@@ -1,0 +1,8 @@
+harnessId: framework/react
+checks:
+  - id: no-index-as-key
+    description: "동적 리스트에서 배열 index를 key로 사용하지 않아야 한다"
+    severity: warning
+  - id: effect-deps-correct
+    description: "useEffect 의존성 배열이 실제 사용값과 일치해야 한다"
+    severity: warning

@@ -1,0 +1,5 @@
+harnessId: buildtool/npm
+checks:
+  - id: lockfile-committed
+    description: "package-lock.json이 변경분과 함께 커밋되어야 한다"
+    severity: error

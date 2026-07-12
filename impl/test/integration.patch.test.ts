@@ -1,0 +1,209 @@
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
+import { handleSugoPlan } from "../src/tools/sugoPlan.js";
+import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
+  const res = await handler(args);
+  return { isError: !!res.isError, data: JSON.parse(res.content[0].text) };
+}
+
+const VALID_PRD = "REQ-1: 이메일 로그인 기능을 제공한다. " + "가".repeat(90);
+const GOOD_SUMMARY = [
+  "배경: 사용자가 이메일로 로그인할 수 없는 문제가 있었다.",
+  "변경: EmailLoginService를 추가하고 컨트롤러에 연결했다.",
+  "설계: 기존 인증 흐름을 재사용하며 비밀번호 해시는 bcrypt를 사용했다.",
+  "테스트: 단위테스트 12개와 통합테스트 2개를 추가해 전부 통과를 확인했다.",
+].join("\n");
+
+let fakeHome: string;
+let projectDir: string;
+
+beforeEach(() => {
+  fakeHome = mkdtempSync(join(tmpdir(), "sugo-patch-home-"));
+  projectDir = mkdtempSync(join(tmpdir(), "sugo-patch-project-"));
+  process.env.SUGO_HOME_OVERRIDE = fakeHome;
+});
+
+afterEach(() => {
+  delete process.env.SUGO_HOME_OVERRIDE;
+  rmSync(fakeHome, { recursive: true, force: true });
+  rmSync(projectDir, { recursive: true, force: true });
+});
+
+/** 1차(plan 모드) 파이프라인을 review_done까지 몰아 work-result.md를 만든다. */
+async function runFirstRoundToReviewDone(
+  wiringTestAdded = true,
+): Promise<{ sessionId: string; workResultPath: string; prdPath: string }> {
+  const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
+  const sessionId = start.data.sessionId as string;
+  await call(handleSugoPlan, { action: "clarify", sessionId });
+  const prd = await call(handleSugoPlan, { action: "prd", sessionId, prdContent: VALID_PRD });
+  await call(handleSugoPlan, { action: "ready", sessionId });
+  await call(handleSugoPlan, { action: "code_start", sessionId });
+  await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
+  await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [], wiringTestAdded });
+  await call(handleSugoPlan, { action: "test_start", sessionId });
+  await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
+  await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
+  await call(handleSugoPlan, { action: "review_start", sessionId });
+  const reviewDone = await call(handleSugoPlan, {
+    action: "review_done",
+    sessionId,
+    userConfirmed: true,
+    summary: GOOD_SUMMARY,
+    runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+  });
+  return { sessionId, workResultPath: reviewDone.data.workResultPath, prdPath: prd.data.prdPath ?? "" };
+}
+
+describe("Patch 진입 — 반드시 거부", () => {
+  it("feature 디렉터리가 존재하지 않으면 PATCH_FEATURE_DIR_NOT_FOUND", async () => {
+    const result = await call(handleSugoPlan, {
+      action: "start",
+      projectPath: projectDir,
+      featureName: "x",
+      workResultPath: join(projectDir, "no-such-dir", "work-result.md"),
+    });
+    expect(result.isError).toBe(true);
+    expect(result.data.errorCode).toBe("PATCH_FEATURE_DIR_NOT_FOUND");
+  });
+
+  it("prd.md도 PRD-patch도 없는 디렉터리면 PATCH_PARENT_PRD_NOT_FOUND", async () => {
+    const isolatedDir = join(projectDir, "sugo", "features", "20260101", "orphan");
+    mkdirSync(isolatedDir, { recursive: true });
+    writeFileSync(join(isolatedDir, "work-result.md"), "부모 없는 산출물");
+
+    const result = await call(handleSugoPlan, {
+      action: "start",
+      projectPath: projectDir,
+      featureName: "orphan-patch",
+      workResultPath: join(isolatedDir, "work-result.md"),
+    });
+    expect(result.isError).toBe(true);
+    expect(result.data.errorCode).toBe("PATCH_PARENT_PRD_NOT_FOUND");
+  });
+});
+
+describe("Patch 전체 흐름 (§7)", () => {
+  it("1차 산출물로 2차 patch에 진입하면 mode=patch, version=2, 부모=원본 prd.md", async () => {
+    const { workResultPath, prdPath } = await runFirstRoundToReviewDone();
+    expect(existsSync(workResultPath)).toBe(true);
+    expect(existsSync(prdPath)).toBe(true);
+
+    const patchStart = await call(handleSugoPlan, {
+      action: "start",
+      projectPath: projectDir,
+      featureName: "login-patch",
+      workResultPath,
+    });
+    expect(patchStart.isError).toBe(false);
+    expect(patchStart.data.patch.version).toBe(2);
+    expect(patchStart.data.patch.parentPrdPath).toBe(prdPath);
+  });
+
+  it("patch 모드의 PRD는 prd.md를 덮어쓰지 않고 PRD-patch-v2.md로 새로 저장된다", async () => {
+    const { workResultPath, prdPath } = await runFirstRoundToReviewDone();
+    const originalPrdContent = readFileSync(prdPath, "utf-8");
+
+    const patchStart = await call(handleSugoPlan, {
+      action: "start",
+      projectPath: projectDir,
+      featureName: "login-patch",
+      workResultPath,
+    });
+    const sessionId = patchStart.data.sessionId as string;
+    await call(handleSugoPlan, { action: "clarify", sessionId });
+    const patchPrdContent = "REQ-1: 소셜 로그인도 추가로 지원한다. " + "나".repeat(90);
+    const prdResult = await call(handleSugoPlan, { action: "prd", sessionId, prdContent: patchPrdContent });
+
+    expect(prdResult.isError).toBe(false);
+    expect(prdResult.data.state).toBe("PRD");
+    expect(readFileSync(prdPath, "utf-8")).toBe(originalPrdContent); // 원본 불변
+    const patchPrdPath = join(join(prdPath, ".."), "PRD-patch-v2.md");
+    expect(existsSync(patchPrdPath)).toBe(true);
+    expect(readFileSync(patchPrdPath, "utf-8")).toBe(patchPrdContent);
+  });
+
+  it("patch 모드는 배선변경 없어도 wiring 게이트가 자동 트리거된다", async () => {
+    const { workResultPath } = await runFirstRoundToReviewDone();
+    const patchStart = await call(handleSugoPlan, {
+      action: "start",
+      projectPath: projectDir,
+      featureName: "login-patch",
+      workResultPath,
+    });
+    const sessionId = patchStart.data.sessionId as string;
+    await call(handleSugoPlan, { action: "clarify", sessionId });
+    await call(handleSugoPlan, { action: "prd", sessionId, prdContent: "REQ-1: 추가 기능. " + "다".repeat(90) });
+    await call(handleSugoPlan, { action: "ready", sessionId });
+    await call(handleSugoPlan, { action: "code_start", sessionId });
+    await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
+
+    const codeDoneNoWiringTest = await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
+    expect(codeDoneNoWiringTest.isError).toBe(true);
+    expect(codeDoneNoWiringTest.data.errorCode).toBe("WIRING_TEST_MISSING");
+
+    const codeDoneOk = await call(handleSugoPlan, {
+      action: "code_done",
+      sessionId,
+      changedFiles: [],
+      wiringTestAdded: true,
+    });
+    expect(codeDoneOk.isError).toBe(false);
+  });
+
+  it("2차 산출물로 3차 patch에 진입하면 version=3, 부모는 여전히 원본 prd.md", async () => {
+    const { workResultPath: firstWorkResult, prdPath } = await runFirstRoundToReviewDone();
+
+    const patchStart = await call(handleSugoPlan, {
+      action: "start",
+      projectPath: projectDir,
+      featureName: "login-patch",
+      workResultPath: firstWorkResult,
+    });
+    const sessionId = patchStart.data.sessionId as string;
+    await call(handleSugoPlan, { action: "clarify", sessionId });
+    await call(handleSugoPlan, { action: "prd", sessionId, prdContent: "REQ-1: 2차 변경. " + "다".repeat(90) });
+    await call(handleSugoPlan, { action: "ready", sessionId });
+    await call(handleSugoPlan, { action: "code_start", sessionId });
+    await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
+    await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [], wiringTestAdded: true });
+    await call(handleSugoPlan, { action: "test_start", sessionId });
+    await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
+    await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
+    await call(handleSugoPlan, { action: "review_start", sessionId });
+    const secondReviewDone = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    const secondWorkResult = secondReviewDone.data.workResultPath as string;
+    expect(secondWorkResult).toContain("work-result-patch-v2.md");
+
+    const thirdStart = await call(handleSugoPlan, {
+      action: "start",
+      projectPath: projectDir,
+      featureName: "login-patch-2",
+      workResultPath: secondWorkResult,
+    });
+    expect(thirdStart.isError).toBe(false);
+    expect(thirdStart.data.patch.version).toBe(3);
+    expect(thirdStart.data.patch.parentPrdPath).toBe(prdPath);
+  });
+
+  it("workResultPath 없이 start하면 100% 기존(신규 PRD, mode=plan) 동작이다(하위호환)", async () => {
+    const result = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "fresh" });
+    expect(result.isError).toBe(false);
+    expect(result.data.patch).toBeUndefined();
+
+    const status = await call(handleSugoPlan, { action: "status", sessionId: result.data.sessionId });
+    expect(status.isError).toBe(false);
+  });
+});

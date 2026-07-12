@@ -1,0 +1,8 @@
+harnessId: framework/node
+checks:
+  - id: env-validated-at-boot
+    description: "필수 환경변수는 부팅 초기에 검증되어야 한다"
+    severity: warning
+  - id: input-validated-at-boundary
+    description: "외부 입력을 받는 라우트/핸들러에 스키마 검증이 있어야 한다"
+    severity: warning

@@ -1,0 +1,11 @@
+harnessId: lang/javascript
+checks:
+  - id: no-var
+    description: "var 선언이 없어야 한다"
+    severity: warning
+  - id: strict-equality
+    description: "==/!= 대신 ===/!==를 사용해야 한다"
+    severity: warning
+  - id: no-unhandled-promise
+    description: "미처리 Promise rejection이 없어야 한다"
+    severity: error

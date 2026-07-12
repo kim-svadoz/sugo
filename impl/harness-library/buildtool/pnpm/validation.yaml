@@ -1,0 +1,5 @@
+harnessId: buildtool/pnpm
+checks:
+  - id: single-lockfile
+    description: "pnpm-lock.yaml만 존재하고 다른 lockfile과 혼용되지 않아야 한다"
+    severity: error

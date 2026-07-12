@@ -1,0 +1,11 @@
+{
+  "name": "sugo",
+  "version": "0.1.0",
+  "description": "Spec-based harness + enforced state-machine dev pipeline",
+  "mcpServers": {
+    "sugo": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/index.bundle.mjs"]
+    }
+  }
+}

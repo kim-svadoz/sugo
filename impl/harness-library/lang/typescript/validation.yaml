@@ -1,0 +1,14 @@
+harnessId: lang/typescript
+checks:
+  - id: no-any
+    description: "변경분에 새로 추가된 any/as any가 없어야 한다(이유 주석 있는 경우 예외)"
+    severity: warning
+  - id: strict-mode
+    description: "tsconfig.json의 strict가 true여야 한다"
+    severity: error
+  - id: typecheck-passes
+    description: "tsc --noEmit이 에러 없이 통과해야 한다"
+    severity: error
+  - id: no-non-null-assertion-abuse
+    description: "널 단언(!) 남용이 없어야 한다"
+    severity: warning

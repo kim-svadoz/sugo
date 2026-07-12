@@ -1,0 +1,8 @@
+harnessId: framework/express
+checks:
+  - id: async-errors-forwarded
+    description: "async 라우트 핸들러의 예외가 next(err)로 전달되어야 한다"
+    severity: error
+  - id: error-middleware-registered-last
+    description: "에러 처리 미들웨어가 모든 라우트 등록 이후에 위치해야 한다"
+    severity: warning
