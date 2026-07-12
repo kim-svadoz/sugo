@@ -3,7 +3,12 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { handleSugoAdd, sugoAddInputSchema } from "./tools/sugoAdd.js";
 import { handleSugoAnalyze, sugoAnalyzeInputSchema } from "./tools/sugoAnalyze.js";
 import { handleSugoChain, sugoChainInputSchema } from "./tools/sugoChain.js";
+import {
+  handleSugoCheckLethalTrifecta,
+  sugoCheckLethalTrifectaInputSchema,
+} from "./tools/sugoCheckLethalTrifecta.js";
 import { handleSugoCheckpoint, sugoCheckpointInputSchema } from "./tools/sugoCheckpoint.js";
+import { handleSugoExplore, sugoExploreInputSchema } from "./tools/sugoExplore.js";
 import {
   handleSugoGetProjectContext,
   sugoGetProjectContextInputSchema,
@@ -14,6 +19,10 @@ import {
   sugoJudgmentReportInputSchema,
 } from "./tools/sugoJudgmentReport.js";
 import { handleSugoPlan, sugoPlanInputSchema } from "./tools/sugoPlan.js";
+import {
+  handleSugoRecordContractEvidence,
+  sugoRecordContractEvidenceInputSchema,
+} from "./tools/sugoRecordContractEvidence.js";
 import {
   handleSugoRecordTestEvidence,
   sugoRecordTestEvidenceInputSchema,
@@ -74,6 +83,31 @@ server.registerTool(
     inputSchema: sugoRecordTestEvidenceInputSchema,
   },
   handleSugoRecordTestEvidence,
+);
+
+server.registerTool(
+  "sugo_record_contract_evidence",
+  {
+    title: "Record contract test red→green transition evidence",
+    description:
+      "계약테스트의 red(구현 전 실패)/green(구현 후 통과) 단계를 각각 기록한다. review_done의 " +
+      "contractEvidenceRequired 게이트는 이 red→green 전이만 신뢰하며, green만 있고 red가 " +
+      "없으면(자기보고 승격) 거부한다(§10).",
+    inputSchema: sugoRecordContractEvidenceInputSchema,
+  },
+  handleSugoRecordContractEvidence,
+);
+
+server.registerTool(
+  "sugo_check_lethal_trifecta",
+  {
+    title: "Check registered tools for the lethal trifecta risk pattern",
+    description:
+      "(사설데이터 접근 + 신뢰할 수 없는 입력 처리 + 외부 통신)이 한 도구에 동시에 있으면 경고한다. " +
+      "capability는 호출자가 명시적으로 제공해야 한다(자동 추측 안 함)(§10).",
+    inputSchema: sugoCheckLethalTrifectaInputSchema,
+  },
+  handleSugoCheckLethalTrifecta,
 );
 
 server.registerTool(
@@ -182,6 +216,18 @@ server.registerTool(
     inputSchema: sugoJudgmentReportInputSchema,
   },
   handleSugoJudgmentReport,
+);
+
+server.registerTool(
+  "sugo_explore",
+  {
+    title: "AST-based codebase exploration (not regex)",
+    description:
+      "web-tree-sitter로 실제 파싱해 클래스·인터페이스·메서드·함수·import를 추출한다 " +
+      "(TypeScript/TSX/JavaScript/Python/Java 지원). code-agent가 코딩 전 구조를 이해하는 용도(§D.7).",
+    inputSchema: sugoExploreInputSchema,
+  },
+  handleSugoExplore,
 );
 
 async function main() {

@@ -4,6 +4,8 @@ export const PLAN_STATES = [
   "CLARIFY",
   "PRD",
   "READY",
+  "DECOMPOSE",
+  "ORCHESTRATING",
   "CODE_RUNNING",
   "CODE_DONE",
   "TEST_RUNNING",
@@ -21,6 +23,10 @@ export const PLAN_ACTIONS = [
   "clarify",
   "prd",
   "ready",
+  "decompose",
+  "subtask_start",
+  "subtask_done",
+  "integrate",
   "code_start",
   "code_done",
   "test_start",
@@ -39,12 +45,19 @@ export type PlanAction = (typeof PLAN_ACTIONS)[number];
  * 스펙 §3 전이·전제 표. `start`/`status`/`cancel`은 세션이 없어도(또는 임의 상태에서) 실행 가능하므로
  * 빈 배열로 표기하고 handler에서 별도 처리한다. code_start는 정상 진입(READY) 외에
  * auto-loop 역방향 재진입(TEST_DONE, REVIEW_RUNNING)도 허용한다.
+ * §10 decompose 오케스트레이션(선택 확장): READY에서 code_start 대신 decompose로 들어가
+ * subtask_start/subtask_done을 반복하다 integrate로 CODE_RUNNING에 합류한다(이후 code_done부터는
+ * 기존 파이프라인과 동일 — 게이트 중복 없음).
  */
 export const PREREQUISITES: Record<PlanAction, PlanState[]> = {
   start: [],
   clarify: ["SCAN"],
   prd: ["CLARIFY"],
   ready: ["PRD"],
+  decompose: ["READY"],
+  subtask_start: ["DECOMPOSE", "ORCHESTRATING"],
+  subtask_done: ["ORCHESTRATING"],
+  integrate: ["ORCHESTRATING"],
   code_start: ["READY", "TEST_DONE", "REVIEW_RUNNING"],
   code_done: ["CODE_RUNNING"],
   test_start: ["CODE_DONE"],
@@ -63,6 +76,10 @@ export const RESULT_STATE: Partial<Record<PlanAction, PlanState>> = {
   clarify: "CLARIFY",
   prd: "PRD",
   ready: "READY",
+  decompose: "DECOMPOSE",
+  subtask_start: "ORCHESTRATING",
+  subtask_done: "ORCHESTRATING",
+  integrate: "CODE_RUNNING",
   code_start: "CODE_RUNNING",
   code_done: "CODE_DONE",
   test_start: "TEST_RUNNING",
@@ -79,7 +96,9 @@ export const NEXT_ACTION_HINTS: Record<PlanState, PlanAction[]> = {
   SCAN: ["clarify"],
   CLARIFY: ["prd"],
   PRD: ["ready"],
-  READY: ["code_start"],
+  READY: ["code_start", "decompose"],
+  DECOMPOSE: ["subtask_start"],
+  ORCHESTRATING: ["subtask_start", "subtask_done", "integrate"],
   CODE_RUNNING: ["code_done"],
   CODE_DONE: ["test_start"],
   TEST_RUNNING: ["test_done"],
@@ -91,7 +110,9 @@ export const NEXT_ACTION_HINTS: Record<PlanState, PlanAction[]> = {
 };
 
 import type { ChainDirection } from "./chain.js";
+import type { ContractTestRecord } from "./contractEvidence.js";
 import type { CoverageMap } from "./consistency.js";
+import type { DecomposeManifest } from "./decompose.js";
 import type { HumanHoursEstimate } from "./humanHours.js";
 import type { PatchContext } from "./patch.js";
 import type { TestEvidenceRecord, TestPassedState } from "./testEvidence.js";
@@ -131,6 +152,10 @@ export interface ChainInfo {
   runtimeCheckUnverifiedReason?: string;
   /** §10 PRD 정합성 게이트(선택 확장) — test_done에 제출된 커버리지맵을 감사 목적으로 보존. */
   coverageMap?: CoverageMap;
+  /** review_done이 실제로 증거 재사용(reusedFromTestDone)으로 통과했는지 감사 기록. */
+  evidenceReused?: boolean;
+  /** §10 계약테스트 실행증거 — sugo_record_contract_evidence로 누적되는 red/green 기록. */
+  contractTests?: ContractTestRecord[];
 }
 
 export interface SessionData {
@@ -145,6 +170,8 @@ export interface SessionData {
   /** §8 HULK 연동: prd 성공 시 프로젝트가 워크스페이스에 속해 있으면 자동 생성된 Task를 가리킨다. */
   hulkWorkspace?: string;
   hulkTaskId?: string;
+  /** §10 decompose 오케스트레이션(선택 확장) — DECOMPOSE/ORCHESTRATING 상태 동안의 서브태스크 매니페스트. */
+  decomposeManifest?: DecomposeManifest;
 }
 
 export interface PlanSession {

@@ -1,8 +1,13 @@
+import { readFile } from "node:fs/promises";
 import { z } from "zod";
+import { extractRequirements } from "../analyze.js";
 import { isProjectBootable } from "../bootable.js";
 import { scanForSpringBootTestAnnotation } from "../bootScan.js";
 import { writePatchPrdFile, writePatchWorkResultFile, writePrdFile, writeWorkResultFile } from "../feature.js";
 import { checkCoverageGate } from "../consistency.js";
+import { checkContractEvidenceGate } from "../contractEvidence.js";
+import { validateIntegration, validateManifest, type DecomposeManifest } from "../decompose.js";
+import { checkEvidenceReuseGate, computeChangedFilesFingerprint } from "../fingerprint.js";
 import {
   checkAnalyzeGate,
   checkBaselineGate,
@@ -59,6 +64,10 @@ export const sugoPlanInputSchema = {
     })
     .optional()
     .describe("review_done action에 필요. 실제 빌드+테스트 결과"),
+  reusedFromTestDone: z
+    .boolean()
+    .optional()
+    .describe("review_done action: §10 이중 실행 제거 — test_done 증거를 재사용할지. 변경파일 지문이 일치하면 runtimeCheck 없이 통과한다"),
   userReportedHumanHours: z
     .number()
     .optional()
@@ -73,6 +82,22 @@ export const sugoPlanInputSchema = {
     })
     .optional()
     .describe("test_done action: §10 PRD 정합성 게이트(선택 확장) — verificationPolicy.integrationGateEnforced가 켜져 있으면 필수"),
+  manifest: z
+    .object({
+      subtasks: z.array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          dependsOn: z.array(z.string()).default([]),
+          files: z.array(z.string()).default([]),
+          coversRequirements: z.array(z.string()).default([]),
+        }),
+      ),
+    })
+    .optional()
+    .describe("decompose action에 필요. §10 오케스트레이션 매니페스트 — 사이클/파일겹침/요구커버리지를 검증한다"),
+  subtaskId: z.string().optional().describe("subtask_start/subtask_done action에 필요"),
+  subtaskChangedFiles: z.array(z.string()).optional().describe("subtask_done action: 이 서브태스크가 실제로 바꾼 파일"),
 };
 
 const SugoPlanArgs = z.object(sugoPlanInputSchema);
@@ -166,14 +191,65 @@ export async function handleSugoPlan(rawArgs: unknown) {
       );
     }
 
-    if (!args.runtimeCheck) return errorResult("RUNTIME_CHECK_REQUIRED", "review_done action에는 runtimeCheck가 필요합니다.");
-    const bootable = await isProjectBootable(existing.projectPath);
-    const runtimeResult = checkRuntimeVerificationGate(
-      existing.data.chainInfo.testPassedState,
-      args.runtimeCheck as RuntimeCheck,
-      bootable,
-    );
-    if (!runtimeResult.ok) return errorResult(runtimeResult.code as GateBlockCode, runtimeResult.message!);
+    // ── §10 이중 실행 제거: reusedFromTestDone이면 지문이 일치할 때 runtimeCheck 없이 통과시킨다.
+    let runtimeSatisfiedByReuse = false;
+    if (args.reusedFromTestDone) {
+      const currentFingerprint = await computeChangedFilesFingerprint(existing.projectPath, existing.data.chainInfo.changedFiles);
+      const reuseResult = checkEvidenceReuseGate(
+        true,
+        existing.data.chainInfo.testEvidenceFingerprint,
+        currentFingerprint,
+        existing.data.chainInfo.testPassedState,
+      );
+      if (!reuseResult.ok) return errorResult(reuseResult.code as GateBlockCode, reuseResult.message!);
+      runtimeSatisfiedByReuse = true;
+    }
+
+    if (!runtimeSatisfiedByReuse) {
+      if (!args.runtimeCheck) return errorResult("RUNTIME_CHECK_REQUIRED", "review_done action에는 runtimeCheck가 필요합니다.");
+      const bootable = await isProjectBootable(existing.projectPath);
+      const runtimeResult = checkRuntimeVerificationGate(
+        existing.data.chainInfo.testPassedState,
+        args.runtimeCheck as RuntimeCheck,
+        bootable,
+      );
+      if (!runtimeResult.ok) return errorResult(runtimeResult.code as GateBlockCode, runtimeResult.message!);
+    }
+
+    // ── §10 계약테스트 실행증거(opt-in): config.verificationPolicy.contractEvidenceRequired가
+    // 켜져 있으면 sugo_record_contract_evidence로 기록된 red→green 전이를 요구한다.
+    const projectConfigForContract = await loadProjectConfig(existing.projectPath);
+    const contractRequired = projectConfigForContract?.verificationPolicy?.contractEvidenceRequired ?? false;
+    const contractResult = checkContractEvidenceGate(existing.data.chainInfo.contractTests ?? [], contractRequired);
+    if (!contractResult.ok) return errorResult(contractResult.code as GateBlockCode, contractResult.message!);
+  }
+
+  // ── §10 decompose 오케스트레이션(선택 확장): 매니페스트 결정론 검증(사이클·파일겹침·요구커버리지).
+  if (action === "decompose" && existing) {
+    if (!args.manifest) return errorResult("MANIFEST_REQUIRED", "decompose action에는 manifest가 필요합니다.");
+    if (!existing.data.prdPath) return errorResult("PRD_NOT_FOUND", "decompose 전에 PRD가 필요합니다.");
+    const prdContent = await readFile(existing.data.prdPath, "utf-8").catch(() => "");
+    const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
+    const candidateManifest: DecomposeManifest = {
+      subtasks: args.manifest.subtasks.map((s) => ({ ...s, status: "pending" as const })),
+    };
+    const manifestResult = validateManifest(candidateManifest, prdRequirementIds);
+    if (!manifestResult.ok) return errorResult(manifestResult.code as GateBlockCode, manifestResult.message!);
+  }
+
+  if ((action === "subtask_start" || action === "subtask_done") && existing) {
+    if (!args.subtaskId) {
+      return errorResult("SUBTASK_ID_REQUIRED", `${action} action에는 subtaskId가 필요합니다.`);
+    }
+    const subtask = existing.data.decomposeManifest?.subtasks.find((s) => s.id === args.subtaskId);
+    if (!subtask) return errorResult("SUBTASK_NOT_FOUND", `서브태스크를 찾을 수 없습니다: ${args.subtaskId}`);
+  }
+
+  if (action === "integrate" && existing) {
+    const manifest = existing.data.decomposeManifest;
+    if (!manifest) return errorResult("MANIFEST_REQUIRED", "integrate 전에 decompose가 필요합니다.");
+    const integrationResult = validateIntegration(manifest);
+    if (!integrationResult.ok) return errorResult(integrationResult.code as GateBlockCode, integrationResult.message!);
   }
 
   // ── §7 Patch 진입점: workResultPath가 주어지면 부모 PRD/버전을 미리 계산해둔다.
@@ -216,6 +292,38 @@ export async function handleSugoPlan(rawArgs: unknown) {
         ...session.data,
         chainInfo: { ...session.data.chainInfo, autoLoopRetryCount: session.data.chainInfo.autoLoopRetryCount + 1 },
       },
+    };
+  }
+
+  // ── §10 decompose 오케스트레이션: 매니페스트 생성/서브태스크 상태 갱신/integrate 시 changedFiles 합류.
+  if (action === "decompose" && args.manifest) {
+    const manifestWithStatus: DecomposeManifest = {
+      subtasks: args.manifest.subtasks.map((s) => ({ ...s, status: "pending" as const })),
+    };
+    session = { ...session, data: { ...session.data, decomposeManifest: manifestWithStatus } };
+  }
+
+  if (action === "subtask_start" && args.subtaskId && session.data.decomposeManifest) {
+    const updatedSubtasks = session.data.decomposeManifest.subtasks.map((s) =>
+      s.id === args.subtaskId ? { ...s, status: "in_progress" as const } : s,
+    );
+    session = { ...session, data: { ...session.data, decomposeManifest: { subtasks: updatedSubtasks } } };
+  }
+
+  if (action === "subtask_done" && args.subtaskId && session.data.decomposeManifest) {
+    const updatedSubtasks = session.data.decomposeManifest.subtasks.map((s) =>
+      s.id === args.subtaskId ? { ...s, status: "done" as const, changedFiles: args.subtaskChangedFiles ?? [] } : s,
+    );
+    session = { ...session, data: { ...session.data, decomposeManifest: { subtasks: updatedSubtasks } } };
+  }
+
+  if (action === "integrate" && session.data.decomposeManifest) {
+    const allChangedFiles = Array.from(
+      new Set(session.data.decomposeManifest.subtasks.flatMap((s) => s.changedFiles ?? [])),
+    );
+    session = {
+      ...session,
+      data: { ...session.data, chainInfo: { ...session.data.chainInfo, changedFiles: allChangedFiles } },
     };
   }
 
@@ -280,14 +388,21 @@ export async function handleSugoPlan(rawArgs: unknown) {
   }
 
   if (action === "test_done" && existing?.data.chainInfo.testEvidence) {
+    const derivedState = existing.data.chainInfo.testEvidence.derivedState;
+    // §10 이중 실행 제거: pass일 때만 지문을 남긴다 — fail/unverified 증거는 재사용 대상이 아니다.
+    const testEvidenceFingerprint =
+      derivedState === "pass"
+        ? await computeChangedFilesFingerprint(session.projectPath, session.data.chainInfo.changedFiles)
+        : session.data.chainInfo.testEvidenceFingerprint;
     session = {
       ...session,
       data: {
         ...session.data,
         chainInfo: {
           ...session.data.chainInfo,
-          testPassedState: existing.data.chainInfo.testEvidence.derivedState,
+          testPassedState: derivedState,
           coverageMap: args.coverageMap,
+          testEvidenceFingerprint,
         },
       },
     };
@@ -318,6 +433,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
           reviewSummary: args.summary,
           reviewDoneAt: new Date().toISOString(),
           runtimeCheckUnverifiedReason: args.runtimeCheck?.unverifiedReason,
+          evidenceReused: args.reusedFromTestDone ?? false,
         },
       },
     };
@@ -384,6 +500,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
         ? { parentPrdPath: session.data.patch.parentPrdPath, version: session.data.patch.version }
         : undefined,
     hulk,
+    decomposeManifest: session.data.decomposeManifest,
   };
 
   return {

@@ -136,3 +136,54 @@ describe("checkPrerequisite 단위 동작", () => {
     expect(result.errorCode).toBe("PREREQUISITE_FAILED");
   });
 });
+
+describe("§10 decompose 오케스트레이션 — 순서강제", () => {
+  it("READY에서 decompose로 진입할 수 있다", () => {
+    const result = applyTransition(sessionAt("READY"), "decompose", "sid", {});
+    expect(result.ok).toBe(true);
+    expect(result.session?.state).toBe("DECOMPOSE");
+  });
+
+  it("DECOMPOSE에서 subtask_start로 ORCHESTRATING에 진입한다", () => {
+    const result = applyTransition(sessionAt("DECOMPOSE"), "subtask_start", "sid", {});
+    expect(result.ok).toBe(true);
+    expect(result.session?.state).toBe("ORCHESTRATING");
+  });
+
+  it("ORCHESTRATING에서 subtask_start를 반복해도 ORCHESTRATING을 유지한다", () => {
+    const result = applyTransition(sessionAt("ORCHESTRATING"), "subtask_start", "sid", {});
+    expect(result.ok).toBe(true);
+    expect(result.session?.state).toBe("ORCHESTRATING");
+  });
+
+  it("ORCHESTRATING에서 subtask_done은 ORCHESTRATING을 유지한다", () => {
+    const result = applyTransition(sessionAt("ORCHESTRATING"), "subtask_done", "sid", {});
+    expect(result.ok).toBe(true);
+    expect(result.session?.state).toBe("ORCHESTRATING");
+  });
+
+  it("ORCHESTRATING에서 integrate로 CODE_RUNNING에 합류한다(기존 파이프라인 재사용)", () => {
+    const result = applyTransition(sessionAt("ORCHESTRATING"), "integrate", "sid", {});
+    expect(result.ok).toBe(true);
+    expect(result.session?.state).toBe("CODE_RUNNING");
+  });
+
+  it("DECOMPOSE를 거치지 않고 바로 subtask_done을 호출하면 거부된다", () => {
+    const result = applyTransition(sessionAt("DECOMPOSE"), "subtask_done", "sid", {});
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("PREREQUISITE_FAILED");
+  });
+
+  it("READY가 아닌 상태에서 decompose를 호출하면 거부된다", () => {
+    const result = applyTransition(sessionAt("CODE_RUNNING"), "decompose", "sid", {});
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("PREREQUISITE_FAILED");
+  });
+
+  it("integrate 이후 CODE_RUNNING에서 정상적으로 code_done까지 이어진다", () => {
+    let s = applyTransition(sessionAt("ORCHESTRATING"), "integrate", "sid", {}).session!;
+    expect(s.state).toBe("CODE_RUNNING");
+    s = applyTransition(s, "code_done", s.id, {}).session!;
+    expect(s.state).toBe("CODE_DONE");
+  });
+});

@@ -20,6 +20,10 @@ export const sugoAddInputSchema = {
     .boolean()
     .optional()
     .describe("§10 PRD 정합성 게이트를 opt-in으로 강제할지(verificationPolicy). true면 test_done에 coverageMap 제출이 필수가 된다"),
+  contractEvidenceRequired: z
+    .boolean()
+    .optional()
+    .describe("§10 계약테스트 실행증거를 opt-in으로 강제할지(verificationPolicy). true면 review_done에 red→green 전이 기록이 필수가 된다"),
 };
 
 const SugoAddArgs = z.object(sugoAddInputSchema);
@@ -77,9 +81,13 @@ export async function handleSugoAdd(rawArgs: unknown) {
     })),
     autoCommitArtifacts: existing?.autoCommitArtifacts ?? true,
     verificationPolicy:
-      args.integrationGateEnforced === undefined
+      args.integrationGateEnforced === undefined && args.contractEvidenceRequired === undefined
         ? existing?.verificationPolicy
-        : { ...existing?.verificationPolicy, integrationGateEnforced: args.integrationGateEnforced },
+        : {
+            ...existing?.verificationPolicy,
+            ...(args.integrationGateEnforced !== undefined && { integrationGateEnforced: args.integrationGateEnforced }),
+            ...(args.contractEvidenceRequired !== undefined && { contractEvidenceRequired: args.contractEvidenceRequired }),
+          },
   };
   await saveProjectConfig(config);
   await registerProject({

@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.bundle.mjs",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.bundle.mjs",
+    "build": "node build.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
@@ -13,6 +13,8 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
     "js-yaml": "^5.2.1",
+    "tree-sitter-wasms": "^0.1.13",
+    "web-tree-sitter": "^0.22.6",
     "zod": "^3.23.8"
   },
   "devDependencies": {
