@@ -31,7 +31,8 @@ import { addWorkLog } from "../hulk/history.js";
 import { listCheckpoints } from "../hulk/checkpoint.js";
 import { backfillRoadmapTask, completeTaskRequirements, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
 import { promotePrdRequirements } from "../hulk/roadmapReq.js";
-import { addTask, updateTask } from "../hulk/task.js";
+import { addTask, findTaskByPrdRef, updateTask } from "../hulk/task.js";
+import type { Task, TaskPatchInfo } from "../hulk/types.js";
 import {
   computeCompletionGrade,
   detectLabelContradiction,
@@ -54,6 +55,10 @@ export const sugoPlanInputSchema = {
     .string()
     .optional()
     .describe("start action: patch 진입점(§7) — 기존 work-result.md(또는 work-result-patch-vN.md) 경로. 미입력시 기존(신규 PRD) 동작"),
+  seed: z
+    .string()
+    .optional()
+    .describe("start action(§7.1 Patch 성숙화): 이번 patch 차수에 대한 사용자 지시. review_done이 work-result에 함께 기록한다"),
   prdContent: z.string().optional().describe("prd action에 필요. 본문 ≥100자, REQ-N 태그 ≥1"),
   changedFiles: z.array(z.string()).optional().describe("code_done action에서 이번 코딩으로 바뀐 파일 목록"),
   dependencyRemoved: z.boolean().optional().describe("code_done: 의존성을 제거/내재화했는지(registration-glue 게이트 트리거)"),
@@ -470,6 +475,11 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
+  // ── §7.1 Patch 성숙화: 사용자 지시(seed)는 세션에 그대로 보존해뒀다가 review_done이 work-result에 싣는다.
+  if (action === "start" && args.seed) {
+    session = { ...session, data: { ...session.data, seed: args.seed } };
+  }
+
   // ── 콘텐츠 게이트 통과 후 세션 데이터 반영(+파일 IO)
   if (action === "prd" && args.prdContent) {
     const isPatch = session.data.mode === "patch" && session.data.patch;
@@ -488,14 +498,28 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
 
     // ── §8 HULK 연동: 프로젝트가 워크스페이스에 등록돼 있으면 Task를 자동 생성한다.
+    // §7.1 Patch 성숙화: patch 모드면 새 Task를 만들지 않고 원본 Run(=Task)을
+    // 재사용한다 — base-task 매칭은 ref 파일명 우선(findTaskByPrdRef). 못 찾으면(예: 원본이
+    // 워크스페이스 등록 전에 만들어짐) 새 Task로 안전하게 폴백한다(교착 방지).
     const registryEntry = await findRegistryEntry(session.projectPath);
     if (registryEntry?.workspace) {
-      const task = await addTask(registryEntry.workspace, {
-        title: session.featureName,
-        project: session.projectPath,
-        status: "in_progress",
-        prd_ref: prdPath,
-      });
+      let task: Task;
+      const baseTask = isPatch ? await findTaskByPrdRef(registryEntry.workspace, session.data.patch!.parentPrdPath) : null;
+      if (baseTask) {
+        const patchInfo: TaskPatchInfo = {
+          parentTaskId: baseTask.id,
+          patchVersion: session.data.patch!.version,
+          seed: session.data.seed,
+        };
+        task = (await updateTask(registryEntry.workspace, baseTask.id, { status: "in_progress", patchInfo })) ?? baseTask;
+      } else {
+        task = await addTask(registryEntry.workspace, {
+          title: session.featureName,
+          project: session.projectPath,
+          status: "in_progress",
+          prd_ref: prdPath,
+        });
+      }
       session = {
         ...session,
         data: { ...session.data, hulkWorkspace: registryEntry.workspace, hulkTaskId: task.id },
@@ -558,9 +582,12 @@ export async function handleSugoPlan(rawArgs: unknown) {
   if (action === "review_done" && args.summary) {
     const featurePath = session.data.featurePath ?? session.projectPath;
     const isPatch = session.data.mode === "patch" && session.data.patch;
+    // ── §7.1 Patch 성숙화: seed(사용자 지시)가 있으면 work-result에 그대로 실어 "이번 차수에
+    // 뭘 요청했는지"를 남긴다(reviewSummary와는 별개 — summary는 결과 요약, seed는 최초 지시).
+    const workResultContent = session.data.seed ? `${args.summary}\n\n## 사용자 지시(seed)\n${session.data.seed}` : args.summary;
     const { workResultPath } = isPatch
-      ? await writePatchWorkResultFile(session.data.patch!.featureDir, session.data.patch!.version, args.summary)
-      : await writeWorkResultFile(featurePath, args.summary);
+      ? await writePatchWorkResultFile(session.data.patch!.featureDir, session.data.patch!.version, workResultContent)
+      : await writeWorkResultFile(featurePath, workResultContent);
     humanHoursEstimate = estimateHumanHours(
       session.startedAt,
       new Date().toISOString(),

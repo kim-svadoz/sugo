@@ -28044,6 +28044,7 @@ async function updateTask(workspace, taskId, params) {
     if (params.log_id !== void 0) task.log_id = params.log_id;
     if (params.completed_at !== void 0) task.completed_at = params.completed_at;
     else if (params.status === "done" && !task.completed_at) task.completed_at = (/* @__PURE__ */ new Date()).toISOString();
+    if (params.patchInfo !== void 0) task.patchInfo = params.patchInfo;
     file.last_updated = (/* @__PURE__ */ new Date()).toISOString();
     await writeTasksFile(workspace, file);
     void syncTask(workspace, task);
@@ -28059,6 +28060,13 @@ async function listTasks(workspace, filter) {
 async function getTask(workspace, taskId) {
   const file = await readTasksFile(workspace);
   return file.tasks.find((t) => t.id === taskId) ?? null;
+}
+async function findTaskByPrdRef(workspace, prdRefPath) {
+  const file = await readTasksFile(workspace);
+  const exact = file.tasks.find((t) => t.prd_ref === prdRefPath);
+  if (exact) return exact;
+  const targetFilename = prdRefPath.split(/[\\/]/).pop();
+  return file.tasks.find((t) => t.prd_ref && t.prd_ref.split(/[\\/]/).pop() === targetFilename) ?? null;
 }
 
 // src/labelGuard.ts
@@ -28300,6 +28308,7 @@ var sugoPlanInputSchema = {
   projectPath: external_exports.string().optional().describe("start action\uC5D0 \uD544\uC694"),
   featureName: external_exports.string().optional().describe("start action\uC5D0 \uC120\uD0DD\uC801\uC73C\uB85C \uC0AC\uC6A9"),
   workResultPath: external_exports.string().optional().describe("start action: patch \uC9C4\uC785\uC810(\xA77) \u2014 \uAE30\uC874 work-result.md(\uB610\uB294 work-result-patch-vN.md) \uACBD\uB85C. \uBBF8\uC785\uB825\uC2DC \uAE30\uC874(\uC2E0\uADDC PRD) \uB3D9\uC791"),
+  seed: external_exports.string().optional().describe("start action(\xA77.1 Patch \uC131\uC219\uD654): \uC774\uBC88 patch \uCC28\uC218\uC5D0 \uB300\uD55C \uC0AC\uC6A9\uC790 \uC9C0\uC2DC. review_done\uC774 work-result\uC5D0 \uD568\uAED8 \uAE30\uB85D\uD55C\uB2E4"),
   prdContent: external_exports.string().optional().describe("prd action\uC5D0 \uD544\uC694. \uBCF8\uBB38 \u2265100\uC790, REQ-N \uD0DC\uADF8 \u22651"),
   changedFiles: external_exports.array(external_exports.string()).optional().describe("code_done action\uC5D0\uC11C \uC774\uBC88 \uCF54\uB529\uC73C\uB85C \uBC14\uB010 \uD30C\uC77C \uBAA9\uB85D"),
   dependencyRemoved: external_exports.boolean().optional().describe("code_done: \uC758\uC874\uC131\uC744 \uC81C\uAC70/\uB0B4\uC7AC\uD654\uD588\uB294\uC9C0(registration-glue \uAC8C\uC774\uD2B8 \uD2B8\uB9AC\uAC70)"),
@@ -28631,6 +28640,9 @@ async function handleSugoPlan(rawArgs) {
       data: { ...session.data, mode: "patch", patch: patchContext, featurePath: patchContext.featureDir }
     };
   }
+  if (action === "start" && args2.seed) {
+    session = { ...session, data: { ...session.data, seed: args2.seed } };
+  }
   if (action === "prd" && args2.prdContent) {
     const isPatch = session.data.mode === "patch" && session.data.patch;
     const { featurePath, prdPath } = isPatch ? await writePatchPrdFile(session.data.patch.featureDir, session.data.patch.version, args2.prdContent) : await writePrdFile(session.projectPath, session.featureName, args2.prdContent);
@@ -28646,12 +28658,23 @@ async function handleSugoPlan(rawArgs) {
     };
     const registryEntry = await findRegistryEntry(session.projectPath);
     if (registryEntry?.workspace) {
-      const task = await addTask(registryEntry.workspace, {
-        title: session.featureName,
-        project: session.projectPath,
-        status: "in_progress",
-        prd_ref: prdPath
-      });
+      let task;
+      const baseTask = isPatch ? await findTaskByPrdRef(registryEntry.workspace, session.data.patch.parentPrdPath) : null;
+      if (baseTask) {
+        const patchInfo = {
+          parentTaskId: baseTask.id,
+          patchVersion: session.data.patch.version,
+          seed: session.data.seed
+        };
+        task = await updateTask(registryEntry.workspace, baseTask.id, { status: "in_progress", patchInfo }) ?? baseTask;
+      } else {
+        task = await addTask(registryEntry.workspace, {
+          title: session.featureName,
+          project: session.projectPath,
+          status: "in_progress",
+          prd_ref: prdPath
+        });
+      }
       session = {
         ...session,
         data: { ...session.data, hulkWorkspace: registryEntry.workspace, hulkTaskId: task.id }
@@ -28702,7 +28725,11 @@ async function handleSugoPlan(rawArgs) {
   if (action === "review_done" && args2.summary) {
     const featurePath = session.data.featurePath ?? session.projectPath;
     const isPatch = session.data.mode === "patch" && session.data.patch;
-    const { workResultPath } = isPatch ? await writePatchWorkResultFile(session.data.patch.featureDir, session.data.patch.version, args2.summary) : await writeWorkResultFile(featurePath, args2.summary);
+    const workResultContent = session.data.seed ? `${args2.summary}
+
+## \uC0AC\uC6A9\uC790 \uC9C0\uC2DC(seed)
+${session.data.seed}` : args2.summary;
+    const { workResultPath } = isPatch ? await writePatchWorkResultFile(session.data.patch.featureDir, session.data.patch.version, workResultContent) : await writeWorkResultFile(featurePath, workResultContent);
     humanHoursEstimate = estimateHumanHours(
       session.startedAt,
       (/* @__PURE__ */ new Date()).toISOString(),

@@ -2,9 +2,11 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
+import { handleSugoTask } from "../src/tools/sugoTask.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
@@ -214,5 +216,93 @@ describe("Patch 전체 흐름 (§7)", () => {
 
     const status = await call(handleSugoPlan, { action: "status", sessionId: result.data.sessionId });
     expect(status.isError).toBe(false);
+  });
+});
+
+describe("§7.1 Patch 성숙화 — Run 재사용 + seed + patchInfo + lineage", () => {
+  it("patch 2차 진입은 새 Task를 만들지 않고 원본 Task를 재사용한다(prd_ref 매칭)", async () => {
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-patch" });
+    const { workResultPath } = await runFirstRoundToReviewDone();
+
+    const tasksAfterFirst = await call(handleSugoTask, { action: "list", workspace: "team-patch" });
+    expect(tasksAfterFirst.data.tasks).toHaveLength(1);
+    const originalTaskId = tasksAfterFirst.data.tasks[0].id;
+
+    const patchStart = await call(handleSugoPlan, {
+      action: "start",
+      projectPath: projectDir,
+      featureName: "login-patch",
+      workResultPath,
+      seed: "결제 실패 시 재시도 로직도 추가해달라는 요청이 있었다",
+    });
+    const sessionId = patchStart.data.sessionId as string;
+    await call(handleSugoPlan, { action: "clarify", sessionId });
+    await call(handleSugoPlan, { action: "prd", sessionId, prdContent: "REQ-1: 재시도 로직 추가. " + "다".repeat(90) });
+
+    const tasksAfterPatch = await call(handleSugoTask, { action: "list", workspace: "team-patch" });
+    // 새 Task가 생기지 않고 여전히 1개 — 원본 Run을 재사용했다는 증거.
+    expect(tasksAfterPatch.data.tasks).toHaveLength(1);
+    expect(tasksAfterPatch.data.tasks[0].id).toBe(originalTaskId);
+    expect(tasksAfterPatch.data.tasks[0].status).toBe("in_progress");
+
+    // patchInfo(lineage)가 기록됐다 — parentTaskId는 spec대로 "이 Task 자신"(재사용이므로 자기참조).
+    expect(tasksAfterPatch.data.tasks[0].patchInfo).toEqual({
+      parentTaskId: originalTaskId,
+      patchVersion: 2,
+      seed: "결제 실패 시 재시도 로직도 추가해달라는 요청이 있었다",
+    });
+  });
+
+  it("seed가 있으면 work-result에 그대로 실린다", async () => {
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-patch2" });
+    const { workResultPath } = await runFirstRoundToReviewDone();
+
+    const patchStart = await call(handleSugoPlan, {
+      action: "start",
+      projectPath: projectDir,
+      featureName: "login-patch",
+      workResultPath,
+      seed: "이번엔 로그아웃 기능도 같이 부탁한다",
+    });
+    const sessionId = patchStart.data.sessionId as string;
+    await call(handleSugoPlan, { action: "clarify", sessionId });
+    await call(handleSugoPlan, { action: "prd", sessionId, prdContent: "REQ-1: 로그아웃 기능. " + "다".repeat(90) });
+    await call(handleSugoPlan, { action: "ready", sessionId });
+    await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    await call(handleSugoPlan, { action: "contract_done", sessionId });
+    await call(handleSugoPlan, { action: "code_start", sessionId });
+    await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
+    await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [], wiringTestAdded: true });
+    await call(handleSugoPlan, { action: "test_start", sessionId });
+    await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
+    await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
+    await call(handleSugoPlan, { action: "review_start", sessionId });
+    const reviewDone = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+
+    const content = readFileSync(reviewDone.data.workResultPath, "utf-8");
+    expect(content).toContain(GOOD_SUMMARY);
+    expect(content).toContain("이번엔 로그아웃 기능도 같이 부탁한다");
+  });
+
+  it("워크스페이스 미등록 프로젝트는 base-task를 찾을 수 없으므로 안전하게 새 Task를 만든다(폴백)", async () => {
+    // 워크스페이스에 아예 등록 안 함 — registryEntry.workspace가 없으므로 HULK 연동 자체가 no-op.
+    const { workResultPath } = await runFirstRoundToReviewDone();
+    const patchStart = await call(handleSugoPlan, {
+      action: "start",
+      projectPath: projectDir,
+      featureName: "login-patch",
+      workResultPath,
+    });
+    const sessionId = patchStart.data.sessionId as string;
+    await call(handleSugoPlan, { action: "clarify", sessionId });
+    const prd = await call(handleSugoPlan, { action: "prd", sessionId, prdContent: "REQ-1: 추가. " + "다".repeat(90) });
+    expect(prd.isError).toBe(false);
   });
 });

@@ -196,6 +196,9 @@ export interface SessionData {
   hulkTaskId?: string;
   /** §10 decompose 오케스트레이션(선택 확장) — DECOMPOSE/ORCHESTRATING 상태 동안의 서브태스크 매니페스트. */
   decomposeManifest?: DecomposeManifest;
+  /** §7.1 Patch 성숙화: start action에 전달된 사용자 지시. patch 모드에서 review_done이
+   * work-result에 실어둔다(reviewSummary와는 별개 — "이번 차수에 뭘 요청했는지" 자체를 보존). */
+  seed?: string;
 }
 
 export interface PlanSession {

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { addTask, getTask, listTasks, updateTask } from "../src/hulk/task.js";
+import { addTask, findTaskByPrdRef, getTask, listTasks, updateTask } from "../src/hulk/task.js";
 import { ensureWorkspace, listWorkspaces, loadWorkspace } from "../src/hulk/workspace.js";
 
 let fakeHome: string;
@@ -99,5 +99,30 @@ describe("Task CRUD", () => {
     const tasks = await listTasks("team-a");
     expect(tasks.length).toBe(count);
     expect(new Set(tasks.map((t) => t.id)).size).toBe(count);
+  });
+
+  it("updateTask로 patchInfo를 기록할 수 있다(§7.1 Patch 성숙화)", async () => {
+    const task = await addTask("team-a", { title: "A", project: "/tmp/proj1", prd_ref: "/tmp/proj1/sugo/features/x/prd.md" });
+    await updateTask("team-a", task.id, { patchInfo: { parentTaskId: task.id, patchVersion: 2, seed: "추가 요청사항" } });
+    const updated = await getTask("team-a", task.id);
+    expect(updated?.patchInfo).toEqual({ parentTaskId: task.id, patchVersion: 2, seed: "추가 요청사항" });
+  });
+});
+
+describe("findTaskByPrdRef — §7.1 base-task 매칭(patch가 원본 Run을 재사용하기 위한 조회)", () => {
+  it("prd_ref가 정확히 일치하는 태스크를 찾는다", async () => {
+    const task = await addTask("team-a", { title: "A", project: "/tmp/proj1", prd_ref: "/tmp/proj1/sugo/features/x/prd.md" });
+    const found = await findTaskByPrdRef("team-a", "/tmp/proj1/sugo/features/x/prd.md");
+    expect(found?.id).toBe(task.id);
+  });
+
+  it("정확 일치가 없으면 파일명만으로 폴백 매칭한다", async () => {
+    const task = await addTask("team-a", { title: "A", project: "/tmp/proj1", prd_ref: "C:\\proj1\\sugo\\features\\x\\prd.md" });
+    const found = await findTaskByPrdRef("team-a", "/proj1/sugo/features/x/prd.md");
+    expect(found?.id).toBe(task.id);
+  });
+
+  it("일치하는 태스크가 없으면 null", async () => {
+    expect(await findTaskByPrdRef("team-a", "/nonexistent/prd.md")).toBeNull();
   });
 });

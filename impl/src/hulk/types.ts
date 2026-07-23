@@ -1,5 +1,14 @@
 export type TaskStatus = "pending" | "idea" | "in_progress" | "done" | "dropped" | "archived";
 
+/** §7.1 Patch 성숙화: patch가 원본 Run(=이 Task)을 재사용할 때 남기는 계보 정보.
+ * parentTaskId는 "base work-result를 소유한 태스크"를 가리킨다 — Run을 재사용하는 설계라 보통
+ * 이 Task 자신의 id와 같다(자기참조 — 대시보드가 "이건 patch로 이어진 태스크"임을 알 수 있게). */
+export interface TaskPatchInfo {
+  parentTaskId: string;
+  patchVersion: number;
+  seed?: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -14,6 +23,7 @@ export interface Task {
   log_id?: string;
   prd_ref?: string;
   tags?: string[];
+  patchInfo?: TaskPatchInfo;
 }
 
 export interface TasksFile {
