@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { mkdir, readdir, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
+import { fetchCheckpointSync } from "../dashboard/fetch.js";
 import { parseFrontmatter, stringifyFrontmatter } from "./frontmatter.js";
 import { slugify } from "./slug.js";
 import { checkpointsDir } from "./storage.js";
@@ -110,4 +111,22 @@ export async function migrateCheckpoints(workspace: string): Promise<number> {
     await atomicWriteFile(join(dir, filename), content);
   }
   return entries.length;
+}
+
+/**
+ * §7.2 "/sugo:checkpoint-sync"(대시보드→로컬 pull): 원격 체크포인트를 프로젝트의
+ * `.claude/rules/<category>/<slug>.md`로 기록한다(sugo_get_project_context가 읽는 바로 그
+ * 위치, §1 레이아웃). 대시보드가 꺼져있거나 응답이 없으면 null을 그대로 반환한다(호출부가
+ * "가져온 게 없다"로 판단하게 — 에러가 아니다, §7.2 "다운돼도 막지 않는다").
+ */
+export async function pullCheckpointsToRules(projectPath: string): Promise<number | null> {
+  const remote = await fetchCheckpointSync();
+  if (!remote) return null;
+  for (const cp of remote) {
+    const dir = join(projectPath, ".claude", "rules", cp.category ?? "general");
+    await mkdir(dir, { recursive: true });
+    const body = [`# ${cp.title}`, "", ...cp.checklist.map((item) => `- [ ] ${item}`)].join("\n");
+    await atomicWriteFile(join(dir, `${slugify(cp.title)}.md`), body);
+  }
+  return remote.length;
 }

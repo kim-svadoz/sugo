@@ -8,6 +8,7 @@ import {
   linkRoadmapNodes,
   listRoadmapNodes,
   markRequirementDone,
+  pullRoadmapOrdering,
   removeRoadmapNode,
   unlinkRoadmapNodes,
   updateRoadmapNodeStatus,
@@ -15,7 +16,20 @@ import {
 import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../hulk/types.js";
 
 export const sugoRoadmapInputSchema = {
-  action: z.enum(["add", "remove", "status", "link", "unlink", "group", "backfill", "list", "ready", "get", "mark_req"]),
+  action: z.enum([
+    "add",
+    "remove",
+    "status",
+    "link",
+    "unlink",
+    "group",
+    "backfill",
+    "list",
+    "ready",
+    "get",
+    "mark_req",
+    "pull_ordering",
+  ]),
   workspace: z.string().describe("HULK 워크스페이스 이름"),
   id: z.string().optional().describe("add/remove/status/get/mark_req action에 필요. add의 새 노드 id 또는 대상 노드 id"),
   title: z.string().optional().describe("add/group/backfill action에 필요"),
@@ -102,6 +116,10 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
     case "ready": {
       const ready = await getReadySet(args.workspace);
       return ok({ ready });
+    }
+    case "pull_ordering": {
+      const pulled = await pullRoadmapOrdering(args.workspace);
+      return ok({ pulled });
     }
     case "get": {
       if (!args.id) return errorResult("ID_REQUIRED", "get action에는 id가 필요합니다.");

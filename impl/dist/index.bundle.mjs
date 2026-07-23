@@ -23396,6 +23396,36 @@ async function syncCheckpoint(workspaceName, checkpoint) {
   if (!config2.enabled) return;
   await pushEvent("/api/sync/checkpoint", "POST", { userId: config2.userId, workspaceName, checkpoint });
 }
+async function syncHistory(workspaceName, workLog, prRefs) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/history", "POST", { userId: config2.userId, workspaceName, workLog, prRefs: prRefs ?? void 0 });
+}
+async function syncDecision(workspaceName, spec) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/decision", "POST", { userId: config2.userId, workspaceName, spec });
+}
+async function syncPluginVersion(version2) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/plugin-version", "POST", { userId: config2.userId, version: version2 });
+}
+async function syncUser() {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/user", "POST", { userId: config2.userId });
+}
+async function syncRoadmapLink(workspaceName, fromId, toId) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/roadmap/link", "POST", { userId: config2.userId, workspaceName, fromId, toId });
+}
+async function unsyncRoadmapLink(workspaceName, fromId, toId) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/roadmap/link", "DELETE", { userId: config2.userId, workspaceName, fromId, toId });
+}
 
 // src/hulk/workspace.ts
 async function loadWorkspace(name2) {
@@ -23826,6 +23856,39 @@ async function handleSugoCheckLethalTrifecta(rawArgs) {
 import { randomBytes as randomBytes2 } from "node:crypto";
 import { mkdir as mkdir8, readdir as readdir3, readFile as readFile9, rm } from "node:fs/promises";
 import { join as join11 } from "node:path";
+
+// src/dashboard/fetch.ts
+async function fetchJson(path, timeoutMs) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled || !config2.apiUrl) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${config2.apiUrl}${path}`, { signal: controller.signal });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function fetchRoadmapOrdering(workspaceName) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return null;
+  const qs = config2.userId ? `?userId=${encodeURIComponent(config2.userId)}` : "";
+  return fetchJson(`/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap${qs}`, 8e3);
+}
+async function fetchCheckpointSync() {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return null;
+  const qs = config2.userId ? `?userId=${encodeURIComponent(config2.userId)}` : "";
+  return fetchJson(`/api/workspaces/checkpoint-sync${qs}`, 8e3);
+}
+async function fetchCalibratedRatio() {
+  const result = await fetchJson("/api/metrics/calibrated-ratio", 5e3);
+  return result?.ratio ?? null;
+}
 
 // node_modules/js-yaml/dist/js-yaml.mjs
 var NOT_RESOLVED = Symbol("NOT_RESOLVED");
@@ -26839,6 +26902,17 @@ async function migrateCheckpoints(workspace) {
   }
   return entries.length;
 }
+async function pullCheckpointsToRules(projectPath) {
+  const remote = await fetchCheckpointSync();
+  if (!remote) return null;
+  for (const cp of remote) {
+    const dir = join11(projectPath, ".claude", "rules", cp.category ?? "general");
+    await mkdir8(dir, { recursive: true });
+    const body2 = [`# ${cp.title}`, "", ...cp.checklist.map((item) => `- [ ] ${item}`)].join("\n");
+    await atomicWriteFile(join11(dir, `${slugify(cp.title)}.md`), body2);
+  }
+  return remote.length;
+}
 
 // src/hulk/memory.ts
 import { mkdir as mkdir9, readFile as readFile10 } from "node:fs/promises";
@@ -26860,14 +26934,15 @@ async function readMemory(workspace) {
 
 // src/tools/sugoCheckpoint.ts
 var sugoCheckpointInputSchema = {
-  action: external_exports.enum(["add", "get", "list", "remove", "memory", "read_memory", "migrate", "sync"]),
+  action: external_exports.enum(["add", "get", "list", "remove", "memory", "read_memory", "migrate", "sync", "pull"]),
   workspace: external_exports.string().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
   id: external_exports.string().optional().describe("get/remove/sync action\uC5D0 \uD544\uC694"),
   title: external_exports.string().optional().describe("add action\uC5D0 \uD544\uC694"),
   category: external_exports.string().optional(),
   applies_to: external_exports.array(external_exports.string()).optional().describe("\uBE48 \uBC30\uC5F4/\uBBF8\uC9C0\uC815\uC774\uBA74 \uBCF4\uD3B8 \uCCB4\uD06C\uD3EC\uC778\uD2B8(\uD56D\uC0C1 \uC801\uC6A9)"),
   checklist: external_exports.array(external_exports.string()).optional().describe("add action\uC5D0 \uD544\uC694"),
-  note: external_exports.string().optional().describe("memory action\uC5D0 \uD544\uC694 \u2014 \uC790\uC720 \uBA54\uBAA8 \uD55C \uC904/\uC5EC\uB7EC \uC904")
+  note: external_exports.string().optional().describe("memory action\uC5D0 \uD544\uC694 \u2014 \uC790\uC720 \uBA54\uBAA8 \uD55C \uC904/\uC5EC\uB7EC \uC904"),
+  projectPath: external_exports.string().optional().describe("pull action\uC5D0 \uD544\uC694 \u2014 \uC6D0\uACA9 \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C .claude/rules/\uB85C \uAE30\uB85D\uD560 \uD504\uB85C\uC81D\uD2B8")
 };
 var SugoCheckpointArgs = external_exports.object(sugoCheckpointInputSchema);
 async function handleSugoCheckpoint(rawArgs) {
@@ -26921,6 +26996,11 @@ async function handleSugoCheckpoint(rawArgs) {
       await syncCheckpoint(args2.workspace, checkpoint);
       return ok({ synced: true });
     }
+    case "pull": {
+      if (!args2.projectPath) return errorResult3("PROJECT_PATH_REQUIRED", "pull action\uC5D0\uB294 projectPath\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const pulledCount = await pullCheckpointsToRules(args2.projectPath);
+      return ok({ pulledCount });
+    }
   }
 }
 function ok(payload) {
@@ -26931,6 +27011,11 @@ function errorResult3(errorCode, message) {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
   };
+}
+
+// src/version.ts
+function currentSugoVersion() {
+  return true ? "0.1.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -27272,6 +27357,7 @@ async function addWorkLog(workspace, params) {
   const dir = historyDir(workspace);
   await mkdir10(dir, { recursive: true });
   await atomicWriteFile(join16(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
+  void syncHistory(workspace, workLog, workLog.prRefs);
   return workLog;
 }
 async function listWorkLogs(workspace) {
@@ -27873,6 +27959,51 @@ function resolveContractRequired(policyValue, sessionCtx) {
   return sessionCtx.baselineRequired;
 }
 
+// src/prRefs.ts
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+var execFileAsync = promisify(execFile);
+async function runGit(args2, cwd) {
+  try {
+    const { stdout } = await execFileAsync("git", args2, { cwd });
+    return stdout.trim();
+  } catch {
+    return null;
+  }
+}
+function parseRemoteUrl(remoteUrl) {
+  const trimmed = remoteUrl.trim();
+  let host;
+  let pathPart;
+  const sshShorthand = trimmed.match(/^git@([^:]+):(.+)$/);
+  if (sshShorthand) {
+    host = sshShorthand[1];
+    pathPart = sshShorthand[2];
+  } else {
+    try {
+      const u = new URL(trimmed);
+      host = u.host;
+      pathPart = u.pathname.replace(/^\//, "");
+    } catch {
+      return null;
+    }
+  }
+  pathPart = pathPart.replace(/\.git$/, "");
+  const segments = pathPart.split("/").filter(Boolean);
+  if (segments.length < 2) return null;
+  const repoSlug = segments[segments.length - 1];
+  const projectKey = segments[segments.length - 2];
+  return { baseUrl: `https://${host}`, projectKey: projectKey.toUpperCase(), repoSlug };
+}
+async function collectPrRefs(projectPath) {
+  const remoteUrl = await runGit(["remote", "get-url", "origin"], projectPath);
+  if (!remoteUrl) return null;
+  const parsed = parseRemoteUrl(remoteUrl);
+  if (!parsed) return null;
+  const sourceBranch = await runGit(["rev-parse", "--abbrev-ref", "HEAD"], projectPath) ?? "HEAD";
+  return { ...parsed, sourceBranch, targetBranch: "develop" };
+}
+
 // src/decompose.ts
 function findManifestCycle(subtasks) {
   const byId = new Map(subtasks.map((s) => [s.id, s]));
@@ -28027,6 +28158,20 @@ function checkpointApplies(checkpoint, ctx) {
 import { mkdir as mkdir12, readFile as readFile16 } from "node:fs/promises";
 
 // src/hulk/roadmapGraph.ts
+function mergeRoadmapOwnership(localNodes, remoteOrdering) {
+  const remoteById = new Map(remoteOrdering.map((r) => [r.id, r]));
+  return localNodes.map((node) => {
+    const remote = remoteById.get(node.id);
+    if (!remote) return node;
+    return {
+      ...node,
+      dependsOn: remote.dependsOn,
+      manual_status: remote.manual_status ?? node.manual_status,
+      pos_x: remote.pos_x ?? node.pos_x,
+      pos_y: remote.pos_y ?? node.pos_y
+    };
+  });
+}
 function topoSort(nodes) {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const unknownDeps = /* @__PURE__ */ new Set();
@@ -28161,6 +28306,7 @@ async function linkRoadmapNodes(workspace, fromId, toId) {
       return { ok: false, error: "CYCLE", message: `\uB9C1\uD06C\uB97C \uCD94\uAC00\uD558\uBA74 \uC0AC\uC774\uD074\uC774 \uC0DD\uAE41\uB2C8\uB2E4: ${fromId} -> ${toId}` };
     }
     await writeRoadmapFile(workspace, { ...file, nodes: candidateNodes });
+    void syncRoadmapLink(workspace, fromId, toId);
     return { ok: true };
   });
 }
@@ -28170,6 +28316,7 @@ async function unlinkRoadmapNodes(workspace, fromId, toId) {
     if (!from) return { ok: false, error: "NODE_NOT_FOUND", message: `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${fromId}` };
     const nodes = file.nodes.map((n) => n.id === fromId ? { ...n, dependsOn: n.dependsOn.filter((d) => d !== toId) } : n);
     await writeRoadmapFile(workspace, { ...file, nodes });
+    void unsyncRoadmapLink(workspace, fromId, toId);
     return { ok: true };
   });
 }
@@ -28222,6 +28369,15 @@ async function completeTaskRequirements(workspace, taskId, summary, logId) {
 async function getReadySet(workspace) {
   const file = await readRoadmapFile(workspace);
   return readySet(file.nodes);
+}
+async function pullRoadmapOrdering(workspace) {
+  const remote = await fetchRoadmapOrdering(workspace);
+  if (!remote) return false;
+  return withRoadmap(workspace, async (file) => {
+    const merged = mergeRoadmapOwnership(file.nodes, remote);
+    await writeRoadmapFile(workspace, { ...file, nodes: merged });
+    return true;
+  });
 }
 
 // src/hulk/roadmapReq.ts
@@ -29001,11 +29157,13 @@ async function handleSugoPlan(rawArgs) {
 ## \uC0AC\uC6A9\uC790 \uC9C0\uC2DC(seed)
 ${session.data.seed}` : args2.summary;
     const { workResultPath } = isPatch ? await writePatchWorkResultFile(session.data.patch.featureDir, session.data.patch.version, workResultContent) : await writeWorkResultFile(featurePath, workResultContent);
+    const calibratedRatio = await fetchCalibratedRatio();
     humanHoursEstimate = estimateHumanHours(
       session.startedAt,
       (/* @__PURE__ */ new Date()).toISOString(),
       session.data.chainInfo.analyzeAttempts,
-      session.data.chainInfo.autoLoopRetryCount
+      session.data.chainInfo.autoLoopRetryCount,
+      calibratedRatio ?? void 0
     );
     session = {
       ...session,
@@ -29037,6 +29195,7 @@ ${session.data.seed}` : args2.summary;
   let hulk;
   if (action === "commit" && session.data.hulkWorkspace && session.data.hulkTaskId) {
     const workspace = session.data.hulkWorkspace;
+    const prRefs = await collectPrRefs(session.projectPath) ?? void 0;
     const workLog = await addWorkLog(workspace, {
       task_id: session.data.hulkTaskId,
       task_title: session.featureName,
@@ -29048,7 +29207,8 @@ ${session.data.seed}` : args2.summary;
         aiExecutionMinutes: session.data.chainInfo.humanHoursEstimate?.aiExecutionMinutes,
         estimationBasis: session.data.chainInfo.humanHoursEstimate?.estimationBasis,
         userReportedHumanHours: args2.userReportedHumanHours
-      }
+      },
+      prRefs
     });
     await updateTask(workspace, session.data.hulkTaskId, {
       status: "done",
@@ -29269,7 +29429,20 @@ var ROADMAP_NODE_STATUSES = ["pending", "in_progress", "done", "blocked", "dropp
 
 // src/tools/sugoRoadmap.ts
 var sugoRoadmapInputSchema = {
-  action: external_exports.enum(["add", "remove", "status", "link", "unlink", "group", "backfill", "list", "ready", "get", "mark_req"]),
+  action: external_exports.enum([
+    "add",
+    "remove",
+    "status",
+    "link",
+    "unlink",
+    "group",
+    "backfill",
+    "list",
+    "ready",
+    "get",
+    "mark_req",
+    "pull_ordering"
+  ]),
   workspace: external_exports.string().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
   id: external_exports.string().optional().describe("add/remove/status/get/mark_req action\uC5D0 \uD544\uC694. add\uC758 \uC0C8 \uB178\uB4DC id \uB610\uB294 \uB300\uC0C1 \uB178\uB4DC id"),
   title: external_exports.string().optional().describe("add/group/backfill action\uC5D0 \uD544\uC694"),
@@ -29353,6 +29526,10 @@ async function handleSugoRoadmap(rawArgs) {
     case "ready": {
       const ready = await getReadySet(args2.workspace);
       return ok4({ ready });
+    }
+    case "pull_ordering": {
+      const pulled = await pullRoadmapOrdering(args2.workspace);
+      return ok4({ pulled });
     }
     case "get": {
       if (!args2.id) return errorResult12("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
@@ -29487,6 +29664,7 @@ async function addSpec(workspace, params) {
     spec.content
   );
   await atomicWriteFile(join23(dir, `${slugify(params.name)}.md`), fileContent);
+  void syncDecision(workspace, spec);
   return spec;
 }
 function parseSpecFile(raw) {
@@ -29800,11 +29978,6 @@ function errorResult16(errorCode, message) {
   };
 }
 
-// src/version.ts
-function currentSugoVersion() {
-  return true ? "0.1.0" : "0.0.0-dev";
-}
-
 // src/tools/sugoVersion.ts
 var sugoVersionInputSchema = {};
 async function handleSugoVersion() {
@@ -30009,7 +30182,7 @@ server.registerTool(
   "sugo_roadmap",
   {
     title: "Roadmap DAG (\xA78.5) \u2014 dependsOn-ordered task/requirement graph",
-    description: "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uBCC4 \uB85C\uB4DC\uB9F5 DAG\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/remove/status/link/unlink/group/backfill/list/ready/get/mark_req). link/unlink\uB294 task \uB808\uBCA8 \uB178\uB4DC\uB07C\uB9AC\uB9CC \uD5C8\uC6A9\uB418\uACE0(fail-closed), \uC0AC\uC774\uD074\uC744 \uB9CC\uB4DC\uB294 \uBCC0\uACBD\uC740 \uC804\uBD80 \uAC70\uBD80\uB41C\uB2E4. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)\uC740 \uC774 \uB3C4\uAD6C\uC758 mark_req\uB85C \uC9C1\uC811 \uC644\uB8CC\uD560 \uC218 \uC5C6\uB2E4 \u2014 sugo_plan(review_done)\uC774 \uC131\uACF5\uD560 \uB54C\uB9CC \uC790\uB3D9 \uC644\uB8CC\uB41C\uB2E4(\xA78.5).",
+    description: "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uBCC4 \uB85C\uB4DC\uB9F5 DAG\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/remove/status/link/unlink/group/backfill/list/ready/get/mark_req/pull_ordering). link/unlink\uB294 task \uB808\uBCA8 \uB178\uB4DC\uB07C\uB9AC\uB9CC \uD5C8\uC6A9\uB418\uACE0(fail-closed), \uC0AC\uC774\uD074\uC744 \uB9CC\uB4DC\uB294 \uBCC0\uACBD\uC740 \uC804\uBD80 \uAC70\uBD80\uB41C\uB2E4. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)\uC740 \uC774 \uB3C4\uAD6C\uC758 mark_req\uB85C \uC9C1\uC811 \uC644\uB8CC\uD560 \uC218 \uC5C6\uB2E4 \u2014 sugo_plan(review_done)\uC774 \uC131\uACF5\uD560 \uB54C\uB9CC \uC790\uB3D9 \uC644\uB8CC\uB41C\uB2E4. pull_ordering\uC740 \uB300\uC2DC\uBCF4\uB4DC\uC5D0\uC11C dependsOn/manual_status/pos_x/pos_y(\uB300\uC2DC\uBCF4\uB4DC\uAC00 SOT\uC778 \uD544\uB4DC\uB9CC)\uB97C \uAC00\uC838\uC640 \uBCD1\uD569\uD55C\uB2E4(\xA78.5/\xA77.2).",
     inputSchema: sugoRoadmapInputSchema
   },
   handleSugoRoadmap
@@ -30105,6 +30278,8 @@ server.registerTool(
   handleSugoVersion
 );
 async function main() {
+  void syncPluginVersion(currentSugoVersion());
+  void syncUser();
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

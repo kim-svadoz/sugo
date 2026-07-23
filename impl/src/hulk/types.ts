@@ -1,3 +1,5 @@
+import type { PrRefs } from "../prRefs.js";
+
 export type TaskStatus = "pending" | "idea" | "in_progress" | "done" | "dropped" | "archived";
 
 /** §7.1 Patch 성숙화: patch가 원본 Run(=이 Task)을 재사용할 때 남기는 계보 정보.
@@ -74,6 +76,9 @@ export interface WorkLog {
   files_changed?: string[];
   commits?: string[];
   metrics?: WorkLogMetrics;
+  /** §7.2 — commit 시점에 collectPrRefs(git 원격/브랜치)로 채워 대시보드의 "Create PR"
+   * 버튼에 급전한다. PR 생성 자체는 대시보드 책임(범위 밖). */
+  prRefs?: PrRefs;
 }
 
 // ── §8.5 Roadmap DAG ─────────────────────────────────────────────────────────
@@ -102,6 +107,12 @@ export interface RoadmapNode {
   note?: string;
   result?: RoadmapNodeResult;
   workResult?: string;
+  /** §7.2 소유권 경계: 이 3개 필드는 대시보드가 SOT다 — 로컬(fetchRoadmapOrdering 병합) 외에는
+   * 절대 덮어쓰지 않는다. dependsOn도 마찬가지로 "최초 1회 seed 이후엔 대시보드가 SOT"지만,
+   * 로컬에서도 계속 쓰는 실행 필드라 별도 표시 없이 dependsOn 필드 자체를 공유한다. */
+  manual_status?: string;
+  pos_x?: number;
+  pos_y?: number;
 }
 
 export interface RoadmapFile {

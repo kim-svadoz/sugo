@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readySet, topoSort, wouldCreateCycle } from "../src/hulk/roadmapGraph.js";
+import { mergeRoadmapOwnership, readySet, topoSort, wouldCreateCycle } from "../src/hulk/roadmapGraph.js";
 import type { RoadmapNode } from "../src/hulk/types.js";
 
 function node(id: string, dependsOn: string[] = [], status: RoadmapNode["status"] = "pending"): RoadmapNode {
@@ -82,5 +82,29 @@ describe("wouldCreateCycle", () => {
   it("간접 사이클(A->B->C->A)도 감지한다", () => {
     const nodes = [node("A", ["B"]), node("B", ["C"]), node("C")];
     expect(wouldCreateCycle(nodes, "C", "A")).toBe(true);
+  });
+});
+
+describe("mergeRoadmapOwnership — §7.2 소유권 경계", () => {
+  it("dependsOn/manual_status/pos_x/pos_y는 원격값으로 덮어쓴다", () => {
+    const local = [{ ...node("A", ["OLD"]), title: "로컬 제목" }];
+    const merged = mergeRoadmapOwnership(local, [{ id: "A", dependsOn: ["NEW"], manual_status: "in_review", pos_x: 5, pos_y: 9 }]);
+    expect(merged[0].dependsOn).toEqual(["NEW"]);
+    expect(merged[0].manual_status).toBe("in_review");
+    expect(merged[0].pos_x).toBe(5);
+    expect(merged[0].pos_y).toBe(9);
+  });
+
+  it("title/level/status 등 플러그인 소유 필드는 절대 안 건드린다", () => {
+    const local = [{ ...node("A", []), title: "로컬 제목", status: "in_progress" as const }];
+    const merged = mergeRoadmapOwnership(local, [{ id: "A", dependsOn: ["X"] }]);
+    expect(merged[0].title).toBe("로컬 제목");
+    expect(merged[0].status).toBe("in_progress");
+  });
+
+  it("원격에 없는 로컬 전용 노드는 그대로 둔다", () => {
+    const local = [node("A", ["B"])];
+    const merged = mergeRoadmapOwnership(local, []);
+    expect(merged[0].dependsOn).toEqual(["B"]);
   });
 });

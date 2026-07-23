@@ -1,10 +1,17 @@
 import { z } from "zod";
-import { addCheckpoint, getCheckpoint, listCheckpoints, migrateCheckpoints, removeCheckpoint } from "../hulk/checkpoint.js";
+import {
+  addCheckpoint,
+  getCheckpoint,
+  listCheckpoints,
+  migrateCheckpoints,
+  pullCheckpointsToRules,
+  removeCheckpoint,
+} from "../hulk/checkpoint.js";
 import { appendMemory, readMemory } from "../hulk/memory.js";
 import { syncCheckpoint } from "../dashboard/sync.js";
 
 export const sugoCheckpointInputSchema = {
-  action: z.enum(["add", "get", "list", "remove", "memory", "read_memory", "migrate", "sync"]),
+  action: z.enum(["add", "get", "list", "remove", "memory", "read_memory", "migrate", "sync", "pull"]),
   workspace: z.string().describe("HULK 워크스페이스 이름"),
   id: z.string().optional().describe("get/remove/sync action에 필요"),
   title: z.string().optional().describe("add action에 필요"),
@@ -12,6 +19,7 @@ export const sugoCheckpointInputSchema = {
   applies_to: z.array(z.string()).optional().describe("빈 배열/미지정이면 보편 체크포인트(항상 적용)"),
   checklist: z.array(z.string()).optional().describe("add action에 필요"),
   note: z.string().optional().describe("memory action에 필요 — 자유 메모 한 줄/여러 줄"),
+  projectPath: z.string().optional().describe("pull action에 필요 — 원격 체크포인트를 .claude/rules/로 기록할 프로젝트"),
 };
 
 const SugoCheckpointArgs = z.object(sugoCheckpointInputSchema);
@@ -67,6 +75,11 @@ export async function handleSugoCheckpoint(rawArgs: unknown) {
       if (!checkpoint) return errorResult("CHECKPOINT_NOT_FOUND", `체크포인트를 찾을 수 없습니다: ${args.id}`);
       await syncCheckpoint(args.workspace, checkpoint);
       return ok({ synced: true });
+    }
+    case "pull": {
+      if (!args.projectPath) return errorResult("PROJECT_PATH_REQUIRED", "pull action에는 projectPath가 필요합니다.");
+      const pulledCount = await pullCheckpointsToRules(args.projectPath);
+      return ok({ pulledCount });
     }
   }
 }

@@ -1,7 +1,8 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { atomicWriteFile, withFileLock } from "../fsUtil.js";
-import { syncRoadmapSnapshot } from "../dashboard/sync.js";
-import { readySet, topoSort } from "./roadmapGraph.js";
+import { fetchRoadmapOrdering } from "../dashboard/fetch.js";
+import { syncRoadmapLink, syncRoadmapSnapshot, unsyncRoadmapLink } from "../dashboard/sync.js";
+import { mergeRoadmapOwnership, readySet, topoSort } from "./roadmapGraph.js";
 import { roadmapFilePath, roadmapLockPath, workspaceDir } from "./storage.js";
 import type { RoadmapFile, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus } from "./types.js";
 
@@ -126,6 +127,7 @@ export async function linkRoadmapNodes(workspace: string, fromId: string, toId: 
       return { ok: false, error: "CYCLE", message: `링크를 추가하면 사이클이 생깁니다: ${fromId} -> ${toId}` };
     }
     await writeRoadmapFile(workspace, { ...file, nodes: candidateNodes });
+    void syncRoadmapLink(workspace, fromId, toId);
     return { ok: true };
   });
 }
@@ -136,6 +138,7 @@ export async function unlinkRoadmapNodes(workspace: string, fromId: string, toId
     if (!from) return { ok: false, error: "NODE_NOT_FOUND", message: `노드를 찾을 수 없습니다: ${fromId}` };
     const nodes = file.nodes.map((n) => (n.id === fromId ? { ...n, dependsOn: n.dependsOn.filter((d) => d !== toId) } : n));
     await writeRoadmapFile(workspace, { ...file, nodes });
+    void unsyncRoadmapLink(workspace, fromId, toId);
     return { ok: true };
   });
 }
@@ -214,4 +217,19 @@ export async function completeTaskRequirements(workspace: string, taskId: string
 export async function getReadySet(workspace: string): Promise<string[]> {
   const file = await readRoadmapFile(workspace);
   return readySet(file.nodes);
+}
+
+/**
+ * §7.2 fetch(dependsOn pull): 대시보드에서 순서(dependsOn 등)를 받아와 로컬 노드에 병합한다.
+ * 대시보드가 꺼져있거나 응답이 없으면(null) 아무것도 안 바꾸고 false를 반환한다 — 로컬 상태가
+ * 곧 안전한 폴백이다(§7.2 "대시보드 다운이 파이프라인을 막지 않는다").
+ */
+export async function pullRoadmapOrdering(workspace: string): Promise<boolean> {
+  const remote = await fetchRoadmapOrdering(workspace);
+  if (!remote) return false;
+  return withRoadmap(workspace, async (file) => {
+    const merged = mergeRoadmapOwnership(file.nodes, remote);
+    await writeRoadmapFile(workspace, { ...file, nodes: merged });
+    return true;
+  });
 }

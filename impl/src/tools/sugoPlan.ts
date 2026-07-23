@@ -7,6 +7,8 @@ import { writePatchPrdFile, writePatchWorkResultFile, writePrdFile, writeWorkRes
 import { checkCoverageGate } from "../consistency.js";
 import { checkContractEvidenceGate, checkContractStartedGate, resolveContractRequired } from "../contractEvidence.js";
 import { emitActivity } from "../dashboard/activity.js";
+import { fetchCalibratedRatio } from "../dashboard/fetch.js";
+import { collectPrRefs } from "../prRefs.js";
 import { validateIntegration, validateManifest, type DecomposeManifest } from "../decompose.js";
 import { checkEvidenceReuseGate, computeChangedFilesFingerprint } from "../fingerprint.js";
 import {
@@ -588,11 +590,15 @@ export async function handleSugoPlan(rawArgs: unknown) {
     const { workResultPath } = isPatch
       ? await writePatchWorkResultFile(session.data.patch!.featureDir, session.data.patch!.version, workResultContent)
       : await writeWorkResultFile(featurePath, workResultContent);
+    // ── §7.2 calibrated-ratio fetch: 대시보드가 실측 중앙값으로 보정한 비율이 있으면 그걸 쓰고,
+    // 없으면(disabled/실패) humanHours.ts의 고정 기본값(3.5)으로 안전하게 폴백한다.
+    const calibratedRatio = await fetchCalibratedRatio();
     humanHoursEstimate = estimateHumanHours(
       session.startedAt,
       new Date().toISOString(),
       session.data.chainInfo.analyzeAttempts,
       session.data.chainInfo.autoLoopRetryCount,
+      calibratedRatio ?? undefined,
     );
     session = {
       ...session,
@@ -637,6 +643,9 @@ export async function handleSugoPlan(rawArgs: unknown) {
     | undefined;
   if (action === "commit" && session.data.hulkWorkspace && session.data.hulkTaskId) {
     const workspace = session.data.hulkWorkspace;
+    // ── §7.2 prRefs: 완료 시점에 git 원격/브랜치를 읽어 대시보드 "Create PR" 버튼을 급전한다.
+    // git 저장소가 아니거나 원격이 없으면 조용히 undefined(막지 않음).
+    const prRefs = (await collectPrRefs(session.projectPath)) ?? undefined;
     const workLog = await addWorkLog(workspace, {
       task_id: session.data.hulkTaskId,
       task_title: session.featureName,
@@ -649,6 +658,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
         estimationBasis: session.data.chainInfo.humanHoursEstimate?.estimationBasis,
         userReportedHumanHours: args.userReportedHumanHours,
       },
+      prRefs,
     });
     await updateTask(workspace, session.data.hulkTaskId, {
       status: "done",

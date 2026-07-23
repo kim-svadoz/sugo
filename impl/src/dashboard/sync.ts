@@ -1,6 +1,7 @@
 import { pushEvent } from "./client.js";
 import { resolveDashboardConfig } from "./config.js";
-import type { Checkpoint, RoadmapNode, Task, Workspace } from "../hulk/types.js";
+import type { Checkpoint, RoadmapNode, Spec, Task, Workspace, WorkLog } from "../hulk/types.js";
+import type { PrRefs } from "../prRefs.js";
 
 /**
  * §7.2 push 엔드포인트 얇은 래퍼들 — 호출부(hulk/*.ts, tools/sugoPlan.ts)는 로컬 쓰기가 끝난 뒤
@@ -34,10 +35,66 @@ export async function syncRoadmapSnapshot(workspaceName: string, nodes: RoadmapN
   await pushEvent("/api/sync/roadmap", "POST", { userId: config.userId, workspaceName, nodes });
 }
 
-/** §7.2 `/api/sync/checkpoint` push 방향 — sugo_checkpoint(action:'sync')가 사용한다. 대시보드→로컬
- * pull(§7.2 "/sugo:checkpoint-sync")은 아직 미구현(11단계 roadmap-progress.md 참고, fetch 계열 보류). */
+/** §7.2 `/api/sync/checkpoint` push 방향 — sugo_checkpoint(action:'sync')가 사용한다. pull 방향은
+ * dashboard/fetch.ts의 fetchCheckpointSync + sugo_checkpoint(action:'pull')이 담당한다(14단계). */
 export async function syncCheckpoint(workspaceName: string, checkpoint: Checkpoint): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
   await pushEvent("/api/sync/checkpoint", "POST", { userId: config.userId, workspaceName, checkpoint });
+}
+
+/** §7.2 `/api/sync/history` — WorkLog(완료 작업 요약) push. prRefs가 있으면 함께 실어 대시보드의
+ * "Create PR" 버튼을 급전한다(§7.2 prRefs,). */
+export async function syncHistory(workspaceName: string, workLog: WorkLog, prRefs?: PrRefs | null): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await pushEvent("/api/sync/history", "POST", { userId: config.userId, workspaceName, workLog, prRefs: prRefs ?? undefined });
+}
+
+/** §7.2 `/api/sync/decision`(ADR) — sugo_spec(add)가 트리거한다. Spec을 그대로 "결정 기록"으로 취급한다. */
+export async function syncDecision(workspaceName: string, spec: Spec): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await pushEvent("/api/sync/decision", "POST", { userId: config.userId, workspaceName, spec });
+}
+
+/** §7.2 `/api/sync/plugin-version` — 서버 기동 시 1회. */
+export async function syncPluginVersion(version: string): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await pushEvent("/api/sync/plugin-version", "POST", { userId: config.userId, version });
+}
+
+/** §7.2 `/api/sync/user` — 서버 기동 시 1회(플러그인 버전과 같은 타이밍). */
+export async function syncUser(): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await pushEvent("/api/sync/user", "POST", { userId: config.userId });
+}
+
+/**
+ * §7.2 `/api/sync/workspace-meta` — 워크스페이스 표시 설정 등 메타데이터. **의도적으로 자동 호출
+ * 지점을 안 붙였다:** 스펙의 "대시보드 소유 필드"(manual_status/pos_x/pos_y와 같은 성격)에 더
+ * 가까워 보이는데, 로컬 플러그인이 뭘 밀어넣어야 하는지 스펙에 구체적으로 안 나와 있다. 계약
+ * 함수만 마련해두고(다른 push 래퍼와 동일 패턴), 실제로 무엇을 보낼지는 대시보드 스펙 문서가
+ * 확보되면 그때 호출부를 붙이는 게 안전하다(추측성 배선 금지).
+ */
+export async function syncWorkspaceMeta(workspaceName: string, meta: Record<string, unknown>): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await pushEvent("/api/sync/workspace-meta", "POST", { userId: config.userId, workspaceName, meta });
+}
+
+/** §7.2 `/api/sync/roadmap/link` + DELETE — link/unlink 전용 이벤트(스냅샷 replace와 별개로,
+ * 대시보드가 "이 링크가 방금 편집됐다"는 이벤트 자체를 받고 싶을 때를 위한 보조 신호). */
+export async function syncRoadmapLink(workspaceName: string, fromId: string, toId: string): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await pushEvent("/api/sync/roadmap/link", "POST", { userId: config.userId, workspaceName, fromId, toId });
+}
+
+export async function unsyncRoadmapLink(workspaceName: string, fromId: string, toId: string): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await pushEvent("/api/sync/roadmap/link", "DELETE", { userId: config.userId, workspaceName, fromId, toId });
 }

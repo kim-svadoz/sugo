@@ -8,6 +8,8 @@ import {
   sugoCheckLethalTrifectaInputSchema,
 } from "./tools/sugoCheckLethalTrifecta.js";
 import { handleSugoCheckpoint, sugoCheckpointInputSchema } from "./tools/sugoCheckpoint.js";
+import { syncPluginVersion, syncUser } from "./dashboard/sync.js";
+import { currentSugoVersion } from "./version.js";
 import { handleSugoDelete, sugoDeleteInputSchema } from "./tools/sugoDelete.js";
 import { handleSugoDisable, sugoDisableInputSchema } from "./tools/sugoDisable.js";
 import { handleSugoEnable, sugoEnableInputSchema } from "./tools/sugoEnable.js";
@@ -235,9 +237,10 @@ server.registerTool(
     title: "Roadmap DAG (§8.5) — dependsOn-ordered task/requirement graph",
     description:
       "워크스페이스별 로드맵 DAG를 관리한다(add/remove/status/link/unlink/group/backfill/list/ready/get/" +
-      "mark_req). link/unlink는 task 레벨 노드끼리만 허용되고(fail-closed), 사이클을 만드는 변경은 " +
-      "전부 거부된다. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)은 이 도구의 mark_req로 직접 완료할 수 " +
-      "없다 — sugo_plan(review_done)이 성공할 때만 자동 완료된다(§8.5).",
+      "mark_req/pull_ordering). link/unlink는 task 레벨 노드끼리만 허용되고(fail-closed), 사이클을 " +
+      "만드는 변경은 전부 거부된다. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)은 이 도구의 mark_req로 " +
+      "직접 완료할 수 없다 — sugo_plan(review_done)이 성공할 때만 자동 완료된다. pull_ordering은 " +
+      "대시보드에서 dependsOn/manual_status/pos_x/pos_y(대시보드가 SOT인 필드만)를 가져와 병합한다(§8.5/§7.2).",
     inputSchema: sugoRoadmapInputSchema,
   },
   handleSugoRoadmap,
@@ -356,6 +359,10 @@ server.registerTool(
 );
 
 async function main() {
+  // §7.2: 서버 기동 시 1회, 논블로킹으로 플러그인 버전/사용자를 대시보드에 알린다(disabled면 조용히 no-op).
+  void syncPluginVersion(currentSugoVersion());
+  void syncUser();
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

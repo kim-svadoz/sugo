@@ -1,5 +1,33 @@
 import type { RoadmapNode } from "./types.js";
 
+export interface RemoteOrderingEntry {
+  id: string;
+  dependsOn: string[];
+  manual_status?: string;
+  pos_x?: number;
+  pos_y?: number;
+}
+
+/**
+ * §7.2 소유권 경계: 대시보드가 SOT인 필드(dependsOn/manual_status/pos_x/pos_y)만 원격값으로
+ * 덮어쓴다 — title/level/status/parent/ref/note/specPath/workResult 등 플러그인 소유 필드는
+ * 절대 건드리지 않는다. 원격에 없는 로컬 전용 노드(대시보드가 아직 모르는 노드)는 그대로 둔다.
+ */
+export function mergeRoadmapOwnership(localNodes: RoadmapNode[], remoteOrdering: RemoteOrderingEntry[]): RoadmapNode[] {
+  const remoteById = new Map(remoteOrdering.map((r) => [r.id, r]));
+  return localNodes.map((node) => {
+    const remote = remoteById.get(node.id);
+    if (!remote) return node;
+    return {
+      ...node,
+      dependsOn: remote.dependsOn,
+      manual_status: remote.manual_status ?? node.manual_status,
+      pos_x: remote.pos_x ?? node.pos_x,
+      pos_y: remote.pos_y ?? node.pos_y,
+    };
+  });
+}
+
 export interface TopoSortResult {
   order: string[];
   cyclic: boolean;

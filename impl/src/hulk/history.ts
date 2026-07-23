@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
+import { syncHistory } from "../dashboard/sync.js";
 import { historyDir } from "./storage.js";
 import type { WorkLog } from "./types.js";
 
@@ -15,6 +16,7 @@ export async function addWorkLog(workspace: string, params: Omit<WorkLog, "id">)
   const dir = historyDir(workspace);
   await mkdir(dir, { recursive: true });
   await atomicWriteFile(join(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
+  void syncHistory(workspace, workLog, workLog.prRefs);
   return workLog;
 }
 
