@@ -1,13 +1,17 @@
 import { z } from "zod";
-import { addCheckpoint, listCheckpoints } from "../hulk/checkpoint.js";
+import { addCheckpoint, getCheckpoint, listCheckpoints, migrateCheckpoints, removeCheckpoint } from "../hulk/checkpoint.js";
+import { appendMemory, readMemory } from "../hulk/memory.js";
+import { syncCheckpoint } from "../dashboard/sync.js";
 
 export const sugoCheckpointInputSchema = {
-  action: z.enum(["add", "list"]),
+  action: z.enum(["add", "get", "list", "remove", "memory", "read_memory", "migrate", "sync"]),
   workspace: z.string().describe("HULK 워크스페이스 이름"),
+  id: z.string().optional().describe("get/remove/sync action에 필요"),
   title: z.string().optional().describe("add action에 필요"),
   category: z.string().optional(),
   applies_to: z.array(z.string()).optional().describe("빈 배열/미지정이면 보편 체크포인트(항상 적용)"),
   checklist: z.array(z.string()).optional().describe("add action에 필요"),
+  note: z.string().optional().describe("memory action에 필요 — 자유 메모 한 줄/여러 줄"),
 };
 
 const SugoCheckpointArgs = z.object(sugoCheckpointInputSchema);
@@ -28,9 +32,41 @@ export async function handleSugoCheckpoint(rawArgs: unknown) {
       });
       return ok({ checkpoint });
     }
+    case "get": {
+      if (!args.id) return errorResult("ID_REQUIRED", "get action에는 id가 필요합니다.");
+      const checkpoint = await getCheckpoint(args.workspace, args.id);
+      if (!checkpoint) return errorResult("CHECKPOINT_NOT_FOUND", `체크포인트를 찾을 수 없습니다: ${args.id}`);
+      return ok({ checkpoint });
+    }
     case "list": {
       const checkpoints = await listCheckpoints(args.workspace);
       return ok({ checkpoints });
+    }
+    case "remove": {
+      if (!args.id) return errorResult("ID_REQUIRED", "remove action에는 id가 필요합니다.");
+      const removed = await removeCheckpoint(args.workspace, args.id);
+      if (!removed) return errorResult("CHECKPOINT_NOT_FOUND", `체크포인트를 찾을 수 없습니다: ${args.id}`);
+      return ok({});
+    }
+    case "memory": {
+      if (!args.note) return errorResult("NOTE_REQUIRED", "memory action에는 note가 필요합니다.");
+      await appendMemory(args.workspace, args.note);
+      return ok({});
+    }
+    case "read_memory": {
+      const memory = await readMemory(args.workspace);
+      return ok({ memory });
+    }
+    case "migrate": {
+      const migratedCount = await migrateCheckpoints(args.workspace);
+      return ok({ migratedCount });
+    }
+    case "sync": {
+      if (!args.id) return errorResult("ID_REQUIRED", "sync action에는 id가 필요합니다.");
+      const checkpoint = await getCheckpoint(args.workspace, args.id);
+      if (!checkpoint) return errorResult("CHECKPOINT_NOT_FOUND", `체크포인트를 찾을 수 없습니다: ${args.id}`);
+      await syncCheckpoint(args.workspace, checkpoint);
+      return ok({ synced: true });
     }
   }
 }

@@ -1,14 +1,6 @@
-import { mkdir } from "node:fs/promises";
-import { basename, dirname, join, resolve } from "node:path";
+import { resolve } from "node:path";
 import { z } from "zod";
-import { atomicWriteFile } from "../fsUtil.js";
-import { loadProjectConfig, projectSugoDir, saveProjectConfig, type ProjectConfig } from "../harness/config.js";
-import { hashHarnessContent } from "../harness/contentHash.js";
-import { compose } from "../harness/harnessComposer.js";
-import { fetchHarnesses } from "../harness/harnessFetcher.js";
-import { defaultHarnessLibraryDir } from "../harness/libraryPath.js";
-import { registerProject } from "../harness/registry.js";
-import { detectStack } from "../harness/stackDetector.js";
+import { syncProjectHarness } from "../harness/sync.js";
 import { ensureWorkspace } from "../hulk/workspace.js";
 
 export const sugoAddInputSchema = {
@@ -30,86 +22,27 @@ const SugoAddArgs = z.object(sugoAddInputSchema);
 
 /**
  * §2 하네스 서브시스템 진입점: 스택감지 → 하네스 fetch(로컬) → 합성 → 프로젝트에 파일쓰기
- * → config.json 저장 → registry.json 등록.
+ * → config.json 저장 → registry.json 등록. 실제 동작은 harness/sync.ts에 있다(sugo_update와 공유).
  */
 export async function handleSugoAdd(rawArgs: unknown) {
   const args = SugoAddArgs.parse(rawArgs);
   const projectPath = resolve(args.projectPath);
 
-  const detectedStack = detectStack(projectPath);
-  const harnessIds = Array.from(new Set([...detectedStack.harnessIds, ...(args.additionalStacks ?? [])]));
+  const result = await syncProjectHarness({ ...args, projectPath });
 
-  const libraryDir = defaultHarnessLibraryDir();
-  const { harnesses, warnings: fetchWarnings } = fetchHarnesses({
-    harnessIds,
-    libraryDir,
-    repoUrl: args.repoUrl,
-  });
-
-  const projectName = basename(projectPath);
-  const composeResult = compose({
-    harnesses,
-    projectName,
-    workspace: args.workspace,
-    detectedStack,
-    fetchWarnings,
-  });
-
-  const sugoDir = projectSugoDir(projectPath);
-  await mkdir(sugoDir, { recursive: true });
-  await atomicWriteFile(join(sugoDir, "CLAUDE.md"), composeResult.claudeMd);
-  for (const file of composeResult.harnessFiles) {
-    const fullPath = join(projectPath, file.relPath);
-    await mkdir(dirname(fullPath), { recursive: true });
-    await atomicWriteFile(fullPath, file.content);
-  }
-
-  const now = new Date().toISOString();
-  const existing = await loadProjectConfig(projectPath);
-  const config: ProjectConfig = {
-    version: "0.1.0",
-    projectPath,
-    projectName,
-    registeredAt: existing?.registeredAt ?? now,
-    lastUpdated: now,
-    detectedStack,
-    appliedHarnesses: harnesses.map((h) => ({
-      id: h.id,
-      version: h.version,
-      appliedAt: now,
-      contentHash: hashHarnessContent(h),
-    })),
-    autoCommitArtifacts: existing?.autoCommitArtifacts ?? true,
-    verificationPolicy:
-      args.integrationGateEnforced === undefined && args.contractEvidenceRequired === undefined
-        ? existing?.verificationPolicy
-        : {
-            ...existing?.verificationPolicy,
-            ...(args.integrationGateEnforced !== undefined && { integrationGateEnforced: args.integrationGateEnforced }),
-            ...(args.contractEvidenceRequired !== undefined && { contractEvidenceRequired: args.contractEvidenceRequired }),
-          },
-  };
-  await saveProjectConfig(config);
-  await registerProject({
-    path: projectPath,
-    name: projectName,
-    registeredAt: config.registeredAt,
-    workspace: args.workspace,
-  });
-
-  if (args.workspace) {
-    await ensureWorkspace(args.workspace, projectPath);
+  if (result.workspace) {
+    await ensureWorkspace(result.workspace, projectPath);
   }
 
   const payload = {
     ok: true,
     projectPath,
-    projectName,
-    workspace: args.workspace,
-    detectedStack,
-    appliedHarnesses: composeResult.appliedHarnesses,
-    warnings: composeResult.warnings,
-    claudeMdPath: join(sugoDir, "CLAUDE.md"),
+    projectName: result.projectName,
+    workspace: result.workspace,
+    detectedStack: result.config.detectedStack,
+    appliedHarnesses: result.composeResult.appliedHarnesses,
+    warnings: result.composeResult.warnings,
+    claudeMdPath: result.claudeMdPath,
   };
   return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
 }

@@ -1,6 +1,6 @@
 import { pushEvent } from "./client.js";
 import { resolveDashboardConfig } from "./config.js";
-import type { RoadmapNode, Task, Workspace } from "../hulk/types.js";
+import type { Checkpoint, RoadmapNode, Task, Workspace } from "../hulk/types.js";
 
 /**
  * §7.2 push 엔드포인트 얇은 래퍼들 — 호출부(hulk/*.ts, tools/sugoPlan.ts)는 로컬 쓰기가 끝난 뒤
@@ -32,4 +32,12 @@ export async function syncRoadmapSnapshot(workspaceName: string, nodes: RoadmapN
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
   await pushEvent("/api/sync/roadmap", "POST", { userId: config.userId, workspaceName, nodes });
+}
+
+/** §7.2 `/api/sync/checkpoint` push 방향 — sugo_checkpoint(action:'sync')가 사용한다. 대시보드→로컬
+ * pull(§7.2 "/sugo:checkpoint-sync")은 아직 미구현(11단계 roadmap-progress.md 참고, fetch 계열 보류). */
+export async function syncCheckpoint(workspaceName: string, checkpoint: Checkpoint): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await pushEvent("/api/sync/checkpoint", "POST", { userId: config.userId, workspaceName, checkpoint });
 }

@@ -2991,7 +2991,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve3.call(this, root, ref);
+      let _sch = resolve8.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3018,7 +3018,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve3(root, ref) {
+    function resolve8(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3649,55 +3649,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve3(baseURI, relativeURI, options) {
+    function resolve8(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative2, options, skipNormalization) {
+    function resolveComponent(base, relative3, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative2 = parse3(serialize(relative2, options), options);
+        relative3 = parse3(serialize(relative3, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative2.scheme) {
-        target.scheme = relative2.scheme;
-        target.userinfo = relative2.userinfo;
-        target.host = relative2.host;
-        target.port = relative2.port;
-        target.path = removeDotSegments(relative2.path || "");
-        target.query = relative2.query;
+      if (!options.tolerant && relative3.scheme) {
+        target.scheme = relative3.scheme;
+        target.userinfo = relative3.userinfo;
+        target.host = relative3.host;
+        target.port = relative3.port;
+        target.path = removeDotSegments(relative3.path || "");
+        target.query = relative3.query;
       } else {
-        if (relative2.userinfo !== void 0 || relative2.host !== void 0 || relative2.port !== void 0) {
-          target.userinfo = relative2.userinfo;
-          target.host = relative2.host;
-          target.port = relative2.port;
-          target.path = removeDotSegments(relative2.path || "");
-          target.query = relative2.query;
+        if (relative3.userinfo !== void 0 || relative3.host !== void 0 || relative3.port !== void 0) {
+          target.userinfo = relative3.userinfo;
+          target.host = relative3.host;
+          target.port = relative3.port;
+          target.path = removeDotSegments(relative3.path || "");
+          target.query = relative3.query;
         } else {
-          if (!relative2.path) {
+          if (!relative3.path) {
             target.path = base.path;
-            if (relative2.query !== void 0) {
-              target.query = relative2.query;
+            if (relative3.query !== void 0) {
+              target.query = relative3.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative2.path[0] === "/") {
-              target.path = removeDotSegments(relative2.path);
+            if (relative3.path[0] === "/") {
+              target.path = removeDotSegments(relative3.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative2.path;
+                target.path = "/" + relative3.path;
               } else if (!base.path) {
-                target.path = relative2.path;
+                target.path = relative3.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative2.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative3.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative2.query;
+            target.query = relative3.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative2.fragment;
+      target.fragment = relative3.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3907,7 +3907,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve3,
+      resolve: resolve8,
       resolveComponent,
       equal,
       serialize,
@@ -20404,7 +20404,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve3) => setTimeout(resolve3, pollInterval));
+        await new Promise((resolve8) => setTimeout(resolve8, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -20421,7 +20421,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve3, reject) => {
+    return new Promise((resolve8, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -20499,7 +20499,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve3(parseResult.data);
+            resolve8(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -20760,12 +20760,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve3, reject) => {
+    return new Promise((resolve8, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve3, interval);
+      const timeoutId = setTimeout(resolve8, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -21865,7 +21865,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve3) => setTimeout(resolve3, pollInterval));
+      await new Promise((resolve8) => setTimeout(resolve8, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -22514,20 +22514,23 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve3) => {
+    return new Promise((resolve8) => {
       const json = serializeMessage(message);
       if (this._stdout.write(json)) {
-        resolve3();
+        resolve8();
       } else {
-        this._stdout.once("drain", resolve3);
+        this._stdout.once("drain", resolve8);
       }
     });
   }
 };
 
 // src/tools/sugoAdd.ts
-import { mkdir as mkdir6 } from "node:fs/promises";
-import { basename, dirname as dirname6, join as join8, resolve as resolve2 } from "node:path";
+import { resolve as resolve2 } from "node:path";
+
+// src/harness/sync.ts
+import { mkdir as mkdir4 } from "node:fs/promises";
+import { basename, dirname as dirname5, join as join6 } from "node:path";
 
 // src/fsUtil.ts
 import { mkdir, open, rename, unlink, writeFile } from "node:fs/promises";
@@ -22816,6 +22819,9 @@ async function readRegistryFile() {
     return [];
   }
 }
+async function loadRegistry() {
+  return readRegistryFile();
+}
 async function findRegistryEntry(projectPath) {
   const normalized = resolve(projectPath);
   const entries = await readRegistryFile();
@@ -22830,6 +22836,16 @@ async function registerProject(entry) {
     const filtered = current.filter((e) => resolve(e.path) !== normalizedPath);
     filtered.push({ ...entry, path: normalizedPath });
     await atomicWriteFile(path, JSON.stringify(filtered, null, 2));
+  });
+}
+async function unregisterProject(projectPath) {
+  const normalizedPath = resolve(projectPath);
+  return withFileLock(registryLockPath(), async () => {
+    const current = await readRegistryFile();
+    const filtered = current.filter((e) => resolve(e.path) !== normalizedPath);
+    if (filtered.length === current.length) return false;
+    await atomicWriteFile(registryPath(), JSON.stringify(filtered, null, 2));
+    return true;
   });
 }
 
@@ -23173,15 +23189,63 @@ function detectStack(projectPath) {
   return { languages, frameworks, dataStores, buildTools, infra, harnessIds, commands };
 }
 
+// src/harness/sync.ts
+async function syncProjectHarness(args2) {
+  const { projectPath } = args2;
+  const detectedStack = detectStack(projectPath);
+  const harnessIds = Array.from(/* @__PURE__ */ new Set([...detectedStack.harnessIds, ...args2.additionalStacks ?? []]));
+  const libraryDir = defaultHarnessLibraryDir();
+  const { harnesses, warnings: fetchWarnings } = fetchHarnesses({ harnessIds, libraryDir, repoUrl: args2.repoUrl });
+  const projectName = basename(projectPath);
+  const composeResult = compose({ harnesses, projectName, workspace: args2.workspace, detectedStack, fetchWarnings });
+  const sugoDir = projectSugoDir(projectPath);
+  await mkdir4(sugoDir, { recursive: true });
+  await atomicWriteFile(join6(sugoDir, "CLAUDE.md"), composeResult.claudeMd);
+  for (const file of composeResult.harnessFiles) {
+    const fullPath = join6(projectPath, file.relPath);
+    await mkdir4(dirname5(fullPath), { recursive: true });
+    await atomicWriteFile(fullPath, file.content);
+  }
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  const existingConfig = await loadProjectConfig(projectPath);
+  const existingEntry = await findRegistryEntry(projectPath);
+  const config2 = {
+    version: "0.1.0",
+    projectPath,
+    projectName,
+    registeredAt: existingConfig?.registeredAt ?? now,
+    lastUpdated: now,
+    detectedStack,
+    appliedHarnesses: harnesses.map((h) => ({ id: h.id, version: h.version, appliedAt: now, contentHash: hashHarnessContent(h) })),
+    autoCommitArtifacts: existingConfig?.autoCommitArtifacts ?? true,
+    disabled: existingConfig?.disabled ?? false,
+    verificationPolicy: args2.integrationGateEnforced === void 0 && args2.contractEvidenceRequired === void 0 ? existingConfig?.verificationPolicy : {
+      ...existingConfig?.verificationPolicy,
+      ...args2.integrationGateEnforced !== void 0 && { integrationGateEnforced: args2.integrationGateEnforced },
+      ...args2.contractEvidenceRequired !== void 0 && { contractEvidenceRequired: args2.contractEvidenceRequired }
+    }
+  };
+  await saveProjectConfig(config2);
+  const workspace = args2.workspace ?? existingEntry?.workspace;
+  await registerProject({ path: projectPath, name: projectName, registeredAt: config2.registeredAt, workspace });
+  return {
+    projectName,
+    workspace,
+    composeResult,
+    config: config2,
+    claudeMdPath: join6(sugoDir, "CLAUDE.md")
+  };
+}
+
 // src/hulk/workspace.ts
-import { mkdir as mkdir5, readdir, readFile as readFile5 } from "node:fs/promises";
+import { mkdir as mkdir6, readdir, readFile as readFile5 } from "node:fs/promises";
 
 // src/dashboard/config.ts
 import { userInfo } from "node:os";
 import { readFile as readFile3 } from "node:fs/promises";
-import { join as join6 } from "node:path";
+import { join as join7 } from "node:path";
 function settingsFilePath() {
-  return join6(sugoHomeDir(), ".claude", "sugo", "settings.json");
+  return join7(sugoHomeDir(), ".claude", "sugo", "settings.json");
 }
 function currentUsername() {
   try {
@@ -23208,52 +23272,52 @@ async function resolveDashboardConfig() {
 }
 
 // src/dashboard/retryQueue.ts
-import { mkdir as mkdir4, readFile as readFile4 } from "node:fs/promises";
+import { mkdir as mkdir5, readFile as readFile4 } from "node:fs/promises";
 
 // src/hulk/storage.ts
-import { join as join7 } from "node:path";
+import { join as join8 } from "node:path";
 function hulkRootDir() {
-  return join7(sugoHomeDir(), ".claude", "sugo", "hulk");
+  return join8(sugoHomeDir(), ".claude", "sugo", "hulk");
 }
 function workspaceDir(workspace) {
-  return join7(hulkRootDir(), workspace);
+  return join8(hulkRootDir(), workspace);
 }
 function workspaceFilePath(workspace) {
-  return join7(workspaceDir(workspace), "workspace.json");
+  return join8(workspaceDir(workspace), "workspace.json");
 }
 function tasksFilePath(workspace) {
-  return join7(workspaceDir(workspace), "tasks.json");
+  return join8(workspaceDir(workspace), "tasks.json");
 }
 function tasksLockPath(workspace) {
   return `${tasksFilePath(workspace)}.lock`;
 }
 function checkpointsDir(workspace) {
-  return join7(workspaceDir(workspace), "checkpoints");
+  return join8(workspaceDir(workspace), "checkpoints");
 }
 function specsDir(workspace) {
-  return join7(workspaceDir(workspace), "specs");
+  return join8(workspaceDir(workspace), "specs");
 }
 function historyDir(workspace) {
-  return join7(workspaceDir(workspace), "history");
+  return join8(workspaceDir(workspace), "history");
 }
 function memoryFilePath(workspace) {
-  return join7(workspaceDir(workspace), "memory.md");
+  return join8(workspaceDir(workspace), "memory.md");
 }
 function roadmapFilePath(workspace) {
-  return join7(workspaceDir(workspace), "roadmap.json");
+  return join8(workspaceDir(workspace), "roadmap.json");
 }
 function roadmapLockPath(workspace) {
   return `${roadmapFilePath(workspace)}.lock`;
 }
 function syncRetryQueuePath() {
-  return join7(hulkRootDir(), "sync-retry-queue.json");
+  return join8(hulkRootDir(), "sync-retry-queue.json");
 }
 function syncRetryQueueLockPath() {
   return `${syncRetryQueuePath()}.lock`;
 }
 
 // src/dashboard/retryQueue.ts
-import { dirname as dirname5 } from "node:path";
+import { dirname as dirname6 } from "node:path";
 var MAX_RETRY_QUEUE_ITEMS = 100;
 async function readQueueFile() {
   try {
@@ -23264,7 +23328,7 @@ async function readQueueFile() {
   }
 }
 async function writeQueueFile(file) {
-  await mkdir4(dirname5(syncRetryQueuePath()), { recursive: true });
+  await mkdir5(dirname6(syncRetryQueuePath()), { recursive: true });
   await atomicWriteFile(syncRetryQueuePath(), JSON.stringify(file, null, 2));
 }
 async function enqueueRetry(endpoint, method, data) {
@@ -23327,6 +23391,11 @@ async function syncRoadmapSnapshot(workspaceName, nodes) {
   if (!config2.enabled) return;
   await pushEvent("/api/sync/roadmap", "POST", { userId: config2.userId, workspaceName, nodes });
 }
+async function syncCheckpoint(workspaceName, checkpoint) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/checkpoint", "POST", { userId: config2.userId, workspaceName, checkpoint });
+}
 
 // src/hulk/workspace.ts
 async function loadWorkspace(name2) {
@@ -23346,7 +23415,7 @@ async function ensureWorkspace(name2, projectPath) {
     projects: Array.from(projects),
     created_at: existing?.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
   };
-  await mkdir5(workspaceDir(name2), { recursive: true });
+  await mkdir6(workspaceDir(name2), { recursive: true });
   await atomicWriteFile(workspaceFilePath(name2), JSON.stringify(workspace, null, 2));
   void syncWorkspace(workspace);
   return workspace;
@@ -23380,71 +23449,19 @@ var SugoAddArgs = external_exports.object(sugoAddInputSchema);
 async function handleSugoAdd(rawArgs) {
   const args2 = SugoAddArgs.parse(rawArgs);
   const projectPath = resolve2(args2.projectPath);
-  const detectedStack = detectStack(projectPath);
-  const harnessIds = Array.from(/* @__PURE__ */ new Set([...detectedStack.harnessIds, ...args2.additionalStacks ?? []]));
-  const libraryDir = defaultHarnessLibraryDir();
-  const { harnesses, warnings: fetchWarnings } = fetchHarnesses({
-    harnessIds,
-    libraryDir,
-    repoUrl: args2.repoUrl
-  });
-  const projectName = basename(projectPath);
-  const composeResult = compose({
-    harnesses,
-    projectName,
-    workspace: args2.workspace,
-    detectedStack,
-    fetchWarnings
-  });
-  const sugoDir = projectSugoDir(projectPath);
-  await mkdir6(sugoDir, { recursive: true });
-  await atomicWriteFile(join8(sugoDir, "CLAUDE.md"), composeResult.claudeMd);
-  for (const file of composeResult.harnessFiles) {
-    const fullPath = join8(projectPath, file.relPath);
-    await mkdir6(dirname6(fullPath), { recursive: true });
-    await atomicWriteFile(fullPath, file.content);
-  }
-  const now = (/* @__PURE__ */ new Date()).toISOString();
-  const existing = await loadProjectConfig(projectPath);
-  const config2 = {
-    version: "0.1.0",
-    projectPath,
-    projectName,
-    registeredAt: existing?.registeredAt ?? now,
-    lastUpdated: now,
-    detectedStack,
-    appliedHarnesses: harnesses.map((h) => ({
-      id: h.id,
-      version: h.version,
-      appliedAt: now,
-      contentHash: hashHarnessContent(h)
-    })),
-    autoCommitArtifacts: existing?.autoCommitArtifacts ?? true,
-    verificationPolicy: args2.integrationGateEnforced === void 0 && args2.contractEvidenceRequired === void 0 ? existing?.verificationPolicy : {
-      ...existing?.verificationPolicy,
-      ...args2.integrationGateEnforced !== void 0 && { integrationGateEnforced: args2.integrationGateEnforced },
-      ...args2.contractEvidenceRequired !== void 0 && { contractEvidenceRequired: args2.contractEvidenceRequired }
-    }
-  };
-  await saveProjectConfig(config2);
-  await registerProject({
-    path: projectPath,
-    name: projectName,
-    registeredAt: config2.registeredAt,
-    workspace: args2.workspace
-  });
-  if (args2.workspace) {
-    await ensureWorkspace(args2.workspace, projectPath);
+  const result = await syncProjectHarness({ ...args2, projectPath });
+  if (result.workspace) {
+    await ensureWorkspace(result.workspace, projectPath);
   }
   const payload = {
     ok: true,
     projectPath,
-    projectName,
-    workspace: args2.workspace,
-    detectedStack,
-    appliedHarnesses: composeResult.appliedHarnesses,
-    warnings: composeResult.warnings,
-    claudeMdPath: join8(sugoDir, "CLAUDE.md")
+    projectName: result.projectName,
+    workspace: result.workspace,
+    detectedStack: result.config.detectedStack,
+    appliedHarnesses: result.composeResult.appliedHarnesses,
+    warnings: result.composeResult.warnings,
+    claudeMdPath: result.claudeMdPath
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
@@ -23807,7 +23824,7 @@ async function handleSugoCheckLethalTrifecta(rawArgs) {
 
 // src/hulk/checkpoint.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir8, readdir as readdir3, readFile as readFile9 } from "node:fs/promises";
+import { mkdir as mkdir8, readdir as readdir3, readFile as readFile9, rm } from "node:fs/promises";
 import { join as join11 } from "node:path";
 
 // node_modules/js-yaml/dist/js-yaml.mjs
@@ -26771,35 +26788,86 @@ async function addCheckpoint(workspace, params) {
   return checkpoint;
 }
 async function listCheckpoints(workspace) {
+  const entries = await listCheckpointFiles(workspace);
+  return entries.map((e) => e.checkpoint);
+}
+async function listCheckpointFiles(workspace) {
   const dir = checkpointsDir(workspace);
-  let entries;
+  let names;
   try {
-    entries = await readdir3(dir);
+    names = await readdir3(dir);
   } catch {
     return [];
   }
-  const checkpoints = [];
-  for (const name2 of entries) {
+  const result = [];
+  for (const name2 of names) {
     if (!name2.endsWith(".md")) continue;
     try {
       const raw = await readFile9(join11(dir, name2), "utf-8");
       const { meta } = parseFrontmatter(raw);
-      checkpoints.push(meta);
+      result.push({ filename: name2, checkpoint: meta });
     } catch {
       continue;
     }
   }
-  return checkpoints;
+  return result;
+}
+async function getCheckpoint(workspace, id) {
+  const entries = await listCheckpointFiles(workspace);
+  return entries.find((e) => e.checkpoint.id === id)?.checkpoint ?? null;
+}
+async function removeCheckpoint(workspace, id) {
+  const entries = await listCheckpointFiles(workspace);
+  const found = entries.find((e) => e.checkpoint.id === id);
+  if (!found) return false;
+  await rm(join11(checkpointsDir(workspace), found.filename), { force: true });
+  return true;
+}
+async function migrateCheckpoints(workspace) {
+  const entries = await listCheckpointFiles(workspace);
+  const dir = checkpointsDir(workspace);
+  for (const { filename, checkpoint } of entries) {
+    const content = stringifyFrontmatter({
+      id: checkpoint.id,
+      title: checkpoint.title,
+      category: checkpoint.category ?? null,
+      applies_to: checkpoint.applies_to ?? [],
+      checklist: checkpoint.checklist,
+      created_at: checkpoint.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
+    });
+    await atomicWriteFile(join11(dir, filename), content);
+  }
+  return entries.length;
+}
+
+// src/hulk/memory.ts
+import { mkdir as mkdir9, readFile as readFile10 } from "node:fs/promises";
+async function appendMemory(workspace, note) {
+  const path = memoryFilePath(workspace);
+  const existing = await readFile10(path, "utf-8").catch(() => "");
+  const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
+
+${note}
+`;
+  const next = existing ? `${existing}
+${entry}` : entry;
+  await mkdir9(workspaceDir(workspace), { recursive: true });
+  await atomicWriteFile(path, next);
+}
+async function readMemory(workspace) {
+  return readFile10(memoryFilePath(workspace), "utf-8").catch(() => "");
 }
 
 // src/tools/sugoCheckpoint.ts
 var sugoCheckpointInputSchema = {
-  action: external_exports.enum(["add", "list"]),
+  action: external_exports.enum(["add", "get", "list", "remove", "memory", "read_memory", "migrate", "sync"]),
   workspace: external_exports.string().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
+  id: external_exports.string().optional().describe("get/remove/sync action\uC5D0 \uD544\uC694"),
   title: external_exports.string().optional().describe("add action\uC5D0 \uD544\uC694"),
   category: external_exports.string().optional(),
   applies_to: external_exports.array(external_exports.string()).optional().describe("\uBE48 \uBC30\uC5F4/\uBBF8\uC9C0\uC815\uC774\uBA74 \uBCF4\uD3B8 \uCCB4\uD06C\uD3EC\uC778\uD2B8(\uD56D\uC0C1 \uC801\uC6A9)"),
-  checklist: external_exports.array(external_exports.string()).optional().describe("add action\uC5D0 \uD544\uC694")
+  checklist: external_exports.array(external_exports.string()).optional().describe("add action\uC5D0 \uD544\uC694"),
+  note: external_exports.string().optional().describe("memory action\uC5D0 \uD544\uC694 \u2014 \uC790\uC720 \uBA54\uBAA8 \uD55C \uC904/\uC5EC\uB7EC \uC904")
 };
 var SugoCheckpointArgs = external_exports.object(sugoCheckpointInputSchema);
 async function handleSugoCheckpoint(rawArgs) {
@@ -26817,9 +26885,41 @@ async function handleSugoCheckpoint(rawArgs) {
       });
       return ok({ checkpoint });
     }
+    case "get": {
+      if (!args2.id) return errorResult3("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const checkpoint = await getCheckpoint(args2.workspace, args2.id);
+      if (!checkpoint) return errorResult3("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      return ok({ checkpoint });
+    }
     case "list": {
       const checkpoints = await listCheckpoints(args2.workspace);
       return ok({ checkpoints });
+    }
+    case "remove": {
+      if (!args2.id) return errorResult3("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const removed = await removeCheckpoint(args2.workspace, args2.id);
+      if (!removed) return errorResult3("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      return ok({});
+    }
+    case "memory": {
+      if (!args2.note) return errorResult3("NOTE_REQUIRED", "memory action\uC5D0\uB294 note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      await appendMemory(args2.workspace, args2.note);
+      return ok({});
+    }
+    case "read_memory": {
+      const memory = await readMemory(args2.workspace);
+      return ok({ memory });
+    }
+    case "migrate": {
+      const migratedCount = await migrateCheckpoints(args2.workspace);
+      return ok({ migratedCount });
+    }
+    case "sync": {
+      if (!args2.id) return errorResult3("ID_REQUIRED", "sync action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const checkpoint = await getCheckpoint(args2.workspace, args2.id);
+      if (!checkpoint) return errorResult3("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      await syncCheckpoint(args2.workspace, checkpoint);
+      return ok({ synced: true });
     }
   }
 }
@@ -26833,8 +26933,95 @@ function errorResult3(errorCode, message) {
   };
 }
 
+// src/tools/sugoDelete.ts
+import { resolve as resolve3 } from "node:path";
+var sugoDeleteInputSchema = {
+  projectPath: external_exports.string().describe("\uB4F1\uB85D \uCDE8\uC18C\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C")
+};
+var SugoDeleteArgs = external_exports.object(sugoDeleteInputSchema);
+async function handleSugoDelete(rawArgs) {
+  const args2 = SugoDeleteArgs.parse(rawArgs);
+  const projectPath = resolve3(args2.projectPath);
+  const removed = await unregisterProject(projectPath);
+  if (!removed) {
+    return errorResult4("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4: ${projectPath}`);
+  }
+  return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, removedFromRegistry: true }, null, 2) }] };
+}
+function errorResult4(errorCode, message) {
+  return {
+    isError: true,
+    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
+  };
+}
+
+// src/tools/sugoDisable.ts
+import { resolve as resolve4 } from "node:path";
+
+// src/harness/toggle.ts
+var ToggleProjectError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+  }
+};
+async function setProjectDisabled(projectPath, disabled) {
+  const config2 = await loadProjectConfig(projectPath);
+  if (!config2) {
+    throw new ToggleProjectError("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4(sugo/config.json \uC5C6\uC74C): ${projectPath}`);
+  }
+  await saveProjectConfig({ ...config2, disabled, lastUpdated: (/* @__PURE__ */ new Date()).toISOString() });
+}
+
+// src/tools/sugoDisable.ts
+var sugoDisableInputSchema = {
+  projectPath: external_exports.string().describe("\uBE44\uD65C\uC131 \uCC98\uB9AC\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C")
+};
+var SugoDisableArgs = external_exports.object(sugoDisableInputSchema);
+async function handleSugoDisable(rawArgs) {
+  const args2 = SugoDisableArgs.parse(rawArgs);
+  const projectPath = resolve4(args2.projectPath);
+  try {
+    await setProjectDisabled(projectPath, true);
+  } catch (err2) {
+    if (err2 instanceof ToggleProjectError) return errorResult5(err2.code, err2.message);
+    throw err2;
+  }
+  return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, disabled: true }, null, 2) }] };
+}
+function errorResult5(errorCode, message) {
+  return {
+    isError: true,
+    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
+  };
+}
+
+// src/tools/sugoEnable.ts
+import { resolve as resolve5 } from "node:path";
+var sugoEnableInputSchema = {
+  projectPath: external_exports.string().describe("\uB2E4\uC2DC \uD65C\uC131\uD654\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C")
+};
+var SugoEnableArgs = external_exports.object(sugoEnableInputSchema);
+async function handleSugoEnable(rawArgs) {
+  const args2 = SugoEnableArgs.parse(rawArgs);
+  const projectPath = resolve5(args2.projectPath);
+  try {
+    await setProjectDisabled(projectPath, false);
+  } catch (err2) {
+    if (err2 instanceof ToggleProjectError) return errorResult6(err2.code, err2.message);
+    throw err2;
+  }
+  return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, disabled: false }, null, 2) }] };
+}
+function errorResult6(errorCode, message) {
+  return {
+    isError: true,
+    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
+  };
+}
+
 // src/tools/sugoExplore.ts
-import { readFile as readFile10 } from "node:fs/promises";
+import { readFile as readFile11 } from "node:fs/promises";
 import { isAbsolute as isAbsolute2, join as join14 } from "node:path";
 
 // src/ast/astParser.ts
@@ -26998,7 +27185,7 @@ async function handleSugoExplore(rawArgs) {
     const full = isAbsolute2(f) ? f : join14(args2.projectPath, f);
     let content;
     try {
-      content = await readFile10(full, "utf-8");
+      content = await readFile11(full, "utf-8");
     } catch {
       skipped.push({ path: f, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -27019,7 +27206,7 @@ async function handleSugoExplore(rawArgs) {
 }
 
 // src/tools/sugoGetProjectContext.ts
-import { readdir as readdir4, readFile as readFile11 } from "node:fs/promises";
+import { readdir as readdir4, readFile as readFile12 } from "node:fs/promises";
 import { join as join15 } from "node:path";
 var sugoGetProjectContextInputSchema = {
   projectPath: external_exports.string().describe("\uCEE8\uD14D\uC2A4\uD2B8\uB97C \uB85C\uB4DC\uD560 \uD504\uB85C\uC81D\uD2B8 \uC808\uB300\uACBD\uB85C")
@@ -27027,7 +27214,7 @@ var sugoGetProjectContextInputSchema = {
 var SugoGetProjectContextArgs = external_exports.object(sugoGetProjectContextInputSchema);
 async function readIfExists(path) {
   try {
-    return await readFile11(path, "utf-8");
+    return await readFile12(path, "utf-8");
   } catch {
     return null;
   }
@@ -27075,7 +27262,7 @@ async function handleSugoGetProjectContext(rawArgs) {
 
 // src/hulk/history.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdir as mkdir9, readdir as readdir5, readFile as readFile12 } from "node:fs/promises";
+import { mkdir as mkdir10, readdir as readdir5, readFile as readFile13 } from "node:fs/promises";
 import { join as join16 } from "node:path";
 function generateWorkLogId() {
   return `wl-${Date.now()}-${randomBytes3(4).toString("hex")}`;
@@ -27083,7 +27270,7 @@ function generateWorkLogId() {
 async function addWorkLog(workspace, params) {
   const workLog = { id: generateWorkLogId(), ...params };
   const dir = historyDir(workspace);
-  await mkdir9(dir, { recursive: true });
+  await mkdir10(dir, { recursive: true });
   await atomicWriteFile(join16(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
   return workLog;
 }
@@ -27099,7 +27286,7 @@ async function listWorkLogs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile12(join16(dir, name2), "utf-8");
+      const raw = await readFile13(join16(dir, name2), "utf-8");
       logs.push(JSON.parse(raw));
     } catch {
       continue;
@@ -27109,7 +27296,7 @@ async function listWorkLogs(workspace) {
 }
 async function getWorkLog(workspace, id) {
   try {
-    const raw = await readFile12(join16(historyDir(workspace), `${id}.json`), "utf-8");
+    const raw = await readFile13(join16(historyDir(workspace), `${id}.json`), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -27137,7 +27324,7 @@ async function handleSugoHistory(rawArgs) {
   switch (args2.action) {
     case "add": {
       if (!args2.task_id || !args2.task_title) {
-        return errorResult4("TASK_ID_AND_TITLE_REQUIRED", "add action\uC5D0\uB294 task_id\uC640 task_title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult7("TASK_ID_AND_TITLE_REQUIRED", "add action\uC5D0\uB294 task_id\uC640 task_title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       const workLog = await addWorkLog(args2.workspace, {
         task_id: args2.task_id,
@@ -27160,9 +27347,9 @@ async function handleSugoHistory(rawArgs) {
       return ok2({ workLogs });
     }
     case "get": {
-      if (!args2.logId) return errorResult4("LOG_ID_REQUIRED", "get action\uC5D0\uB294 logId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.logId) return errorResult7("LOG_ID_REQUIRED", "get action\uC5D0\uB294 logId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workLog = await getWorkLog(args2.workspace, args2.logId);
-      if (!workLog) return errorResult4("WORKLOG_NOT_FOUND", `WorkLog\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.logId}`);
+      if (!workLog) return errorResult7("WORKLOG_NOT_FOUND", `WorkLog\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.logId}`);
       return ok2({ workLog });
     }
   }
@@ -27170,7 +27357,7 @@ async function handleSugoHistory(rawArgs) {
 function ok2(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult4(errorCode, message) {
+function errorResult7(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -27244,8 +27431,92 @@ async function handleSugoJudgmentReport(rawArgs) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, report }, null, 2) }] };
 }
 
+// src/tools/sugoOverview.ts
+import { readFile as readFile14 } from "node:fs/promises";
+import { relative } from "node:path";
+
+// src/overview.ts
+import { readdir as readdir6 } from "node:fs/promises";
+import { join as join17 } from "node:path";
+var IGNORED_DIR_NAMES = /* @__PURE__ */ new Set([
+  "node_modules",
+  "dist",
+  "build",
+  "out",
+  "target",
+  "coverage",
+  "sugo",
+  ".claude"
+]);
+async function walkSourceFiles(rootDir, maxFiles) {
+  const results = [];
+  async function walk(dir) {
+    if (results.length >= maxFiles) return;
+    let entries;
+    try {
+      entries = await readdir6(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (results.length >= maxFiles) return;
+      if (entry.isDirectory()) {
+        if (entry.name.startsWith(".") || IGNORED_DIR_NAMES.has(entry.name)) continue;
+        await walk(join17(dir, entry.name));
+      } else if (entry.isFile() && detectLanguage(entry.name)) {
+        results.push(join17(dir, entry.name));
+      }
+    }
+  }
+  await walk(rootDir);
+  return results;
+}
+
+// src/tools/sugoOverview.ts
+var MAX_FILES3 = 200;
+var MAX_FILE_BYTES3 = 5e5;
+var sugoOverviewInputSchema = {
+  projectPath: external_exports.string().describe("\uC628\uBCF4\uB529\uD560 \uD504\uB85C\uC81D\uD2B8 \uC808\uB300\uACBD\uB85C")
+};
+var SugoOverviewArgs = external_exports.object(sugoOverviewInputSchema);
+async function handleSugoOverview(rawArgs) {
+  const args2 = SugoOverviewArgs.parse(rawArgs);
+  const files = await walkSourceFiles(args2.projectPath, MAX_FILES3);
+  const outlines = [];
+  const skipped = [];
+  for (const full of files) {
+    const relPath = relative(args2.projectPath, full);
+    let content;
+    try {
+      content = await readFile14(full, "utf-8");
+    } catch {
+      skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
+      continue;
+    }
+    if (content.length > MAX_FILE_BYTES3) {
+      skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC774 \uB108\uBB34 \uD07C(500KB \uCD08\uACFC)" });
+      continue;
+    }
+    const outline = await parseFileOutline(relPath, content);
+    if (!outline) {
+      skipped.push({ path: relPath, reason: `\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC5B8\uC5B4(\uC9C0\uC6D0: ${supportedLanguages().join(", ")})` });
+      continue;
+    }
+    outlines.push(outline);
+  }
+  const payload = {
+    ok: true,
+    projectPath: args2.projectPath,
+    scannedFileCount: files.length,
+    truncated: files.length >= MAX_FILES3,
+    outlines,
+    skipped
+  };
+  return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+}
+
 // src/tools/sugoPlan.ts
-import { readFile as readFile16 } from "node:fs/promises";
+import { readFile as readFile18 } from "node:fs/promises";
 
 // src/bootable.ts
 async function isProjectBootable(projectPath) {
@@ -27254,8 +27525,8 @@ async function isProjectBootable(projectPath) {
 }
 
 // src/bootScan.ts
-import { readdir as readdir6, readFile as readFile13 } from "node:fs/promises";
-import { join as join17 } from "node:path";
+import { readdir as readdir7, readFile as readFile15 } from "node:fs/promises";
+import { join as join18 } from "node:path";
 
 // src/gates.ts
 function ok3() {
@@ -27396,23 +27667,23 @@ function checkRuntimeVerificationGate(testPassedState, runtimeCheck, bootable) {
 
 // src/bootScan.ts
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
-var MAX_FILES3 = 2e3;
-var MAX_FILE_BYTES3 = 3e5;
+var MAX_FILES4 = 2e3;
+var MAX_FILE_BYTES4 = 3e5;
 async function collectJavaFiles(dir, acc) {
-  if (acc.length >= MAX_FILES3) return;
+  if (acc.length >= MAX_FILES4) return;
   let entries;
   try {
-    entries = await readdir6(dir, { withFileTypes: true });
+    entries = await readdir7(dir, { withFileTypes: true });
   } catch {
     return;
   }
   for (const entry of entries) {
-    if (acc.length >= MAX_FILES3) return;
+    if (acc.length >= MAX_FILES4) return;
     if (entry.isDirectory()) {
       if (EXCLUDED_DIRS.has(entry.name)) continue;
-      await collectJavaFiles(join17(dir, entry.name), acc);
+      await collectJavaFiles(join18(dir, entry.name), acc);
     } else if (entry.isFile() && entry.name.endsWith(".java")) {
-      acc.push(join17(dir, entry.name));
+      acc.push(join18(dir, entry.name));
     }
   }
 }
@@ -27423,8 +27694,8 @@ async function scanForSpringBootTestAnnotation(projectPath) {
   const candidates = testFiles.length > 0 ? testFiles : files;
   for (const file of candidates) {
     try {
-      const content = await readFile13(file, "utf-8");
-      if (content.length > MAX_FILE_BYTES3) continue;
+      const content = await readFile15(file, "utf-8");
+      if (content.length > MAX_FILE_BYTES4) continue;
       if (hasValidSpringBootTestAnnotation([content])) return true;
     } catch {
       continue;
@@ -27434,12 +27705,12 @@ async function scanForSpringBootTestAnnotation(projectPath) {
 }
 
 // src/feature.ts
-import { mkdir as mkdir10 } from "node:fs/promises";
-import { join as join19 } from "node:path";
+import { mkdir as mkdir11 } from "node:fs/promises";
+import { join as join20 } from "node:path";
 
 // src/patch.ts
-import { readdir as readdir7 } from "node:fs/promises";
-import { dirname as dirname8, join as join18 } from "node:path";
+import { readdir as readdir8 } from "node:fs/promises";
+import { dirname as dirname8, join as join19 } from "node:path";
 var PatchEntryError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -27476,13 +27747,13 @@ async function resolvePatchContext(workResultPath) {
   const featureDir = dirname8(workResultPath);
   let filenames;
   try {
-    filenames = await readdir7(featureDir);
+    filenames = await readdir8(featureDir);
   } catch {
     throw new PatchEntryError("PATCH_FEATURE_DIR_NOT_FOUND", `feature \uB514\uB809\uD130\uB9AC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`);
   }
   let parentPrdPath;
   if (filenames.includes("prd.md")) {
-    parentPrdPath = join18(featureDir, "prd.md");
+    parentPrdPath = join19(featureDir, "prd.md");
   } else {
     const latest = findLatestPrdPatchFilename(filenames);
     if (!latest) {
@@ -27491,7 +27762,7 @@ async function resolvePatchContext(workResultPath) {
         `\uBD80\uBAA8 PRD(prd.md \uB610\uB294 PRD-patch-v*.md)\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`
       );
     }
-    parentPrdPath = join18(featureDir, latest);
+    parentPrdPath = join19(featureDir, latest);
   }
   const version2 = computeNextPatchVersion(filenames);
   return { parentPrdPath, version: version2, baseWorkResultPath: workResultPath, featureDir };
@@ -27507,27 +27778,27 @@ function todayYyyymmdd() {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 }
 async function writePrdFile(projectPath, featureName, content) {
-  const featurePath = join19(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
-  const prdPath = join19(featurePath, "prd.md");
-  await mkdir10(featurePath, { recursive: true });
+  const featurePath = join20(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
+  const prdPath = join20(featurePath, "prd.md");
+  await mkdir11(featurePath, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath, prdPath };
 }
 async function writeWorkResultFile(featurePath, content) {
-  const workResultPath = join19(featurePath, "work-result.md");
-  await mkdir10(featurePath, { recursive: true });
+  const workResultPath = join20(featurePath, "work-result.md");
+  await mkdir11(featurePath, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
 async function writePatchPrdFile(featureDir, version2, content) {
-  const prdPath = join19(featureDir, patchPrdFilename(version2));
-  await mkdir10(featureDir, { recursive: true });
+  const prdPath = join20(featureDir, patchPrdFilename(version2));
+  await mkdir11(featureDir, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath: featureDir, prdPath };
 }
 async function writePatchWorkResultFile(featureDir, version2, content) {
-  const workResultPath = join19(featureDir, patchWorkResultFilename(version2));
-  await mkdir10(featureDir, { recursive: true });
+  const workResultPath = join20(featureDir, patchWorkResultFilename(version2));
+  await mkdir11(featureDir, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
@@ -27690,7 +27961,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash2 } from "node:crypto";
 import { stat } from "node:fs/promises";
-import { isAbsolute as isAbsolute3, join as join20, relative } from "node:path";
+import { isAbsolute as isAbsolute3, join as join21, relative as relative2 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash2("sha1").update(parts2.join("\n")).digest("hex");
@@ -27698,8 +27969,8 @@ function computeFingerprintFromEntries(entries) {
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
-    const full = isAbsolute3(f) ? f : join20(projectPath, f);
-    const relPath = isAbsolute3(f) ? relative(projectPath, f) : f;
+    const full = isAbsolute3(f) ? f : join21(projectPath, f);
+    const relPath = isAbsolute3(f) ? relative2(projectPath, f) : f;
     try {
       const st = await stat(full);
       entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
@@ -27753,7 +28024,7 @@ function checkpointApplies(checkpoint, ctx) {
 }
 
 // src/hulk/roadmap.ts
-import { mkdir as mkdir11, readFile as readFile14 } from "node:fs/promises";
+import { mkdir as mkdir12, readFile as readFile16 } from "node:fs/promises";
 
 // src/hulk/roadmapGraph.ts
 function topoSort(nodes) {
@@ -27808,14 +28079,14 @@ function readySet(nodes) {
 // src/hulk/roadmap.ts
 async function readRoadmapFile(workspace) {
   try {
-    const raw = await readFile14(roadmapFilePath(workspace), "utf-8");
+    const raw = await readFile16(roadmapFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
   }
 }
 async function writeRoadmapFile(workspace, file) {
-  await mkdir11(workspaceDir(workspace), { recursive: true });
+  await mkdir12(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(roadmapFilePath(workspace), JSON.stringify(file, null, 2));
   void syncRoadmapSnapshot(workspace, file.nodes);
 }
@@ -27995,20 +28266,20 @@ function promotePrdRequirements(taskId, prdContent) {
 
 // src/hulk/task.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir12, readFile as readFile15 } from "node:fs/promises";
+import { mkdir as mkdir13, readFile as readFile17 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile15(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile17(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
   }
 }
 async function writeTasksFile(workspace, file) {
-  await mkdir12(workspaceDir(workspace), { recursive: true });
+  await mkdir13(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(tasksFilePath(workspace), JSON.stringify(file, null, 2));
 }
 async function addTask(workspace, params) {
@@ -28357,10 +28628,10 @@ async function handleSugoPlan(rawArgs) {
   let existing = null;
   if (action !== "start") {
     if (!sessionId) {
-      return errorResult5("SESSION_ID_REQUIRED", `action "${action}"\uC5D0\uB294 sessionId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
+      return errorResult8("SESSION_ID_REQUIRED", `action "${action}"\uC5D0\uB294 sessionId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
     }
     if (!await sessionExists(sessionId)) {
-      return errorResult5("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${sessionId}`);
+      return errorResult8("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${sessionId}`);
     }
     existing = await loadSession(sessionId);
   }
@@ -28374,10 +28645,10 @@ async function handleSugoPlan(rawArgs) {
     };
   }
   if (action === "prd") {
-    if (!args2.prdContent) return errorResult5("PRD_CONTENT_REQUIRED", "prd action\uC5D0\uB294 prdContent\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!args2.prdContent) return errorResult8("PRD_CONTENT_REQUIRED", "prd action\uC5D0\uB294 prdContent\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const validation = validatePrd(args2.prdContent);
     if (!validation.ok) {
-      return errorResult5(
+      return errorResult8(
         validation.errors[0],
         `PRD \uAC80\uC99D \uC2E4\uD328: \uAE38\uC774=${validation.length}\uC790(\u2265100 \uD544\uC694), REQ \uD0DC\uADF8=${validation.reqCount}\uAC1C(\u22651 \uD544\uC694)`
       );
@@ -28387,7 +28658,7 @@ async function handleSugoPlan(rawArgs) {
     const baselineRequired = existing.data.baselineGate?.required ?? false;
     const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
     const baselineResult = checkBaselineGate(baselineRequired, baselineExitCode);
-    if (!baselineResult.ok) return errorResult5(baselineResult.code, baselineResult.message);
+    if (!baselineResult.ok) return errorResult8(baselineResult.code, baselineResult.message);
   }
   if (action === "contract_done" && existing) {
     const projectConfigForContractStart = await loadProjectConfig(existing.projectPath);
@@ -28397,14 +28668,14 @@ async function handleSugoPlan(rawArgs) {
     const claimsAbsent = !!args2.contractEnvironmentAbsentReason && args2.contractEnvironmentAbsentReason.trim().length > 0;
     if (claimsAbsent) {
       const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
-      if (!contradiction.ok) return errorResult5(contradiction.code, contradiction.message);
+      if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
     }
     const contractStartedResult = checkContractStartedGate(
       existing.data.chainInfo.contractTests ?? [],
       contractRequired,
       args2.contractEnvironmentAbsentReason
     );
-    if (!contractStartedResult.ok) return errorResult5(contractStartedResult.code, contractStartedResult.message);
+    if (!contractStartedResult.ok) return errorResult8(contractStartedResult.code, contractStartedResult.message);
     if (claimsAbsent && contractRequired) {
       newBypassLabels.push({
         kind: "contractEvidenceMissing",
@@ -28418,24 +28689,24 @@ async function handleSugoPlan(rawArgs) {
     const changedFiles = args2.changedFiles ?? [];
     const hasPrd = !!existing.data.prdPath;
     const analyzeGate = checkAnalyzeGate(existing.data.chainInfo.analyzeAttempts, hasPrd);
-    if (!analyzeGate.ok) return errorResult5(analyzeGate.code, analyzeGate.message);
+    if (!analyzeGate.ok) return errorResult8(analyzeGate.code, analyzeGate.message);
     const baselineRequired = existing.data.baselineGate?.required ?? false;
     const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
     const baselineResult = checkBaselineGate(baselineRequired, baselineExitCode);
-    if (!baselineResult.ok) return errorResult5(baselineResult.code, baselineResult.message);
+    if (!baselineResult.ok) return errorResult8(baselineResult.code, baselineResult.message);
     const wiringResult = checkWiringGate(changedFiles, existing.data.mode, args2.wiringTestAdded ?? false);
-    if (!wiringResult.ok) return errorResult5(wiringResult.code, wiringResult.message);
+    if (!wiringResult.ok) return errorResult8(wiringResult.code, wiringResult.message);
     const glueResult = checkRegistrationGlueGate(args2.dependencyRemoved ?? false, args2.registrationGlueChecked ?? false);
-    if (!glueResult.ok) return errorResult5(glueResult.code, glueResult.message);
+    if (!glueResult.ok) return errorResult8(glueResult.code, glueResult.message);
     const bootable = await isProjectBootable(existing.projectPath);
     const bootAnnotationFound = bootable ? await scanForSpringBootTestAnnotation(existing.projectPath) : false;
     const claimsBootAbsent = bootable && !bootAnnotationFound && !!args2.bootUnverifiedReason && args2.bootUnverifiedReason.trim().length > 0;
     if (claimsBootAbsent) {
       const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
-      if (!contradiction.ok) return errorResult5(contradiction.code, contradiction.message);
+      if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
     }
     const bootResult = checkBootGate(bootable, bootAnnotationFound, args2.bootUnverifiedReason);
-    if (!bootResult.ok) return errorResult5(bootResult.code, bootResult.message);
+    if (!bootResult.ok) return errorResult8(bootResult.code, bootResult.message);
     if (claimsBootAbsent) {
       newBypassLabels.push({
         kind: "bootUnverified",
@@ -28447,10 +28718,10 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "test_done" && existing) {
     if (args2.testPassed === void 0) {
-      return errorResult5("TEST_PASSED_REQUIRED", "test_done action\uC5D0\uB294 testPassed\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      return errorResult8("TEST_PASSED_REQUIRED", "test_done action\uC5D0\uB294 testPassed\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     }
     const evidenceResult = checkTestEvidenceGate(args2.testPassed, existing.data.chainInfo.testEvidence ?? null);
-    if (!evidenceResult.ok) return errorResult5(evidenceResult.code, evidenceResult.message);
+    if (!evidenceResult.ok) return errorResult8(evidenceResult.code, evidenceResult.message);
     const feature = existing.data.chainInfo.testEvidence;
     if (feature?.derivedState === "unverified") {
       const contradiction = detectLabelContradiction(
@@ -28460,7 +28731,7 @@ async function handleSugoPlan(rawArgs) {
           contractTests: existing.data.chainInfo.contractTests
         })
       );
-      if (!contradiction.ok) return errorResult5(contradiction.code, contradiction.message);
+      if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
       newBypassLabels.push({
         kind: "environmentAbsent",
         reason: feature.unverifiedReason ?? "\uC0AC\uC720 \uBBF8\uAE30\uC7AC",
@@ -28471,23 +28742,23 @@ async function handleSugoPlan(rawArgs) {
     const projectConfig = await loadProjectConfig(existing.projectPath);
     const enforced = projectConfig?.verificationPolicy?.integrationGateEnforced ?? false;
     if (enforced && !args2.coverageMap) {
-      return errorResult5(
+      return errorResult8(
         "COVERAGE_MAP_REQUIRED",
         "\uC774 \uD504\uB85C\uC81D\uD2B8\uB294 verificationPolicy.integrationGateEnforced\uAC00 \uCF1C\uC838 \uC788\uC5B4 test_done\uC5D0 coverageMap\uC774 \uD544\uC694\uD569\uB2C8\uB2E4."
       );
     }
     if (args2.coverageMap) {
       const coverageResult = checkCoverageGate(args2.coverageMap);
-      if (!coverageResult.ok) return errorResult5(coverageResult.code, coverageResult.message);
+      if (!coverageResult.ok) return errorResult8(coverageResult.code, coverageResult.message);
     }
   }
   if (action === "review_done" && existing) {
     const confirmResult = checkUserConfirmationGate(args2.userConfirmed ?? false);
-    if (!confirmResult.ok) return errorResult5(confirmResult.code, confirmResult.message);
-    if (!args2.summary) return errorResult5("SUMMARY_REQUIRED", "review_done action\uC5D0\uB294 summary\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!confirmResult.ok) return errorResult8(confirmResult.code, confirmResult.message);
+    if (!args2.summary) return errorResult8("SUMMARY_REQUIRED", "review_done action\uC5D0\uB294 summary\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const summaryQuality = validateSummaryQuality(args2.summary);
     if (!summaryQuality.ok) {
-      return errorResult5(
+      return errorResult8(
         summaryQuality.errors[0],
         `summary \uD488\uC9C8 \uBBF8\uB2EC: \uC904=${summaryQuality.lines}(\u22653), \uAE38\uC774=${summaryQuality.length}\uC790(\u226530), \uACE0\uC720\uBB38\uC790=${summaryQuality.uniqueChars}\uAC1C(\u226510), \uAD6C\uBCC4\uD1A0\uD070=${summaryQuality.distinctTokens}\uAC1C(\u22655)`
       );
@@ -28501,11 +28772,11 @@ async function handleSugoPlan(rawArgs) {
         currentFingerprint,
         existing.data.chainInfo.testPassedState
       );
-      if (!reuseResult.ok) return errorResult5(reuseResult.code, reuseResult.message);
+      if (!reuseResult.ok) return errorResult8(reuseResult.code, reuseResult.message);
       runtimeSatisfiedByReuse = true;
     }
     if (!runtimeSatisfiedByReuse) {
-      if (!args2.runtimeCheck) return errorResult5("RUNTIME_CHECK_REQUIRED", "review_done action\uC5D0\uB294 runtimeCheck\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.runtimeCheck) return errorResult8("RUNTIME_CHECK_REQUIRED", "review_done action\uC5D0\uB294 runtimeCheck\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const bootable = await isProjectBootable(existing.projectPath);
       const rc = args2.runtimeCheck;
       const labeled = !!rc.unverifiedReason && rc.unverifiedReason.trim().length > 0;
@@ -28513,10 +28784,10 @@ async function handleSugoPlan(rawArgs) {
       const claimsWiringAbsent = labeled && rc.runtimeVerified && bootable && rc.wiringVerified !== true;
       if (claimsRuntimeAbsent || claimsWiringAbsent) {
         const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
-        if (!contradiction.ok) return errorResult5(contradiction.code, contradiction.message);
+        if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
       }
       const runtimeResult = checkRuntimeVerificationGate(existing.data.chainInfo.testPassedState, rc, bootable);
-      if (!runtimeResult.ok) return errorResult5(runtimeResult.code, runtimeResult.message);
+      if (!runtimeResult.ok) return errorResult8(runtimeResult.code, runtimeResult.message);
       if (claimsRuntimeAbsent) {
         newBypassLabels.push({
           kind: "runtimeUnverified",
@@ -28538,38 +28809,38 @@ async function handleSugoPlan(rawArgs) {
       baselineRequired: existing.data.baselineGate?.required ?? false
     });
     const contractResult = checkContractEvidenceGate(existing.data.chainInfo.contractTests ?? [], contractRequired);
-    if (!contractResult.ok) return errorResult5(contractResult.code, contractResult.message);
+    if (!contractResult.ok) return errorResult8(contractResult.code, contractResult.message);
   }
   if (action === "decompose" && existing) {
-    if (!args2.manifest) return errorResult5("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    if (!existing.data.prdPath) return errorResult5("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    const prdContent = await readFile16(existing.data.prdPath, "utf-8").catch(() => "");
+    if (!args2.manifest) return errorResult8("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!existing.data.prdPath) return errorResult8("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    const prdContent = await readFile18(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
     };
     const manifestResult = validateManifest(candidateManifest, prdRequirementIds);
-    if (!manifestResult.ok) return errorResult5(manifestResult.code, manifestResult.message);
+    if (!manifestResult.ok) return errorResult8(manifestResult.code, manifestResult.message);
   }
   if ((action === "subtask_start" || action === "subtask_done") && existing) {
     if (!args2.subtaskId) {
-      return errorResult5("SUBTASK_ID_REQUIRED", `${action} action\uC5D0\uB294 subtaskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
+      return errorResult8("SUBTASK_ID_REQUIRED", `${action} action\uC5D0\uB294 subtaskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
     }
     const subtask = existing.data.decomposeManifest?.subtasks.find((s) => s.id === args2.subtaskId);
-    if (!subtask) return errorResult5("SUBTASK_NOT_FOUND", `\uC11C\uBE0C\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.subtaskId}`);
+    if (!subtask) return errorResult8("SUBTASK_NOT_FOUND", `\uC11C\uBE0C\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.subtaskId}`);
   }
   if (action === "integrate" && existing) {
     const manifest = existing.data.decomposeManifest;
-    if (!manifest) return errorResult5("MANIFEST_REQUIRED", "integrate \uC804\uC5D0 decompose\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!manifest) return errorResult8("MANIFEST_REQUIRED", "integrate \uC804\uC5D0 decompose\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const integrationResult = validateIntegration(manifest);
-    if (!integrationResult.ok) return errorResult5(integrationResult.code, integrationResult.message);
+    if (!integrationResult.ok) return errorResult8(integrationResult.code, integrationResult.message);
   }
   let patchContext;
   if (action === "start" && args2.workResultPath) {
     try {
       patchContext = await resolvePatchContext(args2.workResultPath);
     } catch (err2) {
-      if (err2 instanceof PatchEntryError) return errorResult5(err2.code, err2.message);
+      if (err2 instanceof PatchEntryError) return errorResult8(err2.code, err2.message);
       throw err2;
     }
   }
@@ -28579,7 +28850,7 @@ async function handleSugoPlan(rawArgs) {
     featureName: args2.featureName
   });
   if (!result.ok) {
-    return errorResult5(result.errorCode ?? "UNKNOWN_ERROR", result.message ?? "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958");
+    return errorResult8(result.errorCode ?? "UNKNOWN_ERROR", result.message ?? "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958");
   }
   let session = result.session;
   if (!session) {
@@ -28826,7 +29097,7 @@ ${session.data.seed}` : args2.summary;
     content: [{ type: "text", text: JSON.stringify(payload, null, 2) }]
   };
 }
-function errorResult5(errorCode, message) {
+function errorResult8(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -28845,7 +29116,7 @@ var SugoRecordContractEvidenceArgs = external_exports.object(sugoRecordContractE
 async function handleSugoRecordContractEvidence(rawArgs) {
   const args2 = SugoRecordContractEvidenceArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult6("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult9("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   const existingRecords = session.data.chainInfo.contractTests ?? [];
@@ -28859,7 +29130,7 @@ async function handleSugoRecordContractEvidence(rawArgs) {
   const payload = { ok: true, sessionId: session.id, contractId: args2.contractId, record: updatedRecord };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult6(errorCode, message) {
+function errorResult9(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -28882,7 +29153,7 @@ var SugoRecordTestEvidenceArgs = external_exports.object(sugoRecordTestEvidenceI
 async function handleSugoRecordTestEvidence(rawArgs) {
   const args2 = SugoRecordTestEvidenceArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult7("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult10("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   const record2 = makeTestEvidenceRecord(
@@ -28919,7 +29190,73 @@ async function handleSugoRecordTestEvidence(rawArgs) {
   const payload = { ok: true, sessionId: session.id, kind: args2.kind, derivedState: record2.derivedState };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult7(errorCode, message) {
+function errorResult10(errorCode, message) {
+  return {
+    isError: true,
+    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
+  };
+}
+
+// src/tools/sugoReset.ts
+import { resolve as resolve6 } from "node:path";
+
+// src/harness/reset.ts
+import { mkdir as mkdir14, readFile as readFile19, rm as rm2 } from "node:fs/promises";
+import { join as join22 } from "node:path";
+var ResetProjectError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+  }
+};
+function backupTimestamp() {
+  return (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
+}
+var RESET_CLAUDE_MD = [
+  "# Sugo \uD558\uB124\uC2A4 \uC778\uB371\uC2A4",
+  "",
+  "(\uCD08\uAE30\uD654\uB428 \u2014 \uD558\uB124\uC2A4\uAC00 \uC801\uC6A9\uB418\uC9C0 \uC54A\uC740 \uC0C1\uD0DC\uC785\uB2C8\uB2E4. `sugo_add` \uB610\uB294 `sugo_update`\uB85C \uB2E4\uC2DC \uC801\uC6A9\uD558\uC138\uC694.)",
+  ""
+].join("\n");
+async function resetProjectHarness(projectPath) {
+  const config2 = await loadProjectConfig(projectPath);
+  if (!config2) {
+    throw new ResetProjectError("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4(sugo/config.json \uC5C6\uC74C): ${projectPath}`);
+  }
+  const sugoDir = projectSugoDir(projectPath);
+  const claudeMdPath = join22(sugoDir, "CLAUDE.md");
+  let backedUpTo;
+  try {
+    const current = await readFile19(claudeMdPath, "utf-8");
+    const backupDir = join22(sugoDir, "backup");
+    await mkdir14(backupDir, { recursive: true });
+    backedUpTo = join22(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
+    await atomicWriteFile(backedUpTo, current);
+  } catch {
+  }
+  await rm2(join22(sugoDir, "harness"), { recursive: true, force: true });
+  await atomicWriteFile(claudeMdPath, RESET_CLAUDE_MD);
+  await saveProjectConfig({ ...config2, appliedHarnesses: [], lastUpdated: (/* @__PURE__ */ new Date()).toISOString() });
+  return { backedUpTo };
+}
+
+// src/tools/sugoReset.ts
+var sugoResetInputSchema = {
+  projectPath: external_exports.string().describe("\uC801\uC6A9\uB41C \uD558\uB124\uC2A4\uB97C \uCD08\uAE30\uD654\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C")
+};
+var SugoResetArgs = external_exports.object(sugoResetInputSchema);
+async function handleSugoReset(rawArgs) {
+  const args2 = SugoResetArgs.parse(rawArgs);
+  const projectPath = resolve6(args2.projectPath);
+  try {
+    const { backedUpTo } = await resetProjectHarness(projectPath);
+    return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, backedUpTo }, null, 2) }] };
+  } catch (err2) {
+    if (err2 instanceof ResetProjectError) return errorResult11(err2.code, err2.message);
+    throw err2;
+  }
+}
+function errorResult11(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -28957,7 +29294,7 @@ async function handleSugoRoadmap(rawArgs) {
   switch (args2.action) {
     case "add": {
       if (!args2.id || !args2.title || !args2.level) {
-        return errorResult8("ADD_FIELDS_REQUIRED", "add action\uC5D0\uB294 id/title/level\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult12("ADD_FIELDS_REQUIRED", "add action\uC5D0\uB294 id/title/level\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       const result = await addRoadmapNode(args2.workspace, {
         id: args2.id,
@@ -28970,42 +29307,42 @@ async function handleSugoRoadmap(rawArgs) {
         specPath: args2.specPath,
         note: args2.note
       });
-      if (!result.ok) return errorResult8(result.error, result.message);
+      if (!result.ok) return errorResult12(result.error, result.message);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "remove": {
-      if (!args2.id) return errorResult8("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult12("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await removeRoadmapNode(args2.workspace, args2.id);
-      if (!result.ok) return errorResult8(result.error, result.message);
+      if (!result.ok) return errorResult12(result.error, result.message);
       return ok4({});
     }
     case "status": {
-      if (!args2.id || !args2.status) return errorResult8("ID_AND_STATUS_REQUIRED", "status action\uC5D0\uB294 id\uC640 status\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id || !args2.status) return errorResult12("ID_AND_STATUS_REQUIRED", "status action\uC5D0\uB294 id\uC640 status\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await updateRoadmapNodeStatus(args2.workspace, args2.id, args2.status, resultFrom(args2));
-      if (!result.ok) return errorResult8(result.error, result.message);
+      if (!result.ok) return errorResult12(result.error, result.message);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "link": {
-      if (!args2.fromId || !args2.toId) return errorResult8("FROM_TO_REQUIRED", "link action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.fromId || !args2.toId) return errorResult12("FROM_TO_REQUIRED", "link action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await linkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
-      if (!result.ok) return errorResult8(result.error, result.message);
+      if (!result.ok) return errorResult12(result.error, result.message);
       return ok4({});
     }
     case "unlink": {
-      if (!args2.fromId || !args2.toId) return errorResult8("FROM_TO_REQUIRED", "unlink action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.fromId || !args2.toId) return errorResult12("FROM_TO_REQUIRED", "unlink action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await unlinkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
-      if (!result.ok) return errorResult8(result.error, result.message);
+      if (!result.ok) return errorResult12(result.error, result.message);
       return ok4({});
     }
     case "group": {
       if (!args2.id || !args2.title || !args2.taskIds) {
-        return errorResult8("GROUP_FIELDS_REQUIRED", "group action\uC5D0\uB294 id(workstream id)/title/taskIds\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult12("GROUP_FIELDS_REQUIRED", "group action\uC5D0\uB294 id(workstream id)/title/taskIds\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       await groupRoadmapNodes(args2.workspace, args2.id, args2.title, args2.taskIds);
       return ok4({});
     }
     case "backfill": {
-      if (!args2.id || !args2.title) return errorResult8("BACKFILL_FIELDS_REQUIRED", "backfill action\uC5D0\uB294 id(HULK taskId)/title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id || !args2.title) return errorResult12("BACKFILL_FIELDS_REQUIRED", "backfill action\uC5D0\uB294 id(HULK taskId)/title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await backfillRoadmapTask(args2.workspace, args2.id, args2.title);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
@@ -29018,15 +29355,15 @@ async function handleSugoRoadmap(rawArgs) {
       return ok4({ ready });
     }
     case "get": {
-      if (!args2.id) return errorResult8("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult12("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const node = await getRoadmapNode(args2.workspace, args2.id);
-      if (!node) return errorResult8("NODE_NOT_FOUND", `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      if (!node) return errorResult12("NODE_NOT_FOUND", `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
       return ok4({ node });
     }
     case "mark_req": {
-      if (!args2.id) return errorResult8("ID_REQUIRED", "mark_req action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult12("ID_REQUIRED", "mark_req action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await markRequirementDone(args2.workspace, args2.id, resultFrom(args2));
-      if (!result.ok) return errorResult8(result.error, result.message);
+      if (!result.ok) return errorResult12(result.error, result.message);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
   }
@@ -29038,16 +29375,103 @@ function resultFrom(args2) {
 function ok4(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult8(errorCode, message) {
+function errorResult12(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
   };
 }
 
+// src/route.ts
+var ROUTES = [
+  {
+    agent: "test-agent",
+    skill: "full",
+    triggers: ["\uC804\uCCB4 \uD14C\uC2A4\uD2B8", "\uC804\uB7C9 \uD14C\uC2A4\uD2B8", "\uBAA8\uB4E0 \uD14C\uC2A4\uD2B8", "run all tests", "full test"],
+    priority: 12
+  },
+  {
+    agent: "review-agent",
+    skill: "security",
+    triggers: ["\uBCF4\uC548", "\uCDE8\uC57D\uC810", "security", "vulnerability", "owasp"],
+    priority: 12
+  },
+  {
+    agent: "code-agent",
+    skill: "bugfix",
+    triggers: ["\uBC84\uADF8", "\uC5D0\uB7EC", "\uC624\uB958", "\uACE0\uCCD0\uC918", "\uACE0\uCCD0", "bug", "fix", "error"],
+    negative: ["\uD14C\uC2A4\uD2B8", "\uBB38\uC11C", "\uB9AC\uD329\uD1A0\uB9C1", "test", "docs", "refactor"],
+    priority: 10
+  },
+  {
+    agent: "code-agent",
+    skill: "refactor",
+    triggers: ["\uB9AC\uD329\uD1A0\uB9C1", "refactor", "\uC815\uB9AC\uD574\uC918", "\uAD6C\uC870 \uAC1C\uC120"],
+    priority: 10
+  },
+  {
+    agent: "test-agent",
+    skill: "targeted",
+    triggers: ["\uD14C\uC2A4\uD2B8 \uCD94\uAC00", "\uD14C\uC2A4\uD2B8 \uC791\uC131", "\uD14C\uC2A4\uD2B8\uD574\uC918", "add test", "write test"],
+    priority: 10
+  },
+  {
+    agent: "review-agent",
+    skill: "validate",
+    triggers: ["\uB9AC\uBDF0\uD574\uC918", "\uAC80\uD1A0\uD574\uC918", "\uCF54\uB4DC\uB9AC\uBDF0", "review"],
+    negative: ["\uBCF4\uC548", "security"],
+    priority: 10
+  },
+  {
+    agent: "docs-agent",
+    skill: "readme",
+    triggers: ["\uBB38\uC11C\uD654", "\uBB38\uC11C \uC791\uC131", "readme", "docs"],
+    priority: 10
+  },
+  {
+    agent: "code-agent",
+    skill: "implement",
+    triggers: ["\uAD6C\uD604\uD574\uC918", "\uCD94\uAC00\uD574\uC918", "\uAE30\uB2A5 \uCD94\uAC00", "\uB9CC\uB4E4\uC5B4\uC918", "implement", "add feature"],
+    priority: 5
+  }
+];
+function matchRule(rule, normalizedInput) {
+  if (rule.negative?.some((n) => normalizedInput.includes(n.toLowerCase()))) return null;
+  const matched = rule.triggers.filter((t) => normalizedInput.includes(t.toLowerCase()));
+  if (matched.length === 0) return null;
+  return { agent: rule.agent, skill: rule.skill, triggers_matched: matched };
+}
+function routeInput(input) {
+  const normalized = input.toLowerCase();
+  const matches = [];
+  for (const rule of ROUTES) {
+    const match = matchRule(rule, normalized);
+    if (match) matches.push({ rule, match });
+  }
+  if (matches.length === 0) return { matched: false };
+  matches.sort((a, b) => b.rule.priority - a.rule.priority);
+  const [best, ...rest] = matches;
+  return {
+    matched: true,
+    route: best.match,
+    alternatives: rest.length > 0 ? rest.map((m) => m.match) : void 0
+  };
+}
+
+// src/tools/sugoRoute.ts
+var sugoRouteInputSchema = {
+  input: external_exports.string().describe("\uC790\uC5F0\uC5B4 \uC694\uCCAD(\uC608: '\uC774 \uBC84\uADF8 \uC880 \uACE0\uCCD0\uC918', '\uD14C\uC2A4\uD2B8 \uC880 \uB3CC\uB824\uC918')")
+};
+var SugoRouteArgs = external_exports.object(sugoRouteInputSchema);
+async function handleSugoRoute(rawArgs) {
+  const args2 = SugoRouteArgs.parse(rawArgs);
+  const result = routeInput(args2.input);
+  return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...result }, null, 2) }] };
+}
+
 // src/hulk/spec.ts
-import { mkdir as mkdir13, readdir as readdir8, readFile as readFile17 } from "node:fs/promises";
-import { join as join21 } from "node:path";
+import { mkdir as mkdir15, readdir as readdir9, readFile as readFile20 } from "node:fs/promises";
+import { join as join23 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
     name: params.name,
@@ -29057,12 +29481,12 @@ async function addSpec(workspace, params) {
     created_at: (/* @__PURE__ */ new Date()).toISOString()
   };
   const dir = specsDir(workspace);
-  await mkdir13(dir, { recursive: true });
+  await mkdir15(dir, { recursive: true });
   const fileContent = stringifyFrontmatter(
     { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
     spec.content
   );
-  await atomicWriteFile(join21(dir, `${slugify(params.name)}.md`), fileContent);
+  await atomicWriteFile(join23(dir, `${slugify(params.name)}.md`), fileContent);
   return spec;
 }
 function parseSpecFile(raw) {
@@ -29079,7 +29503,7 @@ async function listSpecs(workspace) {
   const dir = specsDir(workspace);
   let entries;
   try {
-    entries = await readdir8(dir);
+    entries = await readdir9(dir);
   } catch {
     return [];
   }
@@ -29087,7 +29511,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile17(join21(dir, name2), "utf-8");
+      const raw = await readFile20(join23(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -29097,7 +29521,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile17(join21(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile20(join23(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -29120,7 +29544,7 @@ async function handleSugoSpec(rawArgs) {
   switch (args2.action) {
     case "add": {
       if (!args2.name || !args2.type || !args2.content) {
-        return errorResult9("NAME_TYPE_CONTENT_REQUIRED", "add action\uC5D0\uB294 name, type, content\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult13("NAME_TYPE_CONTENT_REQUIRED", "add action\uC5D0\uB294 name, type, content\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       const spec = await addSpec(args2.workspace, { name: args2.name, type: args2.type, tags: args2.tags, content: args2.content });
       return ok5({ spec });
@@ -29130,9 +29554,9 @@ async function handleSugoSpec(rawArgs) {
       return ok5({ specs });
     }
     case "get": {
-      if (!args2.name) return errorResult9("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult13("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const spec = await getSpec(args2.workspace, args2.name);
-      if (!spec) return errorResult9("SPEC_NOT_FOUND", `\uC2A4\uD399\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
+      if (!spec) return errorResult13("SPEC_NOT_FOUND", `\uC2A4\uD399\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
       return ok5({ spec });
     }
   }
@@ -29140,11 +29564,35 @@ async function handleSugoSpec(rawArgs) {
 function ok5(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult9(errorCode, message) {
+function errorResult13(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
   };
+}
+
+// src/tools/sugoStatus.ts
+var sugoStatusInputSchema = {};
+async function handleSugoStatus() {
+  const entries = await loadRegistry();
+  const projects = await Promise.all(
+    entries.map(async (entry) => {
+      const config2 = await loadProjectConfig(entry.path);
+      return {
+        path: entry.path,
+        name: entry.name,
+        registeredAt: entry.registeredAt,
+        workspace: entry.workspace,
+        disabled: config2?.disabled ?? false,
+        appliedHarnessCount: config2?.appliedHarnesses.length ?? 0,
+        languages: config2?.detectedStack.languages.map((l) => l.name) ?? [],
+        frameworks: config2?.detectedStack.frameworks.map((f) => f.name) ?? [],
+        lastUpdated: config2?.lastUpdated
+      };
+    })
+  );
+  const payload = { ok: true, totalProjects: projects.length, projects };
+  return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
 // src/tools/sugoTask.ts
@@ -29168,7 +29616,7 @@ async function handleSugoTask(rawArgs) {
   const args2 = SugoTaskArgs.parse(rawArgs);
   switch (args2.action) {
     case "add": {
-      if (!args2.title || !args2.project) return errorResult10("TITLE_AND_PROJECT_REQUIRED", "add action\uC5D0\uB294 title\uACFC project\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.title || !args2.project) return errorResult14("TITLE_AND_PROJECT_REQUIRED", "add action\uC5D0\uB294 title\uACFC project\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await addTask(args2.workspace, {
         title: args2.title,
         project: args2.project,
@@ -29185,15 +29633,15 @@ async function handleSugoTask(rawArgs) {
       return ok6({ tasks });
     }
     case "update": {
-      if (!args2.taskId) return errorResult10("TASK_ID_REQUIRED", "update action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.taskId) return errorResult14("TASK_ID_REQUIRED", "update action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await updateTask(args2.workspace, args2.taskId, { status: args2.status, summary: args2.summary });
-      if (!task) return errorResult10("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
+      if (!task) return errorResult14("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
       return ok6({ task });
     }
     case "get": {
-      if (!args2.taskId) return errorResult10("TASK_ID_REQUIRED", "get action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.taskId) return errorResult14("TASK_ID_REQUIRED", "get action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await getTask(args2.workspace, args2.taskId);
-      if (!task) return errorResult10("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
+      if (!task) return errorResult14("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
       return ok6({ task });
     }
   }
@@ -29201,7 +29649,44 @@ async function handleSugoTask(rawArgs) {
 function ok6(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult10(errorCode, message) {
+function errorResult14(errorCode, message) {
+  return {
+    isError: true,
+    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
+  };
+}
+
+// src/tools/sugoUpdate.ts
+import { resolve as resolve7 } from "node:path";
+var sugoUpdateInputSchema = {
+  projectPath: external_exports.string().describe("\uAC31\uC2E0\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C(\uC774\uBBF8 sugo_add\uB85C \uB4F1\uB85D\uB3FC \uC788\uC5B4\uC57C \uD568)"),
+  repoUrl: external_exports.string().optional(),
+  additionalStacks: external_exports.array(external_exports.string()).optional().describe("\uC790\uB3D9\uAC10\uC9C0 \uACB0\uACFC\uC5D0 \uCD94\uAC00\uB85C \uAC15\uC81C \uD3EC\uD568\uD560 harnessId \uBAA9\uB85D"),
+  integrationGateEnforced: external_exports.boolean().optional(),
+  contractEvidenceRequired: external_exports.boolean().optional()
+};
+var SugoUpdateArgs = external_exports.object(sugoUpdateInputSchema);
+async function handleSugoUpdate(rawArgs) {
+  const args2 = SugoUpdateArgs.parse(rawArgs);
+  const projectPath = resolve7(args2.projectPath);
+  const existing = await findRegistryEntry(projectPath);
+  if (!existing) {
+    return errorResult15("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uBA3C\uC800 sugo_add\uB85C \uB4F1\uB85D\uD558\uC138\uC694: ${projectPath}`);
+  }
+  const result = await syncProjectHarness({ ...args2, projectPath });
+  const payload = {
+    ok: true,
+    projectPath,
+    projectName: result.projectName,
+    workspace: result.workspace,
+    detectedStack: result.config.detectedStack,
+    appliedHarnesses: result.composeResult.appliedHarnesses,
+    warnings: result.composeResult.warnings,
+    claudeMdPath: result.claudeMdPath
+  };
+  return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+}
+function errorResult15(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -29209,8 +29694,8 @@ function errorResult10(errorCode, message) {
 }
 
 // src/harness/validationConfig.ts
-import { readFile as readFile18 } from "node:fs/promises";
-import { join as join22 } from "node:path";
+import { readFile as readFile21 } from "node:fs/promises";
+import { join as join24 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
   const checks = (raw?.checks ?? []).filter((c) => !!c?.id).map((c) => ({
@@ -29225,9 +29710,9 @@ async function loadProjectValidationConfigs(projectPath) {
   const result = /* @__PURE__ */ new Map();
   if (!config2) return result;
   for (const applied of config2.appliedHarnesses) {
-    const path = join22(projectPath, "sugo", "harness", applied.id, "validation.yaml");
+    const path = join24(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile18(path, "utf-8");
+      const content = await readFile21(path, "utf-8");
       result.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -29278,7 +29763,7 @@ var SugoValidateArgs = external_exports.object(sugoValidateInputSchema);
 async function handleSugoValidate(rawArgs) {
   const args2 = SugoValidateArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult11("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult16("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   const configs = await loadProjectValidationConfigs(session.projectPath);
@@ -29308,29 +29793,28 @@ async function handleSugoValidate(rawArgs) {
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult11(errorCode, message) {
+function errorResult16(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
   };
 }
 
-// src/hulk/memory.ts
-import { mkdir as mkdir14, readFile as readFile19 } from "node:fs/promises";
-async function appendMemory(workspace, note) {
-  const path = memoryFilePath(workspace);
-  const existing = await readFile19(path, "utf-8").catch(() => "");
-  const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
-
-${note}
-`;
-  const next = existing ? `${existing}
-${entry}` : entry;
-  await mkdir14(workspaceDir(workspace), { recursive: true });
-  await atomicWriteFile(path, next);
+// src/version.ts
+function currentSugoVersion() {
+  return true ? "0.1.0" : "0.0.0-dev";
 }
-async function readMemory(workspace) {
-  return readFile19(memoryFilePath(workspace), "utf-8").catch(() => "");
+
+// src/tools/sugoVersion.ts
+var sugoVersionInputSchema = {};
+async function handleSugoVersion() {
+  const payload = {
+    ok: true,
+    version: currentSugoVersion(),
+    updateCheckAvailable: false,
+    note: "\uC6D0\uACA9 \uB9C8\uCF13\uD50C\uB808\uC774\uC2A4/\uC800\uC7A5\uC18C\uAC00 \uAD6C\uC131\uB418\uC9C0 \uC54A\uC544 \uC5C5\uB370\uC774\uD2B8 \uD655\uC778\uC740 \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
+  };
+  return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
 // src/tools/sugoWorkspace.ts
@@ -29345,7 +29829,7 @@ async function handleSugoWorkspace(rawArgs) {
   const args2 = SugoWorkspaceArgs.parse(rawArgs);
   switch (args2.action) {
     case "add": {
-      if (!args2.name) return errorResult12("NAME_REQUIRED", "add action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult17("NAME_REQUIRED", "add action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workspace = await ensureWorkspace(args2.name, args2.projectPath);
       return ok7({ workspace });
     }
@@ -29354,18 +29838,18 @@ async function handleSugoWorkspace(rawArgs) {
       return ok7({ workspaces });
     }
     case "get": {
-      if (!args2.name) return errorResult12("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult17("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workspace = await loadWorkspace(args2.name);
-      if (!workspace) return errorResult12("WORKSPACE_NOT_FOUND", `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
+      if (!workspace) return errorResult17("WORKSPACE_NOT_FOUND", `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
       return ok7({ workspace });
     }
     case "remember": {
-      if (!args2.name || !args2.note) return errorResult12("NAME_AND_NOTE_REQUIRED", "remember action\uC5D0\uB294 name\uACFC note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name || !args2.note) return errorResult17("NAME_AND_NOTE_REQUIRED", "remember action\uC5D0\uB294 name\uACFC note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await appendMemory(args2.name, args2.note);
       return ok7({ remembered: true });
     }
     case "recall": {
-      if (!args2.name) return errorResult12("NAME_REQUIRED", "recall action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult17("NAME_REQUIRED", "recall action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const memory = await readMemory(args2.name);
       return ok7({ memory });
     }
@@ -29374,7 +29858,7 @@ async function handleSugoWorkspace(rawArgs) {
 function ok7(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult12(errorCode, message) {
+function errorResult17(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -29489,7 +29973,7 @@ server.registerTool(
   "sugo_checkpoint",
   {
     title: "HULK checkpoint CRUD (pre-commit reminders)",
-    description: "\uCEE4\uBC0B \uC804 \uC7AC\uBC1C\uBC29\uC9C0 \uCCB4\uD06C\uB9AC\uC2A4\uD2B8\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/list). applies_to\uAC00 \uBE44\uC5B4\uC788\uC73C\uBA74 \uBCF4\uD3B8 \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB85C \uD56D\uC0C1 \uC801\uC6A9\uB418\uACE0, \uC544\uB2C8\uBA74 \uD504\uB85C\uC81D\uD2B8\uBA85/harnessId\uC640 \uB9E4\uCE6D\uB420 \uB54C\uB9CC \uC801\uC6A9\uB41C\uB2E4(\xA78).",
+    description: "\uCEE4\uBC0B \uC804 \uC7AC\uBC1C\uBC29\uC9C0 \uCCB4\uD06C\uB9AC\uC2A4\uD2B8\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/get/list/remove/memory/read_memory/migrate/sync). applies_to\uAC00 \uBE44\uC5B4\uC788\uC73C\uBA74 \uBCF4\uD3B8 \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB85C \uD56D\uC0C1 \uC801\uC6A9\uB418\uACE0, \uC544\uB2C8\uBA74 \uD504\uB85C\uC81D\uD2B8\uBA85/harnessId\uC640 \uB9E4\uCE6D\uB420 \uB54C\uB9CC \uC801\uC6A9\uB41C\uB2E4. sync\uB294 \uB300\uC2DC\uBCF4\uB4DC\uB85C push\uB9CC \uD55C\uB2E4(pull\uC740 \uBBF8\uAD6C\uD604, \xA77.2/\xA78).",
     inputSchema: sugoCheckpointInputSchema
   },
   handleSugoCheckpoint
@@ -29538,6 +30022,87 @@ server.registerTool(
     inputSchema: sugoExploreInputSchema
   },
   handleSugoExplore
+);
+server.registerTool(
+  "sugo_update",
+  {
+    title: "Re-sync harness for an already-registered project",
+    description: "\uC774\uBBF8 sugo_add\uB85C \uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uC758 \uC2A4\uD0DD\uAC10\uC9C0\xB7\uD558\uB124\uC2A4\uB97C \uB2E4\uC2DC \uB3C8\uB2E4(sugo_add\uC640 \uB3D9\uC791 \uACF5\uC720). \uB4F1\uB85D\uB3FC \uC788\uC9C0 \uC54A\uC73C\uBA74 \uAC70\uBD80\uD55C\uB2E4 \u2014 \uC2E0\uADDC \uB4F1\uB85D\uC740 sugo_add\uC758 \uCC45\uC784(\xA79).",
+    inputSchema: sugoUpdateInputSchema
+  },
+  handleSugoUpdate
+);
+server.registerTool(
+  "sugo_disable",
+  {
+    title: "Mark a registered project as disabled",
+    description: "\uD504\uB85C\uC81D\uD2B8\uB97C \uBE44\uD65C\uC131 \uD45C\uC2DC\uD55C\uB2E4(sugo/config.json.disabled=true). sugo_status\uC5D0 \uB178\uCD9C\uB41C\uB2E4(\xA79).",
+    inputSchema: sugoDisableInputSchema
+  },
+  handleSugoDisable
+);
+server.registerTool(
+  "sugo_enable",
+  {
+    title: "Re-enable a disabled project",
+    description: "sugo_disable\uB85C \uBE44\uD65C\uC131\uD654\uB41C \uD504\uB85C\uC81D\uD2B8\uB97C \uB2E4\uC2DC \uD65C\uC131\uD654\uD55C\uB2E4(\xA79).",
+    inputSchema: sugoEnableInputSchema
+  },
+  handleSugoEnable
+);
+server.registerTool(
+  "sugo_reset",
+  {
+    title: "Reset applied harness state for a project",
+    description: "\uC801\uC6A9\uB41C \uD558\uB124\uC2A4 \uC0B0\uCD9C\uBB3C(sugo/harness/**, CLAUDE.md \uB0B4\uC6A9)\uB9CC \uC9C0\uC6B4\uB2E4 \u2014 \uB808\uC9C0\uC2A4\uD2B8\uB9AC \uB4F1\uB85D\xB7\uAC10\uC9C0\uB41C \uC2A4\uD0DD \uC815\uBCF4\uB294 \uC720\uC9C0\uD55C\uB2E4. \uAE30\uC874 CLAUDE.md\uB294 sugo/backup/\uC73C\uB85C \uBC31\uC5C5\uD55C\uB2E4(\xA79).",
+    inputSchema: sugoResetInputSchema
+  },
+  handleSugoReset
+);
+server.registerTool(
+  "sugo_delete",
+  {
+    title: "Unregister a project from the global registry",
+    description: "\uB808\uC9C0\uC2A4\uD2B8\uB9AC(\uB4F1\uB85D \uBAA9\uB85D)\uC5D0\uC11C\uB9CC \uC81C\uAC70\uD55C\uB2E4 \u2014 \uD504\uB85C\uC81D\uD2B8\uC758 \uC2E4\uC81C \uD30C\uC77C(sugo/**)\uC740 \uC9C0\uC6B0\uC9C0 \uC54A\uB294\uB2E4(\xA79).",
+    inputSchema: sugoDeleteInputSchema
+  },
+  handleSugoDelete
+);
+server.registerTool(
+  "sugo_status",
+  {
+    title: "Local dashboard of all registered projects (readOnly)",
+    description: "\uB4F1\uB85D\uB41C \uBAA8\uB4E0 \uD504\uB85C\uC81D\uD2B8\uC758 \uC0C1\uD0DC(\uD65C\uC131\uD654 \uC5EC\uBD80, \uC801\uC6A9 \uD558\uB124\uC2A4 \uC218, \uAC10\uC9C0\uB41C \uC2A4\uD0DD \uB4F1)\uB97C \uBAA8\uC544 \uBCF4\uC5EC\uC900\uB2E4(\xA79).",
+    inputSchema: sugoStatusInputSchema
+  },
+  handleSugoStatus
+);
+server.registerTool(
+  "sugo_overview",
+  {
+    title: "Whole-project AST-based structural onboarding",
+    description: "sugo_explore(\uD30C\uC77C \uBAA9\uB85D\uC744 \uC9C1\uC811 \uC9C0\uC815)\uC640 \uB2EC\uB9AC \uD504\uB85C\uC81D\uD2B8 \uC804\uCCB4\uB97C \uC2A4\uC2A4\uB85C \uAC78\uC5B4(\uCD5C\uB300 200\uAC1C \uD30C\uC77C) tree-sitter\uB85C \uD30C\uC2F1\uD55C \uAD6C\uC870 \uC694\uC57D JSON\uC744 \uB9CC\uB4E0\uB2E4(\xA79/\xA7D.7).",
+    inputSchema: sugoOverviewInputSchema
+  },
+  handleSugoOverview
+);
+server.registerTool(
+  "sugo_route",
+  {
+    title: "Route a natural-language request to (agent, skill)",
+    description: '\uD30C\uC774\uD504\uB77C\uC778 \uBC16 \uB2E8\uBC1C \uC694\uCCAD("\uC774\uAC70 \uBC84\uADF8 \uACE0\uCCD0\uC918", "\uB9AC\uBDF0\uD574\uC918")\uC758 \uC790\uC5F0\uC5B4 \uC758\uB3C4\uB97C (agent, skill)\uB85C \uB9E4\uD551\uD55C\uB2E4(\xA75b). \uC774\uBC88 \uBE4C\uB4DC \uCD5C\uC18C\uC14B: code(implement/bugfix/refactor)\xB7test(targeted/full)\xB7review(validate/security)\xB7docs(readme).',
+    inputSchema: sugoRouteInputSchema
+  },
+  handleSugoRoute
+);
+server.registerTool(
+  "version",
+  {
+    title: "Plugin version (readOnly)",
+    description: "\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804\uC744 \uBC18\uD658\uD55C\uB2E4. \uC6D0\uACA9 \uB9C8\uCF13\uD50C\uB808\uC774\uC2A4\uAC00 \uAD6C\uC131\uB3FC \uC788\uC9C0 \uC54A\uC544 \uC5C5\uB370\uC774\uD2B8 \uD655\uC778\uC740 \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294\uB2E4(\xA71/\xA7D.1).",
+    inputSchema: sugoVersionInputSchema
+  },
+  handleSugoVersion
 );
 async function main() {
   const transport = new StdioServerTransport();

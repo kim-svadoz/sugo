@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
 import { build } from "esbuild";
+
+const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf-8"));
 
 // esbuild가 ESM으로 번들할 때 web-tree-sitter(CJS, emscripten 생성 코드)의 동적 require()/
 // __dirname 참조를 그대로 못 옮긴다("Dynamic require of X is not supported",
@@ -19,6 +22,7 @@ await build({
   format: "esm",
   outfile: "dist/index.bundle.mjs",
   banner: { js: banner },
+  define: { __SUGO_VERSION__: JSON.stringify(pkg.version) },
 });
 
 console.log("빌드 완료: dist/index.bundle.mjs");

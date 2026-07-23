@@ -8,6 +8,9 @@ import {
   sugoCheckLethalTrifectaInputSchema,
 } from "./tools/sugoCheckLethalTrifecta.js";
 import { handleSugoCheckpoint, sugoCheckpointInputSchema } from "./tools/sugoCheckpoint.js";
+import { handleSugoDelete, sugoDeleteInputSchema } from "./tools/sugoDelete.js";
+import { handleSugoDisable, sugoDisableInputSchema } from "./tools/sugoDisable.js";
+import { handleSugoEnable, sugoEnableInputSchema } from "./tools/sugoEnable.js";
 import { handleSugoExplore, sugoExploreInputSchema } from "./tools/sugoExplore.js";
 import {
   handleSugoGetProjectContext,
@@ -18,6 +21,7 @@ import {
   handleSugoJudgmentReport,
   sugoJudgmentReportInputSchema,
 } from "./tools/sugoJudgmentReport.js";
+import { handleSugoOverview, sugoOverviewInputSchema } from "./tools/sugoOverview.js";
 import { handleSugoPlan, sugoPlanInputSchema } from "./tools/sugoPlan.js";
 import {
   handleSugoRecordContractEvidence,
@@ -27,10 +31,15 @@ import {
   handleSugoRecordTestEvidence,
   sugoRecordTestEvidenceInputSchema,
 } from "./tools/sugoRecordTestEvidence.js";
+import { handleSugoReset, sugoResetInputSchema } from "./tools/sugoReset.js";
 import { handleSugoRoadmap, sugoRoadmapInputSchema } from "./tools/sugoRoadmap.js";
+import { handleSugoRoute, sugoRouteInputSchema } from "./tools/sugoRoute.js";
 import { handleSugoSpec, sugoSpecInputSchema } from "./tools/sugoSpec.js";
+import { handleSugoStatus, sugoStatusInputSchema } from "./tools/sugoStatus.js";
 import { handleSugoTask, sugoTaskInputSchema } from "./tools/sugoTask.js";
+import { handleSugoUpdate, sugoUpdateInputSchema } from "./tools/sugoUpdate.js";
 import { handleSugoValidate, sugoValidateInputSchema } from "./tools/sugoValidate.js";
+import { handleSugoVersion, sugoVersionInputSchema } from "./tools/sugoVersion.js";
 import { handleSugoWorkspace, sugoWorkspaceInputSchema } from "./tools/sugoWorkspace.js";
 
 const server = new McpServer({
@@ -177,8 +186,9 @@ server.registerTool(
   {
     title: "HULK checkpoint CRUD (pre-commit reminders)",
     description:
-      "커밋 전 재발방지 체크리스트를 관리한다(add/list). applies_to가 비어있으면 보편 " +
-      "체크포인트로 항상 적용되고, 아니면 프로젝트명/harnessId와 매칭될 때만 적용된다(§8).",
+      "커밋 전 재발방지 체크리스트를 관리한다(add/get/list/remove/memory/read_memory/migrate/sync). " +
+      "applies_to가 비어있으면 보편 체크포인트로 항상 적용되고, 아니면 프로젝트명/harnessId와 " +
+      "매칭될 때만 적용된다. sync는 대시보드로 push만 한다(pull은 미구현, §7.2/§8).",
     inputSchema: sugoCheckpointInputSchema,
   },
   handleSugoCheckpoint,
@@ -243,6 +253,106 @@ server.registerTool(
     inputSchema: sugoExploreInputSchema,
   },
   handleSugoExplore,
+);
+
+server.registerTool(
+  "sugo_update",
+  {
+    title: "Re-sync harness for an already-registered project",
+    description:
+      "이미 sugo_add로 등록된 프로젝트의 스택감지·하네스를 다시 돈다(sugo_add와 동작 공유). " +
+      "등록돼 있지 않으면 거부한다 — 신규 등록은 sugo_add의 책임(§9).",
+    inputSchema: sugoUpdateInputSchema,
+  },
+  handleSugoUpdate,
+);
+
+server.registerTool(
+  "sugo_disable",
+  {
+    title: "Mark a registered project as disabled",
+    description: "프로젝트를 비활성 표시한다(sugo/config.json.disabled=true). sugo_status에 노출된다(§9).",
+    inputSchema: sugoDisableInputSchema,
+  },
+  handleSugoDisable,
+);
+
+server.registerTool(
+  "sugo_enable",
+  {
+    title: "Re-enable a disabled project",
+    description: "sugo_disable로 비활성화된 프로젝트를 다시 활성화한다(§9).",
+    inputSchema: sugoEnableInputSchema,
+  },
+  handleSugoEnable,
+);
+
+server.registerTool(
+  "sugo_reset",
+  {
+    title: "Reset applied harness state for a project",
+    description:
+      "적용된 하네스 산출물(sugo/harness/**, CLAUDE.md 내용)만 지운다 — 레지스트리 등록·감지된 " +
+      "스택 정보는 유지한다. 기존 CLAUDE.md는 sugo/backup/으로 백업한다(§9).",
+    inputSchema: sugoResetInputSchema,
+  },
+  handleSugoReset,
+);
+
+server.registerTool(
+  "sugo_delete",
+  {
+    title: "Unregister a project from the global registry",
+    description:
+      "레지스트리(등록 목록)에서만 제거한다 — 프로젝트의 실제 파일(sugo/**)은 지우지 않는다(§9).",
+    inputSchema: sugoDeleteInputSchema,
+  },
+  handleSugoDelete,
+);
+
+server.registerTool(
+  "sugo_status",
+  {
+    title: "Local dashboard of all registered projects (readOnly)",
+    description: "등록된 모든 프로젝트의 상태(활성화 여부, 적용 하네스 수, 감지된 스택 등)를 모아 보여준다(§9).",
+    inputSchema: sugoStatusInputSchema,
+  },
+  handleSugoStatus,
+);
+
+server.registerTool(
+  "sugo_overview",
+  {
+    title: "Whole-project AST-based structural onboarding",
+    description:
+      "sugo_explore(파일 목록을 직접 지정)와 달리 프로젝트 전체를 스스로 걸어(최대 200개 파일) " +
+      "tree-sitter로 파싱한 구조 요약 JSON을 만든다(§9/§D.7).",
+    inputSchema: sugoOverviewInputSchema,
+  },
+  handleSugoOverview,
+);
+
+server.registerTool(
+  "sugo_route",
+  {
+    title: "Route a natural-language request to (agent, skill)",
+    description:
+      "파이프라인 밖 단발 요청(\"이거 버그 고쳐줘\", \"리뷰해줘\")의 자연어 의도를 (agent, skill)로 " +
+      "매핑한다(§5b). 이번 빌드 최소셋: code(implement/bugfix/refactor)·test(targeted/full)·" +
+      "review(validate/security)·docs(readme).",
+    inputSchema: sugoRouteInputSchema,
+  },
+  handleSugoRoute,
+);
+
+server.registerTool(
+  "version",
+  {
+    title: "Plugin version (readOnly)",
+    description: "플러그인 버전을 반환한다. 원격 마켓플레이스가 구성돼 있지 않아 업데이트 확인은 지원하지 않는다(§1/§D.1).",
+    inputSchema: sugoVersionInputSchema,
+  },
+  handleSugoVersion,
 );
 
 async function main() {
