@@ -22526,8 +22526,8 @@ var StdioServerTransport = class {
 };
 
 // src/tools/sugoAdd.ts
-import { mkdir as mkdir5 } from "node:fs/promises";
-import { basename, dirname as dirname5, join as join7, resolve as resolve2 } from "node:path";
+import { mkdir as mkdir6 } from "node:fs/promises";
+import { basename, dirname as dirname6, join as join8, resolve as resolve2 } from "node:path";
 
 // src/fsUtil.ts
 import { mkdir, open, rename, unlink, writeFile } from "node:fs/promises";
@@ -23174,48 +23174,164 @@ function detectStack(projectPath) {
 }
 
 // src/hulk/workspace.ts
-import { mkdir as mkdir4, readdir, readFile as readFile3 } from "node:fs/promises";
+import { mkdir as mkdir5, readdir, readFile as readFile5 } from "node:fs/promises";
+
+// src/dashboard/config.ts
+import { userInfo } from "node:os";
+import { readFile as readFile3 } from "node:fs/promises";
+import { join as join6 } from "node:path";
+function settingsFilePath() {
+  return join6(sugoHomeDir(), ".claude", "sugo", "settings.json");
+}
+function currentUsername() {
+  try {
+    return userInfo().username;
+  } catch {
+    return "unknown";
+  }
+}
+async function resolveDashboardConfig() {
+  const envUrl = process.env.SUGO_DASHBOARD_API_URL;
+  if (envUrl) {
+    return { enabled: true, apiUrl: envUrl, userId: process.env.SUGO_DASHBOARD_USER_ID ?? currentUsername() };
+  }
+  try {
+    const raw = await readFile3(settingsFilePath(), "utf-8");
+    const parsed = JSON.parse(raw);
+    const d = parsed.dashboard;
+    if (d?.enabled && d.apiUrl) {
+      return { enabled: true, apiUrl: d.apiUrl, userId: d.userId ?? currentUsername() };
+    }
+  } catch {
+  }
+  return { enabled: false };
+}
+
+// src/dashboard/retryQueue.ts
+import { mkdir as mkdir4, readFile as readFile4 } from "node:fs/promises";
 
 // src/hulk/storage.ts
-import { join as join6 } from "node:path";
+import { join as join7 } from "node:path";
 function hulkRootDir() {
-  return join6(sugoHomeDir(), ".claude", "sugo", "hulk");
+  return join7(sugoHomeDir(), ".claude", "sugo", "hulk");
 }
 function workspaceDir(workspace) {
-  return join6(hulkRootDir(), workspace);
+  return join7(hulkRootDir(), workspace);
 }
 function workspaceFilePath(workspace) {
-  return join6(workspaceDir(workspace), "workspace.json");
+  return join7(workspaceDir(workspace), "workspace.json");
 }
 function tasksFilePath(workspace) {
-  return join6(workspaceDir(workspace), "tasks.json");
+  return join7(workspaceDir(workspace), "tasks.json");
 }
 function tasksLockPath(workspace) {
   return `${tasksFilePath(workspace)}.lock`;
 }
 function checkpointsDir(workspace) {
-  return join6(workspaceDir(workspace), "checkpoints");
+  return join7(workspaceDir(workspace), "checkpoints");
 }
 function specsDir(workspace) {
-  return join6(workspaceDir(workspace), "specs");
+  return join7(workspaceDir(workspace), "specs");
 }
 function historyDir(workspace) {
-  return join6(workspaceDir(workspace), "history");
+  return join7(workspaceDir(workspace), "history");
 }
 function memoryFilePath(workspace) {
-  return join6(workspaceDir(workspace), "memory.md");
+  return join7(workspaceDir(workspace), "memory.md");
 }
 function roadmapFilePath(workspace) {
-  return join6(workspaceDir(workspace), "roadmap.json");
+  return join7(workspaceDir(workspace), "roadmap.json");
 }
 function roadmapLockPath(workspace) {
   return `${roadmapFilePath(workspace)}.lock`;
+}
+function syncRetryQueuePath() {
+  return join7(hulkRootDir(), "sync-retry-queue.json");
+}
+function syncRetryQueueLockPath() {
+  return `${syncRetryQueuePath()}.lock`;
+}
+
+// src/dashboard/retryQueue.ts
+import { dirname as dirname5 } from "node:path";
+var MAX_RETRY_QUEUE_ITEMS = 100;
+async function readQueueFile() {
+  try {
+    const raw = await readFile4(syncRetryQueuePath(), "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return { items: [] };
+  }
+}
+async function writeQueueFile(file) {
+  await mkdir4(dirname5(syncRetryQueuePath()), { recursive: true });
+  await atomicWriteFile(syncRetryQueuePath(), JSON.stringify(file, null, 2));
+}
+async function enqueueRetry(endpoint, method, data) {
+  await withFileLock(syncRetryQueueLockPath(), async () => {
+    const file = await readQueueFile();
+    file.items.push({ endpoint, method, data, timestamp: (/* @__PURE__ */ new Date()).toISOString(), retryCount: 0 });
+    if (file.items.length > MAX_RETRY_QUEUE_ITEMS) {
+      file.items = file.items.slice(file.items.length - MAX_RETRY_QUEUE_ITEMS);
+    }
+    await writeQueueFile(file);
+  });
+}
+
+// src/dashboard/client.ts
+var DEFAULT_TIMEOUT_MS = 5e3;
+async function sendOnce(apiUrl, endpoint, method, data, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${apiUrl}${endpoint}`, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      signal: controller.signal
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function pushEvent(endpoint, method, data, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled || !config2.apiUrl) return;
+  const ok8 = await sendOnce(config2.apiUrl, endpoint, method, data, timeoutMs);
+  if (!ok8) await enqueueRetry(endpoint, method, data);
+}
+
+// src/dashboard/sync.ts
+async function syncWorkspace(ws) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/workspace", "POST", {
+    userId: config2.userId,
+    name: ws.name,
+    projects: ws.projects,
+    gitSyncedProjects: [],
+    createdAt: ws.created_at,
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  });
+}
+async function syncTask(workspaceName, task) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/task", "POST", { userId: config2.userId, workspaceName, task });
+}
+async function syncRoadmapSnapshot(workspaceName, nodes) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/roadmap", "POST", { userId: config2.userId, workspaceName, nodes });
 }
 
 // src/hulk/workspace.ts
 async function loadWorkspace(name2) {
   try {
-    const raw = await readFile3(workspaceFilePath(name2), "utf-8");
+    const raw = await readFile5(workspaceFilePath(name2), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -23230,8 +23346,9 @@ async function ensureWorkspace(name2, projectPath) {
     projects: Array.from(projects),
     created_at: existing?.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
   };
-  await mkdir4(workspaceDir(name2), { recursive: true });
+  await mkdir5(workspaceDir(name2), { recursive: true });
   await atomicWriteFile(workspaceFilePath(name2), JSON.stringify(workspace, null, 2));
+  void syncWorkspace(workspace);
   return workspace;
 }
 async function listWorkspaces() {
@@ -23280,11 +23397,11 @@ async function handleSugoAdd(rawArgs) {
     fetchWarnings
   });
   const sugoDir = projectSugoDir(projectPath);
-  await mkdir5(sugoDir, { recursive: true });
-  await atomicWriteFile(join7(sugoDir, "CLAUDE.md"), composeResult.claudeMd);
+  await mkdir6(sugoDir, { recursive: true });
+  await atomicWriteFile(join8(sugoDir, "CLAUDE.md"), composeResult.claudeMd);
   for (const file of composeResult.harnessFiles) {
-    const fullPath = join7(projectPath, file.relPath);
-    await mkdir5(dirname5(fullPath), { recursive: true });
+    const fullPath = join8(projectPath, file.relPath);
+    await mkdir6(dirname6(fullPath), { recursive: true });
     await atomicWriteFile(fullPath, file.content);
   }
   const now = (/* @__PURE__ */ new Date()).toISOString();
@@ -23327,13 +23444,13 @@ async function handleSugoAdd(rawArgs) {
     detectedStack,
     appliedHarnesses: composeResult.appliedHarnesses,
     warnings: composeResult.warnings,
-    claudeMdPath: join7(sugoDir, "CLAUDE.md")
+    claudeMdPath: join8(sugoDir, "CLAUDE.md")
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
 // src/tools/sugoAnalyze.ts
-import { readFile as readFile6 } from "node:fs/promises";
+import { readFile as readFile8 } from "node:fs/promises";
 
 // src/analyze.ts
 var REQ_LINE_RE = /\bREQ-(\d+)\b\s*:?\s*(.*)$/gim;
@@ -23420,16 +23537,16 @@ function analyzePrdMatch(prdContent, fileContents) {
 }
 
 // src/readChangedFiles.ts
-import { readFile as readFile4 } from "node:fs/promises";
-import { isAbsolute, join as join8 } from "node:path";
+import { readFile as readFile6 } from "node:fs/promises";
+import { isAbsolute, join as join9 } from "node:path";
 var MAX_FILE_BYTES = 3e5;
 var MAX_FILES = 200;
 async function readFileContents(projectPath, changedFiles) {
   const contents = [];
   for (const rel of changedFiles.slice(0, MAX_FILES)) {
-    const full = isAbsolute(rel) ? rel : join8(projectPath, rel);
+    const full = isAbsolute(rel) ? rel : join9(projectPath, rel);
     try {
-      const content = await readFile4(full, "utf-8");
+      const content = await readFile6(full, "utf-8");
       if (content.length <= MAX_FILE_BYTES) contents.push(content);
     } catch {
       continue;
@@ -23440,29 +23557,29 @@ async function readFileContents(projectPath, changedFiles) {
 
 // src/session.ts
 import { randomBytes } from "node:crypto";
-import { mkdir as mkdir6, readdir as readdir2, readFile as readFile5 } from "node:fs/promises";
-import { join as join9 } from "node:path";
+import { mkdir as mkdir7, readdir as readdir2, readFile as readFile7 } from "node:fs/promises";
+import { join as join10 } from "node:path";
 function sessionsDir() {
-  return join9(sugoHomeDir(), ".claude", "sugo", "sessions");
+  return join10(sugoHomeDir(), ".claude", "sugo", "sessions");
 }
 function generateSessionId() {
   return `plan-${Date.now()}-${randomBytes(4).toString("hex")}`;
 }
 function sessionFilePath(id) {
-  return join9(sessionsDir(), `${id}.json`);
+  return join10(sessionsDir(), `${id}.json`);
 }
 async function saveSession(session) {
-  await mkdir6(sessionsDir(), { recursive: true });
+  await mkdir7(sessionsDir(), { recursive: true });
   session.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   await atomicWriteFile(sessionFilePath(session.id), JSON.stringify(session, null, 2));
 }
 async function loadSession(id) {
-  const raw = await readFile5(sessionFilePath(id), "utf-8");
+  const raw = await readFile7(sessionFilePath(id), "utf-8");
   return JSON.parse(raw);
 }
 async function sessionExists(id) {
   try {
-    await readFile5(sessionFilePath(id), "utf-8");
+    await readFile7(sessionFilePath(id), "utf-8");
     return true;
   } catch {
     return false;
@@ -23479,7 +23596,7 @@ async function loadAllSessions() {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile5(join9(sessionsDir(), name2), "utf-8");
+      const raw = await readFile7(join10(sessionsDir(), name2), "utf-8");
       sessions.push(JSON.parse(raw));
     } catch {
       continue;
@@ -23505,7 +23622,7 @@ async function handleSugoAnalyze(rawArgs) {
   }
   let prdContent;
   try {
-    prdContent = await readFile6(session.data.prdPath, "utf-8");
+    prdContent = await readFile8(session.data.prdPath, "utf-8");
   } catch {
     return errorResult("PRD_FILE_MISSING", `PRD \uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${session.data.prdPath}`);
   }
@@ -23583,6 +23700,19 @@ function buildChainPrompt(direction, handoff) {
   return direction === "code_to_test" ? buildCodeToTestPrompt(handoff) : buildTestToReviewPrompt(handoff);
 }
 
+// src/dashboard/activity.ts
+var ACTIVITY_TIMEOUT_MS = 3e3;
+async function emitActivity(event) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent(
+    "/api/activity/ingest",
+    "POST",
+    { userId: config2.userId, ts: (/* @__PURE__ */ new Date()).toISOString(), ...event },
+    ACTIVITY_TIMEOUT_MS
+  );
+}
+
 // src/tools/sugoChain.ts
 var sugoChainInputSchema = {
   sessionId: external_exports.string().describe("sugo_plan(start)\uC73C\uB85C \uBC1C\uAE09\uB41C \uC138\uC158 id"),
@@ -23625,6 +23755,17 @@ async function handleSugoChain(rawArgs) {
     }
   };
   await saveSession(updated);
+  if (session.data.hulkWorkspace) {
+    const fromAgent = direction === "code_to_test" ? "CODE" : "TEST";
+    const toAgent = direction === "code_to_test" ? "TEST" : "REVIEW";
+    void emitActivity({
+      workspaceName: session.data.hulkWorkspace,
+      agent: fromAgent,
+      handoffTo: toAgent,
+      eventType: "HANDOFF",
+      message: args2.summary
+    });
+  }
   const payload = { ok: true, sessionId: session.id, direction, handoff, prompt };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
@@ -23666,8 +23807,8 @@ async function handleSugoCheckLethalTrifecta(rawArgs) {
 
 // src/hulk/checkpoint.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir7, readdir as readdir3, readFile as readFile7 } from "node:fs/promises";
-import { join as join10 } from "node:path";
+import { mkdir as mkdir8, readdir as readdir3, readFile as readFile9 } from "node:fs/promises";
+import { join as join11 } from "node:path";
 
 // node_modules/js-yaml/dist/js-yaml.mjs
 var NOT_RESOLVED = Symbol("NOT_RESOLVED");
@@ -26617,7 +26758,7 @@ async function addCheckpoint(workspace, params) {
     created_at: (/* @__PURE__ */ new Date()).toISOString()
   };
   const dir = checkpointsDir(workspace);
-  await mkdir7(dir, { recursive: true });
+  await mkdir8(dir, { recursive: true });
   const content = stringifyFrontmatter({
     id: checkpoint.id,
     title: checkpoint.title,
@@ -26626,7 +26767,7 @@ async function addCheckpoint(workspace, params) {
     checklist: checkpoint.checklist,
     created_at: checkpoint.created_at
   });
-  await atomicWriteFile(join10(dir, `${id}-${slugify(params.title)}.md`), content);
+  await atomicWriteFile(join11(dir, `${id}-${slugify(params.title)}.md`), content);
   return checkpoint;
 }
 async function listCheckpoints(workspace) {
@@ -26641,7 +26782,7 @@ async function listCheckpoints(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile7(join10(dir, name2), "utf-8");
+      const raw = await readFile9(join11(dir, name2), "utf-8");
       const { meta } = parseFrontmatter(raw);
       checkpoints.push(meta);
     } catch {
@@ -26693,12 +26834,12 @@ function errorResult3(errorCode, message) {
 }
 
 // src/tools/sugoExplore.ts
-import { readFile as readFile8 } from "node:fs/promises";
-import { isAbsolute as isAbsolute2, join as join13 } from "node:path";
+import { readFile as readFile10 } from "node:fs/promises";
+import { isAbsolute as isAbsolute2, join as join14 } from "node:path";
 
 // src/ast/astParser.ts
 var import_web_tree_sitter = __toESM(require_tree_sitter(), 1);
-import { extname, join as join12 } from "node:path";
+import { extname, join as join13 } from "node:path";
 
 // src/ast/outline.ts
 var NODE_TYPE_MAP = {
@@ -26771,11 +26912,11 @@ function extractOutline(rootNode, language) {
 
 // src/ast/wasmGrammarPath.ts
 import { existsSync as existsSync4 } from "node:fs";
-import { dirname as dirname6, join as join11 } from "node:path";
+import { dirname as dirname7, join as join12 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 function defaultWasmGrammarsDir() {
-  const here = dirname6(fileURLToPath2(import.meta.url));
-  const candidates = [join11(here, "..", "..", "wasm-grammars"), join11(here, "..", "wasm-grammars")];
+  const here = dirname7(fileURLToPath2(import.meta.url));
+  const candidates = [join12(here, "..", "..", "wasm-grammars"), join12(here, "..", "wasm-grammars")];
   for (const c of candidates) {
     if (existsSync4(c)) return c;
   }
@@ -26814,7 +26955,7 @@ async function ensureInit() {
   if (!initPromise2) {
     const grammarsDir = defaultWasmGrammarsDir();
     initPromise2 = import_web_tree_sitter.default.init({
-      locateFile: (scriptName) => join12(grammarsDir, scriptName)
+      locateFile: (scriptName) => join13(grammarsDir, scriptName)
     });
   }
   return initPromise2;
@@ -26824,7 +26965,7 @@ async function loadLanguage(language) {
   if (cached2) return cached2;
   const wasmFile = LANGUAGE_FILE_MAP[language];
   if (!wasmFile) throw new Error(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC5B8\uC5B4: ${language}`);
-  const lang = await import_web_tree_sitter.default.Language.load(join12(defaultWasmGrammarsDir(), wasmFile));
+  const lang = await import_web_tree_sitter.default.Language.load(join13(defaultWasmGrammarsDir(), wasmFile));
   languageCache.set(language, lang);
   return lang;
 }
@@ -26854,10 +26995,10 @@ async function handleSugoExplore(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const f of args2.filePaths.slice(0, MAX_FILES2)) {
-    const full = isAbsolute2(f) ? f : join13(args2.projectPath, f);
+    const full = isAbsolute2(f) ? f : join14(args2.projectPath, f);
     let content;
     try {
-      content = await readFile8(full, "utf-8");
+      content = await readFile10(full, "utf-8");
     } catch {
       skipped.push({ path: f, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -26878,21 +27019,21 @@ async function handleSugoExplore(rawArgs) {
 }
 
 // src/tools/sugoGetProjectContext.ts
-import { readdir as readdir4, readFile as readFile9 } from "node:fs/promises";
-import { join as join14 } from "node:path";
+import { readdir as readdir4, readFile as readFile11 } from "node:fs/promises";
+import { join as join15 } from "node:path";
 var sugoGetProjectContextInputSchema = {
   projectPath: external_exports.string().describe("\uCEE8\uD14D\uC2A4\uD2B8\uB97C \uB85C\uB4DC\uD560 \uD504\uB85C\uC81D\uD2B8 \uC808\uB300\uACBD\uB85C")
 };
 var SugoGetProjectContextArgs = external_exports.object(sugoGetProjectContextInputSchema);
 async function readIfExists(path) {
   try {
-    return await readFile9(path, "utf-8");
+    return await readFile11(path, "utf-8");
   } catch {
     return null;
   }
 }
 async function readRulesDir(projectPath) {
-  const rulesDir = join14(projectPath, ".claude", "rules");
+  const rulesDir = join15(projectPath, ".claude", "rules");
   let entries;
   try {
     entries = await readdir4(rulesDir, { withFileTypes: true });
@@ -26902,7 +27043,7 @@ async function readRulesDir(projectPath) {
   const rules = [];
   for (const entry of entries) {
     if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-    const full = join14(rulesDir, entry.name);
+    const full = join15(rulesDir, entry.name);
     const content = await readIfExists(full);
     if (content !== null) rules.push({ path: full, content });
   }
@@ -26911,12 +27052,12 @@ async function readRulesDir(projectPath) {
 async function handleSugoGetProjectContext(rawArgs) {
   const args2 = SugoGetProjectContextArgs.parse(rawArgs);
   const { projectPath } = args2;
-  const claudeMd = await readIfExists(join14(projectPath, "sugo", "CLAUDE.md"));
+  const claudeMd = await readIfExists(join15(projectPath, "sugo", "CLAUDE.md"));
   const config2 = await loadProjectConfig(projectPath);
   const harnesses = [];
   if (config2) {
     for (const applied of config2.appliedHarnesses) {
-      const content = await readIfExists(join14(projectPath, "sugo", "harness", applied.id, "harness.md"));
+      const content = await readIfExists(join15(projectPath, "sugo", "harness", applied.id, "harness.md"));
       if (content !== null) harnesses.push({ id: applied.id, harnessMd: content });
     }
   }
@@ -26934,16 +27075,16 @@ async function handleSugoGetProjectContext(rawArgs) {
 
 // src/hulk/history.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdir as mkdir8, readdir as readdir5, readFile as readFile10 } from "node:fs/promises";
-import { join as join15 } from "node:path";
+import { mkdir as mkdir9, readdir as readdir5, readFile as readFile12 } from "node:fs/promises";
+import { join as join16 } from "node:path";
 function generateWorkLogId() {
   return `wl-${Date.now()}-${randomBytes3(4).toString("hex")}`;
 }
 async function addWorkLog(workspace, params) {
   const workLog = { id: generateWorkLogId(), ...params };
   const dir = historyDir(workspace);
-  await mkdir8(dir, { recursive: true });
-  await atomicWriteFile(join15(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
+  await mkdir9(dir, { recursive: true });
+  await atomicWriteFile(join16(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
   return workLog;
 }
 async function listWorkLogs(workspace) {
@@ -26958,7 +27099,7 @@ async function listWorkLogs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile10(join15(dir, name2), "utf-8");
+      const raw = await readFile12(join16(dir, name2), "utf-8");
       logs.push(JSON.parse(raw));
     } catch {
       continue;
@@ -26968,7 +27109,7 @@ async function listWorkLogs(workspace) {
 }
 async function getWorkLog(workspace, id) {
   try {
-    const raw = await readFile10(join15(historyDir(workspace), `${id}.json`), "utf-8");
+    const raw = await readFile12(join16(historyDir(workspace), `${id}.json`), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -27104,7 +27245,7 @@ async function handleSugoJudgmentReport(rawArgs) {
 }
 
 // src/tools/sugoPlan.ts
-import { readFile as readFile14 } from "node:fs/promises";
+import { readFile as readFile16 } from "node:fs/promises";
 
 // src/bootable.ts
 async function isProjectBootable(projectPath) {
@@ -27113,8 +27254,8 @@ async function isProjectBootable(projectPath) {
 }
 
 // src/bootScan.ts
-import { readdir as readdir6, readFile as readFile11 } from "node:fs/promises";
-import { join as join16 } from "node:path";
+import { readdir as readdir6, readFile as readFile13 } from "node:fs/promises";
+import { join as join17 } from "node:path";
 
 // src/gates.ts
 function ok3() {
@@ -27269,9 +27410,9 @@ async function collectJavaFiles(dir, acc) {
     if (acc.length >= MAX_FILES3) return;
     if (entry.isDirectory()) {
       if (EXCLUDED_DIRS.has(entry.name)) continue;
-      await collectJavaFiles(join16(dir, entry.name), acc);
+      await collectJavaFiles(join17(dir, entry.name), acc);
     } else if (entry.isFile() && entry.name.endsWith(".java")) {
-      acc.push(join16(dir, entry.name));
+      acc.push(join17(dir, entry.name));
     }
   }
 }
@@ -27282,7 +27423,7 @@ async function scanForSpringBootTestAnnotation(projectPath) {
   const candidates = testFiles.length > 0 ? testFiles : files;
   for (const file of candidates) {
     try {
-      const content = await readFile11(file, "utf-8");
+      const content = await readFile13(file, "utf-8");
       if (content.length > MAX_FILE_BYTES3) continue;
       if (hasValidSpringBootTestAnnotation([content])) return true;
     } catch {
@@ -27293,12 +27434,12 @@ async function scanForSpringBootTestAnnotation(projectPath) {
 }
 
 // src/feature.ts
-import { mkdir as mkdir9 } from "node:fs/promises";
-import { join as join18 } from "node:path";
+import { mkdir as mkdir10 } from "node:fs/promises";
+import { join as join19 } from "node:path";
 
 // src/patch.ts
 import { readdir as readdir7 } from "node:fs/promises";
-import { dirname as dirname7, join as join17 } from "node:path";
+import { dirname as dirname8, join as join18 } from "node:path";
 var PatchEntryError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -27332,7 +27473,7 @@ function patchWorkResultFilename(version2) {
   return `work-result-patch-v${version2}.md`;
 }
 async function resolvePatchContext(workResultPath) {
-  const featureDir = dirname7(workResultPath);
+  const featureDir = dirname8(workResultPath);
   let filenames;
   try {
     filenames = await readdir7(featureDir);
@@ -27341,7 +27482,7 @@ async function resolvePatchContext(workResultPath) {
   }
   let parentPrdPath;
   if (filenames.includes("prd.md")) {
-    parentPrdPath = join17(featureDir, "prd.md");
+    parentPrdPath = join18(featureDir, "prd.md");
   } else {
     const latest = findLatestPrdPatchFilename(filenames);
     if (!latest) {
@@ -27350,7 +27491,7 @@ async function resolvePatchContext(workResultPath) {
         `\uBD80\uBAA8 PRD(prd.md \uB610\uB294 PRD-patch-v*.md)\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`
       );
     }
-    parentPrdPath = join17(featureDir, latest);
+    parentPrdPath = join18(featureDir, latest);
   }
   const version2 = computeNextPatchVersion(filenames);
   return { parentPrdPath, version: version2, baseWorkResultPath: workResultPath, featureDir };
@@ -27366,27 +27507,27 @@ function todayYyyymmdd() {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 }
 async function writePrdFile(projectPath, featureName, content) {
-  const featurePath = join18(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
-  const prdPath = join18(featurePath, "prd.md");
-  await mkdir9(featurePath, { recursive: true });
+  const featurePath = join19(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
+  const prdPath = join19(featurePath, "prd.md");
+  await mkdir10(featurePath, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath, prdPath };
 }
 async function writeWorkResultFile(featurePath, content) {
-  const workResultPath = join18(featurePath, "work-result.md");
-  await mkdir9(featurePath, { recursive: true });
+  const workResultPath = join19(featurePath, "work-result.md");
+  await mkdir10(featurePath, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
 async function writePatchPrdFile(featureDir, version2, content) {
-  const prdPath = join18(featureDir, patchPrdFilename(version2));
-  await mkdir9(featureDir, { recursive: true });
+  const prdPath = join19(featureDir, patchPrdFilename(version2));
+  await mkdir10(featureDir, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath: featureDir, prdPath };
 }
 async function writePatchWorkResultFile(featureDir, version2, content) {
-  const workResultPath = join18(featureDir, patchWorkResultFilename(version2));
-  await mkdir9(featureDir, { recursive: true });
+  const workResultPath = join19(featureDir, patchWorkResultFilename(version2));
+  await mkdir10(featureDir, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
@@ -27549,7 +27690,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash2 } from "node:crypto";
 import { stat } from "node:fs/promises";
-import { isAbsolute as isAbsolute3, join as join19, relative } from "node:path";
+import { isAbsolute as isAbsolute3, join as join20, relative } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash2("sha1").update(parts2.join("\n")).digest("hex");
@@ -27557,7 +27698,7 @@ function computeFingerprintFromEntries(entries) {
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
-    const full = isAbsolute3(f) ? f : join19(projectPath, f);
+    const full = isAbsolute3(f) ? f : join20(projectPath, f);
     const relPath = isAbsolute3(f) ? relative(projectPath, f) : f;
     try {
       const st = await stat(full);
@@ -27612,7 +27753,7 @@ function checkpointApplies(checkpoint, ctx) {
 }
 
 // src/hulk/roadmap.ts
-import { mkdir as mkdir10, readFile as readFile12 } from "node:fs/promises";
+import { mkdir as mkdir11, readFile as readFile14 } from "node:fs/promises";
 
 // src/hulk/roadmapGraph.ts
 function topoSort(nodes) {
@@ -27667,15 +27808,16 @@ function readySet(nodes) {
 // src/hulk/roadmap.ts
 async function readRoadmapFile(workspace) {
   try {
-    const raw = await readFile12(roadmapFilePath(workspace), "utf-8");
+    const raw = await readFile14(roadmapFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
   }
 }
 async function writeRoadmapFile(workspace, file) {
-  await mkdir10(workspaceDir(workspace), { recursive: true });
+  await mkdir11(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(roadmapFilePath(workspace), JSON.stringify(file, null, 2));
+  void syncRoadmapSnapshot(workspace, file.nodes);
 }
 async function withRoadmap(workspace, fn) {
   return withFileLock(roadmapLockPath(workspace), async () => {
@@ -27853,20 +27995,20 @@ function promotePrdRequirements(taskId, prdContent) {
 
 // src/hulk/task.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir11, readFile as readFile13 } from "node:fs/promises";
+import { mkdir as mkdir12, readFile as readFile15 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile13(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile15(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
   }
 }
 async function writeTasksFile(workspace, file) {
-  await mkdir11(workspaceDir(workspace), { recursive: true });
+  await mkdir12(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(tasksFilePath(workspace), JSON.stringify(file, null, 2));
 }
 async function addTask(workspace, params) {
@@ -27888,6 +28030,7 @@ async function addTask(workspace, params) {
     file.tasks.push(task);
     file.last_updated = now;
     await writeTasksFile(workspace, file);
+    void syncTask(workspace, task);
     return task;
   });
 }
@@ -27903,6 +28046,7 @@ async function updateTask(workspace, taskId, params) {
     else if (params.status === "done" && !task.completed_at) task.completed_at = (/* @__PURE__ */ new Date()).toISOString();
     file.last_updated = (/* @__PURE__ */ new Date()).toISOString();
     await writeTasksFile(workspace, file);
+    void syncTask(workspace, task);
     return task;
   });
 }
@@ -28390,7 +28534,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "decompose" && existing) {
     if (!args2.manifest) return errorResult5("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     if (!existing.data.prdPath) return errorResult5("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    const prdContent = await readFile14(existing.data.prdPath, "utf-8").catch(() => "");
+    const prdContent = await readFile16(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
@@ -28626,6 +28770,12 @@ async function handleSugoPlan(rawArgs) {
       workLogId: workLog.id,
       checkpointsToReview: applicable.map((cp) => ({ id: cp.id, title: cp.title, checklist: cp.checklist }))
     };
+    void emitActivity({
+      workspaceName: workspace,
+      agent: "MAIN",
+      eventType: "COMPLETED",
+      message: session.data.chainInfo.reviewSummary ?? `${session.featureName} \uC644\uB8CC`
+    });
   }
   if (action !== "status") {
     await saveSession(session);
@@ -28869,8 +29019,8 @@ function errorResult8(errorCode, message) {
 }
 
 // src/hulk/spec.ts
-import { mkdir as mkdir12, readdir as readdir8, readFile as readFile15 } from "node:fs/promises";
-import { join as join20 } from "node:path";
+import { mkdir as mkdir13, readdir as readdir8, readFile as readFile17 } from "node:fs/promises";
+import { join as join21 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
     name: params.name,
@@ -28880,12 +29030,12 @@ async function addSpec(workspace, params) {
     created_at: (/* @__PURE__ */ new Date()).toISOString()
   };
   const dir = specsDir(workspace);
-  await mkdir12(dir, { recursive: true });
+  await mkdir13(dir, { recursive: true });
   const fileContent = stringifyFrontmatter(
     { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
     spec.content
   );
-  await atomicWriteFile(join20(dir, `${slugify(params.name)}.md`), fileContent);
+  await atomicWriteFile(join21(dir, `${slugify(params.name)}.md`), fileContent);
   return spec;
 }
 function parseSpecFile(raw) {
@@ -28910,7 +29060,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile15(join20(dir, name2), "utf-8");
+      const raw = await readFile17(join21(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -28920,7 +29070,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile15(join20(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile17(join21(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -29032,8 +29182,8 @@ function errorResult10(errorCode, message) {
 }
 
 // src/harness/validationConfig.ts
-import { readFile as readFile16 } from "node:fs/promises";
-import { join as join21 } from "node:path";
+import { readFile as readFile18 } from "node:fs/promises";
+import { join as join22 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
   const checks = (raw?.checks ?? []).filter((c) => !!c?.id).map((c) => ({
@@ -29048,9 +29198,9 @@ async function loadProjectValidationConfigs(projectPath) {
   const result = /* @__PURE__ */ new Map();
   if (!config2) return result;
   for (const applied of config2.appliedHarnesses) {
-    const path = join21(projectPath, "sugo", "harness", applied.id, "validation.yaml");
+    const path = join22(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile16(path, "utf-8");
+      const content = await readFile18(path, "utf-8");
       result.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -29139,21 +29289,21 @@ function errorResult11(errorCode, message) {
 }
 
 // src/hulk/memory.ts
-import { mkdir as mkdir13, readFile as readFile17 } from "node:fs/promises";
+import { mkdir as mkdir14, readFile as readFile19 } from "node:fs/promises";
 async function appendMemory(workspace, note) {
   const path = memoryFilePath(workspace);
-  const existing = await readFile17(path, "utf-8").catch(() => "");
+  const existing = await readFile19(path, "utf-8").catch(() => "");
   const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
 
 ${note}
 `;
   const next = existing ? `${existing}
 ${entry}` : entry;
-  await mkdir13(workspaceDir(workspace), { recursive: true });
+  await mkdir14(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(path, next);
 }
 async function readMemory(workspace) {
-  return readFile17(memoryFilePath(workspace), "utf-8").catch(() => "");
+  return readFile19(memoryFilePath(workspace), "utf-8").catch(() => "");
 }
 
 // src/tools/sugoWorkspace.ts

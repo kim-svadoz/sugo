@@ -6,6 +6,7 @@ import { scanForSpringBootTestAnnotation } from "../bootScan.js";
 import { writePatchPrdFile, writePatchWorkResultFile, writePrdFile, writeWorkResultFile } from "../feature.js";
 import { checkCoverageGate } from "../consistency.js";
 import { checkContractEvidenceGate, checkContractStartedGate, resolveContractRequired } from "../contractEvidence.js";
+import { emitActivity } from "../dashboard/activity.js";
 import { validateIntegration, validateManifest, type DecomposeManifest } from "../decompose.js";
 import { checkEvidenceReuseGate, computeChangedFilesFingerprint } from "../fingerprint.js";
 import {
@@ -642,6 +643,14 @@ export async function handleSugoPlan(rawArgs: unknown) {
       workLogId: workLog.id,
       checkpointsToReview: applicable.map((cp) => ({ id: cp.id, title: cp.title, checklist: cp.checklist })),
     };
+
+    // ── §7.2 Activity Stream: 태스크 완료 이벤트. 논블로킹 — 실패해도 commit 응답엔 영향 없다.
+    void emitActivity({
+      workspaceName: workspace,
+      agent: "MAIN",
+      eventType: "COMPLETED",
+      message: session.data.chainInfo.reviewSummary ?? `${session.featureName} 완료`,
+    });
   }
 
   if (action !== "status") {

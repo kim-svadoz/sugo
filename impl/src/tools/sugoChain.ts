@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { buildChainPrompt, type ChainDirection, type ChainHandoff } from "../chain.js";
+import { emitActivity } from "../dashboard/activity.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
 
 export const sugoChainInputSchema = {
@@ -53,6 +54,20 @@ export async function handleSugoChain(rawArgs: unknown) {
     },
   };
   await saveSession(updated);
+
+  // ── §7.2 Activity Stream: 워크스페이스에 등록된 세션만 emit(비등록 세션은 대시보드에 보일
+  // 워크스페이스 자체가 없으므로 no-op). 논블로킹 — 실패해도 sugo_chain 응답엔 영향 없다.
+  if (session.data.hulkWorkspace) {
+    const fromAgent = direction === "code_to_test" ? "CODE" : "TEST";
+    const toAgent = direction === "code_to_test" ? "TEST" : "REVIEW";
+    void emitActivity({
+      workspaceName: session.data.hulkWorkspace,
+      agent: fromAgent,
+      handoffTo: toAgent,
+      eventType: "HANDOFF",
+      message: args.summary,
+    });
+  }
 
   const payload = { ok: true, sessionId: session.id, direction, handoff, prompt };
   return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };

@@ -1,5 +1,6 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { atomicWriteFile, withFileLock } from "../fsUtil.js";
+import { syncRoadmapSnapshot } from "../dashboard/sync.js";
 import { readySet, topoSort } from "./roadmapGraph.js";
 import { roadmapFilePath, roadmapLockPath, workspaceDir } from "./storage.js";
 import type { RoadmapFile, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus } from "./types.js";
@@ -16,6 +17,9 @@ async function readRoadmapFile(workspace: string): Promise<RoadmapFile> {
 async function writeRoadmapFile(workspace: string, file: RoadmapFile): Promise<void> {
   await mkdir(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(roadmapFilePath(workspace), JSON.stringify(file, null, 2));
+  // §7.2: 모든 로드맵 변경은 결국 이 함수를 거치므로, 성공적인 로컬 쓰기 뒤 스냅샷 전체를
+  // 논블로킹으로 흘려보낸다(개별 뮤테이션 함수마다 push를 반복하지 않기 위한 단일 지점).
+  void syncRoadmapSnapshot(workspace, file.nodes);
 }
 
 export interface RoadmapMutationResult {

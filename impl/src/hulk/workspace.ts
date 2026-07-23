@@ -1,5 +1,6 @@
 import { mkdir, readdir, readFile } from "node:fs/promises";
 import { atomicWriteFile } from "../fsUtil.js";
+import { syncWorkspace } from "../dashboard/sync.js";
 import { hulkRootDir, workspaceDir, workspaceFilePath } from "./storage.js";
 import type { Workspace } from "./types.js";
 
@@ -24,6 +25,7 @@ export async function ensureWorkspace(name: string, projectPath?: string): Promi
   };
   await mkdir(workspaceDir(name), { recursive: true });
   await atomicWriteFile(workspaceFilePath(name), JSON.stringify(workspace, null, 2));
+  void syncWorkspace(workspace); // §7.2 논블로킹 — 로컬 쓰기 완료 후 흘려보낸다(실패해도 이 함수는 이미 반환됨)
   return workspace;
 }
 

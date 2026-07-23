@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import { atomicWriteFile, withFileLock } from "../fsUtil.js";
+import { syncTask } from "../dashboard/sync.js";
 import { tasksFilePath, tasksLockPath, workspaceDir } from "./storage.js";
 import type { Task, TasksFile, TaskStatus } from "./types.js";
 
@@ -52,6 +53,7 @@ export async function addTask(workspace: string, params: AddTaskParams): Promise
     file.tasks.push(task);
     file.last_updated = now;
     await writeTasksFile(workspace, file);
+    void syncTask(workspace, task);
     return task;
   });
 }
@@ -75,6 +77,7 @@ export async function updateTask(workspace: string, taskId: string, params: Upda
     else if (params.status === "done" && !task.completed_at) task.completed_at = new Date().toISOString();
     file.last_updated = new Date().toISOString();
     await writeTasksFile(workspace, file);
+    void syncTask(workspace, task);
     return task;
   });
 }

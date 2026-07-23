@@ -45,3 +45,12 @@ export function roadmapFilePath(workspace: string): string {
 export function roadmapLockPath(workspace: string): string {
   return `${roadmapFilePath(workspace)}.lock`;
 }
+
+/** §7.2 대시보드 sync 재시도 큐 — 워크스페이스 단위가 아니라 hulk 루트에 하나만 둔다(스펙 §1 레이아웃). */
+export function syncRetryQueuePath(): string {
+  return join(hulkRootDir(), "sync-retry-queue.json");
+}
+
+export function syncRetryQueueLockPath(): string {
+  return `${syncRetryQueuePath()}.lock`;
+}
