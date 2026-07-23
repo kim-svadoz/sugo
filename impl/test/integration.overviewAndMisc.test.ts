@@ -2,8 +2,11 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoCheckpoint } from "../src/tools/sugoCheckpoint.js";
+import { handleSugoGetProjectContext } from "../src/tools/sugoGetProjectContext.js";
 import { handleSugoOverview } from "../src/tools/sugoOverview.js";
+import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRoute } from "../src/tools/sugoRoute.js";
 import { handleSugoVersion } from "../src/tools/sugoVersion.js";
 
@@ -104,5 +107,28 @@ describe("sugo_checkpoint 신규 action(get/remove/memory/read_memory/migrate/sy
     const synced = await call(handleSugoCheckpoint, { action: "sync", workspace: "ws1", id: added.data.checkpoint.id });
     expect(synced.isError).toBe(false);
     expect(synced.data.synced).toBe(true);
+  });
+});
+
+describe("§2 하네스 도구 디스패치 — 레지스트리가 비어있는 기본 상태에서도 배선이 깨지지 않는다", () => {
+  it("sugo_get_project_context는 harnessTools(빈 가이드)를 노출한다", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ devDependencies: { typescript: "^5.4.0" } }));
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    await call(handleSugoAdd, { projectPath: projectDir });
+    const context = await call(handleSugoGetProjectContext, { projectPath: projectDir });
+    expect(context.data.harnessTools).toEqual({ guides: [], mcpAllowPatterns: [], toolMenu: "" });
+  });
+
+  it("sugo_plan(code_start) 응답에 harnessToolMenu(빈 문자열)가 실린다", async () => {
+    const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "x" });
+    const sessionId = start.data.sessionId;
+    await call(handleSugoPlan, { action: "clarify", sessionId });
+    await call(handleSugoPlan, { action: "prd", sessionId, prdContent: "REQ-1: 아무거나. " + "가".repeat(90) });
+    await call(handleSugoPlan, { action: "ready", sessionId });
+    await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    await call(handleSugoPlan, { action: "contract_done", sessionId });
+    const codeStart = await call(handleSugoPlan, { action: "code_start", sessionId });
+    expect(codeStart.data.harnessToolMenu).toBe("");
   });
 });

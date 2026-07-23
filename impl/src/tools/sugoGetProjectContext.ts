@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
 import { loadProjectConfig } from "../harness/config.js";
+import { mcpAllowPatterns, renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistry.js";
 
 export const sugoGetProjectContextInputSchema = {
   projectPath: z.string().describe("컨텍스트를 로드할 프로젝트 절대경로"),
@@ -57,6 +58,11 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
 
   const rules = await readRulesDir(projectPath);
 
+  // ── §2 하네스 도구 디스패치: 적용된 하네스에 매칭되는 특화 MCP 도구 안내를 실어준다.
+  // 레지스트리가 비어있으면(이 로컬 빌드의 기본값) toolMenu는 빈 문자열 — 조용히 아무 것도 없음.
+  const appliedHarnessIds = config?.appliedHarnesses.map((h) => h.id) ?? [];
+  const harnessToolGuides = resolveHarnessToolGuides(appliedHarnessIds);
+
   const payload = {
     ok: true,
     projectPath,
@@ -64,6 +70,11 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
     claudeMd,
     harnesses,
     rules,
+    harnessTools: {
+      guides: harnessToolGuides,
+      mcpAllowPatterns: mcpAllowPatterns(harnessToolGuides),
+      toolMenu: renderToolMenu(harnessToolGuides),
+    },
   };
   return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
 }

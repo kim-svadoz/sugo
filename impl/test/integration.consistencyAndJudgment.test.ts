@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
-import { handleSugoJudgmentReport } from "../src/tools/sugoJudgmentReport.js";
+import { handleSugoHulk } from "../src/tools/sugoHulk.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
 
@@ -147,13 +147,13 @@ describe("auto-loop 재시도 카운트 (§4.5 신호)", () => {
     await call(handleSugoPlan, { action: "contract_done", sessionId });
     await call(handleSugoPlan, { action: "code_start", sessionId });
 
-    const report = await call(handleSugoJudgmentReport, {});
+    const report = await call(handleSugoHulk, { action: "judgment" });
     const thisSession = report.data.report.sessionsWithReviewLoop;
     expect(thisSession).toBe(0);
   });
 });
 
-describe("sugo_judgment_report — 전체 흐름 집계", () => {
+describe("sugo_hulk(judgment) — sugo_judgment_report 흡수, 전체 흐름 집계", () => {
   it("완료된 세션들의 신호를 정확히 집계한다", async () => {
     // 세션 1: 정상 완료(환경부재 없음)
     const s1 = await toTestRunning();
@@ -201,7 +201,7 @@ describe("sugo_judgment_report — 전체 흐름 집계", () => {
     await call(handleSugoPlan, { action: "commit", sessionId: s2 });
     rmSync(projectDir2, { recursive: true, force: true });
 
-    const report = await call(handleSugoJudgmentReport, {});
+    const report = await call(handleSugoHulk, { action: "judgment" });
     expect(report.data.report.totalSessions).toBe(2);
     expect(report.data.report.runtimeUnverifiedSessions).toBe(1);
     expect(report.data.report.environmentAbsentRate).toBeCloseTo(0.5, 5);
@@ -213,10 +213,10 @@ describe("sugo_judgment_report — 전체 흐름 집계", () => {
     await call(handleSugoRecordTestEvidence, { sessionId: s1, command: "npm test", exitCode: 0, failed: 0 });
     await call(handleSugoPlan, { action: "test_done", sessionId: s1, testPassed: true });
 
-    const reportAll = await call(handleSugoJudgmentReport, {});
+    const reportAll = await call(handleSugoHulk, { action: "judgment" });
     expect(reportAll.data.report.totalSessions).toBeGreaterThanOrEqual(1);
 
-    const reportNegativeWindow = await call(handleSugoJudgmentReport, { windowDays: -1 });
+    const reportNegativeWindow = await call(handleSugoHulk, { action: "judgment", windowDays: -1 });
     expect(reportNegativeWindow.data.report.totalSessions).toBe(0);
   });
 });

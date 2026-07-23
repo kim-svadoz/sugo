@@ -19,10 +19,7 @@ import {
   sugoGetProjectContextInputSchema,
 } from "./tools/sugoGetProjectContext.js";
 import { handleSugoHistory, sugoHistoryInputSchema } from "./tools/sugoHistory.js";
-import {
-  handleSugoJudgmentReport,
-  sugoJudgmentReportInputSchema,
-} from "./tools/sugoJudgmentReport.js";
+import { handleSugoHulk, sugoHulkInputSchema } from "./tools/sugoHulk.js";
 import { handleSugoOverview, sugoOverviewInputSchema } from "./tools/sugoOverview.js";
 import { handleSugoPlan, sugoPlanInputSchema } from "./tools/sugoPlan.js";
 import {
@@ -219,16 +216,17 @@ server.registerTool(
 );
 
 server.registerTool(
-  "sugo_judgment_report",
+  "sugo_hulk",
   {
-    title: "Cross-session judgment quality report (observation layer, not wired into gates)",
+    title: "HULK meta tool — enable/disable/status/help/sync/health/judgment",
     description:
-      "누적된 세션 파일들을 횡단 집계해 patch 재진입률, review→commit 갭, 환경부재(우회구) " +
-      "남용률, auto-loop 재시도, 조작된 검증 보고 세션 수 등을 리포트한다. 파이프라인을 막지 " +
-      "않는 순수 관측 계층이다(§4.5).",
-    inputSchema: sugoJudgmentReportInputSchema,
+      "HULK(§8) 통합 도구. enable/disable은 HULK가 항상 켜져 있어( 내장 상수) no-op이다. " +
+      "status는 워크스페이스 요약(태스크/체크포인트/로드맵/스펙/이력 개수), sync는 워크스페이스/" +
+      "태스크/로드맵을 대시보드로 다시 push(§7.2), health는 대시보드 연결·재시도 큐 상태, " +
+      "judgment는 §4.5 판단품질 리포트(구 sugo_judgment_report를 이 action으로 흡수).",
+    inputSchema: sugoHulkInputSchema,
   },
-  handleSugoJudgmentReport,
+  handleSugoHulk,
 );
 
 server.registerTool(

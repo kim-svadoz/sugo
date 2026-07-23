@@ -26,6 +26,7 @@ import {
   type RuntimeCheck,
 } from "../gates.js";
 import { loadProjectConfig } from "../harness/config.js";
+import { renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistry.js";
 import { findRegistryEntry } from "../harness/registry.js";
 import { estimateHumanHours } from "../humanHours.js";
 import { checkpointApplies } from "../hulk/matching.js";
@@ -580,6 +581,15 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
+  // ── §2 하네스 도구 디스패치: code_start 순간에 적용된 하네스와 매칭되는 특화 MCP 도구 메뉴를
+  // 실어준다(레지스트리가 비어있으면 빈 문자열 — 이 로컬 빌드의 기본값).
+  let harnessToolMenu: string | undefined;
+  if (action === "code_start") {
+    const projectConfig = await loadProjectConfig(session.projectPath);
+    const guides = resolveHarnessToolGuides(projectConfig?.appliedHarnesses.map((h) => h.id) ?? []);
+    harnessToolMenu = renderToolMenu(guides);
+  }
+
   let humanHoursEstimate: ReturnType<typeof estimateHumanHours> | undefined;
   if (action === "review_done" && args.summary) {
     const featurePath = session.data.featurePath ?? session.projectPath;
@@ -711,6 +721,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
         : undefined,
     hulk,
     decomposeManifest: session.data.decomposeManifest,
+    harnessToolMenu,
   };
 
   return {
