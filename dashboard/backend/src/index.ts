@@ -7,6 +7,7 @@ import { initDb } from "./db/init.js";
 import type { DbClient } from "./db/client.js";
 import { createSyncRouter } from "./routes/sync.js";
 import { createActivityRouter } from "./routes/activity.js";
+import { createWorkspacesRouter } from "./routes/workspaces.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
@@ -22,6 +23,7 @@ export async function createApp(dbOverride?: DbClient) {
 
   app.use("/api/sync", createSyncRouter(db));
   app.use("/api/activity", createActivityRouter(db));
+  app.use("/api/workspaces", createWorkspacesRouter(db));
 
   return { app, db };
 }
