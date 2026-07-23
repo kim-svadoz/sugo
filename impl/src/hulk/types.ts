@@ -65,3 +65,36 @@ export interface WorkLog {
   commits?: string[];
   metrics?: WorkLogMetrics;
 }
+
+// ── §8.5 Roadmap DAG ─────────────────────────────────────────────────────────
+
+export const ROADMAP_LEVELS = ["spec", "workstream", "task", "subtask", "step"] as const;
+export type RoadmapLevel = (typeof ROADMAP_LEVELS)[number];
+
+export const ROADMAP_NODE_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"] as const;
+export type RoadmapNodeStatus = (typeof ROADMAP_NODE_STATUSES)[number];
+
+export interface RoadmapNodeResult {
+  summary?: string;
+  logId?: string;
+}
+
+export interface RoadmapNode {
+  id: string;
+  title: string;
+  level: RoadmapLevel;
+  status: RoadmapNodeStatus;
+  /** "from이 to를 기다림" 실행 엣지(§8.5) — 이 노드가 시작되려면 여기 담긴 id들이 먼저 done이어야 한다. */
+  dependsOn: string[];
+  parent?: string;
+  ref?: string;
+  specPath?: string;
+  note?: string;
+  result?: RoadmapNodeResult;
+  workResult?: string;
+}
+
+export interface RoadmapFile {
+  nodes: RoadmapNode[];
+  schemaVersion: number;
+}

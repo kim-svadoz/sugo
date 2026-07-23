@@ -37,3 +37,11 @@ export function historyDir(workspace: string): string {
 export function memoryFilePath(workspace: string): string {
   return join(workspaceDir(workspace), "memory.md");
 }
+
+export function roadmapFilePath(workspace: string): string {
+  return join(workspaceDir(workspace), "roadmap.json");
+}
+
+export function roadmapLockPath(workspace: string): string {
+  return `${roadmapFilePath(workspace)}.lock`;
+}

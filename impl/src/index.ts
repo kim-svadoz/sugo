@@ -27,6 +27,7 @@ import {
   handleSugoRecordTestEvidence,
   sugoRecordTestEvidenceInputSchema,
 } from "./tools/sugoRecordTestEvidence.js";
+import { handleSugoRoadmap, sugoRoadmapInputSchema } from "./tools/sugoRoadmap.js";
 import { handleSugoSpec, sugoSpecInputSchema } from "./tools/sugoSpec.js";
 import { handleSugoTask, sugoTaskInputSchema } from "./tools/sugoTask.js";
 import { handleSugoValidate, sugoValidateInputSchema } from "./tools/sugoValidate.js";
@@ -216,6 +217,20 @@ server.registerTool(
     inputSchema: sugoJudgmentReportInputSchema,
   },
   handleSugoJudgmentReport,
+);
+
+server.registerTool(
+  "sugo_roadmap",
+  {
+    title: "Roadmap DAG (§8.5) — dependsOn-ordered task/requirement graph",
+    description:
+      "워크스페이스별 로드맵 DAG를 관리한다(add/remove/status/link/unlink/group/backfill/list/ready/get/" +
+      "mark_req). link/unlink는 task 레벨 노드끼리만 허용되고(fail-closed), 사이클을 만드는 변경은 " +
+      "전부 거부된다. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)은 이 도구의 mark_req로 직접 완료할 수 " +
+      "없다 — sugo_plan(review_done)이 성공할 때만 자동 완료된다(§8.5).",
+    inputSchema: sugoRoadmapInputSchema,
+  },
+  handleSugoRoadmap,
 );
 
 server.registerTool(

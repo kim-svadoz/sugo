@@ -23205,6 +23205,12 @@ function historyDir(workspace) {
 function memoryFilePath(workspace) {
   return join6(workspaceDir(workspace), "memory.md");
 }
+function roadmapFilePath(workspace) {
+  return join6(workspaceDir(workspace), "roadmap.json");
+}
+function roadmapLockPath(workspace) {
+  return `${roadmapFilePath(workspace)}.lock`;
+}
 
 // src/hulk/workspace.ts
 async function loadWorkspace(name2) {
@@ -27098,7 +27104,7 @@ async function handleSugoJudgmentReport(rawArgs) {
 }
 
 // src/tools/sugoPlan.ts
-import { readFile as readFile13 } from "node:fs/promises";
+import { readFile as readFile14 } from "node:fs/promises";
 
 // src/bootable.ts
 async function isProjectBootable(projectPath) {
@@ -27605,22 +27611,262 @@ function checkpointApplies(checkpoint, ctx) {
   return applies.some((tag) => tag === ctx.projectName || ctx.harnessIds.includes(tag));
 }
 
+// src/hulk/roadmap.ts
+import { mkdir as mkdir10, readFile as readFile12 } from "node:fs/promises";
+
+// src/hulk/roadmapGraph.ts
+function topoSort(nodes) {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const unknownDeps = /* @__PURE__ */ new Set();
+  const inDegree = /* @__PURE__ */ new Map();
+  const dependents = /* @__PURE__ */ new Map();
+  for (const n of nodes) {
+    inDegree.set(n.id, 0);
+    dependents.set(n.id, []);
+  }
+  for (const n of nodes) {
+    for (const dep of n.dependsOn) {
+      if (!byId.has(dep)) {
+        unknownDeps.add(dep);
+        continue;
+      }
+      inDegree.set(n.id, (inDegree.get(n.id) ?? 0) + 1);
+      dependents.get(dep).push(n.id);
+    }
+  }
+  const ready = [...inDegree.entries()].filter(([, deg]) => deg === 0).map(([id]) => id);
+  ready.sort();
+  const order = [];
+  while (ready.length > 0) {
+    const id = ready.shift();
+    order.push(id);
+    const newlyReady = [];
+    for (const dependentId of dependents.get(id) ?? []) {
+      const remaining = (inDegree.get(dependentId) ?? 0) - 1;
+      inDegree.set(dependentId, remaining);
+      if (remaining === 0) newlyReady.push(dependentId);
+    }
+    if (newlyReady.length > 0) {
+      ready.push(...newlyReady);
+      ready.sort();
+    }
+  }
+  return { order, cyclic: order.length < nodes.length, unknownDeps: [...unknownDeps].sort() };
+}
+function readySet(nodes) {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const result = [];
+  for (const n of nodes) {
+    if (n.status !== "pending") continue;
+    const allDepsDone = n.dependsOn.every((dep) => byId.get(dep)?.status === "done");
+    if (allDepsDone) result.push(n.id);
+  }
+  return result;
+}
+
+// src/hulk/roadmap.ts
+async function readRoadmapFile(workspace) {
+  try {
+    const raw = await readFile12(roadmapFilePath(workspace), "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return { nodes: [], schemaVersion: 1 };
+  }
+}
+async function writeRoadmapFile(workspace, file) {
+  await mkdir10(workspaceDir(workspace), { recursive: true });
+  await atomicWriteFile(roadmapFilePath(workspace), JSON.stringify(file, null, 2));
+}
+async function withRoadmap(workspace, fn) {
+  return withFileLock(roadmapLockPath(workspace), async () => {
+    const file = await readRoadmapFile(workspace);
+    return fn(file);
+  });
+}
+async function listRoadmapNodes(workspace, filter) {
+  const file = await readRoadmapFile(workspace);
+  return file.nodes.filter(
+    (n) => (!filter?.level || n.level === filter.level) && (!filter?.parent || n.parent === filter.parent)
+  );
+}
+async function getRoadmapNode(workspace, id) {
+  const file = await readRoadmapFile(workspace);
+  return file.nodes.find((n) => n.id === id) ?? null;
+}
+async function addRoadmapNode(workspace, node) {
+  return withRoadmap(workspace, async (file) => {
+    if (file.nodes.some((n) => n.id === node.id)) {
+      return { ok: false, error: "DUPLICATE_ID", message: `\uC774\uBBF8 \uC874\uC7AC\uD558\uB294 \uB178\uB4DC id\uC785\uB2C8\uB2E4: ${node.id}` };
+    }
+    const candidate = { ...file, nodes: [...file.nodes, node] };
+    const sorted = topoSort(candidate.nodes);
+    if (sorted.cyclic) {
+      return { ok: false, error: "CYCLE", message: `\uB178\uB4DC\uB97C \uCD94\uAC00\uD558\uBA74 \uC758\uC874\uC131 \uADF8\uB798\uD504\uC5D0 \uC0AC\uC774\uD074\uC774 \uC0DD\uAE41\uB2C8\uB2E4: ${node.id}` };
+    }
+    await writeRoadmapFile(workspace, candidate);
+    return { ok: true };
+  });
+}
+async function upsertRoadmapNodes(workspace, nodes) {
+  await withRoadmap(workspace, async (file) => {
+    const byId = new Map(file.nodes.map((n) => [n.id, n]));
+    for (const n of nodes) byId.set(n.id, n);
+    await writeRoadmapFile(workspace, { ...file, nodes: [...byId.values()] });
+  });
+}
+async function updateRoadmapNodeStatus(workspace, id, status, result) {
+  return withRoadmap(workspace, async (file) => {
+    const node = file.nodes.find((n) => n.id === id);
+    if (!node) return { ok: false, error: "NODE_NOT_FOUND", message: `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${id}` };
+    node.status = status;
+    if (result) node.result = result;
+    await writeRoadmapFile(workspace, file);
+    return { ok: true };
+  });
+}
+async function removeRoadmapNode(workspace, id) {
+  return withRoadmap(workspace, async (file) => {
+    if (!file.nodes.some((n) => n.id === id)) {
+      return { ok: false, error: "NODE_NOT_FOUND", message: `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${id}` };
+    }
+    const nodes = file.nodes.filter((n) => n.id !== id).map((n) => n.dependsOn.includes(id) ? { ...n, dependsOn: n.dependsOn.filter((d) => d !== id) } : n);
+    await writeRoadmapFile(workspace, { ...file, nodes });
+    return { ok: true };
+  });
+}
+async function linkRoadmapNodes(workspace, fromId, toId) {
+  return withRoadmap(workspace, async (file) => {
+    const from = file.nodes.find((n) => n.id === fromId);
+    const to = file.nodes.find((n) => n.id === toId);
+    if (!from || !to) return { ok: false, error: "NODE_NOT_FOUND", message: "fromId/toId \uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4." };
+    if (from.level !== "task" || to.level !== "task") {
+      return { ok: false, error: "LINK_REQUIRES_TASK_LEVEL", message: "link/unlink\uB294 task \uB808\uBCA8 \uB178\uB4DC\uB07C\uB9AC\uB9CC \uD5C8\uC6A9\uB429\uB2C8\uB2E4." };
+    }
+    if (from.dependsOn.includes(toId)) return { ok: true };
+    const candidateNodes = file.nodes.map((n) => n.id === fromId ? { ...n, dependsOn: [...n.dependsOn, toId] } : n);
+    if (topoSort(candidateNodes).cyclic) {
+      return { ok: false, error: "CYCLE", message: `\uB9C1\uD06C\uB97C \uCD94\uAC00\uD558\uBA74 \uC0AC\uC774\uD074\uC774 \uC0DD\uAE41\uB2C8\uB2E4: ${fromId} -> ${toId}` };
+    }
+    await writeRoadmapFile(workspace, { ...file, nodes: candidateNodes });
+    return { ok: true };
+  });
+}
+async function unlinkRoadmapNodes(workspace, fromId, toId) {
+  return withRoadmap(workspace, async (file) => {
+    const from = file.nodes.find((n) => n.id === fromId);
+    if (!from) return { ok: false, error: "NODE_NOT_FOUND", message: `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${fromId}` };
+    const nodes = file.nodes.map((n) => n.id === fromId ? { ...n, dependsOn: n.dependsOn.filter((d) => d !== toId) } : n);
+    await writeRoadmapFile(workspace, { ...file, nodes });
+    return { ok: true };
+  });
+}
+async function groupRoadmapNodes(workspace, workstreamId, workstreamTitle, taskIds) {
+  return withRoadmap(workspace, async (file) => {
+    const byId = new Map(file.nodes.map((n) => [n.id, n]));
+    if (!byId.has(workstreamId)) {
+      byId.set(workstreamId, {
+        id: workstreamId,
+        title: workstreamTitle,
+        level: "workstream",
+        status: "pending",
+        dependsOn: []
+      });
+    }
+    for (const taskId of taskIds) {
+      const task = byId.get(taskId);
+      if (task) byId.set(taskId, { ...task, parent: workstreamId });
+    }
+    await writeRoadmapFile(workspace, { ...file, nodes: [...byId.values()] });
+    return { ok: true };
+  });
+}
+async function backfillRoadmapTask(workspace, taskId, title) {
+  return withRoadmap(workspace, async (file) => {
+    if (file.nodes.some((n) => n.id === taskId)) return { ok: true };
+    const node = { id: taskId, title, level: "task", status: "pending", dependsOn: [], ref: taskId };
+    await writeRoadmapFile(workspace, { ...file, nodes: [...file.nodes, node] });
+    return { ok: true };
+  });
+}
+async function markRequirementDone(workspace, id, result) {
+  if (id.endsWith("::REQ-CONFIRM")) {
+    return {
+      ok: false,
+      error: "REQ_CONFIRM_AGENT_FORBIDDEN",
+      message: "REQ-CONFIRM\uC740 \uC5D0\uC774\uC804\uD2B8\uAC00 \uC9C1\uC811 \uC644\uB8CC\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4 \u2014 \uC0AC\uC6A9\uC790 review_done\uC744 \uD1B5\uD574\uC11C\uB9CC \uC644\uB8CC\uB429\uB2C8\uB2E4."
+    };
+  }
+  return updateRoadmapNodeStatus(workspace, id, "done", result);
+}
+async function completeTaskRequirements(workspace, taskId, summary, logId) {
+  await withRoadmap(workspace, async (file) => {
+    const children = file.nodes.filter((n) => n.parent === taskId);
+    if (children.length === 0) return;
+    const nodes = file.nodes.map((n) => n.parent === taskId ? { ...n, status: "done", result: { summary, logId } } : n);
+    await writeRoadmapFile(workspace, { ...file, nodes });
+  });
+}
+async function getReadySet(workspace) {
+  const file = await readRoadmapFile(workspace);
+  return readySet(file.nodes);
+}
+
+// src/hulk/roadmapReq.ts
+var REQ_HEADING_RE = /^#{1,6}\s*REQ-(\d+)\s*:\s*(.+)$/gim;
+function parseRequirementsFromPrd(prdContent) {
+  const results = [];
+  const seen = /* @__PURE__ */ new Set();
+  const re = new RegExp(REQ_HEADING_RE);
+  let m;
+  while ((m = re.exec(prdContent)) !== null) {
+    const id = `REQ-${m[1]}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    results.push({ id, title: m[2].trim() });
+  }
+  return results;
+}
+function reqConfirmId(taskId) {
+  return `${taskId}::REQ-CONFIRM`;
+}
+function promotePrdRequirements(taskId, prdContent) {
+  const requirements = parseRequirementsFromPrd(prdContent);
+  if (requirements.length === 0) return [];
+  const nodes = requirements.map((req, i2) => ({
+    id: req.id,
+    title: req.title,
+    level: "subtask",
+    status: "pending",
+    dependsOn: i2 === 0 ? [] : [requirements[i2 - 1].id],
+    parent: taskId
+  }));
+  nodes.push({
+    id: reqConfirmId(taskId),
+    title: "\uC0AC\uC6A9\uC790 \uCD5C\uC885 \uD655\uC778",
+    level: "step",
+    status: "pending",
+    dependsOn: requirements.map((r) => r.id),
+    parent: taskId
+  });
+  return nodes;
+}
+
 // src/hulk/task.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir10, readFile as readFile12 } from "node:fs/promises";
+import { mkdir as mkdir11, readFile as readFile13 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile12(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile13(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
   }
 }
 async function writeTasksFile(workspace, file) {
-  await mkdir10(workspaceDir(workspace), { recursive: true });
+  await mkdir11(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(tasksFilePath(workspace), JSON.stringify(file, null, 2));
 }
 async function addTask(workspace, params) {
@@ -28144,7 +28390,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "decompose" && existing) {
     if (!args2.manifest) return errorResult5("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     if (!existing.data.prdPath) return errorResult5("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    const prdContent = await readFile13(existing.data.prdPath, "utf-8").catch(() => "");
+    const prdContent = await readFile14(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
@@ -28266,6 +28512,12 @@ async function handleSugoPlan(rawArgs) {
         ...session,
         data: { ...session.data, hulkWorkspace: registryEntry.workspace, hulkTaskId: task.id }
       };
+      await backfillRoadmapTask(registryEntry.workspace, task.id, session.featureName);
+      await updateRoadmapNodeStatus(registryEntry.workspace, task.id, "in_progress");
+      const reqNodes = promotePrdRequirements(task.id, args2.prdContent);
+      if (reqNodes.length > 0) {
+        await upsertRoadmapNodes(registryEntry.workspace, reqNodes);
+      }
     }
   }
   if (action === "code_done") {
@@ -28329,6 +28581,9 @@ async function handleSugoPlan(rawArgs) {
         }
       }
     };
+    if (session.data.hulkWorkspace && session.data.hulkTaskId) {
+      await completeTaskRequirements(session.data.hulkWorkspace, session.data.hulkTaskId, args2.summary);
+    }
   }
   let completionGrade;
   let bypassSummary;
@@ -28494,8 +28749,127 @@ function errorResult7(errorCode, message) {
   };
 }
 
+// src/hulk/types.ts
+var ROADMAP_LEVELS = ["spec", "workstream", "task", "subtask", "step"];
+var ROADMAP_NODE_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"];
+
+// src/tools/sugoRoadmap.ts
+var sugoRoadmapInputSchema = {
+  action: external_exports.enum(["add", "remove", "status", "link", "unlink", "group", "backfill", "list", "ready", "get", "mark_req"]),
+  workspace: external_exports.string().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
+  id: external_exports.string().optional().describe("add/remove/status/get/mark_req action\uC5D0 \uD544\uC694. add\uC758 \uC0C8 \uB178\uB4DC id \uB610\uB294 \uB300\uC0C1 \uB178\uB4DC id"),
+  title: external_exports.string().optional().describe("add/group/backfill action\uC5D0 \uD544\uC694"),
+  level: external_exports.enum(ROADMAP_LEVELS).optional().describe("add action\uC5D0 \uD544\uC694"),
+  dependsOn: external_exports.array(external_exports.string()).optional().describe("add action\uC5D0\uC11C \uCD08\uAE30 \uC758\uC874\uAD00\uACC4(\uBE48 \uBC30\uC5F4 \uAE30\uBCF8)"),
+  parent: external_exports.string().optional(),
+  ref: external_exports.string().optional(),
+  specPath: external_exports.string().optional(),
+  note: external_exports.string().optional(),
+  status: external_exports.enum(ROADMAP_NODE_STATUSES).optional().describe("status/mark_req action\uC5D0 \uD544\uC694(mark_req\uB294 \uD56D\uC0C1 done)"),
+  resultSummary: external_exports.string().optional().describe("status/mark_req action\uC5D0\uC11C result.summary\uB85C \uAE30\uB85D"),
+  logId: external_exports.string().optional().describe("status/mark_req action\uC5D0\uC11C result.logId\uB85C \uAE30\uB85D"),
+  fromId: external_exports.string().optional().describe("link/unlink action\uC5D0 \uD544\uC694"),
+  toId: external_exports.string().optional().describe("link/unlink action\uC5D0 \uD544\uC694 \u2014 fromId\uAC00 toId\uC5D0 \uC758\uC874\uD558\uAC8C \uB41C\uB2E4"),
+  taskIds: external_exports.array(external_exports.string()).optional().describe("group action\uC5D0 \uD544\uC694 \u2014 \uC774 workstream \uC544\uB798\uB85C \uBB36\uC744 task id\uB4E4"),
+  filterLevel: external_exports.enum(ROADMAP_LEVELS).optional().describe("list action\uC758 \uC120\uD0DD\uC801 \uD544\uD130"),
+  filterParent: external_exports.string().optional().describe("list action\uC758 \uC120\uD0DD\uC801 \uD544\uD130")
+};
+var SugoRoadmapArgs = external_exports.object(sugoRoadmapInputSchema);
+async function handleSugoRoadmap(rawArgs) {
+  const args2 = SugoRoadmapArgs.parse(rawArgs);
+  switch (args2.action) {
+    case "add": {
+      if (!args2.id || !args2.title || !args2.level) {
+        return errorResult8("ADD_FIELDS_REQUIRED", "add action\uC5D0\uB294 id/title/level\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      }
+      const result = await addRoadmapNode(args2.workspace, {
+        id: args2.id,
+        title: args2.title,
+        level: args2.level,
+        status: "pending",
+        dependsOn: args2.dependsOn ?? [],
+        parent: args2.parent,
+        ref: args2.ref,
+        specPath: args2.specPath,
+        note: args2.note
+      });
+      if (!result.ok) return errorResult8(result.error, result.message);
+      return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
+    }
+    case "remove": {
+      if (!args2.id) return errorResult8("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const result = await removeRoadmapNode(args2.workspace, args2.id);
+      if (!result.ok) return errorResult8(result.error, result.message);
+      return ok4({});
+    }
+    case "status": {
+      if (!args2.id || !args2.status) return errorResult8("ID_AND_STATUS_REQUIRED", "status action\uC5D0\uB294 id\uC640 status\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const result = await updateRoadmapNodeStatus(args2.workspace, args2.id, args2.status, resultFrom(args2));
+      if (!result.ok) return errorResult8(result.error, result.message);
+      return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
+    }
+    case "link": {
+      if (!args2.fromId || !args2.toId) return errorResult8("FROM_TO_REQUIRED", "link action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const result = await linkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
+      if (!result.ok) return errorResult8(result.error, result.message);
+      return ok4({});
+    }
+    case "unlink": {
+      if (!args2.fromId || !args2.toId) return errorResult8("FROM_TO_REQUIRED", "unlink action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const result = await unlinkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
+      if (!result.ok) return errorResult8(result.error, result.message);
+      return ok4({});
+    }
+    case "group": {
+      if (!args2.id || !args2.title || !args2.taskIds) {
+        return errorResult8("GROUP_FIELDS_REQUIRED", "group action\uC5D0\uB294 id(workstream id)/title/taskIds\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      }
+      await groupRoadmapNodes(args2.workspace, args2.id, args2.title, args2.taskIds);
+      return ok4({});
+    }
+    case "backfill": {
+      if (!args2.id || !args2.title) return errorResult8("BACKFILL_FIELDS_REQUIRED", "backfill action\uC5D0\uB294 id(HULK taskId)/title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      await backfillRoadmapTask(args2.workspace, args2.id, args2.title);
+      return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
+    }
+    case "list": {
+      const nodes = await listRoadmapNodes(args2.workspace, { level: args2.filterLevel, parent: args2.filterParent });
+      return ok4({ nodes });
+    }
+    case "ready": {
+      const ready = await getReadySet(args2.workspace);
+      return ok4({ ready });
+    }
+    case "get": {
+      if (!args2.id) return errorResult8("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const node = await getRoadmapNode(args2.workspace, args2.id);
+      if (!node) return errorResult8("NODE_NOT_FOUND", `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      return ok4({ node });
+    }
+    case "mark_req": {
+      if (!args2.id) return errorResult8("ID_REQUIRED", "mark_req action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const result = await markRequirementDone(args2.workspace, args2.id, resultFrom(args2));
+      if (!result.ok) return errorResult8(result.error, result.message);
+      return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
+    }
+  }
+}
+function resultFrom(args2) {
+  if (!args2.resultSummary && !args2.logId) return void 0;
+  return { summary: args2.resultSummary, logId: args2.logId };
+}
+function ok4(payload) {
+  return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
+}
+function errorResult8(errorCode, message) {
+  return {
+    isError: true,
+    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
+  };
+}
+
 // src/hulk/spec.ts
-import { mkdir as mkdir11, readdir as readdir8, readFile as readFile14 } from "node:fs/promises";
+import { mkdir as mkdir12, readdir as readdir8, readFile as readFile15 } from "node:fs/promises";
 import { join as join20 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
@@ -28506,7 +28880,7 @@ async function addSpec(workspace, params) {
     created_at: (/* @__PURE__ */ new Date()).toISOString()
   };
   const dir = specsDir(workspace);
-  await mkdir11(dir, { recursive: true });
+  await mkdir12(dir, { recursive: true });
   const fileContent = stringifyFrontmatter(
     { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
     spec.content
@@ -28536,7 +28910,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile14(join20(dir, name2), "utf-8");
+      const raw = await readFile15(join20(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -28546,7 +28920,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile14(join20(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile15(join20(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -28569,27 +28943,27 @@ async function handleSugoSpec(rawArgs) {
   switch (args2.action) {
     case "add": {
       if (!args2.name || !args2.type || !args2.content) {
-        return errorResult8("NAME_TYPE_CONTENT_REQUIRED", "add action\uC5D0\uB294 name, type, content\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult9("NAME_TYPE_CONTENT_REQUIRED", "add action\uC5D0\uB294 name, type, content\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       const spec = await addSpec(args2.workspace, { name: args2.name, type: args2.type, tags: args2.tags, content: args2.content });
-      return ok4({ spec });
+      return ok5({ spec });
     }
     case "list": {
       const specs = await listSpecs(args2.workspace);
-      return ok4({ specs });
+      return ok5({ specs });
     }
     case "get": {
-      if (!args2.name) return errorResult8("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult9("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const spec = await getSpec(args2.workspace, args2.name);
-      if (!spec) return errorResult8("SPEC_NOT_FOUND", `\uC2A4\uD399\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
-      return ok4({ spec });
+      if (!spec) return errorResult9("SPEC_NOT_FOUND", `\uC2A4\uD399\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
+      return ok5({ spec });
     }
   }
 }
-function ok4(payload) {
+function ok5(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult8(errorCode, message) {
+function errorResult9(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -28617,7 +28991,7 @@ async function handleSugoTask(rawArgs) {
   const args2 = SugoTaskArgs.parse(rawArgs);
   switch (args2.action) {
     case "add": {
-      if (!args2.title || !args2.project) return errorResult9("TITLE_AND_PROJECT_REQUIRED", "add action\uC5D0\uB294 title\uACFC project\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.title || !args2.project) return errorResult10("TITLE_AND_PROJECT_REQUIRED", "add action\uC5D0\uB294 title\uACFC project\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await addTask(args2.workspace, {
         title: args2.title,
         project: args2.project,
@@ -28627,30 +29001,30 @@ async function handleSugoTask(rawArgs) {
         prd_ref: args2.prd_ref,
         tags: args2.tags
       });
-      return ok5({ task });
+      return ok6({ task });
     }
     case "list": {
       const tasks = await listTasks(args2.workspace, { project: args2.filterProject, status: args2.status });
-      return ok5({ tasks });
+      return ok6({ tasks });
     }
     case "update": {
-      if (!args2.taskId) return errorResult9("TASK_ID_REQUIRED", "update action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.taskId) return errorResult10("TASK_ID_REQUIRED", "update action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await updateTask(args2.workspace, args2.taskId, { status: args2.status, summary: args2.summary });
-      if (!task) return errorResult9("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
-      return ok5({ task });
+      if (!task) return errorResult10("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
+      return ok6({ task });
     }
     case "get": {
-      if (!args2.taskId) return errorResult9("TASK_ID_REQUIRED", "get action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.taskId) return errorResult10("TASK_ID_REQUIRED", "get action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await getTask(args2.workspace, args2.taskId);
-      if (!task) return errorResult9("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
-      return ok5({ task });
+      if (!task) return errorResult10("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
+      return ok6({ task });
     }
   }
 }
-function ok5(payload) {
+function ok6(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult9(errorCode, message) {
+function errorResult10(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -28658,7 +29032,7 @@ function errorResult9(errorCode, message) {
 }
 
 // src/harness/validationConfig.ts
-import { readFile as readFile15 } from "node:fs/promises";
+import { readFile as readFile16 } from "node:fs/promises";
 import { join as join21 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
@@ -28676,7 +29050,7 @@ async function loadProjectValidationConfigs(projectPath) {
   for (const applied of config2.appliedHarnesses) {
     const path = join21(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile15(path, "utf-8");
+      const content = await readFile16(path, "utf-8");
       result.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -28727,7 +29101,7 @@ var SugoValidateArgs = external_exports.object(sugoValidateInputSchema);
 async function handleSugoValidate(rawArgs) {
   const args2 = SugoValidateArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult10("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult11("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   const configs = await loadProjectValidationConfigs(session.projectPath);
@@ -28757,7 +29131,7 @@ async function handleSugoValidate(rawArgs) {
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult10(errorCode, message) {
+function errorResult11(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -28765,21 +29139,21 @@ function errorResult10(errorCode, message) {
 }
 
 // src/hulk/memory.ts
-import { mkdir as mkdir12, readFile as readFile16 } from "node:fs/promises";
+import { mkdir as mkdir13, readFile as readFile17 } from "node:fs/promises";
 async function appendMemory(workspace, note) {
   const path = memoryFilePath(workspace);
-  const existing = await readFile16(path, "utf-8").catch(() => "");
+  const existing = await readFile17(path, "utf-8").catch(() => "");
   const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
 
 ${note}
 `;
   const next = existing ? `${existing}
 ${entry}` : entry;
-  await mkdir12(workspaceDir(workspace), { recursive: true });
+  await mkdir13(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(path, next);
 }
 async function readMemory(workspace) {
-  return readFile16(memoryFilePath(workspace), "utf-8").catch(() => "");
+  return readFile17(memoryFilePath(workspace), "utf-8").catch(() => "");
 }
 
 // src/tools/sugoWorkspace.ts
@@ -28794,36 +29168,36 @@ async function handleSugoWorkspace(rawArgs) {
   const args2 = SugoWorkspaceArgs.parse(rawArgs);
   switch (args2.action) {
     case "add": {
-      if (!args2.name) return errorResult11("NAME_REQUIRED", "add action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult12("NAME_REQUIRED", "add action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workspace = await ensureWorkspace(args2.name, args2.projectPath);
-      return ok6({ workspace });
+      return ok7({ workspace });
     }
     case "list": {
       const workspaces = await listWorkspaces();
-      return ok6({ workspaces });
+      return ok7({ workspaces });
     }
     case "get": {
-      if (!args2.name) return errorResult11("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult12("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workspace = await loadWorkspace(args2.name);
-      if (!workspace) return errorResult11("WORKSPACE_NOT_FOUND", `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
-      return ok6({ workspace });
+      if (!workspace) return errorResult12("WORKSPACE_NOT_FOUND", `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
+      return ok7({ workspace });
     }
     case "remember": {
-      if (!args2.name || !args2.note) return errorResult11("NAME_AND_NOTE_REQUIRED", "remember action\uC5D0\uB294 name\uACFC note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name || !args2.note) return errorResult12("NAME_AND_NOTE_REQUIRED", "remember action\uC5D0\uB294 name\uACFC note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await appendMemory(args2.name, args2.note);
-      return ok6({ remembered: true });
+      return ok7({ remembered: true });
     }
     case "recall": {
-      if (!args2.name) return errorResult11("NAME_REQUIRED", "recall action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult12("NAME_REQUIRED", "recall action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const memory = await readMemory(args2.name);
-      return ok6({ memory });
+      return ok7({ memory });
     }
   }
 }
-function ok6(payload) {
+function ok7(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult11(errorCode, message) {
+function errorResult12(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -28969,6 +29343,15 @@ server.registerTool(
     inputSchema: sugoJudgmentReportInputSchema
   },
   handleSugoJudgmentReport
+);
+server.registerTool(
+  "sugo_roadmap",
+  {
+    title: "Roadmap DAG (\xA78.5) \u2014 dependsOn-ordered task/requirement graph",
+    description: "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uBCC4 \uB85C\uB4DC\uB9F5 DAG\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/remove/status/link/unlink/group/backfill/list/ready/get/mark_req). link/unlink\uB294 task \uB808\uBCA8 \uB178\uB4DC\uB07C\uB9AC\uB9CC \uD5C8\uC6A9\uB418\uACE0(fail-closed), \uC0AC\uC774\uD074\uC744 \uB9CC\uB4DC\uB294 \uBCC0\uACBD\uC740 \uC804\uBD80 \uAC70\uBD80\uB41C\uB2E4. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)\uC740 \uC774 \uB3C4\uAD6C\uC758 mark_req\uB85C \uC9C1\uC811 \uC644\uB8CC\uD560 \uC218 \uC5C6\uB2E4 \u2014 sugo_plan(review_done)\uC774 \uC131\uACF5\uD560 \uB54C\uB9CC \uC790\uB3D9 \uC644\uB8CC\uB41C\uB2E4(\xA78.5).",
+    inputSchema: sugoRoadmapInputSchema
+  },
+  handleSugoRoadmap
 );
 server.registerTool(
   "sugo_explore",

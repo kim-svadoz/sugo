@@ -28,6 +28,8 @@ import { estimateHumanHours } from "../humanHours.js";
 import { checkpointApplies } from "../hulk/matching.js";
 import { addWorkLog } from "../hulk/history.js";
 import { listCheckpoints } from "../hulk/checkpoint.js";
+import { backfillRoadmapTask, completeTaskRequirements, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
+import { promotePrdRequirements } from "../hulk/roadmapReq.js";
 import { addTask, updateTask } from "../hulk/task.js";
 import {
   computeCompletionGrade,
@@ -497,6 +499,17 @@ export async function handleSugoPlan(rawArgs: unknown) {
         ...session,
         data: { ...session.data, hulkWorkspace: registryEntry.workspace, hulkTaskId: task.id },
       };
+
+      // ── §8.5 Roadmap DAG: task 레벨 노드를 보장하고, PRD의 ### REQ-XXX 헤딩을 자식 REQ
+      // 노드(+ 항상 REQ-CONFIRM)로 심는다. 헤딩 형식 REQ가 하나도 없으면 심을 게 없어 no-op.
+      // task 노드 상태는 실제 HULK Task와 맞춰 in_progress로 갱신한다 — pending으로 남으면
+      // 의존성 없는 이 노드가 readySet에 REQ와 나란히 잘못 섞여 나온다(스모크 테스트가 잡아낸 버그).
+      await backfillRoadmapTask(registryEntry.workspace, task.id, session.featureName);
+      await updateRoadmapNodeStatus(registryEntry.workspace, task.id, "in_progress");
+      const reqNodes = promotePrdRequirements(task.id, args.prdContent);
+      if (reqNodes.length > 0) {
+        await upsertRoadmapNodes(registryEntry.workspace, reqNodes);
+      }
     }
   }
 
@@ -569,6 +582,13 @@ export async function handleSugoPlan(rawArgs: unknown) {
         },
       },
     };
+
+    // ── §3/§8.5 REQ/REQ-CONFIRM 자동완료: "사용자 확인이 곧 REQ 롤다운"이다. 승격된 REQ가 없는
+    // 세션(워크스페이스 미등록, 헤딩 형식 REQ 없음 등)은 completeTaskRequirements 내부에서 조용히
+    // no-op하므로 여기서 별도 분기 없이 항상 호출해도 안전하다.
+    if (session.data.hulkWorkspace && session.data.hulkTaskId) {
+      await completeTaskRequirements(session.data.hulkWorkspace, session.data.hulkTaskId, args.summary);
+    }
   }
 
   // ── §4.6 label-guard: commit 시점에 우회 라벨 누적분으로 completionGrade를 판정한다. 차단은
