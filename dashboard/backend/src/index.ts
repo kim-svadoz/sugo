@@ -5,6 +5,8 @@ import express from "express";
 import { config } from "./config.js";
 import { initDb } from "./db/init.js";
 import type { DbClient } from "./db/client.js";
+import { createSyncRouter } from "./routes/sync.js";
+import { createActivityRouter } from "./routes/activity.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
@@ -17,6 +19,9 @@ export async function createApp(dbOverride?: DbClient) {
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });
   });
+
+  app.use("/api/sync", createSyncRouter(db));
+  app.use("/api/activity", createActivityRouter(db));
 
   return { app, db };
 }
