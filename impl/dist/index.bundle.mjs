@@ -27436,6 +27436,24 @@ function checkContractEvidenceGate(records, required2) {
   }
   return ok3();
 }
+function hasValidRed(r) {
+  return r.redExitCode !== void 0 && r.redExitCode !== 0;
+}
+function checkContractStartedGate(records, required2, environmentAbsentReason) {
+  if (!required2) return ok3();
+  if (environmentAbsentReason && environmentAbsentReason.trim().length > 0) return ok3();
+  if (!records.some(hasValidRed)) {
+    return fail(
+      "CONTRACT_NOT_STARTED",
+      "\uACC4\uC57D\uD14C\uC2A4\uD2B8\uAC00 \uD544\uC218\uC778\uB370 \uAD6C\uD604 \uC804 red \uD655\uC778(sugo_record_contract_evidence phase=red)\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."
+    );
+  }
+  return ok3();
+}
+function resolveContractRequired(policyValue, sessionCtx) {
+  if (policyValue !== void 0) return policyValue;
+  return sessionCtx.baselineRequired;
+}
 
 // src/decompose.ts
 function findManifestCycle(subtasks) {
@@ -27653,12 +27671,49 @@ async function getTask(workspace, taskId) {
   return file.tasks.find((t) => t.id === taskId) ?? null;
 }
 
+// src/labelGuard.ts
+function hasGreenExecutionEvidence(input) {
+  if (input.baselineExitCode === 0) return true;
+  if (input.testDerivedState === "pass") return true;
+  if (input.contractTests?.some((r) => r.greenExitCode === 0)) return true;
+  return false;
+}
+function detectLabelContradiction(claimsAbsent, hasGreenEvidence) {
+  if (!claimsAbsent) return ok3();
+  if (hasGreenEvidence) {
+    return fail(
+      "LABEL_CONTRADICTION",
+      "\uC774 \uC138\uC158\uC5D0 \uADF8\uB9B0 \uC2E4\uD589 \uC99D\uAC70\uAC00 \uC774\uBBF8 \uC788\uB294\uB370 \uD658\uACBD\uBD80\uC7AC\uB958 \uB77C\uBCA8\uC744 \uC8FC\uC7A5\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uB77C\uBCA8-\uBAA8\uC21C\uC73C\uB85C \uAC70\uBD80\uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok3();
+}
+function isLabelStillInScope(labelPatchVersion, currentPatchVersion) {
+  return labelPatchVersion === currentPatchVersion;
+}
+function collectBypassLabels(labels, currentPatchVersion) {
+  return labels.filter((l) => isLabelStillInScope(l.patchVersion, currentPatchVersion));
+}
+function computeCompletionGrade(labels, currentPatchVersion) {
+  const inScope = collectBypassLabels(labels, currentPatchVersion);
+  return { grade: inScope.length > 0 ? "unverified" : "verified", bypassLabels: inScope };
+}
+function renderBypassSummary(result) {
+  if (result.grade === "verified") return void 0;
+  const lines = result.bypassLabels.map((l) => `- [${l.kind}] ${l.reason}`);
+  return `\uC644\uB8CC\uB4F1\uAE09: unverified (\uC6B0\uD68C \uB77C\uBCA8 ${result.bypassLabels.length}\uAC74)
+${lines.join("\n")}`;
+}
+
 // src/types.ts
 var PLAN_ACTIONS = [
   "start",
   "clarify",
   "prd",
   "ready",
+  "baseline_capture",
+  "contract_start",
+  "contract_done",
   "decompose",
   "subtask_start",
   "subtask_done",
@@ -27679,11 +27734,14 @@ var PREREQUISITES = {
   clarify: ["SCAN"],
   prd: ["CLARIFY"],
   ready: ["PRD"],
+  baseline_capture: ["READY"],
+  contract_start: ["BASELINE"],
+  contract_done: ["CONTRACT_RUNNING"],
   decompose: ["READY"],
   subtask_start: ["DECOMPOSE", "ORCHESTRATING"],
   subtask_done: ["ORCHESTRATING"],
   integrate: ["ORCHESTRATING"],
-  code_start: ["READY", "TEST_DONE", "REVIEW_RUNNING"],
+  code_start: ["CODE_READY", "TEST_DONE", "REVIEW_RUNNING"],
   code_done: ["CODE_RUNNING"],
   test_start: ["CODE_DONE"],
   test_done: ["TEST_RUNNING"],
@@ -27699,6 +27757,9 @@ var RESULT_STATE = {
   clarify: "CLARIFY",
   prd: "PRD",
   ready: "READY",
+  baseline_capture: "BASELINE",
+  contract_start: "CONTRACT_RUNNING",
+  contract_done: "CODE_READY",
   decompose: "DECOMPOSE",
   subtask_start: "ORCHESTRATING",
   subtask_done: "ORCHESTRATING",
@@ -27717,7 +27778,10 @@ var NEXT_ACTION_HINTS = {
   SCAN: ["clarify"],
   CLARIFY: ["prd"],
   PRD: ["ready"],
-  READY: ["code_start", "decompose"],
+  READY: ["baseline_capture", "decompose"],
+  BASELINE: ["contract_start"],
+  CONTRACT_RUNNING: ["contract_done"],
+  CODE_READY: ["code_start"],
   DECOMPOSE: ["subtask_start"],
   ORCHESTRATING: ["subtask_start", "subtask_done", "integrate"],
   CODE_RUNNING: ["code_done"],
@@ -27852,6 +27916,7 @@ var sugoPlanInputSchema = {
   registrationGlueChecked: external_exports.boolean().optional().describe("code_done: \uB4F1\uB85D \uAE00\uB8E8(\uBE48 \uB4F1\uB85D \uBA54\uD0C0) diff\uB97C \uC810\uAC80\uD588\uB294\uC9C0"),
   wiringTestAdded: external_exports.boolean().optional().describe("code_done: \uBC30\uC120/\uC124\uC815 \uBCC0\uACBD\uC5D0 \uB300\uD574 mock \uC5C6\uB294 \uBC30\uC120 \uD14C\uC2A4\uD2B8\uB97C \uCD94\uAC00/\uAC80\uC99D\uD588\uB294\uC9C0"),
   bootUnverifiedReason: external_exports.string().optional().describe("code_done: boot-gate\uB97C \uD658\uACBD\uBD80\uC7AC\uB85C \uC6B0\uD68C\uD560 \uB54C\uC758 \uC0AC\uC720 \uB77C\uBCA8"),
+  contractEnvironmentAbsentReason: external_exports.string().optional().describe("contract_done: \uACC4\uC57D\uD14C\uC2A4\uD2B8\uB97C \uC2E4\uD589\uD560 \uD658\uACBD\uC774 \uC5C6\uC744 \uB54C red \uD655\uC778 \uC694\uAD6C\uB97C \uC6B0\uD68C\uD558\uB294 \uC0AC\uC720 \uB77C\uBCA8(\xA74.6 \uB77C\uBCA8-\uBAA8\uC21C \uAC80\uC0AC \uB300\uC0C1)"),
   testPassed: external_exports.boolean().optional().describe("test_done action\uC5D0 \uD544\uC694. \uC11C\uBC84\uC5D0 \uAE30\uB85D\uB41C test evidence\uC640 \uB300\uC870\uB41C\uB2E4"),
   userConfirmed: external_exports.boolean().optional().describe("review_done action\uC5D0 \uD544\uC694. work-result\uB97C \uC0AC\uB78C\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uD655\uC778\uBC1B\uC558\uB294\uC9C0"),
   summary: external_exports.string().optional().describe("review_done action\uC5D0 \uD544\uC694. work-result \uC694\uC57D(\xA74.3: \uC904\u22653, \uAE38\uC774\u226530\uC790 \uB4F1)"),
@@ -27900,6 +27965,15 @@ async function handleSugoPlan(rawArgs) {
     }
     existing = await loadSession(sessionId);
   }
+  const newBypassLabels = [];
+  const currentPatchVersion = existing?.data.patch?.version ?? 0;
+  function greenEvidenceSnapshot(session2) {
+    return {
+      baselineExitCode: session2.data.baselineGate?.evidence?.exitCode ?? null,
+      testDerivedState: session2.data.chainInfo.testPassedState,
+      contractTests: session2.data.chainInfo.contractTests
+    };
+  }
   if (action === "prd") {
     if (!args2.prdContent) return errorResult5("PRD_CONTENT_REQUIRED", "prd action\uC5D0\uB294 prdContent\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const validation = validatePrd(args2.prdContent);
@@ -27908,6 +27982,37 @@ async function handleSugoPlan(rawArgs) {
         validation.errors[0],
         `PRD \uAC80\uC99D \uC2E4\uD328: \uAE38\uC774=${validation.length}\uC790(\u2265100 \uD544\uC694), REQ \uD0DC\uADF8=${validation.reqCount}\uAC1C(\u22651 \uD544\uC694)`
       );
+    }
+  }
+  if (action === "baseline_capture" && existing) {
+    const baselineRequired = existing.data.baselineGate?.required ?? false;
+    const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
+    const baselineResult = checkBaselineGate(baselineRequired, baselineExitCode);
+    if (!baselineResult.ok) return errorResult5(baselineResult.code, baselineResult.message);
+  }
+  if (action === "contract_done" && existing) {
+    const projectConfigForContractStart = await loadProjectConfig(existing.projectPath);
+    const contractRequired = resolveContractRequired(projectConfigForContractStart?.verificationPolicy?.contractEvidenceRequired, {
+      baselineRequired: existing.data.baselineGate?.required ?? false
+    });
+    const claimsAbsent = !!args2.contractEnvironmentAbsentReason && args2.contractEnvironmentAbsentReason.trim().length > 0;
+    if (claimsAbsent) {
+      const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
+      if (!contradiction.ok) return errorResult5(contradiction.code, contradiction.message);
+    }
+    const contractStartedResult = checkContractStartedGate(
+      existing.data.chainInfo.contractTests ?? [],
+      contractRequired,
+      args2.contractEnvironmentAbsentReason
+    );
+    if (!contractStartedResult.ok) return errorResult5(contractStartedResult.code, contractStartedResult.message);
+    if (claimsAbsent && contractRequired) {
+      newBypassLabels.push({
+        kind: "contractEvidenceMissing",
+        reason: args2.contractEnvironmentAbsentReason,
+        patchVersion: currentPatchVersion,
+        recordedAt: (/* @__PURE__ */ new Date()).toISOString()
+      });
     }
   }
   if (action === "code_done" && existing) {
@@ -27925,8 +28030,21 @@ async function handleSugoPlan(rawArgs) {
     if (!glueResult.ok) return errorResult5(glueResult.code, glueResult.message);
     const bootable = await isProjectBootable(existing.projectPath);
     const bootAnnotationFound = bootable ? await scanForSpringBootTestAnnotation(existing.projectPath) : false;
+    const claimsBootAbsent = bootable && !bootAnnotationFound && !!args2.bootUnverifiedReason && args2.bootUnverifiedReason.trim().length > 0;
+    if (claimsBootAbsent) {
+      const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
+      if (!contradiction.ok) return errorResult5(contradiction.code, contradiction.message);
+    }
     const bootResult = checkBootGate(bootable, bootAnnotationFound, args2.bootUnverifiedReason);
     if (!bootResult.ok) return errorResult5(bootResult.code, bootResult.message);
+    if (claimsBootAbsent) {
+      newBypassLabels.push({
+        kind: "bootUnverified",
+        reason: args2.bootUnverifiedReason,
+        patchVersion: currentPatchVersion,
+        recordedAt: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    }
   }
   if (action === "test_done" && existing) {
     if (args2.testPassed === void 0) {
@@ -27934,6 +28052,23 @@ async function handleSugoPlan(rawArgs) {
     }
     const evidenceResult = checkTestEvidenceGate(args2.testPassed, existing.data.chainInfo.testEvidence ?? null);
     if (!evidenceResult.ok) return errorResult5(evidenceResult.code, evidenceResult.message);
+    const feature = existing.data.chainInfo.testEvidence;
+    if (feature?.derivedState === "unverified") {
+      const contradiction = detectLabelContradiction(
+        true,
+        hasGreenExecutionEvidence({
+          baselineExitCode: existing.data.baselineGate?.evidence?.exitCode ?? null,
+          contractTests: existing.data.chainInfo.contractTests
+        })
+      );
+      if (!contradiction.ok) return errorResult5(contradiction.code, contradiction.message);
+      newBypassLabels.push({
+        kind: "environmentAbsent",
+        reason: feature.unverifiedReason ?? "\uC0AC\uC720 \uBBF8\uAE30\uC7AC",
+        patchVersion: currentPatchVersion,
+        recordedAt: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    }
     const projectConfig = await loadProjectConfig(existing.projectPath);
     const enforced = projectConfig?.verificationPolicy?.integrationGateEnforced ?? false;
     if (enforced && !args2.coverageMap) {
@@ -27973,15 +28108,36 @@ async function handleSugoPlan(rawArgs) {
     if (!runtimeSatisfiedByReuse) {
       if (!args2.runtimeCheck) return errorResult5("RUNTIME_CHECK_REQUIRED", "review_done action\uC5D0\uB294 runtimeCheck\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const bootable = await isProjectBootable(existing.projectPath);
-      const runtimeResult = checkRuntimeVerificationGate(
-        existing.data.chainInfo.testPassedState,
-        args2.runtimeCheck,
-        bootable
-      );
+      const rc = args2.runtimeCheck;
+      const labeled = !!rc.unverifiedReason && rc.unverifiedReason.trim().length > 0;
+      const claimsRuntimeAbsent = labeled && !rc.runtimeVerified;
+      const claimsWiringAbsent = labeled && rc.runtimeVerified && bootable && rc.wiringVerified !== true;
+      if (claimsRuntimeAbsent || claimsWiringAbsent) {
+        const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
+        if (!contradiction.ok) return errorResult5(contradiction.code, contradiction.message);
+      }
+      const runtimeResult = checkRuntimeVerificationGate(existing.data.chainInfo.testPassedState, rc, bootable);
       if (!runtimeResult.ok) return errorResult5(runtimeResult.code, runtimeResult.message);
+      if (claimsRuntimeAbsent) {
+        newBypassLabels.push({
+          kind: "runtimeUnverified",
+          reason: rc.unverifiedReason,
+          patchVersion: currentPatchVersion,
+          recordedAt: (/* @__PURE__ */ new Date()).toISOString()
+        });
+      } else if (claimsWiringAbsent) {
+        newBypassLabels.push({
+          kind: "wiringUnverified",
+          reason: rc.unverifiedReason,
+          patchVersion: currentPatchVersion,
+          recordedAt: (/* @__PURE__ */ new Date()).toISOString()
+        });
+      }
     }
     const projectConfigForContract = await loadProjectConfig(existing.projectPath);
-    const contractRequired = projectConfigForContract?.verificationPolicy?.contractEvidenceRequired ?? false;
+    const contractRequired = resolveContractRequired(projectConfigForContract?.verificationPolicy?.contractEvidenceRequired, {
+      baselineRequired: existing.data.baselineGate?.required ?? false
+    });
     const contractResult = checkContractEvidenceGate(existing.data.chainInfo.contractTests ?? [], contractRequired);
     if (!contractResult.ok) return errorResult5(contractResult.code, contractResult.message);
   }
@@ -28030,6 +28186,18 @@ async function handleSugoPlan(rawArgs) {
   if (!session) {
     const payload2 = { ok: true, sessionId: void 0, state: void 0, nextActionHints: result.nextActionHints ?? [] };
     return { content: [{ type: "text", text: JSON.stringify(payload2, null, 2) }] };
+  }
+  if (newBypassLabels.length > 0) {
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        chainInfo: {
+          ...session.data.chainInfo,
+          bypassLabels: [...session.data.chainInfo.bypassLabels ?? [], ...newBypassLabels]
+        }
+      }
+    };
   }
   if (action === "code_start" && existing && (existing.state === "TEST_DONE" || existing.state === "REVIEW_RUNNING")) {
     session = {
@@ -28162,6 +28330,13 @@ async function handleSugoPlan(rawArgs) {
       }
     };
   }
+  let completionGrade;
+  let bypassSummary;
+  if (action === "commit") {
+    const gradeResult = computeCompletionGrade(session.data.chainInfo.bypassLabels ?? [], currentPatchVersion);
+    completionGrade = gradeResult.grade;
+    bypassSummary = renderBypassSummary(gradeResult);
+  }
   let hulk;
   if (action === "commit" && session.data.hulkWorkspace && session.data.hulkTaskId) {
     const workspace = session.data.hulkWorkspace;
@@ -28204,6 +28379,8 @@ async function handleSugoPlan(rawArgs) {
     ok: true,
     sessionId: session.id,
     state: session.state,
+    completionGrade,
+    bypassSummary,
     cancelledAt: session.cancelledAt,
     nextActionHints: result.nextActionHints ?? [],
     humanHoursEstimate,

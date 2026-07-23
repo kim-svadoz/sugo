@@ -4,6 +4,9 @@ export const PLAN_STATES = [
   "CLARIFY",
   "PRD",
   "READY",
+  "BASELINE",
+  "CONTRACT_RUNNING",
+  "CODE_READY",
   "DECOMPOSE",
   "ORCHESTRATING",
   "CODE_RUNNING",
@@ -23,6 +26,9 @@ export const PLAN_ACTIONS = [
   "clarify",
   "prd",
   "ready",
+  "baseline_capture",
+  "contract_start",
+  "contract_done",
   "decompose",
   "subtask_start",
   "subtask_done",
@@ -43,22 +49,30 @@ export type PlanAction = (typeof PLAN_ACTIONS)[number];
 
 /**
  * 스펙 §3 전이·전제 표. `start`/`status`/`cancel`은 세션이 없어도(또는 임의 상태에서) 실행 가능하므로
- * 빈 배열로 표기하고 handler에서 별도 처리한다. code_start는 정상 진입(READY) 외에
- * auto-loop 역방향 재진입(TEST_DONE, REVIEW_RUNNING)도 허용한다.
- * §10 decompose 오케스트레이션(선택 확장): READY에서 code_start 대신 decompose로 들어가
- * subtask_start/subtask_done을 반복하다 integrate로 CODE_RUNNING에 합류한다(이후 code_done부터는
- * 기존 파이프라인과 동일 — 게이트 중복 없음).
+ * 빈 배열로 표기하고 handler에서 별도 처리한다.
+ *
+ * **v1 스펙 델타(게이트 하드닝,) — 코드 착수 전 선형화:** 원본은 `READY→code_start`
+ * 직행이었으나, 지금은 `READY→baseline_capture→BASELINE→contract_start→CONTRACT_RUNNING
+ * →contract_done→CODE_READY→code_start`로 선형화됐다. `code_start`는 정상 진입(CODE_READY) 외에
+ * auto-loop 역방향 재진입(TEST_DONE, REVIEW_RUNNING)도 허용한다 — READY 직행은 이제 차단된다.
+ * §10 decompose 오케스트레이션(선택 확장)은 이 선형화와 별개 분기: READY에서 baseline_capture
+ * 대신 decompose로 들어가 subtask_start/subtask_done을 반복하다 integrate로 CODE_RUNNING에
+ * 합류한다(BASELINE/CONTRACT_RUNNING/CODE_READY를 거치지 않음 — decompose 경로는 code_done의
+ * 기존 baseline 콘텐츠게이트를 그대로 재사용해 보호된다. tools/sugoPlan.ts 주석 참고).
  */
 export const PREREQUISITES: Record<PlanAction, PlanState[]> = {
   start: [],
   clarify: ["SCAN"],
   prd: ["CLARIFY"],
   ready: ["PRD"],
+  baseline_capture: ["READY"],
+  contract_start: ["BASELINE"],
+  contract_done: ["CONTRACT_RUNNING"],
   decompose: ["READY"],
   subtask_start: ["DECOMPOSE", "ORCHESTRATING"],
   subtask_done: ["ORCHESTRATING"],
   integrate: ["ORCHESTRATING"],
-  code_start: ["READY", "TEST_DONE", "REVIEW_RUNNING"],
+  code_start: ["CODE_READY", "TEST_DONE", "REVIEW_RUNNING"],
   code_done: ["CODE_RUNNING"],
   test_start: ["CODE_DONE"],
   test_done: ["TEST_RUNNING"],
@@ -76,6 +90,9 @@ export const RESULT_STATE: Partial<Record<PlanAction, PlanState>> = {
   clarify: "CLARIFY",
   prd: "PRD",
   ready: "READY",
+  baseline_capture: "BASELINE",
+  contract_start: "CONTRACT_RUNNING",
+  contract_done: "CODE_READY",
   decompose: "DECOMPOSE",
   subtask_start: "ORCHESTRATING",
   subtask_done: "ORCHESTRATING",
@@ -96,7 +113,10 @@ export const NEXT_ACTION_HINTS: Record<PlanState, PlanAction[]> = {
   SCAN: ["clarify"],
   CLARIFY: ["prd"],
   PRD: ["ready"],
-  READY: ["code_start", "decompose"],
+  READY: ["baseline_capture", "decompose"],
+  BASELINE: ["contract_start"],
+  CONTRACT_RUNNING: ["contract_done"],
+  CODE_READY: ["code_start"],
   DECOMPOSE: ["subtask_start"],
   ORCHESTRATING: ["subtask_start", "subtask_done", "integrate"],
   CODE_RUNNING: ["code_done"],
@@ -114,6 +134,7 @@ import type { ContractTestRecord } from "./contractEvidence.js";
 import type { CoverageMap } from "./consistency.js";
 import type { DecomposeManifest } from "./decompose.js";
 import type { HumanHoursEstimate } from "./humanHours.js";
+import type { BypassLabel } from "./labelGuard.js";
 import type { PatchContext } from "./patch.js";
 import type { TestEvidenceRecord, TestPassedState } from "./testEvidence.js";
 
@@ -156,6 +177,9 @@ export interface ChainInfo {
   evidenceReused?: boolean;
   /** §10 계약테스트 실행증거 — sugo_record_contract_evidence로 누적되는 red/green 기록. */
   contractTests?: ContractTestRecord[];
+  /** §4.6 label-guard: 세션 동안 실제로 사용된 우회 라벨 누적(모순 검사를 통과한 것만). commit
+   * 시점에 completionGrade 강등 판정의 입력이 된다. */
+  bypassLabels?: BypassLabel[];
 }
 
 export interface SessionData {

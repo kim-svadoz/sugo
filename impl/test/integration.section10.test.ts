@@ -38,13 +38,35 @@ afterEach(() => {
   rmSync(projectDir, { recursive: true, force: true });
 });
 
-async function toTestDonePass(prd = VALID_PRD, changedFile = "login.ts"): Promise<string> {
+/**
+ * contractRedContractId가 주어지면 contract_start 이후 그 id로 red를 먼저 기록해두고 contract_done을
+ * 부른다(§3 신규 gate: 계약필수인데 red가 하나도 없으면 이 단계에서 이미 막힌다 — 그 경계 자체는
+ * integration.gates.test.ts의 "contract_done 게이트" 블록에서 전담 검증하고, 여기서는 review_done의
+ * red→green 전체 재검증(§10)에 집중하기 위해 그 전제만 충족시켜둔다).
+ */
+async function toTestDonePass(
+  prd = VALID_PRD,
+  changedFile = "login.ts",
+  contractRedContractId?: string,
+): Promise<string> {
   writeFileSync(join(projectDir, changedFile), "content");
   const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
   const sessionId = start.data.sessionId as string;
   await call(handleSugoPlan, { action: "clarify", sessionId });
   await call(handleSugoPlan, { action: "prd", sessionId, prdContent: prd });
   await call(handleSugoPlan, { action: "ready", sessionId });
+  await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+  await call(handleSugoPlan, { action: "contract_start", sessionId });
+  if (contractRedContractId) {
+    await call(handleSugoRecordContractEvidence, {
+      sessionId,
+      contractId: contractRedContractId,
+      phase: "red",
+      command: "x",
+      exitCode: 1,
+    });
+  }
+  await call(handleSugoPlan, { action: "contract_done", sessionId });
   await call(handleSugoPlan, { action: "code_start", sessionId });
   await call(handleSugoAnalyze, { sessionId, changedFiles: [changedFile] });
   await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [changedFile] });
@@ -99,24 +121,25 @@ describe("§10 계약테스트 실행증거 — opt-in", () => {
     expect(result.isError).toBe(false);
   });
 
-  it("opt-in 켜져있는데 기록이 없으면 거부한다", async () => {
+  it("§3 신규 gate: 필수인데 red 확인 자체가 없으면 code_start 전에 contract_done에서 이미 거부된다", async () => {
+    // v1 스펙 델타(선형화) 이전에는 review_done에서야 CONTRACT_EVIDENCE_MISSING으로 걸렸지만,
+    // 지금은 훨씬 앞단인 contract_done 상태전이 자체가 막아 code_start조차 못 간다(빨리 실패).
     await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
-    const sessionId = await toTestDonePass();
-    const result = await call(handleSugoPlan, {
-      action: "review_done",
-      sessionId,
-      userConfirmed: true,
-      summary: GOOD_SUMMARY,
-      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
-    });
-    expect(result.isError).toBe(true);
-    expect(result.data.errorCode).toBe("CONTRACT_EVIDENCE_MISSING");
+    const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
+    const sessionId = start.data.sessionId as string;
+    await call(handleSugoPlan, { action: "clarify", sessionId });
+    await call(handleSugoPlan, { action: "prd", sessionId, prdContent: VALID_PRD });
+    await call(handleSugoPlan, { action: "ready", sessionId });
+    await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    const contractDone = await call(handleSugoPlan, { action: "contract_done", sessionId });
+    expect(contractDone.isError).toBe(true);
+    expect(contractDone.data.errorCode).toBe("CONTRACT_NOT_STARTED");
   });
 
-  it("green만 기록하고 red가 없으면 거부한다(자기보고 승격 차단)", async () => {
+  it("red만 기록하고 green이 없으면 review_done에서 거부한다(자기보고 승격 차단)", async () => {
     await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
-    const sessionId = await toTestDonePass();
-    await call(handleSugoRecordContractEvidence, { sessionId, contractId: "C-1", phase: "green", command: "x", exitCode: 0 });
+    const sessionId = await toTestDonePass(VALID_PRD, "login.ts", "C-1");
     const result = await call(handleSugoPlan, {
       action: "review_done",
       sessionId,
@@ -128,10 +151,25 @@ describe("§10 계약테스트 실행증거 — opt-in", () => {
     expect(result.data.errorCode).toBe("CONTRACT_EVIDENCE_INCOMPLETE");
   });
 
+  it("green만 기록하고 red가 없으면 거부한다(자기보고 승격 차단 — C-1은 contract_done 통과용, C-2가 검증 대상)", async () => {
+    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
+    const sessionId = await toTestDonePass(VALID_PRD, "login.ts", "C-1");
+    await call(handleSugoRecordContractEvidence, { sessionId, contractId: "C-2", phase: "green", command: "x", exitCode: 0 });
+    const result = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    expect(result.isError).toBe(true);
+    expect(result.data.errorCode).toBe("CONTRACT_EVIDENCE_INCOMPLETE");
+    expect(result.data.message).toContain("C-2");
+  });
+
   it("red→green 전이를 실제로 기록하면 통과한다", async () => {
     await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
-    const sessionId = await toTestDonePass();
-    await call(handleSugoRecordContractEvidence, { sessionId, contractId: "C-1", phase: "red", command: "x", exitCode: 1 });
+    const sessionId = await toTestDonePass(VALID_PRD, "login.ts", "C-1");
     await call(handleSugoRecordContractEvidence, { sessionId, contractId: "C-1", phase: "green", command: "x", exitCode: 0 });
     const result = await call(handleSugoPlan, {
       action: "review_done",

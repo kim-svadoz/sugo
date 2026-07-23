@@ -5,7 +5,7 @@ import { isProjectBootable } from "../bootable.js";
 import { scanForSpringBootTestAnnotation } from "../bootScan.js";
 import { writePatchPrdFile, writePatchWorkResultFile, writePrdFile, writeWorkResultFile } from "../feature.js";
 import { checkCoverageGate } from "../consistency.js";
-import { checkContractEvidenceGate } from "../contractEvidence.js";
+import { checkContractEvidenceGate, checkContractStartedGate, resolveContractRequired } from "../contractEvidence.js";
 import { validateIntegration, validateManifest, type DecomposeManifest } from "../decompose.js";
 import { checkEvidenceReuseGate, computeChangedFilesFingerprint } from "../fingerprint.js";
 import {
@@ -29,6 +29,13 @@ import { checkpointApplies } from "../hulk/matching.js";
 import { addWorkLog } from "../hulk/history.js";
 import { listCheckpoints } from "../hulk/checkpoint.js";
 import { addTask, updateTask } from "../hulk/task.js";
+import {
+  computeCompletionGrade,
+  detectLabelContradiction,
+  hasGreenExecutionEvidence,
+  renderBypassSummary,
+  type BypassLabel,
+} from "../labelGuard.js";
 import { PatchEntryError, resolvePatchContext, type PatchContext } from "../patch.js";
 import { applyTransition } from "../planStateMachine.js";
 import { generateSessionId, loadSession, saveSession, sessionExists } from "../session.js";
@@ -50,6 +57,10 @@ export const sugoPlanInputSchema = {
   registrationGlueChecked: z.boolean().optional().describe("code_done: 등록 글루(빈 등록 메타) diff를 점검했는지"),
   wiringTestAdded: z.boolean().optional().describe("code_done: 배선/설정 변경에 대해 mock 없는 배선 테스트를 추가/검증했는지"),
   bootUnverifiedReason: z.string().optional().describe("code_done: boot-gate를 환경부재로 우회할 때의 사유 라벨"),
+  contractEnvironmentAbsentReason: z
+    .string()
+    .optional()
+    .describe("contract_done: 계약테스트를 실행할 환경이 없을 때 red 확인 요구를 우회하는 사유 라벨(§4.6 라벨-모순 검사 대상)"),
   testPassed: z.boolean().optional().describe("test_done action에 필요. 서버에 기록된 test evidence와 대조된다"),
   userConfirmed: z.boolean().optional().describe("review_done action에 필요. work-result를 사람에게 보여주고 확인받았는지"),
   summary: z.string().optional().describe("review_done action에 필요. work-result 요약(§4.3: 줄≥3, 길이≥30자 등)"),
@@ -117,6 +128,18 @@ export async function handleSugoPlan(rawArgs: unknown) {
     existing = await loadSession(sessionId);
   }
 
+  // ── §4.6 label-guard: 이번 호출에서 실제로 "우회 라벨"이 쓰였다면 여기 누적했다가, 상태전이가
+  // 성공한 뒤 세션에 반영한다(차단이 아니라 강등용 감사 기록 — commit 시점에 completionGrade를 낮춘다).
+  const newBypassLabels: BypassLabel[] = [];
+  const currentPatchVersion = existing?.data.patch?.version ?? 0;
+  function greenEvidenceSnapshot(session: PlanSession) {
+    return {
+      baselineExitCode: session.data.baselineGate?.evidence?.exitCode ?? null,
+      testDerivedState: session.data.chainInfo.testPassedState,
+      contractTests: session.data.chainInfo.contractTests,
+    };
+  }
+
   // ── 콘텐츠 게이트(§4): 순서강제(prerequisite)와 별개로 액션별 페이로드를 검증한다.
   // 상태 전이 전에 막아야 "READY로 되돌아갔다가 재시도" 같은 오염된 중간상태가 안 남는다.
   if (action === "prd") {
@@ -127,6 +150,45 @@ export async function handleSugoPlan(rawArgs: unknown) {
         validation.errors[0],
         `PRD 검증 실패: 길이=${validation.length}자(≥100 필요), REQ 태그=${validation.reqCount}개(≥1 필요)`,
       );
+    }
+  }
+
+  // ── §3/§4.0 baseline_capture: 원본은 code_done에 딸린 암묵 태깅이었으나, v1 스펙(게이트 하드닝
+  //)에서 명시 상태로 승격됐다. code_done에도 동일 게이트를 남겨둔다(§10 decompose 경로는
+  // 이 상태를 거치지 않고 code_done에서 곧장 재검증되므로 — types.ts PREREQUISITES 주석 참고).
+  if (action === "baseline_capture" && existing) {
+    const baselineRequired = existing.data.baselineGate?.required ?? false;
+    const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
+    const baselineResult = checkBaselineGate(baselineRequired, baselineExitCode);
+    if (!baselineResult.ok) return errorResult(baselineResult.code as GateBlockCode, baselineResult.message!);
+  }
+
+  // ── §3 contract_done: 구현 전 red 확인을 요구한다(review_done의 checkContractEvidenceGate는
+  // 나중에 red→green 전이 전체를 재검증 — 서로 다른 단계를 본다). resolveContractRequired는
+  // §9/§4.3 "undefined면 기본-on 휴리스틱"을 적용한다(contractEvidence.ts 주석 참고).
+  if (action === "contract_done" && existing) {
+    const projectConfigForContractStart = await loadProjectConfig(existing.projectPath);
+    const contractRequired = resolveContractRequired(projectConfigForContractStart?.verificationPolicy?.contractEvidenceRequired, {
+      baselineRequired: existing.data.baselineGate?.required ?? false,
+    });
+    const claimsAbsent = !!args.contractEnvironmentAbsentReason && args.contractEnvironmentAbsentReason.trim().length > 0;
+    if (claimsAbsent) {
+      const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
+      if (!contradiction.ok) return errorResult(contradiction.code as GateBlockCode, contradiction.message!);
+    }
+    const contractStartedResult = checkContractStartedGate(
+      existing.data.chainInfo.contractTests ?? [],
+      contractRequired,
+      args.contractEnvironmentAbsentReason,
+    );
+    if (!contractStartedResult.ok) return errorResult(contractStartedResult.code as GateBlockCode, contractStartedResult.message!);
+    if (claimsAbsent && contractRequired) {
+      newBypassLabels.push({
+        kind: "contractEvidenceMissing",
+        reason: args.contractEnvironmentAbsentReason!,
+        patchVersion: currentPatchVersion,
+        recordedAt: new Date().toISOString(),
+      });
     }
   }
 
@@ -150,8 +212,21 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
     const bootable = await isProjectBootable(existing.projectPath);
     const bootAnnotationFound = bootable ? await scanForSpringBootTestAnnotation(existing.projectPath) : false;
+    const claimsBootAbsent = bootable && !bootAnnotationFound && !!args.bootUnverifiedReason && args.bootUnverifiedReason.trim().length > 0;
+    if (claimsBootAbsent) {
+      const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
+      if (!contradiction.ok) return errorResult(contradiction.code as GateBlockCode, contradiction.message!);
+    }
     const bootResult = checkBootGate(bootable, bootAnnotationFound, args.bootUnverifiedReason);
     if (!bootResult.ok) return errorResult(bootResult.code as GateBlockCode, bootResult.message!);
+    if (claimsBootAbsent) {
+      newBypassLabels.push({
+        kind: "bootUnverified",
+        reason: args.bootUnverifiedReason!,
+        patchVersion: currentPatchVersion,
+        recordedAt: new Date().toISOString(),
+      });
+    }
   }
 
   if (action === "test_done" && existing) {
@@ -160,6 +235,26 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
     const evidenceResult = checkTestEvidenceGate(args.testPassed, existing.data.chainInfo.testEvidence ?? null);
     if (!evidenceResult.ok) return errorResult(evidenceResult.code as GateBlockCode, evidenceResult.message!);
+
+    // ── §4.6 label-guard: testEvidence가 unverified(환경부재 선언)로 기록됐다면, 같은 세션에
+    // 이미 그린 증거(baseline 등 — 이 evidence 자신은 순환을 피하려 제외)가 있는지 대조한다.
+    const feature = existing.data.chainInfo.testEvidence;
+    if (feature?.derivedState === "unverified") {
+      const contradiction = detectLabelContradiction(
+        true,
+        hasGreenExecutionEvidence({
+          baselineExitCode: existing.data.baselineGate?.evidence?.exitCode ?? null,
+          contractTests: existing.data.chainInfo.contractTests,
+        }),
+      );
+      if (!contradiction.ok) return errorResult(contradiction.code as GateBlockCode, contradiction.message!);
+      newBypassLabels.push({
+        kind: "environmentAbsent",
+        reason: feature.unverifiedReason ?? "사유 미기재",
+        patchVersion: currentPatchVersion,
+        recordedAt: new Date().toISOString(),
+      });
+    }
 
     // ── §10 PRD 정합성 게이트(선택 확장, opt-in): config.verificationPolicy.integrationGateEnforced가
     // 켜져 있으면 coverageMap 제출을 강제한다. 꺼져 있으면 제출된 경우에만 검증(하위호환).
@@ -208,18 +303,41 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (!runtimeSatisfiedByReuse) {
       if (!args.runtimeCheck) return errorResult("RUNTIME_CHECK_REQUIRED", "review_done action에는 runtimeCheck가 필요합니다.");
       const bootable = await isProjectBootable(existing.projectPath);
-      const runtimeResult = checkRuntimeVerificationGate(
-        existing.data.chainInfo.testPassedState,
-        args.runtimeCheck as RuntimeCheck,
-        bootable,
-      );
+      const rc = args.runtimeCheck as RuntimeCheck;
+      const labeled = !!rc.unverifiedReason && rc.unverifiedReason.trim().length > 0;
+      // ── §4.6 label-guard: 어떤 종류의 우회가 실제로 쓰이려는지 먼저 판별해 모순부터 검사한다.
+      const claimsRuntimeAbsent = labeled && !rc.runtimeVerified;
+      const claimsWiringAbsent = labeled && rc.runtimeVerified && bootable && rc.wiringVerified !== true;
+      if (claimsRuntimeAbsent || claimsWiringAbsent) {
+        const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
+        if (!contradiction.ok) return errorResult(contradiction.code as GateBlockCode, contradiction.message!);
+      }
+      const runtimeResult = checkRuntimeVerificationGate(existing.data.chainInfo.testPassedState, rc, bootable);
       if (!runtimeResult.ok) return errorResult(runtimeResult.code as GateBlockCode, runtimeResult.message!);
+      if (claimsRuntimeAbsent) {
+        newBypassLabels.push({
+          kind: "runtimeUnverified",
+          reason: rc.unverifiedReason!,
+          patchVersion: currentPatchVersion,
+          recordedAt: new Date().toISOString(),
+        });
+      } else if (claimsWiringAbsent) {
+        newBypassLabels.push({
+          kind: "wiringUnverified",
+          reason: rc.unverifiedReason!,
+          patchVersion: currentPatchVersion,
+          recordedAt: new Date().toISOString(),
+        });
+      }
     }
 
-    // ── §10 계약테스트 실행증거(opt-in): config.verificationPolicy.contractEvidenceRequired가
-    // 켜져 있으면 sugo_record_contract_evidence로 기록된 red→green 전이를 요구한다.
+    // ── §10 계약테스트 실행증거: config.verificationPolicy.contractEvidenceRequired가 켜져 있으면
+    // sugo_record_contract_evidence로 기록된 red→green 전이를 요구한다. resolveContractRequired로
+    // §9/§4.3 "undefined면 기본-on 휴리스틱"을 적용한다(contract_done 게이트와 동일 정책 판정).
     const projectConfigForContract = await loadProjectConfig(existing.projectPath);
-    const contractRequired = projectConfigForContract?.verificationPolicy?.contractEvidenceRequired ?? false;
+    const contractRequired = resolveContractRequired(projectConfigForContract?.verificationPolicy?.contractEvidenceRequired, {
+      baselineRequired: existing.data.baselineGate?.required ?? false,
+    });
     const contractResult = checkContractEvidenceGate(existing.data.chainInfo.contractTests ?? [], contractRequired);
     if (!contractResult.ok) return errorResult(contractResult.code as GateBlockCode, contractResult.message!);
   }
@@ -281,6 +399,20 @@ export async function handleSugoPlan(rawArgs: unknown) {
   if (!session) {
     const payload = { ok: true, sessionId: undefined, state: undefined, nextActionHints: result.nextActionHints ?? [] };
     return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
+  }
+
+  // ── §4.6 label-guard: 콘텐츠 게이트 검사 중 실제로 쓰인 우회 라벨(모순검사 통과분)을 세션에 누적한다.
+  if (newBypassLabels.length > 0) {
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        chainInfo: {
+          ...session.data.chainInfo,
+          bypassLabels: [...(session.data.chainInfo.bypassLabels ?? []), ...newBypassLabels],
+        },
+      },
+    };
   }
 
   // ── §4.5 판단품질 측정용 신호: TEST_DONE/REVIEW_RUNNING에서 code_start로 역방향 재진입하면
@@ -439,6 +571,16 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
+  // ── §4.6 label-guard: commit 시점에 우회 라벨 누적분으로 completionGrade를 판정한다. 차단은
+  // 하지 않는다(교착 방지) — 대신 응답 최상단에 강제 노출해 "조용히 넘어가지 못하게" 한다.
+  let completionGrade: "verified" | "unverified" | undefined;
+  let bypassSummary: string | undefined;
+  if (action === "commit") {
+    const gradeResult = computeCompletionGrade(session.data.chainInfo.bypassLabels ?? [], currentPatchVersion);
+    completionGrade = gradeResult.grade;
+    bypassSummary = renderBypassSummary(gradeResult);
+  }
+
   // ── §8 HULK 연동: commit 시점에 Task를 done으로 전환하고 WorkLog를 기록한다.
   // 매칭되는 checkpoint는 정보성으로만 노출한다(체크리스트 완료 여부는 자기보고라 강제할 수 없음 —
   // sugo_validate와 같은 이유. roadmap-progress.md 참고).
@@ -490,6 +632,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
     ok: true,
     sessionId: session.id,
     state: session.state,
+    completionGrade,
+    bypassSummary,
     cancelledAt: session.cancelledAt,
     nextActionHints: result.nextActionHints ?? [],
     humanHoursEstimate,

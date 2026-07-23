@@ -3,8 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { saveProjectConfig } from "../src/harness/config.js";
+import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
+import { handleSugoRecordContractEvidence } from "../src/tools/sugoRecordContractEvidence.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,6 +33,8 @@ afterEach(() => {
   rmSync(projectDir, { recursive: true, force: true });
 });
 
+/** VALID_PRD(baseline 시그널 없음)를 가정한 해피패스 진입 — baseline_capture/contract_start/
+ * contract_done은 시그널이 없어 전부 no-op 통과한다(§3 선형화, resolveContractRequired 휴리스틱). */
 async function startToReady(prdContent: string): Promise<string> {
   const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
   const sessionId = start.data.sessionId as string;
@@ -38,6 +42,9 @@ async function startToReady(prdContent: string): Promise<string> {
   const prd = await call(handleSugoPlan, { action: "prd", sessionId, prdContent });
   expect(prd.isError).toBe(false);
   await call(handleSugoPlan, { action: "ready", sessionId });
+  await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+  await call(handleSugoPlan, { action: "contract_start", sessionId });
+  await call(handleSugoPlan, { action: "contract_done", sessionId });
   await call(handleSugoPlan, { action: "code_start", sessionId });
   return sessionId;
 }
@@ -77,18 +84,34 @@ describe("analyze 호출강제 게이트 (§4.1)", () => {
   });
 });
 
-describe("baseline 게이트 (§4.0)", () => {
-  it("baseline 시그널이 있는 PRD는 baseline evidence 없이 code_done을 거부한다", async () => {
-    const sessionId = await startToReady(BASELINE_SIGNAL_PRD);
-    await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
-    const codeDone = await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
-    expect(codeDone.isError).toBe(true);
-    expect(codeDone.data.errorCode).toBe("BASELINE_NOT_GREEN");
+/** baseline_capture 직전(READY)까지만 진행 — v1 스펙 선형화(§3)로 baseline 강제가 code_done이
+ * 아니라 baseline_capture 자신에서 일어나므로, 이 describe 블록은 그 지점을 직접 검증한다. */
+async function startToReadyOnly(prdContent: string): Promise<string> {
+  const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
+  const sessionId = start.data.sessionId as string;
+  await call(handleSugoPlan, { action: "clarify", sessionId });
+  const prd = await call(handleSugoPlan, { action: "prd", sessionId, prdContent });
+  expect(prd.isError).toBe(false);
+  await call(handleSugoPlan, { action: "ready", sessionId });
+  return sessionId;
+}
+
+describe("baseline 게이트 (§4.0) — v1 스펙: baseline_capture 상태전이 자체에서 강제된다(§3 선형화)", () => {
+  it("baseline 시그널이 있는 PRD는 baseline evidence 없이 baseline_capture를 거부한다(READY에 머문다)", async () => {
+    const sessionId = await startToReadyOnly(BASELINE_SIGNAL_PRD);
+    const baselineCapture = await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+    expect(baselineCapture.isError).toBe(true);
+    expect(baselineCapture.data.errorCode).toBe("BASELINE_NOT_GREEN");
+
+    const status = await call(handleSugoPlan, { action: "status", sessionId });
+    expect(status.data.state).toBe("READY");
   });
 
-  it("baseline evidence를 그린으로 기록하면 code_done이 통과한다", async () => {
-    const sessionId = await startToReady(BASELINE_SIGNAL_PRD);
-    await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
+  it("baseline evidence를 그린으로 기록하면 baseline_capture가 통과하고 이후 code_done까지 이어진다", async () => {
+    // 이 테스트는 baseline 체인만 본다 — contract_done은 별도 describe 블록에서 다루므로
+    // 여기서는 기본-on 휴리스틱이 끼어들지 않게 명시적으로 꺼둔다.
+    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: false });
+    const sessionId = await startToReadyOnly(BASELINE_SIGNAL_PRD);
     await call(handleSugoRecordTestEvidence, {
       sessionId,
       kind: "baseline",
@@ -96,15 +119,104 @@ describe("baseline 게이트 (§4.0)", () => {
       exitCode: 0,
       failed: 0,
     });
+    const baselineCapture = await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+    expect(baselineCapture.isError).toBe(false);
+    expect(baselineCapture.data.state).toBe("BASELINE");
+
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    await call(handleSugoPlan, { action: "contract_done", sessionId });
+    await call(handleSugoPlan, { action: "code_start", sessionId });
+    await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
     const codeDone = await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
     expect(codeDone.isError).toBe(false);
   });
 
-  it("시그널 없는 PRD는 baseline 증거 없이도 통과한다(no-op)", async () => {
+  it("시그널 없는 PRD는 baseline 증거 없이도 baseline_capture가 통과한다(no-op)", async () => {
     const sessionId = await startToReady(VALID_PRD);
     await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
     const codeDone = await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
     expect(codeDone.isError).toBe(false);
+  });
+});
+
+/** BASELINE 상태 직전까지 진행 — contract_done 게이트를 직접 검증하는 describe 블록이 사용한다.
+ * recordGreenBaseline=false(기본)면 baseline evidence를 아예 기록하지 않는다 — VALID_PRD처럼
+ * baseline이 애초에 불필요한 세션에서 그린 증거를 남기면 이후 라벨-모순 검사가 오염되기 때문. */
+async function toBaseline(prdContent: string, recordGreenBaseline = false): Promise<string> {
+  const sessionId = await startToReadyOnly(prdContent);
+  if (recordGreenBaseline) {
+    await call(handleSugoRecordTestEvidence, { sessionId, kind: "baseline", command: "./gradlew test", exitCode: 0, failed: 0 });
+  }
+  const baselineCapture = await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+  expect(baselineCapture.isError).toBe(false);
+  return sessionId;
+}
+
+describe("contract_done 게이트 (§3 신규 상태 — v1 스펙 델타)", () => {
+  it("baseline 위험시그널이 있는 PRD는(기본-on 휴리스틱) red 확인 없이 contract_done을 거부한다", async () => {
+    const sessionId = await toBaseline(BASELINE_SIGNAL_PRD, true);
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    const contractDone = await call(handleSugoPlan, { action: "contract_done", sessionId });
+    expect(contractDone.isError).toBe(true);
+    expect(contractDone.data.errorCode).toBe("CONTRACT_NOT_STARTED");
+  });
+
+  it("red를 기록하면 contract_done이 통과하고 CODE_READY로 전이한다", async () => {
+    const sessionId = await toBaseline(BASELINE_SIGNAL_PRD, true);
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    await call(handleSugoRecordContractEvidence, {
+      sessionId,
+      contractId: "REQ-1",
+      phase: "red",
+      command: "./gradlew test",
+      exitCode: 1,
+    });
+    const contractDone = await call(handleSugoPlan, { action: "contract_done", sessionId });
+    expect(contractDone.isError).toBe(false);
+    expect(contractDone.data.state).toBe("CODE_READY");
+  });
+
+  it("시그널 없는 평범한 PRD는(정책 미설정) red 확인 없이도 통과한다(하위호환 — 기본 off 유지)", async () => {
+    const sessionId = await toBaseline(VALID_PRD);
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    const contractDone = await call(handleSugoPlan, { action: "contract_done", sessionId });
+    expect(contractDone.isError).toBe(false);
+  });
+
+  it("contractEvidenceRequired:false를 명시하면 baseline 시그널이 있어도 해제된다", async () => {
+    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: false });
+    const sessionId = await toBaseline(BASELINE_SIGNAL_PRD, true);
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    const contractDone = await call(handleSugoPlan, { action: "contract_done", sessionId });
+    expect(contractDone.isError).toBe(false);
+  });
+
+  it("environmentAbsentReason 라벨로 red 확인을 우회할 수 있다(그린 증거가 전혀 없는 세션)", async () => {
+    // VALID_PRD(baseline 시그널 없음) + 정책으로 명시 강제 — baseline evidence를 아예 기록하지
+    // 않아 hasGreenExecutionEvidence가 false가 되므로, 이 environmentAbsent 주장은 모순이 아니다.
+    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
+    const sessionId = await toBaseline(VALID_PRD);
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    const contractDone = await call(handleSugoPlan, {
+      action: "contract_done",
+      sessionId,
+      contractEnvironmentAbsentReason: "샌드박스에 테스트 러너 없음",
+    });
+    expect(contractDone.isError).toBe(false);
+  });
+
+  it("§4.6 라벨-모순: baseline이 이미 그린으로 기록됐는데 contract environmentAbsent를 주장하면 거부한다", async () => {
+    // toBaseline이 baseline evidence를 exitCode=0(그린)으로 기록해두므로, 여기서 contract를
+    // "환경이 없어서 못 돌린다"고 주장하는 것은 명백한 모순이다.
+    const sessionId = await toBaseline(BASELINE_SIGNAL_PRD, true);
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    const contractDone = await call(handleSugoPlan, {
+      action: "contract_done",
+      sessionId,
+      contractEnvironmentAbsentReason: "환경이 없음(거짓 주장)",
+    });
+    expect(contractDone.isError).toBe(true);
+    expect(contractDone.data.errorCode).toBe("LABEL_CONTRADICTION");
   });
 });
 

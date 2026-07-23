@@ -22,6 +22,30 @@ describe("순서강제 게이트 (설계안: Gate Keeper) — 반드시 거부",
     expect(result.errorCode).toBe("PREREQUISITE_FAILED");
   });
 
+  it("v1 스펙 델타(§3 선형화): READY에서 code_start로 직행하면 차단된다(CODE_READY 아님)", () => {
+    const result = applyTransition(sessionAt("READY"), "code_start", "sid", {});
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("PREREQUISITE_FAILED");
+  });
+
+  it("BASELINE에서 code_start로 직행하면 차단된다(CONTRACT_RUNNING/CODE_READY 건너뛰기)", () => {
+    const result = applyTransition(sessionAt("BASELINE"), "code_start", "sid", {});
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("PREREQUISITE_FAILED");
+  });
+
+  it("READY에서 contract_start로 직행하면 차단된다(BASELINE을 건너뛰기)", () => {
+    const result = applyTransition(sessionAt("READY"), "contract_start", "sid", {});
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("PREREQUISITE_FAILED");
+  });
+
+  it("BASELINE에서 contract_done으로 직행하면 차단된다(CONTRACT_RUNNING을 건너뛰기)", () => {
+    const result = applyTransition(sessionAt("BASELINE"), "contract_done", "sid", {});
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("PREREQUISITE_FAILED");
+  });
+
   it("CODE_RUNNING 상태에서 review_start를 호출하면 차단된다", () => {
     const result = applyTransition(sessionAt("CODE_RUNNING"), "review_start", "sid", {});
     expect(result.ok).toBe(false);
@@ -56,9 +80,20 @@ describe("순서강제 게이트 (설계안: Gate Keeper) — 반드시 거부",
 
 describe("순서강제 게이트 — 반드시 허용", () => {
   it("전제 상태를 충족한 액션은 통과하고 다음 상태로 전이한다", () => {
-    const result = applyTransition(sessionAt("READY"), "code_start", "sid", {});
+    const result = applyTransition(sessionAt("CODE_READY"), "code_start", "sid", {});
     expect(result.ok).toBe(true);
     expect(result.session?.state).toBe("CODE_RUNNING");
+  });
+
+  it("v1 스펙 델타(§3): READY→BASELINE→CONTRACT_RUNNING→CODE_READY 선형화가 순서대로 통과한다", () => {
+    let s = applyTransition(sessionAt("READY"), "baseline_capture", "sid", {}).session!;
+    expect(s.state).toBe("BASELINE");
+    s = applyTransition(s, "contract_start", s.id, {}).session!;
+    expect(s.state).toBe("CONTRACT_RUNNING");
+    s = applyTransition(s, "contract_done", s.id, {}).session!;
+    expect(s.state).toBe("CODE_READY");
+    s = applyTransition(s, "code_start", s.id, {}).session!;
+    expect(s.state).toBe("CODE_RUNNING");
   });
 
   it("전체 해피패스 체인이 순서대로 통과한다: start~commit", () => {
@@ -73,6 +108,15 @@ describe("순서강제 게이트 — 반드시 허용", () => {
 
     s = applyTransition(s, "ready", s.id, {}).session!;
     expect(s.state).toBe("READY");
+
+    s = applyTransition(s, "baseline_capture", s.id, {}).session!;
+    expect(s.state).toBe("BASELINE");
+
+    s = applyTransition(s, "contract_start", s.id, {}).session!;
+    expect(s.state).toBe("CONTRACT_RUNNING");
+
+    s = applyTransition(s, "contract_done", s.id, {}).session!;
+    expect(s.state).toBe("CODE_READY");
 
     s = applyTransition(s, "code_start", s.id, {}).session!;
     expect(s.state).toBe("CODE_RUNNING");

@@ -44,6 +44,9 @@ async function runFirstRoundToReviewDone(
   await call(handleSugoPlan, { action: "clarify", sessionId });
   const prd = await call(handleSugoPlan, { action: "prd", sessionId, prdContent: VALID_PRD });
   await call(handleSugoPlan, { action: "ready", sessionId });
+  await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+  await call(handleSugoPlan, { action: "contract_start", sessionId });
+  await call(handleSugoPlan, { action: "contract_done", sessionId });
   await call(handleSugoPlan, { action: "code_start", sessionId });
   await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
   await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [], wiringTestAdded });
@@ -141,6 +144,9 @@ describe("Patch 전체 흐름 (§7)", () => {
     await call(handleSugoPlan, { action: "clarify", sessionId });
     await call(handleSugoPlan, { action: "prd", sessionId, prdContent: "REQ-1: 추가 기능. " + "다".repeat(90) });
     await call(handleSugoPlan, { action: "ready", sessionId });
+    await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    await call(handleSugoPlan, { action: "contract_done", sessionId });
     await call(handleSugoPlan, { action: "code_start", sessionId });
     await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
 
@@ -170,6 +176,9 @@ describe("Patch 전체 흐름 (§7)", () => {
     await call(handleSugoPlan, { action: "clarify", sessionId });
     await call(handleSugoPlan, { action: "prd", sessionId, prdContent: "REQ-1: 2차 변경. " + "다".repeat(90) });
     await call(handleSugoPlan, { action: "ready", sessionId });
+    await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    await call(handleSugoPlan, { action: "contract_done", sessionId });
     await call(handleSugoPlan, { action: "code_start", sessionId });
     await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
     await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [], wiringTestAdded: true });

@@ -43,6 +43,9 @@ async function toTestDone(testPassed = true, failed = 0): Promise<string> {
   await call(handleSugoPlan, { action: "clarify", sessionId });
   await call(handleSugoPlan, { action: "prd", sessionId, prdContent: VALID_PRD });
   await call(handleSugoPlan, { action: "ready", sessionId });
+  await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+  await call(handleSugoPlan, { action: "contract_start", sessionId });
+  await call(handleSugoPlan, { action: "contract_done", sessionId });
   await call(handleSugoPlan, { action: "code_start", sessionId });
   await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
   await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
@@ -145,7 +148,9 @@ describe("review_done — 런타임검증 게이트", () => {
   });
 
   it("환경부재 라벨로 우회할 수 있다", async () => {
-    const sessionId = await toTestDone();
+    // §4.6 label-guard: 그린 test evidence가 있는 채로 환경부재를 주장하면 라벨-모순으로 거부되므로,
+    // 이 세션은 test evidence부터 그린이 아니어야 한다(일관되게 "환경이 없었다"는 이야기).
+    const sessionId = await toTestDone(false, 3);
     const result = await call(handleSugoPlan, {
       action: "review_done",
       sessionId,

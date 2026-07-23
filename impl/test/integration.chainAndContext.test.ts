@@ -39,6 +39,9 @@ async function toCodeDone(): Promise<string> {
   await call(handleSugoPlan, { action: "clarify", sessionId });
   await call(handleSugoPlan, { action: "prd", sessionId, prdContent: VALID_PRD });
   await call(handleSugoPlan, { action: "ready", sessionId });
+  await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+  await call(handleSugoPlan, { action: "contract_start", sessionId });
+  await call(handleSugoPlan, { action: "contract_done", sessionId });
   await call(handleSugoPlan, { action: "code_start", sessionId });
   await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
   await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: ["login.js"] });

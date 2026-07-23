@@ -51,6 +51,9 @@ async function toTestRunning(): Promise<string> {
   await call(handleSugoPlan, { action: "clarify", sessionId });
   await call(handleSugoPlan, { action: "prd", sessionId, prdContent: VALID_PRD });
   await call(handleSugoPlan, { action: "ready", sessionId });
+  await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+  await call(handleSugoPlan, { action: "contract_start", sessionId });
+  await call(handleSugoPlan, { action: "contract_done", sessionId });
   await call(handleSugoPlan, { action: "code_start", sessionId });
   await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
   await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
@@ -139,6 +142,9 @@ describe("auto-loop 재시도 카운트 (§4.5 신호)", () => {
     await call(handleSugoPlan, { action: "clarify", sessionId });
     await call(handleSugoPlan, { action: "prd", sessionId, prdContent: VALID_PRD });
     await call(handleSugoPlan, { action: "ready", sessionId });
+    await call(handleSugoPlan, { action: "baseline_capture", sessionId });
+    await call(handleSugoPlan, { action: "contract_start", sessionId });
+    await call(handleSugoPlan, { action: "contract_done", sessionId });
     await call(handleSugoPlan, { action: "code_start", sessionId });
 
     const report = await call(handleSugoJudgmentReport, {});
@@ -171,12 +177,18 @@ describe("sugo_judgment_report — 전체 흐름 집계", () => {
     await call(handleSugoPlan, { action: "clarify", sessionId: s2 });
     await call(handleSugoPlan, { action: "prd", sessionId: s2, prdContent: VALID_PRD });
     await call(handleSugoPlan, { action: "ready", sessionId: s2 });
+    await call(handleSugoPlan, { action: "baseline_capture", sessionId: s2 });
+    await call(handleSugoPlan, { action: "contract_start", sessionId: s2 });
+    await call(handleSugoPlan, { action: "contract_done", sessionId: s2 });
     await call(handleSugoPlan, { action: "code_start", sessionId: s2 });
     await call(handleSugoAnalyze, { sessionId: s2, changedFiles: [] });
     await call(handleSugoPlan, { action: "code_done", sessionId: s2, changedFiles: [] });
     await call(handleSugoPlan, { action: "test_start", sessionId: s2 });
-    await call(handleSugoRecordTestEvidence, { sessionId: s2, command: "npm test", exitCode: 0, failed: 0 });
-    await call(handleSugoPlan, { action: "test_done", sessionId: s2, testPassed: true });
+    // §4.6 label-guard: 이 세션은 "환경 자체가 없다"는 일관된 이야기여야 한다 — test_done에서
+    // 이미 그린으로 통과했는데 review_done에서 환경부재를 주장하면 라벨-모순으로 거부되기 때문에,
+    // test evidence도 함께 unverified로 기록한다(테스트가 실제로 검증됐다는 증거가 세션에 없어야 함).
+    await call(handleSugoRecordTestEvidence, { sessionId: s2, command: "npm test", unverified: true, unverifiedReason: "환경 없음" });
+    await call(handleSugoPlan, { action: "test_done", sessionId: s2, testPassed: false });
     await call(handleSugoPlan, { action: "review_start", sessionId: s2 });
     await call(handleSugoPlan, {
       action: "review_done",
