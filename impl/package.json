@@ -5,7 +5,9 @@
   "type": "module",
   "main": "dist/index.bundle.mjs",
   "scripts": {
+    "prebuild": "node syncVersion.mjs",
     "build": "node build.mjs",
+    "sync-version": "node syncVersion.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
