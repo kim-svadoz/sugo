@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/* §5 테마 (사이버펑크 콘솔) — 브랜드 색상은 스펙 그대로, 실제 UI 다듬기는 §10 8단계에서. */
+@theme {
+  --color-primary: #00b4d8;
+  --color-secondary: #8b5cf6;
+  --color-accent: #f59e0b;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "Pretendard", "Plus Jakarta Sans", ui-sans-serif, sans-serif;
+}
+
+html {
+  font-size: 19px;
+}
+
+body {
+  background: #040711;
+  color: #e5e7eb;
+  font-family: var(--font-sans);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.ck-glass {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.ck-card {
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.ck-glow-cyan {
+  box-shadow: 0 0 12px rgba(0, 180, 216, 0.35);
+}
+
+.ck-glow-violet {
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+}
+
+.ck-text-glow {
+  text-shadow: 0 0 8px currentColor;
+}
+
+.ck-pulse-dot {
+  animation: ck-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes ck-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.ck-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ck-pulse-dot {
+    animation: none;
+  }
+}

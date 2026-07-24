@@ -13,6 +13,10 @@ export const config = {
     database: process.env.MYSQL_DATABASE ?? "sugo_dashboard",
   },
   pluginVersion: process.env.PLUGIN_VERSION ?? "0.0.0",
+  // §8 "현재 냄새": original has cors() with no options (wide open). local
+  // fix is a whitelist instead - CORS_ORIGINS is comma-separated, defaults to
+  // the Vite dev server port for local frontend/backend development.
+  corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5173").split(",").map((s) => s.trim()).filter(Boolean),
   oidc: {
     issuer: process.env.OIDC_ISSUER ?? "",
     authEndpoint: process.env.OIDC_AUTH_ENDPOINT ?? "",

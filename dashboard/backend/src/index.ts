@@ -12,6 +12,7 @@ import { createWorkspacesRouter } from "./routes/workspaces.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createJwtVerifier, type VerifyJwt } from "./auth/jwt.js";
 import { createHttpOidcTokenClient, type OidcTokenClient } from "./auth/oidcTokenClient.js";
+import { corsWhitelist } from "./middleware/cors.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
@@ -61,6 +62,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
       : unconfiguredOidcClient());
 
   const app = express();
+  app.use(corsWhitelist(config.corsOrigins));
   app.use(express.json());
 
   app.get("/health", (_req, res) => {

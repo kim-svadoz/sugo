@@ -1,0 +1,4 @@
+// §3.7/§5: 백엔드 /api/skills 라우트는 아직 없음(§10 로드맵에 명시된 순서 밖) - 골격만.
+export function Skills() {
+  return <div className="text-sm opacity-70">Skills — 백엔드 /api/skills 라우트 연결 예정.</div>;
+}
