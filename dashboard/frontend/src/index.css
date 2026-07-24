@@ -58,8 +58,59 @@ body {
   scrollbar-width: thin;
 }
 
+/* §5 ck- 유틸: 새 항목이 목록에 들어올 때 살짝 슬라이드+페이드 인. */
+.ck-line-in {
+  animation: ck-line-in 0.2s ease-out;
+}
+
+@keyframes ck-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* §5 ck-scan: CRT 스캔라인 오버레이. */
+.ck-scan {
+  position: relative;
+}
+
+.ck-scan::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.03) 0px,
+    rgba(255, 255, 255, 0.03) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.neon-border-cyan {
+  border: 1px solid rgba(0, 180, 216, 0.6);
+  box-shadow: 0 0 6px rgba(0, 180, 216, 0.4);
+}
+
+.neon-border-violet {
+  border: 1px solid rgba(139, 92, 246, 0.6);
+  box-shadow: 0 0 6px rgba(139, 92, 246, 0.4);
+}
+
+.neon-border-amber {
+  border: 1px solid rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .ck-pulse-dot {
+  .ck-pulse-dot,
+  .ck-line-in {
     animation: none;
   }
 }

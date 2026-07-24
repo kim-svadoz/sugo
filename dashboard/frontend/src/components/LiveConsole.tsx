@@ -42,7 +42,7 @@ export function LiveConsole() {
       <div className="ck-scroll space-y-1 font-mono text-xs" style={{ maxHeight: expanded ? "24rem" : undefined }}>
         {visible.length === 0 && <div className="opacity-50">활동 없음</div>}
         {visible.map((ev, i) => (
-          <div key={`${ev.id}-${i}`}>
+          <div key={`${ev.id}-${i}`} className="ck-line-in">
             <span className="opacity-50">{`> [${formatTs(ev.ts)}]`}</span>{" "}
             <AgentBadge agent={ev.agent} handoffTo={ev.handoff_to} /> <span className="opacity-70">{ev.workspace_name}</span>{" "}
             <span className="opacity-50">›</span> {ev.message}

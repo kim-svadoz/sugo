@@ -4,7 +4,7 @@ export function Login() {
   const { login } = useAuth();
   return (
     <div className="flex h-screen items-center justify-center">
-      <div className="ck-glass ck-card text-center">
+      <div className="ck-glass ck-card ck-scan text-center">
         <h1 className="mb-4 font-mono text-xl ck-text-glow" style={{ color: "var(--color-primary)" }}>
           SUGÒ Console
         </h1>

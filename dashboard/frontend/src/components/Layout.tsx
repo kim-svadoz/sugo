@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.js";
 import { LiveConsole } from "./LiveConsole.js";
+import { CommandPalette } from "./CommandPalette.js";
 
 const NAV_ITEMS = [
   { to: "/sessions", label: "Workspaces" },
@@ -10,8 +11,7 @@ const NAV_ITEMS = [
   { to: "/settings", label: "Settings" },
 ];
 
-// §5: 슬림 아이콘 Sidebar + Header("SUGÒ Console") + <Outlet>.
-// CommandPalette(Cmd/Ctrl+K)는 §10 8단계(테마 다듬기)에서 붙임 - 지금은 골격만.
+// §5: 슬림 아이콘 Sidebar + Header("SUGÒ Console") + <Outlet> + 전역 CommandPalette(Cmd/Ctrl+K).
 export function Layout() {
   const { userId, logout } = useAuth();
 
@@ -51,6 +51,7 @@ export function Layout() {
           <LiveConsole />
         </main>
       </div>
+      <CommandPalette />
     </div>
   );
 }

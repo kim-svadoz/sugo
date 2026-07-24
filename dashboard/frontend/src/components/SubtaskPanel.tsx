@@ -181,7 +181,7 @@ function ProgressTab({
           <div className="font-mono text-xs uppercase opacity-60">Lineage</div>
           <div className="space-y-1">
             {lineage.map((entry) => (
-              <div key={entry.version} className="rounded border border-violet-400/30 p-2 text-xs">
+              <div key={entry.version} className="neon-border-violet ck-line-in rounded p-2 text-xs">
                 <span style={{ color: "var(--color-secondary)" }}>v{entry.version}</span>{" "}
                 {entry.title ?? entry.summary ?? ""}{" "}
                 <span className="opacity-50">{entry.completedAt}</span>
