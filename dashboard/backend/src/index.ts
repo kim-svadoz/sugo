@@ -10,8 +10,11 @@ import { createSyncRouter } from "./routes/sync.js";
 import { createActivityRouter } from "./routes/activity.js";
 import { createWorkspacesRouter } from "./routes/workspaces.js";
 import { createAuthRouter } from "./routes/auth.js";
+import { createBitbucketRouter } from "./routes/bitbucket.js";
+import { createPrRouter } from "./routes/pr.js";
 import { createJwtVerifier, type VerifyJwt } from "./auth/jwt.js";
 import { createHttpOidcTokenClient, type OidcTokenClient } from "./auth/oidcTokenClient.js";
+import { createHttpBitbucketClient, type BitbucketClient } from "./bitbucket/client.js";
 import { corsWhitelist } from "./middleware/cors.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -41,6 +44,8 @@ export interface AppOverrides {
   db?: DbClient;
   verifyJwt?: VerifyJwt;
   oidcClient?: OidcTokenClient;
+  bitbucketClient?: BitbucketClient;
+  secretEncKey?: string;
 }
 
 export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
@@ -60,6 +65,8 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
           redirectUri: config.oidc.redirectUri,
         })
       : unconfiguredOidcClient());
+  const bitbucketClient = overrides.bitbucketClient ?? createHttpBitbucketClient();
+  const secretEncKey = overrides.secretEncKey ?? config.secretEncKey;
 
   const app = express();
   app.use(corsWhitelist(config.corsOrigins));
@@ -86,6 +93,8 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
       verifyJwt
     )
   );
+  app.use("/api/bitbucket", createBitbucketRouter(db, verifyJwt, secretEncKey));
+  app.use("/api/pr", createPrRouter(db, verifyJwt, secretEncKey, bitbucketClient));
 
   return { app, db, verifyJwt };
 }
