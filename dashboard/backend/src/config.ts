@@ -13,4 +13,14 @@ export const config = {
     database: process.env.MYSQL_DATABASE ?? "sugo_dashboard",
   },
   pluginVersion: process.env.PLUGIN_VERSION ?? "0.0.0",
+  oidc: {
+    issuer: process.env.OIDC_ISSUER ?? "",
+    authEndpoint: process.env.OIDC_AUTH_ENDPOINT ?? "",
+    tokenEndpoint: process.env.OIDC_TOKEN_ENDPOINT ?? "",
+    jwksUri: process.env.OIDC_JWKS_URI ?? "",
+    clientId: process.env.OIDC_CLIENT_ID ?? "",
+    clientSecret: process.env.OIDC_CLIENT_SECRET ?? "",
+    redirectUri: process.env.OIDC_REDIRECT_URI ?? "",
+    scope: "openid profile email offline_access",
+  },
 };
