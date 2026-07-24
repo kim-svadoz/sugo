@@ -1,5 +1,6 @@
 import type { DbClient } from "../db/client.js";
 import { readySet, topoSort, wouldCreateCycle } from "./canvasGraph.js";
+import { parseJsonArray, parseMaybeJson } from "../db/jsonColumn.js";
 
 export interface WorkspaceProjectRow {
   project_path: string;
@@ -109,15 +110,20 @@ export interface CheckpointSyncRow {
   category: string;
   title: string;
   learned_from: string | null;
-  checklist: string | null;
-  applies_to: string | null;
+  checklist: unknown;
+  applies_to: unknown;
+}
+
+function normalizeCheckpointRow<T extends { checklist: unknown; applies_to: unknown }>(row: T): T {
+  return { ...row, checklist: parseMaybeJson<unknown>(row.checklist, null), applies_to: parseMaybeJson<unknown>(row.applies_to, null) };
 }
 
 export async function getCheckpointSync(db: DbClient, userId: string): Promise<CheckpointSyncRow[]> {
-  return db.query<CheckpointSyncRow>(
+  const rows = await db.query<CheckpointSyncRow>(
     "SELECT id, workspace_name, category, title, learned_from, checklist, applies_to FROM sugo_checkpoints WHERE user_id = ? ORDER BY workspace_name, id",
     [userId]
   );
+  return rows.map(normalizeCheckpointRow);
 }
 
 export async function getDecisions(db: DbClient, userId: string, workspaceName: string) {
@@ -135,10 +141,11 @@ export async function getHistory(db: DbClient, userId: string, workspaceName: st
 }
 
 export async function getCheckpoints(db: DbClient, userId: string, workspaceName: string) {
-  return db.query(
+  const rows = await db.query<{ id: string; category: string; title: string; learned_from: string | null; checklist: unknown; applies_to: unknown; checkpoint_date: string | null }>(
     "SELECT id, category, title, learned_from, checklist, applies_to, checkpoint_date FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? ORDER BY id",
     [userId, workspaceName]
   );
+  return rows.map(normalizeCheckpointRow);
 }
 
 export async function getTasks(db: DbClient, userId: string, workspaceName: string) {
@@ -153,13 +160,13 @@ export interface CanvasNodeRow {
   title: string;
   level: string;
   status: string;
-  depends_on: string | null;
+  depends_on: string[];
   parent: string | null;
   ref: string | null;
   note: string | null;
   spec_path: string | null;
-  work_result: string | null;
-  lineage: string | null;
+  work_result: unknown;
+  lineage: unknown;
   manual_status: string | null;
   manual_by: string | null;
   manual_at: string | null;
@@ -167,11 +174,26 @@ export interface CanvasNodeRow {
   pos_y: number | null;
 }
 
+// Row shape as it comes off the wire - JSON columns are driver-dependent
+// (string on sqlite, already-parsed on mysql2); normalized below so the API
+// response is identical regardless of DB_DRIVER.
+type CanvasNodeDbRow = Omit<CanvasNodeRow, "depends_on" | "work_result" | "lineage"> & {
+  depends_on: unknown;
+  work_result: unknown;
+  lineage: unknown;
+};
+
 export async function getCanvas(db: DbClient, userId: string, workspaceName: string): Promise<CanvasNodeRow[]> {
-  return db.query<CanvasNodeRow>(
+  const rows = await db.query<CanvasNodeDbRow>(
     "SELECT * FROM sugo_canvas_nodes WHERE user_id = ? AND workspace_name = ? ORDER BY id",
     [userId, workspaceName]
   );
+  return rows.map((r) => ({
+    ...r,
+    depends_on: parseJsonArray(r.depends_on),
+    work_result: parseMaybeJson<unknown>(r.work_result, null),
+    lineage: parseMaybeJson<unknown>(r.lineage, null),
+  }));
 }
 
 // ---- Checkpoint CRUD (§3.3, dashboard-initiated - separate from plugin sync) ----
@@ -250,22 +272,12 @@ export async function deleteCheckpointRow(
 
 export type CanvasMutationResult = { ok: true } | { ok: false; error: string; message: string };
 
-function parseDeps(raw: string | null): string[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
 async function loadGraphNodes(db: DbClient, userId: string, workspaceName: string) {
-  const rows = await db.query<{ id: string; level: string; status: string; depends_on: string | null }>(
+  const rows = await db.query<{ id: string; level: string; status: string; depends_on: unknown }>(
     "SELECT id, level, status, depends_on FROM sugo_canvas_nodes WHERE user_id = ? AND workspace_name = ?",
     [userId, workspaceName]
   );
-  return rows.map((r) => ({ id: r.id, level: r.level, status: r.status, dependsOn: parseDeps(r.depends_on) }));
+  return rows.map((r) => ({ id: r.id, level: r.level, status: r.status, dependsOn: parseJsonArray(r.depends_on) }));
 }
 
 // §3.3: link/unlink는 task<->task만 허용(fail-closed), 사이클 생기면 거부.

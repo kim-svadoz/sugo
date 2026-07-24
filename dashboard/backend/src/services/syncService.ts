@@ -1,6 +1,7 @@
 import type { DbClient } from "../db/client.js";
 import { upsertRow } from "../db/upsert.js";
 import { cleanDanglingDeps, computeNodesToDelete, shouldSeedDependsOn } from "./canvasDiff.js";
+import { parseJsonArray } from "../db/jsonColumn.js";
 
 export async function ensureUser(db: DbClient, userId: string): Promise<void> {
   await upsertRow(db, "sugo_users", { id: userId }, {});
@@ -292,17 +293,9 @@ export interface CanvasNodeInput {
 interface CanvasRow {
   id: string;
   level: string;
-  depends_on: string | null;
-}
-
-function parseDeps(raw: string | null): string[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  // driver-dependent: mysql2 auto-parses JSON columns to arrays, node:sqlite
+  // returns the raw TEXT string - parseJsonArray() normalizes both.
+  depends_on: unknown;
 }
 
 // §3.1/§7 canvas sync: 스냅샷 replace 시맨틱 + 소유권 경계(depends_on 최초1회 seed,
@@ -323,7 +316,7 @@ export async function syncCanvas(
   const incomingIds = new Set(nodes.map((n) => n.id));
 
   const toDelete = computeNodesToDelete(
-    existingRows.map((r) => ({ id: r.id, level: r.level, dependsOn: parseDeps(r.depends_on) })),
+    existingRows.map((r) => ({ id: r.id, level: r.level, dependsOn: parseJsonArray(r.depends_on) })),
     incomingIds
   );
   for (const id of toDelete) {
@@ -337,7 +330,7 @@ export async function syncCanvas(
 
   for (const node of nodes) {
     const existing = existingById.get(node.id);
-    const existingDeps = existing ? parseDeps(existing.depends_on) : undefined;
+    const existingDeps = existing ? parseJsonArray(existing.depends_on) : undefined;
     const seed = shouldSeedDependsOn(existingDeps);
     const incomingDeps = cleanDanglingDeps(node.dependsOn ?? [], deletedIds);
 
@@ -400,7 +393,7 @@ export async function syncCanvas(
       [userId, workspaceName]
     );
     for (const row of remaining) {
-      const deps = parseDeps(row.depends_on);
+      const deps = parseJsonArray(row.depends_on);
       const cleaned = cleanDanglingDeps(deps, deletedIds);
       if (cleaned.length !== deps.length) {
         await db.exec(

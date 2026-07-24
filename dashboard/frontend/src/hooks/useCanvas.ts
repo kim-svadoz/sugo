@@ -42,13 +42,16 @@ export interface CanvasNode {
   title: string;
   level: string;
   status: string;
-  depends_on: string | null;
+  // Backend normalizes JSON columns to a driver-independent shape (see
+  // dashboard/backend/src/db/jsonColumn.ts) - always real parsed values here,
+  // never a JSON-encoded string, regardless of DB_DRIVER.
+  depends_on: string[];
   parent: string | null;
   ref: string | null;
   note: string | null;
   spec_path: string | null;
-  work_result: string | null;
-  lineage: string | null;
+  work_result: unknown;
+  lineage: unknown;
   manual_status: string | null;
   pos_x: number | null;
   pos_y: number | null;
@@ -99,21 +102,31 @@ export function useCanvas(workspaceName: string) {
   return { data, loading, error, refetch };
 }
 
-export function parseWorkResult(raw: string | null): WorkResult | null {
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as WorkResult;
-  } catch {
-    return null;
+// Lenient by design: the backend always sends already-parsed JSON now, but
+// these accept a raw string too (defensive - mirrors the backend's own
+// parseMaybeJson helper, see dashboard/backend/src/db/jsonColumn.ts).
+export function parseWorkResult(value: unknown): WorkResult | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value) as WorkResult;
+    } catch {
+      return null;
+    }
   }
+  return value as WorkResult;
 }
 
-export function parseLineage(raw: string | null): LineageEntry[] {
-  if (!raw) return [];
+export function parseLineage(value: unknown): LineageEntry[] {
+  if (value === null || value === undefined) return [];
+  const parsed = typeof value === "string" ? safeJsonParse(value) : value;
+  return Array.isArray(parsed) ? (parsed as LineageEntry[]) : [];
+}
+
+function safeJsonParse(raw: string): unknown {
   try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return JSON.parse(raw);
   } catch {
-    return [];
+    return null;
   }
 }

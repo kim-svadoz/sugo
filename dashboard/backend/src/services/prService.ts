@@ -1,4 +1,5 @@
 import type { DbClient } from "../db/client.js";
+import { parseMaybeJson } from "../db/jsonColumn.js";
 
 export interface PrRefs {
   baseUrl: string;
@@ -14,25 +15,22 @@ export interface NodeRow {
   id: string;
   level: string;
   parent: string | null;
-  work_result: string | null;
+  // driver-dependent shape (string on sqlite, already-parsed object on
+  // mysql2) - extractPrRefs() normalizes via parseMaybeJson.
+  work_result: unknown;
 }
 
-export function extractPrRefs(workResultJson: string | null): PrRefs | null {
-  if (!workResultJson) return null;
-  try {
-    const parsed = JSON.parse(workResultJson) as { prRefs?: Partial<PrRefs> };
-    const refs = parsed.prRefs;
-    if (!refs || !refs.baseUrl || !refs.projectKey || !refs.repoSlug || !refs.sourceBranch) return null;
-    return {
-      baseUrl: refs.baseUrl,
-      projectKey: refs.projectKey,
-      repoSlug: refs.repoSlug,
-      sourceBranch: refs.sourceBranch,
-      targetBranch: refs.targetBranch ?? "develop",
-    };
-  } catch {
-    return null;
-  }
+export function extractPrRefs(workResult: unknown): PrRefs | null {
+  const parsed = parseMaybeJson<{ prRefs?: Partial<PrRefs> } | null>(workResult, null);
+  const refs = parsed?.prRefs;
+  if (!refs || !refs.baseUrl || !refs.projectKey || !refs.repoSlug || !refs.sourceBranch) return null;
+  return {
+    baseUrl: refs.baseUrl,
+    projectKey: refs.projectKey,
+    repoSlug: refs.repoSlug,
+    sourceBranch: refs.sourceBranch,
+    targetBranch: refs.targetBranch ?? "develop",
+  };
 }
 
 export function collectDescendantTaskIds(nodes: NodeRow[], rootId: string): string[] {
