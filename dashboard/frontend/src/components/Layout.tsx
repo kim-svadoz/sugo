@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.js";
+import { LiveConsole } from "./LiveConsole.js";
 
 const NAV_ITEMS = [
   { to: "/sessions", label: "Workspaces" },
@@ -45,8 +46,9 @@ export function Layout() {
             </button>
           </div>
         </header>
-        <main className="ck-scroll flex-1 p-6">
+        <main className="ck-scroll flex-1 space-y-4 p-6">
           <Outlet />
+          <LiveConsole />
         </main>
       </div>
     </div>
