@@ -1,6 +1,6 @@
 // Ported as-is (same algorithm, not copied source) from the plugin's
-// impl/src/hulk/roadmapGraph.ts so both sides of the seam agree on ordering.
-// See spec/sugo-dashboard-spec-v1.md 설계안 "로드맵 DAG 규칙 (플러그인과 알고리즘 동일)".
+// impl/src/hulk/canvasGraph.ts so both sides of the seam agree on ordering.
+// See spec/sugo-dashboard-spec-v1.md 설계안 "캔버스 DAG 규칙 (플러그인과 알고리즘 동일)".
 
 export interface GraphNode {
   id: string;

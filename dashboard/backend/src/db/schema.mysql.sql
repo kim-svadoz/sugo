@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS sugo_workspace_meta (
   PRIMARY KEY (user_id, workspace_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (
+CREATE TABLE IF NOT EXISTS sugo_canvas_nodes (
   id VARCHAR(191) NOT NULL,
   user_id VARCHAR(191) NOT NULL,
   workspace_name VARCHAR(255) NOT NULL,

@@ -66,7 +66,7 @@ export async function resolveRefs(
   scope: "task" | "run" | "spec"
 ): Promise<ResolveRefsResult> {
   const nodes = await db.query<NodeRow>(
-    "SELECT id, level, parent, work_result FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    "SELECT id, level, parent, work_result FROM sugo_canvas_nodes WHERE user_id = ? AND workspace_name = ?",
     [userId, workspaceName]
   );
 

@@ -8,7 +8,7 @@ import {
   entityDeleteSchema,
   historySchema,
   pluginVersionSchema,
-  roadmapSyncSchema,
+  canvasSyncSchema,
   taskSchema,
   workspaceDeleteSchema,
   workspaceMetaSchema,
@@ -27,7 +27,7 @@ import {
   syncDecision,
   syncHistory,
   syncPluginVersion,
-  syncRoadmap,
+  syncCanvas,
   syncTask,
   syncUser,
   syncWorkspace,
@@ -111,8 +111,8 @@ export function createSyncRouter(db: DbClient): Router {
     res.json({ ok: true });
   });
 
-  router.post("/roadmap", validateBody(roadmapSyncSchema), async (req, res) => {
-    await syncRoadmap(db, req.body.userId, req.body.workspaceName, req.body.nodes);
+  router.post("/canvas", validateBody(canvasSyncSchema), async (req, res) => {
+    await syncCanvas(db, req.body.userId, req.body.workspaceName, req.body.nodes);
     res.json({ ok: true });
   });
 
@@ -125,7 +125,7 @@ export function createSyncRouter(db: DbClient): Router {
     for (const d of body.decisions ?? []) await syncDecision(db, d);
     for (const c of body.checkpoints ?? []) await syncCheckpoint(db, c);
     for (const m of body.workspaceMeta ?? []) await syncWorkspaceMeta(db, m);
-    for (const r of body.roadmap ?? []) await syncRoadmap(db, r.userId, r.workspaceName, r.nodes);
+    for (const r of body.canvas ?? []) await syncCanvas(db, r.userId, r.workspaceName, r.nodes);
     res.json({ ok: true });
   });
 

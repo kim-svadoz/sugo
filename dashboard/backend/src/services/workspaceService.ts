@@ -1,5 +1,5 @@
 import type { DbClient } from "../db/client.js";
-import { readySet, topoSort, wouldCreateCycle } from "./roadmapGraph.js";
+import { readySet, topoSort, wouldCreateCycle } from "./canvasGraph.js";
 
 export interface WorkspaceProjectRow {
   project_path: string;
@@ -13,7 +13,7 @@ export interface TaskCounts {
   archived: number;
 }
 
-export interface RoadmapCounts {
+export interface CanvasCounts {
   total: number;
   done: number;
   active: number;
@@ -23,13 +23,13 @@ export interface WorkspaceSummary {
   name: string;
   projects: WorkspaceProjectRow[];
   taskCounts: TaskCounts;
-  roadmap: RoadmapCounts;
+  canvas: CanvasCounts;
 }
 
-// 설계안: roadmap count는 level='task'만, active는 COALESCE(manual_status,status)='in_progress'.
-async function roadmapCounts(db: DbClient, userId: string, workspaceName: string): Promise<RoadmapCounts> {
+// 설계안: canvas count는 level='task'만, active는 COALESCE(manual_status,status)='in_progress'.
+async function canvasCounts(db: DbClient, userId: string, workspaceName: string): Promise<CanvasCounts> {
   const rows = await db.query<{ status: string; manual_status: string | null }>(
-    "SELECT status, manual_status FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND level = 'task'",
+    "SELECT status, manual_status FROM sugo_canvas_nodes WHERE user_id = ? AND workspace_name = ? AND level = 'task'",
     [userId, workspaceName]
   );
   let done = 0;
@@ -69,7 +69,7 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
       name: ws.name,
       projects,
       taskCounts: await taskCounts(db, userId, ws.name),
-      roadmap: await roadmapCounts(db, userId, ws.name),
+      canvas: await canvasCounts(db, userId, ws.name),
     });
   }
   return result;
@@ -148,7 +148,7 @@ export async function getTasks(db: DbClient, userId: string, workspaceName: stri
   );
 }
 
-export interface RoadmapNodeRow {
+export interface CanvasNodeRow {
   id: string;
   title: string;
   level: string;
@@ -167,9 +167,9 @@ export interface RoadmapNodeRow {
   pos_y: number | null;
 }
 
-export async function getRoadmap(db: DbClient, userId: string, workspaceName: string): Promise<RoadmapNodeRow[]> {
-  return db.query<RoadmapNodeRow>(
-    "SELECT * FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? ORDER BY id",
+export async function getCanvas(db: DbClient, userId: string, workspaceName: string): Promise<CanvasNodeRow[]> {
+  return db.query<CanvasNodeRow>(
+    "SELECT * FROM sugo_canvas_nodes WHERE user_id = ? AND workspace_name = ? ORDER BY id",
     [userId, workspaceName]
   );
 }
@@ -246,9 +246,9 @@ export async function deleteCheckpointRow(
   ]);
 }
 
-// ---- Roadmap mutations (§3.3 "대시보드가 구조/순서 소유") ----
+// ---- Canvas mutations (§3.3 "대시보드가 구조/순서 소유") ----
 
-export type RoadmapMutationResult = { ok: true } | { ok: false; error: string; message: string };
+export type CanvasMutationResult = { ok: true } | { ok: false; error: string; message: string };
 
 function parseDeps(raw: string | null): string[] {
   if (!raw) return [];
@@ -262,20 +262,20 @@ function parseDeps(raw: string | null): string[] {
 
 async function loadGraphNodes(db: DbClient, userId: string, workspaceName: string) {
   const rows = await db.query<{ id: string; level: string; status: string; depends_on: string | null }>(
-    "SELECT id, level, status, depends_on FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    "SELECT id, level, status, depends_on FROM sugo_canvas_nodes WHERE user_id = ? AND workspace_name = ?",
     [userId, workspaceName]
   );
   return rows.map((r) => ({ id: r.id, level: r.level, status: r.status, dependsOn: parseDeps(r.depends_on) }));
 }
 
 // §3.3: link/unlink는 task<->task만 허용(fail-closed), 사이클 생기면 거부.
-export async function linkRoadmapNodes(
+export async function linkCanvasNodes(
   db: DbClient,
   userId: string,
   workspaceName: string,
   fromId: string,
   toId: string
-): Promise<RoadmapMutationResult> {
+): Promise<CanvasMutationResult> {
   const nodes = await loadGraphNodes(db, userId, workspaceName);
   const from = nodes.find((n) => n.id === fromId);
   const to = nodes.find((n) => n.id === toId);
@@ -292,7 +292,7 @@ export async function linkRoadmapNodes(
   }
 
   const newDeps = [...from.dependsOn, toId];
-  await db.exec("UPDATE sugo_roadmap_nodes SET depends_on = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+  await db.exec("UPDATE sugo_canvas_nodes SET depends_on = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
     JSON.stringify(newDeps),
     userId,
     workspaceName,
@@ -301,20 +301,20 @@ export async function linkRoadmapNodes(
   return { ok: true };
 }
 
-export async function unlinkRoadmapNodes(
+export async function unlinkCanvasNodes(
   db: DbClient,
   userId: string,
   workspaceName: string,
   fromId: string,
   toId: string
-): Promise<RoadmapMutationResult> {
+): Promise<CanvasMutationResult> {
   const nodes = await loadGraphNodes(db, userId, workspaceName);
   const from = nodes.find((n) => n.id === fromId);
   if (!from) {
     return { ok: false, error: "NODE_NOT_FOUND", message: "fromId 노드를 찾을 수 없습니다." };
   }
   const newDeps = from.dependsOn.filter((id) => id !== toId);
-  await db.exec("UPDATE sugo_roadmap_nodes SET depends_on = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+  await db.exec("UPDATE sugo_canvas_nodes SET depends_on = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
     JSON.stringify(newDeps),
     userId,
     workspaceName,
@@ -325,7 +325,7 @@ export async function unlinkRoadmapNodes(
 
 // group으로 workstream 묶기: 새 workstream 노드를 만들고 멤버들의 parent를 그 그룹으로.
 // sequential이면 멤버 순서대로 dependsOn 체인을 건다(task 레벨 멤버만 해당).
-export async function createRoadmapGroup(
+export async function createCanvasGroup(
   db: DbClient,
   userId: string,
   workspaceName: string,
@@ -333,50 +333,50 @@ export async function createRoadmapGroup(
   title: string,
   members: string[],
   sequential: boolean
-): Promise<RoadmapMutationResult> {
+): Promise<CanvasMutationResult> {
   await db.exec(
-    "INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, status) VALUES (?, ?, ?, ?, 'workstream', 'pending')",
+    "INSERT INTO sugo_canvas_nodes (id, user_id, workspace_name, title, level, status) VALUES (?, ?, ?, ?, 'workstream', 'pending')",
     [groupId, userId, workspaceName, title]
   );
   for (const memberId of members) {
     await db.exec(
-      "UPDATE sugo_roadmap_nodes SET parent = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
+      "UPDATE sugo_canvas_nodes SET parent = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
       [groupId, userId, workspaceName, memberId]
     );
   }
   if (sequential) {
     for (let i = 1; i < members.length; i++) {
-      await linkRoadmapNodes(db, userId, workspaceName, members[i], members[i - 1]);
+      await linkCanvasNodes(db, userId, workspaceName, members[i], members[i - 1]);
     }
   }
   return { ok: true };
 }
 
-export async function deleteRoadmapGroup(
+export async function deleteCanvasGroup(
   db: DbClient,
   userId: string,
   workspaceName: string,
   groupId: string
 ): Promise<void> {
   await db.exec(
-    "UPDATE sugo_roadmap_nodes SET parent = NULL WHERE user_id = ? AND workspace_name = ? AND parent = ?",
+    "UPDATE sugo_canvas_nodes SET parent = NULL WHERE user_id = ? AND workspace_name = ? AND parent = ?",
     [userId, workspaceName, groupId]
   );
-  await db.exec("DELETE FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+  await db.exec("DELETE FROM sugo_canvas_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?", [
     userId,
     workspaceName,
     groupId,
   ]);
 }
 
-export async function setRoadmapParent(
+export async function setCanvasParent(
   db: DbClient,
   userId: string,
   workspaceName: string,
   nodeId: string,
   parentId: string | null
 ): Promise<void> {
-  await db.exec("UPDATE sugo_roadmap_nodes SET parent = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+  await db.exec("UPDATE sugo_canvas_nodes SET parent = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
     parentId,
     userId,
     workspaceName,
@@ -384,14 +384,14 @@ export async function setRoadmapParent(
   ]);
 }
 
-export async function renameRoadmapNode(
+export async function renameCanvasNode(
   db: DbClient,
   userId: string,
   workspaceName: string,
   nodeId: string,
   title: string
 ): Promise<void> {
-  await db.exec("UPDATE sugo_roadmap_nodes SET title = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+  await db.exec("UPDATE sugo_canvas_nodes SET title = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
     title,
     userId,
     workspaceName,
@@ -409,7 +409,7 @@ export async function setManualStatus(
   manualBy: string
 ): Promise<void> {
   await db.exec(
-    "UPDATE sugo_roadmap_nodes SET manual_status = ?, manual_by = ?, manual_at = CURRENT_TIMESTAMP WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    "UPDATE sugo_canvas_nodes SET manual_status = ?, manual_by = ?, manual_at = CURRENT_TIMESTAMP WHERE user_id = ? AND workspace_name = ? AND id = ?",
     [status, manualBy, userId, workspaceName, nodeId]
   );
 }
@@ -421,12 +421,12 @@ export async function clearManualStatus(
   nodeId: string
 ): Promise<void> {
   await db.exec(
-    "UPDATE sugo_roadmap_nodes SET manual_status = NULL, manual_by = NULL, manual_at = NULL WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    "UPDATE sugo_canvas_nodes SET manual_status = NULL, manual_by = NULL, manual_at = NULL WHERE user_id = ? AND workspace_name = ? AND id = ?",
     [userId, workspaceName, nodeId]
   );
 }
 
-export async function setRoadmapPosition(
+export async function setCanvasPosition(
   db: DbClient,
   userId: string,
   workspaceName: string,
@@ -434,7 +434,7 @@ export async function setRoadmapPosition(
   x: number,
   y: number
 ): Promise<void> {
-  await db.exec("UPDATE sugo_roadmap_nodes SET pos_x = ?, pos_y = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+  await db.exec("UPDATE sugo_canvas_nodes SET pos_x = ?, pos_y = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
     x,
     y,
     userId,

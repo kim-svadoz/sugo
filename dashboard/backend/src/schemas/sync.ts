@@ -88,7 +88,7 @@ export const pluginVersionSchema = z.object({
   version: z.string().min(1),
 });
 
-const roadmapNodeSchema = z.object({
+const canvasNodeSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   level: z.enum(["spec", "workstream", "task", "subtask", "step"]),
@@ -102,10 +102,10 @@ const roadmapNodeSchema = z.object({
   lineage: z.unknown().optional(),
 });
 
-export const roadmapSyncSchema = z.object({
+export const canvasSyncSchema = z.object({
   userId: z.string().min(1),
   workspaceName: z.string().min(1),
-  nodes: z.array(roadmapNodeSchema),
+  nodes: z.array(canvasNodeSchema),
 });
 
 export const bulkSyncSchema = z.object({
@@ -116,7 +116,7 @@ export const bulkSyncSchema = z.object({
   decisions: z.array(decisionSchema).optional(),
   checkpoints: z.array(checkpointSchema).optional(),
   workspaceMeta: z.array(workspaceMetaSchema).optional(),
-  roadmap: z.array(roadmapSyncSchema).optional(),
+  canvas: z.array(canvasSyncSchema).optional(),
 });
 
 export const activityIngestSchema = z.object({

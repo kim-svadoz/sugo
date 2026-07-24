@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 
-// §5 Sessions(홈) 골격 — 워크스페이스 카드 + Canvas Progress(roadmapDone/roadmapCount).
+// §5 Sessions(홈) 골격 — 워크스페이스 카드 + Canvas Progress(canvasDone/canvasCount).
 // 실제 스펙의 History 검색/체크포인트 모달/LiveConsole 등은 §10 6단계(폴링)/이후 증분에서.
 export function Sessions() {
   const { data, loading, error } = useWorkspaces();
@@ -13,11 +13,11 @@ export function Sessions() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {data.map((ws) => {
-        const progress = ws.roadmap.total > 0 ? Math.round((ws.roadmap.done / ws.roadmap.total) * 100) : 0;
+        const progress = ws.canvas.total > 0 ? Math.round((ws.canvas.done / ws.canvas.total) * 100) : 0;
         const statusPill =
-          ws.taskCounts.in_progress > 0 ? "IN PROGRESS" : ws.roadmap.total > 0 && progress === 100 ? "COMPLETED" : "IDLE";
+          ws.taskCounts.in_progress > 0 ? "IN PROGRESS" : ws.canvas.total > 0 && progress === 100 ? "COMPLETED" : "IDLE";
         return (
-          <Link key={ws.name} to={`/roadmap/${encodeURIComponent(ws.name)}`} className="ck-glass ck-card block hover:ck-glow-cyan">
+          <Link key={ws.name} to={`/canvas/${encodeURIComponent(ws.name)}`} className="ck-glass ck-card block hover:ck-glow-cyan">
             <div className="mb-2 flex items-center justify-between">
               <span className="font-mono text-sm">{ws.name}</span>
               <span className="rounded px-2 py-0.5 text-xs" style={{ color: "var(--color-accent)" }}>
@@ -25,7 +25,7 @@ export function Sessions() {
               </span>
             </div>
             <div className="mb-2 text-xs opacity-70">
-              Canvas Progress: {ws.roadmap.done}/{ws.roadmap.total} ({progress}%)
+              Canvas Progress: {ws.canvas.done}/{ws.canvas.total} ({progress}%)
             </div>
             <div className="flex flex-wrap gap-1">
               {ws.projects.map((p) => (

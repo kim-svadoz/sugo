@@ -15,24 +15,24 @@ import {
 import {
   clearManualStatus,
   createCheckpoint,
-  createRoadmapGroup,
+  createCanvasGroup,
   deleteCheckpointRow,
-  deleteRoadmapGroup,
+  deleteCanvasGroup,
   getCheckpointSync,
   getCheckpoints,
   getDecisions,
   getHistory,
   getRecentHistory,
-  getRoadmap,
+  getCanvas,
   getTasks,
-  linkRoadmapNodes,
+  linkCanvasNodes,
   listWorkspaces,
-  renameRoadmapNode,
+  renameCanvasNode,
   searchWorkspaces,
   setManualStatus,
-  setRoadmapParent,
-  setRoadmapPosition,
-  unlinkRoadmapNodes,
+  setCanvasParent,
+  setCanvasPosition,
+  unlinkCanvasNodes,
   updateCheckpoint,
 } from "../services/workspaceService.js";
 
@@ -53,7 +53,7 @@ function respondMutation(res: import("express").Response, result: { ok: true } |
   }
 }
 
-// §3.3: all PUBLIC, userId via query. Dashboard owns roadmap structure/order here.
+// §3.3: all PUBLIC, userId via query. Dashboard owns canvas structure/order here.
 export function createWorkspacesRouter(db: DbClient): Router {
   const router = Router();
 
@@ -107,10 +107,10 @@ export function createWorkspacesRouter(db: DbClient): Router {
     res.json({ tasks: await getTasks(db, userId, req.params.name) });
   });
 
-  router.get("/:name/roadmap", async (req, res) => {
+  router.get("/:name/canvas", async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    res.json({ nodes: await getRoadmap(db, userId, req.params.name) });
+    res.json({ nodes: await getCanvas(db, userId, req.params.name) });
   });
 
   router.post("/:name/checkpoints", validateBody(checkpointCreateSchema), async (req, res) => {
@@ -134,67 +134,67 @@ export function createWorkspacesRouter(db: DbClient): Router {
     res.json({ ok: true });
   });
 
-  router.post("/:name/roadmap/link", validateBody(linkSchema), async (req, res) => {
+  router.post("/:name/canvas/link", validateBody(linkSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    const result = await linkRoadmapNodes(db, userId, req.params.name, req.body.from, req.body.to);
+    const result = await linkCanvasNodes(db, userId, req.params.name, req.body.from, req.body.to);
     respondMutation(res, result);
   });
 
-  router.delete("/:name/roadmap/link", validateBody(linkSchema), async (req, res) => {
+  router.delete("/:name/canvas/link", validateBody(linkSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    const result = await unlinkRoadmapNodes(db, userId, req.params.name, req.body.from, req.body.to);
+    const result = await unlinkCanvasNodes(db, userId, req.params.name, req.body.from, req.body.to);
     respondMutation(res, result);
   });
 
-  router.post("/:name/roadmap/group", validateBody(groupCreateSchema), async (req, res) => {
+  router.post("/:name/canvas/group", validateBody(groupCreateSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
     const { groupId, title, members, sequential } = req.body;
-    const result = await createRoadmapGroup(db, userId, req.params.name, groupId, title, members, Boolean(sequential));
+    const result = await createCanvasGroup(db, userId, req.params.name, groupId, title, members, Boolean(sequential));
     respondMutation(res, result);
   });
 
-  router.delete("/:name/roadmap/group/:groupId", async (req, res) => {
+  router.delete("/:name/canvas/group/:groupId", async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    await deleteRoadmapGroup(db, userId, req.params.name, req.params.groupId);
+    await deleteCanvasGroup(db, userId, req.params.name, req.params.groupId);
     res.json({ ok: true });
   });
 
-  router.post("/:name/roadmap/parent", validateBody(parentSchema), async (req, res) => {
+  router.post("/:name/canvas/parent", validateBody(parentSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    await setRoadmapParent(db, userId, req.params.name, req.body.nodeId, req.body.parentId);
+    await setCanvasParent(db, userId, req.params.name, req.body.nodeId, req.body.parentId);
     res.json({ ok: true });
   });
 
-  router.post("/:name/roadmap/rename", validateBody(renameSchema), async (req, res) => {
+  router.post("/:name/canvas/rename", validateBody(renameSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    await renameRoadmapNode(db, userId, req.params.name, req.body.nodeId, req.body.title);
+    await renameCanvasNode(db, userId, req.params.name, req.body.nodeId, req.body.title);
     res.json({ ok: true });
   });
 
-  router.post("/:name/roadmap/manual-status", validateBody(manualStatusSchema), async (req, res) => {
+  router.post("/:name/canvas/manual-status", validateBody(manualStatusSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
     await setManualStatus(db, userId, req.params.name, req.body.nodeId, req.body.status, userId);
     res.json({ ok: true });
   });
 
-  router.delete("/:name/roadmap/manual-status", validateBody(manualStatusClearSchema), async (req, res) => {
+  router.delete("/:name/canvas/manual-status", validateBody(manualStatusClearSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
     await clearManualStatus(db, userId, req.params.name, req.body.nodeId);
     res.json({ ok: true });
   });
 
-  router.post("/:name/roadmap/position", validateBody(positionSchema), async (req, res) => {
+  router.post("/:name/canvas/position", validateBody(positionSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    await setRoadmapPosition(db, userId, req.params.name, req.body.nodeId, req.body.x, req.body.y);
+    await setCanvasPosition(db, userId, req.params.name, req.body.nodeId, req.body.x, req.body.y);
     res.json({ ok: true });
   });
 

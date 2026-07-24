@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { collectDescendantTaskIds, extractPrRefs, resolveRefs } from "../src/services/prService.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
-import { syncRoadmap, syncUser } from "../src/services/syncService.js";
+import { syncCanvas, syncUser } from "../src/services/syncService.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
@@ -52,7 +52,7 @@ describe("resolveRefs — §6 scope 선택 PR", () => {
 
   it("task scope: 자기 자신의 prRefs만 본다", async () => {
     const db = await seeded();
-    await syncRoadmap(db, "u1", "ws1", [
+    await syncCanvas(db, "u1", "ws1", [
       {
         id: "t1",
         title: "T1",
@@ -70,14 +70,14 @@ describe("resolveRefs — §6 scope 선택 PR", () => {
 
   it("반드시 거부: prRefs가 하나도 없으면 NO_REFS", async () => {
     const db = await seeded();
-    await syncRoadmap(db, "u1", "ws1", [{ id: "t1", title: "T1", level: "task", status: "pending" }]);
+    await syncCanvas(db, "u1", "ws1", [{ id: "t1", title: "T1", level: "task", status: "pending" }]);
     const result = await resolveRefs(db, "u1", "ws1", "t1", "task");
     expect(result).toEqual({ ok: false, error: "NO_REFS" });
   });
 
   it("run scope: 하위 task들의 branch가 전부 같으면 단일 ref로 통과", async () => {
     const db = await seeded();
-    await syncRoadmap(db, "u1", "ws1", [
+    await syncCanvas(db, "u1", "ws1", [
       { id: "run1", title: "Run", level: "workstream", status: "in_progress" },
       {
         id: "t1",
@@ -102,7 +102,7 @@ describe("resolveRefs — §6 scope 선택 PR", () => {
 
   it("반드시 거부: run scope인데 하위 task들 branch가 다르면 MULTI_BRANCH", async () => {
     const db = await seeded();
-    await syncRoadmap(db, "u1", "ws1", [
+    await syncCanvas(db, "u1", "ws1", [
       { id: "run1", title: "Run", level: "workstream", status: "in_progress" },
       {
         id: "t1",

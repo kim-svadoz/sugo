@@ -22,7 +22,7 @@ async function seededApp() {
     .post("/api/sync/task")
     .send({ userId: "u1", workspaceName: "ws1", id: "t2", title: "Task 2", status: "done" });
   await request(app)
-    .post("/api/sync/roadmap")
+    .post("/api/sync/canvas")
     .send({
       userId: "u1",
       workspaceName: "ws1",
@@ -45,7 +45,7 @@ async function seededApp() {
 }
 
 describe("GET /api/workspaces", () => {
-  it("lists workspaces with task counts and roadmap counts", async () => {
+  it("lists workspaces with task counts and canvas counts", async () => {
     const { app } = await seededApp();
     const res = await request(app).get("/api/workspaces").query({ userId: "u1" }).expect(200);
     expect(res.body.workspaces).toHaveLength(1);
@@ -53,7 +53,7 @@ describe("GET /api/workspaces", () => {
     expect(ws.name).toBe("ws1");
     expect(ws.projects).toEqual([{ project_path: "C:/a", git_synced: 1 }]);
     expect(ws.taskCounts).toEqual({ pending: 0, in_progress: 1, done: 1, archived: 0 });
-    expect(ws.roadmap).toEqual({ total: 2, done: 1, active: 1 });
+    expect(ws.canvas).toEqual({ total: 2, done: 1, active: 1 });
   });
 
   it("400s without userId", async () => {
@@ -90,7 +90,7 @@ describe("GET /api/workspaces/checkpoint-sync", () => {
   });
 });
 
-describe("GET /api/workspaces/:name/{decisions,history,checkpoints,tasks,roadmap}", () => {
+describe("GET /api/workspaces/:name/{decisions,history,checkpoints,tasks,canvas}", () => {
   it("returns per-workspace data", async () => {
     const { app } = await seededApp();
     const decisions = await request(app).get("/api/workspaces/ws1/decisions").query({ userId: "u1" }).expect(200);
@@ -99,8 +99,8 @@ describe("GET /api/workspaces/:name/{decisions,history,checkpoints,tasks,roadmap
     const tasks = await request(app).get("/api/workspaces/ws1/tasks").query({ userId: "u1" }).expect(200);
     expect(tasks.body.tasks).toHaveLength(2);
 
-    const roadmap = await request(app).get("/api/workspaces/ws1/roadmap").query({ userId: "u1" }).expect(200);
-    expect(roadmap.body.nodes).toHaveLength(2);
+    const canvas = await request(app).get("/api/workspaces/ws1/canvas").query({ userId: "u1" }).expect(200);
+    expect(canvas.body.nodes).toHaveLength(2);
   });
 });
 

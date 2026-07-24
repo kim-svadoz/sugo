@@ -7,7 +7,7 @@ import { exportJWK, generateKeyPair, SignJWT, createLocalJWKSet } from "jose";
 import { createApp } from "../src/index.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
 import { createJwtVerifier } from "../src/auth/jwt.js";
-import { syncRoadmap, syncUser } from "../src/services/syncService.js";
+import { syncCanvas, syncUser } from "../src/services/syncService.js";
 import type { BitbucketClient, BitbucketRepoRef, PrRef } from "../src/bitbucket/client.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
@@ -48,7 +48,7 @@ async function appWithNode(bitbucketClient: BitbucketClient) {
   const db = createSqliteClient();
   await db.execScript(schema);
   await syncUser(db, { userId: "u1" });
-  await syncRoadmap(db, "u1", "ws1", [
+  await syncCanvas(db, "u1", "ws1", [
     {
       id: "t1",
       title: "T1",

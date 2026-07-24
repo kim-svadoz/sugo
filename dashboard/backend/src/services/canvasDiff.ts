@@ -1,18 +1,18 @@
-// Pure functions for the roadmap sync "replace semantics + ownership boundary"
+// Pure functions for the canvas sync "replace semantics + ownership boundary"
 // contract (spec §3.1/§7/설계안설계안). No IO here — src/services/syncService.ts
 // does the actual DB work using these as the decision layer, so the ownership
 // rules can be unit-tested without a database.
 
-export interface ExistingRoadmapNode {
+export interface ExistingCanvasNode {
   id: string;
   level: string;
   dependsOn: string[];
 }
 
-// §7 "roadmap replace 시맨틱": payload에 없는 non-workstream 노드는 삭제,
+// §7 "canvas replace 시맨틱": payload에 없는 non-workstream 노드는 삭제,
 // 수동 생성된 workstream 그룹은 payload에 없어도 보존한다.
 export function computeNodesToDelete(
-  existing: ExistingRoadmapNode[],
+  existing: ExistingCanvasNode[],
   incomingIds: ReadonlySet<string>
 ): string[] {
   return existing.filter((n) => n.level !== "workstream" && !incomingIds.has(n.id)).map((n) => n.id);

@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS sugo_workspace_meta (
   PRIMARY KEY (user_id, workspace_name)
 );
 
-CREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (
+CREATE TABLE IF NOT EXISTS sugo_canvas_nodes (
   id TEXT NOT NULL,
   user_id TEXT NOT NULL,
   workspace_name TEXT NOT NULL,
