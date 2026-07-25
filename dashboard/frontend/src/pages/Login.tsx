@@ -10,11 +10,11 @@ export function Login() {
         </h1>
         <button
           type="button"
-          onClick={() => void login()}
+          onClick={() => login()}
           className="ck-glow-cyan rounded px-4 py-2 text-sm"
           style={{ border: "1px solid var(--color-primary)" }}
         >
-          Sign in
+          Sign in with GitHub
         </button>
       </div>
     </div>

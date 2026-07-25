@@ -1,37 +1,6 @@
-import { clearAuthState, getAuthState, setAuthState } from "../auth/authStore";
+import { clearAuthState, getAuthState } from "../auth/authStore";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
-
-let refreshPromise: Promise<boolean> | null = null;
-
-async function doRefresh(): Promise<boolean> {
-  const { refreshToken } = getAuthState();
-  if (!refreshToken) return false;
-  const res = await fetch(`${API_BASE}/api/auth/refresh`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refreshToken }),
-  });
-  if (!res.ok) return false;
-  const data = await res.json();
-  setAuthState({
-    user: data.user,
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken,
-    expiresAt: data.expiresAt,
-  });
-  return true;
-}
-
-// §5: "401 -> single-flight refresh -> retry -> 실패시 logout"
-function refreshOnce(): Promise<boolean> {
-  if (!refreshPromise) {
-    refreshPromise = doRefresh().finally(() => {
-      refreshPromise = null;
-    });
-  }
-  return refreshPromise;
-}
 
 function withAuthHeaders(options: RequestInit, token: string | null): HeadersInit {
   const headers = new Headers(options.headers);
@@ -40,21 +9,12 @@ function withAuthHeaders(options: RequestInit, token: string | null): HeadersIni
   return headers;
 }
 
-// §5: "Authorization: Bearer 부착" on every call - PUBLIC routes (sync/workspaces)
-// ignore it, AUTH routes (bitbucket/pr, later stages) require it.
+// 공개 SaaS(§Phase 1.5): 모든 호출에 Bearer(세션 토큰) 부착 — 이제 데이터 라우트도 인증 필요.
+// GitHub 세션은 갱신 엔드포인트가 없으므로 401이면 그냥 로그아웃(재로그인 유도).
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
   const { accessToken } = getAuthState();
-  let res = await fetch(`${API_BASE}${path}`, { ...options, headers: withAuthHeaders(options, accessToken) });
-
-  if (res.status === 401) {
-    const refreshed = await refreshOnce();
-    if (refreshed) {
-      const { accessToken: newToken } = getAuthState();
-      res = await fetch(`${API_BASE}${path}`, { ...options, headers: withAuthHeaders(options, newToken) });
-    } else {
-      clearAuthState();
-    }
-  }
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers: withAuthHeaders(options, accessToken) });
+  if (res.status === 401) clearAuthState();
   return res;
 }
 
