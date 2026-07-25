@@ -97,3 +97,25 @@ describe("API 토큰 관리 (웹 세션 필요)", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("requireUser — 세션(웹)과 API 토큰(플러그인) 둘 다 데이터 라우트를 통과한다", () => {
+  it("브라우저 세션 토큰으로 데이터 라우트(/api/workspaces)를 읽을 수 있다", async () => {
+    const session = await loginAndGetSession();
+    const res = await request(app).get("/api/workspaces").set("Authorization", `Bearer ${session}`);
+    expect(res.status).toBe(200);
+    expect(res.body.workspaces).toEqual([]);
+  });
+
+  it("발급받은 API 토큰으로도 같은 데이터 라우트를 읽을 수 있다", async () => {
+    const session = await loginAndGetSession();
+    const created = await request(app).post("/api/tokens").set("Authorization", `Bearer ${session}`).send({});
+    const apiToken = created.body.token as string;
+    const res = await request(app).get("/api/workspaces").set("Authorization", `Bearer ${apiToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.workspaces).toEqual([]);
+  });
+
+  it("자격증명 없으면 데이터 라우트는 401", async () => {
+    await request(app).get("/api/workspaces").expect(401);
+  });
+});

@@ -86,9 +86,9 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
     res.json({ status: "ok", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });
   });
 
-  app.use("/api/sync", createSyncRouter(db));
-  app.use("/api/activity", createActivityRouter(db));
-  app.use("/api/workspaces", createWorkspacesRouter(db));
+  app.use("/api/sync", createSyncRouter(db, sessionSecret));
+  app.use("/api/activity", createActivityRouter(db, sessionSecret));
+  app.use("/api/workspaces", createWorkspacesRouter(db, sessionSecret));
   // 공개 SaaS(§Phase 1): GitHub OAuth 로그인 + API 토큰 관리. 기존 OIDC /api/auth보다 먼저 등록.
   app.use("/api/auth/github", createGithubAuthRouter(db, githubOAuth, config.github, sessionSecret, config.frontendUrl));
   app.use("/api/tokens", createTokensRouter(db, sessionSecret));
@@ -109,7 +109,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/bitbucket", createBitbucketRouter(db, verifyJwt, secretEncKey));
   app.use("/api/pr", createPrRouter(db, verifyJwt, secretEncKey, bitbucketClient));
   // §3.7: /api/stats + alias /api/metrics(플러그인이 calibrated-ratio를 여기로 fetch), harness, skills.
-  const statsRouter = createStatsRouter(db);
+  const statsRouter = createStatsRouter(db, sessionSecret);
   app.use("/api/stats", statsRouter);
   app.use("/api/metrics", statsRouter);
   app.use("/api/harness", createHarnessRouter(config.harnessPath));

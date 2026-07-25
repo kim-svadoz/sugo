@@ -17,7 +17,7 @@ import {
 import { z } from "zod";
 import { validateBody } from "../schemas/validate.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { requireApiAuth } from "../auth/requireApiAuth.js";
+import { requireUser } from "../auth/requireUser.js";
 import {
   deleteCheckpoint,
   deleteDecision,
@@ -46,9 +46,9 @@ const canvasLinkSchema = z.object({
 
 // 공개 SaaS(§Phase 1, 스펙 §3.1 이탈): 토큰 인증 강제. body/query의 userId는 신뢰하지 않고
 // 인증 미들웨어가 세운 req.userId로 덮어써서(bindUserId) 모든 핸들러가 토큰 신원만 쓰게 한다.
-export function createSyncRouter(db: DbClient): Router {
+export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();
-  router.use(requireApiAuth(db));
+  router.use(requireUser(db, sessionSecret));
   // 단일 엔티티 핸들러 일괄 강제: 요청 본문의 userId를 토큰 신원으로 덮어쓴다.
   router.use((req, _res, next) => {
     if (req.body && typeof req.body === "object") (req.body as { userId?: string }).userId = req.userId;

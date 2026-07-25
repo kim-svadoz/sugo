@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { DbClient } from "../db/client.js";
 import { validateBody } from "../schemas/validate.js";
-import { requireApiAuth } from "../auth/requireApiAuth.js";
+import { requireUser } from "../auth/requireUser.js";
 import {
   checkpointCreateSchema,
   checkpointUpdateSchema,
@@ -57,9 +57,9 @@ function respondMutation(res: import("express").Response, result: { ok: true } |
 }
 
 // §3.3: all PUBLIC, userId via query. Dashboard owns canvas structure/order here.
-export function createWorkspacesRouter(db: DbClient): Router {
+export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();
-  router.use(requireApiAuth(db));
+  router.use(requireUser(db, sessionSecret));
 
   router.get("/", async (req, res) => {
     const userId = requireUserId(req, res);
