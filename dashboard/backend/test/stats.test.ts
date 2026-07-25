@@ -5,6 +5,7 @@ import request from "supertest";
 import { createApp } from "../src/index.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
 import { computeCalibratedRatio } from "../src/services/statsService.js";
+import { seedUserToken } from "./testAuth.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
@@ -42,6 +43,7 @@ describe("GET /api/metrics/calibrated-ratio (+ /api/stats alias)", () => {
   async function seeded(n: number) {
     const db = createSqliteClient();
     await db.execScript(schema);
+    const auth = await seedUserToken(db, "u1");
     for (let i = 0; i < n; i++) {
       await db.exec(
         "INSERT INTO sugo_history (id, user_id, workspace_name, user_reported_human_hours, ai_execution_minutes) VALUES (?,?,?,?,?)",
@@ -49,26 +51,31 @@ describe("GET /api/metrics/calibrated-ratio (+ /api/stats alias)", () => {
       );
     }
     const { app } = await createApp(db);
-    return app;
+    return { app, auth };
   }
 
   it("실측 표본이 충분하면 ratio를 반환한다", async () => {
-    const app = await seeded(12);
-    const res = await request(app).get("/api/metrics/calibrated-ratio").query({ userId: "u1" }).expect(200);
+    const { app, auth } = await seeded(12);
+    const res = await request(app).get("/api/metrics/calibrated-ratio").set("Authorization", auth).expect(200);
     expect(res.body.ratio).toBe(3);
   });
 
   it("표본 부족이면 ratio:null(플러그인이 고정 기본값으로 폴백)", async () => {
-    const app = await seeded(3);
-    const res = await request(app).get("/api/stats/calibrated-ratio").query({ userId: "u1" }).expect(200);
+    const { app, auth } = await seeded(3);
+    const res = await request(app).get("/api/stats/calibrated-ratio").set("Authorization", auth).expect(200);
     expect(res.body.ratio).toBeNull();
   });
 
+  it("인증 없이 호출하면 401", async () => {
+    const { app } = await seeded(12);
+    await request(app).get("/api/metrics/calibrated-ratio").expect(401);
+  });
+
   it("stub 통계는 0/빈값을 반환한다(가짜 데이터 금지)", async () => {
-    const app = await seeded(0);
-    const usage = await request(app).get("/api/stats/usage").expect(200);
+    const { app, auth } = await seeded(0);
+    const usage = await request(app).get("/api/stats/usage").set("Authorization", auth).expect(200);
     expect(usage.body.totalSessions).toBe(0);
-    const daily = await request(app).get("/api/metrics/daily").expect(200);
+    const daily = await request(app).get("/api/metrics/daily").set("Authorization", auth).expect(200);
     expect(daily.body.days).toEqual([]);
   });
 });
@@ -93,13 +100,15 @@ describe("§3.3 spec-content — decision을 slug로 매칭", () => {
   it("title로 decision content를 반환하고, 없으면 404", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);
+    const auth = await seedUserToken(db, "u1");
     const { app } = await createApp(db);
     await request(app)
       .post("/api/sync/decision")
+      .set("Authorization", auth)
       .send({ userId: "u1", workspaceName: "ws1", id: "인증", title: "인증 방식", content: "JWT 채택" })
       .expect(200);
-    const hit = await request(app).get("/api/workspaces/ws1/spec-content").query({ userId: "u1", title: "인증 방식" }).expect(200);
+    const hit = await request(app).get("/api/workspaces/ws1/spec-content").set("Authorization", auth).query({ title: "인증 방식" }).expect(200);
     expect(hit.body.content).toBe("JWT 채택");
-    await request(app).get("/api/workspaces/ws1/spec-content").query({ userId: "u1", title: "없는스펙" }).expect(404);
+    await request(app).get("/api/workspaces/ws1/spec-content").set("Authorization", auth).query({ title: "없는스펙" }).expect(404);
   });
 });

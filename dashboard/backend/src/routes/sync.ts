@@ -17,6 +17,7 @@ import {
 import { z } from "zod";
 import { validateBody } from "../schemas/validate.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
+import { requireApiAuth } from "../auth/requireApiAuth.js";
 import {
   deleteCheckpoint,
   deleteDecision,
@@ -43,13 +44,19 @@ const canvasLinkSchema = z.object({
   toId: z.string().min(1),
 });
 
-// §3.1: all PUBLIC (no auth) - the plugin trusts userId in the body/query,
-// and every handler responds fast/non-blocking per the seam contract.
+// 공개 SaaS(§Phase 1, 스펙 §3.1 이탈): 토큰 인증 강제. body/query의 userId는 신뢰하지 않고
+// 인증 미들웨어가 세운 req.userId로 덮어써서(bindUserId) 모든 핸들러가 토큰 신원만 쓰게 한다.
 export function createSyncRouter(db: DbClient): Router {
   const router = Router();
+  router.use(requireApiAuth(db));
+  // 단일 엔티티 핸들러 일괄 강제: 요청 본문의 userId를 토큰 신원으로 덮어쓴다.
+  router.use((req, _res, next) => {
+    if (req.body && typeof req.body === "object") (req.body as { userId?: string }).userId = req.userId;
+    next();
+  });
 
   router.get("/plugin-version", asyncHandler(async (req, res) => {
-    const userId = String(req.query.userId ?? "");
+    const userId = req.userId!;
     if (!userId) return res.status(400).json({ error: "userId required" });
     const version = await getPluginVersion(db, userId);
     res.json({ version });
@@ -140,14 +147,15 @@ export function createSyncRouter(db: DbClient): Router {
 
   router.post("/bulk", validateBody(bulkSyncSchema), asyncHandler(async (req, res) => {
     const body = req.body as z.infer<typeof bulkSyncSchema>;
-    for (const u of body.users ?? []) await syncUser(db, u);
-    for (const w of body.workspaces ?? []) await syncWorkspace(db, w);
-    for (const t of body.tasks ?? []) await syncTask(db, t);
-    for (const h of body.history ?? []) await syncHistory(db, h);
-    for (const d of body.decisions ?? []) await syncDecision(db, d);
-    for (const c of body.checkpoints ?? []) await syncCheckpoint(db, c);
-    for (const m of body.workspaceMeta ?? []) await syncWorkspaceMeta(db, m);
-    for (const r of body.canvas ?? []) await syncCanvas(db, r.userId, r.workspaceName, r.nodes);
+    const uid = req.userId!; // 배치 각 항목의 userId도 토큰 신원으로 강제(항목별 사칭 차단)
+    for (const u of body.users ?? []) await syncUser(db, { ...u, userId: uid });
+    for (const w of body.workspaces ?? []) await syncWorkspace(db, { ...w, userId: uid });
+    for (const t of body.tasks ?? []) await syncTask(db, { ...t, userId: uid });
+    for (const h of body.history ?? []) await syncHistory(db, { ...h, userId: uid });
+    for (const d of body.decisions ?? []) await syncDecision(db, { ...d, userId: uid });
+    for (const c of body.checkpoints ?? []) await syncCheckpoint(db, { ...c, userId: uid });
+    for (const m of body.workspaceMeta ?? []) await syncWorkspaceMeta(db, { ...m, userId: uid });
+    for (const r of body.canvas ?? []) await syncCanvas(db, uid, r.workspaceName, r.nodes);
     res.json({ ok: true });
   }));
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { DbClient } from "../db/client.js";
 import { validateBody } from "../schemas/validate.js";
+import { requireApiAuth } from "../auth/requireApiAuth.js";
 import {
   checkpointCreateSchema,
   checkpointUpdateSchema,
@@ -38,9 +39,10 @@ import {
 } from "../services/workspaceService.js";
 
 function requireUserId(req: import("express").Request, res: import("express").Response): string | null {
-  const userId = String(req.query.userId ?? "");
+  // 공개 SaaS(§Phase 1): 신원은 인증 미들웨어가 세운 req.userId(토큰)만 신뢰. query userId 무시.
+  const userId = req.userId ?? "";
   if (!userId) {
-    res.status(400).json({ error: "userId required" });
+    res.status(401).json({ error: "unauthorized" });
     return null;
   }
   return userId;
@@ -57,6 +59,7 @@ function respondMutation(res: import("express").Response, result: { ok: true } |
 // §3.3: all PUBLIC, userId via query. Dashboard owns canvas structure/order here.
 export function createWorkspacesRouter(db: DbClient): Router {
   const router = Router();
+  router.use(requireApiAuth(db));
 
   router.get("/", async (req, res) => {
     const userId = requireUserId(req, res);

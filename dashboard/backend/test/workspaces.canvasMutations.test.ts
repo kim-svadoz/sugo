@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/index.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
+import { seedUserToken } from "./testAuth.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
@@ -11,22 +12,23 @@ async function appWithNodes(nodes: Array<{ id: string; level: string; status?: s
   const db = createSqliteClient();
   await db.execScript(schema);
   const { app } = await createApp(db);
+  const auth = await seedUserToken(db, "u1");
   await request(app)
-    .post("/api/sync/canvas")
+    .post("/api/sync/canvas").set("Authorization", auth)
     .send({
       userId: "u1",
       workspaceName: "ws1",
       nodes: nodes.map((n) => ({ id: n.id, title: n.id, level: n.level, status: n.status ?? "pending", dependsOn: n.dependsOn })),
     });
-  return { app, db };
+  return { app, db, auth };
 }
 
 describe("POST/DELETE /api/workspaces/:name/canvas/link — fail-closed", () => {
   it("links two task nodes", async () => {
-    const { app, db } = await appWithNodes([{ id: "a", level: "task" }, { id: "b", level: "task" }]);
+    const { app, db, auth } = await appWithNodes([{ id: "a", level: "task" }, { id: "b", level: "task" }]);
     await request(app)
       .post("/api/workspaces/ws1/canvas/link")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ from: "a", to: "b" })
       .expect(200);
     const rows = await db.query<{ depends_on: string }>("SELECT depends_on FROM sugo_canvas_nodes WHERE id='a'");
@@ -34,36 +36,36 @@ describe("POST/DELETE /api/workspaces/:name/canvas/link — fail-closed", () => 
   });
 
   it("반드시 거부: non-task 레벨끼리는 링크 불가", async () => {
-    const { app } = await appWithNodes([
+    const { app, auth } = await appWithNodes([
       { id: "spec1", level: "spec" },
       { id: "b", level: "task" },
     ]);
     const res = await request(app)
       .post("/api/workspaces/ws1/canvas/link")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ from: "spec1", to: "b" })
       .expect(409);
     expect(res.body.error).toBe("LINK_REQUIRES_TASK_LEVEL");
   });
 
   it("반드시 거부: 사이클을 만드는 링크", async () => {
-    const { app } = await appWithNodes([
+    const { app, auth } = await appWithNodes([
       { id: "a", level: "task", dependsOn: ["b"] },
       { id: "b", level: "task" },
     ]);
     const res = await request(app)
       .post("/api/workspaces/ws1/canvas/link")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ from: "b", to: "a" })
       .expect(409);
     expect(res.body.error).toBe("CYCLE");
   });
 
   it("unlink removes the dependency", async () => {
-    const { app, db } = await appWithNodes([{ id: "a", level: "task", dependsOn: ["b"] }, { id: "b", level: "task" }]);
+    const { app, db, auth } = await appWithNodes([{ id: "a", level: "task", dependsOn: ["b"] }, { id: "b", level: "task" }]);
     await request(app)
       .delete("/api/workspaces/ws1/canvas/link")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ from: "a", to: "b" })
       .expect(200);
     const rows = await db.query<{ depends_on: string }>("SELECT depends_on FROM sugo_canvas_nodes WHERE id='a'");
@@ -73,10 +75,10 @@ describe("POST/DELETE /api/workspaces/:name/canvas/link — fail-closed", () => 
 
 describe("POST /api/workspaces/:name/canvas/group", () => {
   it("creates a workstream and reparents members", async () => {
-    const { app, db } = await appWithNodes([{ id: "a", level: "task" }, { id: "b", level: "task" }]);
+    const { app, db, auth } = await appWithNodes([{ id: "a", level: "task" }, { id: "b", level: "task" }]);
     await request(app)
       .post("/api/workspaces/ws1/canvas/group")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ groupId: "grp1", title: "Group 1", members: ["a", "b"], sequential: true })
       .expect(200);
 
@@ -92,13 +94,13 @@ describe("POST /api/workspaces/:name/canvas/group", () => {
   });
 
   it("deleting a group clears parent on former members but keeps them", async () => {
-    const { app, db } = await appWithNodes([{ id: "a", level: "task" }]);
+    const { app, db, auth } = await appWithNodes([{ id: "a", level: "task" }]);
     await request(app)
       .post("/api/workspaces/ws1/canvas/group")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ groupId: "grp1", title: "Group 1", members: ["a"] })
       .expect(200);
-    await request(app).delete("/api/workspaces/ws1/canvas/group/grp1").query({ userId: "u1" }).expect(200);
+    await request(app).delete("/api/workspaces/ws1/canvas/group/grp1").query({ userId: "u1" }).set("Authorization", auth).expect(200);
 
     const group = await db.query("SELECT * FROM sugo_canvas_nodes WHERE id='grp1'");
     expect(group).toEqual([]);
@@ -109,10 +111,10 @@ describe("POST /api/workspaces/:name/canvas/group", () => {
 
 describe("manual-status ownership survives plugin re-sync", () => {
   it("set/clear manual-status persist and are never overwritten by sync", async () => {
-    const { app, db } = await appWithNodes([{ id: "a", level: "task" }]);
+    const { app, db, auth } = await appWithNodes([{ id: "a", level: "task" }]);
     await request(app)
       .post("/api/workspaces/ws1/canvas/manual-status")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ nodeId: "a", status: "done" })
       .expect(200);
 
@@ -123,14 +125,14 @@ describe("manual-status ownership survives plugin re-sync", () => {
 
     // plugin re-syncs the same node as pending - manual override must survive
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "a", title: "a", level: "task", status: "pending" }] });
     rows = await db.query("SELECT manual_status FROM sugo_canvas_nodes WHERE id='a'");
     expect(rows[0].manual_status).toBe("done");
 
     await request(app)
       .delete("/api/workspaces/ws1/canvas/manual-status")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ nodeId: "a" })
       .expect(200);
     const cleared = await db.query("SELECT manual_status FROM sugo_canvas_nodes WHERE id='a'");
@@ -140,15 +142,15 @@ describe("manual-status ownership survives plugin re-sync", () => {
 
 describe("position mutation", () => {
   it("sets pos_x/pos_y and survives plugin re-sync", async () => {
-    const { app, db } = await appWithNodes([{ id: "a", level: "task" }]);
+    const { app, db, auth } = await appWithNodes([{ id: "a", level: "task" }]);
     await request(app)
       .post("/api/workspaces/ws1/canvas/position")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ nodeId: "a", x: 12.5, y: 34.5 })
       .expect(200);
 
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "a", title: "a", level: "task", status: "in_progress" }] });
 
     const rows = await db.query<{ pos_x: number; pos_y: number }>("SELECT pos_x, pos_y FROM sugo_canvas_nodes WHERE id='a'");
@@ -158,15 +160,15 @@ describe("position mutation", () => {
 
 describe("rename and parent mutations", () => {
   it("renames a node and sets its parent", async () => {
-    const { app, db } = await appWithNodes([{ id: "a", level: "task" }, { id: "ws-grp", level: "workstream" }]);
+    const { app, db, auth } = await appWithNodes([{ id: "a", level: "task" }, { id: "ws-grp", level: "workstream" }]);
     await request(app)
       .post("/api/workspaces/ws1/canvas/rename")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ nodeId: "a", title: "New Title" })
       .expect(200);
     await request(app)
       .post("/api/workspaces/ws1/canvas/parent")
-      .query({ userId: "u1" })
+      .query({ userId: "u1" }).set("Authorization", auth)
       .send({ nodeId: "a", parentId: "ws-grp" })
       .expect(200);
 

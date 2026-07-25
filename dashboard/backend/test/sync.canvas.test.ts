@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/index.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
+import { seedUserToken } from "./testAuth.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
@@ -11,7 +12,8 @@ async function freshApp() {
   const db = createSqliteClient();
   await db.execScript(schema);
   const { app } = await createApp(db);
-  return { app, db };
+  const auth = await seedUserToken(db, "u1");
+  return { app, db, auth };
 }
 
 interface CanvasRow {
@@ -33,9 +35,9 @@ async function fetchNodes(db: Awaited<ReturnType<typeof createSqliteClient>>) {
 
 describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위에서)", () => {
   it("반드시 지켜야: depends_on은 최초 1회만 seed된다", async () => {
-    const { app, db } = await freshApp();
+    const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -49,7 +51,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
 
     // plugin re-syncs with a *different* dependsOn - must NOT overwrite the manual edit
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -65,9 +67,9 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
   });
 
   it("반드시 막아야: sync가 manual_status/pos_x/pos_y를 덮으면 안 된다", async () => {
-    const { app, db } = await freshApp();
+    const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -82,7 +84,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
 
     // plugin re-syncs (still says pending) - manual override must survive
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -98,9 +100,9 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
   });
 
   it("반드시 막아야: replace가 수동 생성 workstream 그룹까지 지우면 안 된다", async () => {
-    const { app, db } = await freshApp();
+    const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -115,7 +117,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
 
     // plugin re-syncs without mentioning the manual workstream at all
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -129,9 +131,9 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
   });
 
   it("반드시 지켜야: payload에서 빠진 non-workstream 노드는 삭제되고, 참조하던 depends_on도 청소된다", async () => {
-    const { app, db } = await freshApp();
+    const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -144,7 +146,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
 
     // t1 disappears from the next sync (e.g. dropped/renamed by the plugin)
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -159,9 +161,9 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
   });
 
   it("반드시 지켜야: 신규 노드는 depends_on을 그대로 seed한다", async () => {
-    const { app, db } = await freshApp();
+    const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -178,9 +180,9 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
   });
 
   it("work_result/lineage는 best-effort로 실려서 저장된다", async () => {
-    const { app, db } = await freshApp();
+    const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas")
+      .post("/api/sync/canvas").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
