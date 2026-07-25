@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-// @ts-expect-error .mjs 훅 모듈(allowJs) — 순수함수만 가져온다
+// .mjs 훅 모듈(allowJs로 해석) — 순수함수만 가져온다
 import { decide, isTestFile, isDocFile, agentName } from '../hooks/scope-guard.mjs';
 
 describe('scope-guard: agentName 정규화', () => {
