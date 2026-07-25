@@ -48,8 +48,9 @@ export function createGithubAuthRouter(
       const userId = githubUserIdToUserId(user);
       await syncUser(db, { userId, displayName: user.name ?? user.login });
       const session = await issueSession(userId, sessionSecret);
-      // 세션 토큰을 URL 프래그먼트로 전달(서버 로그·리퍼러에 안 남게). 프론트가 파싱해 저장.
-      res.redirect(`${frontendUrl}/#session=${encodeURIComponent(session)}`);
+      // 세션 토큰을 URL 프래그먼트로 전달(서버 로그·리퍼러에 안 남게). 프론트 /auth/callback 라우트가
+      // 프래그먼트를 파싱해 저장한다(루트 '/'가 아니라 반드시 이 경로여야 파서가 동작).
+      res.redirect(`${frontendUrl}/auth/callback#session=${encodeURIComponent(session)}`);
     } catch {
       res.status(401).json({ error: "github_oauth_failed" });
     }
