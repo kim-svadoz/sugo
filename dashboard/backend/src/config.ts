@@ -14,6 +14,10 @@ export const config = {
   },
   pluginVersion: process.env.PLUGIN_VERSION ?? "0.0.0",
   secretEncKey: process.env.SECRET_ENC_KEY ?? "",
+  // §9 CI가 빌드타임에 하네스 저장소를 클론해 구워두는 경로(§3.7 harness/skills 서빙 근거).
+  // 로컬 로컬엔 없으므로 미설정이면 빈 매니페스트/404로 안전 반환(가짜 데이터 금지).
+  harnessPath: process.env.HARNESS_PATH ?? "",
+  skillsPath: process.env.SKILLS_PATH ?? "",
   // §8 "현재 냄새": original has cors() with no options (wide open). local
   // fix is a whitelist instead - CORS_ORIGINS is comma-separated, defaults to
   // the Vite dev server port for local frontend/backend development.

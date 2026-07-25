@@ -24,6 +24,7 @@ import {
   getHistory,
   getRecentHistory,
   getCanvas,
+  getSpecContent,
   getTasks,
   linkCanvasNodes,
   listWorkspaces,
@@ -111,6 +112,17 @@ export function createWorkspacesRouter(db: DbClient): Router {
     const userId = requireUserId(req, res);
     if (!userId) return;
     res.json({ nodes: await getCanvas(db, userId, req.params.name) });
+  });
+
+  // §3.3 Spec 원문 팝업(slug 매칭). title(또는 path 마지막 세그먼트)로 decision content를 찾는다.
+  router.get("/:name/spec-content", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const title = String(req.query.title ?? req.query.path ?? "");
+    if (!title) return res.status(400).json({ error: "title or path required" });
+    const result = await getSpecContent(db, userId, req.params.name, title);
+    if (!result) return res.status(404).json({ error: "not_found" });
+    res.json(result);
   });
 
   router.post("/:name/checkpoints", validateBody(checkpointCreateSchema), async (req, res) => {

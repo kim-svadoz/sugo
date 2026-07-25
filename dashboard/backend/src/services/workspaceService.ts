@@ -133,6 +133,25 @@ export async function getDecisions(db: DbClient, userId: string, workspaceName: 
   );
 }
 
+/**
+ * §3.3 "GET /:name/spec-content?path=&title= — Spec 원문(slug 매칭)". 대시보드엔 spec 파일 원문을
+ * 저장하는 테이블이 없다(§2) — 플러그인이 Spec을 ADR로 sync하므로(sugo_decisions), title 또는 id를
+ * slug로 매칭해 decision content를 돌려준다. 없으면 null.
+ */
+export async function getSpecContent(
+  db: DbClient,
+  userId: string,
+  workspaceName: string,
+  title: string,
+): Promise<{ title: string; content: string | null } | null> {
+  const rows = await db.query<{ id: string; title: string; content: string | null }>(
+    "SELECT id, title, content FROM sugo_decisions WHERE user_id = ? AND workspace_name = ? AND (id = ? OR title = ?) LIMIT 1",
+    [userId, workspaceName, title, title],
+  );
+  if (rows.length === 0) return null;
+  return { title: rows[0].title, content: rows[0].content };
+}
+
 export async function getHistory(db: DbClient, userId: string, workspaceName: string) {
   return db.query(
     "SELECT id, task_id, task_title, summary, completed_at, created_at FROM sugo_history WHERE user_id = ? AND workspace_name = ? ORDER BY created_at DESC",

@@ -12,6 +12,8 @@ import { createWorkspacesRouter } from "./routes/workspaces.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createBitbucketRouter } from "./routes/bitbucket.js";
 import { createPrRouter } from "./routes/pr.js";
+import { createStatsRouter } from "./routes/stats.js";
+import { createHarnessRouter, createSkillsRouter } from "./routes/harness.js";
 import { createJwtVerifier, type VerifyJwt } from "./auth/jwt.js";
 import { createHttpOidcTokenClient, type OidcTokenClient } from "./auth/oidcTokenClient.js";
 import { createHttpBitbucketClient, type BitbucketClient } from "./bitbucket/client.js";
@@ -96,6 +98,12 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   );
   app.use("/api/bitbucket", createBitbucketRouter(db, verifyJwt, secretEncKey));
   app.use("/api/pr", createPrRouter(db, verifyJwt, secretEncKey, bitbucketClient));
+  // §3.7: /api/stats + alias /api/metrics(플러그인이 calibrated-ratio를 여기로 fetch), harness, skills.
+  const statsRouter = createStatsRouter(db);
+  app.use("/api/stats", statsRouter);
+  app.use("/api/metrics", statsRouter);
+  app.use("/api/harness", createHarnessRouter(config.harnessPath));
+  app.use("/api/skills", createSkillsRouter(config.skillsPath));
 
   // 모든 라우트 뒤: 동기 throw / next(err)를 프로세스를 죽이지 않고 500으로 응답한다.
   app.use(errorMiddleware);
