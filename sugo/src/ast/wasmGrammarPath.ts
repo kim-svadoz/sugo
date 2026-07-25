@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
  */
 export function defaultWasmGrammarsDir(): string {
   const here = dirname(fileURLToPath(import.meta.url));
-  // 소스 직접 실행(vitest): src/ast -> ../../wasm-grammars (impl/wasm-grammars)
-  // 번들 실행(dist/index.bundle.mjs, 파일 하나): dist -> ../wasm-grammars (impl/wasm-grammars)
+  // 소스 직접 실행(vitest): src/ast -> ../../wasm-grammars (sugo/wasm-grammars)
+  // 번들 실행(dist/index.bundle.mjs, 파일 하나): dist -> ../wasm-grammars (sugo/wasm-grammars)
   const candidates = [join(here, "..", "..", "wasm-grammars"), join(here, "..", "wasm-grammars")];
   for (const c of candidates) {
     if (existsSync(c)) return c;

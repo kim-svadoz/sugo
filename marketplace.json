@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "sugo",
-      "source": "./impl",
+      "source": "./sugo",
       "description": "스펙 기반 하네스 + 강제 상태머신 개발 파이프라인 (code→test→review→docs→commit)",
       "version": "0.1.0"
     }

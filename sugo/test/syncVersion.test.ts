@@ -54,7 +54,7 @@ describe("syncVersion — §D.1 4파일 하드 규칙 순수 함수", () => {
     const marketplaceFixture = {
       name: "sugo-marketplace",
       owner: { name: "김성현" },
-      plugins: [{ name: "sugo", source: "./impl", version: "0.1.0" }],
+      plugins: [{ name: "sugo", source: "./sugo", version: "0.1.0" }],
     };
 
     it("이름이 일치하는 plugin 항목의 version만 갱신한다", () => {

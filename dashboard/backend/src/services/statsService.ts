@@ -2,7 +2,7 @@ import type { DbClient } from "../db/client.js";
 
 // §3.7 "calibrated-ratio (유일한 실측): sugo_history 지표의 median+IQR, ≥10행 필요, 1.0~10.0 클램프".
 // 플러그인이 인간공수 추정(estimatedHumanHours = ai_hours × ratio)의 고정 3.5 대신 실측 보정비율을
-// 이 엔드포인트로 fetch한다(impl/src/dashboard/fetch.ts fetchCalibratedRatio → humanHours.ts).
+// 이 엔드포인트로 fetch한다(sugo/src/dashboard/fetch.ts fetchCalibratedRatio → humanHours.ts).
 
 export interface RatioSampleRow {
   user_reported_human_hours: number | null;
