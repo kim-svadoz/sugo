@@ -11,7 +11,9 @@ async function fetchJson<T>(path: string, timeoutMs: number): Promise<T | null> 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`${config.apiUrl}${path}`, { signal: controller.signal });
+    // 공개 SaaS 대시보드는 Bearer 토큰으로 신원 확정(fetch 엔드포인트도 인증 강제).
+    const headers = config.apiToken ? { Authorization: `Bearer ${config.apiToken}` } : undefined;
+    const res = await fetch(`${config.apiUrl}${path}`, { signal: controller.signal, headers });
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {

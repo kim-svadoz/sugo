@@ -3,13 +3,16 @@ import { enqueueRetry, processRetryQueue, type RetryItem } from "./retryQueue.js
 
 const DEFAULT_TIMEOUT_MS = 5000;
 
-async function sendOnce(apiUrl: string, endpoint: string, method: "POST" | "DELETE", data: unknown, timeoutMs: number): Promise<boolean> {
+async function sendOnce(apiUrl: string, endpoint: string, method: "POST" | "DELETE", data: unknown, timeoutMs: number, apiToken?: string): Promise<boolean> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    // 공개 SaaS 대시보드는 Bearer API 토큰으로 신원을 확정한다(body userId는 서버가 무시).
+    if (apiToken) headers.Authorization = `Bearer ${apiToken}`;
     const res = await fetch(`${apiUrl}${endpoint}`, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(data),
       signal: controller.signal,
     });
@@ -30,7 +33,7 @@ async function sendOnce(apiUrl: string, endpoint: string, method: "POST" | "DELE
 export async function pushEvent(endpoint: string, method: "POST" | "DELETE", data: unknown, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled || !config.apiUrl) return;
-  const ok = await sendOnce(config.apiUrl, endpoint, method, data, timeoutMs);
+  const ok = await sendOnce(config.apiUrl, endpoint, method, data, timeoutMs, config.apiToken);
   if (!ok) await enqueueRetry(endpoint, method, data);
 }
 
@@ -39,5 +42,6 @@ export async function drainRetryQueue(): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled || !config.apiUrl) return;
   const apiUrl = config.apiUrl;
-  await processRetryQueue((item: RetryItem) => sendOnce(apiUrl, item.endpoint, item.method, item.data, DEFAULT_TIMEOUT_MS));
+  const apiToken = config.apiToken;
+  await processRetryQueue((item: RetryItem) => sendOnce(apiUrl, item.endpoint, item.method, item.data, DEFAULT_TIMEOUT_MS, apiToken));
 }

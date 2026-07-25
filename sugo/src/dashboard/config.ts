@@ -8,7 +8,9 @@ import { sugoHomeDir } from "../homeDir.js";
  * currentUsername 폴백으로 userId를 항상 채운다). 이렇게 좁혀두면 `if (!config.enabled) return`
  * 뒤에서 TS가 userId를 string으로 인지해 seam 직렬화(serialize.ts)에 그대로 넘길 수 있다.
  */
-export type DashboardConfig = { enabled: false } | { enabled: true; apiUrl: string; userId: string };
+export type DashboardConfig =
+  | { enabled: false }
+  | { enabled: true; apiUrl: string; userId: string; apiToken?: string };
 
 function settingsFilePath(): string {
   return join(sugoHomeDir(), ".claude", "sugo", "settings.json");
@@ -32,15 +34,21 @@ function currentUsername(): string {
 export async function resolveDashboardConfig(): Promise<DashboardConfig> {
   const envUrl = process.env.SUGO_DASHBOARD_API_URL;
   if (envUrl) {
-    return { enabled: true, apiUrl: envUrl, userId: process.env.SUGO_DASHBOARD_USER_ID ?? currentUsername() };
+    return {
+      enabled: true,
+      apiUrl: envUrl,
+      userId: process.env.SUGO_DASHBOARD_USER_ID ?? currentUsername(),
+      // 공개 SaaS 대시보드는 API 토큰이 필요하다(웹UI에서 발급→여기 붙여넣기). self-host/로컬은 생략 가능.
+      apiToken: process.env.SUGO_DASHBOARD_API_TOKEN,
+    };
   }
 
   try {
     const raw = await readFile(settingsFilePath(), "utf-8");
-    const parsed = JSON.parse(raw) as { dashboard?: { apiUrl?: string; userId?: string; enabled?: boolean } };
+    const parsed = JSON.parse(raw) as { dashboard?: { apiUrl?: string; userId?: string; apiToken?: string; enabled?: boolean } };
     const d = parsed.dashboard;
     if (d?.enabled && d.apiUrl) {
-      return { enabled: true, apiUrl: d.apiUrl, userId: d.userId ?? currentUsername() };
+      return { enabled: true, apiUrl: d.apiUrl, userId: d.userId ?? currentUsername(), apiToken: d.apiToken };
     }
   } catch {
     // 설정 파일이 없거나 파싱 실패 — disabled로 폴백(차단 아님)

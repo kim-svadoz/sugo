@@ -20,7 +20,7 @@ import {
 let fakeHome: string;
 let server: Server;
 let port: number;
-const received: { path: string; method?: string; body: unknown }[] = [];
+const received: { path: string; method?: string; body: unknown; auth?: string }[] = [];
 
 beforeEach(async () => {
   fakeHome = mkdtempSync(join(tmpdir(), "sugo-dashboard-sync-home-"));
@@ -30,7 +30,7 @@ beforeEach(async () => {
     let body = "";
     req.on("data", (c) => (body += c));
     req.on("end", () => {
-      received.push({ path: req.url ?? "", method: req.method, body: JSON.parse(body || "{}") });
+      received.push({ path: req.url ?? "", method: req.method, body: JSON.parse(body || "{}"), auth: req.headers.authorization });
       res.writeHead(200);
       res.end();
     });
@@ -47,6 +47,23 @@ afterEach(async () => {
   delete process.env.SUGO_DASHBOARD_USER_ID;
   rmSync(fakeHome, { recursive: true, force: true });
   await new Promise<void>((resolve) => server.close(() => resolve()));
+});
+
+describe("공개 SaaS 인증 — apiToken", () => {
+  it("SUGO_DASHBOARD_API_TOKEN이 있으면 Authorization: Bearer를 실어 보낸다", async () => {
+    process.env.SUGO_DASHBOARD_API_TOKEN = "sugo_pat_testtoken123";
+    try {
+      await syncWorkspace({ name: "ws1", projects: [], created_at: "2026-01-01T00:00:00.000Z" });
+      expect(received[0].auth).toBe("Bearer sugo_pat_testtoken123");
+    } finally {
+      delete process.env.SUGO_DASHBOARD_API_TOKEN;
+    }
+  });
+
+  it("토큰이 없으면 Authorization 헤더를 붙이지 않는다(self-host/로컬 호환)", async () => {
+    await syncWorkspace({ name: "ws2", projects: [], created_at: "2026-01-01T00:00:00.000Z" });
+    expect(received[0].auth).toBeUndefined();
+  });
 });
 
 describe("syncWorkspace", () => {
