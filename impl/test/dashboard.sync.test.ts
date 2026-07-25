@@ -62,25 +62,38 @@ describe("syncWorkspace", () => {
 });
 
 describe("syncTask", () => {
-  it("/api/sync/task로 태스크를 보낸다", async () => {
+  it("/api/sync/task로 태스크를 대시보드 평평한 wire 포맷(camelCase, top-level)으로 보낸다", async () => {
     await syncTask("ws1", {
       id: "t-1",
       title: "기능",
       project: "/tmp/p",
       status: "in_progress",
       created_at: "2026-01-01T00:00:00.000Z",
+      started_at: "2026-01-02T00:00:00.000Z",
     });
     expect(received[0].path).toBe("/api/sync/task");
     const body = received[0].body as Record<string, unknown>;
     expect(body.workspaceName).toBe("ws1");
-    expect((body.task as { id: string }).id).toBe("t-1");
+    // seam 어댑터: task가 감싸지지 않고 평평하게, started_at→startedAt로 나간다
+    expect(body.id).toBe("t-1");
+    expect(body.title).toBe("기능");
+    expect(body.startedAt).toBe("2026-01-02T00:00:00.000Z");
+    expect(body.task).toBeUndefined();
+  });
+
+  it("대시보드 status enum에 없는 값(idea/dropped)을 매핑한다", async () => {
+    await syncTask("ws1", { id: "t-2", title: "아이디어", project: "/p", status: "idea", created_at: "t" });
+    expect((received[0].body as Record<string, unknown>).status).toBe("pending");
+    received.length = 0;
+    await syncTask("ws1", { id: "t-3", title: "폐기", project: "/p", status: "dropped", created_at: "t" });
+    expect((received[0].body as Record<string, unknown>).status).toBe("archived");
   });
 });
 
 describe("syncRoadmapSnapshot", () => {
-  it("/api/sync/roadmap으로 노드 스냅샷 전체를 replace 방식으로 보낸다", async () => {
+  it("/api/sync/canvas로 노드 스냅샷 전체를 replace 방식으로 보낸다(대시보드 리네임)", async () => {
     await syncRoadmapSnapshot("ws1", [{ id: "A", title: "A", level: "task", status: "pending", dependsOn: [] }]);
-    expect(received[0].path).toBe("/api/sync/roadmap");
+    expect(received[0].path).toBe("/api/sync/canvas");
     const body = received[0].body as Record<string, unknown>;
     expect(body.workspaceName).toBe("ws1");
     expect((body.nodes as unknown[])).toHaveLength(1);
@@ -95,28 +108,46 @@ describe("syncCheckpoint", () => {
 });
 
 describe("syncHistory", () => {
-  it("/api/sync/history로 WorkLog를 보내고, prRefs가 있으면 함께 실어보낸다", async () => {
+  it("/api/sync/history로 WorkLog를 평평한 wire 포맷으로 보낸다(task_id→taskId, metrics 펼침)", async () => {
+    await syncHistory("ws1", {
+      id: "wl-1",
+      task_id: "t-1",
+      task_title: "기능",
+      completed_at: "2026-01-01T00:00:00.000Z",
+      key_decisions: ["JWT 채택"],
+      metrics: { estimatedHumanHours: 3, estimationBasis: "복잡도" },
+    });
+    expect(received[0].path).toBe("/api/sync/history");
+    const body = received[0].body as Record<string, unknown>;
+    expect(body.id).toBe("wl-1");
+    expect(body.taskId).toBe("t-1");
+    expect(body.taskTitle).toBe("기능");
+    expect(body.keyDecisions).toEqual(["JWT 채택"]);
+    expect(body.estimatedHumanHours).toBe(3);
+    expect(body.estimationBasis).toBe("복잡도");
+    expect(body.workLog).toBeUndefined();
+  });
+
+  it("prRefs는 history wire에 실리지 않는다(정본 경로는 canvas 노드 workResult.prRefs)", async () => {
     await syncHistory(
       "ws1",
       { id: "wl-1", task_id: "t-1", task_title: "기능", completed_at: "2026-01-01T00:00:00.000Z" },
       { baseUrl: "https://x", projectKey: "P", repoSlug: "r", sourceBranch: "feat", targetBranch: "develop" },
     );
-    expect(received[0].path).toBe("/api/sync/history");
-    const body = received[0].body as Record<string, unknown>;
-    expect((body.prRefs as { repoSlug: string }).repoSlug).toBe("r");
-  });
-
-  it("prRefs 없이도 보낼 수 있다", async () => {
-    await syncHistory("ws1", { id: "wl-1", task_id: "t-1", task_title: "기능", completed_at: "2026-01-01T00:00:00.000Z" });
     const body = received[0].body as Record<string, unknown>;
     expect(body.prRefs).toBeUndefined();
   });
 });
 
 describe("syncDecision", () => {
-  it("/api/sync/decision으로 Spec을 보낸다", async () => {
+  it("/api/sync/decision으로 Spec을 ADR wire(id/title=name)로 보낸다", async () => {
     await syncDecision("ws1", { name: "인증 방식", type: "architecture", tags: [], content: "JWT", created_at: "t" });
     expect(received[0].path).toBe("/api/sync/decision");
+    const body = received[0].body as Record<string, unknown>;
+    expect(body.id).toBe("인증 방식");
+    expect(body.title).toBe("인증 방식");
+    expect(body.content).toBe("JWT");
+    expect(body.spec).toBeUndefined();
   });
 });
 
@@ -140,6 +171,6 @@ describe("syncRoadmapLink / unsyncRoadmapLink", () => {
     await syncRoadmapLink("ws1", "A", "B");
     await unsyncRoadmapLink("ws1", "A", "B");
     expect(received.map((r) => r.method)).toEqual(["POST", "DELETE"]);
-    expect(received.map((r) => r.path)).toEqual(["/api/sync/roadmap/link", "/api/sync/roadmap/link"]);
+    expect(received.map((r) => r.path)).toEqual(["/api/sync/canvas/link", "/api/sync/canvas/link"]);
   });
 });

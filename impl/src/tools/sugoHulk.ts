@@ -68,7 +68,11 @@ export async function handleSugoHulk(rawArgs: unknown) {
     case "health": {
       const config = await resolveDashboardConfig();
       const queue = await listRetryQueue();
-      return ok({ dashboardEnabled: config.enabled, dashboardApiUrl: config.apiUrl, retryQueueSize: queue.length });
+      return ok({
+        dashboardEnabled: config.enabled,
+        dashboardApiUrl: config.enabled ? config.apiUrl : undefined,
+        retryQueueSize: queue.length,
+      });
     }
     case "sync": {
       if (!args.workspace) return errorResult("WORKSPACE_REQUIRED", "sync action에는 workspace가 필요합니다.");

@@ -29,12 +29,35 @@ export interface RemoteRoadmapOrdering {
   pos_y?: number;
 }
 
-/** GET /api/workspaces/{ws}/roadmap?userId= — §7.2 "대시보드=순서의 SOT". */
+/** 대시보드 canvas 노드 응답 형태(snake_case, depends_on 등). fetch 어댑터가 이걸 plugin의
+ * camelCase RemoteRoadmapOrdering으로 번역한다. */
+interface CanvasNodeResponse {
+  id: string;
+  depends_on?: string[];
+  manual_status?: string | null;
+  pos_x?: number | null;
+  pos_y?: number | null;
+}
+
+/** GET /api/workspaces/{ws}/canvas?userId= — §7.2 "대시보드=순서의 SOT".
+ * 대시보드가 roadmap→canvas로 리네임됐고 응답을 `{nodes:[...]}`로 감싸며 snake_case(depends_on)를
+ * 쓰므로, 이 경계에서 언랩 + camelCase 매핑을 한다(seam 어댑터). */
 export async function fetchRoadmapOrdering(workspaceName: string): Promise<RemoteRoadmapOrdering[] | null> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return null;
   const qs = config.userId ? `?userId=${encodeURIComponent(config.userId)}` : "";
-  return fetchJson<RemoteRoadmapOrdering[]>(`/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap${qs}`, 8000);
+  const res = await fetchJson<{ nodes: CanvasNodeResponse[] }>(
+    `/api/workspaces/${encodeURIComponent(workspaceName)}/canvas${qs}`,
+    8000,
+  );
+  if (!res) return null;
+  return res.nodes.map((n) => ({
+    id: n.id,
+    dependsOn: n.depends_on ?? [],
+    manual_status: n.manual_status ?? undefined,
+    pos_x: n.pos_x ?? undefined,
+    pos_y: n.pos_y ?? undefined,
+  }));
 }
 
 export interface RemoteCheckpoint {
@@ -45,12 +68,29 @@ export interface RemoteCheckpoint {
   checklist: string[];
 }
 
-/** GET /api/workspaces/checkpoint-sync?userId= — 대시보드→로컬 체크포인트 pull. */
+interface CheckpointSyncResponse {
+  id: string;
+  title: string;
+  category?: string | null;
+  applies_to?: string[] | null;
+  checklist?: string[] | null;
+}
+
+/** GET /api/workspaces/checkpoint-sync?userId= — 대시보드→로컬 체크포인트 pull.
+ * 대시보드가 `{checkpoints:[...]}`로 감싸고 applies_to(snake)를 쓰므로 언랩+매핑(seam 어댑터). */
 export async function fetchCheckpointSync(): Promise<RemoteCheckpoint[] | null> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return null;
   const qs = config.userId ? `?userId=${encodeURIComponent(config.userId)}` : "";
-  return fetchJson<RemoteCheckpoint[]>(`/api/workspaces/checkpoint-sync${qs}`, 8000);
+  const res = await fetchJson<{ checkpoints: CheckpointSyncResponse[] }>(`/api/workspaces/checkpoint-sync${qs}`, 8000);
+  if (!res) return null;
+  return res.checkpoints.map((c) => ({
+    id: c.id,
+    title: c.title,
+    category: c.category ?? undefined,
+    applies_to: c.applies_to ?? undefined,
+    checklist: c.checklist ?? [],
+  }));
 }
 
 /** GET /api/metrics/calibrated-ratio — 인간공수 보정비율 헬스(humanHours.ts의 고정 3.5 대체용). */

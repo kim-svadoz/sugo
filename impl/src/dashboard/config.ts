@@ -3,11 +3,12 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { sugoHomeDir } from "../homeDir.js";
 
-export interface DashboardConfig {
-  enabled: boolean;
-  apiUrl?: string;
-  userId?: string;
-}
+/**
+ * Discriminated union: enabled일 때는 apiUrl/userId가 반드시 있다(resolveDashboardConfig가
+ * currentUsername 폴백으로 userId를 항상 채운다). 이렇게 좁혀두면 `if (!config.enabled) return`
+ * 뒤에서 TS가 userId를 string으로 인지해 seam 직렬화(serialize.ts)에 그대로 넘길 수 있다.
+ */
+export type DashboardConfig = { enabled: false } | { enabled: true; apiUrl: string; userId: string };
 
 function settingsFilePath(): string {
   return join(sugoHomeDir(), ".claude", "sugo", "settings.json");

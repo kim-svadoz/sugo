@@ -2,29 +2,38 @@ import { Router } from "express";
 import type { DbClient } from "../db/client.js";
 import { activityIngestSchema } from "../schemas/sync.js";
 import { validateBody } from "../schemas/validate.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 import { ingestActivity, streamActivity } from "../services/activityService.js";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 500;
 
 // §3.2/§4: PUBLIC, non-blocking ingest + polling read (no SSE/WebSocket).
+// 핸들러는 asyncHandler로 감싸 에러가 프로세스를 죽이거나 요청을 행시키지 않고 500으로 끝나게 한다.
 export function createActivityRouter(db: DbClient): Router {
   const router = Router();
 
-  router.post("/ingest", validateBody(activityIngestSchema), async (req, res) => {
-    await ingestActivity(db, req.body);
-    res.json({ ok: true });
-  });
+  router.post(
+    "/ingest",
+    validateBody(activityIngestSchema),
+    asyncHandler(async (req, res) => {
+      await ingestActivity(db, req.body);
+      res.json({ ok: true });
+    }),
+  );
 
-  router.get("/stream", async (req, res) => {
-    const userId = String(req.query.userId ?? "");
-    if (!userId) return res.status(400).json({ error: "userId required" });
-    const workspace = req.query.workspace ? String(req.query.workspace) : undefined;
-    const rawLimit = Number(req.query.limit ?? DEFAULT_LIMIT);
-    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(1, rawLimit), MAX_LIMIT) : DEFAULT_LIMIT;
-    const events = await streamActivity(db, userId, workspace, limit);
-    res.json({ events });
-  });
+  router.get(
+    "/stream",
+    asyncHandler(async (req, res) => {
+      const userId = String(req.query.userId ?? "");
+      if (!userId) return res.status(400).json({ error: "userId required" });
+      const workspace = req.query.workspace ? String(req.query.workspace) : undefined;
+      const rawLimit = Number(req.query.limit ?? DEFAULT_LIMIT);
+      const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(1, rawLimit), MAX_LIMIT) : DEFAULT_LIMIT;
+      const events = await streamActivity(db, userId, workspace, limit);
+      res.json({ events });
+    }),
+  );
 
   return router;
 }

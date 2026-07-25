@@ -16,6 +16,7 @@ import { createJwtVerifier, type VerifyJwt } from "./auth/jwt.js";
 import { createHttpOidcTokenClient, type OidcTokenClient } from "./auth/oidcTokenClient.js";
 import { createHttpBitbucketClient, type BitbucketClient } from "./bitbucket/client.js";
 import { corsWhitelist } from "./middleware/cors.js";
+import { errorMiddleware } from "./middleware/asyncHandler.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
@@ -96,10 +97,24 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/bitbucket", createBitbucketRouter(db, verifyJwt, secretEncKey));
   app.use("/api/pr", createPrRouter(db, verifyJwt, secretEncKey, bitbucketClient));
 
+  // 모든 라우트 뒤: 동기 throw / next(err)를 프로세스를 죽이지 않고 500으로 응답한다.
+  app.use(errorMiddleware);
+
   return { app, db, verifyJwt };
 }
 
 async function main() {
+  // §3.1/§7 회복력: sync는 논블로킹이고 대시보드 다운이 플러그인을 막으면 안 된다. Express 4는
+  // async 핸들러 reject를 자동으로 안 잡아 unhandledRejection으로 프로세스가 죽을 수 있으므로,
+  // 프로세스 레벨 가드로 잘못된 push 하나가 전체 서버를 내리는 걸 막는다(실제 MySQL e2e에서
+  // datetime 페이로드로 크래시하는 걸 발견해 추가, 2026-07-25). 로그만 남기고 계속 산다.
+  process.on("unhandledRejection", (reason) => {
+    console.error("[dashboard] unhandledRejection (프로세스 유지):", reason instanceof Error ? reason.message : reason);
+  });
+  process.on("uncaughtException", (err) => {
+    console.error("[dashboard] uncaughtException (프로세스 유지):", err.message);
+  });
+
   const { app } = await createApp();
   app.listen(config.port, () => {
     console.log(`sugo-dashboard-backend listening on :${config.port} (db=${config.dbDriver})`);

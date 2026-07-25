@@ -36,13 +36,21 @@ describe("fetch 계열 — 실제 서버 응답", () => {
   let port: number;
 
   beforeEach(async () => {
+    // 대시보드의 실제 응답 형태를 그대로 모사한다(canvas URL, {nodes}/{checkpoints} 래핑, depends_on
+    // snake_case) — seam 어댑터가 이걸 plugin의 camelCase로 정확히 번역하는지 검증한다.
     server = createServer((req, res) => {
-      if (req.url?.startsWith("/api/workspaces/ws1/roadmap")) {
+      if (req.url?.startsWith("/api/workspaces/ws1/canvas")) {
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify([{ id: "A", dependsOn: ["B"], manual_status: "in_review", pos_x: 10, pos_y: 20 }]));
+        res.end(
+          JSON.stringify({
+            nodes: [
+              { id: "A", depends_on: ["B"], manual_status: "in_review", pos_x: 10, pos_y: 20, title: "A", level: "task", status: "pending" },
+            ],
+          }),
+        );
       } else if (req.url?.startsWith("/api/workspaces/checkpoint-sync")) {
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify([{ id: "CP-1", title: "원격 체크포인트", checklist: ["x"] }]));
+        res.end(JSON.stringify({ checkpoints: [{ id: "CP-1", title: "원격 체크포인트", checklist: ["x"], applies_to: null, category: null }] }));
       } else if (req.url === "/api/metrics/calibrated-ratio") {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ratio: 2.8 }));
@@ -61,14 +69,14 @@ describe("fetch 계열 — 실제 서버 응답", () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));
   });
 
-  it("fetchRoadmapOrdering이 dependsOn/manual_status/pos_x/pos_y를 가져온다", async () => {
+  it("fetchRoadmapOrdering이 대시보드 {nodes} 응답을 언랩하고 depends_on→dependsOn으로 매핑한다", async () => {
     const result = await fetchRoadmapOrdering("ws1");
     expect(result).toEqual([{ id: "A", dependsOn: ["B"], manual_status: "in_review", pos_x: 10, pos_y: 20 }]);
   });
 
-  it("fetchCheckpointSync가 원격 체크포인트 목록을 가져온다", async () => {
+  it("fetchCheckpointSync가 대시보드 {checkpoints} 응답을 언랩하고 applies_to를 매핑한다", async () => {
     const result = await fetchCheckpointSync();
-    expect(result).toEqual([{ id: "CP-1", title: "원격 체크포인트", checklist: ["x"] }]);
+    expect(result).toEqual([{ id: "CP-1", title: "원격 체크포인트", checklist: ["x"], applies_to: undefined, category: undefined }]);
   });
 
   it("fetchCalibratedRatio가 숫자를 가져온다", async () => {
@@ -76,7 +84,7 @@ describe("fetch 계열 — 실제 서버 응답", () => {
   });
 
   it("서버가 죽어있으면(타임아웃/에러) null로 안전 폴백한다(블로킹이어도 예외를 던지지 않음)", async () => {
-    process.env.SUGO_DASHBOARD_API_URL = "http://127.0.0.1:1";
+    process.env.SUGO_DASHBOARD_API_URL = "http://127.0.0.1:9";
     expect(await fetchRoadmapOrdering("ws1")).toBeNull();
   });
 });

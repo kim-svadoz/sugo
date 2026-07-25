@@ -1,5 +1,6 @@
 import type { DbClient } from "../db/client.js";
 import { parseMaybeJson } from "../db/jsonColumn.js";
+import { toDbDateTime } from "../db/datetime.js";
 
 export interface IngestActivityInput {
   userId: string;
@@ -22,7 +23,7 @@ export async function ingestActivity(db: DbClient, input: IngestActivityInput): 
     [
       input.userId,
       input.workspace,
-      input.ts ?? new Date().toISOString(),
+      toDbDateTime(input.ts) ?? toDbDateTime(new Date().toISOString()),
       input.level ?? "INFO",
       input.agent ?? null,
       input.handoffTo ?? null,

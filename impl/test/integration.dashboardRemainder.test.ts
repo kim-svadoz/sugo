@@ -1,6 +1,6 @@
 import { createServer, type Server } from "node:http";
 import { execFile } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -38,12 +38,14 @@ beforeEach(async () => {
     req.on("end", () => {
       received.push({ path: url, method: req.method, body: body ? JSON.parse(body) : undefined });
       res.writeHead(200, { "Content-Type": "application/json" });
-      if (url.startsWith("/api/workspaces/") && url.includes("/roadmap")) {
-        res.end(JSON.stringify([{ id: "A", dependsOn: ["B"], manual_status: "in_review" }]));
+      if (url.startsWith("/api/workspaces/checkpoint-sync")) {
+        // 대시보드 실제 형태: {checkpoints:[...]}, applies_to(snake)
+        res.end(JSON.stringify({ checkpoints: [{ id: "CP-remote", title: "원격 규칙", category: "backend", checklist: ["체크1"], applies_to: null }] }));
+      } else if (url.startsWith("/api/workspaces/") && url.includes("/canvas")) {
+        // 대시보드 실제 형태: {nodes:[...]}, depends_on(snake)
+        res.end(JSON.stringify({ nodes: [{ id: "A", depends_on: ["B"], manual_status: "in_review", title: "A", level: "task", status: "pending" }] }));
       } else if (url === "/api/metrics/calibrated-ratio") {
         res.end(JSON.stringify({ ratio: 1.5 }));
-      } else if (url.startsWith("/api/workspaces/checkpoint-sync")) {
-        res.end(JSON.stringify([{ id: "CP-remote", title: "원격 규칙", category: "backend", checklist: ["체크1"] }]));
       } else {
         res.end("{}");
       }
@@ -124,9 +126,20 @@ describe("commit → prRefs 수집 + WorkLog에 실림", () => {
     const commit = await call(handleSugoPlan, { action: "commit", sessionId });
     expect(commit.isError).toBe(false);
 
+    // commit이 WorkLog를 대시보드로 sync한다(평평한 history wire). prRefs는 §7.2 정본 경로가
+    // canvas 노드 workResult.prRefs라 history wire엔 실리지 않는다(seam 어댑터가 제외) — 대신
+    // prRefs가 로컬 WorkLog에는 수집돼 있어야 한다(git 원격에서 repoSlug 추출).
     const historyPush = received.find((r) => r.path === "/api/sync/history");
     expect(historyPush).toBeDefined();
-    const body = historyPush!.body as { prRefs?: { repoSlug: string } };
-    expect(body.prRefs?.repoSlug).toBe("repo");
+    const body = historyPush!.body as { id: string; taskTitle: string; prRefs?: unknown };
+    expect(body.taskTitle).toBe("login");
+    expect(body.prRefs).toBeUndefined();
+
+    // prRefs가 실제로 수집됐는지는 로컬 WorkLog(history 파일)로 확인한다.
+    const historyDir = join(fakeHome, ".claude", "sugo", "hulk", "ws-pr", "history");
+    const logFile = readdirSync(historyDir).find((f) => f.endsWith(".json"));
+    expect(logFile).toBeDefined();
+    const workLog = JSON.parse(readFileSync(join(historyDir, logFile!), "utf-8")) as { prRefs?: { repoSlug: string } };
+    expect(workLog.prRefs?.repoSlug).toBe("repo");
   });
 });

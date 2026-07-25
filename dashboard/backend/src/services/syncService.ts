@@ -2,6 +2,7 @@ import type { DbClient } from "../db/client.js";
 import { upsertRow } from "../db/upsert.js";
 import { cleanDanglingDeps, computeNodesToDelete, shouldSeedDependsOn } from "./canvasDiff.js";
 import { parseJsonArray } from "../db/jsonColumn.js";
+import { toDbDateTime } from "../db/datetime.js";
 
 export async function ensureUser(db: DbClient, userId: string): Promise<void> {
   await upsertRow(db, "sugo_users", { id: userId }, {});
@@ -104,8 +105,8 @@ export async function syncTask(db: DbClient, input: SyncTaskInput): Promise<void
       priority: input.priority ?? null,
       description: input.description ?? null,
       summary: input.summary ?? null,
-      started_at: input.startedAt ?? null,
-      completed_at: input.completedAt ?? null,
+      started_at: toDbDateTime(input.startedAt),
+      completed_at: toDbDateTime(input.completedAt),
     }
   );
 }
@@ -148,7 +149,7 @@ export async function syncHistory(db: DbClient, input: SyncHistoryInput): Promis
       key_decisions: input.keyDecisions !== undefined ? JSON.stringify(input.keyDecisions) : null,
       files_changed: input.filesChanged !== undefined ? JSON.stringify(input.filesChanged) : null,
       notes: input.notes ?? null,
-      completed_at: input.completedAt ?? null,
+      completed_at: toDbDateTime(input.completedAt),
       estimated_human_hours: input.estimatedHumanHours ?? null,
       user_reported_human_hours: input.userReportedHumanHours ?? null,
       ai_execution_minutes: input.aiExecutionMinutes ?? null,
@@ -185,7 +186,7 @@ export async function syncDecision(db: DbClient, input: SyncDecisionInput): Prom
       title: input.title,
       status: input.status ?? "accepted",
       content: input.content ?? null,
-      decision_date: input.decisionDate ?? null,
+      decision_date: toDbDateTime(input.decisionDate),
     }
   );
 }
@@ -222,7 +223,7 @@ export async function syncCheckpoint(db: DbClient, input: SyncCheckpointInput): 
       learned_from: input.learnedFrom ?? null,
       checklist: input.checklist !== undefined ? JSON.stringify(input.checklist) : null,
       applies_to: input.appliesTo !== undefined ? JSON.stringify(input.appliesTo) : null,
-      checkpoint_date: input.checkpointDate ?? null,
+      checkpoint_date: toDbDateTime(input.checkpointDate),
     }
   );
 }
