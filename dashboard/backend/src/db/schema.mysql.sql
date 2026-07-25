@@ -147,3 +147,18 @@ CREATE TABLE IF NOT EXISTS user_bitbucket_tokens (
   token_hint VARCHAR(8) NULL,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- SaaS(공개 배포) 전용: 플러그인이 sync 시 Bearer로 보내는 개인 API 토큰. 평문은 저장하지
+-- 않고 sha256 해시만 저장한다(user_bitbucket_tokens와 달리 복호화 불필요 — 대조만 함).
+CREATE TABLE IF NOT EXISTS user_api_tokens (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL,
+  name VARCHAR(191) NULL,
+  token_hash CHAR(64) NOT NULL,
+  token_hint VARCHAR(12) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_used_at TIMESTAMP NULL,
+  UNIQUE KEY uq_api_token_hash (token_hash),
+  KEY idx_api_tokens_user (user_id),
+  CONSTRAINT fk_api_tokens_user FOREIGN KEY (user_id) REFERENCES sugo_users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -148,3 +148,13 @@ CREATE TABLE IF NOT EXISTS user_bitbucket_tokens (
   token_hint TEXT,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS user_api_tokens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  name TEXT,
+  token_hash TEXT NOT NULL UNIQUE,
+  token_hint TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_used_at TEXT
+);
