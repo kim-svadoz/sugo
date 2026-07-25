@@ -32,4 +32,15 @@ export const config = {
     redirectUri: process.env.OIDC_REDIRECT_URI ?? "",
     scope: "openid profile email offline_access",
   },
+  // 공개 SaaS(§Phase 1): GitHub OAuth 웹 로그인 + HS256 세션. OIDC와 별개 경로.
+  github: {
+    clientId: process.env.GITHUB_CLIENT_ID ?? "",
+    clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
+    redirectUri: process.env.GITHUB_REDIRECT_URI ?? "",
+    scope: process.env.GITHUB_SCOPE ?? "read:user",
+  },
+  // 세션/state 서명용 대칭키(HS256). 프로덕션은 반드시 강한 랜덤값을 시크릿 매니저로 주입.
+  sessionSecret: process.env.SESSION_SECRET ?? "",
+  // 로그인 성공 후 세션 토큰을 붙여 리다이렉트할 프론트 URL.
+  frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:5173",
 };

@@ -14,6 +14,9 @@ import { createBitbucketRouter } from "./routes/bitbucket.js";
 import { createPrRouter } from "./routes/pr.js";
 import { createStatsRouter } from "./routes/stats.js";
 import { createHarnessRouter, createSkillsRouter } from "./routes/harness.js";
+import { createGithubAuthRouter } from "./routes/githubAuth.js";
+import { createTokensRouter } from "./routes/tokens.js";
+import { createHttpGithubOAuth, type GithubOAuthClient } from "./auth/github.js";
 import { createJwtVerifier, type VerifyJwt } from "./auth/jwt.js";
 import { createHttpOidcTokenClient, type OidcTokenClient } from "./auth/oidcTokenClient.js";
 import { createHttpBitbucketClient, type BitbucketClient } from "./bitbucket/client.js";
@@ -48,6 +51,8 @@ export interface AppOverrides {
   verifyJwt?: VerifyJwt;
   oidcClient?: OidcTokenClient;
   bitbucketClient?: BitbucketClient;
+  githubOAuth?: GithubOAuthClient;
+  sessionSecret?: string;
   secretEncKey?: string;
 }
 
@@ -69,6 +74,8 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
         })
       : unconfiguredOidcClient());
   const bitbucketClient = overrides.bitbucketClient ?? createHttpBitbucketClient();
+  const githubOAuth = overrides.githubOAuth ?? createHttpGithubOAuth(config.github);
+  const sessionSecret = overrides.sessionSecret ?? config.sessionSecret;
   const secretEncKey = overrides.secretEncKey ?? config.secretEncKey;
 
   const app = express();
@@ -82,6 +89,9 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/sync", createSyncRouter(db));
   app.use("/api/activity", createActivityRouter(db));
   app.use("/api/workspaces", createWorkspacesRouter(db));
+  // 공개 SaaS(§Phase 1): GitHub OAuth 로그인 + API 토큰 관리. 기존 OIDC /api/auth보다 먼저 등록.
+  app.use("/api/auth/github", createGithubAuthRouter(db, githubOAuth, config.github, sessionSecret, config.frontendUrl));
+  app.use("/api/tokens", createTokensRouter(db, sessionSecret));
   app.use(
     "/api/auth",
     createAuthRouter(
