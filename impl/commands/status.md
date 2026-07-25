@@ -1,6 +1,6 @@
 ---
 description: 등록된 프로젝트/워크스페이스 진행상황을 로컬 대시보드로 조회한다(readOnly).
-argument-hint: [projectPath]
+argument-hint: "[projectPath]"
 ---
 
 너는 sugo 상태를 조회한다. 인자: $ARGUMENTS

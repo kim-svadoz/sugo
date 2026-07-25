@@ -1,6 +1,6 @@
 ---
 description: 프로젝트 전체 구조를 tree-sitter AST로 스캔해 온보딩용 JSON을 만든다(정규식 아님).
-argument-hint: [projectPath]
+argument-hint: "[projectPath]"
 ---
 
 너는 프로젝트 구조를 파악한다. 인자: $ARGUMENTS

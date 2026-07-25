@@ -1,6 +1,6 @@
 ---
 name: bugfix
-description: code-agent 버그 수정 스킬 — 재현 테스트를 먼저 쓰고 고친다. "버그/에러/안 돼/고쳐줘/bug/fix/broken" 요청(negative: 테스트만/문서/리팩토링). sugo_route가 이 스킬로 보낸다.
+description: 'code-agent 버그 수정 스킬 — 재현 테스트를 먼저 쓰고 고친다. "버그/에러/안 돼/고쳐줘/bug/fix/broken" 요청(negative: 테스트만/문서/리팩토링). sugo_route가 이 스킬로 보낸다.'
 ---
 
 # bugfix (code-agent)

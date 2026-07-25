@@ -2,6 +2,9 @@
   "name": "sugo",
   "version": "0.1.0",
   "description": "Spec-based harness + enforced state-machine dev pipeline",
+  "author": {
+    "name": "김성현"
+  },
   "mcpServers": {
     "sugo": {
       "command": "node",

@@ -1,6 +1,6 @@
 ---
-description: review 단계 하네스 규칙 검증을 돌린다(validation.yaml: build/test/lint/typecheck/security/custom).
-argument-hint: [projectPath]
+description: 'review 단계 하네스 규칙 검증을 돌린다(validation.yaml: build/test/lint/typecheck/security/custom).'
+argument-hint: "[projectPath]"
 ---
 
 너는 하네스 규칙 검증을 실행한다(§5). 인자: $ARGUMENTS

@@ -1,6 +1,6 @@
 ---
 description: 대시보드의 체크포인트를 로컬 .claude/rules/로 pull한다(§7.2 seam).
-argument-hint: [projectPath]
+argument-hint: "[projectPath]"
 ---
 
 너는 대시보드→로컬 체크포인트 동기화를 한다(§7.2). 인자: $ARGUMENTS

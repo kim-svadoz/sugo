@@ -23392,6 +23392,85 @@ async function drainRetryQueue() {
   await processRetryQueue((item) => sendOnce(apiUrl, item.endpoint, item.method, item.data, DEFAULT_TIMEOUT_MS));
 }
 
+// src/dashboard/serialize.ts
+function serializeTaskStatus(status) {
+  if (status === "idea") return "pending";
+  if (status === "dropped") return "archived";
+  return status;
+}
+function serializeTask(userId, workspaceName, task) {
+  return {
+    userId,
+    workspaceName,
+    id: task.id,
+    title: task.title,
+    project: task.project,
+    status: serializeTaskStatus(task.status),
+    priority: task.priority,
+    description: task.description,
+    summary: task.summary,
+    startedAt: task.started_at,
+    completedAt: task.completed_at
+  };
+}
+function serializeHistory(userId, workspaceName, workLog) {
+  return {
+    userId,
+    workspaceName,
+    id: workLog.id,
+    taskId: workLog.task_id,
+    taskTitle: workLog.task_title,
+    summary: workLog.summary,
+    keyDecisions: workLog.key_decisions,
+    filesChanged: workLog.files_changed,
+    completedAt: workLog.completed_at,
+    estimatedHumanHours: workLog.metrics?.estimatedHumanHours,
+    userReportedHumanHours: workLog.metrics?.userReportedHumanHours,
+    aiExecutionMinutes: workLog.metrics?.aiExecutionMinutes,
+    estimationBasis: workLog.metrics?.estimationBasis
+  };
+}
+function serializeCheckpoint(userId, workspaceName, cp) {
+  return {
+    userId,
+    workspaceName,
+    id: cp.id,
+    title: cp.title,
+    category: cp.category,
+    appliesTo: cp.applies_to,
+    checklist: cp.checklist,
+    checkpointDate: cp.created_at
+  };
+}
+function serializeDecision(userId, workspaceName, spec) {
+  return {
+    userId,
+    workspaceName,
+    id: spec.name,
+    title: spec.name,
+    status: "accepted",
+    content: spec.content,
+    decisionDate: spec.created_at
+  };
+}
+function serializeCanvasNode(node) {
+  return {
+    id: node.id,
+    title: node.title,
+    level: node.level,
+    status: node.status,
+    dependsOn: node.dependsOn,
+    parent: node.parent,
+    ref: node.ref,
+    note: node.note,
+    specPath: node.specPath,
+    workResult: node.workResult
+  };
+}
+function serializeCanvasSnapshot(userId, workspaceName, nodes) {
+  return { userId, workspaceName, nodes: nodes.map(serializeCanvasNode) };
+}
+
 // src/dashboard/sync.ts
 async function syncWorkspace(ws) {
   const config2 = await resolveDashboardConfig();
@@ -23408,27 +23487,27 @@ async function syncWorkspace(ws) {
 async function syncTask(workspaceName, task) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/task", "POST", { userId: config2.userId, workspaceName, task });
+  await pushEvent("/api/sync/task", "POST", serializeTask(config2.userId, workspaceName, task));
 }
 async function syncRoadmapSnapshot(workspaceName, nodes) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/roadmap", "POST", { userId: config2.userId, workspaceName, nodes });
+  await pushEvent("/api/sync/canvas", "POST", serializeCanvasSnapshot(config2.userId, workspaceName, nodes));
 }
 async function syncCheckpoint(workspaceName, checkpoint) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/checkpoint", "POST", { userId: config2.userId, workspaceName, checkpoint });
+  await pushEvent("/api/sync/checkpoint", "POST", serializeCheckpoint(config2.userId, workspaceName, checkpoint));
 }
-async function syncHistory(workspaceName, workLog, prRefs) {
+async function syncHistory(workspaceName, workLog, _prRefs) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/history", "POST", { userId: config2.userId, workspaceName, workLog, prRefs: prRefs ?? void 0 });
+  await pushEvent("/api/sync/history", "POST", serializeHistory(config2.userId, workspaceName, workLog));
 }
 async function syncDecision(workspaceName, spec) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/decision", "POST", { userId: config2.userId, workspaceName, spec });
+  await pushEvent("/api/sync/decision", "POST", serializeDecision(config2.userId, workspaceName, spec));
 }
 async function syncPluginVersion(version2) {
   const config2 = await resolveDashboardConfig();
@@ -23443,12 +23522,12 @@ async function syncUser() {
 async function syncRoadmapLink(workspaceName, fromId, toId) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/roadmap/link", "POST", { userId: config2.userId, workspaceName, fromId, toId });
+  await pushEvent("/api/sync/canvas/link", "POST", { userId: config2.userId, workspaceName, fromId, toId });
 }
 async function unsyncRoadmapLink(workspaceName, fromId, toId) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/roadmap/link", "DELETE", { userId: config2.userId, workspaceName, fromId, toId });
+  await pushEvent("/api/sync/canvas/link", "DELETE", { userId: config2.userId, workspaceName, fromId, toId });
 }
 
 // src/hulk/workspace.ts
@@ -23901,13 +23980,32 @@ async function fetchRoadmapOrdering(workspaceName) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return null;
   const qs = config2.userId ? `?userId=${encodeURIComponent(config2.userId)}` : "";
-  return fetchJson(`/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap${qs}`, 8e3);
+  const res = await fetchJson(
+    `/api/workspaces/${encodeURIComponent(workspaceName)}/canvas${qs}`,
+    8e3
+  );
+  if (!res) return null;
+  return res.nodes.map((n) => ({
+    id: n.id,
+    dependsOn: n.depends_on ?? [],
+    manual_status: n.manual_status ?? void 0,
+    pos_x: n.pos_x ?? void 0,
+    pos_y: n.pos_y ?? void 0
+  }));
 }
 async function fetchCheckpointSync() {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return null;
   const qs = config2.userId ? `?userId=${encodeURIComponent(config2.userId)}` : "";
-  return fetchJson(`/api/workspaces/checkpoint-sync${qs}`, 8e3);
+  const res = await fetchJson(`/api/workspaces/checkpoint-sync${qs}`, 8e3);
+  if (!res) return null;
+  return res.checkpoints.map((c) => ({
+    id: c.id,
+    title: c.title,
+    category: c.category ?? void 0,
+    applies_to: c.applies_to ?? void 0,
+    checklist: c.checklist ?? []
+  }));
 }
 async function fetchCalibratedRatio() {
   const result = await fetchJson("/api/metrics/calibrated-ratio", 5e3);
@@ -27963,7 +28061,11 @@ async function handleSugoHulk(rawArgs) {
     case "health": {
       const config2 = await resolveDashboardConfig();
       const queue = await listRetryQueue();
-      return ok3({ dashboardEnabled: config2.enabled, dashboardApiUrl: config2.apiUrl, retryQueueSize: queue.length });
+      return ok3({
+        dashboardEnabled: config2.enabled,
+        dashboardApiUrl: config2.enabled ? config2.apiUrl : void 0,
+        retryQueueSize: queue.length
+      });
     }
     case "sync": {
       if (!args2.workspace) return errorResult8("WORKSPACE_REQUIRED", "sync action\uC5D0\uB294 workspace\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
@@ -28879,6 +28981,17 @@ function applyTransition(session, action, newSessionId, params) {
 }
 
 // src/testEvidence.ts
+function classifyVerifyCommand(command) {
+  const c = command.toLowerCase();
+  const isGradle = /gradlew|\bgradle\b/.test(c);
+  const isMaven = /\bmvn\b|\bmaven\b/.test(c);
+  if (isGradle) return /\bcheck\b/.test(c) ? "full-verify" : "partial-test";
+  if (isMaven) return /\b(verify|install)\b/.test(c) ? "full-verify" : "partial-test";
+  return "not-enforceable";
+}
+function isFullVerifyEnforceable(command) {
+  return classifyVerifyCommand(command) !== "not-enforceable";
+}
 function deriveTestState(input) {
   if (input.unverified) return "unverified";
   if (input.exitCode === void 0) return "unverified";
@@ -28898,6 +29011,12 @@ function checkTestEvidenceGate(claimedTestPassed, evidence) {
     return fail(
       "TEST_EVIDENCE_MISMATCH",
       `testPassed \uC8FC\uC7A5(${claimedTestPassed})\uC774 \uAE30\uB85D\uB41C \uC99D\uAC70(${evidence.derivedState}, exitCode=${evidence.exitCode}, failed=${evidence.failed ?? "?"})\uC640 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`
+    );
+  }
+  if (actuallyPassed && classifyVerifyCommand(evidence.command) === "partial-test") {
+    return fail(
+      "TEST_NOT_FULL_VERIFY",
+      `\uAE30\uB85D\uB41C \uBA85\uB839("${evidence.command}")\uC774 \uD480\uAC80\uC99D \uBA85\uB839\uC774 \uC544\uB2D9\uB2C8\uB2E4. gradle/maven\uC740 gradlew check / mvn verify|install\uB85C \uC2E4\uD589\uD574\uC57C \uD569\uB2C8\uB2E4("test \uADF8\uB9B0"\uC740 \uC99D\uBA85\uC774 \uC544\uB2D8).`
     );
   }
   return ok4();
@@ -29433,7 +29552,10 @@ ${session.data.seed}` : args2.summary;
     patch: session.data.mode === "patch" && session.data.patch ? { parentPrdPath: session.data.patch.parentPrdPath, version: session.data.patch.version } : void 0,
     hulk,
     decomposeManifest: session.data.decomposeManifest,
-    harnessToolMenu
+    harnessToolMenu,
+    // §4.2 "정적검증 미강제" 라벨: test_done에서 npm/py/go 등 풀검증 강제 불가 명령이면 false로
+    // 노출한다(gradle/maven이면 true — 그쪽은 게이트가 gradlew check/mvn verify를 이미 강제).
+    fullVerifyEnforceable: action === "test_done" && session.data.chainInfo.testEvidence ? isFullVerifyEnforceable(session.data.chainInfo.testEvidence.command) : void 0
   };
   return {
     content: [{ type: "text", text: JSON.stringify(payload, null, 2) }]
