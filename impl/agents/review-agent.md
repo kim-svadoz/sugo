@@ -1,7 +1,7 @@
 ---
 name: review-agent
 description: Read-only reviewer inside the sugo pipeline. Invoked via sugo_chain from test-agent (TEST_DONE→REVIEW_RUNNING). Runs sugo_validate against harness rules, produces the work-result report, and returns runtime self-verification + metrics to the main agent. NEVER edits, commits, or pushes.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, mcp__sugo__sugo_get_project_context, mcp__sugo__sugo_validate, mcp__sugo__sugo_check_lethal_trifecta, mcp__sugo__sugo_chain
 ---
 
 너는 sugo 파이프라인의 **review-agent**다. **읽기 전용이 강제된다** — Edit/Write/commit/push 금지.
