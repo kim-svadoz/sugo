@@ -53,7 +53,7 @@ async function freshApp() {
   const idToken = await sign({ account_id: "u1", name: "Kim" });
   const oidcClient = new FakeOidcClient(idToken);
   const { app } = await createApp({ db, verifyJwt, oidcClient });
-  return { app, db, verifyJwt, sign };
+  return { app, db, verifyJwt, sign, idToken };
 }
 
 describe("GET /api/auth/config", () => {
@@ -70,12 +70,17 @@ describe("GET /api/auth/config", () => {
 
 describe("POST /api/auth/token", () => {
   it("exchanges a valid code for tokens and upserts the user", async () => {
-    const { app, db } = await freshApp();
+    const { app, db, idToken } = await freshApp();
     const res = await request(app).post("/api/auth/token").send({ code: "valid-code" }).expect(200);
     expect(res.body.user).toEqual({ id: "u1" });
-    expect(res.body.accessToken).toBe("access-1");
+    // accessToken은 이제 id_token(JWT) — IdP의 opaque access token 문제를 피하려 id_token을 Bearer로
+    // 준다(실제 OIDC provider e2e에서 발견). fake의 idToken이 그대로 accessToken으로 나온다.
+    expect(res.body.accessToken).toBe(idToken);
     expect(res.body.refreshToken).toBe("refresh-1");
     expect(typeof res.body.expiresAt).toBe("number");
+    // 반환된 accessToken이 실제로 requireAuth를 통과하는 JWT인지 왕복 검증
+    const verify = await request(app).post("/api/auth/verify").set("Authorization", `Bearer ${res.body.accessToken}`).expect(200);
+    expect(verify.body.user).toEqual({ id: "u1" });
 
     const rows = await db.query("SELECT id, display_name FROM sugo_users WHERE id='u1'");
     expect(rows).toEqual([{ id: "u1", display_name: "Kim" }]);
@@ -120,9 +125,9 @@ describe("POST /api/auth/verify", () => {
 
 describe("POST /api/auth/refresh", () => {
   it("exchanges a valid refresh token for new tokens", async () => {
-    const { app } = await freshApp();
+    const { app, idToken } = await freshApp();
     const res = await request(app).post("/api/auth/refresh").send({ refreshToken: "refresh-1" }).expect(200);
-    expect(res.body.accessToken).toBe("access-2");
+    expect(res.body.accessToken).toBe(idToken); // id_token(JWT)을 Bearer로 반환
     expect(res.body.refreshToken).toBe("refresh-2");
   });
 

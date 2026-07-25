@@ -44,7 +44,12 @@ export function createAuthRouter(
       await syncUser(db, { userId, displayName: typeof claims.name === "string" ? claims.name : undefined });
       res.json({
         user: { id: userId },
-        accessToken: tokens.accessToken,
+        // 프론트가 Bearer로 쓸 토큰. **id_token(JWT)을 준다** — OIDC access token은 IdP 설정에
+        // 따라 opaque일 수 있고(oidc-provider 기본/일부 Keycloak 설정), 그러면 requireAuth의 JWKS
+        // 검증이 401로 거부한다(실제 OIDC provider e2e에서 발견, 2026-07-25). 대시보드는 어차피
+        // id_token을 JWKS로 검증하므로, 이걸 Bearer로 쓰면 IdP의 access-token 형식과 무관하게
+        // auth-gated 라우트(bitbucket/pr)가 동작한다. (§8 "Bearer JWT"의 견고한 해석.)
+        accessToken: tokens.idToken,
         refreshToken: tokens.refreshToken,
         expiresAt: Date.now() + tokens.expiresIn * 1000,
       });
@@ -75,7 +80,7 @@ export function createAuthRouter(
       const userId = deriveUserId(claims);
       res.json({
         user: { id: userId },
-        accessToken: tokens.accessToken,
+        accessToken: tokens.idToken, // /token과 동일 — id_token(JWT)을 Bearer로 사용(위 주석 참고)
         refreshToken: tokens.refreshToken ?? req.body.refreshToken,
         expiresAt: Date.now() + tokens.expiresIn * 1000,
       });
