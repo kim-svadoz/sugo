@@ -46,7 +46,7 @@ import {
 import { PatchEntryError, resolvePatchContext, type PatchContext } from "../patch.js";
 import { applyTransition } from "../planStateMachine.js";
 import { generateSessionId, loadSession, saveSession, sessionExists } from "../session.js";
-import { checkTestEvidenceGate } from "../testEvidence.js";
+import { checkTestEvidenceGate, isFullVerifyEnforceable } from "../testEvidence.js";
 import { PLAN_ACTIONS, type PlanSession } from "../types.js";
 
 export const sugoPlanInputSchema = {
@@ -722,6 +722,12 @@ export async function handleSugoPlan(rawArgs: unknown) {
     hulk,
     decomposeManifest: session.data.decomposeManifest,
     harnessToolMenu,
+    // §4.2 "정적검증 미강제" 라벨: test_done에서 npm/py/go 등 풀검증 강제 불가 명령이면 false로
+    // 노출한다(gradle/maven이면 true — 그쪽은 게이트가 gradlew check/mvn verify를 이미 강제).
+    fullVerifyEnforceable:
+      action === "test_done" && session.data.chainInfo.testEvidence
+        ? isFullVerifyEnforceable(session.data.chainInfo.testEvidence.command)
+        : undefined,
   };
 
   return {

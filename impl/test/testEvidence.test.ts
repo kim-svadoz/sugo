@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { checkTestEvidenceGate, deriveTestState, makeTestEvidenceRecord } from "../src/testEvidence.js";
+import {
+  checkTestEvidenceGate,
+  classifyVerifyCommand,
+  deriveTestState,
+  isFullVerifyCommand,
+  isFullVerifyEnforceable,
+  makeTestEvidenceRecord,
+} from "../src/testEvidence.js";
 
 describe("deriveTestState", () => {
   it("exitCode 0 + failed 0 -> pass", () => {
@@ -59,6 +66,60 @@ describe("checkTestEvidenceGate — 반드시 허용", () => {
   it("unverified 기록이면 claim과 무관하게 통과한다(환경부재 라벨)", () => {
     const evidence = makeTestEvidenceRecord("feature", { command: "npm test", unverified: true, unverifiedReason: "샌드박스에 런타임 없음" }, "2026-01-01T00:00:00.000Z");
     expect(checkTestEvidenceGate(true, evidence).ok).toBe(true);
+    expect(checkTestEvidenceGate(false, evidence).ok).toBe(true);
+  });
+});
+
+describe("§4.2 풀검증 명령 분류 (classifyVerifyCommand)", () => {
+  it("gradlew check / mvn verify|install만 full-verify", () => {
+    expect(classifyVerifyCommand("./gradlew check")).toBe("full-verify");
+    expect(classifyVerifyCommand("mvn verify")).toBe("full-verify");
+    expect(classifyVerifyCommand("mvn clean install")).toBe("full-verify");
+    expect(isFullVerifyCommand("./gradlew check")).toBe(true);
+  });
+
+  it("단순 test(gradlew test / mvn test)는 partial-test", () => {
+    expect(classifyVerifyCommand("./gradlew test")).toBe("partial-test");
+    expect(classifyVerifyCommand("mvn test")).toBe("partial-test");
+    expect(isFullVerifyCommand("./gradlew test")).toBe(false);
+  });
+
+  it("npm/pytest/go는 not-enforceable(풀검증 강제 불가)", () => {
+    expect(classifyVerifyCommand("npm test")).toBe("not-enforceable");
+    expect(classifyVerifyCommand("pytest -q")).toBe("not-enforceable");
+    expect(classifyVerifyCommand("go test ./...")).toBe("not-enforceable");
+    expect(isFullVerifyEnforceable("npm test")).toBe(false);
+    expect(isFullVerifyEnforceable("./gradlew test")).toBe(true);
+  });
+});
+
+describe("§4.2 풀검증 명령 게이트 — 설계안 코퍼스", () => {
+  const rec = (command: string) => makeTestEvidenceRecord("feature", { command, exitCode: 0, failed: 0 }, "2026-01-01T00:00:00.000Z");
+
+  it("반드시 거부: gradle 프로젝트인데 단순 `gradlew test`로 pass 주장", () => {
+    const result = checkTestEvidenceGate(true, rec("./gradlew test"));
+    expect(result.ok).toBe(false);
+    expect(result.code).toBe("TEST_NOT_FULL_VERIFY");
+  });
+
+  it("반드시 거부: maven `mvn test`로 pass 주장", () => {
+    expect(checkTestEvidenceGate(true, rec("mvn test")).code).toBe("TEST_NOT_FULL_VERIFY");
+  });
+
+  it("반드시 허용: `gradlew check` exitCode==0 pass", () => {
+    expect(checkTestEvidenceGate(true, rec("./gradlew check")).ok).toBe(true);
+  });
+
+  it("반드시 허용: `mvn verify` exitCode==0 pass", () => {
+    expect(checkTestEvidenceGate(true, rec("mvn clean verify")).ok).toBe(true);
+  });
+
+  it("반드시 허용: npm은 풀검증 강제 불가라 단순 test여도 통과(미강제)", () => {
+    expect(checkTestEvidenceGate(true, rec("npm test")).ok).toBe(true);
+  });
+
+  it("fail 주장이면 풀검증 여부와 무관(불일치가 아니면) 통과 — auto-loop로 감", () => {
+    const evidence = makeTestEvidenceRecord("feature", { command: "./gradlew test", exitCode: 1, failed: 1 }, "2026-01-01T00:00:00.000Z");
     expect(checkTestEvidenceGate(false, evidence).ok).toBe(true);
   });
 });

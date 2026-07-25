@@ -3,6 +3,32 @@ import { fail, ok, type GateCheckResult } from "./gates.js";
 export type TestEvidenceKind = "baseline" | "feature";
 export type TestPassedState = "pass" | "fail" | "unverified";
 
+/**
+ * §4.2 풀검증 명령 분류: gradle/maven은 "풀검증 명령"(gradlew check / mvn verify|install)을 강제할
+ * 수 있고, 단순 test(gradlew test / mvn test)는 "그린이어도 증명 아님"으로 거부한다. npm/pytest/go
+ * 등은 풀검증 개념을 강제할 수 없어 not-enforceable — 통과시키되 "정적검증 미강제"로 표시한다.
+ */
+export type VerifyCommandKind = "full-verify" | "partial-test" | "not-enforceable";
+
+export function classifyVerifyCommand(command: string): VerifyCommandKind {
+  const c = command.toLowerCase();
+  const isGradle = /gradlew|\bgradle\b/.test(c);
+  const isMaven = /\bmvn\b|\bmaven\b/.test(c);
+  if (isGradle) return /\bcheck\b/.test(c) ? "full-verify" : "partial-test";
+  if (isMaven) return /\b(verify|install)\b/.test(c) ? "full-verify" : "partial-test";
+  return "not-enforceable";
+}
+
+/** 설계안: `gradlew check` / `mvn verify|install`만 풀검증으로 인정. 단순 test는 불인정. */
+export function isFullVerifyCommand(command: string): boolean {
+  return classifyVerifyCommand(command) === "full-verify";
+}
+
+/** gradle/maven이면 풀검증 강제 가능(true), npm/py/go 등이면 강제 불가(false → 미강제 라벨). */
+export function isFullVerifyEnforceable(command: string): boolean {
+  return classifyVerifyCommand(command) !== "not-enforceable";
+}
+
 export interface TestEvidenceInput {
   command: string;
   exitCode?: number;
@@ -49,6 +75,15 @@ export function checkTestEvidenceGate(claimedTestPassed: boolean, evidence: Test
     return fail(
       "TEST_EVIDENCE_MISMATCH",
       `testPassed 주장(${claimedTestPassed})이 기록된 증거(${evidence.derivedState}, exitCode=${evidence.exitCode}, failed=${evidence.failed ?? "?"})와 일치하지 않습니다.`,
+    );
+  }
+  // §4.2 풀검증 명령 강제: gradle/maven 프로젝트에서 pass 주장하려면 gradlew check / mvn verify|install
+  // 이어야 한다. 단순 test(gradlew test / mvn test)는 "test 그린은 증명 아님"으로 거부(설계안 코퍼스).
+  // npm/pytest/go 등은 강제 불가(not-enforceable) → 통과시킨다(호출부가 미강제 라벨 노출).
+  if (actuallyPassed && classifyVerifyCommand(evidence.command) === "partial-test") {
+    return fail(
+      "TEST_NOT_FULL_VERIFY",
+      `기록된 명령("${evidence.command}")이 풀검증 명령이 아닙니다. gradle/maven은 gradlew check / mvn verify|install로 실행해야 합니다("test 그린"은 증명이 아님).`,
     );
   }
   return ok();
