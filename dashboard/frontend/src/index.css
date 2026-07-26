@@ -136,6 +136,27 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
 
 :focus-visible { outline: 2px solid rgba(0, 180, 216, 0.6); outline-offset: 2px; }
 
+/* ── 마크다운 렌더(Harness unified 등) ───────────────────────────── */
+.md-body { font-size: 0.9rem; line-height: 1.65; color: #cbd5e1; }
+.md-body h1, .md-body h2, .md-body h3, .md-body h4 { color: #e5e7eb; font-weight: 700; margin: 1.1em 0 0.5em; line-height: 1.25; }
+.md-body h1 { font-size: 1.4rem; color: var(--color-primary); }
+.md-body h2 { font-size: 1.15rem; border-bottom: 1px solid var(--line); padding-bottom: 0.25em; }
+.md-body h3 { font-size: 1rem; }
+.md-body p { margin: 0.6em 0; }
+.md-body a { color: #7de3ff; text-decoration: underline; text-underline-offset: 2px; }
+.md-body ul, .md-body ol { margin: 0.5em 0; padding-left: 1.4em; }
+.md-body ul { list-style: disc; }
+.md-body ol { list-style: decimal; }
+.md-body li { margin: 0.2em 0; }
+.md-body code { font-family: var(--font-mono); font-size: 0.82em; background: rgba(0, 180, 216, 0.1); color: #7de3ff; padding: 0.08em 0.4em; border-radius: 4px; }
+.md-body pre { background: rgba(2, 6, 18, 0.7); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.8rem; overflow-x: auto; margin: 0.8em 0; }
+.md-body pre code { background: none; color: #cbd5e1; padding: 0; }
+.md-body blockquote { border-left: 3px solid var(--color-secondary); padding-left: 0.9em; margin: 0.8em 0; color: #94a3b8; }
+.md-body table { border-collapse: collapse; margin: 0.8em 0; display: block; overflow-x: auto; }
+.md-body th, .md-body td { border: 1px solid var(--line); padding: 0.4em 0.7em; text-align: left; }
+.md-body th { background: rgba(148, 163, 184, 0.08); }
+.md-body hr { border: none; border-top: 1px solid var(--line); margin: 1.2em 0; }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
