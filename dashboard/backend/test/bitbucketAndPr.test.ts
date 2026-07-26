@@ -3,28 +3,14 @@ import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import request from "supertest";
-import { exportJWK, generateKeyPair, SignJWT, createLocalJWKSet } from "jose";
 import { createApp } from "../src/index.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
-import { createJwtVerifier } from "../src/auth/jwt.js";
 import { syncCanvas, syncUser } from "../src/services/syncService.js";
+import { seedUserToken } from "./testAuth.js";
 import type { BitbucketClient, BitbucketRepoRef, PrRef } from "../src/bitbucket/client.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 const SECRET_ENC_KEY = randomBytes(32).toString("base64");
-
-async function testBearer() {
-  const { publicKey, privateKey } = await generateKeyPair("RS256");
-  const jwk = await exportJWK(publicKey);
-  jwk.kid = "k1";
-  const verifyJwt = createJwtVerifier(createLocalJWKSet({ keys: [jwk] }));
-  const token = await new SignJWT({ account_id: "u1" })
-    .setProtectedHeader({ alg: "RS256", kid: "k1" })
-    .setIssuedAt()
-    .setExpirationTime("1h")
-    .sign(privateKey);
-  return { verifyJwt, token };
-}
 
 class FakeBitbucketClient implements BitbucketClient {
   public created: unknown[] = [];
@@ -57,8 +43,8 @@ async function appWithNode(bitbucketClient: BitbucketClient) {
       workResult: { prRefs: { baseUrl: "https://bb.example", projectKey: "P", repoSlug: "r", sourceBranch: "feat/t1" } },
     },
   ]);
-  const { verifyJwt, token } = await testBearer();
-  const { app } = await createApp({ db, verifyJwt, bitbucketClient, secretEncKey: SECRET_ENC_KEY });
+  const token = (await seedUserToken(db, "u1")).replace(/^Bearer /, "");
+  const { app } = await createApp({ db, bitbucketClient, secretEncKey: SECRET_ENC_KEY });
   return { app, db, token };
 }
 

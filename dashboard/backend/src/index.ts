@@ -106,8 +106,8 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
       verifyJwt
     )
   );
-  app.use("/api/bitbucket", createBitbucketRouter(db, verifyJwt, secretEncKey));
-  app.use("/api/pr", createPrRouter(db, verifyJwt, secretEncKey, bitbucketClient));
+  app.use("/api/bitbucket", createBitbucketRouter(db, sessionSecret, secretEncKey));
+  app.use("/api/pr", createPrRouter(db, sessionSecret, secretEncKey, bitbucketClient));
   // §3.7: /api/stats + alias /api/metrics(플러그인이 calibrated-ratio를 여기로 fetch), harness, skills.
   const statsRouter = createStatsRouter(db, sessionSecret);
   app.use("/api/stats", statsRouter);

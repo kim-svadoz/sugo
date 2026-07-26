@@ -1,8 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import type { DbClient } from "../db/client.js";
-import type { VerifyJwt } from "../auth/jwt.js";
-import { requireAuth } from "../auth/requireAuth.js";
+import { requireUser } from "../auth/requireUser.js";
 import { validateBody } from "../schemas/validate.js";
 import { resolveRefs } from "../services/prService.js";
 import { getDecryptedBitbucketToken } from "../services/bitbucketTokenService.js";
@@ -29,12 +28,12 @@ const existingSchema = z.object({
 // §3.4/§6: AUTH-gated. Error codes: NO_TOKEN, NO_REFS, MULTI_BRANCH, BRANCH_NOT_PUSHED.
 export function createPrRouter(
   db: DbClient,
-  verifyJwt: VerifyJwt,
+  sessionSecret: string,
   secretEncKey: string,
   bitbucketClient: BitbucketClient
 ): Router {
   const router = Router();
-  router.use(requireAuth(verifyJwt));
+  router.use(requireUser(db, sessionSecret));
 
   router.post("/existing", validateBody(existingSchema), async (req, res) => {
     const { workspace, nodeId, scope } = req.body;

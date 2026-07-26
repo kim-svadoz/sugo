@@ -1,8 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import type { DbClient } from "../db/client.js";
-import type { VerifyJwt } from "../auth/jwt.js";
-import { requireAuth } from "../auth/requireAuth.js";
+import { requireUser } from "../auth/requireUser.js";
 import { validateBody } from "../schemas/validate.js";
 import {
   deleteBitbucketToken,
@@ -15,10 +14,10 @@ const putSchema = z.object({
   baseUrl: z.string().optional(),
 });
 
-// §3.5: AUTH-gated (requireAuth). GET never returns the token, only hint/status.
-export function createBitbucketRouter(db: DbClient, verifyJwt: VerifyJwt, secretEncKey: string): Router {
+// §3.5: 인증 필요. 세션(웹) 또는 API 토큰(플러그인) 둘 다 수용. GET은 토큰 미반환(hint/status만).
+export function createBitbucketRouter(db: DbClient, sessionSecret: string, secretEncKey: string): Router {
   const router = Router();
-  router.use(requireAuth(verifyJwt));
+  router.use(requireUser(db, sessionSecret));
 
   router.get("/", async (req, res) => {
     const status = await getBitbucketTokenStatus(db, req.userId!);

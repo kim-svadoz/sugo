@@ -1,4 +1,4 @@
-import { clearAuthState, getAuthState } from "../auth/authStore";
+import { getAuthState } from "../auth/authStore";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -9,13 +9,12 @@ function withAuthHeaders(options: RequestInit, token: string | null): HeadersIni
   return headers;
 }
 
-// 공개 SaaS(§Phase 1.5): 모든 호출에 Bearer(세션 토큰) 부착 — 이제 데이터 라우트도 인증 필요.
-// GitHub 세션은 갱신 엔드포인트가 없으므로 401이면 그냥 로그아웃(재로그인 유도).
+// 공개 SaaS(§Phase 1.5): 모든 호출에 Bearer(세션 토큰) 부착.
+// 개별 호출의 401은 세션을 지우지 않는다(한 엔드포인트 실패가 전역 로그아웃을 유발하면 안 됨).
+// 진짜 세션 만료는 authStore의 expiresAt(로컬스토리지)로 처리한다.
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
   const { accessToken } = getAuthState();
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers: withAuthHeaders(options, accessToken) });
-  if (res.status === 401) clearAuthState();
-  return res;
+  return fetch(`${API_BASE}${path}`, { ...options, headers: withAuthHeaders(options, accessToken) });
 }
 
 export async function apiJson<T>(path: string, options?: RequestInit): Promise<T> {
