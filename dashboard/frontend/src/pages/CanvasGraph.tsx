@@ -1,60 +1,157 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useCanvas } from "../hooks/useCanvas.js";
+import {
+  ReactFlow,
+  Background,
+  BackgroundVariant,
+  Controls,
+  MiniMap,
+  Handle,
+  Position,
+  type Node,
+  type Edge,
+  type NodeProps,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import dagre from "dagre";
+import { useCanvas, type CanvasNode } from "../hooks/useCanvas.js";
 import { SubtaskPanel } from "../components/SubtaskPanel.js";
 
-// §5 CanvasGraph 골격 — 이번 증분은 의도적으로 간소화: 실제 스펙의 @xyflow/react+dagre
-// DAG 캔버스 시각화는 별도 증분에서 다룬다(브라우저로 실제 확인할 수 있게 되면 리팩토링).
-// 노드는 계층 리스트로만 보여주되, 선택하면 SubtaskPanel이 열림(진행상황/summary/파일/
-// lineage/수동조작/PR 패널 — §5).
+// §5 RoadmapGraph — @xyflow/react + dagre(LR), 읽기전용 뷰어. 노드는 living-state 색,
+// depends_on 엣지, ✋수동 칩, 우측 SubtaskPanel. (Spec/RUN 컨테이너 그룹핑은 후속 증분)
+const NODE_W = 214;
+const NODE_H = 76;
+
+type TaskNodeData = { node: CanvasNode; selected: boolean };
+type FlowNode = Node<TaskNodeData, "task">;
+
+function effStatus(n: CanvasNode): string {
+  return (n.manual_status ?? n.status ?? "pending").toLowerCase();
+}
+function statusColor(status: string): string {
+  if (status === "done" || status === "completed") return "#34d399";
+  if (status === "in_progress" || status === "running") return "#00b4d8";
+  if (status === "archived" || status === "dropped") return "#64748b";
+  if (status === "pending" || status === "idea") return "#94a3b8";
+  return "#f59e0b";
+}
+
+function TaskNodeCard({ data }: NodeProps<FlowNode>) {
+  const n = data.node;
+  const st = effStatus(n);
+  const color = statusColor(st);
+  const manual = !!n.manual_status;
+  return (
+    <div
+      className="ck-glass"
+      style={{
+        width: NODE_W,
+        borderRadius: 12,
+        borderColor: data.selected ? color : "rgba(148,163,184,0.2)",
+        boxShadow: data.selected ? `0 0 0 1px ${color}, 0 0 18px ${color}66` : `inset 3px 0 0 ${color}`,
+        padding: "8px 10px",
+        cursor: "pointer",
+      }}
+    >
+      <Handle type="target" position={Position.Left} style={{ background: color, width: 7, height: 7, border: "none" }} />
+      <div className="flex items-center justify-between">
+        <span className="ck-pill" style={{ color, borderColor: color + "55", fontSize: "0.58rem", padding: "0 6px" }}>{n.level}</span>
+        <span className="flex items-center gap-1 font-mono text-[0.56rem] uppercase" style={{ color }}>
+          {st === "in_progress" && <span className="h-1.5 w-1.5 rounded-full ck-pulse-dot" style={{ background: color }} />}
+          {st}
+        </span>
+      </div>
+      <div className="mt-1 truncate font-mono text-[0.78rem] text-slate-100" title={n.title}>{n.title}</div>
+      {manual && <span className="mt-1 inline-block text-[0.56rem] text-amber-300">✋ 수동</span>}
+      <Handle type="source" position={Position.Right} style={{ background: color, width: 7, height: 7, border: "none" }} />
+    </div>
+  );
+}
+
+const nodeTypes = { task: TaskNodeCard };
+
+function layout(nodes: CanvasNode[], selectedId: string | null): { rfNodes: FlowNode[]; rfEdges: Edge[] } {
+  const g = new dagre.graphlib.Graph();
+  g.setGraph({ rankdir: "LR", nodesep: 26, ranksep: 76, marginx: 20, marginy: 20 });
+  g.setDefaultEdgeLabel(() => ({}));
+  const ids = new Set(nodes.map((n) => n.id));
+  for (const n of nodes) g.setNode(n.id, { width: NODE_W, height: NODE_H });
+  const rfEdges: Edge[] = [];
+  for (const n of nodes) {
+    for (const dep of n.depends_on ?? []) {
+      if (!ids.has(dep)) continue;
+      g.setEdge(dep, n.id);
+      rfEdges.push({
+        id: `${dep}->${n.id}`,
+        source: dep,
+        target: n.id,
+        style: { stroke: "rgba(0,180,216,0.45)", strokeWidth: 1.5 },
+        markerEnd: { type: "arrowclosed" as never, color: "rgba(0,180,216,0.6)" },
+      });
+    }
+  }
+  dagre.layout(g);
+  const rfNodes: FlowNode[] = nodes.map((n) => {
+    const p = g.node(n.id);
+    return {
+      id: n.id,
+      type: "task",
+      position: { x: (p?.x ?? 0) - NODE_W / 2, y: (p?.y ?? 0) - NODE_H / 2 },
+      data: { node: n, selected: n.id === selectedId },
+      draggable: false,
+    };
+  });
+  return { rfNodes, rfEdges };
+}
+
 export function CanvasGraph() {
   const { workspace = "" } = useParams();
   const { data, loading, error, refetch } = useCanvas(workspace);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  if (loading) return <div className="text-sm opacity-70">불러오는 중...</div>;
-  if (error) return <div className="text-sm text-red-400">에러: {error}</div>;
-  if (!data) return null;
-
-  const selected = data.find((n) => n.id === selectedId) ?? null;
+  const { rfNodes, rfEdges } = useMemo(() => layout(data ?? [], selectedId), [data, selectedId]);
+  const selected = data?.find((n) => n.id === selectedId) ?? null;
 
   return (
-    <div className="flex gap-4">
-      <div className="flex-1">
-        <h1 className="mb-4 font-mono text-lg" style={{ color: "var(--color-primary)" }}>
-          {workspace}
-        </h1>
-        <ul className="space-y-2">
-          {data.map((node) => {
-            const effectiveStatus = node.manual_status ?? node.status;
-            return (
-              <li key={node.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(node.id)}
-                  className={`ck-glass ck-card flex w-full items-center justify-between text-left text-sm hover:ck-glow-cyan ${
-                    selectedId === node.id ? "ck-glow-cyan" : ""
-                  }`}
-                >
-                  <div>
-                    <span className="mr-2 rounded bg-white/5 px-2 py-0.5 text-xs uppercase">{node.level}</span>
-                    <span>{node.title}</span>
-                    {node.manual_status && (
-                      <span className="ml-2 rounded px-2 py-0.5 text-xs" style={{ color: "var(--color-secondary)" }}>
-                        ✋ 수동
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs opacity-70">{effectiveStatus}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <h1 className="font-mono text-lg font-bold ck-text-glow" style={{ color: "var(--color-primary)" }}>{workspace}</h1>
+        <span className="ck-pill text-slate-400">{data?.length ?? 0} nodes</span>
+        {loading && <span className="text-xs text-slate-500">동기화 중…</span>}
+        {error && <span className="text-xs text-red-400">에러: {error}</span>}
       </div>
-      {selected && (
-        <SubtaskPanel workspace={workspace} node={selected} onClose={() => setSelectedId(null)} onChanged={refetch} />
-      )}
+
+      <div className="flex gap-3">
+        <div className="ck-glass relative flex-1 overflow-hidden rounded-xl" style={{ height: "calc(100vh - 190px)" }}>
+          {(!data || data.length === 0) && !loading ? (
+            <div className="flex h-full items-center justify-center text-sm text-slate-400">
+              이 워크스페이스에 캔버스 노드가 없습니다 — 플러그인에서 <code className="mx-1" style={{ color: "var(--color-primary)" }}>/sugo:feat</code> 를 돌리면 노드가 채워집니다.
+            </div>
+          ) : (
+            <ReactFlow
+              nodes={rfNodes}
+              edges={rfEdges}
+              nodeTypes={nodeTypes}
+              onNodeClick={(_, node) => setSelectedId(node.id)}
+              onPaneClick={() => setSelectedId(null)}
+              nodesDraggable={false}
+              nodesConnectable={false}
+              fitView
+              proOptions={{ hideAttribution: true }}
+              minZoom={0.2}
+              maxZoom={1.6}
+            >
+              <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="rgba(148,163,184,0.18)" />
+              <MiniMap pannable zoomable maskColor="rgba(4,7,17,0.7)" nodeColor={(nd) => statusColor(effStatus((nd.data as TaskNodeData).node))} style={{ background: "rgba(11,18,32,0.9)", border: "1px solid rgba(148,163,184,0.2)" }} />
+              <Controls showInteractive={false} style={{ background: "rgba(11,18,32,0.9)", border: "1px solid rgba(148,163,184,0.2)", borderRadius: 8 }} />
+            </ReactFlow>
+          )}
+        </div>
+
+        {selected && (
+          <SubtaskPanel workspace={workspace} node={selected} onClose={() => setSelectedId(null)} onChanged={refetch} />
+        )}
+      </div>
     </div>
   );
 }
