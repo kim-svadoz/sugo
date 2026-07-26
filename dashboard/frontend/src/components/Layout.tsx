@@ -1,7 +1,6 @@
 import { type ReactElement } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.js";
-import { LiveConsole } from "./LiveConsole.js";
 import { CommandPalette } from "./CommandPalette.js";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 
@@ -117,7 +116,6 @@ export function Layout() {
         </header>
         <main className="ck-scroll flex-1 space-y-4 p-6">
           <Outlet />
-          <LiveConsole />
         </main>
       </div>
       <CommandPalette />
