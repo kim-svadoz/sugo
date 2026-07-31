@@ -251,6 +251,14 @@ describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
     await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-1", subtaskChangedFiles: ["email.ts"] });
     await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-2", subtaskChangedFiles: ["social.ts"] });
 
+    // P5-24 통합 게이트: 서브태스크마다 파이프라인을 강제하진 않지만, **합류 지점에서는 한 번**
+    // code_done과 같은 내용 게이트를 통과해야 한다. analyze 미호출이면 여기서 막힌다.
+    const blocked = await call(handleSugoPlan, { action: "integrate", sessionId });
+    expect(blocked.isError).toBe(true);
+    expect(blocked.data.errorCode).toBe("ANALYZE_NOT_CALLED");
+
+    await call(handleSugoAnalyze, { sessionId, changedFiles: ["email.ts", "social.ts"] });
+
     // v2 §4 흐름도: integrate는 CODE_RUNNING이 아니라 DOCS_PENDING으로 합류한다 — 서브태스크가
     // 각자 구현을 끝낸 상태라 통합 후엔 코딩으로 되돌아가지 않고 문서화→커밋으로 간다.
     const integrateResult = await call(handleSugoPlan, { action: "integrate", sessionId });
@@ -282,5 +290,75 @@ describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
     const integrateResult = await call(handleSugoPlan, { action: "integrate", sessionId });
     expect(integrateResult.isError).toBe(true);
     expect(integrateResult.data.errorCode).toBe("MANIFEST_FILE_OVERLAP");
+  });
+});
+
+/**
+ * P5-24 결정(2026-08-01, 사용자): **서브태스크마다 미니 파이프라인은 강제하지 않는다.**
+ * 쪼갠 일을 각자 알아서 하라고 나눈 건데 거기 또 게이트를 걸면 decompose를 쓸 이유가 없다.
+ * 대신 **합쳐서 나가는 integrate 한 지점**에서 code_done과 같은 내용 게이트를 통과해야 한다.
+ * v2가 integrate 도착지를 DOCS_PENDING으로 바꾸면서 생긴 게이트 공백을 이걸로 닫는다.
+ */
+describe("§10 통합 게이트 — 각자는 자유, 합류는 검증(P5-24)", () => {
+  async function toOrchestrating(): Promise<string> {
+    const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
+    const sessionId = start.data.sessionId as string;
+    await call(handleSugoPlan, { action: "clarify", sessionId });
+    await call(handleSugoPlan, { action: "prd", sessionId, prdContent: TWO_REQ_PRD });
+    await call(handleSugoPlan, {
+      action: "decompose",
+      sessionId,
+      manifest: {
+        subtasks: [
+          { id: "S-1", title: "A", dependsOn: [], files: ["email.ts"], coversRequirements: ["REQ-1"] },
+          { id: "S-2", title: "B", dependsOn: [], files: ["social.ts"], coversRequirements: ["REQ-2"] },
+        ],
+      },
+    });
+    await call(handleSugoPlan, { action: "subtask_start", sessionId, subtaskId: "S-1" });
+    await call(handleSugoPlan, { action: "subtask_start", sessionId, subtaskId: "S-2" });
+    return sessionId;
+  }
+
+  it("서브태스크 진행 자체에는 게이트가 없다(자유롭게 start/done 가능)", async () => {
+    const sessionId = await toOrchestrating();
+    const d1 = await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-1", subtaskChangedFiles: ["email.ts"] });
+    const d2 = await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-2", subtaskChangedFiles: ["social.ts"] });
+    expect(d1.isError).toBe(false);
+    expect(d2.isError).toBe(false);
+  });
+
+  it("거부: 합류 시점에 analyze 실호출 이력이 없으면 막힌다", async () => {
+    const sessionId = await toOrchestrating();
+    await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-1", subtaskChangedFiles: ["email.ts"] });
+    await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-2", subtaskChangedFiles: ["social.ts"] });
+
+    const r = await call(handleSugoPlan, { action: "integrate", sessionId });
+    expect(r.isError).toBe(true);
+    expect(r.data.errorCode).toBe("ANALYZE_NOT_CALLED");
+  });
+
+  it("거부: 병합된 변경파일에 배선 변경이 있는데 배선 테스트가 없으면 막힌다", async () => {
+    writeFileSync(join(projectDir, "application.yml"), "server:\n  port: 8080\n");
+    const sessionId = await toOrchestrating();
+    await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-1", subtaskChangedFiles: ["application.yml"] });
+    await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-2", subtaskChangedFiles: ["social.ts"] });
+    await call(handleSugoAnalyze, { sessionId, changedFiles: ["application.yml", "social.ts"] });
+
+    const r = await call(handleSugoPlan, { action: "integrate", sessionId });
+    expect(r.isError).toBe(true);
+    expect(r.data.errorCode).toBe("WIRING_TEST_MISSING");
+  });
+
+  it("허용: 배선 변경을 신고하고 배선 테스트를 추가했다고 밝히면 통과한다", async () => {
+    writeFileSync(join(projectDir, "application.yml"), "server:\n  port: 8080\n");
+    const sessionId = await toOrchestrating();
+    await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-1", subtaskChangedFiles: ["application.yml"] });
+    await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-2", subtaskChangedFiles: ["social.ts"] });
+    await call(handleSugoAnalyze, { sessionId, changedFiles: ["application.yml", "social.ts"] });
+
+    const r = await call(handleSugoPlan, { action: "integrate", sessionId, wiringTestAdded: true });
+    expect(r.isError).toBe(false);
+    expect(r.data.state).toBe("DOCS_PENDING");
   });
 });

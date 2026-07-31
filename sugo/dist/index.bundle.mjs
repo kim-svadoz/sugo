@@ -29416,6 +29416,29 @@ async function handleSugoPlan(rawArgs) {
     if (!manifest) return errorResult8("MANIFEST_REQUIRED", "integrate \uC804\uC5D0 decompose\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const integrationResult = validateIntegration(manifest);
     if (!integrationResult.ok) return errorResult8(integrationResult.code, integrationResult.message);
+    const mergedChangedFiles = Array.from(new Set(manifest.subtasks.flatMap((s) => s.changedFiles ?? [])));
+    const hasPrd = !!existing.data.prdPath;
+    const analyzeGate = checkAnalyzeGate(existing.data.chainInfo.analyzeAttempts, hasPrd);
+    if (!analyzeGate.ok) return errorResult8(analyzeGate.code, analyzeGate.message);
+    const baselineResult = checkBaselineGate(
+      existing.data.baselineGate?.required ?? false,
+      existing.data.baselineGate?.evidence?.exitCode ?? null
+    );
+    if (!baselineResult.ok) return errorResult8(baselineResult.code, baselineResult.message);
+    const wiringResult = checkWiringGate(mergedChangedFiles, existing.data.mode, args2.wiringTestAdded ?? false);
+    if (!wiringResult.ok) return errorResult8(wiringResult.code, wiringResult.message);
+    const bootable = await isProjectBootable(existing.projectPath);
+    const bootAnnotationFound = bootable ? await scanForSpringBootTestAnnotation(existing.projectPath) : false;
+    const bootResult = checkBootGate(bootable, bootAnnotationFound, args2.bootUnverifiedReason);
+    if (!bootResult.ok) return errorResult8(bootResult.code, bootResult.message);
+    if (bootable && !bootAnnotationFound && args2.bootUnverifiedReason?.trim()) {
+      newBypassLabels.push({
+        kind: "bootUnverified",
+        reason: args2.bootUnverifiedReason,
+        patchVersion: currentPatchVersion,
+        recordedAt: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    }
   }
   let patchContext;
   if (action === "start" && args2.workResultPath) {

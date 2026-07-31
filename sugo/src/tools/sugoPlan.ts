@@ -420,6 +420,42 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (!manifest) return errorResult("MANIFEST_REQUIRED", "integrate 전에 decompose가 필요합니다.");
     const integrationResult = validateIntegration(manifest);
     if (!integrationResult.ok) return errorResult(integrationResult.code as GateBlockCode, integrationResult.message!);
+
+    // ── 통합 게이트(v2 P5-24 결정, 2026-08-01): decompose 경로는 v2에서 integrate가
+    // DOCS_PENDING으로 합류하도록 바뀌면서 baseline/analyze/wiring/boot 게이트를 하나도
+    // 안 거치게 됐다(v1은 CODE_RUNNING 합류라 code_done이 잡아줬다).
+    //
+    // **서브태스크마다 미니 파이프라인을 강제하지는 않는다** — 쪼갠 일을 각자 알아서 하라고
+    // 나눈 건데 거기에 또 게이트를 걸면 decompose를 쓸 이유가 없어진다. 대신 **합쳐서 나가는
+    // 이 지점 한 번만** code_done과 동일한 내용 게이트를 병합된 변경파일 전체에 적용한다.
+    // "각자는 자유, 합류는 검증"이 이 경로의 계약이다.
+    const mergedChangedFiles = Array.from(new Set(manifest.subtasks.flatMap((s) => s.changedFiles ?? [])));
+    const hasPrd = !!existing.data.prdPath;
+
+    const analyzeGate = checkAnalyzeGate(existing.data.chainInfo.analyzeAttempts, hasPrd);
+    if (!analyzeGate.ok) return errorResult(analyzeGate.code as GateBlockCode, analyzeGate.message!);
+
+    const baselineResult = checkBaselineGate(
+      existing.data.baselineGate?.required ?? false,
+      existing.data.baselineGate?.evidence?.exitCode ?? null,
+    );
+    if (!baselineResult.ok) return errorResult(baselineResult.code as GateBlockCode, baselineResult.message!);
+
+    const wiringResult = checkWiringGate(mergedChangedFiles, existing.data.mode, args.wiringTestAdded ?? false);
+    if (!wiringResult.ok) return errorResult(wiringResult.code as GateBlockCode, wiringResult.message!);
+
+    const bootable = await isProjectBootable(existing.projectPath);
+    const bootAnnotationFound = bootable ? await scanForSpringBootTestAnnotation(existing.projectPath) : false;
+    const bootResult = checkBootGate(bootable, bootAnnotationFound, args.bootUnverifiedReason);
+    if (!bootResult.ok) return errorResult(bootResult.code as GateBlockCode, bootResult.message!);
+    if (bootable && !bootAnnotationFound && args.bootUnverifiedReason?.trim()) {
+      newBypassLabels.push({
+        kind: "bootUnverified",
+        reason: args.bootUnverifiedReason,
+        patchVersion: currentPatchVersion,
+        recordedAt: new Date().toISOString(),
+      });
+    }
   }
 
   // ── §7 Patch 진입점: workResultPath가 주어지면 부모 PRD/버전을 미리 계산해둔다.
