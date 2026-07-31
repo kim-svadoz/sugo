@@ -7,6 +7,7 @@
  *
  * 실행: MYSQL_PASSWORD=... SESSION_SECRET=... npx tsx dev-local.mts
  */
+import { mkdir, writeFile } from "node:fs/promises";
 import { initDb } from "./src/db/init.js";
 import { issueSession } from "./src/auth/session.js";
 import {
@@ -68,12 +69,51 @@ await syncRoadmap(db, USER, "splearn", [
 const token = await issueSession(USER, SECRET);
 const origin = process.env.FRONTEND_ORIGIN ?? "http://localhost:4173";
 
+/**
+ * 로컬 확인 전용 정적 페이지를 프론트 빌드 산출물에 떨궈둔다.
+ *
+ * **서버에 로그인 우회 라우트를 뚫지 않는 이유:** 그런 건 한 번 만들면 프로덕션까지 따라간다.
+ * 대신 이 페이지가 브라우저에서 localStorage에 세션을 심고 앱으로 보낸다 — dist/ 안에만 있고
+ * 커밋되지 않으며, 프론트를 다시 빌드하면 사라진다(그때 이 스크립트를 다시 돌리면 된다).
+ */
+const distDir = new URL("../frontend/dist/", import.meta.url);
+try {
+  await mkdir(distDir, { recursive: true });
+  await writeFile(
+    new URL("dev-login.html", distDir),
+    `<!doctype html>
+<meta charset="utf-8">
+<title>Sugo 로컬 로그인</title>
+<body style="background:#040711;color:#e2e8f0;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+<div style="text-align:center">
+  <p style="font-size:14px;color:#94a3b8">로컬 세션을 심는 중…</p>
+  <p id="s" style="font-family:monospace;font-size:12px;color:#00b4d8"></p>
+</div>
+<script>
+  localStorage.setItem("sugo_auth", JSON.stringify({
+    user: { id: ${JSON.stringify(USER)} },
+    accessToken: ${JSON.stringify(token)},
+    refreshToken: null,
+    expiresAt: Date.now() + 24 * 3600 * 1000
+  }));
+  document.getElementById("s").textContent = "OK — /sessions 로 이동합니다";
+  setTimeout(function () { location.href = "/sessions"; }, 400);
+</script>
+</body>`,
+  );
+} catch {
+  // 프론트를 아직 빌드 안 했으면 건너뛴다 — 아래 붙여넣기 스니펫으로도 들어갈 수 있다.
+}
+
 console.log(`
 ────────────────────────────────────────────────────────────────
 데모 데이터 시드 완료 (userId=${USER})
 
-1) 브라우저에서 ${origin} 열기
-2) F12 → Console 에 아래 한 줄 붙여넣고 Enter → 새로고침
+▶ 가장 쉬운 방법:  ${origin}/dev-login.html  열기 (끝)
+
+  GitHub OAuth를 안 붙였으므로 /login 의 로그인 버튼은 github_login_unconfigured가 정상이다.
+
+(수동) F12 → Console 에 아래 한 줄 붙여넣고 Enter:
 
 localStorage.setItem('sugo_auth', JSON.stringify({user:{id:${JSON.stringify(USER)}},accessToken:${JSON.stringify(token)},refreshToken:null,expiresAt:${Date.now() + 24 * 3600 * 1000}}));location.href='/sessions'
 
