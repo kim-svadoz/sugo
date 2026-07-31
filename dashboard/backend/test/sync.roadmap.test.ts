@@ -16,7 +16,7 @@ async function freshApp() {
   return { app, db, auth };
 }
 
-interface CanvasRow {
+interface RoadmapRow {
   id: string;
   level: string;
   status: string;
@@ -27,17 +27,17 @@ interface CanvasRow {
 }
 
 async function fetchNodes(db: Awaited<ReturnType<typeof createSqliteClient>>) {
-  const rows = await db.query<CanvasRow>(
-    "SELECT id, level, status, depends_on, manual_status, pos_x, pos_y FROM sugo_canvas_nodes ORDER BY id"
+  const rows = await db.query<RoadmapRow>(
+    "SELECT id, level, status, depends_on, manual_status, pos_x, pos_y FROM sugo_roadmap_nodes ORDER BY id"
   );
   return rows;
 }
 
-describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위에서)", () => {
+describe("POST /api/sync/roadmap — 설계안 적대적 코퍼스 (실제 DB 위에서)", () => {
   it("반드시 지켜야: depends_on은 최초 1회만 seed된다", async () => {
     const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas").set("Authorization", auth)
+      .post("/api/sync/roadmap").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -46,12 +46,12 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
       .expect(200);
 
     // dashboard "owns" ordering after the initial seed: reorder manually via raw SQL
-    // (simulating what the canvas mutation routes will do in a later stage)
-    await db.exec("UPDATE sugo_canvas_nodes SET depends_on = ? WHERE id = ?", [JSON.stringify(["manual-dep"]), "t1"]);
+    // (simulating what the roadmap mutation routes will do in a later stage)
+    await db.exec("UPDATE sugo_roadmap_nodes SET depends_on = ? WHERE id = ?", [JSON.stringify(["manual-dep"]), "t1"]);
 
     // plugin re-syncs with a *different* dependsOn - must NOT overwrite the manual edit
     await request(app)
-      .post("/api/sync/canvas").set("Authorization", auth)
+      .post("/api/sync/roadmap").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -69,7 +69,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
   it("반드시 막아야: sync가 manual_status/pos_x/pos_y를 덮으면 안 된다", async () => {
     const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas").set("Authorization", auth)
+      .post("/api/sync/roadmap").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -79,12 +79,12 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
 
     // dashboard marks it manually done and repositions it
     await db.exec(
-      "UPDATE sugo_canvas_nodes SET manual_status='done', manual_by='dashboard-user', pos_x=100, pos_y=200 WHERE id='t1'"
+      "UPDATE sugo_roadmap_nodes SET manual_status='done', manual_by='dashboard-user', pos_x=100, pos_y=200 WHERE id='t1'"
     );
 
     // plugin re-syncs (still says pending) - manual override must survive
     await request(app)
-      .post("/api/sync/canvas").set("Authorization", auth)
+      .post("/api/sync/roadmap").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -102,7 +102,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
   it("반드시 막아야: replace가 수동 생성 workstream 그룹까지 지우면 안 된다", async () => {
     const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas").set("Authorization", auth)
+      .post("/api/sync/roadmap").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -112,12 +112,12 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
 
     // dashboard manually creates a workstream grouping (not from the plugin)
     await db.exec(
-      "INSERT INTO sugo_canvas_nodes (id, user_id, workspace_name, title, level, status) VALUES ('ws-manual','u1','ws1','Manual Group','workstream','pending')"
+      "INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, status) VALUES ('ws-manual','u1','ws1','Manual Group','workstream','pending')"
     );
 
     // plugin re-syncs without mentioning the manual workstream at all
     await request(app)
-      .post("/api/sync/canvas").set("Authorization", auth)
+      .post("/api/sync/roadmap").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -133,7 +133,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
   it("반드시 지켜야: payload에서 빠진 non-workstream 노드는 삭제되고, 참조하던 depends_on도 청소된다", async () => {
     const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas").set("Authorization", auth)
+      .post("/api/sync/roadmap").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -146,7 +146,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
 
     // t1 disappears from the next sync (e.g. dropped/renamed by the plugin)
     await request(app)
-      .post("/api/sync/canvas").set("Authorization", auth)
+      .post("/api/sync/roadmap").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -163,7 +163,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
   it("반드시 지켜야: 신규 노드는 depends_on을 그대로 seed한다", async () => {
     const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas").set("Authorization", auth)
+      .post("/api/sync/roadmap").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -182,7 +182,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
   it("work_result/lineage는 best-effort로 실려서 저장된다", async () => {
     const { app, db, auth } = await freshApp();
     await request(app)
-      .post("/api/sync/canvas").set("Authorization", auth)
+      .post("/api/sync/roadmap").set("Authorization", auth)
       .send({
         userId: "u1",
         workspaceName: "ws1",
@@ -199,7 +199,7 @@ describe("POST /api/sync/canvas — 설계안 적대적 코퍼스 (실제 DB 위
       })
       .expect(200);
     const rows = await db.query<{ work_result: string; lineage: string }>(
-      "SELECT work_result, lineage FROM sugo_canvas_nodes WHERE id='t1'"
+      "SELECT work_result, lineage FROM sugo_roadmap_nodes WHERE id='t1'"
     );
     expect(JSON.parse(rows[0].work_result).summary).toBe("did it");
     expect(JSON.parse(rows[0].lineage)).toEqual([{ version: 0, completedAt: "2026-01-01" }]);

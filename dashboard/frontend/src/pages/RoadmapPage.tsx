@@ -14,7 +14,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import dagre from "dagre";
-import { useCanvas, type CanvasNode } from "../hooks/useCanvas.js";
+import { useRoadmap, type RoadmapNode } from "../hooks/useRoadmap.js";
 import { SubtaskPanel } from "../components/SubtaskPanel.js";
 
 // §5 RoadmapGraph — @xyflow/react + dagre(LR), 읽기전용 뷰어. 노드는 living-state 색,
@@ -22,10 +22,10 @@ import { SubtaskPanel } from "../components/SubtaskPanel.js";
 const NODE_W = 214;
 const NODE_H = 76;
 
-type TaskNodeData = { node: CanvasNode; selected: boolean };
+type TaskNodeData = { node: RoadmapNode; selected: boolean };
 type FlowNode = Node<TaskNodeData, "task">;
 
-function effStatus(n: CanvasNode): string {
+function effStatus(n: RoadmapNode): string {
   return (n.manual_status ?? n.status ?? "pending").toLowerCase();
 }
 function statusColor(status: string): string {
@@ -70,7 +70,7 @@ function TaskNodeCard({ data }: NodeProps<FlowNode>) {
 
 const nodeTypes = { task: TaskNodeCard };
 
-function layout(nodes: CanvasNode[], selectedId: string | null): { rfNodes: FlowNode[]; rfEdges: Edge[] } {
+function layout(nodes: RoadmapNode[], selectedId: string | null): { rfNodes: FlowNode[]; rfEdges: Edge[] } {
   const g = new dagre.graphlib.Graph();
   g.setGraph({ rankdir: "LR", nodesep: 26, ranksep: 76, marginx: 20, marginy: 20 });
   g.setDefaultEdgeLabel(() => ({}));
@@ -104,9 +104,9 @@ function layout(nodes: CanvasNode[], selectedId: string | null): { rfNodes: Flow
   return { rfNodes, rfEdges };
 }
 
-export function CanvasGraph() {
+export function RoadmapPage() {
   const { workspace = "" } = useParams();
-  const { data, loading, error, refetch } = useCanvas(workspace);
+  const { data, loading, error, refetch } = useRoadmap(workspace);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { rfNodes, rfEdges } = useMemo(() => layout(data ?? [], selectedId), [data, selectedId]);

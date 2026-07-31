@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import type { DbClient } from "./client.js";
 import { createMySqlClient } from "./mysqlClient.js";
 import { createSqliteClient } from "./sqliteClient.js";
+import { migrateCanvasToRoadmap } from "./migrations.js";
 import { config } from "../config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -11,11 +12,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export async function initDb(): Promise<DbClient> {
   if (config.dbDriver === "sqlite") {
     const client = createSqliteClient(config.sqliteFile);
+    // 리네임은 CREATE TABLE IF NOT EXISTS보다 **먼저** — 새 이름 테이블이 먼저 생기면
+    // 구 테이블 데이터가 고아가 된다(migrations.ts 주석 참고).
+    await migrateCanvasToRoadmap(client);
     const schemaPath = join(__dirname, "..", "..", "test", "schema.sqlite.sql");
     await client.execScript(readFileSync(schemaPath, "utf8"));
     return client;
   }
   const client = createMySqlClient(config.mysql);
+  await migrateCanvasToRoadmap(client);
   const schemaPath = join(__dirname, "schema.mysql.sql");
   await client.execScript(readFileSync(schemaPath, "utf8"));
   return client;

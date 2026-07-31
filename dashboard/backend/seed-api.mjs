@@ -38,7 +38,7 @@ async function main() {
     await post("/api/sync/task", { userId: USER, workspaceName: "temp-workspace", id, title, project: "C:/Users/user/splearn", status }, token);
   }
 
-  await post("/api/sync/canvas", { userId: USER, workspaceName: "temp-workspace", nodes: [
+  await post("/api/sync/roadmap", { userId: USER, workspaceName: "temp-workspace", nodes: [
     { id: "spec1", title: "이메일 로그인 스펙", level: "spec", status: "done", dependsOn: [], specPath: "sugo/features/login/prd.md" },
     { id: "ws1", title: "로그인 워크스트림", level: "workstream", status: "in_progress", dependsOn: [] },
     { id: "t1", title: "EmailLoginService 구현", level: "task", status: "done", dependsOn: ["spec1"], parent: "ws1", ref: "work-result.md", workResult: wr(), lineage: [{ version: 0, completedAt: "2026-07-20T11:30:00.000Z", commitType: "feat", title: "이메일 로그인", summary: "최초 구현", changedFiles: ["EmailLoginService.java", "LoginController.java"], runtimeVerified: true, wiringVerified: true }] },
@@ -51,9 +51,9 @@ async function main() {
     { id: "t5", title: "레거시 인증 정리", level: "task", status: "dropped", dependsOn: [], note: "범위 밖으로 판단해 드롭" },
   ] }, token);
 
-  await post("/api/workspaces/temp-workspace/canvas/manual-status", { nodeId: "t3", status: "done" }, token);
+  await post("/api/workspaces/temp-workspace/roadmap/manual-status", { nodeId: "t3", status: "done" }, token);
 
-  await post("/api/sync/canvas", { userId: USER, workspaceName: "payments-api", nodes: [
+  await post("/api/sync/roadmap", { userId: USER, workspaceName: "payments-api", nodes: [
     { id: "p1", title: "결제 요청 API", level: "task", status: "done", dependsOn: [] },
     { id: "p2", title: "웹훅 검증", level: "task", status: "done", dependsOn: ["p1"] },
     { id: "p3", title: "정산 배치", level: "task", status: "done", dependsOn: ["p2"] },

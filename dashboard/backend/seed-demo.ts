@@ -14,7 +14,7 @@ import {
   syncDecision,
   syncCheckpoint,
   syncWorkspaceMeta,
-  syncCanvas,
+  syncRoadmap,
 } from "./src/services/syncService.js";
 
 const USER = "github:58545240";
@@ -62,8 +62,8 @@ async function main() {
     await syncTask(db, { userId: USER, workspaceName: "temp-workspace", id, title, project: "C:/Users/user/splearn", status });
   }
 
-  // ── Canvas (DAG: spec → workstream → tasks, work_result/lineage/prRefs) ──
-  await syncCanvas(db, USER, "temp-workspace", [
+  // ── Roadmap (DAG: spec → workstream → tasks, work_result/lineage/prRefs) ──
+  await syncRoadmap(db, USER, "temp-workspace", [
     { id: "spec1", title: "이메일 로그인 스펙", level: "spec", status: "done", dependsOn: [], parent: null, specPath: "sugo/features/login/prd.md" },
     { id: "ws1", title: "로그인 워크스트림", level: "workstream", status: "in_progress", dependsOn: [], parent: null },
     { id: "t1", title: "EmailLoginService 구현", level: "task", status: "done", dependsOn: ["spec1"], parent: "ws1", ref: "work-result.md", workResult: workResult(), lineage: lineage([{ version: 0, completedAt: "2026-07-20T11:30:00.000Z", commitType: "feat", title: "이메일 로그인", summary: "최초 구현", changedFiles: ["EmailLoginService.java", "LoginController.java"], runtimeVerified: true, wiringVerified: true }]) },
@@ -79,10 +79,10 @@ async function main() {
   ]);
 
   // 대시보드 소유 필드(수동 상태/위치)는 sync가 안 건드리므로 직접 세팅해 데모.
-  await db.exec("UPDATE sugo_canvas_nodes SET manual_status = 'done', manual_by = 'dashboard' WHERE user_id = ? AND workspace_name = ? AND id = 't3'", [USER, "temp-workspace"]);
+  await db.exec("UPDATE sugo_roadmap_nodes SET manual_status = 'done', manual_by = 'dashboard' WHERE user_id = ? AND workspace_name = ? AND id = 't3'", [USER, "temp-workspace"]);
 
   // payments-api: 완료 워크스페이스
-  await syncCanvas(db, USER, "payments-api", [
+  await syncRoadmap(db, USER, "payments-api", [
     { id: "p1", title: "결제 요청 API", level: "task", status: "done", dependsOn: [] },
     { id: "p2", title: "웹훅 검증", level: "task", status: "done", dependsOn: ["p1"] },
     { id: "p3", title: "정산 배치", level: "task", status: "done", dependsOn: ["p2"] },

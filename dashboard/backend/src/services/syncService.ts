@@ -1,6 +1,6 @@
 import type { DbClient } from "../db/client.js";
 import { upsertRow } from "../db/upsert.js";
-import { cleanDanglingDeps, computeNodesToDelete, shouldSeedDependsOn } from "./canvasDiff.js";
+import { cleanDanglingDeps, computeNodesToDelete, shouldSeedDependsOn } from "./roadmapDiff.js";
 import { parseJsonArray } from "../db/jsonColumn.js";
 import { toDbDateTime } from "../db/datetime.js";
 
@@ -277,7 +277,7 @@ export async function getPluginVersion(db: DbClient, userId: string): Promise<st
   return rows[0]?.plugin_version ?? null;
 }
 
-export interface CanvasNodeInput {
+export interface RoadmapNodeInput {
   id: string;
   title: string;
   level: string;
@@ -291,7 +291,7 @@ export interface CanvasNodeInput {
   lineage?: unknown;
 }
 
-interface CanvasRow {
+interface RoadmapRow {
   id: string;
   level: string;
   // driver-dependent: mysql2 auto-parses JSON columns to arrays, node:sqlite
@@ -299,18 +299,18 @@ interface CanvasRow {
   depends_on: unknown;
 }
 
-// §3.1/§7 canvas sync: 스냅샷 replace 시맨틱 + 소유권 경계(depends_on 최초1회 seed,
+// §3.1/§7 roadmap sync: 스냅샷 replace 시맨틱 + 소유권 경계(depends_on 최초1회 seed,
 // manual_status/manual_by/manual_at/pos_x/pos_y는 upsert SET에서 물리적으로 제외).
-export async function syncCanvas(
+export async function syncRoadmap(
   db: DbClient,
   userId: string,
   workspaceName: string,
-  nodes: CanvasNodeInput[]
+  nodes: RoadmapNodeInput[]
 ): Promise<void> {
   await ensureUser(db, userId);
 
-  const existingRows = await db.query<CanvasRow>(
-    "SELECT id, level, depends_on FROM sugo_canvas_nodes WHERE user_id = ? AND workspace_name = ?",
+  const existingRows = await db.query<RoadmapRow>(
+    "SELECT id, level, depends_on FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
     [userId, workspaceName]
   );
   const existingById = new Map(existingRows.map((r) => [r.id, r]));
@@ -321,7 +321,7 @@ export async function syncCanvas(
     incomingIds
   );
   for (const id of toDelete) {
-    await db.exec("DELETE FROM sugo_canvas_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+    await db.exec("DELETE FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?", [
       userId,
       workspaceName,
       id,
@@ -340,7 +340,7 @@ export async function syncCanvas(
 
     if (!existing) {
       await db.exec(
-        `INSERT INTO sugo_canvas_nodes
+        `INSERT INTO sugo_roadmap_nodes
          (id, user_id, workspace_name, title, level, status, depends_on, parent, ref, note, spec_path, work_result, lineage, synced_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         [
@@ -378,7 +378,7 @@ export async function syncCanvas(
     }
     params.push(userId, workspaceName, node.id);
     await db.exec(
-      `UPDATE sugo_canvas_nodes SET ${sets.join(", ")} WHERE user_id = ? AND workspace_name = ? AND id = ?`,
+      `UPDATE sugo_roadmap_nodes SET ${sets.join(", ")} WHERE user_id = ? AND workspace_name = ? AND id = ?`,
       params
     );
   }
@@ -389,8 +389,8 @@ export async function syncCanvas(
   // its stored depends_on can still point at an id we just deleted; this is
   // invalid data regardless of ownership, so cleanup runs unconditionally.
   if (deletedIds.size > 0) {
-    const remaining = await db.query<CanvasRow>(
-      "SELECT id, level, depends_on FROM sugo_canvas_nodes WHERE user_id = ? AND workspace_name = ?",
+    const remaining = await db.query<RoadmapRow>(
+      "SELECT id, level, depends_on FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
       [userId, workspaceName]
     );
     for (const row of remaining) {
@@ -398,7 +398,7 @@ export async function syncCanvas(
       const cleaned = cleanDanglingDeps(deps, deletedIds);
       if (cleaned.length !== deps.length) {
         await db.exec(
-          "UPDATE sugo_canvas_nodes SET depends_on = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
+          "UPDATE sugo_roadmap_nodes SET depends_on = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
           [JSON.stringify(cleaned), userId, workspaceName, row.id]
         );
       }

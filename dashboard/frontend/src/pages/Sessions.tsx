@@ -7,9 +7,9 @@ type StatusKind = "IN PROGRESS" | "COMPLETED" | "IDLE";
 type Filter = "ALL" | StatusKind;
 
 function statusOf(ws: WorkspaceSummary): StatusKind {
-  const progress = ws.canvas.total > 0 ? (ws.canvas.done / ws.canvas.total) * 100 : 0;
+  const progress = ws.roadmap.total > 0 ? (ws.roadmap.done / ws.roadmap.total) * 100 : 0;
   if (ws.taskCounts.in_progress > 0) return "IN PROGRESS";
-  if (ws.canvas.total > 0 && progress === 100) return "COMPLETED";
+  if (ws.roadmap.total > 0 && progress === 100) return "COMPLETED";
   return "IDLE";
 }
 
@@ -38,7 +38,7 @@ function DomainCard({ ws }: { ws: WorkspaceSummary }) {
   const status = statusOf(ws);
   const s = STATUS_STYLE[status];
   return (
-    <Link to={`/canvas/${encodeURIComponent(ws.name)}`} className="ck-glass ck-card ck-line-in block hover:ck-glow-cyan">
+    <Link to={`/roadmap/${encodeURIComponent(ws.name)}`} className="ck-glass ck-card ck-line-in block hover:ck-glow-cyan">
       <div className="mb-1 flex items-center justify-between">
         <span className="font-mono text-sm font-semibold">{ws.name}</span>
         <span className="ck-pill" style={{ color: s.color, background: s.bg, borderColor: s.color + "55" }}>
@@ -46,7 +46,7 @@ function DomainCard({ ws }: { ws: WorkspaceSummary }) {
           {status}
         </span>
       </div>
-      <ProgressBar done={ws.canvas.done} total={ws.canvas.total} />
+      <ProgressBar done={ws.roadmap.done} total={ws.roadmap.total} />
       <div className="mt-3 flex flex-wrap gap-1.5 text-[0.66rem] font-mono">
         <span className="ck-pill" style={{ color: "#fbbf24" }}>진행 {ws.taskCounts.in_progress}</span>
         <span className="ck-pill" style={{ color: "#34d399" }}>완료 {ws.taskCounts.done}</span>
@@ -171,14 +171,14 @@ export function Sessions() {
           {filtered.map((ws) => {
             const status = statusOf(ws);
             const s = STATUS_STYLE[status];
-            const pct = ws.canvas.total > 0 ? Math.round((ws.canvas.done / ws.canvas.total) * 100) : 0;
+            const pct = ws.roadmap.total > 0 ? Math.round((ws.roadmap.done / ws.roadmap.total) * 100) : 0;
             return (
-              <Link key={ws.name} to={`/canvas/${encodeURIComponent(ws.name)}`} className="ck-glass ck-card ck-line-in flex items-center gap-4 py-2.5 hover:ck-glow-cyan">
+              <Link key={ws.name} to={`/roadmap/${encodeURIComponent(ws.name)}`} className="ck-glass ck-card ck-line-in flex items-center gap-4 py-2.5 hover:ck-glow-cyan">
                 <span className="ck-pill shrink-0" style={{ color: s.color, background: s.bg, borderColor: s.color + "55" }}>{status}</span>
                 <span className="font-mono text-sm">{ws.name}</span>
                 <div className="ml-auto flex items-center gap-3 text-[0.7rem] font-mono text-slate-400">
                   <span>{ws.projects.length} proj</span>
-                  <span>{ws.canvas.done}/{ws.canvas.total} · {pct}%</span>
+                  <span>{ws.roadmap.done}/{ws.roadmap.total} · {pct}%</span>
                   <div className="h-1.5 w-28 overflow-hidden rounded-full bg-white/5">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--color-primary), var(--color-secondary))" }} />
                   </div>

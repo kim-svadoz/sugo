@@ -37,7 +37,7 @@ export interface LineageEntry {
   seed?: string;
 }
 
-export interface CanvasNode {
+export interface RoadmapNode {
   id: string;
   title: string;
   level: string;
@@ -57,13 +57,13 @@ export interface CanvasNode {
   pos_y: number | null;
 }
 
-// §4: "캔버스 Agent-Canvas 오버레이는 getCanvas을 4초 독립 폴링" - independent
+// §4: "캔버스 Agent-Roadmap 오버레이는 getRoadmap을 4초 독립 폴링" - independent
 // from LiveConsole's own 4s poll (useActivityStream). Also exposes `refetch`
 // so mutations (manual-status, etc.) can refresh immediately instead of
 // waiting for the next 4s tick.
-export function useCanvas(workspaceName: string) {
+export function useRoadmap(workspaceName: string) {
   const { userId } = useAuth();
-  const [data, setData] = useState<CanvasNode[] | null>(null);
+  const [data, setData] = useState<RoadmapNode[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
@@ -77,8 +77,8 @@ export function useCanvas(workspaceName: string) {
     async function fetchOnce(isFirst: boolean) {
       if (isFirst) setLoading(true);
       try {
-        const res = await apiJson<{ nodes: CanvasNode[] }>(
-          withUserId(`/api/workspaces/${encodeURIComponent(workspaceName)}/canvas`, userId!)
+        const res = await apiJson<{ nodes: RoadmapNode[] }>(
+          withUserId(`/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap`, userId!)
         );
         if (!cancelled) {
           setData(res.nodes);

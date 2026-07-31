@@ -7,7 +7,7 @@ import {
   entityDeleteSchema,
   historySchema,
   pluginVersionSchema,
-  canvasSyncSchema,
+  roadmapSyncSchema,
   taskSchema,
   workspaceDeleteSchema,
   workspaceMetaSchema,
@@ -17,6 +17,7 @@ import {
 import { z } from "zod";
 import { validateBody } from "../schemas/validate.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
+import { syncSchemaVersion } from "../middleware/syncSchemaVersion.js";
 import { requireUser } from "../auth/requireUser.js";
 import {
   deleteCheckpoint,
@@ -29,15 +30,15 @@ import {
   syncDecision,
   syncHistory,
   syncPluginVersion,
-  syncCanvas,
+  syncRoadmap,
   syncTask,
   syncUser,
   syncWorkspace,
   syncWorkspaceMeta,
 } from "../services/syncService.js";
-import { linkCanvasNodes, unlinkCanvasNodes } from "../services/workspaceService.js";
+import { linkRoadmapNodes, unlinkRoadmapNodes } from "../services/workspaceService.js";
 
-const canvasLinkSchema = z.object({
+const roadmapLinkSchema = z.object({
   userId: z.string().min(1),
   workspaceName: z.string().min(1),
   fromId: z.string().min(1),
@@ -48,7 +49,10 @@ const canvasLinkSchema = z.object({
 // 인증 미들웨어가 세운 req.userId로 덮어써서(bindUserId) 모든 핸들러가 토큰 신원만 쓰게 한다.
 export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();
+  // §3.1 계약 버전 소비는 인증보다 앞이든 뒤든 상관없지만, 인증 뒤에 둬서 미인증 요청까지
+  // 버전 경고를 찍지 않게 한다(로그 오염 방지).
   router.use(requireUser(db, sessionSecret));
+  router.use(syncSchemaVersion());
   // 단일 엔티티 핸들러 일괄 강제: 요청 본문의 userId를 토큰 신원으로 덮어쓴다.
   router.use((req, _res, next) => {
     if (req.body && typeof req.body === "object") (req.body as { userId?: string }).userId = req.userId;
@@ -127,21 +131,21 @@ export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
     res.json({ ok: true });
   }));
 
-  router.post("/canvas", validateBody(canvasSyncSchema), asyncHandler(async (req, res) => {
-    await syncCanvas(db, req.body.userId, req.body.workspaceName, req.body.nodes);
+  router.post("/roadmap", validateBody(roadmapSyncSchema), asyncHandler(async (req, res) => {
+    await syncRoadmap(db, req.body.userId, req.body.workspaceName, req.body.nodes);
     res.json({ ok: true });
   }));
 
-  // §7.2 "POST /api/sync/canvas/link + DELETE (링크 편집 전파)": 플러그인이 로컬에서 편집한
+  // §7.2 "POST /api/sync/roadmap/link + DELETE (링크 편집 전파)": 플러그인이 로컬에서 편집한
   // 링크를 push한다. 스냅샷 replace와 별개 신호 — dependsOn 편집 의도를 그대로 적용한다
   // (fail-closed task↔task + 사이클 가드는 workspaceService가 이미 담당). 논블로킹이라 결과 상관없이 200.
-  router.post("/canvas/link", validateBody(canvasLinkSchema), asyncHandler(async (req, res) => {
-    await linkCanvasNodes(db, req.body.userId, req.body.workspaceName, req.body.fromId, req.body.toId);
+  router.post("/roadmap/link", validateBody(roadmapLinkSchema), asyncHandler(async (req, res) => {
+    await linkRoadmapNodes(db, req.body.userId, req.body.workspaceName, req.body.fromId, req.body.toId);
     res.json({ ok: true });
   }));
 
-  router.delete("/canvas/link", validateBody(canvasLinkSchema), asyncHandler(async (req, res) => {
-    await unlinkCanvasNodes(db, req.body.userId, req.body.workspaceName, req.body.fromId, req.body.toId);
+  router.delete("/roadmap/link", validateBody(roadmapLinkSchema), asyncHandler(async (req, res) => {
+    await unlinkRoadmapNodes(db, req.body.userId, req.body.workspaceName, req.body.fromId, req.body.toId);
     res.json({ ok: true });
   }));
 
@@ -155,7 +159,7 @@ export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
     for (const d of body.decisions ?? []) await syncDecision(db, { ...d, userId: uid });
     for (const c of body.checkpoints ?? []) await syncCheckpoint(db, { ...c, userId: uid });
     for (const m of body.workspaceMeta ?? []) await syncWorkspaceMeta(db, { ...m, userId: uid });
-    for (const r of body.canvas ?? []) await syncCanvas(db, uid, r.workspaceName, r.nodes);
+    for (const r of body.roadmap ?? []) await syncRoadmap(db, uid, r.workspaceName, r.nodes);
     res.json({ ok: true });
   }));
 

@@ -1,7 +1,36 @@
 import { resolveDashboardConfig } from "./config.js";
 import { enqueueRetry, processRetryQueue, type RetryItem } from "./retryQueue.js";
+import { DASHBOARD_SYNC_SCHEMA_VERSION, SYNC_SCHEMA_VERSION_HEADER } from "./schemaVersion.js";
 
 const DEFAULT_TIMEOUT_MS = 5000;
+
+/**
+ * §8.2 schemaVersion 주입 — **여기 한 곳**에서만 붙인다. 래퍼마다 손으로 달면 새 엔드포인트를
+ * 추가할 때 빠뜨리고, 빠뜨려도 아무도 안 죽어서(fail-open) 조용히 계약이 갈라진다. 아웃바운드가
+ * 전부 pushEvent를 거치므로(`no-fetch-bypass` 불변식) 여기가 유일한 관문이다.
+ *
+ * 호출부가 명시한 값은 존중한다(마이그레이션 중 특정 이벤트만 다른 계약으로 보내야 할 때).
+ */
+function withSchemaVersion(data: unknown): unknown {
+  if (data === null || typeof data !== "object" || Array.isArray(data)) return data;
+  const obj = data as Record<string, unknown>;
+  if (obj.schemaVersion !== undefined) return obj;
+  return { ...obj, schemaVersion: DASHBOARD_SYNC_SCHEMA_VERSION };
+}
+
+/** 역방향 degrade: 서버가 우리보다 새 계약이면 1회만 경고한다(매 이벤트마다 짖으면 로그가 죽는다). */
+let warnedNewerServer = false;
+function noteServerSchemaVersion(res: Response): void {
+  const raw = res.headers.get(SYNC_SCHEMA_VERSION_HEADER);
+  if (!raw) return;
+  const server = Number(raw);
+  if (!Number.isInteger(server) || server <= DASHBOARD_SYNC_SCHEMA_VERSION || warnedNewerServer) return;
+  warnedNewerServer = true;
+  console.warn(
+    `[sugo] 대시보드 sync 계약이 더 최신입니다(server=${server}, plugin=${DASHBOARD_SYNC_SCHEMA_VERSION}). ` +
+      "플러그인 업데이트를 권장합니다 — 동기화는 계속 진행합니다.",
+  );
+}
 
 async function sendOnce(apiUrl: string, endpoint: string, method: "POST" | "DELETE", data: unknown, timeoutMs: number, apiToken?: string): Promise<boolean> {
   const controller = new AbortController();
@@ -13,9 +42,10 @@ async function sendOnce(apiUrl: string, endpoint: string, method: "POST" | "DELE
     const res = await fetch(`${apiUrl}${endpoint}`, {
       method,
       headers,
-      body: JSON.stringify(data),
+      body: JSON.stringify(withSchemaVersion(data)),
       signal: controller.signal,
     });
+    noteServerSchemaVersion(res);
     return res.ok;
   } catch {
     return false;
@@ -33,8 +63,11 @@ async function sendOnce(apiUrl: string, endpoint: string, method: "POST" | "DELE
 export async function pushEvent(endpoint: string, method: "POST" | "DELETE", data: unknown, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled || !config.apiUrl) return;
-  const ok = await sendOnce(config.apiUrl, endpoint, method, data, timeoutMs, config.apiToken);
-  if (!ok) await enqueueRetry(endpoint, method, data);
+  // 버전을 먼저 붙여두고 그 값을 전송·큐잉 양쪽에 쓴다 — WAL에 "실제로 전선에 나갈 것"과
+  // 똑같은 바이트가 남아야 재전송이 원본과 같은 계약으로 나간다.
+  const payload = withSchemaVersion(data);
+  const ok = await sendOnce(config.apiUrl, endpoint, method, payload, timeoutMs, config.apiToken);
+  if (!ok) await enqueueRetry(endpoint, method, payload);
 }
 
 /** 재시도 큐를 한 바퀴 돌며 재전송을 시도한다. disabled면(설정이 그 사이 꺼졌으면) 아무 것도 안 보내고 그대로 큐에 둔다. */

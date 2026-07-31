@@ -11,9 +11,10 @@ import type { PrRefs } from "../prRefs.js";
  * camelCase를 기대). 두 반쪽을 실제로 붙여본 적이 없어 숨어 있었다. 대시보드가 수신 계약의
  * 주인(§2 "DB가 진실")이므로 플러그인 쪽을 대시보드 wire 포맷에 맞춘다.
  *
- * URL도 여기서 canvas로 통일한다(대시보드가 roadmap→canvas로 리네임됨). 플러그인 내부 HULK
- * 네이밍(sugo_roadmap/RoadmapNode)은 스펙 §1/§8.5와 일치하므로 그대로 두고, **대시보드에 나가는
- * 경계에서만** canvas로 번역한다.
+ * **URL 번역은 없다(v2/D1):** 2026-07-24에 대시보드만 roadmap→canvas로 리네임하는 바람에 이
+ * 어댑터가 경계에서 URL을 canvas로 번역했었는데, v2 스펙이 양쪽 모두 `roadmap`으로 못박아
+ * 되돌렸다(화면에 보이는 라벨만 "Agent Canvas"). 이제 이 파일은 **형태 변환(snake_case 중첩 →
+ * 평평한 camelCase)만** 담당하고 경로는 양쪽이 그대로 일치한다.
  */
 
 /** 대시보드 task status enum(pending|in_progress|done|archived)에 없는 플러그인 값(idea/dropped)을 매핑. */
@@ -135,7 +136,7 @@ export function serializeDecision(userId: string, workspaceName: string, spec: S
   };
 }
 
-export interface CanvasNodeWire {
+export interface RoadmapNodeWire {
   id: string;
   title: string;
   level: string;
@@ -149,9 +150,9 @@ export interface CanvasNodeWire {
   lineage?: unknown;
 }
 
-/** RoadmapNode → 대시보드 canvas 노드 wire. 필드명이 이미 camelCase로 정렬돼 있어(dependsOn/specPath/
+/** RoadmapNode → 대시보드 roadmap 노드 wire. 필드명이 이미 camelCase로 정렬돼 있어(dependsOn/specPath/
  * workResult) 대부분 통과하지만, 플러그인 전용 `result` 필드는 대시보드가 모르므로 떨군다. */
-export function serializeCanvasNode(node: RoadmapNode): CanvasNodeWire {
+export function serializeRoadmapNode(node: RoadmapNode): RoadmapNodeWire {
   return {
     id: node.id,
     title: node.title,
@@ -166,14 +167,14 @@ export function serializeCanvasNode(node: RoadmapNode): CanvasNodeWire {
   };
 }
 
-export interface CanvasSnapshotWire {
+export interface RoadmapSnapshotWire {
   userId: string;
   workspaceName: string;
-  nodes: CanvasNodeWire[];
+  nodes: RoadmapNodeWire[];
 }
 
-export function serializeCanvasSnapshot(userId: string, workspaceName: string, nodes: RoadmapNode[]): CanvasSnapshotWire {
-  return { userId, workspaceName, nodes: nodes.map(serializeCanvasNode) };
+export function serializeRoadmapSnapshot(userId: string, workspaceName: string, nodes: RoadmapNode[]): RoadmapSnapshotWire {
+  return { userId, workspaceName, nodes: nodes.map(serializeRoadmapNode) };
 }
 
 export interface WorkspaceWire {
@@ -185,7 +186,7 @@ export interface WorkspaceWire {
   updatedAt: string;
 }
 
-/** prRefs는 §7.2에서 canvas 노드의 workResult.prRefs로 흐르는 게 정본 경로다. 대시보드 history
+/** prRefs는 §7.2에서 roadmap 노드의 workResult.prRefs로 흐르는 게 정본 경로다. 대시보드 history
  * 스키마엔 prRefs 필드가 없어(zod가 떨군다) history로 실어보내도 소비되지 않는다 — 이 어댑터는
  * history wire에서 prRefs를 의도적으로 제외한다(죽은 필드 안 보냄). */
 export type { PrRefs };

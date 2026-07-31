@@ -1,6 +1,6 @@
 // 헤드리스 Chromium(Playwright)로 실제 브라우저 렌더링 + 실제 OIDC authorization_code 플로우를
 // 끝까지 완주 검증한다: 프론트(:4173) → 로그인 게이트 → 실제 OIDC(:9100) 로그인/동의 → /auth/callback
-// → 실 토큰 교환(/api/auth/token) → /sessions 실데이터 렌더 → /canvas 노드/한글 렌더.
+// → 실 토큰 교환(/api/auth/token) → /sessions 실데이터 렌더 → /roadmap 노드/한글 렌더.
 import { chromium } from "playwright";
 
 const FRONTEND = "http://localhost:4173";
@@ -45,20 +45,20 @@ try {
   }
 
   // 5) 콜백 → 토큰 교환 → 앱 내부로. /sessions로 착지할 때까지 대기
-  await page.waitForURL(/localhost:4173\/(sessions|canvas)/, { timeout: 15000 }).catch(() => {});
+  await page.waitForURL(/localhost:4173\/(sessions|roadmap)/, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(1500);
-  check("실 토큰 교환 후 앱 내부(/sessions)로 진입", /localhost:4173\/(sessions|canvas)/.test(page.url()), page.url());
+  check("실 토큰 교환 후 앱 내부(/sessions)로 진입", /localhost:4173\/(sessions|roadmap)/.test(page.url()), page.url());
 
   // 6) Sessions에 실데이터(워크스페이스 카드) 렌더
   const bodyText = await page.textContent("body");
   check("워크스페이스 카드(demo-domain) 렌더", bodyText.includes("demo-domain"), bodyText?.slice(0, 200));
   check("Canvas Progress 표시", /Canvas Progress/i.test(bodyText), null);
 
-  // 7) 워크스페이스 클릭 → Canvas 페이지 + 한글 노드 렌더
+  // 7) 워크스페이스 클릭 → Roadmap 페이지 + 한글 노드 렌더
   await page.getByText("demo-domain").first().click().catch(() => {});
   await page.waitForTimeout(1500);
-  const canvasText = await page.textContent("body");
-  check("Canvas 페이지에 한글 노드 렌더(로그인 기능 구현)", canvasText.includes("로그인 기능 구현"), page.url());
+  const roadmapText = await page.textContent("body");
+  check("Roadmap 페이지에 한글 노드 렌더(로그인 기능 구현)", roadmapText.includes("로그인 기능 구현"), page.url());
 
   // 8) localStorage에 실제 토큰이 저장됐는지(auth 상태)
   const auth = await page.evaluate(() => localStorage.getItem("sugo_auth"));

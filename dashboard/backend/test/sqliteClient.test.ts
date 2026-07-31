@@ -26,7 +26,7 @@ describe("sqliteClient — dev/test stand-in DbClient", () => {
         "sugo_decisions",
         "sugo_checkpoints",
         "sugo_workspace_meta",
-        "sugo_canvas_nodes",
+        "sugo_roadmap_nodes",
         "sugo_activity_events",
         "user_bitbucket_tokens",
       ])
@@ -73,14 +73,14 @@ describe("sqliteClient — dev/test stand-in DbClient", () => {
     await db.close();
   });
 
-  it("CHECK constraint rejects an invalid canvas level", async () => {
+  it("CHECK constraint rejects an invalid roadmap level", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);
     await db.exec("INSERT INTO sugo_users (id) VALUES (?)", ["u1"]);
 
     await expect(
       db.exec(
-        "INSERT INTO sugo_canvas_nodes (id, user_id, workspace_name, title, level) VALUES (?,?,?,?,?)",
+        "INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level) VALUES (?,?,?,?,?)",
         ["n1", "u1", "ws1", "T", "not-a-level"]
       )
     ).rejects.toThrow();

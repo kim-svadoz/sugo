@@ -5,14 +5,14 @@ import { Layout } from "./components/Layout.js";
 import { Login } from "./pages/Login.js";
 import { AuthCallback } from "./pages/AuthCallback.js";
 import { Sessions } from "./pages/Sessions.js";
-import { CanvasGraph } from "./pages/CanvasGraph.js";
+import { RoadmapPage } from "./pages/RoadmapPage.js";
 import { Skills } from "./pages/Skills.js";
 import { Harness } from "./pages/Harness.js";
 import { Playbook } from "./pages/Playbook.js";
 import { Settings } from "./pages/Settings.js";
 
 // §5: BrowserRouter -> AuthProvider. 공개: /login, /auth/callback.
-// 게이트(ProtectedRoute -> Layout): /(-> /sessions), sessions, canvas/:workspace,
+// 게이트(ProtectedRoute -> Layout): /(-> /sessions), sessions, roadmap/:workspace,
 // skills, harness, playbook, settings.
 export function App() {
   return (
@@ -25,7 +25,7 @@ export function App() {
             <Route element={<Layout />}>
               <Route path="/" element={<Navigate to="/sessions" replace />} />
               <Route path="/sessions" element={<Sessions />} />
-              <Route path="/canvas/:workspace" element={<CanvasGraph />} />
+              <Route path="/roadmap/:workspace" element={<RoadmapPage />} />
               <Route path="/skills" element={<Skills />} />
               <Route path="/harness" element={<Harness />} />
               <Route path="/playbook" element={<Playbook />} />

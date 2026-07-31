@@ -1,7 +1,7 @@
 import { pushEvent } from "./client.js";
 import { resolveDashboardConfig } from "./config.js";
 import {
-  serializeCanvasSnapshot,
+  serializeRoadmapSnapshot,
   serializeCheckpoint,
   serializeDecision,
   serializeHistory,
@@ -15,9 +15,8 @@ import type { PrRefs } from "../prRefs.js";
  * `void syncXxx(...)`처럼 기다리지 않고 호출한다. pushEvent 자체가 disabled/실패를 조용히
  * 흡수하므로 이 래퍼들도 절대 던지지 않는다.
  *
- * **wire 포맷/URL:** 대시보드가 기대하는 평평한 camelCase 페이로드로의 변환은 serialize.ts가
- * 담당한다(왜 필요한지는 그 파일 주석 참고). URL도 대시보드 리네임(roadmap→canvas)에 맞춰
- * 이 경계에서 canvas로 번역한다 — 플러그인 내부 HULK 네이밍은 그대로.
+ * **wire 포맷:** 대시보드가 기대하는 평평한 camelCase 페이로드로의 변환은 serialize.ts가
+ * 담당한다(왜 필요한지는 그 파일 주석 참고). 경로는 양쪽 다 `roadmap`으로 일치한다(v2/D1).
  */
 
 export async function syncWorkspace(ws: Workspace): Promise<void> {
@@ -40,11 +39,11 @@ export async function syncTask(workspaceName: string, task: Task): Promise<void>
 }
 
 /** §7.2 "노드 스냅샷 replace" — 부분 patch가 아니라 매번 전체 노드 목록을 통째로 보낸다(대시보드가 diff한다).
- * 대시보드가 roadmap→canvas로 리네임됐으므로 URL은 `/api/sync/canvas`. */
+ */
 export async function syncRoadmapSnapshot(workspaceName: string, nodes: RoadmapNode[]): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
-  await pushEvent("/api/sync/canvas", "POST", serializeCanvasSnapshot(config.userId, workspaceName, nodes));
+  await pushEvent("/api/sync/roadmap", "POST", serializeRoadmapSnapshot(config.userId, workspaceName, nodes));
 }
 
 /** §7.2 `/api/sync/checkpoint` push 방향 — sugo_checkpoint(action:'sync')가 사용한다. pull 방향은
@@ -55,7 +54,7 @@ export async function syncCheckpoint(workspaceName: string, checkpoint: Checkpoi
   await pushEvent("/api/sync/checkpoint", "POST", serializeCheckpoint(config.userId, workspaceName, checkpoint));
 }
 
-/** §7.2 `/api/sync/history` — WorkLog(완료 작업 요약) push. prRefs는 canvas 노드 workResult.prRefs로
+/** §7.2 `/api/sync/history` — WorkLog(완료 작업 요약) push. prRefs는 roadmap 노드 workResult.prRefs로
  * 흐르는 게 정본이라(대시보드 history 스키마엔 prRefs 필드 없음) 여기선 실어보내지 않는다.
  * (호출부 하위호환을 위해 prRefs 인자는 유지하되 사용하지 않는다.) */
 export async function syncHistory(workspaceName: string, workLog: WorkLog, _prRefs?: PrRefs | null): Promise<void> {
@@ -98,17 +97,17 @@ export async function syncWorkspaceMeta(workspaceName: string, meta: Record<stri
   await pushEvent("/api/sync/workspace-meta", "POST", { userId: config.userId, workspaceName, meta });
 }
 
-/** §7.2 `/api/sync/canvas/link` + DELETE — link/unlink 전용 이벤트(스냅샷 replace와 별개로,
+/** §7.2 `/api/sync/roadmap/link` + DELETE — link/unlink 전용 이벤트(스냅샷 replace와 별개로,
  * 대시보드가 "이 링크가 방금 편집됐다"는 이벤트 자체를 받고 싶을 때를 위한 보조 신호).
- * 대시보드 리네임에 맞춰 URL은 canvas. */
+ */
 export async function syncRoadmapLink(workspaceName: string, fromId: string, toId: string): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
-  await pushEvent("/api/sync/canvas/link", "POST", { userId: config.userId, workspaceName, fromId, toId });
+  await pushEvent("/api/sync/roadmap/link", "POST", { userId: config.userId, workspaceName, fromId, toId });
 }
 
 export async function unsyncRoadmapLink(workspaceName: string, fromId: string, toId: string): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
-  await pushEvent("/api/sync/canvas/link", "DELETE", { userId: config.userId, workspaceName, fromId, toId });
+  await pushEvent("/api/sync/roadmap/link", "DELETE", { userId: config.userId, workspaceName, fromId, toId });
 }

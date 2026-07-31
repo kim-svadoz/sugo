@@ -23257,14 +23257,20 @@ function currentUsername() {
 async function resolveDashboardConfig() {
   const envUrl = process.env.SUGO_DASHBOARD_API_URL;
   if (envUrl) {
-    return { enabled: true, apiUrl: envUrl, userId: process.env.SUGO_DASHBOARD_USER_ID ?? currentUsername() };
+    return {
+      enabled: true,
+      apiUrl: envUrl,
+      userId: process.env.SUGO_DASHBOARD_USER_ID ?? currentUsername(),
+      // 공개 SaaS 대시보드는 API 토큰이 필요하다(웹UI에서 발급→여기 붙여넣기). self-host/로컬은 생략 가능.
+      apiToken: process.env.SUGO_DASHBOARD_API_TOKEN
+    };
   }
   try {
     const raw = await readFile3(settingsFilePath(), "utf-8");
     const parsed = JSON.parse(raw);
     const d = parsed.dashboard;
     if (d?.enabled && d.apiUrl) {
-      return { enabled: true, apiUrl: d.apiUrl, userId: d.userId ?? currentUsername() };
+      return { enabled: true, apiUrl: d.apiUrl, userId: d.userId ?? currentUsername(), apiToken: d.apiToken };
     }
   } catch {
   }
@@ -23360,18 +23366,42 @@ async function processRetryQueue(attempt) {
   });
 }
 
+// src/dashboard/schemaVersion.ts
+var DASHBOARD_SYNC_SCHEMA_VERSION = 1;
+var SYNC_SCHEMA_VERSION_HEADER = "x-sugo-sync-schema-version";
+
 // src/dashboard/client.ts
 var DEFAULT_TIMEOUT_MS = 5e3;
-async function sendOnce(apiUrl, endpoint, method, data, timeoutMs) {
+function withSchemaVersion(data) {
+  if (data === null || typeof data !== "object" || Array.isArray(data)) return data;
+  const obj = data;
+  if (obj.schemaVersion !== void 0) return obj;
+  return { ...obj, schemaVersion: DASHBOARD_SYNC_SCHEMA_VERSION };
+}
+var warnedNewerServer = false;
+function noteServerSchemaVersion(res) {
+  const raw = res.headers.get(SYNC_SCHEMA_VERSION_HEADER);
+  if (!raw) return;
+  const server2 = Number(raw);
+  if (!Number.isInteger(server2) || server2 <= DASHBOARD_SYNC_SCHEMA_VERSION || warnedNewerServer) return;
+  warnedNewerServer = true;
+  console.warn(
+    `[sugo] \uB300\uC2DC\uBCF4\uB4DC sync \uACC4\uC57D\uC774 \uB354 \uCD5C\uC2E0\uC785\uB2C8\uB2E4(server=${server2}, plugin=${DASHBOARD_SYNC_SCHEMA_VERSION}). \uD50C\uB7EC\uADF8\uC778 \uC5C5\uB370\uC774\uD2B8\uB97C \uAD8C\uC7A5\uD569\uB2C8\uB2E4 \u2014 \uB3D9\uAE30\uD654\uB294 \uACC4\uC18D \uC9C4\uD589\uD569\uB2C8\uB2E4.`
+  );
+}
+async function sendOnce(apiUrl, endpoint, method, data, timeoutMs, apiToken) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    const headers = { "Content-Type": "application/json" };
+    if (apiToken) headers.Authorization = `Bearer ${apiToken}`;
     const res = await fetch(`${apiUrl}${endpoint}`, {
       method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      headers,
+      body: JSON.stringify(withSchemaVersion(data)),
       signal: controller.signal
     });
+    noteServerSchemaVersion(res);
     return res.ok;
   } catch {
     return false;
@@ -23382,14 +23412,16 @@ async function sendOnce(apiUrl, endpoint, method, data, timeoutMs) {
 async function pushEvent(endpoint, method, data, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled || !config2.apiUrl) return;
-  const ok9 = await sendOnce(config2.apiUrl, endpoint, method, data, timeoutMs);
-  if (!ok9) await enqueueRetry(endpoint, method, data);
+  const payload = withSchemaVersion(data);
+  const ok9 = await sendOnce(config2.apiUrl, endpoint, method, payload, timeoutMs, config2.apiToken);
+  if (!ok9) await enqueueRetry(endpoint, method, payload);
 }
 async function drainRetryQueue() {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled || !config2.apiUrl) return;
   const apiUrl = config2.apiUrl;
-  await processRetryQueue((item) => sendOnce(apiUrl, item.endpoint, item.method, item.data, DEFAULT_TIMEOUT_MS));
+  const apiToken = config2.apiToken;
+  await processRetryQueue((item) => sendOnce(apiUrl, item.endpoint, item.method, item.data, DEFAULT_TIMEOUT_MS, apiToken));
 }
 
 // src/dashboard/serialize.ts
@@ -23453,7 +23485,7 @@ function serializeDecision(userId, workspaceName, spec) {
     decisionDate: spec.created_at
   };
 }
-function serializeCanvasNode(node) {
+function serializeRoadmapNode(node) {
   return {
     id: node.id,
     title: node.title,
@@ -23467,8 +23499,8 @@ function serializeCanvasNode(node) {
     workResult: node.workResult
   };
 }
-function serializeCanvasSnapshot(userId, workspaceName, nodes) {
-  return { userId, workspaceName, nodes: nodes.map(serializeCanvasNode) };
+function serializeRoadmapSnapshot(userId, workspaceName, nodes) {
+  return { userId, workspaceName, nodes: nodes.map(serializeRoadmapNode) };
 }
 
 // src/dashboard/sync.ts
@@ -23492,7 +23524,7 @@ async function syncTask(workspaceName, task) {
 async function syncRoadmapSnapshot(workspaceName, nodes) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/canvas", "POST", serializeCanvasSnapshot(config2.userId, workspaceName, nodes));
+  await pushEvent("/api/sync/roadmap", "POST", serializeRoadmapSnapshot(config2.userId, workspaceName, nodes));
 }
 async function syncCheckpoint(workspaceName, checkpoint) {
   const config2 = await resolveDashboardConfig();
@@ -23522,12 +23554,12 @@ async function syncUser() {
 async function syncRoadmapLink(workspaceName, fromId, toId) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/canvas/link", "POST", { userId: config2.userId, workspaceName, fromId, toId });
+  await pushEvent("/api/sync/roadmap/link", "POST", { userId: config2.userId, workspaceName, fromId, toId });
 }
 async function unsyncRoadmapLink(workspaceName, fromId, toId) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/canvas/link", "DELETE", { userId: config2.userId, workspaceName, fromId, toId });
+  await pushEvent("/api/sync/roadmap/link", "DELETE", { userId: config2.userId, workspaceName, fromId, toId });
 }
 
 // src/hulk/workspace.ts
@@ -23967,7 +23999,8 @@ async function fetchJson(path, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`${config2.apiUrl}${path}`, { signal: controller.signal });
+    const headers = config2.apiToken ? { Authorization: `Bearer ${config2.apiToken}` } : void 0;
+    const res = await fetch(`${config2.apiUrl}${path}`, { signal: controller.signal, headers });
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -23981,7 +24014,7 @@ async function fetchRoadmapOrdering(workspaceName) {
   if (!config2.enabled) return null;
   const qs = config2.userId ? `?userId=${encodeURIComponent(config2.userId)}` : "";
   const res = await fetchJson(
-    `/api/workspaces/${encodeURIComponent(workspaceName)}/canvas${qs}`,
+    `/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap${qs}`,
     8e3
   );
   if (!res) return null;

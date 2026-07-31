@@ -36,10 +36,10 @@ describe("fetch 계열 — 실제 서버 응답", () => {
   let port: number;
 
   beforeEach(async () => {
-    // 대시보드의 실제 응답 형태를 그대로 모사한다(canvas URL, {nodes}/{checkpoints} 래핑, depends_on
+    // 대시보드의 실제 응답 형태를 그대로 모사한다(roadmap URL, {nodes}/{checkpoints} 래핑, depends_on
     // snake_case) — seam 어댑터가 이걸 plugin의 camelCase로 정확히 번역하는지 검증한다.
     server = createServer((req, res) => {
-      if (req.url?.startsWith("/api/workspaces/ws1/canvas")) {
+      if (req.url?.startsWith("/api/workspaces/ws1/roadmap")) {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({

@@ -12,7 +12,7 @@ await page.click('button[type="submit"]');
 await page.waitForTimeout(800);
 const c = await page.$('button[type="submit"]');
 if (c && page.url().includes("9100")) { await c.click(); await page.waitForTimeout(800); }
-await page.waitForURL(/localhost:4173\/(sessions|canvas)/, { timeout: 12000 }).catch(()=>{});
+await page.waitForURL(/localhost:4173\/(sessions|roadmap)/, { timeout: 12000 }).catch(()=>{});
 await page.waitForTimeout(1000);
 const token = await page.evaluate(() => { const a = localStorage.getItem("sugo_auth"); return a ? JSON.parse(a).accessToken : null; });
 const parts = (token||"").split(".");

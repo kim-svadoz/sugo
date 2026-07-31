@@ -6,15 +6,15 @@ const workspaces = [{
   name: "temp-workspace",
   projects: [{ project_path: "C:/Users/user/splearn", git_synced: 1 }],
   taskCounts: { pending: 2, in_progress: 1, done: 3, archived: 0 },
-  canvas: { total: 6, done: 3, active: 1 },
+  roadmap: { total: 6, done: 3, active: 1 },
 }, {
   name: "payments-api",
   projects: [{ project_path: "C:/work/payments", git_synced: 0 }],
   taskCounts: { pending: 0, in_progress: 0, done: 5, archived: 1 },
-  canvas: { total: 5, done: 5, active: 0 },
+  roadmap: { total: 5, done: 5, active: 0 },
 }];
 
-const canvasNodes = [
+const roadmapNodes = [
   { id: "spec1", title: "이메일 로그인 스펙", level: "spec", status: "done", depends_on: [], parent: null, ref: null, note: null, spec_path: null, work_result: null, lineage: null, manual_status: null, pos_x: null, pos_y: null },
   { id: "t1", title: "EmailLoginService 구현", level: "task", status: "done", depends_on: ["spec1"], parent: null, ref: null, note: null, spec_path: null, work_result: null, lineage: null, manual_status: null, pos_x: null, pos_y: null },
   { id: "t2", title: "로그인 컨트롤러 배선", level: "task", status: "in_progress", depends_on: ["t1"], parent: null, ref: null, note: null, spec_path: null, work_result: null, lineage: null, manual_status: null, pos_x: null, pos_y: null },
@@ -31,7 +31,7 @@ await page.addInitScript(() => {
 await page.route("**/health", (r) => r.fulfill({ json: { status: "ok", version: "0.1.0", build: "dev" } }));
 await page.route("**/api/**", (route) => {
   const u = route.request().url();
-  if (u.includes("/api/workspaces/") && u.includes("/canvas")) return route.fulfill({ json: { nodes: canvasNodes } });
+  if (u.includes("/api/workspaces/") && u.includes("/roadmap")) return route.fulfill({ json: { nodes: roadmapNodes } });
   if (u.includes("/api/workspaces")) return route.fulfill({ json: { workspaces } });
   if (u.includes("/api/skills/agents")) return route.fulfill({ json: { agents: ["code-agent", "test-agent", "review-agent", "docs-agent"] } });
   if (u.includes("/api/skills")) return route.fulfill({ json: { skills: ["implement", "bugfix", "refactor", "test-targeted", "review-validate"] } });
@@ -48,7 +48,7 @@ async function shot(path, file) {
 }
 await shot("/login", "01-login.png");
 await shot("/sessions", "02-sessions.png");
-await shot("/canvas/temp-workspace", "03-canvas.png");
+await shot("/roadmap/temp-workspace", "03-roadmap.png");
 await shot("/playbook", "04-playbook.png");
 await shot("/skills", "05-skills.png");
 await shot("/harness", "06-harness.png");

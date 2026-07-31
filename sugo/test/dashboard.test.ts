@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { emitActivity } from "../src/dashboard/activity.js";
 import { drainRetryQueue, pushEvent } from "../src/dashboard/client.js";
 import { resolveDashboardConfig } from "../src/dashboard/config.js";
+import { DASHBOARD_SYNC_SCHEMA_VERSION } from "../src/dashboard/schemaVersion.js";
 import { syncRetryQueuePath } from "../src/hulk/storage.js";
 
 let fakeHome: string;
@@ -74,7 +75,7 @@ describe("pushEvent — fire-and-forget, 절대 던지지 않는다", () => {
     process.env.SUGO_DASHBOARD_API_URL = `http://127.0.0.1:${port}`;
 
     await pushEvent("/api/sync/task", "POST", { taskId: "t-1" });
-    expect(received).toEqual({ taskId: "t-1" });
+    expect(received).toEqual({ taskId: "t-1", schemaVersion: DASHBOARD_SYNC_SCHEMA_VERSION });
 
     let queueExists = true;
     try {
@@ -94,7 +95,7 @@ describe("pushEvent — fire-and-forget, 절대 던지지 않는다", () => {
     const queue = JSON.parse(raw);
     expect(queue.items).toHaveLength(1);
     expect(queue.items[0].endpoint).toBe("/api/sync/task");
-    expect(queue.items[0].data).toEqual({ taskId: "t-2" });
+    expect(queue.items[0].data).toEqual({ taskId: "t-2", schemaVersion: DASHBOARD_SYNC_SCHEMA_VERSION });
     expect(queue.items[0].retryCount).toBe(0);
   });
 });
@@ -119,7 +120,7 @@ describe("drainRetryQueue — 재시도 소진 시 버림, 성공 시 제거", (
     process.env.SUGO_DASHBOARD_API_URL = `http://127.0.0.1:${port}`;
 
     await drainRetryQueue();
-    expect(received).toEqual([{ taskId: "t-3" }]);
+    expect(received).toEqual([{ taskId: "t-3", schemaVersion: DASHBOARD_SYNC_SCHEMA_VERSION }]);
 
     const raw = readFileSync(syncRetryQueuePath(), "utf-8");
     expect(JSON.parse(raw).items).toHaveLength(0);

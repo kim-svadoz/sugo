@@ -41,7 +41,7 @@ beforeEach(async () => {
       if (url.startsWith("/api/workspaces/checkpoint-sync")) {
         // 대시보드 실제 형태: {checkpoints:[...]}, applies_to(snake)
         res.end(JSON.stringify({ checkpoints: [{ id: "CP-remote", title: "원격 규칙", category: "backend", checklist: ["체크1"], applies_to: null }] }));
-      } else if (url.startsWith("/api/workspaces/") && url.includes("/canvas")) {
+      } else if (url.startsWith("/api/workspaces/") && url.includes("/roadmap")) {
         // 대시보드 실제 형태: {nodes:[...]}, depends_on(snake)
         res.end(JSON.stringify({ nodes: [{ id: "A", depends_on: ["B"], manual_status: "in_review", title: "A", level: "task", status: "pending" }] }));
       } else if (url === "/api/metrics/calibrated-ratio") {
@@ -127,7 +127,7 @@ describe("commit → prRefs 수집 + WorkLog에 실림", () => {
     expect(commit.isError).toBe(false);
 
     // commit이 WorkLog를 대시보드로 sync한다(평평한 history wire). prRefs는 §7.2 정본 경로가
-    // canvas 노드 workResult.prRefs라 history wire엔 실리지 않는다(seam 어댑터가 제외) — 대신
+    // roadmap 노드 workResult.prRefs라 history wire엔 실리지 않는다(seam 어댑터가 제외) — 대신
     // prRefs가 로컬 WorkLog에는 수집돼 있어야 한다(git 원격에서 repoSlug 추출).
     const historyPush = received.find((r) => r.path === "/api/sync/history");
     expect(historyPush).toBeDefined();

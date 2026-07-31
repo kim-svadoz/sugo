@@ -3,10 +3,10 @@ import { useAuth } from "../auth/AuthContext.js";
 import {
   parseLineage,
   parseWorkResult,
-  type CanvasNode,
+  type RoadmapNode,
   type WorkResultFile,
-} from "../hooks/useCanvas.js";
-import { clearManualStatus, setManualStatus } from "../api/canvasMutationsApi.js";
+} from "../hooks/useRoadmap.js";
+import { clearManualStatus, setManualStatus } from "../api/roadmapMutationsApi.js";
 import { checkExistingPr, createPr, type PrRef, type PrScope } from "../api/prApi.js";
 
 type Tab = "progress" | "summary" | "files";
@@ -40,7 +40,7 @@ export function SubtaskPanel({
   onChanged,
 }: {
   workspace: string;
-  node: CanvasNode;
+  node: RoadmapNode;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -113,7 +113,7 @@ function ProgressTab({
 }: {
   userId: string | null;
   workspace: string;
-  node: CanvasNode;
+  node: RoadmapNode;
   workResult: ReturnType<typeof parseWorkResult>;
   lineage: ReturnType<typeof parseLineage>;
   onChanged: () => void;
@@ -223,7 +223,7 @@ function ProgressTab({
   );
 }
 
-function PrPanel({ workspace, node }: { workspace: string; node: Pick<CanvasNode, "id" | "level"> }) {
+function PrPanel({ workspace, node }: { workspace: string; node: Pick<RoadmapNode, "id" | "level"> }) {
   const [scope, setScope] = useState<PrScope>(scopeForLevel(node.level));
   const [targetBranch, setTargetBranch] = useState("develop");
   const [title, setTitle] = useState("");

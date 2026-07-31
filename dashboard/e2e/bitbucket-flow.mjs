@@ -25,7 +25,7 @@ await page.click('button[type="submit"]');
 await page.waitForTimeout(800);
 const consent = await page.$('button[type="submit"]');
 if (consent && page.url().includes("9100")) { await consent.click(); await page.waitForTimeout(800); }
-await page.waitForURL(/localhost:4173\/(sessions|canvas)/, { timeout: 12000 }).catch(() => {});
+await page.waitForURL(/localhost:4173\/(sessions|roadmap)/, { timeout: 12000 }).catch(() => {});
 await page.waitForTimeout(800);
 const token = await page.evaluate(() => JSON.parse(localStorage.getItem("sugo_auth")).accessToken);
 await browser.close();
@@ -39,8 +39,8 @@ await authed("/api/bitbucket", { method: "PUT", body: JSON.stringify({ token: "m
 const status = await (await authed("/api/bitbucket")).json();
 check("PAT 저장 후 connected + hint만(토큰 원문 미노출)", status.connected === true && status.hint === "1234" && !JSON.stringify(status).includes("my-secret-pat"), status);
 
-// 3) prRefs 심기: canvas 노드의 workResult.prRefs (feat/ 브랜치라 mock이 존재로 응답)
-await fetch(BE + "/api/sync/canvas", {
+// 3) prRefs 심기: roadmap 노드의 workResult.prRefs (feat/ 브랜치라 mock이 존재로 응답)
+await fetch(BE + "/api/sync/roadmap", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
@@ -66,7 +66,7 @@ const exist = await existRes.json();
 check("existing 재조회 → exists:true", exist.exists === true && exist.pr?.id >= 101, exist);
 
 // 6) 브랜치 미푸시(feat/ 아님) → BRANCH_NOT_PUSHED
-await fetch(BE + "/api/sync/canvas", {
+await fetch(BE + "/api/sync/roadmap", {
   method: "POST", headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ userId: "e2euser", workspaceName: "demo-domain", nodes: [
     { id: "t-2", title: "로그아웃 기능", level: "task", status: "done",

@@ -108,9 +108,9 @@ describe("syncTask", () => {
 });
 
 describe("syncRoadmapSnapshot", () => {
-  it("/api/sync/canvas로 노드 스냅샷 전체를 replace 방식으로 보낸다(대시보드 리네임)", async () => {
+  it("/api/sync/roadmap로 노드 스냅샷 전체를 replace 방식으로 보낸다(대시보드 리네임)", async () => {
     await syncRoadmapSnapshot("ws1", [{ id: "A", title: "A", level: "task", status: "pending", dependsOn: [] }]);
-    expect(received[0].path).toBe("/api/sync/canvas");
+    expect(received[0].path).toBe("/api/sync/roadmap");
     const body = received[0].body as Record<string, unknown>;
     expect(body.workspaceName).toBe("ws1");
     expect((body.nodes as unknown[])).toHaveLength(1);
@@ -145,7 +145,7 @@ describe("syncHistory", () => {
     expect(body.workLog).toBeUndefined();
   });
 
-  it("prRefs는 history wire에 실리지 않는다(정본 경로는 canvas 노드 workResult.prRefs)", async () => {
+  it("prRefs는 history wire에 실리지 않는다(정본 경로는 roadmap 노드 workResult.prRefs)", async () => {
     await syncHistory(
       "ws1",
       { id: "wl-1", task_id: "t-1", task_title: "기능", completed_at: "2026-01-01T00:00:00.000Z" },
@@ -188,6 +188,6 @@ describe("syncRoadmapLink / unsyncRoadmapLink", () => {
     await syncRoadmapLink("ws1", "A", "B");
     await unsyncRoadmapLink("ws1", "A", "B");
     expect(received.map((r) => r.method)).toEqual(["POST", "DELETE"]);
-    expect(received.map((r) => r.path)).toEqual(["/api/sync/canvas/link", "/api/sync/canvas/link"]);
+    expect(received.map((r) => r.path)).toEqual(["/api/sync/roadmap/link", "/api/sync/roadmap/link"]);
   });
 });

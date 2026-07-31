@@ -2,7 +2,7 @@ import { apiJson, withUserId } from "./client.js";
 
 // §3.3: PUBLIC routes (dashboard owns structure/order) - userId via query.
 function path(workspace: string, suffix: string): string {
-  return `/api/workspaces/${encodeURIComponent(workspace)}/canvas${suffix}`;
+  return `/api/workspaces/${encodeURIComponent(workspace)}/roadmap${suffix}`;
 }
 
 export function setManualStatus(userId: string, workspace: string, nodeId: string, status: string) {

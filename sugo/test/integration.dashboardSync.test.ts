@@ -62,16 +62,16 @@ describe("§7.2 대시보드 sync — 실제 파이프라인 배선 e2e", () => 
     expect(received).toContain("/api/sync/workspace");
   });
 
-  it("prd(헤딩 REQ)가 task+canvas 스냅샷을 논블로킹으로 쏜다(대시보드 리네임 URL)", async () => {
+  it("prd(헤딩 REQ)가 task+roadmap 스냅샷을 논블로킹으로 쏜다(대시보드 리네임 URL)", async () => {
     await call(handleSugoAdd, { projectPath: projectDir, workspace: "ws-sync" });
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId;
     await call(handleSugoPlan, { action: "clarify", sessionId });
     await call(handleSugoPlan, { action: "prd", sessionId, prdContent: "### REQ-1: 로그인\n" + "가".repeat(90) });
 
-    await waitFor(() => received.includes("/api/sync/task") && received.includes("/api/sync/canvas"));
+    await waitFor(() => received.includes("/api/sync/task") && received.includes("/api/sync/roadmap"));
     expect(received).toContain("/api/sync/task");
-    expect(received).toContain("/api/sync/canvas");
+    expect(received).toContain("/api/sync/roadmap");
   });
 
   it("대시보드가 disabled(env 없음)면 아무 요청도 안 나간다", async () => {

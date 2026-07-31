@@ -6,7 +6,7 @@ export interface WorkspaceSummary {
   name: string;
   projects: { project_path: string; git_synced: number }[];
   taskCounts: { pending: number; in_progress: number; done: number; archived: number };
-  canvas: { total: number; done: number; active: number };
+  roadmap: { total: number; done: number; active: number };
 }
 
 interface UseWorkspacesResult {
