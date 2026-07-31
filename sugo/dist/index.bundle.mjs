@@ -8578,8 +8578,8 @@ var ZodIssueCode = util.arrayToEnum([
   "not_finite"
 ]);
 var quotelessJson = (obj) => {
-  const json = JSON.stringify(obj, null, 2);
-  return json.replace(/"([^"]+)":/g, "$1:");
+  const json2 = JSON.stringify(obj, null, 2);
+  return json2.replace(/"([^"]+)":/g, "$1:");
 };
 var ZodError = class _ZodError extends Error {
   get errors() {
@@ -15444,24 +15444,24 @@ var JSONSchemaGenerator = class {
         const _json = result.schema;
         switch (def.type) {
           case "string": {
-            const json = _json;
-            json.type = "string";
+            const json2 = _json;
+            json2.type = "string";
             const { minimum, maximum, format, patterns, contentEncoding } = schema._zod.bag;
             if (typeof minimum === "number")
-              json.minLength = minimum;
+              json2.minLength = minimum;
             if (typeof maximum === "number")
-              json.maxLength = maximum;
+              json2.maxLength = maximum;
             if (format) {
-              json.format = formatMap[format] ?? format;
-              if (json.format === "")
-                delete json.format;
+              json2.format = formatMap[format] ?? format;
+              if (json2.format === "")
+                delete json2.format;
             }
             if (contentEncoding)
-              json.contentEncoding = contentEncoding;
+              json2.contentEncoding = contentEncoding;
             if (patterns && patterns.size > 0) {
               const regexes = [...patterns];
               if (regexes.length === 1)
-                json.pattern = regexes[0].source;
+                json2.pattern = regexes[0].source;
               else if (regexes.length > 1) {
                 result.schema.allOf = [
                   ...regexes.map((regex) => ({
@@ -15474,41 +15474,41 @@ var JSONSchemaGenerator = class {
             break;
           }
           case "number": {
-            const json = _json;
+            const json2 = _json;
             const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
             if (typeof format === "string" && format.includes("int"))
-              json.type = "integer";
+              json2.type = "integer";
             else
-              json.type = "number";
+              json2.type = "number";
             if (typeof exclusiveMinimum === "number")
-              json.exclusiveMinimum = exclusiveMinimum;
+              json2.exclusiveMinimum = exclusiveMinimum;
             if (typeof minimum === "number") {
-              json.minimum = minimum;
+              json2.minimum = minimum;
               if (typeof exclusiveMinimum === "number") {
                 if (exclusiveMinimum >= minimum)
-                  delete json.minimum;
+                  delete json2.minimum;
                 else
-                  delete json.exclusiveMinimum;
+                  delete json2.exclusiveMinimum;
               }
             }
             if (typeof exclusiveMaximum === "number")
-              json.exclusiveMaximum = exclusiveMaximum;
+              json2.exclusiveMaximum = exclusiveMaximum;
             if (typeof maximum === "number") {
-              json.maximum = maximum;
+              json2.maximum = maximum;
               if (typeof exclusiveMaximum === "number") {
                 if (exclusiveMaximum <= maximum)
-                  delete json.maximum;
+                  delete json2.maximum;
                 else
-                  delete json.exclusiveMaximum;
+                  delete json2.exclusiveMaximum;
               }
             }
             if (typeof multipleOf === "number")
-              json.multipleOf = multipleOf;
+              json2.multipleOf = multipleOf;
             break;
           }
           case "boolean": {
-            const json = _json;
-            json.type = "boolean";
+            const json2 = _json;
+            json2.type = "boolean";
             break;
           }
           case "bigint": {
@@ -15556,23 +15556,23 @@ var JSONSchemaGenerator = class {
             break;
           }
           case "array": {
-            const json = _json;
+            const json2 = _json;
             const { minimum, maximum } = schema._zod.bag;
             if (typeof minimum === "number")
-              json.minItems = minimum;
+              json2.minItems = minimum;
             if (typeof maximum === "number")
-              json.maxItems = maximum;
-            json.type = "array";
-            json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
+              json2.maxItems = maximum;
+            json2.type = "array";
+            json2.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
             break;
           }
           case "object": {
-            const json = _json;
-            json.type = "object";
-            json.properties = {};
+            const json2 = _json;
+            json2.type = "object";
+            json2.properties = {};
             const shape = def.shape;
             for (const key in shape) {
-              json.properties[key] = this.process(shape[key], {
+              json2.properties[key] = this.process(shape[key], {
                 ...params,
                 path: [...params.path, "properties", key]
               });
@@ -15587,15 +15587,15 @@ var JSONSchemaGenerator = class {
               }
             }));
             if (requiredKeys.size > 0) {
-              json.required = Array.from(requiredKeys);
+              json2.required = Array.from(requiredKeys);
             }
             if (def.catchall?._zod.def.type === "never") {
-              json.additionalProperties = false;
+              json2.additionalProperties = false;
             } else if (!def.catchall) {
               if (this.io === "output")
-                json.additionalProperties = false;
+                json2.additionalProperties = false;
             } else if (def.catchall) {
-              json.additionalProperties = this.process(def.catchall, {
+              json2.additionalProperties = this.process(def.catchall, {
                 ...params,
                 path: [...params.path, "additionalProperties"]
               });
@@ -15603,15 +15603,15 @@ var JSONSchemaGenerator = class {
             break;
           }
           case "union": {
-            const json = _json;
-            json.anyOf = def.options.map((x, i2) => this.process(x, {
+            const json2 = _json;
+            json2.anyOf = def.options.map((x, i2) => this.process(x, {
               ...params,
               path: [...params.path, "anyOf", i2]
             }));
             break;
           }
           case "intersection": {
-            const json = _json;
+            const json2 = _json;
             const a = this.process(def.left, {
               ...params,
               path: [...params.path, "allOf", 0]
@@ -15625,17 +15625,17 @@ var JSONSchemaGenerator = class {
               ...isSimpleIntersection(a) ? a.allOf : [a],
               ...isSimpleIntersection(b) ? b.allOf : [b]
             ];
-            json.allOf = allOf;
+            json2.allOf = allOf;
             break;
           }
           case "tuple": {
-            const json = _json;
-            json.type = "array";
+            const json2 = _json;
+            json2.type = "array";
             const prefixItems = def.items.map((x, i2) => this.process(x, { ...params, path: [...params.path, "prefixItems", i2] }));
             if (this.target === "draft-2020-12") {
-              json.prefixItems = prefixItems;
+              json2.prefixItems = prefixItems;
             } else {
-              json.items = prefixItems;
+              json2.items = prefixItems;
             }
             if (def.rest) {
               const rest = this.process(def.rest, {
@@ -15643,29 +15643,29 @@ var JSONSchemaGenerator = class {
                 path: [...params.path, "items"]
               });
               if (this.target === "draft-2020-12") {
-                json.items = rest;
+                json2.items = rest;
               } else {
-                json.additionalItems = rest;
+                json2.additionalItems = rest;
               }
             }
             if (def.rest) {
-              json.items = this.process(def.rest, {
+              json2.items = this.process(def.rest, {
                 ...params,
                 path: [...params.path, "items"]
               });
             }
             const { minimum, maximum } = schema._zod.bag;
             if (typeof minimum === "number")
-              json.minItems = minimum;
+              json2.minItems = minimum;
             if (typeof maximum === "number")
-              json.maxItems = maximum;
+              json2.maxItems = maximum;
             break;
           }
           case "record": {
-            const json = _json;
-            json.type = "object";
-            json.propertyNames = this.process(def.keyType, { ...params, path: [...params.path, "propertyNames"] });
-            json.additionalProperties = this.process(def.valueType, {
+            const json2 = _json;
+            json2.type = "object";
+            json2.propertyNames = this.process(def.keyType, { ...params, path: [...params.path, "propertyNames"] });
+            json2.additionalProperties = this.process(def.valueType, {
               ...params,
               path: [...params.path, "additionalProperties"]
             });
@@ -15684,17 +15684,17 @@ var JSONSchemaGenerator = class {
             break;
           }
           case "enum": {
-            const json = _json;
+            const json2 = _json;
             const values = getEnumValues(def.entries);
             if (values.every((v) => typeof v === "number"))
-              json.type = "number";
+              json2.type = "number";
             if (values.every((v) => typeof v === "string"))
-              json.type = "string";
-            json.enum = values;
+              json2.type = "string";
+            json2.enum = values;
             break;
           }
           case "literal": {
-            const json = _json;
+            const json2 = _json;
             const vals = [];
             for (const val of def.values) {
               if (val === void 0) {
@@ -15715,23 +15715,23 @@ var JSONSchemaGenerator = class {
             if (vals.length === 0) {
             } else if (vals.length === 1) {
               const val = vals[0];
-              json.type = val === null ? "null" : typeof val;
-              json.const = val;
+              json2.type = val === null ? "null" : typeof val;
+              json2.const = val;
             } else {
               if (vals.every((v) => typeof v === "number"))
-                json.type = "number";
+                json2.type = "number";
               if (vals.every((v) => typeof v === "string"))
-                json.type = "string";
+                json2.type = "string";
               if (vals.every((v) => typeof v === "boolean"))
-                json.type = "string";
+                json2.type = "string";
               if (vals.every((v) => v === null))
-                json.type = "null";
-              json.enum = vals;
+                json2.type = "null";
+              json2.enum = vals;
             }
             break;
           }
           case "file": {
-            const json = _json;
+            const json2 = _json;
             const file = {
               type: "string",
               format: "binary",
@@ -15745,15 +15745,15 @@ var JSONSchemaGenerator = class {
             if (mime) {
               if (mime.length === 1) {
                 file.contentMediaType = mime[0];
-                Object.assign(json, file);
+                Object.assign(json2, file);
               } else {
-                json.anyOf = mime.map((m) => {
+                json2.anyOf = mime.map((m) => {
                   const mFile = { ...file, contentMediaType: m };
                   return mFile;
                 });
               }
             } else {
-              Object.assign(json, file);
+              Object.assign(json2, file);
             }
             break;
           }
@@ -15774,8 +15774,8 @@ var JSONSchemaGenerator = class {
             break;
           }
           case "success": {
-            const json = _json;
-            json.type = "boolean";
+            const json2 = _json;
+            json2.type = "boolean";
             break;
           }
           case "default": {
@@ -15810,12 +15810,12 @@ var JSONSchemaGenerator = class {
             break;
           }
           case "template_literal": {
-            const json = _json;
+            const json2 = _json;
             const pattern = schema._zod.pattern;
             if (!pattern)
               throw new Error("Pattern not found in template literal");
-            json.type = "string";
-            json.pattern = pattern.source;
+            json2.type = "string";
+            json2.pattern = pattern.source;
             break;
           }
           case "pipe": {
@@ -22515,8 +22515,8 @@ var StdioServerTransport = class {
   }
   send(message) {
     return new Promise((resolve8) => {
-      const json = serializeMessage(message);
-      if (this._stdout.write(json)) {
+      const json2 = serializeMessage(message);
+      if (this._stdout.write(json2)) {
         resolve8();
       } else {
         this._stdout.once("drain", resolve8);
@@ -28362,6 +28362,29 @@ function checkRuntimeVerificationGate(testPassedState, runtimeCheck, bootable) {
   }
   return ok4();
 }
+function checkSpecOracleGate(specOracle) {
+  if (!specOracle?.required) return ok4();
+  if (specOracle.ran) return ok4();
+  return fail(
+    "SPEC_ORACLE_NOT_RUN",
+    "q-spec \uC6D0\uBCF8 \uC2A4\uD399 \uB300\uC870(oracle)\uAC00 \uC544\uC9C1 \uAE30\uB85D\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4 \u2014 sugo_plan({action:'oracle_done', ...})\uC73C\uB85C \uB300\uC870 \uACB0\uACFC\uB97C \uBA3C\uC800 \uAE30\uB85D\uD558\uC138\uC694."
+  );
+}
+function checkOracleDone(uncovered, overrideReason) {
+  if (!uncovered || uncovered.length === 0) return ok4();
+  if (overrideReason && overrideReason.trim().length > 0) return ok4();
+  return fail(
+    "ORACLE_OVERRIDE_REASON_REQUIRED",
+    `\uBBF8\uCEE4\uBC84 \uD56D\uBAA9 ${uncovered.length}\uAC74\uC744 \uBCF4\uACE0\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uADF8\uB300\uB85C \uC9C4\uD589\uD558\uB824\uBA74 overrideReason(\uC65C \uC9C0\uAE08 \uCEE4\uBC84\uD558\uC9C0 \uC54A\uB294\uC9C0)\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.`
+  );
+}
+function checkJiraOption(option, jiraKey) {
+  if (!option) return fail("JIRA_OPTION_REQUIRED", "jira action\uC5D0\uB294 jiraOption('new'|'link'|'skip')\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  if (option === "link" && !(jiraKey && jiraKey.trim().length > 0)) {
+    return fail("JIRA_KEY_REQUIRED", "jiraOption:'link'\uC5D0\uB294 \uC5F0\uACB0\uD560 jiraKey\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  }
+  return ok4();
+}
 
 // src/bootScan.ts
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
@@ -28840,85 +28863,208 @@ function renderBypassSummary(result) {
 ${lines.join("\n")}`;
 }
 
-// src/types.ts
-var PLAN_ACTIONS = [
-  "start",
-  "clarify",
-  "prd",
-  "ready",
-  "baseline_capture",
-  "contract_start",
-  "contract_done",
-  "decompose",
-  "subtask_start",
-  "subtask_done",
-  "integrate",
-  "code_start",
-  "code_done",
-  "test_start",
-  "test_done",
-  "review_start",
-  "review_done",
-  "docs_done",
-  "commit",
-  "status",
-  "cancel"
+// src/ontology/model.ts
+var ALL_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"];
+var OBJECT_TYPES = [
+  { name: "spec", label: "Spec", meaning: "\uB9C8\uC2A4\uD130 PRD(\uACBD\uB85C=\uC18C\uC18D). \uB85C\uB4DC\uB9F5 \uCD5C\uC0C1\uC704 \uCEE8\uD14C\uC774\uB108", containedBy: null },
+  { name: "workstream", label: "Run", meaning: "feat/patch \uC2E4\uD589 \uB2E8\uC704. Spec \uC548\uC5D0 \uC2DC\uAC04\uC21C \uC801\uCE35", containedBy: "spec" },
+  { name: "task", label: "Task", meaning: "\uB808\uD3EC\uBCC4 \uC2E4\uC81C \uC0B0\uCD9C\uBB3C. \uC9C4\uD589\uB960 \uAE30\uC900 \uCE35", containedBy: "workstream" },
+  { name: "subtask", label: "REQ", meaning: "Task \uD558\uC704 \uC138\uBD80 \uAC80\uC99D \uC2A4\uD399(\uC694\uAD6C\uC0AC\uD56D)", containedBy: "task" },
+  { name: "step", label: "Step(\uB808\uAC70\uC2DC)", meaning: "\uAD6C \uB2E8\uACC4 \uB2E8\uC704. \uC2E0\uADDC \uD750\uB984 \uBBF8\uC0AC\uC6A9", containedBy: "subtask" }
 ];
-var PREREQUISITES = {
-  start: [],
-  clarify: ["SCAN"],
-  prd: ["CLARIFY"],
-  ready: ["PRD"],
-  baseline_capture: ["READY"],
-  contract_start: ["BASELINE"],
-  contract_done: ["CONTRACT_RUNNING"],
-  decompose: ["READY"],
-  subtask_start: ["DECOMPOSE", "ORCHESTRATING"],
-  subtask_done: ["ORCHESTRATING"],
-  integrate: ["ORCHESTRATING"],
-  code_start: ["CODE_READY", "TEST_DONE", "REVIEW_RUNNING"],
-  code_done: ["CODE_RUNNING"],
-  test_start: ["CODE_DONE"],
-  test_done: ["TEST_RUNNING"],
-  review_start: ["TEST_DONE"],
-  review_done: ["REVIEW_RUNNING"],
-  docs_done: ["DOCS_PENDING"],
-  commit: ["COMMIT_PENDING"],
-  status: [],
-  cancel: []
+var LINK_TYPES = [
+  { name: "contains", from: "*", to: "*", meaning: "\uACC4\uCE35 \uD3EC\uD568(parent). spec\u2192workstream\u2192task\u2192subtask" },
+  { name: "depends_on", from: "task", to: "task", meaning: "\uD615\uC81C \uC21C\uC11C/\uC758\uC874(DAG). to\uAC00 \uBA3C\uC800 done\uC774\uC5B4\uC57C from ready" },
+  { name: "lineage", from: "task", to: "task", meaning: "patch \uACC4\uBCF4(\uC6D0\uBCF8 \uC544\uB798 \uCC28\uC218 \uCCB4\uC778). task \uB178\uB4DC\uC5D0\uB9CC" }
+];
+var WORKFLOW_STATES = [
+  "INIT",
+  "SCAN",
+  "CLARIFY",
+  "PRD",
+  "DECOMPOSE",
+  "ORCHESTRATING",
+  "JIRA",
+  "READY",
+  "BASELINE",
+  "CONTRACT_RUNNING",
+  "CODE_READY",
+  "CODE_RUNNING",
+  "CODE_DONE",
+  "TEST_RUNNING",
+  "TEST_DONE",
+  "REVIEW_RUNNING",
+  "DOCS_PENDING",
+  "COMMIT_PENDING",
+  "DONE"
+];
+var ACTION_TYPES = [
+  { name: "start", fromStates: null, toState: "SCAN", gates: [] },
+  { name: "clarify", fromStates: ["SCAN"], toState: "CLARIFY", gates: [] },
+  { name: "prd", fromStates: ["CLARIFY"], toState: "PRD", gates: ["CONFORMANCE_LEDGER"] },
+  { name: "oracle_done", fromStates: ["PRD", "JIRA"], toState: null, gates: ["SPEC_ORACLE_NOT_RUN"] },
+  { name: "decompose", fromStates: ["PRD"], toState: "DECOMPOSE", gates: [] },
+  { name: "subtask_start", fromStates: ["DECOMPOSE", "ORCHESTRATING"], toState: "ORCHESTRATING", gates: [] },
+  { name: "subtask_done", fromStates: ["ORCHESTRATING"], toState: "ORCHESTRATING", gates: [] },
+  { name: "integrate", fromStates: ["ORCHESTRATING"], toState: "DOCS_PENDING", gates: [] },
+  { name: "jira", fromStates: ["PRD"], toState: "JIRA", gates: [] },
+  { name: "ready", fromStates: ["JIRA", "PRD"], toState: "READY", gates: [] },
+  { name: "baseline_capture", fromStates: ["READY"], toState: "BASELINE", gates: ["BASELINE_RED", "BASELINE_NOT_RUN"] },
+  { name: "contract_start", fromStates: ["BASELINE"], toState: "CONTRACT_RUNNING", gates: [] },
+  { name: "contract_done", fromStates: ["CONTRACT_RUNNING"], toState: "CODE_READY", gates: ["CONTRACT_NOT_AUTHORED"] },
+  { name: "code_start", fromStates: ["CODE_READY", "REVIEW_RUNNING", "TEST_DONE"], toState: "CODE_RUNNING", gates: [] },
+  {
+    name: "code_done",
+    fromStates: ["CODE_RUNNING"],
+    toState: "CODE_DONE",
+    gates: ["ANALYZE_NOT_CALLED", "WIRING_GATE_NOT_SATISFIED", "BOOT_GATE_NOT_SATISFIED"]
+  },
+  { name: "test_start", fromStates: ["CODE_DONE"], toState: "TEST_RUNNING", gates: [] },
+  { name: "test_done", fromStates: ["TEST_RUNNING"], toState: "TEST_DONE", gates: ["TEST_EVIDENCE_MISMATCH"] },
+  { name: "review_start", fromStates: ["TEST_DONE"], toState: "REVIEW_RUNNING", gates: [] },
+  {
+    name: "review_done",
+    fromStates: ["REVIEW_RUNNING"],
+    toState: "DOCS_PENDING",
+    gates: ["PRD_COVERAGE_GATE_FAILED", "RUNTIME_UNVERIFIED_GATE_FAILED"]
+  },
+  { name: "docs_done", fromStates: ["DOCS_PENDING"], toState: "COMMIT_PENDING", gates: [] },
+  { name: "commit", fromStates: ["COMMIT_PENDING"], toState: "DONE", gates: [] },
+  { name: "status", fromStates: null, toState: null, gates: [] },
+  { name: "cancel", fromStates: null, toState: null, gates: [] }
+];
+var START_STATES = ["INIT", "DONE"];
+var CANCELLABLE_STATES = [
+  "SCAN",
+  "CLARIFY",
+  "PRD",
+  "DECOMPOSE",
+  "ORCHESTRATING",
+  "JIRA",
+  "READY",
+  "BASELINE",
+  "CONTRACT_RUNNING",
+  "CODE_READY",
+  "DOCS_PENDING",
+  "COMMIT_PENDING"
+];
+var OWNERSHIP = [
+  { concept: "\uC6CC\uD06C\uD50C\uB85C\uC6B0 \uC0C1\uD0DC(session)", owner: "plugin", note: "\uC0C1\uD0DC\uBA38\uC2E0\uC774 \uC18C\uC720\xB7\uAC15\uC81C" },
+  { concept: "\uB85C\uB4DC\uB9F5 \uB178\uB4DC status", owner: "plugin", note: "push(upsert). \uB300\uC2DC\uBCF4\uB4DC\uB294 \uC800\uC7A5\uB9CC" },
+  { concept: "WORK \uB370\uC774\uD130(tasks\xB7history\xB7checkpoints\xB7specs)", owner: "plugin", note: "\uB85C\uCEEC \uC6D0\uC7A5\uC774 \uC815\uBCF8" },
+  { concept: "git(\uCEE4\uBC0B\xB7remote \uAC10\uC9C0\xB7PR refs)", owner: "plugin", note: "\uD50C\uB7EC\uADF8\uC778\uC774 \uC218\uD589\xB7\uC218\uC9D1" },
+  { concept: "manual_status(\uC218\uB3D9 \uC644\uB8CC override)", owner: "dashboard", note: "\uD50C\uB7EC\uADF8\uC778 push\uAC00 \uB36E\uC9C0 \uC54A\uC74C" },
+  { concept: "\uB178\uB4DC \uC704\uCE58(pos)\xB7\uC21C\uC11C(depends_on)", owner: "dashboard", note: "\uC0AC\uB78C\uC774 \uCE94\uBC84\uC2A4\uC5D0\uC11C \uD3B8\uC9D1" },
+  { concept: "\uCCB4\uD06C\uD3EC\uC778\uD2B8 \uD3B8\uC9D1", owner: "dashboard", note: "\uD3B8\uC9D1\u2192\uD50C\uB7EC\uADF8\uC778\uC774 pull" },
+  { concept: "Bitbucket PAT", owner: "dashboard", note: "\uC554\uD638\uD654 \uC800\uC7A5" }
+];
+var INVARIANTS = [
+  {
+    id: "user-final-confirm",
+    enforcedBy: "gate",
+    statement: "AI\uB294 \uC2A4\uC2A4\uB85C \uC644\uB8CC \uBABB \uD568 \u2014 \uC0AC\uB78C\uC758 review_done(REQ-CONFIRM)\uC774 \uC720\uC77C \uCD5C\uC885 \uAC8C\uC774\uD2B8"
+  },
+  {
+    id: "async-asymmetry",
+    enforcedBy: "doc",
+    statement: "\uD50C\uB7EC\uADF8\uC778\u2192\uB300\uC2DC\uBCF4\uB4DC push(fire-and-forget), pull\uC740 \uD50C\uB7EC\uADF8\uC778\uC774. \uB300\uC2DC\uBCF4\uB4DC\uB294 \uD50C\uB7EC\uADF8\uC778\uC744 \uBABB \uBD80\uB978\uB2E4"
+  },
+  {
+    id: "no-silent-loss",
+    enforcedBy: "test",
+    statement: "\uC544\uC6C3\uBC14\uC6B4\uB4DC sync \uC2E4\uD328\uB294 \uCE68\uBB35 \uC720\uC2E4 \uAE08\uC9C0 \u2014 \uC7AC\uC2DC\uB3C4 \uD050(WAL) \uB610\uB294 \uBA85\uC2DC degrade+\uB85C\uADF8"
+  },
+  {
+    id: "single-source",
+    enforcedBy: "test",
+    statement: "\uD310\uBCC4\xB7\uD30C\uC2F1\xB7\uD544\uB4DC\xB7\uBC84\uC804\uC740 \uB2E8\uC77C \uC18C\uC2A4. \uBCF5\uBD99 \uAE08\uC9C0(parseReqHeading\xB7isUserConfirmReq\xB7titleToSlug + \uBAA8\uB378 drift)"
+  },
+  { id: "doer-wired", enforcedBy: "test", statement: "\uADDC\uCE59\uC740 \uC2E4\uC81C doer\uC5D0\uAC8C \uAD6C\uC870\uD654 \uD544\uB4DC\uB85C \uB3C4\uB2EC\uD574\uC57C(\uD504\uB85C\uC988\uB9CC X)" },
+  {
+    id: "cross-repo-contract",
+    enforcedBy: "test",
+    statement: "sync \uD544\uB4DC\uB294 2\uB808\uD3EC \uACC4\uC57D. schemaVersion \uC2E3\uACE0 \uC591\uBC29\uD5A5 graceful degrade(500 \uAE08\uC9C0)"
+  },
+  {
+    id: "ownership-preserved",
+    enforcedBy: "test",
+    statement: "\uD50C\uB7EC\uADF8\uC778 sync\uB294 \uB300\uC2DC\uBCF4\uB4DC \uC815\uBCF8 \uCEEC\uB7FC(manual_status\xB7pos)\uC744 \uB36E\uC9C0 \uC54A\uB294\uB2E4"
+  },
+  { id: "no-fetch-bypass", enforcedBy: "test", statement: "\uC544\uC6C3\uBC14\uC6B4\uB4DC\uB294 \uC7AC\uC2DC\uB3C4 \uD050\uB97C \uAC70\uCE5C\uB2E4 \u2014 void fetch \uBC14\uC774\uD328\uC2A4 \uAE08\uC9C0" },
+  { id: "user-truth", enforcedBy: "doc", statement: "\uC0AC\uC6A9\uC790\uAC00 \uBCF4\uB294 \uC0C1\uD0DC = \uC2E4\uC81C \uC0C1\uD0DC. \uAD34\uB9AC\uB294 \uACE7 \uBC84\uADF8" },
+  { id: "gate-not-skippable", enforcedBy: "gate", statement: "\uC6CC\uD06C\uD50C\uB85C\uC6B0 \uC21C\uC11C\uB294 \uC11C\uBC84\uAC00 \uAC15\uC81C(PREREQUISITES)" }
+];
+var BOUNDARIES = [
+  {
+    name: "handoff",
+    contract: "orchestrator\u2192doer \uC704\uC784(code_start data.reqs \uB4F1 \uAD6C\uC870\uD654 \uD544\uB4DC)",
+    invariantIds: ["doer-wired"]
+  },
+  {
+    name: "sync",
+    contract: "\uD50C\uB7EC\uADF8\uC778 sync payload \u2194 \uB300\uC2DC\uBCF4\uB4DC read \uD544\uB4DC(schemaVersion)",
+    invariantIds: ["cross-repo-contract", "no-silent-loss", "ownership-preserved", "no-fetch-bypass"]
+  },
+  {
+    name: "lifecycle",
+    contract: "\uBD80\uD305\xB75\uBD84 \uC8FC\uAE30 pull\xB7\uD050 replay \uC0DD\uBA85\uC8FC\uAE30",
+    invariantIds: ["no-silent-loss", "no-fetch-bypass"]
+  },
+  {
+    name: "workflow",
+    contract: "\uC0C1\uD0DC\uBA38\uC2E0 \uC21C\uC11C\xB7\uC644\uB8CC\uC758 \uC815\uC758",
+    invariantIds: ["gate-not-skippable", "user-final-confirm"]
+  }
+];
+var ONTOLOGY = {
+  objectTypes: OBJECT_TYPES,
+  allStatuses: ALL_STATUSES,
+  linkTypes: LINK_TYPES,
+  workflowStates: WORKFLOW_STATES,
+  actionTypes: ACTION_TYPES,
+  startStates: START_STATES,
+  cancellableStates: CANCELLABLE_STATES,
+  ownership: OWNERSHIP,
+  invariants: INVARIANTS,
+  boundaries: BOUNDARIES
 };
-var RESULT_STATE = {
-  start: "SCAN",
-  clarify: "CLARIFY",
-  prd: "PRD",
-  ready: "READY",
-  baseline_capture: "BASELINE",
-  contract_start: "CONTRACT_RUNNING",
-  contract_done: "CODE_READY",
-  decompose: "DECOMPOSE",
-  subtask_start: "ORCHESTRATING",
-  subtask_done: "ORCHESTRATING",
-  integrate: "CODE_RUNNING",
-  code_start: "CODE_RUNNING",
-  code_done: "CODE_DONE",
-  test_start: "TEST_RUNNING",
-  test_done: "TEST_DONE",
-  review_start: "REVIEW_RUNNING",
-  review_done: "DOCS_PENDING",
-  docs_done: "COMMIT_PENDING",
-  commit: "DONE"
-};
+
+// src/ontology/derive.ts
+var PREREQUISITES = Object.fromEntries(
+  ACTION_TYPES.filter((a) => a.fromStates !== null).map((a) => [a.name, a.fromStates])
+);
+var RESULT_STATE = Object.fromEntries(
+  ACTION_TYPES.filter((a) => a.toState !== null).map((a) => [a.name, a.toState])
+);
+function deriveAllowedActions(state) {
+  const fromOntology = ACTION_TYPES.filter((a) => a.fromStates !== null && a.fromStates.includes(state)).map(
+    (a) => a.name
+  );
+  const universal = [];
+  if (START_STATES.includes(state)) universal.push("start");
+  universal.push("status");
+  if (CANCELLABLE_STATES.includes(state)) universal.push("cancel");
+  return [...fromOntology, ...universal];
+}
+var ALLOWED_ACTIONS_BY_STATE = Object.fromEntries(
+  WORKFLOW_STATES.map((s) => [s, deriveAllowedActions(s)])
+);
+
+// src/types.ts
+var PLAN_ACTIONS = ACTION_TYPES.map((a) => a.name);
+var planArgsActionEnum = PLAN_ACTIONS;
 var NEXT_ACTION_HINTS = {
   INIT: ["start"],
   SCAN: ["clarify"],
   CLARIFY: ["prd"],
-  PRD: ["ready"],
-  READY: ["baseline_capture", "decompose"],
+  PRD: ["ready", "decompose", "jira"],
+  DECOMPOSE: ["subtask_start"],
+  ORCHESTRATING: ["subtask_start", "subtask_done", "integrate"],
+  JIRA: ["ready"],
+  READY: ["baseline_capture"],
   BASELINE: ["contract_start"],
   CONTRACT_RUNNING: ["contract_done"],
   CODE_READY: ["code_start"],
-  DECOMPOSE: ["subtask_start"],
-  ORCHESTRATING: ["subtask_start", "subtask_done", "integrate"],
   CODE_RUNNING: ["code_done"],
   CODE_DONE: ["test_start"],
   TEST_RUNNING: ["test_done"],
@@ -28945,7 +29091,7 @@ function createEmptySessionData() {
 // src/planStateMachine.ts
 function checkPrerequisite(action, currentState) {
   const allowed = PREREQUISITES[action];
-  if (allowed.length === 0) {
+  if (!allowed || allowed.length === 0) {
     return { ok: true };
   }
   if (currentState === null) {
@@ -29007,7 +29153,11 @@ function applyTransition(session, action, newSessionId, params) {
   const current = session;
   const resultState = RESULT_STATE[action];
   if (!resultState) {
-    return { ok: false, errorCode: "PREREQUISITE_FAILED", message: `\uC54C \uC218 \uC5C6\uB294 action: ${action}` };
+    const declared = ACTION_TYPES.find((a) => a.name === action);
+    if (!declared || declared.toState !== null) {
+      return { ok: false, errorCode: "PREREQUISITE_FAILED", message: `\uC54C \uC218 \uC5C6\uB294 action: ${action}` };
+    }
+    return { ok: true, session: current, nextActionHints: NEXT_ACTION_HINTS[current.state] };
   }
   const next = { ...current, state: resultState };
   return { ok: true, session: next, nextActionHints: NEXT_ACTION_HINTS[resultState] };
@@ -29057,13 +29207,18 @@ function checkTestEvidenceGate(claimedTestPassed, evidence) {
 
 // src/tools/sugoPlan.ts
 var sugoPlanInputSchema = {
-  action: external_exports.enum(PLAN_ACTIONS).describe("\uD30C\uC774\uD504\uB77C\uC778 \uC0C1\uD0DC\uBA38\uC2E0 \uC561\uC158"),
+  action: external_exports.enum(planArgsActionEnum).describe("\uD30C\uC774\uD504\uB77C\uC778 \uC0C1\uD0DC\uBA38\uC2E0 \uC561\uC158"),
   sessionId: external_exports.string().optional().describe("start \uC774\uC678\uC758 \uBAA8\uB4E0 action\uC5D0 \uD544\uC694. start \uACB0\uACFC\uB85C \uBC1C\uAE09\uB428"),
   projectPath: external_exports.string().optional().describe("start action\uC5D0 \uD544\uC694"),
   featureName: external_exports.string().optional().describe("start action\uC5D0 \uC120\uD0DD\uC801\uC73C\uB85C \uC0AC\uC6A9"),
   workResultPath: external_exports.string().optional().describe("start action: patch \uC9C4\uC785\uC810(\xA77) \u2014 \uAE30\uC874 work-result.md(\uB610\uB294 work-result-patch-vN.md) \uACBD\uB85C. \uBBF8\uC785\uB825\uC2DC \uAE30\uC874(\uC2E0\uADDC PRD) \uB3D9\uC791"),
   seed: external_exports.string().optional().describe("start action(\xA77.1 Patch \uC131\uC219\uD654): \uC774\uBC88 patch \uCC28\uC218\uC5D0 \uB300\uD55C \uC0AC\uC6A9\uC790 \uC9C0\uC2DC. review_done\uC774 work-result\uC5D0 \uD568\uAED8 \uAE30\uB85D\uD55C\uB2E4"),
   prdContent: external_exports.string().optional().describe("prd action\uC5D0 \uD544\uC694. \uBCF8\uBB38 \u2265100\uC790, REQ-N \uD0DC\uADF8 \u22651"),
+  specPath: external_exports.string().optional().describe("prd action(\xA75.0): \uB300\uC870\uD560 \uC6D0\uBCF8 \uC2A4\uD399 \uBB38\uC11C(q-spec) \uACBD\uB85C. \uC2E4\uC7AC\uD558\uBA74 specOracle\uC774 \uCF1C\uC838 ready \uC804\uC5D0 oracle_done\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4"),
+  uncovered: external_exports.array(external_exports.object({ quote: external_exports.string(), reason: external_exports.string() })).optional().describe("oracle_done: \uC6D0\uBCF8 \uC2A4\uD399\uC5D0 \uC788\uC73C\uB098 PRD\uAC00 \uBABB \uB36E\uC740 \uD56D\uBAA9\uB4E4(\uC778\uC6A9 + \uC0AC\uC720). 1\uAC74 \uC774\uC0C1\uC774\uBA74 overrideReason \uD544\uC218"),
+  overrideReason: external_exports.string().optional().describe("oracle_done: \uBBF8\uCEE4\uBC84 \uD56D\uBAA9\uC744 \uB0A8\uAE34 \uCC44 \uC9C4\uD589\uD558\uB294 \uC0AC\uC720"),
+  jiraOption: external_exports.enum(["new", "link", "skip"]).optional().describe("jira action\uC5D0 \uD544\uC694. 'link'\uBA74 jiraKey\uB3C4 \uD544\uC694"),
+  jiraKey: external_exports.string().optional().describe("jira action\uC5D0\uC11C jiraOption:'link'\uC77C \uB54C\uC758 \uAE30\uC874 \uD2F0\uCF13 \uD0A4"),
   changedFiles: external_exports.array(external_exports.string()).optional().describe("code_done action\uC5D0\uC11C \uC774\uBC88 \uCF54\uB529\uC73C\uB85C \uBC14\uB010 \uD30C\uC77C \uBAA9\uB85D"),
   dependencyRemoved: external_exports.boolean().optional().describe("code_done: \uC758\uC874\uC131\uC744 \uC81C\uAC70/\uB0B4\uC7AC\uD654\uD588\uB294\uC9C0(registration-glue \uAC8C\uC774\uD2B8 \uD2B8\uB9AC\uAC70)"),
   registrationGlueChecked: external_exports.boolean().optional().describe("code_done: \uB4F1\uB85D \uAE00\uB8E8(\uBE48 \uB4F1\uB85D \uBA54\uD0C0) diff\uB97C \uC810\uAC80\uD588\uB294\uC9C0"),
@@ -29136,6 +29291,18 @@ async function handleSugoPlan(rawArgs) {
         `PRD \uAC80\uC99D \uC2E4\uD328: \uAE38\uC774=${validation.length}\uC790(\u2265100 \uD544\uC694), REQ \uD0DC\uADF8=${validation.reqCount}\uAC1C(\u22651 \uD544\uC694)`
       );
     }
+  }
+  if (action === "oracle_done") {
+    const oracleResult = checkOracleDone(args2.uncovered, args2.overrideReason);
+    if (!oracleResult.ok) return errorResult9(oracleResult.code, oracleResult.message);
+  }
+  if (action === "jira") {
+    const jiraResult = checkJiraOption(args2.jiraOption, args2.jiraKey);
+    if (!jiraResult.ok) return errorResult9(jiraResult.code, jiraResult.message);
+  }
+  if (action === "ready" && existing) {
+    const oracleGate = checkSpecOracleGate(existing.data.specOracle);
+    if (!oracleGate.ok) return errorResult9(oracleGate.code, oracleGate.message);
   }
   if (action === "baseline_capture" && existing) {
     const baselineRequired = existing.data.baselineGate?.required ?? false;
@@ -29396,6 +29563,43 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "start" && args2.seed) {
     session = { ...session, data: { ...session.data, seed: args2.seed } };
+  }
+  if (action === "prd" && args2.specPath) {
+    const specExists = await readFile19(args2.specPath, "utf-8").then(
+      () => true,
+      () => false
+    );
+    if (specExists) {
+      session = {
+        ...session,
+        data: { ...session.data, specOracle: { required: true, ran: false, specPath: args2.specPath } }
+      };
+    }
+  }
+  if (action === "oracle_done") {
+    const prev = session.data.specOracle ?? { required: false, ran: false };
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        specOracle: {
+          ...prev,
+          ran: true,
+          ranAt: (/* @__PURE__ */ new Date()).toISOString(),
+          uncovered: args2.uncovered,
+          overrideReason: args2.overrideReason
+        }
+      }
+    };
+  }
+  if (action === "jira" && args2.jiraOption) {
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        jira: { option: args2.jiraOption, jiraKey: args2.jiraKey, recordedAt: (/* @__PURE__ */ new Date()).toISOString() }
+      }
+    };
   }
   if (action === "prd" && args2.prdContent) {
     const isPatch = session.data.mode === "patch" && session.data.patch;
@@ -30267,6 +30471,63 @@ async function handleSugoVersion() {
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
+// src/tools/sugoOntology.ts
+var VIEWS = [
+  "objectTypes",
+  "allStatuses",
+  "linkTypes",
+  "workflowStates",
+  "actionTypes",
+  "startStates",
+  "cancellableStates",
+  "ownership",
+  "invariants",
+  "boundaries"
+];
+var sugoOntologyInputSchema = {
+  view: external_exports.enum(VIEWS).optional().describe("\uC870\uD68C\uD560 \uC139\uC158. \uC0DD\uB7B5\uD558\uBA74 \uC804\uCCB4 \uBAA8\uB378 + \uD30C\uC0DD \uD14C\uC774\uBE14\uC744 \uBC18\uD658\uD55C\uB2E4"),
+  boundary: external_exports.string().optional().describe("\uACB0\uD568 \uD45C\uBA74 \uC774\uB984(handoff|sync|lifecycle|workflow). \uD574\uB2F9 \uACBD\uACC4\uC640 \uAC70\uAE30 \uAC78\uB9B0 \uBD88\uBCC0\uC2DD\uC744 \uD568\uAED8 \uBC18\uD658\uD55C\uB2E4")
+};
+var SugoOntologyArgs = external_exports.object(sugoOntologyInputSchema);
+async function handleSugoOntology(rawArgs) {
+  const args2 = SugoOntologyArgs.parse(rawArgs);
+  if (args2.boundary) {
+    const boundary = BOUNDARIES.find((b) => b.name === args2.boundary);
+    if (!boundary) {
+      return json({
+        ok: false,
+        errorCode: "UNKNOWN_BOUNDARY",
+        message: `\uC54C \uC218 \uC5C6\uB294 boundary: ${args2.boundary}`,
+        available: BOUNDARIES.map((b) => b.name)
+      });
+    }
+    return json({
+      ok: true,
+      boundary: {
+        name: boundary.name,
+        contract: boundary.contract,
+        invariants: boundary.invariantIds.map((id) => INVARIANTS.find((i2) => i2.id === id))
+      }
+    });
+  }
+  if (args2.view) {
+    return json({ ok: true, view: args2.view, [args2.view]: ONTOLOGY[args2.view] });
+  }
+  return json({
+    ok: true,
+    ontology: ONTOLOGY,
+    derived: {
+      prerequisites: PREREQUISITES,
+      resultState: RESULT_STATE,
+      allowedActionsByState: ALLOWED_ACTIONS_BY_STATE
+    },
+    note: "derived.*\uB294 ontology.actionTypes\uC5D0\uC11C \uD30C\uC0DD\uB41C \uAC12\uC774\uB2E4(\xA72.8) \u2014 \uBCC4\uB3C4\uB85C \uC190\uAD00\uB9AC\uB418\uB294 \uC0AC\uBCF8\uC774 \uC544\uB2C8\uB2E4."
+  });
+}
+function json(payload) {
+  return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+}
+
 // src/tools/sugoWorkspace.ts
 var sugoWorkspaceInputSchema = {
   action: external_exports.enum(["add", "list", "get", "remember", "recall"]),
@@ -30553,6 +30814,15 @@ server.registerTool(
     inputSchema: sugoVersionInputSchema
   },
   handleSugoVersion
+);
+server.registerTool(
+  "sugo_ontology",
+  {
+    title: "Operational ontology (readOnly)",
+    description: "\xA72 \uC624\uD37C\uB808\uC774\uC154\uB110 \uC628\uD1A8\uB85C\uC9C0 \uC870\uD68C \u2014 \uC0C1\uD0DC\xB7\uC561\uC158\xB7\uC804\uC81C\xB7\uC18C\uC720\uAD8C\xB7\uBD88\uBCC0\uC2DD\xB7\uACBD\uACC4\uC758 \uC815\uBCF8. view\uB85C \uC139\uC158\uC744 \uC881\uD788\uAC70\uB098 boundary(handoff|sync|lifecycle|workflow)\uB85C \uADF8 \uC774\uC74C\uC0C8\uC758 \uACC4\uC57D\uACFC \uBD88\uBCC0\uC2DD\uC744 \uD568\uAED8 \uBCF8\uB2E4.",
+    inputSchema: sugoOntologyInputSchema
+  },
+  handleSugoOntology
 );
 async function main() {
   void syncPluginVersion(currentSugoVersion());

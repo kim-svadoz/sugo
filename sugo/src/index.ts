@@ -39,6 +39,7 @@ import { handleSugoTask, sugoTaskInputSchema } from "./tools/sugoTask.js";
 import { handleSugoUpdate, sugoUpdateInputSchema } from "./tools/sugoUpdate.js";
 import { handleSugoValidate, sugoValidateInputSchema } from "./tools/sugoValidate.js";
 import { handleSugoVersion, sugoVersionInputSchema } from "./tools/sugoVersion.js";
+import { handleSugoOntology, sugoOntologyInputSchema } from "./tools/sugoOntology.js";
 import { handleSugoWorkspace, sugoWorkspaceInputSchema } from "./tools/sugoWorkspace.js";
 
 const server = new McpServer({
@@ -354,6 +355,17 @@ server.registerTool(
     inputSchema: sugoVersionInputSchema,
   },
   handleSugoVersion,
+);
+
+server.registerTool(
+  "sugo_ontology",
+  {
+    title: "Operational ontology (readOnly)",
+    description:
+      "§2 오퍼레이셔널 온톨로지 조회 — 상태·액션·전제·소유권·불변식·경계의 정본. view로 섹션을 좁히거나 boundary(handoff|sync|lifecycle|workflow)로 그 이음새의 계약과 불변식을 함께 본다.",
+    inputSchema: sugoOntologyInputSchema,
+  },
+  handleSugoOntology,
 );
 
 async function main() {

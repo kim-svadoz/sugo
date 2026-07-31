@@ -183,17 +183,17 @@ describe("§10 계약테스트 실행증거 — opt-in", () => {
 });
 
 describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
-  async function toReady(prd = TWO_REQ_PRD): Promise<string> {
+  // v2 §2.4: decompose 진입점은 PRD다(구 READY). 비대 PRD를 쪼개질지는 PRD 직후에 정한다.
+  async function toPrd(prd = TWO_REQ_PRD): Promise<string> {
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId as string;
     await call(handleSugoPlan, { action: "clarify", sessionId });
     await call(handleSugoPlan, { action: "prd", sessionId, prdContent: prd });
-    await call(handleSugoPlan, { action: "ready", sessionId });
     return sessionId;
   }
 
   it("사이클이 있는 매니페스트는 decompose 시점에 거부된다", async () => {
-    const sessionId = await toReady();
+    const sessionId = await toPrd();
     const result = await call(handleSugoPlan, {
       action: "decompose",
       sessionId,
@@ -209,7 +209,7 @@ describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
   });
 
   it("요구사항이 커버되지 않으면 decompose가 거부된다", async () => {
-    const sessionId = await toReady();
+    const sessionId = await toPrd();
     const result = await call(handleSugoPlan, {
       action: "decompose",
       sessionId,
@@ -219,8 +219,8 @@ describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
     expect(result.data.errorCode).toBe("MANIFEST_REQUIREMENT_UNCOVERED");
   });
 
-  it("전체 흐름: decompose→subtask_start×2→subtask_done×2→integrate→code_done까지 이어진다", async () => {
-    const sessionId = await toReady();
+  it("전체 흐름: decompose→subtask_start×2→subtask_done×2→integrate→docs_done까지 이어진다", async () => {
+    const sessionId = await toPrd();
     const decomposeResult = await call(handleSugoPlan, {
       action: "decompose",
       sessionId,
@@ -251,22 +251,19 @@ describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
     await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-1", subtaskChangedFiles: ["email.ts"] });
     await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-2", subtaskChangedFiles: ["social.ts"] });
 
+    // v2 §4 흐름도: integrate는 CODE_RUNNING이 아니라 DOCS_PENDING으로 합류한다 — 서브태스크가
+    // 각자 구현을 끝낸 상태라 통합 후엔 코딩으로 되돌아가지 않고 문서화→커밋으로 간다.
     const integrateResult = await call(handleSugoPlan, { action: "integrate", sessionId });
     expect(integrateResult.isError).toBe(false);
-    expect(integrateResult.data.state).toBe("CODE_RUNNING");
+    expect(integrateResult.data.state).toBe("DOCS_PENDING");
 
-    await call(handleSugoAnalyze, { sessionId, changedFiles: ["email.ts", "social.ts"] });
-    const codeDone = await call(handleSugoPlan, {
-      action: "code_done",
-      sessionId,
-      changedFiles: ["email.ts", "social.ts"],
-    });
-    expect(codeDone.isError).toBe(false);
-    expect(codeDone.data.state).toBe("CODE_DONE");
+    const docsDone = await call(handleSugoPlan, { action: "docs_done", sessionId });
+    expect(docsDone.isError).toBe(false);
+    expect(docsDone.data.state).toBe("COMMIT_PENDING");
   });
 
   it("실제 변경파일이 겹치면 integrate 시점에 거부된다(계획엔 안 겹쳤어도)", async () => {
-    const sessionId = await toReady();
+    const sessionId = await toPrd();
     await call(handleSugoPlan, {
       action: "decompose",
       sessionId,

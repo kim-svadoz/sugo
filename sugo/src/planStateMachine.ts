@@ -1,3 +1,4 @@
+import { ACTION_TYPES } from "./ontology/model.js";
 import {
   createEmptySessionData,
   NEXT_ACTION_HINTS,
@@ -25,8 +26,10 @@ export interface TransitionResult {
  * start/status/cancel은 전제상태가 없어(빈 배열) 항상 통과 — 단, cancel은 세션 존재를 요구(호출부에서 처리).
  */
 export function checkPrerequisite(action: PlanAction, currentState: PlanSession["state"] | null): TransitionResult {
+  // §2.8 파생 규칙상 PREREQUISITES는 fromStates!==null인 액션만 담는다 —
+  // 키 부재 = "전제 없음"(start/status/cancel)이고, 빈 배열과 같은 뜻이다.
   const allowed = PREREQUISITES[action];
-  if (allowed.length === 0) {
+  if (!allowed || allowed.length === 0) {
     return { ok: true };
   }
   if (currentState === null) {
@@ -104,7 +107,18 @@ export function applyTransition(
   const current = session as PlanSession;
   const resultState = RESULT_STATE[action];
   if (!resultState) {
-    return { ok: false, errorCode: "PREREQUISITE_FAILED", message: `알 수 없는 action: ${action}` };
+    // §2.4 `toState: null` = **기록성 액션**(현재는 oracle_done). 전제는 검사하되 상태는 그대로
+    // 둔다 — 이게 v2 데드락 수정의 핵심이다. oracle_done이 상태를 옮겨버리면 PRD/JIRA 중
+    // 한쪽에서만 기록할 수 있게 되고, 다른 쪽에서 온 세션은 ready가 영영 안 열린다.
+    // 부수효과(specOracle.ran 기록)는 호출부(tools/sugoPlan.ts)가 세션 데이터에 쓴다.
+    //
+    // 온톨로지에 없는 액션이 여기 오면 그건 4계층이 갈라졌다는 뜻이라 통과시키면 안 된다
+    // (gate-consistency.test.ts가 CI에서 먼저 잡지만, 런타임도 열어두지 않는다).
+    const declared = ACTION_TYPES.find((a) => a.name === action);
+    if (!declared || declared.toState !== null) {
+      return { ok: false, errorCode: "PREREQUISITE_FAILED", message: `알 수 없는 action: ${action}` };
+    }
+    return { ok: true, session: current, nextActionHints: NEXT_ACTION_HINTS[current.state] };
   }
   const next: PlanSession = { ...current, state: resultState };
   return { ok: true, session: next, nextActionHints: NEXT_ACTION_HINTS[resultState] };

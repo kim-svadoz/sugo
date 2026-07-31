@@ -34,7 +34,11 @@ export type GateBlockCode =
   | "MANIFEST_FILE_OVERLAP"
   | "MANIFEST_REQUIREMENT_UNCOVERED"
   | "SUBTASK_NOT_FOUND"
-  | "SUBTASKS_INCOMPLETE";
+  | "SUBTASKS_INCOMPLETE"
+  | "SPEC_ORACLE_NOT_RUN"
+  | "ORACLE_OVERRIDE_REASON_REQUIRED"
+  | "JIRA_OPTION_REQUIRED"
+  | "JIRA_KEY_REQUIRED";
 
 export interface GateCheckResult {
   ok: boolean;
@@ -262,5 +266,61 @@ export function checkRuntimeVerificationGate(
     );
   }
 
+  return ok();
+}
+
+// ── §5.0 SPEC_ORACLE_NOT_RUN / 설계안·E.4 ────────────────────────────────
+
+export interface SpecOracleState {
+  /** clarify의 q-spec 답변 경로가 실재할 때만 true(§설계안 prd 부수효과). */
+  required: boolean;
+  ran: boolean;
+  ranAt?: string;
+  specPath?: string;
+  uncovered?: { quote: string; reason: string }[];
+  overrideReason?: string;
+}
+
+/**
+ * `ready` 차단 게이트. PRD를 썼다는 것과 **원본 스펙 문서를 실제로 대조했다는 것은 다른 사실**이다.
+ * 대조 없이 넘어가면 스펙에만 있고 PRD엔 없는 요구사항이 조용히 사라진 채 코딩이 시작된다.
+ *
+ * required가 아닐 때는 no-op — q-spec을 준 세션에서만 켜지는 조건부 게이트다(위험할 때만 조인다).
+ * specOracle 자체가 없는 레거시 세션도 통과시킨다(하위호환, §5 "레거시 세션엔 기존 동작").
+ */
+export function checkSpecOracleGate(specOracle: SpecOracleState | undefined): GateCheckResult {
+  if (!specOracle?.required) return ok();
+  if (specOracle.ran) return ok();
+  return fail(
+    "SPEC_ORACLE_NOT_RUN",
+    "q-spec 원본 스펙 대조(oracle)가 아직 기록되지 않았습니다 — sugo_plan({action:'oracle_done', ...})으로 대조 결과를 먼저 기록하세요.",
+  );
+}
+
+/**
+ * 설계안: 미커버 항목을 보고하면서 사유를 안 밝히는 것을 막는다. "스펙에 있는데 PRD엔
+ * 없다"를 인지한 채로 그냥 넘어가는 게 가장 위험한 경로라, 넘어가려면 **왜 넘어가는지**를
+ * 남기게 한다(차단이 아니라 기록 강제 — 정직한 탈출구는 열어둔다).
+ */
+export function checkOracleDone(
+  uncovered: { quote: string; reason: string }[] | undefined,
+  overrideReason: string | undefined,
+): GateCheckResult {
+  if (!uncovered || uncovered.length === 0) return ok();
+  if (overrideReason && overrideReason.trim().length > 0) return ok();
+  return fail(
+    "ORACLE_OVERRIDE_REASON_REQUIRED",
+    `미커버 항목 ${uncovered.length}건을 보고했습니다 — 그대로 진행하려면 overrideReason(왜 지금 커버하지 않는지)이 필요합니다.`,
+  );
+}
+
+export type JiraOption = "new" | "link" | "skip";
+
+/** 설계안: `jiraOption` 필수, `link`면 `jiraKey` 필수. */
+export function checkJiraOption(option: string | undefined, jiraKey: string | undefined): GateCheckResult {
+  if (!option) return fail("JIRA_OPTION_REQUIRED", "jira action에는 jiraOption('new'|'link'|'skip')이 필요합니다.");
+  if (option === "link" && !(jiraKey && jiraKey.trim().length > 0)) {
+    return fail("JIRA_KEY_REQUIRED", "jiraOption:'link'에는 연결할 jiraKey가 필요합니다.");
+  }
   return ok();
 }

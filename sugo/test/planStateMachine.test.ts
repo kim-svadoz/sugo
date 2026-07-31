@@ -182,10 +182,18 @@ describe("checkPrerequisite 단위 동작", () => {
 });
 
 describe("§10 decompose 오케스트레이션 — 순서강제", () => {
-  it("READY에서 decompose로 진입할 수 있다", () => {
-    const result = applyTransition(sessionAt("READY"), "decompose", "sid", {});
+  // v2 §2.4: decompose의 진입점은 READY가 아니라 **PRD**다. 비대 PRD를 쪼개는 결정은 PRD를
+  // 쓴 직후에 내리는 것이지, ready(구현 착수 승인)를 받은 뒤가 아니다.
+  it("PRD에서 decompose로 진입할 수 있다", () => {
+    const result = applyTransition(sessionAt("PRD"), "decompose", "sid", {});
     expect(result.ok).toBe(true);
     expect(result.session?.state).toBe("DECOMPOSE");
+  });
+
+  it("READY에서 decompose는 거부된다(v2에서 진입점이 PRD로 옮겨짐)", () => {
+    const result = applyTransition(sessionAt("READY"), "decompose", "sid", {});
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("PREREQUISITE_FAILED");
   });
 
   it("DECOMPOSE에서 subtask_start로 ORCHESTRATING에 진입한다", () => {
@@ -206,10 +214,13 @@ describe("§10 decompose 오케스트레이션 — 순서강제", () => {
     expect(result.session?.state).toBe("ORCHESTRATING");
   });
 
-  it("ORCHESTRATING에서 integrate로 CODE_RUNNING에 합류한다(기존 파이프라인 재사용)", () => {
+  // v2 §2.4/§4 흐름도: integrate는 CODE_RUNNING이 아니라 **DOCS_PENDING**으로 합류한다.
+  // 서브태스크 각각이 이미 자기 구현을 끝낸 상태라, 통합 후에는 코딩 단계로 되돌아갈 게 아니라
+  // 문서화→커밋으로 이어진다.
+  it("ORCHESTRATING에서 integrate로 DOCS_PENDING에 합류한다", () => {
     const result = applyTransition(sessionAt("ORCHESTRATING"), "integrate", "sid", {});
     expect(result.ok).toBe(true);
-    expect(result.session?.state).toBe("CODE_RUNNING");
+    expect(result.session?.state).toBe("DOCS_PENDING");
   });
 
   it("DECOMPOSE를 거치지 않고 바로 subtask_done을 호출하면 거부된다", () => {
@@ -218,16 +229,61 @@ describe("§10 decompose 오케스트레이션 — 순서강제", () => {
     expect(result.errorCode).toBe("PREREQUISITE_FAILED");
   });
 
-  it("READY가 아닌 상태에서 decompose를 호출하면 거부된다", () => {
+  it("PRD가 아닌 상태에서 decompose를 호출하면 거부된다", () => {
     const result = applyTransition(sessionAt("CODE_RUNNING"), "decompose", "sid", {});
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("PREREQUISITE_FAILED");
   });
 
-  it("integrate 이후 CODE_RUNNING에서 정상적으로 code_done까지 이어진다", () => {
+  it("integrate 이후 DOCS_PENDING에서 docs_done→commit으로 이어진다", () => {
     let s = applyTransition(sessionAt("ORCHESTRATING"), "integrate", "sid", {}).session!;
-    expect(s.state).toBe("CODE_RUNNING");
-    s = applyTransition(s, "code_done", s.id, {}).session!;
-    expect(s.state).toBe("CODE_DONE");
+    expect(s.state).toBe("DOCS_PENDING");
+    s = applyTransition(s, "docs_done", s.id, {}).session!;
+    expect(s.state).toBe("COMMIT_PENDING");
+    s = applyTransition(s, "commit", s.id, {}).session!;
+    expect(s.state).toBe("DONE");
+  });
+});
+
+/**
+ * v2 §2.4 신규 액션. `oracle_done`은 **상태를 바꾸지 않는** 유일한 기록성 액션이라 전이 로직에서
+ * 별도 취급된다 — 이게 깨지면 PRD/JIRA 중 한쪽에서만 오라클을 기록할 수 있게 되어 ready가
+ * 영영 안 열리는 데드락이 재발한다.
+ */
+describe("v2 신규 액션 — jira / oracle_done", () => {
+  it("PRD에서 jira로 진입한다", () => {
+    const result = applyTransition(sessionAt("PRD"), "jira", "sid", {});
+    expect(result.ok).toBe(true);
+    expect(result.session?.state).toBe("JIRA");
+  });
+
+  it("JIRA에서 ready로 이어진다", () => {
+    const result = applyTransition(sessionAt("JIRA"), "ready", "sid", {});
+    expect(result.ok).toBe(true);
+    expect(result.session?.state).toBe("READY");
+  });
+
+  it("jira를 건너뛰고 PRD에서 곧장 ready로도 갈 수 있다", () => {
+    const result = applyTransition(sessionAt("PRD"), "ready", "sid", {});
+    expect(result.ok).toBe(true);
+    expect(result.session?.state).toBe("READY");
+  });
+
+  it("oracle_done은 PRD에서 상태를 바꾸지 않는다", () => {
+    const result = applyTransition(sessionAt("PRD"), "oracle_done", "sid", {});
+    expect(result.ok).toBe(true);
+    expect(result.session?.state).toBe("PRD");
+  });
+
+  it("oracle_done은 JIRA에서도 상태를 바꾸지 않는다(양쪽 진입 — 데드락 수정)", () => {
+    const result = applyTransition(sessionAt("JIRA"), "oracle_done", "sid", {});
+    expect(result.ok).toBe(true);
+    expect(result.session?.state).toBe("JIRA");
+  });
+
+  it("PRD/JIRA가 아닌 상태에서 oracle_done은 거부된다", () => {
+    const result = applyTransition(sessionAt("READY"), "oracle_done", "sid", {});
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("PREREQUISITE_FAILED");
   });
 });

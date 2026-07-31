@@ -22,6 +22,9 @@ import {
   detectBaselineSignals,
   validatePrd,
   validateSummaryQuality,
+  checkJiraOption,
+  checkOracleDone,
+  checkSpecOracleGate,
   type GateBlockCode,
   type RuntimeCheck,
 } from "../gates.js";
@@ -47,10 +50,10 @@ import { PatchEntryError, resolvePatchContext, type PatchContext } from "../patc
 import { applyTransition } from "../planStateMachine.js";
 import { generateSessionId, loadSession, saveSession, sessionExists } from "../session.js";
 import { checkTestEvidenceGate, isFullVerifyEnforceable } from "../testEvidence.js";
-import { PLAN_ACTIONS, type PlanSession } from "../types.js";
+import { planArgsActionEnum, type PlanAction, type PlanSession } from "../types.js";
 
 export const sugoPlanInputSchema = {
-  action: z.enum(PLAN_ACTIONS).describe("파이프라인 상태머신 액션"),
+  action: z.enum(planArgsActionEnum).describe("파이프라인 상태머신 액션"),
   sessionId: z.string().optional().describe("start 이외의 모든 action에 필요. start 결과로 발급됨"),
   projectPath: z.string().optional().describe("start action에 필요"),
   featureName: z.string().optional().describe("start action에 선택적으로 사용"),
@@ -63,6 +66,20 @@ export const sugoPlanInputSchema = {
     .optional()
     .describe("start action(§7.1 Patch 성숙화): 이번 patch 차수에 대한 사용자 지시. review_done이 work-result에 함께 기록한다"),
   prdContent: z.string().optional().describe("prd action에 필요. 본문 ≥100자, REQ-N 태그 ≥1"),
+  specPath: z
+    .string()
+    .optional()
+    .describe("prd action(§5.0): 대조할 원본 스펙 문서(q-spec) 경로. 실재하면 specOracle이 켜져 ready 전에 oracle_done이 필수가 된다"),
+  uncovered: z
+    .array(z.object({ quote: z.string(), reason: z.string() }))
+    .optional()
+    .describe("oracle_done: 원본 스펙에 있으나 PRD가 못 덮은 항목들(인용 + 사유). 1건 이상이면 overrideReason 필수"),
+  overrideReason: z
+    .string()
+    .optional()
+    .describe("oracle_done: 미커버 항목을 남긴 채 진행하는 사유"),
+  jiraOption: z.enum(["new", "link", "skip"]).optional().describe("jira action에 필요. 'link'면 jiraKey도 필요"),
+  jiraKey: z.string().optional().describe("jira action에서 jiraOption:'link'일 때의 기존 티켓 키"),
   changedFiles: z.array(z.string()).optional().describe("code_done action에서 이번 코딩으로 바뀐 파일 목록"),
   dependencyRemoved: z.boolean().optional().describe("code_done: 의존성을 제거/내재화했는지(registration-glue 게이트 트리거)"),
   registrationGlueChecked: z.boolean().optional().describe("code_done: 등록 글루(빈 등록 메타) diff를 점검했는지"),
@@ -164,9 +181,33 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
+  // ── §5.0 oracle_done: 미커버 항목을 보고하면서 사유를 안 밝히는 것만 막는다(§설계안).
+  if (action === "oracle_done") {
+    const oracleResult = checkOracleDone(args.uncovered, args.overrideReason);
+    if (!oracleResult.ok) return errorResult(oracleResult.code as GateBlockCode, oracleResult.message!);
+  }
+
+  // ── 설계안 jira: 옵션 필수, link면 키 필수.
+  if (action === "jira") {
+    const jiraResult = checkJiraOption(args.jiraOption, args.jiraKey);
+    if (!jiraResult.ok) return errorResult(jiraResult.code as GateBlockCode, jiraResult.message!);
+  }
+
+  // ── §5.0 ready: q-spec 대조(oracle)를 안 했으면 차단. PRD를 썼다는 것과 원본 스펙을 실제로
+  // 대조했다는 것은 다른 사실이고, 대조 없이 넘어가면 스펙에만 있는 요구사항이 조용히 사라진다.
+  if (action === "ready" && existing) {
+    const oracleGate = checkSpecOracleGate(existing.data.specOracle);
+    if (!oracleGate.ok) return errorResult(oracleGate.code as GateBlockCode, oracleGate.message!);
+  }
+
   // ── §3/§4.0 baseline_capture: 원본은 code_done에 딸린 암묵 태깅이었으나, v1 스펙(게이트 하드닝
-  //)에서 명시 상태로 승격됐다. code_done에도 동일 게이트를 남겨둔다(§10 decompose 경로는
-  // 이 상태를 거치지 않고 code_done에서 곧장 재검증되므로 — types.ts PREREQUISITES 주석 참고).
+  //)에서 명시 상태로 승격됐다. code_done에도 동일 게이트를 남겨둔다.
+  //
+  // ⚠️ v2에서 decompose 경로는 이 보호를 **못 받는다.** PRD→DECOMPOSE→ORCHESTRATING→(integrate)→
+  // DOCS_PENDING이라 baseline_capture도 code_done도 안 거친다. v1에서는 integrate가 CODE_RUNNING으로
+  // 합류해서 code_done의 baseline 재검증에 걸렸지만, v2 §4 흐름도는 DOCS_PENDING 합류를 명시한다 —
+  // 서브태스크 각자가 자기 검증을 끝냈다는 전제다. 서브태스크별 게이트는 아직 미구현이므로
+  // **이 경로는 현재 게이트 공백**이다(V2-DELTA-PLAN에 후속으로 기록).
   if (action === "baseline_capture" && existing) {
     const baselineRequired = existing.data.baselineGate?.required ?? false;
     const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
@@ -481,6 +522,52 @@ export async function handleSugoPlan(rawArgs: unknown) {
   // ── §7.1 Patch 성숙화: 사용자 지시(seed)는 세션에 그대로 보존해뒀다가 review_done이 work-result에 싣는다.
   if (action === "start" && args.seed) {
     session = { ...session, data: { ...session.data, seed: args.seed } };
+  }
+
+  // ── §5.0 specOracle 켜기: **경로를 줬다는 주장이 아니라 파일이 실재하는지**를 서버가 확인한다.
+  // 존재하지 않는 경로로 게이트를 켜면 영영 못 여는 세션이 되고, 반대로 자기보고만 믿으면
+  // "스펙 있다고 했는데 없음"으로 게이트가 무력화된다.
+  if (action === "prd" && args.specPath) {
+    const specExists = await readFile(args.specPath, "utf-8").then(
+      () => true,
+      () => false,
+    );
+    if (specExists) {
+      session = {
+        ...session,
+        data: { ...session.data, specOracle: { required: true, ran: false, specPath: args.specPath } },
+      };
+    }
+  }
+
+  // ── §5.0 oracle_done: 상태는 그대로 두고 대조 사실만 기록한다(ready 게이트의 근거).
+  if (action === "oracle_done") {
+    const prev = session.data.specOracle ?? { required: false, ran: false };
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        specOracle: {
+          ...prev,
+          ran: true,
+          ranAt: new Date().toISOString(),
+          uncovered: args.uncovered,
+          overrideReason: args.overrideReason,
+        },
+      },
+    };
+  }
+
+  // ── 설계안 jira: 선택을 세션에 남긴다. `"new"`는 실제 티켓을 만들지 않는다(스펙상 TODO) —
+  // 만드는 척하지 않고 선택만 기록한다.
+  if (action === "jira" && args.jiraOption) {
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        jira: { option: args.jiraOption, jiraKey: args.jiraKey, recordedAt: new Date().toISOString() },
+      },
+    };
   }
 
   // ── 콘텐츠 게이트 통과 후 세션 데이터 반영(+파일 IO)
