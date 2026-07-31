@@ -82,7 +82,7 @@ export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
   }));
 
   router.delete("/workspace", validateBody(workspaceDeleteSchema), asyncHandler(async (req, res) => {
-    await deleteWorkspace(db, req.body.userId, req.body.name);
+    await deleteWorkspace(db, req.body.userId, req.body.name, { purge: req.body.purge === true });
     res.json({ ok: true });
   }));
 

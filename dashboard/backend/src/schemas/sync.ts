@@ -15,6 +15,8 @@ export const workspaceSchema = z.object({
 export const workspaceDeleteSchema = z.object({
   userId: z.string().min(1),
   name: z.string().min(1),
+  /** §4: 기본은 soft(숨김). true여야 하드 삭제 — 플러그인 §9의 purge와 같은 의미. */
+  purge: z.boolean().optional(),
 });
 
 export const taskSchema = z.object({

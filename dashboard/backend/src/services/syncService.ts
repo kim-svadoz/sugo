@@ -29,12 +29,58 @@ export interface SyncWorkspaceInput {
   gitSyncedProjects?: string[];
 }
 
+/**
+ * §4 `deleted_at` 자가보강. 캐시된 삼상태 boolean —
+ * information_schema(또는 SQLite의 PRAGMA)로 컬럼을 확인하고 없으면 ALTER,
+ * **ALTER 권한이 없으면 false로 확정하고 이후 필터를 생략한다(graceful degrade).**
+ *
+ * 왜 이렇게까지 하나: 코드가 마이그레이션보다 먼저 배포되는 일은 실제로 일어난다. 그때
+ * `WHERE deleted_at IS NULL`이 들어 있으면 **대시보드 전체가 500으로 죽는다.** 숨김이 잠깐 안
+ * 되는 건 불편이지만, 죽는 건 사고다 — 그래서 안전측 기본값이 "필터 생략(전부 노출)"이다.
+ *
+ * 캐시하는 이유: 이 판정이 모든 목록 조회 경로에 걸리는데, 매번 스키마를 조회하면 그게 곧 부하다.
+ */
+let deletedAtColState: boolean | null = null;
+
+/** 테스트 전용 — 모듈 레벨 캐시를 비운다(프로세스 내 여러 DB를 오가는 테스트 때문). */
+export function __resetDeletedAtColState(): void {
+  deletedAtColState = null;
+}
+
+export async function ensureWorkspaceDeletedAtColumn(db: DbClient): Promise<boolean> {
+  if (deletedAtColState !== null) return deletedAtColState;
+  try {
+    // 드라이버 중립: 실제로 읽어보고 통하면 있는 것으로 본다(MySQL의 information_schema와
+    // SQLite의 PRAGMA를 분기하지 않아도 되고, 권한 문제도 같은 방식으로 흡수된다).
+    await db.query("SELECT deleted_at FROM sugo_workspaces LIMIT 1");
+    deletedAtColState = true;
+    return true;
+  } catch {
+    // 없다 → 추가를 시도한다.
+  }
+  try {
+    await db.exec("ALTER TABLE sugo_workspaces ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL");
+    deletedAtColState = true;
+    return true;
+  } catch {
+    deletedAtColState = false;
+    return false;
+  }
+}
+
 async function getOrCreateWorkspaceId(db: DbClient, userId: string, name: string): Promise<number> {
   const rows = await db.query<{ id: number }>(
     "SELECT id FROM sugo_workspaces WHERE user_id = ? AND name = ?",
     [userId, name]
   );
-  if (rows.length > 0) return rows[0].id;
+  if (rows.length > 0) {
+    // §4 "soft delete 부활": 재sync는 곧 "이 워크스페이스를 다시 쓰고 있다"는 신호다.
+    // 컬럼이 있을 때만 시도한다(없으면 애초에 soft delete도 안 걸려 있다).
+    if (await ensureWorkspaceDeletedAtColumn(db)) {
+      await db.exec("UPDATE sugo_workspaces SET deleted_at = NULL WHERE id = ?", [rows[0].id]);
+    }
+    return rows[0].id;
+  }
   const result = await db.exec("INSERT INTO sugo_workspaces (user_id, name) VALUES (?, ?)", [userId, name]);
   return Number(result.insertId);
 }
@@ -42,6 +88,10 @@ async function getOrCreateWorkspaceId(db: DbClient, userId: string, name: string
 // §3.1 "workspace: projects replace + gitSyncedProjects"
 export async function syncWorkspace(db: DbClient, input: SyncWorkspaceInput): Promise<void> {
   await ensureUser(db, input.userId);
+  // §4 자가보강은 **진입 시점**에 한다. getOrCreateWorkspaceId의 UPDATE 분기에만 두면 신규
+  // 워크스페이스를 만드는 경로에서는 컬럼이 안 생기고, 그 뒤 첫 soft delete가 올 때까지
+  // 스키마가 비어 있는 상태가 유지된다(실제 로컬 MySQL에서 이 순서 문제를 잡았다).
+  await ensureWorkspaceDeletedAtColumn(db);
   const workspaceId = await getOrCreateWorkspaceId(db, input.userId, input.name);
 
   const projects = input.projects ?? [];
@@ -74,8 +124,40 @@ export async function syncWorkspace(db: DbClient, input: SyncWorkspaceInput): Pr
   }
 }
 
-export async function deleteWorkspace(db: DbClient, userId: string, name: string): Promise<void> {
-  await db.exec("DELETE FROM sugo_workspaces WHERE user_id = ? AND name = ?", [userId, name]);
+/**
+ * §4 `DELETE /api/sync/workspace` — **기본은 soft, `purge:true`여야 하드.**
+ *
+ * 플러그인(§9)이 기본 soft로 보내고 사용자에게 "복구 가능하다"고 안내한다. 여기서 하드로 지우면
+ * 그 안내가 거짓말이 된다 — 삭제 의미는 양쪽이 같아야 한다.
+ *
+ * 컬럼이 없어 soft가 불가능하면 **아무 것도 하지 않는다.** 여기서 하드로 폴백하면
+ * "숨기려 했는데 지워졌다"가 되어 조용한 데이터 소멸이 된다.
+ */
+export async function deleteWorkspace(
+  db: DbClient,
+  userId: string,
+  name: string,
+  options: { purge?: boolean } = {},
+): Promise<void> {
+  if (options.purge) {
+    // 관련 테이블은 FK CASCADE가 없는 것들(복합PK 테이블)이라 명시적으로 지운다.
+    for (const table of ["sugo_tasks", "sugo_history", "sugo_decisions", "sugo_checkpoints", "sugo_workspace_meta", "sugo_roadmap_nodes"]) {
+      try {
+        await db.exec(`DELETE FROM ${table} WHERE user_id = ? AND workspace_name = ?`, [userId, name]);
+      } catch {
+        // 지연생성 테이블이 아직 없을 수 있다 — purge 전체를 실패시키지 않는다.
+      }
+    }
+    await db.exec("DELETE FROM sugo_workspaces WHERE user_id = ? AND name = ?", [userId, name]);
+    return;
+  }
+
+  const hasCol = await ensureWorkspaceDeletedAtColumn(db);
+  if (!hasCol) return;
+  await db.exec("UPDATE sugo_workspaces SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ? AND name = ? AND deleted_at IS NULL", [
+    userId,
+    name,
+  ]);
 }
 
 export interface SyncTaskInput {

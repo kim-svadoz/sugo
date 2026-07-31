@@ -1,4 +1,5 @@
 import type { DbClient } from "../db/client.js";
+import { ensureWorkspaceDeletedAtColumn } from "./syncService.js";
 import { readySet, topoSort, wouldCreateCycle } from "./roadmapGraph.js";
 import { parseJsonArray, parseMaybeJson } from "../db/jsonColumn.js";
 
@@ -56,8 +57,13 @@ async function taskCounts(db: DbClient, userId: string, workspaceName: string): 
 }
 
 export async function listWorkspaces(db: DbClient, userId: string): Promise<WorkspaceSummary[]> {
+  // §4 soft delete 필터. 컬럼이 없으면(코드가 마이그레이션보다 먼저 배포된 경우) 필터를 생략해
+  // 전부 노출한다 — 여기서 500을 내면 대시보드 전체가 멈춘다(graceful degrade).
+  const hasDeletedCol = await ensureWorkspaceDeletedAtColumn(db);
   const workspaces = await db.query<{ id: number; name: string }>(
-    "SELECT id, name FROM sugo_workspaces WHERE user_id = ? ORDER BY name",
+    hasDeletedCol
+      ? "SELECT id, name FROM sugo_workspaces WHERE user_id = ? AND deleted_at IS NULL ORDER BY name"
+      : "SELECT id, name FROM sugo_workspaces WHERE user_id = ? ORDER BY name",
     [userId]
   );
   const result: WorkspaceSummary[] = [];

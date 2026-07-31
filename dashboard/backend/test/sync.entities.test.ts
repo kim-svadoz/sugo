@@ -68,12 +68,21 @@ describe("POST /api/sync/workspace — projects replace semantics", () => {
 });
 
 describe("DELETE /api/sync/workspace", () => {
-  it("cascades to workspace_projects", async () => {
+  // v2 §4: 기본 삭제가 soft로 바뀌었다. 프로젝트 연결은 복구를 위해 남아 있어야 하고,
+  // 실제 cascade는 purge에서만 일어난다.
+  it("기본(soft) 삭제는 workspace_projects를 남긴다(복구 가능해야 하므로)", async () => {
     const { app, db, auth } = await freshApp();
     await request(app).post("/api/sync/workspace").set("Authorization", auth).send({ userId: "u1", name: "ws1", projects: ["C:/a"] }).expect(200);
     await request(app).delete("/api/sync/workspace").set("Authorization", auth).send({ userId: "u1", name: "ws1" }).expect(200);
-    const rows = await db.query("SELECT * FROM sugo_workspace_projects");
-    expect(rows).toEqual([]);
+    expect(await db.query("SELECT * FROM sugo_workspace_projects")).toHaveLength(1);
+    await db.close();
+  });
+
+  it("purge:true면 workspace_projects까지 cascade된다", async () => {
+    const { app, db, auth } = await freshApp();
+    await request(app).post("/api/sync/workspace").set("Authorization", auth).send({ userId: "u1", name: "ws1", projects: ["C:/a"] }).expect(200);
+    await request(app).delete("/api/sync/workspace").set("Authorization", auth).send({ userId: "u1", name: "ws1", purge: true }).expect(200);
+    expect(await db.query("SELECT * FROM sugo_workspace_projects")).toEqual([]);
     await db.close();
   });
 });
