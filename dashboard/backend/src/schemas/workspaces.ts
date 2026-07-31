@@ -48,3 +48,10 @@ export const positionSchema = z.object({
   x: z.number(),
   y: z.number(),
 });
+
+/** §7 orphan RUN → Spec. specId는 명시적 null(분리)을 허용해야 하므로 nullish. */
+export const runSpecSchema = z.object({
+  nodeId: z.string().optional(),
+  runId: z.string().min(1),
+  specId: z.string().nullish(),
+});

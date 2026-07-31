@@ -5,6 +5,7 @@ import type { DbClient } from "./client.js";
 import { createMySqlClient } from "./mysqlClient.js";
 import { createSqliteClient } from "./sqliteClient.js";
 import { migrateCanvasToRoadmap } from "./migrations.js";
+import { migrateWstToRun } from "../services/workspaceService.js";
 import { config } from "../config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -17,11 +18,14 @@ export async function initDb(): Promise<DbClient> {
     await migrateCanvasToRoadmap(client);
     const schemaPath = join(__dirname, "..", "..", "test", "schema.sqlite.sql");
     await client.execScript(readFileSync(schemaPath, "utf8"));
+    await migrateWstToRun(client);
     return client;
   }
   const client = createMySqlClient(config.mysql);
   await migrateCanvasToRoadmap(client);
   const schemaPath = join(__dirname, "schema.mysql.sql");
   await client.execScript(readFileSync(schemaPath, "utf8"));
+  // §7 구 `wst-` 접두어 → `run-`. 테이블이 있어야 하므로 스키마 적용 뒤에 돈다.
+  await migrateWstToRun(client);
   return client;
 }

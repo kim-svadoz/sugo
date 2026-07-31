@@ -12,6 +12,7 @@ import {
   parentSchema,
   positionSchema,
   renameSchema,
+  runSpecSchema,
 } from "../schemas/workspaces.js";
 import {
   clearManualStatus,
@@ -30,7 +31,10 @@ import {
   linkRoadmapNodes,
   listWorkspaces,
   renameRoadmapNode,
+  assignRunToSpec,
+  restoreSubtree,
   searchWorkspaces,
+  dropSubtree,
   setManualStatus,
   setRoadmapParent,
   setRoadmapPosition,
@@ -204,6 +208,45 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     if (!userId) return;
     await clearManualStatus(db, userId, req.params.name, req.body.nodeId);
     res.json({ ok: true });
+  });
+
+  // §7 orphan RUN → Spec 편입/분리. specId:null이면 분리(미분류). task 잠금과 달리 RUN은
+  // 재편입을 허용한다 — 나중에 "이건 저 Spec 일이었다"고 재분류하는 게 정상 흐름이다.
+  router.post("/:name/roadmap/run-spec", validateBody(runSpecSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const result = await assignRunToSpec(db, userId, req.params.name, req.body.runId, req.body.specId ?? null);
+    if (!result.ok) {
+      const status = result.errorCode === "NODE_NOT_FOUND" ? 404 : 409;
+      res.status(status).json({ ok: false, errorCode: result.errorCode, message: result.message });
+      return;
+    }
+    res.json({ ok: true });
+  });
+
+  // §7 폐기/복구. 삭제가 아니라 manual_status='dropped' override라 되돌릴 수 있다.
+  // 완료 항목이 하위에 있으면 409 — 이미 한 일을 "없던 일"로 만들지 않는다.
+  router.post("/:name/roadmap/drop", validateBody(manualStatusClearSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const result = await dropSubtree(db, userId, req.params.name, req.body.nodeId, userId);
+    if (!result.ok) {
+      const status = result.errorCode === "NODE_NOT_FOUND" ? 404 : 409;
+      res.status(status).json({ ok: false, errorCode: result.errorCode, message: result.message });
+      return;
+    }
+    res.json({ ok: true, affected: result.affected });
+  });
+
+  router.post("/:name/roadmap/restore", validateBody(manualStatusClearSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const result = await restoreSubtree(db, userId, req.params.name, req.body.nodeId);
+    if (!result.ok) {
+      res.status(404).json({ ok: false, errorCode: result.errorCode, message: result.message });
+      return;
+    }
+    res.json({ ok: true, affected: result.affected });
   });
 
   router.post("/:name/roadmap/position", validateBody(positionSchema), async (req, res) => {
