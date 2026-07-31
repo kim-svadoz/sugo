@@ -2991,7 +2991,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve8.call(this, root, ref);
+      let _sch = resolve9.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3018,7 +3018,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve8(root, ref) {
+    function resolve9(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3649,55 +3649,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve8(baseURI, relativeURI, options) {
+    function resolve9(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative4, options, skipNormalization) {
+    function resolveComponent(base, relative5, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative4 = parse3(serialize(relative4, options), options);
+        relative5 = parse3(serialize(relative5, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative4.scheme) {
-        target.scheme = relative4.scheme;
-        target.userinfo = relative4.userinfo;
-        target.host = relative4.host;
-        target.port = relative4.port;
-        target.path = removeDotSegments(relative4.path || "");
-        target.query = relative4.query;
+      if (!options.tolerant && relative5.scheme) {
+        target.scheme = relative5.scheme;
+        target.userinfo = relative5.userinfo;
+        target.host = relative5.host;
+        target.port = relative5.port;
+        target.path = removeDotSegments(relative5.path || "");
+        target.query = relative5.query;
       } else {
-        if (relative4.userinfo !== void 0 || relative4.host !== void 0 || relative4.port !== void 0) {
-          target.userinfo = relative4.userinfo;
-          target.host = relative4.host;
-          target.port = relative4.port;
-          target.path = removeDotSegments(relative4.path || "");
-          target.query = relative4.query;
+        if (relative5.userinfo !== void 0 || relative5.host !== void 0 || relative5.port !== void 0) {
+          target.userinfo = relative5.userinfo;
+          target.host = relative5.host;
+          target.port = relative5.port;
+          target.path = removeDotSegments(relative5.path || "");
+          target.query = relative5.query;
         } else {
-          if (!relative4.path) {
+          if (!relative5.path) {
             target.path = base.path;
-            if (relative4.query !== void 0) {
-              target.query = relative4.query;
+            if (relative5.query !== void 0) {
+              target.query = relative5.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative4.path[0] === "/") {
-              target.path = removeDotSegments(relative4.path);
+            if (relative5.path[0] === "/") {
+              target.path = removeDotSegments(relative5.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative4.path;
+                target.path = "/" + relative5.path;
               } else if (!base.path) {
-                target.path = relative4.path;
+                target.path = relative5.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative4.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative5.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative4.query;
+            target.query = relative5.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative4.fragment;
+      target.fragment = relative5.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3907,7 +3907,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve8,
+      resolve: resolve9,
       resolveComponent,
       equal,
       serialize,
@@ -20404,7 +20404,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve8) => setTimeout(resolve8, pollInterval));
+        await new Promise((resolve9) => setTimeout(resolve9, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -20421,7 +20421,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve8, reject) => {
+    return new Promise((resolve9, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -20499,7 +20499,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve8(parseResult.data);
+            resolve9(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -20760,12 +20760,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve8, reject) => {
+    return new Promise((resolve9, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve8, interval);
+      const timeoutId = setTimeout(resolve9, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -21865,7 +21865,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve8) => setTimeout(resolve8, pollInterval));
+      await new Promise((resolve9) => setTimeout(resolve9, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -22514,19 +22514,19 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve8) => {
+    return new Promise((resolve9) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve8();
+        resolve9();
       } else {
-        this._stdout.once("drain", resolve8);
+        this._stdout.once("drain", resolve9);
       }
     });
   }
 };
 
 // src/tools/sugoAdd.ts
-import { resolve as resolve2 } from "node:path";
+import { resolve as resolve3 } from "node:path";
 
 // src/harness/sync.ts
 import { mkdir as mkdir4 } from "node:fs/promises";
@@ -23238,7 +23238,8 @@ async function syncProjectHarness(args2) {
 }
 
 // src/hulk/workspace.ts
-import { mkdir as mkdir7, readdir as readdir2, readFile as readFile6 } from "node:fs/promises";
+import { mkdir as mkdir7, readdir as readdir2, readFile as readFile6, rm } from "node:fs/promises";
+import { relative as relative2, resolve as resolve2 } from "node:path";
 
 // src/dashboard/config.ts
 import { userInfo } from "node:os";
@@ -23589,6 +23590,15 @@ async function syncWorkspace(ws) {
     updatedAt: (/* @__PURE__ */ new Date()).toISOString()
   });
 }
+async function deleteWorkspaceSync(name2, options = {}) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/workspace", "DELETE", {
+    userId: config2.userId,
+    name: name2,
+    ...options.purge ? { purge: true } : {}
+  });
+}
 async function syncTask(workspaceName, task) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
@@ -23658,7 +23668,7 @@ async function ensureWorkspace(name2, projectPath) {
   void syncWorkspace(workspace);
   return workspace;
 }
-async function listWorkspaces() {
+async function listWorkspaces(includeDeleted = false) {
   let entries;
   try {
     entries = await readdir2(workRootDir(), { withFileTypes: true });
@@ -23669,9 +23679,52 @@ async function listWorkspaces() {
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     const ws = await loadWorkspace(entry.name);
-    if (ws) workspaces.push(ws);
+    if (!ws) continue;
+    if (!includeDeleted && ws.deleted_at) continue;
+    workspaces.push(ws);
   }
   return workspaces;
+}
+var VALID_WORKSPACE_NAME = /^[A-Za-z0-9._-]+$/;
+function isValidWorkspaceName(name2) {
+  if (!VALID_WORKSPACE_NAME.test(name2)) return false;
+  return name2 !== "." && name2 !== "..";
+}
+async function deleteWorkspace(name2, options = {}) {
+  if (!isValidWorkspaceName(name2)) {
+    return { ok: false, errorCode: "INVALID_WORKSPACE_NAME", message: `\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uB294 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984\uC785\uB2C8\uB2E4: ${JSON.stringify(name2)}` };
+  }
+  const existing = await loadWorkspace(name2);
+  if (!existing) {
+    return { ok: false, errorCode: "WORKSPACE_NOT_FOUND", message: `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${name2}` };
+  }
+  if (!options.purge) {
+    if (existing.deleted_at) return { ok: true, mode: "soft", alreadyDeleted: true, dataRemoved: false };
+    const deleted = { ...existing, deleted_at: (/* @__PURE__ */ new Date()).toISOString() };
+    await atomicWriteFile(workspaceFilePath(name2), JSON.stringify(deleted, null, 2));
+    void deleteWorkspaceSync(name2);
+    return { ok: true, mode: "soft", alreadyDeleted: false, dataRemoved: false };
+  }
+  if (existing.projects.length > 0 && !options.force) {
+    return {
+      ok: false,
+      errorCode: "WORKSPACE_HAS_PROJECTS",
+      message: `\uC5F0\uACB0\uB41C \uD504\uB85C\uC81D\uD2B8 ${existing.projects.length}\uAC1C\uAC00 \uC788\uC2B5\uB2C8\uB2E4. \uD558\uB4DC \uC0AD\uC81C\uD558\uB824\uBA74 force\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`
+    };
+  }
+  let dataRemoved = false;
+  if (!options.keepData) {
+    const target = resolve2(workspaceDir(name2));
+    const base = resolve2(workRootDir());
+    const rel = relative2(base, target);
+    const insideBase = rel.length > 0 && !rel.startsWith("..") && target !== base;
+    if (insideBase) {
+      await rm(target, { recursive: true, force: true });
+      dataRemoved = true;
+    }
+  }
+  void deleteWorkspaceSync(name2, { purge: true });
+  return { ok: true, mode: "purge", alreadyDeleted: false, dataRemoved };
 }
 
 // src/tools/sugoAdd.ts
@@ -23686,7 +23739,7 @@ var sugoAddInputSchema = {
 var SugoAddArgs = external_exports.object(sugoAddInputSchema);
 async function handleSugoAdd(rawArgs) {
   const args2 = SugoAddArgs.parse(rawArgs);
-  const projectPath = resolve2(args2.projectPath);
+  const projectPath = resolve3(args2.projectPath);
   const result = await syncProjectHarness({ ...args2, projectPath });
   if (result.workspace) {
     await ensureWorkspace(result.workspace, projectPath);
@@ -24062,7 +24115,7 @@ async function handleSugoCheckLethalTrifecta(rawArgs) {
 
 // src/hulk/checkpoint.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir9, readdir as readdir4, readFile as readFile10, rm } from "node:fs/promises";
+import { mkdir as mkdir9, readdir as readdir4, readFile as readFile10, rm as rm2 } from "node:fs/promises";
 import { join as join11 } from "node:path";
 
 // src/dashboard/fetch.ts
@@ -27111,7 +27164,7 @@ async function removeCheckpoint(workspace, id) {
   const entries = await listCheckpointFiles(workspace);
   const found = entries.find((e) => e.checkpoint.id === id);
   if (!found) return false;
-  await rm(join11(checkpointsDir(workspace), found.filename), { force: true });
+  await rm2(join11(checkpointsDir(workspace), found.filename), { force: true });
   return true;
 }
 async function migrateCheckpoints(workspace) {
@@ -27247,14 +27300,14 @@ function currentSugoVersion() {
 }
 
 // src/tools/sugoDelete.ts
-import { resolve as resolve3 } from "node:path";
+import { resolve as resolve4 } from "node:path";
 var sugoDeleteInputSchema = {
   projectPath: external_exports.string().describe("\uB4F1\uB85D \uCDE8\uC18C\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C")
 };
 var SugoDeleteArgs = external_exports.object(sugoDeleteInputSchema);
 async function handleSugoDelete(rawArgs) {
   const args2 = SugoDeleteArgs.parse(rawArgs);
-  const projectPath = resolve3(args2.projectPath);
+  const projectPath = resolve4(args2.projectPath);
   const removed = await unregisterProject(projectPath);
   if (!removed) {
     return errorResult4("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4: ${projectPath}`);
@@ -27269,7 +27322,7 @@ function errorResult4(errorCode, message) {
 }
 
 // src/tools/sugoDisable.ts
-import { resolve as resolve4 } from "node:path";
+import { resolve as resolve5 } from "node:path";
 
 // src/harness/toggle.ts
 var ToggleProjectError = class extends Error {
@@ -27293,7 +27346,7 @@ var sugoDisableInputSchema = {
 var SugoDisableArgs = external_exports.object(sugoDisableInputSchema);
 async function handleSugoDisable(rawArgs) {
   const args2 = SugoDisableArgs.parse(rawArgs);
-  const projectPath = resolve4(args2.projectPath);
+  const projectPath = resolve5(args2.projectPath);
   try {
     await setProjectDisabled(projectPath, true);
   } catch (err2) {
@@ -27310,14 +27363,14 @@ function errorResult5(errorCode, message) {
 }
 
 // src/tools/sugoEnable.ts
-import { resolve as resolve5 } from "node:path";
+import { resolve as resolve6 } from "node:path";
 var sugoEnableInputSchema = {
   projectPath: external_exports.string().describe("\uB2E4\uC2DC \uD65C\uC131\uD654\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C")
 };
 var SugoEnableArgs = external_exports.object(sugoEnableInputSchema);
 async function handleSugoEnable(rawArgs) {
   const args2 = SugoEnableArgs.parse(rawArgs);
-  const projectPath = resolve5(args2.projectPath);
+  const projectPath = resolve6(args2.projectPath);
   try {
     await setProjectDisabled(projectPath, false);
   } catch (err2) {
@@ -27708,7 +27761,7 @@ function errorResult7(errorCode, message) {
 
 // src/tools/sugoOverview.ts
 import { readFile as readFile15 } from "node:fs/promises";
-import { relative as relative2 } from "node:path";
+import { relative as relative3 } from "node:path";
 
 // src/overview.ts
 import { readdir as readdir7 } from "node:fs/promises";
@@ -27760,7 +27813,7 @@ async function handleSugoOverview(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const full of files) {
-    const relPath = relative2(args2.projectPath, full);
+    const relPath = relative3(args2.projectPath, full);
     let content;
     try {
       content = await readFile15(full, "utf-8");
@@ -28304,7 +28357,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash2 } from "node:crypto";
 import { stat } from "node:fs/promises";
-import { isAbsolute as isAbsolute3, join as join21, relative as relative3 } from "node:path";
+import { isAbsolute as isAbsolute3, join as join21, relative as relative4 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash2("sha1").update(parts2.join("\n")).digest("hex");
@@ -28313,7 +28366,7 @@ async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
     const full = isAbsolute3(f) ? f : join21(projectPath, f);
-    const relPath = isAbsolute3(f) ? relative3(projectPath, f) : f;
+    const relPath = isAbsolute3(f) ? relative4(projectPath, f) : f;
     try {
       const st = await stat(full);
       entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
@@ -29778,10 +29831,10 @@ function errorResult10(errorCode, message) {
 }
 
 // src/tools/sugoReset.ts
-import { resolve as resolve6 } from "node:path";
+import { resolve as resolve7 } from "node:path";
 
 // src/harness/reset.ts
-import { mkdir as mkdir15, readFile as readFile20, rm as rm2 } from "node:fs/promises";
+import { mkdir as mkdir15, readFile as readFile20, rm as rm3 } from "node:fs/promises";
 import { join as join22 } from "node:path";
 var ResetProjectError = class extends Error {
   constructor(code, message) {
@@ -29814,7 +29867,7 @@ async function resetProjectHarness(projectPath) {
     await atomicWriteFile(backedUpTo, current);
   } catch {
   }
-  await rm2(join22(sugoDir, "harness"), { recursive: true, force: true });
+  await rm3(join22(sugoDir, "harness"), { recursive: true, force: true });
   await atomicWriteFile(claudeMdPath, RESET_CLAUDE_MD);
   await saveProjectConfig({ ...config2, appliedHarnesses: [], lastUpdated: (/* @__PURE__ */ new Date()).toISOString() });
   return { backedUpTo };
@@ -29827,7 +29880,7 @@ var sugoResetInputSchema = {
 var SugoResetArgs = external_exports.object(sugoResetInputSchema);
 async function handleSugoReset(rawArgs) {
   const args2 = SugoResetArgs.parse(rawArgs);
-  const projectPath = resolve6(args2.projectPath);
+  const projectPath = resolve7(args2.projectPath);
   try {
     const { backedUpTo } = await resetProjectHarness(projectPath);
     return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, backedUpTo }, null, 2) }] };
@@ -30340,7 +30393,7 @@ function errorResult14(errorCode, message) {
 }
 
 // src/tools/sugoUpdate.ts
-import { resolve as resolve7 } from "node:path";
+import { resolve as resolve8 } from "node:path";
 var sugoUpdateInputSchema = {
   projectPath: external_exports.string().describe("\uAC31\uC2E0\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C(\uC774\uBBF8 sugo_add\uB85C \uB4F1\uB85D\uB3FC \uC788\uC5B4\uC57C \uD568)"),
   repoUrl: external_exports.string().optional(),
@@ -30351,7 +30404,7 @@ var sugoUpdateInputSchema = {
 var SugoUpdateArgs = external_exports.object(sugoUpdateInputSchema);
 async function handleSugoUpdate(rawArgs) {
   const args2 = SugoUpdateArgs.parse(rawArgs);
-  const projectPath = resolve7(args2.projectPath);
+  const projectPath = resolve8(args2.projectPath);
   const existing = await findRegistryEntry(projectPath);
   if (!existing) {
     return errorResult15("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uBA3C\uC800 sugo_add\uB85C \uB4F1\uB85D\uD558\uC138\uC694: ${projectPath}`);
@@ -30554,10 +30607,14 @@ function json(payload) {
 
 // src/tools/sugoWorkspace.ts
 var sugoWorkspaceInputSchema = {
-  action: external_exports.enum(["add", "list", "get", "remember", "recall", "status", "sync"]),
-  name: external_exports.string().optional().describe("add/get/remember/recall/status/sync action\uC5D0 \uD544\uC694"),
+  action: external_exports.enum(["add", "list", "get", "remember", "recall", "status", "sync", "delete"]),
+  name: external_exports.string().optional().describe("add/get/remember/recall/status/sync/delete action\uC5D0 \uD544\uC694"),
   projectPath: external_exports.string().optional().describe("add: \uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uC5D0 \uCD94\uAC00\uB85C \uC18C\uC18D\uC2DC\uD0AC \uD504\uB85C\uC81D\uD2B8 \uACBD\uB85C"),
-  note: external_exports.string().optional().describe("remember action\uC5D0 \uD544\uC694")
+  note: external_exports.string().optional().describe("remember action\uC5D0 \uD544\uC694"),
+  includeDeleted: external_exports.boolean().optional().describe("list: soft delete\uB41C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB3C4 \uD568\uAED8 \uBCF4\uC5EC\uC900\uB2E4"),
+  purge: external_exports.boolean().optional().describe("delete: \uD558\uB4DC \uC0AD\uC81C(\uAE30\uBCF8\uC740 soft \u2014 \uC228\uAE30\uAE30\uB9CC \uD558\uACE0 \uB370\uC774\uD130 \uBCF4\uC874)"),
+  force: external_exports.boolean().optional().describe("delete: \uC5F0\uACB0\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC788\uC5B4\uB3C4 \uD558\uB4DC \uC0AD\uC81C\uB97C \uC9C4\uD589\uD55C\uB2E4"),
+  keep_data: external_exports.boolean().optional().describe("delete: purge\uC5EC\uB3C4 \uB514\uC2A4\uD06C\uC758 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uB514\uB809\uD130\uB9AC\uB294 \uB0A8\uAE34\uB2E4")
 };
 var SugoWorkspaceArgs = external_exports.object(sugoWorkspaceInputSchema);
 async function handleSugoWorkspace(rawArgs) {
@@ -30569,8 +30626,25 @@ async function handleSugoWorkspace(rawArgs) {
       return ok7({ workspace });
     }
     case "list": {
-      const workspaces = await listWorkspaces();
+      const workspaces = await listWorkspaces(args2.includeDeleted ?? false);
       return ok7({ workspaces });
+    }
+    case "delete": {
+      if (!args2.name) return errorResult17("NAME_REQUIRED", "delete action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const result = await deleteWorkspace(args2.name, {
+        purge: args2.purge,
+        force: args2.force,
+        keepData: args2.keep_data
+      });
+      if (!result.ok) return errorResult17(result.errorCode, result.message);
+      return ok7({
+        workspace: args2.name,
+        mode: result.mode,
+        alreadyDeleted: result.alreadyDeleted,
+        dataRemoved: result.dataRemoved,
+        // soft는 되살릴 수 있다는 걸 응답에서 바로 알려준다 — 몰라서 purge를 쓰는 게 최악이다.
+        note: result.mode === "soft" ? "\uB370\uC774\uD130\uB294 \uBCF4\uC874\uB410\uC2B5\uB2C8\uB2E4. \uAC19\uC740 \uC774\uB984\uC73C\uB85C \uB2E4\uC2DC add\uD558\uBA74 \uBCF5\uAD6C\uB429\uB2C8\uB2E4." : "\uD558\uB4DC \uC0AD\uC81C\uB418\uC5B4 \uBCF5\uAD6C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."
+      });
     }
     case "get": {
       if (!args2.name) return errorResult17("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");

@@ -38,6 +38,8 @@ export interface Workspace {
   name: string;
   projects: string[];
   created_at: string;
+  /** §9 soft delete(ISO). 있으면 목록에서 숨지만 데이터는 그대로다 — 재사용 시 해제된다. */
+  deleted_at?: string;
 }
 
 export interface Checkpoint {

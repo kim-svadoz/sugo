@@ -32,6 +32,23 @@ export async function syncWorkspace(ws: Workspace): Promise<void> {
   });
 }
 
+/**
+ * §8.2 soft delete sync — `DELETE /api/sync/workspace`. 기본은 soft(대시보드가 `deleted_at`을
+ * 찍고 목록에서 숨긴다), `purge:true`면 관련 행을 하드 삭제한다.
+ *
+ * 로컬에서 지웠는데 대시보드에 그대로 남아 있으면 사용자가 보는 상태와 실제 상태가 갈라진다
+ * (`user-truth` 불변식). 다른 push와 똑같이 fire-and-forget이라 실패해도 큐에 쌓일 뿐이다.
+ */
+export async function deleteWorkspaceSync(name: string, options: { purge?: boolean } = {}): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await pushEvent("/api/sync/workspace", "DELETE", {
+    userId: config.userId,
+    name,
+    ...(options.purge ? { purge: true } : {}),
+  });
+}
+
 export async function syncTask(workspaceName: string, task: Task): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;

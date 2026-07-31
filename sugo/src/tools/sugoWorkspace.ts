@@ -7,7 +7,7 @@ import { appendMemory, readMemory } from "../hulk/memory.js";
 import { listRoadmapNodes } from "../hulk/roadmap.js";
 import { listSpecs } from "../hulk/spec.js";
 import { listTasks } from "../hulk/task.js";
-import { ensureWorkspace, listWorkspaces, loadWorkspace } from "../hulk/workspace.js";
+import { deleteWorkspace, ensureWorkspace, listWorkspaces, loadWorkspace } from "../hulk/workspace.js";
 
 /**
  * §1/§9 `sugo_workspace`. v2에서 `sugo_hulk`가 완전히 제거되면서 그 도구의 워크스페이스 관련
@@ -18,10 +18,14 @@ import { ensureWorkspace, listWorkspaces, loadWorkspace } from "../hulk/workspac
  * "대시보드와 어긋났을 때 수동으로 다시 밀어넣는" 실동작 기능이라 삭제하지 않고 여기로 옮겼다.
  */
 export const sugoWorkspaceInputSchema = {
-  action: z.enum(["add", "list", "get", "remember", "recall", "status", "sync"]),
-  name: z.string().optional().describe("add/get/remember/recall/status/sync action에 필요"),
+  action: z.enum(["add", "list", "get", "remember", "recall", "status", "sync", "delete"]),
+  name: z.string().optional().describe("add/get/remember/recall/status/sync/delete action에 필요"),
   projectPath: z.string().optional().describe("add: 이 워크스페이스에 추가로 소속시킬 프로젝트 경로"),
   note: z.string().optional().describe("remember action에 필요"),
+  includeDeleted: z.boolean().optional().describe("list: soft delete된 워크스페이스도 함께 보여준다"),
+  purge: z.boolean().optional().describe("delete: 하드 삭제(기본은 soft — 숨기기만 하고 데이터 보존)"),
+  force: z.boolean().optional().describe("delete: 연결된 프로젝트가 있어도 하드 삭제를 진행한다"),
+  keep_data: z.boolean().optional().describe("delete: purge여도 디스크의 워크스페이스 디렉터리는 남긴다"),
 };
 
 const SugoWorkspaceArgs = z.object(sugoWorkspaceInputSchema);
@@ -36,8 +40,28 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
       return ok({ workspace });
     }
     case "list": {
-      const workspaces = await listWorkspaces();
+      const workspaces = await listWorkspaces(args.includeDeleted ?? false);
       return ok({ workspaces });
+    }
+    case "delete": {
+      if (!args.name) return errorResult("NAME_REQUIRED", "delete action에는 name이 필요합니다.");
+      const result = await deleteWorkspace(args.name, {
+        purge: args.purge,
+        force: args.force,
+        keepData: args.keep_data,
+      });
+      if (!result.ok) return errorResult(result.errorCode!, result.message!);
+      return ok({
+        workspace: args.name,
+        mode: result.mode,
+        alreadyDeleted: result.alreadyDeleted,
+        dataRemoved: result.dataRemoved,
+        // soft는 되살릴 수 있다는 걸 응답에서 바로 알려준다 — 몰라서 purge를 쓰는 게 최악이다.
+        note:
+          result.mode === "soft"
+            ? "데이터는 보존됐습니다. 같은 이름으로 다시 add하면 복구됩니다."
+            : "하드 삭제되어 복구할 수 없습니다.",
+      });
     }
     case "get": {
       if (!args.name) return errorResult("NAME_REQUIRED", "get action에는 name이 필요합니다.");
