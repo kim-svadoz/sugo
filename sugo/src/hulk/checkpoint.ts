@@ -5,7 +5,7 @@ import { atomicWriteFile } from "../fsUtil.js";
 import { fetchCheckpointSync } from "../dashboard/fetch.js";
 import { parseFrontmatter, stringifyFrontmatter } from "./frontmatter.js";
 import { slugify } from "./slug.js";
-import { checkpointsDir } from "./storage.js";
+import { checkpointsDir } from "../work/storage.js";
 import type { Checkpoint } from "./types.js";
 
 function generateCheckpointId(): string {

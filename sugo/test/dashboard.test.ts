@@ -8,7 +8,7 @@ import { emitActivity } from "../src/dashboard/activity.js";
 import { drainRetryQueue, pushEvent } from "../src/dashboard/client.js";
 import { resolveDashboardConfig } from "../src/dashboard/config.js";
 import { DASHBOARD_SYNC_SCHEMA_VERSION } from "../src/dashboard/schemaVersion.js";
-import { syncRetryQueuePath } from "../src/hulk/storage.js";
+import { syncRetryQueuePath } from "../src/work/storage.js";
 
 let fakeHome: string;
 

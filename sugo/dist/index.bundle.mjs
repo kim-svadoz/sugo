@@ -3655,49 +3655,49 @@ var require_fast_uri = __commonJS({
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative3, options, skipNormalization) {
+    function resolveComponent(base, relative4, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative3 = parse3(serialize(relative3, options), options);
+        relative4 = parse3(serialize(relative4, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative3.scheme) {
-        target.scheme = relative3.scheme;
-        target.userinfo = relative3.userinfo;
-        target.host = relative3.host;
-        target.port = relative3.port;
-        target.path = removeDotSegments(relative3.path || "");
-        target.query = relative3.query;
+      if (!options.tolerant && relative4.scheme) {
+        target.scheme = relative4.scheme;
+        target.userinfo = relative4.userinfo;
+        target.host = relative4.host;
+        target.port = relative4.port;
+        target.path = removeDotSegments(relative4.path || "");
+        target.query = relative4.query;
       } else {
-        if (relative3.userinfo !== void 0 || relative3.host !== void 0 || relative3.port !== void 0) {
-          target.userinfo = relative3.userinfo;
-          target.host = relative3.host;
-          target.port = relative3.port;
-          target.path = removeDotSegments(relative3.path || "");
-          target.query = relative3.query;
+        if (relative4.userinfo !== void 0 || relative4.host !== void 0 || relative4.port !== void 0) {
+          target.userinfo = relative4.userinfo;
+          target.host = relative4.host;
+          target.port = relative4.port;
+          target.path = removeDotSegments(relative4.path || "");
+          target.query = relative4.query;
         } else {
-          if (!relative3.path) {
+          if (!relative4.path) {
             target.path = base.path;
-            if (relative3.query !== void 0) {
-              target.query = relative3.query;
+            if (relative4.query !== void 0) {
+              target.query = relative4.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative3.path[0] === "/") {
-              target.path = removeDotSegments(relative3.path);
+            if (relative4.path[0] === "/") {
+              target.path = removeDotSegments(relative4.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative3.path;
+                target.path = "/" + relative4.path;
               } else if (!base.path) {
-                target.path = relative3.path;
+                target.path = relative4.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative3.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative4.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative3.query;
+            target.query = relative4.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative3.fragment;
+      target.fragment = relative4.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -23238,7 +23238,7 @@ async function syncProjectHarness(args2) {
 }
 
 // src/hulk/workspace.ts
-import { mkdir as mkdir6, readdir, readFile as readFile5 } from "node:fs/promises";
+import { mkdir as mkdir7, readdir as readdir2, readFile as readFile6 } from "node:fs/promises";
 
 // src/dashboard/config.ts
 import { userInfo } from "node:os";
@@ -23278,15 +23278,20 @@ async function resolveDashboardConfig() {
 }
 
 // src/dashboard/retryQueue.ts
-import { mkdir as mkdir5, readFile as readFile4 } from "node:fs/promises";
+import { mkdir as mkdir6, readFile as readFile5 } from "node:fs/promises";
 
-// src/hulk/storage.ts
-import { join as join8 } from "node:path";
-function hulkRootDir() {
+// src/work/storage.ts
+import { copyFile, mkdir as mkdir5, readdir, readFile as readFile4, writeFile as writeFile2 } from "node:fs/promises";
+import { join as join8, relative } from "node:path";
+function workRootDir() {
+  return join8(sugoHomeDir(), ".claude", "sugo", "work");
+}
+function legacyHulkRootDir() {
   return join8(sugoHomeDir(), ".claude", "sugo", "hulk");
 }
+var MIGRATION_MARKER = ".hulk-migrated";
 function workspaceDir(workspace) {
-  return join8(hulkRootDir(), workspace);
+  return join8(workRootDir(), workspace);
 }
 function workspaceFilePath(workspace) {
   return join8(workspaceDir(workspace), "workspace.json");
@@ -23316,10 +23321,78 @@ function roadmapLockPath(workspace) {
   return `${roadmapFilePath(workspace)}.lock`;
 }
 function syncRetryQueuePath() {
-  return join8(hulkRootDir(), "sync-retry-queue.json");
+  return join8(workRootDir(), "sync-retry-queue.json");
 }
 function syncRetryQueueLockPath() {
   return `${syncRetryQueuePath()}.lock`;
+}
+async function listFilesRecursively(dir, base = dir, acc = []) {
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return acc;
+  }
+  for (const entry of entries) {
+    const full = join8(dir, entry.name);
+    if (entry.isDirectory()) await listFilesRecursively(full, base, acc);
+    else acc.push(relative(base, full));
+  }
+  return acc;
+}
+async function fileExists(path) {
+  try {
+    await readFile4(path);
+    return true;
+  } catch (err2) {
+    return err2.code === "EISDIR";
+  }
+}
+async function migrateWorkDataDir() {
+  const empty = { migrated: false, alreadyMigrated: false, copied: 0, skipped: 0, failures: 0 };
+  const workRoot = workRootDir();
+  const legacyRoot = legacyHulkRootDir();
+  try {
+    if (await fileExists(join8(workRoot, MIGRATION_MARKER))) {
+      return { ...empty, alreadyMigrated: true };
+    }
+    const legacyFiles = await listFilesRecursively(legacyRoot);
+    if (legacyFiles.length === 0) {
+      try {
+        await readdir(legacyRoot);
+      } catch {
+        return empty;
+      }
+    }
+    let copied = 0;
+    let skipped = 0;
+    let failures = 0;
+    for (const rel of legacyFiles) {
+      const target = join8(workRoot, rel);
+      try {
+        if (await fileExists(target)) {
+          skipped++;
+          continue;
+        }
+        await mkdir5(join8(target, ".."), { recursive: true });
+        await copyFile(join8(legacyRoot, rel), target);
+        copied++;
+      } catch {
+        failures++;
+      }
+    }
+    if (failures === 0) {
+      await mkdir5(workRoot, { recursive: true });
+      await writeFile2(
+        join8(workRoot, MIGRATION_MARKER),
+        JSON.stringify({ migratedAt: (/* @__PURE__ */ new Date()).toISOString(), copied, skipped, failures }, null, 2)
+      );
+      return { migrated: true, alreadyMigrated: false, copied, skipped, failures };
+    }
+    return { migrated: false, alreadyMigrated: false, copied, skipped, failures };
+  } catch {
+    return empty;
+  }
 }
 
 // src/dashboard/retryQueue.ts
@@ -23328,14 +23401,14 @@ var MAX_RETRY_QUEUE_ITEMS = 100;
 var MAX_RETRY_ATTEMPTS = 5;
 async function readQueueFile() {
   try {
-    const raw = await readFile4(syncRetryQueuePath(), "utf-8");
+    const raw = await readFile5(syncRetryQueuePath(), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { items: [] };
   }
 }
 async function writeQueueFile(file) {
-  await mkdir5(dirname6(syncRetryQueuePath()), { recursive: true });
+  await mkdir6(dirname6(syncRetryQueuePath()), { recursive: true });
   await atomicWriteFile(syncRetryQueuePath(), JSON.stringify(file, null, 2));
 }
 async function enqueueRetry(endpoint, method, data) {
@@ -23413,8 +23486,8 @@ async function pushEvent(endpoint, method, data, timeoutMs = DEFAULT_TIMEOUT_MS)
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled || !config2.apiUrl) return;
   const payload = withSchemaVersion(data);
-  const ok9 = await sendOnce(config2.apiUrl, endpoint, method, payload, timeoutMs, config2.apiToken);
-  if (!ok9) await enqueueRetry(endpoint, method, payload);
+  const ok8 = await sendOnce(config2.apiUrl, endpoint, method, payload, timeoutMs, config2.apiToken);
+  if (!ok8) await enqueueRetry(endpoint, method, payload);
 }
 async function drainRetryQueue() {
   const config2 = await resolveDashboardConfig();
@@ -23565,7 +23638,7 @@ async function unsyncRoadmapLink(workspaceName, fromId, toId) {
 // src/hulk/workspace.ts
 async function loadWorkspace(name2) {
   try {
-    const raw = await readFile5(workspaceFilePath(name2), "utf-8");
+    const raw = await readFile6(workspaceFilePath(name2), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -23580,7 +23653,7 @@ async function ensureWorkspace(name2, projectPath) {
     projects: Array.from(projects),
     created_at: existing?.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
   };
-  await mkdir6(workspaceDir(name2), { recursive: true });
+  await mkdir7(workspaceDir(name2), { recursive: true });
   await atomicWriteFile(workspaceFilePath(name2), JSON.stringify(workspace, null, 2));
   void syncWorkspace(workspace);
   return workspace;
@@ -23588,7 +23661,7 @@ async function ensureWorkspace(name2, projectPath) {
 async function listWorkspaces() {
   let entries;
   try {
-    entries = await readdir(hulkRootDir(), { withFileTypes: true });
+    entries = await readdir2(workRootDir(), { withFileTypes: true });
   } catch {
     return [];
   }
@@ -23632,7 +23705,7 @@ async function handleSugoAdd(rawArgs) {
 }
 
 // src/tools/sugoAnalyze.ts
-import { readFile as readFile8 } from "node:fs/promises";
+import { readFile as readFile9 } from "node:fs/promises";
 
 // src/analyze.ts
 var REQ_LINE_RE = /\bREQ-(\d+)\b\s*:?\s*(.*)$/gim;
@@ -23719,7 +23792,7 @@ function analyzePrdMatch(prdContent, fileContents) {
 }
 
 // src/readChangedFiles.ts
-import { readFile as readFile6 } from "node:fs/promises";
+import { readFile as readFile7 } from "node:fs/promises";
 import { isAbsolute, join as join9 } from "node:path";
 var MAX_FILE_BYTES = 3e5;
 var MAX_FILES = 200;
@@ -23728,7 +23801,7 @@ async function readFileContents(projectPath, changedFiles) {
   for (const rel of changedFiles.slice(0, MAX_FILES)) {
     const full = isAbsolute(rel) ? rel : join9(projectPath, rel);
     try {
-      const content = await readFile6(full, "utf-8");
+      const content = await readFile7(full, "utf-8");
       if (content.length <= MAX_FILE_BYTES) contents.push(content);
     } catch {
       continue;
@@ -23739,7 +23812,7 @@ async function readFileContents(projectPath, changedFiles) {
 
 // src/session.ts
 import { randomBytes } from "node:crypto";
-import { mkdir as mkdir7, readdir as readdir2, readFile as readFile7 } from "node:fs/promises";
+import { mkdir as mkdir8, readdir as readdir3, readFile as readFile8 } from "node:fs/promises";
 import { join as join10 } from "node:path";
 function sessionsDir() {
   return join10(sugoHomeDir(), ".claude", "sugo", "sessions");
@@ -23751,17 +23824,17 @@ function sessionFilePath(id) {
   return join10(sessionsDir(), `${id}.json`);
 }
 async function saveSession(session) {
-  await mkdir7(sessionsDir(), { recursive: true });
+  await mkdir8(sessionsDir(), { recursive: true });
   session.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   await atomicWriteFile(sessionFilePath(session.id), JSON.stringify(session, null, 2));
 }
 async function loadSession(id) {
-  const raw = await readFile7(sessionFilePath(id), "utf-8");
+  const raw = await readFile8(sessionFilePath(id), "utf-8");
   return JSON.parse(raw);
 }
 async function sessionExists(id) {
   try {
-    await readFile7(sessionFilePath(id), "utf-8");
+    await readFile8(sessionFilePath(id), "utf-8");
     return true;
   } catch {
     return false;
@@ -23770,7 +23843,7 @@ async function sessionExists(id) {
 async function loadAllSessions() {
   let entries;
   try {
-    entries = await readdir2(sessionsDir());
+    entries = await readdir3(sessionsDir());
   } catch {
     return [];
   }
@@ -23778,7 +23851,7 @@ async function loadAllSessions() {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile7(join10(sessionsDir(), name2), "utf-8");
+      const raw = await readFile8(join10(sessionsDir(), name2), "utf-8");
       sessions.push(JSON.parse(raw));
     } catch {
       continue;
@@ -23804,7 +23877,7 @@ async function handleSugoAnalyze(rawArgs) {
   }
   let prdContent;
   try {
-    prdContent = await readFile8(session.data.prdPath, "utf-8");
+    prdContent = await readFile9(session.data.prdPath, "utf-8");
   } catch {
     return errorResult("PRD_FILE_MISSING", `PRD \uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${session.data.prdPath}`);
   }
@@ -23989,7 +24062,7 @@ async function handleSugoCheckLethalTrifecta(rawArgs) {
 
 // src/hulk/checkpoint.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir8, readdir as readdir3, readFile as readFile9, rm } from "node:fs/promises";
+import { mkdir as mkdir9, readdir as readdir4, readFile as readFile10, rm } from "node:fs/promises";
 import { join as join11 } from "node:path";
 
 // src/dashboard/fetch.ts
@@ -26993,7 +27066,7 @@ async function addCheckpoint(workspace, params) {
     created_at: (/* @__PURE__ */ new Date()).toISOString()
   };
   const dir = checkpointsDir(workspace);
-  await mkdir8(dir, { recursive: true });
+  await mkdir9(dir, { recursive: true });
   const content = stringifyFrontmatter({
     id: checkpoint.id,
     title: checkpoint.title,
@@ -27013,7 +27086,7 @@ async function listCheckpointFiles(workspace) {
   const dir = checkpointsDir(workspace);
   let names;
   try {
-    names = await readdir3(dir);
+    names = await readdir4(dir);
   } catch {
     return [];
   }
@@ -27021,7 +27094,7 @@ async function listCheckpointFiles(workspace) {
   for (const name2 of names) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile9(join11(dir, name2), "utf-8");
+      const raw = await readFile10(join11(dir, name2), "utf-8");
       const { meta } = parseFrontmatter(raw);
       result.push({ filename: name2, checkpoint: meta });
     } catch {
@@ -27062,7 +27135,7 @@ async function pullCheckpointsToRules(projectPath) {
   if (!remote) return null;
   for (const cp of remote) {
     const dir = join11(projectPath, ".claude", "rules", cp.category ?? "general");
-    await mkdir8(dir, { recursive: true });
+    await mkdir9(dir, { recursive: true });
     const body2 = [`# ${cp.title}`, "", ...cp.checklist.map((item) => `- [ ] ${item}`)].join("\n");
     await atomicWriteFile(join11(dir, `${slugify(cp.title)}.md`), body2);
   }
@@ -27070,21 +27143,21 @@ async function pullCheckpointsToRules(projectPath) {
 }
 
 // src/hulk/memory.ts
-import { mkdir as mkdir9, readFile as readFile10 } from "node:fs/promises";
+import { mkdir as mkdir10, readFile as readFile11 } from "node:fs/promises";
 async function appendMemory(workspace, note) {
   const path = memoryFilePath(workspace);
-  const existing = await readFile10(path, "utf-8").catch(() => "");
+  const existing = await readFile11(path, "utf-8").catch(() => "");
   const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
 
 ${note}
 `;
   const next = existing ? `${existing}
 ${entry}` : entry;
-  await mkdir9(workspaceDir(workspace), { recursive: true });
+  await mkdir10(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(path, next);
 }
 async function readMemory(workspace) {
-  return readFile10(memoryFilePath(workspace), "utf-8").catch(() => "");
+  return readFile11(memoryFilePath(workspace), "utf-8").catch(() => "");
 }
 
 // src/tools/sugoCheckpoint.ts
@@ -27261,7 +27334,7 @@ function errorResult6(errorCode, message) {
 }
 
 // src/tools/sugoExplore.ts
-import { readFile as readFile11 } from "node:fs/promises";
+import { readFile as readFile12 } from "node:fs/promises";
 import { isAbsolute as isAbsolute2, join as join14 } from "node:path";
 
 // src/ast/astParser.ts
@@ -27425,7 +27498,7 @@ async function handleSugoExplore(rawArgs) {
     const full = isAbsolute2(f) ? f : join14(args2.projectPath, f);
     let content;
     try {
-      content = await readFile11(full, "utf-8");
+      content = await readFile12(full, "utf-8");
     } catch {
       skipped.push({ path: f, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -27446,7 +27519,7 @@ async function handleSugoExplore(rawArgs) {
 }
 
 // src/tools/sugoGetProjectContext.ts
-import { readdir as readdir4, readFile as readFile12 } from "node:fs/promises";
+import { readdir as readdir5, readFile as readFile13 } from "node:fs/promises";
 import { join as join15 } from "node:path";
 
 // src/harness/toolRegistry.ts
@@ -27475,7 +27548,7 @@ var sugoGetProjectContextInputSchema = {
 var SugoGetProjectContextArgs = external_exports.object(sugoGetProjectContextInputSchema);
 async function readIfExists(path) {
   try {
-    return await readFile12(path, "utf-8");
+    return await readFile13(path, "utf-8");
   } catch {
     return null;
   }
@@ -27484,7 +27557,7 @@ async function readRulesDir(projectPath) {
   const rulesDir = join15(projectPath, ".claude", "rules");
   let entries;
   try {
-    entries = await readdir4(rulesDir, { withFileTypes: true });
+    entries = await readdir5(rulesDir, { withFileTypes: true });
   } catch {
     return [];
   }
@@ -27530,7 +27603,7 @@ async function handleSugoGetProjectContext(rawArgs) {
 
 // src/hulk/history.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdir as mkdir10, readdir as readdir5, readFile as readFile13 } from "node:fs/promises";
+import { mkdir as mkdir11, readdir as readdir6, readFile as readFile14 } from "node:fs/promises";
 import { join as join16 } from "node:path";
 function generateWorkLogId() {
   return `wl-${Date.now()}-${randomBytes3(4).toString("hex")}`;
@@ -27538,7 +27611,7 @@ function generateWorkLogId() {
 async function addWorkLog(workspace, params) {
   const workLog = { id: generateWorkLogId(), ...params };
   const dir = historyDir(workspace);
-  await mkdir10(dir, { recursive: true });
+  await mkdir11(dir, { recursive: true });
   await atomicWriteFile(join16(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
   void syncHistory(workspace, workLog, workLog.prRefs);
   return workLog;
@@ -27547,7 +27620,7 @@ async function listWorkLogs(workspace) {
   const dir = historyDir(workspace);
   let entries;
   try {
-    entries = await readdir5(dir);
+    entries = await readdir6(dir);
   } catch {
     return [];
   }
@@ -27555,7 +27628,7 @@ async function listWorkLogs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile13(join16(dir, name2), "utf-8");
+      const raw = await readFile14(join16(dir, name2), "utf-8");
       logs.push(JSON.parse(raw));
     } catch {
       continue;
@@ -27565,7 +27638,7 @@ async function listWorkLogs(workspace) {
 }
 async function getWorkLog(workspace, id) {
   try {
-    const raw = await readFile13(join16(historyDir(workspace), `${id}.json`), "utf-8");
+    const raw = await readFile14(join16(historyDir(workspace), `${id}.json`), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -27633,8 +27706,668 @@ function errorResult7(errorCode, message) {
   };
 }
 
+// src/tools/sugoOverview.ts
+import { readFile as readFile15 } from "node:fs/promises";
+import { relative as relative2 } from "node:path";
+
+// src/overview.ts
+import { readdir as readdir7 } from "node:fs/promises";
+import { join as join17 } from "node:path";
+var IGNORED_DIR_NAMES = /* @__PURE__ */ new Set([
+  "node_modules",
+  "dist",
+  "build",
+  "out",
+  "target",
+  "coverage",
+  "sugo",
+  ".claude"
+]);
+async function walkSourceFiles(rootDir, maxFiles) {
+  const results = [];
+  async function walk(dir) {
+    if (results.length >= maxFiles) return;
+    let entries;
+    try {
+      entries = await readdir7(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (results.length >= maxFiles) return;
+      if (entry.isDirectory()) {
+        if (entry.name.startsWith(".") || IGNORED_DIR_NAMES.has(entry.name)) continue;
+        await walk(join17(dir, entry.name));
+      } else if (entry.isFile() && detectLanguage(entry.name)) {
+        results.push(join17(dir, entry.name));
+      }
+    }
+  }
+  await walk(rootDir);
+  return results;
+}
+
+// src/tools/sugoOverview.ts
+var MAX_FILES3 = 200;
+var MAX_FILE_BYTES3 = 5e5;
+var sugoOverviewInputSchema = {
+  projectPath: external_exports.string().describe("\uC628\uBCF4\uB529\uD560 \uD504\uB85C\uC81D\uD2B8 \uC808\uB300\uACBD\uB85C")
+};
+var SugoOverviewArgs = external_exports.object(sugoOverviewInputSchema);
+async function handleSugoOverview(rawArgs) {
+  const args2 = SugoOverviewArgs.parse(rawArgs);
+  const files = await walkSourceFiles(args2.projectPath, MAX_FILES3);
+  const outlines = [];
+  const skipped = [];
+  for (const full of files) {
+    const relPath = relative2(args2.projectPath, full);
+    let content;
+    try {
+      content = await readFile15(full, "utf-8");
+    } catch {
+      skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
+      continue;
+    }
+    if (content.length > MAX_FILE_BYTES3) {
+      skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC774 \uB108\uBB34 \uD07C(500KB \uCD08\uACFC)" });
+      continue;
+    }
+    const outline = await parseFileOutline(relPath, content);
+    if (!outline) {
+      skipped.push({ path: relPath, reason: `\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC5B8\uC5B4(\uC9C0\uC6D0: ${supportedLanguages().join(", ")})` });
+      continue;
+    }
+    outlines.push(outline);
+  }
+  const payload = {
+    ok: true,
+    projectPath: args2.projectPath,
+    scannedFileCount: files.length,
+    truncated: files.length >= MAX_FILES3,
+    outlines,
+    skipped
+  };
+  return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+}
+
+// src/tools/sugoPlan.ts
+import { readFile as readFile19 } from "node:fs/promises";
+
+// src/bootable.ts
+async function isProjectBootable(projectPath) {
+  const config2 = await loadProjectConfig(projectPath);
+  return (config2?.detectedStack.frameworks ?? []).some((f) => f.id.startsWith("framework/spring"));
+}
+
+// src/bootScan.ts
+import { readdir as readdir8, readFile as readFile16 } from "node:fs/promises";
+import { join as join18 } from "node:path";
+
+// src/gates.ts
+function ok3() {
+  return { ok: true };
+}
+function fail(code, message) {
+  return { ok: false, code, message };
+}
+var REQ_TAG_RE = /\bREQ-\d+\b/g;
+function validatePrd(content) {
+  const trimmed = content.trim();
+  const length = trimmed.length;
+  const reqIds = new Set((trimmed.match(REQ_TAG_RE) ?? []).map((s) => s.toUpperCase()));
+  const reqCount = reqIds.size;
+  const errors = [];
+  if (length < 100) errors.push("PRD_TOO_SHORT");
+  if (reqCount < 1) errors.push("PRD_MISSING_REQUIREMENTS");
+  return { ok: errors.length === 0, length, reqCount, errors };
+}
+var BASELINE_SIGNAL_PATTERNS = [
+  { label: "jdk-runtime-upgrade", re: /(JDK|자바\s*버전|java\s*version|런타임)[\s\S]{0,12}(상향|업그레이드|변경|마이그레이션|upgrade|migration)/i },
+  { label: "build-system-change", re: /(빌드\s*시스템|build\s*system)[\s\S]{0,12}(변경|교체|전환|migration)/i },
+  { label: "dependency-removal", re: /의존성[\s\S]{0,6}(제거|삭제|내재화)|(dependency|library)[\s\S]{0,12}(removal|removed|inlin(e|ing))/i }
+];
+function detectBaselineSignals(prdContent) {
+  const signals = BASELINE_SIGNAL_PATTERNS.filter((p) => p.re.test(prdContent)).map((p) => p.label);
+  return { required: signals.length > 0, signals };
+}
+function checkBaselineGate(required2, baselineEvidenceExitCode) {
+  if (!required2) return ok3();
+  if (baselineEvidenceExitCode === null) {
+    return fail("BASELINE_NOT_GREEN", "baseline \uC2DC\uADF8\uB110\uC774 \uAC10\uC9C0\uB41C PRD\uC785\uB2C8\uB2E4. code_done \uC804\uC5D0 baseline \uD14C\uC2A4\uD2B8 \uC99D\uAC70(record_test_evidence, kind=baseline)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  }
+  if (baselineEvidenceExitCode !== 0) {
+    return fail("BASELINE_NOT_GREEN", `baseline \uD14C\uC2A4\uD2B8\uAC00 \uADF8\uB9B0\uC774 \uC544\uB2D9\uB2C8\uB2E4(exitCode=${baselineEvidenceExitCode}).`);
+  }
+  return ok3();
+}
+function checkAnalyzeGate(analyzeAttempts, hasPrd) {
+  if (!hasPrd) return ok3();
+  if (analyzeAttempts < 1) {
+    return fail("ANALYZE_NOT_CALLED", "code_done \uC804\uC5D0 sugo_analyze\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4.");
+  }
+  return ok3();
+}
+var WIRING_FILE_PATTERNS = [
+  /(^|[\\/])application(-[^\\/.]*)?\.(ya?ml|properties)$/i,
+  /(^|[\\/])\w+Config(uration)?\.(java|kt)$/,
+  /(^|[\\/])docker-compose(\.[^\\/]*)?\.ya?ml$/i,
+  /(^|[\\/])Dockerfile$/i,
+  /(^|[\\/])\.env(\.[^\\/]*)?$/,
+  /(^|[\\/])(build\.gradle(\.kts)?|pom\.xml)$/
+];
+function isWiringChange(changedFiles) {
+  return changedFiles.some((f) => WIRING_FILE_PATTERNS.some((re) => re.test(f)));
+}
+function checkWiringGate(changedFiles, mode, wiringTestAdded) {
+  const triggered = mode === "patch" || isWiringChange(changedFiles);
+  if (!triggered) return ok3();
+  if (!wiringTestAdded) {
+    return fail(
+      "WIRING_TEST_MISSING",
+      "\uBC30\uC120/\uC124\uC815 \uD30C\uC77C \uBCC0\uACBD(\uB610\uB294 patch \uBAA8\uB4DC)\uC774 \uAC10\uC9C0\uB418\uC5C8\uC2B5\uB2C8\uB2E4. mock \uC5C6\uB294 \uBC30\uC120 \uD14C\uC2A4\uD2B8\uB97C \uCD94\uAC00/\uAC80\uC99D\uD588\uB294\uC9C0(wiringTestAdded)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok3();
+}
+function checkRegistrationGlueGate(dependencyRemoved, registrationGlueChecked) {
+  if (!dependencyRemoved) return ok3();
+  if (!registrationGlueChecked) {
+    return fail(
+      "REGISTRATION_GLUE_NOT_CHECKED",
+      "\uC758\uC874\uC131 \uC81C\uAC70/\uB0B4\uC7AC\uD654\uAC00 \uC120\uC5B8\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB4F1\uB85D \uAE00\uB8E8(\uBE48 \uB4F1\uB85D \uBA54\uD0C0)\uAC00 \uB3D9\uC77C\uD558\uAC8C \uC720\uC9C0\uB418\uB294\uC9C0 diff\uB85C \uD655\uC778(registrationGlueChecked)\uD574\uC57C \uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok3();
+}
+var SPRING_BOOT_TEST_ANNOTATION_RE = /^[ \t]*@SpringBootTest\b/m;
+function hasValidSpringBootTestAnnotation(fileContents) {
+  return fileContents.some((content) => SPRING_BOOT_TEST_ANNOTATION_RE.test(content));
+}
+function checkBootGate(bootable, annotationFound, bootUnverifiedReason) {
+  if (!bootable) return ok3();
+  if (annotationFound) return ok3();
+  if (bootUnverifiedReason && bootUnverifiedReason.trim().length > 0) return ok3();
+  return fail(
+    "BOOT_GATE_FAILED",
+    "\uBD80\uD305 \uAC00\uB2A5 \uC2A4\uD0DD(Spring Boot)\uC778\uB370 \uD480\uCEE8\uD14D\uC2A4\uD2B8 @SpringBootTest\uAC00 \uBC1C\uACAC\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uD658\uACBD\uBD80\uC7AC\uBA74 bootUnverifiedReason\uC73C\uB85C \uB77C\uBCA8\uB9C1\uD558\uC138\uC694."
+  );
+}
+function checkUserConfirmationGate(userConfirmed) {
+  if (!userConfirmed) {
+    return fail(
+      "USER_CONFIRMATION_REQUIRED",
+      "review_done \uC804\uC5D0 work-result\uB97C \uC0AC\uB78C\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uD655\uC778(userConfirmed:true)\uBC1B\uC544\uC57C \uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok3();
+}
+function validateSummaryQuality(summary) {
+  const trimmed = summary.trim();
+  const lines = trimmed.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0).length;
+  const length = trimmed.length;
+  const uniqueChars = new Set(trimmed.replace(/\s+/g, "")).size;
+  const tokens = trimmed.split(/[^\p{L}\p{N}]+/u).filter((t) => t.length >= 2);
+  const distinctTokens = new Set(tokens.map((t) => t.toLowerCase())).size;
+  const errors = [];
+  if (lines < 3) errors.push("SUMMARY_TOO_FEW_LINES");
+  if (length < 30) errors.push("SUMMARY_TOO_SHORT");
+  if (uniqueChars < 10) errors.push("SUMMARY_LOW_CHAR_DIVERSITY");
+  if (distinctTokens < 5) errors.push("SUMMARY_LOW_TOKEN_DIVERSITY");
+  return { ok: errors.length === 0, lines, length, uniqueChars, distinctTokens, errors };
+}
+function checkRuntimeVerificationGate(testPassedState, runtimeCheck, bootable) {
+  const labeled = !!(runtimeCheck.unverifiedReason && runtimeCheck.unverifiedReason.trim().length > 0);
+  if (!runtimeCheck.runtimeVerified) {
+    if (labeled) return ok3();
+    return fail(
+      "RUNTIME_UNVERIFIED_GATE_FAILED",
+      "\uC2E4\uC81C \uBE4C\uB4DC+\uD14C\uC2A4\uD2B8\uB85C \uADF8\uB9B0\uC784\uC744 \uC99D\uBA85(runtimeVerified:true)\uD558\uAC70\uB098 \uD658\uACBD\uBD80\uC7AC\uB97C unverifiedReason\uC73C\uB85C \uB77C\uBCA8\uB9C1\uD574\uC57C \uD569\uB2C8\uB2E4."
+    );
+  }
+  if (testPassedState === "fail") {
+    return fail(
+      "RUNTIME_CLAIM_CONTRADICTS_EVIDENCE",
+      "\uAE30\uB85D\uB41C test evidence\uAC00 fail\uC778\uB370 runtimeVerified:true\uB97C \uC8FC\uC7A5\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uC790\uAE30\uBCF4\uACE0\uBCF4\uB2E4 \uAE30\uB85D\uB41C \uC99D\uAC70\uAC00 \uC6B0\uC120\uD569\uB2C8\uB2E4."
+    );
+  }
+  if (bootable && runtimeCheck.wiringVerified !== true) {
+    if (labeled) return ok3();
+    return fail(
+      "RUNTIME_WIRING_NOT_VERIFIED",
+      "\uBD80\uD305 \uAC00\uB2A5 \uC2A4\uD0DD\uC740 wiringVerified:true(\uC571\uC774 \uC2E4\uC81C \uB728\uB294\uC9C0 \uBC30\uC120 \uAC80\uC99D)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok3();
+}
+function checkSpecOracleGate(specOracle) {
+  if (!specOracle?.required) return ok3();
+  if (specOracle.ran) return ok3();
+  return fail(
+    "SPEC_ORACLE_NOT_RUN",
+    "q-spec \uC6D0\uBCF8 \uC2A4\uD399 \uB300\uC870(oracle)\uAC00 \uC544\uC9C1 \uAE30\uB85D\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4 \u2014 sugo_plan({action:'oracle_done', ...})\uC73C\uB85C \uB300\uC870 \uACB0\uACFC\uB97C \uBA3C\uC800 \uAE30\uB85D\uD558\uC138\uC694."
+  );
+}
+function checkOracleDone(uncovered, overrideReason) {
+  if (!uncovered || uncovered.length === 0) return ok3();
+  if (overrideReason && overrideReason.trim().length > 0) return ok3();
+  return fail(
+    "ORACLE_OVERRIDE_REASON_REQUIRED",
+    `\uBBF8\uCEE4\uBC84 \uD56D\uBAA9 ${uncovered.length}\uAC74\uC744 \uBCF4\uACE0\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uADF8\uB300\uB85C \uC9C4\uD589\uD558\uB824\uBA74 overrideReason(\uC65C \uC9C0\uAE08 \uCEE4\uBC84\uD558\uC9C0 \uC54A\uB294\uC9C0)\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.`
+  );
+}
+function checkJiraOption(option, jiraKey) {
+  if (!option) return fail("JIRA_OPTION_REQUIRED", "jira action\uC5D0\uB294 jiraOption('new'|'link'|'skip')\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  if (option === "link" && !(jiraKey && jiraKey.trim().length > 0)) {
+    return fail("JIRA_KEY_REQUIRED", "jiraOption:'link'\uC5D0\uB294 \uC5F0\uACB0\uD560 jiraKey\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  }
+  return ok3();
+}
+
+// src/bootScan.ts
+var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
+var MAX_FILES4 = 2e3;
+var MAX_FILE_BYTES4 = 3e5;
+async function collectJavaFiles(dir, acc) {
+  if (acc.length >= MAX_FILES4) return;
+  let entries;
+  try {
+    entries = await readdir8(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (acc.length >= MAX_FILES4) return;
+    if (entry.isDirectory()) {
+      if (EXCLUDED_DIRS.has(entry.name)) continue;
+      await collectJavaFiles(join18(dir, entry.name), acc);
+    } else if (entry.isFile() && entry.name.endsWith(".java")) {
+      acc.push(join18(dir, entry.name));
+    }
+  }
+}
+async function scanForSpringBootTestAnnotation(projectPath) {
+  const files = [];
+  await collectJavaFiles(projectPath, files);
+  const testFiles = files.filter((f) => /(Test|Tests|IT)\.java$/.test(f));
+  const candidates = testFiles.length > 0 ? testFiles : files;
+  for (const file of candidates) {
+    try {
+      const content = await readFile16(file, "utf-8");
+      if (content.length > MAX_FILE_BYTES4) continue;
+      if (hasValidSpringBootTestAnnotation([content])) return true;
+    } catch {
+      continue;
+    }
+  }
+  return false;
+}
+
+// src/feature.ts
+import { mkdir as mkdir12 } from "node:fs/promises";
+import { join as join20 } from "node:path";
+
+// src/patch.ts
+import { readdir as readdir9 } from "node:fs/promises";
+import { dirname as dirname8, join as join19 } from "node:path";
+var PatchEntryError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+  }
+};
+var PATCH_FILE_RE = /^(prd|work-result)-patch-v(\d+)\.md$/i;
+var PRD_PATCH_RE = /^prd-patch-v(\d+)\.md$/i;
+function computeNextPatchVersion(filenames) {
+  let max = 1;
+  for (const name2 of filenames) {
+    const m = name2.match(PATCH_FILE_RE);
+    if (m) max = Math.max(max, Number(m[2]));
+  }
+  return max + 1;
+}
+function findLatestPrdPatchFilename(filenames) {
+  let best = null;
+  for (const name2 of filenames) {
+    const m = name2.match(PRD_PATCH_RE);
+    if (!m) continue;
+    const version2 = Number(m[1]);
+    if (!best || version2 > best.version) best = { name: name2, version: version2 };
+  }
+  return best?.name ?? null;
+}
+function patchPrdFilename(version2) {
+  return `PRD-patch-v${version2}.md`;
+}
+function patchWorkResultFilename(version2) {
+  return `work-result-patch-v${version2}.md`;
+}
+async function resolvePatchContext(workResultPath) {
+  const featureDir = dirname8(workResultPath);
+  let filenames;
+  try {
+    filenames = await readdir9(featureDir);
+  } catch {
+    throw new PatchEntryError("PATCH_FEATURE_DIR_NOT_FOUND", `feature \uB514\uB809\uD130\uB9AC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`);
+  }
+  let parentPrdPath;
+  if (filenames.includes("prd.md")) {
+    parentPrdPath = join19(featureDir, "prd.md");
+  } else {
+    const latest = findLatestPrdPatchFilename(filenames);
+    if (!latest) {
+      throw new PatchEntryError(
+        "PATCH_PARENT_PRD_NOT_FOUND",
+        `\uBD80\uBAA8 PRD(prd.md \uB610\uB294 PRD-patch-v*.md)\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`
+      );
+    }
+    parentPrdPath = join19(featureDir, latest);
+  }
+  const version2 = computeNextPatchVersion(filenames);
+  return { parentPrdPath, version: version2, baseWorkResultPath: workResultPath, featureDir };
+}
+
+// src/feature.ts
+function slugify2(name2) {
+  return name2.toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-+|-+$/g, "") || "feature";
+}
+function todayYyyymmdd() {
+  const d = /* @__PURE__ */ new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+}
+async function writePrdFile(projectPath, featureName, content) {
+  const featurePath = join20(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
+  const prdPath = join20(featurePath, "prd.md");
+  await mkdir12(featurePath, { recursive: true });
+  await atomicWriteFile(prdPath, content);
+  return { featurePath, prdPath };
+}
+async function writeWorkResultFile(featurePath, content) {
+  const workResultPath = join20(featurePath, "work-result.md");
+  await mkdir12(featurePath, { recursive: true });
+  await atomicWriteFile(workResultPath, content);
+  return { workResultPath };
+}
+async function writePatchPrdFile(featureDir, version2, content) {
+  const prdPath = join20(featureDir, patchPrdFilename(version2));
+  await mkdir12(featureDir, { recursive: true });
+  await atomicWriteFile(prdPath, content);
+  return { featurePath: featureDir, prdPath };
+}
+async function writePatchWorkResultFile(featureDir, version2, content) {
+  const workResultPath = join20(featureDir, patchWorkResultFilename(version2));
+  await mkdir12(featureDir, { recursive: true });
+  await atomicWriteFile(workResultPath, content);
+  return { workResultPath };
+}
+
+// src/consistency.ts
+function checkCoverageGate(coverageMap) {
+  const uncoveredAC = coverageMap.acceptanceCriteria.filter((ac) => !ac.covered);
+  if (uncoveredAC.length > 0) {
+    return fail(
+      "PRD_COVERAGE_INCOMPLETE",
+      `AC(\uC218\uB77D\uAE30\uC900) \uBBF8\uCDA9\uC871: ${uncoveredAC.map((a) => a.id).join(", ")}`
+    );
+  }
+  const unassertedFields = coverageMap.responseFields.filter((f) => !f.asserted);
+  if (unassertedFields.length > 0) {
+    return fail(
+      "PRD_COVERAGE_INCOMPLETE",
+      `\uC751\uB2F5\uD544\uB4DC \uBBF8\uAC80\uC99D: ${unassertedFields.map((f) => f.field).join(", ")}`
+    );
+  }
+  if (coverageMap.regressionChecked && !coverageMap.regressionIntact) {
+    return fail(
+      "REGRESSION_NOT_INTACT",
+      "\uD68C\uADC0 \uD655\uC778\uC744 \uC8FC\uC7A5\uD588\uC9C0\uB9CC \uACB0\uACFC\uAC00 intact:true\uAC00 \uC544\uB2D9\uB2C8\uB2E4(\uAE68\uC84C\uAC70\uB098 \uACB0\uACFC\uB97C \uBA85\uD655\uD788 \uBC1D\uD788\uC9C0 \uC54A\uC74C)."
+    );
+  }
+  if (coverageMap.integrationTestCount < 1) {
+    return fail("INTEGRATION_TEST_MISSING", "\uD1B5\uD569\uB808\uBCA8 \uD14C\uC2A4\uD2B8\uAC00 \uCD5C\uC18C 1\uAC1C \uD544\uC694\uD569\uB2C8\uB2E4.");
+  }
+  return ok3();
+}
+
+// src/contractEvidence.ts
+function applyContractPhase(existing, contractId, phase, exitCode, now) {
+  const base = existing ?? { contractId };
+  if (phase === "red") return { ...base, contractId, redRecordedAt: now, redExitCode: exitCode };
+  return { ...base, contractId, greenRecordedAt: now, greenExitCode: exitCode };
+}
+function isValidRedToGreenTransition(r) {
+  return r.redExitCode !== void 0 && r.redExitCode !== 0 && r.greenExitCode === 0;
+}
+function checkContractEvidenceGate(records, required2) {
+  if (!required2) return ok3();
+  if (records.length === 0) {
+    return fail("CONTRACT_EVIDENCE_MISSING", "\uACC4\uC57D\uD14C\uC2A4\uD2B8 \uC2E4\uD589\uC99D\uAC70(red\u2192green)\uAC00 \uD558\uB098\uB3C4 \uAE30\uB85D\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.");
+  }
+  const invalid = records.filter((r) => !isValidRedToGreenTransition(r));
+  if (invalid.length > 0) {
+    return fail(
+      "CONTRACT_EVIDENCE_INCOMPLETE",
+      `red\u2192green \uC804\uC774\uAC00 \uD655\uC778\uB418\uC9C0 \uC54A\uC740 \uACC4\uC57D: ${invalid.map((r) => r.contractId).join(", ")}`
+    );
+  }
+  return ok3();
+}
+function hasValidRed(r) {
+  return r.redExitCode !== void 0 && r.redExitCode !== 0;
+}
+function checkContractStartedGate(records, required2, environmentAbsentReason) {
+  if (!required2) return ok3();
+  if (environmentAbsentReason && environmentAbsentReason.trim().length > 0) return ok3();
+  if (!records.some(hasValidRed)) {
+    return fail(
+      "CONTRACT_NOT_STARTED",
+      "\uACC4\uC57D\uD14C\uC2A4\uD2B8\uAC00 \uD544\uC218\uC778\uB370 \uAD6C\uD604 \uC804 red \uD655\uC778(sugo_record_contract_evidence phase=red)\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."
+    );
+  }
+  return ok3();
+}
+function resolveContractRequired(policyValue, sessionCtx) {
+  if (policyValue !== void 0) return policyValue;
+  return sessionCtx.baselineRequired;
+}
+
+// src/prRefs.ts
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+var execFileAsync = promisify(execFile);
+async function runGit(args2, cwd) {
+  try {
+    const { stdout } = await execFileAsync("git", args2, { cwd });
+    return stdout.trim();
+  } catch {
+    return null;
+  }
+}
+function parseRemoteUrl(remoteUrl) {
+  const trimmed = remoteUrl.trim();
+  let host;
+  let pathPart;
+  const sshShorthand = trimmed.match(/^git@([^:]+):(.+)$/);
+  if (sshShorthand) {
+    host = sshShorthand[1];
+    pathPart = sshShorthand[2];
+  } else {
+    try {
+      const u = new URL(trimmed);
+      host = u.host;
+      pathPart = u.pathname.replace(/^\//, "");
+    } catch {
+      return null;
+    }
+  }
+  pathPart = pathPart.replace(/\.git$/, "");
+  const segments = pathPart.split("/").filter(Boolean);
+  if (segments.length < 2) return null;
+  const repoSlug = segments[segments.length - 1];
+  const projectKey = segments[segments.length - 2];
+  return { baseUrl: `https://${host}`, projectKey: projectKey.toUpperCase(), repoSlug };
+}
+async function collectPrRefs(projectPath) {
+  const remoteUrl = await runGit(["remote", "get-url", "origin"], projectPath);
+  if (!remoteUrl) return null;
+  const parsed = parseRemoteUrl(remoteUrl);
+  if (!parsed) return null;
+  const sourceBranch = await runGit(["rev-parse", "--abbrev-ref", "HEAD"], projectPath) ?? "HEAD";
+  return { ...parsed, sourceBranch, targetBranch: "develop" };
+}
+
+// src/decompose.ts
+function findManifestCycle(subtasks) {
+  const byId = new Map(subtasks.map((s) => [s.id, s]));
+  const visiting = /* @__PURE__ */ new Set();
+  const visited = /* @__PURE__ */ new Set();
+  function dfs(id, path) {
+    if (visiting.has(id)) {
+      const idx = path.indexOf(id);
+      return path.slice(idx).concat(id);
+    }
+    if (visited.has(id)) return null;
+    visiting.add(id);
+    path.push(id);
+    for (const dep of byId.get(id)?.dependsOn ?? []) {
+      if (!byId.has(dep)) continue;
+      const cycle = dfs(dep, path);
+      if (cycle) return cycle;
+    }
+    path.pop();
+    visiting.delete(id);
+    visited.add(id);
+    return null;
+  }
+  for (const s of subtasks) {
+    if (!visited.has(s.id)) {
+      const cycle = dfs(s.id, []);
+      if (cycle) return cycle;
+    }
+  }
+  return null;
+}
+function detectFileOverlaps(subtasks) {
+  const owners = /* @__PURE__ */ new Map();
+  for (const s of subtasks) {
+    for (const f of s.files) {
+      const list = owners.get(f) ?? [];
+      list.push(s.id);
+      owners.set(f, list);
+    }
+  }
+  const overlaps = [];
+  for (const [file, ids] of owners) {
+    if (ids.length > 1) overlaps.push({ file, subtaskIds: ids });
+  }
+  return overlaps;
+}
+function computeRequirementCoverage(prdRequirementIds, subtasks) {
+  const coveredSet = new Set(subtasks.flatMap((s) => s.coversRequirements));
+  const covered = prdRequirementIds.filter((id) => coveredSet.has(id));
+  const uncovered = prdRequirementIds.filter((id) => !coveredSet.has(id));
+  return { covered, uncovered };
+}
+function validateManifest(manifest, prdRequirementIds) {
+  const cycle = findManifestCycle(manifest.subtasks);
+  if (cycle) {
+    return fail("MANIFEST_HAS_CYCLE", `\uC11C\uBE0C\uD0DC\uC2A4\uD06C \uC758\uC874\uC131\uC5D0 \uC0AC\uC774\uD074\uC774 \uC788\uC2B5\uB2C8\uB2E4: ${cycle.join(" \u2192 ")}`);
+  }
+  const overlaps = detectFileOverlaps(manifest.subtasks);
+  if (overlaps.length > 0) {
+    return fail(
+      "MANIFEST_FILE_OVERLAP",
+      `\uC5EC\uB7EC \uC11C\uBE0C\uD0DC\uC2A4\uD06C\uAC00 \uAC19\uC740 \uD30C\uC77C\uC744 \uACC4\uD68D\uD588\uC2B5\uB2C8\uB2E4: ${overlaps.map((o) => `${o.file}(${o.subtaskIds.join(",")})`).join("; ")}`
+    );
+  }
+  const coverage = computeRequirementCoverage(prdRequirementIds, manifest.subtasks);
+  if (coverage.uncovered.length > 0) {
+    return fail("MANIFEST_REQUIREMENT_UNCOVERED", `\uC5B4\uB5A4 \uC11C\uBE0C\uD0DC\uC2A4\uD06C\uB3C4 \uCEE4\uBC84\uD558\uC9C0 \uC54A\uB294 \uC694\uAD6C\uC0AC\uD56D: ${coverage.uncovered.join(", ")}`);
+  }
+  return ok3();
+}
+function validateIntegration(manifest) {
+  const incomplete = manifest.subtasks.filter((s) => s.status !== "done");
+  if (incomplete.length > 0) {
+    return fail("SUBTASKS_INCOMPLETE", `\uC544\uC9C1 \uC644\uB8CC\uB418\uC9C0 \uC54A\uC740 \uC11C\uBE0C\uD0DC\uC2A4\uD06C: ${incomplete.map((s) => s.id).join(", ")}`);
+  }
+  const overlaps = detectFileOverlaps(manifest.subtasks.map((s) => ({ id: s.id, files: s.changedFiles ?? [] })));
+  if (overlaps.length > 0) {
+    return fail(
+      "MANIFEST_FILE_OVERLAP",
+      `\uC2E4\uC81C \uBCC0\uACBD\uD30C\uC77C\uC774 \uACB9\uCE69\uB2C8\uB2E4: ${overlaps.map((o) => `${o.file}(${o.subtaskIds.join(",")})`).join("; ")}`
+    );
+  }
+  return ok3();
+}
+
+// src/fingerprint.ts
+import { createHash as createHash2 } from "node:crypto";
+import { stat } from "node:fs/promises";
+import { isAbsolute as isAbsolute3, join as join21, relative as relative3 } from "node:path";
+function computeFingerprintFromEntries(entries) {
+  const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
+  return createHash2("sha1").update(parts2.join("\n")).digest("hex");
+}
+async function statChangedFiles(projectPath, changedFiles) {
+  const entries = [];
+  for (const f of changedFiles) {
+    const full = isAbsolute3(f) ? f : join21(projectPath, f);
+    const relPath = isAbsolute3(f) ? relative3(projectPath, f) : f;
+    try {
+      const st = await stat(full);
+      entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
+    } catch {
+      entries.push({ relPath, size: -1, mtimeMs: -1 });
+    }
+  }
+  return entries;
+}
+async function computeChangedFilesFingerprint(projectPath, changedFiles) {
+  return computeFingerprintFromEntries(await statChangedFiles(projectPath, changedFiles));
+}
+function checkEvidenceReuseGate(reusedFromTestDone, storedFingerprint, currentFingerprint, testPassedState) {
+  if (!reusedFromTestDone) return ok3();
+  if (!storedFingerprint) {
+    return fail("EVIDENCE_REUSE_NO_BASELINE", "test_done \uC2DC\uC810\uC5D0 \uAE30\uB85D\uB41C \uBCC0\uACBD\uD30C\uC77C \uC9C0\uBB38\uC774 \uC5C6\uC5B4 \uC99D\uAC70\uB97C \uC7AC\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  }
+  if (testPassedState !== "pass") {
+    return fail("EVIDENCE_REUSE_NOT_GREEN", "test_done \uC99D\uAC70\uAC00 pass\uAC00 \uC544\uB2C8\uC5B4\uC11C \uC7AC\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  }
+  if (storedFingerprint !== currentFingerprint) {
+    return fail(
+      "EVIDENCE_REUSE_FINGERPRINT_MISMATCH",
+      "\uB9AC\uBDF0 \uC911 \uBCC0\uACBD\uD30C\uC77C\uC774 \uC218\uC815\uB418\uC5B4 \uC9C0\uBB38\uC774 \uB2EC\uB77C\uC84C\uC2B5\uB2C8\uB2E4 \u2014 test_done \uC99D\uAC70\uB97C \uC7AC\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC73C\uB2C8 \uC7AC\uC2E4\uD589\uC774 \uD544\uC694\uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok3();
+}
+
+// src/humanHours.ts
+var DEFAULT_RATIO = 3.5;
+function estimateHumanHours(startedAtIso, nowIso2, analyzeAttempts, autoLoopRetryCount, ratio = DEFAULT_RATIO) {
+  const startMs = new Date(startedAtIso).getTime();
+  const nowMs = new Date(nowIso2).getTime();
+  const aiExecutionMinutes = Math.max(0, (nowMs - startMs) / 6e4);
+  const base = aiExecutionMinutes / 60 * ratio;
+  const complexity = analyzeAttempts * 0.1 + autoLoopRetryCount * 0.15;
+  const estimatedHumanHours = Math.round((base + complexity) * 100) / 100;
+  return {
+    aiExecutionMinutes: Math.round(aiExecutionMinutes * 10) / 10,
+    estimatedHumanHours,
+    estimationBasis: `AI \uC2E4\uD589 ${Math.round(aiExecutionMinutes)}\uBD84 \xD7 \uBCF4\uC815\uBE44\uC728 ${ratio} + \uBCF5\uC7A1\uB3C4(analyze ${analyzeAttempts}\uD68C\xD70.1 + auto-loop \uC7AC\uC2DC\uB3C4 ${autoLoopRetryCount}\uD68C\xD70.15)`
+  };
+}
+
+// src/hulk/matching.ts
+function checkpointApplies(checkpoint, ctx) {
+  const applies = checkpoint.applies_to;
+  if (!applies || applies.length === 0) return true;
+  return applies.some((tag) => tag === ctx.projectName || ctx.harnessIds.includes(tag));
+}
+
 // src/hulk/roadmap.ts
-import { mkdir as mkdir11, readFile as readFile14 } from "node:fs/promises";
+import { mkdir as mkdir13, readFile as readFile17 } from "node:fs/promises";
 
 // src/hulk/roadmapGraph.ts
 function mergeRoadmapOwnership(localNodes, remoteOrdering) {
@@ -27703,14 +28436,14 @@ function readySet(nodes) {
 // src/hulk/roadmap.ts
 async function readRoadmapFile(workspace) {
   try {
-    const raw = await readFile14(roadmapFilePath(workspace), "utf-8");
+    const raw = await readFile17(roadmapFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
   }
 }
 async function writeRoadmapFile(workspace, file) {
-  await mkdir11(workspaceDir(workspace), { recursive: true });
+  await mkdir13(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(roadmapFilePath(workspace), JSON.stringify(file, null, 2));
   void syncRoadmapSnapshot(workspace, file.nodes);
 }
@@ -27859,82 +28592,62 @@ async function pullRoadmapOrdering(workspace) {
   });
 }
 
-// src/hulk/spec.ts
-import { mkdir as mkdir12, readdir as readdir6, readFile as readFile15 } from "node:fs/promises";
-import { join as join17 } from "node:path";
-async function addSpec(workspace, params) {
-  const spec = {
-    name: params.name,
-    type: params.type,
-    tags: params.tags ?? [],
-    content: params.content,
-    created_at: (/* @__PURE__ */ new Date()).toISOString()
-  };
-  const dir = specsDir(workspace);
-  await mkdir12(dir, { recursive: true });
-  const fileContent = stringifyFrontmatter(
-    { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
-    spec.content
-  );
-  await atomicWriteFile(join17(dir, `${slugify(params.name)}.md`), fileContent);
-  void syncDecision(workspace, spec);
-  return spec;
-}
-function parseSpecFile(raw) {
-  const { meta, body: body2 } = parseFrontmatter(raw);
-  return {
-    name: meta.name ?? "",
-    type: meta.type ?? "other",
-    tags: meta.tags ?? [],
-    created_at: meta.created_at ?? "",
-    content: body2
-  };
-}
-async function listSpecs(workspace) {
-  const dir = specsDir(workspace);
-  let entries;
-  try {
-    entries = await readdir6(dir);
-  } catch {
-    return [];
+// src/hulk/roadmapReq.ts
+var REQ_HEADING_RE = /^#{1,6}\s*REQ-(\d+)\s*:\s*(.+)$/gim;
+function parseRequirementsFromPrd(prdContent) {
+  const results = [];
+  const seen = /* @__PURE__ */ new Set();
+  const re = new RegExp(REQ_HEADING_RE);
+  let m;
+  while ((m = re.exec(prdContent)) !== null) {
+    const id = `REQ-${m[1]}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    results.push({ id, title: m[2].trim() });
   }
-  const specs = [];
-  for (const name2 of entries) {
-    if (!name2.endsWith(".md")) continue;
-    try {
-      const raw = await readFile15(join17(dir, name2), "utf-8");
-      specs.push(parseSpecFile(raw));
-    } catch {
-      continue;
-    }
-  }
-  return specs;
+  return results;
 }
-async function getSpec(workspace, name2) {
-  try {
-    const raw = await readFile15(join17(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
-    return parseSpecFile(raw);
-  } catch {
-    return null;
-  }
+function reqConfirmId(taskId) {
+  return `${taskId}::REQ-CONFIRM`;
+}
+function promotePrdRequirements(taskId, prdContent) {
+  const requirements = parseRequirementsFromPrd(prdContent);
+  if (requirements.length === 0) return [];
+  const nodes = requirements.map((req, i2) => ({
+    id: req.id,
+    title: req.title,
+    level: "subtask",
+    status: "pending",
+    dependsOn: i2 === 0 ? [] : [requirements[i2 - 1].id],
+    parent: taskId
+  }));
+  nodes.push({
+    id: reqConfirmId(taskId),
+    title: "\uC0AC\uC6A9\uC790 \uCD5C\uC885 \uD655\uC778",
+    level: "step",
+    status: "pending",
+    dependsOn: requirements.map((r) => r.id),
+    parent: taskId
+  });
+  return nodes;
 }
 
 // src/hulk/task.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir13, readFile as readFile16 } from "node:fs/promises";
+import { mkdir as mkdir14, readFile as readFile18 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile16(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile18(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
   }
 }
 async function writeTasksFile(workspace, file) {
-  await mkdir13(workspaceDir(workspace), { recursive: true });
+  await mkdir14(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(tasksFilePath(workspace), JSON.stringify(file, null, 2));
 }
 async function addTask(workspace, params) {
@@ -27995,840 +28708,6 @@ async function findTaskByPrdRef(workspace, prdRefPath) {
   return file.tasks.find((t) => t.prd_ref && t.prd_ref.split(/[\\/]/).pop() === targetFilename) ?? null;
 }
 
-// src/judgment.ts
-function minutesBetween(fromIso, toIso) {
-  return (new Date(toIso).getTime() - new Date(fromIso).getTime()) / 6e4;
-}
-function computeJudgmentReport(sessions) {
-  const total = sessions.length;
-  const patchSessions = sessions.filter((s) => s.data.mode === "patch").length;
-  const gaps = [];
-  for (const s of sessions) {
-    const reviewDoneAt = s.data.chainInfo.reviewDoneAt;
-    if (s.state === "DONE" && reviewDoneAt) {
-      gaps.push({ sessionId: s.id, gapMinutes: Math.max(0, minutesBetween(reviewDoneAt, s.updatedAt)) });
-    }
-  }
-  const avgReviewToCommitMinutes = gaps.length > 0 ? gaps.reduce((sum, g) => sum + g.gapMinutes, 0) / gaps.length : null;
-  const maxReviewToCommitMinutes = gaps.length > 0 ? Math.max(...gaps.map((g) => g.gapMinutes)) : null;
-  const topGaps = [...gaps].sort((a, b) => b.gapMinutes - a.gapMinutes).slice(0, 5);
-  let environmentAbsentCount = 0;
-  let runtimeUnverifiedSessions = 0;
-  let bootUnverifiedSessions = 0;
-  let fabricatedValidationSessions = 0;
-  let reviewLoopRetryTotal = 0;
-  let sessionsWithReviewLoop = 0;
-  for (const s of sessions) {
-    const usedUnverifiedTest = s.data.chainInfo.testEvidence?.derivedState === "unverified";
-    const usedUnverifiedBaseline = s.data.baselineGate?.evidence?.derivedState === "unverified";
-    const usedRuntimeLabel = !!s.data.chainInfo.runtimeCheckUnverifiedReason;
-    const usedBootLabel = !!s.data.chainInfo.codeGateAudit?.bootUnverifiedReason;
-    if (usedUnverifiedTest || usedUnverifiedBaseline || usedRuntimeLabel || usedBootLabel) environmentAbsentCount++;
-    if (usedRuntimeLabel) runtimeUnverifiedSessions++;
-    if (usedBootLabel) bootUnverifiedSessions++;
-    if ((s.data.chainInfo.lastValidation?.fabricatedCount ?? 0) > 0) fabricatedValidationSessions++;
-    const retries = s.data.chainInfo.autoLoopRetryCount;
-    reviewLoopRetryTotal += retries;
-    if (retries > 0) sessionsWithReviewLoop++;
-  }
-  return {
-    totalSessions: total,
-    patchSessions,
-    avgReviewToCommitMinutes,
-    maxReviewToCommitMinutes,
-    topGaps,
-    environmentAbsentRate: total > 0 ? environmentAbsentCount / total : 0,
-    reviewLoopRetryTotal,
-    sessionsWithReviewLoop,
-    runtimeUnverifiedSessions,
-    bootUnverifiedSessions,
-    fabricatedValidationSessions
-  };
-}
-
-// src/tools/sugoHulk.ts
-var sugoHulkInputSchema = {
-  action: external_exports.enum(["enable", "disable", "status", "help", "sync", "health", "judgment"]),
-  workspace: external_exports.string().optional().describe("status/sync action\uC5D0 \uD544\uC694"),
-  windowDays: external_exports.number().optional().describe("judgment action: \uCD5C\uADFC N\uC77C \uC774\uB0B4 \uAC31\uC2E0\uB41C \uC138\uC158\uB9CC \uC9D1\uACC4")
-};
-var SugoHulkArgs = external_exports.object(sugoHulkInputSchema);
-var HULK_HELP_TEXT = [
-  "HULK(\xA78) \u2014 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uAE30\uBC18 \uD0DC\uC2A4\uD06C\xB7\uCCB4\uD06C\uD3EC\uC778\uD2B8\xB7\uC2A4\uD399\xB7\uC774\uB825\xB7\uB85C\uB4DC\uB9F5 \uAD00\uB9AC.",
-  "",
-  "\uAC1C\uB150: Spec \u2283 Run \u2283 Task \u2283 REQ \u2283 step. Workspace\uB294 \uAD00\uB828 \uD504\uB85C\uC81D\uD2B8 \uBB36\uC74C.",
-  "Task\uB294 sugo_plan(prd)\uC774 \uC790\uB3D9 \uC0DD\uC131/\uC7AC\uC0AC\uC6A9(\xA77.1 patch). Checkpoint\uB294 \uCEE4\uBC0B \uC804 \uC7AC\uBC1C\uBC29\uC9C0 \uCCB4\uD06C\uB9AC\uC2A4\uD2B8.",
-  "Roadmap DAG(sugo_roadmap)\uC774 Task/REQ\uC758 \uC2E4\uD589 \uC21C\uC11C\uB97C \uAD00\uB9AC\uD55C\uB2E4.",
-  "",
-  "\uC774 \uB3C4\uAD6C\uC758 action: enable/disable(HULK\uB294 \uD56D\uC0C1 \uCF1C\uC838 \uC788\uC5B4 \uB458 \uB2E4 no-op) \xB7 status(\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC694\uC57D)",
-  "\xB7 help(\uC774 \uD14D\uC2A4\uD2B8) \xB7 sync(\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/\uD0DC\uC2A4\uD06C/\uB85C\uB4DC\uB9F5\uC744 \uB300\uC2DC\uBCF4\uB4DC\uB85C \uB2E4\uC2DC push) \xB7",
-  "health(\uB300\uC2DC\uBCF4\uB4DC \uC5F0\uACB0 \uC0C1\uD0DC\xB7\uC7AC\uC2DC\uB3C4 \uD050 \uD06C\uAE30) \xB7 judgment(\xA74.5 \uD310\uB2E8\uD488\uC9C8 \uB9AC\uD3EC\uD2B8)."
-].join("\n");
-async function handleSugoHulk(rawArgs) {
-  const args2 = SugoHulkArgs.parse(rawArgs);
-  switch (args2.action) {
-    case "enable":
-      return ok3({ message: "HULK\uB294 \uD56D\uC0C1 \uCF1C\uC838 \uC788\uC2B5\uB2C8\uB2E4( \uB0B4\uC7A5 \uC0C1\uC218) \u2014 enable\uC740 \uC544\uBB34 \uAC83\uB3C4 \uBC14\uAFB8\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." });
-    case "disable":
-      return ok3({ message: "HULK\uB294 \uD56D\uC0C1 \uCF1C\uC838 \uC788\uC5B4 \uB04C \uC218 \uC5C6\uC2B5\uB2C8\uB2E4( \uB0B4\uC7A5 \uC0C1\uC218) \u2014 disable\uC740 \uC544\uBB34 \uAC83\uB3C4 \uBC14\uAFB8\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." });
-    case "help":
-      return ok3({ help: HULK_HELP_TEXT });
-    case "status": {
-      if (!args2.workspace) return errorResult8("WORKSPACE_REQUIRED", "status action\uC5D0\uB294 workspace\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const [tasks, checkpoints, roadmapNodes, specs, history] = await Promise.all([
-        listTasks(args2.workspace),
-        listCheckpoints(args2.workspace),
-        listRoadmapNodes(args2.workspace),
-        listSpecs(args2.workspace),
-        listWorkLogs(args2.workspace)
-      ]);
-      return ok3({
-        workspace: args2.workspace,
-        taskCount: tasks.length,
-        checkpointCount: checkpoints.length,
-        roadmapNodeCount: roadmapNodes.length,
-        specCount: specs.length,
-        historyCount: history.length
-      });
-    }
-    case "health": {
-      const config2 = await resolveDashboardConfig();
-      const queue = await listRetryQueue();
-      return ok3({
-        dashboardEnabled: config2.enabled,
-        dashboardApiUrl: config2.enabled ? config2.apiUrl : void 0,
-        retryQueueSize: queue.length
-      });
-    }
-    case "sync": {
-      if (!args2.workspace) return errorResult8("WORKSPACE_REQUIRED", "sync action\uC5D0\uB294 workspace\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const ws = await loadWorkspace(args2.workspace);
-      if (ws) void syncWorkspace(ws);
-      const tasks = await listTasks(args2.workspace);
-      for (const task of tasks) void syncTask(args2.workspace, task);
-      const nodes = await listRoadmapNodes(args2.workspace);
-      void syncRoadmapSnapshot(args2.workspace, nodes);
-      await drainRetryQueue();
-      return ok3({ synced: true, taskCount: tasks.length, roadmapNodeCount: nodes.length });
-    }
-    case "judgment": {
-      const allSessions = await loadAllSessions();
-      const sessions = args2.windowDays === void 0 ? allSessions : allSessions.filter((s) => Date.now() - new Date(s.updatedAt).getTime() <= args2.windowDays * 24 * 60 * 60 * 1e3);
-      const report = computeJudgmentReport(sessions);
-      return ok3({ report });
-    }
-  }
-}
-function ok3(payload) {
-  return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
-}
-function errorResult8(errorCode, message) {
-  return {
-    isError: true,
-    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
-  };
-}
-
-// src/tools/sugoOverview.ts
-import { readFile as readFile17 } from "node:fs/promises";
-import { relative } from "node:path";
-
-// src/overview.ts
-import { readdir as readdir7 } from "node:fs/promises";
-import { join as join18 } from "node:path";
-var IGNORED_DIR_NAMES = /* @__PURE__ */ new Set([
-  "node_modules",
-  "dist",
-  "build",
-  "out",
-  "target",
-  "coverage",
-  "sugo",
-  ".claude"
-]);
-async function walkSourceFiles(rootDir, maxFiles) {
-  const results = [];
-  async function walk(dir) {
-    if (results.length >= maxFiles) return;
-    let entries;
-    try {
-      entries = await readdir7(dir, { withFileTypes: true });
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      if (results.length >= maxFiles) return;
-      if (entry.isDirectory()) {
-        if (entry.name.startsWith(".") || IGNORED_DIR_NAMES.has(entry.name)) continue;
-        await walk(join18(dir, entry.name));
-      } else if (entry.isFile() && detectLanguage(entry.name)) {
-        results.push(join18(dir, entry.name));
-      }
-    }
-  }
-  await walk(rootDir);
-  return results;
-}
-
-// src/tools/sugoOverview.ts
-var MAX_FILES3 = 200;
-var MAX_FILE_BYTES3 = 5e5;
-var sugoOverviewInputSchema = {
-  projectPath: external_exports.string().describe("\uC628\uBCF4\uB529\uD560 \uD504\uB85C\uC81D\uD2B8 \uC808\uB300\uACBD\uB85C")
-};
-var SugoOverviewArgs = external_exports.object(sugoOverviewInputSchema);
-async function handleSugoOverview(rawArgs) {
-  const args2 = SugoOverviewArgs.parse(rawArgs);
-  const files = await walkSourceFiles(args2.projectPath, MAX_FILES3);
-  const outlines = [];
-  const skipped = [];
-  for (const full of files) {
-    const relPath = relative(args2.projectPath, full);
-    let content;
-    try {
-      content = await readFile17(full, "utf-8");
-    } catch {
-      skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
-      continue;
-    }
-    if (content.length > MAX_FILE_BYTES3) {
-      skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC774 \uB108\uBB34 \uD07C(500KB \uCD08\uACFC)" });
-      continue;
-    }
-    const outline = await parseFileOutline(relPath, content);
-    if (!outline) {
-      skipped.push({ path: relPath, reason: `\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC5B8\uC5B4(\uC9C0\uC6D0: ${supportedLanguages().join(", ")})` });
-      continue;
-    }
-    outlines.push(outline);
-  }
-  const payload = {
-    ok: true,
-    projectPath: args2.projectPath,
-    scannedFileCount: files.length,
-    truncated: files.length >= MAX_FILES3,
-    outlines,
-    skipped
-  };
-  return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
-}
-
-// src/tools/sugoPlan.ts
-import { readFile as readFile19 } from "node:fs/promises";
-
-// src/bootable.ts
-async function isProjectBootable(projectPath) {
-  const config2 = await loadProjectConfig(projectPath);
-  return (config2?.detectedStack.frameworks ?? []).some((f) => f.id.startsWith("framework/spring"));
-}
-
-// src/bootScan.ts
-import { readdir as readdir8, readFile as readFile18 } from "node:fs/promises";
-import { join as join19 } from "node:path";
-
-// src/gates.ts
-function ok4() {
-  return { ok: true };
-}
-function fail(code, message) {
-  return { ok: false, code, message };
-}
-var REQ_TAG_RE = /\bREQ-\d+\b/g;
-function validatePrd(content) {
-  const trimmed = content.trim();
-  const length = trimmed.length;
-  const reqIds = new Set((trimmed.match(REQ_TAG_RE) ?? []).map((s) => s.toUpperCase()));
-  const reqCount = reqIds.size;
-  const errors = [];
-  if (length < 100) errors.push("PRD_TOO_SHORT");
-  if (reqCount < 1) errors.push("PRD_MISSING_REQUIREMENTS");
-  return { ok: errors.length === 0, length, reqCount, errors };
-}
-var BASELINE_SIGNAL_PATTERNS = [
-  { label: "jdk-runtime-upgrade", re: /(JDK|자바\s*버전|java\s*version|런타임)[\s\S]{0,12}(상향|업그레이드|변경|마이그레이션|upgrade|migration)/i },
-  { label: "build-system-change", re: /(빌드\s*시스템|build\s*system)[\s\S]{0,12}(변경|교체|전환|migration)/i },
-  { label: "dependency-removal", re: /의존성[\s\S]{0,6}(제거|삭제|내재화)|(dependency|library)[\s\S]{0,12}(removal|removed|inlin(e|ing))/i }
-];
-function detectBaselineSignals(prdContent) {
-  const signals = BASELINE_SIGNAL_PATTERNS.filter((p) => p.re.test(prdContent)).map((p) => p.label);
-  return { required: signals.length > 0, signals };
-}
-function checkBaselineGate(required2, baselineEvidenceExitCode) {
-  if (!required2) return ok4();
-  if (baselineEvidenceExitCode === null) {
-    return fail("BASELINE_NOT_GREEN", "baseline \uC2DC\uADF8\uB110\uC774 \uAC10\uC9C0\uB41C PRD\uC785\uB2C8\uB2E4. code_done \uC804\uC5D0 baseline \uD14C\uC2A4\uD2B8 \uC99D\uAC70(record_test_evidence, kind=baseline)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-  }
-  if (baselineEvidenceExitCode !== 0) {
-    return fail("BASELINE_NOT_GREEN", `baseline \uD14C\uC2A4\uD2B8\uAC00 \uADF8\uB9B0\uC774 \uC544\uB2D9\uB2C8\uB2E4(exitCode=${baselineEvidenceExitCode}).`);
-  }
-  return ok4();
-}
-function checkAnalyzeGate(analyzeAttempts, hasPrd) {
-  if (!hasPrd) return ok4();
-  if (analyzeAttempts < 1) {
-    return fail("ANALYZE_NOT_CALLED", "code_done \uC804\uC5D0 sugo_analyze\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4.");
-  }
-  return ok4();
-}
-var WIRING_FILE_PATTERNS = [
-  /(^|[\\/])application(-[^\\/.]*)?\.(ya?ml|properties)$/i,
-  /(^|[\\/])\w+Config(uration)?\.(java|kt)$/,
-  /(^|[\\/])docker-compose(\.[^\\/]*)?\.ya?ml$/i,
-  /(^|[\\/])Dockerfile$/i,
-  /(^|[\\/])\.env(\.[^\\/]*)?$/,
-  /(^|[\\/])(build\.gradle(\.kts)?|pom\.xml)$/
-];
-function isWiringChange(changedFiles) {
-  return changedFiles.some((f) => WIRING_FILE_PATTERNS.some((re) => re.test(f)));
-}
-function checkWiringGate(changedFiles, mode, wiringTestAdded) {
-  const triggered = mode === "patch" || isWiringChange(changedFiles);
-  if (!triggered) return ok4();
-  if (!wiringTestAdded) {
-    return fail(
-      "WIRING_TEST_MISSING",
-      "\uBC30\uC120/\uC124\uC815 \uD30C\uC77C \uBCC0\uACBD(\uB610\uB294 patch \uBAA8\uB4DC)\uC774 \uAC10\uC9C0\uB418\uC5C8\uC2B5\uB2C8\uB2E4. mock \uC5C6\uB294 \uBC30\uC120 \uD14C\uC2A4\uD2B8\uB97C \uCD94\uAC00/\uAC80\uC99D\uD588\uB294\uC9C0(wiringTestAdded)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok4();
-}
-function checkRegistrationGlueGate(dependencyRemoved, registrationGlueChecked) {
-  if (!dependencyRemoved) return ok4();
-  if (!registrationGlueChecked) {
-    return fail(
-      "REGISTRATION_GLUE_NOT_CHECKED",
-      "\uC758\uC874\uC131 \uC81C\uAC70/\uB0B4\uC7AC\uD654\uAC00 \uC120\uC5B8\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB4F1\uB85D \uAE00\uB8E8(\uBE48 \uB4F1\uB85D \uBA54\uD0C0)\uAC00 \uB3D9\uC77C\uD558\uAC8C \uC720\uC9C0\uB418\uB294\uC9C0 diff\uB85C \uD655\uC778(registrationGlueChecked)\uD574\uC57C \uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok4();
-}
-var SPRING_BOOT_TEST_ANNOTATION_RE = /^[ \t]*@SpringBootTest\b/m;
-function hasValidSpringBootTestAnnotation(fileContents) {
-  return fileContents.some((content) => SPRING_BOOT_TEST_ANNOTATION_RE.test(content));
-}
-function checkBootGate(bootable, annotationFound, bootUnverifiedReason) {
-  if (!bootable) return ok4();
-  if (annotationFound) return ok4();
-  if (bootUnverifiedReason && bootUnverifiedReason.trim().length > 0) return ok4();
-  return fail(
-    "BOOT_GATE_FAILED",
-    "\uBD80\uD305 \uAC00\uB2A5 \uC2A4\uD0DD(Spring Boot)\uC778\uB370 \uD480\uCEE8\uD14D\uC2A4\uD2B8 @SpringBootTest\uAC00 \uBC1C\uACAC\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uD658\uACBD\uBD80\uC7AC\uBA74 bootUnverifiedReason\uC73C\uB85C \uB77C\uBCA8\uB9C1\uD558\uC138\uC694."
-  );
-}
-function checkUserConfirmationGate(userConfirmed) {
-  if (!userConfirmed) {
-    return fail(
-      "USER_CONFIRMATION_REQUIRED",
-      "review_done \uC804\uC5D0 work-result\uB97C \uC0AC\uB78C\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uD655\uC778(userConfirmed:true)\uBC1B\uC544\uC57C \uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok4();
-}
-function validateSummaryQuality(summary) {
-  const trimmed = summary.trim();
-  const lines = trimmed.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0).length;
-  const length = trimmed.length;
-  const uniqueChars = new Set(trimmed.replace(/\s+/g, "")).size;
-  const tokens = trimmed.split(/[^\p{L}\p{N}]+/u).filter((t) => t.length >= 2);
-  const distinctTokens = new Set(tokens.map((t) => t.toLowerCase())).size;
-  const errors = [];
-  if (lines < 3) errors.push("SUMMARY_TOO_FEW_LINES");
-  if (length < 30) errors.push("SUMMARY_TOO_SHORT");
-  if (uniqueChars < 10) errors.push("SUMMARY_LOW_CHAR_DIVERSITY");
-  if (distinctTokens < 5) errors.push("SUMMARY_LOW_TOKEN_DIVERSITY");
-  return { ok: errors.length === 0, lines, length, uniqueChars, distinctTokens, errors };
-}
-function checkRuntimeVerificationGate(testPassedState, runtimeCheck, bootable) {
-  const labeled = !!(runtimeCheck.unverifiedReason && runtimeCheck.unverifiedReason.trim().length > 0);
-  if (!runtimeCheck.runtimeVerified) {
-    if (labeled) return ok4();
-    return fail(
-      "RUNTIME_UNVERIFIED_GATE_FAILED",
-      "\uC2E4\uC81C \uBE4C\uB4DC+\uD14C\uC2A4\uD2B8\uB85C \uADF8\uB9B0\uC784\uC744 \uC99D\uBA85(runtimeVerified:true)\uD558\uAC70\uB098 \uD658\uACBD\uBD80\uC7AC\uB97C unverifiedReason\uC73C\uB85C \uB77C\uBCA8\uB9C1\uD574\uC57C \uD569\uB2C8\uB2E4."
-    );
-  }
-  if (testPassedState === "fail") {
-    return fail(
-      "RUNTIME_CLAIM_CONTRADICTS_EVIDENCE",
-      "\uAE30\uB85D\uB41C test evidence\uAC00 fail\uC778\uB370 runtimeVerified:true\uB97C \uC8FC\uC7A5\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uC790\uAE30\uBCF4\uACE0\uBCF4\uB2E4 \uAE30\uB85D\uB41C \uC99D\uAC70\uAC00 \uC6B0\uC120\uD569\uB2C8\uB2E4."
-    );
-  }
-  if (bootable && runtimeCheck.wiringVerified !== true) {
-    if (labeled) return ok4();
-    return fail(
-      "RUNTIME_WIRING_NOT_VERIFIED",
-      "\uBD80\uD305 \uAC00\uB2A5 \uC2A4\uD0DD\uC740 wiringVerified:true(\uC571\uC774 \uC2E4\uC81C \uB728\uB294\uC9C0 \uBC30\uC120 \uAC80\uC99D)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok4();
-}
-function checkSpecOracleGate(specOracle) {
-  if (!specOracle?.required) return ok4();
-  if (specOracle.ran) return ok4();
-  return fail(
-    "SPEC_ORACLE_NOT_RUN",
-    "q-spec \uC6D0\uBCF8 \uC2A4\uD399 \uB300\uC870(oracle)\uAC00 \uC544\uC9C1 \uAE30\uB85D\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4 \u2014 sugo_plan({action:'oracle_done', ...})\uC73C\uB85C \uB300\uC870 \uACB0\uACFC\uB97C \uBA3C\uC800 \uAE30\uB85D\uD558\uC138\uC694."
-  );
-}
-function checkOracleDone(uncovered, overrideReason) {
-  if (!uncovered || uncovered.length === 0) return ok4();
-  if (overrideReason && overrideReason.trim().length > 0) return ok4();
-  return fail(
-    "ORACLE_OVERRIDE_REASON_REQUIRED",
-    `\uBBF8\uCEE4\uBC84 \uD56D\uBAA9 ${uncovered.length}\uAC74\uC744 \uBCF4\uACE0\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uADF8\uB300\uB85C \uC9C4\uD589\uD558\uB824\uBA74 overrideReason(\uC65C \uC9C0\uAE08 \uCEE4\uBC84\uD558\uC9C0 \uC54A\uB294\uC9C0)\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.`
-  );
-}
-function checkJiraOption(option, jiraKey) {
-  if (!option) return fail("JIRA_OPTION_REQUIRED", "jira action\uC5D0\uB294 jiraOption('new'|'link'|'skip')\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
-  if (option === "link" && !(jiraKey && jiraKey.trim().length > 0)) {
-    return fail("JIRA_KEY_REQUIRED", "jiraOption:'link'\uC5D0\uB294 \uC5F0\uACB0\uD560 jiraKey\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-  }
-  return ok4();
-}
-
-// src/bootScan.ts
-var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
-var MAX_FILES4 = 2e3;
-var MAX_FILE_BYTES4 = 3e5;
-async function collectJavaFiles(dir, acc) {
-  if (acc.length >= MAX_FILES4) return;
-  let entries;
-  try {
-    entries = await readdir8(dir, { withFileTypes: true });
-  } catch {
-    return;
-  }
-  for (const entry of entries) {
-    if (acc.length >= MAX_FILES4) return;
-    if (entry.isDirectory()) {
-      if (EXCLUDED_DIRS.has(entry.name)) continue;
-      await collectJavaFiles(join19(dir, entry.name), acc);
-    } else if (entry.isFile() && entry.name.endsWith(".java")) {
-      acc.push(join19(dir, entry.name));
-    }
-  }
-}
-async function scanForSpringBootTestAnnotation(projectPath) {
-  const files = [];
-  await collectJavaFiles(projectPath, files);
-  const testFiles = files.filter((f) => /(Test|Tests|IT)\.java$/.test(f));
-  const candidates = testFiles.length > 0 ? testFiles : files;
-  for (const file of candidates) {
-    try {
-      const content = await readFile18(file, "utf-8");
-      if (content.length > MAX_FILE_BYTES4) continue;
-      if (hasValidSpringBootTestAnnotation([content])) return true;
-    } catch {
-      continue;
-    }
-  }
-  return false;
-}
-
-// src/feature.ts
-import { mkdir as mkdir14 } from "node:fs/promises";
-import { join as join21 } from "node:path";
-
-// src/patch.ts
-import { readdir as readdir9 } from "node:fs/promises";
-import { dirname as dirname8, join as join20 } from "node:path";
-var PatchEntryError = class extends Error {
-  constructor(code, message) {
-    super(message);
-    this.code = code;
-  }
-};
-var PATCH_FILE_RE = /^(prd|work-result)-patch-v(\d+)\.md$/i;
-var PRD_PATCH_RE = /^prd-patch-v(\d+)\.md$/i;
-function computeNextPatchVersion(filenames) {
-  let max = 1;
-  for (const name2 of filenames) {
-    const m = name2.match(PATCH_FILE_RE);
-    if (m) max = Math.max(max, Number(m[2]));
-  }
-  return max + 1;
-}
-function findLatestPrdPatchFilename(filenames) {
-  let best = null;
-  for (const name2 of filenames) {
-    const m = name2.match(PRD_PATCH_RE);
-    if (!m) continue;
-    const version2 = Number(m[1]);
-    if (!best || version2 > best.version) best = { name: name2, version: version2 };
-  }
-  return best?.name ?? null;
-}
-function patchPrdFilename(version2) {
-  return `PRD-patch-v${version2}.md`;
-}
-function patchWorkResultFilename(version2) {
-  return `work-result-patch-v${version2}.md`;
-}
-async function resolvePatchContext(workResultPath) {
-  const featureDir = dirname8(workResultPath);
-  let filenames;
-  try {
-    filenames = await readdir9(featureDir);
-  } catch {
-    throw new PatchEntryError("PATCH_FEATURE_DIR_NOT_FOUND", `feature \uB514\uB809\uD130\uB9AC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`);
-  }
-  let parentPrdPath;
-  if (filenames.includes("prd.md")) {
-    parentPrdPath = join20(featureDir, "prd.md");
-  } else {
-    const latest = findLatestPrdPatchFilename(filenames);
-    if (!latest) {
-      throw new PatchEntryError(
-        "PATCH_PARENT_PRD_NOT_FOUND",
-        `\uBD80\uBAA8 PRD(prd.md \uB610\uB294 PRD-patch-v*.md)\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`
-      );
-    }
-    parentPrdPath = join20(featureDir, latest);
-  }
-  const version2 = computeNextPatchVersion(filenames);
-  return { parentPrdPath, version: version2, baseWorkResultPath: workResultPath, featureDir };
-}
-
-// src/feature.ts
-function slugify2(name2) {
-  return name2.toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-+|-+$/g, "") || "feature";
-}
-function todayYyyymmdd() {
-  const d = /* @__PURE__ */ new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
-}
-async function writePrdFile(projectPath, featureName, content) {
-  const featurePath = join21(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
-  const prdPath = join21(featurePath, "prd.md");
-  await mkdir14(featurePath, { recursive: true });
-  await atomicWriteFile(prdPath, content);
-  return { featurePath, prdPath };
-}
-async function writeWorkResultFile(featurePath, content) {
-  const workResultPath = join21(featurePath, "work-result.md");
-  await mkdir14(featurePath, { recursive: true });
-  await atomicWriteFile(workResultPath, content);
-  return { workResultPath };
-}
-async function writePatchPrdFile(featureDir, version2, content) {
-  const prdPath = join21(featureDir, patchPrdFilename(version2));
-  await mkdir14(featureDir, { recursive: true });
-  await atomicWriteFile(prdPath, content);
-  return { featurePath: featureDir, prdPath };
-}
-async function writePatchWorkResultFile(featureDir, version2, content) {
-  const workResultPath = join21(featureDir, patchWorkResultFilename(version2));
-  await mkdir14(featureDir, { recursive: true });
-  await atomicWriteFile(workResultPath, content);
-  return { workResultPath };
-}
-
-// src/consistency.ts
-function checkCoverageGate(coverageMap) {
-  const uncoveredAC = coverageMap.acceptanceCriteria.filter((ac) => !ac.covered);
-  if (uncoveredAC.length > 0) {
-    return fail(
-      "PRD_COVERAGE_INCOMPLETE",
-      `AC(\uC218\uB77D\uAE30\uC900) \uBBF8\uCDA9\uC871: ${uncoveredAC.map((a) => a.id).join(", ")}`
-    );
-  }
-  const unassertedFields = coverageMap.responseFields.filter((f) => !f.asserted);
-  if (unassertedFields.length > 0) {
-    return fail(
-      "PRD_COVERAGE_INCOMPLETE",
-      `\uC751\uB2F5\uD544\uB4DC \uBBF8\uAC80\uC99D: ${unassertedFields.map((f) => f.field).join(", ")}`
-    );
-  }
-  if (coverageMap.regressionChecked && !coverageMap.regressionIntact) {
-    return fail(
-      "REGRESSION_NOT_INTACT",
-      "\uD68C\uADC0 \uD655\uC778\uC744 \uC8FC\uC7A5\uD588\uC9C0\uB9CC \uACB0\uACFC\uAC00 intact:true\uAC00 \uC544\uB2D9\uB2C8\uB2E4(\uAE68\uC84C\uAC70\uB098 \uACB0\uACFC\uB97C \uBA85\uD655\uD788 \uBC1D\uD788\uC9C0 \uC54A\uC74C)."
-    );
-  }
-  if (coverageMap.integrationTestCount < 1) {
-    return fail("INTEGRATION_TEST_MISSING", "\uD1B5\uD569\uB808\uBCA8 \uD14C\uC2A4\uD2B8\uAC00 \uCD5C\uC18C 1\uAC1C \uD544\uC694\uD569\uB2C8\uB2E4.");
-  }
-  return ok4();
-}
-
-// src/contractEvidence.ts
-function applyContractPhase(existing, contractId, phase, exitCode, now) {
-  const base = existing ?? { contractId };
-  if (phase === "red") return { ...base, contractId, redRecordedAt: now, redExitCode: exitCode };
-  return { ...base, contractId, greenRecordedAt: now, greenExitCode: exitCode };
-}
-function isValidRedToGreenTransition(r) {
-  return r.redExitCode !== void 0 && r.redExitCode !== 0 && r.greenExitCode === 0;
-}
-function checkContractEvidenceGate(records, required2) {
-  if (!required2) return ok4();
-  if (records.length === 0) {
-    return fail("CONTRACT_EVIDENCE_MISSING", "\uACC4\uC57D\uD14C\uC2A4\uD2B8 \uC2E4\uD589\uC99D\uAC70(red\u2192green)\uAC00 \uD558\uB098\uB3C4 \uAE30\uB85D\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.");
-  }
-  const invalid = records.filter((r) => !isValidRedToGreenTransition(r));
-  if (invalid.length > 0) {
-    return fail(
-      "CONTRACT_EVIDENCE_INCOMPLETE",
-      `red\u2192green \uC804\uC774\uAC00 \uD655\uC778\uB418\uC9C0 \uC54A\uC740 \uACC4\uC57D: ${invalid.map((r) => r.contractId).join(", ")}`
-    );
-  }
-  return ok4();
-}
-function hasValidRed(r) {
-  return r.redExitCode !== void 0 && r.redExitCode !== 0;
-}
-function checkContractStartedGate(records, required2, environmentAbsentReason) {
-  if (!required2) return ok4();
-  if (environmentAbsentReason && environmentAbsentReason.trim().length > 0) return ok4();
-  if (!records.some(hasValidRed)) {
-    return fail(
-      "CONTRACT_NOT_STARTED",
-      "\uACC4\uC57D\uD14C\uC2A4\uD2B8\uAC00 \uD544\uC218\uC778\uB370 \uAD6C\uD604 \uC804 red \uD655\uC778(sugo_record_contract_evidence phase=red)\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."
-    );
-  }
-  return ok4();
-}
-function resolveContractRequired(policyValue, sessionCtx) {
-  if (policyValue !== void 0) return policyValue;
-  return sessionCtx.baselineRequired;
-}
-
-// src/prRefs.ts
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-var execFileAsync = promisify(execFile);
-async function runGit(args2, cwd) {
-  try {
-    const { stdout } = await execFileAsync("git", args2, { cwd });
-    return stdout.trim();
-  } catch {
-    return null;
-  }
-}
-function parseRemoteUrl(remoteUrl) {
-  const trimmed = remoteUrl.trim();
-  let host;
-  let pathPart;
-  const sshShorthand = trimmed.match(/^git@([^:]+):(.+)$/);
-  if (sshShorthand) {
-    host = sshShorthand[1];
-    pathPart = sshShorthand[2];
-  } else {
-    try {
-      const u = new URL(trimmed);
-      host = u.host;
-      pathPart = u.pathname.replace(/^\//, "");
-    } catch {
-      return null;
-    }
-  }
-  pathPart = pathPart.replace(/\.git$/, "");
-  const segments = pathPart.split("/").filter(Boolean);
-  if (segments.length < 2) return null;
-  const repoSlug = segments[segments.length - 1];
-  const projectKey = segments[segments.length - 2];
-  return { baseUrl: `https://${host}`, projectKey: projectKey.toUpperCase(), repoSlug };
-}
-async function collectPrRefs(projectPath) {
-  const remoteUrl = await runGit(["remote", "get-url", "origin"], projectPath);
-  if (!remoteUrl) return null;
-  const parsed = parseRemoteUrl(remoteUrl);
-  if (!parsed) return null;
-  const sourceBranch = await runGit(["rev-parse", "--abbrev-ref", "HEAD"], projectPath) ?? "HEAD";
-  return { ...parsed, sourceBranch, targetBranch: "develop" };
-}
-
-// src/decompose.ts
-function findManifestCycle(subtasks) {
-  const byId = new Map(subtasks.map((s) => [s.id, s]));
-  const visiting = /* @__PURE__ */ new Set();
-  const visited = /* @__PURE__ */ new Set();
-  function dfs(id, path) {
-    if (visiting.has(id)) {
-      const idx = path.indexOf(id);
-      return path.slice(idx).concat(id);
-    }
-    if (visited.has(id)) return null;
-    visiting.add(id);
-    path.push(id);
-    for (const dep of byId.get(id)?.dependsOn ?? []) {
-      if (!byId.has(dep)) continue;
-      const cycle = dfs(dep, path);
-      if (cycle) return cycle;
-    }
-    path.pop();
-    visiting.delete(id);
-    visited.add(id);
-    return null;
-  }
-  for (const s of subtasks) {
-    if (!visited.has(s.id)) {
-      const cycle = dfs(s.id, []);
-      if (cycle) return cycle;
-    }
-  }
-  return null;
-}
-function detectFileOverlaps(subtasks) {
-  const owners = /* @__PURE__ */ new Map();
-  for (const s of subtasks) {
-    for (const f of s.files) {
-      const list = owners.get(f) ?? [];
-      list.push(s.id);
-      owners.set(f, list);
-    }
-  }
-  const overlaps = [];
-  for (const [file, ids] of owners) {
-    if (ids.length > 1) overlaps.push({ file, subtaskIds: ids });
-  }
-  return overlaps;
-}
-function computeRequirementCoverage(prdRequirementIds, subtasks) {
-  const coveredSet = new Set(subtasks.flatMap((s) => s.coversRequirements));
-  const covered = prdRequirementIds.filter((id) => coveredSet.has(id));
-  const uncovered = prdRequirementIds.filter((id) => !coveredSet.has(id));
-  return { covered, uncovered };
-}
-function validateManifest(manifest, prdRequirementIds) {
-  const cycle = findManifestCycle(manifest.subtasks);
-  if (cycle) {
-    return fail("MANIFEST_HAS_CYCLE", `\uC11C\uBE0C\uD0DC\uC2A4\uD06C \uC758\uC874\uC131\uC5D0 \uC0AC\uC774\uD074\uC774 \uC788\uC2B5\uB2C8\uB2E4: ${cycle.join(" \u2192 ")}`);
-  }
-  const overlaps = detectFileOverlaps(manifest.subtasks);
-  if (overlaps.length > 0) {
-    return fail(
-      "MANIFEST_FILE_OVERLAP",
-      `\uC5EC\uB7EC \uC11C\uBE0C\uD0DC\uC2A4\uD06C\uAC00 \uAC19\uC740 \uD30C\uC77C\uC744 \uACC4\uD68D\uD588\uC2B5\uB2C8\uB2E4: ${overlaps.map((o) => `${o.file}(${o.subtaskIds.join(",")})`).join("; ")}`
-    );
-  }
-  const coverage = computeRequirementCoverage(prdRequirementIds, manifest.subtasks);
-  if (coverage.uncovered.length > 0) {
-    return fail("MANIFEST_REQUIREMENT_UNCOVERED", `\uC5B4\uB5A4 \uC11C\uBE0C\uD0DC\uC2A4\uD06C\uB3C4 \uCEE4\uBC84\uD558\uC9C0 \uC54A\uB294 \uC694\uAD6C\uC0AC\uD56D: ${coverage.uncovered.join(", ")}`);
-  }
-  return ok4();
-}
-function validateIntegration(manifest) {
-  const incomplete = manifest.subtasks.filter((s) => s.status !== "done");
-  if (incomplete.length > 0) {
-    return fail("SUBTASKS_INCOMPLETE", `\uC544\uC9C1 \uC644\uB8CC\uB418\uC9C0 \uC54A\uC740 \uC11C\uBE0C\uD0DC\uC2A4\uD06C: ${incomplete.map((s) => s.id).join(", ")}`);
-  }
-  const overlaps = detectFileOverlaps(manifest.subtasks.map((s) => ({ id: s.id, files: s.changedFiles ?? [] })));
-  if (overlaps.length > 0) {
-    return fail(
-      "MANIFEST_FILE_OVERLAP",
-      `\uC2E4\uC81C \uBCC0\uACBD\uD30C\uC77C\uC774 \uACB9\uCE69\uB2C8\uB2E4: ${overlaps.map((o) => `${o.file}(${o.subtaskIds.join(",")})`).join("; ")}`
-    );
-  }
-  return ok4();
-}
-
-// src/fingerprint.ts
-import { createHash as createHash2 } from "node:crypto";
-import { stat } from "node:fs/promises";
-import { isAbsolute as isAbsolute3, join as join22, relative as relative2 } from "node:path";
-function computeFingerprintFromEntries(entries) {
-  const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
-  return createHash2("sha1").update(parts2.join("\n")).digest("hex");
-}
-async function statChangedFiles(projectPath, changedFiles) {
-  const entries = [];
-  for (const f of changedFiles) {
-    const full = isAbsolute3(f) ? f : join22(projectPath, f);
-    const relPath = isAbsolute3(f) ? relative2(projectPath, f) : f;
-    try {
-      const st = await stat(full);
-      entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
-    } catch {
-      entries.push({ relPath, size: -1, mtimeMs: -1 });
-    }
-  }
-  return entries;
-}
-async function computeChangedFilesFingerprint(projectPath, changedFiles) {
-  return computeFingerprintFromEntries(await statChangedFiles(projectPath, changedFiles));
-}
-function checkEvidenceReuseGate(reusedFromTestDone, storedFingerprint, currentFingerprint, testPassedState) {
-  if (!reusedFromTestDone) return ok4();
-  if (!storedFingerprint) {
-    return fail("EVIDENCE_REUSE_NO_BASELINE", "test_done \uC2DC\uC810\uC5D0 \uAE30\uB85D\uB41C \uBCC0\uACBD\uD30C\uC77C \uC9C0\uBB38\uC774 \uC5C6\uC5B4 \uC99D\uAC70\uB97C \uC7AC\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-  }
-  if (testPassedState !== "pass") {
-    return fail("EVIDENCE_REUSE_NOT_GREEN", "test_done \uC99D\uAC70\uAC00 pass\uAC00 \uC544\uB2C8\uC5B4\uC11C \uC7AC\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-  }
-  if (storedFingerprint !== currentFingerprint) {
-    return fail(
-      "EVIDENCE_REUSE_FINGERPRINT_MISMATCH",
-      "\uB9AC\uBDF0 \uC911 \uBCC0\uACBD\uD30C\uC77C\uC774 \uC218\uC815\uB418\uC5B4 \uC9C0\uBB38\uC774 \uB2EC\uB77C\uC84C\uC2B5\uB2C8\uB2E4 \u2014 test_done \uC99D\uAC70\uB97C \uC7AC\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC73C\uB2C8 \uC7AC\uC2E4\uD589\uC774 \uD544\uC694\uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok4();
-}
-
-// src/humanHours.ts
-var DEFAULT_RATIO = 3.5;
-function estimateHumanHours(startedAtIso, nowIso2, analyzeAttempts, autoLoopRetryCount, ratio = DEFAULT_RATIO) {
-  const startMs = new Date(startedAtIso).getTime();
-  const nowMs = new Date(nowIso2).getTime();
-  const aiExecutionMinutes = Math.max(0, (nowMs - startMs) / 6e4);
-  const base = aiExecutionMinutes / 60 * ratio;
-  const complexity = analyzeAttempts * 0.1 + autoLoopRetryCount * 0.15;
-  const estimatedHumanHours = Math.round((base + complexity) * 100) / 100;
-  return {
-    aiExecutionMinutes: Math.round(aiExecutionMinutes * 10) / 10,
-    estimatedHumanHours,
-    estimationBasis: `AI \uC2E4\uD589 ${Math.round(aiExecutionMinutes)}\uBD84 \xD7 \uBCF4\uC815\uBE44\uC728 ${ratio} + \uBCF5\uC7A1\uB3C4(analyze ${analyzeAttempts}\uD68C\xD70.1 + auto-loop \uC7AC\uC2DC\uB3C4 ${autoLoopRetryCount}\uD68C\xD70.15)`
-  };
-}
-
-// src/hulk/matching.ts
-function checkpointApplies(checkpoint, ctx) {
-  const applies = checkpoint.applies_to;
-  if (!applies || applies.length === 0) return true;
-  return applies.some((tag) => tag === ctx.projectName || ctx.harnessIds.includes(tag));
-}
-
-// src/hulk/roadmapReq.ts
-var REQ_HEADING_RE = /^#{1,6}\s*REQ-(\d+)\s*:\s*(.+)$/gim;
-function parseRequirementsFromPrd(prdContent) {
-  const results = [];
-  const seen = /* @__PURE__ */ new Set();
-  const re = new RegExp(REQ_HEADING_RE);
-  let m;
-  while ((m = re.exec(prdContent)) !== null) {
-    const id = `REQ-${m[1]}`;
-    if (seen.has(id)) continue;
-    seen.add(id);
-    results.push({ id, title: m[2].trim() });
-  }
-  return results;
-}
-function reqConfirmId(taskId) {
-  return `${taskId}::REQ-CONFIRM`;
-}
-function promotePrdRequirements(taskId, prdContent) {
-  const requirements = parseRequirementsFromPrd(prdContent);
-  if (requirements.length === 0) return [];
-  const nodes = requirements.map((req, i2) => ({
-    id: req.id,
-    title: req.title,
-    level: "subtask",
-    status: "pending",
-    dependsOn: i2 === 0 ? [] : [requirements[i2 - 1].id],
-    parent: taskId
-  }));
-  nodes.push({
-    id: reqConfirmId(taskId),
-    title: "\uC0AC\uC6A9\uC790 \uCD5C\uC885 \uD655\uC778",
-    level: "step",
-    status: "pending",
-    dependsOn: requirements.map((r) => r.id),
-    parent: taskId
-  });
-  return nodes;
-}
-
 // src/labelGuard.ts
 function hasGreenExecutionEvidence(input) {
   if (input.baselineExitCode === 0) return true;
@@ -28837,14 +28716,14 @@ function hasGreenExecutionEvidence(input) {
   return false;
 }
 function detectLabelContradiction(claimsAbsent, hasGreenEvidence) {
-  if (!claimsAbsent) return ok4();
+  if (!claimsAbsent) return ok3();
   if (hasGreenEvidence) {
     return fail(
       "LABEL_CONTRADICTION",
       "\uC774 \uC138\uC158\uC5D0 \uADF8\uB9B0 \uC2E4\uD589 \uC99D\uAC70\uAC00 \uC774\uBBF8 \uC788\uB294\uB370 \uD658\uACBD\uBD80\uC7AC\uB958 \uB77C\uBCA8\uC744 \uC8FC\uC7A5\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uB77C\uBCA8-\uBAA8\uC21C\uC73C\uB85C \uAC70\uBD80\uD569\uB2C8\uB2E4."
     );
   }
-  return ok4();
+  return ok3();
 }
 function isLabelStillInScope(labelPatchVersion, currentPatchVersion) {
   return labelPatchVersion === currentPatchVersion;
@@ -29188,7 +29067,7 @@ function checkTestEvidenceGate(claimedTestPassed, evidence) {
   if (!evidence) {
     return fail("TEST_EVIDENCE_MISSING", "test_done \uC804\uC5D0 sugo_record_test_evidence\uB85C \uC2E4\uD589 \uC99D\uAC70\uB97C \uAE30\uB85D\uD574\uC57C \uD569\uB2C8\uB2E4.");
   }
-  if (evidence.derivedState === "unverified") return ok4();
+  if (evidence.derivedState === "unverified") return ok3();
   const actuallyPassed = evidence.derivedState === "pass";
   if (claimedTestPassed !== actuallyPassed) {
     return fail(
@@ -29202,7 +29081,7 @@ function checkTestEvidenceGate(claimedTestPassed, evidence) {
       `\uAE30\uB85D\uB41C \uBA85\uB839("${evidence.command}")\uC774 \uD480\uAC80\uC99D \uBA85\uB839\uC774 \uC544\uB2D9\uB2C8\uB2E4. gradle/maven\uC740 gradlew check / mvn verify|install\uB85C \uC2E4\uD589\uD574\uC57C \uD569\uB2C8\uB2E4("test \uADF8\uB9B0"\uC740 \uC99D\uBA85\uC774 \uC544\uB2D8).`
     );
   }
-  return ok4();
+  return ok3();
 }
 
 // src/tools/sugoPlan.ts
@@ -29266,10 +29145,10 @@ async function handleSugoPlan(rawArgs) {
   let existing = null;
   if (action !== "start") {
     if (!sessionId) {
-      return errorResult9("SESSION_ID_REQUIRED", `action "${action}"\uC5D0\uB294 sessionId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
+      return errorResult8("SESSION_ID_REQUIRED", `action "${action}"\uC5D0\uB294 sessionId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
     }
     if (!await sessionExists(sessionId)) {
-      return errorResult9("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${sessionId}`);
+      return errorResult8("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${sessionId}`);
     }
     existing = await loadSession(sessionId);
   }
@@ -29283,10 +29162,10 @@ async function handleSugoPlan(rawArgs) {
     };
   }
   if (action === "prd") {
-    if (!args2.prdContent) return errorResult9("PRD_CONTENT_REQUIRED", "prd action\uC5D0\uB294 prdContent\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!args2.prdContent) return errorResult8("PRD_CONTENT_REQUIRED", "prd action\uC5D0\uB294 prdContent\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const validation = validatePrd(args2.prdContent);
     if (!validation.ok) {
-      return errorResult9(
+      return errorResult8(
         validation.errors[0],
         `PRD \uAC80\uC99D \uC2E4\uD328: \uAE38\uC774=${validation.length}\uC790(\u2265100 \uD544\uC694), REQ \uD0DC\uADF8=${validation.reqCount}\uAC1C(\u22651 \uD544\uC694)`
       );
@@ -29294,21 +29173,21 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "oracle_done") {
     const oracleResult = checkOracleDone(args2.uncovered, args2.overrideReason);
-    if (!oracleResult.ok) return errorResult9(oracleResult.code, oracleResult.message);
+    if (!oracleResult.ok) return errorResult8(oracleResult.code, oracleResult.message);
   }
   if (action === "jira") {
     const jiraResult = checkJiraOption(args2.jiraOption, args2.jiraKey);
-    if (!jiraResult.ok) return errorResult9(jiraResult.code, jiraResult.message);
+    if (!jiraResult.ok) return errorResult8(jiraResult.code, jiraResult.message);
   }
   if (action === "ready" && existing) {
     const oracleGate = checkSpecOracleGate(existing.data.specOracle);
-    if (!oracleGate.ok) return errorResult9(oracleGate.code, oracleGate.message);
+    if (!oracleGate.ok) return errorResult8(oracleGate.code, oracleGate.message);
   }
   if (action === "baseline_capture" && existing) {
     const baselineRequired = existing.data.baselineGate?.required ?? false;
     const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
     const baselineResult = checkBaselineGate(baselineRequired, baselineExitCode);
-    if (!baselineResult.ok) return errorResult9(baselineResult.code, baselineResult.message);
+    if (!baselineResult.ok) return errorResult8(baselineResult.code, baselineResult.message);
   }
   if (action === "contract_done" && existing) {
     const projectConfigForContractStart = await loadProjectConfig(existing.projectPath);
@@ -29318,14 +29197,14 @@ async function handleSugoPlan(rawArgs) {
     const claimsAbsent = !!args2.contractEnvironmentAbsentReason && args2.contractEnvironmentAbsentReason.trim().length > 0;
     if (claimsAbsent) {
       const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
-      if (!contradiction.ok) return errorResult9(contradiction.code, contradiction.message);
+      if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
     }
     const contractStartedResult = checkContractStartedGate(
       existing.data.chainInfo.contractTests ?? [],
       contractRequired,
       args2.contractEnvironmentAbsentReason
     );
-    if (!contractStartedResult.ok) return errorResult9(contractStartedResult.code, contractStartedResult.message);
+    if (!contractStartedResult.ok) return errorResult8(contractStartedResult.code, contractStartedResult.message);
     if (claimsAbsent && contractRequired) {
       newBypassLabels.push({
         kind: "contractEvidenceMissing",
@@ -29339,24 +29218,24 @@ async function handleSugoPlan(rawArgs) {
     const changedFiles = args2.changedFiles ?? [];
     const hasPrd = !!existing.data.prdPath;
     const analyzeGate = checkAnalyzeGate(existing.data.chainInfo.analyzeAttempts, hasPrd);
-    if (!analyzeGate.ok) return errorResult9(analyzeGate.code, analyzeGate.message);
+    if (!analyzeGate.ok) return errorResult8(analyzeGate.code, analyzeGate.message);
     const baselineRequired = existing.data.baselineGate?.required ?? false;
     const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
     const baselineResult = checkBaselineGate(baselineRequired, baselineExitCode);
-    if (!baselineResult.ok) return errorResult9(baselineResult.code, baselineResult.message);
+    if (!baselineResult.ok) return errorResult8(baselineResult.code, baselineResult.message);
     const wiringResult = checkWiringGate(changedFiles, existing.data.mode, args2.wiringTestAdded ?? false);
-    if (!wiringResult.ok) return errorResult9(wiringResult.code, wiringResult.message);
+    if (!wiringResult.ok) return errorResult8(wiringResult.code, wiringResult.message);
     const glueResult = checkRegistrationGlueGate(args2.dependencyRemoved ?? false, args2.registrationGlueChecked ?? false);
-    if (!glueResult.ok) return errorResult9(glueResult.code, glueResult.message);
+    if (!glueResult.ok) return errorResult8(glueResult.code, glueResult.message);
     const bootable = await isProjectBootable(existing.projectPath);
     const bootAnnotationFound = bootable ? await scanForSpringBootTestAnnotation(existing.projectPath) : false;
     const claimsBootAbsent = bootable && !bootAnnotationFound && !!args2.bootUnverifiedReason && args2.bootUnverifiedReason.trim().length > 0;
     if (claimsBootAbsent) {
       const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
-      if (!contradiction.ok) return errorResult9(contradiction.code, contradiction.message);
+      if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
     }
     const bootResult = checkBootGate(bootable, bootAnnotationFound, args2.bootUnverifiedReason);
-    if (!bootResult.ok) return errorResult9(bootResult.code, bootResult.message);
+    if (!bootResult.ok) return errorResult8(bootResult.code, bootResult.message);
     if (claimsBootAbsent) {
       newBypassLabels.push({
         kind: "bootUnverified",
@@ -29368,10 +29247,10 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "test_done" && existing) {
     if (args2.testPassed === void 0) {
-      return errorResult9("TEST_PASSED_REQUIRED", "test_done action\uC5D0\uB294 testPassed\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      return errorResult8("TEST_PASSED_REQUIRED", "test_done action\uC5D0\uB294 testPassed\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     }
     const evidenceResult = checkTestEvidenceGate(args2.testPassed, existing.data.chainInfo.testEvidence ?? null);
-    if (!evidenceResult.ok) return errorResult9(evidenceResult.code, evidenceResult.message);
+    if (!evidenceResult.ok) return errorResult8(evidenceResult.code, evidenceResult.message);
     const feature = existing.data.chainInfo.testEvidence;
     if (feature?.derivedState === "unverified") {
       const contradiction = detectLabelContradiction(
@@ -29381,7 +29260,7 @@ async function handleSugoPlan(rawArgs) {
           contractTests: existing.data.chainInfo.contractTests
         })
       );
-      if (!contradiction.ok) return errorResult9(contradiction.code, contradiction.message);
+      if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
       newBypassLabels.push({
         kind: "environmentAbsent",
         reason: feature.unverifiedReason ?? "\uC0AC\uC720 \uBBF8\uAE30\uC7AC",
@@ -29392,23 +29271,23 @@ async function handleSugoPlan(rawArgs) {
     const projectConfig = await loadProjectConfig(existing.projectPath);
     const enforced = projectConfig?.verificationPolicy?.integrationGateEnforced ?? false;
     if (enforced && !args2.coverageMap) {
-      return errorResult9(
+      return errorResult8(
         "COVERAGE_MAP_REQUIRED",
         "\uC774 \uD504\uB85C\uC81D\uD2B8\uB294 verificationPolicy.integrationGateEnforced\uAC00 \uCF1C\uC838 \uC788\uC5B4 test_done\uC5D0 coverageMap\uC774 \uD544\uC694\uD569\uB2C8\uB2E4."
       );
     }
     if (args2.coverageMap) {
       const coverageResult = checkCoverageGate(args2.coverageMap);
-      if (!coverageResult.ok) return errorResult9(coverageResult.code, coverageResult.message);
+      if (!coverageResult.ok) return errorResult8(coverageResult.code, coverageResult.message);
     }
   }
   if (action === "review_done" && existing) {
     const confirmResult = checkUserConfirmationGate(args2.userConfirmed ?? false);
-    if (!confirmResult.ok) return errorResult9(confirmResult.code, confirmResult.message);
-    if (!args2.summary) return errorResult9("SUMMARY_REQUIRED", "review_done action\uC5D0\uB294 summary\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!confirmResult.ok) return errorResult8(confirmResult.code, confirmResult.message);
+    if (!args2.summary) return errorResult8("SUMMARY_REQUIRED", "review_done action\uC5D0\uB294 summary\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const summaryQuality = validateSummaryQuality(args2.summary);
     if (!summaryQuality.ok) {
-      return errorResult9(
+      return errorResult8(
         summaryQuality.errors[0],
         `summary \uD488\uC9C8 \uBBF8\uB2EC: \uC904=${summaryQuality.lines}(\u22653), \uAE38\uC774=${summaryQuality.length}\uC790(\u226530), \uACE0\uC720\uBB38\uC790=${summaryQuality.uniqueChars}\uAC1C(\u226510), \uAD6C\uBCC4\uD1A0\uD070=${summaryQuality.distinctTokens}\uAC1C(\u22655)`
       );
@@ -29422,11 +29301,11 @@ async function handleSugoPlan(rawArgs) {
         currentFingerprint,
         existing.data.chainInfo.testPassedState
       );
-      if (!reuseResult.ok) return errorResult9(reuseResult.code, reuseResult.message);
+      if (!reuseResult.ok) return errorResult8(reuseResult.code, reuseResult.message);
       runtimeSatisfiedByReuse = true;
     }
     if (!runtimeSatisfiedByReuse) {
-      if (!args2.runtimeCheck) return errorResult9("RUNTIME_CHECK_REQUIRED", "review_done action\uC5D0\uB294 runtimeCheck\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.runtimeCheck) return errorResult8("RUNTIME_CHECK_REQUIRED", "review_done action\uC5D0\uB294 runtimeCheck\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const bootable = await isProjectBootable(existing.projectPath);
       const rc = args2.runtimeCheck;
       const labeled = !!rc.unverifiedReason && rc.unverifiedReason.trim().length > 0;
@@ -29434,10 +29313,10 @@ async function handleSugoPlan(rawArgs) {
       const claimsWiringAbsent = labeled && rc.runtimeVerified && bootable && rc.wiringVerified !== true;
       if (claimsRuntimeAbsent || claimsWiringAbsent) {
         const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
-        if (!contradiction.ok) return errorResult9(contradiction.code, contradiction.message);
+        if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
       }
       const runtimeResult = checkRuntimeVerificationGate(existing.data.chainInfo.testPassedState, rc, bootable);
-      if (!runtimeResult.ok) return errorResult9(runtimeResult.code, runtimeResult.message);
+      if (!runtimeResult.ok) return errorResult8(runtimeResult.code, runtimeResult.message);
       if (claimsRuntimeAbsent) {
         newBypassLabels.push({
           kind: "runtimeUnverified",
@@ -29459,38 +29338,38 @@ async function handleSugoPlan(rawArgs) {
       baselineRequired: existing.data.baselineGate?.required ?? false
     });
     const contractResult = checkContractEvidenceGate(existing.data.chainInfo.contractTests ?? [], contractRequired);
-    if (!contractResult.ok) return errorResult9(contractResult.code, contractResult.message);
+    if (!contractResult.ok) return errorResult8(contractResult.code, contractResult.message);
   }
   if (action === "decompose" && existing) {
-    if (!args2.manifest) return errorResult9("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    if (!existing.data.prdPath) return errorResult9("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!args2.manifest) return errorResult8("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!existing.data.prdPath) return errorResult8("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const prdContent = await readFile19(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
     };
     const manifestResult = validateManifest(candidateManifest, prdRequirementIds);
-    if (!manifestResult.ok) return errorResult9(manifestResult.code, manifestResult.message);
+    if (!manifestResult.ok) return errorResult8(manifestResult.code, manifestResult.message);
   }
   if ((action === "subtask_start" || action === "subtask_done") && existing) {
     if (!args2.subtaskId) {
-      return errorResult9("SUBTASK_ID_REQUIRED", `${action} action\uC5D0\uB294 subtaskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
+      return errorResult8("SUBTASK_ID_REQUIRED", `${action} action\uC5D0\uB294 subtaskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
     }
     const subtask = existing.data.decomposeManifest?.subtasks.find((s) => s.id === args2.subtaskId);
-    if (!subtask) return errorResult9("SUBTASK_NOT_FOUND", `\uC11C\uBE0C\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.subtaskId}`);
+    if (!subtask) return errorResult8("SUBTASK_NOT_FOUND", `\uC11C\uBE0C\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.subtaskId}`);
   }
   if (action === "integrate" && existing) {
     const manifest = existing.data.decomposeManifest;
-    if (!manifest) return errorResult9("MANIFEST_REQUIRED", "integrate \uC804\uC5D0 decompose\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!manifest) return errorResult8("MANIFEST_REQUIRED", "integrate \uC804\uC5D0 decompose\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const integrationResult = validateIntegration(manifest);
-    if (!integrationResult.ok) return errorResult9(integrationResult.code, integrationResult.message);
+    if (!integrationResult.ok) return errorResult8(integrationResult.code, integrationResult.message);
   }
   let patchContext;
   if (action === "start" && args2.workResultPath) {
     try {
       patchContext = await resolvePatchContext(args2.workResultPath);
     } catch (err2) {
-      if (err2 instanceof PatchEntryError) return errorResult9(err2.code, err2.message);
+      if (err2 instanceof PatchEntryError) return errorResult8(err2.code, err2.message);
       throw err2;
     }
   }
@@ -29500,7 +29379,7 @@ async function handleSugoPlan(rawArgs) {
     featureName: args2.featureName
   });
   if (!result.ok) {
-    return errorResult9(result.errorCode ?? "UNKNOWN_ERROR", result.message ?? "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958");
+    return errorResult8(result.errorCode ?? "UNKNOWN_ERROR", result.message ?? "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958");
   }
   let session = result.session;
   if (!session) {
@@ -29798,7 +29677,7 @@ ${session.data.seed}` : args2.summary;
     content: [{ type: "text", text: JSON.stringify(payload, null, 2) }]
   };
 }
-function errorResult9(errorCode, message) {
+function errorResult8(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -29817,7 +29696,7 @@ var SugoRecordContractEvidenceArgs = external_exports.object(sugoRecordContractE
 async function handleSugoRecordContractEvidence(rawArgs) {
   const args2 = SugoRecordContractEvidenceArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult10("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult9("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   const existingRecords = session.data.chainInfo.contractTests ?? [];
@@ -29831,7 +29710,7 @@ async function handleSugoRecordContractEvidence(rawArgs) {
   const payload = { ok: true, sessionId: session.id, contractId: args2.contractId, record: updatedRecord };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult10(errorCode, message) {
+function errorResult9(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -29854,7 +29733,7 @@ var SugoRecordTestEvidenceArgs = external_exports.object(sugoRecordTestEvidenceI
 async function handleSugoRecordTestEvidence(rawArgs) {
   const args2 = SugoRecordTestEvidenceArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult11("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult10("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   const record2 = makeTestEvidenceRecord(
@@ -29891,7 +29770,7 @@ async function handleSugoRecordTestEvidence(rawArgs) {
   const payload = { ok: true, sessionId: session.id, kind: args2.kind, derivedState: record2.derivedState };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult11(errorCode, message) {
+function errorResult10(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -29903,7 +29782,7 @@ import { resolve as resolve6 } from "node:path";
 
 // src/harness/reset.ts
 import { mkdir as mkdir15, readFile as readFile20, rm as rm2 } from "node:fs/promises";
-import { join as join23 } from "node:path";
+import { join as join22 } from "node:path";
 var ResetProjectError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -29925,17 +29804,17 @@ async function resetProjectHarness(projectPath) {
     throw new ResetProjectError("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4(sugo/config.json \uC5C6\uC74C): ${projectPath}`);
   }
   const sugoDir = projectSugoDir(projectPath);
-  const claudeMdPath = join23(sugoDir, "CLAUDE.md");
+  const claudeMdPath = join22(sugoDir, "CLAUDE.md");
   let backedUpTo;
   try {
     const current = await readFile20(claudeMdPath, "utf-8");
-    const backupDir = join23(sugoDir, "backup");
+    const backupDir = join22(sugoDir, "backup");
     await mkdir15(backupDir, { recursive: true });
-    backedUpTo = join23(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
+    backedUpTo = join22(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
     await atomicWriteFile(backedUpTo, current);
   } catch {
   }
-  await rm2(join23(sugoDir, "harness"), { recursive: true, force: true });
+  await rm2(join22(sugoDir, "harness"), { recursive: true, force: true });
   await atomicWriteFile(claudeMdPath, RESET_CLAUDE_MD);
   await saveProjectConfig({ ...config2, appliedHarnesses: [], lastUpdated: (/* @__PURE__ */ new Date()).toISOString() });
   return { backedUpTo };
@@ -29953,11 +29832,11 @@ async function handleSugoReset(rawArgs) {
     const { backedUpTo } = await resetProjectHarness(projectPath);
     return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, backedUpTo }, null, 2) }] };
   } catch (err2) {
-    if (err2 instanceof ResetProjectError) return errorResult12(err2.code, err2.message);
+    if (err2 instanceof ResetProjectError) return errorResult11(err2.code, err2.message);
     throw err2;
   }
 }
-function errorResult12(errorCode, message) {
+function errorResult11(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -30008,7 +29887,7 @@ async function handleSugoRoadmap(rawArgs) {
   switch (args2.action) {
     case "add": {
       if (!args2.id || !args2.title || !args2.level) {
-        return errorResult13("ADD_FIELDS_REQUIRED", "add action\uC5D0\uB294 id/title/level\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult12("ADD_FIELDS_REQUIRED", "add action\uC5D0\uB294 id/title/level\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       const result = await addRoadmapNode(args2.workspace, {
         id: args2.id,
@@ -30021,68 +29900,68 @@ async function handleSugoRoadmap(rawArgs) {
         specPath: args2.specPath,
         note: args2.note
       });
-      if (!result.ok) return errorResult13(result.error, result.message);
-      return ok5({ node: await getRoadmapNode(args2.workspace, args2.id) });
+      if (!result.ok) return errorResult12(result.error, result.message);
+      return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "remove": {
-      if (!args2.id) return errorResult13("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult12("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await removeRoadmapNode(args2.workspace, args2.id);
-      if (!result.ok) return errorResult13(result.error, result.message);
-      return ok5({});
+      if (!result.ok) return errorResult12(result.error, result.message);
+      return ok4({});
     }
     case "status": {
-      if (!args2.id || !args2.status) return errorResult13("ID_AND_STATUS_REQUIRED", "status action\uC5D0\uB294 id\uC640 status\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id || !args2.status) return errorResult12("ID_AND_STATUS_REQUIRED", "status action\uC5D0\uB294 id\uC640 status\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await updateRoadmapNodeStatus(args2.workspace, args2.id, args2.status, resultFrom(args2));
-      if (!result.ok) return errorResult13(result.error, result.message);
-      return ok5({ node: await getRoadmapNode(args2.workspace, args2.id) });
+      if (!result.ok) return errorResult12(result.error, result.message);
+      return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "link": {
-      if (!args2.fromId || !args2.toId) return errorResult13("FROM_TO_REQUIRED", "link action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.fromId || !args2.toId) return errorResult12("FROM_TO_REQUIRED", "link action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await linkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
-      if (!result.ok) return errorResult13(result.error, result.message);
-      return ok5({});
+      if (!result.ok) return errorResult12(result.error, result.message);
+      return ok4({});
     }
     case "unlink": {
-      if (!args2.fromId || !args2.toId) return errorResult13("FROM_TO_REQUIRED", "unlink action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.fromId || !args2.toId) return errorResult12("FROM_TO_REQUIRED", "unlink action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await unlinkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
-      if (!result.ok) return errorResult13(result.error, result.message);
-      return ok5({});
+      if (!result.ok) return errorResult12(result.error, result.message);
+      return ok4({});
     }
     case "group": {
       if (!args2.id || !args2.title || !args2.taskIds) {
-        return errorResult13("GROUP_FIELDS_REQUIRED", "group action\uC5D0\uB294 id(workstream id)/title/taskIds\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult12("GROUP_FIELDS_REQUIRED", "group action\uC5D0\uB294 id(workstream id)/title/taskIds\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       await groupRoadmapNodes(args2.workspace, args2.id, args2.title, args2.taskIds);
-      return ok5({});
+      return ok4({});
     }
     case "backfill": {
-      if (!args2.id || !args2.title) return errorResult13("BACKFILL_FIELDS_REQUIRED", "backfill action\uC5D0\uB294 id(HULK taskId)/title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id || !args2.title) return errorResult12("BACKFILL_FIELDS_REQUIRED", "backfill action\uC5D0\uB294 id(HULK taskId)/title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await backfillRoadmapTask(args2.workspace, args2.id, args2.title);
-      return ok5({ node: await getRoadmapNode(args2.workspace, args2.id) });
+      return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "list": {
       const nodes = await listRoadmapNodes(args2.workspace, { level: args2.filterLevel, parent: args2.filterParent });
-      return ok5({ nodes });
+      return ok4({ nodes });
     }
     case "ready": {
       const ready = await getReadySet(args2.workspace);
-      return ok5({ ready });
+      return ok4({ ready });
     }
     case "pull_ordering": {
       const pulled = await pullRoadmapOrdering(args2.workspace);
-      return ok5({ pulled });
+      return ok4({ pulled });
     }
     case "get": {
-      if (!args2.id) return errorResult13("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult12("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const node = await getRoadmapNode(args2.workspace, args2.id);
-      if (!node) return errorResult13("NODE_NOT_FOUND", `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
-      return ok5({ node });
+      if (!node) return errorResult12("NODE_NOT_FOUND", `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      return ok4({ node });
     }
     case "mark_req": {
-      if (!args2.id) return errorResult13("ID_REQUIRED", "mark_req action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult12("ID_REQUIRED", "mark_req action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await markRequirementDone(args2.workspace, args2.id, resultFrom(args2));
-      if (!result.ok) return errorResult13(result.error, result.message);
-      return ok5({ node: await getRoadmapNode(args2.workspace, args2.id) });
+      if (!result.ok) return errorResult12(result.error, result.message);
+      return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
   }
 }
@@ -30090,10 +29969,10 @@ function resultFrom(args2) {
   if (!args2.resultSummary && !args2.logId) return void 0;
   return { summary: args2.resultSummary, logId: args2.logId };
 }
-function ok5(payload) {
+function ok4(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult13(errorCode, message) {
+function errorResult12(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -30187,6 +30066,66 @@ async function handleSugoRoute(rawArgs) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...result }, null, 2) }] };
 }
 
+// src/hulk/spec.ts
+import { mkdir as mkdir16, readdir as readdir10, readFile as readFile21 } from "node:fs/promises";
+import { join as join23 } from "node:path";
+async function addSpec(workspace, params) {
+  const spec = {
+    name: params.name,
+    type: params.type,
+    tags: params.tags ?? [],
+    content: params.content,
+    created_at: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  const dir = specsDir(workspace);
+  await mkdir16(dir, { recursive: true });
+  const fileContent = stringifyFrontmatter(
+    { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
+    spec.content
+  );
+  await atomicWriteFile(join23(dir, `${slugify(params.name)}.md`), fileContent);
+  void syncDecision(workspace, spec);
+  return spec;
+}
+function parseSpecFile(raw) {
+  const { meta, body: body2 } = parseFrontmatter(raw);
+  return {
+    name: meta.name ?? "",
+    type: meta.type ?? "other",
+    tags: meta.tags ?? [],
+    created_at: meta.created_at ?? "",
+    content: body2
+  };
+}
+async function listSpecs(workspace) {
+  const dir = specsDir(workspace);
+  let entries;
+  try {
+    entries = await readdir10(dir);
+  } catch {
+    return [];
+  }
+  const specs = [];
+  for (const name2 of entries) {
+    if (!name2.endsWith(".md")) continue;
+    try {
+      const raw = await readFile21(join23(dir, name2), "utf-8");
+      specs.push(parseSpecFile(raw));
+    } catch {
+      continue;
+    }
+  }
+  return specs;
+}
+async function getSpec(workspace, name2) {
+  try {
+    const raw = await readFile21(join23(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    return parseSpecFile(raw);
+  } catch {
+    return null;
+  }
+}
+
 // src/tools/sugoSpec.ts
 var SPEC_TYPES = ["architecture", "api-design", "business-rule", "data-model", "flow", "other"];
 var sugoSpecInputSchema = {
@@ -30203,39 +30142,103 @@ async function handleSugoSpec(rawArgs) {
   switch (args2.action) {
     case "add": {
       if (!args2.name || !args2.type || !args2.content) {
-        return errorResult14("NAME_TYPE_CONTENT_REQUIRED", "add action\uC5D0\uB294 name, type, content\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult13("NAME_TYPE_CONTENT_REQUIRED", "add action\uC5D0\uB294 name, type, content\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       const spec = await addSpec(args2.workspace, { name: args2.name, type: args2.type, tags: args2.tags, content: args2.content });
-      return ok6({ spec });
+      return ok5({ spec });
     }
     case "list": {
       const specs = await listSpecs(args2.workspace);
-      return ok6({ specs });
+      return ok5({ specs });
     }
     case "get": {
-      if (!args2.name) return errorResult14("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult13("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const spec = await getSpec(args2.workspace, args2.name);
-      if (!spec) return errorResult14("SPEC_NOT_FOUND", `\uC2A4\uD399\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
-      return ok6({ spec });
+      if (!spec) return errorResult13("SPEC_NOT_FOUND", `\uC2A4\uD399\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
+      return ok5({ spec });
     }
   }
 }
-function ok6(payload) {
+function ok5(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult14(errorCode, message) {
+function errorResult13(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
   };
 }
 
+// src/judgment.ts
+function minutesBetween(fromIso, toIso) {
+  return (new Date(toIso).getTime() - new Date(fromIso).getTime()) / 6e4;
+}
+function computeJudgmentReport(sessions) {
+  const total = sessions.length;
+  const patchSessions = sessions.filter((s) => s.data.mode === "patch").length;
+  const gaps = [];
+  for (const s of sessions) {
+    const reviewDoneAt = s.data.chainInfo.reviewDoneAt;
+    if (s.state === "DONE" && reviewDoneAt) {
+      gaps.push({ sessionId: s.id, gapMinutes: Math.max(0, minutesBetween(reviewDoneAt, s.updatedAt)) });
+    }
+  }
+  const avgReviewToCommitMinutes = gaps.length > 0 ? gaps.reduce((sum, g) => sum + g.gapMinutes, 0) / gaps.length : null;
+  const maxReviewToCommitMinutes = gaps.length > 0 ? Math.max(...gaps.map((g) => g.gapMinutes)) : null;
+  const topGaps = [...gaps].sort((a, b) => b.gapMinutes - a.gapMinutes).slice(0, 5);
+  let environmentAbsentCount = 0;
+  let runtimeUnverifiedSessions = 0;
+  let bootUnverifiedSessions = 0;
+  let fabricatedValidationSessions = 0;
+  let reviewLoopRetryTotal = 0;
+  let sessionsWithReviewLoop = 0;
+  for (const s of sessions) {
+    const usedUnverifiedTest = s.data.chainInfo.testEvidence?.derivedState === "unverified";
+    const usedUnverifiedBaseline = s.data.baselineGate?.evidence?.derivedState === "unverified";
+    const usedRuntimeLabel = !!s.data.chainInfo.runtimeCheckUnverifiedReason;
+    const usedBootLabel = !!s.data.chainInfo.codeGateAudit?.bootUnverifiedReason;
+    if (usedUnverifiedTest || usedUnverifiedBaseline || usedRuntimeLabel || usedBootLabel) environmentAbsentCount++;
+    if (usedRuntimeLabel) runtimeUnverifiedSessions++;
+    if (usedBootLabel) bootUnverifiedSessions++;
+    if ((s.data.chainInfo.lastValidation?.fabricatedCount ?? 0) > 0) fabricatedValidationSessions++;
+    const retries = s.data.chainInfo.autoLoopRetryCount;
+    reviewLoopRetryTotal += retries;
+    if (retries > 0) sessionsWithReviewLoop++;
+  }
+  return {
+    totalSessions: total,
+    patchSessions,
+    avgReviewToCommitMinutes,
+    maxReviewToCommitMinutes,
+    topGaps,
+    environmentAbsentRate: total > 0 ? environmentAbsentCount / total : 0,
+    reviewLoopRetryTotal,
+    sessionsWithReviewLoop,
+    runtimeUnverifiedSessions,
+    bootUnverifiedSessions,
+    fabricatedValidationSessions
+  };
+}
+
+// src/work/enabled.ts
+function isWorkEnabled() {
+  return true;
+}
+
 // src/tools/sugoStatus.ts
-var sugoStatusInputSchema = {};
-async function handleSugoStatus() {
+var sugoStatusInputSchema = {
+  health: external_exports.boolean().optional().describe("\uB300\uC2DC\uBCF4\uB4DC \uC5F0\uACB0 \uC0C1\uD0DC\xB7\uC7AC\uC2DC\uB3C4 \uD050 \uD06C\uAE30\uB97C \uD568\uAED8 \uBC18\uD658\uD55C\uB2E4"),
+  judgment: external_exports.boolean().optional().describe("\xA75.8 \uD310\uB2E8\uD488\uC9C8 \uB9AC\uD3EC\uD2B8\uB97C \uD568\uAED8 \uBC18\uD658\uD55C\uB2E4"),
+  days: external_exports.number().optional().describe("judgment: \uCD5C\uADFC N\uC77C \uC774\uB0B4 \uAC31\uC2E0\uB41C \uC138\uC158\uB9CC \uC9D1\uACC4(\uC0DD\uB7B5 \uC2DC \uC804\uCCB4)"),
+  projectPath: external_exports.string().optional().describe("\uC774 \uACBD\uB85C\uC758 \uD504\uB85C\uC81D\uD2B8 \uD558\uB098\uB9CC \uC870\uD68C\uD55C\uB2E4")
+};
+var SugoStatusArgs = external_exports.object(sugoStatusInputSchema);
+async function handleSugoStatus(rawArgs = {}) {
+  const args2 = SugoStatusArgs.parse(rawArgs ?? {});
   const entries = await loadRegistry();
+  const filtered = args2.projectPath ? entries.filter((e) => e.path === args2.projectPath) : entries;
   const projects = await Promise.all(
-    entries.map(async (entry) => {
+    filtered.map(async (entry) => {
       const config2 = await loadProjectConfig(entry.path);
       return {
         path: entry.path,
@@ -30250,7 +30253,28 @@ async function handleSugoStatus() {
       };
     })
   );
-  const payload = { ok: true, totalProjects: projects.length, projects };
+  const payload = {
+    ok: true,
+    totalProjects: projects.length,
+    projects,
+    workEnabled: isWorkEnabled()
+  };
+  if (args2.health) {
+    const config2 = await resolveDashboardConfig();
+    const queue = await listRetryQueue();
+    if (config2.enabled) await drainRetryQueue();
+    payload.health = {
+      dashboardEnabled: config2.enabled,
+      dashboardApiUrl: config2.enabled ? config2.apiUrl : void 0,
+      retryQueueSize: queue.length,
+      retryQueueSizeAfterDrain: config2.enabled ? (await listRetryQueue()).length : queue.length
+    };
+  }
+  if (args2.judgment) {
+    const allSessions = await loadAllSessions();
+    const sessions = args2.days === void 0 ? allSessions : allSessions.filter((s) => Date.now() - new Date(s.updatedAt).getTime() <= args2.days * 24 * 60 * 60 * 1e3);
+    payload.judgment = computeJudgmentReport(sessions);
+  }
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
@@ -30275,7 +30299,7 @@ async function handleSugoTask(rawArgs) {
   const args2 = SugoTaskArgs.parse(rawArgs);
   switch (args2.action) {
     case "add": {
-      if (!args2.title || !args2.project) return errorResult15("TITLE_AND_PROJECT_REQUIRED", "add action\uC5D0\uB294 title\uACFC project\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.title || !args2.project) return errorResult14("TITLE_AND_PROJECT_REQUIRED", "add action\uC5D0\uB294 title\uACFC project\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await addTask(args2.workspace, {
         title: args2.title,
         project: args2.project,
@@ -30285,30 +30309,30 @@ async function handleSugoTask(rawArgs) {
         prd_ref: args2.prd_ref,
         tags: args2.tags
       });
-      return ok7({ task });
+      return ok6({ task });
     }
     case "list": {
       const tasks = await listTasks(args2.workspace, { project: args2.filterProject, status: args2.status });
-      return ok7({ tasks });
+      return ok6({ tasks });
     }
     case "update": {
-      if (!args2.taskId) return errorResult15("TASK_ID_REQUIRED", "update action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.taskId) return errorResult14("TASK_ID_REQUIRED", "update action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await updateTask(args2.workspace, args2.taskId, { status: args2.status, summary: args2.summary });
-      if (!task) return errorResult15("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
-      return ok7({ task });
+      if (!task) return errorResult14("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
+      return ok6({ task });
     }
     case "get": {
-      if (!args2.taskId) return errorResult15("TASK_ID_REQUIRED", "get action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.taskId) return errorResult14("TASK_ID_REQUIRED", "get action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await getTask(args2.workspace, args2.taskId);
-      if (!task) return errorResult15("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
-      return ok7({ task });
+      if (!task) return errorResult14("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
+      return ok6({ task });
     }
   }
 }
-function ok7(payload) {
+function ok6(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult15(errorCode, message) {
+function errorResult14(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -30330,7 +30354,7 @@ async function handleSugoUpdate(rawArgs) {
   const projectPath = resolve7(args2.projectPath);
   const existing = await findRegistryEntry(projectPath);
   if (!existing) {
-    return errorResult16("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uBA3C\uC800 sugo_add\uB85C \uB4F1\uB85D\uD558\uC138\uC694: ${projectPath}`);
+    return errorResult15("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uBA3C\uC800 sugo_add\uB85C \uB4F1\uB85D\uD558\uC138\uC694: ${projectPath}`);
   }
   const result = await syncProjectHarness({ ...args2, projectPath });
   const payload = {
@@ -30345,7 +30369,7 @@ async function handleSugoUpdate(rawArgs) {
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult16(errorCode, message) {
+function errorResult15(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -30353,7 +30377,7 @@ function errorResult16(errorCode, message) {
 }
 
 // src/harness/validationConfig.ts
-import { readFile as readFile21 } from "node:fs/promises";
+import { readFile as readFile22 } from "node:fs/promises";
 import { join as join24 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
@@ -30371,7 +30395,7 @@ async function loadProjectValidationConfigs(projectPath) {
   for (const applied of config2.appliedHarnesses) {
     const path = join24(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile21(path, "utf-8");
+      const content = await readFile22(path, "utf-8");
       result.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -30422,7 +30446,7 @@ var SugoValidateArgs = external_exports.object(sugoValidateInputSchema);
 async function handleSugoValidate(rawArgs) {
   const args2 = SugoValidateArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult17("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult16("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   const configs = await loadProjectValidationConfigs(session.projectPath);
@@ -30452,7 +30476,7 @@ async function handleSugoValidate(rawArgs) {
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult17(errorCode, message) {
+function errorResult16(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -30530,8 +30554,8 @@ function json(payload) {
 
 // src/tools/sugoWorkspace.ts
 var sugoWorkspaceInputSchema = {
-  action: external_exports.enum(["add", "list", "get", "remember", "recall"]),
-  name: external_exports.string().optional().describe("add/get/remember/recall action\uC5D0 \uD544\uC694"),
+  action: external_exports.enum(["add", "list", "get", "remember", "recall", "status", "sync"]),
+  name: external_exports.string().optional().describe("add/get/remember/recall/status/sync action\uC5D0 \uD544\uC694"),
   projectPath: external_exports.string().optional().describe("add: \uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uC5D0 \uCD94\uAC00\uB85C \uC18C\uC18D\uC2DC\uD0AC \uD504\uB85C\uC81D\uD2B8 \uACBD\uB85C"),
   note: external_exports.string().optional().describe("remember action\uC5D0 \uD544\uC694")
 };
@@ -30540,36 +30564,65 @@ async function handleSugoWorkspace(rawArgs) {
   const args2 = SugoWorkspaceArgs.parse(rawArgs);
   switch (args2.action) {
     case "add": {
-      if (!args2.name) return errorResult18("NAME_REQUIRED", "add action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult17("NAME_REQUIRED", "add action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workspace = await ensureWorkspace(args2.name, args2.projectPath);
-      return ok8({ workspace });
+      return ok7({ workspace });
     }
     case "list": {
       const workspaces = await listWorkspaces();
-      return ok8({ workspaces });
+      return ok7({ workspaces });
     }
     case "get": {
-      if (!args2.name) return errorResult18("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult17("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workspace = await loadWorkspace(args2.name);
-      if (!workspace) return errorResult18("WORKSPACE_NOT_FOUND", `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
-      return ok8({ workspace });
+      if (!workspace) return errorResult17("WORKSPACE_NOT_FOUND", `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
+      return ok7({ workspace });
     }
     case "remember": {
-      if (!args2.name || !args2.note) return errorResult18("NAME_AND_NOTE_REQUIRED", "remember action\uC5D0\uB294 name\uACFC note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name || !args2.note) return errorResult17("NAME_AND_NOTE_REQUIRED", "remember action\uC5D0\uB294 name\uACFC note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await appendMemory(args2.name, args2.note);
-      return ok8({ remembered: true });
+      return ok7({ remembered: true });
     }
     case "recall": {
-      if (!args2.name) return errorResult18("NAME_REQUIRED", "recall action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult17("NAME_REQUIRED", "recall action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const memory = await readMemory(args2.name);
-      return ok8({ memory });
+      return ok7({ memory });
+    }
+    case "status": {
+      if (!args2.name) return errorResult17("NAME_REQUIRED", "status action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const [tasks, checkpoints, roadmapNodes, specs, history] = await Promise.all([
+        listTasks(args2.name),
+        listCheckpoints(args2.name),
+        listRoadmapNodes(args2.name),
+        listSpecs(args2.name),
+        listWorkLogs(args2.name)
+      ]);
+      return ok7({
+        workspace: args2.name,
+        taskCount: tasks.length,
+        checkpointCount: checkpoints.length,
+        roadmapNodeCount: roadmapNodes.length,
+        specCount: specs.length,
+        historyCount: history.length
+      });
+    }
+    case "sync": {
+      if (!args2.name) return errorResult17("NAME_REQUIRED", "sync action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      const ws = await loadWorkspace(args2.name);
+      if (ws) void syncWorkspace(ws);
+      const tasks = await listTasks(args2.name);
+      for (const task of tasks) void syncTask(args2.name, task);
+      const nodes = await listRoadmapNodes(args2.name);
+      void syncRoadmapSnapshot(args2.name, nodes);
+      await drainRetryQueue();
+      return ok7({ synced: true, taskCount: tasks.length, roadmapNodeCount: nodes.length });
     }
   }
 }
-function ok8(payload) {
+function ok7(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult18(errorCode, message) {
+function errorResult17(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -30708,15 +30761,6 @@ server.registerTool(
   handleSugoHistory
 );
 server.registerTool(
-  "sugo_hulk",
-  {
-    title: "HULK meta tool \u2014 enable/disable/status/help/sync/health/judgment",
-    description: "HULK(\xA78) \uD1B5\uD569 \uB3C4\uAD6C. enable/disable\uC740 HULK\uAC00 \uD56D\uC0C1 \uCF1C\uC838 \uC788\uC5B4( \uB0B4\uC7A5 \uC0C1\uC218) no-op\uC774\uB2E4. status\uB294 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC694\uC57D(\uD0DC\uC2A4\uD06C/\uCCB4\uD06C\uD3EC\uC778\uD2B8/\uB85C\uB4DC\uB9F5/\uC2A4\uD399/\uC774\uB825 \uAC1C\uC218), sync\uB294 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/\uD0DC\uC2A4\uD06C/\uB85C\uB4DC\uB9F5\uC744 \uB300\uC2DC\uBCF4\uB4DC\uB85C \uB2E4\uC2DC push(\xA77.2), health\uB294 \uB300\uC2DC\uBCF4\uB4DC \uC5F0\uACB0\xB7\uC7AC\uC2DC\uB3C4 \uD050 \uC0C1\uD0DC, judgment\uB294 \xA74.5 \uD310\uB2E8\uD488\uC9C8 \uB9AC\uD3EC\uD2B8(\uAD6C sugo_judgment_report\uB97C \uC774 action\uC73C\uB85C \uD761\uC218).",
-    inputSchema: sugoHulkInputSchema
-  },
-  handleSugoHulk
-);
-server.registerTool(
   "sugo_roadmap",
   {
     title: "Roadmap DAG (\xA78.5) \u2014 dependsOn-ordered task/requirement graph",
@@ -30825,6 +30869,7 @@ server.registerTool(
   handleSugoOntology
 );
 async function main() {
+  await migrateWorkDataDir();
   void syncPluginVersion(currentSugoVersion());
   void syncUser();
   const transport = new StdioServerTransport();

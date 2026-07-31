@@ -19,7 +19,6 @@ import {
   sugoGetProjectContextInputSchema,
 } from "./tools/sugoGetProjectContext.js";
 import { handleSugoHistory, sugoHistoryInputSchema } from "./tools/sugoHistory.js";
-import { handleSugoHulk, sugoHulkInputSchema } from "./tools/sugoHulk.js";
 import { handleSugoOverview, sugoOverviewInputSchema } from "./tools/sugoOverview.js";
 import { handleSugoPlan, sugoPlanInputSchema } from "./tools/sugoPlan.js";
 import {
@@ -40,6 +39,7 @@ import { handleSugoUpdate, sugoUpdateInputSchema } from "./tools/sugoUpdate.js";
 import { handleSugoValidate, sugoValidateInputSchema } from "./tools/sugoValidate.js";
 import { handleSugoVersion, sugoVersionInputSchema } from "./tools/sugoVersion.js";
 import { handleSugoOntology, sugoOntologyInputSchema } from "./tools/sugoOntology.js";
+import { migrateWorkDataDir } from "./work/storage.js";
 import { handleSugoWorkspace, sugoWorkspaceInputSchema } from "./tools/sugoWorkspace.js";
 
 const server = new McpServer({
@@ -216,19 +216,6 @@ server.registerTool(
   handleSugoHistory,
 );
 
-server.registerTool(
-  "sugo_hulk",
-  {
-    title: "HULK meta tool — enable/disable/status/help/sync/health/judgment",
-    description:
-      "HULK(§8) 통합 도구. enable/disable은 HULK가 항상 켜져 있어( 내장 상수) no-op이다. " +
-      "status는 워크스페이스 요약(태스크/체크포인트/로드맵/스펙/이력 개수), sync는 워크스페이스/" +
-      "태스크/로드맵을 대시보드로 다시 push(§7.2), health는 대시보드 연결·재시도 큐 상태, " +
-      "judgment는 §4.5 판단품질 리포트(구 sugo_judgment_report를 이 action으로 흡수).",
-    inputSchema: sugoHulkInputSchema,
-  },
-  handleSugoHulk,
-);
 
 server.registerTool(
   "sugo_roadmap",
@@ -369,6 +356,11 @@ server.registerTool(
 );
 
 async function main() {
+  // §9 WORK 리네임(hulk/ → work/): 어떤 도구든 데이터를 읽기 **전에** 끝나야 하므로 await한다.
+  // 절대 던지지 않게 만들어져 있어 실패해도 기동을 막지 않는다(못 옮긴 파일은 마커를 안 남겨
+  // 다음 부팅에 재시도된다).
+  await migrateWorkDataDir();
+
   // §7.2: 서버 기동 시 1회, 논블로킹으로 플러그인 버전/사용자를 대시보드에 알린다(disabled면 조용히 no-op).
   void syncPluginVersion(currentSugoVersion());
   void syncUser();

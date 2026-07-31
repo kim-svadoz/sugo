@@ -1,10 +1,25 @@
 import { z } from "zod";
+import { drainRetryQueue } from "../dashboard/client.js";
+import { syncRoadmapSnapshot, syncTask, syncWorkspace } from "../dashboard/sync.js";
+import { listCheckpoints } from "../hulk/checkpoint.js";
+import { listWorkLogs } from "../hulk/history.js";
 import { appendMemory, readMemory } from "../hulk/memory.js";
+import { listRoadmapNodes } from "../hulk/roadmap.js";
+import { listSpecs } from "../hulk/spec.js";
+import { listTasks } from "../hulk/task.js";
 import { ensureWorkspace, listWorkspaces, loadWorkspace } from "../hulk/workspace.js";
 
+/**
+ * §1/§9 `sugo_workspace`. v2에서 `sugo_hulk`가 완전히 제거되면서 그 도구의 워크스페이스 관련
+ * 액션 두 개가 여기로 들어왔다: `status`(워크스페이스 데이터 요약)와 `sync`(대시보드 재push).
+ * 워크스페이스에 대한 조작인데 별도 umbrella 도구에 살아 있을 이유가 없었다.
+ *
+ * ⚠️ `sync`는 v2 도구 표의 `sugo_workspace` action 목록(list/create/delete/status)에 없지만,
+ * "대시보드와 어긋났을 때 수동으로 다시 밀어넣는" 실동작 기능이라 삭제하지 않고 여기로 옮겼다.
+ */
 export const sugoWorkspaceInputSchema = {
-  action: z.enum(["add", "list", "get", "remember", "recall"]),
-  name: z.string().optional().describe("add/get/remember/recall action에 필요"),
+  action: z.enum(["add", "list", "get", "remember", "recall", "status", "sync"]),
+  name: z.string().optional().describe("add/get/remember/recall/status/sync action에 필요"),
   projectPath: z.string().optional().describe("add: 이 워크스페이스에 추가로 소속시킬 프로젝트 경로"),
   note: z.string().optional().describe("remember action에 필요"),
 };
@@ -39,6 +54,36 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
       if (!args.name) return errorResult("NAME_REQUIRED", "recall action에는 name이 필요합니다.");
       const memory = await readMemory(args.name);
       return ok({ memory });
+    }
+    case "status": {
+      if (!args.name) return errorResult("NAME_REQUIRED", "status action에는 name이 필요합니다.");
+      const [tasks, checkpoints, roadmapNodes, specs, history] = await Promise.all([
+        listTasks(args.name),
+        listCheckpoints(args.name),
+        listRoadmapNodes(args.name),
+        listSpecs(args.name),
+        listWorkLogs(args.name),
+      ]);
+      return ok({
+        workspace: args.name,
+        taskCount: tasks.length,
+        checkpointCount: checkpoints.length,
+        roadmapNodeCount: roadmapNodes.length,
+        specCount: specs.length,
+        historyCount: history.length,
+      });
+    }
+    case "sync": {
+      if (!args.name) return errorResult("NAME_REQUIRED", "sync action에는 name이 필요합니다.");
+      const ws = await loadWorkspace(args.name);
+      if (ws) void syncWorkspace(ws);
+      const tasks = await listTasks(args.name);
+      for (const task of tasks) void syncTask(args.name, task);
+      const nodes = await listRoadmapNodes(args.name);
+      void syncRoadmapSnapshot(args.name, nodes);
+      // push는 fire-and-forget이라 여기서 큐를 한 바퀴 돌려야 "수동 재sync"가 실제로 나간다.
+      await drainRetryQueue();
+      return ok({ synced: true, taskCount: tasks.length, roadmapNodeCount: nodes.length });
     }
   }
 }

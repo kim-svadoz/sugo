@@ -3,7 +3,7 @@ import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
 import { syncHistory } from "../dashboard/sync.js";
-import { historyDir } from "./storage.js";
+import { historyDir } from "../work/storage.js";
 import type { WorkLog } from "./types.js";
 
 function generateWorkLogId(): string {

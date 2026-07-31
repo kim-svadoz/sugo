@@ -3,7 +3,7 @@ import { atomicWriteFile, withFileLock } from "../fsUtil.js";
 import { fetchRoadmapOrdering } from "../dashboard/fetch.js";
 import { syncRoadmapLink, syncRoadmapSnapshot, unsyncRoadmapLink } from "../dashboard/sync.js";
 import { mergeRoadmapOwnership, readySet, topoSort } from "./roadmapGraph.js";
-import { roadmapFilePath, roadmapLockPath, workspaceDir } from "./storage.js";
+import { roadmapFilePath, roadmapLockPath, workspaceDir } from "../work/storage.js";
 import type { RoadmapFile, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus } from "./types.js";
 
 async function readRoadmapFile(workspace: string): Promise<RoadmapFile> {

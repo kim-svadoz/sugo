@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import { atomicWriteFile, withFileLock } from "../fsUtil.js";
 import { syncTask } from "../dashboard/sync.js";
-import { tasksFilePath, tasksLockPath, workspaceDir } from "./storage.js";
+import { tasksFilePath, tasksLockPath, workspaceDir } from "../work/storage.js";
 import type { Task, TasksFile, TaskPatchInfo, TaskStatus } from "./types.js";
 
 function generateTaskId(): string {

@@ -136,7 +136,7 @@ describe("commit → prRefs 수집 + WorkLog에 실림", () => {
     expect(body.prRefs).toBeUndefined();
 
     // prRefs가 실제로 수집됐는지는 로컬 WorkLog(history 파일)로 확인한다.
-    const historyDir = join(fakeHome, ".claude", "sugo", "hulk", "ws-pr", "history");
+    const historyDir = join(fakeHome, ".claude", "sugo", "work", "ws-pr", "history");
     const logFile = readdirSync(historyDir).find((f) => f.endsWith(".json"));
     expect(logFile).toBeDefined();
     const workLog = JSON.parse(readFileSync(join(historyDir, logFile!), "utf-8")) as { prRefs?: { repoSlug: string } };

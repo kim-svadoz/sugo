@@ -1,7 +1,7 @@
 import { mkdir, readdir, readFile } from "node:fs/promises";
 import { atomicWriteFile } from "../fsUtil.js";
 import { syncWorkspace } from "../dashboard/sync.js";
-import { hulkRootDir, workspaceDir, workspaceFilePath } from "./storage.js";
+import { workRootDir, workspaceDir, workspaceFilePath } from "../work/storage.js";
 import type { Workspace } from "./types.js";
 
 export async function loadWorkspace(name: string): Promise<Workspace | null> {
@@ -32,7 +32,7 @@ export async function ensureWorkspace(name: string, projectPath?: string): Promi
 export async function listWorkspaces(): Promise<Workspace[]> {
   let entries;
   try {
-    entries = await readdir(hulkRootDir(), { withFileTypes: true });
+    entries = await readdir(workRootDir(), { withFileTypes: true });
   } catch {
     return [];
   }

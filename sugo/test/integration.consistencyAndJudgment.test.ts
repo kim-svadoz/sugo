@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
-import { handleSugoHulk } from "../src/tools/sugoHulk.js";
+import { handleSugoStatus } from "../src/tools/sugoStatus.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
 
@@ -147,8 +147,8 @@ describe("auto-loop 재시도 카운트 (§4.5 신호)", () => {
     await call(handleSugoPlan, { action: "contract_done", sessionId });
     await call(handleSugoPlan, { action: "code_start", sessionId });
 
-    const report = await call(handleSugoHulk, { action: "judgment" });
-    const thisSession = report.data.report.sessionsWithReviewLoop;
+    const report = await call(handleSugoStatus, { judgment: true });
+    const thisSession = report.data.judgment.sessionsWithReviewLoop;
     expect(thisSession).toBe(0);
   });
 });
@@ -201,11 +201,11 @@ describe("sugo_hulk(judgment) — sugo_judgment_report 흡수, 전체 흐름 집
     await call(handleSugoPlan, { action: "commit", sessionId: s2 });
     rmSync(projectDir2, { recursive: true, force: true });
 
-    const report = await call(handleSugoHulk, { action: "judgment" });
-    expect(report.data.report.totalSessions).toBe(2);
-    expect(report.data.report.runtimeUnverifiedSessions).toBe(1);
-    expect(report.data.report.environmentAbsentRate).toBeCloseTo(0.5, 5);
-    expect(report.data.report.avgReviewToCommitMinutes).toBeGreaterThanOrEqual(0);
+    const report = await call(handleSugoStatus, { judgment: true });
+    expect(report.data.judgment.totalSessions).toBe(2);
+    expect(report.data.judgment.runtimeUnverifiedSessions).toBe(1);
+    expect(report.data.judgment.environmentAbsentRate).toBeCloseTo(0.5, 5);
+    expect(report.data.judgment.avgReviewToCommitMinutes).toBeGreaterThanOrEqual(0);
   });
 
   it("windowDays로 필터링할 수 있다(미래 시각 필터는 전부 제외)", async () => {
@@ -213,10 +213,10 @@ describe("sugo_hulk(judgment) — sugo_judgment_report 흡수, 전체 흐름 집
     await call(handleSugoRecordTestEvidence, { sessionId: s1, command: "npm test", exitCode: 0, failed: 0 });
     await call(handleSugoPlan, { action: "test_done", sessionId: s1, testPassed: true });
 
-    const reportAll = await call(handleSugoHulk, { action: "judgment" });
-    expect(reportAll.data.report.totalSessions).toBeGreaterThanOrEqual(1);
+    const reportAll = await call(handleSugoStatus, { judgment: true });
+    expect(reportAll.data.judgment.totalSessions).toBeGreaterThanOrEqual(1);
 
-    const reportNegativeWindow = await call(handleSugoHulk, { action: "judgment", windowDays: -1 });
-    expect(reportNegativeWindow.data.report.totalSessions).toBe(0);
+    const reportNegativeWindow = await call(handleSugoStatus, { judgment: true, days: -1 });
+    expect(reportNegativeWindow.data.judgment.totalSessions).toBe(0);
   });
 });

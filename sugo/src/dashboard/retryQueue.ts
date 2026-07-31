@@ -1,6 +1,6 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { atomicWriteFile, withFileLock } from "../fsUtil.js";
-import { syncRetryQueueLockPath, syncRetryQueuePath } from "../hulk/storage.js";
+import { syncRetryQueueLockPath, syncRetryQueuePath } from "../work/storage.js";
 import { dirname } from "node:path";
 
 export const MAX_RETRY_QUEUE_ITEMS = 100;
