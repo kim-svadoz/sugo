@@ -21,11 +21,26 @@ export interface RoadmapCounts {
   active: number;
 }
 
+/**
+ * 설계안 카드/Inspector가 실제로 읽는 필드들. 화면이 요구하는 모양을 그대로 돌려준다 —
+ * 프론트에서 카운트를 다시 계산하게 두면 목록 화면 하나 그리려고 워크스페이스마다 N번씩
+ * 추가 조회를 하게 된다(도메인 8개면 32번).
+ */
 export interface WorkspaceSummary {
   name: string;
   projects: WorkspaceProjectRow[];
   taskCounts: TaskCounts;
   roadmap: RoadmapCounts;
+  /** 설계안 평평한 별칭 — `ws.roadmapCount` 형태로 직접 참조된다. */
+  roadmapCount: number;
+  roadmapDoneCount: number;
+  activeTaskCount: number;
+  historyCount: number;
+  decisionCount: number;
+  checkpointCount: number;
+  projectCount: number;
+  /** `Recently Active (30d)` 필터의 기준. 활동이 전혀 없으면 null. */
+  lastActivityAt: string | null;
 }
 
 // 설계안: roadmap count는 level='task'만, active는 COALESCE(manual_status,status)='in_progress'.
@@ -77,14 +92,57 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
       "SELECT project_path, git_synced FROM sugo_workspace_projects WHERE workspace_id = ? ORDER BY project_path",
       [ws.id]
     );
+    const tasks = await taskCounts(db, userId, ws.name);
+    const roadmap = await roadmapCounts(db, userId, ws.name);
+    const [historyCount, decisionCount, checkpointCount] = await Promise.all([
+      countRows(db, "sugo_history", userId, ws.name),
+      countRows(db, "sugo_decisions", userId, ws.name),
+      countRows(db, "sugo_checkpoints", userId, ws.name),
+    ]);
     result.push({
       name: ws.name,
       projects,
-      taskCounts: await taskCounts(db, userId, ws.name),
-      roadmap: await roadmapCounts(db, userId, ws.name),
+      taskCounts: tasks,
+      roadmap,
+      roadmapCount: roadmap.total,
+      roadmapDoneCount: roadmap.done,
+      // 설계안 statusOf/activeOf: "진행 중"의 기준은 태스크가 아니라 **캔버스 노드**다
+      // (카드가 "N task 진행 중"으로 쓰지만 값은 로드맵 active에서 온다).
+      activeTaskCount: roadmap.active,
+      historyCount,
+      decisionCount,
+      checkpointCount,
+      projectCount: projects.length,
+      lastActivityAt: await lastActivityAt(db, userId, ws.name),
     });
   }
   return result;
+}
+
+async function countRows(db: DbClient, table: string, userId: string, workspaceName: string): Promise<number> {
+  try {
+    const rows = await db.query<{ n: number }>(
+      `SELECT COUNT(*) as n FROM ${table} WHERE user_id = ? AND workspace_name = ?`,
+      [userId, workspaceName]
+    );
+    return Number(rows[0]?.n ?? 0);
+  } catch {
+    // 지연생성 테이블이 아직 없을 수 있다 — 목록 화면 전체를 죽이지 않는다.
+    return 0;
+  }
+}
+
+/** `Recently Active (30d)` 필터 기준. history 최신 완료/생성 시각을 쓴다(활동의 실제 흔적). */
+async function lastActivityAt(db: DbClient, userId: string, workspaceName: string): Promise<string | null> {
+  try {
+    const rows = await db.query<{ ts: string | null }>(
+      "SELECT MAX(COALESCE(completed_at, created_at)) as ts FROM sugo_history WHERE user_id = ? AND workspace_name = ?",
+      [userId, workspaceName]
+    );
+    return rows[0]?.ts ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export interface HistoryRow {
