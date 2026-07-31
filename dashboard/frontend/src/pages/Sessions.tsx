@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Activity,
@@ -14,12 +14,24 @@ import {
   Package,
   Plus,
   Rows3,
+  Calendar,
+  FileCode,
+  Lightbulb,
   Search,
   Shield,
   X,
 } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
+import {
+  formatDate,
+  useWorkspaceCheckpoints,
+  useWorkspaceDecisions,
+  useWorkspaceHistory,
+  type Decision,
+  type HistoryLog,
+} from "../hooks/useWorkspaceData.js";
+import { LiveConsole } from "../components/LiveConsole.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
@@ -70,6 +82,45 @@ function repoName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() || path;
 }
 
+/** 설계안 Sessions 서브컴포넌트 — Modal / LoadingSpinner / EmptyState. */
+function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="max-h-[80vh] w-full max-w-3xl overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-end border-b border-[var(--color-border)] p-2">
+          <button onClick={onClose} className="rounded-lg p-2 hover:bg-[var(--color-border)]" title="Close (ESC)">
+            <X size={20} className="text-[var(--color-text-muted)]" />
+          </button>
+        </div>
+        <div className="max-h-[calc(80vh-60px)] overflow-auto p-6">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center py-8">
+      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[var(--color-primary)]" />
+    </div>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return <div className="py-8 text-center text-[12.5px] text-[var(--color-text-dim)]">{message}</div>;
+}
+
 export function Sessions() {
   const { data, loading } = useWorkspaces();
   const navigate = useNavigate();
@@ -82,6 +133,13 @@ export function Sessions() {
   const [inspectorPage, setInspectorPage] = useState(0);
   const [showStatusGuide, setShowStatusGuide] = useState(false);
   const [addCopied, setAddCopied] = useState(false);
+  const [selectedHistory, setSelectedHistory] = useState<HistoryLog | null>(null);
+  const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
+  const [checkpointModal, setCheckpointModal] = useState<string | null>(null);
+
+  const history = useWorkspaceHistory(selectedWorkspace);
+  const decisions = useWorkspaceDecisions(selectedWorkspace);
+  const checkpoints = useWorkspaceCheckpoints(checkpointModal);
 
   const workspaces = useMemo(() => data ?? [], [data]);
   const isSearchMode = searchQuery.trim().length >= 2;
@@ -240,12 +298,83 @@ export function Sessions() {
                 <li className="py-6 text-center text-[12.5px] text-[var(--color-text-dim)]">등록된 레포가 없습니다</li>
               )}
             </ul>
+          ) : activeTab === "history" ? (
+            history.loading ? (
+              <LoadingSpinner />
+            ) : history.data.length === 0 ? (
+              <EmptyState message="No history logs" />
+            ) : (
+              <div className="space-y-1">
+                {history.data.slice(s, s + PAGE_SIZE).map((log) => {
+                  const decN = log.key_decisions?.length ?? 0;
+                  const fileN = log.files_changed?.length ?? 0;
+                  return (
+                    <button
+                      key={log.id}
+                      onClick={() => setSelectedHistory(log)}
+                      className="flex w-full items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-left transition-colors hover:border-purple-500/50"
+                    >
+                      <p className="min-w-0 flex-1 truncate text-[13px] text-[var(--color-text)]">
+                        {log.task_title || log.summary || log.id}
+                      </p>
+                      <div className="flex shrink-0 items-center gap-2 font-mono text-[11px] text-[var(--color-text-dim)]">
+                        {decN > 0 && (
+                          <span className="flex items-center gap-0.5" title={`${decN} decisions`}>
+                            <Lightbulb size={10} className="text-yellow-400" />
+                            {decN}
+                          </span>
+                        )}
+                        {fileN > 0 && (
+                          <span className="flex items-center gap-0.5" title={`${fileN} files`}>
+                            <FileCode size={10} className="text-blue-400" />
+                            {fileN}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-0.5">
+                          <Calendar size={10} />
+                          {formatDate(log.completed_at)}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )
+          ) : decisions.loading ? (
+            <LoadingSpinner />
+          ) : decisions.data.length === 0 ? (
+            <EmptyState message="No ADR (Architecture Decision Records)" />
           ) : (
-            // ⚠️ 설계안은 여기서 실제 History/ADR 행을 그리고 클릭 시 상세 모달을 연다.
-            // 그 훅(useWorkspaceHistory/useWorkspaceDecisions)이 아직 없어 **개수만** 정직하게
-            // 보여준다 — 없는 데이터를 지어내지 않는다. P4-17 잔여.
-            <div className="py-6 text-center text-[12.5px] text-[var(--color-text-dim)]">
-              {total > 0 ? `${total}건 — 목록 렌더는 미구현(P4-17 잔여)` : "항목이 없습니다"}
+            <div className="space-y-1">
+              {decisions.data.slice(s, s + PAGE_SIZE).map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => setSelectedDecision(d)}
+                  className="flex w-full items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-left transition-colors hover:border-blue-500/50"
+                >
+                  <span className="shrink-0 rounded bg-blue-500/20 px-1.5 py-0.5 font-mono text-[10px] text-blue-400">
+                    {d.id}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--color-text)]">{d.title}</span>
+                  {d.status && (
+                    <span
+                      className={cn(
+                        "shrink-0 rounded px-1.5 py-0.5 font-mono text-[9px] font-bold",
+                        d.status === "승인됨" || d.status === "accepted"
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-gray-500/20 text-gray-400",
+                      )}
+                    >
+                      {d.status}
+                    </span>
+                  )}
+                  {d.decision_date && (
+                    <span className="shrink-0 font-mono text-[10px] text-[var(--color-text-dim)]">
+                      {formatDate(d.decision_date)}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -458,6 +587,7 @@ export function Sessions() {
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedWorkspace(ws.name);
+                        setCheckpointModal(ws.name);
                       }}
                       className="flex items-center gap-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[11px] font-bold text-amber-300 transition-colors hover:bg-amber-500/20"
                       title="체크포인트 관리"
@@ -515,11 +645,127 @@ export function Sessions() {
         </div>
       )}
 
-      {/* 하단 Pinned Inspector — 카드를 고르면 열린다 */}
+      {/* 하단 2단 — 좌 LiveConsole · 우 Pinned Inspector (설계안 MAIN RETURN 하단) */}
       {selected && (
-        <div className="ck-glass flex h-[300px] flex-col rounded-xl border border-[var(--color-border)] p-3">
-          {renderInspector(selected)}
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="ck-glass flex h-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3">
+            <LiveConsole workspace={selected.name} />
+          </div>
+          <div className="ck-glass flex h-[300px] flex-col rounded-xl border border-[var(--color-border)] p-3">
+            {renderInspector(selected)}
+          </div>
         </div>
+      )}
+
+      {/* History 상세 모달 */}
+      {selectedHistory && (
+        <Modal onClose={() => setSelectedHistory(null)}>
+          <h3 className="mb-1 text-[15px] font-semibold text-[var(--color-text-bright)]">
+            {selectedHistory.task_title || selectedHistory.id}
+          </h3>
+          <p className="mb-4 font-mono text-[11px] text-[var(--color-text-dim)]">
+            {formatDate(selectedHistory.completed_at)} · {selectedHistory.id}
+          </p>
+          {selectedHistory.summary && (
+            <p className="mb-4 whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text)]">
+              {selectedHistory.summary}
+            </p>
+          )}
+          {(selectedHistory.key_decisions?.length ?? 0) > 0 && (
+            <div className="mb-4">
+              <h4 className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-yellow-400">
+                <Lightbulb size={13} /> 주요 결정
+              </h4>
+              <ul className="list-disc space-y-1 pl-5 text-[12.5px] text-[var(--color-text-muted)]">
+                {selectedHistory.key_decisions!.map((d, i) => (
+                  <li key={i}>{d}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {(selectedHistory.files_changed?.length ?? 0) > 0 && (
+            <div>
+              <h4 className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-blue-400">
+                <FileCode size={13} /> 변경 파일 ({selectedHistory.files_changed!.length})
+              </h4>
+              <ul className="space-y-0.5 font-mono text-[11.5px] text-[var(--color-text-muted)]">
+                {selectedHistory.files_changed!.map((f, i) => (
+                  <li key={i} className="truncate" title={f}>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Modal>
+      )}
+
+      {/* ADR 상세 모달 */}
+      {selectedDecision && (
+        <Modal onClose={() => setSelectedDecision(null)}>
+          <div className="mb-3 flex items-center gap-2">
+            <span className="rounded bg-blue-500/20 px-1.5 py-0.5 font-mono text-[10px] text-blue-400">
+              {selectedDecision.id}
+            </span>
+            {selectedDecision.status && (
+              <span className="rounded bg-gray-500/20 px-1.5 py-0.5 font-mono text-[9px] font-bold text-gray-400">
+                {selectedDecision.status}
+              </span>
+            )}
+            <span className="font-mono text-[11px] text-[var(--color-text-dim)]">
+              {formatDate(selectedDecision.decision_date)}
+            </span>
+          </div>
+          <h3 className="mb-3 text-[15px] font-semibold text-[var(--color-text-bright)]">{selectedDecision.title}</h3>
+          <div className="adr-content whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text)]">
+            {selectedDecision.content ?? "(본문 없음)"}
+          </div>
+        </Modal>
+      )}
+
+      {/* Checkpoints 모달 — 커밋 전 재발방지 체크리스트 */}
+      {checkpointModal && (
+        <Modal onClose={() => setCheckpointModal(null)}>
+          <h3 className="mb-1 flex items-center gap-2 text-[15px] font-semibold text-[var(--color-text-bright)]">
+            <Shield size={16} className="text-amber-400" /> {checkpointModal} 체크포인트
+          </h3>
+          <p className="mb-4 text-[12px] text-[var(--color-text-muted)]">
+            커밋 전에 확인할 재발방지 목록입니다. 플러그인이 `applies_to` 매칭으로 자동 적용합니다.
+          </p>
+          {checkpoints.loading ? (
+            <LoadingSpinner />
+          ) : checkpoints.data.length === 0 ? (
+            <EmptyState message="등록된 체크포인트가 없습니다" />
+          ) : (
+            <div className="space-y-3">
+              {checkpoints.data.map((cp) => (
+                <div key={cp.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-3">
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] text-amber-300">
+                      {cp.id}
+                    </span>
+                    <span className="rounded border border-[var(--color-border)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-text-dim)]">
+                      {cp.category}
+                    </span>
+                    <span className="text-[13px] font-semibold text-[var(--color-text)]">{cp.title}</span>
+                  </div>
+                  {(cp.checklist?.length ?? 0) > 0 && (
+                    <ul className="list-disc space-y-0.5 pl-5 text-[12.5px] text-[var(--color-text-muted)]">
+                      {cp.checklist!.map((c, i) => (
+                        <li key={i}>{c}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {/* ⚠️ 설계안은 여기서 생성/수정/삭제(CRUD)까지 제공한다. 쓰기 라우트는 백엔드에
+              이미 있으나(POST/PUT/DELETE /:name/checkpoints) 편집 UI는 미구현 — 읽기 전용. */}
+          <p className="mt-4 border-t border-[var(--color-border)] pt-3 text-[11.5px] text-[var(--color-text-dim)]">
+            편집(추가·수정·삭제) UI는 미구현 — 현재 읽기 전용입니다.
+          </p>
+        </Modal>
       )}
 
       {/* Guide 모달 — 상태 뱃지가 무슨 뜻인지(설계안 statusOf.desc) */}
