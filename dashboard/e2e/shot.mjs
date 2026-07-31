@@ -31,6 +31,7 @@ await page.addInitScript(() => {
 await page.route("**/health", (r) => r.fulfill({ json: { status: "ok", version: "0.1.0", build: "dev" } }));
 await page.route("**/api/**", (route) => {
   const u = route.request().url();
+  if (u.includes("/api/sync/plugin-version")) return route.fulfill({ json: { version: "2.81.12" } });
   if (u.includes("/api/workspaces/") && u.includes("/roadmap")) return route.fulfill({ json: { nodes: roadmapNodes } });
   if (u.includes("/api/workspaces")) return route.fulfill({ json: { workspaces } });
   if (u.includes("/api/skills/agents")) return route.fulfill({ json: { agents: ["code-agent", "test-agent", "review-agent", "docs-agent"] } });

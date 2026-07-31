@@ -1,115 +1,147 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext.js";
+import {
+  BookOpen,
+  CornerDownLeft,
+  LayoutGrid,
+  Puzzle,
+  RefreshCw,
+  Search,
+  Settings as SettingsIcon,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
+import { cn } from "../lib/utils.js";
 
-interface Command {
+interface Cmd {
   id: string;
   label: string;
+  hint?: string;
+  icon: LucideIcon;
+  keywords: string;
   run: () => void;
 }
 
-// §5: "전역 CommandPalette(Cmd/Ctrl+K, 정적 6개 네비 명령, createPortal, API 없음)".
-export function CommandPalette() {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [activeIndex, setActiveIndex] = useState(0);
+/**
+ * 설계안 CommandPalette — portal(body) + ⌘K로 열린다(토글 자체는 Layout 소유).
+ *
+ * **실동작하는 명령만 넣는다.** "곧 지원" 같은 항목을 섞으면 한 번 헛되이 쓴 사용자는
+ * 팔레트를 다시 안 연다. 네트워크 호출도 없다 — 전부 라우팅 아니면 reload다.
+ */
+export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const [q, setQ] = useState("");
+  const [active, setActive] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const commands: Command[] = useMemo(
+  const commands: Cmd[] = useMemo(
     () => [
-      { id: "sessions", label: "Workspaces (Sessions)로 이동", run: () => navigate("/sessions") },
-      { id: "skills", label: "Skills로 이동", run: () => navigate("/skills") },
-      { id: "harness", label: "Harness로 이동", run: () => navigate("/harness") },
-      { id: "playbook", label: "Playbook으로 이동", run: () => navigate("/playbook") },
-      { id: "settings", label: "Settings로 이동", run: () => navigate("/settings") },
-      { id: "logout", label: "로그아웃", run: logout },
+      { id: "ws", label: "Workspaces", hint: "⌘ W", icon: LayoutGrid, keywords: "워크스페이스 도메인 workspace", run: () => navigate("/sessions") },
+      { id: "skills", label: "Skills", hint: "⌘ S", icon: Puzzle, keywords: "스킬 에이전트 agent code test docs review", run: () => navigate("/skills") },
+      { id: "harness", label: "Harness", hint: "⌘ H", icon: BookOpen, keywords: "하네스 규칙 archunit rules", run: () => navigate("/harness") },
+      { id: "playbook", label: "Playbook", hint: "⌘ P", icon: Sparkles, keywords: "플레이북 체험 guide", run: () => navigate("/playbook") },
+      { id: "settings", label: "Settings", icon: SettingsIcon, keywords: "설정 bitbucket pat oidc token", run: () => navigate("/settings") },
+      { id: "refresh", label: "데이터 새로고침", hint: "⌘ R", icon: RefreshCw, keywords: "refresh reload 수동 수집", run: () => window.location.reload() },
     ],
-    [navigate, logout]
+    [navigate],
   );
 
-  const filtered = useMemo(
-    () => commands.filter((c) => c.label.toLowerCase().includes(query.toLowerCase())),
-    [commands, query]
-  );
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return commands;
+    return commands.filter((c) => `${c.label} ${c.keywords}`.toLowerCase().includes(needle));
+  }, [commands, q]);
 
+  // 열릴 때마다 초기화 + 포커스. 지난 검색어가 남아 있으면 "안 열렸다"고 오해하기 쉽다.
   useEffect(() => {
-    function handleKeydown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setOpen((o) => !o);
-        return;
-      }
-      if (!open) return;
-      if (e.key === "Escape") {
-        setOpen(false);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setActiveIndex((i) => Math.max(i - 1, 0));
-      } else if (e.key === "Enter") {
-        const cmd = filtered[activeIndex];
-        if (cmd) {
-          cmd.run();
-          setOpen(false);
-          setQuery("");
-        }
-      }
-    }
-    window.addEventListener("keydown", handleKeydown);
-    return () => window.removeEventListener("keydown", handleKeydown);
-  }, [open, filtered, activeIndex]);
-
-  useEffect(() => {
-    if (open) {
-      setQuery("");
-      setActiveIndex(0);
-    }
+    if (!open) return;
+    setQ("");
+    setActive(0);
+    inputRef.current?.focus();
   }, [open]);
+
+  // 필터가 좁아지면 active가 목록 밖으로 나갈 수 있다.
+  useEffect(() => {
+    setActive((i) => (i >= filtered.length ? 0 : i));
+  }, [filtered.length]);
 
   if (!open) return null;
 
+  const exec = (c: Cmd) => {
+    onClose();
+    c.run();
+  };
+
+  const onKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      onClose();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive((i) => (filtered.length === 0 ? 0 : (i + 1) % filtered.length));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive((i) => (filtered.length === 0 ? 0 : (i - 1 + filtered.length) % filtered.length));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const c = filtered[active];
+      if (c) exec(c);
+    }
+  };
+
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-32"
-      onClick={() => setOpen(false)}
-    >
+    <div className="fixed inset-0 z-[100] flex items-start justify-center px-4 pt-[14vh]" onMouseDown={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="ck-glass ck-scan w-full max-w-md rounded-xl p-2"
-        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-xl overflow-hidden rounded-xl border border-cyan-500/40 ck-glass ck-glow-cyan"
+        onMouseDown={(e) => e.stopPropagation()}
+        onKeyDown={onKey}
       >
-        <input
-          autoFocus
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setActiveIndex(0);
-          }}
-          placeholder="명령 검색... (Esc로 닫기)"
-          className="w-full rounded bg-white/5 px-3 py-2 text-sm outline-none"
-        />
-        <ul className="mt-2 space-y-1">
-          {filtered.length === 0 && <li className="px-3 py-2 text-xs opacity-50">일치하는 명령 없음</li>}
-          {filtered.map((c, i) => (
-            <li key={c.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  c.run();
-                  setOpen(false);
-                }}
-                className={`w-full rounded px-3 py-2 text-left text-sm ${i === activeIndex ? "ck-glow-cyan" : "hover:bg-white/5"}`}
-              >
-                {c.label}
-              </button>
-            </li>
-          ))}
+        <div className="flex items-center gap-2.5 border-b border-[var(--color-border)] px-4 py-3">
+          <Search size={16} className="text-cyan-300" />
+          <input
+            ref={inputRef}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="명령 검색 — 페이지 이동, 새로고침…"
+            className="flex-1 bg-transparent text-[14px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-dim)]"
+          />
+          <kbd className="rounded border border-[var(--color-border)] px-1.5 py-0.5 text-[11px] text-[var(--color-text-dim)]">ESC</kbd>
+        </div>
+        <ul className="ck-scroll max-h-[46vh] overflow-auto py-1.5">
+          {filtered.length === 0 && (
+            <li className="px-4 py-6 text-center text-[13px] text-[var(--color-text-dim)]">일치하는 명령이 없습니다</li>
+          )}
+          {filtered.map((c, i) => {
+            const Icon = c.icon;
+            return (
+              <li key={c.id}>
+                <button
+                  onMouseEnter={() => setActive(i)}
+                  onClick={() => exec(c)}
+                  className={cn(
+                    "flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                    i === active
+                      ? "bg-cyan-500/15 text-[var(--color-text-bright)]"
+                      : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]",
+                  )}
+                >
+                  <Icon size={16} className={i === active ? "text-cyan-300" : "text-[var(--color-text-dim)]"} />
+                  <span className="flex-1 text-[13.5px]">{c.label}</span>
+                  {c.hint && (
+                    <kbd className="rounded border border-[var(--color-border)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--color-text-dim)]">
+                      {c.hint}
+                    </kbd>
+                  )}
+                  {i === active && <CornerDownLeft size={13} className="text-cyan-300/70" />}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
