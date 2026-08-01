@@ -32,6 +32,10 @@ import {
   type HistoryLog,
 } from "../hooks/useWorkspaceData.js";
 import { LiveConsole } from "../components/LiveConsole.js";
+import { searchHistory, type HistorySearchResult } from "../api/client.js";
+import { createWorkspaceCheckpoint, deleteWorkspaceCheckpoint } from "../api/workspacesApi.js";
+import { useAuth } from "../auth/AuthContext.js";
+import { RoadmapPreview } from "../components/RoadmapPreview.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
@@ -136,6 +140,12 @@ export function Sessions() {
   const [selectedHistory, setSelectedHistory] = useState<HistoryLog | null>(null);
   const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
   const [checkpointModal, setCheckpointModal] = useState<string | null>(null);
+  const [agentCanvasModal, setAgentCanvasModal] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<HistorySearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [cpDraft, setCpDraft] = useState({ id: "", title: "", category: "general", checklist: "" });
+  const [cpBusy, setCpBusy] = useState(false);
+  const { userId } = useAuth();
 
   const history = useWorkspaceHistory(selectedWorkspace);
   const decisions = useWorkspaceDecisions(selectedWorkspace);
@@ -156,6 +166,38 @@ export function Sessions() {
     }
     return list;
   }, [workspaces, statusFilter, searchQuery, isSearchMode]);
+
+  // 설계안 디바운스 검색 — 2자 미만이면 결과를 비운다(한 글자에 전체 스캔을 돌리지 않는다).
+  useEffect(() => {
+    if (!isSearchMode || !userId) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    const t = setTimeout(() => {
+      searchHistory(searchQuery.trim(), userId)
+        .then((rows) => {
+          setSearchResults(rows);
+          if (rows.length > 0) {
+            setSelectedWorkspace(rows[0].workspace_name);
+            setActiveTab("history");
+          }
+        })
+        .catch(() => setSearchResults([]))
+        .finally(() => setIsSearching(false));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchQuery, isSearchMode, userId]);
+
+  // Agent Canvas 오버레이가 열려 있는 동안 배경 스크롤을 잠근다(설계안).
+  useEffect(() => {
+    if (!agentCanvasModal) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [agentCanvasModal]);
 
   const selected = filteredWorkspaces.find((w) => w.name === selectedWorkspace) ?? null;
 
@@ -414,7 +456,7 @@ export function Sessions() {
       {isSearchMode && (
         <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-3">
           <p className="text-sm text-[var(--color-text)]">
-            <span className="font-medium">{filteredWorkspaces.length}</span> workspace(s) with matching history for "
+            <span className="font-medium">{new Set(searchResults.map((r) => r.workspace_name)).size}</span> workspace(s) with matching history for "
             <span className="font-medium">{searchQuery}</span>"
           </p>
         </div>
@@ -441,7 +483,12 @@ export function Sessions() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 pl-8 pr-7 text-[13px] text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-500/60"
             />
-            {searchQuery && (
+            {isSearching && (
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-b-2 border-cyan-400" />
+              </div>
+            )}
+            {searchQuery && !isSearching && (
               <button
                 onClick={() => setSearchQuery("")}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
@@ -598,7 +645,7 @@ export function Sessions() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/roadmap/${encodeURIComponent(ws.name)}`);
+                          setAgentCanvasModal(ws.name);
                         }}
                         className="flex items-center gap-1.5 rounded-lg border border-purple-500/40 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 px-3 py-1.5 text-xs font-bold text-purple-300 transition-all hover:from-purple-600/40 hover:to-indigo-600/40"
                         title="Agent Canvas 전체화면으로 보기"
@@ -747,7 +794,22 @@ export function Sessions() {
                     <span className="rounded border border-[var(--color-border)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-text-dim)]">
                       {cp.category}
                     </span>
-                    <span className="text-[13px] font-semibold text-[var(--color-text)]">{cp.title}</span>
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--color-text)]">{cp.title}</span>
+                    <button
+                      disabled={cpBusy || !userId}
+                      onClick={async () => {
+                        setCpBusy(true);
+                        try {
+                          await deleteWorkspaceCheckpoint(userId!, checkpointModal, cp.id);
+                          checkpoints.refresh();
+                        } finally {
+                          setCpBusy(false);
+                        }
+                      }}
+                      className="shrink-0 rounded border border-rose-500/40 px-1.5 py-0.5 text-[10.5px] text-rose-300 hover:bg-rose-500/10 disabled:opacity-40"
+                    >
+                      삭제
+                    </button>
                   </div>
                   {(cp.checklist?.length ?? 0) > 0 && (
                     <ul className="list-disc space-y-0.5 pl-5 text-[12.5px] text-[var(--color-text-muted)]">
@@ -760,12 +822,82 @@ export function Sessions() {
               ))}
             </div>
           )}
-          {/* ⚠️ 설계안은 여기서 생성/수정/삭제(CRUD)까지 제공한다. 쓰기 라우트는 백엔드에
-              이미 있으나(POST/PUT/DELETE /:name/checkpoints) 편집 UI는 미구현 — 읽기 전용. */}
-          <p className="mt-4 border-t border-[var(--color-border)] pt-3 text-[11.5px] text-[var(--color-text-dim)]">
-            편집(추가·수정·삭제) UI는 미구현 — 현재 읽기 전용입니다.
-          </p>
+          {/* 설계안 체크포인트 CRUD — 추가/삭제. 체크리스트는 줄 단위로 입력받는다. */}
+          <div className="mt-4 space-y-2 border-t border-[var(--color-border)] pt-3">
+            <div className="font-mono text-[11px] text-[var(--color-text-muted)]">새 체크포인트</div>
+            <div className="flex flex-wrap gap-2">
+              <input
+                value={cpDraft.id}
+                onChange={(e) => setCpDraft({ ...cpDraft, id: e.target.value })}
+                placeholder="CP-003"
+                className="w-28 rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 font-mono text-[12px] text-[var(--color-text)]"
+              />
+              <input
+                value={cpDraft.category}
+                onChange={(e) => setCpDraft({ ...cpDraft, category: e.target.value })}
+                placeholder="category"
+                className="w-28 rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 font-mono text-[12px] text-[var(--color-text)]"
+              />
+              <input
+                value={cpDraft.title}
+                onChange={(e) => setCpDraft({ ...cpDraft, title: e.target.value })}
+                placeholder="제목"
+                className="min-w-40 flex-1 rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 text-[12.5px] text-[var(--color-text)]"
+              />
+            </div>
+            <textarea
+              value={cpDraft.checklist}
+              onChange={(e) => setCpDraft({ ...cpDraft, checklist: e.target.value })}
+              placeholder={"체크리스트 — 한 줄에 하나"}
+              rows={3}
+              className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 text-[12.5px] text-[var(--color-text)]"
+            />
+            <button
+              disabled={cpBusy || !cpDraft.id.trim() || !cpDraft.title.trim() || !userId}
+              onClick={async () => {
+                setCpBusy(true);
+                try {
+                  await createWorkspaceCheckpoint(userId!, checkpointModal, {
+                    id: cpDraft.id.trim(),
+                    category: cpDraft.category.trim() || "general",
+                    title: cpDraft.title.trim(),
+                    checklist: cpDraft.checklist
+                      .split(/\r?\n/)
+                      .map((l) => l.trim())
+                      .filter(Boolean),
+                    appliesTo: [],
+                  });
+                  setCpDraft({ id: "", title: "", category: "general", checklist: "" });
+                  checkpoints.refresh();
+                } finally {
+                  setCpBusy(false);
+                }
+              }}
+              className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[12px] font-bold text-amber-300 transition-colors hover:bg-amber-500/20 disabled:opacity-40"
+            >
+              추가
+            </button>
+          </div>
         </Modal>
+      )}
+
+      {/* Agent Canvas 오버레이 모달 (설계안) */}
+      {agentCanvasModal && (
+        <div
+          className="fixed inset-0 z-[85] flex items-center justify-center p-4"
+          onMouseDown={() => setAgentCanvasModal(null)}
+        >
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className="relative flex h-[82vh] w-full max-w-4xl flex-col rounded-xl border border-purple-500/40 ck-glass p-4"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <RoadmapPreview
+              workspace={agentCanvasModal}
+              onOpenFull={() => navigate(`/roadmap/${encodeURIComponent(agentCanvasModal)}`)}
+            />
+          </div>
+        </div>
       )}
 
       {/* Guide 모달 — 상태 뱃지가 무슨 뜻인지(설계안 statusOf.desc) */}
