@@ -73,6 +73,10 @@ await syncTask(db, { userId: USER, workspaceName: "payments-api", id: "t-101", t
 // ── §9 4층 헌법: Spec ⊃ Run(workstream) ⊃ Task ⊃ REQ(subtask) ────────────────
 // REQ에는 항상 `{taskId}::REQ-CONFIRM`(사용자 최종확인)이 붙는다 — 에이전트가 완료 못 하고
 // 사람의 review_done으로만 닫힌다.
+// depends_on은 **형제(같은 RUN 안) task 사이의 순서**다(플러그인 스펙 §링크타입 "task → task,
+// 형제 순서/의존"). RUN을 가로지르는 링크를 심으면 캔버스에 RUN 상자를 관통하는 대각선이
+// 그려져 "RUN이 RUN을 기다린다"는, 온톨로지에 없는 관계로 읽힌다. RUN 사이의 순서는 의존이
+// 아니라 포함(parent)과 status로만 표현한다.
 await syncRoadmap(db, USER, "splearn", [
   { id: "spec-auth", title: "인증 도메인 마스터 PRD", level: "spec", status: "in_progress", specPath: "docs/prd/auth.md" },
 
@@ -86,7 +90,7 @@ await syncRoadmap(db, USER, "splearn", [
   { id: "t-002::REQ-CONFIRM", title: "사용자 최종확인", level: "subtask", status: "done", parent: "t-002" },
 
   { id: "run-002", title: "소셜 로그인", level: "workstream", status: "in_progress", parent: "spec-auth" },
-  { id: "t-003", title: "OAuth 프로바이더 연동", level: "task", status: "in_progress", parent: "run-002", dependsOn: ["t-002"] },
+  { id: "t-003", title: "OAuth 프로바이더 연동", level: "task", status: "in_progress", parent: "run-002" },
   { id: "t-003::REQ-004", title: "REQ-004 Google OAuth 콜백", level: "subtask", status: "done", parent: "t-003" },
   { id: "t-003::REQ-005", title: "REQ-005 최초 로그인 시 계정 생성", level: "subtask", status: "in_progress", parent: "t-003" },
   { id: "t-003::REQ-CONFIRM", title: "사용자 최종확인", level: "subtask", status: "pending", parent: "t-003" },
@@ -95,7 +99,7 @@ await syncRoadmap(db, USER, "splearn", [
   { id: "t-004::REQ-CONFIRM", title: "사용자 최종확인", level: "subtask", status: "pending", parent: "t-004" },
 
   { id: "run-003", title: "비밀번호 재설정", level: "workstream", status: "blocked", parent: "spec-auth" },
-  { id: "t-005", title: "비밀번호 재설정 메일 발송", level: "task", status: "blocked", parent: "run-003", dependsOn: ["t-002"] },
+  { id: "t-005", title: "비밀번호 재설정 메일 발송", level: "task", status: "blocked", parent: "run-003" },
   { id: "t-005::REQ-007", title: "REQ-007 재설정 토큰 만료 30분", level: "subtask", status: "pending", parent: "t-005" },
   { id: "t-005::REQ-CONFIRM", title: "사용자 최종확인", level: "subtask", status: "pending", parent: "t-005" },
 

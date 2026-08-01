@@ -480,13 +480,25 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
 
 const nodeTypes = { roadmap: RoadmapNodeCard, container: WorkstreamContainer, lineage: LineageChainNode };
 
+/**
+ * **의존(`depends_on`)은 task ↔ task 전용이다** — 플러그인 스펙 §"링크 타입"의 `task → task`,
+ * 백엔드 `LINK_REQUIRES_TASK_LEVEL`과 같은 계약이다. RUN/SPEC 사이의 순서는 의존이 아니라
+ * **포함(parent)** 으로 표현한다. v1은 아무 레벨에나 링크를 그렸는데, 그러면 "RUN이 RUN을
+ * 기다린다"는, 온톨로지에 없는 관계가 화면에만 생겨난다.
+ */
+function isDepNode(n: RoadmapNode): boolean {
+  return n.level === "task" && !n.id.startsWith(CHAIN);
+}
+
 /** to가 전부 done이어야 from이 착수가능. 미지의 의존은 not-done으로 본다(안전측). */
 function computeReady(nodes: RoadmapNode[]): Set<string> {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const ready = new Set<string>();
   for (const n of nodes) {
     const st = effStatus(n);
-    if (st !== "pending") continue;
+    // 착수가능(ready) 판정도 task만 — RUN/SPEC에 초록 "착수가능"이 뜨면 눌러서 시작할 게 있는
+    // 것처럼 보이지만, 실제로 시작되는 건 그 안의 task다.
+    if (!isDepNode(n) || st !== "pending") continue;
     const deps = n.depends_on ?? [];
     if (deps.every((d) => effStatus(byId.get(d) ?? ({ status: "pending" } as RoadmapNode)) === "done")) ready.add(n.id);
   }
@@ -578,6 +590,8 @@ function layout(
    * 컬럼은 스펙 그대로 **depth 0마다 새로 열고, depth>0은 직전 컬럼에 세로로 쌓는다.**
    */
   const chainCols = new Map<string, ChainItem[][]>();
+  /** 체인 노드에 흡수돼 더 이상 낱개로 그려지지 않는 patch task들 — 엣지도 걸면 안 된다. */
+  const absorbed = new Set<string>();
   const linNodes = nodes.filter((n) => readLineage(n.lineage));
   if (linNodes.length > 0) {
     const groups = new Map<string, RoadmapNode[]>();
@@ -603,6 +617,7 @@ function layout(
       const chainNode = { id, title: root, level: "task", status: effStatus(members[0]), parent, lineage: {} } as RoadmapNode;
       byId.set(id, chainNode);
       const memberIds = new Set(members.map((m) => m.id));
+      for (const id of memberIds) absorbed.add(id);
       const strip = (arr: RoadmapNode[]) => arr.filter((n) => !memberIds.has(n.id));
       if (parent && kids.has(parent)) kids.set(parent, [...strip(kids.get(parent)!), chainNode]);
       else roots.splice(0, roots.length, ...strip(roots), chainNode);
@@ -679,7 +694,8 @@ function layout(
     }
     const childIds = new Set(children.map((c) => c.id));
     for (const c of children) {
-      for (const dep of c.depends_on ?? []) if (childIds.has(dep)) inner.setEdge(dep, c.id);
+      if (!isDepNode(c)) continue;
+      for (const dep of c.depends_on ?? []) if (childIds.has(dep) && isDepNode(byId.get(dep)!)) inner.setEdge(dep, c.id);
     }
     dagre.layout(inner);
 
@@ -713,16 +729,18 @@ function layout(
   }
   const rootIds = new Set(roots.map((r) => r.id));
   for (const r of roots) {
-    for (const dep of r.depends_on ?? []) if (rootIds.has(dep)) g.setEdge(dep, r.id);
+    if (!isDepNode(r)) continue;
+    for (const dep of r.depends_on ?? []) if (rootIds.has(dep) && isDepNode(byId.get(dep)!)) g.setEdge(dep, r.id);
   }
   dagre.layout(g);
 
-  // 엣지는 계층과 무관하게 **보이는 노드 사이 전부** 그린다(컨테이너를 넘나드는 의존도 있다).
+  // 엣지는 컨테이너를 넘나들며 그리되, **task ↔ task만** 그린다(위 isDepNode 주석 참조).
   const ids = new Set(nodes.map((n) => n.id));
   const rfEdges: Edge[] = [];
   for (const n of nodes) {
+    if (!isDepNode(n) || absorbed.has(n.id)) continue;
     for (const dep of n.depends_on ?? []) {
-      if (!ids.has(dep)) continue;
+      if (!ids.has(dep) || absorbed.has(dep) || !isDepNode(byId.get(dep)!)) continue;
       rfEdges.push({
         id: `${dep}->${n.id}`,
         source: dep,
