@@ -28015,6 +28015,56 @@ function checkJiraOption(option, jiraKey) {
   }
   return ok3();
 }
+var LEDGER_HEADING = /^#{1,6}\s*.*(in[-\s]?scope|범위|dod|완료\s*조건|definition of done)/i;
+var OUT_OF_SCOPE_HEADING = /out[-\s]?of[-\s]?scope|범위\s*외|제외/i;
+var REQ_REF = /\bREQ-\d+\b/gi;
+function validateConformanceLedger(prdContent) {
+  const lines = prdContent.split(/\r?\n/);
+  const declaredReqs = /* @__PURE__ */ new Set();
+  {
+    let scanLedger = false;
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (/^#{1,6}\s/.test(line)) {
+        scanLedger = LEDGER_HEADING.test(line) && !OUT_OF_SCOPE_HEADING.test(line);
+        if (!scanLedger) for (const m of line.match(REQ_REF) ?? []) declaredReqs.add(m.toUpperCase());
+        continue;
+      }
+      if (scanLedger) continue;
+      for (const m of line.match(REQ_REF) ?? []) declaredReqs.add(m.toUpperCase());
+    }
+  }
+  const uncovered = [];
+  const ghost = [];
+  let inLedger = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (/^#{1,6}\s/.test(line)) {
+      inLedger = LEDGER_HEADING.test(line) && !OUT_OF_SCOPE_HEADING.test(line);
+      continue;
+    }
+    if (!inLedger) continue;
+    const item = line.replace(/^[-*+]\s*/, "").replace(/^\d+\.\s*/, "").trim();
+    if (item === line && !/^[-*+]\s|^\d+\.\s/.test(line)) continue;
+    if (item.length === 0) continue;
+    const refs = item.match(REQ_REF);
+    if (!refs || refs.length === 0) {
+      uncovered.push(item);
+      continue;
+    }
+    for (const ref of refs) {
+      if (!declaredReqs.has(ref.toUpperCase())) ghost.push(ref.toUpperCase());
+    }
+  }
+  if (uncovered.length === 0 && ghost.length === 0) return ok3();
+  const parts2 = [];
+  if (uncovered.length > 0) parts2.push(`REQ \uBBF8\uB9E4\uD551 ${uncovered.length}\uAC74: ${uncovered.join(" / ")}`);
+  if (ghost.length > 0) parts2.push(`\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 REQ \uCC38\uC870: ${[...new Set(ghost)].join(", ")}`);
+  return fail(
+    "CONFORMANCE_LEDGER_INCOMPLETE",
+    `In-Scope/DoD \uC6D0\uC7A5\uC774 REQ\uC640 \uB9DE\uBB3C\uB9AC\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4 \u2014 ${parts2.join(" \xB7 ")}. \uD56D\uBAA9\uC744 REQ\uB85C \uC2B9\uACA9\uD558\uAC70\uB098 \uC6D0\uC7A5\uC5D0\uC11C \uBE7C\uC138\uC694.`
+  );
+}
 
 // src/bootScan.ts
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
@@ -29216,6 +29266,8 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "prd") {
     if (!args2.prdContent) return errorResult8("PRD_CONTENT_REQUIRED", "prd action\uC5D0\uB294 prdContent\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    const ledger = validateConformanceLedger(args2.prdContent);
+    if (!ledger.ok) return errorResult8(ledger.code, ledger.message);
     const validation = validatePrd(args2.prdContent);
     if (!validation.ok) {
       return errorResult8(
@@ -30637,6 +30689,114 @@ function json(payload) {
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
+// src/tools/sugoPrd.ts
+var sugoPrdInputSchema = {};
+async function handleSugoPrd() {
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(
+          {
+            ok: false,
+            errorCode: "TOOL_DEPRECATED",
+            message: "sugo_prd\uB294 \uD3D0\uAE30\uB410\uC2B5\uB2C8\uB2E4. PRD\uB294 \uD30C\uC774\uD504\uB77C\uC778 \uC548\uC5D0\uC11C\uB9CC \uB9CC\uB4E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4 \u2014 sugo_plan({action:'prd', sessionId, prdContent})\uB97C \uC0AC\uC6A9\uD558\uC138\uC694.",
+            replacement: "sugo_plan(action:'prd')"
+          },
+          null,
+          2
+        )
+      }
+    ]
+  };
+}
+
+// src/tools/sugoSetup.ts
+var sugoSetupInputSchema = {
+  bitbucket: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Bitbucket \uC5F0\uB3D9 \uC124\uC815(\xA73.5). \uD1A0\uD070 \uC790\uCCB4\uB294 \uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC554\uD638\uD654 \uBCF4\uAD00\uD55C\uB2E4"),
+  jira: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Jira \uC5F0\uB3D9 \uC124\uC815. Jira 연동 \uBAA8\uB4C8\uC774 \uC788\uC744 \uB54C\uB9CC \uC758\uBBF8\uAC00 \uC788\uB2E4"),
+  initSecrets: external_exports.boolean().optional().describe("\uC2DC\uD06C\uB9BF \uC800\uC7A5\uC18C \uCD08\uAE30\uD654 \uC5EC\uBD80")
+};
+var SugoSetupArgs = external_exports.object(sugoSetupInputSchema);
+async function handleSugoSetup(rawArgs) {
+  const args2 = SugoSetupArgs.parse(rawArgs ?? {});
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(
+          {
+            ok: true,
+            configured: false,
+            received: args2,
+            note: "\uC774 \uBE4C\uB4DC\uB294 \uC5F0\uB3D9 \uC124\uC815\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Bitbucket PAT\uB294 \uB300\uC2DC\uBCF4\uB4DC Settings\uC5D0\uC11C \uB4F1\uB85D\uD558\uC138\uC694(\uC554\uD638\uD654 \uBCF4\uAD00, \xA73.5). Jira(Jira 연동)\uB294 \uC120\uD0DD \uBAA8\uB4C8\uC774\uB77C \uC774 \uBE4C\uB4DC\uC5D0 \uD3EC\uD568\uB3FC \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
+          },
+          null,
+          2
+        )
+      }
+    ]
+  };
+}
+
+// src/tools/sugoCommit.ts
+var sugoCommitInputSchema = {
+  sessionId: external_exports.string().describe("DONE \uC0C1\uD0DC\uC758 \uC138\uC158 id \u2014 \uCEE4\uBC0B \uBA54\uC2DC\uC9C0\uB294 \uADF8 \uC138\uC158\uC758 \uC791\uC5C5\uC5D0\uC11C \uB098\uC628\uB2E4"),
+  type: external_exports.string().describe("Conventional Commit type(feat/fix/refactor/test/docs/chore \u2026)"),
+  scope: external_exports.string().optional().describe("\uC601\uD5A5 \uBC94\uC704(\uC120\uD0DD)"),
+  subject: external_exports.string().describe("\uD55C \uC904 \uC81C\uBAA9(\uD55C\uAD6D\uC5B4)"),
+  body: external_exports.string().optional().describe("\uBCF8\uBB38(\uD55C\uAD6D\uC5B4) \u2014 \uC65C \uC774\uB807\uAC8C \uD588\uB294\uC9C0"),
+  jiraKey: external_exports.string().optional().describe("\uC5F0\uACB0\uB41C Jira \uD2F0\uCF13 \uD0A4(\uC788\uC73C\uBA74 \uAF2C\uB9AC\uB9D0\uC5D0 \uBD99\uB294\uB2E4)"),
+  includeTime: external_exports.boolean().optional().describe("started_at\u2192done \uC18C\uC694\uC2DC\uAC04\uC744 \uAF2C\uB9AC\uB9D0\uC5D0 \uB123\uC744\uC9C0")
+};
+var SugoCommitArgs = external_exports.object(sugoCommitInputSchema);
+async function handleSugoCommit(rawArgs) {
+  const args2 = SugoCommitArgs.parse(rawArgs);
+  if (!await sessionExists(args2.sessionId)) {
+    return errorResult17("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+  }
+  const session = await loadSession(args2.sessionId);
+  if (session.state !== "DONE") {
+    return errorResult17(
+      "COMMIT_REQUIRES_DONE",
+      `sugo_commit\uC740 DONE \uC0C1\uD0DC\uC5D0\uC11C\uB9CC \uAC00\uB2A5\uD569\uB2C8\uB2E4(\uD604\uC7AC: ${session.state}). sugo_plan(action:'commit')\uC73C\uB85C \uD30C\uC774\uD504\uB77C\uC778\uC744 \uBA3C\uC800 \uB05D\uB0B4\uC138\uC694.`
+    );
+  }
+  const header = `${args2.type}${args2.scope ? `(${args2.scope})` : ""}: ${args2.subject}`;
+  const footerParts = [];
+  if (args2.jiraKey) footerParts.push(`Refs: ${args2.jiraKey}`);
+  if (args2.includeTime) {
+    const started = new Date(session.startedAt).getTime();
+    const minutes = Math.max(0, Math.round((Date.now() - started) / 6e4));
+    footerParts.push(`AI-Execution-Minutes: ${minutes}`);
+  }
+  const message = [header, args2.body?.trim(), footerParts.join("\n")].filter((p) => p && p.length > 0).join("\n\n");
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(
+          {
+            ok: true,
+            message,
+            executed: false,
+            note: "\uBA54\uC2DC\uC9C0\uB9CC \uC0DD\uC131\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uC774 \uB3C4\uAD6C\uB294 \uC800\uC7A5\uC18C\uB97C \uAC74\uB4DC\uB9AC\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4(\xA77 '\uC0DD\uC131\uB9CC'). \uC2E4\uC81C \uAE30\uB85D\uC740 \uD654\uC774\uD2B8\uB9AC\uC2A4\uD2B8 \uACBD\uB85C\uB9CC \uC2A4\uD14C\uC774\uC9D5\uD574 \uC0AC\uC6A9\uC790\uAC00 \uC9C1\uC811 \uC218\uD589\uD569\uB2C8\uB2E4."
+          },
+          null,
+          2
+        )
+      }
+    ]
+  };
+}
+function errorResult17(errorCode, message) {
+  return {
+    isError: true,
+    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
+  };
+}
+
 // src/tools/sugoWorkspace.ts
 var sugoWorkspaceInputSchema = {
   action: external_exports.enum(["add", "list", "get", "remember", "recall", "status", "sync", "delete"]),
@@ -30653,7 +30813,7 @@ async function handleSugoWorkspace(rawArgs) {
   const args2 = SugoWorkspaceArgs.parse(rawArgs);
   switch (args2.action) {
     case "add": {
-      if (!args2.name) return errorResult17("NAME_REQUIRED", "add action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult18("NAME_REQUIRED", "add action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workspace = await ensureWorkspace(args2.name, args2.projectPath);
       return ok7({ workspace });
     }
@@ -30662,13 +30822,13 @@ async function handleSugoWorkspace(rawArgs) {
       return ok7({ workspaces });
     }
     case "delete": {
-      if (!args2.name) return errorResult17("NAME_REQUIRED", "delete action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult18("NAME_REQUIRED", "delete action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result = await deleteWorkspace(args2.name, {
         purge: args2.purge,
         force: args2.force,
         keepData: args2.keep_data
       });
-      if (!result.ok) return errorResult17(result.errorCode, result.message);
+      if (!result.ok) return errorResult18(result.errorCode, result.message);
       return ok7({
         workspace: args2.name,
         mode: result.mode,
@@ -30679,23 +30839,23 @@ async function handleSugoWorkspace(rawArgs) {
       });
     }
     case "get": {
-      if (!args2.name) return errorResult17("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult18("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workspace = await loadWorkspace(args2.name);
-      if (!workspace) return errorResult17("WORKSPACE_NOT_FOUND", `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
+      if (!workspace) return errorResult18("WORKSPACE_NOT_FOUND", `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
       return ok7({ workspace });
     }
     case "remember": {
-      if (!args2.name || !args2.note) return errorResult17("NAME_AND_NOTE_REQUIRED", "remember action\uC5D0\uB294 name\uACFC note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name || !args2.note) return errorResult18("NAME_AND_NOTE_REQUIRED", "remember action\uC5D0\uB294 name\uACFC note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await appendMemory(args2.name, args2.note);
       return ok7({ remembered: true });
     }
     case "recall": {
-      if (!args2.name) return errorResult17("NAME_REQUIRED", "recall action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult18("NAME_REQUIRED", "recall action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const memory = await readMemory(args2.name);
       return ok7({ memory });
     }
     case "status": {
-      if (!args2.name) return errorResult17("NAME_REQUIRED", "status action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult18("NAME_REQUIRED", "status action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const [tasks, checkpoints, roadmapNodes, specs, history] = await Promise.all([
         listTasks(args2.name),
         listCheckpoints(args2.name),
@@ -30713,7 +30873,7 @@ async function handleSugoWorkspace(rawArgs) {
       });
     }
     case "sync": {
-      if (!args2.name) return errorResult17("NAME_REQUIRED", "sync action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult18("NAME_REQUIRED", "sync action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const ws = await loadWorkspace(args2.name);
       if (ws) void syncWorkspace(ws);
       const tasks = await listTasks(args2.name);
@@ -30728,7 +30888,7 @@ async function handleSugoWorkspace(rawArgs) {
 function ok7(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult17(errorCode, message) {
+function errorResult18(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -30973,6 +31133,33 @@ server.registerTool(
     inputSchema: sugoOntologyInputSchema
   },
   handleSugoOntology
+);
+server.registerTool(
+  "sugo_setup",
+  {
+    title: "Integration setup (Bitbucket/Jira)",
+    description: "\xA71 \uC5F0\uB3D9 \uC124\uC815. \uC774 \uB85C\uCEEC \uBE4C\uB4DC\uB294 \uAC12\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uACE0 \uC5B4\uB514\uC11C \uC124\uC815\uD574\uC57C \uD558\uB294\uC9C0\uB9CC \uC54C\uB9B0\uB2E4(\uD1A0\uD070\uC740 \uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC554\uD638\uD654 \uBCF4\uAD00).",
+    inputSchema: sugoSetupInputSchema
+  },
+  handleSugoSetup
+);
+server.registerTool(
+  "sugo_commit",
+  {
+    title: "Conventional Commit message (generate only)",
+    description: "\xA77 Conventional Commit \uBA54\uC2DC\uC9C0\uB97C \uC0DD\uC131\uD55C\uB2E4. DONE \uC0C1\uD0DC\uC5D0\uC11C\uB9CC \uB3D9\uC791\uD558\uBA70 \uC800\uC7A5\uC18C\uB97C \uBC14\uAFB8\uC9C0\uB294 \uC54A\uB294\uB2E4(\uC0DD\uC131\uB9CC).",
+    inputSchema: sugoCommitInputSchema
+  },
+  handleSugoCommit
+);
+server.registerTool(
+  "sugo_prd",
+  {
+    title: "DEPRECATED \u2014 use sugo_plan(action:prd)",
+    description: "\xA71 \uD3D0\uAE30\uB41C \uB3C4\uAD6C. \uBB34\uC870\uAC74 \uAC70\uBD80\uD558\uACE0 sugo_plan(action:prd)\uB85C \uC548\uB0B4\uD55C\uB2E4 \u2014 \uC0C1\uD0DC\uBA38\uC2E0\uC744 \uC6B0\uD68C\uD558\uB294 PRD \uC0DD\uC131\uC740 \uAC8C\uC774\uD2B8\uB97C \uD1B5\uC9F8\uB85C \uBE60\uC838\uB098\uAC00\uB294 \uB4B7\uBB38\uC774\uC5C8\uB2E4.",
+    inputSchema: sugoPrdInputSchema
+  },
+  handleSugoPrd
 );
 async function main() {
   await migrateWorkDataDir();

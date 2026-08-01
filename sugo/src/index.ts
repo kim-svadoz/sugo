@@ -39,6 +39,9 @@ import { handleSugoUpdate, sugoUpdateInputSchema } from "./tools/sugoUpdate.js";
 import { handleSugoValidate, sugoValidateInputSchema } from "./tools/sugoValidate.js";
 import { handleSugoVersion, sugoVersionInputSchema } from "./tools/sugoVersion.js";
 import { handleSugoOntology, sugoOntologyInputSchema } from "./tools/sugoOntology.js";
+import { handleSugoPrd, sugoPrdInputSchema } from "./tools/sugoPrd.js";
+import { handleSugoSetup, sugoSetupInputSchema } from "./tools/sugoSetup.js";
+import { handleSugoCommit, sugoCommitInputSchema } from "./tools/sugoCommit.js";
 import { migrateWorkDataDir } from "./work/storage.js";
 import { handleSugoWorkspace, sugoWorkspaceInputSchema } from "./tools/sugoWorkspace.js";
 
@@ -353,6 +356,39 @@ server.registerTool(
     inputSchema: sugoOntologyInputSchema,
   },
   handleSugoOntology,
+);
+
+server.registerTool(
+  "sugo_setup",
+  {
+    title: "Integration setup (Bitbucket/Jira)",
+    description:
+      "§1 연동 설정. 이 로컬 빌드는 값을 저장하지 않고 어디서 설정해야 하는지만 알린다(토큰은 대시보드가 암호화 보관).",
+    inputSchema: sugoSetupInputSchema,
+  },
+  handleSugoSetup,
+);
+
+server.registerTool(
+  "sugo_commit",
+  {
+    title: "Conventional Commit message (generate only)",
+    description:
+      "§7 Conventional Commit 메시지를 생성한다. DONE 상태에서만 동작하며 저장소를 바꾸지는 않는다(생성만).",
+    inputSchema: sugoCommitInputSchema,
+  },
+  handleSugoCommit,
+);
+
+server.registerTool(
+  "sugo_prd",
+  {
+    title: "DEPRECATED — use sugo_plan(action:prd)",
+    description:
+      "§1 폐기된 도구. 무조건 거부하고 sugo_plan(action:prd)로 안내한다 — 상태머신을 우회하는 PRD 생성은 게이트를 통째로 빠져나가는 뒷문이었다.",
+    inputSchema: sugoPrdInputSchema,
+  },
+  handleSugoPrd,
 );
 
 async function main() {

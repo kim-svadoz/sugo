@@ -38,7 +38,8 @@ export type GateBlockCode =
   | "SPEC_ORACLE_NOT_RUN"
   | "ORACLE_OVERRIDE_REASON_REQUIRED"
   | "JIRA_OPTION_REQUIRED"
-  | "JIRA_KEY_REQUIRED";
+  | "JIRA_KEY_REQUIRED"
+  | "CONFORMANCE_LEDGER_INCOMPLETE";
 
 export interface GateCheckResult {
   ok: boolean;
@@ -323,4 +324,78 @@ export function checkJiraOption(option: string | undefined, jiraKey: string | un
     return fail("JIRA_KEY_REQUIRED", "jiraOption:'link'에는 연결할 jiraKey가 필요합니다.");
   }
   return ok();
+}
+
+// ── §5.0 CONFORMANCE_LEDGER_INCOMPLETE (prd 차단) ────────────────────────────
+
+/**
+ * In-Scope / DoD 섹션의 항목들이 전부 실재하는 REQ에 매핑되는지 확인한다.
+ *
+ * **왜 막나:** PRD에 "하기로 한 일"을 적어놓고 그 중 일부를 REQ로 승격하지 않으면, 그 항목은
+ * 아무 게이트도 안 거친 채 문장으로만 남는다 — 로드맵 subtask로 안 심기니 진행률에도 안 잡히고
+ * review_done의 PRD 커버리지 대조에도 안 걸려서 **조용히 증발한다.** 원장과 REQ가 맞물릴 때만
+ * 통과시키는 게 이 게이트의 전부다.
+ *
+ * **Out-of-Scope는 대상이 아니다** — 안 하기로 한 일에 REQ를 요구하면 그게 더 이상하다.
+ * 섹션이 아예 없으면 no-op(레거시 PRD 하위호환, §5 "레거시 세션엔 기존 동작").
+ */
+const LEDGER_HEADING = /^#{1,6}\s*.*(in[-\s]?scope|범위|dod|완료\s*조건|definition of done)/i;
+const OUT_OF_SCOPE_HEADING = /out[-\s]?of[-\s]?scope|범위\s*외|제외/i;
+const REQ_REF = /\bREQ-\d+\b/gi;
+
+export function validateConformanceLedger(prdContent: string): GateCheckResult {
+  const lines = prdContent.split(/\r?\n/);
+
+  // **선언은 원장 밖에서만 인정한다.** 원장 항목 안의 태그까지 선언으로 치면 오타 참조가
+  // 스스로를 선언해버려(`REQ-009` 하나만 적어도 통과) 유령 참조를 영영 못 잡는다.
+  const declaredReqs = new Set<string>();
+  {
+    let scanLedger = false;
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (/^#{1,6}\s/.test(line)) {
+        scanLedger = LEDGER_HEADING.test(line) && !OUT_OF_SCOPE_HEADING.test(line);
+        if (!scanLedger) for (const m of line.match(REQ_REF) ?? []) declaredReqs.add(m.toUpperCase());
+        continue;
+      }
+      if (scanLedger) continue;
+      for (const m of line.match(REQ_REF) ?? []) declaredReqs.add(m.toUpperCase());
+    }
+  }
+
+  const uncovered: string[] = [];
+  const ghost: string[] = [];
+  let inLedger = false;
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (/^#{1,6}\s/.test(line)) {
+      inLedger = LEDGER_HEADING.test(line) && !OUT_OF_SCOPE_HEADING.test(line);
+      continue;
+    }
+    if (!inLedger) continue;
+
+    const item = line.replace(/^[-*+]\s*/, "").replace(/^\d+\.\s*/, "").trim();
+    if (item === line && !/^[-*+]\s|^\d+\.\s/.test(line)) continue; // 불릿이 아닌 산문은 항목이 아니다
+    if (item.length === 0) continue; // 빈 불릿
+
+    const refs = item.match(REQ_REF);
+    if (!refs || refs.length === 0) {
+      uncovered.push(item);
+      continue;
+    }
+    for (const ref of refs) {
+      if (!declaredReqs.has(ref.toUpperCase())) ghost.push(ref.toUpperCase());
+    }
+  }
+
+  if (uncovered.length === 0 && ghost.length === 0) return ok();
+
+  const parts: string[] = [];
+  if (uncovered.length > 0) parts.push(`REQ 미매핑 ${uncovered.length}건: ${uncovered.join(" / ")}`);
+  if (ghost.length > 0) parts.push(`존재하지 않는 REQ 참조: ${[...new Set(ghost)].join(", ")}`);
+  return fail(
+    "CONFORMANCE_LEDGER_INCOMPLETE",
+    `In-Scope/DoD 원장이 REQ와 맞물리지 않습니다 — ${parts.join(" · ")}. 항목을 REQ로 승격하거나 원장에서 빼세요.`,
+  );
 }

@@ -25,6 +25,7 @@ import {
   checkJiraOption,
   checkOracleDone,
   checkSpecOracleGate,
+  validateConformanceLedger,
   type GateBlockCode,
   type RuntimeCheck,
 } from "../gates.js";
@@ -172,6 +173,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
   // 상태 전이 전에 막아야 "READY로 되돌아갔다가 재시도" 같은 오염된 중간상태가 안 남는다.
   if (action === "prd") {
     if (!args.prdContent) return errorResult("PRD_CONTENT_REQUIRED", "prd action에는 prdContent가 필요합니다.");
+    const ledger = validateConformanceLedger(args.prdContent);
+    if (!ledger.ok) return errorResult(ledger.code as GateBlockCode, ledger.message!);
     const validation = validatePrd(args.prdContent);
     if (!validation.ok) {
       return errorResult(
