@@ -99,6 +99,13 @@ await syncRoadmap(db, USER, "splearn", [
   { id: "t-005::REQ-007", title: "REQ-007 재설정 토큰 만료 30분", level: "subtask", status: "pending", parent: "t-005" },
   { id: "t-005::REQ-CONFIRM", title: "사용자 최종확인", level: "subtask", status: "pending", parent: "t-005" },
 
+  // 📋미분류 밴드 확인용 — 아직 어느 Spec에도 편입되지 않은 RUN(parent 없음).
+  // 캔버스에서 SPEC 컨테이너 위로 끌어다 놓으면 편입된다(assignRunToSpec).
+  { id: "run-005", title: "2FA (Spec 미편입)", level: "workstream", status: "pending" },
+  { id: "t-007", title: "TOTP 시크릿 발급", level: "task", status: "pending", parent: "run-005" },
+  { id: "t-007::REQ-008", title: "REQ-008 백업코드 10개 생성", level: "subtask", status: "pending", parent: "t-007" },
+  { id: "t-007::REQ-CONFIRM", title: "사용자 최종확인", level: "subtask", status: "pending", parent: "t-007" },
+
   // 폐기함 확인용 — 최상위 dropped RUN 하나(하위까지 cascade된 상태).
   { id: "run-004", title: "SAML SSO (보류)", level: "workstream", status: "dropped", parent: "spec-auth" },
   { id: "t-006", title: "IdP 메타데이터 파서", level: "task", status: "dropped", parent: "run-004" },

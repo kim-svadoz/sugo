@@ -37,6 +37,14 @@ const C_PROG = "#5c8bcc";
 const CONT_HEADER = 54;
 const CONT_PAD = 16;
 const DROP_ROOM = 44;
+/** 미분류 밴드(📋)가 차지하는 세로 폭 — 컨테이너 헤더 아래에 한 줄 더 얹힌다. */
+const BAND_H = 30;
+/**
+ * Spec에 편입되지 않은 RUN들을 담는 **가상 컨테이너**의 id.
+ * 서버에 이런 노드는 없다 — 화면에서만 만든다. `assignRunToSpec(run, null)`로 분리한 RUN이
+ * 최상위에 흩어져 "왜 여기 떠 있지"가 되는 걸 막고, 설계안의 📋미분류 밴드를 걸어준다.
+ */
+const UNASSIGNED = "__unassigned__";
 
 function effStatus(n: RoadmapNode): string {
   return (n.manual_status ?? n.status ?? "pending").toLowerCase();
@@ -83,6 +91,10 @@ type NodeData = {
   onViewSummary?: () => void;
   onViewSpec?: () => void;
   onRename?: () => void;
+  /** 미분류 밴드의 밑줄 y좌표. null이면 밴드 없음(설계안). */
+  bandBottom?: number | null;
+  /** 드래그 중인 RUN이 이 컨테이너 위에 있는가 → "＋ 여기에 놓기". */
+  isDropTarget?: boolean;
 };
 type FlowNode = Node<NodeData, "roadmap" | "container" | "lineage">;
 
@@ -195,19 +207,53 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
 function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
   const n = data.node;
   const isSpec = n.level === "spec";
+  const isBand = n.id === UNASSIGNED;
   const st = effStatus(n);
   const dim = st === "dropped";
   return (
     // 부모(ReactFlow 노드)가 style.width/height로 실제 크기를 준다 — 자식이 이 안에 놓이므로
     // 여기서 폭을 고정하면 안 된다.
-    <div className="h-full w-full" style={{ opacity: dim ? 0.6 : 1 }}>
+    <div className="relative h-full w-full" style={{ opacity: dim ? 0.6 : 1 }}>
       <Handle type="target" position={Position.Left} style={{ opacity: 0, width: 9, height: 9, left: -5 }} />
       <div
         className="h-full w-full rounded-xl border-2 border-dashed transition-all duration-150"
-        style={{ borderColor: "#4b5261", background: "rgba(30,41,59,0.35)" }}
-        title={isSpec ? "SPEC(마스터 PRD)" : "RUN(실행 묶음)"}
+        style={{
+          borderColor: data.isDropTarget ? "rgba(52,211,153,0.85)" : isBand ? "rgba(251,191,36,0.55)" : "#4b5261",
+          background: data.isDropTarget ? "rgba(16,185,129,0.10)" : "rgba(30,41,59,0.35)",
+        }}
+        title={isBand ? "어느 Spec에도 편입되지 않은 RUN" : isSpec ? "SPEC(마스터 PRD)" : "RUN(실행 묶음)"}
       >
+        {/* 설계안 미분류 밴드 */}
+        {data.bandBottom != null && (
+          <>
+            <div
+              className="pointer-events-none absolute flex items-center gap-1 rounded-md bg-amber-400 px-1.5 py-0.5 text-[12px] font-extrabold tracking-[0.12em] text-slate-900"
+              style={{ left: CONT_PAD, top: CONT_HEADER + 4 }}
+            >
+              <span className="text-[9px] leading-none">📋</span>미분류
+            </div>
+            <div
+              className="pointer-events-none absolute border-t-2 border-amber-400/70"
+              style={{ left: CONT_PAD, right: CONT_PAD, top: data.bandBottom }}
+            />
+          </>
+        )}
+        {/* 설계안 drop 타깃 */}
+        {data.isDropTarget && (
+          <div
+            className="pointer-events-none absolute inset-x-3 flex items-end justify-center pb-2"
+            style={{ top: CONT_HEADER, bottom: 0 }}
+          >
+            <span className="rounded-md border border-emerald-400/50 bg-emerald-500/20 px-2.5 py-1 text-[12px] font-bold text-emerald-200 shadow">
+              ＋ 여기에 놓기
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-1.5 whitespace-nowrap border-b border-slate-500/25 bg-slate-500/15 py-2.5 pl-2 pr-3">
+          {isBand ? (
+            // 미분류는 접히지 않는다 — 접어서 안 보이면 "편입 안 된 RUN이 있다"는 사실을 잊는다.
+            <span className="-my-1 flex h-8 w-8 items-center justify-center text-[15px] leading-none text-amber-300/70">▾</span>
+          ) : (
           <button
             className="nodrag -my-1 flex h-8 w-8 items-center justify-center rounded text-[15px] leading-none text-slate-200 hover:bg-slate-400/20 hover:text-white"
             title="접기"
@@ -218,15 +264,18 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
           >
             ▾
           </button>
-          <span className={cn("leading-none opacity-80", isSpec ? "text-xl" : "text-base")}>{isSpec ? "📄" : "🔁"}</span>
+          )}
+          <span className={cn("leading-none opacity-80", isSpec ? "text-xl" : "text-base")}>
+            {isBand ? "📋" : isSpec ? "📄" : "🔁"}
+          </span>
           <span className="rounded-md bg-slate-500/25 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-wider text-slate-200">
-            {isSpec ? "SPEC" : "RUN"}
+            {isBand ? "미분류" : isSpec ? "SPEC" : "RUN"}
           </span>
           <span
             className={cn("min-w-0 flex-1 truncate text-slate-200/90", isSpec ? "text-[15px] font-semibold" : "text-[13px]")}
             title={n.title}
           >
-            · {n.title}
+            {isBand ? "· 어느 Spec에도 편입되지 않은 RUN — 카드를 SPEC 위로 끌어다 놓으세요" : `· ${n.title}`}
           </span>
           <span className="shrink-0 font-mono text-[10.5px] text-slate-400">
             {isSpec ? `RUN ${data.childCount ?? 0}개` : `task ${data.childCount ?? 0}개 (${data.doneChildCount ?? 0} done)`}
@@ -271,16 +320,19 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
                 📄 원문
               </button>
             )}
-            <button
-              className="text-[12px] text-slate-300/80 hover:text-slate-100"
-              title="이름 변경"
-              onClick={(e) => {
-                e.stopPropagation();
-                data.onRename?.();
-              }}
-            >
-              ✎
-            </button>
+            {/* 가상 미분류 컨테이너는 서버에 없는 id다 — 이름을 바꾸면 404다. 아예 안 그린다. */}
+            {!isBand && (
+              <button
+                className="text-[12px] text-slate-300/80 hover:text-slate-100"
+                title="이름 변경"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onRename?.();
+                }}
+              >
+                ✎
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -383,6 +435,30 @@ function layout(
   }
 
   /**
+   * **미분류 밴드(설계안).** Spec이 하나라도 있는 로드맵에서 부모 없는 RUN은 "아직 어느 Spec에도
+   * 안 걸린 것"이라는 뜻이다 — 최상위에 그냥 흩뿌리면 Spec 컨테이너와 구분이 안 간다. 그래서
+   * 가상 컨테이너 하나로 묶고 📋미분류 밴드를 얹는다.
+   *
+   * Spec이 아예 없는 로드맵에는 만들지 않는다. 그런 데선 "미분류"라는 말 자체가 성립하지 않는다.
+   */
+  const hasSpec = nodes.some((n) => n.level === "spec");
+  const loose = roots.filter((n) => n.level === "workstream");
+  let bandNode: RoadmapNode | null = null;
+  if (hasSpec && loose.length > 0) {
+    bandNode = { id: UNASSIGNED, title: "미분류", level: "spec", status: "pending" } as RoadmapNode;
+    kids.set(UNASSIGNED, loose);
+    const looseIds = new Set(loose.map((n) => n.id));
+    roots.splice(0, roots.length, ...roots.filter((n) => !looseIds.has(n.id)), bandNode);
+    byId.set(UNASSIGNED, bandNode);
+    childCount.set(UNASSIGNED, loose.length);
+    doneChildCount.set(UNASSIGNED, loose.filter((n) => effStatus(n) === "done").length);
+    expanded = new Set([...expanded, UNASSIGNED]); // 미분류는 접지 않는다 — 접으면 존재를 잊는다.
+  }
+
+  /** 컨테이너 안쪽 내용이 시작하는 y — 미분류만 밴드 높이만큼 더 내려간다. */
+  const innerTop = (id: string) => CONT_HEADER + (id === UNASSIGNED ? BAND_H : 0);
+
+  /**
    * **2단 레이아웃(설계안).** 펼친 컨테이너는 자식을 *옆에 늘어놓는 게 아니라 품는다* —
    * ReactFlow의 `parentId`로 실제 부모-자식이 되고, 자식 좌표는 부모 기준 상대좌표다.
    *
@@ -414,7 +490,7 @@ function layout(
 
     const children = kids.get(n.id) ?? [];
     if (children.length === 0) {
-      const s = { w: WS_CARD_W, h: CONT_HEADER + CONT_PAD * 2 };
+      const s = { w: WS_CARD_W, h: innerTop(n.id) + CONT_PAD * 2 };
       size.set(n.id, s);
       return s;
     }
@@ -439,7 +515,7 @@ function layout(
       const cs = size.get(c.id)!;
       // dagre는 중심 좌표를 준다 → 좌상단으로 변환하고 컨테이너 안쪽 여백만큼 민다.
       const x = (p?.x ?? 0) - cs.w / 2 + CONT_PAD;
-      const y = (p?.y ?? 0) - cs.h / 2 + CONT_HEADER + CONT_PAD;
+      const y = (p?.y ?? 0) - cs.h / 2 + innerTop(n.id) + CONT_PAD;
       childPos.set(c.id, { x, y });
       maxX = Math.max(maxX, x + cs.w);
       maxY = Math.max(maxY, y + cs.h);
@@ -487,6 +563,7 @@ function layout(
   const rfNodes: FlowNode[] = [];
   const emit = (n: RoadmapNode, parentId?: string) => {
     const kind = kindOf(n);
+    const draggable = n.level === "workstream" && n.id !== UNASSIGNED;
     const s = size.get(n.id)!;
     const rootPos = g.node(n.id);
     const position = parentId
@@ -497,7 +574,13 @@ function layout(
       id: n.id,
       type: kind,
       position,
-      ...(parentId ? { parentId, extent: "parent" as const } : {}),
+      // RUN만 끌 수 있다 — Spec 컨테이너 위로 끌어다 놓으면 편입된다(설계안 drop 타깃).
+      // 나머지는 고정. 전부 draggable로 풀면 좌드래그 패닝(panOnDrag[0])과 싸운다.
+      //
+      // 끌 수 있는 RUN에는 `extent:"parent"`를 걸지 않는다 — 걸면 부모 상자 안에 갇혀서
+      // **다른 Spec 위로 끌고 갈 수가 없다**(편입 기능 자체가 죽는다). 나머지는 그대로 가둔다.
+      ...(parentId ? { parentId, ...(draggable ? {} : { extent: "parent" as const }) } : {}),
+      draggable,
       style: { width: s.w, height: s.h },
       data: {
         node: n,
@@ -513,6 +596,7 @@ function layout(
         onViewSummary: () => actions.onViewSummary(n),
         onViewSpec: () => actions.onViewSpec(n),
         onRename: () => actions.onRename(n),
+        bandBottom: n.id === UNASSIGNED ? CONT_HEADER + BAND_H - 4 : null,
       },
     });
 
@@ -594,10 +678,57 @@ export function RoadmapGraph({
     [userId, workspace],
   );
 
-  const { rfNodes, rfEdges } = useMemo(
+  /**
+   * 설계안 drop 타깃 — RUN 카드를 끌어 SPEC 컨테이너(또는 📋미분류)에 놓으면 편입/분리된다.
+   * 판정은 **포인터 위치**로 한다. 끌리는 카드의 bbox 겹침으로 하면 큰 카드가 컨테이너 두 개에
+   * 동시에 걸려 어디로 갈지 사람이 예측할 수 없다.
+   */
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+
+  const hitTest = useCallback(
+    (evt: MouseEvent | TouchEvent, dragged: string): string | null => {
+      const pt = "clientX" in evt ? evt : evt.changedTouches[0];
+      if (!pt) return null;
+      const under = document.elementsFromPoint(pt.clientX, pt.clientY);
+      for (const el of under) {
+        const holder = el.closest?.("[data-id]") as HTMLElement | null;
+        const id = holder?.dataset.id;
+        if (!id || id === dragged) continue;
+        const n = nodes.find((x) => x.id === id);
+        if (id === UNASSIGNED || n?.level === "spec") return id;
+      }
+      return null;
+    },
+    [nodes],
+  );
+
+  /** 드래그 중인 RUN의 **실시간 좌표**. 이게 없으면 카드가 커서를 안 따라온다(아래 주석 참조). */
+  const [dragPos, setDragPos] = useState<{ id: string; x: number; y: number } | null>(null);
+
+  const base = useMemo(
     () => layout(nodes, selectedId, expanded, toggleExpand, actions),
     [nodes, selectedId, expanded, toggleExpand, actions],
   );
+
+  /**
+   * 드래그 상태는 **layout 밖에서** 덧칠한다. layout 안에 넣으면 드롭 타깃이 바뀔 때마다 전체
+   * 레이아웃이 다시 돌면서 좌표가 원래대로 리셋되고, 끌던 카드가 손에서 튕겨 제자리로 돌아간다.
+   * ReactFlow는 controlled `nodes`라 배열이 갈릴 때마다 위치를 다시 받아들이기 때문이다.
+   */
+  const rfNodes = useMemo(() => {
+    if (!dropTargetId && !dragPos) return base.rfNodes;
+    return base.rfNodes.map((n) => {
+      const isTarget = n.id === dropTargetId;
+      const moved = dragPos?.id === n.id;
+      if (!isTarget && !moved) return n;
+      return {
+        ...n,
+        ...(moved ? { position: { x: dragPos!.x, y: dragPos!.y } } : {}),
+        ...(isTarget ? { data: { ...n.data, isDropTarget: true } } : {}),
+      };
+    });
+  }, [base.rfNodes, dropTargetId, dragPos]);
+  const rfEdges = base.rfEdges;
 
   /** 설계안 droppedTop — dropped인데 부모는 dropped가 아닌 "최상위 폐기"만. */
   const droppedTop = useMemo(() => {
@@ -682,6 +813,19 @@ export function RoadmapGraph({
           deleteKeyCode={null}
           panOnDrag={[0, 1, 2]}
           zoomOnDoubleClick={false}
+          onNodeDrag={(e, node) => {
+            setDropTargetId(hitTest(e, node.id));
+            setDragPos({ id: node.id, x: node.position.x, y: node.position.y });
+          }}
+          onNodeDragStop={(e, node) => {
+            const target = hitTest(e, node.id);
+            setDropTargetId(null);
+            setDragPos(null);
+            const n = nodes.find((x) => x.id === node.id);
+            if (!target || n?.level !== "workstream") return;
+            if (target === (n.parent ?? UNASSIGNED)) return; // 제자리에 놓았다 — 아무 일도 안 한다.
+            void run(() => assignRunToSpec(userId!, workspace, node.id, target === UNASSIGNED ? null : target));
+          }}
           onNodeClick={(_, node) => setSelectedId(node.id === selectedId ? null : node.id)}
           onNodeDoubleClick={(_, node) => {
             // 설계안: SPEC/RUN은 더블클릭으로 펼치고 접는다. task는 펼칠 하위(=REQ)가
