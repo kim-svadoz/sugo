@@ -135,6 +135,33 @@ await syncHistory(db, {
 });
 
 // ── ADR ──────────────────────────────────────────────────────────────────────
+// SPEC 원문(📄) 버튼이 실제 내용을 보여주도록 — 백엔드 getSpecContent는 decisions를 id/title로
+// 매칭하므로, SPEC 노드 제목과 같은 제목의 ADR이 있어야 원문이 뜬다.
+await syncDecision(db, {
+  userId: USER, workspaceName: "splearn", id: "auth.md", title: "인증 도메인 마스터 PRD", status: "accepted",
+  content: `# 인증 도메인 마스터 PRD
+
+## In-Scope
+- 이메일 로그인 (REQ-001, REQ-002)
+- 소셜 로그인 (REQ-004, REQ-005)
+- 비밀번호 재설정 (REQ-007)
+
+## Out-of-Scope
+- SAML SSO
+- LDAP 연동
+
+## DoD
+- REQ-001~REQ-007 통합테스트 통과
+- 계정 열거 방지 확인(실패 응답에 사유 미노출)
+
+### REQ-001: 이메일+비밀번호 인증
+### REQ-002: 비밀번호 bcrypt 해시
+### REQ-004: Google OAuth 콜백
+### REQ-005: 최초 로그인 시 계정 생성
+### REQ-007: 재설정 토큰 만료 30분`,
+  decisionDate: iso(16),
+});
+
 await syncDecision(db, {
   userId: USER, workspaceName: "splearn", id: "ADR-001", title: "세션 대신 JWT를 쓴다", status: "accepted",
   content: "# ADR-001 — 세션 대신 JWT\n\n## 배경\n수평 확장 시 세션 스토어가 단일 병목이 된다.\n\n## 결정\nstateless JWT(RS256) + refresh 토큰.\n\n## 결과\n- 서버 간 세션 공유 불필요\n- 즉시 로그아웃은 불가 → refresh 만료(24h)로 절충",

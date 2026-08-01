@@ -15,8 +15,14 @@ import {
 import "@xyflow/react/dist/style.css";
 import dagre from "dagre";
 import { useAuth } from "../../auth/AuthContext.js";
-import { useRoadmap, type RoadmapNode } from "../../hooks/useRoadmap.js";
-import { assignRunToSpec, dropSubtree, restoreSubtree } from "../../api/roadmapMutationsApi.js";
+import { parseWorkResult, useRoadmap, type RoadmapNode } from "../../hooks/useRoadmap.js";
+import {
+  assignRunToSpec,
+  dropSubtree,
+  getSpecContent,
+  renameRoadmapNode,
+  restoreSubtree,
+} from "../../api/roadmapMutationsApi.js";
 import { SubtaskPanel } from "../SubtaskPanel.js";
 import { cn } from "../../lib/utils.js";
 
@@ -69,7 +75,14 @@ type NodeData = {
   childCount?: number;
   /** 하위 중 done 개수. RUN 카드가 `· task N개 (M done)`으로 쓴다. */
   doneChildCount?: number;
+  /** SPEC 헤더 뱃지 — 스스로 done인가 / 하위가 전부 끝나 완료 처리할 수 있는가. */
+  specDone?: boolean;
+  specCanComplete?: boolean;
+  hasSummary?: boolean;
   onToggleExpand?: () => void;
+  onViewSummary?: () => void;
+  onViewSpec?: () => void;
+  onRename?: () => void;
 };
 type FlowNode = Node<NodeData, "roadmap" | "container" | "lineage">;
 
@@ -209,12 +222,66 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
           <span className="rounded-md bg-slate-500/25 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-wider text-slate-200">
             {isSpec ? "SPEC" : "RUN"}
           </span>
-          <span className="truncate font-mono text-[13px] font-bold text-slate-100" title={n.title}>
-            {n.title}
+          <span
+            className={cn("min-w-0 flex-1 truncate text-slate-200/90", isSpec ? "text-[15px] font-semibold" : "text-[13px]")}
+            title={n.title}
+          >
+            · {n.title}
           </span>
-          <span className="ml-auto shrink-0 font-mono text-[10.5px] text-slate-400">
+          <span className="shrink-0 font-mono text-[10.5px] text-slate-400">
             {isSpec ? `RUN ${data.childCount ?? 0}개` : `task ${data.childCount ?? 0}개 (${data.doneChildCount ?? 0} done)`}
           </span>
+
+          {/* 설계안 헤더 우측 액션. SPEC 전용 뱃지/버튼은 SPEC에서만 뜬다. */}
+          <div className="nodrag ml-auto flex shrink-0 items-center gap-2">
+            {isSpec && data.specDone && (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded border border-emerald-500/40 bg-emerald-500/15 px-1.5 py-0.5 text-[12px] font-bold text-emerald-300">
+                ✅ 작업완료
+              </span>
+            )}
+            {isSpec && !data.specDone && data.specCanComplete && (
+              <span
+                className="inline-flex shrink-0 items-center gap-1 rounded border border-slate-400/30 bg-slate-500/15 px-1.5 py-0.5 text-[12px] font-semibold text-slate-300"
+                title="하위 작업이 전부 끝났습니다 — 패널에서 완료 처리할 수 있어요"
+              >
+                ☑ 완료 가능
+              </span>
+            )}
+            {isSpec && data.hasSummary && (
+              <button
+                className="rounded border border-violet-500/40 px-1 py-0.5 text-[12px] text-violet-300/90 hover:bg-violet-500/10 hover:text-violet-200"
+                title="이 SPEC의 AI 작업요약 보기"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onViewSummary?.();
+                }}
+              >
+                🧠 AI요약
+              </button>
+            )}
+            {isSpec && n.spec_path && (
+              <button
+                className="rounded border border-sky-500/40 px-1 py-0.5 text-[12px] text-sky-300/90 hover:bg-sky-500/10 hover:text-sky-200"
+                title="Spec 원문(PRD) 보기"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onViewSpec?.();
+                }}
+              >
+                📄 원문
+              </button>
+            )}
+            <button
+              className="text-[12px] text-slate-300/80 hover:text-slate-100"
+              title="이름 변경"
+              onClick={(e) => {
+                e.stopPropagation();
+                data.onRename?.();
+              }}
+            >
+              ✎
+            </button>
+          </div>
         </div>
       </div>
       <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 9, height: 9, right: -5 }} />
@@ -287,6 +354,7 @@ function layout(
   selectedId: string | null,
   expanded: Set<string>,
   onToggleExpand: (id: string) => void,
+  actions: { onViewSummary: (n: RoadmapNode) => void; onViewSpec: (n: RoadmapNode) => void; onRename: (n: RoadmapNode) => void },
 ): { rfNodes: FlowNode[]; rfEdges: Edge[] } {
   const ready = computeReady(nodes);
   // 하위 개수는 **숨긴 것까지 세어** 접힌 카드에 "N 하위"로 보여준다(펼치기 전에 규모를 알아야 한다).
@@ -437,7 +505,14 @@ function layout(
         ready: ready.has(n.id),
         childCount: childCount.get(n.id) ?? 0,
         doneChildCount: doneChildCount.get(n.id) ?? 0,
+        specDone: effStatus(n) === "done",
+        // "완료 가능" = 자기는 아직 안 끝났는데 하위는 전부 끝난 상태. 사람이 닫아주기만 하면 된다.
+        specCanComplete: (childCount.get(n.id) ?? 0) > 0 && childCount.get(n.id) === doneChildCount.get(n.id),
+        hasSummary: !!parseWorkResult(n.work_result)?.summary,
         onToggleExpand: () => onToggleExpand(n.id),
+        onViewSummary: () => actions.onViewSummary(n),
+        onViewSpec: () => actions.onViewSpec(n),
+        onRename: () => actions.onRename(n),
       },
     });
 
@@ -484,6 +559,10 @@ export function RoadmapGraph({
    *  RUN 안의 task까지 한꺼번에 쏟아지지 않게 한다(더블클릭으로 한 단계씩 내려간다). */
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [seeded, setSeeded] = useState(false);
+  /** 헤더 액션 팝업: 🧠 AI요약 / 📄 원문 / ✎ 이름변경. 셋 다 같은 자리에 뜬다. */
+  const [summaryOf, setSummaryOf] = useState<RoadmapNode | null>(null);
+  const [specDoc, setSpecDoc] = useState<{ title: string; content: string | null } | null>(null);
+  const [renaming, setRenaming] = useState<{ node: RoadmapNode; value: string } | null>(null);
 
   const nodes = useMemo(() => data ?? [], [data]);
 
@@ -502,9 +581,22 @@ export function RoadmapGraph({
     });
   }, []);
 
+  const actions = useMemo(
+    () => ({
+      onViewSummary: (n: RoadmapNode) => setSummaryOf(n),
+      onViewSpec: async (n: RoadmapNode) => {
+        const label = n.spec_path?.split(/[\/]/).filter(Boolean).pop() ?? n.title;
+        // 원문이 없으면 null이 온다 — 모달은 열되 "없음"을 정직하게 보여준다.
+        setSpecDoc((await getSpecContent(userId!, workspace, n.title)) ?? { title: label, content: null });
+      },
+      onRename: (n: RoadmapNode) => setRenaming({ node: n, value: n.title }),
+    }),
+    [userId, workspace],
+  );
+
   const { rfNodes, rfEdges } = useMemo(
-    () => layout(nodes, selectedId, expanded, toggleExpand),
-    [nodes, selectedId, expanded, toggleExpand],
+    () => layout(nodes, selectedId, expanded, toggleExpand, actions),
+    [nodes, selectedId, expanded, toggleExpand, actions],
   );
 
   /** 설계안 droppedTop — dropped인데 부모는 dropped가 아닌 "최상위 폐기"만. */
@@ -689,6 +781,54 @@ export function RoadmapGraph({
         </div>
       )}
 
+      {/* 🧠 AI요약 / 📄 원문 / ✎ 이름변경 — 헤더 액션 팝업 */}
+      {summaryOf && (
+        <HeaderModal title={`🧠 ${summaryOf.title} · AI 작업요약`} onClose={() => setSummaryOf(null)}>
+          {parseWorkResult(summaryOf.work_result)?.summary ? (
+            <div className="spec-md whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text)]">
+              {parseWorkResult(summaryOf.work_result)!.summary}
+            </div>
+          ) : (
+            <p className="text-[12.5px] text-[var(--color-text-dim)]">아직 작업요약이 없습니다.</p>
+          )}
+        </HeaderModal>
+      )}
+
+      {specDoc && (
+        <HeaderModal title={`📄 ${specDoc.title} · 원문`} onClose={() => setSpecDoc(null)}>
+          {specDoc.content ? (
+            <pre className="whitespace-pre-wrap font-mono text-[12.5px] leading-relaxed text-[var(--color-text)]">
+              {specDoc.content}
+            </pre>
+          ) : (
+            <p className="text-[12.5px] text-[var(--color-text-dim)]">
+              원문을 찾지 못했습니다 — 플러그인이 이 Spec을 ADR로 sync해야 여기서 읽을 수 있습니다.
+            </p>
+          )}
+        </HeaderModal>
+      )}
+
+      {renaming && (
+        <HeaderModal title="✎ 이름 변경" onClose={() => setRenaming(null)}>
+          <input
+            autoFocus
+            value={renaming.value}
+            onChange={(e) => setRenaming({ ...renaming, value: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              const title = renaming.value.trim();
+              if (!title) return;
+              void run(() => renameRoadmapNode(userId!, workspace, renaming.node.id, title));
+              setRenaming(null);
+            }}
+            className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-[13px] text-[var(--color-text)]"
+          />
+          <p className="mt-2 text-[11.5px] text-[var(--color-text-dim)]">
+            표시명만 바뀝니다(Enter로 저장) — 플러그인이 push하는 제목은 다음 sync에서 다시 덮어씁니다.
+          </p>
+        </HeaderModal>
+      )}
+
       {/* 폐기함 모달 */}
       {binOpen && (
         <div className="fixed inset-0 z-[96] flex items-center justify-center p-4" onMouseDown={() => setBinOpen(false)}>
@@ -738,5 +878,36 @@ export function RoadmapGraphPanel(props: { workspace: string; fill?: boolean; on
     <ReactFlowProvider>
       <RoadmapGraph {...props} />
     </ReactFlowProvider>
+  );
+}
+
+/** 헤더 액션(요약·원문·이름변경) 공용 팝업. 캔버스 위에 떠야 하므로 z는 폐기함보다 낮게 둔다. */
+function HeaderModal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      onClose();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[94] flex items-center justify-center p-4" onMouseDown={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative flex max-h-[75vh] w-full max-w-2xl flex-col rounded-xl border border-[var(--color-border)] ck-glass p-4"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <span className="truncate text-[14px] font-semibold text-[var(--color-text-bright)]">{title}</span>
+          <button onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+            ✕
+          </button>
+        </div>
+        <div className="ck-scroll min-h-0 flex-1 overflow-auto pr-1">{children}</div>
+      </div>
+    </div>
   );
 }

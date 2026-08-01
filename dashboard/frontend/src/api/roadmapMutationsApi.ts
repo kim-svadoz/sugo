@@ -41,3 +41,23 @@ export function assignRunToSpec(userId: string, workspace: string, runId: string
     body: JSON.stringify({ runId, specId }),
   });
 }
+
+/** §3.3 노드 이름 변경(✎). 대시보드가 구조·표시명을 소유한다. */
+export function renameRoadmapNode(userId: string, workspace: string, nodeId: string, title: string) {
+  return apiJson<{ ok: boolean }>(withUserId(path(workspace, "/rename"), userId), {
+    method: "POST",
+    body: JSON.stringify({ nodeId, title }),
+  });
+}
+
+/** §3.3 `GET /:name/spec-content` — SPEC 원문(PRD) 팝업. 없으면 null. */
+export async function getSpecContent(userId: string, workspace: string, title: string) {
+  try {
+    return await apiJson<{ title: string; content: string | null }>(
+      withUserId(`/api/workspaces/${encodeURIComponent(workspace)}/spec-content`, userId, { title }),
+    );
+  } catch {
+    // 404 = 원문이 없다. 화면에서 "없음"으로 안내하고 넘어간다(모달 자체를 막지 않는다).
+    return null;
+  }
+}
