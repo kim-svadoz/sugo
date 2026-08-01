@@ -21,10 +21,11 @@ export function Harness() {
   const empty = loaded && !md && manifest.length === 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="font-mono text-lg font-bold ck-text-glow" style={{ color: "var(--color-primary)" }}>Harness</h1>
-        <span className="ck-pill text-slate-400">{manifest.length} entries</span>
+    <div className="space-y-6">
+      {/* 설계안 Harness 헤더 — 제목 + 부제. */}
+      <div>
+        <h1 className="text-2xl font-bold text-[var(--color-text-bright)]">Harness</h1>
+        <p className="text-[var(--color-text-muted)]">통합 코딩 하네스</p>
       </div>
 
       {manifest.length > 0 && (
@@ -46,7 +47,12 @@ export function Harness() {
           </p>
         </div>
       ) : (
-        html && <div className="ck-glass ck-card md-body" dangerouslySetInnerHTML={{ __html: html }} />
+        html && (
+          // 설계안: 뷰포트를 채우는 단일 스크롤 패널(문서가 길어도 페이지가 아니라 패널이 스크롤).
+          <div className="ck-scroll h-[calc(100vh-200px)] overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8">
+            <article className="md-body" dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
+        )
       )}
     </div>
   );
