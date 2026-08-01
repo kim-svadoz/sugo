@@ -65,7 +65,8 @@ type FlowNode = Node<NodeData, "roadmap" | "container" | "lineage">;
 function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
   const n = data.node;
   const st = effStatus(n);
-  const cs = cardStyle(st, data.ready, false);
+  const isGroup = n.level === "spec" || n.level === "workstream";
+  const cs = cardStyle(st, data.ready, isGroup);
   const dim = st === "dropped";
   return (
     <div className="group/card" style={{ width: NODE_W, opacity: dim ? 0.55 : 1 }}>
@@ -84,7 +85,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
             className="rounded border px-1.5 py-0.5 font-mono text-[9.5px]"
             style={{ color: cs.accent, borderColor: `${cs.accent}66` }}
           >
-            {n.level}
+            {n.level === "spec" ? "📄 SPEC" : n.level === "workstream" ? "🔁 RUN" : n.level}
           </span>
           <span className="flex items-center gap-1 font-mono text-[9.5px] uppercase" style={{ color: cs.accent }}>
             {st === "in_progress" && (
@@ -96,7 +97,14 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
         <div className={cn("mt-1 truncate font-mono text-[12.5px] text-slate-100", dim && "line-through")} title={n.title}>
           {n.title}
         </div>
-        {n.manual_status && <span className="mt-1 inline-block text-[9.5px] text-amber-300">✋ 수동</span>}
+        <div className="mt-1 flex items-center gap-2">
+          {n.manual_status && <span className="text-[9.5px] text-amber-300">✋ 수동</span>}
+          {isGroup && (data.childCount ?? 0) > 0 && (
+            <span className="ml-auto font-mono text-[9.5px] text-[var(--color-text-dim)]">
+              ▸ {data.childCount} 하위 · 더블클릭
+            </span>
+          )}
+        </div>
       </div>
       <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 9, height: 9, right: -5 }} />
     </div>
@@ -124,7 +132,9 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
           <span className="truncate font-mono text-[13px] font-bold text-slate-100" title={n.title}>
             {n.title}
           </span>
-          <span className="ml-auto font-mono text-[10.5px] text-slate-400">{data.childCount ?? 0} 하위</span>
+          <span className="ml-auto font-mono text-[10.5px] text-slate-400">
+            ▾ {data.childCount ?? 0} 하위 · 더블클릭으로 접기
+          </span>
         </div>
       </div>
       <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 9, height: 9, right: -5 }} />
@@ -164,18 +174,51 @@ function computeReady(nodes: RoadmapNode[]): Set<string> {
   return ready;
 }
 
-function layout(nodes: RoadmapNode[], selectedId: string | null): { rfNodes: FlowNode[]; rfEdges: Edge[] } {
+/**
+ * 그래프에 올릴 노드를 고른다.
+ *
+ * **subtask(REQ)는 그래프에 올리지 않는다(설계안).** nodeTypes는 roadmap(접힌 task/SPEC·RUN
+ * 카드) / container(펼친 SPEC·RUN) / lineage(패치 체인) 셋뿐이고, REQ는 노드가 아니라
+ * **오른쪽 SubtaskPanel의 "진행 N/M" 탭**에 들어간다. REQ까지 카드로 뿌리면 task 하나에
+ * 카드가 3~5개씩 붙어 위상 그래프가 아니라 목록이 된다.
+ *
+ * 접힌 컨테이너(SPEC/RUN)의 자손은 숨긴다 — 더블클릭으로 펼쳐야 드러난다.
+ */
+function visibleNodes(nodes: RoadmapNode[], expanded: Set<string>): RoadmapNode[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const isContainer = (n: RoadmapNode) => n.level === "spec" || n.level === "workstream";
+
+  const hiddenByCollapsedAncestor = (n: RoadmapNode): boolean => {
+    let cur = n.parent ? byId.get(n.parent) : undefined;
+    const seen = new Set<string>();
+    while (cur && !seen.has(cur.id)) {
+      seen.add(cur.id);
+      if (isContainer(cur) && !expanded.has(cur.id)) return true;
+      cur = cur.parent ? byId.get(cur.parent) : undefined;
+    }
+    return false;
+  };
+
+  return nodes.filter((n) => n.level !== "subtask" && n.level !== "step" && !hiddenByCollapsedAncestor(n));
+}
+
+function layout(nodes: RoadmapNode[], selectedId: string | null, expanded: Set<string>): { rfNodes: FlowNode[]; rfEdges: Edge[] } {
   const ready = computeReady(nodes);
+  // 하위 개수는 **숨긴 것까지 세어** 접힌 카드에 "N 하위"로 보여준다(펼치기 전에 규모를 알아야 한다).
   const childCount = new Map<string, number>();
   for (const n of nodes) if (n.parent) childCount.set(n.parent, (childCount.get(n.parent) ?? 0) + 1);
+  const all = nodes;
+  nodes = visibleNodes(nodes, expanded);
+  void all;
 
   const g = new dagre.graphlib.Graph();
   // 설계안 "최상위 산개" 값.
   g.setGraph({ rankdir: "LR", nodesep: 44, ranksep: 150, marginx: 12, marginy: 12 });
   g.setDefaultEdgeLabel(() => ({}));
 
+  // 펼친 SPEC/RUN만 container(대시 테두리 컨테이너). 접혀 있으면 일반 카드로 그린다.
   const kindOf = (n: RoadmapNode): "roadmap" | "container" | "lineage" => {
-    if (n.level === "spec" || n.level === "workstream") return "container";
+    if (n.level === "spec" || n.level === "workstream") return expanded.has(n.id) ? "container" : "roadmap";
     if (n.lineage) return "lineage";
     return "roadmap";
   };
@@ -251,9 +294,29 @@ export function RoadmapGraph({
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [binOpen, setBinOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  /** 펼친 SPEC/RUN 집합. **기본은 SPEC만 펼침** — 처음 열었을 때 최상위 구조가 보이되
+   *  RUN 안의 task까지 한꺼번에 쏟아지지 않게 한다(더블클릭으로 한 단계씩 내려간다). */
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [seeded, setSeeded] = useState(false);
 
   const nodes = useMemo(() => data ?? [], [data]);
-  const { rfNodes, rfEdges } = useMemo(() => layout(nodes, selectedId), [nodes, selectedId]);
+
+  useEffect(() => {
+    if (seeded || nodes.length === 0) return;
+    setExpanded(new Set(nodes.filter((n) => n.level === "spec").map((n) => n.id)));
+    setSeeded(true);
+  }, [nodes, seeded]);
+
+  const toggleExpand = useCallback((id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const { rfNodes, rfEdges } = useMemo(() => layout(nodes, selectedId, expanded), [nodes, selectedId, expanded]);
 
   /** 설계안 droppedTop — dropped인데 부모는 dropped가 아닌 "최상위 폐기"만. */
   const droppedTop = useMemo(() => {
@@ -327,14 +390,25 @@ export function RoadmapGraph({
           nodes={rfNodes}
           edges={rfEdges}
           nodeTypes={nodeTypes}
-          fitView
+          // 설계안: fitView는 **maxZoom 1**로 묶는다. 안 묶으면 노드가 적을 때 화면을 채우려
+          // 200%까지 확대돼 카드 몇 장이 화면을 다 덮는다(위상이 안 보인다).
+          onInit={(inst) => inst.fitView({ padding: 0.18, maxZoom: 1 })}
+          minZoom={0.1}
           proOptions={{ hideAttribution: true }}
           nodesConnectable={false}
           nodesDraggable={false}
           elementsSelectable={false}
           deleteKeyCode={null}
           panOnDrag={[0, 1, 2]}
+          zoomOnDoubleClick={false}
           onNodeClick={(_, node) => setSelectedId(node.id === selectedId ? null : node.id)}
+          onNodeDoubleClick={(_, node) => {
+            // 설계안: SPEC/RUN은 더블클릭으로 펼치고 접는다. task는 펼칠 하위(=REQ)가
+            // 그래프에 없으므로 아무 일도 하지 않는다(REQ는 오른쪽 패널 소관).
+            const n = nodes.find((x) => x.id === node.id);
+            if (!n || (n.level !== "spec" && n.level !== "workstream")) return;
+            toggleExpand(n.id);
+          }}
           onNodeContextMenu={(e, node) => {
             e.preventDefault();
             const n = nodes.find((x) => x.id === node.id);
@@ -363,6 +437,7 @@ export function RoadmapGraph({
           <SubtaskPanel
             workspace={workspace}
             node={selectedNode}
+            reqs={nodes.filter((n) => n.parent === selectedNode.id && n.level === "subtask")}
             onClose={() => setSelectedId(null)}
             onChanged={() => {
               refetch();

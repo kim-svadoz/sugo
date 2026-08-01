@@ -36,16 +36,22 @@ function fileBadgeColor(change: WorkResultFile["change"]): string {
 export function SubtaskPanel({
   workspace,
   node,
+  reqs: reqsProp,
   onClose,
   onChanged,
 }: {
   workspace: string;
   node: RoadmapNode;
+  /** 이 노드의 REQ(subtask) 자식들. **그래프가 아니라 여기서 보여주는 게 정본이다**(설계안). */
+  reqs?: RoadmapNode[];
   onClose: () => void;
   onChanged: () => void;
 }) {
   const { userId } = useAuth();
   const [tab, setTab] = useState<Tab>("progress");
+  const reqs = reqsProp ?? [];
+  const reqTotal = reqs.length;
+  const reqDone = reqs.filter((r) => (r.manual_status ?? r.status ?? "").toLowerCase() === "done").length;
 
   const workResult = parseWorkResult(node.work_result);
   const lineage = parseLineage(node.lineage);
@@ -70,14 +76,15 @@ export function SubtaskPanel({
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`flex-1 py-2 uppercase ${tab === t ? "ck-glow-cyan" : "opacity-60 hover:opacity-100"}`}
+            className={`flex-1 py-2 ${tab === t ? "ck-glow-cyan" : "opacity-60 hover:opacity-100"}`}
           >
-            {t}
+            {t === "progress" ? `진행 ${reqDone}/${reqTotal}` : t === "summary" ? "요약" : `파일 ${workResult?.files?.length ?? 0}`}
           </button>
         ))}
       </div>
 
       <div className="ck-scroll flex-1 space-y-4 p-3 text-sm">
+        {tab === "progress" && reqTotal > 0 && <ReqList reqs={reqs} />}
         {tab === "progress" && (
           <ProgressTab
             userId={userId}
@@ -339,6 +346,49 @@ function FilesTab({ files }: { files: WorkResultFile[] }) {
       {selected?.diff && (
         <pre className="ck-scroll max-h-64 overflow-x-auto rounded bg-black/30 p-2 font-mono text-xs">{selected.diff}</pre>
       )}
+    </div>
+  );
+}
+
+/**
+ * REQ(subtask) 목록 — 설계안에서 REQ는 **그래프 노드가 아니라 이 패널**에 산다.
+ *
+ * `{taskId}::REQ-CONFIRM`(사용자 최종확인)은 §9상 **에이전트가 못 닫고 사람의 review_done으로만**
+ * 완료되는 노드라, 다른 REQ와 구분해 표시한다 — 이게 섞이면 "AI가 다 끝냈다"로 잘못 읽힌다.
+ */
+function ReqList({ reqs }: { reqs: RoadmapNode[] }) {
+  return (
+    <div className="space-y-1">
+      {reqs.map((r) => {
+        const st = (r.manual_status ?? r.status ?? "pending").toLowerCase();
+        const isConfirm = r.id.endsWith("::REQ-CONFIRM");
+        const done = st === "done";
+        return (
+          <div
+            key={r.id}
+            className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 ${
+              isConfirm ? "border-amber-500/30 bg-amber-500/5" : "border-[var(--color-border)] bg-[var(--color-background)]"
+            }`}
+          >
+            <span className={`shrink-0 text-[12px] ${done ? "text-emerald-400" : "text-[var(--color-text-dim)]"}`}>
+              {done ? "✓" : st === "in_progress" ? "◐" : "○"}
+            </span>
+            <span
+              className={`min-w-0 flex-1 truncate text-[12.5px] ${
+                done ? "text-[var(--color-text-muted)]" : "text-[var(--color-text)]"
+              }`}
+              title={r.title}
+            >
+              {r.title}
+            </span>
+            {isConfirm && (
+              <span className="shrink-0 rounded border border-amber-500/40 px-1.5 py-0.5 font-mono text-[9.5px] text-amber-300">
+                사용자 확인
+              </span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
