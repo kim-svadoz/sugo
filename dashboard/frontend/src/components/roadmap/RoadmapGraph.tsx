@@ -58,16 +58,87 @@ function cardStyle(status: string, ready: boolean, isGroup: boolean) {
   }
 }
 
-type NodeData = { node: RoadmapNode; selected: boolean; ready: boolean; childCount?: number };
+type NodeData = {
+  node: RoadmapNode;
+  selected: boolean;
+  ready: boolean;
+  /** 직속 하위 개수(접혀서 안 보이는 것 포함) — 펼치기 전에 규모를 알아야 한다. */
+  childCount?: number;
+  /** 하위 중 done 개수. RUN 카드가 `· task N개 (M done)`으로 쓴다. */
+  doneChildCount?: number;
+  onToggleExpand?: () => void;
+};
 type FlowNode = Node<NodeData, "roadmap" | "container" | "lineage">;
 
-/** nodeTypes ①: 접힌 task/subtask 카드. */
+/**
+ * nodeTypes ① — 접힌 **task 카드**와 접힌 **SPEC/RUN 폴더 카드**를 둘 다 그린다(설계안).
+ *
+ * 접힌 SPEC/RUN은 일반 task 카드가 아니라 **폴더**다: `WS_CARD_W` 폭 + 대시 테두리 + 헤더 밴드
+ * + 펼치기 chevron. **클릭하면 펼쳐진다** — 접힌 폴더에서 사람이 기대하는 건 클릭이지
+ * 더블클릭이 아니다(더블클릭도 같이 받는다).
+ */
 function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
   const n = data.node;
   const st = effStatus(n);
-  const isGroup = n.level === "spec" || n.level === "workstream";
+  const isSpec = n.level === "spec";
+  const isGroup = isSpec || n.level === "workstream";
   const cs = cardStyle(st, data.ready, isGroup);
   const dim = st === "dropped";
+
+  if (isGroup) {
+    const expand = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      data.onToggleExpand?.();
+    };
+    return (
+      <div className="group/card" style={{ width: WS_CARD_W, opacity: dim ? 0.6 : 1 }}>
+        <Handle type="target" position={Position.Left} style={{ opacity: 0, width: 9, height: 9, left: -5 }} />
+        <div
+          className="cursor-pointer overflow-hidden rounded-xl border-2 border-dashed transition-all duration-150 group-hover/card:brightness-110"
+          style={{ borderColor: cs.border, background: "rgba(30,41,59,0.35)" }}
+          title={isSpec ? "SPEC(마스터 PRD)" : "RUN(실행 묶음)"}
+          onClick={expand}
+        >
+          <div className="flex items-center gap-1.5 whitespace-nowrap border-b border-slate-500/25 bg-slate-500/15 py-2.5 pl-2 pr-3">
+            <button
+              className="nodrag -my-1 flex h-8 w-8 items-center justify-center rounded text-[15px] leading-none text-slate-200 hover:bg-slate-400/20 hover:text-white"
+              title="펼치기"
+              onClick={expand}
+            >
+              ▸
+            </button>
+            <span className={cn("leading-none opacity-80", isSpec ? "text-xl" : "text-base")}>{isSpec ? "📄" : "🔁"}</span>
+            <span
+              className={cn(
+                "inline-flex items-center rounded-md bg-slate-500/25 font-bold leading-none tracking-wider text-slate-200",
+                isSpec ? "px-2 py-1 text-[11px]" : "px-1.5 py-0.5 text-[10px]",
+              )}
+            >
+              {isSpec ? "SPEC" : "RUN"}
+            </span>
+            <span className={cn("font-medium text-slate-400/90", isSpec ? "text-[13px]" : "text-[12px]")}>
+              {isSpec
+                ? `· RUN ${data.childCount ?? 0}개`
+                : `· task ${data.childCount ?? 0}개 (${data.doneChildCount ?? 0} done)`}
+            </span>
+            <span
+              className={cn(
+                "min-w-0 flex-1 truncate text-slate-200/90",
+                isSpec ? "text-[15px] font-semibold" : "text-[13px]",
+                dim && "line-through",
+              )}
+              title={n.title}
+            >
+              · {n.title}
+            </span>
+            {n.manual_status && <span className="shrink-0 text-[10px] text-amber-300">✋</span>}
+          </div>
+        </div>
+        <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 9, height: 9, right: -5 }} />
+      </div>
+    );
+  }
+
   return (
     <div className="group/card" style={{ width: NODE_W, opacity: dim ? 0.55 : 1 }}>
       <Handle type="target" position={Position.Left} style={{ opacity: 0, width: 9, height: 9, left: -5 }} />
@@ -85,7 +156,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
             className="rounded border px-1.5 py-0.5 font-mono text-[9.5px]"
             style={{ color: cs.accent, borderColor: `${cs.accent}66` }}
           >
-            {n.level === "spec" ? "📄 SPEC" : n.level === "workstream" ? "🔁 RUN" : n.level}
+            {n.level}
           </span>
           <span className="flex items-center gap-1 font-mono text-[9.5px] uppercase" style={{ color: cs.accent }}>
             {st === "in_progress" && (
@@ -97,14 +168,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
         <div className={cn("mt-1 truncate font-mono text-[12.5px] text-slate-100", dim && "line-through")} title={n.title}>
           {n.title}
         </div>
-        <div className="mt-1 flex items-center gap-2">
-          {n.manual_status && <span className="text-[9.5px] text-amber-300">✋ 수동</span>}
-          {isGroup && (data.childCount ?? 0) > 0 && (
-            <span className="ml-auto font-mono text-[9.5px] text-[var(--color-text-dim)]">
-              ▸ {data.childCount} 하위 · 더블클릭
-            </span>
-          )}
-        </div>
+        {n.manual_status && <span className="mt-1 inline-block text-[9.5px] text-amber-300">✋ 수동</span>}
       </div>
       <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 9, height: 9, right: -5 }} />
     </div>
@@ -125,15 +189,26 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
         style={{ borderColor: "#4b5261", background: "rgba(30,41,59,0.35)" }}
         title={isSpec ? "SPEC(마스터 PRD)" : "RUN(실행 묶음)"}
       >
-        <div className="flex items-center gap-2 border-b border-slate-500/25 bg-slate-500/15 py-2.5 pl-3 pr-3 whitespace-nowrap">
-          <span className="rounded border border-slate-400/40 px-1.5 py-0.5 font-mono text-[9.5px] text-slate-300">
+        <div className="flex items-center gap-1.5 whitespace-nowrap border-b border-slate-500/25 bg-slate-500/15 py-2.5 pl-2 pr-3">
+          <button
+            className="nodrag -my-1 flex h-8 w-8 items-center justify-center rounded text-[15px] leading-none text-slate-200 hover:bg-slate-400/20 hover:text-white"
+            title="접기"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onToggleExpand?.();
+            }}
+          >
+            ▾
+          </button>
+          <span className={cn("leading-none opacity-80", isSpec ? "text-xl" : "text-base")}>{isSpec ? "📄" : "🔁"}</span>
+          <span className="rounded-md bg-slate-500/25 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-wider text-slate-200">
             {isSpec ? "SPEC" : "RUN"}
           </span>
           <span className="truncate font-mono text-[13px] font-bold text-slate-100" title={n.title}>
             {n.title}
           </span>
-          <span className="ml-auto font-mono text-[10.5px] text-slate-400">
-            ▾ {data.childCount ?? 0} 하위 · 더블클릭으로 접기
+          <span className="ml-auto shrink-0 font-mono text-[10.5px] text-slate-400">
+            {isSpec ? `RUN ${data.childCount ?? 0}개` : `task ${data.childCount ?? 0}개 (${data.doneChildCount ?? 0} done)`}
           </span>
         </div>
       </div>
@@ -202,11 +277,21 @@ function visibleNodes(nodes: RoadmapNode[], expanded: Set<string>): RoadmapNode[
   return nodes.filter((n) => n.level !== "subtask" && n.level !== "step" && !hiddenByCollapsedAncestor(n));
 }
 
-function layout(nodes: RoadmapNode[], selectedId: string | null, expanded: Set<string>): { rfNodes: FlowNode[]; rfEdges: Edge[] } {
+function layout(
+  nodes: RoadmapNode[],
+  selectedId: string | null,
+  expanded: Set<string>,
+  onToggleExpand: (id: string) => void,
+): { rfNodes: FlowNode[]; rfEdges: Edge[] } {
   const ready = computeReady(nodes);
   // 하위 개수는 **숨긴 것까지 세어** 접힌 카드에 "N 하위"로 보여준다(펼치기 전에 규모를 알아야 한다).
   const childCount = new Map<string, number>();
-  for (const n of nodes) if (n.parent) childCount.set(n.parent, (childCount.get(n.parent) ?? 0) + 1);
+  const doneChildCount = new Map<string, number>();
+  for (const n of nodes) {
+    if (!n.parent) continue;
+    childCount.set(n.parent, (childCount.get(n.parent) ?? 0) + 1);
+    if (effStatus(n) === "done") doneChildCount.set(n.parent, (doneChildCount.get(n.parent) ?? 0) + 1);
+  }
   const all = nodes;
   nodes = visibleNodes(nodes, expanded);
   void all;
@@ -256,7 +341,14 @@ function layout(nodes: RoadmapNode[], selectedId: string | null, expanded: Set<s
       id: n.id,
       type: kind,
       position: { x: pos?.x ?? 0, y: pos?.y ?? 0 },
-      data: { node: n, selected: selectedId === n.id, ready: ready.has(n.id), childCount: childCount.get(n.id) ?? 0 },
+      data: {
+        node: n,
+        selected: selectedId === n.id,
+        ready: ready.has(n.id),
+        childCount: childCount.get(n.id) ?? 0,
+        doneChildCount: doneChildCount.get(n.id) ?? 0,
+        onToggleExpand: () => onToggleExpand(n.id),
+      },
     };
   });
   return { rfNodes, rfEdges };
@@ -316,7 +408,10 @@ export function RoadmapGraph({
     });
   }, []);
 
-  const { rfNodes, rfEdges } = useMemo(() => layout(nodes, selectedId, expanded), [nodes, selectedId, expanded]);
+  const { rfNodes, rfEdges } = useMemo(
+    () => layout(nodes, selectedId, expanded, toggleExpand),
+    [nodes, selectedId, expanded, toggleExpand],
+  );
 
   /** 설계안 droppedTop — dropped인데 부모는 dropped가 아닌 "최상위 폐기"만. */
   const droppedTop = useMemo(() => {
