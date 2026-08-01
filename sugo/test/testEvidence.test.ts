@@ -123,3 +123,38 @@ describe("§4.2 풀검증 명령 게이트 — 설계안 코퍼스", () => {
     expect(checkTestEvidenceGate(false, evidence).ok).toBe(true);
   });
 });
+
+/**
+ * 설계안 파라미터명(`totalTests`/`passedTests`/`failedTests`)이 v2 정본이다. v1은
+ * `total`/`passed`/`failed`였는데, test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
+ * undefined로 들어가 증거가 비어버린다 — 그래서 둘 다 받되 새 이름이 이긴다.
+ */
+describe("§설계안 record_test_evidence 파라미터명", () => {
+  async function record(args: Record<string, unknown>) {
+    const { handleSugoPlan } = await import("../src/tools/sugoPlan.js");
+    const { handleSugoRecordTestEvidence } = await import("../src/tools/sugoRecordTestEvidence.js");
+    const { loadSession } = await import("../src/session.js");
+    const started = JSON.parse(
+      ((await handleSugoPlan({ action: "start", projectPath: process.cwd(), featureName: "f" })) as { content: { text: string }[] }).content[0].text,
+    );
+    await handleSugoRecordTestEvidence({ sessionId: started.sessionId, ...args });
+    return (await loadSession(started.sessionId)).data.chainInfo.testEvidence;
+  }
+
+  it("새 이름(totalTests/passedTests/failedTests)이 기록된다", async () => {
+    const ev = await record({ command: "./gradlew check", exitCode: 0, totalTests: 12, passedTests: 12, failedTests: 0 });
+    expect(ev?.total).toBe(12);
+    expect(ev?.passed).toBe(12);
+    expect(ev?.failed).toBe(0);
+  });
+
+  it("구 이름(total/passed/failed)도 여전히 받는다(하위호환)", async () => {
+    const ev = await record({ command: "npm test", exitCode: 0, total: 5, passed: 5, failed: 0 });
+    expect(ev?.total).toBe(5);
+  });
+
+  it("둘 다 주면 새 이름이 이긴다", async () => {
+    const ev = await record({ command: "npm test", exitCode: 0, total: 1, totalTests: 9 });
+    expect(ev?.total).toBe(9);
+  });
+});

@@ -85,7 +85,10 @@ export function createSkillsRouter(skillsPath: string): Router {
         if (d.isFile() && d.name.endsWith(".md")) out.push(d.name.replace(/\.md$/, ""));
       }
     }
-    res.json({ skills: out });
+    // 설계안 SkillList는 `{name, agent}`로 에이전트별 필터링을 한다. 플러그인 레이아웃엔
+    // 스킬→에이전트 소속이 디렉터리에 안 드러나므로 SKILL.md frontmatter의 `agent:`를 읽는다.
+    // 없으면 null — 추측해서 붙이면 잘못된 에이전트 밑에 스킬이 걸린다.
+    res.json({ skills: out.map((name) => ({ name, agent: readSkillAgent(skillsPath, name) })) });
   });
 
   router.get("/agents", (_req, res) => {
@@ -95,7 +98,9 @@ export function createSkillsRouter(skillsPath: string): Router {
     const agents = readdirSync(agentsDir, { withFileTypes: true })
       .filter((d) => (d.isFile() && d.name.endsWith(".md")) || d.isDirectory())
       .map((d) => d.name.replace(/\.md$/, ""));
-    res.json({ agents });
+    // 설계안 에이전트 카드는 name/description을 쓴다. 파일 frontmatter에서 읽고,
+    // 없으면 id를 그대로 name으로 둔다(설명을 지어내지 않는다).
+    res.json({ agents: agents.map((id) => ({ id, ...readAgentMeta(agentsDir, id) })) });
   });
 
   router.get(
@@ -112,4 +117,37 @@ export function createSkillsRouter(skillsPath: string): Router {
   );
 
   return router;
+}
+
+
+/** `---` frontmatter에서 키 하나를 뽑는다. 파서를 새로 들이지 않는 최소 구현. */
+function frontmatterValue(text: string, key: string): string | null {
+  const m = /^---[\r\n]+([\s\S]*?)[\r\n]+---/.exec(text);
+  if (!m) return null;
+  const line = m[1].split(/[\r\n]+/).find((l) => l.trim().startsWith(key + ":"));
+  if (!line) return null;
+  return line.slice(line.indexOf(":") + 1).trim().replace(/^["']|["']$/g, "") || null;
+}
+
+function readAgentMeta(agentsDir: string, id: string): { name: string; description: string } {
+  for (const candidate of [join(agentsDir, id + ".md"), join(agentsDir, id, "AGENT.md")]) {
+    try {
+      const text = readFileSync(candidate, "utf8");
+      return { name: frontmatterValue(text, "name") ?? id, description: frontmatterValue(text, "description") ?? "" };
+    } catch {
+      /* 다음 후보 */
+    }
+  }
+  return { name: id, description: "" };
+}
+
+function readSkillAgent(skillsPath: string, name: string): string | null {
+  for (const candidate of [join(skillsPath, "skills", name, "SKILL.md"), join(skillsPath, "commands", name + ".md")]) {
+    try {
+      return frontmatterValue(readFileSync(candidate, "utf8"), "agent");
+    } catch {
+      /* 다음 후보 */
+    }
+  }
+  return null;
 }

@@ -10,6 +10,15 @@ export const sugoRecordTestEvidenceInputSchema = {
     .describe("baseline=code_start 전 기존 테스트(§4.0), feature=구현 후 테스트(§4.2)"),
   command: z.string().describe("실행한 명령(예: npm test, ./gradlew test)"),
   exitCode: z.number().optional().describe("프로세스 종료코드. 0이면 그린"),
+  // 설계안 정본 파라미터명. v1은 total/passed/failed였는데 test-agent가 부르는 계약이라
+  // 이름이 어긋나면 값이 조용히 undefined로 들어가 증거가 비어버린다 — 구 이름은 아래에서
+  // 하위호환으로만 받고, 새 이름이 있으면 새 이름이 이긴다.
+  totalTests: z.number().optional().describe("실행된 전체 테스트 수"),
+  passedTests: z.number().optional().describe("통과 수"),
+  failedTests: z.number().optional().describe("실패 수"),
+  skippedTests: z.number().optional().describe("스킵 수"),
+  rawOutput: z.string().optional().describe("원문 출력(감사용, 선택)"),
+  /** @deprecated v1 이름 — 낡은 호출부 호환용. 새 코드는 totalTests/passedTests/failedTests를 쓴다. */
   total: z.number().optional(),
   passed: z.number().optional(),
   failed: z.number().optional(),
@@ -37,9 +46,9 @@ export async function handleSugoRecordTestEvidence(rawArgs: unknown) {
     {
       command: args.command,
       exitCode: args.exitCode,
-      total: args.total,
-      passed: args.passed,
-      failed: args.failed,
+      total: args.totalTests ?? args.total,
+      passed: args.passedTests ?? args.passed,
+      failed: args.failedTests ?? args.failed,
       unverified: args.unverified,
       unverifiedReason: args.unverifiedReason,
     },

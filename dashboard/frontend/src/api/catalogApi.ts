@@ -8,11 +8,24 @@ export interface HarnessManifestEntry {
   [k: string]: unknown;
 }
 
-export function listSkills(): Promise<{ skills: string[] }> {
-  return apiJson<{ skills: string[] }>("/api/skills");
+/** 설계안 — SkillList가 에이전트별로 필터링하려면 소속이 필요하다(frontmatter의 agent:). */
+export interface SkillEntry {
+  name: string;
+  agent: string | null;
 }
-export function listAgents(): Promise<{ agents: string[] }> {
-  return apiJson<{ agents: string[] }>("/api/skills/agents");
+
+/** 에이전트 카드는 name/description을 쓴다. 없으면 백엔드가 id를 name으로 준다. */
+export interface AgentEntry {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export function listSkills(): Promise<{ skills: SkillEntry[] }> {
+  return apiJson<{ skills: SkillEntry[] }>("/api/skills");
+}
+export function listAgents(): Promise<{ agents: AgentEntry[] }> {
+  return apiJson<{ agents: AgentEntry[] }>("/api/skills/agents");
 }
 export async function getHarnessUnified(): Promise<string> {
   const res = await apiFetch("/api/harness/unified");

@@ -39,7 +39,7 @@ function FeedLine({ ev }: { ev: ActivityEvent }) {
     <div className="ck-line-in flex items-start gap-1.5 font-mono text-[11.5px] leading-relaxed">
       <span className="w-3 shrink-0 text-[var(--color-text-dim)]">&gt;</span>
       <span className="w-[92px] shrink-0 text-[var(--color-text-dim)]">[{formatTs(ev.ts)}]</span>
-      <span className="w-[96px] shrink-0">
+      <span className="w-[96px] shrink-0 overflow-hidden whitespace-nowrap">
         <AgentBadge agent={ev.agent} handoffTo={ev.handoff_to} />
       </span>
       <span className="shrink-0 text-[var(--color-text-muted)]">{ev.workspace_name}</span>
@@ -112,7 +112,7 @@ export function LiveLogTail({ workspace }: { workspace: string }) {
   const events = useActivityStream();
   const visible = events.filter((e) => e.workspace_name === workspace).slice(0, 40);
   return (
-    <div className="ck-scroll max-h-40 space-y-0.5 overflow-auto pr-1">
+    <div className="ck-scroll h-24 space-y-0.5 overflow-auto pr-1">
       {visible.length === 0 ? (
         <div className="py-4 text-center text-[11.5px] text-[var(--color-text-dim)]">이벤트 대기 중</div>
       ) : (

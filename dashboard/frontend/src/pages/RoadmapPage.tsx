@@ -398,7 +398,9 @@ function RoadmapInner() {
       </div>
 
       {/* 하단 워크스페이스 로그 tail */}
-      <div className="shrink-0 border-t border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
+      {/* 하단 로그 스트립 — 높이를 고정한다. 마운트 후 높이가 바뀌면 ReactFlow의 fitView가
+          이미 계산을 끝낸 뒤라 그래프가 잘린 채로 남는다. */}
+      <div className="h-28 shrink-0 overflow-hidden border-t border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
         <LiveLogTail workspace={workspace} />
       </div>
 
