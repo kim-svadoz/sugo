@@ -28,6 +28,9 @@ const LINEAGE_VCARD_H = 72;
 const ALERT = "#fb923c";
 const C_READY = "#4fa87f";
 const C_PROG = "#5c8bcc";
+const CONT_HEADER = 54;
+const CONT_PAD = 16;
+const DROP_ROOM = 44;
 
 function effStatus(n: RoadmapNode): string {
   return (n.manual_status ?? n.status ?? "pending").toLowerCase();
@@ -182,10 +185,12 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
   const st = effStatus(n);
   const dim = st === "dropped";
   return (
-    <div style={{ width: WS_CARD_W, opacity: dim ? 0.6 : 1 }}>
+    // 부모(ReactFlow 노드)가 style.width/height로 실제 크기를 준다 — 자식이 이 안에 놓이므로
+    // 여기서 폭을 고정하면 안 된다.
+    <div className="h-full w-full" style={{ opacity: dim ? 0.6 : 1 }}>
       <Handle type="target" position={Position.Left} style={{ opacity: 0, width: 9, height: 9, left: -5 }} />
       <div
-        className="overflow-hidden rounded-xl border-2 border-dashed transition-all duration-150"
+        className="h-full w-full rounded-xl border-2 border-dashed transition-all duration-150"
         style={{ borderColor: "#4b5261", background: "rgba(30,41,59,0.35)" }}
         title={isSpec ? "SPEC(마스터 PRD)" : "RUN(실행 묶음)"}
       >
@@ -292,36 +297,113 @@ function layout(
     childCount.set(n.parent, (childCount.get(n.parent) ?? 0) + 1);
     if (effStatus(n) === "done") doneChildCount.set(n.parent, (doneChildCount.get(n.parent) ?? 0) + 1);
   }
-  const all = nodes;
   nodes = visibleNodes(nodes, expanded);
-  void all;
 
-  const g = new dagre.graphlib.Graph();
-  // 설계안 "최상위 산개" 값.
-  g.setGraph({ rankdir: "LR", nodesep: 44, ranksep: 150, marginx: 12, marginy: 12 });
-  g.setDefaultEdgeLabel(() => ({}));
-
-  // 펼친 SPEC/RUN만 container(대시 테두리 컨테이너). 접혀 있으면 일반 카드로 그린다.
+  // 펼친 SPEC/RUN만 container(대시 테두리 컨테이너). 접혀 있으면 폴더 카드로 그린다.
   const kindOf = (n: RoadmapNode): "roadmap" | "container" | "lineage" => {
     if (n.level === "spec" || n.level === "workstream") return expanded.has(n.id) ? "container" : "roadmap";
     if (n.lineage) return "lineage";
     return "roadmap";
   };
 
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const kids = new Map<string, RoadmapNode[]>();
+  const roots: RoadmapNode[] = [];
   for (const n of nodes) {
-    const kind = kindOf(n);
-    g.setNode(n.id, {
-      width: kind === "container" ? WS_CARD_W : NODE_W,
-      height: kind === "lineage" ? LINEAGE_VCARD_H : kind === "container" ? 60 : CARD_H / 2,
-    });
+    if (n.parent && byId.has(n.parent)) kids.set(n.parent, [...(kids.get(n.parent) ?? []), n]);
+    else roots.push(n);
   }
 
+  /**
+   * **2단 레이아웃(설계안).** 펼친 컨테이너는 자식을 *옆에 늘어놓는 게 아니라 품는다* —
+   * ReactFlow의 `parentId`로 실제 부모-자식이 되고, 자식 좌표는 부모 기준 상대좌표다.
+   *
+   * 그래서 안쪽부터 재귀로 크기를 정한다: 자식들을 컨테이너 내부 dagre(nodesep 24·ranksep 80)로
+   * 배치해 bbox를 얻고, 그 bbox에 헤더(CONT_HEADER)·여백(CONT_PAD)·드롭 여유(DROP_ROOM)를 더한
+   * 값이 컨테이너의 크기가 된다. 이 크기를 가지고 다시 바깥 단계를 배치한다.
+   *
+   * 안쪽 크기를 모르면 바깥 dagre가 컨테이너를 실제보다 작게 잡아 형제 노드와 겹친다 —
+   * 그래서 순서가 뒤집히면 안 된다.
+   */
+  const size = new Map<string, { w: number; h: number }>();
+  const childPos = new Map<string, { x: number; y: number }>();
+
+  const measure = (n: RoadmapNode): { w: number; h: number } => {
+    const cached = size.get(n.id);
+    if (cached) return cached;
+    const kind = kindOf(n);
+
+    if (kind !== "container") {
+      const s =
+        kind === "lineage"
+          ? { w: NODE_W, h: LINEAGE_VCARD_H }
+          : n.level === "spec" || n.level === "workstream"
+            ? { w: WS_CARD_W, h: CONT_HEADER } // 접힌 폴더 = 헤더 밴드 한 줄
+            : { w: NODE_W, h: CARD_H / 2 };
+      size.set(n.id, s);
+      return s;
+    }
+
+    const children = kids.get(n.id) ?? [];
+    if (children.length === 0) {
+      const s = { w: WS_CARD_W, h: CONT_HEADER + CONT_PAD * 2 };
+      size.set(n.id, s);
+      return s;
+    }
+
+    const inner = new dagre.graphlib.Graph();
+    inner.setGraph({ rankdir: "LR", nodesep: 24, ranksep: 80, marginx: 0, marginy: 0 });
+    inner.setDefaultEdgeLabel(() => ({}));
+    for (const c of children) {
+      const cs = measure(c);
+      inner.setNode(c.id, { width: cs.w, height: cs.h });
+    }
+    const childIds = new Set(children.map((c) => c.id));
+    for (const c of children) {
+      for (const dep of c.depends_on ?? []) if (childIds.has(dep)) inner.setEdge(dep, c.id);
+    }
+    dagre.layout(inner);
+
+    let maxX = 0;
+    let maxY = 0;
+    for (const c of children) {
+      const p = inner.node(c.id);
+      const cs = size.get(c.id)!;
+      // dagre는 중심 좌표를 준다 → 좌상단으로 변환하고 컨테이너 안쪽 여백만큼 민다.
+      const x = (p?.x ?? 0) - cs.w / 2 + CONT_PAD;
+      const y = (p?.y ?? 0) - cs.h / 2 + CONT_HEADER + CONT_PAD;
+      childPos.set(c.id, { x, y });
+      maxX = Math.max(maxX, x + cs.w);
+      maxY = Math.max(maxY, y + cs.h);
+    }
+
+    const s = { w: Math.max(WS_CARD_W, maxX + CONT_PAD), h: maxY + CONT_PAD + DROP_ROOM };
+    size.set(n.id, s);
+    return s;
+  };
+
+  for (const r of roots) measure(r);
+
+  // 최상위 산개(설계안) — 컨테이너는 위에서 잰 실제 크기로 자리를 잡는다.
+  const g = new dagre.graphlib.Graph();
+  g.setGraph({ rankdir: "LR", nodesep: 44, ranksep: 150, marginx: 12, marginy: 12 });
+  g.setDefaultEdgeLabel(() => ({}));
+  for (const r of roots) {
+    const s = size.get(r.id)!;
+    g.setNode(r.id, { width: s.w, height: s.h });
+  }
+  const rootIds = new Set(roots.map((r) => r.id));
+  for (const r of roots) {
+    for (const dep of r.depends_on ?? []) if (rootIds.has(dep)) g.setEdge(dep, r.id);
+  }
+  dagre.layout(g);
+
+  // 엣지는 계층과 무관하게 **보이는 노드 사이 전부** 그린다(컨테이너를 넘나드는 의존도 있다).
   const ids = new Set(nodes.map((n) => n.id));
   const rfEdges: Edge[] = [];
   for (const n of nodes) {
     for (const dep of n.depends_on ?? []) {
       if (!ids.has(dep)) continue;
-      g.setEdge(dep, n.id);
       rfEdges.push({
         id: `${dep}->${n.id}`,
         source: dep,
@@ -332,15 +414,23 @@ function layout(
       });
     }
   }
-  dagre.layout(g);
 
-  const rfNodes: FlowNode[] = nodes.map((n) => {
-    const pos = g.node(n.id);
+  // ReactFlow는 **부모가 배열에서 자식보다 먼저** 와야 한다 — 위에서 아래로 훑어 담는다.
+  const rfNodes: FlowNode[] = [];
+  const emit = (n: RoadmapNode, parentId?: string) => {
     const kind = kindOf(n);
-    return {
+    const s = size.get(n.id)!;
+    const rootPos = g.node(n.id);
+    const position = parentId
+      ? (childPos.get(n.id) ?? { x: 0, y: 0 })
+      : { x: (rootPos?.x ?? 0) - s.w / 2, y: (rootPos?.y ?? 0) - s.h / 2 };
+
+    rfNodes.push({
       id: n.id,
       type: kind,
-      position: { x: pos?.x ?? 0, y: pos?.y ?? 0 },
+      position,
+      ...(parentId ? { parentId, extent: "parent" as const } : {}),
+      style: { width: s.w, height: s.h },
       data: {
         node: n,
         selected: selectedId === n.id,
@@ -349,8 +439,12 @@ function layout(
         doneChildCount: doneChildCount.get(n.id) ?? 0,
         onToggleExpand: () => onToggleExpand(n.id),
       },
-    };
-  });
+    });
+
+    if (kind === "container") for (const c of kids.get(n.id) ?? []) emit(c, n.id);
+  };
+  for (const r of roots) emit(r);
+
   return { rfNodes, rfEdges };
 }
 
