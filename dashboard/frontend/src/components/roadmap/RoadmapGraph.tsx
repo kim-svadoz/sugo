@@ -45,6 +45,30 @@ const BAND_H = 30;
  * 최상위에 흩어져 "왜 여기 떠 있지"가 되는 걸 막고, 설계안의 📋미분류 밴드를 걸어준다.
  */
 const UNASSIGNED = "__unassigned__";
+/** 설계안 패치 체인 치수. */
+const PC_COL_W = 280;
+const PC_COL_GAP = 30;
+const PC_FORK_H = 48;
+const PC_CARD_GAP = 18;
+/** 체인 노드 id 접두어 — 서버 노드가 아니라 여러 patch task를 묶은 화면 전용 노드다. */
+const CHAIN = "chain:";
+
+/**
+ * `lineage` 컬럼은 계약상 `unknown`이다(스키마가 열려 있다). 화면이 쓰는 필드만 **방어적으로**
+ * 읽는다 — 모양이 달라져도 체인이 통째로 사라지지 않고 depth 0 한 줄로 접힐 뿐이다.
+ */
+type Lineage = { root?: string; depth?: number; version?: number };
+function readLineage(v: unknown): Lineage | null {
+  if (!v || typeof v !== "object") return null;
+  const o = v as Record<string, unknown>;
+  return {
+    root: typeof o.root === "string" ? o.root : undefined,
+    depth: typeof o.depth === "number" ? o.depth : undefined,
+    version: typeof o.version === "number" ? o.version : undefined,
+  };
+}
+/** 체인 안의 카드 한 장. */
+type ChainItem = { node: RoadmapNode; depth: number; version: number };
 
 function effStatus(n: RoadmapNode): string {
   return (n.manual_status ?? n.status ?? "pending").toLowerCase();
@@ -95,6 +119,13 @@ type NodeData = {
   bandBottom?: number | null;
   /** 드래그 중인 RUN이 이 컨테이너 위에 있는가 → "＋ 여기에 놓기". */
   isDropTarget?: boolean;
+  /** lineage 노드 전용 — 이 체인에 묶인 patch 카드들(컬럼=sibling, 세로=serial). */
+  chain?: ChainItem[][];
+  /** 체인이 접혀 있는가(depth 0만 보인다). */
+  collapsed?: boolean;
+  onSelect?: (id: string) => void;
+  /** 체인 안에서 실제로 선택된 patch의 id — 체인 노드 자신의 id와는 다르다. */
+  selectedItemId?: string | null;
 };
 type FlowNode = Node<NodeData, "roadmap" | "container" | "lineage">;
 
@@ -341,19 +372,108 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
   );
 }
 
-/** nodeTypes ③: patch 계보 체인(보라 계열 — §5.4 secondary). */
+/**
+ * nodeTypes ③: patch 계보 체인(설계안 · 보라 계열 §5.4 secondary).
+ *
+ * 카드 한 장이 아니라 **체인 하나가 노드 하나**다. 위쪽 stem에서 컬럼마다 violet 점선 베지어가
+ * 갈라져 나오고(fork), 같은 컬럼 안에서는 세로로 쌓인다 — 컬럼=형제 패치, 세로=연속 차수.
+ * 접으면 각 컬럼의 depth 0 한 장만 남고 "▾ +N패치" 버튼이 붙는다.
+ */
 function LineageChainNode({ data }: NodeProps<FlowNode>) {
-  const n = data.node;
+  const cols = data.chain ?? [];
+  const isColl = data.collapsed !== false;
+  const ncols = Math.max(cols.length, 1);
+  const totalW = ncols * PC_COL_W + (ncols - 1) * PC_COL_GAP;
+  const stemX = totalW / 2;
+  const dy = PC_FORK_H * 0.55;
+  const colCenter = (i: number) => i * (PC_COL_W + PC_COL_GAP) + PC_COL_W / 2;
+  // "최신"은 **차수가 가장 높은 한 장**이다. 컬럼마다 붙이면 최신이 여러 개가 돼 의미가 없다.
+  const latestId = cols.flat().reduce<ChainItem | null>((a, b) => (!a || b.version > a.version ? b : a), null)?.node.id;
+
   return (
-    <div style={{ width: NODE_W, height: LINEAGE_VCARD_H }}>
-      <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
-      <div className="h-full overflow-hidden rounded-xl border border-violet-500/50 bg-violet-500/10 px-2.5 py-2">
-        <div className="font-mono text-[9.5px] text-violet-300">patch 계보</div>
-        <div className="mt-1 truncate font-mono text-[12px] text-violet-100" title={n.title}>
-          {n.title}
-        </div>
+    <div className="relative" style={{ width: totalW }}>
+      <Handle type="target" position={Position.Left} style={{ top: 16, opacity: 0 }} />
+      <Handle type="target" position={Position.Top} id="top" style={{ left: stemX, opacity: 0, width: 8, height: 8 }} />
+      <svg className="pointer-events-none absolute" style={{ left: 0, top: 0 }} width={totalW} height={PC_FORK_H}>
+        {cols.map((col, i) => (
+          <path
+            key={col[0].node.id}
+            d={`M ${stemX} 0 C ${stemX} ${dy}, ${colCenter(i)} ${PC_FORK_H - dy}, ${colCenter(i)} ${PC_FORK_H}`}
+            stroke="#8B5CF6"
+            strokeWidth={2}
+            strokeDasharray="4 4"
+            fill="none"
+            opacity={0.8}
+          />
+        ))}
+      </svg>
+
+      <div className="flex" style={{ gap: PC_COL_GAP, paddingTop: PC_FORK_H }}>
+        {cols.map((col) => {
+          const shown = isColl ? col.slice(0, 1) : col;
+          const hasChildren = col.length > 1;
+          return (
+            <div key={col[0].node.id} className="flex flex-col" style={{ width: PC_COL_W, gap: PC_CARD_GAP }}>
+              {shown.map((item, ri) => {
+                const st = effStatus(item.node);
+                return (
+                  <div key={item.node.id} className="relative">
+                    {/* 같은 컬럼의 앞 카드와 잇는 세로 점선 = 연속 차수 */}
+                    {ri > 0 && (
+                      <div
+                        className="absolute border-l-2 border-dashed"
+                        style={{ left: "50%", top: -PC_CARD_GAP, height: PC_CARD_GAP, borderColor: "#8B5CF6", opacity: 0.7 }}
+                      />
+                    )}
+                    <div
+                      className={cn(
+                        "cursor-pointer overflow-hidden rounded-xl border bg-violet-500/10 px-2.5 py-2 transition-all hover:brightness-110",
+                        data.selectedItemId === item.node.id ? "border-violet-300" : "border-violet-500/50",
+                      )}
+                      style={{ height: LINEAGE_VCARD_H }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        data.onSelect?.(item.node.id);
+                      }}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className="shrink-0 rounded bg-violet-500/25 px-1.5 py-0.5 font-mono text-[12px] font-bold text-violet-100">
+                          v{item.version}-patch
+                        </span>
+                        {item.node.id === latestId && (
+                          <span className="shrink-0 font-mono text-[10px] text-violet-300/80">최신</span>
+                        )}
+                        <span
+                          className="ml-auto shrink-0 font-mono text-[10px] uppercase"
+                          style={{ color: statusColor(st, false) }}
+                        >
+                          {st === "done" ? "완료" : cardStyle(st, false, false).label}
+                        </span>
+                      </div>
+                      <div className="mt-1 truncate text-[12.5px] text-[var(--color-text)]" title={item.node.title}>
+                        🔁 {item.node.title}
+                      </div>
+                    </div>
+                    {ri === 0 && hasChildren && (
+                      <button
+                        className="nodrag absolute z-10 flex items-center gap-1 rounded-full border border-violet-400/40 bg-[var(--color-surface)] px-1.5 py-0.5 text-[10.5px] font-semibold leading-none text-violet-300 hover:bg-violet-500/15"
+                        style={{ left: "50%", bottom: -9, transform: "translateX(-50%)" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          data.onToggleExpand?.();
+                        }}
+                      >
+                        {isColl ? `▾ +${col.length - 1}패치` : "▴ 접기"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
-      <Handle type="source" position={Position.Right} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} style={{ top: "auto", bottom: LINEAGE_VCARD_H / 2, opacity: 0 }} />
     </div>
   );
 }
@@ -406,7 +526,12 @@ function layout(
   selectedId: string | null,
   expanded: Set<string>,
   onToggleExpand: (id: string) => void,
-  actions: { onViewSummary: (n: RoadmapNode) => void; onViewSpec: (n: RoadmapNode) => void; onRename: (n: RoadmapNode) => void },
+  actions: {
+    onViewSummary: (n: RoadmapNode) => void;
+    onViewSpec: (n: RoadmapNode) => void;
+    onRename: (n: RoadmapNode) => void;
+    onSelect: (id: string) => void;
+  },
 ): { rfNodes: FlowNode[]; rfEdges: Edge[] } {
   const ready = computeReady(nodes);
   // 하위 개수는 **숨긴 것까지 세어** 접힌 카드에 "N 하위"로 보여준다(펼치기 전에 규모를 알아야 한다).
@@ -421,9 +546,20 @@ function layout(
 
   // 펼친 SPEC/RUN만 container(대시 테두리 컨테이너). 접혀 있으면 폴더 카드로 그린다.
   const kindOf = (n: RoadmapNode): "roadmap" | "container" | "lineage" => {
+    if (n.id.startsWith(CHAIN)) return "lineage";
     if (n.level === "spec" || n.level === "workstream") return expanded.has(n.id) ? "container" : "roadmap";
-    if (n.lineage) return "lineage";
     return "roadmap";
+  };
+
+  /** 체인 노드의 크기 — 컬럼 수 × 폭, 높이는 가장 긴 컬럼 기준(접혀 있으면 한 장). */
+  const chainSize = (id: string) => {
+    const cols = chainCols.get(id) ?? [];
+    const ncols = Math.max(cols.length, 1);
+    const rows = Math.max(...cols.map((c) => (expanded.has(id) ? c.length : 1)), 1);
+    return {
+      w: ncols * PC_COL_W + (ncols - 1) * PC_COL_GAP,
+      h: PC_FORK_H + rows * LINEAGE_VCARD_H + (rows - 1) * PC_CARD_GAP,
+    };
   };
 
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -432,6 +568,45 @@ function layout(
   for (const n of nodes) {
     if (n.parent && byId.has(n.parent)) kids.set(n.parent, [...(kids.get(n.parent) ?? []), n]);
     else roots.push(n);
+  }
+
+  /**
+   * **패치 체인 묶기(설계안).** `lineage`가 붙은 patch task들은 카드를 낱장으로 흩뿌리지 않고
+   * 계보 하나당 노드 하나(`chain:<root>`)로 묶는다 — 3차 패치까지 간 작업이 카드 네 장으로
+   * 퍼지면 원본이 어느 것인지 안 보인다.
+   *
+   * 컬럼은 스펙 그대로 **depth 0마다 새로 열고, depth>0은 직전 컬럼에 세로로 쌓는다.**
+   */
+  const chainCols = new Map<string, ChainItem[][]>();
+  const linNodes = nodes.filter((n) => readLineage(n.lineage));
+  if (linNodes.length > 0) {
+    const groups = new Map<string, RoadmapNode[]>();
+    for (const n of linNodes) {
+      const key = readLineage(n.lineage)!.root ?? n.parent ?? n.id;
+      groups.set(key, [...(groups.get(key) ?? []), n]);
+    }
+    for (const [root, members] of groups) {
+      const id = CHAIN + root;
+      const cols: ChainItem[][] = [];
+      const sorted = [...members].sort((a, b) => (readLineage(a.lineage)!.version ?? 0) - (readLineage(b.lineage)!.version ?? 0));
+      for (const m of sorted) {
+        const l = readLineage(m.lineage)!;
+        const item: ChainItem = { node: m, depth: l.depth ?? 0, version: l.version ?? 0 };
+        if (item.depth === 0 || cols.length === 0) cols.push([item]);
+        else cols[cols.length - 1].push(item);
+      }
+      chainCols.set(id, cols);
+
+      // 원본 노드들을 빼고 체인 노드 한 개로 갈아끼운다. 소속(부모 RUN)은 첫 멤버를 따른다 —
+      // patch는 새 Run을 만들지 않고 **원본 Run에 귀속**되기 때문이다(플러그인 스펙 §성숙).
+      const parent = members[0].parent;
+      const chainNode = { id, title: root, level: "task", status: effStatus(members[0]), parent, lineage: {} } as RoadmapNode;
+      byId.set(id, chainNode);
+      const memberIds = new Set(members.map((m) => m.id));
+      const strip = (arr: RoadmapNode[]) => arr.filter((n) => !memberIds.has(n.id));
+      if (parent && kids.has(parent)) kids.set(parent, [...strip(kids.get(parent)!), chainNode]);
+      else roots.splice(0, roots.length, ...strip(roots), chainNode);
+    }
   }
 
   /**
@@ -480,7 +655,7 @@ function layout(
     if (kind !== "container") {
       const s =
         kind === "lineage"
-          ? { w: NODE_W, h: LINEAGE_VCARD_H }
+          ? chainSize(n.id)
           : n.level === "spec" || n.level === "workstream"
             ? { w: WS_CARD_W, h: CONT_HEADER } // 접힌 폴더 = 헤더 밴드 한 줄
             : { w: NODE_W, h: CARD_H / 2 };
@@ -597,6 +772,10 @@ function layout(
         onViewSpec: () => actions.onViewSpec(n),
         onRename: () => actions.onRename(n),
         bandBottom: n.id === UNASSIGNED ? CONT_HEADER + BAND_H - 4 : null,
+        chain: chainCols.get(n.id),
+        selectedItemId: selectedId,
+        collapsed: !expanded.has(n.id),
+        onSelect: actions.onSelect,
       },
     });
 
@@ -674,6 +853,7 @@ export function RoadmapGraph({
         setSpecDoc((await getSpecContent(userId!, workspace, n.title)) ?? { title: label, content: null });
       },
       onRename: (n: RoadmapNode) => setRenaming({ node: n, value: n.title }),
+      onSelect: (id: string) => setSelectedId((cur) => (cur === id ? null : id)),
     }),
     [userId, workspace],
   );

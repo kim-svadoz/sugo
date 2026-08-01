@@ -99,6 +99,12 @@ await syncRoadmap(db, USER, "splearn", [
   { id: "t-005::REQ-007", title: "REQ-007 재설정 토큰 만료 30분", level: "subtask", status: "pending", parent: "t-005" },
   { id: "t-005::REQ-CONFIRM", title: "사용자 최종확인", level: "subtask", status: "pending", parent: "t-005" },
 
+  // 패치 계보 확인용 — patch는 새 Run을 만들지 않고 **원본 Run(run-001)에 귀속**된다.
+  // depth 0마다 새 컬럼, depth>0은 그 컬럼에 세로로 쌓인다(설계안 LineageChainNode).
+  { id: "t-001-p1", title: "로그인 실패 카운터 추가", level: "task", status: "done", parent: "run-001", lineage: { root: "t-001", depth: 0, version: 1 } },
+  { id: "t-001-p2", title: "계정 잠금 해제 스케줄러", level: "task", status: "done", parent: "run-001", lineage: { root: "t-001", depth: 1, version: 2 } },
+  { id: "t-001-p3", title: "bcrypt cost 재조정", level: "task", status: "in_progress", parent: "run-001", lineage: { root: "t-001", depth: 0, version: 3 } },
+
   // 📋미분류 밴드 확인용 — 아직 어느 Spec에도 편입되지 않은 RUN(parent 없음).
   // 캔버스에서 SPEC 컨테이너 위로 끌어다 놓으면 편입된다(assignRunToSpec).
   { id: "run-005", title: "2FA (Spec 미편입)", level: "workstream", status: "pending" },
