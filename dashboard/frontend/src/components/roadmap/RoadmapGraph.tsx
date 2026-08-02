@@ -41,6 +41,13 @@ const LINEAGE_VCARD_H = 72;
 const ALERT = "#fb923c";
 const C_READY = "#4fa87f";
 const C_PROG = "#5c8bcc";
+/**
+ * 선택 표시색. **상태색과 무관한 별도 색**이어야 한다 — 상태 accent로 칠하면 대기 상태의
+ * accent가 `#3a3f4d`(거의 배경색)이라 골라놓고도 골랐는지 알 수가 없다.
+ * 앱의 나머지(워크스페이스 카드 `neon-border-cyan`)와 같은 시안 계열로 맞춘다.
+ */
+const SEL = "#22d3ee";
+const selRing = (on: boolean) => (on ? `0 0 0 2px ${SEL}, 0 0 22px ${SEL}55` : undefined);
 const CONT_HEADER = 54;
 const CONT_PAD = 16;
 const DROP_ROOM = 44;
@@ -195,7 +202,11 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
         <Handle type="target" position={Position.Left} style={{ opacity: 0, width: 9, height: 9, left: -5 }} />
         <div
           className="cursor-pointer overflow-hidden rounded-xl border-2 border-dashed transition-all duration-150 group-hover/card:brightness-110"
-          style={{ borderColor: cs.border, background: "rgba(30,41,59,0.35)" }}
+          style={{
+            borderColor: data.selected ? SEL : cs.border,
+            background: data.selected ? "rgba(34,211,238,0.07)" : "rgba(30,41,59,0.35)",
+            boxShadow: selRing(data.selected),
+          }}
           title={isSpec ? "SPEC(마스터 PRD)" : "RUN(실행 묶음)"}
           onClick={expand}
         >
@@ -258,9 +269,9 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
       <div
         className="relative overflow-hidden rounded-xl border transition-all duration-150 group-hover/card:-translate-y-[2px] group-hover/card:brightness-110"
         style={{
-          borderColor: stale === 2 ? ALERT : data.selected ? cs.accent : cs.border,
+          borderColor: data.selected ? SEL : stale === 2 ? ALERT : cs.border,
           background: st === "done" && stale === 0 ? "#1b2620" : "var(--color-surface)",
-          boxShadow: data.selected ? `0 0 0 1px ${cs.accent}, 0 0 18px ${cs.accent}55` : undefined,
+          boxShadow: selRing(data.selected),
         }}
       >
         {/* 상단 상태 색바 */}
@@ -347,8 +358,19 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
       <div
         className="h-full w-full rounded-xl border-2 border-dashed transition-all duration-150"
         style={{
-          borderColor: data.isDropTarget ? "rgba(52,211,153,0.85)" : isBand ? "rgba(251,191,36,0.55)" : "#4b5261",
-          background: data.isDropTarget ? "rgba(16,185,129,0.10)" : "rgba(30,41,59,0.35)",
+          borderColor: data.isDropTarget
+            ? "rgba(52,211,153,0.85)"
+            : data.selected
+              ? SEL
+              : isBand
+                ? "rgba(251,191,36,0.55)"
+                : "#4b5261",
+          background: data.isDropTarget
+            ? "rgba(16,185,129,0.10)"
+            : data.selected
+              ? "rgba(34,211,238,0.06)"
+              : "rgba(30,41,59,0.35)",
+          boxShadow: selRing(!!data.selected),
         }}
         title={isBand ? "어느 Spec에도 편입되지 않은 RUN" : isSpec ? "SPEC(마스터 PRD)" : "RUN(실행 묶음)"}
       >
@@ -526,9 +548,12 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
                     <div
                       className={cn(
                         "cursor-pointer overflow-hidden rounded-xl border bg-violet-500/10 px-2.5 py-2 transition-all hover:brightness-110",
-                        data.selectedItemId === item.node.id ? "border-violet-300" : "border-violet-500/50",
                       )}
-                      style={{ height: LINEAGE_VCARD_H }}
+                      style={{
+                        height: LINEAGE_VCARD_H,
+                        borderColor: data.selectedItemId === item.node.id ? SEL : "rgba(139,92,246,0.5)",
+                        boxShadow: selRing(data.selectedItemId === item.node.id),
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         data.onSelect?.(item.node.id);
