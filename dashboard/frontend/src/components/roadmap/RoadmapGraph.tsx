@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BaseEdge,
   Background,
@@ -10,6 +10,7 @@ import {
   Position,
   ReactFlow,
   ReactFlowProvider,
+  useNodesState,
   getBezierPath,
   type Connection,
   type Edge,
@@ -227,62 +228,91 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
     );
   }
 
+  /**
+   * task 실행 카드 — 설계안 그대로.
+   *
+   * 상태 dot은 **깜빡이지 않는다.** `ck-pulse-dot`은 워크스페이스 카드·헤더 버전 뱃지·
+   * "Polling 4s" 표시에만 쓰는 클래스다. 캔버스에 카드가 수십 장 깔린 화면에서 전부 깜빡이면
+   * 눈이 어디를 봐야 할지 모르게 된다.
+   */
+  const total = data.childCount ?? 0;
+  const done = data.doneChildCount ?? 0;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  // stale 2(심각) = 테두리까지 ALERT로 바뀌고 "확인 필요", stale 1 = "정체 의심"(흐린 주황).
+  const stale = data.stale == null ? 0 : data.stale >= STALE_ALERT_H ? 2 : 1;
+
   return (
     <div className="group/card" style={{ width: NODE_W, opacity: dim ? 0.55 : 1 }}>
       <Handle type="target" position={Position.Left} style={{ width: 11, height: 11, left: -5 }} />
       <div
-        className="overflow-hidden rounded-xl border transition-all duration-150"
+        className="relative overflow-hidden rounded-xl border transition-all duration-150 group-hover/card:-translate-y-[2px] group-hover/card:brightness-110"
         style={{
-          borderColor: data.selected ? cs.accent : cs.border,
-          background: "var(--color-surface)",
-          boxShadow: data.selected ? `0 0 0 1px ${cs.accent}, 0 0 18px ${cs.accent}55` : `inset 3px 0 0 ${cs.accent}`,
-          padding: "8px 10px",
+          borderColor: stale === 2 ? ALERT : data.selected ? cs.accent : cs.border,
+          background: st === "done" && stale === 0 ? "#1b2620" : "var(--color-surface)",
+          boxShadow: data.selected ? `0 0 0 1px ${cs.accent}, 0 0 18px ${cs.accent}55` : undefined,
         }}
       >
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className="rounded border px-1.5 py-0.5 font-mono text-[9.5px]"
-            style={{ color: cs.accent, borderColor: `${cs.accent}66` }}
-          >
-            {n.level}
-          </span>
-          <span className="flex items-center gap-1 font-mono text-[9.5px] uppercase" style={{ color: cs.accent }}>
-            {st === "in_progress" && (
-              <span className="h-1.5 w-1.5 rounded-full ck-pulse-dot" style={{ background: cs.accent }} />
-            )}
-            {cs.label}
-          </span>
-        </div>
-        <div className={cn("mt-1 truncate font-mono text-[12.5px] text-slate-100", dim && "line-through")} title={n.title}>
-          {n.title}
-        </div>
-        {/* 설계안 진행바 — REQ 진척을 카드에서 바로 본다(펼치지 않아도 규모가 보인다). */}
-        {(data.childCount ?? 0) > 0 && (
-          <div className="mt-1.5">
-            <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--color-border)]">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${Math.round(((data.doneChildCount ?? 0) / (data.childCount || 1)) * 100)}%`,
-                  background: cs.accent,
-                }}
-              />
-            </div>
-            <div className="mt-0.5 text-right font-mono text-[9px] text-[var(--color-text-dim)]">
-              {data.doneChildCount ?? 0}/{data.childCount} REQ
+        {/* 상단 상태 색바 */}
+        <div className="h-1" style={{ background: stale === 2 ? ALERT : cs.accent }} />
+        <div className="px-2.5 py-2">
+          <div className="mb-1 flex items-center gap-1.5">
+            <span
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ background: cs.accent, boxShadow: `0 0 4px ${cs.accent}66` }}
+            />
+            <div className="ml-auto flex items-center gap-1">
+              {n.manual_status && (
+                <span
+                  className="rounded bg-sky-500/20 px-1 py-0.5 text-[8px] font-semibold text-sky-300"
+                  title={`수동 완료(${n.manual_by ?? "사용자"}) — AI 완료 아님`}
+                >
+                  ✋ 수동
+                </span>
+              )}
+              <span
+                className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9.5px] font-semibold"
+                style={{ background: `${cs.accent}22`, color: cs.accent }}
+              >
+                {cs.label}
+              </span>
             </div>
           </div>
-        )}
-        <div className="mt-1 flex flex-wrap items-center gap-1.5">
-          {n.manual_status && <span className="text-[9.5px] text-amber-300">✋ 수동</span>}
-          {/* 자기보고("진행중")를 시계로 대조한다 — 6h 확인 필요 / 24h 정체 의심. */}
-          {data.stale != null && (
-            <span
-              className={cn("text-[9.5px]", data.stale >= STALE_ALERT_H ? "text-rose-300" : "text-amber-300")}
-              title={`진행중으로 표시된 지 ${Math.floor(data.stale)}시간째 변화가 없습니다`}
+
+          <div
+            className={cn("text-[12.5px] leading-snug text-slate-100", dim && "line-through")}
+            style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: 30 }}
+            title={`${n.id} · ${n.title}`}
+          >
+            {n.title}
+          </div>
+
+          {total > 0 ? (
+            <div className="mt-1.5 flex items-center gap-2">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--color-background)]">
+                <div
+                  className="h-full rounded-full transition-[width] duration-300"
+                  style={{ width: `${pct}%`, background: cs.accent }}
+                />
+              </div>
+              <span className="shrink-0 text-[12px] font-extrabold tabular-nums" style={{ color: cs.accent }}>
+                {done}
+                <span className="font-bold text-[var(--color-text-muted)]">/{total}</span>
+              </span>
+            </div>
+          ) : (
+            <div className="mt-1.5 text-[9px] text-[var(--color-text-muted)]">subtask 없음</div>
+          )}
+
+          {stale > 0 && (
+            <div
+              className={cn(
+                "mt-1.5 flex items-center gap-1 text-[9px]",
+                stale === 2 ? "font-semibold text-orange-400" : "text-orange-300/70",
+              )}
+              title={`진행중으로 표시된 지 ${Math.floor(data.stale ?? 0)}시간째 변화가 없습니다`}
             >
-              ⏳ {data.stale >= STALE_ALERT_H ? "정체 의심" : "확인 필요"}
-            </span>
+              ⏳ {stale === 2 ? "확인 필요" : "정체 의심"} · {Math.floor(data.stale ?? 0)}h
+            </div>
           )}
         </div>
       </div>
@@ -548,7 +578,9 @@ const nodeTypes = { roadmap: RoadmapNodeCard, container: WorkstreamContainer, li
  */
 function DeletableEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, data }: EdgeProps) {
   const [path, labelX, labelY] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
-  const d = data as { onDelete?: (edgeId: string) => void; dim?: boolean } | undefined;
+  const d = data as
+    | { onDelete?: (edgeId: string) => void; dim?: boolean; hi?: boolean; keep?: () => void; release?: () => void }
+    | undefined;
   return (
     <>
       <BaseEdge id={id} path={path} style={style} />
@@ -558,20 +590,29 @@ function DeletableEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition,
         `EdgeLabelRenderer`는 라벨을 SVG 밖 오버레이 div로 포탈해 그 문제를 피한다.
       */}
       {/*
-        `dim`으로 버튼을 숨기면 안 된다 — ✕는 엣지 한가운데, 즉 컨테이너 **안**에 뜨기 때문에
-        마우스를 가져가는 순간 그 컨테이너에 포커스가 걸려 버튼이 사라진다. 손이 닿을 수 없다.
-        dim은 선 색만 흐리게 하고, 버튼은 그래프에 마우스가 있는 동안 계속 잡을 수 있게 둔다.
+        ✕는 **이 엣지에 마우스를 올렸을 때만 존재한다(`hi`)**.
+
+        `opacity: 0`으로 숨겨두면 안 된다 — 라벨 레이어는 노드 위(z-index 12)에 있어서, 보이지도
+        않는 22px 버튼이 그 자리에 있는 카드의 클릭을 통째로 가로챈다. 렌더 자체를 막아야 한다.
+
+        판정을 `dim`으로 하면 안 되는 이유도 있다. ✕는 엣지 한가운데, 즉 컨테이너 **안**에 뜨기
+        때문에 마우스를 가져가는 순간 그 컨테이너에 포커스가 걸려 버튼이 사라진다.
       */}
-      {d?.onDelete && (
+      {d?.onDelete && d.hi && (
         <EdgeLabelRenderer>
           <button
             title="이 의존을 지웁니다"
+            // 이 버튼은 노드 **위**에 뜬다. 손을 올리는 순간 노드에서 마우스가 빠져 포커스가
+            // 꺼지고 버튼이 사라지는데, 그러면 다시 노드 위가 되어 버튼이 돌아온다 —
+            // 깜빡임이 무한히 반복된다. 버튼에 올라와 있는 동안은 포커스를 붙잡아 둔다.
+            onMouseEnter={() => d.keep?.()}
+            onMouseLeave={() => d.release?.()}
             onClick={(e) => {
               e.stopPropagation();
               d.onDelete!(id);
             }}
             style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`, pointerEvents: "all" }}
-            className="nodrag nopan absolute flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[11px] leading-none text-[var(--color-text-dim)] opacity-0 transition-opacity hover:border-rose-400/60 hover:text-rose-300 group-hover/rf:opacity-100"
+            className="nodrag nopan absolute flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[11px] leading-none text-[var(--color-text-dim)] shadow hover:border-rose-400/60 hover:text-rose-300"
           >
             ✕
           </button>
@@ -890,7 +931,8 @@ function layout(
         source: dep,
         target: n.id,
         type: "deletable",
-        animated: effStatus(n) === "in_progress",
+        // `animated`(점선 행진)는 스펙의 캔버스 엣지에 없다. 켜두면 진행중 의존선이 계속
+        // 꿈틀거려, 정작 봐야 할 상태 변화가 그 움직임에 묻힌다.
         style: { stroke: "rgba(148,163,184,0.45)" },
       });
     }
@@ -1065,10 +1107,30 @@ export function RoadmapGraph({
   );
 
   /** 드래그 중인 RUN의 **실시간 좌표**. 이게 없으면 카드가 커서를 안 따라온다(아래 주석 참조). */
-  const [dragPos, setDragPos] = useState<{ id: string; x: number; y: number } | null>(null);
   const [dragOrigin, setDragOrigin] = useState<{ x: number; y: number } | null>(null);
 
   const [hovered, setHovered] = useState<string | null>(null);
+  /**
+   * 포커스 해제에 **유예를 둔다.** 엣지의 ✕는 노드 위에 뜨기 때문에, 손을 올리는 순간
+   * 노드에서 마우스가 빠져 포커스가 꺼지고 버튼이 사라진다 → 다시 노드 위가 되어 버튼이
+   * 돌아온다. 유예가 없으면 이 왕복이 무한히 반복돼 화면이 깜빡인다.
+   */
+  const hoverTimer = useRef<number | null>(null);
+  const keepHover = useCallback(() => {
+    if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = null;
+  }, []);
+  const holdHover = useCallback(
+    (id: string | null) => {
+      keepHover();
+      if (id !== null) {
+        setHovered(id);
+        return;
+      }
+      hoverTimer.current = window.setTimeout(() => setHovered(null), 260);
+    },
+    [keepHover],
+  );
   const [guideOpen, setGuideOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   /** SPEC 단위 필터. 노드를 지우는 게 아니라 **어느 SPEC 묶음을 보여줄지**만 고른다. */
@@ -1114,21 +1176,45 @@ export function RoadmapGraph({
   const focus = useMemo(() => {
     if (!hovered) return null;
     const nodeSet = new Set<string>([hovered]);
-    const edgeSet = new Set<string>();
     for (const e of base.rfEdges) {
       if (e.source !== hovered && e.target !== hovered) continue;
-      edgeSet.add(e.id);
       nodeSet.add(e.source);
       nodeSet.add(e.target);
     }
-    // 흐려진 상자 안에 밝은 카드가 들어앉으면 카드까지 같이 어두워 보인다 → 조상은 살린다.
     const byId = new Map(base.rfNodes.map((n) => [n.id, n]));
+
+    // 상자에 마우스를 올렸으면 **그 안의 것들은 같이 밝다.** 자기 자식을 흐리게 만들면
+    // 상자를 가리켰는데 내용이 사라지는, 아무도 원하지 않는 동작이 된다.
+    const kidsOf = new Map<string, string[]>();
+    for (const n of base.rfNodes) {
+      if (!n.parentId) continue;
+      kidsOf.set(n.parentId, [...(kidsOf.get(n.parentId) ?? []), n.id]);
+    }
+    const stack = [...nodeSet];
+    while (stack.length) {
+      const id = stack.pop()!;
+      for (const k of kidsOf.get(id) ?? []) {
+        if (nodeSet.has(k)) continue;
+        nodeSet.add(k);
+        stack.push(k);
+      }
+    }
+
+    // 흐려진 상자 안에 밝은 카드가 들어앉으면 카드까지 같이 어두워 보인다 → 조상도 살린다.
     for (const id of [...nodeSet]) {
       let cur = byId.get(id)?.parentId;
       while (cur) {
         nodeSet.add(cur);
         cur = byId.get(cur)?.parentId;
       }
+    }
+    /**
+     * 엣지는 **nodeSet이 다 정해진 뒤에** 고른다. 상자에 마우스를 올렸을 때 그 안의 의존선까지
+     * 켜져야 ✕에 손이 닿는다 — 엣지 자체에는 hover를 걸 수 없다(컨테이너 노드가 선을 덮는다).
+     */
+    const edgeSet = new Set<string>();
+    for (const e of base.rfEdges) {
+      if (nodeSet.has(e.source) && nodeSet.has(e.target)) edgeSet.add(e.id);
     }
     return { nodeSet, edgeSet };
   }, [hovered, base.rfNodes, base.rfEdges]);
@@ -1168,34 +1254,89 @@ export function RoadmapGraph({
           ...e,
           zIndex: focus && on ? 900 : undefined,
           style: { ...e.style, opacity: focus && !on ? 0.1 : 0.8 },
-          data: { ...e.data, onDelete: onDeleteEdge, dim: focus ? !on : false },
+          // hi(설계안) = 지금 포커스된 묶음에 속한 엣지. ✕는 여기에만 뜬다.
+          data: {
+            ...e.data,
+            onDelete: onDeleteEdge,
+            dim: focus ? !on : false,
+            hi: focus ? on : false,
+            keep: keepHover,
+            release: () => holdHover(null),
+          },
         };
       }),
-    [base.rfEdges, focus, onDeleteEdge],
+    [base.rfEdges, focus, onDeleteEdge, keepHover, holdHover],
   );
 
   /**
-   * 드래그·포커스 상태는 **layout 밖에서** 덧칠한다. layout 안에 넣으면 상태가 바뀔 때마다
-   * 전체 레이아웃이 다시 돌면서 좌표가 리셋되고, 끌던 카드가 손에서 튕겨 제자리로 돌아간다.
-   * ReactFlow는 controlled `nodes`라 배열이 갈릴 때마다 위치를 다시 받아들이기 때문이다.
+   * **드래그는 ReactFlow가 소유한다(`onNodesChange`).**
+   *
+   * 예전엔 `nodes`를 완전 제어하면서 드래그 좌표를 우리 state로 따라 그렸다. 그러면 매 렌더마다
+   * 우리가 계산한 좌표가 ReactFlow의 드래그 결과를 덮어써서, 카드가 커서를 못 따라오고 한 프레임
+   * 뒤처진 자리에서 떨었다. 게다가 4초 폴링이 한 번 돌면 레이아웃이 통째로 다시 계산돼 끌던
+   * 카드가 손에서 튕겨나갔다.
+   *
+   * 그래서 ReactFlow에 상태를 맡기고, **레이아웃이 실제로 달라졌을 때만** 다시 심는다.
+   * 판단 기준이 `layoutSig`다 — 위치·크기·부모·그리고 화면에 그려지는 데이터만 담는다.
+   * 폴링이 같은 내용을 다시 가져왔다면 문자열이 같으므로 아무 일도 일어나지 않는다.
+   */
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<FlowNode>([]);
+  const dragging = useRef(false);
+
+  const layoutSig = useMemo(
+    () =>
+      base.rfNodes
+        .map((n) => {
+          const d = n.data;
+          // stale은 실수(시간)라 매 렌더 값이 미세하게 바뀐다 → 그대로 넣으면 서명이 늘 달라져
+          // 매 렌더 재배치가 돈다. 화면에 보이는 **구간**으로만 접는다.
+          const staleBucket = d.stale == null ? "" : d.stale >= STALE_ALERT_H ? "a" : "w";
+          return [
+            n.id,
+            n.type,
+            Math.round(n.position.x),
+            Math.round(n.position.y),
+            n.style?.width,
+            n.style?.height,
+            n.parentId ?? "",
+            effStatus(d.node),
+            d.ready ? 1 : 0,
+            d.selected ? 1 : 0,
+            d.childCount,
+            d.doneChildCount,
+            d.collapsed ? 1 : 0,
+            staleBucket,
+          ].join(",");
+        })
+        .join("|"),
+    [base.rfNodes],
+  );
+
+  useEffect(() => {
+    // 끌고 있는 중에 다시 심으면 그 순간 카드가 손에서 빠져나간다. 놓을 때 한 번 더 심긴다.
+    if (dragging.current) return;
+    setFlowNodes(base.rfNodes);
+    // base.rfNodes는 매 렌더 새 배열이라 의존성에 넣으면 무한 재심기다 — 서명으로만 본다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layoutSig, setFlowNodes]);
+
+  /**
+   * 포커스 흐림·드롭 타깃은 **위치를 건드리지 않는** 덧칠이라 렌더 시점에 얹는다.
+   * 여기서 `position`을 손대면 드래그와 다시 싸우게 된다.
    */
   const rfNodes = useMemo(() => {
-    if (!dropTargetId && !dragPos && !focus) return base.rfNodes;
-    return base.rfNodes.map((n) => {
-      if (focus) {
-        const lit = focus.nodeSet.has(n.id);
-        n = { ...n, style: { ...n.style, opacity: lit ? 1 : 0.12 } };
-      }
+    if (!dropTargetId && !focus) return flowNodes;
+    return flowNodes.map((n) => {
+      const lit = !focus || focus.nodeSet.has(n.id);
       const isTarget = n.id === dropTargetId;
-      const moved = dragPos?.id === n.id;
-      if (!isTarget && !moved) return n;
+      if (lit && !isTarget) return n;
       return {
         ...n,
-        ...(moved ? { position: { x: dragPos!.x, y: dragPos!.y } } : {}),
+        ...(focus ? { style: { ...n.style, opacity: lit ? 1 : 0.12 } } : {}),
         ...(isTarget ? { data: { ...n.data, isDropTarget: true } } : {}),
       };
     });
-  }, [base.rfNodes, dropTargetId, dragPos, focus]);
+  }, [flowNodes, dropTargetId, focus]);
 
   /** 설계안 droppedTop — dropped인데 부모는 dropped가 아닌 "최상위 폐기"만. */
   const droppedTop = useMemo(() => {
@@ -1322,11 +1463,12 @@ export function RoadmapGraph({
           deleteKeyCode={null}
           panOnDrag={[0, 1, 2]}
           zoomOnDoubleClick={false}
-          onNodeDragStart={(_, node) => setDragOrigin({ x: node.position.x, y: node.position.y })}
-          onNodeDrag={(e, node) => {
-            setDropTargetId(hitTest(e, node.id));
-            setDragPos({ id: node.id, x: node.position.x, y: node.position.y });
+          onNodesChange={onNodesChange}
+          onNodeDragStart={(_, node) => {
+            dragging.current = true;
+            setDragOrigin({ x: node.position.x, y: node.position.y });
           }}
+          onNodeDrag={(e, node) => setDropTargetId(hitTest(e, node.id))}
           /**
            * 놓았을 때 둘 중 하나다:
            *  ① RUN을 **다른** Spec/미분류 상자 위에 놓았다 → 편입/분리(구조 변경).
@@ -1336,9 +1478,9 @@ export function RoadmapGraph({
            * 달라지므로, 옛 좌표계에서 잰 값을 새 부모 밑에 박아두면 엉뚱한 데로 튄다.
            */
           onNodeDragStop={(e, node) => {
+            dragging.current = false;
             const target = hitTest(e, node.id);
             setDropTargetId(null);
-            setDragPos(null);
             const origin = dragOrigin;
             setDragOrigin(null);
             const n = nodes.find((x) => x.id === node.id);
@@ -1363,8 +1505,8 @@ export function RoadmapGraph({
             if (!c.source || !c.target || c.source === c.target) return;
             void run(() => linkRoadmapNodes(userId!, workspace, c.target!, c.source!));
           }}
-          onNodeMouseEnter={(_, node) => setHovered(node.id)}
-          onNodeMouseLeave={() => setHovered(null)}
+          onNodeMouseEnter={(_, node) => holdHover(node.id)}
+          onNodeMouseLeave={() => holdHover(null)}
           onNodeClick={(_, node) => setSelectedId(node.id === selectedId ? null : node.id)}
           onNodeDoubleClick={(_, node) => {
             // 설계안: SPEC/RUN은 더블클릭으로 펼치고 접는다. task는 펼칠 하위(=REQ)가

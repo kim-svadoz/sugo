@@ -53,6 +53,8 @@ export interface RoadmapNode {
   work_result: unknown;
   lineage: unknown;
   manual_status: string | null;
+  /** 수동 완료 처리한 사람 — 카드 뱃지 title에 쓴다(AI 완료가 아님을 밝힌다). */
+  manual_by?: string | null;
   pos_x: number | null;
   pos_y: number | null;
   /** 마지막 변경 시각(UTC). "⏳ 확인 필요/정체 의심" stale 판정에 쓴다. */

@@ -185,7 +185,7 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
    `pointer-events: none !important`로 아예 죽여놨는데, 그 한 줄 때문에 링크 생성이
    코드로는 다 붙어 있는데도 손이 닿지 않았다. 평소엔 안 보이고, 카드에 마우스를 올리면
    드러나서 잡을 수 있게 한다. */
-.react-flow__handle { cursor: crosshair; opacity: .3; transition: opacity .12s ease, background .12s ease; }
+.react-flow__handle { cursor: crosshair; opacity: 0; transition: opacity .12s ease, background .12s ease; }
 /* 연결 대상 판정은 hit-test로 이뤄진다. 연결을 끌고 있는 동안에는 대상 노드에 `:hover`가
    걸리지 않으므로(포인터가 출발 손잡이에 캡처돼 있다) hover에 기대어 살리면 드롭이 안 잡힌다.
    그래서 연결 가능한 손잡이는 **항상** 이벤트를 받게 둔다. */
