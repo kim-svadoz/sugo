@@ -61,3 +61,30 @@ export async function getSpecContent(userId: string, workspace: string, title: s
     return null;
   }
 }
+
+/**
+ * §7 소유권 경계에서 **대시보드가 소유한다고 선언한 두 컬럼**을 실제로 채우는 통로다.
+ * 백엔드는 진작 라우트를 열어뒀는데(그리고 플러그인 sync가 못 덮게 SET-list에서 빼뒀는데)
+ * 화면에 편집 수단이 없어서 pos_x/pos_y는 영영 NULL이고 링크는 손댈 수가 없었다.
+ */
+export function saveNodePosition(userId: string, workspace: string, nodeId: string, x: number, y: number) {
+  return apiJson(withUserId(path(workspace, "/position"), userId), {
+    method: "POST",
+    body: JSON.stringify({ nodeId, x, y }),
+  });
+}
+
+/** task↔task만 허용된다(백엔드 `LINK_REQUIRES_TASK_LEVEL` + 사이클 가드). */
+export function linkRoadmapNodes(userId: string, workspace: string, from: string, to: string) {
+  return apiJson(withUserId(path(workspace, "/link"), userId), {
+    method: "POST",
+    body: JSON.stringify({ from, to }),
+  });
+}
+
+export function unlinkRoadmapNodes(userId: string, workspace: string, from: string, to: string) {
+  return apiJson(withUserId(path(workspace, "/link"), userId), {
+    method: "DELETE",
+    body: JSON.stringify({ from, to }),
+  });
+}

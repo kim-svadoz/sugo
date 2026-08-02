@@ -181,7 +181,23 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .ck-pop { animation: ck-pop 0.11s ease-out both; transform-origin: top left; }
 
 /* 로드맵 캔버스: 연결 비활성이라 핸들은 순수 엣지 앵커 — 십자커서·hover 제거. */
-.react-flow__handle { cursor: default !important; pointer-events: none !important; }
+/* 손잡이(Handle)는 **의존을 잇는 유일한 수단**이다. 예전엔 캔버스가 읽기 전용이라
+   `pointer-events: none !important`로 아예 죽여놨는데, 그 한 줄 때문에 링크 생성이
+   코드로는 다 붙어 있는데도 손이 닿지 않았다. 평소엔 안 보이고, 카드에 마우스를 올리면
+   드러나서 잡을 수 있게 한다. */
+.react-flow__handle { cursor: crosshair; opacity: .3; transition: opacity .12s ease, background .12s ease; }
+/* 연결 대상 판정은 hit-test로 이뤄진다. 연결을 끌고 있는 동안에는 대상 노드에 `:hover`가
+   걸리지 않으므로(포인터가 출발 손잡이에 캡처돼 있다) hover에 기대어 살리면 드롭이 안 잡힌다.
+   그래서 연결 가능한 손잡이는 **항상** 이벤트를 받게 둔다. */
+.react-flow__handle.connectable { pointer-events: all !important; }
+.react-flow__node:hover .react-flow__handle.connectable,
+.react-flow__handle.connectingfrom,
+.react-flow__handle.connectionindicator:hover {
+  opacity: 1;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.react-flow__handle:not(.connectable) { pointer-events: none; }
 
 /* 설계안은 0.85였는데 이 빌드는 루트 폰트가 19px이라 실제로는 글씨가 작게 읽힌다.
    학습용 화면이라 읽히는 게 우선이므로 0.95로 올렸다(1.0은 max-w-7xl 카드가 사이드바 옆
@@ -262,3 +278,8 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 
 /* 구 이름 별칭 — violet 계열을 쓰던 기존 코드 호환. */
 .neon-border-violet { border-color: rgba(139, 92, 246, 0.5) !important; box-shadow: 0 0 15px rgba(139, 92, 246, 0.25) !important; }
+
+/* 의존 엣지의 ✕ 버튼은 **노드 위에** 떠야 손이 닿는다.
+   ReactFlow는 엣지 라벨 레이어를 노드 레이어보다 아래에 깔기 때문에, 그대로 두면 버튼이
+   보이기는 하는데 클릭은 밑에 있는 카드가 가져간다(가장 알아채기 어려운 종류의 버그다). */
+.react-flow__edgelabel-renderer { z-index: 12; }

@@ -89,3 +89,102 @@ export function wouldCreateCycle(nodes: GraphNode[], fromId: string, toId: strin
 
   return dependsOnFrom(toId);
 }
+
+// ─── 로드맵 진행 요약 + 이상징후(§C.3 RoadmapTab) ────────────────────────────
+//
+// 화면이 `const { counts, issues } = roadmap`으로 받는 두 값을 여기서 만든다. 프론트에서
+// 세지 않고 서버가 세는 이유는 "진행 중심" 필터가 노드를 걸러낸 뒤에도 **전체 기준 진행률**이
+// 흔들리면 안 되기 때문이다 — 필터는 보기이지 진척이 아니다.
+
+export interface RoadmapCounts {
+  total: number;
+  pending: number;
+  in_progress: number;
+  done: number;
+  blocked: number;
+  dropped: number;
+}
+
+export interface RoadmapViewNode extends GraphNode {
+  level: string;
+  parent: string | null;
+  title?: string;
+  manualStatus?: string | null;
+}
+
+/** 사람이 수동으로 덮은 상태가 있으면 그게 우선(§3.3 manual_status). */
+export function effectiveStatus(n: { status: string; manualStatus?: string | null }): string {
+  return (n.manualStatus ?? n.status ?? "pending").toLowerCase();
+}
+
+/**
+ * 진행률은 **task만** 센다(설계안: "roadmap count는 level='task'만").
+ * spec/workstream은 그릇이고 subtask는 task 안의 세부라, 함께 세면 같은 일이 3번 세어진다.
+ */
+export function roadmapCounts(nodes: RoadmapViewNode[]): RoadmapCounts {
+  const counts: RoadmapCounts = { total: 0, pending: 0, in_progress: 0, done: 0, blocked: 0, dropped: 0 };
+  for (const n of nodes) {
+    if (n.level !== "task") continue;
+    counts.total++;
+    const st = effectiveStatus(n);
+    if (st in counts) counts[st as keyof RoadmapCounts]++;
+  }
+  return counts;
+}
+
+/**
+ * 화면 상단 빨간 경고에 그대로 찍히는 문장들. **그래프에서 실제로 확인되는 사실만** 담는다 —
+ * 추측성 경고를 섞으면 사람이 경고를 안 읽게 되고, 그러면 진짜 사이클도 같이 묻힌다.
+ */
+export function roadmapIssues(nodes: RoadmapViewNode[]): string[] {
+  const issues: string[] = [];
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+
+  // ① 의존 사이클 — 순서를 확정할 수 없으므로 착수가능 판정 자체가 무의미해진다.
+  const tasks = nodes.filter((n) => n.level === "task");
+  const { cyclic, unknownDeps } = topoSort(tasks);
+  if (cyclic) issues.push("의존 사이클이 있습니다 — 실행 순서를 확정할 수 없습니다.");
+  if (unknownDeps.length > 0) {
+    issues.push(`존재하지 않는 노드를 가리키는 의존 ${unknownDeps.length}건: ${unknownDeps.slice(0, 3).join(", ")}`);
+  }
+
+  // ② 끊어진 부모 — 캔버스에서 노드가 통째로 사라져 보인다(컨테이너를 못 찾으니 최상위로 튄다).
+  const orphans = nodes.filter((n) => n.parent && !byId.has(n.parent));
+  if (orphans.length > 0) {
+    issues.push(`부모가 사라진 노드 ${orphans.length}건: ${orphans.slice(0, 3).map((n) => n.id).join(", ")}`);
+  }
+
+  // ③ 의존은 task↔task뿐이다(플러그인 링크타입 계약). 어긋난 게 있으면 데이터가 오염된 것이다.
+  const badLinks: string[] = [];
+  for (const n of nodes) {
+    for (const dep of n.dependsOn) {
+      const to = byId.get(dep);
+      if (!to) continue;
+      if (n.level !== "task" || to.level !== "task") badLinks.push(`${n.id}→${dep}`);
+    }
+  }
+  if (badLinks.length > 0) {
+    issues.push(`task가 아닌 노드에 걸린 의존 ${badLinks.length}건: ${badLinks.slice(0, 3).join(", ")}`);
+  }
+
+  // ④ 하위가 전부 done인데 자기는 안 닫힌 그릇 — 사람이 완료 처리만 하면 되는 상태.
+  const doneKids = new Map<string, { total: number; done: number }>();
+  for (const n of nodes) {
+    if (!n.parent) continue;
+    const acc = doneKids.get(n.parent) ?? { total: 0, done: 0 };
+    acc.total++;
+    if (effectiveStatus(n) === "done") acc.done++;
+    doneKids.set(n.parent, acc);
+  }
+  const closable = nodes.filter((n) => {
+    if (n.level !== "spec" && n.level !== "workstream") return false;
+    if (effectiveStatus(n) === "done" || effectiveStatus(n) === "dropped") return false;
+    const acc = doneKids.get(n.id);
+    return !!acc && acc.total > 0 && acc.total === acc.done;
+  });
+  if (closable.length > 0) {
+    issues.push(`하위가 전부 끝났는데 안 닫힌 항목 ${closable.length}건: ${closable.slice(0, 3).map((n) => n.title ?? n.id).join(", ")}`);
+  }
+
+  return issues;
+}

@@ -55,7 +55,26 @@ export interface RoadmapNode {
   manual_status: string | null;
   pos_x: number | null;
   pos_y: number | null;
+  /** 마지막 변경 시각(UTC). "⏳ 확인 필요/정체 의심" stale 판정에 쓴다. */
+  updated_at?: string | null;
+  synced_at?: string | null;
 }
+
+/** 설계안 RoadmapTab이 받는 봉투. counts/issues는 **서버가** 센다(전체 기준 진척). */
+export interface RoadmapCounts {
+  total: number;
+  pending: number;
+  in_progress: number;
+  done: number;
+  blocked: number;
+  dropped: number;
+}
+export interface RoadmapEnvelope {
+  nodes: RoadmapNode[];
+  counts: RoadmapCounts;
+  issues: string[];
+}
+const EMPTY_COUNTS: RoadmapCounts = { total: 0, pending: 0, in_progress: 0, done: 0, blocked: 0, dropped: 0 };
 
 // §4: "캔버스 Agent-Roadmap 오버레이는 getRoadmap을 4초 독립 폴링" - independent
 // from LiveConsole's own 4s poll (useActivityStream). Also exposes `refetch`
@@ -64,6 +83,8 @@ export interface RoadmapNode {
 export function useRoadmap(workspaceName: string) {
   const { userId } = useAuth();
   const [data, setData] = useState<RoadmapNode[] | null>(null);
+  const [counts, setCounts] = useState<RoadmapCounts>(EMPTY_COUNTS);
+  const [issues, setIssues] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
@@ -77,11 +98,14 @@ export function useRoadmap(workspaceName: string) {
     async function fetchOnce(isFirst: boolean) {
       if (isFirst) setLoading(true);
       try {
-        const res = await apiJson<{ nodes: RoadmapNode[] }>(
+        const res = await apiJson<Partial<RoadmapEnvelope> & { nodes: RoadmapNode[] }>(
           withUserId(`/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap`, userId!)
         );
         if (!cancelled) {
           setData(res.nodes);
+          // 구버전 백엔드는 counts/issues를 안 준다 — 그때는 조용히 빈 값으로 둔다(화면이 죽는 것보다 낫다).
+          setCounts(res.counts ?? EMPTY_COUNTS);
+          setIssues(res.issues ?? []);
           setError(null);
         }
       } catch (err) {
@@ -99,7 +123,7 @@ export function useRoadmap(workspaceName: string) {
     };
   }, [userId, workspaceName, refreshNonce]);
 
-  return { data, loading, error, refetch };
+  return { data, counts, issues, loading, error, refetch };
 }
 
 // Lenient by design: the backend always sends already-parsed JSON now, but

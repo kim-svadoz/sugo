@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { RoadmapGraphPanel } from "../components/roadmap/RoadmapGraph.js";
+import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
 import { LiveLogTail } from "../components/LiveConsole.js";
 import { useRoadmap } from "../hooks/useRoadmap.js";
 
@@ -54,8 +54,8 @@ export function RoadmapPage() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1">
-        <RoadmapGraphPanel workspace={workspace} fill />
+      <div className="min-h-0 flex-1 p-3">
+        <RoadmapTab workspace={workspace} fill />
       </div>
 
       <div className="h-28 shrink-0 overflow-hidden border-t border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">

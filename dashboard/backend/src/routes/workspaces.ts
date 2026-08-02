@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { roadmapCounts, roadmapIssues } from "../services/roadmapGraph.js";
 import type { DbClient } from "../db/client.js";
 import { validateBody } from "../schemas/validate.js";
 import { requireUser } from "../auth/requireUser.js";
@@ -115,10 +116,23 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     res.json({ tasks: await getTasks(db, userId, req.params.name) });
   });
 
+  // 설계안 RoadmapTab이 `const { counts, issues } = roadmap`으로 받는다. 프론트에서 세지
+  // 않고 서버가 세는 이유는, "진행 중심" 필터가 노드를 걸러낸 뒤에도 진행률은 **전체 기준**
+  // 이어야 하기 때문이다 — 필터는 보기이지 진척이 아니다.
   router.get("/:name/roadmap", async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    res.json({ nodes: await getRoadmap(db, userId, req.params.name) });
+    const nodes = await getRoadmap(db, userId, req.params.name);
+    const view = nodes.map((n) => ({
+      id: n.id,
+      title: n.title,
+      level: n.level,
+      parent: n.parent,
+      status: n.status,
+      manualStatus: n.manual_status,
+      dependsOn: n.depends_on,
+    }));
+    res.json({ nodes, counts: roadmapCounts(view), issues: roadmapIssues(view) });
   });
 
   // §3.3 Spec 원문 팝업(slug 매칭). title(또는 path 마지막 세그먼트)로 decision content를 찾는다.

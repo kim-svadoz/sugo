@@ -36,7 +36,7 @@ import { LiveConsole } from "../components/LiveConsole.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { createWorkspaceCheckpoint, deleteWorkspaceCheckpoint } from "../api/workspacesApi.js";
 import { useAuth } from "../auth/AuthContext.js";
-import { RoadmapGraphPanel } from "../components/roadmap/RoadmapGraph.js";
+import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
 import { LiveLogTail } from "../components/LiveConsole.js";
 import { useRoadmap } from "../hooks/useRoadmap.js";
 
@@ -210,7 +210,7 @@ function AgentCanvasOverlay({ workspace, onClose }: { workspace: string; onClose
               Agent Canvas 데이터가 없습니다
             </div>
           ) : (
-            <RoadmapGraphPanel workspace={workspace} fill onEdited={refetch} />
+            <RoadmapTab workspace={workspace} fill onEdited={refetch} />
           )}
         </div>
 
