@@ -30,7 +30,7 @@ const INTRO: Record<TabId, string[]> = {
   3: [
     "Sugo는 기능 하나를 명세부터 커밋까지 정해진 순서로 끌고 간다.",
     "구현 단계에선 code-agent가 요구사항(REQ)을 하나씩 끝내며 진행바를 올리고, 전부 끝나야 다음 단계로 넘어간다.",
-    "내부적으로는 13개 상태를 게이트로 관리하며, 단계를 건너뛸 수 없다.",
+    "내부적으로는 19개 상태를 게이트로 관리하며, 단계를 건너뛸 수 없다.",
   ],
   4: [
     "완료는 선언이 아니라 증명이다.",
@@ -68,25 +68,47 @@ public class CharacterService {
     private final CharacterRepository repository;
 }`;
 
+/**
+ * 에이전트 체인 — **플러그인 `ontology/model.ts`의 ACTIONS 전이 순서 그대로**다.
+ * `state`는 그 단계가 도달하는 실제 상태, `gate`는 그 전이에 걸린 실제 게이트 코드다.
+ *
+ * 설계안에 적힌 9단계는 v1 것이라, v2의 정체성인 **베이스라인 포착**(기존 테스트가 그린인지
+ * 먼저 확인)과 **계약 테스트 작성**(실패하는 테스트를 먼저 쓴다)이 통째로 빠져 있었다. 그 둘이
+ * 없으면 "게이트가 거짓 완료를 막는다"는 이 화면의 주장 자체가 성립하지 않는다.
+ */
 const STEPS = [
-  { n: 1, key: "scan", title: "프로젝트 파악", sub: "스캔·세션 생성" },
-  { n: 2, key: "clarify", title: "요구사항 확정", sub: "질문으로 명확화" },
-  { n: 3, key: "prd", title: "명세 작성", sub: "PRD 문서화" },
-  { n: 4, key: "jira", title: "이슈 연동", sub: "Jira · 선택" },
-  { n: 5, key: "implement", title: "구현", sub: "code-agent · REQ 하나씩" },
-  { n: 6, key: "verify", title: "테스트·검증", sub: "test-agent · 회귀+신규" },
-  { n: 7, key: "review", title: "리뷰·감사", sub: "review-agent · 아키텍처" },
-  { n: 8, key: "readme", title: "문서 갱신", sub: "README·docs 재작성" },
-  { n: 9, key: "commit", title: "커밋", sub: "fix/feat 자동" },
+  { n: 1, key: "scan", title: "프로젝트 파악", sub: "스캔·세션 생성", state: "SCAN", gate: null },
+  { n: 2, key: "clarify", title: "요구사항 확정", sub: "질문으로 명확화", state: "CLARIFY", gate: null },
+  { n: 3, key: "prd", title: "명세 작성", sub: "PRD · 정합성 원장", state: "PRD", gate: "CONFORMANCE_LEDGER" },
+  { n: 4, key: "jira", title: "이슈 연동", sub: "Jira · 선택", state: "JIRA", gate: null },
+  { n: 5, key: "baseline", title: "베이스라인 포착", sub: "기존 테스트 그린 확인", state: "BASELINE", gate: "BASELINE_RED" },
+  { n: 6, key: "contract", title: "계약 테스트", sub: "실패하는 테스트 먼저", state: "CODE_READY", gate: "CONTRACT_NOT_AUTHORED" },
+  { n: 7, key: "implement", title: "구현", sub: "code-agent · REQ 하나씩", state: "CODE_DONE", gate: "WIRING_GATE_NOT_SATISFIED" },
+  { n: 8, key: "verify", title: "테스트·검증", sub: "test-agent · 회귀+신규", state: "TEST_DONE", gate: "TEST_EVIDENCE_MISMATCH" },
+  { n: 9, key: "review", title: "리뷰·감사", sub: "review-agent · 아키텍처", state: "DOCS_PENDING", gate: "PRD_COVERAGE_GATE_FAILED" },
+  { n: 10, key: "docs", title: "문서 갱신", sub: "docs-agent · README·docs", state: "COMMIT_PENDING", gate: null },
+  { n: 11, key: "commit", title: "커밋", sub: "fix/feat 자동", state: "DONE", gate: null },
 ];
 const REQS = ["REQ-001", "REQ-002", "REQ-003", "REQ-004", "REQ-005", "REQ-006", "REQ-007"];
-const IMPLEMENT_INDEX = 4;
+/** STEPS에서 `implement`의 0-based 인덱스 — 여기서 REQ 진행바가 돈다. */
+const IMPLEMENT_INDEX = STEPS.findIndex((s) => s.key === "implement");
 
+/**
+ * 완료 검증 항목. `gate`는 **플러그인에 실재하는 게이트 코드**다(`ontology/model.ts`).
+ *
+ * 앞 IntroBox가 "커버리지·회귀·**런타임**·계약 게이트"라고 말해놓고 런타임 줄이 없었다 —
+ * 문구와 화면이 어긋나 있었다. `RUNTIME_UNVERIFIED_GATE_FAILED`는 review_done을 막는
+ * 실제 게이트이므로 줄을 채웠다.
+ *
+ * ArchUnit만 gate가 null이다. 그건 프로젝트 하네스 규칙이지 플러그인 게이트가 아니다 —
+ * 없는 코드를 지어 붙이면 이 학습화면이 거짓말을 하게 된다.
+ */
 const AUDIT_ROWS = [
-  { key: "coverage", label: "커버리지", detail: "jacoco · 라인 80% 기준" },
-  { key: "regression", label: "회귀", detail: "CharacterServiceTest 전량" },
-  { key: "contract", label: "계약", detail: "character↔inventory 스펙 대조" },
-  { key: "archunit", label: "ArchUnit 규칙", detail: "ConstructorInjectionRule" },
+  { key: "coverage", label: "커버리지", detail: "jacoco · 라인 80% 기준", gate: "PRD_COVERAGE_GATE_FAILED" },
+  { key: "regression", label: "회귀", detail: "CharacterServiceTest 전량", gate: "TEST_EVIDENCE_MISMATCH" },
+  { key: "runtime", label: "런타임", detail: "실제 기동·호출 증거 대조", gate: "RUNTIME_UNVERIFIED_GATE_FAILED" },
+  { key: "contract", label: "계약", detail: "character↔inventory 스펙 대조", gate: "CONTRACT_NOT_AUTHORED" },
+  { key: "archunit", label: "ArchUnit 규칙", detail: "ConstructorInjectionRule", gate: null },
 ];
 
 const DEMO_PATCHES: Record<string, string> = {
@@ -325,7 +347,7 @@ export function Playbook() {
                   <div
                     key={s.key}
                     className={cn(
-                      "rounded-lg border px-2.5 py-1.5 text-[11.5px]",
+                      "min-w-[132px] rounded-lg border px-2.5 py-1.5 text-[12.5px]",
                       i < stepIndex
                         ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
                         : i === stepIndex
@@ -334,7 +356,13 @@ export function Playbook() {
                     )}
                   >
                     <span className="font-mono">{s.n}.</span> {s.title}
-                    <div className="text-[10px] opacity-70">{s.sub}</div>
+                    <div className="text-[11px] opacity-70">{s.sub}</div>
+                    {/* 실제 플러그인의 상태/게이트 코드를 그대로 노출한다 — 데모용 라벨이 아니라
+                        `ontology/model.ts`에 있는 값이라야 학습화면이 거짓말을 안 한다. */}
+                    <div className="mt-1 flex flex-wrap items-center gap-1 font-mono text-[9.5px]">
+                      <span className="rounded bg-[var(--color-border)]/60 px-1 py-px opacity-80">{s.state}</span>
+                      {s.gate && <span className="rounded bg-amber-500/15 px-1 py-px text-amber-300/90">🔒 {s.gate}</span>}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -391,8 +419,13 @@ export function Playbook() {
                     >
                       {state === undefined ? "…" : state ? "PASS" : "FAIL"}
                     </span>
-                    <span className="text-[13px] text-[var(--color-text)]">{row.label}</span>
-                    <span className="ml-auto font-mono text-[11px] text-[var(--color-text-dim)]">{row.detail}</span>
+                    <span className="text-[14px] text-[var(--color-text)]">{row.label}</span>
+                    {row.gate && (
+                      <span className="rounded bg-amber-500/15 px-1.5 py-px font-mono text-[10px] text-amber-300/90">
+                        🔒 {row.gate}
+                      </span>
+                    )}
+                    <span className="ml-auto font-mono text-[11.5px] text-[var(--color-text-dim)]">{row.detail}</span>
                   </div>
                 );
               })}

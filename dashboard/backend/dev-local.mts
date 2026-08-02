@@ -16,6 +16,7 @@ import {
   syncCheckpoint,
   syncDecision,
   syncHistory,
+  syncPluginVersion,
   syncRoadmap,
   syncTask,
   syncUser,
@@ -38,6 +39,8 @@ for (const t of ["sugo_roadmap_nodes", "sugo_tasks", "sugo_history", "sugo_decis
 }
 
 await syncUser(db, { userId: USER, displayName: "로컬 개발" });
+// 플러그인이 push하는 값. 안 심으면 상단바와 Playbook 배지가 "v—"로 뜬다(가짜가 아니라 없는 것).
+await syncPluginVersion(db, USER, "0.1.0");
 await syncWorkspace(db, {
   userId: USER,
   name: "splearn",
