@@ -426,7 +426,7 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
             className={cn("min-w-0 flex-1 truncate text-slate-200/90", isSpec ? "text-[15px] font-semibold" : "text-[13px]")}
             title={n.title}
           >
-            {isBand ? "· 어느 Spec에도 편입되지 않은 RUN — 카드를 SPEC 위로 끌어다 놓으세요" : `· ${n.title}`}
+            {isBand ? "· 어느 Spec에도 편입되지 않은 RUN — 카드를 눌러 오른쪽 패널에서 편입하세요" : `· ${n.title}`}
           </span>
           <span className="shrink-0 font-mono text-[10.5px] text-slate-400">
             {isSpec ? `RUN ${data.childCount ?? 0}개` : `task ${data.childCount ?? 0}개 (${data.doneChildCount ?? 0} done)`}
@@ -1270,16 +1270,11 @@ export function RoadmapGraph({
   );
 
   /**
-   * **드래그는 ReactFlow가 소유한다(`onNodesChange`).**
+   * 노드는 ReactFlow가 들고 있고, **레이아웃이 실제로 달라졌을 때만** 다시 심는다.
    *
-   * 예전엔 `nodes`를 완전 제어하면서 드래그 좌표를 우리 state로 따라 그렸다. 그러면 매 렌더마다
-   * 우리가 계산한 좌표가 ReactFlow의 드래그 결과를 덮어써서, 카드가 커서를 못 따라오고 한 프레임
-   * 뒤처진 자리에서 떨었다. 게다가 4초 폴링이 한 번 돌면 레이아웃이 통째로 다시 계산돼 끌던
-   * 카드가 손에서 튕겨나갔다.
-   *
-   * 그래서 ReactFlow에 상태를 맡기고, **레이아웃이 실제로 달라졌을 때만** 다시 심는다.
-   * 판단 기준이 `layoutSig`다 — 위치·크기·부모·그리고 화면에 그려지는 데이터만 담는다.
-   * 폴링이 같은 내용을 다시 가져왔다면 문자열이 같으므로 아무 일도 일어나지 않는다.
+   * 판단 기준이 `layoutSig`다 — 위치·크기·부모 + 화면에 그려지는 데이터만 담는다. 4초 폴링이
+   * 같은 내용을 다시 가져왔다면 문자열이 같으므로 아무 일도 일어나지 않는다. 이 가드가 없으면
+   * 폴링마다 전체 레이아웃이 다시 계산되고 노드가 통째로 다시 그려진다.
    */
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<FlowNode>([]);
 
@@ -1391,12 +1386,11 @@ export function RoadmapGraph({
           <div className="absolute left-3 top-14 z-30 w-[330px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-[12px] leading-relaxed text-[var(--color-text-muted)] shadow-xl">
             <p className="mb-1.5 font-semibold text-[var(--color-text-bright)]">이 캔버스에서 할 수 있는 것</p>
             <ul className="space-y-1">
-              <li>· SPEC/RUN 카드를 <b>클릭</b>하면 펼쳐지고, 안의 카드를 품습니다.</li>
-              <li>· 카드를 <b>끌어 옮기면 자리가 저장</b>됩니다(자동배치보다 우선).</li>
-              <li>· RUN을 다른 SPEC 위로 끌면 <b>편입</b>, 📋미분류로 끌면 분리됩니다.</li>
-              <li>· task 카드 좌우 손잡이를 이어 <b>의존을 만들고</b>, 선 가운데 ✕로 지웁니다.</li>
-              <li>· 노드에 마우스를 올리면 <b>연결된 것만</b> 밝아집니다.</li>
+              <li>· 카드를 <b>클릭</b>하면 SPEC/RUN은 펼쳐지고, 오른쪽에 상세가 열립니다.</li>
+              <li>· 배치는 <b>자동</b>입니다 — 카드를 끌어 옮기지 않습니다(빈 곳을 끌면 화면이 움직입니다).</li>
+              <li>· RUN의 <b>Spec 편입·분리</b>는 오른쪽 패널의 드롭다운에서 합니다.</li>
               <li>· RUN/SPEC <b>우클릭</b>으로 폐기하고, 우상단 폐기함에서 되돌립니다.</li>
+              <li>· 노드에 마우스를 올리면 <b>연결된 것만</b> 밝아지고, 의존선에 ✕가 뜹니다.</li>
               <li>· REQ는 그래프가 아니라 <b>오른쪽 패널</b>에서 봅니다.</li>
             </ul>
           </div>
