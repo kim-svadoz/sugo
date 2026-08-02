@@ -26,10 +26,8 @@ import {
   assignRunToSpec,
   dropSubtree,
   getSpecContent,
-  linkRoadmapNodes,
   renameRoadmapNode,
   restoreSubtree,
-  saveNodePosition,
   unlinkRoadmapNodes,
 } from "../../api/roadmapMutationsApi.js";
 import { SubtaskPanel } from "../SubtaskPanel.js";
@@ -50,8 +48,6 @@ const DROP_ROOM = 44;
 const BAND_H = 30;
 /** SPEC 안에서 RUN들이 가로로 늘어설 때의 간격(컨테이너 내부 dagre의 ranksep과 같은 값). */
 const RUN_GAP = 80;
-/** 이만큼은 움직여야 "옮겼다"로 친다(px). 클릭의 손떨림과 배치 의도를 가르는 선. */
-const DRAG_THRESHOLD = 6;
 /** 설계안 stale 임계 — in_progress인 채 이만큼 지나면 경고를 띄운다(시간 단위). */
 const STALE_WARN_H = 6;
 const STALE_ALERT_H = 24;
@@ -145,7 +141,13 @@ type NodeData = {
   onRename?: () => void;
   /** 미분류 밴드의 밑줄 y좌표. null이면 밴드 없음(설계안). */
   bandBottom?: number | null;
-  /** 드래그 중인 RUN이 이 컨테이너 위에 있는가 → "＋ 여기에 놓기". */
+  /**
+   * 설계안 WorkstreamContainer의 "＋ 여기에 놓기" 표시.
+   *
+   * 캔버스는 §5.1대로 **읽기전용 뷰어**라 카드를 끌 수 없고, 따라서 이 값을 켜는 곳이 지금은
+   * 없다. 마크업은 설계안에 있는 그대로 남겨둔다 — 나중에 캔버스 밖(목록 등)에서 끌어오는
+   * 경로가 생기면 받을 자리가 이미 있는 셈이고, 지우면 스펙과 어긋난다.
+   */
   isDropTarget?: boolean;
   /** lineage 노드 전용 — 이 체인에 묶인 patch 카드들(컬럼=sibling, 세로=serial). */
   chain?: ChainItem[][];
@@ -175,13 +177,22 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
   const dim = st === "dropped";
 
   if (isGroup) {
-    const expand = (e: React.MouseEvent) => {
+    /**
+     * chevron(▸)은 **펼치기만** 한다 — 전파를 막아 선택까지 바뀌지 않게.
+     *
+     * 카드 본체는 전파를 막지 않는다. 막으면 ReactFlow의 `onNodeClick`이 안 와서 이 노드가
+     * 선택되지 않고, 그러면 오른쪽 패널이 안 열린다. **RUN의 Spec 편입/분리는 그 패널의
+     * 드롭다운이 유일한 경로**(§C.3, 캔버스는 읽기전용)라, 여기서 전파를 막으면 기능 자체가
+     * 손에 닿지 않게 된다.
+     */
+    const expandOnly = (e: React.MouseEvent) => {
       e.stopPropagation();
       data.onToggleExpand?.();
     };
+    const expand = () => data.onToggleExpand?.();
     return (
       <div className="group/card" style={{ width: WS_CARD_W, opacity: dim ? 0.6 : 1 }}>
-        <Handle type="target" position={Position.Left} style={{ width: 11, height: 11, left: -5 }} />
+        <Handle type="target" position={Position.Left} style={{ opacity: 0, width: 9, height: 9, left: -5 }} />
         <div
           className="cursor-pointer overflow-hidden rounded-xl border-2 border-dashed transition-all duration-150 group-hover/card:brightness-110"
           style={{ borderColor: cs.border, background: "rgba(30,41,59,0.35)" }}
@@ -192,7 +203,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
             <button
               className="nodrag -my-1 flex h-8 w-8 items-center justify-center rounded text-[15px] leading-none text-slate-200 hover:bg-slate-400/20 hover:text-white"
               title="펼치기"
-              onClick={expand}
+              onClick={expandOnly}
             >
               ▸
             </button>
@@ -223,7 +234,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
             {n.manual_status && <span className="shrink-0 text-[10px] text-amber-300">✋</span>}
           </div>
         </div>
-        <Handle type="source" position={Position.Right} style={{ width: 11, height: 11, right: -5 }} />
+        <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 9, height: 9, right: -5 }} />
       </div>
     );
   }
@@ -243,7 +254,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
 
   return (
     <div className="group/card" style={{ width: NODE_W, opacity: dim ? 0.55 : 1 }}>
-      <Handle type="target" position={Position.Left} style={{ width: 11, height: 11, left: -5 }} />
+      <Handle type="target" position={Position.Left} style={{ opacity: 0, width: 9, height: 9, left: -5 }} />
       <div
         className="relative overflow-hidden rounded-xl border transition-all duration-150 group-hover/card:-translate-y-[2px] group-hover/card:brightness-110"
         style={{
@@ -316,7 +327,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
           )}
         </div>
       </div>
-      <Handle type="source" position={Position.Right} style={{ width: 11, height: 11, right: -5 }} />
+      <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 9, height: 9, right: -5 }} />
     </div>
   );
 }
@@ -332,7 +343,7 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
     // 부모(ReactFlow 노드)가 style.width/height로 실제 크기를 준다 — 자식이 이 안에 놓이므로
     // 여기서 폭을 고정하면 안 된다.
     <div className="relative h-full w-full" style={{ opacity: dim ? 0.6 : 1 }}>
-      <Handle type="target" position={Position.Left} style={{ width: 11, height: 11, left: -5 }} />
+      <Handle type="target" position={Position.Left} style={{ opacity: 0, width: 9, height: 9, left: -5 }} />
       <div
         className="h-full w-full rounded-xl border-2 border-dashed transition-all duration-150"
         style={{
@@ -454,7 +465,7 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
           </div>
         </div>
       </div>
-      <Handle type="source" position={Position.Right} style={{ width: 11, height: 11, right: -5 }} />
+      <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 9, height: 9, right: -5 }} />
     </div>
   );
 }
@@ -942,9 +953,6 @@ function layout(
   const rfNodes: FlowNode[] = [];
   const emit = (n: RoadmapNode, parentId?: string) => {
     const kind = kindOf(n);
-    // 가상 노드(체인·미분류)는 서버에 없으니 옮겨도 저장할 곳이 없다. 나머지는 전부 옮길 수 있다.
-    const draggable = !n.id.startsWith(CHAIN) && n.id !== UNASSIGNED;
-    const isRun = n.level === "workstream" && n.id !== UNASSIGNED;
     const s = size.get(n.id)!;
     const rootPos = g.node(n.id);
     // **사람이 옮긴 자리(pos_x/pos_y)가 dagre를 이긴다.** §7에서 pos는 대시보드 소유다 —
@@ -960,12 +968,7 @@ function layout(
       id: n.id,
       type: kind,
       position,
-      // RUN에는 `extent:"parent"`를 걸지 않는다 — 걸면 부모 상자 안에 갇혀서 **다른 Spec 위로
-      // 끌고 갈 수가 없다**(편입 기능 자체가 죽는다). 나머지는 상자 안에 가둔다.
-      ...(parentId ? { parentId, ...(isRun ? {} : { extent: "parent" as const }) } : {}),
-      draggable,
-      // 링크는 task↔task뿐이라 연결 핸들도 task에만 연다(계약을 UI에서 먼저 막는다).
-      connectable: isDepNode(n),
+      ...(parentId ? { parentId, extent: "parent" as const } : {}),
       style: { width: s.w, height: s.h },
       data: {
         node: n,
@@ -1081,33 +1084,6 @@ export function RoadmapGraph({
     }),
     [userId, workspace],
   );
-
-  /**
-   * 설계안 drop 타깃 — RUN 카드를 끌어 SPEC 컨테이너(또는 📋미분류)에 놓으면 편입/분리된다.
-   * 판정은 **포인터 위치**로 한다. 끌리는 카드의 bbox 겹침으로 하면 큰 카드가 컨테이너 두 개에
-   * 동시에 걸려 어디로 갈지 사람이 예측할 수 없다.
-   */
-  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
-
-  const hitTest = useCallback(
-    (evt: MouseEvent | TouchEvent, dragged: string): string | null => {
-      const pt = "clientX" in evt ? evt : evt.changedTouches[0];
-      if (!pt) return null;
-      const under = document.elementsFromPoint(pt.clientX, pt.clientY);
-      for (const el of under) {
-        const holder = el.closest?.("[data-id]") as HTMLElement | null;
-        const id = holder?.dataset.id;
-        if (!id || id === dragged) continue;
-        const n = nodes.find((x) => x.id === id);
-        if (id === UNASSIGNED || n?.level === "spec") return id;
-      }
-      return null;
-    },
-    [nodes],
-  );
-
-  /** 드래그 중인 RUN의 **실시간 좌표**. 이게 없으면 카드가 커서를 안 따라온다(아래 주석 참조). */
-  const [dragOrigin, setDragOrigin] = useState<{ x: number; y: number } | null>(null);
 
   const [hovered, setHovered] = useState<string | null>(null);
   /**
@@ -1281,7 +1257,6 @@ export function RoadmapGraph({
    * 폴링이 같은 내용을 다시 가져왔다면 문자열이 같으므로 아무 일도 일어나지 않는다.
    */
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<FlowNode>([]);
-  const dragging = useRef(false);
 
   const layoutSig = useMemo(
     () =>
@@ -1313,8 +1288,6 @@ export function RoadmapGraph({
   );
 
   useEffect(() => {
-    // 끌고 있는 중에 다시 심으면 그 순간 카드가 손에서 빠져나간다. 놓을 때 한 번 더 심긴다.
-    if (dragging.current) return;
     setFlowNodes(base.rfNodes);
     // base.rfNodes는 매 렌더 새 배열이라 의존성에 넣으면 무한 재심기다 — 서명으로만 본다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1325,18 +1298,13 @@ export function RoadmapGraph({
    * 여기서 `position`을 손대면 드래그와 다시 싸우게 된다.
    */
   const rfNodes = useMemo(() => {
-    if (!dropTargetId && !focus) return flowNodes;
+    if (!focus) return flowNodes;
     return flowNodes.map((n) => {
-      const lit = !focus || focus.nodeSet.has(n.id);
-      const isTarget = n.id === dropTargetId;
-      if (lit && !isTarget) return n;
-      return {
-        ...n,
-        ...(focus ? { style: { ...n.style, opacity: lit ? 1 : 0.12 } } : {}),
-        ...(isTarget ? { data: { ...n.data, isDropTarget: true } } : {}),
-      };
+      const lit = focus.nodeSet.has(n.id);
+      if (lit) return n;
+      return { ...n, style: { ...n.style, opacity: 0.12 } };
     });
-  }, [flowNodes, dropTargetId, focus]);
+  }, [flowNodes, focus]);
 
   /** 설계안 droppedTop — dropped인데 부모는 dropped가 아닌 "최상위 폐기"만. */
   const droppedTop = useMemo(() => {
@@ -1454,57 +1422,25 @@ export function RoadmapGraph({
           minZoom={0.1}
           proOptions={{ hideAttribution: true }}
           edgeTypes={edgeTypes}
-          // 노드별 `connectable`/`draggable`이 이 기본값을 덮는다(task만 연결, 가상 노드만 고정).
-          nodesConnectable
-          nodesDraggable
+          /**
+           * **읽기전용 뷰어(§5.1).** 설계안이 명시적으로 이렇게 못박는다:
+           * `nodesFocusable/nodesConnectable/nodesDraggable/elementsSelectable = false`.
+           *
+           * 캔버스는 **보는 자리**다. 구조를 바꾸는 일은 각각 제자리가 따로 있다 —
+           * RUN의 Spec 편입/분리는 오른쪽 패널의 드롭다운, 폐기·복구는 우클릭 메뉴와 폐기함,
+           * 의존 삭제는 엣지의 ✕. 여기서 카드를 끌어 옮기는 조작은 스펙에 없다.
+           */
+          nodesFocusable={false}
+          nodesConnectable={false}
+          nodesDraggable={false}
           connectionRadius={40}
           elevateEdgesOnSelect
           elementsSelectable={false}
           deleteKeyCode={null}
           panOnDrag={[0, 1, 2]}
           zoomOnDoubleClick={false}
+          // 드래그용이 아니라 **크기 측정 변화**를 받기 위한 것이다(설계안에 그대로 있다).
           onNodesChange={onNodesChange}
-          onNodeDragStart={(_, node) => {
-            dragging.current = true;
-            setDragOrigin({ x: node.position.x, y: node.position.y });
-          }}
-          onNodeDrag={(e, node) => setDropTargetId(hitTest(e, node.id))}
-          /**
-           * 놓았을 때 둘 중 하나다:
-           *  ① RUN을 **다른** Spec/미분류 상자 위에 놓았다 → 편입/분리(구조 변경).
-           *  ② 그 외 전부 → **자리 저장**(pos_x/pos_y). §7에서 pos는 대시보드 소유다.
-           *
-           * ①일 때 자리까지 같이 저장하면 안 된다. 편입 직후 부모가 바뀌어 좌표계 자체가
-           * 달라지므로, 옛 좌표계에서 잰 값을 새 부모 밑에 박아두면 엉뚱한 데로 튄다.
-           */
-          onNodeDragStop={(e, node) => {
-            dragging.current = false;
-            const target = hitTest(e, node.id);
-            setDropTargetId(null);
-            const origin = dragOrigin;
-            setDragOrigin(null);
-            const n = nodes.find((x) => x.id === node.id);
-            if (!n) return;
-            // 클릭도 미세한 드래그로 잡힌다 — 그대로 저장하면 **펼치려고 누른 것만으로**
-            // 자동배치가 사람 배치로 바뀌어 다시는 정렬되지 않는다. 문턱을 둔다.
-            const dist = origin ? Math.hypot(node.position.x - origin.x, node.position.y - origin.y) : 0;
-            const moved = target && n.level === "workstream" && target !== (n.parent ?? UNASSIGNED);
-            if (moved) {
-              void run(() => assignRunToSpec(userId!, workspace, node.id, target === UNASSIGNED ? null : target));
-              return;
-            }
-            if (dist < DRAG_THRESHOLD) return;
-            void run(() => saveNodePosition(userId!, workspace, node.id, node.position.x, node.position.y));
-          }}
-          /**
-           * 핸들을 끌어 이으면 의존이 생긴다. ReactFlow의 source는 **선행**, target은 후행인데
-           * 백엔드 `link(from, to)`는 `from.dependsOn += to`라 방향이 뒤집힌다 — 여기서 맞춘다.
-           * task↔task/사이클 검사는 백엔드가 fail-closed로 한 번 더 본다.
-           */
-          onConnect={(c: Connection) => {
-            if (!c.source || !c.target || c.source === c.target) return;
-            void run(() => linkRoadmapNodes(userId!, workspace, c.target!, c.source!));
-          }}
           onNodeMouseEnter={(_, node) => holdHover(node.id)}
           onNodeMouseLeave={() => holdHover(null)}
           onNodeClick={(_, node) => setSelectedId(node.id === selectedId ? null : node.id)}
