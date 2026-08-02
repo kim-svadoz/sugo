@@ -39,6 +39,8 @@ const CONT_PAD = 16;
 const DROP_ROOM = 44;
 /** 미분류 밴드(📋)가 차지하는 세로 폭 — 컨테이너 헤더 아래에 한 줄 더 얹힌다. */
 const BAND_H = 30;
+/** SPEC 안에서 RUN들이 가로로 늘어설 때의 간격(컨테이너 내부 dagre의 ranksep과 같은 값). */
+const RUN_GAP = 80;
 /**
  * Spec에 편입되지 않은 RUN들을 담는 **가상 컨테이너**의 id.
  * 서버에 이런 노드는 없다 — 화면에서만 만든다. `assignRunToSpec(run, null)`로 분리한 RUN이
@@ -681,6 +683,32 @@ function layout(
     const children = kids.get(n.id) ?? [];
     if (children.length === 0) {
       const s = { w: WS_CARD_W, h: innerTop(n.id) + CONT_PAD * 2 };
+      size.set(n.id, s);
+      return s;
+    }
+
+    /**
+     * **SPEC 안의 RUN은 가로 한 줄로 왼→오른쪽으로 흐른다.** RUN은 feat 하나당 하나씩 생기는
+     * *작업흐름의 단계*라서, 진행 방향이 곧 가로 방향이다.
+     *
+     * dagre에 맡기면 안 된다. RUN끼리는 의존(`depends_on`)이 없으므로 — 있어서도 안 된다,
+     * 의존은 task↔task뿐이다 — LR dagre가 전부 같은 rank 0에 넣어 **세로로 쌓아버린다.**
+     * 엣지가 없는 그래프에서 dagre가 줄 수 있는 정보가 없으니, 순서는 우리가 정한다:
+     * 서버가 준 로드맵 배열 순서(=생성 순서)가 곧 작업 순서다.
+     */
+    if (n.level === "spec") {
+      let x = CONT_PAD;
+      let rowH = 0;
+      for (const c of children) {
+        const cs = measure(c);
+        childPos.set(c.id, { x, y: innerTop(n.id) + CONT_PAD });
+        x += cs.w + RUN_GAP;
+        rowH = Math.max(rowH, cs.h);
+      }
+      const s = {
+        w: Math.max(WS_CARD_W, x - RUN_GAP + CONT_PAD),
+        h: innerTop(n.id) + CONT_PAD + rowH + CONT_PAD + DROP_ROOM,
+      };
       size.set(n.id, s);
       return s;
     }
