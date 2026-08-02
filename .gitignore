@@ -1,0 +1,10 @@
+# 저장소 루트 공통 무시.
+# 하위 프로젝트(sugo/, dashboard/*)는 각자 .gitignore를 갖고 있고, 이 파일은 루트에서
+# 잘못 만들어지는 것들만 막는다 — 레포 루트에서 vite/npm을 실행하면 여기에 빈
+# node_modules/.vite 가 생긴다.
+node_modules/
+.vite/
+
+# OS·에디터 부산물
+.DS_Store
+Thumbs.db
