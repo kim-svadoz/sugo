@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Activity,
@@ -42,6 +42,18 @@ import { useRoadmap } from "../hooks/useRoadmap.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
+
+/**
+ * 설계안 도메인 색 팔레트. **이름이 아니라 목록 순서(index)로** 고른다 — 이름 해시로 고르면
+ * 도메인이 하나 늘 때마다 기존 도메인 색이 같이 뒤바뀌어, 색으로 기억한 사람을 배신한다.
+ */
+const WS_COLORS = [
+  "#f87171", "#fb923c", "#facc15", "#4ade80", "#22d3ee",
+  "#60a5fa", "#a78bfa", "#f472b6", "#34d399", "#c084fc",
+];
+function getWsColor(_name: string, index: number): string {
+  return WS_COLORS[index % WS_COLORS.length];
+}
 
 const INSPECTOR_TABS = [
   { id: "history" as const, label: "History", icon: History },
@@ -262,11 +274,20 @@ export function Sessions() {
       list = list.filter((w) => w.lastActivityAt !== null && new Date(w.lastActivityAt).getTime() >= cutoff);
     }
     if (isSearchMode) {
+      // 이건 **이력 검색**이다. 도메인 이름만 대조하면 "1건 일치"라고 배너에 써놓고 목록은
+      // 비는, 스스로 모순되는 화면이 된다. 이름이 걸리거나 **이력이 걸린** 도메인을 남긴다.
       const q = searchQuery.trim().toLowerCase();
-      list = list.filter((w) => w.name.toLowerCase().includes(q));
+      const hit = new Set(searchResults.map((r) => r.workspace_name));
+      list = list.filter((w) => hit.has(w.name) || w.name.toLowerCase().includes(q));
     }
     return list;
-  }, [workspaces, statusFilter, searchQuery, isSearchMode]);
+  }, [workspaces, statusFilter, searchQuery, isSearchMode, searchResults]);
+
+  /** 검색 모드에서 이 도메인에 걸린 이력만. 인스펙터가 전체 이력 대신 이걸 보여준다. */
+  const getSearchResultHistory = useCallback(
+    (name: string) => searchResults.filter((r) => r.workspace_name === name),
+    [searchResults],
+  );
 
   // 설계안 디바운스 검색 — 2자 미만이면 결과를 비운다(한 글자에 전체 스캔을 돌리지 않는다).
   useEffect(() => {
@@ -380,9 +401,46 @@ export function Sessions() {
     </div>
   );
 
+  /**
+   * 설계안 `renderDetail(ws)` — 검색 결과 행을 그 자리에서 펼친 본문.
+   * 프로젝트 칩 + 인스펙터(History/ADR/Repositories)를 그대로 쓴다. 탭 본문을 여기에 다시
+   * 쓰면 두 벌이 되어 한쪽만 고쳐지는 일이 반드시 생긴다.
+   */
+  const renderDetail = (ws: WorkspaceSummary) => (
+    <>
+      {(ws.projects?.length ?? 0) > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-2">
+          <span className="mr-1 text-[12px] text-[var(--color-text-muted)]">프로젝트 {ws.projects!.length}</span>
+          {ws.projects!.map((pr) => (
+            <span
+              key={pr.project_path}
+              title={pr.project_path}
+              className="rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-0.5 font-mono text-[12px] text-[var(--color-text-muted)] transition-colors hover:border-cyan-500/40 hover:text-[var(--color-text)]"
+            >
+              {repoName(pr.project_path)}
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex max-h-[320px] min-h-[140px] flex-col">{renderInspector(ws)}</div>
+    </>
+  );
+
   const renderInspector = (ws: WorkspaceSummary) => {
+    // 검색 중에는 **걸린 이력만** 보여준다. 전체 이력을 그대로 띄우면 무엇이 검색에 걸렸는지
+    // 사람이 다시 눈으로 찾아야 한다(설계안 `getSearchResultHistory`).
+    // 검색 결과 행에는 key_decisions/files_changed가 없다(검색 API가 요약만 준다) — 칩은
+    // 0으로 접히고, 상세는 모달을 열 때 전체 이력에서 다시 찾는다.
+    const hist: { data: HistoryLog[]; loading: boolean } = isSearchMode
+      ? {
+          data: getSearchResultHistory(ws.name).map(
+            (r) => ({ ...r, key_decisions: [], files_changed: [] }) as unknown as HistoryLog,
+          ),
+          loading: false,
+        }
+      : { data: history.data, loading: history.loading };
     const total =
-      activeTab === "history" ? ws.historyCount : activeTab === "adr" ? ws.decisionCount : (ws.projects?.length ?? 0);
+      activeTab === "history" ? hist.data.length : activeTab === "adr" ? ws.decisionCount : (ws.projects?.length ?? 0);
     const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
     const page = Math.min(inspectorPage, pages - 1);
     const s = page * PAGE_SIZE;
@@ -401,7 +459,7 @@ export function Sessions() {
             {INSPECTOR_TABS.map((t) => {
               const Icon = t.icon;
               const count =
-                t.id === "history" ? ws.historyCount : t.id === "adr" ? ws.decisionCount : (ws.projects?.length ?? 0);
+                t.id === "history" ? hist.data.length : t.id === "adr" ? ws.decisionCount : (ws.projects?.length ?? 0);
               return (
                 <button
                   key={t.id}
@@ -442,13 +500,13 @@ export function Sessions() {
               )}
             </ul>
           ) : activeTab === "history" ? (
-            history.loading ? (
+            hist.loading ? (
               <LoadingSpinner />
-            ) : history.data.length === 0 ? (
+            ) : hist.data.length === 0 ? (
               <EmptyState message="No history logs" />
             ) : (
               <div className="space-y-1">
-                {history.data.slice(s, s + PAGE_SIZE).map((log) => {
+                {hist.data.slice(s, s + PAGE_SIZE).map((log) => {
                   const decN = log.key_decisions?.length ?? 0;
                   const fileN = log.files_changed?.length ?? 0;
                   return (
@@ -664,12 +722,60 @@ export function Sessions() {
               ? "필터 조건에 맞는 도메인이 없습니다"
               : "No workspaces found"}
         </div>
+      ) : isSearchMode ? (
+        /*
+         * 설계안 뷰 3종 중 **검색 모드** — 전폭 행 + 클릭하면 그 자리에서 펼쳐지는 상세.
+         * 검색은 "어느 도메인에 있나"를 찾는 행위라, 결과를 누를 때마다 아래 인스펙터로
+         * 시선이 튀면 찾던 자리를 잃는다. 그래서 결과 안에서 바로 편다.
+         */
+        <div className="ck-scroll max-h-[560px] space-y-1.5 overflow-auto pr-1">
+          {filteredWorkspaces.map((ws, wi) => {
+            const isSel = selectedWorkspace === ws.name;
+            const st = statusOf(ws);
+            const color = getWsColor(ws.name, wi);
+            return (
+              <div
+                key={ws.name}
+                className={cn(
+                  "rounded-lg border bg-[var(--color-surface)]",
+                  isSel ? "neon-border-cyan border-cyan-500/60" : "border-[var(--color-border)]",
+                )}
+                style={{ boxShadow: `inset 3px 0 0 ${color}` }}
+              >
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedWorkspace(isSel ? null : ws.name)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
+                  }}
+                  className="flex cursor-pointer items-center gap-3 px-3 py-2.5"
+                >
+                  <span className="w-4 shrink-0 text-center font-mono text-[11px] text-[var(--color-text-dim)]">
+                    {isSel ? "▾" : "▸"}
+                  </span>
+                  <span className={cn("h-2 w-2 shrink-0 rounded-full ck-pulse-dot", st.dot)} />
+                  <span className="w-56 shrink-0 truncate font-mono text-[13.5px] font-bold text-white">{ws.name}</span>
+                  <span className={cn("shrink-0 rounded border px-2 py-0.5 font-mono text-[10px] font-bold", st.pill)}>
+                    {st.text}
+                  </span>
+                  <div className="flex-1">{renderCounts(ws)}</div>
+                  {renderVitals(ws)}
+                </div>
+                {isSel && (
+                  <div className="ml-6 mr-3 mt-1 space-y-3 border-l-2 border-cyan-500/30 pb-3 pl-4">{renderDetail(ws)}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       ) : viewMode === "grid" ? (
         <div className="ck-scroll grid max-h-[360px] grid-cols-1 gap-2.5 overflow-auto pr-1 md:grid-cols-2 xl:grid-cols-4">
-          {filteredWorkspaces.map((ws) => {
+          {filteredWorkspaces.map((ws, wi) => {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);
             const h = healthOf(ws);
+            const color = getWsColor(ws.name, wi);
             return (
               <div
                 key={ws.name}
@@ -683,6 +789,7 @@ export function Sessions() {
                   "ck-card flex cursor-pointer flex-col justify-between rounded-xl border bg-[var(--color-surface)] p-4",
                   isSel ? "neon-border-cyan border-cyan-500/60" : "border-[var(--color-border)]",
                 )}
+                style={{ boxShadow: `inset 3px 0 0 ${color}` }}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">
@@ -763,9 +870,10 @@ export function Sessions() {
       ) : (
         /* Compact List — 단일 행 */
         <div className="ck-scroll max-h-[360px] space-y-1 overflow-auto pr-1">
-          {filteredWorkspaces.map((ws) => {
+          {filteredWorkspaces.map((ws, wi) => {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);
+            const color = getWsColor(ws.name, wi);
             return (
               <div
                 key={ws.name}
@@ -779,6 +887,7 @@ export function Sessions() {
                   "ck-card flex cursor-pointer items-center gap-3 rounded-lg border bg-[var(--color-surface)] px-3 py-2",
                   isSel ? "neon-border-cyan border-cyan-500/60" : "border-[var(--color-border)]",
                 )}
+                style={{ boxShadow: `inset 3px 0 0 ${color}` }}
               >
                 <span className={cn("h-2 w-2 shrink-0 rounded-full ck-pulse-dot", st.dot)} />
                 <span className="w-48 shrink-0 truncate font-mono text-[13px] font-bold text-white">{ws.name}</span>
@@ -793,8 +902,12 @@ export function Sessions() {
         </div>
       )}
 
-      {/* 하단 2단 — 좌 LiveConsole · 우 Pinned Inspector (설계안 MAIN RETURN 하단) */}
-      {selected && (
+      {/*
+        하단 2단 — 좌 LiveConsole · 우 Pinned Inspector (설계안 MAIN RETURN 하단).
+        **검색 모드에선 띄우지 않는다.** 검색은 결과 행 안에서 바로 펼치는 뷰라, 아래에
+        같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
+      */}
+      {selected && !isSearchMode && (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <div className="ck-glass flex h-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3">
             <LiveConsole workspace={selected.name} />
