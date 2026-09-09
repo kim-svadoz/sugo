@@ -1,7 +1,7 @@
 // 플러그인은 ISO 8601 문자열(`2026-01-02T00:00:00.000Z`)로 타임스탬프를 보내지만, MySQL의
 // TIMESTAMP/DATETIME 컬럼은 `T`/`Z`/밀리초가 붙은 ISO를 거부한다(ER_TRUNCATED_WRONG_VALUE) —
-// `YYYY-MM-DD HH:MM:SS[.fff]`(공백 구분, UTC)를 기대한다. SQLite는 TEXT라 원본을 그대로 받아
-// 이 불일치가 실제 MySQL 연결 전까지 숨어 있었다(2026-07-25 실제 MySQL e2e에서 발견).
+// `YYYY-MM-DD HH:MM:SS[.fff]`(공백 구분, UTC)를 기대한다. **SQLite는 TEXT라 원본을 그대로 받으므로
+// 이 불일치는 SQLite 테스트로는 절대 안 드러난다** — 실물 MySQL로만 잡힌다.
 //
 // 이 헬퍼가 두 드라이버 모두에서 안전한 형태로 정규화한다: ISO를 UTC 기준 `YYYY-MM-DD HH:MM:SS.fff`로
 // 변환한다. **datetime 컬럼 전용**이므로(호출부가 started_at/completed_at 등에만 적용) 파싱

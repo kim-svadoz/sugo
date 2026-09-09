@@ -2,7 +2,7 @@ import { chromium } from "playwright";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
-// CLAUDE_JOB_DIR이 없으면 예전엔 "undefined/tmp"로 조용히 망가졌다. 없으면 OS 임시 디렉터리로.
+// CLAUDE_JOB_DIR이 없으면 OS 임시 디렉터리로 — 문자열 연결로 두면 "undefined/tmp"가 된다.
 const OUT = process.env.CLAUDE_JOB_DIR ? join(process.env.CLAUDE_JOB_DIR, "tmp") : tmpdir();
 const BASE = "http://localhost:4173";
 

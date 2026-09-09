@@ -64,7 +64,7 @@ export async function syncRoadmapSnapshot(workspaceName: string, nodes: RoadmapN
 }
 
 /** §7.2 `/api/sync/checkpoint` push 방향 — sugo_checkpoint(action:'sync')가 사용한다. pull 방향은
- * dashboard/fetch.ts의 fetchCheckpointSync + sugo_checkpoint(action:'pull')이 담당한다(14단계). */
+ * dashboard/fetch.ts의 fetchCheckpointSync + sugo_checkpoint(action:'pull')이 담당한다. */
 export async function syncCheckpoint(workspaceName: string, checkpoint: Checkpoint): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;

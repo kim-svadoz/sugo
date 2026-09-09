@@ -23,8 +23,8 @@ const PRD_PATCH_RE = /^prd-patch-v(\d+)\.md$/i;
 /**
  * 순수 함수(§7): 원본(1차, 번호 없는 prd.md/work-result.md)을 암묵적 v1로 취급하고,
  * 디렉터리에서 발견한 (prd|work-result)-patch-v(N).md 중 최대 N과 비교해 다음 버전을 정한다.
- * 스펙 원문("최대값+1")이 "패치 파일이 하나도 없을 때 기준값"을 명시하지 않아, 원본=v1 기준으로
- * 첫 patch가 v2가 되도록 해석했다 — roadmap-progress.md에 이 해석을 기록해둘 것.
+ * 스펙 원문("최대값+1")이 "패치 파일이 하나도 없을 때 기준값"을 명시하지 않는다 — 원본=v1로
+ * 보고 첫 patch를 v2로 매기는 쪽으로 해석했다.
  */
 export function computeNextPatchVersion(filenames: string[]): number {
   let max = 1;

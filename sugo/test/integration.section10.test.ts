@@ -122,8 +122,8 @@ describe("§10 계약테스트 실행증거 — opt-in", () => {
   });
 
   it("§3 신규 gate: 필수인데 red 확인 자체가 없으면 code_start 전에 contract_done에서 이미 거부된다", async () => {
-    // v1 스펙 델타(선형화) 이전에는 review_done에서야 CONTRACT_EVIDENCE_MISSING으로 걸렸지만,
-    // 지금은 훨씬 앞단인 contract_done 상태전이 자체가 막아 code_start조차 못 간다(빨리 실패).
+    // contract_done 상태전이 자체가 막아 code_start조차 못 간다 — review_done까지 끌고 가지
+    // 않고 앞단에서 빨리 실패시키는 게 이 게이트의 요점이다.
     await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId as string;
@@ -294,10 +294,10 @@ describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
 });
 
 /**
- * P5-24 결정(2026-08-01, 사용자): **서브태스크마다 미니 파이프라인은 강제하지 않는다.**
- * 쪼갠 일을 각자 알아서 하라고 나눈 건데 거기 또 게이트를 걸면 decompose를 쓸 이유가 없다.
- * 대신 **합쳐서 나가는 integrate 한 지점**에서 code_done과 같은 내용 게이트를 통과해야 한다.
- * v2가 integrate 도착지를 DOCS_PENDING으로 바꾸면서 생긴 게이트 공백을 이걸로 닫는다.
+ * **서브태스크마다 미니 파이프라인은 강제하지 않는다.** 쪼갠 일을 각자 알아서 하라고 나눈
+ * 건데 거기 또 게이트를 걸면 decompose를 쓸 이유가 없다. 대신 **합쳐서 나가는 integrate 한
+ * 지점**에서 code_done과 같은 내용 게이트를 통과해야 한다 — integrate가 DOCS_PENDING으로
+ * 합류하면서 생기는 게이트 공백을 이걸로 닫는다.
  */
 describe("§10 통합 게이트 — 각자는 자유, 합류는 검증(P5-24)", () => {
   async function toOrchestrating(): Promise<string> {

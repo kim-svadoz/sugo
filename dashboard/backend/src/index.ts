@@ -124,8 +124,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
 async function main() {
   // §3.1/§7 회복력: sync는 논블로킹이고 대시보드 다운이 플러그인을 막으면 안 된다. Express 4는
   // async 핸들러 reject를 자동으로 안 잡아 unhandledRejection으로 프로세스가 죽을 수 있으므로,
-  // 프로세스 레벨 가드로 잘못된 push 하나가 전체 서버를 내리는 걸 막는다(실제 MySQL e2e에서
-  // datetime 페이로드로 크래시하는 걸 발견해 추가, 2026-07-25). 로그만 남기고 계속 산다.
+  // 프로세스 레벨 가드로 잘못된 push 하나가 전체 서버를 내리는 걸 막는다. 로그만 남기고 계속 산다.
   process.on("unhandledRejection", (reason) => {
     console.error("[dashboard] unhandledRejection (프로세스 유지):", reason instanceof Error ? reason.message : reason);
   });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { toDbDateTime } from "../src/db/datetime.js";
 
-// 실제 MySQL e2e(2026-07-25)에서 발견: 플러그인 ISO 8601을 MySQL TIMESTAMP가 거부.
+// MySQL TIMESTAMP는 플러그인이 보내는 ISO 8601을 거부한다 — SQLite로는 안 드러나는 계약이라 여기 고정한다.
 describe("toDbDateTime", () => {
   it("반드시 지켜야: ISO 8601(T/Z/밀리초)을 MySQL 공용 형태로 변환한다", () => {
     expect(toDbDateTime("2026-01-02T00:00:00.000Z")).toBe("2026-01-02 00:00:00.000");

@@ -125,9 +125,9 @@ describe("§4.2 풀검증 명령 게이트 — 설계안 코퍼스", () => {
 });
 
 /**
- * 설계안 파라미터명(`totalTests`/`passedTests`/`failedTests`)이 v2 정본이다. v1은
- * `total`/`passed`/`failed`였는데, test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
- * undefined로 들어가 증거가 비어버린다 — 그래서 둘 다 받되 새 이름이 이긴다.
+ * 설계안 파라미터명(`totalTests`/`passedTests`/`failedTests`)이 정본이다. test-agent가
+ * 부르는 계약이라 이름이 어긋나면 값이 조용히 undefined로 들어가 증거가 비어버린다 —
+ * 짧은 이름(`total`/`passed`/`failed`)도 받되 정본 이름이 이긴다.
  */
 describe("§설계안 record_test_evidence 파라미터명", () => {
   async function record(args: Record<string, unknown>) {

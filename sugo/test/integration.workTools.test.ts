@@ -29,10 +29,9 @@ afterEach(() => {
 });
 
 /**
- * §9/§1 v2 도구 델타: `sugo_hulk` umbrella 완전 제거. 이 파일은 그 도구가 갖고 있던 액션들이
- * 어디로 갔는지를 고정한다 — health/judgment는 `sugo_status`로, 워크스페이스 status/sync는
- * `sugo_workspace`로. enable/disable/help는 그냥 사라졌다(토글은 무력한 no-op이었고,
- * help는 도구 description이 할 일이다).
+ * §9/§1 umbrella 도구 없이 액션이 어디에 속하는지를 고정한다 — health/judgment는
+ * `sugo_status`, 워크스페이스 status/sync는 `sugo_workspace`. enable/disable/help는 두지
+ * 않는다(토글은 무력한 no-op이고, help는 도구 description이 할 일이다).
  */
 describe("§9 isWorkEnabled — 상수, 토글 개념 소멸", () => {
   it("항상 true다", () => {

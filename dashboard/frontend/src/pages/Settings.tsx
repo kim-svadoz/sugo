@@ -107,7 +107,7 @@ function ApiTokensCard() {
 }
 
 // §5/§6: "Settings — Bitbucket PAT만(password 입력, PUT /api/bitbucket, ••••{hint} 표시, 삭제)."
-// scope 선택은 로드맵 PR 패널에 있음(§10 로드맵 UI는 5단계에서 간소화 뷰로 미룸 - 아직 없음).
+// scope 선택은 로드맵 PR 패널에 있다.
 export function Settings() {
   const [status, setStatus] = useState<BitbucketStatus | null>(null);
   const [token, setToken] = useState("");

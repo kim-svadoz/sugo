@@ -108,8 +108,8 @@ export interface FetchHarnessesParams {
 }
 
 /**
- * 하네스 fetch 진입점. repoUrl이 주어져도 git 연동은 아직 구현되지 않아(로드맵 2단계는 로컬만)
- * 경고를 남기고 로컬로 폴백한다 — 차단하지 않는다(§2).
+ * 하네스 fetch 진입점. repoUrl이 주어져도 git 연동은 아직 없어 경고만 남기고 로컬로
+ * 폴백한다 — 차단하지 않는다(§2).
  */
 export function fetchHarnesses(params: FetchHarnessesParams): FetchResult {
   const result = fetchFromLocal(params.harnessIds, params.libraryDir);

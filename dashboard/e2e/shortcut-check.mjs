@@ -1,5 +1,5 @@
 /**
- * CommandPalette 단축키 실동작 확인 (2026-09-09).
+ * CommandPalette 단축키 실동작 확인.
  *
  * 백엔드/DB 없이 프론트 preview(:4173)만 띄우고 API는 전부 page.route로 mock한다
  * (shot.mjs와 같은 방식). 키보드 동작은 "조용히 안 먹는" 대표 케이스라 단정 대신 실제

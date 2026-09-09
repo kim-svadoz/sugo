@@ -2,19 +2,11 @@ import type { Checkpoint, RoadmapNode, Spec, Task, WorkLog } from "../hulk/types
 import type { PrRefs } from "../prRefs.js";
 
 /**
- * §7.2 seam 직렬화 어댑터 — 플러그인 도메인 객체(snake_case, 중첩 타입)를 대시보드 REST API가
- * 기대하는 **평평한 wire 포맷(camelCase, top-level 필드)**으로 변환한다.
+ * §7.2 seam 직렬화 어댑터 — 플러그인 도메인 객체(snake_case, 중첩)를 대시보드 REST API가 기대하는
+ * **평평한 wire 포맷(camelCase, top-level 필드)**으로 변환한다.
  *
- * **왜 이 계층이 필요한가:** 플러그인과 대시보드가 같은 v1 스펙 §7.2를 각자 격리 구현하면서
- * 페이로드 형태가 어긋났다(플러그인은 `{userId,workspaceName,task:{...}}`처럼 감싸고 snake_case를
- * 쓰는데, 대시보드 zod 스키마는 `{userId,workspaceName,id,title,startedAt,...}`처럼 평평하고
- * camelCase를 기대). 두 반쪽을 실제로 붙여본 적이 없어 숨어 있었다. 대시보드가 수신 계약의
- * 주인(§2 "DB가 진실")이므로 플러그인 쪽을 대시보드 wire 포맷에 맞춘다.
- *
- * **URL 번역은 없다(v2/D1):** 2026-07-24에 대시보드만 roadmap→canvas로 리네임하는 바람에 이
- * 어댑터가 경계에서 URL을 canvas로 번역했었는데, v2 스펙이 양쪽 모두 `roadmap`으로 못박아
- * 되돌렸다(화면에 보이는 라벨만 "Agent Canvas"). 이제 이 파일은 **형태 변환(snake_case 중첩 →
- * 평평한 camelCase)만** 담당하고 경로는 양쪽이 그대로 일치한다.
+ * 변환 방향이 이쪽인 이유: 대시보드가 수신 계약의 주인이다(§2 "DB가 진실"). 플러그인이 맞춘다.
+ * 이 파일은 **형태 변환만** 한다 — 경로는 양쪽이 `roadmap`으로 일치하므로 URL은 건드리지 않는다.
  */
 
 /** 대시보드 task status enum(pending|in_progress|done|archived)에 없는 플러그인 값(idea/dropped)을 매핑. */

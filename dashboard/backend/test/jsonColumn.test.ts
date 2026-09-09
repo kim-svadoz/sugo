@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { parseJsonArray, parseMaybeJson } from "../src/db/jsonColumn.js";
 
-// Found by testing against a real local MySQL instance (2026-07-24, see
-// docs/roadmap-progress.md): mysql2 auto-deserializes JSON columns into
-// objects/arrays, while node:sqlite returns the raw TEXT string. Every
-// service that reads a JSON column has to tolerate both shapes - these
-// tests pin that contract down.
+// mysql2 auto-deserializes JSON columns into objects/arrays, while node:sqlite
+// returns the raw TEXT string. Every service that reads a JSON column has to
+// tolerate both shapes - these tests pin that contract down.
 describe("parseMaybeJson", () => {
   it("parses a JSON string (sqlite shape)", () => {
     expect(parseMaybeJson('{"a":1}', null)).toEqual({ a: 1 });

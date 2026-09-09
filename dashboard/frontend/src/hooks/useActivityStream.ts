@@ -18,9 +18,9 @@ export interface ActivityEvent {
 /**
  * §6 Activity Stream 4초 폴링(SSE 아님).
  *
- * **history 폴백은 v2에서 폐지됐다.** 예전엔 스트림이 비면 recent-history를 이벤트처럼 변환해
- * 채웠는데, 그러면 사용자가 "지금 에이전트가 돌고 있다"고 오해한다 — 실시간 로그가 없다는 건
- * 그 자체로 정보다. 비면 비어 있는 채로 두고 화면이 "이벤트 대기 중"을 그린다.
+ * **history 폴백을 두지 않는다.** 스트림이 비었을 때 recent-history를 이벤트처럼 변환해 채우면
+ * 사용자가 "지금 에이전트가 돌고 있다"고 오해한다 — 실시간 로그가 없다는 건 그 자체로 정보다.
+ * 비면 비어 있는 채로 두고 화면이 "이벤트 대기 중"을 그린다.
  */
 export function useActivityStream(workspace?: string) {
   const { userId, isAuthenticated } = useAuth();

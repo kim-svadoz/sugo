@@ -114,7 +114,7 @@ describe("§5.0 스펙 오라클 — 실제 파이프라인 통과", () => {
     expect(jira.isError).toBe(false);
     expect(jira.data.state).toBe("JIRA");
 
-    // 여기서 막히면 이 세션은 영영 ready로 못 간다 — 그게 v2가 고친 데드락이다.
+    // 여기서 막히면 이 세션은 영영 ready로 못 간다 — 이 전이가 그 데드락을 막는다.
     const oracle = await call({ action: "oracle_done", sessionId });
     expect(oracle.isError).toBe(false);
     expect(oracle.data.state).toBe("JIRA");

@@ -92,9 +92,8 @@ export async function removeCheckpoint(workspace: string, id: string): Promise<b
 
 /**
  * §8 sugo_checkpoint(migrate): 기존 체크포인트 파일을 현재 canonical frontmatter 포맷으로
- * 다시 써서 정규화한다(예: 예전 필드 누락/순서 차이). 이 로컬 빌드엔 실제 레거시 포맷이
- * 없어 사실상 재직렬화 no-op이지만, 파일이 손상되거나 필드가 부분적으로만 있어도 항상 완전한
- * Checkpoint 셰이프로 다시 쓰는 안전한 정규화 통로를 마련해둔다.
+ * 다시 써서 정규화한다. 파일이 손상되거나 필드가 부분적으로만 있어도 항상 완전한 Checkpoint
+ * 셰이프로 다시 쓰는 통로다.
  */
 export async function migrateCheckpoints(workspace: string): Promise<number> {
   const entries = await listCheckpointFiles(workspace);

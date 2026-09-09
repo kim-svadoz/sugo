@@ -81,8 +81,7 @@ export interface ChainInfo {
   workResultPath?: string;
   autoLoopRetryCount: number;
   codeGateAudit?: CodeGateAudit;
-  /** sugo_chain 호출 감사로그(§5). 이번 빌드에서는 test_start/review_start의 하드 게이트는
-   * 아니고 기록만 한다 — roadmap-progress.md의 4단계 스코프 결정 참고. */
+  /** sugo_chain 호출 감사로그(§5). test_start/review_start의 하드 게이트는 아니고 기록만 한다. */
   chainHandoffs?: { direction: ChainDirection; calledAt: string }[];
   lastValidation?: { verdict: "pass" | "partial" | "fail"; checkedAt: string; fabricatedCount: number };
   /** review_done에서 계산한 값을 commit 시점(§8 WorkLog 기록)까지 들고 가기 위한 보존 필드. */
@@ -117,7 +116,7 @@ export interface SessionData {
   hulkTaskId?: string;
   /** §10 decompose 오케스트레이션(선택 확장) — DECOMPOSE/ORCHESTRATING 상태 동안의 서브태스크 매니페스트. */
   decomposeManifest?: DecomposeManifest;
-  /** §7.1 Patch 성숙화: start action에 전달된 사용자 지시. patch 모드에서 review_done이
+  /** §7.1 start action에 전달된 사용자 지시. patch 모드에서 review_done이
    * work-result에 실어둔다(reviewSummary와는 별개 — "이번 차수에 뭘 요청했는지" 자체를 보존). */
   seed?: string;
   /** §5.0 스펙 오라클(q-spec 대조) 상태. prd가 specPath 실재를 확인하면 required=true로 켜고,

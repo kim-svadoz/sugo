@@ -20,8 +20,8 @@ async function tableExists(db: DbClient, name: string): Promise<boolean> {
 }
 
 /**
- * D1(v2 스펙 정렬): 2026-07-24에 대시보드만 `roadmap → canvas`로 리네임했다가 v2 스펙에 맞춰
- * 되돌린다. 스키마 파일은 새 이름으로 `CREATE TABLE IF NOT EXISTS`를 돌리므로, 이 마이그레이션이
+ * 한동안 대시보드에만 `canvas` 이름을 썼던 DB를 스펙대로 `roadmap`으로 되돌린다.
+ * 스키마 파일은 새 이름으로 `CREATE TABLE IF NOT EXISTS`를 돌리므로, 이 마이그레이션이
  * 없으면 기존 DB는 **빈 `sugo_roadmap_nodes`가 생기고 노드 데이터는 `sugo_canvas_nodes`에 남아
  * 고아가 된다**(화면엔 "노드 없음"으로 보이고 원인은 안 보임). 그래서 스키마 적용 **전에** 돈다.
  *

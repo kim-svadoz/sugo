@@ -20,12 +20,10 @@ const SugoStatusArgs = z.object(sugoStatusInputSchema);
 /**
  * §1 `sugo_status` — 상태 대시보드 **+ 진단 흡수**.
  *
- * v2에서 `sugo_hulk`가 완전히 사라지면서 그 도구가 갖고 있던 `health`(대시보드 연결 진단)와
- * `judgment`(§5.8 판단품질 리포트)가 여기로 들어왔다. 별도 umbrella 도구를 두면 "상태를 보려면
- * 어느 도구를 불러야 하나"가 매번 헷갈리고, 실제로 v1의 `sugo_hulk`는 enable/disable처럼
- * 아무 것도 안 하는 no-op 액션까지 달고 있었다.
+ * `health`(대시보드 연결 진단)와 `judgment`(§5.8 판단품질 리포트)를 여기서 함께 받는다.
+ * 진단용 umbrella 도구를 따로 두면 "상태를 보려면 어느 도구를 불러야 하나"가 매번 헷갈린다.
  *
- * 기본(파라미터 없음)은 v1과 동일한 등록 프로젝트 목록이라 하위호환이 유지된다.
+ * 파라미터가 없으면 등록 프로젝트 목록만 돌려준다.
  */
 export async function handleSugoStatus(rawArgs: unknown = {}) {
   const args = SugoStatusArgs.parse(rawArgs ?? {});

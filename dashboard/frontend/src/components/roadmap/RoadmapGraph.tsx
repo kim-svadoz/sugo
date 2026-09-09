@@ -663,8 +663,8 @@ const edgeTypes = { deletable: DeletableEdge };
 /**
  * **의존(`depends_on`)은 task ↔ task 전용이다** — 플러그인 스펙 §"링크 타입"의 `task → task`,
  * 백엔드 `LINK_REQUIRES_TASK_LEVEL`과 같은 계약이다. RUN/SPEC 사이의 순서는 의존이 아니라
- * **포함(parent)** 으로 표현한다. v1은 아무 레벨에나 링크를 그렸는데, 그러면 "RUN이 RUN을
- * 기다린다"는, 온톨로지에 없는 관계가 화면에만 생겨난다.
+ * **포함(parent)** 으로 표현한다. 아무 레벨에나 링크를 그리면 "RUN이 RUN을 기다린다"는,
+ * 온톨로지에 없는 관계가 화면에만 생겨난다.
  */
 function isDepNode(n: RoadmapNode): boolean {
   return n.level === "task" && !n.id.startsWith(CHAIN);

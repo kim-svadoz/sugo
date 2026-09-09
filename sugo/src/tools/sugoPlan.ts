@@ -203,14 +203,12 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (!oracleGate.ok) return errorResult(oracleGate.code as GateBlockCode, oracleGate.message!);
   }
 
-  // ── §3/§4.0 baseline_capture: 원본은 code_done에 딸린 암묵 태깅이었으나, v1 스펙(게이트 하드닝
-  //)에서 명시 상태로 승격됐다. code_done에도 동일 게이트를 남겨둔다.
+  // ── §3/§4.0 baseline_capture. code_done에도 동일 게이트를 남겨둔다(이중 방어).
   //
-  // ⚠️ v2에서 decompose 경로는 이 보호를 **못 받는다.** PRD→DECOMPOSE→ORCHESTRATING→(integrate)→
-  // DOCS_PENDING이라 baseline_capture도 code_done도 안 거친다. v1에서는 integrate가 CODE_RUNNING으로
-  // 합류해서 code_done의 baseline 재검증에 걸렸지만, v2 §4 흐름도는 DOCS_PENDING 합류를 명시한다 —
-  // 서브태스크 각자가 자기 검증을 끝냈다는 전제다. 서브태스크별 게이트는 아직 미구현이므로
-  // **이 경로는 현재 게이트 공백**이다(V2-DELTA-PLAN에 후속으로 기록).
+  // ⚠️ decompose 경로는 이 보호를 **못 받는다.** PRD→DECOMPOSE→ORCHESTRATING→(integrate)→
+  // DOCS_PENDING이라 baseline_capture도 code_done도 안 거친다. §4 흐름도가 DOCS_PENDING 합류를
+  // 명시하는 근거는 "서브태스크 각자가 자기 검증을 끝냈다"는 전제인데, 서브태스크별 게이트가
+  // 아직 없다 — **이 경로는 현재 게이트 공백**이다(V2-DELTA-PLAN에 후속으로 기록).
   if (action === "baseline_capture" && existing) {
     const baselineRequired = existing.data.baselineGate?.required ?? false;
     const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
@@ -424,9 +422,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
     const integrationResult = validateIntegration(manifest);
     if (!integrationResult.ok) return errorResult(integrationResult.code as GateBlockCode, integrationResult.message!);
 
-    // ── 통합 게이트(v2 P5-24 결정, 2026-08-01): decompose 경로는 v2에서 integrate가
-    // DOCS_PENDING으로 합류하도록 바뀌면서 baseline/analyze/wiring/boot 게이트를 하나도
-    // 안 거치게 됐다(v1은 CODE_RUNNING 합류라 code_done이 잡아줬다).
+    // ── 통합 게이트: decompose 경로는 integrate가 DOCS_PENDING으로 합류하므로
+    // baseline/analyze/wiring/boot 게이트를 하나도 안 거친다.
     //
     // **서브태스크마다 미니 파이프라인을 강제하지는 않는다** — 쪼갠 일을 각자 알아서 하라고
     // 나눈 건데 거기에 또 게이트를 걸면 decompose를 쓸 이유가 없어진다. 대신 **합쳐서 나가는
@@ -558,7 +555,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
-  // ── §7.1 Patch 성숙화: 사용자 지시(seed)는 세션에 그대로 보존해뒀다가 review_done이 work-result에 싣는다.
+  // ── §7.1 seed(사용자 지시)는 세션에 그대로 보존해뒀다가 review_done이 work-result에 싣는다.
   if (action === "start" && args.seed) {
     session = { ...session, data: { ...session.data, seed: args.seed } };
   }
@@ -720,7 +717,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
   if (action === "review_done" && args.summary) {
     const featurePath = session.data.featurePath ?? session.projectPath;
     const isPatch = session.data.mode === "patch" && session.data.patch;
-    // ── §7.1 Patch 성숙화: seed(사용자 지시)가 있으면 work-result에 그대로 실어 "이번 차수에
+    // ── §7.1 seed가 있으면 work-result에 그대로 실어 "이번 차수에
     // 뭘 요청했는지"를 남긴다(reviewSummary와는 별개 — summary는 결과 요약, seed는 최초 지시).
     const workResultContent = session.data.seed ? `${args.summary}\n\n## 사용자 지시(seed)\n${session.data.seed}` : args.summary;
     const { workResultPath } = isPatch

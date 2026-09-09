@@ -11,12 +11,11 @@ import { listTasks } from "../hulk/task.js";
 import { deleteWorkspace, ensureWorkspace, listWorkspaces, loadWorkspace } from "../hulk/workspace.js";
 
 /**
- * §1/§9 `sugo_workspace`. v2에서 `sugo_hulk`가 완전히 제거되면서 그 도구의 워크스페이스 관련
- * 액션 두 개가 여기로 들어왔다: `status`(워크스페이스 데이터 요약)와 `sync`(대시보드 재push).
- * 워크스페이스에 대한 조작인데 별도 umbrella 도구에 살아 있을 이유가 없었다.
+ * §1/§9 `sugo_workspace`. 워크스페이스에 대한 조작은 전부 여기 모은다 — `status`(데이터 요약)와
+ * `sync`(대시보드 재push)도 포함이다.
  *
- * ⚠️ `sync`는 v2 도구 표의 `sugo_workspace` action 목록(list/create/delete/status)에 없지만,
- * "대시보드와 어긋났을 때 수동으로 다시 밀어넣는" 실동작 기능이라 삭제하지 않고 여기로 옮겼다.
+ * ⚠️ `sync`는 스펙 도구 표의 action 목록(list/create/delete/status)에 없지만, "대시보드와
+ * 어긋났을 때 수동으로 다시 밀어넣는" 실동작 기능이라 의도적으로 유지한다.
  */
 export const sugoWorkspaceInputSchema = {
   action: z.enum(["add", "list", "get", "remember", "recall", "status", "sync", "delete"]),

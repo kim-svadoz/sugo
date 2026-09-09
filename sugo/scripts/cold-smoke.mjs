@@ -162,7 +162,7 @@ try {
   const added = await A.callTool("sugo_add", { projectPath: projectA, workspace: "cold-ws" });
   check("sugo_add — 프로젝트 등록 + 하네스 합성(로컬 라이브러리)", toolOk(added), JSON.stringify(added).slice(0, 160));
 
-  // ── 체크포인트(사용자가 지목한 핵심 기능) ──
+  // ── 체크포인트 ──
   const cpAdd = await A.callTool("sugo_checkpoint", {
     action: "add", workspace: "cold-ws", title: "배포 전 점검", category: "release",
     checklist: ["마이그레이션 확인", "롤백 절차 확인"],
