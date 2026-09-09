@@ -1,5 +1,6 @@
 {
   "name": "sugo-marketplace",
+  "description": "sugo 플러그인 배포용 마켓플레이스",
   "owner": {
     "name": "김성현"
   },

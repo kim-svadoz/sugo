@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // §D.1 "4파일 하드 규칙": package.json의 version이 정본(source of truth)이고,
-// plugin.json / package-lock.json(2곳) / marketplace.json(레포 루트)이 이를 따라간다.
+// plugin.json / package-lock.json(2곳) / .claude-plugin/marketplace.json이 이를 따라간다.
 // 순수 함수로 분리해 test/syncVersion.test.ts에서 실제 파일 IO 없이 검증한다.
 
 /** @param {string} json @param {string} version @returns {{text:string, changed:boolean}} */
@@ -45,7 +45,7 @@ function main() {
   const pkgPath = join(__dirname, "package.json");
   const pluginPath = join(__dirname, ".claude-plugin", "plugin.json");
   const lockPath = join(__dirname, "package-lock.json");
-  const marketplacePath = join(__dirname, "..", "marketplace.json");
+  const marketplacePath = join(__dirname, "..", ".claude-plugin", "marketplace.json");
 
   const version = JSON.parse(readFileSync(pkgPath, "utf8")).version;
 
