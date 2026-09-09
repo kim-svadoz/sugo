@@ -337,8 +337,10 @@ server.registerTool(
   handleSugoRoute,
 );
 
+// 이름은 반드시 `sugo_` 접두어를 유지한다 — 여기만 bare `version`이었는데, MCP 도구명은
+// 클라이언트에서 서버들 사이 전역으로 노출되므로 다른 서버의 `version`과 부딪힐 수 있다.
 server.registerTool(
-  "version",
+  "sugo_version",
   {
     title: "Plugin version (readOnly)",
     description: "플러그인 버전을 반환한다. 원격 마켓플레이스가 구성돼 있지 않아 업데이트 확인은 지원하지 않는다(§1/§D.1).",

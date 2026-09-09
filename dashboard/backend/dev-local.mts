@@ -221,7 +221,10 @@ await syncCheckpoint(db, {
 });
 
 // ── Activity(실시간 콘솔) — 핸드오프 체인이 보이도록 ─────────────────────────
-const feed: [number, string, string, string | null, string, string][] = [
+// agent는 null일 수 있다(에이전트가 아닌 SYSTEM 이벤트). ingestActivity도 `string | null`을
+// 받는데 이 튜플 주석만 `string`으로 좁아서 어긋나 있었다 — 이 파일이 어느 tsconfig에도
+// 없어서 지금까지 드러나지 않았다(tsconfig.scripts.json으로 검사 대상에 넣었다).
+const feed: [number, string, string | null, string | null, string, string][] = [
   [46, "AGENT", "MAIN", "CODE", "EXECUTE", "t-003 OAuth 프로바이더 연동 — code-agent에 위임"],
   [42, "AGENT", "CODE", null, "EXECUTE", "GoogleOAuthClient 초안 작성 (3 files)"],
   [35, "INFO", "CODE", null, "EXECUTE", "sugo_analyze 실행 — REQ-004 pass / REQ-005 partial"],

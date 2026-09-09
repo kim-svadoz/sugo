@@ -16,13 +16,24 @@ import { describe, expect, it } from "vitest";
 const here = dirname(fileURLToPath(import.meta.url));
 const dashboard = join(here, "..", "..");
 
+/**
+ * 스캔 대상은 **디렉터리 단위로** 잡는다. 처음엔 backend 루트의 스크립트를
+ * `dev-local.mts` 하나만 화이트리스트로 넣었는데, 바로 옆의 `seed-demo.ts`에 똑같은
+ * Windows 경로 하드코딩이 남아 있는 걸 못 잡았다 — **파일 이름을 나열하는 가드는
+ * 형제 파일을 놓친다.**
+ */
 const SCAN_ROOTS = [
-  join(dashboard, "backend", "src"),
+  join(dashboard, "backend"),
   join(dashboard, "frontend", "src"),
   join(dashboard, "e2e"),
 ];
-const SCAN_FILES = [join(dashboard, "backend", "dev-local.mts")];
-const SKIP_DIRS = new Set(["node_modules", "dist", "build"]);
+/**
+ * `test/`는 제외한다 — 테스트가 쓰는 `"C:/a"`, `"C:/proj"` 같은 값은 **임의의 픽스처
+ * 문자열**이지 실행 경로가 아니다(어느 OS에서도 그냥 문자열로 오간다). 그걸 잡기 시작하면
+ * 가드가 오탐 더미가 되고, 그러면 아무도 안 보게 된다. 잡아야 하는 건 **실제로 돌아가거나
+ * 화면에 나가는 코드**다.
+ */
+const SKIP_DIRS = new Set(["node_modules", "dist", "build", "coverage", "test"]);
 
 function collect(): string[] {
   const out: string[] = [];
@@ -35,7 +46,6 @@ function collect(): string[] {
     }
   };
   for (const root of SCAN_ROOTS) walk(root);
-  for (const f of SCAN_FILES) out.push(f);
   return out;
 }
 

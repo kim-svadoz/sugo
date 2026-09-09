@@ -31142,7 +31142,7 @@ server.registerTool(
   handleSugoRoute
 );
 server.registerTool(
-  "version",
+  "sugo_version",
   {
     title: "Plugin version (readOnly)",
     description: "\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804\uC744 \uBC18\uD658\uD55C\uB2E4. \uC6D0\uACA9 \uB9C8\uCF13\uD50C\uB808\uC774\uC2A4\uAC00 \uAD6C\uC131\uB3FC \uC788\uC9C0 \uC54A\uC544 \uC5C5\uB370\uC774\uD2B8 \uD655\uC778\uC740 \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294\uB2E4(\xA71/\xA7D.1).",

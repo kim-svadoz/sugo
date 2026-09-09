@@ -4,6 +4,7 @@
  * userId는 실제 로그인 계정(github:58545240)으로 넣어야 대시보드에서 보인다.
  */
 import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { createSqliteClient } from "./src/db/sqliteClient.js";
 import {
@@ -18,6 +19,10 @@ import {
 } from "./src/services/syncService.js";
 
 const USER = "github:58545240";
+// 데모 프로젝트 경로는 화면에 그대로 찍힌다 — 이 PC의 Windows 경로를 박으면 mac에서 시드했을 때
+// 존재하지도 않는 경로가 대시보드에 뜬다(dev-local.mts와 같은 이유로 정정).
+const SPLEARN = join(homedir(), "splearn");
+const PAYMENTS = join(homedir(), "work", "payments");
 const db = createSqliteClient("./local.db");
 
 const workResult = (over: Record<string, unknown> = {}) => ({
@@ -46,8 +51,8 @@ async function main() {
   await syncUser(db, { userId: USER, displayName: "김성현" });
 
   // ── 워크스페이스 2개 ─────────────────────────────────────────────
-  await syncWorkspace(db, { userId: USER, name: "temp-workspace", projects: ["C:/Users/user/splearn"], gitSyncedProjects: ["C:/Users/user/splearn"] });
-  await syncWorkspace(db, { userId: USER, name: "payments-api", projects: ["C:/work/payments"], gitSyncedProjects: [] });
+  await syncWorkspace(db, { userId: USER, name: "temp-workspace", projects: [SPLEARN], gitSyncedProjects: [SPLEARN] });
+  await syncWorkspace(db, { userId: USER, name: "payments-api", projects: [PAYMENTS], gitSyncedProjects: [] });
   await syncWorkspaceMeta(db, { userId: USER, workspaceName: "temp-workspace", goldenRule: "테스트 먼저, 게이트는 실행증거로만 통과", checkpointsVersion: 3 });
 
   // ── temp-workspace 태스크 ────────────────────────────────────────
@@ -59,7 +64,7 @@ async function main() {
     ["t5", "레거시 인증 정리", "archived"],
   ];
   for (const [id, title, status] of tasks) {
-    await syncTask(db, { userId: USER, workspaceName: "temp-workspace", id, title, project: "C:/Users/user/splearn", status });
+    await syncTask(db, { userId: USER, workspaceName: "temp-workspace", id, title, project: SPLEARN, status });
   }
 
   // ── Roadmap (DAG: spec → workstream → tasks, work_result/lineage/prRefs) ──

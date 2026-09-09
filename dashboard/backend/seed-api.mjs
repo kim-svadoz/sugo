@@ -1,8 +1,13 @@
 // 실행 중인 로컬 백엔드(:3001)에 데모 데이터를 API로 시드한다.
 // 세션 서명키를 후보에서 자동 탐색해 userId=github:58545240로 넣는다.
 import { SignJWT } from "jose";
+import { homedir } from "node:os";
+import { join } from "node:path";
 const USER = "github:58545240";
 const BASE = "http://localhost:3001";
+// 데모 경로는 화면에 그대로 찍힌다 — 이 PC의 Windows 경로를 박지 않는다(seed-demo.ts와 동일).
+const SPLEARN = join(homedir(), "splearn");
+const PAYMENTS = join(homedir(), "work", "payments");
 
 const mint = (secret) =>
   new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject(USER).setIssuedAt()
@@ -30,12 +35,12 @@ async function main() {
   }
   if (!token) { console.error("❌ 세션 서명키를 못 찾음(백엔드 SESSION_SECRET 불일치). 백엔드 재시작 후 재시도."); process.exit(1); }
 
-  await post("/api/sync/workspace", { userId: USER, name: "temp-workspace", projects: ["C:/Users/user/splearn"], gitSyncedProjects: ["C:/Users/user/splearn"] }, token);
-  await post("/api/sync/workspace", { userId: USER, name: "payments-api", projects: ["C:/work/payments"], gitSyncedProjects: [] }, token);
+  await post("/api/sync/workspace", { userId: USER, name: "temp-workspace", projects: [SPLEARN], gitSyncedProjects: [SPLEARN] }, token);
+  await post("/api/sync/workspace", { userId: USER, name: "payments-api", projects: [PAYMENTS], gitSyncedProjects: [] }, token);
   await post("/api/sync/workspace-meta", { userId: USER, workspaceName: "temp-workspace", goldenRule: "테스트 먼저, 게이트는 실행증거로만 통과", checkpointsVersion: 3 }, token);
 
   for (const [id, title, status] of [["t1", "EmailLoginService 구현", "done"], ["t2", "로그인 컨트롤러 배선", "in_progress"], ["t3", "통합테스트", "pending"], ["t4", "비밀번호 재설정", "done"], ["t5", "레거시 인증 정리", "archived"]]) {
-    await post("/api/sync/task", { userId: USER, workspaceName: "temp-workspace", id, title, project: "C:/Users/user/splearn", status }, token);
+    await post("/api/sync/task", { userId: USER, workspaceName: "temp-workspace", id, title, project: SPLEARN, status }, token);
   }
 
   await post("/api/sync/roadmap", { userId: USER, workspaceName: "temp-workspace", nodes: [

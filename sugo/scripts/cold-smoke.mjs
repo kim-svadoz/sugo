@@ -237,11 +237,11 @@ try {
   const rmPull = await A.callTool("sugo_roadmap", { action: "pull_ordering", workspace: "cold-ws" });
   check("sugo_roadmap pull_ordering(대시보드 없음) — 즉시 폴백", toolOk(rmPull) && Date.now() - tPull < 3000, `${Date.now() - tPull}ms ${JSON.stringify(rmPull).slice(0, 140)}`);
 
-  // 29번째 도구만 `sugo_` 접두어가 없다(`version`) — 이름 규칙 확인용.
-  const verTool = toolNames.includes("version") && !toolNames.includes("sugo_version");
-  check("[발견] version 도구만 sugo_ 접두어가 없다", true, verTool ? "확인됨 — 나머지 28개는 전부 sugo_*" : "접두어 일관됨");
-  const ver = await A.callTool("version", {});
-  check("version 도구 동작", toolOk(ver), JSON.stringify(ver).slice(0, 140));
+  // 도구명은 클라이언트에서 서버 간 전역으로 노출된다 — 접두어 없는 이름은 충돌 여지를 남긴다.
+  const unprefixed = toolNames.filter((n) => !n.startsWith("sugo_"));
+  check("모든 도구가 sugo_ 접두어를 가진다", unprefixed.length === 0, unprefixed.join(", ") || "전부 sugo_*");
+  const ver = await A.callTool("sugo_version", {});
+  check("sugo_version 도구 동작", toolOk(ver), JSON.stringify(ver).slice(0, 140));
 
   const cpRemove = await A.callTool("sugo_checkpoint", { action: "remove", workspace: "cold-ws", id: cpId });
   check("checkpoint remove", toolOk(cpRemove), JSON.stringify(cpRemove).slice(0, 160));
