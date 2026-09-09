@@ -2,7 +2,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { atomicWriteFile } from "../fsUtil.js";
 import { memoryFilePath, workspaceDir } from "../work/storage.js";
 
-/** hulk/<ws>/memory.md — "기억해" 명령으로 누적되는 자유 메모(§8) */
+/** work/<ws>/memory.md — "기억해" 명령으로 누적되는 자유 메모(§8) */
 export async function appendMemory(workspace: string, note: string): Promise<void> {
   const path = memoryFilePath(workspace);
   const existing = await readFile(path, "utf-8").catch(() => "");

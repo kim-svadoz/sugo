@@ -22,9 +22,9 @@ const SugoValidateArgs = z.object(sugoValidateInputSchema);
 /**
  * §5 review 단계 진입점. 제출된 결과를 프로젝트에 실제 정의된 validation.yaml과 대조한다
  * (존재하지 않는 checkId는 fabricated로 분리 — computeValidationVerdict 참고).
- * 이번 빌드에서는 review_done의 하드 게이트로 연결하지 않았다: "제출 자체가 없으면 자동 pass"가
- * 되는 한계가 있어(test/validate.test.ts에서 확인) 안전하게 하드 게이트화하려면 "최소 N개 이상
- * 제출 필수" 같은 추가 규칙이 더 필요하다 — roadmap-progress.md에 다음 단계로 기록.
+ * review_done의 하드 게이트로 연결하지 않는다: "제출 자체가 없으면 자동 pass"가 되는 한계가
+ * 있어서다(test/validate.test.ts에 고정). 하드 게이트로 쓰려면 "최소 N개 이상 제출 필수" 같은
+ * 규칙이 먼저 필요하다.
  */
 export async function handleSugoValidate(rawArgs: unknown) {
   const args = SugoValidateArgs.parse(rawArgs);

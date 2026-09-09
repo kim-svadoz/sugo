@@ -208,7 +208,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
   // ⚠️ decompose 경로는 이 보호를 **못 받는다.** PRD→DECOMPOSE→ORCHESTRATING→(integrate)→
   // DOCS_PENDING이라 baseline_capture도 code_done도 안 거친다. §4 흐름도가 DOCS_PENDING 합류를
   // 명시하는 근거는 "서브태스크 각자가 자기 검증을 끝냈다"는 전제인데, 서브태스크별 게이트가
-  // 아직 없다 — **이 경로는 현재 게이트 공백**이다(V2-DELTA-PLAN에 후속으로 기록).
+  // 아직 없다 — **이 경로는 현재 게이트 공백**이다.
   if (action === "baseline_capture" && existing) {
     const baselineRequired = existing.data.baselineGate?.required ?? false;
     const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
@@ -705,7 +705,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
   }
 
   // ── §2 하네스 도구 디스패치: code_start 순간에 적용된 하네스와 매칭되는 특화 MCP 도구 메뉴를
-  // 실어준다(레지스트리가 비어있으면 빈 문자열 — 이 로컬 빌드의 기본값).
+  // 실어준다(레지스트리가 비어있으면 빈 문자열 — 그게 기본값이다).
   let harnessToolMenu: string | undefined;
   if (action === "code_start") {
     const projectConfig = await loadProjectConfig(session.projectPath);
@@ -770,7 +770,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
   // ── §8 HULK 연동: commit 시점에 Task를 done으로 전환하고 WorkLog를 기록한다.
   // 매칭되는 checkpoint는 정보성으로만 노출한다(체크리스트 완료 여부는 자기보고라 강제할 수 없음 —
-  // sugo_validate와 같은 이유. roadmap-progress.md 참고).
+  // sugo_validate와 같은 이유).
   let hulk:
     | { taskId: string; workLogId: string; checkpointsToReview: { id: string; title: string; checklist: string[] }[] }
     | undefined;

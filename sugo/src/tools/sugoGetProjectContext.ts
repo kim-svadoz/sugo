@@ -59,7 +59,7 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
   const rules = await readRulesDir(projectPath);
 
   // ── §2 하네스 도구 디스패치: 적용된 하네스에 매칭되는 특화 MCP 도구 안내를 실어준다.
-  // 레지스트리가 비어있으면(이 로컬 빌드의 기본값) toolMenu는 빈 문자열 — 조용히 아무 것도 없음.
+  // 레지스트리가 비어있으면(기본값) toolMenu는 빈 문자열 — 조용히 아무 것도 없음.
   const appliedHarnessIds = config?.appliedHarnesses.map((h) => h.id) ?? [];
   const harnessToolGuides = resolveHarnessToolGuides(appliedHarnessIds);
 

@@ -8,8 +8,10 @@ export interface HumanHoursEstimate {
 const DEFAULT_RATIO = 3.5;
 
 /**
- * HULK(§8)의 전체 워크로그/자동보정 루프는 아직 없다 — review_done 응답에 참고용 추정치만
- * 실어준다. 사람이 실제 시간을 확인해 자동보정하는 루프는 HULK 구현 단계에서 붙일 것.
+ * review_done 응답에 싣는 **참고용** 추정치다(정밀치 아님).
+ *
+ * `ratio`는 주입받는다 — 호출부(sugoPlan review_done)가 대시보드의 실측 보정비율을
+ * fetch해 넘기고, 대시보드가 없거나 실패하면 여기 기본값 3.5로 폴백한다.
  */
 export function estimateHumanHours(
   startedAtIso: string,

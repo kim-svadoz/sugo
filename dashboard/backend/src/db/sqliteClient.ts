@@ -11,11 +11,10 @@ const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as {
   DatabaseSync: typeof DatabaseSyncType;
 };
 
-// Local dev/test stand-in for MySQL until a real instance is available
-// (see docs/roadmap-progress.md). Uses Node's built-in node:sqlite (Node
-// 22.5+, still experimental) instead of better-sqlite3 — this environment
-// has no working Python/node-gyp toolchain to compile better-sqlite3's
-// native binding, and node:sqlite needs no native compile at all.
+// Local dev/test stand-in for MySQL. Uses Node's built-in node:sqlite
+// (Node 22.5+, still experimental) instead of better-sqlite3 on purpose:
+// node:sqlite needs no native compile, so no Python/node-gyp toolchain is
+// required to run the tests anywhere.
 // Same DbClient surface as mysqlClient.ts — route/service code is written
 // once against the interface.
 export function createSqliteClient(filename = ":memory:"): DbClient {

@@ -1,8 +1,8 @@
 // mysql2 auto-deserializes MySQL's native JSON column type into a JS
-// value (object/array), while node:sqlite returns the TEXT column as a
-// raw string - discovered by testing against a real local MySQL instance
-// (docs/roadmap-progress.md "재확인 필요" #1). Every JSON-column read has
-// to tolerate both shapes; these helpers are the one place that does.
+// value (object/array), while node:sqlite returns the TEXT column as a raw
+// string. Tests running on SQLite alone will never surface this - only a real
+// MySQL connection does. Every JSON-column read has to tolerate both shapes;
+// these helpers are the one place that does.
 
 export function parseMaybeJson<T>(value: unknown, fallback: T): T {
   if (value === null || value === undefined) return fallback;

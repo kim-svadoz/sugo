@@ -26,10 +26,8 @@ import { errorMiddleware } from "./middleware/asyncHandler.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
 
-// No real IdP is configured in this local dev environment (§11 "OIDC
-// IdP... -> 외부 IdP + Secret", remove) - a request that reaches these
-// before an override is a misconfiguration, so they fail closed loudly
-// instead of silently accepting unverified tokens.
+// IdP가 설정되지 않았을 때의 기본 구현(§11). 오버라이드 없이 여기까지 도달한 요청은 설정
+// 실수이므로, 검증 안 된 토큰을 조용히 받아들이는 대신 시끄럽게 fail-closed 한다.
 function unconfiguredVerifyJwt(): VerifyJwt {
   return async () => {
     throw new Error("OIDC_JWKS_URI not configured");

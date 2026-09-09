@@ -14,7 +14,7 @@ export interface DetectedStack {
   dataStores: DetectedItem[];
   buildTools: DetectedItem[];
   infra: DetectedItem[];
-  /** language/framework/buildTool 규칙의 id만 모음(중복제거) — dataStore/infra는 정보성이라 제외(§2 MVP 결정, roadmap-progress.md 참조) */
+  /** language/framework/buildTool 규칙의 id만 모음(중복제거). dataStore/infra는 정보성이라 제외한다(§2). */
   harnessIds: string[];
   commands: {
     build?: string;

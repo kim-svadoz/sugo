@@ -18,7 +18,7 @@ export interface LethalTrifectaWarning {
  * 동시에 있으면 경고한다 — 프롬프트 인젝션이 사설 데이터를 읽어 외부로 유출시킬 수 있는 조합.
  * 순수 함수. **capability는 호출자가 명시적으로 제공**해야 한다 — 도구 설명/이름에서 자동으로
  * 추측하지 않는다(휴리스틱 추측은 "보안 점검"이라는 이름을 달고도 신뢰 못할 결과를 낼 수 있어
- * 차라리 없는 게 낫다는 판단 — roadmap-progress.md 참고).
+ * 차라리 없는 게 낫다).
  */
 export function checkLethalTrifecta(tools: ToolCapabilityProfile[]): LethalTrifectaWarning[] {
   return tools

@@ -1,6 +1,6 @@
-// Spec §8 "환경변수". DB_DRIVER is a local-only addition (not in the
-// original) so local dev can run against SQLite until MySQL is available —
-// production always sets DB_DRIVER=mysql (or leaves it unset, the default).
+// Spec §8 "환경변수". DB_DRIVER is an addition on top of the spec so local dev
+// can run against SQLite — production always sets DB_DRIVER=mysql (or leaves it
+// unset, which is the default).
 export const config = {
   port: Number(process.env.PORT ?? 3001),
   dbDriver: (process.env.DB_DRIVER ?? "mysql") as "mysql" | "sqlite",
@@ -15,12 +15,11 @@ export const config = {
   pluginVersion: process.env.PLUGIN_VERSION ?? "0.0.0",
   secretEncKey: process.env.SECRET_ENC_KEY ?? "",
   // §9 CI가 빌드타임에 하네스 저장소를 클론해 구워두는 경로(§3.7 harness/skills 서빙 근거).
-  // 로컬 로컬엔 없으므로 미설정이면 빈 매니페스트/404로 안전 반환(가짜 데이터 금지).
+  // 미설정이면 빈 매니페스트/404로 안전 반환한다(가짜 데이터 금지).
   harnessPath: process.env.HARNESS_PATH ?? "",
   skillsPath: process.env.SKILLS_PATH ?? "",
-  // §8 "현재 냄새": original has cors() with no options (wide open). local
-  // fix is a whitelist instead - CORS_ORIGINS is comma-separated, defaults to
-  // the Vite dev server port for local frontend/backend development.
+  // §8 "현재 냄새"가 지적하는 대로 cors()를 옵션 없이 열어두지 않는다 — 화이트리스트만 허용.
+  // CORS_ORIGINS는 콤마 구분이고, 기본값은 로컬 개발용 Vite dev 서버 포트다.
   corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5173").split(",").map((s) => s.trim()).filter(Boolean),
   oidc: {
     issuer: process.env.OIDC_ISSUER ?? "",

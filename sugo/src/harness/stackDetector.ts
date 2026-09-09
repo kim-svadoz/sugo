@@ -44,7 +44,7 @@ function detectPythonCommands(buildToolIds: string[]): DetectedStack["commands"]
 
 /**
  * 모든 DetectionRule을 실행해 카테고리별로 집계한다. dataStore/infra는 정보성으로만 채우고
- * harnessIds에는 넣지 않는다(§2 MVP 결정 — roadmap-progress.md 참조).
+ * harnessIds에는 넣지 않는다(§2).
  * commands는 감지된 buildTool 조합으로 best-effort 추정한다(정확한 보장 없음).
  */
 export function detectStack(projectPath: string, platform: NodeJS.Platform = process.platform): DetectedStack {

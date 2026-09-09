@@ -26,7 +26,7 @@ function currentUsername(): string {
 
 /**
  * §7.2 대시보드 설정 해석: `SUGO_DASHBOARD_API_URL`/`SUGO_DASHBOARD_USER_ID` env가 있으면 최우선
- * (정리 대상 — 외부에서 지정). 없으면 `~/.claude/sugo/settings.json`의 `dashboard{apiUrl,userId,
+ * 없으면 `~/.claude/sugo/settings.json`의 `dashboard{apiUrl,userId,
  * enabled}`를 본다. 둘 다 없거나 enabled가 명시적으로 false면 disabled — 이 함수를 호출하는 쪽은
  * enabled를 확인하고 나서만 실제 네트워크 호출을 시도해야 한다(§7.2 "대시보드 다운이 파이프라인을
  * 막지 않는다"는 원칙의 첫 관문).

@@ -3,8 +3,8 @@ import { join, normalize, relative } from "node:path";
 import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 
-// §3.7 Harness (PUBLIC): 빌드타임에 구운 파일을 서빙. 로컬 로컬엔 harnessPath가 없으므로
-// 미설정/부재면 빈 매니페스트나 404로 안전 반환한다("실데이터만" — 없는 걸 지어내지 않는다).
+// §3.7 Harness (PUBLIC): 빌드타임에 구운 파일을 서빙. harnessPath가 미설정/부재면 빈
+// 매니페스트나 404로 안전 반환한다("실데이터만" — 없는 걸 지어내지 않는다).
 // 경로 traversal 방지: 요청 세그먼트를 정규화해 baseDir 밖으로 못 나가게 막는다.
 export function createHarnessRouter(harnessPath: string): Router {
   const router = Router();

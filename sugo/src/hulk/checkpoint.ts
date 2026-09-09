@@ -19,7 +19,7 @@ export interface AddCheckpointParams {
   checklist: string[];
 }
 
-/** hulk/<ws>/checkpoints/CP-<id>-<slug>.md (frontmatter+본문) — §8 */
+/** work/<ws>/checkpoints/CP-<id>-<slug>.md (frontmatter+본문) — §8 */
 export async function addCheckpoint(workspace: string, params: AddCheckpointParams): Promise<Checkpoint> {
   const id = generateCheckpointId();
   const checkpoint: Checkpoint = {

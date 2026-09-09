@@ -29,10 +29,8 @@ function fileBadgeColor(change: WorkResultFile["change"]): string {
   return "#f59e0b";
 }
 
-// §5 SubtaskPanel(폭 420, 탭 progress/summary/files) — 이번 증분은 "한번 쫙 만들고
-// 나중에 리팩토링" 방침으로 기능 우선 구현. WorkResult 메타/수동 done-취소/PR 패널/
-// lineage는 progress 탭에 몰아넣음(원본은 레이아웃이 더 세분화돼 있었을 수 있음 —
-// 실제 브라우저로 볼 수 있게 되면 재배치할 것).
+// §5 SubtaskPanel(폭 420, 탭 progress/summary/files).
+// WorkResult 메타·수동 done/취소·PR 패널·lineage는 전부 progress 탭에 있다.
 export function SubtaskPanel({
   workspace,
   node,
@@ -315,8 +313,8 @@ function PrPanel({ workspace, node }: { workspace: string; node: Pick<RoadmapNod
 
 function SummaryTab({ summary }: { summary?: string }) {
   if (!summary) return <div className="text-xs opacity-50">summary 없음</div>;
-  // §5 "마크다운 summary" - 지금은 원문 그대로 렌더(실제 마크다운 렌더러는 나중에
-  // 리팩토링 때 붙일 것, 지금은 브라우저로 볼 수 없어서 우선순위 낮음).
+  // §5는 "마크다운 summary"라고 하지만 여기선 원문을 그대로 렌더한다(마크다운 파싱 없음).
+  // 렌더러가 필요하면 Harness.tsx가 쓰는 marked를 그대로 붙이면 된다.
   return <pre className="whitespace-pre-wrap font-sans text-xs">{summary}</pre>;
 }
 

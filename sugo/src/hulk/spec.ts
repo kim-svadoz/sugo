@@ -14,7 +14,7 @@ export interface AddSpecParams {
   content: string;
 }
 
-/** hulk/<ws>/specs/<slug>.md — 아키텍처/API/비즈니스룰 등 장기 지식(§8) */
+/** work/<ws>/specs/<slug>.md — 아키텍처/API/비즈니스룰 등 장기 지식(§8) */
 export async function addSpec(workspace: string, params: AddSpecParams): Promise<Spec> {
   const spec: Spec = {
     name: params.name,
