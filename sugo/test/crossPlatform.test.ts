@@ -159,6 +159,14 @@ describe("이식성 가드 — 배포되는 코드에 이 PC 전용 가정이 �
     expect(offenders).toEqual([]);
   });
 
+  it("POSIX 전용 /tmp 경로가 하드코딩돼 있지 않다(os.tmpdir()을 쓸 것)", async () => {
+    const offenders: string[] = [];
+    for (const f of await sourceFiles()) {
+      if (/["'`]\/tmp\//.test(stripComments(readFileSync(f, "utf-8")))) offenders.push(f);
+    }
+    expect(offenders).toEqual([]);
+  });
+
   it("process.platform 분기는 허용된 한 곳(stackDetector)에만 있다", async () => {
     const offenders: string[] = [];
     for (const f of await sourceFiles()) {

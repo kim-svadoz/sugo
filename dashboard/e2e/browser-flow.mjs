@@ -2,8 +2,12 @@
 // 끝까지 완주 검증한다: 프론트(:4173) → 로그인 게이트 → 실제 OIDC(:9100) 로그인/동의 → /auth/callback
 // → 실 토큰 교환(/api/auth/token) → /sessions 실데이터 렌더 → /roadmap 노드/한글 렌더.
 import { chromium } from "playwright";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const FRONTEND = "http://localhost:4173";
+// 스크린샷 위치는 OS별 임시 디렉터리로 — `/tmp` 하드코딩은 Windows에서 엉뚱한 데로 간다.
+const shot = (name) => join(tmpdir(), name);
 let failures = 0;
 const check = (label, cond, detail) => {
   console.log(`${cond ? "✓" : "✗"} ${label}${cond ? "" : "  << " + JSON.stringify(detail)}`);
@@ -65,11 +69,11 @@ try {
   const parsed = auth ? JSON.parse(auth) : null;
   check("localStorage에 실 access token 저장 + userId=e2euser", parsed?.user?.id === "e2euser" && !!parsed?.accessToken, parsed?.user);
 
-  await page.screenshot({ path: "/tmp/e2e-sessions.png" }).catch(() => {});
+  await page.screenshot({ path: shot("e2e-sessions.png") }).catch(() => {});
 } catch (err) {
   console.log("✗ 예외:", err.message);
   failures++;
-  await page.screenshot({ path: "/tmp/e2e-error.png" }).catch(() => {});
+  await page.screenshot({ path: shot("e2e-error.png") }).catch(() => {});
 } finally {
   await browser.close();
 }

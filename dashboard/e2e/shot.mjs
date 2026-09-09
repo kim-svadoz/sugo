@@ -1,15 +1,23 @@
 import { chromium } from "playwright";
-const OUT = process.env.CLAUDE_JOB_DIR + "/tmp";
+import { homedir, tmpdir } from "node:os";
+import { join } from "node:path";
+
+// CLAUDE_JOB_DIR이 없으면 예전엔 "undefined/tmp"로 조용히 망가졌다. 없으면 OS 임시 디렉터리로.
+const OUT = process.env.CLAUDE_JOB_DIR ? join(process.env.CLAUDE_JOB_DIR, "tmp") : tmpdir();
 const BASE = "http://localhost:4173";
+
+// 화면에 그대로 찍히는 mock 경로 — 이 PC의 Windows 경로를 박으면 mac 스크린샷에 없는 경로가 뜬다.
+const SPLEARN = join(homedir(), "splearn");
+const PAYMENTS = join(homedir(), "work", "payments");
 
 const workspaces = [{
   name: "temp-workspace",
-  projects: [{ project_path: "C:/Users/user/splearn", git_synced: 1 }],
+  projects: [{ project_path: SPLEARN, git_synced: 1 }],
   taskCounts: { pending: 2, in_progress: 1, done: 3, archived: 0 },
   roadmap: { total: 6, done: 3, active: 1 },
 }, {
   name: "payments-api",
-  projects: [{ project_path: "C:/work/payments", git_synced: 0 }],
+  projects: [{ project_path: PAYMENTS, git_synced: 0 }],
   taskCounts: { pending: 0, in_progress: 0, done: 5, archived: 1 },
   roadmap: { total: 5, done: 5, active: 0 },
 }];
@@ -44,7 +52,7 @@ await page.route("**/api/**", (route) => {
 async function shot(path, file) {
   await page.goto(BASE + path, { waitUntil: "networkidle" });
   await page.waitForTimeout(1200);
-  await page.screenshot({ path: OUT + "/" + file, fullPage: false });
+  await page.screenshot({ path: join(OUT, file), fullPage: false });
   console.log("shot:", file);
 }
 await shot("/login", "01-login.png");

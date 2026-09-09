@@ -9,6 +9,8 @@
  * 실행: MYSQL_PASSWORD=... SESSION_SECRET=... npx tsx dev-local.mts
  */
 import { mkdir, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { initDb } from "./src/db/init.js";
 import { issueSession } from "./src/auth/session.js";
 import { ingestActivity } from "./src/services/activityService.js";
@@ -27,6 +29,15 @@ const USER = process.env.DEV_USER_ID ?? "local-dev";
 const SECRET = process.env.SESSION_SECRET;
 if (!SECRET) throw new Error("SESSION_SECRET이 필요합니다.");
 
+/**
+ * 데모 프로젝트 경로. 화면에 그대로 찍히는 값이라 이 PC의 `C:/Users/user/...`를 박아두면
+ * mac에서 시드했을 때 존재하지도 않는 Windows 경로가 대시보드에 뜬다 — 실행하는 OS의
+ * 홈 디렉터리 기준으로 만든다(같은 상수를 workspace와 task가 공유해야 매칭이 된다).
+ */
+const SPLEARN = join(homedir(), "splearn");
+const SPLEARN_ADMIN = join(homedir(), "splearn-admin");
+const PAYMENTS = join(homedir(), "work", "payments");
+
 const db = await initDb();
 
 /** 재실행이 누적되지 않게 이 사용자 데이터를 먼저 비운다(시드는 멱등해야 한다). */
@@ -44,10 +55,10 @@ await syncPluginVersion(db, USER, "0.1.0");
 await syncWorkspace(db, {
   userId: USER,
   name: "splearn",
-  projects: ["C:/Users/user/splearn", "C:/Users/user/splearn-admin"],
-  gitSyncedProjects: ["C:/Users/user/splearn"],
+  projects: [SPLEARN, SPLEARN_ADMIN],
+  gitSyncedProjects: [SPLEARN],
 });
-await syncWorkspace(db, { userId: USER, name: "payments-api", projects: ["C:/work/payments"], gitSyncedProjects: [] });
+await syncWorkspace(db, { userId: USER, name: "payments-api", projects: [PAYMENTS], gitSyncedProjects: [] });
 
 const iso = (daysAgo: number, h = 10) => new Date(Date.now() - daysAgo * 864e5).toISOString().slice(0, 11) + `${String(h).padStart(2, "0")}:00:00.000Z`;
 
@@ -65,13 +76,13 @@ for (const [id, title, status, completedAt] of tasks) {
     workspaceName: "splearn",
     id,
     title,
-    project: "C:/Users/user/splearn",
+    project: SPLEARN,
     status,
     startedAt: status === "pending" ? undefined : iso(14),
     completedAt,
   });
 }
-await syncTask(db, { userId: USER, workspaceName: "payments-api", id: "t-101", title: "결제 취소 API", project: "C:/work/payments", status: "done", completedAt: iso(20) });
+await syncTask(db, { userId: USER, workspaceName: "payments-api", id: "t-101", title: "결제 취소 API", project: PAYMENTS, status: "done", completedAt: iso(20) });
 
 // ── §9 4층 헌법: Spec ⊃ Run(workstream) ⊃ Task ⊃ REQ(subtask) ────────────────
 // REQ에는 항상 `{taskId}::REQ-CONFIRM`(사용자 최종확인)이 붙는다 — 에이전트가 완료 못 하고
