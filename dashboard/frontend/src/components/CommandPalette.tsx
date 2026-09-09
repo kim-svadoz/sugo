@@ -28,6 +28,10 @@ interface Cmd {
  *
  * **실동작하는 명령만 넣는다.** "곧 지원" 같은 항목을 섞으면 한 번 헛되이 쓴 사용자는
  * 팔레트를 다시 안 연다. 네트워크 호출도 없다 — 전부 라우팅 아니면 reload다.
+ *
+ * 같은 이유로 **hint에 적는 단축키는 실제로 동작하는 것만 적는다**(⌘S/⌘P는 Layout이
+ * 처리, ⌘R은 브라우저 기본 새로고침). 한동안 ⌘W/⌘H까지 적혀 있었지만 핸들러가 없었고,
+ * 그 둘은 브라우저/OS가 선점해 애초에 가로챌 수도 없어서 뗐다(2026-09-09, 사용자 확인).
  */
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
@@ -37,9 +41,11 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   const commands: Cmd[] = useMemo(
     () => [
-      { id: "ws", label: "Workspaces", hint: "⌘ W", icon: LayoutGrid, keywords: "워크스페이스 도메인 workspace", run: () => navigate("/sessions") },
+      // ⌘W/⌘H는 힌트를 뗐다 — ⌘W는 브라우저가 탭을 닫고 ⌘H는 macOS가 앱을 숨기므로
+      // 페이지에서 가로챌 수 없다. 못 지킬 약속을 화면에 적어두느니 안 적는 게 낫다.
+      { id: "ws", label: "Workspaces", icon: LayoutGrid, keywords: "워크스페이스 도메인 workspace", run: () => navigate("/sessions") },
       { id: "skills", label: "Skills", hint: "⌘ S", icon: Puzzle, keywords: "스킬 에이전트 agent code test docs review", run: () => navigate("/skills") },
-      { id: "harness", label: "Harness", hint: "⌘ H", icon: BookOpen, keywords: "하네스 규칙 archunit rules", run: () => navigate("/harness") },
+      { id: "harness", label: "Harness", icon: BookOpen, keywords: "하네스 규칙 archunit rules", run: () => navigate("/harness") },
       { id: "playbook", label: "Playbook", hint: "⌘ P", icon: Sparkles, keywords: "플레이북 체험 guide", run: () => navigate("/playbook") },
       { id: "settings", label: "Settings", icon: SettingsIcon, keywords: "설정 bitbucket pat oidc token", run: () => navigate("/settings") },
       { id: "refresh", label: "데이터 새로고침", hint: "⌘ R", icon: RefreshCw, keywords: "refresh reload 수동 수집", run: () => window.location.reload() },

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { CommandPalette } from "./CommandPalette.js";
 import { Header } from "./Header.js";
 import { Sidebar } from "./Sidebar.js";
@@ -13,17 +13,36 @@ import { Sidebar } from "./Sidebar.js";
  */
 export function Layout() {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
-        e.preventDefault();
-        setPaletteOpen((v) => !v);
+      if (!(e.metaKey || e.ctrlKey)) return;
+      switch (e.key.toLowerCase()) {
+        case "k":
+          e.preventDefault();
+          setPaletteOpen((v) => !v);
+          return;
+        // 팔레트가 표시하던 ⌘S/⌘P를 실제 동작으로 만든다 — 라벨만 있고 핸들러가 없으면
+        // "있다고 말하는 게 없는 것보다 나쁘다"에 걸린다.
+        // ⌘W(탭 닫기)·⌘H(macOS 앱 숨기기)는 브라우저/OS가 페이지보다 먼저 가져가 가로챌 수
+        // 없으므로 구현 대신 팔레트에서 힌트를 뗐다.
+        // ⌘R은 가로채지 않는다 — 브라우저 기본 새로고침이 곧 "데이터 새로고침"이라 이미 맞다.
+        case "s":
+          e.preventDefault();
+          setPaletteOpen(false);
+          navigate("/skills");
+          return;
+        case "p":
+          e.preventDefault();
+          setPaletteOpen(false);
+          navigate("/playbook");
+          return;
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="flex h-screen">
