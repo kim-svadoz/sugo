@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { drainRetryQueue } from "../dashboard/client.js";
+import { resolveDashboardConfig } from "../dashboard/config.js";
 import { syncRoadmapSnapshot, syncTask, syncWorkspace } from "../dashboard/sync.js";
 import { listCheckpoints } from "../hulk/checkpoint.js";
 import { listWorkLogs } from "../hulk/history.js";
@@ -107,7 +108,19 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
       void syncRoadmapSnapshot(args.name, nodes);
       // push는 fire-and-forget이라 여기서 큐를 한 바퀴 돌려야 "수동 재sync"가 실제로 나간다.
       await drainRetryQueue();
-      return ok({ synced: true, taskCount: tasks.length, roadmapNodeCount: nodes.length });
+      // 대시보드 미설정이면 위 push들은 전부 조용한 no-op이다 — `synced: true`는 거짓 보고가
+      // 된다(checkpoint sync와 같은 이유로 정정).
+      const config = await resolveDashboardConfig();
+      if (!config.enabled) {
+        return ok({
+          synced: false,
+          dashboard: "disabled",
+          taskCount: tasks.length,
+          roadmapNodeCount: nodes.length,
+          note: "대시보드가 설정되지 않아 전송하지 않았습니다. 로컬 데이터는 그대로 남아 있습니다.",
+        });
+      }
+      return ok({ synced: true, dashboard: "enabled", taskCount: tasks.length, roadmapNodeCount: nodes.length });
     }
   }
 }

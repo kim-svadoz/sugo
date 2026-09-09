@@ -9,6 +9,7 @@ import {
 } from "../hulk/checkpoint.js";
 import { appendMemory, readMemory } from "../hulk/memory.js";
 import { syncCheckpoint } from "../dashboard/sync.js";
+import { resolveDashboardConfig } from "../dashboard/config.js";
 
 export const sugoCheckpointInputSchema = {
   action: z.enum(["add", "get", "list", "remove", "memory", "read_memory", "migrate", "sync", "pull"]),
@@ -73,8 +74,20 @@ export async function handleSugoCheckpoint(rawArgs: unknown) {
       if (!args.id) return errorResult("ID_REQUIRED", "sync action에는 id가 필요합니다.");
       const checkpoint = await getCheckpoint(args.workspace, args.id);
       if (!checkpoint) return errorResult("CHECKPOINT_NOT_FOUND", `체크포인트를 찾을 수 없습니다: ${args.id}`);
+      // 대시보드가 설정돼 있지 않으면 syncCheckpoint는 아무것도 보내지 않고 조용히 돌아온다.
+      // 그런데도 `synced: true`를 돌려주면 **하지 않은 일을 했다고 보고**하는 게 된다 —
+      // DB 없는 콜드 환경에서 실제로 그랬다. 상태를 사실대로 싣는다(pull이 pulledCount: null을
+      // 돌려주는 것과 같은 태도).
+      const config = await resolveDashboardConfig();
       await syncCheckpoint(args.workspace, checkpoint);
-      return ok({ synced: true });
+      if (!config.enabled) {
+        return ok({
+          synced: false,
+          dashboard: "disabled",
+          note: "대시보드가 설정되지 않아 전송하지 않았습니다. 로컬 체크포인트는 그대로 남아 있습니다.",
+        });
+      }
+      return ok({ synced: true, dashboard: "enabled" });
     }
     case "pull": {
       if (!args.projectPath) return errorResult("PROJECT_PATH_REQUIRED", "pull action에는 projectPath가 필요합니다.");

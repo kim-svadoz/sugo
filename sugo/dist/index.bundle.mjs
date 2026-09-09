@@ -27281,8 +27281,16 @@ async function handleSugoCheckpoint(rawArgs) {
       if (!args2.id) return errorResult3("ID_REQUIRED", "sync action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const checkpoint = await getCheckpoint(args2.workspace, args2.id);
       if (!checkpoint) return errorResult3("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      const config2 = await resolveDashboardConfig();
       await syncCheckpoint(args2.workspace, checkpoint);
-      return ok({ synced: true });
+      if (!config2.enabled) {
+        return ok({
+          synced: false,
+          dashboard: "disabled",
+          note: "\uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC124\uC815\uB418\uC9C0 \uC54A\uC544 \uC804\uC1A1\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uB85C\uCEEC \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB294 \uADF8\uB300\uB85C \uB0A8\uC544 \uC788\uC2B5\uB2C8\uB2E4."
+        });
+      }
+      return ok({ synced: true, dashboard: "enabled" });
     }
     case "pull": {
       if (!args2.projectPath) return errorResult3("PROJECT_PATH_REQUIRED", "pull action\uC5D0\uB294 projectPath\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
@@ -30888,7 +30896,17 @@ async function handleSugoWorkspace(rawArgs) {
       const nodes = await listRoadmapNodes(args2.name);
       void syncRoadmapSnapshot(args2.name, nodes);
       await drainRetryQueue();
-      return ok7({ synced: true, taskCount: tasks.length, roadmapNodeCount: nodes.length });
+      const config2 = await resolveDashboardConfig();
+      if (!config2.enabled) {
+        return ok7({
+          synced: false,
+          dashboard: "disabled",
+          taskCount: tasks.length,
+          roadmapNodeCount: nodes.length,
+          note: "\uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC124\uC815\uB418\uC9C0 \uC54A\uC544 \uC804\uC1A1\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uB85C\uCEEC \uB370\uC774\uD130\uB294 \uADF8\uB300\uB85C \uB0A8\uC544 \uC788\uC2B5\uB2C8\uB2E4."
+        });
+      }
+      return ok7({ synced: true, dashboard: "enabled", taskCount: tasks.length, roadmapNodeCount: nodes.length });
     }
   }
 }

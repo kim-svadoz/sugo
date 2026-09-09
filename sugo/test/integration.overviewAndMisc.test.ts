@@ -102,11 +102,28 @@ describe("sugo_checkpoint 신규 action(get/remove/memory/read_memory/migrate/sy
     expect(list.data.checkpoints).toHaveLength(2);
   });
 
-  it("대시보드 disabled면 sync는 조용히 통과한다(§7.2 논블로킹)", async () => {
+  // §7.2 논블로킹은 맞지만, **하지 않은 일을 했다고 보고하면 안 된다.** 대시보드가 없는
+  // 콜드 환경에서 sync가 `synced: true`를 돌려주고 있었다 — 논블로킹과 거짓보고는 다르다.
+  it("대시보드 disabled면 sync는 막지 않되 synced:false로 사실대로 보고한다", async () => {
     const added = await call(handleSugoCheckpoint, { action: "add", workspace: "ws1", title: "동기화 대상", checklist: ["1"] });
     const synced = await call(handleSugoCheckpoint, { action: "sync", workspace: "ws1", id: added.data.checkpoint.id });
-    expect(synced.isError).toBe(false);
-    expect(synced.data.synced).toBe(true);
+    expect(synced.isError).toBe(false); // 논블로킹 — 파이프라인을 막지 않는다
+    expect(synced.data.synced).toBe(false);
+    expect(synced.data.dashboard).toBe("disabled");
+    expect(synced.data.note).toContain("로컬");
+  });
+
+  it("대시보드가 설정돼 있으면(서버가 죽어 있어도) 전송을 시도했다고 보고한다", async () => {
+    process.env.SUGO_DASHBOARD_API_URL = "http://127.0.0.1:45124"; // 아무도 듣지 않는 포트
+    try {
+      const added = await call(handleSugoCheckpoint, { action: "add", workspace: "ws1", title: "동기화 대상", checklist: ["1"] });
+      const synced = await call(handleSugoCheckpoint, { action: "sync", workspace: "ws1", id: added.data.checkpoint.id });
+      expect(synced.isError).toBe(false);
+      expect(synced.data.synced).toBe(true);
+      expect(synced.data.dashboard).toBe("enabled");
+    } finally {
+      delete process.env.SUGO_DASHBOARD_API_URL;
+    }
   });
 });
 

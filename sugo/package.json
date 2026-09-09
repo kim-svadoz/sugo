@@ -10,7 +10,8 @@
     "sync-version": "node syncVersion.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cold-smoke": "node scripts/cold-smoke.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
