@@ -1,5 +1,5 @@
 ---
-description: 프로젝트를 sugo에 등록한다 — 기술스택 감지 → 하네스 fetch → CLAUDE.md 합성 → 레지스트리/워크스페이스 등록(§2).
+description: '프로젝트를 sugo에 등록한다. 기술스택 감지, 하네스 fetch, CLAUDE.md 합성, 레지스트리와 워크스페이스 등록 순으로 진행한다(§2).'
 argument-hint: "[projectPath] [workspace]"
 ---
 

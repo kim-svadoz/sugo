@@ -29866,9 +29866,9 @@ var sugoRecordTestEvidenceInputSchema = {
   kind: external_exports.enum(["baseline", "feature"]).default("feature").describe("baseline=code_start \uC804 \uAE30\uC874 \uD14C\uC2A4\uD2B8(\xA74.0), feature=\uAD6C\uD604 \uD6C4 \uD14C\uC2A4\uD2B8(\xA74.2)"),
   command: external_exports.string().describe("\uC2E4\uD589\uD55C \uBA85\uB839(\uC608: npm test, ./gradlew test)"),
   exitCode: external_exports.number().optional().describe("\uD504\uB85C\uC138\uC2A4 \uC885\uB8CC\uCF54\uB4DC. 0\uC774\uBA74 \uADF8\uB9B0"),
-  // 설계안 정본 파라미터명. v1은 total/passed/failed였는데 test-agent가 부르는 계약이라
-  // 이름이 어긋나면 값이 조용히 undefined로 들어가 증거가 비어버린다 — 구 이름은 아래에서
-  // 하위호환으로만 받고, 새 이름이 있으면 새 이름이 이긴다.
+  // 설계안 정본 파라미터명. test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
+  // undefined로 들어가 증거가 비어버린다 — 짧은 이름(total/passed/failed)도 하위호환으로
+  // 받되, 정본 이름이 함께 오면 그쪽이 이긴다.
   totalTests: external_exports.number().optional().describe("\uC2E4\uD589\uB41C \uC804\uCCB4 \uD14C\uC2A4\uD2B8 \uC218"),
   passedTests: external_exports.number().optional().describe("\uD1B5\uACFC \uC218"),
   failedTests: external_exports.number().optional().describe("\uC2E4\uD328 \uC218"),
