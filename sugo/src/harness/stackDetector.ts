@@ -22,16 +22,14 @@ function detectNodeCommands(ctx: DetectionContext, buildToolIds: string[]): Dete
   return commands;
 }
 
-function detectGradleCommands(ctx: DetectionContext): DetectedStack["commands"] {
-  const isWindows = process.platform === "win32";
+function detectGradleCommands(ctx: DetectionContext, isWindows: boolean): DetectedStack["commands"] {
   const hasBat = ctx.fileExists("gradlew.bat");
   const hasSh = ctx.fileExists("gradlew");
   const exe = isWindows && hasBat ? ".\\gradlew.bat" : hasSh ? "./gradlew" : "gradle";
   return { build: `${exe} build`, test: `${exe} test` };
 }
 
-function detectMavenCommands(ctx: DetectionContext): DetectedStack["commands"] {
-  const isWindows = process.platform === "win32";
+function detectMavenCommands(ctx: DetectionContext, isWindows: boolean): DetectedStack["commands"] {
   const hasCmd = ctx.fileExists("mvnw.cmd");
   const hasSh = ctx.fileExists("mvnw");
   const exe = isWindows && hasCmd ? "mvnw.cmd" : hasSh ? "./mvnw" : "mvn";
@@ -49,8 +47,11 @@ function detectPythonCommands(buildToolIds: string[]): DetectedStack["commands"]
  * harnessIds에는 넣지 않는다(§2 MVP 결정 — roadmap-progress.md 참조).
  * commands는 감지된 buildTool 조합으로 best-effort 추정한다(정확한 보장 없음).
  */
-export function detectStack(projectPath: string): DetectedStack {
+export function detectStack(projectPath: string, platform: NodeJS.Platform = process.platform): DetectedStack {
   const ctx = createFsDetectionContext(projectPath);
+  // 래퍼 명령만 OS에 따라 갈린다(`.\gradlew.bat` vs `./gradlew`). 호스트 OS에서 반대편 분기를
+  // 검증할 길이 없으면 "mac에서도 똑같이 도는지"를 영영 증명 못 하므로 주입 가능하게 뒀다.
+  const isWindows = platform === "win32";
 
   const languages: DetectedItem[] = [];
   const frameworks: DetectedItem[] = [];
@@ -90,8 +91,8 @@ export function detectStack(projectPath: string): DetectedStack {
     ...(buildToolIds.some((id) => id.startsWith("buildtool/npm") || id.startsWith("buildtool/yarn") || id.startsWith("buildtool/pnpm"))
       ? detectNodeCommands(ctx, buildToolIds)
       : {}),
-    ...(buildToolIds.includes("buildtool/gradle") ? detectGradleCommands(ctx) : {}),
-    ...(buildToolIds.includes("buildtool/maven") ? detectMavenCommands(ctx) : {}),
+    ...(buildToolIds.includes("buildtool/gradle") ? detectGradleCommands(ctx, isWindows) : {}),
+    ...(buildToolIds.includes("buildtool/maven") ? detectMavenCommands(ctx, isWindows) : {}),
     ...detectPythonCommands(buildToolIds),
   };
 

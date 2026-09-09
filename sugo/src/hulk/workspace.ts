@@ -1,5 +1,5 @@
 import { mkdir, readdir, readFile, rm } from "node:fs/promises";
-import { relative, resolve } from "node:path";
+import { isAbsolute, relative, resolve } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
 import { deleteWorkspaceSync, syncWorkspace } from "../dashboard/sync.js";
 import { workRootDir, workspaceDir, workspaceFilePath } from "../work/storage.js";
@@ -131,7 +131,9 @@ export async function deleteWorkspace(name: string, options: DeleteWorkspaceOpti
     const rel = relative(base, target);
     // base 밖(rel이 비었거나 ".."로 시작)이면 절대 지우지 않는다. 이름 검사를 이미 통과했더라도
     // 재귀 삭제는 경로 하나만 어긋나도 되돌릴 수 없어서, 실행 직전에 한 번 더 확인한다.
-    const insideBase = rel.length > 0 && !rel.startsWith("..") && target !== base;
+    // Windows에서 두 경로의 드라이브가 다르면 relative()가 ".."가 아니라 절대경로(`D:\…`)를
+    // 돌려주므로 startsWith("..") 검사만으로는 base 밖을 통과시킨다 — isAbsolute로 같이 막는다.
+    const insideBase = rel.length > 0 && !rel.startsWith("..") && !isAbsolute(rel) && target !== base;
     if (insideBase) {
       await rm(target, { recursive: true, force: true });
       dataRemoved = true;

@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { relative } from "node:path";
+import { relative, sep } from "node:path";
 import { z } from "zod";
 import { parseFileOutline, supportedLanguages } from "../ast/astParser.js";
 import { walkSourceFiles } from "../overview.js";
@@ -26,7 +26,10 @@ export async function handleSugoOverview(rawArgs: unknown) {
   const skipped: { path: string; reason: string }[] = [];
 
   for (const full of files) {
-    const relPath = relative(args.projectPath, full);
+    // relative()는 플랫폼 구분자를 쓴다(Windows `src\a.ts` / mac `src/a.ts`). 이 경로는 그대로
+    // 도구 출력에 실려 에이전트가 읽고 다시 인용하므로, 같은 프로젝트면 어느 OS에서든 같은
+    // 문자열이 나오도록 POSIX 구분자로 통일한다(§D.7 출력은 플랫폼 중립).
+    const relPath = relative(args.projectPath, full).split(sep).join("/");
     let content: string;
     try {
       content = await readFile(full, "utf-8");

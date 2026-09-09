@@ -2,9 +2,12 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { atomicWriteFile } from "./fsUtil.js";
 import { patchPrdFilename, patchWorkResultFilename } from "./patch.js";
+import { toNfc } from "./unicodeName.js";
 
 function slugify(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-+|-+$/g, "") || "feature";
+  // NFC 합성 먼저 — 아니면 mac발 조합형 한글이 `가-힣`에 안 걸려 전부 "feature"로 붕괴하고,
+  // 서로 다른 기능이 같은 디렉터리를 공유하며 prd.md를 덮어쓴다. 자세한 이유는 unicodeName.ts.
+  return toNfc(name).toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-+|-+$/g, "") || "feature";
 }
 
 function todayYyyymmdd(): string {

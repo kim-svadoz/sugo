@@ -23128,15 +23128,13 @@ function detectNodeCommands(ctx, buildToolIds) {
   if (scripts.lint) commands.lint = `${runner} lint`;
   return commands;
 }
-function detectGradleCommands(ctx) {
-  const isWindows = process.platform === "win32";
+function detectGradleCommands(ctx, isWindows) {
   const hasBat = ctx.fileExists("gradlew.bat");
   const hasSh = ctx.fileExists("gradlew");
   const exe = isWindows && hasBat ? ".\\gradlew.bat" : hasSh ? "./gradlew" : "gradle";
   return { build: `${exe} build`, test: `${exe} test` };
 }
-function detectMavenCommands(ctx) {
-  const isWindows = process.platform === "win32";
+function detectMavenCommands(ctx, isWindows) {
   const hasCmd = ctx.fileExists("mvnw.cmd");
   const hasSh = ctx.fileExists("mvnw");
   const exe = isWindows && hasCmd ? "mvnw.cmd" : hasSh ? "./mvnw" : "mvn";
@@ -23147,8 +23145,9 @@ function detectPythonCommands(buildToolIds) {
   const runner = buildToolIds.includes("buildtool/poetry") ? "poetry run pytest" : "pytest";
   return { test: runner };
 }
-function detectStack(projectPath) {
+function detectStack(projectPath, platform = process.platform) {
   const ctx = createFsDetectionContext(projectPath);
+  const isWindows = platform === "win32";
   const languages = [];
   const frameworks = [];
   const dataStores = [];
@@ -23182,8 +23181,8 @@ function detectStack(projectPath) {
   const buildToolIds = buildTools.map((b) => b.id);
   const commands = {
     ...buildToolIds.some((id) => id.startsWith("buildtool/npm") || id.startsWith("buildtool/yarn") || id.startsWith("buildtool/pnpm")) ? detectNodeCommands(ctx, buildToolIds) : {},
-    ...buildToolIds.includes("buildtool/gradle") ? detectGradleCommands(ctx) : {},
-    ...buildToolIds.includes("buildtool/maven") ? detectMavenCommands(ctx) : {},
+    ...buildToolIds.includes("buildtool/gradle") ? detectGradleCommands(ctx, isWindows) : {},
+    ...buildToolIds.includes("buildtool/maven") ? detectMavenCommands(ctx, isWindows) : {},
     ...detectPythonCommands(buildToolIds)
   };
   return { languages, frameworks, dataStores, buildTools, infra, harnessIds, commands };
@@ -23239,7 +23238,7 @@ async function syncProjectHarness(args2) {
 
 // src/hulk/workspace.ts
 import { mkdir as mkdir7, readdir as readdir2, readFile as readFile6, rm } from "node:fs/promises";
-import { relative as relative2, resolve as resolve2 } from "node:path";
+import { isAbsolute, relative as relative2, resolve as resolve2 } from "node:path";
 
 // src/dashboard/config.ts
 import { userInfo } from "node:os";
@@ -23717,7 +23716,7 @@ async function deleteWorkspace(name2, options = {}) {
     const target = resolve2(workspaceDir(name2));
     const base = resolve2(workRootDir());
     const rel = relative2(base, target);
-    const insideBase = rel.length > 0 && !rel.startsWith("..") && target !== base;
+    const insideBase = rel.length > 0 && !rel.startsWith("..") && !isAbsolute(rel) && target !== base;
     if (insideBase) {
       await rm(target, { recursive: true, force: true });
       dataRemoved = true;
@@ -23846,13 +23845,13 @@ function analyzePrdMatch(prdContent, fileContents) {
 
 // src/readChangedFiles.ts
 import { readFile as readFile7 } from "node:fs/promises";
-import { isAbsolute, join as join9 } from "node:path";
+import { isAbsolute as isAbsolute2, join as join9 } from "node:path";
 var MAX_FILE_BYTES = 3e5;
 var MAX_FILES = 200;
 async function readFileContents(projectPath, changedFiles) {
   const contents = [];
   for (const rel of changedFiles.slice(0, MAX_FILES)) {
-    const full = isAbsolute(rel) ? rel : join9(projectPath, rel);
+    const full = isAbsolute2(rel) ? rel : join9(projectPath, rel);
     try {
       const content = await readFile7(full, "utf-8");
       if (content.length <= MAX_FILE_BYTES) contents.push(content);
@@ -26884,8 +26883,8 @@ function writeFlowMapping(state, level, node) {
     if (explicitPair) pairBuffer += "? ";
     else if (state.quoteFlowKeys) pairBuffer += '"';
     const valueText = writeNode(state, level, value, {});
-    const sep = state.flowSkipColonSpace || valueText === "" ? "" : " ";
-    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep}${valueText}`;
+    const sep2 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
+    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep2}${valueText}`;
     result += pairBuffer;
   }
   const pad = state.flowBracketPadding && result !== "" ? " " : "";
@@ -26982,8 +26981,8 @@ function writeNode(state, level, node, ctx) {
       if (anchor !== null) props.push(anchor);
       if (tag !== null) props.push(tag);
     }
-    const sep = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
-    body2 = `${props.join(" ")}${sep}${body2}`;
+    const sep2 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
+    body2 = `${props.join(" ")}${sep2}${body2}`;
   }
   return body2;
 }
@@ -27028,8 +27027,8 @@ function present(documents, options) {
         block: true,
         compact: true
       });
-      const sep = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
-      result += `---${sep}${body2}
+      const sep2 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
+      result += `---${sep2}${body2}
 `;
     } else result += writeNode(state, 0, doc.contents, {
       block: true,
@@ -27099,9 +27098,17 @@ function parseFrontmatter(content) {
   return { meta, body: match[2].replace(/^\r?\n/, "") };
 }
 
+// src/unicodeName.ts
+function toNfc(text) {
+  return text.normalize("NFC");
+}
+
 // src/hulk/slug.ts
 function slugify(text) {
-  return text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
+  return (
+    // NFC 합성 먼저 — 아니면 mac발 조합형 한글이 `가-힣`에 안 걸려 전부 "untitled"로 붕괴한다.
+    toNfc(text).toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-+|-+$/g, "") || "untitled"
+  );
 }
 
 // src/hulk/checkpoint.ts
@@ -27388,7 +27395,7 @@ function errorResult6(errorCode, message) {
 
 // src/tools/sugoExplore.ts
 import { readFile as readFile12 } from "node:fs/promises";
-import { isAbsolute as isAbsolute2, join as join14 } from "node:path";
+import { isAbsolute as isAbsolute3, join as join14 } from "node:path";
 
 // src/ast/astParser.ts
 var import_web_tree_sitter = __toESM(require_tree_sitter(), 1);
@@ -27548,7 +27555,7 @@ async function handleSugoExplore(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const f of args2.filePaths.slice(0, MAX_FILES2)) {
-    const full = isAbsolute2(f) ? f : join14(args2.projectPath, f);
+    const full = isAbsolute3(f) ? f : join14(args2.projectPath, f);
     let content;
     try {
       content = await readFile12(full, "utf-8");
@@ -27761,7 +27768,7 @@ function errorResult7(errorCode, message) {
 
 // src/tools/sugoOverview.ts
 import { readFile as readFile15 } from "node:fs/promises";
-import { relative as relative3 } from "node:path";
+import { relative as relative3, sep } from "node:path";
 
 // src/overview.ts
 import { readdir as readdir7 } from "node:fs/promises";
@@ -27813,7 +27820,7 @@ async function handleSugoOverview(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const full of files) {
-    const relPath = relative3(args2.projectPath, full);
+    const relPath = relative3(args2.projectPath, full).split(sep).join("/");
     let content;
     try {
       content = await readFile15(full, "utf-8");
@@ -28171,7 +28178,7 @@ async function resolvePatchContext(workResultPath) {
 
 // src/feature.ts
 function slugify2(name2) {
-  return name2.toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-+|-+$/g, "") || "feature";
+  return toNfc(name2).toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-+|-+$/g, "") || "feature";
 }
 function todayYyyymmdd() {
   const d = /* @__PURE__ */ new Date();
@@ -28407,7 +28414,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash2 } from "node:crypto";
 import { stat } from "node:fs/promises";
-import { isAbsolute as isAbsolute3, join as join21, relative as relative4 } from "node:path";
+import { isAbsolute as isAbsolute4, join as join21, relative as relative4 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash2("sha1").update(parts2.join("\n")).digest("hex");
@@ -28415,8 +28422,8 @@ function computeFingerprintFromEntries(entries) {
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
-    const full = isAbsolute3(f) ? f : join21(projectPath, f);
-    const relPath = isAbsolute3(f) ? relative4(projectPath, f) : f;
+    const full = isAbsolute4(f) ? f : join21(projectPath, f);
+    const relPath = isAbsolute4(f) ? relative4(projectPath, f) : f;
     try {
       const st = await stat(full);
       entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
