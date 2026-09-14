@@ -1,4 +1,4 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile, unlink } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
 import { loadProjectConfig, projectSugoDir, saveProjectConfig, type ProjectConfig } from "./config.js";
@@ -7,6 +7,7 @@ import { compose, type ComposeResult } from "./harnessComposer.js";
 import { fetchHarnesses } from "./harnessFetcher.js";
 import { defaultHarnessLibraryDir } from "./libraryPath.js";
 import { findRegistryEntry, registerProject } from "./registry.js";
+import { buildClaudeRuleFile, mergeRootClaudeReference } from "./rulesFile.js";
 import { detectStack } from "./stackDetector.js";
 
 export interface SyncProjectHarnessArgs {
@@ -24,6 +25,9 @@ export interface SyncProjectHarnessResult {
   composeResult: ComposeResult;
   config: ProjectConfig;
   claudeMdPath: string;
+  /** Claude Code가 자동으로 읽는 실제 진입점 — sugo/CLAUDE.md와 달리 세션 시작 시 항상 로드된다. */
+  rootClaudeMdPath: string;
+  claudeRulesFiles: string[];
 }
 
 /**
@@ -53,8 +57,33 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
     await atomicWriteFile(fullPath, file.content);
   }
 
-  const now = new Date().toISOString();
   const existingConfig = await loadProjectConfig(projectPath);
+
+  // Claude Code는 `.claude/rules/*.md`를 재귀 자동로드한다 — 이게 실제 "규칙이 알아서 컨텍스트에
+  // 들어오는" 경로다(sugo/harness/**는 sugo_get_project_context를 명시 호출해야만 읽힌다).
+  const claudeRulesDir = join(projectPath, ".claude", "rules");
+  await mkdir(claudeRulesDir, { recursive: true });
+  for (const h of harnesses) {
+    const ruleFile = buildClaudeRuleFile(h.id, h.harnessMd);
+    await atomicWriteFile(join(projectPath, ruleFile.relPath), ruleFile.content);
+  }
+  // 더 이상 적용되지 않는 하네스의 규칙 파일은 지운다 — 안 지우면 제거된 스택의 규칙이 계속
+  // 자동로드된다(예: Next를 뺐는데 Next 규칙이 계속 붙는 조용한 misleading).
+  const currentIds = new Set(harnesses.map((h) => h.id));
+  const previousIds = existingConfig?.appliedHarnesses.map((h) => h.id) ?? [];
+  for (const staleId of previousIds.filter((id) => !currentIds.has(id))) {
+    const stalePath = join(projectPath, buildClaudeRuleFile(staleId, "").relPath);
+    await unlink(stalePath).catch(() => {}); // 이미 없으면(수동 삭제 등) 무시
+  }
+
+  // 루트 CLAUDE.md는 Claude Code가 세션 시작 시 항상 읽는 파일이다 — 사람이 쓴 내용은 보존하고
+  // sugo 관리 블록만 교체한다.
+  const rootClaudePath = join(projectPath, "CLAUDE.md");
+  const existingRootClaude = await readFile(rootClaudePath, "utf-8").catch(() => null);
+  const rootClaude = mergeRootClaudeReference(existingRootClaude, harnesses.map((h) => h.id));
+  if (rootClaude.changed) await atomicWriteFile(rootClaudePath, rootClaude.content);
+
+  const now = new Date().toISOString();
   const existingEntry = await findRegistryEntry(projectPath);
   const config: ProjectConfig = {
     version: "0.1.0",
@@ -86,5 +115,7 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
     composeResult,
     config,
     claudeMdPath: join(sugoDir, "CLAUDE.md"),
+    rootClaudeMdPath: rootClaudePath,
+    claudeRulesFiles: harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath),
   };
 }

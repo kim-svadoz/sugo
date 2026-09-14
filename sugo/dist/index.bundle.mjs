@@ -22529,7 +22529,7 @@ var StdioServerTransport = class {
 import { resolve as resolve3 } from "node:path";
 
 // src/harness/sync.ts
-import { mkdir as mkdir4 } from "node:fs/promises";
+import { mkdir as mkdir4, readFile as readFile3, unlink as unlink2 } from "node:fs/promises";
 import { basename, dirname as dirname5, join as join6 } from "node:path";
 
 // src/fsUtil.ts
@@ -22847,6 +22847,155 @@ async function unregisterProject(projectPath) {
     await atomicWriteFile(registryPath(), JSON.stringify(filtered, null, 2));
     return true;
   });
+}
+
+// src/harness/harnessRouting.ts
+var JAVA_PREFIXES = ["lang/java", "framework/spring"];
+var NODE_PREFIXES = [
+  "lang/typescript",
+  "lang/javascript",
+  "framework/node",
+  "framework/react",
+  "framework/nextjs",
+  "framework/express"
+];
+var PYTHON_PREFIXES = ["lang/python"];
+var PREFIXES_BY_EXTENSION = {
+  ".java": JAVA_PREFIXES,
+  ".kt": JAVA_PREFIXES,
+  ".ts": NODE_PREFIXES,
+  ".tsx": NODE_PREFIXES,
+  ".mts": NODE_PREFIXES,
+  ".cts": NODE_PREFIXES,
+  ".js": NODE_PREFIXES,
+  ".jsx": NODE_PREFIXES,
+  ".mjs": NODE_PREFIXES,
+  ".cjs": NODE_PREFIXES,
+  ".py": PYTHON_PREFIXES,
+  ".pyi": PYTHON_PREFIXES
+};
+var PREFIXES_BY_FILENAME = {
+  "pom.xml": ["buildtool/maven", ...JAVA_PREFIXES],
+  "build.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "build.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "settings.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "settings.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "gradle.properties": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "libs.versions.toml": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "package.json": ["buildtool/npm", ...NODE_PREFIXES],
+  "package-lock.json": ["buildtool/npm", ...NODE_PREFIXES],
+  "yarn.lock": ["buildtool/yarn", ...NODE_PREFIXES],
+  "pnpm-lock.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
+  "pnpm-workspace.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
+  "tsconfig.json": ["lang/typescript"],
+  "poetry.lock": ["buildtool/poetry", ...PYTHON_PREFIXES],
+  "pyproject.toml": ["buildtool/poetry", "buildtool/pip", ...PYTHON_PREFIXES]
+};
+var ALWAYS_SELECTED = "default";
+function normalizePath(filePath) {
+  return filePath.replace(/\\/g, "/").toLowerCase();
+}
+function basenameOf(normalized) {
+  const idx = normalized.lastIndexOf("/");
+  return idx === -1 ? normalized : normalized.slice(idx + 1);
+}
+function extensionOf(basename3) {
+  const idx = basename3.lastIndexOf(".");
+  return idx <= 0 ? "" : basename3.slice(idx);
+}
+function prefixesForFile(filePath) {
+  const normalized = normalizePath(filePath);
+  const basename3 = basenameOf(normalized);
+  const byName = PREFIXES_BY_FILENAME[basename3];
+  if (byName) return byName;
+  if (basename3.startsWith("next.config.")) return ["framework/nextjs", ...NODE_PREFIXES];
+  if (/^requirements.*\.txt$/.test(basename3)) return ["buildtool/pip", ...PYTHON_PREFIXES];
+  const byExt = PREFIXES_BY_EXTENSION[extensionOf(basename3)];
+  return byExt ?? null;
+}
+function matchesPrefix(harnessId, prefix) {
+  return harnessId === prefix || harnessId.startsWith(`${prefix}/`);
+}
+function globsForHarnessId(harnessId) {
+  const globs = /* @__PURE__ */ new Set();
+  for (const [ext, prefixes] of Object.entries(PREFIXES_BY_EXTENSION)) {
+    if (prefixes.some((p) => matchesPrefix(harnessId, p))) globs.add(`**/*${ext}`);
+  }
+  for (const [filename, prefixes] of Object.entries(PREFIXES_BY_FILENAME)) {
+    if (prefixes.some((p) => matchesPrefix(harnessId, p))) globs.add(`**/${filename}`);
+  }
+  if (["framework/nextjs", ...NODE_PREFIXES].some((p) => matchesPrefix(harnessId, p))) {
+    globs.add("**/next.config.*");
+  }
+  if (["buildtool/pip", ...PYTHON_PREFIXES].some((p) => matchesPrefix(harnessId, p))) {
+    globs.add("**/requirements*.txt");
+  }
+  return [...globs].sort();
+}
+function routeHarnessesForFiles(appliedIds, changedFiles) {
+  const prefixes = /* @__PURE__ */ new Set();
+  const unmatchedFiles = [];
+  for (const file of changedFiles) {
+    const hit = prefixesForFile(file);
+    if (hit === null) {
+      unmatchedFiles.push(file);
+      continue;
+    }
+    for (const p of hit) prefixes.add(p);
+  }
+  if (prefixes.size === 0) {
+    return { selected: [...appliedIds], excluded: [], unmatchedFiles, fellBackToAll: true };
+  }
+  const selected = [];
+  const excluded = [];
+  for (const id of appliedIds) {
+    const keep = id === ALWAYS_SELECTED || [...prefixes].some((p) => matchesPrefix(id, p));
+    (keep ? selected : excluded).push(id);
+  }
+  return { selected, excluded, unmatchedFiles, fellBackToAll: false };
+}
+
+// src/harness/rulesFile.ts
+function ruleFilename(harnessId) {
+  return `${harnessId.replace(/\//g, "-")}.md`;
+}
+function buildClaudeRuleFile(harnessId, harnessMd) {
+  const globs = globsForHarnessId(harnessId);
+  const frontmatter = globs.length === 0 ? "" : `---
+paths:
+${globs.map((g) => `  - "${g}"`).join("\n")}
+---
+
+`;
+  return { relPath: `.claude/rules/${ruleFilename(harnessId)}`, content: frontmatter + harnessMd };
+}
+var BLOCK_START = "<!-- sugo:harness-rules:start -->";
+var BLOCK_END = "<!-- sugo:harness-rules:end -->";
+function buildManagedBlock(harnessIds) {
+  const list = harnessIds.length === 0 ? "(\uC801\uC6A9\uB41C \uD558\uB124\uC2A4 \uC5C6\uC74C)" : harnessIds.map((id) => `- \`${id}\``).join("\n");
+  return `${BLOCK_START}
+<!-- \uC774 \uBE14\uB85D\uC740 sugo\uAC00 \uC790\uB3D9 \uAD00\uB9AC\uD569\uB2C8\uB2E4. \uC190\uC73C\uB85C \uACE0\uCE58\uBA74 \uB2E4\uC74C sugo_add/sugo_update \uB54C \uB36E\uC5B4\uC368\uC9D1\uB2C8\uB2E4. -->
+## Sugo \uD558\uB124\uC2A4
+
+\uC774 \uD504\uB85C\uC81D\uD2B8\uC5D0 \uC801\uC6A9\uB41C \uCF54\uB529 \uD45C\uC900\uC774 \`.claude/rules/\`\uC5D0 \uC790\uB3D9 \uB85C\uB4DC\uB418\uB3C4\uB85D \uC124\uCE58\uB3FC \uC788\uC2B5\uB2C8\uB2E4.
+\uC804\uBB38\uC740 \`sugo/harness/<id>/harness.md\`, \uAC80\uC99D \uC124\uC815\uC740 \`sugo/harness/<id>/validation.yaml\`\uC5D0 \uC788\uC2B5\uB2C8\uB2E4.
+
+${list}
+${BLOCK_END}`;
+}
+function mergeRootClaudeReference(existing, appliedHarnessIds) {
+  const block = buildManagedBlock(appliedHarnessIds);
+  const base = existing ?? "";
+  const startIdx = base.indexOf(BLOCK_START);
+  const endIdx = base.indexOf(BLOCK_END);
+  if (startIdx === -1 || endIdx === -1) {
+    const separator = base.length > 0 && !base.endsWith("\n\n") ? base.endsWith("\n") ? "\n" : "\n\n" : "";
+    return { content: base + separator + block + "\n", changed: true };
+  }
+  const before = base.slice(0, startIdx);
+  const after = base.slice(endIdx + BLOCK_END.length);
+  const content = before + block + after;
+  return { content, changed: content !== base };
 }
 
 // src/harness/context.ts
@@ -23407,8 +23556,25 @@ async function syncProjectHarness(args2) {
     await mkdir4(dirname5(fullPath), { recursive: true });
     await atomicWriteFile(fullPath, file.content);
   }
-  const now = (/* @__PURE__ */ new Date()).toISOString();
   const existingConfig = await loadProjectConfig(projectPath);
+  const claudeRulesDir = join6(projectPath, ".claude", "rules");
+  await mkdir4(claudeRulesDir, { recursive: true });
+  for (const h of harnesses) {
+    const ruleFile = buildClaudeRuleFile(h.id, h.harnessMd);
+    await atomicWriteFile(join6(projectPath, ruleFile.relPath), ruleFile.content);
+  }
+  const currentIds = new Set(harnesses.map((h) => h.id));
+  const previousIds = existingConfig?.appliedHarnesses.map((h) => h.id) ?? [];
+  for (const staleId of previousIds.filter((id) => !currentIds.has(id))) {
+    const stalePath = join6(projectPath, buildClaudeRuleFile(staleId, "").relPath);
+    await unlink2(stalePath).catch(() => {
+    });
+  }
+  const rootClaudePath = join6(projectPath, "CLAUDE.md");
+  const existingRootClaude = await readFile3(rootClaudePath, "utf-8").catch(() => null);
+  const rootClaude = mergeRootClaudeReference(existingRootClaude, harnesses.map((h) => h.id));
+  if (rootClaude.changed) await atomicWriteFile(rootClaudePath, rootClaude.content);
+  const now = (/* @__PURE__ */ new Date()).toISOString();
   const existingEntry = await findRegistryEntry(projectPath);
   const config2 = {
     version: "0.1.0",
@@ -23434,17 +23600,19 @@ async function syncProjectHarness(args2) {
     workspace,
     composeResult,
     config: config2,
-    claudeMdPath: join6(sugoDir, "CLAUDE.md")
+    claudeMdPath: join6(sugoDir, "CLAUDE.md"),
+    rootClaudeMdPath: rootClaudePath,
+    claudeRulesFiles: harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath)
   };
 }
 
 // src/hulk/workspace.ts
-import { mkdir as mkdir7, readdir as readdir2, readFile as readFile6, rm } from "node:fs/promises";
+import { mkdir as mkdir7, readdir as readdir2, readFile as readFile7, rm } from "node:fs/promises";
 import { isAbsolute, relative as relative2, resolve as resolve2 } from "node:path";
 
 // src/dashboard/config.ts
 import { userInfo } from "node:os";
-import { readFile as readFile3 } from "node:fs/promises";
+import { readFile as readFile4 } from "node:fs/promises";
 import { join as join7 } from "node:path";
 function settingsFilePath() {
   return join7(sugoHomeDir(), ".claude", "sugo", "settings.json");
@@ -23468,7 +23636,7 @@ async function resolveDashboardConfig() {
     };
   }
   try {
-    const raw = await readFile3(settingsFilePath(), "utf-8");
+    const raw = await readFile4(settingsFilePath(), "utf-8");
     const parsed = JSON.parse(raw);
     const d = parsed.dashboard;
     if (d?.enabled && d.apiUrl) {
@@ -23480,10 +23648,10 @@ async function resolveDashboardConfig() {
 }
 
 // src/dashboard/retryQueue.ts
-import { mkdir as mkdir6, readFile as readFile5 } from "node:fs/promises";
+import { mkdir as mkdir6, readFile as readFile6 } from "node:fs/promises";
 
 // src/work/storage.ts
-import { copyFile, mkdir as mkdir5, readdir, readFile as readFile4, writeFile as writeFile2 } from "node:fs/promises";
+import { copyFile, mkdir as mkdir5, readdir, readFile as readFile5, writeFile as writeFile2 } from "node:fs/promises";
 import { join as join8, relative } from "node:path";
 function workRootDir() {
   return join8(sugoHomeDir(), ".claude", "sugo", "work");
@@ -23544,7 +23712,7 @@ async function listFilesRecursively(dir, base = dir, acc = []) {
 }
 async function fileExists(path) {
   try {
-    await readFile4(path);
+    await readFile5(path);
     return true;
   } catch (err2) {
     return err2.code === "EISDIR";
@@ -23603,7 +23771,7 @@ var MAX_RETRY_QUEUE_ITEMS = 100;
 var MAX_RETRY_ATTEMPTS = 5;
 async function readQueueFile() {
   try {
-    const raw = await readFile5(syncRetryQueuePath(), "utf-8");
+    const raw = await readFile6(syncRetryQueuePath(), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { items: [] };
@@ -23849,7 +24017,7 @@ async function unsyncRoadmapLink(workspaceName, fromId, toId) {
 // src/hulk/workspace.ts
 async function loadWorkspace(name2) {
   try {
-    const raw = await readFile6(workspaceFilePath(name2), "utf-8");
+    const raw = await readFile7(workspaceFilePath(name2), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -23959,7 +24127,7 @@ async function handleSugoAdd(rawArgs) {
 }
 
 // src/tools/sugoAnalyze.ts
-import { readFile as readFile9 } from "node:fs/promises";
+import { readFile as readFile10 } from "node:fs/promises";
 
 // src/analyze.ts
 var REQ_LINE_RE = /\bREQ-(\d+)\b\s*:?\s*(.*)$/gim;
@@ -24046,7 +24214,7 @@ function analyzePrdMatch(prdContent, fileContents) {
 }
 
 // src/readChangedFiles.ts
-import { readFile as readFile7 } from "node:fs/promises";
+import { readFile as readFile8 } from "node:fs/promises";
 import { isAbsolute as isAbsolute2, join as join9 } from "node:path";
 var MAX_FILE_BYTES = 3e5;
 var MAX_FILES = 200;
@@ -24055,7 +24223,7 @@ async function readFileContents(projectPath, changedFiles) {
   for (const rel of changedFiles.slice(0, MAX_FILES)) {
     const full = isAbsolute2(rel) ? rel : join9(projectPath, rel);
     try {
-      const content = await readFile7(full, "utf-8");
+      const content = await readFile8(full, "utf-8");
       if (content.length <= MAX_FILE_BYTES) contents.push(content);
     } catch {
       continue;
@@ -24066,7 +24234,7 @@ async function readFileContents(projectPath, changedFiles) {
 
 // src/session.ts
 import { randomBytes } from "node:crypto";
-import { mkdir as mkdir8, readdir as readdir3, readFile as readFile8 } from "node:fs/promises";
+import { mkdir as mkdir8, readdir as readdir3, readFile as readFile9 } from "node:fs/promises";
 import { join as join10 } from "node:path";
 function sessionsDir() {
   return join10(sugoHomeDir(), ".claude", "sugo", "sessions");
@@ -24083,12 +24251,12 @@ async function saveSession(session) {
   await atomicWriteFile(sessionFilePath(session.id), JSON.stringify(session, null, 2));
 }
 async function loadSession(id) {
-  const raw = await readFile8(sessionFilePath(id), "utf-8");
+  const raw = await readFile9(sessionFilePath(id), "utf-8");
   return JSON.parse(raw);
 }
 async function sessionExists(id) {
   try {
-    await readFile8(sessionFilePath(id), "utf-8");
+    await readFile9(sessionFilePath(id), "utf-8");
     return true;
   } catch {
     return false;
@@ -24105,7 +24273,7 @@ async function loadAllSessions() {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile8(join10(sessionsDir(), name2), "utf-8");
+      const raw = await readFile9(join10(sessionsDir(), name2), "utf-8");
       sessions.push(JSON.parse(raw));
     } catch {
       continue;
@@ -24131,7 +24299,7 @@ async function handleSugoAnalyze(rawArgs) {
   }
   let prdContent;
   try {
-    prdContent = await readFile9(session.data.prdPath, "utf-8");
+    prdContent = await readFile10(session.data.prdPath, "utf-8");
   } catch {
     return errorResult("PRD_FILE_MISSING", `PRD \uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${session.data.prdPath}`);
   }
@@ -24316,7 +24484,7 @@ async function handleSugoCheckLethalTrifecta(rawArgs) {
 
 // src/hulk/checkpoint.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir9, readdir as readdir4, readFile as readFile10, rm as rm2 } from "node:fs/promises";
+import { mkdir as mkdir9, readdir as readdir4, readFile as readFile11, rm as rm2 } from "node:fs/promises";
 import { join as join11 } from "node:path";
 
 // src/dashboard/fetch.ts
@@ -27356,7 +27524,7 @@ async function listCheckpointFiles(workspace) {
   for (const name2 of names) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile10(join11(dir, name2), "utf-8");
+      const raw = await readFile11(join11(dir, name2), "utf-8");
       const { meta } = parseFrontmatter(raw);
       result.push({ filename: name2, checkpoint: meta });
     } catch {
@@ -27405,10 +27573,10 @@ async function pullCheckpointsToRules(projectPath) {
 }
 
 // src/hulk/memory.ts
-import { mkdir as mkdir10, readFile as readFile11 } from "node:fs/promises";
+import { mkdir as mkdir10, readFile as readFile12 } from "node:fs/promises";
 async function appendMemory(workspace, note) {
   const path = memoryFilePath(workspace);
-  const existing = await readFile11(path, "utf-8").catch(() => "");
+  const existing = await readFile12(path, "utf-8").catch(() => "");
   const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
 
 ${note}
@@ -27419,7 +27587,7 @@ ${entry}` : entry;
   await atomicWriteFile(path, next);
 }
 async function readMemory(workspace) {
-  return readFile11(memoryFilePath(workspace), "utf-8").catch(() => "");
+  return readFile12(memoryFilePath(workspace), "utf-8").catch(() => "");
 }
 
 // src/tools/sugoCheckpoint.ts
@@ -27604,7 +27772,7 @@ function errorResult6(errorCode, message) {
 }
 
 // src/tools/sugoExplore.ts
-import { readFile as readFile12 } from "node:fs/promises";
+import { readFile as readFile13 } from "node:fs/promises";
 import { isAbsolute as isAbsolute3, join as join14 } from "node:path";
 
 // src/ast/astParser.ts
@@ -27768,7 +27936,7 @@ async function handleSugoExplore(rawArgs) {
     const full = isAbsolute3(f) ? f : join14(args2.projectPath, f);
     let content;
     try {
-      content = await readFile12(full, "utf-8");
+      content = await readFile13(full, "utf-8");
     } catch {
       skipped.push({ path: f, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -27789,98 +27957,8 @@ async function handleSugoExplore(rawArgs) {
 }
 
 // src/tools/sugoGetProjectContext.ts
-import { readdir as readdir5, readFile as readFile13 } from "node:fs/promises";
-import { join as join15 } from "node:path";
-
-// src/harness/harnessRouting.ts
-var JAVA_PREFIXES = ["lang/java", "framework/spring"];
-var NODE_PREFIXES = [
-  "lang/typescript",
-  "lang/javascript",
-  "framework/node",
-  "framework/react",
-  "framework/nextjs",
-  "framework/express"
-];
-var PYTHON_PREFIXES = ["lang/python"];
-var PREFIXES_BY_EXTENSION = {
-  ".java": JAVA_PREFIXES,
-  ".kt": JAVA_PREFIXES,
-  ".ts": NODE_PREFIXES,
-  ".tsx": NODE_PREFIXES,
-  ".mts": NODE_PREFIXES,
-  ".cts": NODE_PREFIXES,
-  ".js": NODE_PREFIXES,
-  ".jsx": NODE_PREFIXES,
-  ".mjs": NODE_PREFIXES,
-  ".cjs": NODE_PREFIXES,
-  ".py": PYTHON_PREFIXES,
-  ".pyi": PYTHON_PREFIXES
-};
-var PREFIXES_BY_FILENAME = {
-  "pom.xml": ["buildtool/maven", ...JAVA_PREFIXES],
-  "build.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "build.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "settings.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "settings.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "gradle.properties": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "libs.versions.toml": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "package.json": ["buildtool/npm", ...NODE_PREFIXES],
-  "package-lock.json": ["buildtool/npm", ...NODE_PREFIXES],
-  "yarn.lock": ["buildtool/yarn", ...NODE_PREFIXES],
-  "pnpm-lock.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
-  "pnpm-workspace.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
-  "tsconfig.json": ["lang/typescript"],
-  "poetry.lock": ["buildtool/poetry", ...PYTHON_PREFIXES],
-  "pyproject.toml": ["buildtool/poetry", "buildtool/pip", ...PYTHON_PREFIXES]
-};
-var ALWAYS_SELECTED = "default";
-function normalizePath(filePath) {
-  return filePath.replace(/\\/g, "/").toLowerCase();
-}
-function basenameOf(normalized) {
-  const idx = normalized.lastIndexOf("/");
-  return idx === -1 ? normalized : normalized.slice(idx + 1);
-}
-function extensionOf(basename2) {
-  const idx = basename2.lastIndexOf(".");
-  return idx <= 0 ? "" : basename2.slice(idx);
-}
-function prefixesForFile(filePath) {
-  const normalized = normalizePath(filePath);
-  const basename2 = basenameOf(normalized);
-  const byName = PREFIXES_BY_FILENAME[basename2];
-  if (byName) return byName;
-  if (basename2.startsWith("next.config.")) return ["framework/nextjs", ...NODE_PREFIXES];
-  if (/^requirements.*\.txt$/.test(basename2)) return ["buildtool/pip", ...PYTHON_PREFIXES];
-  const byExt = PREFIXES_BY_EXTENSION[extensionOf(basename2)];
-  return byExt ?? null;
-}
-function matchesPrefix(harnessId, prefix) {
-  return harnessId === prefix || harnessId.startsWith(`${prefix}/`);
-}
-function routeHarnessesForFiles(appliedIds, changedFiles) {
-  const prefixes = /* @__PURE__ */ new Set();
-  const unmatchedFiles = [];
-  for (const file of changedFiles) {
-    const hit = prefixesForFile(file);
-    if (hit === null) {
-      unmatchedFiles.push(file);
-      continue;
-    }
-    for (const p of hit) prefixes.add(p);
-  }
-  if (prefixes.size === 0) {
-    return { selected: [...appliedIds], excluded: [], unmatchedFiles, fellBackToAll: true };
-  }
-  const selected = [];
-  const excluded = [];
-  for (const id of appliedIds) {
-    const keep = id === ALWAYS_SELECTED || [...prefixes].some((p) => matchesPrefix(id, p));
-    (keep ? selected : excluded).push(id);
-  }
-  return { selected, excluded, unmatchedFiles, fellBackToAll: false };
-}
+import { readdir as readdir5, readFile as readFile14 } from "node:fs/promises";
+import { basename as basename2, join as join15 } from "node:path";
 
 // src/harness/toolRegistry.ts
 var HARNESS_TOOL_REGISTRY = [];
@@ -27909,12 +27987,12 @@ var sugoGetProjectContextInputSchema = {
 var SugoGetProjectContextArgs = external_exports.object(sugoGetProjectContextInputSchema);
 async function readIfExists(path) {
   try {
-    return await readFile13(path, "utf-8");
+    return await readFile14(path, "utf-8");
   } catch {
     return null;
   }
 }
-async function readRulesDir(projectPath) {
+async function readRulesDir(projectPath, excludeBasenames) {
   const rulesDir = join15(projectPath, ".claude", "rules");
   let entries;
   try {
@@ -27925,6 +28003,7 @@ async function readRulesDir(projectPath) {
   const rules = [];
   for (const entry of entries) {
     if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    if (excludeBasenames.has(entry.name)) continue;
     const full = join15(rulesDir, entry.name);
     const content = await readIfExists(full);
     if (content !== null) rules.push({ path: full, content });
@@ -27948,7 +28027,8 @@ async function handleSugoGetProjectContext(rawArgs) {
     changedFiles ?? []
   );
   const harnesses = loaded.filter((h) => routing.selected.includes(h.id));
-  const rules = await readRulesDir(projectPath);
+  const sugoManagedRuleFiles = new Set(loaded.map((h) => basename2(buildClaudeRuleFile(h.id, "").relPath)));
+  const rules = await readRulesDir(projectPath, sugoManagedRuleFiles);
   const harnessToolGuides = resolveHarnessToolGuides(routing.selected);
   const payload = {
     ok: true,
@@ -27976,7 +28056,7 @@ async function handleSugoGetProjectContext(rawArgs) {
 
 // src/hulk/history.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdir as mkdir11, readdir as readdir6, readFile as readFile14 } from "node:fs/promises";
+import { mkdir as mkdir11, readdir as readdir6, readFile as readFile15 } from "node:fs/promises";
 import { join as join16 } from "node:path";
 function generateWorkLogId() {
   return `wl-${Date.now()}-${randomBytes3(4).toString("hex")}`;
@@ -28001,7 +28081,7 @@ async function listWorkLogs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile14(join16(dir, name2), "utf-8");
+      const raw = await readFile15(join16(dir, name2), "utf-8");
       logs.push(JSON.parse(raw));
     } catch {
       continue;
@@ -28011,7 +28091,7 @@ async function listWorkLogs(workspace) {
 }
 async function getWorkLog(workspace, id) {
   try {
-    const raw = await readFile14(join16(historyDir(workspace), `${id}.json`), "utf-8");
+    const raw = await readFile15(join16(historyDir(workspace), `${id}.json`), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -28080,7 +28160,7 @@ function errorResult7(errorCode, message) {
 }
 
 // src/tools/sugoOverview.ts
-import { readFile as readFile15 } from "node:fs/promises";
+import { readFile as readFile16 } from "node:fs/promises";
 import { relative as relative3, sep } from "node:path";
 
 // src/overview.ts
@@ -28136,7 +28216,7 @@ async function handleSugoOverview(rawArgs) {
     const relPath = relative3(args2.projectPath, full).split(sep).join("/");
     let content;
     try {
-      content = await readFile15(full, "utf-8");
+      content = await readFile16(full, "utf-8");
     } catch {
       skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -28164,7 +28244,7 @@ async function handleSugoOverview(rawArgs) {
 }
 
 // src/tools/sugoPlan.ts
-import { readFile as readFile19 } from "node:fs/promises";
+import { readFile as readFile20 } from "node:fs/promises";
 
 // src/bootable.ts
 async function isProjectBootable(projectPath) {
@@ -28173,7 +28253,7 @@ async function isProjectBootable(projectPath) {
 }
 
 // src/bootScan.ts
-import { readdir as readdir8, readFile as readFile16 } from "node:fs/promises";
+import { readdir as readdir8, readFile as readFile17 } from "node:fs/promises";
 import { join as join18 } from "node:path";
 
 // src/gates.ts
@@ -28415,7 +28495,7 @@ async function scanForSpringBootTestAnnotation(projectPath) {
   const candidates = testFiles.length > 0 ? testFiles : files;
   for (const file of candidates) {
     try {
-      const content = await readFile16(file, "utf-8");
+      const content = await readFile17(file, "utf-8");
       if (content.length > MAX_FILE_BYTES4) continue;
       if (hasValidSpringBootTestAnnotation([content])) return true;
     } catch {
@@ -28790,7 +28870,7 @@ function checkpointApplies(checkpoint, ctx) {
 }
 
 // src/hulk/roadmap.ts
-import { mkdir as mkdir13, readFile as readFile17 } from "node:fs/promises";
+import { mkdir as mkdir13, readFile as readFile18 } from "node:fs/promises";
 
 // src/hulk/roadmapGraph.ts
 function mergeRoadmapOwnership(localNodes, remoteOrdering) {
@@ -28859,7 +28939,7 @@ function readySet(nodes) {
 // src/hulk/roadmap.ts
 async function readRoadmapFile(workspace) {
   try {
-    const raw = await readFile17(roadmapFilePath(workspace), "utf-8");
+    const raw = await readFile18(roadmapFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
@@ -29057,13 +29137,13 @@ function promotePrdRequirements(taskId, prdContent) {
 
 // src/hulk/task.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir14, readFile as readFile18 } from "node:fs/promises";
+import { mkdir as mkdir14, readFile as readFile19 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile18(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile19(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
@@ -29768,7 +29848,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "decompose" && existing) {
     if (!args2.manifest) return errorResult8("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     if (!existing.data.prdPath) return errorResult8("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    const prdContent = await readFile19(existing.data.prdPath, "utf-8").catch(() => "");
+    const prdContent = await readFile20(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
@@ -29892,7 +29972,7 @@ async function handleSugoPlan(rawArgs) {
     session = { ...session, data: { ...session.data, seed: args2.seed } };
   }
   if (action === "prd" && args2.specPath) {
-    const specExists = await readFile19(args2.specPath, "utf-8").then(
+    const specExists = await readFile20(args2.specPath, "utf-8").then(
       () => true,
       () => false
     );
@@ -30238,7 +30318,7 @@ function errorResult10(errorCode, message) {
 import { resolve as resolve7 } from "node:path";
 
 // src/harness/reset.ts
-import { mkdir as mkdir15, readFile as readFile20, rm as rm3 } from "node:fs/promises";
+import { mkdir as mkdir15, readFile as readFile21, rm as rm3 } from "node:fs/promises";
 import { join as join22 } from "node:path";
 var ResetProjectError = class extends Error {
   constructor(code, message) {
@@ -30264,7 +30344,7 @@ async function resetProjectHarness(projectPath) {
   const claudeMdPath = join22(sugoDir, "CLAUDE.md");
   let backedUpTo;
   try {
-    const current = await readFile20(claudeMdPath, "utf-8");
+    const current = await readFile21(claudeMdPath, "utf-8");
     const backupDir = join22(sugoDir, "backup");
     await mkdir15(backupDir, { recursive: true });
     backedUpTo = join22(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
@@ -30524,7 +30604,7 @@ async function handleSugoRoute(rawArgs) {
 }
 
 // src/hulk/spec.ts
-import { mkdir as mkdir16, readdir as readdir10, readFile as readFile21 } from "node:fs/promises";
+import { mkdir as mkdir16, readdir as readdir10, readFile as readFile22 } from "node:fs/promises";
 import { join as join23 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
@@ -30566,7 +30646,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile21(join23(dir, name2), "utf-8");
+      const raw = await readFile22(join23(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -30576,7 +30656,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile21(join23(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile22(join23(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -30918,7 +30998,7 @@ function evaluateAutoCheck(spec, ctx) {
 }
 
 // src/harness/validationConfig.ts
-import { readFile as readFile22 } from "node:fs/promises";
+import { readFile as readFile23 } from "node:fs/promises";
 import { join as join24 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
@@ -30937,7 +31017,7 @@ async function loadProjectValidationConfigs(projectPath) {
   for (const applied of config2.appliedHarnesses) {
     const path = join24(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile22(path, "utf-8");
+      const content = await readFile23(path, "utf-8");
       result.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -31425,7 +31505,7 @@ server.registerTool(
   "sugo_get_project_context",
   {
     title: "Load project context for sub-agents",
-    description: "sugo/CLAUDE.md(\uD569\uC131 \uC778\uB371\uC2A4), \uC801\uC6A9\uB41C \uAC1C\uBCC4 \uD558\uB124\uC2A4 \uBCF8\uBB38, .claude/rules/*.md(\uC788\uC73C\uBA74)\uB97C \uC77D\uC5B4 \uC11C\uBE0C\uC5D0\uC774\uC804\uD2B8\uAC00 \uC791\uC5C5 \uC804 \uB85C\uB4DC\uD574\uC57C \uD558\uB294 \uCEE8\uD14D\uC2A4\uD2B8\uB97C \uBAA8\uC544\uC900\uB2E4(\xA75).",
+    description: "sugo/CLAUDE.md(\uD569\uC131 \uC778\uB371\uC2A4), \uC801\uC6A9\uB41C \uAC1C\uBCC4 \uD558\uB124\uC2A4 \uBCF8\uBB38, .claude/rules/\uC758 \uD300 \uC804\uC6A9 \uADDC\uCE59(\uD558\uB124\uC2A4\uAC00 \uC4F4 \uD30C\uC77C \uC81C\uC678 \u2014 \uADF8\uAC74 Claude Code\uAC00 \uC790\uB3D9\uB85C\uB4DC\uD558\uBBC0\uB85C harnesses\uC5D0\uB9CC \uC2E3\uB294\uB2E4)\uC744 \uC77D\uC5B4 \uC11C\uBE0C\uC5D0\uC774\uC804\uD2B8\uAC00 \uC791\uC5C5 \uC804 \uB85C\uB4DC\uD574\uC57C \uD558\uB294 \uCEE8\uD14D\uC2A4\uD2B8\uB97C \uBAA8\uC544\uC900\uB2E4(\xA75). changedFiles\uB97C \uC8FC\uBA74 \uAD00\uB828 \uD558\uB124\uC2A4\uB9CC \uC120\uBCC4\uD55C\uB2E4.",
     inputSchema: sugoGetProjectContextInputSchema
   },
   handleSugoGetProjectContext

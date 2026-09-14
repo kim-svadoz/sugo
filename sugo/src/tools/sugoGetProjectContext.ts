@@ -1,8 +1,9 @@
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { z } from "zod";
 import { loadProjectConfig } from "../harness/config.js";
 import { routeHarnessesForFiles } from "../harness/harnessRouting.js";
+import { buildClaudeRuleFile } from "../harness/rulesFile.js";
 import { mcpAllowPatterns, renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistry.js";
 
 export const sugoGetProjectContextInputSchema = {
@@ -23,7 +24,12 @@ async function readIfExists(path: string): Promise<string | null> {
   }
 }
 
-async function readRulesDir(projectPath: string): Promise<{ path: string; content: string }[]> {
+/**
+ * sugo가 하네스마다 `.claude/rules/<id>.md`를 직접 쓰므로(Claude Code 자동로드용), 여기서 또
+ * 읽어 `harnesses`와 같은 내용을 `rules`에 중복으로 실으면 안 된다. `excludeBasenames`는 그
+ * 파일명들이다 — sync.ts의 파일명 규칙(`buildClaudeRuleFile`)과 같은 소스에서 파생한다.
+ */
+async function readRulesDir(projectPath: string, excludeBasenames: Set<string>): Promise<{ path: string; content: string }[]> {
   const rulesDir = join(projectPath, ".claude", "rules");
   let entries;
   try {
@@ -34,6 +40,7 @@ async function readRulesDir(projectPath: string): Promise<{ path: string; conten
   const rules: { path: string; content: string }[] = [];
   for (const entry of entries) {
     if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    if (excludeBasenames.has(entry.name)) continue;
     const full = join(rulesDir, entry.name);
     const content = await readIfExists(full);
     if (content !== null) rules.push({ path: full, content });
@@ -69,7 +76,8 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
   );
   const harnesses = loaded.filter((h) => routing.selected.includes(h.id));
 
-  const rules = await readRulesDir(projectPath);
+  const sugoManagedRuleFiles = new Set(loaded.map((h) => basename(buildClaudeRuleFile(h.id, "").relPath)));
+  const rules = await readRulesDir(projectPath, sugoManagedRuleFiles);
 
   // ── §2 하네스 도구 디스패치: 적용된 하네스에 매칭되는 특화 MCP 도구 안내를 실어준다.
   // 레지스트리가 비어있으면(기본값) toolMenu는 빈 문자열 — 조용히 아무 것도 없음.

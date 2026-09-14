@@ -102,6 +102,32 @@ function matchesPrefix(harnessId: string, prefix: string): boolean {
   return harnessId === prefix || harnessId.startsWith(`${prefix}/`);
 }
 
+/**
+ * `.claude/rules/*.md`의 frontmatter `paths:` 글롭을 만든다. `PREFIXES_BY_EXTENSION`/
+ * `PREFIXES_BY_FILENAME`을 그대로 뒤집어 쓴다 — 파일 라우팅과 자동로드 경로가 각자 다른 표를
+ * 들고 있으면 둘이 서서히 어긋난다(한쪽만 고치고 잊는 사고). 커버되지 않는 id(예: `default`)는
+ * 빈 배열 — 호출부가 이를 "항상 로드"(frontmatter 생략)로 해석한다.
+ */
+export function globsForHarnessId(harnessId: string): string[] {
+  const globs = new Set<string>();
+
+  for (const [ext, prefixes] of Object.entries(PREFIXES_BY_EXTENSION)) {
+    if (prefixes.some((p) => matchesPrefix(harnessId, p))) globs.add(`**/*${ext}`);
+  }
+  for (const [filename, prefixes] of Object.entries(PREFIXES_BY_FILENAME)) {
+    if (prefixes.some((p) => matchesPrefix(harnessId, p))) globs.add(`**/${filename}`);
+  }
+  // prefixesForFile의 특수 케이스(파일명 표에 없는 패턴 매칭)와 대응을 맞춘다.
+  if (["framework/nextjs", ...NODE_PREFIXES].some((p) => matchesPrefix(harnessId, p))) {
+    globs.add("**/next.config.*");
+  }
+  if (["buildtool/pip", ...PYTHON_PREFIXES].some((p) => matchesPrefix(harnessId, p))) {
+    globs.add("**/requirements*.txt");
+  }
+
+  return [...globs].sort();
+}
+
 export function routeHarnessesForFiles(appliedIds: string[], changedFiles: string[]): HarnessRoutingResult {
   const prefixes = new Set<string>();
   const unmatchedFiles: string[] = [];

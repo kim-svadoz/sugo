@@ -116,6 +116,20 @@ describe("sugo_get_project_context", () => {
     expect(result.data.rules[0].content).toContain("팀 전용 규칙");
   });
 
+  it("sugo_add가 .claude/rules/에 쓴 하네스 파일은 rules에서 제외한다(harnesses와 중복 방지)", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    await call(handleSugoAdd, { projectPath: projectDir });
+    // 사람이 쓴 진짜 팀 규칙도 같은 디렉터리에 섞어 둔다.
+    writeFileSync(join(projectDir, ".claude", "rules", "custom.md"), "# 팀 전용 규칙");
+
+    const result = await call(handleSugoGetProjectContext, { projectPath: projectDir });
+
+    expect(result.data.rules).toHaveLength(1);
+    expect(result.data.rules[0].content).toContain("팀 전용 규칙");
+    expect(result.data.harnesses.some((h: { id: string }) => h.id === "lang/typescript")).toBe(true);
+  });
+
   it("changedFiles를 주면 그 파일에 해당하는 하네스만 싣는다(폴리글랏 실배선)", async () => {
     // Java(Spring/Maven) + TypeScript(React/npm)가 한 저장소에 있는 상태를 실제로 만든다.
     writeFileSync(

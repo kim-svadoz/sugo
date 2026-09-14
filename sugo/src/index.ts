@@ -141,8 +141,9 @@ server.registerTool(
   {
     title: "Load project context for sub-agents",
     description:
-      "sugo/CLAUDE.md(합성 인덱스), 적용된 개별 하네스 본문, .claude/rules/*.md(있으면)를 읽어 " +
-      "서브에이전트가 작업 전 로드해야 하는 컨텍스트를 모아준다(§5).",
+      "sugo/CLAUDE.md(합성 인덱스), 적용된 개별 하네스 본문, .claude/rules/의 팀 전용 규칙(하네스가 " +
+      "쓴 파일 제외 — 그건 Claude Code가 자동로드하므로 harnesses에만 싣는다)을 읽어 서브에이전트가 " +
+      "작업 전 로드해야 하는 컨텍스트를 모아준다(§5). changedFiles를 주면 관련 하네스만 선별한다.",
     inputSchema: sugoGetProjectContextInputSchema,
   },
   handleSugoGetProjectContext,
