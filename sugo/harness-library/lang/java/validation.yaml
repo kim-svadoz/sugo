@@ -1,11 +1,11 @@
 harnessId: lang/java
 checks:
-  - id: no-raw-null-return-for-collections
-    description: "컬렉션 반환 타입에서 null 대신 빈 컬렉션을 반환해야 한다"
-    severity: warning
   - id: try-with-resources
     description: "Closeable/AutoCloseable 자원은 try-with-resources로 해제해야 한다"
     severity: error
   - id: equals-hashcode-pair
     description: "equals를 오버라이드하면 hashCode도 함께 오버라이드해야 한다"
+    severity: error
+  - id: no-raw-null-return-for-collections
+    description: "컬렉션 반환 타입에서 null 대신 빈 컬렉션을 반환해야 한다"
     severity: error

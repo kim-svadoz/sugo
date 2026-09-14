@@ -1,11 +1,17 @@
 harnessId: default
 checks:
-  - id: no-debug-output
-    description: "커밋 대상에 console.log/print/System.out.println 등 디버그 출력이 남아있지 않아야 한다"
+  - id: no-empty-catch
+    description: "catch/except 블록이 비어있거나 로그 없이 무시하지 않아야 한다"
+    severity: error
+  - id: no-defensive-code-for-unreachable-cases
+    description: "일어날 수 없는 케이스에 대한 방어 코드가 없어야 한다(검증은 시스템 경계에서만)"
     severity: warning
   - id: no-secrets
     description: "API 키/토큰/비밀번호로 보이는 문자열 리터럴이 없어야 한다"
     severity: error
-  - id: no-empty-catch
-    description: "catch/except 블록이 비어있거나 로그 없이 무시하지 않아야 한다"
-    severity: warning
+  - id: no-out-of-scope-file-changes
+    description: "요청받은 범위 밖 파일이 변경되지 않아야 한다"
+    severity: error
+  - id: no-unverified-completion-claim
+    description: "테스트/실행 확인 없이 완료를 주장하지 않아야 한다"
+    severity: error

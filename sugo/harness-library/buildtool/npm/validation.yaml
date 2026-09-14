@@ -3,3 +3,9 @@ checks:
   - id: lockfile-committed
     description: "package-lock.json이 변경분과 함께 커밋되어야 한다"
     severity: error
+  - id: correct-dependency-scope
+    description: "런타임에 필요한 패키지가 dependencies에 있어야 한다(devDependencies에 있으면 안 된다)"
+    severity: error
+  - id: ci-uses-npm-ci
+    description: "CI/배포 스크립트가 npm install이 아니라 npm ci를 사용해야 한다"
+    severity: warning

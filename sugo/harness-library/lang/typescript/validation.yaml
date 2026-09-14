@@ -1,14 +1,11 @@
 harnessId: lang/typescript
 checks:
-  - id: no-any
-    description: "변경분에 새로 추가된 any/as any가 없어야 한다(이유 주석 있는 경우 예외)"
-    severity: warning
-  - id: strict-mode
-    description: "tsconfig.json의 strict가 true여야 한다"
+  - id: no-type-escape-hatch
+    description: "any/as any/널 단언(!)으로 타입 에러를 회피하지 않아야 한다(진짜 문제 해결 또는 unknown+타입가드, 불가피하면 이유 주석)"
     severity: error
-  - id: typecheck-passes
-    description: "tsc --noEmit이 에러 없이 통과해야 한다"
+  - id: no-weakened-strict-config
+    description: "타입 에러 회피를 위해 tsconfig.json의 strict 계열 설정을 낮추지 않아야 한다"
     severity: error
-  - id: no-non-null-assertion-abuse
-    description: "널 단언(!) 남용이 없어야 한다"
-    severity: warning
+  - id: no-unhandled-promise
+    description: "비동기 함수 호출부에 미처리 Promise rejection이 없어야 한다"
+    severity: error

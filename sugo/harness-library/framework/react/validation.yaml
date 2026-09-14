@@ -1,8 +1,11 @@
 harnessId: framework/react
 checks:
-  - id: no-index-as-key
-    description: "동적 리스트에서 배열 index를 key로 사용하지 않아야 한다"
-    severity: warning
+  - id: no-render-side-effects
+    description: "렌더 함수 본문에서 상태 변경 등 부수효과를 실행하지 않아야 한다(useEffect/이벤트 핸들러 안에서만)"
+    severity: error
   - id: effect-deps-correct
     description: "useEffect 의존성 배열이 실제 사용값과 일치해야 한다"
+    severity: error
+  - id: no-index-as-key
+    description: "변경 가능한 리스트에서 배열 index를 key로 사용하지 않아야 한다"
     severity: warning

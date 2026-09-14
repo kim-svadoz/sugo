@@ -126,7 +126,7 @@ describe("sugo_validate", () => {
     const sessionId = await toCodeDone();
     const result = await call(handleSugoValidate, {
       sessionId,
-      validationResults: [{ harnessId: "lang/typescript", checkId: "strict-mode", passed: true }],
+      validationResults: [{ harnessId: "lang/typescript", checkId: "no-weakened-strict-config", passed: true }],
     });
     expect(result.isError).toBe(false);
     expect(result.data.verdict).toBe("pass");

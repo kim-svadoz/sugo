@@ -1,11 +1,11 @@
 harnessId: lang/python
 checks:
-  - id: type-hints-on-public-functions
-    description: "공개 함수/메서드 시그니처에 타입힌트가 있어야 한다"
-    severity: warning
   - id: no-mutable-default-args
     description: "가변 기본인자(list/dict 등)를 사용하지 않아야 한다"
     severity: error
   - id: no-bare-except
     description: "맨몸 except: 를 사용하지 않아야 한다"
     severity: error
+  - id: resource-context-manager
+    description: "파일/커넥션 등 해제가 필요한 자원은 with로 열어야 한다"
+    severity: warning
