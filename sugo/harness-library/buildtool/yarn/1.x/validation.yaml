@@ -1,0 +1,11 @@
+harnessId: buildtool/yarn/1.x
+checks:
+  - id: frozen-lockfile-flag-for-classic
+    description: "CI 설치가 --frozen-lockfile이어야 한다(--immutable은 1에서 무시된다)"
+    severity: error
+  - id: documented-resolutions
+    description: "resolutions 항목에 고정 사유가 남아 있어야 한다"
+    severity: warning
+  - id: no-berry-config-files
+    description: ".yarnrc.yml(Berry 전용) 설정 파일이 없어야 한다(1은 조용히 무시)"
+    severity: error

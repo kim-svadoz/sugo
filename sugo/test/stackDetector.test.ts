@@ -40,7 +40,7 @@ describe("detectStack — Node + TypeScript + React 프로젝트", () => {
 
     const stack = detectStack(dir);
 
-    expect(stack.languages.map((l) => l.id)).toEqual(["lang/typescript"]);
+    expect(stack.languages.map((l) => l.id)).toEqual(["lang/typescript", "lang/typescript/5.x"]);
     expect(stack.languages[0].version).toBe("^5.4.0");
     expect(stack.frameworks.map((f) => f.id).sort()).toEqual([
       "framework/node",
@@ -49,7 +49,14 @@ describe("detectStack — Node + TypeScript + React 프로젝트", () => {
     ]);
     expect(stack.buildTools.map((b) => b.id)).toEqual(["buildtool/npm"]);
     expect(stack.harnessIds.sort()).toEqual(
-      ["lang/typescript", "framework/node", "framework/react", "framework/react/18.x", "buildtool/npm"].sort(),
+      [
+        "lang/typescript",
+        "lang/typescript/5.x",
+        "framework/node",
+        "framework/react",
+        "framework/react/18.x",
+        "buildtool/npm",
+      ].sort(),
     );
     expect(stack.commands.build).toBe("npm run build");
     expect(stack.commands.test).toBe("npm run test");
@@ -170,6 +177,104 @@ describe("detectStack — Python 프로젝트", () => {
     write(pinned, "requirements.txt", "flask==3.0.0\n");
     write(pinned, ".python-version", "3.11.9\n");
     expect(detectStack(pinned).languages.map((l) => l.id)).toEqual(["lang/python", "lang/python/3.10"]);
+  });
+});
+
+describe("detectStack — TypeScript / Node / Express 버전", () => {
+  it("TypeScript 7은 7.x 버킷으로 간다", () => {
+    const dir = makeProject();
+    write(dir, "tsconfig.json", "{}");
+    write(dir, "package.json", JSON.stringify({ devDependencies: { typescript: "^7.0.2" } }));
+    expect(detectStack(dir).languages.map((l) => l.id)).toEqual(["lang/typescript", "lang/typescript/7.x"]);
+  });
+
+  it("typescript 의존성 표기가 없으면 base만 적용한다", () => {
+    const dir = makeProject();
+    write(dir, "tsconfig.json", "{}");
+    write(dir, "package.json", JSON.stringify({}));
+    expect(detectStack(dir).languages.map((l) => l.id)).toEqual(["lang/typescript"]);
+  });
+
+  it("Node 버전은 engines를 우선하고, 없으면 .nvmrc를 본다", () => {
+    const engines = makeProject();
+    write(engines, "package.json", JSON.stringify({ engines: { node: ">=24.0.0" } }));
+    expect(detectStack(engines).frameworks.map((f) => f.id)).toEqual(["framework/node", "framework/node/24.x"]);
+
+    const nvmrc = makeProject();
+    write(nvmrc, "package.json", JSON.stringify({}));
+    write(nvmrc, ".nvmrc", "v22.11.0\n");
+    expect(detectStack(nvmrc).frameworks.map((f) => f.id)).toEqual(["framework/node", "framework/node/22.x"]);
+
+    // "lts/jod" 같은 코드네임은 숫자가 없어 버킷을 못 잡는다 — base만.
+    const codename = makeProject();
+    write(codename, "package.json", JSON.stringify({}));
+    write(codename, ".nvmrc", "lts/jod\n");
+    expect(detectStack(codename).frameworks.map((f) => f.id)).toEqual(["framework/node"]);
+  });
+
+  it("Express 5와 4를 각각의 버킷으로 가른다", () => {
+    const five = makeProject();
+    write(five, "package.json", JSON.stringify({ dependencies: { express: "^5.1.0" } }));
+    expect(detectStack(five).frameworks.map((f) => f.id)).toContain("framework/express/5.x");
+
+    const four = makeProject();
+    write(four, "package.json", JSON.stringify({ dependencies: { express: "4.19.2" } }));
+    expect(detectStack(four).frameworks.map((f) => f.id)).toContain("framework/express/4.x");
+  });
+});
+
+describe("detectStack — 빌드도구 버전", () => {
+  it("Gradle은 wrapper properties의 배포본 버전을 본다", () => {
+    const dir = makeProject();
+    write(dir, "build.gradle", "plugins { id 'java' }");
+    write(
+      dir,
+      "gradle/wrapper/gradle-wrapper.properties",
+      "distributionUrl=https\\://services.gradle.org/distributions/gradle-9.7.1-bin.zip\n",
+    );
+    expect(detectStack(dir).buildTools.map((b) => b.id)).toEqual(["buildtool/gradle", "buildtool/gradle/9.x"]);
+  });
+
+  it("Yarn은 숫자 버킷이 아니라 classic/berry로 가른다", () => {
+    const berry = makeProject();
+    write(berry, "yarn.lock", "");
+    write(berry, "package.json", JSON.stringify({ packageManager: "yarn@4.5.0" }));
+    expect(detectStack(berry).buildTools.map((b) => b.id)).toEqual(["buildtool/yarn", "buildtool/yarn/berry"]);
+
+    // yarn 3도 Berry다 — 숫자 버킷이었다면 1.x로 내려가 classic 규칙을 받았을 자리.
+    const yarn3 = makeProject();
+    write(yarn3, "yarn.lock", "");
+    write(yarn3, "package.json", JSON.stringify({ packageManager: "yarn@3.6.4" }));
+    expect(detectStack(yarn3).buildTools.map((b) => b.id)).toEqual(["buildtool/yarn", "buildtool/yarn/berry"]);
+
+    const classic = makeProject();
+    write(classic, "yarn.lock", "");
+    write(classic, "package.json", JSON.stringify({ packageManager: "yarn@1.22.22" }));
+    expect(detectStack(classic).buildTools.map((b) => b.id)).toEqual(["buildtool/yarn", "buildtool/yarn/1.x"]);
+
+    // packageManager가 없어도 .yarnrc.yml이 있으면 Berry
+    const byConfig = makeProject();
+    write(byConfig, "yarn.lock", "");
+    write(byConfig, "package.json", JSON.stringify({}));
+    write(byConfig, ".yarnrc.yml", "nodeLinker: node-modules\n");
+    expect(detectStack(byConfig).buildTools.map((b) => b.id)).toEqual(["buildtool/yarn", "buildtool/yarn/berry"]);
+  });
+
+  it("pnpm은 packageManager 필드로 버킷을 잡는다", () => {
+    const dir = makeProject();
+    write(dir, "pnpm-lock.yaml", "");
+    write(dir, "package.json", JSON.stringify({ packageManager: "pnpm@12.0.0" }));
+    expect(detectStack(dir).buildTools.map((b) => b.id)).toEqual(["buildtool/pnpm", "buildtool/pnpm/12.x"]);
+  });
+
+  it("Poetry는 명시 신호가 있을 때만 버킷을 잡는다(추측 금지)", () => {
+    const declared = makeProject();
+    write(declared, "pyproject.toml", "[tool.poetry]\nrequires-poetry = \">=2.0\"\n");
+    expect(detectStack(declared).buildTools.map((b) => b.id)).toEqual(["buildtool/poetry", "buildtool/poetry/2.x"]);
+
+    const noSignal = makeProject();
+    write(noSignal, "pyproject.toml", "[tool.poetry]\nname = \"demo\"\n");
+    expect(detectStack(noSignal).buildTools.map((b) => b.id)).toEqual(["buildtool/poetry"]);
   });
 });
 

@@ -1,0 +1,14 @@
+harnessId: buildtool/gradle/9.x
+checks:
+  - id: no-env-access-at-configuration-time
+    description: "설정 단계에서 System.getenv/getProperty/파일 읽기 대신 providers API를 써야 한다"
+    severity: error
+  - id: no-project-access-in-task-actions
+    description: "태스크 액션에서 project를 참조하지 않아야 한다(설정 캐시 무효화)"
+    severity: error
+  - id: jvm17-for-gradle-itself
+    description: "Gradle 실행 JVM이 17 이상이어야 한다(컴파일 대상과 별개)"
+    severity: error
+  - id: no-disabling-configuration-cache
+    description: "--no-configuration-cache로 실패를 회피하지 않아야 한다"
+    severity: warning

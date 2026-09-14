@@ -1,0 +1,11 @@
+harnessId: framework/express/4.x
+checks:
+  - id: async-errors-forwarded
+    description: "async 라우트 핸들러의 예외가 next(err)로 전달되어야 한다(4는 자동 전파 없음)"
+    severity: error
+  - id: no-removed-in-5-apis
+    description: "res.sendfile/app.del/2-인자 res.redirect 등 5에서 제거된 API를 새로 쓰지 않아야 한다"
+    severity: warning
+  - id: simple-route-patterns
+    description: "정규식 기반 복잡한 라우트 패턴을 피해야 한다(5의 path-to-regexp v8에서 의미가 달라진다)"
+    severity: warning

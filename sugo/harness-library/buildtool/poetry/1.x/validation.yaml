@@ -1,0 +1,11 @@
+harnessId: buildtool/poetry/1.x
+checks:
+  - id: no-hard-dependency-on-export
+    description: "poetry export를 빌드의 필수 단계로 두지 않아야 한다(2에서 플러그인으로 분리됨)"
+    severity: warning
+  - id: pep621-migration-ready
+    description: "커스텀 스크립트가 [tool.poetry] 구조 파싱에 의존하지 않아야 한다"
+    severity: warning
+  - id: install-with-sync
+    description: "환경 정리를 위해 poetry install --sync를 사용해야 한다"
+    severity: warning

@@ -1,0 +1,14 @@
+harnessId: lang/typescript/6.x
+checks:
+  - id: no-suppressed-deprecations
+    description: "6.0의 폐기 경고를 억제하지 않아야 한다(7.0에서 에러가 된다)"
+    severity: error
+  - id: no-reverted-defaults
+    description: "6.0이 바꾼 기본값을 예전 값으로 되돌리지 않아야 한다(되돌린다면 사유와 해제 시점 명시)"
+    severity: warning
+  - id: remove-enum-namespace
+    description: "남아 있는 enum/namespace를 제거해야 한다"
+    severity: warning
+  - id: migration-flags-enabled
+    description: "7.0 마이그레이션 플래그를 켜고 통과 상태를 유지해야 한다"
+    severity: warning

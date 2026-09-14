@@ -22917,6 +22917,28 @@ var PYTHON_MINOR_BUCKETS = [9, 10, 12, 14];
 var REACT_BUCKETS = [18, 19];
 var NEXT_BUCKETS = [15, 16];
 var SPRING_BUCKETS = [2, 3, 4];
+var TYPESCRIPT_BUCKETS = [5, 6, 7];
+var NODE_BUCKETS = [20, 22, 24];
+var EXPRESS_BUCKETS = [4, 5];
+var GRADLE_BUCKETS = [8, 9];
+var PNPM_BUCKETS = [10, 12];
+var POETRY_BUCKETS = [1, 2];
+function extractNodeMajor(ctx, pkg) {
+  const engines = pkg?.engines?.node;
+  const fromEngines = majorFromRange(engines);
+  if (fromEngines !== null) return fromEngines;
+  for (const file of [".nvmrc", ".node-version"]) {
+    const raw = ctx.readFile(file);
+    const major = majorFromRange(raw?.trim());
+    if (major !== null) return major;
+  }
+  return null;
+}
+function packageManagerMajor(pkg, tool) {
+  const raw = pkg?.packageManager;
+  if (!raw || !raw.startsWith(`${tool}@`)) return null;
+  return majorFromRange(raw.slice(tool.length + 1));
+}
 function extractJavaMajor(javaSrc) {
   const patterns = [
     /<java\.version>\s*(?:1\.)?(\d+)/,
@@ -22971,13 +22993,18 @@ var langTypescript = {
   detect(ctx) {
     if (!ctx.fileExists("tsconfig.json")) return null;
     const pkg = readPackageJson(ctx);
-    return {
-      id: "lang/typescript",
-      category: "language",
-      name: "TypeScript",
-      version: depVersion(pkg, "typescript"),
-      detectedBy: "tsconfig.json"
-    };
+    const declared = depVersion(pkg, "typescript");
+    const bucket = nearestBucket(majorFromRange(declared) ?? -1, TYPESCRIPT_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "lang/typescript",
+        category: "language",
+        name: "TypeScript",
+        version: declared,
+        detectedBy: "tsconfig.json"
+      },
+      bucket === null ? null : `${bucket}.x`
+    );
   }
 };
 var langJavascript = {
@@ -23021,7 +23048,19 @@ var frameworkNode = {
   category: "framework",
   detect(ctx) {
     if (!ctx.fileExists("package.json")) return null;
-    return { id: "framework/node", category: "framework", name: "Node.js", detectedBy: "package.json" };
+    const pkg = readPackageJson(ctx);
+    const major = extractNodeMajor(ctx, pkg);
+    const bucket = major === null ? null : nearestBucket(major, NODE_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "framework/node",
+        category: "framework",
+        name: "Node.js",
+        version: major === null ? void 0 : String(major),
+        detectedBy: "package.json"
+      },
+      bucket === null ? null : `${bucket}.x`
+    );
   }
 };
 var frameworkReact = {
@@ -23071,13 +23110,18 @@ var frameworkExpress = {
   detect(ctx) {
     const pkg = readPackageJson(ctx);
     if (!hasDep(pkg, "express")) return null;
-    return {
-      id: "framework/express",
-      category: "framework",
-      name: "Express",
-      version: depVersion(pkg, "express"),
-      detectedBy: "package.json:dependencies.express"
-    };
+    const declared = depVersion(pkg, "express");
+    const bucket = nearestBucket(majorFromRange(declared) ?? -1, EXPRESS_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "framework/express",
+        category: "framework",
+        name: "Express",
+        version: declared,
+        detectedBy: "package.json:dependencies.express"
+      },
+      bucket === null ? null : `${bucket}.x`
+    );
   }
 };
 var frameworkSpring = {
@@ -23111,16 +23155,65 @@ function buildToolRule(id, name2, marker) {
   };
 }
 var buildtoolNpm = buildToolRule("buildtool/npm", "npm", "package-lock.json");
-var buildtoolYarn = buildToolRule("buildtool/yarn", "Yarn", "yarn.lock");
-var buildtoolPnpm = buildToolRule("buildtool/pnpm", "pnpm", "pnpm-lock.yaml");
 var buildtoolMaven = buildToolRule("buildtool/maven", "Maven", "pom.xml");
+var buildtoolPnpm = {
+  id: "buildtool/pnpm",
+  category: "buildTool",
+  detect(ctx) {
+    if (!ctx.fileExists("pnpm-lock.yaml")) return null;
+    const major = packageManagerMajor(readPackageJson(ctx), "pnpm");
+    const bucket = major === null ? null : nearestBucket(major, PNPM_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "buildtool/pnpm",
+        category: "buildTool",
+        name: "pnpm",
+        version: major === null ? void 0 : String(major),
+        detectedBy: "pnpm-lock.yaml"
+      },
+      bucket === null ? null : `${bucket}.x`
+    );
+  }
+};
+var buildtoolYarn = {
+  id: "buildtool/yarn",
+  category: "buildTool",
+  detect(ctx) {
+    if (!ctx.fileExists("yarn.lock")) return null;
+    const major = packageManagerMajor(readPackageJson(ctx), "yarn");
+    const berryConfig = ctx.fileExists(".yarnrc.yml");
+    const label = major === null ? berryConfig ? "berry" : null : major >= 2 ? "berry" : "1.x";
+    return withVersionBucket(
+      {
+        id: "buildtool/yarn",
+        category: "buildTool",
+        name: label === "berry" ? "Yarn (Berry)" : "Yarn",
+        version: major === null ? void 0 : String(major),
+        detectedBy: "yarn.lock"
+      },
+      label
+    );
+  }
+};
 var buildtoolGradle = {
   id: "buildtool/gradle",
   category: "buildTool",
   detect(ctx) {
     const marker = ["build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
     if (!marker) return null;
-    return { id: "buildtool/gradle", category: "buildTool", name: "Gradle", detectedBy: marker };
+    const wrapper = ctx.readFile("gradle/wrapper/gradle-wrapper.properties");
+    const major = majorFromRange(wrapper?.match(/gradle-(\d+)\.[\d.]*-(?:bin|all)\.zip/)?.[1]);
+    const bucket = major === null ? null : nearestBucket(major, GRADLE_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "buildtool/gradle",
+        category: "buildTool",
+        name: "Gradle",
+        version: major === null ? void 0 : String(major),
+        detectedBy: marker
+      },
+      bucket === null ? null : `${bucket}.x`
+    );
   }
 };
 var buildtoolPip = buildToolRule("buildtool/pip", "pip", "requirements.txt");
@@ -23130,7 +23223,20 @@ var buildtoolPoetry = {
   detect(ctx) {
     const src = ctx.readFile("pyproject.toml");
     if (!src || !src.includes("[tool.poetry]")) return null;
-    return { id: "buildtool/poetry", category: "buildTool", name: "Poetry", detectedBy: "pyproject.toml" };
+    const declared = majorFromRange(src.match(/requires-poetry\s*=\s*["'][^"']*?(\d+)/)?.[1]);
+    const lockVersion = majorFromRange(ctx.readFile("poetry.lock")?.match(/lock-version\s*=\s*["'](\d+)/)?.[1]);
+    const major = declared ?? (lockVersion !== null && lockVersion >= 2 ? 2 : null);
+    const bucket = major === null ? null : nearestBucket(major, POETRY_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "buildtool/poetry",
+        category: "buildTool",
+        name: "Poetry",
+        version: major === null ? void 0 : String(major),
+        detectedBy: "pyproject.toml"
+      },
+      bucket === null ? null : `${bucket}.x`
+    );
   }
 };
 function dataStoreRule(id, name2, matchers) {

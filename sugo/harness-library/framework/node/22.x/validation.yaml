@@ -1,0 +1,14 @@
+harnessId: framework/node/22.x
+checks:
+  - id: await-subtests
+    description: "node --test의 서브테스트를 await해야 한다(자동 대기는 24부터)"
+    severity: error
+  - id: prefer-builtin-test-runner
+    description: "외부 테스트 러너를 새로 도입할 때 내장 러너로 안 되는 이유가 있어야 한다"
+    severity: warning
+  - id: no-dotenv-dependency
+    description: ".env 로딩에 dotenv 대신 --env-file을 사용해야 한다"
+    severity: warning
+  - id: no-esm-require-workaround
+    description: "require(esm)가 되므로 동적 import() 우회를 새로 만들지 않아야 한다"
+    severity: warning

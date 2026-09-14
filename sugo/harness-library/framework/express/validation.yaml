@@ -1,8 +1,8 @@
 harnessId: framework/express
 checks:
-  - id: async-errors-forwarded
-    description: "async 라우트 핸들러의 예외가 next(err)로 전달되어야 한다"
+  - id: error-middleware-four-args-and-last
+    description: "에러 처리 미들웨어가 인자 4개를 명시하고 모든 라우트 뒤 마지막에 위치해야 한다"
     severity: error
-  - id: error-middleware-registered-last
-    description: "에러 처리 미들웨어가 모든 라우트 등록 이후에 위치해야 한다"
+  - id: specific-routes-before-param-routes
+    description: "구체적인 경로가 파라미터 경로(/users/:id)보다 먼저 등록되어야 한다"
     severity: error

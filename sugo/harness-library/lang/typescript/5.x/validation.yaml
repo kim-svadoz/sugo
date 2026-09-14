@@ -1,0 +1,14 @@
+harnessId: lang/typescript/5.x
+checks:
+  - id: no-enum-no-namespace
+    description: "새 코드에 enum/namespace를 사용하지 않아야 한다(union literal, 파일 단위 모듈 사용)"
+    severity: warning
+  - id: no-compiler-api-transforms
+    description: "tsc 컴파일러 API 기반 커스텀 트랜스포머에 의존하지 않아야 한다(7.0 이관 차단 요인)"
+    severity: warning
+  - id: modern-module-resolution
+    description: "moduleResolution이 bundler/node16/nodenext여야 한다(구식 node 해석 금지)"
+    severity: error
+  - id: as-is-type-imports
+    description: "타입 전용 임포트를 import type으로 구분해야 한다"
+    severity: warning

@@ -1,0 +1,11 @@
+harnessId: lang/typescript/7.x
+checks:
+  - id: no-compiler-api-dependency
+    description: "typescript 컴파일러 API를 프로그램적으로 호출하는 코드를 새로 만들지 않아야 한다"
+    severity: error
+  - id: typecheck-still-in-ci
+    description: "CI에 타입체크 단계가 남아 있어야 한다(속도 개선을 이유로 생략 금지)"
+    severity: error
+  - id: no-config-masking-of-compiler-diff
+    description: "구 tsc와 결과가 다른 지점을 설정으로 덮지 않고 원인을 해결해야 한다"
+    severity: warning

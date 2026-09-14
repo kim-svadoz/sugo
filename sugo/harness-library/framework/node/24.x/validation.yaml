@@ -1,0 +1,14 @@
+harnessId: framework/node/24.x
+checks:
+  - id: global-setup-teardown-for-shared-resources
+    description: "통합 테스트의 공유 자원(DB/서버)을 전역 setup/teardown API로 관리해야 한다"
+    severity: warning
+  - id: keep-explicit-await-for-portability
+    description: "여러 런타임에서 도는 코드는 서브테스트 await를 유지해야 한다(22 이하에서 거짓 그린)"
+    severity: warning
+  - id: runtime-gated-new-globals
+    description: "URLPattern/RegExp.escape 등 24 전역 사용 시 대상 런타임을 확인해야 한다"
+    severity: warning
+  - id: lockfile-generator-consistency
+    description: "npm 11로 재생성한 lockfile이 팀의 다른 npm 버전과 충돌하지 않아야 한다"
+    severity: warning

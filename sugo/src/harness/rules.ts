@@ -69,6 +69,36 @@ const PYTHON_MINOR_BUCKETS = [9, 10, 12, 14] as const;
 const REACT_BUCKETS = [18, 19] as const;
 const NEXT_BUCKETS = [15, 16] as const;
 const SPRING_BUCKETS = [2, 3, 4] as const;
+const TYPESCRIPT_BUCKETS = [5, 6, 7] as const;
+const NODE_BUCKETS = [20, 22, 24] as const;
+const EXPRESS_BUCKETS = [4, 5] as const;
+const GRADLE_BUCKETS = [8, 9] as const;
+const PNPM_BUCKETS = [10, 12] as const;
+const POETRY_BUCKETS = [1, 2] as const;
+
+/**
+ * Node 런타임 버전 근거를 우선순위대로 찾는다. engines가 계약이고 .nvmrc/.node-version은
+ * 개발 환경 고정이라, 둘이 다르면 계약 쪽을 믿는다.
+ */
+function extractNodeMajor(ctx: DetectionContext, pkg: PackageJson | null): number | null {
+  const engines = (pkg as { engines?: Record<string, string> } | null)?.engines?.node;
+  const fromEngines = majorFromRange(engines);
+  if (fromEngines !== null) return fromEngines;
+  for (const file of [".nvmrc", ".node-version"]) {
+    const raw = ctx.readFile(file);
+    // "lts/jod" 같은 코드네임은 숫자가 없어 majorFromRange가 null을 준다 — 그때는 버전 하네스 없이 base만.
+    const major = majorFromRange(raw?.trim());
+    if (major !== null) return major;
+  }
+  return null;
+}
+
+/** `packageManager: "pnpm@12.0.0"` 필드에서 특정 도구의 major를 뽑는다(corepack 표준 표기). */
+function packageManagerMajor(pkg: PackageJson | null, tool: string): number | null {
+  const raw = (pkg as { packageManager?: string } | null)?.packageManager;
+  if (!raw || !raw.startsWith(`${tool}@`)) return null;
+  return majorFromRange(raw.slice(tool.length + 1));
+}
 
 /** pom.xml의 java.version/maven.compiler.*, build.gradle의 sourceCompatibility/toolchain에서 major 추출. */
 function extractJavaMajor(javaSrc: string): number | null {
@@ -132,13 +162,18 @@ const langTypescript: DetectionRule = {
   detect(ctx) {
     if (!ctx.fileExists("tsconfig.json")) return null;
     const pkg = readPackageJson(ctx);
-    return {
-      id: "lang/typescript",
-      category: "language",
-      name: "TypeScript",
-      version: depVersion(pkg, "typescript"),
-      detectedBy: "tsconfig.json",
-    };
+    const declared = depVersion(pkg, "typescript");
+    const bucket = nearestBucket(majorFromRange(declared) ?? -1, TYPESCRIPT_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "lang/typescript",
+        category: "language",
+        name: "TypeScript",
+        version: declared,
+        detectedBy: "tsconfig.json",
+      },
+      bucket === null ? null : `${bucket}.x`,
+    );
   },
 };
 
@@ -186,7 +221,19 @@ const frameworkNode: DetectionRule = {
   category: "framework",
   detect(ctx) {
     if (!ctx.fileExists("package.json")) return null;
-    return { id: "framework/node", category: "framework", name: "Node.js", detectedBy: "package.json" };
+    const pkg = readPackageJson(ctx);
+    const major = extractNodeMajor(ctx, pkg);
+    const bucket = major === null ? null : nearestBucket(major, NODE_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "framework/node",
+        category: "framework",
+        name: "Node.js",
+        version: major === null ? undefined : String(major),
+        detectedBy: "package.json",
+      },
+      bucket === null ? null : `${bucket}.x`,
+    );
   },
 };
 
@@ -240,13 +287,18 @@ const frameworkExpress: DetectionRule = {
   detect(ctx) {
     const pkg = readPackageJson(ctx);
     if (!hasDep(pkg, "express")) return null;
-    return {
-      id: "framework/express",
-      category: "framework",
-      name: "Express",
-      version: depVersion(pkg, "express"),
-      detectedBy: "package.json:dependencies.express",
-    };
+    const declared = depVersion(pkg, "express");
+    const bucket = nearestBucket(majorFromRange(declared) ?? -1, EXPRESS_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "framework/express",
+        category: "framework",
+        name: "Express",
+        version: declared,
+        detectedBy: "package.json:dependencies.express",
+      },
+      bucket === null ? null : `${bucket}.x`,
+    );
   },
 };
 
@@ -283,9 +335,50 @@ function buildToolRule(id: string, name: string, marker: string): DetectionRule 
 }
 
 const buildtoolNpm = buildToolRule("buildtool/npm", "npm", "package-lock.json");
-const buildtoolYarn = buildToolRule("buildtool/yarn", "Yarn", "yarn.lock");
-const buildtoolPnpm = buildToolRule("buildtool/pnpm", "pnpm", "pnpm-lock.yaml");
 const buildtoolMaven = buildToolRule("buildtool/maven", "Maven", "pom.xml");
+
+const buildtoolPnpm: DetectionRule = {
+  id: "buildtool/pnpm",
+  category: "buildTool",
+  detect(ctx) {
+    if (!ctx.fileExists("pnpm-lock.yaml")) return null;
+    const major = packageManagerMajor(readPackageJson(ctx), "pnpm");
+    const bucket = major === null ? null : nearestBucket(major, PNPM_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "buildtool/pnpm",
+        category: "buildTool",
+        name: "pnpm",
+        version: major === null ? undefined : String(major),
+        detectedBy: "pnpm-lock.yaml",
+      },
+      bucket === null ? null : `${bucket}.x`,
+    );
+  },
+};
+
+const buildtoolYarn: DetectionRule = {
+  id: "buildtool/yarn",
+  category: "buildTool",
+  detect(ctx) {
+    if (!ctx.fileExists("yarn.lock")) return null;
+    // Yarn 1(classic)과 2+(Berry)는 사실상 다른 도구다(PnP, 설치 명령, 설정 파일 전부 다름).
+    // 숫자 버킷으로 두면 yarn 3이 1.x로 내려가 classic 규칙을 받는 사고가 나므로 라벨로 가른다.
+    const major = packageManagerMajor(readPackageJson(ctx), "yarn");
+    const berryConfig = ctx.fileExists(".yarnrc.yml");
+    const label = major === null ? (berryConfig ? "berry" : null) : major >= 2 ? "berry" : "1.x";
+    return withVersionBucket(
+      {
+        id: "buildtool/yarn",
+        category: "buildTool",
+        name: label === "berry" ? "Yarn (Berry)" : "Yarn",
+        version: major === null ? undefined : String(major),
+        detectedBy: "yarn.lock",
+      },
+      label,
+    );
+  },
+};
 
 const buildtoolGradle: DetectionRule = {
   id: "buildtool/gradle",
@@ -293,7 +386,20 @@ const buildtoolGradle: DetectionRule = {
   detect(ctx) {
     const marker = ["build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
     if (!marker) return null;
-    return { id: "buildtool/gradle", category: "buildTool", name: "Gradle", detectedBy: marker };
+    // 실제로 빌드를 도는 건 래퍼가 내려받는 배포본이라 wrapper properties가 가장 정확한 근거다.
+    const wrapper = ctx.readFile("gradle/wrapper/gradle-wrapper.properties");
+    const major = majorFromRange(wrapper?.match(/gradle-(\d+)\.[\d.]*-(?:bin|all)\.zip/)?.[1]);
+    const bucket = major === null ? null : nearestBucket(major, GRADLE_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "buildtool/gradle",
+        category: "buildTool",
+        name: "Gradle",
+        version: major === null ? undefined : String(major),
+        detectedBy: marker,
+      },
+      bucket === null ? null : `${bucket}.x`,
+    );
   },
 };
 
@@ -305,7 +411,22 @@ const buildtoolPoetry: DetectionRule = {
   detect(ctx) {
     const src = ctx.readFile("pyproject.toml");
     if (!src || !src.includes("[tool.poetry]")) return null;
-    return { id: "buildtool/poetry", category: "buildTool", name: "Poetry", detectedBy: "pyproject.toml" };
+    // Poetry 버전은 프로젝트 파일에 직접 안 적힌다. 명시 신호(requires-poetry, lock의 lock-version)가
+    // 있을 때만 버킷을 잡고, 없으면 base만 — 추측으로 버전 규칙을 씌우면 틀린 규칙을 강제하게 된다.
+    const declared = majorFromRange(src.match(/requires-poetry\s*=\s*["'][^"']*?(\d+)/)?.[1]);
+    const lockVersion = majorFromRange(ctx.readFile("poetry.lock")?.match(/lock-version\s*=\s*["'](\d+)/)?.[1]);
+    const major = declared ?? (lockVersion !== null && lockVersion >= 2 ? 2 : null);
+    const bucket = major === null ? null : nearestBucket(major, POETRY_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "buildtool/poetry",
+        category: "buildTool",
+        name: "Poetry",
+        version: major === null ? undefined : String(major),
+        detectedBy: "pyproject.toml",
+      },
+      bucket === null ? null : `${bucket}.x`,
+    );
   },
 };
 

@@ -1,0 +1,11 @@
+harnessId: framework/node/20.x
+checks:
+  - id: await-subtests
+    description: "node --test의 서브테스트를 await해야 한다(안 하면 실패가 통과로 보고된다)"
+    severity: error
+  - id: no-redundant-web-api-polyfills
+    description: "fetch/FormData/WebSocket 폴리필을 새로 추가하지 않아야 한다(내장)"
+    severity: warning
+  - id: no-new-upgrade-blockers
+    description: "20 전용/폐기 API에 새로 의존하지 않아야 한다"
+    severity: warning

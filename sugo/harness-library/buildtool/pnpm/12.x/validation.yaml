@@ -1,0 +1,14 @@
+harnessId: buildtool/pnpm/12.x
+checks:
+  - id: no-output-string-parsing
+    description: "pnpm 로그/에러 문자열을 파싱하지 않고 종료 코드나 --json을 써야 한다"
+    severity: error
+  - id: pinned-package-manager-field
+    description: "packageManager 필드로 pnpm 버전을 고정해야 한다"
+    severity: error
+  - id: no-node-modules-layout-hardcoding
+    description: "node_modules 내부 구조에 기대는 경로 하드코딩이 없어야 한다"
+    severity: error
+  - id: only-built-dependencies-maintained
+    description: "onlyBuiltDependencies 허용 목록 관리가 유지되어야 한다"
+    severity: warning

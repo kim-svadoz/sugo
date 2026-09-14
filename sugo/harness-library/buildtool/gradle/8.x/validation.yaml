@@ -1,0 +1,11 @@
+harnessId: buildtool/gradle/8.x
+checks:
+  - id: declared-task-dependencies
+    description: "태스크 간 의존을 dependsOn/출력 프로퍼티로 선언해야 한다(암묵적 출력 참조 금지)"
+    severity: error
+  - id: no-ignored-deprecations
+    description: "폐기 경고(--warning-mode all)를 남겨두지 않아야 한다(9에서 제거되는 API)"
+    severity: warning
+  - id: prefer-kotlin-dsl
+    description: "새 빌드 스크립트는 Kotlin DSL을 우선 검토해야 한다"
+    severity: warning

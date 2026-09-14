@@ -1,0 +1,14 @@
+harnessId: buildtool/poetry/2.x
+checks:
+  - id: pep621-project-table
+    description: "프로젝트 메타데이터가 표준 [project] 테이블에 있어야 한다"
+    severity: warning
+  - id: explicit-export-plugin
+    description: "poetry export를 쓴다면 export 플러그인 설치가 명시되어야 한다"
+    severity: error
+  - id: poetry-sync-command
+    description: "환경 정리에 poetry sync를 사용해야 한다(install --sync는 폐기)"
+    severity: warning
+  - id: requires-poetry-declared
+    description: "requires-poetry로 최소 Poetry 버전을 선언해야 한다"
+    severity: warning

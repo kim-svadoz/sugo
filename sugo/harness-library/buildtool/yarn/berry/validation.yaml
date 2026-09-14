@@ -1,0 +1,17 @@
+harnessId: buildtool/yarn/berry
+checks:
+  - id: immutable-flag-for-berry
+    description: "CI 설치가 --immutable이어야 한다(--frozen-lockfile은 Berry의 플래그가 아니다)"
+    severity: error
+  - id: no-node-modules-path-assumption
+    description: "PnP 모드에서 node_modules 경로를 가정하는 코드가 없어야 한다"
+    severity: error
+  - id: no-phantom-dependencies
+    description: "임포트하는 모든 패키지가 package.json에 선언되어야 한다"
+    severity: error
+  - id: committed-yarn-release
+    description: ".yarn/releases 바이너리와 packageManager 필드가 커밋되어야 한다"
+    severity: warning
+  - id: consistent-zero-install-policy
+    description: ".yarn/cache 커밋 여부가 일관되어야 한다"
+    severity: warning

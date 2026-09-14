@@ -1,0 +1,14 @@
+harnessId: framework/express/5.x
+checks:
+  - id: no-redundant-async-wrappers
+    description: "async 에러 래퍼/관용 try-catch-next를 새로 추가하지 않아야 한다(5는 자동 전파)"
+    severity: warning
+  - id: route-patterns-retested
+    description: "4에서 옮겨온 라우트 패턴이 테스트로 검증되어야 한다(path-to-regexp v8에서 매칭이 조용히 달라진다)"
+    severity: error
+  - id: no-removed-apis
+    description: "res.sendfile/app.del/2-인자 res.redirect를 사용하지 않아야 한다"
+    severity: error
+  - id: error-handler-still-required
+    description: "자동 전파를 이유로 4-인자 에러 핸들러를 생략하지 않아야 한다"
+    severity: error
