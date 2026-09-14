@@ -171,7 +171,8 @@ describe("sugo_get_project_context", () => {
 describe("sugo_validate", () => {
   it("sugo_add로 생성된 실제 validation.yaml과 대조해 정상 판정한다", async () => {
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));
-    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    // strict가 실제로 켜져 있어야 auto 체크(no-weakened-strict-config)가 통과한다.
+    writeFileSync(join(projectDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { strict: true } }));
     await call(handleSugoAdd, { projectPath: projectDir });
 
     const sessionId = await toCodeDone();
@@ -182,6 +183,46 @@ describe("sugo_validate", () => {
     expect(result.isError).toBe(false);
     expect(result.data.verdict).toBe("pass");
     expect(result.data.fabricated).toEqual([]);
+    expect(result.data.contradictions).toEqual([]);
+    expect(result.data.autoVerifiedCount).toBeGreaterThan(0);
+  });
+
+  it("통과했다고 주장해도 서버 실측이 실패면 fail로 뒤집고 모순을 남긴다(실배선)", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));
+    // strict를 꺼서 타입에러를 회피한 상태 — 하네스가 금지하는 바로 그 형태다.
+    writeFileSync(join(projectDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { strict: false } }));
+    await call(handleSugoAdd, { projectPath: projectDir });
+
+    const sessionId = await toCodeDone();
+    const result = await call(handleSugoValidate, {
+      sessionId,
+      validationResults: [{ harnessId: "lang/typescript", checkId: "no-weakened-strict-config", passed: true }],
+    });
+
+    expect(result.data.verdict).toBe("fail");
+    const strictCheck = result.data.results.find(
+      (r: { checkId: string }) => r.checkId === "no-weakened-strict-config",
+    );
+    expect(strictCheck.passed).toBe(false);
+    expect(strictCheck.source).toBe("verified");
+    expect(result.data.contradictions).toHaveLength(1);
+    expect(result.data.contradictions[0].claimed).toBe(true);
+    expect(result.data.contradictions[0].verified).toBe(false);
+  });
+
+  it("아무 것도 제출하지 않아도 auto 체크는 서버가 돌린다(실배선)", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));
+    writeFileSync(join(projectDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { strict: false } }));
+    await call(handleSugoAdd, { projectPath: projectDir });
+
+    const sessionId = await toCodeDone();
+    const result = await call(handleSugoValidate, { sessionId, validationResults: [] });
+
+    // "제출 안 하면 자동 pass"가 auto 체크에는 성립하지 않는다.
+    expect(result.data.verdict).toBe("fail");
+    expect(result.data.uncoveredChecks.map((u: { checkId: string }) => u.checkId)).not.toContain(
+      "no-weakened-strict-config",
+    );
   });
 
   it("존재하지 않는 checkId를 보고하면 fabricated로 분리되고 세션에 기록된다", async () => {

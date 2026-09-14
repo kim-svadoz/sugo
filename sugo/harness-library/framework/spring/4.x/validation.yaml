@@ -3,12 +3,24 @@ checks:
   - id: jackson3-only
     description: "com.fasterxml.jackson.* (Jackson 2) API를 사용하지 않아야 한다(Jackson 3)"
     severity: error
+    auto:
+      kind: file-content-absent
+      paths: ["pom.xml", "build.gradle", "build.gradle.kts"]
+      pattern: "com\\.fasterxml\\.jackson"
   - id: junit5-only
     description: "JUnit 4(org.junit.Test/@RunWith) 테스트를 새로 작성하지 않아야 한다"
     severity: error
+    auto:
+      kind: file-content-absent
+      paths: ["pom.xml", "build.gradle", "build.gradle.kts"]
+      pattern: "(junit:junit|<artifactId>junit</artifactId>)"
   - id: no-undertow
     description: "Undertow를 서블릿 컨테이너로 지정하지 않아야 한다(4.0에서 제거)"
     severity: error
+    auto:
+      kind: file-content-absent
+      paths: ["pom.xml", "build.gradle", "build.gradle.kts"]
+      pattern: "spring-boot-starter-undertow"
   - id: explicit-autoconfigure-modules
     description: "분할된 자동설정 모듈 의존성을 명시적으로 선언해야 한다"
     severity: warning

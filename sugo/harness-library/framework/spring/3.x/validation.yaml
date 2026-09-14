@@ -3,6 +3,10 @@ checks:
   - id: jakarta-namespace-only
     description: "javax.* EE 임포트가 남아 있지 않고 전부 jakarta.*여야 한다"
     severity: error
+    auto:
+      kind: file-content-absent
+      paths: ["pom.xml", "build.gradle", "build.gradle.kts"]
+      pattern: "javax\\.(persistence|validation|servlet)"
   - id: lambda-dsl-security-config
     description: "보안 설정이 SecurityFilterChain 빈 + 람다 DSL이어야 한다(WebSecurityConfigurerAdapter는 제거됨)"
     severity: error

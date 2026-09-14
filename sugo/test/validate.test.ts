@@ -9,8 +9,8 @@ function configs(...entries: HarnessValidationConfig[]): Map<string, HarnessVali
 const TS_CONFIG: HarnessValidationConfig = {
   harnessId: "lang/typescript",
   checks: [
-    { id: "no-any", description: "any 금지", severity: "warning" },
-    { id: "typecheck-passes", description: "tsc 통과", severity: "error" },
+    { id: "no-any", description: "any 금지", severity: "warning", auto: null },
+    { id: "typecheck-passes", description: "tsc 통과", severity: "error", auto: null },
   ],
 };
 

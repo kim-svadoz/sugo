@@ -3,6 +3,9 @@ checks:
   - id: lockfile-committed
     description: "poetry.lock이 pyproject.toml 변경과 함께 커밋되어야 한다"
     severity: error
+    auto:
+      kind: file-exists
+      paths: ["poetry.lock"]
   - id: ci-syncs-lockfile
     description: "CI/배포 스크립트가 poetry install --sync(또는 --no-interaction)로 lockfile을 그대로 재현해야 한다"
     severity: warning

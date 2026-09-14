@@ -9,3 +9,6 @@ checks:
   - id: no-berry-config-files
     description: ".yarnrc.yml(Berry 전용) 설정 파일이 없어야 한다(1은 조용히 무시)"
     severity: error
+    auto:
+      kind: file-absent
+      paths: [".yarnrc.yml"]

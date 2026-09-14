@@ -9,6 +9,11 @@ checks:
   - id: modern-module-resolution
     description: "moduleResolution이 bundler/node16/nodenext여야 한다(구식 node 해석 금지)"
     severity: error
+    auto:
+      kind: json-field
+      file: "tsconfig.json"
+      path: "compilerOptions.moduleResolution"
+      in: ["bundler", "node16", "nodenext", "Bundler", "Node16", "NodeNext"]
   - id: as-is-type-imports
     description: "타입 전용 임포트를 import type으로 구분해야 한다"
     severity: warning

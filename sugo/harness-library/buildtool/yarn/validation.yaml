@@ -3,6 +3,9 @@ checks:
   - id: single-lockfile
     description: "yarn.lock과 package-lock.json이 동시에 존재하지 않아야 한다"
     severity: error
+    auto:
+      kind: file-absent
+      paths: ["package-lock.json", "pnpm-lock.yaml"]
   - id: frozen-lockfile-in-ci
     description: "CI/배포 스크립트가 --frozen-lockfile(Yarn 1) 또는 --immutable(Berry)로 설치해야 한다"
     severity: warning

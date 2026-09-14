@@ -3,6 +3,9 @@ checks:
   - id: single-lockfile
     description: "pnpm-lock.yaml만 존재하고 다른 lockfile과 혼용되지 않아야 한다"
     severity: error
+    auto:
+      kind: file-absent
+      paths: ["package-lock.json", "yarn.lock"]
   - id: frozen-lockfile-in-ci
     description: "CI/배포 스크립트가 --frozen-lockfile로 설치해야 한다"
     severity: warning

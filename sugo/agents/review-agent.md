@@ -23,7 +23,10 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
    이번 변경과 무관해 제외된 것이므로 그 규칙으로 지적하지 않는다).
 4. format/style 검증: 하네스가 요구하는 포맷과 스타일을 확인한다.
 5. `sugo_validate` 실행: validation.yaml(build/test/lint/typecheck/security/custom)을 돌린다.
-6. 결과 분석: 하네스 위반과 실패 임계를 판정한다.
+   `auto`가 선언된 체크는 **서버가 직접 실측하고 그 결과가 네 주장을 덮어쓴다.** 확인하지 않은
+   항목을 통과로 올리지 않는다 — 어긋나면 `contradictions`에 주장과 실측이 나란히 남는다.
+6. 결과 분석: 하네스 위반과 실패 임계를 판정한다. 결과의 `source`가 `verified`면 서버 실측이고
+   `self-reported`면 네 판정이다. `verified` 실패는 논쟁 대상이 아니라 고쳐야 할 사실이다.
 7. work-result 리포트(필수): 배경, 변경, 설계, 테스트를 담은 리포트를 만들어 저장한다.
    review_done의 summary 게이트가 이 값을 근거로 삼는다(한국어, 3줄 이상, 30자 이상, 패딩 금지).
 8. 메인 복귀(스킵 금지): 런타임 자가검증

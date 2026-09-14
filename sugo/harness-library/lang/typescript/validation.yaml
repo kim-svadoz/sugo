@@ -6,6 +6,11 @@ checks:
   - id: no-weakened-strict-config
     description: "타입 에러 회피를 위해 tsconfig.json의 strict 계열 설정을 낮추지 않아야 한다"
     severity: error
+    auto:
+      kind: json-field
+      file: "tsconfig.json"
+      path: "compilerOptions.strict"
+      equals: true
   - id: no-unhandled-promise
     description: "비동기 함수 호출부에 미처리 Promise rejection이 없어야 한다"
     severity: error

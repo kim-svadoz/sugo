@@ -6,6 +6,9 @@ checks:
   - id: proxy-not-middleware
     description: "middleware.ts 대신 proxy.ts(export function proxy)를 사용해야 한다"
     severity: error
+    auto:
+      kind: file-absent
+      paths: ["middleware.ts", "middleware.js", "src/middleware.ts", "src/middleware.js"]
   - id: proxy-node-runtime
     description: "proxy.ts 코드가 Node.js 런타임 전제로 작성되어야 한다"
     severity: warning

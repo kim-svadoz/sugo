@@ -30833,6 +30833,90 @@ function errorResult15(errorCode, message) {
   };
 }
 
+// src/harness/autoCheck.ts
+var KINDS = ["file-exists", "file-absent", "file-content-absent", "json-field"];
+function requireNonEmptyPaths(raw) {
+  const paths = raw.paths;
+  if (!Array.isArray(paths) || paths.length === 0 || !paths.every((p) => typeof p === "string" && p.length > 0)) {
+    throw new Error("auto.paths\uB294 \uBE44\uC5B4\uC788\uC9C0 \uC54A\uC740 \uBB38\uC790\uC5F4 \uBC30\uC5F4\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+  }
+  return paths;
+}
+function parseAutoSpec(raw) {
+  if (raw === void 0 || raw === null) return null;
+  if (typeof raw !== "object") throw new Error("auto\uB294 \uAC1D\uCCB4\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  const obj = raw;
+  const kind = obj.kind;
+  if (typeof kind !== "string" || !KINDS.includes(kind)) {
+    throw new Error(`\uC54C \uC218 \uC5C6\uB294 auto.kind: ${String(kind)} (\uC9C0\uC6D0: ${KINDS.join(", ")})`);
+  }
+  if (kind === "file-exists" || kind === "file-absent") {
+    return { kind, paths: requireNonEmptyPaths(obj) };
+  }
+  if (kind === "file-content-absent") {
+    const paths = requireNonEmptyPaths(obj);
+    if (typeof obj.pattern !== "string" || obj.pattern.length === 0) {
+      throw new Error("file-content-absent\uC5D0\uB294 pattern\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    }
+    return { kind, paths, pattern: new RegExp(obj.pattern) };
+  }
+  const file = obj.file;
+  const path = obj.path;
+  if (typeof file !== "string" || file.length === 0) throw new Error("json-field\uC5D0\uB294 file\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  if (typeof path !== "string" || path.length === 0) throw new Error("json-field\uC5D0\uB294 path\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  const hasEquals = "equals" in obj;
+  const allowed = obj.in;
+  if (!hasEquals && !Array.isArray(allowed)) {
+    throw new Error("json-field\uC5D0\uB294 \uBE44\uAD50 \uAE30\uC900(equals \uB610\uB294 in)\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  }
+  return { kind: "json-field", file, path, ...hasEquals ? { equals: obj.equals } : {}, ...Array.isArray(allowed) ? { allowed } : {} };
+}
+function readDotPath(root, dotPath) {
+  let cur = root;
+  for (const segment of dotPath.split(".")) {
+    if (typeof cur !== "object" || cur === null || !(segment in cur)) {
+      return { found: false, value: void 0 };
+    }
+    cur = cur[segment];
+  }
+  return { found: true, value: cur };
+}
+function evaluateAutoCheck(spec, ctx) {
+  switch (spec.kind) {
+    case "file-exists": {
+      const missing = spec.paths.filter((p) => !ctx.fileExists(p));
+      return missing.length === 0 ? { passed: true, detail: `\uD544\uC694\uD55C \uD30C\uC77C\uC774 \uBAA8\uB450 \uC788\uC2B5\uB2C8\uB2E4: ${spec.paths.join(", ")}` } : { passed: false, detail: `\uC5C6\uB294 \uD30C\uC77C: ${missing.join(", ")}` };
+    }
+    case "file-absent": {
+      const present2 = spec.paths.filter((p) => ctx.fileExists(p));
+      return present2.length === 0 ? { passed: true, detail: `\uC5C6\uC5B4\uC57C \uD560 \uD30C\uC77C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4: ${spec.paths.join(", ")}` } : { passed: false, detail: `\uC788\uC73C\uBA74 \uC548 \uB418\uB294 \uD30C\uC77C: ${present2.join(", ")}` };
+    }
+    case "file-content-absent": {
+      const hits = spec.paths.filter((p) => {
+        const content = ctx.readFile(p);
+        return content !== null && spec.pattern.test(content);
+      });
+      return hits.length === 0 ? { passed: true, detail: `\uAE08\uC9C0 \uD328\uD134\uC774 \uC5C6\uC2B5\uB2C8\uB2E4: /${spec.pattern.source}/` } : { passed: false, detail: `\uAE08\uC9C0 \uD328\uD134 /${spec.pattern.source}/ \uBC1C\uACAC: ${hits.join(", ")}` };
+    }
+    case "json-field": {
+      const raw = ctx.readFile(spec.file);
+      if (raw === null) return { passed: false, detail: `${spec.file}\uC744(\uB97C) \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.` };
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        return { passed: false, detail: `${spec.file} \uD30C\uC2F1\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.` };
+      }
+      const { found, value } = readDotPath(parsed, spec.path);
+      if (!found) return { passed: false, detail: `${spec.file}\uC5D0 ${spec.path}\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.` };
+      if (spec.allowed) {
+        return spec.allowed.includes(value) ? { passed: true, detail: `${spec.path} = ${JSON.stringify(value)}` } : { passed: false, detail: `${spec.path} = ${JSON.stringify(value)} (\uD5C8\uC6A9: ${spec.allowed.map((v) => JSON.stringify(v)).join(", ")})` };
+      }
+      return value === spec.equals ? { passed: true, detail: `${spec.path} = ${JSON.stringify(value)}` } : { passed: false, detail: `${spec.path} = ${JSON.stringify(value)} (\uAE30\uB300: ${JSON.stringify(spec.equals)})` };
+    }
+  }
+}
+
 // src/harness/validationConfig.ts
 import { readFile as readFile22 } from "node:fs/promises";
 import { join as join24 } from "node:path";
@@ -30841,7 +30925,8 @@ function parseValidationYaml(content) {
   const checks = (raw?.checks ?? []).filter((c) => !!c?.id).map((c) => ({
     id: c.id,
     description: c.description ?? "",
-    severity: c.severity === "error" ? "error" : "warning"
+    severity: c.severity === "error" ? "error" : "warning",
+    auto: parseAutoSpec(c.auto)
   }));
   return { harnessId: raw?.harnessId ?? "unknown", checks };
 }
@@ -30862,9 +30947,11 @@ async function loadProjectValidationConfigs(projectPath) {
 }
 
 // src/validate.ts
-function computeValidationVerdict(submitted, definedConfigs) {
+function computeValidationVerdict(submitted, definedConfigs, autoResults = /* @__PURE__ */ new Map()) {
   const results = [];
   const fabricated = [];
+  const contradictions = [];
+  const claimByKey = /* @__PURE__ */ new Map();
   for (const item of submitted) {
     const config2 = definedConfigs.get(item.harnessId);
     const check2 = config2?.checks.find((c) => c.id === item.checkId);
@@ -30872,7 +30959,31 @@ function computeValidationVerdict(submitted, definedConfigs) {
       fabricated.push(item);
       continue;
     }
-    results.push({ ...item, severity: check2.severity });
+    const key = `${item.harnessId}#${item.checkId}`;
+    claimByKey.set(key, item);
+    if (!autoResults.has(key)) results.push({ ...item, severity: check2.severity, source: "self-reported" });
+  }
+  for (const [key, verified] of autoResults) {
+    const check2 = definedConfigs.get(verified.harnessId)?.checks.find((c) => c.id === verified.checkId);
+    if (!check2) continue;
+    results.push({
+      harnessId: verified.harnessId,
+      checkId: verified.checkId,
+      passed: verified.passed,
+      severity: check2.severity,
+      source: "verified",
+      detail: verified.detail
+    });
+    const claim = claimByKey.get(key);
+    if (claim && claim.passed !== verified.passed) {
+      contradictions.push({
+        harnessId: verified.harnessId,
+        checkId: verified.checkId,
+        claimed: claim.passed,
+        verified: verified.passed,
+        detail: verified.detail
+      });
+    }
   }
   const uncoveredChecks = [];
   for (const [harnessId, config2] of definedConfigs) {
@@ -30884,7 +30995,7 @@ function computeValidationVerdict(submitted, definedConfigs) {
   const failedErrors = results.filter((r) => !r.passed && r.severity === "error");
   const failedWarnings = results.filter((r) => !r.passed && r.severity === "warning");
   const verdict = failedErrors.length > 0 ? "fail" : failedWarnings.length > 0 ? "partial" : "pass";
-  return { verdict, results, fabricated, uncoveredChecks };
+  return { verdict, results, fabricated, uncoveredChecks, contradictions };
 }
 
 // src/tools/sugoValidate.ts
@@ -30900,6 +31011,18 @@ var sugoValidateInputSchema = {
   ).describe("review-agent\uAC00 \uAC01 \uD558\uB124\uC2A4 validation.yaml \uCCB4\uD06C \uD56D\uBAA9\uBCC4\uB85C \uD310\uC815\uD55C \uACB0\uACFC")
 };
 var SugoValidateArgs = external_exports.object(sugoValidateInputSchema);
+function runAutoChecks(projectPath, configs) {
+  const ctx = createFsDetectionContext(projectPath);
+  const out2 = /* @__PURE__ */ new Map();
+  for (const [harnessId, config2] of configs) {
+    for (const check2 of config2.checks) {
+      if (!check2.auto) continue;
+      const { passed, detail } = evaluateAutoCheck(check2.auto, ctx);
+      out2.set(`${harnessId}#${check2.id}`, { harnessId, checkId: check2.id, passed, detail });
+    }
+  }
+  return out2;
+}
 async function handleSugoValidate(rawArgs) {
   const args2 = SugoValidateArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
@@ -30907,7 +31030,8 @@ async function handleSugoValidate(rawArgs) {
   }
   const session = await loadSession(args2.sessionId);
   const configs = await loadProjectValidationConfigs(session.projectPath);
-  const result = computeValidationVerdict(args2.validationResults, configs);
+  const autoResults = runAutoChecks(session.projectPath, configs);
+  const result = computeValidationVerdict(args2.validationResults, configs, autoResults);
   const updated = {
     ...session,
     data: {
@@ -30917,7 +31041,9 @@ async function handleSugoValidate(rawArgs) {
         lastValidation: {
           verdict: result.verdict,
           checkedAt: (/* @__PURE__ */ new Date()).toISOString(),
-          fabricatedCount: result.fabricated.length
+          fabricatedCount: result.fabricated.length,
+          contradictionCount: result.contradictions.length,
+          autoVerifiedCount: autoResults.size
         }
       }
     }
@@ -30929,7 +31055,9 @@ async function handleSugoValidate(rawArgs) {
     verdict: result.verdict,
     results: result.results,
     fabricated: result.fabricated,
-    uncoveredChecks: result.uncoveredChecks
+    uncoveredChecks: result.uncoveredChecks,
+    contradictions: result.contradictions,
+    autoVerifiedCount: autoResults.size
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }

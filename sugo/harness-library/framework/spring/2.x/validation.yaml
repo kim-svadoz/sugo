@@ -3,6 +3,10 @@ checks:
   - id: javax-namespace-only
     description: "2.x 코드에 jakarta.* 임포트가 섞이지 않아야 한다(javax.* 사용)"
     severity: error
+    auto:
+      kind: file-content-absent
+      paths: ["pom.xml", "build.gradle", "build.gradle.kts"]
+      pattern: "jakarta\\.(persistence|validation|servlet)"
   - id: no-websecurityconfigureradapter
     description: "WebSecurityConfigurerAdapter 상속 대신 SecurityFilterChain 빈을 등록해야 한다"
     severity: warning
