@@ -16,9 +16,12 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 
 ## 단계 (설계안, implement 기준)
 
-1. prereq: 세션과 PRD가 있는지 확인한다. `sugo_get_project_context(projectPath)`로
+1. prereq: 세션과 PRD가 있는지 확인한다. `sugo_get_project_context(projectPath, changedFiles)`로
    `.claude/rules/*`, `sugo/harness/**`, `CLAUDE.md`, commands, harnessTools를 로드해 규칙과
-   하네스를 숙지한다. 작업 전 필수다.
+   하네스를 숙지한다. 작업 전 필수다. 건드릴 파일을 이미 알면 `changedFiles`에 넘긴다 — 그 파일에
+   해당하는 하네스만 실려 온다(폴리글랏 저장소에서 반대편 스택 규칙이 딸려오지 않는다). 작업 중
+   대상 파일이 늘어나면 그 파일들로 다시 호출한다. 응답의 `harnessRouting.excluded`가 이번에
+   제외된 하네스이고, `fellBackToAll: true`면 좁히지 못해 전량이 온 것이다.
 2. baseline: §4.0 시그널(런타임이나 JDK 상향, 의존성 제거 등)이 있으면 코딩 전에 기존 빌드와
    테스트를 돌려 `sugo_record_test_evidence`로 그린 baseline(exitCode==0)을 남긴다. RED면 먼저 알린다.
 3. 특화 도구 로드: `code_start` 결과의 `harnessToolMenu`에 실린 하네스 특화 MCP 도구를 능동

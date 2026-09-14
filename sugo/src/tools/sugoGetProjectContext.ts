@@ -2,10 +2,15 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
 import { loadProjectConfig } from "../harness/config.js";
+import { routeHarnessesForFiles } from "../harness/harnessRouting.js";
 import { mcpAllowPatterns, renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistry.js";
 
 export const sugoGetProjectContextInputSchema = {
   projectPath: z.string().describe("컨텍스트를 로드할 프로젝트 절대경로"),
+  changedFiles: z
+    .array(z.string())
+    .optional()
+    .describe("이번 작업에서 건드릴 파일 목록. 주면 관련 하네스만 선별해 반환한다(생략 시 전량)"),
 };
 
 const SugoGetProjectContextArgs = z.object(sugoGetProjectContextInputSchema);
@@ -43,25 +48,32 @@ async function readRulesDir(projectPath: string): Promise<{ path: string; conten
  */
 export async function handleSugoGetProjectContext(rawArgs: unknown) {
   const args = SugoGetProjectContextArgs.parse(rawArgs);
-  const { projectPath } = args;
+  const { projectPath, changedFiles } = args;
 
   const claudeMd = await readIfExists(join(projectPath, "sugo", "CLAUDE.md"));
   const config = await loadProjectConfig(projectPath);
 
-  const harnesses: { id: string; harnessMd: string }[] = [];
+  const loaded: { id: string; harnessMd: string }[] = [];
   if (config) {
     for (const applied of config.appliedHarnesses) {
       const content = await readIfExists(join(projectPath, "sugo", "harness", applied.id, "harness.md"));
-      if (content !== null) harnesses.push({ id: applied.id, harnessMd: content });
+      if (content !== null) loaded.push({ id: applied.id, harnessMd: content });
     }
   }
+
+  // 변경 파일을 알면 그 파일에 해당하는 하네스만 싣는다. 인식 못 하는 파일뿐이면 좁히지 않는다 —
+  // 규칙이 과하게 오는 건 소음이지만 빠지는 건 표준이 조용히 약해지는 것이다.
+  const routing = routeHarnessesForFiles(
+    loaded.map((h) => h.id),
+    changedFiles ?? [],
+  );
+  const harnesses = loaded.filter((h) => routing.selected.includes(h.id));
 
   const rules = await readRulesDir(projectPath);
 
   // ── §2 하네스 도구 디스패치: 적용된 하네스에 매칭되는 특화 MCP 도구 안내를 실어준다.
   // 레지스트리가 비어있으면(기본값) toolMenu는 빈 문자열 — 조용히 아무 것도 없음.
-  const appliedHarnessIds = config?.appliedHarnesses.map((h) => h.id) ?? [];
-  const harnessToolGuides = resolveHarnessToolGuides(appliedHarnessIds);
+  const harnessToolGuides = resolveHarnessToolGuides(routing.selected);
 
   const payload = {
     ok: true,
@@ -70,6 +82,14 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
     claudeMd,
     harnesses,
     rules,
+    // 무엇을 왜 뺐는지 드러낸다 — 조용히 줄어든 규칙은 줄어든 줄도 모른다.
+    harnessRouting: {
+      changedFiles: changedFiles ?? [],
+      selected: routing.selected,
+      excluded: routing.excluded,
+      unmatchedFiles: routing.unmatchedFiles,
+      fellBackToAll: routing.fellBackToAll,
+    },
     harnessTools: {
       guides: harnessToolGuides,
       mcpAllowPatterns: mcpAllowPatterns(harnessToolGuides),

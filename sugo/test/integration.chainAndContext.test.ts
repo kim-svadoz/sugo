@@ -115,6 +115,57 @@ describe("sugo_get_project_context", () => {
     expect(result.data.rules.length).toBe(1);
     expect(result.data.rules[0].content).toContain("팀 전용 규칙");
   });
+
+  it("changedFiles를 주면 그 파일에 해당하는 하네스만 싣는다(폴리글랏 실배선)", async () => {
+    // Java(Spring/Maven) + TypeScript(React/npm)가 한 저장소에 있는 상태를 실제로 만든다.
+    writeFileSync(
+      join(projectDir, "package.json"),
+      JSON.stringify({ dependencies: { react: "^19.0.0" } }),
+    );
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    writeFileSync(join(projectDir, "package-lock.json"), "{}");
+    writeFileSync(
+      join(projectDir, "pom.xml"),
+      `<project>
+        <properties><java.version>21</java.version></properties>
+        <parent><artifactId>spring-boot-starter-parent</artifactId><version>3.2.4</version></parent>
+      </project>`,
+    );
+    await call(handleSugoAdd, { projectPath: projectDir });
+
+    const all = await call(handleSugoGetProjectContext, { projectPath: projectDir });
+    const allIds = all.data.harnesses.map((h: { id: string }) => h.id);
+    expect(allIds).toContain("lang/java/21");
+    expect(allIds).toContain("framework/react/19.x");
+
+    const javaOnly = await call(handleSugoGetProjectContext, {
+      projectPath: projectDir,
+      changedFiles: ["src/main/java/com/acme/UserService.java"],
+    });
+    const javaIds = javaOnly.data.harnesses.map((h: { id: string }) => h.id);
+    expect(javaIds).toContain("lang/java");
+    expect(javaIds).toContain("lang/java/21");
+    expect(javaIds).toContain("framework/spring/3.x");
+    expect(javaIds).toContain("default"); // 바닥 규칙은 항상
+    expect(javaIds).not.toContain("framework/react/19.x");
+    expect(javaIds).not.toContain("lang/typescript");
+    expect(javaOnly.data.harnessRouting.fellBackToAll).toBe(false);
+    expect(javaOnly.data.harnessRouting.excluded).toContain("lang/typescript");
+  });
+
+  it("인식 못 하는 파일만 주면 좁히지 않고 전량을 싣는다", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^19.0.0" } }));
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    await call(handleSugoAdd, { projectPath: projectDir });
+
+    const result = await call(handleSugoGetProjectContext, {
+      projectPath: projectDir,
+      changedFiles: ["README.md"],
+    });
+    expect(result.data.harnessRouting.fellBackToAll).toBe(true);
+    expect(result.data.harnessRouting.excluded).toEqual([]);
+    expect(result.data.harnesses.map((h: { id: string }) => h.id)).toContain("lang/typescript");
+  });
 });
 
 describe("sugo_validate", () => {

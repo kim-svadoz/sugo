@@ -15,7 +15,8 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 
 ## 단계 (설계안, targeted 기준)
 
-0. refs 로드: 컨벤션, 체크포인트, `CLAUDE.md`를 `sugo_get_project_context`로 읽는다.
+0. refs 로드: 컨벤션, 체크포인트, `CLAUDE.md`를 `sugo_get_project_context`로 읽는다. 핸드오프의
+   `changed_files[]`를 `changedFiles`로 함께 넘기면 그 스택의 하네스만 실려 온다.
 0.5. 계약테스트 test-first(계약이 필수인 세션): 구현 전에 red를 먼저 확인해 기록한다(§4.1 contract).
 1. 회귀 baseline: 기존 테스트를 전량 실행한다. 기존이 이미 실패면 regression으로 분류해 기록하고
    넘어간다.

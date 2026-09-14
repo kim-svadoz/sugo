@@ -22898,6 +22898,61 @@ function readJavaBuildFiles(ctx) {
 function readPythonFiles(ctx) {
   return [ctx.readFile("requirements.txt"), ctx.readFile("pyproject.toml")].filter((c) => c !== null).join("\n");
 }
+function nearestBucket(value, buckets) {
+  let hit = null;
+  for (const b of buckets) if (value >= b) hit = b;
+  return hit;
+}
+function majorFromRange(raw) {
+  if (!raw) return null;
+  const m = raw.match(/(\d+)/);
+  return m ? Number(m[1]) : null;
+}
+function withVersionBucket(base, bucket) {
+  if (bucket === null) return [base];
+  return [base, { ...base, id: `${base.id}/${bucket}`, version: bucket }];
+}
+var JAVA_BUCKETS = [8, 11, 17, 21, 25];
+var PYTHON_MINOR_BUCKETS = [9, 10, 12, 14];
+var REACT_BUCKETS = [18, 19];
+var NEXT_BUCKETS = [15, 16];
+var SPRING_BUCKETS = [2, 3, 4];
+function extractJavaMajor(javaSrc) {
+  const patterns = [
+    /<java\.version>\s*(?:1\.)?(\d+)/,
+    /<maven\.compiler\.release>\s*(?:1\.)?(\d+)/,
+    /<maven\.compiler\.(?:source|target)>\s*(?:1\.)?(\d+)/,
+    /<release>\s*(?:1\.)?(\d+)\s*<\/release>/,
+    /JavaLanguageVersion\.of\(\s*['"]?(\d+)/,
+    /(?:source|target)Compatibility\s*=?\s*['"]?(?:JavaVersion\.VERSION_)?(?:1[._])?(\d+)/,
+    /options\.release\s*(?:\.set\()?\s*=?\s*['"]?(\d+)/
+  ];
+  for (const re of patterns) {
+    const m = javaSrc.match(re);
+    if (m) return Number(m[1]);
+  }
+  return null;
+}
+function extractPythonMinor(ctx) {
+  const pyproject = ctx.readFile("pyproject.toml");
+  if (pyproject) {
+    const patterns = [
+      /requires-python\s*=\s*["'][^"']*?3\.(\d+)/,
+      /^\s*python\s*=\s*["'][^"']*?3\.(\d+)/m,
+      /target-version\s*=\s*["']py3(\d+)["']/
+    ];
+    for (const re of patterns) {
+      const m = pyproject.match(re);
+      if (m) return Number(m[1]);
+    }
+  }
+  for (const file of [".python-version", "runtime.txt"]) {
+    const content = ctx.readFile(file);
+    const m = content?.match(/3\.(\d+)/);
+    if (m) return Number(m[1]);
+  }
+  return null;
+}
 function extractSpringMajor(javaSrc) {
   const patterns = [
     /<spring-boot\.version>\s*(\d+)\.(\d+)\.(\d+)/,
@@ -22939,7 +22994,12 @@ var langJava = {
   detect(ctx) {
     const marker = ["pom.xml", "build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
     if (!marker) return null;
-    return { id: "lang/java", category: "language", name: "Java", detectedBy: marker };
+    const major = extractJavaMajor(readJavaBuildFiles(ctx));
+    const bucket = major === null ? null : nearestBucket(major, JAVA_BUCKETS);
+    return withVersionBucket(
+      { id: "lang/java", category: "language", name: "Java", version: major ? String(major) : void 0, detectedBy: marker },
+      bucket === null ? null : String(bucket)
+    );
   }
 };
 var langPython = {
@@ -22948,7 +23008,12 @@ var langPython = {
   detect(ctx) {
     const marker = ["requirements.txt", "pyproject.toml"].find((f) => ctx.fileExists(f));
     if (!marker) return null;
-    return { id: "lang/python", category: "language", name: "Python", detectedBy: marker };
+    const minor = extractPythonMinor(ctx);
+    const bucket = minor === null ? null : nearestBucket(minor, PYTHON_MINOR_BUCKETS);
+    return withVersionBucket(
+      { id: "lang/python", category: "language", name: "Python", version: minor ? `3.${minor}` : void 0, detectedBy: marker },
+      bucket === null ? null : `3.${bucket}`
+    );
   }
 };
 var frameworkNode = {
@@ -22965,13 +23030,39 @@ var frameworkReact = {
   detect(ctx) {
     const pkg = readPackageJson(ctx);
     if (!hasDep(pkg, "react")) return null;
-    return {
-      id: "framework/react",
-      category: "framework",
-      name: "React",
-      version: depVersion(pkg, "react"),
-      detectedBy: "package.json:dependencies.react"
-    };
+    const major = majorFromRange(depVersion(pkg, "react"));
+    const bucket = major === null ? null : nearestBucket(major, REACT_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "framework/react",
+        category: "framework",
+        name: "React",
+        version: depVersion(pkg, "react"),
+        detectedBy: "package.json:dependencies.react"
+      },
+      bucket === null ? null : `${bucket}.x`
+    );
+  }
+};
+var frameworkNextjs = {
+  id: "framework/nextjs",
+  category: "framework",
+  detect(ctx) {
+    const pkg = readPackageJson(ctx);
+    if (!hasDep(pkg, "next")) return null;
+    const major = majorFromRange(depVersion(pkg, "next"));
+    const bucket = major === null ? null : nearestBucket(major, NEXT_BUCKETS);
+    const appRouter = ctx.fileExists("app") || ctx.fileExists("src/app");
+    return withVersionBucket(
+      {
+        id: "framework/nextjs",
+        category: "framework",
+        name: appRouter ? "Next.js (App Router)" : "Next.js",
+        version: depVersion(pkg, "next"),
+        detectedBy: "package.json:dependencies.next"
+      },
+      bucket === null ? null : `${bucket}.x`
+    );
   }
 };
 var frameworkExpress = {
@@ -22996,13 +23087,17 @@ var frameworkSpring = {
     const src = readJavaBuildFiles(ctx);
     if (!src || !/spring-boot|org\.springframework\.boot/.test(src)) return null;
     const major = extractSpringMajor(src);
-    return {
-      id: major ? `framework/spring/${major}.x` : "framework/spring",
-      category: "framework",
-      name: "Spring Boot",
-      version: major ? `${major}.x` : void 0,
-      detectedBy: ctx.fileExists("pom.xml") ? "pom.xml" : "build.gradle"
-    };
+    const bucket = major === void 0 ? null : nearestBucket(Number(major), SPRING_BUCKETS);
+    return withVersionBucket(
+      {
+        id: "framework/spring",
+        category: "framework",
+        name: "Spring Boot",
+        version: major ? `${major}.x` : void 0,
+        detectedBy: ctx.fileExists("pom.xml") ? "pom.xml" : "build.gradle"
+      },
+      bucket === null ? null : `${bucket}.x`
+    );
   }
 };
 function buildToolRule(id, name2, marker) {
@@ -23095,6 +23190,7 @@ var ALL_RULES = [
   langPython,
   frameworkNode,
   frameworkReact,
+  frameworkNextjs,
   frameworkExpress,
   frameworkSpring,
   buildtoolNpm,
@@ -27590,6 +27686,96 @@ async function handleSugoExplore(rawArgs) {
 import { readdir as readdir5, readFile as readFile13 } from "node:fs/promises";
 import { join as join15 } from "node:path";
 
+// src/harness/harnessRouting.ts
+var JAVA_PREFIXES = ["lang/java", "framework/spring"];
+var NODE_PREFIXES = [
+  "lang/typescript",
+  "lang/javascript",
+  "framework/node",
+  "framework/react",
+  "framework/nextjs",
+  "framework/express"
+];
+var PYTHON_PREFIXES = ["lang/python"];
+var PREFIXES_BY_EXTENSION = {
+  ".java": JAVA_PREFIXES,
+  ".kt": JAVA_PREFIXES,
+  ".ts": NODE_PREFIXES,
+  ".tsx": NODE_PREFIXES,
+  ".mts": NODE_PREFIXES,
+  ".cts": NODE_PREFIXES,
+  ".js": NODE_PREFIXES,
+  ".jsx": NODE_PREFIXES,
+  ".mjs": NODE_PREFIXES,
+  ".cjs": NODE_PREFIXES,
+  ".py": PYTHON_PREFIXES,
+  ".pyi": PYTHON_PREFIXES
+};
+var PREFIXES_BY_FILENAME = {
+  "pom.xml": ["buildtool/maven", ...JAVA_PREFIXES],
+  "build.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "build.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "settings.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "settings.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "gradle.properties": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "libs.versions.toml": ["buildtool/gradle", ...JAVA_PREFIXES],
+  "package.json": ["buildtool/npm", ...NODE_PREFIXES],
+  "package-lock.json": ["buildtool/npm", ...NODE_PREFIXES],
+  "yarn.lock": ["buildtool/yarn", ...NODE_PREFIXES],
+  "pnpm-lock.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
+  "pnpm-workspace.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
+  "tsconfig.json": ["lang/typescript"],
+  "poetry.lock": ["buildtool/poetry", ...PYTHON_PREFIXES],
+  "pyproject.toml": ["buildtool/poetry", "buildtool/pip", ...PYTHON_PREFIXES]
+};
+var ALWAYS_SELECTED = "default";
+function normalizePath(filePath) {
+  return filePath.replace(/\\/g, "/").toLowerCase();
+}
+function basenameOf(normalized) {
+  const idx = normalized.lastIndexOf("/");
+  return idx === -1 ? normalized : normalized.slice(idx + 1);
+}
+function extensionOf(basename2) {
+  const idx = basename2.lastIndexOf(".");
+  return idx <= 0 ? "" : basename2.slice(idx);
+}
+function prefixesForFile(filePath) {
+  const normalized = normalizePath(filePath);
+  const basename2 = basenameOf(normalized);
+  const byName = PREFIXES_BY_FILENAME[basename2];
+  if (byName) return byName;
+  if (basename2.startsWith("next.config.")) return ["framework/nextjs", ...NODE_PREFIXES];
+  if (/^requirements.*\.txt$/.test(basename2)) return ["buildtool/pip", ...PYTHON_PREFIXES];
+  const byExt = PREFIXES_BY_EXTENSION[extensionOf(basename2)];
+  return byExt ?? null;
+}
+function matchesPrefix(harnessId, prefix) {
+  return harnessId === prefix || harnessId.startsWith(`${prefix}/`);
+}
+function routeHarnessesForFiles(appliedIds, changedFiles) {
+  const prefixes = /* @__PURE__ */ new Set();
+  const unmatchedFiles = [];
+  for (const file of changedFiles) {
+    const hit = prefixesForFile(file);
+    if (hit === null) {
+      unmatchedFiles.push(file);
+      continue;
+    }
+    for (const p of hit) prefixes.add(p);
+  }
+  if (prefixes.size === 0) {
+    return { selected: [...appliedIds], excluded: [], unmatchedFiles, fellBackToAll: true };
+  }
+  const selected = [];
+  const excluded = [];
+  for (const id of appliedIds) {
+    const keep = id === ALWAYS_SELECTED || [...prefixes].some((p) => matchesPrefix(id, p));
+    (keep ? selected : excluded).push(id);
+  }
+  return { selected, excluded, unmatchedFiles, fellBackToAll: false };
+}
+
 // src/harness/toolRegistry.ts
 var HARNESS_TOOL_REGISTRY = [];
 function resolveHarnessToolGuides(appliedHarnessIds, registry2 = HARNESS_TOOL_REGISTRY) {
@@ -27611,7 +27797,8 @@ ${dispatch}`;
 
 // src/tools/sugoGetProjectContext.ts
 var sugoGetProjectContextInputSchema = {
-  projectPath: external_exports.string().describe("\uCEE8\uD14D\uC2A4\uD2B8\uB97C \uB85C\uB4DC\uD560 \uD504\uB85C\uC81D\uD2B8 \uC808\uB300\uACBD\uB85C")
+  projectPath: external_exports.string().describe("\uCEE8\uD14D\uC2A4\uD2B8\uB97C \uB85C\uB4DC\uD560 \uD504\uB85C\uC81D\uD2B8 \uC808\uB300\uACBD\uB85C"),
+  changedFiles: external_exports.array(external_exports.string()).optional().describe("\uC774\uBC88 \uC791\uC5C5\uC5D0\uC11C \uAC74\uB4DC\uB9B4 \uD30C\uC77C \uBAA9\uB85D. \uC8FC\uBA74 \uAD00\uB828 \uD558\uB124\uC2A4\uB9CC \uC120\uBCC4\uD574 \uBC18\uD658\uD55C\uB2E4(\uC0DD\uB7B5 \uC2DC \uC804\uB7C9)")
 };
 var SugoGetProjectContextArgs = external_exports.object(sugoGetProjectContextInputSchema);
 async function readIfExists(path) {
@@ -27640,19 +27827,23 @@ async function readRulesDir(projectPath) {
 }
 async function handleSugoGetProjectContext(rawArgs) {
   const args2 = SugoGetProjectContextArgs.parse(rawArgs);
-  const { projectPath } = args2;
+  const { projectPath, changedFiles } = args2;
   const claudeMd = await readIfExists(join15(projectPath, "sugo", "CLAUDE.md"));
   const config2 = await loadProjectConfig(projectPath);
-  const harnesses = [];
+  const loaded = [];
   if (config2) {
     for (const applied of config2.appliedHarnesses) {
       const content = await readIfExists(join15(projectPath, "sugo", "harness", applied.id, "harness.md"));
-      if (content !== null) harnesses.push({ id: applied.id, harnessMd: content });
+      if (content !== null) loaded.push({ id: applied.id, harnessMd: content });
     }
   }
+  const routing = routeHarnessesForFiles(
+    loaded.map((h) => h.id),
+    changedFiles ?? []
+  );
+  const harnesses = loaded.filter((h) => routing.selected.includes(h.id));
   const rules = await readRulesDir(projectPath);
-  const appliedHarnessIds = config2?.appliedHarnesses.map((h) => h.id) ?? [];
-  const harnessToolGuides = resolveHarnessToolGuides(appliedHarnessIds);
+  const harnessToolGuides = resolveHarnessToolGuides(routing.selected);
   const payload = {
     ok: true,
     projectPath,
@@ -27660,6 +27851,14 @@ async function handleSugoGetProjectContext(rawArgs) {
     claudeMd,
     harnesses,
     rules,
+    // 무엇을 왜 뺐는지 드러낸다 — 조용히 줄어든 규칙은 줄어든 줄도 모른다.
+    harnessRouting: {
+      changedFiles: changedFiles ?? [],
+      selected: routing.selected,
+      excluded: routing.excluded,
+      unmatchedFiles: routing.unmatchedFiles,
+      fellBackToAll: routing.fellBackToAll
+    },
     harnessTools: {
       guides: harnessToolGuides,
       mcpAllowPatterns: mcpAllowPatterns(harnessToolGuides),

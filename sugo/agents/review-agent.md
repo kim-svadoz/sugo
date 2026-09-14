@@ -15,9 +15,12 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
 
 ## 단계 (설계안, validate 기준)
 
-1. 컨텍스트 로드: `sugo_get_project_context`로 규칙, 하네스, CLAUDE.md를 읽는다.
-2. 핸드오프 파싱: changed_files, summary, prd_path를 확인한다.
-3. 적용 하네스 로드: `sugo/harness/**`의 규칙을 읽는다.
+1. 핸드오프 파싱: changed_files, summary, prd_path를 확인한다.
+2. 컨텍스트 로드: `sugo_get_project_context(projectPath, changedFiles)`로 규칙, 하네스,
+   CLAUDE.md를 읽는다. changed_files를 넘기면 이번 변경에 해당하는 하네스만 실려 오므로, 검증
+   대상과 규칙이 어긋나지 않는다.
+3. 적용 하네스 로드: 위에서 받은 하네스 본문을 기준으로 삼는다(`harnessRouting.excluded`는
+   이번 변경과 무관해 제외된 것이므로 그 규칙으로 지적하지 않는다).
 4. format/style 검증: 하네스가 요구하는 포맷과 스타일을 확인한다.
 5. `sugo_validate` 실행: validation.yaml(build/test/lint/typecheck/security/custom)을 돌린다.
 6. 결과 분석: 하네스 위반과 실패 임계를 판정한다.
