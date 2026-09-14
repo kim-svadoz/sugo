@@ -1,0 +1,14 @@
+harnessId: lang/python/3.10
+checks:
+  - id: pep604-union-syntax
+    description: "Optional/Union 대신 X | None 표기를 사용해야 한다"
+    severity: warning
+  - id: structural-match-over-elif-chain
+    description: "구조 기반 분기는 if/elif 사슬 대신 match를 사용해야 한다"
+    severity: warning
+  - id: no-catch-all-case
+    description: "match에 습관적인 case _ 기본 절을 두지 않아야 한다"
+    severity: warning
+  - id: parenthesized-context-managers
+    description: "여러 컨텍스트 매니저는 백슬래시가 아니라 괄호로 묶어야 한다"
+    severity: warning

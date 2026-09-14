@@ -1,0 +1,14 @@
+harnessId: lang/python/3.12
+checks:
+  - id: pep695-generics
+    description: "제네릭을 PEP 695 문법으로 선언해야 한다(모듈 전역 TypeVar 선언 대신)"
+    severity: warning
+  - id: no-datetime-utcnow
+    description: "datetime.utcnow() 대신 datetime.now(timezone.utc)를 사용해야 한다"
+    severity: error
+  - id: no-get-event-loop
+    description: "asyncio.get_event_loop() 대신 asyncio.run()/get_running_loop()를 사용해야 한다"
+    severity: error
+  - id: taskgroup-over-gather
+    description: "여러 비동기 작업은 asyncio.TaskGroup으로 묶어 실패 시 정리가 보장되어야 한다"
+    severity: warning

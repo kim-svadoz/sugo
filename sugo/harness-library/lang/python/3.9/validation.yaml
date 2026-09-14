@@ -1,0 +1,14 @@
+harnessId: lang/python/3.9
+checks:
+  - id: no-py310-syntax
+    description: "match 문/X | Y 유니온 표기를 사용하지 않아야 한다(3.10 문법)"
+    severity: error
+  - id: no-py311-apis
+    description: "Self/ExceptionGroup/except*/tomllib을 사용하지 않아야 한다(3.11 이후)"
+    severity: error
+  - id: no-pep695-generics
+    description: "PEP 695 제네릭 문법을 사용하지 않아야 한다(3.12 문법)"
+    severity: error
+  - id: builtin-generics-over-typing
+    description: "typing.List/Dict 대신 내장 제네릭(list/dict)을 사용해야 한다"
+    severity: warning

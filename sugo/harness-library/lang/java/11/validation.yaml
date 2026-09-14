@@ -1,0 +1,14 @@
+harnessId: lang/java/11
+checks:
+  - id: var-only-when-type-is-obvious
+    description: "var는 우변에서 타입이 드러날 때만 사용해야 한다"
+    severity: warning
+  - id: no-post-java11-syntax
+    description: "record/sealed/switch 패턴 매칭 등 Java 12+ 문법을 쓰지 않아야 한다"
+    severity: error
+  - id: use-standard-httpclient
+    description: "새 HTTP 호출에 HttpURLConnection 대신 java.net.http.HttpClient를 사용해야 한다"
+    severity: warning
+  - id: prefer-immutable-factories
+    description: "불변 컬렉션은 Collections.unmodifiable* 뷰가 아니라 List.of/Map.of로 만들어야 한다"
+    severity: warning

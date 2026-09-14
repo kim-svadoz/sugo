@@ -1,0 +1,11 @@
+harnessId: framework/nextjs/15.x
+checks:
+  - id: await-async-request-apis
+    description: "cookies()/headers()/draftMode()/params/searchParams를 await 없이 사용하지 않아야 한다"
+    severity: error
+  - id: explicit-fetch-caching
+    description: "캐시가 필요한 fetch에 force-cache/revalidate를 명시해야 한다(15부터 기본 no-store)"
+    severity: warning
+  - id: explicit-route-handler-caching
+    description: "GET Route Handler의 캐시가 필요하면 명시적으로 설정해야 한다"
+    severity: warning

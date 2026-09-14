@@ -1,0 +1,14 @@
+harnessId: framework/react/18.x
+checks:
+  - id: effect-cleanup-idempotent
+    description: "useEffect가 StrictMode의 이중 실행에도 안전하도록 cleanup이 구독/타이머/요청을 되돌려야 한다"
+    severity: error
+  - id: use-createroot
+    description: "ReactDOM.render 대신 createRoot를 사용해야 한다"
+    severity: error
+  - id: mark-non-urgent-updates
+    description: "무거운 업데이트를 useTransition/useDeferredValue로 구분해야 한다"
+    severity: warning
+  - id: no-hydration-mismatch
+    description: "렌더 중 Date.now()/window/랜덤 값 사용으로 하이드레이션 불일치를 만들지 않아야 한다"
+    severity: error

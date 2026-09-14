@@ -1,0 +1,17 @@
+harnessId: lang/java/21
+checks:
+  - id: virtual-threads-for-blocking-io
+    description: "블로킹 I/O에 고정 크기 플랫폼 스레드 풀 대신 가상 스레드를 사용해야 한다"
+    severity: warning
+  - id: no-synchronized-around-blocking-in-virtual-threads
+    description: "가상 스레드에서 블로킹 구간을 synchronized로 감싸지 않아야 한다(pinning) — ReentrantLock 사용"
+    severity: error
+  - id: no-virtual-thread-pooling
+    description: "가상 스레드를 풀에 담아 재사용하지 않아야 한다"
+    severity: error
+  - id: exhaustive-switch-over-sealed
+    description: "sealed 계층 분기는 default 절 없이 switch 패턴 매칭으로 전 케이스를 다뤄야 한다"
+    severity: warning
+  - id: sequenced-collection-accessors
+    description: "리스트 처음/끝 접근은 getFirst()/getLast()를 사용해야 한다"
+    severity: warning

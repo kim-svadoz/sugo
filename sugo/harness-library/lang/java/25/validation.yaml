@@ -1,0 +1,14 @@
+harnessId: lang/java/25
+checks:
+  - id: scoped-values-over-threadlocal
+    description: "가상 스레드 컨텍스트 전달에 ThreadLocal 대신 ScopedValue를 사용해야 한다"
+    severity: warning
+  - id: validate-before-super
+    description: "생성자 인자 검증을 super() 호출 이후로 미루지 않아야 한다(유연한 생성자 본문 활용)"
+    severity: warning
+  - id: no-compact-source-in-production
+    description: "프로덕션 코드에 클래스 선언 없는 compact source file/인스턴스 main을 사용하지 않아야 한다"
+    severity: error
+  - id: no-module-import-declarations
+    description: "import module 선언으로 모듈 전체를 임포트하지 않아야 한다"
+    severity: warning

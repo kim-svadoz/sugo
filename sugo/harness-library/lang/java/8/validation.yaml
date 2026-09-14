@@ -1,0 +1,14 @@
+harnessId: lang/java/8
+checks:
+  - id: no-post-java8-syntax
+    description: "var/record/sealed/텍스트블록/switch 표현식 등 Java 9+ 문법을 쓰지 않아야 한다"
+    severity: error
+  - id: optional-return-only
+    description: "Optional을 필드/파라미터 타입으로 쓰지 않아야 한다(반환 타입 전용)"
+    severity: warning
+  - id: no-stream-reuse
+    description: "이미 소비한 Stream을 재사용하지 않아야 한다"
+    severity: error
+  - id: no-legacy-date-api
+    description: "새 코드에서 Date/SimpleDateFormat 대신 java.time을 사용해야 한다"
+    severity: warning

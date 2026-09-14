@@ -1,0 +1,14 @@
+harnessId: lang/python/3.14
+checks:
+  - id: deferred-annotations-aware
+    description: "런타임 어노테이션 접근이 get_type_hints()/annotationlib을 거쳐야 한다(PEP 649 지연 평가)"
+    severity: warning
+  - id: no-gil-assumption-in-free-threaded
+    description: "free-threaded 대상 코드에서 공유 가변 상태에 명시적 락이 있어야 한다"
+    severity: error
+  - id: template-strings-for-untrusted-interpolation
+    description: "SQL/HTML 등 외부 입력 조립에 t-string 등 이스케이프가 강제되는 방식을 사용해야 한다"
+    severity: warning
+  - id: taskgroup-over-gather
+    description: "여러 비동기 작업은 asyncio.gather 대신 TaskGroup으로 묶어야 한다"
+    severity: warning

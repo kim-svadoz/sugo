@@ -17,8 +17,17 @@ describe("fetchFromLocal", () => {
     }
   });
 
-  it("버전 접미사 id는 base id로 폴백하고 경고 없이 local로 처리한다", () => {
-    const { harnesses, warnings } = fetchFromLocal(["framework/spring/3.x"], libraryDir);
+  it("콘텐츠가 있는 버전 접미사 id는 그 버전 하네스를 정확히 로드한다", () => {
+    const { harnesses, warnings } = fetchFromLocal(["framework/spring", "framework/spring/3.x"], libraryDir);
+    const ids = harnesses.map((h) => h.id).sort();
+    expect(ids).toEqual(["default", "framework/spring", "framework/spring/3.x"].sort());
+    expect(harnesses.every((h) => h.source === "local")).toBe(true);
+    expect(warnings).toEqual([]);
+  });
+
+  it("콘텐츠가 없는 버전 접미사 id는 base id로 폴백하고 경고 없이 local로 처리한다", () => {
+    // 아직 만들지 않은 미래 버전이 감지돼도 base 규칙은 적용돼야 한다(차단 아님).
+    const { harnesses, warnings } = fetchFromLocal(["framework/spring/99.x"], libraryDir);
     const spring = harnesses.find((h) => h.id === "framework/spring");
     expect(spring).toBeDefined();
     expect(spring?.source).toBe("local");

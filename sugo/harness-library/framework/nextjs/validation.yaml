@@ -1,0 +1,17 @@
+harnessId: framework/nextjs
+checks:
+  - id: no-server-secrets-across-client-boundary
+    description: "서버 전용 값이 'use client' 경계를 넘는 props로 전달되지 않아야 한다(server-only 사용)"
+    severity: error
+  - id: next-public-prefix-discipline
+    description: "비밀값에 NEXT_PUBLIC_ 접두어를 붙이지 않아야 한다(번들에 인라인됨)"
+    severity: error
+  - id: client-directive-at-leaves
+    description: "'use client'가 트리 상단이 아니라 상호작용이 필요한 잎 컴포넌트에 있어야 한다"
+    severity: warning
+  - id: server-action-authorization
+    description: "Server Action 안에서 권한 검사와 입력 검증을 직접 수행해야 한다"
+    severity: error
+  - id: no-request-data-in-module-scope
+    description: "요청별 데이터를 서버 모듈 전역 변수에 보관하지 않아야 한다"
+    severity: error

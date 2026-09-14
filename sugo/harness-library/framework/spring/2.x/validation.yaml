@@ -1,0 +1,14 @@
+harnessId: framework/spring/2.x
+checks:
+  - id: javax-namespace-only
+    description: "2.x 코드에 jakarta.* 임포트가 섞이지 않아야 한다(javax.* 사용)"
+    severity: error
+  - id: no-websecurityconfigureradapter
+    description: "WebSecurityConfigurerAdapter 상속 대신 SecurityFilterChain 빈을 등록해야 한다"
+    severity: warning
+  - id: no-new-resttemplate
+    description: "새 HTTP 호출에 RestTemplate 대신 WebClient를 사용해야 한다"
+    severity: warning
+  - id: no-new-upgrade-blockers
+    description: "JUnit 4 전용 테스트/Undertow 의존 등 3.x 이관을 막는 코드를 새로 만들지 않아야 한다"
+    severity: warning

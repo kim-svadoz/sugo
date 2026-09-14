@@ -1,0 +1,17 @@
+harnessId: framework/spring/3.x
+checks:
+  - id: jakarta-namespace-only
+    description: "javax.* EE 임포트가 남아 있지 않고 전부 jakarta.*여야 한다"
+    severity: error
+  - id: lambda-dsl-security-config
+    description: "보안 설정이 SecurityFilterChain 빈 + 람다 DSL이어야 한다(WebSecurityConfigurerAdapter는 제거됨)"
+    severity: error
+  - id: no-new-resttemplate
+    description: "새 HTTP 호출에 RestClient 또는 WebClient를 사용해야 한다"
+    severity: warning
+  - id: micrometer-observability
+    description: "트레이싱/관측이 Micrometer Observation 기반이어야 한다(Sleuth 잔재 금지)"
+    severity: warning
+  - id: native-reflection-hints
+    description: "네이티브 이미지 사용 시 리플렉션/프록시 지점에 힌트가 등록되어야 한다"
+    severity: warning

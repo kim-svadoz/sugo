@@ -1,0 +1,17 @@
+harnessId: framework/react/19.x
+checks:
+  - id: actions-for-async-mutations
+    description: "폼 제출/비동기 변경이 useActionState 등 Actions로 처리되어야 한다(수동 isLoading 관리 금지)"
+    severity: warning
+  - id: ref-as-prop
+    description: "새 컴포넌트에 forwardRef 대신 ref prop을 사용해야 한다"
+    severity: warning
+  - id: no-manual-memo-with-compiler
+    description: "React Compiler 사용 시 useMemo/useCallback/memo를 수동으로 추가하지 않아야 한다"
+    severity: warning
+  - id: hooks-rules-clean-for-compiler
+    description: "컴파일러가 최적화를 건너뛰지 않도록 훅 규칙 위반이 없어야 한다"
+    severity: error
+  - id: no-promise-created-in-render
+    description: "use()로 읽을 Promise를 렌더 중에 새로 생성하지 않아야 한다"
+    severity: error
