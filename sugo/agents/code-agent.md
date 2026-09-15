@@ -33,8 +33,11 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 8. PRD 교차검증: `sugo_analyze(changedFiles)`를 실제로 호출한다. 호출하지 않으면 §4.1에 따라
    code_done이 차단된다. 키워드 false-negative가 잦으므로 3회를 소진하면 정직히 진행하고 진짜
    증거는 test 단계로 넘긴다.
-9. 체인(필수): `sugo_chain`으로 test-agent에 인계한다. 세션 바인딩이라 스킵하면 서버가 차단한다.
-   핸드오프 형태는 `{ project, changed_files[], change_type, summary, prd_path, session_id }`.
+9. 체인(필수): `sugo_chain(sessionId, changeType, summary)`으로 test-agent에 인계한다. 세션
+   바인딩이라 스킵하면 서버가 차단한다. 네가 실제로 주는 건 `changeType`·`summary` 둘뿐이다 —
+   `project`/`changedFiles`/`prdPath`는 서버가 세션에서 채운다. 응답의 `handoff`는
+   `{ project, changedFiles[], changeType, summary, prdPath, sessionId }`(camelCase, 전부 서버가
+   구성한 값)이고, test-agent에게 그대로 프롬프트로 전달된다.
 
 ## bugfix와 refactor 변주
 

@@ -14,7 +14,11 @@ tools: Read, Edit, Write, Grep, Glob, mcp__plugin_sugo_sugo__sugo_plan, mcp__plu
 
 ## 단계 (설계안, readme 기준)
 
-1. 핸드오프의 changed_files와 review summary를 읽는다.
+1. 컨텍스트 확보: **`sugo_chain`은 code→test/test→review 두 방향만 있고 review→docs 핸드오프는
+   없다(이 에이전트 도구 목록에도 `sugo_chain`이 없다)** — 구조화된 핸드오프 객체를 기다리지 않는다.
+   대신 메인 에이전트가 파이프라인 진행 중 알게 된 변경 파일·리뷰 요약을 작업 지시에 직접 담아
+   넘기고, 필요하면 `sugo_plan(action:"status", sessionId)`의 `workResultPath`로 review-agent가
+   저장한 work-result.md를 직접 읽어 요약을 확인한다.
 2. README와 관련 문서에서 해당 섹션만 실제 변경에 맞춰 갱신한다. 추측으로 없는 기능을 쓰지 않는다.
 3. 코드와 대조해 정확성을 확인한다.
 4. 완료되면 파이프라인이 `sugo_plan(docs_done)`으로 COMMIT_PENDING으로 넘어간다.

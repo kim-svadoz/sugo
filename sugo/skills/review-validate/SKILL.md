@@ -7,9 +7,10 @@ description: 'review-agent 체인 기본 스킬. validation.yaml checks[] 기반
 
 코드를 고치지 않는다. 판정과 리포트만 한다.
 
-1. 핸드오프 파싱: changed_files, summary, prd_path를 확인한다.
+1. 핸드오프 파싱: `sugo_chain`이 준 `handoff{project, changedFiles, changeType, summary, prdPath,
+   sessionId}`(camelCase)를 확인한다.
 2. 컨텍스트 로드: `sugo_get_project_context(projectPath, changedFiles)`로 규칙, 하네스, CLAUDE.md를
-   읽는다. changed_files를 넘기면 이번 변경에 해당하는 하네스만 실려 온다.
+   읽는다. changedFiles를 넘기면 이번 변경에 해당하는 하네스만 실려 온다.
 3. 적용 하네스 로드: 위에서 받은 하네스 본문을 기준으로 삼는다.
 4. format/style 검증: 하네스가 요구하는 사항을 확인한다.
 5. `sugo_validate(sessionId, validationResults)` 실행(**review_done 전 필수**): 적용된 하네스

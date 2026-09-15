@@ -15,14 +15,20 @@ argument-hint: <기능 설명>
 1. `sugo_plan(action:"start", projectPath, featureName)`으로 등록을 확인하고 세션을 만든다.
    workResultPath를 주면 patch로 분기한다(`/sugo:patch` 참고).
 2. `clarify`로 범위, 수락기준, 제약, 우선순위를 사용자와 확정한다.
-3. `prd`로 PRD를 저장한다(100자 이상, 요구 1개 이상, `### REQ-XXX:` 헤딩). baseline 시그널 판정과
-   HULK Task/Run 생성, Roadmap REQ 노드 심기가 함께 일어난다.
+3. `prd`로 PRD를 저장한다. 게이트 통과 조건은 **본문 100자 이상 + `REQ-N` 태그 1개 이상**(어디에
+   있든 인정, 헤딩 아니어도 됨)뿐이다. baseline 시그널 판정과 HULK Task/Run 생성이 함께 일어난다.
+   **Roadmap REQ 노드 심기는 별개로, `### REQ-N: 제목` 마크다운 헤딩 형식만 인식하는 더 엄격한
+   계약이다** — 헤딩이 없으면 PRD는 정상 통과하지만 Roadmap에는 조용히 아무것도 안 심긴다(에러
+   아님). Roadmap 추적이 필요하면 REQ를 헤딩으로 쓴다.
 4. PRD가 비대하면 `decompose` 후 `subtask_start`와 `subtask_done`을 거쳐 `integrate`로 간다.
    아니면 `ready`로 간다.
 5. `baseline_capture`: §4.0 시그널(런타임이나 JDK 상향, 의존성 제거)이 있으면 코딩 전에 그린
    baseline이 필수다.
-6. `contract_start` 후 `contract_done`: 계약테스트를 test-first로 쓰고 구현 전 red를 확인한다.
-   테스트가 불가능하면 라벨을 붙인다.
+6. `contract_start` 후 `contract_done`: **이 단계는 code-agent가 아니라 네(메인 에이전트) 몫이다**
+   — `code_start`보다 앞서는 상태라 아직 서브에이전트를 안 띄웠다. 계약테스트를 test-first로 쓰고
+   `sugo_record_contract_evidence(sessionId, contractId, phase:"red", command, exitCode)`로 구현 전
+   실패를 직접 기록한다. 테스트가 불가능하면 라벨을 붙인다. green은 나중에 test-agent가 같은
+   `contractId`로 기록해 red→green 전이를 완성한다(§10).
 7. `code_start`로 code-agent를 띄운다. 하네스 도구 메뉴가 주입된다.
 8. `code_done`: code-agent가 `sugo_analyze`를 실제로 호출한 뒤에 넘어간다(§4.1의 analyze, baseline,
    wiring, glue, boot 다중 게이트).

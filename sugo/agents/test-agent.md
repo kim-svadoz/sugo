@@ -15,12 +15,17 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 
 ## 단계 (설계안, targeted 기준)
 
-0. refs 로드: 컨벤션, 체크포인트, `CLAUDE.md`를 `sugo_get_project_context`로 읽는다. 핸드오프의
-   `changed_files[]`를 `changedFiles`로 함께 넘기면 그 스택의 하네스만 실려 온다.
-0.5. 계약테스트 test-first(계약이 필수인 세션): 구현 전에 red를 먼저 확인해 기록한다(§4.1 contract).
+0. refs 로드: `sugo_chain`이 준 `handoff{project, changedFiles, changeType, summary, prdPath,
+   sessionId}`(camelCase)를 확인하고, `changedFiles`를 `sugo_get_project_context`에 함께 넘기면
+   그 스택의 하네스만 실려 온다.
+0.5. 계약테스트 green 기록(계약이 필수인 세션): red는 네 차례가 아니다 — `contract_start`~
+     `contract_done`(code_start 이전, 메인 에이전트 몫)에서 이미 기록됐다. 너는 구현이 끝난 지금
+     같은 `contractId`로 `sugo_record_contract_evidence(sessionId, contractId, phase:"green",
+     command, exitCode)`를 호출해 red→green 전이를 완성한다(§10). exitCode!==0인 red와 exitCode===0
+     인 green이 같은 contractId로 둘 다 있어야 review_done의 계약증거 게이트가 통과한다.
 1. 회귀 baseline: 기존 테스트를 전량 실행한다. 기존이 이미 실패면 regression으로 분류해 기록하고
    넘어간다.
-2. 핸드오프와 PRD 확인: `prd_path`로 PRD를 연다. 없으면 세션을 복구하고, 그래도 없으면 fallback
+2. PRD 확인: `handoff.prdPath`로 PRD를 연다. 없으면 세션을 복구하고, 그래도 없으면 fallback
    라벨을 붙인다.
 3. PRD에서 테스트 도출: 구현이 아니라 명세에서 도출한다. 응답 필드마다 어서션을 넣고 통합레벨을
    1개 이상 포함한다.

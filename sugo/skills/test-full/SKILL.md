@@ -7,7 +7,9 @@ description: 'test-agent 풀 스위트 스킬. 전량 회귀를 포함한 전체
 
 targeted와 같은 규율(명세 기반, 조작 방지 증거)을 쓰되 대상이 전량이다.
 
-1. refs를 로드하고, 계약이 필수면 계약테스트를 test-first로 작성한다.
+1. refs를 로드한다. 파이프라인 안이고 계약이 필수인 세션이면, red는 이미 `contract_start`~
+   `contract_done`(code_start 이전, 메인 에이전트 몫)에서 기록됐다 — 너는 같은 `contractId`로
+   `sugo_record_contract_evidence(phase:"green", ...)`를 기록해 전이를 완성한다.
 2. 전량 실행: 프로젝트 전체 테스트를 풀검증 명령(`gradlew check` 또는 `mvn verify|install`)으로
    돌린다. 단순 test는 §4.2에서 거부된다.
 3. 분류: 신규 실패는 spec_not_met, 기존 실패는 regression으로 분류한다. 회귀는 원인을 밝힌다.
