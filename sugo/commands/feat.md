@@ -32,7 +32,8 @@ argument-hint: <기능 설명>
 7. `code_start`로 code-agent를 띄운다. 하네스 도구 메뉴가 주입된다.
 8. `code_done`: code-agent가 `sugo_analyze`를 실제로 호출한 뒤에 넘어간다(§4.1의 analyze, baseline,
    wiring, glue, boot 다중 게이트).
-9. `test_start`에서 test-agent로 넘기고(`sugo_chain` 필수) `test_done`에서 풀검증 명령 증거를
+9. `test_start`에서 test-agent로 넘기고(`sugo_chain`으로 인계 — 관례이지 서버가 강제하진 않는다,
+   `test_start`/`review_start` 둘 다 게이트가 비어 있다) `test_done`에서 풀검증 명령 증거를
    대조한다(§4.2).
 10. `review_start`에서 review-agent(읽기 전용)로 넘기고 `review_done`에서 게이트를 통과한다:
     `sugo_validate` 호출강제 + 서버 실측 우선, 사용자 확인, summary 품질, 런타임 검증,

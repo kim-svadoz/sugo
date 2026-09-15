@@ -20,7 +20,10 @@ A08 소프트웨어와 데이터 무결성 실패 · A09 로깅과 모니터링 
 2. untrusted 콘텐츠 유입(외부 입력, 프롬프트)
 3. 외부 통신(네트워크 전송)
 
-셋이 겹치면 데이터 유출 경로가 된다. `sugo_check_lethal_trifecta`로 점검한다.
+셋이 겹치면 데이터 유출 경로가 된다. `sugo_check_lethal_trifecta(tools[])`로 점검하되, **이 도구는
+이름/설명에서 3축을 자동으로 추측하지 않는다** — 점검 대상 도구마다
+`{toolName, accessesPrivateData, processesUntrustedInput, communicatesExternally}`를 네가 직접 코드를
+읽고 판단해 채워 넣어야 한다. 신뢰 못할 휴리스틱을 피하려고 의도적으로 이렇게 설계됐다.
 
 ## 규율
 

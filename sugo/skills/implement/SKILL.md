@@ -15,7 +15,8 @@ description: 'code-agent의 기본 스킬. PRD 기반 신규 기능 구현. "구
 6. 구현과 자체검증: 구현하고 컴파일과 자체 확인까지 한다.
 7. 포맷: 감지된 포맷터를 적용한다.
 8. PRD 교차검증: `sugo_analyze(changedFiles)`를 실제로 호출한다(§4.1).
-9. 체인(필수): `sugo_chain`으로 test-agent에 인계한다.
+9. 체인: `sugo_chain`으로 test-agent에 인계한다. 관례이지 서버가 강제하진 않는다(`test_start`
+   게이트가 비어 있어 스킵해도 안 막힌다) — 그래도 다음 에이전트가 맨몸으로 시작하지 않도록 지킨다.
 
 success: code_done 게이트 통과 후 test-agent로 체인.
 on_failure: 게이트가 막은 이유를 전하고 실제로 충족시킨다. 라벨로 우회하지 않는다. 환경이 없을
