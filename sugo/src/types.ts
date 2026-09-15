@@ -83,7 +83,15 @@ export interface ChainInfo {
   codeGateAudit?: CodeGateAudit;
   /** sugo_chain 호출 감사로그(§5). test_start/review_start의 하드 게이트는 아니고 기록만 한다. */
   chainHandoffs?: { direction: ChainDirection; calledAt: string }[];
-  lastValidation?: { verdict: "pass" | "partial" | "fail"; checkedAt: string; fabricatedCount: number };
+  lastValidation?: {
+    verdict: "pass" | "partial" | "fail";
+    checkedAt: string;
+    fabricatedCount: number;
+    contradictionCount: number;
+    autoVerifiedCount: number;
+    /** 서버가 auto로 직접 실측해 실패로 확인한 체크 — review_done의 VALIDATE_VERIFIED_FAILURE 게이트가 본다. */
+    verifiedFailures: { harnessId: string; checkId: string; detail: string }[];
+  };
   /** review_done에서 계산한 값을 commit 시점(§8 WorkLog 기록)까지 들고 가기 위한 보존 필드. */
   humanHoursEstimate?: HumanHoursEstimate;
   reviewSummary?: string;

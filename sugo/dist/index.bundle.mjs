@@ -28494,6 +28494,20 @@ function validateConformanceLedger(prdContent) {
     `In-Scope/DoD \uC6D0\uC7A5\uC774 REQ\uC640 \uB9DE\uBB3C\uB9AC\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4 \u2014 ${parts2.join(" \xB7 ")}. \uD56D\uBAA9\uC744 REQ\uB85C \uC2B9\uACA9\uD558\uAC70\uB098 \uC6D0\uC7A5\uC5D0\uC11C \uBE7C\uC138\uC694.`
   );
 }
+function checkValidateCalledGate(lastValidation) {
+  if (!lastValidation) {
+    return fail("VALIDATE_NOT_CALLED", "review_done \uC804\uC5D0 sugo_validate\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4.");
+  }
+  return ok3();
+}
+function checkValidateVerifiedGate(lastValidation) {
+  if (!lastValidation || lastValidation.verifiedFailures.length === 0) return ok3();
+  const detail = lastValidation.verifiedFailures.map((f) => `${f.harnessId}#${f.checkId}(${f.detail})`).join(" / ");
+  return fail(
+    "VALIDATE_VERIFIED_FAILURE",
+    `sugo_validate\uAC00 \uC11C\uBC84 \uC2E4\uCE21\uC73C\uB85C \uD655\uC778\uD55C \uC704\uBC18\uC774 \uC788\uC2B5\uB2C8\uB2E4 \u2014 ${detail}. \uC2E4\uCE21 \uACB0\uACFC\uB77C \uC790\uAE30\uBCF4\uACE0\uB85C \uB36E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`
+  );
+}
 
 // src/bootScan.ts
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
@@ -29816,6 +29830,10 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "review_done" && existing) {
+    const validateCalledResult = checkValidateCalledGate(existing.data.chainInfo.lastValidation);
+    if (!validateCalledResult.ok) return errorResult8(validateCalledResult.code, validateCalledResult.message);
+    const validateVerifiedResult = checkValidateVerifiedGate(existing.data.chainInfo.lastValidation);
+    if (!validateVerifiedResult.ok) return errorResult8(validateVerifiedResult.code, validateVerifiedResult.message);
     const confirmResult = checkUserConfirmationGate(args2.userConfirmed ?? false);
     if (!confirmResult.ok) return errorResult8(confirmResult.code, confirmResult.message);
     if (!args2.summary) return errorResult8("SUMMARY_REQUIRED", "review_done action\uC5D0\uB294 summary\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
@@ -31152,7 +31170,8 @@ async function handleSugoValidate(rawArgs) {
           checkedAt: (/* @__PURE__ */ new Date()).toISOString(),
           fabricatedCount: result.fabricated.length,
           contradictionCount: result.contradictions.length,
-          autoVerifiedCount: autoResults.size
+          autoVerifiedCount: autoResults.size,
+          verifiedFailures: result.results.filter((r) => r.source === "verified" && !r.passed && r.severity === "error").map((r) => ({ harnessId: r.harnessId, checkId: r.checkId, detail: r.detail ?? "" }))
         }
       }
     }

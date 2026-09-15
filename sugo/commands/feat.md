@@ -28,9 +28,10 @@ argument-hint: <기능 설명>
    wiring, glue, boot 다중 게이트).
 9. `test_start`에서 test-agent로 넘기고(`sugo_chain` 필수) `test_done`에서 풀검증 명령 증거를
    대조한다(§4.2).
-10. `review_start`에서 review-agent(읽기 전용)로 넘기고 `review_done`에서 4중 게이트를 통과한다.
-    사용자 확인, summary 품질, 런타임 검증, PRD 커버리지다(§4.3). 여기서 REQ와 REQ-CONFIRM이
-    자동 완료된다.
+10. `review_start`에서 review-agent(읽기 전용)로 넘기고 `review_done`에서 게이트를 통과한다:
+    `sugo_validate` 호출강제 + 서버 실측 우선, 사용자 확인, summary 품질, 런타임 검증,
+    계약증거(§4.3). PRD 커버리지는 `test_done`의 opt-in 게이트다(review_done이 아님). 여기서
+    REQ와 REQ-CONFIRM이 자동 완료된다.
 11. `docs_done`: docs-agent로 README 등을 갱신한다.
 12. `commit`: DONE에서만 커밋을 생성한다(§6, 2커밋 분리, push 금지). 커밋 전에 체크포인트를 확인한다.
 

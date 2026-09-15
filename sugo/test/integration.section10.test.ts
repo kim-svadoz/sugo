@@ -7,6 +7,7 @@ import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordContractEvidence } from "../src/tools/sugoRecordContractEvidence.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
+import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
@@ -74,6 +75,7 @@ async function toTestDonePass(
   await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
   await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
   await call(handleSugoPlan, { action: "review_start", sessionId });
+  await call(handleSugoValidate, { sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
   return sessionId;
 }
 

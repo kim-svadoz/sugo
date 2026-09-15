@@ -71,6 +71,9 @@ export async function handleSugoValidate(rawArgs: unknown) {
           fabricatedCount: result.fabricated.length,
           contradictionCount: result.contradictions.length,
           autoVerifiedCount: autoResults.size,
+          verifiedFailures: result.results
+            .filter((r) => r.source === "verified" && !r.passed && r.severity === "error")
+            .map((r) => ({ harnessId: r.harnessId, checkId: r.checkId, detail: r.detail ?? "" })),
         },
       },
     },

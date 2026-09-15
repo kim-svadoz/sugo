@@ -1,11 +1,13 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { saveProjectConfig } from "../src/harness/config.js";
+import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
+import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
@@ -37,7 +39,7 @@ afterEach(() => {
 });
 
 /** start~test_done(그린)까지 몰아서 REVIEW_RUNNING 직전(TEST_DONE)까지 도달시킨다. */
-async function toTestDone(testPassed = true, failed = 0): Promise<string> {
+async function toTestDone(testPassed = true, failed = 0, skipAutoValidate = false): Promise<string> {
   const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
   const sessionId = start.data.sessionId as string;
   await call(handleSugoPlan, { action: "clarify", sessionId });
@@ -58,6 +60,11 @@ async function toTestDone(testPassed = true, failed = 0): Promise<string> {
   });
   await call(handleSugoPlan, { action: "test_done", sessionId, testPassed });
   await call(handleSugoPlan, { action: "review_start", sessionId });
+  if (!skipAutoValidate) {
+    // review_done의 VALIDATE_NOT_CALLED 게이트 충족용(§4.3 확장). 하네스 미적용 프로젝트라
+    // validationResults가 비어 있어도 verifiedFailures 없이 통과한다.
+    await call(handleSugoValidate, { sessionId, validationResults: [] });
+  }
   return sessionId;
 }
 
@@ -220,5 +227,63 @@ describe("work-result.md 파일 내용 검증", () => {
     const workResultPath = result.data.workResultPath as string;
     expect(existsSync(workResultPath)).toBe(true);
     expect(readFileSync(workResultPath, "utf-8")).toBe(GOOD_SUMMARY);
+  });
+});
+
+describe("review_done — sugo_validate 호출강제 + 실측 우선 게이트(실배선)", () => {
+  it("sugo_validate를 한 번도 안 부르면 review_done이 거부된다", async () => {
+    const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ true);
+    const result = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    expect(result.isError).toBe(true);
+    expect(result.data.errorCode).toBe("VALIDATE_NOT_CALLED");
+  });
+
+  it("실제로 auto 체크를 위반한 프로젝트는 통과했다고 주장해도 review_done이 거부된다", async () => {
+    // strict:false는 lang/typescript의 no-weakened-strict-config(error, auto)를 실제로 위반한다.
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ devDependencies: { typescript: "^5.4.0" } }));
+    writeFileSync(join(projectDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { strict: false } }));
+    await call(handleSugoAdd, { projectPath: projectDir });
+
+    const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ true);
+    const validate = await call(handleSugoValidate, {
+      sessionId,
+      validationResults: [{ harnessId: "lang/typescript", checkId: "no-weakened-strict-config", passed: true }],
+    });
+    expect(validate.data.verdict).toBe("fail"); // 주장은 true지만 실측이 뒤집는다
+
+    const result = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    expect(result.isError).toBe(true);
+    expect(result.data.errorCode).toBe("VALIDATE_VERIFIED_FAILURE");
+    expect(result.data.message).toContain("no-weakened-strict-config");
+  });
+
+  it("실측이 전부 통과면 review_done이 정상 진행된다", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ devDependencies: { typescript: "^5.4.0" } }));
+    writeFileSync(join(projectDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { strict: true, moduleResolution: "bundler" } }));
+    await call(handleSugoAdd, { projectPath: projectDir });
+
+    const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ true);
+    await call(handleSugoValidate, { sessionId, validationResults: [] });
+
+    const result = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    expect(result.isError).toBe(false);
   });
 });

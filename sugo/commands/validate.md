@@ -20,8 +20,11 @@ argument-hint: "[projectPath]"
 ## 규율
 - `verified` 실패는 논쟁 대상이 아니라 고쳐야 할 사실이다. `self-reported`는 확인 안 한 항목을
   통과라고 우기지 않는다.
-- validate는 판정만 한다 — 여기서 코드를 고치지 마라(고치는 건 code-agent). 실패가 재작업으로
-  이어질 땐 `sugo_chain`으로 되돌리되, 재진입 횟수는 세션에 `autoLoopRetryCount`로 쌓인다(하드
-  캡 없음 — 판단품질 리포트의 근거 지표일 뿐, 무한 반복하지 않는다는 판단은 에이전트 몫).
-- **아직 `review_done`을 막는 하드 게이트로 승격되지 않았다.** 실패를 보고해도 파이프라인은
-  진행된다 — `verified` 커버리지가 낮은 채로 게이트를 걸면 "막는 척"이 되기 때문이다.
+- validate는 판정만 한다 — 여기서 코드를 고치지 마라(고치는 건 code-agent).
+- **`review_done`은 이 도구를 두 겹으로 강제한다.** 호출 자체를 안 했으면 `VALIDATE_NOT_CALLED`,
+  호출은 했는데 `auto` 실측이 실패로 확인된 게 있으면 `VALIDATE_VERIFIED_FAILURE`로 막힌다 —
+  둘 다 review_done 전에 여기서 미리 잡고 code-agent로 돌려 고치는 게 낫다.
+- **자기보고 실패는 하드 게이트가 아니다.** 91%는 여전히 자기보고라, 커버리지가 낮은 채로 전체
+  verdict를 하드 게이트로 걸면 "막는 척"이 된다 — `verified`로 확인된 것만 막는다. 자기보고만
+  실패했을 때 재작업으로 돌릴지는 판단 몫이고, 재진입 횟수는 `autoLoopRetryCount`로 쌓인다(하드
+  캡 없음).

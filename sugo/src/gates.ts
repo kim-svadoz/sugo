@@ -39,7 +39,9 @@ export type GateBlockCode =
   | "ORACLE_OVERRIDE_REASON_REQUIRED"
   | "JIRA_OPTION_REQUIRED"
   | "JIRA_KEY_REQUIRED"
-  | "CONFORMANCE_LEDGER_INCOMPLETE";
+  | "CONFORMANCE_LEDGER_INCOMPLETE"
+  | "VALIDATE_NOT_CALLED"
+  | "VALIDATE_VERIFIED_FAILURE";
 
 export interface GateCheckResult {
   ok: boolean;
@@ -397,5 +399,43 @@ export function validateConformanceLedger(prdContent: string): GateCheckResult {
   return fail(
     "CONFORMANCE_LEDGER_INCOMPLETE",
     `In-Scope/DoD 원장이 REQ와 맞물리지 않습니다 — ${parts.join(" · ")}. 항목을 REQ로 승격하거나 원장에서 빼세요.`,
+  );
+}
+
+// ── sugo_validate 호출강제 + 실측 우선 게이트 (§4.3 확장) ────────────────────
+// 하네스 검증의 91%는 여전히 자기보고라 verdict 전체로 막으면 "확인 안 함"과 "확인했더니
+// 틀렸다"를 못 구분한다(sugo_validate와 같은 이유로 하드 게이트를 안 걸어온 근거). 그래서 두
+// 게이트로 쪼갠다: 호출 자체는 강제하되(analyzeAttempts 게이트와 같은 패턴 — verdict 무관),
+// 실제로 막는 건 서버가 auto로 실측한 실패뿐이다. 이 부분만큼은 "제출 안 하면 통과"가 성립하지
+// 않으므로(runAutoChecks가 항상 돈다) 하드 게이트로 걸어도 우회구가 되지 않는다.
+
+export interface LastValidation {
+  verdict: "pass" | "partial" | "fail";
+  checkedAt: string;
+  fabricatedCount: number;
+  contradictionCount: number;
+  autoVerifiedCount: number;
+  verifiedFailures: { harnessId: string; checkId: string; detail: string }[];
+}
+
+/** analyzePassed:true와 같은 패턴 — 호출 이력만 본다. verdict가 fail이어도 호출했으면 통과. */
+export function checkValidateCalledGate(lastValidation: LastValidation | undefined): GateCheckResult {
+  if (!lastValidation) {
+    return fail("VALIDATE_NOT_CALLED", "review_done 전에 sugo_validate를 최소 1회 실제 호출해야 합니다.");
+  }
+  return ok();
+}
+
+/**
+ * 서버가 직접 실측해 실패로 확인된 체크만 막는다. 자기보고 실패(전체 verdict가 fail이어도)는
+ * 이 게이트로 막지 않는다 — self-reported 실패까지 하드 게이트로 걸면 "9% 실측 커버리지"로
+ * 91%를 막는 게이트가 돼버려 오탐이 실제 진행을 막는 사고가 난다.
+ */
+export function checkValidateVerifiedGate(lastValidation: LastValidation | undefined): GateCheckResult {
+  if (!lastValidation || lastValidation.verifiedFailures.length === 0) return ok();
+  const detail = lastValidation.verifiedFailures.map((f) => `${f.harnessId}#${f.checkId}(${f.detail})`).join(" / ");
+  return fail(
+    "VALIDATE_VERIFIED_FAILURE",
+    `sugo_validate가 서버 실측으로 확인한 위반이 있습니다 — ${detail}. 실측 결과라 자기보고로 덮을 수 없습니다.`,
   );
 }

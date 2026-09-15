@@ -22,10 +22,12 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
 3. 적용 하네스 로드: 위에서 받은 하네스 본문을 기준으로 삼는다(`harnessRouting.excluded`는
    이번 변경과 무관해 제외된 것이므로 그 규칙으로 지적하지 않는다).
 4. format/style 검증: 하네스가 요구하는 포맷과 스타일을 확인한다.
-5. `sugo_validate(sessionId, validationResults)` 실행: 적용된 하네스 `validation.yaml`의
-   `checks[]`를 하나씩 `{harnessId, checkId, passed, note?}`로 판정해 제출한다. `auto`가 선언된
-   체크는 **서버가 직접 실측하고 그 결과가 네 주장을 덮어쓴다.** 확인하지 않은 항목을 통과로
-   올리지 않는다 — 어긋나면 `contradictions`에 주장과 실측이 나란히 남는다.
+5. `sugo_validate(sessionId, validationResults)` 실행(**review_done 전 필수 — 안 부르면
+   `VALIDATE_NOT_CALLED`로 막힌다**): 적용된 하네스 `validation.yaml`의 `checks[]`를 하나씩
+   `{harnessId, checkId, passed, note?}`로 판정해 제출한다. `auto`가 선언된 체크는 서버가 직접
+   실측하고 그 결과가 네 주장을 덮어쓴다 — 확인하지 않은 항목을 통과로 올리지 않는다. 실측 실패가
+   하나라도 있으면 review_done이 `VALIDATE_VERIFIED_FAILURE`로 막히므로, 여기서 미리 고치고
+   재검증하는 게 낫다.
 6. 결과 분석: 하네스 위반과 실패 임계를 판정한다. 결과의 `source`가 `verified`면 서버 실측이고
    `self-reported`면 네 판정이다. `verified` 실패는 논쟁 대상이 아니라 고쳐야 할 사실이다.
 7. work-result 리포트(필수): 배경, 변경, 설계, 테스트를 담은 리포트를 만들어 저장한다.
@@ -40,11 +42,15 @@ OWASP Top 10(2021)과 CWE 매핑, 그리고 Lethal Trifecta(private 데이터 �
 
 ## success / on_failure
 
-- 성공: review_done 4중 게이트(사용자 확인, summary 품질, 런타임 검증, PRD 커버리지와 계약증거)에
-  필요한 근거를 제공한 상태.
-- 실패: `verified` 실패나 명백한 하네스 위반이면 `sugo_chain`으로 code-agent에 역행시킨다. 재진입은
-  세션의 `autoLoopRetryCount`로 쌓인다(서버가 강제하는 상한은 없다 — 판단품질 리포트가 보는 지표일
-  뿐, 무한 반복하지 않는다는 판단은 네 몫이다). 환경 부재가 아닌데 runtimeVerified=false를 주장하면
-  게이트가 막으므로 실측을 그대로 제출한다.
-- **`review_done`은 아직 validate 실패를 이유로 막는 하드 게이트가 아니다.** `verified` 실패를
-  스스로 정직하게 고치는 것과, 게이트가 막아서 못 넘어가는 것은 다르다 — 지금은 전자다.
+- 성공: review_done의 게이트(`sugo_validate` 호출강제 + 서버 실측 우선, 사용자 확인, summary 품질,
+  런타임 검증, 계약증거)에 필요한 근거를 제공한 상태. PRD 커버리지는 `test_done`의 opt-in 게이트다.
+- **`sugo_validate`를 한 번도 안 불렀으면 `VALIDATE_NOT_CALLED`로 막힌다.** analyze 게이트와 같은
+  패턴 — verdict와 무관하게 호출 자체를 요구한다.
+- **서버가 `auto`로 실측해 실패로 확인한 항목이 하나라도 있으면 `VALIDATE_VERIFIED_FAILURE`로
+  막힌다.** 자기보고로 통과했다고 주장해도 소용없다 — 실측이 이긴다. 이건 논쟁 대상이 아니라
+  code-agent에게 돌려 고쳐야 할 사실이다.
+- **자기보고 실패(전체 verdict가 fail이어도 `verified` 아닌 것)는 이 게이트로 안 막는다.** 91%는
+  여전히 자기보고라, 하드 게이트로 걸면 "확인 안 함"과 "확인했더니 틀렸다"를 못 구분하게 된다 —
+  이 경우엔 `sugo_chain`으로 스스로 되돌릴지 판단한다(재진입은 `autoLoopRetryCount`로 쌓이되
+  서버가 강제하는 횟수 상한은 없다). 환경 부재가 아닌데 runtimeVerified=false를 주장하면
+  런타임 게이트가 따로 막는다.

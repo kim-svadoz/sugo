@@ -18,6 +18,8 @@ import {
   checkRegistrationGlueGate,
   checkRuntimeVerificationGate,
   checkUserConfirmationGate,
+  checkValidateCalledGate,
+  checkValidateVerifiedGate,
   checkWiringGate,
   detectBaselineSignals,
   validatePrd,
@@ -326,6 +328,13 @@ export async function handleSugoPlan(rawArgs: unknown) {
   }
 
   if (action === "review_done" && existing) {
+    // ── sugo_validate 호출강제 + 실측 우선(§4.3 확장). 서버가 auto로 직접 확인한 실패만 막는다 —
+    // 91%는 여전히 자기보고라 verdict 전체로 막으면 "확인 안 함"과 "확인했더니 틀렸다"를 못 구분한다.
+    const validateCalledResult = checkValidateCalledGate(existing.data.chainInfo.lastValidation);
+    if (!validateCalledResult.ok) return errorResult(validateCalledResult.code as GateBlockCode, validateCalledResult.message!);
+    const validateVerifiedResult = checkValidateVerifiedGate(existing.data.chainInfo.lastValidation);
+    if (!validateVerifiedResult.ok) return errorResult(validateVerifiedResult.code as GateBlockCode, validateVerifiedResult.message!);
+
     const confirmResult = checkUserConfirmationGate(args.userConfirmed ?? false);
     if (!confirmResult.ok) return errorResult(confirmResult.code as GateBlockCode, confirmResult.message!);
 

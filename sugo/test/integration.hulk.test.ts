@@ -8,6 +8,7 @@ import { handleSugoCheckpoint } from "../src/tools/sugoCheckpoint.js";
 import { handleSugoHistory } from "../src/tools/sugoHistory.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
+import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 import { handleSugoSpec } from "../src/tools/sugoSpec.js";
 import { handleSugoTask } from "../src/tools/sugoTask.js";
 import { handleSugoWorkspace } from "../src/tools/sugoWorkspace.js";
@@ -44,7 +45,9 @@ afterEach(() => {
 describe("HULK 전체 흐름: workspace 등록 → prd 자동 Task → commit 자동 WorkLog", () => {
   it("전체 파이프라인이 HULK 데이터를 정확히 누적한다", async () => {
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: {}, devDependencies: { typescript: "^5.4.0" } }));
-    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    // strict/moduleResolution 없는 빈 tsconfig는 lang/typescript(/5.x) 하네스의 auto 체크(실제 파일
+    // 실측)를 진짜로 위반한다 — 이 테스트가 검증하려는 건 HULK 누적이라 하네스 위반과 무관해야 한다.
+    writeFileSync(join(projectDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { strict: true, moduleResolution: "bundler" } }));
 
     const add = await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a" });
     expect(add.isError).toBe(false);
@@ -93,6 +96,7 @@ describe("HULK 전체 흐름: workspace 등록 → prd 자동 Task → commit �
     await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
     await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     await call(handleSugoPlan, { action: "review_start", sessionId });
+    await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
     await call(handleSugoPlan, {
       action: "review_done",
       sessionId,

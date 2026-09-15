@@ -93,11 +93,35 @@ describe("computeJudgmentReport", () => {
     const sessions = [
       makeSession(
         {},
-        { chainInfo: { ...createEmptySessionData().chainInfo, lastValidation: { verdict: "pass", checkedAt: "x", fabricatedCount: 1 } } },
+        {
+          chainInfo: {
+            ...createEmptySessionData().chainInfo,
+            lastValidation: {
+              verdict: "pass",
+              checkedAt: "x",
+              fabricatedCount: 1,
+              contradictionCount: 0,
+              autoVerifiedCount: 0,
+              verifiedFailures: [],
+            },
+          },
+        },
       ),
       makeSession(
         {},
-        { chainInfo: { ...createEmptySessionData().chainInfo, lastValidation: { verdict: "pass", checkedAt: "x", fabricatedCount: 0 } } },
+        {
+          chainInfo: {
+            ...createEmptySessionData().chainInfo,
+            lastValidation: {
+              verdict: "pass",
+              checkedAt: "x",
+              fabricatedCount: 0,
+              contradictionCount: 0,
+              autoVerifiedCount: 0,
+              verifiedFailures: [],
+            },
+          },
+        },
       ),
     ];
     expect(computeJudgmentReport(sessions).fabricatedValidationSessions).toBe(1);
