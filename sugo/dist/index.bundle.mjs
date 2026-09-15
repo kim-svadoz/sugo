@@ -22660,6 +22660,8 @@ ${bullets.map((b) => `- ${b}`).join("\n")}`;
 
 > \uC790\uB3D9 \uC0DD\uC131\uB428. \`sugo:add\`\uB97C \uB2E4\uC2DC \uC2E4\uD589\uD558\uBA74 \uAC31\uC2E0\uB429\uB2C8\uB2E4. \uAC1C\uBCC4 \uD558\uB124\uC2A4 \uC804\uBB38\uC740
 > \`sugo/harness/<id>/harness.md\`, \uAC80\uC99D \uC124\uC815\uC740 \`sugo/harness/<id>/validation.yaml\`\uC744 \uCC38\uACE0\uD558\uC138\uC694.
+> \uC774 \uD30C\uC77C \uC790\uCCB4\uB294 \uCC38\uACE0\uC6A9 \uC778\uB371\uC2A4\uC785\uB2C8\uB2E4 \u2014 Claude Code\uAC00 \uC138\uC158 \uC2DC\uC791 \uC2DC \uC790\uB3D9\uC73C\uB85C \uC77D\uB294 \uAC74
+> \`.claude/rules/*.md\`\uC640 \uD504\uB85C\uC81D\uD2B8 \uB8E8\uD2B8 \`CLAUDE.md\`\uC774\uBA70, \uC5EC\uAE30 \uC788\uB294 \uC694\uC57D\uC740 \uADF8\uAC78 \uBCF4\uC644\uD569\uB2C8\uB2E4.
 ${workspace ? `>
 > \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4: \`${workspace}\`` : ""}
 
@@ -22684,11 +22686,13 @@ ${ruleSummaryBlocks}
 
 ## \uAC80\uC99D \uAC8C\uC774\uD2B8 \uC139\uC158
 
-\uC774 \uC778\uB371\uC2A4\uB294 \uD558\uB124\uC2A4 \uCF58\uD150\uCE20\uB9CC \uD569\uC131\uD55C \uAC83\uC774\uBA70, sugo \uD30C\uC774\uD504\uB77C\uC778\uC758 \uAC15\uC81C \uAC8C\uC774\uD2B8(analyze \uD638\uCD9C\uAC15\uC81C,
-baseline, wiring/glue/boot, \uD14C\uC2A4\uD2B8\uC99D\uAC70\uB300\uC870, review 3\uC911\uAC80\uC99D \uB4F1)\uB294 \uBCC4\uB3C4 \uAD6C\uD604 \uB2E8\uACC4\uC785\uB2C8\uB2E4.
-\uD604\uC7AC \uBE4C\uB4DC\uC5D0\uC11C\uB294 \`sugo_plan\` \uC0C1\uD0DC\uBA38\uC2E0\uC758 \uC21C\uC11C\uAC15\uC81C(Gate Keeper)\uB9CC \uB3D9\uC791\uD558\uBA70, \uC704 \uD45C\uC758 \uAC01 \uD558\uB124\uC2A4
-\`validation.yaml\`\uC5D0 \uC815\uC758\uB41C \uAC1C\uBCC4 \uAC80\uC99D \uADDC\uCE59\uC740 \`sugo_validate\`(review \uB2E8\uACC4) \uAD6C\uD604 \uC774\uD6C4 \uC2E4\uC81C\uB85C
-\uC9D1\uD589\uB429\uB2C8\uB2E4. \uADF8 \uC804\uAE4C\uC9C0\uB294 \uC704 "\uD575\uC2EC \uADDC\uCE59 \uC694\uC57D"\uC744 \uCF54\uB4DC \uC791\uC131 \uC2DC \uCC38\uACE0 \uC790\uB8CC\uB85C\uB9CC \uD65C\uC6A9\uD558\uC138\uC694.
+sugo \uD30C\uC774\uD504\uB77C\uC778\uC758 \uC21C\uC11C\uAC15\uC81C\xB7\uCF58\uD150\uCE20 \uAC8C\uC774\uD2B8(analyze \uD638\uCD9C\uAC15\uC81C, baseline, wiring/glue/boot, \uD14C\uC2A4\uD2B8\uC99D\uAC70\uB300\uC870,
+review 4\uC911\uAC80\uC99D \uB4F1)\uB294 \uC2E4\uC81C\uB85C \uC9D1\uD589\uB429\uB2C8\uB2E4(\`sugo_plan\` \uC0C1\uD0DC\uBA38\uC2E0). \uC704 \uD45C\uC758 \uAC01 \uD558\uB124\uC2A4 \`validation.yaml\`\uC740
+\`sugo_validate\`(review \uB2E8\uACC4)\uAC00 \uB300\uC870\uD569\uB2C8\uB2E4 \u2014 \uADF8\uC911 \`auto\`\uAC00 \uC120\uC5B8\uB41C \uCCB4\uD06C\uB294 \uC11C\uBC84\uAC00 \uD30C\uC77C\uC744 \uC9C1\uC811 \uC77D\uC5B4
+\uC2E4\uCE21\uD558\uACE0, \uADF8 \uACB0\uACFC\uAC00 \uC5D0\uC774\uC804\uD2B8\uC758 \uC790\uAE30\uBCF4\uACE0\uBCF4\uB2E4 \uC6B0\uC120\uD569\uB2C8\uB2E4(\uC8FC\uC7A5\uACFC \uC5B4\uAE0B\uB098\uBA74 \`contradictions\`\uC5D0 \uB0A8\uC2B5\uB2C8\uB2E4).
+**\uB2E4\uB9CC \uC544\uC9C1 \uBAA8\uB4E0 \uCCB4\uD06C\uAC00 \uC2E4\uCE21\uB418\uB294 \uAC74 \uC544\uB2D9\uB2C8\uB2E4** \u2014 \uB300\uBD80\uBD84\uC740 review-agent\uC758 \uC790\uAE30\uBCF4\uACE0\uC774\uACE0,
+\`review_done\`\uC774 \uAC80\uC99D \uC2E4\uD328\uB97C \uC774\uC720\uB85C \uD30C\uC774\uD504\uB77C\uC778\uC744 \uB9C9\uB294 \uD558\uB4DC \uAC8C\uC774\uD2B8\uB85C \uC2B9\uACA9\uB418\uC9C0\uB3C4 \uC54A\uC558\uC2B5\uB2C8\uB2E4.
+"\uD575\uC2EC \uADDC\uCE59 \uC694\uC57D"\uC740 \uADF8 \uCC28\uC774\uB97C \uC54C\uACE0 \uCC38\uACE0 \uC790\uB8CC\uB85C \uD65C\uC6A9\uD558\uC138\uC694.
 
 ${allWarnings.length > 0 ? `## \uACBD\uACE0
 
@@ -22847,6 +22851,25 @@ async function unregisterProject(projectPath) {
     await atomicWriteFile(registryPath(), JSON.stringify(filtered, null, 2));
     return true;
   });
+}
+
+// src/harness/claudeMdFreshness.ts
+var FRESHNESS_PREFIX = "> \uC801\uC6A9 \uD558\uB124\uC2A4 \uCD5C\uADFC \uBCC0\uACBD: ";
+function freshnessLine(dateIso) {
+  return `${FRESHNESS_PREFIX}${dateIso}
+
+`;
+}
+function stripFreshnessLine(content) {
+  if (!content.startsWith(FRESHNESS_PREFIX)) return content;
+  const idx = content.indexOf("\n\n");
+  return idx === -1 ? content : content.slice(idx + 2);
+}
+function writeClaudeIfChanged(existing, nextBody, nowIso2) {
+  if (existing !== null && stripFreshnessLine(existing) === nextBody) {
+    return { content: existing, changed: false };
+  }
+  return { content: freshnessLine(nowIso2) + nextBody, changed: true };
 }
 
 // src/harness/harnessRouting.ts
@@ -23549,8 +23572,11 @@ async function syncProjectHarness(args2) {
   const projectName = basename(projectPath);
   const composeResult = compose({ harnesses, projectName, workspace: args2.workspace, detectedStack, fetchWarnings });
   const sugoDir = projectSugoDir(projectPath);
+  const claudeMdPath = join6(sugoDir, "CLAUDE.md");
   await mkdir4(sugoDir, { recursive: true });
-  await atomicWriteFile(join6(sugoDir, "CLAUDE.md"), composeResult.claudeMd);
+  const existingClaudeMd = await readFile3(claudeMdPath, "utf-8").catch(() => null);
+  const claudeMdResult = writeClaudeIfChanged(existingClaudeMd, composeResult.claudeMd, (/* @__PURE__ */ new Date()).toISOString());
+  if (claudeMdResult.changed) await atomicWriteFile(claudeMdPath, claudeMdResult.content);
   for (const file of composeResult.harnessFiles) {
     const fullPath = join6(projectPath, file.relPath);
     await mkdir4(dirname5(fullPath), { recursive: true });
@@ -23600,7 +23626,7 @@ async function syncProjectHarness(args2) {
     workspace,
     composeResult,
     config: config2,
-    claudeMdPath: join6(sugoDir, "CLAUDE.md"),
+    claudeMdPath,
     rootClaudeMdPath: rootClaudePath,
     claudeRulesFiles: harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath)
   };
@@ -27992,8 +28018,7 @@ async function readIfExists(path) {
     return null;
   }
 }
-async function readRulesDir(projectPath, excludeBasenames) {
-  const rulesDir = join15(projectPath, ".claude", "rules");
+async function readRulesDir(rulesDir, excludeBasenames, isTopLevel = true) {
   let entries;
   try {
     entries = await readdir5(rulesDir, { withFileTypes: true });
@@ -28002,9 +28027,13 @@ async function readRulesDir(projectPath, excludeBasenames) {
   }
   const rules = [];
   for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-    if (excludeBasenames.has(entry.name)) continue;
     const full = join15(rulesDir, entry.name);
+    if (entry.isDirectory()) {
+      rules.push(...await readRulesDir(full, excludeBasenames, false));
+      continue;
+    }
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    if (isTopLevel && excludeBasenames.has(entry.name)) continue;
     const content = await readIfExists(full);
     if (content !== null) rules.push({ path: full, content });
   }
@@ -28028,7 +28057,7 @@ async function handleSugoGetProjectContext(rawArgs) {
   );
   const harnesses = loaded.filter((h) => routing.selected.includes(h.id));
   const sugoManagedRuleFiles = new Set(loaded.map((h) => basename2(buildClaudeRuleFile(h.id, "").relPath)));
-  const rules = await readRulesDir(projectPath, sugoManagedRuleFiles);
+  const rules = await readRulesDir(join15(projectPath, ".claude", "rules"), sugoManagedRuleFiles);
   const harnessToolGuides = resolveHarnessToolGuides(routing.selected);
   const payload = {
     ok: true,

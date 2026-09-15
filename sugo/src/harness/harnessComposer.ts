@@ -77,6 +77,8 @@ export function compose(params: ComposeParams): ComposeResult {
 
 > 자동 생성됨. \`sugo:add\`를 다시 실행하면 갱신됩니다. 개별 하네스 전문은
 > \`sugo/harness/<id>/harness.md\`, 검증 설정은 \`sugo/harness/<id>/validation.yaml\`을 참고하세요.
+> 이 파일 자체는 참고용 인덱스입니다 — Claude Code가 세션 시작 시 자동으로 읽는 건
+> \`.claude/rules/*.md\`와 프로젝트 루트 \`CLAUDE.md\`이며, 여기 있는 요약은 그걸 보완합니다.
 ${workspace ? `>\n> 워크스페이스: \`${workspace}\`` : ""}
 
 ## 감지된 스택
@@ -100,11 +102,13 @@ ${ruleSummaryBlocks}
 
 ## 검증 게이트 섹션
 
-이 인덱스는 하네스 콘텐츠만 합성한 것이며, sugo 파이프라인의 강제 게이트(analyze 호출강제,
-baseline, wiring/glue/boot, 테스트증거대조, review 3중검증 등)는 별도 구현 단계입니다.
-현재 빌드에서는 \`sugo_plan\` 상태머신의 순서강제(Gate Keeper)만 동작하며, 위 표의 각 하네스
-\`validation.yaml\`에 정의된 개별 검증 규칙은 \`sugo_validate\`(review 단계) 구현 이후 실제로
-집행됩니다. 그 전까지는 위 "핵심 규칙 요약"을 코드 작성 시 참고 자료로만 활용하세요.
+sugo 파이프라인의 순서강제·콘텐츠 게이트(analyze 호출강제, baseline, wiring/glue/boot, 테스트증거대조,
+review 4중검증 등)는 실제로 집행됩니다(\`sugo_plan\` 상태머신). 위 표의 각 하네스 \`validation.yaml\`은
+\`sugo_validate\`(review 단계)가 대조합니다 — 그중 \`auto\`가 선언된 체크는 서버가 파일을 직접 읽어
+실측하고, 그 결과가 에이전트의 자기보고보다 우선합니다(주장과 어긋나면 \`contradictions\`에 남습니다).
+**다만 아직 모든 체크가 실측되는 건 아닙니다** — 대부분은 review-agent의 자기보고이고,
+\`review_done\`이 검증 실패를 이유로 파이프라인을 막는 하드 게이트로 승격되지도 않았습니다.
+"핵심 규칙 요약"은 그 차이를 알고 참고 자료로 활용하세요.
 
 ${allWarnings.length > 0 ? `## 경고\n\n${allWarnings.map((w) => `- ${w}`).join("\n")}\n` : ""}`;
 

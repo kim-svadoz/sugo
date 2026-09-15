@@ -66,6 +66,32 @@ describe("sugo_add — .claude/rules/ 실배선", () => {
     expect(rootClaude).toContain("sugo:harness-rules:start");
   });
 
+  it("sugo/CLAUDE.md는 내용이 안 바뀌면 재기록을 생략한다(§2 step 4)", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: {} }));
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    await call(handleSugoAdd, { projectPath: projectDir });
+    const first = readFileSync(join(projectDir, "sugo", "CLAUDE.md"), "utf-8");
+
+    await call(handleSugoUpdate, { projectPath: projectDir }); // 스택 그대로 재동기화
+    const second = readFileSync(join(projectDir, "sugo", "CLAUDE.md"), "utf-8");
+
+    expect(second).toBe(first); // 타임스탬프까지 완전히 동일 — 재기록 자체가 없었다는 뜻
+  });
+
+  it("실제로 스택이 바뀌면 sugo/CLAUDE.md도 갱신된다", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: {} }));
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    await call(handleSugoAdd, { projectPath: projectDir });
+    const before = readFileSync(join(projectDir, "sugo", "CLAUDE.md"), "utf-8");
+
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));
+    await call(handleSugoUpdate, { projectPath: projectDir });
+    const after = readFileSync(join(projectDir, "sugo", "CLAUDE.md"), "utf-8");
+
+    expect(after).not.toBe(before);
+    expect(after).toContain("framework/react");
+  });
+
   it("sugo_update로 스택이 줄어들면 더 이상 안 쓰는 하네스의 규칙 파일을 지운다", async () => {
     // 처음엔 React까지 감지되게, 이후엔 React 의존성을 빼서 다시 update.
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));

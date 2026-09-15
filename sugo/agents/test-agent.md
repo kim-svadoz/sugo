@@ -28,7 +28,8 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 5. 풀검증 실행: 풀검증 명령(`gradlew check` 또는 `mvn verify|install`)으로 전량 실행한다. 단순
    `test`는 그린이어도 증명이 아니므로 §4.2에서 거부된다. 신규 실패는 spec_not_met, 기존 실패는
    regression으로 분류한다.
-6. 증거 기록(필수): `sugo_record_test_evidence(command, exitCode, total, passed, failed)`를 남긴다.
+6. 증거 기록(필수): `sugo_record_test_evidence(sessionId, command, exitCode, totalTests, passedTests,
+   failedTests)`를 남긴다(구 이름 `total/passed/failed`는 하위호환용 deprecated — 새로 쓰지 않는다).
    test_done 게이트가 대조하는 서버측 진실이라 조작을 막는다. unverified는 환경부재 선언용이다.
 7. 커버리지맵: AC와 응답필드의 covered 여부, 계약이 필수면 red에서 green으로의 전이를 산출해
    review_done이 소비하게 한다.

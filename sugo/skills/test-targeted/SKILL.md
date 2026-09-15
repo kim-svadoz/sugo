@@ -15,7 +15,8 @@ description: 'test-agent 체인 기본 스킬. code-agent 핸드오프와 PRD를
 4. write/update: 테스트 파일만 수정한다.
 5. 풀검증 실행: `gradlew check` 또는 `mvn verify|install`을 쓴다. 단순 test는 §4.2에서 거부된다.
    신규 실패는 spec_not_met, 기존 실패는 regression으로 분류한다.
-6. 증거 기록(필수): `sugo_record_test_evidence(command, exitCode, total, passed, failed)`.
+6. 증거 기록(필수): `sugo_record_test_evidence(sessionId, command, exitCode, totalTests, passedTests,
+   failedTests)`(구 이름 `total/passed/failed`는 하위호환용 deprecated).
 7. 커버리지맵: AC와 응답필드의 covered 여부, 계약이 필수면 red에서 green으로의 전이를 산출한다.
    review_done이 이 값을 소비한다.
 

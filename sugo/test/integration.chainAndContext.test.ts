@@ -116,6 +116,17 @@ describe("sugo_get_project_context", () => {
     expect(result.data.rules[0].content).toContain("팀 전용 규칙");
   });
 
+  it(".claude/rules/의 하위 디렉터리(체크포인트 카테고리 등)도 재귀로 읽는다", async () => {
+    // pullCheckpointsToRules가 .claude/rules/<category>/<slug>.md에 쓴다 — Claude Code는 이걸
+    // 재귀로 자동로드하는데 get_project_context가 최상위만 보면 같은 파일을 놓치게 된다.
+    mkdirSync(join(projectDir, ".claude", "rules", "backend"), { recursive: true });
+    writeFileSync(join(projectDir, ".claude", "rules", "backend", "CP-001-정책.md"), "# 체크포인트 규칙");
+
+    const result = await call(handleSugoGetProjectContext, { projectPath: projectDir });
+
+    expect(result.data.rules.some((r: { content: string }) => r.content.includes("체크포인트 규칙"))).toBe(true);
+  });
+
   it("sugo_add가 .claude/rules/에 쓴 하네스 파일은 rules에서 제외한다(harnesses와 중복 방지)", async () => {
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));
     writeFileSync(join(projectDir, "tsconfig.json"), "{}");

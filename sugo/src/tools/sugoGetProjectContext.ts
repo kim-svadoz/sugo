@@ -29,8 +29,16 @@ async function readIfExists(path: string): Promise<string | null> {
  * 읽어 `harnesses`와 같은 내용을 `rules`에 중복으로 실으면 안 된다. `excludeBasenames`는 그
  * 파일명들이다 — sync.ts의 파일명 규칙(`buildClaudeRuleFile`)과 같은 소스에서 파생한다.
  */
-async function readRulesDir(projectPath: string, excludeBasenames: Set<string>): Promise<{ path: string; content: string }[]> {
-  const rulesDir = join(projectPath, ".claude", "rules");
+/**
+ * 재귀로 읽는다. Claude Code 자신이 `.claude/rules/`를 재귀 자동로드하므로(하위 디렉터리 포함),
+ * 최상위만 보면 `pullCheckpointsToRules`가 쓰는 `.claude/rules/<category>/*.md` 같은 걸 놓친다.
+ * `excludeBasenames`는 최상위에서만 적용한다 — sugo가 쓴 하네스 파일은 항상 최상위 평면 구조다.
+ */
+async function readRulesDir(
+  rulesDir: string,
+  excludeBasenames: Set<string>,
+  isTopLevel = true,
+): Promise<{ path: string; content: string }[]> {
   let entries;
   try {
     entries = await readdir(rulesDir, { withFileTypes: true });
@@ -39,9 +47,13 @@ async function readRulesDir(projectPath: string, excludeBasenames: Set<string>):
   }
   const rules: { path: string; content: string }[] = [];
   for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-    if (excludeBasenames.has(entry.name)) continue;
     const full = join(rulesDir, entry.name);
+    if (entry.isDirectory()) {
+      rules.push(...(await readRulesDir(full, excludeBasenames, false)));
+      continue;
+    }
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    if (isTopLevel && excludeBasenames.has(entry.name)) continue;
     const content = await readIfExists(full);
     if (content !== null) rules.push({ path: full, content });
   }
@@ -77,7 +89,7 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
   const harnesses = loaded.filter((h) => routing.selected.includes(h.id));
 
   const sugoManagedRuleFiles = new Set(loaded.map((h) => basename(buildClaudeRuleFile(h.id, "").relPath)));
-  const rules = await readRulesDir(projectPath, sugoManagedRuleFiles);
+  const rules = await readRulesDir(join(projectPath, ".claude", "rules"), sugoManagedRuleFiles);
 
   // ── §2 하네스 도구 디스패치: 적용된 하네스에 매칭되는 특화 MCP 도구 안내를 실어준다.
   // 레지스트리가 비어있으면(기본값) toolMenu는 빈 문자열 — 조용히 아무 것도 없음.

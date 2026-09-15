@@ -7,6 +7,7 @@ import { compose, type ComposeResult } from "./harnessComposer.js";
 import { fetchHarnesses } from "./harnessFetcher.js";
 import { defaultHarnessLibraryDir } from "./libraryPath.js";
 import { findRegistryEntry, registerProject } from "./registry.js";
+import { writeClaudeIfChanged } from "./claudeMdFreshness.js";
 import { buildClaudeRuleFile, mergeRootClaudeReference } from "./rulesFile.js";
 import { detectStack } from "./stackDetector.js";
 
@@ -49,8 +50,13 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
   const composeResult = compose({ harnesses, projectName, workspace: args.workspace, detectedStack, fetchWarnings });
 
   const sugoDir = projectSugoDir(projectPath);
+  const claudeMdPath = join(sugoDir, "CLAUDE.md");
   await mkdir(sugoDir, { recursive: true });
-  await atomicWriteFile(join(sugoDir, "CLAUDE.md"), composeResult.claudeMd);
+  // 내용이 안 바뀌었으면 재기록을 생략한다(§2 step 4 writeClaudeIfChanged) — 그래야 안 건드린
+  // 프로젝트를 재동기화만 해도 git이 dirty해지는 걸 피한다.
+  const existingClaudeMd = await readFile(claudeMdPath, "utf-8").catch(() => null);
+  const claudeMdResult = writeClaudeIfChanged(existingClaudeMd, composeResult.claudeMd, new Date().toISOString());
+  if (claudeMdResult.changed) await atomicWriteFile(claudeMdPath, claudeMdResult.content);
   for (const file of composeResult.harnessFiles) {
     const fullPath = join(projectPath, file.relPath);
     await mkdir(dirname(fullPath), { recursive: true });
@@ -114,7 +120,7 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
     workspace,
     composeResult,
     config,
-    claudeMdPath: join(sugoDir, "CLAUDE.md"),
+    claudeMdPath,
     rootClaudeMdPath: rootClaudePath,
     claudeRulesFiles: harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath),
   };
