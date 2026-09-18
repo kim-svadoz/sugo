@@ -1,5 +1,28 @@
 import type { PlanSession } from "../types.js";
 
+/**
+ * ISO 시각을 실행 머신의 시간대로 포맷한다. 파싱할 수 없으면 undefined를 돌려준다 — 원본 ISO는
+ * 그대로 남으므로 여기서 추측값을 만들어 넣지 않는다.
+ */
+function toLocalTime(iso: string | undefined): string | undefined {
+  if (!iso) return undefined;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return undefined;
+  // `dateStyle`/`timeStyle`은 `timeZoneName` 같은 개별 옵션과 함께 쓸 수 없다(Intl 스펙 제약 —
+  // 섞으면 "Invalid option" TypeError). 그래서 컴포넌트를 하나씩 지정한다.
+  // sv-SE 로캘이 `2026-09-18 15:31:51 GMT+9` 형태를 줘서 ISO에 가깝고 정렬·비교가 자연스럽다.
+  return new Intl.DateTimeFormat("sv-SE", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZoneName: "short",
+  }).format(date);
+}
+
 export interface SessionSummary {
   sessionId: string;
   state: string;
@@ -7,6 +30,13 @@ export interface SessionSummary {
   projectPath: string;
   startedAt?: string;
   updatedAt?: string;
+  /**
+   * `updatedAt`을 실행 머신의 시간대로 포맷한 값(`2026-09-18 15:31:51 KST` 형태).
+   *
+   * 원본 ISO는 UTC라 사람이 "언제 멈췄나"를 바로 못 읽는다. 시간대를 하드코딩하지 않고 시스템
+   * 설정을 따른다 — 플러그인은 배포물이라 특정 지역을 박으면 다른 환경에서 틀린 시각을 보여준다.
+   */
+  updatedAtLocal?: string;
   cancelledAt?: string;
   /**
    * 이어받을 수 있는 세션. 완주(`DONE`)도 취소도 아닌 것만 해당한다.
@@ -43,6 +73,7 @@ export function summarizeSession(session: PlanSession): SessionSummary {
     projectPath: session.projectPath,
     startedAt: session.startedAt,
     updatedAt: session.updatedAt,
+    ...(toLocalTime(session.updatedAt) ? { updatedAtLocal: toLocalTime(session.updatedAt) } : {}),
     ...(session.cancelledAt ? { cancelledAt: session.cancelledAt } : {}),
     resumable: session.state !== "DONE" && !session.cancelledAt,
     blockers,

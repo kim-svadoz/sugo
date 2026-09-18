@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   checkTestEvidenceGate,
   classifyVerifyCommand,
@@ -130,6 +133,21 @@ describe("§4.2 풀검증 명령 게이트 — 설계안 코퍼스", () => {
  * 짧은 이름(`total`/`passed`/`failed`)도 받되 정본 이름이 이긴다.
  */
 describe("§설계안 record_test_evidence 파라미터명", () => {
+  // `sugo_plan(start)`는 실제 세션 파일을 쓴다. HOME을 tmpdir로 갈아끼우지 않으면 사용자의
+  // `~/.claude/sugo/sessions/`에 `featureName:"f"` 세션이 매 실행 3개씩 쌓인다 — 실제로 102개가
+  // 쌓여 `/sugo:ws-status`의 진짜 세션을 덮어버렸다. 다른 실배선 테스트와 같은 격리를 쓴다.
+  let fakeHome: string;
+
+  beforeEach(() => {
+    fakeHome = mkdtempSync(join(tmpdir(), "sugo-test-evidence-home-"));
+    process.env.SUGO_HOME_OVERRIDE = fakeHome;
+  });
+
+  afterEach(() => {
+    delete process.env.SUGO_HOME_OVERRIDE;
+    rmSync(fakeHome, { recursive: true, force: true });
+  });
+
   async function record(args: Record<string, unknown>) {
     const { handleSugoPlan } = await import("../src/tools/sugoPlan.js");
     const { handleSugoRecordTestEvidence } = await import("../src/tools/sugoRecordTestEvidence.js");

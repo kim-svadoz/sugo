@@ -27718,7 +27718,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.3.4" : "0.0.0-dev";
+  return true ? "0.3.5" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -31393,6 +31393,21 @@ function errorResult17(errorCode, message) {
 }
 
 // src/work/sessionSummary.ts
+function toLocalTime(iso) {
+  if (!iso) return void 0;
+  const date3 = new Date(iso);
+  if (Number.isNaN(date3.getTime())) return void 0;
+  return new Intl.DateTimeFormat("sv-SE", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZoneName: "short"
+  }).format(date3);
+}
 function summarizeSession(session) {
   const chain = session.data?.chainInfo;
   const blockers = [];
@@ -31408,6 +31423,7 @@ function summarizeSession(session) {
     projectPath: session.projectPath,
     startedAt: session.startedAt,
     updatedAt: session.updatedAt,
+    ...toLocalTime(session.updatedAt) ? { updatedAtLocal: toLocalTime(session.updatedAt) } : {},
     ...session.cancelledAt ? { cancelledAt: session.cancelledAt } : {},
     resumable: session.state !== "DONE" && !session.cancelledAt,
     blockers,

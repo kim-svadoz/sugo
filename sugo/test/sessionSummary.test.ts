@@ -34,6 +34,18 @@ describe("summarizeSession — 왜 멈췄는지만 남긴다", () => {
     expect(summarizeSession(session())).not.toHaveProperty("cancelledAt");
   });
 
+  it("updatedAt을 실행 머신 시간대로 포맷해 함께 싣는다", () => {
+    const s = summarizeSession(session({ updatedAt: "2026-09-18T06:31:51.270Z" }));
+    // 시간대를 하드코딩하지 않으므로 값 자체는 환경에 따라 다르다 — 형태와 원본 보존만 검증한다.
+    expect(s.updatedAtLocal).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
+    expect(s.updatedAt).toBe("2026-09-18T06:31:51.270Z");
+  });
+
+  it("updatedAt이 없거나 파싱 불가면 updatedAtLocal을 싣지 않는다", () => {
+    expect(summarizeSession(session({ updatedAt: undefined }))).not.toHaveProperty("updatedAtLocal");
+    expect(summarizeSession(session({ updatedAt: "안녕하세요" }))).not.toHaveProperty("updatedAtLocal");
+  });
+
   it("테스트 실패를 blocker로 싣는다", () => {
     const s = summarizeSession(
       session({ data: { chainInfo: { testEvidence: { failed: 2, total: 9 } } } } as Partial<PlanSession>),

@@ -21,6 +21,8 @@ argument-hint: "<워크스페이스 이름>"
 
 **① 이어받을 세션** (`resumable: true`) — 가장 먼저, 가장 자세히.
 세션 ID 전체 값, `state`, `featureName`, 마지막 갱신 시각, `blockers`, 변경파일 수를 표로 낸다.
+마지막 갱신은 **`updatedAtLocal`(실행 머신 시간대)을 쓴다** — `updatedAt`은 UTC라 사람이 바로
+읽지 못한다. UTC를 직접 변환해 적지 말고 서버가 준 값을 그대로 쓴다.
 `blockers`는 서버가 세션 기록에서 뽑은 실측 신호다(테스트 실패 수, analyze/review 미통과,
 review 재시도 횟수) — 추정으로 보태거나 바꾸지 않는다.
 
