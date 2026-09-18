@@ -24080,6 +24080,17 @@ async function listWorkspaces(includeDeleted = false) {
   }
   return workspaces;
 }
+async function removeProjectFromWorkspaces(projectPath) {
+  const affected = [];
+  for (const workspace of await listWorkspaces(true)) {
+    if (!workspace.projects.includes(projectPath)) continue;
+    const next = { ...workspace, projects: workspace.projects.filter((p) => p !== projectPath) };
+    await atomicWriteFile(workspaceFilePath(next.name), JSON.stringify(next, null, 2));
+    void syncWorkspace(next);
+    affected.push(next.name);
+  }
+  return affected;
+}
 var VALID_WORKSPACE_NAME = /^[A-Za-z0-9._-]+$/;
 function isValidWorkspaceName(name2) {
   if (!VALID_WORKSPACE_NAME.test(name2)) return false;
@@ -27723,7 +27734,15 @@ async function handleSugoDelete(rawArgs) {
   if (!removed) {
     return errorResult4("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4: ${projectPath}`);
   }
-  return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, removedFromRegistry: true }, null, 2) }] };
+  const removedFromWorkspaces = await removeProjectFromWorkspaces(projectPath);
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({ ok: true, projectPath, removedFromRegistry: true, removedFromWorkspaces }, null, 2)
+      }
+    ]
+  };
 }
 function errorResult4(errorCode, message) {
   return {

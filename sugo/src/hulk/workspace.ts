@@ -55,6 +55,29 @@ export async function listWorkspaces(includeDeleted = false): Promise<Workspace[
   return workspaces;
 }
 
+/**
+ * 프로젝트를 소속된 모든 워크스페이스의 `projects`에서 뺀다. 제거가 일어난 워크스페이스 이름을
+ * 돌려준다(없으면 빈 배열).
+ *
+ * §9 `sugo_delete`가 레지스트리만 지우고 워크스페이스 멤버십은 남겨서, 등록돼 있지도 않은 경로가
+ * `sugo_workspace(get)`에 계속 보이는 고아 항목이 생겼다. 빼는 경로가 아예 없어 사용자가
+ * `workspace.json`을 손으로 고쳐야 했다.
+ *
+ * soft delete된 워크스페이스도 대상에 포함한다 — 숨겨졌을 뿐 되살릴 수 있는 데이터라, 거기 남은
+ * 고아는 `ensureWorkspace`로 복구했을 때 그대로 되살아난다.
+ */
+export async function removeProjectFromWorkspaces(projectPath: string): Promise<string[]> {
+  const affected: string[] = [];
+  for (const workspace of await listWorkspaces(true)) {
+    if (!workspace.projects.includes(projectPath)) continue;
+    const next: Workspace = { ...workspace, projects: workspace.projects.filter((p) => p !== projectPath) };
+    await atomicWriteFile(workspaceFilePath(next.name), JSON.stringify(next, null, 2));
+    void syncWorkspace(next); // §7.2 논블로킹 — ensureWorkspace와 같은 방식
+    affected.push(next.name);
+  }
+  return affected;
+}
+
 // ── §9 워크스페이스 soft delete ──────────────────────────────────────────────
 
 export interface DeleteWorkspaceOptions {
