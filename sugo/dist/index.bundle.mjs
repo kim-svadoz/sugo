@@ -27718,7 +27718,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.3.3" : "0.0.0-dev";
+  return true ? "0.3.4" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -31392,6 +31392,33 @@ function errorResult17(errorCode, message) {
   };
 }
 
+// src/work/sessionSummary.ts
+function summarizeSession(session) {
+  const chain = session.data?.chainInfo;
+  const blockers = [];
+  const evidence = chain?.testEvidence;
+  if (evidence?.failed) blockers.push(`\uD14C\uC2A4\uD2B8 \uC2E4\uD328 ${evidence.failed}/${evidence.total ?? "?"}`);
+  if (chain?.analyzePassed === false) blockers.push("analyze \uBBF8\uD1B5\uACFC");
+  if (chain?.reviewPassed === false) blockers.push("review \uBBF8\uD1B5\uACFC");
+  if (chain?.autoLoopRetryCount) blockers.push(`review \uC7AC\uC2DC\uB3C4 ${chain.autoLoopRetryCount}\uD68C`);
+  return {
+    sessionId: session.id,
+    state: session.state,
+    featureName: session.featureName,
+    projectPath: session.projectPath,
+    startedAt: session.startedAt,
+    updatedAt: session.updatedAt,
+    ...session.cancelledAt ? { cancelledAt: session.cancelledAt } : {},
+    resumable: session.state !== "DONE" && !session.cancelledAt,
+    blockers,
+    ...chain?.changedFiles ? { changedFileCount: chain.changedFiles.length } : {}
+  };
+}
+function sessionsForProjects(sessions, projectPaths) {
+  const paths = new Set(projectPaths);
+  return sessions.filter((s) => paths.has(s.projectPath)).map(summarizeSession).sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
+}
+
 // src/tools/sugoWorkspace.ts
 var sugoWorkspaceInputSchema = {
   action: external_exports.enum(["add", "list", "get", "remember", "recall", "status", "sync", "delete"]),
@@ -31451,20 +31478,27 @@ async function handleSugoWorkspace(rawArgs) {
     }
     case "status": {
       if (!args2.name) return errorResult18("NAME_REQUIRED", "status action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const [tasks, checkpoints, roadmapNodes, specs, history] = await Promise.all([
+      const [workspace, tasks, checkpoints, roadmapNodes, specs, history, allSessions] = await Promise.all([
+        loadWorkspace(args2.name),
         listTasks(args2.name),
         listCheckpoints(args2.name),
         listRoadmapNodes(args2.name),
         listSpecs(args2.name),
-        listWorkLogs(args2.name)
+        listWorkLogs(args2.name),
+        loadAllSessions()
       ]);
+      const sessions = sessionsForProjects(allSessions, workspace?.projects ?? []);
       return ok7({
         workspace: args2.name,
         taskCount: tasks.length,
         checkpointCount: checkpoints.length,
         roadmapNodeCount: roadmapNodes.length,
         specCount: specs.length,
-        historyCount: history.length
+        historyCount: history.length,
+        tasks,
+        roadmapNodes,
+        sessions,
+        resumableSessionCount: sessions.filter((s) => s.resumable).length
       });
     }
     case "sync": {

@@ -9,6 +9,8 @@ import { listRoadmapNodes } from "../hulk/roadmap.js";
 import { listSpecs } from "../hulk/spec.js";
 import { listTasks } from "../hulk/task.js";
 import { deleteWorkspace, ensureWorkspace, listWorkspaces, loadWorkspace } from "../hulk/workspace.js";
+import { loadAllSessions } from "../session.js";
+import { sessionsForProjects } from "../work/sessionSummary.js";
 
 /**
  * §1/§9 `sugo_workspace`. 워크스페이스에 대한 조작은 전부 여기 모은다 — `status`(데이터 요약)와
@@ -81,13 +83,17 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
     }
     case "status": {
       if (!args.name) return errorResult("NAME_REQUIRED", "status action에는 name이 필요합니다.");
-      const [tasks, checkpoints, roadmapNodes, specs, history] = await Promise.all([
+      const [workspace, tasks, checkpoints, roadmapNodes, specs, history, allSessions] = await Promise.all([
+        loadWorkspace(args.name),
         listTasks(args.name),
         listCheckpoints(args.name),
         listRoadmapNodes(args.name),
         listSpecs(args.name),
         listWorkLogs(args.name),
+        loadAllSessions(),
       ]);
+      // 세션은 projectPath만 알고 워크스페이스를 모른다 — 소속 프로젝트 경로로 걸러낸다.
+      const sessions = sessionsForProjects(allSessions, workspace?.projects ?? []);
       return ok({
         workspace: args.name,
         taskCount: tasks.length,
@@ -95,6 +101,10 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
         roadmapNodeCount: roadmapNodes.length,
         specCount: specs.length,
         historyCount: history.length,
+        tasks,
+        roadmapNodes,
+        sessions,
+        resumableSessionCount: sessions.filter((s) => s.resumable).length,
       });
     }
     case "sync": {
