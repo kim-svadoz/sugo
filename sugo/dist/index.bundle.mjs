@@ -27718,7 +27718,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.3.5" : "0.0.0-dev";
+  return true ? "0.3.6" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -31457,7 +31457,16 @@ async function handleSugoWorkspace(rawArgs) {
     }
     case "list": {
       const workspaces = await listWorkspaces(args2.includeDeleted ?? false);
-      return ok7({ workspaces });
+      const allSessions = await loadAllSessions();
+      const enriched = await Promise.all(
+        workspaces.map(async (workspace) => ({
+          ...workspace,
+          projectCount: workspace.projects.length,
+          taskCount: (await listTasks(workspace.name)).length,
+          resumableSessionCount: sessionsForProjects(allSessions, workspace.projects).filter((s) => s.resumable).length
+        }))
+      );
+      return ok7({ workspaces: enriched });
     }
     case "delete": {
       if (!args2.name) return errorResult18("NAME_REQUIRED", "delete action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");

@@ -43,7 +43,18 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
     }
     case "list": {
       const workspaces = await listWorkspaces(args.includeDeleted ?? false);
-      return ok({ workspaces });
+      // 이름만 나열하면 "어디로 돌아가야 하나"에 답하지 못한다. 세션은 한 번만 읽고 워크스페이스별로
+      // 나눠 이어받을 게 남은 곳을 표시한다 — 상세는 status가 준다.
+      const allSessions = await loadAllSessions();
+      const enriched = await Promise.all(
+        workspaces.map(async (workspace) => ({
+          ...workspace,
+          projectCount: workspace.projects.length,
+          taskCount: (await listTasks(workspace.name)).length,
+          resumableSessionCount: sessionsForProjects(allSessions, workspace.projects).filter((s) => s.resumable).length,
+        })),
+      );
+      return ok({ workspaces: enriched });
     }
     case "delete": {
       if (!args.name) return errorResult("NAME_REQUIRED", "delete action에는 name이 필요합니다.");
