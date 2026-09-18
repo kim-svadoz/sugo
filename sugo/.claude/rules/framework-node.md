@@ -1,0 +1,25 @@
+---
+paths:
+  - "**/*.cjs"
+  - "**/*.cts"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.mjs"
+  - "**/*.mts"
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/next.config.*"
+  - "**/package-lock.json"
+  - "**/package.json"
+  - "**/pnpm-lock.yaml"
+  - "**/pnpm-workspace.yaml"
+  - "**/yarn.lock"
+---
+
+# Node.js 하네스 (framework/node)
+
+## 핵심 규칙
+
+1. **필수 환경변수는 부팅 시점에 검증한다.** 없으면 즉시 명확한 에러로 실패(fail-fast)한다 — 검증 없이 넘어가면 그 값이 실제로 쓰이는 요청 한복판에서야 `undefined` 관련 에러로 드러난다.
+2. **미처리 예외/거부(`uncaughtException`/`unhandledRejection`)는 최소한 로그를 남긴다.** 아무 처리도 없으면 프로세스가 원인 기록 없이 죽거나 좀비 상태로 남는다.
+3. **외부 입력은 경계(라우트/핸들러 진입점)에서 검증한다.** 그 이후의 내부 로직은 검증된 입력을 신뢰하고, 이미 신뢰할 수 있는 값을 다시 검증하지 않는다.

@@ -1,2 +1,8 @@
 node_modules/
 *.tmp.*
+
+# sugo가 이 디렉터리를 프로젝트로 등록해 만드는 산출물(config.json·harness/·features/).
+# 여기는 플러그인으로 배포되는 트리라 그대로 두면 배포물에 섞인다. config.json에는
+# 절대경로가 박혀 있어 다른 PC에서 의미도 없다. 하네스 규칙 자체는 .claude/rules/로
+# 따로 나가므로 추적된다.
+/sugo/
