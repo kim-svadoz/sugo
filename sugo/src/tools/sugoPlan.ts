@@ -11,6 +11,8 @@ import { fetchCalibratedRatio } from "../dashboard/fetch.js";
 import { collectPrRefs } from "../prRefs.js";
 import { validateIntegration, validateManifest, type DecomposeManifest } from "../decompose.js";
 import { checkEvidenceReuseGate, computeChangedFilesFingerprint } from "../fingerprint.js";
+import { currentGitBranch, featureBranchName } from "../gitBranch.js";
+import { checkTodoSpecDraftGate, checkTodoSpecSyncGate, createTodoSpec, readTodoSpec, todoSpecActuallySynced, todoSpecPath } from "../todoSpec.js";
 import {
   checkAnalyzeGate,
   checkBaselineGate,
@@ -51,7 +53,8 @@ import {
 } from "../labelGuard.js";
 import { PatchEntryError, resolvePatchContext, type PatchContext } from "../patch.js";
 import { applyTransition } from "../planStateMachine.js";
-import { generateSessionId, loadSession, saveSession, sessionExists } from "../session.js";
+import { generateSessionId, loadAllSessions, loadSession, saveSession, sessionExists } from "../session.js";
+import { sessionsForProjects } from "../work/sessionSummary.js";
 import { checkTestEvidenceGate, isFullVerifyEnforceable } from "../testEvidence.js";
 import { checkTestReverifyGate } from "../testReverify.js";
 import { buildCompletionPlan } from "../completionPlan.js";
@@ -95,6 +98,24 @@ export const sugoPlanInputSchema = {
     .optional()
     .describe(
       "cancel action: 에이전트 체인 구간(CODE_RUNNING~REVIEW_RUNNING)에서 접을 때 **필수**. 왜 완주하지 않고 접는지. abandonedChain 라벨로 남아 완료등급이 unverified가 된다",
+    ),
+  todoSpecGoal: z
+    .string()
+    .optional()
+    .describe("clarify action: TODO-SPEC이 없는 feature/* 브랜치의 최초 진입에서, 사용자 요청이 암시하는 최종 목표(한두 문장)"),
+  todoSpecItems: z
+    .array(z.string())
+    .optional()
+    .describe("clarify action: 최종 목표를 분해한 항목 목록 — 사용자와 확정한 것만. 이번 세션이 일부만 다뤄도 전체를 싣는다"),
+  todoSpecUserConfirmed: z
+    .boolean()
+    .optional()
+    .describe("clarify action: todoSpecGoal/todoSpecItems 초안을 사용자에게 보여주고 확인받았는지. 없으면 파일을 생성하지 않는다"),
+  todoSpecSyncReason: z
+    .string()
+    .optional()
+    .describe(
+      "commit action: TODO-SPEC.md가 이번 세션 동안 갱신되지 않았을 때의 우회 사유(이 세션이 TODO-SPEC의 최종 목표와 무관했다는 뜻). todoSpecSyncSkipped 라벨로 남아 완료등급이 unverified가 된다",
     ),
   reverifyReason: z
     .string()
@@ -338,6 +359,40 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (args.coverageMap) {
       const coverageResult = checkCoverageGate(args.coverageMap);
       if (!coverageResult.ok) return errorResult(coverageResult.code as GateBlockCode, coverageResult.message!);
+    }
+  }
+
+  // ── §4.3-T TODO-SPEC 최초 확정 게이트. TODO-SPEC이 없는 feature/* 브랜치에서 clarify가 초안을
+  // 들고 왔을 때만 발동한다(goal/items를 안 줬으면 아직 사용자와 논의 중이라는 뜻이라 건너뛴다).
+  // "모델이 임의로 확정하지 않는다"를 자기보고 파라미터로 강제한다 — 진짜 확인이 일어났는지는
+  // checkUserConfirmationGate와 같은 한계로 검증할 수 없다.
+  if (
+    action === "clarify" &&
+    existing?.data.todoSpec &&
+    existing.data.todoSpec.snapshotAtStart === null &&
+    (args.todoSpecGoal || args.todoSpecItems)
+  ) {
+    const draftResult = checkTodoSpecDraftGate(args.todoSpecGoal, args.todoSpecItems, args.todoSpecUserConfirmed);
+    if (!draftResult.ok) return errorResult(draftResult.code as GateBlockCode, draftResult.message!);
+  }
+
+  // ── §4.3-T TODO-SPEC 동기화 게이트. 브랜치가 feature/*가 아니었으면 session.data.todoSpec 자체가
+  // 없으므로 no-op. 파일을 다시 읽어 start 시점 스냅샷과 대조한다 — 세션에 저장해둔 스냅샷과
+  // 비교하는 것이지 서버가 "무엇을 했어야 하는지"를 추론하지 않는다(§4.3 판정 원칙과 동일).
+  if (action === "commit" && existing?.data.todoSpec) {
+    const currentContent = await readTodoSpec(existing.projectPath, existing.data.todoSpec.featureName);
+    const syncResult = checkTodoSpecSyncGate(existing.data.todoSpec.snapshotAtStart, currentContent, args.todoSpecSyncReason);
+    if (!syncResult.ok) return errorResult(syncResult.code as GateBlockCode, syncResult.message!);
+    // 라벨은 "실제로 우회했을 때만" 남긴다 — 정상적으로 갱신하고도 syncReason을 함께 준 경우는
+    // 우회가 아니므로 라벨을 남기지 않는다.
+    const actuallySynced = currentContent !== null && todoSpecActuallySynced(existing.data.todoSpec.snapshotAtStart, currentContent);
+    if (!actuallySynced && args.todoSpecSyncReason?.trim()) {
+      newBypassLabels.push({
+        kind: "todoSpecSyncSkipped",
+        reason: args.todoSpecSyncReason,
+        patchVersion: currentPatchVersion,
+        recordedAt: new Date().toISOString(),
+      });
     }
   }
 
@@ -592,6 +647,39 @@ export async function handleSugoPlan(rawArgs: unknown) {
   // ── §7.1 seed(사용자 지시)는 세션에 그대로 보존해뒀다가 review_done이 work-result에 싣는다.
   if (action === "start" && args.seed) {
     session = { ...session, data: { ...session.data, seed: args.seed } };
+  }
+
+  // ── §4.3-T TODO-SPEC 최초 생성. 게이트(위)를 통과했을 때만 도달한다 — 사용자 확인을 거친
+  // 초안만 파일로 고정한다.
+  if (
+    action === "clarify" &&
+    session.data.todoSpec &&
+    session.data.todoSpec.snapshotAtStart === null &&
+    args.todoSpecUserConfirmed &&
+    args.todoSpecGoal &&
+    args.todoSpecItems
+  ) {
+    const { content } = await createTodoSpec(session.projectPath, {
+      featureName: session.data.todoSpec.featureName,
+      goal: args.todoSpecGoal,
+      items: args.todoSpecItems,
+    });
+    session = { ...session, data: { ...session.data, todoSpec: { ...session.data.todoSpec, snapshotAtStart: content } } };
+  }
+
+  // ── §4.3-T TODO-SPEC 브랜치 감지. sugo를 쓰는 프로젝트라면 feature/* 브랜치에서 무조건
+  // 동작한다(opt-in 아님 — verificationPolicy로 끌 수 있는 §10 확장들과는 다르다). 브랜치가
+  // 패턴이 아니거나 git 저장소가 아니면(currentGitBranch가 null) 조용히 no-op.
+  if (action === "start") {
+    const branch = await currentGitBranch(session.projectPath);
+    const fName = featureBranchName(branch);
+    if (fName) {
+      const snapshotAtStart = await readTodoSpec(session.projectPath, fName);
+      session = {
+        ...session,
+        data: { ...session.data, todoSpec: { featureName: fName, path: todoSpecPath(session.projectPath, fName), snapshotAtStart } },
+      };
+    }
   }
 
   // ── §5.0 specOracle 켜기: **경로를 줬다는 주장이 아니라 파일이 실재하는지**를 서버가 확인한다.
@@ -894,6 +982,23 @@ export async function handleSugoPlan(rawArgs: unknown) {
     await saveSession(session);
   }
 
+  // ── §4.3-T start 응답: TODO-SPEC 원문(요약 아님 — 에이전트가 "완료됨"/"남은 것"을 직접 읽고
+  // 판단하게 한다)과, 결정 ③(합칠지는 물어보되 강제 병합하지 않는다): 같은 프로젝트에 이미
+  // 진행 중인 세션이 있으면 알려준다. 새로 만든 세션 자기 자신은 제외한다.
+  let todoSpecResponse: { status: "missing" | "loaded"; path: string; content: string | null } | undefined;
+  let otherResumableSessions: ReturnType<typeof sessionsForProjects> | undefined;
+  if (action === "start" && session.data.todoSpec) {
+    const t = session.data.todoSpec;
+    todoSpecResponse = { status: t.snapshotAtStart === null ? "missing" : "loaded", path: t.path, content: t.snapshotAtStart };
+  }
+  if (action === "start") {
+    const all = await loadAllSessions();
+    otherResumableSessions = sessionsForProjects(all, [session.projectPath]).filter(
+      (s) => s.resumable && s.sessionId !== session.id,
+    );
+    if (otherResumableSessions.length === 0) otherResumableSessions = undefined;
+  }
+
   const payload = {
     ok: true,
     sessionId: session.id,
@@ -904,6 +1009,10 @@ export async function handleSugoPlan(rawArgs: unknown) {
     nextActionHints: result.nextActionHints ?? [],
     // §4.3-P DONE까지 남은 경로와 지금 막고 있는 것 — 막다른 길에 들어가기 전에 보이게 한다.
     completionPlan: buildCompletionPlan(session.state, session.data.chainInfo),
+    // §4.3-T start에서만 채워진다. missing이면 clarify에서 최종 목표를 확정해 생성해야 한다.
+    todoSpec: todoSpecResponse,
+    // 같은 프로젝트에 이어받을 수 있는 다른 세션이 있으면 알려준다 — 병합을 강제하지 않는다.
+    otherResumableSessions,
     humanHoursEstimate,
     prdPath: session.data.prdPath,
     workResultPath: session.data.chainInfo.workResultPath,

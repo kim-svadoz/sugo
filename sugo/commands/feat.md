@@ -14,12 +14,27 @@ argument-hint: <기능 설명>
 
 1. `sugo_plan(action:"start", projectPath, featureName)`으로 등록을 확인하고 세션을 만든다.
    workResultPath를 주면 patch로 분기한다(`/sugo:patch` 참고).
+   - **§4.3-T TODO-SPEC(하드 게이트, 브랜치 패턴이면 무조건 — opt-in 아님)**: 응답의 `todoSpec`을
+     본다. `status:"missing"`이면 아직 파일이 없다는 뜻이니 2번에서 최종 목표를 확정해야 한다.
+     `status:"loaded"`면 `content`(원문, 요약 아님)를 그대로 읽어 "완료됨"/"남은 것"을 파악하고,
+     이번 요청이 남은 항목 중 어디에 해당하는지 사용자와 짧게 맞춘다. `todoSpec` 필드 자체가
+     없으면(undefined) `feature/*` 브랜치가 아니라는 뜻이라 이 절차 전체를 건너뛴다.
+   - `otherResumableSessions`가 있으면 같은 프로젝트에 막혀 있는 다른 세션이 있다는 뜻이다.
+     자동으로 병합하지 말고 사용자에게 "이 세션을 이어받을지, 새로 시작할지" 물어본다.
 2. `clarify`로 범위, 수락기준, 제약, 우선순위를 사용자와 확정한다.
+   - TODO-SPEC이 `missing`이었다면: 사용자의 요청을 이번 세션 범위로 축소하지 말고, 그 요청이
+     암시하는 **최종 완성형**부터 먼저 사용자와 확정한다. 확정된 목록만
+     `clarify(todoSpecGoal, todoSpecItems, todoSpecUserConfirmed:true)`로 넘긴다 —
+     **`todoSpecUserConfirmed`가 없으면 서버가 `TODO_SPEC_DRAFT_CONFIRMATION_REQUIRED`로 막는다.**
+     모델이 임의로 목록을 확정해 파일로 고정하지 않는다(고정되면 이후 모든 세션이 잘못된
+     전제로 동작한다).
 3. `prd`로 PRD를 저장한다. 게이트 통과 조건은 **본문 100자 이상 + `REQ-N` 태그 1개 이상**(어디에
    있든 인정, 헤딩 아니어도 됨)뿐이다. baseline 시그널 판정과 HULK Task/Run 생성이 함께 일어난다.
    **Roadmap REQ 노드 심기는 별개로, `### REQ-N: 제목` 마크다운 헤딩 형식만 인식하는 더 엄격한
    계약이다** — 헤딩이 없으면 PRD는 정상 통과하지만 Roadmap에는 조용히 아무것도 안 심긴다(에러
    아님). Roadmap 추적이 필요하면 REQ를 헤딩으로 쓴다.
+   TODO-SPEC이 있는 브랜치라면 REQ 태그 옆에 "TODO-SPEC 항목: b" 식으로 참조를 남긴다 — 강제
+   게이트는 아니고, 나중에 사람이 PRD와 TODO-SPEC을 대조할 때 도움을 주는 정도다.
 4. PRD가 비대하면 `decompose` 후 `subtask_start`와 `subtask_done`을 거쳐 `integrate`로 간다.
    아니면 `ready`로 간다.
 5. `baseline_capture`: §4.0 시그널(런타임이나 JDK 상향, 의존성 제거)이 있으면 코딩 전에 그린
@@ -41,6 +56,12 @@ argument-hint: <기능 설명>
     REQ와 REQ-CONFIRM이 자동 완료된다.
 11. `docs_done`: docs-agent로 README 등을 갱신한다.
 12. `commit`: DONE에서만 커밋을 생성한다(§6, 2커밋 분리, push 금지). 커밋 전에 체크포인트를 확인한다.
+    - **§4.3-T TODO-SPEC 동기화(하드 게이트)**: TODO-SPEC이 있는 브랜치인데 세션 시작 이후 파일이
+      전혀 안 바뀌었으면 서버가 `TODO_SPEC_SYNC_REQUIRED`(또는 파일 자체가 없으면
+      `TODO_SPEC_MISSING_AT_COMMIT`)로 `sugo_plan(commit)`을 막는다. **막히면 실제 git commit을
+      실행하지 않는다** — 이 세션이 다룬 항목을 TODO-SPEC의 "완료됨"으로 체크하거나, 새로 발견된
+      잔여 항목을 "남은 것"에 추가한 뒤 다시 시도한다. 정말 이 세션이 TODO-SPEC과 무관했다면(예:
+      핫픽스) `todoSpecSyncReason`으로 사유를 남기고 넘어간다 — 완료등급이 unverified로 낮아진다.
 
 ## 규율
 

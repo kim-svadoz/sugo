@@ -132,6 +132,17 @@ export interface SessionData {
   specOracle?: SpecOracleState;
   /** 설계안 jira 연동 선택 기록. `"new"`는 실제 티켓을 만들지 않는다(스펙상 TODO). */
   jira?: { option: JiraOption; jiraKey?: string; recordedAt: string };
+  /**
+   * §4.3-T 브랜치별 TODO-SPEC. `start`가 `feature/<이름>` 브랜치를 감지했을 때만 채워진다 —
+   * 프로젝트가 sugo를 쓰기만 하면 이 판정 자체는 브랜치 패턴만으로 무조건 이뤄진다(opt-in 아님).
+   * `snapshotAtStart`는 commit 게이트가 "파일이 실제로 움직였는가"를 판정하는 기준선이다.
+   */
+  todoSpec?: {
+    featureName: string;
+    path: string;
+    /** start 시점에 파일이 없었으면 null — commit 때도 여전히 없으면 게이트가 막는다. */
+    snapshotAtStart: string | null;
+  };
 }
 
 export interface PlanSession {

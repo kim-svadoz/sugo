@@ -5,6 +5,8 @@ import { loadProjectConfig } from "../harness/config.js";
 import { routeHarnessesForFiles } from "../harness/harnessRouting.js";
 import { buildClaudeRuleFile } from "../harness/rulesFile.js";
 import { mcpAllowPatterns, renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistry.js";
+import { currentGitBranch, featureBranchName } from "../gitBranch.js";
+import { readTodoSpec, todoSpecPath } from "../todoSpec.js";
 
 export const sugoGetProjectContextInputSchema = {
   projectPath: z.string().describe("컨텍스트를 로드할 프로젝트 절대경로"),
@@ -95,6 +97,14 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
   // 레지스트리가 비어있으면(기본값) toolMenu는 빈 문자열 — 조용히 아무 것도 없음.
   const harnessToolGuides = resolveHarnessToolGuides(routing.selected);
 
+  // ── §4.3-T `.claude/rules/` 스캔과 별개다. 사람이 규칙 파일을 심어야만 동작하는 방식이 아니라,
+  // feature/* 브랜치 패턴만 맞으면 sessionId 없이도(다른 스킬 진입점이어도) 무조건 동작한다.
+  const branch = await currentGitBranch(projectPath);
+  const fName = featureBranchName(branch);
+  const todoSpec = fName
+    ? { featureName: fName, path: todoSpecPath(projectPath, fName), content: await readTodoSpec(projectPath, fName) }
+    : null;
+
   const payload = {
     ok: true,
     projectPath,
@@ -102,6 +112,7 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
     claudeMd,
     harnesses,
     rules,
+    todoSpec,
     // 무엇을 왜 뺐는지 드러낸다 — 조용히 줄어든 규칙은 줄어든 줄도 모른다.
     harnessRouting: {
       changedFiles: changedFiles ?? [],

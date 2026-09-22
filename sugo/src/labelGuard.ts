@@ -22,7 +22,13 @@ export type BypassLabelKind =
    * §9-A 에이전트 체인 구간(CODE_RUNNING~REVIEW_RUNNING)에서 취소했다는 표시. 게이트를 통과해
    * 끝낸 것과 "여기까지 하고 접었다"는 다른 결말인데, 라벨이 없으면 둘을 구분할 수 없다.
    */
-  | "abandonedChain";
+  | "abandonedChain"
+  /**
+   * §4.3-T TODO-SPEC 동기화 게이트를 우회했다는 표시. "이 브랜치/작업이 TODO-SPEC과 무관하다"는
+   * 사유로만 쓴다 — 파일을 갱신하기 귀찮아서가 아니라, 정말 이 세션이 TODO-SPEC이 추적하는
+   * 최종 목표와 무관한 작업(예: 핫픽스)이었을 때다.
+   */
+  | "todoSpecSyncSkipped";
 
 export interface BypassLabel {
   kind: BypassLabelKind;

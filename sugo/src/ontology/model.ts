@@ -143,7 +143,9 @@ export const ACTION_TYPES = [
     gates: ["PRD_COVERAGE_GATE_FAILED", "RUNTIME_UNVERIFIED_GATE_FAILED"],
   },
   { name: "docs_done", fromStates: ["DOCS_PENDING"], toState: "COMMIT_PENDING", gates: [] },
-  { name: "commit", fromStates: ["COMMIT_PENDING"], toState: "DONE", gates: [] },
+  // §4.3-T: feature/* 브랜치면 TODO-SPEC.md가 세션 시작 이후 갱신됐는지 확인한다(무조건 —
+  // opt-in 아님). 다른 §10 확장 게이트와 달리 브랜치 패턴 자체가 스위치다.
+  { name: "commit", fromStates: ["COMMIT_PENDING"], toState: "DONE", gates: ["TODO_SPEC_SYNC_REQUIRED"] },
   { name: "status", fromStates: null, toState: null, gates: [] },
   { name: "cancel", fromStates: null, toState: null, gates: [] },
 ] as const satisfies readonly ActionType[];

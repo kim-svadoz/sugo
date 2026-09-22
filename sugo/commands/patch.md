@@ -10,7 +10,8 @@ argument-hint: <work-result.md 경로> [seed 지시]
    주어지면 patch 모드로 분기한다.
    - 부모 PRD: 같은 디렉터리 `prd.md` 우선, 없으면 `PRD-patch-v*.md` 최신본(둘 다 없으면 진입 불가).
    - 차수: `computeNextPatchVersion`으로 `(prd|work-result)-patch-vN.md` 최대값 +1.
-2. 이후는 feat와 동일한 코어 체인(clarify→prd→…→commit). 단:
+2. 이후는 feat와 동일한 코어 체인(clarify→prd→…→commit). §4.3-T TODO-SPEC 게이트(`/sugo:feat`
+   1·2·3·12번 참고)도 그대로 적용된다 — patch든 신규든 브랜치가 `feature/*`면 무조건이다. 단:
    - 1차 산출물을 덮지 않고 `PRD-patch-vN.md`/`work-result-patch-vN.md`로 누적한다.
    - patch는 원본 Run을 재사용하고 `patchInfo`(parentTaskId, patchVersion, seed)를 기록한다.
    - seed(사용자 지시)는 work-result에 "## 사용자 지시(seed)"로 실린다.

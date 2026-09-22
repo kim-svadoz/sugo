@@ -11,7 +11,11 @@ export interface PrRefs {
   targetBranch: string;
 }
 
-async function runGit(args: string[], cwd: string): Promise<string | null> {
+/**
+ * 읽기 전용 git 명령 실행. `execFile`이라 쉘 인터폴레이션이 없고, 실패(git 저장소 아님·명령
+ * 실패)는 조용히 null로 접는다 — 이 파일 밖(todoSpec.ts 등)에서도 브랜치 조회에 재사용한다.
+ */
+export async function runGit(args: string[], cwd: string): Promise<string | null> {
   try {
     const { stdout } = await execFileAsync("git", args, { cwd });
     return stdout.trim();
