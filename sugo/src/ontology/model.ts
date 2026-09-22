@@ -174,6 +174,18 @@ export const CANCELLABLE_STATES = [
   "COMMIT_PENDING",
 ] as const;
 
+/**
+ * §9-A 에이전트 체인 구간 — 여기서도 취소는 **되지만** 사유가 필수다.
+ *
+ * 런타임(`planStateMachine.ts`의 cancel 분기)은 전제 검사보다 먼저 실행돼 어느 상태에서든 취소를
+ * 허용해 왔다. 선언(`CANCELLABLE_STATES`)만 보고 "체인 구간은 취소 불가"라고 읽으면 틀린다 —
+ * 실제로 2026-09-22에 그렇게 잘못 판단해 사용자가 세션 파일을 손으로 지웠다(기록이 안 남았다).
+ *
+ * 선언을 사실에 맞추되, 체인 구간 취소는 "증거 체인을 끊고 접었다"는 뜻이므로 `cancelReason`을
+ * 요구하고 `abandonedChain` 라벨로 남긴다. 막지 않고 기록한다(§4.6).
+ */
+export const CHAIN_ABANDON_STATES = ["CODE_RUNNING", "CODE_DONE", "TEST_RUNNING", "TEST_DONE", "REVIEW_RUNNING"] as const;
+
 // ── 2.5 OWNERSHIP ────────────────────────────────────────────────────────────
 
 export interface OwnershipEntry {

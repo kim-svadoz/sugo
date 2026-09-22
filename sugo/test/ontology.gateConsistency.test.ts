@@ -107,14 +107,17 @@ describe("§4 Golden per-state action set", () => {
     BASELINE: ["contract_start", "status", "cancel"],
     CONTRACT_RUNNING: ["contract_done", "status", "cancel"],
     CODE_READY: ["code_start", "status", "cancel"],
-    CODE_RUNNING: ["code_done", "status"],
-    CODE_DONE: ["test_start", "status"],
-    TEST_RUNNING: ["test_done", "status"],
+    // §9-A 체인 구간(CODE_RUNNING~REVIEW_RUNNING)에도 cancel이 있다. 런타임은 원래부터 허용해
+    // 왔고(cancel 분기가 전제 검사보다 먼저 실행된다) 선언만 금지처럼 보였다 — 그 불일치를
+    // 2026-09-22에 잘못 읽어 사용자가 세션 파일을 손으로 지웠다. 대신 사유를 요구한다.
+    CODE_RUNNING: ["code_done", "cancel", "status"],
+    CODE_DONE: ["test_start", "cancel", "status"],
+    TEST_RUNNING: ["test_done", "cancel", "status"],
     // test_reverify(§4.3-R): test_done이 찍은 증거 스냅샷을 최신 증거로 다시 찍는다. 상태를 바꾸지
     // 않는 기록성 액션이라 두 상태 모두에서 허용된다 — review_done이 막힌 뒤에야 문제를 알게 되므로
     // REVIEW_RUNNING에서도 열려 있어야 한다.
-    TEST_DONE: ["review_start", "code_start", "test_reverify", "status"],
-    REVIEW_RUNNING: ["review_done", "code_start", "test_reverify", "status"],
+    TEST_DONE: ["review_start", "code_start", "test_reverify", "cancel", "status"],
+    REVIEW_RUNNING: ["review_done", "code_start", "test_reverify", "cancel", "status"],
     DOCS_PENDING: ["docs_done", "status", "cancel"],
     COMMIT_PENDING: ["commit", "status", "cancel"],
     DONE: ["status", "start"],
@@ -139,9 +142,16 @@ describe("설계안 코퍼스: 순서강제", () => {
     expect(ALLOWED_ACTIONS_BY_STATE.CODE_DONE).not.toContain("test_done");
   });
 
-  it("거부: 에이전트 체인 구간(CODE_RUNNING~REVIEW_RUNNING)에서 cancel", () => {
+  it("허용(§9-A): 에이전트 체인 구간에서도 cancel이 열린다 — 단 사유 필수", () => {
+    // 원래 이 코퍼스 행은 "거부"였으나 선언만 그랬고 런타임은 줄곧 허용해 왔다(cancel 분기가
+    // 전제 검사보다 먼저 실행된다). 그 불일치 때문에 방치된 체인 세션을 닫을 길이 없다고
+    // 잘못 판단해 세션 파일을 손으로 지운 사고가 났다(2026-09-22).
+    //
+    // 원래 의도("체인 중간에 날리면 doer가 파일을 건드린 채 고아가 된다")는 막기가 아니라
+    // **기록**으로 지킨다 — cancelReason을 요구하고 abandonedChain 라벨을 남긴다.
+    // 사유 강제는 런타임 규칙이라 integration.cancelChain.test.ts가 검증한다.
     for (const s of ["CODE_RUNNING", "CODE_DONE", "TEST_RUNNING", "TEST_DONE", "REVIEW_RUNNING"] as const) {
-      expect(ALLOWED_ACTIONS_BY_STATE[s], s).not.toContain("cancel");
+      expect(ALLOWED_ACTIONS_BY_STATE[s], s).toContain("cancel");
     }
   });
 

@@ -1,6 +1,7 @@
 import {
   ACTION_TYPES,
   CANCELLABLE_STATES,
+  CHAIN_ABANDON_STATES,
   START_STATES,
   WORKFLOW_STATES,
   type ActionName,
@@ -50,7 +51,13 @@ function deriveAllowedActions(state: WorkflowState): ActionName[] {
   const universal: ActionName[] = [];
   if ((START_STATES as readonly string[]).includes(state)) universal.push("start");
   universal.push("status");
-  if ((CANCELLABLE_STATES as readonly string[]).includes(state)) universal.push("cancel");
+  // 체인 구간도 취소는 된다(사유 필수) — 런타임이 실제로 허용하므로 허용목록이 사실을 반영해야 한다.
+  if (
+    (CANCELLABLE_STATES as readonly string[]).includes(state) ||
+    (CHAIN_ABANDON_STATES as readonly string[]).includes(state)
+  ) {
+    universal.push("cancel");
+  }
   return [...fromOntology, ...universal];
 }
 

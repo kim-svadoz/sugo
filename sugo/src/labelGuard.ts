@@ -17,7 +17,12 @@ export type BypassLabelKind =
    * 환경부재류가 아니므로 라벨-모순 검사 대상이 아니다(그린 증거가 있어야 오히려 정상이다).
    * 다만 "한 번 확정된 판정을 사람이 다시 열었다"는 사실이므로 완료등급은 unverified로 낮춘다.
    */
-  | "evidenceResnapshot";
+  | "evidenceResnapshot"
+  /**
+   * §9-A 에이전트 체인 구간(CODE_RUNNING~REVIEW_RUNNING)에서 취소했다는 표시. 게이트를 통과해
+   * 끝낸 것과 "여기까지 하고 접었다"는 다른 결말인데, 라벨이 없으면 둘을 구분할 수 없다.
+   */
+  | "abandonedChain";
 
 export interface BypassLabel {
   kind: BypassLabelKind;

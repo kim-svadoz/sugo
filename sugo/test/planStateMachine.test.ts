@@ -155,10 +155,23 @@ describe("순서강제 게이트 — 반드시 허용", () => {
     expect(result.session?.state).toBe("CODE_RUNNING");
   });
 
-  it("cancel은 임의 상태에서 허용된다", () => {
-    const result = applyTransition(sessionAt("CODE_RUNNING"), "cancel", "sid", {});
+  it("cancel은 임의 상태에서 허용된다 — 단 체인 구간은 사유가 필요하다(§9-A)", () => {
+    // 체인 구간(CODE_RUNNING~REVIEW_RUNNING)은 "증거 체인을 끊고 접었다"는 뜻이라 사유를 요구한다.
+    // 막는 게 아니라 abandonedChain 라벨로 기록하기 위한 최소 입력이다.
+    const blocked = applyTransition(sessionAt("CODE_RUNNING"), "cancel", "sid", {});
+    expect(blocked.ok).toBe(false);
+    expect(blocked.errorCode).toBe("CANCEL_REASON_REQUIRED");
+
+    const allowed = applyTransition(sessionAt("CODE_RUNNING"), "cancel", "sid", { cancelReason: "요구사항 폐기" });
+    expect(allowed.ok).toBe(true);
+    expect(allowed.session?.cancelledAt).toBeDefined();
+    expect(allowed.abandonedChain).toBe(true);
+  });
+
+  it("체인 밖에서는 사유 없이 취소된다", () => {
+    const result = applyTransition(sessionAt("CODE_READY"), "cancel", "sid", {});
     expect(result.ok).toBe(true);
-    expect(result.session?.cancelledAt).toBeDefined();
+    expect(result.abandonedChain).toBe(false);
   });
 
   it("status는 세션이 없어도 허용되고 start를 힌트로 준다", () => {

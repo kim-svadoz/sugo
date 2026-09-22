@@ -1,4 +1,4 @@
-import { ACTION_TYPES } from "./ontology/model.js";
+import { ACTION_TYPES, CHAIN_ABANDON_STATES } from "./ontology/model.js";
 import {
   createEmptySessionData,
   NEXT_ACTION_HINTS,
@@ -11,14 +11,23 @@ import {
 export interface TransitionParams {
   projectPath?: string;
   featureName?: string;
+  /** §9-A cancel: 체인 구간에서 접을 때의 사유. 그 구간이 아니면 선택. */
+  cancelReason?: string;
 }
 
 export interface TransitionResult {
   ok: boolean;
-  errorCode?: "PREREQUISITE_FAILED" | "SESSION_NOT_FOUND" | "MISSING_PROJECT_PATH" | "ALREADY_CANCELLED";
+  errorCode?:
+    | "PREREQUISITE_FAILED"
+    | "SESSION_NOT_FOUND"
+    | "MISSING_PROJECT_PATH"
+    | "ALREADY_CANCELLED"
+    | "CANCEL_REASON_REQUIRED";
   message?: string;
   session?: PlanSession;
   nextActionHints?: PlanAction[];
+  /** cancel이 에이전트 체인 구간에서 일어났는지 — 호출부가 abandonedChain 라벨을 남길지 판단한다. */
+  abandonedChain?: boolean;
 }
 
 /**
@@ -96,8 +105,18 @@ export function applyTransition(
     if (session.cancelledAt) {
       return { ok: false, errorCode: "ALREADY_CANCELLED", message: "이미 취소된 세션입니다." };
     }
+    // §9-A 체인 구간 취소는 "증거 체인을 끊고 접었다"는 뜻이라 사유를 요구한다. 호출부가
+    // abandonedChain 라벨로 남긴다 — 막지 않고 기록한다.
+    const abandonsChain = (CHAIN_ABANDON_STATES as readonly string[]).includes(session.state);
+    if (abandonsChain && !params.cancelReason?.trim()) {
+      return {
+        ok: false,
+        errorCode: "CANCEL_REASON_REQUIRED",
+        message: `${session.state}은 에이전트 체인 구간입니다 — 취소하려면 cancelReason이 필요합니다(왜 완주하지 않고 접는지).`,
+      };
+    }
     const cancelled: PlanSession = { ...session, cancelledAt: nowIso() };
-    return { ok: true, session: cancelled, nextActionHints: [] };
+    return { ok: true, session: cancelled, nextActionHints: [], abandonedChain: abandonsChain };
   }
 
   // 나머지 액션은 모두 기존 세션 + 전제상태 충족을 요구

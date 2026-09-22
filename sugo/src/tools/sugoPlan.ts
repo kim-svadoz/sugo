@@ -54,6 +54,7 @@ import { applyTransition } from "../planStateMachine.js";
 import { generateSessionId, loadSession, saveSession, sessionExists } from "../session.js";
 import { checkTestEvidenceGate, isFullVerifyEnforceable } from "../testEvidence.js";
 import { checkTestReverifyGate } from "../testReverify.js";
+import { buildCompletionPlan } from "../completionPlan.js";
 import { planArgsActionEnum, type PlanAction, type PlanSession } from "../types.js";
 
 export const sugoPlanInputSchema = {
@@ -89,6 +90,12 @@ export const sugoPlanInputSchema = {
   registrationGlueChecked: z.boolean().optional().describe("code_done: 등록 글루(빈 등록 메타) diff를 점검했는지"),
   wiringTestAdded: z.boolean().optional().describe("code_done: 배선/설정 변경에 대해 mock 없는 배선 테스트를 추가/검증했는지"),
   bootUnverifiedReason: z.string().optional().describe("code_done: boot-gate를 환경부재로 우회할 때의 사유 라벨"),
+  cancelReason: z
+    .string()
+    .optional()
+    .describe(
+      "cancel action: 에이전트 체인 구간(CODE_RUNNING~REVIEW_RUNNING)에서 접을 때 **필수**. 왜 완주하지 않고 접는지. abandonedChain 라벨로 남아 완료등급이 unverified가 된다",
+    ),
   reverifyReason: z
     .string()
     .optional()
@@ -491,7 +498,18 @@ export async function handleSugoPlan(rawArgs: unknown) {
   const result = applyTransition(existing, action, newSessionId, {
     projectPath: args.projectPath,
     featureName: args.featureName,
+    cancelReason: args.cancelReason,
   });
+
+  // §9-A 체인 구간에서 접었으면 라벨로 남긴다 — "게이트를 통과해 끝냈다"와 구분되어야 한다.
+  if (result.ok && result.abandonedChain) {
+    newBypassLabels.push({
+      kind: "abandonedChain",
+      reason: args.cancelReason!,
+      patchVersion: currentPatchVersion,
+      recordedAt: new Date().toISOString(),
+    });
+  }
 
   if (!result.ok) {
     return errorResult(result.errorCode ?? "UNKNOWN_ERROR", result.message ?? "알 수 없는 오류");
@@ -884,6 +902,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
     bypassSummary,
     cancelledAt: session.cancelledAt,
     nextActionHints: result.nextActionHints ?? [],
+    // §4.3-P DONE까지 남은 경로와 지금 막고 있는 것 — 막다른 길에 들어가기 전에 보이게 한다.
+    completionPlan: buildCompletionPlan(session.state, session.data.chainInfo),
     humanHoursEstimate,
     prdPath: session.data.prdPath,
     workResultPath: session.data.chainInfo.workResultPath,

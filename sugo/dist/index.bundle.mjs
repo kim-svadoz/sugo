@@ -27718,7 +27718,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.4.0" : "0.0.0-dev";
+  return true ? "0.4.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29399,6 +29399,7 @@ var CANCELLABLE_STATES = [
   "DOCS_PENDING",
   "COMMIT_PENDING"
 ];
+var CHAIN_ABANDON_STATES = ["CODE_RUNNING", "CODE_DONE", "TEST_RUNNING", "TEST_DONE", "REVIEW_RUNNING"];
 var OWNERSHIP = [
   { concept: "\uC6CC\uD06C\uD50C\uB85C\uC6B0 \uC0C1\uD0DC(session)", owner: "plugin", note: "\uC0C1\uD0DC\uBA38\uC2E0\uC774 \uC18C\uC720\xB7\uAC15\uC81C" },
   { concept: "\uB85C\uB4DC\uB9F5 \uB178\uB4DC status", owner: "plugin", note: "push(upsert). \uB300\uC2DC\uBCF4\uB4DC\uB294 \uC800\uC7A5\uB9CC" },
@@ -29494,7 +29495,9 @@ function deriveAllowedActions(state) {
   const universal = [];
   if (START_STATES.includes(state)) universal.push("start");
   universal.push("status");
-  if (CANCELLABLE_STATES.includes(state)) universal.push("cancel");
+  if (CANCELLABLE_STATES.includes(state) || CHAIN_ABANDON_STATES.includes(state)) {
+    universal.push("cancel");
+  }
   return [...fromOntology, ...universal];
 }
 var ALLOWED_ACTIONS_BY_STATE = Object.fromEntries(
@@ -29596,8 +29599,16 @@ function applyTransition(session, action, newSessionId, params) {
     if (session.cancelledAt) {
       return { ok: false, errorCode: "ALREADY_CANCELLED", message: "\uC774\uBBF8 \uCDE8\uC18C\uB41C \uC138\uC158\uC785\uB2C8\uB2E4." };
     }
+    const abandonsChain = CHAIN_ABANDON_STATES.includes(session.state);
+    if (abandonsChain && !params.cancelReason?.trim()) {
+      return {
+        ok: false,
+        errorCode: "CANCEL_REASON_REQUIRED",
+        message: `${session.state}\uC740 \uC5D0\uC774\uC804\uD2B8 \uCCB4\uC778 \uAD6C\uAC04\uC785\uB2C8\uB2E4 \u2014 \uCDE8\uC18C\uD558\uB824\uBA74 cancelReason\uC774 \uD544\uC694\uD569\uB2C8\uB2E4(\uC65C \uC644\uC8FC\uD558\uC9C0 \uC54A\uACE0 \uC811\uB294\uC9C0).`
+      };
+    }
     const cancelled = { ...session, cancelledAt: nowIso() };
-    return { ok: true, session: cancelled, nextActionHints: [] };
+    return { ok: true, session: cancelled, nextActionHints: [], abandonedChain: abandonsChain };
   }
   const prereq = checkPrerequisite(action, session?.state ?? null);
   if (!prereq.ok) return prereq;
@@ -29682,6 +29693,43 @@ function checkTestReverifyGate(evidence, reason) {
   return { ok: true };
 }
 
+// src/completionPlan.ts
+var REQUIRED_ARGS = {
+  prd: ["prdContent"],
+  jira: ["jiraOption"],
+  code_done: ["changedFiles"],
+  test_done: ["testPassed"],
+  review_done: ["summary", "userConfirmed", "runtimeCheck (\uB610\uB294 reusedFromTestDone)"]
+};
+function remainingSteps(state) {
+  const steps = [];
+  const order = (s) => WORKFLOW_STATES.indexOf(s);
+  let cursor = state;
+  while (cursor !== "DONE") {
+    const current = cursor;
+    const forward = ACTION_TYPES.filter(
+      (a) => a.fromStates?.includes(current) && a.toState !== null && order(a.toState) > order(current)
+    ).sort((x, y) => order(x.toState) - order(y.toState))[0];
+    if (!forward?.toState) break;
+    steps.push({ action: forward.name, toState: forward.toState, requires: REQUIRED_ARGS[forward.name] ?? [] });
+    cursor = forward.toState;
+  }
+  return steps;
+}
+function currentBlockers(chain) {
+  if (!chain) return [];
+  const blockers = [];
+  const evidence = chain.testEvidence;
+  if (evidence?.failed) blockers.push(`\uD14C\uC2A4\uD2B8 \uC2E4\uD328 ${evidence.failed}/${evidence.total ?? "?"}`);
+  if (chain.testPassedState === "fail") blockers.push("test_done \uC2DC\uC810 \uD310\uC815\uC774 fail \u2014 \uADF8\uB9B0 \uC99D\uAC70 \uAE30\uB85D \uD6C4 test_reverify \uD544\uC694");
+  if (chain.analyzePassed === false) blockers.push(`analyze \uBBF8\uD1B5\uACFC(${chain.analyzeLastVerdict ?? "verdict \uC5C6\uC74C"})`);
+  if (chain.reviewPassed === false) blockers.push("review \uBBF8\uD1B5\uACFC");
+  return blockers;
+}
+function buildCompletionPlan(state, chain) {
+  return { remaining: remainingSteps(state), blockers: currentBlockers(chain) };
+}
+
 // src/tools/sugoPlan.ts
 var sugoPlanInputSchema = {
   action: external_exports.enum(planArgsActionEnum).describe("\uD30C\uC774\uD504\uB77C\uC778 \uC0C1\uD0DC\uBA38\uC2E0 \uC561\uC158"),
@@ -29701,6 +29749,9 @@ var sugoPlanInputSchema = {
   registrationGlueChecked: external_exports.boolean().optional().describe("code_done: \uB4F1\uB85D \uAE00\uB8E8(\uBE48 \uB4F1\uB85D \uBA54\uD0C0) diff\uB97C \uC810\uAC80\uD588\uB294\uC9C0"),
   wiringTestAdded: external_exports.boolean().optional().describe("code_done: \uBC30\uC120/\uC124\uC815 \uBCC0\uACBD\uC5D0 \uB300\uD574 mock \uC5C6\uB294 \uBC30\uC120 \uD14C\uC2A4\uD2B8\uB97C \uCD94\uAC00/\uAC80\uC99D\uD588\uB294\uC9C0"),
   bootUnverifiedReason: external_exports.string().optional().describe("code_done: boot-gate\uB97C \uD658\uACBD\uBD80\uC7AC\uB85C \uC6B0\uD68C\uD560 \uB54C\uC758 \uC0AC\uC720 \uB77C\uBCA8"),
+  cancelReason: external_exports.string().optional().describe(
+    "cancel action: \uC5D0\uC774\uC804\uD2B8 \uCCB4\uC778 \uAD6C\uAC04(CODE_RUNNING~REVIEW_RUNNING)\uC5D0\uC11C \uC811\uC744 \uB54C **\uD544\uC218**. \uC65C \uC644\uC8FC\uD558\uC9C0 \uC54A\uACE0 \uC811\uB294\uC9C0. abandonedChain \uB77C\uBCA8\uB85C \uB0A8\uC544 \uC644\uB8CC\uB4F1\uAE09\uC774 unverified\uAC00 \uB41C\uB2E4"
+  ),
   reverifyReason: external_exports.string().optional().describe(
     "test_reverify action\uC5D0 \uD544\uC694. test_done \uC2DC\uC810 \uD310\uC815\uC774 \uC65C \uD2C0\uB838\uB294\uC9C0(\uC608: '\uC804\uCCB4 \uC2A4\uC704\uD2B8\uC5D0 \uBB34\uAD00\uD55C \uC0AC\uC804 \uACB0\uD568\uC774 \uC11E\uC5EC \uBC94\uC704\uB97C \uC881\uD600 \uC7AC\uC2E4\uD589'). evidenceResnapshot \uB77C\uBCA8\uB85C \uB0A8\uC544 \uC644\uB8CC\uB4F1\uAE09\uC774 unverified\uAC00 \uB41C\uB2E4"
   ),
@@ -30006,8 +30057,17 @@ async function handleSugoPlan(rawArgs) {
   const newSessionId = action === "start" ? generateSessionId() : sessionId;
   const result = applyTransition(existing, action, newSessionId, {
     projectPath: args2.projectPath,
-    featureName: args2.featureName
+    featureName: args2.featureName,
+    cancelReason: args2.cancelReason
   });
+  if (result.ok && result.abandonedChain) {
+    newBypassLabels.push({
+      kind: "abandonedChain",
+      reason: args2.cancelReason,
+      patchVersion: currentPatchVersion,
+      recordedAt: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  }
   if (!result.ok) {
     return errorResult8(result.errorCode ?? "UNKNOWN_ERROR", result.message ?? "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958");
   }
@@ -30319,6 +30379,8 @@ ${session.data.seed}` : args2.summary;
     bypassSummary,
     cancelledAt: session.cancelledAt,
     nextActionHints: result.nextActionHints ?? [],
+    // §4.3-P DONE까지 남은 경로와 지금 막고 있는 것 — 막다른 길에 들어가기 전에 보이게 한다.
+    completionPlan: buildCompletionPlan(session.state, session.data.chainInfo),
     humanHoursEstimate,
     prdPath: session.data.prdPath,
     workResultPath: session.data.chainInfo.workResultPath,
