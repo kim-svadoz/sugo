@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sessionsForProjects, summarizeSession } from "../src/work/sessionSummary.js";
+import { sessionForTask, sessionsForProjects, summarizeSession } from "../src/work/sessionSummary.js";
 import type { PlanSession } from "../src/types.js";
 
 function session(overrides: Partial<PlanSession> = {}): PlanSession {
@@ -112,5 +112,25 @@ describe("sessionsForProjects — 워크스페이스 소속 판정", () => {
     const extra = [...sessions, session({ id: "s-legacy", projectPath: "/p/alpha-legacy" })];
     const result = sessionsForProjects(extra, ["/p/alpha"]);
     expect(result.map((s) => s.sessionId)).toEqual(["s-alpha"]);
+  });
+});
+
+describe("sessionForTask — task ↔ session 연결", () => {
+  const sessions = [
+    session({ id: "s-old", updatedAt: "2026-09-18T01:00:00.000Z", data: { hulkTaskId: "task-1" } } as Partial<PlanSession>),
+    session({ id: "s-new", updatedAt: "2026-09-18T05:00:00.000Z", data: { hulkTaskId: "task-1" } } as Partial<PlanSession>),
+    session({ id: "s-other", updatedAt: "2026-09-18T09:00:00.000Z", data: { hulkTaskId: "task-2" } } as Partial<PlanSession>),
+  ];
+
+  it("해당 태스크의 세션 중 가장 최근 것을 돌려준다", () => {
+    expect(sessionForTask(sessions, "task-1")?.sessionId).toBe("s-new");
+  });
+
+  it("연결된 세션이 없으면 undefined", () => {
+    expect(sessionForTask(sessions, "task-없음")).toBeUndefined();
+  });
+
+  it("다른 태스크의 세션을 잘못 집어오지 않는다", () => {
+    expect(sessionForTask(sessions, "task-2")?.sessionId).toBe("s-other");
   });
 });

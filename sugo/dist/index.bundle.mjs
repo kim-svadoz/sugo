@@ -27718,7 +27718,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.3.6" : "0.0.0-dev";
+  return true ? "0.4.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29365,6 +29365,13 @@ var ACTION_TYPES = [
   },
   { name: "test_start", fromStates: ["CODE_DONE"], toState: "TEST_RUNNING", gates: [] },
   { name: "test_done", fromStates: ["TEST_RUNNING"], toState: "TEST_DONE", gates: ["TEST_EVIDENCE_MISMATCH"] },
+  /**
+   * §4.3-R 증거 재스냅샷. `test_done`이 찍은 `testPassedState`/지문은 그 시점 값으로 고정돼,
+   * 이후 올바른 증거를 다시 기록해도 `review_done`이 옛 판정을 보고 막는 데드락이 있었다
+   * (forward-only라 `test_done`으로 되돌아갈 수도 없다). 상태는 그대로 두고 스냅샷만 다시 찍는다.
+   * 게이트를 무르게 하는 게 아니라 `evidenceResnapshot` 라벨로 남겨 완료등급을 강등시킨다.
+   */
+  { name: "test_reverify", fromStates: ["TEST_DONE", "REVIEW_RUNNING"], toState: null, gates: [] },
   { name: "review_start", fromStates: ["TEST_DONE"], toState: "REVIEW_RUNNING", gates: [] },
   {
     name: "review_done",
@@ -29649,6 +29656,32 @@ function checkTestEvidenceGate(claimedTestPassed, evidence) {
   return ok3();
 }
 
+// src/testReverify.ts
+function checkTestReverifyGate(evidence, reason) {
+  if (!evidence) {
+    return {
+      ok: false,
+      code: "REVERIFY_NO_EVIDENCE",
+      message: "\uC7AC\uC2A4\uB0C5\uC0F7\uD560 test evidence\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4 \u2014 sugo_record_test_evidence\uB85C \uBA3C\uC800 \uAE30\uB85D\uD558\uC138\uC694."
+    };
+  }
+  if (!reason || reason.trim().length === 0) {
+    return {
+      ok: false,
+      code: "REVERIFY_REASON_REQUIRED",
+      message: "test_reverify\uC5D0\uB294 reason\uC774 \uD544\uC694\uD569\uB2C8\uB2E4 \u2014 \uC65C test_done \uC2DC\uC810 \uD310\uC815\uC774 \uD2C0\uB838\uB294\uC9C0 \uB0A8\uACA8\uC57C \uD569\uB2C8\uB2E4(\uC608: '\uC804\uCCB4 \uC2A4\uC704\uD2B8\uC5D0 \uBB34\uAD00\uD55C \uC0AC\uC804 \uACB0\uD568\uC774 \uC11E\uC5EC \uBC94\uC704\uB97C \uC881\uD600 \uC7AC\uC2E4\uD589')."
+    };
+  }
+  if (evidence.derivedState === "fail") {
+    return {
+      ok: false,
+      code: "REVERIFY_EVIDENCE_STILL_FAIL",
+      message: "\uCD5C\uC2E0 \uC99D\uAC70\uB3C4 fail\uC785\uB2C8\uB2E4 \u2014 \uC7AC\uC2A4\uB0C5\uC0F7\uD574\uB3C4 \uD310\uC815\uC774 \uB2EC\uB77C\uC9C0\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uC2E4\uD328\uB97C \uBA3C\uC800 \uD574\uACB0\uD558\uACE0 \uADF8\uB9B0 \uC99D\uAC70\uB97C \uAE30\uB85D\uD558\uC138\uC694."
+    };
+  }
+  return { ok: true };
+}
+
 // src/tools/sugoPlan.ts
 var sugoPlanInputSchema = {
   action: external_exports.enum(planArgsActionEnum).describe("\uD30C\uC774\uD504\uB77C\uC778 \uC0C1\uD0DC\uBA38\uC2E0 \uC561\uC158"),
@@ -29668,6 +29701,9 @@ var sugoPlanInputSchema = {
   registrationGlueChecked: external_exports.boolean().optional().describe("code_done: \uB4F1\uB85D \uAE00\uB8E8(\uBE48 \uB4F1\uB85D \uBA54\uD0C0) diff\uB97C \uC810\uAC80\uD588\uB294\uC9C0"),
   wiringTestAdded: external_exports.boolean().optional().describe("code_done: \uBC30\uC120/\uC124\uC815 \uBCC0\uACBD\uC5D0 \uB300\uD574 mock \uC5C6\uB294 \uBC30\uC120 \uD14C\uC2A4\uD2B8\uB97C \uCD94\uAC00/\uAC80\uC99D\uD588\uB294\uC9C0"),
   bootUnverifiedReason: external_exports.string().optional().describe("code_done: boot-gate\uB97C \uD658\uACBD\uBD80\uC7AC\uB85C \uC6B0\uD68C\uD560 \uB54C\uC758 \uC0AC\uC720 \uB77C\uBCA8"),
+  reverifyReason: external_exports.string().optional().describe(
+    "test_reverify action\uC5D0 \uD544\uC694. test_done \uC2DC\uC810 \uD310\uC815\uC774 \uC65C \uD2C0\uB838\uB294\uC9C0(\uC608: '\uC804\uCCB4 \uC2A4\uC704\uD2B8\uC5D0 \uBB34\uAD00\uD55C \uC0AC\uC804 \uACB0\uD568\uC774 \uC11E\uC5EC \uBC94\uC704\uB97C \uC881\uD600 \uC7AC\uC2E4\uD589'). evidenceResnapshot \uB77C\uBCA8\uB85C \uB0A8\uC544 \uC644\uB8CC\uB4F1\uAE09\uC774 unverified\uAC00 \uB41C\uB2E4"
+  ),
   contractEnvironmentAbsentReason: external_exports.string().optional().describe("contract_done: \uACC4\uC57D\uD14C\uC2A4\uD2B8\uB97C \uC2E4\uD589\uD560 \uD658\uACBD\uC774 \uC5C6\uC744 \uB54C red \uD655\uC778 \uC694\uAD6C\uB97C \uC6B0\uD68C\uD558\uB294 \uC0AC\uC720 \uB77C\uBCA8(\xA74.6 \uB77C\uBCA8-\uBAA8\uC21C \uAC80\uC0AC \uB300\uC0C1)"),
   testPassed: external_exports.boolean().optional().describe("test_done action\uC5D0 \uD544\uC694. \uC11C\uBC84\uC5D0 \uAE30\uB85D\uB41C test evidence\uC640 \uB300\uC870\uB41C\uB2E4"),
   userConfirmed: external_exports.boolean().optional().describe("review_done action\uC5D0 \uD544\uC694. work-result\uB97C \uC0AC\uB78C\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uD655\uC778\uBC1B\uC558\uB294\uC9C0"),
@@ -30132,6 +30168,33 @@ async function handleSugoPlan(rawArgs) {
             registrationGlueChecked: args2.registrationGlueChecked,
             bootUnverifiedReason: args2.bootUnverifiedReason
           }
+        }
+      }
+    };
+  }
+  if (action === "test_reverify" && existing) {
+    const latest = existing.data.chainInfo.testEvidence;
+    const reverifyResult = checkTestReverifyGate(latest, args2.reverifyReason);
+    if (!reverifyResult.ok) return errorResult8(reverifyResult.code, reverifyResult.message);
+    const derivedState = latest.derivedState;
+    const testEvidenceFingerprint = derivedState === "pass" ? await computeChangedFilesFingerprint(session.projectPath, session.data.chainInfo.changedFiles) : session.data.chainInfo.testEvidenceFingerprint;
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        chainInfo: {
+          ...session.data.chainInfo,
+          testPassedState: derivedState,
+          testEvidenceFingerprint,
+          bypassLabels: [
+            ...session.data.chainInfo.bypassLabels ?? [],
+            {
+              kind: "evidenceResnapshot",
+              reason: args2.reverifyReason,
+              patchVersion: currentPatchVersion,
+              recordedAt: (/* @__PURE__ */ new Date()).toISOString()
+            }
+          ]
         }
       }
     };
@@ -30881,6 +30944,53 @@ async function handleSugoStatus(rawArgs = {}) {
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
+// src/work/sessionSummary.ts
+function toLocalTime(iso) {
+  if (!iso) return void 0;
+  const date3 = new Date(iso);
+  if (Number.isNaN(date3.getTime())) return void 0;
+  return new Intl.DateTimeFormat("sv-SE", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZoneName: "short"
+  }).format(date3);
+}
+function summarizeSession(session) {
+  const chain = session.data?.chainInfo;
+  const blockers = [];
+  const evidence = chain?.testEvidence;
+  if (evidence?.failed) blockers.push(`\uD14C\uC2A4\uD2B8 \uC2E4\uD328 ${evidence.failed}/${evidence.total ?? "?"}`);
+  if (chain?.analyzePassed === false) blockers.push("analyze \uBBF8\uD1B5\uACFC");
+  if (chain?.reviewPassed === false) blockers.push("review \uBBF8\uD1B5\uACFC");
+  if (chain?.autoLoopRetryCount) blockers.push(`review \uC7AC\uC2DC\uB3C4 ${chain.autoLoopRetryCount}\uD68C`);
+  return {
+    sessionId: session.id,
+    state: session.state,
+    featureName: session.featureName,
+    projectPath: session.projectPath,
+    startedAt: session.startedAt,
+    updatedAt: session.updatedAt,
+    ...toLocalTime(session.updatedAt) ? { updatedAtLocal: toLocalTime(session.updatedAt) } : {},
+    ...session.cancelledAt ? { cancelledAt: session.cancelledAt } : {},
+    resumable: session.state !== "DONE" && !session.cancelledAt,
+    blockers,
+    ...chain?.changedFiles ? { changedFileCount: chain.changedFiles.length } : {}
+  };
+}
+function sessionForTask(sessions, taskId) {
+  const matched = sessions.filter((s) => s.data?.hulkTaskId === taskId).sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
+  return matched[0] ? summarizeSession(matched[0]) : void 0;
+}
+function sessionsForProjects(sessions, projectPaths) {
+  const paths = new Set(projectPaths);
+  return sessions.filter((s) => paths.has(s.projectPath)).map(summarizeSession).sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
+}
+
 // src/tools/sugoTask.ts
 var TASK_STATUS = ["pending", "idea", "in_progress", "done", "dropped", "archived"];
 var sugoTaskInputSchema = {
@@ -30922,13 +31032,15 @@ async function handleSugoTask(rawArgs) {
       if (!args2.taskId) return errorResult14("TASK_ID_REQUIRED", "update action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await updateTask(args2.workspace, args2.taskId, { status: args2.status, summary: args2.summary });
       if (!task) return errorResult14("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
-      return ok6({ task });
+      const linkedSession = sessionForTask(await loadAllSessions(), args2.taskId);
+      return ok6({ task, linkedSession });
     }
     case "get": {
       if (!args2.taskId) return errorResult14("TASK_ID_REQUIRED", "get action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await getTask(args2.workspace, args2.taskId);
       if (!task) return errorResult14("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
-      return ok6({ task });
+      const linkedSessionForGet = sessionForTask(await loadAllSessions(), args2.taskId);
+      return ok6({ task, linkedSession: linkedSessionForGet });
     }
   }
 }
@@ -31390,49 +31502,6 @@ function errorResult17(errorCode, message) {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
   };
-}
-
-// src/work/sessionSummary.ts
-function toLocalTime(iso) {
-  if (!iso) return void 0;
-  const date3 = new Date(iso);
-  if (Number.isNaN(date3.getTime())) return void 0;
-  return new Intl.DateTimeFormat("sv-SE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-    timeZoneName: "short"
-  }).format(date3);
-}
-function summarizeSession(session) {
-  const chain = session.data?.chainInfo;
-  const blockers = [];
-  const evidence = chain?.testEvidence;
-  if (evidence?.failed) blockers.push(`\uD14C\uC2A4\uD2B8 \uC2E4\uD328 ${evidence.failed}/${evidence.total ?? "?"}`);
-  if (chain?.analyzePassed === false) blockers.push("analyze \uBBF8\uD1B5\uACFC");
-  if (chain?.reviewPassed === false) blockers.push("review \uBBF8\uD1B5\uACFC");
-  if (chain?.autoLoopRetryCount) blockers.push(`review \uC7AC\uC2DC\uB3C4 ${chain.autoLoopRetryCount}\uD68C`);
-  return {
-    sessionId: session.id,
-    state: session.state,
-    featureName: session.featureName,
-    projectPath: session.projectPath,
-    startedAt: session.startedAt,
-    updatedAt: session.updatedAt,
-    ...toLocalTime(session.updatedAt) ? { updatedAtLocal: toLocalTime(session.updatedAt) } : {},
-    ...session.cancelledAt ? { cancelledAt: session.cancelledAt } : {},
-    resumable: session.state !== "DONE" && !session.cancelledAt,
-    blockers,
-    ...chain?.changedFiles ? { changedFileCount: chain.changedFiles.length } : {}
-  };
-}
-function sessionsForProjects(sessions, projectPaths) {
-  const paths = new Set(projectPaths);
-  return sessions.filter((s) => paths.has(s.projectPath)).map(summarizeSession).sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
 }
 
 // src/tools/sugoWorkspace.ts

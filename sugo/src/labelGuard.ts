@@ -11,7 +11,13 @@ export type BypassLabelKind =
   | "runtimeUnverified"
   | "wiringUnverified"
   | "bootUnverified"
-  | "contractEvidenceMissing";
+  | "contractEvidenceMissing"
+  /**
+   * §4.3-R `test_reverify`: test_done 시점에 찍힌 증거 스냅샷을 최신 증거로 다시 찍었다는 표시.
+   * 환경부재류가 아니므로 라벨-모순 검사 대상이 아니다(그린 증거가 있어야 오히려 정상이다).
+   * 다만 "한 번 확정된 판정을 사람이 다시 열었다"는 사실이므로 완료등급은 unverified로 낮춘다.
+   */
+  | "evidenceResnapshot";
 
 export interface BypassLabel {
   kind: BypassLabelKind;

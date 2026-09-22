@@ -53,6 +53,7 @@ import { PatchEntryError, resolvePatchContext, type PatchContext } from "../patc
 import { applyTransition } from "../planStateMachine.js";
 import { generateSessionId, loadSession, saveSession, sessionExists } from "../session.js";
 import { checkTestEvidenceGate, isFullVerifyEnforceable } from "../testEvidence.js";
+import { checkTestReverifyGate } from "../testReverify.js";
 import { planArgsActionEnum, type PlanAction, type PlanSession } from "../types.js";
 
 export const sugoPlanInputSchema = {
@@ -88,6 +89,12 @@ export const sugoPlanInputSchema = {
   registrationGlueChecked: z.boolean().optional().describe("code_done: 등록 글루(빈 등록 메타) diff를 점검했는지"),
   wiringTestAdded: z.boolean().optional().describe("code_done: 배선/설정 변경에 대해 mock 없는 배선 테스트를 추가/검증했는지"),
   bootUnverifiedReason: z.string().optional().describe("code_done: boot-gate를 환경부재로 우회할 때의 사유 라벨"),
+  reverifyReason: z
+    .string()
+    .optional()
+    .describe(
+      "test_reverify action에 필요. test_done 시점 판정이 왜 틀렸는지(예: '전체 스위트에 무관한 사전 결함이 섞여 범위를 좁혀 재실행'). evidenceResnapshot 라벨로 남아 완료등급이 unverified가 된다",
+    ),
   contractEnvironmentAbsentReason: z
     .string()
     .optional()
@@ -687,6 +694,39 @@ export async function handleSugoPlan(rawArgs: unknown) {
             registrationGlueChecked: args.registrationGlueChecked,
             bootUnverifiedReason: args.bootUnverifiedReason,
           },
+        },
+      },
+    };
+  }
+
+  // §4.3-R test_reverify: 상태는 그대로 두고 test_done이 찍은 스냅샷만 최신 증거로 다시 찍는다.
+  // test_done과 같은 계산을 쓰되(지문 포함), 재스냅샷 사실을 라벨로 남겨 완료등급을 강등시킨다.
+  if (action === "test_reverify" && existing) {
+    const latest = existing.data.chainInfo.testEvidence;
+    const reverifyResult = checkTestReverifyGate(latest, args.reverifyReason);
+    if (!reverifyResult.ok) return errorResult(reverifyResult.code as GateBlockCode, reverifyResult.message!);
+    const derivedState = latest!.derivedState;
+    const testEvidenceFingerprint =
+      derivedState === "pass"
+        ? await computeChangedFilesFingerprint(session.projectPath, session.data.chainInfo.changedFiles)
+        : session.data.chainInfo.testEvidenceFingerprint;
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        chainInfo: {
+          ...session.data.chainInfo,
+          testPassedState: derivedState,
+          testEvidenceFingerprint,
+          bypassLabels: [
+            ...(session.data.chainInfo.bypassLabels ?? []),
+            {
+              kind: "evidenceResnapshot" as const,
+              reason: args.reverifyReason!,
+              patchVersion: currentPatchVersion,
+              recordedAt: new Date().toISOString(),
+            },
+          ],
         },
       },
     };

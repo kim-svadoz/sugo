@@ -128,6 +128,13 @@ export const ACTION_TYPES = [
   },
   { name: "test_start", fromStates: ["CODE_DONE"], toState: "TEST_RUNNING", gates: [] },
   { name: "test_done", fromStates: ["TEST_RUNNING"], toState: "TEST_DONE", gates: ["TEST_EVIDENCE_MISMATCH"] },
+  /**
+   * §4.3-R 증거 재스냅샷. `test_done`이 찍은 `testPassedState`/지문은 그 시점 값으로 고정돼,
+   * 이후 올바른 증거를 다시 기록해도 `review_done`이 옛 판정을 보고 막는 데드락이 있었다
+   * (forward-only라 `test_done`으로 되돌아갈 수도 없다). 상태는 그대로 두고 스냅샷만 다시 찍는다.
+   * 게이트를 무르게 하는 게 아니라 `evidenceResnapshot` 라벨로 남겨 완료등급을 강등시킨다.
+   */
+  { name: "test_reverify", fromStates: ["TEST_DONE", "REVIEW_RUNNING"], toState: null, gates: [] },
   { name: "review_start", fromStates: ["TEST_DONE"], toState: "REVIEW_RUNNING", gates: [] },
   {
     name: "review_done",

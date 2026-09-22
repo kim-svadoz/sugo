@@ -31,3 +31,14 @@ on_failure: **`sugo_validate`를 안 불렀으면 `VALIDATE_NOT_CALLED`로, 서�
 실패한 경우(전체 verdict는 fail이어도 verified 아님)는 하드 게이트가 아니라서, `sugo_chain`으로
 code-agent에 되돌릴지는 네 판단이다(재진입은 `autoLoopRetryCount`로 쌓이되 서버 강제 상한은 없다).
 환경 부재가 아닌데 runtimeVerified=false를 주장하면 런타임 게이트가 따로 막는다.
+
+**증거 스냅샷이 낡아 어떤 인자로도 안 통과할 때(§4.3-R):** `test_done` 시점의 판정이
+`testPassedState`로 박히고 이후 그린 증거를 다시 기록해도 갱신되지 않는다. 그래서
+`runtimeVerified:true`는 `RUNTIME_CLAIM_CONTRADICTS_EVIDENCE`로, 라벨을 붙이면
+`LABEL_CONTRADICTION`으로, 안 붙이면 `RUNTIME_UNVERIFIED_GATE_FAILED`로 — 세 길이 다 막히는
+데드락이 생긴다(forward-only라 `test_done`으로 되돌아갈 수도 없다).
+
+이때만 `sugo_plan(test_reverify, sessionId, reverifyReason)`으로 최신 증거를 다시 찍는다.
+**먼저 올바른 그린 증거를 `sugo_record_test_evidence`로 기록해야 한다** — 최신 증거가 여전히
+fail이면 `REVERIFY_EVIDENCE_STILL_FAIL`로 거부된다. 실패를 덮는 용도가 아니다. 재스냅샷은
+`evidenceResnapshot` 라벨로 남아 완료등급이 `unverified`로 내려간다.

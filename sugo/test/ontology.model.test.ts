@@ -33,8 +33,9 @@ describe("§2 온톨로지 drift lock", () => {
     expect([...runtime].filter((n) => !ontology.has(n))).toEqual([]);
   });
 
-  it("ACTION_TYPES는 §4대로 23개다", () => {
-    expect(ACTION_TYPES).toHaveLength(23);
+  it("ACTION_TYPES는 §4대로 24개다", () => {
+    // 23 → 24: §4.3-R test_reverify 추가(2026-09-22).
+    expect(ACTION_TYPES).toHaveLength(24);
   });
 
   it("OBJECT_TYPES.name 유니온 == RoadmapLevel", () => {

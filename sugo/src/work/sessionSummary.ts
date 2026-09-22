@@ -88,6 +88,21 @@ export function summarizeSession(session: PlanSession): SessionSummary {
  * 그래서 소속 판정은 호출부가 넘긴 경로 집합으로만 한다 — 여기서 레지스트리를 다시 읽으면
  * 등록이 해제된 프로젝트의 세션이 워크스페이스에서 조용히 사라진다.
  */
+/**
+ * 태스크에 연결된 세션을 찾는다. `sugo_plan(prd)`이 세션에 `hulkTaskId`를 심어두므로 그걸로 건다.
+ *
+ * task와 session은 서로 동기화되지 않는다 — `sugo_task(update, done)`으로 태스크를 닫아도 세션은
+ * 그대로고, 반대로 세션이 막혀 방치돼도 태스크는 in_progress로 남는다. 자동 동기화는 하지 않는다
+ * (사람이 태스크를 닫았다고 파이프라인이 끝난 건 아니다). 대신 **두 층을 함께 보여줘** 사람이
+ * 한쪽만 보고 오판하지 않게 한다.
+ */
+export function sessionForTask(sessions: PlanSession[], taskId: string): SessionSummary | undefined {
+  const matched = sessions
+    .filter((s) => s.data?.hulkTaskId === taskId)
+    .sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
+  return matched[0] ? summarizeSession(matched[0]) : undefined;
+}
+
 export function sessionsForProjects(sessions: PlanSession[], projectPaths: string[]): SessionSummary[] {
   const paths = new Set(projectPaths);
   return sessions

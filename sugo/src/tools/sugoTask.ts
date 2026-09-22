@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { addTask, getTask, listTasks, updateTask } from "../hulk/task.js";
+import { loadAllSessions } from "../session.js";
+import { sessionForTask } from "../work/sessionSummary.js";
 
 const TASK_STATUS = ["pending", "idea", "in_progress", "done", "dropped", "archived"] as const;
 
@@ -45,13 +47,17 @@ export async function handleSugoTask(rawArgs: unknown) {
       if (!args.taskId) return errorResult("TASK_ID_REQUIRED", "update action에는 taskId가 필요합니다.");
       const task = await updateTask(args.workspace, args.taskId, { status: args.status, summary: args.summary });
       if (!task) return errorResult("TASK_NOT_FOUND", `태스크를 찾을 수 없습니다: ${args.taskId}`);
-      return ok({ task });
+      // task와 session은 자동 동기화하지 않는다 — 사람이 태스크를 닫았다고 파이프라인이 끝난 건
+      // 아니다. 대신 연결 세션 상태를 함께 실어 한쪽만 보고 오판하지 않게 한다.
+      const linkedSession = sessionForTask(await loadAllSessions(), args.taskId);
+      return ok({ task, linkedSession });
     }
     case "get": {
       if (!args.taskId) return errorResult("TASK_ID_REQUIRED", "get action에는 taskId가 필요합니다.");
       const task = await getTask(args.workspace, args.taskId);
       if (!task) return errorResult("TASK_NOT_FOUND", `태스크를 찾을 수 없습니다: ${args.taskId}`);
-      return ok({ task });
+      const linkedSessionForGet = sessionForTask(await loadAllSessions(), args.taskId);
+      return ok({ task, linkedSession: linkedSessionForGet });
     }
   }
 }

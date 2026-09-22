@@ -110,8 +110,11 @@ describe("§4 Golden per-state action set", () => {
     CODE_RUNNING: ["code_done", "status"],
     CODE_DONE: ["test_start", "status"],
     TEST_RUNNING: ["test_done", "status"],
-    TEST_DONE: ["review_start", "code_start", "status"],
-    REVIEW_RUNNING: ["review_done", "code_start", "status"],
+    // test_reverify(§4.3-R): test_done이 찍은 증거 스냅샷을 최신 증거로 다시 찍는다. 상태를 바꾸지
+    // 않는 기록성 액션이라 두 상태 모두에서 허용된다 — review_done이 막힌 뒤에야 문제를 알게 되므로
+    // REVIEW_RUNNING에서도 열려 있어야 한다.
+    TEST_DONE: ["review_start", "code_start", "test_reverify", "status"],
+    REVIEW_RUNNING: ["review_done", "code_start", "test_reverify", "status"],
     DOCS_PENDING: ["docs_done", "status", "cancel"],
     COMMIT_PENDING: ["commit", "status", "cancel"],
     DONE: ["status", "start"],
