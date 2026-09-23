@@ -35,9 +35,16 @@ function extractCoreRuleBullets(harnessMd: string, limit = 2): string[] {
   return bullets;
 }
 
+/**
+ * `withVersionBucket`(rules.ts)이 base 하네스(`lang/java`)와 버전 델타 하네스
+ * (`lang/java/17`)를 의도적으로 별개 DetectedItem으로 내보낸다 — 하네스 표에는 둘 다 필요하다.
+ * 하지만 여기서는 사람이 읽는 "감지된 스택" 요약이라 같은 name+version이 두 번 찍히면
+ * 중복 감지처럼 보인다. id가 갈라져도 표시 문구가 같으면 하나로 합친다.
+ */
 function formatItemList(items: DetectedItem[]): string {
   if (items.length === 0) return "(없음)";
-  return items.map((i) => (i.version ? `${i.name} ${i.version}` : i.name)).join(", ");
+  const labels = items.map((i) => (i.version ? `${i.name} ${i.version}` : i.name));
+  return Array.from(new Set(labels)).join(", ");
 }
 
 function formatCommands(commands: DetectedStack["commands"]): string {

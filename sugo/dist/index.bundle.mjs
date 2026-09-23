@@ -22633,7 +22633,8 @@ function extractCoreRuleBullets(harnessMd, limit = 2) {
 }
 function formatItemList(items) {
   if (items.length === 0) return "(\uC5C6\uC74C)";
-  return items.map((i2) => i2.version ? `${i2.name} ${i2.version}` : i2.name).join(", ");
+  const labels = items.map((i2) => i2.version ? `${i2.name} ${i2.version}` : i2.name);
+  return Array.from(new Set(labels)).join(", ");
 }
 function formatCommands(commands) {
   const entries = Object.entries(commands).filter(([, v]) => v);
@@ -27745,7 +27746,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.5.1" : "0.0.0-dev";
+  return true ? "0.5.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts

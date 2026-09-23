@@ -90,4 +90,22 @@ describe("HarnessComposer.compose — 순수 함수", () => {
     expect(result.claudeMd).toContain("TypeScript 5.4.0");
     expect(result.claudeMd).toContain("build=`npm run build`");
   });
+
+  it("base 하네스와 버전 델타 하네스가 같은 name+version이면 요약에서 한 번만 표시한다", () => {
+    // withVersionBucket이 lang/java(버전 미표기 취급 없이 major만 담김)와 lang/java/17을
+    // 같은 name="Java", version="17"로 함께 내보내는 실제 상황(orders-api에서 관측).
+    const result = compose({
+      harnesses: [harness("default", "# d\n\n## 핵심 규칙\n\n1. x\n")],
+      projectName: "demo",
+      detectedStack: emptyStack({
+        languages: [
+          { id: "lang/java", category: "language", name: "Java", version: "17", detectedBy: "build.gradle" },
+          { id: "lang/java/17", category: "language", name: "Java", version: "17", detectedBy: "build.gradle" },
+        ],
+      }),
+      fetchWarnings: [],
+    });
+    const languageLine = result.claudeMd.split("\n").find((l) => l.startsWith("- **언어:**"));
+    expect(languageLine).toBe("- **언어:** Java 17");
+  });
 });
