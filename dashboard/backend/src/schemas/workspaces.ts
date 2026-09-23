@@ -1,16 +1,17 @@
 import { z } from "zod";
 
 export const checkpointCreateSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().min(1).optional(),
   category: z.string().optional(),
   title: z.string().min(1),
   learnedFrom: z.string().nullish(),
   checklist: z.unknown().optional(),
   appliesTo: z.unknown().optional(),
   checkpointDate: z.string().nullish(),
+  apply: z.boolean().optional(),
 });
 
-export const checkpointUpdateSchema = checkpointCreateSchema.omit({ id: true }).partial();
+export const checkpointUpdateSchema = checkpointCreateSchema.omit({ id: true, apply: true }).partial();
 
 export const linkSchema = z.object({
   from: z.string().min(1),

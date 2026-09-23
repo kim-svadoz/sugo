@@ -25,6 +25,14 @@ export interface CheckpointInput {
   learnedFrom?: string | null;
   checklist?: string[];
   appliesTo?: string[];
+  apply?: boolean;
+}
+
+export interface CheckpointApplyResult {
+  applied: Array<{ projectPath: string; file: string }>;
+  skipped: Array<{ projectPath: string; reason: string }>;
+  conflicts: Array<{ projectPath: string; file: string; reason: string }>;
+  failed: Array<{ projectPath: string; reason: string }>;
 }
 
 function cpPath(workspace: string, suffix = ""): string {
@@ -32,7 +40,7 @@ function cpPath(workspace: string, suffix = ""): string {
 }
 
 export function createWorkspaceCheckpoint(userId: string, workspace: string, body: CheckpointInput) {
-  return apiJson<{ ok: boolean }>(withUserId(cpPath(workspace), userId), { method: "POST", body: JSON.stringify(body) });
+  return apiJson<{ ok: boolean; id: string; application?: CheckpointApplyResult }>(withUserId(cpPath(workspace), userId), { method: "POST", body: JSON.stringify(body) });
 }
 
 export function updateWorkspaceCheckpoint(userId: string, workspace: string, id: string, body: Partial<CheckpointInput>) {
@@ -40,6 +48,13 @@ export function updateWorkspaceCheckpoint(userId: string, workspace: string, id:
     method: "PUT",
     body: JSON.stringify(body),
   });
+}
+
+export function applyWorkspaceCheckpoint(userId: string, workspace: string, id: string) {
+  return apiJson<{ ok: boolean; id: string; application: CheckpointApplyResult }>(
+    withUserId(cpPath(workspace, `/${encodeURIComponent(id)}/apply`), userId),
+    { method: "POST" },
+  );
 }
 
 export function deleteWorkspaceCheckpoint(userId: string, workspace: string, id: string) {

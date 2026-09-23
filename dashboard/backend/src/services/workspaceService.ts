@@ -239,6 +239,15 @@ export async function getCheckpoints(db: DbClient, userId: string, workspaceName
   return rows.map(normalizeCheckpointRow);
 }
 
+export async function getCheckpointById(db: DbClient, userId: string, workspaceName: string, id: string) {
+  const rows = await db.query<{ id: string; category: string; title: string; checklist: unknown; applies_to: unknown }>(
+    "SELECT id, category, title, checklist, applies_to FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [userId, workspaceName, id],
+  );
+  const row = rows[0];
+  return row ? normalizeCheckpointRow(row) : null;
+}
+
 export async function getTasks(db: DbClient, userId: string, workspaceName: string) {
   return db.query(
     "SELECT id, title, project, status, priority, description, summary, started_at, completed_at FROM sugo_tasks WHERE user_id = ? AND workspace_name = ? ORDER BY created_at",
@@ -290,7 +299,7 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
 // ---- Checkpoint CRUD (§3.3, dashboard-initiated - separate from plugin sync) ----
 
 export interface CreateCheckpointInput {
-  id: string;
+  id?: string;
   category?: string;
   title: string;
   learnedFrom?: string | null;
@@ -304,7 +313,8 @@ export async function createCheckpoint(
   userId: string,
   workspaceName: string,
   input: CreateCheckpointInput
-): Promise<void> {
+): Promise<string> {
+  if (!input.id) throw new Error("checkpoint id required");
   await db.exec(
     `INSERT INTO sugo_checkpoints
      (id, user_id, workspace_name, category, title, learned_from, checklist, applies_to, checkpoint_date)
@@ -321,6 +331,17 @@ export async function createCheckpoint(
       input.checkpointDate ?? null,
     ]
   );
+  return input.id;
+}
+
+export async function getWorkspaceProjectPaths(db: DbClient, userId: string, workspaceName: string): Promise<string[]> {
+  const rows = await db.query<{ project_path: string }>(
+    `SELECT p.project_path FROM sugo_workspace_projects p
+       JOIN sugo_workspaces w ON w.id = p.workspace_id
+      WHERE w.user_id = ? AND w.name = ? ORDER BY p.project_path`,
+    [userId, workspaceName],
+  );
+  return rows.map((row) => row.project_path);
 }
 
 export async function updateCheckpoint(

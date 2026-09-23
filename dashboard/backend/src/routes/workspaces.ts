@@ -23,12 +23,14 @@ import {
   deleteRoadmapGroup,
   getCheckpointSync,
   getCheckpoints,
+  getCheckpointById,
   getDecisions,
   getHistory,
   getRecentHistory,
   getRoadmap,
   getSpecContent,
   getTasks,
+  getWorkspaceProjectPaths,
   linkRoadmapNodes,
   listWorkspaces,
   renameRoadmapNode,
@@ -42,6 +44,7 @@ import {
   unlinkRoadmapNodes,
   updateCheckpoint,
 } from "../services/workspaceService.js";
+import { applyCheckpointToProjects, newCheckpointId } from "../services/checkpointApply.js";
 
 function requireUserId(req: import("express").Request, res: import("express").Response): string | null {
   // 공개 SaaS(§Phase 1): 신원은 인증 미들웨어가 세운 req.userId(토큰)만 신뢰. query userId 무시.
@@ -150,8 +153,22 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
   router.post("/:name/checkpoints", validateBody(checkpointCreateSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    await createCheckpoint(db, userId, req.params.name, req.body);
-    res.json({ ok: true });
+    const id = req.body.id ?? newCheckpointId();
+    await createCheckpoint(db, userId, req.params.name, { ...req.body, id });
+    const application = req.body.apply
+      ? await applyCheckpointToProjects({
+          workspace: req.params.name,
+          checkpoint: {
+            id,
+            title: req.body.title,
+            category: req.body.category,
+            appliesTo: req.body.appliesTo,
+            checklist: Array.isArray(req.body.checklist) ? req.body.checklist.map(String) : [],
+          },
+          projectPaths: await getWorkspaceProjectPaths(db, userId, req.params.name),
+        })
+      : undefined;
+    res.json({ ok: true, id, application });
   });
 
   router.put("/:name/checkpoints/:id", validateBody(checkpointUpdateSchema), async (req, res) => {
@@ -159,6 +176,25 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     if (!userId) return;
     await updateCheckpoint(db, userId, req.params.name, req.params.id, req.body);
     res.json({ ok: true });
+  });
+
+  router.post("/:name/checkpoints/:id/apply", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const checkpoint = await getCheckpointById(db, userId, req.params.name, req.params.id);
+    if (!checkpoint) return res.status(404).json({ error: "checkpoint_not_found" });
+    const application = await applyCheckpointToProjects({
+      workspace: req.params.name,
+      checkpoint: {
+        id: checkpoint.id,
+        title: checkpoint.title,
+        category: checkpoint.category,
+        appliesTo: Array.isArray(checkpoint.applies_to) ? checkpoint.applies_to.map(String) : [],
+        checklist: Array.isArray(checkpoint.checklist) ? checkpoint.checklist.map(String) : [],
+      },
+      projectPaths: await getWorkspaceProjectPaths(db, userId, req.params.name),
+    });
+    res.json({ ok: true, id: checkpoint.id, application });
   });
 
   router.delete("/:name/checkpoints/:id", async (req, res) => {

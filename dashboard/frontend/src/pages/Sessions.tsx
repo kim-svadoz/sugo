@@ -35,7 +35,7 @@ import {
 } from "../hooks/useWorkspaceData.js";
 import { LiveConsole } from "../components/LiveConsole.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
-import { createWorkspaceCheckpoint, deleteWorkspaceCheckpoint } from "../api/workspacesApi.js";
+import { applyWorkspaceCheckpoint, createWorkspaceCheckpoint, deleteWorkspaceCheckpoint, type CheckpointApplyResult } from "../api/workspacesApi.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
 import { LiveLogTail } from "../components/LiveConsole.js";
@@ -257,8 +257,9 @@ export function Sessions() {
   const [agentCanvasModal, setAgentCanvasModal] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<HistorySearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [cpDraft, setCpDraft] = useState({ id: "", title: "", category: "general", checklist: "", appliesTo: "" });
+  const [cpDraft, setCpDraft] = useState({ title: "", category: "general", checklist: "", appliesTo: "" });
   const [cpBusy, setCpBusy] = useState(false);
+  const [cpApplyResult, setCpApplyResult] = useState<{ id: string; result?: CheckpointApplyResult } | null>(null);
   const { userId } = useAuth();
 
   const history = useWorkspaceHistory(selectedWorkspace);
@@ -994,6 +995,7 @@ export function Sessions() {
           <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
             <p>이 도메인의 프로젝트에서 작업 컨텍스트를 불러올 때 <code>.claude/rules/&lt;category&gt;/</code>로 동기화되어 Claude Code에 자동 주입됩니다.</p>
             <p className="mt-1 text-[var(--color-text-dim)]"><code>applies_to</code>가 비어 있으면 도메인 전체, 값이 있으면 프로젝트명 또는 하네스 ID가 일치하는 프로젝트에만 적용됩니다.</p>
+            <p className="mt-1 text-[var(--color-text-dim)]"><code>.claude/rules/</code>의 생성 파일은 동기화 결과입니다. 직접 수정하면 다음 적용에서 충돌로 표시하고 덮어쓰지 않습니다.</p>
           </div>
           {checkpoints.loading ? (
             <LoadingSpinner />
@@ -1011,6 +1013,13 @@ export function Sessions() {
                       {cp.category}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--color-text)]">{cp.title}</span>
+                    <button disabled={cpBusy || !userId} onClick={async () => {
+                      setCpBusy(true);
+                      try {
+                        const applied = await applyWorkspaceCheckpoint(userId!, checkpointModal, cp.id);
+                        setCpApplyResult({ id: applied.id, result: applied.application });
+                      } finally { setCpBusy(false); }
+                    }} className="shrink-0 rounded border border-cyan-500/40 px-1.5 py-0.5 text-[10.5px] text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-40">다시 적용</button>
                     <button
                       disabled={cpBusy || !userId}
                       onClick={async () => {
@@ -1046,18 +1055,9 @@ export function Sessions() {
           <div className="mt-4 space-y-2 border-t border-[var(--color-border)] pt-3">
             <div className="font-mono text-[11px] text-[var(--color-text-muted)]">새 체크포인트</div>
             <div className="flex flex-wrap gap-2">
-              <input
-                value={cpDraft.id}
-                onChange={(e) => setCpDraft({ ...cpDraft, id: e.target.value })}
-                placeholder="CP-003"
-                className="w-28 rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 font-mono text-[12px] text-[var(--color-text)]"
-              />
-              <input
-                value={cpDraft.category}
-                onChange={(e) => setCpDraft({ ...cpDraft, category: e.target.value })}
-                placeholder="category"
-                className="w-28 rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 font-mono text-[12px] text-[var(--color-text)]"
-              />
+              <label className="w-40 text-[10px] text-[var(--color-text-dim)]">규칙 폴더
+                <input value={cpDraft.category} onChange={(e) => setCpDraft({ ...cpDraft, category: e.target.value })} placeholder="general" className="mt-1 w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 font-mono text-[12px] text-[var(--color-text)]" />
+              </label>
               <input
                 value={cpDraft.title}
                 onChange={(e) => setCpDraft({ ...cpDraft, title: e.target.value })}
@@ -1075,16 +1075,29 @@ export function Sessions() {
             <input
               value={cpDraft.appliesTo}
               onChange={(e) => setCpDraft({ ...cpDraft, appliesTo: e.target.value })}
-              placeholder="적용 대상 — 프로젝트명 또는 harnessId, 쉼표 구분 (비우면 도메인 전체)"
+              placeholder="추가 하네스 ID — 예: lang-java-21 (선택)"
               className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 font-mono text-[11.5px] text-[var(--color-text)]"
             />
+            <div className="rounded-lg border border-[var(--color-border)] bg-black/10 p-2.5">
+              <div className="mb-2 text-[10.5px] text-[var(--color-text-dim)]">적용 프로젝트 · 선택하지 않으면 도메인의 모든 프로젝트</div>
+              <div className="flex flex-wrap gap-2">
+                {(workspaces.find((ws) => ws.name === checkpointModal)?.projects ?? []).map((project) => {
+                  const name = repoName(project.project_path);
+                  const selected = cpDraft.appliesTo.split(",").map((v) => v.trim()).includes(name);
+                  return <button key={project.project_path} type="button" onClick={() => {
+                    const values = cpDraft.appliesTo.split(",").map((v) => v.trim()).filter(Boolean).filter((v) => v !== name);
+                    if (!selected) values.push(name);
+                    setCpDraft({ ...cpDraft, appliesTo: values.join(", ") });
+                  }} className={`rounded-md border px-2 py-1 text-[11px] ${selected ? "border-amber-400/50 bg-amber-400/10 text-amber-200" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>📦 {name}</button>;
+                })}
+              </div>
+            </div>
             <button
-              disabled={cpBusy || !cpDraft.id.trim() || !cpDraft.title.trim() || !userId}
+              disabled={cpBusy || !cpDraft.title.trim() || !userId}
               onClick={async () => {
                 setCpBusy(true);
                 try {
-                  await createWorkspaceCheckpoint(userId!, checkpointModal, {
-                    id: cpDraft.id.trim(),
+                  const saved = await createWorkspaceCheckpoint(userId!, checkpointModal, {
                     category: cpDraft.category.trim() || "general",
                     title: cpDraft.title.trim(),
                     checklist: cpDraft.checklist
@@ -1092,8 +1105,10 @@ export function Sessions() {
                       .map((l) => l.trim())
                       .filter(Boolean),
                     appliesTo: cpDraft.appliesTo.split(",").map((value) => value.trim()).filter(Boolean),
+                    apply: true,
                   });
-                  setCpDraft({ id: "", title: "", category: "general", checklist: "", appliesTo: "" });
+                  setCpApplyResult({ id: saved.id, result: saved.application });
+                  setCpDraft({ title: "", category: "general", checklist: "", appliesTo: "" });
                   checkpoints.refresh();
                 } finally {
                   setCpBusy(false);
@@ -1101,8 +1116,13 @@ export function Sessions() {
               }}
               className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[12px] font-bold text-amber-300 transition-colors hover:bg-amber-500/20 disabled:opacity-40"
             >
-              추가
+              저장 후 적용
             </button>
+            {cpApplyResult && <div className={`rounded-lg border p-2.5 text-[11px] ${cpApplyResult.result?.conflicts.length || cpApplyResult.result?.failed.length ? "border-amber-400/35 bg-amber-400/[0.06] text-amber-100" : "border-emerald-400/30 bg-emerald-400/[0.05] text-emerald-200"}`}>
+              <div className="font-semibold">{cpApplyResult.id} 저장 완료</div>
+              <div className="mt-1">적용 {cpApplyResult.result?.applied.length ?? 0} · 제외 {cpApplyResult.result?.skipped.length ?? 0} · 충돌 {cpApplyResult.result?.conflicts.length ?? 0} · 실패 {cpApplyResult.result?.failed.length ?? 0}</div>
+              {cpApplyResult.result?.conflicts.map((item) => <div key={item.file} className="mt-1 font-mono text-[10px]">충돌: {item.file}</div>)}
+            </div>}
           </div>
         </Modal>
       )}
