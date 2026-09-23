@@ -4,7 +4,7 @@ import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
-import { isManualSpec, scheduleCardStyle, scheduledOpenCount } from "../lib/schedulePresentation.js";
+import { daySpecOverflowClass, isManualSpec, scheduleCardStyle, scheduledOpenCount } from "../lib/schedulePresentation.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -235,7 +235,7 @@ export function SchedulePage() {
                     </span>
                     {holiday && <span className="truncate text-[9px] text-rose-400" title={holiday}>{holiday}</span>}
                   </div>
-                  <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1", daySpecOverflowClass(dayChips.length))}>
                     {dayChips.map((s) => {
                       const style = scheduleCardStyle(colorOf(s.workspace_name));
                       const overdue = key < todayKey && isOpenStatus(s);
@@ -247,11 +247,14 @@ export function SchedulePage() {
                           onDragEnd={() => setDragOverKey(null)}
                           onClick={() => setSelected(s)}
                           style={style}
-                          className="flex min-h-7 shrink-0 cursor-grab items-center gap-1.5 rounded-md border px-2 py-1 text-left text-[11px] transition-[filter,background-color] hover:brightness-110 active:cursor-grabbing"
+                          className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[filter,background-color] hover:brightness-110 active:cursor-grabbing"
                           title={`${s.workspace_name} · ${s.title}`}
                         >
                           <span className="min-w-0 flex-1 truncate font-medium text-slate-100">{s.title}</span>
-                          {isManualSpec(s.id) && !overdue && (
+                          {s.status === "done" && (
+                            <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">완료</span>
+                          )}
+                          {isManualSpec(s.id) && !overdue && s.status !== "done" && (
                             <span className="shrink-0 rounded bg-slate-500/15 px-1 py-0.5 text-[8px] font-medium text-slate-400">초안</span>
                           )}
                           {overdue && (

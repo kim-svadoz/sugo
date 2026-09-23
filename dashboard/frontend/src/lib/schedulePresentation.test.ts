@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { isManualSpec, scheduleCardStyle, scheduledOpenCount } from "./schedulePresentation.js";
+import { daySpecOverflowClass, isManualSpec, scheduleCardStyle, scheduledOpenCount } from "./schedulePresentation.js";
 
 describe("schedule presentation", () => {
   it("마감일이 있고 아직 끝나지 않은 Spec만 제목 개수에 포함한다", () => {
@@ -31,9 +31,11 @@ describe("schedule presentation", () => {
     expect(isManualSpec("spec-feature-checkout")).toBe(false);
   });
 
-  it("날짜 칸은 SPEC 3개 높이를 확보하고 초과분만 내부 스크롤한다", () => {
+  it("날짜 칸은 SPEC 3개까지 스크롤을 끄고 4개부터 내부 스크롤한다", () => {
+    expect(daySpecOverflowClass(3)).toBe("overflow-hidden");
+    expect(daySpecOverflowClass(4)).toBe("overflow-y-auto");
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain("min-h-7 shrink-0");
-    expect(source).toContain("overflow-y-auto");
+    expect(source).toContain("min-h-[26px] shrink-0");
+    expect(source).toContain("완료");
   });
 });
