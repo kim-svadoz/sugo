@@ -172,7 +172,33 @@ describe("rename and parent mutations", () => {
       .send({ nodeId: "a", parentId: "ws-grp" })
       .expect(200);
 
-    const rows = await db.query("SELECT title, parent FROM sugo_roadmap_nodes WHERE id='a'");
-    expect(rows).toEqual([{ title: "New Title", parent: "ws-grp" }]);
+    // 원본 title(CLI 진실)은 그대로, manual_title에만 저장된다 — manual_status와 같은
+    // 오버레이 패턴(§3.3). GET /roadmap이 돌려주는 title은 이미 유효값으로 합쳐진 것.
+    const rows = await db.query("SELECT title, manual_title, parent FROM sugo_roadmap_nodes WHERE id='a'");
+    expect(rows).toEqual([{ title: "a", manual_title: "New Title", parent: "ws-grp" }]);
+
+    const roadmap = await request(app).get("/api/workspaces/ws1/roadmap").query({ userId: "u1" }).set("Authorization", auth).expect(200);
+    expect(roadmap.body.nodes.find((n: { id: string }) => n.id === "a").title).toBe("New Title");
+  });
+
+  it("CLI 재동기화가 대시보드에서 바꾼 이름을 되돌리지 않는다(2026-09-23 사용자가 실제로 겪음)", async () => {
+    const { app, db, auth } = await appWithNodes([{ id: "a", level: "task" }]);
+    await request(app)
+      .post("/api/workspaces/ws1/roadmap/rename")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "a", title: "대시보드에서 바꾼 이름" })
+      .expect(200);
+
+    await request(app)
+      .post("/api/sync/roadmap")
+      .set("Authorization", auth)
+      .send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "a", title: "a", level: "task", status: "in_progress" }] });
+
+    const rows = await db.query<{ title: string; manual_title: string }>("SELECT title, manual_title FROM sugo_roadmap_nodes WHERE id='a'");
+    expect(rows[0].title).toBe("a");
+    expect(rows[0].manual_title).toBe("대시보드에서 바꾼 이름");
+
+    const roadmap = await request(app).get("/api/workspaces/ws1/roadmap").query({ userId: "u1" }).set("Authorization", auth).expect(200);
+    expect(roadmap.body.nodes.find((n: { id: string }) => n.id === "a").title).toBe("대시보드에서 바꾼 이름");
   });
 });

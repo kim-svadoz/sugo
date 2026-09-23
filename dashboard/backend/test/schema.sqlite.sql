@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (
   pos_y REAL,
   due_date TEXT,
   project_path TEXT,
+  manual_title TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   synced_at TEXT,

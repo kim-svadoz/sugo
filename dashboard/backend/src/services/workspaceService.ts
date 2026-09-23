@@ -265,6 +265,7 @@ export interface RoadmapNodeRow {
   pos_x: number | null;
   pos_y: number | null;
   due_date: string | null;
+  manual_title: string | null;
 }
 
 // Row shape as it comes off the wire - JSON columns are driver-dependent
@@ -281,8 +282,12 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
     "SELECT * FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? ORDER BY id",
     [userId, workspaceName]
   );
+  // manual_status와 달리 manual_title은 서버에서 곧바로 유효 title로 합친다 — Canvas의
+  // n.title 참조가 수십 곳이라 프론트에 매번 manual_title ?? title 판정을 시키는 대신,
+  // "원본 CLI 제목을 따로 보여줄 UI가 없다"는 전제로 여기서 한 번에 정리한다.
   return rows.map((r) => ({
     ...r,
+    title: r.manual_title ?? r.title,
     depends_on: parseJsonArray(r.depends_on),
     work_result: parseMaybeJson<unknown>(r.work_result, null),
     lineage: parseMaybeJson<unknown>(r.lineage, null),
@@ -303,10 +308,13 @@ export interface ScheduledSpecRow {
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
  * 프론트가 due_date 유무로 캘린더/"기한 미정" 리스트를 나눈다(§7B). */
 export async function getScheduledSpecs(db: DbClient, userId: string): Promise<ScheduledSpecRow[]> {
-  return db.query<ScheduledSpecRow>(
-    "SELECT id, workspace_name, title, status, due_date, project_path FROM sugo_roadmap_nodes WHERE user_id = ? AND level = 'spec' ORDER BY (due_date IS NULL), due_date, id",
+  const rows = await db.query<ScheduledSpecRow & { manual_title: string | null }>(
+    "SELECT id, workspace_name, title, manual_title, status, due_date, project_path FROM sugo_roadmap_nodes WHERE user_id = ? AND level = 'spec' ORDER BY (due_date IS NULL), due_date, id",
     [userId]
   );
+  // manual_title(Canvas 이름 변경)이 있으면 그게 유효 제목 — CLI가 push한 title은 다음
+  // sync에서 되돌아오므로 화면 표시에는 절대 그대로 쓰지 않는다.
+  return rows.map(({ manual_title, ...row }) => ({ ...row, title: manual_title ?? row.title }));
 }
 
 export type SetDueDateResult = { ok: true } | { ok: false; errorCode: "NODE_NOT_FOUND" | "INVALID_LEVEL" };
@@ -587,6 +595,11 @@ export async function setRoadmapParent(
   ]);
 }
 
+/**
+ * manual_status와 같은 오버레이 패턴 — 원본 `title`(CLI 진실)은 그대로 두고 `manual_title`에만
+ * 쓴다. `title` 자체를 덮어쓰면 다음 CLI 재동기화(syncRoadmap)가 원래 제목으로 되돌려버린다
+ * (2026-09-23 사용자가 실제로 겪음). 읽는 쪽은 전부 `manual_title ?? title`로 유효값을 판정한다.
+ */
 export async function renameRoadmapNode(
   db: DbClient,
   userId: string,
@@ -594,7 +607,7 @@ export async function renameRoadmapNode(
   nodeId: string,
   title: string
 ): Promise<void> {
-  await db.exec("UPDATE sugo_roadmap_nodes SET title = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+  await db.exec("UPDATE sugo_roadmap_nodes SET manual_title = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
     title,
     userId,
     workspaceName,

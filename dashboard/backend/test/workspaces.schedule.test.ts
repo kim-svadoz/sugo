@@ -59,6 +59,22 @@ describe("GET /api/workspaces/schedule — §7B 워크스페이스 비종속 집
     const res = await request(ctx.app).get("/api/workspaces/schedule").query({ userId: "u1" }).set("Authorization", ctx.auth).expect(200);
     expect(res.body.specs.map((s: { id: string }) => s.id)).toEqual(["spec1"]);
   });
+
+  it("Canvas에서 이름을 바꾼 스펙은 재동기화 뒤에도 바뀐 이름을 보여준다", async () => {
+    const ctx = await bootApp();
+    await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }], ctx);
+    await request(ctx.app)
+      .post("/api/workspaces/ws1/roadmap/rename")
+      .query({ userId: "u1" }).set("Authorization", ctx.auth)
+      .send({ nodeId: "spec1", title: "바뀐 제목" })
+      .expect(200);
+    await request(ctx.app)
+      .post("/api/sync/roadmap").set("Authorization", ctx.auth)
+      .send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "spec1", title: "spec1", level: "spec", status: "in_progress" }] });
+
+    const res = await request(ctx.app).get("/api/workspaces/schedule").query({ userId: "u1" }).set("Authorization", ctx.auth).expect(200);
+    expect(res.body.specs.find((s: { id: string }) => s.id === "spec1").title).toBe("바뀐 제목");
+  });
 });
 
 describe("POST /api/workspaces/:name/roadmap/due-date — §7B", () => {

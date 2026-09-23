@@ -6,7 +6,7 @@ import { createMySqlClient } from "./mysqlClient.js";
 import { createSqliteClient } from "./sqliteClient.js";
 import { migrateCanvasToRoadmap } from "./migrations.js";
 import { migrateWstToRun } from "../services/workspaceService.js";
-import { ensureRoadmapDueDateColumn, ensureRoadmapProjectPathColumn } from "../services/syncService.js";
+import { ensureRoadmapDueDateColumn, ensureRoadmapManualTitleColumn, ensureRoadmapProjectPathColumn } from "../services/syncService.js";
 import { config } from "../config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -22,6 +22,7 @@ export async function initDb(): Promise<DbClient> {
     await migrateWstToRun(client);
     await ensureRoadmapDueDateColumn(client);
     await ensureRoadmapProjectPathColumn(client);
+    await ensureRoadmapManualTitleColumn(client);
     return client;
   }
   const client = createMySqlClient(config.mysql);
@@ -34,5 +35,6 @@ export async function initDb(): Promise<DbClient> {
   // 테이블에는 컬럼을 못 붙이므로, 업그레이드 배포를 위해 별도로 돈다.
   await ensureRoadmapDueDateColumn(client);
   await ensureRoadmapProjectPathColumn(client);
+  await ensureRoadmapManualTitleColumn(client);
   return client;
 }

@@ -1669,7 +1669,7 @@ export function RoadmapGraph({
             className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-[13px] text-[var(--color-text)]"
           />
           <p className="mt-2 text-[11.5px] text-[var(--color-text-dim)]">
-            표시명만 바뀝니다(Enter로 저장) — 플러그인이 push하는 제목은 다음 sync에서 다시 덮어씁니다.
+            표시명만 바뀝니다(Enter로 저장). 대시보드가 따로 기억하므로 플러그인이 다시 push해도 되돌아가지 않습니다.
           </p>
         </HeaderModal>
       )}

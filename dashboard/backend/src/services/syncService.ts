@@ -126,6 +126,38 @@ export async function ensureRoadmapProjectPathColumn(db: DbClient): Promise<bool
   }
 }
 
+/**
+ * §3.3 `sugo_roadmap_nodes.manual_title` 자가보강 — 위와 같은 패턴. Canvas의 이름 변경(✎)이
+ * 쓰는 값이라 `syncRoadmap`의 UPDATE SET 절에는 넣지 않는다 — CLI가 다시 push하는 원래
+ * 제목이 대시보드에서 바꾼 이름을 덮어쓰면 안 되기 때문이다(manual_status와 같은 오버레이
+ * 패턴: 원본 `title`은 CLI 진실을 계속 유지하고, 표시는 `manual_title ?? title`로 판정).
+ */
+let manualTitleColState: boolean | null = null;
+
+/** 테스트 전용 — 모듈 레벨 캐시를 비운다. */
+export function __resetManualTitleColState(): void {
+  manualTitleColState = null;
+}
+
+export async function ensureRoadmapManualTitleColumn(db: DbClient): Promise<boolean> {
+  if (manualTitleColState !== null) return manualTitleColState;
+  try {
+    await db.query("SELECT manual_title FROM sugo_roadmap_nodes LIMIT 1");
+    manualTitleColState = true;
+    return true;
+  } catch {
+    // 없다 → 추가를 시도한다.
+  }
+  try {
+    await db.exec("ALTER TABLE sugo_roadmap_nodes ADD COLUMN manual_title TEXT NULL");
+    manualTitleColState = true;
+    return true;
+  } catch {
+    manualTitleColState = false;
+    return false;
+  }
+}
+
 async function getOrCreateWorkspaceId(db: DbClient, userId: string, name: string): Promise<number> {
   const rows = await db.query<{ id: number }>(
     "SELECT id FROM sugo_workspaces WHERE user_id = ? AND name = ?",
@@ -440,7 +472,8 @@ interface RoadmapRow {
 }
 
 // §3.1/§7 roadmap sync: 스냅샷 replace 시맨틱 + 소유권 경계(depends_on 최초1회 seed,
-// manual_status/manual_by/manual_at/pos_x/pos_y는 upsert SET에서 물리적으로 제외).
+// manual_status/manual_by/manual_at/pos_x/pos_y/due_date/project_path/manual_title은
+// upsert SET에서 물리적으로 제외).
 export async function syncRoadmap(
   db: DbClient,
   userId: string,

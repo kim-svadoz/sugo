@@ -12,8 +12,10 @@ describe("local dashboard launcher", () => {
     expect(launcher).toContain('PATH="$PATH"');
     expect(launcher).toContain("nohup");
     expect(launcher).toContain('"$DASHBOARD_ROOT/dev-local.sh"');
-    expect(launcher).toContain("DASHBOARD_API_PORT=3001");
-    expect(launcher).toContain("DASHBOARD_UI_PORT=5175");
+    expect(launcher).toContain('API_PORT="3001"');
+    expect(launcher).toContain('UI_PORT="5175"');
+    expect(launcher).toContain('DASHBOARD_API_PORT="$API_PORT"');
+    expect(launcher).toContain('DASHBOARD_UI_PORT="$UI_PORT"');
     expect(launcher).toContain("DASHBOARD_STRICT_PORTS=1");
   });
 
