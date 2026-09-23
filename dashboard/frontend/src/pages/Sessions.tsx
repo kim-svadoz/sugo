@@ -744,7 +744,7 @@ export function Sessions() {
                 key={ws.name}
                 className={cn(
                   "rounded-lg border bg-[var(--color-surface)]",
-                  isSel ? "border-cyan-400/80 bg-cyan-400/[0.04]" : "border-[var(--color-border)]",
+                  isSel ? "border-[var(--color-border)] bg-cyan-400/[0.045]" : "border-[var(--color-border)]",
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
@@ -793,7 +793,7 @@ export function Sessions() {
                 }}
                 className={cn(
                   "ck-card flex cursor-pointer flex-col justify-between rounded-xl border bg-[var(--color-surface)] p-4",
-                  isSel ? "-translate-y-0.5 border-cyan-400/80 bg-cyan-400/[0.04]" : "border-[var(--color-border)]",
+                  isSel ? "border-[var(--color-border)] bg-cyan-400/[0.045]" : "border-[var(--color-border)]",
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
@@ -891,7 +891,7 @@ export function Sessions() {
                 }}
                 className={cn(
                   "ck-card flex cursor-pointer items-center gap-3 rounded-lg border bg-[var(--color-surface)] px-3 py-2",
-                  isSel ? "border-cyan-400/80 bg-cyan-400/[0.04]" : "border-[var(--color-border)]",
+                  isSel ? "border-[var(--color-border)] bg-cyan-400/[0.045]" : "border-[var(--color-border)]",
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
