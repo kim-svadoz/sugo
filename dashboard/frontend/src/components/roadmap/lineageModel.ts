@@ -80,20 +80,23 @@ export function buildLineageChains(nodes: RoadmapNode[]): LineageChain[] {
     ]);
   }
 
-  return [...groups.entries()].map(([root, unsorted]) => {
+  return [...groups.entries()].flatMap(([root, unsorted]) => {
     const items = [...unsorted].sort((a, b) => a.version - b.version);
+    // v0은 최초 feat의 실행 기록일 뿐, 그 자체로는 "계보"가 아니다. 실제 patch가 하나라도
+    // 생겼을 때만 일반 TASK 카드를 체인 노드로 승격한다.
+    if (!items.some((item) => item.version > 0)) return [];
     const columns: LineageChainItem[][] = [];
     for (const item of items) {
       if (item.depth === 0 || columns.length === 0) columns.push([item]);
       else columns[columns.length - 1].push(item);
     }
-    return {
+    return [{
       id: `chain:${root}`,
       root,
       parent: items[0].node.parent,
       memberIds: [...new Set(items.map((item) => item.node.id))],
       columns,
-    };
+    }];
   });
 }
 

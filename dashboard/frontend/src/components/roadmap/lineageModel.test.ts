@@ -26,6 +26,16 @@ describe("patch lineage canvas model", () => {
     expect(buildLineageChains([run])).toEqual([]);
   });
 
+  it("v0 feat만 있는 TASK는 계보가 아니라 일반 TASK 카드로 남긴다", () => {
+    const task = node({
+      id: "task",
+      parent: "run",
+      lineage: [{ version: 0, title: "최초 구현" }],
+    });
+
+    expect(buildLineageChains([task])).toEqual([]);
+  });
+
   it("Task의 이력 배열을 원본 RUN 아래 v0→v1→v2 체인으로 펼친다", () => {
     const task = node({
       id: "task",

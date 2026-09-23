@@ -497,7 +497,7 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
 }
 
 /**
- * nodeTypes ③: patch 계보 체인(설계안 · 보라 계열 §5.4 secondary).
+ * nodeTypes ③: patch 계보 체인(설계안).
  *
  * 카드 한 장이 아니라 **체인 하나가 노드 하나**다. 위쪽 stem에서 컬럼마다 violet 점선 베지어가
  * 갈라져 나오고(fork), 같은 컬럼 안에서는 세로로 쌓인다 — 컬럼=형제 패치, 세로=연속 차수.
@@ -540,6 +540,7 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
             <div key={col[0].key} className="flex flex-col" style={{ width: PC_COL_W, gap: PC_CARD_GAP }}>
               {shown.map((item, ri) => {
                 const st = effStatus(item.node);
+                const cs = cardStyle(st, false, false);
                 return (
                   <div key={item.key} className="relative">
                     {/* 같은 컬럼의 앞 카드와 잇는 세로 점선 = 연속 차수 */}
@@ -550,12 +551,11 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
                       />
                     )}
                     <div
-                      className={cn(
-                        "cursor-pointer overflow-hidden rounded-xl border bg-violet-500/10 px-2.5 py-2 transition-all hover:brightness-110",
-                      )}
+                      className="cursor-pointer overflow-hidden rounded-xl border bg-[var(--color-surface)] transition-all hover:-translate-y-[2px] hover:brightness-110"
                       style={{
                         height: LINEAGE_VCARD_H,
-                        borderColor: data.selectedItemId === item.key ? SEL : "rgba(139,92,246,0.5)",
+                        borderColor: data.selectedItemId === item.key ? SEL : cs.border,
+                        background: st === "done" ? "#1b2620" : "var(--color-surface)",
                         boxShadow: selRing(data.selectedItemId === item.key),
                       }}
                       onClick={(e) => {
@@ -563,22 +563,25 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
                         data.onSelect?.(item.key);
                       }}
                     >
-                      <div className="flex items-center gap-1.5">
-                        <span className="shrink-0 rounded bg-violet-500/25 px-1.5 py-0.5 font-mono text-[12px] font-bold text-violet-100">
-                          v{item.version}-{item.version === 0 ? "feat" : "patch"}
-                        </span>
-                        {item.key === latestKey && (
-                          <span className="shrink-0 font-mono text-[10px] text-violet-300/80">최신</span>
-                        )}
-                        <span
-                          className="ml-auto shrink-0 font-mono text-[10px] uppercase"
-                          style={{ color: statusColor(st, false) }}
-                        >
-                          {st === "done" ? "완료" : cardStyle(st, false, false).label}
-                        </span>
-                      </div>
-                      <div className="mt-1 truncate text-[12.5px] text-[var(--color-text)]" title={item.title}>
-                        {item.version === 0 ? "✨" : "🔁"} {item.title}
+                      <div className="h-1" style={{ background: cs.accent }} />
+                      <div className="px-2.5 py-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="shrink-0 rounded bg-slate-500/20 px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-200">
+                            v{item.version}-{item.version === 0 ? "feat" : "patch"}
+                          </span>
+                          {item.key === latestKey && (
+                            <span className="shrink-0 font-mono text-[9.5px] text-slate-400">최신</span>
+                          )}
+                          <span
+                            className="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[9.5px] font-semibold"
+                            style={{ background: `${cs.accent}22`, color: cs.accent }}
+                          >
+                            {cs.label}
+                          </span>
+                        </div>
+                        <div className="mt-1 truncate text-[12.5px] leading-snug text-slate-100" title={item.title}>
+                          {item.title}
+                        </div>
                       </div>
                     </div>
                     {ri === 0 && hasChildren && (
