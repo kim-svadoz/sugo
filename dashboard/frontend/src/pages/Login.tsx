@@ -2,6 +2,7 @@ import { useAuth } from "../auth/AuthContext.js";
 
 export function Login() {
   const { login } = useAuth();
+  const localDev = import.meta.env.VITE_LOCAL_DEV === "true";
   return (
     <div className="flex h-screen items-center justify-center">
       <div className="ck-glass ck-card ck-scan text-center">
@@ -14,7 +15,7 @@ export function Login() {
           className="ck-glow-cyan rounded px-4 py-2 text-sm"
           style={{ border: "1px solid var(--color-primary)" }}
         >
-          Sign in with GitHub
+          {localDev ? "Continue as local user" : "Sign in with GitHub"}
         </button>
       </div>
     </div>

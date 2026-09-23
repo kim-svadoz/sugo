@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "../lib/utils.js";
+import { workspaceCardShadow } from "../lib/workspaceSelection.js";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import {
   formatDate,
@@ -256,7 +257,7 @@ export function Sessions() {
   const [agentCanvasModal, setAgentCanvasModal] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<HistorySearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [cpDraft, setCpDraft] = useState({ id: "", title: "", category: "general", checklist: "" });
+  const [cpDraft, setCpDraft] = useState({ id: "", title: "", category: "general", checklist: "", appliesTo: "" });
   const [cpBusy, setCpBusy] = useState(false);
   const { userId } = useAuth();
 
@@ -611,7 +612,7 @@ export function Sessions() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-[calc(100vh-7rem)] min-h-[640px] flex-col gap-4">
       {isSearchMode && (
         <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-3">
           <p className="text-sm text-[var(--color-text)]">
@@ -738,9 +739,9 @@ export function Sessions() {
                 key={ws.name}
                 className={cn(
                   "rounded-lg border bg-[var(--color-surface)]",
-                  isSel ? "neon-border-cyan border-cyan-500/60" : "border-[var(--color-border)]",
+                  isSel ? "border-cyan-400/80 bg-cyan-400/[0.04]" : "border-[var(--color-border)]",
                 )}
-                style={{ boxShadow: `inset 3px 0 0 ${color}` }}
+                style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
                 <div
                   role="button"
@@ -787,9 +788,9 @@ export function Sessions() {
                 }}
                 className={cn(
                   "ck-card flex cursor-pointer flex-col justify-between rounded-xl border bg-[var(--color-surface)] p-4",
-                  isSel ? "neon-border-cyan border-cyan-500/60" : "border-[var(--color-border)]",
+                  isSel ? "-translate-y-0.5 border-cyan-400/80 bg-cyan-400/[0.04]" : "border-[var(--color-border)]",
                 )}
-                style={{ boxShadow: `inset 3px 0 0 ${color}` }}
+                style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">
@@ -885,9 +886,9 @@ export function Sessions() {
                 }}
                 className={cn(
                   "ck-card flex cursor-pointer items-center gap-3 rounded-lg border bg-[var(--color-surface)] px-3 py-2",
-                  isSel ? "neon-border-cyan border-cyan-500/60" : "border-[var(--color-border)]",
+                  isSel ? "border-cyan-400/80 bg-cyan-400/[0.04]" : "border-[var(--color-border)]",
                 )}
-                style={{ boxShadow: `inset 3px 0 0 ${color}` }}
+                style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
                 <span className={cn("h-2 w-2 shrink-0 rounded-full ck-pulse-dot", st.dot)} />
                 <span className="w-48 shrink-0 truncate font-mono text-[13px] font-bold text-white">{ws.name}</span>
@@ -908,11 +909,11 @@ export function Sessions() {
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
       {selected && !isSearchMode && (
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          <div className="ck-glass flex h-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3">
+        <div className="grid min-h-[300px] flex-1 grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="ck-glass flex min-h-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3">
             <LiveConsole workspace={selected.name} />
           </div>
-          <div className="ck-glass flex h-[300px] flex-col rounded-xl border border-[var(--color-border)] p-3">
+          <div className="ck-glass flex min-h-[300px] flex-col rounded-xl border border-[var(--color-border)] p-3">
             {renderInspector(selected)}
           </div>
         </div>
@@ -990,9 +991,10 @@ export function Sessions() {
           <h3 className="mb-1 flex items-center gap-2 text-[15px] font-semibold text-[var(--color-text-bright)]">
             <Shield size={16} className="text-amber-400" /> {checkpointModal} 체크포인트
           </h3>
-          <p className="mb-4 text-[12px] text-[var(--color-text-muted)]">
-            커밋 전에 확인할 재발방지 목록입니다. 플러그인이 `applies_to` 매칭으로 자동 적용합니다.
-          </p>
+          <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
+            <p>이 도메인의 프로젝트에서 작업 컨텍스트를 불러올 때 <code>.claude/rules/&lt;category&gt;/</code>로 동기화되어 Claude Code에 자동 주입됩니다.</p>
+            <p className="mt-1 text-[var(--color-text-dim)]"><code>applies_to</code>가 비어 있으면 도메인 전체, 값이 있으면 프로젝트명 또는 하네스 ID가 일치하는 프로젝트에만 적용됩니다.</p>
+          </div>
           {checkpoints.loading ? (
             <LoadingSpinner />
           ) : checkpoints.data.length === 0 ? (
@@ -1032,6 +1034,10 @@ export function Sessions() {
                       ))}
                     </ul>
                   )}
+                  <div className="mt-2 font-mono text-[10.5px] text-[var(--color-text-dim)]">
+                    적용 범위: {cp.applies_to?.length ? cp.applies_to.join(", ") : `${checkpointModal} 전체 프로젝트`}
+                    <span className="ml-2">→ .claude/rules/{cp.category || "general"}/</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1066,6 +1072,12 @@ export function Sessions() {
               rows={3}
               className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 text-[12.5px] text-[var(--color-text)]"
             />
+            <input
+              value={cpDraft.appliesTo}
+              onChange={(e) => setCpDraft({ ...cpDraft, appliesTo: e.target.value })}
+              placeholder="적용 대상 — 프로젝트명 또는 harnessId, 쉼표 구분 (비우면 도메인 전체)"
+              className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 font-mono text-[11.5px] text-[var(--color-text)]"
+            />
             <button
               disabled={cpBusy || !cpDraft.id.trim() || !cpDraft.title.trim() || !userId}
               onClick={async () => {
@@ -1079,9 +1091,9 @@ export function Sessions() {
                       .split(/\r?\n/)
                       .map((l) => l.trim())
                       .filter(Boolean),
-                    appliesTo: [],
+                    appliesTo: cpDraft.appliesTo.split(",").map((value) => value.trim()).filter(Boolean),
                   });
-                  setCpDraft({ id: "", title: "", category: "general", checklist: "" });
+                  setCpDraft({ id: "", title: "", category: "general", checklist: "", appliesTo: "" });
                   checkpoints.refresh();
                 } finally {
                   setCpBusy(false);

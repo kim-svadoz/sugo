@@ -184,11 +184,12 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 /* 설계안 그대로. 캔버스는 읽기전용 뷰어라 손잡이는 보이지도, 잡히지도 않는다.
    (한때 여기서 의존을 잇게 만들었다가 스펙과 어긋나 되돌렸다 — §5.1 "읽기전용 뷰어".) */
 .react-flow__handle { cursor: default !important; pointer-events: none !important; }
+.react-flow__node-roadmap, .react-flow__node-container { cursor: pointer !important; }
 
 /* 설계안은 0.85였는데 이 빌드는 루트 폰트가 19px이라 실제로는 글씨가 작게 읽힌다.
    학습용 화면이라 읽히는 게 우선이므로 0.95로 올렸다(1.0은 max-w-7xl 카드가 사이드바 옆
    1600px 뷰포트에서 가로로 삐져나온다). */
-.pb-compact { zoom: 0.95; }
+.pb-compact { zoom: 1.04; }
 
 .ck-card { transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease; }
 .ck-card:hover { border-color: rgba(0, 180, 216, 0.5); box-shadow: 0 0 20px rgba(0, 180, 216, 0.25); }

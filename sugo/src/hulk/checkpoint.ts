@@ -5,8 +5,10 @@ import { atomicWriteFile } from "../fsUtil.js";
 import { fetchCheckpointSync } from "../dashboard/fetch.js";
 import { parseFrontmatter, stringifyFrontmatter } from "./frontmatter.js";
 import { slugify } from "./slug.js";
+import { loadProjectConfig } from "../harness/config.js";
 import { checkpointsDir } from "../work/storage.js";
 import type { Checkpoint } from "./types.js";
+import { checkpointApplies } from "./matching.js";
 
 function generateCheckpointId(): string {
   return `CP-${randomBytes(4).toString("hex")}`;
@@ -118,14 +120,29 @@ export async function migrateCheckpoints(workspace: string): Promise<number> {
  * 위치, §1 레이아웃). 대시보드가 꺼져있거나 응답이 없으면 null을 그대로 반환한다(호출부가
  * "가져온 게 없다"로 판단하게 — 에러가 아니다, §7.2 "다운돼도 막지 않는다").
  */
-export async function pullCheckpointsToRules(projectPath: string): Promise<number | null> {
-  const remote = await fetchCheckpointSync();
+export async function pullCheckpointsToRules(projectPath: string, workspace: string): Promise<number | null> {
+  const remote = await fetchCheckpointSync(workspace);
   if (!remote) return null;
-  for (const cp of remote) {
+  const config = await loadProjectConfig(projectPath);
+  const applicable = remote.filter((cp) => checkpointApplies(cp, {
+    projectName: config?.projectName ?? "",
+    harnessIds: config?.detectedStack.harnessIds ?? [],
+  }));
+  for (const cp of applicable) {
     const dir = join(projectPath, ".claude", "rules", cp.category ?? "general");
     await mkdir(dir, { recursive: true });
-    const body = [`# ${cp.title}`, "", ...cp.checklist.map((item) => `- [ ] ${item}`)].join("\n");
-    await atomicWriteFile(join(dir, `${slugify(cp.title)}.md`), body);
+    const body = [
+      "---",
+      `description: \"Sugo checkpoint ${cp.id} · ${workspace}\"`,
+      "---",
+      "",
+      `# ${cp.title}`,
+      "",
+      `> ${workspace} 도메인의 재발방지 컨텍스트 · ${cp.applies_to?.length ? `적용 대상: ${cp.applies_to.join(", ")}` : "도메인 전체 적용"}`,
+      "",
+      ...cp.checklist.map((item) => `- ${item}`),
+    ].join("\n");
+    await atomicWriteFile(join(dir, `${cp.id}-${slugify(cp.title)}.md`), body);
   }
-  return remote.length;
+  return applicable.length;
 }

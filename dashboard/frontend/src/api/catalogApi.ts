@@ -35,3 +35,8 @@ export async function getHarnessManifest(): Promise<HarnessManifestEntry[]> {
   const res = await apiJson<{ harnesses: HarnessManifestEntry[] }>("/api/harness/manifest");
   return res.harnesses ?? [];
 }
+export async function getHarnessContent(id: string): Promise<string> {
+  const res = await apiFetch(`/api/harness/content?id=${encodeURIComponent(id)}`);
+  if (!res.ok) throw new Error("하네스 본문을 불러오지 못했습니다.");
+  return res.text();
+}

@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import request from "supertest";
@@ -93,6 +94,23 @@ describe("§3.7 harness/skills — 미설정이면 빈 목록(404 아님)", () =
   it("skills 빈 목록", async () => {
     const res = await request(await app()).get("/api/skills").expect(200);
     expect(res.body.skills).toEqual([]);
+  });
+  it("manifest 파일이 없어도 harness.md 트리에서 분류 목록을 파생한다", async () => {
+    const root = mkdtempSync(join(tmpdir(), "sugo-harness-manifest-"));
+    try {
+      mkdirSync(join(root, "framework", "react", "19.x"), { recursive: true });
+      writeFileSync(join(root, "framework", "react", "19.x", "harness.md"), "# React 19");
+      const db = createSqliteClient();
+      await db.execScript(schema);
+      const { app } = await createApp({ db, harnessPath: root });
+      const res = await request(app).get("/api/harness/manifest").expect(200);
+      expect(res.body.harnesses).toEqual([{ id: "framework/react/19.x", name: "framework/react/19.x", version: "19.x" }]);
+      const content = await request(app).get("/api/harness/content").query({ id: "framework/react/19.x" }).expect(200);
+      expect(content.text).toBe("# React 19");
+      await request(app).get("/api/harness/content").query({ id: "../outside" }).expect(400);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

@@ -49,8 +49,9 @@ async function toReadyAndBeyond(prd: string): Promise<{ sessionId: string; taskI
   await call(handleSugoPlan, { action: "baseline_capture", sessionId });
   await call(handleSugoPlan, { action: "contract_start", sessionId });
   await call(handleSugoPlan, { action: "contract_done", sessionId });
-  const status = await call(handleSugoPlan, { action: "status", sessionId });
-  return { sessionId, taskId: status.data.hulk?.taskId };
+  const roadmap = await call(handleSugoRoadmap, { action: "list", workspace: "team-a" });
+  const taskId = roadmap.data.nodes.find((n: { level: string }) => n.level === "task").id as string;
+  return { sessionId, taskId };
 }
 
 describe("§8.5 Roadmap DAG — sugo_plan(prd) 자동 REQ 승격", () => {
@@ -64,12 +65,14 @@ describe("§8.5 Roadmap DAG — sugo_plan(prd) 자동 REQ 승격", () => {
 
     const list = await call(handleSugoRoadmap, { action: "list", workspace: "team-a" });
     const ids = list.data.nodes.map((n: { id: string }) => n.id);
-    expect(ids).toContain("REQ-1");
-    expect(ids).toContain("REQ-2");
+    expect(ids.some((id: string) => id.endsWith("::REQ-1"))).toBe(true);
+    expect(ids.some((id: string) => id.endsWith("::REQ-2"))).toBe(true);
+    expect(list.data.nodes.filter((n: { level: string }) => n.level === "spec")).toHaveLength(1);
+    expect(list.data.nodes.filter((n: { level: string }) => n.level === "workstream")).toHaveLength(1);
     expect(ids.some((id: string) => id.endsWith("::REQ-CONFIRM"))).toBe(true);
 
-    const req2 = list.data.nodes.find((n: { id: string }) => n.id === "REQ-2");
-    expect(req2.dependsOn).toEqual(["REQ-1"]);
+    const req2 = list.data.nodes.find((n: { id: string }) => n.id.endsWith("::REQ-2"));
+    expect(req2.dependsOn[0]).toMatch(/::REQ-1$/);
   });
 
   it("인라인 REQ만 있는 평범한 PRD는 로드맵에 아무것도 심지 않는다(no-op)", async () => {
@@ -91,15 +94,14 @@ describe("§8.5 Roadmap DAG — sugo_plan(prd) 자동 REQ 승격", () => {
 describe("§8.5 sugo_roadmap ready/get/mark_req", () => {
   it("의존 관계상 REQ-1만 ready하고, REQ-2는 REQ-1이 done이어야 ready된다", async () => {
     const { taskId } = await toReadyAndBeyond(HEADING_PRD);
-    void taskId;
     const ready1 = await call(handleSugoRoadmap, { action: "ready", workspace: "team-a" });
     // 정확히 REQ-1만 ready여야 한다 — task 레벨 노드가 in_progress로 갱신되지 않으면(과거 버그)
     // 의존성 없는 그 노드도 여기 잘못 섞여 나온다.
-    expect(ready1.data.ready).toEqual(["REQ-1"]);
+    expect(ready1.data.ready).toEqual([`${taskId}::REQ-1`]);
 
-    await call(handleSugoRoadmap, { action: "mark_req", workspace: "team-a", id: "REQ-1" });
+    await call(handleSugoRoadmap, { action: "mark_req", workspace: "team-a", id: `${taskId}::REQ-1` });
     const ready2 = await call(handleSugoRoadmap, { action: "ready", workspace: "team-a" });
-    expect(ready2.data.ready).toContain("REQ-2");
+    expect(ready2.data.ready).toContain(`${taskId}::REQ-2`);
   });
 
   it("에이전트가 REQ-CONFIRM을 mark_req로 직접 완료하려 하면 거부된다(§8.5 코퍼스)", async () => {
@@ -134,8 +136,8 @@ describe("§8.5 review_done → REQ/REQ-CONFIRM 자동완료", () => {
     expect(reviewDone.isError).toBe(false);
 
     const list = await call(handleSugoRoadmap, { action: "list", workspace: "team-a" });
-    const req1 = list.data.nodes.find((n: { id: string }) => n.id === "REQ-1");
-    const req2 = list.data.nodes.find((n: { id: string }) => n.id === "REQ-2");
+    const req1 = list.data.nodes.find((n: { id: string }) => n.id.endsWith("::REQ-1"));
+    const req2 = list.data.nodes.find((n: { id: string }) => n.id.endsWith("::REQ-2"));
     const confirm = list.data.nodes.find((n: { id: string }) => n.id.endsWith("::REQ-CONFIRM"));
     expect(req1.status).toBe("done");
     expect(req2.status).toBe("done");

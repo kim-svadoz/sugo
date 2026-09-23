@@ -1,5 +1,6 @@
 ---
 name: security-checklist
+agent: review-agent
 description: '보안 리뷰 체크리스트. OWASP Top 10(2021)과 CWE 매핑, Lethal Trifecta를 다룬다. review-agent의 security 스킬이 코드와 변경을 점검할 때 따른다. "보안/취약점/security/OWASP/injection" 요청에도 적용한다.'
 ---
 

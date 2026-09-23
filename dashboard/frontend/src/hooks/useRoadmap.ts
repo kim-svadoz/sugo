@@ -12,6 +12,7 @@ export interface WorkResultFile {
 }
 
 export interface WorkResult {
+  path?: string;
   startedAt?: string;
   endedAt?: string;
   model?: string;

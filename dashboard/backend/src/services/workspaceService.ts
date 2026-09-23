@@ -187,10 +187,13 @@ function normalizeCheckpointRow<T extends { checklist: unknown; applies_to: unkn
   return { ...row, checklist: parseMaybeJson<unknown>(row.checklist, null), applies_to: parseMaybeJson<unknown>(row.applies_to, null) };
 }
 
-export async function getCheckpointSync(db: DbClient, userId: string): Promise<CheckpointSyncRow[]> {
+export async function getCheckpointSync(db: DbClient, userId: string, workspaceName?: string): Promise<CheckpointSyncRow[]> {
   const rows = await db.query<CheckpointSyncRow>(
-    "SELECT id, workspace_name, category, title, learned_from, checklist, applies_to FROM sugo_checkpoints WHERE user_id = ? ORDER BY workspace_name, id",
-    [userId]
+    `SELECT id, workspace_name, category, title, learned_from, checklist, applies_to
+       FROM sugo_checkpoints
+      WHERE user_id = ?${workspaceName ? " AND workspace_name = ?" : ""}
+      ORDER BY workspace_name, id`,
+    workspaceName ? [userId, workspaceName] : [userId]
   );
   return rows.map(normalizeCheckpointRow);
 }

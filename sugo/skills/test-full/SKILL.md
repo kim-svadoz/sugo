@@ -1,5 +1,6 @@
 ---
 name: test-full
+agent: test-agent
 description: 'test-agent 풀 스위트 스킬. 전량 회귀를 포함한 전체 테스트를 풀검증 명령으로 돌리고 증거를 기록한다. 파이프라인 밖의 "전체 테스트 돌려줘/full test/회귀 확인" 요청에도 쓴다.'
 ---
 

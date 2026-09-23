@@ -1,5 +1,6 @@
 ---
 name: review-validate
+agent: review-agent
 description: 'review-agent 체인 기본 스킬. validation.yaml checks[] 기반 하네스 규칙 검증(일부 서버 실측)과 work-result 리포트 생성. sugo_chain으로 TEST_DONE 후 진입한다. 읽기 전용이며 Edit/commit/push를 하지 않는다.'
 ---
 

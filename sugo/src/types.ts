@@ -79,6 +79,8 @@ export interface ChainInfo {
   testEvidenceFingerprint?: string;
   reviewPassed: boolean | null;
   workResultPath?: string;
+  runtimeVerified?: boolean;
+  wiringVerified?: boolean;
   autoLoopRetryCount: number;
   codeGateAudit?: CodeGateAudit;
   /** sugo_chain 호출 감사로그(§5). test_start/review_start의 하드 게이트는 아니고 기록만 한다. */

@@ -91,7 +91,7 @@ export async function handleSugoCheckpoint(rawArgs: unknown) {
     }
     case "pull": {
       if (!args.projectPath) return errorResult("PROJECT_PATH_REQUIRED", "pull action에는 projectPath가 필요합니다.");
-      const pulledCount = await pullCheckpointsToRules(args.projectPath);
+      const pulledCount = await pullCheckpointsToRules(args.projectPath, args.workspace);
       return ok({ pulledCount });
     }
   }

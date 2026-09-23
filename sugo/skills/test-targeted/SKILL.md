@@ -1,5 +1,6 @@
 ---
 name: test-targeted
+agent: test-agent
 description: 'test-agent 체인 기본 스킬. code-agent 핸드오프와 PRD를 근거로 이번 변경에 대한 테스트를 명세에서 도출한다. sugo_chain으로 CODE_DONE 후 진입한다. 테스트 파일만 수정한다.'
 ---
 

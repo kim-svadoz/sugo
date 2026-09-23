@@ -16,6 +16,7 @@ import { createStatsRouter } from "./routes/stats.js";
 import { createHarnessRouter, createSkillsRouter } from "./routes/harness.js";
 import { createGithubAuthRouter } from "./routes/githubAuth.js";
 import { createTokensRouter } from "./routes/tokens.js";
+import { createLocalAuthRouter, type LocalAuthConfig } from "./routes/localAuth.js";
 import { createHttpGithubOAuth, type GithubOAuthClient } from "./auth/github.js";
 import { createJwtVerifier, type VerifyJwt } from "./auth/jwt.js";
 import { createHttpOidcTokenClient, type OidcTokenClient } from "./auth/oidcTokenClient.js";
@@ -52,6 +53,10 @@ export interface AppOverrides {
   githubOAuth?: GithubOAuthClient;
   sessionSecret?: string;
   secretEncKey?: string;
+  frontendUrl?: string;
+  localDev?: LocalAuthConfig;
+  harnessPath?: string;
+  skillsPath?: string;
 }
 
 export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
@@ -75,6 +80,10 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const githubOAuth = overrides.githubOAuth ?? createHttpGithubOAuth(config.github);
   const sessionSecret = overrides.sessionSecret ?? config.sessionSecret;
   const secretEncKey = overrides.secretEncKey ?? config.secretEncKey;
+  const frontendUrl = overrides.frontendUrl ?? config.frontendUrl;
+  const localDev = overrides.localDev ?? config.localDev;
+  const harnessPath = overrides.harnessPath ?? config.harnessPath;
+  const skillsPath = overrides.skillsPath ?? config.skillsPath;
 
   const app = express();
   app.use(corsWhitelist(config.corsOrigins));
@@ -89,6 +98,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/workspaces", createWorkspacesRouter(db, sessionSecret));
   // 공개 SaaS(§Phase 1): GitHub OAuth 로그인 + API 토큰 관리. 기존 OIDC /api/auth보다 먼저 등록.
   app.use("/api/auth/github", createGithubAuthRouter(db, githubOAuth, config.github, sessionSecret, config.frontendUrl));
+  if (localDev.enabled) app.use("/api/auth/local", createLocalAuthRouter(db, sessionSecret, frontendUrl, localDev));
   app.use("/api/tokens", createTokensRouter(db, sessionSecret));
   app.use(
     "/api/auth",
@@ -110,8 +120,8 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const statsRouter = createStatsRouter(db, sessionSecret);
   app.use("/api/stats", statsRouter);
   app.use("/api/metrics", statsRouter);
-  app.use("/api/harness", createHarnessRouter(config.harnessPath));
-  app.use("/api/skills", createSkillsRouter(config.skillsPath));
+  app.use("/api/harness", createHarnessRouter(harnessPath));
+  app.use("/api/skills", createSkillsRouter(skillsPath));
 
   // 모든 라우트 뒤: 동기 throw / next(err)를 프로세스를 죽이지 않고 500으로 응답한다.
   app.use(errorMiddleware);
@@ -131,8 +141,8 @@ async function main() {
   });
 
   const { app } = await createApp();
-  app.listen(config.port, () => {
-    console.log(`sugo-dashboard-backend listening on :${config.port} (db=${config.dbDriver})`);
+  app.listen(config.port, config.host, () => {
+    console.log(`sugo-dashboard-backend listening on ${config.host}:${config.port} (db=${config.dbDriver})`);
   });
 }
 

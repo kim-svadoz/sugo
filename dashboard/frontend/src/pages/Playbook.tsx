@@ -68,6 +68,12 @@ public class CharacterService {
     private final CharacterRepository repository;
 }`;
 
+const HARNESS_BEHAVIOR = [
+  { label: "세션 시작", asis: "팀 규칙을 모른 채 작업 시작", tobe: ".claude/rules/framework-spring-3.x.md 자동 로드" },
+  { label: "코드 생성", asis: "필드 주입을 그대로 생성", tobe: "생성자 주입 규칙 안에서 코드 생성" },
+  { label: "검증", asis: "리뷰에서 뒤늦게 발견", tobe: "ConstructorInjectionRule 즉시 통과" },
+];
+
 /**
  * 에이전트 체인 — **플러그인 `ontology/model.ts`의 ACTIONS 전이 순서 그대로**다.
  * `state`는 그 단계가 도달하는 실제 상태, `gate`는 그 전이에 걸린 실제 게이트 코드다.
@@ -269,7 +275,7 @@ export function Playbook() {
         <div className="pb-aurora-b absolute -right-16 top-32 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
       </div>
 
-      <div className="group relative mx-auto max-w-7xl overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/80 p-8 shadow-2xl backdrop-blur-sm">
+      <div className="group relative mx-auto w-[min(96vw,1680px)] max-w-none overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/80 p-10 shadow-2xl backdrop-blur-sm">
         <div className="mb-1 flex flex-wrap items-center gap-3">
           <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-bright)]">Sugo 플레이북</h1>
           <span className="rounded-md border border-[var(--color-border)] px-2 py-0.5 font-mono text-[11.5px] text-[var(--color-text-muted)]">
@@ -335,6 +341,23 @@ export function Playbook() {
                 <CodeBlock title="AS-IS" code={CODE_ASIS} tone="asis" />
                 <CodeBlock title="TO-BE" code={CODE_TOBE} tone="tobe" />
               </div>
+              <div className="overflow-hidden rounded-xl border border-[var(--color-border)]">
+                <div className="grid grid-cols-[120px_1fr_1fr] bg-[var(--color-background)] px-4 py-2 font-mono text-[10.5px] uppercase tracking-wider text-[var(--color-text-dim)]">
+                  <span>동작 시점</span><span className="text-rose-300">AS-IS</span><span className="text-emerald-300">TO-BE</span>
+                </div>
+                {HARNESS_BEHAVIOR.map((row) => (
+                  <div key={row.label} className="grid grid-cols-[120px_1fr_1fr] gap-3 border-t border-[var(--color-border)] px-4 py-3 text-[12px]">
+                    <span className="font-semibold text-[var(--color-text)]">{row.label}</span>
+                    <span className="text-rose-200/80">{row.asis}</span>
+                    <span className="text-emerald-200">✓ {row.tobe}</span>
+                  </div>
+                ))}
+              </div>
+              {harnessStep >= HARNESS_STEPS.length && (
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-[12.5px] text-emerald-200">
+                  결과: 다음 Claude Code 세션부터 규칙이 자동으로 컨텍스트에 들어오고, 생성 코드와 검증 기준이 같은 하네스를 사용합니다.
+                </div>
+              )}
               <p className="font-mono text-[11.5px] text-[var(--color-text-dim)]">CharacterService.java</p>
             </div>
           )}
@@ -435,11 +458,22 @@ export function Playbook() {
                     ConstructorInjectionRule: 생성자 final 누락이 검출됐습니다. '완료'는 선언이 아니라 증명입니다.
                   </p>
                   <button
-                    onClick={() => setBlocked(false)}
+                    onClick={() => {
+                      setAuditPass((current) => ({ ...current, archunit: true }));
+                      setBlocked(false);
+                    }}
                     className="mt-2 rounded border border-rose-500/40 px-2 py-1 font-mono text-[11px] text-rose-200 hover:bg-rose-500/10"
                   >
-                    확인
+                    생성자 주입으로 수정하고 재검증
                   </button>
+                </div>
+              )}
+              {!blocked && auditPass.archunit === true && (
+                <div className="pb-slam rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4">
+                  <div className="font-mono text-[13px] font-bold text-emerald-300">✓ VERIFIED — 커밋 전이 잠금 해제</div>
+                  <p className="mt-1 text-[12.5px] text-emerald-100/90">
+                    위반 코드를 수정한 뒤 ArchUnit을 다시 실행했고, 5개 증거가 모두 PASS여서 DONE 전이가 허용됩니다.
+                  </p>
                 </div>
               )}
             </div>

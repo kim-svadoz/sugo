@@ -96,6 +96,36 @@ export interface RoadmapNodeResult {
   logId?: string;
 }
 
+export interface RoadmapWorkResult {
+  path?: string;
+  startedAt?: string;
+  endedAt?: string;
+  model?: string;
+  summary?: string;
+  files?: { path: string; change: "added" | "modified" | "deleted"; content?: string; diff?: string }[];
+  parentTaskId?: string;
+  patchVersion?: number;
+  seed?: string;
+  runtimeVerified?: boolean;
+  wiringVerified?: boolean;
+  prRefs?: PrRefs;
+}
+
+export interface RoadmapLineageEntry {
+  version: number;
+  completedAt: string;
+  title?: string;
+  summary?: string;
+  changedFiles?: string[];
+  seed?: string;
+  runtimeVerified?: boolean;
+  wiringVerified?: boolean;
+  /** 이 차수가 끝난 시점의 REQ 스냅샷. 다음 patch가 같은 Task의 REQ를 교체해도 과거를 보존한다. */
+  requirements?: { id: string; title: string; status: RoadmapNodeStatus }[];
+  /** 차수별 Inspector/다음 patch 진입점. Task의 workResult는 최신 차수만 가리킨다. */
+  workResult?: RoadmapWorkResult;
+}
+
 export interface RoadmapNode {
   id: string;
   title: string;
@@ -108,7 +138,8 @@ export interface RoadmapNode {
   specPath?: string;
   note?: string;
   result?: RoadmapNodeResult;
-  workResult?: string;
+  workResult?: RoadmapWorkResult;
+  lineage?: RoadmapLineageEntry[];
   /** §7.2 소유권 경계: 이 3개 필드는 대시보드가 SOT다 — 로컬(fetchRoadmapOrdering 병합) 외에는
    * 절대 덮어쓰지 않는다. dependsOn도 마찬가지로 "최초 1회 seed 이후엔 대시보드가 SOT"지만,
    * 로컬에서도 계속 쓰는 실행 필드라 별도 표시 없이 dependsOn 필드 자체를 공유한다. */

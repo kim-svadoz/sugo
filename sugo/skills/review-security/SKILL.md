@@ -1,5 +1,6 @@
 ---
 name: review-security
+agent: review-agent
 description: 'review-agent 보안 스킬. OWASP 2021과 CWE, Lethal Trifecta를 점검한다(§4.5). "보안/취약점/security/OWASP/injection/SSRF" 요청에 쓴다. security-checklist를 따르며 읽기 전용이다.'
 ---
 

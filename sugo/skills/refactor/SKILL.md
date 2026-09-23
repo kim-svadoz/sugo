@@ -1,5 +1,6 @@
 ---
 name: refactor
+agent: code-agent
 description: 'code-agent 리팩토링 스킬. 동작을 바꾸지 않고 구조만 개선한다. 신규 테스트를 추가하지 않고 기존 그린을 유지한다. "리팩토링/정리/구조 개선/refactor/clean up" 요청에 쓴다.'
 ---
 

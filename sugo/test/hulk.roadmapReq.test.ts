@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseRequirementsFromPrd, promotePrdRequirements, reqConfirmId } from "../src/hulk/roadmapReq.js";
+import { parseRequirementsFromPrd, promotePrdRequirements, reqConfirmId, requirementNodeId } from "../src/hulk/roadmapReq.js";
 
 describe("parseRequirementsFromPrd — ### REQ-XXX: 헤딩만 인식한다", () => {
   it("### 헤딩 형식의 REQ를 순서대로 추출한다", () => {
@@ -30,24 +30,24 @@ describe("promotePrdRequirements — 순차 선형 의존 + REQ-CONFIRM 항상 �
   it("REQ 노드들이 순차적으로 서로 의존한다(REQ-2는 REQ-1에 의존)", () => {
     const prd = "### REQ-1: A\n### REQ-2: B\n### REQ-3: C";
     const nodes = promotePrdRequirements("t-1", prd);
-    const req1 = nodes.find((n) => n.id === "REQ-1")!;
-    const req2 = nodes.find((n) => n.id === "REQ-2")!;
-    const req3 = nodes.find((n) => n.id === "REQ-3")!;
+    const req1 = nodes.find((n) => n.id === "t-1::REQ-1")!;
+    const req2 = nodes.find((n) => n.id === "t-1::REQ-2")!;
+    const req3 = nodes.find((n) => n.id === "t-1::REQ-3")!;
     expect(req1.dependsOn).toEqual([]);
-    expect(req2.dependsOn).toEqual(["REQ-1"]);
-    expect(req3.dependsOn).toEqual(["REQ-2"]);
+    expect(req2.dependsOn).toEqual(["t-1::REQ-1"]);
+    expect(req3.dependsOn).toEqual(["t-1::REQ-2"]);
   });
 
   it("모든 REQ 노드는 parent가 taskId다", () => {
     const nodes = promotePrdRequirements("t-1", "### REQ-1: A");
-    expect(nodes.find((n) => n.id === "REQ-1")?.parent).toBe("t-1");
+    expect(nodes.find((n) => n.id === "t-1::REQ-1")?.parent).toBe("t-1");
   });
 
   it("REQ가 하나 이상이면 항상 {taskId}::REQ-CONFIRM이 부착되고 모든 REQ에 의존한다", () => {
     const nodes = promotePrdRequirements("t-1", "### REQ-1: A\n### REQ-2: B");
     const confirm = nodes.find((n) => n.id === reqConfirmId("t-1"));
     expect(confirm).toBeDefined();
-    expect(confirm!.dependsOn.sort()).toEqual(["REQ-1", "REQ-2"]);
+    expect(confirm!.dependsOn.sort()).toEqual(["t-1::REQ-1", "t-1::REQ-2"]);
     expect(confirm!.parent).toBe("t-1");
   });
 
@@ -64,5 +64,12 @@ describe("promotePrdRequirements — 순차 선형 의존 + REQ-CONFIRM 항상 �
 describe("reqConfirmId", () => {
   it("taskId::REQ-CONFIRM 형태를 만든다", () => {
     expect(reqConfirmId("t-1")).toBe("t-1::REQ-CONFIRM");
+  });
+});
+
+describe("requirementNodeId", () => {
+  it("workspace 전역 충돌을 막기 위해 task id로 REQ를 namespace한다", () => {
+    expect(requirementNodeId("task-a", "REQ-1")).toBe("task-a::REQ-1");
+    expect(requirementNodeId("task-b", "REQ-1")).not.toBe(requirementNodeId("task-a", "REQ-1"));
   });
 });

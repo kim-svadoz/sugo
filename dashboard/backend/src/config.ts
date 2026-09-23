@@ -2,6 +2,7 @@
 // can run against SQLite — production always sets DB_DRIVER=mysql (or leaves it
 // unset, which is the default).
 export const config = {
+  host: process.env.HOST ?? "0.0.0.0",
   port: Number(process.env.PORT ?? 3001),
   dbDriver: (process.env.DB_DRIVER ?? "mysql") as "mysql" | "sqlite",
   sqliteFile: process.env.SQLITE_FILE ?? ":memory:",
@@ -42,4 +43,10 @@ export const config = {
   sessionSecret: process.env.SESSION_SECRET ?? "",
   // 로그인 성공 후 세션 토큰을 붙여 리다이렉트할 프론트 URL.
   frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:5173",
+  // 개인용 로컬 실행에서만 OAuth를 우회한다. 기본 off라 production 동작에는 영향이 없다.
+  localDev: {
+    enabled: process.env.LOCAL_DEV_MODE === "1",
+    userId: process.env.LOCAL_DEV_USER_ID ?? "local-dev",
+    displayName: process.env.LOCAL_DEV_DISPLAY_NAME ?? "Local Developer",
+  },
 };

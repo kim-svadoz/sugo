@@ -21,7 +21,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import dagre from "dagre";
 import { useAuth } from "../../auth/AuthContext.js";
-import { parseWorkResult, useRoadmap, type RoadmapNode } from "../../hooks/useRoadmap.js";
+import { parseWorkResult, useRoadmap, type RoadmapNode, type WorkResultFile } from "../../hooks/useRoadmap.js";
 import {
   assignRunToSpec,
   dropSubtree,
@@ -32,11 +32,15 @@ import {
 } from "../../api/roadmapMutationsApi.js";
 import { SubtaskPanel } from "../SubtaskPanel.js";
 import { cn } from "../../lib/utils.js";
+import { shouldApplyHoverFocus } from "./interaction.js";
+import { measuredLeafHeight, TASK_CARD_HEIGHT } from "./layoutSizing.js";
+import { buildLineageChains, lineageSelection, type LineageChainItem } from "./lineageModel.js";
+import { FileViewerSheet } from "./FileViewerSheet.js";
 
 /** 설계안 치수 상수 — 그대로. */
 const NODE_W = 236;
 const WS_CARD_W = 560;
-const CARD_H = 130;
+const CARD_H = TASK_CARD_HEIGHT;
 const LINEAGE_VCARD_H = 72;
 const ALERT = "#fb923c";
 const C_READY = "#4fa87f";
@@ -88,18 +92,8 @@ const CHAIN = "chain:";
  * `lineage` 컬럼은 계약상 `unknown`이다(스키마가 열려 있다). 화면이 쓰는 필드만 **방어적으로**
  * 읽는다 — 모양이 달라져도 체인이 통째로 사라지지 않고 depth 0 한 줄로 접힐 뿐이다.
  */
-type Lineage = { root?: string; depth?: number; version?: number };
-function readLineage(v: unknown): Lineage | null {
-  if (!v || typeof v !== "object") return null;
-  const o = v as Record<string, unknown>;
-  return {
-    root: typeof o.root === "string" ? o.root : undefined,
-    depth: typeof o.depth === "number" ? o.depth : undefined,
-    version: typeof o.version === "number" ? o.version : undefined,
-  };
-}
 /** 체인 안의 카드 한 장. */
-type ChainItem = { node: RoadmapNode; depth: number; version: number };
+type ChainItem = LineageChainItem;
 
 function effStatus(n: RoadmapNode): string {
   return (n.manual_status ?? n.status ?? "pending").toLowerCase();
@@ -400,7 +394,15 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
             </span>
           </div>
         )}
-        <div className="flex items-center gap-1.5 whitespace-nowrap border-b border-slate-500/25 bg-slate-500/15 py-2.5 pl-2 pr-3">
+        <div
+          className="nodrag flex cursor-pointer items-center gap-1.5 whitespace-nowrap border-b border-slate-500/25 bg-slate-500/15 py-2.5 pl-2 pr-3 transition-colors hover:bg-cyan-400/10"
+          title={isBand ? undefined : `${isSpec ? "SPEC" : "RUN"} 접기`}
+          onClick={(e) => {
+            if (isBand) return;
+            e.stopPropagation();
+            data.onToggleExpand?.();
+          }}
+        >
           {isBand ? (
             // 미분류는 접히지 않는다 — 접어서 안 보이면 "편입 안 된 RUN이 있다"는 사실을 잊는다.
             <span className="-my-1 flex h-8 w-8 items-center justify-center text-[15px] leading-none text-amber-300/70">▾</span>
@@ -508,7 +510,7 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
   const dy = PC_FORK_H * 0.55;
   const colCenter = (i: number) => i * (PC_COL_W + PC_COL_GAP) + PC_COL_W / 2;
   // "최신"은 **차수가 가장 높은 한 장**이다. 컬럼마다 붙이면 최신이 여러 개가 돼 의미가 없다.
-  const latestId = cols.flat().reduce<ChainItem | null>((a, b) => (!a || b.version > a.version ? b : a), null)?.node.id;
+  const latestKey = cols.flat().reduce<ChainItem | null>((a, b) => (!a || b.version > a.version ? b : a), null)?.key;
 
   return (
     <div className="relative" style={{ width: totalW }}>
@@ -517,7 +519,7 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
       <svg className="pointer-events-none absolute" style={{ left: 0, top: 0 }} width={totalW} height={PC_FORK_H}>
         {cols.map((col, i) => (
           <path
-            key={col[0].node.id}
+            key={col[0].key}
             d={`M ${stemX} 0 C ${stemX} ${dy}, ${colCenter(i)} ${PC_FORK_H - dy}, ${colCenter(i)} ${PC_FORK_H}`}
             stroke="#8B5CF6"
             strokeWidth={2}
@@ -533,11 +535,11 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
           const shown = isColl ? col.slice(0, 1) : col;
           const hasChildren = col.length > 1;
           return (
-            <div key={col[0].node.id} className="flex flex-col" style={{ width: PC_COL_W, gap: PC_CARD_GAP }}>
+            <div key={col[0].key} className="flex flex-col" style={{ width: PC_COL_W, gap: PC_CARD_GAP }}>
               {shown.map((item, ri) => {
                 const st = effStatus(item.node);
                 return (
-                  <div key={item.node.id} className="relative">
+                  <div key={item.key} className="relative">
                     {/* 같은 컬럼의 앞 카드와 잇는 세로 점선 = 연속 차수 */}
                     {ri > 0 && (
                       <div
@@ -551,19 +553,19 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
                       )}
                       style={{
                         height: LINEAGE_VCARD_H,
-                        borderColor: data.selectedItemId === item.node.id ? SEL : "rgba(139,92,246,0.5)",
-                        boxShadow: selRing(data.selectedItemId === item.node.id),
+                        borderColor: data.selectedItemId === item.key ? SEL : "rgba(139,92,246,0.5)",
+                        boxShadow: selRing(data.selectedItemId === item.key),
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        data.onSelect?.(item.node.id);
+                        data.onSelect?.(item.key);
                       }}
                     >
                       <div className="flex items-center gap-1.5">
                         <span className="shrink-0 rounded bg-violet-500/25 px-1.5 py-0.5 font-mono text-[12px] font-bold text-violet-100">
-                          v{item.version}-patch
+                          v{item.version}-{item.version === 0 ? "feat" : "patch"}
                         </span>
-                        {item.node.id === latestId && (
+                        {item.key === latestKey && (
                           <span className="shrink-0 font-mono text-[10px] text-violet-300/80">최신</span>
                         )}
                         <span
@@ -573,8 +575,8 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
                           {st === "done" ? "완료" : cardStyle(st, false, false).label}
                         </span>
                       </div>
-                      <div className="mt-1 truncate text-[12.5px] text-[var(--color-text)]" title={item.node.title}>
-                        🔁 {item.node.title}
+                      <div className="mt-1 truncate text-[12.5px] text-[var(--color-text)]" title={item.title}>
+                        {item.version === 0 ? "✨" : "🔁"} {item.title}
                       </div>
                     </div>
                     {ri === 0 && hasChildren && (
@@ -772,33 +774,20 @@ function layout(
   const chainCols = new Map<string, ChainItem[][]>();
   /** 체인 노드에 흡수돼 더 이상 낱개로 그려지지 않는 patch task들 — 엣지도 걸면 안 된다. */
   const absorbed = new Set<string>();
-  const linNodes = nodes.filter((n) => readLineage(n.lineage));
-  if (linNodes.length > 0) {
-    const groups = new Map<string, RoadmapNode[]>();
-    for (const n of linNodes) {
-      const key = readLineage(n.lineage)!.root ?? n.parent ?? n.id;
-      groups.set(key, [...(groups.get(key) ?? []), n]);
-    }
-    for (const [root, members] of groups) {
-      const id = CHAIN + root;
-      const cols: ChainItem[][] = [];
-      const sorted = [...members].sort((a, b) => (readLineage(a.lineage)!.version ?? 0) - (readLineage(b.lineage)!.version ?? 0));
-      for (const m of sorted) {
-        const l = readLineage(m.lineage)!;
-        const item: ChainItem = { node: m, depth: l.depth ?? 0, version: l.version ?? 0 };
-        if (item.depth === 0 || cols.length === 0) cols.push([item]);
-        else cols[cols.length - 1].push(item);
-      }
-      chainCols.set(id, cols);
+  const lineageChains = buildLineageChains(nodes);
+  if (lineageChains.length > 0) {
+    for (const chain of lineageChains) {
+      const { id, root, parent, memberIds, columns } = chain;
+      chainCols.set(id, columns);
 
       // 원본 노드들을 빼고 체인 노드 한 개로 갈아끼운다. 소속(부모 RUN)은 첫 멤버를 따른다 —
       // patch는 새 Run을 만들지 않고 **원본 Run에 귀속**되기 때문이다(플러그인 스펙 §성숙).
-      const parent = members[0].parent;
-      const chainNode = { id, title: root, level: "task", status: effStatus(members[0]), parent, lineage: {} } as RoadmapNode;
+      const first = columns[0][0].node;
+      const chainNode = { id, title: root, level: "task", status: effStatus(first), parent, lineage: {} } as RoadmapNode;
       byId.set(id, chainNode);
-      const memberIds = new Set(members.map((m) => m.id));
-      for (const id of memberIds) absorbed.add(id);
-      const strip = (arr: RoadmapNode[]) => arr.filter((n) => !memberIds.has(n.id));
+      const memberIdSet = new Set(memberIds);
+      for (const memberId of memberIds) absorbed.add(memberId);
+      const strip = (arr: RoadmapNode[]) => arr.filter((n) => !memberIdSet.has(n.id));
       if (parent && kids.has(parent)) kids.set(parent, [...strip(kids.get(parent)!), chainNode]);
       else roots.splice(0, roots.length, ...strip(roots), chainNode);
     }
@@ -861,7 +850,7 @@ function layout(
           ? chainSize(n.id)
           : n.level === "spec" || n.level === "workstream"
             ? { w: WS_CARD_W, h: CONT_HEADER } // 접힌 폴더 = 헤더 밴드 한 줄
-            : { w: NODE_W, h: CARD_H / 2 };
+            : { w: NODE_W, h: measuredLeafHeight(n.level) };
       size.set(n.id, s);
       return s;
     }
@@ -1063,10 +1052,12 @@ export function RoadmapGraph({
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [binOpen, setBinOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  /** 펼친 SPEC/RUN 집합. **기본은 SPEC만 펼침** — 처음 열었을 때 최상위 구조가 보이되
-   *  RUN 안의 task까지 한꺼번에 쏟아지지 않게 한다(더블클릭으로 한 단계씩 내려간다). */
+  /** 펼친 SPEC/RUN/lineage 집합. SPEC은 기본 펼침, lineage는 RUN을 열었을 때 계보가 곧바로
+   * 보이도록 기본 펼침이다. RUN 자체는 접어서 첫 화면의 최상위 구조를 유지한다. */
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [seeded, setSeeded] = useState(false);
+  /** 폴링으로 늦게 도착한 lineage도 최초 한 번은 펼친다. 사용자가 접은 체인은 다시 열지 않는다. */
+  const [knownChains, setKnownChains] = useState<Set<string>>(new Set());
   /** 헤더 액션 팝업: 🧠 AI요약 / 📄 원문 / ✎ 이름변경. 셋 다 같은 자리에 뜬다. */
   const [summaryOf, setSummaryOf] = useState<RoadmapNode | null>(null);
   const [specDoc, setSpecDoc] = useState<{ title: string; content: string | null } | null>(null);
@@ -1083,9 +1074,22 @@ export function RoadmapGraph({
 
   useEffect(() => {
     if (seeded || nodes.length === 0) return;
-    setExpanded(new Set(nodes.filter((n) => n.level === "spec").map((n) => n.id)));
+    setExpanded(
+      new Set([
+        ...nodes.filter((n) => n.level === "spec").map((n) => n.id),
+        ...buildLineageChains(nodes).map((chain) => chain.id),
+      ]),
+    );
     setSeeded(true);
   }, [nodes, seeded]);
+
+  useEffect(() => {
+    const ids = buildLineageChains(nodes).map((chain) => chain.id);
+    const fresh = ids.filter((id) => !knownChains.has(id));
+    if (fresh.length === 0) return;
+    setExpanded((prev) => new Set([...prev, ...fresh]));
+    setKnownChains((prev) => new Set([...prev, ...fresh]));
+  }, [nodes, knownChains]);
 
   const toggleExpand = useCallback((id: string) => {
     setExpanded((prev) => {
@@ -1105,7 +1109,10 @@ export function RoadmapGraph({
         setSpecDoc((await getSpecContent(userId!, workspace, n.title)) ?? { title: label, content: null });
       },
       onRename: (n: RoadmapNode) => setRenaming({ node: n, value: n.title }),
-      onSelect: (id: string) => setSelectedId((cur) => (cur === id ? null : id)),
+      onSelect: (id: string) => {
+        setFileViewer(null);
+        setSelectedId((cur) => (cur === id ? null : id));
+      },
     }),
     [userId, workspace],
   );
@@ -1134,6 +1141,7 @@ export function RoadmapGraph({
   );
   const [guideOpen, setGuideOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [fileViewer, setFileViewer] = useState<{ file: WorkResultFile; expanded: boolean } | null>(null);
   /** SPEC 단위 필터. 노드를 지우는 게 아니라 **어느 SPEC 묶음을 보여줄지**만 고른다. */
   const [specFilter, setSpecFilter] = useState<"all" | "active" | "done">("all");
 
@@ -1175,8 +1183,8 @@ export function RoadmapGraph({
    * **1촌(직접 의존·피의존)과 포함관계 부모**로만 한정한다.
    */
   const focus = useMemo(() => {
-    if (!hovered) return null;
-    const nodeSet = new Set<string>([hovered]);
+    if (!shouldApplyHoverFocus(hovered, selectedId)) return null;
+    const nodeSet = new Set<string>([hovered!]);
     for (const e of base.rfEdges) {
       if (e.source !== hovered && e.target !== hovered) continue;
       nodeSet.add(e.source);
@@ -1218,7 +1226,7 @@ export function RoadmapGraph({
       if (nodeSet.has(e.source) && nodeSet.has(e.target)) edgeSet.add(e.id);
     }
     return { nodeSet, edgeSet };
-  }, [hovered, base.rfNodes, base.rfEdges]);
+  }, [hovered, selectedId, base.rfNodes, base.rfEdges]);
 
   const run = useCallback(
     async (fn: () => Promise<unknown>) => {
@@ -1348,7 +1356,18 @@ export function RoadmapGraph({
   }, [menu, binOpen]);
 
 
-  const selectedNode = nodes.find((n) => n.id === selectedId) ?? null;
+  const selectedLineageItem = useMemo(
+    () => buildLineageChains(nodes).flatMap((chain) => chain.columns.flat()).find((item) => item.key === selectedId) ?? null,
+    [nodes, selectedId],
+  );
+  const selectedLineage = useMemo(() => {
+    if (!selectedLineageItem) return null;
+    const currentReqs = nodes.filter(
+      (n) => n.parent === selectedLineageItem.node.id && (n.level === "subtask" || n.level === "step"),
+    );
+    return lineageSelection(selectedLineageItem, currentReqs);
+  }, [nodes, selectedLineageItem]);
+  const selectedNode = selectedLineage?.node ?? nodes.find((n) => n.id === selectedId) ?? null;
   const specs = nodes.filter((n) => n.level === "spec");
 
   if (loading && nodes.length === 0) {
@@ -1462,7 +1481,11 @@ export function RoadmapGraph({
           onNodesChange={onNodesChange}
           onNodeMouseEnter={(_, node) => holdHover(node.id)}
           onNodeMouseLeave={() => holdHover(null)}
-          onNodeClick={(_, node) => setSelectedId(node.id === selectedId ? null : node.id)}
+          onNodeClick={(_, node) => {
+            setHovered(null);
+            setFileViewer(null);
+            setSelectedId(node.id === selectedId ? null : node.id);
+          }}
           onNodeDoubleClick={(_, node) => {
             // 설계안: SPEC/RUN은 더블클릭으로 펼치고 접는다. task는 펼칠 하위(=REQ)가
             // 그래프에 없으므로 아무 일도 하지 않는다(REQ는 오른쪽 패널 소관).
@@ -1494,12 +1517,17 @@ export function RoadmapGraph({
       </div>
 
       {selectedNode && (
-        <div className="ck-scroll w-[340px] shrink-0 overflow-auto border-l border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+        <div className="ck-scroll w-[390px] shrink-0 overflow-auto border-l border-[var(--color-border)] bg-[var(--color-surface)]">
           <SubtaskPanel
             workspace={workspace}
             node={selectedNode}
-            reqs={nodes.filter((n) => n.parent === selectedNode.id && n.level === "subtask")}
-            onClose={() => setSelectedId(null)}
+            reqs={selectedLineage?.reqs ?? nodes.filter((n) => n.parent === selectedNode.id && n.level === "subtask")}
+            children={nodes.filter((n) => n.parent === selectedNode.id && n.level !== "subtask" && n.level !== "step")}
+            onClose={() => {
+              setFileViewer(null);
+              setSelectedId(null);
+            }}
+            onOpenFile={(file, expanded = false) => setFileViewer({ file, expanded })}
             onChanged={() => {
               refetch();
               onEdited?.();
@@ -1528,6 +1556,15 @@ export function RoadmapGraph({
             </div>
           )}
         </div>
+      )}
+
+      {fileViewer && (
+        <FileViewerSheet
+          file={fileViewer.file}
+          expanded={fileViewer.expanded}
+          onExpandedChange={(expanded) => setFileViewer((current) => current ? { ...current, expanded } : null)}
+          onClose={() => setFileViewer(null)}
+        />
       )}
 
       {/* 우클릭 컨텍스트 메뉴 — RUN/SPEC 전용 */}

@@ -2,6 +2,8 @@ import { readdir, readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { z } from "zod";
 import { loadProjectConfig } from "../harness/config.js";
+import { findRegistryEntry } from "../harness/registry.js";
+import { pullCheckpointsToRules } from "../hulk/checkpoint.js";
 import { routeHarnessesForFiles } from "../harness/harnessRouting.js";
 import { buildClaudeRuleFile } from "../harness/rulesFile.js";
 import { mcpAllowPatterns, renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistry.js";
@@ -73,6 +75,14 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
 
   const claudeMd = await readIfExists(join(projectPath, "sugo", "CLAUDE.md"));
   const config = await loadProjectConfig(projectPath);
+  const registryEntry = await findRegistryEntry(projectPath);
+
+  // 작업 컨텍스트를 읽는 순간 해당 도메인의 체크포인트를 먼저 갱신한다. 대시보드가 꺼져 있으면
+  // null로 안전 폴백하며 기존 로컬 규칙은 유지한다. 이 경로 덕분에 별도 수동 pull을 기억하지
+  // 않아도, 에이전트가 작업 전 필수 호출하는 get_project_context에서 팀 맥락이 자동 주입된다.
+  const checkpointSync = registryEntry?.workspace
+    ? await pullCheckpointsToRules(projectPath, registryEntry.workspace).catch(() => null)
+    : null;
 
   const loaded: { id: string; harnessMd: string }[] = [];
   if (config) {
@@ -109,6 +119,12 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
     ok: true,
     projectPath,
     registered: !!config,
+    workspace: registryEntry?.workspace ?? null,
+    checkpointSync: {
+      attempted: !!registryEntry?.workspace,
+      injectedCount: checkpointSync,
+      rulesRoot: join(projectPath, ".claude", "rules"),
+    },
     claudeMd,
     harnesses,
     rules,

@@ -27,6 +27,11 @@ export function reqConfirmId(taskId: string): string {
   return `${taskId}::REQ-CONFIRM`;
 }
 
+/** REQ 번호는 PRD 안에서만 고유하다. Roadmap/DB의 id는 workspace 범위 PK이므로 task로 namespace한다. */
+export function requirementNodeId(taskId: string, requirementId: string): string {
+  return `${taskId}::${requirementId}`;
+}
+
 /**
  * §8.5: PRD의 REQ 헤딩을 Roadmap 자식 노드로 심는다 — 순차 선형 의존(REQ-N은 REQ-(N-1)의
  * roadmap 노드 id에 의존, PRD 등장 순서 기준이지 숫자 크기 기준이 아니다)으로 실행순서를 제안하고,
@@ -40,11 +45,11 @@ export function promotePrdRequirements(taskId: string, prdContent: string): Road
   if (requirements.length === 0) return [];
 
   const nodes: RoadmapNode[] = requirements.map((req, i) => ({
-    id: req.id,
+    id: requirementNodeId(taskId, req.id),
     title: req.title,
     level: "subtask",
     status: "pending",
-    dependsOn: i === 0 ? [] : [requirements[i - 1].id],
+    dependsOn: i === 0 ? [] : [requirementNodeId(taskId, requirements[i - 1].id)],
     parent: taskId,
   }));
 
@@ -53,7 +58,7 @@ export function promotePrdRequirements(taskId: string, prdContent: string): Road
     title: "사용자 최종 확인",
     level: "step",
     status: "pending",
-    dependsOn: requirements.map((r) => r.id),
+    dependsOn: requirements.map((r) => requirementNodeId(taskId, r.id)),
     parent: taskId,
   });
 

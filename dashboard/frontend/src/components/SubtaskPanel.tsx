@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
+import { Check, Copy, GitPullRequest, Sparkles } from "lucide-react";
 import { useAuth } from "../auth/AuthContext.js";
-import {
-  parseLineage,
-  parseWorkResult,
-  type RoadmapNode,
-  type WorkResultFile,
-} from "../hooks/useRoadmap.js";
+import { parseWorkResult, type RoadmapNode, type WorkResultFile } from "../hooks/useRoadmap.js";
 import { clearManualStatus, setManualStatus } from "../api/roadmapMutationsApi.js";
 import { checkExistingPr, createPr, type PrRef, type PrScope } from "../api/prApi.js";
+import { inspectorProgress, type InspectorProgress } from "./roadmap/inspectorModel.js";
 
 type Tab = "progress" | "summary" | "files";
 
@@ -30,37 +27,49 @@ function fileBadgeColor(change: WorkResultFile["change"]): string {
 }
 
 // §5 SubtaskPanel(폭 420, 탭 progress/summary/files).
-// WorkResult 메타·수동 done/취소·PR 패널·lineage는 전부 progress 탭에 있다.
+// WorkResult 메타·수동 done/취소·PR 패널은 progress 탭에 있다.
 export function SubtaskPanel({
   workspace,
   node,
   reqs: reqsProp,
+  children: childrenProp,
   onClose,
   onChanged,
+  onOpenFile,
 }: {
   workspace: string;
   node: RoadmapNode;
   /** 이 노드의 REQ(subtask) 자식들. **그래프가 아니라 여기서 보여주는 게 정본이다**(설계안). */
   reqs?: RoadmapNode[];
+  /** SPEC의 RUN, RUN의 TASK. TASK 진행률은 reqs를 사용한다. */
+  children?: RoadmapNode[];
   onClose: () => void;
   onChanged: () => void;
+  onOpenFile: (file: WorkResultFile, expanded?: boolean) => void;
 }) {
   const { userId } = useAuth();
   const [tab, setTab] = useState<Tab>("progress");
   const reqs = reqsProp ?? [];
-  const reqTotal = reqs.length;
-  const reqDone = reqs.filter((r) => (r.manual_status ?? r.status ?? "").toLowerCase() === "done").length;
+  const progressItems = node.level === "task" ? reqs : (childrenProp ?? []);
+  const progress = inspectorProgress(node, progressItems);
+
+  useEffect(() => setTab("progress"), [node.id]);
 
   const workResult = parseWorkResult(node.work_result);
-  const lineage = parseLineage(node.lineage);
 
   return (
-    <aside className="ck-glass flex w-[420px] shrink-0 flex-col overflow-hidden rounded-xl">
-      <div className="flex items-center justify-between border-b border-white/10 p-3">
+    <aside className="flex min-h-full w-full min-w-0 flex-col overflow-hidden bg-[var(--color-surface)]">
+      <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3.5">
         <div className="min-w-0">
-          <div className="truncate text-sm font-medium">{node.title}</div>
-          <div className="font-mono text-xs opacity-60">
-            {node.id} · {node.level}
+          <div className="mb-1 flex items-center gap-2">
+            <span className="rounded-md bg-cyan-400/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-cyan-300">
+              {node.level === "workstream" ? "RUN" : node.level}
+            </span>
+            <span className="font-mono text-[10px] uppercase text-[var(--color-text-dim)]">{node.status}</span>
+          </div>
+          <div className="truncate text-[15px] font-semibold text-[var(--color-text-bright)]">{node.title}</div>
+          <div className="mt-1 truncate font-mono text-[10px] text-[var(--color-text-dim)]" title={node.id}>
+            {node.id}
           </div>
         </div>
         <button type="button" onClick={onClose} className="text-xs opacity-60 hover:opacity-100">
@@ -76,25 +85,29 @@ export function SubtaskPanel({
             onClick={() => setTab(t)}
             className={`flex-1 py-2 ${tab === t ? "ck-glow-cyan" : "opacity-60 hover:opacity-100"}`}
           >
-            {t === "progress" ? `진행 ${reqDone}/${reqTotal}` : t === "summary" ? "요약" : `파일 ${workResult?.files?.length ?? 0}`}
+            {t === "progress"
+              ? `개요 · ${progress.label} ${progress.done}/${progress.total}`
+              : t === "summary"
+                ? "작업 요약"
+                : `변경 파일 ${workResult?.files?.length ?? 0}`}
           </button>
         ))}
       </div>
 
       <div className="ck-scroll flex-1 space-y-4 p-3 text-sm">
-        {tab === "progress" && reqTotal > 0 && <ReqList reqs={reqs} />}
         {tab === "progress" && (
           <ProgressTab
             userId={userId}
             workspace={workspace}
             node={node}
             workResult={workResult}
-            lineage={lineage}
+            progress={progress}
+            progressItems={progressItems}
             onChanged={onChanged}
           />
         )}
         {tab === "summary" && <SummaryTab summary={workResult?.summary} />}
-        {tab === "files" && <FilesTab files={workResult?.files ?? []} />}
+        {tab === "files" && <FilesTab files={workResult?.files ?? []} onOpenFile={onOpenFile} />}
       </div>
     </aside>
   );
@@ -113,17 +126,21 @@ function ProgressTab({
   workspace,
   node,
   workResult,
-  lineage,
+  progress,
+  progressItems,
   onChanged,
 }: {
   userId: string | null;
   workspace: string;
   node: RoadmapNode;
   workResult: ReturnType<typeof parseWorkResult>;
-  lineage: ReturnType<typeof parseLineage>;
+  progress: InspectorProgress;
+  progressItems: RoadmapNode[];
   onChanged: () => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [patchCopied, setPatchCopied] = useState(false);
+  const [showPr, setShowPr] = useState(false);
 
   async function handleManualDone() {
     if (!userId) return;
@@ -148,14 +165,37 @@ function ProgressTab({
   }
 
   function handleCopyPatchBridge() {
-    const cmd = `/sugo:patch ${workspace} ${node.id}${workResult?.seed ? ` "${workResult.seed}"` : ""}`;
+    if (!workResult?.path) return;
+    const cmd = `/sugo:patch ${workResult.path}`;
     void navigator.clipboard?.writeText(cmd);
+    setPatchCopied(true);
+    window.setTimeout(() => setPatchCopied(false), 1800);
   }
 
   const duration = durationLabel(workResult?.startedAt, workResult?.endedAt);
 
   return (
     <div className="space-y-4">
+      <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-3">
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-dim)]">실제 진행</div>
+            <div className="mt-1 text-[12px] text-[var(--color-text-muted)]">{progress.label} 기준</div>
+          </div>
+          <div className="font-mono text-xl font-semibold text-cyan-300">
+            {progress.done}<span className="text-sm text-[var(--color-text-dim)]">/{progress.total}</span>
+          </div>
+        </div>
+        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-black/30">
+          <div
+            className="h-full rounded-full bg-cyan-400 transition-[width] duration-300"
+            style={{ width: `${progress.total === 0 ? 0 : Math.round((progress.done / progress.total) * 100)}%` }}
+          />
+        </div>
+      </div>
+
+      {progressItems.length > 0 && (node.level === "task" ? <ReqList reqs={progressItems} /> : <ChildList items={progressItems} />)}
+
       <div className="space-y-1">
         <div className="font-mono text-xs uppercase opacity-60">Work Result</div>
         {workResult ? (
@@ -181,24 +221,26 @@ function ProgressTab({
         )}
       </div>
 
-      {lineage.length > 0 && (
-        <div className="space-y-1">
-          <div className="font-mono text-xs uppercase opacity-60">Lineage</div>
-          <div className="space-y-1">
-            {lineage.map((entry) => (
-              <div key={entry.version} className="neon-border-violet ck-line-in rounded p-2 text-xs">
-                <span style={{ color: "var(--color-secondary)" }}>v{entry.version}</span>{" "}
-                {entry.title ?? entry.summary ?? ""}{" "}
-                <span className="opacity-50">{entry.completedAt}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {(node.level === "task" || node.level === "workstream") && (node.manual_status ?? node.status) === "done" && workResult?.path && (
+          <button type="button" onClick={handleCopyPatchBridge} className="group rounded-xl border border-violet-400/45 bg-gradient-to-br from-violet-500/15 to-fuchsia-500/[0.06] p-3 text-left transition-all hover:-translate-y-0.5 hover:border-violet-300/70 hover:shadow-[0_0_24px_rgba(139,92,246,0.14)]">
+            <span className="flex items-center gap-2 text-sm font-semibold text-violet-200"><Sparkles size={16} /> Patch 이어가기</span>
+            <span className="mt-1.5 flex items-center gap-1.5 text-[10.5px] text-violet-200/60">{patchCopied ? <><Check size={12} /> 명령어 복사됨</> : <><Copy size={12} /> 완료 산출물에서 다음 차수 시작</>}</span>
+          </button>
+        )}
+        <button type="button" onClick={() => setShowPr((value) => !value)} className="group rounded-xl border border-cyan-400/40 bg-gradient-to-br from-cyan-500/15 to-blue-500/[0.05] p-3 text-left transition-all hover:-translate-y-0.5 hover:border-cyan-300/70 hover:shadow-[0_0_24px_rgba(34,211,238,0.12)]">
+          <span className="flex items-center gap-2 text-sm font-semibold text-cyan-200"><GitPullRequest size={16} /> PR 생성하기</span>
+          <span className="mt-1.5 block text-[10.5px] text-cyan-200/60">{showPr ? "입력 닫기" : "제목·대상 브랜치 설정"}</span>
+        </button>
+      </div>
 
-      <div className="space-y-1">
-        <div className="font-mono text-xs uppercase opacity-60">수동 조작</div>
-        <div className="flex gap-2">
+      {showPr && <div className="rounded-xl border border-cyan-400/25 bg-cyan-400/[0.035] p-3"><PrPanel workspace={workspace} node={node} /></div>}
+
+      {(node.level === "task" && (node.manual_status ?? node.status) !== "done") || node.manual_status ? (
+        <details className="rounded-lg border border-[var(--color-border)] bg-black/10 p-2.5">
+          <summary className="cursor-pointer font-mono text-[11px] uppercase text-[var(--color-text-muted)]">상태 관리</summary>
+          <div className="mt-3 flex flex-wrap gap-2">
+          {node.level === "task" && (node.manual_status ?? node.status) !== "done" && (
           <button
             type="button"
             disabled={busy}
@@ -207,6 +249,7 @@ function ProgressTab({
           >
             수동 완료
           </button>
+          )}
           {node.manual_status && (
             <button
               type="button"
@@ -217,13 +260,9 @@ function ProgressTab({
               취소
             </button>
           )}
-          <button type="button" onClick={handleCopyPatchBridge} className="rounded border border-white/20 px-2 py-1 text-xs hover:bg-white/5">
-            /sugo:patch 복사
-          </button>
-        </div>
-      </div>
-
-      <PrPanel workspace={workspace} node={node} />
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }
@@ -269,7 +308,7 @@ function PrPanel({ workspace, node }: { workspace: string; node: Pick<RoadmapNod
 
   return (
     <div className="space-y-2">
-      <div className="font-mono text-xs uppercase opacity-60">Pull Request</div>
+      <div className="font-mono text-xs uppercase text-cyan-200/70">Pull Request 설정</div>
       <div className="flex gap-2">
         <select value={scope} onChange={(e) => setScope(e.target.value as PrScope)} className="rounded bg-white/5 px-2 py-1 text-xs">
           <option value="task">task</option>
@@ -312,26 +351,51 @@ function PrPanel({ workspace, node }: { workspace: string; node: Pick<RoadmapNod
 }
 
 function SummaryTab({ summary }: { summary?: string }) {
-  if (!summary) return <div className="text-xs opacity-50">summary 없음</div>;
+  if (!summary) return <div className="rounded-lg border border-dashed border-white/10 p-4 text-xs text-[var(--color-text-dim)]">아직 기록된 작업 요약이 없습니다.</div>;
   // §5는 "마크다운 summary"라고 하지만 여기선 원문을 그대로 렌더한다(마크다운 파싱 없음).
   // 렌더러가 필요하면 Harness.tsx가 쓰는 marked를 그대로 붙이면 된다.
   return <pre className="whitespace-pre-wrap font-sans text-xs">{summary}</pre>;
 }
 
-function FilesTab({ files }: { files: WorkResultFile[] }) {
+function ChildList({ items }: { items: RoadmapNode[] }) {
+  return (
+    <div className="space-y-1.5">
+      {items.map((item) => {
+        const done = (item.manual_status ?? item.status) === "done";
+        return (
+          <div key={item.id} className="flex items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2">
+            <span className={done ? "text-emerald-400" : "text-cyan-300"}>{done ? "✓" : "○"}</span>
+            <span className="min-w-0 flex-1 truncate text-[12px]" title={item.title}>{item.title}</span>
+            <span className="font-mono text-[9px] uppercase text-[var(--color-text-dim)]">{item.level === "workstream" ? "RUN" : item.level}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function FilesTab({ files, onOpenFile }: { files: WorkResultFile[]; onOpenFile: (file: WorkResultFile, expanded?: boolean) => void }) {
   const [selected, setSelected] = useState<WorkResultFile | null>(null);
   if (files.length === 0) return <div className="text-xs opacity-50">변경된 파일 없음</div>;
   return (
-    <div className="space-y-2">
+    <div className="flex min-h-0 flex-col gap-2">
       <ul className="space-y-1">
         {files.map((f) => (
           <li key={f.path}>
             <button
               type="button"
-              onClick={() => setSelected(f)}
+              onClick={() => {
+                setSelected(f);
+                onOpenFile(f, false);
+              }}
+              onDoubleClick={() => {
+                setSelected(f);
+                onOpenFile(f, true);
+              }}
               className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-white/5 ${
                 selected?.path === f.path ? "bg-white/5" : ""
               }`}
+              title="클릭: 하단에서 보기 · 더블클릭: 전체화면"
             >
               <span className="font-mono" style={{ color: fileBadgeColor(f.change) }}>
                 {fileBadge(f.change)}
@@ -341,9 +405,6 @@ function FilesTab({ files }: { files: WorkResultFile[] }) {
           </li>
         ))}
       </ul>
-      {selected?.diff && (
-        <pre className="ck-scroll max-h-64 overflow-x-auto rounded bg-black/30 p-2 font-mono text-xs">{selected.diff}</pre>
-      )}
     </div>
   );
 }

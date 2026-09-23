@@ -89,7 +89,8 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
   router.get("/checkpoint-sync", async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    res.json({ checkpoints: await getCheckpointSync(db, userId) });
+    const workspace = typeof req.query.workspace === "string" ? req.query.workspace : undefined;
+    res.json({ checkpoints: await getCheckpointSync(db, userId, workspace) });
   });
 
   router.get("/:name/decisions", async (req, res) => {

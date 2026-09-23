@@ -8,6 +8,7 @@ import { checkCoverageGate } from "../consistency.js";
 import { checkContractEvidenceGate, checkContractStartedGate, resolveContractRequired } from "../contractEvidence.js";
 import { emitActivity } from "../dashboard/activity.js";
 import { fetchCalibratedRatio } from "../dashboard/fetch.js";
+import { snapshotWorkResultFiles } from "../dashboard/workResultFiles.js";
 import { collectPrRefs } from "../prRefs.js";
 import { validateIntegration, validateManifest, type DecomposeManifest } from "../decompose.js";
 import { checkEvidenceReuseGate, computeChangedFilesFingerprint } from "../fingerprint.js";
@@ -40,9 +41,9 @@ import { estimateHumanHours } from "../humanHours.js";
 import { checkpointApplies } from "../hulk/matching.js";
 import { addWorkLog } from "../hulk/history.js";
 import { listCheckpoints } from "../hulk/checkpoint.js";
-import { backfillRoadmapTask, completeTaskRequirements, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
+import { backfillRoadmapTask, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
 import { promotePrdRequirements } from "../hulk/roadmapReq.js";
-import { addTask, findTaskByPrdRef, updateTask } from "../hulk/task.js";
+import { addTask, findTaskByPrdRef, listTasks, updateTask } from "../hulk/task.js";
 import type { Task, TaskPatchInfo } from "../hulk/types.js";
 import {
   computeCompletionGrade,
@@ -779,9 +780,47 @@ export async function handleSugoPlan(rawArgs: unknown) {
       // 의존성 없는 이 노드가 readySet에 REQ와 나란히 잘못 섞여 나온다(스모크 테스트가 잡아낸 버그).
       await backfillRoadmapTask(registryEntry.workspace, task.id, session.featureName);
       await updateRoadmapNodeStatus(registryEntry.workspace, task.id, "in_progress");
+      // §9 4층 헌법: PRD 하나가 Spec, 실행 한 번이 Run, 저장소 산출물이 Task다.
+      // 기존 구현은 Task→REQ만 만들어 Canvas의 핵심 계층이 영원히 비어 있었다.
+      // patch는 같은 제품 작업의 다음 차수이지 새 실행 묶음이 아니다. 기존 Task가 속한 RUN을
+      // 그대로 재사용해야 캔버스가 RUN 하나 안에서 v0-feat → vN-patch를 보여줄 수 있다.
+      const existingTaskNode = isPatch ? await getRoadmapNode(registryEntry.workspace, task.id) : null;
+      const runId = existingTaskNode?.parent ?? `run-${task.id}`;
+      const existingRunNode = await getRoadmapNode(registryEntry.workspace, runId);
+      const specId = existingRunNode?.parent ?? `spec-${task.id}`;
+      const existingSpecNode = await getRoadmapNode(registryEntry.workspace, specId);
+      await upsertRoadmapNodes(registryEntry.workspace, [
+        {
+          id: specId,
+          title: existingSpecNode?.title ?? session.featureName,
+          level: "spec",
+          status: "in_progress",
+          dependsOn: [],
+          specPath: existingSpecNode?.specPath ?? prdPath,
+        },
+        {
+          id: runId,
+          title: existingRunNode?.title ?? session.featureName,
+          level: "workstream",
+          status: "in_progress",
+          dependsOn: [],
+          parent: specId,
+          specPath: existingRunNode?.specPath ?? prdPath,
+        },
+        {
+          id: task.id,
+          title: session.featureName,
+          level: "task",
+          status: "in_progress",
+          dependsOn: [],
+          parent: runId,
+          ref: task.id,
+          specPath: prdPath,
+        },
+      ]);
       const reqNodes = promotePrdRequirements(task.id, args.prdContent);
       if (reqNodes.length > 0) {
-        await upsertRoadmapNodes(registryEntry.workspace, reqNodes);
+        await replaceTaskRequirements(registryEntry.workspace, task.id, reqNodes);
       }
     }
   }
@@ -899,6 +938,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
           humanHoursEstimate,
           reviewSummary: args.summary,
           reviewDoneAt: new Date().toISOString(),
+          runtimeVerified: args.runtimeCheck?.runtimeVerified,
+          wiringVerified: args.runtimeCheck?.wiringVerified,
           runtimeCheckUnverifiedReason: args.runtimeCheck?.unverifiedReason,
           evidenceReused: args.reusedFromTestDone ?? false,
         },
@@ -952,6 +993,35 @@ export async function handleSugoPlan(rawArgs: unknown) {
       status: "done",
       summary: session.data.chainInfo.reviewSummary,
       log_id: workLog.id,
+    });
+    // Task 파일과 로드맵을 같은 commit 이벤트에서 맞춘다. 대시보드가 다음 주기까지
+    // in_progress로 남는 상태 드리프트를 허용하지 않는다.
+    await reconcileRoadmapWithTasks(workspace, await listTasks(workspace));
+    const completedAt = new Date().toISOString();
+    const patchVersion = session.data.mode === "patch" ? session.data.patch?.version : 0;
+    const dashboardFiles = await snapshotWorkResultFiles(session.projectPath, session.data.chainInfo.changedFiles);
+    const workResult = {
+      path: session.data.chainInfo.workResultPath,
+      startedAt: session.startedAt,
+      endedAt: completedAt,
+      summary: session.data.chainInfo.reviewSummary,
+      files: dashboardFiles,
+      parentTaskId: session.data.hulkTaskId,
+      patchVersion,
+      seed: session.data.seed,
+      runtimeVerified: session.data.chainInfo.runtimeVerified,
+      wiringVerified: session.data.chainInfo.wiringVerified,
+      prRefs,
+    };
+    await recordRoadmapWorkResult(workspace, session.data.hulkTaskId, workResult, {
+      version: patchVersion ?? 0,
+      completedAt,
+      title: session.featureName,
+      summary: session.data.chainInfo.reviewSummary,
+      changedFiles: session.data.chainInfo.changedFiles,
+      seed: session.data.seed,
+      runtimeVerified: session.data.chainInfo.runtimeVerified,
+      wiringVerified: session.data.chainInfo.wiringVerified,
     });
 
     const config = await loadProjectConfig(session.projectPath);

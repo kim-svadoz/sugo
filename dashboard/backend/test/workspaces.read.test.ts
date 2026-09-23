@@ -90,6 +90,11 @@ describe("GET /api/workspaces/checkpoint-sync", () => {
       expect.objectContaining({ id: "CP-001", workspace_name: "ws1", title: "watch out" }),
     ]);
   });
+  it("workspace 쿼리가 있으면 다른 도메인의 체크포인트를 섞지 않는다", async () => {
+    const { app, auth } = await seededApp();
+    const res = await request(app).get("/api/workspaces/checkpoint-sync").query({ userId: "u1", workspace: "other" }).set("Authorization", auth).expect(200);
+    expect(res.body.checkpoints).toEqual([]);
+  });
 });
 
 describe("GET /api/workspaces/:name/{decisions,history,checkpoints,tasks,roadmap}", () => {

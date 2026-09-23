@@ -83,8 +83,9 @@ describe("sugo_checkpoint(pull)", () => {
     const pull = await call(handleSugoCheckpoint, { action: "pull", workspace: "ws1", projectPath: projectDir });
     expect(pull.isError).toBe(false);
     expect(pull.data.pulledCount).toBe(1);
-    const content = readFileSync(join(projectDir, ".claude", "rules", "backend", "원격-규칙.md"), "utf-8");
+    const content = readFileSync(join(projectDir, ".claude", "rules", "backend", "CP-remote-원격-규칙.md"), "utf-8");
     expect(content).toContain("체크1");
+    expect(received.some((r) => r.path.includes("workspace=ws1"))).toBe(true);
   });
 });
 

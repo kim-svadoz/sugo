@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useSyncExternalStore, type Reac
 import { clearAuthState, getAuthState, setAuthState, subscribeAuthState } from "./authStore.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 
 interface AuthContextValue {
   userId: string | null;
@@ -30,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 공개 SaaS(§Phase 1.5): 백엔드 GitHub OAuth로 302 → 콜백에서 #session= 프래그먼트로 복귀.
   const login = useCallback(() => {
-    window.location.href = `${API_BASE}/api/auth/github/login`;
+    window.location.href = `${API_BASE}${LOCAL_DEV ? "/api/auth/local" : "/api/auth/github/login"}`;
   }, []);
 
   // 콜백에서 받은 세션 JWT를 저장(accessToken). sub=userId, exp로 만료 설정.

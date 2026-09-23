@@ -56,7 +56,8 @@ describe("sugo_workspace(status) — 구 sugo_hulk(status) 흡수", () => {
     expect(status.isError).toBe(false);
     expect(status.data.taskCount).toBe(1);
     expect(status.data.checkpointCount).toBe(1);
-    expect(status.data.roadmapNodeCount).toBe(1);
+    // status 동기화가 기존 task 노드에 Spec→Run 부모를 자동 보강한다.
+    expect(status.data.roadmapNodeCount).toBe(4);
     expect(status.data.specCount).toBe(1);
     expect(status.data.historyCount).toBe(0);
   });

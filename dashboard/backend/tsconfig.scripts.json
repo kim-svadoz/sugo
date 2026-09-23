@@ -11,5 +11,5 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "include": ["src", "dev-local.mts", "seed-demo.ts"]
+  "include": ["src", "dev-local.mts", "local-setup.mts", "local-sync.mts", "seed-demo.ts"]
 }

@@ -1,5 +1,6 @@
 ---
 name: implement
+agent: code-agent
 description: 'code-agent의 기본 스킬. PRD 기반 신규 기능 구현. "구현/만들어/추가해줘/implement/feature" 요청에 쓴다. 설계안 단계 골격을 따른다. bugfix와 refactor는 별도 스킬.'
 ---
 

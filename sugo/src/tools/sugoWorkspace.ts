@@ -5,7 +5,7 @@ import { syncRoadmapSnapshot, syncTask, syncWorkspace } from "../dashboard/sync.
 import { listCheckpoints } from "../hulk/checkpoint.js";
 import { listWorkLogs } from "../hulk/history.js";
 import { appendMemory, readMemory } from "../hulk/memory.js";
-import { listRoadmapNodes } from "../hulk/roadmap.js";
+import { listRoadmapNodes, reconcileRoadmapWithTasks } from "../hulk/roadmap.js";
 import { listSpecs } from "../hulk/spec.js";
 import { listTasks } from "../hulk/task.js";
 import { deleteWorkspace, ensureWorkspace, listWorkspaces, loadWorkspace } from "../hulk/workspace.js";
@@ -94,15 +94,16 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
     }
     case "status": {
       if (!args.name) return errorResult("NAME_REQUIRED", "status action에는 name이 필요합니다.");
-      const [workspace, tasks, checkpoints, roadmapNodes, specs, history, allSessions] = await Promise.all([
+      const [workspace, tasks, checkpoints, specs, history, allSessions] = await Promise.all([
         loadWorkspace(args.name),
         listTasks(args.name),
         listCheckpoints(args.name),
-        listRoadmapNodes(args.name),
         listSpecs(args.name),
         listWorkLogs(args.name),
         loadAllSessions(),
       ]);
+      await reconcileRoadmapWithTasks(args.name, tasks);
+      const roadmapNodes = await listRoadmapNodes(args.name);
       // 세션은 projectPath만 알고 워크스페이스를 모른다 — 소속 프로젝트 경로로 걸러낸다.
       const sessions = sessionsForProjects(allSessions, workspace?.projects ?? []);
       return ok({
@@ -124,6 +125,7 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
       if (ws) void syncWorkspace(ws);
       const tasks = await listTasks(args.name);
       for (const task of tasks) void syncTask(args.name, task);
+      await reconcileRoadmapWithTasks(args.name, tasks);
       const nodes = await listRoadmapNodes(args.name);
       void syncRoadmapSnapshot(args.name, nodes);
       // push는 fire-and-forget이라 여기서 큐를 한 바퀴 돌려야 "수동 재sync"가 실제로 나간다.

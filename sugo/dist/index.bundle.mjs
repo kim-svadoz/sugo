@@ -2991,7 +2991,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve9.call(this, root, ref);
+      let _sch = resolve10.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3018,7 +3018,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve9(root, ref) {
+    function resolve10(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3649,55 +3649,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve9(baseURI, relativeURI, options) {
+    function resolve10(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative5, options, skipNormalization) {
+    function resolveComponent(base, relative6, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative5 = parse3(serialize(relative5, options), options);
+        relative6 = parse3(serialize(relative6, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative5.scheme) {
-        target.scheme = relative5.scheme;
-        target.userinfo = relative5.userinfo;
-        target.host = relative5.host;
-        target.port = relative5.port;
-        target.path = removeDotSegments(relative5.path || "");
-        target.query = relative5.query;
+      if (!options.tolerant && relative6.scheme) {
+        target.scheme = relative6.scheme;
+        target.userinfo = relative6.userinfo;
+        target.host = relative6.host;
+        target.port = relative6.port;
+        target.path = removeDotSegments(relative6.path || "");
+        target.query = relative6.query;
       } else {
-        if (relative5.userinfo !== void 0 || relative5.host !== void 0 || relative5.port !== void 0) {
-          target.userinfo = relative5.userinfo;
-          target.host = relative5.host;
-          target.port = relative5.port;
-          target.path = removeDotSegments(relative5.path || "");
-          target.query = relative5.query;
+        if (relative6.userinfo !== void 0 || relative6.host !== void 0 || relative6.port !== void 0) {
+          target.userinfo = relative6.userinfo;
+          target.host = relative6.host;
+          target.port = relative6.port;
+          target.path = removeDotSegments(relative6.path || "");
+          target.query = relative6.query;
         } else {
-          if (!relative5.path) {
+          if (!relative6.path) {
             target.path = base.path;
-            if (relative5.query !== void 0) {
-              target.query = relative5.query;
+            if (relative6.query !== void 0) {
+              target.query = relative6.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative5.path[0] === "/") {
-              target.path = removeDotSegments(relative5.path);
+            if (relative6.path[0] === "/") {
+              target.path = removeDotSegments(relative6.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative5.path;
+                target.path = "/" + relative6.path;
               } else if (!base.path) {
-                target.path = relative5.path;
+                target.path = relative6.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative5.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative6.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative5.query;
+            target.query = relative6.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative5.fragment;
+      target.fragment = relative6.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3907,7 +3907,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve9,
+      resolve: resolve10,
       resolveComponent,
       equal,
       serialize,
@@ -20404,7 +20404,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve9) => setTimeout(resolve9, pollInterval));
+        await new Promise((resolve10) => setTimeout(resolve10, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -20421,7 +20421,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve9, reject) => {
+    return new Promise((resolve10, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -20499,7 +20499,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve9(parseResult.data);
+            resolve10(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -20760,12 +20760,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve9, reject) => {
+    return new Promise((resolve10, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve9, interval);
+      const timeoutId = setTimeout(resolve10, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -21865,7 +21865,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve9) => setTimeout(resolve9, pollInterval));
+      await new Promise((resolve10) => setTimeout(resolve10, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -22514,12 +22514,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve9) => {
+    return new Promise((resolve10) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve9();
+        resolve10();
       } else {
-        this._stdout.once("drain", resolve9);
+        this._stdout.once("drain", resolve10);
       }
     });
   }
@@ -23965,7 +23965,8 @@ function serializeRoadmapNode(node) {
     ref: node.ref,
     note: node.note,
     specPath: node.specPath,
-    workResult: node.workResult
+    workResult: node.workResult,
+    lineage: node.lineage
   };
 }
 function serializeRoadmapSnapshot(userId, workspaceName, nodes) {
@@ -24558,14 +24559,18 @@ async function fetchRoadmapOrdering(workspaceName) {
     pos_y: n.pos_y ?? void 0
   }));
 }
-async function fetchCheckpointSync() {
+async function fetchCheckpointSync(workspaceName) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return null;
-  const qs = config2.userId ? `?userId=${encodeURIComponent(config2.userId)}` : "";
+  const params = new URLSearchParams();
+  if (config2.userId) params.set("userId", config2.userId);
+  if (workspaceName) params.set("workspace", workspaceName);
+  const qs = params.size ? `?${params.toString()}` : "";
   const res = await fetchJson(`/api/workspaces/checkpoint-sync${qs}`, 8e3);
   if (!res) return null;
   return res.checkpoints.map((c) => ({
     id: c.id,
+    workspace_name: c.workspace_name,
     title: c.title,
     category: c.category ?? void 0,
     applies_to: c.applies_to ?? void 0,
@@ -27290,8 +27295,8 @@ function writeFlowMapping(state, level, node) {
     if (explicitPair) pairBuffer += "? ";
     else if (state.quoteFlowKeys) pairBuffer += '"';
     const valueText = writeNode(state, level, value, {});
-    const sep2 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
-    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep2}${valueText}`;
+    const sep3 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
+    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep3}${valueText}`;
     result += pairBuffer;
   }
   const pad = state.flowBracketPadding && result !== "" ? " " : "";
@@ -27388,8 +27393,8 @@ function writeNode(state, level, node, ctx) {
       if (anchor !== null) props.push(anchor);
       if (tag !== null) props.push(tag);
     }
-    const sep2 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
-    body2 = `${props.join(" ")}${sep2}${body2}`;
+    const sep3 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
+    body2 = `${props.join(" ")}${sep3}${body2}`;
   }
   return body2;
 }
@@ -27434,8 +27439,8 @@ function present(documents, options) {
         block: true,
         compact: true
       });
-      const sep2 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
-      result += `---${sep2}${body2}
+      const sep3 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
+      result += `---${sep3}${body2}
 `;
     } else result += writeNode(state, 0, doc.contents, {
       block: true,
@@ -27518,6 +27523,13 @@ function slugify(text) {
   );
 }
 
+// src/hulk/matching.ts
+function checkpointApplies(checkpoint, ctx) {
+  const applies = checkpoint.applies_to;
+  if (!applies || applies.length === 0) return true;
+  return applies.some((tag) => tag === ctx.projectName || ctx.harnessIds.includes(tag));
+}
+
 // src/hulk/checkpoint.ts
 function generateCheckpointId() {
   return `CP-${randomBytes2(4).toString("hex")}`;
@@ -27597,16 +27609,31 @@ async function migrateCheckpoints(workspace) {
   }
   return entries.length;
 }
-async function pullCheckpointsToRules(projectPath) {
-  const remote = await fetchCheckpointSync();
+async function pullCheckpointsToRules(projectPath, workspace) {
+  const remote = await fetchCheckpointSync(workspace);
   if (!remote) return null;
-  for (const cp of remote) {
+  const config2 = await loadProjectConfig(projectPath);
+  const applicable = remote.filter((cp) => checkpointApplies(cp, {
+    projectName: config2?.projectName ?? "",
+    harnessIds: config2?.detectedStack.harnessIds ?? []
+  }));
+  for (const cp of applicable) {
     const dir = join11(projectPath, ".claude", "rules", cp.category ?? "general");
     await mkdir9(dir, { recursive: true });
-    const body2 = [`# ${cp.title}`, "", ...cp.checklist.map((item) => `- [ ] ${item}`)].join("\n");
-    await atomicWriteFile(join11(dir, `${slugify(cp.title)}.md`), body2);
+    const body2 = [
+      "---",
+      `description: "Sugo checkpoint ${cp.id} \xB7 ${workspace}"`,
+      "---",
+      "",
+      `# ${cp.title}`,
+      "",
+      `> ${workspace} \uB3C4\uBA54\uC778\uC758 \uC7AC\uBC1C\uBC29\uC9C0 \uCEE8\uD14D\uC2A4\uD2B8 \xB7 ${cp.applies_to?.length ? `\uC801\uC6A9 \uB300\uC0C1: ${cp.applies_to.join(", ")}` : "\uB3C4\uBA54\uC778 \uC804\uCCB4 \uC801\uC6A9"}`,
+      "",
+      ...cp.checklist.map((item) => `- ${item}`)
+    ].join("\n");
+    await atomicWriteFile(join11(dir, `${cp.id}-${slugify(cp.title)}.md`), body2);
   }
-  return remote.length;
+  return applicable.length;
 }
 
 // src/hulk/memory.ts
@@ -27701,7 +27728,7 @@ async function handleSugoCheckpoint(rawArgs) {
     }
     case "pull": {
       if (!args2.projectPath) return errorResult3("PROJECT_PATH_REQUIRED", "pull action\uC5D0\uB294 projectPath\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const pulledCount = await pullCheckpointsToRules(args2.projectPath);
+      const pulledCount = await pullCheckpointsToRules(args2.projectPath, args2.workspace);
       return ok({ pulledCount });
     }
   }
@@ -28429,6 +28456,8 @@ async function handleSugoGetProjectContext(rawArgs) {
   const { projectPath, changedFiles } = args2;
   const claudeMd = await readIfExists(join16(projectPath, "sugo", "CLAUDE.md"));
   const config2 = await loadProjectConfig(projectPath);
+  const registryEntry = await findRegistryEntry(projectPath);
+  const checkpointSync = registryEntry?.workspace ? await pullCheckpointsToRules(projectPath, registryEntry.workspace).catch(() => null) : null;
   const loaded = [];
   if (config2) {
     for (const applied of config2.appliedHarnesses) {
@@ -28451,6 +28480,12 @@ async function handleSugoGetProjectContext(rawArgs) {
     ok: true,
     projectPath,
     registered: !!config2,
+    workspace: registryEntry?.workspace ?? null,
+    checkpointSync: {
+      attempted: !!registryEntry?.workspace,
+      injectedCount: checkpointSync,
+      rulesRoot: join16(projectPath, ".claude", "rules")
+    },
     claudeMd,
     harnesses,
     rules,
@@ -28662,7 +28697,7 @@ async function handleSugoOverview(rawArgs) {
 }
 
 // src/tools/sugoPlan.ts
-import { readFile as readFile21 } from "node:fs/promises";
+import { readFile as readFile22 } from "node:fs/promises";
 
 // src/bootable.ts
 async function isProjectBootable(projectPath) {
@@ -28880,6 +28915,49 @@ function resolveContractRequired(policyValue, sessionCtx) {
   return sessionCtx.baselineRequired;
 }
 
+// src/dashboard/workResultFiles.ts
+import { execFile as execFile2 } from "node:child_process";
+import { readFile as readFile19 } from "node:fs/promises";
+import { isAbsolute as isAbsolute4, relative as relative4, resolve as resolve7, sep as sep2 } from "node:path";
+import { promisify as promisify2 } from "node:util";
+var execFileAsync2 = promisify2(execFile2);
+var MAX_CONTENT_BYTES = 2e5;
+var MAX_DIFF_BYTES = 4e5;
+function safeProjectFile(projectPath, path) {
+  const root = resolve7(projectPath);
+  const absolute = isAbsolute4(path) ? resolve7(path) : resolve7(root, path);
+  const rel = relative4(root, absolute);
+  if (rel === ".." || rel.startsWith(`..${sep2}`) || isAbsolute4(rel)) return null;
+  return { absolute, relative: rel.split(sep2).join("/") };
+}
+async function gitOutput(projectPath, args2) {
+  try {
+    const { stdout } = await execFileAsync2("git", args2, { cwd: projectPath, maxBuffer: MAX_DIFF_BYTES });
+    return stdout.slice(0, MAX_DIFF_BYTES);
+  } catch {
+    return "";
+  }
+}
+async function snapshotWorkResultFiles(projectPath, paths) {
+  return Promise.all(paths.map(async (path) => {
+    const safe = safeProjectFile(projectPath, path);
+    if (!safe) return { path, change: "modified" };
+    const status = await gitOutput(projectPath, ["status", "--porcelain", "--", safe.relative]);
+    const code = status.slice(0, 2);
+    const change = code.includes("D") ? "deleted" : code.includes("?") || code.includes("A") ? "added" : "modified";
+    const diff = await gitOutput(projectPath, ["diff", "--no-ext-diff", "--unified=40", "HEAD", "--", safe.relative]);
+    let content;
+    if (change !== "deleted") {
+      try {
+        const raw = await readFile19(safe.absolute);
+        if (raw.byteLength <= MAX_CONTENT_BYTES && !raw.includes(0)) content = raw.toString("utf8");
+      } catch {
+      }
+    }
+    return { path: safe.relative, change, ...content ? { content } : {}, ...diff ? { diff } : {} };
+  }));
+}
+
 // src/decompose.ts
 function findManifestCycle(subtasks) {
   const byId = new Map(subtasks.map((s) => [s.id, s]));
@@ -28968,7 +29046,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash2 } from "node:crypto";
 import { stat } from "node:fs/promises";
-import { isAbsolute as isAbsolute4, join as join22, relative as relative4 } from "node:path";
+import { isAbsolute as isAbsolute5, join as join22, relative as relative5 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash2("sha1").update(parts2.join("\n")).digest("hex");
@@ -28976,8 +29054,8 @@ function computeFingerprintFromEntries(entries) {
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
-    const full = isAbsolute4(f) ? f : join22(projectPath, f);
-    const relPath = isAbsolute4(f) ? relative4(projectPath, f) : f;
+    const full = isAbsolute5(f) ? f : join22(projectPath, f);
+    const relPath = isAbsolute5(f) ? relative5(projectPath, f) : f;
     try {
       const st = await stat(full);
       entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
@@ -29023,15 +29101,8 @@ function estimateHumanHours(startedAtIso, nowIso2, analyzeAttempts, autoLoopRetr
   };
 }
 
-// src/hulk/matching.ts
-function checkpointApplies(checkpoint, ctx) {
-  const applies = checkpoint.applies_to;
-  if (!applies || applies.length === 0) return true;
-  return applies.some((tag) => tag === ctx.projectName || ctx.harnessIds.includes(tag));
-}
-
 // src/hulk/roadmap.ts
-import { mkdir as mkdir14, readFile as readFile19 } from "node:fs/promises";
+import { mkdir as mkdir14, readFile as readFile20 } from "node:fs/promises";
 
 // src/hulk/roadmapGraph.ts
 function mergeRoadmapOwnership(localNodes, remoteOrdering) {
@@ -29097,10 +29168,53 @@ function readySet(nodes) {
   return result;
 }
 
+// src/hulk/roadmapReq.ts
+var REQ_HEADING_RE = /^#{1,6}\s*REQ-(\d+)\s*:\s*(.+)$/gim;
+function parseRequirementsFromPrd(prdContent) {
+  const results = [];
+  const seen = /* @__PURE__ */ new Set();
+  const re = new RegExp(REQ_HEADING_RE);
+  let m;
+  while ((m = re.exec(prdContent)) !== null) {
+    const id = `REQ-${m[1]}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    results.push({ id, title: m[2].trim() });
+  }
+  return results;
+}
+function reqConfirmId(taskId) {
+  return `${taskId}::REQ-CONFIRM`;
+}
+function requirementNodeId(taskId, requirementId) {
+  return `${taskId}::${requirementId}`;
+}
+function promotePrdRequirements(taskId, prdContent) {
+  const requirements = parseRequirementsFromPrd(prdContent);
+  if (requirements.length === 0) return [];
+  const nodes = requirements.map((req, i2) => ({
+    id: requirementNodeId(taskId, req.id),
+    title: req.title,
+    level: "subtask",
+    status: "pending",
+    dependsOn: i2 === 0 ? [] : [requirementNodeId(taskId, requirements[i2 - 1].id)],
+    parent: taskId
+  }));
+  nodes.push({
+    id: reqConfirmId(taskId),
+    title: "\uC0AC\uC6A9\uC790 \uCD5C\uC885 \uD655\uC778",
+    level: "step",
+    status: "pending",
+    dependsOn: requirements.map((r) => requirementNodeId(taskId, r.id)),
+    parent: taskId
+  });
+  return nodes;
+}
+
 // src/hulk/roadmap.ts
 async function readRoadmapFile(workspace) {
   try {
-    const raw = await readFile19(roadmapFilePath(workspace), "utf-8");
+    const raw = await readFile20(roadmapFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
@@ -29109,7 +29223,8 @@ async function readRoadmapFile(workspace) {
 async function writeRoadmapFile(workspace, file) {
   await mkdir14(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(roadmapFilePath(workspace), JSON.stringify(file, null, 2));
-  void syncRoadmapSnapshot(workspace, file.nodes);
+  void syncRoadmapSnapshot(workspace, file.nodes).catch(() => {
+  });
 }
 async function withRoadmap(workspace, fn) {
   return withFileLock(roadmapLockPath(workspace), async () => {
@@ -29123,9 +29238,81 @@ async function listRoadmapNodes(workspace, filter) {
     (n) => (!filter?.level || n.level === filter.level) && (!filter?.parent || n.parent === filter.parent)
   );
 }
+async function reconcileRoadmapWithTasks(workspace, tasks) {
+  await withRoadmap(workspace, async (file) => {
+    const oldToNewByParent = /* @__PURE__ */ new Map();
+    for (const n of file.nodes) {
+      if (n.level !== "subtask" || !n.parent || n.id.includes("::")) continue;
+      const map = oldToNewByParent.get(n.parent) ?? /* @__PURE__ */ new Map();
+      map.set(n.id, requirementNodeId(n.parent, n.id));
+      oldToNewByParent.set(n.parent, map);
+    }
+    const migrated = file.nodes.map((node) => {
+      if (node.level !== "subtask" && node.level !== "step" || !node.parent) return { ...node };
+      const localMap = oldToNewByParent.get(node.parent) ?? /* @__PURE__ */ new Map();
+      const id = node.level === "subtask" ? localMap.get(node.id) ?? node.id : node.id;
+      const dependsOn = node.dependsOn.flatMap((dep) => {
+        if (dep.includes("::")) return [dep];
+        const local = localMap.get(dep);
+        return local ? [local] : [];
+      });
+      return { ...node, id, dependsOn };
+    });
+    const byId = new Map(migrated.map((n) => [n.id, n]));
+    for (const task of tasks) {
+      const existing = byId.get(task.id);
+      const runId = existing?.parent?.startsWith("run-") ? existing.parent : `run-${task.id}`;
+      const existingRun = byId.get(runId);
+      const specId = existingRun?.parent?.startsWith("spec-") ? existingRun.parent : `spec-${task.id}`;
+      const status = task.status === "done" ? "done" : task.status === "in_progress" ? "in_progress" : "pending";
+      const existingSpec = byId.get(specId);
+      byId.set(specId, {
+        ...existingSpec ?? { id: specId, title: task.title, level: "spec", dependsOn: [] },
+        status,
+        specPath: task.prd_ref
+      });
+      byId.set(runId, {
+        ...existingRun ?? { id: runId, title: task.title, level: "workstream", dependsOn: [], parent: specId },
+        status,
+        parent: specId,
+        specPath: task.prd_ref
+      });
+      byId.set(task.id, {
+        ...existing ?? { id: task.id, title: task.title, level: "task", dependsOn: [], ref: task.id },
+        title: task.title,
+        level: "task",
+        status,
+        parent: existing?.parent?.startsWith("run-") ? existing.parent : runId,
+        specPath: task.prd_ref
+      });
+      if (status === "done") {
+        for (const [id, child] of byId) {
+          if (child.parent === task.id) byId.set(id, { ...child, status: "done" });
+        }
+      }
+    }
+    await writeRoadmapFile(workspace, { ...file, nodes: [...byId.values()] });
+  });
+}
 async function getRoadmapNode(workspace, id) {
   const file = await readRoadmapFile(workspace);
   return file.nodes.find((n) => n.id === id) ?? null;
+}
+async function recordRoadmapWorkResult(workspace, taskId, workResult, lineageEntry) {
+  await withRoadmap(workspace, async (file) => {
+    const task = file.nodes.find((node) => node.id === taskId && node.level === "task");
+    if (!task) return;
+    const requirements = file.nodes.filter((node) => node.parent === task.id && (node.level === "subtask" || node.level === "step")).map((node) => ({ id: node.id, title: node.title, status: node.status }));
+    const completedEntry = { ...lineageEntry, requirements, workResult };
+    const targetIds = /* @__PURE__ */ new Set([task.id, ...task.parent ? [task.parent] : []]);
+    const nodes = file.nodes.map((node) => {
+      if (!targetIds.has(node.id)) return node;
+      if (node.id !== task.id) return { ...node, workResult };
+      const lineage = [...(node.lineage ?? []).filter((entry) => entry.version !== completedEntry.version), completedEntry].sort((a, b) => a.version - b.version);
+      return { ...node, workResult, lineage };
+    });
+    await writeRoadmapFile(workspace, { ...file, nodes });
+  });
 }
 async function addRoadmapNode(workspace, node) {
   return withRoadmap(workspace, async (file) => {
@@ -29146,6 +29333,18 @@ async function upsertRoadmapNodes(workspace, nodes) {
     const byId = new Map(file.nodes.map((n) => [n.id, n]));
     for (const n of nodes) byId.set(n.id, n);
     await writeRoadmapFile(workspace, { ...file, nodes: [...byId.values()] });
+  });
+}
+async function replaceTaskRequirements(workspace, taskId, requirements) {
+  await withRoadmap(workspace, async (file) => {
+    const keep = file.nodes.filter(
+      (node) => !(node.parent === taskId && (node.level === "subtask" || node.level === "step"))
+    );
+    const ids = new Set(requirements.map((node) => node.id));
+    await writeRoadmapFile(workspace, {
+      ...file,
+      nodes: [...keep.filter((node) => !ids.has(node.id)), ...requirements]
+    });
   });
 }
 async function updateRoadmapNodeStatus(workspace, id, status, result) {
@@ -29256,55 +29455,15 @@ async function pullRoadmapOrdering(workspace) {
   });
 }
 
-// src/hulk/roadmapReq.ts
-var REQ_HEADING_RE = /^#{1,6}\s*REQ-(\d+)\s*:\s*(.+)$/gim;
-function parseRequirementsFromPrd(prdContent) {
-  const results = [];
-  const seen = /* @__PURE__ */ new Set();
-  const re = new RegExp(REQ_HEADING_RE);
-  let m;
-  while ((m = re.exec(prdContent)) !== null) {
-    const id = `REQ-${m[1]}`;
-    if (seen.has(id)) continue;
-    seen.add(id);
-    results.push({ id, title: m[2].trim() });
-  }
-  return results;
-}
-function reqConfirmId(taskId) {
-  return `${taskId}::REQ-CONFIRM`;
-}
-function promotePrdRequirements(taskId, prdContent) {
-  const requirements = parseRequirementsFromPrd(prdContent);
-  if (requirements.length === 0) return [];
-  const nodes = requirements.map((req, i2) => ({
-    id: req.id,
-    title: req.title,
-    level: "subtask",
-    status: "pending",
-    dependsOn: i2 === 0 ? [] : [requirements[i2 - 1].id],
-    parent: taskId
-  }));
-  nodes.push({
-    id: reqConfirmId(taskId),
-    title: "\uC0AC\uC6A9\uC790 \uCD5C\uC885 \uD655\uC778",
-    level: "step",
-    status: "pending",
-    dependsOn: requirements.map((r) => r.id),
-    parent: taskId
-  });
-  return nodes;
-}
-
 // src/hulk/task.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir15, readFile as readFile20 } from "node:fs/promises";
+import { mkdir as mkdir15, readFile as readFile21 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile20(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile21(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
@@ -30173,7 +30332,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "decompose" && existing) {
     if (!args2.manifest) return errorResult8("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     if (!existing.data.prdPath) return errorResult8("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    const prdContent = await readFile21(existing.data.prdPath, "utf-8").catch(() => "");
+    const prdContent = await readFile22(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
@@ -30325,7 +30484,7 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "prd" && args2.specPath) {
-    const specExists = await readFile21(args2.specPath, "utf-8").then(
+    const specExists = await readFile22(args2.specPath, "utf-8").then(
       () => true,
       () => false
     );
@@ -30399,9 +30558,43 @@ async function handleSugoPlan(rawArgs) {
       };
       await backfillRoadmapTask(registryEntry.workspace, task.id, session.featureName);
       await updateRoadmapNodeStatus(registryEntry.workspace, task.id, "in_progress");
+      const existingTaskNode = isPatch ? await getRoadmapNode(registryEntry.workspace, task.id) : null;
+      const runId = existingTaskNode?.parent ?? `run-${task.id}`;
+      const existingRunNode = await getRoadmapNode(registryEntry.workspace, runId);
+      const specId = existingRunNode?.parent ?? `spec-${task.id}`;
+      const existingSpecNode = await getRoadmapNode(registryEntry.workspace, specId);
+      await upsertRoadmapNodes(registryEntry.workspace, [
+        {
+          id: specId,
+          title: existingSpecNode?.title ?? session.featureName,
+          level: "spec",
+          status: "in_progress",
+          dependsOn: [],
+          specPath: existingSpecNode?.specPath ?? prdPath
+        },
+        {
+          id: runId,
+          title: existingRunNode?.title ?? session.featureName,
+          level: "workstream",
+          status: "in_progress",
+          dependsOn: [],
+          parent: specId,
+          specPath: existingRunNode?.specPath ?? prdPath
+        },
+        {
+          id: task.id,
+          title: session.featureName,
+          level: "task",
+          status: "in_progress",
+          dependsOn: [],
+          parent: runId,
+          ref: task.id,
+          specPath: prdPath
+        }
+      ]);
       const reqNodes = promotePrdRequirements(task.id, args2.prdContent);
       if (reqNodes.length > 0) {
-        await upsertRoadmapNodes(registryEntry.workspace, reqNodes);
+        await replaceTaskRequirements(registryEntry.workspace, task.id, reqNodes);
       }
     }
   }
@@ -30500,6 +30693,8 @@ ${session.data.seed}` : args2.summary;
           humanHoursEstimate,
           reviewSummary: args2.summary,
           reviewDoneAt: (/* @__PURE__ */ new Date()).toISOString(),
+          runtimeVerified: args2.runtimeCheck?.runtimeVerified,
+          wiringVerified: args2.runtimeCheck?.wiringVerified,
           runtimeCheckUnverifiedReason: args2.runtimeCheck?.unverifiedReason,
           evidenceReused: args2.reusedFromTestDone ?? false
         }
@@ -30538,6 +30733,33 @@ ${session.data.seed}` : args2.summary;
       status: "done",
       summary: session.data.chainInfo.reviewSummary,
       log_id: workLog.id
+    });
+    await reconcileRoadmapWithTasks(workspace, await listTasks(workspace));
+    const completedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const patchVersion = session.data.mode === "patch" ? session.data.patch?.version : 0;
+    const dashboardFiles = await snapshotWorkResultFiles(session.projectPath, session.data.chainInfo.changedFiles);
+    const workResult = {
+      path: session.data.chainInfo.workResultPath,
+      startedAt: session.startedAt,
+      endedAt: completedAt,
+      summary: session.data.chainInfo.reviewSummary,
+      files: dashboardFiles,
+      parentTaskId: session.data.hulkTaskId,
+      patchVersion,
+      seed: session.data.seed,
+      runtimeVerified: session.data.chainInfo.runtimeVerified,
+      wiringVerified: session.data.chainInfo.wiringVerified,
+      prRefs
+    };
+    await recordRoadmapWorkResult(workspace, session.data.hulkTaskId, workResult, {
+      version: patchVersion ?? 0,
+      completedAt,
+      title: session.featureName,
+      summary: session.data.chainInfo.reviewSummary,
+      changedFiles: session.data.chainInfo.changedFiles,
+      seed: session.data.seed,
+      runtimeVerified: session.data.chainInfo.runtimeVerified,
+      wiringVerified: session.data.chainInfo.wiringVerified
     });
     const config2 = await loadProjectConfig(session.projectPath);
     const checkpoints = await listCheckpoints(workspace);
@@ -30714,10 +30936,10 @@ function errorResult10(errorCode, message) {
 }
 
 // src/tools/sugoReset.ts
-import { resolve as resolve7 } from "node:path";
+import { resolve as resolve8 } from "node:path";
 
 // src/harness/reset.ts
-import { mkdir as mkdir16, readFile as readFile22, rm as rm3 } from "node:fs/promises";
+import { mkdir as mkdir16, readFile as readFile23, rm as rm3 } from "node:fs/promises";
 import { join as join23 } from "node:path";
 var ResetProjectError = class extends Error {
   constructor(code, message) {
@@ -30743,7 +30965,7 @@ async function resetProjectHarness(projectPath) {
   const claudeMdPath = join23(sugoDir, "CLAUDE.md");
   let backedUpTo;
   try {
-    const current = await readFile22(claudeMdPath, "utf-8");
+    const current = await readFile23(claudeMdPath, "utf-8");
     const backupDir = join23(sugoDir, "backup");
     await mkdir16(backupDir, { recursive: true });
     backedUpTo = join23(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
@@ -30763,7 +30985,7 @@ var sugoResetInputSchema = {
 var SugoResetArgs = external_exports.object(sugoResetInputSchema);
 async function handleSugoReset(rawArgs) {
   const args2 = SugoResetArgs.parse(rawArgs);
-  const projectPath = resolve7(args2.projectPath);
+  const projectPath = resolve8(args2.projectPath);
   try {
     const { backedUpTo } = await resetProjectHarness(projectPath);
     return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, backedUpTo }, null, 2) }] };
@@ -31003,7 +31225,7 @@ async function handleSugoRoute(rawArgs) {
 }
 
 // src/hulk/spec.ts
-import { mkdir as mkdir17, readdir as readdir10, readFile as readFile23 } from "node:fs/promises";
+import { mkdir as mkdir17, readdir as readdir10, readFile as readFile24 } from "node:fs/promises";
 import { join as join24 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
@@ -31045,7 +31267,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile23(join24(dir, name2), "utf-8");
+      const raw = await readFile24(join24(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -31055,7 +31277,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile23(join24(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile24(join24(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -31278,7 +31500,7 @@ function errorResult14(errorCode, message) {
 }
 
 // src/tools/sugoUpdate.ts
-import { resolve as resolve8 } from "node:path";
+import { resolve as resolve9 } from "node:path";
 var sugoUpdateInputSchema = {
   projectPath: external_exports.string().describe("\uAC31\uC2E0\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C(\uC774\uBBF8 sugo_add\uB85C \uB4F1\uB85D\uB3FC \uC788\uC5B4\uC57C \uD568)"),
   repoUrl: external_exports.string().optional(),
@@ -31289,7 +31511,7 @@ var sugoUpdateInputSchema = {
 var SugoUpdateArgs = external_exports.object(sugoUpdateInputSchema);
 async function handleSugoUpdate(rawArgs) {
   const args2 = SugoUpdateArgs.parse(rawArgs);
-  const projectPath = resolve8(args2.projectPath);
+  const projectPath = resolve9(args2.projectPath);
   const existing = await findRegistryEntry(projectPath);
   if (!existing) {
     return errorResult15("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uBA3C\uC800 sugo_add\uB85C \uB4F1\uB85D\uD558\uC138\uC694: ${projectPath}`);
@@ -31399,7 +31621,7 @@ function evaluateAutoCheck(spec, ctx) {
 }
 
 // src/harness/validationConfig.ts
-import { readFile as readFile24 } from "node:fs/promises";
+import { readFile as readFile25 } from "node:fs/promises";
 import { join as join25 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
@@ -31418,7 +31640,7 @@ async function loadProjectValidationConfigs(projectPath) {
   for (const applied of config2.appliedHarnesses) {
     const path = join25(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile24(path, "utf-8");
+      const content = await readFile25(path, "utf-8");
       result.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -31795,15 +32017,16 @@ async function handleSugoWorkspace(rawArgs) {
     }
     case "status": {
       if (!args2.name) return errorResult18("NAME_REQUIRED", "status action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const [workspace, tasks, checkpoints, roadmapNodes, specs, history, allSessions] = await Promise.all([
+      const [workspace, tasks, checkpoints, specs, history, allSessions] = await Promise.all([
         loadWorkspace(args2.name),
         listTasks(args2.name),
         listCheckpoints(args2.name),
-        listRoadmapNodes(args2.name),
         listSpecs(args2.name),
         listWorkLogs(args2.name),
         loadAllSessions()
       ]);
+      await reconcileRoadmapWithTasks(args2.name, tasks);
+      const roadmapNodes = await listRoadmapNodes(args2.name);
       const sessions = sessionsForProjects(allSessions, workspace?.projects ?? []);
       return ok7({
         workspace: args2.name,
@@ -31824,6 +32047,7 @@ async function handleSugoWorkspace(rawArgs) {
       if (ws) void syncWorkspace(ws);
       const tasks = await listTasks(args2.name);
       for (const task of tasks) void syncTask(args2.name, task);
+      await reconcileRoadmapWithTasks(args2.name, tasks);
       const nodes = await listRoadmapNodes(args2.name);
       void syncRoadmapSnapshot(args2.name, nodes);
       await drainRetryQueue();

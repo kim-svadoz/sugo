@@ -1,5 +1,6 @@
 ---
 name: docs-readme
+agent: docs-agent
 description: 'docs-agent 기본 스킬. 변경파일과 summary로 README의 해당 섹션을 갱신한다. 정확성이 최우선이며 코드와 문서가 어긋나면 안 된다. DOCS_PENDING에서 진입해 완료 후 docs_done으로 넘어간다. 문서 파일만 수정한다.'
 ---
 

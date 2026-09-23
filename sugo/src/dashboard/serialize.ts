@@ -156,6 +156,7 @@ export function serializeRoadmapNode(node: RoadmapNode): RoadmapNodeWire {
     note: node.note,
     specPath: node.specPath,
     workResult: node.workResult,
+    lineage: node.lineage,
   };
 }
 

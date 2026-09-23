@@ -1,0 +1,50 @@
+import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { isAbsolute, relative, resolve, sep } from "node:path";
+import { promisify } from "node:util";
+import type { RoadmapWorkResult } from "../hulk/types.js";
+
+const execFileAsync = promisify(execFile);
+const MAX_CONTENT_BYTES = 200_000;
+const MAX_DIFF_BYTES = 400_000;
+type SnapshotFile = NonNullable<RoadmapWorkResult["files"]>[number];
+
+function safeProjectFile(projectPath: string, path: string): { absolute: string; relative: string } | null {
+  const root = resolve(projectPath);
+  const absolute = isAbsolute(path) ? resolve(path) : resolve(root, path);
+  const rel = relative(root, absolute);
+  if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)) return null;
+  return { absolute, relative: rel.split(sep).join("/") };
+}
+
+async function gitOutput(projectPath: string, args: string[]): Promise<string> {
+  try {
+    const { stdout } = await execFileAsync("git", args, { cwd: projectPath, maxBuffer: MAX_DIFF_BYTES });
+    return stdout.slice(0, MAX_DIFF_BYTES);
+  } catch {
+    return "";
+  }
+}
+
+/** 완료 시점의 변경파일을 self-contained WorkResult로 만든다. 대시보드가 원본 repo 없이도 열 수 있다. */
+export async function snapshotWorkResultFiles(projectPath: string, paths: string[]): Promise<SnapshotFile[]> {
+  return Promise.all(paths.map(async (path): Promise<SnapshotFile> => {
+    const safe = safeProjectFile(projectPath, path);
+    if (!safe) return { path, change: "modified" };
+
+    const status = await gitOutput(projectPath, ["status", "--porcelain", "--", safe.relative]);
+    const code = status.slice(0, 2);
+    const change: SnapshotFile["change"] = code.includes("D") ? "deleted" : code.includes("?") || code.includes("A") ? "added" : "modified";
+    const diff = await gitOutput(projectPath, ["diff", "--no-ext-diff", "--unified=40", "HEAD", "--", safe.relative]);
+    let content: string | undefined;
+    if (change !== "deleted") {
+      try {
+        const raw = await readFile(safe.absolute);
+        if (raw.byteLength <= MAX_CONTENT_BYTES && !raw.includes(0)) content = raw.toString("utf8");
+      } catch {
+        // 파일이 사라졌거나 바이너리면 경로/상태만 보존한다.
+      }
+    }
+    return { path: safe.relative, change, ...(content ? { content } : {}), ...(diff ? { diff } : {}) };
+  }));
+}

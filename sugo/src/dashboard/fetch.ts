@@ -64,6 +64,7 @@ export async function fetchRoadmapOrdering(workspaceName: string): Promise<Remot
 
 export interface RemoteCheckpoint {
   id: string;
+  workspace_name?: string;
   title: string;
   category?: string;
   applies_to?: string[];
@@ -72,6 +73,7 @@ export interface RemoteCheckpoint {
 
 interface CheckpointSyncResponse {
   id: string;
+  workspace_name?: string;
   title: string;
   category?: string | null;
   applies_to?: string[] | null;
@@ -80,14 +82,18 @@ interface CheckpointSyncResponse {
 
 /** GET /api/workspaces/checkpoint-sync?userId= — 대시보드→로컬 체크포인트 pull.
  * 대시보드가 `{checkpoints:[...]}`로 감싸고 applies_to(snake)를 쓰므로 언랩+매핑(seam 어댑터). */
-export async function fetchCheckpointSync(): Promise<RemoteCheckpoint[] | null> {
+export async function fetchCheckpointSync(workspaceName?: string): Promise<RemoteCheckpoint[] | null> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return null;
-  const qs = config.userId ? `?userId=${encodeURIComponent(config.userId)}` : "";
+  const params = new URLSearchParams();
+  if (config.userId) params.set("userId", config.userId);
+  if (workspaceName) params.set("workspace", workspaceName);
+  const qs = params.size ? `?${params.toString()}` : "";
   const res = await fetchJson<{ checkpoints: CheckpointSyncResponse[] }>(`/api/workspaces/checkpoint-sync${qs}`, 8000);
   if (!res) return null;
   return res.checkpoints.map((c) => ({
     id: c.id,
+    workspace_name: c.workspace_name,
     title: c.title,
     category: c.category ?? undefined,
     applies_to: c.applies_to ?? undefined,

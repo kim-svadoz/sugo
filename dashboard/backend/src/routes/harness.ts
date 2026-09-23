@@ -10,10 +10,25 @@ export function createHarnessRouter(harnessPath: string): Router {
   const router = Router();
 
   router.get("/manifest", (_req, res) => {
-    if (!harnessPath || !existsSync(join(harnessPath, "manifest.json"))) {
-      return res.json({ harnesses: [] });
+    if (!harnessPath || !existsSync(harnessPath)) return res.json({ harnesses: [] });
+    if (existsSync(join(harnessPath, "manifest.json"))) {
+      return res.type("application/json").send(readFileSync(join(harnessPath, "manifest.json"), "utf8"));
     }
-    res.type("application/json").send(readFileSync(join(harnessPath, "manifest.json"), "utf8"));
+    const harnesses: Array<{ id: string; name: string; version?: string }> = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (entry.name === "harness.md") {
+          const id = relative(harnessPath, dir).replace(/\\/g, "/") || "default";
+          const last = id.split("/").at(-1) ?? id;
+          harnesses.push({ id, name: id, ...(/^[0-9]+\.x$/.test(last) ? { version: last } : {}) });
+        }
+      }
+    };
+    walk(harnessPath);
+    harnesses.sort((a, b) => a.id.localeCompare(b.id));
+    return res.json({ harnesses });
   });
 
   router.get("/unified", (_req, res) => {
@@ -40,6 +55,19 @@ export function createHarnessRouter(harnessPath: string): Router {
       if (parts.length) return res.type("text/markdown").send("# 통합 하네스\n\n" + parts.join("\n\n---\n\n"));
     }
     res.type("text/markdown").send("");
+  });
+
+  router.get("/content", (req, res) => {
+    if (!harnessPath) return res.status(404).json({ error: "harness_not_configured" });
+    const id = String(req.query.id ?? "");
+    const rel = normalize(join(id, "harness.md"));
+    const full = join(harnessPath, rel);
+    const insideBase = relative(harnessPath, full);
+    if (!id || insideBase.startsWith("..") || insideBase.includes("..")) {
+      return res.status(400).json({ error: "invalid_path" });
+    }
+    if (!existsSync(full)) return res.status(404).json({ error: "not_found" });
+    return res.type("text/markdown").send(readFileSync(full, "utf8"));
   });
 
   router.get(

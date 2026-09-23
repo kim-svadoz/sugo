@@ -154,13 +154,20 @@ export function roadmapIssues(nodes: RoadmapViewNode[]): string[] {
     issues.push(`부모가 사라진 노드 ${orphans.length}건: ${orphans.slice(0, 3).map((n) => n.id).join(", ")}`);
   }
 
-  // ③ 의존은 task↔task뿐이다(플러그인 링크타입 계약). 어긋난 게 있으면 데이터가 오염된 것이다.
+  // ③ 사용자 편집 link는 task↔task뿐이지만, 플러그인이 만드는 REQ 실행 체인은
+  // 같은 task 아래 subtask/step→subtask도 정상이다. 두 계약을 혼동하면 정상 PRD마다 경고가 뜬다.
   const badLinks: string[] = [];
   for (const n of nodes) {
     for (const dep of n.dependsOn) {
       const to = byId.get(dep);
       if (!to) continue;
-      if (n.level !== "task" || to.level !== "task") badLinks.push(`${n.id}→${dep}`);
+      const taskLink = n.level === "task" && to.level === "task";
+      const requirementLink =
+        (n.level === "subtask" || n.level === "step") &&
+        to.level === "subtask" &&
+        Boolean(n.parent) &&
+        n.parent === to.parent;
+      if (!taskLink && !requirementLink) badLinks.push(`${n.id}→${dep}`);
     }
   }
   if (badLinks.length > 0) {

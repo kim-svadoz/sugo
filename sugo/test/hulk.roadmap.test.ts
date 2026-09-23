@@ -1,10 +1,11 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   addRoadmapNode,
   backfillRoadmapTask,
+  backfillLegacyRoadmapWorkResults,
   completeTaskRequirements,
   getReadySet,
   getRoadmapNode,
@@ -12,6 +13,8 @@ import {
   linkRoadmapNodes,
   listRoadmapNodes,
   markRequirementDone,
+  reconcileRoadmapWithTasks,
+  recordRoadmapWorkResult,
   removeRoadmapNode,
   unlinkRoadmapNodes,
   updateRoadmapNodeStatus,
@@ -87,10 +90,10 @@ describe("upsertRoadmapNodes — PRD REQ 승격 심기", () => {
     const nodes = promotePrdRequirements("t-1", "### REQ-1: A\n### REQ-2: B");
     await addRoadmapNode("ws1", { id: "t-1", title: "기능", level: "task", status: "in_progress", dependsOn: [] });
     await upsertRoadmapNodes("ws1", nodes);
-    const req1 = await getRoadmapNode("ws1", "REQ-1");
+    const req1 = await getRoadmapNode("ws1", "t-1::REQ-1");
     const confirm = await getRoadmapNode("ws1", reqConfirmId("t-1"));
     expect(req1?.parent).toBe("t-1");
-    expect(confirm?.dependsOn.sort()).toEqual(["REQ-1", "REQ-2"]);
+    expect(confirm?.dependsOn.sort()).toEqual(["t-1::REQ-1", "t-1::REQ-2"]);
   });
 
   it("이미 있는 id를 다시 upsert하면 갱신한다(중복추가 거부 아님)", async () => {
@@ -102,6 +105,47 @@ describe("upsertRoadmapNodes — PRD REQ 승격 심기", () => {
   });
 });
 
+describe("reconcileRoadmapWithTasks — 레거시 데이터 4층 승격", () => {
+  it("REQ id를 task로 namespace하고 Spec→Run→Task 계층과 완료 상태를 복구한다", async () => {
+    await upsertRoadmapNodes("ws1", [
+      { id: "task-a", title: "A", level: "task", status: "in_progress", dependsOn: [] },
+      { id: "REQ-1", title: "요구1", level: "subtask", status: "pending", dependsOn: [], parent: "task-a" },
+      { id: "REQ-2", title: "요구2", level: "subtask", status: "pending", dependsOn: ["REQ-1"], parent: "task-a" },
+    ]);
+    await reconcileRoadmapWithTasks("ws1", [
+      {
+        id: "task-a",
+        title: "A",
+        project: "/tmp/a",
+        status: "done",
+        created_at: "2026-01-01T00:00:00.000Z",
+        prd_ref: "/tmp/a/prd.md",
+      },
+    ]);
+    const nodes = await listRoadmapNodes("ws1");
+    expect(nodes.find((n) => n.id === "task-a")?.parent).toBe("run-task-a");
+    expect(nodes.find((n) => n.id === "run-task-a")?.parent).toBe("spec-task-a");
+    expect(nodes.find((n) => n.id === "task-a::REQ-2")?.dependsOn).toEqual(["task-a::REQ-1"]);
+    expect(nodes.find((n) => n.id === "task-a::REQ-1")?.status).toBe("done");
+    expect(nodes.some((n) => n.id === "REQ-1")).toBe(false);
+  });
+
+  it("patch task의 기존 versioned Run을 보존하고 기본 Run을 중복 생성하지 않는다", async () => {
+    await upsertRoadmapNodes("ws1", [
+      { id: "spec-task-a", title: "A", level: "spec", status: "in_progress", dependsOn: [] },
+      { id: "run-task-a-v2", title: "A patch v2", level: "workstream", status: "in_progress", dependsOn: [], parent: "spec-task-a" },
+      { id: "task-a", title: "A", level: "task", status: "in_progress", dependsOn: [], parent: "run-task-a-v2" },
+    ]);
+    await reconcileRoadmapWithTasks("ws1", [
+      { id: "task-a", title: "A", project: "/tmp/a", status: "done", created_at: "2026-01-01T00:00:00.000Z" },
+    ]);
+    const nodes = await listRoadmapNodes("ws1");
+    expect(nodes.find((n) => n.id === "task-a")?.parent).toBe("run-task-a-v2");
+    expect(nodes.find((n) => n.id === "run-task-a-v2")?.status).toBe("done");
+    expect(nodes.some((n) => n.id === "run-task-a")).toBe(false);
+  });
+});
+
 describe("updateRoadmapNodeStatus", () => {
   it("상태와 result를 갱신한다", async () => {
     await addRoadmapNode("ws1", { id: "A", title: "A", level: "task", status: "pending", dependsOn: [] });
@@ -109,6 +153,66 @@ describe("updateRoadmapNodeStatus", () => {
     const node = await getRoadmapNode("ws1", "A");
     expect(node?.status).toBe("done");
     expect(node?.result?.summary).toBe("완료됨");
+  });
+});
+
+describe("recordRoadmapWorkResult", () => {
+  it("완료 산출물은 Task/RUN에 기록하고 patch 계보는 Task에만 기록한다", async () => {
+    await upsertRoadmapNodes("ws1", [
+      { id: "run-a", title: "RUN", level: "workstream", status: "done", dependsOn: [] },
+      { id: "task-a", title: "Task", level: "task", status: "done", dependsOn: [], parent: "run-a" },
+      { id: "task-a::REQ-1", title: "중복 요청 차단", level: "subtask", status: "done", dependsOn: [], parent: "task-a" },
+    ]);
+    await recordRoadmapWorkResult("ws1", "task-a", { path: "/work-result-patch-v1.md", summary: "완료", patchVersion: 1 }, { version: 1, completedAt: "2026-01-01T00:00:00.000Z", summary: "완료" });
+    const task = await getRoadmapNode("ws1", "task-a");
+    const run = await getRoadmapNode("ws1", "run-a");
+    expect(task?.workResult?.path).toBe("/work-result-patch-v1.md");
+    expect(run?.workResult?.path).toBe("/work-result-patch-v1.md");
+    expect(task?.lineage).toEqual([expect.objectContaining({ version: 1 })]);
+    expect(task?.lineage?.[0].requirements).toEqual([
+      expect.objectContaining({ id: "task-a::REQ-1", title: "중복 요청 차단", status: "done" }),
+    ]);
+    expect(task?.lineage?.[0].workResult?.path).toBe("/work-result-patch-v1.md");
+    expect(run?.lineage).toBeUndefined();
+  });
+});
+
+describe("backfillLegacyRoadmapWorkResults", () => {
+  it("파이프라인 밖에서 완료된 옛 Task도 work-result를 만들어 Patch 진입점을 복구한다", async () => {
+    const featureDir = join(fakeHome, "project", "sugo", "features", "20260921", "legacy");
+    mkdirSync(featureDir, { recursive: true });
+    const prdPath = join(featureDir, "prd.md");
+    writeFileSync(prdPath, "# Legacy PRD\n");
+    await reconcileRoadmapWithTasks("ws1", [{
+      id: "task-legacy",
+      title: "legacy",
+      project: join(fakeHome, "project"),
+      status: "done",
+      summary: "직접 커밋으로 완료되어 기존 work-result가 없던 작업",
+      prd_ref: prdPath,
+      created_at: "2026-09-21T01:00:00.000Z",
+      started_at: "2026-09-21T01:10:00.000Z",
+      completed_at: "2026-09-21T02:00:00.000Z",
+    }]);
+
+    const count = await backfillLegacyRoadmapWorkResults("ws1", [{
+      id: "task-legacy",
+      title: "legacy",
+      project: join(fakeHome, "project"),
+      status: "done",
+      summary: "직접 커밋으로 완료되어 기존 work-result가 없던 작업",
+      prd_ref: prdPath,
+      created_at: "2026-09-21T01:00:00.000Z",
+      started_at: "2026-09-21T01:10:00.000Z",
+      completed_at: "2026-09-21T02:00:00.000Z",
+    }]);
+
+    const workResultPath = join(featureDir, "work-result.md");
+    expect(count).toBe(1);
+    expect(existsSync(workResultPath)).toBe(true);
+    expect(readFileSync(workResultPath, "utf8")).toContain("직접 커밋");
+    expect((await getRoadmapNode("ws1", "task-legacy"))?.workResult?.path).toBe(workResultPath);
+    expect((await getRoadmapNode("ws1", "run-task-legacy"))?.workResult?.path).toBe(workResultPath);
   });
 });
 
@@ -128,9 +232,9 @@ describe("markRequirementDone — 반드시 거부/허용", () => {
     const nodes = promotePrdRequirements("t-1", "### REQ-1: A");
     await addRoadmapNode("ws1", { id: "t-1", title: "기능", level: "task", status: "in_progress", dependsOn: [] });
     await upsertRoadmapNodes("ws1", nodes);
-    const result = await markRequirementDone("ws1", "REQ-1");
+    const result = await markRequirementDone("ws1", "t-1::REQ-1");
     expect(result.ok).toBe(true);
-    const req1 = await getRoadmapNode("ws1", "REQ-1");
+    const req1 = await getRoadmapNode("ws1", "t-1::REQ-1");
     expect(req1?.status).toBe("done");
   });
 });
@@ -143,8 +247,8 @@ describe("completeTaskRequirements — review_done 자동완료 연동", () => {
 
     await completeTaskRequirements("ws1", "t-1", "review_done으로 확인 완료");
 
-    const req1 = await getRoadmapNode("ws1", "REQ-1");
-    const req2 = await getRoadmapNode("ws1", "REQ-2");
+    const req1 = await getRoadmapNode("ws1", "t-1::REQ-1");
+    const req2 = await getRoadmapNode("ws1", "t-1::REQ-2");
     const confirm = await getRoadmapNode("ws1", reqConfirmId("t-1"));
     expect(req1?.status).toBe("done");
     expect(req2?.status).toBe("done");

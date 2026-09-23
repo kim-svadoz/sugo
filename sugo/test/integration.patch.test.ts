@@ -8,6 +8,7 @@ import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 import { handleSugoTask } from "../src/tools/sugoTask.js";
+import { listRoadmapNodes } from "../src/hulk/roadmap.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
@@ -247,6 +248,9 @@ describe("§7.1 Patch 성숙화 — Run 재사용 + seed + patchInfo + lineage",
     expect(tasksAfterPatch.data.tasks).toHaveLength(1);
     expect(tasksAfterPatch.data.tasks[0].id).toBe(originalTaskId);
     expect(tasksAfterPatch.data.tasks[0].status).toBe("in_progress");
+    const roadmapAfterPatch = await listRoadmapNodes("team-patch");
+    expect(roadmapAfterPatch.filter((node) => node.level === "workstream")).toHaveLength(1);
+    expect(roadmapAfterPatch.find((node) => node.id === originalTaskId)?.parent).toBe(`run-${originalTaskId}`);
 
     // patchInfo(lineage)가 기록됐다 — parentTaskId는 spec대로 "이 Task 자신"(재사용이므로 자기참조).
     expect(tasksAfterPatch.data.tasks[0].patchInfo).toEqual({
