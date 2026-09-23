@@ -4,7 +4,7 @@ import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
-import { scheduleCardStyle, scheduledOpenCount } from "../lib/schedulePresentation.js";
+import { isManualSpec, scheduleCardStyle, scheduledOpenCount } from "../lib/schedulePresentation.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -122,7 +122,7 @@ export function SchedulePage() {
           onClick={() => setAddOpen(true)}
           className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20"
         >
-          <CalendarPlus size={15} /> 일정 추가
+          <CalendarPlus size={15} /> SPEC 일정 추가
         </button>
       </div>
 
@@ -159,10 +159,11 @@ export function SchedulePage() {
                 onDragEnd={() => setDragOverKey(null)}
                 onClick={() => setSelected(s)}
                 style={style}
-                className="min-h-9 cursor-grab rounded-lg border px-2.5 py-2 text-[12px] font-medium text-slate-100 transition-colors hover:brightness-110 active:cursor-grabbing"
+                className="flex min-h-9 cursor-grab items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[12px] font-medium text-slate-100 transition-colors hover:brightness-110 active:cursor-grabbing"
                 title="캘린더 날짜 칸으로 끌어놓으면 마감일이 지정됩니다"
               >
-                {s.title}
+                <span className="min-w-0 flex-1 truncate">{s.title}</span>
+                {isManualSpec(s.id) && <span className="shrink-0 rounded bg-slate-500/15 px-1 py-0.5 text-[9px] text-slate-400">SPEC 초안</span>}
               </div>
             );
           })}
@@ -228,13 +229,13 @@ export function SchedulePage() {
                     dragOverKey === key && "border-cyan-400 bg-cyan-500/10",
                   )}
                 >
-                  <div className="flex items-baseline justify-between gap-1">
+                  <div className="flex h-4 shrink-0 items-baseline justify-between gap-1">
                     <span className={cn("font-mono text-[11px]", isToday ? "font-bold text-cyan-300" : dayAccentClass(day))}>
                       {day.getDate()}
                     </span>
                     {holiday && <span className="truncate text-[9px] text-rose-400" title={holiday}>{holiday}</span>}
                   </div>
-                  <div className="flex flex-1 flex-col gap-1 overflow-auto">
+                  <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
                     {dayChips.map((s) => {
                       const style = scheduleCardStyle(colorOf(s.workspace_name));
                       const overdue = key < todayKey && isOpenStatus(s);
@@ -246,10 +247,13 @@ export function SchedulePage() {
                           onDragEnd={() => setDragOverKey(null)}
                           onClick={() => setSelected(s)}
                           style={style}
-                          className="flex min-h-8 cursor-grab items-center gap-1.5 rounded-md border px-2 py-1.5 text-left text-[11px] transition-[filter,background-color] hover:brightness-110 active:cursor-grabbing"
+                          className="flex min-h-7 shrink-0 cursor-grab items-center gap-1.5 rounded-md border px-2 py-1 text-left text-[11px] transition-[filter,background-color] hover:brightness-110 active:cursor-grabbing"
                           title={`${s.workspace_name} · ${s.title}`}
                         >
                           <span className="min-w-0 flex-1 truncate font-medium text-slate-100">{s.title}</span>
+                          {isManualSpec(s.id) && !overdue && (
+                            <span className="shrink-0 rounded bg-slate-500/15 px-1 py-0.5 text-[8px] font-medium text-slate-400">초안</span>
+                          )}
                           {overdue && (
                             <span className="flex shrink-0 items-center gap-0.5 rounded bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
                               <AlertTriangle size={9} /> 기한 초과
@@ -281,6 +285,11 @@ export function SchedulePage() {
               </span>
               <h2 className="mt-2 text-lg font-bold text-[var(--color-text-bright)]">{selected.title}</h2>
               <p className="font-mono text-[11px] text-[var(--color-text-dim)]">{selected.id} · {selected.status}</p>
+              {isManualSpec(selected.id) && (
+                <div className="mt-3 rounded-lg border border-slate-500/25 bg-slate-500/10 px-3 py-2 text-[11.5px] leading-relaxed text-slate-300">
+                  <strong className="font-semibold text-slate-100">SPEC 일정 초안</strong> · 아직 Run/Task나 <code>/sugo:feat</code> 파이프라인과 연결되지 않았습니다.
+                </div>
+              )}
             </div>
 
             <div>
@@ -306,13 +315,13 @@ export function SchedulePage() {
         </Modal>
       )}
 
-      {/* 경량 Spec 추가(§7B "+ 일정 추가") */}
+      {/* 경량 Spec 추가(§7B "+ SPEC 일정 추가") */}
       {addOpen && (
         <Modal onClose={() => setAddOpen(false)}>
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-[var(--color-text-bright)]">일정 추가</h2>
+            <h2 className="text-lg font-bold text-[var(--color-text-bright)]">SPEC 일정 추가</h2>
             <p className="text-[12px] text-[var(--color-text-muted)]">
-              Run/Task 없이 제목과 마감일만 먼저 잡아둡니다. 나중에 실제로 feat를 시작하면 이 Spec으로 편입할 수 있습니다.
+              최상위 SPEC 초안의 제목과 마감일만 먼저 잡아둡니다. Run/Task와 <code>/sugo:feat</code> 파이프라인은 아직 연결되지 않습니다.
             </p>
             <label className="block text-[12px] text-[var(--color-text-muted)]">
               제목
@@ -351,7 +360,7 @@ export function SchedulePage() {
                 onClick={() => void handleAddQuickSpec()}
                 className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[12px] font-bold text-cyan-200 disabled:opacity-40"
               >
-                추가
+                SPEC 초안 추가
               </button>
             </div>
           </div>

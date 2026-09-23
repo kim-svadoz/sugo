@@ -13,3 +13,8 @@ export function scheduleCardStyle(color: string) {
     backgroundColor: `${color}14`,
   };
 }
+
+/** Schedule에서 Run/Task 없이 먼저 만든 최상위 SPEC 초안이다. */
+export function isManualSpec(id: string): boolean {
+  return id.startsWith("spec-manual-");
+}
