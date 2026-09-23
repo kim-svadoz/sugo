@@ -1,5 +1,5 @@
 import { useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, CalendarPlus, ChevronLeft, ChevronRight, Clock, Shield, Workflow } from "lucide-react";
+import { AlertTriangle, CalendarPlus, ChevronLeft, ChevronRight, Clock, Pencil, Shield, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -13,7 +13,7 @@ import { DatePicker } from "../components/DatePicker.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
-import { createQuickSpec, setDueDate, setProject, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
+import { createQuickSpec, renameRoadmapNode, setDueDate, setProject, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -45,7 +45,10 @@ export function SchedulePage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
   // 안 보이면 사용자가 헷갈린다(2026-09-23 사용자 피드백). 성공 시 잠깐 "저장됨"을 보여준다.
-  const [savedFlash, setSavedFlash] = useState<"due" | "project" | null>(null);
+  const [savedFlash, setSavedFlash] = useState<"due" | "project" | "title" | null>(null);
+  // Canvas의 이름 변경(✎)과 같은 API(renameRoadmapNode → manual_title)라 여기서 바꿔도
+  // Canvas에 그대로 반영된다(2026-09-23 사용자 요청) — null이면 편집 중이 아님.
+  const [titleDraft, setTitleDraft] = useState<string | null>(null);
 
   // §7B 사용자 결정(2026-09-23): 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
   // Schedule 위에 겹쳐서 뜬다 — Esc를 누르면 그냥 이 오버레이만 닫히고 Schedule로 남는다.
@@ -95,7 +98,7 @@ export function SchedulePage() {
     return Math.round((due.getTime() - today.getTime()) / 86_400_000);
   }
 
-  function flashSaved(field: "due" | "project") {
+  function flashSaved(field: "due" | "project" | "title") {
     setSavedFlash(field);
     setTimeout(() => setSavedFlash((current) => (current === field ? null : current)), 1600);
   }
@@ -123,6 +126,24 @@ export function SchedulePage() {
       flashSaved("project");
     } catch {
       setErrorMsg("프로젝트 지정에 실패했습니다. Run/Task가 아닌 Spec인지 확인하세요.");
+    }
+  }
+
+  async function applyTitle(spec: ScheduledSpec, title: string) {
+    if (!userId || !title.trim() || title === spec.title) {
+      setTitleDraft(null);
+      return;
+    }
+    setErrorMsg(null);
+    try {
+      await renameRoadmapNode(userId, spec.workspace_name, spec.id, title.trim());
+      refetch();
+      if (selected?.id === spec.id) setSelected({ ...spec, title: title.trim() });
+      flashSaved("title");
+    } catch {
+      setErrorMsg("이름 변경에 실패했습니다.");
+    } finally {
+      setTitleDraft(null);
     }
   }
 
@@ -399,7 +420,13 @@ export function SchedulePage() {
 
       {/* Spec 상세 패널 */}
       {selected && (
-        <Modal onClose={() => setSelected(null)} disableEscape={!!checkpointTarget || !!canvasOverlay}>
+        <Modal
+          onClose={() => {
+            setSelected(null);
+            setTitleDraft(null);
+          }}
+          disableEscape={!!checkpointTarget || !!canvasOverlay}
+        >
           <div className="space-y-4">
             <div>
               <span
@@ -408,7 +435,34 @@ export function SchedulePage() {
               >
                 {selected.workspace_name}
               </span>
-              <h2 className="mt-2 text-lg font-bold text-[var(--color-text-bright)]">{selected.title}</h2>
+              {titleDraft !== null ? (
+                <input
+                  autoFocus
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onBlur={() => void applyTitle(selected, titleDraft)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void applyTitle(selected, titleDraft);
+                    if (e.key === "Escape") {
+                      e.stopPropagation();
+                      setTitleDraft(null);
+                    }
+                  }}
+                  className="mt-2 block w-full rounded-lg border border-cyan-400/40 bg-[var(--color-background)] px-2.5 py-1 text-lg font-bold text-[var(--color-text-bright)] outline-none"
+                />
+              ) : (
+                <div className="mt-2 flex items-center gap-1.5">
+                  <h2 className="text-lg font-bold text-[var(--color-text-bright)]">{selected.title}</h2>
+                  <button
+                    onClick={() => setTitleDraft(selected.title)}
+                    title="이름 변경 — Canvas에도 그대로 반영됩니다"
+                    className="shrink-0 rounded p-1 text-[var(--color-text-dim)] hover:bg-cyan-500/10 hover:text-cyan-300"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                  {savedFlash === "title" && <span className="text-[10.5px] font-semibold text-emerald-400">저장됨</span>}
+                </div>
+              )}
               <p className="font-mono text-[11px] text-[var(--color-text-dim)]">{selected.id} · {selected.status}</p>
               {isManualSpec(selected.id) && (
                 <div className="mt-3 rounded-lg border border-slate-500/25 bg-slate-500/10 px-3 py-2 text-[11.5px] leading-relaxed text-slate-300">

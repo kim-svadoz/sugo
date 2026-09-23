@@ -83,6 +83,15 @@ await page.getByText("관심 상품 추천", { exact: true }).first().click();
 await page.waitForTimeout(400);
 await page.screenshot({ path: join(OUT, "schedule-02-detail-no-project.png"), fullPage: false });
 
+// 제목 옆 연필 → 인라인 입력으로 바뀌는지 확인
+await page.locator('button[title^="이름 변경"]').click();
+await page.waitForTimeout(150);
+await page.screenshot({ path: join(OUT, "schedule-02b-title-editing.png"), fullPage: false });
+await page.locator("input").first().fill("이름 바꾼 관심 상품");
+await page.keyboard.press("Enter");
+await page.waitForTimeout(300);
+await page.screenshot({ path: join(OUT, "schedule-02c-title-renamed-saved-flash.png"), fullPage: false });
+
 // DatePicker 팝오버 열기 → 선택 → "저장됨" 플래시 확인
 await page.locator("button:has-text('2026-09-26')").first().click();
 await page.waitForTimeout(300);
