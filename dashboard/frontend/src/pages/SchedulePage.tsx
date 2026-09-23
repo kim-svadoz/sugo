@@ -96,8 +96,7 @@ export function SchedulePage() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--color-text-bright)]">Schedule</h1>
-          <p className="text-[var(--color-text-muted)]">여러 워크스페이스의 Spec 마감일을 한 곳에서 확인합니다.</p>
+          <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">Schedule</h1>
         </div>
         <button
           onClick={() => setAddOpen(true)}
