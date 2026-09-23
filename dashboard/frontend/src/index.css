@@ -191,8 +191,8 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
    1600px 뷰포트에서 가로로 삐져나온다). */
 .pb-compact { zoom: 1.04; }
 
-.ck-card { transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease; }
-.ck-card:hover { border-color: rgba(0, 180, 216, 0.5); box-shadow: 0 0 20px rgba(0, 180, 216, 0.25); }
+.ck-card { transition: filter 0.2s ease; }
+.ck-card:hover { filter: brightness(1.05); }
 
 @keyframes ck-pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.82); } }
 .ck-pulse-dot { animation: ck-pulse-dot 1.8s ease-in-out infinite; }

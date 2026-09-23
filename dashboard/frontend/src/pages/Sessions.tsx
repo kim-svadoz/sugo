@@ -853,7 +853,7 @@ export function Sessions() {
                         setSelectedWorkspace(ws.name);
                         setCheckpointModal(ws.name);
                       }}
-                      className="flex items-center gap-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[11px] font-bold text-amber-300 transition-colors hover:bg-amber-500/20"
+                      className="flex items-center gap-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[11px] font-bold text-amber-300 outline-none transition-colors hover:bg-amber-500/20 focus-visible:bg-amber-500/25"
                       title="체크포인트 관리"
                     >
                       <Shield size={12} /> {ws.checkpointCount}
@@ -864,7 +864,7 @@ export function Sessions() {
                           e.stopPropagation();
                           setAgentCanvasModal(ws.name);
                         }}
-                        className="flex items-center gap-1.5 rounded-lg border border-purple-500/40 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 px-3 py-1.5 text-xs font-bold text-purple-300 transition-all hover:from-purple-600/40 hover:to-indigo-600/40"
+                        className="flex items-center gap-1.5 rounded-lg border border-purple-500/40 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 px-3 py-1.5 text-xs font-bold text-purple-300 outline-none transition-all hover:from-purple-600/40 hover:to-indigo-600/40 focus-visible:brightness-125"
                         title="Agent Canvas 전체화면으로 보기"
                       >
                         <Bot size={14} className="text-purple-300" /> Agent Canvas
