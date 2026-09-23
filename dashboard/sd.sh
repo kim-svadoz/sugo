@@ -17,6 +17,8 @@ STATE_DIR="${SUGO_DASHBOARD_STATE_DIR:-$TEMP_ROOT/sugo-dashboard-${UID}}"
 PID_FILE="$STATE_DIR/supervisor.pid"
 LOG_FILE="$STATE_DIR/dashboard.log"
 LAUNCH_LABEL="com.sugo.dashboard.local"
+API_PORT="3001"
+UI_PORT="5175"
 
 mkdir -p "$STATE_DIR"
 
@@ -56,9 +58,24 @@ stop_stale_dashboard_listeners() {
   )
 }
 
+# 직전 프로세스가 죽는 것과 OS가 포트를 실제로 회수하는 건 별개 타이밍이다. 고정 sleep은
+# 느린 종료(진행 중 요청 처리 등)일 때 --strictPort 재기동과 레이스를 일으킨다 — 포트가
+# 실제로 비는 것을 최대 5초까지 폴링하고, 그래도 안 비면(다른 프로세스가 점유 등) 밑에서
+# 어차피 --strictPort가 명확한 에러로 실패하게 둔다.
+wait_ports_free() {
+  command -v lsof >/dev/null 2>&1 || return 0
+  local waited=0
+  while [ "$waited" -lt 50 ]; do
+    lsof -tiTCP:"$API_PORT" -sTCP:LISTEN >/dev/null 2>&1 || lsof -tiTCP:"$UI_PORT" -sTCP:LISTEN >/dev/null 2>&1 || return 0
+    sleep 0.1
+    waited=$((waited + 1))
+  done
+  return 0
+}
+
 stop_previous
 stop_stale_dashboard_listeners
-sleep 0.3
+wait_ports_free
 
 : > "$LOG_FILE"
 run_mode="nohup"
@@ -66,10 +83,10 @@ supervisor_pid=""
 if [ "$(uname -s)" = "Darwin" ] && command -v launchctl >/dev/null 2>&1; then
   run_mode="launchctl"
   launchctl submit -l "$LAUNCH_LABEL" -o "$LOG_FILE" -e "$LOG_FILE" -- \
-    /usr/bin/env PATH="$PATH" DASHBOARD_API_PORT=3001 DASHBOARD_UI_PORT=5175 DASHBOARD_STRICT_PORTS=1 \
+    /usr/bin/env PATH="$PATH" DASHBOARD_API_PORT="$API_PORT" DASHBOARD_UI_PORT="$UI_PORT" DASHBOARD_STRICT_PORTS=1 \
     "$DASHBOARD_ROOT/dev-local.sh"
 else
-  nohup env DASHBOARD_API_PORT=3001 DASHBOARD_UI_PORT=5175 DASHBOARD_STRICT_PORTS=1 \
+  nohup env DASHBOARD_API_PORT="$API_PORT" DASHBOARD_UI_PORT="$UI_PORT" DASHBOARD_STRICT_PORTS=1 \
     "$DASHBOARD_ROOT/dev-local.sh" >"$LOG_FILE" 2>&1 </dev/null &
   supervisor_pid=$!
   printf '%s\n' "$supervisor_pid" > "$PID_FILE"
