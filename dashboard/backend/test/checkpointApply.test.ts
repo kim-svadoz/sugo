@@ -43,4 +43,18 @@ describe("checkpoint save-and-apply", () => {
   it("사람이 입력하지 않아도 충돌 가능성이 낮은 ID를 만든다", () => {
     expect(newCheckpointId()).toMatch(/^CP-[0-9a-f]{8}$/);
   });
+
+  it("Markdown 원문을 그대로 적용하고 같은 내용의 재적용은 변경으로 세지 않는다", async () => {
+    const root = await mkdtemp(join(tmpdir(), "sugo-cp-md-"));
+    const input = {
+      workspace: "payments",
+      checkpoint: { id: "CP-md123456", title: "운영 규칙", category: "general", appliesTo: [], learnedFrom: "## 확인\n\n- 첫 번째\n- 두 번째" },
+      projectPaths: [root],
+    };
+    const first = await applyCheckpointToProjects(input);
+    const second = await applyCheckpointToProjects(input);
+    expect(await readFile(first.applied[0].file, "utf8")).toContain("## 확인\n\n- 첫 번째");
+    expect(second.applied).toHaveLength(0);
+    expect(second.unchanged).toHaveLength(1);
+  });
 });

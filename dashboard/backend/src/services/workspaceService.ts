@@ -239,15 +239,6 @@ export async function getCheckpoints(db: DbClient, userId: string, workspaceName
   return rows.map(normalizeCheckpointRow);
 }
 
-export async function getCheckpointById(db: DbClient, userId: string, workspaceName: string, id: string) {
-  const rows = await db.query<{ id: string; category: string; title: string; checklist: unknown; applies_to: unknown }>(
-    "SELECT id, category, title, checklist, applies_to FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? AND id = ?",
-    [userId, workspaceName, id],
-  );
-  const row = rows[0];
-  return row ? normalizeCheckpointRow(row) : null;
-}
-
 export async function getTasks(db: DbClient, userId: string, workspaceName: string) {
   return db.query(
     "SELECT id, title, project, status, priority, description, summary, started_at, completed_at FROM sugo_tasks WHERE user_id = ? AND workspace_name = ? ORDER BY created_at",

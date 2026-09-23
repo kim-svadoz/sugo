@@ -23,7 +23,6 @@ import {
   deleteRoadmapGroup,
   getCheckpointSync,
   getCheckpoints,
-  getCheckpointById,
   getDecisions,
   getHistory,
   getRecentHistory,
@@ -155,20 +154,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     if (!userId) return;
     const id = req.body.id ?? newCheckpointId();
     await createCheckpoint(db, userId, req.params.name, { ...req.body, id });
-    const application = req.body.apply
-      ? await applyCheckpointToProjects({
-          workspace: req.params.name,
-          checkpoint: {
-            id,
-            title: req.body.title,
-            category: req.body.category,
-            appliesTo: req.body.appliesTo,
-            checklist: Array.isArray(req.body.checklist) ? req.body.checklist.map(String) : [],
-          },
-          projectPaths: await getWorkspaceProjectPaths(db, userId, req.params.name),
-        })
-      : undefined;
-    res.json({ ok: true, id, application });
+    res.json({ ok: true, id });
   });
 
   router.put("/:name/checkpoints/:id", validateBody(checkpointUpdateSchema), async (req, res) => {
@@ -178,23 +164,34 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     res.json({ ok: true });
   });
 
-  router.post("/:name/checkpoints/:id/apply", async (req, res) => {
+  router.post("/:name/checkpoints/apply", async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    const checkpoint = await getCheckpointById(db, userId, req.params.name, req.params.id);
-    if (!checkpoint) return res.status(404).json({ error: "checkpoint_not_found" });
-    const application = await applyCheckpointToProjects({
-      workspace: req.params.name,
-      checkpoint: {
-        id: checkpoint.id,
-        title: checkpoint.title,
-        category: checkpoint.category,
-        appliesTo: Array.isArray(checkpoint.applies_to) ? checkpoint.applies_to.map(String) : [],
-        checklist: Array.isArray(checkpoint.checklist) ? checkpoint.checklist.map(String) : [],
-      },
-      projectPaths: await getWorkspaceProjectPaths(db, userId, req.params.name),
+    const checkpoints = await getCheckpoints(db, userId, req.params.name);
+    const projectPaths = await getWorkspaceProjectPaths(db, userId, req.params.name);
+    const results = [];
+    for (const checkpoint of checkpoints) {
+      const application = await applyCheckpointToProjects({
+        workspace: req.params.name,
+        checkpoint: {
+          id: checkpoint.id, title: checkpoint.title, category: checkpoint.category,
+          appliesTo: [],
+          learnedFrom: checkpoint.learned_from,
+          checklist: Array.isArray(checkpoint.checklist) ? checkpoint.checklist.map(String) : [],
+        },
+        projectPaths,
+      });
+      results.push({ id: checkpoint.id, application });
+    }
+    const appliedIds = results.filter((item) => item.application.failed.length === 0 && item.application.conflicts.length === 0).map((item) => item.id);
+    res.json({
+      ok: true,
+      appliedIds,
+      changedCheckpoints: results.filter((item) => item.application.applied.length > 0).length,
+      filesWritten: results.reduce((sum, item) => sum + item.application.applied.length, 0),
+      conflicts: results.flatMap((item) => item.application.conflicts.map((conflict) => ({ id: item.id, ...conflict }))),
+      failed: results.flatMap((item) => item.application.failed.map((failed) => ({ id: item.id, ...failed }))),
     });
-    res.json({ ok: true, id: checkpoint.id, application });
   });
 
   router.delete("/:name/checkpoints/:id", async (req, res) => {

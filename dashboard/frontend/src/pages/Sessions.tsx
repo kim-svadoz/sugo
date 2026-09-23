@@ -32,10 +32,11 @@ import {
   useWorkspaceHistory,
   type Decision,
   type HistoryLog,
+  type Checkpoint,
 } from "../hooks/useWorkspaceData.js";
 import { LiveConsole } from "../components/LiveConsole.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
-import { applyWorkspaceCheckpoint, createWorkspaceCheckpoint, deleteWorkspaceCheckpoint, type CheckpointApplyResult } from "../api/workspacesApi.js";
+import { applyWorkspaceCheckpoints, createWorkspaceCheckpoint, deleteWorkspaceCheckpoint, updateWorkspaceCheckpoint, type WorkspaceCheckpointApplyResult } from "../api/workspacesApi.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
 import { LiveLogTail } from "../components/LiveConsole.js";
@@ -257,9 +258,12 @@ export function Sessions() {
   const [agentCanvasModal, setAgentCanvasModal] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<HistorySearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [cpDraft, setCpDraft] = useState({ title: "", category: "general", checklist: "", appliesTo: "" });
+  const [cpDraft, setCpDraft] = useState({ title: "", category: "general", markdown: "" });
   const [cpBusy, setCpBusy] = useState(false);
-  const [cpApplyResult, setCpApplyResult] = useState<{ id: string; result?: CheckpointApplyResult } | null>(null);
+  const [cpApplyResult, setCpApplyResult] = useState<WorkspaceCheckpointApplyResult | null>(null);
+  const [dirtyCheckpoints, setDirtyCheckpoints] = useState<Set<string>>(new Set());
+  const [editingCheckpoint, setEditingCheckpoint] = useState<Checkpoint | null>(null);
+  const [cpEditDraft, setCpEditDraft] = useState({ title: "", category: "general", markdown: "" });
   const { userId } = useAuth();
 
   const history = useWorkspaceHistory(selectedWorkspace);
@@ -994,7 +998,7 @@ export function Sessions() {
           </h3>
           <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
             <p>이 도메인의 프로젝트에서 작업 컨텍스트를 불러올 때 <code>.claude/rules/&lt;category&gt;/</code>로 동기화되어 Claude Code에 자동 주입됩니다.</p>
-            <p className="mt-1 text-[var(--color-text-dim)]"><code>applies_to</code>가 비어 있으면 도메인 전체, 값이 있으면 프로젝트명 또는 하네스 ID가 일치하는 프로젝트에만 적용됩니다.</p>
+            <p className="mt-1 text-[var(--color-text-dim)]">이 워크스페이스의 체크포인트는 소속된 모든 프로젝트에 함께 적용됩니다.</p>
             <p className="mt-1 text-[var(--color-text-dim)]"><code>.claude/rules/</code>의 생성 파일은 동기화 결과입니다. 직접 수정하면 다음 적용에서 충돌로 표시하고 덮어쓰지 않습니다.</p>
           </div>
           {checkpoints.loading ? (
@@ -1013,13 +1017,11 @@ export function Sessions() {
                       {cp.category}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--color-text)]">{cp.title}</span>
-                    <button disabled={cpBusy || !userId} onClick={async () => {
-                      setCpBusy(true);
-                      try {
-                        const applied = await applyWorkspaceCheckpoint(userId!, checkpointModal, cp.id);
-                        setCpApplyResult({ id: applied.id, result: applied.application });
-                      } finally { setCpBusy(false); }
-                    }} className="shrink-0 rounded border border-cyan-500/40 px-1.5 py-0.5 text-[10.5px] text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-40">다시 적용</button>
+                    {dirtyCheckpoints.has(cp.id) && <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300">수정됨</span>}
+                    <button disabled={cpBusy || !userId} onClick={() => {
+                      setEditingCheckpoint(cp);
+                      setCpEditDraft({ title: cp.title, category: cp.category || "general", markdown: cp.learned_from ?? (cp.checklist ?? []).map((item) => `- ${item}`).join("\n") });
+                    }} className="shrink-0 rounded border border-cyan-500/40 px-1.5 py-0.5 text-[10.5px] text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-40">수정</button>
                     <button
                       disabled={cpBusy || !userId}
                       onClick={async () => {
@@ -1036,7 +1038,7 @@ export function Sessions() {
                       삭제
                     </button>
                   </div>
-                  {(cp.checklist?.length ?? 0) > 0 && (
+                  {cp.learned_from ? <div className="max-h-28 overflow-hidden whitespace-pre-wrap text-[12px] leading-relaxed text-[var(--color-text-muted)]">{cp.learned_from}</div> : (cp.checklist?.length ?? 0) > 0 && (
                     <ul className="list-disc space-y-0.5 pl-5 text-[12.5px] text-[var(--color-text-muted)]">
                       {cp.checklist!.map((c, i) => (
                         <li key={i}>{c}</li>
@@ -1044,14 +1046,13 @@ export function Sessions() {
                     </ul>
                   )}
                   <div className="mt-2 font-mono text-[10.5px] text-[var(--color-text-dim)]">
-                    적용 범위: {cp.applies_to?.length ? cp.applies_to.join(", ") : `${checkpointModal} 전체 프로젝트`}
-                    <span className="ml-2">→ .claude/rules/{cp.category || "general"}/</span>
+                    워크스페이스 전체 프로젝트 → .claude/rules/{cp.category || "general"}/
                   </div>
                 </div>
               ))}
             </div>
           )}
-          {/* 설계안 체크포인트 CRUD — 추가/삭제. 체크리스트는 줄 단위로 입력받는다. */}
+          {/* 워크스페이스 단위 체크포인트 편집·일괄 적용. */}
           <div className="mt-4 space-y-2 border-t border-[var(--color-border)] pt-3">
             <div className="font-mono text-[11px] text-[var(--color-text-muted)]">새 체크포인트</div>
             <div className="flex flex-wrap gap-2">
@@ -1066,49 +1067,25 @@ export function Sessions() {
               />
             </div>
             <textarea
-              value={cpDraft.checklist}
-              onChange={(e) => setCpDraft({ ...cpDraft, checklist: e.target.value })}
-              placeholder={"체크리스트 — 한 줄에 하나"}
-              rows={3}
+              value={cpDraft.markdown}
+              onChange={(e) => setCpDraft({ ...cpDraft, markdown: e.target.value })}
+              placeholder={"Markdown 내용을 붙여넣으세요"}
+              rows={7}
               className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 text-[12.5px] text-[var(--color-text)]"
             />
-            <input
-              value={cpDraft.appliesTo}
-              onChange={(e) => setCpDraft({ ...cpDraft, appliesTo: e.target.value })}
-              placeholder="추가 하네스 ID — 예: lang-java-21 (선택)"
-              className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 font-mono text-[11.5px] text-[var(--color-text)]"
-            />
-            <div className="rounded-lg border border-[var(--color-border)] bg-black/10 p-2.5">
-              <div className="mb-2 text-[10.5px] text-[var(--color-text-dim)]">적용 프로젝트 · 선택하지 않으면 도메인의 모든 프로젝트</div>
-              <div className="flex flex-wrap gap-2">
-                {(workspaces.find((ws) => ws.name === checkpointModal)?.projects ?? []).map((project) => {
-                  const name = repoName(project.project_path);
-                  const selected = cpDraft.appliesTo.split(",").map((v) => v.trim()).includes(name);
-                  return <button key={project.project_path} type="button" onClick={() => {
-                    const values = cpDraft.appliesTo.split(",").map((v) => v.trim()).filter(Boolean).filter((v) => v !== name);
-                    if (!selected) values.push(name);
-                    setCpDraft({ ...cpDraft, appliesTo: values.join(", ") });
-                  }} className={`rounded-md border px-2 py-1 text-[11px] ${selected ? "border-amber-400/50 bg-amber-400/10 text-amber-200" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>📦 {name}</button>;
-                })}
-              </div>
-            </div>
             <button
-              disabled={cpBusy || !cpDraft.title.trim() || !userId}
+              disabled={cpBusy || !cpDraft.title.trim() || !cpDraft.markdown.trim() || !userId}
               onClick={async () => {
                 setCpBusy(true);
                 try {
                   const saved = await createWorkspaceCheckpoint(userId!, checkpointModal, {
                     category: cpDraft.category.trim() || "general",
                     title: cpDraft.title.trim(),
-                    checklist: cpDraft.checklist
-                      .split(/\r?\n/)
-                      .map((l) => l.trim())
-                      .filter(Boolean),
-                    appliesTo: cpDraft.appliesTo.split(",").map((value) => value.trim()).filter(Boolean),
-                    apply: true,
+                    learnedFrom: cpDraft.markdown,
+                    appliesTo: [],
                   });
-                  setCpApplyResult({ id: saved.id, result: saved.application });
-                  setCpDraft({ title: "", category: "general", checklist: "", appliesTo: "" });
+                  setDirtyCheckpoints((current) => new Set(current).add(saved.id));
+                  setCpDraft({ title: "", category: "general", markdown: "" });
                   checkpoints.refresh();
                 } finally {
                   setCpBusy(false);
@@ -1116,16 +1093,33 @@ export function Sessions() {
               }}
               className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[12px] font-bold text-amber-300 transition-colors hover:bg-amber-500/20 disabled:opacity-40"
             >
-              저장 후 적용
+              체크포인트 저장
             </button>
-            {cpApplyResult && <div className={`rounded-lg border p-2.5 text-[11px] ${cpApplyResult.result?.conflicts.length || cpApplyResult.result?.failed.length ? "border-amber-400/35 bg-amber-400/[0.06] text-amber-100" : "border-emerald-400/30 bg-emerald-400/[0.05] text-emerald-200"}`}>
-              <div className="font-semibold">{cpApplyResult.id} 저장 완료</div>
-              <div className="mt-1">적용 {cpApplyResult.result?.applied.length ?? 0} · 제외 {cpApplyResult.result?.skipped.length ?? 0} · 충돌 {cpApplyResult.result?.conflicts.length ?? 0} · 실패 {cpApplyResult.result?.failed.length ?? 0}</div>
-              {cpApplyResult.result?.conflicts.map((item) => <div key={item.file} className="mt-1 font-mono text-[10px]">충돌: {item.file}</div>)}
+            <button disabled={cpBusy || checkpoints.data.length === 0 || !userId} onClick={async () => {
+              setCpBusy(true);
+              try {
+                const result = await applyWorkspaceCheckpoints(userId!, checkpointModal);
+                setCpApplyResult(result);
+                setDirtyCheckpoints((current) => new Set([...current].filter((id) => !result.appliedIds.includes(id))));
+              } finally { setCpBusy(false); }
+            }} className="w-full rounded-xl border border-amber-400/45 bg-gradient-to-r from-amber-500/15 to-orange-500/[0.06] px-4 py-2.5 text-[13px] font-bold text-amber-200 hover:border-amber-300 disabled:opacity-40">저장 후 적용 · 전체 프로젝트</button>
+            {cpApplyResult && <div className={`rounded-lg border p-2.5 text-[11px] ${cpApplyResult.conflicts.length || cpApplyResult.failed.length ? "border-amber-400/35 bg-amber-400/[0.06] text-amber-100" : "border-emerald-400/30 bg-emerald-400/[0.05] text-emerald-200"}`}>
+              <div className="font-semibold">변경된 체크포인트 {cpApplyResult.changedCheckpoints}건 · 파일 {cpApplyResult.filesWritten}개 적용</div>
+              <div className="mt-1">충돌 {cpApplyResult.conflicts.length} · 실패 {cpApplyResult.failed.length}</div>
+              {cpApplyResult.conflicts.map((item) => <div key={`${item.id}:${item.file}`} className="mt-1 font-mono text-[10px]">충돌: {item.file}</div>)}
             </div>}
           </div>
         </Modal>
       )}
+
+      {editingCheckpoint && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditingCheckpoint(null); }}>
+        <div className="flex h-[72vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-cyan-400/25 bg-[var(--color-surface)] shadow-2xl">
+          <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-5 py-4"><div className="min-w-0 flex-1"><div className="font-mono text-[10px] text-cyan-300">{editingCheckpoint.id}</div><div className="text-[16px] font-semibold">체크포인트 수정</div></div><button onClick={() => setEditingCheckpoint(null)}>✕</button></div>
+          <div className="grid grid-cols-[160px_1fr] gap-3 border-b border-[var(--color-border)] p-4"><input value={cpEditDraft.category} onChange={(e) => setCpEditDraft({ ...cpEditDraft, category: e.target.value })} placeholder="규칙 폴더" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 font-mono text-[12px]" /><input value={cpEditDraft.title} onChange={(e) => setCpEditDraft({ ...cpEditDraft, title: e.target.value })} placeholder="제목" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-[13px]" /></div>
+          <textarea autoFocus value={cpEditDraft.markdown} onChange={(e) => setCpEditDraft({ ...cpEditDraft, markdown: e.target.value })} className="ck-scroll min-h-0 flex-1 resize-none bg-[#070b12] p-5 font-mono text-[12.5px] leading-6 text-slate-200 outline-none" placeholder="Markdown 내용을 붙여넣으세요" />
+          <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-3"><button onClick={() => setEditingCheckpoint(null)} className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px]">취소</button><button disabled={cpBusy || !cpEditDraft.title.trim() || !cpEditDraft.markdown.trim()} onClick={async () => { setCpBusy(true); try { await updateWorkspaceCheckpoint(userId!, checkpointModal!, editingCheckpoint.id, { title: cpEditDraft.title.trim(), category: cpEditDraft.category.trim() || "general", learnedFrom: cpEditDraft.markdown, appliesTo: [] }); setDirtyCheckpoints((current) => new Set(current).add(editingCheckpoint.id)); checkpoints.refresh(); setEditingCheckpoint(null); } finally { setCpBusy(false); } }} className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[12px] font-bold text-cyan-200">수정 저장</button></div>
+        </div>
+      </div>}
 
       {/* 로드맵(Agent Canvas) 전체화면 오버레이 모달 — z-[70] (설계안) */}
       {agentCanvasModal && (

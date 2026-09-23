@@ -8,6 +8,7 @@ export interface ApplicableCheckpoint {
   category?: string | null;
   appliesTo?: string[] | null;
   checklist?: string[] | null;
+  learnedFrom?: string | null;
 }
 
 export interface CheckpointApplyResult {
@@ -15,6 +16,7 @@ export interface CheckpointApplyResult {
   skipped: Array<{ projectPath: string; reason: string }>;
   conflicts: Array<{ projectPath: string; file: string; reason: string }>;
   failed: Array<{ projectPath: string; reason: string }>;
+  unchanged: Array<{ projectPath: string; file: string }>;
 }
 
 export function newCheckpointId(): string {
@@ -52,7 +54,9 @@ function bodyWithoutHash(checkpoint: ApplicableCheckpoint, workspace: string): s
     "",
     `> ${workspace} 도메인의 재발방지 컨텍스트 · ${applies}`,
     "",
-    ...(checkpoint.checklist ?? []).map((item) => `- ${item}`),
+    ...(checkpoint.learnedFrom?.trim()
+      ? [checkpoint.learnedFrom.trim()]
+      : (checkpoint.checklist ?? []).map((item) => `- ${item}`)),
     "",
   ].join("\n");
 }
@@ -64,7 +68,7 @@ function managedContent(checkpoint: ApplicableCheckpoint, workspace: string): st
 
 function existingWasEdited(content: string): boolean {
   const match = content.match(/^content-hash:\s*([0-9a-f]{64})$/m);
-  if (!match) return true;
+  if (!match) return !content.includes("description: \"Sugo checkpoint ");
   const without = content.replace(/^content-hash:\s*[0-9a-f]{64}\n/m, "");
   return digest(without) !== match[1];
 }
@@ -91,7 +95,7 @@ export async function applyCheckpointToProjects(input: {
   checkpoint: ApplicableCheckpoint;
   projectPaths: string[];
 }): Promise<CheckpointApplyResult> {
-  const result: CheckpointApplyResult = { applied: [], skipped: [], conflicts: [], failed: [] };
+  const result: CheckpointApplyResult = { applied: [], skipped: [], conflicts: [], failed: [], unchanged: [] };
   const category = safeSegment(input.checkpoint.category ?? "general", "general");
   const id = safeSegment(input.checkpoint.id, newCheckpointId());
   const content = managedContent(input.checkpoint, input.workspace);
@@ -108,6 +112,10 @@ export async function applyCheckpointToProjects(input: {
       const dir = join(projectPath, ".claude", "rules", category);
       const file = join(dir, `${id}-${slug(input.checkpoint.title)}.md`);
       const existing = await readFile(file, "utf8").catch(() => null);
+      if (existing === content) {
+        result.unchanged.push({ projectPath, file });
+        continue;
+      }
       if (existing !== null && existingWasEdited(existing)) {
         result.conflicts.push({ projectPath, file, reason: "rules 파일에 직접 수정된 내용이 있어 덮어쓰지 않았습니다." });
         continue;
