@@ -9,3 +9,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 .idea/
+
+# understand-anything 플러그인의 로컬 지식그래프 캐시. 클론마다 재생성되며 sugo와 무관.
+.ua/
