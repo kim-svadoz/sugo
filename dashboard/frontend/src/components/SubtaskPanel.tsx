@@ -5,6 +5,7 @@ import { parseWorkResult, type RoadmapNode, type WorkResultFile } from "../hooks
 import { clearManualStatus, setManualStatus } from "../api/roadmapMutationsApi.js";
 import { checkExistingPr, createPr, type PrRef, type PrScope } from "../api/prApi.js";
 import { inspectorProgress, type InspectorProgress } from "./roadmap/inspectorModel.js";
+import { fileViewerPresentation } from "./roadmap/fileViewerModel.js";
 
 type Tab = "progress" | "summary" | "files";
 
@@ -36,6 +37,7 @@ export function SubtaskPanel({
   onClose,
   onChanged,
   onOpenFile,
+  scopeFiles,
 }: {
   workspace: string;
   node: RoadmapNode;
@@ -46,6 +48,8 @@ export function SubtaskPanel({
   onClose: () => void;
   onChanged: () => void;
   onOpenFile: (file: WorkResultFile, expanded?: boolean) => void;
+  /** SPEC/RUN은 하위 작업 전체의 변경 파일을 합친 scope 결과를 받는다. */
+  scopeFiles?: WorkResultFile[];
 }) {
   const { userId } = useAuth();
   const [tab, setTab] = useState<Tab>("progress");
@@ -56,6 +60,7 @@ export function SubtaskPanel({
   useEffect(() => setTab("progress"), [node.id]);
 
   const workResult = parseWorkResult(node.work_result);
+  const files = scopeFiles ?? workResult?.files ?? [];
 
   return (
     <aside className="flex min-h-full w-full min-w-0 flex-col overflow-hidden bg-[var(--color-surface)]">
@@ -89,7 +94,7 @@ export function SubtaskPanel({
               ? `개요 · ${progress.label} ${progress.done}/${progress.total}`
               : t === "summary"
                 ? "작업 요약"
-                : `변경 파일 ${workResult?.files?.length ?? 0}`}
+                : `변경 파일 ${files.length}`}
           </button>
         ))}
       </div>
@@ -107,7 +112,7 @@ export function SubtaskPanel({
           />
         )}
         {tab === "summary" && <SummaryTab summary={workResult?.summary} />}
-        {tab === "files" && <FilesTab files={workResult?.files ?? []} onOpenFile={onOpenFile} />}
+        {tab === "files" && <FilesTab files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} />}
       </div>
     </aside>
   );
@@ -374,13 +379,20 @@ function ChildList({ items }: { items: RoadmapNode[] }) {
   );
 }
 
-function FilesTab({ files, onOpenFile }: { files: WorkResultFile[]; onOpenFile: (file: WorkResultFile, expanded?: boolean) => void }) {
+function FilesTab({ files, onOpenFile, aggregated = false }: { files: WorkResultFile[]; onOpenFile: (file: WorkResultFile, expanded?: boolean) => void; aggregated?: boolean }) {
   const [selected, setSelected] = useState<WorkResultFile | null>(null);
   if (files.length === 0) return <div className="text-xs opacity-50">변경된 파일 없음</div>;
   return (
     <div className="flex min-h-0 flex-col gap-2">
+      {aggregated && (
+        <div className="rounded-lg border border-cyan-400/15 bg-cyan-400/[0.035] px-2.5 py-2 text-[10.5px] leading-relaxed text-cyan-100/60">
+          이 범위에 속한 하위 RUN/TASK의 변경 파일을 합쳐서 보여줍니다. 같은 경로는 최신 산출물 기준입니다.
+        </div>
+      )}
       <ul className="space-y-1">
-        {files.map((f) => (
+        {files.map((f) => {
+          const presentation = fileViewerPresentation(f.path);
+          return (
           <li key={f.path}>
             <button
               type="button"
@@ -392,18 +404,22 @@ function FilesTab({ files, onOpenFile }: { files: WorkResultFile[]; onOpenFile: 
                 setSelected(f);
                 onOpenFile(f, true);
               }}
-              className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-white/5 ${
-                selected?.path === f.path ? "bg-white/5" : ""
+              className={`group flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-xs transition-colors hover:border-cyan-400/25 hover:bg-white/5 ${
+                selected?.path === f.path ? "border-cyan-400/30 bg-cyan-400/[0.06]" : "border-transparent"
               }`}
               title="클릭: 하단에서 보기 · 더블클릭: 전체화면"
             >
               <span className="font-mono" style={{ color: fileBadgeColor(f.change) }}>
                 {fileBadge(f.change)}
               </span>
-              <span className="truncate">{f.path}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[11.5px] text-[var(--color-text)]">{f.path}</span>
+                <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wide text-[var(--color-text-dim)]">{presentation.eyebrow}</span>
+              </span>
             </button>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );

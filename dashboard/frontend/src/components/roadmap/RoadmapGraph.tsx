@@ -36,6 +36,7 @@ import { shouldApplyHoverFocus } from "./interaction.js";
 import { measuredLeafHeight, TASK_CARD_HEIGHT } from "./layoutSizing.js";
 import { buildLineageChains, lineageSelection, type LineageChainItem } from "./lineageModel.js";
 import { FileViewerSheet } from "./FileViewerSheet.js";
+import { filesForRoadmapScope } from "./fileViewerModel.js";
 
 /** 설계안 치수 상수 — 그대로. */
 const NODE_W = 236;
@@ -1368,6 +1369,12 @@ export function RoadmapGraph({
     return lineageSelection(selectedLineageItem, currentReqs);
   }, [nodes, selectedLineageItem]);
   const selectedNode = selectedLineage?.node ?? nodes.find((n) => n.id === selectedId) ?? null;
+  const selectedFiles = useMemo(
+    // 진행 중심/SPEC 상태 필터는 **캔버스 표시만** 줄인다. 상세 범위까지 잘라버리면
+    // 화면에서 숨긴 완료 TASK의 산출물이 SPEC 파일 탭에서 사라진다.
+    () => selectedNode ? filesForRoadmapScope(selectedNode, data ?? nodes) : [],
+    [selectedNode, data, nodes],
+  );
   const specs = nodes.filter((n) => n.level === "spec");
 
   if (loading && nodes.length === 0) {
@@ -1528,6 +1535,7 @@ export function RoadmapGraph({
               setSelectedId(null);
             }}
             onOpenFile={(file, expanded = false) => setFileViewer({ file, expanded })}
+            scopeFiles={selectedFiles}
             onChanged={() => {
               refetch();
               onEdited?.();

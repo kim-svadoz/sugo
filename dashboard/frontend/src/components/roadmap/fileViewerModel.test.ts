@@ -1,5 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { fileViewerLanguage, fileViewerText } from "./fileViewerModel.js";
+import { filesForRoadmapScope, fileViewerLanguage, fileViewerPresentation, fileViewerText } from "./fileViewerModel.js";
+import type { RoadmapNode } from "../../hooks/useRoadmap.js";
+
+const node = (id: string, level: string, parent: string | null, files: Array<{ path: string; content: string }> = []): RoadmapNode => ({
+  id,
+  title: id,
+  level,
+  status: "done",
+  depends_on: [],
+  parent,
+  ref: null,
+  note: null,
+  spec_path: null,
+  work_result: files.length ? { files: files.map((file) => ({ ...file, change: "modified" as const })) } : null,
+  lineage: null,
+  manual_status: null,
+  pos_x: null,
+  pos_y: null,
+});
 
 describe("changed-file viewer model", () => {
   it("전체 파일 content가 있으면 diff보다 우선 보여준다", () => {
@@ -21,5 +39,31 @@ describe("changed-file viewer model", () => {
   it("파일 확장자로 바텀시트 언어 라벨을 만든다", () => {
     expect(fileViewerLanguage("src/main/App.tsx")).toBe("TSX");
     expect(fileViewerLanguage("buildspec.yml")).toBe("YAML");
+  });
+
+  it("SPEC을 선택하면 모든 하위 RUN/TASK의 변경 파일을 모은다", () => {
+    const nodes = [
+      node("spec", "spec", null),
+      node("run-a", "workstream", "spec"),
+      node("task-a", "task", "run-a", [{ path: "src/A.java", content: "old" }]),
+      node("run-b", "workstream", "spec"),
+      node("task-b", "task", "run-b", [
+        { path: "src/A.java", content: "latest" },
+        { path: "README.md", content: "# Guide" },
+      ]),
+    ];
+
+    expect(filesForRoadmapScope(nodes[0], nodes)).toEqual([
+      expect.objectContaining({ path: "src/A.java", content: "latest" }),
+      expect.objectContaining({ path: "README.md", content: "# Guide" }),
+    ]);
+  });
+
+  it("파일 성격에 맞는 뷰어 템플릿을 고른다", () => {
+    expect(fileViewerPresentation("src/payment/CheckoutController.java").kind).toBe("code");
+    expect(fileViewerPresentation("src/payment/CheckoutControllerTest.java").kind).toBe("test");
+    expect(fileViewerPresentation("application.yml").kind).toBe("config");
+    expect(fileViewerPresentation("README.md").kind).toBe("document");
+    expect(fileViewerPresentation("schema.sql").kind).toBe("data");
   });
 });
