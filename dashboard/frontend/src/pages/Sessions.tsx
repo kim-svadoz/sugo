@@ -23,7 +23,8 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "../lib/utils.js";
-import { workspaceCardShadow } from "../lib/workspaceSelection.js";
+import { WORKSPACE_CARD_FOCUS_CLASSES, workspaceCardShadow } from "../lib/workspaceSelection.js";
+import { resultForWorkspace, type WorkspaceScopedResult } from "../lib/scopedResult.js";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import {
   formatDate,
@@ -260,7 +261,7 @@ export function Sessions() {
   const [isSearching, setIsSearching] = useState(false);
   const [cpDraft, setCpDraft] = useState({ title: "", category: "general", markdown: "" });
   const [cpBusy, setCpBusy] = useState(false);
-  const [cpApplyResult, setCpApplyResult] = useState<WorkspaceCheckpointApplyResult | null>(null);
+  const [cpApplyResult, setCpApplyResult] = useState<WorkspaceScopedResult<WorkspaceCheckpointApplyResult> | null>(null);
   const [dirtyCheckpoints, setDirtyCheckpoints] = useState<Set<string>>(new Set());
   const [editingCheckpoint, setEditingCheckpoint] = useState<Checkpoint | null>(null);
   const [cpEditDraft, setCpEditDraft] = useState({ title: "", category: "general", markdown: "" });
@@ -269,6 +270,7 @@ export function Sessions() {
   const history = useWorkspaceHistory(selectedWorkspace);
   const decisions = useWorkspaceDecisions(selectedWorkspace);
   const checkpoints = useWorkspaceCheckpoints(checkpointModal);
+  const visibleCpApplyResult = resultForWorkspace(cpApplyResult, checkpointModal);
 
   const workspaces = useMemo(() => data ?? [], [data]);
   const isSearchMode = searchQuery.trim().length >= 2;
@@ -755,7 +757,7 @@ export function Sessions() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
                   }}
-                  className="flex cursor-pointer items-center gap-3 px-3 py-2.5"
+                  className={cn("flex cursor-pointer items-center gap-3 px-3 py-2.5", WORKSPACE_CARD_FOCUS_CLASSES)}
                 >
                   <span className="w-4 shrink-0 text-center font-mono text-[11px] text-[var(--color-text-dim)]">
                     {isSel ? "▾" : "▸"}
@@ -793,6 +795,7 @@ export function Sessions() {
                 }}
                 className={cn(
                   "ck-card flex cursor-pointer flex-col justify-between rounded-xl border bg-[var(--color-surface)] p-4",
+                  WORKSPACE_CARD_FOCUS_CLASSES,
                   isSel ? "border-[var(--color-border)] bg-cyan-400/[0.045]" : "border-[var(--color-border)]",
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
@@ -891,6 +894,7 @@ export function Sessions() {
                 }}
                 className={cn(
                   "ck-card flex cursor-pointer items-center gap-3 rounded-lg border bg-[var(--color-surface)] px-3 py-2",
+                  WORKSPACE_CARD_FOCUS_CLASSES,
                   isSel ? "border-[var(--color-border)] bg-cyan-400/[0.045]" : "border-[var(--color-border)]",
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
@@ -1099,14 +1103,14 @@ export function Sessions() {
               setCpBusy(true);
               try {
                 const result = await applyWorkspaceCheckpoints(userId!, checkpointModal);
-                setCpApplyResult(result);
+                setCpApplyResult({ workspace: checkpointModal, value: result });
                 setDirtyCheckpoints((current) => new Set([...current].filter((id) => !result.appliedIds.includes(id))));
               } finally { setCpBusy(false); }
             }} className="w-full rounded-xl border border-amber-400/45 bg-gradient-to-r from-amber-500/15 to-orange-500/[0.06] px-4 py-2.5 text-[13px] font-bold text-amber-200 hover:border-amber-300 disabled:opacity-40">저장 후 적용 · 전체 프로젝트</button>
-            {cpApplyResult && <div className={`rounded-lg border p-2.5 text-[11px] ${cpApplyResult.conflicts.length || cpApplyResult.failed.length ? "border-amber-400/35 bg-amber-400/[0.06] text-amber-100" : "border-emerald-400/30 bg-emerald-400/[0.05] text-emerald-200"}`}>
-              <div className="font-semibold">변경된 체크포인트 {cpApplyResult.changedCheckpoints}건 · 파일 {cpApplyResult.filesWritten}개 적용</div>
-              <div className="mt-1">충돌 {cpApplyResult.conflicts.length} · 실패 {cpApplyResult.failed.length}</div>
-              {cpApplyResult.conflicts.map((item) => <div key={`${item.id}:${item.file}`} className="mt-1 font-mono text-[10px]">충돌: {item.file}</div>)}
+            {visibleCpApplyResult && <div className={`rounded-lg border p-2.5 text-[11px] ${visibleCpApplyResult.conflicts.length || visibleCpApplyResult.failed.length ? "border-amber-400/35 bg-amber-400/[0.06] text-amber-100" : "border-emerald-400/30 bg-emerald-400/[0.05] text-emerald-200"}`}>
+              <div className="font-semibold">{checkpointModal} 적용 결과 · 변경된 체크포인트 {visibleCpApplyResult.changedCheckpoints}건 · 파일 {visibleCpApplyResult.filesWritten}개 적용</div>
+              <div className="mt-1">충돌 {visibleCpApplyResult.conflicts.length} · 실패 {visibleCpApplyResult.failed.length}</div>
+              {visibleCpApplyResult.conflicts.map((item) => <div key={`${item.id}:${item.file}`} className="mt-1 text-[10px]"><div className="font-mono">충돌: {item.file}</div><div className="mt-0.5 opacity-70">{item.reason}</div></div>)}
             </div>}
           </div>
         </Modal>
