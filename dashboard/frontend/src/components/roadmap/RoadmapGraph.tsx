@@ -85,7 +85,6 @@ const UNASSIGNED = "__unassigned__";
 /** 설계안 패치 체인 치수. */
 const PC_COL_W = 280;
 const PC_COL_GAP = 30;
-const PC_FORK_H = 48;
 const PC_CARD_GAP = 18;
 /** 체인 노드 id 접두어 — 서버 노드가 아니라 여러 patch task를 묶은 화면 전용 노드다. */
 const CHAIN = "chain:";
@@ -499,8 +498,8 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
 /**
  * nodeTypes ③: patch 계보 체인(설계안).
  *
- * 카드 한 장이 아니라 **체인 하나가 노드 하나**다. 위쪽 stem에서 컬럼마다 violet 점선 베지어가
- * 갈라져 나오고(fork), 같은 컬럼 안에서는 세로로 쌓인다 — 컬럼=형제 패치, 세로=연속 차수.
+ * 카드 한 장이 아니라 **체인 하나가 노드 하나**다. 같은 컬럼 안의 버전 카드 사이만 violet
+ * 점선으로 잇는다 — v0 위에는 연결 대상이 없으므로 stem을 그리지 않는다.
  * 접으면 각 컬럼의 depth 0 한 장만 남고 "▾ +N패치" 버튼이 붙는다.
  */
 function LineageChainNode({ data }: NodeProps<FlowNode>) {
@@ -508,31 +507,13 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
   const isColl = data.collapsed !== false;
   const ncols = Math.max(cols.length, 1);
   const totalW = ncols * PC_COL_W + (ncols - 1) * PC_COL_GAP;
-  const stemX = totalW / 2;
-  const dy = PC_FORK_H * 0.55;
-  const colCenter = (i: number) => i * (PC_COL_W + PC_COL_GAP) + PC_COL_W / 2;
   // "최신"은 **차수가 가장 높은 한 장**이다. 컬럼마다 붙이면 최신이 여러 개가 돼 의미가 없다.
   const latestKey = cols.flat().reduce<ChainItem | null>((a, b) => (!a || b.version > a.version ? b : a), null)?.key;
 
   return (
     <div className="relative" style={{ width: totalW }}>
       <Handle type="target" position={Position.Left} style={{ top: 16, opacity: 0 }} />
-      <Handle type="target" position={Position.Top} id="top" style={{ left: stemX, opacity: 0, width: 8, height: 8 }} />
-      <svg className="pointer-events-none absolute" style={{ left: 0, top: 0 }} width={totalW} height={PC_FORK_H}>
-        {cols.map((col, i) => (
-          <path
-            key={col[0].key}
-            d={`M ${stemX} 0 C ${stemX} ${dy}, ${colCenter(i)} ${PC_FORK_H - dy}, ${colCenter(i)} ${PC_FORK_H}`}
-            stroke="#8B5CF6"
-            strokeWidth={2}
-            strokeDasharray="4 4"
-            fill="none"
-            opacity={0.8}
-          />
-        ))}
-      </svg>
-
-      <div className="flex" style={{ gap: PC_COL_GAP, paddingTop: PC_FORK_H }}>
+      <div className="flex" style={{ gap: PC_COL_GAP }}>
         {cols.map((col) => {
           const shown = isColl ? col.slice(0, 1) : col;
           const hasChildren = col.length > 1;
@@ -540,7 +521,6 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
             <div key={col[0].key} className="flex flex-col" style={{ width: PC_COL_W, gap: PC_CARD_GAP }}>
               {shown.map((item, ri) => {
                 const st = effStatus(item.node);
-                const cs = cardStyle(st, false, false);
                 return (
                   <div key={item.key} className="relative">
                     {/* 같은 컬럼의 앞 카드와 잇는 세로 점선 = 연속 차수 */}
@@ -551,11 +531,10 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
                       />
                     )}
                     <div
-                      className="cursor-pointer overflow-hidden rounded-xl border bg-[var(--color-surface)] transition-all hover:-translate-y-[2px] hover:brightness-110"
+                      className="cursor-pointer overflow-hidden rounded-xl border bg-violet-500/10 px-2.5 py-2 transition-all hover:-translate-y-[2px] hover:brightness-110"
                       style={{
                         height: LINEAGE_VCARD_H,
-                        borderColor: data.selectedItemId === item.key ? SEL : cs.border,
-                        background: st === "done" ? "#1b2620" : "var(--color-surface)",
+                        borderColor: data.selectedItemId === item.key ? SEL : "rgba(139,92,246,0.5)",
                         boxShadow: selRing(data.selectedItemId === item.key),
                       }}
                       onClick={(e) => {
@@ -563,25 +542,22 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
                         data.onSelect?.(item.key);
                       }}
                     >
-                      <div className="h-1" style={{ background: cs.accent }} />
-                      <div className="px-2.5 py-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="shrink-0 rounded bg-slate-500/20 px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-200">
-                            v{item.version}-{item.version === 0 ? "feat" : "patch"}
-                          </span>
-                          {item.key === latestKey && (
-                            <span className="shrink-0 font-mono text-[9.5px] text-slate-400">최신</span>
-                          )}
-                          <span
-                            className="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[9.5px] font-semibold"
-                            style={{ background: `${cs.accent}22`, color: cs.accent }}
-                          >
-                            {cs.label}
-                          </span>
-                        </div>
-                        <div className="mt-1 truncate text-[12.5px] leading-snug text-slate-100" title={item.title}>
-                          {item.title}
-                        </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="shrink-0 rounded bg-violet-500/25 px-1.5 py-0.5 font-mono text-[12px] font-bold text-violet-100">
+                          v{item.version}-{item.version === 0 ? "feat" : "patch"}
+                        </span>
+                        {item.key === latestKey && (
+                          <span className="shrink-0 font-mono text-[10px] text-violet-300/80">최신</span>
+                        )}
+                        <span
+                          className="ml-auto shrink-0 font-mono text-[10px] uppercase"
+                          style={{ color: statusColor(st, false) }}
+                        >
+                          {st === "done" ? "완료" : cardStyle(st, false, false).label}
+                        </span>
+                      </div>
+                      <div className="mt-1 truncate text-[12.5px] text-[var(--color-text)]" title={item.title}>
+                        {item.version === 0 ? "✨" : "🔁"} {item.title}
                       </div>
                     </div>
                     {ri === 0 && hasChildren && (
@@ -757,7 +733,7 @@ function layout(
     const rows = Math.max(...cols.map((c) => (expanded.has(id) ? c.length : 1)), 1);
     return {
       w: ncols * PC_COL_W + (ncols - 1) * PC_COL_GAP,
-      h: PC_FORK_H + rows * LINEAGE_VCARD_H + (rows - 1) * PC_CARD_GAP,
+      h: rows * LINEAGE_VCARD_H + (rows - 1) * PC_CARD_GAP,
     };
   };
 
