@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS sugo_checkpoints (
   checklist TEXT,
   applies_to TEXT,
   checkpoint_date TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id, workspace_name, id)
 );
 

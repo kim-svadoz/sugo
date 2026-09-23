@@ -158,6 +158,37 @@ export async function ensureRoadmapManualTitleColumn(db: DbClient): Promise<bool
   }
 }
 
+/**
+ * §3.3 `sugo_checkpoints.created_at` 자가보강 — 같은 패턴. 체크포인트 목록을 페이지네이션할 때
+ * "처음 만든 순"으로 정렬할 기준이 필요해서 추가했다(2026-09-23). CLI 재동기화(`syncCheckpoint`)는
+ * `upsertRow`로 UPDATE 시 이 컬럼을 SET에 넣지 않으므로 최초 생성 시각이 그대로 유지된다.
+ */
+let checkpointCreatedAtColState: boolean | null = null;
+
+/** 테스트 전용 — 모듈 레벨 캐시를 비운다. */
+export function __resetCheckpointCreatedAtColState(): void {
+  checkpointCreatedAtColState = null;
+}
+
+export async function ensureCheckpointCreatedAtColumn(db: DbClient): Promise<boolean> {
+  if (checkpointCreatedAtColState !== null) return checkpointCreatedAtColState;
+  try {
+    await db.query("SELECT created_at FROM sugo_checkpoints LIMIT 1");
+    checkpointCreatedAtColState = true;
+    return true;
+  } catch {
+    // 없다 → 추가를 시도한다.
+  }
+  try {
+    await db.exec("ALTER TABLE sugo_checkpoints ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP");
+    checkpointCreatedAtColState = true;
+    return true;
+  } catch {
+    checkpointCreatedAtColState = false;
+    return false;
+  }
+}
+
 async function getOrCreateWorkspaceId(db: DbClient, userId: string, name: string): Promise<number> {
   const rows = await db.query<{ id: number }>(
     "SELECT id FROM sugo_workspaces WHERE user_id = ? AND name = ?",

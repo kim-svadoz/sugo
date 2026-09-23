@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Shield } from "lucide-react";
+import { marked } from "marked";
+import { Eye, Pencil, Shield } from "lucide-react";
 import { Modal } from "./Modal.js";
 import { LoadingSpinner, EmptyState } from "./StatusViews.js";
 import { useWorkspaceCheckpoints, type Checkpoint } from "../hooks/useWorkspaceData.js";
@@ -15,6 +16,64 @@ import { useAuth } from "../auth/AuthContext.js";
 /** Sessions.tsx `repoName`과 동일한 1줄 헬퍼 — 순환 import를 피하려고 그대로 복제. */
 function repoName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() || path;
+}
+
+/** Harness.tsx와 같은 렌더러(`marked` + `.md-body`) — 체크포인트 본문도 같은 마크다운이다. */
+function renderMd(md: string): string {
+  return marked.parse(md, { async: false }) as string;
+}
+
+const CHECKPOINTS_PER_PAGE = 5;
+
+/** 작성/미리보기 탭 + textarea 한 벌 — 새 체크포인트·수정 다이얼로그가 그대로 공유한다. */
+function MarkdownEditor({
+  value,
+  onChange,
+  className,
+  autoFocus,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  className?: string;
+  autoFocus?: boolean;
+}) {
+  const [view, setView] = useState<"write" | "preview">("write");
+  return (
+    <div className={className}>
+      <div className="mb-1.5 flex items-center gap-1 rounded-lg border border-[var(--color-border)] p-0.5 text-[11px] font-semibold">
+        <button
+          type="button"
+          onClick={() => setView("write")}
+          className={`flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 transition-colors ${view === "write" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]"}`}
+        >
+          <Pencil size={11} /> 작성
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("preview")}
+          className={`flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 transition-colors ${view === "preview" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]"}`}
+        >
+          <Eye size={11} /> 미리보기
+        </button>
+      </div>
+      {view === "write" ? (
+        <textarea
+          autoFocus={autoFocus}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={"Markdown 문법으로 작성하세요 — # 제목, - 목록, **굵게** 등"}
+          rows={7}
+          className="ck-scroll w-full resize-y rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 font-mono text-[12.5px] leading-6 text-[var(--color-text)] outline-none"
+        />
+      ) : value.trim() ? (
+        <div className="md-body ck-scroll max-h-[260px] overflow-y-auto rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2" dangerouslySetInnerHTML={{ __html: renderMd(value) }} />
+      ) : (
+        <div className="rounded border border-dashed border-[var(--color-border)] px-3 py-6 text-center text-[11.5px] text-[var(--color-text-dim)]">
+          아직 내용이 없습니다 — 작성 탭에서 입력하면 여기 미리보기가 뜹니다.
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -49,9 +108,15 @@ export function CheckpointPanel({
   );
   const [cpDraft, setCpDraft] = useState({ title: "", category: "general", markdown: "" });
   const [cpBusy, setCpBusy] = useState(false);
+  // 5개 넘으면 페이지네이션 — 오래된(처음 만든) 순으로 이미 정렬돼 온다(getCheckpoints ORDER BY created_at).
+  const [page, setPage] = useState(0);
+  const pageCount = Math.max(1, Math.ceil(visibleCheckpoints.length / CHECKPOINTS_PER_PAGE));
+  const safePage = Math.min(page, pageCount - 1);
+  const pagedCheckpoints = visibleCheckpoints.slice(safePage * CHECKPOINTS_PER_PAGE, safePage * CHECKPOINTS_PER_PAGE + CHECKPOINTS_PER_PAGE);
   const [cpApplyResult, setCpApplyResult] = useState<WorkspaceCheckpointApplyResult | null>(null);
   const [dirtyCheckpoints, setDirtyCheckpoints] = useState<Set<string>>(new Set());
   const [editingCheckpoint, setEditingCheckpoint] = useState<Checkpoint | null>(null);
+  const [editView, setEditView] = useState<"write" | "preview">("write");
   const [cpEditDraft, setCpEditDraft] = useState({ title: "", category: "general", markdown: "" });
 
   return (
@@ -75,7 +140,7 @@ export function CheckpointPanel({
           <EmptyState message="등록된 체크포인트가 없습니다" />
         ) : (
           <div className="space-y-3">
-            {visibleCheckpoints.map((cp) => (
+            {pagedCheckpoints.map((cp) => (
               <div key={cp.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-3">
                 <div className="mb-1.5 flex items-center gap-2">
                   <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] text-amber-300">
@@ -88,6 +153,7 @@ export function CheckpointPanel({
                   {dirtyCheckpoints.has(cp.id) && <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300">수정됨</span>}
                   <button disabled={cpBusy || !userId} onClick={() => {
                     setEditingCheckpoint(cp);
+                    setEditView("write");
                     setCpEditDraft({ title: cp.title, category: cp.category || "general", markdown: cp.learned_from ?? (cp.checklist ?? []).map((item) => `- ${item}`).join("\n") });
                   }} className="shrink-0 rounded border border-cyan-500/40 px-1.5 py-0.5 text-[10.5px] text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-40">수정</button>
                   <button
@@ -106,7 +172,9 @@ export function CheckpointPanel({
                     삭제
                   </button>
                 </div>
-                {cp.learned_from ? <div className="max-h-28 overflow-hidden whitespace-pre-wrap text-[12px] leading-relaxed text-[var(--color-text-muted)]">{cp.learned_from}</div> : (cp.checklist?.length ?? 0) > 0 && (
+                {cp.learned_from ? (
+                  <div className="md-body max-h-28 overflow-hidden text-[12px]" dangerouslySetInnerHTML={{ __html: renderMd(cp.learned_from) }} />
+                ) : (cp.checklist?.length ?? 0) > 0 && (
                   <ul className="list-disc space-y-0.5 pl-5 text-[12.5px] text-[var(--color-text-muted)]">
                     {cp.checklist!.map((c, i) => (
                       <li key={i}>{c}</li>
@@ -118,6 +186,25 @@ export function CheckpointPanel({
                 </div>
               </div>
             ))}
+            {visibleCheckpoints.length > CHECKPOINTS_PER_PAGE && (
+              <div className="flex items-center justify-between pt-1 text-[11.5px] text-[var(--color-text-muted)]">
+                <button
+                  disabled={safePage === 0}
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  className="rounded border border-[var(--color-border)] px-2.5 py-1 hover:text-cyan-300 disabled:opacity-30"
+                >
+                  ← 이전
+                </button>
+                <span className="font-mono">{safePage + 1} / {pageCount} · 총 {visibleCheckpoints.length}개</span>
+                <button
+                  disabled={safePage >= pageCount - 1}
+                  onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+                  className="rounded border border-[var(--color-border)] px-2.5 py-1 hover:text-cyan-300 disabled:opacity-30"
+                >
+                  다음 →
+                </button>
+              </div>
+            )}
           </div>
         )}
         {/* 워크스페이스 단위 체크포인트 편집·일괄 적용. */}
@@ -134,13 +221,7 @@ export function CheckpointPanel({
               className="min-w-40 flex-1 rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 text-[12.5px] text-[var(--color-text)]"
             />
           </div>
-          <textarea
-            value={cpDraft.markdown}
-            onChange={(e) => setCpDraft({ ...cpDraft, markdown: e.target.value })}
-            placeholder={"Markdown 내용을 붙여넣으세요"}
-            rows={7}
-            className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 text-[12.5px] text-[var(--color-text)]"
-          />
+          <MarkdownEditor value={cpDraft.markdown} onChange={(markdown) => setCpDraft({ ...cpDraft, markdown })} />
           <button
             disabled={cpBusy || !cpDraft.title.trim() || !cpDraft.markdown.trim() || !userId}
             onClick={async () => {
@@ -184,7 +265,21 @@ export function CheckpointPanel({
           <div className="flex h-[72vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-cyan-400/25 bg-[var(--color-surface)] shadow-2xl">
             <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-5 py-4"><div className="min-w-0 flex-1"><div className="font-mono text-[10px] text-cyan-300">{editingCheckpoint.id}</div><div className="text-[16px] font-semibold">체크포인트 수정</div></div><button onClick={() => setEditingCheckpoint(null)}>✕</button></div>
             <div className="grid grid-cols-[160px_1fr] gap-3 border-b border-[var(--color-border)] p-4"><input value={cpEditDraft.category} onChange={(e) => setCpEditDraft({ ...cpEditDraft, category: e.target.value })} placeholder="규칙 폴더" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 font-mono text-[12px]" /><input value={cpEditDraft.title} onChange={(e) => setCpEditDraft({ ...cpEditDraft, title: e.target.value })} placeholder="제목" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-[13px]" /></div>
-            <textarea autoFocus value={cpEditDraft.markdown} onChange={(e) => setCpEditDraft({ ...cpEditDraft, markdown: e.target.value })} className="ck-scroll min-h-0 flex-1 resize-none bg-[#070b12] p-5 font-mono text-[12.5px] leading-6 text-slate-200 outline-none" placeholder="Markdown 내용을 붙여넣으세요" />
+            <div className="flex shrink-0 items-center gap-1 border-b border-[var(--color-border)] px-4 pt-2 text-[11px] font-semibold">
+              <button type="button" onClick={() => setEditView("write")} className={`flex items-center gap-1 rounded-t-md px-3 py-1.5 transition-colors ${editView === "write" ? "border-x border-t border-[var(--color-border)] bg-[#070b12] text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]"}`}>
+                <Pencil size={11} /> 작성
+              </button>
+              <button type="button" onClick={() => setEditView("preview")} className={`flex items-center gap-1 rounded-t-md px-3 py-1.5 transition-colors ${editView === "preview" ? "border-x border-t border-[var(--color-border)] bg-[#070b12] text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]"}`}>
+                <Eye size={11} /> 미리보기
+              </button>
+            </div>
+            {editView === "write" ? (
+              <textarea autoFocus value={cpEditDraft.markdown} onChange={(e) => setCpEditDraft({ ...cpEditDraft, markdown: e.target.value })} className="ck-scroll min-h-0 flex-1 resize-none bg-[#070b12] p-5 font-mono text-[12.5px] leading-6 text-slate-200 outline-none" placeholder={"Markdown 문법으로 작성하세요 — # 제목, - 목록, **굵게** 등"} />
+            ) : (
+              <div className="md-body ck-scroll min-h-0 flex-1 overflow-y-auto bg-[#070b12] p-5">
+                {cpEditDraft.markdown.trim() ? <div dangerouslySetInnerHTML={{ __html: renderMd(cpEditDraft.markdown) }} /> : <p className="text-[var(--color-text-dim)]">아직 내용이 없습니다.</p>}
+              </div>
+            )}
             <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-3"><button onClick={() => setEditingCheckpoint(null)} className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px]">취소</button><button disabled={cpBusy || !cpEditDraft.title.trim() || !cpEditDraft.markdown.trim()} onClick={async () => { setCpBusy(true); try { await updateWorkspaceCheckpoint(userId!, workspace, editingCheckpoint.id, { title: cpEditDraft.title.trim(), category: cpEditDraft.category.trim() || "general", learnedFrom: cpEditDraft.markdown, appliesTo: editingCheckpoint.applies_to ?? defaultAppliesTo }); setDirtyCheckpoints((current) => new Set(current).add(editingCheckpoint.id)); checkpoints.refresh(); setEditingCheckpoint(null); } finally { setCpBusy(false); } }} className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[12px] font-bold text-cyan-200">수정 저장</button></div>
           </div>
         </div>

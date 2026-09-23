@@ -72,6 +72,7 @@ export interface Checkpoint {
   checklist: string[] | null;
   applies_to: string[] | null;
   checkpoint_date: string | null;
+  created_at: string;
 }
 
 export function useWorkspaceHistory(workspace: string | null) {

@@ -233,8 +233,17 @@ export async function getHistory(db: DbClient, userId: string, workspaceName: st
 }
 
 export async function getCheckpoints(db: DbClient, userId: string, workspaceName: string) {
-  const rows = await db.query<{ id: string; category: string; title: string; learned_from: string | null; checklist: unknown; applies_to: unknown; checkpoint_date: string | null }>(
-    "SELECT id, category, title, learned_from, checklist, applies_to, checkpoint_date FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? ORDER BY id",
+  const rows = await db.query<{
+    id: string;
+    category: string;
+    title: string;
+    learned_from: string | null;
+    checklist: unknown;
+    applies_to: unknown;
+    checkpoint_date: string | null;
+    created_at: string;
+  }>(
+    "SELECT id, category, title, learned_from, checklist, applies_to, checkpoint_date, created_at FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? ORDER BY created_at, id",
     [userId, workspaceName]
   );
   return rows.map(normalizeCheckpointRow);

@@ -6,7 +6,12 @@ import { createMySqlClient } from "./mysqlClient.js";
 import { createSqliteClient } from "./sqliteClient.js";
 import { migrateCanvasToRoadmap } from "./migrations.js";
 import { migrateWstToRun } from "../services/workspaceService.js";
-import { ensureRoadmapDueDateColumn, ensureRoadmapManualTitleColumn, ensureRoadmapProjectPathColumn } from "../services/syncService.js";
+import {
+  ensureCheckpointCreatedAtColumn,
+  ensureRoadmapDueDateColumn,
+  ensureRoadmapManualTitleColumn,
+  ensureRoadmapProjectPathColumn,
+} from "../services/syncService.js";
 import { config } from "../config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -23,6 +28,7 @@ export async function initDb(): Promise<DbClient> {
     await ensureRoadmapDueDateColumn(client);
     await ensureRoadmapProjectPathColumn(client);
     await ensureRoadmapManualTitleColumn(client);
+    await ensureCheckpointCreatedAtColumn(client);
     return client;
   }
   const client = createMySqlClient(config.mysql);
@@ -36,5 +42,6 @@ export async function initDb(): Promise<DbClient> {
   await ensureRoadmapDueDateColumn(client);
   await ensureRoadmapProjectPathColumn(client);
   await ensureRoadmapManualTitleColumn(client);
+  await ensureCheckpointCreatedAtColumn(client);
   return client;
 }

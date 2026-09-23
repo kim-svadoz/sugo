@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS sugo_checkpoints (
   checklist JSON NULL,
   applies_to JSON NULL,
   checkpoint_date TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id, workspace_name, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

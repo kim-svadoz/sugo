@@ -48,9 +48,17 @@ await page.route("**/api/**", (route) => {
   if (u.includes("/api/workspaces/") && u.includes("/checkpoints")) {
     return route.fulfill({
       json: {
-        checkpoints: [
-          { id: "CP-a1b2c3d4", category: "general", title: "PR 전에 회귀 테스트 돌리기", learned_from: "커밋 전에는 항상 npm test를 돌린다.", checklist: [], applies_to: [], checkpoint_date: null },
-        ],
+        // 페이지네이션(5개씩) + 마크다운 미리보기 확인용으로 6개, created_at 오름차순.
+        checkpoints: Array.from({ length: 6 }, (_, i) => ({
+          id: `CP-mock${i}`,
+          category: "general",
+          title: `체크포인트 ${i + 1}`,
+          learned_from: i === 0 ? "## 핵심 규칙\n\n- **커밋 전**에는 항상 `npm test`를 돌린다.\n- PR은 리뷰어 1인 이상 승인 필요.\n\n> 회귀를 놓치면 롤백 비용이 훨씬 크다." : `체크포인트 ${i + 1}의 내용`,
+          checklist: [],
+          applies_to: [],
+          checkpoint_date: null,
+          created_at: `2026-09-${10 + i}T00:00:00.000Z`,
+        })),
       },
     });
   }
@@ -108,6 +116,19 @@ await page.screenshot({ path: join(OUT, "schedule-04-project-assigned-saved-flas
 await page.getByText("orders-api 프로젝트 체크포인트", { exact: true }).click();
 await page.waitForTimeout(400);
 await page.screenshot({ path: join(OUT, "schedule-05-checkpoint-overlay.png"), fullPage: false });
+
+// 6개라 페이지네이션(5개씩)이 뜬다 → 다음 페이지
+await page.getByText("다음 →", { exact: true }).click();
+await page.waitForTimeout(200);
+await page.screenshot({ path: join(OUT, "schedule-05b-checkpoint-page2.png"), fullPage: false });
+
+// 새 체크포인트 작성 → 미리보기 탭
+await page.getByPlaceholder("제목", { exact: true }).fill("마크다운 미리보기 테스트");
+await page.getByPlaceholder(/Markdown 문법으로/).fill("## 제목\n\n- 목록 1\n- 목록 2\n\n**굵게** 확인");
+await page.getByText("미리보기", { exact: true }).last().click();
+await page.waitForTimeout(200);
+await page.screenshot({ path: join(OUT, "schedule-05c-new-checkpoint-preview.png"), fullPage: false });
+
 await page.keyboard.press("Escape");
 await page.waitForTimeout(200);
 
