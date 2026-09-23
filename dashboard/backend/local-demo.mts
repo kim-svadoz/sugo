@@ -33,9 +33,106 @@ const completedResult = {
   model: "claude-sonnet",
   summary: "중복 결제 요청을 멱등키로 차단하고, 동일 요청에는 최초 승인 결과를 재사용하도록 구현했습니다.",
   files: [
-    { path: "src/main/java/payment/IdempotencyService.java", change: "added" as const, diff: "+ 멱등키 저장 및 조회\n+ 만료 시간 검증" },
-    { path: "src/main/java/payment/CheckoutController.java", change: "modified" as const, diff: "+ Idempotency-Key 헤더 검증" },
-    { path: "src/test/java/payment/CheckoutIdempotencyTest.java", change: "added" as const, diff: "+ 동시 중복 요청 회귀 테스트" },
+    {
+      path: "src/main/java/payment/IdempotencyService.java",
+      change: "added" as const,
+      content: `package payment;
+
+import java.time.Duration;
+import java.util.Optional;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
+
+@Service
+public class IdempotencyService {
+    private static final Duration TTL = Duration.ofHours(24);
+    private final StringRedisTemplate redis;
+
+    public IdempotencyService(StringRedisTemplate redis) {
+        this.redis = redis;
+    }
+
+    public boolean reserve(String key) {
+        return Boolean.TRUE.equals(redis.opsForValue().setIfAbsent(key, "PROCESSING", TTL));
+    }
+
+    public void complete(String key, String responseBody) {
+        redis.opsForValue().set(key, responseBody, TTL);
+    }
+
+    public Optional<String> findCompleted(String key) {
+        String value = redis.opsForValue().get(key);
+        return value == null || "PROCESSING".equals(value) ? Optional.empty() : Optional.of(value);
+    }
+}
+`,
+      diff: "+ IdempotencyService 신규 생성\n+ Redis SET NX와 24시간 TTL 적용",
+    },
+    {
+      path: "src/main/java/payment/CheckoutController.java",
+      change: "modified" as const,
+      content: `package payment;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/payments")
+public class CheckoutController {
+    private final IdempotencyService idempotency;
+    private final PaymentService payments;
+
+    public CheckoutController(IdempotencyService idempotency, PaymentService payments) {
+        this.idempotency = idempotency;
+        this.payments = payments;
+    }
+
+    @PostMapping("/checkout")
+    public ResponseEntity<String> checkout(@RequestHeader("Idempotency-Key") String key) {
+        var completed = idempotency.findCompleted(key);
+        if (completed.isPresent()) return ResponseEntity.ok(completed.get());
+        if (!idempotency.reserve(key)) return ResponseEntity.status(409).body("payment is processing");
+
+        String result = payments.approve();
+        idempotency.complete(key, result);
+        return ResponseEntity.ok(result);
+    }
+}
+`,
+      diff: "+ Idempotency-Key 헤더 검증\n+ 완료 응답 재사용 및 처리 중 충돌 응답",
+    },
+    {
+      path: "src/test/java/payment/CheckoutIdempotencyTest.java",
+      change: "added" as const,
+      content: `package payment;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import java.util.concurrent.CompletableFuture;
+import org.junit.jupiter.api.Test;
+
+class CheckoutIdempotencyTest {
+    @Test
+    void concurrentRequestsApproveOnlyOnce() {
+        String key = "checkout-order-42";
+        var first = CompletableFuture.supplyAsync(() -> fixture.checkout(key));
+        var second = CompletableFuture.supplyAsync(() -> fixture.checkout(key));
+
+        CompletableFuture.allOf(first, second).join();
+
+        verify(paymentGateway, times(1)).approve();
+        assertThat(first.join().statusCode()).isIn(200, 409);
+        assertThat(second.join().statusCode()).isIn(200, 409);
+    }
+}
+`,
+      diff: "+ 동시 중복 요청 회귀 테스트",
+    },
   ],
   parentTaskId: "demo-checkout",
   patchVersion: 2,
