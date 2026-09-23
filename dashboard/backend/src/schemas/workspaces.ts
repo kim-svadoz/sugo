@@ -55,3 +55,21 @@ export const runSpecSchema = z.object({
   runId: z.string().min(1),
   specId: z.string().nullish(),
 });
+
+/** §7B Schedule 탭. dueDate는 'YYYY-MM-DD' 또는 명시적 null(기한 미정으로 되돌림). */
+export const dueDateSchema = z.object({
+  nodeId: z.string().min(1),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
+});
+
+/** §7B 경량 Spec 생성 — Run/Task 없이 단독 level='spec' 노드만 만든다. */
+export const quickSpecSchema = z.object({
+  title: z.string().min(1),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullish(),
+});

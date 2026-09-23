@@ -1,6 +1,33 @@
 export const WORKSPACE_CARD_FOCUS_CLASSES =
   "focus-visible:outline-none focus-visible:bg-cyan-400/[0.07]";
 
+/**
+ * 설계안 도메인 색 팔레트. **이름이 아니라 목록 순서(index)로** 고른다 — 이름 해시로 고르면
+ * 도메인이 하나 늘 때마다 기존 도메인 색이 같이 뒤바뀌어, 색으로 기억한 사람을 배신한다.
+ *
+ * Sessions.tsx의 홈 카드에 있던 걸 그대로 옮겼다(§7B Schedule 탭이 같은 색으로 칩을 그리려면
+ * 워크스페이스 색이 화면마다 따로 계산되면 안 된다).
+ */
+export const WORKSPACE_COLORS = [
+  "#f87171", "#fb923c", "#facc15", "#4ade80", "#22d3ee",
+  "#60a5fa", "#a78bfa", "#f472b6", "#34d399", "#c084fc",
+];
+export function getWorkspaceColor(_name: string, index: number): string {
+  return WORKSPACE_COLORS[index % WORKSPACE_COLORS.length];
+}
+
+/** §7B Schedule 탭 칩 — Tailwind 팔레트 클래스가 아니라 워크스페이스 hex색 자체를 쓰므로
+ * 인라인 style로 투명도만 붙인다(hex는 6자리 고정이라 안전하게 알파를 이어붙일 수 있다). */
+export function workspaceChipStyle(color: string): { borderColor: string; backgroundColor: string; color: string } {
+  return { borderColor: `${color}4D`, backgroundColor: `${color}26`, color };
+}
+
+export function workspaceCardEmphasis(selected: boolean, hasSelection: boolean): string {
+  if (selected) return "bg-cyan-400/[0.075] opacity-100 saturate-100";
+  if (hasSelection) return "bg-[var(--color-surface)] opacity-[0.82] saturate-[0.85]";
+  return "bg-[var(--color-surface)] opacity-100 saturate-100";
+}
+
 export function workspaceCardShadow(color: string, selected: boolean): string {
   const identity = `inset 3px 0 0 ${color}`;
   return selected

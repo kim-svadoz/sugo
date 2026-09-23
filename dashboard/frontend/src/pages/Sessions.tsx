@@ -15,7 +15,6 @@ import {
   Plus,
   Rows3,
   Calendar,
-  ChevronRight,
   FileCode,
   Lightbulb,
   Search,
@@ -23,40 +22,27 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "../lib/utils.js";
-import { WORKSPACE_CARD_FOCUS_CLASSES, workspaceCardShadow } from "../lib/workspaceSelection.js";
-import { resultForWorkspace, type WorkspaceScopedResult } from "../lib/scopedResult.js";
+import { WORKSPACE_CARD_FOCUS_CLASSES, getWorkspaceColor, workspaceCardEmphasis, workspaceCardShadow } from "../lib/workspaceSelection.js";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import {
   formatDate,
-  useWorkspaceCheckpoints,
   useWorkspaceDecisions,
   useWorkspaceHistory,
   type Decision,
   type HistoryLog,
-  type Checkpoint,
 } from "../hooks/useWorkspaceData.js";
 import { LiveConsole } from "../components/LiveConsole.js";
+import { Modal } from "../components/Modal.js";
+import { LoadingSpinner, EmptyState } from "../components/StatusViews.js";
+import { CheckpointPanel } from "../components/CheckpointPanel.js";
+import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
-import { applyWorkspaceCheckpoints, createWorkspaceCheckpoint, deleteWorkspaceCheckpoint, updateWorkspaceCheckpoint, type WorkspaceCheckpointApplyResult } from "../api/workspacesApi.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
-import { LiveLogTail } from "../components/LiveConsole.js";
 import { useRoadmap } from "../hooks/useRoadmap.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
-
-/**
- * 설계안 도메인 색 팔레트. **이름이 아니라 목록 순서(index)로** 고른다 — 이름 해시로 고르면
- * 도메인이 하나 늘 때마다 기존 도메인 색이 같이 뒤바뀌어, 색으로 기억한 사람을 배신한다.
- */
-const WS_COLORS = [
-  "#f87171", "#fb923c", "#facc15", "#4ade80", "#22d3ee",
-  "#60a5fa", "#a78bfa", "#f472b6", "#34d399", "#c084fc",
-];
-function getWsColor(_name: string, index: number): string {
-  return WS_COLORS[index % WS_COLORS.length];
-}
 
 const INSPECTOR_TABS = [
   { id: "history" as const, label: "History", icon: History },
@@ -104,143 +90,6 @@ function repoName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() || path;
 }
 
-/** 설계안 Sessions 서브컴포넌트 — Modal / LoadingSpinner / EmptyState. */
-function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div
-        className="max-h-[80vh] w-full max-w-3xl overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-end border-b border-[var(--color-border)] p-2">
-          <button onClick={onClose} className="rounded-lg p-2 hover:bg-[var(--color-border)]" title="Close (ESC)">
-            <X size={20} className="text-[var(--color-text-muted)]" />
-          </button>
-        </div>
-        <div className="max-h-[calc(80vh-60px)] overflow-auto p-6">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-function LoadingSpinner() {
-  return (
-    <div className="flex items-center justify-center py-8">
-      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[var(--color-primary)]" />
-    </div>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return <div className="py-8 text-center text-[12.5px] text-[var(--color-text-dim)]">{message}</div>;
-}
-
-/**
- * 설계안 로드맵(Agent Canvas) 전체화면 오버레이 — `z-[70]`.
- *
- * **본문은 `<RoadmapGraph fill />`이다(리스트가 아니다).** 전체화면 페이지와 같은 그래프를
- * 그대로 띄우는 게 스펙이고, 그래야 "캔버스"가 화면마다 다른 걸 가리키지 않는다.
- *
- * 화면을 거의 다 쓴다(`m-3 flex-1`) — 위상 그래프를 좁은 모달에 넣으면 노드가 겹쳐서
- * 팬/줌을 해야만 읽히고, 그러면 "훑어보는" 용도 자체가 성립하지 않는다.
- */
-function AgentCanvasOverlay({ workspace, onClose }: { workspace: string; onClose: () => void }) {
-  const { data, refetch } = useRoadmap(workspace);
-  const nodes = data ?? [];
-  const specNode = nodes.find((n) => n.level === "spec");
-  const specLabel = specNode?.spec_path ? specNode.spec_path.split(/[\\/]/).filter(Boolean).pop() : specNode?.title;
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 z-[70] flex flex-col bg-black/60 backdrop-blur-sm"
-      style={{ animation: "agentCanvasModalFade 0.2s ease" }}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div
-        className="relative m-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-background)]"
-        style={{
-          animation: "agentCanvasModalUp 0.3s cubic-bezier(0.16,1,0.3,1)",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.55)",
-        }}
-      >
-        <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5">
-          <div className="flex min-w-0 flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
-              <span className="font-mono text-cyan-300/80">SYSTEM</span>
-              <ChevronRight size={12} />
-              <span className="font-semibold text-[var(--color-text)]">{workspace}</span>
-              {specLabel && (
-                <>
-                  <ChevronRight size={12} />
-                  <span className="truncate font-mono">AGENT CANVAS: {specLabel}</span>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <GitBranch size={16} className="text-cyan-300" />
-              <span className="rounded border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 font-mono text-[10.5px] text-cyan-300">
-                4-Tier · Spec ⊃ Run ⊃ Task ⊃ REQ
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span
-              className="hidden items-center gap-1.5 rounded-md border border-[var(--color-border)] px-2 py-1 text-[11px] text-[var(--color-text-muted)] sm:inline-flex"
-              title="4초 폴링으로 실시간 반영"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 ck-pulse-dot" /> Polling 4s
-            </span>
-            <span className="hidden text-[13px] text-[var(--color-text-muted)] sm:inline">Esc로 닫기</span>
-            <button
-              onClick={onClose}
-              className="group flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] transition-all hover:border-rose-400 hover:bg-rose-500/15 hover:text-white"
-              title="닫기 (Esc)"
-            >
-              <X size={20} className="transition-transform group-hover:rotate-90" />
-            </button>
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1">
-          {nodes.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">
-              Agent Canvas 데이터가 없습니다
-            </div>
-          ) : (
-            <RoadmapTab workspace={workspace} fill onEdited={refetch} />
-          )}
-        </div>
-
-        <div className="shrink-0 px-3 pb-3 pt-1">
-          <LiveLogTail workspace={workspace} />
-        </div>
-      </div>
-      <style>{`
-        @keyframes agentCanvasModalFade{from{opacity:0}to{opacity:1}}
-        @keyframes agentCanvasModalUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
-      `}</style>
-    </div>
-  );
-}
-
 export function Sessions() {
   const { data, loading } = useWorkspaces();
   const navigate = useNavigate();
@@ -259,18 +108,10 @@ export function Sessions() {
   const [agentCanvasModal, setAgentCanvasModal] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<HistorySearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [cpDraft, setCpDraft] = useState({ title: "", category: "general", markdown: "" });
-  const [cpBusy, setCpBusy] = useState(false);
-  const [cpApplyResult, setCpApplyResult] = useState<WorkspaceScopedResult<WorkspaceCheckpointApplyResult> | null>(null);
-  const [dirtyCheckpoints, setDirtyCheckpoints] = useState<Set<string>>(new Set());
-  const [editingCheckpoint, setEditingCheckpoint] = useState<Checkpoint | null>(null);
-  const [cpEditDraft, setCpEditDraft] = useState({ title: "", category: "general", markdown: "" });
   const { userId } = useAuth();
 
   const history = useWorkspaceHistory(selectedWorkspace);
   const decisions = useWorkspaceDecisions(selectedWorkspace);
-  const checkpoints = useWorkspaceCheckpoints(checkpointModal);
-  const visibleCpApplyResult = resultForWorkspace(cpApplyResult, checkpointModal);
 
   const workspaces = useMemo(() => data ?? [], [data]);
   const isSearchMode = searchQuery.trim().length >= 2;
@@ -740,19 +581,20 @@ export function Sessions() {
           {filteredWorkspaces.map((ws, wi) => {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);
-            const color = getWsColor(ws.name, wi);
+            const color = getWorkspaceColor(ws.name, wi);
             return (
               <div
                 key={ws.name}
                 className={cn(
-                  "rounded-lg border bg-[var(--color-surface)]",
-                  isSel ? "border-[var(--color-border)] bg-cyan-400/[0.045]" : "border-[var(--color-border)]",
+                  "rounded-lg border border-[var(--color-border)] transition-[opacity,filter,background-color] duration-200",
+                  workspaceCardEmphasis(isSel, selectedWorkspace !== null),
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
                 <div
                   role="button"
                   tabIndex={0}
+                  aria-pressed={isSel}
                   onClick={() => setSelectedWorkspace(isSel ? null : ws.name)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
@@ -783,20 +625,21 @@ export function Sessions() {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);
             const h = healthOf(ws);
-            const color = getWsColor(ws.name, wi);
+            const color = getWorkspaceColor(ws.name, wi);
             return (
               <div
                 key={ws.name}
                 role="button"
                 tabIndex={0}
+                aria-pressed={isSel}
                 onClick={() => setSelectedWorkspace(isSel ? null : ws.name)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
                 }}
                 className={cn(
-                  "ck-card flex cursor-pointer flex-col justify-between rounded-xl border bg-[var(--color-surface)] p-4",
+                  "ck-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-4 transition-[opacity,filter,background-color] duration-200",
                   WORKSPACE_CARD_FOCUS_CLASSES,
-                  isSel ? "border-[var(--color-border)] bg-cyan-400/[0.045]" : "border-[var(--color-border)]",
+                  workspaceCardEmphasis(isSel, selectedWorkspace !== null),
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
@@ -882,20 +725,21 @@ export function Sessions() {
           {filteredWorkspaces.map((ws, wi) => {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);
-            const color = getWsColor(ws.name, wi);
+            const color = getWorkspaceColor(ws.name, wi);
             return (
               <div
                 key={ws.name}
                 role="button"
                 tabIndex={0}
+                aria-pressed={isSel}
                 onClick={() => setSelectedWorkspace(isSel ? null : ws.name)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
                 }}
                 className={cn(
-                  "ck-card flex cursor-pointer items-center gap-3 rounded-lg border bg-[var(--color-surface)] px-3 py-2",
+                  "ck-card flex cursor-pointer items-center gap-3 rounded-lg border border-[var(--color-border)] px-3 py-2 transition-[opacity,filter,background-color] duration-200",
                   WORKSPACE_CARD_FOCUS_CLASSES,
-                  isSel ? "border-[var(--color-border)] bg-cyan-400/[0.045]" : "border-[var(--color-border)]",
+                  workspaceCardEmphasis(isSel, selectedWorkspace !== null),
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
@@ -994,136 +838,11 @@ export function Sessions() {
         </Modal>
       )}
 
-      {/* Checkpoints 모달 — 커밋 전 재발방지 체크리스트 */}
+      {/* Checkpoints 모달 — 커밋 전 재발방지 체크리스트. §7B: SchedulePage와 공유하려고
+          자기완결형 컴포넌트로 분리했다(동작 변경 없음). */}
       {checkpointModal && (
-        <Modal onClose={() => setCheckpointModal(null)}>
-          <h3 className="mb-1 flex items-center gap-2 text-[15px] font-semibold text-[var(--color-text-bright)]">
-            <Shield size={16} className="text-amber-400" /> {checkpointModal} 체크포인트
-          </h3>
-          <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
-            <p>이 도메인의 프로젝트에서 작업 컨텍스트를 불러올 때 <code>.claude/rules/&lt;category&gt;/</code>로 동기화되어 Claude Code에 자동 주입됩니다.</p>
-            <p className="mt-1 text-[var(--color-text-dim)]">이 워크스페이스의 체크포인트는 소속된 모든 프로젝트에 함께 적용됩니다.</p>
-            <p className="mt-1 text-[var(--color-text-dim)]"><code>.claude/rules/</code>의 생성 파일은 동기화 결과입니다. 직접 수정하면 다음 적용에서 충돌로 표시하고 덮어쓰지 않습니다.</p>
-          </div>
-          {checkpoints.loading ? (
-            <LoadingSpinner />
-          ) : checkpoints.data.length === 0 ? (
-            <EmptyState message="등록된 체크포인트가 없습니다" />
-          ) : (
-            <div className="space-y-3">
-              {checkpoints.data.map((cp) => (
-                <div key={cp.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-3">
-                  <div className="mb-1.5 flex items-center gap-2">
-                    <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] text-amber-300">
-                      {cp.id}
-                    </span>
-                    <span className="rounded border border-[var(--color-border)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-text-dim)]">
-                      {cp.category}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--color-text)]">{cp.title}</span>
-                    {dirtyCheckpoints.has(cp.id) && <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300">수정됨</span>}
-                    <button disabled={cpBusy || !userId} onClick={() => {
-                      setEditingCheckpoint(cp);
-                      setCpEditDraft({ title: cp.title, category: cp.category || "general", markdown: cp.learned_from ?? (cp.checklist ?? []).map((item) => `- ${item}`).join("\n") });
-                    }} className="shrink-0 rounded border border-cyan-500/40 px-1.5 py-0.5 text-[10.5px] text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-40">수정</button>
-                    <button
-                      disabled={cpBusy || !userId}
-                      onClick={async () => {
-                        setCpBusy(true);
-                        try {
-                          await deleteWorkspaceCheckpoint(userId!, checkpointModal, cp.id);
-                          checkpoints.refresh();
-                        } finally {
-                          setCpBusy(false);
-                        }
-                      }}
-                      className="shrink-0 rounded border border-rose-500/40 px-1.5 py-0.5 text-[10.5px] text-rose-300 hover:bg-rose-500/10 disabled:opacity-40"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                  {cp.learned_from ? <div className="max-h-28 overflow-hidden whitespace-pre-wrap text-[12px] leading-relaxed text-[var(--color-text-muted)]">{cp.learned_from}</div> : (cp.checklist?.length ?? 0) > 0 && (
-                    <ul className="list-disc space-y-0.5 pl-5 text-[12.5px] text-[var(--color-text-muted)]">
-                      {cp.checklist!.map((c, i) => (
-                        <li key={i}>{c}</li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="mt-2 font-mono text-[10.5px] text-[var(--color-text-dim)]">
-                    워크스페이스 전체 프로젝트 → .claude/rules/{cp.category || "general"}/
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* 워크스페이스 단위 체크포인트 편집·일괄 적용. */}
-          <div className="mt-4 space-y-2 border-t border-[var(--color-border)] pt-3">
-            <div className="font-mono text-[11px] text-[var(--color-text-muted)]">새 체크포인트</div>
-            <div className="flex flex-wrap gap-2">
-              <label className="w-40 text-[10px] text-[var(--color-text-dim)]">규칙 폴더
-                <input value={cpDraft.category} onChange={(e) => setCpDraft({ ...cpDraft, category: e.target.value })} placeholder="general" className="mt-1 w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 font-mono text-[12px] text-[var(--color-text)]" />
-              </label>
-              <input
-                value={cpDraft.title}
-                onChange={(e) => setCpDraft({ ...cpDraft, title: e.target.value })}
-                placeholder="제목"
-                className="min-w-40 flex-1 rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 text-[12.5px] text-[var(--color-text)]"
-              />
-            </div>
-            <textarea
-              value={cpDraft.markdown}
-              onChange={(e) => setCpDraft({ ...cpDraft, markdown: e.target.value })}
-              placeholder={"Markdown 내용을 붙여넣으세요"}
-              rows={7}
-              className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 text-[12.5px] text-[var(--color-text)]"
-            />
-            <button
-              disabled={cpBusy || !cpDraft.title.trim() || !cpDraft.markdown.trim() || !userId}
-              onClick={async () => {
-                setCpBusy(true);
-                try {
-                  const saved = await createWorkspaceCheckpoint(userId!, checkpointModal, {
-                    category: cpDraft.category.trim() || "general",
-                    title: cpDraft.title.trim(),
-                    learnedFrom: cpDraft.markdown,
-                    appliesTo: [],
-                  });
-                  setDirtyCheckpoints((current) => new Set(current).add(saved.id));
-                  setCpDraft({ title: "", category: "general", markdown: "" });
-                  checkpoints.refresh();
-                } finally {
-                  setCpBusy(false);
-                }
-              }}
-              className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[12px] font-bold text-amber-300 transition-colors hover:bg-amber-500/20 disabled:opacity-40"
-            >
-              체크포인트 저장
-            </button>
-            <button disabled={cpBusy || checkpoints.data.length === 0 || !userId} onClick={async () => {
-              setCpBusy(true);
-              try {
-                const result = await applyWorkspaceCheckpoints(userId!, checkpointModal);
-                setCpApplyResult({ workspace: checkpointModal, value: result });
-                setDirtyCheckpoints((current) => new Set([...current].filter((id) => !result.appliedIds.includes(id))));
-              } finally { setCpBusy(false); }
-            }} className="w-full rounded-xl border border-amber-400/45 bg-gradient-to-r from-amber-500/15 to-orange-500/[0.06] px-4 py-2.5 text-[13px] font-bold text-amber-200 hover:border-amber-300 disabled:opacity-40">저장 후 적용 · 전체 프로젝트</button>
-            {visibleCpApplyResult && <div className={`rounded-lg border p-2.5 text-[11px] ${visibleCpApplyResult.conflicts.length || visibleCpApplyResult.failed.length ? "border-amber-400/35 bg-amber-400/[0.06] text-amber-100" : "border-emerald-400/30 bg-emerald-400/[0.05] text-emerald-200"}`}>
-              <div className="font-semibold">{checkpointModal} 적용 결과 · 변경된 체크포인트 {visibleCpApplyResult.changedCheckpoints}건 · 파일 {visibleCpApplyResult.filesWritten}개 적용</div>
-              <div className="mt-1">충돌 {visibleCpApplyResult.conflicts.length} · 실패 {visibleCpApplyResult.failed.length}</div>
-              {visibleCpApplyResult.conflicts.map((item) => <div key={`${item.id}:${item.file}`} className="mt-1 text-[10px]"><div className="font-mono">충돌: {item.file}</div><div className="mt-0.5 opacity-70">{item.reason}</div></div>)}
-            </div>}
-          </div>
-        </Modal>
+        <CheckpointPanel workspace={checkpointModal} onClose={() => setCheckpointModal(null)} />
       )}
-
-      {editingCheckpoint && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditingCheckpoint(null); }}>
-        <div className="flex h-[72vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-cyan-400/25 bg-[var(--color-surface)] shadow-2xl">
-          <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-5 py-4"><div className="min-w-0 flex-1"><div className="font-mono text-[10px] text-cyan-300">{editingCheckpoint.id}</div><div className="text-[16px] font-semibold">체크포인트 수정</div></div><button onClick={() => setEditingCheckpoint(null)}>✕</button></div>
-          <div className="grid grid-cols-[160px_1fr] gap-3 border-b border-[var(--color-border)] p-4"><input value={cpEditDraft.category} onChange={(e) => setCpEditDraft({ ...cpEditDraft, category: e.target.value })} placeholder="규칙 폴더" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 font-mono text-[12px]" /><input value={cpEditDraft.title} onChange={(e) => setCpEditDraft({ ...cpEditDraft, title: e.target.value })} placeholder="제목" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-[13px]" /></div>
-          <textarea autoFocus value={cpEditDraft.markdown} onChange={(e) => setCpEditDraft({ ...cpEditDraft, markdown: e.target.value })} className="ck-scroll min-h-0 flex-1 resize-none bg-[#070b12] p-5 font-mono text-[12.5px] leading-6 text-slate-200 outline-none" placeholder="Markdown 내용을 붙여넣으세요" />
-          <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-3"><button onClick={() => setEditingCheckpoint(null)} className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px]">취소</button><button disabled={cpBusy || !cpEditDraft.title.trim() || !cpEditDraft.markdown.trim()} onClick={async () => { setCpBusy(true); try { await updateWorkspaceCheckpoint(userId!, checkpointModal!, editingCheckpoint.id, { title: cpEditDraft.title.trim(), category: cpEditDraft.category.trim() || "general", learnedFrom: cpEditDraft.markdown, appliesTo: [] }); setDirtyCheckpoints((current) => new Set(current).add(editingCheckpoint.id)); checkpoints.refresh(); setEditingCheckpoint(null); } finally { setCpBusy(false); } }} className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[12px] font-bold text-cyan-200">수정 저장</button></div>
-        </div>
-      </div>}
 
       {/* 로드맵(Agent Canvas) 전체화면 오버레이 모달 — z-[70] (설계안) */}
       {agentCanvasModal && (

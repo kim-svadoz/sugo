@@ -6,18 +6,21 @@ import { requireUser } from "../auth/requireUser.js";
 import {
   checkpointCreateSchema,
   checkpointUpdateSchema,
+  dueDateSchema,
   groupCreateSchema,
   linkSchema,
   manualStatusClearSchema,
   manualStatusSchema,
   parentSchema,
   positionSchema,
+  quickSpecSchema,
   renameSchema,
   runSpecSchema,
 } from "../schemas/workspaces.js";
 import {
   clearManualStatus,
   createCheckpoint,
+  createQuickSpec,
   createRoadmapGroup,
   deleteCheckpointRow,
   deleteRoadmapGroup,
@@ -27,6 +30,7 @@ import {
   getHistory,
   getRecentHistory,
   getRoadmap,
+  getScheduledSpecs,
   getSpecContent,
   getTasks,
   getWorkspaceProjectPaths,
@@ -38,6 +42,7 @@ import {
   searchWorkspaces,
   dropSubtree,
   setManualStatus,
+  setRoadmapDueDate,
   setRoadmapParent,
   setRoadmapPosition,
   unlinkRoadmapNodes,
@@ -72,6 +77,14 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     const userId = requireUserId(req, res);
     if (!userId) return;
     res.json({ workspaces: await listWorkspaces(db, userId) });
+  });
+
+  // §7B Schedule 탭 — 워크스페이스 비종속. `/:name/...` 라우트보다 먼저 등록해야
+  // Express가 "schedule"을 workspace 이름으로 오인하지 않는다.
+  router.get("/schedule", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    res.json({ specs: await getScheduledSpecs(db, userId) });
   });
 
   router.get("/recent-history", async (req, res) => {
@@ -302,6 +315,27 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     if (!userId) return;
     await setRoadmapPosition(db, userId, req.params.name, req.body.nodeId, req.body.x, req.body.y);
     res.json({ ok: true });
+  });
+
+  // §7B Schedule 탭 — level='spec' 노드 전용. CLI(sugo_plan)는 이 경로를 절대 안 부른다.
+  router.post("/:name/roadmap/due-date", validateBody(dueDateSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const result = await setRoadmapDueDate(db, userId, req.params.name, req.body.nodeId, req.body.dueDate);
+    if (!result.ok) {
+      const status = result.errorCode === "NODE_NOT_FOUND" ? 404 : 400;
+      res.status(status).json({ ok: false, errorCode: result.errorCode });
+      return;
+    }
+    res.json({ ok: true });
+  });
+
+  // §7B Run/Task 없이 level='spec' 노드만 단독 생성("+ 일정 추가").
+  router.post("/:name/roadmap/quick-spec", validateBody(quickSpecSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const created = await createQuickSpec(db, userId, req.params.name, req.body.title, req.body.dueDate ?? null);
+    res.json({ ok: true, id: created.id });
   });
 
   return router;

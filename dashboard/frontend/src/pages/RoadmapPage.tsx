@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
 import { LiveLogTail } from "../components/LiveConsole.js";
 import { useRoadmap } from "../hooks/useRoadmap.js";
@@ -13,6 +13,8 @@ import { useRoadmap } from "../hooks/useRoadmap.js";
 export function RoadmapPage() {
   const { workspace = "" } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const focusNodeId = searchParams.get("focus") ?? undefined;
   const { data } = useRoadmap(workspace);
   const nodes = data ?? [];
 
@@ -55,7 +57,7 @@ export function RoadmapPage() {
       </div>
 
       <div className="min-h-0 flex-1 p-3">
-        <RoadmapTab workspace={workspace} fill />
+        <RoadmapTab workspace={workspace} focusNodeId={focusNodeId} fill />
       </div>
 
       <div className="h-28 shrink-0 overflow-hidden border-t border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">

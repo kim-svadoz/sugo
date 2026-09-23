@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type { DbClient } from "../db/client.js";
 import { ensureWorkspaceDeletedAtColumn } from "./syncService.js";
 import { readySet, topoSort, wouldCreateCycle } from "./roadmapGraph.js";
@@ -263,6 +264,7 @@ export interface RoadmapNodeRow {
   manual_at: string | null;
   pos_x: number | null;
   pos_y: number | null;
+  due_date: string | null;
 }
 
 // Row shape as it comes off the wire - JSON columns are driver-dependent
@@ -285,6 +287,67 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
     work_result: parseMaybeJson<unknown>(r.work_result, null),
     lineage: parseMaybeJson<unknown>(r.lineage, null),
   }));
+}
+
+// ---- §7B Schedule 탭 (due_date는 dashboard 전용, CLI/플러그인 sync가 안 건드림) ----
+
+export interface ScheduledSpecRow {
+  id: string;
+  workspace_name: string;
+  title: string;
+  status: string;
+  due_date: string | null;
+}
+
+/** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
+ * 프론트가 due_date 유무로 캘린더/"기한 미정" 리스트를 나눈다(§7B). */
+export async function getScheduledSpecs(db: DbClient, userId: string): Promise<ScheduledSpecRow[]> {
+  return db.query<ScheduledSpecRow>(
+    "SELECT id, workspace_name, title, status, due_date FROM sugo_roadmap_nodes WHERE user_id = ? AND level = 'spec' ORDER BY (due_date IS NULL), due_date, id",
+    [userId]
+  );
+}
+
+export type SetDueDateResult = { ok: true } | { ok: false; errorCode: "NODE_NOT_FOUND" | "INVALID_LEVEL" };
+
+/** level='spec' 노드에만 due_date를 붙인다. 다른 level에 시도하면 INVALID_LEVEL. */
+export async function setRoadmapDueDate(
+  db: DbClient,
+  userId: string,
+  workspaceName: string,
+  nodeId: string,
+  dueDate: string | null
+): Promise<SetDueDateResult> {
+  const rows = await db.query<{ level: string }>(
+    "SELECT level FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [userId, workspaceName, nodeId]
+  );
+  if (rows.length === 0) return { ok: false, errorCode: "NODE_NOT_FOUND" };
+  if (rows[0].level !== "spec") return { ok: false, errorCode: "INVALID_LEVEL" };
+  await db.exec("UPDATE sugo_roadmap_nodes SET due_date = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+    dueDate,
+    userId,
+    workspaceName,
+    nodeId,
+  ]);
+  return { ok: true };
+}
+
+/** Run/Task 없이 level='spec' 노드만 단독 생성한다. 사용자가 정식 feat 착수 전에
+ * 일정만 먼저 잡아둘 때 쓴다(§7B "+ 일정 추가"). */
+export async function createQuickSpec(
+  db: DbClient,
+  userId: string,
+  workspaceName: string,
+  title: string,
+  dueDate: string | null
+): Promise<{ id: string }> {
+  const id = `spec-manual-${randomBytes(4).toString("hex")}`;
+  await db.exec(
+    "INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, status, due_date) VALUES (?, ?, ?, ?, 'spec', 'pending', ?)",
+    [id, userId, workspaceName, title, dueDate]
+  );
+  return { id };
 }
 
 // ---- Checkpoint CRUD (§3.3, dashboard-initiated - separate from plugin sync) ----

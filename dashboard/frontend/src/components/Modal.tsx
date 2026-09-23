@@ -1,0 +1,42 @@
+import { useEffect } from "react";
+import { X } from "lucide-react";
+
+/** 설계안 Checkpoints 모달에서 쓰던 걸 §7B SchedulePage와 공유하기 위해 분리했다.
+ * 동작은 그대로(ESC 닫기, 오버레이 클릭 닫기, max-w-3xl) — 구현 아님. */
+export function Modal({
+  children,
+  onClose,
+  disableEscape,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+  /** §7B — 이 Modal 위에 다른 오버레이(체크포인트/캔버스)가 열려 있는 동안 true로 두면
+   * Escape를 무시한다. 안 그러면 이 Modal과 위에 뜬 오버레이가 같은 keydown에 동시에
+   * 반응해서 Esc 한 번에 둘 다 닫혀버린다(오버레이만 닫고 이 Modal로 돌아와야 하는데). */
+  disableEscape?: boolean;
+}) {
+  useEffect(() => {
+    if (disableEscape) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, disableEscape]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="max-h-[80vh] w-full max-w-3xl overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-end border-b border-[var(--color-border)] p-2">
+          <button onClick={onClose} className="rounded-lg p-2 hover:bg-[var(--color-border)]" title="Close (ESC)">
+            <X size={20} className="text-[var(--color-text-muted)]" />
+          </button>
+        </div>
+        <div className="max-h-[calc(80vh-60px)] overflow-auto p-6">{children}</div>
+      </div>
+    </div>
+  );
+}

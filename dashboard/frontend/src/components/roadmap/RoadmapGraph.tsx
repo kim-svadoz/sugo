@@ -11,6 +11,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useNodesState,
+  useReactFlow,
   getBezierPath,
   type Connection,
   type Edge,
@@ -1040,16 +1041,23 @@ export function RoadmapGraph({
   fill = false,
   onEdited,
   nodeFilter,
+  focusNodeId,
 }: {
   workspace: string;
   fill?: boolean;
   /** RoadmapTab의 "진행 중심" 결과. 주면 이 목록만 그린다(폴링은 계속 전체를 읽는다). */
   nodeFilter?: RoadmapNode[];
   onEdited?: () => void;
+  /** §7B Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). 로드된 뒤 그 노드로 팬 + 선택하고
+   * 1회만 적용한다(이후 폴링 갱신에서 다시 튀지 않게 `focusedOnce`로 잠근다). */
+  focusNodeId?: string;
 }) {
   const { userId } = useAuth();
   const { data, loading, error, refetch } = useRoadmap(workspace);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // ReactFlowProvider 하위(RoadmapGraphPanel이 감쌈)라 onInit/ref 없이 바로 인스턴스를 쓸 수 있다.
+  const rf = useReactFlow<FlowNode>();
+  const [focusedOnce, setFocusedOnce] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [binOpen, setBinOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -1083,6 +1091,15 @@ export function RoadmapGraph({
     );
     setSeeded(true);
   }, [nodes, seeded]);
+
+  // §7B Schedule 탭에서 특정 spec으로 딥링크했을 때 그 노드로 팬 + 선택한다.
+  useEffect(() => {
+    if (!focusNodeId || focusedOnce) return;
+    if (!nodes.some((n) => n.id === focusNodeId)) return;
+    setSelectedId(focusNodeId);
+    rf.fitView({ nodes: [{ id: focusNodeId }], padding: 0.4, maxZoom: 1, duration: 400 });
+    setFocusedOnce(true);
+  }, [focusNodeId, focusedOnce, nodes, rf]);
 
   useEffect(() => {
     const ids = buildLineageChains(nodes).map((chain) => chain.id);
@@ -1704,6 +1721,8 @@ export function RoadmapGraphPanel(props: {
   onEdited?: () => void;
   /** RoadmapTab의 "진행 중심" 필터 결과를 그대로 흘려보낸다. */
   nodeFilter?: RoadmapNode[];
+  /** §7B Schedule 탭 딥링크. */
+  focusNodeId?: string;
 }) {
   return (
     <ReactFlowProvider>

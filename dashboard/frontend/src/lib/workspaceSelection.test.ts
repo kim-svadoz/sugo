@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { WORKSPACE_CARD_FOCUS_CLASSES, workspaceCardShadow } from "./workspaceSelection.js";
+import { WORKSPACE_CARD_FOCUS_CLASSES, workspaceCardEmphasis, workspaceCardShadow } from "./workspaceSelection.js";
 
 describe("workspace selection chrome", () => {
   it("선택해도 도메인 고유 왼쪽 색을 보존하되 잘리는 바깥 링은 만들지 않는다", () => {
@@ -14,5 +14,12 @@ describe("workspace selection chrome", () => {
     expect(WORKSPACE_CARD_FOCUS_CLASSES).toContain("focus-visible:outline-none");
     expect(WORKSPACE_CARD_FOCUS_CLASSES).toContain("focus-visible:bg-cyan");
     expect(WORKSPACE_CARD_FOCUS_CLASSES).not.toContain("ring-");
+  });
+
+  it("선택 카드와 나머지 카드 사이에 외곽선 없는 명도 대비를 만든다", () => {
+    expect(workspaceCardEmphasis(true, true)).toContain("bg-cyan-400/[0.075]");
+    expect(workspaceCardEmphasis(false, true)).toContain("opacity-[0.82]");
+    expect(workspaceCardEmphasis(false, true)).toContain("saturate-[0.85]");
+    expect(workspaceCardEmphasis(false, false)).toContain("opacity-100");
   });
 });

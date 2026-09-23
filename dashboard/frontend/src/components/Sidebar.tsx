@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { RefreshCw, Shapes, ShieldHalf, SlidersHorizontal, Wand2, Zap } from "lucide-react";
+import { CalendarDays, RefreshCw, Shapes, ShieldHalf, SlidersHorizontal, Wand2, Zap } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
@@ -7,12 +7,13 @@ import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 /**
  * 설계안 Sidebar — 슬림 아이콘 LNB(w-16 md:w-20).
  *
- * **navItems 순서 엄수**(§5.2 표): Workspaces·Skills·Harness·Playbook·Settings.
+ * **navItems 순서 엄수**(§5.2 표): Workspaces·Schedule·Skills·Harness·Playbook·Settings.
  * Workspaces만 라우트가 `/sessions`이고 나머지는 라벨 소문자와 일치한다 — 홈이 원래
  * "세션 목록"이었다가 "워크스페이스"로 라벨만 바뀐 흔적이라 URL과 라벨이 어긋나 있다.
  */
 const navItems = [
   { to: "/sessions", icon: Shapes, label: "Workspaces" },
+  { to: "/schedule", icon: CalendarDays, label: "Schedule" },
   { to: "/skills", icon: Zap, label: "Skills" },
   { to: "/harness", icon: ShieldHalf, label: "Harness" },
   { to: "/playbook", icon: Wand2, label: "Playbook" },

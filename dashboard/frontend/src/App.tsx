@@ -5,6 +5,7 @@ import { Layout } from "./components/Layout.js";
 import { Login } from "./pages/Login.js";
 import { AuthCallback } from "./pages/AuthCallback.js";
 import { Sessions } from "./pages/Sessions.js";
+import { SchedulePage } from "./pages/SchedulePage.js";
 import { RoadmapPage } from "./pages/RoadmapPage.js";
 import { Skills } from "./pages/Skills.js";
 import { Harness } from "./pages/Harness.js";
@@ -25,6 +26,7 @@ export function App() {
             <Route element={<Layout />}>
               <Route path="/" element={<Navigate to="/sessions" replace />} />
               <Route path="/sessions" element={<Sessions />} />
+              <Route path="/schedule" element={<SchedulePage />} />
               <Route path="/roadmap/:workspace" element={<RoadmapPage />} />
               <Route path="/skills" element={<Skills />} />
               <Route path="/harness" element={<Harness />} />

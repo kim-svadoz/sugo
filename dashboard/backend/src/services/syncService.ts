@@ -68,6 +68,33 @@ export async function ensureWorkspaceDeletedAtColumn(db: DbClient): Promise<bool
   }
 }
 
+/** §7B `sugo_roadmap_nodes.due_date` 자가보강 — 위 `ensureWorkspaceDeletedAtColumn`과 같은 패턴. */
+let dueDateColState: boolean | null = null;
+
+/** 테스트 전용 — 모듈 레벨 캐시를 비운다. */
+export function __resetDueDateColState(): void {
+  dueDateColState = null;
+}
+
+export async function ensureRoadmapDueDateColumn(db: DbClient): Promise<boolean> {
+  if (dueDateColState !== null) return dueDateColState;
+  try {
+    await db.query("SELECT due_date FROM sugo_roadmap_nodes LIMIT 1");
+    dueDateColState = true;
+    return true;
+  } catch {
+    // 없다 → 추가를 시도한다.
+  }
+  try {
+    await db.exec("ALTER TABLE sugo_roadmap_nodes ADD COLUMN due_date DATE NULL");
+    dueDateColState = true;
+    return true;
+  } catch {
+    dueDateColState = false;
+    return false;
+  }
+}
+
 async function getOrCreateWorkspaceId(db: DbClient, userId: string, name: string): Promise<number> {
   const rows = await db.query<{ id: number }>(
     "SELECT id FROM sugo_workspaces WHERE user_id = ? AND name = ?",

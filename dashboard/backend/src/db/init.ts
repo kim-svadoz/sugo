@@ -6,6 +6,7 @@ import { createMySqlClient } from "./mysqlClient.js";
 import { createSqliteClient } from "./sqliteClient.js";
 import { migrateCanvasToRoadmap } from "./migrations.js";
 import { migrateWstToRun } from "../services/workspaceService.js";
+import { ensureRoadmapDueDateColumn } from "../services/syncService.js";
 import { config } from "../config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -19,6 +20,7 @@ export async function initDb(): Promise<DbClient> {
     const schemaPath = join(__dirname, "..", "..", "test", "schema.sqlite.sql");
     await client.execScript(readFileSync(schemaPath, "utf8"));
     await migrateWstToRun(client);
+    await ensureRoadmapDueDateColumn(client);
     return client;
   }
   const client = createMySqlClient(config.mysql);
@@ -27,5 +29,8 @@ export async function initDb(): Promise<DbClient> {
   await client.execScript(readFileSync(schemaPath, "utf8"));
   // §7 구 `wst-` 접두어 → `run-`. 테이블이 있어야 하므로 스키마 적용 뒤에 돈다.
   await migrateWstToRun(client);
+  // §7B `due_date` 자가보강 — 스키마 파일의 CREATE TABLE IF NOT EXISTS는 이미 존재하는
+  // 테이블에는 컬럼을 못 붙이므로, 업그레이드 배포를 위해 별도로 돈다.
+  await ensureRoadmapDueDateColumn(client);
   return client;
 }

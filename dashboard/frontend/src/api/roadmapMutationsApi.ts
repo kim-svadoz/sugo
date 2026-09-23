@@ -73,3 +73,38 @@ export function unlinkRoadmapNodes(userId: string, workspace: string, from: stri
     body: JSON.stringify({ from, to }),
   });
 }
+
+// ── §7B Schedule 탭 ─────────────────────────────────────────────────────────
+// due_date는 항상 화면에서만 입력한다(2026-09-23 사용자 결정) — sugo_plan CLI는 이 경로를 모른다.
+
+export interface ScheduledSpec {
+  id: string;
+  workspace_name: string;
+  title: string;
+  status: string;
+  due_date: string | null;
+}
+
+/** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드를 가로질러 가져온다.
+ * `/:name/...`이 아니라 워크스페이스 비종속 엔드포인트다. */
+export async function getSchedule(userId: string): Promise<ScheduledSpec[]> {
+  const res = await apiJson<{ specs: ScheduledSpec[] }>(withUserId("/api/workspaces/schedule", userId));
+  return res.specs;
+}
+
+/** level='spec' 노드에만 적용 가능. dueDate=null이면 "기한 미정"으로 되돌린다.
+ * 실패(404/400)는 apiJson이 그대로 throw한다 — 호출부에서 잡아 안내한다. */
+export function setDueDate(userId: string, workspace: string, nodeId: string, dueDate: string | null) {
+  return apiJson<{ ok: true }>(withUserId(path(workspace, "/due-date"), userId), {
+    method: "POST",
+    body: JSON.stringify({ nodeId, dueDate }),
+  });
+}
+
+/** Run/Task 없이 level='spec' 노드만 단독 생성한다("+ 일정 추가"). */
+export function createQuickSpec(userId: string, workspace: string, title: string, dueDate?: string | null) {
+  return apiJson<{ ok: boolean; id: string }>(withUserId(path(workspace, "/quick-spec"), userId), {
+    method: "POST",
+    body: JSON.stringify({ title, dueDate }),
+  });
+}

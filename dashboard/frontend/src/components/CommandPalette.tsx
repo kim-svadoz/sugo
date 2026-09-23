@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
+  CalendarDays,
   CornerDownLeft,
   LayoutGrid,
   Puzzle,
@@ -44,6 +45,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       // ⌘W/⌘H는 힌트를 뗐다 — ⌘W는 브라우저가 탭을 닫고 ⌘H는 macOS가 앱을 숨기므로
       // 페이지에서 가로챌 수 없다. 못 지킬 약속을 화면에 적어두느니 안 적는 게 낫다.
       { id: "ws", label: "Workspaces", icon: LayoutGrid, keywords: "워크스페이스 도메인 workspace", run: () => navigate("/sessions") },
+      { id: "schedule", label: "Schedule", icon: CalendarDays, keywords: "일정 캘린더 스케줄 마감일 calendar due date", run: () => navigate("/schedule") },
       { id: "skills", label: "Skills", hint: "⌘ S", icon: Puzzle, keywords: "스킬 에이전트 agent code test docs review", run: () => navigate("/skills") },
       { id: "harness", label: "Harness", icon: BookOpen, keywords: "하네스 규칙 archunit rules", run: () => navigate("/harness") },
       { id: "playbook", label: "Playbook", hint: "⌘ P", icon: Sparkles, keywords: "플레이북 체험 guide", run: () => navigate("/playbook") },
