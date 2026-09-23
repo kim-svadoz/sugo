@@ -44,8 +44,17 @@ if [ ! -f "$SECRET_FILE" ]; then
   chmod 600 "$SECRET_FILE"
 fi
 
-API_PORT="$(next_free_port "${DASHBOARD_API_PORT:-3001}")"
-UI_PORT="$(next_free_port "${DASHBOARD_UI_PORT:-5173}")"
+API_BASE_PORT="${DASHBOARD_API_PORT:-3001}"
+UI_BASE_PORT="${DASHBOARD_UI_PORT:-5173}"
+if [ "${DASHBOARD_STRICT_PORTS:-0}" = "1" ]; then
+  port_open "$API_BASE_PORT" && die "Sugo Dashboard API 전용 포트 :$API_BASE_PORT 가 이미 사용 중입니다."
+  port_open "$UI_BASE_PORT" && die "Sugo Dashboard UI 전용 포트 :$UI_BASE_PORT 가 이미 사용 중입니다."
+  API_PORT="$API_BASE_PORT"
+  UI_PORT="$UI_BASE_PORT"
+else
+  API_PORT="$(next_free_port "$API_BASE_PORT")"
+  UI_PORT="$(next_free_port "$UI_BASE_PORT")"
+fi
 
 export HOST="127.0.0.1"
 export PORT="$API_PORT"

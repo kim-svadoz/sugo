@@ -521,6 +521,8 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
             <div key={col[0].key} className="flex flex-col" style={{ width: PC_COL_W, gap: PC_CARD_GAP }}>
               {shown.map((item, ri) => {
                 const st = effStatus(item.node);
+                const isFeat = item.version === 0;
+                const cs = cardStyle(st, false, false);
                 return (
                   <div key={item.key} className="relative">
                     {/* 같은 컬럼의 앞 카드와 잇는 세로 점선 = 연속 차수 */}
@@ -531,10 +533,14 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
                       />
                     )}
                     <div
-                      className="cursor-pointer overflow-hidden rounded-xl border bg-violet-500/10 px-2.5 py-2 transition-all hover:-translate-y-[2px] hover:brightness-110"
+                      className={cn(
+                        "cursor-pointer overflow-hidden rounded-xl border transition-all hover:-translate-y-[2px] hover:brightness-110",
+                        isFeat ? "bg-[var(--color-surface)]" : "bg-violet-500/10 px-2.5 py-2",
+                      )}
                       style={{
                         height: LINEAGE_VCARD_H,
-                        borderColor: data.selectedItemId === item.key ? SEL : "rgba(139,92,246,0.5)",
+                        borderColor: data.selectedItemId === item.key ? SEL : isFeat ? cs.border : "rgba(139,92,246,0.5)",
+                        background: isFeat && st === "done" ? "#1b2620" : undefined,
                         boxShadow: selRing(data.selectedItemId === item.key),
                       }}
                       onClick={(e) => {
@@ -542,23 +548,48 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
                         data.onSelect?.(item.key);
                       }}
                     >
-                      <div className="flex items-center gap-1.5">
-                        <span className="shrink-0 rounded bg-violet-500/25 px-1.5 py-0.5 font-mono text-[12px] font-bold text-violet-100">
-                          v{item.version}-{item.version === 0 ? "feat" : "patch"}
-                        </span>
-                        {item.key === latestKey && (
-                          <span className="shrink-0 font-mono text-[10px] text-violet-300/80">최신</span>
-                        )}
-                        <span
-                          className="ml-auto shrink-0 font-mono text-[10px] uppercase"
-                          style={{ color: statusColor(st, false) }}
-                        >
-                          {st === "done" ? "완료" : cardStyle(st, false, false).label}
-                        </span>
-                      </div>
-                      <div className="mt-1 truncate text-[12.5px] text-[var(--color-text)]" title={item.title}>
-                        {item.version === 0 ? "✨" : "🔁"} {item.title}
-                      </div>
+                      {isFeat ? (
+                        <>
+                          <div className="h-1" style={{ background: cs.accent }} />
+                          <div className="px-2.5 py-2">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className="h-2 w-2 shrink-0 rounded-full"
+                                style={{ background: cs.accent, boxShadow: `0 0 4px ${cs.accent}66` }}
+                              />
+                              <span
+                                className="ml-auto rounded-full px-1.5 py-0.5 text-[9.5px] font-semibold"
+                                style={{ background: `${cs.accent}22`, color: cs.accent }}
+                              >
+                                {cs.label}
+                              </span>
+                            </div>
+                            <div className="mt-1 truncate text-[12.5px] leading-snug text-slate-100" title={item.title}>
+                              {item.title}
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-1.5">
+                            <span className="shrink-0 rounded bg-violet-500/25 px-1.5 py-0.5 font-mono text-[12px] font-bold text-violet-100">
+                              v{item.version}-patch
+                            </span>
+                            {item.key === latestKey && (
+                              <span className="shrink-0 font-mono text-[10px] text-violet-300/80">최신</span>
+                            )}
+                            <span
+                              className="ml-auto shrink-0 font-mono text-[10px] uppercase"
+                              style={{ color: statusColor(st, false) }}
+                            >
+                              {st === "done" ? "완료" : cs.label}
+                            </span>
+                          </div>
+                          <div className="mt-1 truncate text-[12.5px] text-[var(--color-text)]" title={item.title}>
+                            🔁 {item.title}
+                          </div>
+                        </>
+                      )}
                     </div>
                     {ri === 0 && hasChildren && (
                       <button

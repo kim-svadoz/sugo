@@ -11,7 +11,9 @@ describe("patch lineage visual", () => {
     expect(lineage).toContain("ri > 0");
   });
 
-  it("계보 카드는 보라색 배경과 기존 타이포 감도를 유지한다", () => {
+  it("v0는 상태 카드로 유지하고 v1+ patch만 보라색 계보 카드로 표시한다", () => {
+    expect(lineage).toContain("const isFeat = item.version === 0");
+    expect(lineage).toContain('isFeat ? "bg-[var(--color-surface)]" : "bg-violet-500/10 px-2.5 py-2"');
     expect(lineage).toContain("bg-violet-500/10");
     expect(lineage).toContain("text-violet-100");
     expect(lineage).toContain("font-mono text-[12px] font-bold");
