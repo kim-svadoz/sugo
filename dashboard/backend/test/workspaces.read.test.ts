@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { mkdtemp, readdir } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/index.js";
@@ -131,5 +133,34 @@ describe("checkpoint CRUD via dashboard (§3.3)", () => {
     await request(app).delete("/api/workspaces/ws1/checkpoints/CP-002").query({ userId: "u1" }).set("Authorization", auth).expect(200);
     rows = await db.query("SELECT * FROM sugo_checkpoints WHERE id='CP-002'");
     expect(rows).toEqual([]);
+  });
+});
+
+describe("POST /api/workspaces/:name/checkpoints/apply — §7B 프로젝트 스코프", () => {
+  it("applies_to가 있으면 그 프로젝트에만 파일을 쓴다 — 워크스페이스 전체로 되돌아가지 않는다", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    const { app } = await createApp(db);
+    const auth = await seedUserToken(db, "u1");
+    const projectA = await mkdtemp(join(tmpdir(), "sugo-apply-a-"));
+    const projectB = await mkdtemp(join(tmpdir(), "sugo-apply-b-"));
+
+    await request(app)
+      .post("/api/sync/workspace").set("Authorization", auth)
+      .send({ userId: "u1", name: "ws-scoped", projects: [projectA, projectB] });
+    await request(app)
+      .post("/api/workspaces/ws-scoped/checkpoints")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ id: "CP-scoped", title: "프로젝트 전용 규칙", category: "general", learnedFrom: "본문", appliesTo: [basename(projectA)] })
+      .expect(200);
+
+    const res = await request(app)
+      .post("/api/workspaces/ws-scoped/checkpoints/apply")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .expect(200);
+
+    expect(res.body.filesWritten).toBe(1);
+    await expect(readdir(join(projectA, ".claude", "rules", "general"))).resolves.toHaveLength(1);
+    await expect(readdir(join(projectB, ".claude"))).rejects.toThrow();
   });
 });

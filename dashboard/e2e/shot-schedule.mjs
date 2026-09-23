@@ -12,11 +12,13 @@ const plus = (n) => { const d = new Date(today); d.setDate(d.getDate() + n); ret
 const minus = (n) => { const d = new Date(today); d.setDate(d.getDate() - n); return iso(d); };
 
 const specs = [
-  { id: "spec-rd20", workspace_name: "orders", title: "쇼핑히스토리 rd20 개편", status: "in_progress", due_date: plus(3) },
-  { id: "spec-favorite-items", workspace_name: "orders", title: "관심 상품 추천", status: "pending", due_date: plus(3) },
-  { id: "spec-overdue", workspace_name: "orders", title: "지난 마감(테스트)", status: "in_progress", due_date: minus(2) },
-  { id: "spec-profile", workspace_name: "profile", title: "프로필 API v2 마이그레이션", status: "pending", due_date: plus(10) },
-  { id: "spec-manual-abc123", workspace_name: "inventory", title: "sugo 릴리스 체크리스트 정리", status: "pending", due_date: null },
+  { id: "spec-rd20", workspace_name: "orders", title: "쇼핑히스토리 rd20 개편", status: "in_progress", due_date: plus(3), project_path: "/home/u1/projects/orders-api" },
+  { id: "spec-favorite-items", workspace_name: "orders", title: "관심 상품 추천", status: "pending", due_date: plus(3), project_path: null },
+  { id: "spec-overdue", workspace_name: "orders", title: "지난 마감(테스트)", status: "in_progress", due_date: minus(2), project_path: null },
+  { id: "spec-profile", workspace_name: "profile", title: "프로필 API v2 마이그레이션", status: "pending", due_date: plus(10), project_path: null },
+  { id: "spec-manual-abc123", workspace_name: "inventory", title: "sugo 릴리스 체크리스트 정리", status: "pending", due_date: null, project_path: null },
+  // 오늘 달력에는 안 보이는 먼 미래 마감(전체 목록 토글 + 클릭 시 마감월로 점프하는지 확인용).
+  { id: "spec-far-future", workspace_name: "orders", title: "다음다음달 큰 개편", status: "pending", due_date: plus(70), project_path: "/home/u1/projects/orders-api" },
 ];
 
 const browser = await chromium.launch();
@@ -35,7 +37,7 @@ await page.route("**/api/**", (route) => {
     return route.fulfill({
       json: {
         workspaces: [
-          { name: "orders", projects: [], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
+          { name: "orders", projects: [{ project_path: "/home/u1/projects/orders-api", git_synced: 1 }, { project_path: "/home/u1/projects/shop-batch", git_synced: 0 }], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
           { name: "profile", projects: [], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
           { name: "inventory", projects: [], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
         ],
@@ -76,31 +78,67 @@ async function shot(path, file) {
 
 await shot("/schedule", "schedule-01-calendar.png");
 
-// 칩 클릭 → 상세 패널 (새 DatePicker 버튼 확인)
+// 칩 클릭 → 상세 패널. spec-favorite-items은 project_path=null이라 체크포인트 버튼이 비활성이어야 한다.
 await page.getByText("관심 상품 추천", { exact: true }).first().click();
 await page.waitForTimeout(400);
-await page.screenshot({ path: join(OUT, "schedule-02-detail-panel.png"), fullPage: false });
+await page.screenshot({ path: join(OUT, "schedule-02-detail-no-project.png"), fullPage: false });
 
-// DatePicker 팝오버 열기
+// DatePicker 팝오버 열기 → 선택 → "저장됨" 플래시 확인
 await page.locator("button:has-text('2026-09-26')").first().click();
 await page.waitForTimeout(300);
 await page.screenshot({ path: join(OUT, "schedule-03-datepicker-open.png"), fullPage: false });
 await page.keyboard.press("Escape");
+await page.waitForTimeout(1700); // savedFlash 자동소멸(1.6s) 이후 상태로 정리
 
-// 체크포인트 관리 → Schedule 위에 겹쳐 뜨는지(리다이렉트 아님) 확인
-await page.getByText("체크포인트 관리", { exact: true }).click();
+// 대상 프로젝트 지정 → 즉시 저장("저장됨" 플래시) + 체크포인트 버튼이 활성화되며 라벨이 바뀐다.
+await page.locator("select").first().selectOption("/home/u1/projects/orders-api");
+await page.waitForTimeout(300);
+await page.screenshot({ path: join(OUT, "schedule-04-project-assigned-saved-flash.png"), fullPage: false });
+
+// 이제 활성화된 프로젝트 체크포인트 버튼 → Schedule 위에 겹쳐 뜨는지(리다이렉트 아님) 확인
+await page.getByText("orders-api 프로젝트 체크포인트", { exact: true }).click();
 await page.waitForTimeout(400);
-await page.screenshot({ path: join(OUT, "schedule-04-checkpoint-overlay.png"), fullPage: false });
+await page.screenshot({ path: join(OUT, "schedule-05-checkpoint-overlay.png"), fullPage: false });
 await page.keyboard.press("Escape");
 await page.waitForTimeout(200);
 
 // Canvas에서 보기 → Schedule 위에 캔버스 오버레이(리다이렉트 아님), Esc로 Schedule 복귀 확인
 await page.getByText("Canvas에서 보기", { exact: true }).click();
 await page.waitForTimeout(600);
-await page.screenshot({ path: join(OUT, "schedule-05-canvas-overlay.png"), fullPage: false });
+await page.screenshot({ path: join(OUT, "schedule-06-canvas-overlay.png"), fullPage: false });
 await page.keyboard.press("Escape");
 await page.waitForTimeout(300);
-await page.screenshot({ path: join(OUT, "schedule-06-back-to-schedule.png"), fullPage: false });
+await page.screenshot({ path: join(OUT, "schedule-07-back-to-schedule.png"), fullPage: false });
+await page.keyboard.press("Escape");
+await page.waitForTimeout(200);
+
+// 이미 project_path가 실려온(실제 프로젝트 sync 유래) spec-rd20 — 별도 조작 없이도 라벨이 맞는지.
+await page.getByText("쇼핑히스토리 rd20 개편", { exact: true }).first().click();
+await page.waitForTimeout(400);
+await page.screenshot({ path: join(OUT, "schedule-08-detail-preassigned-project.png"), fullPage: false });
+await page.keyboard.press("Escape");
+await page.waitForTimeout(200);
+
+// SPEC 일정 추가 — 워크스페이스 선택 후 프로젝트 2단계 선택 플로우
+await page.getByText("SPEC 일정 추가", { exact: true }).click();
+await page.waitForTimeout(300);
+await page.screenshot({ path: join(OUT, "schedule-09-add-spec-modal.png"), fullPage: false });
+await page.locator("select").first().selectOption("orders");
+await page.waitForTimeout(200);
+await page.screenshot({ path: join(OUT, "schedule-10-add-spec-project-picker.png"), fullPage: false });
+await page.keyboard.press("Escape");
+await page.waitForTimeout(200);
+
+// 왼쪽 패널 "등록완료" 토글(마감일이 잡힌 것만) — 마감월이 지금 보이는 달을 벗어난
+// spec-far-future도 목록엔 보이고, 기한 미정(project-draft)은 안 보여야 한다.
+await page.getByRole("button", { name: /^등록완료 ·/ }).click();
+await page.waitForTimeout(300);
+await page.screenshot({ path: join(OUT, "schedule-11-scheduled-toggle.png"), fullPage: false });
+
+// 그 카드를 클릭하면 캘린더가 마감월로 점프해야 한다(오늘 달이 아니었던 걸 확인).
+await page.getByText("다음다음달 큰 개편", { exact: true }).first().click();
+await page.waitForTimeout(400);
+await page.screenshot({ path: join(OUT, "schedule-12-jump-to-due-month.png"), fullPage: false });
 
 await browser.close();
 console.log("DONE");

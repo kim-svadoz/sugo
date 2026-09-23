@@ -95,6 +95,37 @@ export async function ensureRoadmapDueDateColumn(db: DbClient): Promise<boolean>
   }
 }
 
+/**
+ * §7B `sugo_roadmap_nodes.project_path` 자가보강 — 위와 같은 패턴. 이 컬럼은 대시보드가
+ * 직접 채우는 값이라 `syncRoadmap`의 UPDATE SET 절에는 절대 넣지 않는다 — CLI 재동기화가
+ * 대시보드에서 지정한 프로젝트를 덮어쓰면 안 되기 때문이다.
+ */
+let projectPathColState: boolean | null = null;
+
+/** 테스트 전용 — 모듈 레벨 캐시를 비운다. */
+export function __resetProjectPathColState(): void {
+  projectPathColState = null;
+}
+
+export async function ensureRoadmapProjectPathColumn(db: DbClient): Promise<boolean> {
+  if (projectPathColState !== null) return projectPathColState;
+  try {
+    await db.query("SELECT project_path FROM sugo_roadmap_nodes LIMIT 1");
+    projectPathColState = true;
+    return true;
+  } catch {
+    // 없다 → 추가를 시도한다.
+  }
+  try {
+    await db.exec("ALTER TABLE sugo_roadmap_nodes ADD COLUMN project_path TEXT NULL");
+    projectPathColState = true;
+    return true;
+  } catch {
+    projectPathColState = false;
+    return false;
+  }
+}
+
 async function getOrCreateWorkspaceId(db: DbClient, userId: string, name: string): Promise<number> {
   const rows = await db.query<{ id: number }>(
     "SELECT id FROM sugo_workspaces WHERE user_id = ? AND name = ?",

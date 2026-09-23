@@ -1,10 +1,10 @@
 import { useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, CalendarPlus, ChevronLeft, ChevronRight, Shield, Workflow } from "lucide-react";
+import { AlertTriangle, CalendarPlus, ChevronLeft, ChevronRight, Clock, Shield, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
-import { daySpecOverflowClass, isManualSpec, scheduleCardStyle, scheduledOpenCount } from "../lib/schedulePresentation.js";
+import { daySpecOverflowClass, isManualSpec, scheduleCardStyle } from "../lib/schedulePresentation.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -13,9 +13,14 @@ import { DatePicker } from "../components/DatePicker.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
-import { createQuickSpec, setDueDate, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
+import { createQuickSpec, setDueDate, setProject, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+
+/** CheckpointPanel의 동일 헬퍼와 같은 1줄 — 순환 import를 피하려고 그대로 복제. */
+function repoName(path: string): string {
+  return path.split(/[\\/]/).filter(Boolean).pop() || path;
+}
 
 /** 표류(dropped)를 제외한 "미완료"만 마감 임박/초과 강조 대상으로 본다. */
 function isOpenStatus(spec: ScheduledSpec): boolean {
@@ -34,13 +39,17 @@ export function SchedulePage() {
   const [addOpen, setAddOpen] = useState(false);
   const [addTitle, setAddTitle] = useState("");
   const [addWorkspace, setAddWorkspace] = useState("");
+  const [addProjectPath, setAddProjectPath] = useState("");
   const [addDate, setAddDate] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
+  // 안 보이면 사용자가 헷갈린다(2026-09-23 사용자 피드백). 성공 시 잠깐 "저장됨"을 보여준다.
+  const [savedFlash, setSavedFlash] = useState<"due" | "project" | null>(null);
 
   // §7B 사용자 결정(2026-09-23): 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
   // Schedule 위에 겹쳐서 뜬다 — Esc를 누르면 그냥 이 오버레이만 닫히고 Schedule로 남는다.
-  const [checkpointWorkspace, setCheckpointWorkspace] = useState<string | null>(null);
+  const [checkpointTarget, setCheckpointTarget] = useState<{ workspace: string; projectPath: string | null } | null>(null);
   const [canvasOverlay, setCanvasOverlay] = useState<{ workspace: string; nodeId: string } | null>(null);
 
   const todayKey = toDateKey(today);
@@ -64,7 +73,32 @@ export function SchedulePage() {
   }, [specs]);
 
   const backlog = useMemo(() => (specs ?? []).filter((s) => !s.due_date), [specs]);
-  const openScheduledCount = useMemo(() => scheduledOpenCount(specs ?? []), [specs]);
+
+  // 왼쪽 패널: "기한 미정"만 보던 걸 "등록완료"(마감일이 잡힌 것)로도 전환할 수 있게 —
+  // 마감일이 화면에 보이는 달을 벗어나 있으면(예: 오늘은 9월인데 마감은 10월) 달력만으론
+  // 존재 자체를 놓친다.
+  const [panelMode, setPanelMode] = useState<"backlog" | "scheduled">("backlog");
+  const scheduledSorted = useMemo(
+    () => (specs ?? []).filter((s) => s.due_date).sort((a, b) => a.due_date!.localeCompare(b.due_date!)),
+    [specs],
+  );
+
+  function jumpToDate(dueDate: string) {
+    const [year, month] = dueDate.split("-").map(Number);
+    setCursor({ year, month: month - 1 });
+  }
+
+  /** 오늘(KST) 기준 남은 일수 — 음수면 이미 지난 마감. */
+  function daysUntil(dueDate: string): number {
+    const [year, month, day] = dueDate.split("-").map(Number);
+    const due = new Date(year, month - 1, day);
+    return Math.round((due.getTime() - today.getTime()) / 86_400_000);
+  }
+
+  function flashSaved(field: "due" | "project") {
+    setSavedFlash(field);
+    setTimeout(() => setSavedFlash((current) => (current === field ? null : current)), 1600);
+  }
 
   async function applyDueDate(spec: ScheduledSpec, dueDate: string | null) {
     if (!userId) return;
@@ -73,8 +107,22 @@ export function SchedulePage() {
       await setDueDate(userId, spec.workspace_name, spec.id, dueDate);
       refetch();
       if (selected?.id === spec.id) setSelected({ ...spec, due_date: dueDate });
+      flashSaved("due");
     } catch {
       setErrorMsg("날짜 저장에 실패했습니다. Run/Task가 아닌 Spec인지 확인하세요.");
+    }
+  }
+
+  async function applyProject(spec: ScheduledSpec, projectPath: string | null) {
+    if (!userId) return;
+    setErrorMsg(null);
+    try {
+      await setProject(userId, spec.workspace_name, spec.id, projectPath);
+      refetch();
+      if (selected?.id === spec.id) setSelected({ ...spec, project_path: projectPath });
+      flashSaved("project");
+    } catch {
+      setErrorMsg("프로젝트 지정에 실패했습니다. Run/Task가 아닌 Spec인지 확인하세요.");
     }
   }
 
@@ -98,9 +146,11 @@ export function SchedulePage() {
     setBusy(true);
     setErrorMsg(null);
     try {
-      await createQuickSpec(userId, addWorkspace, addTitle.trim(), addDate);
+      await createQuickSpec(userId, addWorkspace, addTitle.trim(), addDate, addProjectPath || null);
       setAddOpen(false);
       setAddTitle("");
+      setAddWorkspace("");
+      setAddProjectPath("");
       setAddDate(null);
       refetch();
     } catch {
@@ -110,12 +160,24 @@ export function SchedulePage() {
     }
   }
 
+  /** 선택된 워크스페이스에 등록된 프로젝트 목록 — SPEC 일정 추가의 2단계 선택에 쓴다. */
+  const addWorkspaceProjects = useMemo(
+    () => (workspaces ?? []).find((w) => w.name === addWorkspace)?.projects ?? [],
+    [workspaces, addWorkspace],
+  );
+
+  /** 스펙 상세의 "대상 프로젝트" 드롭다운 — 그 스펙이 속한 워크스페이스의 등록 프로젝트만 보여준다. */
+  const selectedWorkspaceProjects = useMemo(
+    () => (workspaces ?? []).find((w) => w.name === selected?.workspace_name)?.projects ?? [],
+    [workspaces, selected?.workspace_name],
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">
-            Schedule <span className="font-normal text-[var(--color-text-dim)]">({openScheduledCount})</span>
+            Schedule <span className="font-normal text-[var(--color-text-dim)]">({scheduledSorted.length})</span>
           </h1>
         </div>
         <button
@@ -131,42 +193,102 @@ export function SchedulePage() {
       )}
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[220px_1fr]">
-        {/* 기한 미정 백로그 */}
+        {/* 기한 미정 백로그 / 전체 목록 토글 */}
         <div
           className={cn(
             "ck-glass ck-card flex flex-col gap-2 overflow-auto p-3 transition-colors",
             dragOverKey === "backlog" && "border-cyan-400 bg-cyan-500/10",
           )}
           onDragOver={(e) => {
+            if (panelMode !== "backlog") return;
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
             setDragOverKey("backlog");
           }}
           onDragLeave={() => setDragOverKey((key) => (key === "backlog" ? null : key))}
-          onDrop={(e) => dropSpec(e, null)}
+          onDrop={(e) => panelMode === "backlog" && dropSpec(e, null)}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-[12px] font-semibold text-[var(--color-text-muted)]">기한 미정 · {backlog.length}</span>
+          <div className="flex shrink-0 items-center gap-1 rounded-lg border border-[var(--color-border)] p-0.5 text-[11px] font-semibold">
+            <button
+              onClick={() => setPanelMode("backlog")}
+              className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "backlog" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
+            >
+              기한 미정 · {backlog.length}
+            </button>
+            <button
+              onClick={() => setPanelMode("scheduled")}
+              className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "scheduled" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
+            >
+              등록완료 · {scheduledSorted.length}
+            </button>
           </div>
-          {backlog.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">없음. 여기 끌어다 놓으면 날짜가 풀립니다.</p>}
-          {backlog.map((s) => {
-            const style = scheduleCardStyle(colorOf(s.workspace_name));
-            return (
-              <div
-                key={s.id}
-                draggable
-                onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
-                onDragEnd={() => setDragOverKey(null)}
-                onClick={() => setSelected(s)}
-                style={style}
-                className="flex min-h-9 cursor-grab items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[12px] font-medium text-slate-100 transition-colors hover:brightness-110 active:cursor-grabbing"
-                title="캘린더 날짜 칸으로 끌어놓으면 마감일이 지정됩니다"
-              >
-                <span className="min-w-0 flex-1 truncate">{s.title}</span>
-                {isManualSpec(s.id) && <span className="shrink-0 rounded bg-slate-500/15 px-1 py-0.5 text-[9px] text-slate-400">SPEC 초안</span>}
-              </div>
-            );
-          })}
+
+          {panelMode === "backlog" ? (
+            <>
+              {backlog.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">없음. 여기 끌어다 놓으면 날짜가 풀립니다.</p>}
+              {backlog.map((s) => {
+                const style = scheduleCardStyle(colorOf(s.workspace_name));
+                return (
+                  <div
+                    key={s.id}
+                    draggable
+                    onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
+                    onDragEnd={() => setDragOverKey(null)}
+                    onClick={() => setSelected(s)}
+                    style={style}
+                    className="flex min-h-9 cursor-grab items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[12px] font-medium text-slate-100 transition-colors hover:brightness-110 active:cursor-grabbing"
+                    title="캘린더 날짜 칸으로 끌어놓으면 마감일이 지정됩니다"
+                  >
+                    <span className="min-w-0 flex-1 truncate">{s.title}</span>
+                    {isManualSpec(s.id) && <span className="shrink-0 rounded bg-slate-500/15 px-1 py-0.5 text-[9px] text-slate-400">SPEC 초안</span>}
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              {scheduledSorted.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">마감일이 지정된 SPEC이 없습니다.</p>}
+              {scheduledSorted.map((s) => {
+                const style = scheduleCardStyle(colorOf(s.workspace_name));
+                const remaining = daysUntil(s.due_date!);
+                const open = isOpenStatus(s);
+                const overdue = remaining < 0 && open;
+                // "3일보다 안 남은 애들은(3일 포함) 전부 기한임박" — 0~3일 남은 것만. 이미 지난 건 위의 기한 초과.
+                const dueSoon = remaining >= 0 && remaining <= 3 && open;
+                return (
+                  <div
+                    key={s.id}
+                    draggable
+                    onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
+                    onDragEnd={() => setDragOverKey(null)}
+                    onClick={() => {
+                      setSelected(s);
+                      jumpToDate(s.due_date!);
+                    }}
+                    style={style}
+                    className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium text-slate-100 transition-colors hover:brightness-110 active:cursor-grabbing"
+                    title="클릭하면 마감월로 이동합니다 · 캘린더 날짜 칸으로 끌어놓으면 마감일이 바뀝니다"
+                  >
+                    <span className="min-w-0 truncate">{s.title}</span>
+                    <span className="flex flex-wrap items-center gap-1">
+                      <span className="font-mono text-[9.5px] text-slate-300/80">{s.due_date}</span>
+                      {isManualSpec(s.id) && <span className="shrink-0 rounded bg-slate-500/20 px-1 py-0.5 text-[9px] text-slate-400">SPEC 초안</span>}
+                      {overdue && (
+                        <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-rose-300">
+                          <AlertTriangle size={9} /> 기한 초과
+                        </span>
+                      )}
+                      {dueSoon && (
+                        <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">
+                          <Clock size={9} /> 기한임박 · D-{remaining}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
 
         {/* 월간 캘린더 (KST 기준, 주말/공휴일 표시) */}
@@ -277,7 +399,7 @@ export function SchedulePage() {
 
       {/* Spec 상세 패널 */}
       {selected && (
-        <Modal onClose={() => setSelected(null)} disableEscape={!!checkpointWorkspace || !!canvasOverlay}>
+        <Modal onClose={() => setSelected(null)} disableEscape={!!checkpointTarget || !!canvasOverlay}>
           <div className="space-y-4">
             <div>
               <span
@@ -296,16 +418,43 @@ export function SchedulePage() {
             </div>
 
             <div>
-              <span className="mb-1 block text-[12px] text-[var(--color-text-muted)]">마감일</span>
+              <span className="mb-1 flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
+                마감일
+                {savedFlash === "due" && <span className="text-[10.5px] font-semibold text-emerald-400">저장됨</span>}
+              </span>
               <DatePicker value={selected.due_date} onChange={(next) => void applyDueDate(selected, next)} />
+            </div>
+
+            <div>
+              <span className="mb-1 flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
+                대상 프로젝트 · 선택하면 바로 저장됩니다
+                {savedFlash === "project" && <span className="text-[10.5px] font-semibold text-emerald-400">저장됨</span>}
+              </span>
+              <select
+                value={selected.project_path ?? ""}
+                onChange={(e) => void applyProject(selected, e.target.value || null)}
+                className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-[13px] text-[var(--color-text)]"
+              >
+                <option value="">프로젝트 미지정</option>
+                {selectedWorkspaceProjects.map((p) => (
+                  <option key={p.project_path} value={p.project_path}>
+                    {repoName(p.project_path)}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex gap-2 pt-2">
               <button
-                onClick={() => setCheckpointWorkspace(selected.workspace_name)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[12.5px] font-semibold text-amber-300 hover:bg-amber-500/20"
+                disabled={!selected.project_path}
+                onClick={() => {
+                  if (!selected.project_path) return;
+                  setCheckpointTarget({ workspace: selected.workspace_name, projectPath: selected.project_path });
+                }}
+                title={selected.project_path ? undefined : "먼저 위에서 대상 프로젝트를 지정해야 체크포인트를 관리할 수 있습니다"}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[12.5px] font-semibold text-amber-300 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-amber-500/10"
               >
-                <Shield size={14} /> 체크포인트 관리
+                <Shield size={14} /> {selected.project_path ? `${repoName(selected.project_path)} 프로젝트 체크포인트` : "프로젝트 지정 후 체크포인트 관리"}
               </button>
               <button
                 onClick={() => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.id })}
@@ -339,13 +488,32 @@ export function SchedulePage() {
               워크스페이스
               <select
                 value={addWorkspace}
-                onChange={(e) => setAddWorkspace(e.target.value)}
+                onChange={(e) => {
+                  setAddWorkspace(e.target.value);
+                  setAddProjectPath("");
+                }}
                 className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-[13px] text-[var(--color-text)]"
               >
                 <option value="">선택</option>
                 {(workspaces ?? []).map((w) => (
                   <option key={w.name} value={w.name}>
                     {w.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-[12px] text-[var(--color-text-muted)]">
+              프로젝트(선택)
+              <select
+                value={addProjectPath}
+                onChange={(e) => setAddProjectPath(e.target.value)}
+                disabled={!addWorkspace}
+                className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-[13px] text-[var(--color-text)] disabled:opacity-40"
+              >
+                <option value="">프로젝트 미지정</option>
+                {addWorkspaceProjects.map((p) => (
+                  <option key={p.project_path} value={p.project_path}>
+                    {repoName(p.project_path)}
                   </option>
                 ))}
               </select>
@@ -372,8 +540,12 @@ export function SchedulePage() {
 
       {/* §7B 사용자 결정: 체크포인트/캔버스는 다른 화면으로 안 보내고 Schedule 위에 겹쳐서 연다.
           Esc를 누르면 이 오버레이만 닫히고 Schedule로 그대로 남는다. */}
-      {checkpointWorkspace && (
-        <CheckpointPanel workspace={checkpointWorkspace} onClose={() => setCheckpointWorkspace(null)} />
+      {checkpointTarget && (
+        <CheckpointPanel
+          workspace={checkpointTarget.workspace}
+          projectPath={checkpointTarget.projectPath}
+          onClose={() => setCheckpointTarget(null)}
+        />
       )}
       {canvasOverlay && (
         <AgentCanvasOverlay

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Shield } from "lucide-react";
 import { Modal } from "./Modal.js";
 import { LoadingSpinner, EmptyState } from "./StatusViews.js";
@@ -12,15 +12,41 @@ import {
 } from "../api/workspacesApi.js";
 import { useAuth } from "../auth/AuthContext.js";
 
+/** Sessions.tsx `repoName`과 동일한 1줄 헬퍼 — 순환 import를 피하려고 그대로 복제. */
+function repoName(path: string): string {
+  return path.split(/[\\/]/).filter(Boolean).pop() || path;
+}
+
 /**
  * 설계안 Checkpoints 모달 — Sessions.tsx에 있던 걸 §7B(사용자 결정: 체크포인트/캔버스는
  * 다른 화면으로 리다이렉트하지 않고 그 자리에서 모달로만 뜬다)에 맞춰 자기완결형으로 뽑았다.
  * workspace 하나만 받아 내부에서 전부 처리하므로 Sessions.tsx·SchedulePage 어디서든
  * `<CheckpointPanel workspace={...} onClose={...} />`로 그대로 마운트하면 된다.
+ *
+ * `projectPath`를 주면 스펙 상세에서 연 "프로젝트 체크포인트" 모드다 — 새로 만드는
+ * 체크포인트는 그 프로젝트에만 적용되도록(`appliesTo`) 기본값이 채워지고, 목록도
+ * 이 프로젝트와 무관한(다른 프로젝트 전용) 체크포인트는 화면에서만 숨긴다.
  */
-export function CheckpointPanel({ workspace, onClose }: { workspace: string; onClose: () => void }) {
+export function CheckpointPanel({
+  workspace,
+  onClose,
+  projectPath = null,
+}: {
+  workspace: string;
+  onClose: () => void;
+  projectPath?: string | null;
+}) {
   const { userId } = useAuth();
   const checkpoints = useWorkspaceCheckpoints(workspace);
+  const projectLabel = projectPath ? repoName(projectPath) : null;
+  const defaultAppliesTo = useMemo(() => (projectLabel ? [projectLabel] : []), [projectLabel]);
+  const visibleCheckpoints = useMemo(
+    () =>
+      projectLabel
+        ? checkpoints.data.filter((cp) => !cp.applies_to?.length || cp.applies_to.includes(projectLabel))
+        : checkpoints.data,
+    [checkpoints.data, projectLabel],
+  );
   const [cpDraft, setCpDraft] = useState({ title: "", category: "general", markdown: "" });
   const [cpBusy, setCpBusy] = useState(false);
   const [cpApplyResult, setCpApplyResult] = useState<WorkspaceCheckpointApplyResult | null>(null);
@@ -32,20 +58,24 @@ export function CheckpointPanel({ workspace, onClose }: { workspace: string; onC
     <>
       <Modal onClose={onClose}>
         <h3 className="mb-1 flex items-center gap-2 text-[15px] font-semibold text-[var(--color-text-bright)]">
-          <Shield size={16} className="text-amber-400" /> {workspace} 체크포인트
+          <Shield size={16} className="text-amber-400" /> {projectLabel ? `${projectLabel} 프로젝트 체크포인트` : `${workspace} 체크포인트`}
         </h3>
         <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
           <p>이 도메인의 프로젝트에서 작업 컨텍스트를 불러올 때 <code>.claude/rules/&lt;category&gt;/</code>로 동기화되어 Claude Code에 자동 주입됩니다.</p>
-          <p className="mt-1 text-[var(--color-text-dim)]">이 워크스페이스의 체크포인트는 소속된 모든 프로젝트에 함께 적용됩니다.</p>
+          {projectLabel ? (
+            <p className="mt-1 text-[var(--color-text-dim)]">여기서 새로 만드는 체크포인트는 기본적으로 <strong className="text-amber-300">{projectLabel}</strong> 프로젝트에만 적용됩니다. 워크스페이스 전체 체크포인트도 함께 보입니다.</p>
+          ) : (
+            <p className="mt-1 text-[var(--color-text-dim)]">이 워크스페이스의 체크포인트는 소속된 모든 프로젝트에 함께 적용됩니다.</p>
+          )}
           <p className="mt-1 text-[var(--color-text-dim)]"><code>.claude/rules/</code>의 생성 파일은 동기화 결과입니다. 직접 수정하면 다음 적용에서 충돌로 표시하고 덮어쓰지 않습니다.</p>
         </div>
         {checkpoints.loading ? (
           <LoadingSpinner />
-        ) : checkpoints.data.length === 0 ? (
+        ) : visibleCheckpoints.length === 0 ? (
           <EmptyState message="등록된 체크포인트가 없습니다" />
         ) : (
           <div className="space-y-3">
-            {checkpoints.data.map((cp) => (
+            {visibleCheckpoints.map((cp) => (
               <div key={cp.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-3">
                 <div className="mb-1.5 flex items-center gap-2">
                   <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] text-amber-300">
@@ -84,7 +114,7 @@ export function CheckpointPanel({ workspace, onClose }: { workspace: string; onC
                   </ul>
                 )}
                 <div className="mt-2 font-mono text-[10.5px] text-[var(--color-text-dim)]">
-                  워크스페이스 전체 프로젝트 → .claude/rules/{cp.category || "general"}/
+                  {cp.applies_to?.length ? cp.applies_to.join(", ") : "워크스페이스 전체 프로젝트"} → .claude/rules/{cp.category || "general"}/
                 </div>
               </div>
             ))}
@@ -120,7 +150,7 @@ export function CheckpointPanel({ workspace, onClose }: { workspace: string; onC
                   category: cpDraft.category.trim() || "general",
                   title: cpDraft.title.trim(),
                   learnedFrom: cpDraft.markdown,
-                  appliesTo: [],
+                  appliesTo: defaultAppliesTo,
                 });
                 setDirtyCheckpoints((current) => new Set(current).add(saved.id));
                 setCpDraft({ title: "", category: "general", markdown: "" });
@@ -155,7 +185,7 @@ export function CheckpointPanel({ workspace, onClose }: { workspace: string; onC
             <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-5 py-4"><div className="min-w-0 flex-1"><div className="font-mono text-[10px] text-cyan-300">{editingCheckpoint.id}</div><div className="text-[16px] font-semibold">체크포인트 수정</div></div><button onClick={() => setEditingCheckpoint(null)}>✕</button></div>
             <div className="grid grid-cols-[160px_1fr] gap-3 border-b border-[var(--color-border)] p-4"><input value={cpEditDraft.category} onChange={(e) => setCpEditDraft({ ...cpEditDraft, category: e.target.value })} placeholder="규칙 폴더" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 font-mono text-[12px]" /><input value={cpEditDraft.title} onChange={(e) => setCpEditDraft({ ...cpEditDraft, title: e.target.value })} placeholder="제목" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-[13px]" /></div>
             <textarea autoFocus value={cpEditDraft.markdown} onChange={(e) => setCpEditDraft({ ...cpEditDraft, markdown: e.target.value })} className="ck-scroll min-h-0 flex-1 resize-none bg-[#070b12] p-5 font-mono text-[12.5px] leading-6 text-slate-200 outline-none" placeholder="Markdown 내용을 붙여넣으세요" />
-            <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-3"><button onClick={() => setEditingCheckpoint(null)} className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px]">취소</button><button disabled={cpBusy || !cpEditDraft.title.trim() || !cpEditDraft.markdown.trim()} onClick={async () => { setCpBusy(true); try { await updateWorkspaceCheckpoint(userId!, workspace, editingCheckpoint.id, { title: cpEditDraft.title.trim(), category: cpEditDraft.category.trim() || "general", learnedFrom: cpEditDraft.markdown, appliesTo: [] }); setDirtyCheckpoints((current) => new Set(current).add(editingCheckpoint.id)); checkpoints.refresh(); setEditingCheckpoint(null); } finally { setCpBusy(false); } }} className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[12px] font-bold text-cyan-200">수정 저장</button></div>
+            <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-3"><button onClick={() => setEditingCheckpoint(null)} className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px]">취소</button><button disabled={cpBusy || !cpEditDraft.title.trim() || !cpEditDraft.markdown.trim()} onClick={async () => { setCpBusy(true); try { await updateWorkspaceCheckpoint(userId!, workspace, editingCheckpoint.id, { title: cpEditDraft.title.trim(), category: cpEditDraft.category.trim() || "general", learnedFrom: cpEditDraft.markdown, appliesTo: editingCheckpoint.applies_to ?? defaultAppliesTo }); setDirtyCheckpoints((current) => new Set(current).add(editingCheckpoint.id)); checkpoints.refresh(); setEditingCheckpoint(null); } finally { setCpBusy(false); } }} className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[12px] font-bold text-cyan-200">수정 저장</button></div>
           </div>
         </div>
       )}

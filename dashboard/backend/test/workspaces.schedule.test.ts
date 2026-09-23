@@ -155,4 +155,104 @@ describe("POST /api/workspaces/:name/roadmap/quick-spec — §7B 경량 Spec 생
     const rows = await db.query<{ due_date: string | null }>("SELECT due_date FROM sugo_roadmap_nodes WHERE id = ?", [res.body.id]);
     expect(rows[0].due_date).toBeNull();
   });
+
+  it("projectPath를 함께 보내면 즉시 저장되고 /schedule에도 실린다", async () => {
+    const { app, db, auth } = await bootApp();
+    const res = await request(app)
+      .post("/api/workspaces/ws1/roadmap/quick-spec")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ title: "프로젝트 지정 스펙", projectPath: "/home/u1/projects/orders-api" })
+      .expect(200);
+
+    const rows = await db.query<{ project_path: string | null }>("SELECT project_path FROM sugo_roadmap_nodes WHERE id = ?", [res.body.id]);
+    expect(rows[0].project_path).toBe("/home/u1/projects/orders-api");
+
+    const schedule = await request(app).get("/api/workspaces/schedule").query({ userId: "u1" }).set("Authorization", auth).expect(200);
+    expect(schedule.body.specs.find((s: { id: string }) => s.id === res.body.id).project_path).toBe(
+      "/home/u1/projects/orders-api"
+    );
+  });
+
+  it("projectPath 없이도 만들 수 있다(프로젝트 미지정)", async () => {
+    const { app, db, auth } = await bootApp();
+    const res = await request(app)
+      .post("/api/workspaces/ws1/roadmap/quick-spec")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ title: "프로젝트 미정 스펙" })
+      .expect(200);
+
+    const rows = await db.query<{ project_path: string | null }>("SELECT project_path FROM sugo_roadmap_nodes WHERE id = ?", [res.body.id]);
+    expect(rows[0].project_path).toBeNull();
+  });
+});
+
+describe("POST /api/workspaces/:name/roadmap/project — §7B 스펙별 프로젝트 지정", () => {
+  it("level='spec' 노드에 프로젝트를 지정하면 즉시 반영된다", async () => {
+    const { app, db, auth } = await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }]);
+    await request(app)
+      .post("/api/workspaces/ws1/roadmap/project")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "spec1", projectPath: "/home/u1/projects/orders-api" })
+      .expect(200);
+
+    const rows = await db.query<{ project_path: string }>("SELECT project_path FROM sugo_roadmap_nodes WHERE id='spec1'");
+    expect(rows[0].project_path).toBe("/home/u1/projects/orders-api");
+  });
+
+  it("null을 보내면 프로젝트 미지정으로 되돌린다", async () => {
+    const { app, db, auth } = await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }]);
+    await request(app)
+      .post("/api/workspaces/ws1/roadmap/project")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "spec1", projectPath: "/home/u1/projects/orders-api" })
+      .expect(200);
+    await request(app)
+      .post("/api/workspaces/ws1/roadmap/project")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "spec1", projectPath: null })
+      .expect(200);
+
+    const rows = await db.query<{ project_path: string | null }>("SELECT project_path FROM sugo_roadmap_nodes WHERE id='spec1'");
+    expect(rows[0].project_path).toBeNull();
+  });
+
+  it("반드시 거부: level='spec'이 아닌 노드", async () => {
+    const { app, auth } = await appWithNodesIn("ws1", [{ id: "task1", level: "task" }]);
+    const res = await request(app)
+      .post("/api/workspaces/ws1/roadmap/project")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "task1", projectPath: "/home/u1/projects/orders-api" })
+      .expect(400);
+    expect(res.body.errorCode).toBe("INVALID_LEVEL");
+  });
+
+  it("존재하지 않는 노드는 404", async () => {
+    const { app, auth } = await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }]);
+    const res = await request(app)
+      .post("/api/workspaces/ws1/roadmap/project")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "nope", projectPath: "/home/u1/projects/orders-api" })
+      .expect(404);
+    expect(res.body.errorCode).toBe("NODE_NOT_FOUND");
+  });
+
+  it("CLI 재동기화(POST /api/sync/roadmap)는 대시보드가 지정한 project_path를 덮어쓰지 않는다", async () => {
+    const { app, db, auth } = await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }]);
+    await request(app)
+      .post("/api/workspaces/ws1/roadmap/project")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "spec1", projectPath: "/home/u1/projects/orders-api" })
+      .expect(200);
+
+    await request(app)
+      .post("/api/sync/roadmap")
+      .set("Authorization", auth)
+      .send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "spec1", title: "spec1(renamed)", level: "spec", status: "in_progress" }] });
+
+    const rows = await db.query<{ project_path: string; title: string }>(
+      "SELECT project_path, title FROM sugo_roadmap_nodes WHERE id='spec1'"
+    );
+    expect(rows[0].title).toBe("spec1(renamed)");
+    expect(rows[0].project_path).toBe("/home/u1/projects/orders-api");
+  });
 });

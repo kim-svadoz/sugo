@@ -72,4 +72,11 @@ export const quickSpecSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .nullish(),
+  projectPath: z.string().nullish(),
+});
+
+/** §7B 스펙별 프로젝트 지정 — dueDateSchema와 같은 형태(null이면 해제). */
+export const setProjectSchema = z.object({
+  nodeId: z.string().min(1),
+  projectPath: z.string().nullable(),
 });

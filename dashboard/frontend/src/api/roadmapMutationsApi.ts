@@ -83,6 +83,7 @@ export interface ScheduledSpec {
   title: string;
   status: string;
   due_date: string | null;
+  project_path: string | null;
 }
 
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드를 가로질러 가져온다.
@@ -101,10 +102,24 @@ export function setDueDate(userId: string, workspace: string, nodeId: string, du
   });
 }
 
+/** level='spec' 노드에만 적용 가능. projectPath=null이면 "프로젝트 미지정"으로 되돌린다. */
+export function setProject(userId: string, workspace: string, nodeId: string, projectPath: string | null) {
+  return apiJson<{ ok: true }>(withUserId(path(workspace, "/project"), userId), {
+    method: "POST",
+    body: JSON.stringify({ nodeId, projectPath }),
+  });
+}
+
 /** Run/Task 없이 level='spec' 노드만 단독 생성한다("+ 일정 추가"). */
-export function createQuickSpec(userId: string, workspace: string, title: string, dueDate?: string | null) {
+export function createQuickSpec(
+  userId: string,
+  workspace: string,
+  title: string,
+  dueDate?: string | null,
+  projectPath?: string | null
+) {
   return apiJson<{ ok: boolean; id: string }>(withUserId(path(workspace, "/quick-spec"), userId), {
     method: "POST",
-    body: JSON.stringify({ title, dueDate }),
+    body: JSON.stringify({ title, dueDate, projectPath }),
   });
 }

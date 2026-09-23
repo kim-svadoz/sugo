@@ -16,6 +16,7 @@ import {
   quickSpecSchema,
   renameSchema,
   runSpecSchema,
+  setProjectSchema,
 } from "../schemas/workspaces.js";
 import {
   clearManualStatus,
@@ -43,6 +44,7 @@ import {
   dropSubtree,
   setManualStatus,
   setRoadmapDueDate,
+  setRoadmapProject,
   setRoadmapParent,
   setRoadmapPosition,
   unlinkRoadmapNodes,
@@ -188,7 +190,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
         workspace: req.params.name,
         checkpoint: {
           id: checkpoint.id, title: checkpoint.title, category: checkpoint.category,
-          appliesTo: [],
+          appliesTo: Array.isArray(checkpoint.applies_to) ? checkpoint.applies_to.map(String) : [],
           learnedFrom: checkpoint.learned_from,
           checklist: Array.isArray(checkpoint.checklist) ? checkpoint.checklist.map(String) : [],
         },
@@ -330,11 +332,31 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     res.json({ ok: true });
   });
 
+  // §7B 스펙별 프로젝트 지정("SPEC 상세 → 프로젝트 지정/변경"). due-date와 같은 모양.
+  router.post("/:name/roadmap/project", validateBody(setProjectSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const result = await setRoadmapProject(db, userId, req.params.name, req.body.nodeId, req.body.projectPath);
+    if (!result.ok) {
+      const status = result.errorCode === "NODE_NOT_FOUND" ? 404 : 400;
+      res.status(status).json({ ok: false, errorCode: result.errorCode });
+      return;
+    }
+    res.json({ ok: true });
+  });
+
   // §7B Run/Task 없이 level='spec' 노드만 단독 생성("+ 일정 추가").
   router.post("/:name/roadmap/quick-spec", validateBody(quickSpecSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
-    const created = await createQuickSpec(db, userId, req.params.name, req.body.title, req.body.dueDate ?? null);
+    const created = await createQuickSpec(
+      db,
+      userId,
+      req.params.name,
+      req.body.title,
+      req.body.dueDate ?? null,
+      req.body.projectPath ?? null
+    );
     res.json({ ok: true, id: created.id });
   });
 

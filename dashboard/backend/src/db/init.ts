@@ -6,7 +6,7 @@ import { createMySqlClient } from "./mysqlClient.js";
 import { createSqliteClient } from "./sqliteClient.js";
 import { migrateCanvasToRoadmap } from "./migrations.js";
 import { migrateWstToRun } from "../services/workspaceService.js";
-import { ensureRoadmapDueDateColumn } from "../services/syncService.js";
+import { ensureRoadmapDueDateColumn, ensureRoadmapProjectPathColumn } from "../services/syncService.js";
 import { config } from "../config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -21,6 +21,7 @@ export async function initDb(): Promise<DbClient> {
     await client.execScript(readFileSync(schemaPath, "utf8"));
     await migrateWstToRun(client);
     await ensureRoadmapDueDateColumn(client);
+    await ensureRoadmapProjectPathColumn(client);
     return client;
   }
   const client = createMySqlClient(config.mysql);
@@ -32,5 +33,6 @@ export async function initDb(): Promise<DbClient> {
   // §7B `due_date` 자가보강 — 스키마 파일의 CREATE TABLE IF NOT EXISTS는 이미 존재하는
   // 테이블에는 컬럼을 못 붙이므로, 업그레이드 배포를 위해 별도로 돈다.
   await ensureRoadmapDueDateColumn(client);
+  await ensureRoadmapProjectPathColumn(client);
   return client;
 }
