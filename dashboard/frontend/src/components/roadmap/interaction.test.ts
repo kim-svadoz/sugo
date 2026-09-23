@@ -1,7 +1,14 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { shouldApplyHoverFocus } from "./interaction.js";
 
 describe("canvas selection interaction", () => {
+  it("SPEC/RUN은 제목 헤더 클릭으로만 접고 캔버스 노드 더블클릭은 사용하지 않는다", () => {
+    const source = readFileSync(new URL("./RoadmapGraph.tsx", import.meta.url), "utf8");
+    expect(source).not.toContain("onNodeDoubleClick=");
+    expect(source).toContain('title={isBand ? undefined : `${isSpec ? "SPEC" : "RUN"} 접기`}');
+  });
+
   it("Inspector가 열린 동안 hover focus를 중지해 선택 직후 깜빡임을 만들지 않는다", () => {
     expect(shouldApplyHoverFocus("spec-1", "spec-1")).toBe(false);
     expect(shouldApplyHoverFocus("run-1", "spec-1")).toBe(false);

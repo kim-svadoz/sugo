@@ -167,8 +167,7 @@ type FlowNode = Node<NodeData, "roadmap" | "container" | "lineage">;
  * nodeTypes ① — 접힌 **task 카드**와 접힌 **SPEC/RUN 폴더 카드**를 둘 다 그린다(설계안).
  *
  * 접힌 SPEC/RUN은 일반 task 카드가 아니라 **폴더**다: `WS_CARD_W` 폭 + 대시 테두리 + 헤더 밴드
- * + 펼치기 chevron. **클릭하면 펼쳐진다** — 접힌 폴더에서 사람이 기대하는 건 클릭이지
- * 더블클릭이 아니다(더블클릭도 같이 받는다).
+ * + 펼치기 chevron. 접힌 폴더는 카드 전체가 제목 헤더이므로 **한 번 클릭하면 펼쳐진다**.
  */
 function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
   const n = data.node;
@@ -1439,7 +1438,8 @@ export function RoadmapGraph({
           <div className="absolute left-3 top-14 z-30 w-[330px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-[12px] leading-relaxed text-[var(--color-text-muted)] shadow-xl">
             <p className="mb-1.5 font-semibold text-[var(--color-text-bright)]">이 캔버스에서 할 수 있는 것</p>
             <ul className="space-y-1">
-              <li>· 카드를 <b>클릭</b>하면 SPEC/RUN은 펼쳐지고, 오른쪽에 상세가 열립니다.</li>
+              <li>· SPEC/RUN은 <b>상단 제목 헤더</b>를 클릭할 때만 접히고 펼쳐집니다.</li>
+              <li>· TASK 카드를 클릭하면 오른쪽에 상세가 열립니다.</li>
               <li>· 배치는 <b>자동</b>입니다 — 카드를 끌어 옮기지 않습니다(빈 곳을 끌면 화면이 움직입니다).</li>
               <li>· RUN의 <b>Spec 편입·분리</b>는 오른쪽 패널의 드롭다운에서 합니다.</li>
               <li>· RUN/SPEC <b>우클릭</b>으로 폐기하고, 우상단 폐기함에서 되돌립니다.</li>
@@ -1519,13 +1519,6 @@ export function RoadmapGraph({
             setHovered(null);
             setFileViewer(null);
             setSelectedId(node.id === selectedId ? null : node.id);
-          }}
-          onNodeDoubleClick={(_, node) => {
-            // 설계안: SPEC/RUN은 더블클릭으로 펼치고 접는다. task는 펼칠 하위(=REQ)가
-            // 그래프에 없으므로 아무 일도 하지 않는다(REQ는 오른쪽 패널 소관).
-            const n = nodes.find((x) => x.id === node.id);
-            if (!n || (n.level !== "spec" && n.level !== "workstream")) return;
-            toggleExpand(n.id);
           }}
           onNodeContextMenu={(e, node) => {
             e.preventDefault();

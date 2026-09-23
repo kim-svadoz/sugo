@@ -3,6 +3,7 @@ import { CalendarPlus, ChevronLeft, ChevronRight, Shield, Workflow } from "lucid
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
+import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -75,6 +76,21 @@ export function SchedulePage() {
     }
   }
 
+  function startSpecDrag(e: DragEvent<HTMLElement>, spec: ScheduledSpec) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData(SCHEDULE_DRAG_TYPE, encodeScheduleDrag({ workspaceName: spec.workspace_name, id: spec.id }));
+  }
+
+  function dropSpec(e: DragEvent<HTMLElement>, dueDate: string | null) {
+    e.preventDefault();
+    setDragOverKey(null);
+    const payload = decodeScheduleDrag(e.dataTransfer.getData(SCHEDULE_DRAG_TYPE));
+    if (!payload) return;
+    const spec = (specs ?? []).find((item) => item.id === payload.id && item.workspace_name === payload.workspaceName);
+    if (!spec || spec.due_date === dueDate) return;
+    void applyDueDate(spec, dueDate);
+  }
+
   async function handleAddQuickSpec() {
     if (!userId || !addTitle.trim() || !addWorkspace) return;
     setBusy(true);
@@ -112,7 +128,19 @@ export function SchedulePage() {
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[220px_1fr]">
         {/* 기한 미정 백로그 */}
-        <div className="ck-glass ck-card flex flex-col gap-2 overflow-auto p-3">
+        <div
+          className={cn(
+            "ck-glass ck-card flex flex-col gap-2 overflow-auto p-3 transition-colors",
+            dragOverKey === "backlog" && "border-cyan-400 bg-cyan-500/10",
+          )}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            setDragOverKey("backlog");
+          }}
+          onDragLeave={() => setDragOverKey((key) => (key === "backlog" ? null : key))}
+          onDrop={(e) => dropSpec(e, null)}
+        >
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-semibold text-[var(--color-text-muted)]">기한 미정 · {backlog.length}</span>
           </div>
@@ -123,7 +151,8 @@ export function SchedulePage() {
               <div
                 key={s.id}
                 draggable
-                onDragStart={(e: DragEvent<HTMLDivElement>) => e.dataTransfer.setData("text/spec-id", `${s.workspace_name}::${s.id}`)}
+                onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
+                onDragEnd={() => setDragOverKey(null)}
                 onClick={() => setSelected(s)}
                 style={style}
                 className="cursor-grab rounded-lg border px-2 py-1.5 text-[12px] active:cursor-grabbing"
@@ -183,17 +212,11 @@ export function SchedulePage() {
                   key={key}
                   onDragOver={(e) => {
                     e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
                     setDragOverKey(key);
                   }}
                   onDragLeave={() => setDragOverKey((k) => (k === key ? null : k))}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOverKey(null);
-                    const raw = e.dataTransfer.getData("text/spec-id");
-                    const [workspace_name, id] = raw.split("::");
-                    const spec = (specs ?? []).find((s) => s.id === id && s.workspace_name === workspace_name);
-                    if (spec) void applyDueDate(spec, key);
-                  }}
+                  onDrop={(e) => dropSpec(e, key)}
                   className={cn(
                     "flex flex-col gap-1 overflow-hidden rounded-lg border p-1.5 text-left",
                     inMonth ? "border-[var(--color-border)] bg-[var(--color-background)]" : "border-transparent opacity-40",
@@ -214,10 +237,13 @@ export function SchedulePage() {
                       return (
                         <button
                           key={s.id}
+                          draggable
+                          onDragStart={(e: DragEvent<HTMLButtonElement>) => startSpecDrag(e, s)}
+                          onDragEnd={() => setDragOverKey(null)}
                           onClick={() => setSelected(s)}
                           style={style}
                           className={cn(
-                            "truncate rounded border px-1.5 py-0.5 text-left text-[11px]",
+                            "cursor-grab truncate rounded border px-1.5 py-0.5 text-left text-[11px] active:cursor-grabbing",
                             overdue && "ring-1 ring-rose-400",
                           )}
                           title={`${s.workspace_name} · ${s.title}`}
