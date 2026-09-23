@@ -6,7 +6,9 @@ describe("page heading typography", () => {
     const sessions = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
     const schedule = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(sessions).toContain('text-lg font-semibold text-[var(--color-text-bright)]');
-    expect(schedule).toContain('text-lg font-semibold text-[var(--color-text-bright)]">Schedule');
+    expect(schedule).toContain('text-lg font-semibold text-[var(--color-text-bright)]');
+    expect(schedule).toContain("Schedule <span");
+    expect(schedule).toContain("({openScheduledCount})");
     expect(schedule).not.toContain("여러 워크스페이스의 Spec 마감일을 한 곳에서 확인합니다.");
   });
 });

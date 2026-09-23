@@ -1,9 +1,10 @@
 import { useMemo, useState, type DragEvent } from "react";
-import { CalendarPlus, ChevronLeft, ChevronRight, Shield, Workflow } from "lucide-react";
+import { AlertTriangle, CalendarPlus, ChevronLeft, ChevronRight, Shield, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
+import { scheduleCardStyle, scheduledOpenCount } from "../lib/schedulePresentation.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -63,6 +64,7 @@ export function SchedulePage() {
   }, [specs]);
 
   const backlog = useMemo(() => (specs ?? []).filter((s) => !s.due_date), [specs]);
+  const openScheduledCount = useMemo(() => scheduledOpenCount(specs ?? []), [specs]);
 
   async function applyDueDate(spec: ScheduledSpec, dueDate: string | null) {
     if (!userId) return;
@@ -112,7 +114,9 @@ export function SchedulePage() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">Schedule</h1>
+          <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">
+            Schedule <span className="font-normal text-[var(--color-text-dim)]">({openScheduledCount})</span>
+          </h1>
         </div>
         <button
           onClick={() => setAddOpen(true)}
@@ -146,7 +150,7 @@ export function SchedulePage() {
           </div>
           {backlog.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">없음. 여기 끌어다 놓으면 날짜가 풀립니다.</p>}
           {backlog.map((s) => {
-            const style = workspaceChipStyle(colorOf(s.workspace_name));
+            const style = scheduleCardStyle(colorOf(s.workspace_name));
             return (
               <div
                 key={s.id}
@@ -155,7 +159,7 @@ export function SchedulePage() {
                 onDragEnd={() => setDragOverKey(null)}
                 onClick={() => setSelected(s)}
                 style={style}
-                className="cursor-grab rounded-lg border px-2 py-1.5 text-[12px] active:cursor-grabbing"
+                className="min-h-9 cursor-grab rounded-lg border px-2.5 py-2 text-[12px] font-medium text-slate-100 transition-colors hover:brightness-110 active:cursor-grabbing"
                 title="캘린더 날짜 칸으로 끌어놓으면 마감일이 지정됩니다"
               >
                 {s.title}
@@ -232,7 +236,7 @@ export function SchedulePage() {
                   </div>
                   <div className="flex flex-1 flex-col gap-1 overflow-auto">
                     {dayChips.map((s) => {
-                      const style = workspaceChipStyle(colorOf(s.workspace_name));
+                      const style = scheduleCardStyle(colorOf(s.workspace_name));
                       const overdue = key < todayKey && isOpenStatus(s);
                       return (
                         <button
@@ -242,13 +246,15 @@ export function SchedulePage() {
                           onDragEnd={() => setDragOverKey(null)}
                           onClick={() => setSelected(s)}
                           style={style}
-                          className={cn(
-                            "cursor-grab truncate rounded border px-1.5 py-0.5 text-left text-[11px] active:cursor-grabbing",
-                            overdue && "ring-1 ring-rose-400",
-                          )}
+                          className="flex min-h-8 cursor-grab items-center gap-1.5 rounded-md border px-2 py-1.5 text-left text-[11px] transition-[filter,background-color] hover:brightness-110 active:cursor-grabbing"
                           title={`${s.workspace_name} · ${s.title}`}
                         >
-                          {s.title}
+                          <span className="min-w-0 flex-1 truncate font-medium text-slate-100">{s.title}</span>
+                          {overdue && (
+                            <span className="flex shrink-0 items-center gap-0.5 rounded bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
+                              <AlertTriangle size={9} /> 기한 초과
+                            </span>
+                          )}
                         </button>
                       );
                     })}
