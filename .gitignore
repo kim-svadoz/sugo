@@ -8,3 +8,4 @@ node_modules/
 # OS·에디터 부산물
 .DS_Store
 Thumbs.db
+.idea/
