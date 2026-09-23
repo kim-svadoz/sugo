@@ -21,6 +21,11 @@ argument-hint: <기능 설명>
      없으면(undefined) `feature/*` 브랜치가 아니라는 뜻이라 이 절차 전체를 건너뛴다.
    - `otherResumableSessions`가 있으면 같은 프로젝트에 막혀 있는 다른 세션이 있다는 뜻이다.
      자동으로 병합하지 말고 사용자에게 "이 세션을 이어받을지, 새로 시작할지" 물어본다.
+   - `unlinkedSpecDrafts`가 있으면 Schedule에서 먼저 만든 미연결 최상위 SPEC 초안이다. **반드시**
+     제목·마감일을 사용자에게 보여주고, 하나에 연결할지 새 SPEC을 만들지 물어본다. 선택 전에는
+     `clarify`가 `SPEC_DRAFT_SELECTION_REQUIRED`로 차단된다. 기존 초안이면
+     `clarify(specDraftDecision:"link", specDraftId)`, 새 SPEC이면 `clarify(specDraftDecision:"new")`로
+     기록한다. 에이전트가 제목 유사도로 자동 선택하면 안 된다.
 2. `clarify`로 범위, 수락기준, 제약, 우선순위를 사용자와 확정한다.
    - TODO-SPEC이 `missing`이었다면: 사용자의 요청을 이번 세션 범위로 축소하지 말고, 그 요청이
      암시하는 **최종 완성형**부터 먼저 사용자와 확정한다. 확정된 목록만

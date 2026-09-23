@@ -107,7 +107,7 @@ export interface ActionType {
  */
 export const ACTION_TYPES = [
   { name: "start", fromStates: null, toState: "SCAN", gates: [] },
-  { name: "clarify", fromStates: ["SCAN"], toState: "CLARIFY", gates: [] },
+  { name: "clarify", fromStates: ["SCAN"], toState: "CLARIFY", gates: ["SPEC_DRAFT_SELECTION_REQUIRED"] },
   { name: "prd", fromStates: ["CLARIFY"], toState: "PRD", gates: ["CONFORMANCE_LEDGER"] },
   { name: "oracle_done", fromStates: ["PRD", "JIRA"], toState: null, gates: ["SPEC_ORACLE_NOT_RUN"] },
   { name: "decompose", fromStates: ["PRD"], toState: "DECOMPOSE", gates: [] },

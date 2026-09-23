@@ -15,7 +15,9 @@ export function computeNodesToDelete(
   existing: ExistingRoadmapNode[],
   incomingIds: ReadonlySet<string>
 ): string[] {
-  return existing.filter((n) => n.level !== "workstream" && !incomingIds.has(n.id)).map((n) => n.id);
+  return existing
+    .filter((n) => n.level !== "workstream" && !n.id.startsWith("spec-manual-") && !incomingIds.has(n.id))
+    .map((n) => n.id);
 }
 
 // 삭제된 노드를 가리키던 depends_on 참조를 청소(dangling dep 제거).

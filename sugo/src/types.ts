@@ -58,6 +58,7 @@ import type { BypassLabel } from "./labelGuard.js";
 import type { PatchContext } from "./patch.js";
 import type { TestEvidenceRecord, TestPassedState } from "./testEvidence.js";
 import type { JiraOption, SpecOracleState } from "./gates.js";
+import type { UnlinkedSpecDraft } from "./dashboard/fetch.js";
 
 /** code_done 시점에 전달된 게이트 관련 플래그를 감사(audit) 목적으로 보존한다 — 자기보고 값이지만
  * 최소한 "무엇을 주장했는지"는 세션 파일에 남겨 나중에 review 단계에서 대조할 수 있게 한다. */
@@ -124,6 +125,12 @@ export interface SessionData {
   /** §8 HULK 연동: prd 성공 시 프로젝트가 워크스페이스에 속해 있으면 자동 생성된 Task를 가리킨다. */
   hulkWorkspace?: string;
   hulkTaskId?: string;
+  /** Dashboard에서 먼저 만든 SPEC 초안에 이번 feat를 연결할지 사용자가 고른 결과. */
+  specDraftSelection?: {
+    candidates: UnlinkedSpecDraft[];
+    decision?: "link" | "new";
+    selectedId?: string;
+  };
   /** §10 decompose 오케스트레이션(선택 확장) — DECOMPOSE/ORCHESTRATING 상태 동안의 서브태스크 매니페스트. */
   decomposeManifest?: DecomposeManifest;
   /** §7.1 start action에 전달된 사용자 지시. patch 모드에서 review_done이

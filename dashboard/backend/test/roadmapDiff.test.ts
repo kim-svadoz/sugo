@@ -31,6 +31,14 @@ describe("computeNodesToDelete — replace 시맨틱", () => {
     const toDelete = computeNodesToDelete(existing, new Set(["task-1"]));
     expect(toDelete).toEqual([]);
   });
+
+  it("대시보드에서 만든 spec-manual 초안은 plugin snapshot에 없어도 보존한다", () => {
+    const existing = [
+      { id: "spec-manual-draft", level: "spec", dependsOn: [] },
+      { id: "spec-plugin-owned", level: "spec", dependsOn: [] },
+    ];
+    expect(computeNodesToDelete(existing, new Set())).toEqual(["spec-plugin-owned"]);
+  });
 });
 
 describe("cleanDanglingDeps", () => {

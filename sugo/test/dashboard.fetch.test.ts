@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { fetchCalibratedRatio, fetchCheckpointSync, fetchRoadmapOrdering } from "../src/dashboard/fetch.js";
+import { fetchCalibratedRatio, fetchCheckpointSync, fetchRoadmapOrdering, fetchUnlinkedSpecDrafts } from "../src/dashboard/fetch.js";
 
 let fakeHome: string;
 
@@ -45,6 +45,10 @@ describe("fetch 계열 — 실제 서버 응답", () => {
           JSON.stringify({
             nodes: [
               { id: "A", depends_on: ["B"], manual_status: "in_review", pos_x: 10, pos_y: 20, title: "A", level: "task", status: "pending" },
+              { id: "spec-manual-open", title: "미연동 스펙", level: "spec", status: "pending", due_date: "2026-10-01" },
+              { id: "spec-manual-linked", title: "연결된 스펙", level: "spec", status: "pending" },
+              { id: "run-linked", title: "실행", level: "workstream", status: "pending", parent: "spec-manual-linked" },
+              { id: "spec-manual-done", title: "끝난 스펙", level: "spec", status: "done" },
             ],
           }),
         );
@@ -71,12 +75,18 @@ describe("fetch 계열 — 실제 서버 응답", () => {
 
   it("fetchRoadmapOrdering이 대시보드 {nodes} 응답을 언랩하고 depends_on→dependsOn으로 매핑한다", async () => {
     const result = await fetchRoadmapOrdering("ws1");
-    expect(result).toEqual([{ id: "A", dependsOn: ["B"], manual_status: "in_review", pos_x: 10, pos_y: 20 }]);
+    expect(result?.[0]).toEqual({ id: "A", dependsOn: ["B"], manual_status: "in_review", pos_x: 10, pos_y: 20 });
   });
 
   it("fetchCheckpointSync가 대시보드 {checkpoints} 응답을 언랩하고 applies_to를 매핑한다", async () => {
     const result = await fetchCheckpointSync();
     expect(result).toEqual([{ id: "CP-1", title: "원격 체크포인트", checklist: ["x"], applies_to: undefined, category: undefined }]);
+  });
+
+  it("하위 Run이 없는 진행 중 manual SPEC만 feat 연결 후보로 반환한다", async () => {
+    expect(await fetchUnlinkedSpecDrafts("ws1")).toEqual([
+      { id: "spec-manual-open", title: "미연동 스펙", dueDate: "2026-10-01" },
+    ]);
   });
 
   it("fetchCalibratedRatio가 숫자를 가져온다", async () => {

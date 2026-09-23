@@ -24543,6 +24543,22 @@ async function fetchJson(path, timeoutMs) {
     clearTimeout(timer);
   }
 }
+async function fetchUnlinkedSpecDrafts(workspaceName) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return null;
+  const qs = config2.userId ? `?userId=${encodeURIComponent(config2.userId)}` : "";
+  const res = await fetchJson(
+    `/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap${qs}`,
+    8e3
+  );
+  if (!res) return null;
+  const linkedSpecIds = new Set(
+    res.nodes.filter((node) => node.level === "workstream" && node.parent).map((node) => node.parent)
+  );
+  return res.nodes.filter(
+    (node) => node.level === "spec" && node.id.startsWith("spec-manual-") && node.status !== "done" && node.status !== "dropped" && !linkedSpecIds.has(node.id)
+  ).map((node) => ({ id: node.id, title: node.title ?? node.id, dueDate: node.due_date ?? null }));
+}
 async function fetchRoadmapOrdering(workspaceName) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return null;
@@ -27746,7 +27762,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.6.0" : "0.0.0-dev";
+  return true ? "0.6.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29603,7 +29619,7 @@ var WORKFLOW_STATES = [
 ];
 var ACTION_TYPES = [
   { name: "start", fromStates: null, toState: "SCAN", gates: [] },
-  { name: "clarify", fromStates: ["SCAN"], toState: "CLARIFY", gates: [] },
+  { name: "clarify", fromStates: ["SCAN"], toState: "CLARIFY", gates: ["SPEC_DRAFT_SELECTION_REQUIRED"] },
   { name: "prd", fromStates: ["CLARIFY"], toState: "PRD", gates: ["CONFORMANCE_LEDGER"] },
   { name: "oracle_done", fromStates: ["PRD", "JIRA"], toState: null, gates: ["SPEC_ORACLE_NOT_RUN"] },
   { name: "decompose", fromStates: ["PRD"], toState: "DECOMPOSE", gates: [] },
@@ -30046,6 +30062,8 @@ var sugoPlanInputSchema = {
   featureName: external_exports.string().optional().describe("start action\uC5D0 \uC120\uD0DD\uC801\uC73C\uB85C \uC0AC\uC6A9"),
   workResultPath: external_exports.string().optional().describe("start action: patch \uC9C4\uC785\uC810(\xA77) \u2014 \uAE30\uC874 work-result.md(\uB610\uB294 work-result-patch-vN.md) \uACBD\uB85C. \uBBF8\uC785\uB825\uC2DC \uAE30\uC874(\uC2E0\uADDC PRD) \uB3D9\uC791"),
   seed: external_exports.string().optional().describe("start action(\xA77.1 Patch \uC131\uC219\uD654): \uC774\uBC88 patch \uCC28\uC218\uC5D0 \uB300\uD55C \uC0AC\uC6A9\uC790 \uC9C0\uC2DC. review_done\uC774 work-result\uC5D0 \uD568\uAED8 \uAE30\uB85D\uD55C\uB2E4"),
+  specDraftDecision: external_exports.enum(["link", "new"]).optional().describe("clarify action: \uBBF8\uC5F0\uACB0 SPEC \uCD08\uC548 \uD6C4\uBCF4\uAC00 \uC788\uC73C\uBA74 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uBCF4\uC5EC\uC900 \uB4A4 \uAE30\uC874 \uCD08\uC548 \uC5F0\uACB0(link) \uB610\uB294 \uC0C8 SPEC \uC0DD\uC131(new)\uC744 \uBC18\uB4DC\uC2DC \uC120\uD0DD"),
+  specDraftId: external_exports.string().optional().describe("clarify action: specDraftDecision='link'\uC77C \uB54C \uC0AC\uC6A9\uC790\uAC00 \uC120\uD0DD\uD55C spec-manual-* ID"),
   prdContent: external_exports.string().optional().describe("prd action\uC5D0 \uD544\uC694. \uBCF8\uBB38 \u2265100\uC790, REQ-N \uD0DC\uADF8 \u22651"),
   specPath: external_exports.string().optional().describe("prd action(\xA75.0): \uB300\uC870\uD560 \uC6D0\uBCF8 \uC2A4\uD399 \uBB38\uC11C(q-spec) \uACBD\uB85C. \uC2E4\uC7AC\uD558\uBA74 specOracle\uC774 \uCF1C\uC838 ready \uC804\uC5D0 oracle_done\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4"),
   uncovered: external_exports.array(external_exports.object({ quote: external_exports.string(), reason: external_exports.string() })).optional().describe("oracle_done: \uC6D0\uBCF8 \uC2A4\uD399\uC5D0 \uC788\uC73C\uB098 PRD\uAC00 \uBABB \uB36E\uC740 \uD56D\uBAA9\uB4E4(\uC778\uC6A9 + \uC0AC\uC720). 1\uAC74 \uC774\uC0C1\uC774\uBA74 overrideReason \uD544\uC218"),
@@ -30252,6 +30270,25 @@ async function handleSugoPlan(rawArgs) {
   if (action === "clarify" && existing?.data.todoSpec && existing.data.todoSpec.snapshotAtStart === null && (args2.todoSpecGoal || args2.todoSpecItems)) {
     const draftResult = checkTodoSpecDraftGate(args2.todoSpecGoal, args2.todoSpecItems, args2.todoSpecUserConfirmed);
     if (!draftResult.ok) return errorResult8(draftResult.code, draftResult.message);
+  }
+  if (action === "clarify" && existing?.data.mode !== "patch") {
+    const selection = existing?.data.specDraftSelection;
+    if (selection && selection.candidates.length > 0) {
+      if (!args2.specDraftDecision) {
+        return errorResult8(
+          "SPEC_DRAFT_SELECTION_REQUIRED",
+          "\uBBF8\uC5F0\uACB0 SPEC \uCD08\uC548\uC774 \uC788\uC2B5\uB2C8\uB2E4. \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uD6C4\uBCF4\uB97C \uBCF4\uC5EC\uC8FC\uACE0 specDraftDecision(link|new)\uC744 \uD655\uC778\uBC1B\uC544\uC57C \uD569\uB2C8\uB2E4."
+        );
+      }
+      if (args2.specDraftDecision === "link") {
+        if (!args2.specDraftId) {
+          return errorResult8("SPEC_DRAFT_ID_REQUIRED", "link \uC120\uD0DD\uC5D0\uB294 \uC0AC\uC6A9\uC790\uAC00 \uACE0\uB978 specDraftId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        }
+        if (!selection.candidates.some((candidate) => candidate.id === args2.specDraftId)) {
+          return errorResult8("SPEC_DRAFT_NOT_FOUND", `\uD604\uC7AC \uBBF8\uC5F0\uACB0 \uD6C4\uBCF4\uAC00 \uC544\uB2CC SPEC\uC785\uB2C8\uB2E4: ${args2.specDraftId}`);
+        }
+      }
+    }
   }
   if (action === "commit" && existing?.data.todoSpec) {
     const currentContent = await readTodoSpec(existing.projectPath, existing.data.todoSpec.featureName);
@@ -30465,6 +30502,28 @@ async function handleSugoPlan(rawArgs) {
   if (action === "start" && args2.seed) {
     session = { ...session, data: { ...session.data, seed: args2.seed } };
   }
+  if (action === "start" && session.data.mode !== "patch") {
+    const registryEntry = await findRegistryEntry(session.projectPath);
+    if (registryEntry?.workspace) {
+      const candidates = await fetchUnlinkedSpecDrafts(registryEntry.workspace);
+      if (candidates && candidates.length > 0) {
+        session = { ...session, data: { ...session.data, specDraftSelection: { candidates } } };
+      }
+    }
+  }
+  if (action === "clarify" && session.data.specDraftSelection && args2.specDraftDecision) {
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        specDraftSelection: {
+          ...session.data.specDraftSelection,
+          decision: args2.specDraftDecision,
+          selectedId: args2.specDraftDecision === "link" ? args2.specDraftId : void 0
+        }
+      }
+    };
+  }
   if (action === "clarify" && session.data.todoSpec && session.data.todoSpec.snapshotAtStart === null && args2.todoSpecUserConfirmed && args2.todoSpecGoal && args2.todoSpecItems) {
     const { content } = await createTodoSpec(session.projectPath, {
       featureName: session.data.todoSpec.featureName,
@@ -30562,12 +30621,14 @@ async function handleSugoPlan(rawArgs) {
       const existingTaskNode = isPatch ? await getRoadmapNode(registryEntry.workspace, task.id) : null;
       const runId = existingTaskNode?.parent ?? `run-${task.id}`;
       const existingRunNode = await getRoadmapNode(registryEntry.workspace, runId);
-      const specId = existingRunNode?.parent ?? `spec-${task.id}`;
+      const draftSelection = session.data.specDraftSelection;
+      const selectedDraft = draftSelection?.decision === "link" ? draftSelection.candidates.find((candidate) => candidate.id === draftSelection.selectedId) : void 0;
+      const specId = existingRunNode?.parent ?? selectedDraft?.id ?? `spec-${task.id}`;
       const existingSpecNode = await getRoadmapNode(registryEntry.workspace, specId);
       await upsertRoadmapNodes(registryEntry.workspace, [
         {
           id: specId,
-          title: existingSpecNode?.title ?? session.featureName,
+          title: existingSpecNode?.title ?? selectedDraft?.title ?? session.featureName,
           level: "spec",
           status: "in_progress",
           dependsOn: [],
@@ -30810,6 +30871,8 @@ ${session.data.seed}` : args2.summary;
     completionPlan: buildCompletionPlan(session.state, session.data.chainInfo),
     // §4.3-T start에서만 채워진다. missing이면 clarify에서 최종 목표를 확정해 생성해야 한다.
     todoSpec: todoSpecResponse,
+    // feat 시작 시 사용자가 기존 초안 연결/새 SPEC 생성을 직접 고를 수 있도록 원문 후보를 반환한다.
+    unlinkedSpecDrafts: action === "start" ? session.data.specDraftSelection?.candidates : void 0,
     // 같은 프로젝트에 이어받을 수 있는 다른 세션이 있으면 알려준다 — 병합을 강제하지 않는다.
     otherResumableSessions,
     humanHoursEstimate,

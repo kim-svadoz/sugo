@@ -7,7 +7,7 @@ import { writePatchPrdFile, writePatchWorkResultFile, writePrdFile, writeWorkRes
 import { checkCoverageGate } from "../consistency.js";
 import { checkContractEvidenceGate, checkContractStartedGate, resolveContractRequired } from "../contractEvidence.js";
 import { emitActivity } from "../dashboard/activity.js";
-import { fetchCalibratedRatio } from "../dashboard/fetch.js";
+import { fetchCalibratedRatio, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
 import { snapshotWorkResultFiles } from "../dashboard/workResultFiles.js";
 import { collectPrRefs } from "../prRefs.js";
 import { validateIntegration, validateManifest, type DecomposeManifest } from "../decompose.js";
@@ -74,6 +74,11 @@ export const sugoPlanInputSchema = {
     .string()
     .optional()
     .describe("start action(§7.1 Patch 성숙화): 이번 patch 차수에 대한 사용자 지시. review_done이 work-result에 함께 기록한다"),
+  specDraftDecision: z
+    .enum(["link", "new"])
+    .optional()
+    .describe("clarify action: 미연결 SPEC 초안 후보가 있으면 사용자에게 보여준 뒤 기존 초안 연결(link) 또는 새 SPEC 생성(new)을 반드시 선택"),
+  specDraftId: z.string().optional().describe("clarify action: specDraftDecision='link'일 때 사용자가 선택한 spec-manual-* ID"),
   prdContent: z.string().optional().describe("prd action에 필요. 본문 ≥100자, REQ-N 태그 ≥1"),
   specPath: z
     .string()
@@ -377,6 +382,28 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (!draftResult.ok) return errorResult(draftResult.code as GateBlockCode, draftResult.message!);
   }
 
+  // Dashboard에 미연결 SPEC 초안이 있으면 feat가 임의로 새 SPEC을 만들 수 없다. clarify에서
+  // 사용자에게 후보를 보여주고 기존 초안 연결/새 SPEC 생성을 명시적으로 선택받아야 한다.
+  if (action === "clarify" && existing?.data.mode !== "patch") {
+    const selection = existing?.data.specDraftSelection;
+    if (selection && selection.candidates.length > 0) {
+      if (!args.specDraftDecision) {
+        return errorResult(
+          "SPEC_DRAFT_SELECTION_REQUIRED",
+          "미연결 SPEC 초안이 있습니다. 사용자에게 후보를 보여주고 specDraftDecision(link|new)을 확인받아야 합니다.",
+        );
+      }
+      if (args.specDraftDecision === "link") {
+        if (!args.specDraftId) {
+          return errorResult("SPEC_DRAFT_ID_REQUIRED", "link 선택에는 사용자가 고른 specDraftId가 필요합니다.");
+        }
+        if (!selection.candidates.some((candidate) => candidate.id === args.specDraftId)) {
+          return errorResult("SPEC_DRAFT_NOT_FOUND", `현재 미연결 후보가 아닌 SPEC입니다: ${args.specDraftId}`);
+        }
+      }
+    }
+  }
+
   // ── §4.3-T TODO-SPEC 동기화 게이트. 브랜치가 feature/*가 아니었으면 session.data.todoSpec 자체가
   // 없으므로 no-op. 파일을 다시 읽어 start 시점 스냅샷과 대조한다 — 세션에 저장해둔 스냅샷과
   // 비교하는 것이지 서버가 "무엇을 했어야 하는지"를 추론하지 않는다(§4.3 판정 원칙과 동일).
@@ -650,6 +677,32 @@ export async function handleSugoPlan(rawArgs: unknown) {
     session = { ...session, data: { ...session.data, seed: args.seed } };
   }
 
+  // feat 시작 시 Dashboard의 미연결 SPEC 초안을 캡처한다. Dashboard가 꺼져 있거나 조회에 실패하면
+  // 기존 fail-open 원칙대로 후보 없음으로 진행하지만, 후보를 정상 조회했다면 clarify 게이트가 강제된다.
+  if (action === "start" && session.data.mode !== "patch") {
+    const registryEntry = await findRegistryEntry(session.projectPath);
+    if (registryEntry?.workspace) {
+      const candidates = await fetchUnlinkedSpecDrafts(registryEntry.workspace);
+      if (candidates && candidates.length > 0) {
+        session = { ...session, data: { ...session.data, specDraftSelection: { candidates } } };
+      }
+    }
+  }
+
+  if (action === "clarify" && session.data.specDraftSelection && args.specDraftDecision) {
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        specDraftSelection: {
+          ...session.data.specDraftSelection,
+          decision: args.specDraftDecision,
+          selectedId: args.specDraftDecision === "link" ? args.specDraftId : undefined,
+        },
+      },
+    };
+  }
+
   // ── §4.3-T TODO-SPEC 최초 생성. 게이트(위)를 통과했을 때만 도달한다 — 사용자 확인을 거친
   // 초안만 파일로 고정한다.
   if (
@@ -787,12 +840,16 @@ export async function handleSugoPlan(rawArgs: unknown) {
       const existingTaskNode = isPatch ? await getRoadmapNode(registryEntry.workspace, task.id) : null;
       const runId = existingTaskNode?.parent ?? `run-${task.id}`;
       const existingRunNode = await getRoadmapNode(registryEntry.workspace, runId);
-      const specId = existingRunNode?.parent ?? `spec-${task.id}`;
+      const draftSelection = session.data.specDraftSelection;
+      const selectedDraft = draftSelection?.decision === "link"
+        ? draftSelection.candidates.find((candidate) => candidate.id === draftSelection.selectedId)
+        : undefined;
+      const specId = existingRunNode?.parent ?? selectedDraft?.id ?? `spec-${task.id}`;
       const existingSpecNode = await getRoadmapNode(registryEntry.workspace, specId);
       await upsertRoadmapNodes(registryEntry.workspace, [
         {
           id: specId,
-          title: existingSpecNode?.title ?? session.featureName,
+          title: existingSpecNode?.title ?? selectedDraft?.title ?? session.featureName,
           level: "spec",
           status: "in_progress",
           dependsOn: [],
@@ -1081,6 +1138,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
     completionPlan: buildCompletionPlan(session.state, session.data.chainInfo),
     // §4.3-T start에서만 채워진다. missing이면 clarify에서 최종 목표를 확정해 생성해야 한다.
     todoSpec: todoSpecResponse,
+    // feat 시작 시 사용자가 기존 초안 연결/새 SPEC 생성을 직접 고를 수 있도록 원문 후보를 반환한다.
+    unlinkedSpecDrafts: action === "start" ? session.data.specDraftSelection?.candidates : undefined,
     // 같은 프로젝트에 이어받을 수 있는 다른 세션이 있으면 알려준다 — 병합을 강제하지 않는다.
     otherResumableSessions,
     humanHoursEstimate,

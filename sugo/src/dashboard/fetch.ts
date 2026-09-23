@@ -35,10 +35,46 @@ export interface RemoteRoadmapOrdering {
  * camelCase RemoteRoadmapOrdering으로 번역한다. */
 interface RoadmapNodeResponse {
   id: string;
+  title?: string;
+  level?: string;
+  status?: string;
+  parent?: string | null;
+  due_date?: string | null;
   depends_on?: string[];
   manual_status?: string | null;
   pos_x?: number | null;
   pos_y?: number | null;
+}
+
+export interface UnlinkedSpecDraft {
+  id: string;
+  title: string;
+  dueDate: string | null;
+}
+
+/** Dashboard에서 먼저 만든 최상위 SPEC 중 아직 하위 Run이 없는 feat 연결 후보만 가져온다. */
+export async function fetchUnlinkedSpecDrafts(workspaceName: string): Promise<UnlinkedSpecDraft[] | null> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return null;
+  const qs = config.userId ? `?userId=${encodeURIComponent(config.userId)}` : "";
+  const res = await fetchJson<{ nodes: RoadmapNodeResponse[] }>(
+    `/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap${qs}`,
+    8000,
+  );
+  if (!res) return null;
+  const linkedSpecIds = new Set(
+    res.nodes.filter((node) => node.level === "workstream" && node.parent).map((node) => node.parent as string),
+  );
+  return res.nodes
+    .filter(
+      (node) =>
+        node.level === "spec" &&
+        node.id.startsWith("spec-manual-") &&
+        node.status !== "done" &&
+        node.status !== "dropped" &&
+        !linkedSpecIds.has(node.id),
+    )
+    .map((node) => ({ id: node.id, title: node.title ?? node.id, dueDate: node.due_date ?? null }));
 }
 
 /** GET /api/workspaces/{ws}/roadmap?userId= — §7.2 "대시보드=순서의 SOT".
