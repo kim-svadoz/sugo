@@ -411,10 +411,13 @@ export async function createCheckpoint(
   input: CreateCheckpointInput
 ): Promise<string> {
   if (!input.id) throw new Error("checkpoint id required");
+  // created_at을 명시적으로 CURRENT_TIMESTAMP로 찍는다 — ALTER로 자가보강된 컬럼은(마이그레이션
+  // 이전부터 있던 DB) 컬럼 자체 DEFAULT가 없어서(위 ensureCheckpointCreatedAtColumn 주석 참고),
+  // INSERT에서 값을 안 주면 NULL로 남는다. CREATE TABLE의 DEFAULT는 신규 설치에만 해당한다.
   await db.exec(
     `INSERT INTO sugo_checkpoints
-     (id, user_id, workspace_name, category, title, learned_from, checklist, applies_to, checkpoint_date)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     (id, user_id, workspace_name, category, title, learned_from, checklist, applies_to, checkpoint_date, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
     [
       input.id,
       userId,

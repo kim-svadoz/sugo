@@ -7,6 +7,7 @@ import request from "supertest";
 import { createApp } from "../src/index.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
 import { seedUserToken } from "./testAuth.js";
+import { __resetCheckpointCreatedAtColState, ensureCheckpointCreatedAtColumn } from "../src/services/syncService.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
@@ -133,6 +134,38 @@ describe("checkpoint CRUD via dashboard (§3.3)", () => {
     await request(app).delete("/api/workspaces/ws1/checkpoints/CP-002").query({ userId: "u1" }).set("Authorization", auth).expect(200);
     rows = await db.query("SELECT * FROM sugo_checkpoints WHERE id='CP-002'");
     expect(rows).toEqual([]);
+  });
+
+  it("생성하면 created_at이 즉시 채워진다(페이지네이션 정렬 기준)", async () => {
+    const { app, db, auth } = await seededApp();
+    await request(app)
+      .post("/api/workspaces/ws1/checkpoints")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ id: "CP-003", title: "dated" })
+      .expect(200);
+    const rows = await db.query<{ created_at: string | null }>("SELECT created_at FROM sugo_checkpoints WHERE id='CP-003'");
+    expect(rows[0].created_at).not.toBeNull();
+  });
+});
+
+/**
+ * §3.3 `ensureCheckpointCreatedAtColumn` 자가보강 — schema.sqlite.sql로 만든 테이블은 이미
+ * created_at이 있어서(CREATE TABLE 안에 DEFAULT CURRENT_TIMESTAMP로 선언) 다른 모든 테스트가
+ * ALTER 경로를 절대 타지 않는다. 실제 버그(2026-09-23, `ensureWorkspaceDeletedAtColumn`과
+ * 같은 패턴으로 이 자가보강만 없이 배포된 기존 로컬 DB에서 재현)는 여기서만 잡힌다 —
+ * ALTER TABLE ADD COLUMN에 CURRENT_TIMESTAMP 같은 비상수 DEFAULT를 주면 sqlite가 거부한다.
+ */
+describe("§3.3 ensureCheckpointCreatedAtColumn — 자가보강(구 DB 업그레이드 경로)", () => {
+  it("컬럼이 없는 기존 테이블에도 ALTER로 추가되고, 기존 행도 백필된다", async () => {
+    __resetCheckpointCreatedAtColState();
+    const db = createSqliteClient();
+    await db.exec("CREATE TABLE sugo_checkpoints (id TEXT PRIMARY KEY, user_id TEXT, workspace_name TEXT, category TEXT, title TEXT)");
+    await db.exec("INSERT INTO sugo_checkpoints (id, user_id, workspace_name, category, title) VALUES ('CP-old','u1','ws1','general','기존 행')");
+
+    expect(await ensureCheckpointCreatedAtColumn(db)).toBe(true);
+    const rows = await db.query<{ created_at: string | null }>("SELECT created_at FROM sugo_checkpoints WHERE id='CP-old'");
+    expect(rows[0].created_at).not.toBeNull();
+    await db.close();
   });
 });
 

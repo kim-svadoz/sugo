@@ -49,16 +49,30 @@ await page.route("**/api/**", (route) => {
     return route.fulfill({
       json: {
         // 페이지네이션(5개씩) + 마크다운 미리보기 확인용으로 6개, created_at 오름차순.
-        checkpoints: Array.from({ length: 6 }, (_, i) => ({
-          id: `CP-mock${i}`,
-          category: "general",
-          title: `체크포인트 ${i + 1}`,
-          learned_from: i === 0 ? "## 핵심 규칙\n\n- **커밋 전**에는 항상 `npm test`를 돌린다.\n- PR은 리뷰어 1인 이상 승인 필요.\n\n> 회귀를 놓치면 롤백 비용이 훨씬 크다." : `체크포인트 ${i + 1}의 내용`,
-          checklist: [],
-          applies_to: [],
-          checkpoint_date: null,
-          created_at: `2026-09-${10 + i}T00:00:00.000Z`,
-        })),
+        // learned_from(마크다운)과 checklist(git/ 카테고리처럼 목록만 있는 것) 둘 다
+        // .md-body-compact로 같은 크기로 렌더링되는지 확인용으로 섞어 넣는다.
+        checkpoints: [
+          ...Array.from({ length: 5 }, (_, i) => ({
+            id: `CP-mock${i}`,
+            category: "general",
+            title: `체크포인트 ${i + 1}`,
+            learned_from: i === 0 ? "## 핵심 규칙\n\n- **커밋 전**에는 항상 `npm test`를 돌린다.\n- PR은 리뷰어 1인 이상 승인 필요.\n\n> 회귀를 놓치면 롤백 비용이 훨씬 크다." : `체크포인트 ${i + 1}의 내용`,
+            checklist: [],
+            applies_to: [],
+            checkpoint_date: null,
+            created_at: `2026-09-${10 + i}T00:00:00.000Z`,
+          })),
+          {
+            id: "CP-mock-git",
+            category: "git",
+            title: "기준 브랜치는 develop",
+            learned_from: null,
+            checklist: ["작업 브랜치를 develop에서 분기했는지 확인", "PR 대상 브랜치가 develop인지 확인"],
+            applies_to: [],
+            checkpoint_date: null,
+            created_at: "2026-09-16T00:00:00.000Z",
+          },
+        ],
       },
     });
   }

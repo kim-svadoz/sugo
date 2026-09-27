@@ -172,14 +172,11 @@ export function CheckpointPanel({
                     삭제
                   </button>
                 </div>
-                {cp.learned_from ? (
-                  <div className="md-body max-h-28 overflow-hidden text-[12px]" dangerouslySetInnerHTML={{ __html: renderMd(cp.learned_from) }} />
-                ) : (cp.checklist?.length ?? 0) > 0 && (
-                  <ul className="list-disc space-y-0.5 pl-5 text-[12.5px] text-[var(--color-text-muted)]">
-                    {cp.checklist!.map((c, i) => (
-                      <li key={i}>{c}</li>
-                    ))}
-                  </ul>
+                {(cp.learned_from || (cp.checklist?.length ?? 0) > 0) && (
+                  <div
+                    className="md-body md-body-compact max-h-28 overflow-hidden"
+                    dangerouslySetInnerHTML={{ __html: renderMd(cp.learned_from || cp.checklist!.map((item) => `- ${item}`).join("\n")) }}
+                  />
                 )}
                 <div className="mt-2 font-mono text-[10.5px] text-[var(--color-text-dim)]">
                   {cp.applies_to?.length ? cp.applies_to.join(", ") : "워크스페이스 전체 프로젝트"} → .claude/rules/{cp.category || "general"}/

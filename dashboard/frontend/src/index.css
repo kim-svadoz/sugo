@@ -263,6 +263,12 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .md-body th, .md-body td { border: 1px solid var(--color-border); padding: 0.4em 0.6em; text-align: left; }
 .md-body th { background: rgba(0, 180, 216, 0.08); color: #7de3ff; }
 
+/* 체크포인트 카드처럼 좁은 미리보기 영역에서 쓰는 축소판 — .md-body보다 더 구체적이라
+   레이어 순서와 무관하게 이긴다(Tailwind text-[Npx] 유틸은 @layer 안에 있어서 plain CSS인
+   .md-body에 항상 진다 — 그래서 카드마다 폰트가 들쭉날쭉해 보였다, 2026-09-23). */
+.md-body.md-body-compact { font-size: 12px; line-height: 1.5; }
+.md-body.md-body-compact h1, .md-body.md-body-compact h2, .md-body.md-body-compact h3, .md-body.md-body-compact h4 { font-size: 1em; margin: 0.3em 0; }
+
 /* 구 이름 별칭 — violet 계열을 쓰던 기존 코드 호환. */
 .neon-border-violet { border-color: rgba(139, 92, 246, 0.5) !important; box-shadow: 0 0 15px rgba(139, 92, 246, 0.25) !important; }
 
