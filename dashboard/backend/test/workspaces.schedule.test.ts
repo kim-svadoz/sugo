@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import request from "supertest";
@@ -110,6 +111,45 @@ describe("POST /api/workspaces/:name/roadmap/spec-document", () => {
     expect(res.body.errorCode).toBe("SPEC_LOCKED_AFTER_FEAT");
     const rows = await ctx.db.query<{ spec_path: string }>("SELECT spec_path FROM sugo_roadmap_nodes WHERE id = ?", ["spec1"]);
     expect(rows[0].spec_path).toBe("/tmp/v1/spec.md");
+  });
+});
+
+describe("GET/PUT /api/workspaces/:name/roadmap/spec-document — 원문 조회·수정", () => {
+  it("연결된 Markdown을 읽고 feat 전에는 원자적으로 수정한다", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "sugo-spec-editor-"));
+    const specPath = join(dir, "spec.md");
+    writeFileSync(specPath, "# v1\n");
+    try {
+      const { app, db, auth } = await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }]);
+      await db.exec("UPDATE sugo_roadmap_nodes SET spec_path = ? WHERE id = ?", [specPath, "spec1"]);
+      const before = await request(app).get("/api/workspaces/ws1/roadmap/spec-document").query({ nodeId: "spec1" }).set("Authorization", auth).expect(200);
+      expect(before.body).toMatchObject({ content: "# v1\n", specPath, locked: false });
+      await request(app).put("/api/workspaces/ws1/roadmap/spec-document").set("Authorization", auth)
+        .send({ nodeId: "spec1", content: "# v2\n\n수정됨\n" }).expect(200);
+      expect(readFileSync(specPath, "utf8")).toBe("# v2\n\n수정됨\n");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("feat RUN 생성 뒤에는 읽기만 허용하고 저장은 409로 거부한다", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "sugo-spec-editor-"));
+    const specPath = join(dir, "spec.md");
+    writeFileSync(specPath, "# locked\n");
+    try {
+      const ctx = await bootApp();
+      await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }, { id: "run1", level: "workstream" }], ctx);
+      await ctx.db.exec("UPDATE sugo_roadmap_nodes SET spec_path = ? WHERE id = ?", [specPath, "spec1"]);
+      await ctx.db.exec("UPDATE sugo_roadmap_nodes SET parent = ? WHERE id = ?", ["spec1", "run1"]);
+      const read = await request(ctx.app).get("/api/workspaces/ws1/roadmap/spec-document").query({ nodeId: "spec1" }).set("Authorization", ctx.auth).expect(200);
+      expect(read.body.locked).toBe(true);
+      const save = await request(ctx.app).put("/api/workspaces/ws1/roadmap/spec-document").set("Authorization", ctx.auth)
+        .send({ nodeId: "spec1", content: "# changed\n" }).expect(409);
+      expect(save.body.errorCode).toBe("SPEC_LOCKED_AFTER_FEAT");
+      expect(readFileSync(specPath, "utf8")).toBe("# locked\n");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

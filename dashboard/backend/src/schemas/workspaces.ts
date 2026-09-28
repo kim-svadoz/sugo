@@ -86,3 +86,8 @@ export const setSpecDocumentSchema = z.object({
   nodeId: z.string().min(1),
   specPath: z.string().min(1),
 });
+
+export const updateSpecDocumentContentSchema = z.object({
+  nodeId: z.string().min(1),
+  content: z.string().min(1).max(1_000_000),
+});

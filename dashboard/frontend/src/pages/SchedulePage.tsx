@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, LockKeyhole, Pencil, Shield, Workflow } from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, LockKeyhole, Pencil, Shield, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -10,6 +10,7 @@ import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
 import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
 import { DatePicker } from "../components/DatePicker.js";
+import { SpecDocumentPanel } from "../components/SpecDocumentPanel.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
@@ -63,6 +64,7 @@ export function SchedulePage() {
   // Schedule 위에 겹쳐서 뜬다 — Esc를 누르면 그냥 이 오버레이만 닫히고 Schedule로 남는다.
   const [checkpointTarget, setCheckpointTarget] = useState<{ workspace: string; projectPath: string | null; dueDate: string | null } | null>(null);
   const [canvasOverlay, setCanvasOverlay] = useState<{ workspace: string; nodeId: string } | null>(null);
+  const [specDocumentTarget, setSpecDocumentTarget] = useState<{ workspace: string; nodeId: string; title: string } | null>(null);
 
   // spec-writer는 다른 터미널에서 완료되므로 4초 폴링 결과를 열린 상세에도 반영한다.
   useEffect(() => {
@@ -446,7 +448,7 @@ export function SchedulePage() {
             setSelected(null);
             setTitleDraft(null);
           }}
-          disableEscape={!!checkpointTarget || !!canvasOverlay}
+          disableEscape={!!checkpointTarget || !!canvasOverlay || !!specDocumentTarget}
         >
           <div className="space-y-4">
             <div>
@@ -495,6 +497,14 @@ export function SchedulePage() {
                 <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11.5px] text-emerald-200">
                   <strong>SPEC 작성 완료</strong> · feat 시작 전까지 다시 작성할 수 있습니다.
                 </div>
+              )}
+              {selected.spec_path && (
+                <button
+                  onClick={() => setSpecDocumentTarget({ workspace: selected.workspace_name, nodeId: selected.id, title: selected.title })}
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-500/30 bg-slate-500/10 px-3 py-2.5 text-[12px] font-semibold text-slate-200 hover:bg-slate-500/20"
+                >
+                  <BookOpen size={14} /> {selected.has_run ? "SPEC 원문 읽기" : "SPEC 원문 읽기·수정"}
+                </button>
               )}
               {scheduleSpecStage(selected) === "in_progress" && (
                 <div className="mt-3 flex items-start gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-[11.5px] text-cyan-100">
@@ -670,6 +680,14 @@ export function SchedulePage() {
           workspace={canvasOverlay.workspace}
           focusNodeId={canvasOverlay.nodeId}
           onClose={() => setCanvasOverlay(null)}
+        />
+      )}
+      {specDocumentTarget && (
+        <SpecDocumentPanel
+          workspace={specDocumentTarget.workspace}
+          nodeId={specDocumentTarget.nodeId}
+          title={specDocumentTarget.title}
+          onClose={() => setSpecDocumentTarget(null)}
         />
       )}
     </div>

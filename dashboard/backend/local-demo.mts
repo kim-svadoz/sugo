@@ -1,4 +1,5 @@
 /** 로컬 UI 확인용 완전한 시나리오 데이터. ~/.claude/sugo 원장은 건드리지 않고 SQLite 미러에만 넣는다. */
+import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -20,6 +21,41 @@ const baseWorkResult = join(projectPath, "sugo", "features", "20260922", "checko
 const patchWorkResult = join(projectPath, "sugo", "features", "20260922", "checkout-guard", "work-result-patch-v2.md");
 
 const workspace: Workspace = { name: workspaceName, projects: [projectPath], created_at: now };
+
+// Schedule의 SPEC 원문 뷰어가 실제 파일을 읽고 잠금 상태까지 재현할 수 있게 한다.
+await mkdir(projectPath, { recursive: true });
+await writeFile(join(projectPath, "SPEC.md"), `# 안전한 결제 처리
+
+## 배경
+
+네트워크 재시도와 중복 클릭이 발생해도 결제 승인은 한 번만 수행되어야 합니다.
+
+## 요구사항
+
+- 모든 결제 승인 요청은 \`Idempotency-Key\`를 받습니다.
+- 동일한 키의 요청은 최초 승인 결과를 재사용합니다.
+- 동시에 들어온 중복 요청은 한 건만 승인하고 나머지는 처리 중 응답을 반환합니다.
+
+## 완료 기준
+
+1. Redis 원자 연산으로 중복 승인을 차단합니다.
+2. 완료 응답은 24시간 동안 재사용할 수 있습니다.
+3. 동시 요청 회귀 테스트가 통과합니다.
+`, "utf8");
+await writeFile(join(projectPath, "OPS-SPEC.md"), `# 결제 운영 안정화
+
+## 목표
+
+실패한 웹훅을 안전하게 재처리하고 고액 환불에는 이중 승인 정책을 적용합니다.
+
+## 작업 범위
+
+- 지수 백오프 기반 웹훅 재처리 큐
+- 재시도 한도를 넘긴 이벤트를 위한 DLQ 운영 도구
+- 고액 환불 이중 승인과 감사 로그
+
+> 환불 승인 금액 기준은 법무 검토가 끝날 때까지 확정하지 않습니다.
+`, "utf8");
 const tasks: Task[] = [
   { id: "demo-checkout", title: "결제 중복 방지", project: "checkout-service", status: "done", priority: "high", summary: "멱등키 저장과 재시도 응답을 구현했습니다.", created_at: now, completed_at: now, prd_ref: join(projectPath, "prd.md") },
   { id: "demo-webhook", title: "웹훅 재처리", project: "checkout-service", status: "in_progress", priority: "medium", description: "실패 웹훅 재처리 큐", created_at: now, started_at: now },

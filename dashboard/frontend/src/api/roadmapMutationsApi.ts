@@ -112,6 +112,24 @@ export function setProject(userId: string, workspace: string, nodeId: string, pr
   });
 }
 
+export interface SpecDocument {
+  ok: true;
+  specPath: string;
+  content: string;
+  locked: boolean;
+}
+
+export function getSpecDocument(userId: string, workspace: string, nodeId: string) {
+  return apiJson<SpecDocument>(withUserId(path(workspace, "/spec-document"), userId, { nodeId }));
+}
+
+export function updateSpecDocument(userId: string, workspace: string, nodeId: string, content: string) {
+  return apiJson<SpecDocument>(withUserId(path(workspace, "/spec-document"), userId), {
+    method: "PUT",
+    body: JSON.stringify({ nodeId, content }),
+  });
+}
+
 /** Run/Task 없이 level='spec' 노드만 단독 생성한다("+ 일정 추가"). */
 export function createQuickSpec(
   userId: string,

@@ -18,6 +18,7 @@ import {
   runSpecSchema,
   setProjectSchema,
   setSpecDocumentSchema,
+  updateSpecDocumentContentSchema,
 } from "../schemas/workspaces.js";
 import {
   clearManualStatus,
@@ -34,6 +35,7 @@ import {
   getRoadmap,
   getScheduledSpecs,
   getSpecContent,
+  getRoadmapSpecDocument,
   getTasks,
   getWorkspaceProjectPaths,
   linkRoadmapNodes,
@@ -51,6 +53,7 @@ import {
   setRoadmapPosition,
   unlinkRoadmapNodes,
   updateCheckpoint,
+  updateRoadmapSpecDocument,
 } from "../services/workspaceService.js";
 import { applyCheckpointToProjects, isCheckpointExpired, newCheckpointId } from "../services/checkpointApply.js";
 
@@ -360,6 +363,30 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
       return;
     }
     res.json({ ok: true });
+  });
+
+  router.get("/:name/roadmap/spec-document", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+    if (!nodeId) return void res.status(400).json({ ok: false, errorCode: "NODE_ID_REQUIRED" });
+    const result = await getRoadmapSpecDocument(db, userId, req.params.name, nodeId);
+    if (!result.ok) {
+      const status = result.errorCode === "NODE_NOT_FOUND" || result.errorCode === "SPEC_FILE_NOT_FOUND" ? 404 : 400;
+      return void res.status(status).json(result);
+    }
+    res.json(result);
+  });
+
+  router.put("/:name/roadmap/spec-document", validateBody(updateSpecDocumentContentSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const result = await updateRoadmapSpecDocument(db, userId, req.params.name, req.body.nodeId, req.body.content);
+    if (!result.ok) {
+      const status = result.errorCode === "SPEC_LOCKED_AFTER_FEAT" ? 409 : result.errorCode === "NODE_NOT_FOUND" || result.errorCode === "SPEC_FILE_NOT_FOUND" ? 404 : 400;
+      return void res.status(status).json(result);
+    }
+    res.json(result);
   });
 
   // §7B Run/Task 없이 level='spec' 노드만 단독 생성("+ 일정 추가").

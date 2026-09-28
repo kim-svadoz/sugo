@@ -1,4 +1,6 @@
 import { randomBytes } from "node:crypto";
+import { readFile, rename as renameFile, unlink, writeFile } from "node:fs/promises";
+import { basename, dirname, extname, isAbsolute, join } from "node:path";
 import type { DbClient } from "../db/client.js";
 import { ensureWorkspaceDeletedAtColumn } from "./syncService.js";
 import { readySet, topoSort, wouldCreateCycle } from "./roadmapGraph.js";
@@ -358,6 +360,78 @@ export async function setRoadmapSpecDocument(
     [specPath, userId, workspaceName, nodeId]
   );
   return { ok: true };
+}
+
+type SpecDocumentError = "NODE_NOT_FOUND" | "INVALID_LEVEL" | "SPEC_DOCUMENT_NOT_LINKED" | "SPEC_FILE_NOT_FOUND";
+
+export type SpecDocumentResult =
+  | { ok: true; specPath: string; content: string; locked: boolean }
+  | { ok: false; errorCode: SpecDocumentError };
+
+type SpecNodeState =
+  | { ok: true; specPath: string; locked: boolean }
+  | { ok: false; errorCode: "NODE_NOT_FOUND" | "INVALID_LEVEL" | "SPEC_DOCUMENT_NOT_LINKED" };
+
+async function specNodeState(db: DbClient, userId: string, workspaceName: string, nodeId: string): Promise<SpecNodeState> {
+  const rows = await db.query<{ level: string; spec_path: string | null }>(
+    "SELECT level, spec_path FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [userId, workspaceName, nodeId],
+  );
+  if (rows.length === 0) return { ok: false, errorCode: "NODE_NOT_FOUND" };
+  if (rows[0].level !== "spec") return { ok: false, errorCode: "INVALID_LEVEL" };
+  if (!rows[0].spec_path) return { ok: false, errorCode: "SPEC_DOCUMENT_NOT_LINKED" };
+  const children = await db.query<{ id: string }>(
+    "SELECT id FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND parent = ? AND level = 'workstream' LIMIT 1",
+    [userId, workspaceName, nodeId],
+  );
+  return { ok: true, specPath: rows[0].spec_path, locked: children.length > 0 };
+}
+
+/** 연결된 SPEC 원문만 읽는다. 요청에서 임의 파일 경로를 받지 않아 로컬 파일 탐색 API가 되지 않는다. */
+export async function getRoadmapSpecDocument(
+  db: DbClient,
+  userId: string,
+  workspaceName: string,
+  nodeId: string,
+): Promise<SpecDocumentResult> {
+  const state = await specNodeState(db, userId, workspaceName, nodeId);
+  if (!state.ok) return { ok: false, errorCode: state.errorCode };
+  if (!isAbsolute(state.specPath) || extname(state.specPath).toLowerCase() !== ".md") {
+    return { ok: false, errorCode: "SPEC_FILE_NOT_FOUND" };
+  }
+  const content = await readFile(state.specPath, "utf8").catch(() => null);
+  if (content === null) return { ok: false, errorCode: "SPEC_FILE_NOT_FOUND" };
+  return { ok: true, specPath: state.specPath, content, locked: state.locked };
+}
+
+export type UpdateSpecDocumentResult =
+  | { ok: true; specPath: string; content: string; locked: false }
+  | { ok: false; errorCode: SpecDocumentError | "SPEC_LOCKED_AFTER_FEAT" };
+
+/** feat 전 원문 수정. 같은 디렉터리의 임시 파일을 rename해 중간 저장 실패 시 원문을 보존한다. */
+export async function updateRoadmapSpecDocument(
+  db: DbClient,
+  userId: string,
+  workspaceName: string,
+  nodeId: string,
+  content: string,
+): Promise<UpdateSpecDocumentResult> {
+  const state = await specNodeState(db, userId, workspaceName, nodeId);
+  if (!state.ok) return { ok: false, errorCode: state.errorCode };
+  if (state.locked) return { ok: false, errorCode: "SPEC_LOCKED_AFTER_FEAT" };
+  if (!isAbsolute(state.specPath) || extname(state.specPath).toLowerCase() !== ".md") {
+    return { ok: false, errorCode: "SPEC_FILE_NOT_FOUND" };
+  }
+  const existing = await readFile(state.specPath, "utf8").catch(() => null);
+  if (existing === null) return { ok: false, errorCode: "SPEC_FILE_NOT_FOUND" };
+  const tempPath = join(dirname(state.specPath), `.${basename(state.specPath)}.sugo-edit-${randomBytes(4).toString("hex")}.tmp`);
+  try {
+    await writeFile(tempPath, content, "utf8");
+    await renameFile(tempPath, state.specPath);
+  } finally {
+    await unlink(tempPath).catch(() => undefined);
+  }
+  return { ok: true, specPath: state.specPath, content, locked: false };
 }
 
 export type SetDueDateResult = { ok: true } | { ok: false; errorCode: "NODE_NOT_FOUND" | "INVALID_LEVEL" };
