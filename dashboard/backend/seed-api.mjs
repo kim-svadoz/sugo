@@ -4,7 +4,9 @@ import { SignJWT } from "jose";
 import { homedir } from "node:os";
 import { join } from "node:path";
 const USER = "github:58545240";
-const BASE = "http://localhost:3001";
+import { LOCAL_API_URL } from "../port-contract.mjs";
+
+const BASE = LOCAL_API_URL;
 // 데모 경로는 화면에 그대로 찍힌다 — 이 PC의 Windows 경로를 박지 않는다(seed-demo.ts와 동일).
 const SPLEARN = join(homedir(), "splearn");
 const PAYMENTS = join(homedir(), "work", "payments");

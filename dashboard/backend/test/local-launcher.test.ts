@@ -12,11 +12,14 @@ describe("local dashboard launcher", () => {
     expect(launcher).toContain('PATH="$PATH"');
     expect(launcher).toContain("nohup");
     expect(launcher).toContain('"$DASHBOARD_ROOT/dev-local.sh"');
-    expect(launcher).toContain('API_PORT="3001"');
-    expect(launcher).toContain('UI_PORT="5175"');
+    expect(launcher).toContain('source "$DASHBOARD_ROOT/port-contract.sh"');
+    expect(launcher).toContain('API_PORT="$SUGO_LOCAL_API_PORT"');
+    expect(launcher).toContain('UI_PORT="$SUGO_LOCAL_UI_PORT"');
     expect(launcher).toContain('DASHBOARD_API_PORT="$API_PORT"');
     expect(launcher).toContain('DASHBOARD_UI_PORT="$UI_PORT"');
-    expect(launcher).toContain("DASHBOARD_STRICT_PORTS=1");
+    expect(launcher).not.toContain("next_free_port");
+    expect(launcher).toContain('if [ "${1:-}" = "ports" ]');
+    expect(launcher).toContain("sugo_print_port_contract");
   });
 
   it("다른 앱을 죽이지 않도록 listener의 cwd가 dashboard 경로인지 확인한다", () => {

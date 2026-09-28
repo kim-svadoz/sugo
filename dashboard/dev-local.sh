@@ -3,6 +3,7 @@
 set -euo pipefail
 
 DASHBOARD_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$DASHBOARD_ROOT/port-contract.sh"
 BACKEND_DIR="$DASHBOARD_ROOT/backend"
 FRONTEND_DIR="$DASHBOARD_ROOT/frontend"
 SECRET_FILE="$BACKEND_DIR/.local-session-secret"
@@ -10,27 +11,6 @@ SECRET_FILE="$BACKEND_DIR/.local-session-secret"
 info() { printf '\033[36m[local]\033[0m %s\n' "$1"; }
 ok() { printf '\033[32m[local]\033[0m %s\n' "$1"; }
 die() { printf '\033[31m[local]\033[0m %s\n' "$1" >&2; exit 1; }
-
-port_open() {
-  (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null && exec 3>&- && return 0
-  return 1
-}
-
-wait_port() {
-  local port="$1" label="$2" waited=0
-  while [ "$waited" -lt 60 ]; do
-    if port_open "$port"; then ok "$label 준비됨 (:$port)"; return 0; fi
-    sleep 1
-    waited=$((waited + 1))
-  done
-  die "$label 이(가) :$port 에서 시작되지 않았습니다."
-}
-
-next_free_port() {
-  local port="$1"
-  while port_open "$port"; do port=$((port + 1)); done
-  printf '%s' "$port"
-}
 
 for project_dir in "$BACKEND_DIR" "$FRONTEND_DIR"; do
   if [ ! -d "$project_dir/node_modules" ]; then
@@ -44,17 +24,12 @@ if [ ! -f "$SECRET_FILE" ]; then
   chmod 600 "$SECRET_FILE"
 fi
 
-API_BASE_PORT="${DASHBOARD_API_PORT:-3001}"
-UI_BASE_PORT="${DASHBOARD_UI_PORT:-5173}"
-if [ "${DASHBOARD_STRICT_PORTS:-0}" = "1" ]; then
-  port_open "$API_BASE_PORT" && die "Sugo Dashboard API 전용 포트 :$API_BASE_PORT 가 이미 사용 중입니다."
-  port_open "$UI_BASE_PORT" && die "Sugo Dashboard UI 전용 포트 :$UI_BASE_PORT 가 이미 사용 중입니다."
-  API_PORT="$API_BASE_PORT"
-  UI_PORT="$UI_BASE_PORT"
-else
-  API_PORT="$(next_free_port "$API_BASE_PORT")"
-  UI_PORT="$(next_free_port "$UI_BASE_PORT")"
-fi
+API_PORT="$SUGO_LOCAL_API_PORT"
+UI_PORT="$SUGO_LOCAL_UI_PORT"
+[ "${DASHBOARD_API_PORT:-$API_PORT}" = "$API_PORT" ] || die "API 포트 override는 허용하지 않습니다. ports.env를 수정하세요."
+[ "${DASHBOARD_UI_PORT:-$UI_PORT}" = "$UI_PORT" ] || die "UI 포트 override는 허용하지 않습니다. ports.env를 수정하세요."
+sugo_require_port_free "$API_PORT" "Sugo Dashboard API"
+sugo_require_port_free "$UI_PORT" "Sugo Dashboard UI"
 
 export HOST="127.0.0.1"
 export PORT="$API_PORT"
@@ -90,8 +65,8 @@ info "Dashboard API 시작"
 info "Dashboard UI 시작"
 (cd "$FRONTEND_DIR" && VITE_API_BASE="http://localhost:$API_PORT" VITE_LOCAL_DEV=true npm run dev -- --host 127.0.0.1 --port "$UI_PORT" --strictPort) & pids+=("$!")
 
-wait_port "$API_PORT" "Dashboard API"
-wait_port "$UI_PORT" "Dashboard UI"
+sugo_wait_port "$API_PORT" "Dashboard API"
+sugo_wait_port "$UI_PORT" "Dashboard UI"
 
 info "기존 ~/.claude/sugo 워크스페이스·작업·roadmap 동기화"
 (cd "$BACKEND_DIR" && npx tsx local-sync.mts)

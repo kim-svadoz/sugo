@@ -1,10 +1,11 @@
 import { chromium } from "playwright";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
+import { E2E_UI_URL } from "../port-contract.mjs";
 
 // CLAUDE_JOB_DIR이 없으면 OS 임시 디렉터리로 — 문자열 연결로 두면 "undefined/tmp"가 된다.
 const OUT = process.env.CLAUDE_JOB_DIR ? join(process.env.CLAUDE_JOB_DIR, "tmp") : tmpdir();
-const BASE = "http://localhost:4173";
+const BASE = E2E_UI_URL;
 
 // 화면에 그대로 찍히는 mock 경로 — 이 PC의 Windows 경로를 박으면 mac 스크린샷에 없는 경로가 뜬다.
 const SPLEARN = join(homedir(), "splearn");

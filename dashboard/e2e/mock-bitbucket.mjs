@@ -3,8 +3,9 @@
 // ⚠️ 실제 Bitbucket Server가 아니라 Atlassian 문서 기준 응답 SHAPE를 모사한 것 — 클라이언트
 // HTTP 경로는 진짜로 태우지만, 실제 서버의 정확한 응답 형태와의 최종 일치는 여전히 미검증(residual).
 import { createServer } from "node:http";
+import { E2E_BITBUCKET_URL, PORTS } from "../port-contract.mjs";
 
-const PORT = Number(process.env.BITBUCKET_PORT ?? 9200);
+const PORT = PORTS.e2eBitbucket;
 const created = [];
 
 const server = createServer((req, res) => {
@@ -59,4 +60,4 @@ const server = createServer((req, res) => {
   res.end("{}");
 });
 
-server.listen(PORT, () => console.log(`[bitbucket] mock Bitbucket Server on http://localhost:${PORT}`));
+server.listen(PORT, "127.0.0.1", () => console.log(`[bitbucket] mock Bitbucket Server on ${E2E_BITBUCKET_URL}`));

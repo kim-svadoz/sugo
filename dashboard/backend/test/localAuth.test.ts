@@ -21,13 +21,13 @@ describe("GET /api/auth/local", () => {
     const { app } = await createApp({
       db,
       sessionSecret: SECRET,
-      frontendUrl: "http://localhost:5173",
+      frontendUrl: "http://localhost:5175",
       localDev: { enabled: true, userId: "me", displayName: "Local Me" },
     });
 
     const res = await request(app).get("/api/auth/local");
     expect(res.status).toBe(302);
-    expect(res.headers.location).toMatch(/^http:\/\/localhost:5173\/auth\/callback#session=/);
+    expect(res.headers.location).toMatch(/^http:\/\/localhost:5175\/auth\/callback#session=/);
     const token = decodeURIComponent((res.headers.location as string).split("#session=")[1]);
     expect(await verifySession(token, SECRET)).toBe("me");
     expect(await db.query("SELECT id FROM sugo_users WHERE id = ?", ["me"])).toHaveLength(1);

@@ -1,10 +1,11 @@
-// 실제 로그인 토큰(JWT Bearer)으로 Bitbucket PR 전체 플로우를 mock Bitbucket Server(:9200)에 대고
+// 실제 로그인 토큰(JWT Bearer)으로 Bitbucket PR 전체 플로우를 고정 포트 mock Bitbucket Server에 대고
 // 검증한다: PAT 저장(AES-GCM 암호화) → 상태 조회(hint만) → prRefs 심기 → PR 생성(실 HTTP:
 // branches 조회/findOpenPr/createPullRequest) → 기존 PR 재조회.
 import { chromium } from "playwright";
+import { E2E_API_URL, E2E_BITBUCKET_URL, E2E_OIDC_URL, E2E_UI_URL } from "../port-contract.mjs";
 
-const BE = "http://localhost:4000";
-const BB = "http://localhost:9200";
+const BE = E2E_API_URL;
+const BB = E2E_BITBUCKET_URL;
 let failures = 0;
 const check = (label, cond, detail) => {
   console.log(`${cond ? "✓" : "✗"} ${label}${cond ? "" : "  << " + JSON.stringify(detail)}`);
@@ -14,18 +15,18 @@ const check = (label, cond, detail) => {
 // 1) 헤드리스 로그인으로 실제 JWT Bearer 획득
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
-await page.goto("http://localhost:4173/", { waitUntil: "networkidle" });
+await page.goto(`${E2E_UI_URL}/`, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 await page.getByRole("button", { name: /sign in/i }).click();
-await page.waitForURL(/localhost:9100/, { timeout: 10000 });
+await page.waitForURL((url) => url.origin === E2E_OIDC_URL, { timeout: 10000 });
 await page.waitForSelector('input[name="login"]', { timeout: 8000 });
 await page.fill('input[name="login"]', "e2euser");
 await page.fill('input[name="password"]', "any");
 await page.click('button[type="submit"]');
 await page.waitForTimeout(800);
 const consent = await page.$('button[type="submit"]');
-if (consent && page.url().includes("9100")) { await consent.click(); await page.waitForTimeout(800); }
-await page.waitForURL(/localhost:4173\/(sessions|roadmap)/, { timeout: 12000 }).catch(() => {});
+if (consent && page.url().startsWith(E2E_OIDC_URL)) { await consent.click(); await page.waitForTimeout(800); }
+await page.waitForURL((url) => url.origin === E2E_UI_URL && /^\/(sessions|roadmap)/.test(url.pathname), { timeout: 12000 }).catch(() => {});
 await page.waitForTimeout(800);
 const token = await page.evaluate(() => JSON.parse(localStorage.getItem("sugo_auth")).accessToken);
 await browser.close();

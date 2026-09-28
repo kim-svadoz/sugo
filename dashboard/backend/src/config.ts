@@ -21,7 +21,7 @@ export const config = {
   skillsPath: process.env.SKILLS_PATH ?? "",
   // §8 "현재 냄새"가 지적하는 대로 cors()를 옵션 없이 열어두지 않는다 — 화이트리스트만 허용.
   // CORS_ORIGINS는 콤마 구분이고, 기본값은 로컬 개발용 Vite dev 서버 포트다.
-  corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5173").split(",").map((s) => s.trim()).filter(Boolean),
+  corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5175").split(",").map((s) => s.trim()).filter(Boolean),
   oidc: {
     issuer: process.env.OIDC_ISSUER ?? "",
     authEndpoint: process.env.OIDC_AUTH_ENDPOINT ?? "",
@@ -42,7 +42,7 @@ export const config = {
   // 세션/state 서명용 대칭키(HS256). 프로덕션은 반드시 강한 랜덤값을 시크릿 매니저로 주입.
   sessionSecret: process.env.SESSION_SECRET ?? "",
   // 로그인 성공 후 세션 토큰을 붙여 리다이렉트할 프론트 URL.
-  frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:5173",
+  frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:5175",
   // 개인용 로컬 실행에서만 OAuth를 우회한다. 기본 off라 production 동작에는 영향이 없다.
   localDev: {
     enabled: process.env.LOCAL_DEV_MODE === "1",

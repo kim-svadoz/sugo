@@ -31,7 +31,7 @@ async function loginAndGetSession(): Promise<string> {
   const res = await request(app).get("/api/auth/github/callback").query({ code: "abc", state });
   expect(res.status).toBe(302);
   const loc = res.headers.location as string;
-  expect(loc.startsWith("http://localhost:5173/auth/callback#session=")).toBe(true);
+  expect(loc.startsWith("http://localhost:5175/auth/callback#session=")).toBe(true);
   return decodeURIComponent(loc.split("#session=")[1]);
 }
 

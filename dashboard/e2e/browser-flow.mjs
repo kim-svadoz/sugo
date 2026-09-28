@@ -4,8 +4,9 @@
 import { chromium } from "playwright";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { E2E_OIDC_URL, E2E_UI_URL } from "../port-contract.mjs";
 
-const FRONTEND = "http://localhost:4173";
+const FRONTEND = E2E_UI_URL;
 // 스크린샷 위치는 OS별 임시 디렉터리로 — `/tmp` 하드코딩은 Windows에서 엉뚱한 데로 간다.
 const shot = (name) => join(tmpdir(), name);
 let failures = 0;
@@ -30,8 +31,8 @@ try {
 
   // 2) Sign in 클릭 → 실제 OIDC provider로 리다이렉트
   await page.getByRole("button", { name: /sign in/i }).click();
-  await page.waitForURL(/localhost:9100/, { timeout: 10000 });
-  check("실제 OIDC provider(:9100)로 리다이렉트", page.url().includes("localhost:9100"), page.url());
+  await page.waitForURL((url) => url.origin === E2E_OIDC_URL, { timeout: 10000 });
+  check("실제 OIDC provider로 리다이렉트", page.url().startsWith(E2E_OIDC_URL), page.url());
 
   // 3) OIDC dev 로그인 화면: login=e2euser, password 아무거나
   await page.waitForSelector('input[name="login"], input[name="username"]', { timeout: 10000 });
@@ -43,15 +44,15 @@ try {
 
   // 4) 동의(consent) 화면이 있으면 승인
   const consentBtn = await page.$('button[type="submit"]');
-  if (consentBtn && page.url().includes("localhost:9100")) {
+  if (consentBtn && page.url().startsWith(E2E_OIDC_URL)) {
     await consentBtn.click();
     await page.waitForTimeout(1000);
   }
 
   // 5) 콜백 → 토큰 교환 → 앱 내부로. /sessions로 착지할 때까지 대기
-  await page.waitForURL(/localhost:4173\/(sessions|roadmap)/, { timeout: 15000 }).catch(() => {});
+  await page.waitForURL((url) => url.origin === E2E_UI_URL && /^\/(sessions|roadmap)/.test(url.pathname), { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(1500);
-  check("실 토큰 교환 후 앱 내부(/sessions)로 진입", /localhost:4173\/(sessions|roadmap)/.test(page.url()), page.url());
+  check("실 토큰 교환 후 앱 내부(/sessions)로 진입", page.url().startsWith(E2E_UI_URL) && /\/(sessions|roadmap)/.test(new URL(page.url()).pathname), page.url());
 
   // 6) Sessions에 실데이터(워크스페이스 카드) 렌더
   const bodyText = await page.textContent("body");

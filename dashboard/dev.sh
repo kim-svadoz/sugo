@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sugo Dashboard 로컬 개발 — 백엔드(:3001) + 프론트(:5173)를 한 번에 띄운다.
+# Sugo Dashboard 로컬 개발 — ports.env의 고정 API/UI 포트를 한 번에 띄운다.
 # dev.ps1의 POSIX(mac/리눅스) 대응판. 동작과 포트·기본값을 의도적으로 똑같이 맞췄다.
 #
 #   cd ~/sugo/dashboard && ./dev.sh
@@ -9,8 +9,11 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$ROOT/port-contract.sh"
 BACKEND="$ROOT/backend"
 FRONTEND="$ROOT/frontend"
+API_PORT="$SUGO_LOCAL_API_PORT"
+UI_PORT="$SUGO_LOCAL_UI_PORT"
 
 info()  { printf '\033[36m[dev]\033[0m %s\n' "$1"; }
 ok()    { printf '\033[32m[dev]\033[0m %s\n' "$1"; }
@@ -39,10 +42,11 @@ fi
 : "${DB_DRIVER:=sqlite}"
 : "${SQLITE_FILE:=./local.db}"
 : "${SESSION_SECRET:=dev-secret-change-me}"
-: "${FRONTEND_URL:=http://localhost:5173}"
-: "${CORS_ORIGINS:=http://localhost:5173}"
-export DB_DRIVER SQLITE_FILE SESSION_SECRET FRONTEND_URL CORS_ORIGINS
-export VITE_API_BASE="http://localhost:3001"
+FRONTEND_URL="http://localhost:$UI_PORT"
+CORS_ORIGINS="$FRONTEND_URL"
+PORT="$API_PORT"
+export DB_DRIVER SQLITE_FILE SESSION_SECRET FRONTEND_URL CORS_ORIGINS PORT
+export VITE_API_BASE="http://localhost:$API_PORT"
 
 if [ -z "${GITHUB_CLIENT_ID:-}" ]; then
   warn "경고: GITHUB_CLIENT_ID 미설정 → 로그인 버튼이 503을 냅니다. backend/.env 에 OAuth App 값을 넣으세요."
@@ -67,9 +71,11 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 
-ok "starting backend(:3001) + frontend(:5173)..."
+sugo_require_port_free "$API_PORT" "Sugo Dashboard API"
+sugo_require_port_free "$UI_PORT" "Sugo Dashboard UI"
+ok "starting backend(:$API_PORT) + frontend(:$UI_PORT)..."
 (cd "$BACKEND" && npm run dev) & pids+=("$!")
-(cd "$FRONTEND" && VITE_API_BASE=http://localhost:3001 npm run dev) & pids+=("$!")
+(cd "$FRONTEND" && VITE_API_BASE="http://localhost:$API_PORT" npm run dev -- --host 127.0.0.1 --port "$UI_PORT" --strictPort) & pids+=("$!")
 
-ok "✅ http://localhost:5173  → Sign in with GitHub   (Ctrl+C 로 둘 다 종료)"
+ok "✅ http://localhost:$UI_PORT  → Sign in with GitHub   (Ctrl+C 로 둘 다 종료)"
 wait

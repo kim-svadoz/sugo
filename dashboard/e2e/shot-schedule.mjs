@@ -2,10 +2,11 @@ import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { E2E_UI_URL } from "../port-contract.mjs";
 
 // §7B Schedule 탭 자체 확인용 — shot.mjs와 같은 mock 패턴(실 백엔드 없이 API 라우트만 가짜로 채운다).
 const OUT = process.env.CLAUDE_JOB_DIR ? join(process.env.CLAUDE_JOB_DIR, "tmp") : tmpdir();
-const BASE = "http://localhost:4173";
+const BASE = E2E_UI_URL;
 
 const today = new Date();
 const iso = (d) => d.toISOString().slice(0, 10);

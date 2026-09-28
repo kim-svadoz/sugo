@@ -9,6 +9,7 @@ while [ -L "$SOURCE_PATH" ]; do
   case "$SOURCE_PATH" in /*) ;; *) SOURCE_PATH="$SOURCE_DIR/$SOURCE_PATH" ;; esac
 done
 DASHBOARD_ROOT="$(cd "$(dirname "$SOURCE_PATH")" && pwd)"
+source "$DASHBOARD_ROOT/port-contract.sh"
 BACKEND_DIR="$DASHBOARD_ROOT/backend"
 FRONTEND_DIR="$DASHBOARD_ROOT/frontend"
 TEMP_ROOT="${TMPDIR:-/tmp}"
@@ -17,8 +18,17 @@ STATE_DIR="${SUGO_DASHBOARD_STATE_DIR:-$TEMP_ROOT/sugo-dashboard-${UID}}"
 PID_FILE="$STATE_DIR/supervisor.pid"
 LOG_FILE="$STATE_DIR/dashboard.log"
 LAUNCH_LABEL="com.sugo.dashboard.local"
-API_PORT="3001"
-UI_PORT="5175"
+API_PORT="$SUGO_LOCAL_API_PORT"
+UI_PORT="$SUGO_LOCAL_UI_PORT"
+
+if [ "${1:-}" = "ports" ]; then
+  sugo_print_port_contract
+  exit 0
+fi
+if [ "$#" -gt 0 ]; then
+  printf '사용법: sd [ports]\n' >&2
+  exit 2
+fi
 
 mkdir -p "$STATE_DIR"
 
@@ -52,8 +62,8 @@ stop_stale_dashboard_listeners() {
     esac
   done < <(
     {
-      lsof -tiTCP:3001-3099 -sTCP:LISTEN 2>/dev/null || true
-      lsof -tiTCP:5173-5199 -sTCP:LISTEN 2>/dev/null || true
+      lsof -tiTCP:"$API_PORT" -sTCP:LISTEN 2>/dev/null || true
+      lsof -tiTCP:"$UI_PORT" -sTCP:LISTEN 2>/dev/null || true
     } | sort -u
   )
 }
@@ -66,7 +76,9 @@ wait_ports_free() {
   command -v lsof >/dev/null 2>&1 || return 0
   local waited=0
   while [ "$waited" -lt 50 ]; do
-    lsof -tiTCP:"$API_PORT" -sTCP:LISTEN >/dev/null 2>&1 || lsof -tiTCP:"$UI_PORT" -sTCP:LISTEN >/dev/null 2>&1 || return 0
+    if ! lsof -tiTCP:"$API_PORT" -sTCP:LISTEN >/dev/null 2>&1 && ! lsof -tiTCP:"$UI_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+      return 0
+    fi
     sleep 0.1
     waited=$((waited + 1))
   done
@@ -76,6 +88,8 @@ wait_ports_free() {
 stop_previous
 stop_stale_dashboard_listeners
 wait_ports_free
+sugo_require_port_free "$API_PORT" "Sugo Dashboard API"
+sugo_require_port_free "$UI_PORT" "Sugo Dashboard UI"
 
 : > "$LOG_FILE"
 run_mode="nohup"
@@ -83,10 +97,10 @@ supervisor_pid=""
 if [ "$(uname -s)" = "Darwin" ] && command -v launchctl >/dev/null 2>&1; then
   run_mode="launchctl"
   launchctl submit -l "$LAUNCH_LABEL" -o "$LOG_FILE" -e "$LOG_FILE" -- \
-    /usr/bin/env PATH="$PATH" DASHBOARD_API_PORT="$API_PORT" DASHBOARD_UI_PORT="$UI_PORT" DASHBOARD_STRICT_PORTS=1 \
+    /usr/bin/env PATH="$PATH" DASHBOARD_API_PORT="$API_PORT" DASHBOARD_UI_PORT="$UI_PORT" \
     "$DASHBOARD_ROOT/dev-local.sh"
 else
-  nohup env DASHBOARD_API_PORT="$API_PORT" DASHBOARD_UI_PORT="$UI_PORT" DASHBOARD_STRICT_PORTS=1 \
+  nohup env DASHBOARD_API_PORT="$API_PORT" DASHBOARD_UI_PORT="$UI_PORT" \
     "$DASHBOARD_ROOT/dev-local.sh" >"$LOG_FILE" 2>&1 </dev/null &
   supervisor_pid=$!
   printf '%s\n' "$supervisor_pid" > "$PID_FILE"
@@ -103,7 +117,7 @@ service_alive() {
 for _ in {1..120}; do
   if grep -q "Dashboard →" "$LOG_FILE"; then
     url="$(sed -n 's/.*Dashboard → //p' "$LOG_FILE" | tail -n 1)"
-    printf 'Sugo Dashboard 재시작 완료: %s\n' "${url:-http://localhost:5173}"
+    printf 'Sugo Dashboard 재시작 완료: %s\n' "${url:-http://localhost:$UI_PORT}"
     printf '로그: %s\n' "$LOG_FILE"
     exit 0
   fi

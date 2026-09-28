@@ -16,8 +16,8 @@ async function freshApp() {
 describe("CORS whitelist (§8 fix for the original's wide-open cors())", () => {
   it("allows the whitelisted dev origin", async () => {
     const { app } = await freshApp();
-    const res = await request(app).get("/health").set("Origin", "http://localhost:5173");
-    expect(res.headers["access-control-allow-origin"]).toBe("http://localhost:5173");
+    const res = await request(app).get("/health").set("Origin", "http://localhost:5175");
+    expect(res.headers["access-control-allow-origin"]).toBe("http://localhost:5175");
   });
 
   it("does not reflect an arbitrary non-whitelisted origin", async () => {
@@ -28,7 +28,7 @@ describe("CORS whitelist (§8 fix for the original's wide-open cors())", () => {
 
   it("responds 204 to an OPTIONS preflight", async () => {
     const { app } = await freshApp();
-    const res = await request(app).options("/api/workspaces").set("Origin", "http://localhost:5173");
+    const res = await request(app).options("/api/workspaces").set("Origin", "http://localhost:5175");
     expect(res.status).toBe(204);
   });
 });

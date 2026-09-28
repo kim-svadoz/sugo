@@ -3,10 +3,11 @@
 // devInteractions(내장 로그인/동의 화면)를 켜서 헤드리스 브라우저가 실제 authorization_code
 // 플로우를 완주할 수 있게 한다.
 import Provider from "oidc-provider";
+import { E2E_OIDC_URL, E2E_UI_URL, PORTS } from "../port-contract.mjs";
 
-const ISSUER = process.env.OIDC_ISSUER_URL ?? "http://localhost:9100";
-const PORT = Number(process.env.OIDC_PORT ?? 9100);
-const REDIRECT = process.env.OIDC_REDIRECT ?? "http://localhost:4173/auth/callback";
+const ISSUER = E2E_OIDC_URL;
+const PORT = PORTS.e2eOidc;
+const REDIRECT = `${E2E_UI_URL}/auth/callback`;
 
 const configuration = {
   clients: [
@@ -52,6 +53,6 @@ const configuration = {
 const oidc = new Provider(ISSUER, configuration);
 oidc.proxy = true;
 
-oidc.listen(PORT, () => {
+oidc.listen(PORT, "127.0.0.1", () => {
   console.log(`[oidc] real OIDC provider on ${ISSUER} (well-known: ${ISSUER}/.well-known/openid-configuration)`);
 });
