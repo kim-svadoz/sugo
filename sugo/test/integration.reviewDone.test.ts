@@ -214,7 +214,7 @@ describe("review_done — 3중게이트 모두 통과", () => {
 });
 
 describe("work-result.md 파일 내용 검증", () => {
-  it("작성한 summary가 실제 파일에 그대로 저장된다", async () => {
+  it("작성한 summary와 실행 증거가 표준 work-result 골격으로 저장된다", async () => {
     const sessionId = await toTestDone();
     const result = await call(handleSugoPlan, {
       action: "review_done",
@@ -226,7 +226,14 @@ describe("work-result.md 파일 내용 검증", () => {
 
     const workResultPath = result.data.workResultPath as string;
     expect(existsSync(workResultPath)).toBe(true);
-    expect(readFileSync(workResultPath, "utf-8")).toBe(GOOD_SUMMARY);
+    const content = readFileSync(workResultPath, "utf-8");
+    expect(content).toContain("# Work Result — login");
+    expect(content).toContain("## 결과 요약");
+    expect(content).toContain(GOOD_SUMMARY);
+    expect(content).toContain("## 주요 변경");
+    expect(content).toContain("## 검증");
+    expect(content).toContain("`npm test`");
+    expect(content).toContain("## 남은 사항 및 위험");
   });
 });
 

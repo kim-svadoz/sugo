@@ -22621,15 +22621,15 @@ function extractCoreRuleBullets(harnessMd, limit = 2) {
   const lines = harnessMd.split(/\r?\n/);
   const headingIdx = lines.findIndex((l) => /^#{1,3}\s*핵심 규칙/.test(l.trim()));
   if (headingIdx === -1) return [];
-  const bullets = [];
+  const bullets2 = [];
   for (let i2 = headingIdx + 1; i2 < lines.length; i2++) {
     const line = lines[i2].trim();
     if (/^#{1,3}\s/.test(line)) break;
     const m = line.match(/^(?:\d+\.|-)\s+(.*)$/);
-    if (m) bullets.push(m[1]);
-    if (bullets.length >= limit) break;
+    if (m) bullets2.push(m[1]);
+    if (bullets2.length >= limit) break;
   }
-  return bullets;
+  return bullets2;
 }
 function formatItemList(items) {
   if (items.length === 0) return "(\uC5C6\uC74C)";
@@ -22650,11 +22650,11 @@ function compose(params) {
   }
   const appliedTableRows = harnesses.map((h) => `| \`${h.id}\` | ${h.source === "default-fallback" ? "(\uD3F4\uBC31) " : ""}${h.version} |`).join("\n");
   const ruleSummaryBlocks = harnesses.map((h) => {
-    const bullets = extractCoreRuleBullets(h.harnessMd);
-    if (bullets.length === 0) return `### \`${h.id}\`
+    const bullets2 = extractCoreRuleBullets(h.harnessMd);
+    if (bullets2.length === 0) return `### \`${h.id}\`
 (\uD575\uC2EC \uADDC\uCE59 \uC139\uC158 \uC5C6\uC74C \u2014 harness.md \uCC38\uACE0)`;
     return `### \`${h.id}\`
-${bullets.map((b) => `- ${b}`).join("\n")}`;
+${bullets2.map((b) => `- ${b}`).join("\n")}`;
   }).join("\n\n");
   const allWarnings = [...fetchWarnings];
   const claudeMd = `# ${projectName} \u2014 Sugo \uD558\uB124\uC2A4 \uC778\uB371\uC2A4
@@ -27872,7 +27872,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.7.1" : "0.0.0-dev";
+  return true ? "0.7.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30172,6 +30172,77 @@ function buildCompletionPlan(state, chain) {
   return { remaining: remainingSteps(state), blockers: currentBlockers(chain) };
 }
 
+// src/workResultReport.ts
+function buildWorkResultReport(input) {
+  return {
+    schemaVersion: 1,
+    featureName: input.featureName,
+    kind: input.kind,
+    patchVersion: input.patchVersion,
+    completedAt: input.completedAt,
+    completionGrade: input.completionGrade,
+    summary: input.summary.trim(),
+    changedFiles: [...input.changedFiles],
+    requirements: [...input.requirements ?? []],
+    designDecisions: [...input.designDecisions ?? []],
+    knownLimitations: [...input.knownLimitations ?? []],
+    seed: input.seed?.trim() || void 0,
+    verification: {
+      test: { ...input.testEvidence },
+      runtimeVerified: input.runtimeVerified,
+      wiringVerified: input.wiringVerified,
+      validationVerdict: input.validation?.verdict,
+      autoVerifiedCount: input.validation?.autoVerifiedCount,
+      contradictionCount: input.validation?.contradictionCount
+    }
+  };
+}
+var yesNo = (value) => value === true ? "\uC644\uB8CC" : value === false ? "\uBBF8\uAC80\uC99D" : "\uD574\uB2F9 \uC5C6\uC74C";
+var bullets = (items, empty) => items.length > 0 ? items.map((item) => `- ${item}`).join("\n") : `- ${empty}`;
+function renderWorkResultMarkdown(report) {
+  const kindLabel = report.kind === "feat" ? "FEAT" : `PATCH v${report.patchVersion}`;
+  const gradeLabel = report.completionGrade === "verified" ? "\uAC80\uC99D \uC644\uB8CC" : "\uBBF8\uAC80\uC99D";
+  const reqs = report.requirements.length > 0 ? report.requirements.map((req) => `- [${req.covered ? "x" : " "}] ${req.id}`).join("\n") : "- \uAE30\uB85D\uB41C \uC694\uAD6C\uC0AC\uD56D \uCEE4\uBC84\uB9AC\uC9C0 \uC5C6\uC74C";
+  const test = report.verification.test;
+  const counts = test.total === void 0 ? "\uAC74\uC218 \uBBF8\uAE30\uB85D" : `${test.passed ?? Math.max(0, test.total - (test.failed ?? 0))}/${test.total} \uD1B5\uACFC`;
+  return [
+    `# Work Result \u2014 ${report.featureName}`,
+    "",
+    `> ${kindLabel} \xB7 ${gradeLabel} \xB7 ${report.completedAt}`,
+    "",
+    "## \uACB0\uACFC \uC694\uC57D",
+    "",
+    report.summary,
+    "",
+    "## \uC694\uAD6C\uC0AC\uD56D \uCDA9\uC871",
+    "",
+    reqs,
+    "",
+    "## \uC8FC\uC694 \uBCC0\uACBD",
+    "",
+    bullets(report.changedFiles.map((path) => `\`${path}\``), "\uBCC0\uACBD \uD30C\uC77C \uC5C6\uC74C"),
+    "",
+    "## \uC124\uACC4 \uACB0\uC815",
+    "",
+    bullets(report.designDecisions, "\uBCC4\uB3C4 \uC124\uACC4 \uACB0\uC815 \uAE30\uB85D \uC5C6\uC74C"),
+    "",
+    "## \uAC80\uC99D",
+    "",
+    "| \uAD6C\uBD84 | \uC99D\uAC70 | \uACB0\uACFC |",
+    "|---|---|---|",
+    `| \uD14C\uC2A4\uD2B8 | ${test.command ? `\`${test.command}\`` : "\uBA85\uB839 \uBBF8\uAE30\uB85D"} | ${test.state === "pass" ? counts : "\uBBF8\uAC80\uC99D"} |`,
+    `| \uB7F0\uD0C0\uC784 | \uC2E4\uC81C \uC2E4\uD589 \uD655\uC778 | ${yesNo(report.verification.runtimeVerified)} |`,
+    `| \uBC30\uC120 | \uB4F1\uB85D\xB7\uD638\uCD9C \uACBD\uB85C \uD655\uC778 | ${yesNo(report.verification.wiringVerified)} |`,
+    `| \uD558\uB124\uC2A4 | ${report.verification.autoVerifiedCount ?? 0}\uAC1C \uC790\uB3D9 \uAC80\uC99D | ${report.verification.validationVerdict ?? "\uBBF8\uAE30\uB85D"} |`,
+    "",
+    "## \uB0A8\uC740 \uC0AC\uD56D \uBC0F \uC704\uD5D8",
+    "",
+    bullets(report.knownLimitations, "\uC54C\uB824\uC9C4 \uC81C\uD55C \uC0AC\uD56D \uC5C6\uC74C"),
+    ...report.seed ? ["", "## \uC0AC\uC6A9\uC790 \uC9C0\uC2DC", "", report.seed] : [],
+    ""
+  ].join("\n");
+}
+
 // src/tools/sugoPlan.ts
 var sugoPlanInputSchema = {
   action: external_exports.enum(planArgsActionEnum).describe("\uD30C\uC774\uD504\uB77C\uC778 \uC0C1\uD0DC\uBA38\uC2E0 \uC561\uC158"),
@@ -30209,6 +30280,10 @@ var sugoPlanInputSchema = {
   testPassed: external_exports.boolean().optional().describe("test_done action\uC5D0 \uD544\uC694. \uC11C\uBC84\uC5D0 \uAE30\uB85D\uB41C test evidence\uC640 \uB300\uC870\uB41C\uB2E4"),
   userConfirmed: external_exports.boolean().optional().describe("review_done action\uC5D0 \uD544\uC694. work-result\uB97C \uC0AC\uB78C\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uD655\uC778\uBC1B\uC558\uB294\uC9C0"),
   summary: external_exports.string().optional().describe("review_done action\uC5D0 \uD544\uC694. work-result \uC694\uC57D(\xA74.3: \uC904\u22653, \uAE38\uC774\u226530\uC790 \uB4F1)"),
+  reportDetails: external_exports.object({
+    designDecisions: external_exports.array(external_exports.string()).optional(),
+    knownLimitations: external_exports.array(external_exports.string()).optional()
+  }).optional().describe("review_done: \uD45C\uC900 work-result\uC758 \uC124\uACC4 \uACB0\uC815\uACFC \uB0A8\uC740 \uC704\uD5D8. \uC5C6\uC73C\uBA74 \uBA85\uC2DC\uC801\uC778 \uBE48 \uC139\uC158\uC73C\uB85C \uAE30\uB85D\uD55C\uB2E4"),
   runtimeCheck: external_exports.object({
     buildAttempted: external_exports.boolean(),
     testRun: external_exports.boolean(),
@@ -30879,10 +30954,34 @@ async function handleSugoPlan(rawArgs) {
   if (action === "review_done" && args2.summary) {
     const featurePath = session.data.featurePath ?? session.projectPath;
     const isPatch = session.data.mode === "patch" && session.data.patch;
-    const workResultContent = session.data.seed ? `${args2.summary}
-
-## \uC0AC\uC6A9\uC790 \uC9C0\uC2DC(seed)
-${session.data.seed}` : args2.summary;
+    const completedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const grade = computeCompletionGrade(session.data.chainInfo.bypassLabels ?? [], currentPatchVersion).grade;
+    const evidence = session.data.chainInfo.testEvidence;
+    const report = buildWorkResultReport({
+      featureName: session.featureName,
+      kind: isPatch ? "patch" : "feat",
+      patchVersion: session.data.patch?.version ?? 0,
+      completedAt,
+      completionGrade: grade,
+      summary: args2.summary,
+      changedFiles: session.data.chainInfo.changedFiles,
+      requirements: session.data.chainInfo.coverageMap?.acceptanceCriteria,
+      designDecisions: args2.reportDetails?.designDecisions,
+      knownLimitations: args2.reportDetails?.knownLimitations,
+      seed: session.data.seed,
+      testEvidence: {
+        command: evidence?.command,
+        exitCode: evidence?.exitCode,
+        total: evidence?.total,
+        passed: evidence?.passed,
+        failed: evidence?.failed,
+        state: evidence?.derivedState ?? session.data.chainInfo.testPassedState ?? "unverified"
+      },
+      runtimeVerified: args2.runtimeCheck?.runtimeVerified ?? args2.reusedFromTestDone === true,
+      wiringVerified: args2.runtimeCheck?.wiringVerified ?? session.data.chainInfo.wiringVerified,
+      validation: session.data.chainInfo.lastValidation
+    });
+    const workResultContent = renderWorkResultMarkdown(report);
     const { workResultPath } = isPatch ? await writePatchWorkResultFile(session.data.patch.featureDir, session.data.patch.version, workResultContent) : await writeWorkResultFile(featurePath, workResultContent);
     const calibratedRatio = await fetchCalibratedRatio();
     humanHoursEstimate = estimateHumanHours(
@@ -30900,11 +30999,12 @@ ${session.data.seed}` : args2.summary;
           ...session.data.chainInfo,
           reviewPassed: true,
           workResultPath,
+          workResultReport: report,
           humanHoursEstimate,
           reviewSummary: args2.summary,
-          reviewDoneAt: (/* @__PURE__ */ new Date()).toISOString(),
-          runtimeVerified: args2.runtimeCheck?.runtimeVerified,
-          wiringVerified: args2.runtimeCheck?.wiringVerified,
+          reviewDoneAt: completedAt,
+          runtimeVerified: report.verification.runtimeVerified,
+          wiringVerified: report.verification.wiringVerified,
           runtimeCheckUnverifiedReason: args2.runtimeCheck?.unverifiedReason,
           evidenceReused: args2.reusedFromTestDone ?? false
         }
@@ -30945,7 +31045,7 @@ ${session.data.seed}` : args2.summary;
       log_id: workLog.id
     });
     await reconcileRoadmapWithTasks(workspace, await listTasks(workspace));
-    const completedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const completedAt = session.data.chainInfo.workResultReport?.completedAt ?? (/* @__PURE__ */ new Date()).toISOString();
     const patchVersion = session.data.mode === "patch" ? session.data.patch?.version : 0;
     const dashboardFiles = await snapshotWorkResultFiles(session.projectPath, session.data.chainInfo.changedFiles);
     const workResult = {
@@ -30959,7 +31059,8 @@ ${session.data.seed}` : args2.summary;
       seed: session.data.seed,
       runtimeVerified: session.data.chainInfo.runtimeVerified,
       wiringVerified: session.data.chainInfo.wiringVerified,
-      prRefs
+      prRefs,
+      report: session.data.chainInfo.workResultReport
     };
     await recordRoadmapWorkResult(workspace, session.data.hulkTaskId, workResult, {
       version: patchVersion ?? 0,

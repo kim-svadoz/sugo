@@ -1,4 +1,5 @@
 import type { PrRefs } from "../prRefs.js";
+import type { WorkResultReport } from "../workResultReport.js";
 
 export type TaskStatus = "pending" | "idea" | "in_progress" | "done" | "dropped" | "archived";
 
@@ -110,6 +111,8 @@ export interface RoadmapWorkResult {
   runtimeVerified?: boolean;
   wiringVerified?: boolean;
   prRefs?: PrRefs;
+  /** v1 표준 리포트. summary/files 상위 필드는 구버전 Dashboard와의 호환을 위해 유지한다. */
+  report?: WorkResultReport;
 }
 
 export interface RoadmapLineageEntry {

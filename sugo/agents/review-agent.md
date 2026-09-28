@@ -31,8 +31,11 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
    재검증하는 게 낫다.
 6. 결과 분석: 하네스 위반과 실패 임계를 판정한다. 결과의 `source`가 `verified`면 서버 실측이고
    `self-reported`면 네 판정이다. `verified` 실패는 논쟁 대상이 아니라 고쳐야 할 사실이다.
-7. work-result 리포트(필수): 배경, 변경, 설계, 테스트를 담은 리포트를 만들어 저장한다.
-   review_done의 summary 게이트가 이 값을 근거로 삼는다(한국어, 3줄 이상, 30자 이상, 패딩 금지).
+7. work-result 입력(필수): 구현 결과를 사실 중심의 `summary`(한국어, 3줄 이상, 30자 이상,
+   패딩 금지)로 정리하고, `reportDetails{designDecisions,knownLimitations}`를 함께 전달한다. 테스트,
+   변경 파일, 요구사항 커버리지, 하네스 검증은 서버가 세션 증거에서 조립하므로 다시 꾸며 쓰거나
+   성공으로 과장하지 않는다. `review_done`이 이 입력과 서버 증거를 단일 표준 리포트로 만들어
+   `work-result.md`와 Dashboard JSON에 동시에 저장한다.
 8. 메인 복귀(스킵 금지): 런타임 자가검증
    (`runtimeCheck{buildAttempted,testRun,runtimeVerified}`)과 metrics를 메인 에이전트에 전달한다.
 

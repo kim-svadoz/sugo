@@ -24,6 +24,30 @@ export interface WorkResult {
   runtimeVerified?: boolean;
   wiringVerified?: boolean;
   prRefs?: unknown;
+  report?: WorkResultReport;
+}
+
+export interface WorkResultReport {
+  schemaVersion: 1;
+  featureName?: string;
+  kind: "feat" | "patch";
+  patchVersion: number;
+  completedAt?: string;
+  completionGrade: "verified" | "unverified";
+  summary: string;
+  changedFiles: string[];
+  requirements?: { id: string; covered: boolean }[];
+  designDecisions: string[];
+  knownLimitations: string[];
+  seed?: string;
+  verification: {
+    test: { command?: string; total?: number; passed?: number; failed?: number; state: "pass" | "fail" | "unverified" };
+    runtimeVerified: boolean;
+    wiringVerified?: boolean;
+    validationVerdict?: "pass" | "partial" | "fail";
+    autoVerifiedCount?: number;
+    contradictionCount?: number;
+  };
 }
 
 export interface LineageEntry {

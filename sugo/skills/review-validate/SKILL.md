@@ -21,8 +21,11 @@ description: 'review-agent 체인 기본 스킬. validation.yaml checks[] 기반
 6. 결과 분석: `verified` 실패는 review_done을 실제로 막는다(`VALIDATE_VERIFIED_FAILURE`) — 여기서
    미리 고치고 재검증한다. `self-reported`는 네 판정 그대로 참고만 된다. `contradictions`에 주장과
    실측이 어긋난 항목이 남는다.
-7. work-result 리포트(필수): 배경, 변경, 설계, 테스트를 한국어로 저장한다(3줄 이상, 30자 이상,
-   패딩 금지). review_done의 summary 게이트가 이 값을 근거로 삼는다.
+7. work-result 입력(필수): 결과를 사실 중심의 한국어 `summary`로 정리한다(3줄 이상, 30자 이상,
+   패딩 금지). 중요한 선택과 트레이드오프는 `reportDetails.designDecisions`, 남은 위험이나 제한은
+   `reportDetails.knownLimitations`로 전달한다. 테스트 결과·변경 파일·요구사항 커버리지·하네스
+   검증은 서버가 세션 증거에서 조립하며, `review_done`이 동일한 표준 리포트를 Markdown과
+   Dashboard JSON으로 저장한다. 증거가 없는 성공을 직접 써 넣지 않는다.
 8. 메인 복귀(스킵 금지): `runtimeCheck{buildAttempted,testRun,runtimeVerified}`와 metrics를 전달한다.
 
 success: review_done의 게이트(validate 호출강제+실측, 사용자 확인, summary 품질, 런타임 검증,

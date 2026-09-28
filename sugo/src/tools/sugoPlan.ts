@@ -60,6 +60,7 @@ import { checkTestEvidenceGate, isFullVerifyEnforceable } from "../testEvidence.
 import { checkTestReverifyGate } from "../testReverify.js";
 import { buildCompletionPlan } from "../completionPlan.js";
 import { planArgsActionEnum, type PlanAction, type PlanSession } from "../types.js";
+import { buildWorkResultReport, renderWorkResultMarkdown } from "../workResultReport.js";
 
 export const sugoPlanInputSchema = {
   action: z.enum(planArgsActionEnum).describe("파이프라인 상태머신 액션"),
@@ -136,6 +137,13 @@ export const sugoPlanInputSchema = {
   testPassed: z.boolean().optional().describe("test_done action에 필요. 서버에 기록된 test evidence와 대조된다"),
   userConfirmed: z.boolean().optional().describe("review_done action에 필요. work-result를 사람에게 보여주고 확인받았는지"),
   summary: z.string().optional().describe("review_done action에 필요. work-result 요약(§4.3: 줄≥3, 길이≥30자 등)"),
+  reportDetails: z
+    .object({
+      designDecisions: z.array(z.string()).optional(),
+      knownLimitations: z.array(z.string()).optional(),
+    })
+    .optional()
+    .describe("review_done: 표준 work-result의 설계 결정과 남은 위험. 없으면 명시적인 빈 섹션으로 기록한다"),
   runtimeCheck: z
     .object({
       buildAttempted: z.boolean(),
@@ -1005,9 +1013,34 @@ export async function handleSugoPlan(rawArgs: unknown) {
   if (action === "review_done" && args.summary) {
     const featurePath = session.data.featurePath ?? session.projectPath;
     const isPatch = session.data.mode === "patch" && session.data.patch;
-    // ── §7.1 seed가 있으면 work-result에 그대로 실어 "이번 차수에
-    // 뭘 요청했는지"를 남긴다(reviewSummary와는 별개 — summary는 결과 요약, seed는 최초 지시).
-    const workResultContent = session.data.seed ? `${args.summary}\n\n## 사용자 지시(seed)\n${session.data.seed}` : args.summary;
+    const completedAt = new Date().toISOString();
+    const grade = computeCompletionGrade(session.data.chainInfo.bypassLabels ?? [], currentPatchVersion).grade;
+    const evidence = session.data.chainInfo.testEvidence;
+    const report = buildWorkResultReport({
+      featureName: session.featureName,
+      kind: isPatch ? "patch" : "feat",
+      patchVersion: session.data.patch?.version ?? 0,
+      completedAt,
+      completionGrade: grade,
+      summary: args.summary,
+      changedFiles: session.data.chainInfo.changedFiles,
+      requirements: session.data.chainInfo.coverageMap?.acceptanceCriteria,
+      designDecisions: args.reportDetails?.designDecisions,
+      knownLimitations: args.reportDetails?.knownLimitations,
+      seed: session.data.seed,
+      testEvidence: {
+        command: evidence?.command,
+        exitCode: evidence?.exitCode,
+        total: evidence?.total,
+        passed: evidence?.passed,
+        failed: evidence?.failed,
+        state: evidence?.derivedState ?? session.data.chainInfo.testPassedState ?? "unverified",
+      },
+      runtimeVerified: args.runtimeCheck?.runtimeVerified ?? args.reusedFromTestDone === true,
+      wiringVerified: args.runtimeCheck?.wiringVerified ?? session.data.chainInfo.wiringVerified,
+      validation: session.data.chainInfo.lastValidation,
+    });
+    const workResultContent = renderWorkResultMarkdown(report);
     const { workResultPath } = isPatch
       ? await writePatchWorkResultFile(session.data.patch!.featureDir, session.data.patch!.version, workResultContent)
       : await writeWorkResultFile(featurePath, workResultContent);
@@ -1029,11 +1062,12 @@ export async function handleSugoPlan(rawArgs: unknown) {
           ...session.data.chainInfo,
           reviewPassed: true,
           workResultPath,
+          workResultReport: report,
           humanHoursEstimate,
           reviewSummary: args.summary,
-          reviewDoneAt: new Date().toISOString(),
-          runtimeVerified: args.runtimeCheck?.runtimeVerified,
-          wiringVerified: args.runtimeCheck?.wiringVerified,
+          reviewDoneAt: completedAt,
+          runtimeVerified: report.verification.runtimeVerified,
+          wiringVerified: report.verification.wiringVerified,
           runtimeCheckUnverifiedReason: args.runtimeCheck?.unverifiedReason,
           evidenceReused: args.reusedFromTestDone ?? false,
         },
@@ -1091,7 +1125,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     // Task 파일과 로드맵을 같은 commit 이벤트에서 맞춘다. 대시보드가 다음 주기까지
     // in_progress로 남는 상태 드리프트를 허용하지 않는다.
     await reconcileRoadmapWithTasks(workspace, await listTasks(workspace));
-    const completedAt = new Date().toISOString();
+    const completedAt = session.data.chainInfo.workResultReport?.completedAt ?? new Date().toISOString();
     const patchVersion = session.data.mode === "patch" ? session.data.patch?.version : 0;
     const dashboardFiles = await snapshotWorkResultFiles(session.projectPath, session.data.chainInfo.changedFiles);
     const workResult = {
@@ -1106,6 +1140,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       runtimeVerified: session.data.chainInfo.runtimeVerified,
       wiringVerified: session.data.chainInfo.wiringVerified,
       prRefs,
+      report: session.data.chainInfo.workResultReport,
     };
     await recordRoadmapWorkResult(workspace, session.data.hulkTaskId, workResult, {
       version: patchVersion ?? 0,

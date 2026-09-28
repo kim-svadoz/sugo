@@ -175,6 +175,38 @@ class CheckoutIdempotencyTest {
   seed: "동시 요청에서도 최초 승인 한 건만 발생하게 보강",
   runtimeVerified: true,
   wiringVerified: true,
+  report: {
+    schemaVersion: 1 as const,
+    featureName: "결제 중복 방지",
+    kind: "patch" as const,
+    patchVersion: 2,
+    completedAt: "2026-09-22T01:42:00.000Z",
+    completionGrade: "verified" as const,
+    summary: "중복 결제 요청을 멱등키로 차단하고, 동일 요청에는 최초 승인 결과를 재사용하도록 구현했습니다.",
+    changedFiles: [
+      "src/main/java/payment/IdempotencyService.java",
+      "src/main/java/payment/CheckoutController.java",
+      "src/test/java/payment/CheckoutIdempotencyTest.java",
+    ],
+    requirements: [
+      { id: "REQ-001", covered: true },
+      { id: "REQ-002", covered: true },
+    ],
+    designDecisions: [
+      "Redis SET NX를 멱등성 원장으로 사용하고 완료 응답을 같은 TTL로 보존한다.",
+      "처리 중인 동일 키 요청은 중복 승인 대신 409 응답으로 명확히 구분한다.",
+    ],
+    knownLimitations: ["Redis 장애 시의 다중 리전 폴백은 이번 범위에 포함하지 않는다."],
+    seed: "동시 요청에서도 최초 승인 한 건만 발생하게 보강",
+    verification: {
+      test: { command: "./gradlew check", state: "pass" as const, total: 12, passed: 12, failed: 0 },
+      runtimeVerified: true,
+      wiringVerified: true,
+      validationVerdict: "pass" as const,
+      autoVerifiedCount: 3,
+      contradictionCount: 0,
+    },
+  },
 };
 
 const lineage = [

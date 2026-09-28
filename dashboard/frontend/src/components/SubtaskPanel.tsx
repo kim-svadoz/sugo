@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
-import { Check, Copy, GitPullRequest, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, Check, CheckCircle2, Copy, GitPullRequest, Sparkles } from "lucide-react";
+import { marked } from "marked";
 import { useAuth } from "../auth/AuthContext.js";
 import { parseWorkResult, type RoadmapNode, type WorkResultFile } from "../hooks/useRoadmap.js";
 import { clearManualStatus, setManualStatus } from "../api/roadmapMutationsApi.js";
 import { checkExistingPr, createPr, type PrRef, type PrScope } from "../api/prApi.js";
 import { inspectorProgress, type InspectorProgress } from "./roadmap/inspectorModel.js";
 import { fileViewerPresentation } from "./roadmap/fileViewerModel.js";
+import { workResultPresentation } from "./roadmap/workResultPresentation.js";
 
 type Tab = "progress" | "summary" | "files";
 
@@ -111,7 +113,7 @@ export function SubtaskPanel({
             onChanged={onChanged}
           />
         )}
-        {tab === "summary" && <SummaryTab summary={workResult?.summary} />}
+        {tab === "summary" && <SummaryTab workResult={workResult} />}
         {tab === "files" && <FilesTab files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} />}
       </div>
     </aside>
@@ -178,6 +180,7 @@ function ProgressTab({
   }
 
   const duration = durationLabel(workResult?.startedAt, workResult?.endedAt);
+  const reportView = workResult ? workResultPresentation(workResult.report ?? workResult) : null;
 
   return (
     <div className="space-y-4">
@@ -201,28 +204,28 @@ function ProgressTab({
 
       {progressItems.length > 0 && (node.level === "task" ? <ReqList reqs={progressItems} /> : <ChildList items={progressItems} />)}
 
-      <div className="space-y-1">
-        <div className="font-mono text-xs uppercase opacity-60">Work Result</div>
-        {workResult ? (
-          <div className="space-y-1 text-xs">
-            {workResult.model && <div>model: {workResult.model}</div>}
-            {duration && <div>소요: {duration}</div>}
-            {workResult.seed && <div>seed: {workResult.seed}</div>}
-            <div className="flex gap-2 pt-1">
-              {workResult.runtimeVerified && (
-                <span className="rounded px-2 py-0.5" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981" }}>
-                  runtime ✓
-                </span>
-              )}
-              {workResult.wiringVerified && (
-                <span className="rounded px-2 py-0.5" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981" }}>
-                  wiring ✓
-                </span>
-              )}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]">Work Result</div>
+          {reportView && <span className="font-mono text-[10px] text-violet-200/70">{reportView.versionLabel}</span>}
+        </div>
+        {workResult && reportView ? (
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.045] to-transparent">
+            <div className="flex items-center justify-between border-b border-white/8 px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                {reportView.grade === "unverified" ? <AlertTriangle size={14} className="text-amber-300" /> : <CheckCircle2 size={14} className="text-emerald-300" />}
+                <span className={`text-xs font-semibold ${reportView.grade === "unverified" ? "text-amber-200" : "text-emerald-200"}`}>{reportView.gradeLabel}</span>
+              </div>
+              {duration && <span className="font-mono text-[10px] text-[var(--color-text-dim)]">{duration}</span>}
             </div>
+            <div className="grid grid-cols-2 gap-px bg-white/5 text-[10.5px]">
+              <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">테스트</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.testLabel ?? "기록 없음"}</div></div>
+              <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">실행 검증</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.runtimeVerified ? "runtime ✓" : "미검증"}{reportView.wiringVerified ? " · wiring ✓" : ""}</div></div>
+            </div>
+            {workResult.seed && <div className="border-t border-white/8 px-3 py-2 text-[10.5px] leading-relaxed text-violet-100/65"><span className="mr-1.5 font-mono text-violet-300/80">SEED</span>{workResult.seed}</div>}
           </div>
         ) : (
-          <div className="text-xs opacity-50">아직 work_result 없음</div>
+          <div className="rounded-xl border border-dashed border-white/10 p-3 text-xs opacity-50">아직 work_result 없음</div>
         )}
       </div>
 
@@ -355,11 +358,30 @@ function PrPanel({ workspace, node }: { workspace: string; node: Pick<RoadmapNod
   );
 }
 
-function SummaryTab({ summary }: { summary?: string }) {
-  if (!summary) return <div className="rounded-lg border border-dashed border-white/10 p-4 text-xs text-[var(--color-text-dim)]">아직 기록된 작업 요약이 없습니다.</div>;
-  // §5는 "마크다운 summary"라고 하지만 여기선 원문을 그대로 렌더한다(마크다운 파싱 없음).
-  // 렌더러가 필요하면 Harness.tsx가 쓰는 marked를 그대로 붙이면 된다.
-  return <pre className="whitespace-pre-wrap font-sans text-xs">{summary}</pre>;
+function SummaryTab({ workResult }: { workResult: ReturnType<typeof parseWorkResult> }) {
+  const view = workResult ? workResultPresentation(workResult.report ?? workResult) : null;
+  const html = useMemo(() => marked.parse(view?.summary ?? "", { async: false }) as string, [view?.summary]);
+  if (!workResult || !view) return <div className="rounded-lg border border-dashed border-white/10 p-4 text-xs text-[var(--color-text-dim)]">아직 기록된 작업 요약이 없습니다.</div>;
+  return (
+    <div className="space-y-3">
+      <section className="rounded-xl border border-cyan-400/15 bg-cyan-400/[0.035] p-3.5">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-cyan-200/70">결과 요약</span>
+          <span className="rounded-full border border-white/10 px-2 py-0.5 font-mono text-[9px] text-[var(--color-text-dim)]">{view.versionLabel}</span>
+        </div>
+        <div className="md-body text-[12px] leading-6 text-[var(--color-text)]" dangerouslySetInnerHTML={{ __html: html }} />
+      </section>
+      {view.sections.map((section) => (
+        <section key={section.title} className={`rounded-xl border p-3.5 ${section.tone === "warning" ? "border-amber-400/20 bg-amber-400/[0.035]" : "border-white/10 bg-white/[0.025]"}`}>
+          <div className={`mb-2 font-mono text-[10px] uppercase tracking-[0.12em] ${section.tone === "warning" ? "text-amber-200/75" : "text-[var(--color-text-dim)]"}`}>{section.title}</div>
+          <ul className="space-y-1.5 text-[11.5px] leading-relaxed text-[var(--color-text-muted)]">
+            {section.items.map((item) => <li key={item} className="flex gap-2"><span className="text-cyan-300/55">•</span><span className="min-w-0 break-words">{item}</span></li>)}
+          </ul>
+        </section>
+      ))}
+      {view.testCommand && <div className="rounded-lg border border-white/8 bg-black/20 px-3 py-2 font-mono text-[10px] leading-relaxed text-[var(--color-text-dim)]"><span className="mr-2 text-emerald-300/70">$</span>{view.testCommand}</div>}
+    </div>
+  );
 }
 
 function ChildList({ items }: { items: RoadmapNode[] }) {
