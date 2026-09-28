@@ -132,10 +132,19 @@ await page.screenshot({ path: join(OUT, "schedule-04-project-assigned-saved-flas
 // 이제 활성화된 프로젝트 체크포인트 버튼 → Schedule 위에 겹쳐 뜨는지(리다이렉트 아님) 확인
 await page.getByText("orders-api 프로젝트 체크포인트", { exact: true }).click();
 await page.waitForTimeout(400);
-assert.equal(await page.locator('input[type="date"]').last().inputValue(), plus(3), "SPEC 체크포인트는 마감일을 기본 유효일로 사용해야 한다");
+assert.match(await page.getByRole("button", { name: "새 체크포인트 유효기간" }).innerText(), /만료 없음/, "새 체크포인트의 기본 유효기간은 없어야 한다");
 assert.equal(await page.getByText("만료됨", { exact: true }).count(), 1, "만료 체크포인트 배지가 보여야 한다");
 assert.equal(await page.getByText("곧 만료", { exact: true }).count(), 1, "임박 체크포인트 배지가 보여야 한다");
 await page.screenshot({ path: join(OUT, "schedule-05-checkpoint-overlay.png"), fullPage: false });
+
+// 기존 체크포인트 수정에서도 SPEC 마감일과 같은 실제 캘린더를 사용한다.
+await page.getByText("수정", { exact: true }).first().click();
+await page.getByRole("button", { name: "체크포인트 유효기간 수정" }).click();
+await page.waitForTimeout(200);
+assert.equal(await page.getByRole("dialog", { name: "체크포인트 유효기간 수정 달력" }).count(), 1, "수정 모달에 월간 캘린더가 열려야 한다");
+await page.screenshot({ path: join(OUT, "schedule-05a-checkpoint-edit-datepicker.png"), fullPage: false });
+await page.keyboard.press("Escape");
+await page.getByText("✕", { exact: true }).click();
 
 // 6개라 페이지네이션(5개씩)이 뜬다 → 다음 페이지
 await page.getByText("다음 →", { exact: true }).click();

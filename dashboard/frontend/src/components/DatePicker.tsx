@@ -20,11 +20,13 @@ export function DatePicker({
   onChange,
   placeholder = "날짜 선택",
   allowClear = true,
+  ariaLabel,
 }: {
   value: string | null;
   onChange: (next: string | null) => void;
   placeholder?: string;
   allowClear?: boolean;
+  ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -74,6 +76,7 @@ export function DatePicker({
       <button
         ref={buttonRef}
         type="button"
+        aria-label={ariaLabel}
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-left text-[13px] text-[var(--color-text)]"
       >
@@ -85,6 +88,8 @@ export function DatePicker({
         createPortal(
           <div
             ref={panelRef}
+            role="dialog"
+            aria-label={`${ariaLabel ?? placeholder} 달력`}
             style={{ position: "fixed", top: pos.top, left: pos.left }}
             className="z-[100] w-72 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2.5 shadow-2xl"
           >
