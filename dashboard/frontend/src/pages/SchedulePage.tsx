@@ -422,7 +422,8 @@ export function SchedulePage() {
                           {s.status === "done" && (
                             <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">완료</span>
                           )}
-                          {isManualSpec(s.id) && !overdue && s.status !== "done" && <SpecStageBadge spec={s} compact />}
+                          {s.status !== "done" && scheduleSpecStage(s) === "in_progress" && <SpecStageBadge spec={s} compact />}
+                          {isManualSpec(s.id) && !overdue && s.status !== "done" && scheduleSpecStage(s) !== "in_progress" && <SpecStageBadge spec={s} compact />}
                           {overdue && (
                             <span className="flex shrink-0 items-center gap-0.5 rounded bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
                               <AlertTriangle size={9} /> 기한 초과

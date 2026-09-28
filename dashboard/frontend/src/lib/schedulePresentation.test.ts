@@ -38,4 +38,10 @@ describe("schedule presentation", () => {
     expect(source).toContain("min-h-[26px] shrink-0");
     expect(source).toContain("완료");
   });
+
+  it("RUN이 시작된 모든 SPEC 카드에 진행중 단계를 표시한다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain('scheduleSpecStage(s) === "in_progress"');
+    expect(source).toContain('<SpecStageBadge spec={s} compact />');
+  });
 });
