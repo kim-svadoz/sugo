@@ -47,6 +47,18 @@ describe("GET /api/workspaces/schedule — §7B 워크스페이스 비종속 집
     expect(res.body.specs.find((s: { id: string; workspace_name: string }) => s.id === "spec2").workspace_name).toBe("ws2");
   });
 
+  it("SPEC 원문 경로와 하위 RUN 존재 여부를 함께 반환한다", async () => {
+    const ctx = await bootApp();
+    await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }, { id: "run1", level: "workstream" }], ctx);
+    await ctx.db.exec("UPDATE sugo_roadmap_nodes SET spec_path = ? WHERE id = ?", ["/tmp/spec.md", "spec1"]);
+    await ctx.db.exec("UPDATE sugo_roadmap_nodes SET parent = ? WHERE id = ?", ["spec1", "run1"]);
+    const res = await request(ctx.app).get("/api/workspaces/schedule").set("Authorization", ctx.auth).expect(200);
+    expect(res.body.specs.find((s: { id: string }) => s.id === "spec1")).toMatchObject({
+      spec_path: "/tmp/spec.md",
+      has_run: true,
+    });
+  });
+
   it("다른 유저의 spec은 섞이지 않는다", async () => {
     const ctx = await bootApp();
     await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }], ctx);
@@ -74,6 +86,30 @@ describe("GET /api/workspaces/schedule — §7B 워크스페이스 비종속 집
 
     const res = await request(ctx.app).get("/api/workspaces/schedule").query({ userId: "u1" }).set("Authorization", ctx.auth).expect(200);
     expect(res.body.specs.find((s: { id: string }) => s.id === "spec1").title).toBe("바뀐 제목");
+  });
+});
+
+describe("POST /api/workspaces/:name/roadmap/spec-document", () => {
+  it("feat 전에는 원문 경로를 연결하고 새 버전으로 바꿀 수 있다", async () => {
+    const { app, db, auth } = await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }]);
+    for (const specPath of ["/tmp/v1/spec.md", "/tmp/v2/spec.md"]) {
+      await request(app).post("/api/workspaces/ws1/roadmap/spec-document").set("Authorization", auth)
+        .send({ nodeId: "spec1", specPath }).expect(200);
+    }
+    const rows = await db.query<{ spec_path: string }>("SELECT spec_path FROM sugo_roadmap_nodes WHERE id = ?", ["spec1"]);
+    expect(rows[0].spec_path).toBe("/tmp/v2/spec.md");
+  });
+
+  it("하위 RUN이 생긴 뒤에는 SPEC 변경을 거부한다", async () => {
+    const ctx = await bootApp();
+    await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }, { id: "run1", level: "workstream" }], ctx);
+    await ctx.db.exec("UPDATE sugo_roadmap_nodes SET spec_path = ? WHERE id = ?", ["/tmp/v1/spec.md", "spec1"]);
+    await ctx.db.exec("UPDATE sugo_roadmap_nodes SET parent = ? WHERE id = ?", ["spec1", "run1"]);
+    const res = await request(ctx.app).post("/api/workspaces/ws1/roadmap/spec-document").set("Authorization", ctx.auth)
+      .send({ nodeId: "spec1", specPath: "/tmp/v2/spec.md" }).expect(409);
+    expect(res.body.errorCode).toBe("SPEC_LOCKED_AFTER_FEAT");
+    const rows = await ctx.db.query<{ spec_path: string }>("SELECT spec_path FROM sugo_roadmap_nodes WHERE id = ?", ["spec1"]);
+    expect(rows[0].spec_path).toBe("/tmp/v1/spec.md");
   });
 });
 

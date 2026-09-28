@@ -7,7 +7,7 @@ describe("schedule drag payload", () => {
     const calendarCards = source.slice(source.indexOf("dayChips.map"), source.indexOf("{loading &&"));
     expect(calendarCards).toContain("draggable");
     expect(calendarCards).toContain("onDragStart");
-    expect(source).toContain('onDrop={(e) => dropSpec(e, null)}');
+    expect(source).toContain('onDrop={(e) => panelMode === "backlog" && dropSpec(e, null)}');
   });
 
   it("날짜가 있는 Spec도 워크스페이스와 id를 잃지 않고 이동한다", () => {

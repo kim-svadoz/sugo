@@ -84,6 +84,8 @@ export interface ScheduledSpec {
   status: string;
   due_date: string | null;
   project_path: string | null;
+  spec_path: string | null;
+  has_run: boolean;
 }
 
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드를 가로질러 가져온다.

@@ -40,6 +40,8 @@ interface RoadmapNodeResponse {
   status?: string;
   parent?: string | null;
   due_date?: string | null;
+  project_path?: string | null;
+  spec_path?: string | null;
   depends_on?: string[];
   manual_status?: string | null;
   pos_x?: number | null;
@@ -50,6 +52,8 @@ export interface UnlinkedSpecDraft {
   id: string;
   title: string;
   dueDate: string | null;
+  projectPath: string | null;
+  specPath: string | null;
 }
 
 /** Dashboard에서 먼저 만든 최상위 SPEC 중 아직 하위 Run이 없는 feat 연결 후보만 가져온다. */
@@ -74,7 +78,30 @@ export async function fetchUnlinkedSpecDrafts(workspaceName: string): Promise<Un
         node.status !== "dropped" &&
         !linkedSpecIds.has(node.id),
     )
-    .map((node) => ({ id: node.id, title: node.title ?? node.id, dueDate: node.due_date ?? null }));
+    .map((node) => ({
+      id: node.id,
+      title: node.title ?? node.id,
+      dueDate: node.due_date ?? null,
+      projectPath: node.project_path ?? null,
+      specPath: node.spec_path ?? null,
+    }));
+}
+
+/** spec-writer 완료는 다음 fetch에서 재시도하면 되는 조회가 아니라 사용자가 기다리는 제어 경로다. */
+export async function attachSpecDocument(workspaceName: string, nodeId: string, specPath: string): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled || !config.apiUrl) throw new Error("DASHBOARD_DISABLED");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (config.apiToken) headers.Authorization = `Bearer ${config.apiToken}`;
+  const res = await fetch(`${config.apiUrl}/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap/spec-document`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ nodeId, specPath }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`SPEC_DOCUMENT_ATTACH_FAILED:${res.status}:${body}`);
+  }
 }
 
 /** GET /api/workspaces/{ws}/roadmap?userId= — §7.2 "대시보드=순서의 SOT".

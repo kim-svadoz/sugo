@@ -33,6 +33,7 @@ import { handleSugoReset, sugoResetInputSchema } from "./tools/sugoReset.js";
 import { handleSugoRoadmap, sugoRoadmapInputSchema } from "./tools/sugoRoadmap.js";
 import { handleSugoRoute, sugoRouteInputSchema } from "./tools/sugoRoute.js";
 import { handleSugoSpec, sugoSpecInputSchema } from "./tools/sugoSpec.js";
+import { handleSugoSpecWriter, sugoSpecWriterInputSchema } from "./tools/sugoSpecWriter.js";
 import { handleSugoStatus, sugoStatusInputSchema } from "./tools/sugoStatus.js";
 import { handleSugoTask, sugoTaskInputSchema } from "./tools/sugoTask.js";
 import { handleSugoUpdate, sugoUpdateInputSchema } from "./tools/sugoUpdate.js";
@@ -206,6 +207,16 @@ server.registerTool(
     inputSchema: sugoSpecInputSchema,
   },
   handleSugoSpec,
+);
+
+server.registerTool(
+  "sugo_spec_writer",
+  {
+    title: "Dashboard SPEC writer bridge",
+    description: "Schedule SPEC 초안 컨텍스트를 읽고 완성된 spec.md 경로를 다시 연결한다. feat 시작 뒤에는 수정이 거부된다.",
+    inputSchema: sugoSpecWriterInputSchema,
+  },
+  handleSugoSpecWriter,
 );
 
 server.registerTool(

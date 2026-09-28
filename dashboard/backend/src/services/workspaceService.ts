@@ -314,18 +314,50 @@ export interface ScheduledSpecRow {
   status: string;
   due_date: string | null;
   project_path: string | null;
+  spec_path: string | null;
+  has_run: boolean;
 }
 
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
  * 프론트가 due_date 유무로 캘린더/"기한 미정" 리스트를 나눈다(§7B). */
 export async function getScheduledSpecs(db: DbClient, userId: string): Promise<ScheduledSpecRow[]> {
-  const rows = await db.query<ScheduledSpecRow & { manual_title: string | null }>(
-    "SELECT id, workspace_name, title, manual_title, status, due_date, project_path FROM sugo_roadmap_nodes WHERE user_id = ? AND level = 'spec' ORDER BY (due_date IS NULL), due_date, id",
+  const rows = await db.query<Omit<ScheduledSpecRow, "has_run"> & { manual_title: string | null; has_run: number | boolean }>(
+    "SELECT n.id, n.workspace_name, n.title, n.manual_title, n.status, n.due_date, n.project_path, n.spec_path, EXISTS (SELECT 1 FROM sugo_roadmap_nodes child WHERE child.user_id = n.user_id AND child.workspace_name = n.workspace_name AND child.parent = n.id AND child.level = 'workstream') AS has_run FROM sugo_roadmap_nodes n WHERE n.user_id = ? AND n.level = 'spec' ORDER BY (n.due_date IS NULL), n.due_date, n.id",
     [userId]
   );
   // manual_title(Canvas 이름 변경)이 있으면 그게 유효 제목 — CLI가 push한 title은 다음
   // sync에서 되돌아오므로 화면 표시에는 절대 그대로 쓰지 않는다.
-  return rows.map(({ manual_title, ...row }) => ({ ...row, title: manual_title ?? row.title }));
+  return rows.map(({ manual_title, has_run, ...row }) => ({ ...row, has_run: Boolean(has_run), title: manual_title ?? row.title }));
+}
+
+export type SetSpecDocumentResult =
+  | { ok: true }
+  | { ok: false; errorCode: "NODE_NOT_FOUND" | "INVALID_LEVEL" | "SPEC_LOCKED_AFTER_FEAT" };
+
+/** spec-writer가 만든 원문을 Schedule SPEC에 연결한다. 첫 RUN이 생긴 뒤에는 원문을 불변으로 잠근다. */
+export async function setRoadmapSpecDocument(
+  db: DbClient,
+  userId: string,
+  workspaceName: string,
+  nodeId: string,
+  specPath: string
+): Promise<SetSpecDocumentResult> {
+  const rows = await db.query<{ level: string }>(
+    "SELECT level FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [userId, workspaceName, nodeId]
+  );
+  if (rows.length === 0) return { ok: false, errorCode: "NODE_NOT_FOUND" };
+  if (rows[0].level !== "spec") return { ok: false, errorCode: "INVALID_LEVEL" };
+  const children = await db.query<{ id: string }>(
+    "SELECT id FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND parent = ? AND level = 'workstream' LIMIT 1",
+    [userId, workspaceName, nodeId]
+  );
+  if (children.length > 0) return { ok: false, errorCode: "SPEC_LOCKED_AFTER_FEAT" };
+  await db.exec(
+    "UPDATE sugo_roadmap_nodes SET spec_path = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [specPath, userId, workspaceName, nodeId]
+  );
+  return { ok: true };
 }
 
 export type SetDueDateResult = { ok: true } | { ok: false; errorCode: "NODE_NOT_FOUND" | "INVALID_LEVEL" };

@@ -17,6 +17,7 @@ import {
   renameSchema,
   runSpecSchema,
   setProjectSchema,
+  setSpecDocumentSchema,
 } from "../schemas/workspaces.js";
 import {
   clearManualStatus,
@@ -45,6 +46,7 @@ import {
   setManualStatus,
   setRoadmapDueDate,
   setRoadmapProject,
+  setRoadmapSpecDocument,
   setRoadmapParent,
   setRoadmapPosition,
   unlinkRoadmapNodes,
@@ -342,6 +344,18 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     const result = await setRoadmapProject(db, userId, req.params.name, req.body.nodeId, req.body.projectPath);
     if (!result.ok) {
       const status = result.errorCode === "NODE_NOT_FOUND" ? 404 : 400;
+      res.status(status).json({ ok: false, errorCode: result.errorCode });
+      return;
+    }
+    res.json({ ok: true });
+  });
+
+  router.post("/:name/roadmap/spec-document", validateBody(setSpecDocumentSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const result = await setRoadmapSpecDocument(db, userId, req.params.name, req.body.nodeId, req.body.specPath);
+    if (!result.ok) {
+      const status = result.errorCode === "NODE_NOT_FOUND" ? 404 : result.errorCode === "SPEC_LOCKED_AFTER_FEAT" ? 409 : 400;
       res.status(status).json({ ok: false, errorCode: result.errorCode });
       return;
     }

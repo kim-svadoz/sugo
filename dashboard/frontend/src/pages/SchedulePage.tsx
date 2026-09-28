@@ -1,5 +1,5 @@
-import { useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, CalendarPlus, ChevronLeft, ChevronRight, Clock, Pencil, Shield, Workflow } from "lucide-react";
+import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { AlertTriangle, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, LockKeyhole, Pencil, Shield, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -14,6 +14,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { createQuickSpec, renameRoadmapNode, setDueDate, setProject, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
+import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -25,6 +26,13 @@ function repoName(path: string): string {
 /** 표류(dropped)를 제외한 "미완료"만 마감 임박/초과 강조 대상으로 본다. */
 function isOpenStatus(spec: ScheduledSpec): boolean {
   return spec.status !== "done" && spec.status !== "dropped";
+}
+
+function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compact?: boolean }) {
+  const stage = scheduleSpecStage(spec);
+  const label = stage === "draft" ? "초안" : stage === "ready" ? "SPEC 준비" : "진행중";
+  const tone = stage === "draft" ? "bg-slate-500/15 text-slate-400" : stage === "ready" ? "bg-emerald-500/15 text-emerald-300" : "bg-cyan-500/15 text-cyan-300";
+  return <span className={cn("shrink-0 rounded px-1 py-0.5 font-semibold", compact ? "text-[8px]" : "text-[9px]", tone)}>{label}</span>;
 }
 
 export function SchedulePage() {
@@ -49,11 +57,19 @@ export function SchedulePage() {
   // Canvas의 이름 변경(✎)과 같은 API(renameRoadmapNode → manual_title)라 여기서 바꿔도
   // Canvas에 그대로 반영된다(2026-09-23 사용자 요청) — null이면 편집 중이 아님.
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
   // §7B 사용자 결정(2026-09-23): 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
   // Schedule 위에 겹쳐서 뜬다 — Esc를 누르면 그냥 이 오버레이만 닫히고 Schedule로 남는다.
   const [checkpointTarget, setCheckpointTarget] = useState<{ workspace: string; projectPath: string | null; dueDate: string | null } | null>(null);
   const [canvasOverlay, setCanvasOverlay] = useState<{ workspace: string; nodeId: string } | null>(null);
+
+  // spec-writer는 다른 터미널에서 완료되므로 4초 폴링 결과를 열린 상세에도 반영한다.
+  useEffect(() => {
+    if (!selected || !specs) return;
+    const fresh = specs.find((spec) => spec.id === selected.id && spec.workspace_name === selected.workspace_name);
+    if (fresh && (fresh.spec_path !== selected.spec_path || fresh.has_run !== selected.has_run)) setSelected(fresh);
+  }, [specs, selected]);
 
   const todayKey = toDateKey(today);
   const grid = useMemo(() => buildMonthGrid(cursor.year, cursor.month), [cursor]);
@@ -85,6 +101,7 @@ export function SchedulePage() {
     () => (specs ?? []).filter((s) => s.due_date).sort((a, b) => a.due_date!.localeCompare(b.due_date!)),
     [specs],
   );
+  const openScheduledCount = useMemo(() => (specs ?? []).filter(isOpenStatus).length, [specs]);
 
   function jumpToDate(dueDate: string) {
     const [year, month] = dueDate.split("-").map(Number);
@@ -101,6 +118,12 @@ export function SchedulePage() {
   function flashSaved(field: "due" | "project" | "title") {
     setSavedFlash(field);
     setTimeout(() => setSavedFlash((current) => (current === field ? null : current)), 1600);
+  }
+
+  async function copyWorkflowCommand(kind: string, command: string) {
+    await navigator.clipboard.writeText(command);
+    setCopied(kind);
+    setTimeout(() => setCopied((current) => (current === kind ? null : current)), 1800);
   }
 
   async function applyDueDate(spec: ScheduledSpec, dueDate: string | null) {
@@ -198,7 +221,7 @@ export function SchedulePage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">
-            Schedule <span className="font-normal text-[var(--color-text-dim)]">({scheduledSorted.length})</span>
+            Schedule <span className="font-normal text-[var(--color-text-dim)]">({openScheduledCount})</span>
           </h1>
         </div>
         <button
@@ -261,7 +284,7 @@ export function SchedulePage() {
                     title="캘린더 날짜 칸으로 끌어놓으면 마감일이 지정됩니다"
                   >
                     <span className="min-w-0 flex-1 truncate">{s.title}</span>
-                    {isManualSpec(s.id) && <span className="shrink-0 rounded bg-slate-500/15 px-1 py-0.5 text-[9px] text-slate-400">SPEC 초안</span>}
+                    {isManualSpec(s.id) && <SpecStageBadge spec={s} />}
                   </div>
                 );
               })}
@@ -293,7 +316,7 @@ export function SchedulePage() {
                     <span className="min-w-0 truncate">{s.title}</span>
                     <span className="flex flex-wrap items-center gap-1">
                       <span className="font-mono text-[9.5px] text-slate-300/80">{s.due_date}</span>
-                      {isManualSpec(s.id) && <span className="shrink-0 rounded bg-slate-500/20 px-1 py-0.5 text-[9px] text-slate-400">SPEC 초안</span>}
+                      {isManualSpec(s.id) && <SpecStageBadge spec={s} />}
                       {overdue && (
                         <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-rose-300">
                           <AlertTriangle size={9} /> 기한 초과
@@ -397,9 +420,7 @@ export function SchedulePage() {
                           {s.status === "done" && (
                             <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">완료</span>
                           )}
-                          {isManualSpec(s.id) && !overdue && s.status !== "done" && (
-                            <span className="shrink-0 rounded bg-slate-500/15 px-1 py-0.5 text-[8px] font-medium text-slate-400">초안</span>
-                          )}
+                          {isManualSpec(s.id) && !overdue && s.status !== "done" && <SpecStageBadge spec={s} compact />}
                           {overdue && (
                             <span className="flex shrink-0 items-center gap-0.5 rounded bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
                               <AlertTriangle size={9} /> 기한 초과
@@ -435,7 +456,7 @@ export function SchedulePage() {
               >
                 {selected.workspace_name}
               </span>
-              {titleDraft !== null ? (
+              {titleDraft !== null && !selected.has_run ? (
                 <input
                   autoFocus
                   value={titleDraft}
@@ -454,9 +475,10 @@ export function SchedulePage() {
                 <div className="mt-2 flex items-center gap-1.5">
                   <h2 className="text-lg font-bold text-[var(--color-text-bright)]">{selected.title}</h2>
                   <button
+                    disabled={selected.has_run}
                     onClick={() => setTitleDraft(selected.title)}
                     title="이름 변경 — Canvas에도 그대로 반영됩니다"
-                    className="shrink-0 rounded p-1 text-[var(--color-text-dim)] hover:bg-cyan-500/10 hover:text-cyan-300"
+                    className="shrink-0 rounded p-1 text-[var(--color-text-dim)] hover:bg-cyan-500/10 hover:text-cyan-300 disabled:hidden"
                   >
                     <Pencil size={13} />
                   </button>
@@ -464,9 +486,20 @@ export function SchedulePage() {
                 </div>
               )}
               <p className="font-mono text-[11px] text-[var(--color-text-dim)]">{selected.id} · {selected.status}</p>
-              {isManualSpec(selected.id) && (
+              {scheduleSpecStage(selected) === "draft" && (
                 <div className="mt-3 rounded-lg border border-slate-500/25 bg-slate-500/10 px-3 py-2 text-[11.5px] leading-relaxed text-slate-300">
-                  <strong className="font-semibold text-slate-100">SPEC 일정 초안</strong> · 아직 Run/Task나 <code>/sugo:feat</code> 파이프라인과 연결되지 않았습니다.
+                  <strong className="font-semibold text-slate-100">SPEC 일정 초안</strong> · 작성 도구를 선택해 구현 가능한 SPEC으로 완성하세요.
+                </div>
+              )}
+              {scheduleSpecStage(selected) === "ready" && (
+                <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11.5px] text-emerald-200">
+                  <strong>SPEC 작성 완료</strong> · feat 시작 전까지 다시 작성할 수 있습니다.
+                </div>
+              )}
+              {scheduleSpecStage(selected) === "in_progress" && (
+                <div className="mt-3 flex items-start gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-[11.5px] text-cyan-100">
+                  <LockKeyhole size={14} className="mt-0.5 shrink-0" />
+                  <span><strong>진행 중 · SPEC 잠금</strong><br />연결된 feat가 있어 원문과 대상 프로젝트는 바꿀 수 없습니다. 이후 변경은 Canvas의 Patch로 이어가세요.</span>
                 </div>
               )}
             </div>
@@ -485,9 +518,10 @@ export function SchedulePage() {
                 {savedFlash === "project" && <span className="text-[10.5px] font-semibold text-emerald-400">저장됨</span>}
               </span>
               <select
+                disabled={selected.has_run}
                 value={selected.project_path ?? ""}
                 onChange={(e) => void applyProject(selected, e.target.value || null)}
-                className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-[13px] text-[var(--color-text)]"
+                className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-[13px] text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <option value="">프로젝트 미지정</option>
                 {selectedWorkspaceProjects.map((p) => (
@@ -496,6 +530,35 @@ export function SchedulePage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="rounded-xl border border-[var(--color-border)] bg-slate-950/35 p-3">
+              <div className="mb-2 text-[12px] font-semibold text-[var(--color-text-bright)]">SPEC → feat</div>
+              {scheduleSpecStage(selected) !== "in_progress" && (
+                <div className="grid grid-cols-2 gap-2">
+                  {(["claude", "codex"] as SpecWriterProvider[]).map((provider) => (
+                    <button
+                      key={provider}
+                      disabled={!selected.project_path}
+                      onClick={() => void copyWorkflowCommand(`writer-${provider}`, buildSpecWriterCommand(selected, provider))}
+                      className="flex items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-[12px] font-semibold text-violet-200 hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {copied === `writer-${provider}` ? <Check size={13} /> : <Copy size={13} />}
+                      {provider === "claude" ? "Claude" : "Codex"}로 {selected.spec_path ? "다시 작성" : "SPEC 작성"}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {scheduleSpecStage(selected) === "ready" && (
+                <button
+                  onClick={() => void copyWorkflowCommand("feat", buildFeatCommand(selected))}
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/15 px-3 py-2.5 text-[12.5px] font-bold text-cyan-200 hover:bg-cyan-500/25"
+                >
+                  {copied === "feat" ? <Check size={14} /> : <Copy size={14} />} {copied === "feat" ? "feat 명령 복사됨" : "feat 명령 복사"}
+                </button>
+              )}
+              {!selected.project_path && <p className="mt-2 text-[10.5px] text-amber-300">먼저 대상 프로젝트를 지정하세요.</p>}
+              {selected.spec_path && <p className="mt-2 break-all font-mono text-[10px] text-[var(--color-text-dim)]">{selected.spec_path}</p>}
             </div>
 
             <div className="flex gap-2 pt-2">

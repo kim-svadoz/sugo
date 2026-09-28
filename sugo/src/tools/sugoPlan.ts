@@ -78,12 +78,12 @@ export const sugoPlanInputSchema = {
     .enum(["link", "new"])
     .optional()
     .describe("clarify action: 미연결 SPEC 초안 후보가 있으면 사용자에게 보여준 뒤 기존 초안 연결(link) 또는 새 SPEC 생성(new)을 반드시 선택"),
-  specDraftId: z.string().optional().describe("clarify action: specDraftDecision='link'일 때 사용자가 선택한 spec-manual-* ID"),
+  specDraftId: z.string().optional().describe("start/clarify action: Dashboard에서 선택한 spec-manual-* ID"),
   prdContent: z.string().optional().describe("prd action에 필요. 본문 ≥100자, REQ-N 태그 ≥1"),
   specPath: z
     .string()
     .optional()
-    .describe("prd action(§5.0): 대조할 원본 스펙 문서(q-spec) 경로. 실재하면 specOracle이 켜져 ready 전에 oracle_done이 필수가 된다"),
+    .describe("start/prd action(§5.0): 대조할 원본 spec.md 경로. 실재하면 specOracle이 켜져 ready 전에 oracle_done이 필수가 된다"),
   uncovered: z
     .array(z.object({ quote: z.string(), reason: z.string() }))
     .optional()
@@ -386,7 +386,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
   // 사용자에게 후보를 보여주고 기존 초안 연결/새 SPEC 생성을 명시적으로 선택받아야 한다.
   if (action === "clarify" && existing?.data.mode !== "patch") {
     const selection = existing?.data.specDraftSelection;
-    if (selection && selection.candidates.length > 0) {
+    if (selection && selection.candidates.length > 0 && !selection.decision) {
       if (!args.specDraftDecision) {
         return errorResult(
           "SPEC_DRAFT_SELECTION_REQUIRED",
@@ -694,9 +694,36 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (registryEntry?.workspace) {
       const candidates = await fetchUnlinkedSpecDrafts(registryEntry.workspace);
       if (candidates && candidates.length > 0) {
-        session = { ...session, data: { ...session.data, specDraftSelection: { candidates } } };
+        if (args.specDraftId) {
+          const selected = candidates.find((candidate) => candidate.id === args.specDraftId);
+          if (!selected) return errorResult("SPEC_DRAFT_NOT_FOUND", `현재 미연결 후보가 아닌 SPEC입니다: ${args.specDraftId}`);
+          if (selected.projectPath && selected.projectPath !== session.projectPath) {
+            return errorResult("SPEC_DRAFT_PROJECT_MISMATCH", `SPEC 대상 프로젝트가 다릅니다: ${selected.projectPath}`);
+          }
+          session = {
+            ...session,
+            data: { ...session.data, specDraftSelection: { candidates, decision: "link", selectedId: selected.id } },
+          };
+        } else {
+          session = { ...session, data: { ...session.data, specDraftSelection: { candidates } } };
+        }
+      } else if (args.specDraftId) {
+        return errorResult("SPEC_DRAFT_NOT_FOUND", `연결 가능한 Schedule SPEC을 찾지 못했습니다: ${args.specDraftId}`);
       }
     }
+  }
+
+  // Dashboard에서 복사한 feat 명령은 세션 생성 시점부터 원본 SPEC을 고정한다. PRD 단계까지
+  // 늦추면 중간 재개 세션에서 어느 SPEC으로 시작했는지 잃을 수 있으므로 start가 정본이다.
+  if (action === "start" && args.specPath) {
+    const specExists = await readFile(args.specPath, "utf-8").then(() => true, () => false);
+    if (!specExists) return errorResult("SPEC_FILE_NOT_FOUND", `원본 SPEC 파일을 찾을 수 없습니다: ${args.specPath}`);
+    const selectedId = session.data.specDraftSelection?.selectedId;
+    const selected = session.data.specDraftSelection?.candidates.find((candidate) => candidate.id === selectedId);
+    if (selected?.specPath && selected.specPath !== args.specPath) {
+      return errorResult("SPEC_PATH_MISMATCH", `Schedule에 연결된 SPEC 경로와 다릅니다: ${selected.specPath}`);
+    }
+    session = { ...session, data: { ...session.data, specOracle: { required: true, ran: false, specPath: args.specPath } } };
   }
 
   if (action === "clarify" && session.data.specDraftSelection && args.specDraftDecision) {
@@ -863,7 +890,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
           level: "spec",
           status: "in_progress",
           dependsOn: [],
-          specPath: existingSpecNode?.specPath ?? prdPath,
+          specPath: existingSpecNode?.specPath ?? selectedDraft?.specPath ?? session.data.specOracle?.specPath ?? prdPath,
         },
         {
           id: runId,

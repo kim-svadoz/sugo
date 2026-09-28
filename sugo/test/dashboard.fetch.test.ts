@@ -85,7 +85,7 @@ describe("fetch 계열 — 실제 서버 응답", () => {
 
   it("하위 Run이 없는 진행 중 manual SPEC만 feat 연결 후보로 반환한다", async () => {
     expect(await fetchUnlinkedSpecDrafts("ws1")).toEqual([
-      { id: "spec-manual-open", title: "미연동 스펙", dueDate: "2026-10-01" },
+      { id: "spec-manual-open", title: "미연동 스펙", dueDate: "2026-10-01", projectPath: null, specPath: null },
     ]);
   });
 

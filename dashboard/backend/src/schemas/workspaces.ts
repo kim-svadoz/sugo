@@ -81,3 +81,8 @@ export const setProjectSchema = z.object({
   nodeId: z.string().min(1),
   projectPath: z.string().nullable(),
 });
+
+export const setSpecDocumentSchema = z.object({
+  nodeId: z.string().min(1),
+  specPath: z.string().min(1),
+});

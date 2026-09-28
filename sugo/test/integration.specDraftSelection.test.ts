@@ -1,5 +1,5 @@
 import { createServer, type Server } from "node:http";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -56,11 +56,32 @@ describe("feat 미연결 SPEC 초안 선택 게이트", () => {
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "checkout" });
     expect(existsSync(expiredFile)).toBe(false);
     expect(start.data.unlinkedSpecDrafts).toEqual([
-      { id: "spec-manual-test", title: "미연동스펙-테스트용", dueDate: "2026-10-10" },
+      { id: "spec-manual-test", title: "미연동스펙-테스트용", dueDate: "2026-10-10", projectPath: null, specPath: null },
     ]);
     const blocked = await call(handleSugoPlan, { action: "clarify", sessionId: start.data.sessionId });
     expect(blocked.isError).toBe(true);
     expect(blocked.data.errorCode).toBe("SPEC_DRAFT_SELECTION_REQUIRED");
+  });
+
+  it("Dashboard feat 명령은 start부터 선택과 원본 SPEC을 고정한다", async () => {
+    const specPath = join(projectDir, "dashboard-spec.md");
+    writeFileSync(specPath, "# dashboard spec\n");
+    server.removeAllListeners("request");
+    server.on("request", (req, res) => {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      if (req.url?.startsWith("/api/workspaces/checkpoint-sync")) return res.end(JSON.stringify({ checkpoints: [] }));
+      res.end(JSON.stringify({ nodes: [{
+        id: "spec-manual-test", title: "미연동스펙-테스트용", level: "spec", status: "pending",
+        due_date: "2026-10-10", parent: null, project_path: projectDir, spec_path: specPath,
+      }] }));
+    });
+    const start = await call(handleSugoPlan, {
+      action: "start", projectPath: projectDir, featureName: "checkout", specDraftId: "spec-manual-test", specPath,
+    });
+    expect(start.isError).toBe(false);
+    expect(start.data.unlinkedSpecDrafts).toEqual([expect.objectContaining({ id: "spec-manual-test", specPath })]);
+    const clarify = await call(handleSugoPlan, { action: "clarify", sessionId: start.data.sessionId });
+    expect(clarify.isError).toBe(false);
   });
 
   it("선택한 초안 아래에 Run과 Task를 만들고 새 Spec은 만들지 않는다", async () => {
