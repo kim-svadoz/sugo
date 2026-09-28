@@ -40,7 +40,7 @@ import { findRegistryEntry } from "../harness/registry.js";
 import { estimateHumanHours } from "../humanHours.js";
 import { checkpointApplies } from "../hulk/matching.js";
 import { addWorkLog } from "../hulk/history.js";
-import { listCheckpoints } from "../hulk/checkpoint.js";
+import { listCheckpoints, pullCheckpointsToRules } from "../hulk/checkpoint.js";
 import { backfillRoadmapTask, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
 import { promotePrdRequirements } from "../hulk/roadmapReq.js";
 import { addTask, findTaskByPrdRef, listTasks, updateTask } from "../hulk/task.js";
@@ -675,6 +675,16 @@ export async function handleSugoPlan(rawArgs: unknown) {
   // ── §7.1 seed(사용자 지시)는 세션에 그대로 보존해뒀다가 review_done이 work-result에 싣는다.
   if (action === "start" && args.seed) {
     session = { ...session, data: { ...session.data, seed: args.seed } };
+  }
+
+  // feat/patch 진입점 자체에서도 Dashboard 체크포인트를 재조정한다. command 스킬은 보통
+  // get_project_context를 먼저 호출하지만, 도구 직접 호출 경로에서도 만료 규칙이 남지 않아야 한다.
+  // Dashboard가 꺼져 있으면 기존 fail-open 계약대로 파이프라인을 막지 않는다.
+  if (action === "start") {
+    const registryEntry = await findRegistryEntry(session.projectPath);
+    if (registryEntry?.workspace) {
+      await pullCheckpointsToRules(session.projectPath, registryEntry.workspace).catch(() => null);
+    }
   }
 
   // feat 시작 시 Dashboard의 미연결 SPEC 초안을 캡처한다. Dashboard가 꺼져 있거나 조회에 실패하면

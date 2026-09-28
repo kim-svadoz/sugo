@@ -105,6 +105,8 @@ export interface RemoteCheckpoint {
   category?: string;
   applies_to?: string[];
   checklist: string[];
+  learned_from?: string;
+  expires_at?: string;
 }
 
 interface CheckpointSyncResponse {
@@ -114,6 +116,8 @@ interface CheckpointSyncResponse {
   category?: string | null;
   applies_to?: string[] | null;
   checklist?: string[] | null;
+  learned_from?: string | null;
+  expires_at?: string | null;
 }
 
 /** GET /api/workspaces/checkpoint-sync?userId= — 대시보드→로컬 체크포인트 pull.
@@ -134,6 +138,8 @@ export async function fetchCheckpointSync(workspaceName?: string): Promise<Remot
     category: c.category ?? undefined,
     applies_to: c.applies_to ?? undefined,
     checklist: c.checklist ?? [],
+    learned_from: c.learned_from ?? undefined,
+    expires_at: c.expires_at ?? undefined,
   }));
 }
 

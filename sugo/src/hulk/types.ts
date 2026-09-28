@@ -49,6 +49,7 @@ export interface Checkpoint {
   applies_to?: string[];
   checklist: string[];
   created_at?: string;
+  expires_at?: string;
 }
 
 export type SpecType = "architecture" | "api-design" | "business-rule" | "data-model" | "flow" | "other";

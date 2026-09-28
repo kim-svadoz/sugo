@@ -50,7 +50,7 @@ import {
   unlinkRoadmapNodes,
   updateCheckpoint,
 } from "../services/workspaceService.js";
-import { applyCheckpointToProjects, newCheckpointId } from "../services/checkpointApply.js";
+import { applyCheckpointToProjects, isCheckpointExpired, newCheckpointId } from "../services/checkpointApply.js";
 
 function requireUserId(req: import("express").Request, res: import("express").Response): string | null {
   // 공개 SaaS(§Phase 1): 신원은 인증 미들웨어가 세운 req.userId(토큰)만 신뢰. query userId 무시.
@@ -193,6 +193,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
           appliesTo: Array.isArray(checkpoint.applies_to) ? checkpoint.applies_to.map(String) : [],
           learnedFrom: checkpoint.learned_from,
           checklist: Array.isArray(checkpoint.checklist) ? checkpoint.checklist.map(String) : [],
+          expiresAt: checkpoint.expires_at,
         },
         projectPaths,
       });
@@ -202,8 +203,10 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     res.json({
       ok: true,
       appliedIds,
-      changedCheckpoints: results.filter((item) => item.application.applied.length > 0).length,
+      changedCheckpoints: results.filter((item) => item.application.applied.length > 0 || item.application.removed.length > 0).length,
       filesWritten: results.reduce((sum, item) => sum + item.application.applied.length, 0),
+      filesRemoved: results.reduce((sum, item) => sum + item.application.removed.length, 0),
+      expiredCheckpoints: checkpoints.filter((checkpoint) => isCheckpointExpired(checkpoint.expires_at)).length,
       conflicts: results.flatMap((item) => item.application.conflicts.map((conflict) => ({ id: item.id, ...conflict }))),
       failed: results.flatMap((item) => item.application.failed.map((failed) => ({ id: item.id, ...failed }))),
     });

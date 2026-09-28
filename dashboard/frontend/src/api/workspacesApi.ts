@@ -25,6 +25,7 @@ export interface CheckpointInput {
   learnedFrom?: string | null;
   checklist?: string[];
   appliesTo?: string[];
+  expiresAt?: string | null;
 }
 
 export interface CheckpointApplyResult {
@@ -33,6 +34,7 @@ export interface CheckpointApplyResult {
   conflicts: Array<{ projectPath: string; file: string; reason: string }>;
   failed: Array<{ projectPath: string; reason: string }>;
   unchanged: Array<{ projectPath: string; file: string }>;
+  removed: Array<{ projectPath: string; file: string }>;
 }
 
 function cpPath(workspace: string, suffix = ""): string {
@@ -55,6 +57,8 @@ export interface WorkspaceCheckpointApplyResult {
   appliedIds: string[];
   changedCheckpoints: number;
   filesWritten: number;
+  filesRemoved: number;
+  expiredCheckpoints: number;
   conflicts: Array<{ id: string; projectPath: string; file: string; reason: string }>;
   failed: Array<{ id: string; projectPath: string; reason: string }>;
 }

@@ -7,7 +7,7 @@ import request from "supertest";
 import { createApp } from "../src/index.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
 import { seedUserToken } from "./testAuth.js";
-import { __resetCheckpointCreatedAtColState, ensureCheckpointCreatedAtColumn } from "../src/services/syncService.js";
+import { __resetCheckpointCreatedAtColState, __resetCheckpointExpiresAtColState, ensureCheckpointCreatedAtColumn, ensureCheckpointExpiresAtColumn } from "../src/services/syncService.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
@@ -120,16 +120,16 @@ describe("checkpoint CRUD via dashboard (§3.3)", () => {
     await request(app)
       .post("/api/workspaces/ws1/checkpoints")
       .query({ userId: "u1" }).set("Authorization", auth)
-      .send({ id: "CP-002", title: "new one" })
+      .send({ id: "CP-002", title: "new one", expiresAt: "2026-10-02" })
       .expect(200);
 
     await request(app)
       .put("/api/workspaces/ws1/checkpoints/CP-002")
       .query({ userId: "u1" }).set("Authorization", auth)
-      .send({ title: "updated title" })
+      .send({ title: "updated title", expiresAt: null })
       .expect(200);
-    let rows = await db.query("SELECT title FROM sugo_checkpoints WHERE id='CP-002'");
-    expect(rows).toEqual([{ title: "updated title" }]);
+    let rows = await db.query("SELECT title, expires_at FROM sugo_checkpoints WHERE id='CP-002'");
+    expect(rows).toEqual([{ title: "updated title", expires_at: null }]);
 
     await request(app).delete("/api/workspaces/ws1/checkpoints/CP-002").query({ userId: "u1" }).set("Authorization", auth).expect(200);
     rows = await db.query("SELECT * FROM sugo_checkpoints WHERE id='CP-002'");
@@ -165,6 +165,18 @@ describe("§3.3 ensureCheckpointCreatedAtColumn — 자가보강(구 DB 업그�
     expect(await ensureCheckpointCreatedAtColumn(db)).toBe(true);
     const rows = await db.query<{ created_at: string | null }>("SELECT created_at FROM sugo_checkpoints WHERE id='CP-old'");
     expect(rows[0].created_at).not.toBeNull();
+    await db.close();
+  });
+});
+
+describe("§3.3 ensureCheckpointExpiresAtColumn — 자가보강", () => {
+  it("기존 테이블에 nullable expires_at을 추가한다", async () => {
+    __resetCheckpointExpiresAtColState();
+    const db = createSqliteClient();
+    await db.exec("CREATE TABLE sugo_checkpoints (id TEXT PRIMARY KEY, user_id TEXT, workspace_name TEXT, category TEXT, title TEXT)");
+    expect(await ensureCheckpointExpiresAtColumn(db)).toBe(true);
+    const rows = await db.query<{ expires_at: string | null }>("SELECT expires_at FROM sugo_checkpoints");
+    expect(rows).toEqual([]);
     await db.close();
   });
 });

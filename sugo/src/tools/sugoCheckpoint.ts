@@ -18,6 +18,7 @@ export const sugoCheckpointInputSchema = {
   title: z.string().optional().describe("add action에 필요"),
   category: z.string().optional(),
   applies_to: z.array(z.string()).optional().describe("빈 배열/미지정이면 보편 체크포인트(항상 적용)"),
+  expires_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("KST 기준 이 날짜까지 유효. 다음 날부터 rules 컨텍스트에서 제외"),
   checklist: z.array(z.string()).optional().describe("add action에 필요"),
   note: z.string().optional().describe("memory action에 필요 — 자유 메모 한 줄/여러 줄"),
   projectPath: z.string().optional().describe("pull action에 필요 — 원격 체크포인트를 .claude/rules/로 기록할 프로젝트"),
@@ -37,6 +38,7 @@ export async function handleSugoCheckpoint(rawArgs: unknown) {
         title: args.title,
         category: args.category,
         applies_to: args.applies_to,
+        expires_at: args.expires_at,
         checklist: args.checklist,
       });
       return ok({ checkpoint });

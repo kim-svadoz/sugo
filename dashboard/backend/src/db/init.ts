@@ -8,6 +8,7 @@ import { migrateCanvasToRoadmap } from "./migrations.js";
 import { migrateWstToRun } from "../services/workspaceService.js";
 import {
   ensureCheckpointCreatedAtColumn,
+  ensureCheckpointExpiresAtColumn,
   ensureRoadmapDueDateColumn,
   ensureRoadmapManualTitleColumn,
   ensureRoadmapProjectPathColumn,
@@ -29,6 +30,7 @@ export async function initDb(): Promise<DbClient> {
     await ensureRoadmapProjectPathColumn(client);
     await ensureRoadmapManualTitleColumn(client);
     await ensureCheckpointCreatedAtColumn(client);
+    await ensureCheckpointExpiresAtColumn(client);
     return client;
   }
   const client = createMySqlClient(config.mysql);
@@ -43,5 +45,6 @@ export async function initDb(): Promise<DbClient> {
   await ensureRoadmapProjectPathColumn(client);
   await ensureRoadmapManualTitleColumn(client);
   await ensureCheckpointCreatedAtColumn(client);
+  await ensureCheckpointExpiresAtColumn(client);
   return client;
 }

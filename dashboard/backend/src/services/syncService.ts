@@ -197,6 +197,32 @@ export async function ensureCheckpointCreatedAtColumn(db: DbClient): Promise<boo
   }
 }
 
+let checkpointExpiresAtColState: boolean | null = null;
+
+export function __resetCheckpointExpiresAtColState(): void {
+  checkpointExpiresAtColState = null;
+}
+
+/** 기존 로컬 DB에도 체크포인트 유효일을 안전하게 추가한다. DATE/TEXT 모두 문자열 비교가 가능하다. */
+export async function ensureCheckpointExpiresAtColumn(db: DbClient): Promise<boolean> {
+  if (checkpointExpiresAtColState !== null) return checkpointExpiresAtColState;
+  try {
+    await db.query("SELECT expires_at FROM sugo_checkpoints LIMIT 1");
+    checkpointExpiresAtColState = true;
+    return true;
+  } catch {
+    // 없다 → nullable DATE 컬럼 추가. 기본값이 없어 SQLite ALTER에도 안전하다.
+  }
+  try {
+    await db.exec("ALTER TABLE sugo_checkpoints ADD COLUMN expires_at DATE NULL");
+    checkpointExpiresAtColState = true;
+    return true;
+  } catch {
+    checkpointExpiresAtColState = false;
+    return false;
+  }
+}
+
 async function getOrCreateWorkspaceId(db: DbClient, userId: string, name: string): Promise<number> {
   const rows = await db.query<{ id: number }>(
     "SELECT id FROM sugo_workspaces WHERE user_id = ? AND name = ?",
@@ -420,6 +446,7 @@ export interface SyncCheckpointInput {
   checklist?: unknown;
   appliesTo?: unknown;
   checkpointDate?: string | null;
+  expiresAt?: string | null;
 }
 
 export async function syncCheckpoint(db: DbClient, input: SyncCheckpointInput): Promise<void> {
@@ -435,6 +462,7 @@ export async function syncCheckpoint(db: DbClient, input: SyncCheckpointInput): 
       checklist: input.checklist !== undefined ? JSON.stringify(input.checklist) : null,
       applies_to: input.appliesTo !== undefined ? JSON.stringify(input.appliesTo) : null,
       checkpoint_date: toDbDateTime(input.checkpointDate),
+      expires_at: input.expiresAt ?? null,
     }
   );
 }

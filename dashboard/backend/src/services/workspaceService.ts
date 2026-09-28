@@ -182,6 +182,7 @@ export interface CheckpointSyncRow {
   learned_from: string | null;
   checklist: unknown;
   applies_to: unknown;
+  expires_at: string | null;
 }
 
 function normalizeCheckpointRow<T extends { checklist: unknown; applies_to: unknown }>(row: T): T {
@@ -190,7 +191,7 @@ function normalizeCheckpointRow<T extends { checklist: unknown; applies_to: unkn
 
 export async function getCheckpointSync(db: DbClient, userId: string, workspaceName?: string): Promise<CheckpointSyncRow[]> {
   const rows = await db.query<CheckpointSyncRow>(
-    `SELECT id, workspace_name, category, title, learned_from, checklist, applies_to
+    `SELECT id, workspace_name, category, title, learned_from, checklist, applies_to, expires_at
        FROM sugo_checkpoints
       WHERE user_id = ?${workspaceName ? " AND workspace_name = ?" : ""}
       ORDER BY workspace_name, id`,
@@ -242,8 +243,9 @@ export async function getCheckpoints(db: DbClient, userId: string, workspaceName
     applies_to: unknown;
     checkpoint_date: string | null;
     created_at: string;
+    expires_at: string | null;
   }>(
-    "SELECT id, category, title, learned_from, checklist, applies_to, checkpoint_date, created_at FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? ORDER BY created_at, id",
+    "SELECT id, category, title, learned_from, checklist, applies_to, checkpoint_date, expires_at, created_at FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? ORDER BY created_at, id",
     [userId, workspaceName]
   );
   return rows.map(normalizeCheckpointRow);
@@ -402,6 +404,7 @@ export interface CreateCheckpointInput {
   checklist?: unknown;
   appliesTo?: unknown;
   checkpointDate?: string | null;
+  expiresAt?: string | null;
 }
 
 export async function createCheckpoint(
@@ -416,8 +419,8 @@ export async function createCheckpoint(
   // INSERT에서 값을 안 주면 NULL로 남는다. CREATE TABLE의 DEFAULT는 신규 설치에만 해당한다.
   await db.exec(
     `INSERT INTO sugo_checkpoints
-     (id, user_id, workspace_name, category, title, learned_from, checklist, applies_to, checkpoint_date, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+     (id, user_id, workspace_name, category, title, learned_from, checklist, applies_to, checkpoint_date, expires_at, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
     [
       input.id,
       userId,
@@ -428,6 +431,7 @@ export async function createCheckpoint(
       input.checklist !== undefined ? JSON.stringify(input.checklist) : null,
       input.appliesTo !== undefined ? JSON.stringify(input.appliesTo) : null,
       input.checkpointDate ?? null,
+      input.expiresAt ?? null,
     ]
   );
   return input.id;
@@ -458,6 +462,7 @@ export async function updateCheckpoint(
   if (input.checklist !== undefined) { sets.push("checklist = ?"); params.push(JSON.stringify(input.checklist)); }
   if (input.appliesTo !== undefined) { sets.push("applies_to = ?"); params.push(JSON.stringify(input.appliesTo)); }
   if (input.checkpointDate !== undefined) { sets.push("checkpoint_date = ?"); params.push(input.checkpointDate); }
+  if (input.expiresAt !== undefined) { sets.push("expires_at = ?"); params.push(input.expiresAt); }
   if (sets.length === 0) return;
   params.push(userId, workspaceName, id);
   await db.exec(

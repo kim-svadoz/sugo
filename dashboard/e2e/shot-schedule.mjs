@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import assert from "node:assert/strict";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -60,6 +61,7 @@ await page.route("**/api/**", (route) => {
             checklist: [],
             applies_to: [],
             checkpoint_date: null,
+            expires_at: i === 0 ? minus(1) : i === 1 ? plus(2) : null,
             created_at: `2026-09-${10 + i}T00:00:00.000Z`,
           })),
           {
@@ -70,6 +72,7 @@ await page.route("**/api/**", (route) => {
             checklist: ["작업 브랜치를 develop에서 분기했는지 확인", "PR 대상 브랜치가 develop인지 확인"],
             applies_to: [],
             checkpoint_date: null,
+            expires_at: null,
             created_at: "2026-09-16T00:00:00.000Z",
           },
         ],
@@ -115,7 +118,7 @@ await page.waitForTimeout(300);
 await page.screenshot({ path: join(OUT, "schedule-02c-title-renamed-saved-flash.png"), fullPage: false });
 
 // DatePicker 팝오버 열기 → 선택 → "저장됨" 플래시 확인
-await page.locator("button:has-text('2026-09-26')").first().click();
+await page.locator(`button:has-text('${specs[1].due_date}')`).first().click();
 await page.waitForTimeout(300);
 await page.screenshot({ path: join(OUT, "schedule-03-datepicker-open.png"), fullPage: false });
 await page.keyboard.press("Escape");
@@ -129,6 +132,9 @@ await page.screenshot({ path: join(OUT, "schedule-04-project-assigned-saved-flas
 // 이제 활성화된 프로젝트 체크포인트 버튼 → Schedule 위에 겹쳐 뜨는지(리다이렉트 아님) 확인
 await page.getByText("orders-api 프로젝트 체크포인트", { exact: true }).click();
 await page.waitForTimeout(400);
+assert.equal(await page.locator('input[type="date"]').last().inputValue(), plus(3), "SPEC 체크포인트는 마감일을 기본 유효일로 사용해야 한다");
+assert.equal(await page.getByText("만료됨", { exact: true }).count(), 1, "만료 체크포인트 배지가 보여야 한다");
+assert.equal(await page.getByText("곧 만료", { exact: true }).count(), 1, "임박 체크포인트 배지가 보여야 한다");
 await page.screenshot({ path: join(OUT, "schedule-05-checkpoint-overlay.png"), fullPage: false });
 
 // 6개라 페이지네이션(5개씩)이 뜬다 → 다음 페이지

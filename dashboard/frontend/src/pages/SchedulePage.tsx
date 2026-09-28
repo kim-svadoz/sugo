@@ -52,7 +52,7 @@ export function SchedulePage() {
 
   // §7B 사용자 결정(2026-09-23): 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
   // Schedule 위에 겹쳐서 뜬다 — Esc를 누르면 그냥 이 오버레이만 닫히고 Schedule로 남는다.
-  const [checkpointTarget, setCheckpointTarget] = useState<{ workspace: string; projectPath: string | null } | null>(null);
+  const [checkpointTarget, setCheckpointTarget] = useState<{ workspace: string; projectPath: string | null; dueDate: string | null } | null>(null);
   const [canvasOverlay, setCanvasOverlay] = useState<{ workspace: string; nodeId: string } | null>(null);
 
   const todayKey = toDateKey(today);
@@ -503,7 +503,7 @@ export function SchedulePage() {
                 disabled={!selected.project_path}
                 onClick={() => {
                   if (!selected.project_path) return;
-                  setCheckpointTarget({ workspace: selected.workspace_name, projectPath: selected.project_path });
+                  setCheckpointTarget({ workspace: selected.workspace_name, projectPath: selected.project_path, dueDate: selected.due_date });
                 }}
                 title={selected.project_path ? undefined : "먼저 위에서 대상 프로젝트를 지정해야 체크포인트를 관리할 수 있습니다"}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[12.5px] font-semibold text-amber-300 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-amber-500/10"
@@ -598,6 +598,7 @@ export function SchedulePage() {
         <CheckpointPanel
           workspace={checkpointTarget.workspace}
           projectPath={checkpointTarget.projectPath}
+          defaultExpiresAt={checkpointTarget.dueDate}
           onClose={() => setCheckpointTarget(null)}
         />
       )}

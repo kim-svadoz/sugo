@@ -23941,7 +23941,8 @@ function serializeCheckpoint(userId, workspaceName, cp) {
     category: cp.category,
     appliesTo: cp.applies_to,
     checklist: cp.checklist,
-    checkpointDate: cp.created_at
+    checkpointDate: cp.created_at,
+    expiresAt: cp.expires_at
   };
 }
 function serializeDecision(userId, workspaceName, spec) {
@@ -24522,7 +24523,7 @@ async function handleSugoCheckLethalTrifecta(rawArgs) {
 }
 
 // src/hulk/checkpoint.ts
-import { randomBytes as randomBytes2 } from "node:crypto";
+import { createHash as createHash2, randomBytes as randomBytes2 } from "node:crypto";
 import { mkdir as mkdir9, readdir as readdir4, readFile as readFile11, rm as rm2 } from "node:fs/promises";
 import { join as join11 } from "node:path";
 
@@ -24591,7 +24592,9 @@ async function fetchCheckpointSync(workspaceName) {
     title: c.title,
     category: c.category ?? void 0,
     applies_to: c.applies_to ?? void 0,
-    checklist: c.checklist ?? []
+    checklist: c.checklist ?? [],
+    learned_from: c.learned_from ?? void 0,
+    expires_at: c.expires_at ?? void 0
   }));
 }
 async function fetchCalibratedRatio() {
@@ -27559,7 +27562,8 @@ async function addCheckpoint(workspace, params) {
     category: params.category,
     applies_to: params.applies_to,
     checklist: params.checklist,
-    created_at: (/* @__PURE__ */ new Date()).toISOString()
+    created_at: (/* @__PURE__ */ new Date()).toISOString(),
+    expires_at: params.expires_at
   };
   const dir = checkpointsDir(workspace);
   await mkdir9(dir, { recursive: true });
@@ -27569,7 +27573,8 @@ async function addCheckpoint(workspace, params) {
     category: checkpoint.category ?? null,
     applies_to: checkpoint.applies_to ?? [],
     checklist: checkpoint.checklist,
-    created_at: checkpoint.created_at
+    created_at: checkpoint.created_at,
+    expires_at: checkpoint.expires_at ?? null
   });
   await atomicWriteFile(join11(dir, `${id}-${slugify(params.title)}.md`), content);
   return checkpoint;
@@ -27620,37 +27625,119 @@ async function migrateCheckpoints(workspace) {
       category: checkpoint.category ?? null,
       applies_to: checkpoint.applies_to ?? [],
       checklist: checkpoint.checklist,
-      created_at: checkpoint.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
+      created_at: checkpoint.created_at ?? (/* @__PURE__ */ new Date()).toISOString(),
+      expires_at: checkpoint.expires_at ?? null
     });
     await atomicWriteFile(join11(dir, filename), content);
   }
   return entries.length;
 }
+function todayKst(now) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+function isExpired(expiresAt, now) {
+  return !!expiresAt && /^\d{4}-\d{2}-\d{2}$/.test(expiresAt.slice(0, 10)) && expiresAt.slice(0, 10) < todayKst(now);
+}
+function digest(value) {
+  return createHash2("sha256").update(value).digest("hex");
+}
+function checkpointBody(cp, workspace) {
+  const body2 = [
+    "---",
+    "sugo-managed: checkpoint",
+    `checkpoint-id: ${cp.id}`,
+    ...cp.expires_at ? [`expires-at: ${cp.expires_at.slice(0, 10)}`] : [],
+    `description: "Sugo checkpoint ${cp.id} \xB7 ${workspace}"`,
+    "---",
+    "",
+    "> \uC774 \uD30C\uC77C\uC740 Sugo Dashboard\uAC00 \uAD00\uB9AC\uD569\uB2C8\uB2E4. \uC218\uC815\uC740 \uB300\uC2DC\uBCF4\uB4DC \uCCB4\uD06C\uD3EC\uC778\uD2B8\uC5D0\uC11C \uC9C4\uD589\uD558\uC138\uC694.",
+    "",
+    `# ${cp.title}`,
+    "",
+    `> ${workspace} \uB3C4\uBA54\uC778\uC758 \uC7AC\uBC1C\uBC29\uC9C0 \uCEE8\uD14D\uC2A4\uD2B8 \xB7 ${cp.applies_to?.length ? `\uC801\uC6A9 \uB300\uC0C1: ${cp.applies_to.join(", ")}` : "\uB3C4\uBA54\uC778 \uC804\uCCB4 \uC801\uC6A9"}`,
+    "",
+    ...cp.learned_from?.trim() ? [cp.learned_from.trim()] : cp.checklist.map((item) => `- ${item}`),
+    ""
+  ].join("\n");
+  return body2.replace("checkpoint-id:", `content-hash: ${digest(body2)}
+checkpoint-id:`);
+}
+function legacyCheckpointBody(cp, workspace) {
+  return [
+    "---",
+    `description: "Sugo checkpoint ${cp.id} \xB7 ${workspace}"`,
+    "---",
+    "",
+    `# ${cp.title}`,
+    "",
+    `> ${workspace} \uB3C4\uBA54\uC778\uC758 \uC7AC\uBC1C\uBC29\uC9C0 \uCEE8\uD14D\uC2A4\uD2B8 \xB7 ${cp.applies_to?.length ? `\uC801\uC6A9 \uB300\uC0C1: ${cp.applies_to.join(", ")}` : "\uB3C4\uBA54\uC778 \uC804\uCCB4 \uC801\uC6A9"}`,
+    "",
+    ...cp.checklist.map((item) => `- ${item}`)
+  ].join("\n");
+}
+function wasEdited(content, cp, workspace) {
+  const match = content.match(/^content-hash:\s*([0-9a-f]{64})$/m);
+  if (!match) return content !== legacyCheckpointBody(cp, workspace);
+  const without = content.replace(/^content-hash:\s*[0-9a-f]{64}\n/m, "");
+  return digest(without) !== match[1];
+}
+async function checkpointFiles(projectPath, id) {
+  const root = join11(projectPath, ".claude", "rules");
+  const found = [];
+  async function walk(dir) {
+    const entries = await readdir4(dir, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      const path = join11(dir, entry.name);
+      if (entry.isDirectory()) await walk(path);
+      else if (entry.isFile() && entry.name.endsWith(".md")) {
+        const content = await readFile11(path, "utf8").catch(() => "");
+        if (content.includes(`checkpoint-id: ${id}`) || content.includes(`Sugo checkpoint ${id} \xB7`)) found.push(path);
+      }
+    }
+  }
+  await walk(root);
+  return found;
+}
+async function syncRemoteCheckpointsToRules(projectPath, workspace, remote, context, now = /* @__PURE__ */ new Date()) {
+  const result = { appliedCount: 0, removedCount: 0, conflicts: [] };
+  for (const cp of remote) {
+    const files = await checkpointFiles(projectPath, cp.id);
+    const applicable = checkpointApplies(cp, context) && !isExpired(cp.expires_at, now);
+    const target = join11(projectPath, ".claude", "rules", cp.category ?? "general", `${cp.id}-${slugify(cp.title)}.md`);
+    let blocked = false;
+    for (const file of files.filter((path) => !applicable || path !== target)) {
+      const content2 = await readFile11(file, "utf8").catch(() => null);
+      if (content2 === null) continue;
+      if (wasEdited(content2, cp, workspace)) {
+        result.conflicts.push(file);
+        blocked = true;
+      } else {
+        await rm2(file, { force: true });
+        result.removedCount += 1;
+      }
+    }
+    if (!applicable || blocked) continue;
+    const content = checkpointBody(cp, workspace);
+    const existing = await readFile11(target, "utf8").catch(() => null);
+    if (existing !== null && existing !== content && wasEdited(existing, cp, workspace)) {
+      result.conflicts.push(target);
+      continue;
+    }
+    await mkdir9(join11(projectPath, ".claude", "rules", cp.category ?? "general"), { recursive: true });
+    if (existing !== content) await atomicWriteFile(target, content);
+    result.appliedCount += 1;
+  }
+  return result;
+}
 async function pullCheckpointsToRules(projectPath, workspace) {
   const remote = await fetchCheckpointSync(workspace);
   if (!remote) return null;
   const config2 = await loadProjectConfig(projectPath);
-  const applicable = remote.filter((cp) => checkpointApplies(cp, {
+  const result = await syncRemoteCheckpointsToRules(projectPath, workspace, remote, {
     projectName: config2?.projectName ?? "",
     harnessIds: config2?.detectedStack.harnessIds ?? []
-  }));
-  for (const cp of applicable) {
-    const dir = join11(projectPath, ".claude", "rules", cp.category ?? "general");
-    await mkdir9(dir, { recursive: true });
-    const body2 = [
-      "---",
-      `description: "Sugo checkpoint ${cp.id} \xB7 ${workspace}"`,
-      "---",
-      "",
-      `# ${cp.title}`,
-      "",
-      `> ${workspace} \uB3C4\uBA54\uC778\uC758 \uC7AC\uBC1C\uBC29\uC9C0 \uCEE8\uD14D\uC2A4\uD2B8 \xB7 ${cp.applies_to?.length ? `\uC801\uC6A9 \uB300\uC0C1: ${cp.applies_to.join(", ")}` : "\uB3C4\uBA54\uC778 \uC804\uCCB4 \uC801\uC6A9"}`,
-      "",
-      ...cp.checklist.map((item) => `- ${item}`)
-    ].join("\n");
-    await atomicWriteFile(join11(dir, `${cp.id}-${slugify(cp.title)}.md`), body2);
-  }
-  return applicable.length;
+  });
+  return result.appliedCount;
 }
 
 // src/hulk/memory.ts
@@ -27679,6 +27766,7 @@ var sugoCheckpointInputSchema = {
   title: external_exports.string().optional().describe("add action\uC5D0 \uD544\uC694"),
   category: external_exports.string().optional(),
   applies_to: external_exports.array(external_exports.string()).optional().describe("\uBE48 \uBC30\uC5F4/\uBBF8\uC9C0\uC815\uC774\uBA74 \uBCF4\uD3B8 \uCCB4\uD06C\uD3EC\uC778\uD2B8(\uD56D\uC0C1 \uC801\uC6A9)"),
+  expires_at: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("KST \uAE30\uC900 \uC774 \uB0A0\uC9DC\uAE4C\uC9C0 \uC720\uD6A8. \uB2E4\uC74C \uB0A0\uBD80\uD130 rules \uCEE8\uD14D\uC2A4\uD2B8\uC5D0\uC11C \uC81C\uC678"),
   checklist: external_exports.array(external_exports.string()).optional().describe("add action\uC5D0 \uD544\uC694"),
   note: external_exports.string().optional().describe("memory action\uC5D0 \uD544\uC694 \u2014 \uC790\uC720 \uBA54\uBAA8 \uD55C \uC904/\uC5EC\uB7EC \uC904"),
   projectPath: external_exports.string().optional().describe("pull action\uC5D0 \uD544\uC694 \u2014 \uC6D0\uACA9 \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C .claude/rules/\uB85C \uAE30\uB85D\uD560 \uD504\uB85C\uC81D\uD2B8")
@@ -27695,6 +27783,7 @@ async function handleSugoCheckpoint(rawArgs) {
         title: args2.title,
         category: args2.category,
         applies_to: args2.applies_to,
+        expires_at: args2.expires_at,
         checklist: args2.checklist
       });
       return ok({ checkpoint });
@@ -27762,7 +27851,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.6.1" : "0.0.0-dev";
+  return true ? "0.6.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29061,12 +29150,12 @@ function validateIntegration(manifest) {
 }
 
 // src/fingerprint.ts
-import { createHash as createHash2 } from "node:crypto";
+import { createHash as createHash3 } from "node:crypto";
 import { stat } from "node:fs/promises";
 import { isAbsolute as isAbsolute5, join as join22, relative as relative5 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
-  return createHash2("sha1").update(parts2.join("\n")).digest("hex");
+  return createHash3("sha1").update(parts2.join("\n")).digest("hex");
 }
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
@@ -30501,6 +30590,12 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "start" && args2.seed) {
     session = { ...session, data: { ...session.data, seed: args2.seed } };
+  }
+  if (action === "start") {
+    const registryEntry = await findRegistryEntry(session.projectPath);
+    if (registryEntry?.workspace) {
+      await pullCheckpointsToRules(session.projectPath, registryEntry.workspace).catch(() => null);
+    }
   }
   if (action === "start" && session.data.mode !== "patch") {
     const registryEntry = await findRegistryEntry(session.projectPath);

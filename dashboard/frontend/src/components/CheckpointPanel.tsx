@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { marked } from "marked";
-import { Eye, Pencil, Shield } from "lucide-react";
+import { AlertTriangle, CalendarClock, Eye, Pencil, Shield } from "lucide-react";
 import { Modal } from "./Modal.js";
 import { LoadingSpinner, EmptyState } from "./StatusViews.js";
 import { useWorkspaceCheckpoints, type Checkpoint } from "../hooks/useWorkspaceData.js";
@@ -24,6 +24,19 @@ function renderMd(md: string): string {
 }
 
 const CHECKPOINTS_PER_PAGE = 5;
+
+function todayKst(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+
+function expiryState(expiresAt: string | null): "none" | "active" | "soon" | "expired" {
+  if (!expiresAt) return "none";
+  const date = expiresAt.slice(0, 10);
+  const today = todayKst();
+  if (date < today) return "expired";
+  const days = Math.round((Date.parse(`${date}T00:00:00+09:00`) - Date.parse(`${today}T00:00:00+09:00`)) / 86_400_000);
+  return days <= 3 ? "soon" : "active";
+}
 
 /** 작성/미리보기 탭 + textarea 한 벌 — 새 체크포인트·수정 다이얼로그가 그대로 공유한다. */
 function MarkdownEditor({
@@ -90,10 +103,12 @@ export function CheckpointPanel({
   workspace,
   onClose,
   projectPath = null,
+  defaultExpiresAt = null,
 }: {
   workspace: string;
   onClose: () => void;
   projectPath?: string | null;
+  defaultExpiresAt?: string | null;
 }) {
   const { userId } = useAuth();
   const checkpoints = useWorkspaceCheckpoints(workspace);
@@ -106,7 +121,7 @@ export function CheckpointPanel({
         : checkpoints.data,
     [checkpoints.data, projectLabel],
   );
-  const [cpDraft, setCpDraft] = useState({ title: "", category: "general", markdown: "" });
+  const [cpDraft, setCpDraft] = useState({ title: "", category: "general", markdown: "", expiresAt: defaultExpiresAt ?? "" });
   const [cpBusy, setCpBusy] = useState(false);
   // 5개 넘으면 페이지네이션 — 오래된(처음 만든) 순으로 이미 정렬돼 온다(getCheckpoints ORDER BY created_at).
   const [page, setPage] = useState(0);
@@ -117,7 +132,7 @@ export function CheckpointPanel({
   const [dirtyCheckpoints, setDirtyCheckpoints] = useState<Set<string>>(new Set());
   const [editingCheckpoint, setEditingCheckpoint] = useState<Checkpoint | null>(null);
   const [editView, setEditView] = useState<"write" | "preview">("write");
-  const [cpEditDraft, setCpEditDraft] = useState({ title: "", category: "general", markdown: "" });
+  const [cpEditDraft, setCpEditDraft] = useState({ title: "", category: "general", markdown: "", expiresAt: "" });
 
   return (
     <>
@@ -150,11 +165,13 @@ export function CheckpointPanel({
                     {cp.category}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--color-text)]">{cp.title}</span>
+                  {expiryState(cp.expires_at) === "expired" && <span className="flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300"><AlertTriangle size={10} /> 만료됨</span>}
+                  {expiryState(cp.expires_at) === "soon" && <span className="flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300"><CalendarClock size={10} /> 곧 만료</span>}
                   {dirtyCheckpoints.has(cp.id) && <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300">수정됨</span>}
                   <button disabled={cpBusy || !userId} onClick={() => {
                     setEditingCheckpoint(cp);
                     setEditView("write");
-                    setCpEditDraft({ title: cp.title, category: cp.category || "general", markdown: cp.learned_from ?? (cp.checklist ?? []).map((item) => `- ${item}`).join("\n") });
+                    setCpEditDraft({ title: cp.title, category: cp.category || "general", markdown: cp.learned_from ?? (cp.checklist ?? []).map((item) => `- ${item}`).join("\n"), expiresAt: cp.expires_at?.slice(0, 10) ?? "" });
                   }} className="shrink-0 rounded border border-cyan-500/40 px-1.5 py-0.5 text-[10.5px] text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-40">수정</button>
                   <button
                     disabled={cpBusy || !userId}
@@ -180,6 +197,9 @@ export function CheckpointPanel({
                 )}
                 <div className="mt-2 font-mono text-[10.5px] text-[var(--color-text-dim)]">
                   {cp.applies_to?.length ? cp.applies_to.join(", ") : "워크스페이스 전체 프로젝트"} → .claude/rules/{cp.category || "general"}/
+                </div>
+                <div className={`mt-1 flex items-center gap-1 text-[10.5px] ${expiryState(cp.expires_at) === "expired" ? "text-rose-300" : "text-[var(--color-text-dim)]"}`}>
+                  <CalendarClock size={11} /> {cp.expires_at ? `${cp.expires_at.slice(0, 10)}까지 유효 (KST)` : "유효기간 없음"}
                 </div>
               </div>
             ))}
@@ -219,6 +239,13 @@ export function CheckpointPanel({
             />
           </div>
           <MarkdownEditor value={cpDraft.markdown} onChange={(markdown) => setCpDraft({ ...cpDraft, markdown })} />
+          <label className="block text-[10.5px] text-[var(--color-text-dim)]">유효기간
+            <div className="mt-1 flex items-center gap-2">
+              <input type="date" value={cpDraft.expiresAt} onChange={(e) => setCpDraft({ ...cpDraft, expiresAt: e.target.value })} className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1.5 text-[12px] text-[var(--color-text)]" />
+              {defaultExpiresAt && <button type="button" onClick={() => setCpDraft({ ...cpDraft, expiresAt: defaultExpiresAt })} className="rounded border border-cyan-500/30 px-2 py-1.5 text-[10.5px] text-cyan-300">SPEC 마감일까지</button>}
+              <button type="button" onClick={() => setCpDraft({ ...cpDraft, expiresAt: "" })} className="rounded border border-[var(--color-border)] px-2 py-1.5 text-[10.5px] text-[var(--color-text-muted)]">만료 없음</button>
+            </div>
+          </label>
           <button
             disabled={cpBusy || !cpDraft.title.trim() || !cpDraft.markdown.trim() || !userId}
             onClick={async () => {
@@ -229,9 +256,10 @@ export function CheckpointPanel({
                   title: cpDraft.title.trim(),
                   learnedFrom: cpDraft.markdown,
                   appliesTo: defaultAppliesTo,
+                  expiresAt: cpDraft.expiresAt || null,
                 });
                 setDirtyCheckpoints((current) => new Set(current).add(saved.id));
-                setCpDraft({ title: "", category: "general", markdown: "" });
+                setCpDraft({ title: "", category: "general", markdown: "", expiresAt: defaultExpiresAt ?? "" });
                 checkpoints.refresh();
               } finally {
                 setCpBusy(false);
@@ -250,7 +278,8 @@ export function CheckpointPanel({
             } finally { setCpBusy(false); }
           }} className="w-full rounded-xl border border-amber-400/45 bg-gradient-to-r from-amber-500/15 to-orange-500/[0.06] px-4 py-2.5 text-[13px] font-bold text-amber-200 hover:border-amber-300 disabled:opacity-40">저장 후 적용 · 전체 프로젝트</button>
           {cpApplyResult && <div className={`rounded-lg border p-2.5 text-[11px] ${cpApplyResult.conflicts.length || cpApplyResult.failed.length ? "border-amber-400/35 bg-amber-400/[0.06] text-amber-100" : "border-emerald-400/30 bg-emerald-400/[0.05] text-emerald-200"}`}>
-            <div className="font-semibold">{workspace} 적용 결과 · 변경된 체크포인트 {cpApplyResult.changedCheckpoints}건 · 파일 {cpApplyResult.filesWritten}개 적용</div>
+            <div className="font-semibold">{workspace} 적용 결과 · 변경된 체크포인트 {cpApplyResult.changedCheckpoints}건 · 파일 {cpApplyResult.filesWritten}개 적용 · {cpApplyResult.filesRemoved}개 정리</div>
+            {cpApplyResult.expiredCheckpoints > 0 && <div className="mt-1 text-rose-200">만료 체크포인트 {cpApplyResult.expiredCheckpoints}건은 컨텍스트에서 제외했습니다.</div>}
             <div className="mt-1">충돌 {cpApplyResult.conflicts.length} · 실패 {cpApplyResult.failed.length}</div>
             {cpApplyResult.conflicts.map((item) => <div key={`${item.id}:${item.file}`} className="mt-1 text-[10px]"><div className="font-mono">충돌: {item.file}</div><div className="mt-0.5 opacity-70">{item.reason}</div></div>)}
           </div>}
@@ -261,7 +290,7 @@ export function CheckpointPanel({
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditingCheckpoint(null); }}>
           <div className="flex h-[72vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-cyan-400/25 bg-[var(--color-surface)] shadow-2xl">
             <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-5 py-4"><div className="min-w-0 flex-1"><div className="font-mono text-[10px] text-cyan-300">{editingCheckpoint.id}</div><div className="text-[16px] font-semibold">체크포인트 수정</div></div><button onClick={() => setEditingCheckpoint(null)}>✕</button></div>
-            <div className="grid grid-cols-[160px_1fr] gap-3 border-b border-[var(--color-border)] p-4"><input value={cpEditDraft.category} onChange={(e) => setCpEditDraft({ ...cpEditDraft, category: e.target.value })} placeholder="규칙 폴더" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 font-mono text-[12px]" /><input value={cpEditDraft.title} onChange={(e) => setCpEditDraft({ ...cpEditDraft, title: e.target.value })} placeholder="제목" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-[13px]" /></div>
+            <div className="grid grid-cols-[160px_1fr_170px] gap-3 border-b border-[var(--color-border)] p-4"><input value={cpEditDraft.category} onChange={(e) => setCpEditDraft({ ...cpEditDraft, category: e.target.value })} placeholder="규칙 폴더" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 font-mono text-[12px]" /><input value={cpEditDraft.title} onChange={(e) => setCpEditDraft({ ...cpEditDraft, title: e.target.value })} placeholder="제목" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-[13px]" /><label className="text-[10px] text-[var(--color-text-dim)]">유효기간<input type="date" value={cpEditDraft.expiresAt} onChange={(e) => setCpEditDraft({ ...cpEditDraft, expiresAt: e.target.value })} className="mt-1 w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 text-[12px] text-[var(--color-text)]" /></label></div>
             <div className="flex shrink-0 items-center gap-1 border-b border-[var(--color-border)] px-4 pt-2 text-[11px] font-semibold">
               <button type="button" onClick={() => setEditView("write")} className={`flex items-center gap-1 rounded-t-md px-3 py-1.5 transition-colors ${editView === "write" ? "border-x border-t border-[var(--color-border)] bg-[#070b12] text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]"}`}>
                 <Pencil size={11} /> 작성
@@ -277,7 +306,7 @@ export function CheckpointPanel({
                 {cpEditDraft.markdown.trim() ? <div dangerouslySetInnerHTML={{ __html: renderMd(cpEditDraft.markdown) }} /> : <p className="text-[var(--color-text-dim)]">아직 내용이 없습니다.</p>}
               </div>
             )}
-            <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-3"><button onClick={() => setEditingCheckpoint(null)} className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px]">취소</button><button disabled={cpBusy || !cpEditDraft.title.trim() || !cpEditDraft.markdown.trim()} onClick={async () => { setCpBusy(true); try { await updateWorkspaceCheckpoint(userId!, workspace, editingCheckpoint.id, { title: cpEditDraft.title.trim(), category: cpEditDraft.category.trim() || "general", learnedFrom: cpEditDraft.markdown, appliesTo: editingCheckpoint.applies_to ?? defaultAppliesTo }); setDirtyCheckpoints((current) => new Set(current).add(editingCheckpoint.id)); checkpoints.refresh(); setEditingCheckpoint(null); } finally { setCpBusy(false); } }} className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[12px] font-bold text-cyan-200">수정 저장</button></div>
+            <div className="flex items-center justify-between gap-2 border-t border-[var(--color-border)] px-5 py-3"><button type="button" onClick={() => setCpEditDraft({ ...cpEditDraft, expiresAt: "" })} className="text-[10.5px] text-[var(--color-text-dim)] hover:text-cyan-300">유효기간 제거</button><div className="flex gap-2"><button onClick={() => setEditingCheckpoint(null)} className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px]">취소</button><button disabled={cpBusy || !cpEditDraft.title.trim() || !cpEditDraft.markdown.trim()} onClick={async () => { setCpBusy(true); try { await updateWorkspaceCheckpoint(userId!, workspace, editingCheckpoint.id, { title: cpEditDraft.title.trim(), category: cpEditDraft.category.trim() || "general", learnedFrom: cpEditDraft.markdown, appliesTo: editingCheckpoint.applies_to ?? defaultAppliesTo, expiresAt: cpEditDraft.expiresAt || null }); setDirtyCheckpoints((current) => new Set(current).add(editingCheckpoint.id)); checkpoints.refresh(); setEditingCheckpoint(null); } finally { setCpBusy(false); } }} className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[12px] font-bold text-cyan-200">수정 저장</button></div></div>
           </div>
         </div>
       )}

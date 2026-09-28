@@ -1,8 +1,8 @@
-import { mkdtemp, readFile, writeFile, mkdir } from "node:fs/promises";
+import { access, mkdtemp, readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { applyCheckpointToProjects, newCheckpointId } from "../src/services/checkpointApply.js";
+import { applyCheckpointToProjects, isCheckpointExpired, newCheckpointId } from "../src/services/checkpointApply.js";
 
 describe("checkpoint save-and-apply", () => {
   it("대상 프로젝트의 category 폴더에 관리 파일을 만든다", async () => {
@@ -56,5 +56,71 @@ describe("checkpoint save-and-apply", () => {
     expect(await readFile(first.applied[0].file, "utf8")).toContain("## 확인\n\n- 첫 번째");
     expect(second.applied).toHaveLength(0);
     expect(second.unchanged).toHaveLength(1);
+  });
+
+  it("KST 기준 유효일 당일까지 활성이고 다음 날부터 만료된다", () => {
+    expect(isCheckpointExpired("2026-10-02", new Date("2026-10-02T14:59:59.000Z"))).toBe(false);
+    expect(isCheckpointExpired("2026-10-02", new Date("2026-10-02T15:00:00.000Z"))).toBe(true);
+    expect(isCheckpointExpired(null, new Date("2030-01-01T00:00:00.000Z"))).toBe(false);
+  });
+
+  it("만료된 체크포인트의 수정되지 않은 관리 파일은 rules에서 제거한다", async () => {
+    const root = await mkdtemp(join(tmpdir(), "sugo-cp-expired-"));
+    const base = {
+      workspace: "payments",
+      checkpoint: { id: "CP-expired1", title: "기간 한정 규칙", category: "general", checklist: ["10월 2일까지 확인"] },
+      projectPaths: [root],
+    };
+    const first = await applyCheckpointToProjects(base, new Date("2026-10-02T00:00:00.000Z"));
+    const file = first.applied[0].file;
+
+    const expired = await applyCheckpointToProjects(
+      { ...base, checkpoint: { ...base.checkpoint, expiresAt: "2026-10-02" } },
+      new Date("2026-10-02T15:00:00.000Z"),
+    );
+
+    expect(expired.removed).toEqual([{ projectPath: root, file }]);
+    await expect(access(file)).rejects.toThrow();
+  });
+
+  it("만료됐어도 직접 수정된 관리 파일은 삭제하지 않고 충돌로 남긴다", async () => {
+    const root = await mkdtemp(join(tmpdir(), "sugo-cp-expired-conflict-"));
+    const base = {
+      workspace: "payments",
+      checkpoint: { id: "CP-expired2", title: "기간 한정 규칙", category: "general", checklist: ["확인"] },
+      projectPaths: [root],
+    };
+    const first = await applyCheckpointToProjects(base, new Date("2026-10-02T00:00:00.000Z"));
+    const file = first.applied[0].file;
+    await writeFile(file, `${await readFile(file, "utf8")}\n직접 수정\n`);
+
+    const expired = await applyCheckpointToProjects(
+      { ...base, checkpoint: { ...base.checkpoint, expiresAt: "2026-10-02" } },
+      new Date("2026-10-02T15:00:00.000Z"),
+    );
+
+    expect(expired.removed).toHaveLength(0);
+    expect(expired.conflicts[0].reason).toContain("만료");
+    expect(await readFile(file, "utf8")).toContain("직접 수정");
+  });
+
+  it("0.6.1 hash 없는 자동 pull 파일도 원문이 정확히 같으면 만료 정리한다", async () => {
+    const root = await mkdtemp(join(tmpdir(), "sugo-cp-expired-legacy-"));
+    const dir = join(root, ".claude", "rules", "general");
+    await mkdir(dir, { recursive: true });
+    const file = join(dir, "CP-legacy-구형-규칙.md");
+    await writeFile(file, [
+      "---", 'description: "Sugo checkpoint CP-legacy · payments"', "---", "", "# 구형 규칙", "",
+      "> payments 도메인의 재발방지 컨텍스트 · 도메인 전체 적용", "", "- 확인",
+    ].join("\n"));
+
+    const result = await applyCheckpointToProjects({
+      workspace: "payments",
+      checkpoint: { id: "CP-legacy", title: "구형 규칙", category: "general", checklist: ["확인"], expiresAt: "2000-01-01" },
+      projectPaths: [root],
+    });
+
+    expect(result.removed).toEqual([{ projectPath: root, file }]);
+    expect(result.conflicts).toEqual([]);
   });
 });

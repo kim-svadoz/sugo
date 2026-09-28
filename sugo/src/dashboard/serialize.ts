@@ -89,6 +89,7 @@ export interface CheckpointWire {
   appliesTo?: string[];
   checklist?: string[];
   checkpointDate?: string;
+  expiresAt?: string;
 }
 
 export function serializeCheckpoint(userId: string, workspaceName: string, cp: Checkpoint): CheckpointWire {
@@ -101,6 +102,7 @@ export function serializeCheckpoint(userId: string, workspaceName: string, cp: C
     appliesTo: cp.applies_to,
     checklist: cp.checklist,
     checkpointDate: cp.created_at,
+    expiresAt: cp.expires_at,
   };
 }
 

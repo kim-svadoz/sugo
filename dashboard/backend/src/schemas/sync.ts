@@ -76,6 +76,7 @@ export const checkpointSchema = z.object({
   checklist: z.unknown().optional(),
   appliesTo: z.unknown().optional(),
   checkpointDate: z.string().nullish(),
+  expiresAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
 });
 
 export const workspaceMetaSchema = z.object({

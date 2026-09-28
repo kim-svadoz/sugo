@@ -72,6 +72,7 @@ export interface Checkpoint {
   checklist: string[] | null;
   applies_to: string[] | null;
   checkpoint_date: string | null;
+  expires_at: string | null;
   created_at: string;
 }
 

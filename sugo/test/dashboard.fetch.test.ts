@@ -54,7 +54,7 @@ describe("fetch 계열 — 실제 서버 응답", () => {
         );
       } else if (req.url?.startsWith("/api/workspaces/checkpoint-sync")) {
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ checkpoints: [{ id: "CP-1", title: "원격 체크포인트", checklist: ["x"], applies_to: null, category: null }] }));
+        res.end(JSON.stringify({ checkpoints: [{ id: "CP-1", title: "원격 체크포인트", checklist: ["x"], learned_from: "## 원문", applies_to: null, category: null, expires_at: "2026-10-02" }] }));
       } else if (req.url === "/api/metrics/calibrated-ratio") {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ratio: 2.8 }));
@@ -80,7 +80,7 @@ describe("fetch 계열 — 실제 서버 응답", () => {
 
   it("fetchCheckpointSync가 대시보드 {checkpoints} 응답을 언랩하고 applies_to를 매핑한다", async () => {
     const result = await fetchCheckpointSync();
-    expect(result).toEqual([{ id: "CP-1", title: "원격 체크포인트", checklist: ["x"], applies_to: undefined, category: undefined }]);
+    expect(result).toEqual([{ id: "CP-1", title: "원격 체크포인트", checklist: ["x"], learned_from: "## 원문", applies_to: undefined, category: undefined, expires_at: "2026-10-02" }]);
   });
 
   it("하위 Run이 없는 진행 중 manual SPEC만 feat 연결 후보로 반환한다", async () => {
