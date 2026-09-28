@@ -245,7 +245,7 @@ export async function getCheckpoints(db: DbClient, userId: string, workspaceName
     created_at: string;
     expires_at: string | null;
   }>(
-    "SELECT id, category, title, learned_from, checklist, applies_to, checkpoint_date, expires_at, created_at FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? ORDER BY created_at, id",
+    "SELECT id, category, title, learned_from, checklist, applies_to, checkpoint_date, expires_at, created_at FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? ORDER BY COALESCE(checkpoint_date, created_at), id",
     [userId, workspaceName]
   );
   return rows.map(normalizeCheckpointRow);

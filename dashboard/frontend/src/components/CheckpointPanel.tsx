@@ -116,15 +116,23 @@ export function CheckpointPanel({
   const projectLabel = projectPath ? repoName(projectPath) : null;
   const defaultAppliesTo = useMemo(() => (projectLabel ? [projectLabel] : []), [projectLabel]);
   const visibleCheckpoints = useMemo(
-    () =>
-      projectLabel
+    () => {
+      const visible = projectLabel
         ? checkpoints.data.filter((cp) => !cp.applies_to?.length || cp.applies_to.includes(projectLabel))
-        : checkpoints.data,
+        : checkpoints.data;
+
+      return [...visible].sort(
+        (a, b) =>
+          (a.checkpoint_date || a.created_at).localeCompare(b.checkpoint_date || b.created_at)
+          || a.id.localeCompare(b.id),
+      );
+    },
     [checkpoints.data, projectLabel],
   );
   const [cpDraft, setCpDraft] = useState({ title: "", category: "general", markdown: "", expiresAt: "" });
   const [cpBusy, setCpBusy] = useState(false);
-  // 5개 넘으면 페이지네이션 — 오래된(처음 만든) 순으로 이미 정렬돼 온다(getCheckpoints ORDER BY created_at).
+  // 원본 체크포인트 생성일(checkpoint_date, 없으면 DB created_at)이 오래된 순으로 정렬한 뒤
+  // 5개씩 페이지네이션한다. 기존 데이터는 created_at 컬럼 추가 시각이 같을 수 있다.
   const [page, setPage] = useState(0);
   const pageCount = Math.max(1, Math.ceil(visibleCheckpoints.length / CHECKPOINTS_PER_PAGE));
   const safePage = Math.min(page, pageCount - 1);
