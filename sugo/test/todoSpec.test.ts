@@ -13,8 +13,8 @@ import {
 } from "../src/todoSpec.js";
 
 describe("todoSpecPath — 저장 위치 규약(고정)", () => {
-  it("docs/feature/<이름>/TODO-SPEC.md", () => {
-    expect(todoSpecPath("/repo", "abc")).toBe(join("/repo", "docs", "feature", "abc", "TODO-SPEC.md"));
+  it("sugo/docs/feature/<이름>/TODO-SPEC.md", () => {
+    expect(todoSpecPath("/repo", "abc")).toBe(join("/repo", "sugo", "docs", "feature", "abc", "TODO-SPEC.md"));
   });
 });
 

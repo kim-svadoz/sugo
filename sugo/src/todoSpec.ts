@@ -9,11 +9,11 @@ import { fail, ok, type GateCheckResult } from "./gates.js";
  *
  * `sugo/features/<날짜>/<기능>/`의 PRD·work-result와는 다른 개념이다 — 그쪽은 날짜별 세션
  * 기록이고, 이건 브랜치가 존재하는 동안 계속 갱신되는 단일 문서다. 그래서 저장 위치도 분리한다:
- * `docs/feature/<이름>/TODO-SPEC.md`.
+ * `sugo/docs/feature/<이름>/TODO-SPEC.md`.
  */
 
 export function todoSpecPath(projectPath: string, featureName: string): string {
-  return join(projectPath, "docs", "feature", featureName, "TODO-SPEC.md");
+  return join(projectPath, "sugo", "docs", "feature", featureName, "TODO-SPEC.md");
 }
 
 export async function readTodoSpec(projectPath: string, featureName: string): Promise<string | null> {
@@ -56,7 +56,7 @@ export async function createTodoSpec(projectPath: string, draft: TodoSpecDraft):
     "## 갱신 로그",
     "",
   ].join("\n");
-  await mkdir(join(projectPath, "docs", "feature", draft.featureName), { recursive: true });
+  await mkdir(join(projectPath, "sugo", "docs", "feature", draft.featureName), { recursive: true });
   await atomicWriteFile(path, content);
   return { path, content };
 }

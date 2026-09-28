@@ -27851,7 +27851,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.6.2" : "0.0.0-dev";
+  return true ? "0.6.3" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -28444,7 +28444,7 @@ function checkValidateVerifiedGate(lastValidation) {
 
 // src/todoSpec.ts
 function todoSpecPath(projectPath, featureName) {
-  return join15(projectPath, "docs", "feature", featureName, "TODO-SPEC.md");
+  return join15(projectPath, "sugo", "docs", "feature", featureName, "TODO-SPEC.md");
 }
 async function readTodoSpec(projectPath, featureName) {
   try {
@@ -28472,7 +28472,7 @@ async function createTodoSpec(projectPath, draft) {
     "## \uAC31\uC2E0 \uB85C\uADF8",
     ""
   ].join("\n");
-  await mkdir11(join15(projectPath, "docs", "feature", draft.featureName), { recursive: true });
+  await mkdir11(join15(projectPath, "sugo", "docs", "feature", draft.featureName), { recursive: true });
   await atomicWriteFile(path, content);
   return { path, content };
 }

@@ -44,7 +44,7 @@ describe("§4.3-T start — 브랜치 감지 + TODO-SPEC 존재 여부", () => {
   it("feature/abc 브랜치에서 TODO-SPEC이 없으면 missing을 반환한다", async () => {
     const r = parse(await handleSugoPlan({ action: "start", projectPath: repo, featureName: "abc" }));
     expect(r.todoSpec.status).toBe("missing");
-    expect(r.todoSpec.path).toContain(join("docs", "feature", "abc", "TODO-SPEC.md"));
+    expect(r.todoSpec.path).toContain(join("sugo", "docs", "feature", "abc", "TODO-SPEC.md"));
   });
 
   it("feature/* 패턴이 아니면 todoSpec 필드가 아예 없다", async () => {
@@ -116,7 +116,7 @@ describe("§4.3-T commit 직전 — TODO-SPEC 동기화 게이트(COMMIT_PENDING
       data: {
         mode: "plan",
         chainInfo: { changedFiles: [], analyzeAttempts: 1, analyzePassed: true, testPassedState: "pass", reviewPassed: true, autoLoopRetryCount: 0 },
-        todoSpec: { featureName: "abc", path: join(repo, "docs", "feature", "abc", "TODO-SPEC.md"), snapshotAtStart },
+        todoSpec: { featureName: "abc", path: join(repo, "sugo", "docs", "feature", "abc", "TODO-SPEC.md"), snapshotAtStart },
       },
     } as PlanSession;
     await saveSession(session);
@@ -133,8 +133,8 @@ describe("§4.3-T commit 직전 — TODO-SPEC 동기화 게이트(COMMIT_PENDING
   it("파일은 있는데 세션 시작 이후 안 바뀌었으면 거부한다", async () => {
     const before = ["## 완료됨", "## 남은 것", "- [ ] a", "- [ ] b"].join("\n");
     const { writeFileSync, mkdirSync } = await import("node:fs");
-    mkdirSync(join(repo, "docs", "feature", "abc"), { recursive: true });
-    writeFileSync(join(repo, "docs", "feature", "abc", "TODO-SPEC.md"), before);
+    mkdirSync(join(repo, "sugo", "docs", "feature", "abc"), { recursive: true });
+    writeFileSync(join(repo, "sugo", "docs", "feature", "abc", "TODO-SPEC.md"), before);
 
     const id = await seedAtCommitPending(before);
     const r = parse(await handleSugoPlan({ action: "commit", sessionId: id }));
@@ -146,8 +146,8 @@ describe("§4.3-T commit 직전 — TODO-SPEC 동기화 게이트(COMMIT_PENDING
     const before = ["## 완료됨", "## 남은 것", "- [ ] a", "- [ ] b"].join("\n");
     const after = ["## 완료됨", "- [x] a", "## 남은 것", "- [ ] b"].join("\n");
     const { writeFileSync, mkdirSync } = await import("node:fs");
-    mkdirSync(join(repo, "docs", "feature", "abc"), { recursive: true });
-    writeFileSync(join(repo, "docs", "feature", "abc", "TODO-SPEC.md"), after);
+    mkdirSync(join(repo, "sugo", "docs", "feature", "abc"), { recursive: true });
+    writeFileSync(join(repo, "sugo", "docs", "feature", "abc", "TODO-SPEC.md"), after);
 
     const id = await seedAtCommitPending(before);
     const r = parse(await handleSugoPlan({ action: "commit", sessionId: id }));
@@ -158,8 +158,8 @@ describe("§4.3-T commit 직전 — TODO-SPEC 동기화 게이트(COMMIT_PENDING
   it("무관한 사유를 주면 안 바뀌었어도 통과하고 라벨이 남는다", async () => {
     const before = ["## 완료됨", "## 남은 것", "- [ ] a"].join("\n");
     const { writeFileSync, mkdirSync } = await import("node:fs");
-    mkdirSync(join(repo, "docs", "feature", "abc"), { recursive: true });
-    writeFileSync(join(repo, "docs", "feature", "abc", "TODO-SPEC.md"), before);
+    mkdirSync(join(repo, "sugo", "docs", "feature", "abc"), { recursive: true });
+    writeFileSync(join(repo, "sugo", "docs", "feature", "abc", "TODO-SPEC.md"), before);
 
     const id = await seedAtCommitPending(before);
     const r = parse(await handleSugoPlan({ action: "commit", sessionId: id, todoSpecSyncReason: "긴급 핫픽스, TODO-SPEC과 무관" }));
@@ -173,8 +173,8 @@ describe("§4.3-T commit 직전 — TODO-SPEC 동기화 게이트(COMMIT_PENDING
     const before = ["## 완료됨", "## 남은 것", "- [ ] a"].join("\n");
     const after = ["## 완료됨", "- [x] a", "## 남은 것"].join("\n");
     const { writeFileSync, mkdirSync } = await import("node:fs");
-    mkdirSync(join(repo, "docs", "feature", "abc"), { recursive: true });
-    writeFileSync(join(repo, "docs", "feature", "abc", "TODO-SPEC.md"), after);
+    mkdirSync(join(repo, "sugo", "docs", "feature", "abc"), { recursive: true });
+    writeFileSync(join(repo, "sugo", "docs", "feature", "abc", "TODO-SPEC.md"), after);
 
     const id = await seedAtCommitPending(before);
     await handleSugoPlan({ action: "commit", sessionId: id, todoSpecSyncReason: "불필요한 사유" });
@@ -223,8 +223,8 @@ describe("§4.3-T start — 같은 프로젝트의 다른 resumable 세션을 �
 describe("§4.3-T sugo_get_project_context — 세션과 무관하게 자동 로드", () => {
   it("TODO-SPEC이 있으면 원문을 싣는다(sessionId 불필요)", async () => {
     const { writeFileSync, mkdirSync } = await import("node:fs");
-    mkdirSync(join(repo, "docs", "feature", "abc"), { recursive: true });
-    writeFileSync(join(repo, "docs", "feature", "abc", "TODO-SPEC.md"), "# abc\n## 남은 것\n- [ ] a");
+    mkdirSync(join(repo, "sugo", "docs", "feature", "abc"), { recursive: true });
+    writeFileSync(join(repo, "sugo", "docs", "feature", "abc", "TODO-SPEC.md"), "# abc\n## 남은 것\n- [ ] a");
 
     const r = parse(await handleSugoGetProjectContext({ projectPath: repo }));
     expect(r.todoSpec.featureName).toBe("abc");
