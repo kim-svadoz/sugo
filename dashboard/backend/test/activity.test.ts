@@ -5,6 +5,7 @@ import request from "supertest";
 import { createApp } from "../src/index.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
 import { seedUserToken } from "./testAuth.js";
+import { pruneExpiredActivityEvents } from "../src/services/activityService.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
@@ -64,5 +65,28 @@ describe("POST /api/activity/ingest + GET /api/activity/stream", () => {
   it("400s on invalid ingest body", async () => {
     const { app, auth } = await freshApp();
     await request(app).post("/api/activity/ingest").set("Authorization", auth).send({ userId: "u1" }).expect(400);
+  });
+});
+
+describe("live console retention", () => {
+  it("removes only events older than 90 days", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    await db.exec(
+      `INSERT INTO sugo_activity_events
+       (user_id, workspace_name, ts, level, event_type, message)
+       VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?)`,
+      [
+        "u1", "ws1", "2026-06-29 23:59:59.000", "INFO", "SYSTEM", "expired",
+        "u1", "ws1", "2026-06-30 00:00:00.000", "INFO", "SYSTEM", "boundary",
+        "u1", "ws1", "2026-09-27 00:00:00.000", "INFO", "SYSTEM", "recent",
+      ],
+    );
+
+    const removed = await pruneExpiredActivityEvents(db, new Date("2026-09-28T00:00:00.000Z"));
+    const remaining = await db.query<{ message: string }>("SELECT message FROM sugo_activity_events ORDER BY ts");
+
+    expect(removed).toBe(1);
+    expect(remaining.map((row) => row.message)).toEqual(["boundary", "recent"]);
   });
 });

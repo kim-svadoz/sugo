@@ -14,6 +14,7 @@ import {
   ensureRoadmapProjectPathColumn,
 } from "../services/syncService.js";
 import { config } from "../config.js";
+import { pruneExpiredActivityEvents } from "../services/activityService.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -31,6 +32,7 @@ export async function initDb(): Promise<DbClient> {
     await ensureRoadmapManualTitleColumn(client);
     await ensureCheckpointCreatedAtColumn(client);
     await ensureCheckpointExpiresAtColumn(client);
+    await pruneExpiredActivityEvents(client);
     return client;
   }
   const client = createMySqlClient(config.mysql);
@@ -46,5 +48,6 @@ export async function initDb(): Promise<DbClient> {
   await ensureRoadmapManualTitleColumn(client);
   await ensureCheckpointCreatedAtColumn(client);
   await ensureCheckpointExpiresAtColumn(client);
+  await pruneExpiredActivityEvents(client);
   return client;
 }

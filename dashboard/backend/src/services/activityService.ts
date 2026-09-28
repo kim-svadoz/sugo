@@ -2,6 +2,25 @@ import type { DbClient } from "../db/client.js";
 import { parseMaybeJson } from "../db/jsonColumn.js";
 import { toDbDateTime } from "../db/datetime.js";
 
+export const ACTIVITY_RETENTION_DAYS = 90;
+
+/**
+ * 라이브 콘솔은 운영 이력이 아니라 일시적인 관측 데이터다. 서버가 시작될 때 90일보다 오래된
+ * 이벤트만 제거하며, 워크스페이스·TASK·SPEC·체크포인트·History 테이블은 건드리지 않는다.
+ * SQLite의 빈 페이지는 이후 쓰기에서 재사용되므로 여기서 VACUUM은 실행하지 않는다.
+ */
+export async function pruneExpiredActivityEvents(
+  db: DbClient,
+  now = new Date(),
+  retentionDays = ACTIVITY_RETENTION_DAYS,
+): Promise<number> {
+  const cutoff = new Date(now.getTime() - retentionDays * 86_400_000);
+  const cutoffValue = toDbDateTime(cutoff.toISOString());
+  if (!cutoffValue) return 0;
+  const result = await db.exec("DELETE FROM sugo_activity_events WHERE ts < ?", [cutoffValue]);
+  return result.affectedRows;
+}
+
 export interface IngestActivityInput {
   userId: string;
   workspace: string;
