@@ -27872,7 +27872,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.7.0" : "0.0.0-dev";
+  return true ? "0.7.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -28889,7 +28889,7 @@ var PatchEntryError = class extends Error {
 var PATCH_FILE_RE = /^(prd|work-result)-patch-v(\d+)\.md$/i;
 var PRD_PATCH_RE = /^prd-patch-v(\d+)\.md$/i;
 function computeNextPatchVersion(filenames) {
-  let max = 1;
+  let max = 0;
   for (const name2 of filenames) {
     const m = name2.match(PATCH_FILE_RE);
     if (m) max = Math.max(max, Number(m[2]));
@@ -29435,7 +29435,15 @@ async function recordRoadmapWorkResult(workspace, taskId, workResult, lineageEnt
     const nodes = file.nodes.map((node) => {
       if (!targetIds.has(node.id)) return node;
       if (node.id !== task.id) return { ...node, workResult };
-      const lineage = [...(node.lineage ?? []).filter((entry) => entry.version !== completedEntry.version), completedEntry].sort((a, b) => a.version - b.version);
+      const previousLineage = node.lineage ?? [];
+      const legacyFeatEntry = completedEntry.version > 0 && !previousLineage.some((entry) => entry.version === 0) && node.workResult?.path ? [{
+        version: 0,
+        completedAt: node.workResult.endedAt ?? node.workResult.startedAt ?? completedEntry.completedAt,
+        title: node.title,
+        summary: node.workResult.summary,
+        workResult: { ...node.workResult, patchVersion: 0 }
+      }] : [];
+      const lineage = [...legacyFeatEntry, ...previousLineage.filter((entry) => entry.version !== completedEntry.version), completedEntry].sort((a, b) => a.version - b.version);
       return { ...node, workResult, lineage };
     });
     await writeRoadmapFile(workspace, { ...file, nodes });

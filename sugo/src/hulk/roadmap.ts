@@ -142,7 +142,19 @@ export async function recordRoadmapWorkResult(
     const nodes = file.nodes.map((node) => {
       if (!targetIds.has(node.id)) return node;
       if (node.id !== task.id) return { ...node, workResult };
-      const lineage = [...(node.lineage ?? []).filter((entry) => entry.version !== completedEntry.version), completedEntry]
+      const previousLineage = node.lineage ?? [];
+      const legacyFeatEntry: RoadmapLineageEntry[] = completedEntry.version > 0
+        && !previousLineage.some((entry) => entry.version === 0)
+        && node.workResult?.path
+        ? [{
+            version: 0,
+            completedAt: node.workResult.endedAt ?? node.workResult.startedAt ?? completedEntry.completedAt,
+            title: node.title,
+            summary: node.workResult.summary,
+            workResult: { ...node.workResult, patchVersion: 0 },
+          }]
+        : [];
+      const lineage = [...legacyFeatEntry, ...previousLineage.filter((entry) => entry.version !== completedEntry.version), completedEntry]
         .sort((a, b) => a.version - b.version);
       return { ...node, workResult, lineage };
     });

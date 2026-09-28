@@ -157,6 +157,42 @@ describe("updateRoadmapNodeStatus", () => {
 });
 
 describe("recordRoadmapWorkResult", () => {
+  it("lineage 도입 전에 완료된 feat 결과를 첫 patch 기록 시 v0으로 보존한다", async () => {
+    await upsertRoadmapNodes("ws1", [
+      { id: "run-a", title: "RUN", level: "workstream", status: "done", dependsOn: [] },
+      {
+        id: "task-a",
+        title: "최초 구현",
+        level: "task",
+        status: "done",
+        dependsOn: [],
+        parent: "run-a",
+        workResult: {
+          path: "/feature/work-result.md",
+          endedAt: "2026-01-01T00:00:00.000Z",
+          summary: "최초 feat 결과",
+        },
+      },
+    ]);
+
+    await recordRoadmapWorkResult(
+      "ws1",
+      "task-a",
+      { path: "/feature/work-result-patch-v1.md", summary: "첫 patch", patchVersion: 1 },
+      { version: 1, completedAt: "2026-01-02T00:00:00.000Z", summary: "첫 patch" },
+    );
+
+    const task = await getRoadmapNode("ws1", "task-a");
+    expect(task?.lineage?.map((entry) => entry.version)).toEqual([0, 1]);
+    expect(task?.lineage?.[0]).toMatchObject({
+      version: 0,
+      completedAt: "2026-01-01T00:00:00.000Z",
+      title: "최초 구현",
+      summary: "최초 feat 결과",
+      workResult: { path: "/feature/work-result.md" },
+    });
+  });
+
   it("완료 산출물은 Task/RUN에 기록하고 patch 계보는 Task에만 기록한다", async () => {
     await upsertRoadmapNodes("ws1", [
       { id: "run-a", title: "RUN", level: "workstream", status: "done", dependsOn: [] },

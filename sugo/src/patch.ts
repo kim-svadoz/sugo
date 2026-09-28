@@ -21,13 +21,11 @@ const PATCH_FILE_RE = /^(prd|work-result)-patch-v(\d+)\.md$/i;
 const PRD_PATCH_RE = /^prd-patch-v(\d+)\.md$/i;
 
 /**
- * 순수 함수(§7): 원본(1차, 번호 없는 prd.md/work-result.md)을 암묵적 v1로 취급하고,
- * 디렉터리에서 발견한 (prd|work-result)-patch-v(N).md 중 최대 N과 비교해 다음 버전을 정한다.
- * 스펙 원문("최대값+1")이 "패치 파일이 하나도 없을 때 기준값"을 명시하지 않는다 — 원본=v1로
- * 보고 첫 patch를 v2로 매기는 쪽으로 해석했다.
+ * 순수 함수(§7): 원본 feat는 대시보드 계보의 v0이고, 첫 patch는 v1이다.
+ * 디렉터리에서 발견한 (prd|work-result)-patch-v(N).md 중 최대 N의 다음 버전을 정한다.
  */
 export function computeNextPatchVersion(filenames: string[]): number {
-  let max = 1;
+  let max = 0;
   for (const name of filenames) {
     const m = name.match(PATCH_FILE_RE);
     if (m) max = Math.max(max, Number(m[2]));

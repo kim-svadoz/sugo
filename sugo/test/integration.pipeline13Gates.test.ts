@@ -231,7 +231,7 @@ describe("patch 파이프라인 — 완주 + wiring 게이트 자동 트리거(�
     // patch 진입: data.patch.version=2로 표시된다
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login-patch", workResultPath });
     const sessionId = start.data.sessionId as string;
-    expect(start.data.patch.version).toBe(2);
+    expect(start.data.patch.version).toBe(1);
     await call(handleSugoPlan, { action: "clarify", sessionId });
     await call(handleSugoPlan, { action: "prd", sessionId, prdContent: PLAIN_PRD });
     await call(handleSugoPlan, { action: "ready", sessionId });

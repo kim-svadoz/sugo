@@ -98,7 +98,7 @@ describe("Patch 진입 — 반드시 거부", () => {
 });
 
 describe("Patch 전체 흐름 (§7)", () => {
-  it("1차 산출물로 2차 patch에 진입하면 mode=patch, version=2, 부모=원본 prd.md", async () => {
+  it("v0 feat 산출물로 첫 patch에 진입하면 mode=patch, version=1, 부모=원본 prd.md", async () => {
     const { workResultPath, prdPath } = await runFirstRoundToReviewDone();
     expect(existsSync(workResultPath)).toBe(true);
     expect(existsSync(prdPath)).toBe(true);
@@ -110,11 +110,11 @@ describe("Patch 전체 흐름 (§7)", () => {
       workResultPath,
     });
     expect(patchStart.isError).toBe(false);
-    expect(patchStart.data.patch.version).toBe(2);
+    expect(patchStart.data.patch.version).toBe(1);
     expect(patchStart.data.patch.parentPrdPath).toBe(prdPath);
   });
 
-  it("patch 모드의 PRD는 prd.md를 덮어쓰지 않고 PRD-patch-v2.md로 새로 저장된다", async () => {
+  it("patch 모드의 PRD는 prd.md를 덮어쓰지 않고 PRD-patch-v1.md로 새로 저장된다", async () => {
     const { workResultPath, prdPath } = await runFirstRoundToReviewDone();
     const originalPrdContent = readFileSync(prdPath, "utf-8");
 
@@ -132,7 +132,7 @@ describe("Patch 전체 흐름 (§7)", () => {
     expect(prdResult.isError).toBe(false);
     expect(prdResult.data.state).toBe("PRD");
     expect(readFileSync(prdPath, "utf-8")).toBe(originalPrdContent); // 원본 불변
-    const patchPrdPath = join(join(prdPath, ".."), "PRD-patch-v2.md");
+    const patchPrdPath = join(join(prdPath, ".."), "PRD-patch-v1.md");
     expect(existsSync(patchPrdPath)).toBe(true);
     expect(readFileSync(patchPrdPath, "utf-8")).toBe(patchPrdContent);
   });
@@ -168,7 +168,7 @@ describe("Patch 전체 흐름 (§7)", () => {
     expect(codeDoneOk.isError).toBe(false);
   });
 
-  it("2차 산출물로 3차 patch에 진입하면 version=3, 부모는 여전히 원본 prd.md", async () => {
+  it("v1 patch 산출물로 다음 patch에 진입하면 version=2, 부모는 여전히 원본 prd.md", async () => {
     const { workResultPath: firstWorkResult, prdPath } = await runFirstRoundToReviewDone();
 
     const patchStart = await call(handleSugoPlan, {
@@ -200,7 +200,7 @@ describe("Patch 전체 흐름 (§7)", () => {
       runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
     });
     const secondWorkResult = secondReviewDone.data.workResultPath as string;
-    expect(secondWorkResult).toContain("work-result-patch-v2.md");
+    expect(secondWorkResult).toContain("work-result-patch-v1.md");
 
     const thirdStart = await call(handleSugoPlan, {
       action: "start",
@@ -209,7 +209,7 @@ describe("Patch 전체 흐름 (§7)", () => {
       workResultPath: secondWorkResult,
     });
     expect(thirdStart.isError).toBe(false);
-    expect(thirdStart.data.patch.version).toBe(3);
+    expect(thirdStart.data.patch.version).toBe(2);
     expect(thirdStart.data.patch.parentPrdPath).toBe(prdPath);
   });
 
@@ -255,7 +255,7 @@ describe("§7.1 Patch 성숙화 — Run 재사용 + seed + patchInfo + lineage",
     // patchInfo(lineage)가 기록됐다 — parentTaskId는 spec대로 "이 Task 자신"(재사용이므로 자기참조).
     expect(tasksAfterPatch.data.tasks[0].patchInfo).toEqual({
       parentTaskId: originalTaskId,
-      patchVersion: 2,
+      patchVersion: 1,
       seed: "결제 실패 시 재시도 로직도 추가해달라는 요청이 있었다",
     });
   });

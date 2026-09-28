@@ -12,8 +12,8 @@ import {
 } from "../src/patch.js";
 
 describe("computeNextPatchVersion", () => {
-  it("patch 파일이 하나도 없으면(원본만 있음) v2를 반환한다", () => {
-    expect(computeNextPatchVersion(["prd.md", "work-result.md"])).toBe(2);
+  it("patch 파일이 하나도 없으면(원본 feat만 있음) 첫 patch인 v1을 반환한다", () => {
+    expect(computeNextPatchVersion(["prd.md", "work-result.md"])).toBe(1);
   });
 
   it("기존 patch 파일 중 최대 버전+1을 반환한다", () => {
@@ -72,14 +72,14 @@ describe("resolvePatchContext — 반드시 거부", () => {
 });
 
 describe("resolvePatchContext — 반드시 허용", () => {
-  it("1차 산출물만 있으면 prd.md를 부모로, 버전 2를 계산한다", async () => {
+  it("최초 feat 산출물만 있으면 prd.md를 부모로, 첫 patch 버전 1을 계산한다", async () => {
     const dir = tmpFeatureDir();
     writeFileSync(join(dir, "prd.md"), "REQ-1: 원본 요구사항");
     writeFileSync(join(dir, "work-result.md"), "1차 요약");
 
     const ctx = await resolvePatchContext(join(dir, "work-result.md"));
     expect(ctx.parentPrdPath).toBe(join(dir, "prd.md"));
-    expect(ctx.version).toBe(2);
+    expect(ctx.version).toBe(1);
     expect(ctx.featureDir).toBe(dir);
   });
 
