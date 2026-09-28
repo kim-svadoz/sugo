@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useActivityStream, type ActivityEvent } from "../hooks/useActivityStream.js";
 import { AgentBadge } from "./AgentBadge.js";
 
@@ -34,7 +35,7 @@ function formatTs(ts: string): string {
  * 공백이 남는다. 이벤트가 0건이면 **history 폴백 없이** "이벤트 대기 중"을 그린다 — 없는 걸
  * 다른 데이터로 메우면 실시간이라고 오해한다.
  */
-function FeedLine({ ev }: { ev: ActivityEvent }) {
+function FeedLine({ ev, expanded = false }: { ev: ActivityEvent; expanded?: boolean }) {
   return (
     <div className="ck-line-in flex items-start gap-1.5 font-mono text-[11.5px] leading-relaxed">
       <span className="w-3 shrink-0 text-[var(--color-text-dim)]">&gt;</span>
@@ -43,7 +44,11 @@ function FeedLine({ ev }: { ev: ActivityEvent }) {
         <AgentBadge agent={ev.agent} handoffTo={ev.handoff_to} />
       </span>
       <span className="shrink-0 text-[var(--color-text-muted)]">{ev.workspace_name}</span>
-      <span className="log-message-body min-w-0 flex-1 truncate">{ev.message}</span>
+      <span
+        className={`log-message-body min-w-0 flex-1 ${expanded ? "whitespace-pre-wrap break-words" : "truncate"}`}
+      >
+        {ev.message}
+      </span>
     </div>
   );
 }
@@ -54,12 +59,21 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
   const [full, setFull] = useState(false);
   const visible = workspace ? events.filter((e) => e.workspace_name === workspace) : events;
 
-  const feed = (
+  useEffect(() => {
+    if (!full) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFull(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [full]);
+
+  const renderFeed = (expanded = false) => (
     <div className="ck-scroll min-h-0 flex-1 space-y-0.5 overflow-auto pr-1">
       {visible.length === 0 ? (
         <div className="py-8 text-center text-[12px] text-[var(--color-text-dim)]">이벤트 대기 중</div>
       ) : (
-        visible.map((ev, i) => <FeedLine key={`${ev.id}-${i}`} ev={ev} />)
+        visible.map((ev, i) => <FeedLine key={`${ev.id}-${i}`} ev={ev} expanded={expanded} />)
       )}
     </div>
   );
@@ -80,10 +94,10 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
             VIEW FULL CONSOLE
           </button>
         </div>
-        {feed}
+        {renderFeed()}
       </div>
 
-      {full && (
+      {full && createPortal(
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" onMouseDown={() => setFull(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
@@ -99,9 +113,10 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
                 닫기
               </button>
             </div>
-            {feed}
+            {renderFeed(true)}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

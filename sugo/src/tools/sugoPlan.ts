@@ -6,7 +6,7 @@ import { scanForSpringBootTestAnnotation } from "../bootScan.js";
 import { writePatchPrdFile, writePatchWorkResultFile, writePrdFile, writeWorkResultFile } from "../feature.js";
 import { checkCoverageGate } from "../consistency.js";
 import { checkContractEvidenceGate, checkContractStartedGate, resolveContractRequired } from "../contractEvidence.js";
-import { emitActivity } from "../dashboard/activity.js";
+import { activityForPlanTransition, emitActivity } from "../dashboard/activity.js";
 import { fetchCalibratedRatio, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
 import { snapshotWorkResultFiles } from "../dashboard/workResultFiles.js";
 import { collectPrRefs } from "../prRefs.js";
@@ -1179,6 +1179,15 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
   if (action !== "status") {
     await saveSession(session);
+  }
+
+  // Activity Stream은 선택적인 sugo_chain 호출이 아니라 실제 상태 전이를 정본으로 삼는다.
+  // 성공한 전이만 여기 도달하므로 실패한 게이트를 handoff처럼 기록하지 않는다.
+  if (existing && session.data.hulkWorkspace) {
+    const transitionActivity = activityForPlanTransition(action, existing.state, session.featureName);
+    if (transitionActivity) {
+      void emitActivity({ workspaceName: session.data.hulkWorkspace, ...transitionActivity });
+    }
   }
 
   // ── §4.3-T start 응답: TODO-SPEC 원문(요약 아님 — 에이전트가 "완료됨"/"남은 것"을 직접 읽고

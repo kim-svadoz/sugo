@@ -24417,29 +24417,6 @@ function buildChainPrompt(direction, handoff) {
   return direction === "code_to_test" ? buildCodeToTestPrompt(handoff) : buildTestToReviewPrompt(handoff);
 }
 
-// src/dashboard/activity.ts
-var ACTIVITY_TIMEOUT_MS = 3e3;
-async function emitActivity(event) {
-  const config2 = await resolveDashboardConfig();
-  if (!config2.enabled) return;
-  await pushEvent(
-    "/api/activity/ingest",
-    "POST",
-    {
-      userId: config2.userId,
-      workspace: event.workspaceName,
-      ts: (/* @__PURE__ */ new Date()).toISOString(),
-      agent: event.agent,
-      handoffTo: event.handoffTo,
-      eventType: event.eventType,
-      level: event.level,
-      message: event.message,
-      details: event.details
-    },
-    ACTIVITY_TIMEOUT_MS
-  );
-}
-
 // src/tools/sugoChain.ts
 var sugoChainInputSchema = {
   sessionId: external_exports.string().describe("sugo_plan(start)\uC73C\uB85C \uBC1C\uAE09\uB41C \uC138\uC158 id"),
@@ -24482,17 +24459,6 @@ async function handleSugoChain(rawArgs) {
     }
   };
   await saveSession(updated);
-  if (session.data.hulkWorkspace) {
-    const fromAgent = direction === "code_to_test" ? "CODE" : "TEST";
-    const toAgent = direction === "code_to_test" ? "TEST" : "REVIEW";
-    void emitActivity({
-      workspaceName: session.data.hulkWorkspace,
-      agent: fromAgent,
-      handoffTo: toAgent,
-      eventType: "HANDOFF",
-      message: args2.summary
-    });
-  }
   const payload = { ok: true, sessionId: session.id, direction, handoff, prompt };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
@@ -27882,7 +27848,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.7.3" : "0.0.0-dev";
+  return true ? "0.7.4" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29050,6 +29016,53 @@ function checkContractStartedGate(records, required2, environmentAbsentReason) {
 function resolveContractRequired(policyValue, sessionCtx) {
   if (policyValue !== void 0) return policyValue;
   return sessionCtx.baselineRequired;
+}
+
+// src/dashboard/activity.ts
+function activityForPlanTransition(action, fromState, featureName) {
+  if (action === "code_start") {
+    const agent = fromState === "REVIEW_RUNNING" ? "REVIEW" : fromState === "TEST_DONE" ? "TEST" : "MAIN";
+    return {
+      agent,
+      handoffTo: "CODE",
+      eventType: "HANDOFF",
+      message: agent === "MAIN" ? `${featureName} \uAD6C\uD604 \uC2DC\uC791` : `${featureName} \uAD6C\uD604 \uC7AC\uC9C4\uC785`
+    };
+  }
+  if (action === "test_start") {
+    return { agent: "CODE", handoffTo: "TEST", eventType: "HANDOFF", message: `${featureName} \uD14C\uC2A4\uD2B8 \uC778\uACC4` };
+  }
+  if (action === "review_start") {
+    return { agent: "TEST", handoffTo: "REVIEW", eventType: "HANDOFF", message: `${featureName} \uB9AC\uBDF0 \uC778\uACC4` };
+  }
+  if (action === "review_done") {
+    return { agent: "REVIEW", handoffTo: "DOCS", eventType: "HANDOFF", message: `${featureName} \uBB38\uC11C\uD654 \uC778\uACC4` };
+  }
+  if (action === "docs_done") {
+    return { agent: "DOCS", handoffTo: "MAIN", eventType: "HANDOFF", message: `${featureName} \uC644\uB8CC \uCC98\uB9AC \uC778\uACC4` };
+  }
+  return null;
+}
+var ACTIVITY_TIMEOUT_MS = 3e3;
+async function emitActivity(event) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent(
+    "/api/activity/ingest",
+    "POST",
+    {
+      userId: config2.userId,
+      workspace: event.workspaceName,
+      ts: (/* @__PURE__ */ new Date()).toISOString(),
+      agent: event.agent,
+      handoffTo: event.handoffTo,
+      eventType: event.eventType,
+      level: event.level,
+      message: event.message,
+      details: event.details
+    },
+    ACTIVITY_TIMEOUT_MS
+  );
 }
 
 // src/dashboard/workResultFiles.ts
@@ -31104,6 +31117,12 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action !== "status") {
     await saveSession(session);
+  }
+  if (existing && session.data.hulkWorkspace) {
+    const transitionActivity = activityForPlanTransition(action, existing.state, session.featureName);
+    if (transitionActivity) {
+      void emitActivity({ workspaceName: session.data.hulkWorkspace, ...transitionActivity });
+    }
   }
   let todoSpecResponse;
   let otherResumableSessions;

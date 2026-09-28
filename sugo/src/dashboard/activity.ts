@@ -14,6 +14,37 @@ export interface ActivityEventInput {
   details?: unknown;
 }
 
+type HandoffActivity = Omit<ActivityEventInput, "workspaceName">;
+
+/**
+ * 상태머신의 성공 전이를 Live Console handoff의 정본으로 바꾼다.
+ * sugo_chain은 프롬프트 전달 보조 수단이라 호출이 생략될 수 있으므로 관측 로그의 근거로 쓰지 않는다.
+ */
+export function activityForPlanTransition(action: string, fromState: string, featureName: string): HandoffActivity | null {
+  if (action === "code_start") {
+    const agent: ActivityAgent = fromState === "REVIEW_RUNNING" ? "REVIEW" : fromState === "TEST_DONE" ? "TEST" : "MAIN";
+    return {
+      agent,
+      handoffTo: "CODE",
+      eventType: "HANDOFF",
+      message: agent === "MAIN" ? `${featureName} 구현 시작` : `${featureName} 구현 재진입`,
+    };
+  }
+  if (action === "test_start") {
+    return { agent: "CODE", handoffTo: "TEST", eventType: "HANDOFF", message: `${featureName} 테스트 인계` };
+  }
+  if (action === "review_start") {
+    return { agent: "TEST", handoffTo: "REVIEW", eventType: "HANDOFF", message: `${featureName} 리뷰 인계` };
+  }
+  if (action === "review_done") {
+    return { agent: "REVIEW", handoffTo: "DOCS", eventType: "HANDOFF", message: `${featureName} 문서화 인계` };
+  }
+  if (action === "docs_done") {
+    return { agent: "DOCS", handoffTo: "MAIN", eventType: "HANDOFF", message: `${featureName} 완료 처리 인계` };
+  }
+  return null;
+}
+
 const ACTIVITY_TIMEOUT_MS = 3000;
 
 /**
