@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { marked } from "marked";
-import { AlertTriangle, CalendarClock, Eye, Pencil, Shield } from "lucide-react";
+import { AlertTriangle, CalendarClock, Check, Eye, Pencil, Shield } from "lucide-react";
 import { DatePicker } from "./DatePicker.js";
 import { Modal } from "./Modal.js";
 import { LoadingSpinner, EmptyState } from "./StatusViews.js";
@@ -137,7 +137,8 @@ export function CheckpointPanel({
 
   return (
     <>
-      <Modal onClose={onClose}>
+      <Modal onClose={onClose} size="wide">
+        <div className="checkpoint-panel">
         <h3 className="mb-1 flex items-center gap-2 text-[15px] font-semibold text-[var(--color-text-bright)]">
           <Shield size={16} className="text-amber-400" /> {projectLabel ? `${projectLabel} 프로젝트 체크포인트` : `${workspace} 체크포인트`}
         </h3>
@@ -250,8 +251,24 @@ export function CheckpointPanel({
                   ariaLabel="새 체크포인트 유효기간"
                 />
               </div>
-              {defaultExpiresAt && <button type="button" onClick={() => setCpDraft({ ...cpDraft, expiresAt: defaultExpiresAt })} className="rounded border border-cyan-500/30 px-2 py-1.5 text-[10.5px] text-cyan-300">SPEC 마감일까지</button>}
-              <button type="button" onClick={() => setCpDraft({ ...cpDraft, expiresAt: "" })} disabled={!cpDraft.expiresAt} className="rounded border border-[var(--color-border)] px-2 py-1.5 text-[10.5px] text-[var(--color-text-muted)] hover:text-cyan-300 disabled:cursor-default disabled:opacity-40">만료 없음</button>
+              {defaultExpiresAt && (
+                <button
+                  type="button"
+                  aria-pressed={cpDraft.expiresAt === defaultExpiresAt}
+                  onClick={() => setCpDraft({ ...cpDraft, expiresAt: defaultExpiresAt })}
+                  className={`rounded border px-2 py-1.5 text-[10.5px] transition-colors ${cpDraft.expiresAt === defaultExpiresAt ? "border-cyan-400/60 bg-cyan-400/15 font-semibold text-cyan-200" : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-cyan-500/30 hover:text-cyan-300"}`}
+                >
+                  SPEC 마감일까지
+                </button>
+              )}
+              <button
+                type="button"
+                aria-pressed={!cpDraft.expiresAt}
+                onClick={() => setCpDraft({ ...cpDraft, expiresAt: "" })}
+                className={`flex items-center gap-1 rounded border px-2 py-1.5 text-[10.5px] transition-colors ${!cpDraft.expiresAt ? "border-cyan-400/60 bg-cyan-400/15 font-semibold text-cyan-200" : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-cyan-500/30 hover:text-cyan-300"}`}
+              >
+                {!cpDraft.expiresAt && <Check size={12} />} 만료 없음
+              </button>
             </div>
           </div>
           <button
@@ -292,10 +309,11 @@ export function CheckpointPanel({
             {cpApplyResult.conflicts.map((item) => <div key={`${item.id}:${item.file}`} className="mt-1 text-[10px]"><div className="font-mono">충돌: {item.file}</div><div className="mt-0.5 opacity-70">{item.reason}</div></div>)}
           </div>}
         </div>
+        </div>
       </Modal>
 
       {editingCheckpoint && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditingCheckpoint(null); }}>
+        <div className="checkpoint-panel fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditingCheckpoint(null); }}>
           <div className="flex h-[72vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-cyan-400/25 bg-[var(--color-surface)] shadow-2xl">
             <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-5 py-4"><div className="min-w-0 flex-1"><div className="font-mono text-[10px] text-cyan-300">{editingCheckpoint.id}</div><div className="text-[16px] font-semibold">체크포인트 수정</div></div><button onClick={() => setEditingCheckpoint(null)}>✕</button></div>
             <div className="grid grid-cols-[160px_1fr_270px] gap-3 border-b border-[var(--color-border)] p-4"><input value={cpEditDraft.category} onChange={(e) => setCpEditDraft({ ...cpEditDraft, category: e.target.value })} placeholder="규칙 폴더" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 font-mono text-[12px]" /><input value={cpEditDraft.title} onChange={(e) => setCpEditDraft({ ...cpEditDraft, title: e.target.value })} placeholder="제목" className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-[13px]" /><div className="text-[10px] text-[var(--color-text-dim)]">유효기간<div className="mt-1 flex items-center gap-2"><div className="min-w-0 flex-1"><DatePicker value={cpEditDraft.expiresAt || null} onChange={(expiresAt) => setCpEditDraft({ ...cpEditDraft, expiresAt: expiresAt ?? "" })} placeholder="만료 없음" ariaLabel="체크포인트 유효기간 수정" /></div><button type="button" onClick={() => setCpEditDraft({ ...cpEditDraft, expiresAt: "" })} disabled={!cpEditDraft.expiresAt} className="shrink-0 rounded border border-[var(--color-border)] px-2 py-1.5 text-[10.5px] text-[var(--color-text-muted)] hover:text-cyan-300 disabled:cursor-default disabled:opacity-40">만료 없음</button></div></div></div>

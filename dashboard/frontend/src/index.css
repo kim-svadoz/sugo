@@ -276,3 +276,15 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
    ReactFlow는 엣지 라벨 레이어를 노드 레이어보다 아래에 깔기 때문에, 그대로 두면 버튼이
    보이기는 하는데 클릭은 밑에 있는 카드가 가져간다(가장 알아채기 어려운 종류의 버그다). */
 .react-flow__edgelabel-renderer { z-index: 12; }
+
+/* 정보 밀도가 높은 체크포인트 패널은 기본 UI보다 한 단계 큰 활자를 쓴다. */
+.checkpoint-panel [class~="text-[10px]"] { font-size: 11px !important; }
+.checkpoint-panel [class~="text-[10.5px]"] { font-size: 11.5px !important; }
+.checkpoint-panel [class~="text-[11px]"] { font-size: 12px !important; }
+.checkpoint-panel [class~="text-[11.5px]"] { font-size: 12.5px !important; }
+.checkpoint-panel [class~="text-[12px]"] { font-size: 13px !important; }
+.checkpoint-panel [class~="text-[12.5px]"] { font-size: 13.5px !important; }
+.checkpoint-panel [class~="text-[13px]"] { font-size: 14px !important; }
+.checkpoint-panel [class~="text-[15px]"] { font-size: 16px !important; }
+.checkpoint-panel [class~="text-[16px]"] { font-size: 17px !important; }
+.checkpoint-panel .md-body.md-body-compact { font-size: 13px; }
