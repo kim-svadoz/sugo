@@ -124,7 +124,8 @@ export const bulkSyncSchema = z.object({
 
 export const activityIngestSchema = z.object({
   userId: z.string().min(1),
-  workspace: z.string().min(1),
+  workspace: z.string().min(1).optional(),
+  workspaceName: z.string().min(1).optional(),
   ts: z.string().optional(),
   level: z.enum(["AGENT", "INFO", "WARN", "ERROR", "SYSTEM"]).optional(),
   agent: z.enum(["MAIN", "CODE", "TEST", "REVIEW", "DOCS"]).nullish(),
@@ -132,4 +133,12 @@ export const activityIngestSchema = z.object({
   eventType: z.enum(["EXECUTE", "HANDOFF", "COMPLETED", "SYSTEM"]).optional(),
   message: z.string().min(1),
   details: z.unknown().optional(),
-});
+})
+  .refine((value) => Boolean(value.workspace || value.workspaceName), {
+    message: "workspace is required",
+    path: ["workspace"],
+  })
+  .transform(({ workspaceName, ...value }) => ({
+    ...value,
+    workspace: value.workspace ?? workspaceName!,
+  }));

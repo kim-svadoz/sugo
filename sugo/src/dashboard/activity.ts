@@ -7,7 +7,7 @@ export type ActivityEventType = "EXECUTE" | "HANDOFF" | "COMPLETED" | "SYSTEM";
 export interface ActivityEventInput {
   workspaceName: string;
   agent: ActivityAgent;
-  handoffTo?: string;
+  handoffTo?: ActivityAgent;
   eventType: ActivityEventType;
   level?: string;
   message: string;
@@ -27,7 +27,17 @@ export async function emitActivity(event: ActivityEventInput): Promise<void> {
   await pushEvent(
     "/api/activity/ingest",
     "POST",
-    { userId: config.userId, ts: new Date().toISOString(), ...event },
+    {
+      userId: config.userId,
+      workspace: event.workspaceName,
+      ts: new Date().toISOString(),
+      agent: event.agent,
+      handoffTo: event.handoffTo,
+      eventType: event.eventType,
+      level: event.level,
+      message: event.message,
+      details: event.details,
+    },
     ACTIVITY_TIMEOUT_MS,
   );
 }

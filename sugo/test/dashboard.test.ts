@@ -163,13 +163,14 @@ describe("emitActivity — Activity Stream", () => {
     process.env.SUGO_DASHBOARD_API_URL = `http://127.0.0.1:${port}`;
     process.env.SUGO_DASHBOARD_USER_ID = "u1";
 
-    await emitActivity({ workspaceName: "ws1", agent: "CODE", handoffTo: "test-agent", eventType: "HANDOFF", message: "핸드오프" });
+    await emitActivity({ workspaceName: "ws1", agent: "CODE", handoffTo: "TEST", eventType: "HANDOFF", message: "핸드오프" });
 
     const r = received as { path: string; method: string; body: Record<string, unknown> };
     expect(r.path).toBe("/api/activity/ingest");
     expect(r.method).toBe("POST");
     expect(r.body.userId).toBe("u1");
-    expect(r.body.workspaceName).toBe("ws1");
+    expect(r.body.workspace).toBe("ws1");
+    expect(r.body.workspaceName).toBeUndefined();
     expect(r.body.eventType).toBe("HANDOFF");
     expect(r.body.ts).toBeDefined();
 

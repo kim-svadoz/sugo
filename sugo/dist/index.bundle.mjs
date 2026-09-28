@@ -24425,7 +24425,17 @@ async function emitActivity(event) {
   await pushEvent(
     "/api/activity/ingest",
     "POST",
-    { userId: config2.userId, ts: (/* @__PURE__ */ new Date()).toISOString(), ...event },
+    {
+      userId: config2.userId,
+      workspace: event.workspaceName,
+      ts: (/* @__PURE__ */ new Date()).toISOString(),
+      agent: event.agent,
+      handoffTo: event.handoffTo,
+      eventType: event.eventType,
+      level: event.level,
+      message: event.message,
+      details: event.details
+    },
     ACTIVITY_TIMEOUT_MS
   );
 }
@@ -27872,7 +27882,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.7.2" : "0.0.0-dev";
+  return true ? "0.7.3" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts

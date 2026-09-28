@@ -50,7 +50,7 @@ function FeedLine({ ev }: { ev: ActivityEvent }) {
 
 /** 전역 콘솔. `workspace`를 주면 그 도메인 로그만 거른다(Sessions 하단 2단이 그렇게 쓴다). */
 export function LiveConsole({ workspace }: { workspace?: string } = {}) {
-  const events = useActivityStream();
+  const events = useActivityStream(workspace);
   const [full, setFull] = useState(false);
   const visible = workspace ? events.filter((e) => e.workspace_name === workspace) : events;
 
@@ -109,7 +109,7 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
 
 /** §6 워크스페이스별 tail — Agent Canvas 오버레이 하단에 붙는다. slice(0,40). */
 export function LiveLogTail({ workspace }: { workspace: string }) {
-  const events = useActivityStream();
+  const events = useActivityStream(workspace);
   const visible = events.filter((e) => e.workspace_name === workspace).slice(0, 40);
   return (
     <div className="ck-scroll h-24 space-y-0.5 overflow-auto pr-1">
