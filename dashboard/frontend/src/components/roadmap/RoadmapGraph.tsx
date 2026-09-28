@@ -26,12 +26,12 @@ import { parseWorkResult, useRoadmap, type RoadmapNode, type WorkResultFile } fr
 import {
   assignRunToSpec,
   dropSubtree,
-  getSpecContent,
   renameRoadmapNode,
   restoreSubtree,
   unlinkRoadmapNodes,
 } from "../../api/roadmapMutationsApi.js";
 import { SubtaskPanel } from "../SubtaskPanel.js";
+import { SpecDocumentPanel } from "../SpecDocumentPanel.js";
 import { cn } from "../../lib/utils.js";
 import { shouldApplyHoverFocus } from "./interaction.js";
 import { measuredLeafHeight, TASK_CARD_HEIGHT } from "./layoutSizing.js";
@@ -1076,9 +1076,9 @@ export function RoadmapGraph({
   const [seeded, setSeeded] = useState(false);
   /** 폴링으로 늦게 도착한 lineage도 최초 한 번은 펼친다. 사용자가 접은 체인은 다시 열지 않는다. */
   const [knownChains, setKnownChains] = useState<Set<string>>(new Set());
-  /** 헤더 액션 팝업: 🧠 AI요약 / 📄 원문 / ✎ 이름변경. 셋 다 같은 자리에 뜬다. */
+  /** 헤더 액션 팝업: 🧠 AI요약 / 📄 원문 / ✎ 이름변경. */
   const [summaryOf, setSummaryOf] = useState<RoadmapNode | null>(null);
-  const [specDoc, setSpecDoc] = useState<{ title: string; content: string | null } | null>(null);
+  const [specDocumentTarget, setSpecDocumentTarget] = useState<RoadmapNode | null>(null);
   const [renaming, setRenaming] = useState<{ node: RoadmapNode; value: string } | null>(null);
 
   // 필터가 오면 그 목록을 쓴다. 단 **폴링 결과와 어긋나지 않게** id로 다시 맞춘다 —
@@ -1130,11 +1130,9 @@ export function RoadmapGraph({
   const actions = useMemo(
     () => ({
       onViewSummary: (n: RoadmapNode) => setSummaryOf(n),
-      onViewSpec: async (n: RoadmapNode) => {
-        const label = n.spec_path?.split(/[\/]/).filter(Boolean).pop() ?? n.title;
-        // 원문이 없으면 null이 온다 — 모달은 열되 "없음"을 정직하게 보여준다.
-        setSpecDoc((await getSpecContent(userId!, workspace, n.title)) ?? { title: label, content: null });
-      },
+      // Schedule과 같은 node-id 기반 뷰어를 쓴다. 제목으로 ADR을 찾던 구식 경로는
+      // spec_path에 연결된 실제 파일과 어긋나므로 Canvas에서 사용하지 않는다.
+      onViewSpec: (n: RoadmapNode) => setSpecDocumentTarget(n),
       onRename: (n: RoadmapNode) => setRenaming({ node: n, value: n.title }),
       onSelect: (id: string) => {
         setFileViewer(null);
@@ -1639,18 +1637,13 @@ export function RoadmapGraph({
         </HeaderModal>
       )}
 
-      {specDoc && (
-        <HeaderModal title={`📄 ${specDoc.title} · 원문`} onClose={() => setSpecDoc(null)}>
-          {specDoc.content ? (
-            <pre className="whitespace-pre-wrap font-mono text-[12.5px] leading-relaxed text-[var(--color-text)]">
-              {specDoc.content}
-            </pre>
-          ) : (
-            <p className="text-[12.5px] text-[var(--color-text-dim)]">
-              원문을 찾지 못했습니다 — 플러그인이 이 Spec을 ADR로 sync해야 여기서 읽을 수 있습니다.
-            </p>
-          )}
-        </HeaderModal>
+      {specDocumentTarget && (
+        <SpecDocumentPanel
+          workspace={workspace}
+          nodeId={specDocumentTarget.id}
+          title={specDocumentTarget.title}
+          onClose={() => setSpecDocumentTarget(null)}
+        />
       )}
 
       {renaming && (
