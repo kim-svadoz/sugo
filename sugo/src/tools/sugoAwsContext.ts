@@ -44,6 +44,7 @@ export async function handleSugoAwsContextWithFetcher(rawArgs: unknown, fetcher:
     content: [{ type: "text" as const, text: JSON.stringify({
       ok: true,
       connected: context.connected,
+      activeAccount: context.activeAccount ?? null,
       accountHint: context.accountHint,
       region: context.region,
       observedAt: context.observedAt,

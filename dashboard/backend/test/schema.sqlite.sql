@@ -191,6 +191,12 @@ CREATE TABLE IF NOT EXISTS user_aws_context_snapshots (
   PRIMARY KEY (user_id, account_name)
 );
 
+CREATE TABLE IF NOT EXISTS user_aws_context_preferences (
+  user_id TEXT NOT NULL PRIMARY KEY,
+  active_account_name TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS user_api_tokens (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id TEXT NOT NULL,

@@ -206,6 +206,7 @@ export interface DashboardAwsServiceInventory {
 
 export interface DashboardAwsContext {
   connected: boolean;
+  activeAccount?: string | null;
   profile: string | null;
   region: string | null;
   accountHint: string | null;

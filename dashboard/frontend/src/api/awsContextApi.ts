@@ -15,6 +15,8 @@ export interface AwsServiceInventory {
 
 export interface AwsContextStatus {
   connected: boolean;
+  activeAccount: string | null;
+  accounts: Array<{ name: string; profile: string; region: string; accountHint: string; principal: string | null }>;
   profile: string | null;
   region: string | null;
   accountHint: string | null;
@@ -27,14 +29,18 @@ export function getAwsContext(): Promise<AwsContextStatus> {
   return apiJson("/api/aws-context");
 }
 
-export function connectAwsContext(profile: string, region: string): Promise<{ ok: true }> {
-  return apiJson("/api/aws-context", { method: "PUT", body: JSON.stringify({ profile, region }) });
+export function connectAwsContext(name: string, profile: string, region: string): Promise<{ ok: true }> {
+  return apiJson("/api/aws-context", { method: "PUT", body: JSON.stringify({ name, profile, region }) });
+}
+
+export function selectAwsContext(name: string): Promise<{ ok: true }> {
+  return apiJson("/api/aws-context/active", { method: "POST", body: JSON.stringify({ name }) });
 }
 
 export function refreshAwsContext(): Promise<{ inventory: AwsServiceInventory[] }> {
   return apiJson("/api/aws-context/refresh", { method: "POST" });
 }
 
-export function disconnectAwsContext(): Promise<{ ok: true }> {
-  return apiJson("/api/aws-context", { method: "DELETE" });
+export function disconnectAwsContext(name: string): Promise<{ ok: true }> {
+  return apiJson(`/api/aws-context/${encodeURIComponent(name)}`, { method: "DELETE" });
 }

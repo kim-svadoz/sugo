@@ -8,7 +8,7 @@ import {
   type GitProviderId,
 } from "../api/gitConnectionsApi.js";
 import { createToken, listTokens, revokeToken, type ApiTokenSummary } from "../api/tokensApi.js";
-import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
+import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAwsContext, selectAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
 
 const awsServiceLabels: Record<string, string> = {
   codecommit: "CodeCommit", athena: "Athena", s3: "S3", codebuild: "CodeBuild",
@@ -20,8 +20,10 @@ const awsServices = Object.keys(awsServiceLabels);
 
 function AwsContextCard() {
   const [status, setStatus] = useState<AwsContextStatus | null>(null);
+  const [accountName, setAccountName] = useState("");
   const [profile, setProfile] = useState("");
   const [region, setRegion] = useState("ap-northeast-2");
+  const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +34,7 @@ function AwsContextCard() {
 
   async function connect() {
     setBusy(true);
-    try { await connectAwsContext(profile, region); await refreshAwsContext(); await load(); }
+    try { await connectAwsContext(accountName, profile, region); setAdding(false); setAccountName(""); setProfile(""); await refreshAwsContext(); await load(); }
     catch (err) { setError(String(err)); }
     finally { setBusy(false); }
   }
@@ -43,8 +45,15 @@ function AwsContextCard() {
     finally { setBusy(false); }
   }
   async function disconnect() {
+    if (!status?.activeAccount) return;
     setBusy(true);
-    try { await disconnectAwsContext(); await load(); }
+    try { await disconnectAwsContext(status.activeAccount); await load(); }
+    catch (err) { setError(String(err)); }
+    finally { setBusy(false); }
+  }
+  async function select(name: string) {
+    setBusy(true);
+    try { await selectAwsContext(name); await load(); }
     catch (err) { setError(String(err)); }
     finally { setBusy(false); }
   }
@@ -59,16 +68,26 @@ function AwsContextCard() {
     </div>
     <div className="space-y-4 p-5">
       {error && <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{error}</div>}
-      {status === null ? <div className="text-sm text-[var(--color-text-muted)]">불러오는 중…</div> : !status.connected ? <>
+      {status === null ? <div className="text-sm text-[var(--color-text-muted)]">불러오는 중…</div> : !status.connected || adding ? <>
+        {status.connected && <div className="flex items-center justify-between"><div className="text-sm font-medium text-[var(--color-text)]">AWS 계정 추가</div><button type="button" onClick={() => setAdding(false)} className="text-xs text-[var(--color-text-muted)]">취소</button></div>}
         <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-sm text-[var(--color-text)]">표시 이름<input value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="예: 공용 계정" className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5" /></label>
           <label className="text-sm text-[var(--color-text)]">AWS profile<input value={profile} onChange={(event) => setProfile(event.target.value)} placeholder="예: team-account" className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5" /></label>
           <label className="text-sm text-[var(--color-text)]">기본 region<input value={region} onChange={(event) => setRegion(event.target.value)} className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5" /></label>
         </div>
-        <button type="button" disabled={busy || !profile || !region} onClick={() => void connect()} className="ck-glow-cyan rounded-md border border-cyan-400/50 px-3 py-1.5 text-sm disabled:opacity-40">계정 확인 후 연결</button>
+        <button type="button" disabled={busy || !accountName || !profile || !region} onClick={() => void connect()} className="ck-glow-cyan rounded-md border border-cyan-400/50 px-3 py-1.5 text-sm disabled:opacity-40">계정 확인 후 추가</button>
         <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">AWS CLI의 로컬 자격 증명을 읽기 전용으로 사용합니다. 키는 Dashboard에 저장하지 않습니다.</p>
       </> : <>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="min-w-0 flex-1 text-xs text-[var(--color-text-muted)]">사용할 AWS 계정
+            <select value={status.activeAccount ?? ""} disabled={busy} onChange={(event) => void select(event.target.value)} className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-text)]">
+              {status.accounts.map((account) => <option key={account.name} value={account.name}>{account.name} · {account.profile} · ••••{account.accountHint}</option>)}
+            </select>
+          </label>
+          <button type="button" disabled={busy} onClick={() => setAdding(true)} className="rounded-md border border-cyan-400/40 px-3 py-2 text-sm text-cyan-200">계정 추가</button>
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-400/25 bg-emerald-400/[0.05] px-4 py-3">
-          <div><div className="text-sm font-medium text-emerald-200">{status.profile} · ••••{status.accountHint}</div><div className="mt-1 font-mono text-[11px] text-[var(--color-text-dim)]">{status.region} · {status.principal}</div></div>
+          <div><div className="text-sm font-medium text-emerald-200">{status.activeAccount} · {status.profile} · ••••{status.accountHint}</div><div className="mt-1 font-mono text-[11px] text-[var(--color-text-dim)]">{status.region} · {status.principal}</div></div>
           <div className="flex gap-2"><button type="button" disabled={busy} onClick={() => void refresh()} className="rounded border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200">새로고침</button><button type="button" disabled={busy} onClick={() => void disconnect()} className="rounded border border-rose-500/30 px-2.5 py-1 text-xs text-rose-300">연결 해제</button></div>
         </div>
         <div className="grid gap-2 sm:grid-cols-3">

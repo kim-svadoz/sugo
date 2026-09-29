@@ -57,11 +57,33 @@ describe("/api/aws-context", () => {
     };
     const { app } = await createApp({ db, awsContextClient: fake });
 
-    await request(app).put("/api/aws-context").set("Authorization", `Bearer ${auth}`).send({ profile: "team-account", region: "ap-northeast-2" }).expect(200);
+    await request(app).put("/api/aws-context").set("Authorization", `Bearer ${auth}`).send({ name: "공용", profile: "team-account", region: "ap-northeast-2" }).expect(200);
     await request(app).post("/api/aws-context/refresh").set("Authorization", `Bearer ${auth}`).expect(200);
     const result = await request(app).get("/api/aws-context").set("Authorization", `Bearer ${auth}`).expect(200);
-    expect(result.body).toMatchObject({ connected: true, profile: "team-account", region: "ap-northeast-2", accountHint: "9012", principal: "demo-user" });
+    expect(result.body).toMatchObject({ connected: true, activeAccount: "공용", profile: "team-account", region: "ap-northeast-2", accountHint: "9012", principal: "demo-user" });
+    expect(result.body.accounts).toEqual([expect.objectContaining({ name: "공용", profile: "team-account" })]);
     expect(result.body.inventory[0].resources[0].id).toBe("orders-api");
     expect(JSON.stringify(result.body)).not.toContain("123456789012");
+  });
+
+  it("keeps per-account snapshots and switches the active account", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    await syncUser(db, { userId: "u2" });
+    const auth = (await seedUserToken(db, "u2")).replace(/^Bearer /, "");
+    const fake: AwsContextClient = {
+      identity: async ({ profile }) => ({ accountId: profile === "dev-profile" ? "111111111111" : "222222222222", arn: `arn:aws:iam::123:user/${profile}` }),
+      inventory: async ({ profile }) => [{ service: "codecommit", resources: [{ service: "codecommit", kind: "repository", id: `${profile}-repo` }] }],
+    };
+    const { app } = await createApp({ db, awsContextClient: fake });
+    await request(app).put("/api/aws-context").set("Authorization", `Bearer ${auth}`).send({ name: "개발", profile: "dev-profile", region: "ap-northeast-2" }).expect(200);
+    await request(app).post("/api/aws-context/refresh").set("Authorization", `Bearer ${auth}`).expect(200);
+    await request(app).put("/api/aws-context").set("Authorization", `Bearer ${auth}`).send({ name: "운영", profile: "prd-profile", region: "ap-northeast-2" }).expect(200);
+    await request(app).post("/api/aws-context/refresh").set("Authorization", `Bearer ${auth}`).expect(200);
+    await request(app).post("/api/aws-context/active").set("Authorization", `Bearer ${auth}`).send({ name: "개발" }).expect(200);
+    const result = await request(app).get("/api/aws-context").set("Authorization", `Bearer ${auth}`).expect(200);
+    expect(result.body.activeAccount).toBe("개발");
+    expect(result.body.accounts).toHaveLength(2);
+    expect(result.body.inventory[0].resources[0].id).toBe("dev-profile-repo");
   });
 });

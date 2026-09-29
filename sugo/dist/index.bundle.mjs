@@ -27921,7 +27921,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.7.8" : "0.0.0-dev";
+  return true ? "0.7.9" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32704,6 +32704,7 @@ async function handleSugoAwsContextWithFetcher(rawArgs, fetcher) {
     content: [{ type: "text", text: JSON.stringify({
       ok: true,
       connected: context.connected,
+      activeAccount: context.activeAccount ?? null,
       accountHint: context.accountHint,
       region: context.region,
       observedAt: context.observedAt,
