@@ -14,7 +14,9 @@ const awsServiceLabels: Record<string, string> = {
   codecommit: "CodeCommit", athena: "Athena", s3: "S3", codebuild: "CodeBuild",
   codepipeline: "CodePipeline", dynamodb: "DynamoDB", elasticache: "ElastiCache",
   opensearch: "OpenSearch", cloudwatch: "CloudWatch",
+  ecs: "ECS",
 };
+const awsServices = Object.keys(awsServiceLabels);
 
 function AwsContextCard() {
   const [status, setStatus] = useState<AwsContextStatus | null>(null);
@@ -70,10 +72,13 @@ function AwsContextCard() {
           <div className="flex gap-2"><button type="button" disabled={busy} onClick={() => void refresh()} className="rounded border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200">새로고침</button><button type="button" disabled={busy} onClick={() => void disconnect()} className="rounded border border-rose-500/30 px-2.5 py-1 text-xs text-rose-300">연결 해제</button></div>
         </div>
         <div className="grid gap-2 sm:grid-cols-3">
-          {status.inventory.map((item) => <details key={item.service} className={`rounded-lg border px-3 py-2 ${item.error ? "border-amber-400/25 bg-amber-400/[0.04]" : "border-[var(--color-border)] bg-black/10"}`}>
-            <summary className="cursor-pointer list-none text-sm"><span className="font-medium text-[var(--color-text)]">{awsServiceLabels[item.service] ?? item.service}</span><span className="float-right font-mono text-xs text-[var(--color-text-muted)]">{item.error ? "확인 필요" : item.resources.length}</span></summary>
-            {item.error ? <div className="mt-2 break-words text-[10px] leading-relaxed text-amber-300/75">권한 또는 조회 실패</div> : item.resources.length === 0 ? <div className="mt-2 text-[10px] text-[var(--color-text-dim)]">리소스 없음</div> : <ul className="mt-2 max-h-32 space-y-1 overflow-auto">{item.resources.map((resource) => <li key={`${resource.kind}:${resource.id}`} className="truncate font-mono text-[10px] text-[var(--color-text-muted)]" title={resource.id}>{resource.id}</li>)}</ul>}
-          </details>)}
+          {awsServices.map((service) => {
+            const item = status.inventory.find((candidate) => candidate.service === service);
+            return <details key={service} className={`rounded-lg border px-3 py-2 ${item?.error || !item ? "border-amber-400/25 bg-amber-400/[0.04]" : "border-[var(--color-border)] bg-black/10"}`}>
+              <summary className="cursor-pointer list-none text-sm"><span className="font-medium text-[var(--color-text)]">{awsServiceLabels[service]}</span><span className="float-right font-mono text-xs text-[var(--color-text-muted)]">{!item ? "갱신 필요" : item.error ? "확인 필요" : item.resources.length}</span></summary>
+              {!item ? <div className="mt-2 text-[10px] leading-relaxed text-amber-300/75">새로고침하면 이 서비스가 스냅샷에 추가됩니다.</div> : item.error ? <div className="mt-2 break-words text-[10px] leading-relaxed text-amber-300/75">권한 또는 조회 실패</div> : item.resources.length === 0 ? <div className="mt-2 text-[10px] text-[var(--color-text-dim)]">리소스 없음</div> : <ul className="mt-2 max-h-32 space-y-1 overflow-auto">{item.resources.map((resource) => <li key={`${resource.kind}:${resource.id}`} className="truncate font-mono text-[10px] text-[var(--color-text-muted)]" title={resource.id}>{resource.id}</li>)}</ul>}
+            </details>;
+          })}
         </div>
         <div className="text-right font-mono text-[10px] text-[var(--color-text-dim)]">마지막 조회 {status.observedAt ?? "없음"}</div>
       </>}

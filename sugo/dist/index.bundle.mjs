@@ -27921,7 +27921,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.7.7" : "0.0.0-dev";
+  return true ? "0.7.8" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32670,7 +32670,8 @@ var AWS_SERVICES = [
   "dynamodb",
   "elasticache",
   "opensearch",
-  "cloudwatch"
+  "cloudwatch",
+  "ecs"
 ];
 var sugoAwsContextInputSchema = {
   services: external_exports.array(external_exports.enum(AWS_SERVICES)).optional().describe("\uC870\uD68C\uD560 \uC11C\uBE44\uC2A4. \uC0DD\uB7B5\uD558\uBA74 \uC804\uCCB4 \uC11C\uBE44\uC2A4 \uC694\uC57D"),

@@ -5,7 +5,7 @@ const execFileAsync = promisify(execFile);
 
 export const awsInventoryServices = [
   "codecommit", "athena", "s3", "codebuild", "codepipeline",
-  "dynamodb", "elasticache", "opensearch", "cloudwatch",
+  "dynamodb", "elasticache", "opensearch", "cloudwatch", "ecs",
 ] as const;
 export type AwsInventoryService = (typeof awsInventoryServices)[number];
 
@@ -56,9 +56,14 @@ function compact(items: Array<AwsInventoryResource | null>): AwsInventoryResourc
   return items.filter((item): item is AwsInventoryResource => item !== null);
 }
 
+function arnName(value: unknown): string | null {
+  const normalized = text(value);
+  return normalized?.split("/").at(-1) ?? null;
+}
+
 export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextClient {
   const run: AwsRunner = customRunner ?? (async (args) => {
-    const { stdout } = await execFileAsync("aws", args, { maxBuffer: 8 * 1024 * 1024 });
+    const { stdout } = await execFileAsync("aws", args, { maxBuffer: 8 * 1024 * 1024, timeout: 60_000 });
     return JSON.parse(stdout);
   });
 
@@ -68,6 +73,17 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
       return { service, resources: parse(payload) };
     } catch (error) {
       return { service, resources: [], error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
+  async function collectEcs(account: AwsContextAccount): Promise<AwsServiceInventory> {
+    try {
+      const clusterPayload = await run(["ecs", "list-clusters", ...commonArgs(account)]) as any;
+      const clusterArns = Array.isArray(clusterPayload.clusterArns) ? clusterPayload.clusterArns : [];
+      const clusters = compact(clusterArns.map((arn: unknown) => resource("ecs", "cluster", arnName(arn))));
+      return { service: "ecs", resources: clusters };
+    } catch (error) {
+      return { service: "ecs", resources: [], error: error instanceof Error ? error.message : String(error) };
     }
   }
 
@@ -88,6 +104,7 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
         collect(account, "elasticache", ["elasticache", "describe-replication-groups"], (p) => compact((p.ReplicationGroups ?? []).map((x: any) => resource("elasticache", "replication-group", x.ReplicationGroupId, { status: x.Status, engine: x.Engine })) )),
         collect(account, "opensearch", ["opensearch", "list-domain-names"], (p) => compact((p.DomainNames ?? []).map((x: any) => resource("opensearch", "domain", x.DomainName, { engineType: x.EngineType })) )),
         collect(account, "cloudwatch", ["cloudwatch", "list-dashboards"], (p) => compact((p.DashboardEntries ?? []).map((x: any) => resource("cloudwatch", "dashboard", x.DashboardName, { lastModified: x.LastModified, size: x.Size })) )),
+        collectEcs(account),
       ]);
     },
   };

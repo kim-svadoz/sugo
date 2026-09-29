@@ -24,12 +24,13 @@ describe("AWS context CLI adapter", () => {
       if (service === "elasticache") return { ReplicationGroups: [{ ReplicationGroupId: "shop-cache", Status: "available" }] };
       if (service === "opensearch") return { DomainNames: [{ DomainName: "shop-search", EngineType: "OpenSearch" }] };
       if (service === "cloudwatch") return { DashboardEntries: [{ DashboardName: "shop-dashboard" }] };
+      if (service === "ecs" && args[1] === "list-clusters") return { clusterArns: ["arn:aws:ecs:ap-northeast-2:123456789012:cluster/shop-cluster"] };
       throw new Error(`unexpected ${service}`);
     });
     const inventory = await client.inventory({ profile: "team-account", region: "ap-northeast-2" });
-    expect(inventory).toHaveLength(9);
+    expect(inventory).toHaveLength(10);
     expect(inventory.flatMap((item) => item.resources.map((resource) => resource.id))).toEqual(expect.arrayContaining([
-      "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard",
+      "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "shop-cluster",
     ]));
   });
 
