@@ -5,10 +5,13 @@ import type { DbClient } from "../db/client.js";
 import { ensureWorkspaceDeletedAtColumn } from "./syncService.js";
 import { readySet, topoSort, wouldCreateCycle } from "./roadmapGraph.js";
 import { parseJsonArray, parseMaybeJson } from "../db/jsonColumn.js";
+import { linkAwsDeployments, type AwsDeploymentSnapshot, type AwsProjectDeployment } from "./awsDeploymentLink.js";
 
 export interface WorkspaceProjectRow {
   project_path: string;
   git_synced: number;
+  aws_synced: number;
+  aws_deployments: AwsProjectDeployment[];
 }
 
 export interface TaskCounts {
@@ -131,11 +134,33 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
     [userId]
   );
   const result: WorkspaceSummary[] = [];
+  let awsSnapshots: AwsDeploymentSnapshot[] = [];
+  try {
+    const rows = await db.query<{ account_name: string; region: string; payload: unknown; observed_at: string | null }>(
+      `SELECT a.name AS account_name, a.region, s.payload, s.observed_at
+       FROM user_aws_context_accounts a
+       JOIN user_aws_context_snapshots s ON s.user_id = a.user_id AND s.account_name = a.name
+       WHERE a.user_id = ?`,
+      [userId],
+    );
+    awsSnapshots = rows.map((row) => ({
+      accountName: row.account_name,
+      region: row.region,
+      observedAt: row.observed_at,
+      inventory: parseMaybeJson(row.payload, []),
+    }));
+  } catch {
+    // AWS Context는 선택 기능이다. 구 DB나 미연결 사용자도 Workspace 목록을 그대로 쓸 수 있어야 한다.
+  }
   for (const ws of workspaces) {
-    const projects = await db.query<WorkspaceProjectRow>(
+    const projectRows = await db.query<{ project_path: string; git_synced: number }>(
       "SELECT project_path, git_synced FROM sugo_workspace_projects WHERE workspace_id = ? ORDER BY project_path",
       [ws.id]
     );
+    const projects: WorkspaceProjectRow[] = projectRows.map((project) => {
+      const deployments = linkAwsDeployments(project.project_path, awsSnapshots);
+      return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments };
+    });
     const tasks = await taskCounts(db, userId, ws.name);
     const roadmap = await roadmapCounts(db, userId, ws.name);
     const attention = await workspaceAttention(db, userId, ws.name);

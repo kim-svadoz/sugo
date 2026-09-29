@@ -48,6 +48,20 @@ export async function refreshAwsContext(db: DbClient, userId: string, client: Aw
   return inventory;
 }
 
+export async function refreshAllAwsContexts(db: DbClient, userId: string, client: AwsContextClient): Promise<string[]> {
+  const { accounts } = await accountState(db, userId);
+  const refreshed: string[] = [];
+  for (const account of accounts) {
+    const inventory = await client.inventory({ profile: account.profile, region: account.region });
+    await upsertRow(db, "user_aws_context_snapshots", { user_id: userId, account_name: account.name }, {
+      payload: JSON.stringify(inventory),
+      observed_at: new Date().toISOString(),
+    });
+    refreshed.push(account.name);
+  }
+  return refreshed;
+}
+
 export async function disconnectAwsContext(db: DbClient, userId: string, name: string): Promise<void> {
   await db.exec("DELETE FROM user_aws_context_snapshots WHERE user_id = ? AND account_name = ?", [userId, name]);
   await db.exec("DELETE FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId, name]);

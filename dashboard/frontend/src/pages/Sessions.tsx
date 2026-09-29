@@ -45,9 +45,9 @@ import { useRoadmap } from "../hooks/useRoadmap.js";
 const PAGE_SIZE = 10;
 
 const INSPECTOR_TABS = [
-  { id: "history" as const, label: "History", icon: History },
-  { id: "adr" as const, label: "ADR", icon: FileText },
   { id: "repositories" as const, label: "Repositories", icon: Package },
+  { id: "adr" as const, label: "ADR", icon: FileText },
+  { id: "history" as const, label: "History", icon: History },
 ];
 type TabType = (typeof INSPECTOR_TABS)[number]["id"];
 
@@ -90,12 +90,36 @@ function repoName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() || path;
 }
 
+function formatDeploymentDate(value: string | null, fallback: string | null): string {
+  const effective = value ?? fallback;
+  if (!effective) return "배포 시각 확인 불가";
+  const date = new Date(effective);
+  if (Number.isNaN(date.getTime())) return "배포 시각 확인 불가";
+  return `기준 ${new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date)}`;
+}
+
+const DEPLOYMENT_HEALTH = {
+  HEALTHY: { label: "정상", color: "text-emerald-300" },
+  DEPLOYING: { label: "배포 중", color: "text-cyan-300" },
+  DEGRADED: { label: "비정상", color: "text-rose-300" },
+  INACTIVE: { label: "비활성", color: "text-slate-400" },
+  UNKNOWN: { label: "미확인", color: "text-amber-300" },
+} as const;
+
 export function Sessions() {
   const { data, loading } = useWorkspaces();
   const navigate = useNavigate();
 
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>("history");
+  const [activeTab, setActiveTab] = useState<TabType>("repositories");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<"all" | "recent">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -115,6 +139,18 @@ export function Sessions() {
 
   const workspaces = useMemo(() => data ?? [], [data]);
   const isSearchMode = searchQuery.trim().length >= 2;
+
+  useEffect(() => {
+    const closeGuideOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && showStatusGuide) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setShowStatusGuide(false);
+      }
+    };
+    window.addEventListener("keydown", closeGuideOnEscape);
+    return () => window.removeEventListener("keydown", closeGuideOnEscape);
+  }, [showStatusGuide]);
 
   const filteredWorkspaces = useMemo(() => {
     let list = workspaces;
@@ -332,22 +368,50 @@ export function Sessions() {
 
         <div className="ck-scroll mt-2 min-h-0 flex-1 overflow-auto pr-1">
           {activeTab === "repositories" ? (
-            <ul className="space-y-1">
-              {(ws.projects ?? []).slice(s, s + PAGE_SIZE).map((p) => (
+            <div className="space-y-2">
+              <ul className="space-y-1">
+              {(ws.projects ?? []).slice(s, s + PAGE_SIZE).map((p) => {
+                const serviceDeployments = [...new Set(p.aws_deployments.map((deployment) => deployment.service))]
+                  .map((service) => ({ service, deployments: p.aws_deployments.filter((deployment) => deployment.service === service) }));
+                return (
                 <li
                   key={p.project_path}
-                  className="flex items-center justify-between rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 font-mono text-[12px]"
+                  className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 font-mono text-[12px]"
                 >
-                  <span className="truncate text-[var(--color-text)]" title={p.project_path}>
-                    📦 {repoName(p.project_path)}
-                  </span>
-                  {p.git_synced === 1 && <span className="shrink-0 text-[11px] text-emerald-400">git synced ✓</span>}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-[var(--color-text)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
+                    <div className="flex shrink-0 gap-1.5">
+                      {p.git_synced === 1 && <span className="rounded border border-emerald-400/25 bg-emerald-400/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">Git Synced</span>}
+                      {p.aws_synced === 1 && <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">AWS Synced</span>}
+                    </div>
+                  </div>
+                  {serviceDeployments.map(({ service, deployments }) => <section key={service} className="mt-2 rounded border border-[var(--color-border)] bg-black/10 p-2">
+                    <div className="mb-1.5 truncate text-[11px] font-semibold text-amber-200" title={service}>ECS {service}</div>
+                    <div className="grid gap-1 sm:grid-cols-3">
+                      {deployments.map((deployment) => {
+                        const health = DEPLOYMENT_HEALTH[deployment.healthState];
+                        const imageVersion = deployment.images[0]?.split(":").at(-1) ?? null;
+                        return <div key={`${deployment.accountName}:${deployment.service}`} className="rounded border border-[var(--color-border)] bg-black/15 px-2 py-1.5">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-bold uppercase text-cyan-300">{deployment.environment}</span>
+                            <span className={health.color} title={`AWS 원본: ${deployment.rolloutState ?? deployment.status ?? "없음"}`}>{health.label}</span>
+                          </div>
+                          <div className="mt-0.5 truncate text-[11px] text-[var(--color-text)]" title={deployment.taskDefinition ?? undefined}>{deployment.taskDefinition ?? "TaskDefinition 미확인"}</div>
+                          {imageVersion && <div className="truncate text-[10px] text-purple-300" title={deployment.images[0]}>image {imageVersion}</div>}
+                          <div className="truncate text-[10px] text-[var(--color-text-muted)]" title={deployment.deployedAt ? "ECS PRIMARY 배포 갱신 시각" : "TaskDefinition 등록 시각 기반"}>{formatDeploymentDate(deployment.deployedAt, deployment.taskDefinitionRegisteredAt)}</div>
+                          <div className="text-[10px] text-[var(--color-text-dim)]">running {deployment.runningCount ?? "?"}/{deployment.desiredCount ?? "?"}</div>
+                        </div>;
+                      })}
+                    </div>
+                  </section>)}
                 </li>
-              ))}
+                );
+              })}
               {(ws.projects?.length ?? 0) === 0 && (
                 <li className="py-6 text-center text-[12.5px] text-[var(--color-text-dim)]">등록된 레포가 없습니다</li>
               )}
-            </ul>
+              </ul>
+            </div>
           ) : activeTab === "history" ? (
             hist.loading ? (
               <LoadingSpinner />

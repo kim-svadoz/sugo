@@ -61,6 +61,12 @@ function arnName(value: unknown): string | null {
   return normalized?.split("/").at(-1) ?? null;
 }
 
+function chunks<T>(items: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < items.length; i += size) result.push(items.slice(i, i + size));
+  return result;
+}
+
 export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextClient {
   const run: AwsRunner = customRunner ?? (async (args) => {
     const { stdout } = await execFileAsync("aws", args, { maxBuffer: 8 * 1024 * 1024, timeout: 60_000 });
@@ -77,11 +83,68 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
   }
 
   async function collectEcs(account: AwsContextAccount): Promise<AwsServiceInventory> {
+    const resources: AwsInventoryResource[] = [];
+    const errors: string[] = [];
     try {
       const clusterPayload = await run(["ecs", "list-clusters", ...commonArgs(account)]) as any;
       const clusterArns = Array.isArray(clusterPayload.clusterArns) ? clusterPayload.clusterArns : [];
-      const clusters = compact(clusterArns.map((arn: unknown) => resource("ecs", "cluster", arnName(arn))));
-      return { service: "ecs", resources: clusters };
+      resources.push(...compact(clusterArns.map((arn: unknown) => resource("ecs", "cluster", arnName(arn)))));
+      for (const clusterArn of clusterArns.filter((arn: unknown): arn is string => typeof arn === "string")) {
+        try {
+          const servicesPayload = await run(["ecs", "list-services", "--cluster", clusterArn, ...commonArgs(account)]) as any;
+          const serviceArns = Array.isArray(servicesPayload.serviceArns) ? servicesPayload.serviceArns.filter((arn: unknown): arn is string => typeof arn === "string") : [];
+          for (const serviceChunk of chunks(serviceArns, 10)) {
+            const described = await run(["ecs", "describe-services", "--cluster", clusterArn, "--services", ...serviceChunk, ...commonArgs(account)]) as any;
+            for (const service of described.services ?? []) {
+              const primaryDeployment = Array.isArray(service.deployments) ? service.deployments.find((deployment: any) => deployment.status === "PRIMARY") : null;
+              let primaryTaskSet: any = null;
+              if (service.deploymentController?.type === "CODE_DEPLOY" || !primaryDeployment) {
+                try {
+                  const payload = await run(["ecs", "describe-task-sets", "--cluster", clusterArn, "--service", service.serviceArn ?? service.serviceName, ...commonArgs(account)]) as any;
+                  primaryTaskSet = Array.isArray(payload.taskSets) ? payload.taskSets.find((taskSet: any) => taskSet.status === "PRIMARY") : null;
+                } catch (error) {
+                  const message = error instanceof Error ? error.message : String(error);
+                  if (!message.includes("TaskSets cannot be empty")) errors.push(message);
+                }
+              }
+              const taskDefinitionArn = text(primaryTaskSet?.taskDefinition) ?? text(service.taskDefinition);
+              let taskDefinition: any = null;
+              if (taskDefinitionArn) {
+                try {
+                  const payload = await run(["ecs", "describe-task-definition", "--task-definition", taskDefinitionArn, ...commonArgs(account)]) as any;
+                  taskDefinition = payload.taskDefinition ?? null;
+                } catch (error) {
+                  errors.push(error instanceof Error ? error.message : String(error));
+                }
+              }
+              const revision = typeof taskDefinition?.revision === "number"
+                ? taskDefinition.revision
+                : Number(taskDefinitionArn?.split(":").at(-1)) || null;
+              const family = text(taskDefinition?.family) ?? taskDefinitionArn?.split("/").at(-1)?.split(":")[0] ?? null;
+              const images = Array.isArray(taskDefinition?.containerDefinitions)
+                ? taskDefinition.containerDefinitions.map((container: any) => text(container.image)).filter((image: string | null): image is string => image !== null)
+                : [];
+              const serviceResource = resource("ecs", "service", service.serviceName ?? arnName(service.serviceArn), {
+                cluster: arnName(clusterArn),
+                status: service.status,
+                desiredCount: service.desiredCount,
+                runningCount: service.runningCount,
+                rolloutState: primaryDeployment?.rolloutState ?? primaryTaskSet?.stabilityStatus ?? null,
+                deployedAt: text(primaryDeployment?.updatedAt) ?? text(primaryDeployment?.createdAt) ?? text(primaryTaskSet?.updatedAt) ?? text(primaryTaskSet?.createdAt),
+                deploymentSource: primaryTaskSet ? "ECS_TASK_SET" : primaryDeployment ? "ECS_DEPLOYMENT" : null,
+                taskDefinition: family && revision ? `${family}:${revision}` : taskDefinitionArn,
+                revision,
+                images,
+                taskDefinitionRegisteredAt: text(taskDefinition?.registeredAt),
+              });
+              if (serviceResource) resources.push(serviceResource);
+            }
+          }
+        } catch (error) {
+          errors.push(error instanceof Error ? error.message : String(error));
+        }
+      }
+      return { service: "ecs", resources, ...(errors.length ? { error: errors.join("; ") } : {}) };
     } catch (error) {
       return { service: "ecs", resources: [], error: error instanceof Error ? error.message : String(error) };
     }

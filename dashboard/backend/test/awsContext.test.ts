@@ -25,13 +25,17 @@ describe("AWS context CLI adapter", () => {
       if (service === "opensearch") return { DomainNames: [{ DomainName: "shop-search", EngineType: "OpenSearch" }] };
       if (service === "cloudwatch") return { DashboardEntries: [{ DashboardName: "shop-dashboard" }] };
       if (service === "ecs" && args[1] === "list-clusters") return { clusterArns: ["arn:aws:ecs:ap-northeast-2:123456789012:cluster/shop-cluster"] };
+      if (service === "ecs" && args[1] === "list-services") return { serviceArns: ["arn:aws:ecs:ap-northeast-2:123456789012:service/shop-cluster/orders-api-service"] };
+      if (service === "ecs" && args[1] === "describe-services") return { services: [{ serviceName: "orders-api-service", status: "ACTIVE", desiredCount: 2, runningCount: 2, taskDefinition: "arn:aws:ecs:ap-northeast-2:123456789012:task-definition/orders-api:343", deployments: [{ status: "PRIMARY", rolloutState: "COMPLETED", createdAt: "2026-09-28T08:00:00.000Z", updatedAt: "2026-09-28T08:03:00.000Z" }] }] };
+      if (service === "ecs" && args[1] === "describe-task-definition") return { taskDefinition: { family: "orders-api", revision: 343, containerDefinitions: [{ image: "123.dkr.ecr/orders-api:343" }] } };
       throw new Error(`unexpected ${service}`);
     });
     const inventory = await client.inventory({ profile: "team-account", region: "ap-northeast-2" });
     expect(inventory).toHaveLength(10);
     expect(inventory.flatMap((item) => item.resources.map((resource) => resource.id))).toEqual(expect.arrayContaining([
-      "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "shop-cluster",
+      "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "shop-cluster", "orders-api-service",
     ]));
+    expect(inventory.find((item) => item.service === "ecs")?.resources.find((item) => item.kind === "service")?.metadata).toMatchObject({ revision: 343, rolloutState: "COMPLETED", runningCount: 2, desiredCount: 2, deployedAt: "2026-09-28T08:03:00.000Z" });
   });
 
   it("keeps one denied service visible without dropping successful services", async () => {
@@ -42,6 +46,25 @@ describe("AWS context CLI adapter", () => {
     const inventory = await client.inventory({ profile: "team-account", region: "ap-northeast-2" });
     expect(inventory.find((item) => item.service === "s3")).toMatchObject({ resources: [], error: "AccessDenied" });
     expect(inventory.find((item) => item.service === "dynamodb")).toMatchObject({ resources: [] });
+  });
+
+  it("uses the PRIMARY task set for CodeDeploy ECS services", async () => {
+    const client = createAwsCliContextClient(async (args) => {
+      if (args[0] !== "ecs") return {};
+      if (args[1] === "list-clusters") return { clusterArns: ["arn:aws:ecs:ap-northeast-2:123:cluster/shop"] };
+      if (args[1] === "list-services") return { serviceArns: ["arn:aws:ecs:ap-northeast-2:123:service/shop/orders-service"] };
+      if (args[1] === "describe-services") return { services: [{ serviceName: "orders-service", status: "ACTIVE", desiredCount: 5, runningCount: 5, taskDefinition: "old:1", deploymentController: { type: "CODE_DEPLOY" }, deployments: [] }] };
+      if (args[1] === "describe-task-sets") return { taskSets: [{ status: "PRIMARY", taskDefinition: "arn:aws:ecs:ap-northeast-2:123:task-definition/orders:68", createdAt: "2026-09-20T01:00:00.000Z", updatedAt: "2026-09-20T01:04:00.000Z" }] };
+      if (args[1] === "describe-task-definition") return { taskDefinition: { family: "orders", revision: 68, containerDefinitions: [{ image: "repo/orders:421" }] } };
+      return {};
+    });
+    const ecs = (await client.inventory({ profile: "prd", region: "ap-northeast-2" })).find((item) => item.service === "ecs");
+    expect(ecs?.resources.find((item) => item.kind === "service")?.metadata).toMatchObject({
+      taskDefinition: "orders:68",
+      revision: 68,
+      deployedAt: "2026-09-20T01:04:00.000Z",
+      deploymentSource: "ECS_TASK_SET",
+    });
   });
 });
 
@@ -106,5 +129,24 @@ describe("/api/aws-context", () => {
     expect(requested.body).toMatchObject({ activeAccount: "default", inventory: [{ resources: [{ id: "default-profile-bucket" }] }] });
     const uiActive = await request(app).get("/api/aws-context").set("Authorization", `Bearer ${auth}`).expect(200);
     expect(uiActive.body.activeAccount).toBe("team-dev");
+  });
+
+  it("refreshes every connected account without changing the selected account", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    await syncUser(db, { userId: "u4" });
+    const auth = (await seedUserToken(db, "u4")).replace(/^Bearer /, "");
+    const refreshed: string[] = [];
+    const fake: AwsContextClient = {
+      identity: async ({ profile }) => ({ accountId: profile, arn: `arn:aws:iam::123:user/${profile}` }),
+      inventory: async ({ profile }) => { refreshed.push(profile); return [{ service: "s3", resources: [] }]; },
+    };
+    const { app } = await createApp({ db, awsContextClient: fake });
+    await request(app).put("/api/aws-context").set("Authorization", `Bearer ${auth}`).send({ name: "team-dev", profile: "dev", region: "ap-northeast-2" }).expect(200);
+    await request(app).put("/api/aws-context").set("Authorization", `Bearer ${auth}`).send({ name: "team-prd", profile: "prd", region: "ap-northeast-2" }).expect(200);
+    const result = await request(app).post("/api/aws-context/refresh-all").set("Authorization", `Bearer ${auth}`).expect(200);
+    expect(result.body).toMatchObject({ refreshed: ["team-dev", "team-prd"] });
+    expect(refreshed).toEqual(["dev", "prd"]);
+    expect((await request(app).get("/api/aws-context").set("Authorization", `Bearer ${auth}`)).body.activeAccount).toBe("team-prd");
   });
 });

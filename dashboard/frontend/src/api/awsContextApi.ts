@@ -41,6 +41,10 @@ export function refreshAwsContext(): Promise<{ inventory: AwsServiceInventory[] 
   return apiJson("/api/aws-context/refresh", { method: "POST" });
 }
 
+export function refreshAllAwsContexts(): Promise<{ refreshed: string[] }> {
+  return apiJson("/api/aws-context/refresh-all", { method: "POST" });
+}
+
 export function disconnectAwsContext(name: string): Promise<{ ok: true }> {
   return apiJson(`/api/aws-context/${encodeURIComponent(name)}`, { method: "DELETE" });
 }

@@ -5,7 +5,30 @@ import { useAuth } from "../auth/AuthContext.js";
 /** 백엔드 `listWorkspaces`가 설계안 카드/Inspector가 읽는 모양 그대로 내려준다. */
 export interface WorkspaceSummary {
   name: string;
-  projects: { project_path: string; git_synced: number }[];
+  projects: Array<{
+    project_path: string;
+    git_synced: number;
+    aws_synced: number;
+    aws_deployments: Array<{
+      accountName: string;
+      environment: string;
+      region: string;
+      cluster: string | null;
+      service: string;
+      status: string | null;
+      rolloutState: string | null;
+      healthState: "HEALTHY" | "DEPLOYING" | "DEGRADED" | "INACTIVE" | "UNKNOWN";
+      matchSource: "image" | "service";
+      taskDefinition: string | null;
+      revision: number | null;
+      runningCount: number | null;
+      desiredCount: number | null;
+      images: string[];
+      deployedAt: string | null;
+      taskDefinitionRegisteredAt: string | null;
+      observedAt: string | null;
+    }>;
+  }>;
   taskCounts: { pending: number; in_progress: number; done: number; archived: number };
   roadmap: { total: number; done: number; active: number };
   roadmapCount: number;

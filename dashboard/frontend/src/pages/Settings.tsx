@@ -8,7 +8,7 @@ import {
   type GitProviderId,
 } from "../api/gitConnectionsApi.js";
 import { createToken, listTokens, revokeToken, type ApiTokenSummary } from "../api/tokensApi.js";
-import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAwsContext, selectAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
+import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsContexts, refreshAwsContext, selectAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
 
 const awsServiceLabels: Record<string, string> = {
   codecommit: "CodeCommit", athena: "Athena", s3: "S3", codebuild: "CodeBuild",
@@ -42,6 +42,12 @@ function AwsContextCard() {
     catch (err) { setError(String(err)); }
     finally { setBusy(false); }
   }
+  async function refreshAll() {
+    setBusy(true);
+    try { await refreshAllAwsContexts(); await load(); }
+    catch (err) { setError(String(err)); }
+    finally { setBusy(false); }
+  }
   async function disconnect() {
     if (!status?.activeAccount) return;
     setBusy(true);
@@ -68,6 +74,15 @@ function AwsContextCard() {
       {error && <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{error}</div>}
       {status === null ? <div className="text-sm text-[var(--color-text-muted)]">불러오는 중…</div> : !status.connected || adding ? <>
         {status.connected && <div className="flex items-center justify-between"><div className="text-sm font-medium text-[var(--color-text)]">AWS 계정 추가</div><button type="button" onClick={() => setAdding(false)} className="text-xs text-[var(--color-text-muted)]">취소</button></div>}
+        <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
+          <div className="mb-2 font-semibold text-cyan-200">AWS Context 연결 순서</div>
+          <ol className="list-decimal space-y-1 pl-4">
+            <li>AWS CLI에서 profile을 준비합니다. <code className="text-[var(--color-text)]">aws configure --profile my-account</code> 또는 AWS SSO를 사용할 수 있습니다.</li>
+            <li><code className="text-[var(--color-text)]">aws sts get-caller-identity --profile my-account</code>로 로그인과 권한을 확인합니다.</li>
+            <li>아래에 표시 이름·profile·region을 입력해 추가한 뒤 <b className="text-[var(--color-text)]">새로고침</b>하면 Sugo가 읽을 snapshot이 저장됩니다.</li>
+          </ol>
+          <p className="mt-2 text-[var(--color-text-dim)]">환경별 조회를 쓰려면 표시 이름을 <code>default</code>, <code>team-dev</code>, <code>team-stg</code>, <code>team-prd</code>으로 등록하세요.</p>
+        </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm text-[var(--color-text)]">표시 이름<input value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="예: 공용 계정" className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5" /></label>
           <label className="text-sm text-[var(--color-text)]">AWS profile<input value={profile} onChange={(event) => setProfile(event.target.value)} placeholder="예: team-account" className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5" /></label>
@@ -82,14 +97,15 @@ function AwsContextCard() {
               {status.accounts.map((account) => <option key={account.name} value={account.name}>{account.name} · {account.profile} · ••••{account.accountHint}</option>)}
             </select>
           </label>
+          <button type="button" disabled={busy} onClick={() => void refreshAll()} className="rounded-md border border-amber-400/40 px-3 py-2 text-sm text-amber-200">AWS 전체 동기화</button>
           <button type="button" disabled={busy} onClick={() => setAdding(true)} className="rounded-md border border-cyan-400/40 px-3 py-2 text-sm text-cyan-200">계정 추가</button>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-400/25 bg-emerald-400/[0.05] px-4 py-3">
           <div><div className="text-sm font-medium text-emerald-200">{status.activeAccount} · {status.profile} · ••••{status.accountHint}</div><div className="mt-1 font-mono text-[11px] text-[var(--color-text-dim)]">{status.region} · {status.principal}</div></div>
           <div className="flex gap-2"><button type="button" disabled={busy} onClick={() => void refresh()} className="rounded border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200">새로고침</button><button type="button" disabled={busy} onClick={() => void disconnect()} className="rounded border border-rose-500/30 px-2.5 py-1 text-xs text-rose-300">연결 해제</button></div>
         </div>
-        {status.inventory.some((item) => !item.error && item.resources.length > 0) ? <div className="grid gap-2 sm:grid-cols-3">
-          {status.inventory.filter((item) => !item.error && item.resources.length > 0).map((item) => <div key={item.service} className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-2">
+        {status.inventory.some((item) => item.resources.length > 0) ? <div className="grid gap-2 sm:grid-cols-3">
+          {status.inventory.filter((item) => item.resources.length > 0).map((item) => <div key={item.service} className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-2">
             <div className="text-sm"><span className="font-medium text-[var(--color-text)]">{awsServiceLabels[item.service] ?? item.service}</span><span className="float-right font-mono text-xs text-[var(--color-text-muted)]">{item.resources.length}</span></div>
             <ul className="mt-2 max-h-32 space-y-1 overflow-auto">{item.resources.map((resource) => <li key={`${resource.kind}:${resource.id}`} className="truncate font-mono text-[10px] text-[var(--color-text-muted)]" title={resource.id}>{resource.id}</li>)}</ul>
           </div>)}
