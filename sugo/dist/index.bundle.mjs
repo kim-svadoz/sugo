@@ -24480,6 +24480,9 @@ function checkLethalTrifecta(tools) {
 
 // src/tools/sugoCheckLethalTrifecta.ts
 var sugoCheckLethalTrifectaInputSchema = {
+  sessionId: external_exports.string().describe(
+    "sugo_plan(start)\uC73C\uB85C \uBC1C\uAE09\uB41C \uC138\uC158 id. \xA7P6-1: review_done \uC804\uC5D0 \uC774 \uB3C4\uAD6C\uB97C \uCD5C\uC18C 1\uD68C \uD638\uCD9C\uD574\uC57C \uD558\uB294 \uD558\uB4DC \uAC8C\uC774\uD2B8(LETHAL_TRIFECTA_NOT_CALLED)\uC758 \uB300\uC0C1\uC774\uB77C, \uC138\uC158\uC5D0 \uD638\uCD9C \uAE30\uB85D\uC744 \uB0A8\uAE34\uB2E4."
+  ),
   tools: external_exports.array(
     external_exports.object({
       toolName: external_exports.string(),
@@ -24494,9 +24497,33 @@ var sugoCheckLethalTrifectaInputSchema = {
 var SugoCheckLethalTrifectaArgs = external_exports.object(sugoCheckLethalTrifectaInputSchema);
 async function handleSugoCheckLethalTrifecta(rawArgs) {
   const args2 = SugoCheckLethalTrifectaArgs.parse(rawArgs);
+  if (!await sessionExists(args2.sessionId)) {
+    return errorResult3("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+  }
+  const session = await loadSession(args2.sessionId);
   const warnings = checkLethalTrifecta(args2.tools);
-  const payload = { ok: true, warnings, safe: warnings.length === 0 };
+  const updated = {
+    ...session,
+    data: {
+      ...session.data,
+      chainInfo: {
+        ...session.data.chainInfo,
+        lastLethalTrifectaCheck: {
+          checkedAt: (/* @__PURE__ */ new Date()).toISOString(),
+          warnings
+        }
+      }
+    }
+  };
+  await saveSession(updated);
+  const payload = { ok: true, sessionId: session.id, warnings, safe: warnings.length === 0 };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+}
+function errorResult3(errorCode, message) {
+  return {
+    isError: true,
+    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
+  };
 }
 
 // src/hulk/checkpoint.ts
@@ -27785,7 +27812,7 @@ async function handleSugoCheckpoint(rawArgs) {
   switch (args2.action) {
     case "add": {
       if (!args2.title || !args2.checklist || args2.checklist.length === 0) {
-        return errorResult3("TITLE_AND_CHECKLIST_REQUIRED", "add action\uC5D0\uB294 title\uACFC checklist(1\uAC1C \uC774\uC0C1)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult4("TITLE_AND_CHECKLIST_REQUIRED", "add action\uC5D0\uB294 title\uACFC checklist(1\uAC1C \uC774\uC0C1)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       const checkpoint = await addCheckpoint(args2.workspace, {
         title: args2.title,
@@ -27797,9 +27824,9 @@ async function handleSugoCheckpoint(rawArgs) {
       return ok({ checkpoint });
     }
     case "get": {
-      if (!args2.id) return errorResult3("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult4("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const checkpoint = await getCheckpoint(args2.workspace, args2.id);
-      if (!checkpoint) return errorResult3("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      if (!checkpoint) return errorResult4("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
       return ok({ checkpoint });
     }
     case "list": {
@@ -27807,13 +27834,13 @@ async function handleSugoCheckpoint(rawArgs) {
       return ok({ checkpoints });
     }
     case "remove": {
-      if (!args2.id) return errorResult3("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult4("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const removed = await removeCheckpoint(args2.workspace, args2.id);
-      if (!removed) return errorResult3("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      if (!removed) return errorResult4("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
       return ok({});
     }
     case "memory": {
-      if (!args2.note) return errorResult3("NOTE_REQUIRED", "memory action\uC5D0\uB294 note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.note) return errorResult4("NOTE_REQUIRED", "memory action\uC5D0\uB294 note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await appendMemory(args2.workspace, args2.note);
       return ok({});
     }
@@ -27826,9 +27853,9 @@ async function handleSugoCheckpoint(rawArgs) {
       return ok({ migratedCount });
     }
     case "sync": {
-      if (!args2.id) return errorResult3("ID_REQUIRED", "sync action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult4("ID_REQUIRED", "sync action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const checkpoint = await getCheckpoint(args2.workspace, args2.id);
-      if (!checkpoint) return errorResult3("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      if (!checkpoint) return errorResult4("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
       const config2 = await resolveDashboardConfig();
       await syncCheckpoint(args2.workspace, checkpoint);
       if (!config2.enabled) {
@@ -27841,7 +27868,7 @@ async function handleSugoCheckpoint(rawArgs) {
       return ok({ synced: true, dashboard: "enabled" });
     }
     case "pull": {
-      if (!args2.projectPath) return errorResult3("PROJECT_PATH_REQUIRED", "pull action\uC5D0\uB294 projectPath\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.projectPath) return errorResult4("PROJECT_PATH_REQUIRED", "pull action\uC5D0\uB294 projectPath\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const pulledCount = await pullCheckpointsToRules(args2.projectPath, args2.workspace);
       return ok({ pulledCount });
     }
@@ -27850,7 +27877,7 @@ async function handleSugoCheckpoint(rawArgs) {
 function ok(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult3(errorCode, message) {
+function errorResult4(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -27873,7 +27900,7 @@ async function handleSugoDelete(rawArgs) {
   const projectPath = resolve4(args2.projectPath);
   const removed = await unregisterProject(projectPath);
   if (!removed) {
-    return errorResult4("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4: ${projectPath}`);
+    return errorResult5("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4: ${projectPath}`);
   }
   const removedFromWorkspaces = await removeProjectFromWorkspaces(projectPath);
   return {
@@ -27885,7 +27912,7 @@ async function handleSugoDelete(rawArgs) {
     ]
   };
 }
-function errorResult4(errorCode, message) {
+function errorResult5(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -27921,12 +27948,12 @@ async function handleSugoDisable(rawArgs) {
   try {
     await setProjectDisabled(projectPath, true);
   } catch (err2) {
-    if (err2 instanceof ToggleProjectError) return errorResult5(err2.code, err2.message);
+    if (err2 instanceof ToggleProjectError) return errorResult6(err2.code, err2.message);
     throw err2;
   }
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, disabled: true }, null, 2) }] };
 }
-function errorResult5(errorCode, message) {
+function errorResult6(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -27945,12 +27972,12 @@ async function handleSugoEnable(rawArgs) {
   try {
     await setProjectDisabled(projectPath, false);
   } catch (err2) {
-    if (err2 instanceof ToggleProjectError) return errorResult6(err2.code, err2.message);
+    if (err2 instanceof ToggleProjectError) return errorResult7(err2.code, err2.message);
     throw err2;
   }
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, disabled: false }, null, 2) }] };
 }
-function errorResult6(errorCode, message) {
+function errorResult7(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -28449,6 +28476,24 @@ function checkValidateVerifiedGate(lastValidation) {
     `sugo_validate\uAC00 \uC11C\uBC84 \uC2E4\uCE21\uC73C\uB85C \uD655\uC778\uD55C \uC704\uBC18\uC774 \uC788\uC2B5\uB2C8\uB2E4 \u2014 ${detail}. \uC2E4\uCE21 \uACB0\uACFC\uB77C \uC790\uAE30\uBCF4\uACE0\uB85C \uB36E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`
   );
 }
+function checkLethalTrifectaCalledGate(lastCheck) {
+  if (!lastCheck) {
+    return fail(
+      "LETHAL_TRIFECTA_NOT_CALLED",
+      "review_done \uC804\uC5D0 sugo_check_lethal_trifecta\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok2();
+}
+function checkLethalTrifectaMitigationGate(lastCheck, trifectaMitigation) {
+  if (!lastCheck || lastCheck.warnings.length === 0) return ok2();
+  if (trifectaMitigation && trifectaMitigation.trim().length > 0) return ok2();
+  const detail = lastCheck.warnings.map((w) => `${w.toolName}(${w.reason})`).join(" / ");
+  return fail(
+    "LETHAL_TRIFECTA_MITIGATION_REQUIRED",
+    `sugo_check_lethal_trifecta\uAC00 \uACBD\uACE0\uB97C \uBCF4\uACE0\uD588\uC2B5\uB2C8\uB2E4 \u2014 ${detail}. \uADF8\uB300\uB85C \uC9C4\uD589\uD558\uB824\uBA74 trifectaMitigation(\uC5B4\uB5BB\uAC8C \uC644\uD654\uD588\uB294\uC9C0)\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.`
+  );
+}
 
 // src/todoSpec.ts
 function todoSpecPath(projectPath, featureName) {
@@ -28686,7 +28731,7 @@ async function handleSugoHistory(rawArgs) {
   switch (args2.action) {
     case "add": {
       if (!args2.task_id || !args2.task_title) {
-        return errorResult7("TASK_ID_AND_TITLE_REQUIRED", "add action\uC5D0\uB294 task_id\uC640 task_title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult8("TASK_ID_AND_TITLE_REQUIRED", "add action\uC5D0\uB294 task_id\uC640 task_title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       const workLog = await addWorkLog(args2.workspace, {
         task_id: args2.task_id,
@@ -28709,9 +28754,9 @@ async function handleSugoHistory(rawArgs) {
       return ok3({ workLogs });
     }
     case "get": {
-      if (!args2.logId) return errorResult7("LOG_ID_REQUIRED", "get action\uC5D0\uB294 logId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.logId) return errorResult8("LOG_ID_REQUIRED", "get action\uC5D0\uB294 logId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workLog = await getWorkLog(args2.workspace, args2.logId);
-      if (!workLog) return errorResult7("WORKLOG_NOT_FOUND", `WorkLog\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.logId}`);
+      if (!workLog) return errorResult8("WORKLOG_NOT_FOUND", `WorkLog\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.logId}`);
       return ok3({ workLog });
     }
   }
@@ -28719,7 +28764,7 @@ async function handleSugoHistory(rawArgs) {
 function ok3(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult7(errorCode, message) {
+function errorResult8(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -30340,6 +30385,9 @@ var sugoPlanInputSchema = {
   testPassed: external_exports.boolean().optional().describe("test_done action\uC5D0 \uD544\uC694. \uC11C\uBC84\uC5D0 \uAE30\uB85D\uB41C test evidence\uC640 \uB300\uC870\uB41C\uB2E4"),
   userConfirmed: external_exports.boolean().optional().describe("review_done action\uC5D0 \uD544\uC694. work-result\uB97C \uC0AC\uB78C\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uD655\uC778\uBC1B\uC558\uB294\uC9C0"),
   summary: external_exports.string().optional().describe("review_done action\uC5D0 \uD544\uC694. work-result \uC694\uC57D(\xA74.3: \uC904\u22653, \uAE38\uC774\u226530\uC790 \uB4F1)"),
+  trifectaMitigation: external_exports.string().optional().describe(
+    "review_done action: sugo_check_lethal_trifecta\uAC00 \uACBD\uACE0(3\uCD95 \uB3D9\uC2DC \uC131\uB9BD \uB3C4\uAD6C)\uB97C \uBCF4\uACE0\uD588\uC744 \uB54C\uB9CC \uD544\uC694. \uC5B4\uB5BB\uAC8C \uC644\uD654\uD588\uB294\uC9C0(\uC608: sub-agent \uACA9\uB9AC, \uC0AC\uB78C \uAC8C\uC774\uD2B8, capability \uC81C\uAC70). LETHAL_TRIFECTA_MITIGATION_REQUIRED \uAC8C\uC774\uD2B8 \uB300\uC0C1"
+  ),
   reportDetails: external_exports.object({
     designDecisions: external_exports.array(external_exports.string()).optional(),
     knownLimitations: external_exports.array(external_exports.string()).optional()
@@ -30382,15 +30430,15 @@ async function handleSugoPlan(rawArgs) {
   let existing = null;
   if (action !== "start") {
     if (!sessionId) {
-      return errorResult8("SESSION_ID_REQUIRED", `action "${action}"\uC5D0\uB294 sessionId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
+      return errorResult9("SESSION_ID_REQUIRED", `action "${action}"\uC5D0\uB294 sessionId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
     }
     if (!await sessionExists(sessionId)) {
-      return errorResult8("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${sessionId}`);
+      return errorResult9("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${sessionId}`);
     }
     existing = await loadSession(sessionId);
     if (existing.data.humanDecisionGate && action !== "status" && action !== "cancel") {
       const gate = existing.data.humanDecisionGate;
-      return errorResult8(
+      return errorResult9(
         "HUMAN_DECISION_REQUIRED",
         `\uC0AC\uB78C\uC758 \uACB0\uC815\uC774 \uD544\uC694\uD55C \uCC28\uB2E8 \uC0C1\uD0DC\uC785\uB2C8\uB2E4. Dashboard\uC5D0\uC11C \uB2F5\uBCC0\uD55C \uB4A4 sugo_roadmap(action:"resume_with_decision", workspace:"${gate.workspace}", id:"${gate.taskId}", sessionId:"${existing.id}")\uB85C \uC7AC\uAC1C\uD558\uC138\uC694. \uC9C8\uBB38: ${gate.blocker.question}`
       );
@@ -30406,12 +30454,12 @@ async function handleSugoPlan(rawArgs) {
     };
   }
   if (action === "prd") {
-    if (!args2.prdContent) return errorResult8("PRD_CONTENT_REQUIRED", "prd action\uC5D0\uB294 prdContent\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!args2.prdContent) return errorResult9("PRD_CONTENT_REQUIRED", "prd action\uC5D0\uB294 prdContent\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const ledger = validateConformanceLedger(args2.prdContent);
-    if (!ledger.ok) return errorResult8(ledger.code, ledger.message);
+    if (!ledger.ok) return errorResult9(ledger.code, ledger.message);
     const validation = validatePrd(args2.prdContent);
     if (!validation.ok) {
-      return errorResult8(
+      return errorResult9(
         validation.errors[0],
         `PRD \uAC80\uC99D \uC2E4\uD328: \uAE38\uC774=${validation.length}\uC790(\u2265100 \uD544\uC694), REQ \uD0DC\uADF8=${validation.reqCount}\uAC1C(\u22651 \uD544\uC694)`
       );
@@ -30419,21 +30467,21 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "oracle_done") {
     const oracleResult = checkOracleDone(args2.uncovered, args2.overrideReason);
-    if (!oracleResult.ok) return errorResult8(oracleResult.code, oracleResult.message);
+    if (!oracleResult.ok) return errorResult9(oracleResult.code, oracleResult.message);
   }
   if (action === "jira") {
     const jiraResult = checkJiraOption(args2.jiraOption, args2.jiraKey);
-    if (!jiraResult.ok) return errorResult8(jiraResult.code, jiraResult.message);
+    if (!jiraResult.ok) return errorResult9(jiraResult.code, jiraResult.message);
   }
   if (action === "ready" && existing) {
     const oracleGate = checkSpecOracleGate(existing.data.specOracle);
-    if (!oracleGate.ok) return errorResult8(oracleGate.code, oracleGate.message);
+    if (!oracleGate.ok) return errorResult9(oracleGate.code, oracleGate.message);
   }
   if (action === "baseline_capture" && existing) {
     const baselineRequired = existing.data.baselineGate?.required ?? false;
     const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
     const baselineResult = checkBaselineGate(baselineRequired, baselineExitCode);
-    if (!baselineResult.ok) return errorResult8(baselineResult.code, baselineResult.message);
+    if (!baselineResult.ok) return errorResult9(baselineResult.code, baselineResult.message);
   }
   if (action === "contract_done" && existing) {
     const projectConfigForContractStart = await loadProjectConfig(existing.projectPath);
@@ -30443,14 +30491,14 @@ async function handleSugoPlan(rawArgs) {
     const claimsAbsent = !!args2.contractEnvironmentAbsentReason && args2.contractEnvironmentAbsentReason.trim().length > 0;
     if (claimsAbsent) {
       const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
-      if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
+      if (!contradiction.ok) return errorResult9(contradiction.code, contradiction.message);
     }
     const contractStartedResult = checkContractStartedGate(
       existing.data.chainInfo.contractTests ?? [],
       contractRequired,
       args2.contractEnvironmentAbsentReason
     );
-    if (!contractStartedResult.ok) return errorResult8(contractStartedResult.code, contractStartedResult.message);
+    if (!contractStartedResult.ok) return errorResult9(contractStartedResult.code, contractStartedResult.message);
     if (claimsAbsent && contractRequired) {
       newBypassLabels.push({
         kind: "contractEvidenceMissing",
@@ -30464,24 +30512,24 @@ async function handleSugoPlan(rawArgs) {
     const changedFiles = args2.changedFiles ?? [];
     const hasPrd = !!existing.data.prdPath;
     const analyzeGate = checkAnalyzeGate(existing.data.chainInfo.analyzeAttempts, hasPrd);
-    if (!analyzeGate.ok) return errorResult8(analyzeGate.code, analyzeGate.message);
+    if (!analyzeGate.ok) return errorResult9(analyzeGate.code, analyzeGate.message);
     const baselineRequired = existing.data.baselineGate?.required ?? false;
     const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;
     const baselineResult = checkBaselineGate(baselineRequired, baselineExitCode);
-    if (!baselineResult.ok) return errorResult8(baselineResult.code, baselineResult.message);
+    if (!baselineResult.ok) return errorResult9(baselineResult.code, baselineResult.message);
     const wiringResult = checkWiringGate(changedFiles, existing.data.mode, args2.wiringTestAdded ?? false);
-    if (!wiringResult.ok) return errorResult8(wiringResult.code, wiringResult.message);
+    if (!wiringResult.ok) return errorResult9(wiringResult.code, wiringResult.message);
     const glueResult = checkRegistrationGlueGate(args2.dependencyRemoved ?? false, args2.registrationGlueChecked ?? false);
-    if (!glueResult.ok) return errorResult8(glueResult.code, glueResult.message);
+    if (!glueResult.ok) return errorResult9(glueResult.code, glueResult.message);
     const bootable = await isProjectBootable(existing.projectPath);
     const bootAnnotationFound = bootable ? await scanForSpringBootTestAnnotation(existing.projectPath) : false;
     const claimsBootAbsent = bootable && !bootAnnotationFound && !!args2.bootUnverifiedReason && args2.bootUnverifiedReason.trim().length > 0;
     if (claimsBootAbsent) {
       const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
-      if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
+      if (!contradiction.ok) return errorResult9(contradiction.code, contradiction.message);
     }
     const bootResult = checkBootGate(bootable, bootAnnotationFound, args2.bootUnverifiedReason);
-    if (!bootResult.ok) return errorResult8(bootResult.code, bootResult.message);
+    if (!bootResult.ok) return errorResult9(bootResult.code, bootResult.message);
     if (claimsBootAbsent) {
       newBypassLabels.push({
         kind: "bootUnverified",
@@ -30493,10 +30541,10 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "test_done" && existing) {
     if (args2.testPassed === void 0) {
-      return errorResult8("TEST_PASSED_REQUIRED", "test_done action\uC5D0\uB294 testPassed\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      return errorResult9("TEST_PASSED_REQUIRED", "test_done action\uC5D0\uB294 testPassed\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     }
     const evidenceResult = checkTestEvidenceGate(args2.testPassed, existing.data.chainInfo.testEvidence ?? null);
-    if (!evidenceResult.ok) return errorResult8(evidenceResult.code, evidenceResult.message);
+    if (!evidenceResult.ok) return errorResult9(evidenceResult.code, evidenceResult.message);
     const feature = existing.data.chainInfo.testEvidence;
     if (feature?.derivedState === "unverified") {
       const contradiction = detectLabelContradiction(
@@ -30506,7 +30554,7 @@ async function handleSugoPlan(rawArgs) {
           contractTests: existing.data.chainInfo.contractTests
         })
       );
-      if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
+      if (!contradiction.ok) return errorResult9(contradiction.code, contradiction.message);
       newBypassLabels.push({
         kind: "environmentAbsent",
         reason: feature.unverifiedReason ?? "\uC0AC\uC720 \uBBF8\uAE30\uC7AC",
@@ -30517,35 +30565,35 @@ async function handleSugoPlan(rawArgs) {
     const projectConfig = await loadProjectConfig(existing.projectPath);
     const enforced = projectConfig?.verificationPolicy?.integrationGateEnforced ?? false;
     if (enforced && !args2.coverageMap) {
-      return errorResult8(
+      return errorResult9(
         "COVERAGE_MAP_REQUIRED",
         "\uC774 \uD504\uB85C\uC81D\uD2B8\uB294 verificationPolicy.integrationGateEnforced\uAC00 \uCF1C\uC838 \uC788\uC5B4 test_done\uC5D0 coverageMap\uC774 \uD544\uC694\uD569\uB2C8\uB2E4."
       );
     }
     if (args2.coverageMap) {
       const coverageResult = checkCoverageGate(args2.coverageMap);
-      if (!coverageResult.ok) return errorResult8(coverageResult.code, coverageResult.message);
+      if (!coverageResult.ok) return errorResult9(coverageResult.code, coverageResult.message);
     }
   }
   if (action === "clarify" && existing?.data.todoSpec && existing.data.todoSpec.snapshotAtStart === null && (args2.todoSpecGoal || args2.todoSpecItems)) {
     const draftResult = checkTodoSpecDraftGate(args2.todoSpecGoal, args2.todoSpecItems, args2.todoSpecUserConfirmed);
-    if (!draftResult.ok) return errorResult8(draftResult.code, draftResult.message);
+    if (!draftResult.ok) return errorResult9(draftResult.code, draftResult.message);
   }
   if (action === "clarify" && existing?.data.mode !== "patch") {
     const selection = existing?.data.specDraftSelection;
     if (selection && selection.candidates.length > 0 && !selection.decision) {
       if (!args2.specDraftDecision) {
-        return errorResult8(
+        return errorResult9(
           "SPEC_DRAFT_SELECTION_REQUIRED",
           "\uBBF8\uC5F0\uACB0 SPEC \uCD08\uC548\uC774 \uC788\uC2B5\uB2C8\uB2E4. \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uD6C4\uBCF4\uB97C \uBCF4\uC5EC\uC8FC\uACE0 specDraftDecision(link|new)\uC744 \uD655\uC778\uBC1B\uC544\uC57C \uD569\uB2C8\uB2E4."
         );
       }
       if (args2.specDraftDecision === "link") {
         if (!args2.specDraftId) {
-          return errorResult8("SPEC_DRAFT_ID_REQUIRED", "link \uC120\uD0DD\uC5D0\uB294 \uC0AC\uC6A9\uC790\uAC00 \uACE0\uB978 specDraftId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+          return errorResult9("SPEC_DRAFT_ID_REQUIRED", "link \uC120\uD0DD\uC5D0\uB294 \uC0AC\uC6A9\uC790\uAC00 \uACE0\uB978 specDraftId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
         }
         if (!selection.candidates.some((candidate) => candidate.id === args2.specDraftId)) {
-          return errorResult8("SPEC_DRAFT_NOT_FOUND", `\uD604\uC7AC \uBBF8\uC5F0\uACB0 \uD6C4\uBCF4\uAC00 \uC544\uB2CC SPEC\uC785\uB2C8\uB2E4: ${args2.specDraftId}`);
+          return errorResult9("SPEC_DRAFT_NOT_FOUND", `\uD604\uC7AC \uBBF8\uC5F0\uACB0 \uD6C4\uBCF4\uAC00 \uC544\uB2CC SPEC\uC785\uB2C8\uB2E4: ${args2.specDraftId}`);
         }
       }
     }
@@ -30553,7 +30601,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "commit" && existing?.data.todoSpec) {
     const currentContent = await readTodoSpec(existing.projectPath, existing.data.todoSpec.featureName);
     const syncResult = checkTodoSpecSyncGate(existing.data.todoSpec.snapshotAtStart, currentContent, args2.todoSpecSyncReason);
-    if (!syncResult.ok) return errorResult8(syncResult.code, syncResult.message);
+    if (!syncResult.ok) return errorResult9(syncResult.code, syncResult.message);
     const actuallySynced = currentContent !== null && todoSpecActuallySynced(existing.data.todoSpec.snapshotAtStart, currentContent);
     if (!actuallySynced && args2.todoSpecSyncReason?.trim()) {
       newBypassLabels.push({
@@ -30566,15 +30614,22 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "review_done" && existing) {
     const validateCalledResult = checkValidateCalledGate(existing.data.chainInfo.lastValidation);
-    if (!validateCalledResult.ok) return errorResult8(validateCalledResult.code, validateCalledResult.message);
+    if (!validateCalledResult.ok) return errorResult9(validateCalledResult.code, validateCalledResult.message);
     const validateVerifiedResult = checkValidateVerifiedGate(existing.data.chainInfo.lastValidation);
-    if (!validateVerifiedResult.ok) return errorResult8(validateVerifiedResult.code, validateVerifiedResult.message);
+    if (!validateVerifiedResult.ok) return errorResult9(validateVerifiedResult.code, validateVerifiedResult.message);
+    const trifectaCalledResult = checkLethalTrifectaCalledGate(existing.data.chainInfo.lastLethalTrifectaCheck);
+    if (!trifectaCalledResult.ok) return errorResult9(trifectaCalledResult.code, trifectaCalledResult.message);
+    const trifectaMitigationResult = checkLethalTrifectaMitigationGate(
+      existing.data.chainInfo.lastLethalTrifectaCheck,
+      args2.trifectaMitigation
+    );
+    if (!trifectaMitigationResult.ok) return errorResult9(trifectaMitigationResult.code, trifectaMitigationResult.message);
     const confirmResult = checkUserConfirmationGate(args2.userConfirmed ?? false);
-    if (!confirmResult.ok) return errorResult8(confirmResult.code, confirmResult.message);
-    if (!args2.summary) return errorResult8("SUMMARY_REQUIRED", "review_done action\uC5D0\uB294 summary\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!confirmResult.ok) return errorResult9(confirmResult.code, confirmResult.message);
+    if (!args2.summary) return errorResult9("SUMMARY_REQUIRED", "review_done action\uC5D0\uB294 summary\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const summaryQuality = validateSummaryQuality(args2.summary);
     if (!summaryQuality.ok) {
-      return errorResult8(
+      return errorResult9(
         summaryQuality.errors[0],
         `summary \uD488\uC9C8 \uBBF8\uB2EC: \uC904=${summaryQuality.lines}(\u22653), \uAE38\uC774=${summaryQuality.length}\uC790(\u226530), \uACE0\uC720\uBB38\uC790=${summaryQuality.uniqueChars}\uAC1C(\u226510), \uAD6C\uBCC4\uD1A0\uD070=${summaryQuality.distinctTokens}\uAC1C(\u22655)`
       );
@@ -30588,11 +30643,11 @@ async function handleSugoPlan(rawArgs) {
         currentFingerprint,
         existing.data.chainInfo.testPassedState
       );
-      if (!reuseResult.ok) return errorResult8(reuseResult.code, reuseResult.message);
+      if (!reuseResult.ok) return errorResult9(reuseResult.code, reuseResult.message);
       runtimeSatisfiedByReuse = true;
     }
     if (!runtimeSatisfiedByReuse) {
-      if (!args2.runtimeCheck) return errorResult8("RUNTIME_CHECK_REQUIRED", "review_done action\uC5D0\uB294 runtimeCheck\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.runtimeCheck) return errorResult9("RUNTIME_CHECK_REQUIRED", "review_done action\uC5D0\uB294 runtimeCheck\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const bootable = await isProjectBootable(existing.projectPath);
       const rc = args2.runtimeCheck;
       const labeled = !!rc.unverifiedReason && rc.unverifiedReason.trim().length > 0;
@@ -30600,10 +30655,10 @@ async function handleSugoPlan(rawArgs) {
       const claimsWiringAbsent = labeled && rc.runtimeVerified && bootable && rc.wiringVerified !== true;
       if (claimsRuntimeAbsent || claimsWiringAbsent) {
         const contradiction = detectLabelContradiction(true, hasGreenExecutionEvidence(greenEvidenceSnapshot(existing)));
-        if (!contradiction.ok) return errorResult8(contradiction.code, contradiction.message);
+        if (!contradiction.ok) return errorResult9(contradiction.code, contradiction.message);
       }
       const runtimeResult = checkRuntimeVerificationGate(existing.data.chainInfo.testPassedState, rc, bootable);
-      if (!runtimeResult.ok) return errorResult8(runtimeResult.code, runtimeResult.message);
+      if (!runtimeResult.ok) return errorResult9(runtimeResult.code, runtimeResult.message);
       if (claimsRuntimeAbsent) {
         newBypassLabels.push({
           kind: "runtimeUnverified",
@@ -30625,46 +30680,46 @@ async function handleSugoPlan(rawArgs) {
       baselineRequired: existing.data.baselineGate?.required ?? false
     });
     const contractResult = checkContractEvidenceGate(existing.data.chainInfo.contractTests ?? [], contractRequired);
-    if (!contractResult.ok) return errorResult8(contractResult.code, contractResult.message);
+    if (!contractResult.ok) return errorResult9(contractResult.code, contractResult.message);
   }
   if (action === "decompose" && existing) {
-    if (!args2.manifest) return errorResult8("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    if (!existing.data.prdPath) return errorResult8("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!args2.manifest) return errorResult9("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!existing.data.prdPath) return errorResult9("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const prdContent = await readFile22(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
     };
     const manifestResult = validateManifest(candidateManifest, prdRequirementIds);
-    if (!manifestResult.ok) return errorResult8(manifestResult.code, manifestResult.message);
+    if (!manifestResult.ok) return errorResult9(manifestResult.code, manifestResult.message);
   }
   if ((action === "subtask_start" || action === "subtask_done") && existing) {
     if (!args2.subtaskId) {
-      return errorResult8("SUBTASK_ID_REQUIRED", `${action} action\uC5D0\uB294 subtaskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
+      return errorResult9("SUBTASK_ID_REQUIRED", `${action} action\uC5D0\uB294 subtaskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
     }
     const subtask = existing.data.decomposeManifest?.subtasks.find((s) => s.id === args2.subtaskId);
-    if (!subtask) return errorResult8("SUBTASK_NOT_FOUND", `\uC11C\uBE0C\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.subtaskId}`);
+    if (!subtask) return errorResult9("SUBTASK_NOT_FOUND", `\uC11C\uBE0C\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.subtaskId}`);
   }
   if (action === "integrate" && existing) {
     const manifest = existing.data.decomposeManifest;
-    if (!manifest) return errorResult8("MANIFEST_REQUIRED", "integrate \uC804\uC5D0 decompose\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!manifest) return errorResult9("MANIFEST_REQUIRED", "integrate \uC804\uC5D0 decompose\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const integrationResult = validateIntegration(manifest);
-    if (!integrationResult.ok) return errorResult8(integrationResult.code, integrationResult.message);
+    if (!integrationResult.ok) return errorResult9(integrationResult.code, integrationResult.message);
     const mergedChangedFiles = Array.from(new Set(manifest.subtasks.flatMap((s) => s.changedFiles ?? [])));
     const hasPrd = !!existing.data.prdPath;
     const analyzeGate = checkAnalyzeGate(existing.data.chainInfo.analyzeAttempts, hasPrd);
-    if (!analyzeGate.ok) return errorResult8(analyzeGate.code, analyzeGate.message);
+    if (!analyzeGate.ok) return errorResult9(analyzeGate.code, analyzeGate.message);
     const baselineResult = checkBaselineGate(
       existing.data.baselineGate?.required ?? false,
       existing.data.baselineGate?.evidence?.exitCode ?? null
     );
-    if (!baselineResult.ok) return errorResult8(baselineResult.code, baselineResult.message);
+    if (!baselineResult.ok) return errorResult9(baselineResult.code, baselineResult.message);
     const wiringResult = checkWiringGate(mergedChangedFiles, existing.data.mode, args2.wiringTestAdded ?? false);
-    if (!wiringResult.ok) return errorResult8(wiringResult.code, wiringResult.message);
+    if (!wiringResult.ok) return errorResult9(wiringResult.code, wiringResult.message);
     const bootable = await isProjectBootable(existing.projectPath);
     const bootAnnotationFound = bootable ? await scanForSpringBootTestAnnotation(existing.projectPath) : false;
     const bootResult = checkBootGate(bootable, bootAnnotationFound, args2.bootUnverifiedReason);
-    if (!bootResult.ok) return errorResult8(bootResult.code, bootResult.message);
+    if (!bootResult.ok) return errorResult9(bootResult.code, bootResult.message);
     if (bootable && !bootAnnotationFound && args2.bootUnverifiedReason?.trim()) {
       newBypassLabels.push({
         kind: "bootUnverified",
@@ -30679,7 +30734,7 @@ async function handleSugoPlan(rawArgs) {
     try {
       patchContext = await resolvePatchContext(args2.workResultPath);
     } catch (err2) {
-      if (err2 instanceof PatchEntryError) return errorResult8(err2.code, err2.message);
+      if (err2 instanceof PatchEntryError) return errorResult9(err2.code, err2.message);
       throw err2;
     }
   }
@@ -30698,7 +30753,7 @@ async function handleSugoPlan(rawArgs) {
     });
   }
   if (!result2.ok) {
-    return errorResult8(result2.errorCode ?? "UNKNOWN_ERROR", result2.message ?? "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958");
+    return errorResult9(result2.errorCode ?? "UNKNOWN_ERROR", result2.message ?? "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958");
   }
   let session = result2.session;
   if (!session) {
@@ -30775,9 +30830,9 @@ async function handleSugoPlan(rawArgs) {
       if (candidates && candidates.length > 0) {
         if (args2.specDraftId) {
           const selected = candidates.find((candidate) => candidate.id === args2.specDraftId);
-          if (!selected) return errorResult8("SPEC_DRAFT_NOT_FOUND", `\uD604\uC7AC \uBBF8\uC5F0\uACB0 \uD6C4\uBCF4\uAC00 \uC544\uB2CC SPEC\uC785\uB2C8\uB2E4: ${args2.specDraftId}`);
+          if (!selected) return errorResult9("SPEC_DRAFT_NOT_FOUND", `\uD604\uC7AC \uBBF8\uC5F0\uACB0 \uD6C4\uBCF4\uAC00 \uC544\uB2CC SPEC\uC785\uB2C8\uB2E4: ${args2.specDraftId}`);
           if (selected.projectPath && selected.projectPath !== session.projectPath) {
-            return errorResult8("SPEC_DRAFT_PROJECT_MISMATCH", `SPEC \uB300\uC0C1 \uD504\uB85C\uC81D\uD2B8\uAC00 \uB2E4\uB985\uB2C8\uB2E4: ${selected.projectPath}`);
+            return errorResult9("SPEC_DRAFT_PROJECT_MISMATCH", `SPEC \uB300\uC0C1 \uD504\uB85C\uC81D\uD2B8\uAC00 \uB2E4\uB985\uB2C8\uB2E4: ${selected.projectPath}`);
           }
           session = {
             ...session,
@@ -30787,17 +30842,17 @@ async function handleSugoPlan(rawArgs) {
           session = { ...session, data: { ...session.data, specDraftSelection: { candidates } } };
         }
       } else if (args2.specDraftId) {
-        return errorResult8("SPEC_DRAFT_NOT_FOUND", `\uC5F0\uACB0 \uAC00\uB2A5\uD55C Schedule SPEC\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${args2.specDraftId}`);
+        return errorResult9("SPEC_DRAFT_NOT_FOUND", `\uC5F0\uACB0 \uAC00\uB2A5\uD55C Schedule SPEC\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${args2.specDraftId}`);
       }
     }
   }
   if (action === "start" && args2.specPath) {
     const specExists = await readFile22(args2.specPath, "utf-8").then(() => true, () => false);
-    if (!specExists) return errorResult8("SPEC_FILE_NOT_FOUND", `\uC6D0\uBCF8 SPEC \uD30C\uC77C\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.specPath}`);
+    if (!specExists) return errorResult9("SPEC_FILE_NOT_FOUND", `\uC6D0\uBCF8 SPEC \uD30C\uC77C\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.specPath}`);
     const selectedId = session.data.specDraftSelection?.selectedId;
     const selected = session.data.specDraftSelection?.candidates.find((candidate) => candidate.id === selectedId);
     if (selected?.specPath && selected.specPath !== args2.specPath) {
-      return errorResult8("SPEC_PATH_MISMATCH", `Schedule\uC5D0 \uC5F0\uACB0\uB41C SPEC \uACBD\uB85C\uC640 \uB2E4\uB985\uB2C8\uB2E4: ${selected.specPath}`);
+      return errorResult9("SPEC_PATH_MISMATCH", `Schedule\uC5D0 \uC5F0\uACB0\uB41C SPEC \uACBD\uB85C\uC640 \uB2E4\uB985\uB2C8\uB2E4: ${selected.specPath}`);
     }
     session = { ...session, data: { ...session.data, specOracle: { required: true, ran: false, specPath: args2.specPath } } };
   }
@@ -30971,7 +31026,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "test_reverify" && existing) {
     const latest = existing.data.chainInfo.testEvidence;
     const reverifyResult = checkTestReverifyGate(latest, args2.reverifyReason);
-    if (!reverifyResult.ok) return errorResult8(reverifyResult.code, reverifyResult.message);
+    if (!reverifyResult.ok) return errorResult9(reverifyResult.code, reverifyResult.message);
     const derivedState = latest.derivedState;
     const testEvidenceFingerprint = derivedState === "pass" ? await computeChangedFilesFingerprint(session.projectPath, session.data.chainInfo.changedFiles) : session.data.chainInfo.testEvidenceFingerprint;
     session = {
@@ -31212,7 +31267,7 @@ async function handleSugoPlan(rawArgs) {
     content: [{ type: "text", text: JSON.stringify(payload, null, 2) }]
   };
 }
-function errorResult8(errorCode, message) {
+function errorResult9(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -31231,7 +31286,7 @@ var SugoRecordContractEvidenceArgs = external_exports.object(sugoRecordContractE
 async function handleSugoRecordContractEvidence(rawArgs) {
   const args2 = SugoRecordContractEvidenceArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult9("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult10("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   const existingRecords = session.data.chainInfo.contractTests ?? [];
@@ -31245,7 +31300,7 @@ async function handleSugoRecordContractEvidence(rawArgs) {
   const payload = { ok: true, sessionId: session.id, contractId: args2.contractId, record: updatedRecord };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult9(errorCode, message) {
+function errorResult10(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -31277,7 +31332,7 @@ var SugoRecordTestEvidenceArgs = external_exports.object(sugoRecordTestEvidenceI
 async function handleSugoRecordTestEvidence(rawArgs) {
   const args2 = SugoRecordTestEvidenceArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult10("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult11("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   const record2 = makeTestEvidenceRecord(
@@ -31314,7 +31369,7 @@ async function handleSugoRecordTestEvidence(rawArgs) {
   const payload = { ok: true, sessionId: session.id, kind: args2.kind, derivedState: record2.derivedState };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult10(errorCode, message) {
+function errorResult11(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -31376,11 +31431,11 @@ async function handleSugoReset(rawArgs) {
     const { backedUpTo } = await resetProjectHarness(projectPath);
     return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, backedUpTo }, null, 2) }] };
   } catch (err2) {
-    if (err2 instanceof ResetProjectError) return errorResult11(err2.code, err2.message);
+    if (err2 instanceof ResetProjectError) return errorResult12(err2.code, err2.message);
     throw err2;
   }
 }
-function errorResult11(errorCode, message) {
+function errorResult12(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -31441,7 +31496,7 @@ async function handleSugoRoadmap(rawArgs) {
   switch (args2.action) {
     case "add": {
       if (!args2.id || !args2.title || !args2.level) {
-        return errorResult12("ADD_FIELDS_REQUIRED", "add action\uC5D0\uB294 id/title/level\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult13("ADD_FIELDS_REQUIRED", "add action\uC5D0\uB294 id/title/level\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       const result2 = await addRoadmapNode(args2.workspace, {
         id: args2.id,
@@ -31454,42 +31509,42 @@ async function handleSugoRoadmap(rawArgs) {
         specPath: args2.specPath,
         note: args2.note
       });
-      if (!result2.ok) return errorResult12(result2.error, result2.message);
+      if (!result2.ok) return errorResult13(result2.error, result2.message);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "remove": {
-      if (!args2.id) return errorResult12("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult13("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result2 = await removeRoadmapNode(args2.workspace, args2.id);
-      if (!result2.ok) return errorResult12(result2.error, result2.message);
+      if (!result2.ok) return errorResult13(result2.error, result2.message);
       return ok4({});
     }
     case "status": {
-      if (!args2.id || !args2.status) return errorResult12("ID_AND_STATUS_REQUIRED", "status action\uC5D0\uB294 id\uC640 status\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id || !args2.status) return errorResult13("ID_AND_STATUS_REQUIRED", "status action\uC5D0\uB294 id\uC640 status\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result2 = await updateRoadmapNodeStatus(args2.workspace, args2.id, args2.status, resultFrom(args2));
-      if (!result2.ok) return errorResult12(result2.error, result2.message);
+      if (!result2.ok) return errorResult13(result2.error, result2.message);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "link": {
-      if (!args2.fromId || !args2.toId) return errorResult12("FROM_TO_REQUIRED", "link action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.fromId || !args2.toId) return errorResult13("FROM_TO_REQUIRED", "link action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result2 = await linkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
-      if (!result2.ok) return errorResult12(result2.error, result2.message);
+      if (!result2.ok) return errorResult13(result2.error, result2.message);
       return ok4({});
     }
     case "unlink": {
-      if (!args2.fromId || !args2.toId) return errorResult12("FROM_TO_REQUIRED", "unlink action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.fromId || !args2.toId) return errorResult13("FROM_TO_REQUIRED", "unlink action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result2 = await unlinkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
-      if (!result2.ok) return errorResult12(result2.error, result2.message);
+      if (!result2.ok) return errorResult13(result2.error, result2.message);
       return ok4({});
     }
     case "group": {
       if (!args2.id || !args2.title || !args2.taskIds) {
-        return errorResult12("GROUP_FIELDS_REQUIRED", "group action\uC5D0\uB294 id(workstream id)/title/taskIds\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult13("GROUP_FIELDS_REQUIRED", "group action\uC5D0\uB294 id(workstream id)/title/taskIds\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       await groupRoadmapNodes(args2.workspace, args2.id, args2.title, args2.taskIds);
       return ok4({});
     }
     case "backfill": {
-      if (!args2.id || !args2.title) return errorResult12("BACKFILL_FIELDS_REQUIRED", "backfill action\uC5D0\uB294 id(HULK taskId)/title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id || !args2.title) return errorResult13("BACKFILL_FIELDS_REQUIRED", "backfill action\uC5D0\uB294 id(HULK taskId)/title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await backfillRoadmapTask(args2.workspace, args2.id, args2.title);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
@@ -31507,12 +31562,12 @@ async function handleSugoRoadmap(rawArgs) {
     }
     case "block_for_human": {
       if (!args2.id || !args2.sessionId || !args2.stage || !args2.resumeAction || !args2.blockerSummary || !args2.question || !args2.blockedNextStep) {
-        return errorResult12("HUMAN_BLOCKER_FIELDS_REQUIRED", "\uC0AC\uB78C \uCC28\uB2E8\uC5D0\uB294 id/sessionId/stage/resumeAction/blockerSummary/question/blockedNextStep\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult13("HUMAN_BLOCKER_FIELDS_REQUIRED", "\uC0AC\uB78C \uCC28\uB2E8\uC5D0\uB294 id/sessionId/stage/resumeAction/blockerSummary/question/blockedNextStep\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
-      if (!await sessionExists(args2.sessionId)) return errorResult12("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+      if (!await sessionExists(args2.sessionId)) return errorResult13("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
       const session = await loadSession(args2.sessionId);
       if (session.data.hulkWorkspace !== args2.workspace || session.data.hulkTaskId !== args2.id) {
-        return errorResult12("BLOCKER_TARGET_MISMATCH", "\uD604\uC7AC \uC138\uC158\uC5D0 \uC5F0\uACB0\uB41C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC640 \uCC28\uB2E8 \uB300\uC0C1\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
+        return errorResult13("BLOCKER_TARGET_MISMATCH", "\uD604\uC7AC \uC138\uC158\uC5D0 \uC5F0\uACB0\uB41C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC640 \uCC28\uB2E8 \uB300\uC0C1\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
       }
       const blocker = {
         schemaVersion: 1,
@@ -31527,26 +31582,26 @@ async function handleSugoRoadmap(rawArgs) {
         createdAt: (/* @__PURE__ */ new Date()).toISOString()
       };
       const result2 = await blockRoadmapNodeForHuman(args2.workspace, args2.id, blocker);
-      if (!result2.ok) return errorResult12(result2.error, result2.message);
+      if (!result2.ok) return errorResult13(result2.error, result2.message);
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };
       await saveSession(session);
       return ok4({ awaitingHumanDecision: true, node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "resume_with_decision": {
-      if (!args2.id || !args2.sessionId) return errorResult12("ID_AND_SESSION_REQUIRED", "\uC7AC\uAC1C\uC5D0\uB294 id\uC640 sessionId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      if (!await sessionExists(args2.sessionId)) return errorResult12("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+      if (!args2.id || !args2.sessionId) return errorResult13("ID_AND_SESSION_REQUIRED", "\uC7AC\uAC1C\uC5D0\uB294 id\uC640 sessionId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!await sessionExists(args2.sessionId)) return errorResult13("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
       const session = await loadSession(args2.sessionId);
       const gate = session.data.humanDecisionGate;
       if (!gate || gate.workspace !== args2.workspace || gate.taskId !== args2.id) {
-        return errorResult12("HUMAN_DECISION_GATE_NOT_FOUND", "\uD604\uC7AC \uC138\uC158\uC5D0\uB294 \uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC5D0 \uB300\uD55C \uC0AC\uB78C \uACB0\uC815 \uCC28\uB2E8\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+        return errorResult13("HUMAN_DECISION_GATE_NOT_FOUND", "\uD604\uC7AC \uC138\uC158\uC5D0\uB294 \uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC5D0 \uB300\uD55C \uC0AC\uB78C \uACB0\uC815 \uCC28\uB2E8\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
       }
       const remote = await fetchBlockerDecision(args2.workspace, args2.id);
-      if (!remote?.decision?.response) return errorResult12("HUMAN_DECISION_PENDING", "\uB300\uC2DC\uBCF4\uB4DC\uC5D0 \uC544\uC9C1 \uC0AC\uC6A9\uC790 \uACB0\uC815\uC774 \uC800\uC7A5\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.");
+      if (!remote?.decision?.response) return errorResult13("HUMAN_DECISION_PENDING", "\uB300\uC2DC\uBCF4\uB4DC\uC5D0 \uC544\uC9C1 \uC0AC\uC6A9\uC790 \uACB0\uC815\uC774 \uC800\uC7A5\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.");
       if (remote.blocker?.sessionId && remote.blocker.sessionId !== args2.sessionId) {
-        return errorResult12("BLOCKER_SESSION_MISMATCH", "\uB300\uC2DC\uBCF4\uB4DC \uCC28\uB2E8\uC744 \uB9CC\uB4E0 \uC138\uC158\uACFC \uD604\uC7AC \uC138\uC158\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
+        return errorResult13("BLOCKER_SESSION_MISMATCH", "\uB300\uC2DC\uBCF4\uB4DC \uCC28\uB2E8\uC744 \uB9CC\uB4E0 \uC138\uC158\uACFC \uD604\uC7AC \uC138\uC158\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
       }
       const result2 = await resumeRoadmapNodeWithDecision(args2.workspace, args2.id, args2.sessionId, remote.decision.response);
-      if (!result2.ok) return errorResult12(result2.error, result2.message);
+      if (!result2.ok) return errorResult13(result2.error, result2.message);
       session.data.humanDecisionGate = void 0;
       session.data.commitContext = {
         ...typeof session.data.commitContext === "object" && session.data.commitContext !== null ? session.data.commitContext : {},
@@ -31560,15 +31615,15 @@ async function handleSugoRoadmap(rawArgs) {
       });
     }
     case "get": {
-      if (!args2.id) return errorResult12("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult13("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const node = await getRoadmapNode(args2.workspace, args2.id);
-      if (!node) return errorResult12("NODE_NOT_FOUND", `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
+      if (!node) return errorResult13("NODE_NOT_FOUND", `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
       return ok4({ node });
     }
     case "mark_req": {
-      if (!args2.id) return errorResult12("ID_REQUIRED", "mark_req action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id) return errorResult13("ID_REQUIRED", "mark_req action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result2 = await markRequirementDone(args2.workspace, args2.id, resultFrom(args2));
-      if (!result2.ok) return errorResult12(result2.error, result2.message);
+      if (!result2.ok) return errorResult13(result2.error, result2.message);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
   }
@@ -31580,7 +31635,7 @@ function resultFrom(args2) {
 function ok4(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult12(errorCode, message) {
+function errorResult13(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -31750,7 +31805,7 @@ async function handleSugoSpec(rawArgs) {
   switch (args2.action) {
     case "add": {
       if (!args2.name || !args2.type || !args2.content) {
-        return errorResult13("NAME_TYPE_CONTENT_REQUIRED", "add action\uC5D0\uB294 name, type, content\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        return errorResult14("NAME_TYPE_CONTENT_REQUIRED", "add action\uC5D0\uB294 name, type, content\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
       const spec = await addSpec(args2.workspace, { name: args2.name, type: args2.type, tags: args2.tags, content: args2.content });
       return ok5({ spec });
@@ -31760,9 +31815,9 @@ async function handleSugoSpec(rawArgs) {
       return ok5({ specs });
     }
     case "get": {
-      if (!args2.name) return errorResult13("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult14("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const spec = await getSpec(args2.workspace, args2.name);
-      if (!spec) return errorResult13("SPEC_NOT_FOUND", `\uC2A4\uD399\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
+      if (!spec) return errorResult14("SPEC_NOT_FOUND", `\uC2A4\uD399\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
       return ok5({ spec });
     }
   }
@@ -31770,7 +31825,7 @@ async function handleSugoSpec(rawArgs) {
 function ok5(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult13(errorCode, message) {
+function errorResult14(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -31939,7 +31994,7 @@ async function handleSugoTask(rawArgs) {
   const args2 = SugoTaskArgs.parse(rawArgs);
   switch (args2.action) {
     case "add": {
-      if (!args2.title || !args2.project) return errorResult14("TITLE_AND_PROJECT_REQUIRED", "add action\uC5D0\uB294 title\uACFC project\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.title || !args2.project) return errorResult15("TITLE_AND_PROJECT_REQUIRED", "add action\uC5D0\uB294 title\uACFC project\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await addTask(args2.workspace, {
         title: args2.title,
         project: args2.project,
@@ -31956,16 +32011,16 @@ async function handleSugoTask(rawArgs) {
       return ok6({ tasks });
     }
     case "update": {
-      if (!args2.taskId) return errorResult14("TASK_ID_REQUIRED", "update action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.taskId) return errorResult15("TASK_ID_REQUIRED", "update action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await updateTask(args2.workspace, args2.taskId, { status: args2.status, summary: args2.summary });
-      if (!task) return errorResult14("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
+      if (!task) return errorResult15("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
       const linkedSession = sessionForTask(await loadAllSessions(), args2.taskId);
       return ok6({ task, linkedSession });
     }
     case "get": {
-      if (!args2.taskId) return errorResult14("TASK_ID_REQUIRED", "get action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.taskId) return errorResult15("TASK_ID_REQUIRED", "get action\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const task = await getTask(args2.workspace, args2.taskId);
-      if (!task) return errorResult14("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
+      if (!task) return errorResult15("TASK_NOT_FOUND", `\uD0DC\uC2A4\uD06C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
       const linkedSessionForGet = sessionForTask(await loadAllSessions(), args2.taskId);
       return ok6({ task, linkedSession: linkedSessionForGet });
     }
@@ -31974,7 +32029,7 @@ async function handleSugoTask(rawArgs) {
 function ok6(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult14(errorCode, message) {
+function errorResult15(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -31996,7 +32051,7 @@ async function handleSugoUpdate(rawArgs) {
   const projectPath = resolve9(args2.projectPath);
   const existing = await findRegistryEntry(projectPath);
   if (!existing) {
-    return errorResult15("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uBA3C\uC800 sugo_add\uB85C \uB4F1\uB85D\uD558\uC138\uC694: ${projectPath}`);
+    return errorResult16("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uBA3C\uC800 sugo_add\uB85C \uB4F1\uB85D\uD558\uC138\uC694: ${projectPath}`);
   }
   const result2 = await syncProjectHarness({ ...args2, projectPath });
   const payload = {
@@ -32011,7 +32066,7 @@ async function handleSugoUpdate(rawArgs) {
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult15(errorCode, message) {
+function errorResult16(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -32211,7 +32266,7 @@ function runAutoChecks(projectPath, configs) {
 async function handleSugoValidate(rawArgs) {
   const args2 = SugoValidateArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult16("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult17("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   const configs = await loadProjectValidationConfigs(session.projectPath);
@@ -32247,7 +32302,7 @@ async function handleSugoValidate(rawArgs) {
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
-function errorResult16(errorCode, message) {
+function errorResult17(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -32388,11 +32443,11 @@ var SugoCommitArgs = external_exports.object(sugoCommitInputSchema);
 async function handleSugoCommit(rawArgs) {
   const args2 = SugoCommitArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
-    return errorResult17("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+    return errorResult18("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
   if (session.state !== "DONE") {
-    return errorResult17(
+    return errorResult18(
       "COMMIT_REQUIRES_DONE",
       `sugo_commit\uC740 DONE \uC0C1\uD0DC\uC5D0\uC11C\uB9CC \uAC00\uB2A5\uD569\uB2C8\uB2E4(\uD604\uC7AC: ${session.state}). sugo_plan(action:'commit')\uC73C\uB85C \uD30C\uC774\uD504\uB77C\uC778\uC744 \uBA3C\uC800 \uB05D\uB0B4\uC138\uC694.`
     );
@@ -32424,7 +32479,7 @@ async function handleSugoCommit(rawArgs) {
     ]
   };
 }
-function errorResult17(errorCode, message) {
+function errorResult18(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -32447,7 +32502,7 @@ async function handleSugoWorkspace(rawArgs) {
   const args2 = SugoWorkspaceArgs.parse(rawArgs);
   switch (args2.action) {
     case "add": {
-      if (!args2.name) return errorResult18("NAME_REQUIRED", "add action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult19("NAME_REQUIRED", "add action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workspace = await ensureWorkspace(args2.name, args2.projectPath);
       return ok7({ workspace });
     }
@@ -32465,13 +32520,13 @@ async function handleSugoWorkspace(rawArgs) {
       return ok7({ workspaces: enriched });
     }
     case "delete": {
-      if (!args2.name) return errorResult18("NAME_REQUIRED", "delete action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult19("NAME_REQUIRED", "delete action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const result2 = await deleteWorkspace(args2.name, {
         purge: args2.purge,
         force: args2.force,
         keepData: args2.keep_data
       });
-      if (!result2.ok) return errorResult18(result2.errorCode, result2.message);
+      if (!result2.ok) return errorResult19(result2.errorCode, result2.message);
       return ok7({
         workspace: args2.name,
         mode: result2.mode,
@@ -32482,23 +32537,23 @@ async function handleSugoWorkspace(rawArgs) {
       });
     }
     case "get": {
-      if (!args2.name) return errorResult18("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult19("NAME_REQUIRED", "get action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const workspace = await loadWorkspace(args2.name);
-      if (!workspace) return errorResult18("WORKSPACE_NOT_FOUND", `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
+      if (!workspace) return errorResult19("WORKSPACE_NOT_FOUND", `\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.name}`);
       return ok7({ workspace });
     }
     case "remember": {
-      if (!args2.name || !args2.note) return errorResult18("NAME_AND_NOTE_REQUIRED", "remember action\uC5D0\uB294 name\uACFC note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name || !args2.note) return errorResult19("NAME_AND_NOTE_REQUIRED", "remember action\uC5D0\uB294 name\uACFC note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await appendMemory(args2.name, args2.note);
       return ok7({ remembered: true });
     }
     case "recall": {
-      if (!args2.name) return errorResult18("NAME_REQUIRED", "recall action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult19("NAME_REQUIRED", "recall action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const memory = await readMemory(args2.name);
       return ok7({ memory });
     }
     case "status": {
-      if (!args2.name) return errorResult18("NAME_REQUIRED", "status action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult19("NAME_REQUIRED", "status action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const [workspace, tasks, checkpoints, specs, history, allSessions] = await Promise.all([
         loadWorkspace(args2.name),
         listTasks(args2.name),
@@ -32524,7 +32579,7 @@ async function handleSugoWorkspace(rawArgs) {
       });
     }
     case "sync": {
-      if (!args2.name) return errorResult18("NAME_REQUIRED", "sync action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.name) return errorResult19("NAME_REQUIRED", "sync action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const ws = await loadWorkspace(args2.name);
       if (ws) void syncWorkspace(ws);
       const tasks = await listTasks(args2.name);
@@ -32550,7 +32605,7 @@ async function handleSugoWorkspace(rawArgs) {
 function ok7(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
-function errorResult18(errorCode, message) {
+function errorResult19(errorCode, message) {
   return {
     isError: true,
     content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
@@ -32611,7 +32666,7 @@ server.registerTool(
   "sugo_check_lethal_trifecta",
   {
     title: "Check registered tools for the lethal trifecta risk pattern",
-    description: "(\uC0AC\uC124\uB370\uC774\uD130 \uC811\uADFC + \uC2E0\uB8B0\uD560 \uC218 \uC5C6\uB294 \uC785\uB825 \uCC98\uB9AC + \uC678\uBD80 \uD1B5\uC2E0)\uC774 \uD55C \uB3C4\uAD6C\uC5D0 \uB3D9\uC2DC\uC5D0 \uC788\uC73C\uBA74 \uACBD\uACE0\uD55C\uB2E4. capability\uB294 \uD638\uCD9C\uC790\uAC00 \uBA85\uC2DC\uC801\uC73C\uB85C \uC81C\uACF5\uD574\uC57C \uD55C\uB2E4(\uC790\uB3D9 \uCD94\uCE21 \uC548 \uD568)(\xA710).",
+    description: "(\uC0AC\uC124\uB370\uC774\uD130 \uC811\uADFC + \uC2E0\uB8B0\uD560 \uC218 \uC5C6\uB294 \uC785\uB825 \uCC98\uB9AC + \uC678\uBD80 \uD1B5\uC2E0)\uC774 \uD55C \uB3C4\uAD6C\uC5D0 \uB3D9\uC2DC\uC5D0 \uC788\uC73C\uBA74 \uACBD\uACE0\uD55C\uB2E4. capability\uB294 \uD638\uCD9C\uC790\uAC00 \uBA85\uC2DC\uC801\uC73C\uB85C \uC81C\uACF5\uD574\uC57C \uD55C\uB2E4(\uC790\uB3D9 \uCD94\uCE21 \uC548 \uD568)(\xA710). \xA7P6-1: review_done \uC804 \uCD5C\uC18C 1\uD68C \uD638\uCD9C\uC774 \uD558\uB4DC \uAC8C\uC774\uD2B8\uB2E4(LETHAL_TRIFECTA_NOT_CALLED) \u2014 \uACBD\uACE0\uAC00 \uC788\uC73C\uBA74 review_done\uC758 trifectaMitigation\uB3C4 \uD568\uAED8 \uD544\uC694\uD558\uB2E4.",
     inputSchema: sugoCheckLethalTrifectaInputSchema
   },
   handleSugoCheckLethalTrifecta

@@ -133,6 +133,8 @@ async function runPipeline(callTool, project, featureName) {
   // review_done의 VALIDATE_NOT_CALLED 게이트 충족용 — 이 프로젝트에 적용된 하네스(default/framework
   // node)엔 auto 체크가 없어 빈 제출로도 verifiedFailures 없이 통과한다.
   await callTool("sugo_validate", { sessionId, validationResults: [] });
+  // review_done의 LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용(§P6-1) — 빈 tools면 경고 없이 통과한다.
+  await callTool("sugo_check_lethal_trifecta", { sessionId, tools: [] });
   for (const [action, extra] of [
     ["review_done", { userConfirmed: true, summary: GOOD_SUMMARY, runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true } }],
     ["docs_done", {}],

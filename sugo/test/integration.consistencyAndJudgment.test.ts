@@ -7,6 +7,7 @@ import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
 import { handleSugoStatus } from "../src/tools/sugoStatus.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
+import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrifecta.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -128,6 +129,7 @@ describe("auto-loop 재시도 카운트 (§4.5 신호)", () => {
 
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     const reviewDone = await call(handleSugoPlan, {
       action: "review_done",
       sessionId,
@@ -163,6 +165,7 @@ describe("sugo_hulk(judgment) — sugo_judgment_report 흡수, 전체 흐름 집
     await call(handleSugoPlan, { action: "test_done", sessionId: s1, testPassed: true });
     await call(handleSugoPlan, { action: "review_start", sessionId: s1 });
     await call(handleSugoValidate, { sessionId: s1, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: s1, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     await call(handleSugoPlan, {
       action: "review_done",
       sessionId: s1,
@@ -194,6 +197,7 @@ describe("sugo_hulk(judgment) — sugo_judgment_report 흡수, 전체 흐름 집
     await call(handleSugoPlan, { action: "test_done", sessionId: s2, testPassed: false });
     await call(handleSugoPlan, { action: "review_start", sessionId: s2 });
     await call(handleSugoValidate, { sessionId: s2, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: s2, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     await call(handleSugoPlan, {
       action: "review_done",
       sessionId: s2,

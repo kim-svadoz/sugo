@@ -18,6 +18,8 @@ import {
   checkAnalyzeGate,
   checkBaselineGate,
   checkBootGate,
+  checkLethalTrifectaCalledGate,
+  checkLethalTrifectaMitigationGate,
   checkRegistrationGlueGate,
   checkRuntimeVerificationGate,
   checkUserConfirmationGate,
@@ -137,6 +139,13 @@ export const sugoPlanInputSchema = {
   testPassed: z.boolean().optional().describe("test_done action에 필요. 서버에 기록된 test evidence와 대조된다"),
   userConfirmed: z.boolean().optional().describe("review_done action에 필요. work-result를 사람에게 보여주고 확인받았는지"),
   summary: z.string().optional().describe("review_done action에 필요. work-result 요약(§4.3: 줄≥3, 길이≥30자 등)"),
+  trifectaMitigation: z
+    .string()
+    .optional()
+    .describe(
+      "review_done action: sugo_check_lethal_trifecta가 경고(3축 동시 성립 도구)를 보고했을 때만 필요. " +
+        "어떻게 완화했는지(예: sub-agent 격리, 사람 게이트, capability 제거). LETHAL_TRIFECTA_MITIGATION_REQUIRED 게이트 대상",
+    ),
   reportDetails: z
     .object({
       designDecisions: z.array(z.string()).optional(),
@@ -446,6 +455,17 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (!validateCalledResult.ok) return errorResult(validateCalledResult.code as GateBlockCode, validateCalledResult.message!);
     const validateVerifiedResult = checkValidateVerifiedGate(existing.data.chainInfo.lastValidation);
     if (!validateVerifiedResult.ok) return errorResult(validateVerifiedResult.code as GateBlockCode, validateVerifiedResult.message!);
+
+    // ── §P6-1: sugo_check_lethal_trifecta 호출강제 + 완화사유(sugo_validate와 같은 2단 분리).
+    // 이전엔 review-security라는 opt-in 스킬로만 트리펙타를 점검해, 요청 문구에 보안 관련
+    // 키워드가 없으면 review_done이 트리펙타 위험을 전혀 안 보고 통과했다.
+    const trifectaCalledResult = checkLethalTrifectaCalledGate(existing.data.chainInfo.lastLethalTrifectaCheck);
+    if (!trifectaCalledResult.ok) return errorResult(trifectaCalledResult.code as GateBlockCode, trifectaCalledResult.message!);
+    const trifectaMitigationResult = checkLethalTrifectaMitigationGate(
+      existing.data.chainInfo.lastLethalTrifectaCheck,
+      args.trifectaMitigation,
+    );
+    if (!trifectaMitigationResult.ok) return errorResult(trifectaMitigationResult.code as GateBlockCode, trifectaMitigationResult.message!);
 
     const confirmResult = checkUserConfirmationGate(args.userConfirmed ?? false);
     if (!confirmResult.ok) return errorResult(confirmResult.code as GateBlockCode, confirmResult.message!);

@@ -16,6 +16,7 @@ import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordContractEvidence } from "../src/tools/sugoRecordContractEvidence.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
+import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrifecta.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -161,6 +162,7 @@ describe("13게이트 유기적 완주 — feat 파이프라인 (Spring Boot + b
     expect(testDone.data.state).toBe("TEST_DONE");
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
 
     // (게이트 11) user-confirmation: 확인 없으면 거부 (review_done 순서: confirm→summary→runtime→contract)
     const noConfirm = await call(handleSugoPlan, {
@@ -218,6 +220,7 @@ describe("patch 파이프라인 — 완주 + wiring 게이트 자동 트리거(�
     await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     const rd = await call(handleSugoPlan, {
       action: "review_done", sessionId, userConfirmed: true, summary: GOOD_SUMMARY,
       runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
@@ -252,6 +255,7 @@ describe("patch 파이프라인 — 완주 + wiring 게이트 자동 트리거(�
     await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     await call(handleSugoPlan, {
       action: "review_done", sessionId, userConfirmed: true, summary: GOOD_SUMMARY,
       runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
@@ -298,6 +302,7 @@ describe("label-guard 관통 + 완료등급", () => {
     await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     await call(handleSugoPlan, {
       action: "review_done", sessionId, userConfirmed: true, summary: GOOD_SUMMARY,
       runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true, wiringVerified: true },

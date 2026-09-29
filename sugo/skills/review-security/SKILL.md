@@ -11,8 +11,12 @@ security-checklist 스킬의 체크리스트를 코드와 변경에 적용한다
 1. 컨텍스트 로드: 규칙, 하네스, 변경 diff를 읽는다.
 2. OWASP Top 10(2021) 점검: 접근통제, 암호화, 인젝션, 설계, 설정, 구식 컴포넌트, 인증, 무결성,
    로깅, SSRF를 확인한다. 각 지적을 CWE 번호로 매핑한다.
-3. Lethal Trifecta 점검: `sugo_check_lethal_trifecta`로 private 데이터, untrusted 유입, 외부 통신
-   3축이 동시에 성립하는지 확인한다. 겹치면 유출 경로로 경고한다.
+3. Lethal Trifecta 점검: `sugo_check_lethal_trifecta(sessionId, tools)`로 private 데이터, untrusted
+   유입, 외부 통신 3축이 동시에 성립하는지 확인한다. 겹치면 유출 경로로 경고한다. **§P6-1: 이 호출은
+   `review-validate`(체인 기본)가 이미 매 review마다 강제로 부르므로, 여기서는 "보안" 요청의 맥락에서
+   그 결과를 더 깊이 해석하는 자리다** — 경고가 있으면 `review_done`의 `trifectaMitigation`에 실제
+   완화 방법을 구체적으로 적는다(가능성 서술이 아니라 "sub-agent 격리로 외부통신 capability를
+   제거했다" 같은 사실).
 4. 외부 기술 보안 주장: external-tech-verification 규율을 따른다. 증거 없는 주장은 미검증 가정으로
    표기한다.
 5. 리포트: 각 취약점을 구체적인 입력과 결과로 기술해 work-result에 담는다. 가능성만 나열하지 않는다.

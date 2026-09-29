@@ -8,6 +8,7 @@ import { handleSugoCheckpoint } from "../src/tools/sugoCheckpoint.js";
 import { handleSugoHistory } from "../src/tools/sugoHistory.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
+import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrifecta.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 import { handleSugoSpec } from "../src/tools/sugoSpec.js";
 import { handleSugoTask } from "../src/tools/sugoTask.js";
@@ -97,6 +98,7 @@ describe("HULK 전체 흐름: workspace 등록 → prd 자동 Task → commit �
     await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     await call(handleSugoPlan, {
       action: "review_done",
       sessionId,

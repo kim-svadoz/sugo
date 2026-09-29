@@ -21,10 +21,16 @@ A08 소프트웨어와 데이터 무결성 실패 · A09 로깅과 모니터링 
 2. untrusted 콘텐츠 유입(외부 입력, 프롬프트)
 3. 외부 통신(네트워크 전송)
 
-셋이 겹치면 데이터 유출 경로가 된다. `sugo_check_lethal_trifecta(tools[])`로 점검하되, **이 도구는
-이름/설명에서 3축을 자동으로 추측하지 않는다** — 점검 대상 도구마다
+셋이 겹치면 데이터 유출 경로가 된다. `sugo_check_lethal_trifecta(sessionId, tools[])`로 점검하되,
+**이 도구는 이름/설명에서 3축을 자동으로 추측하지 않는다** — 점검 대상 도구마다
 `{toolName, accessesPrivateData, processesUntrustedInput, communicatesExternally}`를 네가 직접 코드를
 읽고 판단해 채워 넣어야 한다. 신뢰 못할 휴리스틱을 피하려고 의도적으로 이렇게 설계됐다.
+
+**§P6-1: 이 호출은 이제 opt-in이 아니다.** `review-validate`(체인 기본 스킬)가 "보안" 관련 요청
+여부와 무관하게 매 review마다 무조건 호출하고, review_done이 호출 자체를 하드 게이트로 요구한다
+(`LETHAL_TRIFECTA_NOT_CALLED`). 이 `security` 스킬에서 다시 부르는 건 중복 호출이 아니라 —
+review-validate 단계에서 이미 판단한 capability를 OWASP 전체 점검의 맥락에서 다시 검토하는
+것이라 여겨도 된다(세션에는 최신 호출 결과만 남는다).
 
 ## 규율
 

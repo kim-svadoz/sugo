@@ -48,7 +48,9 @@ export type GateBlockCode =
   | "JIRA_KEY_REQUIRED"
   | "CONFORMANCE_LEDGER_INCOMPLETE"
   | "VALIDATE_NOT_CALLED"
-  | "VALIDATE_VERIFIED_FAILURE";
+  | "VALIDATE_VERIFIED_FAILURE"
+  | "LETHAL_TRIFECTA_NOT_CALLED"
+  | "LETHAL_TRIFECTA_MITIGATION_REQUIRED";
 
 export interface GateCheckResult {
   ok: boolean;
@@ -444,5 +446,46 @@ export function checkValidateVerifiedGate(lastValidation: LastValidation | undef
   return fail(
     "VALIDATE_VERIFIED_FAILURE",
     `sugo_validate가 서버 실측으로 확인한 위반이 있습니다 — ${detail}. 실측 결과라 자기보고로 덮을 수 없습니다.`,
+  );
+}
+
+// ── sugo_check_lethal_trifecta 호출강제 + 완화사유 게이트(§P6-1) ─────────────
+// 기존엔 review-security라는 opt-in 스킬(요청에 "보안" 등 키워드가 있어야 붙는다)로만 트리펙타를
+// 점검했다 — 즉 요청 문구에 그 단어가 없으면 review_done이 트리펙타 위험을 전혀 안 보고 통과했다.
+// sugo_validate와 같은 2단 분리를 그대로 따른다: 호출 자체는 verdict 무관 하드 게이트(capability
+// 판정이 self-reported라 판정 내용으로 막을 수 없다), 경고가 있으면 완화사유 기록을 하드 게이트로
+// 요구한다(§설계안 ORACLE_OVERRIDE_REASON_REQUIRED와 같은 "정직한 탈출구" 패턴 — 위험을 인지한
+// 채 넘어가려면 왜 넘어가는지를 남기게 한다. 무경고면 완화사유 없이 그대로 통과한다).
+
+export interface LastLethalTrifectaCheck {
+  checkedAt: string;
+  warnings: { toolName: string; reason: string }[];
+}
+
+/** checkValidateCalledGate와 같은 패턴 — 호출 이력만 본다. 경고 유무와 무관하게 통과. */
+export function checkLethalTrifectaCalledGate(lastCheck: LastLethalTrifectaCheck | undefined): GateCheckResult {
+  if (!lastCheck) {
+    return fail(
+      "LETHAL_TRIFECTA_NOT_CALLED",
+      "review_done 전에 sugo_check_lethal_trifecta를 최소 1회 실제 호출해야 합니다.",
+    );
+  }
+  return ok();
+}
+
+/**
+ * 경고(3축 동시 성립 도구)가 있는데 완화사유가 없으면 막는다. 경고가 없으면 완화사유 없이도
+ * 통과한다 — 위험이 없는데 사유를 요구하는 건 과잉이다.
+ */
+export function checkLethalTrifectaMitigationGate(
+  lastCheck: LastLethalTrifectaCheck | undefined,
+  trifectaMitigation: string | undefined,
+): GateCheckResult {
+  if (!lastCheck || lastCheck.warnings.length === 0) return ok();
+  if (trifectaMitigation && trifectaMitigation.trim().length > 0) return ok();
+  const detail = lastCheck.warnings.map((w) => `${w.toolName}(${w.reason})`).join(" / ");
+  return fail(
+    "LETHAL_TRIFECTA_MITIGATION_REQUIRED",
+    `sugo_check_lethal_trifecta가 경고를 보고했습니다 — ${detail}. 그대로 진행하려면 trifectaMitigation(어떻게 완화했는지)이 필요합니다.`,
   );
 }

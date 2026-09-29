@@ -118,7 +118,9 @@ server.registerTool(
     title: "Check registered tools for the lethal trifecta risk pattern",
     description:
       "(사설데이터 접근 + 신뢰할 수 없는 입력 처리 + 외부 통신)이 한 도구에 동시에 있으면 경고한다. " +
-      "capability는 호출자가 명시적으로 제공해야 한다(자동 추측 안 함)(§10).",
+      "capability는 호출자가 명시적으로 제공해야 한다(자동 추측 안 함)(§10). " +
+      "§P6-1: review_done 전 최소 1회 호출이 하드 게이트다(LETHAL_TRIFECTA_NOT_CALLED) — " +
+      "경고가 있으면 review_done의 trifectaMitigation도 함께 필요하다.",
     inputSchema: sugoCheckLethalTrifectaInputSchema,
   },
   handleSugoCheckLethalTrifecta,

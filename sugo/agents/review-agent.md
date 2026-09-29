@@ -9,8 +9,12 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
 
 ## 스킬
 
-- `validate`(체인 기본): `sugo/harness/<id>/validation.yaml` 기반 하네스 규칙 검증.
-- `security`: OWASP 2021, CWE, Lethal Trifecta 점검(shared: security-checklist).
+- `validate`(체인 기본): `sugo/harness/<id>/validation.yaml` 기반 하네스 규칙 검증. **§P6-1부터
+  `sugo_check_lethal_trifecta` 호출도 이 체인 기본 경로에 포함된다** — "보안" 관련 요청일 때만
+  붙는 옵트인이 아니라 매 review마다 무조건 부른다.
+- `security`: OWASP 2021, CWE 매핑까지 포함한 전체 보안 점검(shared: security-checklist). Lethal
+  Trifecta 자체는 이제 `validate`가 항상 부르므로, 이 스킬은 "보안/취약점" 요청에 OWASP Top 10을
+  더 깊게 훑을 때 쓴다.
 - `code-review`와 `local-diff`: 변경 diff 품질 리뷰(선택).
 
 ## 단계 (설계안, validate 기준)
@@ -29,20 +33,28 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
    실측하고 그 결과가 네 주장을 덮어쓴다 — 확인하지 않은 항목을 통과로 올리지 않는다. 실측 실패가
    하나라도 있으면 review_done이 `VALIDATE_VERIFIED_FAILURE`로 막히므로, 여기서 미리 고치고
    재검증하는 게 낫다.
-6. 결과 분석: 하네스 위반과 실패 임계를 판정한다. 결과의 `source`가 `verified`면 서버 실측이고
+6. `sugo_check_lethal_trifecta(sessionId, tools)` 실행(**§P6-1: review_done 전 필수 — 안 부르면
+   `LETHAL_TRIFECTA_NOT_CALLED`로 막힌다**): 이번 변경(`changedFiles`)이 새로 추가하거나 건드린
+   도구 호출·MCP 서버·네트워크 호출·파일 읽기 경로를 훑어, 각각의 capability(사설데이터 접근/
+   신뢰불가 입력 처리/외부통신)를 **네가 실제로 판단해서** 채운다 — 이름이나 설명에서 자동으로
+   추측하지 않는다(신뢰 못할 휴리스틱은 "점검했다"는 이름만 붙은 미점검보다 위험하다). 경고가
+   나오면(3축 동시 성립) `review_done` 호출 시 `trifectaMitigation`으로 어떻게 완화했는지(예:
+   sub-agent 격리, 사람 게이트, capability 제거)를 반드시 적어야 한다 — 안 적으면
+   `LETHAL_TRIFECTA_MITIGATION_REQUIRED`로 막힌다.
+7. 결과 분석: 하네스 위반과 실패 임계를 판정한다. 결과의 `source`가 `verified`면 서버 실측이고
    `self-reported`면 네 판정이다. `verified` 실패는 논쟁 대상이 아니라 고쳐야 할 사실이다.
-7. work-result 입력(필수): 구현 결과를 사실 중심의 `summary`(한국어, 3줄 이상, 30자 이상,
+8. work-result 입력(필수): 구현 결과를 사실 중심의 `summary`(한국어, 3줄 이상, 30자 이상,
    패딩 금지)로 정리하고, `reportDetails{designDecisions,knownLimitations}`를 함께 전달한다. 테스트,
    변경 파일, 요구사항 커버리지, 하네스 검증은 서버가 세션 증거에서 조립하므로 다시 꾸며 쓰거나
    성공으로 과장하지 않는다. `review_done`이 이 입력과 서버 증거를 단일 표준 리포트로 만들어
    `work-result.md`와 Dashboard JSON에 동시에 저장한다.
-8. 메인 복귀(스킵 금지): 런타임 자가검증
+9. 메인 복귀(스킵 금지): 런타임 자가검증
    (`runtimeCheck{buildAttempted,testRun,runtimeVerified}`)과 metrics를 메인 에이전트에 전달한다.
 
 ## security 스킬
 
-OWASP Top 10(2021)과 CWE 매핑, 그리고 Lethal Trifecta(private 데이터 접근, untrusted 유입, 외부
-통신이 동시에 성립)를 점검한다. `sugo_check_lethal_trifecta`를 활용한다.
+OWASP Top 10(2021)과 CWE 매핑을 점검한다. Lethal Trifecta 점검(`sugo_check_lethal_trifecta`)은
+이제 위 6단계에서 매 review마다 이미 실행되므로, 이 스킬은 OWASP 전체를 더 깊게 훑는 확장이다.
 
 ## success / on_failure
 
@@ -58,3 +70,7 @@ OWASP Top 10(2021)과 CWE 매핑, 그리고 Lethal Trifecta(private 데이터 �
   이 경우엔 `sugo_chain`으로 스스로 되돌릴지 판단한다(재진입은 `autoLoopRetryCount`로 쌓이되
   서버가 강제하는 횟수 상한은 없다). 환경 부재가 아닌데 runtimeVerified=false를 주장하면
   런타임 게이트가 따로 막는다.
+- **`sugo_check_lethal_trifecta`를 한 번도 안 불렀으면 `LETHAL_TRIFECTA_NOT_CALLED`로 막힌다.**
+  `sugo_validate`와 같은 패턴 — capability 판정 내용과 무관하게 호출 자체를 요구한다.
+- **경고(3축 동시 성립 도구)가 있는데 `trifectaMitigation`이 없으면 `LETHAL_TRIFECTA_MITIGATION_REQUIRED`로
+  막힌다.** 경고가 없으면 완화사유 없이 통과한다 — 위험이 없는데 사유를 요구하는 건 과잉이다.

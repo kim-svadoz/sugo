@@ -9,6 +9,7 @@ import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoCheckpoint } from "../src/tools/sugoCheckpoint.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
+import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrifecta.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 import { handleSugoRoadmap } from "../src/tools/sugoRoadmap.js";
 import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
@@ -114,6 +115,7 @@ describe("commit → prRefs 수집 + WorkLog에 실림", () => {
     await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     const reviewDone = await call(handleSugoPlan, {
       action: "review_done",
       sessionId,

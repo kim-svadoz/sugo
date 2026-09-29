@@ -6,6 +6,7 @@ import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
+import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrifecta.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 import { handleSugoTask } from "../src/tools/sugoTask.js";
 import { listRoadmapNodes } from "../src/hulk/roadmap.js";
@@ -59,6 +60,7 @@ async function runFirstRoundToReviewDone(
   await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
   await call(handleSugoPlan, { action: "review_start", sessionId });
   await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+  await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
   const reviewDone = await call(handleSugoPlan, {
     action: "review_done",
     sessionId,
@@ -192,6 +194,7 @@ describe("Patch 전체 흐름 (§7)", () => {
     await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     const secondReviewDone = await call(handleSugoPlan, {
       action: "review_done",
       sessionId,
@@ -286,6 +289,7 @@ describe("§7.1 Patch 성숙화 — Run 재사용 + seed + patchInfo + lineage",
     await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
+    await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     const reviewDone = await call(handleSugoPlan, {
       action: "review_done",
       sessionId,

@@ -57,7 +57,7 @@ import type { HumanHoursEstimate } from "./humanHours.js";
 import type { BypassLabel } from "./labelGuard.js";
 import type { PatchContext } from "./patch.js";
 import type { TestEvidenceRecord, TestPassedState } from "./testEvidence.js";
-import type { JiraOption, SpecOracleState } from "./gates.js";
+import type { JiraOption, LastLethalTrifectaCheck, SpecOracleState } from "./gates.js";
 import type { UnlinkedSpecDraft } from "./dashboard/fetch.js";
 import type { WorkResultReport } from "./workResultReport.js";
 import type { HumanBlocker } from "./hulk/types.js";
@@ -98,6 +98,8 @@ export interface ChainInfo {
     /** 서버가 auto로 직접 실측해 실패로 확인한 체크 — review_done의 VALIDATE_VERIFIED_FAILURE 게이트가 본다. */
     verifiedFailures: { harnessId: string; checkId: string; detail: string }[];
   };
+  /** §P6-1: sugo_check_lethal_trifecta 호출 기록. review_done의 호출강제+완화사유 게이트가 본다. */
+  lastLethalTrifectaCheck?: LastLethalTrifectaCheck;
   /** review_done에서 계산한 값을 commit 시점(§8 WorkLog 기록)까지 들고 가기 위한 보존 필드. */
   humanHoursEstimate?: HumanHoursEstimate;
   reviewSummary?: string;

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { saveProjectConfig } from "../src/harness/config.js";
 import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
+import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrifecta.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
@@ -39,7 +40,12 @@ afterEach(() => {
 });
 
 /** start~test_done(그린)까지 몰아서 REVIEW_RUNNING 직전(TEST_DONE)까지 도달시킨다. */
-async function toTestDone(testPassed = true, failed = 0, skipAutoValidate = false): Promise<string> {
+async function toTestDone(
+  testPassed = true,
+  failed = 0,
+  skipAutoValidate = false,
+  skipAutoTrifecta = false,
+): Promise<string> {
   const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
   const sessionId = start.data.sessionId as string;
   await call(handleSugoPlan, { action: "clarify", sessionId });
@@ -64,6 +70,10 @@ async function toTestDone(testPassed = true, failed = 0, skipAutoValidate = fals
     // review_done의 VALIDATE_NOT_CALLED 게이트 충족용(§4.3 확장). 하네스 미적용 프로젝트라
     // validationResults가 비어 있어도 verifiedFailures 없이 통과한다.
     await call(handleSugoValidate, { sessionId, validationResults: [] });
+  }
+  if (!skipAutoTrifecta) {
+    // review_done의 LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용(§P6-1). 빈 tools면 경고 없이 통과한다.
+    await call(handleSugoCheckLethalTrifecta, { sessionId, tools: [] });
   }
   return sessionId;
 }
@@ -283,6 +293,76 @@ describe("review_done — sugo_validate 호출강제 + 실측 우선 게이트(�
 
     const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ true);
     await call(handleSugoValidate, { sessionId, validationResults: [] });
+
+    const result = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    expect(result.isError).toBe(false);
+  });
+});
+
+describe("review_done — sugo_check_lethal_trifecta 호출강제 + 완화사유 게이트(§P6-1, 실배선)", () => {
+  it("sugo_check_lethal_trifecta를 한 번도 안 부르면 review_done이 거부된다", async () => {
+    const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ false, /* skipAutoTrifecta */ true);
+    const result = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    expect(result.isError).toBe(true);
+    expect(result.data.errorCode).toBe("LETHAL_TRIFECTA_NOT_CALLED");
+  });
+
+  it("3축이 모두 성립하는 도구를 보고했는데 완화사유 없이 review_done을 부르면 거부한다", async () => {
+    const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ false, /* skipAutoTrifecta */ true);
+    const trifecta = await call(handleSugoCheckLethalTrifecta, {
+      sessionId,
+      tools: [{ toolName: "web-fetch-and-read-secrets", accessesPrivateData: true, processesUntrustedInput: true, communicatesExternally: true }],
+    });
+    expect(trifecta.data.safe).toBe(false);
+
+    const result = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    expect(result.isError).toBe(true);
+    expect(result.data.errorCode).toBe("LETHAL_TRIFECTA_MITIGATION_REQUIRED");
+    expect(result.data.message).toContain("web-fetch-and-read-secrets");
+  });
+
+  it("경고가 있어도 trifectaMitigation을 함께 제출하면 review_done이 통과한다", async () => {
+    const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ false, /* skipAutoTrifecta */ true);
+    await call(handleSugoCheckLethalTrifecta, {
+      sessionId,
+      tools: [{ toolName: "web-fetch-and-read-secrets", accessesPrivateData: true, processesUntrustedInput: true, communicatesExternally: true }],
+    });
+
+    const result = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      trifectaMitigation: "sub-agent로 격리하고 외부 통신 capability를 제거했다",
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    expect(result.isError).toBe(false);
+  });
+
+  it("경고가 없으면 완화사유 없이도 review_done이 통과한다", async () => {
+    const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ false, /* skipAutoTrifecta */ true);
+    await call(handleSugoCheckLethalTrifecta, {
+      sessionId,
+      tools: [{ toolName: "pure-calculator", accessesPrivateData: false, processesUntrustedInput: false, communicatesExternally: false }],
+    });
 
     const result = await call(handleSugoPlan, {
       action: "review_done",
