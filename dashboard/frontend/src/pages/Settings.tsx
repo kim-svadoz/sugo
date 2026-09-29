@@ -74,10 +74,10 @@ function AwsContextCard() {
         <div className="grid gap-2 sm:grid-cols-3">
           {awsServices.map((service) => {
             const item = status.inventory.find((candidate) => candidate.service === service);
-            return <details key={service} className={`rounded-lg border px-3 py-2 ${item?.error || !item ? "border-amber-400/25 bg-amber-400/[0.04]" : "border-[var(--color-border)] bg-black/10"}`}>
-              <summary className="cursor-pointer list-none text-sm"><span className="font-medium text-[var(--color-text)]">{awsServiceLabels[service]}</span><span className="float-right font-mono text-xs text-[var(--color-text-muted)]">{!item ? "갱신 필요" : item.error ? "확인 필요" : item.resources.length}</span></summary>
+            return <div key={service} className={`rounded-lg border px-3 py-2 ${item?.error || !item ? "border-amber-400/25 bg-amber-400/[0.04]" : "border-[var(--color-border)] bg-black/10"}`}>
+              <div className="text-sm"><span className="font-medium text-[var(--color-text)]">{awsServiceLabels[service]}</span><span className="float-right font-mono text-xs text-[var(--color-text-muted)]">{!item ? "갱신 필요" : item.error ? "확인 필요" : item.resources.length}</span></div>
               {!item ? <div className="mt-2 text-[10px] leading-relaxed text-amber-300/75">새로고침하면 이 서비스가 스냅샷에 추가됩니다.</div> : item.error ? <div className="mt-2 break-words text-[10px] leading-relaxed text-amber-300/75">권한 또는 조회 실패</div> : item.resources.length === 0 ? <div className="mt-2 text-[10px] text-[var(--color-text-dim)]">리소스 없음</div> : <ul className="mt-2 max-h-32 space-y-1 overflow-auto">{item.resources.map((resource) => <li key={`${resource.kind}:${resource.id}`} className="truncate font-mono text-[10px] text-[var(--color-text-muted)]" title={resource.id}>{resource.id}</li>)}</ul>}
-            </details>;
+            </div>;
           })}
         </div>
         <div className="text-right font-mono text-[10px] text-[var(--color-text-dim)]">마지막 조회 {status.observedAt ?? "없음"}</div>
