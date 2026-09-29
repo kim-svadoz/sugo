@@ -23968,7 +23968,8 @@ function serializeRoadmapNode(node) {
     note: node.note,
     specPath: node.specPath,
     workResult: node.workResult,
-    lineage: node.lineage
+    lineage: node.lineage,
+    humanBlocker: node.humanBlocker
   };
 }
 function serializeRoadmapSnapshot(userId, workspaceName, nodes) {
@@ -24519,6 +24520,16 @@ async function fetchJson(path, timeoutMs) {
   } finally {
     clearTimeout(timer);
   }
+}
+async function fetchBlockerDecision(workspaceName, nodeId) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return null;
+  const qs = new URLSearchParams({ nodeId });
+  if (config2.userId) qs.set("userId", config2.userId);
+  return fetchJson(
+    `/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap/blocker-decision?${qs.toString()}`,
+    8e3
+  );
 }
 async function fetchUnlinkedSpecDrafts(workspaceName) {
   const config2 = await resolveDashboardConfig();
@@ -27848,7 +27859,7 @@ function errorResult3(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.7.4" : "0.0.0-dev";
+  return true ? "0.7.5" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29515,6 +29526,32 @@ async function updateRoadmapNodeStatus(workspace, id, status, result2) {
     return { ok: true };
   });
 }
+async function blockRoadmapNodeForHuman(workspace, id, blocker) {
+  return withRoadmap(workspace, async (file) => {
+    const node = file.nodes.find((candidate) => candidate.id === id);
+    if (!node || node.level !== "task") return { ok: false, error: "NODE_NOT_FOUND", message: `Task\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${id}` };
+    node.status = "blocked";
+    node.note = blocker.question;
+    node.humanBlocker = blocker;
+    await writeRoadmapFile(workspace, file);
+    return { ok: true };
+  });
+}
+async function resumeRoadmapNodeWithDecision(workspace, id, sessionId, decision) {
+  return withRoadmap(workspace, async (file) => {
+    const node = file.nodes.find((candidate) => candidate.id === id);
+    if (!node || node.level !== "task") return { ok: false, error: "NODE_NOT_FOUND", message: `Task\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${id}` };
+    if (!node.humanBlocker || node.humanBlocker.sessionId !== sessionId) {
+      return { ok: false, error: "BLOCKER_SESSION_MISMATCH", message: "\uD604\uC7AC \uCC28\uB2E8\uC744 \uB9CC\uB4E0 \uC138\uC158\uACFC \uC7AC\uAC1C \uC138\uC158\uC774 \uB2E4\uB985\uB2C8\uB2E4." };
+    }
+    if (!decision.trim()) return { ok: false, error: "DECISION_REQUIRED", message: "\uC800\uC7A5\uB41C \uC0AC\uC6A9\uC790 \uACB0\uC815\uC774 \uD544\uC694\uD569\uB2C8\uB2E4." };
+    node.status = "in_progress";
+    node.note = `\uC0AC\uC6A9\uC790 \uACB0\uC815 \uBC18\uC601: ${decision.trim()}`;
+    delete node.humanBlocker;
+    await writeRoadmapFile(workspace, file);
+    return { ok: true };
+  });
+}
 async function removeRoadmapNode(workspace, id) {
   return withRoadmap(workspace, async (file) => {
     if (!file.nodes.some((n) => n.id === id)) {
@@ -30351,6 +30388,13 @@ async function handleSugoPlan(rawArgs) {
       return errorResult8("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${sessionId}`);
     }
     existing = await loadSession(sessionId);
+    if (existing.data.humanDecisionGate && action !== "status" && action !== "cancel") {
+      const gate = existing.data.humanDecisionGate;
+      return errorResult8(
+        "HUMAN_DECISION_REQUIRED",
+        `\uC0AC\uB78C\uC758 \uACB0\uC815\uC774 \uD544\uC694\uD55C \uCC28\uB2E8 \uC0C1\uD0DC\uC785\uB2C8\uB2E4. Dashboard\uC5D0\uC11C \uB2F5\uBCC0\uD55C \uB4A4 sugo_roadmap(action:"resume_with_decision", workspace:"${gate.workspace}", id:"${gate.taskId}", sessionId:"${existing.id}")\uB85C \uC7AC\uAC1C\uD558\uC138\uC694. \uC9C8\uBB38: ${gate.blocker.question}`
+      );
+    }
   }
   const newBypassLabels = [];
   const currentPatchVersion = existing?.data.patch?.version ?? 0;
@@ -31361,7 +31405,9 @@ var sugoRoadmapInputSchema = {
     "ready",
     "get",
     "mark_req",
-    "pull_ordering"
+    "pull_ordering",
+    "block_for_human",
+    "resume_with_decision"
   ]),
   workspace: external_exports.string().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
   id: external_exports.string().optional().describe("add/remove/status/get/mark_req action\uC5D0 \uD544\uC694. add\uC758 \uC0C8 \uB178\uB4DC id \uB610\uB294 \uB300\uC0C1 \uB178\uB4DC id"),
@@ -31379,7 +31425,15 @@ var sugoRoadmapInputSchema = {
   toId: external_exports.string().optional().describe("link/unlink action\uC5D0 \uD544\uC694 \u2014 fromId\uAC00 toId\uC5D0 \uC758\uC874\uD558\uAC8C \uB41C\uB2E4"),
   taskIds: external_exports.array(external_exports.string()).optional().describe("group action\uC5D0 \uD544\uC694 \u2014 \uC774 workstream \uC544\uB798\uB85C \uBB36\uC744 task id\uB4E4"),
   filterLevel: external_exports.enum(ROADMAP_LEVELS).optional().describe("list action\uC758 \uC120\uD0DD\uC801 \uD544\uD130"),
-  filterParent: external_exports.string().optional().describe("list action\uC758 \uC120\uD0DD\uC801 \uD544\uD130")
+  filterParent: external_exports.string().optional().describe("list action\uC758 \uC120\uD0DD\uC801 \uD544\uD130"),
+  sessionId: external_exports.string().optional().describe("block_for_human/resume_with_decision: \uC6D0\uB798 sugo_plan \uC138\uC158 ID"),
+  stage: external_exports.string().optional().describe("block_for_human: \uBA48\uCD98 \uD30C\uC774\uD504\uB77C\uC778 \uC0C1\uD0DC"),
+  resumeAction: external_exports.string().optional().describe("block_for_human: \uACB0\uC815 \uBC18\uC601 \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD560 sugo_plan action"),
+  blockerSummary: external_exports.string().optional().describe("block_for_human: \uBB34\uC5C7\uC744 \uD558\uB2E4\uAC00 \uBA48\uCDC4\uB294\uC9C0 \uD55C \uBB38\uC7A5"),
+  question: external_exports.string().optional().describe("block_for_human: \uC0AC\uB78C\uC774 \uB2F5\uD574\uC57C \uD560 \uC815\uD655\uD55C \uC9C8\uBB38"),
+  context: external_exports.array(external_exports.string()).optional().describe("block_for_human: \uD310\uB2E8\uC5D0 \uD544\uC694\uD55C \uC0AC\uC2E4 \uBAA9\uB85D"),
+  options: external_exports.array(external_exports.object({ id: external_exports.string(), label: external_exports.string(), impact: external_exports.string() })).optional().describe("block_for_human: \uC120\uD0DD\uC9C0\uC640 \uAC01 \uC601\uD5A5"),
+  blockedNextStep: external_exports.string().optional().describe("block_for_human: \uACB0\uC815 \uC804\uC5D0\uB294 \uC9C4\uD589\uD560 \uC218 \uC5C6\uB294 \uB2E4\uC74C \uB2E8\uACC4")
 };
 var SugoRoadmapArgs = external_exports.object(sugoRoadmapInputSchema);
 async function handleSugoRoadmap(rawArgs) {
@@ -31450,6 +31504,60 @@ async function handleSugoRoadmap(rawArgs) {
     case "pull_ordering": {
       const pulled = await pullRoadmapOrdering(args2.workspace);
       return ok4({ pulled });
+    }
+    case "block_for_human": {
+      if (!args2.id || !args2.sessionId || !args2.stage || !args2.resumeAction || !args2.blockerSummary || !args2.question || !args2.blockedNextStep) {
+        return errorResult12("HUMAN_BLOCKER_FIELDS_REQUIRED", "\uC0AC\uB78C \uCC28\uB2E8\uC5D0\uB294 id/sessionId/stage/resumeAction/blockerSummary/question/blockedNextStep\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      }
+      if (!await sessionExists(args2.sessionId)) return errorResult12("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+      const session = await loadSession(args2.sessionId);
+      if (session.data.hulkWorkspace !== args2.workspace || session.data.hulkTaskId !== args2.id) {
+        return errorResult12("BLOCKER_TARGET_MISMATCH", "\uD604\uC7AC \uC138\uC158\uC5D0 \uC5F0\uACB0\uB41C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC640 \uCC28\uB2E8 \uB300\uC0C1\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
+      }
+      const blocker = {
+        schemaVersion: 1,
+        sessionId: args2.sessionId,
+        stage: args2.stage,
+        resumeAction: args2.resumeAction,
+        summary: args2.blockerSummary,
+        question: args2.question,
+        context: args2.context ?? [],
+        options: args2.options ?? [],
+        blockedNextStep: args2.blockedNextStep,
+        createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      const result2 = await blockRoadmapNodeForHuman(args2.workspace, args2.id, blocker);
+      if (!result2.ok) return errorResult12(result2.error, result2.message);
+      session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };
+      await saveSession(session);
+      return ok4({ awaitingHumanDecision: true, node: await getRoadmapNode(args2.workspace, args2.id) });
+    }
+    case "resume_with_decision": {
+      if (!args2.id || !args2.sessionId) return errorResult12("ID_AND_SESSION_REQUIRED", "\uC7AC\uAC1C\uC5D0\uB294 id\uC640 sessionId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!await sessionExists(args2.sessionId)) return errorResult12("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
+      const session = await loadSession(args2.sessionId);
+      const gate = session.data.humanDecisionGate;
+      if (!gate || gate.workspace !== args2.workspace || gate.taskId !== args2.id) {
+        return errorResult12("HUMAN_DECISION_GATE_NOT_FOUND", "\uD604\uC7AC \uC138\uC158\uC5D0\uB294 \uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC5D0 \uB300\uD55C \uC0AC\uB78C \uACB0\uC815 \uCC28\uB2E8\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+      }
+      const remote = await fetchBlockerDecision(args2.workspace, args2.id);
+      if (!remote?.decision?.response) return errorResult12("HUMAN_DECISION_PENDING", "\uB300\uC2DC\uBCF4\uB4DC\uC5D0 \uC544\uC9C1 \uC0AC\uC6A9\uC790 \uACB0\uC815\uC774 \uC800\uC7A5\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.");
+      if (remote.blocker?.sessionId && remote.blocker.sessionId !== args2.sessionId) {
+        return errorResult12("BLOCKER_SESSION_MISMATCH", "\uB300\uC2DC\uBCF4\uB4DC \uCC28\uB2E8\uC744 \uB9CC\uB4E0 \uC138\uC158\uACFC \uD604\uC7AC \uC138\uC158\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
+      }
+      const result2 = await resumeRoadmapNodeWithDecision(args2.workspace, args2.id, args2.sessionId, remote.decision.response);
+      if (!result2.ok) return errorResult12(result2.error, result2.message);
+      session.data.humanDecisionGate = void 0;
+      session.data.commitContext = {
+        ...typeof session.data.commitContext === "object" && session.data.commitContext !== null ? session.data.commitContext : {},
+        lastHumanDecision: remote.decision
+      };
+      await saveSession(session);
+      return ok4({
+        decision: remote.decision,
+        resumeAction: remote.blocker?.resumeAction,
+        node: await getRoadmapNode(args2.workspace, args2.id)
+      });
     }
     case "get": {
       if (!args2.id) return errorResult12("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
@@ -32593,7 +32701,7 @@ server.registerTool(
   "sugo_roadmap",
   {
     title: "Roadmap DAG (\xA78.5) \u2014 dependsOn-ordered task/requirement graph",
-    description: "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uBCC4 \uB85C\uB4DC\uB9F5 DAG\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/remove/status/link/unlink/group/backfill/list/ready/get/mark_req/pull_ordering). link/unlink\uB294 task \uB808\uBCA8 \uB178\uB4DC\uB07C\uB9AC\uB9CC \uD5C8\uC6A9\uB418\uACE0(fail-closed), \uC0AC\uC774\uD074\uC744 \uB9CC\uB4DC\uB294 \uBCC0\uACBD\uC740 \uC804\uBD80 \uAC70\uBD80\uB41C\uB2E4. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)\uC740 \uC774 \uB3C4\uAD6C\uC758 mark_req\uB85C \uC9C1\uC811 \uC644\uB8CC\uD560 \uC218 \uC5C6\uB2E4 \u2014 sugo_plan(review_done)\uC774 \uC131\uACF5\uD560 \uB54C\uB9CC \uC790\uB3D9 \uC644\uB8CC\uB41C\uB2E4. pull_ordering\uC740 \uB300\uC2DC\uBCF4\uB4DC\uC5D0\uC11C dependsOn/manual_status/pos_x/pos_y(\uB300\uC2DC\uBCF4\uB4DC\uAC00 SOT\uC778 \uD544\uB4DC\uB9CC)\uB97C \uAC00\uC838\uC640 \uBCD1\uD569\uD55C\uB2E4(\xA78.5/\xA77.2).",
+    description: "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uBCC4 \uB85C\uB4DC\uB9F5 DAG\uC640 \uC0AC\uB78C \uACB0\uC815 \uCC28\uB2E8\uC744 \uAD00\uB9AC\uD55C\uB2E4(add/remove/status/link/unlink/group/backfill/list/ready/get/mark_req/pull_ordering/block_for_human/resume_with_decision). \uC0AC\uB78C \uCC28\uB2E8\uC740 \uAD6C\uC870\uD654\uB41C \uC0C1\uD669\xB7\uC9C8\uBB38\xB7\uC120\uD0DD\uC9C0\xB7\uC601\uD5A5\uC744 \uAE30\uB85D\uD558\uACE0, Dashboard \uACB0\uC815\uC744 \uAC19\uC740 sessionId\uC5D0\uC11C \uAC80\uC99D\uD574\uC57C\uB9CC \uC7AC\uAC1C\uD55C\uB2E4. link/unlink\uB294 task \uB808\uBCA8 \uB178\uB4DC\uB07C\uB9AC\uB9CC \uD5C8\uC6A9\uB418\uACE0(fail-closed), \uC0AC\uC774\uD074\uC744 \uB9CC\uB4DC\uB294 \uBCC0\uACBD\uC740 \uC804\uBD80 \uAC70\uBD80\uB41C\uB2E4. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)\uC740 \uC774 \uB3C4\uAD6C\uC758 mark_req\uB85C \uC9C1\uC811 \uC644\uB8CC\uD560 \uC218 \uC5C6\uB2E4 \u2014 sugo_plan(review_done)\uC774 \uC131\uACF5\uD560 \uB54C\uB9CC \uC790\uB3D9 \uC644\uB8CC\uB41C\uB2E4. pull_ordering\uC740 \uB300\uC2DC\uBCF4\uB4DC\uC5D0\uC11C dependsOn/manual_status/pos_x/pos_y(\uB300\uC2DC\uBCF4\uB4DC\uAC00 SOT\uC778 \uD544\uB4DC\uB9CC)\uB97C \uAC00\uC838\uC640 \uBCD1\uD569\uD55C\uB2E4(\xA78.5/\xA77.2).",
     inputSchema: sugoRoadmapInputSchema
   },
   handleSugoRoadmap

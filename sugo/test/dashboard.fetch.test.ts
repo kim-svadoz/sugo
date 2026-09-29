@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { fetchCalibratedRatio, fetchCheckpointSync, fetchRoadmapOrdering, fetchUnlinkedSpecDrafts } from "../src/dashboard/fetch.js";
+import { fetchBlockerDecision, fetchCalibratedRatio, fetchCheckpointSync, fetchRoadmapOrdering, fetchUnlinkedSpecDrafts } from "../src/dashboard/fetch.js";
 
 let fakeHome: string;
 
@@ -39,7 +39,10 @@ describe("fetch 계열 — 실제 서버 응답", () => {
     // 대시보드의 실제 응답 형태를 그대로 모사한다(roadmap URL, {nodes}/{checkpoints} 래핑, depends_on
     // snake_case) — seam 어댑터가 이걸 plugin의 camelCase로 정확히 번역하는지 검증한다.
     server = createServer((req, res) => {
-      if (req.url?.startsWith("/api/workspaces/ws1/roadmap")) {
+      if (req.url?.startsWith("/api/workspaces/ws1/roadmap/blocker-decision")) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "blocked", blocker: { sessionId: "plan-1", resumeAction: "code_done" }, decision: { response: "팀장 승인", answered_by: "u1", answered_at: "2026-09-29" } }));
+      } else if (req.url?.startsWith("/api/workspaces/ws1/roadmap")) {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
@@ -91,6 +94,13 @@ describe("fetch 계열 — 실제 서버 응답", () => {
 
   it("fetchCalibratedRatio가 숫자를 가져온다", async () => {
     expect(await fetchCalibratedRatio()).toBe(2.8);
+  });
+
+  it("사람 결정과 원래 session/action을 함께 가져온다", async () => {
+    expect(await fetchBlockerDecision("ws1", "A")).toMatchObject({
+      blocker: { sessionId: "plan-1", resumeAction: "code_done" },
+      decision: { response: "팀장 승인" },
+    });
   });
 
   it("서버가 죽어있으면(타임아웃/에러) null로 안전 폴백한다(블로킹이어도 예외를 던지지 않음)", async () => {

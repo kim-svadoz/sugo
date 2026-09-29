@@ -11,6 +11,7 @@ import {
   ensureCheckpointExpiresAtColumn,
   ensureRoadmapDueDateColumn,
   ensureRoadmapManualTitleColumn,
+  ensureRoadmapBlockerDecisionColumns,
   ensureRoadmapProjectPathColumn,
 } from "../services/syncService.js";
 import { config } from "../config.js";
@@ -30,6 +31,7 @@ export async function initDb(): Promise<DbClient> {
     await ensureRoadmapDueDateColumn(client);
     await ensureRoadmapProjectPathColumn(client);
     await ensureRoadmapManualTitleColumn(client);
+    await ensureRoadmapBlockerDecisionColumns(client);
     await ensureCheckpointCreatedAtColumn(client);
     await ensureCheckpointExpiresAtColumn(client);
     await pruneExpiredActivityEvents(client);
@@ -46,6 +48,7 @@ export async function initDb(): Promise<DbClient> {
   await ensureRoadmapDueDateColumn(client);
   await ensureRoadmapProjectPathColumn(client);
   await ensureRoadmapManualTitleColumn(client);
+  await ensureRoadmapBlockerDecisionColumns(client);
   await ensureCheckpointCreatedAtColumn(client);
   await ensureCheckpointExpiresAtColumn(client);
   await pruneExpiredActivityEvents(client);

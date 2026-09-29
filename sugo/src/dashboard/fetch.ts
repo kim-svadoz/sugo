@@ -48,6 +48,23 @@ interface RoadmapNodeResponse {
   pos_y?: number | null;
 }
 
+export interface RemoteBlockerDecision {
+  status: string;
+  blocker: { sessionId?: string; resumeAction?: string } | null;
+  decision: { response: string; answered_by: string; answered_at: string } | null;
+}
+
+export async function fetchBlockerDecision(workspaceName: string, nodeId: string): Promise<RemoteBlockerDecision | null> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return null;
+  const qs = new URLSearchParams({ nodeId });
+  if (config.userId) qs.set("userId", config.userId);
+  return fetchJson<RemoteBlockerDecision>(
+    `/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap/blocker-decision?${qs.toString()}`,
+    8000,
+  );
+}
+
 export interface UnlinkedSpecDraft {
   id: string;
   title: string;

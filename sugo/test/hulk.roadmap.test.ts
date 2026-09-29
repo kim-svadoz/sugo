@@ -18,6 +18,8 @@ import {
   removeRoadmapNode,
   unlinkRoadmapNodes,
   updateRoadmapNodeStatus,
+  blockRoadmapNodeForHuman,
+  resumeRoadmapNodeWithDecision,
   upsertRoadmapNodes,
 } from "../src/hulk/roadmap.js";
 import { promotePrdRequirements, reqConfirmId } from "../src/hulk/roadmapReq.js";
@@ -27,6 +29,31 @@ let fakeHome: string;
 beforeEach(() => {
   fakeHome = mkdtempSync(join(tmpdir(), "sugo-roadmap-home-"));
   process.env.SUGO_HOME_OVERRIDE = fakeHome;
+});
+
+describe("human decision blocker", () => {
+  it("records enough context to answer and only resumes the same session with a real decision", async () => {
+    await addRoadmapNode("ws1", { id: "T-1", title: "환불 승인", level: "task", status: "in_progress", dependsOn: [] });
+    await blockRoadmapNodeForHuman("ws1", "T-1", {
+      schemaVersion: 1, sessionId: "plan-1", stage: "CODE_RUNNING", resumeAction: "code_done",
+      summary: "고액 환불 승인 정책 구현 중", question: "100만원 이상 환불은 누가 승인합니까?",
+      context: ["현재 기준이 없어 권한 검사를 구현할 수 없습니다."],
+      options: [{ id: "team-lead", label: "팀장 승인", impact: "승인 지연은 늘지만 통제가 강화됩니다." }],
+      blockedNextStep: "승인 정책 구현", createdAt: "2026-09-29T00:00:00.000Z",
+    });
+    const blocked = await getRoadmapNode("ws1", "T-1");
+    expect(blocked).toMatchObject({ status: "blocked", note: "100만원 이상 환불은 누가 승인합니까?", humanBlocker: { sessionId: "plan-1" } });
+
+    const wrong = await resumeRoadmapNodeWithDecision("ws1", "T-1", "plan-other", "팀장 승인");
+    expect(wrong.ok).toBe(false);
+    expect((await getRoadmapNode("ws1", "T-1"))?.status).toBe("blocked");
+
+    const resumed = await resumeRoadmapNodeWithDecision("ws1", "T-1", "plan-1", "팀장 승인");
+    expect(resumed.ok).toBe(true);
+    const afterResume = await getRoadmapNode("ws1", "T-1");
+    expect(afterResume?.status).toBe("in_progress");
+    expect(afterResume?.humanBlocker).toBeUndefined();
+  });
 });
 
 afterEach(() => {

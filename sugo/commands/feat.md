@@ -78,3 +78,19 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`를 
 - 게이트가 막으면 에러코드를 사용자에게 그대로 전하고 실제로 충족시킨다. 라벨로 도망치지 않는다.
 - 환경 부재는 명시 라벨로만 쓴다. 남용하면 완료등급이 강등된다(§4.6).
 - 진행 상황은 대시보드로 논블로킹 미러링된다. 대시보드가 다운돼도 파이프라인은 막히지 않는다.
+
+### 사람 판단 차단 계약
+
+- 테스트 실패, analyze/review 미통과, 실행증거 부족처럼 에이전트가 직접 해결할 수 있는 게이트는
+  대시보드에 사람 차단으로 올리지 않는다. 원인을 고치고 같은 action을 다시 시도한다.
+- PRD 이후 구현·검증 중 정책/범위/권한처럼 **사람만 결정할 수 있는 미확정 사항**이 발견되면
+  임의로 추측하지 않는다. 현재 `hulkWorkspace`와 `hulkTaskId`를 사용해
+  `sugo_roadmap(action:"block_for_human", workspace, id, sessionId, stage, resumeAction,
+  blockerSummary, question, context, options, blockedNextStep)`를 호출한다. 질문 한 줄만 보내지 말고
+  무엇을 하다 멈췄는지, 판단 근거, 선택지별 영향을 모두 채운 뒤 작업을 멈춘다.
+- 사용자가 Dashboard에서 결정을 저장하고 복사한 재개 프롬프트로 돌아오면 반드시 먼저
+  `sugo_roadmap(action:"resume_with_decision", workspace, id, sessionId)`을 호출한다. 서버가 돌려준
+  결정과 `resumeAction`을 확인한 뒤 **같은 `sugo_plan` sessionId**에서 해당 action을 다시 진행한다.
+  대시보드에 답이 없거나 sessionId가 다르면 재개하지 않는다.
+- start~clarify처럼 아직 Task가 생기기 전이고 현재 대화에서 즉시 답할 수 있는 질문은 기존처럼
+  대화에서 묻는다. 존재하지 않는 임시 Task를 만들어 Dashboard 차단처럼 꾸미지 않는다.

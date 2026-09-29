@@ -8,6 +8,8 @@ import { checkExistingPr, createPr, type PrRef, type PrScope } from "../api/prAp
 import { inspectorProgress, type InspectorProgress } from "./roadmap/inspectorModel.js";
 import { fileViewerPresentation } from "./roadmap/fileViewerModel.js";
 import { workResultPresentation } from "./roadmap/workResultPresentation.js";
+import { taskGuidance } from "../lib/taskGuidance.js";
+import { BlockerDecisionPanel } from "./BlockerDecisionPanel.js";
 
 type Tab = "progress" | "summary" | "files";
 
@@ -111,6 +113,7 @@ export function SubtaskPanel({
             progress={progress}
             progressItems={progressItems}
             onChanged={onChanged}
+            onReviewResult={() => setTab("summary")}
           />
         )}
         {tab === "summary" && <SummaryTab workResult={workResult} />}
@@ -136,6 +139,7 @@ function ProgressTab({
   progress,
   progressItems,
   onChanged,
+  onReviewResult,
 }: {
   userId: string | null;
   workspace: string;
@@ -144,6 +148,7 @@ function ProgressTab({
   progress: InspectorProgress;
   progressItems: RoadmapNode[];
   onChanged: () => void;
+  onReviewResult: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [patchCopied, setPatchCopied] = useState(false);
@@ -181,9 +186,56 @@ function ProgressTab({
 
   const duration = durationLabel(workResult?.startedAt, workResult?.endedAt);
   const reportView = workResult ? workResultPresentation(workResult.report ?? workResult) : null;
+  const guidance = node.level === "task" ? taskGuidance(node) : null;
+
+  function handlePrimaryAction() {
+    if (!guidance) return;
+    if (guidance.action === "review_result") onReviewResult();
+    if (guidance.action === "continue_patch") handleCopyPatchBridge();
+    if (guidance.action === "create_pr") setShowPr(true);
+  }
+
+  const actionable = guidance && ["review_result", "continue_patch", "create_pr"].includes(guidance.action);
 
   return (
     <div className="space-y-4">
+      {guidance && (
+        <section className={`overflow-hidden rounded-xl border ${guidance.kind === "blocked" ? "border-orange-400/40 bg-orange-400/[0.06]" : guidance.kind === "attention" ? "border-amber-400/35 bg-amber-400/[0.05]" : "border-cyan-400/30 bg-cyan-400/[0.045]"}`}>
+          <div className="border-b border-white/[0.07] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]">지금 할 일</div>
+          <div className="space-y-2.5 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[10px] text-[var(--color-text-dim)]">현재 단계</div>
+                <div className="mt-0.5 text-sm font-semibold text-[var(--color-text-bright)]">{guidance.currentStage}</div>
+              </div>
+              <span className={`shrink-0 rounded-full px-2 py-1 font-mono text-[9.5px] font-semibold ${guidance.kind === "blocked" ? "bg-orange-400/15 text-orange-300" : guidance.kind === "attention" ? "bg-amber-400/15 text-amber-300" : "bg-cyan-400/10 text-cyan-300"}`}>{guidance.label}</span>
+            </div>
+            <p className="text-[11.5px] leading-relaxed text-[var(--color-text-muted)]">{guidance.reason}</p>
+            <div className="rounded-lg border border-white/[0.07] bg-black/15 px-2.5 py-2">
+              <div className="text-[9.5px] text-[var(--color-text-dim)]">다음 단계</div>
+              <div className="mt-0.5 text-[12.5px] font-semibold text-cyan-200">{guidance.nextAction}</div>
+            </div>
+            {guidance.kind === "blocked" && <p className="text-[10.5px] leading-relaxed text-orange-200/70">{guidance.blockedNextStep}</p>}
+            {actionable && (
+              <button type="button" onClick={handlePrimaryAction} className="w-full rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 py-2 text-sm font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/20">
+                {guidance.nextAction}
+              </button>
+            )}
+          </div>
+        </section>
+      )}
+      {node.level === "task" && (node.manual_status ?? node.status) === "blocked" && (
+        <BlockerDecisionPanel
+          userId={userId}
+          workspace={workspace}
+          taskId={node.id}
+          taskTitle={node.title}
+          question={node.note}
+          decision={node.blocker_decision}
+          blocker={node.human_blocker}
+          onSaved={onChanged}
+        />
+      )}
       <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-3">
         <div className="flex items-end justify-between">
           <div>

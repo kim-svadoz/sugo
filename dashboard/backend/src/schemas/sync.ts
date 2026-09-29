@@ -103,6 +103,7 @@ const roadmapNodeSchema = z.object({
   specPath: z.string().nullish(),
   workResult: z.unknown().optional(),
   lineage: z.unknown().optional(),
+  humanBlocker: z.unknown().optional(),
 });
 
 export const roadmapSyncSchema = z.object({

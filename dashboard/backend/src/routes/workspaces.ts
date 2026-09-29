@@ -11,6 +11,7 @@ import {
   linkSchema,
   manualStatusClearSchema,
   manualStatusSchema,
+  blockerDecisionSchema,
   parentSchema,
   positionSchema,
   quickSpecSchema,
@@ -28,6 +29,7 @@ import {
   deleteCheckpointRow,
   deleteRoadmapGroup,
   getCheckpointSync,
+  getBlockerDecision,
   getCheckpoints,
   getDecisions,
   getHistory,
@@ -51,6 +53,7 @@ import {
   setRoadmapSpecDocument,
   setRoadmapParent,
   setRoadmapPosition,
+  saveBlockerDecision,
   unlinkRoadmapNodes,
   updateCheckpoint,
   updateRoadmapSpecDocument,
@@ -272,6 +275,27 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     if (!userId) return;
     await setManualStatus(db, userId, req.params.name, req.body.nodeId, req.body.status, userId);
     res.json({ ok: true });
+  });
+
+  router.post("/:name/roadmap/blocker-decision", validateBody(blockerDecisionSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const result = await saveBlockerDecision(db, userId, req.params.name, req.body.nodeId, req.body.response);
+    if (!result.ok) {
+      res.status(result.errorCode === "NODE_NOT_FOUND" ? 404 : 409).json(result);
+      return;
+    }
+    res.json(result);
+  });
+
+  router.get("/:name/roadmap/blocker-decision", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+    if (!nodeId) return void res.status(400).json({ errorCode: "NODE_ID_REQUIRED" });
+    const result = await getBlockerDecision(db, userId, req.params.name, nodeId);
+    if (!result) return void res.status(404).json({ errorCode: "NODE_NOT_FOUND" });
+    res.json(result);
   });
 
   router.delete("/:name/roadmap/manual-status", validateBody(manualStatusClearSchema), async (req, res) => {

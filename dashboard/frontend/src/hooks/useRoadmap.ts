@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiJson, withUserId } from "../api/client.js";
+import type { HumanBlocker } from "../api/roadmapMutationsApi.js";
 import { useAuth } from "../auth/AuthContext.js";
 
 const POLL_MS = 4000;
@@ -85,6 +86,8 @@ export interface RoadmapNode {
   /** 마지막 변경 시각(UTC). "⏳ 확인 필요/정체 의심" stale 판정에 쓴다. */
   updated_at?: string | null;
   synced_at?: string | null;
+  blocker_decision?: { response: string; answered_by: string; answered_at: string } | null;
+  human_blocker?: HumanBlocker | null;
 }
 
 /** 설계안 RoadmapTab이 받는 봉투. counts/issues는 **서버가** 센다(전체 기준 진척). */

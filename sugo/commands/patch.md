@@ -20,3 +20,6 @@ argument-hint: <work-result.md 경로> [seed 지시]
 
 ## 규율
 - work-result 경로가 없으면 이건 patch가 아니다 → `/sugo:feat`(신규)로 진행한다(100% 하위호환).
+- 구현·검증 중 사람의 정책 판단이 필요하면 `/sugo:feat`의 **사람 판단 차단 계약**을 그대로 따른다.
+  patch도 원본 Task와 현재 `sessionId`로 `block_for_human`을 기록하고, Dashboard 결정은
+  `resume_with_decision`으로 검증한 뒤 같은 patch 세션의 `resumeAction`으로 돌아간다.

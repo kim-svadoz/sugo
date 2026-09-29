@@ -41,7 +41,15 @@ describe("schedule presentation", () => {
 
   it("RUN이 시작된 모든 SPEC 카드에 진행중 단계를 표시한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain('scheduleSpecStage(s) === "in_progress"');
+    expect(source).toContain("const guidance = scheduleAttention(spec)");
     expect(source).toContain('<SpecStageBadge spec={s} compact />');
+  });
+
+  it("Schedule 카드 클릭은 상세만 열고 Canvas는 명시적 버튼으로만 연다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    const openSpecBody = source.match(/function openSpec\(spec: ScheduledSpec\) \{([\s\S]*?)\n  \}/)?.[1] ?? "";
+    expect(openSpecBody).toContain("setSelected(spec)");
+    expect(openSpecBody).not.toContain("setCanvasOverlay");
+    expect(source).toContain('onClick={() => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.focus_task_id ?? selected.id })}');
   });
 });

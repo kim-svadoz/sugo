@@ -158,6 +158,36 @@ export async function ensureRoadmapManualTitleColumn(db: DbClient): Promise<bool
   }
 }
 
+let blockerDecisionColsState: boolean | null = null;
+
+export function __resetBlockerDecisionColsState(): void {
+  blockerDecisionColsState = null;
+}
+
+/** 사람의 차단 해소 결정은 대시보드 소유 오버레이다. 플러그인 재동기화가 지우지 않는다. */
+export async function ensureRoadmapBlockerDecisionColumns(db: DbClient): Promise<boolean> {
+  if (blockerDecisionColsState !== null) return blockerDecisionColsState;
+  const columns = [
+    ["blocker_response", "TEXT NULL"],
+    ["blocker_answered_by", "VARCHAR(191) NULL"],
+    ["blocker_answered_at", "TIMESTAMP NULL"],
+    ["blocker_context", "TEXT NULL"],
+  ] as const;
+  try {
+    for (const [name, definition] of columns) {
+      try {
+        await db.query(`SELECT ${name} FROM sugo_roadmap_nodes LIMIT 1`);
+      } catch {
+        await db.exec(`ALTER TABLE sugo_roadmap_nodes ADD COLUMN ${name} ${definition}`);
+      }
+    }
+    blockerDecisionColsState = true;
+  } catch {
+    blockerDecisionColsState = false;
+  }
+  return blockerDecisionColsState;
+}
+
 /**
  * §3.3 `sugo_checkpoints.created_at` 자가보강 — 같은 패턴. 체크포인트 목록을 페이지네이션할 때
  * "처음 만든 순"으로 정렬할 기준이 필요해서 추가했다(2026-09-23). CLI 재동기화(`syncCheckpoint`)는
@@ -528,6 +558,7 @@ export interface RoadmapNodeInput {
   specPath?: string | null;
   workResult?: unknown;
   lineage?: unknown;
+  humanBlocker?: unknown;
 }
 
 interface RoadmapRow {
@@ -577,12 +608,13 @@ export async function syncRoadmap(
 
     const workResultJson = node.workResult !== undefined ? JSON.stringify(node.workResult) : undefined;
     const lineageJson = node.lineage !== undefined ? JSON.stringify(node.lineage) : undefined;
+    const blockerContextJson = node.humanBlocker !== undefined ? JSON.stringify(node.humanBlocker) : null;
 
     if (!existing) {
       await db.exec(
         `INSERT INTO sugo_roadmap_nodes
-         (id, user_id, workspace_name, title, level, status, depends_on, parent, ref, note, spec_path, work_result, lineage, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+         (id, user_id, workspace_name, title, level, status, depends_on, parent, ref, note, spec_path, work_result, lineage, blocker_context, synced_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         [
           node.id,
           userId,
@@ -597,13 +629,14 @@ export async function syncRoadmap(
           node.specPath ?? null,
           workResultJson ?? null,
           lineageJson ?? null,
+          blockerContextJson,
         ]
       );
       continue;
     }
 
-    const sets = ["title = ?", "level = ?", "status = ?", "parent = ?", "ref = ?", "note = ?", "spec_path = ?", "synced_at = CURRENT_TIMESTAMP"];
-    const params: unknown[] = [node.title, node.level, node.status, node.parent ?? null, node.ref ?? null, node.note ?? null, node.specPath ?? null];
+    const sets = ["title = ?", "level = ?", "status = ?", "parent = ?", "ref = ?", "note = ?", "spec_path = ?", "blocker_context = ?", "synced_at = CURRENT_TIMESTAMP"];
+    const params: unknown[] = [node.title, node.level, node.status, node.parent ?? null, node.ref ?? null, node.note ?? null, node.specPath ?? null, blockerContextJson];
     if (workResultJson !== undefined) {
       sets.push("work_result = ?");
       params.push(workResultJson);

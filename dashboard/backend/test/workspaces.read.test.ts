@@ -59,6 +59,15 @@ describe("GET /api/workspaces", () => {
     expect(ws.projects).toEqual([{ project_path: "C:/a", git_synced: 1 }]);
     expect(ws.taskCounts).toEqual({ pending: 0, in_progress: 1, done: 1, archived: 0 });
     expect(ws.roadmap).toEqual({ total: 2, done: 1, active: 1 });
+    expect(ws.attentionCount).toBe(0);
+  });
+
+  it("차단·정체·미검증 완료 Task를 확인 필요 건수로 집계한다", async () => {
+    const { app, db, auth } = await seededApp();
+    await db.exec("UPDATE sugo_roadmap_nodes SET status = 'blocked', note = '정책 확인 대기' WHERE id = 't1'");
+    await db.exec("UPDATE sugo_roadmap_nodes SET work_result = ? WHERE id = 't2'", [JSON.stringify({ report: { completionGrade: "unverified" } })]);
+    const res = await request(app).get("/api/workspaces").set("Authorization", auth).expect(200);
+    expect(res.body.workspaces[0]).toMatchObject({ attentionCount: 2, attentionLabel: "차단 1건" });
   });
 
   it("401s without an API token", async () => {

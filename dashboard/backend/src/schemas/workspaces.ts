@@ -44,6 +44,11 @@ export const manualStatusClearSchema = z.object({
   nodeId: z.string().min(1),
 });
 
+export const blockerDecisionSchema = z.object({
+  nodeId: z.string().min(1),
+  response: z.string().trim().min(1).max(10_000),
+});
+
 export const positionSchema = z.object({
   nodeId: z.string().min(1),
   x: z.number(),

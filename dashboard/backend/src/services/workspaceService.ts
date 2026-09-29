@@ -42,8 +42,49 @@ export interface WorkspaceSummary {
   decisionCount: number;
   checkpointCount: number;
   projectCount: number;
+  /** 사람이 지금 확인해야 할 task(차단·6h 정체·미검증 완료)의 합계와 최우선 요약. */
+  attentionCount: number;
+  attentionLabel: string | null;
   /** `Recently Active (30d)` 필터의 기준. 활동이 전혀 없으면 null. */
   lastActivityAt: string | null;
+}
+
+const STALE_ATTENTION_HOURS = 6;
+
+function timestampMs(value: string | null): number | null {
+  if (!value) return null;
+  const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
+  const parsed = Date.parse(normalized);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function isStale(status: string, updatedAt: string | null, now = Date.now()): boolean {
+  const updated = timestampMs(updatedAt);
+  return status === "in_progress" && updated !== null && now - updated >= STALE_ATTENTION_HOURS * 3_600_000;
+}
+
+function isUnverified(workResult: unknown): boolean {
+  const parsed = parseMaybeJson<{ report?: { completionGrade?: string } } | null>(workResult, null);
+  return parsed?.report?.completionGrade === "unverified";
+}
+
+async function workspaceAttention(db: DbClient, userId: string, workspaceName: string): Promise<{ count: number; label: string | null }> {
+  const rows = await db.query<{ status: string; manual_status: string | null; updated_at: string | null; work_result: unknown }>(
+    "SELECT status, manual_status, updated_at, work_result FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND level = 'task'",
+    [userId, workspaceName]
+  );
+  let blocked = 0;
+  let stale = 0;
+  let unverified = 0;
+  for (const row of rows) {
+    const status = row.manual_status ?? row.status;
+    if (status === "blocked") blocked++;
+    else if (isStale(status, row.updated_at)) stale++;
+    if (status === "done" && isUnverified(row.work_result)) unverified++;
+  }
+  const count = blocked + stale + unverified;
+  const label = blocked > 0 ? `차단 ${blocked}건` : stale > 0 ? `확인 필요 ${stale}건` : unverified > 0 ? `미검증 ${unverified}건` : null;
+  return { count, label };
 }
 
 // 설계안: roadmap count는 level='task'만, active는 COALESCE(manual_status,status)='in_progress'.
@@ -97,6 +138,7 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
     );
     const tasks = await taskCounts(db, userId, ws.name);
     const roadmap = await roadmapCounts(db, userId, ws.name);
+    const attention = await workspaceAttention(db, userId, ws.name);
     const [historyCount, decisionCount, checkpointCount] = await Promise.all([
       countRows(db, "sugo_history", userId, ws.name),
       countRows(db, "sugo_decisions", userId, ws.name),
@@ -116,6 +158,8 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
       decisionCount,
       checkpointCount,
       projectCount: projects.length,
+      attentionCount: attention.count,
+      attentionLabel: attention.label,
       lastActivityAt: await lastActivityAt(db, userId, ws.name),
     });
   }
@@ -279,15 +323,22 @@ export interface RoadmapNodeRow {
   pos_y: number | null;
   due_date: string | null;
   manual_title: string | null;
+  blocker_response: string | null;
+  blocker_answered_by: string | null;
+  blocker_answered_at: string | null;
+  blocker_context: unknown;
+  human_blocker?: unknown;
+  blocker_decision?: { response: string; answered_by: string; answered_at: string } | null;
 }
 
 // Row shape as it comes off the wire - JSON columns are driver-dependent
 // (string on sqlite, already-parsed on mysql2); normalized below so the API
 // response is identical regardless of DB_DRIVER.
-type RoadmapNodeDbRow = Omit<RoadmapNodeRow, "depends_on" | "work_result" | "lineage"> & {
+type RoadmapNodeDbRow = Omit<RoadmapNodeRow, "depends_on" | "work_result" | "lineage" | "blocker_context"> & {
   depends_on: unknown;
   work_result: unknown;
   lineage: unknown;
+  blocker_context: unknown;
 };
 
 export async function getRoadmap(db: DbClient, userId: string, workspaceName: string): Promise<RoadmapNodeRow[]> {
@@ -304,7 +355,57 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
     depends_on: parseJsonArray(r.depends_on),
     work_result: parseMaybeJson<unknown>(r.work_result, null),
     lineage: parseMaybeJson<unknown>(r.lineage, null),
+    human_blocker: parseMaybeJson<unknown>(r.blocker_context, null),
+    blocker_decision: r.blocker_response && r.blocker_answered_by && r.blocker_answered_at
+      ? { response: r.blocker_response, answered_by: r.blocker_answered_by, answered_at: r.blocker_answered_at }
+      : null,
   }));
+}
+
+export type SaveBlockerDecisionResult =
+  | { ok: true; decision: { response: string; answered_by: string; answered_at: string } }
+  | { ok: false; errorCode: "NODE_NOT_FOUND" | "TASK_NOT_BLOCKED"; message: string };
+
+export async function saveBlockerDecision(
+  db: DbClient, userId: string, workspaceName: string, nodeId: string, response: string
+): Promise<SaveBlockerDecisionResult> {
+  const rows = await db.query<{ level: string; status: string; manual_status: string | null }>(
+    "SELECT level, status, manual_status FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [userId, workspaceName, nodeId]
+  );
+  const node = rows[0];
+  if (!node || node.level !== "task") return { ok: false, errorCode: "NODE_NOT_FOUND", message: "Task를 찾을 수 없습니다." };
+  if ((node.manual_status ?? node.status) !== "blocked") {
+    return { ok: false, errorCode: "TASK_NOT_BLOCKED", message: "차단된 Task에만 결정을 저장할 수 있습니다." };
+  }
+  await db.exec(
+    "UPDATE sugo_roadmap_nodes SET blocker_response = ?, blocker_answered_by = ?, blocker_answered_at = CURRENT_TIMESTAMP WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [response.trim(), userId, userId, workspaceName, nodeId]
+  );
+  const saved = (await db.query<{ blocker_response: string; blocker_answered_by: string; blocker_answered_at: string }>(
+    "SELECT blocker_response, blocker_answered_by, blocker_answered_at FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [userId, workspaceName, nodeId]
+  ))[0];
+  return { ok: true, decision: { response: saved.blocker_response, answered_by: saved.blocker_answered_by, answered_at: saved.blocker_answered_at } };
+}
+
+export async function getBlockerDecision(db: DbClient, userId: string, workspaceName: string, nodeId: string) {
+  const rows = await db.query<{
+    level: string; status: string; manual_status: string | null; blocker_response: string | null;
+    blocker_answered_by: string | null; blocker_answered_at: string | null; blocker_context: unknown;
+  }>(
+    "SELECT level, status, manual_status, blocker_response, blocker_answered_by, blocker_answered_at, blocker_context FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [userId, workspaceName, nodeId]
+  );
+  const node = rows[0];
+  if (!node || node.level !== "task") return null;
+  return {
+    status: node.manual_status ?? node.status,
+    blocker: parseMaybeJson<unknown>(node.blocker_context, null),
+    decision: node.blocker_response && node.blocker_answered_by && node.blocker_answered_at
+      ? { response: node.blocker_response, answered_by: node.blocker_answered_by, answered_at: node.blocker_answered_at }
+      : null,
+  };
 }
 
 // ---- §7B Schedule 탭 (due_date는 dashboard 전용, CLI/플러그인 sync가 안 건드림) ----
@@ -318,18 +419,78 @@ export interface ScheduledSpecRow {
   project_path: string | null;
   spec_path: string | null;
   has_run: boolean;
+  task_count: number;
+  done_task_count: number;
+  active_task_count: number;
+  blocked_task_count: number;
+  stale_task_count: number;
+  unverified_task_count: number;
+  focus_task_id: string | null;
+  focus_task_title: string | null;
+  focus_task_status: string | null;
+  focus_task_note: string | null;
+  focus_task_updated_at: string | null;
+  focus_task_work_result: unknown;
+  focus_task_blocker_decision: { response: string; answered_by: string; answered_at: string } | null;
+  focus_task_human_blocker: unknown;
 }
 
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
  * 프론트가 due_date 유무로 캘린더/"기한 미정" 리스트를 나눈다(§7B). */
 export async function getScheduledSpecs(db: DbClient, userId: string): Promise<ScheduledSpecRow[]> {
-  const rows = await db.query<Omit<ScheduledSpecRow, "has_run"> & { manual_title: string | null; has_run: number | boolean }>(
-    "SELECT n.id, n.workspace_name, n.title, n.manual_title, n.status, n.due_date, n.project_path, n.spec_path, EXISTS (SELECT 1 FROM sugo_roadmap_nodes child WHERE child.user_id = n.user_id AND child.workspace_name = n.workspace_name AND child.parent = n.id AND child.level = 'workstream') AS has_run FROM sugo_roadmap_nodes n WHERE n.user_id = ? AND n.level = 'spec' ORDER BY (n.due_date IS NULL), n.due_date, n.id",
+  const rows = await db.query<Omit<ScheduledSpecRow, "has_run" | "task_count" | "done_task_count" | "active_task_count" | "blocked_task_count" | "stale_task_count" | "unverified_task_count" | "focus_task_id" | "focus_task_title" | "focus_task_status" | "focus_task_note" | "focus_task_updated_at" | "focus_task_work_result" | "focus_task_blocker_decision" | "focus_task_human_blocker"> & { manual_title: string | null; has_run: number | boolean }>(
+    "SELECT n.id, n.workspace_name, n.title, n.manual_title, COALESCE(n.manual_status, n.status) AS status, n.due_date, n.project_path, n.spec_path, EXISTS (SELECT 1 FROM sugo_roadmap_nodes child WHERE child.user_id = n.user_id AND child.workspace_name = n.workspace_name AND child.parent = n.id AND child.level = 'workstream') AS has_run FROM sugo_roadmap_nodes n WHERE n.user_id = ? AND n.level = 'spec' ORDER BY (n.due_date IS NULL), n.due_date, n.id",
     [userId]
   );
+  const tasks = await db.query<{
+    workspace_name: string; spec_id: string; id: string; title: string; status: string; manual_status: string | null;
+    note: string | null; updated_at: string | null; work_result: unknown; blocker_response: string | null; blocker_answered_by: string | null; blocker_answered_at: string | null; blocker_context: unknown;
+  }>(
+    `SELECT task.workspace_name, run.parent AS spec_id, task.id, task.title, task.status, task.manual_status,
+            task.note, task.updated_at, task.work_result, task.blocker_response, task.blocker_answered_by, task.blocker_answered_at, task.blocker_context
+       FROM sugo_roadmap_nodes task
+       JOIN sugo_roadmap_nodes run
+         ON run.user_id = task.user_id AND run.workspace_name = task.workspace_name AND run.id = task.parent
+      WHERE task.user_id = ? AND task.level = 'task' AND run.level = 'workstream'`,
+    [userId]
+  );
+  const tasksBySpec = new Map<string, typeof tasks>();
+  for (const task of tasks) {
+    const key = `${task.workspace_name}\0${task.spec_id}`;
+    tasksBySpec.set(key, [...(tasksBySpec.get(key) ?? []), task]);
+  }
   // manual_title(Canvas 이름 변경)이 있으면 그게 유효 제목 — CLI가 push한 title은 다음
   // sync에서 되돌아오므로 화면 표시에는 절대 그대로 쓰지 않는다.
-  return rows.map(({ manual_title, has_run, ...row }) => ({ ...row, has_run: Boolean(has_run), title: manual_title ?? row.title }));
+  return rows.map(({ manual_title, has_run, ...row }) => {
+    const children = tasksBySpec.get(`${row.workspace_name}\0${row.id}`) ?? [];
+    const enriched = children.map((task) => {
+      const status = task.manual_status ?? task.status;
+      return { ...task, status, stale: isStale(status, task.updated_at), unverified: status === "done" && isUnverified(task.work_result) };
+    });
+    const priority = (task: (typeof enriched)[number]) => task.status === "blocked" ? 0 : task.stale ? 1 : task.status === "in_progress" ? 2 : task.unverified ? 3 : task.status === "pending" ? 4 : 5;
+    const focus = [...enriched].sort((a, b) => priority(a) - priority(b) || a.id.localeCompare(b.id))[0] ?? null;
+    return {
+      ...row,
+      has_run: Boolean(has_run),
+      title: manual_title ?? row.title,
+      task_count: enriched.length,
+      done_task_count: enriched.filter((task) => task.status === "done").length,
+      active_task_count: enriched.filter((task) => task.status === "in_progress").length,
+      blocked_task_count: enriched.filter((task) => task.status === "blocked").length,
+      stale_task_count: enriched.filter((task) => task.stale).length,
+      unverified_task_count: enriched.filter((task) => task.unverified).length,
+      focus_task_id: focus?.id ?? null,
+      focus_task_title: focus?.title ?? null,
+      focus_task_status: focus?.status ?? null,
+      focus_task_note: focus?.note ?? null,
+      focus_task_updated_at: focus?.updated_at ?? null,
+      focus_task_work_result: parseMaybeJson(focus?.work_result, null),
+      focus_task_blocker_decision: focus?.blocker_response && focus.blocker_answered_by && focus.blocker_answered_at
+        ? { response: focus.blocker_response, answered_by: focus.blocker_answered_by, answered_at: focus.blocker_answered_at }
+        : null,
+      focus_task_human_blocker: parseMaybeJson(focus?.blocker_context, null),
+    };
+  });
 }
 
 export type SetSpecDocumentResult =

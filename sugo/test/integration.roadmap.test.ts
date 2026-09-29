@@ -147,6 +147,25 @@ describe("§8.5 review_done → REQ/REQ-CONFIRM 자동완료", () => {
 });
 
 describe("§8.5 sugo_roadmap — link/unlink/group/backfill (task 레벨 관리)", () => {
+  it("사람만 답할 수 있는 판단은 구조화된 차단으로 기록한다", async () => {
+    const { sessionId, taskId } = await toReadyAndBeyond(HEADING_PRD);
+    const blocked = await call(handleSugoRoadmap, {
+      action: "block_for_human", workspace: "team-a", id: taskId, sessionId,
+      stage: "CODE_RUNNING", resumeAction: "code_done", blockerSummary: "승인 정책 구현 중",
+      question: "승인자는 누구입니까?", context: ["SPEC에 역할이 없습니다."],
+      options: [{ id: "lead", label: "팀장", impact: "통제가 강화됩니다." }], blockedNextStep: "권한 검사 구현",
+    });
+    expect(blocked.isError).toBe(false);
+    expect(blocked.data.node).toMatchObject({ status: "blocked", humanBlocker: { sessionId, resumeAction: "code_done" } });
+
+    const forbidden = await call(handleSugoPlan, { action: "code_start", sessionId });
+    expect(forbidden.isError).toBe(true);
+    expect(forbidden.data.errorCode).toBe("HUMAN_DECISION_REQUIRED");
+
+    const status = await call(handleSugoPlan, { action: "status", sessionId });
+    expect(status.isError).toBe(false);
+  });
+
   it("link는 task 레벨끼리만 허용하고 사이클을 거부한다", async () => {
     await call(handleSugoRoadmap, { action: "add", workspace: "team-b", id: "A", title: "A", level: "task" });
     await call(handleSugoRoadmap, { action: "add", workspace: "team-b", id: "B", title: "B", level: "task" });

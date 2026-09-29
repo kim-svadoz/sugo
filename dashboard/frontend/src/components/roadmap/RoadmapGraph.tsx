@@ -38,6 +38,8 @@ import { measuredLeafHeight, TASK_CARD_HEIGHT } from "./layoutSizing.js";
 import { buildLineageChains, lineageSelection, type LineageChainItem } from "./lineageModel.js";
 import { FileViewerSheet } from "./FileViewerSheet.js";
 import { filesForRoadmapScope } from "./fileViewerModel.js";
+import { taskGuidance } from "../../lib/taskGuidance.js";
+import { focusPathIds } from "./focusPath.js";
 
 /** 설계안 치수 상수 — 그대로. */
 const NODE_W = 236;
@@ -256,6 +258,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   // stale 2(심각) = 테두리까지 ALERT로 바뀌고 "확인 필요", stale 1 = "정체 의심"(흐린 주황).
   const stale = data.stale == null ? 0 : data.stale >= STALE_ALERT_H ? 2 : 1;
+  const guidance = taskGuidance(n);
 
   return (
     <div className="group/card" style={{ width: NODE_W, opacity: dim ? 0.55 : 1 }}>
@@ -319,17 +322,21 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
             <div className="mt-1.5 text-[9px] text-[var(--color-text-muted)]">subtask 없음</div>
           )}
 
-          {stale > 0 && (
-            <div
-              className={cn(
-                "mt-1.5 flex items-center gap-1 text-[9px]",
-                stale === 2 ? "font-semibold text-orange-400" : "text-orange-300/70",
-              )}
-              title={`진행중으로 표시된 지 ${Math.floor(data.stale ?? 0)}시간째 변화가 없습니다`}
-            >
-              ⏳ {stale === 2 ? "확인 필요" : "정체 의심"} · {Math.floor(data.stale ?? 0)}h
+          <div className="mt-2 space-y-1 border-t border-white/[0.06] pt-1.5 text-[9.5px] leading-tight">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="shrink-0 text-[var(--color-text-dim)]">현재</span>
+              <span className={cn("truncate font-semibold", guidance.kind === "blocked" ? "text-orange-300" : guidance.kind === "attention" ? "text-amber-300" : "text-slate-300")}>
+                {guidance.currentStage}
+              </span>
             </div>
-          )}
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="shrink-0 text-[var(--color-text-dim)]">다음</span>
+              <span className="truncate text-cyan-300/85">{guidance.nextAction}</span>
+            </div>
+            {(guidance.kind === "blocked" || guidance.kind === "attention") && (
+              <div className="truncate text-orange-300/75" title={guidance.reason}>⚠ {guidance.reason}</div>
+            )}
+          </div>
         </div>
       </div>
       <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 9, height: 9, right: -5 }} />
@@ -1101,14 +1108,15 @@ export function RoadmapGraph({
     setSeeded(true);
   }, [nodes, seeded]);
 
-  // §7B Schedule 탭에서 특정 spec으로 딥링크했을 때 그 노드로 팬 + 선택한다.
+  // Schedule의 명시적 "Canvas에서 보기"는 정확한 Task와 그 부모 RUN/SPEC을 펼친다.
   useEffect(() => {
     if (!focusNodeId || focusedOnce) return;
-    if (!nodes.some((n) => n.id === focusNodeId)) return;
+    const target = nodes.find((n) => n.id === focusNodeId);
+    if (!target) return;
+    const path = focusPathIds(nodes, focusNodeId);
+    setExpanded((prev) => new Set([...prev, ...path]));
     setSelectedId(focusNodeId);
-    rf.fitView({ nodes: [{ id: focusNodeId }], padding: 0.4, maxZoom: 1, duration: 400 });
-    setFocusedOnce(true);
-  }, [focusNodeId, focusedOnce, nodes, rf]);
+  }, [focusNodeId, focusedOnce, nodes]);
 
   useEffect(() => {
     const ids = buildLineageChains(nodes).map((chain) => chain.id);
@@ -1208,6 +1216,11 @@ export function RoadmapGraph({
    * **1촌(직접 의존·피의존)과 포함관계 부모**로만 한정한다.
    */
   const focus = useMemo(() => {
+    if (focusNodeId && nodes.some((node) => node.id === focusNodeId)) {
+      const nodeSet = focusPathIds(nodes, focusNodeId);
+      const edgeSet = new Set(base.rfEdges.filter((edge) => nodeSet.has(edge.source) && nodeSet.has(edge.target)).map((edge) => edge.id));
+      return { nodeSet, edgeSet };
+    }
     if (!shouldApplyHoverFocus(hovered, selectedId)) return null;
     const nodeSet = new Set<string>([hovered!]);
     for (const e of base.rfEdges) {
@@ -1251,7 +1264,7 @@ export function RoadmapGraph({
       if (nodeSet.has(e.source) && nodeSet.has(e.target)) edgeSet.add(e.id);
     }
     return { nodeSet, edgeSet };
-  }, [hovered, selectedId, base.rfNodes, base.rfEdges]);
+  }, [focusNodeId, nodes, hovered, selectedId, base.rfNodes, base.rfEdges]);
 
   const run = useCallback(
     async (fn: () => Promise<unknown>) => {
@@ -1345,6 +1358,12 @@ export function RoadmapGraph({
     // base.rfNodes는 매 렌더 새 배열이라 의존성에 넣으면 무한 재심기다 — 서명으로만 본다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layoutSig, setFlowNodes]);
+
+  useEffect(() => {
+    if (!focusNodeId || focusedOnce || !flowNodes.some((node) => node.id === focusNodeId)) return;
+    rf.fitView({ nodes: [{ id: focusNodeId }], padding: 0.55, maxZoom: 1, duration: 400 });
+    setFocusedOnce(true);
+  }, [focusNodeId, focusedOnce, flowNodes, rf]);
 
   /**
    * 포커스 흐림·드롭 타깃은 **위치를 건드리지 않는** 덧칠이라 렌더 시점에 얹는다.

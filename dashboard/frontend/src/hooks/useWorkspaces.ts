@@ -15,6 +15,8 @@ export interface WorkspaceSummary {
   decisionCount: number;
   checkpointCount: number;
   projectCount: number;
+  attentionCount: number;
+  attentionLabel: string | null;
   lastActivityAt: string | null;
 }
 

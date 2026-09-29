@@ -8,7 +8,7 @@ import { seedUserToken } from "./testAuth.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
-async function appWithNodes(nodes: Array<{ id: string; level: string; status?: string; dependsOn?: string[] }>) {
+async function appWithNodes(nodes: Array<{ id: string; level: string; status?: string; dependsOn?: string[]; note?: string; humanBlocker?: unknown }>) {
   const db = createSqliteClient();
   await db.execScript(schema);
   const { app } = await createApp(db);
@@ -18,10 +18,48 @@ async function appWithNodes(nodes: Array<{ id: string; level: string; status?: s
     .send({
       userId: "u1",
       workspaceName: "ws1",
-      nodes: nodes.map((n) => ({ id: n.id, title: n.id, level: n.level, status: n.status ?? "pending", dependsOn: n.dependsOn })),
+      nodes: nodes.map((n) => ({ id: n.id, title: n.id, level: n.level, status: n.status ?? "pending", dependsOn: n.dependsOn, note: n.note, humanBlocker: n.humanBlocker })),
     });
   return { app, db, auth };
 }
+
+describe("blocked task decision", () => {
+  it("stores a human decision without pretending that the task resumed, and survives plugin re-sync", async () => {
+    const humanBlocker = { schemaVersion: 1, sessionId: "plan-1", stage: "CODE_RUNNING", resumeAction: "code_done", summary: "승인 정책 구현 중", question: "승인자는?", context: ["기준 없음"], options: [{ id: "lead", label: "팀장", impact: "통제 강화" }], blockedNextStep: "권한 검사", createdAt: "2026-09-29" };
+    const { app, auth } = await appWithNodes([{ id: "blocked-task", level: "task", status: "blocked", note: "승인 금액 기준 미확정", humanBlocker }]);
+
+    await request(app)
+      .post("/api/workspaces/ws1/roadmap/blocker-decision")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "blocked-task", response: "100만원 이상은 팀장 승인을 받는다." })
+      .expect(200);
+
+    await request(app)
+      .post("/api/sync/roadmap").set("Authorization", auth)
+      .send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "blocked-task", title: "blocked-task", level: "task", status: "blocked", note: "승인 금액 기준 미확정", humanBlocker }] })
+      .expect(200);
+
+    const roadmap = await request(app).get("/api/workspaces/ws1/roadmap").query({ userId: "u1" }).set("Authorization", auth).expect(200);
+    const task = roadmap.body.nodes.find((node: { id: string }) => node.id === "blocked-task");
+    expect(task.status).toBe("blocked");
+    expect(task.manual_status).toBeNull();
+    expect(task.blocker_decision).toMatchObject({ response: "100만원 이상은 팀장 승인을 받는다.", answered_by: "u1" });
+    expect(task.human_blocker).toMatchObject({ sessionId: "plan-1", resumeAction: "code_done" });
+
+    const decision = await request(app).get("/api/workspaces/ws1/roadmap/blocker-decision").query({ userId: "u1", nodeId: "blocked-task" }).set("Authorization", auth).expect(200);
+    expect(decision.body).toMatchObject({ blocker: { sessionId: "plan-1" }, decision: { response: "100만원 이상은 팀장 승인을 받는다." } });
+  });
+
+  it("rejects decisions for a task that is not blocked", async () => {
+    const { app, auth } = await appWithNodes([{ id: "active-task", level: "task", status: "in_progress" }]);
+    const response = await request(app)
+      .post("/api/workspaces/ws1/roadmap/blocker-decision")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "active-task", response: "결정" })
+      .expect(409);
+    expect(response.body.errorCode).toBe("TASK_NOT_BLOCKED");
+  });
+});
 
 describe("POST/DELETE /api/workspaces/:name/roadmap/link — fail-closed", () => {
   it("links two task nodes", async () => {

@@ -237,8 +237,9 @@ server.registerTool(
   {
     title: "Roadmap DAG (§8.5) — dependsOn-ordered task/requirement graph",
     description:
-      "워크스페이스별 로드맵 DAG를 관리한다(add/remove/status/link/unlink/group/backfill/list/ready/get/" +
-      "mark_req/pull_ordering). link/unlink는 task 레벨 노드끼리만 허용되고(fail-closed), 사이클을 " +
+      "워크스페이스별 로드맵 DAG와 사람 결정 차단을 관리한다(add/remove/status/link/unlink/group/backfill/list/ready/get/" +
+      "mark_req/pull_ordering/block_for_human/resume_with_decision). 사람 차단은 구조화된 상황·질문·선택지·영향을 기록하고, " +
+      "Dashboard 결정을 같은 sessionId에서 검증해야만 재개한다. link/unlink는 task 레벨 노드끼리만 허용되고(fail-closed), 사이클을 " +
       "만드는 변경은 전부 거부된다. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)은 이 도구의 mark_req로 " +
       "직접 완료할 수 없다 — sugo_plan(review_done)이 성공할 때만 자동 완료된다. pull_ordering은 " +
       "대시보드에서 dependsOn/manual_status/pos_x/pos_y(대시보드가 SOT인 필드만)를 가져와 병합한다(§8.5/§7.2).",

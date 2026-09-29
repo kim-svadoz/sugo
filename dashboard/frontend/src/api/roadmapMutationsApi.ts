@@ -86,6 +86,41 @@ export interface ScheduledSpec {
   project_path: string | null;
   spec_path: string | null;
   has_run: boolean;
+  task_count?: number;
+  done_task_count?: number;
+  active_task_count?: number;
+  blocked_task_count?: number;
+  stale_task_count?: number;
+  unverified_task_count?: number;
+  focus_task_id?: string | null;
+  focus_task_title?: string | null;
+  focus_task_status?: string | null;
+  focus_task_note?: string | null;
+  focus_task_updated_at?: string | null;
+  focus_task_work_result?: unknown;
+  focus_task_blocker_decision?: BlockerDecision | null;
+  focus_task_human_blocker?: HumanBlocker | null;
+}
+
+export interface BlockerDecision { response: string; answered_by: string; answered_at: string }
+export interface HumanBlocker {
+  schemaVersion: 1;
+  sessionId: string;
+  stage: string;
+  resumeAction: string;
+  summary: string;
+  question: string;
+  context: string[];
+  options: Array<{ id: string; label: string; impact: string }>;
+  blockedNextStep: string;
+  createdAt: string;
+}
+
+export function saveBlockerDecision(userId: string, workspace: string, nodeId: string, response: string) {
+  return apiJson<{ ok: true; decision: BlockerDecision }>(withUserId(path(workspace, "/blocker-decision"), userId), {
+    method: "POST",
+    body: JSON.stringify({ nodeId, response }),
+  });
 }
 
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드를 가로질러 가져온다.

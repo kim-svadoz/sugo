@@ -141,6 +141,7 @@ export interface RoadmapNode {
   ref?: string;
   specPath?: string;
   note?: string;
+  humanBlocker?: HumanBlocker;
   result?: RoadmapNodeResult;
   workResult?: RoadmapWorkResult;
   lineage?: RoadmapLineageEntry[];
@@ -150,6 +151,25 @@ export interface RoadmapNode {
   manual_status?: string;
   pos_x?: number;
   pos_y?: number;
+}
+
+export interface HumanBlockerOption {
+  id: string;
+  label: string;
+  impact: string;
+}
+
+export interface HumanBlocker {
+  schemaVersion: 1;
+  sessionId: string;
+  stage: string;
+  resumeAction: string;
+  summary: string;
+  question: string;
+  context: string[];
+  options: HumanBlockerOption[];
+  blockedNextStep: string;
+  createdAt: string;
 }
 
 export interface RoadmapFile {

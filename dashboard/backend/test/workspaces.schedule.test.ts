@@ -60,6 +60,31 @@ describe("GET /api/workspaces/schedule — §7B 워크스페이스 비종속 집
     });
   });
 
+  it("SPEC 하위 Task 상태와 우선 확인할 Task를 함께 반환한다", async () => {
+    const ctx = await bootApp();
+    await request(ctx.app).post("/api/sync/roadmap").set("Authorization", ctx.auth).send({
+      userId: "u1",
+      workspaceName: "ws1",
+      nodes: [
+        { id: "spec1", title: "SPEC", level: "spec", status: "in_progress" },
+        { id: "run1", title: "RUN", level: "workstream", status: "in_progress", parent: "spec1" },
+        { id: "task-running", title: "진행 작업", level: "task", status: "in_progress", parent: "run1" },
+        { id: "task-blocked", title: "차단 작업", level: "task", status: "blocked", parent: "run1", note: "정책 확인 대기" },
+      ],
+    }).expect(200);
+
+    const res = await request(ctx.app).get("/api/workspaces/schedule").set("Authorization", ctx.auth).expect(200);
+    expect(res.body.specs[0]).toMatchObject({
+      task_count: 2,
+      active_task_count: 1,
+      blocked_task_count: 1,
+      focus_task_id: "task-blocked",
+      focus_task_title: "차단 작업",
+      focus_task_status: "blocked",
+      focus_task_note: "정책 확인 대기",
+    });
+  });
+
   it("다른 유저의 spec은 섞이지 않는다", async () => {
     const ctx = await bootApp();
     await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }], ctx);

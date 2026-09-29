@@ -227,7 +227,21 @@ const roadmap: RoadmapNode[] = [
   { id: "demo-webhook::REQ-001", title: "지수 백오프 재시도", level: "subtask", status: "done", dependsOn: [], parent: "demo-webhook" },
   { id: "demo-webhook::REQ-002", title: "DLQ 운영 도구", level: "subtask", status: "in_progress", dependsOn: ["demo-webhook::REQ-001"], parent: "demo-webhook" },
   { id: "demo-run-refund", title: "환불 승인 정책", level: "workstream", status: "blocked", dependsOn: [], parent: "demo-spec-ops", note: "법무 정책 확인 대기" },
-  { id: "demo-refund", title: "고액 환불 이중 승인", level: "task", status: "blocked", dependsOn: [], parent: "demo-run-refund", ref: "demo-refund", note: "승인 금액 기준 미확정" },
+  { id: "demo-refund", title: "고액 환불 이중 승인", level: "task", status: "blocked", dependsOn: [], parent: "demo-run-refund", ref: "demo-refund", note: "100만원 이상 환불 요청의 최종 승인자를 선택해주세요.", humanBlocker: {
+    schemaVersion: 1,
+    sessionId: "plan-demo-refund",
+    stage: "CODE_RUNNING",
+    resumeAction: "code_done",
+    summary: "환불 승인 정책의 권한 검사를 구현하던 중 승인 주체가 SPEC에 없어 작업을 멈췄습니다.",
+    question: "100만원 이상 환불 요청의 최종 승인자를 선택해주세요.",
+    context: ["현재 일반 환불은 담당자가 승인합니다.", "고액 환불은 감사 로그와 이중 승인이 필요하지만 승인 역할이 정해지지 않았습니다.", "이 결정은 API 권한 검사와 승인 알림 대상에 함께 반영됩니다."],
+    options: [
+      { id: "team-lead", label: "팀장 승인", impact: "처리는 빠르지만 조직별 팀장 권한 매핑이 필요합니다." },
+      { id: "finance", label: "재무 담당자 승인", impact: "금액 통제는 강해지지만 처리 대기 시간이 늘어날 수 있습니다." },
+    ],
+    blockedNextStep: "승인 역할에 따른 API 권한 검사와 알림 대상 구현",
+    createdAt: now,
+  } },
 ];
 
 const checkpoint: Checkpoint = { id: "CP-DEMO-001", title: "결제 멱등성 재발방지", category: "payment", applies_to: ["checkout-service"], checklist: ["모든 승인 API가 멱등키를 받는지 확인", "동시 요청 통합 테스트가 있는지 확인"], created_at: now };

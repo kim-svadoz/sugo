@@ -684,9 +684,13 @@ export function Sessions() {
                       )}
                     </div>
                   )}
-                  {activeOf(ws) && (
+                  {(ws.attentionCount ?? 0) > 0 ? (
+                    <div className="mt-2 flex items-center gap-1.5 font-mono text-xs font-semibold text-amber-300" title={`${ws.attentionCount}개의 Task에 사람의 확인이 필요합니다`}>
+                      <AlertTriangle size={13} /> {ws.attentionLabel ?? `확인 필요 ${ws.attentionCount}건`}
+                    </div>
+                  ) : activeOf(ws) ? (
                     <div className="mt-2 font-mono text-xs text-cyan-400">{ws.activeTaskCount} task 진행 중</div>
-                  )}
+                  ) : null}
                 </div>
                 <div className="mt-4 flex items-center justify-end gap-2 border-t border-[var(--color-border)] pt-3">
                   <div className="flex items-center gap-1.5">

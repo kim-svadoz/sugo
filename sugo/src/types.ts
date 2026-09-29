@@ -60,6 +60,7 @@ import type { TestEvidenceRecord, TestPassedState } from "./testEvidence.js";
 import type { JiraOption, SpecOracleState } from "./gates.js";
 import type { UnlinkedSpecDraft } from "./dashboard/fetch.js";
 import type { WorkResultReport } from "./workResultReport.js";
+import type { HumanBlocker } from "./hulk/types.js";
 
 /** code_done 시점에 전달된 게이트 관련 플래그를 감사(audit) 목적으로 보존한다 — 자기보고 값이지만
  * 최소한 "무엇을 주장했는지"는 세션 파일에 남겨 나중에 review 단계에서 대조할 수 있게 한다. */
@@ -127,6 +128,17 @@ export interface SessionData {
   /** §8 HULK 연동: prd 성공 시 프로젝트가 워크스페이스에 속해 있으면 자동 생성된 Task를 가리킨다. */
   hulkWorkspace?: string;
   hulkTaskId?: string;
+  /** 사람의 정책·범위·승인 결정이 필요한 동안 파이프라인 전이를 막는 하드 잠금. */
+  humanDecisionGate?: {
+    workspace: string;
+    taskId: string;
+    blocker: HumanBlocker;
+    resolvedDecision?: {
+      response: string;
+      answeredAt?: string;
+      answeredBy?: string;
+    };
+  };
   /** Dashboard에서 먼저 만든 SPEC 초안에 이번 feat를 연결할지 사용자가 고른 결과. */
   specDraftSelection?: {
     candidates: UnlinkedSpecDraft[];

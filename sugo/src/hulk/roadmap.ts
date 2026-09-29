@@ -5,7 +5,7 @@ import { fetchRoadmapOrdering } from "../dashboard/fetch.js";
 import { syncRoadmapLink, syncRoadmapSnapshot, unsyncRoadmapLink } from "../dashboard/sync.js";
 import { mergeRoadmapOwnership, readySet, topoSort } from "./roadmapGraph.js";
 import { roadmapFilePath, roadmapLockPath, workspaceDir } from "../work/storage.js";
-import type { RoadmapFile, RoadmapLineageEntry, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus, RoadmapWorkResult, Task } from "./types.js";
+import type { HumanBlocker, RoadmapFile, RoadmapLineageEntry, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus, RoadmapWorkResult, Task } from "./types.js";
 import { requirementNodeId } from "./roadmapReq.js";
 
 async function readRoadmapFile(workspace: string): Promise<RoadmapFile> {
@@ -29,7 +29,7 @@ async function writeRoadmapFile(workspace: string, file: RoadmapFile): Promise<v
 
 export interface RoadmapMutationResult {
   ok: boolean;
-  error?: "DUPLICATE_ID" | "CYCLE" | "NODE_NOT_FOUND" | "LINK_REQUIRES_TASK_LEVEL" | "REQ_CONFIRM_AGENT_FORBIDDEN";
+  error?: "DUPLICATE_ID" | "CYCLE" | "NODE_NOT_FOUND" | "LINK_REQUIRES_TASK_LEVEL" | "REQ_CONFIRM_AGENT_FORBIDDEN" | "BLOCKER_SESSION_MISMATCH" | "DECISION_REQUIRED";
   message?: string;
 }
 
@@ -262,6 +262,43 @@ export async function updateRoadmapNodeStatus(
     if (!node) return { ok: false, error: "NODE_NOT_FOUND", message: `노드를 찾을 수 없습니다: ${id}` };
     node.status = status;
     if (result) node.result = result;
+    await writeRoadmapFile(workspace, file);
+    return { ok: true };
+  });
+}
+
+export async function blockRoadmapNodeForHuman(
+  workspace: string,
+  id: string,
+  blocker: HumanBlocker,
+): Promise<RoadmapMutationResult> {
+  return withRoadmap(workspace, async (file) => {
+    const node = file.nodes.find((candidate) => candidate.id === id);
+    if (!node || node.level !== "task") return { ok: false, error: "NODE_NOT_FOUND", message: `Task를 찾을 수 없습니다: ${id}` };
+    node.status = "blocked";
+    node.note = blocker.question;
+    node.humanBlocker = blocker;
+    await writeRoadmapFile(workspace, file);
+    return { ok: true };
+  });
+}
+
+export async function resumeRoadmapNodeWithDecision(
+  workspace: string,
+  id: string,
+  sessionId: string,
+  decision: string,
+): Promise<RoadmapMutationResult> {
+  return withRoadmap(workspace, async (file) => {
+    const node = file.nodes.find((candidate) => candidate.id === id);
+    if (!node || node.level !== "task") return { ok: false, error: "NODE_NOT_FOUND", message: `Task를 찾을 수 없습니다: ${id}` };
+    if (!node.humanBlocker || node.humanBlocker.sessionId !== sessionId) {
+      return { ok: false, error: "BLOCKER_SESSION_MISMATCH", message: "현재 차단을 만든 세션과 재개 세션이 다릅니다." };
+    }
+    if (!decision.trim()) return { ok: false, error: "DECISION_REQUIRED", message: "저장된 사용자 결정이 필요합니다." };
+    node.status = "in_progress";
+    node.note = `사용자 결정 반영: ${decision.trim()}`;
+    delete node.humanBlocker;
     await writeRoadmapFile(workspace, file);
     return { ok: true };
   });

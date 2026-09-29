@@ -206,6 +206,13 @@ export async function handleSugoPlan(rawArgs: unknown) {
       return errorResult("SESSION_NOT_FOUND", `세션을 찾을 수 없습니다: ${sessionId}`);
     }
     existing = await loadSession(sessionId);
+    if (existing.data.humanDecisionGate && action !== "status" && action !== "cancel") {
+      const gate = existing.data.humanDecisionGate;
+      return errorResult(
+        "HUMAN_DECISION_REQUIRED",
+        `사람의 결정이 필요한 차단 상태입니다. Dashboard에서 답변한 뒤 sugo_roadmap(action:\"resume_with_decision\", workspace:\"${gate.workspace}\", id:\"${gate.taskId}\", sessionId:\"${existing.id}\")로 재개하세요. 질문: ${gate.blocker.question}`,
+      );
+    }
   }
 
   // ── §4.6 label-guard: 이번 호출에서 실제로 "우회 라벨"이 쓰였다면 여기 누적했다가, 상태전이가

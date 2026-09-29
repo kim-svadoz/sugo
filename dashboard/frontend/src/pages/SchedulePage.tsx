@@ -1,21 +1,23 @@
 import { useEffect, useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, LockKeyhole, Pencil, Shield, Workflow } from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, Pencil, Shield, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
-import { daySpecOverflowClass, isManualSpec, scheduleCardStyle } from "../lib/schedulePresentation.js";
+import { daySpecOverflowClass, scheduleCardStyle } from "../lib/schedulePresentation.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
 import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
 import { DatePicker } from "../components/DatePicker.js";
 import { SpecDocumentPanel } from "../components/SpecDocumentPanel.js";
+import { BlockerDecisionPanel } from "../components/BlockerDecisionPanel.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { createQuickSpec, renameRoadmapNode, setDueDate, setProject, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
+import { scheduleAttention } from "../lib/taskGuidance.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -30,10 +32,17 @@ function isOpenStatus(spec: ScheduledSpec): boolean {
 }
 
 function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compact?: boolean }) {
-  const stage = scheduleSpecStage(spec);
-  const label = stage === "draft" ? "초안" : stage === "ready" ? "SPEC 준비" : "진행중";
-  const tone = stage === "draft" ? "bg-slate-500/15 text-slate-400" : stage === "ready" ? "bg-emerald-500/15 text-emerald-300" : "bg-cyan-500/15 text-cyan-300";
-  return <span className={cn("shrink-0 rounded px-1 py-0.5 font-semibold", compact ? "text-[8px]" : "text-[9px]", tone)}>{label}</span>;
+  const guidance = scheduleAttention(spec);
+  const tone = ({
+    draft: "bg-slate-500/15 text-slate-400",
+    ready: "bg-emerald-500/15 text-emerald-300",
+    in_progress: "bg-cyan-500/15 text-cyan-300",
+    blocked: "bg-orange-500/20 text-orange-300",
+    attention: "bg-amber-500/20 text-amber-300",
+    done: "bg-emerald-500/15 text-emerald-300",
+    pending: "bg-slate-500/15 text-slate-400",
+  } as const)[guidance.kind];
+  return <span className={cn("shrink-0 rounded px-1 py-0.5 font-semibold", compact ? "text-[8px]" : "text-[9px]", tone)}>{guidance.label}</span>;
 }
 
 export function SchedulePage() {
@@ -52,6 +61,10 @@ export function SchedulePage() {
   const [addDate, setAddDate] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  function openSpec(spec: ScheduledSpec) {
+    setSelected(spec);
+  }
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
   // 안 보이면 사용자가 헷갈린다(2026-09-23 사용자 피드백). 성공 시 잠깐 "저장됨"을 보여준다.
   const [savedFlash, setSavedFlash] = useState<"due" | "project" | "title" | null>(null);
@@ -280,13 +293,13 @@ export function SchedulePage() {
                     draggable
                     onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
                     onDragEnd={() => setDragOverKey(null)}
-                    onClick={() => setSelected(s)}
+                    onClick={() => openSpec(s)}
                     style={style}
                     className="flex min-h-9 cursor-grab items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[12px] font-medium text-slate-100 transition-colors hover:brightness-110 active:cursor-grabbing"
                     title="캘린더 날짜 칸으로 끌어놓으면 마감일이 지정됩니다"
                   >
                     <span className="min-w-0 flex-1 truncate">{s.title}</span>
-                    {isManualSpec(s.id) && <SpecStageBadge spec={s} />}
+                    <SpecStageBadge spec={s} />
                   </div>
                 );
               })}
@@ -308,7 +321,7 @@ export function SchedulePage() {
                     onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
                     onDragEnd={() => setDragOverKey(null)}
                     onClick={() => {
-                      setSelected(s);
+                      openSpec(s);
                       jumpToDate(s.due_date!);
                     }}
                     style={style}
@@ -318,7 +331,7 @@ export function SchedulePage() {
                     <span className="min-w-0 truncate">{s.title}</span>
                     <span className="flex flex-wrap items-center gap-1">
                       <span className="font-mono text-[9.5px] text-slate-300/80">{s.due_date}</span>
-                      {isManualSpec(s.id) && <SpecStageBadge spec={s} />}
+                      <SpecStageBadge spec={s} />
                       {overdue && (
                         <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-rose-300">
                           <AlertTriangle size={9} /> 기한 초과
@@ -413,17 +426,13 @@ export function SchedulePage() {
                           draggable
                           onDragStart={(e: DragEvent<HTMLButtonElement>) => startSpecDrag(e, s)}
                           onDragEnd={() => setDragOverKey(null)}
-                          onClick={() => setSelected(s)}
+                          onClick={() => openSpec(s)}
                           style={style}
                           className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[filter,background-color] hover:brightness-110 active:cursor-grabbing"
                           title={`${s.workspace_name} · ${s.title}`}
                         >
                           <span className="min-w-0 flex-1 truncate font-medium text-slate-100">{s.title}</span>
-                          {s.status === "done" && (
-                            <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">완료</span>
-                          )}
-                          {s.status !== "done" && scheduleSpecStage(s) === "in_progress" && <SpecStageBadge spec={s} compact />}
-                          {isManualSpec(s.id) && !overdue && s.status !== "done" && scheduleSpecStage(s) !== "in_progress" && <SpecStageBadge spec={s} compact />}
+                          <SpecStageBadge spec={s} compact />
                           {overdue && (
                             <span className="flex shrink-0 items-center gap-0.5 rounded bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
                               <AlertTriangle size={9} /> 기한 초과
@@ -489,14 +498,32 @@ export function SchedulePage() {
                 </div>
               )}
               <p className="font-mono text-[11px] text-[var(--color-text-dim)]">{selected.id} · {selected.status}</p>
-              {scheduleSpecStage(selected) === "draft" && (
-                <div className="mt-3 rounded-lg border border-slate-500/25 bg-slate-500/10 px-3 py-2 text-[11.5px] leading-relaxed text-slate-300">
-                  <strong className="font-semibold text-slate-100">SPEC 일정 초안</strong> · 작성 도구를 선택해 구현 가능한 SPEC으로 완성하세요.
-                </div>
-              )}
-              {scheduleSpecStage(selected) === "ready" && (
-                <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11.5px] text-emerald-200">
-                  <strong>SPEC 작성 완료</strong> · feat 시작 전까지 다시 작성할 수 있습니다.
+              {(() => {
+                const guidance = scheduleAttention(selected);
+                return (
+                  <div className="mt-3 rounded-lg border border-cyan-500/25 bg-cyan-500/[0.07] px-3 py-2.5 text-[11.5px] leading-relaxed text-slate-200">
+                    <div className="flex items-center justify-between gap-2">
+                      <strong className="font-semibold text-white">{guidance.currentStage}</strong>
+                      <SpecStageBadge spec={selected} />
+                    </div>
+                    <p className="mt-1 text-slate-300">{guidance.reason}</p>
+                    <p className="mt-2"><span className="text-cyan-300">다음 행동</span> · {guidance.nextAction}</p>
+                    <p className="mt-0.5 text-[10.5px] text-slate-400">{guidance.blockedNextStep}</p>
+                  </div>
+                );
+              })()}
+              {selected.focus_task_id && selected.focus_task_status === "blocked" && (
+                <div className="mt-3">
+                  <BlockerDecisionPanel
+                    userId={userId}
+                    workspace={selected.workspace_name}
+                    taskId={selected.focus_task_id}
+                    taskTitle={selected.focus_task_title ?? selected.focus_task_id}
+                    question={selected.focus_task_note ?? null}
+                    decision={selected.focus_task_blocker_decision}
+                    blocker={selected.focus_task_human_blocker}
+                    onSaved={refetch}
+                  />
                 </div>
               )}
               {selected.spec_path && (
@@ -506,12 +533,6 @@ export function SchedulePage() {
                 >
                   <BookOpen size={14} /> {selected.has_run ? "SPEC 원문 읽기" : "SPEC 원문 읽기·수정"}
                 </button>
-              )}
-              {scheduleSpecStage(selected) === "in_progress" && (
-                <div className="mt-3 flex items-start gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-[11.5px] text-cyan-100">
-                  <LockKeyhole size={14} className="mt-0.5 shrink-0" />
-                  <span><strong>진행 중 · SPEC 잠금</strong><br />연결된 feat가 있어 원문과 대상 프로젝트는 바꿀 수 없습니다. 이후 변경은 Canvas의 Patch로 이어가세요.</span>
-                </div>
               )}
             </div>
 
@@ -585,7 +606,7 @@ export function SchedulePage() {
                 <Shield size={14} /> {selected.project_path ? `${repoName(selected.project_path)} 프로젝트 체크포인트` : "프로젝트 지정 후 체크포인트 관리"}
               </button>
               <button
-                onClick={() => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.id })}
+                onClick={() => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.focus_task_id ?? selected.id })}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-[12.5px] font-semibold text-cyan-300 hover:bg-cyan-500/20"
               >
                 <Workflow size={14} /> Canvas에서 보기

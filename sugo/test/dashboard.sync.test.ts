@@ -115,6 +115,20 @@ describe("syncRoadmapSnapshot", () => {
     expect(body.workspaceName).toBe("ws1");
     expect((body.nodes as unknown[])).toHaveLength(1);
   });
+
+  it("사람 차단의 질문·상황·선택지·복귀 지점을 구조화해 보낸다", async () => {
+    await syncRoadmapSnapshot("ws1", [{
+      id: "A", title: "A", level: "task", status: "blocked", dependsOn: [], note: "승인자는?",
+      humanBlocker: {
+        schemaVersion: 1, sessionId: "plan-1", stage: "CODE_RUNNING", resumeAction: "code_done",
+        summary: "승인 정책 구현 중", question: "승인자는?", context: ["기준 없음"],
+        options: [{ id: "lead", label: "팀장", impact: "통제 강화" }], blockedNextStep: "권한 검사 구현",
+        createdAt: "2026-09-29T00:00:00.000Z",
+      },
+    }]);
+    const node = ((received[0].body as { nodes: Array<Record<string, unknown>> }).nodes)[0];
+    expect(node.humanBlocker).toMatchObject({ sessionId: "plan-1", resumeAction: "code_done" });
+  });
 });
 
 describe("syncCheckpoint", () => {
