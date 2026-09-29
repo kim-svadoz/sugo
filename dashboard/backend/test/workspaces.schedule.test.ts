@@ -373,3 +373,52 @@ describe("POST /api/workspaces/:name/roadmap/project — §7B 스펙별 프로�
     expect(rows[0].project_path).toBe("/home/u1/projects/orders-api");
   });
 });
+
+describe("DELETE /api/workspaces/:name/roadmap/quick-spec — 수동 SPEC 삭제", () => {
+  it("대시보드에서 만든 SPEC과 연결된 하위 계보를 함께 삭제한다", async () => {
+    const { app, db, auth } = await bootApp();
+    const created = await request(app)
+      .post("/api/workspaces/ws1/roadmap/quick-spec")
+      .set("Authorization", auth)
+      .send({ title: "지울 일정" })
+      .expect(200);
+    await request(app).post("/api/sync/roadmap").set("Authorization", auth).send({
+      userId: "u1", workspaceName: "ws1", nodes: [
+        { id: created.body.id, title: "지울 일정", level: "spec", status: "in_progress" },
+        { id: "run-delete", title: "RUN", level: "workstream", status: "in_progress", parent: created.body.id },
+        { id: "task-delete", title: "TASK", level: "task", status: "in_progress", parent: "run-delete" },
+      ],
+    }).expect(200);
+
+    const res = await request(app)
+      .delete("/api/workspaces/ws1/roadmap/quick-spec")
+      .set("Authorization", auth)
+      .send({ nodeId: created.body.id })
+      .expect(200);
+
+    expect(res.body).toMatchObject({ ok: true, deletedCount: 3, filesPreserved: true });
+    expect(await db.query("SELECT id FROM sugo_roadmap_nodes WHERE workspace_name = 'ws1'")).toEqual([]);
+  });
+
+  it("플러그인이 만든 정식 SPEC은 삭제를 거부한다", async () => {
+    const { app, auth } = await appWithNodesIn("ws1", [{ id: "spec-official", level: "spec" }]);
+    const res = await request(app)
+      .delete("/api/workspaces/ws1/roadmap/quick-spec")
+      .set("Authorization", auth)
+      .send({ nodeId: "spec-official" })
+      .expect(409);
+    expect(res.body.errorCode).toBe("NOT_MANUAL_SPEC");
+  });
+
+  it("다른 사용자의 같은 ID는 삭제하지 않는다", async () => {
+    const ctx = await bootApp();
+    const otherAuth = await seedUserToken(ctx.db, "u2");
+    await request(ctx.app).post("/api/workspaces/ws1/roadmap/quick-spec").set("Authorization", otherAuth)
+      .send({ title: "다른 사용자" }).expect(200);
+    const other = await ctx.db.query<{ id: string }>("SELECT id FROM sugo_roadmap_nodes WHERE user_id = 'u2'");
+
+    await request(ctx.app).delete("/api/workspaces/ws1/roadmap/quick-spec").set("Authorization", ctx.auth)
+      .send({ nodeId: other[0].id }).expect(404);
+    expect(await ctx.db.query("SELECT id FROM sugo_roadmap_nodes WHERE user_id = 'u2'")).toHaveLength(1);
+  });
+});

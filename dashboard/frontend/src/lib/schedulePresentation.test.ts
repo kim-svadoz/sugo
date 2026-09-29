@@ -52,4 +52,12 @@ describe("schedule presentation", () => {
     expect(openSpecBody).not.toContain("setCanvasOverlay");
     expect(source).toContain('onClick={() => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.focus_task_id ?? selected.id })}');
   });
+
+  it("대시보드 수동 SPEC 상세에는 파일 보존을 알리는 2단계 삭제 UI가 있다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain('selected.id.startsWith("spec-manual-")');
+    expect(source).toContain("이 SPEC을 삭제할까요?");
+    expect(source).toContain("로컬에 작성된 Markdown 파일은 삭제하지 않습니다.");
+    expect(source).toContain("SPEC과 계보 삭제");
+  });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, Pencil, Shield, Workflow } from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -15,7 +15,7 @@ import { BlockerDecisionPanel } from "../components/BlockerDecisionPanel.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
-import { createQuickSpec, renameRoadmapNode, setDueDate, setProject, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
+import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setProject, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 
@@ -63,6 +63,7 @@ export function SchedulePage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   function openSpec(spec: ScheduledSpec) {
+    setDeleteConfirm(false);
     setSelected(spec);
   }
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
@@ -72,6 +73,7 @@ export function SchedulePage() {
   // Canvas에 그대로 반영된다(2026-09-23 사용자 요청) — null이면 편집 중이 아님.
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   // §7B 사용자 결정(2026-09-23): 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
   // Schedule 위에 겹쳐서 뜬다 — Esc를 누르면 그냥 이 오버레이만 닫히고 Schedule로 남는다.
@@ -214,6 +216,22 @@ export function SchedulePage() {
       refetch();
     } catch {
       setErrorMsg("일정 추가에 실패했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDeleteQuickSpec(spec: ScheduledSpec) {
+    if (!userId || busy) return;
+    setBusy(true);
+    setErrorMsg(null);
+    try {
+      await deleteQuickSpec(userId, spec.workspace_name, spec.id);
+      setSelected(null);
+      setDeleteConfirm(false);
+      refetch();
+    } catch {
+      setErrorMsg("대시보드에서 만든 수동 SPEC만 삭제할 수 있습니다.");
     } finally {
       setBusy(false);
     }
@@ -612,6 +630,43 @@ export function SchedulePage() {
                 <Workflow size={14} /> Canvas에서 보기
               </button>
             </div>
+
+            {selected.id.startsWith("spec-manual-") && (
+              <div className="border-t border-rose-500/15 pt-4">
+                {!deleteConfirm ? (
+                  <button
+                    onClick={() => setDeleteConfirm(true)}
+                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] font-semibold text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-300"
+                  >
+                    <Trash2 size={13} /> SPEC 삭제
+                  </button>
+                ) : (
+                  <div className="rounded-xl border border-rose-500/30 bg-rose-500/[0.07] p-3">
+                    <p className="text-[12px] font-semibold text-rose-200">이 SPEC을 삭제할까요?</p>
+                    <p className="mt-1 text-[10.5px] leading-relaxed text-rose-100/60">
+                      {selected.has_run ? "연결된 RUN과 Task 계보도 함께 삭제됩니다. " : "Schedule과 Canvas에서 제거됩니다. "}
+                      로컬에 작성된 Markdown 파일은 삭제하지 않습니다.
+                    </p>
+                    <div className="mt-3 flex justify-end gap-2">
+                      <button
+                        disabled={busy}
+                        onClick={() => setDeleteConfirm(false)}
+                        className="rounded-lg border border-slate-500/30 px-3 py-1.5 text-[11.5px] text-slate-300 hover:bg-slate-500/10"
+                      >
+                        취소
+                      </button>
+                      <button
+                        disabled={busy}
+                        onClick={() => void handleDeleteQuickSpec(selected)}
+                        className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 py-1.5 text-[11.5px] font-bold text-rose-200 hover:bg-rose-500/25 disabled:opacity-50"
+                      >
+                        {busy ? "삭제 중…" : "SPEC과 계보 삭제"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </Modal>
       )}

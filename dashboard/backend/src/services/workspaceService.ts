@@ -661,6 +661,58 @@ export async function createQuickSpec(
   return { id };
 }
 
+export type DeleteQuickSpecResult =
+  | { ok: true; deletedCount: number; filesPreserved: true }
+  | { ok: false; errorCode: "NODE_NOT_FOUND" | "INVALID_LEVEL" | "NOT_MANUAL_SPEC" };
+
+/** Dashboard에서 만든 경량 SPEC만 영구 삭제한다. 연결된 RUN/Task 계보는 함께 제거하지만,
+ * spec_path가 가리키는 로컬 Markdown은 사용자 파일이므로 절대 지우지 않는다. */
+export async function deleteQuickSpec(
+  db: DbClient,
+  userId: string,
+  workspaceName: string,
+  nodeId: string,
+): Promise<DeleteQuickSpecResult> {
+  const rows = await db.query<{ id: string; level: string; parent: string | null; depends_on: unknown }>(
+    "SELECT id, level, parent, depends_on FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    [userId, workspaceName],
+  );
+  const root = rows.find((row) => row.id === nodeId);
+  if (!root) return { ok: false, errorCode: "NODE_NOT_FOUND" };
+  if (root.level !== "spec") return { ok: false, errorCode: "INVALID_LEVEL" };
+  if (!root.id.startsWith("spec-manual-")) return { ok: false, errorCode: "NOT_MANUAL_SPEC" };
+
+  const deleting = new Set([root.id]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const row of rows) {
+      if (row.parent && deleting.has(row.parent) && !deleting.has(row.id)) {
+        deleting.add(row.id);
+        changed = true;
+      }
+    }
+  }
+
+  // 외부 노드가 삭제 계보를 의존하고 있으면 dangling 참조를 남기지 않는다.
+  for (const row of rows) {
+    if (deleting.has(row.id)) continue;
+    const dependencies = parseMaybeJson<string[]>(row.depends_on, []);
+    const filtered = dependencies.filter((id) => !deleting.has(id));
+    if (filtered.length !== dependencies.length) {
+      await db.exec(
+        "UPDATE sugo_roadmap_nodes SET depends_on = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
+        [JSON.stringify(filtered), userId, workspaceName, row.id],
+      );
+    }
+  }
+  // 자식부터 지우면 향후 FK가 추가돼도 계보 삭제 순서가 안전하다.
+  for (const id of [...deleting].reverse()) {
+    await db.exec("DELETE FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?", [userId, workspaceName, id]);
+  }
+  return { ok: true, deletedCount: deleting.size, filesPreserved: true };
+}
+
 // ---- Checkpoint CRUD (§3.3, dashboard-initiated - separate from plugin sync) ----
 
 export interface CreateCheckpointInput {

@@ -25,6 +25,7 @@ import {
   clearManualStatus,
   createCheckpoint,
   createQuickSpec,
+  deleteQuickSpec,
   createRoadmapGroup,
   deleteCheckpointRow,
   deleteRoadmapGroup,
@@ -426,6 +427,17 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
       req.body.projectPath ?? null
     );
     res.json({ ok: true, id: created.id });
+  });
+
+  router.delete("/:name/roadmap/quick-spec", validateBody(manualStatusClearSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const result = await deleteQuickSpec(db, userId, req.params.name, req.body.nodeId);
+    if (!result.ok) {
+      const status = result.errorCode === "NODE_NOT_FOUND" ? 404 : 409;
+      return void res.status(status).json(result);
+    }
+    res.json(result);
   });
 
   return router;
