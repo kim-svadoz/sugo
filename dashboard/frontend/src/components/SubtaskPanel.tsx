@@ -334,6 +334,13 @@ function PrPanel({ workspace, node }: { workspace: string; node: Pick<RoadmapNod
   const [pr, setPr] = useState<PrRef | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const errorLabel = error === "NO_CONNECTION"
+    ? "이 저장소의 Git 서비스가 연결되지 않았습니다. Settings에서 필요한 공급자만 연결하세요."
+    : error === "PROVIDER_NOT_AVAILABLE"
+      ? "이 Git 공급자의 PR 자동 생성은 아직 지원하지 않습니다."
+      : error === "BRANCH_NOT_PUSHED"
+        ? "원격 저장소에 작업 브랜치를 먼저 push해야 합니다."
+        : error;
 
   useEffect(() => {
     let cancelled = false;
@@ -403,7 +410,7 @@ function PrPanel({ workspace, node }: { workspace: string; node: Pick<RoadmapNod
           >
             PR 생성
           </button>
-          {error && <div className="text-xs text-red-400">{error}</div>}
+          {errorLabel && <div className="text-xs leading-relaxed text-red-400">{errorLabel}</div>}
         </div>
       )}
     </div>

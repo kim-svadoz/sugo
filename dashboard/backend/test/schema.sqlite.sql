@@ -159,6 +159,19 @@ CREATE TABLE IF NOT EXISTS user_bitbucket_tokens (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS user_git_connections (
+  user_id TEXT NOT NULL,
+  provider TEXT NOT NULL CHECK (provider IN ('github','gitlab','bitbucket_server','aws_codecommit')),
+  ct TEXT NOT NULL,
+  iv TEXT NOT NULL,
+  tag TEXT NOT NULL,
+  base_url TEXT,
+  credential_profile TEXT,
+  token_hint TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, provider)
+);
+
 CREATE TABLE IF NOT EXISTS user_api_tokens (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id TEXT NOT NULL,

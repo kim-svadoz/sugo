@@ -49,7 +49,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       { id: "skills", label: "Skills", hint: "⌘ S", icon: Puzzle, keywords: "스킬 에이전트 agent code test docs review", run: () => navigate("/skills") },
       { id: "harness", label: "Harness", icon: BookOpen, keywords: "하네스 규칙 archunit rules", run: () => navigate("/harness") },
       { id: "playbook", label: "Playbook", hint: "⌘ P", icon: Sparkles, keywords: "플레이북 체험 guide", run: () => navigate("/playbook") },
-      { id: "settings", label: "Settings", icon: SettingsIcon, keywords: "설정 bitbucket pat oidc token", run: () => navigate("/settings") },
+      { id: "settings", label: "Settings", icon: SettingsIcon, keywords: "설정 git github gitlab bitbucket codecommit pat oidc token", run: () => navigate("/settings") },
       { id: "refresh", label: "데이터 새로고침", hint: "⌘ R", icon: RefreshCw, keywords: "refresh reload 수동 수집", run: () => window.location.reload() },
     ],
     [navigate],

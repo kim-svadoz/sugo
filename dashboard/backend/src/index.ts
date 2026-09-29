@@ -11,6 +11,7 @@ import { createActivityRouter } from "./routes/activity.js";
 import { createWorkspacesRouter } from "./routes/workspaces.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createBitbucketRouter } from "./routes/bitbucket.js";
+import { createGitConnectionsRouter } from "./routes/gitConnections.js";
 import { createPrRouter } from "./routes/pr.js";
 import { createStatsRouter } from "./routes/stats.js";
 import { createHarnessRouter, createSkillsRouter } from "./routes/harness.js";
@@ -21,6 +22,9 @@ import { createHttpGithubOAuth, type GithubOAuthClient } from "./auth/github.js"
 import { createJwtVerifier, type VerifyJwt } from "./auth/jwt.js";
 import { createHttpOidcTokenClient, type OidcTokenClient } from "./auth/oidcTokenClient.js";
 import { createHttpBitbucketClient, type BitbucketClient } from "./bitbucket/client.js";
+import { adaptBitbucketClient, type GitProviderClients } from "./git/clients.js";
+import { createHttpGithubClient, createHttpGitlabClient } from "./git/httpClients.js";
+import { createAwsCodeCommitClient } from "./git/codeCommitClient.js";
 import { corsWhitelist } from "./middleware/cors.js";
 import { errorMiddleware } from "./middleware/asyncHandler.js";
 
@@ -50,6 +54,7 @@ export interface AppOverrides {
   verifyJwt?: VerifyJwt;
   oidcClient?: OidcTokenClient;
   bitbucketClient?: BitbucketClient;
+  gitProviderClients?: Partial<GitProviderClients>;
   githubOAuth?: GithubOAuthClient;
   sessionSecret?: string;
   secretEncKey?: string;
@@ -77,6 +82,12 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
         })
       : unconfiguredOidcClient());
   const bitbucketClient = overrides.bitbucketClient ?? createHttpBitbucketClient();
+  const gitProviderClients: GitProviderClients = {
+    github: overrides.gitProviderClients?.github ?? createHttpGithubClient(),
+    gitlab: overrides.gitProviderClients?.gitlab ?? createHttpGitlabClient(),
+    bitbucket_server: overrides.gitProviderClients?.bitbucket_server ?? adaptBitbucketClient(bitbucketClient),
+    aws_codecommit: overrides.gitProviderClients?.aws_codecommit ?? createAwsCodeCommitClient(),
+  };
   const githubOAuth = overrides.githubOAuth ?? createHttpGithubOAuth(config.github);
   const sessionSecret = overrides.sessionSecret ?? config.sessionSecret;
   const secretEncKey = overrides.secretEncKey ?? config.secretEncKey;
@@ -115,7 +126,8 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
     )
   );
   app.use("/api/bitbucket", createBitbucketRouter(db, sessionSecret, secretEncKey));
-  app.use("/api/pr", createPrRouter(db, sessionSecret, secretEncKey, bitbucketClient));
+  app.use("/api/git-connections", createGitConnectionsRouter(db, sessionSecret, secretEncKey));
+  app.use("/api/pr", createPrRouter(db, sessionSecret, secretEncKey, gitProviderClients));
   // §3.7: /api/stats + alias /api/metrics(플러그인이 calibrated-ratio를 여기로 fetch), harness, skills.
   const statsRouter = createStatsRouter(db, sessionSecret);
   app.use("/api/stats", statsRouter);

@@ -86,14 +86,14 @@ describe("GET/PUT/DELETE /api/bitbucket — §3.5, AUTH-gated", () => {
 });
 
 describe("POST /api/pr/create — §3.4/§6", () => {
-  it("반드시 거부: NO_TOKEN when no PAT stored", async () => {
+  it("반드시 거부: NO_CONNECTION when no provider credential is stored", async () => {
     const { app, token } = await appWithNode(new FakeBitbucketClient(true, null));
     const res = await request(app)
       .post("/api/pr/create")
       .set("Authorization", `Bearer ${token}`)
       .send({ workspace: "ws1", nodeId: "t1", scope: "task" })
       .expect(409);
-    expect(res.body.error).toBe("NO_TOKEN");
+    expect(res.body).toMatchObject({ error: "NO_CONNECTION", provider: "bitbucket_server" });
   });
 
   it("반드시 거부: BRANCH_NOT_PUSHED when the remote branch doesn't exist", async () => {
@@ -153,7 +153,7 @@ describe("POST /api/pr/existing — best-effort, always 200", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({ workspace: "ws1", nodeId: "t1", scope: "task" })
       .expect(200);
-    expect(res.body).toEqual({ exists: false, error: "NO_TOKEN" });
+    expect(res.body).toEqual({ exists: false, error: "NO_CONNECTION", provider: "bitbucket_server" });
   });
 
   it("returns exists:true with the PR when one is open", async () => {

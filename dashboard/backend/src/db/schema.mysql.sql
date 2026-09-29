@@ -158,6 +158,19 @@ CREATE TABLE IF NOT EXISTS user_bitbucket_tokens (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS user_git_connections (
+  user_id VARCHAR(191) NOT NULL,
+  provider ENUM('github','gitlab','bitbucket_server','aws_codecommit') NOT NULL,
+  ct TEXT NOT NULL,
+  iv VARCHAR(64) NOT NULL,
+  tag VARCHAR(64) NOT NULL,
+  base_url VARCHAR(1024) NULL,
+  credential_profile VARCHAR(191) NULL,
+  token_hint VARCHAR(8) NULL,
+  updated_at VARCHAR(64) NOT NULL,
+  PRIMARY KEY (user_id, provider)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- SaaS(공개 배포) 전용: 플러그인이 sync 시 Bearer로 보내는 개인 API 토큰. 평문은 저장하지
 -- 않고 sha256 해시만 저장한다(user_bitbucket_tokens와 달리 복호화 불필요 — 대조만 함).
 CREATE TABLE IF NOT EXISTS user_api_tokens (

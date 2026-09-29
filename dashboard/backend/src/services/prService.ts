@@ -7,6 +7,8 @@ export interface PrRefs {
   repoSlug: string;
   sourceBranch: string;
   targetBranch: string;
+  provider?: string;
+  remoteUrl?: string;
 }
 
 export type ResolveRefsResult = { ok: true; ref: PrRefs } | { ok: false; error: "NO_REFS" | "MULTI_BRANCH" };
@@ -30,6 +32,8 @@ export function extractPrRefs(workResult: unknown): PrRefs | null {
     repoSlug: refs.repoSlug,
     sourceBranch: refs.sourceBranch,
     targetBranch: refs.targetBranch ?? "develop",
+    provider: refs.provider,
+    remoteUrl: refs.remoteUrl,
   };
 }
 

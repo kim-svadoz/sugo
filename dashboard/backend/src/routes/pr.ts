@@ -4,8 +4,9 @@ import type { DbClient } from "../db/client.js";
 import { requireUser } from "../auth/requireUser.js";
 import { validateBody } from "../schemas/validate.js";
 import { resolveRefs } from "../services/prService.js";
-import { getDecryptedBitbucketToken } from "../services/bitbucketTokenService.js";
-import type { BitbucketClient } from "../bitbucket/client.js";
+import { getDecryptedGitConnection } from "../services/gitConnectionService.js";
+import { detectGitProvider, repositoryFor } from "../git/provider.js";
+import type { GitProviderClients } from "../git/clients.js";
 
 const scopeEnum = z.enum(["task", "run", "spec"]);
 
@@ -25,12 +26,13 @@ const existingSchema = z.object({
   targetBranch: z.string().optional(),
 });
 
-// §3.4/§6: AUTH-gated. Error codes: NO_TOKEN, NO_REFS, MULTI_BRANCH, BRANCH_NOT_PUSHED.
+// AUTH-gated provider-neutral PR/MR boundary. Credentials are resolved only after
+// the work-result remote identifies a provider; local-only users remain valid.
 export function createPrRouter(
   db: DbClient,
   sessionSecret: string,
   secretEncKey: string,
-  bitbucketClient: BitbucketClient
+  clients: GitProviderClients
 ): Router {
   const router = Router();
   router.use(requireUser(db, sessionSecret));
@@ -42,16 +44,14 @@ export function createPrRouter(
       res.json({ exists: false, error: refsResult.error });
       return;
     }
-    const token = await getDecryptedBitbucketToken(db, req.userId!, secretEncKey);
-    if (!token) {
-      res.json({ exists: false, error: "NO_TOKEN" });
+    const provider = detectGitProvider(refsResult.ref);
+    const connection = await getDecryptedGitConnection(db, req.userId!, provider, secretEncKey);
+    if (!connection) {
+      res.json({ exists: false, error: "NO_CONNECTION", provider });
       return;
     }
     try {
-      const pr = await bitbucketClient.findOpenPr(
-        { baseUrl: token.baseUrl ?? refsResult.ref.baseUrl, projectKey: refsResult.ref.projectKey, repoSlug: refsResult.ref.repoSlug, token: token.token },
-        refsResult.ref.sourceBranch
-      );
+      const pr = await clients[provider].findOpenPr(repositoryFor(refsResult.ref, connection), refsResult.ref.sourceBranch);
       res.json({ exists: Boolean(pr), pr: pr ?? undefined });
     } catch {
       res.json({ exists: false, error: "LOOKUP_FAILED" });
@@ -65,32 +65,29 @@ export function createPrRouter(
       res.status(409).json({ error: refsResult.error });
       return;
     }
-    const token = await getDecryptedBitbucketToken(db, req.userId!, secretEncKey);
-    if (!token) {
-      res.status(409).json({ error: "NO_TOKEN" });
+    const provider = detectGitProvider(refsResult.ref);
+    const connection = await getDecryptedGitConnection(db, req.userId!, provider, secretEncKey);
+    if (!connection) {
+      res.status(409).json({ error: "NO_CONNECTION", provider });
       return;
     }
-    const repo = {
-      baseUrl: token.baseUrl ?? refsResult.ref.baseUrl,
-      projectKey: refsResult.ref.projectKey,
-      repoSlug: refsResult.ref.repoSlug,
-      token: token.token,
-    };
+    const repo = repositoryFor(refsResult.ref, connection);
+    const client = clients[provider];
     const fromBranch = refsResult.ref.sourceBranch;
     const toBranch = targetBranch ?? refsResult.ref.targetBranch;
 
     try {
-      const branchExists = await bitbucketClient.remoteBranchExists(repo, fromBranch);
+      const branchExists = await client.remoteBranchExists(repo, fromBranch);
       if (!branchExists) {
         res.status(409).json({ error: "BRANCH_NOT_PUSHED" });
         return;
       }
-      const existing = await bitbucketClient.findOpenPr(repo, fromBranch);
+      const existing = await client.findOpenPr(repo, fromBranch);
       if (existing) {
         res.json({ pr: existing, existed: true });
         return;
       }
-      const pr = await bitbucketClient.createPullRequest(repo, {
+      const pr = await client.createPullRequest(repo, {
         title: title ?? `${nodeId}: ${fromBranch} -> ${toBranch}`,
         description,
         fromBranch,
@@ -98,7 +95,7 @@ export function createPrRouter(
       });
       res.json({ pr, existed: false });
     } catch {
-      res.status(502).json({ error: "BITBUCKET_REQUEST_FAILED" });
+      res.status(502).json({ error: "GIT_PROVIDER_REQUEST_FAILED", provider });
     }
   });
 
