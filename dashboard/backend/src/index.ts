@@ -12,6 +12,7 @@ import { createWorkspacesRouter } from "./routes/workspaces.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createBitbucketRouter } from "./routes/bitbucket.js";
 import { createGitConnectionsRouter } from "./routes/gitConnections.js";
+import { createAwsContextRouter } from "./routes/awsContext.js";
 import { createPrRouter } from "./routes/pr.js";
 import { createStatsRouter } from "./routes/stats.js";
 import { createHarnessRouter, createSkillsRouter } from "./routes/harness.js";
@@ -25,6 +26,7 @@ import { createHttpBitbucketClient, type BitbucketClient } from "./bitbucket/cli
 import { adaptBitbucketClient, type GitProviderClients } from "./git/clients.js";
 import { createHttpGithubClient, createHttpGitlabClient } from "./git/httpClients.js";
 import { createAwsCodeCommitClient } from "./git/codeCommitClient.js";
+import { createAwsCliContextClient, type AwsContextClient } from "./aws/contextClient.js";
 import { corsWhitelist } from "./middleware/cors.js";
 import { errorMiddleware } from "./middleware/asyncHandler.js";
 
@@ -55,6 +57,7 @@ export interface AppOverrides {
   oidcClient?: OidcTokenClient;
   bitbucketClient?: BitbucketClient;
   gitProviderClients?: Partial<GitProviderClients>;
+  awsContextClient?: AwsContextClient;
   githubOAuth?: GithubOAuthClient;
   sessionSecret?: string;
   secretEncKey?: string;
@@ -88,6 +91,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
     bitbucket_server: overrides.gitProviderClients?.bitbucket_server ?? adaptBitbucketClient(bitbucketClient),
     aws_codecommit: overrides.gitProviderClients?.aws_codecommit ?? createAwsCodeCommitClient(),
   };
+  const awsContextClient = overrides.awsContextClient ?? createAwsCliContextClient();
   const githubOAuth = overrides.githubOAuth ?? createHttpGithubOAuth(config.github);
   const sessionSecret = overrides.sessionSecret ?? config.sessionSecret;
   const secretEncKey = overrides.secretEncKey ?? config.secretEncKey;
@@ -127,6 +131,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   );
   app.use("/api/bitbucket", createBitbucketRouter(db, sessionSecret, secretEncKey));
   app.use("/api/git-connections", createGitConnectionsRouter(db, sessionSecret, secretEncKey));
+  app.use("/api/aws-context", createAwsContextRouter(db, sessionSecret, awsContextClient));
   app.use("/api/pr", createPrRouter(db, sessionSecret, secretEncKey, gitProviderClients));
   // §3.7: /api/stats + alias /api/metrics(플러그인이 calibrated-ratio를 여기로 fetch), harness, skills.
   const statsRouter = createStatsRouter(db, sessionSecret);

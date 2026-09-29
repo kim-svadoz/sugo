@@ -172,6 +172,25 @@ CREATE TABLE IF NOT EXISTS user_git_connections (
   PRIMARY KEY (user_id, provider)
 );
 
+CREATE TABLE IF NOT EXISTS user_aws_context_accounts (
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  profile TEXT NOT NULL,
+  region TEXT NOT NULL,
+  account_id TEXT NOT NULL,
+  principal_arn TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS user_aws_context_snapshots (
+  user_id TEXT NOT NULL,
+  account_name TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  observed_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, account_name)
+);
+
 CREATE TABLE IF NOT EXISTS user_api_tokens (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id TEXT NOT NULL,

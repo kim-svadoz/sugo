@@ -171,6 +171,25 @@ CREATE TABLE IF NOT EXISTS user_git_connections (
   PRIMARY KEY (user_id, provider)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS user_aws_context_accounts (
+  user_id VARCHAR(191) NOT NULL,
+  name VARCHAR(191) NOT NULL,
+  profile VARCHAR(191) NOT NULL,
+  region VARCHAR(64) NOT NULL,
+  account_id VARCHAR(32) NOT NULL,
+  principal_arn VARCHAR(1024) NOT NULL,
+  updated_at VARCHAR(64) NOT NULL,
+  PRIMARY KEY (user_id, name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_aws_context_snapshots (
+  user_id VARCHAR(191) NOT NULL,
+  account_name VARCHAR(191) NOT NULL,
+  payload JSON NOT NULL,
+  observed_at VARCHAR(64) NOT NULL,
+  PRIMARY KEY (user_id, account_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- SaaS(공개 배포) 전용: 플러그인이 sync 시 Bearer로 보내는 개인 API 토큰. 평문은 저장하지
 -- 않고 sha256 해시만 저장한다(user_bitbucket_tokens와 달리 복호화 불필요 — 대조만 함).
 CREATE TABLE IF NOT EXISTS user_api_tokens (

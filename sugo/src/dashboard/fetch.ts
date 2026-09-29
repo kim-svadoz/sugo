@@ -192,3 +192,30 @@ export async function fetchCalibratedRatio(): Promise<number | null> {
   const result = await fetchJson<{ ratio: number }>("/api/metrics/calibrated-ratio", 5000);
   return result?.ratio ?? null;
 }
+
+export interface DashboardAwsInventoryResource {
+  kind: string;
+  id: string;
+}
+
+export interface DashboardAwsServiceInventory {
+  service: string;
+  resources: DashboardAwsInventoryResource[];
+  error?: string;
+}
+
+export interface DashboardAwsContext {
+  connected: boolean;
+  profile: string | null;
+  region: string | null;
+  accountHint: string | null;
+  principal: string | null;
+  observedAt: string | null;
+  inventory: DashboardAwsServiceInventory[];
+}
+
+/** Dashboard가 보관한 마지막 AWS 인벤토리 스냅샷만 읽는다.
+ * 에이전트가 AWS를 직접 조회하거나 자동 새로고침하지 않아 비용·지연·권한 범위를 넓히지 않는다. */
+export async function fetchAwsContext(): Promise<DashboardAwsContext | null> {
+  return fetchJson<DashboardAwsContext>("/api/aws-context", 8000);
+}

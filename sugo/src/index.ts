@@ -45,6 +45,7 @@ import { handleSugoSetup, sugoSetupInputSchema } from "./tools/sugoSetup.js";
 import { handleSugoCommit, sugoCommitInputSchema } from "./tools/sugoCommit.js";
 import { migrateWorkDataDir } from "./work/storage.js";
 import { handleSugoWorkspace, sugoWorkspaceInputSchema } from "./tools/sugoWorkspace.js";
+import { handleSugoAwsContext, sugoAwsContextInputSchema } from "./tools/sugoAwsContext.js";
 
 const server = new McpServer({
   name: "sugo",
@@ -162,6 +163,18 @@ server.registerTool(
     inputSchema: sugoValidateInputSchema,
   },
   handleSugoValidate,
+);
+
+server.registerTool(
+  "sugo_aws_context",
+  {
+    title: "Dashboard AWS context snapshot (readOnly)",
+    description:
+      "Dashboard에 사용자가 연결하고 마지막으로 새로고침한 AWS 리소스 스냅샷을 읽는다. " +
+      "AWS를 직접 조회하지 않으며 기본 응답은 서비스별 개수만 반환한다.",
+    inputSchema: sugoAwsContextInputSchema,
+  },
+  handleSugoAwsContext,
 );
 
 server.registerTool(
