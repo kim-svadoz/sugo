@@ -23507,22 +23507,50 @@ function detectNodeCommands(ctx, buildToolIds) {
   if (scripts.lint) commands.lint = `${runner} lint`;
   return commands;
 }
+function readBuildFileText(ctx, paths) {
+  return paths.map((p) => ctx.readFile(p) ?? "").join("\n");
+}
 function detectGradleCommands(ctx, isWindows) {
   const hasBat = ctx.fileExists("gradlew.bat");
   const hasSh = ctx.fileExists("gradlew");
   const exe = isWindows && hasBat ? ".\\gradlew.bat" : hasSh ? "./gradlew" : "gradle";
-  return { build: `${exe} build`, test: `${exe} test` };
+  const buildFile = readBuildFileText(ctx, ["build.gradle", "build.gradle.kts"]);
+  const lintTasks = [];
+  if (/checkstyle/i.test(buildFile)) lintTasks.push("checkstyleMain");
+  if (/spotbugs/i.test(buildFile)) lintTasks.push("spotbugsMain");
+  return {
+    build: `${exe} build`,
+    test: `${exe} test`,
+    ...lintTasks.length > 0 ? { lint: `${exe} ${lintTasks.join(" ")}` } : {}
+  };
 }
 function detectMavenCommands(ctx, isWindows) {
   const hasCmd = ctx.fileExists("mvnw.cmd");
   const hasSh = ctx.fileExists("mvnw");
   const exe = isWindows && hasCmd ? "mvnw.cmd" : hasSh ? "./mvnw" : "mvn";
-  return { build: `${exe} compile`, test: `${exe} test` };
+  const pom = ctx.readFile("pom.xml") ?? "";
+  const lintGoals = [];
+  if (pom.includes("maven-checkstyle-plugin")) lintGoals.push("checkstyle:check");
+  if (pom.includes("spotbugs-maven-plugin")) lintGoals.push("spotbugs:check");
+  return {
+    build: `${exe} compile`,
+    test: `${exe} test`,
+    ...lintGoals.length > 0 ? { lint: `${exe} ${lintGoals.join(" ")}` } : {}
+  };
 }
-function detectPythonCommands(buildToolIds) {
+function detectPythonCommands(ctx, buildToolIds) {
   if (!buildToolIds.includes("buildtool/pip") && !buildToolIds.includes("buildtool/poetry")) return {};
-  const runner = buildToolIds.includes("buildtool/poetry") ? "poetry run pytest" : "pytest";
-  return { test: runner };
+  const isPoetry = buildToolIds.includes("buildtool/poetry");
+  const test = isPoetry ? "poetry run pytest" : "pytest";
+  const pyproject = ctx.readFile("pyproject.toml") ?? "";
+  const prefix = isPoetry ? "poetry run " : "";
+  let lint;
+  if (/\[tool\.ruff(\.|\])/.test(pyproject) || ctx.fileExists("ruff.toml") || ctx.fileExists(".ruff.toml")) {
+    lint = `${prefix}ruff check .`;
+  } else if (/\[tool\.flake8\]/.test(pyproject) || ctx.fileExists(".flake8") || /\[flake8\]/.test(ctx.readFile("setup.cfg") ?? "")) {
+    lint = `${prefix}flake8`;
+  }
+  return { test, ...lint ? { lint } : {} };
 }
 function detectStack(projectPath, platform = process.platform) {
   const ctx = createFsDetectionContext(projectPath);
@@ -23562,7 +23590,7 @@ function detectStack(projectPath, platform = process.platform) {
     ...buildToolIds.some((id) => id.startsWith("buildtool/npm") || id.startsWith("buildtool/yarn") || id.startsWith("buildtool/pnpm")) ? detectNodeCommands(ctx, buildToolIds) : {},
     ...buildToolIds.includes("buildtool/gradle") ? detectGradleCommands(ctx, isWindows) : {},
     ...buildToolIds.includes("buildtool/maven") ? detectMavenCommands(ctx, isWindows) : {},
-    ...detectPythonCommands(buildToolIds)
+    ...detectPythonCommands(ctx, buildToolIds)
   };
   return { languages, frameworks, dataStores, buildTools, infra, harnessIds, commands };
 }
