@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { linkAwsDeployments } from "../src/services/awsDeploymentLink.js";
+import { linkAwsDeployments, linkAwsRelease } from "../src/services/awsDeploymentLink.js";
 
 describe("AWS ECS deployment linking", () => {
   it("links exact {project}-service names across environments", () => {
@@ -60,5 +60,20 @@ describe("AWS ECS deployment linking", () => {
       ] }],
     }];
     expect(linkAwsDeployments("/work/api", snapshots)[0]).toMatchObject({ rolloutState: "COMPLETED", healthState: "HEALTHY" });
+  });
+});
+
+describe("AWS release pipeline linking", () => {
+  it("uses the CodePipeline source contract instead of guessing a branch from a repository name", () => {
+    const linked = linkAwsRelease("/work/orders-api", [{
+      accountName: "default", region: "ap-northeast-2", observedAt: null,
+      inventory: [{ service: "codepipeline", resources: [{
+        kind: "pipeline", id: "orders-api-pipeline", metadata: {
+          repositoryName: "orders-api", branchName: "development", buildProject: "orders-api-build",
+          latestBuildNumber: 421, latestBuildCommit: "abc48af84feddeda", latestBuildStatus: "SUCCEEDED",
+        },
+      }] }],
+    }]);
+    expect(linked).toEqual(expect.objectContaining({ baseBranch: "development", latestBuildNumber: 421, latestBuildCommit: "abc48af84feddeda" }));
   });
 });

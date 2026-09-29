@@ -1,17 +1,38 @@
 import { randomBytes } from "node:crypto";
+import { execFile } from "node:child_process";
 import { readFile, rename as renameFile, unlink, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, isAbsolute, join } from "node:path";
+import { promisify } from "node:util";
 import type { DbClient } from "../db/client.js";
 import { ensureWorkspaceDeletedAtColumn } from "./syncService.js";
 import { readySet, topoSort, wouldCreateCycle } from "./roadmapGraph.js";
 import { parseJsonArray, parseMaybeJson } from "../db/jsonColumn.js";
-import { linkAwsDeployments, type AwsDeploymentSnapshot, type AwsProjectDeployment } from "./awsDeploymentLink.js";
+import { linkAwsDeployments, linkAwsRelease, type AwsDeploymentSnapshot, type AwsProjectDeployment, type AwsProjectRelease } from "./awsDeploymentLink.js";
+
+const execFileAsync = promisify(execFile);
+
+export interface LocalGitState { branch: string | null; headCommit: string | null; dirty: boolean; }
 
 export interface WorkspaceProjectRow {
   project_path: string;
   git_synced: number;
   aws_synced: number;
   aws_deployments: AwsProjectDeployment[];
+  aws_release: AwsProjectRelease | null;
+  local_git: LocalGitState;
+}
+
+async function readLocalGitState(projectPath: string): Promise<LocalGitState> {
+  try {
+    const [{ stdout: head }, { stdout: branch }, { stdout: status }] = await Promise.all([
+      execFileAsync("git", ["-C", projectPath, "rev-parse", "HEAD"], { timeout: 5_000 }),
+      execFileAsync("git", ["-C", projectPath, "branch", "--show-current"], { timeout: 5_000 }),
+      execFileAsync("git", ["-C", projectPath, "status", "--porcelain"], { timeout: 5_000 }),
+    ]);
+    return { headCommit: head.trim() || null, branch: branch.trim() || null, dirty: status.trim().length > 0 };
+  } catch {
+    return { headCommit: null, branch: null, dirty: false };
+  }
 }
 
 export interface TaskCounts {
@@ -157,10 +178,11 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
       "SELECT project_path, git_synced FROM sugo_workspace_projects WHERE workspace_id = ? ORDER BY project_path",
       [ws.id]
     );
-    const projects: WorkspaceProjectRow[] = projectRows.map((project) => {
+    const projects: WorkspaceProjectRow[] = await Promise.all(projectRows.map(async (project) => {
       const deployments = linkAwsDeployments(project.project_path, awsSnapshots);
-      return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments };
-    });
+      const release = linkAwsRelease(project.project_path, awsSnapshots);
+      return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments, aws_release: release, local_git: await readLocalGitState(project.project_path) };
+    }));
     const tasks = await taskCounts(db, userId, ws.name);
     const roadmap = await roadmapCounts(db, userId, ws.name);
     const attention = await workspaceAttention(db, userId, ws.name);

@@ -38,6 +38,16 @@ export interface AwsProjectDeployment {
   observedAt: string | null;
 }
 
+export interface AwsProjectRelease {
+  pipeline: string;
+  baseBranch: string;
+  buildProject: string | null;
+  latestBuildNumber: number | null;
+  latestBuildCommit: string | null;
+  latestBuildStatus: string | null;
+  latestBuildAt: string | null;
+}
+
 function stringValue(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
@@ -114,4 +124,28 @@ function linkExactService(targetName: string, snapshots: AwsDeploymentSnapshot[]
 /** 이름 유사도 추측은 금지한다. repo basename과 ECS service의 `-service` 제거값이 정확히 같을 때만 연결한다. */
 export function linkAwsDeployments(projectPath: string, snapshots: AwsDeploymentSnapshot[]): AwsProjectDeployment[] {
   return linkExactService(basename(projectPath), snapshots);
+}
+
+export function linkAwsRelease(projectPath: string, snapshots: AwsDeploymentSnapshot[]): AwsProjectRelease | null {
+  const projectName = basename(projectPath).toLowerCase();
+  for (const snapshot of snapshots) {
+    const pipelines = snapshot.inventory.find((item) => item.service === "codepipeline");
+    for (const resource of pipelines?.resources ?? []) {
+      if (resource.kind !== "pipeline") continue;
+      const metadata = resource.metadata ?? {};
+      if (stringValue(metadata.repositoryName)?.toLowerCase() !== projectName) continue;
+      const baseBranch = stringValue(metadata.branchName);
+      if (!baseBranch) continue;
+      return {
+        pipeline: resource.id,
+        baseBranch,
+        buildProject: stringValue(metadata.buildProject),
+        latestBuildNumber: numberValue(metadata.latestBuildNumber),
+        latestBuildCommit: stringValue(metadata.latestBuildCommit),
+        latestBuildStatus: stringValue(metadata.latestBuildStatus),
+        latestBuildAt: stringValue(metadata.latestBuildAt),
+      };
+    }
+  }
+  return null;
 }

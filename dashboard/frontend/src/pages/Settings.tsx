@@ -10,6 +10,8 @@ import {
 import { createToken, listTokens, revokeToken, type ApiTokenSummary } from "../api/tokensApi.js";
 import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsContexts, refreshAwsContext, selectAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
 
+const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
+
 const awsServiceLabels: Record<string, string> = {
   codecommit: "CodeCommit", athena: "Athena", s3: "S3", codebuild: "CodeBuild",
   codepipeline: "CodePipeline", dynamodb: "DynamoDB", elasticache: "ElastiCache",
@@ -68,7 +70,10 @@ function AwsContextCard() {
         <h2 className="text-base font-semibold text-[var(--color-text)]">AWS Context</h2>
         <p className="text-xs text-[var(--color-text-muted)]">로컬 AWS 프로필로 공용 리소스 인벤토리를 연결합니다</p>
       </div>
-      {status?.connected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span>}
+      {status?.connected && <div className="flex items-center gap-2">
+        <button type="button" disabled={busy} onClick={() => void refreshAll()} className="rounded-md border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200 disabled:opacity-40">{busy ? "동기화 중…" : "AWS 전체 동기화"}</button>
+        <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span>
+      </div>}
     </div>
     <div className="space-y-4 p-5">
       {error && <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{error}</div>}
@@ -97,7 +102,6 @@ function AwsContextCard() {
               {status.accounts.map((account) => <option key={account.name} value={account.name}>{account.name} · {account.profile} · ••••{account.accountHint}</option>)}
             </select>
           </label>
-          <button type="button" disabled={busy} onClick={() => void refreshAll()} className="rounded-md border border-amber-400/40 px-3 py-2 text-sm text-amber-200">AWS 전체 동기화</button>
           <button type="button" disabled={busy} onClick={() => setAdding(true)} className="rounded-md border border-cyan-400/40 px-3 py-2 text-sm text-cyan-200">계정 추가</button>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-400/25 bg-emerald-400/[0.05] px-4 py-3">
@@ -281,7 +285,7 @@ export function Settings() {
         <p className="text-sm text-[var(--color-text-muted)]">외부 연동을 설정합니다.</p>
       </div>
 
-      <ApiTokensCard />
+      {!LOCAL_DEV && <ApiTokensCard />}
 
       <AwsContextCard />
 

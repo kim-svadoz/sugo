@@ -9,6 +9,16 @@ export interface WorkspaceSummary {
     project_path: string;
     git_synced: number;
     aws_synced: number;
+    aws_release: {
+      pipeline: string;
+      baseBranch: string;
+      buildProject: string | null;
+      latestBuildNumber: number | null;
+      latestBuildCommit: string | null;
+      latestBuildStatus: string | null;
+      latestBuildAt: string | null;
+    } | null;
+    local_git: { branch: string | null; headCommit: string | null; dirty: boolean };
     aws_deployments: Array<{
       accountName: string;
       environment: string;

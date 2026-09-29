@@ -150,6 +150,53 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
     }
   }
 
+  async function collectCodePipelines(account: AwsContextAccount): Promise<AwsServiceInventory> {
+    const resources: AwsInventoryResource[] = [];
+    const errors: string[] = [];
+    try {
+      const listed = await run(["codepipeline", "list-pipelines", ...commonArgs(account)]) as any;
+      const names = (listed.pipelines ?? []).map((item: any) => text(item.name)).filter((name: string | null): name is string => name !== null);
+      for (const name of names) {
+        try {
+          const detail = await run(["codepipeline", "get-pipeline", "--name", name, ...commonArgs(account)]) as any;
+          const stages = Array.isArray(detail.pipeline?.stages) ? detail.pipeline.stages : [];
+          const actions = stages.flatMap((stage: any) => Array.isArray(stage.actions) ? stage.actions : []);
+          const source = actions.find((action: any) => action.actionTypeId?.category === "Source" && action.actionTypeId?.provider === "CodeCommit");
+          const build = actions.find((action: any) => action.actionTypeId?.category === "Build" && action.actionTypeId?.provider === "CodeBuild");
+          const buildProject = text(build?.configuration?.ProjectName);
+          let latestBuild: any = null;
+          if (buildProject) {
+            const buildList = await run(["codebuild", "list-builds-for-project", "--project-name", buildProject, ...commonArgs(account)]) as any;
+            const ids = Array.isArray(buildList.ids) ? buildList.ids.slice(0, 10).filter((id: unknown): id is string => typeof id === "string") : [];
+            if (ids.length > 0) {
+              const builds = await run(["codebuild", "batch-get-builds", "--ids", ...ids, ...commonArgs(account)]) as any;
+              latestBuild = (builds.builds ?? []).find((item: any) => item.buildStatus === "SUCCEEDED") ?? builds.builds?.[0] ?? null;
+            }
+          }
+          const pipeline = resource("codepipeline", "pipeline", name, {
+            version: detail.pipeline?.version,
+            updated: detail.metadata?.updated,
+            repositoryName: text(source?.configuration?.RepositoryName),
+            branchName: text(source?.configuration?.BranchName),
+            buildProject,
+            latestBuildNumber: typeof latestBuild?.buildNumber === "number" ? latestBuild.buildNumber : null,
+            latestBuildCommit: text(latestBuild?.resolvedSourceVersion),
+            latestBuildStatus: text(latestBuild?.buildStatus),
+            latestBuildAt: text(latestBuild?.endTime) ?? text(latestBuild?.startTime),
+          });
+          if (pipeline) resources.push(pipeline);
+        } catch (error) {
+          errors.push(`${name}: ${error instanceof Error ? error.message : String(error)}`);
+          const fallback = resource("codepipeline", "pipeline", name);
+          if (fallback) resources.push(fallback);
+        }
+      }
+      return { service: "codepipeline", resources, ...(errors.length ? { error: errors.join("; ") } : {}) };
+    } catch (error) {
+      return { service: "codepipeline", resources: [], error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
   return {
     async identity(account) {
       const payload = await run(["sts", "get-caller-identity", ...commonArgs(account)]) as any;
@@ -162,7 +209,7 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
         collect(account, "athena", ["athena", "list-work-groups"], (p) => compact((p.WorkGroups ?? []).map((x: any) => resource("athena", "workgroup", x.Name, { state: x.State })) )),
         collect(account, "s3", ["s3api", "list-buckets"], (p) => compact((p.Buckets ?? []).map((x: any) => resource("s3", "bucket", x.Name, { creationDate: x.CreationDate })) )),
         collect(account, "codebuild", ["codebuild", "list-projects", "--sort-by", "NAME"], (p) => compact((p.projects ?? []).map((x: any) => resource("codebuild", "project", x)) )),
-        collect(account, "codepipeline", ["codepipeline", "list-pipelines"], (p) => compact((p.pipelines ?? []).map((x: any) => resource("codepipeline", "pipeline", x.name, { version: x.version, updated: x.updated })) )),
+        collectCodePipelines(account),
         collect(account, "dynamodb", ["dynamodb", "list-tables"], (p) => compact((p.TableNames ?? []).map((x: any) => resource("dynamodb", "table", x)) )),
         collect(account, "elasticache", ["elasticache", "describe-replication-groups"], (p) => compact((p.ReplicationGroups ?? []).map((x: any) => resource("elasticache", "replication-group", x.ReplicationGroupId, { status: x.Status, engine: x.Engine })) )),
         collect(account, "opensearch", ["opensearch", "list-domain-names"], (p) => compact((p.DomainNames ?? []).map((x: any) => resource("opensearch", "domain", x.DomainName, { engineType: x.EngineType })) )),

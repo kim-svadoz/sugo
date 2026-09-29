@@ -40,6 +40,7 @@ import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
 import { useRoadmap } from "../hooks/useRoadmap.js";
+import { compareRelease, shortCommit, type ReleaseComparison } from "../lib/awsReleasePresentation.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
@@ -113,6 +114,14 @@ const DEPLOYMENT_HEALTH = {
   INACTIVE: { label: "비활성", color: "text-slate-400" },
   UNKNOWN: { label: "미확인", color: "text-amber-300" },
 } as const;
+
+const RELEASE_STATE: Record<ReleaseComparison, { label: string; color: string; description: string }> = {
+  UNCOMMITTED: { label: "커밋 전 변경", color: "border-amber-400/30 bg-amber-400/10 text-amber-200", description: "로컬 작업트리에 아직 커밋하지 않은 변경이 있습니다." },
+  COMMIT_NOT_BUILT: { label: "커밋 미빌드", color: "border-rose-400/30 bg-rose-400/10 text-rose-200", description: "로컬 HEAD와 최신 성공 빌드의 커밋이 다릅니다." },
+  BUILT_NOT_DEPLOYED: { label: "빌드됨 · 미배포", color: "border-cyan-400/30 bg-cyan-400/10 text-cyan-200", description: "현재 커밋은 빌드됐지만 한 개 이상의 환경이 최신 이미지가 아닙니다." },
+  DEPLOYED: { label: "최신 배포 일치", color: "border-emerald-400/30 bg-emerald-400/10 text-emerald-200", description: "로컬 HEAD, 최신 성공 빌드, 표시된 환경의 이미지가 일치합니다." },
+  UNKNOWN: { label: "비교 불가", color: "border-slate-400/30 bg-slate-400/10 text-slate-300", description: "커밋·빌드·이미지 중 비교에 필요한 정보가 부족합니다." },
+};
 
 export function Sessions() {
   const { data, loading } = useWorkspaces();
@@ -373,6 +382,9 @@ export function Sessions() {
               {(ws.projects ?? []).slice(s, s + PAGE_SIZE).map((p) => {
                 const serviceDeployments = [...new Set(p.aws_deployments.map((deployment) => deployment.service))]
                   .map((service) => ({ service, deployments: p.aws_deployments.filter((deployment) => deployment.service === service) }));
+                const imageVersions = p.aws_deployments.map((deployment) => deployment.images[0]?.split(":").at(-1) ?? null);
+                const releaseComparison = compareRelease(p.aws_release, p.local_git, imageVersions);
+                const releaseState = RELEASE_STATE[releaseComparison];
                 return (
                 <li
                   key={p.project_path}
@@ -385,6 +397,12 @@ export function Sessions() {
                       {p.aws_synced === 1 && <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">AWS Synced</span>}
                     </div>
                   </div>
+                  {p.aws_release && <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-cyan-400/15 bg-cyan-400/[0.03] px-2 py-1.5 text-[10px] text-[var(--color-text-muted)]">
+                    <span>배포 기준 <b className="text-cyan-200">{p.aws_release.baseBranch}</b></span>
+                    <span>로컬 <b className="text-[var(--color-text)]">{p.local_git.branch ?? "detached"}@{shortCommit(p.local_git.headCommit)}</b></span>
+                    <span>최신 성공 Build <b className="text-purple-200">#{p.aws_release.latestBuildNumber ?? "?"}</b> · {shortCommit(p.aws_release.latestBuildCommit)}</span>
+                    <span className={`ml-auto rounded border px-1.5 py-0.5 font-bold ${releaseState.color}`} title={releaseState.description}>{releaseState.label}</span>
+                  </div>}
                   {serviceDeployments.map(({ service, deployments }) => <section key={service} className="mt-2 rounded border border-[var(--color-border)] bg-black/10 p-2">
                     <div className="mb-1.5 truncate text-[11px] font-semibold text-amber-200" title={service}>ECS {service}</div>
                     <div className="grid gap-1 sm:grid-cols-3">
@@ -397,7 +415,7 @@ export function Sessions() {
                             <span className={health.color} title={`AWS 원본: ${deployment.rolloutState ?? deployment.status ?? "없음"}`}>{health.label}</span>
                           </div>
                           <div className="mt-0.5 truncate text-[11px] text-[var(--color-text)]" title={deployment.taskDefinition ?? undefined}>{deployment.taskDefinition ?? "TaskDefinition 미확인"}</div>
-                          {imageVersion && <div className="truncate text-[10px] text-purple-300" title={deployment.images[0]}>image {imageVersion}</div>}
+                          {imageVersion && <div className="flex items-center justify-between gap-1 text-[10px] text-purple-300" title={deployment.images[0]}><span className="truncate">image {imageVersion}</span>{p.aws_release?.latestBuildNumber != null && <span className={imageVersion === String(p.aws_release.latestBuildNumber) ? "text-emerald-300" : "text-amber-300"}>{imageVersion === String(p.aws_release.latestBuildNumber) ? "최신 Build" : `Build #${p.aws_release.latestBuildNumber}와 다름`}</span>}</div>}
                           <div className="truncate text-[10px] text-[var(--color-text-muted)]" title={deployment.deployedAt ? "ECS PRIMARY 배포 갱신 시각" : "TaskDefinition 등록 시각 기반"}>{formatDeploymentDate(deployment.deployedAt, deployment.taskDefinitionRegisteredAt)}</div>
                           <div className="text-[10px] text-[var(--color-text-dim)]">running {deployment.runningCount ?? "?"}/{deployment.desiredCount ?? "?"}</div>
                         </div>;

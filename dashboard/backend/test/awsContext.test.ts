@@ -18,8 +18,11 @@ describe("AWS context CLI adapter", () => {
       if (service === "codecommit") return { repositories: [{ repositoryName: "orders-api", repositoryId: "r1" }] };
       if (service === "athena") return { WorkGroups: [{ Name: "primary", State: "ENABLED" }] };
       if (service === "s3api") return { Buckets: [{ Name: "logs" }] };
-      if (service === "codebuild") return { projects: ["shop-build"] };
-      if (service === "codepipeline") return { pipelines: [{ name: "shop-pipeline", version: 3 }] };
+      if (service === "codebuild" && args[1] === "list-projects") return { projects: ["shop-build"] };
+      if (service === "codebuild" && args[1] === "list-builds-for-project") return { ids: ["shop-build:b1"] };
+      if (service === "codebuild" && args[1] === "batch-get-builds") return { builds: [{ buildNumber: 421, buildStatus: "SUCCEEDED", resolvedSourceVersion: "abc123", endTime: "2026-09-29T08:29:01.000Z" }] };
+      if (service === "codepipeline" && args[1] === "list-pipelines") return { pipelines: [{ name: "shop-pipeline", version: 3 }] };
+      if (service === "codepipeline" && args[1] === "get-pipeline") return { pipeline: { version: 3, stages: [{ actions: [{ actionTypeId: { category: "Source", provider: "CodeCommit" }, configuration: { RepositoryName: "orders-api", BranchName: "development" } }] }, { actions: [{ actionTypeId: { category: "Build", provider: "CodeBuild" }, configuration: { ProjectName: "shop-build" } }] }] } };
       if (service === "dynamodb") return { TableNames: ["recommendations"] };
       if (service === "elasticache") return { ReplicationGroups: [{ ReplicationGroupId: "shop-cache", Status: "available" }] };
       if (service === "opensearch") return { DomainNames: [{ DomainName: "shop-search", EngineType: "OpenSearch" }] };
@@ -36,6 +39,7 @@ describe("AWS context CLI adapter", () => {
       "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "shop-cluster", "orders-api-service",
     ]));
     expect(inventory.find((item) => item.service === "ecs")?.resources.find((item) => item.kind === "service")?.metadata).toMatchObject({ revision: 343, rolloutState: "COMPLETED", runningCount: 2, desiredCount: 2, deployedAt: "2026-09-28T08:03:00.000Z" });
+    expect(inventory.find((item) => item.service === "codepipeline")?.resources[0]?.metadata).toMatchObject({ repositoryName: "orders-api", branchName: "development", latestBuildNumber: 421, latestBuildCommit: "abc123" });
   });
 
   it("keeps one denied service visible without dropping successful services", async () => {
