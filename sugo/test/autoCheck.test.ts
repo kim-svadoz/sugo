@@ -3,9 +3,10 @@ import { evaluateAutoCheck, parseAutoSpec } from "../src/harness/autoCheck.js";
 import type { DetectionContext } from "../src/harness/types.js";
 
 /** 메모리 기반 컨텍스트 — 실제 파일 없이 판정 로직만 검증한다(mock 라이브러리 없이). */
-function ctx(files: Record<string, string>): DetectionContext {
+function ctx(files: Record<string, string>, changedFiles: string[] = Object.keys(files)): DetectionContext {
   return {
     projectPath: "/fake",
+    changedFiles,
     fileExists: (p) => p in files,
     readFile: (p) => (p in files ? files[p] : null),
     readJson<T>(p: string): T | null {
@@ -38,6 +39,14 @@ describe("parseAutoSpec — 잘못된 선언은 받아들이지 않는다", () =
 
   it("file-content-absent에 pattern이 없으면 거부한다", () => {
     expect(() => parseAutoSpec({ kind: "file-content-absent", paths: ["pom.xml"] })).toThrow(/pattern/);
+  });
+
+  it("changed-files-content-absent에 pattern이 없으면 거부한다", () => {
+    expect(() => parseAutoSpec({ kind: "changed-files-content-absent" })).toThrow(/pattern/);
+  });
+
+  it("changed-files-content-absent는 paths가 없어도 받아들인다(대상은 항상 changedFiles)", () => {
+    expect(() => parseAutoSpec({ kind: "changed-files-content-absent", pattern: "secret" })).not.toThrow();
   });
 
   it("깨진 정규식은 선언 시점에 거부한다", () => {
@@ -96,6 +105,50 @@ describe("evaluateAutoCheck — file-content-absent", () => {
 
   it("대상 파일이 아예 없으면 통과한다(위반할 내용 자체가 없음)", () => {
     expect(evaluateAutoCheck(spec, ctx({})).passed).toBe(true);
+  });
+});
+
+describe("evaluateAutoCheck — changed-files-content-absent(§P6-2)", () => {
+  const spec = parseAutoSpec({
+    kind: "changed-files-content-absent",
+    pattern: "(api[_-]?key|secret|password)\\s*[:=]\\s*[\"'][A-Za-z0-9_\\-]{8,}[\"']",
+  })!;
+
+  it("변경 파일에 하드코딩된 시크릿이 없으면 통과한다", () => {
+    const c = ctx({ "src/config.ts": "export const timeout = 3000;" });
+    expect(evaluateAutoCheck(spec, c).passed).toBe(true);
+  });
+
+  it("변경 파일에 하드코딩된 시크릿이 있으면 실패하고 어느 파일인지 밝힌다", () => {
+    const c = ctx({ "src/config.ts": 'const apiKey = "sk-abcdef1234567890";' });
+    const r = evaluateAutoCheck(spec, c);
+    expect(r.passed).toBe(false);
+    expect(r.detail).toContain("src/config.ts");
+  });
+
+  it("고정 paths가 아니라 changedFiles를 본다 — 프로젝트에 다른 시크릿 파일이 있어도 이번 diff에 없으면 통과", () => {
+    // ctx()의 파일 시스템엔 시크릿이 있지만, changedFiles로 지목한 파일은 다른 것이다.
+    const c = ctx(
+      { "src/config.ts": "export const timeout = 3000;", "src/legacy-secret.ts": 'const password = "hunter22222222";' },
+      ["src/config.ts"],
+    );
+    expect(evaluateAutoCheck(spec, c).passed).toBe(true);
+  });
+
+  it("changedFiles가 비어 있으면 위반할 대상 자체가 없어 통과한다", () => {
+    const c = ctx({ "src/config.ts": 'const apiKey = "sk-abcdef1234567890";' }, []);
+    expect(evaluateAutoCheck(spec, c).passed).toBe(true);
+  });
+
+  it("여러 파일이 위반하면 전부 나열한다", () => {
+    const c = ctx({
+      "a.ts": 'const apiKey = "sk-abcdef1234567890";',
+      "b.ts": 'const secret = "topsecret123456";',
+    });
+    const r = evaluateAutoCheck(spec, c);
+    expect(r.passed).toBe(false);
+    expect(r.detail).toContain("a.ts");
+    expect(r.detail).toContain("b.ts");
   });
 });
 

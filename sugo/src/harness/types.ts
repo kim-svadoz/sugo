@@ -29,6 +29,9 @@ export interface DetectedStack {
  */
 export interface DetectionContext {
   projectPath: string;
+  /** §P6-2: 이번 세션에서 변경된 파일 목록(상대경로 또는 절대경로). changed-files-content-absent
+   * auto-check가 이걸 대상으로 돈다 — 정적 paths 목록이 아니라 "이번 diff"를 스캔해야 하는 체크용. */
+  changedFiles: string[];
   fileExists(relPath: string): boolean;
   readFile(relPath: string): string | null;
   readJson<T = unknown>(relPath: string): T | null;

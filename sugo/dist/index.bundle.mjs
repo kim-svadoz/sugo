@@ -23024,16 +23024,20 @@ function mergeRootClaudeReference(existing, appliedHarnessIds) {
 
 // src/harness/context.ts
 import { existsSync as existsSync3, readFileSync as readFileSync2 } from "node:fs";
-import { join as join5 } from "node:path";
-function createFsDetectionContext(projectPath) {
+import { isAbsolute, join as join5 } from "node:path";
+function resolvePath(projectPath, relPath) {
+  return isAbsolute(relPath) ? relPath : join5(projectPath, relPath);
+}
+function createFsDetectionContext(projectPath, changedFiles = []) {
   return {
     projectPath,
+    changedFiles,
     fileExists(relPath) {
-      return existsSync3(join5(projectPath, relPath));
+      return existsSync3(resolvePath(projectPath, relPath));
     },
     readFile(relPath) {
       try {
-        return readFileSync2(join5(projectPath, relPath), "utf-8");
+        return readFileSync2(resolvePath(projectPath, relPath), "utf-8");
       } catch {
         return null;
       }
@@ -23635,7 +23639,7 @@ async function syncProjectHarness(args2) {
 
 // src/hulk/workspace.ts
 import { mkdir as mkdir7, readdir as readdir2, readFile as readFile7, rm } from "node:fs/promises";
-import { isAbsolute, relative as relative2, resolve as resolve2 } from "node:path";
+import { isAbsolute as isAbsolute2, relative as relative2, resolve as resolve2 } from "node:path";
 
 // src/dashboard/config.ts
 import { userInfo } from "node:os";
@@ -24127,7 +24131,7 @@ async function deleteWorkspace(name2, options = {}) {
     const target = resolve2(workspaceDir(name2));
     const base = resolve2(workRootDir());
     const rel = relative2(base, target);
-    const insideBase = rel.length > 0 && !rel.startsWith("..") && !isAbsolute(rel) && target !== base;
+    const insideBase = rel.length > 0 && !rel.startsWith("..") && !isAbsolute2(rel) && target !== base;
     if (insideBase) {
       await rm(target, { recursive: true, force: true });
       dataRemoved = true;
@@ -24256,13 +24260,13 @@ function analyzePrdMatch(prdContent, fileContents) {
 
 // src/readChangedFiles.ts
 import { readFile as readFile8 } from "node:fs/promises";
-import { isAbsolute as isAbsolute2, join as join9 } from "node:path";
+import { isAbsolute as isAbsolute3, join as join9 } from "node:path";
 var MAX_FILE_BYTES = 3e5;
 var MAX_FILES = 200;
 async function readFileContents(projectPath, changedFiles) {
   const contents = [];
   for (const rel of changedFiles.slice(0, MAX_FILES)) {
-    const full = isAbsolute2(rel) ? rel : join9(projectPath, rel);
+    const full = isAbsolute3(rel) ? rel : join9(projectPath, rel);
     try {
       const content = await readFile8(full, "utf-8");
       if (content.length <= MAX_FILE_BYTES) contents.push(content);
@@ -27986,7 +27990,7 @@ function errorResult7(errorCode, message) {
 
 // src/tools/sugoExplore.ts
 import { readFile as readFile13 } from "node:fs/promises";
-import { isAbsolute as isAbsolute3, join as join14 } from "node:path";
+import { isAbsolute as isAbsolute4, join as join14 } from "node:path";
 
 // src/ast/astParser.ts
 var import_web_tree_sitter = __toESM(require_tree_sitter(), 1);
@@ -28146,7 +28150,7 @@ async function handleSugoExplore(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const f of args2.filePaths.slice(0, MAX_FILES2)) {
-    const full = isAbsolute3(f) ? f : join14(args2.projectPath, f);
+    const full = isAbsolute4(f) ? f : join14(args2.projectPath, f);
     let content;
     try {
       content = await readFile13(full, "utf-8");
@@ -29124,16 +29128,16 @@ async function emitActivity(event) {
 // src/dashboard/workResultFiles.ts
 import { execFile as execFile2 } from "node:child_process";
 import { readFile as readFile19 } from "node:fs/promises";
-import { isAbsolute as isAbsolute4, relative as relative4, resolve as resolve7, sep as sep2 } from "node:path";
+import { isAbsolute as isAbsolute5, relative as relative4, resolve as resolve7, sep as sep2 } from "node:path";
 import { promisify as promisify2 } from "node:util";
 var execFileAsync2 = promisify2(execFile2);
 var MAX_CONTENT_BYTES = 2e5;
 var MAX_DIFF_BYTES = 4e5;
 function safeProjectFile(projectPath, path) {
   const root = resolve7(projectPath);
-  const absolute = isAbsolute4(path) ? resolve7(path) : resolve7(root, path);
+  const absolute = isAbsolute5(path) ? resolve7(path) : resolve7(root, path);
   const rel = relative4(root, absolute);
-  if (rel === ".." || rel.startsWith(`..${sep2}`) || isAbsolute4(rel)) return null;
+  if (rel === ".." || rel.startsWith(`..${sep2}`) || isAbsolute5(rel)) return null;
   return { absolute, relative: rel.split(sep2).join("/") };
 }
 async function gitOutput(projectPath, args2) {
@@ -29252,7 +29256,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash3 } from "node:crypto";
 import { stat } from "node:fs/promises";
-import { isAbsolute as isAbsolute5, join as join22, relative as relative5 } from "node:path";
+import { isAbsolute as isAbsolute6, join as join22, relative as relative5 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash3("sha1").update(parts2.join("\n")).digest("hex");
@@ -29260,8 +29264,8 @@ function computeFingerprintFromEntries(entries) {
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
-    const full = isAbsolute5(f) ? f : join22(projectPath, f);
-    const relPath = isAbsolute5(f) ? relative5(projectPath, f) : f;
+    const full = isAbsolute6(f) ? f : join22(projectPath, f);
+    const relPath = isAbsolute6(f) ? relative5(projectPath, f) : f;
     try {
       const st = await stat(full);
       entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
@@ -32074,7 +32078,7 @@ function errorResult16(errorCode, message) {
 }
 
 // src/harness/autoCheck.ts
-var KINDS = ["file-exists", "file-absent", "file-content-absent", "json-field"];
+var KINDS = ["file-exists", "file-absent", "file-content-absent", "changed-files-content-absent", "json-field"];
 function requireNonEmptyPaths(raw) {
   const paths = raw.paths;
   if (!Array.isArray(paths) || paths.length === 0 || !paths.every((p) => typeof p === "string" && p.length > 0)) {
@@ -32099,6 +32103,12 @@ function parseAutoSpec(raw) {
       throw new Error("file-content-absent\uC5D0\uB294 pattern\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
     }
     return { kind, paths, pattern: new RegExp(obj.pattern) };
+  }
+  if (kind === "changed-files-content-absent") {
+    if (typeof obj.pattern !== "string" || obj.pattern.length === 0) {
+      throw new Error("changed-files-content-absent\uC5D0\uB294 pattern\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    }
+    return { kind, pattern: new RegExp(obj.pattern, "i") };
   }
   const file = obj.file;
   const path = obj.path;
@@ -32137,6 +32147,13 @@ function evaluateAutoCheck(spec, ctx) {
         return content !== null && spec.pattern.test(content);
       });
       return hits.length === 0 ? { passed: true, detail: `\uAE08\uC9C0 \uD328\uD134\uC774 \uC5C6\uC2B5\uB2C8\uB2E4: /${spec.pattern.source}/` } : { passed: false, detail: `\uAE08\uC9C0 \uD328\uD134 /${spec.pattern.source}/ \uBC1C\uACAC: ${hits.join(", ")}` };
+    }
+    case "changed-files-content-absent": {
+      const hits = ctx.changedFiles.filter((p) => {
+        const content = ctx.readFile(p);
+        return content !== null && spec.pattern.test(content);
+      });
+      return hits.length === 0 ? { passed: true, detail: `\uBCC0\uACBD \uD30C\uC77C\uC5D0 \uAE08\uC9C0 \uD328\uD134\uC774 \uC5C6\uC2B5\uB2C8\uB2E4: /${spec.pattern.source}/` } : { passed: false, detail: `\uAE08\uC9C0 \uD328\uD134 /${spec.pattern.source}/ \uBC1C\uACAC: ${hits.join(", ")}` };
     }
     case "json-field": {
       const raw = ctx.readFile(spec.file);
@@ -32251,8 +32268,8 @@ var sugoValidateInputSchema = {
   ).describe("review-agent\uAC00 \uAC01 \uD558\uB124\uC2A4 validation.yaml \uCCB4\uD06C \uD56D\uBAA9\uBCC4\uB85C \uD310\uC815\uD55C \uACB0\uACFC")
 };
 var SugoValidateArgs = external_exports.object(sugoValidateInputSchema);
-function runAutoChecks(projectPath, configs) {
-  const ctx = createFsDetectionContext(projectPath);
+function runAutoChecks(projectPath, changedFiles, configs) {
+  const ctx = createFsDetectionContext(projectPath, changedFiles);
   const out2 = /* @__PURE__ */ new Map();
   for (const [harnessId, config2] of configs) {
     for (const check2 of config2.checks) {
@@ -32270,7 +32287,7 @@ async function handleSugoValidate(rawArgs) {
   }
   const session = await loadSession(args2.sessionId);
   const configs = await loadProjectValidationConfigs(session.projectPath);
-  const autoResults = runAutoChecks(session.projectPath, configs);
+  const autoResults = runAutoChecks(session.projectPath, session.data.chainInfo.changedFiles, configs);
   const result2 = computeValidationVerdict(args2.validationResults, configs, autoResults);
   const updated = {
     ...session,

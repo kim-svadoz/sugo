@@ -25,8 +25,12 @@ const SugoValidateArgs = z.object(sugoValidateInputSchema);
  * 프로젝트에 적용된 하네스의 auto 체크를 서버가 직접 돌린다. 제출 여부와 무관하게 실행되므로
  * 이 부분집합에 한해서는 "검증 안 함"과 "다 통과"가 구분된다.
  */
-function runAutoChecks(projectPath: string, configs: Map<string, HarnessValidationConfig>): Map<string, AutoVerifiedResult> {
-  const ctx = createFsDetectionContext(projectPath);
+function runAutoChecks(
+  projectPath: string,
+  changedFiles: string[],
+  configs: Map<string, HarnessValidationConfig>,
+): Map<string, AutoVerifiedResult> {
+  const ctx = createFsDetectionContext(projectPath, changedFiles);
   const out = new Map<string, AutoVerifiedResult>();
   for (const [harnessId, config] of configs) {
     for (const check of config.checks) {
@@ -56,7 +60,7 @@ export async function handleSugoValidate(rawArgs: unknown) {
   const session = await loadSession(args.sessionId);
 
   const configs = await loadProjectValidationConfigs(session.projectPath);
-  const autoResults = runAutoChecks(session.projectPath, configs);
+  const autoResults = runAutoChecks(session.projectPath, session.data.chainInfo.changedFiles, configs);
   const result = computeValidationVerdict(args.validationResults, configs, autoResults);
 
   const updated = {

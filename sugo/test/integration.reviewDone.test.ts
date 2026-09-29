@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -45,6 +45,7 @@ async function toTestDone(
   failed = 0,
   skipAutoValidate = false,
   skipAutoTrifecta = false,
+  changedFiles: string[] = [],
 ): Promise<string> {
   const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
   const sessionId = start.data.sessionId as string;
@@ -55,8 +56,8 @@ async function toTestDone(
   await call(handleSugoPlan, { action: "contract_start", sessionId });
   await call(handleSugoPlan, { action: "contract_done", sessionId });
   await call(handleSugoPlan, { action: "code_start", sessionId });
-  await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
-  await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
+  await call(handleSugoAnalyze, { sessionId, changedFiles });
+  await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles });
   await call(handleSugoPlan, { action: "test_start", sessionId });
   await call(handleSugoRecordTestEvidence, {
     sessionId,
@@ -363,6 +364,55 @@ describe("review_done — sugo_check_lethal_trifecta 호출강제 + 완화사유
       sessionId,
       tools: [{ toolName: "pure-calculator", accessesPrivateData: false, processesUntrustedInput: false, communicatesExternally: false }],
     });
+
+    const result = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    expect(result.isError).toBe(false);
+  });
+});
+
+describe("review_done — no-secrets auto 실측(§P6-2, 실배선)", () => {
+  it("이번 diff에 하드코딩된 시크릿이 있으면 자기보고로 우겨도 review_done이 거부된다", async () => {
+    await call(handleSugoAdd, { projectPath: projectDir });
+    mkdirSync(join(projectDir, "src"), { recursive: true });
+    writeFileSync(join(projectDir, "src", "config.ts"), 'export const apiKey = "sk-abcdef1234567890";\n');
+
+    const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ true, /* skipAutoTrifecta */ false, [
+      "src/config.ts",
+    ]);
+    const validate = await call(handleSugoValidate, {
+      sessionId,
+      validationResults: [{ harnessId: "default", checkId: "no-secrets", passed: true }],
+    });
+    expect(validate.data.verdict).toBe("fail"); // 주장은 true지만 실측이 뒤집는다
+
+    const result = await call(handleSugoPlan, {
+      action: "review_done",
+      sessionId,
+      userConfirmed: true,
+      summary: GOOD_SUMMARY,
+      runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+    });
+    expect(result.isError).toBe(true);
+    expect(result.data.errorCode).toBe("VALIDATE_VERIFIED_FAILURE");
+    expect(result.data.message).toContain("no-secrets");
+  });
+
+  it("이번 diff에 없는 다른 파일에 시크릿이 있어도(고정 목록이 아니라 changedFiles만 본다) 통과한다", async () => {
+    await call(handleSugoAdd, { projectPath: projectDir });
+    mkdirSync(join(projectDir, "src"), { recursive: true });
+    writeFileSync(join(projectDir, "src", "config.ts"), "export const timeout = 3000;\n");
+    writeFileSync(join(projectDir, "src", "legacy.ts"), 'export const password = "hunter22222222";\n');
+
+    const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ true, /* skipAutoTrifecta */ false, [
+      "src/config.ts",
+    ]);
+    await call(handleSugoValidate, { sessionId, validationResults: [] });
 
     const result = await call(handleSugoPlan, {
       action: "review_done",

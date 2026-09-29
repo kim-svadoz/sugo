@@ -11,6 +11,7 @@ export type AutoCheckSpec =
   | { kind: "file-exists"; paths: string[] }
   | { kind: "file-absent"; paths: string[] }
   | { kind: "file-content-absent"; paths: string[]; pattern: RegExp }
+  | { kind: "changed-files-content-absent"; pattern: RegExp }
   | { kind: "json-field"; file: string; path: string; equals?: unknown; allowed?: unknown[] };
 
 export interface AutoCheckResult {
@@ -19,7 +20,7 @@ export interface AutoCheckResult {
   detail: string;
 }
 
-const KINDS = ["file-exists", "file-absent", "file-content-absent", "json-field"] as const;
+const KINDS = ["file-exists", "file-absent", "file-content-absent", "changed-files-content-absent", "json-field"] as const;
 
 function requireNonEmptyPaths(raw: Record<string, unknown>): string[] {
   const paths = raw.paths;
@@ -54,6 +55,19 @@ export function parseAutoSpec(raw: unknown): AutoCheckSpec | null {
       throw new Error("file-content-absent에는 pattern이 필요합니다.");
     }
     return { kind, paths, pattern: new RegExp(obj.pattern) }; // 깨진 정규식은 여기서 던진다
+  }
+
+  if (kind === "changed-files-content-absent") {
+    // §P6-2: paths를 정적으로 받지 않는다 — 대상은 항상 "이번 세션에서 바뀐 파일"(ctx.changedFiles)이다.
+    // no-secrets처럼 어떤 파일이 바뀔지 미리 알 수 없는 체크(하드코딩 시크릿은 아무 파일에나 생길 수
+    // 있다)에 file-content-absent의 고정 paths는 쓸 수 없어서 이 kind가 필요했다.
+    if (typeof obj.pattern !== "string" || obj.pattern.length === 0) {
+      throw new Error("changed-files-content-absent에는 pattern이 필요합니다.");
+    }
+    // 대소문자 무시 — apiKey/API_KEY/Api-Key처럼 식별자 케이스가 다양해서, 여기서만 대소문자를
+    // 구분하면 동일한 위반을 케이스 차이로 놓친다. file-content-absent(기존)는 의미가 달라(빌드
+    // 스크립트의 고정 플래그 문자열 등) 대소문자 구분을 유지한다.
+    return { kind, pattern: new RegExp(obj.pattern, "i") }; // 깨진 정규식은 여기서 던진다
   }
 
   const file = obj.file;
@@ -102,6 +116,16 @@ export function evaluateAutoCheck(spec: AutoCheckSpec, ctx: DetectionContext): A
       });
       return hits.length === 0
         ? { passed: true, detail: `금지 패턴이 없습니다: /${spec.pattern.source}/` }
+        : { passed: false, detail: `금지 패턴 /${spec.pattern.source}/ 발견: ${hits.join(", ")}` };
+    }
+    case "changed-files-content-absent": {
+      // 대상 파일 목록이 아예 없으면(changedFiles:[]) 위반할 내용 자체가 없다 — 통과.
+      const hits = ctx.changedFiles.filter((p) => {
+        const content = ctx.readFile(p);
+        return content !== null && spec.pattern.test(content);
+      });
+      return hits.length === 0
+        ? { passed: true, detail: `변경 파일에 금지 패턴이 없습니다: /${spec.pattern.source}/` }
         : { passed: false, detail: `금지 패턴 /${spec.pattern.source}/ 발견: ${hits.join(", ")}` };
     }
     case "json-field": {
