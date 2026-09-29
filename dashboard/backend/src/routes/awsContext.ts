@@ -16,7 +16,10 @@ const accountSchema = z.object({ name: z.string().trim().min(1).max(64) });
 export function createAwsContextRouter(db: DbClient, sessionSecret: string, client: AwsContextClient): Router {
   const router = Router();
   router.use(requireUser(db, sessionSecret));
-  router.get("/", async (req, res) => res.json(await getAwsContextStatus(db, req.userId!)));
+  router.get("/", async (req, res) => {
+    const account = typeof req.query.account === "string" ? req.query.account.trim() : undefined;
+    res.json(await getAwsContextStatus(db, req.userId!, account || undefined));
+  });
   router.put("/", validateBody(connectSchema), async (req, res) => {
     try {
       await connectAwsContext(db, req.userId!, req.body.name, req.body.profile, req.body.region, client);

@@ -7,23 +7,34 @@ const AWS_SERVICES = [
 ] as const;
 
 export const sugoAwsContextInputSchema = {
+  environment: z.enum(["default", "dev", "stg", "prd"]).default("default").describe("조회할 AWS 환경. 생략하면 default(team-shared)"),
   services: z.array(z.enum(AWS_SERVICES)).optional().describe("조회할 서비스. 생략하면 전체 서비스 요약"),
   includeResources: z.boolean().default(false).describe("리소스 식별자 포함 여부. 기본 false로 토큰 사용을 제한"),
 };
 
 const SugoAwsContextArgs = z.object(sugoAwsContextInputSchema);
-type FetchAwsContext = () => Promise<DashboardAwsContext | null>;
+type FetchAwsContext = (account: string) => Promise<DashboardAwsContext | null>;
+
+const ENVIRONMENT_ACCOUNTS = {
+  default: "default",
+  dev: "team-dev",
+  stg: "team-stg",
+  prd: "team-prd",
+} as const;
 
 export async function handleSugoAwsContextWithFetcher(rawArgs: unknown, fetcher: FetchAwsContext) {
   const args = SugoAwsContextArgs.parse(rawArgs ?? {});
-  const context = await fetcher();
-  if (!context) {
+  const account = ENVIRONMENT_ACCOUNTS[args.environment];
+  const context = await fetcher(account);
+  if (!context?.connected) {
     return {
       isError: true,
       content: [{ type: "text" as const, text: JSON.stringify({
         ok: false,
         errorCode: "AWS_CONTEXT_UNAVAILABLE",
-        message: "Dashboard 연결 또는 AWS Context 스냅샷을 확인하세요.",
+        environment: args.environment,
+        account,
+        message: "요청한 환경의 Dashboard 연결 또는 AWS Context 스냅샷을 확인하세요.",
       }, null, 2) }],
     };
   }
@@ -43,6 +54,7 @@ export async function handleSugoAwsContextWithFetcher(rawArgs: unknown, fetcher:
   return {
     content: [{ type: "text" as const, text: JSON.stringify({
       ok: true,
+      environment: args.environment,
       connected: context.connected,
       activeAccount: context.activeAccount ?? null,
       accountHint: context.accountHint,

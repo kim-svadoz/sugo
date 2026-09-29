@@ -171,6 +171,7 @@ server.registerTool(
     title: "Dashboard AWS context snapshot (readOnly)",
     description:
       "Dashboard에 사용자가 연결하고 마지막으로 새로고침한 AWS 리소스 스냅샷을 읽는다. " +
+      "환경 미지정 시 default(team-shared), dev/stg/prd 지정 시 대응 환경 계정을 읽는다. " +
       "AWS를 직접 조회하지 않으며 기본 응답은 서비스별 개수만 반환한다.",
     inputSchema: sugoAwsContextInputSchema,
   },

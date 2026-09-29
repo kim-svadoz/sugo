@@ -24668,8 +24668,8 @@ async function fetchCalibratedRatio() {
   const result2 = await fetchJson("/api/metrics/calibrated-ratio", 5e3);
   return result2?.ratio ?? null;
 }
-async function fetchAwsContext() {
-  return fetchJson("/api/aws-context", 8e3);
+async function fetchAwsContext(account = "default") {
+  return fetchJson(`/api/aws-context?account=${encodeURIComponent(account)}`, 8e3);
 }
 
 // node_modules/js-yaml/dist/js-yaml.mjs
@@ -27921,7 +27921,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.7.9" : "0.0.0-dev";
+  return true ? "0.7.10" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32674,20 +32674,30 @@ var AWS_SERVICES = [
   "ecs"
 ];
 var sugoAwsContextInputSchema = {
+  environment: external_exports.enum(["default", "dev", "stg", "prd"]).default("default").describe("\uC870\uD68C\uD560 AWS \uD658\uACBD. \uC0DD\uB7B5\uD558\uBA74 default(team-shared)"),
   services: external_exports.array(external_exports.enum(AWS_SERVICES)).optional().describe("\uC870\uD68C\uD560 \uC11C\uBE44\uC2A4. \uC0DD\uB7B5\uD558\uBA74 \uC804\uCCB4 \uC11C\uBE44\uC2A4 \uC694\uC57D"),
   includeResources: external_exports.boolean().default(false).describe("\uB9AC\uC18C\uC2A4 \uC2DD\uBCC4\uC790 \uD3EC\uD568 \uC5EC\uBD80. \uAE30\uBCF8 false\uB85C \uD1A0\uD070 \uC0AC\uC6A9\uC744 \uC81C\uD55C")
 };
 var SugoAwsContextArgs = external_exports.object(sugoAwsContextInputSchema);
+var ENVIRONMENT_ACCOUNTS = {
+  default: "default",
+  dev: "team-dev",
+  stg: "team-stg",
+  prd: "team-prd"
+};
 async function handleSugoAwsContextWithFetcher(rawArgs, fetcher) {
   const args2 = SugoAwsContextArgs.parse(rawArgs ?? {});
-  const context = await fetcher();
-  if (!context) {
+  const account = ENVIRONMENT_ACCOUNTS[args2.environment];
+  const context = await fetcher(account);
+  if (!context?.connected) {
     return {
       isError: true,
       content: [{ type: "text", text: JSON.stringify({
         ok: false,
         errorCode: "AWS_CONTEXT_UNAVAILABLE",
-        message: "Dashboard \uC5F0\uACB0 \uB610\uB294 AWS Context \uC2A4\uB0C5\uC0F7\uC744 \uD655\uC778\uD558\uC138\uC694."
+        environment: args2.environment,
+        account,
+        message: "\uC694\uCCAD\uD55C \uD658\uACBD\uC758 Dashboard \uC5F0\uACB0 \uB610\uB294 AWS Context \uC2A4\uB0C5\uC0F7\uC744 \uD655\uC778\uD558\uC138\uC694."
       }, null, 2) }]
     };
   }
@@ -32703,6 +32713,7 @@ async function handleSugoAwsContextWithFetcher(rawArgs, fetcher) {
   return {
     content: [{ type: "text", text: JSON.stringify({
       ok: true,
+      environment: args2.environment,
       connected: context.connected,
       activeAccount: context.activeAccount ?? null,
       accountHint: context.accountHint,
@@ -32807,7 +32818,7 @@ server.registerTool(
   "sugo_aws_context",
   {
     title: "Dashboard AWS context snapshot (readOnly)",
-    description: "Dashboard\uC5D0 \uC0AC\uC6A9\uC790\uAC00 \uC5F0\uACB0\uD558\uACE0 \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uC0C8\uB85C\uACE0\uCE68\uD55C AWS \uB9AC\uC18C\uC2A4 \uC2A4\uB0C5\uC0F7\uC744 \uC77D\uB294\uB2E4. AWS\uB97C \uC9C1\uC811 \uC870\uD68C\uD558\uC9C0 \uC54A\uC73C\uBA70 \uAE30\uBCF8 \uC751\uB2F5\uC740 \uC11C\uBE44\uC2A4\uBCC4 \uAC1C\uC218\uB9CC \uBC18\uD658\uD55C\uB2E4.",
+    description: "Dashboard\uC5D0 \uC0AC\uC6A9\uC790\uAC00 \uC5F0\uACB0\uD558\uACE0 \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uC0C8\uB85C\uACE0\uCE68\uD55C AWS \uB9AC\uC18C\uC2A4 \uC2A4\uB0C5\uC0F7\uC744 \uC77D\uB294\uB2E4. \uD658\uACBD \uBBF8\uC9C0\uC815 \uC2DC default(team-shared), dev/stg/prd \uC9C0\uC815 \uC2DC \uB300\uC751 serving \uACC4\uC815\uC744 \uC77D\uB294\uB2E4. AWS\uB97C \uC9C1\uC811 \uC870\uD68C\uD558\uC9C0 \uC54A\uC73C\uBA70 \uAE30\uBCF8 \uC751\uB2F5\uC740 \uC11C\uBE44\uC2A4\uBCC4 \uAC1C\uC218\uB9CC \uBC18\uD658\uD55C\uB2E4.",
     inputSchema: sugoAwsContextInputSchema
   },
   handleSugoAwsContext

@@ -86,4 +86,25 @@ describe("/api/aws-context", () => {
     expect(result.body.accounts).toHaveLength(2);
     expect(result.body.inventory[0].resources[0].id).toBe("dev-profile-repo");
   });
+
+  it("reads a requested account snapshot without changing the UI active account", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    await syncUser(db, { userId: "u3" });
+    const auth = (await seedUserToken(db, "u3")).replace(/^Bearer /, "");
+    const fake: AwsContextClient = {
+      identity: async ({ profile }) => ({ accountId: profile === "default-profile" ? "111111111111" : "222222222222", arn: `arn:aws:iam::123:user/${profile}` }),
+      inventory: async ({ profile }) => [{ service: "s3", resources: [{ service: "s3", kind: "bucket", id: `${profile}-bucket` }] }],
+    };
+    const { app } = await createApp({ db, awsContextClient: fake });
+    await request(app).put("/api/aws-context").set("Authorization", `Bearer ${auth}`).send({ name: "default", profile: "default-profile", region: "ap-northeast-2" }).expect(200);
+    await request(app).post("/api/aws-context/refresh").set("Authorization", `Bearer ${auth}`).expect(200);
+    await request(app).put("/api/aws-context").set("Authorization", `Bearer ${auth}`).send({ name: "team-dev", profile: "dev-profile", region: "ap-northeast-2" }).expect(200);
+    await request(app).post("/api/aws-context/refresh").set("Authorization", `Bearer ${auth}`).expect(200);
+
+    const requested = await request(app).get("/api/aws-context?account=default").set("Authorization", `Bearer ${auth}`).expect(200);
+    expect(requested.body).toMatchObject({ activeAccount: "default", inventory: [{ resources: [{ id: "default-profile-bucket" }] }] });
+    const uiActive = await request(app).get("/api/aws-context").set("Authorization", `Bearer ${auth}`).expect(200);
+    expect(uiActive.body.activeAccount).toBe("team-dev");
+  });
 });

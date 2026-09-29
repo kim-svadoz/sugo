@@ -13,14 +13,15 @@ interface AccountRow { name: string; profile: string; region: string; account_id
 interface PreferenceRow { active_account_name: string; }
 interface SnapshotRow { payload: unknown; observed_at: string; }
 
-async function accountState(db: DbClient, userId: string): Promise<{ accounts: AccountRow[]; active: AccountRow | null }> {
+async function accountState(db: DbClient, userId: string, requestedAccount?: string): Promise<{ accounts: AccountRow[]; active: AccountRow | null }> {
   const accounts = await db.query<AccountRow>("SELECT name, profile, region, account_id, principal_arn FROM user_aws_context_accounts WHERE user_id = ? ORDER BY name ASC", [userId]);
   const preferences = await db.query<PreferenceRow>("SELECT active_account_name FROM user_aws_context_preferences WHERE user_id = ?", [userId]);
-  return { accounts, active: accounts.find((account) => account.name === preferences[0]?.active_account_name) ?? accounts[0] ?? null };
+  const selectedName = requestedAccount ?? preferences[0]?.active_account_name;
+  return { accounts, active: accounts.find((account) => account.name === selectedName) ?? (requestedAccount ? null : accounts[0] ?? null) };
 }
 
-export async function getAwsContextStatus(db: DbClient, userId: string): Promise<AwsContextStatus> {
-  const { accounts, active } = await accountState(db, userId);
+export async function getAwsContextStatus(db: DbClient, userId: string, requestedAccount?: string): Promise<AwsContextStatus> {
+  const { accounts, active } = await accountState(db, userId, requestedAccount);
   const summaries = accounts.map((account) => ({ name: account.name, profile: account.profile, region: account.region, accountHint: account.account_id.slice(-4), principal: account.principal_arn.split("/").at(-1) ?? null }));
   if (!active) return { connected: false, activeAccount: null, accounts: summaries, profile: null, region: null, accountHint: null, principal: null, observedAt: null, inventory: [] };
   const snapshots = await db.query<SnapshotRow>("SELECT payload, observed_at FROM user_aws_context_snapshots WHERE user_id = ? AND account_name = ?", [userId, active.name]);
