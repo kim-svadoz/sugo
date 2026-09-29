@@ -39,6 +39,26 @@ export interface AwsContextClient {
 
 type AwsRunner = (args: string[]) => Promise<unknown>;
 
+const READ_ONLY_AWS_OPERATIONS = new Set([
+  "sts:get-caller-identity",
+  "codecommit:list-repositories",
+  "athena:list-work-groups",
+  "s3api:list-buckets",
+  "codebuild:list-projects", "codebuild:list-builds-for-project", "codebuild:batch-get-builds",
+  "codepipeline:list-pipelines", "codepipeline:get-pipeline",
+  "dynamodb:list-tables", "elasticache:describe-replication-groups",
+  "opensearch:list-domain-names", "cloudwatch:list-dashboards",
+  "ecs:list-clusters", "ecs:list-services", "ecs:describe-services", "ecs:describe-task-sets", "ecs:describe-task-definition",
+]);
+
+/** Dashboard AWS boundary: explicit allowlist, deny by default. Prefix heuristics are intentionally forbidden. */
+export function assertReadOnlyAwsArgs(args: string[]): void {
+  const key = `${args[0] ?? ""}:${args[1] ?? ""}`;
+  if (!READ_ONLY_AWS_OPERATIONS.has(key)) {
+    throw Object.assign(new Error(`AWS_READ_ONLY_POLICY_DENIED: ${key || "missing operation"}`), { code: "AWS_READ_ONLY_POLICY_DENIED" });
+  }
+}
+
 function commonArgs(account: AwsContextAccount): string[] {
   return ["--profile", account.profile, "--region", account.region, "--output", "json", "--no-cli-pager"];
 }
@@ -68,10 +88,11 @@ function chunks<T>(items: T[], size: number): T[][] {
 }
 
 export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextClient {
-  const run: AwsRunner = customRunner ?? (async (args) => {
+  const underlying: AwsRunner = customRunner ?? (async (args) => {
     const { stdout } = await execFileAsync("aws", args, { maxBuffer: 8 * 1024 * 1024, timeout: 60_000 });
     return JSON.parse(stdout);
   });
+  const run: AwsRunner = async (args) => { assertReadOnlyAwsArgs(args); return underlying(args); };
 
   async function collect(account: AwsContextAccount, service: AwsInventoryService, command: string[], parse: (payload: any) => AwsInventoryResource[]): Promise<AwsServiceInventory> {
     try {
@@ -124,6 +145,16 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
               const images = Array.isArray(taskDefinition?.containerDefinitions)
                 ? taskDefinition.containerDefinitions.map((container: any) => text(container.image)).filter((image: string | null): image is string => image !== null)
                 : [];
+              const pinpointApplicationNames = Array.isArray(taskDefinition?.containerDefinitions)
+                ? taskDefinition.containerDefinitions.flatMap((container: any) => {
+                    const fromEnv = Array.isArray(container.environment)
+                      ? container.environment.filter((item: any) => item?.name === "PINPOINT_APPLICATION_NAME").map((item: any) => text(item.value))
+                      : [];
+                    const commandText = [...(container.entryPoint ?? []), ...(container.command ?? [])].join(" ");
+                    const fromCommand = [...commandText.matchAll(/-Dpinpoint\.applicationName=([^\s"']+)/g)].map((match) => match[1]);
+                    return [...fromEnv, ...fromCommand].filter((value): value is string => value !== null);
+                  })
+                : [];
               const serviceResource = resource("ecs", "service", service.serviceName ?? arnName(service.serviceArn), {
                 cluster: arnName(clusterArn),
                 status: service.status,
@@ -135,6 +166,7 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
                 taskDefinition: family && revision ? `${family}:${revision}` : taskDefinitionArn,
                 revision,
                 images,
+                pinpointApplicationName: pinpointApplicationNames[0] ?? null,
                 taskDefinitionRegisteredAt: text(taskDefinition?.registeredAt),
               });
               if (serviceResource) resources.push(serviceResource);

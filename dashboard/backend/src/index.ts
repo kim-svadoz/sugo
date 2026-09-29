@@ -27,6 +27,8 @@ import { adaptBitbucketClient, type GitProviderClients } from "./git/clients.js"
 import { createHttpGithubClient, createHttpGitlabClient } from "./git/httpClients.js";
 import { createAwsCodeCommitClient } from "./git/codeCommitClient.js";
 import { createAwsCliContextClient, type AwsContextClient } from "./aws/contextClient.js";
+import { createHttpPinpointClient, type PinpointClient } from "./pinpoint/client.js";
+import { createPinpointContextRouter } from "./routes/pinpointContext.js";
 import { corsWhitelist } from "./middleware/cors.js";
 import { errorMiddleware } from "./middleware/asyncHandler.js";
 
@@ -58,6 +60,7 @@ export interface AppOverrides {
   bitbucketClient?: BitbucketClient;
   gitProviderClients?: Partial<GitProviderClients>;
   awsContextClient?: AwsContextClient;
+  pinpointClient?: PinpointClient;
   githubOAuth?: GithubOAuthClient;
   sessionSecret?: string;
   secretEncKey?: string;
@@ -92,6 +95,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
     aws_codecommit: overrides.gitProviderClients?.aws_codecommit ?? createAwsCodeCommitClient(),
   };
   const awsContextClient = overrides.awsContextClient ?? createAwsCliContextClient();
+  const pinpointClient = overrides.pinpointClient ?? createHttpPinpointClient();
   const githubOAuth = overrides.githubOAuth ?? createHttpGithubOAuth(config.github);
   const sessionSecret = overrides.sessionSecret ?? config.sessionSecret;
   const secretEncKey = overrides.secretEncKey ?? config.secretEncKey;
@@ -132,6 +136,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/bitbucket", createBitbucketRouter(db, sessionSecret, secretEncKey));
   app.use("/api/git-connections", createGitConnectionsRouter(db, sessionSecret, secretEncKey));
   app.use("/api/aws-context", createAwsContextRouter(db, sessionSecret, awsContextClient));
+  app.use("/api/pinpoint-context", createPinpointContextRouter(db, sessionSecret, pinpointClient));
   app.use("/api/pr", createPrRouter(db, sessionSecret, secretEncKey, gitProviderClients));
   // §3.7: /api/stats + alias /api/metrics(플러그인이 calibrated-ratio를 여기로 fetch), harness, skills.
   const statsRouter = createStatsRouter(db, sessionSecret);

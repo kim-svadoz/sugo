@@ -9,6 +9,7 @@ import {
 } from "../api/gitConnectionsApi.js";
 import { createToken, listTokens, revokeToken, type ApiTokenSummary } from "../api/tokensApi.js";
 import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsContexts, refreshAwsContext, selectAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
+import { connectPinpointContext, disconnectPinpointContext, getPinpointContext, refreshPinpointContext, type PinpointStatus } from '../api/pinpointContextApi.js';
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 
@@ -116,6 +117,30 @@ function AwsContextCard() {
         </div> : <div className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-4 text-center text-xs text-[var(--color-text-muted)]">표시할 AWS 리소스가 없습니다.</div>}
         <div className="text-right font-mono text-[10px] text-[var(--color-text-dim)]">마지막 조회 {status.observedAt ?? "없음"}</div>
       </>}
+    </div>
+  </div>;
+}
+
+function PinpointContextCard() {
+  const [status, setStatus] = useState<PinpointStatus | null>(null);
+  const [baseUrl, setBaseUrl] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function load() { try { const next = await getPinpointContext(); setStatus(next); if (next.baseUrl) setBaseUrl(next.baseUrl); setError(null); } catch (err) { setError(String(err)); } }
+  useEffect(() => { void load(); }, []);
+  async function run(action: () => Promise<unknown>) { setBusy(true); try { await action(); await load(); } catch (err) { setError(String(err)); } finally { setBusy(false); } }
+  return <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
+      <div><h2 className="text-base font-semibold text-[var(--color-text)]">Pinpoint APM</h2><p className="text-xs text-[var(--color-text-muted)]">ECS 생존과 분리해 실제 에이전트 관측 상태를 읽습니다</p></div>
+      {status?.connected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span>}
+    </div>
+    <div className="space-y-3 p-5">
+      {error && <div className="rounded border border-rose-500/30 px-3 py-2 text-xs text-rose-300">{error}</div>}
+      <div className="flex gap-2"><input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://pinpoint.example.com" className="min-w-0 flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm" />
+        {!status?.connected ? <button disabled={busy || !baseUrl} onClick={() => void run(() => connectPinpointContext(baseUrl))} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200 disabled:opacity-40">연결</button> : <><button disabled={busy} onClick={() => void run(refreshPinpointContext)} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200">동기화</button><button disabled={busy} onClick={() => void run(disconnectPinpointContext)} className="rounded border border-rose-400/30 px-3 text-sm text-rose-300">해제</button></>}
+      </div>
+      {status?.connected && <div className="grid gap-2 sm:grid-cols-2">{status.applications.map((app) => <div key={app.applicationName} className="rounded border border-[var(--color-border)] bg-black/10 px-3 py-2 text-xs"><div className="font-medium text-[var(--color-text)]">{app.applicationName}</div><div className="mt-1 text-[var(--color-text-muted)]">{app.state} · agent {app.runningAgentCount}/{app.agentCount}</div></div>)}</div>}
+      <p className="text-[11px] text-[var(--color-text-dim)]">읽기 전용 조회만 수행합니다. 마지막 동기화 {status?.observedAt ?? '없음'}</p>
     </div>
   </div>;
 }
@@ -288,6 +313,7 @@ export function Settings() {
       {!LOCAL_DEV && <ApiTokensCard />}
 
       <AwsContextCard />
+      <PinpointContextCard />
 
       <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className="flex items-center gap-2.5 border-b border-[var(--color-border)] px-5 py-4">

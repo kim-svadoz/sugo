@@ -44,6 +44,12 @@ import { compareRelease, shortCommit, type ReleaseComparison } from "../lib/awsR
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
+const APM_STATE = {
+  OBSERVED: { label: "APM 관측", color: "text-emerald-300" },
+  STALE: { label: "APM 지연", color: "text-amber-300" },
+  MISSING: { label: "APM 미관측", color: "text-rose-300" },
+  UNKNOWN: { label: "APM 확인 필요", color: "text-[var(--color-text-muted)]" },
+} as const;
 
 const INSPECTOR_TABS = [
   { id: "repositories" as const, label: "Repositories", icon: Package },
@@ -412,12 +418,16 @@ export function Sessions() {
                         return <div key={`${deployment.accountName}:${deployment.service}`} className="rounded border border-[var(--color-border)] bg-black/15 px-2 py-1.5">
                           <div className="flex items-center justify-between gap-1">
                             <span className="font-bold uppercase text-cyan-300">{deployment.environment}</span>
-                            <span className={health.color} title={`AWS 원본: ${deployment.rolloutState ?? deployment.status ?? "없음"}`}>{health.label}</span>
+                            <span className={health.color} title={`ECS 원본: ${deployment.rolloutState ?? deployment.status ?? "없음"}`}>ECS {health.label}</span>
                           </div>
                           <div className="mt-0.5 truncate text-[11px] text-[var(--color-text)]" title={deployment.taskDefinition ?? undefined}>{deployment.taskDefinition ?? "TaskDefinition 미확인"}</div>
                           {imageVersion && <div className="flex items-center justify-between gap-1 text-[10px] text-purple-300" title={deployment.images[0]}><span className="truncate">image {imageVersion}</span>{p.aws_release?.latestBuildNumber != null && <span className={imageVersion === String(p.aws_release.latestBuildNumber) ? "text-emerald-300" : "text-amber-300"}>{imageVersion === String(p.aws_release.latestBuildNumber) ? "최신 Build" : `Build #${p.aws_release.latestBuildNumber}와 다름`}</span>}</div>}
                           <div className="truncate text-[10px] text-[var(--color-text-muted)]" title={deployment.deployedAt ? "ECS PRIMARY 배포 갱신 시각" : "TaskDefinition 등록 시각 기반"}>{formatDeploymentDate(deployment.deployedAt, deployment.taskDefinitionRegisteredAt)}</div>
                           <div className="text-[10px] text-[var(--color-text-dim)]">running {deployment.runningCount ?? "?"}/{deployment.desiredCount ?? "?"}</div>
+                          {deployment.pinpointApplicationName && <div className="mt-1 flex items-center justify-between gap-1 border-t border-[var(--color-border)] pt-1 text-[10px]" title={deployment.apmLatestHeartbeatAt ?? "Pinpoint heartbeat 없음"}>
+                            <span className="truncate text-[var(--color-text-muted)]">Pinpoint {deployment.pinpointApplicationName}</span>
+                            {deployment.apmState ? <span className={APM_STATE[deployment.apmState].color}>{APM_STATE[deployment.apmState].label} {deployment.apmRunningAgents ?? 0}/{deployment.apmAgentCount ?? 0}</span> : <span className="text-[var(--color-text-dim)]">동기화 필요</span>}
+                          </div>}
                         </div>;
                       })}
                     </div>

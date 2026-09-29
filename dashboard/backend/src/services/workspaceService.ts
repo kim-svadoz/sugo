@@ -7,7 +7,7 @@ import type { DbClient } from "../db/client.js";
 import { ensureWorkspaceDeletedAtColumn } from "./syncService.js";
 import { readySet, topoSort, wouldCreateCycle } from "./roadmapGraph.js";
 import { parseJsonArray, parseMaybeJson } from "../db/jsonColumn.js";
-import { linkAwsDeployments, linkAwsRelease, type AwsDeploymentSnapshot, type AwsProjectDeployment, type AwsProjectRelease } from "./awsDeploymentLink.js";
+import { linkAwsDeployments, linkAwsRelease, type AwsDeploymentSnapshot, type AwsProjectDeployment, type AwsProjectRelease, type PinpointApplicationSnapshot } from "./awsDeploymentLink.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -156,6 +156,7 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
   );
   const result: WorkspaceSummary[] = [];
   let awsSnapshots: AwsDeploymentSnapshot[] = [];
+  let pinpointSnapshots: PinpointApplicationSnapshot[] = [];
   try {
     const rows = await db.query<{ account_name: string; region: string; payload: unknown; observed_at: string | null }>(
       `SELECT a.name AS account_name, a.region, s.payload, s.observed_at
@@ -173,13 +174,17 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
   } catch {
     // AWS Context는 선택 기능이다. 구 DB나 미연결 사용자도 Workspace 목록을 그대로 쓸 수 있어야 한다.
   }
+  try {
+    const rows = await db.query<{ payload: unknown }>('SELECT payload FROM user_pinpoint_snapshots WHERE user_id = ?', [userId]);
+    pinpointSnapshots = rows[0] ? parseMaybeJson(rows[0].payload, []) : [];
+  } catch { /* Pinpoint is optional and old databases remain readable. */ }
   for (const ws of workspaces) {
     const projectRows = await db.query<{ project_path: string; git_synced: number }>(
       "SELECT project_path, git_synced FROM sugo_workspace_projects WHERE workspace_id = ? ORDER BY project_path",
       [ws.id]
     );
     const projects: WorkspaceProjectRow[] = await Promise.all(projectRows.map(async (project) => {
-      const deployments = linkAwsDeployments(project.project_path, awsSnapshots);
+      const deployments = linkAwsDeployments(project.project_path, awsSnapshots, pinpointSnapshots);
       const release = linkAwsRelease(project.project_path, awsSnapshots);
       return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments, aws_release: release, local_git: await readLocalGitState(project.project_path) };
     }));

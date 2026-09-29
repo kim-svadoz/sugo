@@ -36,7 +36,14 @@ export interface AwsProjectDeployment {
   deployedAt: string | null;
   taskDefinitionRegisteredAt: string | null;
   observedAt: string | null;
+  pinpointApplicationName: string | null;
+  apmState: "OBSERVED" | "STALE" | "MISSING" | "UNKNOWN" | null;
+  apmRunningAgents: number | null;
+  apmAgentCount: number | null;
+  apmLatestHeartbeatAt: string | null;
 }
+
+export interface PinpointApplicationSnapshot { applicationName: string; agentCount: number; runningAgentCount: number; latestHeartbeatAt: string | null; state: "OBSERVED" | "STALE" | "MISSING" | "UNKNOWN"; }
 
 export interface AwsProjectRelease {
   pipeline: string;
@@ -76,7 +83,7 @@ function imageRepositoryName(image: string): string {
   return lastSegment.split("@")[0].split(":")[0].toLowerCase();
 }
 
-function linkExactService(targetName: string, snapshots: AwsDeploymentSnapshot[]): AwsProjectDeployment[] {
+function linkExactService(targetName: string, snapshots: AwsDeploymentSnapshot[], pinpoint: PinpointApplicationSnapshot[]): AwsProjectDeployment[] {
   const normalizedTarget = targetName.toLowerCase();
   const deployments: AwsProjectDeployment[] = [];
   for (const snapshot of snapshots) {
@@ -92,6 +99,8 @@ function linkExactService(targetName: string, snapshots: AwsDeploymentSnapshot[]
       const rolloutState = stringValue(metadata.rolloutState);
       const runningCount = numberValue(metadata.runningCount);
       const desiredCount = numberValue(metadata.desiredCount);
+      const pinpointApplicationName = stringValue(metadata.pinpointApplicationName);
+      const apm = pinpointApplicationName ? pinpoint.find((item) => item.applicationName === pinpointApplicationName) : undefined;
       deployments.push({
         matchSource: imageMatches ? "image" : "service",
         accountName: snapshot.accountName,
@@ -110,6 +119,11 @@ function linkExactService(targetName: string, snapshots: AwsDeploymentSnapshot[]
         deployedAt: stringValue(metadata.deployedAt),
         taskDefinitionRegisteredAt: stringValue(metadata.taskDefinitionRegisteredAt),
         observedAt: snapshot.observedAt,
+        pinpointApplicationName,
+        apmState: apm?.state ?? null,
+        apmRunningAgents: apm?.runningAgentCount ?? null,
+        apmAgentCount: apm?.agentCount ?? null,
+        apmLatestHeartbeatAt: apm?.latestHeartbeatAt ?? null,
       });
     }
   }
@@ -122,8 +136,8 @@ function linkExactService(targetName: string, snapshots: AwsDeploymentSnapshot[]
 }
 
 /** 이름 유사도 추측은 금지한다. repo basename과 ECS service의 `-service` 제거값이 정확히 같을 때만 연결한다. */
-export function linkAwsDeployments(projectPath: string, snapshots: AwsDeploymentSnapshot[]): AwsProjectDeployment[] {
-  return linkExactService(basename(projectPath), snapshots);
+export function linkAwsDeployments(projectPath: string, snapshots: AwsDeploymentSnapshot[], pinpoint: PinpointApplicationSnapshot[] = []): AwsProjectDeployment[] {
+  return linkExactService(basename(projectPath), snapshots, pinpoint);
 }
 
 export function linkAwsRelease(projectPath: string, snapshots: AwsDeploymentSnapshot[]): AwsProjectRelease | null {

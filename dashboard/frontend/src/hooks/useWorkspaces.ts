@@ -37,6 +37,11 @@ export interface WorkspaceSummary {
       deployedAt: string | null;
       taskDefinitionRegisteredAt: string | null;
       observedAt: string | null;
+      pinpointApplicationName: string | null;
+      apmState: "OBSERVED" | "STALE" | "MISSING" | "UNKNOWN" | null;
+      apmRunningAgents: number | null;
+      apmAgentCount: number | null;
+      apmLatestHeartbeatAt: string | null;
     }>;
   }>;
   taskCounts: { pending: number; in_progress: number; done: number; archived: number };
