@@ -5,6 +5,7 @@ import { ONTOLOGY_MODEL_IDENTITY } from "../ontology/identity.js";
 import { projectSessionOntology } from "../ontology/runtimeProjection.js";
 import { loadSession, sessionExists } from "../session.js";
 import { getTask } from "../hulk/task.js";
+import { WORKFLOW_GRAPH_ANALYSIS } from "../ontology/workflowGraph.js";
 
 const VIEWS = [
   "objectTypes",
@@ -17,6 +18,8 @@ const VIEWS = [
   "ownership",
   "invariants",
   "boundaries",
+  "intentionalWorkflowCycles",
+  "evidenceFlows",
 ] as const satisfies readonly OntologyView[];
 
 export const sugoOntologyInputSchema = {
@@ -94,6 +97,7 @@ export async function handleSugoOntology(rawArgs: unknown) {
         name: boundary.name,
         contract: boundary.contract,
         invariants: boundary.invariantIds.map((id) => INVARIANTS.find((i) => i.id === id)),
+        ...(boundary.name === "workflow" ? { graphAnalysis: WORKFLOW_GRAPH_ANALYSIS } : {}),
       },
     });
   }
@@ -110,6 +114,7 @@ export async function handleSugoOntology(rawArgs: unknown) {
       prerequisites: PREREQUISITES,
       resultState: RESULT_STATE,
       allowedActionsByState: ALLOWED_ACTIONS_BY_STATE,
+      workflowGraph: WORKFLOW_GRAPH_ANALYSIS,
     },
     note: "derived.*는 ontology.actionTypes에서 파생된 값이다(§2.8) — 별도로 손관리되는 사본이 아니다.",
   });

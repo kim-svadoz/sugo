@@ -27921,7 +27921,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.11.0" : "0.0.0-dev";
+  return true ? "0.12.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30158,6 +30158,26 @@ var BOUNDARIES = [
     invariantIds: ["gate-not-skippable", "user-final-confirm"]
   }
 ];
+var INTENTIONAL_WORKFLOW_CYCLES = [
+  {
+    id: "orchestration-progress",
+    states: ["ORCHESTRATING"],
+    reason: "\uC5EC\uB7EC subtask\uB97C \uCC28\uB840\uB85C \uC2DC\uC791\xB7\uC644\uB8CC\uD558\uB294 \uB3D9\uC548 \uAC19\uC740 orchestration \uC0C1\uD0DC\uB97C \uC720\uC9C0\uD55C\uB2E4."
+  },
+  {
+    id: "agent-rework-loop",
+    states: ["CODE_RUNNING", "CODE_DONE", "TEST_RUNNING", "TEST_DONE", "REVIEW_RUNNING"],
+    reason: "\uD14C\uC2A4\uD2B8\xB7\uB9AC\uBDF0\uC5D0\uC11C \uBC1C\uACAC\uD55C \uBB38\uC81C\uB97C code_start\uB85C \uB418\uB3CC\uB824 \uC218\uC815\uD558\uACE0 \uB2E4\uC2DC \uAC80\uC99D\uD55C\uB2E4."
+  }
+];
+var EVIDENCE_FLOWS = [
+  { id: "baseline", producedBy: "sugo_record_test_evidence", consumedBy: ["baseline_capture", "code_done", "integrate"], storageRef: "SessionData.baselineGate.evidence" },
+  { id: "contract-red-green", producedBy: "sugo_record_contract_evidence", consumedBy: ["contract_done", "review_done"], storageRef: "ChainInfo.contractTests" },
+  { id: "analyze", producedBy: "sugo_analyze", consumedBy: ["code_done", "integrate"], storageRef: "ChainInfo.analyzeAttempts + analyzePassed" },
+  { id: "test", producedBy: "sugo_record_test_evidence", consumedBy: ["test_done", "test_reverify", "review_done"], storageRef: "ChainInfo.testEvidence" },
+  { id: "validation", producedBy: "sugo_validate", consumedBy: ["review_done"], storageRef: "ChainInfo.lastValidation" },
+  { id: "lethal-trifecta", producedBy: "sugo_check_lethal_trifecta", consumedBy: ["review_done"], storageRef: "ChainInfo.lastLethalTrifectaCheck" }
+];
 var ONTOLOGY = {
   objectTypes: OBJECT_TYPES,
   allStatuses: ALL_STATUSES,
@@ -30168,7 +30188,9 @@ var ONTOLOGY = {
   cancellableStates: CANCELLABLE_STATES,
   ownership: OWNERSHIP,
   invariants: INVARIANTS,
-  boundaries: BOUNDARIES
+  boundaries: BOUNDARIES,
+  intentionalWorkflowCycles: INTENTIONAL_WORKFLOW_CYCLES,
+  evidenceFlows: EVIDENCE_FLOWS
 };
 
 // src/ontology/derive.ts
@@ -32526,8 +32548,101 @@ async function handleSugoVersion() {
 
 // src/ontology/identity.ts
 import { createHash as createHash4 } from "node:crypto";
+
+// src/ontology/workflowGraph.ts
+function reachable(start2, edges) {
+  const seen = /* @__PURE__ */ new Set();
+  const pending = [start2];
+  while (pending.length) {
+    const current = pending.pop();
+    if (seen.has(current)) continue;
+    seen.add(current);
+    for (const next of edges.get(current) ?? []) pending.push(next);
+  }
+  return seen;
+}
+function reachableFromSeeds(seeds, edges) {
+  const seen = /* @__PURE__ */ new Set();
+  for (const seed of seeds) {
+    for (const state of reachable(seed, edges)) seen.add(state);
+  }
+  return seen;
+}
+function stronglyConnectedComponents(states, edges) {
+  let index = 0;
+  const indices = /* @__PURE__ */ new Map();
+  const lowLinks = /* @__PURE__ */ new Map();
+  const stack = [];
+  const onStack = /* @__PURE__ */ new Set();
+  const components = [];
+  const visit2 = (state) => {
+    indices.set(state, index);
+    lowLinks.set(state, index);
+    index += 1;
+    stack.push(state);
+    onStack.add(state);
+    for (const next of edges.get(state) ?? []) {
+      if (!indices.has(next)) {
+        visit2(next);
+        lowLinks.set(state, Math.min(lowLinks.get(state), lowLinks.get(next)));
+      } else if (onStack.has(next)) {
+        lowLinks.set(state, Math.min(lowLinks.get(state), indices.get(next)));
+      }
+    }
+    if (lowLinks.get(state) === indices.get(state)) {
+      const component = [];
+      let member;
+      do {
+        member = stack.pop();
+        onStack.delete(member);
+        component.push(member);
+      } while (member !== state);
+      components.push(component);
+    }
+  };
+  for (const state of states) if (!indices.has(state)) visit2(state);
+  return components;
+}
+var cycleKey = (states) => [...states].sort().join("|");
+function analyzeWorkflowGraph(states, transitions, allowedCycles) {
+  const known = new Set(states);
+  const edges = new Map(states.map((state) => [state, /* @__PURE__ */ new Set()]));
+  const reverse = new Map(states.map((state) => [state, /* @__PURE__ */ new Set()]));
+  for (const transition of transitions) {
+    if (!transition.fromStates || !transition.toState || !known.has(transition.toState)) continue;
+    const to = transition.toState;
+    for (const fromValue of transition.fromStates) {
+      if (!known.has(fromValue)) continue;
+      const from = fromValue;
+      edges.get(from).add(to);
+      reverse.get(to).add(from);
+    }
+  }
+  const startDestinations = transitions.filter((transition) => transition.name === "start" && transition.toState && known.has(transition.toState)).map((transition) => transition.toState);
+  const fromInit = reachableFromSeeds(["INIT", ...startDestinations], edges);
+  const toDone = reachable("DONE", reverse);
+  if (startDestinations.some((state) => toDone.has(state))) toDone.add("INIT");
+  const order = new Map(states.map((state, position) => [state, position]));
+  const cycles = stronglyConnectedComponents(states, edges).filter((component) => component.length > 1 || edges.get(component[0])?.has(component[0])).map((component) => ({ states: component.sort((a, b) => order.get(a) - order.get(b)) })).sort((a, b) => order.get(a.states[0]) - order.get(b.states[0]));
+  const actualKeys = new Set(cycles.map((cycle) => cycleKey(cycle.states)));
+  const allowedKeys = new Set(allowedCycles.map((cycle) => cycleKey(cycle.states)));
+  return {
+    unreachableFromInit: states.filter((state) => !fromInit.has(state)),
+    cannotReachDone: states.filter((state) => state !== "DONE" && !toDone.has(state)),
+    cycles,
+    unexpectedCycles: cycles.filter((cycle) => !allowedKeys.has(cycleKey(cycle.states))),
+    staleCycleDeclarations: allowedCycles.filter((cycle) => !actualKeys.has(cycleKey(cycle.states)))
+  };
+}
+var WORKFLOW_GRAPH_ANALYSIS = analyzeWorkflowGraph(
+  WORKFLOW_STATES,
+  ACTION_TYPES,
+  INTENTIONAL_WORKFLOW_CYCLES
+);
+
+// src/ontology/identity.ts
 var ONTOLOGY_SCHEMA_VERSION = 1;
-var ONTOLOGY_REVISION = 2;
+var ONTOLOGY_REVISION = 3;
 function canonicalJson(value) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return JSON.stringify(value);
   if (typeof value === "number") {
@@ -32549,7 +32664,8 @@ var HASHED_MODEL = {
   derived: {
     prerequisites: PREREQUISITES,
     resultState: RESULT_STATE,
-    allowedActionsByState: ALLOWED_ACTIONS_BY_STATE
+    allowedActionsByState: ALLOWED_ACTIONS_BY_STATE,
+    workflowGraph: WORKFLOW_GRAPH_ANALYSIS
   }
 };
 var ONTOLOGY_MODEL_IDENTITY = Object.freeze({
@@ -32777,7 +32893,9 @@ var VIEWS = [
   "cancellableStates",
   "ownership",
   "invariants",
-  "boundaries"
+  "boundaries",
+  "intentionalWorkflowCycles",
+  "evidenceFlows"
 ];
 var sugoOntologyInputSchema = {
   view: external_exports.enum(VIEWS).optional().describe("\uC870\uD68C\uD560 \uC139\uC158. \uC0DD\uB7B5\uD558\uBA74 \uC804\uCCB4 \uBAA8\uB378 + \uD30C\uC0DD \uD14C\uC774\uBE14\uC744 \uBC18\uD658\uD55C\uB2E4"),
@@ -32826,7 +32944,8 @@ async function handleSugoOntology(rawArgs) {
       boundary: {
         name: boundary.name,
         contract: boundary.contract,
-        invariants: boundary.invariantIds.map((id) => INVARIANTS.find((i2) => i2.id === id))
+        invariants: boundary.invariantIds.map((id) => INVARIANTS.find((i2) => i2.id === id)),
+        ...boundary.name === "workflow" ? { graphAnalysis: WORKFLOW_GRAPH_ANALYSIS } : {}
       }
     });
   }
@@ -32840,7 +32959,8 @@ async function handleSugoOntology(rawArgs) {
     derived: {
       prerequisites: PREREQUISITES,
       resultState: RESULT_STATE,
-      allowedActionsByState: ALLOWED_ACTIONS_BY_STATE
+      allowedActionsByState: ALLOWED_ACTIONS_BY_STATE,
+      workflowGraph: WORKFLOW_GRAPH_ANALYSIS
     },
     note: "derived.*\uB294 ontology.actionTypes\uC5D0\uC11C \uD30C\uC0DD\uB41C \uAC12\uC774\uB2E4(\xA72.8) \u2014 \uBCC4\uB3C4\uB85C \uC190\uAD00\uB9AC\uB418\uB294 \uC0AC\uBCF8\uC774 \uC544\uB2C8\uB2E4."
   });

@@ -27,7 +27,7 @@ describe("§2 sugo_ontology 도구", () => {
     for (const identity of identities) {
       expect(identity).toEqual({
         schemaVersion: 1,
-        revision: 2,
+        revision: 3,
         hashAlgorithm: "sha256",
         modelHash: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
       });
@@ -59,6 +59,12 @@ describe("§2 sugo_ontology 도구", () => {
     expect(r.derived.allowedActionsByState.PRD).toContain("oracle_done");
     expect(r.derived.prerequisites.ready).toEqual(["JIRA", "PRD"]);
     expect(r.derived.resultState.commit).toBe("DONE");
+    expect(r.derived.workflowGraph).toMatchObject({
+      unreachableFromInit: [],
+      cannotReachDone: [],
+      unexpectedCycles: [],
+      staleCycleDeclarations: [],
+    });
   });
 
   it("view로 섹션을 좁힐 수 있다", async () => {

@@ -240,9 +240,19 @@ try {
     "sugo_ontology — 배포 번들이 결정적 모델 식별자를 제공",
     toolOk(ontology)
       && ontology.model?.schemaVersion === 1
-      && ontology.model?.revision === 2
+      && ontology.model?.revision === 3
       && /^sha256:[a-f0-9]{64}$/.test(ontology.model?.modelHash ?? ""),
     JSON.stringify(ontology.model ?? ontology).slice(0, 200),
+  );
+  const workflowBoundary = await A.callTool("sugo_ontology", { boundary: "workflow" });
+  check(
+    "sugo_ontology — workflow 구조 분석이 교착·미승인 cycle 없음을 보고",
+    toolOk(workflowBoundary)
+      && workflowBoundary.boundary?.graphAnalysis?.unreachableFromInit?.length === 0
+      && workflowBoundary.boundary?.graphAnalysis?.cannotReachDone?.length === 0
+      && workflowBoundary.boundary?.graphAnalysis?.unexpectedCycles?.length === 0
+      && workflowBoundary.boundary?.graphAnalysis?.staleCycleDeclarations?.length === 0,
+    JSON.stringify(workflowBoundary.boundary?.graphAnalysis ?? workflowBoundary).slice(0, 240),
   );
   const runtimeOntology = await A.callTool("sugo_ontology", { sessionId: pipe.sessionId });
   check(

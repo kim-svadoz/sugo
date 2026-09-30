@@ -175,6 +175,8 @@ describe("§2 온톨로지 drift lock", () => {
         "allStatuses",
         "boundaries",
         "cancellableStates",
+        "evidenceFlows",
+        "intentionalWorkflowCycles",
         "invariants",
         "linkTypes",
         "objectTypes",

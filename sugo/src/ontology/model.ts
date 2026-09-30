@@ -482,6 +482,57 @@ export const BOUNDARIES = [
 
 export type BoundaryName = (typeof BOUNDARIES)[number]["name"];
 
+// ── 의도된 workflow cycle ──────────────────────────────────────────────────
+
+export interface IntentionalWorkflowCycle {
+  id: string;
+  /** 순서는 WORKFLOW_STATES의 정방향을 따른다. SCC 분석 결과와 exact match한다. */
+  states: readonly WorkflowState[];
+  reason: string;
+}
+
+/**
+ * cycle은 기본적으로 결함이다. 실제 운영상 필요한 두 루프만 이름과 이유를 붙여 허용한다.
+ * 새 cycle은 이 목록을 의식적으로 갱신하지 않는 한 P4 그래프 검증을 통과할 수 없다.
+ */
+export const INTENTIONAL_WORKFLOW_CYCLES = [
+  {
+    id: "orchestration-progress",
+    states: ["ORCHESTRATING"],
+    reason: "여러 subtask를 차례로 시작·완료하는 동안 같은 orchestration 상태를 유지한다.",
+  },
+  {
+    id: "agent-rework-loop",
+    states: ["CODE_RUNNING", "CODE_DONE", "TEST_RUNNING", "TEST_DONE", "REVIEW_RUNNING"],
+    reason: "테스트·리뷰에서 발견한 문제를 code_start로 되돌려 수정하고 다시 검증한다.",
+  },
+] as const satisfies readonly IntentionalWorkflowCycle[];
+
+// ── 저장 증거 producer / consumer ──────────────────────────────────────────
+
+export interface EvidenceFlow {
+  id: string;
+  /** 증거를 세션에 기록하는 실제 MCP 도구 이름. */
+  producedBy: string;
+  /** 기록된 증거를 실제 게이트 판정에 소비하는 action. */
+  consumedBy: readonly ActionName[];
+  /** 세션 저장 구조에서의 근거 필드. */
+  storageRef: string;
+}
+
+/**
+ * 게이트가 소비하는 영속 증거만 선언한다. payload-only 입력과 action 내부 임시 판정은 제외한다.
+ * producer/consumer 어느 한쪽도 없는 항목은 장식용 지식이므로 P4 검증에서 거부한다.
+ */
+export const EVIDENCE_FLOWS = [
+  { id: "baseline", producedBy: "sugo_record_test_evidence", consumedBy: ["baseline_capture", "code_done", "integrate"], storageRef: "SessionData.baselineGate.evidence" },
+  { id: "contract-red-green", producedBy: "sugo_record_contract_evidence", consumedBy: ["contract_done", "review_done"], storageRef: "ChainInfo.contractTests" },
+  { id: "analyze", producedBy: "sugo_analyze", consumedBy: ["code_done", "integrate"], storageRef: "ChainInfo.analyzeAttempts + analyzePassed" },
+  { id: "test", producedBy: "sugo_record_test_evidence", consumedBy: ["test_done", "test_reverify", "review_done"], storageRef: "ChainInfo.testEvidence" },
+  { id: "validation", producedBy: "sugo_validate", consumedBy: ["review_done"], storageRef: "ChainInfo.lastValidation" },
+  { id: "lethal-trifecta", producedBy: "sugo_check_lethal_trifecta", consumedBy: ["review_done"], storageRef: "ChainInfo.lastLethalTrifectaCheck" },
+] as const satisfies readonly EvidenceFlow[];
+
 // ── 단일 export (§2.7 "전체 모델은 ONTOLOGY 객체로") ─────────────────────────
 
 export const ONTOLOGY = {
@@ -495,6 +546,8 @@ export const ONTOLOGY = {
   ownership: OWNERSHIP,
   invariants: INVARIANTS,
   boundaries: BOUNDARIES,
+  intentionalWorkflowCycles: INTENTIONAL_WORKFLOW_CYCLES,
+  evidenceFlows: EVIDENCE_FLOWS,
 } as const;
 
 export type OntologyView = keyof typeof ONTOLOGY;
