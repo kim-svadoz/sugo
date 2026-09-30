@@ -1,5 +1,15 @@
 import type { IntegrationCandidate, ProjectIntegration } from "../api/projectIntegrationsApi.js";
 
+type AwsAccountIdentity = { name: string; profile: string; region: string; accountHint: string; principal: string | null };
+
+export function awsAccountOptionLabel(account: AwsAccountIdentity): string {
+  return `${account.name} · ••••${account.accountHint}`;
+}
+
+export function awsAccountMetaLabel(account: AwsAccountIdentity): string {
+  return [`profile ${account.profile}`, account.region, account.principal].filter(Boolean).join(" · ");
+}
+
 type KeyFn = (item: { accountName: string; service: string; cluster?: string | null }) => string;
 
 export function isExactIntegrationCandidate(projectPath: string, item: IntegrationCandidate): boolean {

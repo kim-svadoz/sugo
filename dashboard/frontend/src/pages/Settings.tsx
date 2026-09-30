@@ -12,7 +12,7 @@ import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsCo
 import { connectPinpointContext, disconnectPinpointContext, getPinpointContext, refreshPinpointContext, type PinpointStatus } from '../api/pinpointContextApi.js';
 import { getProjectIntegrations, saveProjectIntegration, type IntegrationCandidate, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
 import { summarizeSageMaker } from "../lib/awsInventoryPresentation.js";
-import { initialIntegrationSelection, integrationStatusLabel, isExactIntegrationCandidate } from "../lib/projectIntegrationPresentation.js";
+import { awsAccountMetaLabel, awsAccountOptionLabel, initialIntegrationSelection, integrationStatusLabel, isExactIntegrationCandidate } from "../lib/projectIntegrationPresentation.js";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 
@@ -100,17 +100,18 @@ function AwsContextCard() {
         <button type="button" disabled={busy || !accountName || !profile || !region} onClick={() => void connect()} className="ck-glow-cyan rounded-md border border-cyan-400/50 px-3 py-1.5 text-sm disabled:opacity-40">계정 확인 후 추가</button>
         <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">AWS CLI의 로컬 자격 증명을 읽기 전용으로 사용합니다. 키는 Dashboard에 저장하지 않습니다.</p>
       </> : <>
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="min-w-0 flex-1 text-xs text-[var(--color-text-muted)]">화면에서 볼 AWS 계정
-            <select value={status.activeAccount ?? ""} disabled={busy} onChange={(event) => void select(event.target.value)} className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-text)]">
-              {status.accounts.map((account) => <option key={account.name} value={account.name}>{account.name} · {account.profile} · ••••{account.accountHint}</option>)}
-            </select>
-          </label>
-          <button type="button" disabled={busy} onClick={() => setAdding(true)} className="rounded-md border border-cyan-400/40 px-3 py-2 text-sm text-cyan-200">계정 추가</button>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-400/25 bg-emerald-400/[0.05] px-4 py-3">
-          <div><div className="text-sm font-medium text-emerald-200">{status.activeAccount} · {status.profile} · ••••{status.accountHint}</div><div className="mt-1 font-mono text-[11px] text-[var(--color-text-dim)]">{status.region} · {status.principal}</div></div>
-          <div className="flex gap-2"><button type="button" disabled={busy} onClick={() => void refresh()} className="rounded border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200">새로고침</button><button type="button" disabled={busy} onClick={() => void disconnect()} className="rounded border border-rose-500/30 px-2.5 py-1 text-xs text-rose-300">연결 해제</button></div>
+        <div className="rounded-lg border border-emerald-400/25 bg-emerald-400/[0.05] px-4 py-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="min-w-[14rem] flex-1 text-xs text-[var(--color-text-muted)]">화면에서 볼 AWS 계정
+              <select value={status.activeAccount ?? ""} disabled={busy} onChange={(event) => void select(event.target.value)} className="mt-1.5 w-full rounded-md border border-emerald-400/20 bg-[var(--color-background)] px-3 py-2 text-sm text-emerald-100">
+                {status.accounts.map((account) => <option key={account.name} value={account.name}>{awsAccountOptionLabel(account)}</option>)}
+              </select>
+            </label>
+            <button type="button" disabled={busy} onClick={() => setAdding(true)} className="rounded-md border border-cyan-400/40 px-3 py-2 text-sm text-cyan-200">계정 추가</button>
+            <button type="button" disabled={busy} onClick={() => void refresh()} className="rounded-md border border-cyan-400/40 px-3 py-2 text-sm text-cyan-200">새로고침</button>
+            <button type="button" disabled={busy} onClick={() => void disconnect()} className="rounded-md border border-rose-500/30 px-3 py-2 text-sm text-rose-300">연결 해제</button>
+          </div>
+          {status.activeAccount && <div className="mt-2 font-mono text-[11px] text-[var(--color-text-dim)]">{awsAccountMetaLabel(status.accounts.find((account) => account.name === status.activeAccount)!)}</div>}
         </div>
         {status.inventory.some((item) => item.resources.length > 0) ? <div className="grid gap-2 sm:grid-cols-3">
           {status.inventory.filter((item) => item.resources.length > 0).map((item) => {
