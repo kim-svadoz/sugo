@@ -11,6 +11,7 @@ import { createToken, listTokens, revokeToken, type ApiTokenSummary } from "../a
 import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsContexts, refreshAwsContext, selectAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
 import { connectPinpointContext, disconnectPinpointContext, getPinpointContext, refreshPinpointContext, type PinpointStatus } from '../api/pinpointContextApi.js';
 import { getProjectIntegrations, saveProjectIntegration, type IntegrationCandidate, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
+import { summarizeSageMaker } from "../lib/awsInventoryPresentation.js";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 
@@ -111,10 +112,25 @@ function AwsContextCard() {
           <div className="flex gap-2"><button type="button" disabled={busy} onClick={() => void refresh()} className="rounded border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200">새로고침</button><button type="button" disabled={busy} onClick={() => void disconnect()} className="rounded border border-rose-500/30 px-2.5 py-1 text-xs text-rose-300">연결 해제</button></div>
         </div>
         {status.inventory.some((item) => item.resources.length > 0) ? <div className="grid gap-2 sm:grid-cols-3">
-          {status.inventory.filter((item) => item.resources.length > 0).map((item) => <div key={item.service} className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-2">
-            <div className="text-sm"><span className="font-medium text-[var(--color-text)]">{awsServiceLabels[item.service] ?? item.service}</span><span className="float-right font-mono text-xs text-[var(--color-text-muted)]">{item.resources.length}</span></div>
-            <ul className="mt-2 max-h-32 space-y-1 overflow-auto">{item.resources.map((resource) => <li key={`${resource.kind}:${resource.id}`} className="truncate font-mono text-[10px] text-[var(--color-text-muted)]" title={resource.id}>{resource.id}</li>)}</ul>
-          </div>)}
+          {status.inventory.filter((item) => item.resources.length > 0).map((item) => {
+            if (item.service === "sagemaker") {
+              const summary = summarizeSageMaker(item.resources);
+              return <div key={item.service} className="rounded-lg border border-violet-400/25 bg-violet-400/[0.04] px-3 py-2">
+                <div className="text-sm font-medium text-[var(--color-text)]">SageMaker AI</div>
+                <div className="mt-1 text-xs text-violet-200">Endpoint {summary.endpointCount}</div>
+                <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-[var(--color-text-muted)]">
+                  <span className="rounded bg-white/[0.04] px-1.5 py-0.5">Config {summary.endpointConfigCount}</span>
+                  <span className="rounded bg-white/[0.04] px-1.5 py-0.5">Model {summary.modelCount}</span>
+                  {summary.notebookCount > 0 && <span className="rounded bg-white/[0.04] px-1.5 py-0.5">Notebook {summary.notebookCount}</span>}
+                </div>
+                {summary.endpoints.length > 0 ? <ul className="mt-2 space-y-1">{summary.endpoints.map((endpoint) => <li key={endpoint.id} className="flex items-center justify-between gap-2 text-[11px]" title={endpoint.id}><span className="truncate font-mono text-[var(--color-text-muted)]">{endpoint.id}</span><span className={endpoint.status === "InService" ? "shrink-0 text-emerald-300" : "shrink-0 text-amber-300"}>{endpoint.status ?? "상태 미확인"}</span></li>)}</ul> : <p className="mt-2 text-[11px] text-[var(--color-text-dim)]">서비스 중인 Endpoint 없음</p>}
+              </div>;
+            }
+            return <div key={item.service} className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-2">
+              <div className="text-sm"><span className="font-medium text-[var(--color-text)]">{awsServiceLabels[item.service] ?? item.service}</span><span className="float-right font-mono text-xs text-[var(--color-text-muted)]">{item.resources.length}</span></div>
+              <ul className="mt-2 max-h-32 space-y-1 overflow-auto">{item.resources.map((resource) => <li key={`${resource.kind}:${resource.id}`} className="truncate font-mono text-[10px] text-[var(--color-text-muted)]" title={resource.id}>{resource.id}</li>)}</ul>
+            </div>;
+          })}
         </div> : <div className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-4 text-center text-xs text-[var(--color-text-muted)]">표시할 AWS 리소스가 없습니다.</div>}
         <div className="flex flex-wrap justify-end gap-x-3 font-mono text-[10px] text-[var(--color-text-dim)]"><span>읽기 전용 · 1시간 간격 · 계정별 하루 {status.refreshBudget?.dailyLimit ?? 4}회 제한</span><span>오늘 남음 {status.refreshBudget?.remainingToday ?? '-'}회</span>{status.refreshBudget?.nextAllowedAt && <span>다음 가능 {new Date(status.refreshBudget.nextAllowedAt).toLocaleString('ko-KR')}</span>}<span>마지막 조회 {status.observedAt ?? "없음"}</span></div>
       </>}
