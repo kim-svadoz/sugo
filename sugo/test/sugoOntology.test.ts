@@ -27,6 +27,19 @@ describe("§2 sugo_ontology 도구", () => {
     expect(r.invariants.map((i: { id: string }) => i.id)).toContain("no-fetch-bypass");
   });
 
+  it("actionTypes 조회가 실제 게이트 위치와 근거를 제공한다", async () => {
+    const r = await call({ view: "actionTypes" });
+    const ready = r.actionTypes.find((action: { name: string }) => action.name === "ready");
+    expect(ready.gates).toContainEqual(
+      expect.objectContaining({
+        gateId: "SPEC_ORACLE_NOT_RUN",
+        checkedOnAction: "ready",
+        evidenceSource: expect.any(String),
+        enforcement: "hard",
+      }),
+    );
+  });
+
   it("boundary는 계약 + 걸린 불변식 본문을 묶어서 준다", async () => {
     const r = await call({ boundary: "sync" });
     expect(r.ok).toBe(true);

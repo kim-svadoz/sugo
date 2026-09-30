@@ -27921,7 +27921,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.8.1" : "0.0.0-dev";
+  return true ? "0.8.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29875,49 +29875,154 @@ var WORKFLOW_STATES = [
   "COMMIT_PENDING",
   "DONE"
 ];
+var ACTION_GATES = {
+  start: [],
+  clarify: [
+    { gateId: "TODO_SPEC_DRAFT_INCOMPLETE", checkedOnAction: "clarify", evidenceSource: "args.todoSpecGoal + args.todoSpecItems", enforcement: "hard" },
+    { gateId: "TODO_SPEC_DRAFT_CONFIRMATION_REQUIRED", checkedOnAction: "clarify", evidenceSource: "args.todoSpecUserConfirmed", enforcement: "hard" },
+    { gateId: "SPEC_DRAFT_SELECTION_REQUIRED", checkedOnAction: "clarify", evidenceSource: "session.specDraftSelection + args.specDraftDecision", enforcement: "hard" },
+    { gateId: "SPEC_DRAFT_ID_REQUIRED", checkedOnAction: "clarify", evidenceSource: "args.specDraftDecision + args.specDraftId", enforcement: "hard" },
+    { gateId: "SPEC_DRAFT_NOT_FOUND", checkedOnAction: "clarify", evidenceSource: "session.specDraftSelection.candidates", enforcement: "hard" }
+  ],
+  prd: [
+    { gateId: "CONFORMANCE_LEDGER_INCOMPLETE", checkedOnAction: "prd", evidenceSource: "args.prdContent In-Scope/DoD \u2194 declared REQ", enforcement: "hard" },
+    { gateId: "PRD_TOO_SHORT", checkedOnAction: "prd", evidenceSource: "args.prdContent.length", enforcement: "hard" },
+    { gateId: "PRD_MISSING_REQUIREMENTS", checkedOnAction: "prd", evidenceSource: "args.prdContent REQ-* count", enforcement: "hard" }
+  ],
+  oracle_done: [
+    { gateId: "ORACLE_OVERRIDE_REASON_REQUIRED", checkedOnAction: "oracle_done", evidenceSource: "args.uncovered + args.overrideReason", enforcement: "hard-with-explicit-bypass" }
+  ],
+  decompose: [
+    { gateId: "MANIFEST_HAS_CYCLE", checkedOnAction: "decompose", evidenceSource: "args.manifest.subtasks[].dependsOn", enforcement: "hard" },
+    { gateId: "MANIFEST_FILE_OVERLAP", checkedOnAction: "decompose", evidenceSource: "args.manifest.subtasks[].files", enforcement: "hard" },
+    { gateId: "MANIFEST_REQUIREMENT_UNCOVERED", checkedOnAction: "decompose", evidenceSource: "PRD REQ-* \u2194 args.manifest.subtasks[].coversRequirements", enforcement: "hard" }
+  ],
+  subtask_start: [
+    { gateId: "SUBTASK_NOT_FOUND", checkedOnAction: "subtask_start", evidenceSource: "session.decomposeManifest + args.subtaskId", enforcement: "hard" }
+  ],
+  subtask_done: [
+    { gateId: "SUBTASK_NOT_FOUND", checkedOnAction: "subtask_done", evidenceSource: "session.decomposeManifest + args.subtaskId", enforcement: "hard" }
+  ],
+  integrate: [
+    { gateId: "SUBTASKS_INCOMPLETE", checkedOnAction: "integrate", evidenceSource: "session.decomposeManifest.subtasks[].status", enforcement: "hard" },
+    { gateId: "MANIFEST_FILE_OVERLAP", checkedOnAction: "integrate", evidenceSource: "session.decomposeManifest.subtasks[].changedFiles", enforcement: "hard" },
+    { gateId: "ANALYZE_NOT_CALLED", checkedOnAction: "integrate", evidenceSource: "session.chainInfo.analyzeAttempts", enforcement: "hard" },
+    { gateId: "BASELINE_NOT_GREEN", checkedOnAction: "integrate", evidenceSource: "session.baselineGate.required + evidence.exitCode", enforcement: "hard" },
+    { gateId: "WIRING_TEST_MISSING", checkedOnAction: "integrate", evidenceSource: "merged changedFiles + args.wiringTestAdded", enforcement: "hard" },
+    { gateId: "BOOT_GATE_FAILED", checkedOnAction: "integrate", evidenceSource: "server project scan + args.bootUnverifiedReason", enforcement: "hard-with-explicit-bypass" }
+  ],
+  jira: [
+    { gateId: "JIRA_OPTION_REQUIRED", checkedOnAction: "jira", evidenceSource: "args.jiraOption", enforcement: "hard" },
+    { gateId: "JIRA_KEY_REQUIRED", checkedOnAction: "jira", evidenceSource: "args.jiraOption + args.jiraKey", enforcement: "hard" }
+  ],
+  ready: [
+    { gateId: "SPEC_ORACLE_NOT_RUN", checkedOnAction: "ready", evidenceSource: "session.specOracle.required + ran", enforcement: "hard" }
+  ],
+  baseline_capture: [
+    { gateId: "BASELINE_NOT_GREEN", checkedOnAction: "baseline_capture", evidenceSource: "session.baselineGate.required + evidence.exitCode", enforcement: "hard" }
+  ],
+  contract_start: [],
+  contract_done: [
+    { gateId: "CONTRACT_NOT_STARTED", checkedOnAction: "contract_done", evidenceSource: "session.chainInfo.contractTests red exitCode", enforcement: "hard-with-explicit-bypass" },
+    { gateId: "LABEL_CONTRADICTION", checkedOnAction: "contract_done", evidenceSource: "environmentAbsentReason \u2194 recorded green evidence", enforcement: "hard" }
+  ],
+  code_start: [],
+  code_done: [
+    { gateId: "ANALYZE_NOT_CALLED", checkedOnAction: "code_done", evidenceSource: "session.chainInfo.analyzeAttempts", enforcement: "hard" },
+    { gateId: "BASELINE_NOT_GREEN", checkedOnAction: "code_done", evidenceSource: "session.baselineGate.required + evidence.exitCode", enforcement: "hard" },
+    { gateId: "WIRING_TEST_MISSING", checkedOnAction: "code_done", evidenceSource: "args.changedFiles + mode + args.wiringTestAdded", enforcement: "hard" },
+    { gateId: "REGISTRATION_GLUE_NOT_CHECKED", checkedOnAction: "code_done", evidenceSource: "args.dependencyRemoved + args.registrationGlueChecked", enforcement: "hard" },
+    { gateId: "BOOT_GATE_FAILED", checkedOnAction: "code_done", evidenceSource: "server project scan + args.bootUnverifiedReason", enforcement: "hard-with-explicit-bypass" },
+    { gateId: "LABEL_CONTRADICTION", checkedOnAction: "code_done", evidenceSource: "bootUnverifiedReason \u2194 recorded green evidence", enforcement: "hard" }
+  ],
+  test_start: [],
+  test_done: [
+    { gateId: "TEST_EVIDENCE_MISSING", checkedOnAction: "test_done", evidenceSource: "session.chainInfo.testEvidence", enforcement: "hard" },
+    { gateId: "TEST_EVIDENCE_MISMATCH", checkedOnAction: "test_done", evidenceSource: "args.testPassed \u2194 recorded evidence.derivedState", enforcement: "hard" },
+    { gateId: "TEST_NOT_FULL_VERIFY", checkedOnAction: "test_done", evidenceSource: "recorded evidence.command", enforcement: "hard" },
+    { gateId: "LABEL_CONTRADICTION", checkedOnAction: "test_done", evidenceSource: "unverified evidence \u2194 other recorded green evidence", enforcement: "hard" },
+    { gateId: "COVERAGE_MAP_REQUIRED", checkedOnAction: "test_done", evidenceSource: "project verificationPolicy + args.coverageMap", enforcement: "hard" },
+    { gateId: "PRD_COVERAGE_INCOMPLETE", checkedOnAction: "test_done", evidenceSource: "args.coverageMap.acceptanceCriteria", enforcement: "hard" },
+    { gateId: "REGRESSION_NOT_INTACT", checkedOnAction: "test_done", evidenceSource: "args.coverageMap.regressionIntact", enforcement: "hard" },
+    { gateId: "INTEGRATION_TEST_MISSING", checkedOnAction: "test_done", evidenceSource: "args.coverageMap.integrationTestIncluded", enforcement: "hard" }
+  ],
+  test_reverify: [
+    { gateId: "REVERIFY_NO_EVIDENCE", checkedOnAction: "test_reverify", evidenceSource: "session.chainInfo.testEvidence", enforcement: "hard" },
+    { gateId: "REVERIFY_EVIDENCE_STILL_FAIL", checkedOnAction: "test_reverify", evidenceSource: "session.chainInfo.testEvidence.derivedState", enforcement: "hard" },
+    { gateId: "REVERIFY_REASON_REQUIRED", checkedOnAction: "test_reverify", evidenceSource: "args.reverifyReason", enforcement: "hard" }
+  ],
+  review_start: [],
+  review_done: [
+    { gateId: "VALIDATE_NOT_CALLED", checkedOnAction: "review_done", evidenceSource: "session.chainInfo.lastValidation", enforcement: "hard" },
+    { gateId: "VALIDATE_VERIFIED_FAILURE", checkedOnAction: "review_done", evidenceSource: "lastValidation.verifiedFailures", enforcement: "hard" },
+    { gateId: "LETHAL_TRIFECTA_NOT_CALLED", checkedOnAction: "review_done", evidenceSource: "session.chainInfo.lastLethalTrifectaCheck", enforcement: "hard" },
+    { gateId: "LETHAL_TRIFECTA_MITIGATION_REQUIRED", checkedOnAction: "review_done", evidenceSource: "trifecta warnings + args.trifectaMitigation", enforcement: "hard" },
+    { gateId: "USER_CONFIRMATION_REQUIRED", checkedOnAction: "review_done", evidenceSource: "args.userConfirmed", enforcement: "hard" },
+    { gateId: "SUMMARY_TOO_FEW_LINES", checkedOnAction: "review_done", evidenceSource: "args.summary non-empty line count", enforcement: "hard" },
+    { gateId: "SUMMARY_TOO_SHORT", checkedOnAction: "review_done", evidenceSource: "args.summary length", enforcement: "hard" },
+    { gateId: "SUMMARY_LOW_CHAR_DIVERSITY", checkedOnAction: "review_done", evidenceSource: "args.summary unique characters", enforcement: "hard" },
+    { gateId: "SUMMARY_LOW_TOKEN_DIVERSITY", checkedOnAction: "review_done", evidenceSource: "args.summary distinct tokens", enforcement: "hard" },
+    { gateId: "EVIDENCE_REUSE_NO_BASELINE", checkedOnAction: "review_done", evidenceSource: "session.testEvidenceFingerprint", enforcement: "hard" },
+    { gateId: "EVIDENCE_REUSE_NOT_GREEN", checkedOnAction: "review_done", evidenceSource: "session.chainInfo.testPassedState", enforcement: "hard" },
+    { gateId: "EVIDENCE_REUSE_FINGERPRINT_MISMATCH", checkedOnAction: "review_done", evidenceSource: "recorded \u2194 current changedFiles fingerprint", enforcement: "hard" },
+    { gateId: "RUNTIME_UNVERIFIED_GATE_FAILED", checkedOnAction: "review_done", evidenceSource: "args.runtimeCheck.runtimeVerified + unverifiedReason", enforcement: "hard-with-explicit-bypass" },
+    { gateId: "RUNTIME_CLAIM_CONTRADICTS_EVIDENCE", checkedOnAction: "review_done", evidenceSource: "runtime claim \u2194 session.testPassedState", enforcement: "hard" },
+    { gateId: "RUNTIME_WIRING_NOT_VERIFIED", checkedOnAction: "review_done", evidenceSource: "server bootable scan + args.runtimeCheck.wiringVerified", enforcement: "hard-with-explicit-bypass" },
+    { gateId: "LABEL_CONTRADICTION", checkedOnAction: "review_done", evidenceSource: "runtime unverified label \u2194 recorded green evidence", enforcement: "hard" },
+    { gateId: "CONTRACT_EVIDENCE_MISSING", checkedOnAction: "review_done", evidenceSource: "session.chainInfo.contractTests", enforcement: "hard" },
+    { gateId: "CONTRACT_EVIDENCE_INCOMPLETE", checkedOnAction: "review_done", evidenceSource: "contract red\u2192green exitCode pairs", enforcement: "hard" }
+  ],
+  docs_done: [],
+  commit: [
+    { gateId: "TODO_SPEC_MISSING_AT_COMMIT", checkedOnAction: "commit", evidenceSource: "feature branch TODO-SPEC file", enforcement: "hard-with-explicit-bypass" },
+    { gateId: "TODO_SPEC_SYNC_REQUIRED", checkedOnAction: "commit", evidenceSource: "TODO-SPEC start snapshot \u2194 commit content", enforcement: "hard-with-explicit-bypass" }
+  ],
+  status: [],
+  cancel: []
+};
 var ACTION_TYPES = [
-  { name: "start", fromStates: null, toState: "SCAN", gates: [] },
-  { name: "clarify", fromStates: ["SCAN"], toState: "CLARIFY", gates: ["SPEC_DRAFT_SELECTION_REQUIRED"] },
-  { name: "prd", fromStates: ["CLARIFY"], toState: "PRD", gates: ["CONFORMANCE_LEDGER"] },
-  { name: "oracle_done", fromStates: ["PRD", "JIRA"], toState: null, gates: ["SPEC_ORACLE_NOT_RUN"] },
-  { name: "decompose", fromStates: ["PRD"], toState: "DECOMPOSE", gates: [] },
-  { name: "subtask_start", fromStates: ["DECOMPOSE", "ORCHESTRATING"], toState: "ORCHESTRATING", gates: [] },
-  { name: "subtask_done", fromStates: ["ORCHESTRATING"], toState: "ORCHESTRATING", gates: [] },
-  { name: "integrate", fromStates: ["ORCHESTRATING"], toState: "DOCS_PENDING", gates: [] },
-  { name: "jira", fromStates: ["PRD"], toState: "JIRA", gates: [] },
-  { name: "ready", fromStates: ["JIRA", "PRD"], toState: "READY", gates: [] },
-  { name: "baseline_capture", fromStates: ["READY"], toState: "BASELINE", gates: ["BASELINE_RED", "BASELINE_NOT_RUN"] },
-  { name: "contract_start", fromStates: ["BASELINE"], toState: "CONTRACT_RUNNING", gates: [] },
-  { name: "contract_done", fromStates: ["CONTRACT_RUNNING"], toState: "CODE_READY", gates: ["CONTRACT_NOT_AUTHORED"] },
-  { name: "code_start", fromStates: ["CODE_READY", "REVIEW_RUNNING", "TEST_DONE"], toState: "CODE_RUNNING", gates: [] },
+  { name: "start", fromStates: null, toState: "SCAN", gates: ACTION_GATES.start },
+  { name: "clarify", fromStates: ["SCAN"], toState: "CLARIFY", gates: ACTION_GATES.clarify },
+  { name: "prd", fromStates: ["CLARIFY"], toState: "PRD", gates: ACTION_GATES.prd },
+  { name: "oracle_done", fromStates: ["PRD", "JIRA"], toState: null, gates: ACTION_GATES.oracle_done },
+  { name: "decompose", fromStates: ["PRD"], toState: "DECOMPOSE", gates: ACTION_GATES.decompose },
+  { name: "subtask_start", fromStates: ["DECOMPOSE", "ORCHESTRATING"], toState: "ORCHESTRATING", gates: ACTION_GATES.subtask_start },
+  { name: "subtask_done", fromStates: ["ORCHESTRATING"], toState: "ORCHESTRATING", gates: ACTION_GATES.subtask_done },
+  { name: "integrate", fromStates: ["ORCHESTRATING"], toState: "DOCS_PENDING", gates: ACTION_GATES.integrate },
+  { name: "jira", fromStates: ["PRD"], toState: "JIRA", gates: ACTION_GATES.jira },
+  { name: "ready", fromStates: ["JIRA", "PRD"], toState: "READY", gates: ACTION_GATES.ready },
+  { name: "baseline_capture", fromStates: ["READY"], toState: "BASELINE", gates: ACTION_GATES.baseline_capture },
+  { name: "contract_start", fromStates: ["BASELINE"], toState: "CONTRACT_RUNNING", gates: ACTION_GATES.contract_start },
+  { name: "contract_done", fromStates: ["CONTRACT_RUNNING"], toState: "CODE_READY", gates: ACTION_GATES.contract_done },
+  { name: "code_start", fromStates: ["CODE_READY", "REVIEW_RUNNING", "TEST_DONE"], toState: "CODE_RUNNING", gates: ACTION_GATES.code_start },
   {
     name: "code_done",
     fromStates: ["CODE_RUNNING"],
     toState: "CODE_DONE",
-    gates: ["ANALYZE_NOT_CALLED", "WIRING_GATE_NOT_SATISFIED", "BOOT_GATE_NOT_SATISFIED"]
+    gates: ACTION_GATES.code_done
   },
-  { name: "test_start", fromStates: ["CODE_DONE"], toState: "TEST_RUNNING", gates: [] },
-  { name: "test_done", fromStates: ["TEST_RUNNING"], toState: "TEST_DONE", gates: ["TEST_EVIDENCE_MISMATCH"] },
+  { name: "test_start", fromStates: ["CODE_DONE"], toState: "TEST_RUNNING", gates: ACTION_GATES.test_start },
+  { name: "test_done", fromStates: ["TEST_RUNNING"], toState: "TEST_DONE", gates: ACTION_GATES.test_done },
   /**
    * §4.3-R 증거 재스냅샷. `test_done`이 찍은 `testPassedState`/지문은 그 시점 값으로 고정돼,
    * 이후 올바른 증거를 다시 기록해도 `review_done`이 옛 판정을 보고 막는 데드락이 있었다
    * (forward-only라 `test_done`으로 되돌아갈 수도 없다). 상태는 그대로 두고 스냅샷만 다시 찍는다.
    * 게이트를 무르게 하는 게 아니라 `evidenceResnapshot` 라벨로 남겨 완료등급을 강등시킨다.
    */
-  { name: "test_reverify", fromStates: ["TEST_DONE", "REVIEW_RUNNING"], toState: null, gates: [] },
-  { name: "review_start", fromStates: ["TEST_DONE"], toState: "REVIEW_RUNNING", gates: [] },
+  { name: "test_reverify", fromStates: ["TEST_DONE", "REVIEW_RUNNING"], toState: null, gates: ACTION_GATES.test_reverify },
+  { name: "review_start", fromStates: ["TEST_DONE"], toState: "REVIEW_RUNNING", gates: ACTION_GATES.review_start },
   {
     name: "review_done",
     fromStates: ["REVIEW_RUNNING"],
     toState: "DOCS_PENDING",
-    gates: ["PRD_COVERAGE_GATE_FAILED", "RUNTIME_UNVERIFIED_GATE_FAILED"]
+    gates: ACTION_GATES.review_done
   },
-  { name: "docs_done", fromStates: ["DOCS_PENDING"], toState: "COMMIT_PENDING", gates: [] },
+  { name: "docs_done", fromStates: ["DOCS_PENDING"], toState: "COMMIT_PENDING", gates: ACTION_GATES.docs_done },
   // §4.3-T: feature/* 브랜치면 TODO-SPEC.md가 세션 시작 이후 갱신됐는지 확인한다(무조건 —
   // opt-in 아님). 다른 §10 확장 게이트와 달리 브랜치 패턴 자체가 스위치다.
-  { name: "commit", fromStates: ["COMMIT_PENDING"], toState: "DONE", gates: ["TODO_SPEC_SYNC_REQUIRED"] },
-  { name: "status", fromStates: null, toState: null, gates: [] },
-  { name: "cancel", fromStates: null, toState: null, gates: [] }
+  { name: "commit", fromStates: ["COMMIT_PENDING"], toState: "DONE", gates: ACTION_GATES.commit },
+  { name: "status", fromStates: null, toState: null, gates: ACTION_GATES.status },
+  { name: "cancel", fromStates: null, toState: null, gates: ACTION_GATES.cancel }
 ];
 var START_STATES = ["INIT", "DONE"];
 var CANCELLABLE_STATES = [

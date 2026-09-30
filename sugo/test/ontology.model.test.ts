@@ -113,4 +113,42 @@ describe("§2 온톨로지 drift lock", () => {
     const codeStart = ACTION_TYPES.find((a) => a.name === "code_start")!;
     expect([...(codeStart.fromStates ?? [])].sort()).toEqual(["CODE_READY", "REVIEW_RUNNING", "TEST_DONE"]);
   });
+
+  it("게이트는 실제 차단 액션과 증거·강제방식을 구조적으로 설명한다", () => {
+    for (const action of ACTION_TYPES) {
+      const gateIds = action.gates.map((gate) => gate.gateId);
+      expect(new Set(gateIds).size, `${action.name} gateId 중복`).toBe(gateIds.length);
+      for (const gate of action.gates) {
+        expect(typeof gate, `${action.name} gate가 문자열 사본이면 안 됨`).toBe("object");
+        expect(gate.gateId).toMatch(/^[A-Z][A-Z0-9_]+$/);
+        expect(gate.checkedOnAction).toBe(action.name);
+        expect(gate.evidenceSource.length).toBeGreaterThan(0);
+        expect(["hard", "hard-with-explicit-bypass"]).toContain(gate.enforcement);
+      }
+    }
+  });
+
+  it("SPEC oracle 게이트는 기록 액션이 아니라 실제 차단 액션 ready에 걸린다", () => {
+    const gateIds = (actionName: string) =>
+      ACTION_TYPES.find((action) => action.name === actionName)!.gates.map((gate) => gate.gateId);
+
+    expect(gateIds("oracle_done")).not.toContain("SPEC_ORACLE_NOT_RUN");
+    expect(gateIds("oracle_done")).toContain("ORACLE_OVERRIDE_REASON_REQUIRED");
+    expect(gateIds("ready")).toContain("SPEC_ORACLE_NOT_RUN");
+  });
+
+  it("과거 설명용 별칭이 아니라 런타임의 실제 차단 코드를 사용한다", () => {
+    const allGateIds = ACTION_TYPES.flatMap((action) => action.gates.map((gate) => gate.gateId));
+    expect(allGateIds).toContain("CONFORMANCE_LEDGER_INCOMPLETE");
+    expect(allGateIds).toContain("BASELINE_NOT_GREEN");
+    expect(allGateIds).toContain("CONTRACT_NOT_STARTED");
+    expect(allGateIds).toContain("WIRING_TEST_MISSING");
+    expect(allGateIds).toContain("BOOT_GATE_FAILED");
+    expect(allGateIds).not.toContain("CONFORMANCE_LEDGER");
+    expect(allGateIds).not.toContain("BASELINE_RED");
+    expect(allGateIds).not.toContain("BASELINE_NOT_RUN");
+    expect(allGateIds).not.toContain("CONTRACT_NOT_AUTHORED");
+    expect(allGateIds).not.toContain("WIRING_GATE_NOT_SATISFIED");
+    expect(allGateIds).not.toContain("BOOT_GATE_NOT_SATISFIED");
+  });
 });
