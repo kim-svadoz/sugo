@@ -27921,7 +27921,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.8.2" : "0.0.0-dev";
+  return true ? "0.8.3" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30054,37 +30054,77 @@ var INVARIANTS = [
   {
     id: "user-final-confirm",
     enforcedBy: "gate",
-    statement: "AI\uB294 \uC2A4\uC2A4\uB85C \uC644\uB8CC \uBABB \uD568 \u2014 \uC0AC\uB78C\uC758 review_done(REQ-CONFIRM)\uC774 \uC720\uC77C \uCD5C\uC885 \uAC8C\uC774\uD2B8"
+    statement: "AI\uB294 \uC2A4\uC2A4\uB85C \uC644\uB8CC \uBABB \uD568 \u2014 \uC0AC\uB78C\uC758 review_done(REQ-CONFIRM)\uC774 \uC720\uC77C \uCD5C\uC885 \uAC8C\uC774\uD2B8",
+    enforcementRefs: [
+      { kind: "gate", path: "src/gates.ts", symbol: "USER_CONFIRMATION_REQUIRED" },
+      { kind: "test", path: "test/gates.reviewDone.test.ts", symbol: "USER_CONFIRMATION_REQUIRED" }
+    ]
   },
   {
     id: "async-asymmetry",
     enforcedBy: "doc",
-    statement: "\uD50C\uB7EC\uADF8\uC778\u2192\uB300\uC2DC\uBCF4\uB4DC push(fire-and-forget), pull\uC740 \uD50C\uB7EC\uADF8\uC778\uC774. \uB300\uC2DC\uBCF4\uB4DC\uB294 \uD50C\uB7EC\uADF8\uC778\uC744 \uBABB \uBD80\uB978\uB2E4"
+    statement: "\uD50C\uB7EC\uADF8\uC778\u2192\uB300\uC2DC\uBCF4\uB4DC push(fire-and-forget), pull\uC740 \uD50C\uB7EC\uADF8\uC778\uC774. \uB300\uC2DC\uBCF4\uB4DC\uB294 \uD50C\uB7EC\uADF8\uC778\uC744 \uBABB \uBD80\uB978\uB2E4",
+    enforcementRefs: [{ kind: "doc", path: "../spec/sugo-local-spec-v2.md", symbol: "async-asymmetry" }]
   },
   {
     id: "no-silent-loss",
     enforcedBy: "test",
-    statement: "\uC544\uC6C3\uBC14\uC6B4\uB4DC sync \uC2E4\uD328\uB294 \uCE68\uBB35 \uC720\uC2E4 \uAE08\uC9C0 \u2014 \uC7AC\uC2DC\uB3C4 \uD050(WAL) \uB610\uB294 \uBA85\uC2DC degrade+\uB85C\uADF8"
+    statement: "\uC544\uC6C3\uBC14\uC6B4\uB4DC sync \uC2E4\uD328\uB294 \uCE68\uBB35 \uC720\uC2E4 \uAE08\uC9C0 \u2014 \uC7AC\uC2DC\uB3C4 \uD050(WAL) \uB610\uB294 \uBA85\uC2DC degrade+\uB85C\uADF8",
+    enforcementRefs: [
+      { kind: "test", path: "test/ontology.invariants.test.ts", symbol: "enqueueRetry \uD638\uCD9C \uC874\uC7AC" },
+      { kind: "test", path: "test/dashboard.test.ts", symbol: "retryCount" }
+    ]
   },
   {
     id: "single-source",
     enforcedBy: "test",
-    statement: "\uD310\uBCC4\xB7\uD30C\uC2F1\xB7\uD544\uB4DC\xB7\uBC84\uC804\uC740 \uB2E8\uC77C \uC18C\uC2A4. \uBCF5\uBD99 \uAE08\uC9C0(parseReqHeading\xB7isUserConfirmReq\xB7titleToSlug + \uBAA8\uB378 drift)"
+    statement: "\uD310\uBCC4\xB7\uD30C\uC2F1\xB7\uD544\uB4DC\xB7\uBC84\uC804\uC740 \uB2E8\uC77C \uC18C\uC2A4. \uBCF5\uBD99 \uAE08\uC9C0(parseReqHeading\xB7isUserConfirmReq\xB7titleToSlug + \uBAA8\uB378 drift)",
+    enforcementRefs: [{ kind: "test", path: "test/ontology.invariants.test.ts", symbol: "single-source" }]
   },
-  { id: "doer-wired", enforcedBy: "test", statement: "\uADDC\uCE59\uC740 \uC2E4\uC81C doer\uC5D0\uAC8C \uAD6C\uC870\uD654 \uD544\uB4DC\uB85C \uB3C4\uB2EC\uD574\uC57C(\uD504\uB85C\uC988\uB9CC X)" },
+  {
+    id: "doer-wired",
+    enforcedBy: "test",
+    statement: "\uADDC\uCE59\uC740 \uC2E4\uC81C doer\uC5D0\uAC8C \uAD6C\uC870\uD654 \uD544\uB4DC\uB85C \uB3C4\uB2EC\uD574\uC57C(\uD504\uB85C\uC988\uB9CC X)",
+    enforcementRefs: [{ kind: "test", path: "test/integration.chainAndContext.test.ts", symbol: "handoff.changedFiles" }]
+  },
   {
     id: "cross-repo-contract",
     enforcedBy: "test",
-    statement: "sync \uD544\uB4DC\uB294 2\uB808\uD3EC \uACC4\uC57D. schemaVersion \uC2E3\uACE0 \uC591\uBC29\uD5A5 graceful degrade(500 \uAE08\uC9C0)"
+    statement: "sync \uD544\uB4DC\uB294 2\uB808\uD3EC \uACC4\uC57D. schemaVersion \uC2E3\uACE0 \uC591\uBC29\uD5A5 graceful degrade(500 \uAE08\uC9C0)",
+    enforcementRefs: [
+      { kind: "test", path: "test/dashboard.schemaVersion.test.ts", symbol: "\uBAA8\uB4E0 sync payload\uC5D0 \uACC4\uC57D \uBC84\uC804" },
+      { kind: "test", path: "../dashboard/backend/test/sync.schemaVersion.test.ts", symbol: "sync schemaVersion \uBBF8\uB4E4\uC6E8\uC5B4" }
+    ]
   },
   {
     id: "ownership-preserved",
     enforcedBy: "test",
-    statement: "\uD50C\uB7EC\uADF8\uC778 sync\uB294 \uB300\uC2DC\uBCF4\uB4DC \uC815\uBCF8 \uCEEC\uB7FC(manual_status\xB7pos)\uC744 \uB36E\uC9C0 \uC54A\uB294\uB2E4"
+    statement: "\uD50C\uB7EC\uADF8\uC778 sync\uB294 \uB300\uC2DC\uBCF4\uB4DC \uC815\uBCF8 \uCEEC\uB7FC(manual_status\xB7pos)\uC744 \uB36E\uC9C0 \uC54A\uB294\uB2E4",
+    enforcementRefs: [
+      { kind: "test", path: "../dashboard/backend/test/sync.roadmap.test.ts", symbol: "manual_status/pos_x/pos_y\uB97C \uB36E\uC73C\uBA74 \uC548 \uB41C\uB2E4" }
+    ]
   },
-  { id: "no-fetch-bypass", enforcedBy: "test", statement: "\uC544\uC6C3\uBC14\uC6B4\uB4DC\uB294 \uC7AC\uC2DC\uB3C4 \uD050\uB97C \uAC70\uCE5C\uB2E4 \u2014 void fetch \uBC14\uC774\uD328\uC2A4 \uAE08\uC9C0" },
-  { id: "user-truth", enforcedBy: "doc", statement: "\uC0AC\uC6A9\uC790\uAC00 \uBCF4\uB294 \uC0C1\uD0DC = \uC2E4\uC81C \uC0C1\uD0DC. \uAD34\uB9AC\uB294 \uACE7 \uBC84\uADF8" },
-  { id: "gate-not-skippable", enforcedBy: "gate", statement: "\uC6CC\uD06C\uD50C\uB85C\uC6B0 \uC21C\uC11C\uB294 \uC11C\uBC84\uAC00 \uAC15\uC81C(PREREQUISITES)" }
+  {
+    id: "no-fetch-bypass",
+    enforcedBy: "test",
+    statement: "\uC544\uC6C3\uBC14\uC6B4\uB4DC\uB294 \uC7AC\uC2DC\uB3C4 \uD050\uB97C \uAC70\uCE5C\uB2E4 \u2014 void fetch \uBC14\uC774\uD328\uC2A4 \uAE08\uC9C0",
+    enforcementRefs: [{ kind: "test", path: "test/ontology.invariants.test.ts", symbol: "no-fetch-bypass" }]
+  },
+  {
+    id: "user-truth",
+    enforcedBy: "doc",
+    statement: "\uC0AC\uC6A9\uC790\uAC00 \uBCF4\uB294 \uC0C1\uD0DC = \uC2E4\uC81C \uC0C1\uD0DC. \uAD34\uB9AC\uB294 \uACE7 \uBC84\uADF8",
+    enforcementRefs: [{ kind: "doc", path: "../spec/sugo-local-spec-v2.md", symbol: "user-truth" }]
+  },
+  {
+    id: "gate-not-skippable",
+    enforcedBy: "gate",
+    statement: "\uC6CC\uD06C\uD50C\uB85C\uC6B0 \uC21C\uC11C\uB294 \uC11C\uBC84\uAC00 \uAC15\uC81C(PREREQUISITES)",
+    enforcementRefs: [
+      { kind: "gate", path: "src/planStateMachine.ts", symbol: "checkPrerequisite" },
+      { kind: "test", path: "test/planStateMachine.test.ts", symbol: "\uC21C\uC11C\uAC15\uC81C \uAC8C\uC774\uD2B8" }
+    ]
+  }
 ];
 var BOUNDARIES = [
   {

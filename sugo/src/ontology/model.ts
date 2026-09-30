@@ -337,6 +337,15 @@ export interface Invariant {
   id: string;
   enforcedBy: "gate" | "test" | "doc";
   statement: string;
+  enforcementRefs: readonly EnforcementReference[];
+}
+
+export interface EnforcementReference {
+  kind: "gate" | "test" | "doc";
+  /** `sugo/` 패키지 루트 기준 상대 경로. 저장소 공통 근거는 `../`로 명시한다. */
+  path: string;
+  /** 해당 파일 안에 반드시 존재해야 하는 export·테스트명·문서 anchor 문자열. */
+  symbol?: string;
 }
 
 export const INVARIANTS = [
@@ -344,36 +353,76 @@ export const INVARIANTS = [
     id: "user-final-confirm",
     enforcedBy: "gate",
     statement: "AI는 스스로 완료 못 함 — 사람의 review_done(REQ-CONFIRM)이 유일 최종 게이트",
+    enforcementRefs: [
+      { kind: "gate", path: "src/gates.ts", symbol: "USER_CONFIRMATION_REQUIRED" },
+      { kind: "test", path: "test/gates.reviewDone.test.ts", symbol: "USER_CONFIRMATION_REQUIRED" },
+    ],
   },
   {
     id: "async-asymmetry",
     enforcedBy: "doc",
     statement: "플러그인→대시보드 push(fire-and-forget), pull은 플러그인이. 대시보드는 플러그인을 못 부른다",
+    enforcementRefs: [{ kind: "doc", path: "../spec/sugo-local-spec-v2.md", symbol: "async-asymmetry" }],
   },
   {
     id: "no-silent-loss",
     enforcedBy: "test",
     statement: "아웃바운드 sync 실패는 침묵 유실 금지 — 재시도 큐(WAL) 또는 명시 degrade+로그",
+    enforcementRefs: [
+      { kind: "test", path: "test/ontology.invariants.test.ts", symbol: "enqueueRetry 호출 존재" },
+      { kind: "test", path: "test/dashboard.test.ts", symbol: "retryCount" },
+    ],
   },
   {
     id: "single-source",
     enforcedBy: "test",
     statement: "판별·파싱·필드·버전은 단일 소스. 복붙 금지(parseReqHeading·isUserConfirmReq·titleToSlug + 모델 drift)",
+    enforcementRefs: [{ kind: "test", path: "test/ontology.invariants.test.ts", symbol: "single-source" }],
   },
-  { id: "doer-wired", enforcedBy: "test", statement: "규칙은 실제 doer에게 구조화 필드로 도달해야(프로즈만 X)" },
+  {
+    id: "doer-wired",
+    enforcedBy: "test",
+    statement: "규칙은 실제 doer에게 구조화 필드로 도달해야(프로즈만 X)",
+    enforcementRefs: [{ kind: "test", path: "test/integration.chainAndContext.test.ts", symbol: "handoff.changedFiles" }],
+  },
   {
     id: "cross-repo-contract",
     enforcedBy: "test",
     statement: "sync 필드는 2레포 계약. schemaVersion 싣고 양방향 graceful degrade(500 금지)",
+    enforcementRefs: [
+      { kind: "test", path: "test/dashboard.schemaVersion.test.ts", symbol: "모든 sync payload에 계약 버전" },
+      { kind: "test", path: "../dashboard/backend/test/sync.schemaVersion.test.ts", symbol: "sync schemaVersion 미들웨어" },
+    ],
   },
   {
     id: "ownership-preserved",
     enforcedBy: "test",
     statement: "플러그인 sync는 대시보드 정본 컬럼(manual_status·pos)을 덮지 않는다",
+    enforcementRefs: [
+      { kind: "test", path: "../dashboard/backend/test/sync.roadmap.test.ts", symbol: "manual_status/pos_x/pos_y를 덮으면 안 된다" },
+    ],
   },
-  { id: "no-fetch-bypass", enforcedBy: "test", statement: "아웃바운드는 재시도 큐를 거친다 — void fetch 바이패스 금지" },
-  { id: "user-truth", enforcedBy: "doc", statement: "사용자가 보는 상태 = 실제 상태. 괴리는 곧 버그" },
-  { id: "gate-not-skippable", enforcedBy: "gate", statement: "워크플로우 순서는 서버가 강제(PREREQUISITES)" },
+  {
+    id: "no-fetch-bypass",
+    enforcedBy: "test",
+    statement: "아웃바운드는 재시도 큐를 거친다 — void fetch 바이패스 금지",
+    enforcementRefs: [{ kind: "test", path: "test/ontology.invariants.test.ts", symbol: "no-fetch-bypass" }],
+  },
+  {
+    id: "user-truth",
+    enforcedBy: "doc",
+    statement: "사용자가 보는 상태 = 실제 상태. 괴리는 곧 버그",
+    enforcementRefs: [{ kind: "doc", path: "../spec/sugo-local-spec-v2.md", symbol: "user-truth" }],
+  },
+  {
+    id: "gate-not-skippable",
+    enforcedBy: "gate",
+    statement: "워크플로우 순서는 서버가 강제(PREREQUISITES)",
+    enforcementRefs: [
+      { kind: "gate", path: "src/planStateMachine.ts", symbol: "checkPrerequisite" },
+      { kind: "test", path: "test/planStateMachine.test.ts", symbol: "순서강제 게이트" },
+    ],
+  },
 ] as const satisfies readonly Invariant[];
 
 export type InvariantId = (typeof INVARIANTS)[number]["id"];

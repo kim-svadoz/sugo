@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   ACTION_TYPES,
@@ -18,6 +20,7 @@ import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../src/hulk/types.js";
  * 이 테스트가 없으면 model.ts는 "예쁜 문서"로 전락하고, 실제 강제력은 손관리 상수로 되돌아간다.
  */
 describe("§2 온톨로지 drift lock", () => {
+  const packageRoot = resolve(__dirname, "..");
   it("WORKFLOW_STATES가 PLAN_STATES의 정본이다(순서까지 동일)", () => {
     expect([...PLAN_STATES]).toEqual([...WORKFLOW_STATES]);
   });
@@ -76,6 +79,35 @@ describe("§2 온톨로지 drift lock", () => {
     const byId = new Map(INVARIANTS.map((i) => [i.id, i.enforcedBy]));
     expect(byId.get("no-fetch-bypass")).toBe("test");
     expect(byId.get("single-source")).toBe("test");
+  });
+
+  it("모든 불변식은 실제 구현 근거를 가지며 대표 근거가 enforcedBy와 일치한다", () => {
+    for (const invariant of INVARIANTS) {
+      expect(invariant.enforcementRefs.length, `${invariant.id}.enforcementRefs`).toBeGreaterThan(0);
+      expect(
+        invariant.enforcementRefs.some((ref) => ref.kind === invariant.enforcedBy),
+        `${invariant.id}: ${invariant.enforcedBy} 대표 근거 없음`,
+      ).toBe(true);
+    }
+  });
+
+  it("불변식 구현 근거의 경로와 선택적 심볼이 실제로 존재한다", () => {
+    for (const invariant of INVARIANTS) {
+      for (const ref of invariant.enforcementRefs) {
+        const absolutePath = resolve(packageRoot, ref.path);
+        expect(existsSync(absolutePath), `${invariant.id}: ${ref.path}`).toBe(true);
+        if (ref.symbol) {
+          expect(readFileSync(absolutePath, "utf8"), `${invariant.id}: ${ref.path}#${ref.symbol}`).toContain(ref.symbol);
+        }
+      }
+    }
+  });
+
+  it("한 불변식 안에 같은 구현 근거를 중복 선언하지 않는다", () => {
+    for (const invariant of INVARIANTS) {
+      const keys = invariant.enforcementRefs.map((ref) => `${ref.kind}:${ref.path}:${ref.symbol ?? ""}`);
+      expect(new Set(keys).size, `${invariant.id} 근거 중복`).toBe(keys.length);
+    }
   });
 
   it("id/name에 중복이 없다", () => {
