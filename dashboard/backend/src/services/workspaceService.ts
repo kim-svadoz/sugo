@@ -7,7 +7,7 @@ import type { DbClient } from "../db/client.js";
 import { ensureWorkspaceDeletedAtColumn } from "./syncService.js";
 import { readySet, topoSort, wouldCreateCycle } from "./roadmapGraph.js";
 import { parseJsonArray, parseMaybeJson } from "../db/jsonColumn.js";
-import { linkAwsDeployments, linkAwsRelease, type AwsDeploymentSnapshot, type AwsProjectDeployment, type AwsProjectRelease, type PinpointApplicationSnapshot } from "./awsDeploymentLink.js";
+import { linkAwsDeployments, linkAwsRelease, type AwsDeploymentSnapshot, type AwsProjectDeployment, type AwsProjectRelease, type PinpointApplicationSnapshot, type ProjectIntegrationSelection } from "./awsDeploymentLink.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -157,6 +157,11 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
   const result: WorkspaceSummary[] = [];
   let awsSnapshots: AwsDeploymentSnapshot[] = [];
   let pinpointSnapshots: PinpointApplicationSnapshot[] = [];
+  const integrationMappings = new Map<string, ProjectIntegrationSelection[]>();
+  try {
+    const rows = await db.query<{ project_path: string; selections: unknown }>('SELECT project_path, selections FROM user_project_integration_mappings WHERE user_id = ?', [userId]);
+    for (const row of rows) integrationMappings.set(row.project_path, parseMaybeJson(row.selections, []));
+  } catch { /* Optional on older databases before schema initialization. */ }
   try {
     const rows = await db.query<{ account_name: string; region: string; payload: unknown; observed_at: string | null }>(
       `SELECT a.name AS account_name, a.region, s.payload, s.observed_at
@@ -184,7 +189,7 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
       [ws.id]
     );
     const projects: WorkspaceProjectRow[] = await Promise.all(projectRows.map(async (project) => {
-      const deployments = linkAwsDeployments(project.project_path, awsSnapshots, pinpointSnapshots);
+      const deployments = linkAwsDeployments(project.project_path, awsSnapshots, pinpointSnapshots, integrationMappings.has(project.project_path) ? integrationMappings.get(project.project_path) : undefined);
       const release = linkAwsRelease(project.project_path, awsSnapshots);
       return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments, aws_release: release, local_git: await readLocalGitState(project.project_path) };
     }));

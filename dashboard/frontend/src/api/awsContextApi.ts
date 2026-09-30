@@ -23,6 +23,7 @@ export interface AwsContextStatus {
   principal: string | null;
   observedAt: string | null;
   inventory: AwsServiceInventory[];
+  refreshBudget: { remainingToday: number; dailyLimit: number; nextAllowedAt: string | null; timezone: "Asia/Seoul" } | null;
 }
 
 export function getAwsContext(): Promise<AwsContextStatus> {

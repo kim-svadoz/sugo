@@ -20,6 +20,7 @@ export interface WorkspaceSummary {
     } | null;
     local_git: { branch: string | null; headCommit: string | null; dirty: boolean };
     aws_deployments: Array<{
+      linkMode: "suggested" | "confirmed";
       accountName: string;
       environment: string;
       region: string;
@@ -42,6 +43,14 @@ export interface WorkspaceSummary {
       apmRunningAgents: number | null;
       apmAgentCount: number | null;
       apmLatestHeartbeatAt: string | null;
+      apmSampleCount: number | null;
+      apmErrorCount: number | null;
+      apmErrorRate: number | null;
+      apmAverageResponseMs: number | null;
+      apmP95ResponseMs: number | null;
+      apmMaxResponseMs: number | null;
+      apmApdexScore: number | null;
+      apmSignal: "TRAFFIC_OK" | "ERRORS_OBSERVED" | "NO_TRAFFIC" | "UNAVAILABLE" | null;
     }>;
   }>;
   taskCounts: { pending: number; in_progress: number; done: number; archived: number };

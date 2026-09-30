@@ -196,6 +196,24 @@ CREATE TABLE IF NOT EXISTS user_aws_context_preferences (
   updated_at VARCHAR(64) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS user_aws_context_refresh_budget (
+  user_id VARCHAR(191) NOT NULL,
+  account_name VARCHAR(191) NOT NULL,
+  day_key CHAR(10) NOT NULL,
+  day_count INT NOT NULL,
+  last_started_at VARCHAR(64) NOT NULL,
+  PRIMARY KEY (user_id, account_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_project_integration_mappings (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL,
+  project_path VARCHAR(1024) NOT NULL,
+  selections JSON NOT NULL,
+  updated_at VARCHAR(64) NOT NULL,
+  UNIQUE KEY uq_user_project_integration (user_id, project_path(255))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS user_pinpoint_context (
   user_id VARCHAR(191) NOT NULL PRIMARY KEY,
   base_url VARCHAR(1024) NOT NULL,

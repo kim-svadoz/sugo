@@ -400,7 +400,7 @@ export function Sessions() {
                     <span className="truncate text-[var(--color-text)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
                     <div className="flex shrink-0 gap-1.5">
                       {p.git_synced === 1 && <span className="rounded border border-emerald-400/25 bg-emerald-400/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">Git Synced</span>}
-                      {p.aws_synced === 1 && <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">AWS Synced</span>}
+                      {p.aws_synced === 1 && <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">{p.aws_deployments.some((deployment) => deployment.linkMode === 'confirmed') ? 'AWS Synced' : 'AWS Suggested'}</span>}
                     </div>
                   </div>
                   {p.aws_release && <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-cyan-400/15 bg-cyan-400/[0.03] px-2 py-1.5 text-[10px] text-[var(--color-text-muted)]">
@@ -427,6 +427,12 @@ export function Sessions() {
                           {deployment.pinpointApplicationName && <div className="mt-1 flex items-center justify-between gap-1 border-t border-[var(--color-border)] pt-1 text-[10px]" title={deployment.apmLatestHeartbeatAt ?? "Pinpoint heartbeat 없음"}>
                             <span className="truncate text-[var(--color-text-muted)]">Pinpoint {deployment.pinpointApplicationName}</span>
                             {deployment.apmState ? <span className={APM_STATE[deployment.apmState].color}>{APM_STATE[deployment.apmState].label} {deployment.apmRunningAgents ?? 0}/{deployment.apmAgentCount ?? 0}</span> : <span className="text-[var(--color-text-dim)]">동기화 필요</span>}
+                          </div>}
+                          {deployment.apmSignal && <div className="mt-1 grid grid-cols-2 gap-x-2 border-t border-[var(--color-border)] pt-1 text-[10px] text-[var(--color-text-muted)]" title="Pinpoint 최근 5분 스냅샷">
+                            <span className={deployment.apmSignal === "ERRORS_OBSERVED" ? "text-rose-300" : deployment.apmSignal === "TRAFFIC_OK" ? "text-emerald-300" : "text-[var(--color-text-dim)]"}>{deployment.apmSignal === "ERRORS_OBSERVED" ? `표본 오류 ${deployment.apmErrorCount}/${deployment.apmSampleCount}` : deployment.apmSignal === "TRAFFIC_OK" ? `지연 표본 ${deployment.apmSampleCount && deployment.apmSampleCount >= 5000 ? '5,000+' : deployment.apmSampleCount} · 오류 0` : deployment.apmSignal === "NO_TRAFFIC" ? "최근 트래픽 없음" : "지표 조회 불가"}</span>
+                            <span className="text-right">P95 {deployment.apmP95ResponseMs ?? "-"}ms</span>
+                            <span>평균 {deployment.apmAverageResponseMs ?? "-"}ms</span>
+                            <span className="text-right">Apdex {deployment.apmApdexScore?.toFixed(2) ?? "-"}</span>
                           </div>}
                         </div>;
                       })}
@@ -858,11 +864,11 @@ export function Sessions() {
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
       {selected && !isSearchMode && (
-        <div className="grid min-h-[300px] flex-1 grid-cols-1 gap-3 lg:grid-cols-2">
-          <div className="ck-glass flex min-h-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3">
+        <div className="grid min-h-[300px] flex-1 grid-cols-1 gap-3 lg:grid-cols-10">
+          <div className="ck-glass flex min-h-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3 lg:col-span-3">
             <LiveConsole workspace={selected.name} />
           </div>
-          <div className="ck-glass flex min-h-[300px] flex-col rounded-xl border border-[var(--color-border)] p-3">
+          <div className="ck-glass flex min-h-[300px] flex-col rounded-xl border border-[var(--color-border)] p-3 lg:col-span-7">
             {renderInspector(selected)}
           </div>
         </div>

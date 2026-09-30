@@ -197,6 +197,23 @@ CREATE TABLE IF NOT EXISTS user_aws_context_preferences (
   updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS user_aws_context_refresh_budget (
+  user_id TEXT NOT NULL,
+  account_name TEXT NOT NULL,
+  day_key TEXT NOT NULL,
+  day_count INTEGER NOT NULL,
+  last_started_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, account_name)
+);
+
+CREATE TABLE IF NOT EXISTS user_project_integration_mappings (
+  user_id TEXT NOT NULL,
+  project_path TEXT NOT NULL,
+  selections TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, project_path)
+);
+
 CREATE TABLE IF NOT EXISTS user_pinpoint_context (user_id TEXT PRIMARY KEY, base_url TEXT NOT NULL, updated_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS user_pinpoint_snapshots (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, observed_at TEXT NOT NULL);
 

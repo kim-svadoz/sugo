@@ -151,6 +151,23 @@ describe("/api/aws-context", () => {
     const result = await request(app).post("/api/aws-context/refresh-all").set("Authorization", `Bearer ${auth}`).expect(200);
     expect(result.body).toMatchObject({ refreshed: ["team-dev", "team-prd"] });
     expect(refreshed).toEqual(["dev", "prd"]);
+    await request(app).post("/api/aws-context/refresh-all").set("Authorization", `Bearer ${auth}`).expect(200);
+    expect(refreshed).toEqual(["dev", "prd"]);
     expect((await request(app).get("/api/aws-context").set("Authorization", `Bearer ${auth}`)).body.activeAccount).toBe("team-prd");
+  });
+
+  it("blocks chargeable inventory refreshes before AWS calls when cooldown or daily budget is exhausted", async () => {
+    const db = createSqliteClient(); await db.execScript(schema); await syncUser(db, { userId: 'u5' });
+    const auth = (await seedUserToken(db, 'u5')).replace(/^Bearer /, ''); let calls = 0;
+    const fake: AwsContextClient = { identity: async () => ({ accountId: '123', arn: 'arn:aws:iam::123:user/test' }), inventory: async () => { calls += 1; return []; } };
+    const { app } = await createApp({ db, awsContextClient: fake });
+    await request(app).put('/api/aws-context').set('Authorization', `Bearer ${auth}`).send({ name: 'default', profile: 'default', region: 'ap-northeast-2' }).expect(200);
+    await request(app).post('/api/aws-context/refresh').set('Authorization', `Bearer ${auth}`).expect(200);
+    await db.exec("UPDATE user_aws_context_snapshots SET observed_at = ? WHERE user_id = ? AND account_name = ?", [new Date(Date.now() - 10 * 60_000).toISOString(), 'u5', 'default']);
+    await request(app).post('/api/aws-context/refresh').set('Authorization', `Bearer ${auth}`).expect(429).expect(({ body }) => expect(body.error).toBe('AWS_REFRESH_COOLDOWN'));
+    expect(calls).toBe(1);
+    await db.exec("UPDATE user_aws_context_refresh_budget SET day_count = 4, last_started_at = ? WHERE user_id = ? AND account_name = ?", [new Date(Date.now() - 2 * 60 * 60_000).toISOString(), 'u5', 'default']);
+    await request(app).post('/api/aws-context/refresh').set('Authorization', `Bearer ${auth}`).expect(429).expect(({ body }) => expect(body.error).toBe('AWS_REFRESH_DAILY_LIMIT'));
+    expect(calls).toBe(1);
   });
 });

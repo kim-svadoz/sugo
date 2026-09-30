@@ -4,11 +4,24 @@ export interface PinpointAgentSnapshot {
   runningAgentCount: number;
   latestHeartbeatAt: string | null;
   state: "OBSERVED" | "STALE" | "MISSING" | "UNKNOWN";
+  serviceType: string | null;
+  sampleCount: number;
+  successCount: number;
+  errorCount: number;
+  errorRate: number | null;
+  averageResponseMs: number | null;
+  p95ResponseMs: number | null;
+  maxResponseMs: number | null;
+  apdexScore: number | null;
+  signal: "TRAFFIC_OK" | "ERRORS_OBSERVED" | "NO_TRAFFIC" | "UNAVAILABLE";
 }
 
+export interface PinpointApplication { applicationName: string; serviceType: string; serviceTypeCode: number; }
+
 export interface PinpointClient {
-  verify(baseUrl: string): Promise<string[]>;
+  verify(baseUrl: string): Promise<PinpointApplication[]>;
   agents(baseUrl: string, applicationName: string, from: number, to: number): Promise<PinpointAgentSnapshot>;
+  metrics(baseUrl: string, application: PinpointApplication, from: number, to: number): Promise<Pick<PinpointAgentSnapshot, 'sampleCount' | 'successCount' | 'errorCount' | 'errorRate' | 'averageResponseMs' | 'p95ResponseMs' | 'maxResponseMs' | 'apdexScore' | 'signal'>>;
 }
 
 function endpoint(baseUrl: string, path: string): URL {
@@ -44,7 +57,9 @@ export function createHttpPinpointClient(): PinpointClient {
   return {
     async verify(baseUrl) {
       const payload = await json(endpoint(baseUrl, '/applications.pinpoint'));
-      return (Array.isArray(payload) ? payload : []).map((item: any) => item?.applicationName).filter((value: unknown): value is string => typeof value === 'string');
+      return (Array.isArray(payload) ? payload : []).flatMap((item: any) => typeof item?.applicationName === 'string'
+        ? [{ applicationName: item.applicationName, serviceType: String(item.serviceType ?? 'UNKNOWN'), serviceTypeCode: Number(item.code) }]
+        : []);
     },
     async agents(baseUrl, applicationName, from, to) {
       const url = endpoint(baseUrl, '/getAgentList.pinpoint');
@@ -57,7 +72,39 @@ export function createHttpPinpointClient(): PinpointClient {
       const latest = heartbeats.length ? Math.max(...heartbeats) : null;
       const running = agents.filter((agent: any) => String(agent?.status?.state?.desc ?? agent?.status?.state ?? agent?.status ?? '').toUpperCase().includes('RUNNING')).length;
       const state = agents.length === 0 ? 'MISSING' : latest !== null && to - latest > 10 * 60_000 ? 'STALE' : running > 0 ? 'OBSERVED' : 'UNKNOWN';
-      return { applicationName, agentCount: agents.length, runningAgentCount: running, latestHeartbeatAt: latest === null ? null : new Date(latest).toISOString(), state };
+      return { applicationName, agentCount: agents.length, runningAgentCount: running, latestHeartbeatAt: latest === null ? null : new Date(latest).toISOString(), state, serviceType: null, sampleCount: 0, successCount: 0, errorCount: 0, errorRate: null, averageResponseMs: null, p95ResponseMs: null, maxResponseMs: null, apdexScore: null, signal: 'UNAVAILABLE' };
+    },
+    async metrics(baseUrl, application, from, to) {
+      const scatterUrl = endpoint(baseUrl, '/getScatterData.pinpoint');
+      scatterUrl.searchParams.set('application', application.applicationName);
+      scatterUrl.searchParams.set('from', String(from));
+      scatterUrl.searchParams.set('to', String(to));
+      scatterUrl.searchParams.set('limit', '5000');
+      scatterUrl.searchParams.set('filter', '');
+      scatterUrl.searchParams.set('xGroupUnit', String(Math.max(1, Math.round((to - from) / 460))));
+      scatterUrl.searchParams.set('yGroupUnit', '21');
+      scatterUrl.searchParams.set('backwardDirection', 'true');
+      const apdexUrl = endpoint(baseUrl, '/getApdexScore.pinpoint');
+      apdexUrl.searchParams.set('applicationName', application.applicationName);
+      apdexUrl.searchParams.set('serviceTypeCode', String(application.serviceTypeCode));
+      apdexUrl.searchParams.set('from', String(from));
+      apdexUrl.searchParams.set('to', String(to));
+      const [scatter, apdex] = await Promise.all([json(scatterUrl), json(apdexUrl)]);
+      const dots = Array.isArray(scatter?.scatter?.dotList) ? scatter.scatter.dotList.filter((dot: unknown) => Array.isArray(dot)) : [];
+      const responseTimes = dots.map((dot: any[]) => Number(dot[1])).filter((value: number) => Number.isFinite(value) && value >= 0).sort((a: number, b: number) => a - b);
+      const successCount = dots.filter((dot: any[]) => Number(dot[4]) === 1).length;
+      const errorCount = dots.length - successCount;
+      const sampleCount = dots.length;
+      const percentileIndex = sampleCount ? Math.min(sampleCount - 1, Math.ceil(sampleCount * 0.95) - 1) : -1;
+      return {
+        sampleCount, successCount, errorCount,
+        errorRate: sampleCount ? errorCount / sampleCount : null,
+        averageResponseMs: sampleCount ? Math.round(responseTimes.reduce((sum: number, value: number) => sum + value, 0) / sampleCount) : null,
+        p95ResponseMs: percentileIndex >= 0 ? responseTimes[percentileIndex] : null,
+        maxResponseMs: sampleCount ? responseTimes[sampleCount - 1] : null,
+        apdexScore: Number.isFinite(Number(apdex?.apdexScore)) && Number(apdex?.apdexFormula?.totalSamples) > 0 ? Number(apdex.apdexScore) : null,
+        signal: sampleCount === 0 ? 'NO_TRAFFIC' : errorCount > 0 ? 'ERRORS_OBSERVED' : 'TRAFFIC_OK',
+      };
     },
   };
 }
