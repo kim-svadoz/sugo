@@ -29,3 +29,17 @@ export function integrationStatusLabel(project: Pick<ProjectIntegration, "config
   if (project.selections.length === 0) return "외부 연동 사용 안 함";
   return `AWS/APM ${project.selections.length}개 확정`;
 }
+
+export function partitionIntegrationCandidates(candidates: IntegrationCandidate[], selected: string[], key: KeyFn) {
+  const selectedSet = new Set(selected);
+  return {
+    available: candidates.filter((candidate) => !selectedSet.has(key(candidate))),
+    applied: candidates.filter((candidate) => selectedSet.has(key(candidate))),
+  };
+}
+
+export function moveIntegrationKeys(current: string[], checked: string[], direction: "add" | "remove"): string[] {
+  if (direction === "add") return [...new Set([...current, ...checked])];
+  const removed = new Set(checked);
+  return current.filter((value) => !removed.has(value));
+}

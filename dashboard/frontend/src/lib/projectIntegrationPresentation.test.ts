@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { initialIntegrationSelection, integrationStatusLabel } from "./projectIntegrationPresentation.js";
-import { awsAccountOptionLabel, awsAccountMetaLabel } from "./projectIntegrationPresentation.js";
+import { awsAccountOptionLabel, awsAccountMetaLabel, moveIntegrationKeys, partitionIntegrationCandidates } from "./projectIntegrationPresentation.js";
 
 const candidates = [
   { accountName: "team-dev", environment: "dev", service: "orders-api-service", cluster: "shop", images: ["repo/orders-api:1"], pinpointApplicationName: null },
@@ -28,5 +28,17 @@ describe("project integration presentation", () => {
     expect(integrationStatusLabel({ configured: false, selections: [] })).toBe("AWS/APM 미확정");
     expect(integrationStatusLabel({ configured: true, selections: [candidates[0]] })).toBe("AWS/APM 1개 확정");
     expect(integrationStatusLabel({ configured: true, selections: [] })).toBe("외부 연동 사용 안 함");
+  });
+
+  it("partitions candidates into available and pending/confirmed columns", () => {
+    const selected = [key(candidates[0])];
+    expect(partitionIntegrationCandidates(candidates, selected, key)).toEqual({ available: [candidates[1]], applied: [candidates[0]] });
+  });
+
+  it("moves only checked rows across columns without duplicates", () => {
+    const first = key(candidates[0]);
+    const second = key(candidates[1]);
+    expect(moveIntegrationKeys([first], [second], "add")).toEqual([first, second]);
+    expect(moveIntegrationKeys([first, second], [first], "remove")).toEqual([second]);
   });
 });
