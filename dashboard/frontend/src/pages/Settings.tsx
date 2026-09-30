@@ -12,6 +12,7 @@ import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsCo
 import { connectPinpointContext, disconnectPinpointContext, getPinpointContext, refreshPinpointContext, type PinpointStatus } from '../api/pinpointContextApi.js';
 import { getProjectIntegrations, saveProjectIntegration, type IntegrationCandidate, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
 import { summarizeSageMaker } from "../lib/awsInventoryPresentation.js";
+import { initialIntegrationSelection, integrationStatusLabel, isExactIntegrationCandidate } from "../lib/projectIntegrationPresentation.js";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 
@@ -166,30 +167,28 @@ function ProjectIntegrationsCard() {
   const [projects, setProjects] = useState<ProjectIntegration[]>([]); const [candidates, setCandidates] = useState<IntegrationCandidate[]>([]);
   const [path, setPath] = useState(''); const [selected, setSelected] = useState<string[]>([]); const [filter, setFilter] = useState(''); const [busy, setBusy] = useState(false);
   const key = (item: { accountName: string; service: string; cluster?: string | null }) => `${item.accountName}\u0000${item.cluster ?? ''}\u0000${item.service}`;
-  async function load(nextPath?: string) { const data = await getProjectIntegrations(); setProjects(data.projects); setCandidates(data.candidates); const target = nextPath || path || data.projects[0]?.project_path || ''; setPath(target); setSelected((data.projects.find((item) => item.project_path === target)?.selections ?? []).map(key)); }
+  async function load(nextPath?: string) { const data = await getProjectIntegrations(); setProjects(data.projects); setCandidates(data.candidates); const target = nextPath || path || data.projects[0]?.project_path || ''; const targetProject = data.projects.find((item) => item.project_path === target); setPath(target); setSelected(initialIntegrationSelection(targetProject, data.candidates, key)); }
   useEffect(() => { void load(); }, []);
   const project = projects.find((item) => item.project_path === path);
-  const repositoryName = path.split(/[\\/]/).filter(Boolean).at(-1)?.toLowerCase() ?? '';
-  const isSuggested = (item: IntegrationCandidate) => {
-    const serviceName = item.service.toLowerCase().replace(/-service$/, '');
-    return serviceName === repositoryName || item.images.some((image) => image.split('/').at(-1)?.split(':')[0]?.toLowerCase() === repositoryName);
-  };
+  const isSuggested = (item: IntegrationCandidate) => isExactIntegrationCandidate(path, item);
+  const suggestionCount = candidates.filter(isSuggested).length;
   const visible = candidates
     .filter((item) => `${item.accountName} ${item.service} ${item.cluster ?? ''} ${item.pinpointApplicationName ?? ''}`.toLowerCase().includes(filter.toLowerCase()))
     .sort((left, right) => Number(isSuggested(right)) - Number(isSuggested(left)) || left.environment.localeCompare(right.environment) || left.service.localeCompare(right.service));
   async function save(disable = false) { if (!path) return; setBusy(true); try { const values = disable ? [] : candidates.filter((item) => selected.includes(key(item))).map(({ accountName, service, environment, cluster }) => ({ accountName, service, environment, cluster })); await saveProjectIntegration(path, values); await load(path); } finally { setBusy(false); } }
   return <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-    <div className="border-b border-[var(--color-border)] px-5 py-4"><h2 className="text-base font-semibold text-[var(--color-text)]">프로젝트 외부 연동</h2><p className="text-xs text-[var(--color-text-muted)]">자동 추천을 확인하거나 프로젝트별 AWS·APM 연결을 직접 확정합니다</p></div>
+    <div className="border-b border-[var(--color-border)] px-5 py-4"><h2 className="text-base font-semibold text-[var(--color-text)]">프로젝트 외부 연동</h2><p className="text-xs text-[var(--color-text-muted)]">Workspace에 등록된 로컬 프로젝트와 AWS·APM 운영 리소스의 연결을 확정합니다</p></div>
     <div className="space-y-3 p-5">
       {projects.length === 0 ? <p className="text-xs text-[var(--color-text-dim)]">등록된 프로젝트가 없습니다.</p> : <>
-        <select value={path} onChange={(event) => { const next = event.target.value; setPath(next); setSelected((projects.find((item) => item.project_path === next)?.selections ?? []).map(key)); }} className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm">{projects.map((item) => <option key={item.project_path} value={item.project_path}>{item.workspace_name} · {item.project_path.split('/').at(-1)} · {item.configured ? item.selections.length ? '확정됨' : '연동 안 함' : '자동 추천'}</option>)}</select>
+        <select value={path} onChange={(event) => { const next = event.target.value; const nextProject = projects.find((item) => item.project_path === next); setPath(next); setSelected(initialIntegrationSelection(nextProject, candidates, key)); }} className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm">{projects.map((item) => <option key={item.project_path} value={item.project_path}>{item.workspace_name} · {item.project_path.split('/').at(-1)} · {integrationStatusLabel(item)}</option>)}</select>
+        {project && <div className={project.configured ? "rounded border border-emerald-400/25 bg-emerald-400/[0.05] px-3 py-2 text-xs text-emerald-200" : "rounded border border-amber-400/25 bg-amber-400/[0.05] px-3 py-2 text-xs text-amber-100"}>{project.configured ? project.selections.length ? `외부 연동 ${project.selections.length}개가 확정되어 Inspector에서 AWS Synced로 사용됩니다.` : "이 프로젝트는 외부 연동을 사용하지 않도록 확정되어 있습니다." : `로컬 Workspace 등록은 완료됐지만 AWS·APM 연결은 아직 확정되지 않았습니다. 정확 일치 후보 ${suggestionCount}개를 미리 선택했습니다.`}</div>}
         <input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="계정·ECS 서비스·Pinpoint 앱 검색" className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm" />
         <div className="ck-scroll max-h-56 space-y-1 overflow-auto rounded border border-[var(--color-border)] p-2">
           {visible.length === 0 && <div className="px-2 py-5 text-center text-xs text-[var(--color-text-dim)]">표시할 후보가 없습니다. 먼저 AWS Context를 연결하고 동기화하세요.</div>}
-          {visible.map((item) => <label key={key(item)} className="flex cursor-pointer items-start gap-2 rounded px-2 py-1.5 hover:bg-white/[0.03]"><input type="checkbox" checked={selected.includes(key(item))} onChange={() => setSelected((current) => current.includes(key(item)) ? current.filter((value) => value !== key(item)) : [...current, key(item)])} /><span className="min-w-0 text-xs"><b className="text-cyan-200">{item.environment.toUpperCase()}</b> · {item.service}{isSuggested(item) && <span className="ml-2 rounded border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 text-[9px] text-amber-200">추천</span>}<span className="block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{item.accountName} / {item.cluster ?? 'cluster 미확인'}{item.pinpointApplicationName ? ` / Pinpoint ${item.pinpointApplicationName}` : ''}</span></span></label>)}
+          {visible.map((item) => <label key={key(item)} className="flex cursor-pointer items-start gap-2 rounded px-2 py-1.5 hover:bg-white/[0.03]"><input type="checkbox" checked={selected.includes(key(item))} onChange={() => setSelected((current) => current.includes(key(item)) ? current.filter((value) => value !== key(item)) : [...current, key(item)])} /><span className="min-w-0 text-xs"><b className="text-cyan-200">{item.environment.toUpperCase()}</b> · {item.service}{isSuggested(item) && <span className="ml-2 rounded border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 text-[9px] text-amber-200">정확 일치</span>}<span className="block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{item.accountName} / {item.cluster ?? 'cluster 미확인'}{item.pinpointApplicationName ? ` / Pinpoint ${item.pinpointApplicationName}` : ''}</span></span></label>)}
         </div>
-        <div className="flex gap-2"><button disabled={busy || selected.length === 0} onClick={() => void save()} className="rounded border border-cyan-400/40 px-3 py-1.5 text-xs text-cyan-200 disabled:opacity-40">선택 연결 확정</button><button disabled={busy} onClick={() => void save(true)} className="rounded border border-rose-400/30 px-3 py-1.5 text-xs text-rose-300">이 프로젝트 연동 안 함</button></div>
-        <p className="text-[11px] text-[var(--color-text-dim)]">{project?.configured ? project.selections.length ? '사용자가 확정한 연결만 Inspector에 표시합니다.' : '이 프로젝트의 외부 지표를 숨깁니다.' : '아직 확정하지 않아 정확 일치 후보를 추천으로 표시합니다.'} Pinpoint는 선택한 ECS 서비스의 에이전트 설정이 확인된 경우에만 함께 표시됩니다.</p>
+        <div className="flex gap-2"><button disabled={busy || selected.length === 0} onClick={() => void save()} className="rounded border border-cyan-400/40 px-3 py-1.5 text-xs text-cyan-200 disabled:opacity-40">{project?.configured ? `선택 ${selected.length}개로 갱신` : `추천 ${selected.length}개 연결 확정`}</button><button disabled={busy} onClick={() => void save(true)} className="rounded border border-rose-400/30 px-3 py-1.5 text-xs text-rose-300">외부 연동 사용 안 함</button></div>
+        <p className="text-[11px] text-[var(--color-text-dim)]">확정 전 후보는 Inspector에서 AWS Suggested로만 표시됩니다. 저장 후에는 AWS Synced가 되며, Pinpoint는 선택한 ECS 서비스의 에이전트 설정이 확인된 경우에만 함께 연결됩니다.</p>
       </>}
     </div>
   </div>;
