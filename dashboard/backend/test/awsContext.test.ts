@@ -27,6 +27,9 @@ describe("AWS context CLI adapter", () => {
       if (service === "elasticache") return { ReplicationGroups: [{ ReplicationGroupId: "shop-cache", Status: "available" }] };
       if (service === "opensearch") return { DomainNames: [{ DomainName: "shop-search", EngineType: "OpenSearch" }] };
       if (service === "cloudwatch") return { DashboardEntries: [{ DashboardName: "shop-dashboard" }] };
+      if (service === "sagemaker" && args[1] === "list-endpoints") return { Endpoints: [{ EndpointName: "shop-ranker", EndpointStatus: "InService", CreationTime: "2026-09-01T00:00:00Z", LastModifiedTime: "2026-09-29T00:00:00Z" }] };
+      if (service === "sagemaker" && args[1] === "list-models") return { Models: [{ ModelName: "shop-model", CreationTime: "2026-09-01T00:00:00Z" }] };
+      if (service === "sagemaker" && args[1] === "list-notebook-instances") return { NotebookInstances: [{ NotebookInstanceName: "shop-analysis", NotebookInstanceStatus: "Stopped", InstanceType: "ml.t3.medium", CreationTime: "2026-09-01T00:00:00Z", LastModifiedTime: "2026-09-29T00:00:00Z" }] };
       if (service === "ecs" && args[1] === "list-clusters") return { clusterArns: ["arn:aws:ecs:ap-northeast-2:123456789012:cluster/shop-cluster"] };
       if (service === "ecs" && args[1] === "list-services") return { serviceArns: ["arn:aws:ecs:ap-northeast-2:123456789012:service/shop-cluster/orders-api-service"] };
       if (service === "ecs" && args[1] === "describe-services") return { services: [{ serviceName: "orders-api-service", status: "ACTIVE", desiredCount: 2, runningCount: 2, taskDefinition: "arn:aws:ecs:ap-northeast-2:123456789012:task-definition/orders-api:343", deployments: [{ status: "PRIMARY", rolloutState: "COMPLETED", createdAt: "2026-09-28T08:00:00.000Z", updatedAt: "2026-09-28T08:03:00.000Z" }] }] };
@@ -34,9 +37,14 @@ describe("AWS context CLI adapter", () => {
       throw new Error(`unexpected ${service}`);
     });
     const inventory = await client.inventory({ profile: "team-account", region: "ap-northeast-2" });
-    expect(inventory).toHaveLength(10);
+    expect(inventory).toHaveLength(11);
     expect(inventory.flatMap((item) => item.resources.map((resource) => resource.id))).toEqual(expect.arrayContaining([
-      "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "shop-cluster", "orders-api-service",
+      "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "shop-ranker", "shop-model", "shop-analysis", "shop-cluster", "orders-api-service",
+    ]));
+    expect(inventory.find((item) => item.service === "sagemaker")?.resources).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: "endpoint", id: "shop-ranker", metadata: expect.objectContaining({ status: "InService" }) }),
+      expect.objectContaining({ kind: "model", id: "shop-model" }),
+      expect.objectContaining({ kind: "notebook-instance", id: "shop-analysis", metadata: expect.objectContaining({ status: "Stopped" }) }),
     ]));
     expect(inventory.find((item) => item.service === "ecs")?.resources.find((item) => item.kind === "service")?.metadata).toMatchObject({ revision: 343, rolloutState: "COMPLETED", runningCount: 2, desiredCount: 2, deployedAt: "2026-09-28T08:03:00.000Z" });
     expect(inventory.find((item) => item.service === "codepipeline")?.resources[0]?.metadata).toMatchObject({ repositoryName: "orders-api", branchName: "development", latestBuildNumber: 421, latestBuildCommit: "abc123" });

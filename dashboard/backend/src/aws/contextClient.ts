@@ -5,7 +5,7 @@ const execFileAsync = promisify(execFile);
 
 export const awsInventoryServices = [
   "codecommit", "athena", "s3", "codebuild", "codepipeline",
-  "dynamodb", "elasticache", "opensearch", "cloudwatch", "ecs",
+  "dynamodb", "elasticache", "opensearch", "cloudwatch", "sagemaker", "ecs",
 ] as const;
 export type AwsInventoryService = (typeof awsInventoryServices)[number];
 
@@ -48,6 +48,7 @@ const READ_ONLY_AWS_OPERATIONS = new Set([
   "codepipeline:list-pipelines", "codepipeline:get-pipeline",
   "dynamodb:list-tables", "elasticache:describe-replication-groups",
   "opensearch:list-domain-names", "cloudwatch:list-dashboards",
+  "sagemaker:list-endpoints", "sagemaker:list-models", "sagemaker:list-notebook-instances",
   "ecs:list-clusters", "ecs:list-services", "ecs:describe-services", "ecs:describe-task-sets", "ecs:describe-task-definition",
 ]);
 
@@ -229,6 +230,44 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
     }
   }
 
+  async function collectSageMaker(account: AwsContextAccount): Promise<AwsServiceInventory> {
+    const resources: AwsInventoryResource[] = [];
+    const errors: string[] = [];
+    const calls: Array<{ command: string[]; parse: (payload: any) => AwsInventoryResource[] }> = [
+      {
+        command: ["sagemaker", "list-endpoints", "--max-items", "100"],
+        parse: (payload) => compact((payload.Endpoints ?? []).map((item: any) => resource("sagemaker", "endpoint", item.EndpointName, {
+          status: item.EndpointStatus,
+          creationTime: item.CreationTime,
+          lastModifiedTime: item.LastModifiedTime,
+        }))),
+      },
+      {
+        command: ["sagemaker", "list-models", "--max-items", "100"],
+        parse: (payload) => compact((payload.Models ?? []).map((item: any) => resource("sagemaker", "model", item.ModelName, {
+          creationTime: item.CreationTime,
+        }))),
+      },
+      {
+        command: ["sagemaker", "list-notebook-instances", "--max-items", "100"],
+        parse: (payload) => compact((payload.NotebookInstances ?? []).map((item: any) => resource("sagemaker", "notebook-instance", item.NotebookInstanceName, {
+          status: item.NotebookInstanceStatus,
+          instanceType: item.InstanceType,
+          creationTime: item.CreationTime,
+          lastModifiedTime: item.LastModifiedTime,
+        }))),
+      },
+    ];
+    for (const call of calls) {
+      try {
+        resources.push(...call.parse(await run([...call.command, ...commonArgs(account)])));
+      } catch (error) {
+        errors.push(error instanceof Error ? error.message : String(error));
+      }
+    }
+    return { service: "sagemaker", resources, ...(errors.length ? { error: errors.join("; ") } : {}) };
+  }
+
   return {
     async identity(account) {
       const payload = await run(["sts", "get-caller-identity", ...commonArgs(account)]) as any;
@@ -246,6 +285,7 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
         collect(account, "elasticache", ["elasticache", "describe-replication-groups"], (p) => compact((p.ReplicationGroups ?? []).map((x: any) => resource("elasticache", "replication-group", x.ReplicationGroupId, { status: x.Status, engine: x.Engine })) )),
         collect(account, "opensearch", ["opensearch", "list-domain-names"], (p) => compact((p.DomainNames ?? []).map((x: any) => resource("opensearch", "domain", x.DomainName, { engineType: x.EngineType })) )),
         collect(account, "cloudwatch", ["cloudwatch", "list-dashboards"], (p) => compact((p.DashboardEntries ?? []).map((x: any) => resource("cloudwatch", "dashboard", x.DashboardName, { lastModified: x.LastModified, size: x.Size })) )),
+        collectSageMaker(account),
         collectEcs(account),
       ]);
     },

@@ -4,8 +4,11 @@ import { assertReadOnlyAwsArgs, createAwsCliContextClient } from '../src/aws/con
 describe('AWS read-only hard boundary', () => {
   it('allows explicit inventory operations', () => expect(() => assertReadOnlyAwsArgs(['ecs', 'describe-services'])).not.toThrow());
   it.each([
+    ['sagemaker', 'list-endpoints'], ['sagemaker', 'list-models'], ['sagemaker', 'list-notebook-instances'],
+  ])('allows SageMaker read-only inventory %s %s', (service, operation) => expect(() => assertReadOnlyAwsArgs([service, operation])).not.toThrow());
+  it.each([
     ['ecs', 'update-service'], ['s3api', 'delete-object'], ['codepipeline', 'start-pipeline-execution'],
-    ['iam', 'list-users'], ['logs', 'start-query'], ['secretsmanager', 'get-secret-value'],
+    ['iam', 'list-users'], ['logs', 'start-query'], ['secretsmanager', 'get-secret-value'], ['sagemaker', 'create-endpoint'],
   ])('denies %s %s by default', (service, operation) => expect(() => assertReadOnlyAwsArgs([service, operation])).toThrow(/AWS_READ_ONLY_POLICY_DENIED/));
   it('enforces the policy even for an injected runner', async () => {
     let called = false;

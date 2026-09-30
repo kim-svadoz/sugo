@@ -3,7 +3,7 @@ import { fetchAwsContext, type DashboardAwsContext } from "../dashboard/fetch.js
 
 const AWS_SERVICES = [
   "codecommit", "athena", "s3", "codebuild", "codepipeline",
-  "dynamodb", "elasticache", "opensearch", "cloudwatch", "ecs",
+  "dynamodb", "elasticache", "opensearch", "cloudwatch", "sagemaker", "ecs",
 ] as const;
 
 export const sugoAwsContextInputSchema = {
