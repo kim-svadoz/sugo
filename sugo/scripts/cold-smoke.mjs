@@ -235,6 +235,16 @@ try {
   const route = await A.callTool("sugo_route", { input: "로그인 버그를 고쳐줘" });
   check("sugo_route — 자연어 라우팅", route.__rpcError === undefined && route.ok !== false, JSON.stringify(route).slice(0, 200));
 
+  const ontology = await A.callTool("sugo_ontology", { view: "invariants" });
+  check(
+    "sugo_ontology — 배포 번들이 결정적 모델 식별자를 제공",
+    toolOk(ontology)
+      && ontology.model?.schemaVersion === 1
+      && ontology.model?.revision === 1
+      && /^sha256:[a-f0-9]{64}$/.test(ontology.model?.modelHash ?? ""),
+    JSON.stringify(ontology.model ?? ontology).slice(0, 200),
+  );
+
   const specAdd = await A.callTool("sugo_spec", { action: "add", workspace: "cold-ws", name: "login-spec", type: "architecture", content: "# 로그인 스펙\n\n본문" });
   check("sugo_spec add", toolOk(specAdd), JSON.stringify(specAdd).slice(0, 160));
   const histAdd = await A.callTool("sugo_history", { action: "add", workspace: "cold-ws", task_id: "task-1", task_title: "로그인 구현", summary: "콜드 환경 기록" });

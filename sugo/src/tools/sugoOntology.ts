@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BOUNDARIES, INVARIANTS, ONTOLOGY, type OntologyView } from "../ontology/model.js";
 import { ALLOWED_ACTIONS_BY_STATE, PREREQUISITES, RESULT_STATE } from "../ontology/derive.js";
+import { ONTOLOGY_MODEL_IDENTITY } from "../ontology/identity.js";
 
 const VIEWS = [
   "objectTypes",
@@ -47,6 +48,7 @@ export async function handleSugoOntology(rawArgs: unknown) {
     if (!boundary) {
       return json({
         ok: false,
+        model: ONTOLOGY_MODEL_IDENTITY,
         errorCode: "UNKNOWN_BOUNDARY",
         message: `알 수 없는 boundary: ${args.boundary}`,
         available: BOUNDARIES.map((b) => b.name),
@@ -54,6 +56,7 @@ export async function handleSugoOntology(rawArgs: unknown) {
     }
     return json({
       ok: true,
+      model: ONTOLOGY_MODEL_IDENTITY,
       boundary: {
         name: boundary.name,
         contract: boundary.contract,
@@ -63,11 +66,12 @@ export async function handleSugoOntology(rawArgs: unknown) {
   }
 
   if (args.view) {
-    return json({ ok: true, view: args.view, [args.view]: ONTOLOGY[args.view] });
+    return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, view: args.view, [args.view]: ONTOLOGY[args.view] });
   }
 
   return json({
     ok: true,
+    model: ONTOLOGY_MODEL_IDENTITY,
     ontology: ONTOLOGY,
     derived: {
       prerequisites: PREREQUISITES,

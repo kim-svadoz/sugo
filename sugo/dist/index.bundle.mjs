@@ -27921,7 +27921,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.8.3" : "0.0.0-dev";
+  return true ? "0.8.4" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32514,6 +32514,41 @@ async function handleSugoVersion() {
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
+// src/ontology/identity.ts
+import { createHash as createHash4 } from "node:crypto";
+var ONTOLOGY_SCHEMA_VERSION = 1;
+var ONTOLOGY_REVISION = 1;
+function canonicalJson(value) {
+  if (value === null || typeof value === "string" || typeof value === "boolean") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new TypeError("Ontology hash cannot encode a non-finite number");
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (typeof value === "object") {
+    const entries = Object.entries(value).filter(([, item]) => item !== void 0).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0);
+    return `{${entries.map(([key, item]) => `${JSON.stringify(key)}:${canonicalJson(item)}`).join(",")}}`;
+  }
+  throw new TypeError(`Ontology hash cannot encode ${typeof value}`);
+}
+function deterministicModelHash(value) {
+  return `sha256:${createHash4("sha256").update(canonicalJson(value)).digest("hex")}`;
+}
+var HASHED_MODEL = {
+  ontology: ONTOLOGY,
+  derived: {
+    prerequisites: PREREQUISITES,
+    resultState: RESULT_STATE,
+    allowedActionsByState: ALLOWED_ACTIONS_BY_STATE
+  }
+};
+var ONTOLOGY_MODEL_IDENTITY = Object.freeze({
+  schemaVersion: ONTOLOGY_SCHEMA_VERSION,
+  revision: ONTOLOGY_REVISION,
+  hashAlgorithm: "sha256",
+  modelHash: deterministicModelHash(HASHED_MODEL)
+});
+
 // src/tools/sugoOntology.ts
 var VIEWS = [
   "objectTypes",
@@ -32539,6 +32574,7 @@ async function handleSugoOntology(rawArgs) {
     if (!boundary) {
       return json({
         ok: false,
+        model: ONTOLOGY_MODEL_IDENTITY,
         errorCode: "UNKNOWN_BOUNDARY",
         message: `\uC54C \uC218 \uC5C6\uB294 boundary: ${args2.boundary}`,
         available: BOUNDARIES.map((b) => b.name)
@@ -32546,6 +32582,7 @@ async function handleSugoOntology(rawArgs) {
     }
     return json({
       ok: true,
+      model: ONTOLOGY_MODEL_IDENTITY,
       boundary: {
         name: boundary.name,
         contract: boundary.contract,
@@ -32554,10 +32591,11 @@ async function handleSugoOntology(rawArgs) {
     });
   }
   if (args2.view) {
-    return json({ ok: true, view: args2.view, [args2.view]: ONTOLOGY[args2.view] });
+    return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, view: args2.view, [args2.view]: ONTOLOGY[args2.view] });
   }
   return json({
     ok: true,
+    model: ONTOLOGY_MODEL_IDENTITY,
     ontology: ONTOLOGY,
     derived: {
       prerequisites: PREREQUISITES,

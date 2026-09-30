@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { handleSugoOntology } from "../src/tools/sugoOntology.js";
 import { ACTION_TYPES, WORKFLOW_STATES } from "../src/ontology/model.js";
+import { canonicalJson, deterministicModelHash } from "../src/ontology/identity.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(args: unknown): Promise<any> {
@@ -9,6 +10,41 @@ async function call(args: unknown): Promise<any> {
 }
 
 describe("§2 sugo_ontology 도구", () => {
+  it("모든 조회 응답이 같은 버전·revision·결정적 모델 해시를 제공한다", async () => {
+    const responses = await Promise.all([
+      call({}),
+      call({ view: "invariants" }),
+      call({ boundary: "sync" }),
+      call({ boundary: "workflow" }),
+    ]);
+
+    const identities = responses.map((response) => response.model);
+    for (const identity of identities) {
+      expect(identity).toEqual({
+        schemaVersion: 1,
+        revision: 1,
+        hashAlgorithm: "sha256",
+        modelHash: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      });
+    }
+    expect(new Set(identities.map((identity) => identity.modelHash)).size).toBe(1);
+    for (const response of responses) expect(response).not.toHaveProperty("generatedAt");
+  });
+
+  it("동일 프로세스에서 반복 조회해도 모델 해시는 시간과 무관하게 동일하다", async () => {
+    const first = await call({});
+    const second = await call({});
+    expect(first.model.modelHash).toBe(second.model.modelHash);
+  });
+
+  it("결정적 해시는 객체 key 순서와 무관하고 배열 순서는 구분한다", () => {
+    expect(deterministicModelHash({ b: 2, a: { y: 2, x: 1 } })).toBe(
+      deterministicModelHash({ a: { x: 1, y: 2 }, b: 2 }),
+    );
+    expect(deterministicModelHash({ values: ["a", "b"] })).not.toBe(deterministicModelHash({ values: ["b", "a"] }));
+    expect(canonicalJson({ b: 2, a: 1 })).toBe('{"a":1,"b":2}');
+  });
+
   it("인자 없이 부르면 전체 모델 + 파생 테이블을 준다", async () => {
     const r = await call({});
     expect(r.ok).toBe(true);
