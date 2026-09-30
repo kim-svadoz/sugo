@@ -48,7 +48,7 @@ const READ_ONLY_AWS_OPERATIONS = new Set([
   "codepipeline:list-pipelines", "codepipeline:get-pipeline",
   "dynamodb:list-tables", "elasticache:describe-replication-groups",
   "opensearch:list-domain-names", "cloudwatch:list-dashboards",
-  "sagemaker:list-endpoints", "sagemaker:list-models", "sagemaker:list-notebook-instances",
+  "sagemaker:list-endpoints", "sagemaker:list-endpoint-configs", "sagemaker:list-models", "sagemaker:list-notebook-instances",
   "ecs:list-clusters", "ecs:list-services", "ecs:describe-services", "ecs:describe-task-sets", "ecs:describe-task-definition",
 ]);
 
@@ -240,6 +240,12 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
           status: item.EndpointStatus,
           creationTime: item.CreationTime,
           lastModifiedTime: item.LastModifiedTime,
+        }))),
+      },
+      {
+        command: ["sagemaker", "list-endpoint-configs", "--max-items", "100"],
+        parse: (payload) => compact((payload.EndpointConfigs ?? []).map((item: any) => resource("sagemaker", "endpoint-config", item.EndpointConfigName, {
+          creationTime: item.CreationTime,
         }))),
       },
       {

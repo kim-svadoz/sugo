@@ -4,7 +4,7 @@ import { assertReadOnlyAwsArgs, createAwsCliContextClient } from '../src/aws/con
 describe('AWS read-only hard boundary', () => {
   it('allows explicit inventory operations', () => expect(() => assertReadOnlyAwsArgs(['ecs', 'describe-services'])).not.toThrow());
   it.each([
-    ['sagemaker', 'list-endpoints'], ['sagemaker', 'list-models'], ['sagemaker', 'list-notebook-instances'],
+    ['sagemaker', 'list-endpoints'], ['sagemaker', 'list-endpoint-configs'], ['sagemaker', 'list-models'], ['sagemaker', 'list-notebook-instances'],
   ])('allows SageMaker read-only inventory %s %s', (service, operation) => expect(() => assertReadOnlyAwsArgs([service, operation])).not.toThrow());
   it.each([
     ['ecs', 'update-service'], ['s3api', 'delete-object'], ['codepipeline', 'start-pipeline-execution'],

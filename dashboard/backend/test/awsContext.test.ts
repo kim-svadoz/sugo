@@ -28,6 +28,7 @@ describe("AWS context CLI adapter", () => {
       if (service === "opensearch") return { DomainNames: [{ DomainName: "shop-search", EngineType: "OpenSearch" }] };
       if (service === "cloudwatch") return { DashboardEntries: [{ DashboardName: "shop-dashboard" }] };
       if (service === "sagemaker" && args[1] === "list-endpoints") return { Endpoints: [{ EndpointName: "shop-ranker", EndpointStatus: "InService", CreationTime: "2026-09-01T00:00:00Z", LastModifiedTime: "2026-09-29T00:00:00Z" }] };
+      if (service === "sagemaker" && args[1] === "list-endpoint-configs") return { EndpointConfigs: [{ EndpointConfigName: "shop-ranker-config", CreationTime: "2026-09-01T00:00:00Z" }] };
       if (service === "sagemaker" && args[1] === "list-models") return { Models: [{ ModelName: "shop-model", CreationTime: "2026-09-01T00:00:00Z" }] };
       if (service === "sagemaker" && args[1] === "list-notebook-instances") return { NotebookInstances: [{ NotebookInstanceName: "shop-analysis", NotebookInstanceStatus: "Stopped", InstanceType: "ml.t3.medium", CreationTime: "2026-09-01T00:00:00Z", LastModifiedTime: "2026-09-29T00:00:00Z" }] };
       if (service === "ecs" && args[1] === "list-clusters") return { clusterArns: ["arn:aws:ecs:ap-northeast-2:123456789012:cluster/shop-cluster"] };
@@ -39,10 +40,11 @@ describe("AWS context CLI adapter", () => {
     const inventory = await client.inventory({ profile: "team-account", region: "ap-northeast-2" });
     expect(inventory).toHaveLength(11);
     expect(inventory.flatMap((item) => item.resources.map((resource) => resource.id))).toEqual(expect.arrayContaining([
-      "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "shop-ranker", "shop-model", "shop-analysis", "shop-cluster", "orders-api-service",
+      "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "shop-ranker", "shop-ranker-config", "shop-model", "shop-analysis", "shop-cluster", "orders-api-service",
     ]));
     expect(inventory.find((item) => item.service === "sagemaker")?.resources).toEqual(expect.arrayContaining([
       expect.objectContaining({ kind: "endpoint", id: "shop-ranker", metadata: expect.objectContaining({ status: "InService" }) }),
+      expect.objectContaining({ kind: "endpoint-config", id: "shop-ranker-config" }),
       expect.objectContaining({ kind: "model", id: "shop-model" }),
       expect.objectContaining({ kind: "notebook-instance", id: "shop-analysis", metadata: expect.objectContaining({ status: "Stopped" }) }),
     ]));
