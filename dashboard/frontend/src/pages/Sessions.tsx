@@ -394,41 +394,41 @@ export function Sessions() {
                 return (
                 <li
                   key={p.project_path}
-                  className="rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 font-mono text-[12px]"
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2.5 text-[13px]"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-[var(--color-text)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
+                    <span className="truncate font-mono text-sm font-semibold text-[var(--color-text-bright)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
                     <div className="flex shrink-0 gap-1.5">
                       {p.git_synced === 1 && <span className="rounded border border-emerald-400/25 bg-emerald-400/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">Git Synced</span>}
                       {p.aws_synced === 1 && <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">{p.aws_deployments.some((deployment) => deployment.linkMode === 'confirmed') ? 'AWS Synced' : 'AWS Suggested'}</span>}
                     </div>
                   </div>
-                  {p.aws_release && <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-cyan-400/15 bg-cyan-400/[0.03] px-2 py-1.5 text-[10px] text-[var(--color-text-muted)]">
+                  {p.aws_release && <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border border-cyan-400/20 bg-cyan-400/[0.04] px-2.5 py-2 text-[11px] leading-5 text-[var(--color-text-muted)]">
                     <span>배포 기준 <b className="text-cyan-200">{p.aws_release.baseBranch}</b></span>
                     <span>로컬 <b className="text-[var(--color-text)]">{p.local_git.branch ?? "detached"}@{shortCommit(p.local_git.headCommit)}</b></span>
                     <span>최신 성공 Build <b className="text-purple-200">#{p.aws_release.latestBuildNumber ?? "?"}</b> · {shortCommit(p.aws_release.latestBuildCommit)}</span>
                     <span className={`ml-auto rounded border px-1.5 py-0.5 font-bold ${releaseState.color}`} title={releaseState.description}>{releaseState.label}</span>
                   </div>}
-                  {serviceDeployments.map(({ service, deployments }) => <section key={service} className="mt-2 rounded border border-[var(--color-border)] bg-black/10 p-2">
-                    <div className="mb-1.5 truncate text-[11px] font-semibold text-amber-200" title={service}>ECS {service}</div>
-                    <div className="grid gap-1 sm:grid-cols-3">
+                  {serviceDeployments.map(({ service, deployments }) => <section key={service} className="mt-3 rounded-md border border-[var(--color-border)] bg-black/10 p-2.5">
+                    <div className="mb-2 truncate font-mono text-[12px] font-semibold tracking-wide text-amber-200" title={service}>ECS {service}</div>
+                    <div className="grid gap-2 sm:grid-cols-3">
                       {deployments.map((deployment) => {
                         const health = DEPLOYMENT_HEALTH[deployment.healthState];
                         const imageVersion = deployment.images[0]?.split(":").at(-1) ?? null;
-                        return <div key={`${deployment.accountName}:${deployment.service}`} className="rounded border border-[var(--color-border)] bg-black/15 px-2 py-1.5">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="font-bold uppercase text-cyan-300">{deployment.environment}</span>
-                            <span className={health.color} title={`ECS 원본: ${deployment.rolloutState ?? deployment.status ?? "없음"}`}>ECS {health.label}</span>
+                        return <div key={`${deployment.accountName}:${deployment.service}`} className="rounded-md border border-[var(--color-border)] bg-black/15 px-2.5 py-2.5 leading-relaxed">
+                          <div className="flex items-center justify-between gap-2 text-[12px]">
+                            <span className="font-bold uppercase tracking-wide text-cyan-200">{deployment.environment}</span>
+                            <span className={`font-medium ${health.color}`} title={`ECS 원본: ${deployment.rolloutState ?? deployment.status ?? "없음"}`}>ECS {health.label}</span>
                           </div>
-                          <div className="mt-0.5 truncate text-[11px] text-[var(--color-text)]" title={deployment.taskDefinition ?? undefined}>{deployment.taskDefinition ?? "TaskDefinition 미확인"}</div>
-                          {imageVersion && <div className="flex items-center justify-between gap-1 text-[10px] text-purple-300" title={deployment.images[0]}><span className="truncate">image {imageVersion}</span>{p.aws_release?.latestBuildNumber != null && <span className={imageVersion === String(p.aws_release.latestBuildNumber) ? "text-emerald-300" : "text-amber-300"}>{imageVersion === String(p.aws_release.latestBuildNumber) ? "최신 Build" : `Build #${p.aws_release.latestBuildNumber}와 다름`}</span>}</div>}
-                          <div className="truncate text-[10px] text-[var(--color-text-muted)]" title={deployment.deployedAt ? "ECS PRIMARY 배포 갱신 시각" : "TaskDefinition 등록 시각 기반"}>{formatDeploymentDate(deployment.deployedAt, deployment.taskDefinitionRegisteredAt)}</div>
-                          <div className="text-[10px] text-[var(--color-text-dim)]">running {deployment.runningCount ?? "?"}/{deployment.desiredCount ?? "?"}</div>
-                          {deployment.pinpointApplicationName && <div className="mt-1 flex items-center justify-between gap-1 border-t border-[var(--color-border)] pt-1 text-[10px]" title={deployment.apmLatestHeartbeatAt ?? "Pinpoint heartbeat 없음"}>
-                            <span className="truncate text-[var(--color-text-muted)]">Pinpoint {deployment.pinpointApplicationName}</span>
+                          <div className="mt-1 truncate font-mono text-[12px] font-medium text-[var(--color-text)]" title={deployment.taskDefinition ?? undefined}>{deployment.taskDefinition ?? "TaskDefinition 미확인"}</div>
+                          {imageVersion && <div className="flex items-center justify-between gap-2 font-mono text-[11px] text-purple-200" title={deployment.images[0]}><span className="truncate">image {imageVersion}</span>{p.aws_release?.latestBuildNumber != null && <span className={`font-medium ${imageVersion === String(p.aws_release.latestBuildNumber) ? "text-emerald-300" : "text-amber-300"}`}>{imageVersion === String(p.aws_release.latestBuildNumber) ? "최신 Build" : `Build #${p.aws_release.latestBuildNumber}와 다름`}</span>}</div>}
+                          <div className="mt-0.5 truncate text-[11px] text-[var(--color-text-muted)]" title={deployment.deployedAt ? "ECS PRIMARY 배포 갱신 시각" : "TaskDefinition 등록 시각 기반"}>{formatDeploymentDate(deployment.deployedAt, deployment.taskDefinitionRegisteredAt)}</div>
+                          <div className="text-[11px] text-[var(--color-text-muted)]">running {deployment.runningCount ?? "?"}/{deployment.desiredCount ?? "?"}</div>
+                          {deployment.pinpointApplicationName && <div className="mt-2 flex items-center justify-between gap-2 border-t border-[var(--color-border)] pt-2 text-[11px]" title={deployment.apmLatestHeartbeatAt ?? "Pinpoint heartbeat 없음"}>
+                            <span className="truncate font-mono text-[var(--color-text-muted)]">Pinpoint {deployment.pinpointApplicationName}</span>
                             {deployment.apmState ? <span className={APM_STATE[deployment.apmState].color}>{APM_STATE[deployment.apmState].label} {deployment.apmRunningAgents ?? 0}/{deployment.apmAgentCount ?? 0}</span> : <span className="text-[var(--color-text-dim)]">동기화 필요</span>}
                           </div>}
-                          {deployment.apmSignal && <div className="mt-1 grid grid-cols-2 gap-x-2 border-t border-[var(--color-border)] pt-1 text-[10px] text-[var(--color-text-muted)]" title="Pinpoint 최근 5분 스냅샷">
+                          {deployment.apmSignal && <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5 border-t border-[var(--color-border)] pt-2 text-[11px] leading-5 text-[var(--color-text-muted)]" title="Pinpoint 최근 5분 스냅샷">
                             <span className={deployment.apmSignal === "ERRORS_OBSERVED" ? "text-rose-300" : deployment.apmSignal === "TRAFFIC_OK" ? "text-emerald-300" : "text-[var(--color-text-dim)]"}>{deployment.apmSignal === "ERRORS_OBSERVED" ? `표본 오류 ${deployment.apmErrorCount}/${deployment.apmSampleCount}` : deployment.apmSignal === "TRAFFIC_OK" ? `지연 표본 ${deployment.apmSampleCount && deployment.apmSampleCount >= 5000 ? '5,000+' : deployment.apmSampleCount} · 오류 0` : deployment.apmSignal === "NO_TRAFFIC" ? "최근 트래픽 없음" : "지표 조회 불가"}</span>
                             <span className="text-right">P95 {deployment.apmP95ResponseMs ?? "-"}ms</span>
                             <span>평균 {deployment.apmAverageResponseMs ?? "-"}ms</span>
