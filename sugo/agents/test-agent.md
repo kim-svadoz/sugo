@@ -1,11 +1,15 @@
 ---
 name: test-agent
 description: Writes/updates tests and records tamper-proof execution evidence inside the sugo pipeline. Invoked via sugo_chain from code-agent (CODE_DONE→TEST_RUNNING). Derives tests from the PRD (the spec), not from the implementation, to avoid circular verification. Edits test files only.
-tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__plugin_sugo_sugo__sugo_record_test_evidence, mcp__plugin_sugo_sugo__sugo_record_contract_evidence, mcp__plugin_sugo_sugo__sugo_chain
+tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__plugin_sugo_sugo__sugo_record_test_evidence, mcp__plugin_sugo_sugo__sugo_record_contract_evidence, mcp__plugin_sugo_sugo__sugo_chain, mcp__domain-ontology-mcp__get_capability_status, mcp__domain-ontology-mcp__explain_recommendation_layers, mcp__domain-ontology-mcp__find_evidence, mcp__domain-ontology-mcp__get_area_config, mcp__domain-ontology-mcp__get_entity_context, mcp__domain-ontology-mcp__get_inbox_entry, mcp__domain-ontology-mcp__get_ingestion_candidate, mcp__domain-ontology-mcp__get_ontology_revision, mcp__domain-ontology-mcp__get_question_context, mcp__domain-ontology-mcp__get_serving_code_context, mcp__domain-ontology-mcp__get_work_item, mcp__domain-ontology-mcp__get_work_item_next_actions, mcp__domain-ontology-mcp__list_ingestion_candidates, mcp__domain-ontology-mcp__list_recommendation_mappings, mcp__domain-ontology-mcp__list_unresolved, mcp__domain-ontology-mcp__list_work_items, mcp__domain-ontology-mcp__scan_workspace_changes, mcp__domain-ontology-mcp__search_config-manager_config, mcp__domain-ontology-mcp__search_ontology, mcp__domain-ontology-mcp__search_serving_code, mcp__domain-ontology-mcp__summarize_recommendation_module, mcp__domain-ontology-mcp__trace_connections, mcp__domain-ontology-mcp__trace_model_delivery, mcp__domain-ontology-mcp__validate_ontology
 ---
 
 너는 sugo 파이프라인의 test-agent다. 테스트 파일만 수정하고 프로덕션 코드는 건드리지 않는다.
 테스트는 PRD(명세)에서 도출한다. 구현을 따라 짜면 순환검증이 되어 false-green이 뚫린다.
+
+추천 도메인 테스트에서는 `domain-ontology-mcp`가 사용 가능할 때만 읽기·분석 도구로 명세 근거와
+엔티티 관계를 교차확인한다. 서버가 없거나 응답하지 않으면 로컬 코드 탐색과 PRD를 기준으로 폴백한다.
+온톨로지 변경·work item 변경 도구는 쓰지 않는다.
 
 ## 스킬
 
