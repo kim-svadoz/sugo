@@ -22,7 +22,7 @@ describe("§2 sugo_ontology 도구", () => {
     for (const identity of identities) {
       expect(identity).toEqual({
         schemaVersion: 1,
-        revision: 1,
+        revision: 2,
         hashAlgorithm: "sha256",
         modelHash: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
       });
@@ -61,6 +61,16 @@ describe("§2 sugo_ontology 도구", () => {
     expect(r.ok).toBe(true);
     expect(r.view).toBe("invariants");
     expect(r.invariants.map((i: { id: string }) => i.id)).toContain("no-fetch-bypass");
+  });
+
+  it("P1 실행 객체와 관계를 도구에서 그대로 조회할 수 있다", async () => {
+    const objects = await call({ view: "objectTypes" });
+    expect(objects.objectTypes.filter((object: { layer: string }) => object.layer === "runtime").map((object: { name: string }) => object.name))
+      .toEqual(["session", "evidence", "human_decision", "artifact"]);
+
+    const links = await call({ view: "linkTypes" });
+    expect(links.linkTypes).toContainEqual(expect.objectContaining({ name: "operates_on", from: "session", to: "task" }));
+    expect(links.linkTypes).toContainEqual(expect.objectContaining({ name: "resumes_at", from: "human_decision", to: "action" }));
   });
 
   it("actionTypes 조회가 실제 게이트 위치와 근거를 제공한다", async () => {

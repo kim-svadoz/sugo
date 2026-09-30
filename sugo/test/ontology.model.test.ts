@@ -42,7 +42,55 @@ describe("§2 온톨로지 drift lock", () => {
   });
 
   it("OBJECT_TYPES.name 유니온 == RoadmapLevel", () => {
-    expect(OBJECT_TYPES.map((o) => o.name)).toEqual([...ROADMAP_LEVELS]);
+    const roadmapObjects = OBJECT_TYPES.filter((o) => (o as { layer?: string }).layer === "roadmap");
+    expect(roadmapObjects.map((o) => o.name)).toEqual([...ROADMAP_LEVELS]);
+  });
+
+  it("P1 실행 객체 4종이 런타임 타입 근거와 함께 선언된다", () => {
+    const runtimeObjects = OBJECT_TYPES.filter((o) => (o as { layer?: string }).layer === "runtime") as unknown as {
+      name: string;
+      implementationRefs: { path: string; symbol: string }[];
+    }[];
+    expect(runtimeObjects.map((o) => o.name)).toEqual(["session", "evidence", "human_decision", "artifact"]);
+    for (const object of runtimeObjects) {
+      expect(object.implementationRefs.length, object.name).toBeGreaterThan(0);
+      for (const ref of object.implementationRefs) {
+        const absolutePath = resolve(packageRoot, ref.path);
+        expect(existsSync(absolutePath), `${object.name}: ${ref.path}`).toBe(true);
+        expect(readFileSync(absolutePath, "utf8"), `${object.name}: ${ref.path}#${ref.symbol}`).toContain(ref.symbol);
+      }
+    }
+  });
+
+  it("P1 핵심 관계 6종이 정확한 방향으로 선언된다", () => {
+    const links = new Map(LINK_TYPES.map((link) => [link.name, link]));
+    expect(links.get("operates_on")).toMatchObject({ from: "session", to: "task" });
+    expect(links.get("requires")).toMatchObject({ from: "action", to: "evidence" });
+    expect(links.get("produces")).toMatchObject({ from: "action", to: ["artifact", "evidence"] });
+    expect(links.get("blocks")).toMatchObject({ from: "human_decision", to: "session" });
+    expect(links.get("resumes_at")).toMatchObject({ from: "human_decision", to: "action" });
+    expect(links.get("derived_from")).toMatchObject({ from: "task", to: "task" });
+  });
+
+  it("모든 링크 endpoint는 객체·action·와일드카드 중 하나이며 dangling reference가 없다", () => {
+    const known = new Set<string>(["*", "action", ...OBJECT_TYPES.map((o) => o.name)]);
+    const values = (endpoint: string | readonly string[]) => typeof endpoint === "string" ? [endpoint] : endpoint;
+    for (const link of LINK_TYPES) {
+      for (const endpoint of [...values(link.from), ...values(link.to)]) {
+        expect(known.has(endpoint), `${link.name}: ${endpoint}`).toBe(true);
+      }
+    }
+  });
+
+  it("모든 관계는 실제 런타임 필드 근거를 가지며 장식용 링크로 남지 않는다", () => {
+    for (const link of LINK_TYPES as unknown as { name: string; implementationRefs: { path: string; symbol: string }[] }[]) {
+      expect(link.implementationRefs.length, link.name).toBeGreaterThan(0);
+      for (const ref of link.implementationRefs) {
+        const absolutePath = resolve(packageRoot, ref.path);
+        expect(existsSync(absolutePath), `${link.name}: ${ref.path}`).toBe(true);
+        expect(readFileSync(absolutePath, "utf8"), `${link.name}: ${ref.path}#${ref.symbol}`).toContain(ref.symbol);
+      }
+    }
   });
 
   it("ALL_STATUSES == RoadmapNodeStatus", () => {
@@ -59,7 +107,7 @@ describe("§2 온톨로지 drift lock", () => {
 
   it("containedBy가 실재하는 오브젝트를 가리킨다(spec만 최상위)", () => {
     const known = new Set<string>(OBJECT_TYPES.map((o) => o.name));
-    const roots = OBJECT_TYPES.filter((o) => o.containedBy === null);
+    const roots = OBJECT_TYPES.filter((o) => (o as { layer?: string }).layer === "roadmap" && o.containedBy === null);
     expect(roots.map((o) => o.name)).toEqual(["spec"]);
     for (const o of OBJECT_TYPES) {
       if (o.containedBy !== null) expect(known.has(o.containedBy), `${o.name}.containedBy`).toBe(true);

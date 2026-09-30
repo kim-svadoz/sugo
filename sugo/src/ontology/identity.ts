@@ -6,7 +6,7 @@ import { ONTOLOGY } from "./model.js";
 export const ONTOLOGY_SCHEMA_VERSION = 1 as const;
 
 /** 온톨로지 의미 변경 단위. 모델 변경 시 hash snapshot과 함께 명시적으로 올린다. */
-export const ONTOLOGY_REVISION = 1 as const;
+export const ONTOLOGY_REVISION = 2 as const;
 
 export interface OntologyModelIdentity {
   schemaVersion: typeof ONTOLOGY_SCHEMA_VERSION;

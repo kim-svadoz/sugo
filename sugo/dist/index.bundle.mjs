@@ -27921,7 +27921,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.8.4" : "0.0.0-dev";
+  return true ? "0.9.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29843,16 +29843,26 @@ ${lines.join("\n")}`;
 // src/ontology/model.ts
 var ALL_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"];
 var OBJECT_TYPES = [
-  { name: "spec", label: "Spec", meaning: "\uB9C8\uC2A4\uD130 PRD(\uACBD\uB85C=\uC18C\uC18D). \uB85C\uB4DC\uB9F5 \uCD5C\uC0C1\uC704 \uCEE8\uD14C\uC774\uB108", containedBy: null },
-  { name: "workstream", label: "Run", meaning: "feat/patch \uC2E4\uD589 \uB2E8\uC704. Spec \uC548\uC5D0 \uC2DC\uAC04\uC21C \uC801\uCE35", containedBy: "spec" },
-  { name: "task", label: "Task", meaning: "\uB808\uD3EC\uBCC4 \uC2E4\uC81C \uC0B0\uCD9C\uBB3C. \uC9C4\uD589\uB960 \uAE30\uC900 \uCE35", containedBy: "workstream" },
-  { name: "subtask", label: "REQ", meaning: "Task \uD558\uC704 \uC138\uBD80 \uAC80\uC99D \uC2A4\uD399(\uC694\uAD6C\uC0AC\uD56D)", containedBy: "task" },
-  { name: "step", label: "Step(\uB808\uAC70\uC2DC)", meaning: "\uAD6C \uB2E8\uACC4 \uB2E8\uC704. \uC2E0\uADDC \uD750\uB984 \uBBF8\uC0AC\uC6A9", containedBy: "subtask" }
+  { name: "spec", layer: "roadmap", label: "Spec", meaning: "\uB9C8\uC2A4\uD130 PRD(\uACBD\uB85C=\uC18C\uC18D). \uB85C\uB4DC\uB9F5 \uCD5C\uC0C1\uC704 \uCEE8\uD14C\uC774\uB108", containedBy: null, implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
+  { name: "workstream", layer: "roadmap", label: "Run", meaning: "feat/patch \uC2E4\uD589 \uB2E8\uC704. Spec \uC548\uC5D0 \uC2DC\uAC04\uC21C \uC801\uCE35", containedBy: "spec", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
+  { name: "task", layer: "roadmap", label: "Task", meaning: "\uB808\uD3EC\uBCC4 \uC2E4\uC81C \uC0B0\uCD9C\uBB3C. \uC9C4\uD589\uB960 \uAE30\uC900 \uCE35", containedBy: "workstream", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }, { path: "src/hulk/types.ts", symbol: "interface Task" }] },
+  { name: "subtask", layer: "roadmap", label: "REQ", meaning: "Task \uD558\uC704 \uC138\uBD80 \uAC80\uC99D \uC2A4\uD399(\uC694\uAD6C\uC0AC\uD56D)", containedBy: "task", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
+  { name: "step", layer: "roadmap", label: "Step(\uB808\uAC70\uC2DC)", meaning: "\uAD6C \uB2E8\uACC4 \uB2E8\uC704. \uC2E0\uADDC \uD750\uB984 \uBBF8\uC0AC\uC6A9", containedBy: "subtask", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
+  { name: "session", layer: "runtime", label: "Session", meaning: "\uD55C feat/patch \uC0C1\uD0DC\uBA38\uC2E0 \uC2E4\uD589\uACFC \uADF8 \uAC10\uC0AC \uC0C1\uD0DC", containedBy: null, implementationRefs: [{ path: "src/types.ts", symbol: "interface PlanSession" }] },
+  { name: "evidence", layer: "runtime", label: "Evidence", meaning: "\uAC8C\uC774\uD2B8\uAC00 \uC18C\uBE44\uD558\uB294 baseline\xB7contract\xB7test\xB7runtime\xB7validation \uC2E4\uD589 \uC99D\uAC70", containedBy: null, implementationRefs: [{ path: "src/testEvidence.ts", symbol: "interface TestEvidenceRecord" }, { path: "src/contractEvidence.ts", symbol: "interface ContractTestRecord" }] },
+  { name: "human_decision", layer: "runtime", label: "Human Decision", meaning: "\uC9C8\uBB38\xB7\uC120\uD0DD\uC9C0\xB7\uB2F5\uBCC0\xB7\uBCF5\uADC0 action\uC744 \uBCF4\uC874\uD558\uB294 \uC0AC\uB78C \uD310\uB2E8", containedBy: null, implementationRefs: [{ path: "src/hulk/types.ts", symbol: "interface HumanBlocker" }] },
+  { name: "artifact", layer: "runtime", label: "Artifact", meaning: "PRD\xB7TODO-SPEC\xB7work-result\xB7commit/PR\uCC98\uB7FC \uC2E4\uD589\uC774 \uC0DD\uC0B0\uD55C \uCD94\uC801 \uAC00\uB2A5 \uC0B0\uCD9C\uBB3C", containedBy: null, implementationRefs: [{ path: "src/workResultReport.ts", symbol: "interface WorkResultReport" }] }
 ];
 var LINK_TYPES = [
-  { name: "contains", from: "*", to: "*", meaning: "\uACC4\uCE35 \uD3EC\uD568(parent). spec\u2192workstream\u2192task\u2192subtask" },
-  { name: "depends_on", from: "task", to: "task", meaning: "\uD615\uC81C \uC21C\uC11C/\uC758\uC874(DAG). to\uAC00 \uBA3C\uC800 done\uC774\uC5B4\uC57C from ready" },
-  { name: "lineage", from: "task", to: "task", meaning: "patch \uACC4\uBCF4(\uC6D0\uBCF8 \uC544\uB798 \uCC28\uC218 \uCCB4\uC778). task \uB178\uB4DC\uC5D0\uB9CC" }
+  { name: "contains", from: "*", to: "*", meaning: "\uACC4\uCE35 \uD3EC\uD568(parent). spec\u2192workstream\u2192task\u2192subtask", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "parent?: string" }] },
+  { name: "depends_on", from: "task", to: "task", meaning: "\uD615\uC81C \uC21C\uC11C/\uC758\uC874(DAG). to\uAC00 \uBA3C\uC800 done\uC774\uC5B4\uC57C from ready", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "dependsOn: string[]" }] },
+  { name: "lineage", from: "task", to: "task", meaning: "patch \uACC4\uBCF4(\uC6D0\uBCF8 \uC544\uB798 \uCC28\uC218 \uCCB4\uC778). task \uB178\uB4DC\uC5D0\uB9CC", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "lineage?: RoadmapLineageEntry[]" }] },
+  { name: "operates_on", from: "session", to: "task", meaning: "\uC0C1\uD0DC\uBA38\uC2E0 session\uC774 \uAD6C\uD604\uD558\uB294 \uB85C\uB4DC\uB9F5 Task", implementationRefs: [{ path: "src/types.ts", symbol: "hulkTaskId?: string" }] },
+  { name: "requires", from: "action", to: "evidence", meaning: "action \uAC8C\uC774\uD2B8\uAC00 \uC804\uC774\uB97C \uC704\uD574 \uC694\uAD6C\uD558\uB294 \uC2E4\uD589 \uC99D\uAC70", implementationRefs: [{ path: "src/ontology/model.ts", symbol: "evidenceSource: string" }] },
+  { name: "produces", from: "action", to: ["artifact", "evidence"], meaning: "action \uC2E4\uD589\uC774 \uC0DD\uC131\xB7\uAC31\uC2E0\uD558\uB294 \uC0B0\uCD9C\uBB3C \uB610\uB294 \uC99D\uAC70", implementationRefs: [{ path: "src/types.ts", symbol: "testEvidence?: TestEvidenceRecord" }, { path: "src/types.ts", symbol: "workResultReport?: WorkResultReport" }] },
+  { name: "blocks", from: "human_decision", to: "session", meaning: "\uBBF8\uACB0\uC815 \uC0AC\uB78C \uD310\uB2E8\uC774 session\uC758 \uB2E4\uC74C \uC804\uC774\uB97C \uCC28\uB2E8", implementationRefs: [{ path: "src/types.ts", symbol: "humanDecisionGate?:" }] },
+  { name: "resumes_at", from: "human_decision", to: "action", meaning: "\uD310\uB2E8 \uBC18\uC601 \uD6C4 \uAC19\uC740 session\uC5D0\uC11C \uC7AC\uAC1C\uD560 action", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "resumeAction: string" }] },
+  { name: "derived_from", from: "task", to: "task", meaning: "patch Task\uAC00 \uADFC\uAC70\uB85C \uC0BC\uC740 \uC774\uC804 \uC644\uB8CC Task", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "parentTaskId: string" }] }
 ];
 var WORKFLOW_STATES = [
   "INIT",
@@ -32517,7 +32527,7 @@ async function handleSugoVersion() {
 // src/ontology/identity.ts
 import { createHash as createHash4 } from "node:crypto";
 var ONTOLOGY_SCHEMA_VERSION = 1;
-var ONTOLOGY_REVISION = 1;
+var ONTOLOGY_REVISION = 2;
 function canonicalJson(value) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return JSON.stringify(value);
   if (typeof value === "number") {

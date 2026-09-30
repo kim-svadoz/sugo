@@ -240,7 +240,7 @@ try {
     "sugo_ontology — 배포 번들이 결정적 모델 식별자를 제공",
     toolOk(ontology)
       && ontology.model?.schemaVersion === 1
-      && ontology.model?.revision === 1
+      && ontology.model?.revision === 2
       && /^sha256:[a-f0-9]{64}$/.test(ontology.model?.modelHash ?? ""),
     JSON.stringify(ontology.model ?? ontology).slice(0, 200),
   );
