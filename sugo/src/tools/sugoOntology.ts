@@ -2,6 +2,9 @@ import { z } from "zod";
 import { BOUNDARIES, INVARIANTS, ONTOLOGY, type OntologyView } from "../ontology/model.js";
 import { ALLOWED_ACTIONS_BY_STATE, PREREQUISITES, RESULT_STATE } from "../ontology/derive.js";
 import { ONTOLOGY_MODEL_IDENTITY } from "../ontology/identity.js";
+import { projectSessionOntology } from "../ontology/runtimeProjection.js";
+import { loadSession, sessionExists } from "../session.js";
+import { getTask } from "../hulk/task.js";
 
 const VIEWS = [
   "objectTypes",
@@ -25,6 +28,11 @@ export const sugoOntologyInputSchema = {
     .string()
     .optional()
     .describe("결함 표면 이름(handoff|sync|lifecycle|workflow). 해당 경계와 거기 걸린 불변식을 함께 반환한다"),
+  sessionId: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("저장된 feat/patch 세션을 실행 객체·관계 projection으로 조회한다"),
 };
 
 const SugoOntologyArgs = z.object(sugoOntologyInputSchema);
@@ -42,6 +50,31 @@ const SugoOntologyArgs = z.object(sugoOntologyInputSchema);
  */
 export async function handleSugoOntology(rawArgs: unknown) {
   const args = SugoOntologyArgs.parse(rawArgs);
+  const selectorCount = [args.view, args.boundary, args.sessionId].filter(Boolean).length;
+  if (selectorCount > 1) {
+    return json({
+      ok: false,
+      model: ONTOLOGY_MODEL_IDENTITY,
+      errorCode: "AMBIGUOUS_ONTOLOGY_QUERY",
+      message: "view, boundary, sessionId 중 하나만 지정해야 합니다.",
+    });
+  }
+
+  if (args.sessionId) {
+    if (!(await sessionExists(args.sessionId))) {
+      return json({
+        ok: false,
+        model: ONTOLOGY_MODEL_IDENTITY,
+        errorCode: "SESSION_NOT_FOUND",
+        message: `세션을 찾을 수 없습니다: ${args.sessionId}`,
+      });
+    }
+    const session = await loadSession(args.sessionId);
+    const task = session.data.hulkWorkspace && session.data.hulkTaskId
+      ? await getTask(session.data.hulkWorkspace, session.data.hulkTaskId)
+      : null;
+    return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, projection: projectSessionOntology(session, task) });
+  }
 
   if (args.boundary) {
     const boundary = BOUNDARIES.find((b) => b.name === args.boundary);

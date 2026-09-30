@@ -1,7 +1,12 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { handleSugoOntology } from "../src/tools/sugoOntology.js";
 import { ACTION_TYPES, WORKFLOW_STATES } from "../src/ontology/model.js";
 import { canonicalJson, deterministicModelHash } from "../src/ontology/identity.js";
+import { saveSession } from "../src/session.js";
+import type { PlanSession } from "../src/types.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(args: unknown): Promise<any> {
@@ -71,6 +76,42 @@ describe("§2 sugo_ontology 도구", () => {
     const links = await call({ view: "linkTypes" });
     expect(links.linkTypes).toContainEqual(expect.objectContaining({ name: "operates_on", from: "session", to: "task" }));
     expect(links.linkTypes).toContainEqual(expect.objectContaining({ name: "resumes_at", from: "human_decision", to: "action" }));
+  });
+
+  it("sessionId 조회는 저장된 세션을 실제 runtime projection으로 반환한다", async () => {
+    const fakeHome = mkdtempSync(join(tmpdir(), "sugo-ontology-runtime-"));
+    process.env.SUGO_HOME_OVERRIDE = fakeHome;
+    try {
+      const session = {
+        id: "plan-1-abcd",
+        state: "SCAN",
+        projectPath: "/project",
+        featureName: "runtime projection",
+        startedAt: "2026-09-30T00:00:00.000Z",
+        updatedAt: "2026-09-30T00:00:00.000Z",
+        data: {
+          mode: "plan",
+          chainInfo: { changedFiles: [], analyzeAttempts: 0, analyzePassed: null, testPassedState: null, reviewPassed: null, autoLoopRetryCount: 0 },
+        },
+      } satisfies PlanSession;
+      await saveSession(session);
+      const result = await call({ sessionId: session.id });
+      expect(result.ok).toBe(true);
+      expect(result.projection.sessionId).toBe(session.id);
+      expect(result.projection.objects).toContainEqual(expect.objectContaining({ type: "session" }));
+      expect(result.projection.diagnostics).toContainEqual(expect.objectContaining({ code: "TASK_LINK_UNAVAILABLE" }));
+    } finally {
+      delete process.env.SUGO_HOME_OVERRIDE;
+      rmSync(fakeHome, { recursive: true, force: true });
+    }
+  });
+
+  it("없는 세션과 여러 selector를 섞은 모호한 조회를 명시적으로 거부한다", async () => {
+    const missing = await call({ sessionId: "plan-999-deadbeef" });
+    expect(missing).toMatchObject({ ok: false, errorCode: "SESSION_NOT_FOUND" });
+
+    const ambiguous = await call({ view: "invariants", boundary: "sync" });
+    expect(ambiguous).toMatchObject({ ok: false, errorCode: "AMBIGUOUS_ONTOLOGY_QUERY" });
   });
 
   it("actionTypes 조회가 실제 게이트 위치와 근거를 제공한다", async () => {

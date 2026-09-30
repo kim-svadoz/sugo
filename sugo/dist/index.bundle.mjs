@@ -27921,7 +27921,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.9.0" : "0.0.0-dev";
+  return true ? "0.10.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32559,6 +32559,124 @@ var ONTOLOGY_MODEL_IDENTITY = Object.freeze({
   modelHash: deterministicModelHash(HASHED_MODEL)
 });
 
+// src/ontology/runtimeProjection.ts
+var DECLARED_LINKS = new Set(LINK_TYPES.map((link) => link.name));
+var DECLARED_ACTIONS = new Set(ACTION_TYPES.map((action) => action.name));
+function projectSessionOntology(session, task) {
+  const objects = /* @__PURE__ */ new Map();
+  const links = [];
+  const diagnostics = [];
+  const sessionId = `session:${session.id}`;
+  const putObject = (object3) => objects.set(object3.id, object3);
+  const putAction = (action) => {
+    const id = `action:${action}`;
+    putObject({ id, type: "action", label: action, attributes: { action } });
+    return id;
+  };
+  const putLink = (link) => {
+    if (!DECLARED_LINKS.has(link.type)) throw new Error(`Undeclared ontology link: ${link.type}`);
+    links.push(link);
+  };
+  putObject({
+    id: sessionId,
+    type: "session",
+    label: session.featureName,
+    attributes: {
+      state: session.state,
+      mode: session.data.mode,
+      projectPath: session.projectPath,
+      startedAt: session.startedAt,
+      updatedAt: session.updatedAt,
+      cancelledAt: session.cancelledAt
+    }
+  });
+  if (!session.data.hulkTaskId) {
+    diagnostics.push({ code: "TASK_LINK_UNAVAILABLE", message: "\uC138\uC158\uC5D0 \uC5F0\uACB0\uB41C Task ID\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4." });
+  } else if (!task || task.id !== session.data.hulkTaskId) {
+    diagnostics.push({ code: "TASK_RECORD_NOT_FOUND", message: `\uC5F0\uACB0\uB41C Task\uB97C \uB85C\uB4DC\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${session.data.hulkTaskId}` });
+  } else {
+    const taskId = `task:${task.id}`;
+    putObject({ id: taskId, type: "task", label: task.title, attributes: { status: task.status, project: task.project } });
+    putLink({ type: "operates_on", from: sessionId, to: taskId });
+    if (task.patchInfo) {
+      const parentId = `task:${task.patchInfo.parentTaskId}`;
+      if (!objects.has(parentId)) {
+        putObject({ id: parentId, type: "task", label: task.patchInfo.parentTaskId, attributes: { referenceOnly: true } });
+      }
+      putLink({
+        type: "derived_from",
+        from: taskId,
+        to: parentId,
+        attributes: { patchVersion: task.patchInfo.patchVersion }
+      });
+    }
+  }
+  const putEvidence = (suffix, label, evidence, requiredBy, producedBy) => {
+    const evidenceId = `evidence:${session.id}:${suffix}`;
+    putObject({ id: evidenceId, type: "evidence", label, attributes: evidence });
+    putLink({ type: "requires", from: putAction(requiredBy), to: evidenceId });
+    if (producedBy) putLink({ type: "produces", from: putAction(producedBy), to: evidenceId });
+  };
+  const baseline = session.data.baselineGate?.evidence;
+  if (baseline) putEvidence("baseline", "Baseline evidence", { ...baseline }, "baseline_capture", "baseline_capture");
+  const testEvidence = session.data.chainInfo.testEvidence;
+  if (testEvidence) {
+    putEvidence("test", "Test evidence", { ...testEvidence }, "test_done");
+    putLink({ type: "requires", from: putAction("review_done"), to: `evidence:${session.id}:test` });
+  }
+  for (const [index, contract] of (session.data.chainInfo.contractTests ?? []).entries()) {
+    const suffix = `contract:${encodeURIComponent(contract.contractId)}:${index}`;
+    putEvidence(suffix, `Contract evidence: ${contract.contractId}`, { ...contract }, "contract_done");
+    putLink({ type: "requires", from: putAction("review_done"), to: `evidence:${session.id}:${suffix}` });
+  }
+  const validation = session.data.chainInfo.lastValidation;
+  if (validation) putEvidence("validation", "Validation evidence", { ...validation }, "review_done");
+  const lethal = session.data.chainInfo.lastLethalTrifectaCheck;
+  if (lethal) putEvidence("lethal-trifecta", "Lethal Trifecta evidence", { ...lethal }, "review_done");
+  if (session.data.chainInfo.runtimeVerified !== void 0 || session.data.chainInfo.wiringVerified !== void 0) {
+    putEvidence(
+      "runtime",
+      "Runtime evidence",
+      { runtimeVerified: session.data.chainInfo.runtimeVerified, wiringVerified: session.data.chainInfo.wiringVerified },
+      "review_done"
+    );
+  }
+  const putArtifact = (suffix, label, attributes, producedBy) => {
+    const artifactId = `artifact:${session.id}:${suffix}`;
+    putObject({ id: artifactId, type: "artifact", label, attributes });
+    putLink({ type: "produces", from: putAction(producedBy), to: artifactId });
+  };
+  if (session.data.prdPath) putArtifact("prd", "PRD", { path: session.data.prdPath }, "prd");
+  if (session.data.chainInfo.workResultPath || session.data.chainInfo.workResultReport) {
+    putArtifact(
+      "work-result",
+      "Work Result",
+      { path: session.data.chainInfo.workResultPath, report: session.data.chainInfo.workResultReport },
+      "review_done"
+    );
+  }
+  const decision = session.data.humanDecisionGate;
+  if (decision) {
+    const decisionId = `human-decision:${session.id}`;
+    putObject({
+      id: decisionId,
+      type: "human_decision",
+      label: decision.blocker.summary,
+      attributes: { workspace: decision.workspace, taskId: decision.taskId, ...decision.blocker }
+    });
+    putLink({ type: "blocks", from: decisionId, to: sessionId });
+    if (DECLARED_ACTIONS.has(decision.blocker.resumeAction)) {
+      putLink({ type: "resumes_at", from: decisionId, to: putAction(decision.blocker.resumeAction) });
+    } else {
+      diagnostics.push({
+        code: "UNKNOWN_RESUME_ACTION",
+        message: `\uC120\uC5B8\uB418\uC9C0 \uC54A\uC740 \uBCF5\uADC0 action\uC785\uB2C8\uB2E4: ${decision.blocker.resumeAction}`
+      });
+    }
+  }
+  return { sessionId: session.id, objects: [...objects.values()], links, diagnostics };
+}
+
 // src/tools/sugoOntology.ts
 var VIEWS = [
   "objectTypes",
@@ -32574,11 +32692,34 @@ var VIEWS = [
 ];
 var sugoOntologyInputSchema = {
   view: external_exports.enum(VIEWS).optional().describe("\uC870\uD68C\uD560 \uC139\uC158. \uC0DD\uB7B5\uD558\uBA74 \uC804\uCCB4 \uBAA8\uB378 + \uD30C\uC0DD \uD14C\uC774\uBE14\uC744 \uBC18\uD658\uD55C\uB2E4"),
-  boundary: external_exports.string().optional().describe("\uACB0\uD568 \uD45C\uBA74 \uC774\uB984(handoff|sync|lifecycle|workflow). \uD574\uB2F9 \uACBD\uACC4\uC640 \uAC70\uAE30 \uAC78\uB9B0 \uBD88\uBCC0\uC2DD\uC744 \uD568\uAED8 \uBC18\uD658\uD55C\uB2E4")
+  boundary: external_exports.string().optional().describe("\uACB0\uD568 \uD45C\uBA74 \uC774\uB984(handoff|sync|lifecycle|workflow). \uD574\uB2F9 \uACBD\uACC4\uC640 \uAC70\uAE30 \uAC78\uB9B0 \uBD88\uBCC0\uC2DD\uC744 \uD568\uAED8 \uBC18\uD658\uD55C\uB2E4"),
+  sessionId: external_exports.string().min(1).optional().describe("\uC800\uC7A5\uB41C feat/patch \uC138\uC158\uC744 \uC2E4\uD589 \uAC1D\uCCB4\xB7\uAD00\uACC4 projection\uC73C\uB85C \uC870\uD68C\uD55C\uB2E4")
 };
 var SugoOntologyArgs = external_exports.object(sugoOntologyInputSchema);
 async function handleSugoOntology(rawArgs) {
   const args2 = SugoOntologyArgs.parse(rawArgs);
+  const selectorCount = [args2.view, args2.boundary, args2.sessionId].filter(Boolean).length;
+  if (selectorCount > 1) {
+    return json({
+      ok: false,
+      model: ONTOLOGY_MODEL_IDENTITY,
+      errorCode: "AMBIGUOUS_ONTOLOGY_QUERY",
+      message: "view, boundary, sessionId \uC911 \uD558\uB098\uB9CC \uC9C0\uC815\uD574\uC57C \uD569\uB2C8\uB2E4."
+    });
+  }
+  if (args2.sessionId) {
+    if (!await sessionExists(args2.sessionId)) {
+      return json({
+        ok: false,
+        model: ONTOLOGY_MODEL_IDENTITY,
+        errorCode: "SESSION_NOT_FOUND",
+        message: `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`
+      });
+    }
+    const session = await loadSession(args2.sessionId);
+    const task = session.data.hulkWorkspace && session.data.hulkTaskId ? await getTask(session.data.hulkWorkspace, session.data.hulkTaskId) : null;
+    return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, projection: projectSessionOntology(session, task) });
+  }
   if (args2.boundary) {
     const boundary = BOUNDARIES.find((b) => b.name === args2.boundary);
     if (!boundary) {

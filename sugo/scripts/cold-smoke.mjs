@@ -244,6 +244,15 @@ try {
       && /^sha256:[a-f0-9]{64}$/.test(ontology.model?.modelHash ?? ""),
     JSON.stringify(ontology.model ?? ontology).slice(0, 200),
   );
+  const runtimeOntology = await A.callTool("sugo_ontology", { sessionId: pipe.sessionId });
+  check(
+    "sugo_ontology — 저장된 실제 세션을 runtime 관계로 투영",
+    toolOk(runtimeOntology)
+      && runtimeOntology.projection?.sessionId === pipe.sessionId
+      && runtimeOntology.projection?.objects?.some((object) => object.type === "session")
+      && runtimeOntology.projection?.objects?.some((object) => object.type === "evidence"),
+    JSON.stringify(runtimeOntology.projection ?? runtimeOntology).slice(0, 240),
+  );
 
   const specAdd = await A.callTool("sugo_spec", { action: "add", workspace: "cold-ws", name: "login-spec", type: "architecture", content: "# 로그인 스펙\n\n본문" });
   check("sugo_spec add", toolOk(specAdd), JSON.stringify(specAdd).slice(0, 160));
