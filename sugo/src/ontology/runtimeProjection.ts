@@ -1,6 +1,7 @@
 import { ACTION_TYPES, LINK_TYPES } from "./model.js";
 import type { Task } from "../hulk/types.js";
 import type { PlanSession } from "../types.js";
+import { assessSession, type SessionAssessment } from "./sessionAssessment.js";
 
 export type RuntimeObjectType = "session" | "task" | "evidence" | "human_decision" | "artifact" | "action";
 
@@ -25,6 +26,7 @@ export interface ProjectionDiagnostic {
 
 export interface SessionOntologyProjection {
   sessionId: string;
+  assessment: SessionAssessment;
   objects: RuntimeObjectInstance[];
   links: RuntimeLinkInstance[];
   diagnostics: ProjectionDiagnostic[];
@@ -162,5 +164,5 @@ export function projectSessionOntology(session: PlanSession, task?: Task | null)
     }
   }
 
-  return { sessionId: session.id, objects: [...objects.values()], links, diagnostics };
+  return { sessionId: session.id, assessment: assessSession(session), objects: [...objects.values()], links, diagnostics };
 }

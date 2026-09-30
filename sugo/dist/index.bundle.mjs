@@ -27921,7 +27921,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.10.0" : "0.0.0-dev";
+  return true ? "0.11.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32559,6 +32559,95 @@ var ONTOLOGY_MODEL_IDENTITY = Object.freeze({
   modelHash: deterministicModelHash(HASHED_MODEL)
 });
 
+// src/ontology/sessionAssessment.ts
+var OBSERVATION_ACTIONS = /* @__PURE__ */ new Set(["status", "cancel", "start"]);
+function evidenceFor(session, action) {
+  if (!action) return [];
+  const chain = session.data.chainInfo;
+  const baseline = () => ({
+    id: "baseline",
+    label: "Baseline \uC2E4\uD589 \uC99D\uAC70",
+    status: session.data.baselineGate?.evidence ? "present" : "missing",
+    source: "session.data.baselineGate.evidence"
+  });
+  const contract = () => ({
+    id: "contract-red-green",
+    label: "\uACC4\uC57D \uD14C\uC2A4\uD2B8 red\u2192green \uC99D\uAC70",
+    status: (chain.contractTests ?? []).some((record2) => record2.redExitCode !== void 0 && record2.greenExitCode !== void 0) ? "present" : "missing",
+    source: "session.data.chainInfo.contractTests"
+  });
+  switch (action) {
+    case "baseline_capture":
+      return [baseline()];
+    case "contract_done":
+      return [contract()];
+    case "code_done":
+      return [
+        ...session.data.baselineGate?.required ? [baseline()] : [],
+        {
+          id: "analyze",
+          label: "\uC815\uC801 \uBD84\uC11D \uD1B5\uACFC \uAE30\uB85D",
+          status: chain.analyzeAttempts > 0 && chain.analyzePassed === true ? "present" : "missing",
+          source: "session.data.chainInfo.analyzeAttempts + analyzePassed"
+        }
+      ];
+    case "test_done":
+      return [{
+        id: "test",
+        label: "\uD14C\uC2A4\uD2B8 \uC2E4\uD589 \uC99D\uAC70",
+        status: chain.testEvidence ? "present" : "missing",
+        source: "session.data.chainInfo.testEvidence"
+      }];
+    case "review_done":
+      return [
+        { id: "test", label: "\uD14C\uC2A4\uD2B8 \uC2E4\uD589 \uC99D\uAC70", status: chain.testEvidence ? "present" : "missing", source: "session.data.chainInfo.testEvidence" },
+        { id: "validation", label: "\uAC80\uC99D \uACB0\uACFC", status: chain.lastValidation ? "present" : "missing", source: "session.data.chainInfo.lastValidation" },
+        { id: "lethal-trifecta", label: "Lethal Trifecta \uC810\uAC80", status: chain.lastLethalTrifectaCheck ? "present" : "missing", source: "session.data.chainInfo.lastLethalTrifectaCheck" },
+        {
+          id: "runtime",
+          label: "\uB7F0\uD0C0\uC784\xB7\uBC30\uC120 \uAC80\uC99D \uAE30\uB85D",
+          status: chain.runtimeVerified !== void 0 || chain.wiringVerified !== void 0 ? "present" : "missing",
+          source: "session.data.chainInfo.runtimeVerified + wiringVerified"
+        },
+        ...chain.contractTests?.length ? [contract()] : []
+      ];
+    case "commit":
+      return [{
+        id: "work-result",
+        label: "Work Result",
+        status: chain.workResultPath || chain.workResultReport ? "present" : "missing",
+        source: "session.data.chainInfo.workResultPath + workResultReport"
+      }];
+    default:
+      return [];
+  }
+}
+function assessSession(session) {
+  const decision = session.data.humanDecisionGate?.blocker;
+  const status = session.cancelledAt ? "cancelled" : session.state === "DONE" ? "completed" : decision ? "blocked" : "in_progress";
+  const terminalOrBlocked = status !== "in_progress";
+  const nextActions = terminalOrBlocked ? [] : ALLOWED_ACTIONS_BY_STATE[session.state].filter((action) => !OBSERVATION_ACTIONS.has(action));
+  const recommendedAction = terminalOrBlocked ? null : remainingSteps(session.state)[0]?.action ?? nextActions[0] ?? null;
+  const measuredBlockers = currentBlockers(session.data.chainInfo);
+  const blockers = status === "completed" || status === "cancelled" ? [] : decision ? [decision.summary, ...measuredBlockers] : measuredBlockers;
+  return {
+    projectionSchemaVersion: 1,
+    status,
+    currentStage: session.state,
+    nextActions,
+    recommendedAction,
+    humanDecisionRequired: Boolean(decision),
+    blockers,
+    evidence: evidenceFor(session, recommendedAction),
+    ...decision ? {
+      blockingReason: decision.summary,
+      blockedNextStep: decision.blockedNextStep,
+      resumesAt: decision.resumeAction,
+      decision: { question: decision.question, context: decision.context, options: decision.options }
+    } : {}
+  };
+}
+
 // src/ontology/runtimeProjection.ts
 var DECLARED_LINKS = new Set(LINK_TYPES.map((link) => link.name));
 var DECLARED_ACTIONS = new Set(ACTION_TYPES.map((action) => action.name));
@@ -32674,7 +32763,7 @@ function projectSessionOntology(session, task) {
       });
     }
   }
-  return { sessionId: session.id, objects: [...objects.values()], links, diagnostics };
+  return { sessionId: session.id, assessment: assessSession(session), objects: [...objects.values()], links, diagnostics };
 }
 
 // src/tools/sugoOntology.ts

@@ -250,7 +250,11 @@ try {
     toolOk(runtimeOntology)
       && runtimeOntology.projection?.sessionId === pipe.sessionId
       && runtimeOntology.projection?.objects?.some((object) => object.type === "session")
-      && runtimeOntology.projection?.objects?.some((object) => object.type === "evidence"),
+      && runtimeOntology.projection?.objects?.some((object) => object.type === "evidence")
+      && runtimeOntology.projection?.assessment?.projectionSchemaVersion === 1
+      && runtimeOntology.projection?.assessment?.status === "completed"
+      && runtimeOntology.projection?.assessment?.currentStage === "DONE"
+      && runtimeOntology.projection?.assessment?.recommendedAction === null,
     JSON.stringify(runtimeOntology.projection ?? runtimeOntology).slice(0, 240),
   );
 

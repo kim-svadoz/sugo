@@ -90,6 +90,45 @@ describe("P1 runtime ontology projection", () => {
     expect(result.objects.map((object) => object.type)).toEqual(["session"]);
     expect(result.links).toEqual([]);
     expect(result.diagnostics).toContainEqual(expect.objectContaining({ code: "TASK_LINK_UNAVAILABLE" }));
+    expect(result.assessment).toMatchObject({
+      status: "in_progress",
+      currentStage: "SCAN",
+      recommendedAction: "clarify",
+      humanDecisionRequired: false,
+    });
+  });
+
+  it("사람 결정 차단은 질문·선택지 영향·막힌 다음 단계·복귀 action을 한곳에 모은다", () => {
+    const result = projectSessionOntology(session());
+    expect(result.assessment).toMatchObject({
+      status: "blocked",
+      currentStage: "REVIEW_RUNNING",
+      recommendedAction: null,
+      humanDecisionRequired: true,
+      blockingReason: "승인 필요",
+      blockedNextStep: "문서화",
+      resumesAt: "review_done",
+      decision: {
+        question: "배포할까요?",
+        options: [{ id: "yes", label: "배포", impact: "진행" }],
+      },
+    });
+  });
+
+  it("다음 action에 필요한 저장 증거의 충족·누락을 실제 세션 값으로 판정한다", () => {
+    const review = session({ data: { ...session().data, humanDecisionGate: undefined } });
+    const result = projectSessionOntology(review);
+    expect(result.assessment.recommendedAction).toBe("review_done");
+    expect(result.assessment.evidence).toContainEqual(expect.objectContaining({ id: "validation", status: "present" }));
+    expect(result.assessment.evidence).toContainEqual(expect.objectContaining({ id: "lethal-trifecta", status: "missing" }));
+    expect(result.assessment.evidence).toContainEqual(expect.objectContaining({ id: "runtime", status: "present" }));
+  });
+
+  it("DONE과 취소 세션은 다음 action을 제안하지 않는다", () => {
+    expect(projectSessionOntology(session({ state: "DONE", data: { ...session().data, humanDecisionGate: undefined } })).assessment)
+      .toMatchObject({ status: "completed", recommendedAction: null, nextActions: [], blockers: [] });
+    expect(projectSessionOntology(session({ cancelledAt: "2026-09-30T02:00:00.000Z", data: { ...session().data, humanDecisionGate: undefined } })).assessment)
+      .toMatchObject({ status: "cancelled", recommendedAction: null, nextActions: [], blockers: [] });
   });
 
   it("투영된 모든 관계 type은 선언된 LINK_TYPES에 존재한다", () => {
