@@ -27922,7 +27922,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.13.0" : "0.0.0-dev";
+  return true ? "0.14.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -31507,9 +31507,10 @@ async function handleSugoPlan(rawArgs) {
     });
     const config2 = await loadProjectConfig(session.projectPath);
     const checkpoints = await listCheckpoints(workspace);
+    const featureName = session.featureName;
     const applicable = checkpoints.filter(
       (cp) => checkpointApplies(cp, {
-        projectName: config2?.projectName ?? session.featureName,
+        projectName: config2?.projectName ?? featureName,
         harnessIds: config2?.detectedStack.harnessIds ?? []
       })
     );
@@ -31524,6 +31525,16 @@ async function handleSugoPlan(rawArgs) {
       eventType: "COMPLETED",
       message: session.data.chainInfo.reviewSummary ?? `${session.featureName} \uC644\uB8CC`
     });
+  }
+  const previousState = existing?.state ?? "INIT";
+  if (action !== "status" && session.state !== previousState) {
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        lastTransition: { action, fromState: previousState, toState: session.state, recordedAt: (/* @__PURE__ */ new Date()).toISOString() }
+      }
+    };
   }
   if (action !== "status") {
     await saveSession(session);
@@ -32901,6 +32912,102 @@ function projectSessionOntology(session, task) {
   return { sessionId: session.id, assessment: assessSession(session), objects: [...objects.values()], links, diagnostics };
 }
 
+// src/ontology/operationalQueries.ts
+function explainSessionState(session) {
+  const assessment = assessSession(session);
+  const transition = session.data.lastTransition;
+  const enteredBy = transition?.toState === session.state ? { recorded: true, ...transition } : {
+    recorded: false,
+    inferredCandidates: ACTION_TYPES.filter((action) => action.toState === session.state).map((action) => action.name)
+  };
+  return {
+    querySchemaVersion: 1,
+    sessionId: session.id,
+    status: assessment.status,
+    currentState: session.state,
+    enteredBy,
+    evidence: assessment.evidence,
+    blockers: assessment.blockers,
+    updatedAt: session.updatedAt
+  };
+}
+function explainSessionBlock(session) {
+  const assessment = assessSession(session);
+  const missingEvidence = assessment.evidence.filter((item) => item.status === "missing");
+  return {
+    querySchemaVersion: 1,
+    sessionId: session.id,
+    blocked: assessment.status === "blocked" || assessment.blockers.length > 0,
+    reason: assessment.blockingReason ?? assessment.blockers[0] ?? null,
+    blockers: assessment.blockers,
+    missingEvidence,
+    requiredHumanDecision: assessment.decision ?? null,
+    unresolvedImpact: assessment.blockedNextStep ?? null,
+    resumesAt: assessment.resumesAt ?? null
+  };
+}
+function projectNextActions(session) {
+  const assessment = assessSession(session);
+  const terminal = assessment.status === "completed" || assessment.status === "cancelled";
+  const allowed = terminal ? [] : ALLOWED_ACTIONS_BY_STATE[session.state].filter((name2) => name2 !== "status" && name2 !== "start");
+  const executable = assessment.status === "blocked" ? allowed.filter((name2) => name2 === "cancel") : allowed;
+  return {
+    querySchemaVersion: 1,
+    sessionId: session.id,
+    currentState: session.state,
+    blocked: assessment.status === "blocked",
+    resumeAction: assessment.resumesAt ?? null,
+    actions: executable.map((name2) => {
+      const action = ACTION_TYPES.find((candidate) => candidate.name === name2);
+      if (!action) throw new Error(`Undeclared next action: ${name2}`);
+      return {
+        action: name2,
+        isRecommended: name2 === assessment.recommendedAction,
+        prerequisites: action.fromStates ?? [],
+        effect: {
+          targetState: action.toState,
+          keepsCurrentState: action.toState === null || action.toState === session.state,
+          sessionOutcome: name2 === "cancel" ? "cancelled" : "continues"
+        },
+        gates: action.gates
+      };
+    })
+  };
+}
+function traceTaskArtifacts(session, task, nodes, workspace) {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const taskNode = byId.get(task.id);
+  const hierarchy = [];
+  const seen = /* @__PURE__ */ new Set();
+  let cursor = taskNode;
+  while (cursor && !seen.has(cursor.id)) {
+    hierarchy.unshift(cursor);
+    seen.add(cursor.id);
+    cursor = cursor.parent ? byId.get(cursor.parent) : void 0;
+  }
+  const projection = session ? projectSessionOntology(session, task) : null;
+  const artifacts = projection?.objects.filter((object3) => object3.type === "artifact") ?? [];
+  const hierarchyComplete = hierarchy.map((node) => node.level).join(">") === "spec>workstream>task";
+  return {
+    querySchemaVersion: 1,
+    taskId: task.id,
+    workspace: workspace ?? session?.data.hulkWorkspace ?? null,
+    sessionId: session?.id ?? null,
+    hierarchy: hierarchy.map(({ id, level, title, status, parent, specPath }) => ({ id, level, title, status, parent: parent ?? null, specPath: specPath ?? null })),
+    artifacts,
+    evidence: projection?.objects.filter((object3) => object3.type === "evidence") ?? [],
+    productionLinks: projection?.links.filter((link) => link.type === "produces") ?? [],
+    roadmapWorkResult: taskNode?.workResult ?? null,
+    lineage: taskNode?.lineage ?? [],
+    diagnostics: [
+      ...!taskNode ? [{ code: "ROADMAP_TASK_NOT_FOUND", message: `roadmap\uC5D0\uC11C Task\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${task.id}` }] : [],
+      ...taskNode && !hierarchyComplete ? [{ code: "ROADMAP_HIERARCHY_INCOMPLETE", message: "Spec\u2192Run\u2192Task \uACC4\uCE35\uC774 \uC644\uC804\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." }] : [],
+      ...!session ? [{ code: "SESSION_FOR_TASK_NOT_FOUND", message: `Task\uC5D0 \uC5F0\uACB0\uB41C \uC138\uC158\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${task.id}` }] : [],
+      ...projection?.diagnostics ?? []
+    ]
+  };
+}
+
 // src/tools/sugoOntology.ts
 var VIEWS = [
   "objectTypes",
@@ -32917,13 +33024,19 @@ var VIEWS = [
   "evidenceFlows"
 ];
 var sugoOntologyInputSchema = {
+  query: external_exports.enum(["explain_state", "explain_block", "next_actions", "trace_artifact"]).optional().describe("\uC6B4\uC601 \uC9C8\uC758. explain_state/next_actions\uB294 sessionId, explain_block\uC740 sessionId \uB610\uB294 taskId, trace_artifact\uB294 taskId\uAC00 \uD544\uC694\uD558\uB2E4"),
   view: external_exports.enum(VIEWS).optional().describe("\uC870\uD68C\uD560 \uC139\uC158. \uC0DD\uB7B5\uD558\uBA74 \uC804\uCCB4 \uBAA8\uB378 + \uD30C\uC0DD \uD14C\uC774\uBE14\uC744 \uBC18\uD658\uD55C\uB2E4"),
   boundary: external_exports.string().optional().describe("\uACB0\uD568 \uD45C\uBA74 \uC774\uB984(handoff|sync|lifecycle|workflow). \uD574\uB2F9 \uACBD\uACC4\uC640 \uAC70\uAE30 \uAC78\uB9B0 \uBD88\uBCC0\uC2DD\uC744 \uD568\uAED8 \uBC18\uD658\uD55C\uB2E4"),
-  sessionId: external_exports.string().min(1).optional().describe("\uC800\uC7A5\uB41C feat/patch \uC138\uC158\uC744 \uC2E4\uD589 \uAC1D\uCCB4\xB7\uAD00\uACC4 projection\uC73C\uB85C \uC870\uD68C\uD55C\uB2E4")
+  sessionId: external_exports.string().min(1).optional().describe("\uC800\uC7A5\uB41C feat/patch \uC138\uC158\uC744 \uC2E4\uD589 \uAC1D\uCCB4\xB7\uAD00\uACC4 projection\uC73C\uB85C \uC870\uD68C\uD55C\uB2E4"),
+  taskId: external_exports.string().min(1).optional().describe("explain_block/trace_artifact\uAC00 \uC870\uD68C\uD560 roadmap Task ID")
 };
 var SugoOntologyArgs = external_exports.object(sugoOntologyInputSchema);
 async function handleSugoOntology(rawArgs) {
   const args2 = SugoOntologyArgs.parse(rawArgs);
+  if (args2.query) return handleOperationalQuery(args2);
+  if (args2.taskId) {
+    return ontologyError("TASK_ID_REQUIRES_QUERY", "taskId\uB294 explain_block \uB610\uB294 trace_artifact query\uC640 \uD568\uAED8 \uC9C0\uC815\uD574\uC57C \uD569\uB2C8\uB2E4.");
+  }
   const selectorCount = [args2.view, args2.boundary, args2.sessionId].filter(Boolean).length;
   if (selectorCount > 1) {
     return json({
@@ -32983,6 +33096,63 @@ async function handleSugoOntology(rawArgs) {
     },
     note: "derived.*\uB294 ontology.actionTypes\uC5D0\uC11C \uD30C\uC0DD\uB41C \uAC12\uC774\uB2E4(\xA72.8) \u2014 \uBCC4\uB3C4\uB85C \uC190\uAD00\uB9AC\uB418\uB294 \uC0AC\uBCF8\uC774 \uC544\uB2C8\uB2E4."
   });
+}
+async function handleOperationalQuery(args2) {
+  if (args2.view || args2.boundary) {
+    return ontologyError("AMBIGUOUS_ONTOLOGY_QUERY", "query\uB294 view \uB610\uB294 boundary\uC640 \uD568\uAED8 \uC9C0\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  }
+  if ((args2.query === "explain_state" || args2.query === "next_actions") && !args2.sessionId) {
+    return ontologyError("SESSION_ID_REQUIRED", `${args2.query}\uC5D0\uB294 sessionId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
+  }
+  if ((args2.query === "explain_state" || args2.query === "next_actions") && args2.taskId) {
+    return ontologyError("AMBIGUOUS_ONTOLOGY_QUERY", `${args2.query}\uB294 sessionId\uB9CC \uC9C0\uC815\uD574\uC57C \uD569\uB2C8\uB2E4.`);
+  }
+  if (args2.query === "explain_block" && Boolean(args2.sessionId) === Boolean(args2.taskId)) {
+    return ontologyError("SESSION_OR_TASK_ID_REQUIRED", "explain_block\uC5D0\uB294 sessionId \uB610\uB294 taskId \uC911 \uD558\uB098\uB9CC \uD544\uC694\uD569\uB2C8\uB2E4.");
+  }
+  if (args2.query === "trace_artifact" && !args2.taskId) {
+    return ontologyError("TASK_ID_REQUIRED", "trace_artifact\uC5D0\uB294 taskId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  }
+  if (args2.query === "trace_artifact" && args2.sessionId) {
+    return ontologyError("AMBIGUOUS_ONTOLOGY_QUERY", "trace_artifact\uB294 taskId\uB9CC \uC9C0\uC815\uD574\uC57C \uD569\uB2C8\uB2E4.");
+  }
+  if (args2.query === "trace_artifact") {
+    const resolved = await resolveTask(args2.taskId);
+    if (resolved.error) return ontologyError(resolved.error, resolved.message);
+    const result3 = traceTaskArtifacts(resolved.session, resolved.task, await listRoadmapNodes(resolved.workspace), resolved.workspace);
+    return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, query: args2.query, result: result3 });
+  }
+  const session = args2.sessionId ? await readSession(args2.sessionId) : await latestSessionForTask(args2.taskId);
+  if (!session) {
+    return ontologyError(args2.sessionId ? "SESSION_NOT_FOUND" : "SESSION_FOR_TASK_NOT_FOUND", args2.sessionId ? `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}` : `Task\uC5D0 \uC5F0\uACB0\uB41C \uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
+  }
+  const result2 = args2.query === "explain_state" ? explainSessionState(session) : args2.query === "explain_block" ? explainSessionBlock(session) : projectNextActions(session);
+  return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, query: args2.query, result: result2 });
+}
+async function readSession(id) {
+  return await sessionExists(id) ? loadSession(id) : null;
+}
+async function latestSessionForTask(taskId) {
+  return (await loadAllSessions()).filter((session) => session.data.hulkTaskId === taskId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0] ?? null;
+}
+async function resolveTask(taskId) {
+  const session = await latestSessionForTask(taskId);
+  if (session?.data.hulkWorkspace) {
+    const task = await getTask(session.data.hulkWorkspace, taskId);
+    if (task) return { session, task, workspace: session.data.hulkWorkspace };
+  }
+  const matches = [];
+  for (const workspace of await listWorkspaces(true)) {
+    const task = (await listTasks(workspace.name)).find((candidate) => candidate.id === taskId);
+    if (task) matches.push({ workspace: workspace.name, task });
+  }
+  if (matches.length === 0) return { session, error: "TASK_NOT_FOUND", message: `Task\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${taskId}` };
+  if (matches.length > 1) return { session, error: "TASK_ID_AMBIGUOUS", message: `\uC5EC\uB7EC \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uC5D0 \uAC19\uC740 Task ID\uAC00 \uC788\uC2B5\uB2C8\uB2E4: ${taskId}` };
+  const matched = matches[0];
+  return { session: session?.data.hulkWorkspace === matched.workspace ? session : null, ...matched };
+}
+function ontologyError(errorCode, message) {
+  return json({ ok: false, model: ONTOLOGY_MODEL_IDENTITY, errorCode, message });
 }
 function json(payload) {
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };

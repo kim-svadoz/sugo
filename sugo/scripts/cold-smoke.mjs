@@ -267,6 +267,39 @@ try {
       && runtimeOntology.projection?.assessment?.recommendedAction === null,
     JSON.stringify(runtimeOntology.projection ?? runtimeOntology).slice(0, 240),
   );
+  const explainState = await A.callTool("sugo_ontology", { query: "explain_state", sessionId: pipe.sessionId });
+  check(
+    "sugo_ontology explain_state — 마지막 실전이와 증거를 구조화 조회",
+    toolOk(explainState)
+      && explainState.result?.currentState === "DONE"
+      && explainState.result?.enteredBy?.recorded === true
+      && explainState.result?.enteredBy?.action === "commit",
+    JSON.stringify(explainState.result ?? explainState).slice(0, 240),
+  );
+  const explainBlock = await A.callTool("sugo_ontology", { query: "explain_block", sessionId: pipe.sessionId });
+  check(
+    "sugo_ontology explain_block — 완료 세션을 거짓 차단으로 표시하지 않음",
+    toolOk(explainBlock) && explainBlock.result?.blocked === false && explainBlock.result?.requiredHumanDecision === null,
+    JSON.stringify(explainBlock.result ?? explainBlock).slice(0, 240),
+  );
+  const nextActions = await A.callTool("sugo_ontology", { query: "next_actions", sessionId: pipe.sessionId });
+  check(
+    "sugo_ontology next_actions — 완료 세션에 다음 action을 꾸며내지 않음",
+    toolOk(nextActions) && Array.isArray(nextActions.result?.actions) && nextActions.result.actions.length === 0,
+    JSON.stringify(nextActions.result ?? nextActions).slice(0, 240),
+  );
+  const projectedTask = runtimeOntology.projection?.objects?.find((object) => object.type === "task" && !object.attributes?.referenceOnly);
+  const traceArtifact = projectedTask
+    ? await A.callTool("sugo_ontology", { query: "trace_artifact", taskId: projectedTask.id.replace(/^task:/, "") })
+    : null;
+  check(
+    "sugo_ontology trace_artifact — Spec→Run→Task→evidence→work-result 계보 조회",
+    toolOk(traceArtifact)
+      && traceArtifact.result?.hierarchy?.map((node) => node.level).join(">") === "spec>workstream>task"
+      && traceArtifact.result?.artifacts?.some((artifact) => artifact.label === "Work Result")
+      && traceArtifact.result?.evidence?.length > 0,
+    JSON.stringify(traceArtifact?.result ?? traceArtifact).slice(0, 260),
+  );
 
   const specAdd = await A.callTool("sugo_spec", { action: "add", workspace: "cold-ws", name: "login-spec", type: "architecture", content: "# 로그인 스펙\n\n본문" });
   check("sugo_spec add", toolOk(specAdd), JSON.stringify(specAdd).slice(0, 160));

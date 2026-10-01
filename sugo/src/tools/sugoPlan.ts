@@ -1183,9 +1183,10 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
     const config = await loadProjectConfig(session.projectPath);
     const checkpoints = await listCheckpoints(workspace);
+    const featureName = session.featureName;
     const applicable = checkpoints.filter((cp) =>
       checkpointApplies(cp, {
-        projectName: config?.projectName ?? session.featureName,
+        projectName: config?.projectName ?? featureName,
         harnessIds: config?.detectedStack.harnessIds ?? [],
       }),
     );
@@ -1203,6 +1204,19 @@ export async function handleSugoPlan(rawArgs: unknown) {
       eventType: "COMPLETED",
       message: session.data.chainInfo.reviewSummary ?? `${session.featureName} 완료`,
     });
+  }
+
+  // P3 explain_state의 실행 근거. 상태를 실제로 바꾼 성공 action만 기록한다. oracle_done/status/cancel처럼
+  // 상태를 유지하는 호출이 마지막 진입 action을 덮으면 "이 상태가 어떻게 됐나"가 거짓이 된다.
+  const previousState = existing?.state ?? "INIT";
+  if (action !== "status" && session.state !== previousState) {
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        lastTransition: { action, fromState: previousState, toState: session.state, recordedAt: new Date().toISOString() },
+      },
+    };
   }
 
   if (action !== "status") {

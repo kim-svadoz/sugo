@@ -3,9 +3,13 @@ import { BOUNDARIES, INVARIANTS, ONTOLOGY, type OntologyView } from "../ontology
 import { ALLOWED_ACTIONS_BY_STATE, PREREQUISITES, RESULT_STATE } from "../ontology/derive.js";
 import { ONTOLOGY_MODEL_IDENTITY } from "../ontology/identity.js";
 import { projectSessionOntology } from "../ontology/runtimeProjection.js";
-import { loadSession, sessionExists } from "../session.js";
-import { getTask } from "../hulk/task.js";
+import { loadAllSessions, loadSession, sessionExists } from "../session.js";
+import { getTask, listTasks } from "../hulk/task.js";
 import { WORKFLOW_GRAPH_ANALYSIS } from "../ontology/workflowGraph.js";
+import { explainSessionBlock, explainSessionState, projectNextActions, traceTaskArtifacts } from "../ontology/operationalQueries.js";
+import { listRoadmapNodes } from "../hulk/roadmap.js";
+import { listWorkspaces } from "../hulk/workspace.js";
+import type { PlanSession } from "../types.js";
 
 const VIEWS = [
   "objectTypes",
@@ -23,6 +27,8 @@ const VIEWS = [
 ] as const satisfies readonly OntologyView[];
 
 export const sugoOntologyInputSchema = {
+  query: z.enum(["explain_state", "explain_block", "next_actions", "trace_artifact"]).optional()
+    .describe("운영 질의. explain_state/next_actions는 sessionId, explain_block은 sessionId 또는 taskId, trace_artifact는 taskId가 필요하다"),
   view: z
     .enum(VIEWS)
     .optional()
@@ -36,6 +42,7 @@ export const sugoOntologyInputSchema = {
     .min(1)
     .optional()
     .describe("저장된 feat/patch 세션을 실행 객체·관계 projection으로 조회한다"),
+  taskId: z.string().min(1).optional().describe("explain_block/trace_artifact가 조회할 roadmap Task ID"),
 };
 
 const SugoOntologyArgs = z.object(sugoOntologyInputSchema);
@@ -53,6 +60,10 @@ const SugoOntologyArgs = z.object(sugoOntologyInputSchema);
  */
 export async function handleSugoOntology(rawArgs: unknown) {
   const args = SugoOntologyArgs.parse(rawArgs);
+  if (args.query) return handleOperationalQuery(args);
+  if (args.taskId) {
+    return ontologyError("TASK_ID_REQUIRES_QUERY", "taskId는 explain_block 또는 trace_artifact query와 함께 지정해야 합니다.");
+  }
   const selectorCount = [args.view, args.boundary, args.sessionId].filter(Boolean).length;
   if (selectorCount > 1) {
     return json({
@@ -118,6 +129,86 @@ export async function handleSugoOntology(rawArgs: unknown) {
     },
     note: "derived.*는 ontology.actionTypes에서 파생된 값이다(§2.8) — 별도로 손관리되는 사본이 아니다.",
   });
+}
+
+async function handleOperationalQuery(args: z.infer<typeof SugoOntologyArgs>) {
+  if (args.view || args.boundary) {
+    return ontologyError("AMBIGUOUS_ONTOLOGY_QUERY", "query는 view 또는 boundary와 함께 지정할 수 없습니다.");
+  }
+  if ((args.query === "explain_state" || args.query === "next_actions") && !args.sessionId) {
+    return ontologyError("SESSION_ID_REQUIRED", `${args.query}에는 sessionId가 필요합니다.`);
+  }
+  if ((args.query === "explain_state" || args.query === "next_actions") && args.taskId) {
+    return ontologyError("AMBIGUOUS_ONTOLOGY_QUERY", `${args.query}는 sessionId만 지정해야 합니다.`);
+  }
+  if (args.query === "explain_block" && Boolean(args.sessionId) === Boolean(args.taskId)) {
+    return ontologyError("SESSION_OR_TASK_ID_REQUIRED", "explain_block에는 sessionId 또는 taskId 중 하나만 필요합니다.");
+  }
+  if (args.query === "trace_artifact" && !args.taskId) {
+    return ontologyError("TASK_ID_REQUIRED", "trace_artifact에는 taskId가 필요합니다.");
+  }
+  if (args.query === "trace_artifact" && args.sessionId) {
+    return ontologyError("AMBIGUOUS_ONTOLOGY_QUERY", "trace_artifact는 taskId만 지정해야 합니다.");
+  }
+
+  if (args.query === "trace_artifact") {
+    const resolved = await resolveTask(args.taskId!);
+    if (resolved.error) return ontologyError(resolved.error, resolved.message!);
+    const result = traceTaskArtifacts(resolved.session, resolved.task!, await listRoadmapNodes(resolved.workspace!), resolved.workspace);
+    return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, query: args.query, result });
+  }
+
+  const session = args.sessionId
+    ? await readSession(args.sessionId)
+    : await latestSessionForTask(args.taskId!);
+  if (!session) {
+    return ontologyError(args.sessionId ? "SESSION_NOT_FOUND" : "SESSION_FOR_TASK_NOT_FOUND", args.sessionId
+      ? `세션을 찾을 수 없습니다: ${args.sessionId}`
+      : `Task에 연결된 세션을 찾을 수 없습니다: ${args.taskId}`);
+  }
+  const result = args.query === "explain_state"
+    ? explainSessionState(session)
+    : args.query === "explain_block"
+      ? explainSessionBlock(session)
+      : projectNextActions(session);
+  return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, query: args.query, result });
+}
+
+async function readSession(id: string) {
+  return (await sessionExists(id)) ? loadSession(id) : null;
+}
+
+async function latestSessionForTask(taskId: string) {
+  return (await loadAllSessions())
+    .filter((session) => session.data.hulkTaskId === taskId)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0] ?? null;
+}
+
+async function resolveTask(taskId: string): Promise<{
+  session: PlanSession | null;
+  task?: Awaited<ReturnType<typeof getTask>>;
+  workspace?: string;
+  error?: string;
+  message?: string;
+}> {
+  const session = await latestSessionForTask(taskId);
+  if (session?.data.hulkWorkspace) {
+    const task = await getTask(session.data.hulkWorkspace, taskId);
+    if (task) return { session, task, workspace: session.data.hulkWorkspace };
+  }
+  const matches: { workspace: string; task: NonNullable<Awaited<ReturnType<typeof getTask>>> }[] = [];
+  for (const workspace of await listWorkspaces(true)) {
+    const task = (await listTasks(workspace.name)).find((candidate) => candidate.id === taskId);
+    if (task) matches.push({ workspace: workspace.name, task });
+  }
+  if (matches.length === 0) return { session, error: "TASK_NOT_FOUND", message: `Task를 찾을 수 없습니다: ${taskId}` };
+  if (matches.length > 1) return { session, error: "TASK_ID_AMBIGUOUS", message: `여러 워크스페이스에 같은 Task ID가 있습니다: ${taskId}` };
+  const matched = matches[0];
+  return { session: session?.data.hulkWorkspace === matched.workspace ? session : null, ...matched };
+}
+
+function ontologyError(errorCode: string, message: string) {
+  return json({ ok: false, model: ONTOLOGY_MODEL_IDENTITY, errorCode, message });
 }
 
 function json(payload: unknown) {

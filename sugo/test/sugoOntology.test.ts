@@ -7,6 +7,10 @@ import { ACTION_TYPES, WORKFLOW_STATES } from "../src/ontology/model.js";
 import { canonicalJson, deterministicModelHash } from "../src/ontology/identity.js";
 import { saveSession } from "../src/session.js";
 import type { PlanSession } from "../src/types.js";
+import { handleSugoPlan } from "../src/tools/sugoPlan.js";
+import { ensureWorkspace } from "../src/hulk/workspace.js";
+import { addTask } from "../src/hulk/task.js";
+import { upsertRoadmapNodes } from "../src/hulk/roadmap.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(args: unknown): Promise<any> {
@@ -118,6 +122,61 @@ describe("§2 sugo_ontology 도구", () => {
 
     const ambiguous = await call({ view: "invariants", boundary: "sync" });
     expect(ambiguous).toMatchObject({ ok: false, errorCode: "AMBIGUOUS_ONTOLOGY_QUERY" });
+  });
+
+  it("P3 query는 필요한 식별자를 강제하고 저장 세션에서 구조화 설명을 반환한다", async () => {
+    const fakeHome = mkdtempSync(join(tmpdir(), "sugo-ontology-query-"));
+    process.env.SUGO_HOME_OVERRIDE = fakeHome;
+    try {
+      const querySession = {
+        id: "plan-query-tool", state: "SCAN", projectPath: "/project", featureName: "query",
+        startedAt: "2026-10-01T00:00:00.000Z", updatedAt: "2026-10-01T00:00:00.000Z",
+        data: { mode: "plan", chainInfo: { changedFiles: [], analyzeAttempts: 0, analyzePassed: null, testPassedState: null, reviewPassed: null, autoLoopRetryCount: 0 } },
+      } satisfies PlanSession;
+      await saveSession(querySession);
+
+      expect(await call({ query: "explain_state", sessionId: querySession.id })).toMatchObject({
+        ok: true, query: "explain_state", result: { querySchemaVersion: 1, currentState: "SCAN" },
+      });
+      const nextActions = await call({ query: "next_actions", sessionId: querySession.id });
+      expect(nextActions).toMatchObject({ ok: true, query: "next_actions" });
+      expect(nextActions.result.actions).toContainEqual(expect.objectContaining({ action: "clarify" }));
+      expect(nextActions.result.actions).toContainEqual(expect.objectContaining({ action: "cancel", effect: expect.objectContaining({ sessionOutcome: "cancelled" }) }));
+      const startedRaw = await handleSugoPlan({ action: "start", projectPath: join(fakeHome, "project"), featureName: "transition-audit" });
+      const started = JSON.parse(startedRaw.content[0].text);
+      expect(await call({ query: "explain_state", sessionId: started.sessionId })).toMatchObject({
+        result: { enteredBy: { recorded: true, action: "start", fromState: "INIT", toState: "SCAN" } },
+      });
+
+      await ensureWorkspace("payments", "/project");
+      const task = await addTask("payments", { title: "결제", project: "/project", status: "in_progress" });
+      await upsertRoadmapNodes("payments", [
+        { id: "spec-payment", title: "결제", level: "spec", status: "in_progress", dependsOn: [] },
+        { id: "run-payment", title: "최초 구현", level: "workstream", status: "in_progress", dependsOn: [], parent: "spec-payment" },
+        { id: task.id, title: task.title, level: "task", status: "in_progress", dependsOn: [], parent: "run-payment" },
+      ]);
+      await saveSession({
+        ...querySession,
+        id: "plan-task-query",
+        data: { ...querySession.data, hulkWorkspace: "payments", hulkTaskId: task.id },
+      });
+      expect(await call({ query: "explain_block", taskId: task.id })).toMatchObject({
+        ok: true, result: { sessionId: "plan-task-query", blocked: false },
+      });
+      expect(await call({ query: "trace_artifact", taskId: task.id })).toMatchObject({
+        ok: true,
+        result: { taskId: task.id, workspace: "payments", hierarchy: [
+          { id: "spec-payment", level: "spec" },
+          { id: "run-payment", level: "workstream" },
+          { id: task.id, level: "task" },
+        ] },
+      });
+      expect(await call({ query: "trace_artifact" })).toMatchObject({ ok: false, errorCode: "TASK_ID_REQUIRED" });
+      expect(await call({ query: "explain_state", taskId: "task-1" })).toMatchObject({ ok: false, errorCode: "SESSION_ID_REQUIRED" });
+    } finally {
+      delete process.env.SUGO_HOME_OVERRIDE;
+      rmSync(fakeHome, { recursive: true, force: true });
+    }
   });
 
   it("actionTypes 조회가 실제 게이트 위치와 근거를 제공한다", async () => {
