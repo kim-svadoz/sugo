@@ -10,3 +10,5 @@ argument-hint: --workspace <name> --project <absolute-path> --spec-draft <id>
 반드시 `sugo_spec_writer(action:"context")`로 편집 가능 여부와 정확한 Schedule SPEC을 먼저 확인하고,
 `sugo_get_project_context`로 프로젝트 컨텍스트를 로드한다. spec.md 작성 및 검증이 끝나면
 `sugo_spec_writer(action:"complete")`로 절대 경로를 같은 SPEC 카드에 연결한다. 제품 구현이나 feat 시작은 하지 않는다.
+스펙은 기획자 수준으로 쓰고 파일 경로·줄 번호·현재 코드 동작·조사로 얻은 추정을 넣지 않는다. complete가 `SPEC_LINT_WARNINGS`를
+돌려주면 사용자 승인 없이 `acceptLintWarnings:true`로 연결하지 않는다.

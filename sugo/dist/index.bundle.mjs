@@ -27922,7 +27922,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.15.0" : "0.0.0-dev";
+  return true ? "0.16.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32170,9 +32170,25 @@ var sugoSpecWriterInputSchema = {
   workspace: external_exports.string().min(1),
   specDraftId: external_exports.string().min(1),
   projectPath: external_exports.string().optional(),
-  specPath: external_exports.string().optional()
+  specPath: external_exports.string().optional(),
+  /** lint 경고를 사용자에게 보여주고 연결 승인을 받은 뒤에만 true로 다시 호출한다. */
+  acceptLintWarnings: external_exports.boolean().optional()
 };
 var Args = external_exports.object(sugoSpecWriterInputSchema);
+var SPEC_LINT_RULES = [
+  { kind: "implementation-path", pattern: /src\/(?:main|test)\// },
+  { kind: "file-line", pattern: /\.(?:java|kt|py|ts):\d+/ },
+  { kind: "line-number", pattern: /#L\d+|\blines?\s+\d+|\d+\s*번째\s*줄|\d+\s*행\b/i },
+  { kind: "commit-hash", pattern: /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/ }
+];
+function lintSpecText(text) {
+  return text.split("\n").flatMap(
+    (content, index) => SPEC_LINT_RULES.flatMap(({ kind, pattern }) => {
+      const found = content.match(pattern);
+      return found ? [{ line: index + 1, kind, match: found[0] }] : [];
+    })
+  );
+}
 var result = (payload) => ({ content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] });
 async function handleSugoSpecWriter(rawArgs) {
   const args2 = Args.parse(rawArgs);
@@ -32185,8 +32201,17 @@ async function handleSugoSpecWriter(rawArgs) {
   }
   if (args2.action === "context") return result({ ok: true, spec });
   if (!args2.specPath) return result({ ok: false, errorCode: "SPEC_PATH_REQUIRED" });
-  const exists = await readFile25(args2.specPath, "utf-8").then(() => true, () => false);
-  if (!exists) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args2.specPath });
+  const text = await readFile25(args2.specPath, "utf-8").catch(() => null);
+  if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args2.specPath });
+  const warnings = lintSpecText(text);
+  if (warnings.length > 0 && !args2.acceptLintWarnings) {
+    return result({
+      ok: false,
+      errorCode: "SPEC_LINT_WARNINGS",
+      message: "spec.md\uC5D0 \uAD6C\uD604 \uACBD\uB85C\xB7\uC904 \uBC88\uD638\xB7\uCEE4\uBC0B \uD574\uC2DC\uB85C \uBCF4\uC774\uB294 \uBB38\uAD6C\uAC00 \uC788\uC2B5\uB2C8\uB2E4. \uC0C8 \uBC84\uC804\uC73C\uB85C \uACE0\uCE58\uAC70\uB098, \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uC2B9\uC778\uBC1B\uC740 \uB4A4 acceptLintWarnings:true\uB85C \uB2E4\uC2DC \uD638\uCD9C\uD558\uC138\uC694.",
+      warnings
+    });
+  }
   try {
     await attachSpecDocument(args2.workspace, args2.specDraftId, args2.specPath);
     return result({ ok: true, specPath: args2.specPath, next: "Schedule\uC5D0\uC11C feat \uBA85\uB839\uC744 \uBCF5\uC0AC\uD574 \uC0C8 \uC138\uC158\uC5D0\uC11C \uC2E4\uD589\uD558\uC138\uC694." });
@@ -33596,7 +33621,7 @@ server.registerTool(
   "sugo_spec_writer",
   {
     title: "Dashboard SPEC writer bridge",
-    description: "Schedule SPEC \uCD08\uC548 \uCEE8\uD14D\uC2A4\uD2B8\uB97C \uC77D\uACE0 \uC644\uC131\uB41C spec.md \uACBD\uB85C\uB97C \uB2E4\uC2DC \uC5F0\uACB0\uD55C\uB2E4. feat \uC2DC\uC791 \uB4A4\uC5D0\uB294 \uC218\uC815\uC774 \uAC70\uBD80\uB41C\uB2E4.",
+    description: "Schedule SPEC \uCD08\uC548 \uCEE8\uD14D\uC2A4\uD2B8\uB97C \uC77D\uACE0 \uC644\uC131\uB41C spec.md \uACBD\uB85C\uB97C \uB2E4\uC2DC \uC5F0\uACB0\uD55C\uB2E4. feat \uC2DC\uC791 \uB4A4\uC5D0\uB294 \uC218\uC815\uC774 \uAC70\uBD80\uB41C\uB2E4. complete\uB294 \uAD6C\uD604 \uACBD\uB85C\xB7\uC904 \uBC88\uD638\xB7\uCEE4\uBC0B \uD574\uC2DC \uBB38\uAD6C\uAC00 \uC788\uC73C\uBA74 SPEC_LINT_WARNINGS\uB85C \uC5F0\uACB0\uC744 \uBCF4\uB958\uD558\uBA70, \uC0AC\uC6A9\uC790 \uC2B9\uC778 \uB4A4\uC5D0\uB9CC acceptLintWarnings:true\uB85C \uC7AC\uD638\uCD9C\uD55C\uB2E4.",
     inputSchema: sugoSpecWriterInputSchema
   },
   handleSugoSpecWriter

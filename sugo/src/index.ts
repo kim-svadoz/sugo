@@ -229,7 +229,7 @@ server.registerTool(
   "sugo_spec_writer",
   {
     title: "Dashboard SPEC writer bridge",
-    description: "Schedule SPEC 초안 컨텍스트를 읽고 완성된 spec.md 경로를 다시 연결한다. feat 시작 뒤에는 수정이 거부된다.",
+    description: "Schedule SPEC 초안 컨텍스트를 읽고 완성된 spec.md 경로를 다시 연결한다. feat 시작 뒤에는 수정이 거부된다. complete는 구현 경로·줄 번호·커밋 해시 문구가 있으면 SPEC_LINT_WARNINGS로 연결을 보류하며, 사용자 승인 뒤에만 acceptLintWarnings:true로 재호출한다.",
     inputSchema: sugoSpecWriterInputSchema,
   },
   handleSugoSpecWriter,
