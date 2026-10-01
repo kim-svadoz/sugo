@@ -12,6 +12,9 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 확인한다. 서버가 설치되지 않았거나 응답하지 않으면 실패로 간주하지 말고 로컬 코드 탐색으로
 폴백하며, 확인하지 못한 외부 지식은 추정이라고 표시한다. 온톨로지 변경·work item 변경 도구는 쓰지 않는다.
 
+AWS 직접 조회는 `harness-library/aws-readonly-policy.md`의 Claude/Codex 공통 정책을 따른다.
+먼저 `sugo_aws_context` 스냅샷을 쓰고, 직접 조회가 꼭 필요할 때만 허용 목록과 한도를 지킨다.
+
 ## 어떤 스킬로 왔는지
 
 - `implement`: PRD 기반 신규 구현(기본).

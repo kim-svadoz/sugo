@@ -7,6 +7,7 @@ description: 'code-agent의 기본 스킬. PRD 기반 신규 기능 구현. "구
 # implement (code-agent 기본 스킬)
 
 설계안 단계 골격을 따르고 gate-philosophy를 항상 지킨다.
+AWS 조회는 `../../harness-library/aws-readonly-policy.md`의 공통 정책을 따르고 `sugo_aws_context`를 우선한다.
 
 1. prereq: 세션과 PRD를 확인한다. `sugo_get_project_context`로 규칙, 하네스, CLAUDE.md를 로드한다(필수).
 2. baseline: §4.0 시그널이 있으면 코딩 전에 기존 테스트 그린을 캡처한다(`sugo_record_test_evidence`).

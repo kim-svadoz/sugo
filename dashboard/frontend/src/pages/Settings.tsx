@@ -13,6 +13,7 @@ import { connectPinpointContext, disconnectPinpointContext, getPinpointContext, 
 import { getProjectIntegrations, saveProjectIntegration, type IntegrationCandidate, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
 import { summarizeSageMaker } from "../lib/awsInventoryPresentation.js";
 import { awsAccountMetaLabel, awsAccountOptionLabel, initialIntegrationSelection, integrationStatusLabel, isExactIntegrationCandidate, moveIntegrationKeys, partitionIntegrationCandidates } from "../lib/projectIntegrationPresentation.js";
+import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 
@@ -135,6 +136,34 @@ function AwsContextCard() {
           })}
         </div> : <div className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-4 text-center text-xs text-[var(--color-text-muted)]">표시할 AWS 리소스가 없습니다.</div>}
         <div className="flex flex-wrap justify-end gap-x-3 font-mono text-[10px] text-[var(--color-text-dim)]"><span>읽기 전용 · 1시간 간격 · 계정별 하루 {status.refreshBudget?.dailyLimit ?? 4}회 제한</span><span>오늘 남음 {status.refreshBudget?.remainingToday ?? '-'}회</span>{status.refreshBudget?.nextAllowedAt && <span>다음 가능 {new Date(status.refreshBudget.nextAllowedAt).toLocaleString('ko-KR')}</span>}<span>마지막 조회 {status.observedAt ?? "없음"}</span></div>
+      </>}
+    </div>
+  </div>;
+}
+
+function AwsGuardPolicyCard() {
+  const [policy, setPolicy] = useState<AwsGuardPolicy | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  useEffect(() => { void getAwsGuardPolicy().then(setPolicy).catch((error) => setMessage(String(error))); }, []);
+  async function save() {
+    if (!policy) return;
+    setBusy(true);
+    try {
+      setPolicy(await saveAwsGuardPolicy(policy));
+      setMessage('저장했습니다. 다음 AWS 명령부터 적용됩니다.');
+    } catch (error) { setMessage(String(error)); }
+    finally { setBusy(false); }
+  }
+  const numberField = (label: string, key: 'sessionLimit' | 'dailyLimit' | 'minuteLimit') => <label className="text-xs text-[var(--color-text-muted)]">{label}<input type="number" min="1" value={policy?.[key] ?? ''} onChange={(event) => setPolicy((current) => current ? { ...current, [key]: Number(event.target.value) } : current)} className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-text)]" /></label>;
+  return <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div className="border-b border-[var(--color-border)] px-5 py-4"><h2 className="text-base font-semibold text-[var(--color-text)]">AWS 직접 조회 안전장치</h2><p className="text-xs text-[var(--color-text-muted)]">에이전트의 허용 목록 기반 읽기와 호출량을 제한합니다</p></div>
+    <div className="space-y-4 p-5">
+      {!policy ? <p className="text-sm text-[var(--color-text-muted)]">불러오는 중…</p> : <>
+        <label className="flex items-start justify-between gap-4 rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-3"><span><b className="block text-sm text-[var(--color-text)]">에이전트 직접 AWS 읽기</b><span className="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">켜도 쓰기·비밀·고비용 조회는 항상 차단됩니다. 끄면 저장된 AWS Context만 사용합니다.</span></span><input type="checkbox" checked={policy.directReadEnabled} onChange={(event) => setPolicy({ ...policy, directReadEnabled: event.target.checked })} className="mt-1" /></label>
+        <div className="grid gap-3 sm:grid-cols-3">{numberField('세션당 호출', 'sessionLimit')}{numberField('하루당 호출 (KST)', 'dailyLimit')}{numberField('1분당 호출', 'minuteLimit')}</div>
+        <div className="rounded-md border border-[var(--color-border)] bg-black/10 px-3 py-2 text-[11px] leading-relaxed text-[var(--color-text-dim)]">기본값은 30 / 200 / 10입니다. 초과·넓은 시간 범위·셸 반복은 실행 전에 확인을 요청하며, 감사 로그에는 비밀값을 제거한 명령과 결정만 남깁니다.</div>
+        <div className="flex items-center justify-between gap-3"><span className="text-xs text-[var(--color-text-muted)]">{message}</span><button type="button" disabled={busy} onClick={() => void save()} className="rounded-md border border-cyan-400/40 px-3 py-1.5 text-sm text-cyan-200 disabled:opacity-40">{busy ? '저장 중…' : '정책 저장'}</button></div>
       </>}
     </div>
   </div>;
@@ -379,6 +408,7 @@ export function Settings() {
       {!LOCAL_DEV && <ApiTokensCard />}
 
       <AwsContextCard />
+      <AwsGuardPolicyCard />
       <PinpointContextCard />
       <ProjectIntegrationsCard />
 

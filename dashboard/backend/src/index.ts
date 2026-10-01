@@ -30,6 +30,7 @@ import { createAwsCliContextClient, type AwsContextClient } from "./aws/contextC
 import { createHttpPinpointClient, type PinpointClient } from "./pinpoint/client.js";
 import { createPinpointContextRouter } from "./routes/pinpointContext.js";
 import { createProjectIntegrationsRouter } from './routes/projectIntegrations.js';
+import { createAwsGuardPolicyRouter } from './routes/awsGuardPolicy.js';
 import { corsWhitelist } from "./middleware/cors.js";
 import { errorMiddleware } from "./middleware/asyncHandler.js";
 
@@ -70,6 +71,7 @@ export interface AppOverrides {
   harnessPath?: string;
   skillsPath?: string;
   specAttachmentsPath?: string;
+  awsGuardPolicyPath?: string;
 }
 
 export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
@@ -106,6 +108,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const harnessPath = overrides.harnessPath ?? config.harnessPath;
   const skillsPath = overrides.skillsPath ?? config.skillsPath;
   const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
+  const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
 
   const app = express();
   app.use(corsWhitelist(config.corsOrigins));
@@ -139,6 +142,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/bitbucket", createBitbucketRouter(db, sessionSecret, secretEncKey));
   app.use("/api/git-connections", createGitConnectionsRouter(db, sessionSecret, secretEncKey));
   app.use("/api/aws-context", createAwsContextRouter(db, sessionSecret, awsContextClient));
+  app.use("/api/aws-guard-policy", createAwsGuardPolicyRouter(db, sessionSecret, awsGuardPolicyPath));
   app.use("/api/pinpoint-context", createPinpointContextRouter(db, sessionSecret, pinpointClient));
   app.use('/api/project-integrations', createProjectIntegrationsRouter(db, sessionSecret));
   app.use("/api/pr", createPrRouter(db, sessionSecret, secretEncKey, gitProviderClients));
