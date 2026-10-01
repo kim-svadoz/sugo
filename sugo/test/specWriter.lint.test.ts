@@ -1,5 +1,5 @@
 import { createServer, type Server } from "node:http";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -42,12 +42,20 @@ describe("spec-writer complete gate", () => {
   let server: Server;
   let dir: string;
   let attached: string[];
+  let attachmentNames: string[];
 
   beforeEach(async () => {
     dir = mkdtempSync(join(tmpdir(), "sugo-spec-lint-"));
     attached = [];
+    attachmentNames = ["01.png", "02.jpg"];
+    process.env.SUGO_HOME_OVERRIDE = dir;
     server = createServer((req, res) => {
+      if (req.url?.includes("/spec-attachments/file")) {
+        res.writeHead(200, { "Content-Type": "image/png" });
+        return res.end(Buffer.from(`png:${new URL(req.url, "http://x").searchParams.get("name")}`));
+      }
       res.writeHead(200, { "Content-Type": "application/json" });
+      if (req.url?.includes("/spec-attachments")) return res.end(JSON.stringify({ ok: true, locked: false, attachments: attachmentNames.map((name) => ({ name })) }));
       if (req.method === "POST") {
         attached.push(req.url ?? "");
         return res.end("{}");
@@ -61,6 +69,7 @@ describe("spec-writer complete gate", () => {
 
   afterEach(async () => {
     delete process.env.SUGO_DASHBOARD_API_URL;
+    delete process.env.SUGO_HOME_OVERRIDE;
     delete process.env.SUGO_DASHBOARD_USER_ID;
     await new Promise<void>((resolve) => server.close(() => resolve()));
     rmSync(dir, { recursive: true, force: true });
@@ -91,5 +100,20 @@ describe("spec-writer complete gate", () => {
     const data = await complete(V2_LIKE);
     expect(data.ok).toBe(true);
     expect(attached).toHaveLength(1);
+  });
+
+  it("context는 Schedule에 붙여 넣은 기획 화면을 로컬로 내려받아 경로를 돌려주고, 지운 첨부는 남기지 않는다", async () => {
+    const first = JSON.parse((await handleSugoSpecWriter({ action: "context", workspace: "ws", specDraftId: "spec-manual-1" })).content[0].text);
+    expect(first.ok).toBe(true);
+    expect(first.attachments).toHaveLength(2);
+    expect(readFileSync(first.attachments[0], "utf-8")).toBe("png:01.png");
+    attachmentNames = ["02.jpg"];
+    const second = JSON.parse((await handleSugoSpecWriter({ action: "context", workspace: "ws", specDraftId: "spec-manual-1" })).content[0].text);
+    expect(second.attachments.map((p: string) => p.split("/").pop())).toEqual(["02.jpg"]);
+    expect(existsSync(first.attachments[0])).toBe(false);
+  });
+
+  it("spec.md의 상대경로 이미지 링크는 lint 경고가 아니다", () => {
+    expect(lintSpecText("![기획 화면 1](images/01.png)")).toEqual([]);
   });
 });

@@ -44,6 +44,8 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`를 
    아님). Roadmap 추적이 필요하면 REQ를 헤딩으로 쓴다.
    TODO-SPEC이 있는 브랜치라면 REQ 태그 옆에 "TODO-SPEC 항목: b" 식으로 참조를 남긴다 — 강제
    게이트는 아니고, 나중에 사람이 PRD와 TODO-SPEC을 대조할 때 도움을 주는 정도다.
+   원본 SPEC에 기획 화면 이미지(`![...](images/...)`)가 있으면 PRD에 "기획 화면" 섹션을 두고 spec.md 기준으로
+   풀어 쓴 **절대 경로** 링크로 모두 옮긴다. PRD는 다른 위치에 저장되므로 상대경로를 그대로 쓰면 깨진다.
 4. PRD가 비대하면 `decompose` 후 `subtask_start`와 `subtask_done`을 거쳐 `integrate`로 간다.
    아니면 `ready`로 간다.
 5. `baseline_capture`: §4.0 시그널(런타임이나 JDK 상향, 의존성 제거)이 있으면 코딩 전에 그린

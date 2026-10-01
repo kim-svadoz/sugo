@@ -30,7 +30,7 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 1. 회귀 baseline: 기존 테스트를 전량 실행한다. 기존이 이미 실패면 regression으로 분류해 기록하고
    넘어간다.
 2. PRD 확인: `handoff.prdPath`로 PRD를 연다. 없으면 세션을 복구하고, 그래도 없으면 fallback
-   라벨을 붙인다.
+   라벨을 붙인다. PRD에 기획 화면 이미지 링크가 있으면 Read로 열어 화면에 적힌 문구·노출 조건도 테스트 근거로 쓴다.
 3. PRD에서 테스트 도출: 구현이 아니라 명세에서 도출한다. 응답 필드마다 어서션을 넣고 통합레벨을
    1개 이상 포함한다.
 4. write/update: 테스트 파일만 작성하거나 갱신한다.

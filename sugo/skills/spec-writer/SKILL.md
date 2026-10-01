@@ -13,6 +13,8 @@ Claude와 Codex가 공유하는 SPEC 작성 계약이다. 제품 코드를 구�
 2. 먼저 `sugo_spec_writer(action:"context", workspace, projectPath, specDraftId)`를 호출한다.
 3. `SPEC_NOT_EDITABLE`이면 중단한다. feat가 연결된 SPEC은 수정할 수 없으며 변경은 patch로 처리한다.
 4. `sugo_get_project_context(projectPath)`로 하네스, rules, 체크포인트, TODO-SPEC을 읽는다.
+5. context 응답의 `attachments`는 사용자가 Schedule SPEC 카드에 붙여 넣은 기획 화면 이미지의 로컬 경로다.
+   모두 열어 본다. `attachmentsUnavailable`이면 대시보드가 첨부를 지원하지 않는 버전이니 사용자에게 알린다.
 
 ## 작성
 
@@ -37,12 +39,19 @@ Claude와 Codex가 공유하는 SPEC 작성 계약이다. 제품 코드를 구�
 - 근거 없는 API, 식별자, 수치, 일정, 소유자, 동작을 만들지 않는다.
 - 기존 버전은 덮어쓰지 않는다.
 
+### 기획 화면
+
+- 첨부가 있으면 spec.md와 같은 버전 디렉터리의 `images/`로 같은 파일 이름 그대로 복사하고, "기획 화면" 섹션에
+  `![기획 화면 01](images/01.png)`처럼 상대경로로 모두 넣는다. 원문 뷰어와 실행 에이전트가 이 경로로 화면을 본다.
+- 화면은 사용자가 준 자료다. 화면에 적힌 문구·배치는 사실로 쓸 수 있지만, 화면에 없는 동작이나 데이터 출처를
+  화면에서 추측해 쓰지 않는다. 화면과 사용자 설명이 다르면 Open Questions에 둔다.
+
 ## 파일 규칙과 완료
 
 - 루트: `/Users/demo-user/dev/spec`
 - 경로: `/Users/demo-user/dev/spec/YYYYMMDD/<feature-slug>/vN/spec.md` (Asia/Seoul 날짜, 다음 빈 vN)
 - UTF-8 Markdown으로 저장한다.
-- 저장 후 파일을 다시 읽어 필수 섹션, 완료조건, "넣지 않는 것"이 섞였는지 점검한다.
+- 저장 후 파일을 다시 읽어 필수 섹션, 완료조건, "넣지 않는 것"이 섞였는지, 첨부 이미지가 모두 `images/`에 복사되고 링크됐는지 점검한다.
 - 마지막으로 `sugo_spec_writer(action:"complete", workspace, projectPath, specDraftId, specPath)`를 호출한다.
 - `SPEC_LINT_WARNINGS`가 오면 연결되지 않은 상태다. 경고 줄을 고친 새 버전(vN+1)을 쓰고 다시 complete한다.
   경고를 남긴 채 연결하려면 경고 목록을 사용자에게 보여주고 명시적 승인을 받은 뒤에만 `acceptLintWarnings:true`로 재호출한다.

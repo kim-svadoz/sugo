@@ -1,3 +1,5 @@
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { resolveDashboardConfig } from "./config.js";
 
 /**
@@ -102,6 +104,30 @@ export async function fetchUnlinkedSpecDrafts(workspaceName: string): Promise<Un
       projectPath: node.project_path ?? null,
       specPath: node.spec_path ?? null,
     }));
+}
+
+/** Schedule SPEC에 붙여 넣은 기획 화면을 destDir로 내려받아 로컬 경로를 돌려준다.
+ * 대시보드가 원격이어도 spec-writer가 파일로 읽고 spec 버전 디렉터리에 복사할 수 있게 매번 새로 받는다.
+ * 첨부 API가 없는 구버전 Console이거나 대시보드가 꺼져 있으면 null. */
+export async function downloadSpecAttachments(workspaceName: string, nodeId: string, destDir: string): Promise<string[] | null> {
+  const ws = encodeURIComponent(workspaceName);
+  const qs = `nodeId=${encodeURIComponent(nodeId)}`;
+  const list = await fetchJson<{ attachments: Array<{ name: string }> }>(`/api/workspaces/${ws}/roadmap/spec-attachments?${qs}`, 8000);
+  const config = await resolveDashboardConfig();
+  if (!list || !config.enabled || !config.apiUrl) return null;
+  const headers = config.apiToken ? { Authorization: `Bearer ${config.apiToken}` } : undefined;
+  await rm(destDir, { recursive: true, force: true });
+  if (list.attachments.length === 0) return [];
+  await mkdir(destDir, { recursive: true });
+  const paths: string[] = [];
+  for (const { name } of list.attachments) {
+    const res = await fetch(`${config.apiUrl}/api/workspaces/${ws}/roadmap/spec-attachments/file?${qs}&name=${encodeURIComponent(name)}`, { headers });
+    if (!res.ok) throw new Error(`SPEC_ATTACHMENT_DOWNLOAD_FAILED:${name}:${res.status}`);
+    const target = join(destDir, name);
+    await writeFile(target, Buffer.from(await res.arrayBuffer()));
+    paths.push(target);
+  }
+  return paths;
 }
 
 /** spec-writer 완료는 다음 fetch에서 재시도하면 되는 조회가 아니라 사용자가 기다리는 제어 경로다. */

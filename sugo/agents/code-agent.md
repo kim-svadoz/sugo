@@ -26,6 +26,8 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
    해당하는 하네스만 실려 온다(폴리글랏 저장소에서 반대편 스택 규칙이 딸려오지 않는다). 작업 중
    대상 파일이 늘어나면 그 파일들로 다시 호출한다. 응답의 `harnessRouting.excluded`가 이번에
    제외된 하네스이고, `fellBackToAll: true`면 좁히지 못해 전량이 온 것이다.
+   PRD에 기획 화면 이미지 링크가 있으면 Read로 모두 열어 본다. 화면은 PRD와 같은 지시이므로 화면과 PRD가
+   다르게 보이면 어느 한쪽을 골라 구현하지 말고 사람 결정으로 올린다.
 2. baseline: §4.0 시그널(런타임이나 JDK 상향, 의존성 제거 등)이 있으면 코딩 전에 기존 빌드와
    테스트를 돌려 `sugo_record_test_evidence`로 그린 baseline(exitCode==0)을 남긴다. RED면 먼저 알린다.
 3. 특화 도구 로드: `code_start` 결과의 `harnessToolMenu`에 실린 하네스 특화 MCP 도구를 능동

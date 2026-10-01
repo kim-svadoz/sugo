@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { z } from "zod";
-import { attachSpecDocument, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
+import { attachSpecDocument, downloadSpecAttachments, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
+import { sugoHomeDir } from "../homeDir.js";
 
 export const sugoSpecWriterInputSchema = {
   action: z.enum(["context", "complete"]),
@@ -41,7 +43,15 @@ export async function handleSugoSpecWriter(rawArgs: unknown) {
   if (args.projectPath && spec.projectPath && args.projectPath !== spec.projectPath) {
     return result({ ok: false, errorCode: "PROJECT_MISMATCH", expected: spec.projectPath, received: args.projectPath });
   }
-  if (args.action === "context") return result({ ok: true, spec });
+  if (args.action === "context") {
+    const dir = join(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args.workspace), encodeURIComponent(spec.id));
+    try {
+      const attachments = await downloadSpecAttachments(args.workspace, spec.id, dir);
+      return result({ ok: true, spec, attachments: attachments ?? [], ...(attachments === null && { attachmentsUnavailable: true }) });
+    } catch (error) {
+      return result({ ok: false, errorCode: "SPEC_ATTACHMENT_DOWNLOAD_FAILED", message: error instanceof Error ? error.message : String(error) });
+    }
+  }
   if (!args.specPath) return result({ ok: false, errorCode: "SPEC_PATH_REQUIRED" });
   const text = await readFile(args.specPath, "utf-8").catch(() => null);
   if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args.specPath });
