@@ -48,3 +48,26 @@ export async function migrateCanvasToRoadmap(db: DbClient): Promise<void> {
     console.warn(`[migration] canvas→roadmap 리네임 실패(계속 진행): ${(err as Error).message}`);
   }
 }
+
+/**
+ * P2 Ontology snapshot 컬럼의 부팅 마이그레이션. sync 요청에서만 자가보강하면 그보다 먼저 실행되는
+ * Workspace/Schedule 읽기가 구 DB에서 `no such column`로 죽는다. 읽기 전에 항상 실행하고,
+ * CREATE TABLE IF NOT EXISTS가 이미 컬럼을 만든 신규 DB에서는 no-op이다.
+ */
+export async function migrateRoadmapRuntimeAssessment(db: DbClient): Promise<boolean> {
+  try {
+    await db.query("SELECT runtime_assessment FROM sugo_roadmap_nodes LIMIT 1");
+    return true;
+  } catch {
+    // 기존 설치본에는 컬럼이 없다.
+  }
+  try {
+    // SQLite는 JSON을 type affinity로 허용하고 MySQL은 실제 JSON 검증을 적용한다. 신규 스키마와
+    // 같은 선언을 써서 업그레이드 DB만 TEXT로 갈라지는 계약 drift를 막는다.
+    await db.exec("ALTER TABLE sugo_roadmap_nodes ADD COLUMN runtime_assessment JSON NULL");
+    return true;
+  } catch (err) {
+    console.warn(`[migration] runtime_assessment 추가 실패(계속 진행): ${(err as Error).message}`);
+    return false;
+  }
+}

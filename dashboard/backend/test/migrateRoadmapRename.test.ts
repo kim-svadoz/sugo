@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
-import { migrateCanvasToRoadmap } from "../src/db/migrations.js";
+import { migrateCanvasToRoadmap, migrateRoadmapRuntimeAssessment } from "../src/db/migrations.js";
 import type { DbClient } from "../src/db/client.js";
 
 const OLD = `CREATE TABLE sugo_canvas_nodes (
@@ -103,5 +103,30 @@ describe("canvas→roadmap 테이블 리네임 마이그레이션 (D1)", () => {
     } finally {
       warn.mockRestore();
     }
+  });
+});
+
+describe("runtime_assessment 기존 DB 부팅 마이그레이션", () => {
+  it("sync 요청 전에도 기존 roadmap 테이블에 컬럼을 추가한다", async () => {
+    const db = createSqliteClient();
+    await db.exec(NEW);
+
+    await migrateRoadmapRuntimeAssessment(db);
+
+    const columns = await db.query<{ name: string }>("PRAGMA table_info(sugo_roadmap_nodes)");
+    expect(columns.map((column) => column.name)).toContain("runtime_assessment");
+    await db.close();
+  });
+
+  it("두 번 실행해도 안전하고 기존 행을 보존한다", async () => {
+    const db = createSqliteClient();
+    await db.exec(NEW);
+    await db.exec("INSERT INTO sugo_roadmap_nodes VALUES ('u1','ws1','task-1','T','task','pending')");
+
+    await migrateRoadmapRuntimeAssessment(db);
+    await migrateRoadmapRuntimeAssessment(db);
+
+    expect(await db.query("SELECT id FROM sugo_roadmap_nodes")).toEqual([{ id: "task-1" }]);
+    await db.close();
   });
 });

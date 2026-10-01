@@ -3,6 +3,7 @@ import { upsertRow } from "../db/upsert.js";
 import { cleanDanglingDeps, computeNodesToDelete, shouldSeedDependsOn } from "./roadmapDiff.js";
 import { parseJsonArray } from "../db/jsonColumn.js";
 import { toDbDateTime } from "../db/datetime.js";
+import { migrateRoadmapRuntimeAssessment } from "../db/migrations.js";
 
 export async function ensureUser(db: DbClient, userId: string): Promise<void> {
   await upsertRow(db, "sugo_users", { id: userId }, {});
@@ -197,21 +198,8 @@ export function __resetRuntimeAssessmentColState(): void {
 /** 플러그인 Ontology projection snapshot. 구 DB에서는 additive TEXT/JSON 컬럼으로 자가보강한다. */
 export async function ensureRoadmapRuntimeAssessmentColumn(db: DbClient): Promise<boolean> {
   if (runtimeAssessmentColState !== null) return runtimeAssessmentColState;
-  try {
-    await db.query("SELECT runtime_assessment FROM sugo_roadmap_nodes LIMIT 1");
-    runtimeAssessmentColState = true;
-    return true;
-  } catch {
-    // 기존 설치본에는 없음.
-  }
-  try {
-    await db.exec("ALTER TABLE sugo_roadmap_nodes ADD COLUMN runtime_assessment TEXT NULL");
-    runtimeAssessmentColState = true;
-    return true;
-  } catch {
-    runtimeAssessmentColState = false;
-    return false;
-  }
+  runtimeAssessmentColState = await migrateRoadmapRuntimeAssessment(db);
+  return runtimeAssessmentColState;
 }
 
 /**
