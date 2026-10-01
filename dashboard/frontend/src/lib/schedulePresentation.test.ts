@@ -39,6 +39,11 @@ describe("schedule presentation", () => {
     expect(source).toContain("완료");
   });
 
+  it("오늘 강조 테두리가 월간 그리드 가장자리에서 잘리지 않도록 안전 여백을 둔다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain("grid-rows-6 gap-1 overflow-auto p-px");
+  });
+
   it("RUN이 시작된 모든 SPEC 카드에 진행중 단계를 표시한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("const guidance = scheduleAttention(spec)");

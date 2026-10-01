@@ -414,7 +414,7 @@ export function SchedulePage() {
             ))}
           </div>
 
-          <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-1 overflow-auto">
+          <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-1 overflow-auto p-px">
             {grid.map((day) => {
               const key = toDateKey(day);
               const inMonth = day.getMonth() === cursor.month;
