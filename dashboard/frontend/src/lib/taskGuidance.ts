@@ -222,7 +222,7 @@ export function scheduleAttention(spec: ScheduleAttentionInput, now = Date.now()
   }
   if (spec.spec_path) {
     return {
-      kind: "ready", label: "SPEC 준비", currentStage: "SPEC 작성 완료", reason: "feat를 시작할 준비가 되었습니다.",
+      kind: "ready", label: "준비", currentStage: "SPEC 작성 완료", reason: "feat를 시작할 준비가 되었습니다.",
       nextAction: "feat 시작", blockedNextStep: "feat를 시작하기 전까지 구현 Task는 생성되지 않습니다.", action: "start_feat",
     };
   }

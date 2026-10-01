@@ -70,6 +70,10 @@ describe("task guidance", () => {
 });
 
 describe("schedule attention", () => {
+  it("SPEC 원문이 준비된 초안은 간결하게 준비로 표시한다", () => {
+    expect(scheduleAttention({ status: "pending", spec_path: "spec.md" }).label).toBe("준비");
+  });
+
   it("차단 > 확인 필요 > 진행중 > 완료 순서로 SPEC 상태를 결정한다", () => {
     const base = { status: "in_progress", has_run: true, task_count: 1, done_task_count: 0, active_task_count: 1, blocked_task_count: 0, unverified_task_count: 0 };
     expect(scheduleAttention({ ...base, blocked_task_count: 1 }).label).toBe("차단");
