@@ -43,7 +43,7 @@ import { estimateHumanHours } from "../humanHours.js";
 import { checkpointApplies } from "../hulk/matching.js";
 import { addWorkLog } from "../hulk/history.js";
 import { listCheckpoints, pullCheckpointsToRules } from "../hulk/checkpoint.js";
-import { backfillRoadmapTask, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
+import { backfillRoadmapTask, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
 import { promotePrdRequirements } from "../hulk/roadmapReq.js";
 import { addTask, findTaskByPrdRef, listTasks, updateTask } from "../hulk/task.js";
 import type { Task, TaskPatchInfo } from "../hulk/types.js";
@@ -63,6 +63,7 @@ import { checkTestReverifyGate } from "../testReverify.js";
 import { buildCompletionPlan } from "../completionPlan.js";
 import { planArgsActionEnum, type PlanAction, type PlanSession } from "../types.js";
 import { buildWorkResultReport, renderWorkResultMarkdown } from "../workResultReport.js";
+import { assessSession } from "../ontology/sessionAssessment.js";
 
 export const sugoPlanInputSchema = {
   action: z.enum(planArgsActionEnum).describe("파이프라인 상태머신 액션"),
@@ -1206,6 +1207,13 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
   if (action !== "status") {
     await saveSession(session);
+    if (session.data.hulkWorkspace && session.data.hulkTaskId) {
+      await updateRoadmapNodeRuntimeAssessment(
+        session.data.hulkWorkspace,
+        session.data.hulkTaskId,
+        assessSession(session),
+      );
+    }
   }
 
   // Activity Stream은 선택적인 sugo_chain 호출이 아니라 실제 상태 전이를 정본으로 삼는다.

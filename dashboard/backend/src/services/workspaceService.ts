@@ -92,16 +92,29 @@ function isUnverified(workResult: unknown): boolean {
   return parsed?.report?.completionGrade === "unverified";
 }
 
+type RuntimeAssessmentSummary = {
+  projectionSchemaVersion?: number;
+  status?: "in_progress" | "blocked" | "completed" | "cancelled";
+};
+
+function projectedTaskStatus(rawStatus: string, runtimeAssessment: unknown): string {
+  const assessment = parseMaybeJson<RuntimeAssessmentSummary | null>(runtimeAssessment, null);
+  if (assessment?.projectionSchemaVersion !== 1) return rawStatus;
+  if (assessment.status === "completed") return "done";
+  if (assessment.status === "cancelled") return "dropped";
+  return assessment.status ?? rawStatus;
+}
+
 async function workspaceAttention(db: DbClient, userId: string, workspaceName: string): Promise<{ count: number; label: string | null }> {
-  const rows = await db.query<{ status: string; manual_status: string | null; updated_at: string | null; work_result: unknown }>(
-    "SELECT status, manual_status, updated_at, work_result FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND level = 'task'",
+  const rows = await db.query<{ status: string; manual_status: string | null; updated_at: string | null; work_result: unknown; runtime_assessment: unknown }>(
+    "SELECT status, manual_status, updated_at, work_result, runtime_assessment FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND level = 'task'",
     [userId, workspaceName]
   );
   let blocked = 0;
   let stale = 0;
   let unverified = 0;
   for (const row of rows) {
-    const status = row.manual_status ?? row.status;
+    const status = row.manual_status ?? projectedTaskStatus(row.status, row.runtime_assessment);
     if (status === "blocked") blocked++;
     else if (isStale(status, row.updated_at)) stale++;
     if (status === "done" && isUnverified(row.work_result)) unverified++;
@@ -115,15 +128,15 @@ async function workspaceAttention(db: DbClient, userId: string, workspaceName: s
 // §7: **dropped는 분모에서 제외**한다 — 폐기는 "안 하기로 한 일"이라 진행률에 남아 있으면
 // 아무리 일해도 100%가 안 되는 분모가 된다.
 async function roadmapCounts(db: DbClient, userId: string, workspaceName: string): Promise<RoadmapCounts> {
-  const rows = await db.query<{ status: string; manual_status: string | null }>(
-    "SELECT status, manual_status FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND level = 'task'",
+  const rows = await db.query<{ status: string; manual_status: string | null; runtime_assessment: unknown }>(
+    "SELECT status, manual_status, runtime_assessment FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND level = 'task'",
     [userId, workspaceName]
   );
   let total = 0;
   let done = 0;
   let active = 0;
   for (const r of rows) {
-    const effective = r.manual_status ?? r.status;
+    const effective = r.manual_status ?? projectedTaskStatus(r.status, r.runtime_assessment);
     if (effective === "dropped") continue;
     total++;
     if (effective === "done") done++;
@@ -372,6 +385,7 @@ export interface RoadmapNodeRow {
   note: string | null;
   spec_path: string | null;
   work_result: unknown;
+  runtime_assessment: unknown;
   lineage: unknown;
   manual_status: string | null;
   manual_by: string | null;
@@ -391,9 +405,10 @@ export interface RoadmapNodeRow {
 // Row shape as it comes off the wire - JSON columns are driver-dependent
 // (string on sqlite, already-parsed on mysql2); normalized below so the API
 // response is identical regardless of DB_DRIVER.
-type RoadmapNodeDbRow = Omit<RoadmapNodeRow, "depends_on" | "work_result" | "lineage" | "blocker_context"> & {
+type RoadmapNodeDbRow = Omit<RoadmapNodeRow, "depends_on" | "work_result" | "runtime_assessment" | "lineage" | "blocker_context"> & {
   depends_on: unknown;
   work_result: unknown;
+  runtime_assessment: unknown;
   lineage: unknown;
   blocker_context: unknown;
 };
@@ -411,6 +426,7 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
     title: r.manual_title ?? r.title,
     depends_on: parseJsonArray(r.depends_on),
     work_result: parseMaybeJson<unknown>(r.work_result, null),
+    runtime_assessment: parseMaybeJson<unknown>(r.runtime_assessment, null),
     lineage: parseMaybeJson<unknown>(r.lineage, null),
     human_blocker: parseMaybeJson<unknown>(r.blocker_context, null),
     blocker_decision: r.blocker_response && r.blocker_answered_by && r.blocker_answered_at
@@ -488,6 +504,7 @@ export interface ScheduledSpecRow {
   focus_task_note: string | null;
   focus_task_updated_at: string | null;
   focus_task_work_result: unknown;
+  focus_task_runtime_assessment: unknown;
   focus_task_blocker_decision: { response: string; answered_by: string; answered_at: string } | null;
   focus_task_human_blocker: unknown;
 }
@@ -495,16 +512,16 @@ export interface ScheduledSpecRow {
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
  * 프론트가 due_date 유무로 캘린더/"기한 미정" 리스트를 나눈다(§7B). */
 export async function getScheduledSpecs(db: DbClient, userId: string): Promise<ScheduledSpecRow[]> {
-  const rows = await db.query<Omit<ScheduledSpecRow, "has_run" | "task_count" | "done_task_count" | "active_task_count" | "blocked_task_count" | "stale_task_count" | "unverified_task_count" | "focus_task_id" | "focus_task_title" | "focus_task_status" | "focus_task_note" | "focus_task_updated_at" | "focus_task_work_result" | "focus_task_blocker_decision" | "focus_task_human_blocker"> & { manual_title: string | null; has_run: number | boolean }>(
+  const rows = await db.query<Omit<ScheduledSpecRow, "has_run" | "task_count" | "done_task_count" | "active_task_count" | "blocked_task_count" | "stale_task_count" | "unverified_task_count" | "focus_task_id" | "focus_task_title" | "focus_task_status" | "focus_task_note" | "focus_task_updated_at" | "focus_task_work_result" | "focus_task_runtime_assessment" | "focus_task_blocker_decision" | "focus_task_human_blocker"> & { manual_title: string | null; has_run: number | boolean }>(
     "SELECT n.id, n.workspace_name, n.title, n.manual_title, COALESCE(n.manual_status, n.status) AS status, n.due_date, n.project_path, n.spec_path, EXISTS (SELECT 1 FROM sugo_roadmap_nodes child WHERE child.user_id = n.user_id AND child.workspace_name = n.workspace_name AND child.parent = n.id AND child.level = 'workstream') AS has_run FROM sugo_roadmap_nodes n WHERE n.user_id = ? AND n.level = 'spec' ORDER BY (n.due_date IS NULL), n.due_date, n.id",
     [userId]
   );
   const tasks = await db.query<{
     workspace_name: string; spec_id: string; id: string; title: string; status: string; manual_status: string | null;
-    note: string | null; updated_at: string | null; work_result: unknown; blocker_response: string | null; blocker_answered_by: string | null; blocker_answered_at: string | null; blocker_context: unknown;
+    note: string | null; updated_at: string | null; work_result: unknown; runtime_assessment: unknown; blocker_response: string | null; blocker_answered_by: string | null; blocker_answered_at: string | null; blocker_context: unknown;
   }>(
     `SELECT task.workspace_name, run.parent AS spec_id, task.id, task.title, task.status, task.manual_status,
-            task.note, task.updated_at, task.work_result, task.blocker_response, task.blocker_answered_by, task.blocker_answered_at, task.blocker_context
+            task.note, task.updated_at, task.work_result, task.runtime_assessment, task.blocker_response, task.blocker_answered_by, task.blocker_answered_at, task.blocker_context
        FROM sugo_roadmap_nodes task
        JOIN sugo_roadmap_nodes run
          ON run.user_id = task.user_id AND run.workspace_name = task.workspace_name AND run.id = task.parent
@@ -521,7 +538,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
   return rows.map(({ manual_title, has_run, ...row }) => {
     const children = tasksBySpec.get(`${row.workspace_name}\0${row.id}`) ?? [];
     const enriched = children.map((task) => {
-      const status = task.manual_status ?? task.status;
+      const status = task.manual_status ?? projectedTaskStatus(task.status, task.runtime_assessment);
       return { ...task, status, stale: isStale(status, task.updated_at), unverified: status === "done" && isUnverified(task.work_result) };
     });
     const priority = (task: (typeof enriched)[number]) => task.status === "blocked" ? 0 : task.stale ? 1 : task.status === "in_progress" ? 2 : task.unverified ? 3 : task.status === "pending" ? 4 : 5;
@@ -542,6 +559,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
       focus_task_note: focus?.note ?? null,
       focus_task_updated_at: focus?.updated_at ?? null,
       focus_task_work_result: parseMaybeJson(focus?.work_result, null),
+      focus_task_runtime_assessment: parseMaybeJson(focus?.runtime_assessment, null),
       focus_task_blocker_decision: focus?.blocker_response && focus.blocker_answered_by && focus.blocker_answered_at
         ? { response: focus.blocker_response, answered_by: focus.blocker_answered_by, answered_at: focus.blocker_answered_at }
         : null,

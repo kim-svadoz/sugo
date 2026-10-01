@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiJson, withUserId } from "../api/client.js";
 import type { HumanBlocker } from "../api/roadmapMutationsApi.js";
+import type { RuntimeAssessment } from "../lib/taskGuidance.js";
 import { useAuth } from "../auth/AuthContext.js";
 
 const POLL_MS = 4000;
@@ -77,6 +78,7 @@ export interface RoadmapNode {
   note: string | null;
   spec_path: string | null;
   work_result: unknown;
+  runtime_assessment?: RuntimeAssessment | null;
   lineage: unknown;
   manual_status: string | null;
   /** 수동 완료 처리한 사람 — 카드 뱃지 title에 쓴다(AI 완료가 아님을 밝힌다). */

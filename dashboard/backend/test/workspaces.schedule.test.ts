@@ -85,6 +85,25 @@ describe("GET /api/workspaces/schedule — §7B 워크스페이스 비종속 집
     });
   });
 
+  it("우선 Task의 versioned runtime assessment를 Schedule read model에 전달한다", async () => {
+    const ctx = await bootApp();
+    const runtimeAssessment = {
+      projectionSchemaVersion: 1, status: "blocked", currentStage: "TEST_RUNNING",
+      nextActions: [], recommendedAction: null, humanDecisionRequired: true,
+      blockers: ["승인 필요"], evidence: [], blockingReason: "승인 필요",
+    };
+    await request(ctx.app).post("/api/sync/roadmap").set("Authorization", ctx.auth).send({
+      userId: "u1", workspaceName: "ws1", nodes: [
+        { id: "spec1", title: "SPEC", level: "spec", status: "in_progress" },
+        { id: "run1", title: "RUN", level: "workstream", status: "in_progress", parent: "spec1" },
+        { id: "task1", title: "Task", level: "task", status: "blocked", parent: "run1", runtimeAssessment },
+      ],
+    }).expect(200);
+
+    const res = await request(ctx.app).get("/api/workspaces/schedule").set("Authorization", ctx.auth).expect(200);
+    expect(res.body.specs[0].focus_task_runtime_assessment).toEqual(runtimeAssessment);
+  });
+
   it("다른 유저의 spec은 섞이지 않는다", async () => {
     const ctx = await bootApp();
     await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }], ctx);

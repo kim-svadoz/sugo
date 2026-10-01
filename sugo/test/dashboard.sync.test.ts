@@ -129,6 +129,19 @@ describe("syncRoadmapSnapshot", () => {
     const node = ((received[0].body as { nodes: Array<Record<string, unknown>> }).nodes)[0];
     expect(node.humanBlocker).toMatchObject({ sessionId: "plan-1", resumeAction: "code_done" });
   });
+
+  it("온톨로지 runtime assessment를 Task 노드 sync 계약으로 보낸다", async () => {
+    await syncRoadmapSnapshot("ws1", [{
+      id: "A", title: "A", level: "task", status: "in_progress", dependsOn: [],
+      runtimeAssessment: {
+        projectionSchemaVersion: 1, status: "in_progress", currentStage: "CODE_RUNNING",
+        nextActions: ["code_done"], recommendedAction: "code_done", humanDecisionRequired: false,
+        blockers: [], evidence: [{ id: "analyze", label: "정적 분석 통과 기록", status: "missing", source: "chainInfo" }],
+      },
+    }]);
+    const node = ((received[0].body as { nodes: Array<Record<string, unknown>> }).nodes)[0];
+    expect(node.runtimeAssessment).toMatchObject({ projectionSchemaVersion: 1, currentStage: "CODE_RUNNING", recommendedAction: "code_done" });
+  });
 });
 
 describe("syncCheckpoint", () => {

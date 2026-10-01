@@ -98,6 +98,7 @@ export interface ScheduledSpec {
   focus_task_note?: string | null;
   focus_task_updated_at?: string | null;
   focus_task_work_result?: unknown;
+  focus_task_runtime_assessment?: import("../lib/taskGuidance.js").RuntimeAssessment | null;
   focus_task_blocker_decision?: BlockerDecision | null;
   focus_task_human_blocker?: HumanBlocker | null;
 }

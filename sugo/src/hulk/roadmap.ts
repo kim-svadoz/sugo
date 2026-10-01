@@ -7,6 +7,7 @@ import { mergeRoadmapOwnership, readySet, topoSort } from "./roadmapGraph.js";
 import { roadmapFilePath, roadmapLockPath, workspaceDir } from "../work/storage.js";
 import type { HumanBlocker, RoadmapFile, RoadmapLineageEntry, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus, RoadmapWorkResult, Task } from "./types.js";
 import { requirementNodeId } from "./roadmapReq.js";
+import type { SessionAssessment } from "../ontology/sessionAssessment.js";
 
 async function readRoadmapFile(workspace: string): Promise<RoadmapFile> {
   try {
@@ -262,6 +263,20 @@ export async function updateRoadmapNodeStatus(
     if (!node) return { ok: false, error: "NODE_NOT_FOUND", message: `노드를 찾을 수 없습니다: ${id}` };
     node.status = status;
     if (result) node.result = result;
+    await writeRoadmapFile(workspace, file);
+    return { ok: true };
+  });
+}
+
+export async function updateRoadmapNodeRuntimeAssessment(
+  workspace: string,
+  id: string,
+  runtimeAssessment: SessionAssessment,
+): Promise<RoadmapMutationResult> {
+  return withRoadmap(workspace, async (file) => {
+    const node = file.nodes.find((candidate) => candidate.id === id && candidate.level === "task");
+    if (!node) return { ok: false, error: "NODE_NOT_FOUND", message: `Task를 찾을 수 없습니다: ${id}` };
+    node.runtimeAssessment = runtimeAssessment;
     await writeRoadmapFile(workspace, file);
     return { ok: true };
   });

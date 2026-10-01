@@ -7,12 +7,27 @@ type WorkResultLike = {
 export type GuidanceKind = "draft" | "ready" | "in_progress" | "blocked" | "attention" | "done" | "pending";
 export type GuidanceAction = "open_canvas" | "review_result" | "create_pr" | "continue_patch" | "write_spec" | "start_feat" | "none";
 
+export interface RuntimeAssessment {
+  projectionSchemaVersion: 1;
+  status: "in_progress" | "blocked" | "completed" | "cancelled";
+  currentStage: string;
+  nextActions: string[];
+  recommendedAction: string | null;
+  humanDecisionRequired: boolean;
+  blockers: string[];
+  evidence: unknown[];
+  blockingReason?: string;
+  blockedNextStep?: string;
+  resumesAt?: string;
+}
+
 export interface TaskGuidanceInput {
   status: string;
   manual_status?: string | null;
   note?: string | null;
   updated_at?: string | null;
   work_result?: WorkResultLike | unknown;
+  runtime_assessment?: RuntimeAssessment | null;
 }
 
 export interface TaskGuidance {
@@ -41,7 +56,55 @@ function ageHours(value: string | null | undefined, now: number): number | null 
   return Number.isNaN(parsed) ? null : Math.max(0, (now - parsed) / 3_600_000);
 }
 
+const ACTION_LABELS: Record<string, string> = {
+  prd: "SPEC 작성",
+  baseline_capture: "Baseline 증거 기록",
+  contract_done: "계약 테스트 완료",
+  code_done: "구현 완료",
+  test_done: "테스트 완료",
+  review_done: "검증 완료",
+  commit: "Work Result 작성",
+};
+
+function guidanceFromAssessment(assessment: RuntimeAssessment): TaskGuidance {
+  const kind: GuidanceKind = assessment.status === "blocked"
+    ? "blocked"
+    : assessment.status === "completed"
+      ? "done"
+      : assessment.status === "cancelled"
+        ? "attention"
+        : "in_progress";
+  const label = assessment.status === "blocked" ? "차단"
+    : assessment.status === "completed" ? "완료"
+      : assessment.status === "cancelled" ? "취소됨" : "진행중";
+  const reason = assessment.blockingReason
+    ?? assessment.blockers[0]
+    ?? (assessment.status === "completed" ? "Sugo 파이프라인이 완료되었습니다."
+      : assessment.status === "cancelled" ? "작업 세션이 취소되었습니다."
+        : "Sugo 파이프라인이 다음 게이트를 기다리고 있습니다.");
+  const nextAction = assessment.humanDecisionRequired && assessment.resumesAt
+    ? `결정 입력 후 ${assessment.resumesAt} 재개`
+    : assessment.recommendedAction
+      ? (ACTION_LABELS[assessment.recommendedAction] ?? assessment.recommendedAction)
+      : assessment.status === "completed" ? "완료 결과 확인" : "상태 확인";
+  return {
+    kind,
+    label,
+    currentStage: assessment.currentStage,
+    reason,
+    nextAction,
+    blockedNextStep: assessment.blockedNextStep
+      ?? (assessment.status === "blocked" ? "결정이 반영되기 전에는 다음 단계로 진행하지 않습니다."
+        : assessment.status === "completed" ? "추가 변경이 없다면 별도 행동은 필요하지 않습니다."
+          : "현재 게이트가 완료되기 전에는 다음 단계로 진행하지 않습니다."),
+    action: assessment.status === "cancelled" ? "none" : "open_canvas",
+  };
+}
+
 export function taskGuidance(node: TaskGuidanceInput, now = Date.now()): TaskGuidance {
+  if (node.runtime_assessment?.projectionSchemaVersion === 1) {
+    return guidanceFromAssessment(node.runtime_assessment);
+  }
   const status = (node.manual_status ?? node.status ?? "pending").toLowerCase();
   const workResult = parsedWorkResult(node.work_result);
   const staleHours = status === "in_progress" ? ageHours(node.updated_at, now) : null;
@@ -124,9 +187,17 @@ export interface ScheduleAttentionInput {
   focus_task_note?: string | null;
   focus_task_updated_at?: string | null;
   focus_task_work_result?: unknown;
+  focus_task_runtime_assessment?: RuntimeAssessment | null;
 }
 
 export function scheduleAttention(spec: ScheduleAttentionInput, now = Date.now()): TaskGuidance {
+  if (spec.focus_task_runtime_assessment?.projectionSchemaVersion === 1) {
+    return taskGuidance({
+      status: spec.focus_task_status ?? "pending",
+      work_result: spec.focus_task_work_result,
+      runtime_assessment: spec.focus_task_runtime_assessment,
+    }, now);
+  }
   if ((spec.blocked_task_count ?? 0) > 0) {
     return taskGuidance({ status: "blocked", note: spec.focus_task_note }, now);
   }

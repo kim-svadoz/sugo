@@ -8,7 +8,7 @@ import { seedUserToken } from "./testAuth.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
-async function appWithNodes(nodes: Array<{ id: string; level: string; status?: string; dependsOn?: string[]; note?: string; humanBlocker?: unknown }>) {
+async function appWithNodes(nodes: Array<{ id: string; level: string; status?: string; dependsOn?: string[]; note?: string; humanBlocker?: unknown; runtimeAssessment?: unknown }>) {
   const db = createSqliteClient();
   await db.execScript(schema);
   const { app } = await createApp(db);
@@ -18,12 +18,29 @@ async function appWithNodes(nodes: Array<{ id: string; level: string; status?: s
     .send({
       userId: "u1",
       workspaceName: "ws1",
-      nodes: nodes.map((n) => ({ id: n.id, title: n.id, level: n.level, status: n.status ?? "pending", dependsOn: n.dependsOn, note: n.note, humanBlocker: n.humanBlocker })),
+      nodes: nodes.map((n) => ({ id: n.id, title: n.id, level: n.level, status: n.status ?? "pending", dependsOn: n.dependsOn, note: n.note, humanBlocker: n.humanBlocker, runtimeAssessment: n.runtimeAssessment })),
     });
   return { app, db, auth };
 }
 
 describe("blocked task decision", () => {
+  it("round-trips the plugin runtime assessment and old-plugin re-sync does not erase it", async () => {
+    const runtimeAssessment = {
+      projectionSchemaVersion: 1, status: "blocked", currentStage: "CODE_RUNNING",
+      nextActions: [], recommendedAction: null, humanDecisionRequired: true,
+      blockers: ["승인 필요"], evidence: [], blockingReason: "승인 필요",
+    };
+    const { app, auth } = await appWithNodes([{ id: "assessed-task", level: "task", status: "blocked", runtimeAssessment }]);
+
+    await request(app)
+      .post("/api/sync/roadmap").set("Authorization", auth)
+      .send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "assessed-task", title: "assessed-task", level: "task", status: "blocked" }] })
+      .expect(200);
+
+    const roadmap = await request(app).get("/api/workspaces/ws1/roadmap").query({ userId: "u1" }).set("Authorization", auth).expect(200);
+    expect(roadmap.body.nodes.find((node: { id: string }) => node.id === "assessed-task").runtime_assessment).toEqual(runtimeAssessment);
+  });
+
   it("stores a human decision without pretending that the task resumed, and survives plugin re-sync", async () => {
     const humanBlocker = { schemaVersion: 1, sessionId: "plan-1", stage: "CODE_RUNNING", resumeAction: "code_done", summary: "승인 정책 구현 중", question: "승인자는?", context: ["기준 없음"], options: [{ id: "lead", label: "팀장", impact: "통제 강화" }], blockedNextStep: "권한 검사", createdAt: "2026-09-29" };
     const { app, auth } = await appWithNodes([{ id: "blocked-task", level: "task", status: "blocked", note: "승인 금액 기준 미확정", humanBlocker }]);

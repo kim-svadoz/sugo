@@ -4,6 +4,24 @@ import { scheduleAttention, taskGuidance } from "./taskGuidance.js";
 const now = Date.parse("2026-09-29T12:00:00.000Z");
 
 describe("task guidance", () => {
+  it("버전된 runtime assessment가 있으면 상태·단계·다음 행동을 추측하지 않고 그대로 사용한다", () => {
+    expect(taskGuidance({
+      status: "in_progress",
+      runtime_assessment: {
+        projectionSchemaVersion: 1, status: "blocked", currentStage: "REVIEW_RUNNING",
+        nextActions: [], recommendedAction: null, humanDecisionRequired: true,
+        blockers: ["배포 승인 필요"], evidence: [], blockingReason: "배포 승인 필요",
+        blockedNextStep: "문서화", resumesAt: "review_done",
+      },
+    }, now)).toMatchObject({
+      kind: "blocked",
+      currentStage: "REVIEW_RUNNING",
+      reason: "배포 승인 필요",
+      nextAction: "결정 입력 후 review_done 재개",
+      blockedNextStep: "문서화",
+    });
+  });
+
   it("차단은 이유와 해소 전 진행 불가를 가장 먼저 보여준다", () => {
     expect(taskGuidance({ status: "blocked", note: "외부 API 정책 확인 대기" }, now)).toMatchObject({
       kind: "blocked",

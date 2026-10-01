@@ -14,10 +14,12 @@ import {
   updateRoadmapNodeStatus,
   blockRoadmapNodeForHuman,
   resumeRoadmapNodeWithDecision,
+  updateRoadmapNodeRuntimeAssessment,
 } from "../hulk/roadmap.js";
 import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../hulk/types.js";
 import { fetchBlockerDecision } from "../dashboard/fetch.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
+import { assessSession } from "../ontology/sessionAssessment.js";
 
 export const sugoRoadmapInputSchema = {
   action: z.enum([
@@ -160,6 +162,7 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       if (!result.ok) return errorResult(result.error!, result.message!);
       session.data.humanDecisionGate = { workspace: args.workspace, taskId: args.id, blocker };
       await saveSession(session);
+      await updateRoadmapNodeRuntimeAssessment(args.workspace, args.id, assessSession(session));
       return ok({ awaitingHumanDecision: true, node: await getRoadmapNode(args.workspace, args.id) });
     }
     case "resume_with_decision": {
@@ -183,6 +186,7 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
         lastHumanDecision: remote.decision,
       };
       await saveSession(session);
+      await updateRoadmapNodeRuntimeAssessment(args.workspace, args.id, assessSession(session));
       return ok({
         decision: remote.decision,
         resumeAction: remote.blocker?.resumeAction,

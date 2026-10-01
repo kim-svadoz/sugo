@@ -82,6 +82,16 @@ describe("GET /api/workspaces", () => {
     expect(res.body.workspaces[0]).toMatchObject({ attentionCount: 2, attentionLabel: "차단 1건" });
   });
 
+  it("Workspace 요약도 raw status보다 versioned runtime assessment를 우선한다", async () => {
+    const { app, db, auth } = await seededApp();
+    await db.exec("UPDATE sugo_roadmap_nodes SET runtime_assessment = ? WHERE id = 't1'", [JSON.stringify({
+      projectionSchemaVersion: 1, status: "completed", currentStage: "DONE", nextActions: [],
+      recommendedAction: null, humanDecisionRequired: false, blockers: [], evidence: [],
+    })]);
+    const res = await request(app).get("/api/workspaces").set("Authorization", auth).expect(200);
+    expect(res.body.workspaces[0].roadmap).toEqual({ total: 2, done: 2, active: 0 });
+  });
+
   it("401s without an API token", async () => {
     const { app } = await seededApp();
     await request(app).get("/api/workspaces").expect(401);

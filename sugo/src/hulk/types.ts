@@ -142,6 +142,8 @@ export interface RoadmapNode {
   specPath?: string;
   note?: string;
   humanBlocker?: HumanBlocker;
+  /** Ontology projection v1. 플러그인이 계산하고 Dashboard는 해석을 복제하지 않고 소비한다. */
+  runtimeAssessment?: import("../ontology/sessionAssessment.js").SessionAssessment;
   result?: RoadmapNodeResult;
   workResult?: RoadmapWorkResult;
   lineage?: RoadmapLineageEntry[];

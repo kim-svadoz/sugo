@@ -143,6 +143,7 @@ export interface RoadmapNodeWire {
   workResult?: unknown;
   lineage?: unknown;
   humanBlocker?: unknown;
+  runtimeAssessment?: unknown;
 }
 
 /** RoadmapNode → 대시보드 roadmap 노드 wire. 필드명이 이미 camelCase로 정렬돼 있어(dependsOn/specPath/
@@ -161,6 +162,7 @@ export function serializeRoadmapNode(node: RoadmapNode): RoadmapNodeWire {
     workResult: node.workResult,
     lineage: node.lineage,
     humanBlocker: node.humanBlocker,
+    runtimeAssessment: node.runtimeAssessment,
   };
 }
 

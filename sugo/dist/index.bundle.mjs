@@ -24001,7 +24001,8 @@ function serializeRoadmapNode(node) {
     specPath: node.specPath,
     workResult: node.workResult,
     lineage: node.lineage,
-    humanBlocker: node.humanBlocker
+    humanBlocker: node.humanBlocker,
+    runtimeAssessment: node.runtimeAssessment
   };
 }
 function serializeRoadmapSnapshot(userId, workspaceName, nodes) {
@@ -27921,7 +27922,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.12.0" : "0.0.0-dev";
+  return true ? "0.13.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29606,6 +29607,15 @@ async function updateRoadmapNodeStatus(workspace, id, status, result2) {
     return { ok: true };
   });
 }
+async function updateRoadmapNodeRuntimeAssessment(workspace, id, runtimeAssessment) {
+  return withRoadmap(workspace, async (file) => {
+    const node = file.nodes.find((candidate) => candidate.id === id && candidate.level === "task");
+    if (!node) return { ok: false, error: "NODE_NOT_FOUND", message: `Task\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${id}` };
+    node.runtimeAssessment = runtimeAssessment;
+    await writeRoadmapFile(workspace, file);
+    return { ok: true };
+  });
+}
 async function blockRoadmapNodeForHuman(workspace, id, blocker) {
   return withRoadmap(workspace, async (file) => {
     const node = file.nodes.find((candidate) => candidate.id === id);
@@ -30560,6 +30570,95 @@ function renderWorkResultMarkdown(report) {
   ].join("\n");
 }
 
+// src/ontology/sessionAssessment.ts
+var OBSERVATION_ACTIONS = /* @__PURE__ */ new Set(["status", "cancel", "start"]);
+function evidenceFor(session, action) {
+  if (!action) return [];
+  const chain = session.data.chainInfo;
+  const baseline = () => ({
+    id: "baseline",
+    label: "Baseline \uC2E4\uD589 \uC99D\uAC70",
+    status: session.data.baselineGate?.evidence ? "present" : "missing",
+    source: "session.data.baselineGate.evidence"
+  });
+  const contract = () => ({
+    id: "contract-red-green",
+    label: "\uACC4\uC57D \uD14C\uC2A4\uD2B8 red\u2192green \uC99D\uAC70",
+    status: (chain.contractTests ?? []).some((record2) => record2.redExitCode !== void 0 && record2.greenExitCode !== void 0) ? "present" : "missing",
+    source: "session.data.chainInfo.contractTests"
+  });
+  switch (action) {
+    case "baseline_capture":
+      return [baseline()];
+    case "contract_done":
+      return [contract()];
+    case "code_done":
+      return [
+        ...session.data.baselineGate?.required ? [baseline()] : [],
+        {
+          id: "analyze",
+          label: "\uC815\uC801 \uBD84\uC11D \uD1B5\uACFC \uAE30\uB85D",
+          status: chain.analyzeAttempts > 0 && chain.analyzePassed === true ? "present" : "missing",
+          source: "session.data.chainInfo.analyzeAttempts + analyzePassed"
+        }
+      ];
+    case "test_done":
+      return [{
+        id: "test",
+        label: "\uD14C\uC2A4\uD2B8 \uC2E4\uD589 \uC99D\uAC70",
+        status: chain.testEvidence ? "present" : "missing",
+        source: "session.data.chainInfo.testEvidence"
+      }];
+    case "review_done":
+      return [
+        { id: "test", label: "\uD14C\uC2A4\uD2B8 \uC2E4\uD589 \uC99D\uAC70", status: chain.testEvidence ? "present" : "missing", source: "session.data.chainInfo.testEvidence" },
+        { id: "validation", label: "\uAC80\uC99D \uACB0\uACFC", status: chain.lastValidation ? "present" : "missing", source: "session.data.chainInfo.lastValidation" },
+        { id: "lethal-trifecta", label: "Lethal Trifecta \uC810\uAC80", status: chain.lastLethalTrifectaCheck ? "present" : "missing", source: "session.data.chainInfo.lastLethalTrifectaCheck" },
+        {
+          id: "runtime",
+          label: "\uB7F0\uD0C0\uC784\xB7\uBC30\uC120 \uAC80\uC99D \uAE30\uB85D",
+          status: chain.runtimeVerified !== void 0 || chain.wiringVerified !== void 0 ? "present" : "missing",
+          source: "session.data.chainInfo.runtimeVerified + wiringVerified"
+        },
+        ...chain.contractTests?.length ? [contract()] : []
+      ];
+    case "commit":
+      return [{
+        id: "work-result",
+        label: "Work Result",
+        status: chain.workResultPath || chain.workResultReport ? "present" : "missing",
+        source: "session.data.chainInfo.workResultPath + workResultReport"
+      }];
+    default:
+      return [];
+  }
+}
+function assessSession(session) {
+  const decision = session.data.humanDecisionGate?.blocker;
+  const status = session.cancelledAt ? "cancelled" : session.state === "DONE" ? "completed" : decision ? "blocked" : "in_progress";
+  const terminalOrBlocked = status !== "in_progress";
+  const nextActions = terminalOrBlocked ? [] : ALLOWED_ACTIONS_BY_STATE[session.state].filter((action) => !OBSERVATION_ACTIONS.has(action));
+  const recommendedAction = terminalOrBlocked ? null : remainingSteps(session.state)[0]?.action ?? nextActions[0] ?? null;
+  const measuredBlockers = currentBlockers(session.data.chainInfo);
+  const blockers = status === "completed" || status === "cancelled" ? [] : decision ? [decision.summary, ...measuredBlockers] : measuredBlockers;
+  return {
+    projectionSchemaVersion: 1,
+    status,
+    currentStage: session.state,
+    nextActions,
+    recommendedAction,
+    humanDecisionRequired: Boolean(decision),
+    blockers,
+    evidence: evidenceFor(session, recommendedAction),
+    ...decision ? {
+      blockingReason: decision.summary,
+      blockedNextStep: decision.blockedNextStep,
+      resumesAt: decision.resumeAction,
+      decision: { question: decision.question, context: decision.context, options: decision.options }
+    } : {}
+  };
+}
+
 // src/tools/sugoPlan.ts
 var sugoPlanInputSchema = {
   action: external_exports.enum(planArgsActionEnum).describe("\uD30C\uC774\uD504\uB77C\uC778 \uC0C1\uD0DC\uBA38\uC2E0 \uC561\uC158"),
@@ -31428,6 +31527,13 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action !== "status") {
     await saveSession(session);
+    if (session.data.hulkWorkspace && session.data.hulkTaskId) {
+      await updateRoadmapNodeRuntimeAssessment(
+        session.data.hulkWorkspace,
+        session.data.hulkTaskId,
+        assessSession(session)
+      );
+    }
   }
   if (existing && session.data.hulkWorkspace) {
     const transitionActivity = activityForPlanTransition(action, existing.state, session.featureName);
@@ -31797,6 +31903,7 @@ async function handleSugoRoadmap(rawArgs) {
       if (!result2.ok) return errorResult13(result2.error, result2.message);
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };
       await saveSession(session);
+      await updateRoadmapNodeRuntimeAssessment(args2.workspace, args2.id, assessSession(session));
       return ok4({ awaitingHumanDecision: true, node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "resume_with_decision": {
@@ -31820,6 +31927,7 @@ async function handleSugoRoadmap(rawArgs) {
         lastHumanDecision: remote.decision
       };
       await saveSession(session);
+      await updateRoadmapNodeRuntimeAssessment(args2.workspace, args2.id, assessSession(session));
       return ok4({
         decision: remote.decision,
         resumeAction: remote.blocker?.resumeAction,
@@ -32674,95 +32782,6 @@ var ONTOLOGY_MODEL_IDENTITY = Object.freeze({
   hashAlgorithm: "sha256",
   modelHash: deterministicModelHash(HASHED_MODEL)
 });
-
-// src/ontology/sessionAssessment.ts
-var OBSERVATION_ACTIONS = /* @__PURE__ */ new Set(["status", "cancel", "start"]);
-function evidenceFor(session, action) {
-  if (!action) return [];
-  const chain = session.data.chainInfo;
-  const baseline = () => ({
-    id: "baseline",
-    label: "Baseline \uC2E4\uD589 \uC99D\uAC70",
-    status: session.data.baselineGate?.evidence ? "present" : "missing",
-    source: "session.data.baselineGate.evidence"
-  });
-  const contract = () => ({
-    id: "contract-red-green",
-    label: "\uACC4\uC57D \uD14C\uC2A4\uD2B8 red\u2192green \uC99D\uAC70",
-    status: (chain.contractTests ?? []).some((record2) => record2.redExitCode !== void 0 && record2.greenExitCode !== void 0) ? "present" : "missing",
-    source: "session.data.chainInfo.contractTests"
-  });
-  switch (action) {
-    case "baseline_capture":
-      return [baseline()];
-    case "contract_done":
-      return [contract()];
-    case "code_done":
-      return [
-        ...session.data.baselineGate?.required ? [baseline()] : [],
-        {
-          id: "analyze",
-          label: "\uC815\uC801 \uBD84\uC11D \uD1B5\uACFC \uAE30\uB85D",
-          status: chain.analyzeAttempts > 0 && chain.analyzePassed === true ? "present" : "missing",
-          source: "session.data.chainInfo.analyzeAttempts + analyzePassed"
-        }
-      ];
-    case "test_done":
-      return [{
-        id: "test",
-        label: "\uD14C\uC2A4\uD2B8 \uC2E4\uD589 \uC99D\uAC70",
-        status: chain.testEvidence ? "present" : "missing",
-        source: "session.data.chainInfo.testEvidence"
-      }];
-    case "review_done":
-      return [
-        { id: "test", label: "\uD14C\uC2A4\uD2B8 \uC2E4\uD589 \uC99D\uAC70", status: chain.testEvidence ? "present" : "missing", source: "session.data.chainInfo.testEvidence" },
-        { id: "validation", label: "\uAC80\uC99D \uACB0\uACFC", status: chain.lastValidation ? "present" : "missing", source: "session.data.chainInfo.lastValidation" },
-        { id: "lethal-trifecta", label: "Lethal Trifecta \uC810\uAC80", status: chain.lastLethalTrifectaCheck ? "present" : "missing", source: "session.data.chainInfo.lastLethalTrifectaCheck" },
-        {
-          id: "runtime",
-          label: "\uB7F0\uD0C0\uC784\xB7\uBC30\uC120 \uAC80\uC99D \uAE30\uB85D",
-          status: chain.runtimeVerified !== void 0 || chain.wiringVerified !== void 0 ? "present" : "missing",
-          source: "session.data.chainInfo.runtimeVerified + wiringVerified"
-        },
-        ...chain.contractTests?.length ? [contract()] : []
-      ];
-    case "commit":
-      return [{
-        id: "work-result",
-        label: "Work Result",
-        status: chain.workResultPath || chain.workResultReport ? "present" : "missing",
-        source: "session.data.chainInfo.workResultPath + workResultReport"
-      }];
-    default:
-      return [];
-  }
-}
-function assessSession(session) {
-  const decision = session.data.humanDecisionGate?.blocker;
-  const status = session.cancelledAt ? "cancelled" : session.state === "DONE" ? "completed" : decision ? "blocked" : "in_progress";
-  const terminalOrBlocked = status !== "in_progress";
-  const nextActions = terminalOrBlocked ? [] : ALLOWED_ACTIONS_BY_STATE[session.state].filter((action) => !OBSERVATION_ACTIONS.has(action));
-  const recommendedAction = terminalOrBlocked ? null : remainingSteps(session.state)[0]?.action ?? nextActions[0] ?? null;
-  const measuredBlockers = currentBlockers(session.data.chainInfo);
-  const blockers = status === "completed" || status === "cancelled" ? [] : decision ? [decision.summary, ...measuredBlockers] : measuredBlockers;
-  return {
-    projectionSchemaVersion: 1,
-    status,
-    currentStage: session.state,
-    nextActions,
-    recommendedAction,
-    humanDecisionRequired: Boolean(decision),
-    blockers,
-    evidence: evidenceFor(session, recommendedAction),
-    ...decision ? {
-      blockingReason: decision.summary,
-      blockedNextStep: decision.blockedNextStep,
-      resumesAt: decision.resumeAction,
-      decision: { question: decision.question, context: decision.context, options: decision.options }
-    } : {}
-  };
-}
 
 // src/ontology/runtimeProjection.ts
 var DECLARED_LINKS = new Set(LINK_TYPES.map((link) => link.name));

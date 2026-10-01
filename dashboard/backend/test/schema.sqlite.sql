@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (
   blocker_answered_by TEXT,
   blocker_answered_at TEXT,
   blocker_context TEXT,
+  runtime_assessment TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   synced_at TEXT,

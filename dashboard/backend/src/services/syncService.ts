@@ -188,6 +188,32 @@ export async function ensureRoadmapBlockerDecisionColumns(db: DbClient): Promise
   return blockerDecisionColsState;
 }
 
+let runtimeAssessmentColState: boolean | null = null;
+
+export function __resetRuntimeAssessmentColState(): void {
+  runtimeAssessmentColState = null;
+}
+
+/** 플러그인 Ontology projection snapshot. 구 DB에서는 additive TEXT/JSON 컬럼으로 자가보강한다. */
+export async function ensureRoadmapRuntimeAssessmentColumn(db: DbClient): Promise<boolean> {
+  if (runtimeAssessmentColState !== null) return runtimeAssessmentColState;
+  try {
+    await db.query("SELECT runtime_assessment FROM sugo_roadmap_nodes LIMIT 1");
+    runtimeAssessmentColState = true;
+    return true;
+  } catch {
+    // 기존 설치본에는 없음.
+  }
+  try {
+    await db.exec("ALTER TABLE sugo_roadmap_nodes ADD COLUMN runtime_assessment TEXT NULL");
+    runtimeAssessmentColState = true;
+    return true;
+  } catch {
+    runtimeAssessmentColState = false;
+    return false;
+  }
+}
+
 /**
  * §3.3 `sugo_checkpoints.created_at` 자가보강 — 같은 패턴. 체크포인트 목록을 페이지네이션할 때
  * "처음 만든 순"으로 정렬할 기준이 필요해서 추가했다(2026-09-23). CLI 재동기화(`syncCheckpoint`)는
@@ -559,6 +585,7 @@ export interface RoadmapNodeInput {
   workResult?: unknown;
   lineage?: unknown;
   humanBlocker?: unknown;
+  runtimeAssessment?: unknown;
 }
 
 interface RoadmapRow {
@@ -579,6 +606,7 @@ export async function syncRoadmap(
   nodes: RoadmapNodeInput[]
 ): Promise<void> {
   await ensureUser(db, userId);
+  const hasRuntimeAssessment = await ensureRoadmapRuntimeAssessmentColumn(db);
 
   const existingRows = await db.query<RoadmapRow>(
     "SELECT id, level, depends_on FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
@@ -609,12 +637,13 @@ export async function syncRoadmap(
     const workResultJson = node.workResult !== undefined ? JSON.stringify(node.workResult) : undefined;
     const lineageJson = node.lineage !== undefined ? JSON.stringify(node.lineage) : undefined;
     const blockerContextJson = node.humanBlocker !== undefined ? JSON.stringify(node.humanBlocker) : null;
+    const runtimeAssessmentJson = node.runtimeAssessment !== undefined ? JSON.stringify(node.runtimeAssessment) : null;
 
     if (!existing) {
       await db.exec(
         `INSERT INTO sugo_roadmap_nodes
-         (id, user_id, workspace_name, title, level, status, depends_on, parent, ref, note, spec_path, work_result, lineage, blocker_context, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+         (id, user_id, workspace_name, title, level, status, depends_on, parent, ref, note, spec_path, work_result, lineage, blocker_context${hasRuntimeAssessment ? ", runtime_assessment" : ""}, synced_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasRuntimeAssessment ? ", ?" : ""}, CURRENT_TIMESTAMP)`,
         [
           node.id,
           userId,
@@ -630,6 +659,7 @@ export async function syncRoadmap(
           workResultJson ?? null,
           lineageJson ?? null,
           blockerContextJson,
+          ...(hasRuntimeAssessment ? [runtimeAssessmentJson] : []),
         ]
       );
       continue;
@@ -637,6 +667,12 @@ export async function syncRoadmap(
 
     const sets = ["title = ?", "level = ?", "status = ?", "parent = ?", "ref = ?", "note = ?", "spec_path = ?", "blocker_context = ?", "synced_at = CURRENT_TIMESTAMP"];
     const params: unknown[] = [node.title, node.level, node.status, node.parent ?? null, node.ref ?? null, node.note ?? null, node.specPath ?? null, blockerContextJson];
+    // 구버전 플러그인은 필드를 보내지 않는다. 이때 마지막으로 저장된 신형 projection을
+    // null로 지우지 않아야 롤링 업데이트 중에도 Dashboard 판정이 흔들리지 않는다.
+    if (hasRuntimeAssessment && node.runtimeAssessment !== undefined) {
+      sets.splice(sets.length - 1, 0, "runtime_assessment = ?");
+      params.push(runtimeAssessmentJson);
+    }
     if (workResultJson !== undefined) {
       sets.push("work_result = ?");
       params.push(workResultJson);
