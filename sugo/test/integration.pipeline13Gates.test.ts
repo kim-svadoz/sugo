@@ -18,6 +18,8 @@ import { handleSugoRecordContractEvidence } from "../src/tools/sugoRecordContrac
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
 import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrifecta.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
+import { loadSession } from "../src/session.js";
+import { validateOperationalContract } from "../src/ontology/contractValidation.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
@@ -93,6 +95,9 @@ describe("13게이트 유기적 완주 — feat 파이프라인 (Spring Boot + b
     const skip = await call(handleSugoPlan, { action: "code_start", sessionId });
     expect(skip.isError).toBe(true);
     expect(skip.data.errorCode).toBe("PREREQUISITE_FAILED");
+    const afterRejectedSkip = await loadSession(sessionId);
+    expect(afterRejectedSkip.data.lastTransition).toMatchObject({ action: "start", fromState: "INIT", toState: "SCAN" });
+    expect(validateOperationalContract(afterRejectedSkip)).toEqual({ valid: true, violations: [] });
 
     await call(handleSugoPlan, { action: "clarify", sessionId });
 
@@ -160,6 +165,7 @@ describe("13게이트 유기적 완주 — feat 파이프라인 (Spring Boot + b
     expect(badCoverage.data.errorCode).toBe("PRD_COVERAGE_INCOMPLETE");
     const testDone = await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true, coverageMap: FULL_COVERAGE });
     expect(testDone.data.state).toBe("TEST_DONE");
+    expect(validateOperationalContract(await loadSession(sessionId))).toEqual({ valid: true, violations: [] });
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
     await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
@@ -199,6 +205,9 @@ describe("13게이트 유기적 완주 — feat 파이프라인 (Spring Boot + b
     expect(commit.isError).toBe(false);
     expect(commit.data.state).toBe("DONE");
     expect(commit.data.completionGrade).toBe("verified");
+    const completed = await loadSession(sessionId);
+    expect(completed.data.lastTransition).toMatchObject({ action: "commit", fromState: "COMMIT_PENDING", toState: "DONE" });
+    expect(validateOperationalContract(completed)).toEqual({ valid: true, violations: [] });
   });
 });
 

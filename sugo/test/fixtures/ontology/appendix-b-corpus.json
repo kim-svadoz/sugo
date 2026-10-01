@@ -1,0 +1,18 @@
+[
+  { "id": "order", "modelGateIds": [], "proofFiles": ["ontology.gateConsistency.test.ts", "integration.pipeline13Gates.test.ts"] },
+  { "id": "four-layer-consistency", "modelGateIds": [], "proofFiles": ["ontology.gateConsistency.test.ts"] },
+  { "id": "baseline", "modelGateIds": ["BASELINE_NOT_GREEN"], "proofFiles": ["integration.pipeline13Gates.test.ts"] },
+  { "id": "contract", "modelGateIds": ["CONTRACT_NOT_STARTED", "CONTRACT_EVIDENCE_INCOMPLETE"], "proofFiles": ["integration.pipeline13Gates.test.ts", "contractEvidence.test.ts"] },
+  { "id": "analyze", "modelGateIds": ["ANALYZE_NOT_CALLED"], "proofFiles": ["integration.pipeline13Gates.test.ts", "analyze.test.ts"] },
+  { "id": "test-evidence", "modelGateIds": ["TEST_EVIDENCE_MISSING", "TEST_EVIDENCE_MISMATCH", "TEST_NOT_FULL_VERIFY"], "proofFiles": ["testEvidence.test.ts"] },
+  { "id": "wiring", "modelGateIds": ["WIRING_TEST_MISSING"], "proofFiles": ["integration.pipeline13Gates.test.ts", "gates.test.ts"] },
+  { "id": "registration-glue", "modelGateIds": ["REGISTRATION_GLUE_NOT_CHECKED"], "proofFiles": ["integration.pipeline13Gates.test.ts"] },
+  { "id": "boot", "modelGateIds": ["BOOT_GATE_FAILED"], "proofFiles": ["gates.test.ts", "integration.pipeline13Gates.test.ts"] },
+  { "id": "user-confirmation", "modelGateIds": ["USER_CONFIRMATION_REQUIRED"], "proofFiles": ["gates.reviewDone.test.ts", "integration.pipeline13Gates.test.ts"] },
+  { "id": "summary-quality", "modelGateIds": ["SUMMARY_TOO_FEW_LINES", "SUMMARY_TOO_SHORT"], "proofFiles": ["gates.reviewDone.test.ts"] },
+  { "id": "runtime", "modelGateIds": ["RUNTIME_UNVERIFIED_GATE_FAILED", "RUNTIME_CLAIM_CONTRADICTS_EVIDENCE"], "proofFiles": ["gates.reviewDone.test.ts", "integration.pipeline13Gates.test.ts"] },
+  { "id": "prd-coverage", "modelGateIds": ["PRD_COVERAGE_INCOMPLETE"], "proofFiles": ["integration.pipeline13Gates.test.ts", "consistency.test.ts"] },
+  { "id": "label-guard", "modelGateIds": ["LABEL_CONTRADICTION"], "proofFiles": ["labelGuard.test.ts", "integration.pipeline13Gates.test.ts"] },
+  { "id": "evidence-reuse", "modelGateIds": ["EVIDENCE_REUSE_FINGERPRINT_MISMATCH"], "proofFiles": ["fingerprint.test.ts"] },
+  { "id": "req-completion", "modelGateIds": ["USER_CONFIRMATION_REQUIRED"], "proofFiles": ["gates.reviewDone.test.ts", "hulk.roadmapReq.test.ts"] }
+]

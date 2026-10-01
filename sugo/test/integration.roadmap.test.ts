@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createServer } from "node:http";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
@@ -9,6 +10,9 @@ import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidenc
 import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrifecta.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 import { handleSugoRoadmap } from "../src/tools/sugoRoadmap.js";
+import { loadSession } from "../src/session.js";
+import { validateOperationalContract } from "../src/ontology/contractValidation.js";
+import { explainSessionBlock } from "../src/ontology/operationalQueries.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
@@ -35,6 +39,8 @@ beforeEach(() => {
 
 afterEach(() => {
   delete process.env.SUGO_HOME_OVERRIDE;
+  delete process.env.SUGO_DASHBOARD_API_URL;
+  delete process.env.SUGO_DASHBOARD_USER_ID;
   rmSync(fakeHome, { recursive: true, force: true });
   rmSync(projectDir, { recursive: true, force: true });
 });
@@ -164,8 +170,40 @@ describe("§8.5 sugo_roadmap — link/unlink/group/backfill (task 레벨 관리)
     expect(forbidden.isError).toBe(true);
     expect(forbidden.data.errorCode).toBe("HUMAN_DECISION_REQUIRED");
 
+    const blockedSession = await loadSession(sessionId);
+    expect(validateOperationalContract(blockedSession)).toEqual({ valid: true, violations: [] });
+    expect(explainSessionBlock(blockedSession)).toMatchObject({
+      blocked: true, reason: "승인 정책 구현 중", resumesAt: "code_done", unresolvedImpact: "권한 검사 구현"
+    });
+
     const status = await call(handleSugoPlan, { action: "status", sessionId });
     expect(status.isError).toBe(false);
+
+    // mock 함수가 아니라 실제 HTTP seam으로 Dashboard 결정 응답을 받아 복구까지 검증한다.
+    const dashboard = createServer((_req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({
+        status: "blocked",
+        blocker: { sessionId, resumeAction: "code_done" },
+        decision: { response: "승인자는 팀장입니다.", answered_by: "tester", answered_at: "2026-10-01T00:00:00.000Z" }
+      }));
+    });
+    await new Promise<void>((resolve) => dashboard.listen(0, "127.0.0.1", resolve));
+    try {
+      const address = dashboard.address();
+      if (!address || typeof address === "string") throw new Error("test dashboard address unavailable");
+      process.env.SUGO_DASHBOARD_API_URL = `http://127.0.0.1:${address.port}`;
+      process.env.SUGO_DASHBOARD_USER_ID = "tester";
+      const resumed = await call(handleSugoRoadmap, { action: "resume_with_decision", workspace: "team-a", id: taskId, sessionId });
+      expect(resumed.isError).toBe(false);
+      expect(resumed.data).toMatchObject({ resumeAction: "code_done", node: { status: "in_progress" } });
+      const resumedSession = await loadSession(sessionId);
+      expect(resumedSession.data.humanDecisionGate).toBeUndefined();
+      expect(validateOperationalContract(resumedSession)).toEqual({ valid: true, violations: [] });
+      expect(explainSessionBlock(resumedSession).blocked).toBe(false);
+    } finally {
+      await new Promise<void>((resolve, reject) => dashboard.close((error) => error ? reject(error) : resolve()));
+    }
   });
 
   it("link는 task 레벨끼리만 허용하고 사이클을 거부한다", async () => {

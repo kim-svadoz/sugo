@@ -1,0 +1,24 @@
+{
+  "id": "plan-legacy-v010",
+  "state": "DONE",
+  "projectPath": "/legacy/project",
+  "featureName": "legacy checkout",
+  "startedAt": "2026-08-01T00:00:00.000Z",
+  "updatedAt": "2026-08-01T01:00:00.000Z",
+  "data": {
+    "mode": "plan",
+    "prdPath": "/legacy/project/sugo/features/20260801/legacy-checkout/prd.md",
+    "hulkWorkspace": "legacy-workspace",
+    "hulkTaskId": "task-legacy-checkout",
+    "chainInfo": {
+      "changedFiles": ["src/checkout.ts"],
+      "analyzeAttempts": 1,
+      "analyzePassed": true,
+      "testPassedState": "pass",
+      "reviewPassed": true,
+      "runtimeVerified": true,
+      "autoLoopRetryCount": 0,
+      "workResultPath": "/legacy/project/sugo/features/20260801/legacy-checkout/work-result.md"
+    }
+  }
+}
