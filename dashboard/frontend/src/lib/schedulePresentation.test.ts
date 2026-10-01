@@ -31,9 +31,8 @@ describe("schedule presentation", () => {
     expect(isManualSpec("spec-feature-checkout")).toBe(false);
   });
 
-  it("날짜 칸은 SPEC 3개까지 스크롤을 끄고 4개부터 내부 스크롤한다", () => {
-    expect(daySpecOverflowClass(3)).toBe("overflow-hidden");
-    expect(daySpecOverflowClass(4)).toBe("overflow-y-auto");
+  it("날짜 칸은 실제 높이를 넘을 때 브라우저가 내부 스크롤한다", () => {
+    expect(daySpecOverflowClass()).toBe("overflow-y-auto");
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("min-h-[26px] shrink-0");
     expect(source).toContain("완료");

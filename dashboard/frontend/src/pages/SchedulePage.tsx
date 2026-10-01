@@ -444,7 +444,7 @@ export function SchedulePage() {
                     </span>
                     {holiday && <span className="truncate text-[9px] text-rose-400" title={holiday}>{holiday}</span>}
                   </div>
-                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1", daySpecOverflowClass(dayChips.length))}>
+                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1", daySpecOverflowClass())}>
                     {dayChips.map((s) => {
                       const style = scheduleCardStyle(colorOf(s.workspace_name));
                       const overdue = key < todayKey && isOpenStatus(s);

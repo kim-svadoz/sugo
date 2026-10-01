@@ -19,7 +19,7 @@ export function isManualSpec(id: string): boolean {
   return id.startsWith("spec-manual-");
 }
 
-/** 3개까지는 스크롤 위치가 남아 첫 카드가 잘리지 않게 고정하고, 4개부터만 스크롤한다. */
-export function daySpecOverflowClass(count: number): "overflow-hidden" | "overflow-y-auto" {
-  return count <= 3 ? "overflow-hidden" : "overflow-y-auto";
+/** 카드 개수가 아니라 실제 셀 높이를 기준으로 브라우저가 필요한 때만 스크롤을 만든다. */
+export function daySpecOverflowClass(): "overflow-y-auto" {
+  return "overflow-y-auto";
 }
