@@ -36,7 +36,7 @@ function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compac
   const guidance = scheduleAttention(spec);
   const tone = ({
     draft: "bg-slate-500/15 text-slate-400",
-    ready: "bg-emerald-500/15 text-emerald-300",
+    ready: "bg-sky-500/15 text-sky-300",
     in_progress: "bg-cyan-500/15 text-cyan-300",
     blocked: "bg-orange-500/20 text-orange-300",
     attention: "bg-amber-500/20 text-amber-300",
