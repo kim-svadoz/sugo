@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { execFile } from "node:child_process";
 import { readFile, rename as renameFile, unlink, writeFile } from "node:fs/promises";
-import { basename, dirname, extname, isAbsolute, join } from "node:path";
+import { basename, dirname, extname, isAbsolute, join, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 import type { DbClient } from "../db/client.js";
 import { ensureWorkspaceDeletedAtColumn } from "./syncService.js";
@@ -638,6 +638,30 @@ export async function getRoadmapSpecDocument(
   const content = await readFile(state.specPath, "utf8").catch(() => null);
   if (content === null) return { ok: false, errorCode: "SPEC_FILE_NOT_FOUND" };
   return { ok: true, specPath: state.specPath, content, locked: state.locked };
+}
+
+const SPEC_ASSET_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+
+/** spec.md가 상대경로로 참조한 이미지. 연결된 spec.md 디렉터리 안의 이미지 파일만 읽는다. */
+export async function readRoadmapSpecDocumentAsset(
+  db: DbClient,
+  userId: string,
+  workspaceName: string,
+  nodeId: string,
+  assetPath: string,
+): Promise<{ ok: true; data: Buffer; ext: string } | { ok: false; errorCode: SpecDocumentError | "ASSET_NOT_FOUND" }> {
+  const state = await specNodeState(db, userId, workspaceName, nodeId);
+  if (!state.ok) return { ok: false, errorCode: state.errorCode };
+  if (!isAbsolute(state.specPath)) return { ok: false, errorCode: "SPEC_FILE_NOT_FOUND" };
+  const base = dirname(state.specPath);
+  const target = resolve(base, assetPath);
+  const ext = extname(target).toLowerCase();
+  if (isAbsolute(assetPath) || !target.startsWith(base + sep) || !SPEC_ASSET_EXTENSIONS.has(ext)) {
+    return { ok: false, errorCode: "ASSET_NOT_FOUND" };
+  }
+  const data = await readFile(target).catch(() => null);
+  if (!data) return { ok: false, errorCode: "ASSET_NOT_FOUND" };
+  return { ok: true, data, ext: ext.slice(1) };
 }
 
 export type UpdateSpecDocumentResult =

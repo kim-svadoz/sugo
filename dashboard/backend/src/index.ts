@@ -69,6 +69,7 @@ export interface AppOverrides {
   localDev?: LocalAuthConfig;
   harnessPath?: string;
   skillsPath?: string;
+  specAttachmentsPath?: string;
 }
 
 export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
@@ -104,6 +105,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const localDev = overrides.localDev ?? config.localDev;
   const harnessPath = overrides.harnessPath ?? config.harnessPath;
   const skillsPath = overrides.skillsPath ?? config.skillsPath;
+  const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
 
   const app = express();
   app.use(corsWhitelist(config.corsOrigins));
@@ -115,7 +117,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
 
   app.use("/api/sync", createSyncRouter(db, sessionSecret));
   app.use("/api/activity", createActivityRouter(db, sessionSecret));
-  app.use("/api/workspaces", createWorkspacesRouter(db, sessionSecret));
+  app.use("/api/workspaces", createWorkspacesRouter(db, sessionSecret, specAttachmentsPath));
   // 공개 SaaS(§Phase 1): GitHub OAuth 로그인 + API 토큰 관리. 기존 OIDC /api/auth보다 먼저 등록.
   app.use("/api/auth/github", createGithubAuthRouter(db, githubOAuth, config.github, sessionSecret, config.frontendUrl));
   if (localDev.enabled) app.use("/api/auth/local", createLocalAuthRouter(db, sessionSecret, frontendUrl, localDev));

@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import { roadmapCounts, roadmapIssues } from "../services/roadmapGraph.js";
 import type { DbClient } from "../db/client.js";
 import { validateBody } from "../schemas/validate.js";
@@ -39,6 +39,7 @@ import {
   getScheduledSpecs,
   getSpecContent,
   getRoadmapSpecDocument,
+  readRoadmapSpecDocumentAsset,
   getTasks,
   getWorkspaceProjectPaths,
   linkRoadmapNodes,
@@ -59,6 +60,14 @@ import {
   updateCheckpoint,
   updateRoadmapSpecDocument,
 } from "../services/workspaceService.js";
+import {
+  IMAGE_TYPES,
+  addSpecAttachment,
+  deleteSpecAttachment,
+  listSpecAttachments,
+  readSpecAttachment,
+  removeSpecAttachments,
+} from "../services/specAttachments.js";
 import { applyCheckpointToProjects, isCheckpointExpired, newCheckpointId } from "../services/checkpointApply.js";
 
 function requireUserId(req: import("express").Request, res: import("express").Response): string | null {
@@ -80,7 +89,17 @@ function respondMutation(res: import("express").Response, result: { ok: true } |
 }
 
 // §3.3: all PUBLIC, userId via query. Dashboard owns roadmap structure/order here.
-export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Router {
+function sendImage(res: import("express").Response, data: Buffer, ext: string) {
+  res.type(ext === "jpg" ? "jpeg" : ext).set("Cache-Control", "no-store").send(data);
+}
+
+function attachmentStatus(errorCode: string): number {
+  if (errorCode === "SPEC_LOCKED_AFTER_FEAT" || errorCode === "TOO_MANY_ATTACHMENTS") return 409;
+  if (errorCode === "NODE_NOT_FOUND" || errorCode === "ATTACHMENT_NOT_FOUND") return 404;
+  return 400;
+}
+
+export function createWorkspacesRouter(db: DbClient, sessionSecret: string, specAttachmentsPath: string): Router {
   const router = Router();
   router.use(requireUser(db, sessionSecret));
 
@@ -403,6 +422,64 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
     res.json(result);
   });
 
+  router.get("/:name/roadmap/spec-document/asset", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+    const assetPath = typeof req.query.path === "string" ? req.query.path : "";
+    if (!nodeId || !assetPath) return void res.status(400).json({ ok: false, errorCode: "NODE_ID_AND_PATH_REQUIRED" });
+    const result = await readRoadmapSpecDocumentAsset(db, userId, req.params.name, nodeId, assetPath);
+    if (!result.ok) return void res.status(result.errorCode === "INVALID_LEVEL" ? 400 : 404).json(result);
+    sendImage(res, result.data, result.ext);
+  });
+
+  // Schedule SPEC에 붙여 넣은 기획 화면. feat 전까지만 추가·삭제할 수 있다.
+  router.get("/:name/roadmap/spec-attachments", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+    if (!nodeId) return void res.status(400).json({ ok: false, errorCode: "NODE_ID_REQUIRED" });
+    const result = await listSpecAttachments(db, specAttachmentsPath, userId, req.params.name, nodeId);
+    if (!result.ok) return void res.status(attachmentStatus(result.errorCode)).json(result);
+    res.json(result);
+  });
+
+  router.post(
+    "/:name/roadmap/spec-attachments",
+    express.raw({ type: Object.keys(IMAGE_TYPES), limit: "10mb" }),
+    async (req, res) => {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+      const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+      if (!nodeId) return void res.status(400).json({ ok: false, errorCode: "NODE_ID_REQUIRED" });
+      const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+      const contentType = (req.headers["content-type"] ?? "").split(";")[0].trim();
+      const result = await addSpecAttachment(db, specAttachmentsPath, userId, req.params.name, nodeId, contentType, body);
+      if (!result.ok) return void res.status(attachmentStatus(result.errorCode)).json(result);
+      res.json(result);
+    },
+  );
+
+  router.get("/:name/roadmap/spec-attachments/file", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+    const name = typeof req.query.name === "string" ? req.query.name : "";
+    const result = await readSpecAttachment(db, specAttachmentsPath, userId, req.params.name, nodeId, name);
+    if (!result.ok) return void res.status(attachmentStatus(result.errorCode)).json(result);
+    sendImage(res, result.data, result.ext);
+  });
+
+  router.delete("/:name/roadmap/spec-attachments", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+    const name = typeof req.query.name === "string" ? req.query.name : "";
+    const result = await deleteSpecAttachment(db, specAttachmentsPath, userId, req.params.name, nodeId, name);
+    if (!result.ok) return void res.status(attachmentStatus(result.errorCode)).json(result);
+    res.json(result);
+  });
+
   router.put("/:name/roadmap/spec-document", validateBody(updateSpecDocumentContentSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
@@ -437,6 +514,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string): Rou
       const status = result.errorCode === "NODE_NOT_FOUND" ? 404 : 409;
       return void res.status(status).json(result);
     }
+    await removeSpecAttachments(specAttachmentsPath, userId, req.params.name, req.body.nodeId);
     res.json(result);
   });
 

@@ -1,13 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { marked } from "marked";
 import { Check, Eye, FileText, LockKeyhole, Pencil, Save } from "lucide-react";
-import { getSpecDocument, updateSpecDocument } from "../api/roadmapMutationsApi.js";
+import { getSpecDocument, specDocumentAssetBlobUrl, updateSpecDocument } from "../api/roadmapMutationsApi.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { Modal } from "./Modal.js";
 
-function safeMarkdown(markdown: string): string {
+const isRelativeAsset = (src: string) => !!src && !/^([a-z][a-z0-9+.-]*:|\/\/|\/|#)/i.test(src);
+
+/** spec.md 옆 이미지(예: images/01.png)는 인증 API로만 읽을 수 있어 blob URL로 바꿔 끼운다. */
+function relativeImageSources(markdown: string): string[] {
   const html = marked.parse(markdown, { async: false }) as string;
   const doc = new DOMParser().parseFromString(html, "text/html");
+  return [...new Set(Array.from(doc.querySelectorAll("img")).map((img) => img.getAttribute("src") ?? "").filter(isRelativeAsset))];
+}
+
+function safeMarkdown(markdown: string, assets: Record<string, string>): string {
+  const html = marked.parse(markdown, { async: false }) as string;
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("img").forEach((img) => {
+    const src = img.getAttribute("src") ?? "";
+    if (isRelativeAsset(src)) img.setAttribute("src", assets[src] ?? "");
+  });
   doc.querySelectorAll("script,iframe,object,embed,style,link,meta").forEach((node) => node.remove());
   doc.querySelectorAll("*").forEach((node) => {
     for (const attribute of Array.from(node.attributes)) {
@@ -42,7 +55,27 @@ export function SpecDocumentPanel({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const rendered = useMemo(() => safeMarkdown(mode === "edit" ? draft : content), [content, draft, mode]);
+  const [assets, setAssets] = useState<Record<string, string>>({});
+  const shown = mode === "edit" ? draft : content;
+  const rendered = useMemo(() => safeMarkdown(shown, assets), [shown, assets]);
+  const assetSources = useMemo(() => relativeImageSources(shown).join("\n"), [shown]);
+
+  const requested = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!userId || !assetSources) return;
+    const missing = assetSources.split("\n").filter((src) => !(src in requested.current));
+    if (missing.length === 0) return;
+    missing.forEach((src) => { requested.current[src] = ""; });
+    void Promise.all(
+      missing.map(async (src) => [src, await specDocumentAssetBlobUrl(userId, workspace, nodeId, src).catch(() => "")] as const),
+    ).then((loaded) => {
+      loaded.forEach(([src, url]) => { requested.current[src] = url; });
+      setAssets({ ...requested.current });
+    });
+  }, [userId, workspace, nodeId, assetSources]);
+
+  useEffect(() => () => Object.values(requested.current).forEach((url) => url && URL.revokeObjectURL(url)), []);
 
   useEffect(() => {
     if (!userId) return;

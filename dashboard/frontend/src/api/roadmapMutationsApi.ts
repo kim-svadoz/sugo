@@ -1,4 +1,4 @@
-import { apiJson, withUserId } from "./client.js";
+import { apiFetch, apiJson, withUserId } from "./client.js";
 
 // §3.3: PUBLIC routes (dashboard owns structure/order) - userId via query.
 function path(workspace: string, suffix: string): string {
@@ -186,4 +186,42 @@ export function deleteQuickSpec(userId: string, workspace: string, nodeId: strin
     method: "DELETE",
     body: JSON.stringify({ nodeId }),
   });
+}
+
+/** Schedule SPEC에 붙여 넣은 기획 화면. spec-writer가 읽어 spec.md 버전 디렉터리로 복사한다. */
+export interface SpecAttachmentList {
+  ok: true;
+  locked: boolean;
+  attachments: Array<{ name: string; path: string }>;
+}
+
+export function listSpecAttachments(userId: string, workspace: string, nodeId: string) {
+  return apiJson<SpecAttachmentList>(withUserId(path(workspace, "/spec-attachments"), userId, { nodeId }));
+}
+
+export function uploadSpecAttachment(userId: string, workspace: string, nodeId: string, file: Blob) {
+  return apiJson<{ ok: true; name: string }>(withUserId(path(workspace, "/spec-attachments"), userId, { nodeId }), {
+    method: "POST",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+}
+
+export function deleteSpecAttachment(userId: string, workspace: string, nodeId: string, name: string) {
+  return apiJson<{ ok: true }>(withUserId(path(workspace, "/spec-attachments"), userId, { nodeId, name }), { method: "DELETE" });
+}
+
+async function blobUrl(url: string): Promise<string> {
+  const res = await apiFetch(url);
+  if (!res.ok) throw new Error(`API ${url} failed: ${res.status}`);
+  return URL.createObjectURL(await res.blob());
+}
+
+/** 이미지 API는 Bearer 인증이라 <img src>로 직접 못 부른다 — blob URL로 받아 쓴다. 다 쓰면 revokeObjectURL. */
+export function specAttachmentBlobUrl(userId: string, workspace: string, nodeId: string, name: string) {
+  return blobUrl(withUserId(path(workspace, "/spec-attachments/file"), userId, { nodeId, name }));
+}
+
+export function specDocumentAssetBlobUrl(userId: string, workspace: string, nodeId: string, assetPath: string) {
+  return blobUrl(withUserId(path(workspace, "/spec-document/asset"), userId, { nodeId, path: assetPath }));
 }

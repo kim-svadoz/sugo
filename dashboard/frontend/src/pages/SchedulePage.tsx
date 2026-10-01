@@ -11,11 +11,12 @@ import { CheckpointPanel } from "../components/CheckpointPanel.js";
 import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
 import { DatePicker } from "../components/DatePicker.js";
 import { SpecDocumentPanel } from "../components/SpecDocumentPanel.js";
+import { ImagePasteZone, ImageThumb, SpecAttachments } from "../components/SpecAttachments.js";
 import { BlockerDecisionPanel } from "../components/BlockerDecisionPanel.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
-import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setProject, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
+import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setProject, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 
@@ -59,6 +60,8 @@ export function SchedulePage() {
   const [addWorkspace, setAddWorkspace] = useState("");
   const [addProjectPath, setAddProjectPath] = useState("");
   const [addDate, setAddDate] = useState<string | null>(null);
+  // 생성 전에는 SPEC id가 없으므로 붙여 넣은 화면을 들고 있다가 생성 직후 올린다.
+  const [addImages, setAddImages] = useState<Array<{ file: File; url: string }>>([]);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -207,7 +210,14 @@ export function SchedulePage() {
     setBusy(true);
     setErrorMsg(null);
     try {
-      await createQuickSpec(userId, addWorkspace, addTitle.trim(), addDate, addProjectPath || null);
+      const created = await createQuickSpec(userId, addWorkspace, addTitle.trim(), addDate, addProjectPath || null);
+      try {
+        for (const image of addImages) await uploadSpecAttachment(userId, addWorkspace, created.id, image.file);
+      } catch {
+        setErrorMsg("SPEC은 추가됐지만 일부 기획 화면을 올리지 못했습니다. SPEC 상세에서 다시 붙여 넣으세요.");
+      }
+      addImages.forEach((image) => URL.revokeObjectURL(image.url));
+      setAddImages([]);
       setAddOpen(false);
       setAddTitle("");
       setAddWorkspace("");
@@ -554,6 +564,8 @@ export function SchedulePage() {
               )}
             </div>
 
+            <SpecAttachments workspace={selected.workspace_name} nodeId={selected.id} hasSpec={!!selected.spec_path} />
+
             <div>
               <span className="mb-1 flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
                 마감일
@@ -725,6 +737,25 @@ export function SchedulePage() {
             <div>
               <span className="mb-1 block text-[12px] text-[var(--color-text-muted)]">마감일(선택)</span>
               <DatePicker value={addDate} onChange={setAddDate} placeholder="선택 안 함" />
+            </div>
+            <div className="space-y-2">
+              <span className="block text-[12px] text-[var(--color-text-muted)]">기획 화면(선택) · spec-writer와 실행 에이전트가 함께 봅니다</span>
+              {addImages.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {addImages.map((image, index) => (
+                    <ImageThumb
+                      key={image.url}
+                      src={image.url}
+                      label={`${index + 1}`}
+                      onRemove={() => {
+                        URL.revokeObjectURL(image.url);
+                        setAddImages((prev) => prev.filter((item) => item.url !== image.url));
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+              <ImagePasteZone onImages={(files) => setAddImages((prev) => [...prev, ...files.map((file) => ({ file, url: URL.createObjectURL(file) }))])} />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button onClick={() => setAddOpen(false)} className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[12px]">
