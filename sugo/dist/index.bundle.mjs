@@ -22533,7 +22533,7 @@ import { mkdir as mkdir4, readFile as readFile3, unlink as unlink2 } from "node:
 import { basename, dirname as dirname5, join as join6 } from "node:path";
 
 // src/fsUtil.ts
-import { mkdir, open, rename, unlink, writeFile } from "node:fs/promises";
+import { mkdir, open, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 var seq = 0;
 async function atomicWriteFile(path, content) {
@@ -22554,6 +22554,7 @@ async function atomicWriteFile(path, content) {
   });
   throw lastErr;
 }
+var STALE_LOCK_MS = 3e4;
 async function withFileLock(lockPath, fn) {
   await mkdir(dirname(lockPath), { recursive: true });
   const maxAttempts = 40;
@@ -22574,6 +22575,9 @@ async function withFileLock(lockPath, fn) {
       break;
     } catch (err2) {
       lastErr = err2;
+      const age = await stat(lockPath).then((s) => Date.now() - s.mtimeMs, () => 0);
+      if (age > STALE_LOCK_MS) await unlink(lockPath).catch(() => {
+      });
     }
   }
   if (!acquired) {
@@ -27944,7 +27948,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.17.0" : "0.0.0-dev";
+  return true ? "0.17.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29309,7 +29313,7 @@ function validateIntegration(manifest) {
 
 // src/fingerprint.ts
 import { createHash as createHash3 } from "node:crypto";
-import { stat } from "node:fs/promises";
+import { stat as stat2 } from "node:fs/promises";
 import { isAbsolute as isAbsolute6, join as join23, relative as relative5 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
@@ -29321,7 +29325,7 @@ async function statChangedFiles(projectPath, changedFiles) {
     const full = isAbsolute6(f) ? f : join23(projectPath, f);
     const relPath = isAbsolute6(f) ? relative5(projectPath, f) : f;
     try {
-      const st = await stat(full);
+      const st = await stat2(full);
       entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
     } catch {
       entries.push({ relPath, size: -1, mtimeMs: -1 });

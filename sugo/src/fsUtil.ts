@@ -1,4 +1,4 @@
-import { mkdir, open, rename, unlink, writeFile } from "node:fs/promises";
+import { mkdir, open, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
 let seq = 0;
@@ -33,6 +33,9 @@ export async function atomicWriteFile(path: string, content: string): Promise<vo
  * 락 파일의 부모 디렉터리가 없으면 open('wx')이 매 시도 ENOENT로 실패해 재시도만 반복하다
  * 타임아웃하는 조용한 실패가 된다 — 그래서 시도 전에 디렉터리를 먼저 보장한다.
  */
+// 락을 쥔 프로세스가 강제 종료되면 락 파일이 영원히 남는다. 락 구간은 짧은 파일 작업뿐이라 이보다 오래된 락은 버려진 것으로 본다.
+const STALE_LOCK_MS = 30_000;
+
 export async function withFileLock<T>(lockPath: string, fn: () => Promise<T>): Promise<T> {
   await mkdir(dirname(lockPath), { recursive: true });
   const maxAttempts = 40;
@@ -53,6 +56,8 @@ export async function withFileLock<T>(lockPath: string, fn: () => Promise<T>): P
       break;
     } catch (err) {
       lastErr = err;
+      const age = await stat(lockPath).then((s) => Date.now() - s.mtimeMs, () => 0);
+      if (age > STALE_LOCK_MS) await unlink(lockPath).catch(() => {});
     }
   }
   if (!acquired) {

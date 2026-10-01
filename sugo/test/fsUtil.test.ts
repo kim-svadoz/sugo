@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -37,6 +37,19 @@ describe("atomicWriteFile", () => {
 });
 
 describe("withFileLock", () => {
+  it("강제 종료로 남은 오래된 락은 회수하고, 최근 락은 존중한다", async () => {
+    const dir = tmp();
+    const lockPath = join(dir, "stale.lock");
+    writeFileSync(lockPath, "");
+    const old = new Date(Date.now() - 60_000);
+    utimesSync(lockPath, old, old);
+    expect(await withFileLock(lockPath, async () => "ran")).toBe("ran");
+    expect(existsSync(lockPath)).toBe(false);
+
+    writeFileSync(lockPath, "");
+    await expect(withFileLock(lockPath, async () => "ran")).rejects.toThrow("락 파일을 획득하지 못했습니다");
+  }, 20_000);
+
   it("동시 접근을 직렬화한다(겹치지 않는다)", async () => {
     const dir = tmp();
     const lockPath = join(dir, "test.lock");
