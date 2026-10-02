@@ -109,7 +109,7 @@ describe("spec-writer complete gate", () => {
     expect(readFileSync(first.attachments[0], "utf-8")).toBe("png:01.png");
     attachmentNames = ["02.jpg"];
     const second = JSON.parse((await handleSugoSpecWriter({ action: "context", workspace: "ws", specDraftId: "spec-manual-1" })).content[0].text);
-    expect(second.attachments.map((p: string) => p.split("/").pop())).toEqual(["02.jpg"]);
+    expect(second.attachments.map((p: string) => p.split(/[\\/]/).pop())).toEqual(["02.jpg"]);
     expect(existsSync(first.attachments[0])).toBe(false);
   });
 

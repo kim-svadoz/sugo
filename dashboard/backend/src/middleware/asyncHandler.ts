@@ -18,6 +18,10 @@ export function errorMiddleware(err: unknown, _req: Request, res: Response, next
     next(err);
     return;
   }
+  if (err && typeof err === "object" && "type" in err && err.type === "entity.too.large") {
+    res.status(413).json({ error: "payload_too_large", message: "JSON request body exceeds the 10mb limit.", limit: "10mb" });
+    return;
+  }
   console.error("[dashboard] request error (프로세스는 계속 살아있음):", err instanceof Error ? err.message : err);
   res.status(500).json({ error: "internal_error" });
 }

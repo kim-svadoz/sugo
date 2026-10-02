@@ -135,6 +135,6 @@ async function main() {
 }
 
 // 직접 실행일 때만 main(테스트 import 시엔 순수함수만 사용) — scope-guard.mjs와 같은 패턴.
-if (process.argv[1] && resolve(process.argv[1]).endsWith('/lint-hint.mjs')) {
+if (process.argv[1] && resolve(process.argv[1]).replace(/\\/g, '/').endsWith('/lint-hint.mjs')) {
   main();
 }

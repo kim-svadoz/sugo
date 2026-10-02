@@ -23832,6 +23832,21 @@ async function migrateWorkDataDir() {
 import { dirname as dirname6 } from "node:path";
 var MAX_RETRY_QUEUE_ITEMS = 100;
 var MAX_RETRY_ATTEMPTS = 5;
+function discard(file, item, cause) {
+  const reason = `${cause}: ${item.lastFailureReason ?? "unknown failure"}`;
+  file.discardedCount = (file.discardedCount ?? 0) + 1;
+  file.discardedReasons ??= {};
+  file.discardedReasons[reason] = (file.discardedReasons[reason] ?? 0) + 1;
+  console.warn(`[sugo] sync item discarded (${item.endpoint}): ${reason}`);
+}
+function failureFields(result2) {
+  return {
+    status: result2.permanent ? "permanent_failure" : "pending",
+    lastHttpStatus: result2.httpStatus,
+    lastFailureReason: result2.reason ?? "delivery failed",
+    lastFailureAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+}
 async function readQueueFile() {
   try {
     const raw = await readFile6(syncRetryQueuePath(), "utf-8");
@@ -23844,12 +23859,13 @@ async function writeQueueFile(file) {
   await mkdir6(dirname6(syncRetryQueuePath()), { recursive: true });
   await atomicWriteFile(syncRetryQueuePath(), JSON.stringify(file, null, 2));
 }
-async function enqueueRetry(endpoint, method, data) {
+async function enqueueRetry(endpoint, method, data, failure) {
   await withFileLock(syncRetryQueueLockPath(), async () => {
     const file = await readQueueFile();
-    file.items.push({ endpoint, method, data, timestamp: (/* @__PURE__ */ new Date()).toISOString(), retryCount: 0 });
+    file.items.push({ endpoint, method, data, timestamp: (/* @__PURE__ */ new Date()).toISOString(), retryCount: 0, ...failure ? failureFields(failure) : {} });
     if (file.items.length > MAX_RETRY_QUEUE_ITEMS) {
-      file.items = file.items.slice(file.items.length - MAX_RETRY_QUEUE_ITEMS);
+      const removed = file.items.splice(0, file.items.length - MAX_RETRY_QUEUE_ITEMS);
+      for (const item of removed) discard(file, item, "queue capacity exceeded");
     }
     await writeQueueFile(file);
   });
@@ -23858,76 +23874,42 @@ async function listRetryQueue() {
   const file = await readQueueFile();
   return file.items;
 }
+async function retryQueueHealth() {
+  const file = await readQueueFile();
+  const permanent = file.items.filter((item) => item.status === "permanent_failure");
+  const reasons = { ...file.discardedReasons ?? {} };
+  for (const item of permanent) {
+    const reason = item.lastFailureReason ?? "unknown failure";
+    reasons[reason] = (reasons[reason] ?? 0) + 1;
+  }
+  return {
+    permanentFailureCount: permanent.length,
+    discardedCount: file.discardedCount ?? 0,
+    failureReasons: Object.entries(reasons).map(([reason, count]) => ({ reason, count }))
+  };
+}
 async function processRetryQueue(attempt) {
   await withFileLock(syncRetryQueueLockPath(), async () => {
     const file = await readQueueFile();
     const remaining = [];
     for (const item of file.items) {
-      const succeeded = await attempt(item);
-      if (succeeded) continue;
-      const retried = { ...item, retryCount: item.retryCount + 1 };
+      if (item.status === "permanent_failure") {
+        remaining.push(item);
+        continue;
+      }
+      const outcome = await attempt(item);
+      const result2 = typeof outcome === "boolean" ? { ok: outcome } : outcome;
+      if (result2.ok) continue;
+      const retried = { ...item, ...failureFields(result2), retryCount: item.retryCount + (result2.permanent ? 0 : 1) };
+      if (result2.permanent) {
+        remaining.push(retried);
+        continue;
+      }
       if (retried.retryCount < MAX_RETRY_ATTEMPTS) remaining.push(retried);
+      else discard(file, retried, "retry attempts exhausted");
     }
-    await writeQueueFile({ items: remaining });
+    await writeQueueFile({ ...file, items: remaining });
   });
-}
-
-// src/dashboard/schemaVersion.ts
-var DASHBOARD_SYNC_SCHEMA_VERSION = 1;
-var SYNC_SCHEMA_VERSION_HEADER = "x-sugo-sync-schema-version";
-
-// src/dashboard/client.ts
-var DEFAULT_TIMEOUT_MS = 5e3;
-function withSchemaVersion(data) {
-  if (data === null || typeof data !== "object" || Array.isArray(data)) return data;
-  const obj = data;
-  if (obj.schemaVersion !== void 0) return obj;
-  return { ...obj, schemaVersion: DASHBOARD_SYNC_SCHEMA_VERSION };
-}
-var warnedNewerServer = false;
-function noteServerSchemaVersion(res) {
-  const raw = res.headers.get(SYNC_SCHEMA_VERSION_HEADER);
-  if (!raw) return;
-  const server2 = Number(raw);
-  if (!Number.isInteger(server2) || server2 <= DASHBOARD_SYNC_SCHEMA_VERSION || warnedNewerServer) return;
-  warnedNewerServer = true;
-  console.warn(
-    `[sugo] \uB300\uC2DC\uBCF4\uB4DC sync \uACC4\uC57D\uC774 \uB354 \uCD5C\uC2E0\uC785\uB2C8\uB2E4(server=${server2}, plugin=${DASHBOARD_SYNC_SCHEMA_VERSION}). \uD50C\uB7EC\uADF8\uC778 \uC5C5\uB370\uC774\uD2B8\uB97C \uAD8C\uC7A5\uD569\uB2C8\uB2E4 \u2014 \uB3D9\uAE30\uD654\uB294 \uACC4\uC18D \uC9C4\uD589\uD569\uB2C8\uB2E4.`
-  );
-}
-async function sendOnce(apiUrl, endpoint, method, data, timeoutMs, apiToken) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const headers = { "Content-Type": "application/json" };
-    if (apiToken) headers.Authorization = `Bearer ${apiToken}`;
-    const res = await fetch(`${apiUrl}${endpoint}`, {
-      method,
-      headers,
-      body: JSON.stringify(withSchemaVersion(data)),
-      signal: controller.signal
-    });
-    noteServerSchemaVersion(res);
-    return res.ok;
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-async function pushEvent(endpoint, method, data, timeoutMs = DEFAULT_TIMEOUT_MS) {
-  const config2 = await resolveDashboardConfig();
-  if (!config2.enabled || !config2.apiUrl) return;
-  const payload = withSchemaVersion(data);
-  const ok8 = await sendOnce(config2.apiUrl, endpoint, method, payload, timeoutMs, config2.apiToken);
-  if (!ok8) await enqueueRetry(endpoint, method, payload);
-}
-async function drainRetryQueue() {
-  const config2 = await resolveDashboardConfig();
-  if (!config2.enabled || !config2.apiUrl) return;
-  const apiUrl = config2.apiUrl;
-  const apiToken = config2.apiToken;
-  await processRetryQueue((item) => sendOnce(apiUrl, item.endpoint, item.method, item.data, DEFAULT_TIMEOUT_MS, apiToken));
 }
 
 // src/dashboard/serialize.ts
@@ -23992,6 +23974,53 @@ function serializeDecision(userId, workspaceName, spec) {
     decisionDate: spec.created_at
   };
 }
+function compactWorkResult(result2, summaryOnly = false) {
+  if (!result2) return void 0;
+  if (summaryOnly) {
+    const { path, startedAt, endedAt, model, summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs } = result2;
+    const report = result2.report ? {
+      schemaVersion: result2.report.schemaVersion,
+      kind: result2.report.kind,
+      patchVersion: result2.report.patchVersion,
+      completionGrade: result2.report.completionGrade,
+      summary: result2.report.summary,
+      verification: result2.report.verification,
+      changedFiles: [],
+      designDecisions: [],
+      knownLimitations: []
+    } : void 0;
+    return { path, startedAt, endedAt, model, summary: summary ?? result2.report?.summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, report };
+  }
+  return {
+    ...result2,
+    files: result2.files?.map((file) => {
+      const { path, change, diff } = file;
+      const lines = diff?.split("\n");
+      return {
+        path,
+        change,
+        ...lines ? {
+          additions: lines.filter((line) => line.startsWith("+") && !line.startsWith("+++")).length,
+          deletions: lines.filter((line) => line.startsWith("-") && !line.startsWith("---")).length
+        } : {
+          ..."additions" in file && typeof file.additions === "number" ? { additions: file.additions } : {},
+          ..."deletions" in file && typeof file.deletions === "number" ? { deletions: file.deletions } : {}
+        }
+      };
+    })
+  };
+}
+function compactRoadmapPayload(payload) {
+  if (!payload || typeof payload !== "object" || !("nodes" in payload) || !Array.isArray(payload.nodes)) return payload;
+  return { ...payload, nodes: payload.nodes.map((node) => ({
+    ...node,
+    workResult: compactWorkResult(node.workResult, node.level !== "task"),
+    lineage: Array.isArray(node.lineage) ? node.lineage.map((entry) => ({
+      ...entry,
+      workResult: compactWorkResult(entry.workResult, true)
+    })) : node.lineage
+  })) };
+}
 function serializeRoadmapNode(node) {
   return {
     id: node.id,
@@ -24010,7 +24039,74 @@ function serializeRoadmapNode(node) {
   };
 }
 function serializeRoadmapSnapshot(userId, workspaceName, nodes) {
-  return { userId, workspaceName, nodes: nodes.map(serializeRoadmapNode) };
+  return compactRoadmapPayload({ userId, workspaceName, nodes: nodes.map(serializeRoadmapNode) });
+}
+
+// src/dashboard/schemaVersion.ts
+var DASHBOARD_SYNC_SCHEMA_VERSION = 1;
+var SYNC_SCHEMA_VERSION_HEADER = "x-sugo-sync-schema-version";
+
+// src/dashboard/client.ts
+var DEFAULT_TIMEOUT_MS = 5e3;
+var MAX_ROADMAP_PAYLOAD_BYTES = 1024 * 1024;
+function classifyHttpFailure(status) {
+  return { ok: false, httpStatus: status, reason: `HTTP ${status}`, permanent: [400, 404, 405, 410, 413, 415, 422].includes(status) };
+}
+function withSchemaVersion(data) {
+  if (data === null || typeof data !== "object" || Array.isArray(data)) return data;
+  const obj = data;
+  if (obj.schemaVersion !== void 0) return obj;
+  return { ...obj, schemaVersion: DASHBOARD_SYNC_SCHEMA_VERSION };
+}
+var warnedNewerServer = false;
+function noteServerSchemaVersion(res) {
+  const raw = res.headers.get(SYNC_SCHEMA_VERSION_HEADER);
+  if (!raw) return;
+  const server2 = Number(raw);
+  if (!Number.isInteger(server2) || server2 <= DASHBOARD_SYNC_SCHEMA_VERSION || warnedNewerServer) return;
+  warnedNewerServer = true;
+  console.warn(
+    `[sugo] \uB300\uC2DC\uBCF4\uB4DC sync \uACC4\uC57D\uC774 \uB354 \uCD5C\uC2E0\uC785\uB2C8\uB2E4(server=${server2}, plugin=${DASHBOARD_SYNC_SCHEMA_VERSION}). \uD50C\uB7EC\uADF8\uC778 \uC5C5\uB370\uC774\uD2B8\uB97C \uAD8C\uC7A5\uD569\uB2C8\uB2E4 \u2014 \uB3D9\uAE30\uD654\uB294 \uACC4\uC18D \uC9C4\uD589\uD569\uB2C8\uB2E4.`
+  );
+}
+async function sendOnce(apiUrl, endpoint, method, data, timeoutMs, apiToken) {
+  const isRoadmap = endpoint === "/api/sync/roadmap" && method === "POST";
+  const body2 = JSON.stringify(withSchemaVersion(isRoadmap ? compactRoadmapPayload(data) : data));
+  if (isRoadmap && Buffer.byteLength(body2, "utf8") > MAX_ROADMAP_PAYLOAD_BYTES) {
+    return { ok: false, reason: "ROADMAP_PAYLOAD_TOO_LARGE (limit 1MiB)", permanent: true };
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (apiToken) headers.Authorization = `Bearer ${apiToken}`;
+    const res = await fetch(`${apiUrl}${endpoint}`, {
+      method,
+      headers,
+      body: body2,
+      signal: controller.signal
+    });
+    noteServerSchemaVersion(res);
+    return res.ok ? { ok: true } : classifyHttpFailure(res.status);
+  } catch {
+    return { ok: false, reason: "network error or timeout" };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function pushEvent(endpoint, method, data, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled || !config2.apiUrl) return;
+  const payload = withSchemaVersion(data);
+  const ok8 = await sendOnce(config2.apiUrl, endpoint, method, payload, timeoutMs, config2.apiToken);
+  if (!ok8.ok) await enqueueRetry(endpoint, method, payload, ok8);
+}
+async function drainRetryQueue() {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled || !config2.apiUrl) return;
+  const apiUrl = config2.apiUrl;
+  const apiToken = config2.apiToken;
+  await processRetryQueue((item) => sendOnce(apiUrl, item.endpoint, item.method, item.data, DEFAULT_TIMEOUT_MS, apiToken));
 }
 
 // src/dashboard/sync.ts
@@ -27948,7 +28044,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.18.0" : "0.0.0-dev";
+  return true ? "0.18.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32353,7 +32449,8 @@ async function handleSugoStatus(rawArgs = {}) {
       dashboardEnabled: config2.enabled,
       dashboardApiUrl: config2.enabled ? config2.apiUrl : void 0,
       retryQueueSize: queue.length,
-      retryQueueSizeAfterDrain: config2.enabled ? (await listRetryQueue()).length : queue.length
+      retryQueueSizeAfterDrain: config2.enabled ? (await listRetryQueue()).length : queue.length,
+      ...await retryQueueHealth()
     };
   }
   if (args2.judgment) {

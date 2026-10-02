@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { drainRetryQueue } from "../dashboard/client.js";
 import { resolveDashboardConfig } from "../dashboard/config.js";
-import { listRetryQueue } from "../dashboard/retryQueue.js";
+import { listRetryQueue, retryQueueHealth } from "../dashboard/retryQueue.js";
 import { loadProjectConfig } from "../harness/config.js";
 import { loadRegistry } from "../harness/registry.js";
 import { computeJudgmentReport } from "../judgment.js";
@@ -64,6 +64,7 @@ export async function handleSugoStatus(rawArgs: unknown = {}) {
       dashboardApiUrl: config.enabled ? config.apiUrl : undefined,
       retryQueueSize: queue.length,
       retryQueueSizeAfterDrain: config.enabled ? (await listRetryQueue()).length : queue.length,
+      ...(await retryQueueHealth()),
     };
   }
 

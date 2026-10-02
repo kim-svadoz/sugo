@@ -1,8 +1,14 @@
 import { resolveDashboardConfig } from "./config.js";
-import { enqueueRetry, processRetryQueue, type RetryItem } from "./retryQueue.js";
+import { enqueueRetry, processRetryQueue, type RetryItem, type DeliveryResult } from "./retryQueue.js";
+import { compactRoadmapPayload } from "./serialize.js";
 import { DASHBOARD_SYNC_SCHEMA_VERSION, SYNC_SCHEMA_VERSION_HEADER } from "./schemaVersion.js";
 
 const DEFAULT_TIMEOUT_MS = 5000;
+export const MAX_ROADMAP_PAYLOAD_BYTES = 1024 * 1024;
+
+export function classifyHttpFailure(status: number): DeliveryResult {
+  return { ok: false, httpStatus: status, reason: `HTTP ${status}`, permanent: [400, 404, 405, 410, 413, 415, 422].includes(status) };
+}
 
 /**
  * §8.2 schemaVersion 주입 — **여기 한 곳**에서만 붙인다. 래퍼마다 손으로 달면 새 엔드포인트를
@@ -32,7 +38,12 @@ function noteServerSchemaVersion(res: Response): void {
   );
 }
 
-async function sendOnce(apiUrl: string, endpoint: string, method: "POST" | "DELETE", data: unknown, timeoutMs: number, apiToken?: string): Promise<boolean> {
+async function sendOnce(apiUrl: string, endpoint: string, method: "POST" | "DELETE", data: unknown, timeoutMs: number, apiToken?: string): Promise<DeliveryResult> {
+  const isRoadmap = endpoint === "/api/sync/roadmap" && method === "POST";
+  const body = JSON.stringify(withSchemaVersion(isRoadmap ? compactRoadmapPayload(data) : data));
+  if (isRoadmap && Buffer.byteLength(body, "utf8") > MAX_ROADMAP_PAYLOAD_BYTES) {
+    return { ok: false, reason: "ROADMAP_PAYLOAD_TOO_LARGE (limit 1MiB)", permanent: true };
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -42,13 +53,13 @@ async function sendOnce(apiUrl: string, endpoint: string, method: "POST" | "DELE
     const res = await fetch(`${apiUrl}${endpoint}`, {
       method,
       headers,
-      body: JSON.stringify(withSchemaVersion(data)),
+      body,
       signal: controller.signal,
     });
     noteServerSchemaVersion(res);
-    return res.ok;
+    return res.ok ? { ok: true } : classifyHttpFailure(res.status);
   } catch {
-    return false;
+    return { ok: false, reason: "network error or timeout" };
   } finally {
     clearTimeout(timer);
   }
@@ -67,7 +78,7 @@ export async function pushEvent(endpoint: string, method: "POST" | "DELETE", dat
   // 똑같은 바이트가 남아야 재전송이 원본과 같은 계약으로 나간다.
   const payload = withSchemaVersion(data);
   const ok = await sendOnce(config.apiUrl, endpoint, method, payload, timeoutMs, config.apiToken);
-  if (!ok) await enqueueRetry(endpoint, method, payload);
+  if (!ok.ok) await enqueueRetry(endpoint, method, payload, ok);
 }
 
 /** 재시도 큐를 한 바퀴 돌며 재전송을 시도한다. disabled면(설정이 그 사이 꺼졌으면) 아무 것도 안 보내고 그대로 큐에 둔다. */

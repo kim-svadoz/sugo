@@ -1,4 +1,4 @@
-import type { Checkpoint, RoadmapNode, Spec, Task, WorkLog } from "../hulk/types.js";
+import type { Checkpoint, RoadmapNode, RoadmapWorkResult, Spec, Task, WorkLog } from "../hulk/types.js";
 import type { PrRefs } from "../prRefs.js";
 
 /**
@@ -146,6 +146,50 @@ export interface RoadmapNodeWire {
   runtimeAssessment?: unknown;
 }
 
+/** Only TASK owns the full report; historical entries and RUN keep patch paths and summaries. */
+function compactWorkResult(result: RoadmapWorkResult | undefined, summaryOnly = false) {
+  if (!result) return undefined;
+  if (summaryOnly) {
+    const { path, startedAt, endedAt, model, summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs } = result;
+    const report = result.report ? {
+      schemaVersion: result.report.schemaVersion, kind: result.report.kind,
+      patchVersion: result.report.patchVersion, completionGrade: result.report.completionGrade,
+      summary: result.report.summary, verification: result.report.verification,
+      changedFiles: [], designDecisions: [], knownLimitations: [],
+    } : undefined;
+    return { path, startedAt, endedAt, model, summary: summary ?? result.report?.summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, report };
+  }
+  return {
+    ...result,
+    files: result.files?.map((file) => {
+      const { path, change, diff } = file;
+      const lines = diff?.split("\n");
+      return {
+        path, change,
+        ...(lines ? {
+          additions: lines.filter((line) => line.startsWith("+") && !line.startsWith("+++")).length,
+          deletions: lines.filter((line) => line.startsWith("-") && !line.startsWith("---")).length,
+        } : {
+          ...("additions" in file && typeof file.additions === "number" ? { additions: file.additions } : {}),
+          ...("deletions" in file && typeof file.deletions === "number" ? { deletions: file.deletions } : {}),
+        }),
+      };
+    }),
+  };
+}
+
+/** Also applied to old queued snapshots before retransmission; never changes local artifacts. */
+export function compactRoadmapPayload<T>(payload: T): T {
+  if (!payload || typeof payload !== "object" || !("nodes" in payload) || !Array.isArray(payload.nodes)) return payload;
+  return { ...payload, nodes: payload.nodes.map((node: RoadmapNodeWire) => ({
+    ...node,
+    workResult: compactWorkResult(node.workResult as RoadmapWorkResult | undefined, node.level !== "task"),
+    lineage: Array.isArray(node.lineage) ? node.lineage.map((entry) => ({
+      ...entry, workResult: compactWorkResult(entry.workResult, true),
+    })) : node.lineage,
+  })) };
+}
+
 /** RoadmapNode → 대시보드 roadmap 노드 wire. 필드명이 이미 camelCase로 정렬돼 있어(dependsOn/specPath/
  * workResult) 대부분 통과하지만, 플러그인 전용 `result` 필드는 대시보드가 모르므로 떨군다. */
 export function serializeRoadmapNode(node: RoadmapNode): RoadmapNodeWire {
@@ -173,7 +217,7 @@ export interface RoadmapSnapshotWire {
 }
 
 export function serializeRoadmapSnapshot(userId: string, workspaceName: string, nodes: RoadmapNode[]): RoadmapSnapshotWire {
-  return { userId, workspaceName, nodes: nodes.map(serializeRoadmapNode) };
+  return compactRoadmapPayload({ userId, workspaceName, nodes: nodes.map(serializeRoadmapNode) });
 }
 
 export interface WorkspaceWire {

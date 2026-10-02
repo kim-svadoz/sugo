@@ -112,7 +112,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
 
   const app = express();
   app.use(corsWhitelist(config.corsOrigins));
-  app.use(express.json());
+  app.use(express.json({ limit: "10mb" }));
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });

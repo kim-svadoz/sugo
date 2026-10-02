@@ -6,16 +6,46 @@ import { dirname } from "node:path";
 export const MAX_RETRY_QUEUE_ITEMS = 100;
 export const MAX_RETRY_ATTEMPTS = 5;
 
+export interface DeliveryResult {
+  ok: boolean;
+  httpStatus?: number;
+  reason?: string;
+  permanent?: boolean;
+}
+
 export interface RetryItem {
   endpoint: string;
   method: "POST" | "DELETE";
   data: unknown;
   timestamp: string;
   retryCount: number;
+  status?: "pending" | "permanent_failure";
+  lastHttpStatus?: number;
+  lastFailureReason?: string;
+  lastFailureAt?: string;
 }
 
 interface RetryQueueFile {
   items: RetryItem[];
+  discardedCount?: number;
+  discardedReasons?: Record<string, number>;
+}
+
+function discard(file: RetryQueueFile, item: RetryItem, cause: string): void {
+  const reason = `${cause}: ${item.lastFailureReason ?? "unknown failure"}`;
+  file.discardedCount = (file.discardedCount ?? 0) + 1;
+  file.discardedReasons ??= {};
+  file.discardedReasons[reason] = (file.discardedReasons[reason] ?? 0) + 1;
+  console.warn(`[sugo] sync item discarded (${item.endpoint}): ${reason}`);
+}
+
+function failureFields(result: DeliveryResult) {
+  return {
+    status: result.permanent ? "permanent_failure" as const : "pending" as const,
+    lastHttpStatus: result.httpStatus,
+    lastFailureReason: result.reason ?? "delivery failed",
+    lastFailureAt: new Date().toISOString(),
+  };
 }
 
 async function readQueueFile(): Promise<RetryQueueFile> {
@@ -33,12 +63,13 @@ async function writeQueueFile(file: RetryQueueFile): Promise<void> {
 }
 
 /** §7.2: 실패한 이벤트를 큐에 쌓는다. 최대 100항목 — 넘치면 가장 오래된 것부터 버린다(무한 축적 방지). */
-export async function enqueueRetry(endpoint: string, method: "POST" | "DELETE", data: unknown): Promise<void> {
+export async function enqueueRetry(endpoint: string, method: "POST" | "DELETE", data: unknown, failure?: DeliveryResult): Promise<void> {
   await withFileLock(syncRetryQueueLockPath(), async () => {
     const file = await readQueueFile();
-    file.items.push({ endpoint, method, data, timestamp: new Date().toISOString(), retryCount: 0 });
+    file.items.push({ endpoint, method, data, timestamp: new Date().toISOString(), retryCount: 0, ...(failure ? failureFields(failure) : {}) });
     if (file.items.length > MAX_RETRY_QUEUE_ITEMS) {
-      file.items = file.items.slice(file.items.length - MAX_RETRY_QUEUE_ITEMS);
+      const removed = file.items.splice(0, file.items.length - MAX_RETRY_QUEUE_ITEMS);
+      for (const item of removed) discard(file, item, "queue capacity exceeded");
     }
     await writeQueueFile(file);
   });
@@ -49,18 +80,37 @@ export async function listRetryQueue(): Promise<RetryItem[]> {
   return file.items;
 }
 
+export async function retryQueueHealth() {
+  const file = await readQueueFile();
+  const permanent = file.items.filter((item) => item.status === "permanent_failure");
+  const reasons = { ...(file.discardedReasons ?? {}) };
+  for (const item of permanent) {
+    const reason = item.lastFailureReason ?? "unknown failure";
+    reasons[reason] = (reasons[reason] ?? 0) + 1;
+  }
+  return {
+    permanentFailureCount: permanent.length,
+    discardedCount: file.discardedCount ?? 0,
+    failureReasons: Object.entries(reasons).map(([reason, count]) => ({ reason, count })),
+  };
+}
+
 /** 재전송을 시도한다. attempt(item)이 true(성공)면 큐에서 제거, false(실패)면 retryCount를 올리고
  * MAX_RETRY_ATTEMPTS를 넘긴 항목은 버린다(교착 방지 — 죽은 엔드포인트가 큐를 영원히 채우지 않게). */
-export async function processRetryQueue(attempt: (item: RetryItem) => Promise<boolean>): Promise<void> {
+export async function processRetryQueue(attempt: (item: RetryItem) => Promise<boolean | DeliveryResult>): Promise<void> {
   await withFileLock(syncRetryQueueLockPath(), async () => {
     const file = await readQueueFile();
     const remaining: RetryItem[] = [];
     for (const item of file.items) {
-      const succeeded = await attempt(item);
-      if (succeeded) continue;
-      const retried = { ...item, retryCount: item.retryCount + 1 };
+      if (item.status === "permanent_failure") { remaining.push(item); continue; }
+      const outcome = await attempt(item);
+      const result = typeof outcome === "boolean" ? { ok: outcome } : outcome;
+      if (result.ok) continue;
+      const retried = { ...item, ...failureFields(result), retryCount: item.retryCount + (result.permanent ? 0 : 1) };
+      if (result.permanent) { remaining.push(retried); continue; }
       if (retried.retryCount < MAX_RETRY_ATTEMPTS) remaining.push(retried);
+      else discard(file, retried, "retry attempts exhausted");
     }
-    await writeQueueFile({ items: remaining });
+    await writeQueueFile({ ...file, items: remaining });
   });
 }
