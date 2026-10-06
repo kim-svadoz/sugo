@@ -7,6 +7,7 @@ interface InventoryResource {
 }
 
 interface InventoryService {
+  error?: string;
   service: string;
   resources: InventoryResource[];
 }

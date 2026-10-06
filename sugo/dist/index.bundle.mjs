@@ -2991,7 +2991,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve10.call(this, root, ref);
+      let _sch = resolve11.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3018,7 +3018,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve10(root, ref) {
+    function resolve11(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3649,55 +3649,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve10(baseURI, relativeURI, options) {
+    function resolve11(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative6, options, skipNormalization) {
+    function resolveComponent(base, relative7, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative6 = parse3(serialize(relative6, options), options);
+        relative7 = parse3(serialize(relative7, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative6.scheme) {
-        target.scheme = relative6.scheme;
-        target.userinfo = relative6.userinfo;
-        target.host = relative6.host;
-        target.port = relative6.port;
-        target.path = removeDotSegments(relative6.path || "");
-        target.query = relative6.query;
+      if (!options.tolerant && relative7.scheme) {
+        target.scheme = relative7.scheme;
+        target.userinfo = relative7.userinfo;
+        target.host = relative7.host;
+        target.port = relative7.port;
+        target.path = removeDotSegments(relative7.path || "");
+        target.query = relative7.query;
       } else {
-        if (relative6.userinfo !== void 0 || relative6.host !== void 0 || relative6.port !== void 0) {
-          target.userinfo = relative6.userinfo;
-          target.host = relative6.host;
-          target.port = relative6.port;
-          target.path = removeDotSegments(relative6.path || "");
-          target.query = relative6.query;
+        if (relative7.userinfo !== void 0 || relative7.host !== void 0 || relative7.port !== void 0) {
+          target.userinfo = relative7.userinfo;
+          target.host = relative7.host;
+          target.port = relative7.port;
+          target.path = removeDotSegments(relative7.path || "");
+          target.query = relative7.query;
         } else {
-          if (!relative6.path) {
+          if (!relative7.path) {
             target.path = base.path;
-            if (relative6.query !== void 0) {
-              target.query = relative6.query;
+            if (relative7.query !== void 0) {
+              target.query = relative7.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative6.path[0] === "/") {
-              target.path = removeDotSegments(relative6.path);
+            if (relative7.path[0] === "/") {
+              target.path = removeDotSegments(relative7.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative6.path;
+                target.path = "/" + relative7.path;
               } else if (!base.path) {
-                target.path = relative6.path;
+                target.path = relative7.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative6.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative7.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative6.query;
+            target.query = relative7.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative6.fragment;
+      target.fragment = relative7.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3907,7 +3907,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve10,
+      resolve: resolve11,
       resolveComponent,
       equal,
       serialize,
@@ -20404,7 +20404,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve10) => setTimeout(resolve10, pollInterval));
+        await new Promise((resolve11) => setTimeout(resolve11, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -20421,7 +20421,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve10, reject) => {
+    return new Promise((resolve11, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -20499,7 +20499,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve10(parseResult.data);
+            resolve11(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -20760,12 +20760,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve10, reject) => {
+    return new Promise((resolve11, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve10, interval);
+      const timeoutId = setTimeout(resolve11, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -21865,7 +21865,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve10) => setTimeout(resolve10, pollInterval));
+      await new Promise((resolve11) => setTimeout(resolve11, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -22514,12 +22514,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve10) => {
+    return new Promise((resolve11) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve10();
+        resolve11();
       } else {
-        this._stdout.once("drain", resolve10);
+        this._stdout.once("drain", resolve11);
       }
     });
   }
@@ -23977,7 +23977,7 @@ function serializeDecision(userId, workspaceName, spec) {
 function compactWorkResult(result2, summaryOnly = false) {
   if (!result2) return void 0;
   if (summaryOnly) {
-    const { path, startedAt, endedAt, model, summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs } = result2;
+    const { path, startedAt, endedAt, model, summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, sourceRevision } = result2;
     const report = result2.report ? {
       schemaVersion: result2.report.schemaVersion,
       kind: result2.report.kind,
@@ -23989,7 +23989,7 @@ function compactWorkResult(result2, summaryOnly = false) {
       designDecisions: [],
       knownLimitations: []
     } : void 0;
-    return { path, startedAt, endedAt, model, summary: summary ?? result2.report?.summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, report };
+    return { path, startedAt, endedAt, model, summary: summary ?? result2.report?.summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, sourceRevision, report };
   }
   return {
     ...result2,
@@ -28046,7 +28046,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.19.0" : "0.0.0-dev";
+  return true ? "0.20.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29015,8 +29015,32 @@ async function handleSugoOverview(rawArgs) {
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
+// src/sourceRevision.ts
+import { createHash as createHash3 } from "node:crypto";
+import { readFile as readFile18 } from "node:fs/promises";
+import { relative as relative4, resolve as resolve7, isAbsolute as isAbsolute5 } from "node:path";
+async function collectSourceRevision(projectPath, changedFiles, startedAt) {
+  const paths = [...new Set(changedFiles.map((f) => relative4(projectPath, resolve7(projectPath, f)).replace(/\\/g, "/")))].sort();
+  if (!paths.length || paths.some((p) => !p || p.startsWith("../") || isAbsolute5(p))) return void 0;
+  const head = await runGit(["rev-parse", "HEAD"], projectPath);
+  if (!head || !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(head)) return void 0;
+  const files = [];
+  for (const path of paths) {
+    try {
+      files.push({ path, hash: createHash3("sha256").update(await readFile18(resolve7(projectPath, path))).digest("hex") });
+    } catch (e) {
+      if (e.code !== "ENOENT") return void 0;
+      files.push({ path, hash: "deleted" });
+    }
+  }
+  const status = await runGit(["status", "--porcelain", "--", ...paths], projectPath);
+  const time3 = await runGit(["log", "-1", "--format=%ct", "--", ...paths], projectPath);
+  const committed = status === "" && Number(time3) >= Math.floor(Date.parse(startedAt) / 1e3);
+  return { projectPath, commit: committed ? head : void 0, recordedAt: (/* @__PURE__ */ new Date()).toISOString(), state: committed ? "committed" : "pending", files };
+}
+
 // src/tools/sugoPlan.ts
-import { readFile as readFile22 } from "node:fs/promises";
+import { readFile as readFile23 } from "node:fs/promises";
 
 // src/bootable.ts
 async function isProjectBootable(projectPath) {
@@ -29025,7 +29049,7 @@ async function isProjectBootable(projectPath) {
 }
 
 // src/bootScan.ts
-import { readdir as readdir8, readFile as readFile18 } from "node:fs/promises";
+import { readdir as readdir8, readFile as readFile19 } from "node:fs/promises";
 import { join as join20 } from "node:path";
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
 var MAX_FILES4 = 2e3;
@@ -29055,7 +29079,7 @@ async function scanForSpringBootTestAnnotation(projectPath) {
   const candidates = testFiles.length > 0 ? testFiles : files;
   for (const file of candidates) {
     try {
-      const content = await readFile18(file, "utf-8");
+      const content = await readFile19(file, "utf-8");
       if (content.length > MAX_FILE_BYTES4) continue;
       if (hasValidSpringBootTestAnnotation([content])) return true;
     } catch {
@@ -29283,17 +29307,17 @@ async function emitActivity(event) {
 
 // src/dashboard/workResultFiles.ts
 import { execFile as execFile2 } from "node:child_process";
-import { readFile as readFile19 } from "node:fs/promises";
-import { isAbsolute as isAbsolute5, relative as relative4, resolve as resolve7, sep as sep2 } from "node:path";
+import { readFile as readFile20 } from "node:fs/promises";
+import { isAbsolute as isAbsolute6, relative as relative5, resolve as resolve8, sep as sep2 } from "node:path";
 import { promisify as promisify2 } from "node:util";
 var execFileAsync2 = promisify2(execFile2);
 var MAX_CONTENT_BYTES = 2e5;
 var MAX_DIFF_BYTES = 4e5;
 function safeProjectFile(projectPath, path) {
-  const root = resolve7(projectPath);
-  const absolute = isAbsolute5(path) ? resolve7(path) : resolve7(root, path);
-  const rel = relative4(root, absolute);
-  if (rel === ".." || rel.startsWith(`..${sep2}`) || isAbsolute5(rel)) return null;
+  const root = resolve8(projectPath);
+  const absolute = isAbsolute6(path) ? resolve8(path) : resolve8(root, path);
+  const rel = relative5(root, absolute);
+  if (rel === ".." || rel.startsWith(`..${sep2}`) || isAbsolute6(rel)) return null;
   return { absolute, relative: rel.split(sep2).join("/") };
 }
 async function gitOutput(projectPath, args2) {
@@ -29315,7 +29339,7 @@ async function snapshotWorkResultFiles(projectPath, paths) {
     let content;
     if (change !== "deleted") {
       try {
-        const raw = await readFile19(safe.absolute);
+        const raw = await readFile20(safe.absolute);
         if (raw.byteLength <= MAX_CONTENT_BYTES && !raw.includes(0)) content = raw.toString("utf8");
       } catch {
       }
@@ -29410,18 +29434,18 @@ function validateIntegration(manifest) {
 }
 
 // src/fingerprint.ts
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash4 } from "node:crypto";
 import { stat as stat2 } from "node:fs/promises";
-import { isAbsolute as isAbsolute6, join as join23, relative as relative5 } from "node:path";
+import { isAbsolute as isAbsolute7, join as join23, relative as relative6 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
-  return createHash3("sha1").update(parts2.join("\n")).digest("hex");
+  return createHash4("sha1").update(parts2.join("\n")).digest("hex");
 }
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
-    const full = isAbsolute6(f) ? f : join23(projectPath, f);
-    const relPath = isAbsolute6(f) ? relative5(projectPath, f) : f;
+    const full = isAbsolute7(f) ? f : join23(projectPath, f);
+    const relPath = isAbsolute7(f) ? relative6(projectPath, f) : f;
     try {
       const st = await stat2(full);
       entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
@@ -29598,7 +29622,7 @@ ${lines.join("\n")}`;
 }
 
 // src/hulk/roadmap.ts
-import { mkdir as mkdir15, readFile as readFile20 } from "node:fs/promises";
+import { mkdir as mkdir15, readFile as readFile21 } from "node:fs/promises";
 
 // src/hulk/roadmapGraph.ts
 function mergeRoadmapOwnership(localNodes, remoteOrdering) {
@@ -29711,7 +29735,7 @@ function promotePrdRequirements(taskId, prdContent) {
 async function readRoadmapFile(workspace) {
   let file;
   try {
-    const raw = await readFile20(roadmapFilePath(workspace), "utf-8");
+    const raw = await readFile21(roadmapFilePath(workspace), "utf-8");
     file = JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
@@ -30030,13 +30054,13 @@ async function pullRoadmapOrdering(workspace) {
 
 // src/hulk/task.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir16, readFile as readFile21 } from "node:fs/promises";
+import { mkdir as mkdir16, readFile as readFile22 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile21(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile22(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
@@ -31179,7 +31203,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "decompose" && existing) {
     if (!args2.manifest) return errorResult9("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     if (!existing.data.prdPath) return errorResult9("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    const prdContent = await readFile22(existing.data.prdPath, "utf-8").catch(() => "");
+    const prdContent = await readFile23(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
@@ -31348,7 +31372,7 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "start" && args2.specPath) {
-    const specExists = await readFile22(args2.specPath, "utf-8").then(() => true, () => false);
+    const specExists = await readFile23(args2.specPath, "utf-8").then(() => true, () => false);
     if (!specExists) return errorResult9("SPEC_FILE_NOT_FOUND", `\uC6D0\uBCF8 SPEC \uD30C\uC77C\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.specPath}`);
     const selectedId = session.data.specDraftSelection?.selectedId;
     const selected = session.data.specDraftSelection?.candidates.find((candidate) => candidate.id === selectedId);
@@ -31390,7 +31414,7 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "prd" && args2.specPath) {
-    const specExists = await readFile22(args2.specPath, "utf-8").then(
+    const specExists = await readFile23(args2.specPath, "utf-8").then(
       () => true,
       () => false
     );
@@ -31679,7 +31703,9 @@ async function handleSugoPlan(rawArgs) {
     const completedAt = session.data.chainInfo.workResultReport?.completedAt ?? (/* @__PURE__ */ new Date()).toISOString();
     const patchVersion = session.data.mode === "patch" ? session.data.patch?.version : 0;
     const dashboardFiles = await snapshotWorkResultFiles(session.projectPath, session.data.chainInfo.changedFiles);
+    const sourceRevision = await collectSourceRevision(session.projectPath, session.data.chainInfo.changedFiles ?? [], session.startedAt);
     const workResult = {
+      sourceRevision,
       path: session.data.chainInfo.workResultPath,
       startedAt: session.startedAt,
       endedAt: completedAt,
@@ -31905,10 +31931,10 @@ function errorResult11(errorCode, message) {
 }
 
 // src/tools/sugoReset.ts
-import { resolve as resolve8 } from "node:path";
+import { resolve as resolve9 } from "node:path";
 
 // src/harness/reset.ts
-import { mkdir as mkdir17, readFile as readFile23, rm as rm4 } from "node:fs/promises";
+import { mkdir as mkdir17, readFile as readFile24, rm as rm4 } from "node:fs/promises";
 import { join as join24 } from "node:path";
 var ResetProjectError = class extends Error {
   constructor(code, message) {
@@ -31934,7 +31960,7 @@ async function resetProjectHarness(projectPath) {
   const claudeMdPath = join24(sugoDir, "CLAUDE.md");
   let backedUpTo;
   try {
-    const current = await readFile23(claudeMdPath, "utf-8");
+    const current = await readFile24(claudeMdPath, "utf-8");
     const backupDir = join24(sugoDir, "backup");
     await mkdir17(backupDir, { recursive: true });
     backedUpTo = join24(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
@@ -31954,7 +31980,7 @@ var sugoResetInputSchema = {
 var SugoResetArgs = external_exports.object(sugoResetInputSchema);
 async function handleSugoReset(rawArgs) {
   const args2 = SugoResetArgs.parse(rawArgs);
-  const projectPath = resolve8(args2.projectPath);
+  const projectPath = resolve9(args2.projectPath);
   try {
     const { backedUpTo } = await resetProjectHarness(projectPath);
     return { content: [{ type: "text", text: JSON.stringify({ ok: true, projectPath, backedUpTo }, null, 2) }] };
@@ -32260,7 +32286,7 @@ async function handleSugoRoute(rawArgs) {
 }
 
 // src/hulk/spec.ts
-import { mkdir as mkdir18, readdir as readdir10, readFile as readFile24 } from "node:fs/promises";
+import { mkdir as mkdir18, readdir as readdir10, readFile as readFile25 } from "node:fs/promises";
 import { join as join25 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
@@ -32302,7 +32328,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile24(join25(dir, name2), "utf-8");
+      const raw = await readFile25(join25(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -32312,7 +32338,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile24(join25(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile25(join25(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -32363,7 +32389,7 @@ function errorResult14(errorCode, message) {
 }
 
 // src/tools/sugoSpecWriter.ts
-import { readFile as readFile25 } from "node:fs/promises";
+import { readFile as readFile26 } from "node:fs/promises";
 import { join as join26 } from "node:path";
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
@@ -32409,7 +32435,7 @@ async function handleSugoSpecWriter(rawArgs) {
     }
   }
   if (!args2.specPath) return result({ ok: false, errorCode: "SPEC_PATH_REQUIRED" });
-  const text = await readFile25(args2.specPath, "utf-8").catch(() => null);
+  const text = await readFile26(args2.specPath, "utf-8").catch(() => null);
   if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args2.specPath });
   const warnings = lintSpecText(text);
   if (warnings.length > 0 && !args2.acceptLintWarnings) {
@@ -32602,7 +32628,7 @@ function errorResult15(errorCode, message) {
 }
 
 // src/tools/sugoUpdate.ts
-import { resolve as resolve9 } from "node:path";
+import { resolve as resolve10 } from "node:path";
 var sugoUpdateInputSchema = {
   projectPath: external_exports.string().describe("\uAC31\uC2E0\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C(\uC774\uBBF8 sugo_add\uB85C \uB4F1\uB85D\uB3FC \uC788\uC5B4\uC57C \uD568)"),
   repoUrl: external_exports.string().optional(),
@@ -32613,7 +32639,7 @@ var sugoUpdateInputSchema = {
 var SugoUpdateArgs = external_exports.object(sugoUpdateInputSchema);
 async function handleSugoUpdate(rawArgs) {
   const args2 = SugoUpdateArgs.parse(rawArgs);
-  const projectPath = resolve9(args2.projectPath);
+  const projectPath = resolve10(args2.projectPath);
   const existing = await findRegistryEntry(projectPath);
   if (!existing) {
     return errorResult16("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uBA3C\uC800 sugo_add\uB85C \uB4F1\uB85D\uD558\uC138\uC694: ${projectPath}`);
@@ -32736,7 +32762,7 @@ function evaluateAutoCheck(spec, ctx) {
 }
 
 // src/harness/validationConfig.ts
-import { readFile as readFile26 } from "node:fs/promises";
+import { readFile as readFile27 } from "node:fs/promises";
 import { join as join27 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
@@ -32755,7 +32781,7 @@ async function loadProjectValidationConfigs(projectPath) {
   for (const applied of config2.appliedHarnesses) {
     const path = join27(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile26(path, "utf-8");
+      const content = await readFile27(path, "utf-8");
       result2.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -32900,7 +32926,7 @@ async function handleSugoVersion() {
 }
 
 // src/ontology/identity.ts
-import { createHash as createHash4 } from "node:crypto";
+import { createHash as createHash5 } from "node:crypto";
 
 // src/ontology/workflowGraph.ts
 function reachable(start2, edges) {
@@ -33010,7 +33036,7 @@ function canonicalJson(value) {
   throw new TypeError(`Ontology hash cannot encode ${typeof value}`);
 }
 function deterministicModelHash(value) {
-  return `sha256:${createHash4("sha256").update(canonicalJson(value)).digest("hex")}`;
+  return `sha256:${createHash5("sha256").update(canonicalJson(value)).digest("hex")}`;
 }
 var HASHED_MODEL = {
   ontology: ONTOLOGY,

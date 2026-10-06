@@ -1,0 +1,74 @@
+# SPEC 배포 환경 — Plugin 0.20.0 / Console 0.13.0
+
+2026-10-06 사용자 결정. 개발 상태(초안/진행중/검증/완료)와 실제 배포 환경을 독립적으로 관리한다.
+개발 완료는 PRD 배포 완료를 뜻하지 않는다. 배포 태그는 승인이나 배포 명령을 실행하지 않는다.
+
+## 표시
+
+AWS에 연결된 프로젝트의 SPEC에 LOCAL / DEV / STG / PRD 태그를 표시한다. 연결된 환경 중
+작업 소스가 실제 실행 서비스에 포함된 가장 높은 환경을 표시한다. 일부 TASK만 반영되면
+예를 들어 STG 일부로 표시하며 상세에서 각 환경의 반영 작업 수를 제공한다. 근거가 없거나
+확인하지 못한 경우 확인 불가로 표시한다. AWS 연결이 없는 SPEC에는 태그를 표시하지 않는다.
+Schedule 카드/상세와 Canvas의 접힌/펼친 SPEC 헤더에서 같은 서버 판정을 소비한다.
+태그 하나를 누르면 작업 커밋, 서비스/이미지, 배포 커밋, 조회 시각과 미확인 이유가 열린다.
+
+## 작업 소스 기록
+
+Plugin은 TASK 완료 시점에 workResult.sourceRevision에 프로젝트 경로, Git HEAD, 변경 파일별
+SHA-256(삭제는 deleted), 기록 시각을 추가한다. 파일 내용은 전송하지 않는다. 해당 변경 파일이
+커밋되지 않았거나 작업 시작보다 오래된 커밋이면 이전 HEAD를 최종 구현으로 기록하지 않고
+pending으로 기록한다. 논리적인 sugo_plan commit은 실제 git commit이 아니므로 이 구분이 필요하다.
+
+TASK 이후 실제 Git 커밋한 경우 Console이 같은 프로젝트의 작업 트리를 읽는다. 변경 파일이
+clean이고 기록 당시 해시와 동일하며 파일의 최근 커밋 시각이 기록 시각 이후일 때만 HEAD를
+완료 소스로 연결한다. 파일이 추가 변경되었으면 추정하지 않는다. 서버에 로컬 Git 저장소가
+없으면 이 후속 연결과 ancestry/squash 확인이 제한된다. 자동 git fetch나 git commit은 하지 않는다.
+
+과거 TASK의 완료 커밋 기록이 없으면 확인 불가다. 현재 HEAD를 과거 TASK에 소급 연결하지 않는다.
+기존 세션 재동기화만으로 과거 커밋이 복구되지는 않는다. 새 버전에서 완료한 작업부터 기록된다.
+
+## 배포 근거
+
+1. 기존 Settings의 프로젝트/AWS 서비스 환경 연결과 사용자 소유 워크스페이스 프로젝트를 사용한다.
+   dev/stg/prd 이름으로 연결한다. 정확한 이미지 저장소명 또는 서비스명에 대한 기존 추천 연결도
+   지원하지만 다른 이름의 서비스는 명시적인 프로젝트 연결이 필요하다.
+2. AWS refresh는 ECS RUNNING task/container의 실제 imageDigest와 ECR의 해당 digest의 태그를 수집한다.
+   task definition이나 development 브랜치, 최신 성공 빌드만 보고 배포 완료로 판단하지 않는다.
+3. 전체 SHA 태그, CodeBuild가 export한 IMAGE_URI/IMAGE_DIGEST, 또는 숫자 빌드 태그를 연결한다.
+   숫자 태그는 같은 프로젝트의 성공 빌드 buildNumber/resolvedSourceVersion과 일치하고 해당
+   커밋의 buildspec.yml이 IMAGE_TAG=$CODEBUILD_BUILD_NUMBER 및 docker push의 IMAGE_TAG 사용을
+   증명할 때만 허용한다. 동일 숫자가 여러 커밋에 연결되면 확인 불가다. 최근 최대 100개 빌드를
+   조회하므로 오래된 배포 빌드가 범위 밖이면 확인 불가다. 다른 태그 규칙은 추측하지 않는다.
+4. 서비스가 안정적으로 실행 중이고 조회 기록이 30분 이내일 때만 현재 환경 근거로 사용한다.
+   ECS/ECR 접근 실패, 배포 진행 중, 실행 이미지 누락/연결 불가, 오래된 snapshot은 확인 불가다.
+5. TASK 소스 SHA가 배포 SHA와 같거나 Git ancestor이면 포함된다. 명시적인 revert 메시지가 있으면
+   반영된 것으로 계산하지 않는다. squash/cherry-pick으로 SHA가 달라진 경우 변경 파일의 Git blob이
+   모두 동일할 때 포함된다. 일반적인 역변경이나 기능별 의미를 자동 판정하지는 않는다.
+   연결된 같은 환경의 모든 해당 서비스/실행 이미지에 포함되어야 TASK 하나를 반영으로 센다.
+
+원래 소스, 실행 상태, 사람이 검증한 등급은 변경하지 않는다. 배포 태그는 연결된 환경에 대한
+조회 결과다. 확인되지 않은 더 높은 환경이 있어도 증명된 낮은 환경 태그와 상세 경고를 유지한다.
+변경 파일 기반 후속 커밋 연결/동등성 확인은 동일 저장소에 한정한다. 정확한 커밋 연결을 원하면
+빌드 이미지에 전체 Git SHA 태그 또는 export된 digest/URI를 남기는 것이 가장 명확하다.
+
+## 권한·조회 비용
+
+추가 AWS 권한은 ecs:ListTasks, ecs:DescribeTasks, ecr:DescribeImages다. 모두 명시적인 읽기 전용
+allowlist를 통과한다. 기존 수동 refresh의 쿨다운/일별 예산을 유지하고, Schedule/Canvas 폴링은
+저장된 snapshot만 읽는다. 자동 AWS 조회/배포는 추가하지 않는다. 같은 refresh 내 ECR digest 조회는
+중복 제거하고, immutable Git object 비교만 30초/최대 500개 캐시한다. 작업 트리와 HEAD는 캐시하지 않는다.
+
+## 업데이트
+
+Plugin 0.20.0 / Console 0.13.0. DB 컬럼/테이블 추가는 없으며 기존 work_result/snapshot JSON에
+필드를 추가한다. 백엔드와 UI를 함께 업데이트하고 sd로 재시작해야 한다. Plugin 업데이트 후
+/reload-plugins를 실행한다. 기존 AWS snapshot에는 runtimeImages가 없으므로 Settings → AWS Context에서
+연결된 각 계정을 새로고침한다. 기존 브라우저가 오래된 UI라면 Ctrl+Shift+R로 갱신한다.
+로컬 로그인으로 사람 승인이 가능하며 GitHub OAuth를 별도로 설정할 필요가 없다.
+
+```powershell
+git -C C:\dev\sugo push origin main
+git -C "$env:USERPROFILE\.claude\plugins\marketplaces\sugo-marketplace" pull --ff-only
+claude plugin update sugo@sugo-marketplace
+sd
+```

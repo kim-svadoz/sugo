@@ -55,12 +55,13 @@ describe("dashboard-owned human completion audit", () => {
       expect(history.body.events).toHaveLength(3);
     } finally { await f.db.close(); }
   });
-  it("rejects blank reasons, API/MCP credentials, unattended local login, spoofed user and stale result", async () => {
+  it("rejects blank reasons, API/MCP credentials,  spoofed user and stale result", async () => {
     const f = await fixture();
     try {
       await f.approve(0, "approve", " ").expect(400);
       await f.approve(0, "approve", "reviewed", f.pat).expect(403);
-      await f.approve(0, "approve", "reviewed", f.local).expect(403);
+      await f.approve(0, "approve", "reviewed", f.local).expect(200);
+      expect((await f.get()).report.humanApprovals[0].userId).toBe("u1");
       const other = `Bearer ${await issueSession("u2", "human-completion-test-secret")}`;
       await f.approve(0, "approve", "reviewed", other).expect(409);
       await request(f.app).post(f.url).set("Authorization", f.session).send({ nodeId: "task", resultKey: f.key, labelId: completionLabelId(f.labels[0]), action: "approve", reason: "reviewed", userId: "fake" }).expect(400);

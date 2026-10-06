@@ -49,7 +49,7 @@ const READ_ONLY_AWS_OPERATIONS = new Set([
   "dynamodb:list-tables", "elasticache:describe-replication-groups",
   "opensearch:list-domain-names", "cloudwatch:list-dashboards",
   "sagemaker:list-endpoints", "sagemaker:list-endpoint-configs", "sagemaker:list-models", "sagemaker:list-notebook-instances",
-  "ecs:list-clusters", "ecs:list-services", "ecs:describe-services", "ecs:describe-task-sets", "ecs:describe-task-definition",
+  "ecs:list-clusters", "ecs:list-services", "ecs:describe-services", "ecs:describe-task-sets", "ecs:describe-task-definition", "ecs:list-tasks", "ecs:describe-tasks", "ecr:describe-images",
 ]);
 
 /** Dashboard AWS boundary: explicit allowlist, deny by default. Prefix heuristics are intentionally forbidden. */
@@ -105,6 +105,7 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
   }
 
   async function collectEcs(account: AwsContextAccount): Promise<AwsServiceInventory> {
+    const digestTags = new Map<string, string[]>();
     const resources: AwsInventoryResource[] = [];
     const errors: string[] = [];
     try {
@@ -156,6 +157,32 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
                     return [...fromEnv, ...fromCommand].filter((value): value is string => value !== null);
                   })
                 : [];
+              const runtimeImages: Array<{ image: string; imageDigest: string | null; tags: string[]; container: string | null }> = [];
+              let runtimeError: string | null = null;
+              try {
+                const listed = await run(["ecs", "list-tasks", "--cluster", clusterArn, "--service-name", service.serviceName, "--desired-status", "RUNNING", ...commonArgs(account)]) as any;
+                const taskArns = Array.isArray(listed.taskArns) ? listed.taskArns.filter((a: unknown) => typeof a === "string") : [];
+                for (const batch of chunks(taskArns, 100)) {
+                  const tasks = await run(["ecs", "describe-tasks", "--cluster", clusterArn, "--tasks", ...batch, ...commonArgs(account)]) as any;
+                  if (tasks.failures?.length) throw new Error("ECS runtime task lookup incomplete");
+                  for (const task of tasks.tasks ?? []) for (const container of task.containers ?? []) {
+                    if (task.lastStatus !== "RUNNING" || container.lastStatus !== "RUNNING") continue;
+                    const image = text(container.image); if (!image) continue;
+                    const imageDigest = text(container.imageDigest);
+                    let tags: string[] = [];
+                    const ecr = /^(\d+)\.dkr\.ecr\.[^/]+\/(.+?)(?::[^/:]+|@sha256:[a-f0-9]+)$/.exec(image);
+                    if (ecr && imageDigest) {
+                      const key = `${ecr[1]}/${ecr[2]}@${imageDigest}`;
+                      if (!digestTags.has(key)) {
+                        const detail = await run(["ecr", "describe-images", "--registry-id", ecr[1], "--repository-name", ecr[2], "--image-ids", `imageDigest=${imageDigest}`, ...commonArgs(account)]) as any;
+                        digestTags.set(key, (detail.imageDetails ?? []).filter((d: any) => d.imageDigest === imageDigest).flatMap((d: any) => Array.isArray(d.imageTags) ? d.imageTags.filter((t: unknown) => typeof t === "string") : []));
+                      }
+                      tags = digestTags.get(key)!;
+                    }
+                    runtimeImages.push({ image, imageDigest, tags, container: text(container.name) });
+                  }
+                }
+              } catch (error) { runtimeError = error instanceof Error ? error.message : String(error); }
               const serviceResource = resource("ecs", "service", service.serviceName ?? arnName(service.serviceArn), {
                 cluster: arnName(clusterArn),
                 status: service.status,
@@ -167,6 +194,7 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
                 taskDefinition: family && revision ? `${family}:${revision}` : taskDefinitionArn,
                 revision,
                 images,
+                runtimeImages, runtimeError,
                 pinpointApplicationName: pinpointApplicationNames[0] ?? null,
                 taskDefinitionRegisteredAt: text(taskDefinition?.registeredAt),
               });
@@ -194,24 +222,27 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
           const detail = await run(["codepipeline", "get-pipeline", "--name", name, ...commonArgs(account)]) as any;
           const stages = Array.isArray(detail.pipeline?.stages) ? detail.pipeline.stages : [];
           const actions = stages.flatMap((stage: any) => Array.isArray(stage.actions) ? stage.actions : []);
-          const source = actions.find((action: any) => action.actionTypeId?.category === "Source" && action.actionTypeId?.provider === "CodeCommit");
+          const source = actions.find((action: any) => action.actionTypeId?.category === "Source" && ["CodeCommit", "CodeStarSourceConnection", "GitHub"].includes(action.actionTypeId?.provider));
           const build = actions.find((action: any) => action.actionTypeId?.category === "Build" && action.actionTypeId?.provider === "CodeBuild");
           const buildProject = text(build?.configuration?.ProjectName);
           let latestBuild: any = null;
+          let buildHistory: any[] = [];
           if (buildProject) {
             const buildList = await run(["codebuild", "list-builds-for-project", "--project-name", buildProject, ...commonArgs(account)]) as any;
-            const ids = Array.isArray(buildList.ids) ? buildList.ids.slice(0, 10).filter((id: unknown): id is string => typeof id === "string") : [];
+            const ids = Array.isArray(buildList.ids) ? buildList.ids.slice(0, 100).filter((id: unknown): id is string => typeof id === "string") : [];
             if (ids.length > 0) {
               const builds = await run(["codebuild", "batch-get-builds", "--ids", ...ids, ...commonArgs(account)]) as any;
+              buildHistory = (builds.builds ?? []).filter((b: any) => b.buildStatus === "SUCCEEDED").map((b: any) => ({ project: buildProject, number: b.buildNumber, commit: text(b.resolvedSourceVersion), at: text(b.endTime), imageUri: text(b.exportedEnvironmentVariables?.find((v: any) => v.name === "IMAGE_URI")?.value), imageDigest: text(b.exportedEnvironmentVariables?.find((v: any) => v.name === "IMAGE_DIGEST")?.value) }));
               latestBuild = (builds.builds ?? []).find((item: any) => item.buildStatus === "SUCCEEDED") ?? builds.builds?.[0] ?? null;
             }
           }
           const pipeline = resource("codepipeline", "pipeline", name, {
             version: detail.pipeline?.version,
             updated: detail.metadata?.updated,
-            repositoryName: text(source?.configuration?.RepositoryName),
+            repositoryName: text(source?.configuration?.RepositoryName) ?? text(source?.configuration?.FullRepositoryId),
             branchName: text(source?.configuration?.BranchName),
             buildProject,
+            buildHistory,
             latestBuildNumber: typeof latestBuild?.buildNumber === "number" ? latestBuild.buildNumber : null,
             latestBuildCommit: text(latestBuild?.resolvedSourceVersion),
             latestBuildStatus: text(latestBuild?.buildStatus),

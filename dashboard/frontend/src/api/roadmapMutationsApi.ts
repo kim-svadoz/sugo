@@ -78,6 +78,7 @@ export function unlinkRoadmapNodes(userId: string, workspace: string, from: stri
 // due_date는 항상 화면에서만 입력한다(2026-09-23 사용자 결정) — sugo_plan CLI는 이 경로를 모른다.
 
 export interface ScheduledSpec {
+  deployment?: import("../lib/specDeployment.js").SpecDeployment;
   id: string;
   workspace_name: string;
   title: string;

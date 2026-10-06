@@ -1,3 +1,4 @@
+import { collectSourceRevision } from "../sourceRevision.js";
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
 import { extractRequirements } from "../analyze.js";
@@ -1172,7 +1173,9 @@ export async function handleSugoPlan(rawArgs: unknown) {
     const completedAt = session.data.chainInfo.workResultReport?.completedAt ?? new Date().toISOString();
     const patchVersion = session.data.mode === "patch" ? session.data.patch?.version : 0;
     const dashboardFiles = await snapshotWorkResultFiles(session.projectPath, session.data.chainInfo.changedFiles);
+    const sourceRevision = await collectSourceRevision(session.projectPath, session.data.chainInfo.changedFiles ?? [], session.startedAt);
     const workResult = {
+      sourceRevision,
       path: session.data.chainInfo.workResultPath,
       startedAt: session.startedAt,
       endedAt: completedAt,

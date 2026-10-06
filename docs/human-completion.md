@@ -15,12 +15,12 @@
 ## 로그인과 정본 경계
 
 - Dashboard의 완료 TASK 개요에서 라벨별 사유를 입력해 승인/취소한다. 사용자 ID는 요청 본문이 아닌 인증 세션에서 정한다.
-- `POST /api/workspaces/:name/roadmap/completion-approval`은 GitHub OAuth 로그인으로 발급된 세션 JWT만 허용한다. API 토큰, 자동 로컬 개인 로그인, 출처가 없는 구버전 세션은 403이다. 업데이트 후 다시 GitHub 로그인해야 한다.
+- `POST /api/workspaces/:name/roadmap/completion-approval`은 GitHub 또는 sd 로컬 로그인으로 발급된 세션 JWT를 허용한다(Console 0.13.0). API 토큰과 출처가 없는 구버전 세션은 403이다. 로컬 로그인 상태라면 추가 GitHub 로그인이 필요 없다.
 - MCP, CLI, 스킬에 승인 액션을 제공하지 않는다. `sugo_plan`/`sugo_roadmap`은 `approve`를 받지 않는다. 플러그인의 API 토큰으로 승인 API를 호출해도 거부된다.
-- 자동 로컬 로그인 모드는 사람이 개입했다는 증거가 없으므로 승인에 사용할 수 없다. 이 기능을 사용하려면 GitHub OAuth를 설정하고 로그인해야 한다.
+- 사용자 결정(2026-10-06): 로컬 개인 사용자의 로그인 세션도 사람 승인 경계로 인정한다. MCP에는 승인 액션이 없고 에이전트용 API 토큰으로 승인할 수 없다. 브라우저 세션을 가진 프로그램까지 사람과 구별하는 장치는 아니다. 로컬 로그인 URL이나 브라우저 JWT를 직접 사용하는 주체도 승인 API에 접근할 수 있으므로, 이를 AI의 절대적인 자기승인 차단으로 설명하지 않는다.
 - 승인 정본은 별도 DB 테이블 `sugo_completion_approval_events`다. 플러그인 sync/bulk는 모든 중첩 humanApprovals를 제거하고 `verified_by_human` 주장도 무시한다. TASK와 연결된 RUN, Schedule은 서버가 승인 이력으로 등급을 투영한다.
 - work-result 경로·완료 시각·patch·라벨 집합의 SHA-256 키에 승인을 묶는다. 새 patch나 결과 변경 시 이전 승인이 자동 승계되지 않고, 오래 열린 화면의 승인은 409로 거부된다. 기록은 노드 삭제 후에도 유지한다.
-- 신뢰 경계는 기존 OAuth/서버 서명키다. 서버 파일이나 로그인 세션을 탈취할 수 있는 주체를 이 애플리케이션만으로 사람과 구분할 수는 없다. 에이전트에 로그인 세션/서명키를 전달하지 않는다.
+- 신뢰 경계는 Dashboard 로그인 세션/서버 서명키다. 서버 파일이나 로그인 세션을 탈취할 수 있는 주체를 이 애플리케이션만으로 사람과 구분할 수는 없다. 에이전트에 로그인 세션/서명키를 전달하지 않는다.
 
 ## 로컬 반영
 
@@ -42,14 +42,14 @@ sugo_roadmap({ action: "pull_ordering", workspace: "orders" })
 
 TASK 개요에 `완료등급 사유 · 우회 라벨`과 `참고용 경고 · 완료등급과 별개`를 분리한다. analyze partial/blockers는 완료등급 입력이 아니다. 사람 승인 등급은 보라색 문구로 자동 검증과 구별한다.
 
-검증: Plugin 순수 함수 red-first 후 구현, 부분/전체/취소·빈 사유·API 토큰/자동 로컬 로그인/다른 사용자 거부·위조 sync·결과 변경·삭제 후 감사 유지·MCP 액션 부재·실제 파일 pull·재진입 회귀 테스트. `dashboard/e2e/human-completion-flow.mjs`는 실제 HTTP/SQLite/브라우저 승인 흐름과 스크린샷, `human-completion-mysql.mjs`는 실제 MySQL의 JSON/한글/감사 순번/원자적 INSERT/재동기화를 검증한다.
+검증: Plugin 순수 함수 red-first 후 구현, 부분/전체/취소·빈 사유·로컬 로그인 허용·API 토큰/다른 사용자 거부·위조 sync·결과 변경·삭제 후 감사 유지·MCP 액션 부재·실제 파일 pull·재진입 회귀 테스트. `dashboard/e2e/human-completion-flow.mjs`는 실제 HTTP/SQLite/브라우저 승인 흐름과 스크린샷, `human-completion-mysql.mjs`는 실제 MySQL의 JSON/한글/감사 순번/원자적 INSERT/재동기화를 검증한다.
 
 ## 배포와 마이그레이션
 
 - Plugin 0.19.0 / Console 0.12.0. Plugin을 업데이트하고 `/reload-plugins`한다.
 - **Dashboard 백엔드 재시작이 필요하다.** initDb가 감사 테이블을 추가 생성한다. 기존 테이블/라벨/실행 증거를 수정하지 않는다. DB 계정에 CREATE TABLE 권한이 필요하다.
 - 운영에서 DDL 권한을 분리했다면 `dashboard/backend/src/db/human-completion.mysql.sql`을 먼저 DBA 계정으로 적용한 뒤 백엔드를 재시작한다. SQLite도 동일 필드의 테이블이 자동 생성된다.
-- 프론트엔드를 새 버전으로 빌드·배포하고, 승인을 사용할 사람은 GitHub에서 다시 로그인한다. 기존 세션은 일반 조회/동기화에는 계속 사용할 수 있다.
+- 프론트엔드를 새 버전으로 빌드·배포하고, 승인을 사용할 사람은 Dashboard에 로그인한다(sd 로컬 로그인도 가능). 기존 세션은 일반 조회/동기화에는 계속 사용할 수 있다.
 - 롤백할 때 감사 테이블을 삭제하지 않는다. 구버전 Plugin은 사람 승인 등급을 이해하지 못하므로 양쪽 제품을 함께 업데이트한다.
 
 

@@ -150,14 +150,14 @@ export interface RoadmapNodeWire {
 function compactWorkResult(result: RoadmapWorkResult | undefined, summaryOnly = false) {
   if (!result) return undefined;
   if (summaryOnly) {
-    const { path, startedAt, endedAt, model, summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs } = result;
+    const { path, startedAt, endedAt, model, summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, sourceRevision } = result;
     const report = result.report ? {
       schemaVersion: result.report.schemaVersion, kind: result.report.kind,
       patchVersion: result.report.patchVersion, completionGrade: result.report.completionGrade,
       summary: result.report.summary, verification: result.report.verification,
       changedFiles: [], designDecisions: [], knownLimitations: [],
     } : undefined;
-    return { path, startedAt, endedAt, model, summary: summary ?? result.report?.summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, report };
+    return { path, startedAt, endedAt, model, summary: summary ?? result.report?.summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, sourceRevision, report };
   }
   return {
     ...result,

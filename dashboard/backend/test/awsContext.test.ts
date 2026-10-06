@@ -31,6 +31,9 @@ describe("AWS context CLI adapter", () => {
       if (service === "sagemaker" && args[1] === "list-endpoint-configs") return { EndpointConfigs: [{ EndpointConfigName: "shop-ranker-config", CreationTime: "2026-09-01T00:00:00Z" }] };
       if (service === "sagemaker" && args[1] === "list-models") return { Models: [{ ModelName: "shop-model", CreationTime: "2026-09-01T00:00:00Z" }] };
       if (service === "sagemaker" && args[1] === "list-notebook-instances") return { NotebookInstances: [{ NotebookInstanceName: "shop-analysis", NotebookInstanceStatus: "Stopped", InstanceType: "ml.t3.medium", CreationTime: "2026-09-01T00:00:00Z", LastModifiedTime: "2026-09-29T00:00:00Z" }] };
+      if (service === "ecs" && args[1] === "list-tasks") return { taskArns: ["task1", "task2"] };
+      if (service === "ecs" && args[1] === "describe-tasks") return { tasks: [1, 2].map(() => ({ lastStatus: "RUNNING", containers: [{ lastStatus: "RUNNING", name: "app", image: "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/orders-api:421", imageDigest: "sha256:abc" }] })) };
+      if (service === "ecr" && args[1] === "describe-images") return { imageDetails: [{ imageDigest: "sha256:abc", imageTags: ["421"] }] };
       if (service === "ecs" && args[1] === "list-clusters") return { clusterArns: ["arn:aws:ecs:ap-northeast-2:123456789012:cluster/shop-cluster"] };
       if (service === "ecs" && args[1] === "list-services") return { serviceArns: ["arn:aws:ecs:ap-northeast-2:123456789012:service/shop-cluster/orders-api-service"] };
       if (service === "ecs" && args[1] === "describe-services") return { services: [{ serviceName: "orders-api-service", status: "ACTIVE", desiredCount: 2, runningCount: 2, taskDefinition: "arn:aws:ecs:ap-northeast-2:123456789012:task-definition/orders-api:343", deployments: [{ status: "PRIMARY", rolloutState: "COMPLETED", createdAt: "2026-09-28T08:00:00.000Z", updatedAt: "2026-09-28T08:03:00.000Z" }] }] };
@@ -39,6 +42,8 @@ describe("AWS context CLI adapter", () => {
     });
     const inventory = await client.inventory({ profile: "team-account", region: "ap-northeast-2" });
     expect(inventory).toHaveLength(11);
+    expect(inventory.find(i => i.service === "ecs")?.resources.find(r => r.kind === "service")?.metadata?.runtimeImages).toEqual([1, 2].map(() => ({ image: "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/orders-api:421", imageDigest: "sha256:abc", tags: ["421"], container: "app" })));
+    expect(inventory.find(i => i.service === "codepipeline")?.resources[0].metadata?.buildHistory).toEqual([expect.objectContaining({ number: 421, commit: "abc123" })]);
     expect(inventory.flatMap((item) => item.resources.map((resource) => resource.id))).toEqual(expect.arrayContaining([
       "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "shop-ranker", "shop-ranker-config", "shop-model", "shop-analysis", "shop-cluster", "orders-api-service",
     ]));

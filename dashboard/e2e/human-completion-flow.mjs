@@ -1,3 +1,4 @@
+import { seedDeployment, deploymentRevision } from "./seed-spec-deployment.mjs";
 // node --import ./register-source.mjs human-completion-flow.mjs <screenshots-dir>
 // Frontend preview built with VITE_API_BASE=http://localhost:4000, :4173.
 // Real HTTP + DB + Chromium flow; screenshots directory may be passed as argv[2].
@@ -18,18 +19,19 @@ let browser;
 try {
   const userId = "human-e2e";
   await db.exec("INSERT INTO sugo_users (id, display_name) VALUES (?, ?)", [userId, userId]);
-  const token = await issueSession(userId, secret);
+  const token = await issueSession(userId, secret, 3600, "local");
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const post = async (path, body) => { const r = await fetch(`http://127.0.0.1:4000${path}`, { method: "POST", headers, body: JSON.stringify(body) }); assert.equal(r.status, 200, await r.text()); };
   await post("/api/sync/workspace", { userId, name: "human-e2e", projects: [] });
   const labels = ["evidenceResnapshot", "runtimeUnverified"].map((kind, i) => ({ kind, reason: i ? "로컬 실행환경 부재" : "RankingModule23Test 6/6, 로컬 의존 테스트 2건 제외", patchVersion: 0, recordedAt: `2026-10-02T00:00:0${i}Z` }));
-  const workResult = { path: "/work/work-result.md", parentTaskId: "task-1", report: { schemaVersion: 1, kind: "feat", patchVersion: 0, completedAt: "2026-10-02", completionGrade: "unverified", bypassLabels: labels, summary: "인기 목록 화면 추가", changedFiles: ["RankingModule.java"], designDecisions: [], knownLimitations: [], verification: { test: { command: "gradlew check", total: 6, passed: 6, state: "pass" }, runtimeVerified: false } } };
+  const workResult = { sourceRevision: deploymentRevision, path: "/work/work-result.md", parentTaskId: "task-1", report: { schemaVersion: 1, kind: "feat", patchVersion: 0, completedAt: "2026-10-02", completionGrade: "unverified", bypassLabels: labels, summary: "인기 목록 화면 추가", changedFiles: ["RankingModule.java"], designDecisions: [], knownLimitations: [], verification: { test: { command: "gradlew check", total: 6, passed: 6, state: "pass" }, runtimeVerified: false } } };
   const runtimeAssessment = { projectionSchemaVersion: 1, status: "completed", currentStage: "DONE", nextActions: [], recommendedAction: null, humanDecisionRequired: false, blockers: ["analyze 미통과(partial)"], evidence: [] };
   await post("/api/sync/roadmap", { userId, workspaceName: "human-e2e", nodes: [
     { id: "spec-1", title: "사람 승인 SPEC", level: "spec", status: "done" },
     { id: "run-1", title: "사람 승인 RUN", parent: "spec-1", level: "workstream", status: "done", workResult },
     { id: "task-1", title: "인기 목록 화면 추가", parent: "run-1", level: "task", status: "done", workResult, runtimeAssessment },
   ] });
+  await seedDeployment(db, userId, "human-e2e");
   browser = await chromium.launch({ channel: "msedge" });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1200 } });
   const errors = []; page.on("pageerror", e => errors.push(e.message));
@@ -45,6 +47,14 @@ try {
   assert.equal(await page.getByRole("button", { name: /사유 검토/ }).count(), 1);
   assert.equal(await page.getByText("지금 할 일", { exact: true }).count(), 0);
   await shot("human-compact-panel");
+  await page.getByRole("button", { name: "배포 환경 DEV", exact: true }).click();
+  await page.getByRole("dialog", { name: "SPEC 배포 환경" }).waitFor();
+  await page.getByText("DEV · 1/1 작업 반영", { exact: true }).waitFor();
+  await shot("spec-deployment-dev");
+  await page.keyboard.press("Escape");
+  assert.equal(await page.getByRole("dialog").count(), 0);
+  await page.getByRole("heading", { name: "미검증 사유" }).waitFor();
+
   await review.getByRole("button", { name: "사유 검토", exact: true }).click();
   await page.getByRole("dialog", { name: "검증 사유 검토" }).waitFor();
   await page.keyboard.press("Escape");
@@ -74,6 +84,12 @@ try {
   await page.getByText("미검증", { exact: true }).first().waitFor();
   await page.getByText("사람 승인 감사 기록 (3)").waitFor();
   await shot("human-revoked");
+  await page.getByRole("dialog").getByRole("button", { name: "검토 창 닫기", exact: true }).click();
+  await page.goto("http://localhost:4173/schedule");
+  await page.getByRole("button", { name: "배포 환경 DEV", exact: true }).first().click();
+  await page.getByRole("dialog", { name: "SPEC 배포 환경" }).waitFor();
+  await shot("schedule-deployment-dev");
+  await page.keyboard.press("Escape");
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ status: "passed", partialApproval: "unverified", fullApproval: "verified_by_human", revoked: "unverified", pageErrors: errors.length }));
 } finally {

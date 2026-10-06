@@ -1,3 +1,4 @@
+import { seedDeployment, deploymentRevision } from "./seed-spec-deployment.mjs";
 // MYSQL_HOST/PORT/USER/PASSWORD control the test server. Uses a fresh isolated DB; drops only that DB.
 // node --import ./register-source.mjs human-completion-mysql.mjs
 import assert from "node:assert/strict";
@@ -22,7 +23,7 @@ try {
   const { app } = await createApp({ db, sessionSecret: secret });
   server = await new Promise(resolve => { const s = app.listen(0, "127.0.0.1", () => resolve(s)); });
   const base = `http://127.0.0.1:${server.address().port}`;
-  const token = await issueSession("mysql-human", secret);
+  const token = await issueSession("mysql-human", secret, 3600, "local");
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const post = async (path, body) => { const r = await fetch(base + path, { method: "POST", headers, body: JSON.stringify(body) }); assert.equal(r.status, 200, await r.text()); };
   const labels = ["evidenceResnapshot", "runtimeUnverified"].map((kind, i) => ({ kind, reason: `한글 원래 사유 ${i} "JSON"`, patchVersion: 0, recordedAt: `2026-10-02T00:00:0${i}Z` }));
@@ -42,7 +43,17 @@ try {
   await approve(0, "revoke"); assert.equal((await get()).report.completionGrade, "unverified");
   assert.equal((await get()).report.humanApprovals.length, 3);
   assert.deepEqual((await get()).report.bypassLabels, labels);
-  console.log(JSON.stringify({ mysql: (await db.query("SELECT VERSION() AS version"))[0].version, auditEvents: 3, partial: "unverified", approved: "verified_by_human", revoked: "unverified", resyncPreserved: true }));
+  await post("/api/sync/workspace", { name: "ws", projects: [] });
+  const deploymentWorkResult = { sourceRevision: deploymentRevision, report: { completionGrade: "verified", bypassLabels: [] } };
+  await post("/api/sync/roadmap", { workspaceName: "ws", nodes: [
+    { id: "spec", title: "deploy spec", level: "spec", status: "done" },
+    { id: "run", title: "run", level: "workstream", parent: "spec", status: "done" },
+    { id: "deploy-task", title: "task", level: "task", parent: "run", status: "done", workResult: deploymentWorkResult },
+  ] });
+  await seedDeployment(db, "mysql-human", "ws");
+  const spec = (await view()).nodes.find(n => n.id === "spec");
+  assert.equal(spec.deployment.environment, "DEV"); assert.equal(spec.display_status, "done");
+  console.log(JSON.stringify({ mysql: (await db.query("SELECT VERSION() AS version"))[0].version, auditEvents: 3, partial: "unverified", approved: "verified_by_human", revoked: "unverified", resyncPreserved: true, localLogin: true, deployment: "DEV" }));
 } finally {
   if (server) await new Promise(resolve => server.close(resolve));
   await db?.close();

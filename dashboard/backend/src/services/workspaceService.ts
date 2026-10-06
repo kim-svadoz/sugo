@@ -1,3 +1,4 @@
+import { projectSpecDeployments, type SpecDeployment } from "./specDeploymentService.js";
 import { projectHumanCompletion } from "./humanCompletion.js";
 import { randomBytes } from "node:crypto";
 import { execFile } from "node:child_process";
@@ -370,6 +371,8 @@ export async function getTasks(db: DbClient, userId: string, workspaceName: stri
 }
 
 export interface RoadmapNodeRow {
+  deployment?: SpecDeployment;
+  project_path?: string | null;
   updated_at: string | null;
   id: string;
   title: string;
@@ -451,7 +454,8 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
     else if (unfinished.some(t => t.display_status === "verification")) n.display_status = "verification";
     else if (n.display_status === "done") n.display_status = "pending";
   }
-  return displayed;
+  const deployments = await projectSpecDeployments(db, userId, workspaceName, displayed);
+  return displayed.map(n => ({ ...n, ...(deployments.has(n.id) ? { deployment: deployments.get(n.id)! } : {}) }));
 }
 
 export type SaveBlockerDecisionResult =
@@ -503,6 +507,7 @@ export async function getBlockerDecision(db: DbClient, userId: string, workspace
 // ---- §7B Schedule 탭 (due_date는 dashboard 전용, CLI/플러그인 sync가 안 건드림) ----
 
 export interface ScheduledSpecRow {
+  deployment?: SpecDeployment;
   id: string;
   workspace_name: string;
   title: string;
@@ -555,6 +560,10 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
   }
   // manual_title(Canvas 이름 변경)이 있으면 그게 유효 제목 — CLI가 push한 title은 다음
   // sync에서 되돌아오므로 화면 표시에는 절대 그대로 쓰지 않는다.
+  const deployments = new Map<string, SpecDeployment>();
+  await Promise.all([...new Set(rows.map(r => r.workspace_name))].map(async workspace => {
+    for (const n of await getRoadmap(db, userId, workspace)) if (n.deployment) deployments.set(`${workspace}\0${n.id}`, n.deployment);
+  }));
   return rows.map(({ manual_title, has_run, ...row }) => {
     const children = tasksBySpec.get(`${row.workspace_name}\0${row.id}`) ?? [];
     const enriched = children.map((task) => {
@@ -566,6 +575,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
     const focus = [...enriched].sort((a, b) => priority(a) - priority(b) || a.id.localeCompare(b.id))[0] ?? null;
     return {
       ...row,
+      deployment: deployments.get(`${row.workspace_name}\0${row.id}`),
       status: row.status === "dropped" ? "dropped" : enriched.some(t => t.status === "blocked") ? "blocked" : enriched.some(t => t.status === "in_progress") ? "in_progress" : enriched.some(t => t.status === "verification") ? "verification" : row.status === "done" && enriched.some(t => t.status === "pending") ? "pending" : row.status,
       has_run: Boolean(has_run),
       title: manual_title ?? row.title,

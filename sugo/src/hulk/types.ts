@@ -99,6 +99,7 @@ export interface RoadmapNodeResult {
 }
 
 export interface RoadmapWorkResult {
+  sourceRevision?: import("../sourceRevision.js").SourceRevision;
   path?: string;
   startedAt?: string;
   endedAt?: string;

@@ -1,3 +1,4 @@
+import { SpecDeploymentBadge } from "../components/SpecDeploymentBadge.js";
 import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
@@ -329,6 +330,7 @@ export function SchedulePage() {
                   >
                     <span className="min-w-0 flex-1 truncate">{s.title}</span>
                     <SpecStageBadge spec={s} />
+                      <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
                   </div>
                 );
               })}
@@ -361,6 +363,7 @@ export function SchedulePage() {
                     <span className="flex flex-wrap items-center gap-1">
                       <span className="font-mono text-[9.5px] text-slate-300/80">{s.due_date}</span>
                       <SpecStageBadge spec={s} />
+                      <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
                       {overdue && (
                         <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-rose-300">
                           <AlertTriangle size={9} /> 기한 초과
@@ -462,6 +465,7 @@ export function SchedulePage() {
                         >
                           <span className="min-w-0 flex-1 truncate font-medium text-slate-100">{s.title}</span>
                           <SpecStageBadge spec={s} compact />
+                      <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
                           {overdue && (
                             <span className="flex shrink-0 items-center gap-0.5 rounded bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
                               <AlertTriangle size={9} /> 기한 초과
@@ -534,6 +538,7 @@ export function SchedulePage() {
                     <div className="flex items-center justify-between gap-2">
                       <strong className="font-semibold text-white">{guidance.currentStage}</strong>
                       <SpecStageBadge spec={selected} />
+                      <SpecDeploymentBadge deployment={selected.deployment} title={selected.title} />
                     </div>
                     <p className="mt-1 text-slate-300">{guidance.reason}</p>
                     <p className="mt-2"><span className="text-cyan-300">다음 행동</span> · {guidance.nextAction}</p>

@@ -74,6 +74,7 @@ export interface LineageEntry {
 }
 
 export interface RoadmapNode {
+  deployment?: import("../lib/specDeployment.js").SpecDeployment;
   display_status?: string;
   id: string;
   title: string;

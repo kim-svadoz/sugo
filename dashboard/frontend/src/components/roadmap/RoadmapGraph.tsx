@@ -1,3 +1,4 @@
+import { SpecDeploymentBadge } from "../SpecDeploymentBadge.js";
 import { workflowStatus } from "../../lib/workflowStatus.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -227,6 +228,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
             >
               {isSpec ? "SPEC" : "RUN"}
             </span>
+            {isSpec && <SpecDeploymentBadge deployment={n.deployment} title={n.title} />}
             <span className={cn("font-medium text-slate-400/90", isSpec ? "text-[13px]" : "text-[12px]")}>
               {isSpec
                 ? `· RUN ${data.childCount ?? 0}개`
@@ -435,6 +437,7 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
           <span className="rounded-md bg-slate-500/25 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-wider text-slate-200">
             {isBand ? "미분류" : isSpec ? "SPEC" : "RUN"}
           </span>
+          {isSpec && <SpecDeploymentBadge deployment={n.deployment} title={n.title} />}
           <span
             className={cn("min-w-0 flex-1 truncate text-slate-200/90", isSpec ? "text-[15px] font-semibold" : "text-[13px]")}
             title={n.title}
