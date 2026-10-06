@@ -117,7 +117,6 @@ export function SubtaskPanel({
             onReviewResult={() => setTab("summary")}
           />
         )}
-        {tab === "progress" && <CompletionApprovalPanel workspace={workspace} node={node} onChanged={onChanged} />}
         {tab === "summary" && <SummaryTab workResult={workResult} />}
         {tab === "files" && <FilesTab files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} />}
       </div>
@@ -272,6 +271,7 @@ function ProgressTab({
               </div>
               {duration && <span className="font-mono text-[10px] text-[var(--color-text-dim)]">{duration}</span>}
             </div>
+            <div className="p-3 border-b border-white/8"><CompletionApprovalPanel workspace={workspace} node={node} onChanged={onChanged} /></div>
             <div className="grid grid-cols-2 gap-px bg-white/5 text-[10.5px]">
               <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">테스트</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.testLabel ?? "기록 없음"}</div></div>
               <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">실행 검증</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.runtimeVerified ? "runtime ✓" : "미검증"}{reportView.wiringVerified ? " · wiring ✓" : ""}</div></div>

@@ -103,7 +103,13 @@ function guidanceFromAssessment(assessment: RuntimeAssessment): TaskGuidance {
 
 export function taskGuidance(node: TaskGuidanceInput, now = Date.now()): TaskGuidance {
   if (node.runtime_assessment?.projectionSchemaVersion === 1) {
-    return guidanceFromAssessment(node.runtime_assessment);
+    const guidance = guidanceFromAssessment(node.runtime_assessment);
+    if (node.runtime_assessment.status === "completed") {
+      const grade = parsedWorkResult(node.work_result)?.report?.completionGrade;
+      if (grade === "unverified") return { ...guidance, kind: "attention", label: "미검증", reason: "작업은 완료됐지만 검증 예외가 남아 있습니다. 완료등급 아래의 사유를 검토하세요.", nextAction: "미검증 사유 검토" };
+      if (grade === "verified" || grade === "verified_by_human") return { ...guidance, label: grade === "verified" ? "검증 완료" : "사람 승인 검증완료", nextAction: "추가 작업 없음", action: "none" };
+    }
+    return guidance;
   }
   const status = (node.manual_status ?? node.status ?? "pending").toLowerCase();
   const workResult = parsedWorkResult(node.work_result);

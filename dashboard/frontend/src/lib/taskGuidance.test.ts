@@ -82,3 +82,7 @@ describe("schedule attention", () => {
     expect(scheduleAttention({ ...base, status: "done", active_task_count: 0, done_task_count: 1 }).label).toBe("완료");
   });
 });
+
+ it("DONE 파이프라인에서도 미검증 등급의 원인 검토를 안내한다", () => {
+   expect(taskGuidance({ status: "done", work_result: { report: { completionGrade: "unverified" } }, runtime_assessment: { projectionSchemaVersion: 1, status: "completed", currentStage: "DONE", nextActions: [], recommendedAction: null, humanDecisionRequired: false, blockers: [], evidence: [] } })).toMatchObject({ kind: "attention", currentStage: "DONE", nextAction: "미검증 사유 검토", action: "open_canvas" });
+ });

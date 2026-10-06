@@ -35,17 +35,19 @@ export function CompletionApprovalPanel({ workspace, node, onChanged }: { worksp
   if (node.level !== "task" || !report) return null;
   const labels = report.bypassLabels ?? [];
   const latest = new Map((report.humanApprovals ?? []).map(e => [e.labelId, e]));
-  return <section className="space-y-3 text-xs">
-    <div className="rounded-xl border border-amber-400/20 p-3 space-y-2">
-      <h3 className="font-semibold">완료등급 사유 · 우회 라벨</h3>
+  const names: Record<string, string> = { evidenceResnapshot: "테스트 제외 후 재검증", environmentAbsent: "검증 환경 없음", runtimeUnverified: "실행 검증 생략", wiringUnverified: "연결 검증 생략", bootUnverified: "기동 검증 생략", contractEvidenceMissing: "계약 테스트 증거 없음", abandonedChain: "이전 작업 취소", todoSpecSyncSkipped: "설계 동기화 생략" };
+  return <section id="completion-review" className="space-y-3 text-xs">
+    <div className="space-y-2">
+      <h3 className="font-semibold text-amber-200">{report.completionGrade === "unverified" ? "미검증 사유" : "검증 사유 및 사람 승인 기록"}</h3>
+      <p className="text-[var(--color-text-muted)] leading-relaxed">{report.completionGrade === "unverified" ? "REQ 완료와 테스트 통과가 기록되어도, 아래 검증 예외(우회 라벨)가 남아 있어 미검증입니다. 각 사유를 검토하고 승인할 수 있습니다." : "REQ 진행률과 별도로 실행 증거와 검증 예외의 승인 여부로 등급을 판단합니다."}</p>
       {!labels.length && <p className="opacity-60">{report.bypassLabels ? "우회 라벨 없음" : "이전 플러그인의 기록입니다. 최신 플러그인에서 라벨을 동기화해야 승인할 수 있습니다."}</p>}
       {labels.map((l, index) => {
         const id = completionLabelId(l); const event = latest.get(id);
         const prior = (l.kind === "evidenceResnapshot" && !!l.supersededAt && (l.supersededByCycle ?? 0) > (l.implementationCycle ?? 0)) || l.patchVersion !== report.patchVersion;
         const approved = event?.action === "approve";
         return <div key={`${id}-${index}`} className="space-y-2 border-t border-white/10 pt-2">
-          <p className="font-mono">{l.kind}{prior ? " · 이전 사이클/패치 라벨 (등급 제외)" : approved ? " · 사람 승인" : " · 미승인"}</p>
-          <p className="whitespace-pre-wrap break-words">{l.reason}</p>
+          <p className="font-semibold">{names[l.kind] ?? l.kind}{prior ? " · 이전 사이클/패치 라벨 (등급 제외)" : approved ? " · 사람 승인" : " · 미승인"}</p>
+          <p className="whitespace-pre-wrap break-words leading-relaxed">{l.reason}</p><details className="opacity-60"><summary>원래 라벨 확인</summary><code>{l.kind}</code></details>
           {l.supersededAt && <p className="opacity-60">재검증으로 해소: {l.supersededAt}</p>}
           {event && <p className="whitespace-pre-wrap text-violet-200">{event.userId} · {event.at}<br />{event.reason}</p>}
           {!prior && node.status === "done" && result?.approvalResultKey && <>
@@ -54,7 +56,7 @@ export function CompletionApprovalPanel({ workspace, node, onChanged }: { worksp
           </>}
         </div>;
       })}
-      <p className="opacity-60">실행 증거는 바뀌지 않습니다. 모든 유효 라벨을 승인하면 ‘사람 승인 검증완료’로 표시됩니다. 로컬 work-result는 sugo_roadmap의 pull_ordering으로 반영합니다.</p>
+      <p className="opacity-60">모든 미승인 사유를 승인하면 ‘사람 승인 검증완료’가 됩니다. 자동 검증완료와 구분되며 승인자·시각·사유가 기록됩니다.</p>
       {error && <p role="alert" className="text-rose-300">{error}</p>}
     </div>
     {!!node.runtime_assessment?.blockers?.length && <div className="rounded-xl border border-white/10 p-3"><h3 className="font-semibold">참고용 경고 · 완료등급과 별개</h3>{node.runtime_assessment.blockers.map((b, i) => <p key={i} className="mt-2 whitespace-pre-wrap">{b}</p>)}</div>}
