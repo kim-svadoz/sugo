@@ -200,8 +200,38 @@ function ProgressTab({
 
   const actionable = guidance && ["review_verification", "review_result", "continue_patch", "create_pr"].includes(guidance.action);
 
+  const resultSection = (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]">Work Result</div>
+          {reportView && <span className="font-mono text-[10px] text-violet-200/70">{reportView.versionLabel}</span>}
+        </div>
+        {workResult && reportView ? (
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.045] to-transparent">
+            <div className="flex items-center justify-between border-b border-white/8 px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                {reportView.grade === "unverified" ? <AlertTriangle size={14} className="text-amber-300" /> : <CheckCircle2 size={14} className="text-emerald-300" />}
+                <span className={`text-xs font-semibold ${reportView.grade === "unverified" ? "text-amber-200" : reportView.grade === "verified_by_human" ? "text-violet-200" : "text-emerald-200"}`}>{reportView.gradeLabel}</span>
+              </div>
+              {duration && <span className="font-mono text-[10px] text-[var(--color-text-dim)]">{duration}</span>}
+            </div>
+            <div className="p-3 border-b border-white/8"><CompletionApprovalPanel workspace={workspace} node={node} onChanged={onChanged} /></div>
+            <div className="grid grid-cols-2 gap-px bg-white/5 text-[10.5px]">
+              <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">테스트</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.testLabel ?? "기록 없음"}</div></div>
+              <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">실행 검증</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.runtimeVerified ? "runtime ✓" : "미검증"}{reportView.wiringVerified ? " · wiring ✓" : ""}</div></div>
+            </div>
+            {workResult.seed && <div className="border-t border-white/8 px-3 py-2 text-[10.5px] leading-relaxed text-violet-100/65"><span className="mr-1.5 font-mono text-violet-300/80">SEED</span>{workResult.seed}</div>}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-white/10 p-3 text-xs opacity-50">아직 work_result 없음</div>
+        )}
+      </div>
+
+  );
+
   return (
     <div className="space-y-4">
+      {guidance?.kind === "verification" && resultSection}
       {guidance && (
         <section className={`overflow-hidden rounded-xl border ${guidance.kind === "blocked" ? "border-orange-400/40 bg-orange-400/[0.06]" : (guidance.kind === "attention" || guidance.kind === "verification") ? "border-amber-400/35 bg-amber-400/[0.05]" : "border-cyan-400/30 bg-cyan-400/[0.045]"}`}>
           <div className="border-b border-white/[0.07] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]">지금 할 일</div>
@@ -259,31 +289,7 @@ function ProgressTab({
 
       {progressItems.length > 0 && (node.level === "task" ? <ReqList reqs={progressItems} /> : <ChildList items={progressItems} />)}
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]">Work Result</div>
-          {reportView && <span className="font-mono text-[10px] text-violet-200/70">{reportView.versionLabel}</span>}
-        </div>
-        {workResult && reportView ? (
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.045] to-transparent">
-            <div className="flex items-center justify-between border-b border-white/8 px-3 py-2.5">
-              <div className="flex items-center gap-2">
-                {reportView.grade === "unverified" ? <AlertTriangle size={14} className="text-amber-300" /> : <CheckCircle2 size={14} className="text-emerald-300" />}
-                <span className={`text-xs font-semibold ${reportView.grade === "unverified" ? "text-amber-200" : reportView.grade === "verified_by_human" ? "text-violet-200" : "text-emerald-200"}`}>{reportView.gradeLabel}</span>
-              </div>
-              {duration && <span className="font-mono text-[10px] text-[var(--color-text-dim)]">{duration}</span>}
-            </div>
-            <div className="p-3 border-b border-white/8"><CompletionApprovalPanel workspace={workspace} node={node} onChanged={onChanged} /></div>
-            <div className="grid grid-cols-2 gap-px bg-white/5 text-[10.5px]">
-              <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">테스트</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.testLabel ?? "기록 없음"}</div></div>
-              <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">실행 검증</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.runtimeVerified ? "runtime ✓" : "미검증"}{reportView.wiringVerified ? " · wiring ✓" : ""}</div></div>
-            </div>
-            {workResult.seed && <div className="border-t border-white/8 px-3 py-2 text-[10.5px] leading-relaxed text-violet-100/65"><span className="mr-1.5 font-mono text-violet-300/80">SEED</span>{workResult.seed}</div>}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-white/10 p-3 text-xs opacity-50">아직 work_result 없음</div>
-        )}
-      </div>
+      {guidance?.kind !== "verification" && resultSection}
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {(node.level === "task" || node.level === "workstream") && (node.manual_status ?? node.status) === "done" && workResult?.path && (
