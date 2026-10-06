@@ -232,7 +232,7 @@ function ProgressTab({
   return (
     <div className="space-y-4">
       {resultSection}
-      {guidance && guidance.kind !== "verification" && (
+      {guidance && guidance.kind !== "done" && guidance.kind !== "verification" && (
         <section className={`overflow-hidden rounded-xl border ${guidance.kind === "blocked" ? "border-orange-400/40 bg-orange-400/[0.06]" : guidance.kind === "attention" ? "border-amber-400/35 bg-amber-400/[0.05]" : "border-cyan-400/30 bg-cyan-400/[0.045]"}`}>
           <div className="border-b border-white/[0.07] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]">지금 할 일</div>
           <div className="space-y-2.5 p-3">

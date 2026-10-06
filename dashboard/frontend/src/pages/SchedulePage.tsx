@@ -535,13 +535,15 @@ export function SchedulePage() {
                 return (
                   <div className="mt-3 rounded-lg border border-cyan-500/25 bg-cyan-500/[0.07] px-3 py-2.5 text-[11.5px] leading-relaxed text-slate-200">
                     <div className="flex items-center justify-between gap-2">
-                      <strong className="font-semibold text-white">{guidance.currentStage}</strong>
-                      <SpecStageBadge spec={selected} />
+                      <strong className="font-semibold text-white">{guidance.kind === "done" ? "완료" : guidance.currentStage}</strong>
+                      {guidance.kind !== "done" && <SpecStageBadge spec={selected} />}
                       <SpecDeploymentBadge deployment={selected.deployment} title={selected.title} />
                     </div>
+                    {guidance.kind !== "done" && <>
                     <p className="mt-1 text-slate-300">{guidance.reason}</p>
                     <p className="mt-2"><span className="text-cyan-300">다음 행동</span> · {guidance.nextAction}</p>
                     <p className="mt-0.5 text-[10.5px] text-slate-400">{guidance.blockedNextStep}</p>
+                    </>}
                   </div>
                 );
               })()}

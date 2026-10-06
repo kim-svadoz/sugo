@@ -328,7 +328,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
             <div className="mt-1.5 text-[9px] text-[var(--color-text-muted)]">subtask 없음</div>
           )}
 
-          <div className="mt-2 space-y-1 border-t border-white/[0.06] pt-1.5 text-[9.5px] leading-tight">
+          {guidance.kind !== "done" && <div className="mt-2 space-y-1 border-t border-white/[0.06] pt-1.5 text-[9.5px] leading-tight">
             <div className="flex min-w-0 items-center gap-1.5">
               <span className="shrink-0 text-[var(--color-text-dim)]">현재</span>
               <span className={cn("truncate font-semibold", guidance.kind === "blocked" ? "text-orange-300" : (guidance.kind === "attention" || guidance.kind === "verification") ? "text-amber-300" : "text-slate-300")}>
@@ -342,7 +342,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
             {(guidance.kind === "blocked" || (guidance.kind === "attention" || guidance.kind === "verification")) && (
               <div className="truncate text-orange-300/75" title={guidance.reason}>⚠ {guidance.reason}</div>
             )}
-          </div>
+          </div>}
         </div>
       </div>
       <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 9, height: 9, right: -5 }} />
