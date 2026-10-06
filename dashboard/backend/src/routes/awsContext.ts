@@ -4,7 +4,7 @@ import type { DbClient } from "../db/client.js";
 import type { AwsContextClient } from "../aws/contextClient.js";
 import { requireUser } from "../auth/requireUser.js";
 import { validateBody } from "../schemas/validate.js";
-import { connectAwsContext, disconnectAwsContext, getAwsContextStatus, refreshAllAwsContexts, refreshAwsContext, setActiveAwsContext } from "../services/awsContextService.js";
+import { connectAwsContext, disconnectAwsContext, getAwsContextStatus, refreshAllAwsContexts, refreshAwsContext, refreshAwsDeploymentImages, setActiveAwsContext } from "../services/awsContextService.js";
 
 const connectSchema = z.object({
   name: z.string().trim().min(1).max(64),
@@ -48,6 +48,13 @@ export function createAwsContextRouter(db: DbClient, sessionSecret: string, clie
       const code = (error as { code?: string }).code;
       const limited = code === 'AWS_REFRESH_COOLDOWN' || code === 'AWS_REFRESH_DAILY_LIMIT' || code === 'AWS_REFRESH_IN_PROGRESS';
       res.status(limited ? 429 : 502).json({ error: code ?? "AWS_INVENTORY_FAILED", message: error instanceof Error ? error.message : String(error), budget: (error as any)?.budget });
+    }
+  });
+  router.post("/refresh-deployments", validateBody(z.object({ projectPath: z.string().min(1).max(2048) })), async (req, res) => {
+    try { res.json({ refreshed: await refreshAwsDeploymentImages(db, req.userId!, client, req.body.projectPath) }); }
+    catch (error) {
+      const code = (error as { code?: string }).code;
+      res.status(code?.startsWith("AWS_REFRESH_") ? 429 : code === "AWS_PROJECT_NOT_FOUND" ? 404 : code === "AWS_INVENTORY_STALE" ? 409 : 502).json({ error: code ?? "AWS_DEPLOYMENT_LOOKUP_FAILED", budget: (error as any)?.budget });
     }
   });
   router.delete("/:name", async (req, res) => {

@@ -97,3 +97,54 @@ it("projects real deployed revisions onto SPEC without changing local completion
   expect((await getRoadmap(db, "u", "ws")).find(n => n.id === "spec")?.deployment?.environment).toBe("UNKNOWN");
  } finally { await db.close(); }
 });
+
+
+it("uses a separately connected build account for PRD and refuses an unrelated image registry", async () => {
+ const dir = mkdtempSync(join(tmpdir(), "sugo-cross-account-"));
+ const name = dir.split(/[\\/]/).at(-1)!;
+ const git = (...args: string[]) => execFileSync("git", ["-C", dir, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+ try {
+  git("init", "-b", "main"); git("config", "user.name", "Test"); git("config", "user.email", "test@example.com");
+  writeFileSync(join(dir, "buildspec.yml"), `env:\n  variables:\n    ECR_URI: 123.dkr.ecr.test.amazonaws.com\n    REPOSITORY_NAME: ${name}\nphases:\n  build:\n    commands:\n      - IMAGE_TAG=$CODEBUILD_BUILD_NUMBER\n      - docker push \${ECR_URI}/\${REPOSITORY_NAME}:\${IMAGE_TAG}\n`);
+  git("add", "."); git("commit", "-m", "build"); const commit = git("rev-parse", "HEAD");
+  const production = { accountName: "prd", region: "test", observedAt: new Date().toISOString(), inventory: [] };
+  const build = { accountName: "default", region: "test", observedAt: new Date().toISOString(), inventory: [{ service: "codepipeline", resources: [{ kind: "pipeline", id: "p", metadata: { repositoryName: name, buildHistory: [{ number: 421, commit }] } }] }] };
+  const metadata = { runningCount: 1, runtimeImages: [{ image: `123.dkr.ecr.test.amazonaws.com/${name}:421`, imageDigest: "sha256:abc", tags: ["421"] }] };
+  expect(await resolveDeployedCommits(dir, metadata, production, [build])).toEqual([commit]);
+  expect(await resolveDeployedCommits(dir, { ...metadata, runtimeImages: [{ ...metadata.runtimeImages[0], image: `999.dkr.ecr.test.amazonaws.com/${name}:421` }] }, production, [build])).toBeNull();
+  expect(await resolveDeployedCommits(dir, metadata, production, [{ ...build, observedAt: "2020-01-01" }])).toBeNull();
+  const db = createSqliteClient();
+  try {
+   await db.execScript(readFileSync(new URL("./schema.sqlite.sql", import.meta.url), "utf8"));
+   await syncWorkspace(db, { userId: "u", name: "ws", projects: [dir] });
+   const service = { kind: "service", id: "api", metadata: { ...metadata, cluster: "cluster", status: "ACTIVE", rolloutState: "COMPLETED", desiredCount: 1, images: [metadata.runtimeImages[0].image] } };
+   const other = { kind: "service", id: "another-api", metadata: { ...service.metadata, images: ["123.dkr.ecr.test.amazonaws.com/another-repo:421"] } };
+   for (const account of ["default", "prd"]) await db.exec("INSERT INTO user_aws_context_accounts VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", account, "test", "test", "123", "test", new Date().toISOString()]);
+   await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", "default", JSON.stringify(build.inventory), new Date().toISOString()]);
+   await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", "prd", JSON.stringify([{ service: "ecs", resources: [service, other] }]), new Date().toISOString()]);
+   await db.exec("INSERT INTO user_project_integration_mappings VALUES (?, ?, ?, ?)", ["u", dir, JSON.stringify(["api", "another-api"].map(service => ({ accountName: "prd", service, environment: "prd", cluster: "cluster" }))), new Date().toISOString()]);
+   const view = (await projectSpecDeployments(db, "u", "ws", [{ id: "spec", level: "spec", parent: null, status: "done", project_path: dir }, { id: "task", level: "task", parent: "spec", status: "done", work_result: { sourceRevision: { projectPath: dir, state: "committed", commit } } }])).get("spec")!;
+   expect(view).toMatchObject({ environment: "PRD", partial: false, total: 1 });
+   expect(view.environments[0].services.map(s => s.service)).toEqual(["api"]);
+  } finally { await db.close(); }
+
+ } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+import { recoverLegacySource } from "../src/services/legacyDeploymentSource.js";
+it("recovers historical file snapshots rather than today's HEAD, and never invents a source", async () => {
+ const dir = mkdtempSync(join(tmpdir(), "sugo-legacy-source-"));
+ const git = (...args: string[]) => execFileSync("git", ["-C", dir, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+ try {
+  git("init", "-b", "main"); git("config", "user.name", "Test"); git("config", "user.email", "test@example.com");
+  writeFileSync(join(dir, "a.txt"), "task snapshot\n"); git("add", "."); git("commit", "-m", "task"); const commit = git("rev-parse", "HEAD");
+  writeFileSync(join(dir, "a.txt"), "later edits\n"); git("add", "."); git("commit", "-m", "later");
+  const result = { startedAt: "2020-01-01", endedAt: new Date().toISOString(), path: join(dir, "sugo/features/task/work-result.md"), files: [{ path: "a.txt", change: "modified", content: "task snapshot\r\n" }] };
+  const source = await recoverLegacySource(result, new Set([dir]));
+  expect(source).toMatchObject({ state: "committed", commit, recoveredFrom: "legacy_file_snapshot" });
+  expect(await recoverLegacySource({ ...result, files: [{ path: "a.txt", content: "no matching snapshot" }] }, new Set([dir]))).toMatchObject({ state: "unknown" });
+  expect(await recoverLegacySource({ ...result, files: [{ path: "../other", content: "task snapshot" }] }, new Set([dir]))).toBeNull();
+  expect(await recoverLegacySource(result, new Set([join(dir, "other")]))).toBeNull();
+  expect(await recoverLegacySource({ ...result, files: [{ path: "a.txt" }] }, new Set([dir]))).toBeNull();
+ } finally { rmSync(dir, { recursive: true, force: true }); }
+});

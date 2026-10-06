@@ -86,3 +86,11 @@ describe("schedule attention", () => {
  it("DONE 파이프라인에서도 미검증 등급의 원인 검토를 안내한다", () => {
    expect(taskGuidance({ status: "done", work_result: { report: { completionGrade: "unverified" } }, runtime_assessment: { projectionSchemaVersion: 1, status: "completed", currentStage: "DONE", nextActions: [], recommendedAction: null, humanDecisionRequired: false, blockers: [], evidence: [] } })).toMatchObject({ kind: "verification", currentStage: "사람 검증 대기", nextAction: "미검증 사유 검토", action: "review_verification" });
  });
+
+
+it.each(["verified", "verified_by_human"])("완료 상태 표시는 검증 방식(%s)과 관계없이 완료다", grade => {
+  const runtime_assessment = { projectionSchemaVersion: 1 as const, status: "completed" as const, currentStage: "DONE", nextActions: [], recommendedAction: null, humanDecisionRequired: false, blockers: [], evidence: [] };
+  const work_result = { report: { completionGrade: grade } };
+  expect(taskGuidance({ status: "done", runtime_assessment, work_result })).toMatchObject({ kind: "done", label: "완료", action: "none" });
+  expect(scheduleAttention({ status: "done", has_run: true, focus_task_status: "done", focus_task_runtime_assessment: runtime_assessment, focus_task_work_result: work_result })).toMatchObject({ kind: "done", label: "완료" });
+});

@@ -26,20 +26,20 @@ function nextKstMidnight(now: Date): Date {
   const value = (type: string) => Number(parts.find((part) => part.type === type)?.value);
   return new Date(Date.UTC(value('year'), value('month') - 1, value('day') + 1) - 9 * 60 * 60_000);
 }
-function budgetView(row: BudgetRow | undefined, now = new Date()) {
+function budgetView(row: BudgetRow | undefined, now = new Date(), intervalMs = AWS_REFRESH_MIN_INTERVAL_MS) {
   const today = kstDayKey(now);
   const count = row?.day_key === today ? row.day_count : 0;
-  const intervalAt = row ? new Date(Date.parse(row.last_started_at) + AWS_REFRESH_MIN_INTERVAL_MS) : null;
+  const intervalAt = row ? new Date(Date.parse(row.last_started_at) + intervalMs) : null;
   const resetAt = count >= AWS_REFRESH_DAILY_LIMIT ? nextKstMidnight(now) : null;
   const next = [intervalAt, resetAt].filter((value): value is Date => Boolean(value && value.getTime() > now.getTime())).sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
   return { remainingToday: Math.max(0, AWS_REFRESH_DAILY_LIMIT - count), dailyLimit: AWS_REFRESH_DAILY_LIMIT, nextAllowedAt: next?.toISOString() ?? null, timezone: 'Asia/Seoul' as const };
 }
 
-async function reserveAwsRefresh(db: DbClient, userId: string, accountName: string, now = new Date()): Promise<void> {
+async function reserveAwsRefresh(db: DbClient, userId: string, accountName: string, now = new Date(), intervalMs = AWS_REFRESH_MIN_INTERVAL_MS): Promise<void> {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const rows = await db.query<BudgetRow>('SELECT day_key, day_count, last_started_at FROM user_aws_context_refresh_budget WHERE user_id = ? AND account_name = ?', [userId, accountName]);
     const row = rows[0]; const today = kstDayKey(now); const currentCount = row?.day_key === today ? row.day_count : 0;
-    const view = budgetView(row, now);
+    const view = budgetView(row, now, intervalMs);
     if (view.remainingToday === 0) throw Object.assign(new Error('AWS daily refresh limit reached'), { code: 'AWS_REFRESH_DAILY_LIMIT', budget: view });
     if (view.nextAllowedAt) throw Object.assign(new Error('AWS refresh cooldown active'), { code: 'AWS_REFRESH_COOLDOWN', budget: view });
     if (!row) {
@@ -86,12 +86,12 @@ export async function setActiveAwsContext(db: DbClient, userId: string, name: st
 }
 
 export async function refreshAwsContext(db: DbClient, userId: string, client: AwsContextClient): Promise<AwsServiceInventory[]> {
-  const { active } = await accountState(db, userId);
+  const { active, accounts } = await accountState(db, userId);
   if (!active) throw Object.assign(new Error("AWS context is not connected"), { code: "AWS_CONTEXT_NOT_CONNECTED" });
   const snapshots = await db.query<SnapshotRow>("SELECT payload, observed_at FROM user_aws_context_snapshots WHERE user_id = ? AND account_name = ?", [userId, active.name]);
   if (isFresh(snapshots[0]?.observed_at)) return parseMaybeJson<AwsServiceInventory[]>(snapshots[0].payload, []);
   await reserveAwsRefresh(db, userId, active.name);
-  const inventory = await client.inventory({ profile: active.profile, region: active.region });
+  const inventory = await client.inventory({ profile: active.profile, region: active.region }, accounts.map(a => ({ profile: a.profile, region: a.region, accountId: a.account_id })));
   await upsertRow(db, "user_aws_context_snapshots", { user_id: userId, account_name: active.name }, { payload: JSON.stringify(inventory), observed_at: new Date().toISOString() });
   return inventory;
 }
@@ -103,7 +103,7 @@ export async function refreshAllAwsContexts(db: DbClient, userId: string, client
     const snapshots = await db.query<SnapshotRow>("SELECT payload, observed_at FROM user_aws_context_snapshots WHERE user_id = ? AND account_name = ?", [userId, account.name]);
     if (isFresh(snapshots[0]?.observed_at)) { refreshed.push(account.name); continue; }
     await reserveAwsRefresh(db, userId, account.name);
-    const inventory = await client.inventory({ profile: account.profile, region: account.region });
+    const inventory = await client.inventory({ profile: account.profile, region: account.region }, accounts.map(a => ({ profile: a.profile, region: a.region, accountId: a.account_id })));
     await upsertRow(db, "user_aws_context_snapshots", { user_id: userId, account_name: account.name }, {
       payload: JSON.stringify(inventory),
       observed_at: new Date().toISOString(),
@@ -118,4 +118,35 @@ export async function disconnectAwsContext(db: DbClient, userId: string, name: s
   await db.exec("DELETE FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId, name]);
   await db.exec("DELETE FROM user_aws_context_preferences WHERE user_id = ? AND active_account_name = ?", [userId, name]);
   await db.exec("DELETE FROM user_aws_context_refresh_budget WHERE user_id = ? AND account_name = ?", [userId, name]);
+}
+
+
+/** Explicit retry for runtime/image lookups only; shares the existing daily budget. */
+export async function refreshAwsDeploymentImages(db: DbClient, userId: string, client: AwsContextClient, projectPath: string): Promise<string[]> {
+  if (!client.deploymentImages) throw Object.assign(new Error("Deployment image lookup unavailable"), { code: "AWS_DEPLOYMENT_LOOKUP_UNAVAILABLE" });
+  const owned = await db.query("SELECT p.project_path FROM sugo_workspace_projects p JOIN sugo_workspaces w ON w.id=p.workspace_id WHERE w.user_id=? AND p.project_path=?", [userId, projectPath]);
+  if (!owned.length) throw Object.assign(new Error("Project not owned"), { code: "AWS_PROJECT_NOT_FOUND" });
+  const mappings = await db.query<{ selections: unknown }>("SELECT selections FROM user_project_integration_mappings WHERE user_id=? AND project_path=?", [userId, projectPath]);
+  const selections = parseMaybeJson<{ accountName: string; service: string; cluster?: string }[]>(mappings[0]?.selections, []);
+  const { accounts } = await accountState(db, userId);
+  const registries = accounts.map(a => ({ profile: a.profile, region: a.region, accountId: a.account_id }));
+  const refreshed: string[] = [];
+  for (const account of accounts) {
+    const selected = selections.filter(s => s.accountName === account.name); if (!selected.length) continue;
+    const rows = await db.query<SnapshotRow>("SELECT payload, observed_at FROM user_aws_context_snapshots WHERE user_id=? AND account_name=?", [userId, account.name]);
+    const row = rows[0];
+    if (!row || Date.now() - Date.parse(row.observed_at) > 30 * 60_000) throw Object.assign(new Error("Refresh Settings AWS inventory first"), { code: "AWS_INVENTORY_STALE" });
+    const inventory = parseMaybeJson<AwsServiceInventory[]>(row.payload, []);
+    const services = inventory.find(i => i.service === "ecs")?.resources.filter(r => r.kind === "service" && selected.some(s => s.service === r.id && (!s.cluster || s.cluster === r.metadata?.cluster))) ?? [];
+    if (!services.length) continue;
+    // Narrow ECS/ECR retries use a five-minute cooldown, but consume the same 4/day allowance.
+    await reserveAwsRefresh(db, userId, account.name, new Date(), REFRESH_COOLDOWN_MS);
+    for (const service of services) {
+      const cluster = service.metadata?.cluster; if (typeof cluster !== "string") continue;
+      Object.assign(service.metadata!, await client.deploymentImages(account, cluster, service.id, registries));
+    }
+    await db.exec("UPDATE user_aws_context_snapshots SET payload=? WHERE user_id=? AND account_name=? AND observed_at=?", [JSON.stringify(inventory), userId, account.name, row.observed_at]);
+    refreshed.push(account.name);
+  }
+  return refreshed;
 }

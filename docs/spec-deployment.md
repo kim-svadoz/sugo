@@ -1,4 +1,4 @@
-# SPEC 배포 환경 — Plugin 0.20.0 / Console 0.13.0
+# SPEC 배포 환경 — Plugin 0.20.0 / Console 0.13.3
 
 2026-10-06 사용자 결정. 개발 상태(초안/진행중/검증/완료)와 실제 배포 환경을 독립적으로 관리한다.
 개발 완료는 PRD 배포 완료를 뜻하지 않는다. 배포 태그는 승인이나 배포 명령을 실행하지 않는다.
@@ -24,24 +24,37 @@ clean이고 기록 당시 해시와 동일하며 파일의 최근 커밋 시각�
 완료 소스로 연결한다. 파일이 추가 변경되었으면 추정하지 않는다. 서버에 로컬 Git 저장소가
 없으면 이 후속 연결과 ancestry/squash 확인이 제한된다. 자동 git fetch나 git commit은 하지 않는다.
 
-과거 TASK의 완료 커밋 기록이 없으면 확인 불가다. 현재 HEAD를 과거 TASK에 소급 연결하지 않는다.
-기존 세션 재동기화만으로 과거 커밋이 복구되지는 않는다. 새 버전에서 완료한 작업부터 기록된다.
+과거 TASK는 로컬 모드의 로그인 사용자와 서버의 로컬 사용자가 같을 때 기존 roadmap의
+완료 당시 파일 스냅샷으로 커밋을 복구한다. 사용자 소유 프로젝트 안의 파일만 읽고, 현재
+동기화된 work-result 경로/완료 시각이 로컬 기록과 같아야 한다. 시작 이후 최대 200개 파일
+변경 커밋을 조회해 모든 파일 내용이 일치하는 첫 커밋을 사용한다(CRLF/LF만 정규화).
+파일 내용이 없는 기록, 다른 프로젝트, 일치하지 않는 이력은 확인 불가를 유지한다. 원본
+TASK/완료 등급/승인 기록은 수정하지 않고 읽기 projection에 복구 경로를 표시한다.
+완료 파일과 작업 트리가 일치하고 실제 미커밋 변경이 있을 때만 Git 커밋 대기로 구분한다.
+현재 HEAD를 무조건 소급 연결하지 않는다. 복구 요청은 30초 캐시와 동일 요청 합류로 중복을 막는다.
 
 ## 배포 근거
 
 1. 기존 Settings의 프로젝트/AWS 서비스 환경 연결과 사용자 소유 워크스페이스 프로젝트를 사용한다.
    dev/stg/prd 이름으로 연결한다. 정확한 이미지 저장소명 또는 서비스명에 대한 기존 추천 연결도
    지원하지만 다른 이름의 서비스는 명시적인 프로젝트 연결이 필요하다.
-2. AWS refresh는 ECS RUNNING task/container의 실제 imageDigest와 ECR의 해당 digest의 태그를 수집한다.
+2. Settings에 등록한 모든 사용자의 AWS 계정 중 같은 사용자의 연결만 활용한다. 빌드
+   파이프라인은 배포 환경과 다른 계정에 있어도 같은 저장소의 기록으로 대조한다. 공용
+   ECR 이미지는 이미지 URL의 registry ID와 Settings의 account_id가 일치하는 계정 프로필로
+   조회하며, ECS 조회는 원래 배포 계정으로 유지한다. 태그 조회가 실패해도 실행 이미지와
+   digest는 보존하고 태그 오류를 따로 기록한다. 다른 이미지 저장소의 서비스는 제외한다.
+3. AWS refresh는 ECS RUNNING task/container의 실제 imageDigest와 ECR의 해당 digest의 태그를 수집한다.
    task definition이나 development 브랜치, 최신 성공 빌드만 보고 배포 완료로 판단하지 않는다.
-3. 전체 SHA 태그, CodeBuild가 export한 IMAGE_URI/IMAGE_DIGEST, 또는 숫자 빌드 태그를 연결한다.
+4. 전체 SHA 태그, CodeBuild가 export한 IMAGE_URI/IMAGE_DIGEST, 또는 숫자 빌드 태그를 연결한다.
    숫자 태그는 같은 프로젝트의 성공 빌드 buildNumber/resolvedSourceVersion과 일치하고 해당
    커밋의 buildspec.yml이 IMAGE_TAG=$CODEBUILD_BUILD_NUMBER 및 docker push의 IMAGE_TAG 사용을
-   증명할 때만 허용한다. 동일 숫자가 여러 커밋에 연결되면 확인 불가다. 최근 최대 100개 빌드를
+   증명할 때만 허용한다. 환경 계정 밖의 숫자 빌드 기록은 동일 커밋의 buildspec.yml에 있는 ECR_URI와
+   REPOSITORY_NAME이 실행 이미지의 전체 저장소 주소까지 일치해야 한다. 동일 숫자가
+   여러 커밋에 연결되면 확인 불가다. 최근 최대 100개 빌드를
    조회하므로 오래된 배포 빌드가 범위 밖이면 확인 불가다. 다른 태그 규칙은 추측하지 않는다.
-4. 서비스가 안정적으로 실행 중이고 조회 기록이 30분 이내일 때만 현재 환경 근거로 사용한다.
+5. 서비스가 안정적으로 실행 중이고 조회 기록이 30분 이내일 때만 현재 환경 근거로 사용한다.
    ECS/ECR 접근 실패, 배포 진행 중, 실행 이미지 누락/연결 불가, 오래된 snapshot은 확인 불가다.
-5. TASK 소스 SHA가 배포 SHA와 같거나 Git ancestor이면 포함된다. 명시적인 revert 메시지가 있으면
+6. TASK 소스 SHA가 배포 SHA와 같거나 Git ancestor이면 포함된다. 명시적인 revert 메시지가 있으면
    반영된 것으로 계산하지 않는다. squash/cherry-pick으로 SHA가 달라진 경우 변경 파일의 Git blob이
    모두 동일할 때 포함된다. 일반적인 역변경이나 기능별 의미를 자동 판정하지는 않는다.
    연결된 같은 환경의 모든 해당 서비스/실행 이미지에 포함되어야 TASK 하나를 반영으로 센다.
@@ -60,7 +73,7 @@ allowlist를 통과한다. 기존 수동 refresh의 쿨다운/일별 예산을 �
 
 ## 업데이트
 
-Plugin 0.20.0 / Console 0.13.0. DB 컬럼/테이블 추가는 없으며 기존 work_result/snapshot JSON에
+Plugin 0.20.0 / Console 0.13.3. DB 컬럼/테이블 추가는 없으며 기존 work_result/snapshot JSON에
 필드를 추가한다. 백엔드와 UI를 함께 업데이트하고 sd로 재시작해야 한다. Plugin 업데이트 후
 /reload-plugins를 실행한다. 기존 AWS snapshot에는 runtimeImages가 없으므로 Settings → AWS Context에서
 연결된 각 계정을 새로고침한다. 기존 브라우저가 오래된 UI라면 Ctrl+Shift+R로 갱신한다.
@@ -72,3 +85,14 @@ git -C "$env:USERPROFILE\.claude\plugins\marketplaces\sugo-marketplace" pull --f
 claude plugin update sugo@sugo-marketplace
 sd
 ```
+
+
+## 기존 조회 실패의 제한된 재조회
+
+POST /api/aws-context/refresh-deployments는 인증된 사용자가 Settings에서 소유 프로젝트에
+연결한 ECS 서비스의 RUNNING 이미지와 ECR 태그만 재조회한다. 전체 AWS inventory를
+다시 조회하지 않으며 30분 이내의 기존 inventory가 필요하다. 전체 inventory의 관찰 시각은
+앞당기지 않는다. 기존 4회/일 한도를 공유하고 이 제한된 재조회에는 5분 쿨다운을 적용한다.
+Settings의 전체 조회 쿨다운(1시간)은 유지한다. 폴링 중 자동으로 AWS 재조회를 실행하지 않는다.
+
+Console 0.13.3 / Plugin 0.20.0 유지. DB 마이그레이션 없음. API와 UI 재시작 필요.

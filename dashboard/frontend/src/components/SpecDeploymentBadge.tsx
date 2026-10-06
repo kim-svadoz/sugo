@@ -32,7 +32,7 @@ export function SpecDeploymentBadge({ deployment, title }: { deployment?: SpecDe
         <p className="mt-4 text-xs leading-relaxed text-slate-400">개발 완료와 별개로, 이 SPEC의 작업 커밋이 실제 실행 중인 서비스에 반영됐는지 보여줍니다. 일부는 작업 중 일부만 반영된 상태입니다.</p>
         {deployment.reason && <p className="mt-3 rounded bg-amber-500/10 p-3 text-amber-200">{deployment.reason}</p>}
         <h3 className="mt-5 font-semibold">작업 소스</h3>
-        <div className="mt-2 space-y-2">{deployment.sources?.map(source => <div key={source.taskId} className="rounded border border-slate-700 p-3"><div className="break-all text-xs text-slate-400">{source.taskId} · {source.project ?? "프로젝트 연결 없음"}</div><div className="mt-1 break-all font-mono text-xs">{source.commit ?? (source.state === "pending" ? "Git 커밋 대기" : "완료 시점 커밋 기록 없음")}</div></div>)}</div>
+        <div className="mt-2 space-y-2">{deployment.sources?.map(source => <div key={source.taskId} className="rounded border border-slate-700 p-3"><div className="mb-1 text-xs font-semibold">{source.patchVersion ? `최신 작업 · Patch v${source.patchVersion}` : "최신 작업"}{source.commit && source.recoveredFrom && " · 기존 기록에서 커밋 복구"}</div><div className="break-all text-xs text-slate-400">{source.taskId} · {source.project ?? "프로젝트 연결 없음"}</div><div className="mt-1 break-all font-mono text-xs">{source.commit ?? (source.state === "pending" ? "Git 커밋 대기" : "작업 당시 파일과 일치하는 커밋을 확인하지 못했습니다.")}</div></div>)}</div>
         <h3 className="mt-5 font-semibold">환경별 반영</h3>
         {!deployment.environments.length && <p className="mt-2 text-slate-400">연결된 환경의 배포 근거가 없습니다. 프로젝트의 AWS 환경 연결과 조회 기록을 확인해주세요.</p>}
         {deployment.environments.map(env => <section key={env.environment} className="mt-3 rounded border border-slate-700 p-3">
@@ -42,7 +42,7 @@ export function SpecDeploymentBadge({ deployment, title }: { deployment?: SpecDe
             <div>{service.account} · {service.service}</div>
             <div className="mt-1 text-slate-400">조회: {service.observedAt ? new Date(service.observedAt).toLocaleString() : "기록 없음"}</div>
             {service.reason && <p className="mt-2 text-amber-200">{service.reason}</p>}
-            {service.images.map(image => <div key={image} className="mt-1 break-all text-slate-400">이미지: {image}</div>)}
+            {[...new Set(service.images)].map(image => <div key={image} className="mt-1 break-all text-slate-400">이미지: {image}</div>)}
             {service.commits.map(commit => <div key={commit} className="mt-1 break-all font-mono">배포 커밋: {commit}</div>)}
           </div>)}
         </section>)}

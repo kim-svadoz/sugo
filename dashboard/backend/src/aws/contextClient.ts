@@ -14,6 +14,8 @@ export interface AwsContextAccount {
   region: string;
 }
 
+export interface AwsRegistryAccount extends AwsContextAccount { accountId: string; }
+export interface AwsRuntimeImage { image: string; imageDigest: string | null; tags: string[]; container: string | null; tagError?: string; }
 export interface AwsIdentity {
   accountId: string;
   arn: string;
@@ -34,7 +36,8 @@ export interface AwsServiceInventory {
 
 export interface AwsContextClient {
   identity(account: AwsContextAccount): Promise<AwsIdentity>;
-  inventory(account: AwsContextAccount): Promise<AwsServiceInventory[]>;
+  inventory(account: AwsContextAccount, registries?: AwsRegistryAccount[]): Promise<AwsServiceInventory[]>;
+  deploymentImages?(account: AwsContextAccount, cluster: string, service: string, registries?: AwsRegistryAccount[]): Promise<{ runtimeImages: AwsRuntimeImage[]; runtimeError: string | null }>;
 }
 
 type AwsRunner = (args: string[]) => Promise<unknown>;
@@ -104,7 +107,42 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
     }
   }
 
-  async function collectEcs(account: AwsContextAccount): Promise<AwsServiceInventory> {
+  async function collectRuntimeImages(account: AwsContextAccount, cluster: string, service: string, registries: AwsRegistryAccount[] = []) {
+    const runtimeImages: AwsRuntimeImage[] = [];
+    let runtimeError: string | null = null;
+    const digestTags = new Map<string, string[]>();
+    try {
+      const listed = await run(["ecs", "list-tasks", "--cluster", cluster, "--service-name", service, "--desired-status", "RUNNING", ...commonArgs(account)]) as any;
+      const taskArns: string[] = Array.isArray(listed.taskArns) ? listed.taskArns.filter((a: unknown): a is string => typeof a === "string") : [];
+      for (const batch of chunks(taskArns, 100)) {
+        const tasks = await run(["ecs", "describe-tasks", "--cluster", cluster, "--tasks", ...batch, ...commonArgs(account)]) as any;
+        if (tasks.failures?.length) throw new Error("ECS runtime task lookup incomplete");
+        for (const task of tasks.tasks ?? []) for (const container of task.containers ?? []) {
+          if (task.lastStatus !== "RUNNING" || container.lastStatus !== "RUNNING") continue;
+          const image = text(container.image); if (!image) continue;
+          const imageDigest = text(container.imageDigest);
+          const result: AwsRuntimeImage = { image, imageDigest, tags: [], container: text(container.name) };
+          const ecr = /^(\d+)\.dkr\.ecr\.([^/]+)\/(.+?)(?::[^/:]+|@sha256:[a-f0-9]+)$/.exec(image);
+          if (ecr && imageDigest) {
+            const registry = registries.find(r => r.accountId === ecr[1]);
+            const credentials = registry ? { profile: registry.profile, region: ecr[2].replace(/\.amazonaws\.com(?:\.cn)?$/, "") } : account;
+            const key = `${credentials.profile}/${ecr[1]}/${ecr[3]}@${imageDigest}`;
+            try {
+              if (!digestTags.has(key)) {
+                const detail = await run(["ecr", "describe-images", "--registry-id", ecr[1], "--repository-name", ecr[3], "--image-ids", `imageDigest=${imageDigest}`, ...commonArgs(credentials)]) as any;
+                digestTags.set(key, (detail.imageDetails ?? []).filter((d: any) => d.imageDigest === imageDigest).flatMap((d: any) => Array.isArray(d.imageTags) ? d.imageTags.filter((t: unknown) => typeof t === "string") : []));
+              }
+              result.tags = digestTags.get(key)!;
+            } catch (error) { result.tagError = error instanceof Error ? error.message : String(error); }
+          }
+          runtimeImages.push(result);
+        }
+      }
+    } catch (error) { runtimeError = error instanceof Error ? error.message : String(error); }
+    return { runtimeImages, runtimeError };
+  }
+
+  async function collectEcs(account: AwsContextAccount, registries: AwsRegistryAccount[] = []): Promise<AwsServiceInventory> {
     const digestTags = new Map<string, string[]>();
     const resources: AwsInventoryResource[] = [];
     const errors: string[] = [];
@@ -157,32 +195,7 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
                     return [...fromEnv, ...fromCommand].filter((value): value is string => value !== null);
                   })
                 : [];
-              const runtimeImages: Array<{ image: string; imageDigest: string | null; tags: string[]; container: string | null }> = [];
-              let runtimeError: string | null = null;
-              try {
-                const listed = await run(["ecs", "list-tasks", "--cluster", clusterArn, "--service-name", service.serviceName, "--desired-status", "RUNNING", ...commonArgs(account)]) as any;
-                const taskArns = Array.isArray(listed.taskArns) ? listed.taskArns.filter((a: unknown) => typeof a === "string") : [];
-                for (const batch of chunks(taskArns, 100)) {
-                  const tasks = await run(["ecs", "describe-tasks", "--cluster", clusterArn, "--tasks", ...batch, ...commonArgs(account)]) as any;
-                  if (tasks.failures?.length) throw new Error("ECS runtime task lookup incomplete");
-                  for (const task of tasks.tasks ?? []) for (const container of task.containers ?? []) {
-                    if (task.lastStatus !== "RUNNING" || container.lastStatus !== "RUNNING") continue;
-                    const image = text(container.image); if (!image) continue;
-                    const imageDigest = text(container.imageDigest);
-                    let tags: string[] = [];
-                    const ecr = /^(\d+)\.dkr\.ecr\.[^/]+\/(.+?)(?::[^/:]+|@sha256:[a-f0-9]+)$/.exec(image);
-                    if (ecr && imageDigest) {
-                      const key = `${ecr[1]}/${ecr[2]}@${imageDigest}`;
-                      if (!digestTags.has(key)) {
-                        const detail = await run(["ecr", "describe-images", "--registry-id", ecr[1], "--repository-name", ecr[2], "--image-ids", `imageDigest=${imageDigest}`, ...commonArgs(account)]) as any;
-                        digestTags.set(key, (detail.imageDetails ?? []).filter((d: any) => d.imageDigest === imageDigest).flatMap((d: any) => Array.isArray(d.imageTags) ? d.imageTags.filter((t: unknown) => typeof t === "string") : []));
-                      }
-                      tags = digestTags.get(key)!;
-                    }
-                    runtimeImages.push({ image, imageDigest, tags, container: text(container.name) });
-                  }
-                }
-              } catch (error) { runtimeError = error instanceof Error ? error.message : String(error); }
+              const { runtimeImages, runtimeError } = await collectRuntimeImages(account, clusterArn, service.serviceName, registries);
               const serviceResource = resource("ecs", "service", service.serviceName ?? arnName(service.serviceArn), {
                 cluster: arnName(clusterArn),
                 status: service.status,
@@ -311,7 +324,8 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
       if (!text(payload.Account) || !text(payload.Arn)) throw new Error("AWS identity response is incomplete");
       return { accountId: payload.Account, arn: payload.Arn };
     },
-    async inventory(account) {
+    async deploymentImages(account, cluster, service, registries) { return collectRuntimeImages(account, cluster, service, registries); },
+    async inventory(account, registries) {
       return Promise.all([
         collect(account, "codecommit", ["codecommit", "list-repositories"], (p) => compact((p.repositories ?? []).map((x: any) => resource("codecommit", "repository", x.repositoryName, { repositoryId: x.repositoryId })) )),
         collect(account, "athena", ["athena", "list-work-groups"], (p) => compact((p.WorkGroups ?? []).map((x: any) => resource("athena", "workgroup", x.Name, { state: x.State })) )),
@@ -323,7 +337,7 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
         collect(account, "opensearch", ["opensearch", "list-domain-names"], (p) => compact((p.DomainNames ?? []).map((x: any) => resource("opensearch", "domain", x.DomainName, { engineType: x.EngineType })) )),
         collect(account, "cloudwatch", ["cloudwatch", "list-dashboards"], (p) => compact((p.DashboardEntries ?? []).map((x: any) => resource("cloudwatch", "dashboard", x.DashboardName, { lastModified: x.LastModified, size: x.Size })) )),
         collectSageMaker(account),
-        collectEcs(account),
+        collectEcs(account, registries),
       ]);
     },
   };

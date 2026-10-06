@@ -186,3 +186,50 @@ describe("/api/aws-context", () => {
     expect(calls).toBe(1);
   });
 });
+
+
+it("reads a shared ECR registry with its connected owner profile and retains runtime evidence when tags are denied", async () => {
+ const calls: string[][] = [];
+ const client = createAwsCliContextClient(async args => {
+  calls.push(args);
+  if (args[0] === "ecs" && args[1] === "list-tasks") return { taskArns: ["task"] };
+  if (args[0] === "ecs" && args[1] === "describe-tasks") return { tasks: [{ lastStatus: "RUNNING", containers: [{ lastStatus: "RUNNING", name: "app", image: "123.dkr.ecr.ap-northeast-2.amazonaws.com/api:421", imageDigest: "sha256:abc" }] }] };
+  if (args[0] === "ecr") {
+   if (args[args.indexOf("--profile") + 1] !== "build-owner") throw new Error("ECR AccessDenied");
+   return { imageDetails: [{ imageDigest: "sha256:abc", imageTags: ["421"] }] };
+  }
+  throw new Error("unexpected operation");
+ });
+ const account = { profile: "prd", region: "ap-northeast-2" };
+ const owned = await client.deploymentImages!(account, "cluster", "api", [{ profile: "build-owner", region: "ap-northeast-2", accountId: "123" }]);
+ expect(owned).toMatchObject({ runtimeError: null, runtimeImages: [{ imageDigest: "sha256:abc", tags: ["421"] }] });
+ expect(calls.filter(a => a[0] === "ecs").every(a => a[a.indexOf("--profile") + 1] === "prd")).toBe(true);
+ const denied = await client.deploymentImages!(account, "cluster", "api", [{ profile: "build-owner", region: "ap-northeast-2", accountId: "999" }]);
+ expect(denied).toMatchObject({ runtimeError: null, runtimeImages: [{ imageDigest: "sha256:abc", tags: [], tagError: "ECR AccessDenied" }] });
+});
+
+
+import { syncWorkspace } from "../src/services/syncService.js";
+import { refreshAwsDeploymentImages } from "../src/services/awsContextService.js";
+it("narrow deployment retries use only owned Settings mappings and share the daily AWS budget", async () => {
+ const db = createSqliteClient();
+ try {
+  await db.execScript(schema);
+  const project = "owned-repo";
+  await syncWorkspace(db, { userId: "u", name: "ws", projects: [project] });
+  for (const [name, profile, id] of [["default", "build-owner", "123"], ["prd", "prd", "999"]]) await db.exec("INSERT INTO user_aws_context_accounts VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", name, profile, "test", id, "test", new Date().toISOString()]);
+  await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", "prd", JSON.stringify([{ service: "ecs", resources: [{ kind: "service", id: "api", metadata: { cluster: "cluster" } }, { kind: "service", id: "unrelated", metadata: { cluster: "cluster" } }] }]), new Date().toISOString()]);
+  await db.exec("INSERT INTO user_project_integration_mappings VALUES (?, ?, ?, ?)", ["u", project, JSON.stringify([{ accountName: "prd", service: "api", cluster: "cluster", environment: "prd" }]), new Date().toISOString()]);
+  const calls: string[] = [];
+  const client: AwsContextClient = { identity: async () => { throw Error("unused"); }, inventory: async () => { throw Error("unused"); }, deploymentImages: async (account, cluster, service, registries) => {
+   calls.push(service); expect(account.profile).toBe("prd"); expect(registries?.find(r => r.accountId === "123")?.profile).toBe("build-owner");
+   return { runtimeImages: [{ image: "123.dkr.ecr.test.amazonaws.com/owned-repo:421", imageDigest: "sha256:abc", tags: ["421"], container: "app" }], runtimeError: null };
+  } };
+  await expect(refreshAwsDeploymentImages(db, "other", client, project)).rejects.toMatchObject({ code: "AWS_PROJECT_NOT_FOUND" });
+  expect(await refreshAwsDeploymentImages(db, "u", client, project)).toEqual(["prd"]);
+  expect(calls).toEqual(["api"]);
+  await expect(refreshAwsDeploymentImages(db, "u", client, project)).rejects.toMatchObject({ code: "AWS_REFRESH_COOLDOWN" });
+  await db.exec("UPDATE user_aws_context_refresh_budget SET day_count=4, last_started_at=? WHERE user_id='u'", ["2020-01-01T00:00:00Z"]);
+  await expect(refreshAwsDeploymentImages(db, "u", client, project)).rejects.toMatchObject({ code: "AWS_REFRESH_DAILY_LIMIT" });
+ } finally { await db.close(); }
+});

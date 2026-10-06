@@ -107,7 +107,7 @@ export function taskGuidance(node: TaskGuidanceInput, now = Date.now()): TaskGui
     if (node.runtime_assessment.status === "completed") {
       const grade = parsedWorkResult(node.work_result)?.report?.completionGrade;
       if (grade === "unverified") return { ...guidance, kind: "verification", label: "검증", currentStage: "사람 검증 대기", reason: "코드 작업은 끝났지만 검증 예외가 남아 있습니다. 완료등급 아래의 사유를 검토하세요.", nextAction: "미검증 사유 검토", action: "review_verification" };
-      if (grade === "verified" || grade === "verified_by_human") return { ...guidance, label: grade === "verified" ? "검증 완료" : "사람 승인 검증완료", nextAction: "추가 작업 없음", action: "none" };
+      if (grade === "verified" || grade === "verified_by_human") return { ...guidance, label: "완료", nextAction: "추가 작업 없음", action: "none" };
     }
     return guidance;
   }
