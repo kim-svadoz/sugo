@@ -1,7 +1,8 @@
+import { postCompletionApproval } from "../api/completionApprovalApi.js";
 import { completionReasonPresentation } from "./completionReasonPresentation.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { apiFetch, apiJson } from "../api/client.js";
+import { apiJson } from "../api/client.js";
 import { parseWorkResult, type CompletionLabel, type HumanApprovalEvent, type RoadmapNode } from "../hooks/useRoadmap.js";
 
 export const completionLabelId = (l: CompletionLabel): string => JSON.stringify([l.kind, l.reason, l.patchVersion, l.recordedAt, l.implementationCycle ?? 0]);
@@ -44,8 +45,8 @@ export function CompletionApprovalPanel({ workspace, node, onChanged }: { worksp
   async function change(labelId: string, action: "approve" | "revoke") {
     setBusy(true); setError("");
     try {
-      const response = await apiFetch(`/api/workspaces/${encodeURIComponent(workspace)}/roadmap/completion-approval`, {
-        method: "POST", body: JSON.stringify({ nodeId: node.id, resultKey: result?.approvalResultKey, labelId, action, reason: reasons[labelId] ?? "" }),
+      const response = await postCompletionApproval(`/api/workspaces/${encodeURIComponent(workspace)}/roadmap/completion-approval`, {
+        nodeId: node.id, resultKey: result?.approvalResultKey, labelId, action, reason: reasons[labelId] ?? "",
       });
       if (!response.ok) {
         const body = await response.json().catch(() => ({})) as { message?: string; error?: string };

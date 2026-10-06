@@ -1,3 +1,4 @@
+import { SignJWT } from "jose";
 import { seedDeployment, deploymentRevision } from "./seed-spec-deployment.mjs";
 // node --import ./register-source.mjs human-completion-flow.mjs <screenshots-dir>
 // Frontend preview built with VITE_API_BASE=http://localhost:4000, :4173.
@@ -13,13 +14,13 @@ const { issueSession } = await import("../backend/src/auth/session.ts");
 const db = createSqliteClient();
 await db.execScript(readFileSync(new URL("../backend/test/schema.sqlite.sql", import.meta.url), "utf8"));
 const secret = "isolated-human-completion-e2e-secret";
-const { app } = await createApp({ db, sessionSecret: secret });
+const { app } = await createApp({ db, sessionSecret: secret, localDev: { enabled: true, userId: "human-e2e", displayName: "Human" } });
 const server = await new Promise(resolve => { const s = app.listen(4000, "127.0.0.1", () => resolve(s)); });
 let browser;
 try {
   const userId = "human-e2e";
   await db.exec("INSERT INTO sugo_users (id, display_name) VALUES (?, ?)", [userId, userId]);
-  const token = await issueSession(userId, secret, 3600, "local");
+  const token = await new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject(userId).setExpirationTime("1h").sign(new TextEncoder().encode(secret));
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const post = async (path, body) => { const r = await fetch(`http://127.0.0.1:4000${path}`, { method: "POST", headers, body: JSON.stringify(body) }); assert.equal(r.status, 200, await r.text()); };
   await post("/api/sync/workspace", { userId, name: "human-e2e", projects: [] });
@@ -34,6 +35,7 @@ try {
   await seedDeployment(db, userId, "human-e2e");
   browser = await chromium.launch({ channel: "msedge" });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1200 } });
+  let repairs = 0; page.on("request", req => { if (req.url().endsWith("/api/auth/local/session")) repairs++; });
   const errors = []; page.on("pageerror", e => errors.push(e.message));
   await page.addInitScript(({ token, userId }) => localStorage.setItem("sugo_auth", JSON.stringify({ user: { id: userId }, accessToken: token, refreshToken: null, expiresAt: Date.now() + 3600000 })), { token, userId });
   await page.goto("http://localhost:4173/roadmap/human-e2e?focus=task-1");
@@ -91,7 +93,8 @@ try {
   await shot("schedule-deployment-dev");
   await page.keyboard.press("Escape");
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ status: "passed", partialApproval: "unverified", fullApproval: "verified_by_human", revoked: "unverified", pageErrors: errors.length }));
+  assert.equal(repairs, 1, "old local browser session is repaired once without navigation");
+  console.log(JSON.stringify({ status: "passed", partialApproval: "unverified", fullApproval: "verified_by_human", revoked: "unverified", pageErrors: errors.length, localLoginRepairs: repairs }));
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

@@ -453,17 +453,16 @@ export function SchedulePage() {
                       const style = scheduleCardStyle(colorOf(s.workspace_name));
                       const overdue = key < todayKey && isOpenStatus(s);
                       return (
-                        <button
+                        <div
                           key={s.id}
                           draggable
-                          onDragStart={(e: DragEvent<HTMLButtonElement>) => startSpecDrag(e, s)}
+                          onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
                           onDragEnd={() => setDragOverKey(null)}
-                          onClick={() => openSpec(s)}
                           style={style}
                           className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[filter,background-color] hover:brightness-110 active:cursor-grabbing"
                           title={`${s.workspace_name} · ${s.title}`}
                         >
-                          <span className="min-w-0 flex-1 truncate font-medium text-slate-100">{s.title}</span>
+                          <button type="button" onClick={() => openSpec(s)} className="min-w-0 flex-1 truncate text-left font-medium text-slate-100" title={`${s.workspace_name} · ${s.title}`}>{s.title}</button>
                           <SpecStageBadge spec={s} compact />
                       <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
                           {overdue && (
@@ -471,7 +470,7 @@ export function SchedulePage() {
                               <AlertTriangle size={9} /> 기한 초과
                             </span>
                           )}
-                        </button>
+                        </div>
                       );
                     })}
                   </div>

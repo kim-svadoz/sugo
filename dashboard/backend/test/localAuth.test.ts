@@ -1,3 +1,4 @@
+import { SignJWT } from "jose";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -41,4 +42,15 @@ describe("GET /api/auth/local", () => {
     });
     await request(app).get("/api/auth/local").expect(404);
   });
+  it("renews the existing local browser login without navigating; rejects automation tokens and other users", async () => {
+    const { app } = await createApp({ db, sessionSecret: SECRET, localDev: { enabled: true, userId: "me", displayName: "Me" } });
+    const legacy = await new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject("me").setExpirationTime("1h").sign(new TextEncoder().encode(SECRET));
+    const response = await request(app).get("/api/auth/local/session").set("Authorization", `Bearer ${legacy}`).expect(200);
+    expect(await verifySession(response.body.session, SECRET)).toBe("me");
+    expect(response.body).toMatchObject({ userId: "me", authSource: "local" });
+    const other = await new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject("other").setExpirationTime("1h").sign(new TextEncoder().encode(SECRET));
+    await request(app).get("/api/auth/local/session").set("Authorization", `Bearer ${other}`).expect(403);
+    await request(app).get("/api/auth/local/session").set("Authorization", "Bearer sugo_pat_automation").expect(401);
+  });
+
 });

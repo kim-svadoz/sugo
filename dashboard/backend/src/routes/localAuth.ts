@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { DbClient } from "../db/client.js";
-import { issueSession } from "../auth/session.js";
+import { issueSession, requireSession } from "../auth/session.js";
 import { syncUser } from "../services/syncService.js";
 
 export interface LocalAuthConfig {
@@ -20,6 +20,19 @@ export function createLocalAuthRouter(
   local: LocalAuthConfig,
 ): Router {
   const router = Router();
+
+  // Refresh an already authenticated local browser without dropping its modal/draft.
+  // API tokens cannot be converted into an approval session.
+  router.get("/session", requireSession(sessionSecret), async (req, res, next) => {
+    try {
+      if (!local.enabled) return res.status(404).json({ error: "local_dev_disabled" });
+      if (req.userId !== local.userId) return res.status(403).json({ error: "LOCAL_USER_MISMATCH", message: "현재 로컬 사용자와 로그인한 사용자가 다릅니다." });
+      const ttl = 7 * 24 * 3600;
+      const session = await issueSession(local.userId, sessionSecret, ttl, "local");
+      res.setHeader("Cache-Control", "no-store");
+      res.json({ userId: local.userId, authSource: "local", session, expiresAt: Date.now() + ttl * 1000 });
+    } catch (error) { next(error); }
+  });
 
   router.get("/", async (_req, res, next) => {
     try {
