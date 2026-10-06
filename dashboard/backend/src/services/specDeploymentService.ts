@@ -14,13 +14,18 @@ const SHA = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 const ORDER = ["dev", "stg", "prd"];
 export interface DeploymentServiceEvidence { project: string; service: string; account: string; observedAt: string | null; images: string[]; commits: string[]; state: "confirmed" | "unknown"; reason?: string; }
 export interface DeploymentEnvironment { environment: string; included: number; total: number; unknown: boolean; services: DeploymentServiceEvidence[]; }
-export interface SpecDeployment { environment: "LOCAL" | "DEV" | "STG" | "PRD" | "UNKNOWN"; partial: boolean; total: number; environments: DeploymentEnvironment[]; stale?: boolean; reason?: string; sources?: { taskId: string; project: string | null; commit: string | null; state: string; patchVersion?: number; recoveredFrom?: string }[]; }
+export interface SpecDeployment { environment: "LOCAL" | "DEV" | "STG" | "PRD" | "UNKNOWN"; partial: boolean; total: number; environments: DeploymentEnvironment[]; stale?: boolean; reason?: string; sources?: { taskId: string; project: string | null; commit: string | null; state: string; patchVersion?: number; recoveredFrom?: string; summary?: string }[]; }
 export function summarizeDeployment(environments: DeploymentEnvironment[], total: number): SpecDeployment {
   const positive = environments.filter(e => e.included > 0).sort((a, b) => ORDER.indexOf(b.environment) - ORDER.indexOf(a.environment));
   const highest = positive[0];
   if (highest) return { environment: highest.environment.toUpperCase() as SpecDeployment["environment"], partial: highest.included < total, total, environments };
   const unknown = total > 0 && (environments.length === 0 || environments.some(e => e.unknown));
   return { environment: unknown ? "UNKNOWN" : "LOCAL", partial: false, total, environments, reason: unknown ? "커밋 또는 실제 배포 이미지의 연결 근거를 확인하지 못했습니다." : undefined };
+}
+function latestTaskSummary(value: unknown): string | undefined {
+  const work = parseMaybeJson<any>(value, {});
+  const summary = work?.summary ?? work?.report?.summary;
+  return typeof summary === "string" ? summary.split(/\r?\n/).find(line => line.trim())?.trim().slice(0, 240) : undefined;
 }
 type Source = DeploymentSource;
 export interface DeploymentNode { id: string; level: string; parent: string | null; status: string; manual_status?: string | null; work_result?: unknown; project_path?: string | null; }
@@ -187,7 +192,7 @@ export async function projectSpecDeployments(db: DbClient, userId: string, works
       }
       environments.push({ environment, included, total: tasks.length, unknown, services: serviceRows.map(r => r.evidence) });
     }
-    result.set(spec.id, { ...summarizeDeployment(environments, tasks.length), stale, sources: resolved.map((source, i) => ({ taskId: tasks[i].id, project: source?.projectPath ?? null, commit: source?.commit ?? null, state: source?.state ?? "unknown", patchVersion: parseMaybeJson<any>(tasks[i].work_result, {})?.patchVersion, recoveredFrom: source?.recoveredFrom })) });
+    result.set(spec.id, { ...summarizeDeployment(environments, tasks.length), stale, sources: resolved.map((source, i) => ({ taskId: tasks[i].id, project: source?.projectPath ?? null, commit: source?.commit ?? null, state: source?.state ?? "unknown", patchVersion: parseMaybeJson<any>(tasks[i].work_result, {})?.patchVersion, recoveredFrom: source?.recoveredFrom, summary: latestTaskSummary(tasks[i].work_result) })) });
   }
   return result;
 }

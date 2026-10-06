@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { SpecDeployment } from "../lib/specDeployment.js";
+import { deploymentInclusionLabel, type SpecDeployment } from "../lib/specDeployment.js";
 
 export function SpecDeploymentBadge({ deployment, title }: { deployment?: SpecDeployment; title: string }) {
   const [open, setOpen] = useState(false);
@@ -23,30 +23,23 @@ export function SpecDeploymentBadge({ deployment, title }: { deployment?: SpecDe
     return () => { document.removeEventListener("keydown", key, true); (button.current ?? previous)?.focus(); };
   }, [open]);
   if (!deployment) return null;
-  const label = deployment.environment === "UNKNOWN" ? "확인 불가" : deployment.environment + (deployment.partial ? " 일부" : "");
+  const label = deployment.environment === "UNKNOWN" ? "확인 중" : deployment.environment + (deployment.partial ? " 일부" : "");
+  const observed = deployment.environments.flatMap(env => env.services).map(service => Date.parse(service.observedAt ?? "")).filter(Number.isFinite);
+  const checkedAt = observed.length ? new Date(Math.min(...observed)).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }) : null;
   return <>
-    <button ref={button} type="button" aria-label={`배포 환경 ${label}${deployment.stale ? " 마지막 조회 기준" : ""}`} title={deployment.stale ? "마지막 AWS 조회 기준 · 클릭하여 조회 시각 확인" : "실제 배포 환경 확인"} onClick={e => { e.stopPropagation(); setOpen(true); }} className="nodrag nopan shrink-0 rounded border border-sky-400/35 bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-bold text-sky-300 hover:bg-sky-500/20">{label}{deployment.stale && <span aria-hidden="true" className="ml-1 text-amber-300">◷</span>}</button>
+    <button ref={button} type="button" aria-label={`배포 환경 ${label}`} title="배포 환경 보기" onClick={e => { e.stopPropagation(); setOpen(true); }} className="nodrag nopan shrink-0 rounded border border-sky-400/35 bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-bold text-sky-300 hover:bg-sky-500/20">{label}</button>
     {open && createPortal(<div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4" onClick={e => { e.stopPropagation(); if (e.target === e.currentTarget) setOpen(false); }}>
-      <div ref={dialog} role="dialog" aria-modal="true" aria-label="SPEC 배포 환경" className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-slate-600 bg-[#0b111b] p-5 text-sm text-slate-200 shadow-2xl">
-        <div className="flex items-start justify-between gap-4"><div><h2 className="text-lg font-bold">배포 환경 · {label}</h2><p className="mt-1 text-slate-400">{title}</p></div><button type="button" onClick={() => setOpen(false)} className="rounded border border-slate-600 px-3 py-1.5">닫기</button></div>
-        <p className="mt-4 text-xs leading-relaxed text-slate-400">이 SPEC의 최신 작업 커밋이 포함된 이미지가 실제 실행 중인 가장 높은 환경입니다. LOCAL은 연결된 환경에 아직 미반영, 일부는 작업 중 일부만 반영된 상태입니다. 기능 활성화 여부와 사람 승인 여부는 이 태그에 포함하지 않습니다.</p>
-        {deployment.reason && <p className="mt-3 rounded bg-amber-500/10 p-3 text-amber-200">{deployment.reason}</p>}
-        {deployment.stale && <p className="mt-3 rounded bg-amber-500/10 p-3 text-xs text-amber-200">마지막 AWS 조회 기준입니다. 조회 후 배포가 바뀌었을 수 있으므로 Settings에서 AWS 정보를 새로고침하세요. 환경별 조회 시각은 아래에 표시됩니다.</p>}
-        <h3 className="mt-5 font-semibold">작업 소스</h3>
-        <div className="mt-2 space-y-2">{deployment.sources?.map(source => <div key={source.taskId} className="rounded border border-slate-700 p-3"><div className="mb-1 text-xs font-semibold">{source.patchVersion ? `최신 작업 · Patch v${source.patchVersion}` : "최신 작업"}{source.commit && source.recoveredFrom && " · 기존 기록에서 커밋 복구"}</div><div className="break-all text-xs text-slate-400">{source.taskId} · {source.project ?? "프로젝트 연결 없음"}</div><div className="mt-1 break-all font-mono text-xs">{source.commit ?? (source.state === "pending" ? "Git 커밋 대기" : "작업 당시 파일과 일치하는 커밋을 확인하지 못했습니다.")}</div></div>)}</div>
-        <h3 className="mt-5 font-semibold">환경별 반영</h3>
-        {!deployment.environments.length && <p className="mt-2 text-slate-400">연결된 환경의 배포 근거가 없습니다. 프로젝트의 AWS 환경 연결과 조회 기록을 확인해주세요.</p>}
-        {deployment.environments.map(env => <section key={env.environment} className="mt-3 rounded border border-slate-700 p-3">
-          <div className="font-bold">{env.environment.toUpperCase()} · {env.included}/{env.total} 최신 작업 포함{env.unknown ? " · 확인되지 않은 근거 있음" : ""}</div>
-          {!env.services.length && <p className="mt-2 text-xs text-amber-200">연결된 서비스를 조회하지 못했습니다.</p>}
-          {env.services.map((service, i) => <div key={`${service.project}:${service.service}:${i}`} className="mt-3 border-t border-slate-700 pt-3 text-xs">
-            <div>{service.account} · {service.service}</div>
-            <div className="mt-1 text-slate-400">조회: {service.observedAt ? new Date(service.observedAt).toLocaleString() : "기록 없음"}</div>
-            {service.reason && <p className="mt-2 text-amber-200">{service.reason}</p>}
-            {[...new Set(service.images)].map(image => <div key={image} className="mt-1 break-all text-slate-400">이미지: {image}</div>)}
-            {service.commits.map(commit => <div key={commit} className="mt-1 break-all font-mono">배포 커밋: {commit}</div>)}
-          </div>)}
-        </section>)}
+      <div ref={dialog} role="dialog" aria-modal="true" aria-label="SPEC 배포 환경" className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b111b] p-6 text-sm text-slate-200 shadow-2xl">
+        <div className="flex items-center justify-between gap-4"><h2 className="font-semibold text-slate-400">배포 환경</h2><button type="button" onClick={() => setOpen(false)} className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-800 hover:text-white">닫기</button></div>
+        <p className="mt-5 text-xl font-bold leading-snug">{title}</p>
+        <div className="mt-5 rounded-xl bg-sky-500/10 px-4 py-4"><p className="text-xs text-slate-400">최신 작업 반영</p><p className="mt-1 text-3xl font-bold text-sky-300">{label}</p></div>
+        {!!deployment.sources?.length && <div className="mt-5 space-y-3">{deployment.sources.map(source => <div key={source.taskId}><p className="text-xs font-semibold text-slate-400">{source.patchVersion ? `최근 작업 · Patch v${source.patchVersion}` : "최근 작업"}</p><p className="mt-1 line-clamp-3 leading-relaxed text-slate-200">{source.summary || title}</p></div>)}</div>}
+        <div className="mt-5 divide-y divide-slate-800">{["dev", "stg", "prd"].map(environment => {
+          const env = deployment.environments.find(item => item.environment === environment);
+          const status = env ? deploymentInclusionLabel(env) : "미연결";
+          return <div key={environment} className="flex items-center justify-between py-3"><span className="font-semibold">{environment.toUpperCase()}</span><span className={status === "포함" ? "font-semibold text-sky-300" : status === "일부 포함" ? "text-sky-300" : "text-slate-500"}>{status}</span></div>;
+        })}</div>
+        <p className="mt-4 text-xs text-slate-500">{checkedAt ? `${checkedAt} 조회 기준` : "AWS 조회 기록 없음"}</p>
       </div>
     </div>, document.body)}
   </>;
