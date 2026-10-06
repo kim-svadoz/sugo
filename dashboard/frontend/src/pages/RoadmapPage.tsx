@@ -63,7 +63,7 @@ export function RoadmapPage() {
         <RoadmapTab workspace={workspace} focusNodeId={focusNodeId} fill />
       </div>
 
-      <div className="h-28 shrink-0 overflow-hidden border-t border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
+      <div className="shrink-0 overflow-hidden border-t border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
         <LiveLogTail workspace={workspace} />
       </div>
     </div>

@@ -21,6 +21,13 @@ const node = (overrides: Partial<RoadmapNode>): RoadmapNode => ({
 });
 
 describe("patch lineage canvas model", () => {
+  it("과거 REQ가 없으면 최신 차수 REQ를 그 당시 요구사항으로 대체하지 않는다", () => {
+    const task = node({ id: "task", lineage: [{ version: 0 }, { version: 2 }] });
+    const [chain] = buildLineageChains([task]);
+    const selected = lineageSelection(chain.columns[0][0]);
+    expect(selected.reqs).toEqual([]);
+    expect(selected.requirementsUnavailable).toBe(true);
+  });
   it("RUN의 lineage는 RUN 컨테이너를 대체하지 않는다", () => {
     const run = node({ id: "run", level: "workstream", lineage: [{ version: 0 }] });
     expect(buildLineageChains([run])).toEqual([]);
@@ -63,7 +70,7 @@ describe("patch lineage canvas model", () => {
       [2, "동시성 패치"],
     ]);
 
-    const selected = lineageSelection(chain.columns[0][1], []);
+    const selected = lineageSelection(chain.columns[0][1]);
     expect(selected.node.id).toBe("task:v1");
     expect(selected.node.title).toBe("v1 patch · Redis 만료 보강");
     expect(selected.node.work_result).toEqual(expect.objectContaining({ path: "/work-result-patch-v1.md" }));

@@ -28046,7 +28046,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.20.1" : "0.0.0-dev";
+  return true ? "0.20.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29689,7 +29689,7 @@ function readySet(nodes) {
 }
 
 // src/hulk/roadmapReq.ts
-var REQ_HEADING_RE = /^#{1,6}\s*REQ-(\d+)\s*:\s*(.+)$/gim;
+var REQ_HEADING_RE = /^#{1,6}[ \t]*REQ-(\d+)(?:[ \t]*(\([^\r\n)]+\)))?[ \t]*(?::|[—–])[ \t]*(.+)$/gim;
 function parseRequirementsFromPrd(prdContent) {
   const results = [];
   const seen = /* @__PURE__ */ new Set();
@@ -29699,7 +29699,7 @@ function parseRequirementsFromPrd(prdContent) {
     const id = `REQ-${m[1]}`;
     if (seen.has(id)) continue;
     seen.add(id);
-    results.push({ id, title: m[2].trim() });
+    results.push({ id, title: `${m[2] ? `${m[2]} ` : ""}${m[3].trim()}` });
   }
   return results;
 }

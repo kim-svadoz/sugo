@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { useActivityStream, type ActivityEvent } from "../hooks/useActivityStream.js";
 import { AgentBadge } from "./AgentBadge.js";
 
@@ -125,14 +126,29 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
 /** §6 워크스페이스별 tail — Agent Canvas 오버레이 하단에 붙는다. slice(0,40). */
 export function LiveLogTail({ workspace }: { workspace: string }) {
   const events = useActivityStream(workspace);
+  const [expanded, setExpanded] = useState(false);
   const visible = events.filter((e) => e.workspace_name === workspace).slice(0, 40);
   return (
-    <div className="ck-scroll h-24 space-y-0.5 overflow-auto pr-1">
-      {visible.length === 0 ? (
-        <div className="py-4 text-center text-[11.5px] text-[var(--color-text-dim)]">이벤트 대기 중</div>
-      ) : (
-        visible.map((ev, i) => <FeedLine key={`${ev.id}-${i}`} ev={ev} />)
-      )}
+    <div className={`flex min-h-0 flex-col ${expanded ? "h-[40vh] min-h-28" : "h-28"}`}>
+      <div className="flex shrink-0 justify-end pb-1">
+        <button
+          type="button"
+          onClick={() => setExpanded(value => !value)}
+          aria-label={expanded ? "콘솔 축소" : "콘솔 확대"}
+          aria-expanded={expanded}
+          title={expanded ? "콘솔 축소" : "콘솔 확대"}
+          className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-colors hover:border-cyan-400/50 hover:text-cyan-300 focus-visible:outline-2 focus-visible:outline-cyan-400"
+        >
+          {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+        </button>
+      </div>
+      <div className="ck-scroll min-h-0 flex-1 space-y-0.5 overflow-auto pr-1">
+        {visible.length === 0 ? (
+          <div className="py-4 text-center text-[11.5px] text-[var(--color-text-dim)]">이벤트 대기 중</div>
+        ) : (
+          visible.map((ev, i) => <FeedLine key={`${ev.id}-${i}`} ev={ev} expanded={expanded} />)
+        )}
+      </div>
     </div>
   );
 }

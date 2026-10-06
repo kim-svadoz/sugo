@@ -123,7 +123,7 @@ const requirementNodes = (item: LineageChainItem): RoadmapNode[] => {
 };
 
 /** 클릭한 feat/patch 카드 한 장을 Inspector가 소비할 독립 TASK 뷰로 만든다. */
-export function lineageSelection(item: LineageChainItem, fallbackReqs: RoadmapNode[]) {
+export function lineageSelection(item: LineageChainItem) {
   const explicitWorkResult = item.entry.workResult && typeof item.entry.workResult === "object"
     ? item.entry.workResult
     : null;
@@ -143,5 +143,6 @@ export function lineageSelection(item: LineageChainItem, fallbackReqs: RoadmapNo
     work_result: explicitWorkResult ?? fallbackWorkResult,
     lineage: null,
   };
-  return { node, reqs: reqs.length > 0 ? reqs : fallbackReqs };
+  // Live children belong to the latest cycle, never to an older history card.
+  return { node, reqs, requirementsUnavailable: !Array.isArray(item.entry.requirements) };
 }

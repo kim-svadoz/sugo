@@ -44,6 +44,7 @@ export function SubtaskPanel({
   onChanged,
   onOpenFile,
   scopeFiles,
+  requirementsUnavailable = false,
 }: {
   workspace: string;
   node: RoadmapNode;
@@ -56,6 +57,7 @@ export function SubtaskPanel({
   onOpenFile: (file: WorkResultFile, expanded?: boolean) => void;
   /** SPEC/RUN은 하위 작업 전체의 변경 파일을 합친 scope 결과를 받는다. */
   scopeFiles?: WorkResultFile[];
+  requirementsUnavailable?: boolean;
 }) {
   const { userId } = useAuth();
   const [tab, setTab] = useState<Tab>("progress");
@@ -97,7 +99,7 @@ export function SubtaskPanel({
             className={`flex-1 py-2 ${tab === t ? "ck-glow-cyan" : "opacity-60 hover:opacity-100"}`}
           >
             {t === "progress"
-              ? `개요 · ${progress.label} ${progress.done}/${progress.total}`
+              ? requirementsUnavailable ? "개요 · REQ 기록 없음" : `개요 · ${progress.label} ${progress.done}/${progress.total}`
               : t === "summary"
                 ? "작업 요약"
                 : `변경 파일 ${files.length}`}
@@ -114,6 +116,7 @@ export function SubtaskPanel({
             workResult={workResult}
             progress={progress}
             progressItems={progressItems}
+            requirementsUnavailable={requirementsUnavailable}
             onChanged={onChanged}
             onReviewResult={() => setTab("summary")}
           />
@@ -140,6 +143,7 @@ function ProgressTab({
   workResult,
   progress,
   progressItems,
+  requirementsUnavailable,
   onChanged,
   onReviewResult,
 }: {
@@ -149,6 +153,7 @@ function ProgressTab({
   workResult: ReturnType<typeof parseWorkResult>;
   progress: InspectorProgress;
   progressItems: RoadmapNode[];
+  requirementsUnavailable: boolean;
   onChanged: () => void;
   onReviewResult: () => void;
 }) {
@@ -269,7 +274,9 @@ function ProgressTab({
           onSaved={onChanged}
         />
       )}
-      <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-3">
+      {requirementsUnavailable ? (
+        <div className="rounded-lg border border-[var(--color-border)] p-3 text-[12px] text-[var(--color-text-muted)]">이 차수의 REQ 기록이 없습니다.</div>
+      ) : <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-3">
         <div className="flex items-end justify-between">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-dim)]">실제 진행</div>
@@ -285,7 +292,7 @@ function ProgressTab({
             style={{ width: `${progress.total === 0 ? 0 : Math.round((progress.done / progress.total) * 100)}%` }}
           />
         </div>
-      </div>
+      </div>}
 
       {progressItems.length > 0 && (node.level === "task" ? <ReqList reqs={progressItems} /> : <ChildList items={progressItems} />)}
 

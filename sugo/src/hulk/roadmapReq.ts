@@ -1,8 +1,8 @@
 import type { RoadmapNode } from "./types.js";
 
-/** `### REQ-XXX: 제목` 마크다운 헤딩만 인식한다 — analyze.ts의 인라인 `REQ-N:` 매칭과는 다른,
+/** 구조화된 REQ 마크다운 헤딩만 인식한다 — analyze.ts의 인라인 `REQ-N:` 매칭과는 다른,
  * 더 엄격한 계약이다(§8.5 REQ 승격은 구조화된 PRD 작성을 전제로 한다). */
-const REQ_HEADING_RE = /^#{1,6}\s*REQ-(\d+)\s*:\s*(.+)$/gim;
+const REQ_HEADING_RE = /^#{1,6}[ \t]*REQ-(\d+)(?:[ \t]*(\([^\r\n)]+\)))?[ \t]*(?::|[—–])[ \t]*(.+)$/gim;
 
 export interface ParsedRequirement {
   id: string;
@@ -18,7 +18,7 @@ export function parseRequirementsFromPrd(prdContent: string): ParsedRequirement[
     const id = `REQ-${m[1]}`;
     if (seen.has(id)) continue;
     seen.add(id);
-    results.push({ id, title: m[2].trim() });
+    results.push({ id, title: `${m[2] ? `${m[2]} ` : ""}${m[3].trim()}` });
   }
   return results;
 }

@@ -2,6 +2,13 @@ import { describe, expect, it } from "vitest";
 import { parseRequirementsFromPrd, promotePrdRequirements, reqConfirmId, requirementNodeId } from "../src/hulk/roadmapReq.js";
 
 describe("parseRequirementsFromPrd — ### REQ-XXX: 헤딩만 인식한다", () => {
+  it("스텁 범위 표시와 대시 구분자를 가진 실제 PRD 요구사항도 빠뜨리지 않는다", () => {
+    expect(parseRequirementsFromPrd("### REQ-001 (스텁): 관심 상품 대상 조회\n### REQ-002 — 필터 후보\n### REQ-004 – fallback")).toEqual([
+      { id: "REQ-001", title: "(스텁) 관심 상품 대상 조회" },
+      { id: "REQ-002", title: "필터 후보" },
+      { id: "REQ-004", title: "fallback" },
+    ]);
+  });
   it("### 헤딩 형식의 REQ를 순서대로 추출한다", () => {
     const prd = "### REQ-1: 이메일 로그인\n본문...\n### REQ-2: 소셜 로그인\n본문...";
     const result = parseRequirementsFromPrd(prd);

@@ -277,6 +277,33 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
    보이기는 하는데 클릭은 밑에 있는 카드가 가져간다(가장 알아채기 어려운 종류의 버그다). */
 .react-flow__edgelabel-renderer { z-index: 12; }
 
+/* Canvas zoom controls share the panel palette instead of ReactFlow's white defaults. */
+.canvas-controls.react-flow__controls {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.canvas-controls .react-flow__controls-button {
+  width: 30px;
+  height: 30px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.canvas-controls .react-flow__controls-button:last-child { border-bottom: 0; }
+.canvas-controls .react-flow__controls-button:hover,
+.canvas-controls .react-flow__controls-button:focus-visible {
+  background: var(--color-surface-hover);
+  color: #67e8f9;
+}
+.canvas-controls .react-flow__controls-button:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: -2px;
+}
+.canvas-controls .react-flow__controls-button svg { fill: currentColor; }
+
 /* 정보 밀도가 높은 체크포인트 패널은 기본 UI보다 한 단계 큰 활자를 쓴다. */
 .checkpoint-panel [class~="text-[10px]"] { font-size: 11px !important; }
 .checkpoint-panel [class~="text-[10.5px]"] { font-size: 11.5px !important; }

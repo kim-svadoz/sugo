@@ -1377,13 +1377,13 @@ export function RoadmapGraph({
    * 여기서 `position`을 손대면 드래그와 다시 싸우게 된다.
    */
   const rfNodes = useMemo(() => {
-    if (!focus) return flowNodes;
     return flowNodes.map((n) => {
-      const lit = focus.nodeSet.has(n.id);
-      if (lit) return n;
-      return { ...n, style: { ...n.style, opacity: 0.12 } };
+      // Selection is visual state, independent of the chain's unchanged layout.
+      const rendered = { ...n, data: { ...n.data, selected: selectedId === n.id, selectedItemId: selectedId } };
+      if (!focus || focus.nodeSet.has(n.id)) return rendered;
+      return { ...rendered, style: { ...n.style, opacity: 0.12 } };
     });
-  }, [flowNodes, focus]);
+  }, [flowNodes, focus, selectedId]);
 
   /** 설계안 droppedTop — dropped인데 부모는 dropped가 아닌 "최상위 폐기"만. */
   const droppedTop = useMemo(() => {
@@ -1413,11 +1413,8 @@ export function RoadmapGraph({
   );
   const selectedLineage = useMemo(() => {
     if (!selectedLineageItem) return null;
-    const currentReqs = nodes.filter(
-      (n) => n.parent === selectedLineageItem.node.id && (n.level === "subtask" || n.level === "step"),
-    );
-    return lineageSelection(selectedLineageItem, currentReqs);
-  }, [nodes, selectedLineageItem]);
+    return lineageSelection(selectedLineageItem);
+  }, [selectedLineageItem]);
   const selectedNode = selectedLineage?.node ?? nodes.find((n) => n.id === selectedId) ?? null;
   const selectedFiles = useMemo(
     // 진행 중심/SPEC 상태 필터는 **캔버스 표시만** 줄인다. 상세 범위까지 잘라버리면
@@ -1548,7 +1545,7 @@ export function RoadmapGraph({
           onPaneClick={() => setMenu(null)}
         >
           <Background variant={BackgroundVariant.Dots} gap={18} size={1.2} color="#1e293b" />
-          <Controls showInteractive={false} />
+          <Controls className="canvas-controls" showInteractive={false} />
           <MiniMap
             pannable
             zoomable
@@ -1566,6 +1563,7 @@ export function RoadmapGraph({
           <SubtaskPanel
             workspace={workspace}
             node={selectedNode}
+            requirementsUnavailable={selectedLineage?.requirementsUnavailable}
             reqs={selectedLineage?.reqs ?? nodes.filter((n) => n.parent === selectedNode.id && n.level === "subtask")}
             children={nodes.filter((n) => n.parent === selectedNode.id && n.level !== "subtask" && n.level !== "step")}
             onClose={() => {
