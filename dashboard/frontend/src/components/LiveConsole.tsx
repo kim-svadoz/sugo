@@ -3,26 +3,7 @@ import { createPortal } from "react-dom";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useActivityStream, type ActivityEvent } from "../hooks/useActivityStream.js";
 import { AgentBadge } from "./AgentBadge.js";
-
-// §2/§5: "프론트는 Asia/Seoul 렌더" - formatted as MM-DD HH:mm regardless of
-// what timezone the ts string arrived in.
-function formatTs(ts: string): string {
-  try {
-    const d = new Date(ts);
-    const parts = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Asia/Seoul",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).formatToParts(d);
-    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-    return `${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
-  } catch {
-    return ts;
-  }
-}
+import { formatActivityTime } from "../lib/activityTime.js";
 
 /**
  * §6 실시간 Activity Stream(폴링, SSE 아님).
@@ -40,7 +21,7 @@ function FeedLine({ ev, expanded = false }: { ev: ActivityEvent; expanded?: bool
   return (
     <div className="ck-line-in flex items-start gap-1.5 font-mono text-[11.5px] leading-relaxed">
       <span className="w-3 shrink-0 text-[var(--color-text-dim)]">&gt;</span>
-      <span className="w-[92px] shrink-0 text-[var(--color-text-dim)]">[{formatTs(ev.ts)}]</span>
+      <span className="w-[92px] shrink-0 font-semibold text-slate-300" title="한국 표준시 (KST)">[{formatActivityTime(ev.ts)}]</span>
       <span className="w-[96px] shrink-0 overflow-hidden whitespace-nowrap">
         <AgentBadge agent={ev.agent} handoffTo={ev.handoff_to} />
       </span>
