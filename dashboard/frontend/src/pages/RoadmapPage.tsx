@@ -1,3 +1,4 @@
+import { workflowStatus } from "../lib/workflowStatus.js";
 import { useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
@@ -18,9 +19,10 @@ export function RoadmapPage() {
   const { data } = useRoadmap(workspace);
   const nodes = data ?? [];
 
-  const counts: Record<string, number> = { done: 0, in_progress: 0, pending: 0, blocked: 0, dropped: 0 };
+  const counts: Record<string, number> = { verification: 0, done: 0, in_progress: 0, pending: 0, blocked: 0, dropped: 0 };
   for (const n of nodes) {
-    const st = (n.manual_status ?? n.status ?? "pending").toLowerCase();
+    if (n.level !== "task") continue;
+    const st = workflowStatus(n);
     if (st in counts) counts[st]++;
   }
 
@@ -49,6 +51,7 @@ export function RoadmapPage() {
         <span className="font-mono text-[11px] text-[var(--color-text-dim)]">Esc / ← 로 닫기</span>
         <div className="ml-auto flex items-center gap-2 font-mono text-[11px]">
           <span className="text-emerald-400">완료 {counts.done}</span>
+          <span className="text-amber-300">검증 {counts.verification}</span>
           <span className="text-[#5c8bcc]">진행 {counts.in_progress}</span>
           <span className="text-slate-400">대기 {counts.pending}</span>
           {counts.blocked > 0 && <span className="text-amber-400">막힘 {counts.blocked}</span>}

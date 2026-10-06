@@ -102,6 +102,7 @@ export interface RoadmapCounts {
   in_progress: number;
   done: number;
   blocked: number;
+  verification?: number;
   dropped: number;
 }
 
@@ -127,6 +128,7 @@ export function roadmapCounts(nodes: RoadmapViewNode[]): RoadmapCounts {
     if (n.level !== "task") continue;
     counts.total++;
     const st = effectiveStatus(n);
+    if (st === "verification") { counts.verification = (counts.verification ?? 0) + 1; continue; }
     if (st in counts) counts[st as keyof RoadmapCounts]++;
   }
   return counts;

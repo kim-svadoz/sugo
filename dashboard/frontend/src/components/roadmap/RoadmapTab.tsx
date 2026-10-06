@@ -1,3 +1,4 @@
+import { workflowStatus } from "../../lib/workflowStatus.js";
 import { useMemo, useState } from "react";
 import { RoadmapGraphPanel } from "./RoadmapGraph.js";
 import { useRoadmap, type RoadmapNode } from "../../hooks/useRoadmap.js";
@@ -13,7 +14,7 @@ import { cn } from "../../lib/utils.js";
  * (앞 작업이 끝났다는 사실)가 화면에서 사라져, 착수가능 초록이 이유 없이 떠 있는 것처럼 보인다.
  */
 export function filterActiveNodes(all: RoadmapNode[]): RoadmapNode[] {
-  const eff = (n: RoadmapNode) => (n.manual_status ?? n.status ?? "pending").toLowerCase();
+  const eff = workflowStatus;
   const byId = new Map(all.map((n) => [n.id, n]));
   const keep = new Set<string>();
 
@@ -104,6 +105,7 @@ export function RoadmapTab({
           진행 <span className="font-semibold text-green-400">{counts.done}</span>/{counts.total}
         </span>
         <span className="text-xs text-blue-400">🔄 {counts.in_progress}</span>
+        <span className="text-xs text-amber-300">검증 {counts.verification ?? 0}</span>
         <span className="text-xs text-[var(--color-text-muted)]">⏸️ {counts.pending}</span>
         {counts.blocked > 0 && <span className="text-xs text-red-400">⛔ {counts.blocked}</span>}
         {counts.dropped > 0 && <span className="text-xs text-[var(--color-text-muted)]">❌ {counts.dropped}</span>}

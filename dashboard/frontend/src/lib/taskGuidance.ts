@@ -4,8 +4,8 @@ type WorkResultLike = {
   report?: { completionGrade?: string; verification?: { test?: { state?: string } } };
 } | null;
 
-export type GuidanceKind = "draft" | "ready" | "in_progress" | "blocked" | "attention" | "done" | "pending";
-export type GuidanceAction = "open_canvas" | "review_result" | "create_pr" | "continue_patch" | "write_spec" | "start_feat" | "none";
+export type GuidanceKind = "draft" | "ready" | "in_progress" | "blocked" | "attention" | "verification" | "done" | "pending";
+export type GuidanceAction = "open_canvas" | "review_verification" | "review_result" | "create_pr" | "continue_patch" | "write_spec" | "start_feat" | "none";
 
 export interface RuntimeAssessment {
   projectionSchemaVersion: 1;
@@ -106,7 +106,7 @@ export function taskGuidance(node: TaskGuidanceInput, now = Date.now()): TaskGui
     const guidance = guidanceFromAssessment(node.runtime_assessment);
     if (node.runtime_assessment.status === "completed") {
       const grade = parsedWorkResult(node.work_result)?.report?.completionGrade;
-      if (grade === "unverified") return { ...guidance, kind: "attention", label: "미검증", reason: "작업은 완료됐지만 검증 예외가 남아 있습니다. 완료등급 아래의 사유를 검토하세요.", nextAction: "미검증 사유 검토" };
+      if (grade === "unverified") return { ...guidance, kind: "verification", label: "검증", currentStage: "사람 검증 대기", reason: "코드 작업은 끝났지만 검증 예외가 남아 있습니다. 완료등급 아래의 사유를 검토하세요.", nextAction: "미검증 사유 검토", action: "review_verification" };
       if (grade === "verified" || grade === "verified_by_human") return { ...guidance, label: grade === "verified" ? "검증 완료" : "사람 승인 검증완료", nextAction: "추가 작업 없음", action: "none" };
     }
     return guidance;
@@ -144,11 +144,11 @@ export function taskGuidance(node: TaskGuidanceInput, now = Date.now()): TaskGui
       action: workResult.path ? "continue_patch" : "review_result",
     };
   }
-  if (status === "done" && workResult?.report?.completionGrade === "unverified") {
+  if (status === "verification" || (status === "done" && workResult?.report?.completionGrade === "unverified")) {
     return {
-      kind: "attention", label: "확인 필요", currentStage: "미검증 완료",
-      reason: "완료 결과에 미검증 항목이 남아 있습니다.",
-      nextAction: "검증 결과 확인", blockedNextStep: "확인 없이 후속 작업을 선택하면 미검증 결과를 기준으로 진행하게 됩니다.", action: "review_result",
+      kind: "verification", label: "검증", currentStage: "사람 검증 대기",
+      reason: "코드 작업은 끝났지만 사람이 검토할 미검증 사유가 남아 있습니다.",
+      nextAction: "미검증 사유 검토", blockedNextStep: "미승인 사유가 남아 있으면 TASK 완료로 처리하지 않습니다.", action: "review_verification",
     };
   }
   if (status === "done" && workResult?.prRefs) {

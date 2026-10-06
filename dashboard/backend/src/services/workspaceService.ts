@@ -107,21 +107,18 @@ function projectedTaskStatus(rawStatus: string, runtimeAssessment: unknown): str
 }
 
 async function workspaceAttention(db: DbClient, userId: string, workspaceName: string): Promise<{ count: number; label: string | null }> {
-  const rows = await db.query<{ status: string; manual_status: string | null; updated_at: string | null; work_result: unknown; runtime_assessment: unknown }>(
-    "SELECT status, manual_status, updated_at, work_result, runtime_assessment FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND level = 'task'",
-    [userId, workspaceName]
-  );
+  const rows = (await getRoadmap(db, userId, workspaceName)).filter(n => n.level === "task");
   let blocked = 0;
   let stale = 0;
   let unverified = 0;
   for (const row of rows) {
-    const status = row.manual_status ?? projectedTaskStatus(row.status, row.runtime_assessment);
+    const status = row.display_status ?? row.status;
     if (status === "blocked") blocked++;
     else if (isStale(status, row.updated_at)) stale++;
-    if (status === "done" && isUnverified(row.work_result)) unverified++;
+    if (status === "verification") unverified++;
   }
   const count = blocked + stale + unverified;
-  const label = blocked > 0 ? `차단 ${blocked}건` : stale > 0 ? `확인 필요 ${stale}건` : unverified > 0 ? `미검증 ${unverified}건` : null;
+  const label = blocked > 0 ? `차단 ${blocked}건` : stale > 0 ? `확인 필요 ${stale}건` : unverified > 0 ? `검증 ${unverified}건` : null;
   return { count, label };
 }
 
@@ -129,15 +126,12 @@ async function workspaceAttention(db: DbClient, userId: string, workspaceName: s
 // §7: **dropped는 분모에서 제외**한다 — 폐기는 "안 하기로 한 일"이라 진행률에 남아 있으면
 // 아무리 일해도 100%가 안 되는 분모가 된다.
 async function roadmapCounts(db: DbClient, userId: string, workspaceName: string): Promise<RoadmapCounts> {
-  const rows = await db.query<{ status: string; manual_status: string | null; runtime_assessment: unknown }>(
-    "SELECT status, manual_status, runtime_assessment FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND level = 'task'",
-    [userId, workspaceName]
-  );
+  const rows = (await getRoadmap(db, userId, workspaceName)).filter(n => n.level === "task");
   let total = 0;
   let done = 0;
   let active = 0;
   for (const r of rows) {
-    const effective = r.manual_status ?? projectedTaskStatus(r.status, r.runtime_assessment);
+    const effective = r.display_status ?? r.status;
     if (effective === "dropped") continue;
     total++;
     if (effective === "done") done++;
@@ -376,10 +370,12 @@ export async function getTasks(db: DbClient, userId: string, workspaceName: stri
 }
 
 export interface RoadmapNodeRow {
+  updated_at: string | null;
   id: string;
   title: string;
   level: string;
   status: string;
+  display_status?: string;
   depends_on: string[];
   parent: string | null;
   ref: string | null;
@@ -422,7 +418,7 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
   // manual_status와 달리 manual_title은 서버에서 곧바로 유효 title로 합친다 — Canvas의
   // n.title 참조가 수십 곳이라 프론트에 매번 manual_title ?? title 판정을 시키는 대신,
   // "원본 CLI 제목을 따로 보여줄 UI가 없다"는 전제로 여기서 한 번에 정리한다.
-  return Promise.all(rows.map(async (r) => ({
+  const nodes = await Promise.all(rows.map(async (r) => ({
     ...r,
     title: r.manual_title ?? r.title,
     depends_on: parseJsonArray(r.depends_on),
@@ -434,6 +430,28 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
       ? { response: r.blocker_response, answered_by: r.blocker_answered_by, answered_at: r.blocker_answered_at }
       : null,
   })));
+  const displayed = nodes.map(n => ({ ...n, display_status: n.manual_status ?? (n.level === "task" ? projectedTaskStatus(n.status, n.runtime_assessment) : n.status) }));
+  for (const n of displayed) {
+    if (n.level === "task" && n.display_status === "done" && isUnverified(n.work_result)) n.display_status = "verification";
+  }
+  // Container completion includes human review; raw pipeline status remains an execution record.
+  const byId = new Map(displayed.map(n => [n.id, n]));
+  for (const n of displayed.filter(n => n.level === "spec" || n.level === "workstream")) {
+    if (n.display_status === "dropped" || n.display_status === "blocked") continue;
+    const descendants = displayed.filter(t => {
+      if (t.level !== "task" || t.display_status === "dropped") return false;
+      const seen = new Set<string>(); let parent = t.parent;
+      while (parent && !seen.has(parent)) { if (parent === n.id) return true; seen.add(parent); parent = byId.get(parent)?.parent ?? null; }
+      return false;
+    });
+    const unfinished = descendants.filter(t => t.display_status !== "done");
+    if (!unfinished.length) continue;
+    if (unfinished.some(t => t.display_status === "blocked")) n.display_status = "blocked";
+    else if (unfinished.some(t => t.display_status === "in_progress")) n.display_status = "in_progress";
+    else if (unfinished.some(t => t.display_status === "verification")) n.display_status = "verification";
+    else if (n.display_status === "done") n.display_status = "pending";
+  }
+  return displayed;
 }
 
 export type SaveBlockerDecisionResult =
@@ -540,13 +558,15 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
   return rows.map(({ manual_title, has_run, ...row }) => {
     const children = tasksBySpec.get(`${row.workspace_name}\0${row.id}`) ?? [];
     const enriched = children.map((task) => {
-      const status = task.manual_status ?? projectedTaskStatus(task.status, task.runtime_assessment);
-      return { ...task, status, stale: isStale(status, task.updated_at), unverified: status === "done" && isUnverified(task.work_result) };
+      const raw = task.manual_status ?? projectedTaskStatus(task.status, task.runtime_assessment);
+      const status = raw === "done" && isUnverified(task.work_result) ? "verification" : raw;
+      return { ...task, status, stale: isStale(status, task.updated_at), unverified: status === "verification" };
     });
     const priority = (task: (typeof enriched)[number]) => task.status === "blocked" ? 0 : task.stale ? 1 : task.status === "in_progress" ? 2 : task.unverified ? 3 : task.status === "pending" ? 4 : 5;
     const focus = [...enriched].sort((a, b) => priority(a) - priority(b) || a.id.localeCompare(b.id))[0] ?? null;
     return {
       ...row,
+      status: row.status === "dropped" ? "dropped" : enriched.some(t => t.status === "blocked") ? "blocked" : enriched.some(t => t.status === "in_progress") ? "in_progress" : enriched.some(t => t.status === "verification") ? "verification" : row.status === "done" && enriched.some(t => t.status === "pending") ? "pending" : row.status,
       has_run: Boolean(has_run),
       title: manual_title ?? row.title,
       task_count: enriched.length,

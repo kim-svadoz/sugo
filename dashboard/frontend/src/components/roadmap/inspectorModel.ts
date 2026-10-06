@@ -1,5 +1,6 @@
+import { workflowStatus } from "../../lib/workflowStatus.js";
 type LevelNode = { level: string };
-type StatusNode = { status?: string | null; manual_status?: string | null };
+type StatusNode = { display_status?: string; level?: string; work_result?: unknown; status?: string | null; manual_status?: string | null };
 
 export interface InspectorProgress {
   label: "RUN" | "TASK" | "REQ";
@@ -12,7 +13,7 @@ export function inspectorProgress(node: LevelNode, items: StatusNode[]): Inspect
   const label = node.level === "spec" ? "RUN" : node.level === "workstream" ? "TASK" : "REQ";
   return {
     label,
-    done: items.filter((item) => (item.manual_status ?? item.status ?? "pending").toLowerCase() === "done").length,
+    done: items.filter((item) => workflowStatus(item) === "done").length,
     total: items.length,
   };
 }

@@ -42,6 +42,8 @@ try {
   const review = page.locator("#completion-review");
   assert.equal(await review.locator("..").locator("..").locator("span.font-semibold").filter({ hasText: /^미검증$/ }).count(), 1);
   assert.equal(await review.getByRole("button", { name: "사람 승인", exact: true }).count(), 2);
+  assert.equal(await page.getByText("✅ 작업완료", { exact: true }).count(), 0);
+  await page.getByText("검증 1", { exact: true }).first().waitFor();
   await shot("human-unverified");
   await page.getByRole("textbox", { name: "evidenceResnapshot 승인 사유", exact: true }).fill("로컬 환경 의존 테스트 2건 제외, 코드와 무관");
   await page.getByRole("button", { name: "사람 승인", exact: true }).first().click();
@@ -51,6 +53,8 @@ try {
   await page.getByRole("textbox", { name: "runtimeUnverified 승인 사유" }).fill("배포 환경에서 사람이 실행 결과를 확인함");
   await page.getByRole("button", { name: "사람 승인", exact: true }).click();
   await page.getByText("사람 승인 검증완료", { exact: true }).last().waitFor();
+  await page.getByText("✅ 작업완료", { exact: true }).waitFor();
+  await page.getByText("완료 1", { exact: true }).waitFor();
   await shot("human-approved");
   await page.getByRole("textbox", { name: "evidenceResnapshot 승인 취소 사유" }).fill("승인 판단 재검토");
   await page.getByRole("button", { name: "사람 승인 취소", exact: true }).first().click();

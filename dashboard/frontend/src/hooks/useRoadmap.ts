@@ -74,6 +74,7 @@ export interface LineageEntry {
 }
 
 export interface RoadmapNode {
+  display_status?: string;
   id: string;
   title: string;
   level: string;
@@ -103,6 +104,7 @@ export interface RoadmapNode {
 
 /** 설계안 RoadmapTab이 받는 봉투. counts/issues는 **서버가** 센다(전체 기준 진척). */
 export interface RoadmapCounts {
+  verification?: number;
   total: number;
   pending: number;
   in_progress: number;

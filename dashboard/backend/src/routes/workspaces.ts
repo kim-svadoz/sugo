@@ -194,8 +194,8 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
       title: n.title,
       level: n.level,
       parent: n.parent,
-      status: n.status,
-      manualStatus: n.manual_status,
+      status: n.display_status ?? n.status,
+      manualStatus: null,
       dependsOn: n.depends_on,
     }));
     res.json({ nodes, counts: roadmapCounts(view), issues: roadmapIssues(view) });

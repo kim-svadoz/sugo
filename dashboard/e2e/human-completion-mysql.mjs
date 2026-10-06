@@ -29,10 +29,15 @@ try {
   const payload = { workspaceName: "ws", nodes: [{ id: "task", title: "task", level: "task", status: "done", workResult: { path: "/work-result.md", report: { schemaVersion: 1, patchVersion: 0, completedAt: "2026-10-02", completionGrade: "unverified", bypassLabels: labels } } }] };
   await post("/api/sync/roadmap", payload);
   const get = async () => { const r = await fetch(base + "/api/workspaces/ws/roadmap", { headers }); assert.equal(r.status, 200); return (await r.json()).nodes[0].work_result; };
+  const view = async () => (await fetch(base + "/api/workspaces/ws/roadmap", { headers })).json();
+  assert.equal((await view()).nodes[0].display_status, "verification");
+  assert.equal((await view()).counts.done, 0);
   const key = (await get()).approvalResultKey;
   const approve = (i, action = "approve") => post("/api/workspaces/ws/roadmap/completion-approval", { nodeId: "task", resultKey: key, labelId: completionLabelId(labels[i]), action, reason: "사람의 검토 사유" });
   await approve(0); assert.equal((await get()).report.completionGrade, "unverified");
   await approve(1); assert.equal((await get()).report.completionGrade, "verified_by_human");
+  assert.equal((await view()).nodes[0].display_status, "done");
+  assert.equal((await view()).counts.done, 1);
   await post("/api/sync/roadmap", payload); assert.equal((await get()).report.completionGrade, "verified_by_human");
   await approve(0, "revoke"); assert.equal((await get()).report.completionGrade, "unverified");
   assert.equal((await get()).report.humanApprovals.length, 3);

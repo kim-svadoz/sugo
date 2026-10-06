@@ -1,3 +1,4 @@
+import { workflowStatus } from "../../lib/workflowStatus.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BaseEdge,
@@ -99,11 +100,12 @@ const CHAIN = "chain:";
 type ChainItem = LineageChainItem;
 
 function effStatus(n: RoadmapNode): string {
-  return (n.manual_status ?? n.status ?? "pending").toLowerCase();
+  return workflowStatus(n);
 }
 
 /** 설계안 statusColor — ready(착수가능)가 in_progress보다 우선한다. */
 function statusColor(status: string, ready: boolean): string {
+  if (status === "verification") return "#fbbf24";
   if (status === "blocked") return ALERT;
   if (ready) return C_READY;
   if (status === "in_progress") return C_PROG;
@@ -116,6 +118,8 @@ function cardStyle(status: string, ready: boolean, isGroup: boolean) {
   if (status === "blocked") return { border: ALERT, accent: ALERT, label: "막힘" };
   if (ready) return { border: C_READY, accent: C_READY, label: "착수가능" };
   switch (status) {
+    case "verification":
+      return { border: "#d49c24", accent: "#fbbf24", label: "검증" };
     case "in_progress":
       return { border: C_PROG, accent: C_PROG, label: "진행중" };
     case "done":
@@ -325,7 +329,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
           <div className="mt-2 space-y-1 border-t border-white/[0.06] pt-1.5 text-[9.5px] leading-tight">
             <div className="flex min-w-0 items-center gap-1.5">
               <span className="shrink-0 text-[var(--color-text-dim)]">현재</span>
-              <span className={cn("truncate font-semibold", guidance.kind === "blocked" ? "text-orange-300" : guidance.kind === "attention" ? "text-amber-300" : "text-slate-300")}>
+              <span className={cn("truncate font-semibold", guidance.kind === "blocked" ? "text-orange-300" : (guidance.kind === "attention" || guidance.kind === "verification") ? "text-amber-300" : "text-slate-300")}>
                 {guidance.currentStage}
               </span>
             </div>
@@ -333,7 +337,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
               <span className="shrink-0 text-[var(--color-text-dim)]">다음</span>
               <span className="truncate text-cyan-300/85">{guidance.nextAction}</span>
             </div>
-            {(guidance.kind === "blocked" || guidance.kind === "attention") && (
+            {(guidance.kind === "blocked" || (guidance.kind === "attention" || guidance.kind === "verification")) && (
               <div className="truncate text-orange-300/75" title={guidance.reason}>⚠ {guidance.reason}</div>
             )}
           </div>
@@ -443,6 +447,7 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
 
           {/* 설계안 헤더 우측 액션. SPEC 전용 뱃지/버튼은 SPEC에서만 뜬다. */}
           <div className="nodrag ml-auto flex shrink-0 items-center gap-2">
+            {st === "verification" && <span className="rounded border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-xs font-semibold text-amber-300">검증</span>}
             {isSpec && data.specDone && (
               <span className="inline-flex shrink-0 items-center gap-1 rounded border border-emerald-500/40 bg-emerald-500/15 px-1.5 py-0.5 text-[12px] font-bold text-emerald-300">
                 ✅ 작업완료

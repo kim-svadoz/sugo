@@ -41,10 +41,10 @@ describe("task guidance", () => {
 
   it("미검증 완료는 PR/Patch보다 검증 결과 확인을 우선한다", () => {
     expect(taskGuidance({ status: "done", work_result: { report: { completionGrade: "unverified" } } }, now)).toMatchObject({
-      kind: "attention",
-      currentStage: "미검증 완료",
-      nextAction: "검증 결과 확인",
-      action: "review_result",
+      kind: "verification",
+      currentStage: "사람 검증 대기",
+      nextAction: "미검증 사유 검토",
+      action: "review_verification",
     });
   });
 
@@ -84,5 +84,5 @@ describe("schedule attention", () => {
 });
 
  it("DONE 파이프라인에서도 미검증 등급의 원인 검토를 안내한다", () => {
-   expect(taskGuidance({ status: "done", work_result: { report: { completionGrade: "unverified" } }, runtime_assessment: { projectionSchemaVersion: 1, status: "completed", currentStage: "DONE", nextActions: [], recommendedAction: null, humanDecisionRequired: false, blockers: [], evidence: [] } })).toMatchObject({ kind: "attention", currentStage: "DONE", nextAction: "미검증 사유 검토", action: "open_canvas" });
+   expect(taskGuidance({ status: "done", work_result: { report: { completionGrade: "unverified" } }, runtime_assessment: { projectionSchemaVersion: 1, status: "completed", currentStage: "DONE", nextActions: [], recommendedAction: null, humanDecisionRequired: false, blockers: [], evidence: [] } })).toMatchObject({ kind: "verification", currentStage: "사람 검증 대기", nextAction: "미검증 사유 검토", action: "review_verification" });
  });

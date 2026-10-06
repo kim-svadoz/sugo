@@ -51,3 +51,14 @@ TASK 개요에 `완료등급 사유 · 우회 라벨`과 `참고용 경고 · �
 - 운영에서 DDL 권한을 분리했다면 `dashboard/backend/src/db/human-completion.mysql.sql`을 먼저 DBA 계정으로 적용한 뒤 백엔드를 재시작한다. SQLite도 동일 필드의 테이블이 자동 생성된다.
 - 프론트엔드를 새 버전으로 빌드·배포하고, 승인을 사용할 사람은 GitHub에서 다시 로그인한다. 기존 세션은 일반 조회/동기화에는 계속 사용할 수 있다.
 - 롤백할 때 감사 테이블을 삭제하지 않는다. 구버전 Plugin은 사람 승인 등급을 이해하지 못하므로 양쪽 제품을 함께 업데이트한다.
+
+
+### Console 0.12.2 업무 상태
+
+파이프라인 DONE은 실행 이력이며 업무 완료와 구분한다. 서버는 사람이 승인한 최신 감사 기록으로
+완료등급을 먼저 투영하고, 완료 TASK의 등급이 unverified이면 display_status=verification을
+반환한다. UI는 검증 태그로 표시하고 완료 수에서 제외한다. 모든 유효 라벨 승인 또는
+자동 verified일 때 done으로 돌아가며 승인 취소 시 다시 verification이다. 실행 중 코드는
+in_progress를 유지한다. 상위 RUN/SPEC과 Schedule은 미완료 검증을 반영하며 REQ 완료율은
+별개다. DB 실행 status와 MCP 게이트는 변경하지 않고 읽기 모델에 추가한 상태이므로 DB
+마이그레이션은 없다. API/UI를 함께 재기동해야 한다.

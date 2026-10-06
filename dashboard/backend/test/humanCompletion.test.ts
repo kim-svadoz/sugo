@@ -30,13 +30,20 @@ describe("dashboard-owned human completion audit", () => {
   it("partial/full approval, resync preservation, revoke and audit originals", async () => {
     const f = await fixture();
     try {
+      const view = async () => (await request(f.app).get("/api/workspaces/ws/roadmap").set("Authorization", f.pat).expect(200)).body;
+      expect((await view()).nodes[0].display_status).toBe("verification");
+      expect((await view()).counts.done).toBe(0);
+      expect((await view()).counts.verification).toBe(1);
       await f.approve(0).expect(200);
       expect((await f.get()).report.completionGrade).toBe("unverified");
       await f.approve(1).expect(200);
       expect((await f.get()).report.completionGrade).toBe("verified_by_human");
+      expect((await view()).nodes[0].display_status).toBe("done");
+      expect((await view()).counts.done).toBe(1);
       await f.sync();
       expect((await f.get()).report.completionGrade).toBe("verified_by_human");
       await f.approve(0, "revoke", "승인 판단 재검토").expect(200);
+      expect((await view()).nodes[0].display_status).toBe("verification");
       const result = await f.get();
       expect(result.report.completionGrade).toBe("unverified");
       expect(result.report.bypassLabels).toEqual(f.labels);
@@ -80,4 +87,27 @@ describe("dashboard-owned human completion audit", () => {
       expect(lineage).not.toContain("verified_by_human");
     } finally { await f.db.close(); }
   });
+});
+
+it("review pending excludes TASK/RUN/SPEC from completion in Canvas, Schedule and workspace counts", async () => {
+  const f = await fixture();
+  try {
+    await request(f.app).post("/api/sync/workspace").set("Authorization", f.pat).send({ name: "ws", projects: [] }).expect(200);
+    await f.sync({ workspaceName: "ws", nodes: [
+      { id: "spec", title: "spec", level: "spec", status: "done" },
+      { id: "run", title: "run", level: "workstream", status: "done", parent: "spec" },
+      { ...f.payload.nodes[0], parent: "run" },
+    ] } as any);
+    const view = async () => (await request(f.app).get("/api/workspaces/ws/roadmap").set("Authorization", f.pat).expect(200)).body;
+    expect((await view()).nodes.map((n: any) => n.display_status)).toEqual(["verification", "verification", "verification"]);
+    const schedule = async () => (await request(f.app).get("/api/workspaces/schedule").set("Authorization", f.pat).expect(200)).body.specs[0];
+    expect(await schedule()).toMatchObject({ status: "verification", done_task_count: 0, unverified_task_count: 1 });
+    const workspaces = await request(f.app).get("/api/workspaces").set("Authorization", f.pat).expect(200);
+    expect(workspaces.body.workspaces[0]).toMatchObject({ roadmapDoneCount: 0, attentionCount: 1 });
+    await f.approve(0).expect(200);
+    expect((await view()).counts.done).toBe(0);
+    await f.approve(1).expect(200);
+    expect((await view()).nodes.map((n: any) => n.display_status)).toEqual(["done", "done", "done"]);
+    expect(await schedule()).toMatchObject({ status: "done", done_task_count: 1, unverified_task_count: 0 });
+  } finally { await f.db.close(); }
 });
