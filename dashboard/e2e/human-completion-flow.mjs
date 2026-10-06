@@ -52,6 +52,7 @@ try {
   assert.equal(await review.getByRole("button", { name: "사유 검토" }).evaluate(e => e === document.activeElement), true);
   await review.getByRole("button", { name: "사유 검토", exact: true }).click();
   await page.getByRole("heading", { name: "참고용 경고 · 완료등급과 별개" }).waitFor();
+  assert.equal(await page.getByText("기록 정보", { exact: true }).count(), 0);
   assert.equal(await page.getByRole("dialog").getByRole("button", { name: "사람 승인", exact: true }).count(), 2);
   assert.equal(await page.getByText("✅ 작업완료", { exact: true }).count(), 0);
   await page.getByText("검증 1", { exact: true }).first().waitFor();
