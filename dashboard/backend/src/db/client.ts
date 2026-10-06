@@ -7,6 +7,7 @@ export interface ExecResult {
 // (local dev/test stand-in) both implement
 // this so route/service code never depends on which driver is behind it.
 export interface DbClient {
+  readonly dialect?: "mysql" | "sqlite";
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
   exec(sql: string, params?: unknown[]): Promise<ExecResult>;
   execScript(sqlText: string): Promise<void>;

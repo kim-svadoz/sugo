@@ -22,6 +22,7 @@ export function createSqliteClient(filename = ":memory:"): DbClient {
   db.exec("PRAGMA foreign_keys = ON");
 
   return {
+    dialect: "sqlite",
     async query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
       return db.prepare(sql).all(...(params as never[])) as T[];
     },

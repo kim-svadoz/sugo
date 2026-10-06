@@ -161,6 +161,7 @@ function compactWorkResult(result: RoadmapWorkResult | undefined, summaryOnly = 
   }
   return {
     ...result,
+    report: result.report ? { ...result.report, humanApprovals: undefined } : undefined,
     files: result.files?.map((file) => {
       const { path, change, diff } = file;
       const lines = diff?.split("\n");

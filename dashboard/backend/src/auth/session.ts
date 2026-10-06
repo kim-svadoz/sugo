@@ -10,13 +10,29 @@ function key(secret: string): Uint8Array {
 }
 
 /** 로그인 세션 발급(sub=userId). 기본 7일. */
-export async function issueSession(userId: string, secret: string, ttlSeconds = 7 * 24 * 3600): Promise<string> {
-  return new SignJWT({})
+export async function issueSession(userId: string, secret: string, ttlSeconds = 7 * 24 * 3600, authSource: "github" | "local" = "github"): Promise<string> {
+  return new SignJWT({ authSource })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(userId)
     .setIssuedAt()
     .setExpirationTime(Math.floor(Date.now() / 1000) + ttlSeconds)
     .sign(key(secret));
+}
+
+/** Human completion requires an interactive login. Unattended local-personal login is not proof of a human. */
+export function requireHumanSession(secret: string) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const match = /^Bearer (.+)$/.exec(req.headers.authorization ?? "");
+      if (!match) throw new Error("missing session");
+      const { payload } = await jwtVerify(match[1].trim(), key(secret), { algorithms: ["HS256"] });
+      if (!payload.sub || payload.authSource !== "github") throw new Error("interactive login required");
+      req.userId = payload.sub;
+      next();
+    } catch {
+      res.status(403).json({ error: "HUMAN_LOGIN_REQUIRED", message: "사람 승인은 GitHub 로그인 세션에서만 가능합니다. API 토큰·자동 로컬 로그인은 사용할 수 없습니다. 다시 로그인하세요." });
+    }
+  };
 }
 
 /** 세션 검증 → userId. 실패 시 throw. */

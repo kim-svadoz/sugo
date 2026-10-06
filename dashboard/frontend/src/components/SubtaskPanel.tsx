@@ -1,3 +1,4 @@
+import { CompletionApprovalPanel } from "./CompletionApprovalPanel.js";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, CheckCircle2, Copy, GitPullRequest, Sparkles } from "lucide-react";
 import { marked } from "marked";
@@ -116,6 +117,7 @@ export function SubtaskPanel({
             onReviewResult={() => setTab("summary")}
           />
         )}
+        {tab === "progress" && <CompletionApprovalPanel workspace={workspace} node={node} onChanged={onChanged} />}
         {tab === "summary" && <SummaryTab workResult={workResult} />}
         {tab === "files" && <FilesTab files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} />}
       </div>
@@ -266,7 +268,7 @@ function ProgressTab({
             <div className="flex items-center justify-between border-b border-white/8 px-3 py-2.5">
               <div className="flex items-center gap-2">
                 {reportView.grade === "unverified" ? <AlertTriangle size={14} className="text-amber-300" /> : <CheckCircle2 size={14} className="text-emerald-300" />}
-                <span className={`text-xs font-semibold ${reportView.grade === "unverified" ? "text-amber-200" : "text-emerald-200"}`}>{reportView.gradeLabel}</span>
+                <span className={`text-xs font-semibold ${reportView.grade === "unverified" ? "text-amber-200" : reportView.grade === "verified_by_human" ? "text-violet-200" : "text-emerald-200"}`}>{reportView.gradeLabel}</span>
               </div>
               {duration && <span className="font-mono text-[10px] text-[var(--color-text-dim)]">{duration}</span>}
             </div>

@@ -55,6 +55,8 @@ export async function handleSugoRecordTestEvidence(rawArgs: unknown) {
     new Date().toISOString(),
   );
 
+  if (args.kind === "feature") record.implementationCycle = session.data.chainInfo.implementationCycle ?? 0;
+
   const updated =
     args.kind === "baseline"
       ? {

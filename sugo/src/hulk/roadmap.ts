@@ -1,3 +1,6 @@
+import { renderWorkResultMarkdown } from "../workResultReport.js";
+import { computeCompletionGrade, labelId } from "../labelGuard.js";
+import { loadAllSessions, saveSession } from "../session.js";
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { atomicWriteFile, withFileLock } from "../fsUtil.js";
@@ -10,12 +13,28 @@ import { requirementNodeId } from "./roadmapReq.js";
 import type { SessionAssessment } from "../ontology/sessionAssessment.js";
 
 async function readRoadmapFile(workspace: string): Promise<RoadmapFile> {
+  let file: RoadmapFile;
   try {
     const raw = await readFile(roadmapFilePath(workspace), "utf-8");
-    return JSON.parse(raw) as RoadmapFile;
+    file = JSON.parse(raw) as RoadmapFile;
   } catch {
     return { nodes: [], schemaVersion: 1 };
   }
+    // Old completed sessions already own the canonical bypass labels, but old reports did not carry them.
+    // Hydrate before workspace sync so existing tasks can be reviewed without rerunning the pipeline.
+    if (file.nodes.some(n => n.workResult?.path && !n.workResult.report?.bypassLabels)) {
+      const sessions = (await loadAllSessions()).filter(s => s.state === "DONE" && s.data.hulkWorkspace === workspace);
+      for (const node of file.nodes) {
+        const result = node.workResult;
+        if (!result?.path || result.report?.bypassLabels) continue;
+        const chain = sessions.find(s => s.data.chainInfo.workResultPath === result.path)?.data.chainInfo;
+        if (!chain?.workResultReport || !Array.isArray(chain.bypassLabels) ||
+            (result.report && result.report.completedAt !== chain.workResultReport.completedAt)) continue;
+        result.report = { ...chain.workResultReport, bypassLabels: [...chain.bypassLabels],
+          completionGrade: computeCompletionGrade(chain.bypassLabels, chain.workResultReport.patchVersion).grade };
+      }
+    }
+  return file;
 }
 
 async function writeRoadmapFile(workspace: string, file: RoadmapFile): Promise<void> {
@@ -453,6 +472,26 @@ export async function pullRoadmapOrdering(workspace: string): Promise<boolean> {
   if (!remote) return false;
   return withRoadmap(workspace, async (file) => {
     const merged = mergeRoadmapOwnership(file.nodes, remote);
+    const completedSessions = (await loadAllSessions()).filter(s => s.state === "DONE" && s.data.hulkWorkspace === workspace);
+    for (const node of merged) {
+      const local = node.workResult;
+      const incoming = remote.find(r => r.id === node.id)?.workResult;
+      // Never replace execution evidence with a remote/older report. Only dashboard-owned approvals.
+      if (!local?.report || !local.path || !incoming?.report || incoming.path !== local.path ||
+          !Array.isArray(local.report.bypassLabels) || !Array.isArray(incoming.report.bypassLabels) ||
+          incoming.report.completedAt !== local.report.completedAt || incoming.report.patchVersion !== local.report.patchVersion ||
+          JSON.stringify((incoming.report.bypassLabels ?? []).map(labelId)) !== JSON.stringify((local.report.bypassLabels ?? []).map(labelId))) continue;
+      const approvals = (incoming.report.humanApprovals ?? []).filter(e => e.workResultPath === local.path);
+      local.report = { ...local.report, humanApprovals: approvals,
+        completionGrade: computeCompletionGrade(local.report.bypassLabels ?? [], local.report.patchVersion, approvals).grade };
+      await atomicWriteFile(local.path, renderWorkResultMarkdown(local.report));
+      for (const entry of node.lineage ?? []) if (entry.workResult?.path === local.path) entry.workResult.report = local.report;
+      for (const session of completedSessions) if (session.data.chainInfo.workResultPath === local.path &&
+          session.data.chainInfo.workResultReport?.completedAt === local.report.completedAt) {
+        session.data.chainInfo.workResultReport = local.report;
+        await saveSession(session);
+      }
+    }
     await writeRoadmapFile(workspace, { ...file, nodes: merged });
     return true;
   });

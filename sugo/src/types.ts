@@ -73,6 +73,8 @@ export interface CodeGateAudit {
 }
 
 export interface ChainInfo {
+  implementationCycle?: number;
+  implementationStartedAt?: string;
   changedFiles: string[];
   analyzeAttempts: number;
   analyzePassed: boolean | null;

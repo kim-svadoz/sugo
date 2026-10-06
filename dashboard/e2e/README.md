@@ -41,3 +41,23 @@ mock/jose-local이 아니라 **실제 인프라**로 대시보드+플러그인�
 ## 남은 residual(실물이 더 필요한 것)
 - 실제 Bitbucket Server(Data Center) 응답 형태 최종 일치(지금은 mock SHAPE).
 - 원격/배포 환경(원격 MySQL·네트워크 지연·실 Keycloak)에서의 재검증.
+
+## 사람 승인 완료등급 (2026-10-06)
+
+Node 22.15+와 `npm install`한 e2e/backend가 필요하다. native TypeScript resolve 훅을 사용한다.
+Frontend를 `VITE_API_BASE=http://localhost:4000`으로 빌드하고 :4173에서 preview한 뒤:
+
+```bash
+node --import ./register-source.mjs human-completion-flow.mjs <screenshots-dir>
+```
+
+격리 SQLite HTTP 서버(:4000)와 실제 Edge에서 두 라벨의 부분/전체 승인·취소, 별도 경고 영역,
+감사 이력 및 브라우저 오류를 확인한다. 서버는 종료 시 닫는다.
+
+```bash
+MYSQL_HOST=127.0.0.1 MYSQL_PORT=33077 MYSQL_USER=root MYSQL_PASSWORD=... \
+  node --import ./register-source.mjs human-completion-mysql.mjs
+```
+
+실제 MySQL에서 임의 이름의 테스트 DB를 만들고 승인·취소·재동기화·JSON·한글을 확인한 후
+그 DB만 삭제한다. 테스트 계정에 CREATE/DROP DATABASE 권한이 필요하다. 운영 DB를 사용하지 않는다.

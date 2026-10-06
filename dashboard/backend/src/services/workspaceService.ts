@@ -1,3 +1,4 @@
+import { projectHumanCompletion } from "./humanCompletion.js";
 import { randomBytes } from "node:crypto";
 import { execFile } from "node:child_process";
 import { readFile, rename as renameFile, unlink, writeFile } from "node:fs/promises";
@@ -421,18 +422,18 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
   // manual_status와 달리 manual_title은 서버에서 곧바로 유효 title로 합친다 — Canvas의
   // n.title 참조가 수십 곳이라 프론트에 매번 manual_title ?? title 판정을 시키는 대신,
   // "원본 CLI 제목을 따로 보여줄 UI가 없다"는 전제로 여기서 한 번에 정리한다.
-  return rows.map((r) => ({
+  return Promise.all(rows.map(async (r) => ({
     ...r,
     title: r.manual_title ?? r.title,
     depends_on: parseJsonArray(r.depends_on),
-    work_result: parseMaybeJson<unknown>(r.work_result, null),
+    work_result: await projectHumanCompletion(db, userId, workspaceName, r.id, r.work_result),
     runtime_assessment: parseMaybeJson<unknown>(r.runtime_assessment, null),
     lineage: parseMaybeJson<unknown>(r.lineage, null),
     human_blocker: parseMaybeJson<unknown>(r.blocker_context, null),
     blocker_decision: r.blocker_response && r.blocker_answered_by && r.blocker_answered_at
       ? { response: r.blocker_response, answered_by: r.blocker_answered_by, answered_at: r.blocker_answered_at }
       : null,
-  }));
+  })));
 }
 
 export type SaveBlockerDecisionResult =
@@ -528,6 +529,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
       WHERE task.user_id = ? AND task.level = 'task' AND run.level = 'workstream'`,
     [userId]
   );
+  for (const task of tasks) task.work_result = await projectHumanCompletion(db, userId, task.workspace_name, task.id, task.work_result);
   const tasksBySpec = new Map<string, typeof tasks>();
   for (const task of tasks) {
     const key = `${task.workspace_name}\0${task.spec_id}`;

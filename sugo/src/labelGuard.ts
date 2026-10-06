@@ -36,9 +36,35 @@ export interface BypassLabel {
   /** 이 라벨이 기록된 시점의 patch 버전(0=원본). 낡은 버전의 라벨이 이후 patch에 재사용되지 않게 스코프한다. */
   patchVersion: number;
   recordedAt: string;
+  implementationCycle?: number;
+  supersededAt?: string;
+  supersededByCycle?: number;
 }
 
-export type CompletionGrade = "verified" | "unverified";
+export type CompletionGrade = "verified" | "unverified" | "verified_by_human";
+
+export interface HumanApprovalEvent {
+  labelId: string;
+  action: "approve" | "revoke";
+  userId: string;
+  at: string;
+  kind: string;
+  originalReason: string;
+  reason: string;
+  workResultPath: string;
+}
+
+/** Immutable label identity, also used by the dashboard. Never an agent supplied approval ID. */
+export function labelId(label: BypassLabel): string {
+  return JSON.stringify([label.kind, label.reason, label.patchVersion, label.recordedAt, label.implementationCycle ?? 0]);
+}
+
+/** Fresh clean test_done can retire only the old test snapshot override, never cancellation or other gates. */
+export function supersedePriorTestLabels(labels: BypassLabel[], cycle: number, freshCleanPass: boolean, at: string): BypassLabel[] {
+  if (!freshCleanPass) return labels;
+  return labels.map(l => l.kind === "evidenceResnapshot" && (l.implementationCycle ?? 0) < cycle && !l.supersededAt
+    ? { ...l, supersededAt: at, supersededByCycle: cycle } : l);
+}
 
 export interface GreenEvidenceInput {
   baselineExitCode?: number | null;
@@ -89,14 +115,20 @@ export interface CompletionGradeResult {
 }
 
 /** §4.6-2 완료등급 강등: 스코프 안 우회 라벨이 하나라도 있으면 unverified로 낮춘다(commit 자체는 차단 안 함). */
-export function computeCompletionGrade(labels: BypassLabel[], currentPatchVersion: number): CompletionGradeResult {
-  const inScope = collectBypassLabels(labels, currentPatchVersion);
-  return { grade: inScope.length > 0 ? "unverified" : "verified", bypassLabels: inScope };
+export function computeCompletionGrade(labels: BypassLabel[], currentPatchVersion: number, approvals: HumanApprovalEvent[] = []): CompletionGradeResult {
+  const inScope = collectBypassLabels(labels, currentPatchVersion).filter(l => !(l.kind === "evidenceResnapshot" && l.supersededAt && (l.supersededByCycle ?? 0) > (l.implementationCycle ?? 0)));
+  const approved = new Map<string, HumanApprovalEvent>();
+  for (const event of approvals) approved.set(event.labelId, event);
+  const allApproved = inScope.every(l => {
+    const event = approved.get(labelId(l));
+    return event?.action === "approve" && event.reason.trim() && event.userId && event.kind === l.kind && event.originalReason === l.reason;
+  });
+  return { grade: inScope.length === 0 ? "verified" : allApproved ? "verified_by_human" : "unverified", bypassLabels: inScope };
 }
 
 /** commit 응답에 강제 노출할 요약 텍스트를 렌더링한다("loud label" — 조용히 넘어가지 못하게). */
 export function renderBypassSummary(result: CompletionGradeResult): string | undefined {
   if (result.grade === "verified") return undefined;
   const lines = result.bypassLabels.map((l) => `- [${l.kind}] ${l.reason}`);
-  return `완료등급: unverified (우회 라벨 ${result.bypassLabels.length}건)\n${lines.join("\n")}`;
+  return `완료등급: ${result.grade} (우회 라벨 ${result.bypassLabels.length}건)\n${lines.join("\n")}`;
 }

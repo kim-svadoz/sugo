@@ -2,6 +2,13 @@ import { describe, expect, it } from "vitest";
 import { workResultPresentation } from "./workResultPresentation.js";
 
 describe("workResultPresentation", () => {
+  it("사람 승인 등급은 자동 검증과 다르게 표시한다", () => {
+    const result = workResultPresentation({ schemaVersion: 1, kind: "feat", patchVersion: 0,
+      completionGrade: "verified_by_human", summary: "요약", changedFiles: [], designDecisions: [], knownLimitations: [],
+      verification: { test: { state: "pass" }, runtimeVerified: true } });
+    expect(result.gradeLabel).toBe("사람 승인 검증완료");
+    expect(result.grade).toBe("verified_by_human");
+  });
   it("구조화된 report를 Canvas 카드용 정보로 바꾼다", () => {
     const result = workResultPresentation({
       schemaVersion: 1,

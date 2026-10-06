@@ -49,6 +49,7 @@ import { addTask, findTaskByPrdRef, listTasks, updateTask } from "../hulk/task.j
 import type { Task, TaskPatchInfo } from "../hulk/types.js";
 import {
   computeCompletionGrade,
+  supersedePriorTestLabels,
   detectLabelContradiction,
   hasGreenExecutionEvidence,
   renderBypassSummary,
@@ -650,10 +651,16 @@ export async function handleSugoPlan(rawArgs: unknown) {
         ...session.data,
         chainInfo: {
           ...session.data.chainInfo,
-          bypassLabels: [...(session.data.chainInfo.bypassLabels ?? []), ...newBypassLabels],
+          bypassLabels: [...(session.data.chainInfo.bypassLabels ?? []), ...newBypassLabels.map(l => ({ ...l, implementationCycle: existing?.data.chainInfo.implementationCycle ?? 0 }))],
         },
       },
     };
+  }
+
+  if (action === "code_start") {
+    session.data.chainInfo = { ...session.data.chainInfo,
+      implementationCycle: (session.data.chainInfo.implementationCycle ?? 0) + 1,
+      implementationStartedAt: new Date().toISOString() };
   }
 
   // ── §4.5 판단품질 측정용 신호: TEST_DONE/REVIEW_RUNNING에서 code_start로 역방향 재진입하면
@@ -997,6 +1004,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
             ...(session.data.chainInfo.bypassLabels ?? []),
             {
               kind: "evidenceResnapshot" as const,
+              implementationCycle: session.data.chainInfo.implementationCycle ?? 0,
               reason: args.reverifyReason!,
               patchVersion: currentPatchVersion,
               recordedAt: new Date().toISOString(),
@@ -1020,6 +1028,13 @@ export async function handleSugoPlan(rawArgs: unknown) {
         ...session.data,
         chainInfo: {
           ...session.data.chainInfo,
+          bypassLabels: supersedePriorTestLabels(session.data.chainInfo.bypassLabels ?? [],
+            session.data.chainInfo.implementationCycle ?? 0,
+            derivedState === "pass" && newBypassLabels.length === 0 &&
+              existing.data.chainInfo.testEvidence.implementationCycle === session.data.chainInfo.implementationCycle &&
+              !!session.data.chainInfo.implementationStartedAt &&
+              Date.parse(existing.data.chainInfo.testEvidence.recordedAt) >= Date.parse(session.data.chainInfo.implementationStartedAt),
+            new Date().toISOString()),
           testPassedState: derivedState,
           coverageMap: args.coverageMap,
           testEvidenceFingerprint,
@@ -1050,6 +1065,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       patchVersion: session.data.patch?.version ?? 0,
       completedAt,
       completionGrade: grade,
+      bypassLabels: session.data.chainInfo.bypassLabels ?? [],
       summary: args.summary,
       changedFiles: session.data.chainInfo.changedFiles,
       requirements: session.data.chainInfo.coverageMap?.acceptanceCriteria,
@@ -1112,7 +1128,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
   // ── §4.6 label-guard: commit 시점에 우회 라벨 누적분으로 completionGrade를 판정한다. 차단은
   // 하지 않는다(교착 방지) — 대신 응답 최상단에 강제 노출해 "조용히 넘어가지 못하게" 한다.
-  let completionGrade: "verified" | "unverified" | undefined;
+  let completionGrade: import("../labelGuard.js").CompletionGrade | undefined;
   let bypassSummary: string | undefined;
   if (action === "commit") {
     const gradeResult = computeCompletionGrade(session.data.chainInfo.bypassLabels ?? [], currentPatchVersion);

@@ -14,6 +14,7 @@ export interface WorkResultFile {
 }
 
 export interface WorkResult {
+  approvalResultKey?: string;
   path?: string;
   startedAt?: string;
   endedAt?: string;
@@ -29,13 +30,21 @@ export interface WorkResult {
   report?: WorkResultReport;
 }
 
+export interface CompletionLabel {
+  kind: string; reason: string; patchVersion: number; recordedAt: string; implementationCycle?: number; supersededAt?: string; supersededByCycle?: number;
+}
+export interface HumanApprovalEvent {
+  labelId: string; action: "approve" | "revoke"; userId: string; at: string; kind: string; originalReason: string; reason: string; workResultPath: string;
+}
 export interface WorkResultReport {
+  bypassLabels?: CompletionLabel[];
+  humanApprovals?: HumanApprovalEvent[];
   schemaVersion: 1;
   featureName?: string;
   kind: "feat" | "patch";
   patchVersion: number;
   completedAt?: string;
-  completionGrade: "verified" | "unverified";
+  completionGrade: "verified" | "unverified" | "verified_by_human";
   summary: string;
   changedFiles: string[];
   requirements?: { id: string; covered: boolean }[];

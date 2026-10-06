@@ -10,7 +10,7 @@ export interface WorkResultPresentation {
   summary: string;
   versionLabel: string;
   gradeLabel: string;
-  grade: "verified" | "unverified" | "legacy";
+  grade: "verified" | "unverified" | "verified_by_human" | "legacy";
   testLabel: string | null;
   testCommand: string | null;
   runtimeVerified?: boolean;
@@ -56,7 +56,7 @@ export function workResultPresentation(value: Pick<WorkResult, "summary" | "patc
   return {
     summary: report.summary,
     versionLabel: report.kind === "patch" ? `v${report.patchVersion} patch` : "v0 feat",
-    gradeLabel: report.completionGrade === "verified" ? "검증 완료" : "미검증",
+    gradeLabel: report.completionGrade === "verified" ? "검증 완료" : report.completionGrade === "verified_by_human" ? "사람 승인 검증완료" : "미검증",
     grade: report.completionGrade,
     testLabel,
     testCommand: test.command ?? null,

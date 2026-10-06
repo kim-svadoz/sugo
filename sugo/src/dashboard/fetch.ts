@@ -1,3 +1,4 @@
+import type { WorkResultReport } from "../workResultReport.js";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { resolveDashboardConfig } from "./config.js";
@@ -26,6 +27,7 @@ async function fetchJson<T>(path: string, timeoutMs: number): Promise<T | null> 
 }
 
 export interface RemoteRoadmapOrdering {
+  workResult?: { path?: string; report?: WorkResultReport };
   id: string;
   dependsOn: string[];
   manual_status?: string;
@@ -36,6 +38,7 @@ export interface RemoteRoadmapOrdering {
 /** 대시보드 roadmap 노드 응답 형태(snake_case, depends_on 등). fetch 어댑터가 이걸 plugin의
  * camelCase RemoteRoadmapOrdering으로 번역한다. */
 interface RoadmapNodeResponse {
+  work_result?: { path?: string; report?: WorkResultReport };
   id: string;
   title?: string;
   level?: string;
@@ -161,6 +164,7 @@ export async function fetchRoadmapOrdering(workspaceName: string): Promise<Remot
   if (!res) return null;
   return res.nodes.map((n) => ({
     id: n.id,
+    workResult: n.work_result,
     dependsOn: n.depends_on ?? [],
     manual_status: n.manual_status ?? undefined,
     pos_x: n.pos_x ?? undefined,

@@ -23993,6 +23993,7 @@ function compactWorkResult(result2, summaryOnly = false) {
   }
   return {
     ...result2,
+    report: result2.report ? { ...result2.report, humanApprovals: void 0 } : void 0,
     files: result2.files?.map((file) => {
       const { path, change, diff } = file;
       const lines = diff?.split("\n");
@@ -24761,6 +24762,7 @@ async function fetchRoadmapOrdering(workspaceName) {
   if (!res) return null;
   return res.nodes.map((n) => ({
     id: n.id,
+    workResult: n.work_result,
     dependsOn: n.depends_on ?? [],
     manual_status: n.manual_status ?? void 0,
     pos_x: n.pos_x ?? void 0,
@@ -28044,7 +28046,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.18.1" : "0.0.0-dev";
+  return true ? "0.19.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29465,6 +29467,136 @@ function estimateHumanHours(startedAtIso, nowIso2, analyzeAttempts, autoLoopRetr
   };
 }
 
+// src/workResultReport.ts
+function buildWorkResultReport(input) {
+  return {
+    schemaVersion: 1,
+    bypassLabels: input.bypassLabels ? [...input.bypassLabels] : void 0,
+    featureName: input.featureName,
+    kind: input.kind,
+    patchVersion: input.patchVersion,
+    completedAt: input.completedAt,
+    completionGrade: input.completionGrade,
+    summary: input.summary.trim(),
+    changedFiles: [...input.changedFiles],
+    requirements: [...input.requirements ?? []],
+    designDecisions: [...input.designDecisions ?? []],
+    knownLimitations: [...input.knownLimitations ?? []],
+    seed: input.seed?.trim() || void 0,
+    verification: {
+      test: { ...input.testEvidence },
+      runtimeVerified: input.runtimeVerified,
+      wiringVerified: input.wiringVerified,
+      validationVerdict: input.validation?.verdict,
+      autoVerifiedCount: input.validation?.autoVerifiedCount,
+      contradictionCount: input.validation?.contradictionCount
+    }
+  };
+}
+var yesNo = (value) => value === true ? "\uC644\uB8CC" : value === false ? "\uBBF8\uAC80\uC99D" : "\uD574\uB2F9 \uC5C6\uC74C";
+var bullets = (items, empty) => items.length > 0 ? items.map((item) => `- ${item}`).join("\n") : `- ${empty}`;
+function renderWorkResultMarkdown(report) {
+  const kindLabel = report.kind === "feat" ? "FEAT" : `PATCH v${report.patchVersion}`;
+  const gradeLabel = report.completionGrade === "verified" ? "\uAC80\uC99D \uC644\uB8CC" : report.completionGrade === "verified_by_human" ? "\uC0AC\uB78C \uC2B9\uC778 \uAC80\uC99D\uC644\uB8CC" : "\uBBF8\uAC80\uC99D";
+  const reqs = report.requirements.length > 0 ? report.requirements.map((req) => `- [${req.covered ? "x" : " "}] ${req.id}`).join("\n") : "- \uAE30\uB85D\uB41C \uC694\uAD6C\uC0AC\uD56D \uCEE4\uBC84\uB9AC\uC9C0 \uC5C6\uC74C";
+  const test = report.verification.test;
+  const counts = test.total === void 0 ? "\uAC74\uC218 \uBBF8\uAE30\uB85D" : `${test.passed ?? Math.max(0, test.total - (test.failed ?? 0))}/${test.total} \uD1B5\uACFC`;
+  return [
+    `# Work Result \u2014 ${report.featureName}`,
+    "",
+    `> ${kindLabel} \xB7 ${gradeLabel} \xB7 ${report.completedAt}`,
+    "",
+    "## \uACB0\uACFC \uC694\uC57D",
+    "",
+    report.summary,
+    "",
+    "## \uC694\uAD6C\uC0AC\uD56D \uCDA9\uC871",
+    "",
+    reqs,
+    "",
+    "## \uC8FC\uC694 \uBCC0\uACBD",
+    "",
+    bullets(report.changedFiles.map((path) => `\`${path}\``), "\uBCC0\uACBD \uD30C\uC77C \uC5C6\uC74C"),
+    "",
+    "## \uC124\uACC4 \uACB0\uC815",
+    "",
+    bullets(report.designDecisions, "\uBCC4\uB3C4 \uC124\uACC4 \uACB0\uC815 \uAE30\uB85D \uC5C6\uC74C"),
+    "",
+    "## \uAC80\uC99D",
+    "",
+    "| \uAD6C\uBD84 | \uC99D\uAC70 | \uACB0\uACFC |",
+    "|---|---|---|",
+    `| \uD14C\uC2A4\uD2B8 | ${test.command ? `\`${test.command}\`` : "\uBA85\uB839 \uBBF8\uAE30\uB85D"} | ${test.state === "pass" ? counts : "\uBBF8\uAC80\uC99D"} |`,
+    `| \uB7F0\uD0C0\uC784 | \uC2E4\uC81C \uC2E4\uD589 \uD655\uC778 | ${yesNo(report.verification.runtimeVerified)} |`,
+    `| \uBC30\uC120 | \uB4F1\uB85D\xB7\uD638\uCD9C \uACBD\uB85C \uD655\uC778 | ${yesNo(report.verification.wiringVerified)} |`,
+    `| \uD558\uB124\uC2A4 | ${report.verification.autoVerifiedCount ?? 0}\uAC1C \uC790\uB3D9 \uAC80\uC99D | ${report.verification.validationVerdict ?? "\uBBF8\uAE30\uB85D"} |`,
+    "",
+    "## \uB0A8\uC740 \uC0AC\uD56D \uBC0F \uC704\uD5D8",
+    "",
+    bullets(report.knownLimitations, "\uC54C\uB824\uC9C4 \uC81C\uD55C \uC0AC\uD56D \uC5C6\uC74C"),
+    "",
+    "## \uC644\uB8CC\uB4F1\uAE09 \uC0AC\uC720 \u2014 \uC6B0\uD68C \uB77C\uBCA8",
+    "",
+    bullets((report.bypassLabels ?? []).map((l) => `[${l.kind}] ${l.reason}${l.supersededAt ? ` (\uC774\uC804 \uC0AC\uC774\uD074 \uB77C\uBCA8 \xB7 ${l.supersededAt} \uC7AC\uAC80\uC99D\uC73C\uB85C \uD574\uC18C)` : ""}`), "\uC6B0\uD68C \uB77C\uBCA8 \uC5C6\uC74C"),
+    "",
+    "## \uC0AC\uB78C \uC2B9\uC778",
+    "",
+    bullets((report.humanApprovals ?? []).map((e) => `${e.action === "approve" ? "\uC2B9\uC778" : "\uC2B9\uC778 \uCDE8\uC18C"} \xB7 ${e.userId} \xB7 ${e.at}
+  - \uC6D0\uB798 \uB77C\uBCA8: [${e.kind}] ${e.originalReason}
+  - \uC0AC\uC720: ${e.reason}
+  - \uC2B9\uC778 \uB2F9\uC2DC work-result: ${e.workResultPath}`), "\uC0AC\uB78C \uC2B9\uC778 \uAE30\uB85D \uC5C6\uC74C"),
+    ...report.seed ? ["", "## \uC0AC\uC6A9\uC790 \uC9C0\uC2DC", "", report.seed] : [],
+    ""
+  ].join("\n");
+}
+
+// src/labelGuard.ts
+function labelId(label) {
+  return JSON.stringify([label.kind, label.reason, label.patchVersion, label.recordedAt, label.implementationCycle ?? 0]);
+}
+function supersedePriorTestLabels(labels, cycle, freshCleanPass, at) {
+  if (!freshCleanPass) return labels;
+  return labels.map((l) => l.kind === "evidenceResnapshot" && (l.implementationCycle ?? 0) < cycle && !l.supersededAt ? { ...l, supersededAt: at, supersededByCycle: cycle } : l);
+}
+function hasGreenExecutionEvidence(input) {
+  if (input.baselineExitCode === 0) return true;
+  if (input.testDerivedState === "pass") return true;
+  if (input.contractTests?.some((r) => r.greenExitCode === 0)) return true;
+  return false;
+}
+function detectLabelContradiction(claimsAbsent, hasGreenEvidence) {
+  if (!claimsAbsent) return ok2();
+  if (hasGreenEvidence) {
+    return fail(
+      "LABEL_CONTRADICTION",
+      "\uC774 \uC138\uC158\uC5D0 \uADF8\uB9B0 \uC2E4\uD589 \uC99D\uAC70\uAC00 \uC774\uBBF8 \uC788\uB294\uB370 \uD658\uACBD\uBD80\uC7AC\uB958 \uB77C\uBCA8\uC744 \uC8FC\uC7A5\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uB77C\uBCA8-\uBAA8\uC21C\uC73C\uB85C \uAC70\uBD80\uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok2();
+}
+function isLabelStillInScope(labelPatchVersion, currentPatchVersion) {
+  return labelPatchVersion === currentPatchVersion;
+}
+function collectBypassLabels(labels, currentPatchVersion) {
+  return labels.filter((l) => isLabelStillInScope(l.patchVersion, currentPatchVersion));
+}
+function computeCompletionGrade(labels, currentPatchVersion, approvals = []) {
+  const inScope = collectBypassLabels(labels, currentPatchVersion).filter((l) => !(l.kind === "evidenceResnapshot" && l.supersededAt && (l.supersededByCycle ?? 0) > (l.implementationCycle ?? 0)));
+  const approved = /* @__PURE__ */ new Map();
+  for (const event of approvals) approved.set(event.labelId, event);
+  const allApproved = inScope.every((l) => {
+    const event = approved.get(labelId(l));
+    return event?.action === "approve" && event.reason.trim() && event.userId && event.kind === l.kind && event.originalReason === l.reason;
+  });
+  return { grade: inScope.length === 0 ? "verified" : allApproved ? "verified_by_human" : "unverified", bypassLabels: inScope };
+}
+function renderBypassSummary(result2) {
+  if (result2.grade === "verified") return void 0;
+  const lines = result2.bypassLabels.map((l) => `- [${l.kind}] ${l.reason}`);
+  return `\uC644\uB8CC\uB4F1\uAE09: ${result2.grade} (\uC6B0\uD68C \uB77C\uBCA8 ${result2.bypassLabels.length}\uAC74)
+${lines.join("\n")}`;
+}
+
 // src/hulk/roadmap.ts
 import { mkdir as mkdir15, readFile as readFile20 } from "node:fs/promises";
 
@@ -29577,12 +29709,28 @@ function promotePrdRequirements(taskId, prdContent) {
 
 // src/hulk/roadmap.ts
 async function readRoadmapFile(workspace) {
+  let file;
   try {
     const raw = await readFile20(roadmapFilePath(workspace), "utf-8");
-    return JSON.parse(raw);
+    file = JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
   }
+  if (file.nodes.some((n) => n.workResult?.path && !n.workResult.report?.bypassLabels)) {
+    const sessions = (await loadAllSessions()).filter((s) => s.state === "DONE" && s.data.hulkWorkspace === workspace);
+    for (const node of file.nodes) {
+      const result2 = node.workResult;
+      if (!result2?.path || result2.report?.bypassLabels) continue;
+      const chain = sessions.find((s) => s.data.chainInfo.workResultPath === result2.path)?.data.chainInfo;
+      if (!chain?.workResultReport || !Array.isArray(chain.bypassLabels) || result2.report && result2.report.completedAt !== chain.workResultReport.completedAt) continue;
+      result2.report = {
+        ...chain.workResultReport,
+        bypassLabels: [...chain.bypassLabels],
+        completionGrade: computeCompletionGrade(chain.bypassLabels, chain.workResultReport.patchVersion).grade
+      };
+    }
+  }
+  return file;
 }
 async function writeRoadmapFile(workspace, file) {
   await mkdir15(workspaceDir(workspace), { recursive: true });
@@ -29857,6 +30005,24 @@ async function pullRoadmapOrdering(workspace) {
   if (!remote) return false;
   return withRoadmap(workspace, async (file) => {
     const merged = mergeRoadmapOwnership(file.nodes, remote);
+    const completedSessions = (await loadAllSessions()).filter((s) => s.state === "DONE" && s.data.hulkWorkspace === workspace);
+    for (const node of merged) {
+      const local = node.workResult;
+      const incoming = remote.find((r) => r.id === node.id)?.workResult;
+      if (!local?.report || !local.path || !incoming?.report || incoming.path !== local.path || !Array.isArray(local.report.bypassLabels) || !Array.isArray(incoming.report.bypassLabels) || incoming.report.completedAt !== local.report.completedAt || incoming.report.patchVersion !== local.report.patchVersion || JSON.stringify((incoming.report.bypassLabels ?? []).map(labelId)) !== JSON.stringify((local.report.bypassLabels ?? []).map(labelId))) continue;
+      const approvals = (incoming.report.humanApprovals ?? []).filter((e) => e.workResultPath === local.path);
+      local.report = {
+        ...local.report,
+        humanApprovals: approvals,
+        completionGrade: computeCompletionGrade(local.report.bypassLabels ?? [], local.report.patchVersion, approvals).grade
+      };
+      await atomicWriteFile(local.path, renderWorkResultMarkdown(local.report));
+      for (const entry of node.lineage ?? []) if (entry.workResult?.path === local.path) entry.workResult.report = local.report;
+      for (const session of completedSessions) if (session.data.chainInfo.workResultPath === local.path && session.data.chainInfo.workResultReport?.completedAt === local.report.completedAt) {
+        session.data.chainInfo.workResultReport = local.report;
+        await saveSession(session);
+      }
+    }
     await writeRoadmapFile(workspace, { ...file, nodes: merged });
     return true;
   });
@@ -29936,40 +30102,6 @@ async function findTaskByPrdRef(workspace, prdRefPath) {
   if (exact) return exact;
   const targetFilename = prdRefPath.split(/[\\/]/).pop();
   return file.tasks.find((t) => t.prd_ref && t.prd_ref.split(/[\\/]/).pop() === targetFilename) ?? null;
-}
-
-// src/labelGuard.ts
-function hasGreenExecutionEvidence(input) {
-  if (input.baselineExitCode === 0) return true;
-  if (input.testDerivedState === "pass") return true;
-  if (input.contractTests?.some((r) => r.greenExitCode === 0)) return true;
-  return false;
-}
-function detectLabelContradiction(claimsAbsent, hasGreenEvidence) {
-  if (!claimsAbsent) return ok2();
-  if (hasGreenEvidence) {
-    return fail(
-      "LABEL_CONTRADICTION",
-      "\uC774 \uC138\uC158\uC5D0 \uADF8\uB9B0 \uC2E4\uD589 \uC99D\uAC70\uAC00 \uC774\uBBF8 \uC788\uB294\uB370 \uD658\uACBD\uBD80\uC7AC\uB958 \uB77C\uBCA8\uC744 \uC8FC\uC7A5\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uB77C\uBCA8-\uBAA8\uC21C\uC73C\uB85C \uAC70\uBD80\uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok2();
-}
-function isLabelStillInScope(labelPatchVersion, currentPatchVersion) {
-  return labelPatchVersion === currentPatchVersion;
-}
-function collectBypassLabels(labels, currentPatchVersion) {
-  return labels.filter((l) => isLabelStillInScope(l.patchVersion, currentPatchVersion));
-}
-function computeCompletionGrade(labels, currentPatchVersion) {
-  const inScope = collectBypassLabels(labels, currentPatchVersion);
-  return { grade: inScope.length > 0 ? "unverified" : "verified", bypassLabels: inScope };
-}
-function renderBypassSummary(result2) {
-  if (result2.grade === "verified") return void 0;
-  const lines = result2.bypassLabels.map((l) => `- [${l.kind}] ${l.reason}`);
-  return `\uC644\uB8CC\uB4F1\uAE09: unverified (\uC6B0\uD68C \uB77C\uBCA8 ${result2.bypassLabels.length}\uAC74)
-${lines.join("\n")}`;
 }
 
 // src/ontology/model.ts
@@ -30621,77 +30753,6 @@ function buildCompletionPlan(state, chain) {
   return { remaining: remainingSteps(state), blockers: currentBlockers(chain) };
 }
 
-// src/workResultReport.ts
-function buildWorkResultReport(input) {
-  return {
-    schemaVersion: 1,
-    featureName: input.featureName,
-    kind: input.kind,
-    patchVersion: input.patchVersion,
-    completedAt: input.completedAt,
-    completionGrade: input.completionGrade,
-    summary: input.summary.trim(),
-    changedFiles: [...input.changedFiles],
-    requirements: [...input.requirements ?? []],
-    designDecisions: [...input.designDecisions ?? []],
-    knownLimitations: [...input.knownLimitations ?? []],
-    seed: input.seed?.trim() || void 0,
-    verification: {
-      test: { ...input.testEvidence },
-      runtimeVerified: input.runtimeVerified,
-      wiringVerified: input.wiringVerified,
-      validationVerdict: input.validation?.verdict,
-      autoVerifiedCount: input.validation?.autoVerifiedCount,
-      contradictionCount: input.validation?.contradictionCount
-    }
-  };
-}
-var yesNo = (value) => value === true ? "\uC644\uB8CC" : value === false ? "\uBBF8\uAC80\uC99D" : "\uD574\uB2F9 \uC5C6\uC74C";
-var bullets = (items, empty) => items.length > 0 ? items.map((item) => `- ${item}`).join("\n") : `- ${empty}`;
-function renderWorkResultMarkdown(report) {
-  const kindLabel = report.kind === "feat" ? "FEAT" : `PATCH v${report.patchVersion}`;
-  const gradeLabel = report.completionGrade === "verified" ? "\uAC80\uC99D \uC644\uB8CC" : "\uBBF8\uAC80\uC99D";
-  const reqs = report.requirements.length > 0 ? report.requirements.map((req) => `- [${req.covered ? "x" : " "}] ${req.id}`).join("\n") : "- \uAE30\uB85D\uB41C \uC694\uAD6C\uC0AC\uD56D \uCEE4\uBC84\uB9AC\uC9C0 \uC5C6\uC74C";
-  const test = report.verification.test;
-  const counts = test.total === void 0 ? "\uAC74\uC218 \uBBF8\uAE30\uB85D" : `${test.passed ?? Math.max(0, test.total - (test.failed ?? 0))}/${test.total} \uD1B5\uACFC`;
-  return [
-    `# Work Result \u2014 ${report.featureName}`,
-    "",
-    `> ${kindLabel} \xB7 ${gradeLabel} \xB7 ${report.completedAt}`,
-    "",
-    "## \uACB0\uACFC \uC694\uC57D",
-    "",
-    report.summary,
-    "",
-    "## \uC694\uAD6C\uC0AC\uD56D \uCDA9\uC871",
-    "",
-    reqs,
-    "",
-    "## \uC8FC\uC694 \uBCC0\uACBD",
-    "",
-    bullets(report.changedFiles.map((path) => `\`${path}\``), "\uBCC0\uACBD \uD30C\uC77C \uC5C6\uC74C"),
-    "",
-    "## \uC124\uACC4 \uACB0\uC815",
-    "",
-    bullets(report.designDecisions, "\uBCC4\uB3C4 \uC124\uACC4 \uACB0\uC815 \uAE30\uB85D \uC5C6\uC74C"),
-    "",
-    "## \uAC80\uC99D",
-    "",
-    "| \uAD6C\uBD84 | \uC99D\uAC70 | \uACB0\uACFC |",
-    "|---|---|---|",
-    `| \uD14C\uC2A4\uD2B8 | ${test.command ? `\`${test.command}\`` : "\uBA85\uB839 \uBBF8\uAE30\uB85D"} | ${test.state === "pass" ? counts : "\uBBF8\uAC80\uC99D"} |`,
-    `| \uB7F0\uD0C0\uC784 | \uC2E4\uC81C \uC2E4\uD589 \uD655\uC778 | ${yesNo(report.verification.runtimeVerified)} |`,
-    `| \uBC30\uC120 | \uB4F1\uB85D\xB7\uD638\uCD9C \uACBD\uB85C \uD655\uC778 | ${yesNo(report.verification.wiringVerified)} |`,
-    `| \uD558\uB124\uC2A4 | ${report.verification.autoVerifiedCount ?? 0}\uAC1C \uC790\uB3D9 \uAC80\uC99D | ${report.verification.validationVerdict ?? "\uBBF8\uAE30\uB85D"} |`,
-    "",
-    "## \uB0A8\uC740 \uC0AC\uD56D \uBC0F \uC704\uD5D8",
-    "",
-    bullets(report.knownLimitations, "\uC54C\uB824\uC9C4 \uC81C\uD55C \uC0AC\uD56D \uC5C6\uC74C"),
-    ...report.seed ? ["", "## \uC0AC\uC6A9\uC790 \uC9C0\uC2DC", "", report.seed] : [],
-    ""
-  ].join("\n");
-}
-
 // src/ontology/sessionAssessment.ts
 var OBSERVATION_ACTIONS = /* @__PURE__ */ new Set(["status", "cancel", "start"]);
 function evidenceFor(session, action) {
@@ -31200,9 +31261,16 @@ async function handleSugoPlan(rawArgs) {
         ...session.data,
         chainInfo: {
           ...session.data.chainInfo,
-          bypassLabels: [...session.data.chainInfo.bypassLabels ?? [], ...newBypassLabels]
+          bypassLabels: [...session.data.chainInfo.bypassLabels ?? [], ...newBypassLabels.map((l) => ({ ...l, implementationCycle: existing?.data.chainInfo.implementationCycle ?? 0 }))]
         }
       }
+    };
+  }
+  if (action === "code_start") {
+    session.data.chainInfo = {
+      ...session.data.chainInfo,
+      implementationCycle: (session.data.chainInfo.implementationCycle ?? 0) + 1,
+      implementationStartedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
   }
   if (action === "code_start" && existing && (existing.state === "TEST_DONE" || existing.state === "REVIEW_RUNNING")) {
@@ -31474,6 +31542,7 @@ async function handleSugoPlan(rawArgs) {
             ...session.data.chainInfo.bypassLabels ?? [],
             {
               kind: "evidenceResnapshot",
+              implementationCycle: session.data.chainInfo.implementationCycle ?? 0,
               reason: args2.reverifyReason,
               patchVersion: currentPatchVersion,
               recordedAt: (/* @__PURE__ */ new Date()).toISOString()
@@ -31492,6 +31561,12 @@ async function handleSugoPlan(rawArgs) {
         ...session.data,
         chainInfo: {
           ...session.data.chainInfo,
+          bypassLabels: supersedePriorTestLabels(
+            session.data.chainInfo.bypassLabels ?? [],
+            session.data.chainInfo.implementationCycle ?? 0,
+            derivedState === "pass" && newBypassLabels.length === 0 && existing.data.chainInfo.testEvidence.implementationCycle === session.data.chainInfo.implementationCycle && !!session.data.chainInfo.implementationStartedAt && Date.parse(existing.data.chainInfo.testEvidence.recordedAt) >= Date.parse(session.data.chainInfo.implementationStartedAt),
+            (/* @__PURE__ */ new Date()).toISOString()
+          ),
           testPassedState: derivedState,
           coverageMap: args2.coverageMap,
           testEvidenceFingerprint
@@ -31518,6 +31593,7 @@ async function handleSugoPlan(rawArgs) {
       patchVersion: session.data.patch?.version ?? 0,
       completedAt,
       completionGrade: grade,
+      bypassLabels: session.data.chainInfo.bypassLabels ?? [],
       summary: args2.summary,
       changedFiles: session.data.chainInfo.changedFiles,
       requirements: session.data.chainInfo.coverageMap?.acceptanceCriteria,
@@ -31799,6 +31875,7 @@ async function handleSugoRecordTestEvidence(rawArgs) {
     },
     (/* @__PURE__ */ new Date()).toISOString()
   );
+  if (args2.kind === "feature") record2.implementationCycle = session.data.chainInfo.implementationCycle ?? 0;
   const updated = args2.kind === "baseline" ? {
     ...session,
     data: {

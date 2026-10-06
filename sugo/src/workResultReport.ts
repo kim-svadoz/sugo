@@ -1,4 +1,4 @@
-import type { CompletionGrade } from "./labelGuard.js";
+import type { CompletionGrade, BypassLabel, HumanApprovalEvent } from "./labelGuard.js";
 
 export interface WorkResultRequirement {
   id: string;
@@ -15,6 +15,8 @@ export interface WorkResultTestEvidence {
 }
 
 export interface WorkResultReport {
+  bypassLabels?: BypassLabel[];
+  humanApprovals?: HumanApprovalEvent[];
   schemaVersion: 1;
   featureName: string;
   kind: "feat" | "patch";
@@ -38,6 +40,7 @@ export interface WorkResultReport {
 }
 
 export interface BuildWorkResultReportInput {
+  bypassLabels?: BypassLabel[];
   featureName: string;
   kind: "feat" | "patch";
   patchVersion: number;
@@ -62,6 +65,7 @@ export interface BuildWorkResultReportInput {
 export function buildWorkResultReport(input: BuildWorkResultReportInput): WorkResultReport {
   return {
     schemaVersion: 1,
+    bypassLabels: input.bypassLabels ? [...input.bypassLabels] : undefined,
     featureName: input.featureName,
     kind: input.kind,
     patchVersion: input.patchVersion,
@@ -89,7 +93,7 @@ const bullets = (items: string[], empty: string) => items.length > 0 ? items.map
 
 export function renderWorkResultMarkdown(report: WorkResultReport): string {
   const kindLabel = report.kind === "feat" ? "FEAT" : `PATCH v${report.patchVersion}`;
-  const gradeLabel = report.completionGrade === "verified" ? "검증 완료" : "미검증";
+  const gradeLabel = report.completionGrade === "verified" ? "검증 완료" : report.completionGrade === "verified_by_human" ? "사람 승인 검증완료" : "미검증";
   const reqs = report.requirements.length > 0
     ? report.requirements.map((req) => `- [${req.covered ? "x" : " "}] ${req.id}`).join("\n")
     : "- 기록된 요구사항 커버리지 없음";
@@ -131,6 +135,14 @@ export function renderWorkResultMarkdown(report: WorkResultReport): string {
     "## 남은 사항 및 위험",
     "",
     bullets(report.knownLimitations, "알려진 제한 사항 없음"),
+    "",
+    "## 완료등급 사유 — 우회 라벨",
+    "",
+    bullets((report.bypassLabels ?? []).map(l => `[${l.kind}] ${l.reason}${l.supersededAt ? ` (이전 사이클 라벨 · ${l.supersededAt} 재검증으로 해소)` : ""}`), "우회 라벨 없음"),
+    "",
+    "## 사람 승인",
+    "",
+    bullets((report.humanApprovals ?? []).map(e => `${e.action === "approve" ? "승인" : "승인 취소"} · ${e.userId} · ${e.at}\n  - 원래 라벨: [${e.kind}] ${e.originalReason}\n  - 사유: ${e.reason}\n  - 승인 당시 work-result: ${e.workResultPath}`), "사람 승인 기록 없음"),
     ...(report.seed ? ["", "## 사용자 지시", "", report.seed] : []),
     "",
   ].join("\n");

@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { requireHumanSession } from "../auth/session.js";
+import { changeHumanApproval, readApprovalEvents } from "../services/humanCompletion.js";
 import express, { Router } from "express";
 import { roadmapCounts, roadmapIssues } from "../services/roadmapGraph.js";
 import type { DbClient } from "../db/client.js";
@@ -102,6 +105,23 @@ function attachmentStatus(errorCode: string): number {
 export function createWorkspacesRouter(db: DbClient, sessionSecret: string, specAttachmentsPath: string): Router {
   const router = Router();
   router.use(requireUser(db, sessionSecret));
+
+  router.post("/:name/roadmap/completion-approval", requireHumanSession(sessionSecret), validateBody(z.object({
+    nodeId: z.string().min(1), resultKey: z.string().length(64), labelId: z.string().min(1),
+    action: z.enum(["approve", "revoke"]), reason: z.string().trim().min(1).max(4000),
+  }).strict()), async (req, res, next) => {
+    try {
+      const result = await changeHumanApproval(db, req.userId!, req.params.name, req.body);
+      res.status(result.ok ? 200 : 409).json(result);
+    } catch (error) { next(error); }
+  });
+  router.get("/:name/roadmap/completion-approval-history", async (req, res, next) => {
+    try {
+      const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+      if (!nodeId) return res.status(400).json({ error: "NODE_ID_REQUIRED" });
+      res.json({ events: await readApprovalEvents(db, req.userId!, req.params.name, nodeId) });
+    } catch (error) { next(error); }
+  });
 
   router.get("/", async (req, res) => {
     const userId = requireUserId(req, res);

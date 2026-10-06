@@ -7,6 +7,7 @@ import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
 import type { WorkflowState } from "../src/ontology/model.js";
 import type { PlanSession } from "../src/types.js";
+import { computeCompletionGrade } from "../src/labelGuard.js";
 
 /**
  * 2026-09-21 orders-api 세션에서 실제로 막힌 경로를 재현한다.
@@ -75,6 +76,38 @@ async function recordEvidence(sessionId: string, failed: number) {
 }
 
 describe("§4.3-R test_reverify — 증거 스냅샷 데드락 해소", () => {
+  it("기존 모듈 재스냅샷 뒤 code_start로 새 모듈을 구현하고 새 clean test_done이면 이전 라벨만 해소한다", async () => {
+    const sessionId = await seedSession("REVIEW_RUNNING", "fail");
+    await recordEvidence(sessionId, 0);
+    await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "RankingModule23Test 6/6, 로컬 의존 2건 제외" });
+    const restarted = parse(await handleSugoPlan({ action: "code_start", sessionId }));
+    expect(restarted.ok).toBe(true);
+    let session = await loadSession(sessionId);
+    expect(session.data.chainInfo.implementationCycle).toBe(1);
+    expect(computeCompletionGrade(session.data.chainInfo.bypassLabels!, 0).grade).toBe("unverified");
+    // Advance to TEST_RUNNING with real persisted state; no unrelated harness fixtures needed.
+    session.state = "TEST_RUNNING";
+    await saveSession(session);
+    await recordEvidence(sessionId, 0);
+    expect(parse(await handleSugoPlan({ action: "test_done", sessionId, testPassed: true })).ok).toBe(true);
+    session = await loadSession(sessionId);
+    const label = session.data.chainInfo.bypassLabels![0];
+    expect(label.reason).toContain("RankingModule");
+    expect(label.supersededByCycle).toBe(1);
+    expect(computeCompletionGrade(session.data.chainInfo.bypassLabels!, 0).grade).toBe("verified");
+  });
+  it("재진입 후 옛 그린 증거를 재사용하면 이전 라벨을 해소하지 않는다", async () => {
+    const sessionId = await seedSession("REVIEW_RUNNING", "fail");
+    await recordEvidence(sessionId, 0);
+    await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "이전 구현의 재스냅샷" });
+    await handleSugoPlan({ action: "code_start", sessionId });
+    const session = await loadSession(sessionId);
+    session.state = "TEST_RUNNING";
+    session.data.chainInfo.testEvidence!.recordedAt = "2000-01-01T00:00:00Z";
+    await saveSession(session);
+    await handleSugoPlan({ action: "test_done", sessionId, testPassed: true });
+    expect((await loadSession(sessionId)).data.chainInfo.bypassLabels![0].supersededAt).toBeUndefined();
+  });
   it("fail로 찍힌 스냅샷을 그린 증거로 다시 찍으면 testPassedState가 갱신된다", async () => {
     // ① 무관한 사전 결함이 섞인 전체 스위트 실행 = fail → test_done이 fail로 박아둔 상태
     const sessionId = await seedSession("REVIEW_RUNNING", "fail");

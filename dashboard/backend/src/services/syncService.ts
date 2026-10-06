@@ -1,3 +1,4 @@
+import { stripHumanCompletion } from "./humanCompletion.js";
 import type { DbClient } from "../db/client.js";
 import { upsertRow } from "../db/upsert.js";
 import { cleanDanglingDeps, computeNodesToDelete, shouldSeedDependsOn } from "./roadmapDiff.js";
@@ -622,8 +623,8 @@ export async function syncRoadmap(
     const seed = shouldSeedDependsOn(existingDeps);
     const incomingDeps = cleanDanglingDeps(node.dependsOn ?? [], deletedIds);
 
-    const workResultJson = node.workResult !== undefined ? JSON.stringify(node.workResult) : undefined;
-    const lineageJson = node.lineage !== undefined ? JSON.stringify(node.lineage) : undefined;
+    const workResultJson = node.workResult !== undefined ? JSON.stringify(stripHumanCompletion(node.workResult)) : undefined;
+    const lineageJson = node.lineage !== undefined ? JSON.stringify(stripHumanCompletion(node.lineage)) : undefined;
     const blockerContextJson = node.humanBlocker !== undefined ? JSON.stringify(node.humanBlocker) : null;
     const runtimeAssessmentJson = node.runtimeAssessment !== undefined ? JSON.stringify(node.runtimeAssessment) : null;
 

@@ -27,7 +27,7 @@ export function createLocalAuthRouter(
       if (!sessionSecret) return res.status(503).json({ error: "session_secret_required" });
 
       await syncUser(db, { userId: local.userId, displayName: local.displayName });
-      const session = await issueSession(local.userId, sessionSecret);
+      const session = await issueSession(local.userId, sessionSecret, 7 * 24 * 3600, "local");
       res.redirect(`${frontendUrl}/auth/callback#session=${encodeURIComponent(session)}`);
     } catch (error) {
       next(error);

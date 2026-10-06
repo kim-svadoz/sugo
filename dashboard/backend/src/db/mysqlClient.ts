@@ -25,6 +25,7 @@ export function createMySqlClient(config: MySqlConfig): DbClient {
   });
 
   return {
+    dialect: "mysql",
     async query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
       const [rows] = await pool.query(sql, params);
       return rows as T[];
