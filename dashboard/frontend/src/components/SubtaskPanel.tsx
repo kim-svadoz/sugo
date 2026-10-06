@@ -232,8 +232,8 @@ function ProgressTab({
   return (
     <div className="space-y-4">
       {resultSection}
-      {guidance && (
-        <section className={`overflow-hidden rounded-xl border ${guidance.kind === "blocked" ? "border-orange-400/40 bg-orange-400/[0.06]" : (guidance.kind === "attention" || guidance.kind === "verification") ? "border-amber-400/35 bg-amber-400/[0.05]" : "border-cyan-400/30 bg-cyan-400/[0.045]"}`}>
+      {guidance && guidance.kind !== "verification" && (
+        <section className={`overflow-hidden rounded-xl border ${guidance.kind === "blocked" ? "border-orange-400/40 bg-orange-400/[0.06]" : guidance.kind === "attention" ? "border-amber-400/35 bg-amber-400/[0.05]" : "border-cyan-400/30 bg-cyan-400/[0.045]"}`}>
           <div className="border-b border-white/[0.07] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]">지금 할 일</div>
           <div className="space-y-2.5 p-3">
             <div className="flex items-start justify-between gap-3">
@@ -241,7 +241,7 @@ function ProgressTab({
                 <div className="text-[10px] text-[var(--color-text-dim)]">현재 단계</div>
                 <div className="mt-0.5 text-sm font-semibold text-[var(--color-text-bright)]">{guidance.currentStage}</div>
               </div>
-              <span className={`shrink-0 rounded-full px-2 py-1 font-mono text-[9.5px] font-semibold ${guidance.kind === "blocked" ? "bg-orange-400/15 text-orange-300" : (guidance.kind === "attention" || guidance.kind === "verification") ? "bg-amber-400/15 text-amber-300" : "bg-cyan-400/10 text-cyan-300"}`}>{guidance.label}</span>
+              <span className={`shrink-0 rounded-full px-2 py-1 font-mono text-[9.5px] font-semibold ${guidance.kind === "blocked" ? "bg-orange-400/15 text-orange-300" : guidance.kind === "attention" ? "bg-amber-400/15 text-amber-300" : "bg-cyan-400/10 text-cyan-300"}`}>{guidance.label}</span>
             </div>
             <p className="text-[11.5px] leading-relaxed text-[var(--color-text-muted)]">{guidance.reason}</p>
             <div className="rounded-lg border border-white/[0.07] bg-black/15 px-2.5 py-2">

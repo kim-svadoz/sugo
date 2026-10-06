@@ -42,6 +42,8 @@ try {
   const review = page.locator("#completion-review");
   assert.equal(await review.locator("..").locator("..").locator("span.font-semibold").filter({ hasText: /^미검증$/ }).count(), 1);
   assert.equal(await page.getByRole("textbox").count(), 0);
+  assert.equal(await page.getByRole("button", { name: /사유 검토/ }).count(), 1);
+  assert.equal(await page.getByText("지금 할 일", { exact: true }).count(), 0);
   await shot("human-compact-panel");
   await review.getByRole("button", { name: "사유 검토", exact: true }).click();
   await page.getByRole("dialog", { name: "검증 사유 검토" }).waitFor();
