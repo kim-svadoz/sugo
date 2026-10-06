@@ -36,12 +36,21 @@ try {
   await page.addInitScript(({ token, userId }) => localStorage.setItem("sugo_auth", JSON.stringify({ user: { id: userId }, accessToken: token, refreshToken: null, expiresAt: Date.now() + 3600000 })), { token, userId });
   await page.goto("http://localhost:4173/roadmap/human-e2e?focus=task-1");
   await page.getByRole("heading", { name: "미검증 사유" }).waitFor();
-  await page.getByRole("heading", { name: "참고용 경고 · 완료등급과 별개" }).waitFor();
+
   const shots = process.argv[2]; if (shots) mkdirSync(shots, { recursive: true });
   const shot = async name => { if (shots) await page.screenshot({ path: join(shots, name + ".png"), fullPage: true }); };
   const review = page.locator("#completion-review");
   assert.equal(await review.locator("..").locator("..").locator("span.font-semibold").filter({ hasText: /^미검증$/ }).count(), 1);
-  assert.equal(await review.getByRole("button", { name: "사람 승인", exact: true }).count(), 2);
+  assert.equal(await page.getByRole("textbox").count(), 0);
+  await shot("human-compact-panel");
+  await review.getByRole("button", { name: "사유 검토", exact: true }).click();
+  await page.getByRole("dialog", { name: "검증 사유 검토" }).waitFor();
+  await page.keyboard.press("Escape");
+  assert.equal(await page.getByRole("dialog").count(), 0);
+  assert.equal(await review.getByRole("button", { name: "사유 검토" }).evaluate(e => e === document.activeElement), true);
+  await review.getByRole("button", { name: "사유 검토", exact: true }).click();
+  await page.getByRole("heading", { name: "참고용 경고 · 완료등급과 별개" }).waitFor();
+  assert.equal(await page.getByRole("dialog").getByRole("button", { name: "사람 승인", exact: true }).count(), 2);
   assert.equal(await page.getByText("✅ 작업완료", { exact: true }).count(), 0);
   await page.getByText("검증 1", { exact: true }).first().waitFor();
   await shot("human-unverified");

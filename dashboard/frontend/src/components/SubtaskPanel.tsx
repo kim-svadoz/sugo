@@ -192,7 +192,7 @@ function ProgressTab({
 
   function handlePrimaryAction() {
     if (!guidance) return;
-    if (guidance.action === "review_verification") document.getElementById("completion-review")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (guidance.action === "review_verification") document.querySelector<HTMLButtonElement>("#completion-review [data-review-open]")?.click();
     if (guidance.action === "review_result") onReviewResult();
     if (guidance.action === "continue_patch") handleCopyPatchBridge();
     if (guidance.action === "create_pr") setShowPr(true);
@@ -231,7 +231,7 @@ function ProgressTab({
 
   return (
     <div className="space-y-4">
-      {guidance?.kind === "verification" && resultSection}
+      {resultSection}
       {guidance && (
         <section className={`overflow-hidden rounded-xl border ${guidance.kind === "blocked" ? "border-orange-400/40 bg-orange-400/[0.06]" : (guidance.kind === "attention" || guidance.kind === "verification") ? "border-amber-400/35 bg-amber-400/[0.05]" : "border-cyan-400/30 bg-cyan-400/[0.045]"}`}>
           <div className="border-b border-white/[0.07] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]">지금 할 일</div>
@@ -288,8 +288,6 @@ function ProgressTab({
       </div>
 
       {progressItems.length > 0 && (node.level === "task" ? <ReqList reqs={progressItems} /> : <ChildList items={progressItems} />)}
-
-      {guidance?.kind !== "verification" && resultSection}
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {(node.level === "task" || node.level === "workstream") && (node.manual_status ?? node.status) === "done" && workResult?.path && (
