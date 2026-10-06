@@ -28046,7 +28046,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.20.0" : "0.0.0-dev";
+  return true ? "0.20.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29875,7 +29875,14 @@ async function addRoadmapNode(workspace, node) {
 async function upsertRoadmapNodes(workspace, nodes) {
   await withRoadmap(workspace, async (file) => {
     const byId = new Map(file.nodes.map((n) => [n.id, n]));
-    for (const n of nodes) byId.set(n.id, n);
+    for (const n of nodes) {
+      const previous = byId.get(n.id);
+      byId.set(n.id, {
+        ...n,
+        ...n.workResult === void 0 && previous?.workResult ? { workResult: previous.workResult } : {},
+        ...n.lineage === void 0 && previous?.lineage ? { lineage: previous.lineage } : {}
+      });
+    }
     await writeRoadmapFile(workspace, { ...file, nodes: [...byId.values()] });
   });
 }

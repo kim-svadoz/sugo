@@ -251,7 +251,16 @@ export async function addRoadmapNode(workspace: string, node: RoadmapNode): Prom
 export async function upsertRoadmapNodes(workspace: string, nodes: RoadmapNode[]): Promise<void> {
   await withRoadmap(workspace, async (file) => {
     const byId = new Map(file.nodes.map((n) => [n.id, n]));
-    for (const n of nodes) byId.set(n.id, n);
+    for (const n of nodes) {
+      const previous = byId.get(n.id);
+      // PRD promotion supplies structural fields, not completed work. A patch must
+      // retain the previous results until recordRoadmapWorkResult appends its cycle.
+      byId.set(n.id, {
+        ...n,
+        ...(n.workResult === undefined && previous?.workResult ? { workResult: previous.workResult } : {}),
+        ...(n.lineage === undefined && previous?.lineage ? { lineage: previous.lineage } : {}),
+      });
+    }
     await writeRoadmapFile(workspace, { ...file, nodes: [...byId.values()] });
   });
 }

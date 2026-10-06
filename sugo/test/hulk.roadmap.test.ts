@@ -113,6 +113,24 @@ describe("addRoadmapNode / getRoadmapNode / listRoadmapNodes", () => {
 });
 
 describe("upsertRoadmapNodes — PRD REQ 승격 심기", () => {
+  it("patch PRD 갱신 이후에도 feat/v1 결과를 보존하고 v2를 추가한다", async () => {
+    await upsertRoadmapNodes("ws1", [{ id: "task-a", title: "A", level: "task", status: "done", dependsOn: [] }]);
+    for (const version of [0, 1]) {
+      await recordRoadmapWorkResult("ws1", "task-a", { path: `/result-v${version}.md`, patchVersion: version },
+        { version, completedAt: `2026-01-0${version + 1}T00:00:00.000Z` });
+    }
+    await upsertRoadmapNodes("ws1", [{ id: "task-a", title: "A patch", level: "task", status: "in_progress", dependsOn: [], parent: "run-a" }]);
+    expect((await getRoadmapNode("ws1", "task-a"))?.workResult?.path).toBe("/result-v1.md");
+    expect((await getRoadmapNode("ws1", "task-a"))?.lineage?.map(e => e.version)).toEqual([0, 1]);
+    await recordRoadmapWorkResult("ws1", "task-a", { path: "/result-v2.md", patchVersion: 2 },
+      { version: 2, completedAt: "2026-01-03T00:00:00.000Z" });
+    const node = await getRoadmapNode("ws1", "task-a");
+    expect(node?.status).toBe("in_progress");
+    expect(node?.parent).toBe("run-a");
+    expect(node?.lineage?.map(e => [e.version, e.workResult?.path])).toEqual([
+      [0, "/result-v0.md"], [1, "/result-v1.md"], [2, "/result-v2.md"],
+    ]);
+  });
   it("promotePrdRequirements 결과를 그대로 심을 수 있다", async () => {
     const nodes = promotePrdRequirements("t-1", "### REQ-1: A\n### REQ-2: B");
     await addRoadmapNode("ws1", { id: "t-1", title: "기능", level: "task", status: "in_progress", dependsOn: [] });

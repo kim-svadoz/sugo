@@ -1181,7 +1181,6 @@ export function RoadmapGraph({
     [keepHover],
   );
   const [guideOpen, setGuideOpen] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
   const [fileViewer, setFileViewer] = useState<{ file: WorkResultFile; expanded: boolean } | null>(null);
   /** SPEC 단위 필터. 노드를 지우는 게 아니라 **어느 SPEC 묶음을 보여줄지**만 고른다. */
   const [specFilter, setSpecFilter] = useState<"all" | "active" | "done">("all");
@@ -1447,7 +1446,7 @@ export function RoadmapGraph({
     <div
       className={cn(
         "relative flex min-h-0",
-        fullscreen ? "fixed inset-0 z-[60] bg-[#0e0e1a]" : fill ? "h-full" : "h-[70vh]",
+        fill ? "h-full" : "h-[70vh]",
       )}
     >
       <div className="group/rf relative min-w-0 flex-1">
@@ -1474,7 +1473,7 @@ export function RoadmapGraph({
           </div>
         )}
 
-        {/* 설계안 우상단 — SPEC 필터 세그먼트 + 전체화면 토글 + 폐기함 */}
+        {/* 우상단 — SPEC 필터 세그먼트 + 폐기함. 콘솔 크기는 콘솔 헤더에서 조절한다. */}
         <div className="absolute right-3 top-3 z-30 flex items-center gap-2">
           <div className="flex overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
             {(["all", "active", "done"] as const).map((k) => (
@@ -1493,12 +1492,6 @@ export function RoadmapGraph({
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setFullscreen((v) => !v)}
-            className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-xs text-[var(--color-text-muted)] hover:border-cyan-400/50 hover:text-cyan-300"
-          >
-            {fullscreen ? "⤡ 닫기" : "⤢ 전체화면"}
-          </button>
           {droppedTop.length > 0 && (
             <button
               onClick={() => setBinOpen(true)}
