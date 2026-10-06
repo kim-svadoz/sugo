@@ -14,7 +14,7 @@ const SHA = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 const ORDER = ["dev", "stg", "prd"];
 export interface DeploymentServiceEvidence { project: string; service: string; account: string; observedAt: string | null; images: string[]; commits: string[]; state: "confirmed" | "unknown"; reason?: string; }
 export interface DeploymentEnvironment { environment: string; included: number; total: number; unknown: boolean; services: DeploymentServiceEvidence[]; }
-export interface SpecDeployment { environment: "LOCAL" | "DEV" | "STG" | "PRD" | "UNKNOWN"; partial: boolean; total: number; environments: DeploymentEnvironment[]; reason?: string; sources?: { taskId: string; project: string | null; commit: string | null; state: string; patchVersion?: number; recoveredFrom?: string }[]; }
+export interface SpecDeployment { environment: "LOCAL" | "DEV" | "STG" | "PRD" | "UNKNOWN"; partial: boolean; total: number; environments: DeploymentEnvironment[]; stale?: boolean; reason?: string; sources?: { taskId: string; project: string | null; commit: string | null; state: string; patchVersion?: number; recoveredFrom?: string }[]; }
 export function summarizeDeployment(environments: DeploymentEnvironment[], total: number): SpecDeployment {
   const positive = environments.filter(e => e.included > 0).sort((a, b) => ORDER.indexOf(b.environment) - ORDER.indexOf(a.environment));
   const highest = positive[0];
@@ -91,7 +91,8 @@ export async function resolveDeployedCommits(project: string, metadata: any, sna
   const runtime = Array.isArray(metadata.runtimeImages) ? metadata.runtimeImages : [];
   const images = runtime.filter((i: any) => typeof i.image === "string" && i.image.split("/").at(-1)?.split(/[:@]/)[0] === basename(project));
   if (metadata.runtimeError || !images.length || images.length < Number(metadata.runningCount ?? 0)) return null;
-  const builds = buildSnapshots.filter(s => s.observedAt && Date.now() - Date.parse(s.observedAt) <= 30 * 60_000 && Date.now() >= Date.parse(s.observedAt)).flatMap(s => s.inventory).filter(i => i.service === "codepipeline").flatMap(i => i.resources).filter(r => String(r.metadata?.repositoryName ?? "").split("/").at(-1)?.toLowerCase() === basename(project).toLowerCase()).flatMap(r => Array.isArray(r.metadata?.buildHistory) ? r.metadata!.buildHistory as any[] : []);
+  // Successful build number -> source SHA is immutable; its age does not change the mapping.
+  const builds = buildSnapshots.filter(s => s.observedAt && Number.isFinite(Date.parse(s.observedAt)) && Date.now() >= Date.parse(s.observedAt)).flatMap(s => s.inventory).filter(i => i.service === "codepipeline").flatMap(i => i.resources).filter(r => String(r.metadata?.repositoryName ?? "").split("/").at(-1)?.toLowerCase() === basename(project).toLowerCase()).flatMap(r => Array.isArray(r.metadata?.buildHistory) ? r.metadata!.buildHistory as any[] : []);
   const commits: string[] = [];
   for (const image of images) {
     if (!image.imageDigest) return null;
@@ -143,7 +144,7 @@ export async function projectSpecDeployments(db: DbClient, userId: string, works
     const linked = paths.filter(path => linkAwsDeployments(path, snapshots, [], mappings.get(path)).length > 0 || !!mappings.get(path)?.length);
     if (!linked.length) continue;
     const resolved = await Promise.all(sources.map(source => { if (!source) return null; const key = JSON.stringify(source); if (!sourceMemo.has(key)) sourceMemo.set(key, resolveSource(source, owned)); return sourceMemo.get(key)!; }));
-    const environments: DeploymentEnvironment[] = [];
+    const environments: DeploymentEnvironment[] = []; let stale = false;
     for (const environment of ORDER) {
       const serviceRows: Array<{ project: string; evidence: DeploymentServiceEvidence }> = [];
       for (const path of linked) {
@@ -157,11 +158,13 @@ export async function projectSpecDeployments(db: DbClient, userId: string, works
           const declaredImages = Array.isArray(metadata?.images) ? metadata.images as string[] : [];
           if (declaredImages.length && !declaredImages.some(image => imageRepository(image)?.split("/").at(-1) === basename(path))) continue;
           const fresh = snapshot.observedAt && Date.now() - Date.parse(snapshot.observedAt) <= 30 * 60_000 && Date.now() >= Date.parse(snapshot.observedAt);
+          const observed = snapshot.observedAt && Number.isFinite(Date.parse(snapshot.observedAt)) && Date.now() >= Date.parse(snapshot.observedAt);
+          if (observed && !fresh) stale = true;
           const stable = deployment.healthState === "HEALTHY" && (deployment.runningCount ?? 0) > 0 && !["IN_PROGRESS", "FAILED"].includes(deployment.rolloutState ?? "") && !inventory?.error;
           const key = JSON.stringify([path, snapshot.accountName, snapshot.observedAt, deployment.service, metadata]);
-          if (!commitMemo.has(key)) commitMemo.set(key, fresh && stable && metadata ? resolveDeployedCommits(path, metadata, snapshot, snapshots) : Promise.resolve(null));
+          if (!commitMemo.has(key)) commitMemo.set(key, observed && stable && metadata ? resolveDeployedCommits(path, metadata, snapshot, snapshots) : Promise.resolve(null));
           const commits = await commitMemo.get(key)!;
-          serviceRows.push({ project: path, evidence: { project: path, service: deployment.service, account: snapshot.accountName, observedAt: snapshot.observedAt, images: Array.isArray(metadata?.runtimeImages) ? (metadata.runtimeImages as any[]).map(i => `${i.image} (${i.imageDigest ?? "digest 없음"})`) : deployment.images, commits: commits ?? [], state: commits ? "confirmed" : "unknown", reason: !fresh ? "AWS 조회 기록이 없거나 30분보다 오래됐습니다." : !stable ? "배포 진행 중이거나 실행 상태를 확인하지 못했습니다." : !commits ? "실행 이미지와 빌드 커밋 연결을 확인하지 못했습니다." : undefined } });
+          serviceRows.push({ project: path, evidence: { project: path, service: deployment.service, account: snapshot.accountName, observedAt: snapshot.observedAt, images: Array.isArray(metadata?.runtimeImages) ? (metadata.runtimeImages as any[]).map(i => `${i.image} (${i.imageDigest ?? "digest 없음"})`) : deployment.images, commits: commits ?? [], state: commits ? "confirmed" : "unknown", reason: !observed ? "AWS 조회 시각을 확인하지 못했습니다." : !stable ? "배포 진행 중이거나 실행 상태를 확인하지 못했습니다." : !commits ? "실행 이미지와 빌드 커밋 연결을 확인하지 못했습니다." : !fresh ? "마지막 조회 당시의 배포 상태입니다. Settings에서 AWS 정보를 새로고침하세요." : undefined } });
         }
       }
       const configured = paths.some(path => mappings.get(path)?.some(m => m.environment === environment));
@@ -184,7 +187,7 @@ export async function projectSpecDeployments(db: DbClient, userId: string, works
       }
       environments.push({ environment, included, total: tasks.length, unknown, services: serviceRows.map(r => r.evidence) });
     }
-    result.set(spec.id, { ...summarizeDeployment(environments, tasks.length), sources: resolved.map((source, i) => ({ taskId: tasks[i].id, project: source?.projectPath ?? null, commit: source?.commit ?? null, state: source?.state ?? "unknown", patchVersion: parseMaybeJson<any>(tasks[i].work_result, {})?.patchVersion, recoveredFrom: source?.recoveredFrom })) });
+    result.set(spec.id, { ...summarizeDeployment(environments, tasks.length), stale, sources: resolved.map((source, i) => ({ taskId: tasks[i].id, project: source?.projectPath ?? null, commit: source?.commit ?? null, state: source?.state ?? "unknown", patchVersion: parseMaybeJson<any>(tasks[i].work_result, {})?.patchVersion, recoveredFrom: source?.recoveredFrom })) });
   }
   return result;
 }

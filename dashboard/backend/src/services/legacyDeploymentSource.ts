@@ -9,7 +9,7 @@ const exec = promisify(execFile);
 export interface DeploymentSource {
   projectPath: string; commit?: string; recordedAt?: string; state?: string;
   files?: { path: string; hash: string }[]; hashEncoding?: "lf";
-  recoveredFrom?: "legacy_file_snapshot";
+  recoveredFrom?: "legacy_file_snapshot" | "legacy_recorded_commit";
 }
 function inside(root: string, path: string) {
   const rel = relative(root, path); return !!rel && !isAbsolute(rel) && rel !== ".." && !rel.startsWith("../") && !rel.startsWith("..\\");
@@ -17,11 +17,26 @@ function inside(root: string, path: string) {
 function hash(content: string) { return createHash("sha256").update(content.replace(/\r\n/g, "\n")).digest("hex"); }
 const cache = new Map<string, { expires: number; source: DeploymentSource | null }>();
 const inFlight = new Map<string, Promise<DeploymentSource | null>>();
-/** Reconstruct only from a stored TASK file snapshot and exact historical Git blobs. */
+/** Resolve recorded task identity; deployment inclusion is checked separately against running images. */
 export async function recoverLegacySource(result: any, owned: Set<string>): Promise<DeploymentSource | null> {
-  if (!result?.path || !Number.isFinite(Date.parse(result.startedAt)) || !Number.isFinite(Date.parse(result.endedAt)) || !Array.isArray(result.files) || !result.files.length) return null;
+  if (!result?.path || !Number.isFinite(Date.parse(result.startedAt)) || !Number.isFinite(Date.parse(result.endedAt))) return null;
   const project = [...owned].filter(p => inside(p, resolve(result.path))).sort((a, b) => b.length - a.length)[0];
   if (!project) return null;
+  if (!Array.isArray(result.files) || !result.files.length) {
+    // Old direct-commit tasks sometimes stored their SHA only in the result summary.
+    // Never accept arbitrary hex text, ambiguous references, or an inaccessible Git object.
+    const summary = typeof result.summary === "string" ? result.summary : result.report?.summary;
+    if (typeof summary !== "string") return null;
+    const references = [...new Set([...summary.matchAll(/(?:커밋|\bcommit)\s*(?:[:=]\s*)?`?([a-f0-9]{7,40})\b/gi)].map(m => m[1].toLowerCase()))];
+    if (references.length !== 1) return null;
+    try {
+      const object = await exec("git", ["-C", project, "rev-parse", "--verify", `${references[0]}^{commit}`], { timeout: 3000 });
+      const commit = object.stdout.trim(); if (!/^[a-f0-9]{40,64}$/.test(commit)) return null;
+      const time = await exec("git", ["-C", project, "show", "-s", "--format=%ct", commit], { timeout: 3000 });
+      if (Number(time.stdout.trim()) < Math.floor(Date.parse(result.startedAt) / 1000)) return null;
+      return { projectPath: project, commit, recordedAt: result.endedAt, state: "committed", recoveredFrom: "legacy_recorded_commit" };
+    } catch { return null; }
+  }
   const files: { path: string; hash: string }[] = [];
   for (const file of result.files) {
     if (typeof file?.path !== "string" || !file.path) return null;
@@ -35,7 +50,7 @@ export async function recoverLegacySource(result: any, owned: Set<string>): Prom
   const existing = inFlight.get(key); if (existing) return existing;
   const pending = (async () => {
   try {
-    const output = await exec("git", ["-C", project, "log", "--format=%H", "--reverse", "-200", `--since=${result.startedAt}`, "--", ...files.map(f => f.path)], { timeout: 5000, maxBuffer: 1024 * 1024 });
+    const output = await exec("git", ["-C", project, "log", "--all", "--format=%H", "--reverse", "-200", `--since=${result.startedAt}`, "--", ...files.map(f => f.path)], { timeout: 5000, maxBuffer: 1024 * 1024 });
     for (const commit of output.stdout.trim().split("\n").filter(c => /^[a-f0-9]{40,64}$/.test(c))) {
       let matches = true;
       for (const file of files) {

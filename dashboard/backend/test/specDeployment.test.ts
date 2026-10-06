@@ -91,7 +91,7 @@ it("projects real deployed revisions onto SPEC without changing local completion
   expect((await getScheduledSpecs(db, "u"))[0]).toMatchObject({ status: "verification", deployment: { environment: "DEV" } });
   expect((await projectSpecDeployments(db, "other-user", "ws", roadmap)).size).toBe(0);
   await db.exec("UPDATE user_aws_context_snapshots SET observed_at = ?", ["2020-01-01T00:00:00Z"]);
-  expect((await getRoadmap(db, "u", "ws")).find(n => n.id === "spec")?.deployment?.environment).toBe("UNKNOWN");
+  expect((await getRoadmap(db, "u", "ws")).find(n => n.id === "spec")?.deployment).toMatchObject({ environment: "DEV", stale: true });
   await db.exec("UPDATE user_aws_context_snapshots SET observed_at = ?", [new Date().toISOString()]);
   await db.exec("UPDATE sugo_roadmap_nodes SET work_result = NULL WHERE id = 'task'");
   expect((await getRoadmap(db, "u", "ws")).find(n => n.id === "spec")?.deployment?.environment).toBe("UNKNOWN");
@@ -112,7 +112,8 @@ it("uses a separately connected build account for PRD and refuses an unrelated i
   const metadata = { runningCount: 1, runtimeImages: [{ image: `123.dkr.ecr.test.amazonaws.com/${name}:421`, imageDigest: "sha256:abc", tags: ["421"] }] };
   expect(await resolveDeployedCommits(dir, metadata, production, [build])).toEqual([commit]);
   expect(await resolveDeployedCommits(dir, { ...metadata, runtimeImages: [{ ...metadata.runtimeImages[0], image: `999.dkr.ecr.test.amazonaws.com/${name}:421` }] }, production, [build])).toBeNull();
-  expect(await resolveDeployedCommits(dir, metadata, production, [{ ...build, observedAt: "2020-01-01" }])).toBeNull();
+  expect(await resolveDeployedCommits(dir, metadata, production, [{ ...build, observedAt: "2020-01-01" }])).toEqual([commit]);
+  expect(await resolveDeployedCommits(dir, metadata, production, [{ ...build, observedAt: "2099-01-01" }])).toBeNull();
   const db = createSqliteClient();
   try {
    await db.execScript(readFileSync(new URL("./schema.sqlite.sql", import.meta.url), "utf8"));
@@ -146,5 +147,22 @@ it("recovers historical file snapshots rather than today's HEAD, and never inven
   expect(await recoverLegacySource({ ...result, files: [{ path: "../other", content: "task snapshot" }] }, new Set([dir]))).toBeNull();
   expect(await recoverLegacySource(result, new Set([join(dir, "other")]))).toBeNull();
   expect(await recoverLegacySource({ ...result, files: [{ path: "a.txt" }] }, new Set([dir]))).toBeNull();
+ } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+it("recovers a task on another branch and a unique explicit recorded commit without file contents", async () => {
+ const dir = mkdtempSync(join(tmpdir(), "sugo-legacy-branch-"));
+ const git = (...args: string[]) => execFileSync("git", ["-C", dir, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+ try {
+  git("init", "-b", "main"); git("config", "user.name", "Test"); git("config", "user.email", "test@example.com");
+  writeFileSync(join(dir, "base.txt"), "base"); git("add", "."); git("commit", "-m", "base"); const base = git("rev-parse", "HEAD");
+  git("checkout", "-b", "feature/ranking"); writeFileSync(join(dir, "module.txt"), "new module\n"); git("add", "."); git("commit", "-m", "module"); const commit = git("rev-parse", "HEAD"); git("checkout", "main");
+  const result = { startedAt: "2020-01-01", endedAt: new Date().toISOString(), path: join(dir, "sugo/features/task/work-result.md") };
+  expect(await recoverLegacySource({ ...result, files: [{ path: "module.txt", content: "new module\n" }] }, new Set([dir]))).toMatchObject({ state: "committed", commit });
+  expect(await recoverLegacySource({ ...result, summary: `직접 커밋함(커밋 ${commit.slice(0, 7)})` }, new Set([dir]))).toMatchObject({ state: "committed", commit, recoveredFrom: "legacy_recorded_commit" });
+  expect(await recoverLegacySource({ ...result, summary: "커밋 deadbee" }, new Set([dir]))).toBeNull();
+  expect(await recoverLegacySource({ ...result, summary: `commit ${base}, 커밋 ${commit}` }, new Set([dir]))).toBeNull();
+  expect(await recoverLegacySource({ ...result, startedAt: "2099-01-01", summary: `커밋 ${commit}` }, new Set([dir]))).toBeNull();
+  expect(await recoverLegacySource({ ...result, summary: `커밋 ${commit}`, files: [{ path: "module.txt", content: "wrong snapshot" }] }, new Set([dir]))).toMatchObject({ state: "unknown" });
+  expect(await recoverLegacySource({ ...result, summary: `커밋 ${commit}` }, new Set([join(dir, "other")]))).toBeNull();
  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
