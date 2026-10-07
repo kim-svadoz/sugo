@@ -187,7 +187,15 @@ export function CheckpointPanel({
           <EmptyState message="등록된 체크포인트가 없습니다" />
         ) : (
           <div className="space-y-3">
-            {pagedCheckpoints.map((cp) => (
+            {pagedCheckpoints.map((cp) => {
+              const state = expiryState(cp.expires_at);
+              const expiryTone = state === "expired"
+                ? "border-rose-400/45 bg-rose-500/10 text-rose-200"
+                : state === "soon"
+                  ? "border-amber-400/50 bg-amber-500/10 text-amber-200"
+                  : "border-cyan-400/35 bg-cyan-500/[0.08] text-cyan-200";
+
+              return (
               <div key={cp.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-3">
                 <div className="mb-1.5 flex items-center gap-2">
                   <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] text-amber-300">
@@ -197,8 +205,8 @@ export function CheckpointPanel({
                     {cp.category}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--color-text)]">{cp.title}</span>
-                  {expiryState(cp.expires_at) === "expired" && <span className="flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300"><AlertTriangle size={10} /> 만료됨</span>}
-                  {expiryState(cp.expires_at) === "soon" && <span className="flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300"><CalendarClock size={10} /> 곧 만료</span>}
+                  {state === "expired" && <span className="flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300"><AlertTriangle size={10} /> 만료됨</span>}
+                  {state === "soon" && <span className="flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300"><CalendarClock size={10} /> 곧 만료</span>}
                   {dirtyCheckpoints.has(cp.id) && <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300">수정됨</span>}
                   <button disabled={cpBusy || !userId} onClick={() => {
                     setEditingCheckpoint(cp);
@@ -230,11 +238,21 @@ export function CheckpointPanel({
                 <div className="mt-2 font-mono text-[10.5px] text-[var(--color-text-dim)]">
                   {cp.applies_to?.length ? cp.applies_to.join(", ") : "워크스페이스 전체 프로젝트"} → .claude/rules/{cp.category || "general"}/
                 </div>
-                <div className={`mt-1 flex items-center gap-1 text-[10.5px] ${expiryState(cp.expires_at) === "expired" ? "text-rose-300" : "text-[var(--color-text-dim)]"}`}>
-                  <CalendarClock size={11} /> {cp.expires_at ? `${cp.expires_at.slice(0, 10)}까지 유효 (KST)` : "유효기간 없음"}
-                </div>
+                {cp.expires_at ? (
+                  <div className={`mt-2 inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 ${expiryTone}`}>
+                    <CalendarClock size={13} className="shrink-0" />
+                    <span className="text-[10px] font-semibold opacity-75">유효기간</span>
+                    <span className="font-mono text-[12px] font-bold tracking-wide">{cp.expires_at.slice(0, 10)}까지</span>
+                    <span className="text-[9.5px] opacity-60">KST</span>
+                  </div>
+                ) : (
+                  <div className="mt-1 flex items-center gap-1 text-[10.5px] text-[var(--color-text-dim)]">
+                    <CalendarClock size={11} /> 유효기간 없음
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
             {visibleCheckpoints.length > CHECKPOINTS_PER_PAGE && (
               <div className="flex items-center justify-between pt-1 text-[11.5px] text-[var(--color-text-muted)]">
                 <button
