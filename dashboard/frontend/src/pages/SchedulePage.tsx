@@ -17,7 +17,7 @@ import { BlockerDecisionPanel } from "../components/BlockerDecisionPanel.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
-import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setProject, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
+import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setProject, setWorkBranch, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 
@@ -69,14 +69,16 @@ export function SchedulePage() {
 
   function openSpec(spec: ScheduledSpec) {
     setDeleteConfirm(false);
+    setBranchDraft(null);
     setSelected(spec);
   }
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
   // 안 보이면 사용자가 헷갈린다(2026-09-23 사용자 피드백). 성공 시 잠깐 "저장됨"을 보여준다.
-  const [savedFlash, setSavedFlash] = useState<"due" | "project" | "title" | null>(null);
+  const [savedFlash, setSavedFlash] = useState<"due" | "project" | "branch" | "title" | null>(null);
   // Canvas의 이름 변경(✎)과 같은 API(renameRoadmapNode → manual_title)라 여기서 바꿔도
   // Canvas에 그대로 반영된다(2026-09-23 사용자 요청) — null이면 편집 중이 아님.
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
+  const [branchDraft, setBranchDraft] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
@@ -140,7 +142,7 @@ export function SchedulePage() {
     return Math.round((due.getTime() - today.getTime()) / 86_400_000);
   }
 
-  function flashSaved(field: "due" | "project" | "title") {
+  function flashSaved(field: "due" | "project" | "branch" | "title") {
     setSavedFlash(field);
     setTimeout(() => setSavedFlash((current) => (current === field ? null : current)), 1600);
   }
@@ -174,6 +176,21 @@ export function SchedulePage() {
       flashSaved("project");
     } catch {
       setErrorMsg("프로젝트 지정에 실패했습니다. Run/Task가 아닌 Spec인지 확인하세요.");
+    }
+  }
+
+  async function applyWorkBranch(spec: ScheduledSpec, value: string) {
+    const workBranch = value.trim() || null;
+    setBranchDraft(null);
+    if (!userId || workBranch === spec.work_branch) return;
+    setErrorMsg(null);
+    try {
+      await setWorkBranch(userId, spec.workspace_name, spec.id, workBranch);
+      refetch();
+      if (selected?.id === spec.id) setSelected({ ...spec, work_branch: workBranch });
+      flashSaved("branch");
+    } catch {
+      setErrorMsg("작업 브랜치 저장에 실패했습니다.");
     }
   }
 
@@ -605,6 +622,26 @@ export function SchedulePage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <span className="mb-1 flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
+                작업 브랜치 · feat 시작 전에 준비합니다
+                {savedFlash === "branch" && <span className="text-[10.5px] font-semibold text-emerald-400">저장됨</span>}
+              </span>
+              <input
+                disabled={selected.has_run || !selected.project_path}
+                value={branchDraft ?? selected.work_branch ?? ""}
+                onChange={(event) => setBranchDraft(event.target.value)}
+                onBlur={(event) => void applyWorkBranch(selected, event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") event.currentTarget.blur();
+                  if (event.key === "Escape") setBranchDraft(null);
+                }}
+                placeholder="feature/login"
+                className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 text-[13px] font-mono text-[var(--color-text)] placeholder:text-[var(--color-text-dim)] disabled:cursor-not-allowed disabled:opacity-60"
+              />
+              <p className="mt-1 text-[10.5px] text-[var(--color-text-dim)]">없으면 현재 브랜치에서 시작합니다.</p>
             </div>
 
             <div className="rounded-xl border border-[var(--color-border)] bg-slate-950/35 p-3">

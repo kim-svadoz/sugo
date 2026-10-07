@@ -414,6 +414,27 @@ describe("POST /api/workspaces/:name/roadmap/project — §7B 스펙별 프로�
   });
 });
 
+describe("POST /api/workspaces/:name/roadmap/work-branch", () => {
+  it("spec에 작업 브랜치를 저장하고 schedule에 반환한다", async () => {
+    const { app, db, auth } = await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }]);
+    await request(app).post("/api/workspaces/ws1/roadmap/work-branch")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "spec1", workBranch: "feature/payment" }).expect(200);
+    const rows = await db.query<{ work_branch: string }>("SELECT work_branch FROM sugo_roadmap_nodes WHERE id='spec1'");
+    expect(rows[0].work_branch).toBe("feature/payment");
+    const schedule = await request(app).get("/api/workspaces/schedule").query({ userId: "u1" }).set("Authorization", auth).expect(200);
+    expect(schedule.body.specs.find((s: { id: string }) => s.id === "spec1").work_branch).toBe("feature/payment");
+  });
+
+  it("spec이 아닌 노드는 거부한다", async () => {
+    const { app, auth } = await appWithNodesIn("ws1", [{ id: "task1", level: "task" }]);
+    const res = await request(app).post("/api/workspaces/ws1/roadmap/work-branch")
+      .query({ userId: "u1" }).set("Authorization", auth)
+      .send({ nodeId: "task1", workBranch: "feature/payment" }).expect(400);
+    expect(res.body.errorCode).toBe("INVALID_LEVEL");
+  });
+});
+
 describe("DELETE /api/workspaces/:name/roadmap/quick-spec — 수동 SPEC 삭제", () => {
   it("대시보드에서 만든 SPEC과 연결된 하위 계보를 함께 삭제한다", async () => {
     const { app, db, auth } = await bootApp();

@@ -124,6 +124,7 @@ CREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (
   pos_y REAL,
   due_date TEXT,
   project_path TEXT,
+  work_branch TEXT,
   manual_title TEXT,
   blocker_response TEXT,
   blocker_answered_by TEXT,

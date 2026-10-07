@@ -46,6 +46,7 @@ interface RoadmapNodeResponse {
   parent?: string | null;
   due_date?: string | null;
   project_path?: string | null;
+  work_branch?: string | null;
   spec_path?: string | null;
   depends_on?: string[];
   manual_status?: string | null;
@@ -75,6 +76,7 @@ export interface UnlinkedSpecDraft {
   title: string;
   dueDate: string | null;
   projectPath: string | null;
+  workBranch: string | null;
   specPath: string | null;
 }
 
@@ -105,6 +107,7 @@ export async function fetchUnlinkedSpecDrafts(workspaceName: string): Promise<Un
       title: node.title ?? node.id,
       dueDate: node.due_date ?? null,
       projectPath: node.project_path ?? null,
+      workBranch: node.work_branch ?? null,
       specPath: node.spec_path ?? null,
     }));
 }

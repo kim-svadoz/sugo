@@ -24713,6 +24713,7 @@ async function fetchUnlinkedSpecDrafts(workspaceName) {
     title: node.title ?? node.id,
     dueDate: node.due_date ?? null,
     projectPath: node.project_path ?? null,
+    workBranch: node.work_branch ?? null,
     specPath: node.spec_path ?? null
   }));
 }
@@ -28046,7 +28047,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.24.1" : "0.0.0-dev";
+  return true ? "0.25.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30894,6 +30895,75 @@ function assessSession(session) {
   };
 }
 
+// src/workBranch.ts
+import { execFile as execFile3 } from "node:child_process";
+import { promisify as promisify3 } from "node:util";
+var runFile = promisify3(execFile3);
+var WorkBranchError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+  }
+};
+async function git(projectPath, args2) {
+  try {
+    const { stdout } = await runFile("git", ["-C", projectPath, ...args2], { encoding: "utf8" });
+    return stdout.trim();
+  } catch (error2) {
+    const stderr = error2 instanceof Error && "stderr" in error2 ? String(error2.stderr ?? "") : "";
+    throw new WorkBranchError("WORK_BRANCH_GIT_FAILED", stderr.trim() || `git ${args2[0]} \uC2E4\uD328`);
+  }
+}
+async function refExists(projectPath, ref) {
+  try {
+    await runFile("git", ["-C", projectPath, "show-ref", "--verify", "--quiet", ref]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function prepareWorkBranch(projectPath, name2) {
+  try {
+    await runFile("git", ["check-ref-format", "--branch", name2]);
+  } catch {
+    throw new WorkBranchError("WORK_BRANCH_INVALID", `\uC62C\uBC14\uB978 Git \uBE0C\uB79C\uCE58 \uC774\uB984\uC774 \uC544\uB2D9\uB2C8\uB2E4: ${name2}`);
+  }
+  const dirty = await git(projectPath, ["status", "--porcelain"]);
+  if (dirty) throw new WorkBranchError("WORKTREE_DIRTY", "\uBCC0\uACBD \uC911\uC778 \uD30C\uC77C\uC774 \uC788\uC5B4 \uBE0C\uB79C\uCE58\uB97C \uBC14\uAFB8\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uBA3C\uC800 \uCEE4\uBC0B\uD558\uAC70\uB098 stash\uD558\uC138\uC694.");
+  if (!await git(projectPath, ["remote"]).then((v) => v.split(/\s+/).includes("origin"))) {
+    throw new WorkBranchError("WORK_BRANCH_ORIGIN_MISSING", "origin \uC6D0\uACA9 \uC800\uC7A5\uC18C\uAC00 \uC5C6\uC5B4 \uC791\uC5C5 \uBE0C\uB79C\uCE58\uB97C \uC900\uBE44\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  }
+  await git(projectPath, ["fetch", "origin", "--prune"]);
+  const local = await refExists(projectPath, `refs/heads/${name2}`);
+  const remote = await refExists(projectPath, `refs/remotes/origin/${name2}`);
+  if (local) {
+    await git(projectPath, ["checkout", name2]);
+    if (remote) {
+      try {
+        await git(projectPath, ["merge", "--ff-only", `origin/${name2}`]);
+      } catch {
+        throw new WorkBranchError("WORK_BRANCH_DIVERGED", `${name2}\uC758 \uB85C\uCEEC\uACFC \uC6D0\uACA9 \uC774\uB825\uC774 \uAC08\uB77C\uC838 \uC790\uB3D9 \uBCD1\uD569\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`);
+      }
+    } else {
+      await git(projectPath, ["push", "--set-upstream", "origin", name2]);
+    }
+    return { name: name2, source: "local", remoteCreated: !remote, preparedAt: (/* @__PURE__ */ new Date()).toISOString() };
+  }
+  if (remote) {
+    await git(projectPath, ["checkout", "-b", name2, "--track", `origin/${name2}`]);
+    return { name: name2, source: "remote", remoteCreated: false, preparedAt: (/* @__PURE__ */ new Date()).toISOString() };
+  }
+  let defaultRef;
+  try {
+    defaultRef = await git(projectPath, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]);
+  } catch {
+    throw new WorkBranchError("WORK_BRANCH_BASE_UNKNOWN", "origin\uC758 \uAE30\uBCF8 \uBE0C\uB79C\uCE58\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  }
+  await git(projectPath, ["checkout", "-b", name2, defaultRef]);
+  await git(projectPath, ["push", "--set-upstream", "origin", name2]);
+  return { name: name2, source: "created", remoteCreated: true, preparedAt: (/* @__PURE__ */ new Date()).toISOString() };
+}
+
 // src/tools/sugoPlan.ts
 var sugoPlanInputSchema = {
   action: external_exports.enum(planArgsActionEnum).describe("\uD30C\uC774\uD504\uB77C\uC778 \uC0C1\uD0DC\uBA38\uC2E0 \uC561\uC158"),
@@ -30904,6 +30974,7 @@ var sugoPlanInputSchema = {
   seed: external_exports.string().optional().describe("start action(\xA77.1 Patch \uC131\uC219\uD654): \uC774\uBC88 patch \uCC28\uC218\uC5D0 \uB300\uD55C \uC0AC\uC6A9\uC790 \uC9C0\uC2DC. review_done\uC774 work-result\uC5D0 \uD568\uAED8 \uAE30\uB85D\uD55C\uB2E4"),
   specDraftDecision: external_exports.enum(["link", "new"]).optional().describe("clarify action: \uBBF8\uC5F0\uACB0 SPEC \uCD08\uC548 \uD6C4\uBCF4\uAC00 \uC788\uC73C\uBA74 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uBCF4\uC5EC\uC900 \uB4A4 \uAE30\uC874 \uCD08\uC548 \uC5F0\uACB0(link) \uB610\uB294 \uC0C8 SPEC \uC0DD\uC131(new)\uC744 \uBC18\uB4DC\uC2DC \uC120\uD0DD"),
   specDraftId: external_exports.string().optional().describe("start/clarify action: Dashboard\uC5D0\uC11C \uC120\uD0DD\uD55C spec-manual-* ID"),
+  workBranch: external_exports.string().optional().describe("start action: feat \uC2DC\uC791 \uC804 \uC900\uBE44\uD560 Git \uBE0C\uB79C\uCE58"),
   prdContent: external_exports.string().optional().describe("prd action\uC5D0 \uD544\uC694. \uBCF8\uBB38 \u2265100\uC790, REQ-N \uD0DC\uADF8 \u22651"),
   specPath: external_exports.string().optional().describe("start/prd action(\xA75.0): \uB300\uC870\uD560 \uC6D0\uBCF8 spec.md \uACBD\uB85C. \uC2E4\uC7AC\uD558\uBA74 specOracle\uC774 \uCF1C\uC838 ready \uC804\uC5D0 oracle_done\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4"),
   uncovered: external_exports.array(external_exports.object({ quote: external_exports.string(), reason: external_exports.string() })).optional().describe("oracle_done: \uC6D0\uBCF8 \uC2A4\uD399\uC5D0 \uC788\uC73C\uB098 PRD\uAC00 \uBABB \uB36E\uC740 \uD56D\uBAA9\uB4E4(\uC778\uC6A9 + \uC0AC\uC720). 1\uAC74 \uC774\uC0C1\uC774\uBA74 overrideReason \uD544\uC218"),
@@ -31409,6 +31480,23 @@ async function handleSugoPlan(rawArgs) {
     }
     session = { ...session, data: { ...session.data, specOracle: { required: true, ran: false, specPath: args2.specPath } } };
   }
+  if (action === "start" && args2.workBranch) {
+    if (session.data.mode === "patch") {
+      return errorResult9("WORK_BRANCH_NOT_ALLOWED_FOR_PATCH", "patch\uB294 \uAE30\uC874 feat \uBE0C\uB79C\uCE58\uB97C \uACC4\uC18D \uC0AC\uC6A9\uD569\uB2C8\uB2E4. --branch\uB97C \uC81C\uAC70\uD558\uC138\uC694.");
+    }
+    const selectedId = session.data.specDraftSelection?.selectedId;
+    const selected = session.data.specDraftSelection?.candidates.find((candidate) => candidate.id === selectedId);
+    if (selected?.workBranch && selected.workBranch !== args2.workBranch) {
+      return errorResult9("SPEC_DRAFT_BRANCH_MISMATCH", `Schedule\uC5D0 \uC800\uC7A5\uB41C \uC791\uC5C5 \uBE0C\uB79C\uCE58\uC640 \uB2E4\uB985\uB2C8\uB2E4: ${selected.workBranch}`);
+    }
+    try {
+      const workBranch = await prepareWorkBranch(session.projectPath, args2.workBranch);
+      session = { ...session, data: { ...session.data, workBranch } };
+    } catch (error2) {
+      if (error2 instanceof WorkBranchError) return errorResult9(error2.code, error2.message);
+      return errorResult9("WORK_BRANCH_PREPARE_FAILED", "\uC791\uC5C5 \uBE0C\uB79C\uCE58\uB97C \uC900\uBE44\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+    }
+  }
   if (action === "clarify" && session.data.specDraftSelection && args2.specDraftDecision) {
     session = {
       ...session,
@@ -31836,6 +31924,7 @@ async function handleSugoPlan(rawArgs) {
     humanHoursEstimate,
     prdPath: session.data.prdPath,
     workResultPath: session.data.chainInfo.workResultPath,
+    workBranch: action === "start" ? session.data.workBranch : void 0,
     patch: session.data.mode === "patch" && session.data.patch ? { parentPrdPath: session.data.patch.parentPrdPath, version: session.data.patch.version } : void 0,
     hulk,
     decomposeManifest: session.data.decomposeManifest,

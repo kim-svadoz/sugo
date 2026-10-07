@@ -56,7 +56,7 @@ describe("feat 미연결 SPEC 초안 선택 게이트", () => {
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "checkout" });
     expect(existsSync(expiredFile)).toBe(false);
     expect(start.data.unlinkedSpecDrafts).toEqual([
-      { id: "spec-manual-test", title: "미연동스펙-테스트용", dueDate: "2026-10-10", projectPath: null, specPath: null },
+      { id: "spec-manual-test", title: "미연동스펙-테스트용", dueDate: "2026-10-10", projectPath: null, workBranch: null, specPath: null },
     ]);
     const blocked = await call(handleSugoPlan, { action: "clarify", sessionId: start.data.sessionId });
     expect(blocked.isError).toBe(true);

@@ -5,6 +5,7 @@ import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage } from "./s
 const base: ScheduledSpec = {
   id: "spec-manual-1", workspace_name: "shop", title: "결제 개선", status: "pending",
   due_date: null, project_path: "/work/shop", spec_path: null, has_run: false,
+  work_branch: null,
 };
 
 describe("Schedule SPEC workflow", () => {
@@ -28,6 +29,12 @@ describe("Schedule SPEC workflow", () => {
   it("pins feat to the exact written spec and dashboard node", () => {
     expect(buildFeatCommand({ ...base, spec_path: "/example/spec.md" })).toBe(
       '/sugo:feat --project "/work/shop" --spec "/example/spec.md" --spec-draft "spec-manual-1" "결제 개선"',
+    );
+  });
+
+  it("passes the configured work branch to feat", () => {
+    expect(buildFeatCommand({ ...base, spec_path: "/example/spec.md", work_branch: "feature/payment" })).toContain(
+      '--branch "feature/payment"',
     );
   });
 });

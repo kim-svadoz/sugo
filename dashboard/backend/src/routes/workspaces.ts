@@ -21,6 +21,7 @@ import {
   renameSchema,
   runSpecSchema,
   setProjectSchema,
+  setWorkBranchSchema,
   setSpecDocumentSchema,
   updateSpecDocumentContentSchema,
 } from "../schemas/workspaces.js";
@@ -55,6 +56,7 @@ import {
   setManualStatus,
   setRoadmapDueDate,
   setRoadmapProject,
+  setRoadmapWorkBranch,
   setRoadmapSpecDocument,
   setRoadmapParent,
   setRoadmapPosition,
@@ -412,6 +414,17 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     if (!result.ok) {
       const status = result.errorCode === "NODE_NOT_FOUND" ? 404 : 400;
       res.status(status).json({ ok: false, errorCode: result.errorCode });
+      return;
+    }
+    res.json({ ok: true });
+  });
+
+  router.post("/:name/roadmap/work-branch", validateBody(setWorkBranchSchema), async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const result = await setRoadmapWorkBranch(db, userId, req.params.name, req.body.nodeId, req.body.workBranch);
+    if (!result.ok) {
+      res.status(result.errorCode === "NODE_NOT_FOUND" ? 404 : 400).json({ ok: false, errorCode: result.errorCode });
       return;
     }
     res.json({ ok: true });

@@ -124,6 +124,7 @@ export interface SessionData {
   featurePath?: string;
   prdPath?: string;
   mode: "plan" | "patch";
+  workBranch?: { name: string; source: "local" | "remote" | "created"; remoteCreated: boolean; preparedAt: string };
   /** 서버가 실제로 성공시킨 마지막 상태 전이. P3 explain_state가 추측 없이 진입 action을 설명한다. */
   lastTransition?: {
     action: ActionName;

@@ -66,6 +66,7 @@ import { buildCompletionPlan } from "../completionPlan.js";
 import { planArgsActionEnum, type PlanAction, type PlanSession } from "../types.js";
 import { buildWorkResultReport, renderWorkResultMarkdown } from "../workResultReport.js";
 import { assessSession } from "../ontology/sessionAssessment.js";
+import { prepareWorkBranch, WorkBranchError } from "../workBranch.js";
 
 export const sugoPlanInputSchema = {
   action: z.enum(planArgsActionEnum).describe("파이프라인 상태머신 액션"),
@@ -85,6 +86,7 @@ export const sugoPlanInputSchema = {
     .optional()
     .describe("clarify action: 미연결 SPEC 초안 후보가 있으면 사용자에게 보여준 뒤 기존 초안 연결(link) 또는 새 SPEC 생성(new)을 반드시 선택"),
   specDraftId: z.string().optional().describe("start/clarify action: Dashboard에서 선택한 spec-manual-* ID"),
+  workBranch: z.string().optional().describe("start action: feat 시작 전 준비할 Git 브랜치"),
   prdContent: z.string().optional().describe("prd action에 필요. 본문 ≥100자, REQ-N 태그 ≥1"),
   specPath: z
     .string()
@@ -770,6 +772,24 @@ export async function handleSugoPlan(rawArgs: unknown) {
     session = { ...session, data: { ...session.data, specOracle: { required: true, ran: false, specPath: args.specPath } } };
   }
 
+  if (action === "start" && args.workBranch) {
+    if (session.data.mode === "patch") {
+      return errorResult("WORK_BRANCH_NOT_ALLOWED_FOR_PATCH", "patch는 기존 feat 브랜치를 계속 사용합니다. --branch를 제거하세요.");
+    }
+    const selectedId = session.data.specDraftSelection?.selectedId;
+    const selected = session.data.specDraftSelection?.candidates.find((candidate) => candidate.id === selectedId);
+    if (selected?.workBranch && selected.workBranch !== args.workBranch) {
+      return errorResult("SPEC_DRAFT_BRANCH_MISMATCH", `Schedule에 저장된 작업 브랜치와 다릅니다: ${selected.workBranch}`);
+    }
+    try {
+      const workBranch = await prepareWorkBranch(session.projectPath, args.workBranch);
+      session = { ...session, data: { ...session.data, workBranch } };
+    } catch (error) {
+      if (error instanceof WorkBranchError) return errorResult(error.code, error.message);
+      return errorResult("WORK_BRANCH_PREPARE_FAILED", "작업 브랜치를 준비하지 못했습니다.");
+    }
+  }
+
   if (action === "clarify" && session.data.specDraftSelection && args.specDraftDecision) {
     session = {
       ...session,
@@ -1294,6 +1314,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     humanHoursEstimate,
     prdPath: session.data.prdPath,
     workResultPath: session.data.chainInfo.workResultPath,
+    workBranch: action === "start" ? session.data.workBranch : undefined,
     patch:
       session.data.mode === "patch" && session.data.patch
         ? { parentPrdPath: session.data.patch.parentPrdPath, version: session.data.patch.version }

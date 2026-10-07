@@ -128,6 +128,25 @@ export async function ensureRoadmapProjectPathColumn(db: DbClient): Promise<bool
   }
 }
 
+let workBranchColState: boolean | null = null;
+export function __resetWorkBranchColState(): void { workBranchColState = null; }
+export async function ensureRoadmapWorkBranchColumn(db: DbClient): Promise<boolean> {
+  if (workBranchColState !== null) return workBranchColState;
+  try {
+    await db.query("SELECT work_branch FROM sugo_roadmap_nodes LIMIT 1");
+    workBranchColState = true;
+    return true;
+  } catch { /* add below */ }
+  try {
+    await db.exec("ALTER TABLE sugo_roadmap_nodes ADD COLUMN work_branch VARCHAR(255) NULL");
+    workBranchColState = true;
+    return true;
+  } catch {
+    workBranchColState = false;
+    return false;
+  }
+}
+
 /**
  * §3.3 `sugo_roadmap_nodes.manual_title` 자가보강 — 위와 같은 패턴. Canvas의 이름 변경(✎)이
  * 쓰는 값이라 `syncRoadmap`의 UPDATE SET 절에는 넣지 않는다 — CLI가 다시 push하는 원래

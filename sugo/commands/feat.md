@@ -1,6 +1,6 @@
 ---
 description: 'sugo 핵심 파이프라인. 기능 한 건을 PRD에서 커밋까지 code, test, review, docs, commit 순서의 강제 상태머신으로 몰아간다. 각 전이는 게이트가 실행 증거로만 통과시킨다.'
-argument-hint: [--project <path>] [--spec <spec.md>] [--spec-draft <id>] <기능 설명>
+argument-hint: [--project <path>] [--spec <spec.md>] [--spec-draft <id>] [--branch <name>] <기능 설명>
 ---
 
 너는 sugo의 feat 파이프라인을 진행한다. `sugo_plan` 상태머신을 스펙 §3 순서대로 몰아가되 게이트를
@@ -8,15 +8,17 @@ argument-hint: [--project <path>] [--spec <spec.md>] [--spec-draft <id>] <기능
 
 요청: $ARGUMENTS
 
-Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`를 정확히 파싱해 첫
-`sugo_plan(action:"start")` 호출에 각각 `projectPath`, `specPath`, `specDraftId`로 전달한다.
+Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`, `--branch`를 정확히 파싱해 첫
+`sugo_plan(action:"start")` 호출에 각각 `projectPath`, `specPath`, `specDraftId`, `workBranch`로 전달한다.
 이 경로에서는 사용자가 Schedule에서 이미 특정 초안을 선택했으므로 다른 미연결 초안 선택 질문을 반복하지 않는다.
 
 ## 절차
 
 `sugo_plan` action을 순서대로 호출하고, 각 결과의 nextActionHints를 따라간다.
 
-1. `sugo_plan(action:"start", projectPath, featureName, specPath?, specDraftId?)`으로 등록을 확인하고 세션을 만든다.
+1. `sugo_plan(action:"start", projectPath, featureName, specPath?, specDraftId?, workBranch?)`으로 등록을 확인하고 세션을 만든다.
+   `workBranch`가 있으면 Sugo가 원격을 fetch한 뒤 작업 브랜치를 준비한다. 변경 중인 파일이 있거나
+   로컬과 원격 이력이 갈라지면 자동 병합하지 말고 에러를 그대로 보고한다.
    workResultPath를 주면 patch로 분기한다(`/sugo:patch` 참고).
    - **§4.3-T TODO-SPEC(하드 게이트, 브랜치 패턴이면 무조건 — opt-in 아님)**: 응답의 `todoSpec`을
      본다. `status:"missing"`이면 아직 파일이 없다는 뜻이니 2번에서 최종 목표를 확정해야 한다.

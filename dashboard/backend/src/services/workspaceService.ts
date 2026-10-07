@@ -514,6 +514,7 @@ export interface ScheduledSpecRow {
   status: string;
   due_date: string | null;
   project_path: string | null;
+  work_branch: string | null;
   spec_path: string | null;
   has_run: boolean;
   task_count: number;
@@ -538,7 +539,7 @@ export interface ScheduledSpecRow {
 export async function getScheduledSpecs(db: DbClient, userId: string): Promise<ScheduledSpecRow[]> {
   const rows = await db.query<Omit<ScheduledSpecRow, "has_run" | "task_count" | "done_task_count" | "active_task_count" | "blocked_task_count" | "stale_task_count" | "unverified_task_count" | "focus_task_id" | "focus_task_title" | "focus_task_status" | "focus_task_note" | "focus_task_updated_at" | "focus_task_work_result" | "focus_task_runtime_assessment" | "focus_task_blocker_decision" | "focus_task_human_blocker"> & { manual_title: string | null; has_run: number | boolean }>(
     `SELECT n.id, n.workspace_name, n.title, n.manual_title,
-            COALESCE(n.manual_status, n.status) AS status, n.due_date, n.project_path, n.spec_path,
+            COALESCE(n.manual_status, n.status) AS status, n.due_date, n.project_path, n.work_branch, n.spec_path,
             EXISTS (SELECT 1 FROM sugo_roadmap_nodes child
                      WHERE child.user_id = n.user_id AND child.workspace_name = n.workspace_name
                        AND child.parent = n.id AND child.level = 'workstream') AS has_run
@@ -778,6 +779,21 @@ export async function setRoadmapProject(
     userId,
     workspaceName,
     nodeId,
+  ]);
+  return { ok: true };
+}
+
+export async function setRoadmapWorkBranch(
+  db: DbClient, userId: string, workspaceName: string, nodeId: string, workBranch: string | null
+): Promise<SetDueDateResult> {
+  const rows = await db.query<{ level: string }>(
+    "SELECT level FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [userId, workspaceName, nodeId]
+  );
+  if (rows.length === 0) return { ok: false, errorCode: "NODE_NOT_FOUND" };
+  if (rows[0].level !== "spec") return { ok: false, errorCode: "INVALID_LEVEL" };
+  await db.exec("UPDATE sugo_roadmap_nodes SET work_branch = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+    workBranch, userId, workspaceName, nodeId,
   ]);
   return { ok: true };
 }

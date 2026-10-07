@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (
   pos_y DECIMAL(10,2) NULL,
   due_date DATE NULL,
   project_path TEXT NULL,
+  work_branch VARCHAR(255) NULL,
   manual_title VARCHAR(512) NULL,
   blocker_response MEDIUMTEXT NULL,
   blocker_answered_by VARCHAR(191) NULL,

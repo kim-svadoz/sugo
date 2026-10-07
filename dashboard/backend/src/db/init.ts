@@ -14,6 +14,7 @@ import {
   ensureRoadmapManualTitleColumn,
   ensureRoadmapBlockerDecisionColumns,
   ensureRoadmapProjectPathColumn,
+  ensureRoadmapWorkBranchColumn,
 } from "../services/syncService.js";
 import { config } from "../config.js";
 import { pruneExpiredActivityEvents } from "../services/activityService.js";
@@ -34,6 +35,7 @@ export async function initDb(): Promise<DbClient> {
     await migrateRoadmapRuntimeAssessment(client);
     await ensureRoadmapDueDateColumn(client);
     await ensureRoadmapProjectPathColumn(client);
+    await ensureRoadmapWorkBranchColumn(client);
     await ensureRoadmapManualTitleColumn(client);
     await ensureRoadmapBlockerDecisionColumns(client);
     await ensureCheckpointCreatedAtColumn(client);
@@ -54,6 +56,7 @@ export async function initDb(): Promise<DbClient> {
   // 테이블에는 컬럼을 못 붙이므로, 업그레이드 배포를 위해 별도로 돈다.
   await ensureRoadmapDueDateColumn(client);
   await ensureRoadmapProjectPathColumn(client);
+  await ensureRoadmapWorkBranchColumn(client);
   await ensureRoadmapManualTitleColumn(client);
   await ensureRoadmapBlockerDecisionColumns(client);
   await ensureCheckpointCreatedAtColumn(client);

@@ -21,5 +21,6 @@ export function buildSpecWriterCommand(spec: ScheduledSpec, provider: SpecWriter
 
 export function buildFeatCommand(spec: ScheduledSpec): string {
   if (!spec.project_path || !spec.spec_path) throw new Error("SPEC_NOT_READY");
-  return `/sugo:feat --project ${quoted(spec.project_path)} --spec ${quoted(spec.spec_path)} --spec-draft ${quoted(spec.id)} ${quoted(spec.title)}`;
+  const branch = spec.work_branch ? ` --branch ${quoted(spec.work_branch)}` : "";
+  return `/sugo:feat --project ${quoted(spec.project_path)} --spec ${quoted(spec.spec_path)} --spec-draft ${quoted(spec.id)}${branch} ${quoted(spec.title)}`;
 }

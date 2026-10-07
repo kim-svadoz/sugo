@@ -85,6 +85,7 @@ export interface ScheduledSpec {
   status: string;
   due_date: string | null;
   project_path: string | null;
+  work_branch?: string | null;
   spec_path: string | null;
   has_run: boolean;
   task_count?: number;
@@ -146,6 +147,13 @@ export function setProject(userId: string, workspace: string, nodeId: string, pr
   return apiJson<{ ok: true }>(withUserId(path(workspace, "/project"), userId), {
     method: "POST",
     body: JSON.stringify({ nodeId, projectPath }),
+  });
+}
+
+export function setWorkBranch(userId: string, workspace: string, nodeId: string, workBranch: string | null) {
+  return apiJson<{ ok: true }>(withUserId(path(workspace, "/work-branch"), userId), {
+    method: "POST",
+    body: JSON.stringify({ nodeId, workBranch }),
   });
 }
 
