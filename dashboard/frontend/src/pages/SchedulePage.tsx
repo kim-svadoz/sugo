@@ -5,7 +5,7 @@ import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
-import { countUpcomingScheduledSpecs, daySpecOverflowClass, scheduleCardStyle } from "../lib/schedulePresentation.js";
+import { countUpcomingScheduledSpecs, daySpecOverflowClass, scheduleCardStyle, visibleRegisteredSpecs } from "../lib/schedulePresentation.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -120,8 +120,8 @@ export function SchedulePage() {
   // 존재 자체를 놓친다.
   const [panelMode, setPanelMode] = useState<"backlog" | "scheduled">("backlog");
   const scheduledSorted = useMemo(
-    () => (specs ?? []).filter((s) => s.due_date).sort((a, b) => a.due_date!.localeCompare(b.due_date!)),
-    [specs],
+    () => visibleRegisteredSpecs(specs ?? [], todayKey).sort((a, b) => a.due_date!.localeCompare(b.due_date!)),
+    [specs, todayKey],
   );
   const upcomingScheduledCount = useMemo(
     () => countUpcomingScheduledSpecs(specs ?? [], todayKey),

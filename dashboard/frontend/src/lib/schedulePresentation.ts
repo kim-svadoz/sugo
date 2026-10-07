@@ -5,6 +5,10 @@ export function countUpcomingScheduledSpecs(specs: ScheduleStatusItem[], todayKe
   return specs.filter((spec) => spec.due_date !== null && spec.due_date >= todayKey).length;
 }
 
+export function visibleRegisteredSpecs<T extends ScheduleStatusItem>(specs: T[], todayKey: string): T[] {
+  return specs.filter((spec) => spec.due_date !== null && !(spec.status === "done" && spec.due_date < todayKey));
+}
+
 /** 카드 본문은 흰색 텍스트를 공통 사용하고, 워크스페이스 색은 레일과 옅은 표면에만 쓴다. */
 export function scheduleCardStyle(color: string) {
   return {

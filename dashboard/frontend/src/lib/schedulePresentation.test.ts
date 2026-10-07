@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { countUpcomingScheduledSpecs, daySpecOverflowClass, isManualSpec, scheduleCardStyle } from "./schedulePresentation.js";
+import { countUpcomingScheduledSpecs, daySpecOverflowClass, isManualSpec, scheduleCardStyle, visibleRegisteredSpecs } from "./schedulePresentation.js";
 
 describe("schedule presentation", () => {
   it("오늘 이후 마감일이 등록된 Spec만 제목 개수에 포함한다", () => {
@@ -11,6 +11,17 @@ describe("schedule presentation", () => {
       { due_date: null, status: "pending" },
       { due_date: "2026-10-23", status: "dropped" },
     ], "2026-10-07")).toBe(3);
+  });
+
+  it("등록완료 목록은 완료됐고 기한도 지난 Spec만 숨긴다", () => {
+    const specs = [
+      { due_date: "2026-10-06", status: "done" },
+      { due_date: "2026-10-06", status: "blocked" },
+      { due_date: "2026-10-07", status: "done" },
+      { due_date: "2026-10-08", status: "done" },
+      { due_date: null, status: "done" },
+    ];
+    expect(visibleRegisteredSpecs(specs, "2026-10-07")).toEqual(specs.slice(1, 4));
   });
 
   it("워크스페이스 색은 왼쪽 레일과 옅은 배경에만 쓰고 글자색은 지정하지 않는다", () => {
