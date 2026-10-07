@@ -15,8 +15,9 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 AWS 직접 조회는 `harness-library/aws-readonly-policy.md`의 Claude/Codex 공통 정책을 따른다.
 먼저 `sugo_aws_context` 스냅샷을 쓰고, 직접 조회가 꼭 필요할 때만 허용 목록과 한도를 지킨다.
 
-코드와 이름을 만들거나 고칠 때는 `harness-library/code-quality-policy.md`를 따른다. 코드가 이미
-말하는 동작을 주석으로 반복하지 않고, 저장소의 기존 도메인 어휘를 먼저 검색해 사용한다.
+코드와 이름을 만들거나 고칠 때는 `harness-library/code-quality-policy.md`를 따른다. 주석을 쓰지
+않는 것을 기본값으로 한다. 코드가 이미 말하는 동작, 구현 단계, 작업 과정을 주석으로 만들지 않고,
+저장소의 기존 도메인 어휘를 먼저 검색해 사용한다.
 
 ## 어떤 스킬로 왔는지
 

@@ -11,8 +11,9 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 엔티티 관계를 교차확인한다. 서버가 없거나 응답하지 않으면 로컬 코드 탐색과 PRD를 기준으로 폴백한다.
 온톨로지 변경·work item 변경 도구는 쓰지 않는다.
 
-테스트 코드도 `harness-library/code-quality-policy.md`의 적용 대상이다. 테스트명과 fixture 이름은
-행위와 기대 결과를 표현하고, arrange/act/assert를 그대로 번역한 중계 주석은 만들지 않는다.
+테스트 코드도 `harness-library/code-quality-policy.md`의 적용 대상이다. 주석 없이 읽히는 테스트를
+기본값으로 한다. 테스트명과 fixture 이름은 행위와 기대 결과를 표현하고, arrange/act/assert와
+given/when/then을 비롯한 단계 중계 주석은 만들지 않는다.
 
 ## 스킬
 
