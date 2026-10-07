@@ -638,7 +638,6 @@ export function SchedulePage() {
                   if (event.key === "Enter") event.currentTarget.blur();
                   if (event.key === "Escape") setBranchDraft(null);
                 }}
-                placeholder="feature/login"
                 className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 text-[13px] font-mono text-[var(--color-text)] placeholder:text-[var(--color-text-dim)] disabled:cursor-not-allowed disabled:opacity-60"
               />
               <p className="mt-1 text-[10.5px] text-[var(--color-text-dim)]">없으면 현재 브랜치에서 시작합니다.</p>
