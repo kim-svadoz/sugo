@@ -138,6 +138,14 @@ describe("§2 sugo_ontology 도구", () => {
       expect(await call({ query: "explain_state", sessionId: querySession.id })).toMatchObject({
         ok: true, query: "explain_state", result: { querySchemaVersion: 1, currentState: "SCAN" },
       });
+      expect(await call({ query: "explain_state", sessionId: querySession.id, presentation: "ste-inspired-ko" })).toMatchObject({
+        ok: true,
+        result: { currentState: "SCAN" },
+        presentation: { language: "ko", compliance: "principles-applied", sourceOfTruth: "result" },
+      });
+      expect(await call({ presentation: "asd-ste100-en" })).toMatchObject({
+        ok: false, errorCode: "PRESENTATION_REQUIRES_QUERY",
+      });
       const nextActions = await call({ query: "next_actions", sessionId: querySession.id });
       expect(nextActions).toMatchObject({ ok: true, query: "next_actions" });
       expect(nextActions.result.actions).toContainEqual(expect.objectContaining({ action: "clarify" }));

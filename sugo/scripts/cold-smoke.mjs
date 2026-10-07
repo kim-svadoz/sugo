@@ -276,6 +276,19 @@ try {
       && explainState.result?.enteredBy?.action === "commit",
     JSON.stringify(explainState.result ?? explainState).slice(0, 240),
   );
+  const steExplanation = await A.callTool("sugo_ontology", {
+    query: "explain_state",
+    sessionId: pipe.sessionId,
+    presentation: "asd-ste100-en",
+  });
+  check(
+    "sugo_ontology presentation — 사실 result를 유지하고 STE 준수 한계를 명시",
+    toolOk(steExplanation)
+      && steExplanation.result?.currentState === "DONE"
+      && steExplanation.presentation?.sourceOfTruth === "result"
+      && steExplanation.presentation?.compliance === "unverified-until-qualified-review",
+    JSON.stringify(steExplanation.result ?? steExplanation).slice(0, 240),
+  );
   const explainBlock = await A.callTool("sugo_ontology", { query: "explain_block", sessionId: pipe.sessionId });
   check(
     "sugo_ontology explain_block — 완료 세션을 거짓 차단으로 표시하지 않음",

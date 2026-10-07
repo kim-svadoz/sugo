@@ -7,6 +7,7 @@ import {
 } from "../src/ontology/operationalQueries.js";
 import type { RoadmapNode, Task } from "../src/hulk/types.js";
 import type { PlanSession } from "../src/types.js";
+import { explanationProfileContract } from "../src/ontology/explanationProfile.js";
 
 function session(overrides: Partial<PlanSession> = {}): PlanSession {
   return {
@@ -36,6 +37,15 @@ function session(overrides: Partial<PlanSession> = {}): PlanSession {
 }
 
 describe("P3 operational ontology queries", () => {
+  it("설명 프로필은 사실을 재계산하지 않고 언어별 준수 한계를 명시한다", () => {
+    expect(explanationProfileContract("ste-inspired-ko")).toMatchObject({
+      language: "ko", compliance: "principles-applied", sourceOfTruth: "result",
+    });
+    expect(explanationProfileContract("asd-ste100-en")).toMatchObject({
+      language: "en", compliance: "unverified-until-qualified-review", sourceOfTruth: "result",
+    });
+  });
+
   it("explain_state는 서버가 기록한 마지막 전이와 현재 증거를 반환한다", () => {
     const result = explainSessionState(session());
     expect(result).toMatchObject({

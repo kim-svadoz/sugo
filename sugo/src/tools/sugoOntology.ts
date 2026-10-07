@@ -10,6 +10,7 @@ import { explainSessionBlock, explainSessionState, projectNextActions, traceTask
 import { listRoadmapNodes } from "../hulk/roadmap.js";
 import { listWorkspaces } from "../hulk/workspace.js";
 import type { PlanSession } from "../types.js";
+import { EXPLANATION_PROFILES, explanationProfileContract } from "../ontology/explanationProfile.js";
 
 const VIEWS = [
   "objectTypes",
@@ -43,6 +44,8 @@ export const sugoOntologyInputSchema = {
     .optional()
     .describe("저장된 feat/patch 세션을 실행 객체·관계 projection으로 조회한다"),
   taskId: z.string().min(1).optional().describe("explain_block/trace_artifact가 조회할 roadmap Task ID"),
+  presentation: z.enum(EXPLANATION_PROFILES).optional()
+    .describe("운영 질의의 사실 result는 유지하고 설명 표현 계약을 추가한다. ste-inspired-ko는 STE 원칙 기반 한국어이며 정식 준수 표기가 아니다. asd-ste100-en은 전문 검토 전 준수 미검증이다"),
 };
 
 const SugoOntologyArgs = z.object(sugoOntologyInputSchema);
@@ -61,6 +64,9 @@ const SugoOntologyArgs = z.object(sugoOntologyInputSchema);
 export async function handleSugoOntology(rawArgs: unknown) {
   const args = SugoOntologyArgs.parse(rawArgs);
   if (args.query) return handleOperationalQuery(args);
+  if (args.presentation) {
+    return ontologyError("PRESENTATION_REQUIRES_QUERY", "presentation은 운영 query와 함께 지정해야 합니다.");
+  }
   if (args.taskId) {
     return ontologyError("TASK_ID_REQUIRES_QUERY", "taskId는 explain_block 또는 trace_artifact query와 함께 지정해야 합니다.");
   }
@@ -155,7 +161,7 @@ async function handleOperationalQuery(args: z.infer<typeof SugoOntologyArgs>) {
     const resolved = await resolveTask(args.taskId!);
     if (resolved.error) return ontologyError(resolved.error, resolved.message!);
     const result = traceTaskArtifacts(resolved.session, resolved.task!, await listRoadmapNodes(resolved.workspace!), resolved.workspace);
-    return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, query: args.query, result });
+    return operationalResult(args, result);
   }
 
   const session = args.sessionId
@@ -171,7 +177,17 @@ async function handleOperationalQuery(args: z.infer<typeof SugoOntologyArgs>) {
     : args.query === "explain_block"
       ? explainSessionBlock(session)
       : projectNextActions(session);
-  return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, query: args.query, result });
+  return operationalResult(args, result);
+}
+
+function operationalResult(args: z.infer<typeof SugoOntologyArgs>, result: unknown) {
+  return json({
+    ok: true,
+    model: ONTOLOGY_MODEL_IDENTITY,
+    query: args.query,
+    result,
+    ...(args.presentation ? { presentation: explanationProfileContract(args.presentation) } : {}),
+  });
 }
 
 async function readSession(id: string) {

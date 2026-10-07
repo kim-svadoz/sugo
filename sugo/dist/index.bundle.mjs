@@ -28046,7 +28046,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.20.2" : "0.0.0-dev";
+  return true ? "0.21.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -33275,6 +33275,44 @@ function traceTaskArtifacts(session, task, nodes, workspace) {
   };
 }
 
+// src/ontology/explanationProfile.ts
+var EXPLANATION_PROFILES = ["ste-inspired-ko", "asd-ste100-en"];
+function explanationProfileContract(profile) {
+  if (profile === "ste-inspired-ko") {
+    return {
+      profile,
+      language: "ko",
+      standard: "ASD-STE100 Issue 9",
+      compliance: "principles-applied",
+      sourceOfTruth: "result",
+      rules: [
+        "result\uC758 \uC0AC\uC2E4, \uC2DD\uBCC4\uC790, \uC0C1\uD0DC, \uC218\uCE58, \uADFC\uAC70\uB97C \uCD94\uAC00\uD558\uAC70\uB098 \uBCC0\uACBD\uD558\uC9C0 \uC54A\uB294\uB2E4.",
+        "\uD55C \uBB38\uC7A5\uC5D0\uB294 \uD55C \uAC00\uC9C0 \uC8FC\uC81C \uB610\uB294 \uD55C \uAC00\uC9C0 \uD589\uB3D9\uB9CC \uC4F4\uB2E4.",
+        "\uC9E7\uC740 \uB2A5\uB3D9\uBB38\uC744 \uC4F0\uACE0 \uD589\uC704 \uC8FC\uCCB4\uC640 \uB2E4\uC74C \uD589\uB3D9\uC744 \uBA85\uD655\uD788 \uC4F4\uB2E4.",
+        "\uAC19\uC740 \uAC1C\uB150\uC5D0\uB294 \uD56D\uC0C1 \uAC19\uC740 \uC6A9\uC5B4\uB97C \uC4F4\uB2E4.",
+        "\uD604\uC7AC \uC0C1\uD0DC, \uC6D0\uC778 \uB610\uB294 \uADFC\uAC70, \uD544\uC694\uD55C \uD589\uB3D9, \uD589\uB3D9 \uB4A4\uC758 \uB2E8\uACC4\uB97C \uC774 \uC21C\uC11C\uB85C \uC4F4\uB2E4.",
+        "\uD55C\uAD6D\uC5B4 \uCD9C\uB825\uC740 ASD-STE100 \uC900\uC218\uB77C\uACE0 \uD45C\uC2DC\uD558\uC9C0 \uC54A\uB294\uB2E4."
+      ]
+    };
+  }
+  return {
+    profile,
+    language: "en",
+    standard: "ASD-STE100 Issue 9",
+    compliance: "unverified-until-qualified-review",
+    sourceOfTruth: "result",
+    rules: [
+      "Do not add or change facts, identifiers, states, values, or evidence in result.",
+      "Write one instruction or one topic in each sentence.",
+      "Use short active sentences and identify the actor when it is necessary.",
+      "Use the same term for the same item.",
+      "Put conditions before the related instruction.",
+      "Write the current state, the cause or evidence, the required action, and the next state in this order.",
+      "Do not claim verified ASD-STE100 compliance without a dictionary and rule check plus qualified review."
+    ]
+  };
+}
+
 // src/tools/sugoOntology.ts
 var VIEWS = [
   "objectTypes",
@@ -33295,12 +33333,16 @@ var sugoOntologyInputSchema = {
   view: external_exports.enum(VIEWS).optional().describe("\uC870\uD68C\uD560 \uC139\uC158. \uC0DD\uB7B5\uD558\uBA74 \uC804\uCCB4 \uBAA8\uB378 + \uD30C\uC0DD \uD14C\uC774\uBE14\uC744 \uBC18\uD658\uD55C\uB2E4"),
   boundary: external_exports.string().optional().describe("\uACB0\uD568 \uD45C\uBA74 \uC774\uB984(handoff|sync|lifecycle|workflow). \uD574\uB2F9 \uACBD\uACC4\uC640 \uAC70\uAE30 \uAC78\uB9B0 \uBD88\uBCC0\uC2DD\uC744 \uD568\uAED8 \uBC18\uD658\uD55C\uB2E4"),
   sessionId: external_exports.string().min(1).optional().describe("\uC800\uC7A5\uB41C feat/patch \uC138\uC158\uC744 \uC2E4\uD589 \uAC1D\uCCB4\xB7\uAD00\uACC4 projection\uC73C\uB85C \uC870\uD68C\uD55C\uB2E4"),
-  taskId: external_exports.string().min(1).optional().describe("explain_block/trace_artifact\uAC00 \uC870\uD68C\uD560 roadmap Task ID")
+  taskId: external_exports.string().min(1).optional().describe("explain_block/trace_artifact\uAC00 \uC870\uD68C\uD560 roadmap Task ID"),
+  presentation: external_exports.enum(EXPLANATION_PROFILES).optional().describe("\uC6B4\uC601 \uC9C8\uC758\uC758 \uC0AC\uC2E4 result\uB294 \uC720\uC9C0\uD558\uACE0 \uC124\uBA85 \uD45C\uD604 \uACC4\uC57D\uC744 \uCD94\uAC00\uD55C\uB2E4. ste-inspired-ko\uB294 STE \uC6D0\uCE59 \uAE30\uBC18 \uD55C\uAD6D\uC5B4\uC774\uBA70 \uC815\uC2DD \uC900\uC218 \uD45C\uAE30\uAC00 \uC544\uB2C8\uB2E4. asd-ste100-en\uC740 \uC804\uBB38 \uAC80\uD1A0 \uC804 \uC900\uC218 \uBBF8\uAC80\uC99D\uC774\uB2E4")
 };
 var SugoOntologyArgs = external_exports.object(sugoOntologyInputSchema);
 async function handleSugoOntology(rawArgs) {
   const args2 = SugoOntologyArgs.parse(rawArgs);
   if (args2.query) return handleOperationalQuery(args2);
+  if (args2.presentation) {
+    return ontologyError("PRESENTATION_REQUIRES_QUERY", "presentation\uC740 \uC6B4\uC601 query\uC640 \uD568\uAED8 \uC9C0\uC815\uD574\uC57C \uD569\uB2C8\uB2E4.");
+  }
   if (args2.taskId) {
     return ontologyError("TASK_ID_REQUIRES_QUERY", "taskId\uB294 explain_block \uB610\uB294 trace_artifact query\uC640 \uD568\uAED8 \uC9C0\uC815\uD574\uC57C \uD569\uB2C8\uB2E4.");
   }
@@ -33387,14 +33429,23 @@ async function handleOperationalQuery(args2) {
     const resolved = await resolveTask(args2.taskId);
     if (resolved.error) return ontologyError(resolved.error, resolved.message);
     const result3 = traceTaskArtifacts(resolved.session, resolved.task, await listRoadmapNodes(resolved.workspace), resolved.workspace);
-    return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, query: args2.query, result: result3 });
+    return operationalResult(args2, result3);
   }
   const session = args2.sessionId ? await readSession(args2.sessionId) : await latestSessionForTask(args2.taskId);
   if (!session) {
     return ontologyError(args2.sessionId ? "SESSION_NOT_FOUND" : "SESSION_FOR_TASK_NOT_FOUND", args2.sessionId ? `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}` : `Task\uC5D0 \uC5F0\uACB0\uB41C \uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
   }
   const result2 = args2.query === "explain_state" ? explainSessionState(session) : args2.query === "explain_block" ? explainSessionBlock(session) : projectNextActions(session);
-  return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, query: args2.query, result: result2 });
+  return operationalResult(args2, result2);
+}
+function operationalResult(args2, result2) {
+  return json({
+    ok: true,
+    model: ONTOLOGY_MODEL_IDENTITY,
+    query: args2.query,
+    result: result2,
+    ...args2.presentation ? { presentation: explanationProfileContract(args2.presentation) } : {}
+  });
 }
 async function readSession(id) {
   return await sessionExists(id) ? loadSession(id) : null;
