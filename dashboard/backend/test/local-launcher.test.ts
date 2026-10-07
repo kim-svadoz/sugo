@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 describe("local dashboard launcher", () => {
   const launcher = readFileSync(new URL("../../sd.sh", import.meta.url), "utf8");
+  const devLocal = readFileSync(new URL("../../dev-local.sh", import.meta.url), "utf8");
 
   it("기존 관리 프로세스를 종료하고 최신 dev-local을 백그라운드로 재시작한다", () => {
     expect(launcher).toContain("readlink");
@@ -25,5 +26,9 @@ describe("local dashboard launcher", () => {
   it("다른 앱을 죽이지 않도록 listener의 cwd가 dashboard 경로인지 확인한다", () => {
     expect(launcher).toContain("stop_stale_dashboard_listeners");
     expect(launcher).toContain('"$BACKEND_DIR"|"$FRONTEND_DIR"');
+  });
+
+  it("showcase 데이터는 명시적으로 요청할 때만 시드한다", () => {
+    expect(devLocal).toContain('if [ "${SUGO_LOCAL_DEMO:-0}" = "1" ]; then');
   });
 });

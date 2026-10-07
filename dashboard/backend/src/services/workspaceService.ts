@@ -537,7 +537,15 @@ export interface ScheduledSpecRow {
  * 프론트가 due_date 유무로 캘린더/"기한 미정" 리스트를 나눈다(§7B). */
 export async function getScheduledSpecs(db: DbClient, userId: string): Promise<ScheduledSpecRow[]> {
   const rows = await db.query<Omit<ScheduledSpecRow, "has_run" | "task_count" | "done_task_count" | "active_task_count" | "blocked_task_count" | "stale_task_count" | "unverified_task_count" | "focus_task_id" | "focus_task_title" | "focus_task_status" | "focus_task_note" | "focus_task_updated_at" | "focus_task_work_result" | "focus_task_runtime_assessment" | "focus_task_blocker_decision" | "focus_task_human_blocker"> & { manual_title: string | null; has_run: number | boolean }>(
-    "SELECT n.id, n.workspace_name, n.title, n.manual_title, COALESCE(n.manual_status, n.status) AS status, n.due_date, n.project_path, n.spec_path, EXISTS (SELECT 1 FROM sugo_roadmap_nodes child WHERE child.user_id = n.user_id AND child.workspace_name = n.workspace_name AND child.parent = n.id AND child.level = 'workstream') AS has_run FROM sugo_roadmap_nodes n WHERE n.user_id = ? AND n.level = 'spec' ORDER BY (n.due_date IS NULL), n.due_date, n.id",
+    `SELECT n.id, n.workspace_name, n.title, n.manual_title,
+            COALESCE(n.manual_status, n.status) AS status, n.due_date, n.project_path, n.spec_path,
+            EXISTS (SELECT 1 FROM sugo_roadmap_nodes child
+                     WHERE child.user_id = n.user_id AND child.workspace_name = n.workspace_name
+                       AND child.parent = n.id AND child.level = 'workstream') AS has_run
+       FROM sugo_roadmap_nodes n
+       LEFT JOIN sugo_workspaces w ON w.user_id = n.user_id AND w.name = n.workspace_name
+      WHERE n.user_id = ? AND n.level = 'spec' AND (w.id IS NULL OR w.deleted_at IS NULL)
+      ORDER BY (n.due_date IS NULL), n.due_date, n.id`,
     [userId]
   );
   const tasks = await db.query<{

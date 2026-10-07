@@ -48,6 +48,27 @@ describe("GET /api/workspaces/schedule — §7B 워크스페이스 비종속 집
     expect(res.body.specs.find((s: { id: string; workspace_name: string }) => s.id === "spec2").workspace_name).toBe("ws2");
   });
 
+  it("soft delete한 워크스페이스의 Spec은 Schedule에서 숨긴다", async () => {
+    const ctx = await bootApp();
+    for (const name of ["active-ws", "deleted-ws"]) {
+      await request(ctx.app)
+        .post("/api/sync/workspace")
+        .set("Authorization", ctx.auth)
+        .send({ userId: "u1", name, projects: [] })
+        .expect(200);
+    }
+    await appWithNodesIn("active-ws", [{ id: "active-spec", level: "spec" }], ctx);
+    await appWithNodesIn("deleted-ws", [{ id: "deleted-spec", level: "spec" }], ctx);
+    await request(ctx.app)
+      .delete("/api/sync/workspace")
+      .set("Authorization", ctx.auth)
+      .send({ userId: "u1", name: "deleted-ws" })
+      .expect(200);
+
+    const res = await request(ctx.app).get("/api/workspaces/schedule").set("Authorization", ctx.auth).expect(200);
+    expect(res.body.specs.map((spec: { id: string }) => spec.id)).toEqual(["active-spec"]);
+  });
+
   it("SPEC 원문 경로와 하위 RUN 존재 여부를 함께 반환한다", async () => {
     const ctx = await bootApp();
     await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }, { id: "run1", level: "workstream" }], ctx);

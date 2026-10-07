@@ -70,7 +70,8 @@ sugo_wait_port "$UI_PORT" "Dashboard UI"
 
 info "기존 ~/.claude/sugo 워크스페이스·작업·roadmap 동기화"
 (cd "$BACKEND_DIR" && npx tsx local-sync.mts)
-if [ "${SUGO_LOCAL_DEMO:-1}" != "0" ]; then
+# 실제 사용자 데이터가 기본이다. UI showcase가 필요할 때만 SUGO_LOCAL_DEMO=1로 명시한다.
+if [ "${SUGO_LOCAL_DEMO:-0}" = "1" ]; then
   info "UI 전체 시나리오용 tmp-sugo-showcase 데이터 준비"
   (cd "$BACKEND_DIR" && npx tsx local-demo.mts)
 fi

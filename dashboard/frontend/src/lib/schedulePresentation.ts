@@ -1,7 +1,8 @@
 type ScheduleStatusItem = { due_date: string | null; status: string };
 
-export function scheduledOpenCount(specs: ScheduleStatusItem[]): number {
-  return specs.filter((spec) => spec.due_date && spec.status !== "done" && spec.status !== "dropped").length;
+/** Schedule 제목은 오늘부터 앞으로 날짜가 잡힌 SPEC 수를 보여준다. 상태와 기한 미정은 섞지 않는다. */
+export function countUpcomingScheduledSpecs(specs: ScheduleStatusItem[], todayKey: string): number {
+  return specs.filter((spec) => spec.due_date !== null && spec.due_date >= todayKey).length;
 }
 
 /** 카드 본문은 흰색 텍스트를 공통 사용하고, 워크스페이스 색은 레일과 옅은 표면에만 쓴다. */

@@ -5,7 +5,7 @@ import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
-import { daySpecOverflowClass, scheduleCardStyle } from "../lib/schedulePresentation.js";
+import { countUpcomingScheduledSpecs, daySpecOverflowClass, scheduleCardStyle } from "../lib/schedulePresentation.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -123,7 +123,10 @@ export function SchedulePage() {
     () => (specs ?? []).filter((s) => s.due_date).sort((a, b) => a.due_date!.localeCompare(b.due_date!)),
     [specs],
   );
-  const openScheduledCount = useMemo(() => (specs ?? []).filter(isOpenStatus).length, [specs]);
+  const upcomingScheduledCount = useMemo(
+    () => countUpcomingScheduledSpecs(specs ?? [], todayKey),
+    [specs, todayKey],
+  );
 
   function jumpToDate(dueDate: string) {
     const [year, month] = dueDate.split("-").map(Number);
@@ -266,7 +269,10 @@ export function SchedulePage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">
-            Schedule <span className="font-normal text-[var(--color-text-dim)]">({openScheduledCount})</span>
+            Schedule{" "}
+            <span className="font-normal text-[var(--color-text-dim)]" title="오늘 이후 마감일이 등록된 SPEC 수">
+              ({upcomingScheduledCount})
+            </span>
           </h1>
         </div>
         <button
