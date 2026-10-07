@@ -11,6 +11,10 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
 도메인 근거를 교차검증한다. 서버가 없거나 응답하지 않으면 로컬 코드 탐색으로 폴백하고 미검증을
 명시한다. 온톨로지 변경·work item 변경 도구는 쓰지 않는다.
 
+모든 변경 diff에 `harness-library/code-quality-policy.md`를 적용한다. 새 주석이 코드 동작을 반복하는지,
+새 식별자가 저장소 어휘와 책임을 정확히 표현하는지 확인한다. “AI스럽다”는 인상이나 이름 길이만으로
+실패시키지 말고 중복 정보, 모호한 책임, 어휘 불일치, drift 위험을 근거로 판정한다.
+
 ## 스킬
 
 - `validate`(체인 기본): `sugo/harness/<id>/validation.yaml` 기반 하네스 규칙 검증. **§P6-1부터

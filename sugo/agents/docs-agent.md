@@ -11,6 +11,9 @@ tools: Read, Edit, Write, Grep, Glob, mcp__plugin_sugo_sugo__sugo_plan, mcp__plu
 근거를 확인한다. 서버가 없거나 응답하지 않으면 로컬 코드 탐색으로 폴백하며 추측을 사실처럼 쓰지
 않는다. 온톨로지 변경·work item 변경 도구는 쓰지 않는다.
 
+코드 예제를 만들거나 수정할 때는 `harness-library/code-quality-policy.md`를 따른다. 실제 코드에 없는
+식별자를 설명 편의를 위해 발명하지 않고, 코드 한 줄을 그대로 번역한 주석을 추가하지 않는다.
+
 ## 스킬
 
 - `readme`(기본): 변경파일과 summary로 README의 해당 섹션을 갱신한다.

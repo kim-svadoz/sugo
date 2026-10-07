@@ -6,6 +6,8 @@ description: 'code-agent 버그 수정 스킬. 재현 테스트를 먼저 쓰고
 
 # bugfix (code-agent)
 
+코드 주석과 이름은 `../../harness-library/code-quality-policy.md`의 공통 정책을 따른다.
+
 재현 없이 고치지 않는다. 순서를 지키는 것이 이 스킬의 요점이다.
 
 1. 재현: 버그를 드러내는 실패하는 테스트를 먼저 작성한다(red 고정). 재현이 안 되면 원인부터 좁힌다.

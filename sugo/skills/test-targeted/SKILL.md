@@ -6,6 +6,8 @@ description: 'test-agent 체인 기본 스킬. code-agent 핸드오프와 PRD를
 
 # test-targeted (test-agent, 체인 기본)
 
+테스트 코드의 주석과 이름은 `../../harness-library/code-quality-policy.md`의 공통 정책을 따른다.
+
 테스트는 PRD(명세)에서 도출한다. 구현을 따라 짜면 순환검증이 되어 false-green이 나온다.
 
 0. refs 로드: `sugo_chain`이 준 `handoff{project, changedFiles, changeType, summary, prdPath,

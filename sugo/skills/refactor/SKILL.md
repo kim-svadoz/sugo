@@ -6,6 +6,8 @@ description: 'code-agent 리팩토링 스킬. 동작을 바꾸지 않고 구조�
 
 # refactor (code-agent)
 
+코드 주석과 이름은 `../../harness-library/code-quality-policy.md`의 공통 정책을 따른다.
+
 동작은 불변이고 신규 테스트는 추가하지 않는다. 안전은 기존 스위트가 계속 green인 것으로만 증명한다.
 
 1. 기존 그린 확인: 리팩토링 전에 기존 테스트가 전부 green인지 확인한다. green이 아니면 리팩토링하지

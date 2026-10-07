@@ -6,6 +6,8 @@ description: 'docs-agent 기본 스킬. 변경파일과 summary로 README의 해
 
 # docs-readme (docs-agent)
 
+문서의 코드 예제는 `../../harness-library/code-quality-policy.md`의 공통 정책을 따른다.
+
 정확성이 최우선이다. 코드에 없는 것을 문서에 쓰지 않는다. 문서가 없는 것보다 틀린 문서가 나쁘다.
 
 1. 컨텍스트 확보: `sugo_chain`은 code→test/test→review 두 방향뿐이라 이 에이전트는 구조화된

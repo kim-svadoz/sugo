@@ -6,6 +6,8 @@ description: 'review-agent 체인 기본 스킬. validation.yaml checks[] 기반
 
 # review-validate (review-agent, 체인 기본, 읽기 전용)
 
+변경 diff의 주석과 이름은 `../../harness-library/code-quality-policy.md`의 공통 정책으로 검토한다.
+
 코드를 고치지 않는다. 판정과 리포트만 한다.
 
 1. 핸드오프 파싱: `sugo_chain`이 준 `handoff{project, changedFiles, changeType, summary, prdPath,

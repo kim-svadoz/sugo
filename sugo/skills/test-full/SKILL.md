@@ -6,6 +6,8 @@ description: 'test-agent 풀 스위트 스킬. 전량 회귀를 포함한 전체
 
 # test-full (test-agent)
 
+테스트 코드의 주석과 이름은 `../../harness-library/code-quality-policy.md`의 공통 정책을 따른다.
+
 targeted와 같은 규율(명세 기반, 조작 방지 증거)을 쓰되 대상이 전량이다.
 
 1. refs를 로드한다. 파이프라인 안이고 계약이 필수인 세션이면, red는 이미 `contract_start`~
