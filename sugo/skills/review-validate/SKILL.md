@@ -27,7 +27,9 @@ description: 'review-agent 체인 기본 스킬. validation.yaml checks[] 기반
    자동 추측 금지). 경고(3축 동시 성립)가 있으면 `review_done`에 `trifectaMitigation`(완화 방법)을
    같이 실어야 한다.
 8. work-result 입력(필수): 결과를 사실 중심의 한국어 `summary`로 정리한다(3줄 이상, 30자 이상,
-   패딩 금지). 중요한 선택과 트레이드오프는 `reportDetails.designDecisions`, 남은 위험이나 제한은
+   패딩 금지). 기본 표현은 **ASD-STE100 원칙 기반 한국어**다. 한 문장에는 한 주제나 한 행동만 쓰고,
+   짧은 능동문과 일관된 용어를 사용한다. 상태→근거→행동→다음 단계 순서를 지키며 정식 STE
+   준수라고 표시하지 않는다. 중요한 선택과 트레이드오프는 `reportDetails.designDecisions`, 남은 위험이나 제한은
    `reportDetails.knownLimitations`로 전달한다. 테스트 결과·변경 파일·요구사항 커버리지·하네스
    검증은 서버가 세션 증거에서 조립하며, `review_done`이 동일한 표준 리포트를 Markdown과
    Dashboard JSON으로 저장한다. 증거가 없는 성공을 직접 써 넣지 않는다.

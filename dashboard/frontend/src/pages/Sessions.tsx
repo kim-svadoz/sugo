@@ -41,6 +41,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
 import { useRoadmap } from "../hooks/useRoadmap.js";
 import { compareRelease, shortCommit, type ReleaseComparison } from "../lib/awsReleasePresentation.js";
+import { presentSteKorean } from "../lib/steKorean.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
@@ -885,7 +886,7 @@ export function Sessions() {
           </p>
           {selectedHistory.summary && (
             <p className="mb-4 whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text)]">
-              {selectedHistory.summary}
+              {presentSteKorean(selectedHistory.summary)}
             </p>
           )}
           {(selectedHistory.key_decisions?.length ?? 0) > 0 && (
@@ -895,7 +896,7 @@ export function Sessions() {
               </h4>
               <ul className="list-disc space-y-1 pl-5 text-[12.5px] text-[var(--color-text-muted)]">
                 {selectedHistory.key_decisions!.map((d, i) => (
-                  <li key={i}>{d}</li>
+                  <li key={i} className="whitespace-pre-line">{presentSteKorean(d)}</li>
                 ))}
               </ul>
             </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Copy, MessageSquareWarning } from "lucide-react";
 import { saveBlockerDecision, type BlockerDecision, type HumanBlocker } from "../api/roadmapMutationsApi.js";
 import { blockerResumePrompt } from "../lib/blockerDecision.js";
+import { presentSteKorean } from "../lib/steKorean.js";
 
 export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, question, decision, blocker, onSaved }: {
   userId: string | null;
@@ -39,14 +40,14 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
   return <section className="rounded-xl border border-orange-400/45 bg-orange-400/[0.07] p-3">
     <div className="flex items-center gap-2 text-sm font-semibold text-orange-100"><MessageSquareWarning size={16} /> 사람의 결정이 필요합니다</div>
     {blocker && <div className="mt-2 grid grid-cols-2 gap-2 text-[10.5px]">
-      <div className="rounded-lg bg-black/20 px-3 py-2"><span className="text-orange-200/55">현재 상황</span><p className="mt-1 text-orange-50">{blocker.summary}</p></div>
+      <div className="rounded-lg bg-black/20 px-3 py-2"><span className="text-orange-200/55">현재 상황</span><p className="mt-1 whitespace-pre-line text-orange-50">{presentSteKorean(blocker.summary)}</p></div>
       <div className="rounded-lg bg-black/20 px-3 py-2"><span className="text-orange-200/55">멈춘 단계</span><p className="mt-1 font-mono text-orange-50">{blocker.stage} → {blocker.resumeAction}</p></div>
     </div>}
     <div className="mt-2 rounded-lg bg-black/20 px-3 py-2">
       <div className="text-[10px] text-orange-200/60">결정이 필요한 내용</div>
-      <p className="mt-1 text-[12.5px] text-orange-50">{blocker?.question || question || "차단 원인이 구체적으로 기록되지 않았습니다. 진행 기준을 직접 입력하세요."}</p>
+      <p className="mt-1 whitespace-pre-line text-[12.5px] text-orange-50">{presentSteKorean(blocker?.question || question || "차단 원인이 구체적으로 기록되지 않았습니다. 진행 기준을 직접 입력하세요.")}</p>
     </div>
-    {blocker && blocker.context.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-[11px] text-orange-100/75">{blocker.context.map((item) => <li key={item}>{item}</li>)}</ul>}
+    {blocker && blocker.context.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-[11px] text-orange-100/75">{blocker.context.map((item) => <li key={item} className="whitespace-pre-line">{presentSteKorean(item)}</li>)}</ul>}
     {blocker && blocker.options.length > 0 && <div className="mt-2 space-y-1.5">{blocker.options.map((option) => <button key={option.id} type="button" onClick={() => setResponse(option.label)} className="w-full rounded-lg border border-orange-300/20 bg-black/15 px-3 py-2 text-left hover:border-orange-300/50"><strong className="text-xs text-orange-50">{option.label}</strong><span className="ml-2 text-[10.5px] text-orange-100/55">{option.impact}</span></button>)}</div>}
     {blocker && <p className="mt-2 text-[10.5px] text-amber-200"><strong>결정 전 멈추는 단계:</strong> {blocker.blockedNextStep}</p>}
     <textarea value={response} onChange={(event) => setResponse(event.target.value)} placeholder="결정 내용과 기준을 구체적으로 입력하세요" className="mt-2 min-h-24 w-full resize-y rounded-lg border border-orange-300/25 bg-slate-950/55 p-2.5 text-xs text-white outline-none focus:border-orange-300/60" />

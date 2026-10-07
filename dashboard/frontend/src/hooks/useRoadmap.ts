@@ -40,6 +40,7 @@ export interface WorkResultReport {
   bypassLabels?: CompletionLabel[];
   humanApprovals?: HumanApprovalEvent[];
   schemaVersion: 1;
+  presentationProfile?: "ste-inspired-ko";
   featureName?: string;
   kind: "feat" | "patch";
   patchVersion: number;

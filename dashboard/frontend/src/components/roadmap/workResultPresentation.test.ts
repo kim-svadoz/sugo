@@ -33,8 +33,8 @@ describe("workResultPresentation", () => {
   });
 
   it("legacy summary만 있어도 화면이 깨지지 않는다", () => {
-    const result = workResultPresentation({ summary: "기존 작업 요약" });
+    const result = workResultPresentation({ summary: "기존 작업 요약이다. 다음 행동을 확인한다." });
     expect(result.versionLabel).toBe("작업 결과");
-    expect(result.summary).toBe("기존 작업 요약");
+    expect(result.summary).toBe("기존 작업 요약이다.\n\n다음 행동을 확인한다.");
   });
 });

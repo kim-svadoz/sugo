@@ -48,7 +48,10 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
 7. 결과 분석: 하네스 위반과 실패 임계를 판정한다. 결과의 `source`가 `verified`면 서버 실측이고
    `self-reported`면 네 판정이다. `verified` 실패는 논쟁 대상이 아니라 고쳐야 할 사실이다.
 8. work-result 입력(필수): 구현 결과를 사실 중심의 `summary`(한국어, 3줄 이상, 30자 이상,
-   패딩 금지)로 정리하고, `reportDetails{designDecisions,knownLimitations}`를 함께 전달한다. 테스트,
+   패딩 금지)로 정리하고, `reportDetails{designDecisions,knownLimitations}`를 함께 전달한다. 이 세 필드는
+   기본적으로 **ASD-STE100 원칙 기반 한국어**로 쓴다. 한 문장에는 한 주제나 한 행동만 쓰고, 짧은
+   능동문과 일관된 용어를 사용한다. 상태→근거→행동→다음 단계 순서를 지키며 정식 STE 준수라고
+   표시하지 않는다. 테스트,
    변경 파일, 요구사항 커버리지, 하네스 검증은 서버가 세션 증거에서 조립하므로 다시 꾸며 쓰거나
    성공으로 과장하지 않는다. `review_done`이 이 입력과 서버 증거를 단일 표준 리포트로 만들어
    `work-result.md`와 Dashboard JSON에 동시에 저장한다.

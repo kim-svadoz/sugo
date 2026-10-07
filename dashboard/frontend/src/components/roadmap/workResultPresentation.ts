@@ -1,4 +1,5 @@
 import type { WorkResult, WorkResultReport } from "../../hooks/useRoadmap.js";
+import { presentSteKorean } from "../../lib/steKorean.js";
 
 export interface WorkResultSection {
   title: string;
@@ -27,7 +28,7 @@ function isWorkResultReport(
 export function workResultPresentation(value: Pick<WorkResult, "summary" | "patchVersion" | "runtimeVerified" | "wiringVerified"> | WorkResultReport): WorkResultPresentation {
   if (!isWorkResultReport(value)) {
     return {
-      summary: value.summary ?? "기록된 작업 요약이 없습니다.",
+      summary: presentSteKorean(value.summary ?? "기록된 작업 요약이 없습니다.", true),
       versionLabel: value.patchVersion && value.patchVersion > 0 ? `v${value.patchVersion} patch` : "작업 결과",
       gradeLabel: "레거시 기록",
       grade: "legacy",
@@ -50,11 +51,11 @@ export function workResultPresentation(value: Pick<WorkResult, "summary" | "patc
     sections.push({ title: "요구사항", items: report.requirements.map((item) => `${item.covered ? "✓" : "○"} ${item.id}`), tone: "neutral" });
   }
   sections.push({ title: "주요 변경", items: report.changedFiles.length ? report.changedFiles : ["변경 파일 없음"], tone: "neutral" });
-  sections.push({ title: "설계 결정", items: report.designDecisions.length ? report.designDecisions : ["별도 설계 결정 기록 없음"], tone: "neutral" });
-  sections.push({ title: "남은 사항 및 위험", items: report.knownLimitations.length ? report.knownLimitations : ["알려진 제한 사항 없음"], tone: report.knownLimitations.length ? "warning" : "neutral" });
+  sections.push({ title: "설계 결정", items: report.designDecisions.length ? report.designDecisions.map((item) => presentSteKorean(item)) : ["별도 설계 결정 기록 없음"], tone: "neutral" });
+  sections.push({ title: "남은 사항 및 위험", items: report.knownLimitations.length ? report.knownLimitations.map((item) => presentSteKorean(item)) : ["알려진 제한 사항 없음"], tone: report.knownLimitations.length ? "warning" : "neutral" });
 
   return {
-    summary: report.summary,
+    summary: presentSteKorean(report.summary, true),
     versionLabel: report.kind === "patch" ? `v${report.patchVersion} patch` : "v0 feat",
     gradeLabel: report.completionGrade === "verified" ? "검증 완료" : report.completionGrade === "verified_by_human" ? "사람 승인 검증완료" : "미검증",
     grade: report.completionGrade,

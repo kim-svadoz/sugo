@@ -42,6 +42,7 @@ import { FileViewerSheet } from "./FileViewerSheet.js";
 import { filesForRoadmapScope } from "./fileViewerModel.js";
 import { taskGuidance } from "../../lib/taskGuidance.js";
 import { focusPathIds } from "./focusPath.js";
+import { presentSteKorean } from "../../lib/steKorean.js";
 
 /** 설계안 치수 상수 — 그대로. */
 const NODE_W = 236;
@@ -1647,7 +1648,7 @@ export function RoadmapGraph({
         <HeaderModal title={`🧠 ${summaryOf.title} · AI 작업요약`} onClose={() => setSummaryOf(null)}>
           {parseWorkResult(summaryOf.work_result)?.summary ? (
             <div className="spec-md whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text)]">
-              {parseWorkResult(summaryOf.work_result)!.summary}
+              {presentSteKorean(parseWorkResult(summaryOf.work_result)!.summary!)}
             </div>
           ) : (
             <p className="text-[12.5px] text-[var(--color-text-dim)]">아직 작업요약이 없습니다.</p>

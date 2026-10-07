@@ -22,6 +22,7 @@ describe("canonical work-result report", () => {
     });
 
     expect(report).toMatchObject({ schemaVersion: 1, kind: "patch", patchVersion: 1, completionGrade: "verified" });
+    expect(report.presentationProfile).toBe("ste-inspired-ko");
     expect(report.verification.test.command).toBe("npm test");
     expect(report.verification.runtimeVerified).toBe(true);
 
@@ -35,6 +36,23 @@ describe("canonical work-result report", () => {
     expect(markdown).toContain("`npm test`");
     expect(markdown).toContain("## 남은 사항 및 위험");
     expect(markdown).toContain("## 사용자 지시");
+  });
+
+  it("기존 사실을 바꾸지 않고 한 줄에 한 문장으로 정돈한다", () => {
+    const report = buildWorkResultReport({
+      featureName: "설명",
+      kind: "feat",
+      patchVersion: 0,
+      completedAt: "2026-10-07T00:00:00.000Z",
+      completionGrade: "verified",
+      summary: "기능을 구현했다. 테스트를 통과했다. 다음 단계는 배포 확인이다.",
+      changedFiles: [],
+      designDecisions: ["기존 계약을 유지했다. 새 필드는 선택값으로 추가했다."],
+      testEvidence: { state: "pass" },
+      runtimeVerified: true,
+    });
+    expect(report.summary).toBe("기능을 구현했다.\n테스트를 통과했다.\n다음 단계는 배포 확인이다.");
+    expect(report.designDecisions).toEqual(["기존 계약을 유지했다.\n새 필드는 선택값으로 추가했다."]);
   });
 
   it("선택 입력이 없어도 빈 섹션을 생략하지 않고 명시적으로 기록한다", () => {

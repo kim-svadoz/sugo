@@ -1,4 +1,5 @@
 import type { CompletionGrade, BypassLabel, HumanApprovalEvent } from "./labelGuard.js";
+import { formatSteInspiredKorean } from "./steKorean.js";
 
 export interface WorkResultRequirement {
   id: string;
@@ -18,6 +19,7 @@ export interface WorkResultReport {
   bypassLabels?: BypassLabel[];
   humanApprovals?: HumanApprovalEvent[];
   schemaVersion: 1;
+  presentationProfile?: "ste-inspired-ko";
   featureName: string;
   kind: "feat" | "patch";
   patchVersion: number;
@@ -65,17 +67,18 @@ export interface BuildWorkResultReportInput {
 export function buildWorkResultReport(input: BuildWorkResultReportInput): WorkResultReport {
   return {
     schemaVersion: 1,
+    presentationProfile: "ste-inspired-ko",
     bypassLabels: input.bypassLabels ? [...input.bypassLabels] : undefined,
     featureName: input.featureName,
     kind: input.kind,
     patchVersion: input.patchVersion,
     completedAt: input.completedAt,
     completionGrade: input.completionGrade,
-    summary: input.summary.trim(),
+    summary: formatSteInspiredKorean(input.summary),
     changedFiles: [...input.changedFiles],
     requirements: [...(input.requirements ?? [])],
-    designDecisions: [...(input.designDecisions ?? [])],
-    knownLimitations: [...(input.knownLimitations ?? [])],
+    designDecisions: (input.designDecisions ?? []).map(formatSteInspiredKorean),
+    knownLimitations: (input.knownLimitations ?? []).map(formatSteInspiredKorean),
     seed: input.seed?.trim() || undefined,
     verification: {
       test: { ...input.testEvidence },

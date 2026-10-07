@@ -28046,7 +28046,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.21.0" : "0.0.0-dev";
+  return true ? "0.22.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29491,21 +29491,42 @@ function estimateHumanHours(startedAtIso, nowIso2, analyzeAttempts, autoLoopRetr
   };
 }
 
+// src/steKorean.ts
+function formatSteInspiredKorean(text) {
+  let inFence = false;
+  return text.replace(/\r\n?/g, "\n").split("\n").map((line) => {
+    if (/^\s*(?:```|~~~)/u.test(line)) {
+      inFence = !inFence;
+      return line;
+    }
+    return inFence ? line : splitProseLine(line).join("\n");
+  }).join("\n").trim();
+}
+function splitProseLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed || isMarkdownStructure(trimmed)) return [line];
+  return line.split(/(?<=[.!?])\s+(?=\S)/u);
+}
+function isMarkdownStructure(line) {
+  return /^(?:```|~~~|#{1,6}\s|[-*+]\s|\d+[.)]\s|>|\|)/u.test(line);
+}
+
 // src/workResultReport.ts
 function buildWorkResultReport(input) {
   return {
     schemaVersion: 1,
+    presentationProfile: "ste-inspired-ko",
     bypassLabels: input.bypassLabels ? [...input.bypassLabels] : void 0,
     featureName: input.featureName,
     kind: input.kind,
     patchVersion: input.patchVersion,
     completedAt: input.completedAt,
     completionGrade: input.completionGrade,
-    summary: input.summary.trim(),
+    summary: formatSteInspiredKorean(input.summary),
     changedFiles: [...input.changedFiles],
     requirements: [...input.requirements ?? []],
-    designDecisions: [...input.designDecisions ?? []],
-    knownLimitations: [...input.knownLimitations ?? []],
+    designDecisions: (input.designDecisions ?? []).map(formatSteInspiredKorean),
+    knownLimitations: (input.knownLimitations ?? []).map(formatSteInspiredKorean),
     seed: input.seed?.trim() || void 0,
     verification: {
       test: { ...input.testEvidence },
