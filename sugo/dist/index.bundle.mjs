@@ -2259,17 +2259,17 @@ var require_resolve = __commonJS({
       return id ? id.replace(TRAILING_SLASH_HASH, "") : "";
     }
     exports2.normalizeId = normalizeId;
-    function resolveUrl(resolver, baseId, id) {
+    function resolveUrl(resolver, baseId2, id) {
       id = normalizeId(id);
-      return resolver.resolve(baseId, id);
+      return resolver.resolve(baseId2, id);
     }
     exports2.resolveUrl = resolveUrl;
     var ANCHOR = /^[a-z_][-a-z0-9._]*$/i;
-    function getSchemaRefs(schema, baseId) {
+    function getSchemaRefs(schema, baseId2) {
       if (typeof schema == "boolean")
         return {};
       const { schemaId, uriResolver } = this.opts;
-      const schId = normalizeId(schema[schemaId] || baseId);
+      const schId = normalizeId(schema[schemaId] || baseId2);
       const baseIds = { "": schId };
       const pathPrefix = getFullPath(uriResolver, schId, false);
       const localRefs = {};
@@ -2857,9 +2857,9 @@ var require_ref_error = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     var resolve_1 = require_resolve();
     var MissingRefError = class extends Error {
-      constructor(resolver, baseId, ref, msg) {
-        super(msg || `can't resolve reference ${ref} from id ${baseId}`);
-        this.missingRef = (0, resolve_1.resolveUrl)(resolver, baseId, ref);
+      constructor(resolver, baseId2, ref, msg) {
+        super(msg || `can't resolve reference ${ref} from id ${baseId2}`);
+        this.missingRef = (0, resolve_1.resolveUrl)(resolver, baseId2, ref);
         this.missingSchema = (0, resolve_1.normalizeId)((0, resolve_1.getFullPath)(resolver, this.missingRef));
       }
     };
@@ -2985,9 +2985,9 @@ var require_compile = __commonJS({
       }
     }
     exports2.compileSchema = compileSchema;
-    function resolveRef(root, baseId, ref) {
+    function resolveRef(root, baseId2, ref) {
       var _a;
-      ref = (0, resolve_1.resolveUrl)(this.opts.uriResolver, baseId, ref);
+      ref = (0, resolve_1.resolveUrl)(this.opts.uriResolver, baseId2, ref);
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
@@ -2996,7 +2996,7 @@ var require_compile = __commonJS({
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
         if (schema)
-          _sch = new SchemaEnv({ schema, schemaId, root, baseId });
+          _sch = new SchemaEnv({ schema, schemaId, root, baseId: baseId2 });
       }
       if (_sch === void 0)
         return;
@@ -3027,8 +3027,8 @@ var require_compile = __commonJS({
     function resolveSchema(root, ref) {
       const p = this.opts.uriResolver.parse(ref);
       const refPath = (0, resolve_1._getFullPath)(this.opts.uriResolver, p);
-      let baseId = (0, resolve_1.getFullPath)(this.opts.uriResolver, root.baseId, void 0);
-      if (Object.keys(root.schema).length > 0 && refPath === baseId) {
+      let baseId2 = (0, resolve_1.getFullPath)(this.opts.uriResolver, root.baseId, void 0);
+      if (Object.keys(root.schema).length > 0 && refPath === baseId2) {
         return getJsonPointer.call(this, p, root);
       }
       const id = (0, resolve_1.normalizeId)(refPath);
@@ -3048,8 +3048,8 @@ var require_compile = __commonJS({
         const { schemaId } = this.opts;
         const schId = schema[schemaId];
         if (schId)
-          baseId = (0, resolve_1.resolveUrl)(this.opts.uriResolver, baseId, schId);
-        return new SchemaEnv({ schema, schemaId, root, baseId });
+          baseId2 = (0, resolve_1.resolveUrl)(this.opts.uriResolver, baseId2, schId);
+        return new SchemaEnv({ schema, schemaId, root, baseId: baseId2 });
       }
       return getJsonPointer.call(this, p, schOrRef);
     }
@@ -3061,7 +3061,7 @@ var require_compile = __commonJS({
       "dependencies",
       "definitions"
     ]);
-    function getJsonPointer(parsedRef, { baseId, schema, root }) {
+    function getJsonPointer(parsedRef, { baseId: baseId2, schema, root }) {
       var _a;
       if (((_a = parsedRef.fragment) === null || _a === void 0 ? void 0 : _a[0]) !== "/")
         return;
@@ -3074,16 +3074,16 @@ var require_compile = __commonJS({
         schema = partSchema;
         const schId = typeof schema === "object" && schema[this.opts.schemaId];
         if (!PREVENT_SCOPE_CHANGE.has(part) && schId) {
-          baseId = (0, resolve_1.resolveUrl)(this.opts.uriResolver, baseId, schId);
+          baseId2 = (0, resolve_1.resolveUrl)(this.opts.uriResolver, baseId2, schId);
         }
       }
       let env;
       if (typeof schema != "boolean" && schema.$ref && !(0, util_1.schemaHasRulesButRef)(schema, this.RULES)) {
-        const $ref = (0, resolve_1.resolveUrl)(this.opts.uriResolver, baseId, schema.$ref);
+        const $ref = (0, resolve_1.resolveUrl)(this.opts.uriResolver, baseId2, schema.$ref);
         env = resolveSchema.call(this, root, $ref);
       }
       const { schemaId } = this.opts;
-      env = env || new SchemaEnv({ schema, schemaId, root, baseId });
+      env = env || new SchemaEnv({ schema, schemaId, root, baseId: baseId2 });
       if (env.schema !== env.root.schema)
         return env;
       return void 0;
@@ -4357,7 +4357,7 @@ var require_core = __commonJS({
           }
         }
       }
-      _addSchema(schema, meta, baseId, validateSchema = this.opts.validateSchema, addSchema = this.opts.addUsedSchema) {
+      _addSchema(schema, meta, baseId2, validateSchema = this.opts.validateSchema, addSchema = this.opts.addUsedSchema) {
         let id;
         const { schemaId } = this.opts;
         if (typeof schema == "object") {
@@ -4371,14 +4371,14 @@ var require_core = __commonJS({
         let sch = this._cache.get(schema);
         if (sch !== void 0)
           return sch;
-        baseId = (0, resolve_1.normalizeId)(id || baseId);
-        const localRefs = resolve_1.getSchemaRefs.call(this, schema, baseId);
-        sch = new compile_1.SchemaEnv({ schema, schemaId, meta, baseId, localRefs });
+        baseId2 = (0, resolve_1.normalizeId)(id || baseId2);
+        const localRefs = resolve_1.getSchemaRefs.call(this, schema, baseId2);
+        sch = new compile_1.SchemaEnv({ schema, schemaId, meta, baseId: baseId2, localRefs });
         this._cache.set(sch.schema, sch);
-        if (addSchema && !baseId.startsWith("#")) {
-          if (baseId)
-            this._checkUnique(baseId);
-          this.refs[baseId] = sch;
+        if (addSchema && !baseId2.startsWith("#")) {
+          if (baseId2)
+            this._checkUnique(baseId2);
+          this.refs[baseId2] = sch;
         }
         if (validateSchema)
           this.validateSchema(schema, true);
@@ -4573,13 +4573,13 @@ var require_ref = __commonJS({
       schemaType: "string",
       code(cxt) {
         const { gen, schema: $ref, it } = cxt;
-        const { baseId, schemaEnv: env, validateName, opts, self: self2 } = it;
+        const { baseId: baseId2, schemaEnv: env, validateName, opts, self: self2 } = it;
         const { root } = env;
-        if (($ref === "#" || $ref === "#/") && baseId === root.baseId)
+        if (($ref === "#" || $ref === "#/") && baseId2 === root.baseId)
           return callRootRef();
-        const schOrEnv = compile_1.resolveRef.call(self2, root, baseId, $ref);
+        const schOrEnv = compile_1.resolveRef.call(self2, root, baseId2, $ref);
         if (schOrEnv === void 0)
-          throw new ref_error_1.default(it.opts.uriResolver, baseId, $ref);
+          throw new ref_error_1.default(it.opts.uriResolver, baseId2, $ref);
         if (schOrEnv instanceof compile_1.SchemaEnv)
           return callValidate(schOrEnv);
         return inlineRefSchema(schOrEnv);
@@ -22997,6 +22997,24 @@ ${globs.map((g) => `  - "${g}"`).join("\n")}
 `;
   return { relPath: `.claude/rules/${ruleFilename(harnessId)}`, content: frontmatter + harnessMd };
 }
+function baseId(id) {
+  const parts2 = id.split("/");
+  return parts2.length > 2 ? parts2.slice(0, 2).join("/") : null;
+}
+function buildEffectiveClaudeRuleFiles(harnesses) {
+  const byId = new Map(harnesses.map((harness) => [harness.id, harness]));
+  const shadowedBases = new Set(harnesses.map((harness) => baseId(harness.id)).filter((id) => id !== null));
+  return harnesses.filter((harness) => !shadowedBases.has(harness.id)).map((harness) => {
+    const parent = baseId(harness.id);
+    const parentHarness = parent ? byId.get(parent) : void 0;
+    const content = parentHarness ? `${parentHarness.harnessMd.trimEnd()}
+
+---
+
+${harness.harnessMd.trimStart()}` : harness.harnessMd;
+    return buildClaudeRuleFile(harness.id, content);
+  });
+}
 var BLOCK_START = "<!-- sugo:harness-rules:start -->";
 var BLOCK_END = "<!-- sugo:harness-rules:end -->";
 function buildManagedBlock(harnessIds) {
@@ -23622,13 +23640,13 @@ async function syncProjectHarness(args2) {
   const existingConfig = await loadProjectConfig(projectPath);
   const claudeRulesDir = join6(projectPath, ".claude", "rules");
   await mkdir4(claudeRulesDir, { recursive: true });
-  for (const h of harnesses) {
-    const ruleFile = buildClaudeRuleFile(h.id, h.harnessMd);
+  const effectiveRuleFiles = buildEffectiveClaudeRuleFiles(harnesses);
+  for (const ruleFile of effectiveRuleFiles) {
     await atomicWriteFile(join6(projectPath, ruleFile.relPath), ruleFile.content);
   }
-  const currentIds = new Set(harnesses.map((h) => h.id));
+  const currentRulePaths = new Set(effectiveRuleFiles.map((file) => file.relPath));
   const previousIds = existingConfig?.appliedHarnesses.map((h) => h.id) ?? [];
-  for (const staleId of previousIds.filter((id) => !currentIds.has(id))) {
+  for (const staleId of previousIds.filter((id) => !currentRulePaths.has(buildClaudeRuleFile(id, "").relPath))) {
     const stalePath = join6(projectPath, buildClaudeRuleFile(staleId, "").relPath);
     await unlink2(stalePath).catch(() => {
     });
@@ -28047,7 +28065,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.25.0" : "0.0.0-dev";
+  return true ? "0.25.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts

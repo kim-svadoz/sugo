@@ -8,7 +8,7 @@ import { fetchHarnesses } from "./harnessFetcher.js";
 import { defaultHarnessLibraryDir } from "./libraryPath.js";
 import { findRegistryEntry, registerProject } from "./registry.js";
 import { writeClaudeIfChanged } from "./claudeMdFreshness.js";
-import { buildClaudeRuleFile, mergeRootClaudeReference } from "./rulesFile.js";
+import { buildClaudeRuleFile, buildEffectiveClaudeRuleFiles, mergeRootClaudeReference } from "./rulesFile.js";
 import { detectStack } from "./stackDetector.js";
 
 export interface SyncProjectHarnessArgs {
@@ -69,15 +69,15 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
   // 들어오는" 경로다(sugo/harness/**는 sugo_get_project_context를 명시 호출해야만 읽힌다).
   const claudeRulesDir = join(projectPath, ".claude", "rules");
   await mkdir(claudeRulesDir, { recursive: true });
-  for (const h of harnesses) {
-    const ruleFile = buildClaudeRuleFile(h.id, h.harnessMd);
+  const effectiveRuleFiles = buildEffectiveClaudeRuleFiles(harnesses);
+  for (const ruleFile of effectiveRuleFiles) {
     await atomicWriteFile(join(projectPath, ruleFile.relPath), ruleFile.content);
   }
   // 더 이상 적용되지 않는 하네스의 규칙 파일은 지운다 — 안 지우면 제거된 스택의 규칙이 계속
   // 자동로드된다(예: Next를 뺐는데 Next 규칙이 계속 붙는 조용한 misleading).
-  const currentIds = new Set(harnesses.map((h) => h.id));
+  const currentRulePaths = new Set(effectiveRuleFiles.map((file) => file.relPath));
   const previousIds = existingConfig?.appliedHarnesses.map((h) => h.id) ?? [];
-  for (const staleId of previousIds.filter((id) => !currentIds.has(id))) {
+  for (const staleId of previousIds.filter((id) => !currentRulePaths.has(buildClaudeRuleFile(id, "").relPath))) {
     const stalePath = join(projectPath, buildClaudeRuleFile(staleId, "").relPath);
     await unlink(stalePath).catch(() => {}); // 이미 없으면(수동 삭제 등) 무시
   }

@@ -21,6 +21,35 @@ export function buildClaudeRuleFile(harnessId: string, harnessMd: string): Claud
   return { relPath: `.claude/rules/${ruleFilename(harnessId)}`, content: frontmatter + harnessMd };
 }
 
+interface RuleHarness {
+  id: string;
+  harnessMd: string;
+}
+
+function baseId(id: string): string | null {
+  const parts = id.split("/");
+  return parts.length > 2 ? parts.slice(0, 2).join("/") : null;
+}
+
+/**
+ * `.claude/rules`에는 실제 적용 단위만 쓴다. 버전 하네스는 base의 델타이므로 두 파일을
+ * 자동 로드하지 않고, base 본문과 버전 본문을 하나의 버전 파일로 합친다.
+ */
+export function buildEffectiveClaudeRuleFiles(harnesses: RuleHarness[]): ClaudeRuleFile[] {
+  const byId = new Map(harnesses.map((harness) => [harness.id, harness]));
+  const shadowedBases = new Set(harnesses.map((harness) => baseId(harness.id)).filter((id): id is string => id !== null));
+  return harnesses
+    .filter((harness) => !shadowedBases.has(harness.id))
+    .map((harness) => {
+      const parent = baseId(harness.id);
+      const parentHarness = parent ? byId.get(parent) : undefined;
+      const content = parentHarness
+        ? `${parentHarness.harnessMd.trimEnd()}\n\n---\n\n${harness.harnessMd.trimStart()}`
+        : harness.harnessMd;
+      return buildClaudeRuleFile(harness.id, content);
+    });
+}
+
 const BLOCK_START = "<!-- sugo:harness-rules:start -->";
 const BLOCK_END = "<!-- sugo:harness-rules:end -->";
 

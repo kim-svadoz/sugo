@@ -34,7 +34,11 @@ describe("sugo_add — .claude/rules/ 실배선", () => {
 
     expect(existsSync(join(projectDir, ".claude", "rules", "default.md"))).toBe(true);
     expect(existsSync(join(projectDir, ".claude", "rules", "lang-typescript.md"))).toBe(true);
-    expect(existsSync(join(projectDir, ".claude", "rules", "framework-react.md"))).toBe(true);
+    expect(existsSync(join(projectDir, ".claude", "rules", "framework-react.md"))).toBe(false);
+    expect(existsSync(join(projectDir, ".claude", "rules", "framework-react-18.x.md"))).toBe(true);
+    const reactRule = readFileSync(join(projectDir, ".claude", "rules", "framework-react-18.x.md"), "utf-8");
+    expect(reactRule).toContain("React 하네스 (framework/react)");
+    expect(reactRule).toContain("React 18 하네스");
 
     const tsRule = readFileSync(join(projectDir, ".claude", "rules", "lang-typescript.md"), "utf-8");
     expect(tsRule).toContain("paths:");
@@ -92,17 +96,30 @@ describe("sugo_add — .claude/rules/ 실배선", () => {
     expect(after).toContain("framework/react");
   });
 
+  it("기존 설치본의 base 규칙 파일을 다음 update에서 제거한다", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    await call(handleSugoAdd, { projectPath: projectDir });
+    const legacyBase = join(projectDir, ".claude", "rules", "framework-react.md");
+    writeFileSync(legacyBase, "legacy duplicate");
+
+    await call(handleSugoUpdate, { projectPath: projectDir });
+
+    expect(existsSync(legacyBase)).toBe(false);
+    expect(existsSync(join(projectDir, ".claude", "rules", "framework-react-18.x.md"))).toBe(true);
+  });
+
   it("sugo_update로 스택이 줄어들면 더 이상 안 쓰는 하네스의 규칙 파일을 지운다", async () => {
     // 처음엔 React까지 감지되게, 이후엔 React 의존성을 빼서 다시 update.
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));
     writeFileSync(join(projectDir, "tsconfig.json"), "{}");
     await call(handleSugoAdd, { projectPath: projectDir });
-    expect(existsSync(join(projectDir, ".claude", "rules", "framework-react.md"))).toBe(true);
+    expect(existsSync(join(projectDir, ".claude", "rules", "framework-react-18.x.md"))).toBe(true);
 
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: {} }));
     await call(handleSugoUpdate, { projectPath: projectDir });
 
-    expect(existsSync(join(projectDir, ".claude", "rules", "framework-react.md"))).toBe(false);
+    expect(existsSync(join(projectDir, ".claude", "rules", "framework-react-18.x.md"))).toBe(false);
     expect(existsSync(join(projectDir, ".claude", "rules", "default.md"))).toBe(true);
   });
 });

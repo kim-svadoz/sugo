@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildClaudeRuleFile, mergeRootClaudeReference } from "../src/harness/rulesFile.js";
+import { buildClaudeRuleFile, buildEffectiveClaudeRuleFiles, mergeRootClaudeReference } from "../src/harness/rulesFile.js";
 
 describe("buildClaudeRuleFile", () => {
   it("경로 스코프가 있는 하네스는 paths frontmatter를 낸다", () => {
@@ -26,6 +26,22 @@ describe("buildClaudeRuleFile", () => {
     // 큰따옴표로 감싼 각 줄이 유효한 YAML 리스트 항목 형태인지
     const fmLines = file.content.split("\n---")[0].split("\n").filter((l) => l.startsWith("  - "));
     for (const line of fmLines) expect(line).toMatch(/^ {2}- "[^"]*"$/);
+  });
+});
+
+describe("buildEffectiveClaudeRuleFiles", () => {
+  it("버전 하네스가 있으면 base 규칙을 버전 파일에 합치고 base 파일은 만들지 않는다", () => {
+    const files = buildEffectiveClaudeRuleFiles([
+      { id: "default", harnessMd: "# default" },
+      { id: "lang/java", harnessMd: "# java common" },
+      { id: "lang/java/17", harnessMd: "# java 17" },
+    ]);
+    expect(files.map((file) => file.relPath)).toEqual([
+      ".claude/rules/default.md",
+      ".claude/rules/lang-java-17.md",
+    ]);
+    expect(files[1].content).toContain("# java common");
+    expect(files[1].content).toContain("# java 17");
   });
 });
 
