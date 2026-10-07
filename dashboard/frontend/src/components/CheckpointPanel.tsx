@@ -30,13 +30,45 @@ function todayKst(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
 
-function expiryState(expiresAt: string | null): "none" | "active" | "soon" | "expired" {
+function expiryState(expiresAt: string | null, today = todayKst()): "none" | "active" | "soon" | "expired" {
   if (!expiresAt) return "none";
   const date = expiresAt.slice(0, 10);
-  const today = todayKst();
   if (date < today) return "expired";
   const days = Math.round((Date.parse(`${date}T00:00:00+09:00`) - Date.parse(`${today}T00:00:00+09:00`)) / 86_400_000);
   return days <= 3 ? "soon" : "active";
+}
+
+export function orderVisibleCheckpoints(
+  checkpoints: Checkpoint[],
+  projectLabel: string | null,
+  today = todayKst(),
+): Checkpoint[] {
+  const relevant = projectLabel
+    ? checkpoints.filter((cp) => !cp.applies_to?.length || cp.applies_to.includes(projectLabel))
+    : checkpoints;
+
+  if (!projectLabel) {
+    return [...relevant].sort(
+      (a, b) =>
+        (a.checkpoint_date || a.created_at).localeCompare(b.checkpoint_date || b.created_at)
+        || a.id.localeCompare(b.id),
+    );
+  }
+
+  return relevant
+    .filter((cp) => expiryState(cp.expires_at, today) !== "expired")
+    .sort((a, b) => {
+      if (a.expires_at && b.expires_at) {
+        const expiryOrder = a.expires_at.slice(0, 10).localeCompare(b.expires_at.slice(0, 10));
+        if (expiryOrder !== 0) return expiryOrder;
+      } else if (a.expires_at) {
+        return -1;
+      } else if (b.expires_at) {
+        return 1;
+      }
+      return (a.checkpoint_date || a.created_at).localeCompare(b.checkpoint_date || b.created_at)
+        || a.id.localeCompare(b.id);
+    });
 }
 
 /** 작성/미리보기 탭 + textarea 한 벌 — 새 체크포인트·수정 다이얼로그가 그대로 공유한다. */
@@ -116,23 +148,13 @@ export function CheckpointPanel({
   const projectLabel = projectPath ? repoName(projectPath) : null;
   const defaultAppliesTo = useMemo(() => (projectLabel ? [projectLabel] : []), [projectLabel]);
   const visibleCheckpoints = useMemo(
-    () => {
-      const visible = projectLabel
-        ? checkpoints.data.filter((cp) => !cp.applies_to?.length || cp.applies_to.includes(projectLabel))
-        : checkpoints.data;
-
-      return [...visible].sort(
-        (a, b) =>
-          (a.checkpoint_date || a.created_at).localeCompare(b.checkpoint_date || b.created_at)
-          || a.id.localeCompare(b.id),
-      );
-    },
+    () => orderVisibleCheckpoints(checkpoints.data, projectLabel),
     [checkpoints.data, projectLabel],
   );
   const [cpDraft, setCpDraft] = useState({ title: "", category: "general", markdown: "", expiresAt: "" });
   const [cpBusy, setCpBusy] = useState(false);
-  // 원본 체크포인트 생성일(checkpoint_date, 없으면 DB created_at)이 오래된 순으로 정렬한 뒤
-  // 5개씩 페이지네이션한다. 기존 데이터는 created_at 컬럼 추가 시각이 같을 수 있다.
+  // 프로젝트 화면은 만료일이 가까운 순(무기한 마지막), 워크스페이스 화면은 기존 생성일 순으로
+  // 5개씩 페이지네이션한다. 만료 항목은 프로젝트 화면에서만 숨겨 관리 화면에서는 수정할 수 있다.
   const [page, setPage] = useState(0);
   const pageCount = Math.max(1, Math.ceil(visibleCheckpoints.length / CHECKPOINTS_PER_PAGE));
   const safePage = Math.min(page, pageCount - 1);
