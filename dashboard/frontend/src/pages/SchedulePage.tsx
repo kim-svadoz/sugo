@@ -1,6 +1,6 @@
 import { SpecDeploymentBadge } from "../components/SpecDeploymentBadge.js";
 import { useEffect, useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, Pencil, Shield, Trash2, Workflow } from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, FileText, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -85,7 +85,7 @@ export function SchedulePage() {
   // §7B 사용자 결정(2026-09-23): 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
   // Schedule 위에 겹쳐서 뜬다 — Esc를 누르면 그냥 이 오버레이만 닫히고 Schedule로 남는다.
   const [checkpointTarget, setCheckpointTarget] = useState<{ workspace: string; projectPath: string | null; dueDate: string | null } | null>(null);
-  const [canvasOverlay, setCanvasOverlay] = useState<{ workspace: string; nodeId: string } | null>(null);
+  const [canvasOverlay, setCanvasOverlay] = useState<{ workspace: string; nodeId: string; initialInspectorTab?: "progress" | "summary" } | null>(null);
   const [specDocumentTarget, setSpecDocumentTarget] = useState<{ workspace: string; nodeId: string; title: string } | null>(null);
 
   // spec-writer는 다른 터미널에서 완료되므로 4초 폴링 결과를 열린 상세에도 반영한다.
@@ -672,7 +672,7 @@ export function SchedulePage() {
               {selected.spec_path && <p className="mt-2 break-all font-mono text-[10px] text-[var(--color-text-dim)]">{selected.spec_path}</p>}
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="grid grid-cols-2 gap-2 pt-2">
               <button
                 disabled={!selected.project_path}
                 onClick={() => {
@@ -690,6 +690,14 @@ export function SchedulePage() {
               >
                 <Workflow size={14} /> Canvas에서 보기
               </button>
+              {!!selected.focus_task_id && !!selected.focus_task_work_result && (
+                <button
+                  onClick={() => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.focus_task_id!, initialInspectorTab: "summary" })}
+                  className="col-span-2 flex items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-[12.5px] font-semibold text-violet-200 hover:bg-violet-500/20"
+                >
+                  <FileText size={14} /> 작업 요약 보기
+                </button>
+              )}
             </div>
 
             {selected.id.startsWith("spec-manual-") && (
@@ -836,6 +844,7 @@ export function SchedulePage() {
         <AgentCanvasOverlay
           workspace={canvasOverlay.workspace}
           focusNodeId={canvasOverlay.nodeId}
+          initialInspectorTab={canvasOverlay.initialInspectorTab}
           onClose={() => setCanvasOverlay(null)}
         />
       )}

@@ -45,6 +45,7 @@ export function SubtaskPanel({
   onOpenFile,
   scopeFiles,
   requirementsUnavailable = false,
+  initialTab = "progress",
 }: {
   workspace: string;
   node: RoadmapNode;
@@ -58,6 +59,7 @@ export function SubtaskPanel({
   /** SPEC/RUN은 하위 작업 전체의 변경 파일을 합친 scope 결과를 받는다. */
   scopeFiles?: WorkResultFile[];
   requirementsUnavailable?: boolean;
+  initialTab?: "progress" | "summary";
 }) {
   const { userId } = useAuth();
   const [tab, setTab] = useState<Tab>("progress");
@@ -65,7 +67,7 @@ export function SubtaskPanel({
   const progressItems = node.level === "task" ? reqs : (childrenProp ?? []);
   const progress = inspectorProgress(node, progressItems);
 
-  useEffect(() => setTab("progress"), [node.id]);
+  useEffect(() => setTab(initialTab), [node.id, initialTab]);
 
   const workResult = parseWorkResult(node.work_result);
   const files = scopeFiles ?? workResult?.files ?? [];

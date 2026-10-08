@@ -1067,6 +1067,7 @@ export function RoadmapGraph({
   onEdited,
   nodeFilter,
   focusNodeId,
+  initialInspectorTab,
 }: {
   workspace: string;
   fill?: boolean;
@@ -1076,6 +1077,8 @@ export function RoadmapGraph({
   /** §7B Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). 로드된 뒤 그 노드로 팬 + 선택하고
    * 1회만 적용한다(이후 폴링 갱신에서 다시 튀지 않게 `focusedOnce`로 잠근다). */
   focusNodeId?: string;
+  /** Schedule의 작업 요약 진입점은 선택 Task를 열고 요약 탭부터 보여준다. */
+  initialInspectorTab?: "progress" | "summary";
 }) {
   const { userId } = useAuth();
   const { data, loading, error, refetch } = useRoadmap(workspace);
@@ -1225,7 +1228,20 @@ export function RoadmapGraph({
    */
   const focus = useMemo(() => {
     if (focusNodeId && nodes.some((node) => node.id === focusNodeId)) {
-      const nodeSet = focusPathIds(nodes, focusNodeId);
+      const rootId = focusRootId(nodes, focusNodeId);
+      const nodeSet = new Set<string>();
+      if (rootId) {
+        nodeSet.add(rootId);
+        const stack = [rootId];
+        while (stack.length) {
+          const parent = stack.pop()!;
+          for (const node of base.rfNodes) {
+            if (node.parentId !== parent || nodeSet.has(node.id)) continue;
+            nodeSet.add(node.id);
+            stack.push(node.id);
+          }
+        }
+      }
       const edgeSet = new Set(base.rfEdges.filter((edge) => nodeSet.has(edge.source) && nodeSet.has(edge.target)).map((edge) => edge.id));
       return { nodeSet, edgeSet };
     }
@@ -1371,9 +1387,20 @@ export function RoadmapGraph({
     if (!focusNodeId || focusedOnce) return;
     const rootId = focusRootId(nodes, focusNodeId);
     const rootNode = rootId ? flowNodes.find((node) => node.id === rootId) : null;
-    if (!rootNode || rootNode.type !== "container" || !flowNodes.some((node) => node.id === focusNodeId)) return;
-    rf.fitView({ nodes: [{ id: rootId! }], padding: 0.1, maxZoom: 1.15, duration: 400 });
-    setFocusedOnce(true);
+    if (!rootNode || rootNode.type !== "container" || rootNode.data.collapsed) return;
+    const visibleSpecNodes = flowNodes.filter((node) => {
+      let current: FlowNode | undefined = node;
+      while (current?.parentId) {
+        if (current.parentId === rootId) return true;
+        current = flowNodes.find((candidate) => candidate.id === current?.parentId);
+      }
+      return node.id === rootId;
+    });
+    const frame = window.requestAnimationFrame(() => {
+      rf.fitView({ nodes: visibleSpecNodes.map((node) => ({ id: node.id })), padding: 0.035, minZoom: 0.85, maxZoom: 1.65, duration: 400 });
+      setFocusedOnce(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [focusNodeId, focusedOnce, flowNodes, nodes, rf]);
 
   /**
@@ -1567,6 +1594,7 @@ export function RoadmapGraph({
           <SubtaskPanel
             workspace={workspace}
             node={selectedNode}
+            initialTab={initialInspectorTab}
             requirementsUnavailable={selectedLineage?.requirementsUnavailable}
             reqs={selectedLineage?.reqs ?? nodes.filter((n) => n.parent === selectedNode.id && n.level === "subtask")}
             children={nodes.filter((n) => n.parent === selectedNode.id && n.level !== "subtask" && n.level !== "step")}
@@ -1741,6 +1769,7 @@ export function RoadmapGraphPanel(props: {
   nodeFilter?: RoadmapNode[];
   /** §7B Schedule 탭 딥링크. */
   focusNodeId?: string;
+  initialInspectorTab?: "progress" | "summary";
 }) {
   return (
     <ReactFlowProvider>

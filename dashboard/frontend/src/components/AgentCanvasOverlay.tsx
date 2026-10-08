@@ -18,11 +18,13 @@ export function AgentCanvasOverlay({
   workspace,
   onClose,
   focusNodeId,
+  initialInspectorTab,
 }: {
   workspace: string;
   onClose: () => void;
   /** §7B Schedule 탭에서 특정 spec을 보려고 열었을 때. */
   focusNodeId?: string;
+  initialInspectorTab?: "progress" | "summary";
 }) {
   const { data, refetch } = useRoadmap(workspace);
   const nodes = data ?? [];
@@ -96,7 +98,7 @@ export function AgentCanvasOverlay({
               Agent Canvas 데이터가 없습니다
             </div>
           ) : (
-            <RoadmapTab workspace={workspace} focusNodeId={focusNodeId} fill onEdited={refetch} />
+            <RoadmapTab workspace={workspace} focusNodeId={focusNodeId} initialInspectorTab={initialInspectorTab} fill onEdited={refetch} />
           )}
         </div>
 
