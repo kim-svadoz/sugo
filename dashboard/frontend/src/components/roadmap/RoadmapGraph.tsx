@@ -1531,9 +1531,9 @@ export function RoadmapGraph({
           nodes={rfNodes}
           edges={rfEdges}
           nodeTypes={nodeTypes}
-          // 설계안: fitView는 **maxZoom 1**로 묶는다. 안 묶으면 노드가 적을 때 화면을 채우려
-          // 200%까지 확대돼 카드 몇 장이 화면을 다 덮는다(위상이 안 보인다).
-          onInit={(inst) => inst.fitView({ padding: 0.18, maxZoom: 1 })}
+          onInit={(inst) => {
+            if (!focusNodeId) inst.fitView({ padding: 0.18, maxZoom: 1 });
+          }}
           minZoom={0.1}
           proOptions={{ hideAttribution: true }}
           edgeTypes={edgeTypes}

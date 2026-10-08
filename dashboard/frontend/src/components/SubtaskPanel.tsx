@@ -2,7 +2,6 @@ import { workflowStatus } from "../lib/workflowStatus.js";
 import { CompletionApprovalPanel } from "./CompletionApprovalPanel.js";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, CheckCircle2, Copy, ExternalLink, GitPullRequest, Sparkles } from "lucide-react";
-import { marked } from "marked";
 import { useAuth } from "../auth/AuthContext.js";
 import { parseWorkResult, type RoadmapNode, type WorkResultFile } from "../hooks/useRoadmap.js";
 import { clearManualStatus, setManualStatus } from "../api/roadmapMutationsApi.js";
@@ -127,7 +126,7 @@ export function SubtaskPanel({
             onReviewResult={() => setTab("summary")}
           />
         )}
-        {tab === "summary" && <SummaryTab title={node.title} workResult={workResult} />}
+        {tab === "summary" && <SummaryTab title={node.title} workResult={workResult} requirements={node.level === "task" ? progressItems : []} />}
         {tab === "files" && <FilesTab files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} />}
       </div>
     </aside>
@@ -446,47 +445,48 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 }
 
-function openWorkResultHtml(title: string, workResult: NonNullable<ReturnType<typeof parseWorkResult>>) {
+function reportList(items: string[], empty: string): string {
+  const values = items.length ? items : [empty];
+  return `<ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+}
+
+function openWorkResultHtml(title: string, workResult: NonNullable<ReturnType<typeof parseWorkResult>>, requirements: RoadmapNode[]) {
   const view = workResultPresentation(workResult.report ?? workResult);
-  const sections = view.sections.map((section) => `<section class="section ${section.tone}"><h2>${escapeHtml(section.title)}</h2><ul>${section.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>`).join("");
-  const command = view.testCommand ? `<section class="command"><span>$</span><code>${escapeHtml(view.testCommand)}</code></section>` : "";
+  const report = workResult.report;
+  const files = workResult.files?.map((file) => `${file.change.toUpperCase()} · ${file.path}`) ?? report?.changedFiles ?? [];
+  const decisions = report?.designDecisions ?? [];
+  const risks = report?.knownLimitations ?? [];
+  const pendingRequirements = requirements.filter((item) => (item.manual_status ?? item.status) !== "done").length;
+  const reviewReady = view.grade !== "unverified" && pendingRequirements === 0;
+  const summaryParagraphs = view.summary.split(/\n+/).filter(Boolean).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("");
+  const requirementRows = requirements.length
+    ? requirements.map((item) => {
+      const done = (item.manual_status ?? item.status) === "done";
+      return `<tr><td><span class="state ${done ? "done" : "pending"}">${done ? "완료" : "확인 필요"}</span></td><td>${escapeHtml(item.title)}</td></tr>`;
+    }).join("")
+    : `<tr><td colspan="2" class="muted">기록된 REQ가 없습니다.</td></tr>`;
+  const test = report?.verification.test;
+  const verificationRows = [
+    ["테스트", view.testLabel ?? "기록 없음", test?.state === "pass"],
+    ["런타임 검증", view.runtimeVerified ? "확인됨" : "미확인", !!view.runtimeVerified],
+    ["배선 검증", view.wiringVerified ? "확인됨" : "미확인", !!view.wiringVerified],
+    ["검증 판정", report?.verification.validationVerdict ?? "기록 없음", report?.verification.validationVerdict === "pass"],
+  ].map(([label, value, good]) => `<div class="evidence"><span>${label}</span><strong class="${good ? "good" : "caution"}">${escapeHtml(String(value))}</strong></div>`).join("");
+  const command = view.testCommand ? `<div class="command"><span>$</span><code>${escapeHtml(view.testCommand)}</code></div>` : `<p class="muted">실행 명령 기록이 없습니다.</p>`;
+  const timing = [workResult.startedAt && `시작 ${workResult.startedAt}`, workResult.endedAt && `종료 ${workResult.endedAt}`].filter(Boolean).join(" · ");
   const documentHtml = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} · ${escapeHtml(view.versionLabel)}</title><style>
-    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#07101f;color:#dce7f5}body{margin:0;background:radial-gradient(circle at 80% 0,#12304a55,transparent 35%),#07101f}main{max-width:920px;margin:0 auto;padding:56px 28px 80px}header{border-bottom:1px solid #26364d;padding-bottom:24px;margin-bottom:28px}.eyebrow{font:600 12px ui-monospace,monospace;letter-spacing:.12em;color:#67e8f9}h1{margin:10px 0 8px;font-size:30px}.version{color:#94a3b8;font:13px ui-monospace,monospace}.summary,.section,.command{border:1px solid #26364d;border-radius:16px;background:#0c1728cc;padding:22px 24px;margin-top:16px}.summary{font-size:17px;line-height:1.85;white-space:pre-wrap}.section h2{font-size:15px;color:#a5f3fc;margin:0 0 14px}.section ul{margin:0;padding-left:20px}.section li{margin:9px 0;line-height:1.7;color:#c5d2e3}.section.warning{border-color:#78591e}.section.warning h2{color:#fcd34d}.command{display:flex;gap:12px;font:13px ui-monospace,monospace;color:#94a3b8;overflow-wrap:anywhere}.command span{color:#6ee7b7}</style></head><body><main><header><div class="eyebrow">SUGO WORK RESULT</div><h1>${escapeHtml(title)}</h1><div class="version">${escapeHtml(view.versionLabel)}</div></header><section class="summary">${escapeHtml(view.summary)}</section>${sections}${command}</main></body></html>`;
+    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#07101f;color:#dce7f5}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 82% 0,#12304a66,transparent 34%),#07101f}main{max-width:1080px;margin:0 auto;padding:48px 28px 88px}header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;border-bottom:1px solid #26364d;padding-bottom:24px}.eyebrow{font:700 12px ui-monospace,monospace;letter-spacing:.14em;color:#67e8f9}h1{margin:9px 0 8px;font-size:32px}.version,.muted{color:#8fa1b8}.version{font:13px ui-monospace,monospace}.print{border:1px solid #334762;background:#111f33;color:#dce7f5;border-radius:10px;padding:9px 13px;cursor:pointer}.decision,.panel{border:1px solid #26364d;border-radius:16px;background:#0c1728dd;padding:22px 24px;margin-top:18px}.decision{display:flex;gap:16px;align-items:center}.decision.ready{border-color:#1f806b;background:#0b302c}.decision.hold{border-color:#8b641c;background:#30240b}.decision strong{display:block;font-size:17px}.decision p{margin:5px 0 0;color:#b8c5d6}.mark{font-size:24px}.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}.metric{border:1px solid #26364d;border-radius:12px;background:#0c1728;padding:14px}.metric span{display:block;color:#8fa1b8;font-size:12px}.metric strong{display:block;margin-top:6px;font-size:15px}.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}.panel h2{margin:0 0 15px;font-size:17px;color:#b8f4fc}.summary p{font-size:16px;line-height:1.8;margin:0 0 12px}.summary p:last-child{margin-bottom:0}ul{margin:0;padding-left:20px}li{margin:9px 0;line-height:1.65;color:#c5d2e3;overflow-wrap:anywhere}.risk{border-color:#73551d}.risk h2{color:#facc6b}table{width:100%;border-collapse:collapse}td{padding:10px 8px;border-top:1px solid #23334a;font-size:14px}.state{display:inline-block;border-radius:999px;padding:3px 8px;font-size:11px;white-space:nowrap}.state.done{background:#0f513f;color:#9ff3d4}.state.pending{background:#5a4010;color:#ffd778}.evidence-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.evidence{border:1px solid #26364d;border-radius:10px;padding:12px}.evidence span{display:block;color:#8fa1b8;font-size:12px}.evidence strong{display:block;margin-top:5px}.good{color:#6ee7b7}.caution{color:#fcd34d}.command{display:flex;gap:12px;border-radius:10px;background:#050a13;padding:14px;margin-top:13px;font:12px ui-monospace,monospace;color:#9fb0c6;overflow-wrap:anywhere}.command span{color:#6ee7b7}@media(max-width:760px){.grid,.metrics{grid-template-columns:1fr}header{display:block}.print{margin-top:14px}}@media print{body{background:#fff;color:#172033}.panel,.metric,.decision{background:#fff;border-color:#cbd5e1}.muted,.version{color:#64748b}.print{display:none}}</style></head><body><main><header><div><div class="eyebrow">SUGO REVIEW REPORT</div><h1>${escapeHtml(title)}</h1><div class="version">${escapeHtml(view.versionLabel)}${timing ? ` · ${escapeHtml(timing)}` : ""}</div></div><button class="print" onclick="window.print()">인쇄 / PDF 저장</button></header><section class="decision ${reviewReady ? "ready" : "hold"}"><div class="mark">${reviewReady ? "✓" : "!"}</div><div><strong>${reviewReady ? "review_done 판단 근거가 준비되었습니다" : "review_done 전에 확인할 항목이 남아 있습니다"}</strong><p>${reviewReady ? "모든 REQ와 기록된 검증 근거가 완료 상태입니다. 아래 근거와 남은 위험을 최종 확인하세요." : `${pendingRequirements}개 REQ 또는 검증 예외가 남아 있습니다. 승인 전 아래 노란 항목을 확인하세요.`}</p></div></section><div class="metrics"><div class="metric"><span>작업 차수</span><strong>${escapeHtml(view.versionLabel)}</strong></div><div class="metric"><span>REQ</span><strong>${requirements.length - pendingRequirements}/${requirements.length}</strong></div><div class="metric"><span>테스트</span><strong>${escapeHtml(view.testLabel ?? "기록 없음")}</strong></div><div class="metric"><span>변경 파일</span><strong>${files.length}개</strong></div><div class="metric"><span>사용자 확인</span><strong>${reviewReady ? "완료" : "필요"}</strong></div></div><section class="panel summary"><h2>작업 결과 요약</h2>${summaryParagraphs || `<p class="muted">기록된 요약이 없습니다.</p>`}</section><div class="grid"><section class="panel"><h2>요구사항 충족 상태</h2><table>${requirementRows}</table></section><section class="panel"><h2>검증 증거</h2><div class="evidence-grid">${verificationRows}</div>${command}</section></div><section class="panel"><h2>변경 파일</h2>${reportList(files, "변경 파일 기록이 없습니다.")}</section><div class="grid"><section class="panel"><h2>설계 결정</h2>${reportList(decisions, "별도 설계 결정이 기록되지 않았습니다.")}</section><section class="panel risk"><h2>남은 사항 및 위험</h2>${reportList(risks, "기록된 제한 사항이 없습니다.")}</section></div>${workResult.seed ? `<section class="panel"><h2>추가 작업 요청</h2><p>${escapeHtml(workResult.seed)}</p></section>` : ""}</main></body></html>`;
   const url = URL.createObjectURL(new Blob([documentHtml], { type: "text/html;charset=utf-8" }));
   window.open(url, "_blank", "noopener,noreferrer");
   window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
-function SummaryTab({ title, workResult }: { title: string; workResult: ReturnType<typeof parseWorkResult> }) {
-  const view = workResult ? workResultPresentation(workResult.report ?? workResult) : null;
-  const html = useMemo(() => marked.parse(view?.summary ?? "", { async: false }) as string, [view?.summary]);
-  if (!workResult || !view) return <div className="rounded-lg border border-dashed border-white/10 p-4 text-xs text-[var(--color-text-dim)]">아직 기록된 작업 요약이 없습니다.</div>;
+function SummaryTab({ title, workResult, requirements }: { title: string; workResult: ReturnType<typeof parseWorkResult>; requirements: RoadmapNode[] }) {
+  if (!workResult) return <div className="rounded-lg border border-dashed border-white/10 p-4 text-xs text-[var(--color-text-dim)]">아직 기록된 작업 요약이 없습니다.</div>;
   return (
-    <div className="space-y-3">
-      <button
-        type="button"
-        onClick={() => openWorkResultHtml(title, workResult)}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-violet-400/10 px-3 py-2.5 text-[12.5px] font-semibold text-violet-100 hover:bg-violet-400/20"
-      >
-        <ExternalLink size={14} /> 작업 요약 HTML로 열기
-      </button>
-      <section className="rounded-xl border border-cyan-400/15 bg-cyan-400/[0.035] p-3.5">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-cyan-200/70">결과 요약</span>
-          <span className="rounded-full border border-white/10 px-2 py-0.5 font-mono text-[9px] text-[var(--color-text-dim)]">{view.versionLabel}</span>
-        </div>
-        <div className="md-body text-[12px] leading-6 text-[var(--color-text)]" dangerouslySetInnerHTML={{ __html: html }} />
-      </section>
-      {view.sections.map((section) => (
-        <section key={section.title} className={`rounded-xl border p-3.5 ${section.tone === "warning" ? "border-amber-400/20 bg-amber-400/[0.035]" : "border-white/10 bg-white/[0.025]"}`}>
-          <div className={`mb-2 font-mono text-[10px] uppercase tracking-[0.12em] ${section.tone === "warning" ? "text-amber-200/75" : "text-[var(--color-text-dim)]"}`}>{section.title}</div>
-          <ul className="space-y-1.5 text-[11.5px] leading-relaxed text-[var(--color-text-muted)]">
-            {section.items.map((item) => <li key={item} className="flex gap-2"><span className="text-cyan-300/55">•</span><span className="min-w-0 break-words">{item}</span></li>)}
-          </ul>
-        </section>
-      ))}
-      {view.testCommand && <div className="rounded-lg border border-white/8 bg-black/20 px-3 py-2 font-mono text-[10px] leading-relaxed text-[var(--color-text-dim)]"><span className="mr-2 text-emerald-300/70">$</span>{view.testCommand}</div>}
-    </div>
+    <button type="button" onClick={() => openWorkResultHtml(title, workResult, requirements)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-violet-400/10 px-3 py-3 text-[12.5px] font-semibold text-violet-100 hover:bg-violet-400/20">
+      <ExternalLink size={14} /> 작업 요약 HTML로 열기
+    </button>
   );
 }
 
