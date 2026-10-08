@@ -70,14 +70,12 @@ export function RoadmapTab({
   onEdited,
   fill,
   focusNodeId,
-  initialInspectorTab,
 }: {
   workspace: string;
   onEdited?: () => void;
   fill?: boolean;
   /** §7B Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). */
   focusNodeId?: string;
-  initialInspectorTab?: "progress" | "summary";
 }) {
   const { data, counts, issues, loading } = useRoadmap(workspace);
   const [showDone, setShowDone] = useState(false); // 기본: 진행 중심
@@ -146,10 +144,10 @@ export function RoadmapTab({
 
       {fill ? (
         <div className="min-h-0 flex-1">
-          <RoadmapGraphPanel workspace={workspace} onEdited={onEdited} nodeFilter={visible} focusNodeId={focusNodeId} initialInspectorTab={initialInspectorTab} fill />
+          <RoadmapGraphPanel workspace={workspace} onEdited={onEdited} nodeFilter={visible} focusNodeId={focusNodeId} fill />
         </div>
       ) : (
-        <RoadmapGraphPanel workspace={workspace} onEdited={onEdited} nodeFilter={visible} focusNodeId={focusNodeId} initialInspectorTab={initialInspectorTab} />
+        <RoadmapGraphPanel workspace={workspace} onEdited={onEdited} nodeFilter={visible} focusNodeId={focusNodeId} />
       )}
     </div>
   );

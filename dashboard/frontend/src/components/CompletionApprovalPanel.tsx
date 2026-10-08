@@ -94,7 +94,7 @@ export function CompletionApprovalPanel({ workspace, node, onChanged }: { worksp
         </div>;
       })}
       {node.approval_read_only && <p className="rounded-lg border border-white/10 px-3 py-2 text-[var(--color-text-muted)]">과거 차수의 검증 기록입니다. 이 화면에서는 원문만 확인할 수 있습니다.</p>}
-      <p className="opacity-60">모든 미승인 사유를 승인하면 ‘사람 승인 검증완료’가 됩니다. 자동 검증완료와 구분되며 승인자·시각·사유가 기록됩니다.</p>
+      <p className="opacity-60">모든 미승인 사유를 승인하면 ‘사용자 최종 확인’ REQ가 완료됩니다. 승인자·시각·사유는 기록됩니다.</p>
       {error && <p role="alert" className="text-rose-300">{error}</p>}
     </div>
     {!!node.runtime_assessment?.blockers?.length && <div className="rounded-xl border border-white/10 p-3"><h3 className="font-semibold">참고용 경고 · 완료등급과 별개</h3>{node.runtime_assessment.blockers.map((b, i) => <p key={i} className="mt-2 whitespace-pre-wrap">{b}</p>)}</div>}

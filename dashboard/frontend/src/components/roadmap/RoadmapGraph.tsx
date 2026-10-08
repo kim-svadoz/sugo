@@ -1067,7 +1067,6 @@ export function RoadmapGraph({
   onEdited,
   nodeFilter,
   focusNodeId,
-  initialInspectorTab,
 }: {
   workspace: string;
   fill?: boolean;
@@ -1077,8 +1076,6 @@ export function RoadmapGraph({
   /** §7B Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). 로드된 뒤 그 노드로 팬 + 선택하고
    * 1회만 적용한다(이후 폴링 갱신에서 다시 튀지 않게 `focusedOnce`로 잠근다). */
   focusNodeId?: string;
-  /** Schedule의 작업 요약 진입점은 선택 Task를 열고 요약 탭부터 보여준다. */
-  initialInspectorTab?: "progress" | "summary";
 }) {
   const { userId } = useAuth();
   const { data, loading, error, refetch } = useRoadmap(workspace);
@@ -1594,7 +1591,6 @@ export function RoadmapGraph({
           <SubtaskPanel
             workspace={workspace}
             node={selectedNode}
-            initialTab={initialInspectorTab}
             requirementsUnavailable={selectedLineage?.requirementsUnavailable}
             reqs={selectedLineage?.reqs ?? nodes.filter((n) => n.parent === selectedNode.id && n.level === "subtask")}
             children={nodes.filter((n) => n.parent === selectedNode.id && n.level !== "subtask" && n.level !== "step")}
@@ -1769,7 +1765,6 @@ export function RoadmapGraphPanel(props: {
   nodeFilter?: RoadmapNode[];
   /** §7B Schedule 탭 딥링크. */
   focusNodeId?: string;
-  initialInspectorTab?: "progress" | "summary";
 }) {
   return (
     <ReactFlowProvider>

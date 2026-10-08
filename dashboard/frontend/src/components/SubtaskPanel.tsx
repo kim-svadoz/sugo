@@ -1,7 +1,7 @@
 import { workflowStatus } from "../lib/workflowStatus.js";
 import { CompletionApprovalPanel } from "./CompletionApprovalPanel.js";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Check, CheckCircle2, Copy, GitPullRequest, Sparkles } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, Copy, ExternalLink, GitPullRequest, Sparkles } from "lucide-react";
 import { marked } from "marked";
 import { useAuth } from "../auth/AuthContext.js";
 import { parseWorkResult, type RoadmapNode, type WorkResultFile } from "../hooks/useRoadmap.js";
@@ -45,7 +45,6 @@ export function SubtaskPanel({
   onOpenFile,
   scopeFiles,
   requirementsUnavailable = false,
-  initialTab = "progress",
 }: {
   workspace: string;
   node: RoadmapNode;
@@ -59,17 +58,22 @@ export function SubtaskPanel({
   /** SPEC/RUN은 하위 작업 전체의 변경 파일을 합친 scope 결과를 받는다. */
   scopeFiles?: WorkResultFile[];
   requirementsUnavailable?: boolean;
-  initialTab?: "progress" | "summary";
 }) {
   const { userId } = useAuth();
   const [tab, setTab] = useState<Tab>("progress");
   const reqs = reqsProp ?? [];
-  const progressItems = node.level === "task" ? reqs : (childrenProp ?? []);
+  const workResult = parseWorkResult(node.work_result);
+  const progressItems = useMemo(() => {
+    const items = node.level === "task" ? reqs : (childrenProp ?? []);
+    if (node.level !== "task" || !workResult?.report) return items;
+    return items.map((item) => item.id.endsWith("::REQ-CONFIRM")
+      ? { ...item, status: workResult.report!.completionGrade === "unverified" ? "pending" : "done", manual_status: null }
+      : item);
+  }, [childrenProp, node.level, reqs, workResult?.report]);
   const progress = inspectorProgress(node, progressItems);
 
-  useEffect(() => setTab(initialTab), [node.id, initialTab]);
+  useEffect(() => setTab("progress"), [node.id]);
 
-  const workResult = parseWorkResult(node.work_result);
   const files = scopeFiles ?? workResult?.files ?? [];
 
   return (
@@ -123,7 +127,7 @@ export function SubtaskPanel({
             onReviewResult={() => setTab("summary")}
           />
         )}
-        {tab === "summary" && <SummaryTab workResult={workResult} />}
+        {tab === "summary" && <SummaryTab title={node.title} workResult={workResult} />}
         {tab === "files" && <FilesTab files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} />}
       </div>
     </aside>
@@ -223,11 +227,10 @@ function ProgressTab({
             <div className="flex items-center justify-between border-b border-white/8 px-3 py-2.5">
               <div className="flex items-center gap-2">
                 {reportView.grade === "unverified" ? <AlertTriangle size={14} className="text-amber-300" /> : <CheckCircle2 size={14} className="text-emerald-300" />}
-                <span className={`text-xs font-semibold ${reportView.grade === "unverified" ? "text-amber-200" : reportView.grade === "verified_by_human" ? "text-violet-200" : "text-emerald-200"}`}>{reportView.gradeLabel}</span>
+                <span className={`text-xs font-semibold ${reportView.grade === "unverified" ? "text-amber-200" : "text-[var(--color-text)]"}`}>{reportView.grade === "unverified" ? "사용자 확인 필요" : "작업 결과"}</span>
               </div>
               {duration && <span className="font-mono text-[10px] text-[var(--color-text-dim)]">{duration}</span>}
             </div>
-            <div className="p-3 border-b border-white/8"><CompletionApprovalPanel workspace={workspace} node={node} onChanged={onChanged} /></div>
             <div className="grid grid-cols-2 gap-px bg-white/5 text-[10.5px]">
               <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">테스트</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.testLabel ?? "기록 없음"}</div></div>
               <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">실행 검증</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.runtimeVerified ? "runtime ✓" : "미검증"}{reportView.wiringVerified ? " · wiring ✓" : ""}</div></div>
@@ -301,7 +304,7 @@ function ProgressTab({
         </div>
       </div>}
 
-      {progressItems.length > 0 && (node.level === "task" ? <ReqList reqs={progressItems} /> : <ChildList items={progressItems} />)}
+      {progressItems.length > 0 && (node.level === "task" ? <ReqList reqs={progressItems} workspace={workspace} node={node} onChanged={onChanged} /> : <ChildList items={progressItems} />)}
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {(node.level === "task" || node.level === "workstream") && (node.manual_status ?? node.status) === "done" && workResult?.path && (
@@ -439,12 +442,34 @@ function PrPanel({ workspace, node }: { workspace: string; node: Pick<RoadmapNod
   );
 }
 
-function SummaryTab({ workResult }: { workResult: ReturnType<typeof parseWorkResult> }) {
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
+}
+
+function openWorkResultHtml(title: string, workResult: NonNullable<ReturnType<typeof parseWorkResult>>) {
+  const view = workResultPresentation(workResult.report ?? workResult);
+  const sections = view.sections.map((section) => `<section class="section ${section.tone}"><h2>${escapeHtml(section.title)}</h2><ul>${section.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>`).join("");
+  const command = view.testCommand ? `<section class="command"><span>$</span><code>${escapeHtml(view.testCommand)}</code></section>` : "";
+  const documentHtml = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} · ${escapeHtml(view.versionLabel)}</title><style>
+    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#07101f;color:#dce7f5}body{margin:0;background:radial-gradient(circle at 80% 0,#12304a55,transparent 35%),#07101f}main{max-width:920px;margin:0 auto;padding:56px 28px 80px}header{border-bottom:1px solid #26364d;padding-bottom:24px;margin-bottom:28px}.eyebrow{font:600 12px ui-monospace,monospace;letter-spacing:.12em;color:#67e8f9}h1{margin:10px 0 8px;font-size:30px}.version{color:#94a3b8;font:13px ui-monospace,monospace}.summary,.section,.command{border:1px solid #26364d;border-radius:16px;background:#0c1728cc;padding:22px 24px;margin-top:16px}.summary{font-size:17px;line-height:1.85;white-space:pre-wrap}.section h2{font-size:15px;color:#a5f3fc;margin:0 0 14px}.section ul{margin:0;padding-left:20px}.section li{margin:9px 0;line-height:1.7;color:#c5d2e3}.section.warning{border-color:#78591e}.section.warning h2{color:#fcd34d}.command{display:flex;gap:12px;font:13px ui-monospace,monospace;color:#94a3b8;overflow-wrap:anywhere}.command span{color:#6ee7b7}</style></head><body><main><header><div class="eyebrow">SUGO WORK RESULT</div><h1>${escapeHtml(title)}</h1><div class="version">${escapeHtml(view.versionLabel)}</div></header><section class="summary">${escapeHtml(view.summary)}</section>${sections}${command}</main></body></html>`;
+  const url = URL.createObjectURL(new Blob([documentHtml], { type: "text/html;charset=utf-8" }));
+  window.open(url, "_blank", "noopener,noreferrer");
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+function SummaryTab({ title, workResult }: { title: string; workResult: ReturnType<typeof parseWorkResult> }) {
   const view = workResult ? workResultPresentation(workResult.report ?? workResult) : null;
   const html = useMemo(() => marked.parse(view?.summary ?? "", { async: false }) as string, [view?.summary]);
   if (!workResult || !view) return <div className="rounded-lg border border-dashed border-white/10 p-4 text-xs text-[var(--color-text-dim)]">아직 기록된 작업 요약이 없습니다.</div>;
   return (
     <div className="space-y-3">
+      <button
+        type="button"
+        onClick={() => openWorkResultHtml(title, workResult)}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-violet-400/10 px-3 py-2.5 text-[12.5px] font-semibold text-violet-100 hover:bg-violet-400/20"
+      >
+        <ExternalLink size={14} /> 작업 요약 HTML로 열기
+      </button>
       <section className="rounded-xl border border-cyan-400/15 bg-cyan-400/[0.035] p-3.5">
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-cyan-200/70">결과 요약</span>
@@ -534,20 +559,15 @@ function FilesTab({ files, onOpenFile, aggregated = false }: { files: WorkResult
  * `{taskId}::REQ-CONFIRM`(사용자 최종확인)은 §9상 **에이전트가 못 닫고 사람의 review_done으로만**
  * 완료되는 노드라, 다른 REQ와 구분해 표시한다 — 이게 섞이면 "AI가 다 끝냈다"로 잘못 읽힌다.
  */
-function ReqList({ reqs }: { reqs: RoadmapNode[] }) {
+function ReqList({ reqs, workspace, node, onChanged }: { reqs: RoadmapNode[]; workspace: string; node: RoadmapNode; onChanged: () => void }) {
   return (
     <div className="space-y-1">
       {reqs.map((r) => {
         const st = (r.manual_status ?? r.status ?? "pending").toLowerCase();
         const isConfirm = r.id.endsWith("::REQ-CONFIRM");
         const done = st === "done";
-        return (
-          <div
-            key={r.id}
-            className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 ${
-              isConfirm ? "border-amber-500/30 bg-amber-500/5" : "border-[var(--color-border)] bg-[var(--color-background)]"
-            }`}
-          >
+        return <div key={r.id} className="space-y-2">
+          <div className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 ${isConfirm && !done ? "border-amber-500/30 bg-amber-500/5" : "border-[var(--color-border)] bg-[var(--color-background)]"}`}>
             <span className={`shrink-0 text-[12px] ${done ? "text-emerald-400" : "text-[var(--color-text-dim)]"}`}>
               {done ? "✓" : st === "in_progress" ? "◐" : "○"}
             </span>
@@ -560,12 +580,13 @@ function ReqList({ reqs }: { reqs: RoadmapNode[] }) {
               {r.title}
             </span>
             {isConfirm && (
-              <span className="shrink-0 rounded border border-amber-500/40 px-1.5 py-0.5 font-mono text-[9.5px] text-amber-300">
-                사용자 확인
+              <span className={`shrink-0 rounded border px-1.5 py-0.5 font-mono text-[9.5px] ${done ? "border-white/15 text-[var(--color-text-dim)]" : "border-amber-500/40 text-amber-300"}`}>
+                {done ? "확인 완료" : "사용자 확인"}
               </span>
             )}
           </div>
-        );
+          {isConfirm && <div className="rounded-lg border border-white/8 bg-black/10 px-3 py-2"><CompletionApprovalPanel workspace={workspace} node={node} onChanged={onChanged} /></div>}
+        </div>;
       })}
     </div>
   );
