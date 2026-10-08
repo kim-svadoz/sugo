@@ -123,11 +123,13 @@ it("미검증 등급은 완료 생명주기를 되돌리지 않고 별도 검토
     const schedule = async () => (await request(f.app).get("/api/workspaces/schedule").set("Authorization", f.pat).expect(200)).body.specs[0];
     expect(await schedule()).toMatchObject({ status: "done", done_task_count: 1, unverified_task_count: 1 });
     const workspaces = await request(f.app).get("/api/workspaces").set("Authorization", f.pat).expect(200);
-    expect(workspaces.body.workspaces[0]).toMatchObject({ roadmapDoneCount: 1, attentionCount: 1 });
+    expect(workspaces.body.workspaces[0]).toMatchObject({ roadmapCount: 1, roadmapDoneCount: 0, attentionCount: 1 });
     await f.approve(0).expect(200);
     expect((await view()).counts.done).toBe(1);
     await f.approve(1).expect(200);
     expect((await view()).nodes.map((n: any) => n.display_status)).toEqual(["done", "done", "done"]);
     expect(await schedule()).toMatchObject({ status: "done", done_task_count: 1, unverified_task_count: 0 });
+    const verifiedWorkspaces = await request(f.app).get("/api/workspaces").set("Authorization", f.pat).expect(200);
+    expect(verifiedWorkspaces.body.workspaces[0].roadmapDoneCount).toBe(1);
   } finally { await f.db.close(); }
 });

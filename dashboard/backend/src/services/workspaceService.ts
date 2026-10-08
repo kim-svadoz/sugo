@@ -135,7 +135,7 @@ async function roadmapCounts(db: DbClient, userId: string, workspaceName: string
     const effective = r.display_status ?? r.status;
     if (effective === "dropped") continue;
     total++;
-    if (effective === "done") done++;
+    if (effective === "done" && !isUnverifiedWorkResult(r.work_result)) done++;
     if (effective === "in_progress") active++;
   }
   return { total, done, active };
