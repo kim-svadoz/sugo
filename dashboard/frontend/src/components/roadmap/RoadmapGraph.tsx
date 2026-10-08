@@ -1385,19 +1385,19 @@ export function RoadmapGraph({
     const rootId = focusRootId(nodes, focusNodeId);
     const rootNode = rootId ? flowNodes.find((node) => node.id === rootId) : null;
     if (!rootNode || rootNode.type !== "container" || rootNode.data.collapsed) return;
-    const visibleSpecNodes = flowNodes.filter((node) => {
-      let current: FlowNode | undefined = node;
-      while (current?.parentId) {
-        if (current.parentId === rootId) return true;
-        current = flowNodes.find((candidate) => candidate.id === current?.parentId);
-      }
-      return node.id === rootId;
-    });
+    let nextFrame = 0;
     const frame = window.requestAnimationFrame(() => {
-      rf.fitView({ nodes: visibleSpecNodes.map((node) => ({ id: node.id })), padding: 0.035, minZoom: 0.85, maxZoom: 1.65, duration: 400 });
-      setFocusedOnce(true);
+      nextFrame = window.requestAnimationFrame(() => {
+        const width = typeof rootNode.measured?.width === "number" ? rootNode.measured.width : Number(rootNode.style?.width) || 560;
+        const height = typeof rootNode.measured?.height === "number" ? rootNode.measured.height : Number(rootNode.style?.height) || 400;
+        rf.setCenter(rootNode.position.x + width / 2, rootNode.position.y + height / 2, { zoom: 0.95, duration: 400 });
+        setFocusedOnce(true);
+      });
     });
-    return () => window.cancelAnimationFrame(frame);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.cancelAnimationFrame(nextFrame);
+    };
   }, [focusNodeId, focusedOnce, flowNodes, nodes, rf]);
 
   /**
