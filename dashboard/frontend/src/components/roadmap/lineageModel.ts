@@ -140,6 +140,8 @@ export function lineageSelection(item: LineageChainItem) {
   const node: RoadmapNode = {
     ...item.node,
     id: item.key,
+    ref: item.node.id,
+    approval_read_only: item.version < Number((item.node.work_result as { patchVersion?: number } | null)?.patchVersion ?? item.version),
     title: `v${item.version} ${item.version === 0 ? "feat" : "patch"} · ${item.title}`,
     work_result: explicitWorkResult ?? fallbackWorkResult,
     lineage: null,

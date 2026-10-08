@@ -154,6 +154,7 @@ function compactWorkResult(result: RoadmapWorkResult | undefined, summaryOnly = 
     const report = result.report ? {
       schemaVersion: result.report.schemaVersion, kind: result.report.kind,
       patchVersion: result.report.patchVersion, completionGrade: result.report.completionGrade,
+      completedAt: result.report.completedAt, bypassLabels: result.report.bypassLabels,
       summary: result.report.summary, verification: result.report.verification,
       changedFiles: [], designDecisions: [], knownLimitations: [],
     } : undefined;

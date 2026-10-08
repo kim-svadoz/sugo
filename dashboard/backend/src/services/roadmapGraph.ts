@@ -111,6 +111,7 @@ export interface RoadmapViewNode extends GraphNode {
   parent: string | null;
   title?: string;
   manualStatus?: string | null;
+  verification?: boolean;
 }
 
 /** 사람이 수동으로 덮은 상태가 있으면 그게 우선(§3.3 manual_status). */
@@ -128,7 +129,8 @@ export function roadmapCounts(nodes: RoadmapViewNode[]): RoadmapCounts {
     if (n.level !== "task") continue;
     counts.total++;
     const st = effectiveStatus(n);
-    if (st === "verification") { counts.verification = (counts.verification ?? 0) + 1; continue; }
+    if (n.verification || st === "verification") counts.verification = (counts.verification ?? 0) + 1;
+    if (st === "verification") { counts.done++; continue; }
     if (st in counts) counts[st as keyof RoadmapCounts]++;
   }
   return counts;

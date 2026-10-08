@@ -24001,6 +24001,8 @@ function compactWorkResult(result2, summaryOnly = false) {
       kind: result2.report.kind,
       patchVersion: result2.report.patchVersion,
       completionGrade: result2.report.completionGrade,
+      completedAt: result2.report.completedAt,
+      bypassLabels: result2.report.bypassLabels,
       summary: result2.report.summary,
       verification: result2.report.verification,
       changedFiles: [],
@@ -28074,7 +28076,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.26.1" : "0.0.0-dev";
+  return true ? "0.26.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts

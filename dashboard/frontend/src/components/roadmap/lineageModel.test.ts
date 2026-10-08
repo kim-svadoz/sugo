@@ -48,6 +48,7 @@ describe("patch lineage canvas model", () => {
       id: "task",
       title: "중복 결제 차단",
       parent: "run",
+      work_result: { patchVersion: 2 },
       lineage: [
         { version: "0", title: "최초 구현" },
         {
@@ -74,6 +75,8 @@ describe("patch lineage canvas model", () => {
     const selected = lineageSelection(chain.columns[0][1]);
     expect(selected.node.id).toBe("task:v1");
     expect(selected.node.title).toBe("v1 patch · Redis 만료 보강");
+    expect(selected.node.ref).toBe("task");
+    expect(selected.node.approval_read_only).toBe(true);
     expect(selected.node.work_result).toEqual(expect.objectContaining({ path: "/work-result-patch-v1.md" }));
     expect(selected.reqs.map((req) => req.title)).toEqual(["TTL을 갱신한다"]);
   });

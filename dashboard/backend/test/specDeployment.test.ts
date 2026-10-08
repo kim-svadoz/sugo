@@ -87,8 +87,8 @@ it("projects real deployed revisions onto SPEC without changing local completion
   await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", "dev", JSON.stringify(inventory), new Date().toISOString()]);
   await db.exec("INSERT INTO user_project_integration_mappings VALUES (?, ?, ?, ?)", ["u", project, JSON.stringify([{ accountName: "dev", service: "api", cluster: "cluster", environment: "dev" }]), new Date().toISOString()]);
   const roadmap = await getRoadmap(db, "u", "ws");
-  expect(roadmap.find(n => n.id === "spec")).toMatchObject({ display_status: "verification", deployment: { environment: "DEV", partial: false } });
-  expect((await getScheduledSpecs(db, "u"))[0]).toMatchObject({ status: "verification", deployment: { environment: "DEV" } });
+  expect(roadmap.find(n => n.id === "spec")).toMatchObject({ display_status: "done", deployment: { environment: "DEV", partial: false } });
+  expect((await getScheduledSpecs(db, "u"))[0]).toMatchObject({ status: "done", unverified_task_count: 1, deployment: { environment: "DEV" } });
   expect((await projectSpecDeployments(db, "other-user", "ws", roadmap)).size).toBe(0);
   await db.exec("UPDATE user_aws_context_snapshots SET observed_at = ?", ["2020-01-01T00:00:00Z"]);
   expect((await getRoadmap(db, "u", "ws")).find(n => n.id === "spec")?.deployment).toMatchObject({ environment: "DEV", stale: true });

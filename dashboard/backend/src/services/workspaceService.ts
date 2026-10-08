@@ -89,7 +89,7 @@ function isStale(status: string, updatedAt: string | null, now = Date.now()): bo
   return status === "in_progress" && updated !== null && now - updated >= STALE_ATTENTION_HOURS * 3_600_000;
 }
 
-function isUnverified(workResult: unknown): boolean {
+export function isUnverifiedWorkResult(workResult: unknown): boolean {
   const parsed = parseMaybeJson<{ report?: { completionGrade?: string } } | null>(workResult, null);
   return parsed?.report?.completionGrade === "unverified";
 }
@@ -116,7 +116,7 @@ async function workspaceAttention(db: DbClient, userId: string, workspaceName: s
     const status = row.display_status ?? row.status;
     if (status === "blocked") blocked++;
     else if (isStale(status, row.updated_at)) stale++;
-    if (status === "verification") unverified++;
+    if (isUnverifiedWorkResult(row.work_result)) unverified++;
   }
   const count = blocked + stale + unverified;
   const label = blocked > 0 ? `차단 ${blocked}건` : stale > 0 ? `확인 필요 ${stale}건` : unverified > 0 ? `검증 ${unverified}건` : null;
@@ -421,23 +421,26 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
   // manual_status와 달리 manual_title은 서버에서 곧바로 유효 title로 합친다 — Canvas의
   // n.title 참조가 수십 곳이라 프론트에 매번 manual_title ?? title 판정을 시키는 대신,
   // "원본 CLI 제목을 따로 보여줄 UI가 없다"는 전제로 여기서 한 번에 정리한다.
-  const nodes = await Promise.all(rows.map(async (r) => ({
+  const nodes = await Promise.all(rows.map(async (r) => {
+    const lineage = parseMaybeJson<Array<Record<string, unknown>> | null>(r.lineage, null);
+    const projectedLineage = lineage && await Promise.all(lineage.map(async entry => entry.workResult
+      ? { ...entry, workResult: await projectHumanCompletion(db, userId, workspaceName, r.id, entry.workResult) }
+      : entry));
+    return ({
     ...r,
     title: r.manual_title ?? r.title,
     depends_on: parseJsonArray(r.depends_on),
     work_result: await projectHumanCompletion(db, userId, workspaceName, r.id, r.work_result),
     runtime_assessment: parseMaybeJson<unknown>(r.runtime_assessment, null),
-    lineage: parseMaybeJson<unknown>(r.lineage, null),
+    lineage: projectedLineage,
     human_blocker: parseMaybeJson<unknown>(r.blocker_context, null),
     blocker_decision: r.blocker_response && r.blocker_answered_by && r.blocker_answered_at
       ? { response: r.blocker_response, answered_by: r.blocker_answered_by, answered_at: r.blocker_answered_at }
       : null,
-  })));
+    });
+  }));
   const displayed = nodes.map(n => ({ ...n, display_status: n.manual_status ?? (n.level === "task" ? projectedTaskStatus(n.status, n.runtime_assessment) : n.status) }));
-  for (const n of displayed) {
-    if (n.level === "task" && n.display_status === "done" && isUnverified(n.work_result)) n.display_status = "verification";
-  }
-  // Container completion includes human review; raw pipeline status remains an execution record.
+  // Container completion follows the execution lifecycle. Verification grade remains separate metadata.
   const byId = new Map(displayed.map(n => [n.id, n]));
   for (const n of displayed.filter(n => n.level === "spec" || n.level === "workstream")) {
     if (n.display_status === "dropped" || n.display_status === "blocked") continue;
@@ -451,7 +454,6 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
     if (!unfinished.length) continue;
     if (unfinished.some(t => t.display_status === "blocked")) n.display_status = "blocked";
     else if (unfinished.some(t => t.display_status === "in_progress")) n.display_status = "in_progress";
-    else if (unfinished.some(t => t.display_status === "verification")) n.display_status = "verification";
     else if (n.display_status === "done") n.display_status = "pending";
   }
   const deployments = await projectSpecDeployments(db, userId, workspaceName, displayed);
@@ -577,15 +579,15 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
     const children = tasksBySpec.get(`${row.workspace_name}\0${row.id}`) ?? [];
     const enriched = children.map((task) => {
       const raw = task.manual_status ?? projectedTaskStatus(task.status, task.runtime_assessment);
-      const status = raw === "done" && isUnverified(task.work_result) ? "verification" : raw;
-      return { ...task, status, stale: isStale(status, task.updated_at), unverified: status === "verification" };
+      const status = raw;
+      return { ...task, status, stale: isStale(status, task.updated_at), unverified: isUnverifiedWorkResult(task.work_result) };
     });
     const priority = (task: (typeof enriched)[number]) => task.status === "blocked" ? 0 : task.stale ? 1 : task.status === "in_progress" ? 2 : task.unverified ? 3 : task.status === "pending" ? 4 : 5;
     const focus = [...enriched].sort((a, b) => priority(a) - priority(b) || a.id.localeCompare(b.id))[0] ?? null;
     return {
       ...row,
       deployment: deployments.get(`${row.workspace_name}\0${row.id}`),
-      status: row.status === "dropped" ? "dropped" : enriched.some(t => t.status === "blocked") ? "blocked" : enriched.some(t => t.status === "in_progress") ? "in_progress" : enriched.some(t => t.status === "verification") ? "verification" : row.status === "done" && enriched.some(t => t.status === "pending") ? "pending" : row.status,
+      status: row.status === "dropped" ? "dropped" : enriched.some(t => t.status === "blocked") ? "blocked" : enriched.some(t => t.status === "in_progress") ? "in_progress" : row.status === "done" && enriched.some(t => t.status === "pending") ? "pending" : row.status,
       has_run: Boolean(has_run),
       title: manual_title ?? row.title,
       task_count: enriched.length,

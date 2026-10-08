@@ -40,6 +40,7 @@ import {
   getHistory,
   getRecentHistory,
   getRoadmap,
+  isUnverifiedWorkResult,
   getScheduledSpecs,
   getSpecContent,
   getRoadmapSpecDocument,
@@ -198,6 +199,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
       parent: n.parent,
       status: n.display_status ?? n.status,
       manualStatus: null,
+      verification: n.level === "task" && isUnverifiedWorkResult(n.work_result),
       dependsOn: n.depends_on,
     }));
     res.json({ nodes, counts: roadmapCounts(view), issues: roadmapIssues(view) });
