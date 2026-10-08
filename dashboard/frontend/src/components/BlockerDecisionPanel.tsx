@@ -3,6 +3,7 @@ import { Check, Copy, MessageSquareWarning } from "lucide-react";
 import { saveBlockerDecision, type BlockerDecision, type HumanBlocker } from "../api/roadmapMutationsApi.js";
 import { blockerResumePrompt } from "../lib/blockerDecision.js";
 import { presentSteKorean } from "../lib/steKorean.js";
+import { reviewConfirmationSections } from "../lib/reviewConfirmation.js";
 
 export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, question, decision, blocker, onSaved }: {
   userId: string | null;
@@ -37,8 +38,13 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
     setCopied(true); window.setTimeout(() => setCopied(false), 1800);
   }
 
+  const reviewSections = blocker?.kind === "review_confirmation" && blocker.reviewPacket
+    ? reviewConfirmationSections(blocker.reviewPacket)
+    : [];
+  const responseReady = response.trim().length > 0 && response.trim() !== "수정 필요 —";
+
   return <section className="rounded-xl border border-orange-400/45 bg-orange-400/[0.07] p-3">
-    <div className="flex items-center gap-2 text-sm font-semibold text-orange-100"><MessageSquareWarning size={16} /> 사람의 결정이 필요합니다</div>
+    <div className="flex items-center gap-2 text-sm font-semibold text-orange-100"><MessageSquareWarning size={16} /> {blocker?.kind === "review_confirmation" ? "작업 결과 확인" : "사람의 결정이 필요합니다"}</div>
     {blocker && <div className="mt-2 grid grid-cols-2 gap-2 text-[10.5px]">
       <div className="rounded-lg bg-black/20 px-3 py-2"><span className="text-orange-200/55">현재 상황</span><p className="mt-1 whitespace-pre-line text-orange-50">{presentSteKorean(blocker.summary)}</p></div>
       <div className="rounded-lg bg-black/20 px-3 py-2"><span className="text-orange-200/55">멈춘 단계</span><p className="mt-1 font-mono text-orange-50">{blocker.stage} → {blocker.resumeAction}</p></div>
@@ -47,15 +53,23 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
       <div className="text-[10px] text-orange-200/60">결정이 필요한 내용</div>
       <p className="mt-1 whitespace-pre-line text-[12.5px] text-orange-50">{presentSteKorean(blocker?.question || question || "차단 원인이 구체적으로 기록되지 않았습니다. 진행 기준을 직접 입력하세요.")}</p>
     </div>
+    {reviewSections.length > 0 && <div className="mt-3 grid gap-2 md:grid-cols-2">
+      {reviewSections.map((section) => <section key={section.id} className={section.id === "summary" ? "rounded-lg border border-cyan-300/20 bg-cyan-300/[0.05] p-3 md:col-span-2" : "rounded-lg border border-white/10 bg-black/15 p-3"}>
+        <h4 className="text-[10.5px] font-semibold text-cyan-200">{section.title}</h4>
+        <ul className="mt-1.5 space-y-1 text-[11.5px] leading-relaxed text-slate-200">
+          {section.items.map((item, index) => <li key={`${section.id}-${index}`} className="whitespace-pre-line">{section.items.length > 1 ? "• " : ""}{presentSteKorean(item)}</li>)}
+        </ul>
+      </section>)}
+    </div>}
     {blocker && blocker.context.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-[11px] text-orange-100/75">{blocker.context.map((item) => <li key={item} className="whitespace-pre-line">{presentSteKorean(item)}</li>)}</ul>}
-    {blocker && blocker.options.length > 0 && <div className="mt-2 space-y-1.5">{blocker.options.map((option) => <button key={option.id} type="button" onClick={() => setResponse(option.label)} className="w-full rounded-lg border border-orange-300/20 bg-black/15 px-3 py-2 text-left hover:border-orange-300/50"><strong className="text-xs text-orange-50">{option.label}</strong><span className="ml-2 text-[10.5px] text-orange-100/55">{option.impact}</span></button>)}</div>}
+    {blocker && blocker.options.length > 0 && <div className={`mt-2 ${blocker.kind === "review_confirmation" ? "grid grid-cols-2 gap-2" : "space-y-1.5"}`}>{blocker.options.map((option) => <button key={option.id} type="button" onClick={() => setResponse(option.id === "revise" ? "수정 필요 — " : option.label)} className={`w-full rounded-lg border px-3 py-2 text-left ${option.id === "approve" ? "border-emerald-300/30 bg-emerald-400/10 hover:border-emerald-300/60" : option.id === "revise" ? "border-rose-300/30 bg-rose-400/[0.07] hover:border-rose-300/60" : "border-orange-300/20 bg-black/15 hover:border-orange-300/50"}`}><strong className="text-xs text-orange-50">{option.label}</strong><span className="ml-2 text-[10.5px] text-orange-100/55">{option.impact}</span></button>)}</div>}
     {blocker && <p className="mt-2 text-[10.5px] text-amber-200"><strong>결정 전 멈추는 단계:</strong> {blocker.blockedNextStep}</p>}
-    <textarea value={response} onChange={(event) => setResponse(event.target.value)} placeholder="결정 내용과 기준을 구체적으로 입력하세요" className="mt-2 min-h-24 w-full resize-y rounded-lg border border-orange-300/25 bg-slate-950/55 p-2.5 text-xs text-white outline-none focus:border-orange-300/60" />
+    <textarea value={response} onChange={(event) => setResponse(event.target.value)} placeholder={blocker?.kind === "review_confirmation" ? "수정이 필요하면 변경할 내용을 구체적으로 입력하세요" : "결정 내용과 기준을 구체적으로 입력하세요"} className="mt-2 min-h-24 w-full resize-y rounded-lg border border-orange-300/25 bg-slate-950/55 p-2.5 text-xs text-white outline-none focus:border-orange-300/60" />
     <p className="mt-1.5 text-[10px] leading-relaxed text-orange-100/55">저장만으로 차단은 풀리지 않습니다. 재개 프롬프트를 원래 작업 세션에서 실행하면 Sugo가 답변·세션·Task를 검증한 뒤에만 다음 단계로 진행합니다.</p>
     {error && <p className="mt-1 text-[10px] text-rose-300">{error}</p>}
     <div className="mt-2 grid grid-cols-2 gap-2">
-      <button disabled={busy || !response.trim()} onClick={() => void persist()} className="rounded-lg border border-orange-300/30 px-2 py-2 text-xs font-semibold text-orange-100 disabled:opacity-40">{saved?.response === response.trim() ? <span className="inline-flex items-center gap-1"><Check size={12} /> 저장됨</span> : "결정 저장"}</button>
-      <button disabled={busy || !response.trim()} onClick={() => void copyResume()} className="rounded-lg bg-orange-400/20 px-2 py-2 text-xs font-semibold text-orange-50 disabled:opacity-40"><span className="inline-flex items-center gap-1">{copied ? <Check size={12} /> : <Copy size={12} />}{copied ? "복사됨" : "저장 후 재개 프롬프트 복사"}</span></button>
+      <button disabled={busy || !responseReady} onClick={() => void persist()} className="rounded-lg border border-orange-300/30 px-2 py-2 text-xs font-semibold text-orange-100 disabled:opacity-40">{saved?.response === response.trim() ? <span className="inline-flex items-center gap-1"><Check size={12} /> 저장됨</span> : "결정 저장"}</button>
+      <button disabled={busy || !responseReady} onClick={() => void copyResume()} className="rounded-lg bg-orange-400/20 px-2 py-2 text-xs font-semibold text-orange-50 disabled:opacity-40"><span className="inline-flex items-center gap-1">{copied ? <Check size={12} /> : <Copy size={12} />}{copied ? "복사됨" : "저장 후 재개 프롬프트 복사"}</span></button>
     </div>
   </section>;
 }

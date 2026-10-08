@@ -164,6 +164,7 @@ export interface HumanBlockerOption {
 
 export interface HumanBlocker {
   schemaVersion: 1;
+  kind?: "decision" | "review_confirmation";
   sessionId: string;
   stage: string;
   resumeAction: string;
@@ -173,6 +174,13 @@ export interface HumanBlocker {
   options: HumanBlockerOption[];
   blockedNextStep: string;
   createdAt: string;
+  reviewPacket?: {
+    summary: string;
+    changes: string[];
+    tests: string[];
+    designDecisions: string[];
+    knownLimitations: string[];
+  };
 }
 
 export interface RoadmapFile {

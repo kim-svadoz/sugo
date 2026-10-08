@@ -44,7 +44,11 @@ function buildTestToReviewPrompt(handoff: ChainHandoff): string {
     "## review-agent 지시사항",
     "- 코드를 수정하지 마세요. review-agent는 읽기 전용입니다.",
     "- sugo_get_project_context로 적용된 하네스 규칙을 로드한 뒤, sugo_validate로 검증 결과를 제출하세요.",
-    "- 완료 후 사용자에게 work-result를 보여주고 확인을 받은 뒤에만 review_done(userConfirmed:true)을 호출하세요.",
+    "- 검증이 끝나면 터미널에 긴 work-result를 출력해 확인을 묻지 마세요.",
+    "- 작업 요약·변경·테스트·설계 결정·알려진 한계를 reviewPacket으로 구조화해 메인 에이전트에 반환하세요.",
+    "- 메인 에이전트는 sugo_roadmap(action:'request_review_confirmation', ...)으로 reviewPacket을 Dashboard에 게시해야 합니다.",
+    "- Dashboard 결정을 resume_with_decision으로 확인한 뒤, 사용자가 진행을 승인한 경우에만 review_done(userConfirmed:true)을 호출해야 합니다.",
+    "- 결정이 '수정 필요'이면 review_done을 호출하지 말고, 적힌 수정 내용을 code-agent에 전달하세요.",
   ].join("\n");
 }
 

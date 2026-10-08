@@ -67,6 +67,11 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`, `-
     `sugo_validate` 호출강제 + 서버 실측 우선, 사용자 확인, summary 품질, 런타임 검증,
     계약증거(§4.3). PRD 커버리지는 `test_done`의 opt-in 게이트다(review_done이 아님). 여기서
     REQ와 REQ-CONFIRM이 자동 완료된다.
+    - review-agent가 근거를 반환하면 터미널에 긴 결과를 펼쳐 확인을 묻지 않는다.
+      `sugo_roadmap(action:"request_review_confirmation", workspace, id, sessionId, reviewPacket)`으로
+      Dashboard에 게시한다. 사용자는 Schedule 상세 또는 Agent Canvas의 Task Inspector에서 본다.
+    - Dashboard 결정을 `resume_with_decision`으로 검증한다. `확인, 진행`이면 `review_done`을 호출한다.
+      `수정 필요`이면 review_done을 호출하지 않고 해당 내용을 code-agent에 전달한다.
 11. `docs_done`: docs-agent로 README 등을 갱신한다.
 12. `commit`: DONE에서만 커밋을 생성한다(§6, 2커밋 분리, push 금지). 커밋 전에 체크포인트를 확인한다.
     - **§4.3-T TODO-SPEC 동기화(하드 게이트)**: TODO-SPEC이 있는 브랜치인데 세션 시작 이후 파일이

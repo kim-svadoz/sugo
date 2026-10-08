@@ -108,6 +108,7 @@ export interface ScheduledSpec {
 export interface BlockerDecision { response: string; answered_by: string; answered_at: string }
 export interface HumanBlocker {
   schemaVersion: 1;
+  kind?: "decision" | "review_confirmation";
   sessionId: string;
   stage: string;
   resumeAction: string;
@@ -117,6 +118,7 @@ export interface HumanBlocker {
   options: Array<{ id: string; label: string; impact: string }>;
   blockedNextStep: string;
   createdAt: string;
+  reviewPacket?: import("../lib/reviewConfirmation.js").ReviewPacket;
 }
 
 export function saveBlockerDecision(userId: string, workspace: string, nodeId: string, response: string) {

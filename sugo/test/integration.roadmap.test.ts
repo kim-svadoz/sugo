@@ -155,6 +155,42 @@ describe("§8.5 review_done → REQ/REQ-CONFIRM 자동완료", () => {
 });
 
 describe("§8.5 sugo_roadmap — link/unlink/group/backfill (task 레벨 관리)", () => {
+  it("review 결과를 Dashboard 확인 카드로 게시하고 같은 세션을 잠근다", async () => {
+    const { sessionId, taskId } = await toReadyAndBeyond(HEADING_PRD);
+    await call(handleSugoPlan, { action: "code_start", sessionId });
+    await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
+    await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
+    await call(handleSugoPlan, { action: "test_start", sessionId });
+    await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
+    await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
+    await call(handleSugoPlan, { action: "review_start", sessionId });
+
+    const requested = await call(handleSugoRoadmap, {
+      action: "request_review_confirmation",
+      workspace: "team-a",
+      id: taskId,
+      sessionId,
+      reviewPacket: {
+        summary: "로그인 구현과 검증을 마쳤습니다.",
+        changes: ["이메일 로그인 추가"],
+        tests: ["npm test 통과"],
+        designDecisions: ["기존 인증 흐름 재사용"],
+        knownLimitations: [],
+      },
+    });
+
+    expect(requested.isError).toBe(false);
+    expect(requested.data).toMatchObject({ awaitingHumanDecision: true, presentation: "dashboard" });
+    expect(requested.data.node.humanBlocker).toMatchObject({
+      kind: "review_confirmation",
+      sessionId,
+      resumeAction: "review_done",
+      reviewPacket: { tests: ["npm test 통과"] },
+    });
+    const blocked = await call(handleSugoPlan, { action: "review_done", sessionId, userConfirmed: true });
+    expect(blocked.data.errorCode).toBe("HUMAN_DECISION_REQUIRED");
+  });
+
   it("사람만 답할 수 있는 판단은 구조화된 차단으로 기록한다", async () => {
     const { sessionId, taskId } = await toReadyAndBeyond(HEADING_PRD);
     const blocked = await call(handleSugoRoadmap, {

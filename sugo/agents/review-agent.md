@@ -59,8 +59,11 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
    변경 파일, 요구사항 커버리지, 하네스 검증은 서버가 세션 증거에서 조립하므로 다시 꾸며 쓰거나
    성공으로 과장하지 않는다. `review_done`이 이 입력과 서버 증거를 단일 표준 리포트로 만들어
    `work-result.md`와 Dashboard JSON에 동시에 저장한다.
-9. 메인 복귀(스킵 금지): 런타임 자가검증
-   (`runtimeCheck{buildAttempted,testRun,runtimeVerified}`)과 metrics를 메인 에이전트에 전달한다.
+9. Dashboard 확인 자료: 터미널에 긴 리포트를 출력해 사용자 확인을 묻지 않는다. 메인 에이전트가
+   `sugo_roadmap(action:"request_review_confirmation")`을 호출할 수 있도록
+   `reviewPacket{summary,changes,tests,designDecisions,knownLimitations}`를 구조화해 전달한다.
+10. 메인 복귀(스킵 금지): 런타임 자가검증
+   (`runtimeCheck{buildAttempted,testRun,runtimeVerified}`), metrics, reviewPacket을 메인 에이전트에 전달한다.
 
 ## security 스킬
 

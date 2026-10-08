@@ -20,6 +20,7 @@ import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../hulk/types.js";
 import { fetchBlockerDecision } from "../dashboard/fetch.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
 import { assessSession } from "../ontology/sessionAssessment.js";
+import { buildReviewConfirmationBlocker } from "../reviewConfirmation.js";
 
 export const sugoRoadmapInputSchema = {
   action: z.enum([
@@ -36,6 +37,7 @@ export const sugoRoadmapInputSchema = {
     "mark_req",
     "pull_ordering",
     "block_for_human",
+    "request_review_confirmation",
     "resume_with_decision",
   ]),
   workspace: z.string().describe("HULK 워크스페이스 이름"),
@@ -63,6 +65,13 @@ export const sugoRoadmapInputSchema = {
   context: z.array(z.string()).optional().describe("block_for_human: 판단에 필요한 사실 목록"),
   options: z.array(z.object({ id: z.string(), label: z.string(), impact: z.string() })).optional().describe("block_for_human: 선택지와 각 영향"),
   blockedNextStep: z.string().optional().describe("block_for_human: 결정 전에는 진행할 수 없는 다음 단계"),
+  reviewPacket: z.object({
+    summary: z.string().min(1),
+    changes: z.array(z.string()),
+    tests: z.array(z.string()),
+    designDecisions: z.array(z.string()),
+    knownLimitations: z.array(z.string()),
+  }).optional().describe("request_review_confirmation: Dashboard에 표시할 검토 요약"),
 };
 
 const SugoRoadmapArgs = z.object(sugoRoadmapInputSchema);
@@ -164,6 +173,31 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       await saveSession(session);
       await updateRoadmapNodeRuntimeAssessment(args.workspace, args.id, assessSession(session));
       return ok({ awaitingHumanDecision: true, node: await getRoadmapNode(args.workspace, args.id) });
+    }
+    case "request_review_confirmation": {
+      if (!args.id || !args.sessionId || !args.reviewPacket) {
+        return errorResult("REVIEW_CONFIRMATION_FIELDS_REQUIRED", "review 확인 요청에는 id/sessionId/reviewPacket이 필요합니다.");
+      }
+      if (!(await sessionExists(args.sessionId))) return errorResult("SESSION_NOT_FOUND", `세션을 찾을 수 없습니다: ${args.sessionId}`);
+      const session = await loadSession(args.sessionId);
+      if (session.state !== "REVIEW_RUNNING") {
+        return errorResult("REVIEW_CONFIRMATION_STATE_INVALID", "review 확인 요청은 REVIEW_RUNNING 상태에서만 만들 수 있습니다.");
+      }
+      if (session.data.hulkWorkspace !== args.workspace || session.data.hulkTaskId !== args.id) {
+        return errorResult("BLOCKER_TARGET_MISMATCH", "현재 세션에 연결된 워크스페이스/Task와 확인 요청 대상이 다릅니다.");
+      }
+      const blocker = buildReviewConfirmationBlocker({ sessionId: args.sessionId, ...args.reviewPacket });
+      const result = await blockRoadmapNodeForHuman(args.workspace, args.id, blocker);
+      if (!result.ok) return errorResult(result.error!, result.message!);
+      session.data.humanDecisionGate = { workspace: args.workspace, taskId: args.id, blocker };
+      await saveSession(session);
+      await updateRoadmapNodeRuntimeAssessment(args.workspace, args.id, assessSession(session));
+      return ok({
+        awaitingHumanDecision: true,
+        presentation: "dashboard",
+        message: "Dashboard의 Schedule 또는 Agent Canvas에서 작업 결과를 확인하세요.",
+        node: await getRoadmapNode(args.workspace, args.id),
+      });
     }
     case "resume_with_decision": {
       if (!args.id || !args.sessionId) return errorResult("ID_AND_SESSION_REQUIRED", "재개에는 id와 sessionId가 필요합니다.");
