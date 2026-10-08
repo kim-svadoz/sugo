@@ -102,17 +102,38 @@ expect(result).toEqual(expected);
 
 피함: `processedAndValidatedDeploymentSnapshotResult`, `handleSuccessfulData`, `commonHelper`.
 
-## 5. 변경 범위를 지킨다
+## 5. 실행되는 테스트에는 한글 표시 이름을 쓴다
+
+JUnit에서 실제로 실행되는 테스트 메서드에는 항상 `@DisplayName`을 붙인다. `@Test`,
+`@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`처럼 테스트 러너가 실행하는 단위가 대상이다.
+표시 이름은 테스트 결과를 보는 사용자가 알아보기 쉬운 한글로 작성하고, 테스트 대상의 상황·행위와
+기대 결과를 함께 드러낸다. 메서드명을 그대로 번역하거나 클래스명·기술 식별자만 나열하지 않는다.
+
+```java
+@Test
+@DisplayName("로그인하지 않은 사용자는 주문 내역을 조회할 수 없다")
+void rejectsOrderHistoryRequestWithoutLogin() {
+    assertThatThrownBy(() -> orderHistory.getFor(anonymousUser))
+        .isInstanceOf(UnauthorizedException.class);
+}
+```
+
+테스트 러너가 직접 실행하지 않는 helper 메서드, fixture factory, setup 메서드에는 `@DisplayName`을
+붙이지 않는다. JUnit이 아닌 테스트 프레임워크에서는 그 프레임워크의 표시 이름 기능을 사용해 같은
+원칙으로 사용자에게 보이는 한글 테스트명을 작성한다.
+
+## 6. 변경 범위를 지킨다
 
 - 이번 변경에서 추가하거나 수정한 코드와 직접 관련된 낡은 주석만 정리한다.
 - 기능 변경에 저장소 전체 주석 삭제, 대규모 이름 변경, 전체 포맷을 섞지 않는다.
 - 기존 이름이 불완전해도 공개 계약, 직렬화 필드, DB 컬럼, 외부 API라면 호환성을 먼저 확인한다.
 - 주석 수나 이름 길이만으로 실패를 판정하지 않는다. 의미와 저장소 일관성을 본다.
 
-## 6. 에이전트별 책임
+## 7. 에이전트별 책임
 
 - **code-agent**: 주석 없이 명확한 코드를 기본 출력으로 만든다. 구현 전에 기존 이름을 검색한다.
-- **test-agent**: 테스트 이름과 fixture 이름도 도메인 행위와 기대 결과를 표현한다. arrange/act/assert를
+- **test-agent**: 테스트 이름과 fixture 이름도 도메인 행위와 기대 결과를 표현한다. 실제 실행되는
+  JUnit 테스트에는 사용자가 알아보기 쉬운 한글 `@DisplayName`을 항상 붙인다. arrange/act/assert를
   비롯한 단계 중계 주석은 쓰지 않는다. 복잡한 테스트 데이터의 이유와 회귀 조건만 남긴다.
 - **review-agent**: 새 diff의 주석과 식별자를 검토한다. 코드로 자명한 주석, 저장소 어휘와 어긋난
   이름, 모호한 범용 이름을 근거와 함께 지적한다. 취향만 다른 경우에는 실패로 판정하지 않는다.

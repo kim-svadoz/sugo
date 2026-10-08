@@ -19,6 +19,9 @@ describe("코드 주석·이름 공통 정책", () => {
     expect(policy).toContain("duplicate payment");
     expect(policy).toContain("AI스럽다");
     expect(policy).toContain("취향만 다른 경우에는 실패로 판정하지 않는다");
+    expect(policy).toContain("@DisplayName");
+    expect(policy).toContain("사용자가 알아보기 쉬운 한글");
+    expect(read("agents", "test-agent.md")).toContain("@DisplayName");
   });
 
   it.each(["code-agent.md", "test-agent.md", "review-agent.md", "docs-agent.md"])(

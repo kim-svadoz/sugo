@@ -13,7 +13,8 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 
 테스트 코드도 `harness-library/code-quality-policy.md`의 적용 대상이다. 주석 없이 읽히는 테스트를
 기본값으로 한다. 테스트명과 fixture 이름은 행위와 기대 결과를 표현하고, arrange/act/assert와
-given/when/then을 비롯한 단계 중계 주석은 만들지 않는다.
+given/when/then을 비롯한 단계 중계 주석은 만들지 않는다. JUnit에서 실제 실행되는 테스트에는 항상
+`@DisplayName`을 붙이고, 사용자가 상황·행위·기대 결과를 알아볼 수 있는 한글로 작성한다.
 
 ## 스킬
 
