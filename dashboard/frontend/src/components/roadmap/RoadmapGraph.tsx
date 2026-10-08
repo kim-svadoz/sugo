@@ -1587,7 +1587,7 @@ export function RoadmapGraph({
       </div>
 
       {selectedNode && (
-        <div className="ck-scroll w-[390px] shrink-0 overflow-auto border-l border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="ck-scroll w-[30%] shrink-0 overflow-auto border-l border-[var(--color-border)] bg-[var(--color-surface)]">
           <SubtaskPanel
             workspace={workspace}
             node={selectedNode}
