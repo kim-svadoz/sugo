@@ -80,7 +80,7 @@ server.registerTool(
   {
     title: "Cross-validate PRD requirements against changed files",
     description:
-      "PRD의 REQ-* 요구사항 키워드를 변경파일 콘텐츠와 대조해 pass/partial/fail을 판정한다. " +
+      "PRD의 REQ-* 키워드와 변경파일 문자열 겹침을 pass/partial/fail로 보여주는 비차단 진단이다. " +
       "code_done 게이트는 이 도구의 실제 호출 이력(analyzeAttempts)만 확인하며, 파라미터로 전달된 " +
       "analyzePassed 같은 자기보고는 신뢰하지 않는다(§4.1).",
     inputSchema: sugoAnalyzeInputSchema,

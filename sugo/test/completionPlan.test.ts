@@ -54,10 +54,8 @@ describe("currentBlockers — 실패한 것만 싣는다", () => {
     expect(currentBlockers(chain())).toEqual([]);
   });
 
-  it("analyze 실패를 verdict와 함께 싣는다", () => {
-    expect(currentBlockers(chain({ analyzePassed: false, analyzeLastVerdict: "partial" }))).toContain(
-      "analyze 미통과(partial)",
-    );
+  it("analyze partial은 진단 결과이지 blocker가 아니다", () => {
+    expect(currentBlockers(chain({ analyzeAttempts: 1, analyzePassed: false, analyzeLastVerdict: "partial" }))).toEqual([]);
   });
 
   it("test_done 스냅샷이 fail이면 test_reverify 경로를 알려준다", () => {
@@ -73,6 +71,6 @@ describe("buildCompletionPlan", () => {
   it("남은 경로와 blocker를 함께 돌려준다", () => {
     const plan = buildCompletionPlan("REVIEW_RUNNING", chain({ analyzePassed: false, testPassedState: "fail" }));
     expect(plan.remaining.map((s) => s.action)).toEqual(["review_done", "docs_done", "commit"]);
-    expect(plan.blockers.length).toBe(2);
+    expect(plan.blockers).toEqual(["test_done 시점 판정이 fail — 그린 증거 기록 후 test_reverify 필요"]);
   });
 });

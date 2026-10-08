@@ -44,8 +44,9 @@ AWS 직접 조회는 `harness-library/aws-readonly-policy.md`의 Claude/Codex �
 6. 구현과 자체검증: 구현하고 컴파일과 자체 확인까지 한다.
 7. 포맷: 감지된 포맷터를 적용한다(하네스 commands).
 8. PRD 교차검증: `sugo_analyze(changedFiles)`를 실제로 호출한다. 호출하지 않으면 §4.1에 따라
-   code_done이 차단된다. 키워드 false-negative가 잦으므로 3회를 소진하면 정직히 진행하고 진짜
-   증거는 test 단계로 넘긴다.
+   code_done이 차단된다. `verdict`는 PRD 단어와 코드 문자열의 겹침을 보여주는 비차단 진단이다.
+   `partial`/`fail`을 맞추려고 주석·이름을 바꾸거나 반복 호출하지 않는다. 결과를 테스트·review에
+   참고 정보로 넘기고 `code_done`으로 진행한다.
 9. 체인: `sugo_chain(sessionId, changeType, summary)`으로 test-agent에 인계한다. **관례상 필수이지
    서버가 강제하는 게 아니다** — `test_start`/`review_start` 둘 다 온톨로지 게이트가 `[]`(빈
    배열)이라 스킵해도 차단되지 않는다(`chainHandoffs`는 감사로그일 뿐 어디서도 조회해 막지 않음).

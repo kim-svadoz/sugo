@@ -65,9 +65,9 @@ function evidenceFor(session: PlanSession, action: ActionName | null): StoredEvi
         ...(session.data.baselineGate?.required ? [baseline()] : []),
         {
           id: "analyze",
-          label: "정적 분석 통과 기록",
-          status: chain.analyzeAttempts > 0 && chain.analyzePassed === true ? "present" : "missing",
-          source: "session.data.chainInfo.analyzeAttempts + analyzePassed",
+          label: "PRD 키워드 진단 실행 기록",
+          status: chain.analyzeAttempts > 0 ? "present" : "missing",
+          source: "session.data.chainInfo.analyzeAttempts",
         },
       ];
     case "test_done":

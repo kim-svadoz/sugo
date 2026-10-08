@@ -24507,7 +24507,8 @@ async function handleSugoAnalyze(rawArgs) {
         ...session.data.chainInfo,
         analyzeAttempts: attempts,
         analyzeLastVerdict: analysis.verdict,
-        analyzePassed: analysis.verdict === "pass"
+        // 호출 계약의 성공 여부다. 어휘 일치 verdict는 analyzeLastVerdict에 별도 보존한다.
+        analyzePassed: true
       }
     }
   };
@@ -24517,8 +24518,12 @@ async function handleSugoAnalyze(rawArgs) {
     sessionId: session.id,
     attempt: attempts,
     verdict: analysis.verdict,
+    lexicalVerdict: analysis.verdict,
+    method: "lexical-keyword-overlap",
+    blocking: false,
+    nextAction: "code_done",
     requirements: analysis.requirements,
-    note: attempts >= 3 ? "self-loop 3\uD68C \uC18C\uC9C4 \u2014 verdict\uC640 \uBB34\uAD00\uD558\uAC8C code_done\uC73C\uB85C \uC9C4\uD589 \uAC00\uB2A5\uD569\uB2C8\uB2E4(\xA74.1: \uC815\uC9C1\uD788 \uC9C4\uD589, \uC9C4\uC9DC \uC99D\uAC70\uB294 test\uB85C)." : void 0
+    note: "\uC774 verdict\uB294 PRD \uB2E8\uC5B4\uC640 \uBCC0\uACBD \uD30C\uC77C\uC758 \uBB38\uC790\uC5F4 \uACB9\uCE68\uC744 \uBCF4\uC5EC\uC8FC\uB294 \uBE44\uCC28\uB2E8 \uC9C4\uB2E8\uC785\uB2C8\uB2E4. \uD55C\uAE00\xB7\uC601\uBB38 \uC758\uBBF8 \uB3D9\uCE58\uB97C \uD310\uB2E8\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. verdict\uB97C \uB9DE\uCD94\uB824\uACE0 \uC8FC\uC11D\uC774\uB098 \uC774\uB984\uC744 \uBC14\uAFB8\uC9C0 \uB9C8\uC138\uC694. \uC2E4\uC81C \uB3D9\uC791\uC740 \uD14C\uC2A4\uD2B8\uC640 review\uC5D0\uC11C \uAC80\uC99D\uD558\uC138\uC694."
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
@@ -28065,7 +28070,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.25.1" : "0.0.0-dev";
+  return true ? "0.25.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30508,7 +30513,7 @@ var INTENTIONAL_WORKFLOW_CYCLES = [
 var EVIDENCE_FLOWS = [
   { id: "baseline", producedBy: "sugo_record_test_evidence", consumedBy: ["baseline_capture", "code_done", "integrate"], storageRef: "SessionData.baselineGate.evidence" },
   { id: "contract-red-green", producedBy: "sugo_record_contract_evidence", consumedBy: ["contract_done", "review_done"], storageRef: "ChainInfo.contractTests" },
-  { id: "analyze", producedBy: "sugo_analyze", consumedBy: ["code_done", "integrate"], storageRef: "ChainInfo.analyzeAttempts + analyzePassed" },
+  { id: "analyze", producedBy: "sugo_analyze", consumedBy: ["code_done", "integrate"], storageRef: "ChainInfo.analyzeAttempts + analyzeLastVerdict" },
   { id: "test", producedBy: "sugo_record_test_evidence", consumedBy: ["test_done", "test_reverify", "review_done"], storageRef: "ChainInfo.testEvidence" },
   { id: "validation", producedBy: "sugo_validate", consumedBy: ["review_done"], storageRef: "ChainInfo.lastValidation" },
   { id: "lethal-trifecta", producedBy: "sugo_check_lethal_trifecta", consumedBy: ["review_done"], storageRef: "ChainInfo.lastLethalTrifectaCheck" }
@@ -30693,7 +30698,6 @@ function summarizeSession(session) {
   const blockers = [];
   const evidence = chain?.testEvidence;
   if (evidence?.failed) blockers.push(`\uD14C\uC2A4\uD2B8 \uC2E4\uD328 ${evidence.failed}/${evidence.total ?? "?"}`);
-  if (chain?.analyzePassed === false) blockers.push("analyze \uBBF8\uD1B5\uACFC");
   if (chain?.reviewPassed === false) blockers.push("review \uBBF8\uD1B5\uACFC");
   if (chain?.autoLoopRetryCount) blockers.push(`review \uC7AC\uC2DC\uB3C4 ${chain.autoLoopRetryCount}\uD68C`);
   return {
@@ -30816,7 +30820,6 @@ function currentBlockers(chain) {
   const evidence = chain.testEvidence;
   if (evidence?.failed) blockers.push(`\uD14C\uC2A4\uD2B8 \uC2E4\uD328 ${evidence.failed}/${evidence.total ?? "?"}`);
   if (chain.testPassedState === "fail") blockers.push("test_done \uC2DC\uC810 \uD310\uC815\uC774 fail \u2014 \uADF8\uB9B0 \uC99D\uAC70 \uAE30\uB85D \uD6C4 test_reverify \uD544\uC694");
-  if (chain.analyzePassed === false) blockers.push(`analyze \uBBF8\uD1B5\uACFC(${chain.analyzeLastVerdict ?? "verdict \uC5C6\uC74C"})`);
   if (chain.reviewPassed === false) blockers.push("review \uBBF8\uD1B5\uACFC");
   return blockers;
 }
@@ -30851,9 +30854,9 @@ function evidenceFor(session, action) {
         ...session.data.baselineGate?.required ? [baseline()] : [],
         {
           id: "analyze",
-          label: "\uC815\uC801 \uBD84\uC11D \uD1B5\uACFC \uAE30\uB85D",
-          status: chain.analyzeAttempts > 0 && chain.analyzePassed === true ? "present" : "missing",
-          source: "session.data.chainInfo.analyzeAttempts + analyzePassed"
+          label: "PRD \uD0A4\uC6CC\uB4DC \uC9C4\uB2E8 \uC2E4\uD589 \uAE30\uB85D",
+          status: chain.analyzeAttempts > 0 ? "present" : "missing",
+          source: "session.data.chainInfo.analyzeAttempts"
         }
       ];
     case "test_done":
@@ -33934,7 +33937,7 @@ server.registerTool(
   "sugo_analyze",
   {
     title: "Cross-validate PRD requirements against changed files",
-    description: "PRD\uC758 REQ-* \uC694\uAD6C\uC0AC\uD56D \uD0A4\uC6CC\uB4DC\uB97C \uBCC0\uACBD\uD30C\uC77C \uCF58\uD150\uCE20\uC640 \uB300\uC870\uD574 pass/partial/fail\uC744 \uD310\uC815\uD55C\uB2E4. code_done \uAC8C\uC774\uD2B8\uB294 \uC774 \uB3C4\uAD6C\uC758 \uC2E4\uC81C \uD638\uCD9C \uC774\uB825(analyzeAttempts)\uB9CC \uD655\uC778\uD558\uBA70, \uD30C\uB77C\uBBF8\uD130\uB85C \uC804\uB2EC\uB41C analyzePassed \uAC19\uC740 \uC790\uAE30\uBCF4\uACE0\uB294 \uC2E0\uB8B0\uD558\uC9C0 \uC54A\uB294\uB2E4(\xA74.1).",
+    description: "PRD\uC758 REQ-* \uD0A4\uC6CC\uB4DC\uC640 \uBCC0\uACBD\uD30C\uC77C \uBB38\uC790\uC5F4 \uACB9\uCE68\uC744 pass/partial/fail\uB85C \uBCF4\uC5EC\uC8FC\uB294 \uBE44\uCC28\uB2E8 \uC9C4\uB2E8\uC774\uB2E4. code_done \uAC8C\uC774\uD2B8\uB294 \uC774 \uB3C4\uAD6C\uC758 \uC2E4\uC81C \uD638\uCD9C \uC774\uB825(analyzeAttempts)\uB9CC \uD655\uC778\uD558\uBA70, \uD30C\uB77C\uBBF8\uD130\uB85C \uC804\uB2EC\uB41C analyzePassed \uAC19\uC740 \uC790\uAE30\uBCF4\uACE0\uB294 \uC2E0\uB8B0\uD558\uC9C0 \uC54A\uB294\uB2E4(\xA74.1).",
     inputSchema: sugoAnalyzeInputSchema
   },
   handleSugoAnalyze

@@ -77,6 +77,9 @@ describe("analyze 호출강제 게이트 (§4.1)", () => {
     const analyze = await call(handleSugoAnalyze, { sessionId, changedFiles: ["login.js"] });
     expect(analyze.isError).toBe(false);
     expect(analyze.data.attempt).toBe(1);
+    expect(analyze.data.verdict).toBe("fail");
+    expect(analyze.data.blocking).toBe(false);
+    expect(analyze.data.note).toContain("주석이나 이름을 바꾸지 마세요");
 
     const codeDone = await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: ["login.js"] });
     expect(codeDone.isError).toBe(false);

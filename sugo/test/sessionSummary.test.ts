@@ -53,13 +53,13 @@ describe("summarizeSession — 왜 멈췄는지만 남긴다", () => {
     expect(s.blockers).toContain("테스트 실패 2/9");
   });
 
-  it("analyze·review 미통과와 재시도 횟수를 함께 싣는다", () => {
+  it("analyze partial은 블로커에서 제외하고 review 미통과와 재시도만 싣는다", () => {
     const s = summarizeSession(
       session({
         data: { chainInfo: { analyzePassed: false, reviewPassed: false, autoLoopRetryCount: 3 } },
       } as Partial<PlanSession>),
     );
-    expect(s.blockers).toEqual(["analyze 미통과", "review 미통과", "review 재시도 3회"]);
+    expect(s.blockers).toEqual(["review 미통과", "review 재시도 3회"]);
   });
 
   it("통과한 항목은 blocker에 넣지 않는다", () => {

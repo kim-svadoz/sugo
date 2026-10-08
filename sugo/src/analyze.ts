@@ -63,11 +63,10 @@ export function extractRequirements(prdContent: string): { id: string; keywords:
 }
 
 /**
- * 순수 함수: PRD의 REQ-* 키워드가 변경파일 콘텐츠에 등장하는지 대조한다(구현이 아니라 명세에서
- * 도출 — 순환검증 방지 원칙과는 별개로, 여기서는 "구현이 PRD를 실제로 반영했는가"를 본다).
- * score 1.0(전부매치)=pass, 0.5(일부매치)=partial, 0(전무)=fail — 설계안 임계값 그대로.
- * 키워드가 0개인 요구사항(추출 실패)은 검증 불가로 보고 안전측이 아니라 관대하게 pass 처리한다
- * (§4.1 교훈: "소스가 깊게 중첩되면 false-negative 잦음" — 애매하면 차단보다 test 단계로 넘긴다).
+ * 순수 함수: PRD의 REQ-* 단어가 변경 파일 문자열에 등장하는지만 대조한다.
+ * 의미 동치, 번역, 동작 충족 여부는 판정하지 않는다. 따라서 결과는 비차단 탐색 신호다.
+ * score 1.0(전부 일치)=pass, 0.5(일부 일치)=partial, 0(불일치)=fail이다.
+ * 키워드가 0개인 요구사항은 비교할 항목이 없으므로 pass로 표시한다.
  */
 export function analyzePrdMatch(prdContent: string, fileContents: string[]): AnalyzeResult {
   const requirements = extractRequirements(prdContent);

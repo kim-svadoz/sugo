@@ -58,6 +58,21 @@ function session(overrides: Partial<PlanSession> = {}): PlanSession {
 }
 
 describe("P1 runtime ontology projection", () => {
+  it("analyze partial을 실행 증거로 보존하고 차단으로 표시하지 않는다", () => {
+    const base = session();
+    const partial = session({
+      state: "CODE_RUNNING",
+      data: {
+        ...base.data,
+        humanDecisionGate: undefined,
+        chainInfo: { ...base.data.chainInfo, analyzeAttempts: 1, analyzePassed: false, analyzeLastVerdict: "partial" },
+      },
+    });
+    const result = projectSessionOntology(partial);
+    expect(result.assessment.blockers).not.toContain("analyze 미통과(partial)");
+    expect(result.assessment.evidence).toContainEqual(expect.objectContaining({ id: "analyze", status: "present" }));
+  });
+
   it("실제 세션·Task 데이터에서 객체와 핵심 관계를 결정적으로 투영한다", () => {
     const task: Task = {
       id: "task-payment",

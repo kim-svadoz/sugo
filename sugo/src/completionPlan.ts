@@ -71,7 +71,6 @@ export function currentBlockers(chain: ChainInfo | undefined): string[] {
   const evidence = chain.testEvidence;
   if (evidence?.failed) blockers.push(`테스트 실패 ${evidence.failed}/${evidence.total ?? "?"}`);
   if (chain.testPassedState === "fail") blockers.push("test_done 시점 판정이 fail — 그린 증거 기록 후 test_reverify 필요");
-  if (chain.analyzePassed === false) blockers.push(`analyze 미통과(${chain.analyzeLastVerdict ?? "verdict 없음"})`);
   if (chain.reviewPassed === false) blockers.push("review 미통과");
   return blockers;
 }

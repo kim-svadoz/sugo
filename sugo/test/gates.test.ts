@@ -93,7 +93,7 @@ describe("checkAnalyzeGate — 반드시 거부/허용", () => {
     expect(result.code).toBe("ANALYZE_NOT_CALLED");
   });
 
-  it("analyze를 1회 이상 호출했으면 통과한다(3회 소진 후 partial/fail이어도 허용)", () => {
+  it("analyze를 1회 이상 호출했으면 verdict와 관계없이 통과한다", () => {
     expect(checkAnalyzeGate(1, true).ok).toBe(true);
     expect(checkAnalyzeGate(3, true).ok).toBe(true);
   });

@@ -85,8 +85,10 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`, `-
 
 ### 사람 판단 차단 계약
 
-- 테스트 실패, analyze/review 미통과, 실행증거 부족처럼 에이전트가 직접 해결할 수 있는 게이트는
+- 테스트 실패, review 미통과, 실행증거 부족처럼 에이전트가 직접 해결할 수 있는 게이트는
   대시보드에 사람 차단으로 올리지 않는다. 원인을 고치고 같은 action을 다시 시도한다.
+- analyze의 `partial`/`fail`은 PRD 단어와 코드 문자열의 겹침을 보여주는 비차단 진단이다. 이를
+  통과시키려고 주석·이름을 바꾸거나 반복 호출하지 않는다.
 - PRD 이후 구현·검증 중 정책/범위/권한처럼 **사람만 결정할 수 있는 미확정 사항**이 발견되면
   임의로 추측하지 않는다. 현재 `hulkWorkspace`와 `hulkTaskId`를 사용해
   `sugo_roadmap(action:"block_for_human", workspace, id, sessionId, stage, resumeAction,

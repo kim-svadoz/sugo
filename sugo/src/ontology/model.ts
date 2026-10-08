@@ -527,7 +527,7 @@ export interface EvidenceFlow {
 export const EVIDENCE_FLOWS = [
   { id: "baseline", producedBy: "sugo_record_test_evidence", consumedBy: ["baseline_capture", "code_done", "integrate"], storageRef: "SessionData.baselineGate.evidence" },
   { id: "contract-red-green", producedBy: "sugo_record_contract_evidence", consumedBy: ["contract_done", "review_done"], storageRef: "ChainInfo.contractTests" },
-  { id: "analyze", producedBy: "sugo_analyze", consumedBy: ["code_done", "integrate"], storageRef: "ChainInfo.analyzeAttempts + analyzePassed" },
+  { id: "analyze", producedBy: "sugo_analyze", consumedBy: ["code_done", "integrate"], storageRef: "ChainInfo.analyzeAttempts + analyzeLastVerdict" },
   { id: "test", producedBy: "sugo_record_test_evidence", consumedBy: ["test_done", "test_reverify", "review_done"], storageRef: "ChainInfo.testEvidence" },
   { id: "validation", producedBy: "sugo_validate", consumedBy: ["review_done"], storageRef: "ChainInfo.lastValidation" },
   { id: "lethal-trifecta", producedBy: "sugo_check_lethal_trifecta", consumedBy: ["review_done"], storageRef: "ChainInfo.lastLethalTrifectaCheck" },

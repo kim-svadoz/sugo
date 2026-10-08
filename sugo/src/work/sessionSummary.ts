@@ -62,7 +62,6 @@ export function summarizeSession(session: PlanSession): SessionSummary {
 
   const evidence = chain?.testEvidence;
   if (evidence?.failed) blockers.push(`테스트 실패 ${evidence.failed}/${evidence.total ?? "?"}`);
-  if (chain?.analyzePassed === false) blockers.push("analyze 미통과");
   if (chain?.reviewPassed === false) blockers.push("review 미통과");
   if (chain?.autoLoopRetryCount) blockers.push(`review 재시도 ${chain.autoLoopRetryCount}회`);
 

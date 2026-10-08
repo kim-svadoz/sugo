@@ -12,10 +12,8 @@ export const sugoAnalyzeInputSchema = {
 const SugoAnalyzeArgs = z.object(sugoAnalyzeInputSchema);
 
 /**
- * §4.1 analyze 호출강제의 실제 판정 엔진. code_done의 analyze 게이트는 "호출 이력"만 보지만,
- * 이 도구 자체는 PRD 요구사항과 변경파일을 실제로 대조해 pass/partial/fail을 판정하고
- * session.chainInfo.analyzeAttempts를 서버측에서 증가시킨다(자기보고 analyzePassed:true만으론
- * code_done을 통과할 수 없는 이유 — 호출 이력은 오직 여기서만 기록된다).
+ * §4.1 analyze 호출 기록과 비차단 어휘 진단을 만든다. pass/partial/fail은 PRD 단어와 변경 파일
+ * 문자열의 겹침만 뜻하며 요구사항 충족 판정이 아니다. code_done은 서버가 남긴 호출 이력만 본다.
  */
 export async function handleSugoAnalyze(rawArgs: unknown) {
   const args = SugoAnalyzeArgs.parse(rawArgs);
@@ -48,7 +46,8 @@ export async function handleSugoAnalyze(rawArgs: unknown) {
         ...session.data.chainInfo,
         analyzeAttempts: attempts,
         analyzeLastVerdict: analysis.verdict,
-        analyzePassed: analysis.verdict === "pass",
+        // 호출 계약의 성공 여부다. 어휘 일치 verdict는 analyzeLastVerdict에 별도 보존한다.
+        analyzePassed: true,
       },
     },
   };
@@ -59,11 +58,12 @@ export async function handleSugoAnalyze(rawArgs: unknown) {
     sessionId: session.id,
     attempt: attempts,
     verdict: analysis.verdict,
+    lexicalVerdict: analysis.verdict,
+    method: "lexical-keyword-overlap",
+    blocking: false,
+    nextAction: "code_done",
     requirements: analysis.requirements,
-    note:
-      attempts >= 3
-        ? "self-loop 3회 소진 — verdict와 무관하게 code_done으로 진행 가능합니다(§4.1: 정직히 진행, 진짜 증거는 test로)."
-        : undefined,
+    note: "이 verdict는 PRD 단어와 변경 파일의 문자열 겹침을 보여주는 비차단 진단입니다. 한글·영문 의미 동치를 판단하지 않습니다. verdict를 맞추려고 주석이나 이름을 바꾸지 마세요. 실제 동작은 테스트와 review에서 검증하세요.",
   };
 
   return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };

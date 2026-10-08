@@ -77,6 +77,7 @@ export interface ChainInfo {
   implementationStartedAt?: string;
   changedFiles: string[];
   analyzeAttempts: number;
+  /** sugo_analyze 호출 계약이 성공했는지. lexical verdict 통과 여부가 아니다. */
   analyzePassed: boolean | null;
   analyzeLastVerdict?: "pass" | "partial" | "fail";
   testEvidence?: TestEvidenceRecord;
