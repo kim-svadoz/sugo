@@ -445,6 +445,10 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 }
 
+function requirementTitle(value: string): string {
+  return value.replace(/\s*\(TODO-SPEC\s*항목:\s*[^)]+\)\s*$/i, "").trim();
+}
+
 function reportList(items: string[], empty: string): string {
   const values = items.length ? items : [empty];
   return `<ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
@@ -462,7 +466,7 @@ function openWorkResultHtml(title: string, workResult: NonNullable<ReturnType<ty
   const requirementRows = requirements.length
     ? requirements.map((item) => {
       const done = (item.manual_status ?? item.status) === "done";
-      return `<tr><td><span class="state ${done ? "done" : "pending"}">${done ? "완료" : "확인 필요"}</span></td><td>${escapeHtml(item.title)}</td></tr>`;
+      return `<tr><td><span class="state ${done ? "done" : "pending"}">${done ? "완료" : "확인 필요"}</span></td><td>${escapeHtml(requirementTitle(item.title))}</td></tr>`;
     }).join("")
     : `<tr><td colspan="2" class="muted">기록된 REQ가 없습니다.</td></tr>`;
   const test = report?.verification.test;
@@ -575,9 +579,9 @@ function ReqList({ reqs, workspace, node, onChanged }: { reqs: RoadmapNode[]; wo
               className={`min-w-0 flex-1 truncate text-[12.5px] ${
                 done ? "text-[var(--color-text-muted)]" : "text-[var(--color-text)]"
               }`}
-              title={r.title}
+              title={requirementTitle(r.title)}
             >
-              {r.title}
+              {requirementTitle(r.title)}
             </span>
             {isConfirm && (
               <span className={`shrink-0 rounded border px-1.5 py-0.5 font-mono text-[9.5px] ${done ? "border-white/15 text-[var(--color-text-dim)]" : "border-amber-500/40 text-amber-300"}`}>
