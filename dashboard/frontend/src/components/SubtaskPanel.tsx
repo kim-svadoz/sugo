@@ -234,7 +234,12 @@ function ProgressTab({
               <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">테스트</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.testLabel ?? "기록 없음"}</div></div>
               <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">실행 검증</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.runtimeVerified ? "runtime ✓" : "미검증"}{reportView.wiringVerified ? " · wiring ✓" : ""}</div></div>
             </div>
-            {workResult.seed && <div className="border-t border-white/8 px-3 py-2 text-[10.5px] leading-relaxed text-violet-100/65"><span className="mr-1.5 font-mono text-violet-300/80">SEED</span>{workResult.seed}</div>}
+            {workResult.seed && (
+              <div className="border-t border-white/10 px-3 py-3">
+                <div className="mb-1.5 text-[11px] font-semibold text-violet-200">추가 작업 요청</div>
+                <p className="whitespace-pre-wrap break-words text-[12.5px] leading-6 text-slate-200">{workResult.seed}</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-white/10 p-3 text-xs opacity-50">아직 work_result 없음</div>
