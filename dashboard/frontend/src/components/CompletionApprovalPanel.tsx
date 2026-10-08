@@ -2,8 +2,7 @@ import { postCompletionApproval } from "../api/completionApprovalApi.js";
 import { completionReasonPresentation } from "./completionReasonPresentation.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { apiJson } from "../api/client.js";
-import { parseWorkResult, type CompletionLabel, type HumanApprovalEvent, type RoadmapNode } from "../hooks/useRoadmap.js";
+import { parseWorkResult, type CompletionLabel, type RoadmapNode } from "../hooks/useRoadmap.js";
 
 export const completionLabelId = (l: CompletionLabel): string => JSON.stringify([l.kind, l.reason, l.patchVersion, l.recordedAt, l.implementationCycle ?? 0]);
 export function CompletionApprovalPanel({ workspace, node, onChanged }: { workspace: string; node: RoadmapNode; onChanged: () => void }) {
@@ -15,16 +14,8 @@ export function CompletionApprovalPanel({ workspace, node, onChanged }: { worksp
   const openerRef = useRef<HTMLButtonElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [history, setHistory] = useState<HumanApprovalEvent[]>([]);
   const approvalNodeId = node.id.includes(":v") && node.ref ? node.ref : node.id;
-  useEffect(() => {
-    setReasons({}); setError(""); setHistory([]);
-    if (node.level !== "task" || !report) return;
-    let alive = true;
-    void apiJson<{ events: HumanApprovalEvent[] }>(`/api/workspaces/${encodeURIComponent(workspace)}/roadmap/completion-approval-history?nodeId=${encodeURIComponent(approvalNodeId)}`)
-      .then(r => { if (alive) setHistory(r.events); }).catch(() => { if (alive) setError("승인 이력을 가져오지 못했습니다."); });
-    return () => { alive = false; };
-  }, [workspace, approvalNodeId, result?.approvalResultKey, report?.humanApprovals?.length]);
+  useEffect(() => { setReasons({}); setError(""); }, [workspace, approvalNodeId, result?.approvalResultKey, report?.humanApprovals?.length]);
   useEffect(() => { setOpen(false); }, [workspace, node.id]);
   useEffect(() => {
     if (!open) return;
@@ -106,7 +97,6 @@ export function CompletionApprovalPanel({ workspace, node, onChanged }: { worksp
       {error && <p role="alert" className="text-rose-300">{error}</p>}
     </div>
     {!!node.runtime_assessment?.blockers?.length && <div className="rounded-xl border border-white/10 p-3"><h3 className="font-semibold">참고용 경고 · 완료등급과 별개</h3>{node.runtime_assessment.blockers.map((b, i) => <p key={i} className="mt-2 whitespace-pre-wrap">{b}</p>)}</div>}
-    {!!history.length && <details className="rounded-xl border border-white/10 p-3"><summary>사람 승인 감사 기록 ({history.length})</summary>{history.map((e, i) => <div key={i} className="mt-2 whitespace-pre-wrap break-words border-t border-white/10 pt-2">{e.action === "approve" ? "승인" : "승인 취소"} · {e.userId} · {e.at}<br />[{e.kind}] {e.originalReason}<br />{e.reason}<br />{e.workResultPath}</div>)}</details>}
         </div>
       </div>
     </div>, document.body)}

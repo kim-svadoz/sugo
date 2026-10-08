@@ -48,6 +48,7 @@ describe("patch lineage canvas model", () => {
       id: "task",
       title: "중복 결제 차단",
       parent: "run",
+      status: "verification",
       work_result: { patchVersion: 2 },
       lineage: [
         { version: "0", title: "최초 구현" },
@@ -70,7 +71,7 @@ describe("patch lineage canvas model", () => {
       [1, "Redis 만료 보강"],
       [2, "동시성 패치"],
     ]);
-    expect(chain.columns[0].map((item) => item.node.status)).toEqual(["done", "done", "done"]);
+    expect(chain.columns[0].map((item) => item.node.status)).toEqual(["done", "done", "verification"]);
 
     const selected = lineageSelection(chain.columns[0][1]);
     expect(selected.node.id).toBe("task:v1");

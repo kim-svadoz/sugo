@@ -130,7 +130,7 @@ export function roadmapCounts(nodes: RoadmapViewNode[]): RoadmapCounts {
     counts.total++;
     const st = effectiveStatus(n);
     if (n.verification || st === "verification") counts.verification = (counts.verification ?? 0) + 1;
-    if (st === "verification") { counts.done++; continue; }
+    if (st === "verification") continue;
     if (st in counts) counts[st as keyof RoadmapCounts]++;
   }
   return counts;

@@ -440,7 +440,10 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
     });
   }));
   const displayed = nodes.map(n => ({ ...n, display_status: n.manual_status ?? (n.level === "task" ? projectedTaskStatus(n.status, n.runtime_assessment) : n.status) }));
-  // Container completion follows the execution lifecycle. Verification grade remains separate metadata.
+  for (const n of displayed) {
+    if (n.level === "task" && n.display_status === "done" && isUnverifiedWorkResult(n.work_result)) n.display_status = "verification";
+  }
+  // A finished pipeline can still require human verification. Containers surface that outstanding work.
   const byId = new Map(displayed.map(n => [n.id, n]));
   for (const n of displayed.filter(n => n.level === "spec" || n.level === "workstream")) {
     if (n.display_status === "dropped" || n.display_status === "blocked") continue;
@@ -454,6 +457,7 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
     if (!unfinished.length) continue;
     if (unfinished.some(t => t.display_status === "blocked")) n.display_status = "blocked";
     else if (unfinished.some(t => t.display_status === "in_progress")) n.display_status = "in_progress";
+    else if (unfinished.some(t => t.display_status === "verification")) n.display_status = "verification";
     else if (n.display_status === "done") n.display_status = "pending";
   }
   const deployments = await projectSpecDeployments(db, userId, workspaceName, displayed);
@@ -579,15 +583,16 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
     const children = tasksBySpec.get(`${row.workspace_name}\0${row.id}`) ?? [];
     const enriched = children.map((task) => {
       const raw = task.manual_status ?? projectedTaskStatus(task.status, task.runtime_assessment);
-      const status = raw;
-      return { ...task, status, stale: isStale(status, task.updated_at), unverified: isUnverifiedWorkResult(task.work_result) };
+      const unverified = isUnverifiedWorkResult(task.work_result);
+      const status = raw === "done" && unverified ? "verification" : raw;
+      return { ...task, status, stale: isStale(status, task.updated_at), unverified };
     });
     const priority = (task: (typeof enriched)[number]) => task.status === "blocked" ? 0 : task.stale ? 1 : task.status === "in_progress" ? 2 : task.unverified ? 3 : task.status === "pending" ? 4 : 5;
     const focus = [...enriched].sort((a, b) => priority(a) - priority(b) || a.id.localeCompare(b.id))[0] ?? null;
     return {
       ...row,
       deployment: deployments.get(`${row.workspace_name}\0${row.id}`),
-      status: row.status === "dropped" ? "dropped" : enriched.some(t => t.status === "blocked") ? "blocked" : enriched.some(t => t.status === "in_progress") ? "in_progress" : row.status === "done" && enriched.some(t => t.status === "pending") ? "pending" : row.status,
+      status: row.status === "dropped" ? "dropped" : enriched.some(t => t.status === "blocked") ? "blocked" : enriched.some(t => t.status === "in_progress") ? "in_progress" : enriched.some(t => t.status === "verification") ? "verification" : row.status === "done" && enriched.some(t => t.status === "pending") ? "pending" : row.status,
       has_run: Boolean(has_run),
       title: manual_title ?? row.title,
       task_count: enriched.length,

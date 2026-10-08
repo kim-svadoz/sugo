@@ -1,4 +1,4 @@
-import { needsVerification, workflowStatus } from "../lib/workflowStatus.js";
+import { workflowStatus } from "../lib/workflowStatus.js";
 import { useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
@@ -24,7 +24,6 @@ export function RoadmapPage() {
     if (n.level !== "task") continue;
     const st = workflowStatus(n);
     if (st in counts) counts[st]++;
-    if (needsVerification(n)) counts.verification++;
   }
 
   // Esc / ← 로 닫는다. 그래프 안의 메뉴·폐기함이 Esc를 먼저 잡아 전파를 멈추므로
