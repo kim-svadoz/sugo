@@ -5,7 +5,7 @@ type WorkResultLike = {
 } | null;
 
 export type GuidanceKind = "draft" | "ready" | "in_progress" | "blocked" | "attention" | "verification" | "done" | "pending";
-export type GuidanceAction = "open_canvas" | "review_verification" | "review_result" | "create_pr" | "continue_patch" | "write_spec" | "start_feat" | "none";
+export type GuidanceAction = "open_canvas" | "open_review_confirmation" | "review_verification" | "review_result" | "create_pr" | "continue_patch" | "write_spec" | "start_feat" | "none";
 
 export interface RuntimeAssessment {
   projectionSchemaVersion: 1;
@@ -28,6 +28,7 @@ export interface TaskGuidanceInput {
   updated_at?: string | null;
   work_result?: WorkResultLike | unknown;
   runtime_assessment?: RuntimeAssessment | null;
+  human_blocker?: { kind?: string } | null;
 }
 
 export interface TaskGuidance {
@@ -104,6 +105,11 @@ function guidanceFromAssessment(assessment: RuntimeAssessment): TaskGuidance {
 export function taskGuidance(node: TaskGuidanceInput, now = Date.now()): TaskGuidance {
   if (node.runtime_assessment?.projectionSchemaVersion === 1) {
     const guidance = guidanceFromAssessment(node.runtime_assessment);
+    if (node.human_blocker?.kind === "review_confirmation"
+      && node.runtime_assessment.status === "blocked"
+      && node.runtime_assessment.currentStage === "REVIEW_RUNNING") {
+      return { ...guidance, nextAction: "작업 결과 확인 열기", action: "open_review_confirmation" };
+    }
     if (node.runtime_assessment.status === "completed") {
       const grade = parsedWorkResult(node.work_result)?.report?.completionGrade;
       if (grade === "unverified") return { ...guidance, kind: "verification", label: "검증", currentStage: "사람 검증 대기", reason: "코드 작업은 끝났지만 검증 예외가 남아 있습니다. 완료등급 아래의 사유를 검토하세요.", nextAction: "미검증 사유 검토", action: "review_verification" };

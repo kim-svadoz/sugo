@@ -197,13 +197,18 @@ function ProgressTab({
 
   function handlePrimaryAction() {
     if (!guidance) return;
+    if (guidance.action === "open_review_confirmation") {
+      const panel = document.querySelector<HTMLElement>("#review-confirmation-panel");
+      panel?.scrollIntoView({ behavior: "smooth", block: "start" });
+      panel?.focus({ preventScroll: true });
+    }
     if (guidance.action === "review_verification") document.querySelector<HTMLButtonElement>("#completion-review [data-review-open]")?.click();
     if (guidance.action === "review_result") onReviewResult();
     if (guidance.action === "continue_patch") handleCopyPatchBridge();
     if (guidance.action === "create_pr") setShowPr(true);
   }
 
-  const actionable = guidance && ["review_verification", "review_result", "continue_patch", "create_pr"].includes(guidance.action);
+  const actionable = guidance && ["open_review_confirmation", "review_verification", "review_result", "continue_patch", "create_pr"].includes(guidance.action);
 
   const resultSection = (
       <div className="space-y-2">

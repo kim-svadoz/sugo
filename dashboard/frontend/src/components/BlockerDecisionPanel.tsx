@@ -43,7 +43,7 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
     : [];
   const responseReady = response.trim().length > 0 && response.trim() !== "수정 필요 —";
 
-  return <section className="rounded-xl border border-orange-400/45 bg-orange-400/[0.07] p-3">
+  return <section id={blocker?.kind === "review_confirmation" ? "review-confirmation-panel" : undefined} tabIndex={blocker?.kind === "review_confirmation" ? -1 : undefined} className="scroll-mt-4 rounded-xl border border-orange-400/45 bg-orange-400/[0.07] p-3 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60">
     <div className="flex items-center gap-2 text-sm font-semibold text-orange-100"><MessageSquareWarning size={16} /> {blocker?.kind === "review_confirmation" ? "작업 결과 확인" : "사람의 결정이 필요합니다"}</div>
     {blocker && <div className="mt-2 grid grid-cols-2 gap-2 text-[10.5px]">
       <div className="rounded-lg bg-black/20 px-3 py-2"><span className="text-orange-200/55">현재 상황</span><p className="mt-1 whitespace-pre-line text-orange-50">{presentSteKorean(blocker.summary)}</p></div>

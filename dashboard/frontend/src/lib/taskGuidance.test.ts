@@ -22,6 +22,24 @@ describe("task guidance", () => {
     });
   });
 
+  it("리뷰 확인 차단은 REVIEW_RUNNING을 유지하고 결과 화면 재진입 행동을 제공한다", () => {
+    expect(taskGuidance({
+      status: "blocked",
+      human_blocker: { kind: "review_confirmation" },
+      runtime_assessment: {
+        projectionSchemaVersion: 1, status: "blocked", currentStage: "REVIEW_RUNNING",
+        nextActions: [], recommendedAction: null, humanDecisionRequired: true,
+        blockers: ["사람 검토 대기"], evidence: [], blockingReason: "사람 검토 대기",
+        blockedNextStep: "review_done", resumesAt: "review_done",
+      },
+    }, now)).toMatchObject({
+      kind: "blocked",
+      currentStage: "REVIEW_RUNNING",
+      nextAction: "작업 결과 확인 열기",
+      action: "open_review_confirmation",
+    });
+  });
+
   it("차단은 이유와 해소 전 진행 불가를 가장 먼저 보여준다", () => {
     expect(taskGuidance({ status: "blocked", note: "외부 API 정책 확인 대기" }, now)).toMatchObject({
       kind: "blocked",
