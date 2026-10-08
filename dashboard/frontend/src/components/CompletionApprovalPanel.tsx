@@ -53,11 +53,12 @@ export function CompletionApprovalPanel({ workspace, node, onChanged }: { worksp
   const latest = new Map((report.humanApprovals ?? []).map(e => [e.labelId, e]));
   const isPrior = (l: CompletionLabel) => (l.kind === "evidenceResnapshot" && !!l.supersededAt && (l.supersededByCycle ?? 0) > (l.implementationCycle ?? 0)) || l.patchVersion !== report.patchVersion;
   const pending = labels.filter(l => !isPrior(l) && latest.get(completionLabelId(l))?.action !== "approve").length;
+  const reviewComplete = pending === 0 && report.completionGrade !== "unverified";
   const ordered = [...labels].sort((a, b) => Number(isPrior(a)) - Number(isPrior(b)) || Number(latest.get(completionLabelId(a))?.action === "approve") - Number(latest.get(completionLabelId(b))?.action === "approve"));
   return <section id="completion-review" className="space-y-2 text-[13px] leading-6">
     <div className="flex items-center justify-between gap-3">
-      <div><h3 className="font-semibold text-amber-200">{report.completionGrade === "unverified" ? "미검증 사유" : "사람 검토 기록"}</h3><p className="text-[12px] text-[var(--color-text-muted)]">{pending > 0 ? `사람 검토 ${pending}건 남음` : labels.length ? "미승인 사유 없음" : report.bypassLabels ? "검증 예외 없음" : "사유 기록 동기화 필요"}</p></div>
-      {(labels.length > 0 || report.completionGrade === "unverified") && <button ref={openerRef} data-review-open type="button" onClick={() => setOpen(true)} className="shrink-0 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 font-semibold text-amber-100">사유 검토</button>}
+      <div><h3 className={`font-semibold ${reviewComplete ? "text-[var(--color-text)]" : "text-amber-200"}`}>{report.completionGrade === "unverified" ? "미검증 사유" : "사람 검토 기록"}</h3><p className="text-[12px] text-[var(--color-text-muted)]">{pending > 0 ? `사람 검토 ${pending}건 남음` : labels.length ? "미승인 사유 없음" : report.bypassLabels ? "검증 예외 없음" : "사유 기록 동기화 필요"}</p></div>
+      {(labels.length > 0 || report.completionGrade === "unverified") && <button ref={openerRef} data-review-open type="button" onClick={() => setOpen(true)} className={`shrink-0 rounded-lg border px-3 py-2 font-semibold ${reviewComplete ? "border-white/15 bg-white/[0.03] text-[var(--color-text-muted)]" : "border-amber-400/40 bg-amber-400/10 text-amber-100"}`}>사유 검토</button>}
     </div>
     {!!node.runtime_assessment?.blockers?.length && <p className="text-[11px] text-[var(--color-text-muted)]">참고용 경고 {node.runtime_assessment.blockers.length}건 · 등급과 별개</p>}
     {open && createPortal(<div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 p-4" onClick={() => { if (!busy) setOpen(false); }}>

@@ -52,7 +52,7 @@ export function buildLineageChains(nodes: RoadmapNode[]): LineageChain[] {
           const version = numberOr(entry.version, index);
           return {
             key: `${node.id}:v${version}`,
-            node: version < latestVersion ? { ...node, status: "done" } : node,
+            node: version < latestVersion ? { ...node, status: "done", display_status: "done" } : node,
             depth: index,
             version,
             title: typeof entry.title === "string" && entry.title ? entry.title : node.title,
