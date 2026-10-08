@@ -41,7 +41,7 @@ import { buildLineageChains, lineageSelection, type LineageChainItem } from "./l
 import { FileViewerSheet } from "./FileViewerSheet.js";
 import { filesForRoadmapScope } from "./fileViewerModel.js";
 import { taskGuidance } from "../../lib/taskGuidance.js";
-import { focusPathIds } from "./focusPath.js";
+import { focusPathIds, focusRootId } from "./focusPath.js";
 import { presentSteKorean } from "../../lib/steKorean.js";
 
 /** 설계안 치수 상수 — 그대로. */
@@ -1368,10 +1368,13 @@ export function RoadmapGraph({
   }, [layoutSig, setFlowNodes]);
 
   useEffect(() => {
-    if (!focusNodeId || focusedOnce || !flowNodes.some((node) => node.id === focusNodeId)) return;
-    rf.fitView({ nodes: [{ id: focusNodeId }], padding: 0.55, maxZoom: 1, duration: 400 });
+    if (!focusNodeId || focusedOnce) return;
+    const rootId = focusRootId(nodes, focusNodeId);
+    const rootNode = rootId ? flowNodes.find((node) => node.id === rootId) : null;
+    if (!rootNode || rootNode.type !== "container" || !flowNodes.some((node) => node.id === focusNodeId)) return;
+    rf.fitView({ nodes: [{ id: rootId! }], padding: 0.1, maxZoom: 1.15, duration: 400 });
     setFocusedOnce(true);
-  }, [focusNodeId, focusedOnce, flowNodes, rf]);
+  }, [focusNodeId, focusedOnce, flowNodes, nodes, rf]);
 
   /**
    * 포커스 흐림·드롭 타깃은 **위치를 건드리지 않는** 덧칠이라 렌더 시점에 얹는다.

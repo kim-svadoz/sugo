@@ -7,10 +7,42 @@ import { atomicWriteFile, withFileLock } from "../fsUtil.js";
 import { fetchRoadmapOrdering } from "../dashboard/fetch.js";
 import { syncRoadmapLink, syncRoadmapSnapshot, unsyncRoadmapLink } from "../dashboard/sync.js";
 import { mergeRoadmapOwnership, readySet, topoSort } from "./roadmapGraph.js";
-import { roadmapFilePath, roadmapLockPath, workspaceDir } from "../work/storage.js";
-import type { HumanBlocker, RoadmapFile, RoadmapLineageEntry, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus, RoadmapWorkResult, Task } from "./types.js";
 import { requirementNodeId } from "./roadmapReq.js";
+import { roadmapFilePath, roadmapLockPath, workspaceDir } from "../work/storage.js";
 import type { SessionAssessment } from "../ontology/sessionAssessment.js";
+import type { HumanBlocker, RoadmapFile, RoadmapLineageEntry, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus, RoadmapWorkResult, Task } from "./types.js";
+
+function withStartedPatch(
+  node: RoadmapNode,
+  patchVersion: number,
+  title: string,
+  startedAt: string,
+  baseWorkResultPath?: string,
+): RoadmapNode {
+  const previousLineage = node.lineage ?? [];
+  if (previousLineage.some((entry) => entry.version === patchVersion)) return node;
+  const baseWorkResult = node.workResult?.path
+    ? node.workResult
+    : baseWorkResultPath
+      ? { path: baseWorkResultPath, parentTaskId: node.id, patchVersion: 0 }
+      : undefined;
+  const featEntry: RoadmapLineageEntry[] = patchVersion > 0
+    && !previousLineage.some((entry) => entry.version === 0)
+    && baseWorkResult?.path
+    ? [{
+        version: 0,
+        completedAt: baseWorkResult.endedAt ?? baseWorkResult.startedAt ?? startedAt,
+        title: node.title,
+        summary: baseWorkResult.summary,
+        workResult: { ...baseWorkResult, patchVersion: 0 },
+      }]
+    : [];
+  const patchEntry: RoadmapLineageEntry = { version: patchVersion, completedAt: startedAt, title };
+  return {
+    ...node,
+    lineage: [...featEntry, ...previousLineage, patchEntry].sort((a, b) => a.version - b.version),
+  };
+}
 
 async function readRoadmapFile(workspace: string): Promise<RoadmapFile> {
   let file: RoadmapFile;
@@ -119,14 +151,23 @@ export async function reconcileRoadmapWithTasks(workspace: string, tasks: Task[]
         parent: specId,
         specPath: task.prd_ref,
       });
-      byId.set(task.id, {
+      const nextTask = {
         ...(existing ?? { id: task.id, title: task.title, level: "task", dependsOn: [], ref: task.id }),
         title: task.title,
         level: "task",
         status,
         parent: existing?.parent?.startsWith("run-") ? existing.parent : runId,
         specPath: task.prd_ref,
-      });
+      } as RoadmapNode;
+      byId.set(task.id, task.patchInfo?.patchVersion
+        ? withStartedPatch(
+            nextTask,
+            task.patchInfo.patchVersion,
+            task.title,
+            task.started_at ?? task.created_at,
+            task.patchInfo.baseWorkResultPath,
+          )
+        : nextTask);
       if (status === "done") {
         for (const [id, child] of byId) {
           if (child.parent === task.id) byId.set(id, { ...child, status: "done" });
@@ -141,6 +182,24 @@ export async function reconcileRoadmapWithTasks(workspace: string, tasks: Task[]
 export async function getRoadmapNode(workspace: string, id: string): Promise<RoadmapNode | null> {
   const file = await readRoadmapFile(workspace);
   return file.nodes.find((n) => n.id === id) ?? null;
+}
+
+/** Patch가 시작되면 완료를 기다리지 않고 Canvas 계보를 연다.
+ * 기존 feat 결과는 v0으로 고정하고, 새 patch 차수는 진행 카드로 먼저 추가한다. */
+export async function beginRoadmapPatch(
+  workspace: string,
+  taskId: string,
+  patchVersion: number,
+  title: string,
+  startedAt: string,
+  baseWorkResultPath?: string,
+): Promise<void> {
+  await withRoadmap(workspace, async (file) => {
+    const nodes = file.nodes.map((node) => node.id === taskId && node.level === "task"
+      ? withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath)
+      : node);
+    await writeRoadmapFile(workspace, { ...file, nodes });
+  });
 }
 
 /** 완료 산출물은 Task와 기존 RUN에 함께 기록하되, patch 계보는 실제 작업 단위인 Task가 소유한다.

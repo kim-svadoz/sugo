@@ -46,12 +46,13 @@ export function buildLineageChains(nodes: RoadmapNode[]): LineageChain[] {
     if (Array.isArray(node.lineage)) {
       const entries = node.lineage.filter((entry): entry is HistoryEntry => !!entry && typeof entry === "object");
       if (entries.length === 0) continue;
+      const latestVersion = Math.max(...entries.map((entry, index) => numberOr(entry.version, index)));
       const items = entries
         .map((entry, index) => {
           const version = numberOr(entry.version, index);
           return {
             key: `${node.id}:v${version}`,
-            node,
+            node: version < latestVersion ? { ...node, status: "done" } : node,
             depth: index,
             version,
             title: typeof entry.title === "string" && entry.title ? entry.title : node.title,

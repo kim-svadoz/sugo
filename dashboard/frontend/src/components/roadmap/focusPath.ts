@@ -17,3 +17,11 @@ export function focusPathIds(nodes: Array<{ id: string; parent: string | null }>
   }
   return focused;
 }
+
+export function focusRootId(nodes: Array<{ id: string; parent: string | null }>, focusId: string): string | null {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  let current = byId.get(focusId);
+  if (!current) return null;
+  while (current.parent && byId.has(current.parent)) current = byId.get(current.parent)!;
+  return current.id;
+}

@@ -69,11 +69,22 @@ describe("patch lineage canvas model", () => {
       [1, "Redis 만료 보강"],
       [2, "동시성 패치"],
     ]);
+    expect(chain.columns[0].map((item) => item.node.status)).toEqual(["done", "done", "done"]);
 
     const selected = lineageSelection(chain.columns[0][1]);
     expect(selected.node.id).toBe("task:v1");
     expect(selected.node.title).toBe("v1 patch · Redis 만료 보강");
     expect(selected.node.work_result).toEqual(expect.objectContaining({ path: "/work-result-patch-v1.md" }));
     expect(selected.reqs.map((req) => req.title)).toEqual(["TTL을 갱신한다"]);
+  });
+
+  it("진행 중 patch에서도 feat 카드는 완료 상태로 남는다", () => {
+    const task = node({
+      id: "task",
+      status: "in_progress",
+      lineage: [{ version: 0, title: "최초 feat" }, { version: 1, title: "진행 patch" }],
+    });
+    const [chain] = buildLineageChains([task]);
+    expect(chain.columns[0].map((item) => item.node.status)).toEqual(["done", "in_progress"]);
   });
 });

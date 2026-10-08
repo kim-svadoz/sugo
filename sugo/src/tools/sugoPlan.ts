@@ -44,7 +44,7 @@ import { estimateHumanHours } from "../humanHours.js";
 import { checkpointApplies } from "../hulk/matching.js";
 import { addWorkLog } from "../hulk/history.js";
 import { listCheckpoints, pullCheckpointsToRules } from "../hulk/checkpoint.js";
-import { backfillRoadmapTask, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
+import { backfillRoadmapTask, beginRoadmapPatch, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
 import { promotePrdRequirements } from "../hulk/roadmapReq.js";
 import { addTask, findTaskByPrdRef, listTasks, updateTask } from "../hulk/task.js";
 import type { Task, TaskPatchInfo } from "../hulk/types.js";
@@ -912,6 +912,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
         const patchInfo: TaskPatchInfo = {
           parentTaskId: baseTask.id,
           patchVersion: session.data.patch!.version,
+          baseWorkResultPath: session.data.patch!.baseWorkResultPath,
           seed: session.data.seed,
         };
         task = (await updateTask(registryEntry.workspace, baseTask.id, { status: "in_progress", patchInfo })) ?? baseTask;
@@ -976,6 +977,16 @@ export async function handleSugoPlan(rawArgs: unknown) {
           specPath: prdPath,
         },
       ]);
+      if (isPatch) {
+        await beginRoadmapPatch(
+          registryEntry.workspace,
+          task.id,
+          session.data.patch!.version,
+          session.featureName,
+          session.startedAt,
+          session.data.patch!.baseWorkResultPath,
+        );
+      }
       const reqNodes = promotePrdRequirements(task.id, args.prdContent);
       if (reqNodes.length > 0) {
         await replaceTaskRequirements(registryEntry.workspace, task.id, reqNodes);

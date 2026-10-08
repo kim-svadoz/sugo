@@ -15,6 +15,7 @@ import {
   markRequirementDone,
   reconcileRoadmapWithTasks,
   recordRoadmapWorkResult,
+  beginRoadmapPatch,
   removeRoadmapNode,
   unlinkRoadmapNodes,
   updateRoadmapNodeStatus,
@@ -202,6 +203,47 @@ describe("updateRoadmapNodeStatus", () => {
 });
 
 describe("recordRoadmapWorkResult", () => {
+  it("재동기화도 이미 시작된 patch 계보를 복원한다", async () => {
+    await upsertRoadmapNodes("ws1", [{
+      id: "task-a", title: "최초 구현", level: "task", status: "done", dependsOn: [], parent: "run-task-a",
+      workResult: { path: "/feature/work-result.md", summary: "feat 완료" },
+    }]);
+    await reconcileRoadmapWithTasks("ws1", [{
+      id: "task-a", title: "예외 처리 보강", project: "/project", status: "in_progress",
+      created_at: "2026-01-01T00:00:00.000Z", started_at: "2026-01-02T00:00:00.000Z",
+      patchInfo: { parentTaskId: "task-a", patchVersion: 1 },
+    }]);
+    const task = await getRoadmapNode("ws1", "task-a");
+    expect(task?.lineage?.map((entry) => entry.version)).toEqual([0, 1]);
+  });
+
+  it("patch 시작 즉시 완료된 feat v0와 진행 중 patch v1을 함께 보존한다", async () => {
+    await upsertRoadmapNodes("ws1", [
+      {
+        id: "task-a",
+        title: "최초 구현",
+        level: "task",
+        status: "done",
+        dependsOn: [],
+        parent: "run-a",
+        workResult: {
+          path: "/feature/work-result.md",
+          endedAt: "2026-01-01T00:00:00.000Z",
+          summary: "최초 feat 결과",
+        },
+      },
+    ]);
+
+    await beginRoadmapPatch("ws1", "task-a", 1, "예외 처리 보강", "2026-01-02T00:00:00.000Z");
+
+    const task = await getRoadmapNode("ws1", "task-a");
+    expect(task?.workResult).toMatchObject({ path: "/feature/work-result.md", summary: "최초 feat 결과" });
+    expect(task?.lineage).toEqual([
+      expect.objectContaining({ version: 0, summary: "최초 feat 결과", workResult: { path: "/feature/work-result.md", endedAt: "2026-01-01T00:00:00.000Z", summary: "최초 feat 결과", patchVersion: 0 } }),
+      expect.objectContaining({ version: 1, title: "예외 처리 보강", completedAt: "2026-01-02T00:00:00.000Z" }),
+    ]);
+  });
+
   it("lineage 도입 전에 완료된 feat 결과를 첫 patch 기록 시 v0으로 보존한다", async () => {
     await upsertRoadmapNodes("ws1", [
       { id: "run-a", title: "RUN", level: "workstream", status: "done", dependsOn: [] },

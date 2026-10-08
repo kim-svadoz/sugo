@@ -28074,7 +28074,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.26.0" : "0.0.0-dev";
+  return true ? "0.26.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29781,6 +29781,23 @@ function promotePrdRequirements(taskId, prdContent) {
 }
 
 // src/hulk/roadmap.ts
+function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath) {
+  const previousLineage = node.lineage ?? [];
+  if (previousLineage.some((entry) => entry.version === patchVersion)) return node;
+  const baseWorkResult = node.workResult?.path ? node.workResult : baseWorkResultPath ? { path: baseWorkResultPath, parentTaskId: node.id, patchVersion: 0 } : void 0;
+  const featEntry = patchVersion > 0 && !previousLineage.some((entry) => entry.version === 0) && baseWorkResult?.path ? [{
+    version: 0,
+    completedAt: baseWorkResult.endedAt ?? baseWorkResult.startedAt ?? startedAt,
+    title: node.title,
+    summary: baseWorkResult.summary,
+    workResult: { ...baseWorkResult, patchVersion: 0 }
+  }] : [];
+  const patchEntry = { version: patchVersion, completedAt: startedAt, title };
+  return {
+    ...node,
+    lineage: [...featEntry, ...previousLineage, patchEntry].sort((a, b) => a.version - b.version)
+  };
+}
 async function readRoadmapFile(workspace) {
   let file;
   try {
@@ -29862,14 +29879,21 @@ async function reconcileRoadmapWithTasks(workspace, tasks) {
         parent: specId,
         specPath: task.prd_ref
       });
-      byId.set(task.id, {
+      const nextTask = {
         ...existing ?? { id: task.id, title: task.title, level: "task", dependsOn: [], ref: task.id },
         title: task.title,
         level: "task",
         status,
         parent: existing?.parent?.startsWith("run-") ? existing.parent : runId,
         specPath: task.prd_ref
-      });
+      };
+      byId.set(task.id, task.patchInfo?.patchVersion ? withStartedPatch(
+        nextTask,
+        task.patchInfo.patchVersion,
+        task.title,
+        task.started_at ?? task.created_at,
+        task.patchInfo.baseWorkResultPath
+      ) : nextTask);
       if (status === "done") {
         for (const [id, child] of byId) {
           if (child.parent === task.id) byId.set(id, { ...child, status: "done" });
@@ -29882,6 +29906,12 @@ async function reconcileRoadmapWithTasks(workspace, tasks) {
 async function getRoadmapNode(workspace, id) {
   const file = await readRoadmapFile(workspace);
   return file.nodes.find((n) => n.id === id) ?? null;
+}
+async function beginRoadmapPatch(workspace, taskId, patchVersion, title, startedAt, baseWorkResultPath) {
+  await withRoadmap(workspace, async (file) => {
+    const nodes = file.nodes.map((node) => node.id === taskId && node.level === "task" ? withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath) : node);
+    await writeRoadmapFile(workspace, { ...file, nodes });
+  });
 }
 async function recordRoadmapWorkResult(workspace, taskId, workResult, lineageEntry) {
   await withRoadmap(workspace, async (file) => {
@@ -31612,6 +31642,7 @@ async function handleSugoPlan(rawArgs) {
         const patchInfo = {
           parentTaskId: baseTask.id,
           patchVersion: session.data.patch.version,
+          baseWorkResultPath: session.data.patch.baseWorkResultPath,
           seed: session.data.seed
         };
         task = await updateTask(registryEntry.workspace, baseTask.id, { status: "in_progress", patchInfo }) ?? baseTask;
@@ -31665,6 +31696,16 @@ async function handleSugoPlan(rawArgs) {
           specPath: prdPath
         }
       ]);
+      if (isPatch) {
+        await beginRoadmapPatch(
+          registryEntry.workspace,
+          task.id,
+          session.data.patch.version,
+          session.featureName,
+          session.startedAt,
+          session.data.patch.baseWorkResultPath
+        );
+      }
       const reqNodes = promotePrdRequirements(task.id, args2.prdContent);
       if (reqNodes.length > 0) {
         await replaceTaskRequirements(registryEntry.workspace, task.id, reqNodes);

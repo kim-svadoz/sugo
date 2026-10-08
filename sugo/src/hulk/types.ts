@@ -9,6 +9,8 @@ export type TaskStatus = "pending" | "idea" | "in_progress" | "done" | "dropped"
 export interface TaskPatchInfo {
   parentTaskId: string;
   patchVersion: number;
+  /** patch 시작 시 기준이 된 직전 차수의 work-result. Roadmap 계보 복구에 쓴다. */
+  baseWorkResultPath?: string;
   seed?: string;
 }
 
