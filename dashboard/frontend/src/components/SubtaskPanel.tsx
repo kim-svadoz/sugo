@@ -77,31 +77,31 @@ export function SubtaskPanel({
 
   return (
     <aside className="flex min-h-full w-full min-w-0 flex-col overflow-hidden bg-[var(--color-surface)]">
-      <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3.5">
+      <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
         <div className="min-w-0">
           <div className="mb-1 flex items-center gap-2">
-            <span className="rounded-md bg-cyan-400/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-cyan-300">
+            <span className="rounded-md bg-cyan-400/10 px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
               {node.level === "workstream" ? "RUN" : node.level}
             </span>
-            <span className="font-mono text-[10px] uppercase text-[var(--color-text-dim)]">{workflowStatus(node) === "verification" ? "검증" : workflowStatus(node)}</span>
+            <span className="font-mono text-[11px] uppercase text-[var(--color-text-dim)]">{workflowStatus(node) === "verification" ? "검증" : workflowStatus(node)}</span>
           </div>
-          <div className="truncate text-[15px] font-semibold text-[var(--color-text-bright)]">{node.title}</div>
-          <div className="mt-1 truncate font-mono text-[10px] text-[var(--color-text-dim)]" title={node.id}>
+          <div className="truncate text-lg font-semibold text-[var(--color-text-bright)]">{node.title}</div>
+          <div className="mt-1.5 truncate font-mono text-[11px] text-[var(--color-text-dim)]" title={node.id}>
             {node.id}
           </div>
         </div>
-        <button type="button" onClick={onClose} className="text-xs opacity-60 hover:opacity-100">
+        <button type="button" onClick={onClose} className="text-sm opacity-60 hover:opacity-100">
           ✕
         </button>
       </div>
 
-      <div className="flex border-b border-white/10 text-xs">
+      <div className="flex border-b border-white/10 text-sm">
         {(["progress", "summary", "files"] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`flex-1 py-2 ${tab === t ? "ck-glow-cyan" : "opacity-60 hover:opacity-100"}`}
+            className={`flex-1 py-2.5 ${tab === t ? "ck-glow-cyan" : "opacity-60 hover:opacity-100"}`}
           >
             {t === "progress"
               ? requirementsUnavailable ? "개요 · REQ 기록 없음" : `개요 · ${progress.label} ${progress.done}/${progress.total}`
@@ -112,7 +112,7 @@ export function SubtaskPanel({
         ))}
       </div>
 
-      <div className="ck-scroll flex-1 space-y-4 p-3 text-sm">
+      <div className="ck-scroll flex-1 space-y-5 p-4 text-[15px]">
         {tab === "progress" && (
           <ProgressTab
             userId={userId}
@@ -218,21 +218,21 @@ function ProgressTab({
   const resultSection = (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]">Work Result</div>
-          {reportView && <span className="font-mono text-[10px] text-violet-200/70">{reportView.versionLabel}</span>}
+          <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]">Work Result</div>
+          {reportView && <span className="font-mono text-[11px] text-violet-200/70">{reportView.versionLabel}</span>}
         </div>
         {workResult && reportView ? (
           <div className="overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.045] to-transparent">
-            <div className="flex items-center justify-between border-b border-white/8 px-3 py-2.5">
+            <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
               <div className="flex items-center gap-2">
-                {reportView.grade === "unverified" ? <AlertTriangle size={14} className="text-amber-300" /> : <CheckCircle2 size={14} className="text-emerald-300" />}
-                <span className={`text-xs font-semibold ${reportView.grade === "unverified" ? "text-amber-200" : "text-[var(--color-text)]"}`}>{reportView.grade === "unverified" ? "사용자 확인 필요" : "작업 결과"}</span>
+                {reportView.grade === "unverified" ? <AlertTriangle size={16} className="text-amber-300" /> : <CheckCircle2 size={16} className="text-emerald-300" />}
+                <span className={`text-sm font-semibold ${reportView.grade === "unverified" ? "text-amber-200" : "text-[var(--color-text)]"}`}>{reportView.grade === "unverified" ? "사용자 확인 필요" : "작업 결과"}</span>
               </div>
-              {duration && <span className="font-mono text-[10px] text-[var(--color-text-dim)]">{duration}</span>}
+              {duration && <span className="font-mono text-[11px] text-[var(--color-text-dim)]">{duration}</span>}
             </div>
-            <div className="grid grid-cols-2 gap-px bg-white/5 text-[10.5px]">
-              <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">테스트</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.testLabel ?? "기록 없음"}</div></div>
-              <div className="bg-[var(--color-surface)] px-3 py-2"><span className="text-[var(--color-text-dim)]">실행 검증</span><div className="mt-0.5 font-medium text-[var(--color-text)]">{reportView.runtimeVerified ? "runtime ✓" : "미검증"}{reportView.wiringVerified ? " · wiring ✓" : ""}</div></div>
+            <div className="grid grid-cols-2 gap-px bg-white/5 text-[12px]">
+              <div className="bg-[var(--color-surface)] px-4 py-3"><span className="text-[var(--color-text-dim)]">테스트</span><div className="mt-1 font-medium text-[var(--color-text)]">{reportView.testLabel ?? "기록 없음"}</div></div>
+              <div className="bg-[var(--color-surface)] px-4 py-3"><span className="text-[var(--color-text-dim)]">실행 검증</span><div className="mt-1 font-medium text-[var(--color-text)]">{reportView.runtimeVerified ? "runtime ✓" : "미검증"}{reportView.wiringVerified ? " · wiring ✓" : ""}</div></div>
             </div>
           </div>
         ) : (
@@ -284,17 +284,17 @@ function ProgressTab({
       )}
       {requirementsUnavailable ? (
         <div className="rounded-lg border border-[var(--color-border)] p-3 text-[12px] text-[var(--color-text-muted)]">이 차수의 REQ 기록이 없습니다.</div>
-      ) : <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-3">
+      ) : <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-4">
         <div className="flex items-end justify-between">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-dim)]">실제 진행</div>
-            <div className="mt-1 text-[12px] text-[var(--color-text-muted)]">{progress.label} 기준</div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-text-dim)]">실제 진행</div>
+            <div className="mt-1 text-sm text-[var(--color-text-muted)]">{progress.label} 기준</div>
           </div>
-          <div className="font-mono text-xl font-semibold text-cyan-300">
-            {progress.done}<span className="text-sm text-[var(--color-text-dim)]">/{progress.total}</span>
+          <div className="font-mono text-2xl font-semibold text-cyan-300">
+            {progress.done}<span className="text-base text-[var(--color-text-dim)]">/{progress.total}</span>
           </div>
         </div>
-        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-black/30">
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/30">
           <div
             className="h-full rounded-full bg-cyan-400 transition-[width] duration-300"
             style={{ width: `${progress.total === 0 ? 0 : Math.round((progress.done / progress.total) * 100)}%` }}
@@ -306,14 +306,14 @@ function ProgressTab({
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {(node.level === "task" || node.level === "workstream") && (node.manual_status ?? node.status) === "done" && workResult?.path && (
-          <button type="button" onClick={handleCopyPatchBridge} className="group flex min-h-[96px] flex-col rounded-xl border border-violet-400/45 bg-gradient-to-br from-violet-500/15 to-fuchsia-500/[0.06] p-3 text-left transition-all hover:-translate-y-0.5 hover:border-violet-300/70 hover:shadow-[0_0_24px_rgba(139,92,246,0.14)]">
-            <span className="flex items-center gap-2 text-sm font-semibold text-violet-200"><Sparkles size={16} /> Patch 이어가기</span>
-            <span className="mt-auto flex items-center gap-1.5 pt-2 text-[10.5px] text-violet-200/60">{patchCopied ? <><Check size={12} /> 명령어 복사됨</> : <><Copy size={12} /> 완료 산출물로 후속 작업</>}</span>
+          <button type="button" onClick={handleCopyPatchBridge} className="group flex min-h-[108px] flex-col rounded-xl border border-violet-400/45 bg-gradient-to-br from-violet-500/15 to-fuchsia-500/[0.06] p-4 text-left transition-all hover:-translate-y-0.5 hover:border-violet-300/70 hover:shadow-[0_0_24px_rgba(139,92,246,0.14)]">
+            <span className="flex items-center gap-2 text-base font-semibold text-violet-200"><Sparkles size={18} /> Patch 이어가기</span>
+            <span className="mt-auto flex items-center gap-1.5 pt-2 text-xs text-violet-200/60">{patchCopied ? <><Check size={14} /> 명령어 복사됨</> : <><Copy size={14} /> 완료 산출물로 후속 작업</>}</span>
           </button>
         )}
-        <button type="button" onClick={() => setShowPr((value) => !value)} className="group flex min-h-[96px] flex-col rounded-xl border border-cyan-400/40 bg-gradient-to-br from-cyan-500/15 to-blue-500/[0.05] p-3 text-left transition-all hover:-translate-y-0.5 hover:border-cyan-300/70 hover:shadow-[0_0_24px_rgba(34,211,238,0.12)]">
-          <span className="flex items-center gap-2 text-sm font-semibold text-cyan-200"><GitPullRequest size={16} /> PR 생성하기</span>
-          <span className="mt-auto block pt-2 text-[10.5px] text-cyan-200/60">{showPr ? "입력 닫기" : "제목·대상 브랜치 설정"}</span>
+        <button type="button" onClick={() => setShowPr((value) => !value)} className="group flex min-h-[108px] flex-col rounded-xl border border-cyan-400/40 bg-gradient-to-br from-cyan-500/15 to-blue-500/[0.05] p-4 text-left transition-all hover:-translate-y-0.5 hover:border-cyan-300/70 hover:shadow-[0_0_24px_rgba(34,211,238,0.12)]">
+          <span className="flex items-center gap-2 text-base font-semibold text-cyan-200"><GitPullRequest size={18} /> PR 생성하기</span>
+          <span className="mt-auto block pt-2 text-xs text-cyan-200/60">{showPr ? "입력 닫기" : "제목·대상 브랜치 설정"}</span>
         </button>
       </div>
 
@@ -487,8 +487,8 @@ function openWorkResultHtml(title: string, workResult: NonNullable<ReturnType<ty
 function SummaryTab({ title, workResult, requirements }: { title: string; workResult: ReturnType<typeof parseWorkResult>; requirements: RoadmapNode[] }) {
   if (!workResult) return <div className="rounded-lg border border-dashed border-white/10 p-4 text-xs text-[var(--color-text-dim)]">아직 기록된 작업 요약이 없습니다.</div>;
   return (
-    <button type="button" onClick={() => openWorkResultHtml(title, workResult, requirements)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-violet-400/10 px-3 py-3 text-[12.5px] font-semibold text-violet-100 hover:bg-violet-400/20">
-      <ExternalLink size={14} /> 작업 요약 HTML로 열기
+    <button type="button" onClick={() => openWorkResultHtml(title, workResult, requirements)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-violet-400/10 px-4 py-4 text-sm font-semibold text-violet-100 hover:bg-violet-400/20">
+      <ExternalLink size={16} /> 작업 요약 HTML로 열기
     </button>
   );
 }
@@ -570,12 +570,12 @@ function ReqList({ reqs, workspace, node, onChanged }: { reqs: RoadmapNode[]; wo
         const isConfirm = r.id.endsWith("::REQ-CONFIRM");
         const done = st === "done";
         return <div key={r.id} className="space-y-2">
-          <div className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 ${isConfirm && !done ? "border-amber-500/30 bg-amber-500/5" : "border-[var(--color-border)] bg-[var(--color-background)]"}`}>
-            <span className={`shrink-0 text-[12px] ${done ? "text-emerald-400" : "text-[var(--color-text-dim)]"}`}>
+          <div className={`flex items-center gap-2.5 rounded-md border px-3 py-2.5 ${isConfirm && !done ? "border-amber-500/30 bg-amber-500/5" : "border-[var(--color-border)] bg-[var(--color-background)]"}`}>
+            <span className={`shrink-0 text-sm ${done ? "text-emerald-400" : "text-[var(--color-text-dim)]"}`}>
               {done ? "✓" : st === "in_progress" ? "◐" : "○"}
             </span>
             <span
-              className={`min-w-0 flex-1 truncate text-[12.5px] ${
+              className={`min-w-0 flex-1 truncate text-sm ${
                 done ? "text-[var(--color-text-muted)]" : "text-[var(--color-text)]"
               }`}
               title={requirementTitle(r.title)}
@@ -583,7 +583,7 @@ function ReqList({ reqs, workspace, node, onChanged }: { reqs: RoadmapNode[]; wo
               {requirementTitle(r.title)}
             </span>
             {isConfirm && (
-              <span className={`shrink-0 rounded border px-1.5 py-0.5 font-mono text-[9.5px] ${done ? "border-white/15 text-[var(--color-text-dim)]" : "border-amber-500/40 text-amber-300"}`}>
+              <span className={`shrink-0 rounded border px-2 py-0.5 font-mono text-[11px] ${done ? "border-white/15 text-[var(--color-text-dim)]" : "border-amber-500/40 text-amber-300"}`}>
                 {done ? "확인 완료" : "사용자 확인"}
               </span>
             )}
