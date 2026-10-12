@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filesForRoadmapScope, fileViewerLanguage, fileViewerPresentation, fileViewerText } from "./fileViewerModel.js";
+import { diffChangeRegions, filesForRoadmapScope, fileViewerLanguage, fileViewerPresentation, fileViewerText } from "./fileViewerModel.js";
 import type { RoadmapNode } from "../../hooks/useRoadmap.js";
 
 const node = (id: string, level: string, parent: string | null, files: Array<{ path: string; content: string }> = []): RoadmapNode => ({
@@ -39,6 +39,14 @@ describe("changed-file viewer model", () => {
   it("파일 확장자로 바텀시트 언어 라벨을 만든다", () => {
     expect(fileViewerLanguage("src/main/App.tsx")).toBe("TSX");
     expect(fileViewerLanguage("buildspec.yml")).toBe("YAML");
+  });
+
+  it("unified diff의 변경 구간을 hunk 단위로 찾는다", () => {
+    expect(diffChangeRegions(["diff --git a/a b/a", "@@ -1 +1 @@", "-old", "+new", "@@ -20 +20 @@", "-x", "+y"])).toEqual([1, 4]);
+  });
+
+  it("hunk 헤더가 없는 추가 파일도 첫 변경 줄로 이동한다", () => {
+    expect(diffChangeRegions(["plain", "+added", "+next"])).toEqual([1]);
   });
 
   it("SPEC을 선택하면 모든 하위 RUN/TASK의 변경 파일을 모은다", () => {

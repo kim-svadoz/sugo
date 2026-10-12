@@ -31,6 +31,7 @@ import {
   renameRoadmapNode,
   restoreSubtree,
   unlinkRoadmapNodes,
+  getReviewArtifact,
 } from "../../api/roadmapMutationsApi.js";
 import { SubtaskPanel } from "../SubtaskPanel.js";
 import { SpecDocumentPanel } from "../SpecDocumentPanel.js";
@@ -1067,6 +1068,7 @@ export function RoadmapGraph({
   onEdited,
   nodeFilter,
   focusNodeId,
+  onFileViewerChange,
 }: {
   workspace: string;
   fill?: boolean;
@@ -1076,6 +1078,7 @@ export function RoadmapGraph({
   /** §7B Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). 로드된 뒤 그 노드로 팬 + 선택하고
    * 1회만 적용한다(이후 폴링 갱신에서 다시 튀지 않게 `focusedOnce`로 잠근다). */
   focusNodeId?: string;
+  onFileViewerChange?: (open: boolean) => void;
 }) {
   const { userId } = useAuth();
   const { data, loading, error, refetch } = useRoadmap(workspace);
@@ -1183,6 +1186,10 @@ export function RoadmapGraph({
   );
   const [guideOpen, setGuideOpen] = useState(false);
   const [fileViewer, setFileViewer] = useState<{ file: WorkResultFile; expanded: boolean } | null>(null);
+  useEffect(() => {
+    onFileViewerChange?.(Boolean(fileViewer));
+    return () => onFileViewerChange?.(false);
+  }, [Boolean(fileViewer), onFileViewerChange]);
   /** SPEC 단위 필터. 노드를 지우는 게 아니라 **어느 SPEC 묶음을 보여줄지**만 고른다. */
   const [specFilter, setSpecFilter] = useState<"all" | "active" | "done">("all");
 
@@ -1455,6 +1462,20 @@ export function RoadmapGraph({
     () => selectedNode ? filesForRoadmapScope(selectedNode, data ?? nodes) : [],
     [selectedNode, data, nodes],
   );
+  const selectViewerFile = useCallback(async (file: WorkResultFile) => {
+    if (file.content || file.diff || file.unavailableReason || !userId || !selectedNode) {
+      setFileViewer((current) => ({ file, expanded: current?.expanded ?? true }));
+      return;
+    }
+    const workResult = parseWorkResult(selectedNode.work_result);
+    const loaded = await getReviewArtifact(userId, workspace, {
+      taskId: selectedNode.ref ?? selectedNode.id.replace(/:v\d+$/, ""),
+      path: file.path,
+      sessionId: selectedNode.human_blocker?.sessionId,
+      patchVersion: workResult?.patchVersion,
+    });
+    setFileViewer((current) => ({ file: loaded, expanded: current?.expanded ?? true }));
+  }, [selectedNode, userId, workspace]);
   const specs = nodes.filter((n) => n.level === "spec");
 
   if (loading && nodes.length === 0) {
@@ -1638,7 +1659,9 @@ export function RoadmapGraph({
       {fileViewer && (
         <FileViewerSheet
           file={fileViewer.file}
+          files={selectedFiles}
           expanded={fileViewer.expanded}
+          onSelectFile={selectViewerFile}
           onExpandedChange={(expanded) => setFileViewer((current) => current ? { ...current, expanded } : null)}
           onClose={() => setFileViewer(null)}
         />
@@ -1770,6 +1793,7 @@ export function RoadmapGraphPanel(props: {
   nodeFilter?: RoadmapNode[];
   /** §7B Schedule 탭 딥링크. */
   focusNodeId?: string;
+  onFileViewerChange?: (open: boolean) => void;
 }) {
   return (
     <ReactFlowProvider>

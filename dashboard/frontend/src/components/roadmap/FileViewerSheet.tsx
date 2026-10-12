@@ -1,7 +1,7 @@
-import { useEffect } from "react";
-import { Braces, Database, File, FileCode2, FileText, FlaskConical, Maximize2, Minimize2, Palette, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Braces, ChevronLeft, ChevronRight, Database, File, FileCode2, FileText, FlaskConical, Maximize2, Minimize2, Palette, X } from "lucide-react";
 import type { WorkResultFile } from "../../hooks/useRoadmap.js";
-import { fileViewerLanguage, fileViewerPresentation, fileViewerText, type FileViewerKind } from "./fileViewerModel.js";
+import { diffChangeRegions, fileViewerLanguage, fileViewerPresentation, fileViewerText, type FileViewerKind } from "./fileViewerModel.js";
 
 const toneStyle = {
   cyan: { border: "border-cyan-400/35", bg: "bg-cyan-400/10", text: "text-cyan-300", glow: "from-cyan-400/35" },
@@ -25,15 +25,24 @@ function KindIcon({ kind }: { kind: FileViewerKind }) {
 
 export function FileViewerSheet({
   file,
+  files,
   expanded,
+  onSelectFile,
   onExpandedChange,
   onClose,
 }: {
   file: WorkResultFile;
+  files: WorkResultFile[];
   expanded: boolean;
+  onSelectFile: (file: WorkResultFile) => void | Promise<void>;
   onExpandedChange: (expanded: boolean) => void;
   onClose: () => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const lineRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [regionIndex, setRegionIndex] = useState(0);
+  const [loadingPath, setLoadingPath] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -53,6 +62,33 @@ export function FileViewerSheet({
   const fileName = pathParts.pop() ?? file.path;
   const directory = pathParts.join("/");
   const showingDiff = Boolean(file.diff?.trim());
+  const regions = useMemo(() => diffChangeRegions(lines), [text]);
+  function focusRegion(next: number) {
+    if (!regions.length) return;
+    const normalized = (next + regions.length) % regions.length;
+    setRegionIndex(normalized);
+    lineRefs.current[regions[normalized]]?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+  async function selectFile(candidate: WorkResultFile) {
+    if (candidate.path === file.path) return;
+    setLoadingPath(candidate.path);
+    setLoadError(null);
+    try {
+      await onSelectFile(candidate);
+    } catch {
+      setLoadError("파일 diff를 불러오지 못했습니다.");
+    } finally {
+      setLoadingPath(null);
+    }
+  }
+  useEffect(() => {
+    setRegionIndex(0);
+    const id = window.requestAnimationFrame(() => {
+      if (regions.length) lineRefs.current[regions[0]]?.scrollIntoView({ block: "center" });
+      else scrollRef.current?.scrollTo({ top: 0 });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [file.path, text]);
   return (
     <section
       aria-label={`${file.path} 변경파일 바텀시트`}
@@ -78,6 +114,11 @@ export function FileViewerSheet({
             <span className="shrink-0 text-[14px] font-semibold text-[var(--color-text-bright)]">{fileName}</span>
           </div>
         </div>
+        {regions.length > 0 && <div className="flex items-center rounded-lg border border-white/10 bg-black/20">
+          <button type="button" onClick={() => focusRegion(regionIndex - 1)} className="p-2 text-[var(--color-text-muted)] hover:text-cyan-200" title="이전 변경 영역"><ChevronLeft size={17} /></button>
+          <span className="min-w-12 text-center font-mono text-[10px] text-[var(--color-text-dim)]">{regionIndex + 1}/{regions.length}</span>
+          <button type="button" onClick={() => focusRegion(regionIndex + 1)} className="p-2 text-[var(--color-text-muted)] hover:text-cyan-200" title="다음 변경 영역"><ChevronRight size={17} /></button>
+        </div>}
         <button type="button" onClick={() => onExpandedChange(!expanded)} className="rounded-lg p-2 text-[var(--color-text-muted)] hover:bg-white/5 hover:text-cyan-200" title={expanded ? "하단으로 축소" : "전체화면으로 확장"}>
           {expanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
         </button>
@@ -89,13 +130,24 @@ export function FileViewerSheet({
         <span className="flex items-center gap-2"><span className={`h-1.5 w-1.5 rounded-full ${tone.bg} ring-1 ${tone.border}`} />{file.change === "added" ? "추가됨" : file.change === "deleted" ? "삭제됨" : "수정됨"}</span>
         <span>{lines.length}행 · {new Blob([text]).size.toLocaleString()} B</span>
       </div>
-      <div className="ck-scroll min-h-0 flex-1 overflow-auto font-mono text-[11px] leading-6 text-slate-300">
+      <div className="flex min-h-0 flex-1">
+      <div ref={scrollRef} className="ck-scroll min-h-0 min-w-0 flex-1 overflow-auto font-mono text-[11px] leading-6 text-slate-300">
         {lines.map((line, index) => (
-          <div key={index} className={`flex min-w-max border-b border-white/[0.015] ${showingDiff && line.startsWith("+") && !line.startsWith("+++") ? "bg-emerald-400/[0.08] text-emerald-200" : showingDiff && line.startsWith("-") && !line.startsWith("---") ? "bg-rose-400/[0.08] text-rose-200" : ""}`}>
+          <div ref={(element) => { lineRefs.current[index] = element; }} key={index} className={`flex min-w-max border-b border-white/[0.015] ${showingDiff && line.startsWith("+") && !line.startsWith("+++") ? "bg-emerald-400/[0.08] text-emerald-200" : showingDiff && line.startsWith("-") && !line.startsWith("---") ? "bg-rose-400/[0.08] text-rose-200" : line.startsWith("@@") ? "bg-cyan-400/[0.07] text-cyan-300" : ""}`}>
             <span className="sticky left-0 w-12 shrink-0 select-none border-r border-white/5 bg-[#080c13] pr-3 text-right text-slate-600">{index + 1}</span>
             <span className="whitespace-pre px-4">{line || " "}</span>
           </div>
         ))}
+      </div>
+      {expanded && <aside className="ck-scroll w-[320px] shrink-0 overflow-y-auto border-l border-white/10 bg-black/20 p-2">
+        <div className="px-2 pb-2 pt-1 text-[11px] font-semibold text-[var(--color-text-muted)]">변경 파일 {files.length}</div>
+        <div className="space-y-1">{files.map((candidate) => <button key={candidate.path} type="button" onClick={() => void selectFile(candidate)} className={`w-full rounded-lg border px-2.5 py-2 text-left ${candidate.path === file.path ? "border-cyan-400/40 bg-cyan-400/10" : "border-transparent hover:border-white/10 hover:bg-white/5"}`} title={candidate.path}>
+          <span className="block truncate font-mono text-[11px] text-[var(--color-text)]">{candidate.path.split("/").pop()}</span>
+          <span className="mt-0.5 block truncate font-mono text-[9px] text-[var(--color-text-dim)]">{candidate.path}</span>
+          {loadingPath === candidate.path && <span className="mt-1 block text-[9px] text-cyan-300">불러오는 중…</span>}
+        </button>)}</div>
+        {loadError && <div className="mt-2 rounded border border-rose-400/30 bg-rose-400/5 px-2 py-1.5 text-[10px] text-rose-200">{loadError}</div>}
+      </aside>}
       </div>
       <div className="shrink-0 border-t border-white/5 px-4 py-1.5 text-right font-mono text-[9px] text-[var(--color-text-dim)]">
         {expanded ? "Esc로 닫기" : "⛶ 전체화면 · Esc로 닫기"}

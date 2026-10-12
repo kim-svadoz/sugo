@@ -47,6 +47,13 @@ export function fileViewerText(file: WorkResultFile): string {
   return `${file.path}\n\n이 작업 결과에는 저장된 diff/content가 없습니다.`;
 }
 
+export function diffChangeRegions(lines: string[]): number[] {
+  const hunks = lines.flatMap((line, index) => line.startsWith("@@") ? [index] : []);
+  if (hunks.length) return hunks;
+  const firstChange = lines.findIndex((line) => (line.startsWith("+") && !line.startsWith("+++")) || (line.startsWith("-") && !line.startsWith("---")));
+  return firstChange >= 0 ? [firstChange] : [];
+}
+
 export function fileViewerLanguage(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
   const aliases: Record<string, string> = { yml: "YAML", yaml: "YAML", js: "JS", jsx: "JSX", ts: "TS", tsx: "TSX", md: "MD", java: "JAVA", kt: "KOTLIN", py: "PYTHON", json: "JSON" };

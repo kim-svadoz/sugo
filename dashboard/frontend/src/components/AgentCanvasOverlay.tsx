@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ChevronRight, GitBranch, X } from "lucide-react";
 import { useRoadmap } from "../hooks/useRoadmap.js";
 import { RoadmapTab } from "./roadmap/RoadmapTab.js";
@@ -28,6 +28,7 @@ export function AgentCanvasOverlay({
   const nodes = data ?? [];
   const specNode = nodes.find((n) => n.level === "spec");
   const specLabel = specNode?.spec_path ? specNode.spec_path.split(/[\\/]/).filter(Boolean).pop() : specNode?.title;
+  const [fileViewerOpen, setFileViewerOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -96,13 +97,13 @@ export function AgentCanvasOverlay({
               Agent Canvas 데이터가 없습니다
             </div>
           ) : (
-            <RoadmapTab workspace={workspace} focusNodeId={focusNodeId} fill onEdited={refetch} />
+            <RoadmapTab workspace={workspace} focusNodeId={focusNodeId} fill onEdited={refetch} onFileViewerChange={setFileViewerOpen} />
           )}
         </div>
 
-        <div className="shrink-0 px-3 pb-3 pt-1">
+        {!fileViewerOpen && <div className="shrink-0 px-3 pb-3 pt-1">
           <LiveLogTail workspace={workspace} />
-        </div>
+        </div>}
       </div>
       <style>{`
         @keyframes agentCanvasModalFade{from{opacity:0}to{opacity:1}}
