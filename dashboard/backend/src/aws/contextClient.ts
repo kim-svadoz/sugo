@@ -5,7 +5,7 @@ const execFileAsync = promisify(execFile);
 
 export const awsInventoryServices = [
   "codecommit", "athena", "s3", "codebuild", "codepipeline",
-  "dynamodb", "elasticache", "opensearch", "cloudwatch", "sagemaker", "ecs",
+  "dynamodb", "elasticache", "opensearch", "cloudwatch", "lambda", "kinesis", "sagemaker", "ecs",
 ] as const;
 export type AwsInventoryService = (typeof awsInventoryServices)[number];
 
@@ -51,6 +51,7 @@ const READ_ONLY_AWS_OPERATIONS = new Set([
   "codepipeline:list-pipelines", "codepipeline:get-pipeline",
   "dynamodb:list-tables", "elasticache:describe-replication-groups",
   "opensearch:list-domain-names", "cloudwatch:list-dashboards",
+  "lambda:list-functions", "lambda:list-event-source-mappings", "kinesis:list-streams",
   "sagemaker:list-endpoints", "sagemaker:list-endpoint-configs", "sagemaker:list-models", "sagemaker:list-notebook-instances",
   "ecs:list-clusters", "ecs:list-services", "ecs:describe-services", "ecs:describe-task-sets", "ecs:describe-task-definition", "ecs:list-tasks", "ecs:describe-tasks", "ecr:describe-images",
 ]);
@@ -318,6 +319,50 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
     return { service: "sagemaker", resources, ...(errors.length ? { error: errors.join("; ") } : {}) };
   }
 
+  async function collectLambda(account: AwsContextAccount): Promise<AwsServiceInventory> {
+    try {
+      const [functionsPayload, mappingsPayload] = await Promise.all([
+        run(["lambda", "list-functions", "--query", "{Functions: Functions[].{FunctionName:FunctionName,Runtime:Runtime,Handler:Handler,State:State,LastModified:LastModified,MemorySize:MemorySize,Timeout:Timeout,EnvironmentVariableNames:keys(not_null(Environment.Variables, `{}`))}}", ...commonArgs(account)]),
+        run(["lambda", "list-event-source-mappings", "--query", "{EventSourceMappings: EventSourceMappings[].{FunctionArn:FunctionArn,EventSourceArn:EventSourceArn,State:State,BatchSize:BatchSize,StartingPosition:StartingPosition}}", ...commonArgs(account)]),
+      ]) as any[];
+      const mappings = Array.isArray(mappingsPayload.EventSourceMappings) ? mappingsPayload.EventSourceMappings : [];
+      const resources = compact((functionsPayload.Functions ?? []).map((fn: any) => {
+        const functionName = text(fn.FunctionName);
+        const eventSourceMappings = mappings
+          .filter((mapping: any) => (text(mapping.FunctionName) ?? arnName(mapping.FunctionArn)) === functionName)
+          .map((mapping: any) => ({
+            eventSourceArn: text(mapping.EventSourceArn),
+            state: text(mapping.State),
+            batchSize: typeof mapping.BatchSize === "number" ? mapping.BatchSize : null,
+            startingPosition: text(mapping.StartingPosition),
+          }));
+        return resource("lambda", "function", functionName, {
+          runtime: text(fn.Runtime),
+          handler: text(fn.Handler),
+          state: text(fn.State),
+          lastModified: text(fn.LastModified),
+          memorySize: typeof fn.MemorySize === "number" ? fn.MemorySize : null,
+          timeout: typeof fn.Timeout === "number" ? fn.Timeout : null,
+          environmentVariableNames: Array.isArray(fn.EnvironmentVariableNames) ? fn.EnvironmentVariableNames.filter((name: unknown): name is string => typeof name === "string") : [],
+          eventSourceMappings,
+        });
+      }));
+      return { service: "lambda", resources };
+    } catch (error) {
+      return { service: "lambda", resources: [], error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
+  async function collectKinesis(account: AwsContextAccount): Promise<AwsServiceInventory> {
+    return collect(account, "kinesis", ["kinesis", "list-streams", "--limit", "100", "--query", "{StreamSummaries: StreamSummaries[].{StreamName:StreamName,StreamARN:StreamARN,StreamStatus:StreamStatus,StreamModeDetails:StreamModeDetails,StreamCreationTimestamp:StreamCreationTimestamp,OpenShardCount:OpenShardCount}}"], (payload) => compact((payload.StreamSummaries ?? []).map((stream: any) => resource("kinesis", "stream", stream.StreamName, {
+      arn: text(stream.StreamARN),
+      status: text(stream.StreamStatus),
+      streamMode: text(stream.StreamModeDetails?.StreamMode),
+      creationTimestamp: text(stream.StreamCreationTimestamp),
+      openShardCount: typeof stream.OpenShardCount === "number" ? stream.OpenShardCount : null,
+    }))));
+  }
+
   return {
     async identity(account) {
       const payload = await run(["sts", "get-caller-identity", ...commonArgs(account)]) as any;
@@ -336,6 +381,8 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
         collect(account, "elasticache", ["elasticache", "describe-replication-groups"], (p) => compact((p.ReplicationGroups ?? []).map((x: any) => resource("elasticache", "replication-group", x.ReplicationGroupId, { status: x.Status, engine: x.Engine })) )),
         collect(account, "opensearch", ["opensearch", "list-domain-names"], (p) => compact((p.DomainNames ?? []).map((x: any) => resource("opensearch", "domain", x.DomainName, { engineType: x.EngineType })) )),
         collect(account, "cloudwatch", ["cloudwatch", "list-dashboards"], (p) => compact((p.DashboardEntries ?? []).map((x: any) => resource("cloudwatch", "dashboard", x.DashboardName, { lastModified: x.LastModified, size: x.Size })) )),
+        collectLambda(account),
+        collectKinesis(account),
         collectSageMaker(account),
         collectEcs(account, registries),
       ]);

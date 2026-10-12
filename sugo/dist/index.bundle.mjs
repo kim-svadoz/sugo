@@ -28164,7 +28164,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.27.1" : "0.0.0-dev";
+  return true ? "0.28.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -34041,6 +34041,8 @@ var AWS_SERVICES = [
   "elasticache",
   "opensearch",
   "cloudwatch",
+  "lambda",
+  "kinesis",
   "sagemaker",
   "ecs"
 ];

@@ -27,6 +27,9 @@ describe("AWS context CLI adapter", () => {
       if (service === "elasticache") return { ReplicationGroups: [{ ReplicationGroupId: "shop-cache", Status: "available" }] };
       if (service === "opensearch") return { DomainNames: [{ DomainName: "shop-search", EngineType: "OpenSearch" }] };
       if (service === "cloudwatch") return { DashboardEntries: [{ DashboardName: "shop-dashboard" }] };
+      if (service === "lambda" && args[1] === "list-functions") return { Functions: [{ FunctionName: "ga4-realtime-consumer", Runtime: "nodejs20.x", Handler: "index.handler", State: "Active", LastModified: "2026-10-12T00:00:00Z", MemorySize: 512, Timeout: 60, EnvironmentVariableNames: ["PGM_TABLE", "STREAM_NAME"] }] };
+      if (service === "lambda" && args[1] === "list-event-source-mappings") return { EventSourceMappings: [{ FunctionName: "ga4-realtime-consumer", EventSourceArn: "arn:aws:kinesis:ap-northeast-2:123456789012:stream/ga4-events", State: "Enabled", BatchSize: 100, StartingPosition: "LATEST" }] };
+      if (service === "kinesis") return { StreamSummaries: [{ StreamName: "ga4-events", StreamARN: "arn:aws:kinesis:ap-northeast-2:123456789012:stream/ga4-events", StreamStatus: "ACTIVE", StreamModeDetails: { StreamMode: "ON_DEMAND" }, StreamCreationTimestamp: "2026-10-01T00:00:00Z", OpenShardCount: 4 }] };
       if (service === "sagemaker" && args[1] === "list-endpoints") return { Endpoints: [{ EndpointName: "shop-ranker", EndpointStatus: "InService", CreationTime: "2026-09-01T00:00:00Z", LastModifiedTime: "2026-09-29T00:00:00Z" }] };
       if (service === "sagemaker" && args[1] === "list-endpoint-configs") return { EndpointConfigs: [{ EndpointConfigName: "shop-ranker-config", CreationTime: "2026-09-01T00:00:00Z" }] };
       if (service === "sagemaker" && args[1] === "list-models") return { Models: [{ ModelName: "shop-model", CreationTime: "2026-09-01T00:00:00Z" }] };
@@ -41,12 +44,22 @@ describe("AWS context CLI adapter", () => {
       throw new Error(`unexpected ${service}`);
     });
     const inventory = await client.inventory({ profile: "team-account", region: "ap-northeast-2" });
-    expect(inventory).toHaveLength(11);
+    expect(inventory).toHaveLength(13);
     expect(inventory.find(i => i.service === "ecs")?.resources.find(r => r.kind === "service")?.metadata?.runtimeImages).toEqual([1, 2].map(() => ({ image: "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/orders-api:421", imageDigest: "sha256:abc", tags: ["421"], container: "app" })));
     expect(inventory.find(i => i.service === "codepipeline")?.resources[0].metadata?.buildHistory).toEqual([expect.objectContaining({ number: 421, commit: "abc123" })]);
     expect(inventory.flatMap((item) => item.resources.map((resource) => resource.id))).toEqual(expect.arrayContaining([
-      "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "shop-ranker", "shop-ranker-config", "shop-model", "shop-analysis", "shop-cluster", "orders-api-service",
+      "orders-api", "primary", "logs", "shop-build", "shop-pipeline", "recommendations", "shop-cache", "shop-search", "shop-dashboard", "ga4-realtime-consumer", "ga4-events", "shop-ranker", "shop-ranker-config", "shop-model", "shop-analysis", "shop-cluster", "orders-api-service",
     ]));
+    expect(inventory.find((item) => item.service === "lambda")?.resources[0]).toMatchObject({
+      kind: "function",
+      id: "ga4-realtime-consumer",
+      metadata: {
+        runtime: "nodejs20.x",
+        environmentVariableNames: ["PGM_TABLE", "STREAM_NAME"],
+        eventSourceMappings: [{ eventSourceArn: "arn:aws:kinesis:ap-northeast-2:123456789012:stream/ga4-events", state: "Enabled", batchSize: 100, startingPosition: "LATEST" }],
+      },
+    });
+    expect(inventory.find((item) => item.service === "kinesis")?.resources[0]).toMatchObject({ kind: "stream", id: "ga4-events", metadata: { status: "ACTIVE", streamMode: "ON_DEMAND", openShardCount: 4 } });
     expect(inventory.find((item) => item.service === "sagemaker")?.resources).toEqual(expect.arrayContaining([
       expect.objectContaining({ kind: "endpoint", id: "shop-ranker", metadata: expect.objectContaining({ status: "InService" }) }),
       expect.objectContaining({ kind: "endpoint-config", id: "shop-ranker-config" }),
@@ -65,6 +78,23 @@ describe("AWS context CLI adapter", () => {
     const inventory = await client.inventory({ profile: "team-account", region: "ap-northeast-2" });
     expect(inventory.find((item) => item.service === "s3")).toMatchObject({ resources: [], error: "AccessDenied" });
     expect(inventory.find((item) => item.service === "dynamodb")).toMatchObject({ resources: [] });
+  });
+
+  it("Lambda 환경변수는 값이 아니라 이름만 CLI 출력에 포함한다", async () => {
+    let listFunctionsArgs: string[] = [];
+    const client = createAwsCliContextClient(async (args) => {
+      if (args[0] === "lambda" && args[1] === "list-functions") {
+        listFunctionsArgs = args;
+        return { Functions: [{ FunctionName: "consumer", Environment: { Variables: { DB_PASSWORD: "secret" } } }] };
+      }
+      if (args[0] === "lambda" && args[1] === "list-event-source-mappings") return { EventSourceMappings: [] };
+      return {};
+    });
+    const lambda = (await client.inventory({ profile: "team-account", region: "ap-northeast-2" })).find((item) => item.service === "lambda");
+
+    expect(listFunctionsArgs[listFunctionsArgs.indexOf("--query") + 1]).toContain("keys(not_null(Environment.Variables");
+    expect(JSON.stringify(lambda)).not.toContain("secret");
+    expect(JSON.stringify(lambda)).not.toContain("DB_PASSWORD");
   });
 
   it("uses the PRIMARY task set for CodeDeploy ECS services", async () => {

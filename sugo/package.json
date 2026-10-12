@@ -1,6 +1,6 @@
 {
   "name": "sugo",
-  "version": "0.27.1",
+  "version": "0.28.0",
   "description": "Sugo - spec-based harness + enforced state-machine dev pipeline",
   "type": "module",
   "main": "dist/index.bundle.mjs",

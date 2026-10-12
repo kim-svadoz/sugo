@@ -20,7 +20,7 @@ const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 const awsServiceLabels: Record<string, string> = {
   codecommit: "CodeCommit", athena: "Athena", s3: "S3", codebuild: "CodeBuild",
   codepipeline: "CodePipeline", dynamodb: "DynamoDB", elasticache: "ElastiCache",
-  opensearch: "OpenSearch", cloudwatch: "CloudWatch", sagemaker: "SageMaker",
+  opensearch: "OpenSearch", cloudwatch: "CloudWatch", lambda: "Lambda", kinesis: "Kinesis", sagemaker: "SageMaker",
   ecs: "ECS",
 };
 function AwsContextCard() {

@@ -81,6 +81,19 @@ describe("sugo_aws_context", () => {
     expect(parse(result).services).toEqual([{ service: "sagemaker", count: 1, status: "ok", resources: [{ kind: "endpoint", id: "shop-ranker", metadata: { status: "InService" } }] }]);
   });
 
+  it.each(["lambda", "kinesis"] as const)("%s snapshot을 명시적으로 조회할 수 있다", async (service) => {
+    const result = await handleSugoAwsContextWithFetcher({ services: [service], includeResources: true }, async () => ({
+      connected: true,
+      profile: "team-account",
+      region: "ap-northeast-2",
+      accountHint: "9012",
+      principal: "developer",
+      observedAt: "2026-10-12T00:00:00.000Z",
+      inventory: [{ service, resources: [{ kind: service === "lambda" ? "function" : "stream", id: `sample-${service}` }] }],
+    }));
+    expect(parse(result).services[0]).toMatchObject({ service, count: 1, resources: [{ id: `sample-${service}` }] });
+  });
+
   it("Dashboard를 읽을 수 없으면 거짓 빈 목록 대신 unavailable로 실패한다", async () => {
     const result = await handleSugoAwsContextWithFetcher({}, async () => null);
     expect(result.isError).toBe(true);
