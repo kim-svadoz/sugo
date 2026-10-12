@@ -10,6 +10,7 @@ import {
 import type { Checkpoint, RoadmapNode, Spec, Task, Workspace, WorkLog } from "../hulk/types.js";
 import type { PrRefs } from "../prRefs.js";
 import type { RoadmapWorkResult } from "../hulk/types.js";
+import { sanitizeReviewArtifacts } from "./workResultFiles.js";
 
 /**
  * §7.2 push 엔드포인트 얇은 래퍼들 — 호출부(hulk/*.ts, tools/sugoPlan.ts)는 로컬 쓰기가 끝난 뒤
@@ -62,6 +63,24 @@ export async function syncRoadmapSnapshot(workspaceName: string, nodes: RoadmapN
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
   await pushEvent("/api/sync/roadmap", "POST", serializeRoadmapSnapshot(config.userId, workspaceName, nodes));
+  const completed = completedReviewArtifacts(nodes);
+  await Promise.all(completed.flatMap((artifact) => artifact.files.map((file) =>
+    pushEvent("/api/sync/review-artifact", "POST", {
+      userId: config.userId, workspaceName, taskId: artifact.taskId,
+      sessionId: artifact.sessionId, patchVersion: artifact.patchVersion, ...file,
+    }, 15_000),
+  )));
+}
+
+export function completedReviewArtifacts(nodes: RoadmapNode[]): Array<{
+  taskId: string; sessionId: string; patchVersion: number; files: NonNullable<RoadmapWorkResult["files"]>;
+}> {
+  return nodes.flatMap((node) => {
+    const files = sanitizeReviewArtifacts(node.workResult?.files ?? []).filter((file) => file.content || file.diff || file.unavailableReason);
+    if (node.level !== "task" || files.length === 0) return [];
+    const patchVersion = node.workResult?.patchVersion ?? 0;
+    return [{ taskId: node.id, sessionId: `completed:${node.id}:v${patchVersion}`, patchVersion, files }];
+  });
 }
 
 /** §7.2 `/api/sync/checkpoint` push 방향 — sugo_checkpoint(action:'sync')가 사용한다. pull 방향은

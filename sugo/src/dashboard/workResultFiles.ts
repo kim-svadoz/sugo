@@ -11,6 +11,14 @@ type SnapshotFile = NonNullable<RoadmapWorkResult["files"]>[number];
 
 const SENSITIVE_PATH = /(^|\/)(\.env(?:\.|$)|\.git\/|\.aws\/|\.ssh\/|credentials?(?:\.|$)|secrets?(?:\.|$)|[^/]+\.(?:pem|key|p12|pfx))|(^|\/)node_modules\//i;
 
+export function sanitizeReviewArtifacts(files: SnapshotFile[]): SnapshotFile[] {
+  return files.map((file) => {
+    const { path, change, content, diff, unavailableReason } = file;
+    if (SENSITIVE_PATH.test(path)) return { path, change, unavailableReason: "민감 파일은 Dashboard로 전송하지 않습니다." };
+    return { path, change, ...(content ? { content } : {}), ...(diff ? { diff } : {}), ...(unavailableReason ? { unavailableReason } : {}) };
+  });
+}
+
 function safeProjectFile(projectPath: string, path: string): { absolute: string; relative: string } | null {
   const root = resolve(projectPath);
   const absolute = isAbsolute(path) ? resolve(path) : resolve(root, path);
@@ -54,8 +62,5 @@ export async function snapshotWorkResultFiles(projectPath: string, paths: string
 /** review 전 코드 열람용 아티팩트. 민감 경로는 목록만 남기고 본문은 절대 전송하지 않는다. */
 export async function snapshotReviewArtifacts(projectPath: string, paths: string[]): Promise<SnapshotFile[]> {
   const files = await snapshotWorkResultFiles(projectPath, paths);
-  return files.map((file) => {
-    if (!SENSITIVE_PATH.test(file.path)) return file;
-    return { path: file.path, change: file.change, unavailableReason: "민감 파일은 Dashboard로 전송하지 않습니다." } as SnapshotFile;
-  });
+  return sanitizeReviewArtifacts(files);
 }

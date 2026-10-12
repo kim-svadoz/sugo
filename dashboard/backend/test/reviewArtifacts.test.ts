@@ -17,7 +17,7 @@ describe("review artifact API", () => {
     const auth2 = await seedUserToken(db, "u2");
     await request(app).post("/api/sync/review-artifact").set("Authorization", auth1).send({
       userId: "forged", workspaceName: "ws", taskId: "task-1", sessionId: "session-1", patchVersion: 2,
-      path: "src/app.ts", change: "modified", content: "const next = true;", diff: "-false\n+true",
+      path: "src/app.ts", change: "modified", content: "const next = true;", diff: "-false\n+true", schemaVersion: 1,
     }).expect(200);
     const own = await request(app).get("/api/workspaces/ws/review-artifact").set("Authorization", auth1)
       .query({ taskId: "task-1", path: "src/app.ts", sessionId: "session-1" }).expect(200);

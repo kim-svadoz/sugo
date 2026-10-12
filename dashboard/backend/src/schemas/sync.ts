@@ -114,6 +114,7 @@ export const roadmapSyncSchema = z.object({
 });
 
 export const reviewArtifactSchema = z.object({
+  schemaVersion: z.number().int().positive().optional(),
   userId: z.string().min(1),
   workspaceName: z.string().min(1).max(191),
   taskId: z.string().min(1).max(512),

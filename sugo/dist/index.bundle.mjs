@@ -22526,7 +22526,7 @@ var StdioServerTransport = class {
 };
 
 // src/tools/sugoAdd.ts
-import { resolve as resolve3 } from "node:path";
+import { resolve as resolve4 } from "node:path";
 
 // src/harness/sync.ts
 import { mkdir as mkdir4, readFile as readFile3, unlink as unlink2 } from "node:fs/promises";
@@ -23688,8 +23688,8 @@ async function syncProjectHarness(args2) {
 }
 
 // src/hulk/workspace.ts
-import { mkdir as mkdir7, readdir as readdir2, readFile as readFile7, rm } from "node:fs/promises";
-import { isAbsolute as isAbsolute2, relative as relative2, resolve as resolve2 } from "node:path";
+import { mkdir as mkdir7, readdir as readdir2, readFile as readFile8, rm } from "node:fs/promises";
+import { isAbsolute as isAbsolute3, relative as relative3, resolve as resolve3 } from "node:path";
 
 // src/dashboard/config.ts
 import { userInfo } from "node:os";
@@ -24130,6 +24130,61 @@ async function drainRetryQueue() {
   await processRetryQueue((item) => sendOnce(apiUrl, item.endpoint, item.method, item.data, DEFAULT_TIMEOUT_MS, apiToken));
 }
 
+// src/dashboard/workResultFiles.ts
+import { execFile } from "node:child_process";
+import { readFile as readFile7 } from "node:fs/promises";
+import { isAbsolute as isAbsolute2, relative as relative2, resolve as resolve2, sep } from "node:path";
+import { promisify } from "node:util";
+var execFileAsync = promisify(execFile);
+var MAX_CONTENT_BYTES = 2e5;
+var MAX_DIFF_BYTES = 4e5;
+var SENSITIVE_PATH = /(^|\/)(\.env(?:\.|$)|\.git\/|\.aws\/|\.ssh\/|credentials?(?:\.|$)|secrets?(?:\.|$)|[^/]+\.(?:pem|key|p12|pfx))|(^|\/)node_modules\//i;
+function sanitizeReviewArtifacts(files) {
+  return files.map((file) => {
+    const { path, change, content, diff, unavailableReason } = file;
+    if (SENSITIVE_PATH.test(path)) return { path, change, unavailableReason: "\uBBFC\uAC10 \uD30C\uC77C\uC740 Dashboard\uB85C \uC804\uC1A1\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." };
+    return { path, change, ...content ? { content } : {}, ...diff ? { diff } : {}, ...unavailableReason ? { unavailableReason } : {} };
+  });
+}
+function safeProjectFile(projectPath, path) {
+  const root = resolve2(projectPath);
+  const absolute = isAbsolute2(path) ? resolve2(path) : resolve2(root, path);
+  const rel = relative2(root, absolute);
+  if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute2(rel)) return null;
+  return { absolute, relative: rel.split(sep).join("/") };
+}
+async function gitOutput(projectPath, args2) {
+  try {
+    const { stdout } = await execFileAsync("git", args2, { cwd: projectPath, maxBuffer: MAX_DIFF_BYTES });
+    return stdout.slice(0, MAX_DIFF_BYTES);
+  } catch {
+    return "";
+  }
+}
+async function snapshotWorkResultFiles(projectPath, paths) {
+  return Promise.all(paths.map(async (path) => {
+    const safe = safeProjectFile(projectPath, path);
+    if (!safe) return { path, change: "modified" };
+    const status = await gitOutput(projectPath, ["status", "--porcelain", "--", safe.relative]);
+    const code = status.slice(0, 2);
+    const change = code.includes("D") ? "deleted" : code.includes("?") || code.includes("A") ? "added" : "modified";
+    const diff = await gitOutput(projectPath, ["diff", "--no-ext-diff", "--unified=40", "HEAD", "--", safe.relative]);
+    let content;
+    if (change !== "deleted") {
+      try {
+        const raw = await readFile7(safe.absolute);
+        if (raw.byteLength <= MAX_CONTENT_BYTES && !raw.includes(0)) content = raw.toString("utf8");
+      } catch {
+      }
+    }
+    return { path: safe.relative, change, ...content ? { content } : {}, ...diff ? { diff } : {} };
+  }));
+}
+async function snapshotReviewArtifacts(projectPath, paths) {
+  const files = await snapshotWorkResultFiles(projectPath, paths);
+  return sanitizeReviewArtifacts(files);
+}
+
 // src/dashboard/sync.ts
 async function syncWorkspace(ws) {
   const config2 = await resolveDashboardConfig();
@@ -24161,6 +24216,25 @@ async function syncRoadmapSnapshot(workspaceName, nodes) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
   await pushEvent("/api/sync/roadmap", "POST", serializeRoadmapSnapshot(config2.userId, workspaceName, nodes));
+  const completed = completedReviewArtifacts(nodes);
+  await Promise.all(completed.flatMap((artifact) => artifact.files.map(
+    (file) => pushEvent("/api/sync/review-artifact", "POST", {
+      userId: config2.userId,
+      workspaceName,
+      taskId: artifact.taskId,
+      sessionId: artifact.sessionId,
+      patchVersion: artifact.patchVersion,
+      ...file
+    }, 15e3)
+  )));
+}
+function completedReviewArtifacts(nodes) {
+  return nodes.flatMap((node) => {
+    const files = sanitizeReviewArtifacts(node.workResult?.files ?? []).filter((file) => file.content || file.diff || file.unavailableReason);
+    if (node.level !== "task" || files.length === 0) return [];
+    const patchVersion = node.workResult?.patchVersion ?? 0;
+    return [{ taskId: node.id, sessionId: `completed:${node.id}:v${patchVersion}`, patchVersion, files }];
+  });
 }
 async function syncCheckpoint(workspaceName, checkpoint) {
   const config2 = await resolveDashboardConfig();
@@ -24215,7 +24289,7 @@ async function syncReviewArtifacts(workspaceName, taskId, sessionId, patchVersio
 // src/hulk/workspace.ts
 async function loadWorkspace(name2) {
   try {
-    const raw = await readFile7(workspaceFilePath(name2), "utf-8");
+    const raw = await readFile8(workspaceFilePath(name2), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -24292,10 +24366,10 @@ async function deleteWorkspace(name2, options = {}) {
   }
   let dataRemoved = false;
   if (!options.keepData) {
-    const target = resolve2(workspaceDir(name2));
-    const base = resolve2(workRootDir());
-    const rel = relative2(base, target);
-    const insideBase = rel.length > 0 && !rel.startsWith("..") && !isAbsolute2(rel) && target !== base;
+    const target = resolve3(workspaceDir(name2));
+    const base = resolve3(workRootDir());
+    const rel = relative3(base, target);
+    const insideBase = rel.length > 0 && !rel.startsWith("..") && !isAbsolute3(rel) && target !== base;
     if (insideBase) {
       await rm(target, { recursive: true, force: true });
       dataRemoved = true;
@@ -24317,7 +24391,7 @@ var sugoAddInputSchema = {
 var SugoAddArgs = external_exports.object(sugoAddInputSchema);
 async function handleSugoAdd(rawArgs) {
   const args2 = SugoAddArgs.parse(rawArgs);
-  const projectPath = resolve3(args2.projectPath);
+  const projectPath = resolve4(args2.projectPath);
   const result2 = await syncProjectHarness({ ...args2, projectPath });
   if (result2.workspace) {
     await ensureWorkspace(result2.workspace, projectPath);
@@ -24336,7 +24410,7 @@ async function handleSugoAdd(rawArgs) {
 }
 
 // src/tools/sugoAnalyze.ts
-import { readFile as readFile10 } from "node:fs/promises";
+import { readFile as readFile11 } from "node:fs/promises";
 
 // src/analyze.ts
 var REQ_LINE_RE = /\bREQ-(\d+)\b\s*:?\s*(.*)$/gim;
@@ -24423,16 +24497,16 @@ function analyzePrdMatch(prdContent, fileContents) {
 }
 
 // src/readChangedFiles.ts
-import { readFile as readFile8 } from "node:fs/promises";
-import { isAbsolute as isAbsolute3, join as join9 } from "node:path";
+import { readFile as readFile9 } from "node:fs/promises";
+import { isAbsolute as isAbsolute4, join as join9 } from "node:path";
 var MAX_FILE_BYTES = 3e5;
 var MAX_FILES = 200;
 async function readFileContents(projectPath, changedFiles) {
   const contents = [];
   for (const rel of changedFiles.slice(0, MAX_FILES)) {
-    const full = isAbsolute3(rel) ? rel : join9(projectPath, rel);
+    const full = isAbsolute4(rel) ? rel : join9(projectPath, rel);
     try {
-      const content = await readFile8(full, "utf-8");
+      const content = await readFile9(full, "utf-8");
       if (content.length <= MAX_FILE_BYTES) contents.push(content);
     } catch {
       continue;
@@ -24443,7 +24517,7 @@ async function readFileContents(projectPath, changedFiles) {
 
 // src/session.ts
 import { randomBytes } from "node:crypto";
-import { mkdir as mkdir8, readdir as readdir3, readFile as readFile9 } from "node:fs/promises";
+import { mkdir as mkdir8, readdir as readdir3, readFile as readFile10 } from "node:fs/promises";
 import { join as join10 } from "node:path";
 function sessionsDir() {
   return join10(sugoHomeDir(), ".claude", "sugo", "sessions");
@@ -24460,12 +24534,12 @@ async function saveSession(session) {
   await atomicWriteFile(sessionFilePath(session.id), JSON.stringify(session, null, 2));
 }
 async function loadSession(id) {
-  const raw = await readFile9(sessionFilePath(id), "utf-8");
+  const raw = await readFile10(sessionFilePath(id), "utf-8");
   return JSON.parse(raw);
 }
 async function sessionExists(id) {
   try {
-    await readFile9(sessionFilePath(id), "utf-8");
+    await readFile10(sessionFilePath(id), "utf-8");
     return true;
   } catch {
     return false;
@@ -24482,7 +24556,7 @@ async function loadAllSessions() {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile9(join10(sessionsDir(), name2), "utf-8");
+      const raw = await readFile10(join10(sessionsDir(), name2), "utf-8");
       sessions.push(JSON.parse(raw));
     } catch {
       continue;
@@ -24508,7 +24582,7 @@ async function handleSugoAnalyze(rawArgs) {
   }
   let prdContent;
   try {
-    prdContent = await readFile10(session.data.prdPath, "utf-8");
+    prdContent = await readFile11(session.data.prdPath, "utf-8");
   } catch {
     return errorResult("PRD_FILE_MISSING", `PRD \uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${session.data.prdPath}`);
   }
@@ -24705,7 +24779,7 @@ function errorResult3(errorCode, message) {
 
 // src/hulk/checkpoint.ts
 import { createHash as createHash2, randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir10, readdir as readdir4, readFile as readFile11, rm as rm3 } from "node:fs/promises";
+import { mkdir as mkdir10, readdir as readdir4, readFile as readFile12, rm as rm3 } from "node:fs/promises";
 import { join as join12 } from "node:path";
 
 // src/dashboard/fetch.ts
@@ -27834,7 +27908,7 @@ async function listCheckpointFiles(workspace) {
   for (const name2 of names) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile11(join12(dir, name2), "utf-8");
+      const raw = await readFile12(join12(dir, name2), "utf-8");
       const { meta } = parseFrontmatter(raw);
       result2.push({ filename: name2, checkpoint: meta });
     } catch {
@@ -27929,7 +28003,7 @@ async function checkpointFiles(projectPath, id) {
       const path = join12(dir, entry.name);
       if (entry.isDirectory()) await walk(path);
       else if (entry.isFile() && entry.name.endsWith(".md")) {
-        const content = await readFile11(path, "utf8").catch(() => "");
+        const content = await readFile12(path, "utf8").catch(() => "");
         if (content.includes(`checkpoint-id: ${id}`) || content.includes(`Sugo checkpoint ${id} \xB7`)) found.push(path);
       }
     }
@@ -27945,7 +28019,7 @@ async function syncRemoteCheckpointsToRules(projectPath, workspace, remote, cont
     const target = join12(projectPath, ".claude", "rules", cp.category ?? "general", `${cp.id}-${slugify(cp.title)}.md`);
     let blocked = false;
     for (const file of files.filter((path) => !applicable || path !== target)) {
-      const content2 = await readFile11(file, "utf8").catch(() => null);
+      const content2 = await readFile12(file, "utf8").catch(() => null);
       if (content2 === null) continue;
       if (wasEdited(content2, cp, workspace)) {
         result2.conflicts.push(file);
@@ -27957,7 +28031,7 @@ async function syncRemoteCheckpointsToRules(projectPath, workspace, remote, cont
     }
     if (!applicable || blocked) continue;
     const content = checkpointBody(cp, workspace);
-    const existing = await readFile11(target, "utf8").catch(() => null);
+    const existing = await readFile12(target, "utf8").catch(() => null);
     if (existing !== null && existing !== content && wasEdited(existing, cp, workspace)) {
       result2.conflicts.push(target);
       continue;
@@ -27980,10 +28054,10 @@ async function pullCheckpointsToRules(projectPath, workspace) {
 }
 
 // src/hulk/memory.ts
-import { mkdir as mkdir11, readFile as readFile12 } from "node:fs/promises";
+import { mkdir as mkdir11, readFile as readFile13 } from "node:fs/promises";
 async function appendMemory(workspace, note) {
   const path = memoryFilePath(workspace);
-  const existing = await readFile12(path, "utf-8").catch(() => "");
+  const existing = await readFile13(path, "utf-8").catch(() => "");
   const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
 
 ${note}
@@ -27994,7 +28068,7 @@ ${entry}` : entry;
   await atomicWriteFile(path, next);
 }
 async function readMemory(workspace) {
-  return readFile12(memoryFilePath(workspace), "utf-8").catch(() => "");
+  return readFile13(memoryFilePath(workspace), "utf-8").catch(() => "");
 }
 
 // src/tools/sugoCheckpoint.ts
@@ -28090,18 +28164,18 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.27.0" : "0.0.0-dev";
+  return true ? "0.27.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
-import { resolve as resolve4 } from "node:path";
+import { resolve as resolve5 } from "node:path";
 var sugoDeleteInputSchema = {
   projectPath: external_exports.string().describe("\uB4F1\uB85D \uCDE8\uC18C\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C")
 };
 var SugoDeleteArgs = external_exports.object(sugoDeleteInputSchema);
 async function handleSugoDelete(rawArgs) {
   const args2 = SugoDeleteArgs.parse(rawArgs);
-  const projectPath = resolve4(args2.projectPath);
+  const projectPath = resolve5(args2.projectPath);
   const removed = await unregisterProject(projectPath);
   if (!removed) {
     return errorResult5("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4: ${projectPath}`);
@@ -28124,7 +28198,7 @@ function errorResult5(errorCode, message) {
 }
 
 // src/tools/sugoDisable.ts
-import { resolve as resolve5 } from "node:path";
+import { resolve as resolve6 } from "node:path";
 
 // src/harness/toggle.ts
 var ToggleProjectError = class extends Error {
@@ -28148,7 +28222,7 @@ var sugoDisableInputSchema = {
 var SugoDisableArgs = external_exports.object(sugoDisableInputSchema);
 async function handleSugoDisable(rawArgs) {
   const args2 = SugoDisableArgs.parse(rawArgs);
-  const projectPath = resolve5(args2.projectPath);
+  const projectPath = resolve6(args2.projectPath);
   try {
     await setProjectDisabled(projectPath, true);
   } catch (err2) {
@@ -28165,14 +28239,14 @@ function errorResult6(errorCode, message) {
 }
 
 // src/tools/sugoEnable.ts
-import { resolve as resolve6 } from "node:path";
+import { resolve as resolve7 } from "node:path";
 var sugoEnableInputSchema = {
   projectPath: external_exports.string().describe("\uB2E4\uC2DC \uD65C\uC131\uD654\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C")
 };
 var SugoEnableArgs = external_exports.object(sugoEnableInputSchema);
 async function handleSugoEnable(rawArgs) {
   const args2 = SugoEnableArgs.parse(rawArgs);
-  const projectPath = resolve6(args2.projectPath);
+  const projectPath = resolve7(args2.projectPath);
   try {
     await setProjectDisabled(projectPath, false);
   } catch (err2) {
@@ -28189,8 +28263,8 @@ function errorResult7(errorCode, message) {
 }
 
 // src/tools/sugoExplore.ts
-import { readFile as readFile13 } from "node:fs/promises";
-import { isAbsolute as isAbsolute4, join as join15 } from "node:path";
+import { readFile as readFile14 } from "node:fs/promises";
+import { isAbsolute as isAbsolute5, join as join15 } from "node:path";
 
 // src/ast/astParser.ts
 var import_web_tree_sitter = __toESM(require_tree_sitter(), 1);
@@ -28350,10 +28424,10 @@ async function handleSugoExplore(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const f of args2.filePaths.slice(0, MAX_FILES2)) {
-    const full = isAbsolute4(f) ? f : join15(args2.projectPath, f);
+    const full = isAbsolute5(f) ? f : join15(args2.projectPath, f);
     let content;
     try {
-      content = await readFile13(full, "utf-8");
+      content = await readFile14(full, "utf-8");
     } catch {
       skipped.push({ path: f, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -28374,7 +28448,7 @@ async function handleSugoExplore(rawArgs) {
 }
 
 // src/tools/sugoGetProjectContext.ts
-import { readdir as readdir5, readFile as readFile15 } from "node:fs/promises";
+import { readdir as readdir5, readFile as readFile16 } from "node:fs/promises";
 import { basename as basename2, join as join17 } from "node:path";
 
 // src/harness/toolRegistry.ts
@@ -28397,12 +28471,12 @@ ${dispatch}`;
 }
 
 // src/prRefs.ts
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-var execFileAsync = promisify(execFile);
+import { execFile as execFile2 } from "node:child_process";
+import { promisify as promisify2 } from "node:util";
+var execFileAsync2 = promisify2(execFile2);
 async function runGit(args2, cwd) {
   try {
-    const { stdout } = await execFileAsync("git", args2, { cwd });
+    const { stdout } = await execFileAsync2("git", args2, { cwd });
     return stdout.trim();
   } catch {
     return null;
@@ -28454,7 +28528,7 @@ function featureBranchName(branch) {
 }
 
 // src/todoSpec.ts
-import { mkdir as mkdir12, readFile as readFile14 } from "node:fs/promises";
+import { mkdir as mkdir12, readFile as readFile15 } from "node:fs/promises";
 import { join as join16 } from "node:path";
 
 // src/gates.ts
@@ -28705,7 +28779,7 @@ function todoSpecPath(projectPath, featureName) {
 }
 async function readTodoSpec(projectPath, featureName) {
   try {
-    return await readFile14(todoSpecPath(projectPath, featureName), "utf-8");
+    return await readFile15(todoSpecPath(projectPath, featureName), "utf-8");
   } catch {
     return null;
   }
@@ -28788,7 +28862,7 @@ var sugoGetProjectContextInputSchema = {
 var SugoGetProjectContextArgs = external_exports.object(sugoGetProjectContextInputSchema);
 async function readIfExists(path) {
   try {
-    return await readFile15(path, "utf-8");
+    return await readFile16(path, "utf-8");
   } catch {
     return null;
   }
@@ -28872,7 +28946,7 @@ async function handleSugoGetProjectContext(rawArgs) {
 
 // src/hulk/history.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdir as mkdir13, readdir as readdir6, readFile as readFile16 } from "node:fs/promises";
+import { mkdir as mkdir13, readdir as readdir6, readFile as readFile17 } from "node:fs/promises";
 import { join as join18 } from "node:path";
 function generateWorkLogId() {
   return `wl-${Date.now()}-${randomBytes3(4).toString("hex")}`;
@@ -28897,7 +28971,7 @@ async function listWorkLogs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile16(join18(dir, name2), "utf-8");
+      const raw = await readFile17(join18(dir, name2), "utf-8");
       logs.push(JSON.parse(raw));
     } catch {
       continue;
@@ -28907,7 +28981,7 @@ async function listWorkLogs(workspace) {
 }
 async function getWorkLog(workspace, id) {
   try {
-    const raw = await readFile16(join18(historyDir(workspace), `${id}.json`), "utf-8");
+    const raw = await readFile17(join18(historyDir(workspace), `${id}.json`), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -28976,8 +29050,8 @@ function errorResult8(errorCode, message) {
 }
 
 // src/tools/sugoOverview.ts
-import { readFile as readFile17 } from "node:fs/promises";
-import { relative as relative3, sep } from "node:path";
+import { readFile as readFile18 } from "node:fs/promises";
+import { relative as relative4, sep as sep2 } from "node:path";
 
 // src/overview.ts
 import { readdir as readdir7 } from "node:fs/promises";
@@ -29029,10 +29103,10 @@ async function handleSugoOverview(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const full of files) {
-    const relPath = relative3(args2.projectPath, full).split(sep).join("/");
+    const relPath = relative4(args2.projectPath, full).split(sep2).join("/");
     let content;
     try {
-      content = await readFile17(full, "utf-8");
+      content = await readFile18(full, "utf-8");
     } catch {
       skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -29061,17 +29135,17 @@ async function handleSugoOverview(rawArgs) {
 
 // src/sourceRevision.ts
 import { createHash as createHash3 } from "node:crypto";
-import { readFile as readFile18 } from "node:fs/promises";
-import { relative as relative4, resolve as resolve7, isAbsolute as isAbsolute5 } from "node:path";
+import { readFile as readFile19 } from "node:fs/promises";
+import { relative as relative5, resolve as resolve8, isAbsolute as isAbsolute6 } from "node:path";
 async function collectSourceRevision(projectPath, changedFiles, startedAt) {
-  const paths = [...new Set(changedFiles.map((f) => relative4(projectPath, resolve7(projectPath, f)).replace(/\\/g, "/")))].sort();
-  if (!paths.length || paths.some((p) => !p || p.startsWith("../") || isAbsolute5(p))) return void 0;
+  const paths = [...new Set(changedFiles.map((f) => relative5(projectPath, resolve8(projectPath, f)).replace(/\\/g, "/")))].sort();
+  if (!paths.length || paths.some((p) => !p || p.startsWith("../") || isAbsolute6(p))) return void 0;
   const head = await runGit(["rev-parse", "HEAD"], projectPath);
   if (!head || !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(head)) return void 0;
   const files = [];
   for (const path of paths) {
     try {
-      files.push({ path, hash: createHash3("sha256").update(await readFile18(resolve7(projectPath, path))).digest("hex") });
+      files.push({ path, hash: createHash3("sha256").update(await readFile19(resolve8(projectPath, path))).digest("hex") });
     } catch (e) {
       if (e.code !== "ENOENT") return void 0;
       files.push({ path, hash: "deleted" });
@@ -29093,7 +29167,7 @@ async function isProjectBootable(projectPath) {
 }
 
 // src/bootScan.ts
-import { readdir as readdir8, readFile as readFile19 } from "node:fs/promises";
+import { readdir as readdir8, readFile as readFile20 } from "node:fs/promises";
 import { join as join20 } from "node:path";
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
 var MAX_FILES4 = 2e3;
@@ -29123,7 +29197,7 @@ async function scanForSpringBootTestAnnotation(projectPath) {
   const candidates = testFiles.length > 0 ? testFiles : files;
   for (const file of candidates) {
     try {
-      const content = await readFile19(file, "utf-8");
+      const content = await readFile20(file, "utf-8");
       if (content.length > MAX_FILE_BYTES4) continue;
       if (hasValidSpringBootTestAnnotation([content])) return true;
     } catch {
@@ -29347,57 +29421,6 @@ async function emitActivity(event) {
     },
     ACTIVITY_TIMEOUT_MS
   );
-}
-
-// src/dashboard/workResultFiles.ts
-import { execFile as execFile2 } from "node:child_process";
-import { readFile as readFile20 } from "node:fs/promises";
-import { isAbsolute as isAbsolute6, relative as relative5, resolve as resolve8, sep as sep2 } from "node:path";
-import { promisify as promisify2 } from "node:util";
-var execFileAsync2 = promisify2(execFile2);
-var MAX_CONTENT_BYTES = 2e5;
-var MAX_DIFF_BYTES = 4e5;
-var SENSITIVE_PATH = /(^|\/)(\.env(?:\.|$)|\.git\/|\.aws\/|\.ssh\/|credentials?(?:\.|$)|secrets?(?:\.|$)|[^/]+\.(?:pem|key|p12|pfx))|(^|\/)node_modules\//i;
-function safeProjectFile(projectPath, path) {
-  const root = resolve8(projectPath);
-  const absolute = isAbsolute6(path) ? resolve8(path) : resolve8(root, path);
-  const rel = relative5(root, absolute);
-  if (rel === ".." || rel.startsWith(`..${sep2}`) || isAbsolute6(rel)) return null;
-  return { absolute, relative: rel.split(sep2).join("/") };
-}
-async function gitOutput(projectPath, args2) {
-  try {
-    const { stdout } = await execFileAsync2("git", args2, { cwd: projectPath, maxBuffer: MAX_DIFF_BYTES });
-    return stdout.slice(0, MAX_DIFF_BYTES);
-  } catch {
-    return "";
-  }
-}
-async function snapshotWorkResultFiles(projectPath, paths) {
-  return Promise.all(paths.map(async (path) => {
-    const safe = safeProjectFile(projectPath, path);
-    if (!safe) return { path, change: "modified" };
-    const status = await gitOutput(projectPath, ["status", "--porcelain", "--", safe.relative]);
-    const code = status.slice(0, 2);
-    const change = code.includes("D") ? "deleted" : code.includes("?") || code.includes("A") ? "added" : "modified";
-    const diff = await gitOutput(projectPath, ["diff", "--no-ext-diff", "--unified=40", "HEAD", "--", safe.relative]);
-    let content;
-    if (change !== "deleted") {
-      try {
-        const raw = await readFile20(safe.absolute);
-        if (raw.byteLength <= MAX_CONTENT_BYTES && !raw.includes(0)) content = raw.toString("utf8");
-      } catch {
-      }
-    }
-    return { path: safe.relative, change, ...content ? { content } : {}, ...diff ? { diff } : {} };
-  }));
-}
-async function snapshotReviewArtifacts(projectPath, paths) {
-  const files = await snapshotWorkResultFiles(projectPath, paths);
-  return files.map((file) => {
-    if (!SENSITIVE_PATH.test(file.path)) return file;
-    return { path: file.path, change: file.change, unavailableReason: "\uBBFC\uAC10 \uD30C\uC77C\uC740 Dashboard\uB85C \uC804\uC1A1\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." };
-  });
 }
 
 // src/decompose.ts
