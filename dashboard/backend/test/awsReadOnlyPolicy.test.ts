@@ -5,7 +5,7 @@ describe('AWS read-only hard boundary', () => {
   it('allows explicit inventory operations', () => expect(() => assertReadOnlyAwsArgs(['ecs', 'describe-services'])).not.toThrow());
   it.each([
     ['sagemaker', 'list-endpoints'], ['sagemaker', 'list-endpoint-configs'], ['sagemaker', 'list-models'], ['sagemaker', 'list-notebook-instances'],
-    ['lambda', 'list-functions'], ['lambda', 'list-event-source-mappings'], ['kinesis', 'list-streams'],
+    ['lambda', 'list-functions'], ['lambda', 'list-event-source-mappings'], ['kinesis', 'list-streams'], ['kinesis', 'describe-stream-summary'],
   ])('allows read-only inventory %s %s', (service, operation) => expect(() => assertReadOnlyAwsArgs([service, operation])).not.toThrow());
   it.each([
     ['ecs', 'update-service'], ['s3api', 'delete-object'], ['codepipeline', 'start-pipeline-execution'],

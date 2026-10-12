@@ -51,7 +51,7 @@ const READ_ONLY_AWS_OPERATIONS = new Set([
   "codepipeline:list-pipelines", "codepipeline:get-pipeline",
   "dynamodb:list-tables", "elasticache:describe-replication-groups",
   "opensearch:list-domain-names", "cloudwatch:list-dashboards",
-  "lambda:list-functions", "lambda:list-event-source-mappings", "kinesis:list-streams",
+  "lambda:list-functions", "lambda:list-event-source-mappings", "kinesis:list-streams", "kinesis:describe-stream-summary",
   "sagemaker:list-endpoints", "sagemaker:list-endpoint-configs", "sagemaker:list-models", "sagemaker:list-notebook-instances",
   "ecs:list-clusters", "ecs:list-services", "ecs:describe-services", "ecs:describe-task-sets", "ecs:describe-task-definition", "ecs:list-tasks", "ecs:describe-tasks", "ecr:describe-images",
 ]);
@@ -84,6 +84,11 @@ function compact(items: Array<AwsInventoryResource | null>): AwsInventoryResourc
 function arnName(value: unknown): string | null {
   const normalized = text(value);
   return normalized?.split("/").at(-1) ?? null;
+}
+
+function lambdaFunctionName(value: unknown): string | null {
+  const normalized = text(value);
+  return normalized?.split(":function:").at(-1)?.split(":")[0] ?? null;
 }
 
 function chunks<T>(items: T[], size: number): T[][] {
@@ -329,7 +334,7 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
       const resources = compact((functionsPayload.Functions ?? []).map((fn: any) => {
         const functionName = text(fn.FunctionName);
         const eventSourceMappings = mappings
-          .filter((mapping: any) => (text(mapping.FunctionName) ?? arnName(mapping.FunctionArn)) === functionName)
+          .filter((mapping: any) => (text(mapping.FunctionName) ?? lambdaFunctionName(mapping.FunctionArn)) === functionName)
           .map((mapping: any) => ({
             eventSourceArn: text(mapping.EventSourceArn),
             state: text(mapping.State),
@@ -354,13 +359,33 @@ export function createAwsCliContextClient(customRunner?: AwsRunner): AwsContextC
   }
 
   async function collectKinesis(account: AwsContextAccount): Promise<AwsServiceInventory> {
-    return collect(account, "kinesis", ["kinesis", "list-streams", "--limit", "100", "--query", "{StreamSummaries: StreamSummaries[].{StreamName:StreamName,StreamARN:StreamARN,StreamStatus:StreamStatus,StreamModeDetails:StreamModeDetails,StreamCreationTimestamp:StreamCreationTimestamp,OpenShardCount:OpenShardCount}}"], (payload) => compact((payload.StreamSummaries ?? []).map((stream: any) => resource("kinesis", "stream", stream.StreamName, {
-      arn: text(stream.StreamARN),
-      status: text(stream.StreamStatus),
-      streamMode: text(stream.StreamModeDetails?.StreamMode),
-      creationTimestamp: text(stream.StreamCreationTimestamp),
-      openShardCount: typeof stream.OpenShardCount === "number" ? stream.OpenShardCount : null,
-    }))));
+    const resources: AwsInventoryResource[] = [];
+    const errors: string[] = [];
+    try {
+      const payload = await run(["kinesis", "list-streams", "--limit", "100", "--query", "{StreamSummaries: StreamSummaries[].{StreamName:StreamName,StreamARN:StreamARN,StreamStatus:StreamStatus,StreamModeDetails:StreamModeDetails,StreamCreationTimestamp:StreamCreationTimestamp}}", ...commonArgs(account)]) as any;
+      for (const stream of payload.StreamSummaries ?? []) {
+        const streamName = text(stream.StreamName);
+        if (!streamName) continue;
+        let openShardCount: number | null = null;
+        try {
+          const detail = await run(["kinesis", "describe-stream-summary", "--stream-name", streamName, "--query", "{StreamDescriptionSummary:{OpenShardCount:StreamDescriptionSummary.OpenShardCount}}", ...commonArgs(account)]) as any;
+          openShardCount = typeof detail.StreamDescriptionSummary?.OpenShardCount === "number" ? detail.StreamDescriptionSummary.OpenShardCount : null;
+        } catch (error) {
+          errors.push(`${streamName}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        const item = resource("kinesis", "stream", streamName, {
+          arn: text(stream.StreamARN),
+          status: text(stream.StreamStatus),
+          streamMode: text(stream.StreamModeDetails?.StreamMode),
+          creationTimestamp: text(stream.StreamCreationTimestamp),
+          openShardCount,
+        });
+        if (item) resources.push(item);
+      }
+      return { service: "kinesis", resources, ...(errors.length ? { error: errors.join("; ") } : {}) };
+    } catch (error) {
+      return { service: "kinesis", resources: [], error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
   return {
