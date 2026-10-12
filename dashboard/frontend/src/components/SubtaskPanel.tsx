@@ -86,7 +86,7 @@ export function SubtaskPanel({
             </span>
             <span className="font-mono text-[11px] uppercase text-[var(--color-text-dim)]">{workflowStatus(node) === "verification" ? "검증" : workflowStatus(node)}</span>
           </div>
-          <div className="truncate text-lg font-semibold text-[var(--color-text-bright)]">{node.title}</div>
+          <div className="whitespace-normal break-words text-lg font-semibold leading-snug text-[var(--color-text-bright)]">{node.title}</div>
           <div className="mt-1.5 truncate font-mono text-[11px] text-[var(--color-text-dim)]" title={node.id}>
             {node.id}
           </div>

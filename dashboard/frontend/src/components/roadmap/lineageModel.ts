@@ -37,17 +37,29 @@ const conciseTitle = (value: unknown): string | null => {
   if (typeof value !== "string") return null;
   const firstLine = value.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
   if (!firstLine) return null;
-  const characters = Array.from(firstLine.replace(/\s+/g, " "));
-  return characters.length > 48 ? `${characters.slice(0, 47).join("")}…` : characters.join("");
+  const normalized = firstLine
+    .replace(/^(?:v?\d+\s*(?:차\s*)?patch)\s*[:·-]?\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!normalized) return null;
+  return normalized.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? normalized;
 };
 
 const lineageEntryTitle = (entry: HistoryEntry, taskTitle: string): string => {
   const stored = conciseTitle(entry.title);
+  const version = numberOr(entry.version, 0);
+  if (version === 0 && stored) return stored;
   if (stored && stored !== taskTitle) return stored;
+  const requirementTitle = Array.isArray(entry.requirements)
+    ? entry.requirements
+      .map((requirement) => conciseTitle(requirement?.title)?.replace(/\s*\(TODO-SPEC 항목:[^)]+\)\s*$/, "").trim())
+      .find((title) => title && title !== "사용자 최종 확인")
+    : null;
   const workResult = entry.workResult && typeof entry.workResult === "object"
     ? entry.workResult as { seed?: unknown; summary?: unknown; report?: { summary?: unknown } }
     : null;
-  return conciseTitle(workResult?.seed)
+  return requirementTitle
+    ?? conciseTitle(workResult?.seed)
     ?? conciseTitle(workResult?.summary)
     ?? conciseTitle(workResult?.report?.summary)
     ?? stored
@@ -171,7 +183,7 @@ export function lineageSelection(item: LineageChainItem) {
     id: item.key,
     ref: item.node.id,
     approval_read_only: item.version < Number((item.node.work_result as { patchVersion?: number } | null)?.patchVersion ?? item.version),
-    title: `v${item.version} ${item.version === 0 ? "feat" : "patch"} · ${item.title}`,
+    title: item.title,
     work_result: explicitWorkResult ?? fallbackWorkResult,
     lineage: null,
   };

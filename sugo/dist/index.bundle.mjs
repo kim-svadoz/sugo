@@ -28076,7 +28076,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.26.5" : "0.0.0-dev";
+  return true ? "0.26.6" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29522,13 +29522,21 @@ function estimateHumanHours(startedAtIso, nowIso2, analyzeAttempts, autoLoopRetr
 }
 
 // src/taskTitle.ts
-function taskCycleTitle(seed, fallback) {
+function prdHeadingTitle(prdContent) {
+  const heading = prdContent?.match(/^#\s+PRD(?:\s+patch\s+v\d+)?\s*:\s*(.+)$/im)?.[1]?.trim();
+  if (!heading) return null;
+  const [, patchSubject] = heading.split(/\s+[—–]\s+/, 2);
+  if (patchSubject?.trim()) return patchSubject.trim();
+  return heading.replace(/\s+\([^)]*\)\s*$/, "").trim() || null;
+}
+function taskCycleTitle(seed, fallback, prdContent) {
+  const fromPrd = prdHeadingTitle(prdContent);
+  if (fromPrd) return fromPrd;
   const firstLine = seed?.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
   if (!firstLine) return fallback;
-  const normalized = firstLine.replace(/^#{1,6}\s*/, "").replace(/^(?:[-*+]\s+|\d+[.)]\s+)/, "").replace(/\s+/g, " ").trim();
+  const normalized = firstLine.replace(/^#{1,6}\s*/, "").replace(/^(?:[-*+]\s+|\d+[.)]\s+)/, "").replace(/^(?:v?\d+\s*(?:차\s*)?patch)\s*[:·-]?\s*/i, "").replace(/\s+/g, " ").trim();
   if (!normalized) return fallback;
-  const characters = Array.from(normalized);
-  return characters.length > 48 ? `${characters.slice(0, 47).join("")}\u2026` : normalized;
+  return normalized.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? normalized;
 }
 
 // src/steKorean.ts
@@ -29684,6 +29692,7 @@ ${lines.join("\n")}`;
 
 // src/hulk/roadmap.ts
 import { mkdir as mkdir15, readFile as readFile21 } from "node:fs/promises";
+import { dirname as dirname9, join as join24 } from "node:path";
 
 // src/hulk/roadmapGraph.ts
 function mergeRoadmapOwnership(localNodes, remoteOrdering) {
@@ -29793,6 +29802,12 @@ function promotePrdRequirements(taskId, prdContent) {
 }
 
 // src/hulk/roadmap.ts
+async function restoredPatchTitle(task) {
+  if (!task.patchInfo) return task.title;
+  const patchPrdPath = task.patchInfo.prdPath ?? (task.prd_ref ? join24(dirname9(task.prd_ref), `PRD-patch-v${task.patchInfo.patchVersion}.md`) : void 0);
+  const prdContent = patchPrdPath ? await readFile21(patchPrdPath, "utf8").catch(() => void 0) : void 0;
+  return task.patchInfo.title ?? taskCycleTitle(task.patchInfo.seed, task.title, prdContent);
+}
 function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath) {
   const previousLineage = node.lineage ?? [];
   if (previousLineage.some((entry) => entry.version === patchVersion)) {
@@ -29907,7 +29922,7 @@ async function reconcileRoadmapWithTasks(workspace, tasks) {
       byId.set(task.id, task.patchInfo?.patchVersion ? withStartedPatch(
         nextTask,
         task.patchInfo.patchVersion,
-        taskCycleTitle(task.patchInfo.seed, task.title),
+        await restoredPatchTitle(task),
         task.started_at ?? task.created_at,
         task.patchInfo.baseWorkResultPath
       ) : nextTask);
@@ -31653,6 +31668,7 @@ async function handleSugoPlan(rawArgs) {
     };
     const registryEntry = await findRegistryEntry(session.projectPath);
     if (registryEntry?.workspace) {
+      const cycleTitle = taskCycleTitle(session.data.seed, session.featureName, args2.prdContent);
       let task;
       const baseTask = isPatch ? await findTaskByPrdRef(registryEntry.workspace, session.data.patch.parentPrdPath) : null;
       if (baseTask) {
@@ -31660,7 +31676,9 @@ async function handleSugoPlan(rawArgs) {
           parentTaskId: baseTask.id,
           patchVersion: session.data.patch.version,
           baseWorkResultPath: session.data.patch.baseWorkResultPath,
-          seed: session.data.seed
+          seed: session.data.seed,
+          title: cycleTitle,
+          prdPath
         };
         task = await updateTask(registryEntry.workspace, baseTask.id, { status: "in_progress", patchInfo }) ?? baseTask;
       } else {
@@ -31678,7 +31696,6 @@ async function handleSugoPlan(rawArgs) {
       await backfillRoadmapTask(registryEntry.workspace, task.id, session.featureName);
       await updateRoadmapNodeStatus(registryEntry.workspace, task.id, "in_progress");
       const existingTaskNode = isPatch ? await getRoadmapNode(registryEntry.workspace, task.id) : null;
-      const cycleTitle = taskCycleTitle(session.data.seed, session.featureName);
       const runId = existingTaskNode?.parent ?? `run-${task.id}`;
       const existingRunNode = await getRoadmapNode(registryEntry.workspace, runId);
       const draftSelection = session.data.specDraftSelection;
@@ -32136,7 +32153,7 @@ import { resolve as resolve9 } from "node:path";
 
 // src/harness/reset.ts
 import { mkdir as mkdir17, readFile as readFile24, rm as rm4 } from "node:fs/promises";
-import { join as join24 } from "node:path";
+import { join as join25 } from "node:path";
 var ResetProjectError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -32158,17 +32175,17 @@ async function resetProjectHarness(projectPath) {
     throw new ResetProjectError("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4(sugo/config.json \uC5C6\uC74C): ${projectPath}`);
   }
   const sugoDir = projectSugoDir(projectPath);
-  const claudeMdPath = join24(sugoDir, "CLAUDE.md");
+  const claudeMdPath = join25(sugoDir, "CLAUDE.md");
   let backedUpTo;
   try {
     const current = await readFile24(claudeMdPath, "utf-8");
-    const backupDir = join24(sugoDir, "backup");
+    const backupDir = join25(sugoDir, "backup");
     await mkdir17(backupDir, { recursive: true });
-    backedUpTo = join24(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
+    backedUpTo = join25(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
     await atomicWriteFile(backedUpTo, current);
   } catch {
   }
-  await rm4(join24(sugoDir, "harness"), { recursive: true, force: true });
+  await rm4(join25(sugoDir, "harness"), { recursive: true, force: true });
   await atomicWriteFile(claudeMdPath, RESET_CLAUDE_MD);
   await saveProjectConfig({ ...config2, appliedHarnesses: [], lastUpdated: (/* @__PURE__ */ new Date()).toISOString() });
   return { backedUpTo };
@@ -32548,7 +32565,7 @@ async function handleSugoRoute(rawArgs) {
 
 // src/hulk/spec.ts
 import { mkdir as mkdir18, readdir as readdir10, readFile as readFile25 } from "node:fs/promises";
-import { join as join25 } from "node:path";
+import { join as join26 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
     name: params.name,
@@ -32563,7 +32580,7 @@ async function addSpec(workspace, params) {
     { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
     spec.content
   );
-  await atomicWriteFile(join25(dir, `${slugify(params.name)}.md`), fileContent);
+  await atomicWriteFile(join26(dir, `${slugify(params.name)}.md`), fileContent);
   void syncDecision(workspace, spec);
   return spec;
 }
@@ -32589,7 +32606,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile25(join25(dir, name2), "utf-8");
+      const raw = await readFile25(join26(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -32599,7 +32616,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile25(join25(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile25(join26(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -32651,7 +32668,7 @@ function errorResult14(errorCode, message) {
 
 // src/tools/sugoSpecWriter.ts
 import { readFile as readFile26 } from "node:fs/promises";
-import { join as join26 } from "node:path";
+import { join as join27 } from "node:path";
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
   workspace: external_exports.string().min(1),
@@ -32687,7 +32704,7 @@ async function handleSugoSpecWriter(rawArgs) {
     return result({ ok: false, errorCode: "PROJECT_MISMATCH", expected: spec.projectPath, received: args2.projectPath });
   }
   if (args2.action === "context") {
-    const dir = join26(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const dir = join27(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     try {
       const attachments = await downloadSpecAttachments(args2.workspace, spec.id, dir);
       return result({ ok: true, spec, attachments: attachments ?? [], ...attachments === null && { attachmentsUnavailable: true } });
@@ -33024,7 +33041,7 @@ function evaluateAutoCheck(spec, ctx) {
 
 // src/harness/validationConfig.ts
 import { readFile as readFile27 } from "node:fs/promises";
-import { join as join27 } from "node:path";
+import { join as join28 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
   const checks = (raw?.checks ?? []).filter((c) => !!c?.id).map((c) => ({
@@ -33040,7 +33057,7 @@ async function loadProjectValidationConfigs(projectPath) {
   const result2 = /* @__PURE__ */ new Map();
   if (!config2) return result2;
   for (const applied of config2.appliedHarnesses) {
-    const path = join27(projectPath, "sugo", "harness", applied.id, "validation.yaml");
+    const path = join28(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
       const content = await readFile27(path, "utf-8");
       result2.set(applied.id, parseValidationYaml(content));

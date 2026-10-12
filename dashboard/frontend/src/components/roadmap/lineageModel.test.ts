@@ -75,7 +75,7 @@ describe("patch lineage canvas model", () => {
 
     const selected = lineageSelection(chain.columns[0][1]);
     expect(selected.node.id).toBe("task:v1");
-    expect(selected.node.title).toBe("v1 patch · Redis 만료 보강");
+    expect(selected.node.title).toBe("Redis 만료 보강");
     expect(selected.node.ref).toBe("task");
     expect(selected.node.approval_read_only).toBe(true);
     expect(selected.node.work_result).toEqual(expect.objectContaining({ path: "/work-result-patch-v1.md" }));
@@ -119,20 +119,39 @@ describe("patch lineage canvas model", () => {
     expect(chain.columns[0].map((item) => item.node.display_status)).toEqual(["done", "done", "dropped"]);
   });
 
-  it("반복된 기능명 대신 차수별 작업 지시를 카드 제목으로 사용한다", () => {
+  it("feat는 기능명을 유지하고 patch는 첫 REQ의 명사형 제목을 사용한다", () => {
     const task = node({
       id: "task",
       title: "검색 필터",
       lineage: [
         { version: 0, title: "검색 필터", workResult: { seed: "최초 검색 필터 구현" } },
-        { version: 1, title: "검색 필터", workResult: { seed: "1차 patch: 최신 문서 조회와 정렬을 적용한다" } },
+        {
+          version: 1,
+          title: "검색 필터",
+          workResult: { seed: "1차 patch: 최신 문서 조회와 정렬을 적용한다" },
+          requirements: [{ title: "alias 조회와 최신 문서 선택 (TODO-SPEC 항목: h)" }],
+        },
       ],
     });
 
     const [chain] = buildLineageChains([task]);
     expect(chain.columns[0].map((item) => item.title)).toEqual([
-      "최초 검색 필터 구현",
-      "1차 patch: 최신 문서 조회와 정렬을 적용한다",
+      "검색 필터",
+      "alias 조회와 최신 문서 선택",
     ]);
+  });
+
+  it("긴 작업 지시는 차수 접두사만 제거하고 상세 패널용 전체 제목을 보존한다", () => {
+    const fullTitle = "2차 patch: 필터 종류가 늘어도 요청마다 필터 1개를 조회하도록 미리 대비한다.";
+    const task = node({
+      id: "task",
+      title: "검색 필터",
+      lineage: [{ version: 0, title: "최초 구현" }, { version: 2, title: fullTitle }],
+    });
+
+    const [chain] = buildLineageChains([task]);
+    const selected = lineageSelection(chain.columns[0][1]);
+    expect(selected.node.title).toBe("필터 종류가 늘어도 요청마다 필터 1개를 조회하도록 미리 대비한다.");
+    expect(selected.node.title.endsWith("…")).toBe(false);
   });
 });

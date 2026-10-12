@@ -204,6 +204,11 @@ describe("updateRoadmapNodeStatus", () => {
 
 describe("recordRoadmapWorkResult", () => {
   it("재동기화도 이미 시작된 patch 계보를 복원한다", async () => {
+    const featureDir = join(fakeHome, "project", "sugo", "features", "20261012", "검색 필터");
+    mkdirSync(featureDir, { recursive: true });
+    const basePrdPath = join(featureDir, "prd.md");
+    writeFileSync(basePrdPath, "# PRD: 검색 필터\n");
+    writeFileSync(join(featureDir, "PRD-patch-v1.md"), "# PRD patch v1: 검색 필터 — 필터별 조회와 처리 순서\n");
     await upsertRoadmapNodes("ws1", [{
       id: "task-a", title: "최초 구현", level: "task", status: "done", dependsOn: [], parent: "run-task-a",
       workResult: { path: "/feature/work-result.md", summary: "feat 완료" },
@@ -211,11 +216,12 @@ describe("recordRoadmapWorkResult", () => {
     await reconcileRoadmapWithTasks("ws1", [{
       id: "task-a", title: "예외 처리 보강", project: "/project", status: "in_progress",
       created_at: "2026-01-01T00:00:00.000Z", started_at: "2026-01-02T00:00:00.000Z",
+      prd_ref: basePrdPath,
       patchInfo: { parentTaskId: "task-a", patchVersion: 1, seed: "필터별 조회와 세 단계 대체 조회를 추가한다" },
     }]);
     const task = await getRoadmapNode("ws1", "task-a");
     expect(task?.lineage?.map((entry) => entry.version)).toEqual([0, 1]);
-    expect(task?.lineage?.[1].title).toBe("필터별 조회와 세 단계 대체 조회를 추가한다");
+    expect(task?.lineage?.[1].title).toBe("필터별 조회와 처리 순서");
   });
 
   it("patch 시작 즉시 완료된 feat v0와 진행 중 patch v1을 함께 보존한다", async () => {

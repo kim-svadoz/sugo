@@ -907,6 +907,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     // 워크스페이스 등록 전에 만들어짐) 새 Task로 안전하게 폴백한다(교착 방지).
     const registryEntry = await findRegistryEntry(session.projectPath);
     if (registryEntry?.workspace) {
+      const cycleTitle = taskCycleTitle(session.data.seed, session.featureName, args.prdContent);
       let task: Task;
       const baseTask = isPatch ? await findTaskByPrdRef(registryEntry.workspace, session.data.patch!.parentPrdPath) : null;
       if (baseTask) {
@@ -915,6 +916,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
           patchVersion: session.data.patch!.version,
           baseWorkResultPath: session.data.patch!.baseWorkResultPath,
           seed: session.data.seed,
+          title: cycleTitle,
+          prdPath,
         };
         task = (await updateTask(registryEntry.workspace, baseTask.id, { status: "in_progress", patchInfo })) ?? baseTask;
       } else {
@@ -941,7 +944,6 @@ export async function handleSugoPlan(rawArgs: unknown) {
       // patch는 같은 제품 작업의 다음 차수이지 새 실행 묶음이 아니다. 기존 Task가 속한 RUN을
       // 그대로 재사용해야 캔버스가 RUN 하나 안에서 v0-feat → vN-patch를 보여줄 수 있다.
       const existingTaskNode = isPatch ? await getRoadmapNode(registryEntry.workspace, task.id) : null;
-      const cycleTitle = taskCycleTitle(session.data.seed, session.featureName);
       const runId = existingTaskNode?.parent ?? `run-${task.id}`;
       const existingRunNode = await getRoadmapNode(registryEntry.workspace, runId);
       const draftSelection = session.data.specDraftSelection;

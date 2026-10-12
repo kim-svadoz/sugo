@@ -13,6 +13,17 @@ import type { SessionAssessment } from "../ontology/sessionAssessment.js";
 import { taskCycleTitle } from "../taskTitle.js";
 import type { HumanBlocker, RoadmapFile, RoadmapLineageEntry, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus, RoadmapWorkResult, Task } from "./types.js";
 
+async function restoredPatchTitle(task: Task): Promise<string> {
+  if (!task.patchInfo) return task.title;
+  const patchPrdPath = task.patchInfo.prdPath
+    ?? (task.prd_ref ? join(dirname(task.prd_ref), `PRD-patch-v${task.patchInfo.patchVersion}.md`) : undefined);
+  const prdContent = patchPrdPath
+    ? await readFile(patchPrdPath, "utf8").catch(() => undefined)
+    : undefined;
+  return task.patchInfo.title
+    ?? taskCycleTitle(task.patchInfo.seed, task.title, prdContent);
+}
+
 function withStartedPatch(
   node: RoadmapNode,
   patchVersion: number,
@@ -169,7 +180,7 @@ export async function reconcileRoadmapWithTasks(workspace: string, tasks: Task[]
         ? withStartedPatch(
             nextTask,
             task.patchInfo.patchVersion,
-            taskCycleTitle(task.patchInfo.seed, task.title),
+            await restoredPatchTitle(task),
             task.started_at ?? task.created_at,
             task.patchInfo.baseWorkResultPath,
           )

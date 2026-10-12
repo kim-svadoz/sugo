@@ -260,12 +260,12 @@ describe("§7.1 Patch 성숙화 — Run 재사용 + seed + patchInfo + lineage",
     expect(patchTask?.lineage?.[1].title).toBe("결제 실패 시 재시도 로직도 추가해달라는 요청이 있었다");
 
     // patchInfo(lineage)가 기록됐다 — parentTaskId는 spec대로 "이 Task 자신"(재사용이므로 자기참조).
-    expect(tasksAfterPatch.data.tasks[0].patchInfo).toEqual({
+    expect(tasksAfterPatch.data.tasks[0].patchInfo).toEqual(expect.objectContaining({
       parentTaskId: originalTaskId,
       patchVersion: 1,
       baseWorkResultPath: workResultPath,
       seed: "결제 실패 시 재시도 로직도 추가해달라는 요청이 있었다",
-    });
+    }));
   });
 
   it("seed가 있으면 work-result에 그대로 실린다", async () => {

@@ -12,6 +12,10 @@ export interface TaskPatchInfo {
   /** patch 시작 시 기준이 된 직전 차수의 work-result. Roadmap 계보 복구에 쓴다. */
   baseWorkResultPath?: string;
   seed?: string;
+  /** 해당 차수 PRD의 사람이 읽는 핵심 제목. */
+  title?: string;
+  /** 제목 복구와 계보 감사에 사용하는 해당 차수 PRD 경로. */
+  prdPath?: string;
 }
 
 export interface Task {
