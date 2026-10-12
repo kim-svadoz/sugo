@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Braces, ChevronLeft, ChevronRight, Database, File, FileCode2, FileText, FlaskConical, Maximize2, Minimize2, Palette, X } from "lucide-react";
 import type { WorkResultFile } from "../../hooks/useRoadmap.js";
-import { diffChangeRegions, fileViewerLanguage, fileViewerLines, fileViewerPresentation, fileViewerText, type FileViewerKind } from "./fileViewerModel.js";
+import { diffChangeRegions, fileViewerLanguage, fileViewerLines, fileViewerPresentation, fileViewerText, nextDiffRegionIndex, type FileViewerKind } from "./fileViewerModel.js";
 
 const toneStyle = {
   cyan: { border: "border-cyan-400/35", bg: "bg-cyan-400/10", text: "text-cyan-300", glow: "from-cyan-400/35" },
@@ -73,9 +73,9 @@ export function FileViewerSheet({
   }
   function focusRegion(next: number) {
     if (!regions.length) return;
-    const normalized = (next + regions.length) % regions.length;
-    setRegionIndex(normalized);
-    scrollToLine(regions[normalized]);
+    const bounded = nextDiffRegionIndex(regionIndex, next, regions.length);
+    setRegionIndex(bounded);
+    scrollToLine(regions[bounded]);
   }
   async function selectFile(candidate: WorkResultFile) {
     if (candidate.path === file.path) return;
@@ -123,9 +123,9 @@ export function FileViewerSheet({
           </div>
         </div>
         {regions.length > 0 && <div className="flex items-center rounded-lg border border-white/10 bg-black/20">
-          <button type="button" onClick={() => focusRegion(regionIndex - 1)} className="p-2 text-[var(--color-text-muted)] hover:text-cyan-200" title="이전 변경 영역"><ChevronLeft size={17} /></button>
+          <button type="button" disabled={regionIndex === 0} onClick={() => focusRegion(-1)} className="p-2 text-[var(--color-text-muted)] hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:text-[var(--color-text-muted)]" title="이전 변경 영역"><ChevronLeft size={17} /></button>
           <span className="min-w-12 text-center font-mono text-[10px] text-[var(--color-text-dim)]">{regionIndex + 1}/{regions.length}</span>
-          <button type="button" onClick={() => focusRegion(regionIndex + 1)} className="p-2 text-[var(--color-text-muted)] hover:text-cyan-200" title="다음 변경 영역"><ChevronRight size={17} /></button>
+          <button type="button" disabled={regionIndex === regions.length - 1} onClick={() => focusRegion(1)} className="p-2 text-[var(--color-text-muted)] hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:text-[var(--color-text-muted)]" title="다음 변경 영역"><ChevronRight size={17} /></button>
         </div>}
         <button type="button" onClick={() => onExpandedChange(!expanded)} className="rounded-lg p-2 text-[var(--color-text-muted)] hover:bg-white/5 hover:text-cyan-200" title={expanded ? "하단으로 축소" : "전체화면으로 확장"}>
           {expanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />}

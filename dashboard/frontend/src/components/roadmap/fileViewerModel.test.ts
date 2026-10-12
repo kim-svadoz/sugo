@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diffChangeRegions, filesForRoadmapScope, fileViewerLanguage, fileViewerLines, fileViewerPresentation, fileViewerText } from "./fileViewerModel.js";
+import { diffChangeRegions, filesForRoadmapScope, fileViewerLanguage, fileViewerLines, fileViewerPresentation, fileViewerText, nextDiffRegionIndex } from "./fileViewerModel.js";
 import type { RoadmapNode } from "../../hooks/useRoadmap.js";
 
 const node = (id: string, level: string, parent: string | null, files: Array<{ path: string; content: string }> = []): RoadmapNode => ({
@@ -47,6 +47,11 @@ describe("changed-file viewer model", () => {
 
   it("삭제와 추가가 연속된 교체는 하나의 변경 묶음으로 센다", () => {
     expect(diffChangeRegions(["-old", "+new", "+next", " context", "-later"])).toEqual([0, 4]);
+  });
+
+  it("마지막 변경에서 다음을 눌러도 처음으로 순환하지 않는다", () => {
+    expect(nextDiffRegionIndex(6, 1, 7)).toBe(6);
+    expect(nextDiffRegionIndex(0, -1, 7)).toBe(0);
   });
 
   it("diff 메타데이터와 hunk 헤더는 코드 화면에서 제거한다", () => {

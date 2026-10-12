@@ -69,6 +69,11 @@ export function diffChangeRegions(lines: string[]): number[] {
   return regions;
 }
 
+export function nextDiffRegionIndex(current: number, delta: number, regionCount: number): number {
+  if (regionCount <= 0) return 0;
+  return Math.max(0, Math.min(regionCount - 1, current + delta));
+}
+
 export function fileViewerLanguage(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
   const aliases: Record<string, string> = { yml: "YAML", yaml: "YAML", js: "JS", jsx: "JSX", ts: "TS", tsx: "TSX", md: "MD", java: "JAVA", kt: "KOTLIN", py: "PYTHON", json: "JSON" };
