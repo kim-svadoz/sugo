@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Braces, ChevronLeft, ChevronRight, Database, File, FileCode2, FileText, FlaskConical, Maximize2, Minimize2, Palette, X } from "lucide-react";
 import type { WorkResultFile } from "../../hooks/useRoadmap.js";
 import { diffChangeRegions, fileViewerLanguage, fileViewerLines, fileViewerPresentation, fileViewerText, nextDiffRegionIndex, type FileViewerKind } from "./fileViewerModel.js";
+import { tokenizeCodeLines, type SyntaxTokenKind } from "./syntaxHighlight.js";
 
 const toneStyle = {
   cyan: { border: "border-cyan-400/35", bg: "bg-cyan-400/10", text: "text-cyan-300", glow: "from-cyan-400/35" },
@@ -12,6 +13,17 @@ const toneStyle = {
   rose: { border: "border-rose-400/35", bg: "bg-rose-400/10", text: "text-rose-300", glow: "from-rose-400/35" },
   slate: { border: "border-slate-400/30", bg: "bg-slate-400/10", text: "text-slate-300", glow: "from-slate-400/25" },
 } as const;
+
+const syntaxColor: Record<SyntaxTokenKind, string> = {
+  plain: "text-slate-300",
+  keyword: "text-fuchsia-300",
+  type: "text-cyan-300",
+  annotation: "text-amber-300",
+  string: "text-emerald-300",
+  number: "text-orange-300",
+  comment: "italic text-slate-500",
+  operator: "text-sky-300",
+};
 
 function KindIcon({ kind }: { kind: FileViewerKind }) {
   if (kind === "test") return <FlaskConical size={18} />;
@@ -63,6 +75,9 @@ export function FileViewerSheet({
   const directory = pathParts.join("/");
   const showingDiff = Boolean(file.diff?.trim());
   const showingAddedFile = file.change === "added" && !showingDiff;
+  const language = fileViewerLanguage(file.path);
+  const codeLines = useMemo(() => lines.map((line) => showingDiff && /^[ +\-]/.test(line) ? line.slice(1) : line), [text, showingDiff]);
+  const highlightedLines = useMemo(() => tokenizeCodeLines(codeLines, language), [codeLines, language]);
   const regions = useMemo(() => showingAddedFile ? [0] : diffChangeRegions(lines), [text, showingAddedFile]);
   function scrollToLine(lineIndex: number, behavior: ScrollBehavior = "smooth") {
     const container = scrollRef.current;
@@ -112,7 +127,7 @@ export function FileViewerSheet({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold ${tone.border} ${tone.bg} ${tone.text}`}>
-              {showingDiff ? "DIFF" : showingAddedFile ? "ADDED" : fileViewerLanguage(file.path)}
+              {showingDiff ? "DIFF" : showingAddedFile ? "ADDED" : language}
             </span>
             <span className={`font-mono text-[9px] font-semibold uppercase tracking-[0.14em] ${tone.text}`}>{presentation.eyebrow}</span>
             <span className="truncate text-[10px] text-[var(--color-text-dim)]">{presentation.description}</span>
@@ -143,8 +158,8 @@ export function FileViewerSheet({
         {lines.map((line, index) => (
           <div ref={(element) => { lineRefs.current[index] = element; }} key={index} className={`flex min-w-max border-b border-white/[0.015] ${showingAddedFile ? "bg-emerald-400/[0.08] text-emerald-200" : showingDiff && line.startsWith("+") && !line.startsWith("+++") ? "bg-emerald-400/[0.08] text-emerald-200" : showingDiff && line.startsWith("-") && !line.startsWith("---") ? "bg-rose-400/[0.08] text-rose-200" : ""}`}>
             <span className="sticky left-0 w-12 shrink-0 select-none border-r border-white/5 bg-[#080c13] pr-3 text-right text-slate-600">{index + 1}</span>
-            <span className="w-5 shrink-0 select-none text-center text-emerald-400/80">{showingAddedFile ? "+" : ""}</span>
-            <span className="whitespace-pre pr-4">{line || " "}</span>
+            <span className={`w-5 shrink-0 select-none text-center ${line.startsWith("-") ? "text-rose-400/80" : "text-emerald-400/80"}`}>{showingAddedFile ? "+" : showingDiff && /^[+\-]/.test(line) ? line[0] : ""}</span>
+            <span className="whitespace-pre pr-4">{highlightedLines[index]?.map((token, tokenIndex) => <span key={tokenIndex} className={syntaxColor[token.kind]}>{token.text}</span>) || " "}</span>
           </div>
         ))}
       </div>
