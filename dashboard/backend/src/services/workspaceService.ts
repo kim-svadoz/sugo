@@ -99,11 +99,11 @@ type RuntimeAssessmentSummary = {
   status?: "in_progress" | "blocked" | "completed" | "cancelled";
 };
 
-function projectedTaskStatus(rawStatus: string, runtimeAssessment: unknown): string {
+function projectedTaskStatus(rawStatus: string, runtimeAssessment: unknown, workResult?: unknown): string {
   const assessment = parseMaybeJson<RuntimeAssessmentSummary | null>(runtimeAssessment, null);
   if (assessment?.projectionSchemaVersion !== 1) return rawStatus;
   if (assessment.status === "completed") return "done";
-  if (assessment.status === "cancelled") return "dropped";
+  if (assessment.status === "cancelled") return workResult ? "done" : "dropped";
   return assessment.status ?? rawStatus;
 }
 
@@ -439,7 +439,7 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
       : null,
     });
   }));
-  const displayed = nodes.map(n => ({ ...n, display_status: n.manual_status ?? (n.level === "task" ? projectedTaskStatus(n.status, n.runtime_assessment) : n.status) }));
+  const displayed = nodes.map(n => ({ ...n, display_status: n.manual_status ?? (n.level === "task" ? projectedTaskStatus(n.status, n.runtime_assessment, n.work_result) : n.status) }));
   for (const n of displayed) {
     if (n.level === "task" && n.display_status === "done" && isUnverifiedWorkResult(n.work_result)) n.display_status = "verification";
   }
@@ -582,7 +582,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
   return rows.map(({ manual_title, has_run, ...row }) => {
     const children = tasksBySpec.get(`${row.workspace_name}\0${row.id}`) ?? [];
     const enriched = children.map((task) => {
-      const raw = task.manual_status ?? projectedTaskStatus(task.status, task.runtime_assessment);
+      const raw = task.manual_status ?? projectedTaskStatus(task.status, task.runtime_assessment, task.work_result);
       const unverified = isUnverifiedWorkResult(task.work_result);
       const status = raw === "done" && unverified ? "verification" : raw;
       return { ...task, status, stale: isStale(status, task.updated_at), unverified };

@@ -133,3 +133,34 @@ it("미검증 Task와 상위 컨테이너를 검증 상태로 표시하고 완�
     expect(verifiedWorkspaces.body.workspaces[0].roadmapDoneCount).toBe(1);
   } finally { await f.db.close(); }
 });
+
+it("완료 산출물이 있는 patch 취소는 기존 Task 완료 상태를 복원한다", async () => {
+  const f = await fixture();
+  try {
+    const runtimeAssessment = {
+      projectionSchemaVersion: 1,
+      status: "cancelled",
+      currentStage: "REVIEW_RUNNING",
+      nextActions: [],
+      recommendedAction: null,
+      humanDecisionRequired: false,
+      blockers: [],
+      evidence: [],
+    };
+    const payload: any = structuredClone(f.payload);
+    payload.nodes[0].workResult.report.completionGrade = "verified";
+    payload.nodes[0].workResult.report.bypassLabels = [];
+    payload.nodes[0].status = "in_progress";
+    payload.nodes[0].runtimeAssessment = runtimeAssessment;
+    payload.nodes[0].lineage = [
+      { version: 0, title: "최초 구현", workResult: payload.nodes[0].workResult },
+      { version: 1, title: "캐시 보강", workResult: payload.nodes[0].workResult },
+      { version: 2, title: "취소한 문서 선택 변경" },
+    ];
+    await f.sync(payload);
+
+    const view = (await request(f.app).get("/api/workspaces/ws/roadmap").set("Authorization", f.pat).expect(200)).body;
+    expect(view.nodes[0].display_status).toBe("done");
+    expect(view.counts).toMatchObject({ total: 1, done: 1, dropped: 0 });
+  } finally { await f.db.close(); }
+});

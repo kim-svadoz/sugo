@@ -28076,7 +28076,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.26.4" : "0.0.0-dev";
+  return true ? "0.26.5" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29521,6 +29521,16 @@ function estimateHumanHours(startedAtIso, nowIso2, analyzeAttempts, autoLoopRetr
   };
 }
 
+// src/taskTitle.ts
+function taskCycleTitle(seed, fallback) {
+  const firstLine = seed?.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
+  if (!firstLine) return fallback;
+  const normalized = firstLine.replace(/^#{1,6}\s*/, "").replace(/^(?:[-*+]\s+|\d+[.)]\s+)/, "").replace(/\s+/g, " ").trim();
+  if (!normalized) return fallback;
+  const characters = Array.from(normalized);
+  return characters.length > 48 ? `${characters.slice(0, 47).join("")}\u2026` : normalized;
+}
+
 // src/steKorean.ts
 function formatSteInspiredKorean(text) {
   let inFence = false;
@@ -29785,7 +29795,12 @@ function promotePrdRequirements(taskId, prdContent) {
 // src/hulk/roadmap.ts
 function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath) {
   const previousLineage = node.lineage ?? [];
-  if (previousLineage.some((entry) => entry.version === patchVersion)) return node;
+  if (previousLineage.some((entry) => entry.version === patchVersion)) {
+    return {
+      ...node,
+      lineage: previousLineage.map((entry) => entry.version === patchVersion ? { ...entry, title } : entry)
+    };
+  }
   const baseWorkResult = node.workResult?.path ? node.workResult : baseWorkResultPath ? { path: baseWorkResultPath, parentTaskId: node.id, patchVersion: 0 } : void 0;
   const featEntry = patchVersion > 0 && !previousLineage.some((entry) => entry.version === 0) && baseWorkResult?.path ? [{
     version: 0,
@@ -29892,7 +29907,7 @@ async function reconcileRoadmapWithTasks(workspace, tasks) {
       byId.set(task.id, task.patchInfo?.patchVersion ? withStartedPatch(
         nextTask,
         task.patchInfo.patchVersion,
-        task.title,
+        taskCycleTitle(task.patchInfo.seed, task.title),
         task.started_at ?? task.created_at,
         task.patchInfo.baseWorkResultPath
       ) : nextTask);
@@ -31663,6 +31678,7 @@ async function handleSugoPlan(rawArgs) {
       await backfillRoadmapTask(registryEntry.workspace, task.id, session.featureName);
       await updateRoadmapNodeStatus(registryEntry.workspace, task.id, "in_progress");
       const existingTaskNode = isPatch ? await getRoadmapNode(registryEntry.workspace, task.id) : null;
+      const cycleTitle = taskCycleTitle(session.data.seed, session.featureName);
       const runId = existingTaskNode?.parent ?? `run-${task.id}`;
       const existingRunNode = await getRoadmapNode(registryEntry.workspace, runId);
       const draftSelection = session.data.specDraftSelection;
@@ -31689,7 +31705,7 @@ async function handleSugoPlan(rawArgs) {
         },
         {
           id: task.id,
-          title: session.featureName,
+          title: cycleTitle,
           level: "task",
           status: "in_progress",
           dependsOn: [],
@@ -31703,7 +31719,7 @@ async function handleSugoPlan(rawArgs) {
           registryEntry.workspace,
           task.id,
           session.data.patch.version,
-          session.featureName,
+          cycleTitle,
           session.startedAt,
           session.data.patch.baseWorkResultPath
         );

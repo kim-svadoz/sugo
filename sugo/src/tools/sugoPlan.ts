@@ -42,6 +42,7 @@ import { renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistr
 import { findRegistryEntry } from "../harness/registry.js";
 import { estimateHumanHours } from "../humanHours.js";
 import { checkpointApplies } from "../hulk/matching.js";
+import { taskCycleTitle } from "../taskTitle.js";
 import { addWorkLog } from "../hulk/history.js";
 import { listCheckpoints, pullCheckpointsToRules } from "../hulk/checkpoint.js";
 import { backfillRoadmapTask, beginRoadmapPatch, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
@@ -940,6 +941,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       // patch는 같은 제품 작업의 다음 차수이지 새 실행 묶음이 아니다. 기존 Task가 속한 RUN을
       // 그대로 재사용해야 캔버스가 RUN 하나 안에서 v0-feat → vN-patch를 보여줄 수 있다.
       const existingTaskNode = isPatch ? await getRoadmapNode(registryEntry.workspace, task.id) : null;
+      const cycleTitle = taskCycleTitle(session.data.seed, session.featureName);
       const runId = existingTaskNode?.parent ?? `run-${task.id}`;
       const existingRunNode = await getRoadmapNode(registryEntry.workspace, runId);
       const draftSelection = session.data.specDraftSelection;
@@ -968,7 +970,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
         },
         {
           id: task.id,
-          title: session.featureName,
+          title: cycleTitle,
           level: "task",
           status: "in_progress",
           dependsOn: [],
@@ -982,7 +984,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
           registryEntry.workspace,
           task.id,
           session.data.patch!.version,
-          session.featureName,
+          cycleTitle,
           session.startedAt,
           session.data.patch!.baseWorkResultPath,
         );

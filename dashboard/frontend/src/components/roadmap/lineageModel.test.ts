@@ -92,4 +92,47 @@ describe("patch lineage canvas model", () => {
     expect(chain.columns[0].map((item) => item.node.status)).toEqual(["done", "in_progress"]);
     expect(lineageSelection(chain.columns[0][1]).node.work_result).toBeNull();
   });
+
+  it("취소한 최신 patch만 폐기로 남기고 이전 완료 차수는 완료로 유지한다", () => {
+    const task = node({
+      id: "task",
+      status: "in_progress",
+      display_status: "done",
+      runtime_assessment: {
+        projectionSchemaVersion: 1,
+        status: "cancelled",
+        currentStage: "REVIEW_RUNNING",
+        nextActions: [],
+        recommendedAction: null,
+        humanDecisionRequired: false,
+        blockers: [],
+        evidence: [],
+      },
+      lineage: [
+        { version: 0, title: "최초 구현", workResult: { path: "/work-result.md" } },
+        { version: 1, title: "캐시 보강", workResult: { path: "/work-result-patch-v1.md" } },
+        { version: 2, title: "문서 선택 변경" },
+      ],
+    });
+
+    const [chain] = buildLineageChains([task]);
+    expect(chain.columns[0].map((item) => item.node.display_status)).toEqual(["done", "done", "dropped"]);
+  });
+
+  it("반복된 기능명 대신 차수별 작업 지시를 카드 제목으로 사용한다", () => {
+    const task = node({
+      id: "task",
+      title: "검색 필터",
+      lineage: [
+        { version: 0, title: "검색 필터", workResult: { seed: "최초 검색 필터 구현" } },
+        { version: 1, title: "검색 필터", workResult: { seed: "1차 patch: 최신 문서 조회와 정렬을 적용한다" } },
+      ],
+    });
+
+    const [chain] = buildLineageChains([task]);
+    expect(chain.columns[0].map((item) => item.title)).toEqual([
+      "최초 검색 필터 구현",
+      "1차 patch: 최신 문서 조회와 정렬을 적용한다",
+    ]);
+  });
 });

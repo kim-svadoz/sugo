@@ -211,10 +211,11 @@ describe("recordRoadmapWorkResult", () => {
     await reconcileRoadmapWithTasks("ws1", [{
       id: "task-a", title: "예외 처리 보강", project: "/project", status: "in_progress",
       created_at: "2026-01-01T00:00:00.000Z", started_at: "2026-01-02T00:00:00.000Z",
-      patchInfo: { parentTaskId: "task-a", patchVersion: 1 },
+      patchInfo: { parentTaskId: "task-a", patchVersion: 1, seed: "필터별 조회와 세 단계 대체 조회를 추가한다" },
     }]);
     const task = await getRoadmapNode("ws1", "task-a");
     expect(task?.lineage?.map((entry) => entry.version)).toEqual([0, 1]);
+    expect(task?.lineage?.[1].title).toBe("필터별 조회와 세 단계 대체 조회를 추가한다");
   });
 
   it("patch 시작 즉시 완료된 feat v0와 진행 중 patch v1을 함께 보존한다", async () => {

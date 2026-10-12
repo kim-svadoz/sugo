@@ -33,6 +33,27 @@ const numberOr = (value: unknown, fallback: number) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const conciseTitle = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const firstLine = value.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
+  if (!firstLine) return null;
+  const characters = Array.from(firstLine.replace(/\s+/g, " "));
+  return characters.length > 48 ? `${characters.slice(0, 47).join("")}…` : characters.join("");
+};
+
+const lineageEntryTitle = (entry: HistoryEntry, taskTitle: string): string => {
+  const stored = conciseTitle(entry.title);
+  if (stored && stored !== taskTitle) return stored;
+  const workResult = entry.workResult && typeof entry.workResult === "object"
+    ? entry.workResult as { seed?: unknown; summary?: unknown; report?: { summary?: unknown } }
+    : null;
+  return conciseTitle(workResult?.seed)
+    ?? conciseTitle(workResult?.summary)
+    ?? conciseTitle(workResult?.report?.summary)
+    ?? stored
+    ?? taskTitle;
+};
+
 /**
  * Canvas contract: only TASKs may become patch lineage nodes. A RUN owns the task/chain and must
  * always remain a visible container. Current Sugo stores chronological history as an array on one
@@ -50,12 +71,19 @@ export function buildLineageChains(nodes: RoadmapNode[]): LineageChain[] {
       const items = entries
         .map((entry, index) => {
           const version = numberOr(entry.version, index);
+          const cancelledPatch = version === latestVersion
+            && node.runtime_assessment?.status === "cancelled"
+            && !(entry.workResult && typeof entry.workResult === "object");
           return {
             key: `${node.id}:v${version}`,
-            node: version < latestVersion ? { ...node, status: "done", display_status: "done" } : node,
+            node: version < latestVersion
+              ? { ...node, status: "done", display_status: "done" }
+              : cancelledPatch
+                ? { ...node, status: "dropped", display_status: "dropped" }
+                : node,
             depth: index,
             version,
-            title: typeof entry.title === "string" && entry.title ? entry.title : node.title,
+            title: lineageEntryTitle(entry, node.title),
             entry,
           };
         })

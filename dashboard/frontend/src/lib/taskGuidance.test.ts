@@ -112,3 +112,9 @@ it.each(["verified", "verified_by_human"])("완료 상태 표시는 검증 방�
   expect(taskGuidance({ status: "done", runtime_assessment, work_result })).toMatchObject({ kind: "done", label: "완료", action: "none" });
   expect(scheduleAttention({ status: "done", has_run: true, focus_task_status: "done", focus_task_runtime_assessment: runtime_assessment, focus_task_work_result: work_result })).toMatchObject({ kind: "done", label: "완료" });
 });
+
+it("완료 결과가 있는 patch를 취소하면 Schedule은 마지막 완료 상태를 유지한다", () => {
+  const runtime_assessment = { projectionSchemaVersion: 1 as const, status: "cancelled" as const, currentStage: "REVIEW_RUNNING", nextActions: [], recommendedAction: null, humanDecisionRequired: false, blockers: [], evidence: [] };
+  const work_result = { report: { completionGrade: "verified" } };
+  expect(scheduleAttention({ status: "done", has_run: true, focus_task_status: "done", focus_task_runtime_assessment: runtime_assessment, focus_task_work_result: work_result })).toMatchObject({ kind: "done", label: "완료", action: "none" });
+});

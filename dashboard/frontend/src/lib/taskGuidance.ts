@@ -104,6 +104,13 @@ function guidanceFromAssessment(assessment: RuntimeAssessment): TaskGuidance {
 
 export function taskGuidance(node: TaskGuidanceInput, now = Date.now()): TaskGuidance {
   if (node.runtime_assessment?.projectionSchemaVersion === 1) {
+    const workResult = parsedWorkResult(node.work_result);
+    if (node.runtime_assessment.status === "cancelled" && workResult) {
+      if (workResult.report?.completionGrade === "unverified") {
+        return { kind: "verification", label: "검증", currentStage: "사람 검증 대기", reason: "취소한 patch 이전의 완료 결과에 검증 예외가 남아 있습니다.", nextAction: "미검증 사유 검토", blockedNextStep: "검증 사유를 확인하기 전에는 최종 완료로 집계하지 않습니다.", action: "review_verification" };
+      }
+      return { kind: "done", label: "완료", currentStage: "DONE", reason: "취소한 patch를 폐기하고 마지막 완료 결과를 유지합니다.", nextAction: "추가 작업 없음", blockedNextStep: "별도 행동이 필요하지 않습니다.", action: "none" };
+    }
     const guidance = guidanceFromAssessment(node.runtime_assessment);
     if (node.human_blocker?.kind === "review_confirmation"
       && node.runtime_assessment.status === "blocked"
@@ -111,7 +118,7 @@ export function taskGuidance(node: TaskGuidanceInput, now = Date.now()): TaskGui
       return { ...guidance, nextAction: "작업 결과 확인 열기", action: "open_review_confirmation" };
     }
     if (node.runtime_assessment.status === "completed") {
-      const grade = parsedWorkResult(node.work_result)?.report?.completionGrade;
+      const grade = workResult?.report?.completionGrade;
       if (grade === "unverified") return { ...guidance, kind: "verification", label: "검증", currentStage: "사람 검증 대기", reason: "코드 작업은 끝났지만 검증 예외가 남아 있습니다. 완료등급 아래의 사유를 검토하세요.", nextAction: "미검증 사유 검토", action: "review_verification" };
       if (grade === "verified" || grade === "verified_by_human") return { ...guidance, label: "완료", nextAction: "추가 작업 없음", action: "none" };
     }

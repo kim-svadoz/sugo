@@ -10,6 +10,7 @@ import { mergeRoadmapOwnership, readySet, topoSort } from "./roadmapGraph.js";
 import { requirementNodeId } from "./roadmapReq.js";
 import { roadmapFilePath, roadmapLockPath, workspaceDir } from "../work/storage.js";
 import type { SessionAssessment } from "../ontology/sessionAssessment.js";
+import { taskCycleTitle } from "../taskTitle.js";
 import type { HumanBlocker, RoadmapFile, RoadmapLineageEntry, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus, RoadmapWorkResult, Task } from "./types.js";
 
 function withStartedPatch(
@@ -20,7 +21,12 @@ function withStartedPatch(
   baseWorkResultPath?: string,
 ): RoadmapNode {
   const previousLineage = node.lineage ?? [];
-  if (previousLineage.some((entry) => entry.version === patchVersion)) return node;
+  if (previousLineage.some((entry) => entry.version === patchVersion)) {
+    return {
+      ...node,
+      lineage: previousLineage.map((entry) => entry.version === patchVersion ? { ...entry, title } : entry),
+    };
+  }
   const baseWorkResult = node.workResult?.path
     ? node.workResult
     : baseWorkResultPath
@@ -163,7 +169,7 @@ export async function reconcileRoadmapWithTasks(workspace: string, tasks: Task[]
         ? withStartedPatch(
             nextTask,
             task.patchInfo.patchVersion,
-            task.title,
+            taskCycleTitle(task.patchInfo.seed, task.title),
             task.started_at ?? task.created_at,
             task.patchInfo.baseWorkResultPath,
           )
