@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Braces, ChevronLeft, ChevronRight, Database, File, FileCode2, FileText, FlaskConical, Maximize2, Minimize2, Palette, X } from "lucide-react";
 import type { WorkResultFile } from "../../hooks/useRoadmap.js";
-import { diffChangeRegions, fileViewerLanguage, fileViewerPresentation, fileViewerText, type FileViewerKind } from "./fileViewerModel.js";
+import { diffChangeRegions, fileViewerLanguage, fileViewerLines, fileViewerPresentation, fileViewerText, type FileViewerKind } from "./fileViewerModel.js";
 
 const toneStyle = {
   cyan: { border: "border-cyan-400/35", bg: "bg-cyan-400/10", text: "text-cyan-300", glow: "from-cyan-400/35" },
@@ -55,19 +55,27 @@ export function FileViewerSheet({
   }, [onClose]);
 
   const text = fileViewerText(file);
-  const lines = text.split("\n");
+  const lines = fileViewerLines(file);
   const presentation = fileViewerPresentation(file.path);
   const tone = toneStyle[presentation.tone];
   const pathParts = file.path.split("/");
   const fileName = pathParts.pop() ?? file.path;
   const directory = pathParts.join("/");
   const showingDiff = Boolean(file.diff?.trim());
-  const regions = useMemo(() => diffChangeRegions(lines), [text]);
+  const showingAddedFile = file.change === "added" && !showingDiff;
+  const regions = useMemo(() => showingAddedFile ? [0] : diffChangeRegions(lines), [text, showingAddedFile]);
+  function scrollToLine(lineIndex: number, behavior: ScrollBehavior = "smooth") {
+    const container = scrollRef.current;
+    const target = lineRefs.current[lineIndex];
+    if (!container || !target) return;
+    const top = target.offsetTop - container.clientHeight / 2 + target.clientHeight / 2;
+    container.scrollTo({ top: Math.max(0, top), behavior });
+  }
   function focusRegion(next: number) {
     if (!regions.length) return;
     const normalized = (next + regions.length) % regions.length;
     setRegionIndex(normalized);
-    lineRefs.current[regions[normalized]]?.scrollIntoView({ block: "center", behavior: "smooth" });
+    scrollToLine(regions[normalized]);
   }
   async function selectFile(candidate: WorkResultFile) {
     if (candidate.path === file.path) return;
@@ -84,7 +92,7 @@ export function FileViewerSheet({
   useEffect(() => {
     setRegionIndex(0);
     const id = window.requestAnimationFrame(() => {
-      if (regions.length) lineRefs.current[regions[0]]?.scrollIntoView({ block: "center" });
+      if (regions.length) scrollToLine(regions[0], "auto");
       else scrollRef.current?.scrollTo({ top: 0 });
     });
     return () => window.cancelAnimationFrame(id);
@@ -104,7 +112,7 @@ export function FileViewerSheet({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold ${tone.border} ${tone.bg} ${tone.text}`}>
-              {showingDiff ? "DIFF" : fileViewerLanguage(file.path)}
+              {showingDiff ? "DIFF" : showingAddedFile ? "ADDED" : fileViewerLanguage(file.path)}
             </span>
             <span className={`font-mono text-[9px] font-semibold uppercase tracking-[0.14em] ${tone.text}`}>{presentation.eyebrow}</span>
             <span className="truncate text-[10px] text-[var(--color-text-dim)]">{presentation.description}</span>
@@ -133,9 +141,10 @@ export function FileViewerSheet({
       <div className="flex min-h-0 flex-1">
       <div ref={scrollRef} className="ck-scroll min-h-0 min-w-0 flex-1 overflow-auto font-mono text-[11px] leading-6 text-slate-300">
         {lines.map((line, index) => (
-          <div ref={(element) => { lineRefs.current[index] = element; }} key={index} className={`flex min-w-max border-b border-white/[0.015] ${showingDiff && line.startsWith("+") && !line.startsWith("+++") ? "bg-emerald-400/[0.08] text-emerald-200" : showingDiff && line.startsWith("-") && !line.startsWith("---") ? "bg-rose-400/[0.08] text-rose-200" : line.startsWith("@@") ? "bg-cyan-400/[0.07] text-cyan-300" : ""}`}>
+          <div ref={(element) => { lineRefs.current[index] = element; }} key={index} className={`flex min-w-max border-b border-white/[0.015] ${showingAddedFile ? "bg-emerald-400/[0.08] text-emerald-200" : showingDiff && line.startsWith("+") && !line.startsWith("+++") ? "bg-emerald-400/[0.08] text-emerald-200" : showingDiff && line.startsWith("-") && !line.startsWith("---") ? "bg-rose-400/[0.08] text-rose-200" : ""}`}>
             <span className="sticky left-0 w-12 shrink-0 select-none border-r border-white/5 bg-[#080c13] pr-3 text-right text-slate-600">{index + 1}</span>
-            <span className="whitespace-pre px-4">{line || " "}</span>
+            <span className="w-5 shrink-0 select-none text-center text-emerald-400/80">{showingAddedFile ? "+" : ""}</span>
+            <span className="whitespace-pre pr-4">{line || " "}</span>
           </div>
         ))}
       </div>

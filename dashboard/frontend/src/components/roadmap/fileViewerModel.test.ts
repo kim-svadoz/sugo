@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diffChangeRegions, filesForRoadmapScope, fileViewerLanguage, fileViewerPresentation, fileViewerText } from "./fileViewerModel.js";
+import { diffChangeRegions, filesForRoadmapScope, fileViewerLanguage, fileViewerLines, fileViewerPresentation, fileViewerText } from "./fileViewerModel.js";
 import type { RoadmapNode } from "../../hooks/useRoadmap.js";
 
 const node = (id: string, level: string, parent: string | null, files: Array<{ path: string; content: string }> = []): RoadmapNode => ({
@@ -41,12 +41,20 @@ describe("changed-file viewer model", () => {
     expect(fileViewerLanguage("buildspec.yml")).toBe("YAML");
   });
 
-  it("unified diff의 변경 구간을 hunk 단위로 찾는다", () => {
-    expect(diffChangeRegions(["diff --git a/a b/a", "@@ -1 +1 @@", "-old", "+new", "@@ -20 +20 @@", "-x", "+y"])).toEqual([1, 4]);
+  it("하나의 hunk 안에서도 떨어진 실제 변경 묶음을 각각 찾는다", () => {
+    expect(diffChangeRegions([" context", "-old", "+new", " context", " context", "-later", "+later"])).toEqual([1, 5]);
   });
 
-  it("hunk 헤더가 없는 추가 파일도 첫 변경 줄로 이동한다", () => {
-    expect(diffChangeRegions(["plain", "+added", "+next"])).toEqual([1]);
+  it("삭제와 추가가 연속된 교체는 하나의 변경 묶음으로 센다", () => {
+    expect(diffChangeRegions(["-old", "+new", "+next", " context", "-later"])).toEqual([0, 4]);
+  });
+
+  it("diff 메타데이터와 hunk 헤더는 코드 화면에서 제거한다", () => {
+    expect(fileViewerLines({
+      path: "src/a.ts",
+      change: "modified",
+      diff: "diff --git a/src/a.ts b/src/a.ts\nindex abc..def 100644\n--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1,3 +1,3 @@\n context\n-old\n+new",
+    })).toEqual([" context", "-old", "+new"]);
   });
 
   it("SPEC을 선택하면 모든 하위 RUN/TASK의 변경 파일을 모은다", () => {
