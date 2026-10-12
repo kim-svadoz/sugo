@@ -454,6 +454,10 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
       return false;
     });
     const unfinished = descendants.filter(t => t.display_status !== "done");
+    if (descendants.length > 0 && unfinished.length === 0) {
+      n.display_status = "done";
+      continue;
+    }
     if (!unfinished.length) continue;
     if (unfinished.some(t => t.display_status === "blocked")) n.display_status = "blocked";
     else if (unfinished.some(t => t.display_status === "in_progress")) n.display_status = "in_progress";
@@ -592,7 +596,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
     return {
       ...row,
       deployment: deployments.get(`${row.workspace_name}\0${row.id}`),
-      status: row.status === "dropped" ? "dropped" : enriched.some(t => t.status === "blocked") ? "blocked" : enriched.some(t => t.status === "in_progress") ? "in_progress" : enriched.some(t => t.status === "verification") ? "verification" : row.status === "done" && enriched.some(t => t.status === "pending") ? "pending" : row.status,
+      status: row.status === "dropped" ? "dropped" : enriched.some(t => t.status === "blocked") ? "blocked" : enriched.some(t => t.status === "in_progress") ? "in_progress" : enriched.some(t => t.status === "verification") ? "verification" : enriched.length > 0 && enriched.every(t => t.status === "done") ? "done" : row.status === "done" && enriched.some(t => t.status === "pending") ? "pending" : row.status,
       has_run: Boolean(has_run),
       title: manual_title ?? row.title,
       task_count: enriched.length,

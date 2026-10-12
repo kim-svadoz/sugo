@@ -157,10 +157,17 @@ it("완료 산출물이 있는 patch 취소는 기존 Task 완료 상태를 복�
       { version: 1, title: "캐시 보강", workResult: payload.nodes[0].workResult },
       { version: 2, title: "취소한 문서 선택 변경" },
     ];
+    payload.nodes.unshift(
+      { id: "spec", title: "검색 필터", level: "spec", status: "in_progress" },
+      { id: "run", title: "검색 필터", level: "workstream", status: "in_progress", parent: "spec" },
+    );
+    payload.nodes[2].parent = "run";
     await f.sync(payload);
 
     const view = (await request(f.app).get("/api/workspaces/ws/roadmap").set("Authorization", f.pat).expect(200)).body;
-    expect(view.nodes[0].display_status).toBe("done");
+    expect(view.nodes.map((node: any) => node.display_status)).toEqual(["done", "done", "done"]);
     expect(view.counts).toMatchObject({ total: 1, done: 1, dropped: 0 });
+    const schedule = (await request(f.app).get("/api/workspaces/schedule").set("Authorization", f.pat).expect(200)).body.specs[0];
+    expect(schedule).toMatchObject({ status: "done", task_count: 1, done_task_count: 1, focus_task_status: "done" });
   } finally { await f.db.close(); }
 });
