@@ -57,6 +57,14 @@ describe("harness-library 구조 가드", () => {
     expect(withoutSection).toEqual([]);
   });
 
+  it("Java 하네스는 근거 없는 어노테이션 복제를 금지한다", () => {
+    const javaHarness = readFileSync(join(libraryDir, "lang", "java", "harness.md"), "utf-8");
+    expect(javaHarness).toContain("필요성이 확인된 어노테이션만 추가한다");
+    expect(javaHarness).toContain("실제 호출부");
+    expect(javaHarness).toContain("직렬화·역직렬화 계약");
+    expect(javaHarness).toContain("기존 클래스의 어노테이션 구성을 그대로 복제하지 않는다");
+  });
+
   it("선언된 harnessId가 디렉터리 경로와 정확히 일치한다", () => {
     // 어긋나면 loadProjectValidationConfigs의 맵 키가 빗나가 그 하네스의 체크가 통째로
     // fabricated로 떨어진다 — 규칙이 있는데 아무도 적용받지 않는 상태가 조용히 만들어진다.
