@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, CheckCircle2, Copy, ExternalLink, GitPullRequest, Sparkles } from "lucide-react";
 import { useAuth } from "../auth/AuthContext.js";
 import { parseWorkResult, type RoadmapNode, type WorkResultFile } from "../hooks/useRoadmap.js";
-import { clearManualStatus, setManualStatus } from "../api/roadmapMutationsApi.js";
+import { clearManualStatus, getReviewArtifact, setManualStatus } from "../api/roadmapMutationsApi.js";
 import { checkExistingPr, createPr, type PrRef, type PrScope } from "../api/prApi.js";
 import { inspectorProgress, type InspectorProgress } from "./roadmap/inspectorModel.js";
 import { fileViewerPresentation } from "./roadmap/fileViewerModel.js";
@@ -74,7 +74,8 @@ export function SubtaskPanel({
 
   useEffect(() => setTab("progress"), [node.id]);
 
-  const files = scopeFiles ?? workResult?.files ?? [];
+  const reviewPacket = node.human_blocker?.kind === "review_confirmation" ? node.human_blocker.reviewPacket : undefined;
+  const files = scopeFiles ?? workResult?.files ?? reviewPacket?.files ?? [];
 
   return (
     <aside className="flex min-h-full w-full min-w-0 flex-col overflow-hidden bg-[var(--color-surface)]">
@@ -127,8 +128,8 @@ export function SubtaskPanel({
             onReviewResult={() => setTab("summary")}
           />
         )}
-        {tab === "summary" && <SummaryTab title={node.title} workResult={workResult} reviewPacket={node.human_blocker?.kind === "review_confirmation" ? node.human_blocker.reviewPacket : undefined} requirements={node.level === "task" ? progressItems : []} />}
-        {tab === "files" && <FilesTab files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} />}
+        {tab === "summary" && <SummaryTab title={node.title} workResult={workResult} reviewPacket={reviewPacket} requirements={node.level === "task" ? progressItems : []} />}
+        {tab === "files" && <FilesTab userId={userId} workspace={workspace} taskId={node.ref ?? node.id.replace(/:v\d+$/, "")} sessionId={node.human_blocker?.sessionId} patchVersion={workResult?.patchVersion} files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} />}
       </div>
     </aside>
   );
@@ -521,8 +522,26 @@ function ChildList({ items }: { items: RoadmapNode[] }) {
   );
 }
 
-function FilesTab({ files, onOpenFile, aggregated = false }: { files: WorkResultFile[]; onOpenFile: (file: WorkResultFile, expanded?: boolean) => void; aggregated?: boolean }) {
+function FilesTab({ userId, workspace, taskId, sessionId, patchVersion, files, onOpenFile, aggregated = false }: { userId: string | null; workspace: string; taskId: string; sessionId?: string; patchVersion?: number; files: WorkResultFile[]; onOpenFile: (file: WorkResultFile, expanded?: boolean) => void; aggregated?: boolean }) {
   const [selected, setSelected] = useState<WorkResultFile | null>(null);
+  const [loadingPath, setLoadingPath] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  async function open(file: WorkResultFile, expanded: boolean) {
+    setSelected(file);
+    setError(null);
+    if (file.content || file.diff || file.unavailableReason || !userId) {
+      onOpenFile(file, expanded);
+      return;
+    }
+    setLoadingPath(file.path);
+    try {
+      onOpenFile(await getReviewArtifact(userId, workspace, { taskId, path: file.path, sessionId, patchVersion }), expanded);
+    } catch {
+      setError("코드 아티팩트를 불러오지 못했습니다. 플러그인 동기화 상태를 확인하세요.");
+    } finally {
+      setLoadingPath(null);
+    }
+  }
   if (files.length === 0) return <div className="text-xs opacity-50">변경된 파일 없음</div>;
   return (
     <div className="flex min-h-0 flex-col gap-2">
@@ -538,14 +557,8 @@ function FilesTab({ files, onOpenFile, aggregated = false }: { files: WorkResult
           <li key={f.path}>
             <button
               type="button"
-              onClick={() => {
-                setSelected(f);
-                onOpenFile(f, false);
-              }}
-              onDoubleClick={() => {
-                setSelected(f);
-                onOpenFile(f, true);
-              }}
+              onClick={() => void open(f, false)}
+              onDoubleClick={() => void open(f, true)}
               className={`group flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-xs transition-colors hover:border-cyan-400/25 hover:bg-white/5 ${
                 selected?.path === f.path ? "border-cyan-400/30 bg-cyan-400/[0.06]" : "border-transparent"
               }`}
@@ -557,12 +570,15 @@ function FilesTab({ files, onOpenFile, aggregated = false }: { files: WorkResult
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[11.5px] text-[var(--color-text)]">{f.path}</span>
                 <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wide text-[var(--color-text-dim)]">{presentation.eyebrow}</span>
+                {loadingPath === f.path && <span className="mt-0.5 block text-[10px] text-cyan-300">코드 불러오는 중…</span>}
+                {f.unavailableReason && <span className="mt-0.5 block text-[10px] text-amber-300/80">{f.unavailableReason}</span>}
               </span>
             </button>
           </li>
           );
         })}
       </ul>
+      {error && <div className="rounded-lg border border-rose-400/25 bg-rose-400/5 px-3 py-2 text-xs text-rose-200">{error}</div>}
     </div>
   );
 }

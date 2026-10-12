@@ -4,6 +4,7 @@ export interface ReviewPacket {
   tests: string[];
   designDecisions: string[];
   knownLimitations: string[];
+  files?: Array<{ path: string; change: "added" | "modified" | "deleted"; unavailableReason?: string }>;
 }
 
 export function reviewConfirmationSections(packet: ReviewPacket): Array<{ id: string; title: string; items: string[] }> {

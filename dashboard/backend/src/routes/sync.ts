@@ -8,6 +8,7 @@ import {
   historySchema,
   pluginVersionSchema,
   roadmapSyncSchema,
+  reviewArtifactSchema,
   taskSchema,
   workspaceDeleteSchema,
   workspaceMetaSchema,
@@ -36,6 +37,7 @@ import {
   syncWorkspace,
   syncWorkspaceMeta,
 } from "../services/syncService.js";
+import { saveReviewArtifact } from "../services/reviewArtifacts.js";
 import { linkRoadmapNodes, unlinkRoadmapNodes } from "../services/workspaceService.js";
 
 const roadmapLinkSchema = z.object({
@@ -133,6 +135,12 @@ export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
 
   router.post("/roadmap", validateBody(roadmapSyncSchema), asyncHandler(async (req, res) => {
     await syncRoadmap(db, req.body.userId, req.body.workspaceName, req.body.nodes);
+    res.json({ ok: true });
+  }));
+
+  router.post("/review-artifact", validateBody(reviewArtifactSchema), asyncHandler(async (req, res) => {
+    const { userId: _ignored, ...artifact } = req.body;
+    await saveReviewArtifact(db, req.userId!, artifact);
     res.json({ ok: true });
   }));
 

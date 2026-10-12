@@ -19,6 +19,25 @@ export function clearManualStatus(userId: string, workspace: string, nodeId: str
   });
 }
 
+export async function getReviewArtifact(userId: string, workspace: string, input: {
+  taskId: string; path: string; sessionId?: string; patchVersion?: number;
+}) {
+  const response = await apiJson<{ artifact: { path: string; changeType: "added" | "modified" | "deleted"; content?: string | null; diff?: string | null; unavailableReason?: string | null } }>(
+    withUserId(`/api/workspaces/${encodeURIComponent(workspace)}/review-artifact`, userId, {
+      taskId: input.taskId, path: input.path,
+      ...(input.sessionId ? { sessionId: input.sessionId } : {}),
+      ...(input.patchVersion !== undefined ? { patchVersion: String(input.patchVersion) } : {}),
+    }),
+  );
+  return {
+    path: response.artifact.path,
+    change: response.artifact.changeType,
+    ...(response.artifact.content ? { content: response.artifact.content } : {}),
+    ...(response.artifact.diff ? { diff: response.artifact.diff } : {}),
+    ...(response.artifact.unavailableReason ? { unavailableReason: response.artifact.unavailableReason } : {}),
+  };
+}
+
 /** §7 폐기/복구 — 삭제가 아니라 manual_status='dropped' override(BFS cascade). */
 export function dropSubtree(userId: string, workspace: string, nodeId: string) {
   return apiJson<{ ok: boolean; affected: string[] }>(withUserId(path(workspace, "/drop"), userId), {

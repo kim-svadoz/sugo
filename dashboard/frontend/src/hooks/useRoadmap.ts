@@ -11,6 +11,7 @@ export interface WorkResultFile {
   change: "added" | "modified" | "deleted";
   content?: string;
   diff?: string;
+  unavailableReason?: string;
 }
 
 export interface WorkResult {

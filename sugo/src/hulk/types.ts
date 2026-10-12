@@ -111,7 +111,7 @@ export interface RoadmapWorkResult {
   endedAt?: string;
   model?: string;
   summary?: string;
-  files?: { path: string; change: "added" | "modified" | "deleted"; content?: string; diff?: string }[];
+  files?: { path: string; change: "added" | "modified" | "deleted"; content?: string; diff?: string; unavailableReason?: string }[];
   parentTaskId?: string;
   patchVersion?: number;
   seed?: string;
@@ -186,6 +186,11 @@ export interface HumanBlocker {
     tests: string[];
     designDecisions: string[];
     knownLimitations: string[];
+    files?: Array<{
+      path: string;
+      change: "added" | "modified" | "deleted";
+      unavailableReason?: string;
+    }>;
   };
 }
 

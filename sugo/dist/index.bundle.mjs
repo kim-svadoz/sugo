@@ -24197,6 +24197,20 @@ async function unsyncRoadmapLink(workspaceName, fromId, toId) {
   if (!config2.enabled) return;
   await pushEvent("/api/sync/roadmap/link", "DELETE", { userId: config2.userId, workspaceName, fromId, toId });
 }
+async function syncReviewArtifacts(workspaceName, taskId, sessionId, patchVersion, files) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await Promise.all(files.map(
+    (file) => pushEvent("/api/sync/review-artifact", "POST", {
+      userId: config2.userId,
+      workspaceName,
+      taskId,
+      sessionId,
+      patchVersion,
+      ...file
+    }, 15e3)
+  ));
+}
 
 // src/hulk/workspace.ts
 async function loadWorkspace(name2) {
@@ -28076,7 +28090,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.26.6" : "0.0.0-dev";
+  return true ? "0.27.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29343,6 +29357,7 @@ import { promisify as promisify2 } from "node:util";
 var execFileAsync2 = promisify2(execFile2);
 var MAX_CONTENT_BYTES = 2e5;
 var MAX_DIFF_BYTES = 4e5;
+var SENSITIVE_PATH = /(^|\/)(\.env(?:\.|$)|\.git\/|\.aws\/|\.ssh\/|credentials?(?:\.|$)|secrets?(?:\.|$)|[^/]+\.(?:pem|key|p12|pfx))|(^|\/)node_modules\//i;
 function safeProjectFile(projectPath, path) {
   const root = resolve8(projectPath);
   const absolute = isAbsolute6(path) ? resolve8(path) : resolve8(root, path);
@@ -29376,6 +29391,13 @@ async function snapshotWorkResultFiles(projectPath, paths) {
     }
     return { path: safe.relative, change, ...content ? { content } : {}, ...diff ? { diff } : {} };
   }));
+}
+async function snapshotReviewArtifacts(projectPath, paths) {
+  const files = await snapshotWorkResultFiles(projectPath, paths);
+  return files.map((file) => {
+    if (!SENSITIVE_PATH.test(file.path)) return file;
+    return { path: file.path, change: file.change, unavailableReason: "\uBBFC\uAC10 \uD30C\uC77C\uC740 Dashboard\uB85C \uC804\uC1A1\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." };
+  });
 }
 
 // src/decompose.ts
@@ -32240,7 +32262,8 @@ function buildReviewConfirmationBlocker(input) {
       changes: input.changes,
       tests: input.tests,
       designDecisions: input.designDecisions,
-      knownLimitations: input.knownLimitations
+      knownLimitations: input.knownLimitations,
+      ...input.files ? { files: input.files.map(({ path, change, unavailableReason }) => ({ path, change, unavailableReason })) } : {}
     }
   };
 }
@@ -32407,7 +32430,10 @@ async function handleSugoRoadmap(rawArgs) {
       if (session.data.hulkWorkspace !== args2.workspace || session.data.hulkTaskId !== args2.id) {
         return errorResult13("BLOCKER_TARGET_MISMATCH", "\uD604\uC7AC \uC138\uC158\uC5D0 \uC5F0\uACB0\uB41C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC640 \uD655\uC778 \uC694\uCCAD \uB300\uC0C1\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
       }
-      const blocker = buildReviewConfirmationBlocker({ sessionId: args2.sessionId, ...args2.reviewPacket });
+      const files = await snapshotReviewArtifacts(session.projectPath, session.data.chainInfo.changedFiles ?? []);
+      const patchVersion = session.data.mode === "patch" ? session.data.patch?.version ?? 0 : 0;
+      await syncReviewArtifacts(args2.workspace, args2.id, args2.sessionId, patchVersion, files);
+      const blocker = buildReviewConfirmationBlocker({ sessionId: args2.sessionId, ...args2.reviewPacket, files });
       const result2 = await blockRoadmapNodeForHuman(args2.workspace, args2.id, blocker);
       if (!result2.ok) return errorResult13(result2.error, result2.message);
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };

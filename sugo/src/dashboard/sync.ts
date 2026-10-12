@@ -9,6 +9,7 @@ import {
 } from "./serialize.js";
 import type { Checkpoint, RoadmapNode, Spec, Task, Workspace, WorkLog } from "../hulk/types.js";
 import type { PrRefs } from "../prRefs.js";
+import type { RoadmapWorkResult } from "../hulk/types.js";
 
 /**
  * §7.2 push 엔드포인트 얇은 래퍼들 — 호출부(hulk/*.ts, tools/sugoPlan.ts)는 로컬 쓰기가 끝난 뒤
@@ -127,4 +128,20 @@ export async function unsyncRoadmapLink(workspaceName: string, fromId: string, t
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
   await pushEvent("/api/sync/roadmap/link", "DELETE", { userId: config.userId, workspaceName, fromId, toId });
+}
+
+export async function syncReviewArtifacts(
+  workspaceName: string,
+  taskId: string,
+  sessionId: string,
+  patchVersion: number,
+  files: NonNullable<RoadmapWorkResult["files"]>,
+): Promise<void> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await Promise.all(files.map((file) =>
+    pushEvent("/api/sync/review-artifact", "POST", {
+      userId: config.userId, workspaceName, taskId, sessionId, patchVersion, ...file,
+    }, 15_000),
+  ));
 }

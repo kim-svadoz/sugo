@@ -113,6 +113,19 @@ export const roadmapSyncSchema = z.object({
   nodes: z.array(roadmapNodeSchema),
 });
 
+export const reviewArtifactSchema = z.object({
+  userId: z.string().min(1),
+  workspaceName: z.string().min(1).max(191),
+  taskId: z.string().min(1).max(512),
+  sessionId: z.string().min(1).max(512),
+  patchVersion: z.number().int().min(0),
+  path: z.string().min(1).max(2048),
+  change: z.enum(["added", "modified", "deleted"]),
+  content: z.string().max(200_000).optional(),
+  diff: z.string().max(400_000).optional(),
+  unavailableReason: z.string().max(500).optional(),
+}).strict();
+
 export const bulkSyncSchema = z.object({
   users: z.array(userSchema).optional(),
   workspaces: z.array(workspaceSchema).optional(),

@@ -52,6 +52,7 @@ export function FileViewerSheet({
   const pathParts = file.path.split("/");
   const fileName = pathParts.pop() ?? file.path;
   const directory = pathParts.join("/");
+  const showingDiff = Boolean(file.diff?.trim());
   return (
     <section
       aria-label={`${file.path} 변경파일 바텀시트`}
@@ -67,7 +68,7 @@ export function FileViewerSheet({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold ${tone.border} ${tone.bg} ${tone.text}`}>
-              {fileViewerLanguage(file.path)}
+              {showingDiff ? "DIFF" : fileViewerLanguage(file.path)}
             </span>
             <span className={`font-mono text-[9px] font-semibold uppercase tracking-[0.14em] ${tone.text}`}>{presentation.eyebrow}</span>
             <span className="truncate text-[10px] text-[var(--color-text-dim)]">{presentation.description}</span>
@@ -90,7 +91,7 @@ export function FileViewerSheet({
       </div>
       <div className="ck-scroll min-h-0 flex-1 overflow-auto font-mono text-[11px] leading-6 text-slate-300">
         {lines.map((line, index) => (
-          <div key={index} className="flex min-w-max border-b border-white/[0.015]">
+          <div key={index} className={`flex min-w-max border-b border-white/[0.015] ${showingDiff && line.startsWith("+") && !line.startsWith("+++") ? "bg-emerald-400/[0.08] text-emerald-200" : showingDiff && line.startsWith("-") && !line.startsWith("---") ? "bg-rose-400/[0.08] text-rose-200" : ""}`}>
             <span className="sticky left-0 w-12 shrink-0 select-none border-r border-white/5 bg-[#080c13] pr-3 text-right text-slate-600">{index + 1}</span>
             <span className="whitespace-pre px-4">{line || " "}</span>
           </div>

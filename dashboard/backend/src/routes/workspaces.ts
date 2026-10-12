@@ -75,6 +75,7 @@ import {
   removeSpecAttachments,
 } from "../services/specAttachments.js";
 import { applyCheckpointToProjects, isCheckpointExpired, newCheckpointId } from "../services/checkpointApply.js";
+import { readReviewArtifact } from "../services/reviewArtifacts.js";
 
 function requireUserId(req: import("express").Request, res: import("express").Response): string | null {
   // 공개 SaaS(§Phase 1): 신원은 인증 미들웨어가 세운 req.userId(토큰)만 신뢰. query userId 무시.
@@ -203,6 +204,19 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
       dependsOn: n.depends_on,
     }));
     res.json({ nodes, counts: roadmapCounts(view), issues: roadmapIssues(view) });
+  });
+
+  router.get("/:name/review-artifact", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const taskId = typeof req.query.taskId === "string" ? req.query.taskId : "";
+    const filePath = typeof req.query.path === "string" ? req.query.path : "";
+    const sessionId = typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+    const patchVersionRaw = typeof req.query.patchVersion === "string" ? Number(req.query.patchVersion) : undefined;
+    if (!taskId || !filePath) return res.status(400).json({ error: "taskId and path required" });
+    const artifact = await readReviewArtifact(db, userId, req.params.name, taskId, filePath, sessionId, Number.isInteger(patchVersionRaw) ? patchVersionRaw : undefined);
+    if (!artifact) return res.status(404).json({ error: "not_found" });
+    res.set("Cache-Control", "private, no-store").json({ artifact });
   });
 
   // §3.3 Spec 원문 팝업(slug 매칭). title(또는 path 마지막 세그먼트)로 decision content를 찾는다.

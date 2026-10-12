@@ -228,3 +228,10 @@ CREATE TABLE IF NOT EXISTS user_api_tokens (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_used_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS sugo_review_artifacts (
+  artifact_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, workspace_name TEXT NOT NULL,
+  task_id TEXT NOT NULL, session_id TEXT NOT NULL, patch_version INTEGER NOT NULL,
+  file_path TEXT NOT NULL, change_type TEXT NOT NULL, content TEXT, diff_text TEXT,
+  unavailable_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);

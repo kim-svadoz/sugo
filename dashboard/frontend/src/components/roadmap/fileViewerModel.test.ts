@@ -20,9 +20,9 @@ const node = (id: string, level: string, parent: string | null, files: Array<{ p
 });
 
 describe("changed-file viewer model", () => {
-  it("전체 파일 content가 있으면 diff보다 우선 보여준다", () => {
+  it("수정 파일은 실제 변경을 검토할 수 있도록 diff를 우선 보여준다", () => {
     expect(fileViewerText({ path: "src/a.ts", change: "modified", content: "new", diff: "@@ -1 +1 @@" })).toBe(
-      "new",
+      "@@ -1 +1 @@",
     );
   });
 

@@ -9,6 +9,8 @@ const MAX_CONTENT_BYTES = 200_000;
 const MAX_DIFF_BYTES = 400_000;
 type SnapshotFile = NonNullable<RoadmapWorkResult["files"]>[number];
 
+const SENSITIVE_PATH = /(^|\/)(\.env(?:\.|$)|\.git\/|\.aws\/|\.ssh\/|credentials?(?:\.|$)|secrets?(?:\.|$)|[^/]+\.(?:pem|key|p12|pfx))|(^|\/)node_modules\//i;
+
 function safeProjectFile(projectPath: string, path: string): { absolute: string; relative: string } | null {
   const root = resolve(projectPath);
   const absolute = isAbsolute(path) ? resolve(path) : resolve(root, path);
@@ -47,4 +49,13 @@ export async function snapshotWorkResultFiles(projectPath: string, paths: string
     }
     return { path: safe.relative, change, ...(content ? { content } : {}), ...(diff ? { diff } : {}) };
   }));
+}
+
+/** review 전 코드 열람용 아티팩트. 민감 경로는 목록만 남기고 본문은 절대 전송하지 않는다. */
+export async function snapshotReviewArtifacts(projectPath: string, paths: string[]): Promise<SnapshotFile[]> {
+  const files = await snapshotWorkResultFiles(projectPath, paths);
+  return files.map((file) => {
+    if (!SENSITIVE_PATH.test(file.path)) return file;
+    return { path: file.path, change: file.change, unavailableReason: "민감 파일은 Dashboard로 전송하지 않습니다." } as SnapshotFile;
+  });
 }

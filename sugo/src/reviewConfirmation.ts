@@ -1,4 +1,5 @@
 import type { HumanBlocker } from "./hulk/types.js";
+import type { RoadmapWorkResult } from "./hulk/types.js";
 
 export interface ReviewConfirmationInput {
   sessionId: string;
@@ -7,6 +8,7 @@ export interface ReviewConfirmationInput {
   tests: string[];
   designDecisions: string[];
   knownLimitations: string[];
+  files?: NonNullable<RoadmapWorkResult["files"]>;
 }
 
 export function buildReviewConfirmationBlocker(input: ReviewConfirmationInput): HumanBlocker {
@@ -31,6 +33,7 @@ export function buildReviewConfirmationBlocker(input: ReviewConfirmationInput): 
       tests: input.tests,
       designDecisions: input.designDecisions,
       knownLimitations: input.knownLimitations,
+      ...(input.files ? { files: input.files.map(({ path, change, unavailableReason }) => ({ path, change, unavailableReason })) } : {}),
     },
   };
 }

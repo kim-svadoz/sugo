@@ -21,6 +21,8 @@ import { fetchBlockerDecision } from "../dashboard/fetch.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
 import { assessSession } from "../ontology/sessionAssessment.js";
 import { buildReviewConfirmationBlocker } from "../reviewConfirmation.js";
+import { snapshotReviewArtifacts } from "../dashboard/workResultFiles.js";
+import { syncReviewArtifacts } from "../dashboard/sync.js";
 
 export const sugoRoadmapInputSchema = {
   action: z.enum([
@@ -186,7 +188,10 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       if (session.data.hulkWorkspace !== args.workspace || session.data.hulkTaskId !== args.id) {
         return errorResult("BLOCKER_TARGET_MISMATCH", "현재 세션에 연결된 워크스페이스/Task와 확인 요청 대상이 다릅니다.");
       }
-      const blocker = buildReviewConfirmationBlocker({ sessionId: args.sessionId, ...args.reviewPacket });
+      const files = await snapshotReviewArtifacts(session.projectPath, session.data.chainInfo.changedFiles ?? []);
+      const patchVersion = session.data.mode === "patch" ? session.data.patch?.version ?? 0 : 0;
+      await syncReviewArtifacts(args.workspace, args.id, args.sessionId, patchVersion, files);
+      const blocker = buildReviewConfirmationBlocker({ sessionId: args.sessionId, ...args.reviewPacket, files });
       const result = await blockRoadmapNodeForHuman(args.workspace, args.id, blocker);
       if (!result.ok) return errorResult(result.error!, result.message!);
       session.data.humanDecisionGate = { workspace: args.workspace, taskId: args.id, blocker };

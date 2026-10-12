@@ -10,6 +10,7 @@ describe("buildReviewConfirmationBlocker", () => {
       tests: ["FilterServiceTest 37/37 통과"],
       designDecisions: ["조회 결과는 최대 30개로 제한합니다."],
       knownLimitations: ["운영 환경 시뮬레이터는 실행하지 않았습니다."],
+      files: [{ path: "src/service.ts", change: "modified", content: "secret body is not embedded in packet" }],
     });
 
     expect(blocker).toMatchObject({
@@ -22,5 +23,6 @@ describe("buildReviewConfirmationBlocker", () => {
     });
     expect(blocker.options.map((option) => option.id)).toEqual(["approve", "revise"]);
     expect(blocker.reviewPacket?.tests).toEqual(["FilterServiceTest 37/37 통과"]);
+    expect(blocker.reviewPacket?.files).toEqual([{ path: "src/service.ts", change: "modified" }]);
   });
 });

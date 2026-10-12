@@ -242,3 +242,20 @@ CREATE TABLE IF NOT EXISTS user_api_tokens (
   KEY idx_api_tokens_user (user_id),
   CONSTRAINT fk_api_tokens_user FOREIGN KEY (user_id) REFERENCES sugo_users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sugo_review_artifacts (
+  artifact_id CHAR(64) NOT NULL PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL,
+  workspace_name VARCHAR(191) NOT NULL,
+  task_id VARCHAR(512) NOT NULL,
+  session_id VARCHAR(512) NOT NULL,
+  patch_version INT NOT NULL,
+  file_path TEXT NOT NULL,
+  change_type ENUM('added','modified','deleted') NOT NULL,
+  content MEDIUMTEXT NULL,
+  diff_text MEDIUMTEXT NULL,
+  unavailable_reason VARCHAR(500) NULL,
+  created_at VARCHAR(64) NOT NULL,
+  updated_at VARCHAR(64) NOT NULL,
+  KEY idx_review_artifact_lookup (user_id, workspace_name, task_id(191), patch_version)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

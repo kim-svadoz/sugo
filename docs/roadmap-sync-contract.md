@@ -55,10 +55,12 @@ snapshot after newer work has completed.
 - Update Plugin to 0.18.1 (`claude plugin update sugo@sugo-marketplace`, then `/reload-plugins`).
 - Deploy Console 0.11.1 and **restart the backend**: changing parser configuration in source/build
   does not change an already running process. Rebuild/deploy frontend too for the Console version badge.
-- Source content and diffs are no longer sent to Console. Existing file viewer displays paths and its
-  existing “no saved diff/content” notice; task status, phase, summary and patch-entry paths remain.
-  No on-demand source endpoint is added in this release. Source contents remain in local artifacts;
-  a future viewer endpoint must retrieve them only on request rather than putting them in snapshots.
+- Source content and diffs are not included in the complete Roadmap snapshot. From Plugin 0.27.0 /
+  Console 0.16.0, `request_review_confirmation` uploads bounded per-file review artifacts to a separate
+  authenticated store. The file list remains compact metadata in `reviewPacket`; Console retrieves one
+  artifact only when the user clicks that file. `.env`, credentials, keys, certificates, `.git`, `.aws`,
+  `.ssh`, and `node_modules` paths are listed without content. Artifacts are isolated by token user,
+  workspace, task, session and patch version and responses use `private, no-store`.
 - The manual 2026-10-02 repair removed content/diff from two queued orders snapshots
   (186KB → 62KB). Its backup is `sync-retry-queue.backup-20261002.json`; ranking-rank/favorite-items's
   removed source previews are not restored by this release.
