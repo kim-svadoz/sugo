@@ -90,5 +90,6 @@ describe("patch lineage canvas model", () => {
     });
     const [chain] = buildLineageChains([task]);
     expect(chain.columns[0].map((item) => item.node.status)).toEqual(["done", "in_progress"]);
+    expect(lineageSelection(chain.columns[0][1]).node.work_result).toBeNull();
   });
 });

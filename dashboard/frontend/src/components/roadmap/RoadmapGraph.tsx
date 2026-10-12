@@ -1444,6 +1444,11 @@ export function RoadmapGraph({
     return lineageSelection(selectedLineageItem);
   }, [selectedLineageItem]);
   const selectedNode = selectedLineage?.node ?? nodes.find((n) => n.id === selectedId) ?? null;
+  const selectedReqs = selectedLineage
+    ? selectedLineage.requirementsUnavailable && selectedLineageItem?.node.status !== "done"
+      ? nodes.filter((n) => n.parent === selectedLineageItem?.node.id && n.level === "subtask")
+      : selectedLineage.reqs
+    : selectedNode ? nodes.filter((n) => n.parent === selectedNode.id && n.level === "subtask") : [];
   const selectedFiles = useMemo(
     // 진행 중심/SPEC 상태 필터는 **캔버스 표시만** 줄인다. 상세 범위까지 잘라버리면
     // 화면에서 숨긴 완료 TASK의 산출물이 SPEC 파일 탭에서 사라진다.
@@ -1591,8 +1596,8 @@ export function RoadmapGraph({
           <SubtaskPanel
             workspace={workspace}
             node={selectedNode}
-            requirementsUnavailable={selectedLineage?.requirementsUnavailable}
-            reqs={selectedLineage?.reqs ?? nodes.filter((n) => n.parent === selectedNode.id && n.level === "subtask")}
+            requirementsUnavailable={!!selectedLineage?.requirementsUnavailable && selectedReqs.length === 0}
+            reqs={selectedReqs}
             children={nodes.filter((n) => n.parent === selectedNode.id && n.level !== "subtask" && n.level !== "step")}
             onClose={() => {
               setFileViewer(null);

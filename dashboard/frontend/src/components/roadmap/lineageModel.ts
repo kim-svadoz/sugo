@@ -131,11 +131,12 @@ export function lineageSelection(item: LineageChainItem) {
   const changedFiles = Array.isArray(item.entry.changedFiles)
     ? item.entry.changedFiles.filter((value): value is string => typeof value === "string")
     : [];
-  const fallbackWorkResult = {
+  const hasFallbackResult = typeof item.entry.summary === "string" || changedFiles.length > 0;
+  const fallbackWorkResult = hasFallbackResult ? {
     summary: typeof item.entry.summary === "string" ? item.entry.summary : undefined,
     files: changedFiles.map((path) => ({ path, change: "modified" as const })),
     patchVersion: item.version,
-  };
+  } : null;
   const reqs = requirementNodes(item);
   const node: RoadmapNode = {
     ...item.node,

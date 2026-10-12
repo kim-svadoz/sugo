@@ -11,6 +11,7 @@ import { fileViewerPresentation } from "./roadmap/fileViewerModel.js";
 import { workResultPresentation } from "./roadmap/workResultPresentation.js";
 import { taskGuidance } from "../lib/taskGuidance.js";
 import { BlockerDecisionPanel } from "./BlockerDecisionPanel.js";
+import type { ReviewPacket } from "../lib/reviewConfirmation.js";
 
 type Tab = "progress" | "summary" | "files";
 
@@ -126,7 +127,7 @@ export function SubtaskPanel({
             onReviewResult={() => setTab("summary")}
           />
         )}
-        {tab === "summary" && <SummaryTab title={node.title} workResult={workResult} requirements={node.level === "task" ? progressItems : []} />}
+        {tab === "summary" && <SummaryTab title={node.title} workResult={workResult} reviewPacket={node.human_blocker?.kind === "review_confirmation" ? node.human_blocker.reviewPacket : undefined} requirements={node.level === "task" ? progressItems : []} />}
         {tab === "files" && <FilesTab files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} />}
       </div>
     </aside>
@@ -453,14 +454,18 @@ function reportList(items: string[], empty: string): string {
   return `<ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
 }
 
-function openWorkResultHtml(title: string, workResult: NonNullable<ReturnType<typeof parseWorkResult>>, requirements: RoadmapNode[]) {
-  const view = workResultPresentation(workResult.report ?? workResult);
-  const report = workResult.report;
-  const files = workResult.files?.map((file) => `${file.change.toUpperCase()} · ${file.path}`) ?? report?.changedFiles ?? [];
-  const decisions = report?.designDecisions ?? [];
-  const risks = report?.knownLimitations ?? [];
+function openWorkResultHtml(title: string, workResult: ReturnType<typeof parseWorkResult>, requirements: RoadmapNode[], reviewPacket?: ReviewPacket) {
+  const patchVersion = Number(title.match(/^v(\d+)\s/)?.[1] ?? 0);
+  const effectiveResult = workResult ?? (reviewPacket ? { summary: reviewPacket.summary, patchVersion } : null);
+  if (!effectiveResult) return;
+  const view = workResultPresentation(effectiveResult.report ?? effectiveResult);
+  const report = effectiveResult.report;
+  const files = effectiveResult.files?.map((file) => `${file.change.toUpperCase()} · ${file.path}`) ?? report?.changedFiles ?? reviewPacket?.changes ?? [];
+  const decisions = report?.designDecisions ?? reviewPacket?.designDecisions ?? [];
+  const risks = report?.knownLimitations ?? reviewPacket?.knownLimitations ?? [];
   const pendingRequirements = requirements.filter((item) => (item.manual_status ?? item.status) !== "done").length;
-  const reviewReady = view.grade !== "unverified" && pendingRequirements === 0;
+  const evidenceAvailable = !!report || !!reviewPacket;
+  const reviewReady = evidenceAvailable && view.grade !== "unverified" && pendingRequirements === 0 && (requirements.length > 0 || !!report);
   const summaryParagraphs = view.summary.split(/\n+/).filter(Boolean).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("");
   const requirementRows = requirements.length
     ? requirements.map((item) => {
@@ -469,25 +474,31 @@ function openWorkResultHtml(title: string, workResult: NonNullable<ReturnType<ty
     }).join("")
     : `<tr><td colspan="2" class="muted">기록된 REQ가 없습니다.</td></tr>`;
   const test = report?.verification.test;
+  const packetTests = reviewPacket?.tests ?? [];
+  const testMetricLabel = view.testLabel ?? (packetTests.length ? `${packetTests.length}건 기록` : "기록 없음");
   const verificationRows = [
-    ["테스트", view.testLabel ?? "기록 없음", test?.state === "pass"],
+    ["테스트", view.testLabel ?? (packetTests.length ? packetTests.join("\n") : "기록 없음"), test?.state === "pass" || packetTests.length > 0],
     ["런타임 검증", view.runtimeVerified ? "확인됨" : "미확인", !!view.runtimeVerified],
     ["배선 검증", view.wiringVerified ? "확인됨" : "미확인", !!view.wiringVerified],
     ["검증 판정", report?.verification.validationVerdict ?? "기록 없음", report?.verification.validationVerdict === "pass"],
   ].map(([label, value, good]) => `<div class="evidence"><span>${label}</span><strong class="${good ? "good" : "caution"}">${escapeHtml(String(value))}</strong></div>`).join("");
   const command = view.testCommand ? `<div class="command"><span>$</span><code>${escapeHtml(view.testCommand)}</code></div>` : `<p class="muted">실행 명령 기록이 없습니다.</p>`;
-  const timing = [workResult.startedAt && `시작 ${workResult.startedAt}`, workResult.endedAt && `종료 ${workResult.endedAt}`].filter(Boolean).join(" · ");
+  const timing = [workResult?.startedAt && `시작 ${workResult.startedAt}`, workResult?.endedAt && `종료 ${workResult.endedAt}`].filter(Boolean).join(" · ");
   const documentHtml = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} · ${escapeHtml(view.versionLabel)}</title><style>
     :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#07101f;color:#dce7f5}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 82% 0,#12304a66,transparent 34%),#07101f}main{max-width:1080px;margin:0 auto;padding:48px 28px 88px}header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;border-bottom:1px solid #26364d;padding-bottom:24px}.eyebrow{font:700 12px ui-monospace,monospace;letter-spacing:.14em;color:#67e8f9}h1{margin:9px 0 8px;font-size:32px}.version,.muted{color:#8fa1b8}.version{font:13px ui-monospace,monospace}.print{border:1px solid #334762;background:#111f33;color:#dce7f5;border-radius:10px;padding:9px 13px;cursor:pointer}.decision,.panel{border:1px solid #26364d;border-radius:16px;background:#0c1728dd;padding:22px 24px;margin-top:18px}.decision{display:flex;gap:16px;align-items:center}.decision.ready{border-color:#1f806b;background:#0b302c}.decision.hold{border-color:#8b641c;background:#30240b}.decision strong{display:block;font-size:17px}.decision p{margin:5px 0 0;color:#b8c5d6}.mark{font-size:24px}.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}.metric{border:1px solid #26364d;border-radius:12px;background:#0c1728;padding:14px}.metric span{display:block;color:#8fa1b8;font-size:12px}.metric strong{display:block;margin-top:6px;font-size:15px}.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}.panel h2{margin:0 0 15px;font-size:17px;color:#b8f4fc}.summary p{font-size:16px;line-height:1.8;margin:0 0 12px}.summary p:last-child{margin-bottom:0}ul{margin:0;padding-left:20px}li{margin:9px 0;line-height:1.65;color:#c5d2e3;overflow-wrap:anywhere}.risk{border-color:#73551d}.risk h2{color:#facc6b}table{width:100%;border-collapse:collapse}td{padding:10px 8px;border-top:1px solid #23334a;font-size:14px}.state{display:inline-block;border-radius:999px;padding:3px 8px;font-size:11px;white-space:nowrap}.state.done{background:#0f513f;color:#9ff3d4}.state.pending{background:#5a4010;color:#ffd778}.evidence-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.evidence{border:1px solid #26364d;border-radius:10px;padding:12px}.evidence span{display:block;color:#8fa1b8;font-size:12px}.evidence strong{display:block;margin-top:5px}.good{color:#6ee7b7}.caution{color:#fcd34d}.command{display:flex;gap:12px;border-radius:10px;background:#050a13;padding:14px;margin-top:13px;font:12px ui-monospace,monospace;color:#9fb0c6;overflow-wrap:anywhere}.command span{color:#6ee7b7}@media(max-width:760px){.grid,.metrics{grid-template-columns:1fr}header{display:block}.print{margin-top:14px}}@media print{body{background:#fff;color:#172033}.panel,.metric,.decision{background:#fff;border-color:#cbd5e1}.muted,.version{color:#64748b}.print{display:none}}</style></head><body><main><header><div><div class="eyebrow">SUGO REVIEW REPORT</div><h1>${escapeHtml(title)}</h1><div class="version">${escapeHtml(view.versionLabel)}${timing ? ` · ${escapeHtml(timing)}` : ""}</div></div><button class="print" onclick="window.print()">인쇄 / PDF 저장</button></header><section class="decision ${reviewReady ? "ready" : "hold"}"><div class="mark">${reviewReady ? "✓" : "!"}</div><div><strong>${reviewReady ? "review_done 판단 근거가 준비되었습니다" : "review_done 전에 확인할 항목이 남아 있습니다"}</strong><p>${reviewReady ? "모든 REQ와 기록된 검증 근거가 완료 상태입니다. 아래 근거와 남은 위험을 최종 확인하세요." : `${pendingRequirements}개 REQ 또는 검증 예외가 남아 있습니다. 승인 전 아래 노란 항목을 확인하세요.`}</p></div></section><div class="metrics"><div class="metric"><span>작업 차수</span><strong>${escapeHtml(view.versionLabel)}</strong></div><div class="metric"><span>REQ</span><strong>${requirements.length - pendingRequirements}/${requirements.length}</strong></div><div class="metric"><span>테스트</span><strong>${escapeHtml(view.testLabel ?? "기록 없음")}</strong></div><div class="metric"><span>변경 파일</span><strong>${files.length}개</strong></div><div class="metric"><span>사용자 확인</span><strong>${reviewReady ? "완료" : "필요"}</strong></div></div><section class="panel summary"><h2>작업 결과 요약</h2>${summaryParagraphs || `<p class="muted">기록된 요약이 없습니다.</p>`}</section><div class="grid"><section class="panel"><h2>요구사항 충족 상태</h2><table>${requirementRows}</table></section><section class="panel"><h2>검증 증거</h2><div class="evidence-grid">${verificationRows}</div>${command}</section></div><section class="panel"><h2>변경 파일</h2>${reportList(files, "변경 파일 기록이 없습니다.")}</section><div class="grid"><section class="panel"><h2>설계 결정</h2>${reportList(decisions, "별도 설계 결정이 기록되지 않았습니다.")}</section><section class="panel risk"><h2>남은 사항 및 위험</h2>${reportList(risks, "기록된 제한 사항이 없습니다.")}</section></div></main></body></html>`;
-  const url = URL.createObjectURL(new Blob([documentHtml], { type: "text/html;charset=utf-8" }));
+  const populatedDocumentHtml = documentHtml.replace(
+    `<span>테스트</span><strong>${escapeHtml(view.testLabel ?? "기록 없음")}</strong>`,
+    `<span>테스트</span><strong>${escapeHtml(testMetricLabel)}</strong>`,
+  );
+  const url = URL.createObjectURL(new Blob([populatedDocumentHtml], { type: "text/html;charset=utf-8" }));
   window.open(url, "_blank", "noopener,noreferrer");
   window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
-function SummaryTab({ title, workResult, requirements }: { title: string; workResult: ReturnType<typeof parseWorkResult>; requirements: RoadmapNode[] }) {
-  if (!workResult) return <div className="rounded-lg border border-dashed border-white/10 p-4 text-xs text-[var(--color-text-dim)]">아직 기록된 작업 요약이 없습니다.</div>;
+function SummaryTab({ title, workResult, reviewPacket, requirements }: { title: string; workResult: ReturnType<typeof parseWorkResult>; reviewPacket?: ReviewPacket; requirements: RoadmapNode[] }) {
+  if (!workResult && !reviewPacket) return <div className="rounded-lg border border-dashed border-white/10 p-4 text-sm text-[var(--color-text-muted)]">review-agent가 판단 근거를 작성 중입니다. 검토 요청이 준비되면 이 탭에서 보고서를 열 수 있습니다.</div>;
   return (
-    <button type="button" onClick={() => openWorkResultHtml(title, workResult, requirements)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-violet-400/10 px-4 py-4 text-sm font-semibold text-violet-100 hover:bg-violet-400/20">
+    <button type="button" onClick={() => openWorkResultHtml(title, workResult, requirements, reviewPacket)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-violet-400/10 px-4 py-4 text-sm font-semibold text-violet-100 hover:bg-violet-400/20">
       <ExternalLink size={16} /> 작업 요약 HTML로 열기
     </button>
   );
