@@ -102,7 +102,9 @@ export function withUserId(path: string, userId: string, extra?: Record<string, 
 export interface HistorySearchResult {
   id: string;
   workspace_name: string;
+  task_id: string | null;
   task_title: string | null;
+  spec_title: string | null;
   summary: string | null;
   completed_at: string | null;
   created_at: string;

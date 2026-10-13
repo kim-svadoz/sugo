@@ -263,14 +263,27 @@ export interface HistoryRow {
   workspace_name: string;
   task_id: string | null;
   task_title: string | null;
+  spec_title: string | null;
   summary: string | null;
   completed_at: string | null;
   created_at: string;
 }
 
+const historySelect = `SELECT h.id, h.workspace_name, h.task_id, h.task_title,
+       COALESCE(spec.manual_title, spec.title) AS spec_title,
+       h.summary, h.completed_at, h.created_at
+  FROM sugo_history h
+  LEFT JOIN sugo_roadmap_nodes task
+    ON task.user_id = h.user_id AND task.workspace_name = h.workspace_name AND task.id = h.task_id
+  LEFT JOIN sugo_roadmap_nodes run
+    ON run.user_id = task.user_id AND run.workspace_name = task.workspace_name AND run.id = task.parent
+  LEFT JOIN sugo_roadmap_nodes spec
+    ON spec.user_id = run.user_id AND spec.workspace_name = run.workspace_name
+   AND spec.id = run.parent AND spec.level = 'spec'`;
+
 export async function getRecentHistory(db: DbClient, userId: string, limit: number): Promise<HistoryRow[]> {
   return db.query<HistoryRow>(
-    "SELECT id, workspace_name, task_id, task_title, summary, completed_at, created_at FROM sugo_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?",
+    `${historySelect} WHERE h.user_id = ? ORDER BY h.created_at DESC LIMIT ?`,
     [userId, limit]
   );
 }
@@ -278,11 +291,10 @@ export async function getRecentHistory(db: DbClient, userId: string, limit: numb
 export async function searchWorkspaces(db: DbClient, userId: string, q: string): Promise<HistoryRow[]> {
   const like = `%${q}%`;
   return db.query<HistoryRow>(
-    `SELECT id, workspace_name, task_id, task_title, summary, completed_at, created_at
-     FROM sugo_history
-     WHERE user_id = ? AND (task_title LIKE ? OR summary LIKE ?)
-     ORDER BY created_at DESC`,
-    [userId, like, like]
+    `${historySelect}
+     WHERE h.user_id = ? AND (h.task_title LIKE ? OR h.summary LIKE ? OR COALESCE(spec.manual_title, spec.title) LIKE ?)
+     ORDER BY h.created_at DESC`,
+    [userId, like, like, like]
   );
 }
 
@@ -339,8 +351,8 @@ export async function getSpecContent(
 }
 
 export async function getHistory(db: DbClient, userId: string, workspaceName: string) {
-  return db.query(
-    "SELECT id, task_id, task_title, summary, completed_at, created_at FROM sugo_history WHERE user_id = ? AND workspace_name = ? ORDER BY created_at DESC",
+  return db.query<HistoryRow>(
+    `${historySelect} WHERE h.user_id = ? AND h.workspace_name = ? ORDER BY h.created_at DESC`,
     [userId, workspaceName]
   );
 }

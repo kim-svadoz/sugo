@@ -32,13 +32,15 @@ async function seededApp() {
       userId: "u1",
       workspaceName: "ws1",
       nodes: [
-        { id: "t1", title: "Task 1", level: "task", status: "in_progress" },
-        { id: "t2", title: "Task 2", level: "task", status: "done" },
+        { id: "spec-1", title: "현재 SPEC 제목", level: "spec", status: "done" },
+        { id: "run-1", title: "Run 1", level: "workstream", status: "done", parent: "spec-1" },
+        { id: "t1", title: "Task 1", level: "task", status: "in_progress", parent: "run-1" },
+        { id: "t2", title: "Task 2", level: "task", status: "done", parent: "run-1" },
       ],
     });
   await request(app)
     .post("/api/sync/history").set("Authorization", auth)
-    .send({ userId: "u1", workspaceName: "ws1", id: "h1", taskTitle: "Task 2", summary: "finished the thing" });
+    .send({ userId: "u1", workspaceName: "ws1", id: "h1", taskId: "t2", taskTitle: "저장 당시 제목", summary: "finished the thing" });
   await request(app)
     .post("/api/sync/decision").set("Authorization", auth)
     .send({ userId: "u1", workspaceName: "ws1", id: "d1", title: "Use SQLite locally" });
@@ -133,7 +135,7 @@ describe("GET /api/workspaces/checkpoint-sync", () => {
 
 describe("GET /api/workspaces/:name/{decisions,history,checkpoints,tasks,roadmap}", () => {
   it("returns per-workspace data", async () => {
-    const { app, auth } = await seededApp();
+    const { app, db, auth } = await seededApp();
     const decisions = await request(app).get("/api/workspaces/ws1/decisions").query({ userId: "u1" }).set("Authorization", auth).expect(200);
     expect(decisions.body.decisions).toHaveLength(1);
 
@@ -141,7 +143,14 @@ describe("GET /api/workspaces/:name/{decisions,history,checkpoints,tasks,roadmap
     expect(tasks.body.tasks).toHaveLength(2);
 
     const roadmap = await request(app).get("/api/workspaces/ws1/roadmap").query({ userId: "u1" }).set("Authorization", auth).expect(200);
-    expect(roadmap.body.nodes).toHaveLength(2);
+    expect(roadmap.body.nodes).toHaveLength(4);
+
+    const history = await request(app).get("/api/workspaces/ws1/history").query({ userId: "u1" }).set("Authorization", auth).expect(200);
+    expect(history.body.history[0]).toMatchObject({ task_title: "저장 당시 제목", spec_title: "현재 SPEC 제목" });
+
+    await db.exec("UPDATE sugo_roadmap_nodes SET manual_title = ? WHERE id = ?", ["수정한 SPEC 제목", "spec-1"]);
+    const renamed = await request(app).get("/api/workspaces/ws1/history").query({ userId: "u1" }).set("Authorization", auth).expect(200);
+    expect(renamed.body.history[0].spec_title).toBe("수정한 SPEC 제목");
   });
 });
 

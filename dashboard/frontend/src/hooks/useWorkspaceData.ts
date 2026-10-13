@@ -49,6 +49,7 @@ export interface HistoryLog {
   id: string;
   task_id: string | null;
   task_title: string | null;
+  spec_title: string | null;
   summary: string | null;
   key_decisions?: string[] | null;
   files_changed?: string[] | null;
