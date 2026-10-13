@@ -68,6 +68,19 @@ CREATE TABLE IF NOT EXISTS sugo_history (
   PRIMARY KEY (user_id, workspace_name, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS sugo_schedule_memos (
+  id VARCHAR(191) NOT NULL,
+  user_id VARCHAR(191) NOT NULL,
+  title VARCHAR(512) NOT NULL,
+  content_md MEDIUMTEXT NOT NULL,
+  due_date DATE NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, id),
+  KEY idx_schedule_memos_due (user_id, due_date),
+  CONSTRAINT fk_schedule_memos_user FOREIGN KEY (user_id) REFERENCES sugo_users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS sugo_decisions (
   id VARCHAR(191) NOT NULL,
   user_id VARCHAR(191) NOT NULL,

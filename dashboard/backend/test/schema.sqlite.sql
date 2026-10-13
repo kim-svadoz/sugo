@@ -69,6 +69,19 @@ CREATE TABLE IF NOT EXISTS sugo_history (
   PRIMARY KEY (user_id, workspace_name, id)
 );
 
+CREATE TABLE IF NOT EXISTS sugo_schedule_memos (
+  id TEXT NOT NULL,
+  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content_md TEXT NOT NULL,
+  due_date TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_schedule_memos_due ON sugo_schedule_memos(user_id, due_date);
+
 CREATE TABLE IF NOT EXISTS sugo_decisions (
   id TEXT NOT NULL,
   user_id TEXT NOT NULL,

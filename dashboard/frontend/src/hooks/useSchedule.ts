@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthContext.js";
 import { getSchedule, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
+import { getScheduleMemos, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 
 const POLL_MS = 4000;
 
@@ -9,6 +10,7 @@ const POLL_MS = 4000;
 export function useSchedule() {
   const { userId } = useAuth();
   const [data, setData] = useState<ScheduledSpec[] | null>(null);
+  const [memos, setMemos] = useState<ScheduledMemo[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
@@ -22,9 +24,10 @@ export function useSchedule() {
     async function fetchOnce(isFirst: boolean) {
       if (isFirst) setLoading(true);
       try {
-        const specs = await getSchedule(userId!);
+        const [specs, nextMemos] = await Promise.all([getSchedule(userId!), getScheduleMemos(userId!)]);
         if (!cancelled) {
           setData(specs);
+          setMemos(nextMemos);
           setError(null);
         }
       } catch (err) {
@@ -42,5 +45,5 @@ export function useSchedule() {
     };
   }, [userId, refreshNonce]);
 
-  return { data, loading, error, refetch };
+  return { data, memos, loading, error, refetch };
 }

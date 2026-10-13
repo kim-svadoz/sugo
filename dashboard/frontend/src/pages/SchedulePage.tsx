@@ -1,6 +1,6 @@
 import { SpecDeploymentBadge } from "../components/SpecDeploymentBadge.js";
 import { useEffect, useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, Pencil, Shield, Trash2, Workflow } from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, FilePenLine, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -14,12 +14,14 @@ import { DatePicker } from "../components/DatePicker.js";
 import { SpecDocumentPanel } from "../components/SpecDocumentPanel.js";
 import { ImagePasteZone, ImageThumb, SpecAttachments } from "../components/SpecAttachments.js";
 import { BlockerDecisionPanel } from "../components/BlockerDecisionPanel.js";
+import { ScheduleMemoPanel, type ScheduleMemoDraft } from "../components/ScheduleMemoPanel.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setProject, setWorkBranch, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
+import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -51,13 +53,14 @@ function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compac
 export function SchedulePage() {
   const { userId } = useAuth();
   const { data: workspaces } = useWorkspaces();
-  const { data: specs, loading, refetch } = useSchedule();
+  const { data: specs, memos, loading, refetch } = useSchedule();
 
   const today = nowKST();
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const [selected, setSelected] = useState<ScheduledSpec | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [memoTarget, setMemoTarget] = useState<{ memo?: ScheduledMemo; initialDate?: string | null } | null>(null);
   const [addTitle, setAddTitle] = useState("");
   const [addWorkspace, setAddWorkspace] = useState("");
   const [addProjectPath, setAddProjectPath] = useState("");
@@ -115,7 +118,18 @@ export function SchedulePage() {
     return map;
   }, [specs]);
 
+  const memosByDate = useMemo(() => {
+    const map = new Map<string, ScheduledMemo[]>();
+    for (const memo of memos ?? []) {
+      if (!memo.due_date) continue;
+      map.set(memo.due_date, [...(map.get(memo.due_date) ?? []), memo]);
+    }
+    return map;
+  }, [memos]);
+
   const backlog = useMemo(() => (specs ?? []).filter((s) => !s.due_date), [specs]);
+  const memoBacklog = useMemo(() => (memos ?? []).filter((memo) => !memo.due_date), [memos]);
+  const scheduledMemos = useMemo(() => (memos ?? []).filter((memo): memo is ScheduledMemo & { due_date: string } => !!memo.due_date).sort((a, b) => a.due_date.localeCompare(b.due_date)), [memos]);
 
   // 왼쪽 패널: "기한 미정"만 보던 걸 "등록완료"(마감일이 잡힌 것)로도 전환할 수 있게 —
   // 마감일이 화면에 보이는 달을 벗어나 있으면(예: 오늘은 9월인데 마감은 10월) 달력만으론
@@ -214,7 +228,12 @@ export function SchedulePage() {
 
   function startSpecDrag(e: DragEvent<HTMLElement>, spec: ScheduledSpec) {
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData(SCHEDULE_DRAG_TYPE, encodeScheduleDrag({ workspaceName: spec.workspace_name, id: spec.id }));
+    e.dataTransfer.setData(SCHEDULE_DRAG_TYPE, encodeScheduleDrag({ kind: "spec", workspaceName: spec.workspace_name, id: spec.id }));
+  }
+
+  function startMemoDrag(e: DragEvent<HTMLElement>, memo: ScheduledMemo) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData(SCHEDULE_DRAG_TYPE, encodeScheduleDrag({ kind: "memo", id: memo.id }));
   }
 
   function dropSpec(e: DragEvent<HTMLElement>, dueDate: string | null) {
@@ -222,9 +241,36 @@ export function SchedulePage() {
     setDragOverKey(null);
     const payload = decodeScheduleDrag(e.dataTransfer.getData(SCHEDULE_DRAG_TYPE));
     if (!payload) return;
+    if (payload.kind === "memo") {
+      const memo = (memos ?? []).find((item) => item.id === payload.id);
+      if (!memo || memo.due_date === dueDate || !userId) return;
+      void setScheduleMemoDueDate(userId, memo.id, dueDate).then(refetch).catch(() => setErrorMsg("메모 날짜 저장에 실패했습니다."));
+      return;
+    }
     const spec = (specs ?? []).find((item) => item.id === payload.id && item.workspace_name === payload.workspaceName);
     if (!spec || spec.due_date === dueDate) return;
     void applyDueDate(spec, dueDate);
+  }
+
+  async function saveMemo(draft: ScheduleMemoDraft) {
+    if (!userId) return;
+    setBusy(true);
+    setErrorMsg(null);
+    try {
+      if (memoTarget?.memo) await updateScheduleMemo(userId, memoTarget.memo.id, draft);
+      else await createScheduleMemo(userId, draft);
+      setMemoTarget(null);
+      refetch();
+    } catch { setErrorMsg("메모 저장에 실패했습니다."); }
+    finally { setBusy(false); }
+  }
+
+  async function removeMemo() {
+    if (!userId || !memoTarget?.memo) return;
+    setBusy(true);
+    try { await deleteScheduleMemo(userId, memoTarget.memo.id); setMemoTarget(null); refetch(); }
+    catch { setErrorMsg("메모 삭제에 실패했습니다."); }
+    finally { setBusy(false); }
   }
 
   async function handleAddQuickSpec() {
@@ -292,12 +338,15 @@ export function SchedulePage() {
             </span>
           </h1>
         </div>
-        <button
-          onClick={() => setAddOpen(true)}
-          className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20"
-        >
-          <CalendarPlus size={15} /> SPEC 일정 추가
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setMemoTarget({})} className="flex items-center gap-1.5 rounded-lg border border-slate-500/40 bg-slate-500/10 px-3 py-1.5 text-[12.5px] font-semibold text-slate-200 transition-colors hover:bg-slate-500/20"><FilePenLine size={15} /> 메모 추가</button>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20"
+          >
+            <CalendarPlus size={15} /> SPEC 일정 추가
+          </button>
+        </div>
       </div>
 
       {errorMsg && (
@@ -337,7 +386,7 @@ export function SchedulePage() {
 
           {panelMode === "backlog" ? (
             <>
-              {backlog.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">없음. 여기 끌어다 놓으면 날짜가 풀립니다.</p>}
+              {backlog.length === 0 && memoBacklog.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">없음. 여기 끌어다 놓으면 날짜가 풀립니다.</p>}
               {backlog.map((s) => {
                 const style = scheduleCardStyle(colorOf(s.workspace_name));
                 return (
@@ -357,10 +406,11 @@ export function SchedulePage() {
                   </div>
                 );
               })}
+              {memoBacklog.map((memo) => <button key={memo.id} draggable onDragStart={(event) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} onClick={() => setMemoTarget({ memo })} className="flex min-h-9 cursor-grab items-center gap-1.5 rounded-lg border border-slate-500/30 bg-slate-500/[0.08] px-2.5 py-2 text-left text-[12px] font-medium text-slate-300 hover:bg-slate-500/15 active:cursor-grabbing" title="메모 · 캘린더 날짜 칸으로 끌어놓을 수 있습니다"><FilePenLine size={12} className="shrink-0 text-slate-500" /><span className="min-w-0 flex-1 truncate">{memo.title}</span></button>)}
             </>
           ) : (
             <>
-              {scheduledSorted.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">마감일이 지정된 SPEC이 없습니다.</p>}
+              {scheduledSorted.length === 0 && scheduledMemos.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">날짜가 지정된 항목이 없습니다.</p>}
               {scheduledSorted.map((s) => {
                 const style = scheduleCardStyle(colorOf(s.workspace_name));
                 const remaining = daysUntil(s.due_date!);
@@ -401,6 +451,7 @@ export function SchedulePage() {
                   </div>
                 );
               })}
+              {scheduledMemos.map((memo) => <button key={memo.id} draggable onDragStart={(event) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} onClick={() => { setMemoTarget({ memo }); jumpToDate(memo.due_date); }} className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border border-slate-500/30 bg-slate-500/[0.08] px-2.5 py-1.5 text-left text-[12px] font-medium text-slate-300 hover:bg-slate-500/15 active:cursor-grabbing"><span className="flex min-w-0 items-center gap-1.5"><FilePenLine size={11} className="shrink-0 text-slate-500" /><span className="truncate">{memo.title}</span></span><span className="font-mono text-[9.5px] text-slate-500">{memo.due_date}</span></button>)}
             </>
           )}
         </div>
@@ -446,6 +497,7 @@ export function SchedulePage() {
               const key = toDateKey(day);
               const inMonth = day.getMonth() === cursor.month;
               const dayChips = byDate.get(key) ?? [];
+              const dayMemos = memosByDate.get(key) ?? [];
               const isToday = key === todayKey;
               const holiday = krHolidayName(key);
               return (
@@ -496,6 +548,7 @@ export function SchedulePage() {
                         </div>
                       );
                     })}
+                    {dayMemos.map((memo) => <div key={memo.id} draggable onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-500/30 bg-slate-500/[0.09] px-2 py-0.5 text-left text-[11px] text-slate-300 hover:bg-slate-500/15 active:cursor-grabbing" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-500" /><button type="button" onClick={() => setMemoTarget({ memo })} className="min-w-0 flex-1 truncate text-left">{memo.title}</button></div>)}
                   </div>
                 </div>
               );
@@ -505,6 +558,8 @@ export function SchedulePage() {
       </div>
 
       {loading && !specs && <p className="text-center text-[12px] text-[var(--color-text-dim)]">불러오는 중…</p>}
+
+      {memoTarget && <ScheduleMemoPanel memo={memoTarget.memo} initialDate={memoTarget.initialDate} busy={busy} onSave={saveMemo} onDelete={memoTarget.memo ? removeMemo : undefined} onClose={() => setMemoTarget(null)} />}
 
       {/* Spec 상세 패널 */}
       {selected && (

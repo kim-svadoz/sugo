@@ -11,8 +11,9 @@ describe("schedule drag payload", () => {
   });
 
   it("날짜가 있는 Spec도 워크스페이스와 id를 잃지 않고 이동한다", () => {
-    const encoded = encodeScheduleDrag({ workspaceName: "checkout::service", id: "spec-23" });
-    expect(decodeScheduleDrag(encoded)).toEqual({ workspaceName: "checkout::service", id: "spec-23" });
+    const encoded = encodeScheduleDrag({ kind: "spec", workspaceName: "checkout::service", id: "spec-23" });
+    expect(decodeScheduleDrag(encoded)).toEqual({ kind: "spec", workspaceName: "checkout::service", id: "spec-23" });
+    expect(decodeScheduleDrag(encodeScheduleDrag({ kind: "memo", id: "memo-1" }))).toEqual({ kind: "memo", id: "memo-1" });
   });
 
   it("깨진 외부 drag payload는 무시한다", () => {

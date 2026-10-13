@@ -9,6 +9,7 @@ import type { DbClient } from "./db/client.js";
 import { createSyncRouter } from "./routes/sync.js";
 import { createActivityRouter } from "./routes/activity.js";
 import { createWorkspacesRouter } from "./routes/workspaces.js";
+import { createScheduleRouter } from "./routes/schedule.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createBitbucketRouter } from "./routes/bitbucket.js";
 import { createGitConnectionsRouter } from "./routes/gitConnections.js";
@@ -121,6 +122,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/sync", createSyncRouter(db, sessionSecret));
   app.use("/api/activity", createActivityRouter(db, sessionSecret));
   app.use("/api/workspaces", createWorkspacesRouter(db, sessionSecret, specAttachmentsPath));
+  app.use("/api/schedule", createScheduleRouter(db, sessionSecret));
   // 공개 SaaS(§Phase 1): GitHub OAuth 로그인 + API 토큰 관리. 기존 OIDC /api/auth보다 먼저 등록.
   app.use("/api/auth/github", createGithubAuthRouter(db, githubOAuth, config.github, sessionSecret, config.frontendUrl));
   if (localDev.enabled) app.use("/api/auth/local", createLocalAuthRouter(db, sessionSecret, frontendUrl, localDev));

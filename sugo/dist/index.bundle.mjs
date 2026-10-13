@@ -2991,7 +2991,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve11.call(this, root, ref);
+      let _sch = resolve12.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3018,7 +3018,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve11(root, ref) {
+    function resolve12(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3649,55 +3649,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve11(baseURI, relativeURI, options) {
+    function resolve12(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative7, options, skipNormalization) {
+    function resolveComponent(base, relative8, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative7 = parse3(serialize(relative7, options), options);
+        relative8 = parse3(serialize(relative8, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative7.scheme) {
-        target.scheme = relative7.scheme;
-        target.userinfo = relative7.userinfo;
-        target.host = relative7.host;
-        target.port = relative7.port;
-        target.path = removeDotSegments(relative7.path || "");
-        target.query = relative7.query;
+      if (!options.tolerant && relative8.scheme) {
+        target.scheme = relative8.scheme;
+        target.userinfo = relative8.userinfo;
+        target.host = relative8.host;
+        target.port = relative8.port;
+        target.path = removeDotSegments(relative8.path || "");
+        target.query = relative8.query;
       } else {
-        if (relative7.userinfo !== void 0 || relative7.host !== void 0 || relative7.port !== void 0) {
-          target.userinfo = relative7.userinfo;
-          target.host = relative7.host;
-          target.port = relative7.port;
-          target.path = removeDotSegments(relative7.path || "");
-          target.query = relative7.query;
+        if (relative8.userinfo !== void 0 || relative8.host !== void 0 || relative8.port !== void 0) {
+          target.userinfo = relative8.userinfo;
+          target.host = relative8.host;
+          target.port = relative8.port;
+          target.path = removeDotSegments(relative8.path || "");
+          target.query = relative8.query;
         } else {
-          if (!relative7.path) {
+          if (!relative8.path) {
             target.path = base.path;
-            if (relative7.query !== void 0) {
-              target.query = relative7.query;
+            if (relative8.query !== void 0) {
+              target.query = relative8.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative7.path[0] === "/") {
-              target.path = removeDotSegments(relative7.path);
+            if (relative8.path[0] === "/") {
+              target.path = removeDotSegments(relative8.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative7.path;
+                target.path = "/" + relative8.path;
               } else if (!base.path) {
-                target.path = relative7.path;
+                target.path = relative8.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative7.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative8.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative7.query;
+            target.query = relative8.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative7.fragment;
+      target.fragment = relative8.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3907,7 +3907,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve11,
+      resolve: resolve12,
       resolveComponent,
       equal,
       serialize,
@@ -20404,7 +20404,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve11) => setTimeout(resolve11, pollInterval));
+        await new Promise((resolve12) => setTimeout(resolve12, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -20421,7 +20421,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve11, reject) => {
+    return new Promise((resolve12, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -20499,7 +20499,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve11(parseResult.data);
+            resolve12(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -20760,12 +20760,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve11, reject) => {
+    return new Promise((resolve12, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve11, interval);
+      const timeoutId = setTimeout(resolve12, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -21865,7 +21865,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve11) => setTimeout(resolve11, pollInterval));
+      await new Promise((resolve12) => setTimeout(resolve12, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -22514,12 +22514,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve11) => {
+    return new Promise((resolve12) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve11();
+        resolve12();
       } else {
-        this._stdout.once("drain", resolve11);
+        this._stdout.once("drain", resolve12);
       }
     });
   }
@@ -27628,8 +27628,8 @@ function writeFlowMapping(state, level, node) {
     if (explicitPair) pairBuffer += "? ";
     else if (state.quoteFlowKeys) pairBuffer += '"';
     const valueText = writeNode(state, level, value, {});
-    const sep3 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
-    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep3}${valueText}`;
+    const sep4 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
+    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep4}${valueText}`;
     result2 += pairBuffer;
   }
   const pad = state.flowBracketPadding && result2 !== "" ? " " : "";
@@ -27726,8 +27726,8 @@ function writeNode(state, level, node, ctx) {
       if (anchor !== null) props.push(anchor);
       if (tag !== null) props.push(tag);
     }
-    const sep3 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
-    body2 = `${props.join(" ")}${sep3}${body2}`;
+    const sep4 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
+    body2 = `${props.join(" ")}${sep4}${body2}`;
   }
   return body2;
 }
@@ -27772,8 +27772,8 @@ function present(documents, options) {
         block: true,
         compact: true
       });
-      const sep3 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
-      result2 += `---${sep3}${body2}
+      const sep4 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
+      result2 += `---${sep4}${body2}
 `;
     } else result2 += writeNode(state, 0, doc.contents, {
       block: true,
@@ -28164,7 +28164,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.28.0" : "0.0.0-dev";
+  return true ? "0.29.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -33904,6 +33904,58 @@ function errorResult18(errorCode, message) {
   };
 }
 
+// src/work/gitHistory.ts
+import { execFile as execFile4 } from "node:child_process";
+import { mkdir as mkdir19, realpath } from "node:fs/promises";
+import { isAbsolute as isAbsolute8, join as join29, relative as relative7, resolve as resolve11, sep as sep3 } from "node:path";
+import { promisify as promisify4 } from "node:util";
+var execFileAsync3 = promisify4(execFile4);
+async function git2(cwd, args2) {
+  try {
+    return (await execFileAsync3("git", args2, { cwd, encoding: "utf8", maxBuffer: 2e7 })).stdout.trim();
+  } catch {
+    return "";
+  }
+}
+async function repositoryScopes(projects) {
+  const byRoot = /* @__PURE__ */ new Map();
+  for (const project of projects) {
+    const root = await git2(project, ["rev-parse", "--show-toplevel"]);
+    if (!root) continue;
+    const [canonicalRoot, canonicalProject] = await Promise.all([realpath(resolve11(root)), realpath(resolve11(project))]);
+    const rel = relative7(canonicalRoot, canonicalProject);
+    if (isAbsolute8(rel) || rel === ".." || rel.startsWith(`..${sep3}`)) continue;
+    const paths = byRoot.get(root) ?? /* @__PURE__ */ new Set();
+    paths.add(rel ? rel.split(sep3).join("/") : ".");
+    byRoot.set(canonicalRoot, paths);
+  }
+  return [...byRoot].map(([root, paths]) => ({ root, paths: [...paths] }));
+}
+async function backfillWorkspaceGitHistory(workspace) {
+  const logs = [];
+  for (const scope of await repositoryScopes(workspace.projects)) {
+    const lines = (await git2(scope.root, ["log", `--since=${workspace.created_at}`, "--format=%H%x09%cI%x09%s", "--", ...scope.paths])).split("\n").filter(Boolean);
+    for (const line of lines) {
+      const [sha, completedAt, ...subjectParts] = line.split("	");
+      if (!/^[0-9a-f]{40}$/i.test(sha) || !completedAt) continue;
+      const files = (await git2(scope.root, ["diff-tree", "--root", "--no-commit-id", "--name-only", "-r", sha, "--", ...scope.paths])).split("\n").filter(Boolean);
+      logs.push({
+        id: `git-${sha}`,
+        task_id: `git:${sha.slice(0, 12)}`,
+        task_title: subjectParts.join("	") || sha.slice(0, 12),
+        completed_at: completedAt,
+        summary: "Sugo \uD30C\uC774\uD504\uB77C\uC778 \uC678\uBD80\uC5D0\uC11C \uC218\uD589\uD55C Git \uC800\uC7A5\uC18C \uC774\uB825\uC785\uB2C8\uB2E4.",
+        files_changed: files,
+        commits: [sha]
+      });
+    }
+  }
+  const unique = [...new Map(logs.map((log) => [log.id, log])).values()];
+  await mkdir19(historyDir(workspace.name), { recursive: true });
+  await Promise.all(unique.map((log) => atomicWriteFile(join29(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
+  return unique;
+}
+
 // src/tools/sugoWorkspace.ts
 var sugoWorkspaceInputSchema = {
   action: external_exports.enum(["add", "list", "get", "remember", "recall", "status", "sync", "delete"]),
@@ -33999,12 +34051,19 @@ async function handleSugoWorkspace(rawArgs) {
     case "sync": {
       if (!args2.name) return errorResult19("NAME_REQUIRED", "sync action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const ws = await loadWorkspace(args2.name);
-      if (ws) void syncWorkspace(ws);
+      if (ws) await syncWorkspace(ws);
+      const importedGitHistory = ws ? await backfillWorkspaceGitHistory(ws) : [];
       const tasks = await listTasks(args2.name);
-      for (const task of tasks) void syncTask(args2.name, task);
+      for (const task of tasks) await syncTask(args2.name, task);
+      const checkpoints = await listCheckpoints(args2.name);
+      for (const checkpoint of checkpoints) await syncCheckpoint(args2.name, checkpoint);
+      const specs = await listSpecs(args2.name);
+      for (const spec of specs) await syncDecision(args2.name, spec);
+      const history = await listWorkLogs(args2.name);
+      for (const log of history) await syncHistory(args2.name, log);
       await reconcileRoadmapWithTasks(args2.name, tasks);
       const nodes = await listRoadmapNodes(args2.name);
-      void syncRoadmapSnapshot(args2.name, nodes);
+      await syncRoadmapSnapshot(args2.name, nodes);
       await drainRetryQueue();
       const config2 = await resolveDashboardConfig();
       if (!config2.enabled) {
@@ -34016,7 +34075,16 @@ async function handleSugoWorkspace(rawArgs) {
           note: "\uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC124\uC815\uB418\uC9C0 \uC54A\uC544 \uC804\uC1A1\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uB85C\uCEEC \uB370\uC774\uD130\uB294 \uADF8\uB300\uB85C \uB0A8\uC544 \uC788\uC2B5\uB2C8\uB2E4."
         });
       }
-      return ok7({ synced: true, dashboard: "enabled", taskCount: tasks.length, roadmapNodeCount: nodes.length });
+      return ok7({
+        synced: true,
+        dashboard: "enabled",
+        taskCount: tasks.length,
+        roadmapNodeCount: nodes.length,
+        checkpointCount: checkpoints.length,
+        decisionCount: specs.length,
+        historyCount: history.length,
+        importedGitHistoryCount: importedGitHistory.length
+      });
     }
   }
 }

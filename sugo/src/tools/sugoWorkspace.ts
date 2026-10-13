@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { drainRetryQueue } from "../dashboard/client.js";
 import { resolveDashboardConfig } from "../dashboard/config.js";
-import { syncRoadmapSnapshot, syncTask, syncWorkspace } from "../dashboard/sync.js";
+import { syncCheckpoint, syncDecision, syncHistory, syncRoadmapSnapshot, syncTask, syncWorkspace } from "../dashboard/sync.js";
 import { listCheckpoints } from "../hulk/checkpoint.js";
 import { listWorkLogs } from "../hulk/history.js";
 import { appendMemory, readMemory } from "../hulk/memory.js";
@@ -11,6 +11,7 @@ import { listTasks } from "../hulk/task.js";
 import { deleteWorkspace, ensureWorkspace, listWorkspaces, loadWorkspace } from "../hulk/workspace.js";
 import { loadAllSessions } from "../session.js";
 import { sessionsForProjects } from "../work/sessionSummary.js";
+import { backfillWorkspaceGitHistory } from "../work/gitHistory.js";
 
 /**
  * §1/§9 `sugo_workspace`. 워크스페이스에 대한 조작은 전부 여기 모은다 — `status`(데이터 요약)와
@@ -122,12 +123,19 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
     case "sync": {
       if (!args.name) return errorResult("NAME_REQUIRED", "sync action에는 name이 필요합니다.");
       const ws = await loadWorkspace(args.name);
-      if (ws) void syncWorkspace(ws);
+      if (ws) await syncWorkspace(ws);
+      const importedGitHistory = ws ? await backfillWorkspaceGitHistory(ws) : [];
       const tasks = await listTasks(args.name);
-      for (const task of tasks) void syncTask(args.name, task);
+      for (const task of tasks) await syncTask(args.name, task);
+      const checkpoints = await listCheckpoints(args.name);
+      for (const checkpoint of checkpoints) await syncCheckpoint(args.name, checkpoint);
+      const specs = await listSpecs(args.name);
+      for (const spec of specs) await syncDecision(args.name, spec);
+      const history = await listWorkLogs(args.name);
+      for (const log of history) await syncHistory(args.name, log);
       await reconcileRoadmapWithTasks(args.name, tasks);
       const nodes = await listRoadmapNodes(args.name);
-      void syncRoadmapSnapshot(args.name, nodes);
+      await syncRoadmapSnapshot(args.name, nodes);
       // push는 fire-and-forget이라 여기서 큐를 한 바퀴 돌려야 "수동 재sync"가 실제로 나간다.
       await drainRetryQueue();
       // 대시보드 미설정이면 위 push들은 전부 조용한 no-op이다 — `synced: true`는 거짓 보고가
@@ -142,7 +150,11 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
           note: "대시보드가 설정되지 않아 전송하지 않았습니다. 로컬 데이터는 그대로 남아 있습니다.",
         });
       }
-      return ok({ synced: true, dashboard: "enabled", taskCount: tasks.length, roadmapNodeCount: nodes.length });
+      return ok({
+        synced: true, dashboard: "enabled", taskCount: tasks.length, roadmapNodeCount: nodes.length,
+        checkpointCount: checkpoints.length, decisionCount: specs.length, historyCount: history.length,
+        importedGitHistoryCount: importedGitHistory.length,
+      });
     }
   }
 }
