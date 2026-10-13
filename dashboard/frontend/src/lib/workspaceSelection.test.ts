@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { WORKSPACE_CARD_FOCUS_CLASSES, workspaceCardEmphasis, workspaceCardShadow } from "./workspaceSelection.js";
+import { WORKSPACE_CARD_FOCUS_CLASSES, WORKSPACE_COLORS, workspaceCardEmphasis, workspaceCardShadow } from "./workspaceSelection.js";
 
 describe("workspace selection chrome", () => {
+  it("인접 워크스페이스는 서로 다른 색상군을 쓰고 전역 인터랙션 cyan을 침범하지 않는다", () => {
+    expect(WORKSPACE_COLORS.slice(0, 4)).toEqual(["#fb7185", "#a78bfa", "#fbbf24", "#34d399"]);
+    expect(WORKSPACE_COLORS).not.toContain("#22d3ee");
+  });
+
   it("선택해도 도메인 고유 왼쪽 색을 보존하되 잘리는 바깥 링은 만들지 않는다", () => {
     const style = workspaceCardShadow("#fb923c", true);
     expect(style).toContain("inset 3px 0 0 #fb923c");

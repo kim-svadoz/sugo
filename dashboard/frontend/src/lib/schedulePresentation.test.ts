@@ -24,10 +24,12 @@ describe("schedule presentation", () => {
     expect(visibleRegisteredSpecs(specs, "2026-10-07")).toEqual(specs.slice(1, 4));
   });
 
-  it("워크스페이스 색은 왼쪽 레일과 옅은 배경에만 쓰고 글자색은 지정하지 않는다", () => {
+  it("워크스페이스 색은 굵은 레일과 충분한 대비의 그라데이션 표면으로 구분한다", () => {
     const style = scheduleCardStyle("#fb923c");
     expect(style.borderLeftColor).toBe("#fb923c");
-    expect(style.backgroundColor).toBe("#fb923c14");
+    expect(style.borderLeftWidth).toBe(4);
+    expect(style.background).toContain("#fb923c2E");
+    expect(style.boxShadow).toContain("#fb923c33");
     expect(style).not.toHaveProperty("color");
   });
 
