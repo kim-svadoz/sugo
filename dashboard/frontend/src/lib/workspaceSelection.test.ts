@@ -3,7 +3,7 @@ import { WORKSPACE_CARD_FOCUS_CLASSES, WORKSPACE_COLORS, workspaceCardEmphasis, 
 
 describe("workspace selection chrome", () => {
   it("인접 워크스페이스는 서로 다른 색상군을 쓰고 전역 인터랙션 cyan을 침범하지 않는다", () => {
-    expect(WORKSPACE_COLORS.slice(0, 4)).toEqual(["#fb7185", "#a78bfa", "#fbbf24", "#34d399"]);
+    expect(WORKSPACE_COLORS.slice(0, 4)).toEqual(["#fb7185", "#fbbf24", "#a78bfa", "#34d399"]);
     expect(WORKSPACE_COLORS).not.toContain("#22d3ee");
   });
 

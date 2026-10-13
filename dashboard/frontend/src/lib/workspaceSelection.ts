@@ -9,7 +9,7 @@ export const WORKSPACE_CARD_FOCUS_CLASSES =
  * 워크스페이스 색이 화면마다 따로 계산되면 안 된다).
  */
 export const WORKSPACE_COLORS = [
-  "#fb7185", "#a78bfa", "#fbbf24", "#34d399", "#f97316",
+  "#fb7185", "#fbbf24", "#a78bfa", "#34d399", "#f97316",
   "#f472b6", "#a3e635", "#818cf8", "#ef4444", "#c084fc",
 ];
 export function getWorkspaceColor(_name: string, index: number): string {
