@@ -503,6 +503,7 @@ export function SchedulePage() {
               return (
                 <div
                   key={key}
+                  onDoubleClick={() => dayChips.length === 0 && dayMemos.length === 0 && setMemoTarget({ initialDate: key })}
                   onDragOver={(e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = "move";

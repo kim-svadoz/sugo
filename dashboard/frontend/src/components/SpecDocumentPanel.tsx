@@ -4,18 +4,20 @@ import { Check, Eye, FileText, LockKeyhole, Pencil, Save } from "lucide-react";
 import { getSpecDocument, specDocumentAssetBlobUrl, updateSpecDocument } from "../api/roadmapMutationsApi.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { Modal } from "./Modal.js";
+import { MarkdownTextarea } from "./MarkdownTextarea.js";
+import { markdownForPreview } from "../lib/markdownEditing.js";
 
 const isRelativeAsset = (src: string) => !!src && !/^([a-z][a-z0-9+.-]*:|\/\/|\/|#)/i.test(src);
 
 /** spec.md 옆 이미지(예: images/01.png)는 인증 API로만 읽을 수 있어 blob URL로 바꿔 끼운다. */
 function relativeImageSources(markdown: string): string[] {
-  const html = marked.parse(markdown, { async: false }) as string;
+  const html = marked.parse(markdownForPreview(markdown), { async: false }) as string;
   const doc = new DOMParser().parseFromString(html, "text/html");
   return [...new Set(Array.from(doc.querySelectorAll("img")).map((img) => img.getAttribute("src") ?? "").filter(isRelativeAsset))];
 }
 
 function safeMarkdown(markdown: string, assets: Record<string, string>): string {
-  const html = marked.parse(markdown, { async: false }) as string;
+  const html = marked.parse(markdownForPreview(markdown), { async: false }) as string;
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc.querySelectorAll("img").forEach((img) => {
     const src = img.getAttribute("src") ?? "";
@@ -137,7 +139,7 @@ export function SpecDocumentPanel({
           <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[12px] text-rose-300">{error}</div>
         ) : mode === "edit" && !locked ? (
           <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-2">
-            <textarea autoFocus value={draft} onChange={(event) => setDraft(event.target.value)} className="ck-scroll min-h-[55vh] resize-none rounded-xl border border-violet-500/30 bg-[#070b12] p-4 font-mono text-[12.5px] leading-6 text-slate-200 outline-none focus:border-violet-400/60" />
+            <MarkdownTextarea autoFocus value={draft} onValueChange={setDraft} placeholder="Markdown 문법으로 작성하세요." className="ck-scroll min-h-[55vh] resize-none rounded-xl border border-violet-500/30 bg-[#070b12] p-4 font-mono text-[12.5px] leading-6 text-slate-200 outline-none focus:border-violet-400/60" />
             <article className="md-body ck-scroll min-h-[55vh] overflow-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] p-5" dangerouslySetInnerHTML={{ __html: rendered }} />
           </div>
         ) : (
