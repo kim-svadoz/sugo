@@ -477,10 +477,10 @@ export function SchedulePage() {
                     setMemoTarget({ memo });
                     if (memo.due_date) jumpToDate(memo.due_date);
                   }}
-                  className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border border-slate-500/30 bg-slate-500/[0.08] px-2.5 py-1.5 text-left text-[12px] font-medium text-slate-300 hover:bg-slate-500/15 active:cursor-grabbing"
+                  className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border border-slate-400/45 bg-slate-400/[0.14] px-2.5 py-1.5 text-left text-[12px] font-medium text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing"
                 >
-                  <span className="flex min-w-0 items-center gap-1.5"><FilePenLine size={11} className="shrink-0 text-slate-500" /><span className="truncate">{memo.title}</span></span>
-                  <span className="font-mono text-[9.5px] text-slate-500">{memo.due_date ?? "기한 미정"}</span>
+                  <span className="flex min-w-0 items-center gap-1.5"><FilePenLine size={11} className="shrink-0 text-slate-300" /><span className="truncate">{memo.title}</span></span>
+                  <span className="font-mono text-[9.5px] text-slate-400">{memo.due_date ?? "기한 미정"}</span>
                 </button>
               ))}
             </>
@@ -580,7 +580,7 @@ export function SchedulePage() {
                         </div>
                       );
                     })}
-                    {dayMemos.map((memo) => <div key={memo.id} draggable onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-500/30 bg-slate-500/[0.09] px-2 py-0.5 text-left text-[11px] text-slate-300 hover:bg-slate-500/15 active:cursor-grabbing" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-500" /><button type="button" onClick={() => setMemoTarget({ memo })} className="min-w-0 flex-1 truncate text-left">{memo.title}</button></div>)}
+                    {dayMemos.map((memo) => <div key={memo.id} draggable onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300" /><button type="button" onClick={() => setMemoTarget({ memo })} className="min-w-0 flex-1 truncate text-left">{memo.title}</button></div>)}
                   </div>
                 </div>
               );

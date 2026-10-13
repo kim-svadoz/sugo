@@ -86,6 +86,14 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("memoBacklog.map");
   });
 
+  it("메모 카드는 어두운 캔버스에서도 읽히는 불투명도와 명도 대비를 쓴다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain("border-slate-400/45 bg-slate-400/[0.14]");
+    expect(source).toContain("text-slate-100");
+    expect(source).not.toContain("border-slate-500/30 bg-slate-500/[0.08]");
+    expect(source).not.toContain("border-slate-500/30 bg-slate-500/[0.09]");
+  });
+
   it("대시보드 수동 SPEC 상세에는 파일 보존을 알리는 2단계 삭제 UI가 있다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain('selected.id.startsWith("spec-manual-")');
