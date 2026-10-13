@@ -13,6 +13,7 @@ import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrife
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 import { handleSugoRoadmap } from "../src/tools/sugoRoadmap.js";
 import { handleSugoAnalyze } from "../src/tools/sugoAnalyze.js";
+import { loadSession, saveSession } from "../src/session.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -116,6 +117,15 @@ describe("commit → prRefs 수집 + WorkLog에 실림", () => {
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
     await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
+    const session = await loadSession(sessionId);
+    session.data.reviewConfirmation = {
+      workspace: session.data.hulkWorkspace!,
+      taskId: session.data.hulkTaskId!,
+      requestedAt: new Date().toISOString(),
+      decision: "approve",
+      answeredAt: new Date().toISOString(),
+    };
+    await saveSession(session);
     const reviewDone = await call(handleSugoPlan, {
       action: "review_done",
       sessionId,

@@ -61,6 +61,44 @@ async function toReadyAndBeyond(prd: string): Promise<{ sessionId: string; taskI
   return { sessionId, taskId };
 }
 
+async function approveDashboardReview(sessionId: string, taskId: string): Promise<void> {
+  const requested = await call(handleSugoRoadmap, {
+    action: "request_review_confirmation",
+    workspace: "team-a",
+    id: taskId,
+    sessionId,
+    reviewPacket: {
+      summary: "로그인 구현과 검증을 마쳤습니다.",
+      changes: ["이메일 로그인 추가"],
+      tests: ["npm test 통과"],
+      designDecisions: ["기존 인증 흐름 재사용"],
+      knownLimitations: [],
+    },
+  });
+  expect(requested.isError).toBe(false);
+  const dashboard = createServer((_req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({
+      status: "blocked",
+      blocker: { sessionId, resumeAction: "review_done" },
+      decision: { response: "확인, 진행", answered_by: "tester", answered_at: "2026-10-01T00:00:00.000Z" },
+    }));
+  });
+  await new Promise<void>((resolve) => dashboard.listen(0, "127.0.0.1", resolve));
+  try {
+    const address = dashboard.address();
+    if (!address || typeof address === "string") throw new Error("test dashboard address unavailable");
+    process.env.SUGO_DASHBOARD_API_URL = `http://127.0.0.1:${address.port}`;
+    process.env.SUGO_DASHBOARD_USER_ID = "tester";
+    const resumed = await call(handleSugoRoadmap, { action: "resume_with_decision", workspace: "team-a", id: taskId, sessionId });
+    expect(resumed.isError).toBe(false);
+  } finally {
+    delete process.env.SUGO_DASHBOARD_API_URL;
+    delete process.env.SUGO_DASHBOARD_USER_ID;
+    await new Promise<void>((resolve, reject) => dashboard.close((error) => error ? reject(error) : resolve()));
+  }
+}
+
 describe("§8.5 Roadmap DAG — sugo_plan(prd) 자동 REQ 승격", () => {
   it("### 헤딩 PRD가 있으면 REQ 노드 + REQ-CONFIRM이 자동으로 심긴다", async () => {
     await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a" });
@@ -123,7 +161,7 @@ describe("§8.5 sugo_roadmap ready/get/mark_req", () => {
 
 describe("§8.5 review_done → REQ/REQ-CONFIRM 자동완료", () => {
   it("review_done이 성공하면 해당 task의 모든 REQ와 REQ-CONFIRM이 done으로 롤다운된다", async () => {
-    const { sessionId } = await toReadyAndBeyond(HEADING_PRD);
+    const { sessionId, taskId } = await toReadyAndBeyond(HEADING_PRD);
     await call(handleSugoPlan, { action: "code_start", sessionId });
     await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
     await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
@@ -133,6 +171,7 @@ describe("§8.5 review_done → REQ/REQ-CONFIRM 자동완료", () => {
     await call(handleSugoPlan, { action: "review_start", sessionId });
     await call(handleSugoValidate, { sessionId: sessionId, validationResults: [] }); // VALIDATE_NOT_CALLED 게이트 충족용
     await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
+    await approveDashboardReview(sessionId, taskId);
 
     const reviewDone = await call(handleSugoPlan, {
       action: "review_done",
@@ -164,6 +203,30 @@ describe("§8.5 sugo_roadmap — link/unlink/group/backfill (task 레벨 관리)
     await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
     await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     await call(handleSugoPlan, { action: "review_start", sessionId });
+
+    const reachableDashboard = createServer((_req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ status: "in_progress", blocker: null, decision: null }));
+    });
+    await new Promise<void>((resolve) => reachableDashboard.listen(0, "127.0.0.1", resolve));
+    try {
+      const address = reachableDashboard.address();
+      if (!address || typeof address === "string") throw new Error("test dashboard address unavailable");
+      process.env.SUGO_DASHBOARD_API_URL = `http://127.0.0.1:${address.port}`;
+      process.env.SUGO_DASHBOARD_USER_ID = "tester";
+      const skippedDashboardReview = await call(handleSugoPlan, {
+        action: "review_done",
+        sessionId,
+        userConfirmed: true,
+        summary: GOOD_SUMMARY,
+        runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true },
+      });
+      expect(skippedDashboardReview.data.errorCode).toBe("REVIEW_CONFIRMATION_REQUIRED");
+    } finally {
+      delete process.env.SUGO_DASHBOARD_API_URL;
+      delete process.env.SUGO_DASHBOARD_USER_ID;
+      await new Promise<void>((resolve, reject) => reachableDashboard.close((error) => error ? reject(error) : resolve()));
+    }
 
     const requested = await call(handleSugoRoadmap, {
       action: "request_review_confirmation",

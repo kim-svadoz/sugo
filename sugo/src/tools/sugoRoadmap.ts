@@ -172,6 +172,11 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       const result = await blockRoadmapNodeForHuman(args.workspace, args.id, blocker);
       if (!result.ok) return errorResult(result.error!, result.message!);
       session.data.humanDecisionGate = { workspace: args.workspace, taskId: args.id, blocker };
+      session.data.reviewConfirmation = {
+        workspace: args.workspace,
+        taskId: args.id,
+        requestedAt: new Date().toISOString(),
+      };
       await saveSession(session);
       await updateRoadmapNodeRuntimeAssessment(args.workspace, args.id, assessSession(session));
       return ok({ awaitingHumanDecision: true, node: await getRoadmapNode(args.workspace, args.id) });
@@ -220,6 +225,16 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       const result = await resumeRoadmapNodeWithDecision(args.workspace, args.id, args.sessionId, remote.decision.response);
       if (!result.ok) return errorResult(result.error!, result.message!);
       session.data.humanDecisionGate = undefined;
+      if (gate.blocker.kind === "review_confirmation") {
+        const approvalLabel = gate.blocker.options.find((option) => option.id === "approve")?.label;
+        session.data.reviewConfirmation = {
+          workspace: args.workspace,
+          taskId: args.id,
+          requestedAt: session.data.reviewConfirmation?.requestedAt ?? gate.blocker.createdAt,
+          decision: remote.decision.response === approvalLabel ? "approve" : "revise",
+          answeredAt: remote.decision.answered_at,
+        };
+      }
       session.data.commitContext = {
         ...(typeof session.data.commitContext === "object" && session.data.commitContext !== null ? session.data.commitContext : {}),
         lastHumanDecision: remote.decision,

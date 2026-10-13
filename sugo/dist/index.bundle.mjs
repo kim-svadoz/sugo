@@ -28164,7 +28164,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.29.1" : "0.0.0-dev";
+  return true ? "0.29.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -31362,6 +31362,25 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "review_done" && existing) {
+    const dashboard = await resolveDashboardConfig();
+    if (dashboard.enabled && existing.data.hulkWorkspace && existing.data.hulkTaskId) {
+      const remoteTask = await fetchBlockerDecision(existing.data.hulkWorkspace, existing.data.hulkTaskId);
+      if (remoteTask) {
+        const confirmation = existing.data.reviewConfirmation;
+        if (!confirmation || confirmation.workspace !== existing.data.hulkWorkspace || confirmation.taskId !== existing.data.hulkTaskId) {
+          return errorResult9(
+            "REVIEW_CONFIRMATION_REQUIRED",
+            `review_done \uC804\uC5D0 sugo_roadmap(action:"request_review_confirmation", workspace:"${existing.data.hulkWorkspace}", id:"${existing.data.hulkTaskId}", sessionId:"${existing.id}", reviewPacket:...)\uC73C\uB85C \uC791\uC5C5 \uC694\uC57D\uACFC \uCF54\uB4DC diff\uB97C Dashboard\uC5D0 \uAC8C\uC2DC\uD574\uC57C \uD569\uB2C8\uB2E4.`
+          );
+        }
+        if (confirmation.decision !== "approve") {
+          return errorResult9(
+            "REVIEW_CONFIRMATION_APPROVAL_REQUIRED",
+            "Dashboard\uC5D0\uC11C \uC791\uC5C5 \uC694\uC57D\uACFC \uCF54\uB4DC diff\uB97C \uD655\uC778\uD558\uACE0 '\uD655\uC778, \uC9C4\uD589'\uC744 \uC800\uC7A5\uD55C \uB4A4 resume_with_decision\uC73C\uB85C \uC7AC\uAC1C\uD574\uC57C \uD569\uB2C8\uB2E4."
+          );
+        }
+      }
+    }
     const validateCalledResult = checkValidateCalledGate(existing.data.chainInfo.lastValidation);
     if (!validateCalledResult.ok) return errorResult9(validateCalledResult.code, validateCalledResult.message);
     const validateVerifiedResult = checkValidateVerifiedGate(existing.data.chainInfo.lastValidation);
@@ -32437,6 +32456,11 @@ async function handleSugoRoadmap(rawArgs) {
       const result2 = await blockRoadmapNodeForHuman(args2.workspace, args2.id, blocker);
       if (!result2.ok) return errorResult13(result2.error, result2.message);
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };
+      session.data.reviewConfirmation = {
+        workspace: args2.workspace,
+        taskId: args2.id,
+        requestedAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
       await saveSession(session);
       await updateRoadmapNodeRuntimeAssessment(args2.workspace, args2.id, assessSession(session));
       return ok4({ awaitingHumanDecision: true, node: await getRoadmapNode(args2.workspace, args2.id) });
@@ -32485,6 +32509,16 @@ async function handleSugoRoadmap(rawArgs) {
       const result2 = await resumeRoadmapNodeWithDecision(args2.workspace, args2.id, args2.sessionId, remote.decision.response);
       if (!result2.ok) return errorResult13(result2.error, result2.message);
       session.data.humanDecisionGate = void 0;
+      if (gate.blocker.kind === "review_confirmation") {
+        const approvalLabel = gate.blocker.options.find((option) => option.id === "approve")?.label;
+        session.data.reviewConfirmation = {
+          workspace: args2.workspace,
+          taskId: args2.id,
+          requestedAt: session.data.reviewConfirmation?.requestedAt ?? gate.blocker.createdAt,
+          decision: remote.decision.response === approvalLabel ? "approve" : "revise",
+          answeredAt: remote.decision.answered_at
+        };
+      }
       session.data.commitContext = {
         ...typeof session.data.commitContext === "object" && session.data.commitContext !== null ? session.data.commitContext : {},
         lastHumanDecision: remote.decision

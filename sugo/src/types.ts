@@ -152,6 +152,13 @@ export interface SessionData {
       answeredBy?: string;
     };
   };
+  reviewConfirmation?: {
+    workspace: string;
+    taskId: string;
+    requestedAt: string;
+    decision?: "approve" | "revise";
+    answeredAt?: string;
+  };
   /** Dashboard에서 먼저 만든 SPEC 초안에 이번 feat를 연결할지 사용자가 고른 결과. */
   specDraftSelection?: {
     candidates: UnlinkedSpecDraft[];

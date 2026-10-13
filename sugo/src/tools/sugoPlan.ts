@@ -8,7 +8,8 @@ import { writePatchPrdFile, writePatchWorkResultFile, writePrdFile, writeWorkRes
 import { checkCoverageGate } from "../consistency.js";
 import { checkContractEvidenceGate, checkContractStartedGate, resolveContractRequired } from "../contractEvidence.js";
 import { activityForPlanTransition, emitActivity } from "../dashboard/activity.js";
-import { fetchCalibratedRatio, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
+import { resolveDashboardConfig } from "../dashboard/config.js";
+import { fetchBlockerDecision, fetchCalibratedRatio, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
 import { snapshotWorkResultFiles } from "../dashboard/workResultFiles.js";
 import { collectPrRefs } from "../prRefs.js";
 import { validateIntegration, validateManifest, type DecomposeManifest } from "../decompose.js";
@@ -455,6 +456,25 @@ export async function handleSugoPlan(rawArgs: unknown) {
   }
 
   if (action === "review_done" && existing) {
+    const dashboard = await resolveDashboardConfig();
+    if (dashboard.enabled && existing.data.hulkWorkspace && existing.data.hulkTaskId) {
+      const remoteTask = await fetchBlockerDecision(existing.data.hulkWorkspace, existing.data.hulkTaskId);
+      if (remoteTask) {
+        const confirmation = existing.data.reviewConfirmation;
+        if (!confirmation || confirmation.workspace !== existing.data.hulkWorkspace || confirmation.taskId !== existing.data.hulkTaskId) {
+          return errorResult(
+            "REVIEW_CONFIRMATION_REQUIRED",
+            `review_done 전에 sugo_roadmap(action:"request_review_confirmation", workspace:"${existing.data.hulkWorkspace}", id:"${existing.data.hulkTaskId}", sessionId:"${existing.id}", reviewPacket:...)으로 작업 요약과 코드 diff를 Dashboard에 게시해야 합니다.`,
+          );
+        }
+        if (confirmation.decision !== "approve") {
+          return errorResult(
+            "REVIEW_CONFIRMATION_APPROVAL_REQUIRED",
+            "Dashboard에서 작업 요약과 코드 diff를 확인하고 '확인, 진행'을 저장한 뒤 resume_with_decision으로 재개해야 합니다.",
+          );
+        }
+      }
+    }
     // ── sugo_validate 호출강제 + 실측 우선(§4.3 확장). 서버가 auto로 직접 확인한 실패만 막는다 —
     // 91%는 여전히 자기보고라 verdict 전체로 막으면 "확인 안 함"과 "확인했더니 틀렸다"를 못 구분한다.
     const validateCalledResult = checkValidateCalledGate(existing.data.chainInfo.lastValidation);

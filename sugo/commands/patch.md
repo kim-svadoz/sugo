@@ -16,6 +16,9 @@ argument-hint: <work-result.md 경로> [seed 지시]
    - patch는 원본 Run을 재사용하고 `patchInfo`(parentTaskId, patchVersion, seed)를 기록한다.
    - seed(사용자 지시)는 work-result에 "## 사용자 지시(seed)"로 실린다.
    - 계보(lineage)가 대시보드로 전파된다(§7.2).
+   - review-agent가 근거를 반환하면 Claude 자체 선택창으로 확인을 묻지 않는다. 반드시
+     `request_review_confirmation`으로 작업 요약과 변경 코드 아티팩트를 Dashboard에 먼저 게시한다.
+     Dashboard의 `확인, 진행` 결정을 `resume_with_decision`으로 확인하기 전에는 `review_done`을 호출하지 않는다.
 3. 이번 차수는 변경점만 담은 하위 PRD로 좁힌다. 커밋타입·버전은 자동 판단.
 
 ## 규율
