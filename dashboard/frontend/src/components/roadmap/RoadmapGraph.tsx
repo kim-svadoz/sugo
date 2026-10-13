@@ -1656,6 +1656,7 @@ export function RoadmapGraph({
               </p>
             </div>
           )}
+          {fileViewer && !fileViewer.expanded && <div aria-hidden className="h-[max(43%,260px)] shrink-0" />}
         </div>
       )}
 

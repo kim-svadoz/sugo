@@ -122,13 +122,20 @@ describe("patch lineage canvas model", () => {
       lineage: [
         { version: 0, requirements: [{ id: "feat", title: "최초 기능", status: "done" }], workResult: { report: {} } },
         { version: 1, requirements: [{ id: "feat", title: "최초 기능", status: "done" }], workResult: { report: { requirements: [{ id: "patch", title: "충돌 해결", status: "done" }] } } },
-        { version: 2, requirements: [{ id: "feat", title: "최초 기능", status: "done" }], workResult: { report: { requirements: [] } } },
+        {
+          version: 2,
+          requirements: [{ id: "feat", title: "최초 기능", status: "done" }],
+          seed: "develop 병합 충돌을 해결하고 모듈 번호를 정리한다.",
+          workResult: { seed: "develop 병합 충돌을 해결하고 모듈 번호를 정리한다.", report: { requirements: [] } },
+        },
       ],
     });
     const [chain] = buildLineageChains([task]);
     expect(lineageSelection(chain.columns[0][0]).reqs.map((req) => req.title)).toEqual(["최초 기능"]);
     expect(lineageSelection(chain.columns[0][1]).reqs.map((req) => req.title)).toEqual(["충돌 해결"]);
-    expect(lineageSelection(chain.columns[0][2]).reqs).toEqual([]);
+    expect(lineageSelection(chain.columns[0][2]).reqs.map((req) => req.title)).toEqual([
+      "develop 병합 충돌을 해결하고 모듈 번호를 정리한다.",
+    ]);
   });
 
   it("취소한 최신 patch만 폐기로 남기고 이전 완료 차수는 완료로 유지한다", () => {

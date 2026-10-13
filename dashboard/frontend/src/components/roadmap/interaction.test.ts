@@ -26,4 +26,9 @@ describe("canvas selection interaction", () => {
     expect(source).toContain("<SpecDocumentPanel");
     expect(source).not.toContain("getSpecContent");
   });
+
+  it("하단 파일 뷰어가 Inspector를 덮어도 변경 파일 목록 끝까지 스크롤할 여백을 둔다", () => {
+    const source = readFileSync(new URL("./RoadmapGraph.tsx", import.meta.url), "utf8");
+    expect(source).toContain('fileViewer && !fileViewer.expanded && <div aria-hidden className="h-[max(43%,260px)] shrink-0" />');
+  });
 });

@@ -6,6 +6,7 @@ type HistoryReport = { requirements?: unknown };
 type HistoryEntry = {
   version?: unknown;
   title?: unknown;
+  seed?: unknown;
   summary?: unknown;
   changedFiles?: unknown;
   workResult?: unknown;
@@ -145,16 +146,20 @@ export function buildLineageChains(nodes: RoadmapNode[]): LineageChain[] {
 
 const requirementNodes = (item: LineageChainItem): RoadmapNode[] => {
   const workResult = item.entry.workResult && typeof item.entry.workResult === "object"
-    ? item.entry.workResult as { report?: unknown }
+    ? item.entry.workResult as { report?: unknown; seed?: unknown }
     : null;
   const report = workResult?.report && typeof workResult.report === "object"
     ? workResult.report as HistoryReport
     : null;
   // v0(feat)는 SPEC 요구사항을 보여준다. 이후 patch는 feat 요구사항을 상속하지 않고
   // 해당 patch의 review report가 실제로 검증한 항목만 보여준다.
-  const requirements = item.version === 0
-    ? item.entry.requirements
-    : report?.requirements;
+  const patchSeed = conciseTitle(workResult?.seed ?? item.entry.seed);
+  const patchRequirements = Array.isArray(report?.requirements) && report.requirements.length > 0
+    ? report.requirements
+    : patchSeed
+      ? [{ id: `PATCH-${item.version}`, title: patchSeed, status: item.node.status === "done" ? "done" : item.node.status }]
+      : [];
+  const requirements = item.version === 0 ? item.entry.requirements : patchRequirements;
   if (!Array.isArray(requirements)) return [];
   return requirements
     .filter((value): value is HistoryRequirement => !!value && typeof value === "object")
