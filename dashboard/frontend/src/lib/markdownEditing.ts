@@ -33,6 +33,35 @@ export function applyMarkdownTab(value: string, selectionStart: number, selectio
   };
 }
 
+/** 일반 Markdown 편집기처럼 Enter로 현재 목록 표식을 이어간다. 빈 항목이면 목록을 끝낸다. */
+export function applyMarkdownEnter(value: string, selectionStart: number, selectionEnd: number): MarkdownEdit | null {
+  const lineStart = value.lastIndexOf("\n", Math.max(0, selectionStart - 1)) + 1;
+  const lineEndIndex = value.indexOf("\n", selectionEnd);
+  const lineEnd = lineEndIndex < 0 ? value.length : lineEndIndex;
+  const beforeCursor = value.slice(lineStart, selectionStart);
+  const afterCursor = value.slice(selectionEnd, lineEnd);
+  const unordered = beforeCursor.match(/^(\s*)([-+*])\s+(?:(\[[ xX]\])\s+)?(.*)$/);
+  const ordered = beforeCursor.match(/^(\s*)(\d+)([.)])\s+(.*)$/);
+  if (!unordered && !ordered) return null;
+
+  const content = unordered ? unordered[4] : ordered![4];
+  if (!content.trim() && !afterCursor.trim()) {
+    const valueWithoutMarker = value.slice(0, lineStart) + value.slice(lineEnd);
+    return { value: valueWithoutMarker, selectionStart: lineStart, selectionEnd: lineStart };
+  }
+
+  const marker = unordered
+    ? `${unordered[1]}${unordered[2]} ${unordered[3] ? "[ ] " : ""}`
+    : `${ordered![1]}${Number(ordered![2]) + 1}${ordered![3]} `;
+  const replacement = `\n${marker}`;
+  const nextCaret = selectionStart + replacement.length;
+  return {
+    value: value.slice(0, selectionStart) + replacement + value.slice(selectionEnd),
+    selectionStart: nextCaret,
+    selectionEnd: nextCaret,
+  };
+}
+
 /** 단독 `---`를 앞 문장의 Setext 제목이 아니라 사용자가 기대한 구분선으로 미리보기한다. */
 export function markdownForPreview(markdown: string): string {
   const lines = markdown.split("\n");
