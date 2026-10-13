@@ -9,6 +9,59 @@ export interface FileViewerPresentation {
   tone: "cyan" | "violet" | "amber" | "emerald" | "sky" | "rose" | "slate";
 }
 
+type ArtifactLookup = { taskId: string; patchVersion?: number; sessionId?: string };
+
+/** 구버전 changedFiles의 로컬 절대경로를 review artifact가 사용하는 저장소 상대경로로 맞춘다. */
+export function repositoryRelativePath(path: string): string {
+  const normalized = path.replace(/\\/g, "/");
+  if (!normalized.startsWith("/")) return normalized.replace(/^\.\//, "");
+  for (const root of ["src/", "test/", "tests/", "docs/", "gradle/", ".github/"]) {
+    const index = normalized.indexOf(`/${root}`);
+    if (index >= 0) return normalized.slice(index + 1);
+  }
+  return normalized;
+}
+
+/** 합산된 파일은 선택 중인 SPEC/RUN이 아니라 파일을 만든 Task/차수의 저장 키로 조회한다. */
+export function reviewArtifactLocator(file: WorkResultFile, fallback: ArtifactLookup): ArtifactLookup {
+  const hasOrigin = !!file.artifactTaskId;
+  return {
+    taskId: file.artifactTaskId ?? fallback.taskId,
+    patchVersion: file.artifactPatchVersion ?? fallback.patchVersion,
+    sessionId: file.artifactSessionId ?? (hasOrigin ? undefined : fallback.sessionId),
+  };
+}
+
+function lineageFiles(node: RoadmapNode): WorkResultFile[] {
+  if (!Array.isArray(node.lineage)) return [];
+  return node.lineage.flatMap((raw, index) => {
+    if (!raw || typeof raw !== "object") return [];
+    const entry = raw as Record<string, unknown>;
+    const versionValue = Number(entry.version ?? index);
+    const patchVersion = Number.isFinite(versionValue) ? versionValue : index;
+    const workResult = entry.workResult && typeof entry.workResult === "object"
+      ? entry.workResult as Record<string, unknown>
+      : null;
+    const stored = workResult && Array.isArray(workResult.files)
+      ? workResult.files.filter((file): file is Record<string, unknown> & { path: string } => !!file && typeof file === "object" && typeof (file as { path?: unknown }).path === "string")
+      : [];
+    const changed = Array.isArray(entry.changedFiles)
+      ? entry.changedFiles.filter((path): path is string => typeof path === "string")
+      : [];
+    const sourceFiles = workResult
+      && workResult.sourceRevision && typeof workResult.sourceRevision === "object"
+      && Array.isArray((workResult.sourceRevision as { files?: unknown }).files)
+        ? (workResult.sourceRevision as { files: Array<{ path?: unknown }> }).files
+          .map((file) => file?.path)
+          .filter((path): path is string => typeof path === "string")
+        : [];
+    const files = stored.length > 0
+      ? stored.map((file) => ({ ...file, change: file.change === "added" || file.change === "deleted" ? file.change : "modified" } as WorkResultFile))
+      : (changed.length > 0 ? changed : sourceFiles).map((path) => ({ path, change: "modified" as const }));
+    return files.map((file) => ({ ...file, path: repositoryRelativePath(file.path), artifactTaskId: node.id, artifactPatchVersion: patchVersion }));
+  });
+}
+
 /**
  * SPEC/RUN은 PR scope와 마찬가지로 하위 작업 전체를 뜻한다. 컨테이너 자체에 work_result가
  * 없어도 자손의 산출물을 모아야 파일 탭이 비지 않는다. 같은 파일이 여러 차수에서 바뀌면
@@ -32,7 +85,14 @@ export function filesForRoadmapScope(selected: RoadmapNode, nodes: RoadmapNode[]
   const candidates = nodes.some((node) => node.id === selected.id) ? nodes : [...nodes, selected];
   for (const node of candidates) {
     if (!scopeIds.has(node.id)) continue;
-    for (const file of parseWorkResult(node.work_result)?.files ?? []) {
+    const workResult = parseWorkResult(node.work_result);
+    const ownFiles = (workResult?.files ?? []).map((file) => ({
+      ...file,
+      path: repositoryRelativePath(file.path),
+      artifactTaskId: file.artifactTaskId ?? (node.level === "task" ? node.ref ?? node.id.replace(/:v\d+$/, "") : undefined),
+      artifactPatchVersion: file.artifactPatchVersion ?? workResult?.patchVersion,
+    }));
+    for (const file of [...lineageFiles(node), ...ownFiles]) {
       latestByPath.delete(file.path);
       latestByPath.set(file.path, file);
     }

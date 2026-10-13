@@ -1,4 +1,5 @@
 import type { RoadmapNode } from "../../hooks/useRoadmap.js";
+import { repositoryRelativePath } from "./fileViewerModel.js";
 
 type HistoryRequirement = { id?: unknown; title?: unknown; status?: unknown };
 type HistoryEntry = {
@@ -166,17 +167,37 @@ const requirementNodes = (item: LineageChainItem): RoadmapNode[] => {
 /** 클릭한 feat/patch 카드 한 장을 Inspector가 소비할 독립 TASK 뷰로 만든다. */
 export function lineageSelection(item: LineageChainItem) {
   const explicitWorkResult = item.entry.workResult && typeof item.entry.workResult === "object"
-    ? item.entry.workResult
+    ? item.entry.workResult as Record<string, unknown>
     : null;
   const changedFiles = Array.isArray(item.entry.changedFiles)
     ? item.entry.changedFiles.filter((value): value is string => typeof value === "string")
     : [];
-  const hasFallbackResult = typeof item.entry.summary === "string" || changedFiles.length > 0;
+  const sourceRevisionFiles = explicitWorkResult
+    && typeof explicitWorkResult.sourceRevision === "object"
+    && explicitWorkResult.sourceRevision !== null
+    && Array.isArray((explicitWorkResult.sourceRevision as { files?: unknown }).files)
+      ? (explicitWorkResult.sourceRevision as { files: Array<{ path?: unknown }> }).files
+        .map((file) => file?.path)
+        .filter((path): path is string => typeof path === "string")
+      : [];
+  const storedFiles = explicitWorkResult && Array.isArray(explicitWorkResult.files)
+    ? explicitWorkResult.files.filter((file): file is Record<string, unknown> => !!file && typeof file === "object")
+    : [];
+  const fileEntries = storedFiles.length > 0
+    ? storedFiles
+      .filter((file): file is Record<string, unknown> & { path: string } => typeof file.path === "string")
+      .map((file) => ({ ...file, path: repositoryRelativePath(file.path), artifactTaskId: item.node.id, artifactPatchVersion: item.version }))
+    : (changedFiles.length > 0 ? changedFiles : sourceRevisionFiles)
+      .map((path) => ({ path: repositoryRelativePath(path), change: "modified" as const, artifactTaskId: item.node.id, artifactPatchVersion: item.version }));
+  const hasFallbackResult = typeof item.entry.summary === "string" || fileEntries.length > 0;
   const fallbackWorkResult = hasFallbackResult ? {
     summary: typeof item.entry.summary === "string" ? item.entry.summary : undefined,
-    files: changedFiles.map((path) => ({ path, change: "modified" as const })),
+    files: fileEntries,
     patchVersion: item.version,
   } : null;
+  const presentedWorkResult = explicitWorkResult
+    ? { ...explicitWorkResult, ...(fileEntries.length > 0 ? { files: fileEntries } : {}), patchVersion: item.version }
+    : fallbackWorkResult;
   const reqs = requirementNodes(item);
   const node: RoadmapNode = {
     ...item.node,
@@ -184,7 +205,7 @@ export function lineageSelection(item: LineageChainItem) {
     ref: item.node.id,
     approval_read_only: item.version < Number((item.node.work_result as { patchVersion?: number } | null)?.patchVersion ?? item.version),
     title: item.title,
-    work_result: explicitWorkResult ?? fallbackWorkResult,
+    work_result: presentedWorkResult,
     lineage: null,
   };
   // Live children belong to the latest cycle, never to an older history card.

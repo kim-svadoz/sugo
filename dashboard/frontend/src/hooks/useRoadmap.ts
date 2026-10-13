@@ -12,6 +12,10 @@ export interface WorkResultFile {
   content?: string;
   diff?: string;
   unavailableReason?: string;
+  /** SPEC/RUN 합산 목록에서도 실제 코드 아티팩트 저장 키를 잃지 않기 위한 화면 전용 출처. */
+  artifactTaskId?: string;
+  artifactPatchVersion?: number;
+  artifactSessionId?: string;
 }
 
 export interface WorkResult {

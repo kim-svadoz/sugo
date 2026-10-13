@@ -40,7 +40,7 @@ import { shouldApplyHoverFocus } from "./interaction.js";
 import { measuredLeafHeight, TASK_CARD_HEIGHT } from "./layoutSizing.js";
 import { buildLineageChains, lineageSelection, type LineageChainItem } from "./lineageModel.js";
 import { FileViewerSheet } from "./FileViewerSheet.js";
-import { filesForRoadmapScope } from "./fileViewerModel.js";
+import { filesForRoadmapScope, reviewArtifactLocator } from "./fileViewerModel.js";
 import { taskGuidance } from "../../lib/taskGuidance.js";
 import { focusPathIds, focusRootId } from "./focusPath.js";
 import { presentSteKorean } from "../../lib/steKorean.js";
@@ -1468,11 +1468,14 @@ export function RoadmapGraph({
       return;
     }
     const workResult = parseWorkResult(selectedNode.work_result);
-    const loaded = await getReviewArtifact(userId, workspace, {
+    const locator = reviewArtifactLocator(file, {
       taskId: selectedNode.ref ?? selectedNode.id.replace(/:v\d+$/, ""),
-      path: file.path,
       sessionId: selectedNode.human_blocker?.sessionId,
       patchVersion: workResult?.patchVersion,
+    });
+    const loaded = await getReviewArtifact(userId, workspace, {
+      ...locator,
+      path: file.path,
     });
     setFileViewer((current) => ({ file: loaded, expanded: current?.expanded ?? true }));
   }, [selectedNode, userId, workspace]);

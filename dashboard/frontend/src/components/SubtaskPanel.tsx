@@ -7,7 +7,7 @@ import { parseWorkResult, type RoadmapNode, type WorkResultFile } from "../hooks
 import { clearManualStatus, getReviewArtifact, setManualStatus } from "../api/roadmapMutationsApi.js";
 import { checkExistingPr, createPr, type PrRef, type PrScope } from "../api/prApi.js";
 import { inspectorProgress, type InspectorProgress } from "./roadmap/inspectorModel.js";
-import { fileViewerPresentation } from "./roadmap/fileViewerModel.js";
+import { fileViewerPresentation, reviewArtifactLocator } from "./roadmap/fileViewerModel.js";
 import { workResultPresentation } from "./roadmap/workResultPresentation.js";
 import { taskGuidance } from "../lib/taskGuidance.js";
 import { BlockerDecisionPanel } from "./BlockerDecisionPanel.js";
@@ -535,7 +535,8 @@ function FilesTab({ userId, workspace, taskId, sessionId, patchVersion, files, o
     }
     setLoadingPath(file.path);
     try {
-      onOpenFile(await getReviewArtifact(userId, workspace, { taskId, path: file.path, sessionId, patchVersion }), expanded);
+      const locator = reviewArtifactLocator(file, { taskId, sessionId, patchVersion });
+      onOpenFile(await getReviewArtifact(userId, workspace, { ...locator, path: file.path }), expanded);
     } catch {
       setError("코드 아티팩트를 불러오지 못했습니다. 플러그인 동기화 상태를 확인하세요.");
     } finally {

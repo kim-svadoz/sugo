@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diffChangeRegions, filesForRoadmapScope, fileViewerLanguage, fileViewerLines, fileViewerPresentation, fileViewerText, nextDiffRegionIndex } from "./fileViewerModel.js";
+import { diffChangeRegions, filesForRoadmapScope, fileViewerLanguage, fileViewerLines, fileViewerPresentation, fileViewerText, nextDiffRegionIndex, reviewArtifactLocator } from "./fileViewerModel.js";
 import type { RoadmapNode } from "../../hooks/useRoadmap.js";
 
 const node = (id: string, level: string, parent: string | null, files: Array<{ path: string; content: string }> = []): RoadmapNode => ({
@@ -77,6 +77,41 @@ describe("changed-file viewer model", () => {
     expect(filesForRoadmapScope(nodes[0], nodes)).toEqual([
       expect.objectContaining({ path: "src/A.java", content: "latest" }),
       expect.objectContaining({ path: "README.md", content: "# Guide" }),
+    ]);
+  });
+
+  it("SPEC/RUN은 feat와 patch 전체를 합치고 파일마다 원본 Task와 차수를 보존한다", () => {
+    const task = node("task", "task", "run");
+    task.lineage = [
+      { version: 0, changedFiles: ["src/Feat.java", "src/Shared.java"], workResult: { patchVersion: 0 } },
+      { version: 1, changedFiles: ["src/Patch.java", "src/Shared.java"], workResult: { patchVersion: 1 } },
+    ];
+    task.work_result = { patchVersion: 1, files: [{ path: "src/Patch.java", change: "modified" }] };
+    const nodes = [node("spec", "spec", null), node("run", "workstream", "spec"), task];
+
+    const files = filesForRoadmapScope(nodes[0], nodes);
+    expect(files.map((file) => file.path)).toEqual(["src/Feat.java", "src/Shared.java", "src/Patch.java"]);
+    expect(files.find((file) => file.path === "src/Feat.java")).toMatchObject({ artifactTaskId: "task", artifactPatchVersion: 0 });
+    expect(files.find((file) => file.path === "src/Shared.java")).toMatchObject({ artifactTaskId: "task", artifactPatchVersion: 1 });
+    expect(files.find((file) => file.path === "src/Patch.java")).toMatchObject({ artifactTaskId: "task", artifactPatchVersion: 1 });
+  });
+
+  it("합산 파일은 선택한 SPEC이 아니라 파일의 원본 Task/차수로 조회한다", () => {
+    expect(reviewArtifactLocator(
+      { path: "src/A.java", change: "modified", artifactTaskId: "task-a", artifactPatchVersion: 2 },
+      { taskId: "spec", patchVersion: undefined },
+    )).toEqual({ taskId: "task-a", patchVersion: 2, sessionId: undefined });
+  });
+
+  it("과거 절대경로와 현재 상대경로는 같은 저장소 파일로 합친다", () => {
+    const task = node("task", "task", "run");
+    task.lineage = [
+      { version: 0, changedFiles: ["/Users/me/project/src/Shared.java"], workResult: { patchVersion: 0 } },
+      { version: 1, changedFiles: ["src/Shared.java"], workResult: { patchVersion: 1 } },
+    ];
+
+    expect(filesForRoadmapScope(task, [task])).toEqual([
+      expect.objectContaining({ path: "src/Shared.java", artifactTaskId: "task", artifactPatchVersion: 1 }),
     ]);
   });
 

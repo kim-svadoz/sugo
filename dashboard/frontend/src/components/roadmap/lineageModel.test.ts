@@ -93,6 +93,25 @@ describe("patch lineage canvas model", () => {
     expect(lineageSelection(chain.columns[0][1]).node.work_result).toBeNull();
   });
 
+  it("계보 workResult에 files가 없어도 해당 차수 changedFiles를 복원한다", () => {
+    const task = node({
+      id: "task",
+      work_result: { patchVersion: 1 },
+      lineage: [
+        { version: 0, changedFiles: ["src/Feat.java"], workResult: { path: "/work-result.md" } },
+        { version: 1, changedFiles: ["src/Patch.java"], workResult: { path: "/work-result-patch-v1.md" } },
+      ],
+    });
+    const [chain] = buildLineageChains([task]);
+
+    expect(lineageSelection(chain.columns[0][0]).node.work_result).toEqual(expect.objectContaining({
+      files: [{ path: "src/Feat.java", change: "modified", artifactTaskId: "task", artifactPatchVersion: 0 }],
+    }));
+    expect(lineageSelection(chain.columns[0][1]).node.work_result).toEqual(expect.objectContaining({
+      files: [{ path: "src/Patch.java", change: "modified", artifactTaskId: "task", artifactPatchVersion: 1 }],
+    }));
+  });
+
   it("취소한 최신 patch만 폐기로 남기고 이전 완료 차수는 완료로 유지한다", () => {
     const task = node({
       id: "task",
