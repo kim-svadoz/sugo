@@ -244,6 +244,7 @@ export function SchedulePage() {
     if (payload.kind === "memo") {
       const memo = (memos ?? []).find((item) => item.id === payload.id);
       if (!memo || memo.due_date === dueDate || !userId) return;
+      setErrorMsg(null);
       void setScheduleMemoDueDate(userId, memo.id, dueDate).then(refetch).catch(() => setErrorMsg("메모 날짜 저장에 실패했습니다."));
       return;
     }

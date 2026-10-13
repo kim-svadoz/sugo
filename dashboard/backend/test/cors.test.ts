@@ -31,4 +31,16 @@ describe("CORS whitelist (§8 fix for the original's wide-open cors())", () => {
     const res = await request(app).options("/api/workspaces").set("Origin", "http://localhost:5175");
     expect(res.status).toBe(204);
   });
+
+  it("메모 날짜 이동에 필요한 PATCH를 사전 요청에서 허용한다", async () => {
+    const { app } = await freshApp();
+    const res = await request(app)
+      .options("/api/schedule/memos/memo-1/due-date")
+      .set("Origin", "http://localhost:5175")
+      .set("Access-Control-Request-Method", "PATCH")
+      .set("Access-Control-Request-Headers", "authorization,content-type");
+
+    expect(res.status).toBe(204);
+    expect(res.headers["access-control-allow-methods"]?.split(/,\s*/)).toContain("PATCH");
+  });
 });

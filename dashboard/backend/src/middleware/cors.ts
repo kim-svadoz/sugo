@@ -8,7 +8,9 @@ export function corsWhitelist(allowedOrigins: string[]) {
     if (origin && allowedOrigins.includes(origin)) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Vary", "Origin");
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      // Schedule 메모 날짜 이동은 PATCH를 쓴다. 브라우저의 cross-origin 요청은
+      // 본 요청 전에 OPTIONS를 보내므로 여기서 빠지면 라우트가 정상이어도 호출되지 않는다.
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
       res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
     if (req.method === "OPTIONS") {
