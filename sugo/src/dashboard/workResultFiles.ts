@@ -37,7 +37,7 @@ async function gitOutput(projectPath: string, args: string[]): Promise<string> {
 }
 
 /** 완료 시점의 변경파일을 self-contained WorkResult로 만든다. 대시보드가 원본 repo 없이도 열 수 있다. */
-export async function snapshotWorkResultFiles(projectPath: string, paths: string[]): Promise<SnapshotFile[]> {
+export async function snapshotWorkResultFiles(projectPath: string, paths: string[], startedAt?: string): Promise<SnapshotFile[]> {
   return Promise.all(paths.map(async (path): Promise<SnapshotFile> => {
     const safe = safeProjectFile(projectPath, path);
     if (!safe) return { path, change: "modified" };
@@ -45,7 +45,12 @@ export async function snapshotWorkResultFiles(projectPath: string, paths: string
     const status = await gitOutput(projectPath, ["status", "--porcelain", "--", safe.relative]);
     const code = status.slice(0, 2);
     const change: SnapshotFile["change"] = code.includes("D") ? "deleted" : code.includes("?") || code.includes("A") ? "added" : "modified";
-    const diff = await gitOutput(projectPath, ["diff", "--no-ext-diff", "--unified=40", "HEAD", "--", safe.relative]);
+    let diff = await gitOutput(projectPath, ["diff", "--no-ext-diff", "--unified=40", "HEAD", "--", safe.relative]);
+    if (!diff && startedAt) {
+      const commits = await gitOutput(projectPath, ["rev-list", "--reverse", `--since=${startedAt}`, "HEAD", "--", safe.relative]);
+      const first = commits.trim().split("\n").filter(Boolean)[0];
+      if (first) diff = await gitOutput(projectPath, ["diff", "--no-ext-diff", "--unified=40", `${first}^`, "HEAD", "--", safe.relative]);
+    }
     let content: string | undefined;
     if (change !== "deleted") {
       try {
@@ -60,7 +65,7 @@ export async function snapshotWorkResultFiles(projectPath: string, paths: string
 }
 
 /** review 전 코드 열람용 아티팩트. 민감 경로는 목록만 남기고 본문은 절대 전송하지 않는다. */
-export async function snapshotReviewArtifacts(projectPath: string, paths: string[]): Promise<SnapshotFile[]> {
-  const files = await snapshotWorkResultFiles(projectPath, paths);
+export async function snapshotReviewArtifacts(projectPath: string, paths: string[], startedAt?: string): Promise<SnapshotFile[]> {
+  const files = await snapshotWorkResultFiles(projectPath, paths, startedAt);
   return sanitizeReviewArtifacts(files);
 }

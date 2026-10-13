@@ -26,4 +26,25 @@ describe("review artifact API", () => {
       .query({ taskId: "task-1", path: "src/app.ts", sessionId: "session-1" }).expect(404);
     await db.close();
   });
+
+  it("modified 아티팩트의 diff가 비면 이전 차수 본문으로 diff를 복원한다", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    const { app } = await createApp(db);
+    const auth = await seedUserToken(db, "u1");
+    for (const artifact of [
+      { sessionId: "feat", patchVersion: 0, content: "class A {\n  int value = 1;\n}\n", diff: "-old\n+feat" },
+      { sessionId: "patch", patchVersion: 1, content: "class A {\n  int value = 2;\n}\n" },
+    ]) {
+      await request(app).post("/api/sync/review-artifact").set("Authorization", auth).send({
+        workspaceName: "ws", taskId: "task-1", path: "src/A.java", change: "modified", schemaVersion: 1, ...artifact,
+      }).expect(200);
+    }
+
+    const result = await request(app).get("/api/workspaces/ws/review-artifact").set("Authorization", auth)
+      .query({ taskId: "task-1", path: "src/A.java", patchVersion: 1 }).expect(200);
+    expect(result.body.artifact.diff).toContain("-  int value = 1;");
+    expect(result.body.artifact.diff).toContain("+  int value = 2;");
+    await db.close();
+  });
 });

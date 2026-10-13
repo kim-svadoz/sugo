@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { DbClient } from "../db/client.js";
+import { textDiff } from "./textDiff.js";
 
 export interface ReviewArtifactInput {
   workspaceName: string; taskId: string; sessionId: string; patchVersion: number;
@@ -31,7 +32,13 @@ export async function readReviewArtifact(db: DbClient, userId: string, workspace
   const params: unknown[] = [userId, workspaceName, taskId, filePath];
   if (sessionId) { clauses.push("session_id=?"); params.push(sessionId); }
   else if (patchVersion !== undefined) { clauses.push("patch_version=?"); params.push(patchVersion); }
-  return (await db.query<Record<string, unknown>>(
-    `SELECT file_path AS path, change_type AS changeType, content, diff_text AS diff, unavailable_reason AS unavailableReason FROM sugo_review_artifacts WHERE ${clauses.join(" AND ")} ORDER BY updated_at DESC LIMIT 1`, params,
+  const artifact = (await db.query<Record<string, unknown>>(
+    `SELECT file_path AS path, change_type AS changeType, content, diff_text AS diff, unavailable_reason AS unavailableReason, patch_version AS patchVersion FROM sugo_review_artifacts WHERE ${clauses.join(" AND ")} ORDER BY updated_at DESC LIMIT 1`, params,
   ))[0] ?? null;
+  if (!artifact || artifact.changeType !== "modified" || typeof artifact.content !== "string" || typeof artifact.diff === "string" && artifact.diff.trim()) return artifact;
+  const previous = (await db.query<{ content: string | null }>(
+    "SELECT content FROM sugo_review_artifacts WHERE user_id=? AND workspace_name=? AND task_id=? AND file_path=? AND patch_version<? AND content IS NOT NULL ORDER BY patch_version DESC, updated_at DESC LIMIT 1",
+    [userId, workspaceName, taskId, filePath, Number(artifact.patchVersion)],
+  ))[0];
+  return previous?.content == null ? artifact : { ...artifact, diff: textDiff(previous.content, artifact.content) };
 }

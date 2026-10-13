@@ -24161,14 +24161,19 @@ async function gitOutput(projectPath, args2) {
     return "";
   }
 }
-async function snapshotWorkResultFiles(projectPath, paths) {
+async function snapshotWorkResultFiles(projectPath, paths, startedAt) {
   return Promise.all(paths.map(async (path) => {
     const safe = safeProjectFile(projectPath, path);
     if (!safe) return { path, change: "modified" };
     const status = await gitOutput(projectPath, ["status", "--porcelain", "--", safe.relative]);
     const code = status.slice(0, 2);
     const change = code.includes("D") ? "deleted" : code.includes("?") || code.includes("A") ? "added" : "modified";
-    const diff = await gitOutput(projectPath, ["diff", "--no-ext-diff", "--unified=40", "HEAD", "--", safe.relative]);
+    let diff = await gitOutput(projectPath, ["diff", "--no-ext-diff", "--unified=40", "HEAD", "--", safe.relative]);
+    if (!diff && startedAt) {
+      const commits = await gitOutput(projectPath, ["rev-list", "--reverse", `--since=${startedAt}`, "HEAD", "--", safe.relative]);
+      const first = commits.trim().split("\n").filter(Boolean)[0];
+      if (first) diff = await gitOutput(projectPath, ["diff", "--no-ext-diff", "--unified=40", `${first}^`, "HEAD", "--", safe.relative]);
+    }
     let content;
     if (change !== "deleted") {
       try {
@@ -24180,8 +24185,8 @@ async function snapshotWorkResultFiles(projectPath, paths) {
     return { path: safe.relative, change, ...content ? { content } : {}, ...diff ? { diff } : {} };
   }));
 }
-async function snapshotReviewArtifacts(projectPath, paths) {
-  const files = await snapshotWorkResultFiles(projectPath, paths);
+async function snapshotReviewArtifacts(projectPath, paths, startedAt) {
+  const files = await snapshotWorkResultFiles(projectPath, paths, startedAt);
   return sanitizeReviewArtifacts(files);
 }
 
@@ -28164,7 +28169,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.29.2" : "0.0.0-dev";
+  return true ? "0.29.3" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32477,7 +32482,11 @@ async function handleSugoRoadmap(rawArgs) {
       if (session.data.hulkWorkspace !== args2.workspace || session.data.hulkTaskId !== args2.id) {
         return errorResult13("BLOCKER_TARGET_MISMATCH", "\uD604\uC7AC \uC138\uC158\uC5D0 \uC5F0\uACB0\uB41C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC640 \uD655\uC778 \uC694\uCCAD \uB300\uC0C1\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
       }
-      const files = await snapshotReviewArtifacts(session.projectPath, session.data.chainInfo.changedFiles ?? []);
+      const files = await snapshotReviewArtifacts(
+        session.projectPath,
+        session.data.chainInfo.changedFiles ?? [],
+        session.data.chainInfo.implementationStartedAt ?? session.startedAt
+      );
       const patchVersion = session.data.mode === "patch" ? session.data.patch?.version ?? 0 : 0;
       await syncReviewArtifacts(args2.workspace, args2.id, args2.sessionId, patchVersion, files);
       const blocker = buildReviewConfirmationBlocker({ sessionId: args2.sessionId, ...args2.reviewPacket, files });
