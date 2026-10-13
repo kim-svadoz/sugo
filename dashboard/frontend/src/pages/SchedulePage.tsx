@@ -128,13 +128,19 @@ export function SchedulePage() {
   }, [memos]);
 
   const backlog = useMemo(() => (specs ?? []).filter((s) => !s.due_date), [specs]);
-  const memoBacklog = useMemo(() => (memos ?? []).filter((memo) => !memo.due_date), [memos]);
-  const scheduledMemos = useMemo(() => (memos ?? []).filter((memo): memo is ScheduledMemo & { due_date: string } => !!memo.due_date).sort((a, b) => a.due_date.localeCompare(b.due_date)), [memos]);
+  const sortedMemos = useMemo(
+    () => [...(memos ?? [])].sort((a, b) => {
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return a.due_date.localeCompare(b.due_date);
+    }),
+    [memos],
+  );
 
   // 왼쪽 패널: "기한 미정"만 보던 걸 "등록완료"(마감일이 잡힌 것)로도 전환할 수 있게 —
   // 마감일이 화면에 보이는 달을 벗어나 있으면(예: 오늘은 9월인데 마감은 10월) 달력만으론
   // 존재 자체를 놓친다.
-  const [panelMode, setPanelMode] = useState<"backlog" | "scheduled">("backlog");
+  const [panelMode, setPanelMode] = useState<"backlog" | "scheduled" | "memo">("backlog");
   const scheduledSorted = useMemo(
     () => visibleRegisteredSpecs(specs ?? [], todayKey).sort((a, b) => a.due_date!.localeCompare(b.due_date!)),
     [specs, todayKey],
@@ -362,32 +368,38 @@ export function SchedulePage() {
             dragOverKey === "backlog" && "border-cyan-400 bg-cyan-500/10",
           )}
           onDragOver={(e) => {
-            if (panelMode !== "backlog") return;
+            if (panelMode === "scheduled") return;
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
             setDragOverKey("backlog");
           }}
           onDragLeave={() => setDragOverKey((key) => (key === "backlog" ? null : key))}
-          onDrop={(e) => panelMode === "backlog" && dropSpec(e, null)}
+          onDrop={(e) => panelMode !== "scheduled" && dropSpec(e, null)}
         >
-          <div className="flex shrink-0 items-center gap-1 rounded-lg border border-[var(--color-border)] p-0.5 text-[11px] font-semibold">
+          <div className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-[var(--color-border)] p-0.5 text-[11px] font-semibold">
             <button
               onClick={() => setPanelMode("backlog")}
               className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "backlog" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
             >
-              기한 미정 · {backlog.length}
+              기한 미정
             </button>
             <button
               onClick={() => setPanelMode("scheduled")}
               className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "scheduled" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
             >
-              등록완료 · {scheduledSorted.length}
+              등록완료
+            </button>
+            <button
+              onClick={() => setPanelMode("memo")}
+              className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "memo" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
+            >
+              메모
             </button>
           </div>
 
           {panelMode === "backlog" ? (
             <>
-              {backlog.length === 0 && memoBacklog.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">없음. 여기 끌어다 놓으면 날짜가 풀립니다.</p>}
+              {backlog.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">없음. 여기 끌어다 놓으면 날짜가 풀립니다.</p>}
               {backlog.map((s) => {
                 const style = scheduleCardStyle(colorOf(s.workspace_name));
                 return (
@@ -407,11 +419,10 @@ export function SchedulePage() {
                   </div>
                 );
               })}
-              {memoBacklog.map((memo) => <button key={memo.id} draggable onDragStart={(event) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} onClick={() => setMemoTarget({ memo })} className="flex min-h-9 cursor-grab items-center gap-1.5 rounded-lg border border-slate-500/30 bg-slate-500/[0.08] px-2.5 py-2 text-left text-[12px] font-medium text-slate-300 hover:bg-slate-500/15 active:cursor-grabbing" title="메모 · 캘린더 날짜 칸으로 끌어놓을 수 있습니다"><FilePenLine size={12} className="shrink-0 text-slate-500" /><span className="min-w-0 flex-1 truncate">{memo.title}</span></button>)}
             </>
-          ) : (
+          ) : panelMode === "scheduled" ? (
             <>
-              {scheduledSorted.length === 0 && scheduledMemos.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">날짜가 지정된 항목이 없습니다.</p>}
+              {scheduledSorted.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">날짜가 지정된 항목이 없습니다.</p>}
               {scheduledSorted.map((s) => {
                 const style = scheduleCardStyle(colorOf(s.workspace_name));
                 const remaining = daysUntil(s.due_date!);
@@ -452,7 +463,26 @@ export function SchedulePage() {
                   </div>
                 );
               })}
-              {scheduledMemos.map((memo) => <button key={memo.id} draggable onDragStart={(event) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} onClick={() => { setMemoTarget({ memo }); jumpToDate(memo.due_date); }} className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border border-slate-500/30 bg-slate-500/[0.08] px-2.5 py-1.5 text-left text-[12px] font-medium text-slate-300 hover:bg-slate-500/15 active:cursor-grabbing"><span className="flex min-w-0 items-center gap-1.5"><FilePenLine size={11} className="shrink-0 text-slate-500" /><span className="truncate">{memo.title}</span></span><span className="font-mono text-[9.5px] text-slate-500">{memo.due_date}</span></button>)}
+            </>
+          ) : (
+            <>
+              {sortedMemos.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">등록된 메모가 없습니다.</p>}
+              {sortedMemos.map((memo) => (
+                <button
+                  key={memo.id}
+                  draggable
+                  onDragStart={(event) => startMemoDrag(event, memo)}
+                  onDragEnd={() => setDragOverKey(null)}
+                  onClick={() => {
+                    setMemoTarget({ memo });
+                    if (memo.due_date) jumpToDate(memo.due_date);
+                  }}
+                  className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border border-slate-500/30 bg-slate-500/[0.08] px-2.5 py-1.5 text-left text-[12px] font-medium text-slate-300 hover:bg-slate-500/15 active:cursor-grabbing"
+                >
+                  <span className="flex min-w-0 items-center gap-1.5"><FilePenLine size={11} className="shrink-0 text-slate-500" /><span className="truncate">{memo.title}</span></span>
+                  <span className="font-mono text-[9.5px] text-slate-500">{memo.due_date ?? "기한 미정"}</span>
+                </button>
+              ))}
             </>
           )}
         </div>

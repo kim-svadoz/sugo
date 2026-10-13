@@ -73,6 +73,19 @@ describe("schedule presentation", () => {
     expect(source).toContain('onDoubleClick={() => dayChips.length === 0 && dayMemos.length === 0 && setMemoTarget({ initialDate: key })}');
   });
 
+  it("메모는 SPEC 등록완료와 분리된 전용 탭에만 표시한다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain('useState<"backlog" | "scheduled" | "memo">');
+    expect(source).toContain('onClick={() => setPanelMode("memo")}');
+    expect(source).toContain("sortedMemos.map");
+    expect(source).toContain('panelMode === "memo"');
+    expect(source).toContain("whitespace-nowrap");
+    expect(source).not.toContain("기한 미정 · {backlog.length}");
+    expect(source).not.toContain("등록완료 · {scheduledSorted.length}");
+    expect(source).not.toContain("scheduledMemos.map");
+    expect(source).not.toContain("memoBacklog.map");
+  });
+
   it("대시보드 수동 SPEC 상세에는 파일 보존을 알리는 2단계 삭제 UI가 있다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain('selected.id.startsWith("spec-manual-")');
