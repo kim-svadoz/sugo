@@ -36,6 +36,21 @@ describe("changed-file viewer model", () => {
     expect(fileViewerText({ path: "src/a.ts", change: "deleted" })).toContain("저장된 diff/content가 없습니다");
   });
 
+  it("수정 diff 근거가 없으면 저장된 원문 대신 불가 사유를 보여준다", () => {
+    expect(fileViewerText({
+      path: "src/a.ts",
+      change: "modified",
+      content: "const raw = true;",
+      unavailableReason: "비교 기준 없음",
+    })).toContain("비교 기준 없음");
+    expect(fileViewerText({
+      path: "src/a.ts",
+      change: "modified",
+      content: "const raw = true;",
+      unavailableReason: "비교 기준 없음",
+    })).not.toContain("const raw");
+  });
+
   it("파일 확장자로 바텀시트 언어 라벨을 만든다", () => {
     expect(fileViewerLanguage("src/main/App.tsx")).toBe("TSX");
     expect(fileViewerLanguage("buildspec.yml")).toBe("YAML");

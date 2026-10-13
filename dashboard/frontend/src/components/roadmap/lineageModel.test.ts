@@ -56,7 +56,11 @@ describe("patch lineage canvas model", () => {
           version: 1,
           title: "Redis 만료 보강",
           summary: "TTL 보강",
-          workResult: { path: "/work-result-patch-v1.md", summary: "TTL 보강" },
+          workResult: {
+            path: "/work-result-patch-v1.md",
+            summary: "TTL 보강",
+            report: { requirements: [{ id: "REQ-7", title: "TTL을 갱신한다", status: "done" }] },
+          },
           requirements: [{ id: "REQ-7", title: "TTL을 갱신한다", status: "done" }],
         },
         { version: 2, title: "동시성 패치" },
@@ -110,6 +114,21 @@ describe("patch lineage canvas model", () => {
     expect(lineageSelection(chain.columns[0][1]).node.work_result).toEqual(expect.objectContaining({
       files: [{ path: "src/Patch.java", change: "modified", artifactTaskId: "task", artifactPatchVersion: 1 }],
     }));
+  });
+
+  it("patch는 feat의 REQ를 복사하지 않고 patch report의 검증 항목만 사용한다", () => {
+    const task = node({
+      id: "task",
+      lineage: [
+        { version: 0, requirements: [{ id: "feat", title: "최초 기능", status: "done" }], workResult: { report: {} } },
+        { version: 1, requirements: [{ id: "feat", title: "최초 기능", status: "done" }], workResult: { report: { requirements: [{ id: "patch", title: "충돌 해결", status: "done" }] } } },
+        { version: 2, requirements: [{ id: "feat", title: "최초 기능", status: "done" }], workResult: { report: { requirements: [] } } },
+      ],
+    });
+    const [chain] = buildLineageChains([task]);
+    expect(lineageSelection(chain.columns[0][0]).reqs.map((req) => req.title)).toEqual(["최초 기능"]);
+    expect(lineageSelection(chain.columns[0][1]).reqs.map((req) => req.title)).toEqual(["충돌 해결"]);
+    expect(lineageSelection(chain.columns[0][2]).reqs).toEqual([]);
   });
 
   it("취소한 최신 patch만 폐기로 남기고 이전 완료 차수는 완료로 유지한다", () => {

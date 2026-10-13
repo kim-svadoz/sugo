@@ -2,6 +2,7 @@ import type { RoadmapNode } from "../../hooks/useRoadmap.js";
 import { repositoryRelativePath } from "./fileViewerModel.js";
 
 type HistoryRequirement = { id?: unknown; title?: unknown; status?: unknown };
+type HistoryReport = { requirements?: unknown };
 type HistoryEntry = {
   version?: unknown;
   title?: unknown;
@@ -143,8 +144,19 @@ export function buildLineageChains(nodes: RoadmapNode[]): LineageChain[] {
 }
 
 const requirementNodes = (item: LineageChainItem): RoadmapNode[] => {
-  if (!Array.isArray(item.entry.requirements)) return [];
-  return item.entry.requirements
+  const workResult = item.entry.workResult && typeof item.entry.workResult === "object"
+    ? item.entry.workResult as { report?: unknown }
+    : null;
+  const report = workResult?.report && typeof workResult.report === "object"
+    ? workResult.report as HistoryReport
+    : null;
+  // v0(feat)는 SPEC 요구사항을 보여준다. 이후 patch는 feat 요구사항을 상속하지 않고
+  // 해당 patch의 review report가 실제로 검증한 항목만 보여준다.
+  const requirements = item.version === 0
+    ? item.entry.requirements
+    : report?.requirements;
+  if (!Array.isArray(requirements)) return [];
+  return requirements
     .filter((value): value is HistoryRequirement => !!value && typeof value === "object")
     .map((req, index) => ({
       id: `${item.key}::${typeof req.id === "string" ? req.id : `REQ-${index + 1}`}`,
@@ -209,5 +221,5 @@ export function lineageSelection(item: LineageChainItem) {
     lineage: null,
   };
   // Live children belong to the latest cycle, never to an older history card.
-  return { node, reqs, requirementsUnavailable: !Array.isArray(item.entry.requirements) };
+  return { node, reqs, requirementsUnavailable: item.version === 0 && !Array.isArray(item.entry.requirements) };
 }

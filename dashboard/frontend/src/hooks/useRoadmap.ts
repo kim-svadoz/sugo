@@ -8,7 +8,7 @@ const POLL_MS = 4000;
 
 export interface WorkResultFile {
   path: string;
-  change: "added" | "modified" | "deleted";
+  change: "added" | "modified" | "deleted" | "unchanged";
   content?: string;
   diff?: string;
   unavailableReason?: string;

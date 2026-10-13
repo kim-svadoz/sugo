@@ -47,4 +47,33 @@ describe("review artifact API", () => {
     expect(result.body.artifact.diff).toContain("+  int value = 2;");
     await db.close();
   });
+
+  it("modified로 보고됐지만 이전 차수와 본문이 같으면 변경 없음으로 정정한다", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    const { app } = await createApp(db);
+    const auth = await seedUserToken(db, "u1");
+    for (const patchVersion of [0, 1]) await request(app).post("/api/sync/review-artifact").set("Authorization", auth).send({
+      workspaceName: "ws", taskId: "task-1", sessionId: `s${patchVersion}`, patchVersion,
+      path: "src/Same.java", change: patchVersion === 0 ? "added" : "modified",
+      content: "class Same {}\n", schemaVersion: 1,
+    }).expect(200);
+
+    const result = await request(app).get("/api/workspaces/ws/review-artifact").set("Authorization", auth)
+      .query({ taskId: "task-1", path: "src/Same.java", patchVersion: 1 }).expect(200);
+    expect(result.body.artifact).toMatchObject({ changeType: "unchanged", diff: null, unavailableReason: "이 patch에서는 파일 내용이 바뀌지 않았습니다." });
+    await request(app).post("/api/sync/review-artifact").set("Authorization", auth).send({
+      workspaceName: "ws", taskId: "task-1", sessionId: "patch", patchVersion: 1,
+      path: "src/NoBase.java", change: "modified", content: "class NoBase {}\n", schemaVersion: 1,
+    }).expect(200);
+
+    const noBaseResult = await request(app).get("/api/workspaces/ws/review-artifact").set("Authorization", auth)
+      .query({ taskId: "task-1", path: "src/NoBase.java", patchVersion: 1 }).expect(200);
+    expect(noBaseResult.body.artifact).toMatchObject({
+      changeType: "modified",
+      diff: null,
+      unavailableReason: "비교할 이전 차수의 본문이 없어 diff를 만들 수 없습니다.",
+    });
+    await db.close();
+  });
 });

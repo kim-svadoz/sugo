@@ -40,5 +40,20 @@ export async function readReviewArtifact(db: DbClient, userId: string, workspace
     "SELECT content FROM sugo_review_artifacts WHERE user_id=? AND workspace_name=? AND task_id=? AND file_path=? AND patch_version<? AND content IS NOT NULL ORDER BY patch_version DESC, updated_at DESC LIMIT 1",
     [userId, workspaceName, taskId, filePath, Number(artifact.patchVersion)],
   ))[0];
-  return previous?.content == null ? artifact : { ...artifact, diff: textDiff(previous.content, artifact.content) };
+  if (previous?.content == null) {
+    return {
+      ...artifact,
+      unavailableReason: artifact.unavailableReason
+        ?? "비교할 이전 차수의 본문이 없어 diff를 만들 수 없습니다.",
+    };
+  }
+  if (previous.content === artifact.content) {
+    return {
+      ...artifact,
+      changeType: "unchanged",
+      diff: null,
+      unavailableReason: "이 patch에서는 파일 내용이 바뀌지 않았습니다.",
+    };
+  }
+  return { ...artifact, diff: textDiff(previous.content, artifact.content) };
 }

@@ -22,7 +22,7 @@ export function clearManualStatus(userId: string, workspace: string, nodeId: str
 export async function getReviewArtifact(userId: string, workspace: string, input: {
   taskId: string; path: string; sessionId?: string; patchVersion?: number;
 }) {
-  const response = await apiJson<{ artifact: { path: string; changeType: "added" | "modified" | "deleted"; content?: string | null; diff?: string | null; unavailableReason?: string | null } }>(
+  const response = await apiJson<{ artifact: { path: string; changeType: "added" | "modified" | "deleted" | "unchanged"; content?: string | null; diff?: string | null; unavailableReason?: string | null } }>(
     withUserId(`/api/workspaces/${encodeURIComponent(workspace)}/review-artifact`, userId, {
       taskId: input.taskId, path: input.path,
       ...(input.sessionId ? { sessionId: input.sessionId } : {}),

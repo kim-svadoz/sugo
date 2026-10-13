@@ -75,6 +75,7 @@ export function FileViewerSheet({
   const directory = pathParts.join("/");
   const showingDiff = Boolean(file.diff?.trim());
   const showingAddedFile = file.change === "added" && !showingDiff;
+  const showingUnchanged = file.change === "unchanged";
   const language = fileViewerLanguage(file.path);
   const codeLines = useMemo(() => lines.map((line) => showingDiff && /^[ +\-]/.test(line) ? line.slice(1) : line), [text, showingDiff]);
   const highlightedLines = useMemo(() => tokenizeCodeLines(codeLines, language), [codeLines, language]);
@@ -127,7 +128,7 @@ export function FileViewerSheet({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold ${tone.border} ${tone.bg} ${tone.text}`}>
-              {showingDiff ? "DIFF" : showingAddedFile ? "ADDED" : language}
+              {showingDiff ? "DIFF" : showingAddedFile ? "ADDED" : showingUnchanged ? "UNCHANGED" : language}
             </span>
             <span className={`font-mono text-[9px] font-semibold uppercase tracking-[0.14em] ${tone.text}`}>{presentation.eyebrow}</span>
             <span className="truncate text-[10px] text-[var(--color-text-dim)]">{presentation.description}</span>
@@ -150,15 +151,18 @@ export function FileViewerSheet({
         </button>
       </header>
       <div className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-1.5 font-mono text-[10px] text-[var(--color-text-dim)]">
-        <span className="flex items-center gap-2"><span className={`h-1.5 w-1.5 rounded-full ${tone.bg} ring-1 ${tone.border}`} />{file.change === "added" ? "추가됨" : file.change === "deleted" ? "삭제됨" : "수정됨"}</span>
+        <span className="flex items-center gap-2"><span className={`h-1.5 w-1.5 rounded-full ${tone.bg} ring-1 ${tone.border}`} />{file.change === "added" ? "추가됨" : file.change === "deleted" ? "삭제됨" : file.change === "unchanged" ? "변경 없음" : "수정됨"}</span>
         <span>{lines.length}행 · {new Blob([text]).size.toLocaleString()} B</span>
       </div>
+      {showingUnchanged && <div className="shrink-0 border-b border-amber-300/20 bg-amber-300/[0.08] px-4 py-2 text-[11px] text-amber-100">
+        이 patch에서는 파일 내용이 바뀌지 않았습니다. 아래에는 이전 차수와 동일한 최종 본문을 표시합니다.
+      </div>}
       <div className="flex min-h-0 flex-1">
       <div ref={scrollRef} className="ck-scroll min-h-0 min-w-0 flex-1 overflow-auto font-mono text-[11px] leading-6 text-slate-300">
         {lines.map((line, index) => (
-          <div ref={(element) => { lineRefs.current[index] = element; }} key={index} className={`flex min-w-max border-b border-white/[0.015] ${showingAddedFile ? "bg-emerald-400/[0.08] text-emerald-200" : showingDiff && line.startsWith("+") && !line.startsWith("+++") ? "bg-emerald-400/[0.08] text-emerald-200" : showingDiff && line.startsWith("-") && !line.startsWith("---") ? "bg-rose-400/[0.08] text-rose-200" : ""}`}>
+          <div ref={(element) => { lineRefs.current[index] = element; }} key={index} className={`flex min-w-max border-b border-white/[0.015] ${showingAddedFile ? "bg-emerald-500/[0.18] text-emerald-100 shadow-[inset_3px_0_0_rgba(52,211,153,0.9)]" : showingDiff && line.startsWith("+") && !line.startsWith("+++") ? "bg-emerald-500/[0.18] text-emerald-100 shadow-[inset_3px_0_0_rgba(52,211,153,0.9)]" : showingDiff && line.startsWith("-") && !line.startsWith("---") ? "bg-rose-500/[0.18] text-rose-100 shadow-[inset_3px_0_0_rgba(251,113,133,0.9)]" : ""}`}>
             <span className="sticky left-0 w-12 shrink-0 select-none border-r border-white/5 bg-[#080c13] pr-3 text-right text-slate-600">{index + 1}</span>
-            <span className={`w-5 shrink-0 select-none text-center ${line.startsWith("-") ? "text-rose-400/80" : "text-emerald-400/80"}`}>{showingAddedFile ? "+" : showingDiff && /^[+\-]/.test(line) ? line[0] : ""}</span>
+            <span className={`w-5 shrink-0 select-none text-center font-bold ${line.startsWith("-") ? "text-rose-300" : "text-emerald-300"}`}>{showingAddedFile ? "+" : showingDiff && /^[+\-]/.test(line) ? line[0] : ""}</span>
             <span className="whitespace-pre pr-4">{highlightedLines[index]?.map((token, tokenIndex) => <span key={tokenIndex} className={syntaxColor[token.kind]}>{token.text}</span>) || " "}</span>
           </div>
         ))}

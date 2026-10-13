@@ -102,6 +102,7 @@ export function filesForRoadmapScope(selected: RoadmapNode, nodes: RoadmapNode[]
 
 export function fileViewerText(file: WorkResultFile): string {
   if (file.diff?.trim()) return file.diff;
+  if (file.unavailableReason && file.change !== "unchanged") return `${file.path}\n\n${file.unavailableReason}`;
   if (file.content?.trim()) return file.content;
   if (file.unavailableReason) return `${file.path}\n\n${file.unavailableReason}`;
   return `${file.path}\n\n이 작업 결과에는 저장된 diff/content가 없습니다.`;
