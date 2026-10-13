@@ -485,8 +485,8 @@ export function Sessions() {
                             {fileN}
                           </span>
                         )}
-                        <span className="flex items-center gap-1 font-sans font-medium text-cyan-300/80">
-                          <Calendar size={11} />
+                        <span className="flex items-center gap-1.5 font-sans text-[12px] font-semibold tracking-[0.04em] text-violet-300/90">
+                          <Calendar size={12} className="text-violet-400" />
                           {historyDisplayDate(log.completed_at)}
                         </span>
                       </div>
@@ -891,8 +891,8 @@ export function Sessions() {
             <p className="mb-1 text-[12px] font-medium text-cyan-300/80">{historyContextTitle(selectedHistory)}</p>
           )}
           <div className="mb-4 flex items-center gap-2">
-            <span className="flex items-center gap-1 text-[11px] font-medium text-cyan-300/80">
-              <Calendar size={11} />
+            <span className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.04em] text-violet-300/90">
+              <Calendar size={12} className="text-violet-400" />
               {historyDisplayDate(selectedHistory.completed_at)}
             </span>
             <span className="font-mono text-[11px] text-[var(--color-text-dim)]">{selectedHistory.id}</span>
