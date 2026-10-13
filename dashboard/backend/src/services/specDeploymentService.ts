@@ -41,22 +41,54 @@ async function git(project: string, args: string[]): Promise<string | null> {
 function safePaths(project: string, files: Source["files"]): boolean {
   return Array.isArray(files) && !!files.length && files.every(f => !!f && typeof f.path === "string" && !isAbsolute(f.path) && !relative(project, resolve(project, f.path)).startsWith("..") && /^(?:[a-f0-9]{64}|deleted)$/.test(f.hash));
 }
+async function recordedSnapshotCommit(project: string, source: Source): Promise<string | null> {
+  if (!Number.isFinite(Date.parse(source.recordedAt ?? "")) || !safePaths(project, source.files)) return null;
+  const paths = source.files!.map(file => file.path);
+  const history = await git(project, ["log", "--all", "--format=%H", "-200", `--since=${source.recordedAt}`, "--", ...paths]);
+  if (history === null) return null;
+  for (const commit of history.split("\n").filter(value => SHA.test(value))) {
+    let matches = true;
+    for (const file of source.files!) {
+      if (file.hash === "deleted") {
+        if (await git(project, ["ls-tree", commit, "--", file.path]) !== "") { matches = false; break; }
+        continue;
+      }
+      try {
+        const content = (await exec("git", ["-C", project, "show", `${commit}:${file.path}`], { timeout: 3000, maxBuffer: 2 * 1024 * 1024 })).stdout;
+        const normalized = source.hashEncoding === "lf" ? content.replace(/\r\n/g, "\n") : content;
+        if (createHash("sha256").update(normalized).digest("hex") !== file.hash) { matches = false; break; }
+      } catch { matches = false; break; }
+    }
+    // The checked-out branch can differ from the branch that AWS actually deployed.
+    // Prefer the newest exact snapshot; deployment ancestry is proved separately
+    // against the immutable runtime commit in commitIncluded().
+    if (matches) return commit;
+  }
+  return null;
+}
 async function resolveSource(source: Source, owned: Set<string>): Promise<Source | null> {
   if (!source || typeof source !== "object" || !owned.has(source.projectPath)) return null;
   if (source.state === "committed" && SHA.test(source.commit ?? "")) return source;
   if (source.state === "unknown") return source;
   if (source.state !== "pending" || !safePaths(source.projectPath, source.files)) return null;
   const paths = source.files!.map(f => f.path);
-  if (await git(source.projectPath, ["status", "--porcelain", "--", ...paths]) !== "") return source;
+  const status = await git(source.projectPath, ["status", "--porcelain", "--", ...paths]);
+  if (status === null) return source;
+  if (status !== "") {
+    const commit = await recordedSnapshotCommit(source.projectPath, source);
+    return commit && SHA.test(commit) ? { ...source, commit, state: "committed" } : source;
+  }
+  let currentMatches = true;
   for (const f of source.files!) {
     let hash: string;
     try { hash = createHash("sha256").update(source.hashEncoding === "lf" ? (await readFile(resolve(source.projectPath, f.path), "utf8")).replace(/\r\n/g, "\n") : await readFile(resolve(source.projectPath, f.path))).digest("hex"); }
     catch (e) { if ((e as NodeJS.ErrnoException).code !== "ENOENT") return source; hash = "deleted"; }
-    if (hash !== f.hash) return source;
+    if (hash !== f.hash) currentMatches = false;
   }
-  const time = await git(source.projectPath, ["log", "-1", "--format=%ct", "--", ...paths]);
-  if (Number(time) < Math.floor(Date.parse(source.recordedAt ?? "") / 1000) || !Number.isFinite(Date.parse(source.recordedAt ?? ""))) return source;
-  const commit = await git(source.projectPath, ["rev-parse", "HEAD"]);
+  const time = currentMatches ? await git(source.projectPath, ["log", "-1", "--format=%ct", "--", ...paths]) : null;
+  const commit = currentMatches && Number(time) >= Math.floor(Date.parse(source.recordedAt ?? "") / 1000)
+    ? await git(source.projectPath, ["rev-parse", "HEAD"])
+    : await recordedSnapshotCommit(source.projectPath, source);
   return commit && SHA.test(commit) ? { ...source, commit, state: "committed" } : source;
 }
 /** Direct ancestry, or identical changed-file blobs after squash/cherry-pick. Never compare mutable branch names. */

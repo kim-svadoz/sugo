@@ -63,7 +63,9 @@ it("checks actual Git ancestry, unrelated revisions, squash equivalent files and
     expect(view.environments.map(e => [e.environment, e.included])).toEqual([["dev", 2], ["stg", 1]]);
     expect(view.sources?.[1]).toMatchObject({ state: "committed", commit: finalCommit });
     writeFileSync(join(dir, "a.txt"), "edited after completion");
-    expect((await projectSpecDeployments(db, "u", "ws", nodes)).get("spec")?.sources?.[1]).toMatchObject({ state: "pending", commit: null });
+    expect((await projectSpecDeployments(db, "u", "ws", nodes)).get("spec")?.sources?.[1]).toMatchObject({ state: "committed", commit: finalCommit });
+    git("add", "a.txt"); git("commit", "-m", "later feature edit");
+    expect((await projectSpecDeployments(db, "u", "ws", nodes)).get("spec")?.sources?.[1]).toMatchObject({ state: "committed", commit: finalCommit });
   } finally { await db.close(); }
 
 
