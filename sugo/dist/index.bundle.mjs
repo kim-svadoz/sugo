@@ -28164,7 +28164,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.29.0" : "0.0.0-dev";
+  return true ? "0.29.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -31944,7 +31944,7 @@ async function handleSugoPlan(rawArgs) {
     const prRefs = await collectPrRefs(session.projectPath) ?? void 0;
     const workLog = await addWorkLog(workspace, {
       task_id: session.data.hulkTaskId,
-      task_title: session.featureName,
+      task_title: taskCycleTitle(session.data.chainInfo.reviewSummary, session.featureName),
       completed_at: (/* @__PURE__ */ new Date()).toISOString(),
       summary: session.data.chainInfo.reviewSummary,
       files_changed: session.data.chainInfo.changedFiles,

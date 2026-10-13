@@ -1185,7 +1185,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     const prRefs = (await collectPrRefs(session.projectPath)) ?? undefined;
     const workLog = await addWorkLog(workspace, {
       task_id: session.data.hulkTaskId,
-      task_title: session.featureName,
+      task_title: taskCycleTitle(session.data.chainInfo.reviewSummary, session.featureName),
       completed_at: new Date().toISOString(),
       summary: session.data.chainInfo.reviewSummary,
       files_changed: session.data.chainInfo.changedFiles,

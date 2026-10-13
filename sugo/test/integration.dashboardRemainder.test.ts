@@ -137,7 +137,7 @@ describe("commit → prRefs 수집 + WorkLog에 실림", () => {
     const historyPush = received.find((r) => r.path === "/api/sync/history");
     expect(historyPush).toBeDefined();
     const body = historyPush!.body as { id: string; taskTitle: string; prRefs?: unknown };
-    expect(body.taskTitle).toBe("login");
+    expect(body.taskTitle).toBe("배경: 로그인이 없었다.");
     expect(body.prRefs).toBeUndefined();
 
     // prRefs가 실제로 수집됐는지는 로컬 WorkLog(history 파일)로 확인한다.

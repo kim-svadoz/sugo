@@ -42,6 +42,7 @@ import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
 import { useRoadmap } from "../hooks/useRoadmap.js";
 import { compareRelease, shortCommit, type ReleaseComparison } from "../lib/awsReleasePresentation.js";
 import { presentSteKorean } from "../lib/steKorean.js";
+import { historyDisplayTitle } from "../lib/historyPresentation.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
@@ -463,9 +464,14 @@ export function Sessions() {
                       onClick={() => setSelectedHistory(log)}
                       className="flex w-full items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-left transition-colors hover:border-purple-500/50"
                     >
-                      <p className="min-w-0 flex-1 truncate text-[13px] text-[var(--color-text)]">
-                        {log.task_title || log.summary || log.id}
-                      </p>
+                      <div className="min-w-0 flex-1" title={historyDisplayTitle(log)}>
+                        <p className="line-clamp-2 text-[13px] leading-5 text-[var(--color-text-bright)]">
+                          {historyDisplayTitle(log)}
+                        </p>
+                        {log.task_title && log.task_title !== historyDisplayTitle(log) && (
+                          <p className="mt-0.5 truncate font-mono text-[10px] text-[var(--color-text-dim)]">범위 · {log.task_title}</p>
+                        )}
+                      </div>
                       <div className="flex shrink-0 items-center gap-2 font-mono text-[11px] text-[var(--color-text-dim)]">
                         {decN > 0 && (
                           <span className="flex items-center gap-0.5" title={`${decN} decisions`}>
@@ -879,8 +885,11 @@ export function Sessions() {
       {selectedHistory && (
         <Modal onClose={() => setSelectedHistory(null)}>
           <h3 className="mb-1 text-[15px] font-semibold text-[var(--color-text-bright)]">
-            {selectedHistory.task_title || selectedHistory.id}
+            {historyDisplayTitle(selectedHistory)}
           </h3>
+          {selectedHistory.task_title && selectedHistory.task_title !== historyDisplayTitle(selectedHistory) && (
+            <p className="mb-1 font-mono text-[11px] text-[var(--color-text-muted)]">작업 범위 · {selectedHistory.task_title}</p>
+          )}
           <p className="mb-4 font-mono text-[11px] text-[var(--color-text-dim)]">
             {formatDate(selectedHistory.completed_at)} · {selectedHistory.id}
           </p>
