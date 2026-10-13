@@ -485,8 +485,8 @@ export function Sessions() {
                             {fileN}
                           </span>
                         )}
-                        <span className="flex items-center gap-0.5">
-                          <Calendar size={10} />
+                        <span className="flex items-center gap-1 rounded-md border border-cyan-400/25 bg-cyan-400/10 px-2 py-1 font-sans font-medium text-cyan-200">
+                          <Calendar size={11} className="text-cyan-300" />
                           {historyDisplayDate(log.completed_at)}
                         </span>
                       </div>
@@ -890,9 +890,13 @@ export function Sessions() {
           {historyContextTitle(selectedHistory) && (
             <p className="mb-1 text-[12px] font-medium text-cyan-300/80">{historyContextTitle(selectedHistory)}</p>
           )}
-          <p className="mb-4 font-mono text-[11px] text-[var(--color-text-dim)]">
-            {historyDisplayDate(selectedHistory.completed_at)} · {selectedHistory.id}
-          </p>
+          <div className="mb-4 flex items-center gap-2">
+            <span className="flex items-center gap-1 rounded-md border border-cyan-400/25 bg-cyan-400/10 px-2 py-1 text-[11px] font-medium text-cyan-200">
+              <Calendar size={11} className="text-cyan-300" />
+              {historyDisplayDate(selectedHistory.completed_at)}
+            </span>
+            <span className="font-mono text-[11px] text-[var(--color-text-dim)]">{selectedHistory.id}</span>
+          </div>
           {selectedHistory.summary && (
             <p className="mb-4 whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text)]">
               {presentSteKorean(selectedHistory.summary)}
