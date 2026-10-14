@@ -1,8 +1,14 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { countUpcomingScheduledSpecs, daySpecOverflowClass, isManualSpec, scheduleCardStyle, visibleRegisteredSpecs } from "./schedulePresentation.js";
+import { countUpcomingScheduledSpecs, daySpecOverflowClass, isManualSpec, scheduleCardStyle, schedulePresentationReady, visibleRegisteredSpecs } from "./schedulePresentation.js";
 
 describe("schedule presentation", () => {
+  it("워크스페이스 색상 순서가 오기 전에는 Schedule 카드를 노출하지 않는다", () => {
+    expect(schedulePresentationReady([{}], null)).toBe(false);
+    expect(schedulePresentationReady(null, [{}])).toBe(false);
+    expect(schedulePresentationReady([{}], [])).toBe(true);
+  });
+
   it("오늘 이후 마감일이 등록된 Spec만 제목 개수에 포함한다", () => {
     expect(countUpcomingScheduledSpecs([
       { due_date: "2026-09-29", status: "done" },

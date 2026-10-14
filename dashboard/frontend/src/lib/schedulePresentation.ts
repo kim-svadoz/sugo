@@ -1,5 +1,14 @@
 type ScheduleStatusItem = { due_date: string | null; status: string };
 
+/** 카드 색은 워크스페이스 목록 순서가 정본이다. 두 응답 중 하나라도 아직 없으면 임시 색으로
+ * 카드를 그리지 않고, 둘 다 준비된 뒤 한 번만 올바른 색으로 표시한다. */
+export function schedulePresentationReady(
+  specs: readonly unknown[] | null,
+  workspaces: readonly unknown[] | null,
+): boolean {
+  return specs !== null && workspaces !== null;
+}
+
 /** Schedule 제목은 오늘부터 앞으로 날짜가 잡힌 SPEC 수를 보여준다. 상태와 기한 미정은 섞지 않는다. */
 export function countUpcomingScheduledSpecs(specs: ScheduleStatusItem[], todayKey: string): number {
   return specs.filter((spec) => spec.due_date !== null && spec.due_date >= todayKey).length;

@@ -5,7 +5,7 @@ import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
-import { countUpcomingScheduledSpecs, daySpecOverflowClass, scheduleCardStyle, visibleRegisteredSpecs } from "../lib/schedulePresentation.js";
+import { countUpcomingScheduledSpecs, daySpecOverflowClass, scheduleCardStyle, schedulePresentationReady, visibleRegisteredSpecs } from "../lib/schedulePresentation.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -52,8 +52,8 @@ function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compac
 
 export function SchedulePage() {
   const { userId } = useAuth();
-  const { data: workspaces } = useWorkspaces();
-  const { data: specs, memos, loading, refetch } = useSchedule();
+  const { data: workspaces, error: workspaceError } = useWorkspaces();
+  const { data: specs, memos, refetch } = useSchedule();
 
   const today = nowKST();
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
@@ -334,6 +334,17 @@ export function SchedulePage() {
     [workspaces, selected?.workspace_name],
   );
 
+  if (!schedulePresentationReady(specs, workspaces)) {
+    return (
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">Schedule</h1>
+        <div className="ck-glass ck-card flex min-h-0 flex-1 items-center justify-center text-[12px] text-[var(--color-text-dim)]">
+          {workspaceError ? "워크스페이스 색상 정보를 불러오지 못했습니다." : "불러오는 중…"}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -588,8 +599,6 @@ export function SchedulePage() {
           </div>
         </div>
       </div>
-
-      {loading && !specs && <p className="text-center text-[12px] text-[var(--color-text-dim)]">불러오는 중…</p>}
 
       {memoTarget && <ScheduleMemoPanel memo={memoTarget.memo} initialDate={memoTarget.initialDate} busy={busy} onSave={saveMemo} onDelete={memoTarget.memo ? removeMemo : undefined} onClose={() => setMemoTarget(null)} />}
 
