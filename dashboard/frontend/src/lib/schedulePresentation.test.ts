@@ -51,7 +51,8 @@ describe("schedule presentation", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).not.toContain('max-w-full truncate font-mono text-[9.5px] font-semibold text-slate-300');
     expect(source).not.toContain('mr-1 font-mono text-[9px] font-semibold text-slate-400');
-    expect(source).toContain('title={`${s.workspace_name} · ${s.title}`}');
+    expect(source).toContain("{commitment.title}</button>");
+    expect(source).not.toContain("{commitment.workspace_name}</span>");
   });
 
   it("기한 초과는 외곽선 대신 명시적인 경고 배지로 표시한다", () => {
@@ -77,10 +78,11 @@ describe("schedule presentation", () => {
     expect(source).toContain("grid-rows-6 gap-1 overflow-auto p-px");
   });
 
-  it("RUN이 시작된 모든 SPEC 카드에 진행중 단계를 표시한다", () => {
+  it("파이프라인 완료와 일정 완료를 서로 다른 상태로 표시한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain("const guidance = scheduleAttention(spec)");
-    expect(source).toContain('<SpecStageBadge spec={s} compact />');
+    expect(source).toContain("파이프라인 완료");
+    expect(source).toContain("일정 완료");
+    expect(source).toContain("setCommitmentClosed");
   });
 
   it("Schedule 카드 클릭은 상세만 열고 Canvas는 명시적 버튼으로만 연다", () => {
@@ -96,15 +98,14 @@ describe("schedule presentation", () => {
     expect(source).toContain('onDoubleClick={() => dayChips.length === 0 && dayMemos.length === 0 && setMemoTarget({ initialDate: key })}');
   });
 
-  it("메모는 SPEC 등록완료와 분리된 전용 탭에만 표시한다", () => {
+  it("메모는 Planning Inbox와 분리된 전용 탭에만 표시한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain("useState<SchedulePanelMode | null>(null)");
+    expect(source).toContain('useState<"backlog" | "memo">("backlog")');
     expect(source).toContain('onClick={() => setPanelMode("memo")}');
     expect(source).toContain("sortedMemos.map");
     expect(source).toContain('panelMode === "memo"');
+    expect(source).toContain("Planning Inbox");
     expect(source).toContain("whitespace-nowrap");
-    expect(source).not.toContain("기한 미정 · {backlog.length}");
-    expect(source).not.toContain("등록완료 · {scheduledSorted.length}");
     expect(source).not.toContain("scheduledMemos.map");
     expect(source).not.toContain("memoBacklog.map");
   });

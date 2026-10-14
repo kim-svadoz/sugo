@@ -82,6 +82,26 @@ CREATE TABLE IF NOT EXISTS sugo_schedule_memos (
 
 CREATE INDEX IF NOT EXISTS idx_schedule_memos_due ON sugo_schedule_memos(user_id, due_date);
 
+CREATE TABLE IF NOT EXISTS sugo_schedule_commitments (
+  id TEXT NOT NULL,
+  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,
+  workspace_name TEXT NOT NULL,
+  spec_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  due_date TEXT,
+  state TEXT NOT NULL DEFAULT 'planned' CHECK (state IN ('planned','active','completed','cancelled')),
+  target TEXT NOT NULL DEFAULT 'custom' CHECK (target IN ('implementation','review','dev','stg','prd','custom')),
+  linked_run_id TEXT,
+  completed_at TEXT,
+  completed_by TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_schedule_commitments_due ON sugo_schedule_commitments(user_id, due_date);
+CREATE INDEX IF NOT EXISTS idx_schedule_commitments_spec ON sugo_schedule_commitments(user_id, workspace_name, spec_id);
+
 CREATE TABLE IF NOT EXISTS sugo_decisions (
   id TEXT NOT NULL,
   user_id TEXT NOT NULL,

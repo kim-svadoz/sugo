@@ -81,6 +81,26 @@ CREATE TABLE IF NOT EXISTS sugo_schedule_memos (
   CONSTRAINT fk_schedule_memos_user FOREIGN KEY (user_id) REFERENCES sugo_users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS sugo_schedule_commitments (
+  id VARCHAR(191) NOT NULL,
+  user_id VARCHAR(191) NOT NULL,
+  workspace_name VARCHAR(255) NOT NULL,
+  spec_id VARCHAR(191) NOT NULL,
+  title VARCHAR(512) NOT NULL,
+  due_date DATE NULL,
+  state ENUM('planned','active','completed','cancelled') NOT NULL DEFAULT 'planned',
+  target ENUM('implementation','review','dev','stg','prd','custom') NOT NULL DEFAULT 'custom',
+  linked_run_id VARCHAR(191) NULL,
+  completed_at TIMESTAMP NULL,
+  completed_by VARCHAR(191) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, id),
+  KEY idx_schedule_commitments_due (user_id, due_date),
+  KEY idx_schedule_commitments_spec (user_id, workspace_name, spec_id),
+  CONSTRAINT fk_schedule_commitments_user FOREIGN KEY (user_id) REFERENCES sugo_users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS sugo_decisions (
   id VARCHAR(191) NOT NULL,
   user_id VARCHAR(191) NOT NULL,

@@ -5,7 +5,7 @@ import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
-import { countUpcomingScheduledSpecs, daySpecOverflowClass, defaultSchedulePanelMode, scheduleCardStyle, schedulePresentationReady, visibleRegisteredSpecs, type SchedulePanelMode } from "../lib/schedulePresentation.js";
+import { daySpecOverflowClass, scheduleCardStyle, schedulePresentationReady } from "../lib/schedulePresentation.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -22,9 +22,9 @@ import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setPro
 import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
-import { schedulePulse } from "../lib/operationalPulse.js";
 import { OperationalPulse } from "../components/OperationalPulse.js";
-import { buildScheduleAgenda } from "../lib/experienceModel.js";
+import { buildCommitmentQueue, commitmentNextAction, legacyCommitments, type CommitmentView } from "../lib/scheduleCommitment.js";
+import { completeScheduleCommitment, createScheduleCommitment, reopenScheduleCommitment, updateScheduleCommitment, type CommitmentTarget } from "../api/scheduleCommitmentApi.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -50,13 +50,14 @@ function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compac
     done: "bg-emerald-500/15 text-emerald-300",
     pending: "bg-slate-500/15 text-slate-400",
   } as const)[guidance.kind];
-  return <span className={cn("shrink-0 rounded px-1 py-0.5 font-semibold", compact ? "text-[8px]" : "text-[9px]", tone)}>{guidance.label}</span>;
+  const label = guidance.kind === "done" ? "파이프라인 완료" : guidance.label;
+  return <span className={cn("shrink-0 rounded px-1 py-0.5 font-semibold", compact ? "text-[8px]" : "text-[9px]", tone)}>{label}</span>;
 }
 
 export function SchedulePage() {
   const { userId } = useAuth();
   const { data: workspaces, error: workspaceError } = useWorkspaces();
-  const { data: specs, memos, refetch } = useSchedule();
+  const { data: specs, memos, commitments, refetch } = useSchedule();
 
   const today = nowKST();
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
@@ -73,11 +74,16 @@ export function SchedulePage() {
   const [addImages, setAddImages] = useState<Array<{ file: File; url: string }>>([]);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [commitmentFormOpen, setCommitmentFormOpen] = useState(false);
+  const [commitmentTitle, setCommitmentTitle] = useState("");
+  const [commitmentTarget, setCommitmentTarget] = useState<CommitmentTarget>("implementation");
+  const [commitmentDueDate, setCommitmentDueDate] = useState<string | null>(null);
 
   function openSpec(spec: ScheduledSpec) {
     setDeleteConfirm(false);
     setBranchDraft(null);
     setSelected(spec);
+    setCommitmentFormOpen(false);
   }
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
   // 안 보이면 사용자가 헷갈린다(2026-09-23 사용자 피드백). 성공 시 잠깐 "저장됨"을 보여준다.
@@ -111,17 +117,6 @@ export function SchedulePage() {
     return (name: string) => getWorkspaceColor(name, order.get(name) ?? 0);
   }, [workspaces]);
 
-  const byDate = useMemo(() => {
-    const map = new Map<string, ScheduledSpec[]>();
-    for (const s of specs ?? []) {
-      if (!s.due_date) continue;
-      const list = map.get(s.due_date) ?? [];
-      list.push(s);
-      map.set(s.due_date, list);
-    }
-    return map;
-  }, [specs]);
-
   const memosByDate = useMemo(() => {
     const map = new Map<string, ScheduledMemo[]>();
     for (const memo of memos ?? []) {
@@ -131,7 +126,6 @@ export function SchedulePage() {
     return map;
   }, [memos]);
 
-  const backlog = useMemo(() => (specs ?? []).filter((s) => !s.due_date), [specs]);
   const sortedMemos = useMemo(
     () => [...(memos ?? [])].sort((a, b) => {
       if (!a.due_date) return 1;
@@ -141,21 +135,91 @@ export function SchedulePage() {
     [memos],
   );
 
-  // 왼쪽 패널: "기한 미정"만 보던 걸 "등록완료"(마감일이 잡힌 것)로도 전환할 수 있게 —
-  // 마감일이 화면에 보이는 달을 벗어나 있으면(예: 오늘은 9월인데 마감은 10월) 달력만으론
-  // 존재 자체를 놓친다.
-  const [selectedPanelMode, setPanelMode] = useState<SchedulePanelMode | null>(null);
-  const scheduledSorted = useMemo(
-    () => visibleRegisteredSpecs(specs ?? [], todayKey).sort((a, b) => a.due_date!.localeCompare(b.due_date!)),
-    [specs, todayKey],
+  const [panelMode, setPanelMode] = useState<"backlog" | "memo">("backlog");
+  const commitmentViews = useMemo<CommitmentView[]>(() => {
+    if (!specs) return [];
+    if (commitments === null) return legacyCommitments(specs);
+    const specByKey = new Map(specs.map((spec) => [`${spec.workspace_name}:${spec.id}`, spec]));
+    const explicit = commitments.map((commitment) => {
+      const spec = specByKey.get(`${commitment.workspace_name}:${commitment.spec_id}`);
+      return {
+        ...commitment,
+        pipeline_status: spec?.status,
+        current_environment: spec?.deployment?.environment,
+      };
+    });
+    const committedSpecs = new Set(commitments.map((item) => `${item.workspace_name}:${item.spec_id}`));
+    const legacy = legacyCommitments(specs.filter((spec) => !committedSpecs.has(`${spec.workspace_name}:${spec.id}`)));
+    return [...explicit, ...legacy];
+  }, [commitments, specs]);
+  const agenda = useMemo(() => buildCommitmentQueue(commitmentViews, todayKey), [commitmentViews, todayKey]);
+  const planningInbox = useMemo(() => commitmentViews.filter((item) => item.state !== "completed" && item.state !== "cancelled" && !item.due_date), [commitmentViews]);
+  const byDate = useMemo(() => {
+    const map = new Map<string, CommitmentView[]>();
+    for (const item of commitmentViews) {
+      if (!item.due_date) continue;
+      map.set(item.due_date, [...(map.get(item.due_date) ?? []), item]);
+    }
+    return map;
+  }, [commitmentViews]);
+  const openCommitmentCount = useMemo(() => commitmentViews.filter((item) => item.state !== "completed" && item.state !== "cancelled").length, [commitmentViews]);
+  const commitmentPulse = useMemo(() => {
+    const open = commitmentViews.filter((item) => item.state === "planned" || item.state === "active");
+    const weekEnd = new Date(`${todayKey}T00:00:00Z`);
+    weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
+    const weekEndKey = weekEnd.toISOString().slice(0, 10);
+    return {
+      dueToday: open.filter((item) => item.due_date === todayKey).length,
+      dueThisWeek: open.filter((item) => item.due_date && item.due_date >= todayKey && item.due_date <= weekEndKey).length,
+      overdue: open.filter((item) => item.due_date && item.due_date < todayKey).length,
+      unscheduled: open.filter((item) => !item.due_date).length,
+    };
+  }, [commitmentViews, todayKey]);
+
+  function specForCommitment(commitment: CommitmentView): ScheduledSpec | null {
+    return specs?.find((spec) => spec.workspace_name === commitment.workspace_name && spec.id === commitment.spec_id) ?? null;
+  }
+  const selectedCommitments = useMemo(
+    () => selected ? commitmentViews.filter((item) => item.workspace_name === selected.workspace_name && item.spec_id === selected.id && !item.id.startsWith("legacy:")) : [],
+    [commitmentViews, selected],
   );
-  const panelMode = selectedPanelMode ?? defaultSchedulePanelMode(backlog.length, scheduledSorted.length);
-  const upcomingScheduledCount = useMemo(
-    () => countUpcomingScheduledSpecs(specs ?? [], todayKey),
-    [specs, todayKey],
-  );
-  const pulse = useMemo(() => schedulePulse(specs ?? [], todayKey), [specs, todayKey]);
-  const agenda = useMemo(() => buildScheduleAgenda(specs ?? [], todayKey), [specs, todayKey]);
+
+  async function addCommitment() {
+    if (!userId || !selected || !commitmentTitle.trim()) return;
+    setBusy(true);
+    setErrorMsg(null);
+    try {
+      await createScheduleCommitment(userId, {
+        specId: selected.id,
+        workspaceName: selected.workspace_name,
+        title: commitmentTitle.trim(),
+        dueDate: commitmentDueDate,
+        target: commitmentTarget,
+      });
+      setCommitmentFormOpen(false);
+      setCommitmentTitle("");
+      refetch();
+    } catch {
+      setErrorMsg("작업 약속을 추가하지 못했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function setCommitmentClosed(commitment: CommitmentView, closed: boolean) {
+    if (!userId) return;
+    setBusy(true);
+    setErrorMsg(null);
+    try {
+      if (closed) await completeScheduleCommitment(userId, commitment.id);
+      else await reopenScheduleCommitment(userId, commitment.id);
+      refetch();
+    } catch {
+      setErrorMsg(closed ? "작업 약속을 완료하지 못했습니다." : "작업 약속을 재개하지 못했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function jumpToDate(dueDate: string) {
     const [year, month] = dueDate.split("-").map(Number);
@@ -249,7 +313,12 @@ export function SchedulePage() {
     e.dataTransfer.setData(SCHEDULE_DRAG_TYPE, encodeScheduleDrag({ kind: "memo", id: memo.id }));
   }
 
-  function dropSpec(e: DragEvent<HTMLElement>, dueDate: string | null) {
+  function startCommitmentDrag(e: DragEvent<HTMLElement>, commitment: CommitmentView) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData(SCHEDULE_DRAG_TYPE, encodeScheduleDrag({ kind: "commitment", id: commitment.id }));
+  }
+
+  function dropScheduleItem(e: DragEvent<HTMLElement>, dueDate: string | null) {
     e.preventDefault();
     setDragOverKey(null);
     const payload = decodeScheduleDrag(e.dataTransfer.getData(SCHEDULE_DRAG_TYPE));
@@ -259,6 +328,13 @@ export function SchedulePage() {
       if (!memo || memo.due_date === dueDate || !userId) return;
       setErrorMsg(null);
       void setScheduleMemoDueDate(userId, memo.id, dueDate).then(refetch).catch(() => setErrorMsg("메모 날짜 저장에 실패했습니다."));
+      return;
+    }
+    if (payload.kind === "commitment") {
+      const commitment = (commitments ?? []).find((item) => item.id === payload.id);
+      if (!commitment || commitment.due_date === dueDate || !userId) return;
+      setErrorMsg(null);
+      void updateScheduleCommitment(userId, { ...commitment, due_date: dueDate }).then(refetch).catch(() => setErrorMsg("약속 날짜 저장에 실패했습니다."));
       return;
     }
     const spec = (specs ?? []).find((item) => item.id === payload.id && item.workspace_name === payload.workspaceName);
@@ -358,17 +434,17 @@ export function SchedulePage() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">
             Schedule{" "}
-            <span className="font-normal text-[var(--color-text-dim)]" title="오늘 이후 마감일이 등록된 SPEC 수">
-              ({upcomingScheduledCount})
+            <span className="font-normal text-[var(--color-text-dim)]" title="현재 열려 있는 작업 약속 수">
+              ({openCommitmentCount})
             </span>
           </h1>
           <OperationalPulse
             label="일정 운영 현황"
             items={[
-              { label: "오늘", value: pulse.dueToday, icon: Clock, tone: pulse.dueToday > 0 ? "cyan" : "neutral" },
-              { label: "7일 내", value: pulse.dueThisWeek, icon: CalendarDays, tone: pulse.dueThisWeek > 0 ? "cyan" : "neutral" },
-              { label: "기한 초과", value: pulse.overdue, icon: AlertTriangle, tone: pulse.overdue > 0 ? "danger" : "neutral" },
-              { label: "기한 미정", value: pulse.unscheduled, icon: CircleDashed, tone: pulse.unscheduled > 0 ? "warning" : "neutral" },
+              { label: "오늘", value: commitmentPulse.dueToday, icon: Clock, tone: commitmentPulse.dueToday > 0 ? "cyan" : "neutral" },
+              { label: "7일 내", value: commitmentPulse.dueThisWeek, icon: CalendarDays, tone: commitmentPulse.dueThisWeek > 0 ? "cyan" : "neutral" },
+              { label: "기한 초과", value: commitmentPulse.overdue, icon: AlertTriangle, tone: commitmentPulse.overdue > 0 ? "danger" : "neutral" },
+              { label: "기한 미정", value: commitmentPulse.unscheduled, icon: CircleDashed, tone: commitmentPulse.unscheduled > 0 ? "warning" : "neutral" },
             ]}
           />
         </div>
@@ -406,20 +482,16 @@ export function SchedulePage() {
       )}
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[220px_1fr]">
-        {/* 기한 미정 백로그 / 전체 목록 토글 */}
         <div
-          className={cn(
-            "ck-glass ck-card flex flex-col gap-2 overflow-auto p-3 transition-colors",
-            dragOverKey === "backlog" && "border-cyan-400 bg-cyan-500/10",
-          )}
-          onDragOver={(e) => {
-            if (panelMode === "scheduled") return;
-            e.preventDefault();
-            e.dataTransfer.dropEffect = "move";
+          className="ck-glass ck-card flex flex-col gap-2 overflow-auto p-3 transition-colors"
+          onDragOver={(event) => {
+            if (panelMode !== "backlog") return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
             setDragOverKey("backlog");
           }}
           onDragLeave={() => setDragOverKey((key) => (key === "backlog" ? null : key))}
-          onDrop={(e) => panelMode !== "scheduled" && dropSpec(e, null)}
+          onDrop={(e) => panelMode === "backlog" && dropScheduleItem(e, null)}
         >
           <div className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-[var(--color-border)] p-0.5 text-[11px] font-semibold">
             <button
@@ -428,15 +500,7 @@ export function SchedulePage() {
               aria-selected={panelMode === "backlog"}
               className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "backlog" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
             >
-              기한 미정
-            </button>
-            <button
-              onClick={() => setPanelMode("scheduled")}
-              role="tab"
-              aria-selected={panelMode === "scheduled"}
-              className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "scheduled" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
-            >
-              등록완료
+              Planning Inbox
             </button>
             <button
               onClick={() => setPanelMode("memo")}
@@ -450,68 +514,24 @@ export function SchedulePage() {
 
           {panelMode === "backlog" ? (
             <>
-              {backlog.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">없음. 여기 끌어다 놓으면 날짜가 풀립니다.</p>}
-              {backlog.map((s) => {
-                const style = scheduleCardStyle(colorOf(s.workspace_name));
+              {planningInbox.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">날짜를 정할 약속이 없습니다.</p>}
+              {planningInbox.map((commitment) => {
+                const style = scheduleCardStyle(colorOf(commitment.workspace_name));
+                const action = commitmentNextAction(commitment);
+                const spec = specForCommitment(commitment);
                 return (
-                  <div
-                    key={s.id}
-                    draggable
-                    onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
-                    onDragEnd={() => setDragOverKey(null)}
-                    onClick={() => openSpec(s)}
+                  <button
+                    key={commitment.id}
+                    type="button"
+                    onClick={() => spec && openSpec(spec)}
                     style={style}
-                    className="flex min-h-9 cursor-grab items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[12.5px] font-semibold text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)] active:cursor-grabbing"
-                    title={`${s.workspace_name} · ${s.title} · 캘린더 날짜 칸으로 끌어놓으면 마감일이 지정됩니다`}
+                    className="flex min-h-12 flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)]"
+                    title={`${commitment.workspace_name} · ${commitment.title}`}
                   >
-                    <span className="min-w-0 flex-1 truncate">{s.title}</span>
-                    <SpecStageBadge spec={s} />
-                      <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
-                  </div>
-                );
-              })}
-            </>
-          ) : panelMode === "scheduled" ? (
-            <>
-              {scheduledSorted.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">날짜가 지정된 항목이 없습니다.</p>}
-              {scheduledSorted.map((s) => {
-                const style = scheduleCardStyle(colorOf(s.workspace_name));
-                const remaining = daysUntil(s.due_date!);
-                const open = isOpenStatus(s);
-                const overdue = remaining < 0 && open;
-                // "3일보다 안 남은 애들은(3일 포함) 전부 기한임박" — 0~3일 남은 것만. 이미 지난 건 위의 기한 초과.
-                const dueSoon = remaining >= 0 && remaining <= 3 && open;
-                return (
-                  <div
-                    key={s.id}
-                    draggable
-                    onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
-                    onDragEnd={() => setDragOverKey(null)}
-                    onClick={() => {
-                      openSpec(s);
-                      jumpToDate(s.due_date!);
-                    }}
-                    style={style}
-                    className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)] active:cursor-grabbing"
-                    title={`${s.workspace_name} · ${s.title} · 클릭하면 마감월로 이동합니다`}
-                  >
-                    <span className="min-w-0 truncate text-[12.5px] font-semibold">{s.title}</span>
-                    <span className="flex flex-wrap items-center gap-1">
-                      <span className="font-mono text-[9.5px] text-slate-300/80">{s.due_date}</span>
-                      <SpecStageBadge spec={s} />
-                      <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
-                      {overdue && (
-                        <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-rose-300">
-                          <AlertTriangle size={9} /> 기한 초과
-                        </span>
-                      )}
-                      {dueSoon && (
-                        <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">
-                          <Clock size={9} /> 기한임박 · D-{remaining}
-                        </span>
-                      )}
-                    </span>
-                  </div>
+                    <span className="w-full truncate text-[12.5px] font-semibold">{commitment.title}</span>
+                    <span className="text-[10px] text-cyan-200">{action.label}</span>
+                    <span className="line-clamp-2 text-[9.5px] text-[var(--color-text-dim)]">{action.detail}</span>
+                  </button>
                 );
               })}
             </>
@@ -539,12 +559,12 @@ export function SchedulePage() {
         </div>
 
         {scheduleView === "agenda" ? (
-          <section className="ck-glass command-stage ck-stage-in flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)]" aria-label="다가오는 일정">
+          <section className="ck-glass command-stage ck-stage-in flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)]" aria-label="실행 대기열">
             <div className="flex shrink-0 items-end justify-between border-b border-[var(--color-border)] px-5 py-4">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-cyan-300/80">Execution horizon</p>
-                <h2 className="mt-1 text-xl font-semibold text-[var(--color-text-bright)]">다가오는 일정</h2>
-                <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">위험한 일정부터 확인하고, 카드를 선택해 바로 실행 맥락으로 들어갑니다.</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-cyan-300/80">Action Queue</p>
+                <h2 className="mt-1 text-xl font-semibold text-[var(--color-text-bright)]">지금 지켜야 할 약속</h2>
+                <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">파이프라인 완료와 일정 종료를 구분하고, 다음 행동이 있는 약속만 보여줍니다.</p>
               </div>
               <button type="button" onClick={() => setScheduleView("month")} className="rounded-lg px-3 py-2 text-[12px] font-semibold text-[var(--color-text-muted)] hover:bg-white/[0.05] hover:text-white">월간 배치 보기 →</button>
             </div>
@@ -552,8 +572,8 @@ export function SchedulePage() {
               {agenda.length === 0 ? (
                 <div className="flex h-full min-h-56 flex-col items-center justify-center text-center">
                   <Check size={28} className="mb-3 text-emerald-300" />
-                  <h3 className="text-base font-semibold text-white">예정된 일정이 없습니다</h3>
-                  <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">왼쪽 대기열에서 기한을 정하거나 새 SPEC 일정을 추가하세요.</p>
+                  <h3 className="text-base font-semibold text-white">열린 약속이 없습니다</h3>
+                  <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">새 작업이 생기면 같은 SPEC 아래에 실행 약속을 추가하세요.</p>
                 </div>
               ) : (
                 <div className="space-y-5">
@@ -566,31 +586,34 @@ export function SchedulePage() {
                         <span className="text-[11px] text-[var(--color-text-dim)]">{group.description}</span>
                       </div>
                       <div className="grid gap-2 xl:grid-cols-2">
-                        {group.items.map((spec) => {
-                          const remaining = daysUntil(spec.due_date!);
-                          const style = scheduleCardStyle(colorOf(spec.workspace_name));
+                        {group.items.map((commitment) => {
+                          const remaining = commitment.due_date ? daysUntil(commitment.due_date) : null;
+                          const style = scheduleCardStyle(colorOf(commitment.workspace_name));
+                          const action = commitmentNextAction(commitment);
+                          const spec = specForCommitment(commitment);
                           return (
                             <div
-                              key={`${spec.workspace_name}:${spec.id}`}
+                              key={commitment.id}
                               role="button"
                               tabIndex={0}
-                              onClick={() => openSpec(spec)}
+                              onClick={() => spec && openSpec(spec)}
                               onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") openSpec(spec);
+                                if ((event.key === "Enter" || event.key === " ") && spec) openSpec(spec);
                               }}
                               style={style}
                               className="group flex min-h-[76px] items-center gap-3 rounded-xl border px-4 py-3 text-left transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-white/[0.035] hover:shadow-[0_12px_28px_rgba(0,0,0,0.2)] active:translate-y-0"
                             >
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="truncate text-[14px] font-semibold text-white">{spec.title}</span>
-                                  <SpecStageBadge spec={spec} />
+                                  <span className="truncate text-[14px] font-semibold text-white">{commitment.title}</span>
+                                  {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300">파이프라인 완료</span>}
                                 </div>
-                                <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
-                                  <span className="font-mono text-slate-300">{spec.due_date}</span>
-                                  <SpecDeploymentBadge deployment={spec.deployment} title={spec.title} />
-                                  {group.id === "overdue" && <span className="font-semibold text-rose-300">{Math.abs(remaining)}일 지남</span>}
-                                  {group.id === "next" && <span>D-{remaining}</span>}
+                                <p className="mt-1 text-[12px] font-semibold text-cyan-200">다음 행동 · {action.label}</p>
+                                <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
+                                  <span>{action.detail}</span>
+                                  {commitment.due_date && <span className="font-mono text-slate-300">{commitment.due_date}</span>}
+                                  {group.id === "overdue" && remaining !== null && <span className="font-semibold text-rose-300">{Math.abs(remaining)}일 지남</span>}
+                                  {group.id === "next" && remaining !== null && <span>D-{remaining}</span>}
                                 </div>
                               </div>
                               <ChevronRight size={16} className="shrink-0 text-[var(--color-text-dim)] transition-transform group-hover:translate-x-1 group-hover:text-cyan-300" />
@@ -659,7 +682,7 @@ export function SchedulePage() {
                     setDragOverKey(key);
                   }}
                   onDragLeave={() => setDragOverKey((k) => (k === key ? null : k))}
-                  onDrop={(e) => dropSpec(e, key)}
+                  onDrop={(e) => dropScheduleItem(e, key)}
                   className={cn(
                     "flex flex-col gap-1 overflow-hidden rounded-lg border p-1.5 text-left",
                     inMonth ? "border-[var(--color-border)] bg-[var(--color-background)]" : "border-transparent opacity-40",
@@ -674,22 +697,24 @@ export function SchedulePage() {
                     {holiday && <span className="truncate text-[9px] text-rose-400" title={holiday}>{holiday}</span>}
                   </div>
                   <div className={cn("flex min-h-0 flex-1 flex-col gap-1", daySpecOverflowClass())}>
-                    {dayChips.map((s) => {
-                      const style = scheduleCardStyle(colorOf(s.workspace_name));
-                      const overdue = key < todayKey && isOpenStatus(s);
+                    {dayChips.map((commitment) => {
+                      const style = scheduleCardStyle(colorOf(commitment.workspace_name));
+                      const overdue = key < todayKey && commitment.state !== "completed" && commitment.state !== "cancelled";
+                      const spec = specForCommitment(commitment);
+                      const explicit = !commitment.id.startsWith("legacy:");
                       return (
                         <div
-                          key={s.id}
-                          draggable
-                          onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
+                          key={commitment.id}
+                          draggable={explicit || !!spec}
+                          onDragStart={(e: DragEvent<HTMLDivElement>) => explicit ? startCommitmentDrag(e, commitment) : spec && startSpecDrag(e, spec)}
                           onDragEnd={() => setDragOverKey(null)}
                           style={style}
-                          className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] active:cursor-grabbing"
-                          title={`${s.workspace_name} · ${s.title}`}
+                          className="flex min-h-[26px] shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)]"
+                          title={`${commitment.workspace_name} · ${commitment.title}`}
                         >
-                          <button type="button" onClick={() => openSpec(s)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100" title={`${s.workspace_name} · ${s.title}`}>{s.title}</button>
-                          <SpecStageBadge spec={s} compact />
-                      <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
+                          <button type="button" onClick={() => spec && openSpec(spec)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100">{commitment.title}</button>
+                          {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">파이프라인 완료</span>}
+                          {spec && <SpecDeploymentBadge deployment={spec.deployment} title={commitment.title} />}
                           {overdue && (
                             <span className="flex shrink-0 items-center gap-0.5 rounded bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
                               <AlertTriangle size={9} /> 기한 초과
@@ -762,7 +787,7 @@ export function SchedulePage() {
                 return (
                   <div className="mt-3 rounded-lg border border-cyan-500/25 bg-cyan-500/[0.07] px-3 py-2.5 text-[11.5px] leading-relaxed text-slate-200">
                     <div className="flex items-center justify-between gap-2">
-                      <strong className="font-semibold text-white">{guidance.kind === "done" ? "완료" : guidance.currentStage}</strong>
+                      <strong className="font-semibold text-white">{guidance.kind === "done" ? "파이프라인 완료" : guidance.currentStage}</strong>
                       {guidance.kind !== "done" && <SpecStageBadge spec={selected} />}
                       <SpecDeploymentBadge deployment={selected.deployment} title={selected.title} />
                     </div>
@@ -788,6 +813,106 @@ export function SchedulePage() {
                   />
                 </div>
               )}
+              <section className="mt-3 rounded-xl border border-violet-400/25 bg-violet-400/[0.06] p-3" aria-label="작업 약속">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-[12.5px] font-semibold text-violet-100">작업 약속</h3>
+                    <p className="mt-0.5 text-[10.5px] text-slate-400">파이프라인 실행과 독립적으로 이번 목표와 날짜를 관리합니다.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCommitmentTitle(selected.title);
+                      setCommitmentDueDate(selected.due_date);
+                      setCommitmentFormOpen((open) => !open);
+                    }}
+                    className="shrink-0 rounded-lg border border-violet-400/35 bg-violet-400/10 px-2.5 py-1.5 text-[11px] font-semibold text-violet-200 hover:bg-violet-400/20"
+                  >
+                    + 새 약속
+                  </button>
+                </div>
+
+                {selectedCommitments.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {selectedCommitments.map((commitment) => {
+                      const action = commitmentNextAction(commitment);
+                      const closed = commitment.state === "completed" || commitment.state === "cancelled";
+                      return (
+                        <div key={commitment.id} className="rounded-lg border border-white/[0.08] bg-black/20 px-3 py-2.5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-[12px] font-semibold text-white">{commitment.title}</p>
+                              <p className="mt-1 text-[10.5px] font-semibold text-cyan-200">{action.label}</p>
+                              <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400">{action.detail}</p>
+                              <div className="mt-1.5 flex flex-wrap gap-1.5 font-mono text-[9.5px] text-slate-400">
+                                <span>{commitment.due_date ?? "날짜 미정"}</span>
+                                <span>목표 {commitment.target.toUpperCase()}</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => void setCommitmentClosed(commitment, !closed)}
+                              className={cn(
+                                "shrink-0 rounded-lg border px-2.5 py-1.5 text-[10.5px] font-semibold disabled:opacity-40",
+                                closed
+                                  ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-200 hover:bg-cyan-400/20"
+                                  : "border-emerald-400/30 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/20",
+                              )}
+                            >
+                              {closed ? "다시 열기" : "일정 완료"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {selectedCommitments.length === 0 && !commitmentFormOpen && (
+                  <p className="mt-3 rounded-lg border border-dashed border-white/10 px-3 py-2.5 text-[10.5px] text-slate-400">
+                    기존 마감일은 호환 일정으로 표시 중입니다. 새 약속을 만들면 목표와 완료 이력이 분리됩니다.
+                  </p>
+                )}
+
+                {commitmentFormOpen && (
+                  <div className="mt-3 space-y-3 rounded-lg border border-violet-400/20 bg-black/20 p-3">
+                    <label className="block text-[10.5px] text-slate-400">
+                      약속 제목
+                      <input
+                        value={commitmentTitle}
+                        onChange={(event) => setCommitmentTitle(event.target.value)}
+                        className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 text-[12px] text-white"
+                      />
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="block text-[10.5px] text-slate-400">
+                        목표
+                        <select
+                          value={commitmentTarget}
+                          onChange={(event) => setCommitmentTarget(event.target.value as CommitmentTarget)}
+                          className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 text-[12px] text-white"
+                        >
+                          <option value="implementation">구현</option>
+                          <option value="review">리뷰</option>
+                          <option value="dev">DEV 배포</option>
+                          <option value="stg">STG 배포</option>
+                          <option value="prd">PRD 배포</option>
+                          <option value="custom">사용자 정의</option>
+                        </select>
+                      </label>
+                      <div>
+                        <span className="mb-1 block text-[10.5px] text-slate-400">약속 날짜</span>
+                        <DatePicker value={commitmentDueDate} onChange={setCommitmentDueDate} placeholder="날짜 미정" />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button type="button" onClick={() => setCommitmentFormOpen(false)} className="rounded-lg px-3 py-1.5 text-[10.5px] text-slate-400 hover:bg-white/[0.04]">취소</button>
+                      <button type="button" disabled={busy || !commitmentTitle.trim()} onClick={() => void addCommitment()} className="rounded-lg border border-violet-400/35 bg-violet-400/15 px-3 py-1.5 text-[10.5px] font-semibold text-violet-100 hover:bg-violet-400/25 disabled:opacity-40">약속 추가</button>
+                    </div>
+                  </div>
+                )}
+              </section>
               {selected.spec_path && (
                 <button
                   onClick={() => setSpecDocumentTarget({ workspace: selected.workspace_name, nodeId: selected.id, title: selected.title })}

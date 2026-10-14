@@ -4,12 +4,38 @@ import { requireUser } from "../auth/requireUser.js";
 import type { DbClient } from "../db/client.js";
 import { validateBody } from "../schemas/validate.js";
 import { createScheduleMemo, deleteScheduleMemo, listScheduleMemos, setScheduleMemoDueDate, updateScheduleMemo } from "../services/scheduleMemoService.js";
+import {
+  completeScheduleCommitment,
+  createScheduleCommitment,
+  deleteScheduleCommitment,
+  listScheduleCommitments,
+  reopenScheduleCommitment,
+  updateScheduleCommitment,
+} from "../services/scheduleCommitmentService.js";
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable();
 const memoBody = z.object({
   title: z.string().trim().min(1).max(512),
   contentMd: z.string().max(200_000),
   dueDate: date,
+}).strict();
+const commitmentState = z.enum(["planned", "active", "completed", "cancelled"]);
+const commitmentTarget = z.enum(["implementation", "review", "dev", "stg", "prd", "custom"]);
+const createCommitmentBody = z.object({
+  workspaceName: z.string().trim().min(1).max(255),
+  specId: z.string().trim().min(1).max(191),
+  title: z.string().trim().min(1).max(512),
+  dueDate: date,
+  state: commitmentState.optional(),
+  target: commitmentTarget,
+  linkedRunId: z.string().trim().min(1).max(191).nullable().optional(),
+}).strict();
+const updateCommitmentBody = z.object({
+  title: z.string().trim().min(1).max(512),
+  dueDate: date,
+  state: commitmentState,
+  target: commitmentTarget,
+  linkedRunId: z.string().trim().min(1).max(191).nullable(),
 }).strict();
 
 export function createScheduleRouter(db: DbClient, sessionSecret: string): Router {
@@ -38,6 +64,46 @@ export function createScheduleRouter(db: DbClient, sessionSecret: string): Route
   router.delete("/memos/:id", async (req, res, next) => {
     try {
       if (!await deleteScheduleMemo(db, req.userId!, req.params.id)) return void res.status(404).json({ error: "MEMO_NOT_FOUND" });
+      res.json({ ok: true });
+    } catch (error) { next(error); }
+  });
+
+  router.get("/commitments", async (req, res, next) => {
+    try { res.json({ commitments: await listScheduleCommitments(db, req.userId!) }); } catch (error) { next(error); }
+  });
+  router.post("/commitments", validateBody(createCommitmentBody), async (req, res, next) => {
+    try {
+      const commitment = await createScheduleCommitment(db, req.userId!, req.body);
+      if (!commitment) return void res.status(404).json({ error: "SPEC_NOT_FOUND" });
+      res.status(201).json({ commitment });
+    } catch (error) { next(error); }
+  });
+  router.put("/commitments/:id", validateBody(updateCommitmentBody), async (req, res, next) => {
+    try {
+      const commitment = await updateScheduleCommitment(db, req.userId!, req.params.id, req.body);
+      if (!commitment) return void res.status(404).json({ error: "COMMITMENT_NOT_FOUND" });
+      res.json({ commitment });
+    } catch (error) { next(error); }
+  });
+  router.post("/commitments/:id/complete", async (req, res, next) => {
+    try {
+      const commitment = await completeScheduleCommitment(db, req.userId!, req.params.id);
+      if (!commitment) return void res.status(404).json({ error: "COMMITMENT_NOT_FOUND" });
+      res.json({ commitment });
+    } catch (error) { next(error); }
+  });
+  router.post("/commitments/:id/reopen", async (req, res, next) => {
+    try {
+      const commitment = await reopenScheduleCommitment(db, req.userId!, req.params.id);
+      if (!commitment) return void res.status(404).json({ error: "COMMITMENT_NOT_FOUND" });
+      res.json({ commitment });
+    } catch (error) { next(error); }
+  });
+  router.delete("/commitments/:id", async (req, res, next) => {
+    try {
+      if (!await deleteScheduleCommitment(db, req.userId!, req.params.id)) {
+        return void res.status(404).json({ error: "COMMITMENT_NOT_FOUND" });
+      }
       res.json({ ok: true });
     } catch (error) { next(error); }
   });

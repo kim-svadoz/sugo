@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthContext.js";
 import { getSchedule, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { getScheduleMemos, type ScheduledMemo } from "../api/scheduleMemoApi.js";
+import { getScheduleCommitments, type ScheduleCommitment } from "../api/scheduleCommitmentApi.js";
 
 const POLL_MS = 4000;
 
@@ -11,6 +12,7 @@ export function useSchedule() {
   const { userId } = useAuth();
   const [data, setData] = useState<ScheduledSpec[] | null>(null);
   const [memos, setMemos] = useState<ScheduledMemo[] | null>(null);
+  const [commitments, setCommitments] = useState<ScheduleCommitment[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
@@ -24,10 +26,15 @@ export function useSchedule() {
     async function fetchOnce(isFirst: boolean) {
       if (isFirst) setLoading(true);
       try {
-        const [specs, nextMemos] = await Promise.all([getSchedule(userId!), getScheduleMemos(userId!)]);
+        const [specs, nextMemos, nextCommitments] = await Promise.all([
+          getSchedule(userId!),
+          getScheduleMemos(userId!),
+          getScheduleCommitments(userId!).catch(() => null),
+        ]);
         if (!cancelled) {
           setData(specs);
           setMemos(nextMemos);
+          setCommitments(nextCommitments);
           setError(null);
         }
       } catch (err) {
@@ -45,5 +52,5 @@ export function useSchedule() {
     };
   }, [userId, refreshNonce]);
 
-  return { data, memos, loading, error, refetch };
+  return { data, memos, commitments, loading, error, refetch };
 }
