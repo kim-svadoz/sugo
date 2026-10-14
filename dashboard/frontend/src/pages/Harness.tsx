@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { marked } from "marked";
-import { Boxes, ChevronRight, FileCode2, Layers3 } from "lucide-react";
+import { Boxes, ChevronRight, Layers3 } from "lucide-react";
 import { getHarnessContent, getHarnessManifest, type HarnessManifestEntry } from "../api/catalogApi.js";
 import { groupHarnessManifest, harnessCategoryLabel, harnessVersion, simplifyHarnessHeading, type HarnessTechnology } from "../lib/harnessCatalog.js";
 import { cn } from "../lib/utils.js";
@@ -26,7 +26,6 @@ export function Harness() {
   const categories = useMemo(() => [...new Set(groups.map((group) => group.category))], [groups]);
   const visibleGroups = useMemo(() => groups.filter((group) => group.category === category), [groups, category]);
   const selectedTechnology = groups.find((group) => group.key === technologyKey) ?? null;
-  const selectedEntry = manifest.find((entry) => entry.id === selectedId) ?? null;
   const html = useMemo(() => (content ? (marked.parse(simplifyHarnessHeading(content), { async: false }) as string) : ""), [content]);
 
   useEffect(() => {
@@ -93,7 +92,6 @@ export function Harness() {
               </div>
             </aside>
             <div className="min-h-0 p-6">
-              <div className="mb-4 flex items-center gap-2 border-b border-[var(--color-border)] pb-4"><FileCode2 size={17} className="text-cyan-300" /><div><div className="font-semibold text-[var(--color-text-bright)]">{selectedTechnology?.technology ?? "하네스"}</div><div className="font-mono text-[11px] text-[var(--color-text-dim)]">{String(selectedEntry?.id ?? "")}</div></div></div>
               <div className="ck-scroll h-[calc(100vh-350px)] min-h-[360px] overflow-y-auto pr-3">
                 {contentLoading ? <div className="py-12 text-center font-mono text-sm text-[var(--color-text-dim)]">규칙을 불러오는 중…</div> : html ? <article className="md-body" dangerouslySetInnerHTML={{ __html: html }} /> : <div className="py-12 text-center text-sm text-[var(--color-text-muted)]">표시할 하네스 본문이 없습니다.</div>}
               </div>

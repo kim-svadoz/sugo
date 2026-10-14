@@ -1,6 +1,6 @@
 {
   "name": "sugo-dashboard-backend",
-  "version": "0.21.20",
+  "version": "0.21.21",
   "description": "Sugo Dashboard backend - Express + TypeScript + MySQL",
   "type": "module",
   "main": "dist/index.js",

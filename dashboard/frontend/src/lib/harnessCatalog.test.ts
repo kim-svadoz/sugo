@@ -1,10 +1,18 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { groupHarnessManifest, harnessVersion, simplifyHarnessHeading } from "./harnessCatalog.js";
 
 describe("harness catalog", () => {
-  it("Harness 페이지 본문의 최상위 제목에서는 중복된 하네스 명칭만 제거한다", () => {
-    expect(simplifyHarnessHeading("# Java 하네스 (lang/java)\n\n핵심 규칙")).toBe("# Java (lang/java)\n\n핵심 규칙");
-    expect(simplifyHarnessHeading("# React 19 하네스 (framework/react/19.x)\n\n하네스 규칙을 적용한다.")).toBe("# React 19 (framework/react/19.x)\n\n하네스 규칙을 적용한다.");
+  it("Harness 본문 제목에서는 페이지 UI와 중복되는 명칭과 내부 경로를 제거한다", () => {
+    expect(simplifyHarnessHeading("# Java 하네스 (lang/java)\n\n핵심 규칙")).toBe("# Java\n\n핵심 규칙");
+    expect(simplifyHarnessHeading("# React 19 하네스 (framework/react/19.x)\n\n하네스 규칙을 적용한다.")).toBe("# React 19\n\n하네스 규칙을 적용한다.");
+    expect(simplifyHarnessHeading("# Express 하네스 (framework/express)\n\n설명")).toBe("# Express\n\n설명");
+    expect(simplifyHarnessHeading("# 기본 하네스 (default)\n\n설명")).toBe("# 기본\n\n설명");
+  });
+
+  it("선택 헤더에도 사용자가 해석할 필요 없는 내부 catalog ID를 반복하지 않는다", () => {
+    const source = readFileSync(new URL("../pages/Harness.tsx", import.meta.url), "utf8");
+    expect(source).not.toContain("selectedEntry?.id");
   });
 
   it("카테고리와 기술을 묶고 공통/버전을 한 기술 안에 둔다", () => {
