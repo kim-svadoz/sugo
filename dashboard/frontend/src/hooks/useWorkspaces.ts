@@ -73,21 +73,39 @@ interface UseWorkspacesResult {
   error: string | null;
 }
 
+const workspaceCache = new Map<string, WorkspaceSummary[]>();
+const workspaceRequests = new Map<string, Promise<WorkspaceSummary[]>>();
+
+function fetchWorkspaces(userId: string): Promise<WorkspaceSummary[]> {
+  const pending = workspaceRequests.get(userId);
+  if (pending) return pending;
+  const request = apiJson<{ workspaces: WorkspaceSummary[] }>(withUserId("/api/workspaces", userId))
+    .then((res) => {
+      workspaceCache.set(userId, res.workspaces);
+      return res.workspaces;
+    })
+    .finally(() => workspaceRequests.delete(userId));
+  workspaceRequests.set(userId, request);
+  return request;
+}
+
 // §5: "AuthContext + feature 훅({data,loading,error} 형태)" - no Redux/Zustand.
 export function useWorkspaces(): UseWorkspacesResult {
   const { userId } = useAuth();
-  const [data, setData] = useState<WorkspaceSummary[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<WorkspaceSummary[] | null>(() => userId ? workspaceCache.get(userId) ?? null : null);
+  const [loading, setLoading] = useState(() => userId ? !workspaceCache.has(userId) : true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    setLoading(true);
-    apiJson<{ workspaces: WorkspaceSummary[] }>(withUserId("/api/workspaces", userId))
-      .then((res) => {
+    const cached = workspaceCache.get(userId);
+    if (cached) setData(cached);
+    setLoading(!cached);
+    fetchWorkspaces(userId)
+      .then((workspaces) => {
         if (!cancelled) {
-          setData(res.workspaces);
+          setData(workspaces);
           setError(null);
         }
       })

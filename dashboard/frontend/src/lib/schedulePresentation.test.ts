@@ -130,6 +130,24 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("spec-writer와 실행 에이전트가 함께 봅니다");
   });
 
+  it("개발 이력은 긴 제목만 남기고 중복 본문을 반복하지 않는다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain("{entry.title}</span>");
+    expect(source).not.toContain("entry.summary && entry.summary !== entry.title");
+  });
+
+  it("준비된 SPEC에 중복 feat 명령 복사 버튼을 노출하지 않는다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).not.toContain("feat 명령 복사");
+    expect(source).not.toContain('copyWorkflowCommand("feat"');
+  });
+
+  it("카드 상태와 본문 길이가 달라도 같은 높이를 유지한다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain("h-[76px] flex-col items-start");
+    expect(source).toContain("h-[92px] items-center");
+  });
+
   it("정보가 많은 SPEC 상세는 확장 모달을 사용한다", () => {
     const schedule = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     const modal = readFileSync(new URL("../components/Modal.tsx", import.meta.url), "utf8");

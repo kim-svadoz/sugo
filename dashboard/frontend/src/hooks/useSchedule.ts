@@ -6,14 +6,40 @@ import { getScheduleCommitments, type ScheduleCommitment } from "../api/schedule
 
 const POLL_MS = 4000;
 
+interface ScheduleSnapshot {
+  data: ScheduledSpec[];
+  memos: ScheduledMemo[];
+  commitments: ScheduleCommitment[] | null;
+}
+
+const scheduleCache = new Map<string, ScheduleSnapshot>();
+const scheduleRequests = new Map<string, Promise<ScheduleSnapshot>>();
+
+function fetchScheduleSnapshot(userId: string): Promise<ScheduleSnapshot> {
+  const pending = scheduleRequests.get(userId);
+  if (pending) return pending;
+  const request = Promise.all([
+    getSchedule(userId),
+    getScheduleMemos(userId),
+    getScheduleCommitments(userId).catch(() => null),
+  ]).then(([data, memos, commitments]) => {
+    const snapshot = { data, memos, commitments };
+    scheduleCache.set(userId, snapshot);
+    return snapshot;
+  }).finally(() => scheduleRequests.delete(userId));
+  scheduleRequests.set(userId, request);
+  return request;
+}
+
 /** §7B Schedule 탭 — `useRoadmap`과 같은 4초 폴링 관례. 워크스페이스 하나가 아니라
  * 로그인 사용자 전체를 가로질러 조회하므로 workspaceName 인자가 없다. */
 export function useSchedule() {
   const { userId } = useAuth();
-  const [data, setData] = useState<ScheduledSpec[] | null>(null);
-  const [memos, setMemos] = useState<ScheduledMemo[] | null>(null);
-  const [commitments, setCommitments] = useState<ScheduleCommitment[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const initial = userId ? scheduleCache.get(userId) : undefined;
+  const [data, setData] = useState<ScheduledSpec[] | null>(() => initial?.data ?? null);
+  const [memos, setMemos] = useState<ScheduledMemo[] | null>(() => initial?.memos ?? null);
+  const [commitments, setCommitments] = useState<ScheduleCommitment[] | null>(() => initial?.commitments ?? null);
+  const [loading, setLoading] = useState(() => !initial);
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
@@ -22,19 +48,21 @@ export function useSchedule() {
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
+    const cached = scheduleCache.get(userId);
+    if (cached) {
+      setData(cached.data);
+      setMemos(cached.memos);
+      setCommitments(cached.commitments);
+    }
+    setLoading(!cached);
 
     async function fetchOnce(isFirst: boolean) {
-      if (isFirst) setLoading(true);
       try {
-        const [specs, nextMemos, nextCommitments] = await Promise.all([
-          getSchedule(userId!),
-          getScheduleMemos(userId!),
-          getScheduleCommitments(userId!).catch(() => null),
-        ]);
+        const snapshot = await fetchScheduleSnapshot(userId!);
         if (!cancelled) {
-          setData(specs);
-          setMemos(nextMemos);
-          setCommitments(nextCommitments);
+          setData(snapshot.data);
+          setMemos(snapshot.memos);
+          setCommitments(snapshot.commitments);
           setError(null);
         }
       } catch (err) {

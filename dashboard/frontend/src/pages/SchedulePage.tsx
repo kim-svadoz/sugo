@@ -20,7 +20,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setProject, setWorkBranch, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
-import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
+import { buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { OperationalPulse } from "../components/OperationalPulse.js";
@@ -526,7 +526,7 @@ export function SchedulePage() {
                     type="button"
                     onClick={() => spec && openSpec(spec)}
                     style={style}
-                    className="flex min-h-12 flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)]"
+                    className="flex h-[76px] flex-col items-start gap-1 overflow-hidden rounded-lg border px-2.5 py-2 text-left text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)]"
                     title={`${commitment.workspace_name} · ${commitment.title}`}
                   >
                     <span className="w-full truncate text-[12.5px] font-semibold">{commitment.title}</span>
@@ -603,7 +603,7 @@ export function SchedulePage() {
                                 if ((event.key === "Enter" || event.key === " ") && spec) openSpec(spec);
                               }}
                               style={style}
-                              className="group flex min-h-[76px] items-center gap-3 rounded-xl border px-4 py-3 text-left transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-white/[0.035] hover:shadow-[0_12px_28px_rgba(0,0,0,0.2)] active:translate-y-0"
+                              className="group flex h-[92px] items-center gap-3 overflow-hidden rounded-xl border px-4 py-3 text-left transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-white/[0.035] hover:shadow-[0_12px_28px_rgba(0,0,0,0.2)] active:translate-y-0"
                             >
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
@@ -612,7 +612,7 @@ export function SchedulePage() {
                                 </div>
                                 {action.label !== "일정 닫기" && <p className="mt-1 text-[12px] font-semibold text-cyan-200">{action.label}</p>}
                                 <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
-                                  <span>{action.detail}</span>
+                                  <span className="line-clamp-1">{action.detail}</span>
                                   {commitment.due_date && <span className="font-mono text-slate-300">{commitment.due_date}</span>}
                                   {group.id === "overdue" && remaining !== null && <span className="font-semibold text-rose-300">{Math.abs(remaining)}일 지남</span>}
                                   {group.id === "next" && remaining !== null && <span>D-{remaining}</span>}
@@ -849,7 +849,6 @@ export function SchedulePage() {
                             <span className={cn("rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase", entry.version === 0 ? "bg-cyan-400/10 text-cyan-200" : "bg-violet-400/10 text-violet-200")}>{entry.version === 0 ? "feat" : `patch ${entry.version}`}</span>
                             <span className="text-[13px] font-semibold leading-relaxed text-slate-100">{entry.title}</span>
                           </div>
-                          {entry.summary && entry.summary !== entry.title && <p className="mt-1 line-clamp-3 text-[12px] leading-relaxed text-slate-300">{entry.summary}</p>}
                           {entry.completed_at && <time className="mt-1 block font-mono text-[9.5px] text-slate-500">{entry.completed_at.slice(0, 10)}</time>}
                         </div>
                       </li>
@@ -946,14 +945,6 @@ export function SchedulePage() {
                     </button>
                   ))}
                 </div>
-              )}
-              {scheduleSpecStage(selected) === "ready" && (
-                <button
-                  onClick={() => void copyWorkflowCommand("feat", buildFeatCommand(selected))}
-                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/15 px-3 py-2.5 text-[12.5px] font-bold text-cyan-200 hover:bg-cyan-500/25"
-                >
-                  {copied === "feat" ? <Check size={14} /> : <Copy size={14} />} {copied === "feat" ? "feat 명령 복사됨" : "feat 명령 복사"}
-                </button>
               )}
               {!selected.project_path && <p className="mt-2 text-[10.5px] text-amber-300">먼저 대상 프로젝트를 지정하세요.</p>}
               {selected.spec_path && <p className="mt-2 break-all font-mono text-[10px] text-[var(--color-text-dim)]">{selected.spec_path}</p>}
