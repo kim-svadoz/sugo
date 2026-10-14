@@ -1,12 +1,18 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { countUpcomingScheduledSpecs, daySpecOverflowClass, isManualSpec, scheduleCardStyle, schedulePresentationReady, visibleRegisteredSpecs } from "./schedulePresentation.js";
+import { countUpcomingScheduledSpecs, daySpecOverflowClass, defaultSchedulePanelMode, isManualSpec, scheduleCardStyle, schedulePresentationReady, visibleRegisteredSpecs } from "./schedulePresentation.js";
 
 describe("schedule presentation", () => {
   it("워크스페이스 색상 순서가 오기 전에는 Schedule 카드를 노출하지 않는다", () => {
     expect(schedulePresentationReady([{}], null)).toBe(false);
     expect(schedulePresentationReady(null, [{}])).toBe(false);
     expect(schedulePresentationReady([{}], [])).toBe(true);
+  });
+
+  it("기한 미정이 비고 등록 카드가 있으면 등록완료를 최초 탭으로 고른다", () => {
+    expect(defaultSchedulePanelMode(0, 5)).toBe("scheduled");
+    expect(defaultSchedulePanelMode(1, 5)).toBe("backlog");
+    expect(defaultSchedulePanelMode(0, 0)).toBe("backlog");
   });
 
   it("오늘 이후 마감일이 등록된 Spec만 제목 개수에 포함한다", () => {
@@ -83,7 +89,7 @@ describe("schedule presentation", () => {
 
   it("메모는 SPEC 등록완료와 분리된 전용 탭에만 표시한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain('useState<"backlog" | "scheduled" | "memo">');
+    expect(source).toContain("useState<SchedulePanelMode | null>(null)");
     expect(source).toContain('onClick={() => setPanelMode("memo")}');
     expect(source).toContain("sortedMemos.map");
     expect(source).toContain('panelMode === "memo"');

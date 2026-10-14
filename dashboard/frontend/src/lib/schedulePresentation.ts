@@ -9,6 +9,13 @@ export function schedulePresentationReady(
   return specs !== null && workspaces !== null;
 }
 
+export type SchedulePanelMode = "backlog" | "scheduled" | "memo";
+
+/** 최초 랜딩에서 비어 있는 탭보다 실제 SPEC 카드가 있는 탭을 먼저 보여준다. */
+export function defaultSchedulePanelMode(backlogCount: number, scheduledCount: number): SchedulePanelMode {
+  return backlogCount === 0 && scheduledCount > 0 ? "scheduled" : "backlog";
+}
+
 /** Schedule 제목은 오늘부터 앞으로 날짜가 잡힌 SPEC 수를 보여준다. 상태와 기한 미정은 섞지 않는다. */
 export function countUpcomingScheduledSpecs(specs: ScheduleStatusItem[], todayKey: string): number {
   return specs.filter((spec) => spec.due_date !== null && spec.due_date >= todayKey).length;

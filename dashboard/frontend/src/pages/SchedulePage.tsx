@@ -5,7 +5,7 @@ import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { decodeScheduleDrag, encodeScheduleDrag, SCHEDULE_DRAG_TYPE } from "../lib/scheduleDrag.js";
-import { countUpcomingScheduledSpecs, daySpecOverflowClass, scheduleCardStyle, schedulePresentationReady, visibleRegisteredSpecs } from "../lib/schedulePresentation.js";
+import { countUpcomingScheduledSpecs, daySpecOverflowClass, defaultSchedulePanelMode, scheduleCardStyle, schedulePresentationReady, visibleRegisteredSpecs, type SchedulePanelMode } from "../lib/schedulePresentation.js";
 import { krHolidayName } from "../lib/krHolidays.js";
 import { Modal } from "../components/Modal.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -140,11 +140,12 @@ export function SchedulePage() {
   // 왼쪽 패널: "기한 미정"만 보던 걸 "등록완료"(마감일이 잡힌 것)로도 전환할 수 있게 —
   // 마감일이 화면에 보이는 달을 벗어나 있으면(예: 오늘은 9월인데 마감은 10월) 달력만으론
   // 존재 자체를 놓친다.
-  const [panelMode, setPanelMode] = useState<"backlog" | "scheduled" | "memo">("backlog");
+  const [selectedPanelMode, setPanelMode] = useState<SchedulePanelMode | null>(null);
   const scheduledSorted = useMemo(
     () => visibleRegisteredSpecs(specs ?? [], todayKey).sort((a, b) => a.due_date!.localeCompare(b.due_date!)),
     [specs, todayKey],
   );
+  const panelMode = selectedPanelMode ?? defaultSchedulePanelMode(backlog.length, scheduledSorted.length);
   const upcomingScheduledCount = useMemo(
     () => countUpcomingScheduledSpecs(specs ?? [], todayKey),
     [specs, todayKey],
