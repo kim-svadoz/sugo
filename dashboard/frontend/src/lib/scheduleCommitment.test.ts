@@ -26,8 +26,8 @@ describe("Schedule commitments", () => {
 
     expect(queue.flatMap((group) => group.items.map((entry) => entry.id))).toEqual(["pipeline-done"]);
     expect(commitmentNextAction(item({ pipeline_status: "done", target: "prd", current_environment: "LOCAL" }))).toEqual({
-      label: "PRD 배포 확인",
-      detail: "파이프라인 완료 · 현재 LOCAL → 목표 PRD",
+      label: "PRD 배포",
+      detail: "현재 LOCAL · PRD 반영 후 자동으로 다음 단계가 표시됩니다.",
     });
   });
 
@@ -72,8 +72,8 @@ describe("Schedule commitments", () => {
       target: "prd",
       current_environment: "PRD",
     }))).toEqual({
-      label: "일정 완료 확인",
-      detail: "목표 PRD 도달 · 확인 전까지 약속은 열려 있습니다.",
+      label: "완료 처리",
+      detail: "목표 PRD까지 반영되었습니다.",
     });
 
     const queue = buildCommitmentQueue([

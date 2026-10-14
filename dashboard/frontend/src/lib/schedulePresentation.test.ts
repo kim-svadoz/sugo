@@ -85,6 +85,17 @@ describe("schedule presentation", () => {
     expect(source).toContain("setCommitmentClosed");
   });
 
+  it("내부 Commitment 용어를 사용자에게 약속으로 노출하지 않고 완료 행동을 카드에서 제공한다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).not.toContain("지금 지켜야 할 약속");
+    expect(source).not.toContain("+ 새 약속");
+    expect(source).not.toContain("작업 약속");
+    expect(source).toContain("해야 할 일");
+    expect(source).toContain("작업 목표 추가");
+    expect(source).toContain("완료 처리");
+    expect(source).toContain("completeFromQueue");
+  });
+
   it("Schedule 카드 클릭은 상세만 열고 Canvas는 명시적 버튼으로만 연다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     const openSpecBody = source.match(/function openSpec\(spec: ScheduledSpec\) \{([\s\S]*?)\n  \}/)?.[1] ?? "";

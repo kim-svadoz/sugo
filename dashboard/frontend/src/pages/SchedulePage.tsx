@@ -200,7 +200,7 @@ export function SchedulePage() {
       setCommitmentTitle("");
       refetch();
     } catch {
-      setErrorMsg("작업 약속을 추가하지 못했습니다.");
+      setErrorMsg("작업 목표를 추가하지 못했습니다.");
     } finally {
       setBusy(false);
     }
@@ -215,7 +215,33 @@ export function SchedulePage() {
       else await reopenScheduleCommitment(userId, commitment.id);
       refetch();
     } catch {
-      setErrorMsg(closed ? "작업 약속을 완료하지 못했습니다." : "작업 약속을 재개하지 못했습니다.");
+      setErrorMsg(closed ? "작업 목표를 완료하지 못했습니다." : "작업 목표를 다시 열지 못했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function completeFromQueue(commitment: CommitmentView) {
+    if (!userId) return;
+    setBusy(true);
+    setErrorMsg(null);
+    try {
+      if (commitment.id.startsWith("legacy:")) {
+        await createScheduleCommitment(userId, {
+          specId: commitment.spec_id,
+          workspaceName: commitment.workspace_name,
+          title: commitment.title,
+          dueDate: commitment.due_date,
+          state: "completed",
+          target: commitment.target,
+          linkedRunId: commitment.linked_run_id,
+        });
+      } else {
+        await completeScheduleCommitment(userId, commitment.id);
+      }
+      refetch();
+    } catch {
+      setErrorMsg("완료 처리에 실패했습니다.");
     } finally {
       setBusy(false);
     }
@@ -334,7 +360,7 @@ export function SchedulePage() {
       const commitment = (commitments ?? []).find((item) => item.id === payload.id);
       if (!commitment || commitment.due_date === dueDate || !userId) return;
       setErrorMsg(null);
-      void updateScheduleCommitment(userId, { ...commitment, due_date: dueDate }).then(refetch).catch(() => setErrorMsg("약속 날짜 저장에 실패했습니다."));
+      void updateScheduleCommitment(userId, { ...commitment, due_date: dueDate }).then(refetch).catch(() => setErrorMsg("마감일 저장에 실패했습니다."));
       return;
     }
     const spec = (specs ?? []).find((item) => item.id === payload.id && item.workspace_name === payload.workspaceName);
@@ -434,7 +460,7 @@ export function SchedulePage() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">
             Schedule{" "}
-            <span className="font-normal text-[var(--color-text-dim)]" title="현재 열려 있는 작업 약속 수">
+            <span className="font-normal text-[var(--color-text-dim)]" title="현재 열려 있는 작업 목표 수">
               ({openCommitmentCount})
             </span>
           </h1>
@@ -514,7 +540,7 @@ export function SchedulePage() {
 
           {panelMode === "backlog" ? (
             <>
-              {planningInbox.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">날짜를 정할 약속이 없습니다.</p>}
+              {planningInbox.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">날짜를 정할 작업이 없습니다.</p>}
               {planningInbox.map((commitment) => {
                 const style = scheduleCardStyle(colorOf(commitment.workspace_name));
                 const action = commitmentNextAction(commitment);
@@ -562,9 +588,9 @@ export function SchedulePage() {
           <section className="ck-glass command-stage ck-stage-in flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)]" aria-label="실행 대기열">
             <div className="flex shrink-0 items-end justify-between border-b border-[var(--color-border)] px-5 py-4">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-cyan-300/80">Action Queue</p>
-                <h2 className="mt-1 text-xl font-semibold text-[var(--color-text-bright)]">지금 지켜야 할 약속</h2>
-                <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">파이프라인 완료와 일정 종료를 구분하고, 다음 행동이 있는 약속만 보여줍니다.</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-cyan-300/80">WORK QUEUE</p>
+                <h2 className="mt-1 text-xl font-semibold text-[var(--color-text-bright)]">해야 할 일</h2>
+                <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">개발 진행 상태와 일정 완료를 구분해 보여줍니다.</p>
               </div>
               <button type="button" onClick={() => setScheduleView("month")} className="rounded-lg px-3 py-2 text-[12px] font-semibold text-[var(--color-text-muted)] hover:bg-white/[0.05] hover:text-white">월간 배치 보기 →</button>
             </div>
@@ -572,8 +598,8 @@ export function SchedulePage() {
               {agenda.length === 0 ? (
                 <div className="flex h-full min-h-56 flex-col items-center justify-center text-center">
                   <Check size={28} className="mb-3 text-emerald-300" />
-                  <h3 className="text-base font-semibold text-white">열린 약속이 없습니다</h3>
-                  <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">새 작업이 생기면 같은 SPEC 아래에 실행 약속을 추가하세요.</p>
+                  <h3 className="text-base font-semibold text-white">해야 할 일이 없습니다</h3>
+                  <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">새 작업이 생기면 SPEC 상세에서 작업 목표를 추가하세요.</p>
                 </div>
               ) : (
                 <div className="space-y-5">
@@ -608,7 +634,7 @@ export function SchedulePage() {
                                   <span className="truncate text-[14px] font-semibold text-white">{commitment.title}</span>
                                   {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300">파이프라인 완료</span>}
                                 </div>
-                                <p className="mt-1 text-[12px] font-semibold text-cyan-200">다음 행동 · {action.label}</p>
+                                {action.label !== "완료 처리" && <p className="mt-1 text-[12px] font-semibold text-cyan-200">{action.label}</p>}
                                 <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
                                   <span>{action.detail}</span>
                                   {commitment.due_date && <span className="font-mono text-slate-300">{commitment.due_date}</span>}
@@ -616,7 +642,19 @@ export function SchedulePage() {
                                   {group.id === "next" && remaining !== null && <span>D-{remaining}</span>}
                                 </div>
                               </div>
-                              <ChevronRight size={16} className="shrink-0 text-[var(--color-text-dim)] transition-transform group-hover:translate-x-1 group-hover:text-cyan-300" />
+                              {action.label === "완료 처리" ? (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    void completeFromQueue(commitment);
+                                  }}
+                                  className="shrink-0 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-400/20 disabled:opacity-40"
+                                >
+                                  완료 처리
+                                </button>
+                              ) : <ChevronRight size={16} className="shrink-0 text-[var(--color-text-dim)] transition-transform group-hover:translate-x-1 group-hover:text-cyan-300" />}
                             </div>
                           );
                         })}
@@ -793,7 +831,7 @@ export function SchedulePage() {
                     </div>
                     {guidance.kind !== "done" && <>
                     <p className="mt-1 text-slate-300">{guidance.reason}</p>
-                    <p className="mt-2"><span className="text-cyan-300">다음 행동</span> · {guidance.nextAction}</p>
+                    <p className="mt-2"><span className="text-cyan-300">권장 작업</span> · {guidance.nextAction}</p>
                     <p className="mt-0.5 text-[10.5px] text-slate-400">{guidance.blockedNextStep}</p>
                     </>}
                   </div>
@@ -813,11 +851,11 @@ export function SchedulePage() {
                   />
                 </div>
               )}
-              <section className="mt-3 rounded-xl border border-violet-400/25 bg-violet-400/[0.06] p-3" aria-label="작업 약속">
+              <section className="mt-3 rounded-xl border border-violet-400/25 bg-violet-400/[0.06] p-3" aria-label="작업 목표">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-[12.5px] font-semibold text-violet-100">작업 약속</h3>
-                    <p className="mt-0.5 text-[10.5px] text-slate-400">파이프라인 실행과 독립적으로 이번 목표와 날짜를 관리합니다.</p>
+                    <h3 className="text-[12.5px] font-semibold text-violet-100">작업 목표</h3>
+                    <p className="mt-0.5 text-[10.5px] text-slate-400">이번에 끝낼 범위와 마감일을 관리합니다.</p>
                   </div>
                   <button
                     type="button"
@@ -828,7 +866,7 @@ export function SchedulePage() {
                     }}
                     className="shrink-0 rounded-lg border border-violet-400/35 bg-violet-400/10 px-2.5 py-1.5 text-[11px] font-semibold text-violet-200 hover:bg-violet-400/20"
                   >
-                    + 새 약속
+                    작업 목표 추가
                   </button>
                 </div>
 
@@ -860,7 +898,7 @@ export function SchedulePage() {
                                   : "border-emerald-400/30 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/20",
                               )}
                             >
-                              {closed ? "다시 열기" : "일정 완료"}
+                              {closed ? "다시 열기" : "완료 처리"}
                             </button>
                           </div>
                         </div>
@@ -871,14 +909,14 @@ export function SchedulePage() {
 
                 {selectedCommitments.length === 0 && !commitmentFormOpen && (
                   <p className="mt-3 rounded-lg border border-dashed border-white/10 px-3 py-2.5 text-[10.5px] text-slate-400">
-                    기존 마감일은 호환 일정으로 표시 중입니다. 새 약속을 만들면 목표와 완료 이력이 분리됩니다.
+                    기존 마감일을 일정에 표시하고 있습니다. 작업 목표를 추가하면 완료 이력을 따로 관리할 수 있습니다.
                   </p>
                 )}
 
                 {commitmentFormOpen && (
                   <div className="mt-3 space-y-3 rounded-lg border border-violet-400/20 bg-black/20 p-3">
                     <label className="block text-[10.5px] text-slate-400">
-                      약속 제목
+                      작업 목표
                       <input
                         value={commitmentTitle}
                         onChange={(event) => setCommitmentTitle(event.target.value)}
@@ -902,13 +940,13 @@ export function SchedulePage() {
                         </select>
                       </label>
                       <div>
-                        <span className="mb-1 block text-[10.5px] text-slate-400">약속 날짜</span>
+                        <span className="mb-1 block text-[10.5px] text-slate-400">마감일</span>
                         <DatePicker value={commitmentDueDate} onChange={setCommitmentDueDate} placeholder="날짜 미정" />
                       </div>
                     </div>
                     <div className="flex justify-end gap-2">
                       <button type="button" onClick={() => setCommitmentFormOpen(false)} className="rounded-lg px-3 py-1.5 text-[10.5px] text-slate-400 hover:bg-white/[0.04]">취소</button>
-                      <button type="button" disabled={busy || !commitmentTitle.trim()} onClick={() => void addCommitment()} className="rounded-lg border border-violet-400/35 bg-violet-400/15 px-3 py-1.5 text-[10.5px] font-semibold text-violet-100 hover:bg-violet-400/25 disabled:opacity-40">약속 추가</button>
+                      <button type="button" disabled={busy || !commitmentTitle.trim()} onClick={() => void addCommitment()} className="rounded-lg border border-violet-400/35 bg-violet-400/15 px-3 py-1.5 text-[10.5px] font-semibold text-violet-100 hover:bg-violet-400/25 disabled:opacity-40">작업 목표 추가</button>
                     </div>
                   </div>
                 )}

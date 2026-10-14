@@ -44,22 +44,22 @@ export function commitmentNextAction(commitment: CommitmentProjection): Commitme
       detail: "활성 실행 대기열에서 제외됩니다.",
     };
   }
-  if (commitment.pipeline_status === "blocked") return { label: "차단 해소", detail: "결정 또는 외부 입력이 필요합니다." };
-  if (!commitment.pipeline_status || commitment.pipeline_status === "not_started") return { label: "작업 시작", detail: "이 약속에 연결된 실행이 아직 없습니다." };
-  if (commitment.pipeline_status === "running") return { label: "실행 확인", detail: "연결된 파이프라인이 실행 중입니다." };
+  if (commitment.pipeline_status === "blocked") return { label: "차단 원인 해결", detail: "결정 또는 외부 입력이 필요합니다." };
+  if (!commitment.pipeline_status || commitment.pipeline_status === "not_started") return { label: "개발 시작", detail: "아직 시작된 파이프라인이 없습니다." };
+  if (commitment.pipeline_status === "running") return { label: "진행 상태 확인", detail: "연결된 파이프라인이 실행 중입니다." };
 
   const target = targetEnvironment(commitment.target);
   if (target) {
     const current = commitment.current_environment ?? "LOCAL";
     if (environmentRank[current] < environmentRank[target]) {
-      return { label: `${target} 배포 확인`, detail: `파이프라인 완료 · 현재 ${current} → 목표 ${target}` };
+      return { label: `${target} 배포`, detail: `현재 ${current} · ${target} 반영 후 자동으로 다음 단계가 표시됩니다.` };
     }
-    return { label: "일정 완료 확인", detail: `목표 ${target} 도달 · 확인 전까지 약속은 열려 있습니다.` };
+    return { label: "완료 처리", detail: `목표 ${target}까지 반영되었습니다.` };
   }
-  if (commitment.target === "review") return { label: "결과 검토", detail: "파이프라인 완료 · 사람의 검토가 필요합니다." };
+  if (commitment.target === "review") return { label: "리뷰 진행", detail: "개발 파이프라인이 완료되었습니다." };
   return {
-    label: "일정 완료 확인",
-    detail: commitment.target === "custom" ? "사용자 정의 완료 조건을 확인하세요." : "구현 파이프라인 완료 · 확인 전까지 약속은 열려 있습니다.",
+    label: "완료 처리",
+    detail: commitment.target === "custom" ? "정해 둔 완료 조건을 확인했습니다." : "개발 파이프라인이 완료되었습니다.",
   };
 }
 
@@ -77,16 +77,16 @@ export function buildCommitmentQueue<T extends ScheduleCommitment>(commitments: 
     .sort((left, right) => left.due_date.localeCompare(right.due_date));
   const inbox = open.filter((item) => item.due_date === null);
   const definitions: Array<Omit<CommitmentQueueGroup<T>, "items"> & { match: (item: T & { due_date: string }) => boolean }> = [
-    { id: "overdue", label: "기한 초과", description: "먼저 결론이 필요한 약속", match: (item) => item.due_date < todayKey },
-    { id: "today", label: "오늘", description: "오늘 결론이 필요한 약속", match: (item) => item.due_date === todayKey },
-    { id: "next", label: "다음 7일", description: "곧 다가오는 약속", match: (item) => item.due_date > todayKey && item.due_date <= nextWeekKey },
+    { id: "overdue", label: "기한 초과", description: "먼저 처리할 작업", match: (item) => item.due_date < todayKey },
+    { id: "today", label: "오늘", description: "오늘 처리할 작업", match: (item) => item.due_date === todayKey },
+    { id: "next", label: "다음 7일", description: "곧 시작할 작업", match: (item) => item.due_date > todayKey && item.due_date <= nextWeekKey },
     { id: "later", label: "이후 일정", description: "장기 실행 계획", match: (item) => item.due_date > nextWeekKey },
   ];
   const groups: CommitmentQueueGroup<T>[] = definitions.flatMap((definition) => {
     const items = dated.filter(definition.match);
     return items.length > 0 ? [{ id: definition.id, label: definition.label, description: definition.description, items }] : [];
   });
-  if (inbox.length > 0) groups.push({ id: "inbox", label: "날짜 미정", description: "날짜를 정해야 할 약속", items: inbox });
+  if (inbox.length > 0) groups.push({ id: "inbox", label: "날짜 미정", description: "날짜를 정해야 할 작업", items: inbox });
   return groups;
 }
 
