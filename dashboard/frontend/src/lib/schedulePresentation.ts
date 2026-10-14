@@ -25,15 +25,15 @@ export function visibleRegisteredSpecs<T extends ScheduleStatusItem>(specs: T[],
   return specs.filter((spec) => spec.due_date !== null && !(spec.status === "done" && spec.due_date < todayKey));
 }
 
-/** 카드 본문은 흰색 텍스트를 공통 사용한다. 서로 이웃한 워크스페이스도 한눈에 갈리도록
- * 고유색을 굵은 레일, 외곽선, 표면 그라데이션에 같은 강도로 반복한다. */
+/** 워크스페이스 색은 소속을 찾는 4px 레일에 집중한다. 넓은 본문 표면은 중립색을 유지해
+ * 제목과 상태 배지가 색 면적에 묻히지 않게 한다. */
 export function scheduleCardStyle(color: string) {
   return {
-    borderColor: `${color}66`,
+    borderColor: `${color}52`,
     borderLeftColor: color,
     borderLeftWidth: 4,
-    background: `linear-gradient(105deg, ${color}2E 0%, ${color}18 72%, ${color}0F 100%)`,
-    boxShadow: `inset 0 0 0 1px ${color}33`,
+    background: `linear-gradient(105deg, ${color}18 0%, rgba(11, 17, 29, 0.96) 42%, rgba(11, 17, 29, 0.98) 100%)`,
+    boxShadow: `inset 0 0 0 1px ${color}1F`,
   };
 }
 

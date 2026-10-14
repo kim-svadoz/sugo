@@ -36,13 +36,22 @@ describe("schedule presentation", () => {
     expect(visibleRegisteredSpecs(specs, "2026-10-07")).toEqual(specs.slice(1, 4));
   });
 
-  it("워크스페이스 색은 굵은 레일과 충분한 대비의 그라데이션 표면으로 구분한다", () => {
+  it("워크스페이스 색은 굵은 레일에 집중하고 카드 표면은 절제한다", () => {
     const style = scheduleCardStyle("#fb923c");
     expect(style.borderLeftColor).toBe("#fb923c");
     expect(style.borderLeftWidth).toBe(4);
-    expect(style.background).toContain("#fb923c2E");
-    expect(style.boxShadow).toContain("#fb923c33");
+    expect(style.background).toContain("#fb923c18");
+    expect(style.background).toContain("rgba(11, 17, 29, 0.98)");
+    expect(style.background).not.toContain("#fb923c2E");
+    expect(style.boxShadow).toContain("#fb923c1F");
     expect(style).not.toHaveProperty("color");
+  });
+
+  it("Schedule 카드 본문은 제목 공간을 위해 워크스페이스명을 반복하지 않는다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).not.toContain('max-w-full truncate font-mono text-[9.5px] font-semibold text-slate-300');
+    expect(source).not.toContain('mr-1 font-mono text-[9px] font-semibold text-slate-400');
+    expect(source).toContain('title={`${s.workspace_name} · ${s.title}`}');
   });
 
   it("기한 초과는 외곽선 대신 명시적인 경고 배지로 표시한다", () => {

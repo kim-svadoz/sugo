@@ -428,8 +428,8 @@ export function SchedulePage() {
                     onDragEnd={() => setDragOverKey(null)}
                     onClick={() => openSpec(s)}
                     style={style}
-                    className="flex min-h-9 cursor-grab items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[12px] font-medium text-slate-100 transition-colors hover:brightness-110 active:cursor-grabbing"
-                    title="캘린더 날짜 칸으로 끌어놓으면 마감일이 지정됩니다"
+                    className="flex min-h-9 cursor-grab items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[12.5px] font-semibold text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)] active:cursor-grabbing"
+                    title={`${s.workspace_name} · ${s.title} · 캘린더 날짜 칸으로 끌어놓으면 마감일이 지정됩니다`}
                   >
                     <span className="min-w-0 flex-1 truncate">{s.title}</span>
                     <SpecStageBadge spec={s} />
@@ -459,12 +459,11 @@ export function SchedulePage() {
                       jumpToDate(s.due_date!);
                     }}
                     style={style}
-                    className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium text-slate-100 transition-colors hover:brightness-110 active:cursor-grabbing"
-                    title="클릭하면 마감월로 이동합니다 · 캘린더 날짜 칸으로 끌어놓으면 마감일이 바뀝니다"
+                    className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)] active:cursor-grabbing"
+                    title={`${s.workspace_name} · ${s.title} · 클릭하면 마감월로 이동합니다`}
                   >
-                    <span className="min-w-0 truncate">{s.title}</span>
+                    <span className="min-w-0 truncate text-[12.5px] font-semibold">{s.title}</span>
                     <span className="flex flex-wrap items-center gap-1">
-                      <span className="max-w-full truncate font-mono text-[9.5px] font-semibold text-slate-300">{s.workspace_name}</span>
                       <span className="font-mono text-[9.5px] text-slate-300/80">{s.due_date}</span>
                       <SpecStageBadge spec={s} />
                       <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
@@ -588,7 +587,7 @@ export function SchedulePage() {
                           className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] active:cursor-grabbing"
                           title={`${s.workspace_name} · ${s.title}`}
                         >
-                          <button type="button" onClick={() => openSpec(s)} className="min-w-0 flex-1 truncate text-left font-medium text-slate-100" title={`${s.workspace_name} · ${s.title}`}><span className="mr-1 font-mono text-[9px] font-semibold text-slate-400">{s.workspace_name}</span>{s.title}</button>
+                          <button type="button" onClick={() => openSpec(s)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100" title={`${s.workspace_name} · ${s.title}`}>{s.title}</button>
                           <SpecStageBadge spec={s} compact />
                       <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
                           {overdue && (
