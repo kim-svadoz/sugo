@@ -181,6 +181,7 @@ export interface HumanBlocker {
   blockedNextStep: string;
   createdAt: string;
   reviewPacket?: {
+    report?: WorkResultReport;
     summary: string;
     changes: string[];
     tests: string[];

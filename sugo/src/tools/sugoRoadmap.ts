@@ -23,6 +23,8 @@ import { assessSession } from "../ontology/sessionAssessment.js";
 import { buildReviewConfirmationBlocker } from "../reviewConfirmation.js";
 import { snapshotReviewArtifacts } from "../dashboard/workResultFiles.js";
 import { syncReviewArtifacts } from "../dashboard/sync.js";
+import { buildWorkResultReport } from "../workResultReport.js";
+import { computeCompletionGrade } from "../labelGuard.js";
 
 export const sugoRoadmapInputSchema = {
   action: z.enum([
@@ -200,7 +202,24 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       );
       const patchVersion = session.data.mode === "patch" ? session.data.patch?.version ?? 0 : 0;
       await syncReviewArtifacts(args.workspace, args.id, args.sessionId, patchVersion, files);
-      const blocker = buildReviewConfirmationBlocker({ sessionId: args.sessionId, ...args.reviewPacket, files });
+      const chain = session.data.chainInfo;
+      const evidence = chain.testEvidence;
+      const requirements = chain.coverageMap?.acceptanceCriteria ?? (await listRoadmapNodes(args.workspace))
+        .filter(node => node.parent === args.id && node.level === "subtask")
+        .map(node => ({ id: node.title, covered: node.status === "done" }));
+      const report = buildWorkResultReport({
+        featureName: session.featureName, kind: session.data.mode === "patch" ? "patch" : "feat", patchVersion,
+        completedAt: new Date().toISOString(),
+        completionGrade: computeCompletionGrade(chain.bypassLabels ?? [], patchVersion).grade,
+        bypassLabels: chain.bypassLabels ?? [], summary: args.reviewPacket.summary,
+        changedFiles: files.map(file => file.path), requirements,
+        designDecisions: args.reviewPacket.designDecisions, knownLimitations: args.reviewPacket.knownLimitations,
+        seed: session.data.seed,
+        testEvidence: { command: evidence?.command, exitCode: evidence?.exitCode, total: evidence?.total,
+          passed: evidence?.passed, failed: evidence?.failed, state: evidence?.derivedState ?? chain.testPassedState ?? "unverified" },
+        runtimeVerified: chain.runtimeVerified === true, wiringVerified: chain.wiringVerified, validation: chain.lastValidation,
+      });
+      const blocker = buildReviewConfirmationBlocker({ sessionId: args.sessionId, ...args.reviewPacket, files, report });
       const result = await blockRoadmapNodeForHuman(args.workspace, args.id, blocker);
       if (!result.ok) return errorResult(result.error!, result.message!);
       session.data.humanDecisionGate = { workspace: args.workspace, taskId: args.id, blocker };

@@ -21,6 +21,15 @@ const node = (overrides: Partial<RoadmapNode>): RoadmapNode => ({
 });
 
 describe("patch lineage canvas model", () => {
+  it("완료된 feat에는 현재 patch의 실행 상태와 확인 요청을 전파하지 않는다", () => {
+    const task = node({ id: "task", status: "blocked", note: "patch 검토", human_blocker: { kind: "review_confirmation" } as RoadmapNode["human_blocker"], lineage: [{ version: 0, workResult: { summary: "최초 결과" } }, { version: 1 }] });
+    const [chain] = buildLineageChains([task]);
+    const past = lineageSelection(chain.columns[0][0]).node;
+    expect(past.human_blocker).toBeNull();
+    expect(past.note).toBeNull();
+    expect(past.approval_read_only).toBe(true);
+    expect(lineageSelection(chain.columns[0][1]).node.human_blocker).toBeTruthy();
+  });
   it("과거 REQ가 없으면 최신 차수 REQ를 그 당시 요구사항으로 대체하지 않는다", () => {
     const task = node({ id: "task", lineage: [{ version: 0 }, { version: 2 }] });
     const [chain] = buildLineageChains([task]);

@@ -14,7 +14,7 @@ export function workspaceCommandSummary(pulse: WorkspaceCommandPulse): {
 } {
   if (pulse.attention > 0) {
     return {
-      headline: `${pulse.active}개 도메인이 실행 중입니다`,
+      headline: `확인이 필요한 작업이 ${pulse.attention}건 있습니다`,
       detail: `사람의 확인이 필요한 작업 ${pulse.attention}건을 먼저 확인하세요.`,
       intent: "attention",
     };

@@ -694,8 +694,8 @@ export function Sessions() {
         type="button"
         onClick={() => {
           if (commandSummary.intent !== "attention") return;
-          const needsAttention = filteredWorkspaces.find((workspace) => (workspace.attentionCount ?? 0) > 0);
-          if (needsAttention) setSelectedWorkspace(needsAttention.name);
+          const needsAttention = workspaces.find((workspace) => (workspace.attentionCount ?? 0) > 0);
+          if (needsAttention) { setSelectedWorkspace(needsAttention.name); setAgentCanvasModal(needsAttention.name); }
         }}
         className={cn(
           "command-brief ck-stage-in group flex w-full items-center justify-between gap-5 rounded-2xl border px-5 py-4 text-left",

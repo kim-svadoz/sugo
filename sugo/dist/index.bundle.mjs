@@ -28169,7 +28169,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.29.3" : "0.0.0-dev";
+  return true ? "0.29.4" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -31988,7 +31988,7 @@ async function handleSugoPlan(rawArgs) {
     await reconcileRoadmapWithTasks(workspace, await listTasks(workspace));
     const completedAt = session.data.chainInfo.workResultReport?.completedAt ?? (/* @__PURE__ */ new Date()).toISOString();
     const patchVersion = session.data.mode === "patch" ? session.data.patch?.version : 0;
-    const dashboardFiles = await snapshotWorkResultFiles(session.projectPath, session.data.chainInfo.changedFiles);
+    const dashboardFiles = await snapshotWorkResultFiles(session.projectPath, session.data.chainInfo.changedFiles, session.data.chainInfo.implementationStartedAt ?? session.startedAt);
     const sourceRevision = await collectSourceRevision(session.projectPath, session.data.chainInfo.changedFiles ?? [], session.startedAt);
     const workResult = {
       sourceRevision,
@@ -32082,7 +32082,10 @@ async function handleSugoPlan(rawArgs) {
     completionGrade,
     bypassSummary,
     cancelledAt: session.cancelledAt,
-    nextActionHints: result2.nextActionHints ?? [],
+    nextActionHints: session.state === "REVIEW_RUNNING" ? [
+      "\uC0AC\uC6A9\uC790\uC5D0\uAC8C \uD655\uC778\uC744 \uBB3B\uAE30 \uC804\uC5D0 request_review_confirmation\uC73C\uB85C \uD604\uC7AC \uCC28\uC218\uC758 \uBCF4\uACE0\uC11C\uC640 \uBCC0\uACBD\uD30C\uC77C\uC744 \uBA3C\uC800 \uAC8C\uC2DC\uD558\uC138\uC694. \uAC8C\uC2DC \uC751\uB2F5\uC744 \uD655\uC778\uD55C \uB4A4 Dashboard\uC758 \uB9AC\uBDF0 \uBCF4\uACE0\uC11C HTML \uBC84\uD2BC\uC73C\uB85C \uC548\uB0B4\uD558\uC138\uC694. \uD130\uBBF8\uB110 \uC120\uD0DD\uCC3D\uC5D0\uC11C \uBBF8\uB9AC \uC2B9\uC778\uC744 \uBC1B\uC9C0 \uB9C8\uC138\uC694.",
+      ...result2.nextActionHints ?? []
+    ] : result2.nextActionHints ?? [],
     // §4.3-P DONE까지 남은 경로와 지금 막고 있는 것 — 막다른 길에 들어가기 전에 보이게 한다.
     completionPlan: buildCompletionPlan(session.state, session.data.chainInfo),
     // §4.3-T start에서만 채워진다. missing이면 clarify에서 최종 목표를 확정해 생성해야 한다.
@@ -32305,6 +32308,7 @@ function buildReviewConfirmationBlocker(input) {
     blockedNextStep: "review_done \uD655\uC778 \uD6C4 docs \uB2E8\uACC4 \uC9C4\uD589",
     createdAt: (/* @__PURE__ */ new Date()).toISOString(),
     reviewPacket: {
+      ...input.report ? { report: input.report } : {},
       summary: input.summary,
       changes: input.changes,
       tests: input.tests,
@@ -32489,7 +32493,35 @@ async function handleSugoRoadmap(rawArgs) {
       );
       const patchVersion = session.data.mode === "patch" ? session.data.patch?.version ?? 0 : 0;
       await syncReviewArtifacts(args2.workspace, args2.id, args2.sessionId, patchVersion, files);
-      const blocker = buildReviewConfirmationBlocker({ sessionId: args2.sessionId, ...args2.reviewPacket, files });
+      const chain = session.data.chainInfo;
+      const evidence = chain.testEvidence;
+      const requirements = chain.coverageMap?.acceptanceCriteria ?? (await listRoadmapNodes(args2.workspace)).filter((node) => node.parent === args2.id && node.level === "subtask").map((node) => ({ id: node.title, covered: node.status === "done" }));
+      const report = buildWorkResultReport({
+        featureName: session.featureName,
+        kind: session.data.mode === "patch" ? "patch" : "feat",
+        patchVersion,
+        completedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        completionGrade: computeCompletionGrade(chain.bypassLabels ?? [], patchVersion).grade,
+        bypassLabels: chain.bypassLabels ?? [],
+        summary: args2.reviewPacket.summary,
+        changedFiles: files.map((file) => file.path),
+        requirements,
+        designDecisions: args2.reviewPacket.designDecisions,
+        knownLimitations: args2.reviewPacket.knownLimitations,
+        seed: session.data.seed,
+        testEvidence: {
+          command: evidence?.command,
+          exitCode: evidence?.exitCode,
+          total: evidence?.total,
+          passed: evidence?.passed,
+          failed: evidence?.failed,
+          state: evidence?.derivedState ?? chain.testPassedState ?? "unverified"
+        },
+        runtimeVerified: chain.runtimeVerified === true,
+        wiringVerified: chain.wiringVerified,
+        validation: chain.lastValidation
+      });
+      const blocker = buildReviewConfirmationBlocker({ sessionId: args2.sessionId, ...args2.reviewPacket, files, report });
       const result2 = await blockRoadmapNodeForHuman(args2.workspace, args2.id, blocker);
       if (!result2.ok) return errorResult13(result2.error, result2.message);
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };

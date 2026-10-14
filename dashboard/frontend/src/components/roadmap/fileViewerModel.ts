@@ -86,11 +86,13 @@ export function filesForRoadmapScope(selected: RoadmapNode, nodes: RoadmapNode[]
   for (const node of candidates) {
     if (!scopeIds.has(node.id)) continue;
     const workResult = parseWorkResult(node.work_result);
-    const ownFiles = (workResult?.files ?? []).map((file) => ({
+    const packet = node.human_blocker?.kind === "review_confirmation" ? node.human_blocker.reviewPacket : undefined;
+    const ownFiles = (packet?.files?.length ? packet.files : workResult?.files ?? []).map((file: WorkResultFile) => ({
       ...file,
       path: repositoryRelativePath(file.path),
       artifactTaskId: file.artifactTaskId ?? (node.level === "task" ? node.ref ?? node.id.replace(/:v\d+$/, "") : undefined),
-      artifactPatchVersion: file.artifactPatchVersion ?? workResult?.patchVersion,
+      artifactSessionId: file.artifactSessionId ?? (packet ? node.human_blocker?.sessionId : undefined),
+      artifactPatchVersion: file.artifactPatchVersion ?? packet?.report?.patchVersion ?? workResult?.patchVersion,
     }));
     for (const file of [...lineageFiles(node), ...ownFiles]) {
       latestByPath.delete(file.path);

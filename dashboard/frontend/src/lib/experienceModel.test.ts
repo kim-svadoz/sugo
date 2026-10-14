@@ -4,7 +4,7 @@ import { buildScheduleAgenda, workspaceCommandSummary } from "./experienceModel.
 describe("flagship workspace experience", () => {
   it("turns workspace totals into an action-oriented command summary", () => {
     expect(workspaceCommandSummary({ active: 2, attention: 1, done: 7, total: 10 })).toEqual({
-      headline: "2개 도메인이 실행 중입니다",
+      headline: "확인이 필요한 작업이 1건 있습니다",
       detail: "사람의 확인이 필요한 작업 1건을 먼저 확인하세요.",
       intent: "attention",
     });

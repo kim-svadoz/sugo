@@ -1,4 +1,5 @@
 export interface ReviewPacket {
+  report?: import("../hooks/useRoadmap.js").WorkResultReport;
   summary: string;
   changes: string[];
   tests: string[];

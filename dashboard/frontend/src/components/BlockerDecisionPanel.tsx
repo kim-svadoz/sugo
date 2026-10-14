@@ -5,7 +5,7 @@ import { blockerResumePrompt } from "../lib/blockerDecision.js";
 import { presentSteKorean } from "../lib/steKorean.js";
 import { reviewConfirmationSections } from "../lib/reviewConfirmation.js";
 
-export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, question, decision, blocker, onSaved }: {
+export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, question, decision, blocker, onSaved, onOpenReport }: {
   userId: string | null;
   workspace: string;
   taskId: string;
@@ -14,6 +14,7 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
   decision?: BlockerDecision | null;
   blocker?: HumanBlocker | null;
   onSaved?: () => void;
+  onOpenReport?: () => void;
 }) {
   const [response, setResponse] = useState(decision?.response ?? "");
   const [saved, setSaved] = useState<BlockerDecision | null>(decision ?? null);
@@ -22,11 +23,11 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { setResponse(decision?.response ?? ""); setSaved(decision ?? null); }, [taskId, decision]);
 
-  async function persist(): Promise<BlockerDecision | null> {
-    if (!userId || !response.trim()) return null;
+  async function persist(value = response): Promise<BlockerDecision | null> {
+    if (!userId || !value.trim()) return null;
     setBusy(true); setError(null);
     try {
-      const result = await saveBlockerDecision(userId, workspace, taskId, response.trim());
+      const result = await saveBlockerDecision(userId, workspace, taskId, value.trim());
       setSaved(result.decision); onSaved?.(); return result.decision;
     } catch { setError("결정을 저장하지 못했습니다."); return null; }
     finally { setBusy(false); }
@@ -42,6 +43,17 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
     ? reviewConfirmationSections(blocker.reviewPacket)
     : [];
   const responseReady = response.trim().length > 0 && response.trim() !== "수정 필요 —";
+
+  if (Boolean(blocker?.kind === "review_confirmation")) return <section id="review-confirmation-panel" className="space-y-3 rounded-xl border border-amber-300/25 bg-amber-300/[0.04] p-4">
+    <h3 className="text-sm font-semibold text-white">작업 결과 확인</h3>
+    <p className="text-xs leading-relaxed text-slate-300">보고서에서 변경 내용과 검증 결과를 확인한 뒤 진행 여부를 결정하세요.</p>
+    <button type="button" onClick={onOpenReport} disabled={!onOpenReport} className="w-full rounded-lg border border-violet-300/30 bg-violet-400/10 px-4 py-3 text-sm font-semibold text-violet-100">리뷰 보고서 HTML로 열기 ↗</button>
+    <button type="button" disabled={busy || saved?.response === "확인, 진행"} onClick={() => { setResponse("확인, 진행"); void persist("확인, 진행"); }} className="w-full rounded-lg bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-200 disabled:opacity-50">{saved?.response === "확인, 진행" ? "진행 결정 저장됨" : "확인, 진행"}</button>
+    <label className="block text-xs text-slate-300">변경할 내용<textarea value={response === "확인, 진행" ? "" : response} onChange={event => setResponse(event.target.value)} placeholder="수정할 부분을 구체적으로 입력하세요" className="mt-2 min-h-24 w-full rounded-lg border border-white/15 bg-slate-950/50 p-3 text-sm text-white" /></label>
+    <button type="button" disabled={busy || !responseReady || response === "확인, 진행"} onClick={() => void copyResume()} className="w-full rounded-lg border border-white/20 px-4 py-3 text-sm text-white disabled:opacity-40">{copied ? "복사됨" : "저장 후 재개 프롬프트 복사"}</button>
+    {saved?.response === "확인, 진행" && <p role="status" className="text-xs text-emerald-200">결정을 저장했습니다. 작업 세션에서 계속 진행하면 이 결정을 확인하고 재개합니다.</p>}
+    {error && <p role="alert" className="text-xs text-rose-300">{error}</p>}
+  </section>;
 
   return <section id={blocker?.kind === "review_confirmation" ? "review-confirmation-panel" : undefined} tabIndex={blocker?.kind === "review_confirmation" ? -1 : undefined} className="scroll-mt-4 rounded-xl border border-orange-400/45 bg-orange-400/[0.07] p-3 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60">
     <div className="flex items-center gap-2 text-sm font-semibold text-orange-100"><MessageSquareWarning size={16} /> {blocker?.kind === "review_confirmation" ? "작업 결과 확인" : "사람의 결정이 필요합니다"}</div>

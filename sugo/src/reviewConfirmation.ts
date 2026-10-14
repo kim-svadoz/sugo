@@ -9,6 +9,7 @@ export interface ReviewConfirmationInput {
   designDecisions: string[];
   knownLimitations: string[];
   files?: NonNullable<RoadmapWorkResult["files"]>;
+  report?: import("./workResultReport.js").WorkResultReport;
 }
 
 export function buildReviewConfirmationBlocker(input: ReviewConfirmationInput): HumanBlocker {
@@ -28,6 +29,7 @@ export function buildReviewConfirmationBlocker(input: ReviewConfirmationInput): 
     blockedNextStep: "review_done 확인 후 docs 단계 진행",
     createdAt: new Date().toISOString(),
     reviewPacket: {
+      ...(input.report ? { report: input.report } : {}),
       summary: input.summary,
       changes: input.changes,
       tests: input.tests,

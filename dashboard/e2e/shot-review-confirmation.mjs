@@ -22,6 +22,8 @@ const blocker = {
   blockedNextStep: "review_done 확인 후 docs 단계 진행",
   createdAt: new Date().toISOString(),
   reviewPacket: {
+    report: { schemaVersion: 1, kind: "patch", patchVersion: 1, completionGrade: "verified", summary: "빈 결과 방어와 조회 조건을 개선했습니다.", changedFiles: ["src/category.ts"], requirements: [{ id: "빈 결과를 처리한다", covered: true }], designDecisions: [], knownLimitations: [], verification: { test: { command: "npm test", total: 37, passed: 37, failed: 0, state: "pass" }, runtimeVerified: true, wiringVerified: true, validationVerdict: "pass" } },
+    files: [{ path: "src/category.ts", change: "modified" }],
     summary: "검색 필터 조회 조건과 빈 결과 처리를 수정했습니다.",
     changes: ["사용자 ID와 필터 목록 조건을 함께 적용했습니다.", "조회 결과는 최대 30개로 제한했습니다."],
     tests: ["FilterServiceTest 37/37 통과", "원본 check의 기존 실패 1건은 별도 표시"],
@@ -61,6 +63,8 @@ await page.route("**/api/**", (route) => {
   const url = route.request().url();
   if (url.includes("/api/sync/plugin-version")) return route.fulfill({ json: { version: "0.26.0" } });
   if (url.includes("/api/workspaces/schedule")) return route.fulfill({ json: { specs: [spec] } });
+  if (url.includes("/api/schedule/commitments")) return route.fulfill({ json: { commitments: [] } });
+  if (url.includes("/api/schedule/memos")) return route.fulfill({ json: { memos: [] } });
   if (url.includes("/api/workspaces")) return route.fulfill({ json: { workspaces: [{ name: "orders", projects: [] }] } });
   return route.fulfill({ json: {} });
 });
@@ -71,4 +75,11 @@ await page.getByText("작업 결과 확인", { exact: true }).waitFor();
 const output = join(tmpdir(), "sugo-review-confirmation.png");
 await page.screenshot({ path: output, fullPage: false });
 console.log(output);
+const reportPromise = page.waitForEvent("popup");
+await page.getByRole("button", { name: "리뷰 보고서 HTML로 열기" }).click();
+const report = await reportPromise;
+await report.waitForLoadState();
+await report.getByText("37/37 통과", { exact: true }).first().waitFor();
+await report.screenshot({ path: join(tmpdir(), "sugo-review-report.png"), fullPage: true });
+console.log(join(tmpdir(), "sugo-review-report.png"));
 await browser.close();

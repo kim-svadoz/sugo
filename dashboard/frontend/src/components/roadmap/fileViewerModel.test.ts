@@ -20,6 +20,11 @@ const node = (id: string, level: string, parent: string | null, files: Array<{ p
 });
 
 describe("changed-file viewer model", () => {
+  it("승인 대기 중인 현재 패킷의 파일을 완료 전에도 표시한다", () => {
+    const task = node("task", "task", null);
+    task.human_blocker = { kind: "review_confirmation", reviewPacket: { files: [{ path: "src/new.ts", change: "added" }] } } as RoadmapNode["human_blocker"];
+    expect(filesForRoadmapScope(task, [task]).map(file => file.path)).toEqual(["src/new.ts"]);
+  });
   it("수정 파일은 실제 변경을 검토할 수 있도록 diff를 우선 보여준다", () => {
     expect(fileViewerText({ path: "src/a.ts", change: "modified", content: "new", diff: "@@ -1 +1 @@" })).toBe(
       "@@ -1 +1 @@",

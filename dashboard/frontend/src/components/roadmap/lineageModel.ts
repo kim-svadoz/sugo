@@ -1,7 +1,7 @@
 import type { RoadmapNode } from "../../hooks/useRoadmap.js";
 import { repositoryRelativePath } from "./fileViewerModel.js";
 
-type HistoryRequirement = { id?: unknown; title?: unknown; status?: unknown };
+type HistoryRequirement = { id?: unknown; title?: unknown; status?: unknown; covered?: boolean };
 type HistoryReport = { requirements?: unknown };
 type HistoryEntry = {
   version?: unknown;
@@ -92,7 +92,7 @@ export function buildLineageChains(nodes: RoadmapNode[]): LineageChain[] {
           return {
             key: `${node.id}:v${version}`,
             node: version < latestVersion
-              ? { ...node, status: "done", display_status: "done" }
+              ? { ...node, status: "done", display_status: "done", manual_status: null, human_blocker: null, blocker_decision: null, runtime_assessment: null, note: null, approval_read_only: true }
               : cancelledPatch
                 ? { ...node, status: "dropped", display_status: "dropped" }
                 : node,
@@ -150,7 +150,7 @@ const requirementNodes = (item: LineageChainItem): RoadmapNode[] => {
     : null;
   const report = workResult?.report && typeof workResult.report === "object"
     ? workResult.report as HistoryReport
-    : null;
+    : item.node.human_blocker?.reviewPacket?.report ?? null;
   // v0(feat)는 SPEC 요구사항을 보여준다. 이후 patch는 feat 요구사항을 상속하지 않고
   // 해당 patch의 review report가 실제로 검증한 항목만 보여준다.
   const patchSeed = conciseTitle(workResult?.seed ?? item.entry.seed);
@@ -165,9 +165,9 @@ const requirementNodes = (item: LineageChainItem): RoadmapNode[] => {
     .filter((value): value is HistoryRequirement => !!value && typeof value === "object")
     .map((req, index) => ({
       id: `${item.key}::${typeof req.id === "string" ? req.id : `REQ-${index + 1}`}`,
-      title: typeof req.title === "string" ? req.title : `REQ-${index + 1}`,
+      title: typeof req.title === "string" ? req.title : typeof req.id === "string" ? req.id : `REQ-${index + 1}`,
       level: "subtask",
-      status: typeof req.status === "string" ? req.status : "done",
+      status: typeof req.status === "string" ? req.status : req.covered === false ? "pending" : "done",
       depends_on: [],
       parent: item.key,
       ref: null,
@@ -220,7 +220,7 @@ export function lineageSelection(item: LineageChainItem) {
     ...item.node,
     id: item.key,
     ref: item.node.id,
-    approval_read_only: item.version < Number((item.node.work_result as { patchVersion?: number } | null)?.patchVersion ?? item.version),
+    approval_read_only: item.node.approval_read_only || item.version < Number((item.node.work_result as { patchVersion?: number } | null)?.patchVersion ?? item.version),
     title: item.title,
     work_result: presentedWorkResult,
     lineage: null,

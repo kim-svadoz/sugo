@@ -1227,7 +1227,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     await reconcileRoadmapWithTasks(workspace, await listTasks(workspace));
     const completedAt = session.data.chainInfo.workResultReport?.completedAt ?? new Date().toISOString();
     const patchVersion = session.data.mode === "patch" ? session.data.patch?.version : 0;
-    const dashboardFiles = await snapshotWorkResultFiles(session.projectPath, session.data.chainInfo.changedFiles);
+    const dashboardFiles = await snapshotWorkResultFiles(session.projectPath, session.data.chainInfo.changedFiles, session.data.chainInfo.implementationStartedAt ?? session.startedAt);
     const sourceRevision = await collectSourceRevision(session.projectPath, session.data.chainInfo.changedFiles ?? [], session.startedAt);
     const workResult = {
       sourceRevision,
@@ -1337,7 +1337,10 @@ export async function handleSugoPlan(rawArgs: unknown) {
     completionGrade,
     bypassSummary,
     cancelledAt: session.cancelledAt,
-    nextActionHints: result.nextActionHints ?? [],
+    nextActionHints: session.state === "REVIEW_RUNNING" ? [
+      "사용자에게 확인을 묻기 전에 request_review_confirmation으로 현재 차수의 보고서와 변경파일을 먼저 게시하세요. 게시 응답을 확인한 뒤 Dashboard의 리뷰 보고서 HTML 버튼으로 안내하세요. 터미널 선택창에서 미리 승인을 받지 마세요.",
+      ...(result.nextActionHints ?? []),
+    ] : result.nextActionHints ?? [],
     // §4.3-P DONE까지 남은 경로와 지금 막고 있는 것 — 막다른 길에 들어가기 전에 보이게 한다.
     completionPlan: buildCompletionPlan(session.state, session.data.chainInfo),
     // §4.3-T start에서만 채워진다. missing이면 clarify에서 최종 목표를 확정해 생성해야 한다.

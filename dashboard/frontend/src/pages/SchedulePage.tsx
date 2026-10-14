@@ -14,6 +14,7 @@ import { DatePicker } from "../components/DatePicker.js";
 import { SpecDocumentPanel } from "../components/SpecDocumentPanel.js";
 import { ImagePasteZone, ImageThumb, SpecAttachments } from "../components/SpecAttachments.js";
 import { BlockerDecisionPanel } from "../components/BlockerDecisionPanel.js";
+import { openWorkResultHtml } from "../components/SubtaskPanel.js";
 import { ScheduleMemoPanel, type ScheduleMemoDraft } from "../components/ScheduleMemoPanel.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
@@ -806,7 +807,7 @@ export function SchedulePage() {
                       {guidance.kind !== "done" && <SpecStageBadge spec={selected} />}
                       <SpecDeploymentBadge deployment={selected.deployment} title={selected.title} />
                     </div>
-                    {guidance.kind !== "done" && <>
+                    {guidance.kind !== "done" && selected.focus_task_human_blocker?.kind !== "review_confirmation" && <>
                     <p className="mt-1 text-slate-300">{guidance.reason}</p>
                     <p className="mt-2"><span className="text-cyan-300">권장 작업</span> · {guidance.nextAction}</p>
                     <p className="mt-0.5 text-[10.5px] text-slate-400">{guidance.blockedNextStep}</p>
@@ -817,6 +818,7 @@ export function SchedulePage() {
               {selected.focus_task_id && selected.focus_task_status === "blocked" && (
                 <div className="mt-3">
                   <BlockerDecisionPanel
+                    onOpenReport={() => openWorkResultHtml(selected.title, null, [], selected.focus_task_human_blocker?.reviewPacket)}
                     userId={userId}
                     workspace={selected.workspace_name}
                     taskId={selected.focus_task_id}
@@ -845,8 +847,9 @@ export function SchedulePage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className={cn("rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase", entry.version === 0 ? "bg-cyan-400/10 text-cyan-200" : "bg-violet-400/10 text-violet-200")}>{entry.version === 0 ? "feat" : `patch ${entry.version}`}</span>
-                            <span className="truncate text-[11.5px] font-semibold text-slate-100">{entry.title}</span>
+                            <span className="text-[13px] font-semibold leading-relaxed text-slate-100">{entry.title}</span>
                           </div>
+                          {entry.summary && entry.summary !== entry.title && <p className="mt-1 line-clamp-3 text-[12px] leading-relaxed text-slate-300">{entry.summary}</p>}
                           {entry.completed_at && <time className="mt-1 block font-mono text-[9.5px] text-slate-500">{entry.completed_at.slice(0, 10)}</time>}
                         </div>
                       </li>

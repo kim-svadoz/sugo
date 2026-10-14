@@ -248,7 +248,7 @@ describe("§8.5 sugo_roadmap — link/unlink/group/backfill (task 레벨 관리)
       kind: "review_confirmation",
       sessionId,
       resumeAction: "review_done",
-      reviewPacket: { tests: ["npm test 통과"] },
+      reviewPacket: { tests: ["npm test 통과"], report: { schemaVersion: 1, kind: "feat", verification: { test: { state: expect.any(String) } } } },
     });
     const blocked = await call(handleSugoPlan, { action: "review_done", sessionId, userConfirmed: true });
     expect(blocked.data.errorCode).toBe("HUMAN_DECISION_REQUIRED");

@@ -1463,7 +1463,7 @@ export function RoadmapGraph({
     [selectedNode, data, nodes],
   );
   const selectViewerFile = useCallback(async (file: WorkResultFile) => {
-    if (file.content || file.diff || file.unavailableReason || !userId || !selectedNode) {
+    if (file.diff || (file.content && file.change !== "modified" && !file.unavailableReason) || !userId || !selectedNode) {
       setFileViewer((current) => ({ file, expanded: current?.expanded ?? true }));
       return;
     }
@@ -1479,6 +1479,17 @@ export function RoadmapGraph({
     });
     setFileViewer((current) => ({ file: loaded, expanded: current?.expanded ?? true }));
   }, [selectedNode, userId, workspace]);
+  useEffect(() => {
+    if (!fileViewer || !userId || !selectedNode || (!fileViewer.file.unavailableReason && (fileViewer.file.diff || fileViewer.file.change !== "modified"))) return;
+    let cancelled = false;
+    const file = fileViewer.file;
+    const latest = selectedFiles.find(candidate => candidate.path === file.path) ?? file;
+    const locator = reviewArtifactLocator(latest, { taskId: selectedNode.ref ?? selectedNode.id.replace(/:v\d+$/, ""), patchVersion: parseWorkResult(selectedNode.work_result)?.patchVersion, sessionId: selectedNode.human_blocker?.sessionId });
+    void getReviewArtifact(userId, workspace, { ...locator, path: file.path }).then(loaded => {
+      if (!cancelled) setFileViewer(current => current?.file.path === file.path ? { ...current, file: loaded } : current);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [data, userId, workspace, fileViewer?.file.path]);
   const specs = nodes.filter((n) => n.level === "spec");
 
   if (loading && nodes.length === 0) {
