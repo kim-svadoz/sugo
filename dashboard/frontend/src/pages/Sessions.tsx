@@ -46,6 +46,7 @@ import { presentSteKorean } from "../lib/steKorean.js";
 import { historyContextTitle, historyDisplayDate, historyDisplayTitle } from "../lib/historyPresentation.js";
 import { workspacePulse } from "../lib/operationalPulse.js";
 import { OperationalPulse } from "../components/OperationalPulse.js";
+import { workspaceCommandSummary } from "../lib/experienceModel.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
@@ -159,6 +160,7 @@ export function Sessions() {
 
   const workspaces = useMemo(() => data ?? [], [data]);
   const pulse = useMemo(() => workspacePulse(workspaces), [workspaces]);
+  const commandSummary = useMemo(() => workspaceCommandSummary(pulse), [pulse]);
   const isSearchMode = searchQuery.trim().length >= 2;
   const initialSelectionApplied = useRef(false);
 
@@ -688,6 +690,31 @@ export function Sessions() {
         </div>
       </div>
 
+      <button
+        type="button"
+        onClick={() => {
+          if (commandSummary.intent !== "attention") return;
+          const needsAttention = filteredWorkspaces.find((workspace) => (workspace.attentionCount ?? 0) > 0);
+          if (needsAttention) setSelectedWorkspace(needsAttention.name);
+        }}
+        className={cn(
+          "command-brief ck-stage-in group flex w-full items-center justify-between gap-5 rounded-2xl border px-5 py-4 text-left",
+          commandSummary.intent === "attention" ? "border-amber-400/25 bg-amber-400/[0.055]" : "border-[var(--color-border)] bg-[var(--color-surface)]/75",
+          commandSummary.intent === "attention" ? "cursor-pointer hover:border-amber-300/45" : "cursor-default",
+        )}
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", commandSummary.intent === "attention" ? "bg-amber-400/12 text-amber-300" : commandSummary.intent === "stable" ? "bg-emerald-400/10 text-emerald-300" : "bg-cyan-400/10 text-cyan-300")}>
+            {commandSummary.intent === "attention" ? <AlertTriangle size={19} /> : commandSummary.intent === "stable" ? <CheckCircle2 size={19} /> : <Activity size={19} />}
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[15px] font-semibold text-white">{commandSummary.headline}</span>
+            <span className="mt-0.5 block text-[12.5px] text-[var(--color-text-muted)]">{commandSummary.detail}</span>
+          </span>
+        </span>
+        {commandSummary.intent === "attention" && <span className="shrink-0 text-[12px] font-semibold text-amber-200 transition-transform group-hover:translate-x-1">검토할 도메인 열기 →</span>}
+      </button>
+
       {/* 도메인 목록 */}
       {filteredWorkspaces.length === 0 ? (
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center text-[var(--color-text-muted)]">
@@ -763,9 +790,10 @@ export function Sessions() {
                   if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
                 }}
                 className={cn(
-                  "ck-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-4 transition-[opacity,filter,background-color] duration-200",
+                  "ck-card workspace-command-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-4 transition-[opacity,filter,background-color,transform,box-shadow] duration-200",
                   WORKSPACE_CARD_FOCUS_CLASSES,
                   workspaceCardEmphasis(isSel, selectedWorkspace !== null),
+                  isSel && "workspace-command-card--selected md:col-span-2 xl:col-span-2",
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
@@ -892,7 +920,7 @@ export function Sessions() {
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
       {selected && !isSearchMode && (
-        <div className="grid min-h-[300px] flex-1 grid-cols-1 gap-3 lg:grid-cols-10">
+        <div key={selected.name} className="command-detail ck-stage-in grid min-h-[300px] flex-1 grid-cols-1 gap-3 lg:grid-cols-10">
           <div className="ck-glass flex min-h-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3 lg:col-span-3">
             <LiveConsole workspace={selected.name} />
           </div>

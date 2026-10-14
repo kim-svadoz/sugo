@@ -1,6 +1,6 @@
 import { SpecDeploymentBadge } from "../components/SpecDeploymentBadge.js";
 import { useEffect, useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, BookOpen, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, CircleDashed, Clock, Copy, FilePenLine, Pencil, Shield, Trash2, Workflow } from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, CircleDashed, Clock, Copy, FilePenLine, LayoutList, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -24,6 +24,7 @@ import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { schedulePulse } from "../lib/operationalPulse.js";
 import { OperationalPulse } from "../components/OperationalPulse.js";
+import { buildScheduleAgenda } from "../lib/experienceModel.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -59,6 +60,7 @@ export function SchedulePage() {
 
   const today = nowKST();
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
+  const [scheduleView, setScheduleView] = useState<"agenda" | "month">("agenda");
   const [selected, setSelected] = useState<ScheduledSpec | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -153,6 +155,7 @@ export function SchedulePage() {
     [specs, todayKey],
   );
   const pulse = useMemo(() => schedulePulse(specs ?? [], todayKey), [specs, todayKey]);
+  const agenda = useMemo(() => buildScheduleAgenda(specs ?? [], todayKey), [specs, todayKey]);
 
   function jumpToDate(dueDate: string) {
     const [year, month] = dueDate.split("-").map(Number);
@@ -370,6 +373,24 @@ export function SchedulePage() {
           />
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1" aria-label="일정 보기 방식">
+            <button
+              type="button"
+              aria-pressed={scheduleView === "agenda"}
+              onClick={() => setScheduleView("agenda")}
+              className={cn("flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition-all", scheduleView === "agenda" ? "bg-cyan-500/15 text-cyan-200 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]" : "text-[var(--color-text-muted)] hover:bg-white/[0.04] hover:text-white")}
+            >
+              <LayoutList size={14} /> Agenda
+            </button>
+            <button
+              type="button"
+              aria-pressed={scheduleView === "month"}
+              onClick={() => setScheduleView("month")}
+              className={cn("flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition-all", scheduleView === "month" ? "bg-cyan-500/15 text-cyan-200 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]" : "text-[var(--color-text-muted)] hover:bg-white/[0.04] hover:text-white")}
+            >
+              <CalendarDays size={14} /> Month
+            </button>
+          </div>
           <button onClick={() => setMemoTarget({})} className="flex items-center gap-1.5 rounded-lg border border-slate-500/40 bg-slate-500/10 px-3 py-1.5 text-[12.5px] font-semibold text-slate-200 transition-colors hover:bg-slate-500/20"><FilePenLine size={15} /> 메모 추가</button>
           <button
             onClick={() => setAddOpen(true)}
@@ -517,8 +538,75 @@ export function SchedulePage() {
           )}
         </div>
 
-        {/* 월간 캘린더 (KST 기준, 주말/공휴일 표시) */}
-        <div className="ck-glass ck-card flex min-h-0 flex-col overflow-hidden p-3">
+        {scheduleView === "agenda" ? (
+          <section className="ck-glass command-stage ck-stage-in flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)]" aria-label="다가오는 일정">
+            <div className="flex shrink-0 items-end justify-between border-b border-[var(--color-border)] px-5 py-4">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-cyan-300/80">Execution horizon</p>
+                <h2 className="mt-1 text-xl font-semibold text-[var(--color-text-bright)]">다가오는 일정</h2>
+                <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">위험한 일정부터 확인하고, 카드를 선택해 바로 실행 맥락으로 들어갑니다.</p>
+              </div>
+              <button type="button" onClick={() => setScheduleView("month")} className="rounded-lg px-3 py-2 text-[12px] font-semibold text-[var(--color-text-muted)] hover:bg-white/[0.05] hover:text-white">월간 배치 보기 →</button>
+            </div>
+            <div className="ck-scroll min-h-0 flex-1 overflow-auto p-4">
+              {agenda.length === 0 ? (
+                <div className="flex h-full min-h-56 flex-col items-center justify-center text-center">
+                  <Check size={28} className="mb-3 text-emerald-300" />
+                  <h3 className="text-base font-semibold text-white">예정된 일정이 없습니다</h3>
+                  <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">왼쪽 대기열에서 기한을 정하거나 새 SPEC 일정을 추가하세요.</p>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {agenda.map((group) => (
+                    <section key={group.id} aria-labelledby={`agenda-${group.id}`}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className={cn("h-2 w-2 rounded-full", group.id === "overdue" ? "bg-rose-400" : group.id === "today" ? "bg-cyan-300" : group.id === "next" ? "bg-blue-400" : "bg-slate-500")} />
+                        <h3 id={`agenda-${group.id}`} className="text-[13px] font-bold text-white">{group.label}</h3>
+                        <span className="rounded-full bg-white/[0.05] px-2 py-0.5 font-mono text-[10px] text-[var(--color-text-muted)]">{group.items.length}</span>
+                        <span className="text-[11px] text-[var(--color-text-dim)]">{group.description}</span>
+                      </div>
+                      <div className="grid gap-2 xl:grid-cols-2">
+                        {group.items.map((spec) => {
+                          const remaining = daysUntil(spec.due_date!);
+                          const style = scheduleCardStyle(colorOf(spec.workspace_name));
+                          return (
+                            <div
+                              key={`${spec.workspace_name}:${spec.id}`}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => openSpec(spec)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") openSpec(spec);
+                              }}
+                              style={style}
+                              className="group flex min-h-[76px] items-center gap-3 rounded-xl border px-4 py-3 text-left transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-white/[0.035] hover:shadow-[0_12px_28px_rgba(0,0,0,0.2)] active:translate-y-0"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="truncate text-[14px] font-semibold text-white">{spec.title}</span>
+                                  <SpecStageBadge spec={spec} />
+                                </div>
+                                <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
+                                  <span className="font-mono text-slate-300">{spec.due_date}</span>
+                                  <SpecDeploymentBadge deployment={spec.deployment} title={spec.title} />
+                                  {group.id === "overdue" && <span className="font-semibold text-rose-300">{Math.abs(remaining)}일 지남</span>}
+                                  {group.id === "next" && <span>D-{remaining}</span>}
+                                </div>
+                              </div>
+                              <ChevronRight size={16} className="shrink-0 text-[var(--color-text-dim)] transition-transform group-hover:translate-x-1 group-hover:text-cyan-300" />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        ) : (
+        /* 월간 캘린더 (KST 기준, 주말/공휴일 표시) */
+        <div className="ck-glass ck-card ck-stage-in flex min-h-0 flex-col overflow-hidden p-3">
           <div className="mb-2 flex shrink-0 items-center justify-between">
             <div className="flex items-center gap-1.5">
               <button
@@ -617,6 +705,7 @@ export function SchedulePage() {
             })}
           </div>
         </div>
+        )}
       </div>
 
       {memoTarget && <ScheduleMemoPanel memo={memoTarget.memo} initialDate={memoTarget.initialDate} busy={busy} onSave={saveMemo} onDelete={memoTarget.memo ? removeMemo : undefined} onClose={() => setMemoTarget(null)} />}
