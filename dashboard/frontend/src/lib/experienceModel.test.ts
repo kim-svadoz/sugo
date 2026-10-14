@@ -27,7 +27,7 @@ describe("schedule agenda", () => {
     status,
   });
 
-  it("groups open work by urgency and excludes completed past schedules", () => {
+  it("groups only actionable work by urgency and excludes every completed schedule", () => {
     const agenda = buildScheduleAgenda(
       [
         row("late", "2026-10-13"),
@@ -44,7 +44,7 @@ describe("schedule agenda", () => {
       ["overdue", ["late"]],
       ["today", ["today"]],
       ["next", ["soon"]],
-      ["later", ["future-done", "later"]],
+      ["later", ["later"]],
     ]);
   });
 
