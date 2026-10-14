@@ -130,6 +130,14 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("spec-writer와 실행 에이전트가 함께 봅니다");
   });
 
+  it("정보가 많은 SPEC 상세는 확장 모달을 사용한다", () => {
+    const schedule = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    const modal = readFileSync(new URL("../components/Modal.tsx", import.meta.url), "utf8");
+    expect(schedule).toContain('size="xwide"');
+    expect(modal).toContain('max-h-[92vh] max-w-[1320px]');
+    expect(modal).toContain('max-h-[calc(92vh-60px)] px-9 py-7');
+  });
+
   it("메모 카드는 어두운 캔버스에서도 읽히는 불투명도와 명도 대비를 쓴다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("border-slate-400/45 bg-slate-400/[0.14]");

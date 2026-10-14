@@ -752,6 +752,7 @@ export function SchedulePage() {
       {/* Spec 상세 패널 */}
       {selected && (
         <Modal
+          size="xwide"
           onClose={() => {
             setSelected(null);
             setTitleDraft(null);
