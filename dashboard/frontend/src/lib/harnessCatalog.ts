@@ -8,6 +8,12 @@ export interface HarnessTechnology {
   versions: HarnessManifestEntry[];
 }
 
+/** 페이지 자체가 이미 Harness 맥락을 제공하므로 본문 H1의 중복 명칭만 걷어낸다.
+ * 본문에서 규칙의 의미로 쓰인 "하네스"는 그대로 보존한다. */
+export function simplifyHarnessHeading(markdown: string): string {
+  return markdown.replace(/^(#\s+.*?)\s+하네스(?=\s*(?:\(|$))/m, "$1");
+}
+
 const CATEGORY_LABELS: Record<string, string> = {
   lang: "언어",
   framework: "프레임워크",

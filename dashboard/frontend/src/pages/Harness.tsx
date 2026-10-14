@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { marked } from "marked";
 import { Boxes, ChevronRight, FileCode2, Layers3 } from "lucide-react";
 import { getHarnessContent, getHarnessManifest, type HarnessManifestEntry } from "../api/catalogApi.js";
-import { groupHarnessManifest, harnessCategoryLabel, harnessVersion, type HarnessTechnology } from "../lib/harnessCatalog.js";
+import { groupHarnessManifest, harnessCategoryLabel, harnessVersion, simplifyHarnessHeading, type HarnessTechnology } from "../lib/harnessCatalog.js";
 import { cn } from "../lib/utils.js";
 
 // §5 Harness — unified 마크다운 렌더 + manifest 칩. 데이터는 백엔드 /api/harness(HARNESS_PATH).
@@ -27,7 +27,7 @@ export function Harness() {
   const visibleGroups = useMemo(() => groups.filter((group) => group.category === category), [groups, category]);
   const selectedTechnology = groups.find((group) => group.key === technologyKey) ?? null;
   const selectedEntry = manifest.find((entry) => entry.id === selectedId) ?? null;
-  const html = useMemo(() => (content ? (marked.parse(content, { async: false }) as string) : ""), [content]);
+  const html = useMemo(() => (content ? (marked.parse(simplifyHarnessHeading(content), { async: false }) as string) : ""), [content]);
 
   useEffect(() => {
     if (!category && categories[0]) setCategory(categories[0]);
