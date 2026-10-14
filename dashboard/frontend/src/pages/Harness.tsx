@@ -89,7 +89,7 @@ export function Harness() {
             <aside className="border-r border-[var(--color-border)] bg-[var(--color-background)]/35 p-4 max-md:border-b max-md:border-r-0">
               <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-dim)]"><Layers3 size={13} /> 버전</div>
               <div className="flex flex-col gap-1.5 max-md:flex-row max-md:flex-wrap">
-                {selectedTechnology?.versions.map((entry) => <button key={String(entry.id)} onClick={() => setSelectedId(String(entry.id))} className={cn("rounded-lg border px-3 py-2 text-left font-mono text-xs transition-colors", selectedId === entry.id ? "border-amber-400/50 bg-amber-400/10 text-amber-200" : "border-transparent text-[var(--color-text-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-text)]")}>{harnessVersion(entry)}</button>)}
+                {selectedTechnology?.versions.map((entry) => <button key={String(entry.id)} aria-pressed={selectedId === entry.id} onClick={() => setSelectedId(String(entry.id))} className={cn("rounded-lg border px-3 py-2 text-left font-mono text-xs transition-colors", selectedId === entry.id ? "border-[var(--color-action-primary)]/60 bg-[var(--color-action-primary)]/10 text-cyan-200" : "border-transparent text-[var(--color-text-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-text)]")}>{harnessVersion(entry)}</button>)}
               </div>
             </aside>
             <div className="min-h-0 p-6">

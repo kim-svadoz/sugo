@@ -391,18 +391,24 @@ export function SchedulePage() {
           <div className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-[var(--color-border)] p-0.5 text-[11px] font-semibold">
             <button
               onClick={() => setPanelMode("backlog")}
+              role="tab"
+              aria-selected={panelMode === "backlog"}
               className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "backlog" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
             >
               기한 미정
             </button>
             <button
               onClick={() => setPanelMode("scheduled")}
+              role="tab"
+              aria-selected={panelMode === "scheduled"}
               className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "scheduled" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
             >
               등록완료
             </button>
             <button
               onClick={() => setPanelMode("memo")}
+              role="tab"
+              aria-selected={panelMode === "memo"}
               className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "memo" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
             >
               메모
@@ -458,6 +464,7 @@ export function SchedulePage() {
                   >
                     <span className="min-w-0 truncate">{s.title}</span>
                     <span className="flex flex-wrap items-center gap-1">
+                      <span className="max-w-full truncate font-mono text-[9.5px] font-semibold text-slate-300">{s.workspace_name}</span>
                       <span className="font-mono text-[9.5px] text-slate-300/80">{s.due_date}</span>
                       <SpecStageBadge spec={s} />
                       <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
@@ -578,10 +585,10 @@ export function SchedulePage() {
                           onDragStart={(e: DragEvent<HTMLDivElement>) => startSpecDrag(e, s)}
                           onDragEnd={() => setDragOverKey(null)}
                           style={style}
-                          className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[filter,background-color] hover:brightness-110 active:cursor-grabbing"
+                          className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] active:cursor-grabbing"
                           title={`${s.workspace_name} · ${s.title}`}
                         >
-                          <button type="button" onClick={() => openSpec(s)} className="min-w-0 flex-1 truncate text-left font-medium text-slate-100" title={`${s.workspace_name} · ${s.title}`}>{s.title}</button>
+                          <button type="button" onClick={() => openSpec(s)} className="min-w-0 flex-1 truncate text-left font-medium text-slate-100" title={`${s.workspace_name} · ${s.title}`}><span className="mr-1 font-mono text-[9px] font-semibold text-slate-400">{s.workspace_name}</span>{s.title}</button>
                           <SpecStageBadge spec={s} compact />
                       <SpecDeploymentBadge deployment={s.deployment} title={s.title} />
                           {overdue && (

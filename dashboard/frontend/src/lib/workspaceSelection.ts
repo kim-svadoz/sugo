@@ -9,8 +9,8 @@ export const WORKSPACE_CARD_FOCUS_CLASSES =
  * 워크스페이스 색이 화면마다 따로 계산되면 안 된다).
  */
 export const WORKSPACE_COLORS = [
-  "#fb7185", "#fbbf24", "#a78bfa", "#34d399", "#f97316",
-  "#f472b6", "#a3e635", "#818cf8", "#ef4444", "#c084fc",
+  "#d979a1", "#c9a24f", "#9484d8", "#62ad91", "#cf7c5d",
+  "#c878aa", "#8cab5a", "#7188c9", "#c56878", "#a276c4",
 ];
 export function getWorkspaceColor(_name: string, index: number): string {
   return WORKSPACE_COLORS[index % WORKSPACE_COLORS.length];
@@ -19,7 +19,7 @@ export function getWorkspaceColor(_name: string, index: number): string {
 /** §7B Schedule 탭 칩 — Tailwind 팔레트 클래스가 아니라 워크스페이스 hex색 자체를 쓰므로
  * 인라인 style로 투명도만 붙인다(hex는 6자리 고정이라 안전하게 알파를 이어붙일 수 있다). */
 export function workspaceChipStyle(color: string): { borderColor: string; backgroundColor: string; color: string } {
-  return { borderColor: `${color}4D`, backgroundColor: `${color}26`, color };
+  return { borderColor: `${color}70`, backgroundColor: `${color}20`, color: "#f1f5f9" };
 }
 
 export function workspaceCardEmphasis(selected: boolean, hasSelection: boolean): string {

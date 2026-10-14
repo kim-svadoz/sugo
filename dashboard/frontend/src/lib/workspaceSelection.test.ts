@@ -3,8 +3,11 @@ import { WORKSPACE_CARD_FOCUS_CLASSES, WORKSPACE_COLORS, workspaceCardEmphasis, 
 
 describe("workspace selection chrome", () => {
   it("인접 워크스페이스는 서로 다른 색상군을 쓰고 전역 인터랙션 cyan을 침범하지 않는다", () => {
-    expect(WORKSPACE_COLORS.slice(0, 4)).toEqual(["#fb7185", "#fbbf24", "#a78bfa", "#34d399"]);
+    expect(WORKSPACE_COLORS.slice(0, 4)).toEqual(["#d979a1", "#c9a24f", "#9484d8", "#62ad91"]);
     expect(WORKSPACE_COLORS).not.toContain("#22d3ee");
+    expect(WORKSPACE_COLORS).not.toContain("#fb7185");
+    expect(WORKSPACE_COLORS).not.toContain("#f59e0b");
+    expect(WORKSPACE_COLORS).not.toContain("#10b981");
   });
 
   it("선택해도 도메인 고유 왼쪽 색을 보존하되 잘리는 바깥 링은 만들지 않는다", () => {

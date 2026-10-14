@@ -23,7 +23,23 @@
   --color-text: #e2e8f0;           /* slate-200 본문 */
   --color-text-muted: #94a3b8;     /* slate-400 보조 */
   --color-text-bright: #f1f5f9;    /* slate-100 제목·강조 */
-  --color-text-dim: #64748b;       /* slate-500 최하위 메타 */
+  --color-text-dim: #7f8ea3;       /* 작은 메타도 surface에서 AA 대비를 유지 */
+
+  /* 역할 기반 색상. 기존 변수는 호환 별칭으로 유지하고 새 코드는 이 계층을 쓴다. */
+  --color-action-primary: #00b4d8;
+  --color-action-primary-soft: rgba(0, 180, 216, 0.12);
+  --color-focus-ring: #67e8f9;
+  --color-status-success: #34d399;
+  --color-status-progress: #60a5fa;
+  --color-status-warning: #fbbf24;
+  --color-status-danger: #fb7185;
+  --color-status-neutral: #94a3b8;
+  --color-deployment: #60a5fa;
+  --color-identity-code: #22d3ee;
+  --color-identity-test: #34d399;
+  --color-identity-docs: #7dd3fc;
+  --color-identity-review: #fbbf24;
+  --color-identity-sugo: #a78bfa;
 
   /* 콘솔 로그 레벨 시맨틱 */
   --color-agent: #00b4d8;          /* AGENT — cyan */
@@ -67,6 +83,11 @@ body, #root, main, .bg-grid-pattern {
 button, a[href], label[for], select, summary,
 [role="button"], [role="tab"], [role="menuitem"], [role="option"] { cursor: pointer; }
 button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed; }
+
+:where(button, a[href], input, textarea, select, [role="button"], [role="tab"]):focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
 
 /* 작업요약 마크다운 — patch/task 패널·요약 모달 공용 */
 .spec-md h1 { font-size: 1.15rem; font-weight: 700; margin: 0.6rem 0 0.4rem; color: var(--color-text); }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Code2, FileText, GitPullRequest, TestTube2, Workflow, type LucideIcon } from "lucide-react";
 import { listAgents, listSkills, type AgentEntry, type SkillEntry } from "../api/catalogApi.js";
+import { AGENT_TONES, FALLBACK_AGENT_TONE } from "../lib/colorSystem.js";
 import { cn } from "../lib/utils.js";
 
 const agentIcons: Record<string, LucideIcon> = {
@@ -9,21 +10,6 @@ const agentIcons: Record<string, LucideIcon> = {
   docs: FileText,
   review: GitPullRequest,
   sugo: Workflow,
-};
-
-/** 설계안 에이전트별 네온 액센트(사이버펑크 관제 덱). */
-const agentAccent: Record<string, { icon: string; ring: string; chip: string; bar: string }> = {
-  code: { icon: "text-cyan-300", ring: "ring-cyan-500/50", chip: "border-cyan-500/30 bg-cyan-500/15", bar: "bg-cyan-400" },
-  test: { icon: "text-emerald-300", ring: "ring-emerald-500/50", chip: "border-emerald-500/30 bg-emerald-500/15", bar: "bg-emerald-400" },
-  docs: { icon: "text-sky-300", ring: "ring-sky-500/50", chip: "border-sky-500/30 bg-sky-500/15", bar: "bg-sky-400" },
-  review: { icon: "text-amber-300", ring: "ring-amber-500/50", chip: "border-amber-500/30 bg-amber-500/15", bar: "bg-amber-400" },
-  sugo: { icon: "text-violet-300", ring: "ring-violet-500/50", chip: "border-violet-500/30 bg-violet-500/15", bar: "bg-violet-400" },
-};
-const fallbackAccent = {
-  icon: "text-slate-300",
-  ring: "ring-slate-500/50",
-  chip: "border-slate-500/30 bg-slate-500/15",
-  bar: "bg-slate-400",
 };
 
 const AGENT_FILTERS = [
@@ -38,7 +24,7 @@ const AGENT_FILTERS = [
 /** 에이전트 id는 파일명이 `code-agent`처럼 접미사를 달고 오기도 한다 — 액센트 키로 정규화. */
 function accentKey(id: string): string {
   const base = id.replace(/-agent$/, "").toLowerCase();
-  return base in agentAccent ? base : "sugo";
+  return base in AGENT_TONES ? base : "sugo";
 }
 
 export function Skills() {
@@ -77,16 +63,17 @@ export function Skills() {
         {agents.map((agent) => {
           const key = accentKey(agent.id);
           const Icon = agentIcons[key] ?? Workflow;
-          const a = agentAccent[key] ?? fallbackAccent;
+          const a = AGENT_TONES[key] ?? FALLBACK_AGENT_TONE;
           const agentSkills = skills.filter((s) => accentKey(s.agent ?? "") === key);
           const isSelected = selectedAgent === agent.id;
           return (
             <button
               key={agent.id}
               onClick={() => handleAgentClick(agent.id)}
+              aria-pressed={isSelected}
               className={cn(
                 "ck-card relative overflow-hidden rounded-xl border bg-[var(--color-surface)] p-4 text-left",
-                isSelected ? cn("border-transparent ring-1", a.ring) : "border-[var(--color-border)]",
+                isSelected ? "border-transparent ring-1 ring-[var(--color-action-primary)]/60" : "border-[var(--color-border)]",
               )}
             >
               <span className={cn("absolute inset-x-0 top-0 h-0.5", a.bar, isSelected ? "opacity-100" : "opacity-30")} />
@@ -133,7 +120,7 @@ export function Skills() {
               className={cn(
                 "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
                 selectedAgent === id
-                  ? "bg-[var(--color-primary)] text-white"
+                  ? "bg-[var(--color-action-primary)] text-slate-950"
                   : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]",
               )}
             >
@@ -159,7 +146,7 @@ export function Skills() {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((s) => {
-              const a = agentAccent[accentKey(s.agent ?? "")] ?? fallbackAccent;
+              const a = AGENT_TONES[accentKey(s.agent ?? "")] ?? FALLBACK_AGENT_TONE;
               return (
                 <div
                   key={s.name}
