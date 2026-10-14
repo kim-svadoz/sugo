@@ -74,6 +74,7 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`, `-
       `수정 필요`이면 review_done을 호출하지 않고 해당 내용을 code-agent에 전달한다.
 11. `docs_done`: docs-agent로 README 등을 갱신한다.
 12. `commit`: DONE에서만 커밋을 생성한다(§6, 2커밋 분리, push 금지). 커밋 전에 체크포인트를 확인한다.
+    커밋 메시지에는 `Co-Authored-By` trailer를 추가하지 않으며 Claude·Codex 등 AI 도구나 모델을 공동저자로 기록하지 않는다.
     - **§4.3-T TODO-SPEC 동기화(하드 게이트)**: TODO-SPEC이 있는 브랜치인데 세션 시작 이후 파일이
       전혀 안 바뀌었으면 서버가 `TODO_SPEC_SYNC_REQUIRED`(또는 파일 자체가 없으면
       `TODO_SPEC_MISSING_AT_COMMIT`)로 `sugo_plan(commit)`을 막는다. **막히면 실제 git commit을

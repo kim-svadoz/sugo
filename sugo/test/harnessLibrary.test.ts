@@ -74,6 +74,12 @@ describe("harness-library 구조 가드", () => {
     expect(javaHarness).toContain("갈래마다 이름 있는 메서드로 나눈다");
   });
 
+  it("기본 Git 정책은 AI 공동저자 trailer를 금지한다", () => {
+    const defaultHarness = readFileSync(join(libraryDir, "default", "harness.md"), "utf-8");
+    expect(defaultHarness).toContain("Co-Authored-By");
+    expect(defaultHarness).toContain("AI 도구나 모델을 공동저자로 기록하지 않는다");
+  });
+
   it("선언된 harnessId가 디렉터리 경로와 정확히 일치한다", () => {
     // 어긋나면 loadProjectValidationConfigs의 맵 키가 빗나가 그 하네스의 체크가 통째로
     // fabricated로 떨어진다 — 규칙이 있는데 아무도 적용받지 않는 상태가 조용히 만들어진다.

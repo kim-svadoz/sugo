@@ -13,6 +13,16 @@ export const sugoCommitInputSchema = {
 
 const SugoCommitArgs = z.object(sugoCommitInputSchema);
 
+/** Sugo 커밋은 사람의 작업 기록이며 AI 도구/모델을 Git 공동저자로 만들지 않는다. */
+export function sanitizeCommitText(text: string): string {
+  return text
+    .split(/\r?\n/)
+    .filter((line) => !/^\s*co-authored-by\s*:/i.test(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /**
  * §7 `sugo_commit` — Conventional Commit **메시지를 만들어 돌려준다.**
  *
@@ -46,7 +56,9 @@ export async function handleSugoCommit(rawArgs: unknown) {
     footerParts.push(`AI-Execution-Minutes: ${minutes}`);
   }
 
-  const message = [header, args.body?.trim(), footerParts.join("\n")].filter((p) => p && p.length > 0).join("\n\n");
+  const message = sanitizeCommitText(
+    [header, args.body?.trim(), footerParts.join("\n")].filter((p) => p && p.length > 0).join("\n\n"),
+  );
 
   return {
     content: [

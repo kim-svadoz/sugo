@@ -28169,7 +28169,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.29.5" : "0.0.0-dev";
+  return true ? "0.29.6" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -33933,6 +33933,9 @@ var sugoCommitInputSchema = {
   includeTime: external_exports.boolean().optional().describe("started_at\u2192done \uC18C\uC694\uC2DC\uAC04\uC744 \uAF2C\uB9AC\uB9D0\uC5D0 \uB123\uC744\uC9C0")
 };
 var SugoCommitArgs = external_exports.object(sugoCommitInputSchema);
+function sanitizeCommitText(text) {
+  return text.split(/\r?\n/).filter((line) => !/^\s*co-authored-by\s*:/i.test(line)).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
 async function handleSugoCommit(rawArgs) {
   const args2 = SugoCommitArgs.parse(rawArgs);
   if (!await sessionExists(args2.sessionId)) {
@@ -33953,7 +33956,9 @@ async function handleSugoCommit(rawArgs) {
     const minutes = Math.max(0, Math.round((Date.now() - started) / 6e4));
     footerParts.push(`AI-Execution-Minutes: ${minutes}`);
   }
-  const message = [header, args2.body?.trim(), footerParts.join("\n")].filter((p) => p && p.length > 0).join("\n\n");
+  const message = sanitizeCommitText(
+    [header, args2.body?.trim(), footerParts.join("\n")].filter((p) => p && p.length > 0).join("\n\n")
+  );
   return {
     content: [
       {
