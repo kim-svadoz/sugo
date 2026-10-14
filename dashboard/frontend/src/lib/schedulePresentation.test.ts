@@ -81,7 +81,7 @@ describe("schedule presentation", () => {
   it("파이프라인 완료와 일정 완료를 서로 다른 상태로 표시한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("파이프라인 완료");
-    expect(source).toContain("일정 완료");
+    expect(source).toContain("일정 닫기");
     expect(source).toContain("setCommitmentClosed");
   });
 
@@ -91,8 +91,8 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("+ 새 약속");
     expect(source).not.toContain("작업 약속");
     expect(source).toContain("해야 할 일");
-    expect(source).toContain("작업 목표 추가");
-    expect(source).toContain("완료 처리");
+    expect(source).not.toContain("작업 목표 추가");
+    expect(source).toContain("일정 닫기");
     expect(source).toContain("completeFromQueue");
   });
 
@@ -109,16 +109,25 @@ describe("schedule presentation", () => {
     expect(source).toContain('onDoubleClick={() => dayChips.length === 0 && dayMemos.length === 0 && setMemoTarget({ initialDate: key })}');
   });
 
-  it("메모는 Planning Inbox와 분리된 전용 탭에만 표시한다", () => {
+  it("Planning Inbox와 메모는 Calendar에서만 보인다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain('useState<"backlog" | "memo">("backlog")');
     expect(source).toContain('onClick={() => setPanelMode("memo")}');
     expect(source).toContain("sortedMemos.map");
     expect(source).toContain('panelMode === "memo"');
     expect(source).toContain("Planning Inbox");
+    expect(source).toContain('scheduleView === "month" && (');
     expect(source).toContain("whitespace-nowrap");
     expect(source).not.toContain("scheduledMemos.map");
     expect(source).not.toContain("memoBacklog.map");
+  });
+
+  it("Calendar 명칭과 실제 feat/patch 이력을 노출한다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain("<CalendarDays size={14} /> Calendar");
+    expect(source).toContain("개발 이력");
+    expect(source).toContain('entry.version === 0 ? "feat" : `patch ${entry.version}`');
+    expect(source).not.toContain("spec-writer와 실행 에이전트가 함께 봅니다");
   });
 
   it("메모 카드는 어두운 캔버스에서도 읽히는 불투명도와 명도 대비를 쓴다", () => {

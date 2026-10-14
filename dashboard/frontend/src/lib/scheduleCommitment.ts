@@ -54,11 +54,11 @@ export function commitmentNextAction(commitment: CommitmentProjection): Commitme
     if (environmentRank[current] < environmentRank[target]) {
       return { label: `${target} 배포`, detail: `현재 ${current} · ${target} 반영 후 자동으로 다음 단계가 표시됩니다.` };
     }
-    return { label: "완료 처리", detail: `목표 ${target}까지 반영되었습니다.` };
+    return { label: "일정 닫기", detail: `목표 ${target}까지 반영되었습니다. 이 마감 일정을 Agenda에서 닫을 수 있습니다.` };
   }
   if (commitment.target === "review") return { label: "리뷰 진행", detail: "개발 파이프라인이 완료되었습니다." };
   return {
-    label: "완료 처리",
+    label: "일정 닫기",
     detail: commitment.target === "custom" ? "정해 둔 완료 조건을 확인했습니다." : "개발 파이프라인이 완료되었습니다.",
   };
 }
@@ -77,10 +77,10 @@ export function buildCommitmentQueue<T extends ScheduleCommitment>(commitments: 
     .sort((left, right) => left.due_date.localeCompare(right.due_date));
   const inbox = open.filter((item) => item.due_date === null);
   const definitions: Array<Omit<CommitmentQueueGroup<T>, "items"> & { match: (item: T & { due_date: string }) => boolean }> = [
-    { id: "overdue", label: "기한 초과", description: "먼저 처리할 작업", match: (item) => item.due_date < todayKey },
-    { id: "today", label: "오늘", description: "오늘 처리할 작업", match: (item) => item.due_date === todayKey },
-    { id: "next", label: "다음 7일", description: "곧 시작할 작업", match: (item) => item.due_date > todayKey && item.due_date <= nextWeekKey },
-    { id: "later", label: "이후 일정", description: "장기 실행 계획", match: (item) => item.due_date > nextWeekKey },
+    { id: "overdue", label: "기한 초과", description: "마감일이 지난 일정", match: (item) => item.due_date < todayKey },
+    { id: "today", label: "오늘", description: "오늘까지 마감", match: (item) => item.due_date === todayKey },
+    { id: "next", label: "다음 7일", description: "7일 안에 마감", match: (item) => item.due_date > todayKey && item.due_date <= nextWeekKey },
+    { id: "later", label: "이후 일정", description: "7일 이후 마감", match: (item) => item.due_date > nextWeekKey },
   ];
   const groups: CommitmentQueueGroup<T>[] = definitions.flatMap((definition) => {
     const items = dated.filter(definition.match);

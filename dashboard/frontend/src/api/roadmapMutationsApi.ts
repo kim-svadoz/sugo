@@ -122,6 +122,13 @@ export interface ScheduledSpec {
   focus_task_runtime_assessment?: import("../lib/taskGuidance.js").RuntimeAssessment | null;
   focus_task_blocker_decision?: BlockerDecision | null;
   focus_task_human_blocker?: HumanBlocker | null;
+  development_history?: Array<{
+    task_id: string;
+    version: number;
+    title: string;
+    summary: string | null;
+    completed_at: string | null;
+  }>;
 }
 
 export interface BlockerDecision { response: string; answered_by: string; answered_at: string }

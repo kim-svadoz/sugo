@@ -554,6 +554,7 @@ export interface ScheduledSpecRow {
   focus_task_runtime_assessment: unknown;
   focus_task_blocker_decision: { response: string; answered_by: string; answered_at: string } | null;
   focus_task_human_blocker: unknown;
+  development_history: Array<{ task_id: string; version: number; title: string; summary: string | null; completed_at: string | null }>;
 }
 
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
@@ -573,10 +574,10 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
   );
   const tasks = await db.query<{
     workspace_name: string; spec_id: string; id: string; title: string; status: string; manual_status: string | null;
-    note: string | null; updated_at: string | null; work_result: unknown; runtime_assessment: unknown; blocker_response: string | null; blocker_answered_by: string | null; blocker_answered_at: string | null; blocker_context: unknown;
+    note: string | null; updated_at: string | null; work_result: unknown; lineage: unknown; runtime_assessment: unknown; blocker_response: string | null; blocker_answered_by: string | null; blocker_answered_at: string | null; blocker_context: unknown;
   }>(
     `SELECT task.workspace_name, run.parent AS spec_id, task.id, task.title, task.status, task.manual_status,
-            task.note, task.updated_at, task.work_result, task.runtime_assessment, task.blocker_response, task.blocker_answered_by, task.blocker_answered_at, task.blocker_context
+            task.note, task.updated_at, task.work_result, task.lineage, task.runtime_assessment, task.blocker_response, task.blocker_answered_by, task.blocker_answered_at, task.blocker_context
        FROM sugo_roadmap_nodes task
        JOIN sugo_roadmap_nodes run
          ON run.user_id = task.user_id AND run.workspace_name = task.workspace_name AND run.id = task.parent
@@ -605,6 +606,21 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
     });
     const priority = (task: (typeof enriched)[number]) => task.status === "blocked" ? 0 : task.stale ? 1 : task.status === "in_progress" ? 2 : task.unverified ? 3 : task.status === "pending" ? 4 : 5;
     const focus = [...enriched].sort((a, b) => priority(a) - priority(b) || a.id.localeCompare(b.id))[0] ?? null;
+    const developmentHistory = enriched.flatMap((task) => {
+      const entries = parseMaybeJson<Array<Record<string, unknown>> | null>(task.lineage, null) ?? [];
+      return entries.map((entry, index) => {
+        const version = Number.isFinite(Number(entry.version)) ? Number(entry.version) : index;
+        const workResult = entry.workResult && typeof entry.workResult === "object" ? entry.workResult as Record<string, unknown> : null;
+        const summary = typeof entry.summary === "string" ? entry.summary : typeof workResult?.summary === "string" ? workResult.summary : null;
+        return {
+          task_id: task.id,
+          version,
+          title: typeof entry.title === "string" && entry.title.trim() ? entry.title.trim() : task.title,
+          summary,
+          completed_at: typeof entry.completedAt === "string" ? entry.completedAt : null,
+        };
+      });
+    }).sort((a, b) => (a.completed_at ?? "").localeCompare(b.completed_at ?? "") || a.version - b.version);
     return {
       ...row,
       deployment: deployments.get(`${row.workspace_name}\0${row.id}`),
@@ -628,6 +644,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
         ? { response: focus.blocker_response, answered_by: focus.blocker_answered_by, answered_at: focus.blocker_answered_at }
         : null,
       focus_task_human_blocker: parseMaybeJson(focus?.blocker_context, null),
+      development_history: developmentHistory,
     };
   });
 }

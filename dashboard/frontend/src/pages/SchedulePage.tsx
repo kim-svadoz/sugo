@@ -24,7 +24,7 @@ import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { OperationalPulse } from "../components/OperationalPulse.js";
 import { buildCommitmentQueue, commitmentNextAction, legacyCommitments, type CommitmentView } from "../lib/scheduleCommitment.js";
-import { completeScheduleCommitment, createScheduleCommitment, reopenScheduleCommitment, updateScheduleCommitment, type CommitmentTarget } from "../api/scheduleCommitmentApi.js";
+import { completeScheduleCommitment, createScheduleCommitment, reopenScheduleCommitment, updateScheduleCommitment } from "../api/scheduleCommitmentApi.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -74,16 +74,11 @@ export function SchedulePage() {
   const [addImages, setAddImages] = useState<Array<{ file: File; url: string }>>([]);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [commitmentFormOpen, setCommitmentFormOpen] = useState(false);
-  const [commitmentTitle, setCommitmentTitle] = useState("");
-  const [commitmentTarget, setCommitmentTarget] = useState<CommitmentTarget>("implementation");
-  const [commitmentDueDate, setCommitmentDueDate] = useState<string | null>(null);
 
   function openSpec(spec: ScheduledSpec) {
     setDeleteConfirm(false);
     setBranchDraft(null);
     setSelected(spec);
-    setCommitmentFormOpen(false);
   }
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
   // 안 보이면 사용자가 헷갈린다(2026-09-23 사용자 피드백). 성공 시 잠깐 "저장됨"을 보여준다.
@@ -105,7 +100,7 @@ export function SchedulePage() {
   useEffect(() => {
     if (!selected || !specs) return;
     const fresh = specs.find((spec) => spec.id === selected.id && spec.workspace_name === selected.workspace_name);
-    if (fresh && (fresh.spec_path !== selected.spec_path || fresh.has_run !== selected.has_run)) setSelected(fresh);
+    if (fresh && fresh !== selected) setSelected(fresh);
   }, [specs, selected]);
 
   const todayKey = toDateKey(today);
@@ -184,28 +179,6 @@ export function SchedulePage() {
     [commitmentViews, selected],
   );
 
-  async function addCommitment() {
-    if (!userId || !selected || !commitmentTitle.trim()) return;
-    setBusy(true);
-    setErrorMsg(null);
-    try {
-      await createScheduleCommitment(userId, {
-        specId: selected.id,
-        workspaceName: selected.workspace_name,
-        title: commitmentTitle.trim(),
-        dueDate: commitmentDueDate,
-        target: commitmentTarget,
-      });
-      setCommitmentFormOpen(false);
-      setCommitmentTitle("");
-      refetch();
-    } catch {
-      setErrorMsg("작업 목표를 추가하지 못했습니다.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function setCommitmentClosed(commitment: CommitmentView, closed: boolean) {
     if (!userId) return;
     setBusy(true);
@@ -215,7 +188,7 @@ export function SchedulePage() {
       else await reopenScheduleCommitment(userId, commitment.id);
       refetch();
     } catch {
-      setErrorMsg(closed ? "작업 목표를 완료하지 못했습니다." : "작업 목표를 다시 열지 못했습니다.");
+      setErrorMsg(closed ? "일정을 닫지 못했습니다." : "일정을 다시 열지 못했습니다.");
     } finally {
       setBusy(false);
     }
@@ -241,7 +214,7 @@ export function SchedulePage() {
       }
       refetch();
     } catch {
-      setErrorMsg("완료 처리에 실패했습니다.");
+      setErrorMsg("일정을 닫지 못했습니다.");
     } finally {
       setBusy(false);
     }
@@ -460,7 +433,7 @@ export function SchedulePage() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">
             Schedule{" "}
-            <span className="font-normal text-[var(--color-text-dim)]" title="현재 열려 있는 작업 목표 수">
+            <span className="font-normal text-[var(--color-text-dim)]" title="현재 열려 있는 일정 수">
               ({openCommitmentCount})
             </span>
           </h1>
@@ -490,7 +463,7 @@ export function SchedulePage() {
               onClick={() => setScheduleView("month")}
               className={cn("flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition-all", scheduleView === "month" ? "bg-cyan-500/15 text-cyan-200 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]" : "text-[var(--color-text-muted)] hover:bg-white/[0.04] hover:text-white")}
             >
-              <CalendarDays size={14} /> Month
+              <CalendarDays size={14} /> Calendar
             </button>
           </div>
           <button onClick={() => setMemoTarget({})} className="flex items-center gap-1.5 rounded-lg border border-slate-500/40 bg-slate-500/10 px-3 py-1.5 text-[12.5px] font-semibold text-slate-200 transition-colors hover:bg-slate-500/20"><FilePenLine size={15} /> 메모 추가</button>
@@ -507,7 +480,8 @@ export function SchedulePage() {
         <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">{errorMsg}</div>
       )}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[220px_1fr]">
+      <div className={cn("grid min-h-0 flex-1 grid-cols-1 gap-4", scheduleView === "month" && "lg:grid-cols-[220px_1fr]")}>
+        {scheduleView === "month" && (
         <div
           className="ck-glass ck-card flex flex-col gap-2 overflow-auto p-3 transition-colors"
           onDragOver={(event) => {
@@ -583,6 +557,7 @@ export function SchedulePage() {
             </>
           )}
         </div>
+        )}
 
         {scheduleView === "agenda" ? (
           <section className="ck-glass command-stage ck-stage-in flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)]" aria-label="실행 대기열">
@@ -590,16 +565,16 @@ export function SchedulePage() {
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-cyan-300/80">WORK QUEUE</p>
                 <h2 className="mt-1 text-xl font-semibold text-[var(--color-text-bright)]">해야 할 일</h2>
-                <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">개발 진행 상태와 일정 완료를 구분해 보여줍니다.</p>
+                <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">마감이 지난 일정부터, 아직 닫지 않은 일정을 우선순위대로 보여줍니다.</p>
               </div>
-              <button type="button" onClick={() => setScheduleView("month")} className="rounded-lg px-3 py-2 text-[12px] font-semibold text-[var(--color-text-muted)] hover:bg-white/[0.05] hover:text-white">월간 배치 보기 →</button>
+              <button type="button" onClick={() => setScheduleView("month")} className="rounded-lg px-3 py-2 text-[12px] font-semibold text-[var(--color-text-muted)] hover:bg-white/[0.05] hover:text-white">Calendar에서 전체 이력 보기 →</button>
             </div>
             <div className="ck-scroll min-h-0 flex-1 overflow-auto p-4">
               {agenda.length === 0 ? (
                 <div className="flex h-full min-h-56 flex-col items-center justify-center text-center">
                   <Check size={28} className="mb-3 text-emerald-300" />
                   <h3 className="text-base font-semibold text-white">해야 할 일이 없습니다</h3>
-                  <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">새 작업이 생기면 SPEC 상세에서 작업 목표를 추가하세요.</p>
+                  <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">열려 있는 마감 일정이 없습니다. 완료·과거 일정은 Calendar에서 확인할 수 있습니다.</p>
                 </div>
               ) : (
                 <div className="space-y-5">
@@ -634,7 +609,7 @@ export function SchedulePage() {
                                   <span className="truncate text-[14px] font-semibold text-white">{commitment.title}</span>
                                   {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300">파이프라인 완료</span>}
                                 </div>
-                                {action.label !== "완료 처리" && <p className="mt-1 text-[12px] font-semibold text-cyan-200">{action.label}</p>}
+                                {action.label !== "일정 닫기" && <p className="mt-1 text-[12px] font-semibold text-cyan-200">{action.label}</p>}
                                 <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
                                   <span>{action.detail}</span>
                                   {commitment.due_date && <span className="font-mono text-slate-300">{commitment.due_date}</span>}
@@ -642,17 +617,18 @@ export function SchedulePage() {
                                   {group.id === "next" && remaining !== null && <span>D-{remaining}</span>}
                                 </div>
                               </div>
-                              {action.label === "완료 처리" ? (
+                              {action.label === "일정 닫기" ? (
                                 <button
                                   type="button"
                                   disabled={busy}
+                                  title="이 마감 일정만 Agenda에서 닫습니다. 파이프라인과 feat/patch 이력은 유지되고 Calendar에는 계속 표시됩니다."
                                   onClick={(event) => {
                                     event.stopPropagation();
                                     void completeFromQueue(commitment);
                                   }}
                                   className="shrink-0 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-400/20 disabled:opacity-40"
                                 >
-                                  완료 처리
+                                  일정 닫기
                                 </button>
                               ) : <ChevronRight size={16} className="shrink-0 text-[var(--color-text-dim)] transition-transform group-hover:translate-x-1 group-hover:text-cyan-300" />}
                             </div>
@@ -851,106 +827,46 @@ export function SchedulePage() {
                   />
                 </div>
               )}
-              <section className="mt-3 rounded-xl border border-violet-400/25 bg-violet-400/[0.06] p-3" aria-label="작업 목표">
+              <section className="mt-3 rounded-xl border border-white/[0.09] bg-white/[0.025] p-3" aria-label="개발 이력">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-[12.5px] font-semibold text-violet-100">작업 목표</h3>
-                    <p className="mt-0.5 text-[10.5px] text-slate-400">이번에 끝낼 범위와 마감일을 관리합니다.</p>
+                    <h3 className="text-[12.5px] font-semibold text-white">개발 이력</h3>
+                    <p className="mt-0.5 text-[10.5px] text-slate-400">이 SPEC에서 실행한 feat와 patch를 시간순으로 보여줍니다.</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCommitmentTitle(selected.title);
-                      setCommitmentDueDate(selected.due_date);
-                      setCommitmentFormOpen((open) => !open);
-                    }}
-                    className="shrink-0 rounded-lg border border-violet-400/35 bg-violet-400/10 px-2.5 py-1.5 text-[11px] font-semibold text-violet-200 hover:bg-violet-400/20"
-                  >
-                    작업 목표 추가
-                  </button>
+                  <span className="font-mono text-[10px] text-slate-500">{selected.development_history?.length ?? 0}회</span>
                 </div>
-
-                {selectedCommitments.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {selectedCommitments.map((commitment) => {
-                      const action = commitmentNextAction(commitment);
-                      const closed = commitment.state === "completed" || commitment.state === "cancelled";
-                      return (
-                        <div key={commitment.id} className="rounded-lg border border-white/[0.08] bg-black/20 px-3 py-2.5">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="truncate text-[12px] font-semibold text-white">{commitment.title}</p>
-                              <p className="mt-1 text-[10.5px] font-semibold text-cyan-200">{action.label}</p>
-                              <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400">{action.detail}</p>
-                              <div className="mt-1.5 flex flex-wrap gap-1.5 font-mono text-[9.5px] text-slate-400">
-                                <span>{commitment.due_date ?? "날짜 미정"}</span>
-                                <span>목표 {commitment.target.toUpperCase()}</span>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => void setCommitmentClosed(commitment, !closed)}
-                              className={cn(
-                                "shrink-0 rounded-lg border px-2.5 py-1.5 text-[10.5px] font-semibold disabled:opacity-40",
-                                closed
-                                  ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-200 hover:bg-cyan-400/20"
-                                  : "border-emerald-400/30 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/20",
-                              )}
-                            >
-                              {closed ? "다시 열기" : "완료 처리"}
-                            </button>
+                {(selected.development_history?.length ?? 0) > 0 ? (
+                  <ol className="mt-3 space-y-0">
+                    {selected.development_history?.map((entry, index) => (
+                      <li key={`${entry.task_id}:${entry.version}`} className="relative flex gap-3 pb-3 last:pb-0">
+                        {index < (selected.development_history?.length ?? 0) - 1 && <span className="absolute left-[5px] top-3 h-full w-px bg-white/10" />}
+                        <span className={cn("relative mt-1 h-[11px] w-[11px] shrink-0 rounded-full border-2", entry.version === 0 ? "border-cyan-300 bg-cyan-950" : "border-violet-300 bg-violet-950")} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className={cn("rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase", entry.version === 0 ? "bg-cyan-400/10 text-cyan-200" : "bg-violet-400/10 text-violet-200")}>{entry.version === 0 ? "feat" : `patch ${entry.version}`}</span>
+                            <span className="truncate text-[11.5px] font-semibold text-slate-100">{entry.title}</span>
                           </div>
+                          {entry.completed_at && <time className="mt-1 block font-mono text-[9.5px] text-slate-500">{entry.completed_at.slice(0, 10)}</time>}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {selectedCommitments.length === 0 && !commitmentFormOpen && (
-                  <p className="mt-3 rounded-lg border border-dashed border-white/10 px-3 py-2.5 text-[10.5px] text-slate-400">
-                    기존 마감일을 일정에 표시하고 있습니다. 작업 목표를 추가하면 완료 이력을 따로 관리할 수 있습니다.
-                  </p>
-                )}
-
-                {commitmentFormOpen && (
-                  <div className="mt-3 space-y-3 rounded-lg border border-violet-400/20 bg-black/20 p-3">
-                    <label className="block text-[10.5px] text-slate-400">
-                      작업 목표
-                      <input
-                        value={commitmentTitle}
-                        onChange={(event) => setCommitmentTitle(event.target.value)}
-                        className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 text-[12px] text-white"
-                      />
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <label className="block text-[10.5px] text-slate-400">
-                        목표
-                        <select
-                          value={commitmentTarget}
-                          onChange={(event) => setCommitmentTarget(event.target.value as CommitmentTarget)}
-                          className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 text-[12px] text-white"
-                        >
-                          <option value="implementation">구현</option>
-                          <option value="review">리뷰</option>
-                          <option value="dev">DEV 배포</option>
-                          <option value="stg">STG 배포</option>
-                          <option value="prd">PRD 배포</option>
-                          <option value="custom">사용자 정의</option>
-                        </select>
-                      </label>
-                      <div>
-                        <span className="mb-1 block text-[10.5px] text-slate-400">마감일</span>
-                        <DatePicker value={commitmentDueDate} onChange={setCommitmentDueDate} placeholder="날짜 미정" />
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <button type="button" onClick={() => setCommitmentFormOpen(false)} className="rounded-lg px-3 py-1.5 text-[10.5px] text-slate-400 hover:bg-white/[0.04]">취소</button>
-                      <button type="button" disabled={busy || !commitmentTitle.trim()} onClick={() => void addCommitment()} className="rounded-lg border border-violet-400/35 bg-violet-400/15 px-3 py-1.5 text-[10.5px] font-semibold text-violet-100 hover:bg-violet-400/25 disabled:opacity-40">작업 목표 추가</button>
-                    </div>
-                  </div>
-                )}
+                      </li>
+                    ))}
+                  </ol>
+                ) : <p className="mt-3 text-[10.5px] text-slate-500">아직 실행된 feat 또는 patch가 없습니다.</p>}
               </section>
+
+              {selectedCommitments.length > 0 && (
+                <section className="mt-3 rounded-xl border border-white/[0.08] p-3" aria-label="일정 상태">
+                  <h3 className="text-[12px] font-semibold text-white">일정 상태</h3>
+                  <p className="mt-1 text-[10.5px] leading-relaxed text-slate-400">일정을 닫으면 파이프라인이나 개발 이력은 바뀌지 않고 Agenda에서만 내려갑니다. Calendar에는 계속 남습니다.</p>
+                  {selectedCommitments.map((commitment) => {
+                    const closed = commitment.state === "completed" || commitment.state === "cancelled";
+                    return <div key={commitment.id} className="mt-2 flex items-center justify-between gap-3 rounded-lg bg-black/20 px-3 py-2">
+                      <span className="font-mono text-[10px] text-slate-300">{commitment.due_date ?? "날짜 미정"}</span>
+                      <button type="button" disabled={busy} onClick={() => void setCommitmentClosed(commitment, !closed)} className="rounded-lg border border-white/10 px-2.5 py-1.5 text-[10.5px] font-semibold text-slate-200 hover:bg-white/[0.05] disabled:opacity-40">{closed ? "Agenda에 다시 열기" : "일정 닫기"}</button>
+                    </div>;
+                  })}
+                </section>
+              )}
               {selected.spec_path && (
                 <button
                   onClick={() => setSpecDocumentTarget({ workspace: selected.workspace_name, nodeId: selected.id, title: selected.title })}
@@ -1155,7 +1071,7 @@ export function SchedulePage() {
               <DatePicker value={addDate} onChange={setAddDate} placeholder="선택 안 함" />
             </div>
             <div className="space-y-2">
-              <span className="block text-[12px] text-[var(--color-text-muted)]">기획 화면(선택) · spec-writer와 실행 에이전트가 함께 봅니다</span>
+              <span className="block text-[12px] text-[var(--color-text-muted)]">기획 화면(선택)</span>
               {addImages.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
                   {addImages.map((image, index) => (

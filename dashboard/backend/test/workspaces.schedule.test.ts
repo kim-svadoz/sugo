@@ -106,6 +106,26 @@ describe("GET /api/workspaces/schedule — §7B 워크스페이스 비종속 집
     });
   });
 
+  it("SPEC 하위 feat와 patch 계보를 완료 시각 순서로 반환한다", async () => {
+    const ctx = await bootApp();
+    await request(ctx.app).post("/api/sync/roadmap").set("Authorization", ctx.auth).send({
+      userId: "u1", workspaceName: "ws1", nodes: [
+        { id: "spec1", title: "SPEC", level: "spec", status: "done" },
+        { id: "run1", title: "RUN", level: "workstream", status: "done", parent: "spec1" },
+        { id: "task1", title: "기본 구현", level: "task", status: "done", parent: "run1", lineage: [
+          { version: 1, title: "충돌 처리", completedAt: "2026-10-14T02:00:00Z", summary: "patch" },
+          { version: 0, title: "기본 구현", completedAt: "2026-10-13T01:00:00Z", summary: "feat" },
+        ] },
+      ],
+    }).expect(200);
+
+    const res = await request(ctx.app).get("/api/workspaces/schedule").set("Authorization", ctx.auth).expect(200);
+    expect(res.body.specs[0].development_history).toEqual([
+      expect.objectContaining({ task_id: "task1", version: 0, title: "기본 구현", completed_at: "2026-10-13T01:00:00Z" }),
+      expect.objectContaining({ task_id: "task1", version: 1, title: "충돌 처리", completed_at: "2026-10-14T02:00:00Z" }),
+    ]);
+  });
+
   it("우선 Task의 versioned runtime assessment를 Schedule read model에 전달한다", async () => {
     const ctx = await bootApp();
     const runtimeAssessment = {

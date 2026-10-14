@@ -103,7 +103,7 @@ export function SpecAttachments({ workspace, nodeId, hasSpec }: { workspace: str
 
   return (
     <div className="space-y-2">
-      <span className="flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">기획 화면 · spec-writer와 실행 에이전트가 함께 봅니다</span>
+      <span className="flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">기획 화면</span>
       {items.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {items.map((item) => (

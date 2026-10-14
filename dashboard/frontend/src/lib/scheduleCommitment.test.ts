@@ -72,8 +72,8 @@ describe("Schedule commitments", () => {
       target: "prd",
       current_environment: "PRD",
     }))).toEqual({
-      label: "완료 처리",
-      detail: "목표 PRD까지 반영되었습니다.",
+      label: "일정 닫기",
+      detail: "목표 PRD까지 반영되었습니다. 이 마감 일정을 Agenda에서 닫을 수 있습니다.",
     });
 
     const queue = buildCommitmentQueue([
