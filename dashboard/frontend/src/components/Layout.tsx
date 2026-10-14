@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { CommandPalette } from "./CommandPalette.js";
 import { Header } from "./Header.js";
 import { Sidebar } from "./Sidebar.js";
+import { isTextEditingTarget, sidebarShortcutPath } from "../lib/sidebarNavigation.js";
 
 /**
  * 설계안 Layout. **⌘K/Ctrl+K 토글은 여기에만 둔다** — 팔레트 안에도 넣으면 열려 있을 때
@@ -18,6 +19,13 @@ export function Layout() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;
+      const shortcutPath = sidebarShortcutPath(e.key);
+      if (shortcutPath && !isTextEditingTarget(e.target)) {
+        e.preventDefault();
+        setPaletteOpen(false);
+        navigate(shortcutPath);
+        return;
+      }
       switch (e.key.toLowerCase()) {
         case "k":
           e.preventDefault();

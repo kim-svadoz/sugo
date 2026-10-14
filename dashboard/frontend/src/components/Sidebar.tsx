@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { CalendarDays, RefreshCw, Shapes, ShieldHalf, SlidersHorizontal, Wand2, Zap } from "lucide-react";
 import { cn } from "../lib/utils.js";
+import { SIDEBAR_DESTINATIONS } from "../lib/sidebarNavigation.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 
@@ -11,14 +12,8 @@ import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
  * Workspaces만 라우트가 `/sessions`이고 나머지는 라벨 소문자와 일치한다 — 홈이 원래
  * "세션 목록"이었다가 "워크스페이스"로 라벨만 바뀐 흔적이라 URL과 라벨이 어긋나 있다.
  */
-const navItems = [
-  { to: "/sessions", icon: Shapes, label: "Workspaces" },
-  { to: "/schedule", icon: CalendarDays, label: "Schedule" },
-  { to: "/skills", icon: Zap, label: "Skills" },
-  { to: "/harness", icon: ShieldHalf, label: "Harness" },
-  { to: "/playbook", icon: Wand2, label: "Playbook" },
-  { to: "/settings", icon: SlidersHorizontal, label: "Settings" },
-];
+const icons = [Shapes, CalendarDays, Zap, ShieldHalf, Wand2, SlidersHorizontal];
+const navItems = SIDEBAR_DESTINATIONS.map((item, index) => ({ ...item, icon: icons[index] }));
 
 export function Sidebar() {
   const { pluginVersion } = useDashboardMeta();
@@ -39,10 +34,11 @@ export function Sidebar() {
         </span>
       </Link>
       <nav className="flex w-full flex-1 flex-col items-center gap-1.5 px-1.5">
-        {navItems.map(({ to, icon: Icon, label }) => (
+        {navItems.map(({ to, icon: Icon, label, shortcut }) => (
           <NavLink
             key={to}
             to={to}
+            title={`${label} · ⌘${shortcut}`}
             className={({ isActive }) =>
               cn(
                 "group relative flex w-full flex-col items-center gap-1 rounded-xl px-1 py-2 transition-all",
@@ -59,6 +55,7 @@ export function Sidebar() {
                 )}
                 <Icon size={19} />
                 <span className="text-[9px] font-semibold leading-none tracking-tight">{label}</span>
+                <span className="absolute right-1 top-1 font-mono text-[8px] text-[var(--color-text-dim)]">{shortcut}</span>
               </>
             )}
           </NavLink>
