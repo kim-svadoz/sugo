@@ -27,14 +27,15 @@ describe("schedule agenda", () => {
     status,
   });
 
-  it("groups open work by urgency and leaves completed work in upcoming", () => {
+  it("groups open work by urgency and excludes completed past schedules", () => {
     const agenda = buildScheduleAgenda(
       [
         row("late", "2026-10-13"),
         row("today", "2026-10-14"),
         row("soon", "2026-10-17"),
         row("later", "2026-11-02"),
-        row("done", "2026-10-12", "done"),
+        row("past-done", "2026-10-12", "done"),
+        row("future-done", "2026-10-20", "done"),
       ],
       "2026-10-14",
     );
@@ -43,7 +44,7 @@ describe("schedule agenda", () => {
       ["overdue", ["late"]],
       ["today", ["today"]],
       ["next", ["soon"]],
-      ["later", ["done", "later"]],
+      ["later", ["future-done", "later"]],
     ]);
   });
 

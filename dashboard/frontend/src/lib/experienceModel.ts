@@ -62,13 +62,15 @@ function addDays(dateKey: string, days: number): string {
 
 export function buildScheduleAgenda<T extends AgendaItem>(items: T[], todayKey: string): AgendaGroup<T>[] {
   const nextWeekKey = addDays(todayKey, 7);
-  const sorted = [...items].filter((item) => item.due_date).sort((a, b) => a.due_date!.localeCompare(b.due_date!));
   const isOpen = (item: T) => item.status !== "done" && item.status !== "dropped";
+  const sorted = [...items]
+    .filter((item) => item.due_date && (item.due_date >= todayKey || isOpen(item)))
+    .sort((a, b) => a.due_date!.localeCompare(b.due_date!));
   const definitions: Array<Omit<AgendaGroup<T>, "items"> & { match: (item: T) => boolean }> = [
     { id: "overdue", label: "기한 초과", description: "먼저 정리해야 할 일정", match: (item) => isOpen(item) && item.due_date! < todayKey },
     { id: "today", label: "오늘", description: "오늘 결론이 필요한 일정", match: (item) => isOpen(item) && item.due_date === todayKey },
     { id: "next", label: "다음 7일", description: "곧 다가오는 실행 계획", match: (item) => isOpen(item) && item.due_date! > todayKey && item.due_date! <= nextWeekKey },
-    { id: "later", label: "이후 일정", description: "완료 항목과 장기 계획", match: () => true },
+    { id: "later", label: "이후 일정", description: "예정된 완료 항목과 장기 계획", match: () => true },
   ];
   const remaining = new Set(sorted);
   return definitions.flatMap((definition) => {
