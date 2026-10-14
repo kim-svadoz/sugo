@@ -1,6 +1,6 @@
 import { SpecDeploymentBadge } from "../components/SpecDeploymentBadge.js";
 import { useEffect, useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, BookOpen, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock, Copy, FilePenLine, Pencil, Shield, Trash2, Workflow } from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, CircleDashed, Clock, Copy, FilePenLine, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -22,6 +22,8 @@ import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setPro
 import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
+import { schedulePulse } from "../lib/operationalPulse.js";
+import { OperationalPulse } from "../components/OperationalPulse.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -150,6 +152,7 @@ export function SchedulePage() {
     () => countUpcomingScheduledSpecs(specs ?? [], todayKey),
     [specs, todayKey],
   );
+  const pulse = useMemo(() => schedulePulse(specs ?? [], todayKey), [specs, todayKey]);
 
   function jumpToDate(dueDate: string) {
     const [year, month] = dueDate.split("-").map(Number);
@@ -349,13 +352,22 @@ export function SchedulePage() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">
             Schedule{" "}
             <span className="font-normal text-[var(--color-text-dim)]" title="오늘 이후 마감일이 등록된 SPEC 수">
               ({upcomingScheduledCount})
             </span>
           </h1>
+          <OperationalPulse
+            label="일정 운영 현황"
+            items={[
+              { label: "오늘", value: pulse.dueToday, icon: Clock, tone: pulse.dueToday > 0 ? "cyan" : "neutral" },
+              { label: "7일 내", value: pulse.dueThisWeek, icon: CalendarDays, tone: pulse.dueThisWeek > 0 ? "cyan" : "neutral" },
+              { label: "기한 초과", value: pulse.overdue, icon: AlertTriangle, tone: pulse.overdue > 0 ? "danger" : "neutral" },
+              { label: "기한 미정", value: pulse.unscheduled, icon: CircleDashed, tone: pulse.unscheduled > 0 ? "warning" : "neutral" },
+            ]}
+          />
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setMemoTarget({})} className="flex items-center gap-1.5 rounded-lg border border-slate-500/40 bg-slate-500/10 px-3 py-1.5 text-[12.5px] font-semibold text-slate-200 transition-colors hover:bg-slate-500/20"><FilePenLine size={15} /> 메모 추가</button>

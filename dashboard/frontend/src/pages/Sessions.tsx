@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Activity,
@@ -15,6 +15,7 @@ import {
   Plus,
   Rows3,
   Calendar,
+  CheckCircle2,
   FileCode,
   Lightbulb,
   Search,
@@ -43,6 +44,8 @@ import { useRoadmap } from "../hooks/useRoadmap.js";
 import { compareRelease, shortCommit, type ReleaseComparison } from "../lib/awsReleasePresentation.js";
 import { presentSteKorean } from "../lib/steKorean.js";
 import { historyContextTitle, historyDisplayDate, historyDisplayTitle } from "../lib/historyPresentation.js";
+import { workspacePulse } from "../lib/operationalPulse.js";
+import { OperationalPulse } from "../components/OperationalPulse.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
@@ -155,7 +158,15 @@ export function Sessions() {
   const decisions = useWorkspaceDecisions(selectedWorkspace);
 
   const workspaces = useMemo(() => data ?? [], [data]);
+  const pulse = useMemo(() => workspacePulse(workspaces), [workspaces]);
   const isSearchMode = searchQuery.trim().length >= 2;
+  const initialSelectionApplied = useRef(false);
+
+  useEffect(() => {
+    if (initialSelectionApplied.current || workspaces.length === 0) return;
+    initialSelectionApplied.current = true;
+    setSelectedWorkspace(workspaces[0].name);
+  }, [workspaces]);
 
   useEffect(() => {
     const closeGuideOnEscape = (event: KeyboardEvent) => {
@@ -577,9 +588,19 @@ export function Sessions() {
 
       {/* 1단 통합 툴바 — Domains(N) ··· Guide · 검색 · 필터 · 뷰토글 · Add Domain */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="shrink-0 text-lg font-semibold text-[var(--color-text-bright)]">
-          Domains <span className="text-sm font-normal text-[var(--color-text-dim)]">({filteredWorkspaces.length})</span>
-        </h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="shrink-0 text-lg font-semibold text-[var(--color-text-bright)]">
+            Domains <span className="text-sm font-normal text-[var(--color-text-dim)]">({filteredWorkspaces.length})</span>
+          </h2>
+          <OperationalPulse
+            label="전체 도메인 운영 현황"
+            items={[
+              { label: "진행", value: pulse.active, icon: Activity, tone: pulse.active > 0 ? "cyan" : "neutral" },
+              { label: "확인 필요", value: pulse.attention, icon: AlertTriangle, tone: pulse.attention > 0 ? "warning" : "neutral" },
+              { label: "완료", value: pulse.total > 0 ? `${pulse.done}/${pulse.total}` : "—", icon: CheckCircle2, tone: pulse.total > 0 && pulse.done === pulse.total ? "success" : "neutral" },
+            ]}
+          />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowStatusGuide(true)}
