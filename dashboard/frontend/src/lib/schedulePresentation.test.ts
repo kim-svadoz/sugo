@@ -239,5 +239,7 @@ describe("schedule presentation", () => {
     expect(source).toContain("SPEC 휴지통");
     expect(source).toContain('className="fixed inset-0 z-[80] flex items-center justify-center');
     expect(source).toContain('role="dialog" aria-modal="true"');
+    expect(source).toContain('window.addEventListener("keydown", cancelArchive, true)');
+    expect(source).toContain('|| !!archiveConfirm}');
   });
 });

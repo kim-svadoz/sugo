@@ -114,6 +114,18 @@ export function SchedulePage() {
   const [archiveConfirm, setArchiveConfirm] = useState<ScheduleSpecArchiveReason | null>(null);
   const [trashOpen, setTrashOpen] = useState(false);
 
+  useEffect(() => {
+    if (!archiveConfirm) return;
+    const cancelArchive = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || busy) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      setArchiveConfirm(null);
+    };
+    window.addEventListener("keydown", cancelArchive, true);
+    return () => window.removeEventListener("keydown", cancelArchive, true);
+  }, [archiveConfirm, busy]);
+
   // §7B 사용자 결정(2026-09-23): 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
   // Schedule 위에 겹쳐서 뜬다 — Esc를 누르면 그냥 이 오버레이만 닫히고 Schedule로 남는다.
   const [checkpointTarget, setCheckpointTarget] = useState<{ workspace: string; projectPath: string | null; dueDate: string | null } | null>(null);
@@ -750,7 +762,7 @@ export function SchedulePage() {
             setSelected(null);
             setTitleDraft(null);
           }}
-          disableEscape={!!checkpointTarget || !!canvasOverlay || !!specDocumentTarget}
+          disableEscape={!!checkpointTarget || !!canvasOverlay || !!specDocumentTarget || !!archiveConfirm}
         >
           <div className="space-y-4">
             <div>
