@@ -104,12 +104,12 @@ function repoName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() || path;
 }
 
-function formatDeploymentDate(value: string | null, fallback: string | null): string {
-  const effective = value ?? fallback;
+function formatDeploymentDate(taskDefinitionRegisteredAt: string | null, deploymentUpdatedAt: string | null): string {
+  const effective = taskDefinitionRegisteredAt ?? deploymentUpdatedAt;
   if (!effective) return "배포 시각 확인 불가";
   const date = new Date(effective);
   if (Number.isNaN(date.getTime())) return "배포 시각 확인 불가";
-  return `기준 ${new Intl.DateTimeFormat("ko-KR", {
+  return `${taskDefinitionRegisteredAt ? "Task 정의" : "ECS 갱신"} ${new Intl.DateTimeFormat("ko-KR", {
     timeZone: "Asia/Seoul",
     year: "2-digit",
     month: "2-digit",
@@ -438,7 +438,7 @@ export function Sessions() {
                           </div>
                           <div className="mt-1 truncate font-mono text-[12px] font-medium text-[var(--color-text)]" title={deployment.taskDefinition ?? undefined}>{deployment.taskDefinition ?? "TaskDefinition 미확인"}</div>
                           {imageVersion && <div className="flex items-center justify-between gap-2 font-mono text-[11px] text-purple-200" title={deployment.images[0]}><span className="truncate">image {imageVersion}</span>{p.aws_release?.latestBuildNumber != null && <span className={`font-medium ${imageVersion === String(p.aws_release.latestBuildNumber) ? "text-emerald-300" : "text-amber-300"}`}>{imageVersion === String(p.aws_release.latestBuildNumber) ? "최신 Build" : `Build #${p.aws_release.latestBuildNumber}와 다름`}</span>}</div>}
-                          <div className="mt-0.5 truncate text-[11px] text-[var(--color-text-muted)]" title={deployment.deployedAt ? "ECS PRIMARY 배포 갱신 시각" : "TaskDefinition 등록 시각 기반"}>{formatDeploymentDate(deployment.deployedAt, deployment.taskDefinitionRegisteredAt)}</div>
+                          <div className="mt-0.5 truncate text-[11px] text-[var(--color-text-muted)]" title={deployment.deployedAt ? `ECS 최근 갱신 ${formatDeploymentDate(null, deployment.deployedAt)}` : "TaskDefinition 등록 시각"}>{formatDeploymentDate(deployment.taskDefinitionRegisteredAt, deployment.deployedAt)}</div>
                           <div className="text-[11px] text-[var(--color-text-muted)]">running {deployment.runningCount ?? "?"}/{deployment.desiredCount ?? "?"}</div>
                           {deployment.pinpointApplicationName && <div className="mt-2 flex items-center justify-between gap-2 border-t border-[var(--color-border)] pt-2 text-[11px]" title={deployment.apmLatestHeartbeatAt ?? "Pinpoint heartbeat 없음"}>
                             <span className="truncate font-mono text-[var(--color-text-muted)]">Pinpoint {deployment.pinpointApplicationName}</span>

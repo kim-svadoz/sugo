@@ -23017,6 +23017,8 @@ ${harness.harnessMd.trimStart()}` : harness.harnessMd;
 }
 var BLOCK_START = "<!-- sugo:harness-rules:start -->";
 var BLOCK_END = "<!-- sugo:harness-rules:end -->";
+var AGENTS_BLOCK_START = "<!-- sugo:project-context:start -->";
+var AGENTS_BLOCK_END = "<!-- sugo:project-context:end -->";
 function buildManagedBlock(harnessIds) {
   const list = harnessIds.length === 0 ? "(\uC801\uC6A9\uB41C \uD558\uB124\uC2A4 \uC5C6\uC74C)" : harnessIds.map((id) => `- \`${id}\``).join("\n");
   return `${BLOCK_START}
@@ -23041,6 +23043,25 @@ function mergeRootClaudeReference(existing, appliedHarnessIds) {
   const before = base.slice(0, startIdx);
   const after = base.slice(endIdx + BLOCK_END.length);
   const content = before + block + after;
+  return { content, changed: content !== base };
+}
+function mergeRootAgentsReference(existing) {
+  const block = `${AGENTS_BLOCK_START}
+<!-- \uC774 \uBE14\uB85D\uC740 sugo\uAC00 \uC790\uB3D9 \uAD00\uB9AC\uD569\uB2C8\uB2E4. \uC190\uC73C\uB85C \uACE0\uCE58\uBA74 \uB2E4\uC74C sugo_add/sugo_update \uB54C \uB36E\uC5B4\uC368\uC9D1\uB2C8\uB2E4. -->
+## Sugo \uD504\uB85C\uC81D\uD2B8 \uCEE8\uD14D\uC2A4\uD2B8
+
+\uC791\uC5C5\uC744 \uACC4\uD68D\uD558\uAC70\uB098 \uD30C\uC77C\uC744 \uC218\uC815\uD558\uAE30 \uC804\uC5D0 \uC791\uC5C5 \uB300\uC0C1 \uD504\uB85C\uC81D\uD2B8\uC758 \`.claude/rules/\` \uC544\uB798 Markdown \uD30C\uC77C\uC744 \uC7AC\uADC0\uC801\uC73C\uB85C \uD655\uC778\uD55C\uB2E4.
+\uC774 \uD30C\uC77C\uB4E4\uC740 Sugo \uD558\uB124\uC2A4\uC640 Dashboard\uC758 \uB3C4\uBA54\uC778 \uADDC\uCE59 \uAD00\uB9AC\uC5D0\uC11C \uB3D9\uAE30\uD654\uD55C \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB2E4.
+\uD604\uC7AC \uC791\uC5C5\uC5D0 \uC801\uC6A9\uB418\uB294 \uADDC\uCE59\uC744 \uAD6C\uD604\xB7\uB9AC\uBDF0\xB7\uAC80\uC99D \uD310\uB2E8\uC5D0 \uBC18\uC601\uD558\uACE0, \uCDA9\uB3CC\uD558\uAC70\uB098 \uC801\uC6A9\uD560 \uC218 \uC5C6\uC73C\uBA74 \uACB0\uACFC\uC5D0 \uC774\uC720\uB97C \uBA85\uC2DC\uD55C\uB2E4.
+${AGENTS_BLOCK_END}`;
+  const base = existing ?? "";
+  const startIdx = base.indexOf(AGENTS_BLOCK_START);
+  const endIdx = base.indexOf(AGENTS_BLOCK_END);
+  if (startIdx === -1 || endIdx === -1) {
+    const separator = base.length > 0 && !base.endsWith("\n\n") ? base.endsWith("\n") ? "\n" : "\n\n" : "";
+    return { content: base + separator + block + "\n", changed: true };
+  }
+  const content = base.slice(0, startIdx) + block + base.slice(endIdx + AGENTS_BLOCK_END.length);
   return { content, changed: content !== base };
 }
 
@@ -23655,6 +23676,10 @@ async function syncProjectHarness(args2) {
   const existingRootClaude = await readFile3(rootClaudePath, "utf-8").catch(() => null);
   const rootClaude = mergeRootClaudeReference(existingRootClaude, harnesses.map((h) => h.id));
   if (rootClaude.changed) await atomicWriteFile(rootClaudePath, rootClaude.content);
+  const rootAgentsPath = join6(projectPath, "AGENTS.md");
+  const existingRootAgents = await readFile3(rootAgentsPath, "utf-8").catch(() => null);
+  const rootAgents = mergeRootAgentsReference(existingRootAgents);
+  if (rootAgents.changed) await atomicWriteFile(rootAgentsPath, rootAgents.content);
   const now = (/* @__PURE__ */ new Date()).toISOString();
   const existingEntry = await findRegistryEntry(projectPath);
   const config2 = {
@@ -23683,6 +23708,7 @@ async function syncProjectHarness(args2) {
     config: config2,
     claudeMdPath,
     rootClaudeMdPath: rootClaudePath,
+    rootAgentsMdPath: rootAgentsPath,
     claudeRulesFiles: harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath)
   };
 }
@@ -28169,7 +28195,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.29.6" : "0.0.0-dev";
+  return true ? "0.30.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts

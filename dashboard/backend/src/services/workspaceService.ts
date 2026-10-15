@@ -13,7 +13,7 @@ import { linkAwsDeployments, linkAwsRelease, type AwsDeploymentSnapshot, type Aw
 
 const execFileAsync = promisify(execFile);
 
-export interface LocalGitState { branch: string | null; headCommit: string | null; dirty: boolean; }
+export interface LocalGitState { branch: string | null; headCommit: string | null; baseCommit: string | null; dirty: boolean; }
 
 export interface WorkspaceProjectRow {
   project_path: string;
@@ -24,16 +24,34 @@ export interface WorkspaceProjectRow {
   local_git: LocalGitState;
 }
 
-async function readLocalGitState(projectPath: string): Promise<LocalGitState> {
+async function resolveBaseCommit(projectPath: string, baseBranch: string | null): Promise<string | null> {
+  if (!baseBranch) return null;
+  for (const ref of [`refs/remotes/origin/${baseBranch}`, `refs/heads/${baseBranch}`]) {
+    try {
+      const { stdout } = await execFileAsync("git", ["-C", projectPath, "rev-parse", "--verify", ref], { timeout: 5_000 });
+      if (stdout.trim()) return stdout.trim();
+    } catch {
+      // Try the next explicit ref. Never compare a pipeline branch with the checked-out feature HEAD.
+    }
+  }
+  return null;
+}
+
+async function readLocalGitState(projectPath: string, baseBranch: string | null): Promise<LocalGitState> {
   try {
     const [{ stdout: head }, { stdout: branch }, { stdout: status }] = await Promise.all([
       execFileAsync("git", ["-C", projectPath, "rev-parse", "HEAD"], { timeout: 5_000 }),
       execFileAsync("git", ["-C", projectPath, "branch", "--show-current"], { timeout: 5_000 }),
       execFileAsync("git", ["-C", projectPath, "status", "--porcelain"], { timeout: 5_000 }),
     ]);
-    return { headCommit: head.trim() || null, branch: branch.trim() || null, dirty: status.trim().length > 0 };
+    return {
+      headCommit: head.trim() || null,
+      branch: branch.trim() || null,
+      baseCommit: await resolveBaseCommit(projectPath, baseBranch),
+      dirty: status.trim().length > 0,
+    };
   } catch {
-    return { headCommit: null, branch: null, dirty: false };
+    return { headCommit: null, branch: null, baseCommit: null, dirty: false };
   }
 }
 
@@ -200,7 +218,7 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
     const projects: WorkspaceProjectRow[] = await Promise.all(projectRows.map(async (project) => {
       const deployments = linkAwsDeployments(project.project_path, awsSnapshots, pinpointSnapshots, integrationMappings.has(project.project_path) ? integrationMappings.get(project.project_path) : undefined);
       const release = linkAwsRelease(project.project_path, awsSnapshots);
-      return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments, aws_release: release, local_git: await readLocalGitState(project.project_path) };
+      return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments, aws_release: release, local_git: await readLocalGitState(project.project_path, release?.baseBranch ?? null) };
     }));
     const tasks = await taskCounts(db, userId, ws.name);
     const roadmap = await roadmapCounts(db, userId, ws.name);

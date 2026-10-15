@@ -16,6 +16,7 @@ export interface DeploymentServiceEvidence { project: string; service: string; a
 export interface DeploymentEnvironment { environment: string; included: number; total: number; unknown: boolean; services: DeploymentServiceEvidence[]; }
 export interface SpecDeployment { environment: "LOCAL" | "DEV" | "STG" | "PRD" | "UNKNOWN"; partial: boolean; total: number; environments: DeploymentEnvironment[]; stale?: boolean; reason?: string; sources?: { taskId: string; project: string | null; commit: string | null; state: string; patchVersion?: number; recoveredFrom?: string; summary?: string }[]; }
 export function summarizeDeployment(environments: DeploymentEnvironment[], total: number): SpecDeployment {
+  if (total === 0) return { environment: "UNKNOWN", partial: false, total, environments, reason: "아직 완료된 개발 작업이 없어 배포 환경을 판단할 수 없습니다." };
   const positive = environments.filter(e => e.included > 0).sort((a, b) => ORDER.indexOf(b.environment) - ORDER.indexOf(a.environment));
   const highest = positive[0];
   if (highest) return { environment: highest.environment.toUpperCase() as SpecDeployment["environment"], partial: highest.included < total, total, environments };

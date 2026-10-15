@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildClaudeRuleFile, buildEffectiveClaudeRuleFiles, mergeRootClaudeReference } from "../src/harness/rulesFile.js";
+import { buildClaudeRuleFile, buildEffectiveClaudeRuleFiles, mergeRootAgentsReference, mergeRootClaudeReference } from "../src/harness/rulesFile.js";
 
 describe("buildClaudeRuleFile", () => {
   it("경로 스코프가 있는 하네스는 paths frontmatter를 낸다", () => {
@@ -83,5 +83,24 @@ describe("mergeRootClaudeReference — 관리 블록은 idempotent하다", () =>
   it("적용된 하네스가 없으면 빈 목록으로 명시한다(조용히 생략하지 않는다)", () => {
     const { content } = mergeRootClaudeReference(null, []);
     expect(content).toMatch(/없음|비어/);
+  });
+});
+
+describe("mergeRootAgentsReference — Codex도 Sugo 규칙을 빠뜨리지 않는다", () => {
+  it("기존 AGENTS.md를 보존하고 적용 가능한 rules를 먼저 읽도록 연결한다", () => {
+    const { content, changed } = mergeRootAgentsReference("# 프로젝트 규칙\n\n사람이 쓴 내용.\n");
+    expect(changed).toBe(true);
+    expect(content).toContain("사람이 쓴 내용.");
+    expect(content).toContain("<!-- sugo:project-context:start -->");
+    expect(content).toContain(".claude/rules/");
+    expect(content).toContain("재귀");
+    expect(content).toContain("체크포인트");
+  });
+
+  it("두 번 적용해도 관리 블록은 하나이고 내용이 같으면 다시 쓰지 않는다", () => {
+    const first = mergeRootAgentsReference(null);
+    const second = mergeRootAgentsReference(first.content);
+    expect(second.changed).toBe(false);
+    expect(second.content.split("sugo:project-context:start").length).toBe(2);
   });
 });

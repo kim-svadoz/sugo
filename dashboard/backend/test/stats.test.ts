@@ -95,6 +95,27 @@ describe("§3.7 harness/skills — 미설정이면 빈 목록(404 아님)", () =
     const res = await request(await app()).get("/api/skills").expect(200);
     expect(res.body.skills).toEqual([]);
   });
+  it("skills 카탈로그는 중복 이름을 합치고 설명·종류·원문을 제공한다", async () => {
+    const root = mkdtempSync(join(tmpdir(), "sugo-skills-"));
+    try {
+      mkdirSync(join(root, "skills", "spec-writer"), { recursive: true });
+      mkdirSync(join(root, "commands"), { recursive: true });
+      writeFileSync(join(root, "skills", "spec-writer", "SKILL.md"), "---\nname: spec-writer\nagent: code-agent\ndescription: Turns a draft into an implementable specification.\n---\n\n# Spec writer\n\nSkill body.\n");
+      writeFileSync(join(root, "commands", "spec-writer.md"), "---\ndescription: command duplicate\n---\n\n# command\n");
+      writeFileSync(join(root, "commands", "status.md"), "---\ndescription: Shows the current pipeline state.\n---\n\n# Status\n");
+      const db = createSqliteClient();
+      await db.execScript(schema);
+      const { app } = await createApp({ db, skillsPath: root });
+      const list = await request(app).get("/api/skills").expect(200);
+      expect(list.body.skills).toEqual([
+        { name: "spec-writer", agent: "code-agent", description: "Turns a draft into an implementable specification.", kind: "skill", command: true },
+        { name: "status", agent: null, description: "Shows the current pipeline state.", kind: "command", command: true },
+      ]);
+      expect((await request(app).get("/api/skills/spec-writer").expect(200)).text).toContain("Skill body.");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
   it("manifest 파일이 없어도 harness.md 트리에서 분류 목록을 파생한다", async () => {
     const root = mkdtempSync(join(tmpdir(), "sugo-harness-manifest-"));
     try {

@@ -8,7 +8,7 @@ import { fetchHarnesses } from "./harnessFetcher.js";
 import { defaultHarnessLibraryDir } from "./libraryPath.js";
 import { findRegistryEntry, registerProject } from "./registry.js";
 import { writeClaudeIfChanged } from "./claudeMdFreshness.js";
-import { buildClaudeRuleFile, buildEffectiveClaudeRuleFiles, mergeRootClaudeReference } from "./rulesFile.js";
+import { buildClaudeRuleFile, buildEffectiveClaudeRuleFiles, mergeRootAgentsReference, mergeRootClaudeReference } from "./rulesFile.js";
 import { detectStack } from "./stackDetector.js";
 
 export interface SyncProjectHarnessArgs {
@@ -28,6 +28,8 @@ export interface SyncProjectHarnessResult {
   claudeMdPath: string;
   /** Claude Code가 자동으로 읽는 실제 진입점 — sugo/CLAUDE.md와 달리 세션 시작 시 항상 로드된다. */
   rootClaudeMdPath: string;
+  /** Codex가 Sugo 체크포인트를 읽도록 연결하는 프로젝트 루트 AGENTS.md. */
+  rootAgentsMdPath: string;
   claudeRulesFiles: string[];
 }
 
@@ -89,6 +91,11 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
   const rootClaude = mergeRootClaudeReference(existingRootClaude, harnesses.map((h) => h.id));
   if (rootClaude.changed) await atomicWriteFile(rootClaudePath, rootClaude.content);
 
+  const rootAgentsPath = join(projectPath, "AGENTS.md");
+  const existingRootAgents = await readFile(rootAgentsPath, "utf-8").catch(() => null);
+  const rootAgents = mergeRootAgentsReference(existingRootAgents);
+  if (rootAgents.changed) await atomicWriteFile(rootAgentsPath, rootAgents.content);
+
   const now = new Date().toISOString();
   const existingEntry = await findRegistryEntry(projectPath);
   const config: ProjectConfig = {
@@ -122,6 +129,7 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
     config,
     claudeMdPath,
     rootClaudeMdPath: rootClaudePath,
+    rootAgentsMdPath: rootAgentsPath,
     claudeRulesFiles: harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath),
   };
 }

@@ -18,7 +18,7 @@ export interface WorkspaceSummary {
       latestBuildStatus: string | null;
       latestBuildAt: string | null;
     } | null;
-    local_git: { branch: string | null; headCommit: string | null; dirty: boolean };
+    local_git: { branch: string | null; headCommit: string | null; baseCommit: string | null; dirty: boolean };
     aws_deployments: Array<{
       linkMode: "suggested" | "confirmed";
       accountName: string;

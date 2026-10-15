@@ -92,31 +92,43 @@ export function createSkillsRouter(skillsPath: string): Router {
 
   router.get("/", (_req, res) => {
     if (!skillsPath || !existsSync(skillsPath)) return res.json({ skills: [] });
-    const out: string[] = [];
+    const out = new Map<string, { name: string; agent: string | null; description: string; kind: "skill" | "command"; command: boolean }>();
     // 플러그인 레이아웃: skills/<name>/SKILL.md (서브디렉터리)
     const skillsDir = join(skillsPath, "skills");
     if (existsSync(skillsDir)) {
       for (const d of readdirSync(skillsDir, { withFileTypes: true })) {
-        if (d.isDirectory() && existsSync(join(skillsDir, d.name, "SKILL.md"))) out.push(d.name);
+        if (d.isDirectory() && existsSync(join(skillsDir, d.name, "SKILL.md"))) {
+          const text = readFileSync(join(skillsDir, d.name, "SKILL.md"), "utf8");
+          out.set(d.name, { name: d.name, agent: frontmatterValue(text, "agent"), description: frontmatterValue(text, "description") ?? "", kind: "skill", command: false });
+        }
       }
     }
     // commands/*.md 도 스킬(슬래시 커맨드)로 노출
     const cmdDir = join(skillsPath, "commands");
     if (existsSync(cmdDir)) {
       for (const d of readdirSync(cmdDir, { withFileTypes: true })) {
-        if (d.isFile() && d.name.endsWith(".md")) out.push(d.name.replace(/\.md$/, ""));
+        if (d.isFile() && d.name.endsWith(".md")) {
+          const name = d.name.replace(/\.md$/, "");
+          const text = readFileSync(join(cmdDir, d.name), "utf8");
+          const existing = out.get(name);
+          out.set(name, existing ? { ...existing, command: true } : { name, agent: frontmatterValue(text, "agent"), description: frontmatterValue(text, "description") ?? "", kind: "command", command: true });
+        }
       }
     }
     // 폴백: skillsPath 바로 아래 flat .md
-    if (out.length === 0) {
+    if (out.size === 0) {
       for (const d of readdirSync(skillsPath, { withFileTypes: true })) {
-        if (d.isFile() && d.name.endsWith(".md")) out.push(d.name.replace(/\.md$/, ""));
+        if (d.isFile() && d.name.endsWith(".md")) {
+          const name = d.name.replace(/\.md$/, "");
+          const text = readFileSync(join(skillsPath, d.name), "utf8");
+          out.set(name, { name, agent: frontmatterValue(text, "agent"), description: frontmatterValue(text, "description") ?? "", kind: "skill", command: false });
+        }
       }
     }
     // 설계안 SkillList는 `{name, agent}`로 에이전트별 필터링을 한다. 플러그인 레이아웃엔
     // 스킬→에이전트 소속이 디렉터리에 안 드러나므로 SKILL.md frontmatter의 `agent:`를 읽는다.
     // 없으면 null — 추측해서 붙이면 잘못된 에이전트 밑에 스킬이 걸린다.
-    res.json({ skills: out.map((name) => ({ name, agent: readSkillAgent(skillsPath, name) })) });
+    res.json({ skills: [...out.values()].sort((a, b) => a.name.localeCompare(b.name)) });
   });
 
   router.get("/agents", (_req, res) => {
@@ -129,6 +141,14 @@ export function createSkillsRouter(skillsPath: string): Router {
     // 설계안 에이전트 카드는 name/description을 쓴다. 파일 frontmatter에서 읽고,
     // 없으면 id를 그대로 name으로 둔다(설명을 지어내지 않는다).
     res.json({ agents: agents.map((id) => ({ id, ...readAgentMeta(agentsDir, id) })) });
+  });
+
+  router.get("/:name", (req, res) => {
+    if (!skillsPath || !/^[a-zA-Z0-9_-]+$/.test(req.params.name)) return res.status(404).json({ error: "not_found" });
+    for (const candidate of [join(skillsPath, "skills", req.params.name, "SKILL.md"), join(skillsPath, "commands", req.params.name + ".md"), join(skillsPath, req.params.name + ".md")]) {
+      if (existsSync(candidate)) return res.type("text/markdown").send(readFileSync(candidate, "utf8"));
+    }
+    return res.status(404).json({ error: "not_found" });
   });
 
   router.get(

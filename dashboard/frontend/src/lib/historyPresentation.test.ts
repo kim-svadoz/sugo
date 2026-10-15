@@ -23,6 +23,14 @@ describe("History 표시 제목", () => {
     expect(historyDisplayTitle({ task_title: null, summary: null, id: "wl-4" })).toBe("wl-4");
   });
 
+  it("Git 가져오기 안내문을 모든 이력의 제목처럼 반복하지 않는다", () => {
+    expect(historyDisplayTitle({
+      task_title: "feat: add schedule memo",
+      summary: "Sugo 파이프라인 외부에서 수행한 Git 저장소 이력입니다.",
+      id: "git:abc123",
+    })).toBe("feat: add schedule memo");
+  });
+
   it("현재 SPEC 제목을 저장 당시 작업명보다 우선한다", () => {
     expect(historyContextTitle({ spec_title: "수정한 SPEC 제목", task_title: "등록 당시 제목" })).toBe("수정한 SPEC 제목");
     expect(historyContextTitle({ spec_title: null, task_title: "등록 당시 제목" })).toBe("등록 당시 제목");

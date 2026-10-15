@@ -10,9 +10,11 @@ type HistoryContextSource = {
 };
 
 const GENERIC_SUMMARY_LABEL = /^(?:작업\s*요약|summary)$/i;
+const IMPORTED_GIT_SUMMARY = /^Sugo 파이프라인 외부에서 수행한 Git 저장소 이력입니다\.?$/;
 
 /** History의 주 제목은 기능 폴더명이 아니라 실제 완료 작업을 설명해야 한다. */
 export function historyDisplayTitle(log: HistoryTitleSource): string {
+  if (log.summary?.trim().match(IMPORTED_GIT_SUMMARY)) return log.task_title?.trim() || log.id;
   const meaningfulLine = log.summary
     ?.split(/\r?\n/)
     .map((line) => line.trim().replace(/^#{1,6}\s*/, "").replace(/^(?:[-*+]\s+|\d+[.)]\s+)/, "").trim())

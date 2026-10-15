@@ -52,6 +52,8 @@ export function buildEffectiveClaudeRuleFiles(harnesses: RuleHarness[]): ClaudeR
 
 const BLOCK_START = "<!-- sugo:harness-rules:start -->";
 const BLOCK_END = "<!-- sugo:harness-rules:end -->";
+const AGENTS_BLOCK_START = "<!-- sugo:project-context:start -->";
+const AGENTS_BLOCK_END = "<!-- sugo:project-context:end -->";
 
 function buildManagedBlock(harnessIds: string[]): string {
   const list = harnessIds.length === 0 ? "(적용된 하네스 없음)" : harnessIds.map((id) => `- \`${id}\``).join("\n");
@@ -89,5 +91,30 @@ export function mergeRootClaudeReference(
   const before = base.slice(0, startIdx);
   const after = base.slice(endIdx + BLOCK_END.length);
   const content = before + block + after;
+  return { content, changed: content !== base };
+}
+
+/**
+ * Codex는 CLAUDE.md나 `.claude/rules/`를 제품 계약상 자동 로드하지 않는다. 따라서 소비자 프로젝트의
+ * AGENTS.md에는 상세 규칙을 복제하지 않고, Sugo가 동기화한 규칙을 먼저 읽으라는 연결 블록만 둔다.
+ * 사용자가 작성한 AGENTS.md 본문은 그대로 보존하고 관리 블록만 멱등 갱신한다.
+ */
+export function mergeRootAgentsReference(existing: string | null): { content: string; changed: boolean } {
+  const block = `${AGENTS_BLOCK_START}
+<!-- 이 블록은 sugo가 자동 관리합니다. 손으로 고치면 다음 sugo_add/sugo_update 때 덮어써집니다. -->
+## Sugo 프로젝트 컨텍스트
+
+작업을 계획하거나 파일을 수정하기 전에 작업 대상 프로젝트의 \`.claude/rules/\` 아래 Markdown 파일을 재귀적으로 확인한다.
+이 파일들은 Sugo 하네스와 Dashboard의 도메인 규칙 관리에서 동기화한 체크포인트다.
+현재 작업에 적용되는 규칙을 구현·리뷰·검증 판단에 반영하고, 충돌하거나 적용할 수 없으면 결과에 이유를 명시한다.
+${AGENTS_BLOCK_END}`;
+  const base = existing ?? "";
+  const startIdx = base.indexOf(AGENTS_BLOCK_START);
+  const endIdx = base.indexOf(AGENTS_BLOCK_END);
+  if (startIdx === -1 || endIdx === -1) {
+    const separator = base.length > 0 && !base.endsWith("\n\n") ? (base.endsWith("\n") ? "\n" : "\n\n") : "";
+    return { content: base + separator + block + "\n", changed: true };
+  }
+  const content = base.slice(0, startIdx) + block + base.slice(endIdx + AGENTS_BLOCK_END.length);
   return { content, changed: content !== base };
 }

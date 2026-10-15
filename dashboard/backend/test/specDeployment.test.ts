@@ -8,6 +8,7 @@ it("deployment tags are independent and reflect full, partial, and unknown evide
   expect(summarizeDeployment([row("prd", 2)], 2)).toMatchObject({ environment: "PRD", partial: false });
   expect(summarizeDeployment([row("dev", 0)], 2).environment).toBe("LOCAL");
   expect(summarizeDeployment([row("dev", 0, 2, true)], 2).environment).toBe("UNKNOWN");
+  expect(summarizeDeployment([], 0)).toMatchObject({ environment: "UNKNOWN", total: 0 });
 });
 
 import { execFileSync } from "node:child_process";

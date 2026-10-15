@@ -70,6 +70,20 @@ describe("sugo_add — .claude/rules/ 실배선", () => {
     expect(rootClaude).toContain("sugo:harness-rules:start");
   });
 
+  it("루트 AGENTS.md를 보존하며 Codex용 프로젝트 컨텍스트 연결 블록을 추가한다", async () => {
+    writeFileSync(join(projectDir, "AGENTS.md"), "# 우리 에이전트 규칙\n\n기존 지시입니다.\n");
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: {} }));
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    await call(handleSugoAdd, { projectPath: projectDir });
+    await call(handleSugoUpdate, { projectPath: projectDir });
+
+    const rootAgents = readFileSync(join(projectDir, "AGENTS.md"), "utf-8");
+    expect(rootAgents).toContain("기존 지시입니다.");
+    expect(rootAgents).toContain("sugo:project-context:start");
+    expect(rootAgents).toContain(".claude/rules/");
+    expect(rootAgents.split("sugo:project-context:start").length).toBe(2);
+  });
+
   it("sugo/CLAUDE.md는 내용이 안 바뀌면 재기록을 생략한다(§2 step 4)", async () => {
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: {} }));
     writeFileSync(join(projectDir, "tsconfig.json"), "{}");

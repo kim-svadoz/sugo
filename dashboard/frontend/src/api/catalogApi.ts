@@ -12,6 +12,9 @@ export interface HarnessManifestEntry {
 export interface SkillEntry {
   name: string;
   agent: string | null;
+  description: string;
+  kind: "skill" | "command";
+  command: boolean;
 }
 
 /** 에이전트 카드는 name/description을 쓴다. 없으면 백엔드가 id를 name으로 준다. */
@@ -26,6 +29,11 @@ export function listSkills(): Promise<{ skills: SkillEntry[] }> {
 }
 export function listAgents(): Promise<{ agents: AgentEntry[] }> {
   return apiJson<{ agents: AgentEntry[] }>("/api/skills/agents");
+}
+export async function getSkillContent(name: string): Promise<string> {
+  const res = await apiFetch(`/api/skills/${encodeURIComponent(name)}`);
+  if (!res.ok) throw new Error("스킬 본문을 불러오지 못했습니다.");
+  return res.text();
 }
 export async function getHarnessUnified(): Promise<string> {
   const res = await apiFetch("/api/harness/unified");
