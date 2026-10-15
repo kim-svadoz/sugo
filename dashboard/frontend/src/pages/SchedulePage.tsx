@@ -1,6 +1,6 @@
 import { SpecDeploymentBadge } from "../components/SpecDeploymentBadge.js";
 import { useEffect, useMemo, useState, type DragEvent } from "react";
-import { Archive, BookOpen, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, FilePenLine, LayoutList, Pencil, Shield, Trash2, Workflow } from "lucide-react";
+import { Archive, BookOpen, CalendarDays, CalendarPlus, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, FilePenLine, LayoutList, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -826,25 +826,26 @@ export function SchedulePage() {
                 </div>
                 {savedFlash && savedFlash !== "title" && <span className="text-[10px] font-semibold text-emerald-400">변경사항 저장됨</span>}
               </div>
-              <div className="grid gap-3 xl:grid-cols-[0.7fr_1fr_1.3fr]">
-                <div>
-                  <span className="mb-1.5 block text-[11px] font-semibold text-slate-300">완료 목표일</span>
-                  <DatePicker value={selected.due_date} onChange={(next) => void applyDueDate(selected, next)} />
+              <div className="grid overflow-hidden rounded-xl border border-white/[0.08] bg-black/20 xl:grid-cols-[0.72fr_1fr_1.3fr] xl:divide-x xl:divide-white/[0.07]">
+                <div className="border-b border-white/[0.07] px-4 py-3 xl:border-b-0">
+                  <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">완료 목표일</span>
+                  <DatePicker className="h-8 border-0 bg-transparent px-0 py-0 font-mono shadow-none" value={selected.due_date} onChange={(next) => void applyDueDate(selected, next)} />
                 </div>
-                <label className="block">
-                  <span className="mb-1.5 block text-[11px] font-semibold text-slate-300">Repository</span>
+                <label className="relative block border-b border-white/[0.07] px-4 py-3 xl:border-b-0">
+                  <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">저장소</span>
                   <select
                     disabled={selected.has_run}
                     value={selected.project_path ?? ""}
                     onChange={(e) => void applyProject(selected, e.target.value || null)}
-                    className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-[13px] text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="block h-8 w-full appearance-none border-0 bg-transparent py-0 pr-7 text-[13px] font-semibold text-slate-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <option value="">미지정</option>
                     {selectedWorkspaceProjects.map((p) => <option key={p.project_path} value={p.project_path}>{repoName(p.project_path)}</option>)}
                   </select>
+                  <ChevronDown size={14} className="pointer-events-none absolute bottom-[21px] right-4 text-slate-500" />
                 </label>
-                <label className="block">
-                  <span className="mb-1.5 block text-[11px] font-semibold text-slate-300">Working branch</span>
+                <label className="block px-4 py-3">
+                  <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">작업 브랜치</span>
                   <input
                     disabled={selected.has_run || !selected.project_path}
                     value={branchDraft ?? selected.work_branch ?? ""}
@@ -854,17 +855,17 @@ export function SchedulePage() {
                       if (event.key === "Enter") event.currentTarget.blur();
                       if (event.key === "Escape") setBranchDraft(null);
                     }}
-                    placeholder="현재 checkout 유지"
-                    className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 text-[13px] font-mono text-[var(--color-text)] placeholder:text-[var(--color-text-dim)] disabled:cursor-not-allowed disabled:opacity-60"
+                    placeholder="현재 브랜치 사용"
+                    className="block h-8 w-full border-0 bg-transparent p-0 text-[13px] font-mono text-slate-100 outline-none placeholder:text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </label>
               </div>
             </section>
 
-            {(!selected.has_run || selected.status === "done") && <section className="rounded-xl border border-white/[0.1] bg-slate-950/35 p-5" aria-label="개발 흐름">
+            {(!selected.has_run || selected.status === "done") && <section className="rounded-xl border border-white/[0.1] bg-slate-950/35 p-5" aria-label={selected.status === "done" ? "후속 개발" : "작업 준비"}>
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-white">{selected.status === "done" ? "후속 개발" : "개발 흐름"}</h3>
+                  <h3 className="text-sm font-semibold text-white">{selected.status === "done" ? "후속 개발" : "작업 준비"}</h3>
                   <p className="mt-1 text-[11.5px] text-slate-300">{selected.status === "done" ? "완료 결과를 기준으로 다음 patch를 시작합니다." : scheduleSpecStage(selected) === "ready" ? "작성된 SPEC으로 feat를 시작하거나, 필요하면 SPEC을 다시 작성합니다." : "실행 에이전트를 선택하고 SPEC 작성 명령을 생성합니다."}</p>
                 </div>
               {scheduleSpecStage(selected) !== "in_progress" && (
@@ -878,7 +879,7 @@ export function SchedulePage() {
                   <button
                     disabled={!selected.project_path}
                     onClick={() => void copyWorkflowCommand(`writer-${writerProvider}`, buildSpecWriterCommand(selected, writerProvider))}
-                    className={cn("mt-auto inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-4 text-[11.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40", scheduleSpecStage(selected) === "ready" ? "border border-violet-400/40 bg-violet-400/10 text-violet-200 hover:bg-violet-400/20" : "bg-violet-400 text-slate-950 hover:bg-violet-300")}
+                    className={cn("mt-auto inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-[11.5px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40", scheduleSpecStage(selected) === "ready" ? "text-violet-200 hover:bg-violet-400/10" : "bg-violet-400 px-4 font-bold text-slate-950 hover:bg-violet-300")}
                   >
                     {copied === `writer-${writerProvider}` ? <Check size={13} /> : <Copy size={13} />}
                     {copied === `writer-${writerProvider}` ? "복사됨" : scheduleSpecStage(selected) === "ready" ? "SPEC 재작성" : "SPEC 작성 명령 복사"}

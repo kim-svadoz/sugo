@@ -165,9 +165,9 @@ describe("schedule presentation", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("작업 컨텍스트");
     expect(source).toContain("완료 목표일");
-    expect(source).toContain("Repository");
-    expect(source).toContain("Working branch");
-    expect(source).toContain("개발 흐름");
+    expect(source).toContain("저장소");
+    expect(source).toContain("작업 브랜치");
+    expect(source).toContain("작업 준비");
     expect(source).toContain("실행 에이전트");
     expect(source).toContain("명령 복사");
     expect(source).toContain("프로젝트 도구");
@@ -184,7 +184,7 @@ describe("schedule presentation", () => {
     expect(source).toContain("후속 개발");
     expect(source).toContain("Patch 명령 복사");
     expect(source).toContain("작업 컨텍스트");
-    expect(source).toContain("개발 흐름");
+    expect(source).toContain("작업 준비");
     expect(source).toContain("프로젝트 도구");
     expect(source).toContain("WORKSPACE_RULES_TOOL.label");
     expect(source).toContain("AI_WORK_STATUS_TOOL.label");

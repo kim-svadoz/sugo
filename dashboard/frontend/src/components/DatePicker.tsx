@@ -21,12 +21,14 @@ export function DatePicker({
   placeholder = "날짜 선택",
   allowClear = true,
   ariaLabel,
+  className,
 }: {
   value: string | null;
   onChange: (next: string | null) => void;
   placeholder?: string;
   allowClear?: boolean;
   ariaLabel?: string;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -78,7 +80,7 @@ export function DatePicker({
         type="button"
         aria-label={ariaLabel}
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-left text-[13px] text-[var(--color-text)]"
+        className={cn("flex w-full items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-left text-[13px] text-[var(--color-text)]", className)}
       >
         <CalendarDays size={14} className="text-[var(--color-text-dim)]" />
         {value ?? <span className="text-[var(--color-text-dim)]">{placeholder}</span>}
