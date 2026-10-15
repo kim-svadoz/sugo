@@ -45,7 +45,7 @@ export function orderVisibleCheckpoints(
 ): Checkpoint[] {
   const relevant = projectLabel
     ? checkpoints.filter((cp) => !cp.applies_to?.length || cp.applies_to.includes(projectLabel))
-    : checkpoints;
+    : checkpoints.filter((cp) => !cp.expires_at);
 
   if (!projectLabel) {
     return [...relevant].sort(
@@ -153,8 +153,7 @@ export function CheckpointPanel({
   );
   const [cpDraft, setCpDraft] = useState({ title: "", category: "general", markdown: "", expiresAt: "" });
   const [cpBusy, setCpBusy] = useState(false);
-  // 프로젝트 화면은 만료일이 가까운 순(무기한 마지막), 워크스페이스 화면은 기존 생성일 순으로
-  // 5개씩 페이지네이션한다. 만료 항목은 프로젝트 화면에서만 숨겨 관리 화면에서는 수정할 수 있다.
+  // 프로젝트 화면은 활성 체크포인트를 만료일 순으로, 워크스페이스 화면은 영구 규칙만 보여준다.
   const [page, setPage] = useState(0);
   const pageCount = Math.max(1, Math.ceil(visibleCheckpoints.length / CHECKPOINTS_PER_PAGE));
   const safePage = Math.min(page, pageCount - 1);

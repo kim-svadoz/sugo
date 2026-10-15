@@ -53,7 +53,8 @@ async function seededApp() {
 
 describe("GET /api/workspaces", () => {
   it("lists workspaces with task counts and roadmap counts", async () => {
-    const { app, auth } = await seededApp();
+    const { app, db, auth } = await seededApp();
+    await db.exec("INSERT INTO sugo_checkpoints (id, user_id, workspace_name, category, title, expires_at) VALUES ('CP-timed','u1','ws1','general','temporary','2026-10-20')");
     const res = await request(app).get("/api/workspaces").query({ userId: "u1" }).set("Authorization", auth).expect(200);
     expect(res.body.workspaces).toHaveLength(1);
     const ws = res.body.workspaces[0];
@@ -65,6 +66,7 @@ describe("GET /api/workspaces", () => {
     expect(ws.taskCounts).toEqual({ pending: 0, in_progress: 1, done: 1, archived: 0 });
     expect(ws.roadmap).toEqual({ total: 2, done: 1, active: 1 });
     expect(ws.attentionCount).toBe(0);
+    expect(ws.checkpointCount).toBe(1);
   });
 
   it("adds AWS synced ECS deployments to matching repositories", async () => {

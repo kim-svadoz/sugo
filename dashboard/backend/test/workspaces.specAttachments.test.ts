@@ -58,6 +58,25 @@ describe("Schedule SPEC 기획 화면 첨부", () => {
     expect(list.body).toMatchObject({ locked: true, attachments: [{ name: "01.png" }] });
   });
 
+  it("기획 참고 링크를 저장하고 feat 뒤에는 조회만 허용한다", async () => {
+    const links = [{ title: "로그인 기획 위키", url: "https://wiki.example.com/login" }];
+    await request(ctx.app).put("/api/workspaces/ws1/roadmap/spec-references").query({ nodeId }).set("Authorization", ctx.auth).send({ links }).expect(200);
+    const listed = await request(ctx.app).get("/api/workspaces/ws1/roadmap/spec-references").query({ nodeId }).set("Authorization", ctx.auth).expect(200);
+    expect(listed.body).toMatchObject({ locked: false, links });
+
+    await request(ctx.app).post("/api/sync/roadmap").set("Authorization", ctx.auth)
+      .send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "run-link", title: "run", level: "workstream", status: "pending" }] });
+    await ctx.db.exec("UPDATE sugo_roadmap_nodes SET parent = ? WHERE id = ?", [nodeId, "run-link"]);
+    await request(ctx.app).put("/api/workspaces/ws1/roadmap/spec-references").query({ nodeId }).set("Authorization", ctx.auth).send({ links: [] }).expect(409);
+    const locked = await request(ctx.app).get("/api/workspaces/ws1/roadmap/spec-references").query({ nodeId }).set("Authorization", ctx.auth).expect(200);
+    expect(locked.body).toMatchObject({ locked: true, links });
+  });
+
+  it("기획 참고 링크는 http(s) URL만 받는다", async () => {
+    await request(ctx.app).put("/api/workspaces/ws1/roadmap/spec-references").query({ nodeId }).set("Authorization", ctx.auth)
+      .send({ links: [{ title: "로컬 파일", url: "file:///etc/passwd" }] }).expect(400);
+  });
+
   it("삭제하면 목록에서 빠지고, SPEC을 지우면 첨부 디렉터리도 지운다", async () => {
     await upload(PNG).expect(200);
     await upload(PNG).expect(200);

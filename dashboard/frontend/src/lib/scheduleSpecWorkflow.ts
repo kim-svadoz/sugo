@@ -24,3 +24,8 @@ export function buildFeatCommand(spec: ScheduledSpec): string {
   const branch = spec.work_branch ? ` --branch ${quoted(spec.work_branch)}` : "";
   return `/sugo:feat --project ${quoted(spec.project_path)} --spec ${quoted(spec.spec_path)} --spec-draft ${quoted(spec.id)}${branch} ${quoted(spec.title)}`;
 }
+
+export function buildPatchCommand(workResultPath: string): string {
+  if (!workResultPath.trim()) throw new Error("WORK_RESULT_REQUIRED");
+  return `/sugo:patch ${quoted(workResultPath)}`;
+}

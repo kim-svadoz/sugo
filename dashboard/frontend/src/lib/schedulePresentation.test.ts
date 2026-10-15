@@ -144,11 +144,11 @@ describe("schedule presentation", () => {
 
   it("SPEC 상세는 실행 컨텍스트와 단일 명령 행동으로 위계를 정리한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain("실행 컨텍스트");
+    expect(source).toContain("작업 컨텍스트");
     expect(source).toContain("완료 목표일");
     expect(source).toContain("Repository");
     expect(source).toContain("Working branch");
-    expect(source).toContain("Specification workflow");
+    expect(source).toContain("개발 흐름");
     expect(source).toContain("실행 에이전트");
     expect(source).toContain("명령 복사");
     expect(source).toContain("프로젝트 도구");
@@ -156,6 +156,26 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("없으면 현재 브랜치에서 시작합니다.");
     expect(source).not.toContain("SPEC → feat");
     expect(source).not.toContain("grid grid-cols-2 gap-2 pt-2");
+  });
+
+  it("완료 SPEC에는 후속 patch 행동과 읽기 쉬운 프로젝트 도구를 제공한다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain("후속 개발");
+    expect(source).toContain("Patch 명령 복사");
+    expect(source).toContain("작업 컨텍스트");
+    expect(source).toContain("개발 흐름");
+    expect(source).toContain("프로젝트 도구");
+    expect(source).toContain("워크스페이스 규칙 관리");
+    expect(source).toContain("개발 계보 살펴보기");
+  });
+
+  it("기획 참고자료는 이미지와 링크를 함께 다루고 빈 읽기 전용 영역은 숨긴다", () => {
+    const source = readFileSync(new URL("../components/SpecAttachments.tsx", import.meta.url), "utf8");
+    expect(source).toContain("기획 참고자료");
+    expect(source).toContain("기획 문서 링크");
+    expect(source).toContain("listSpecReferences");
+    expect(source).toContain("locked && items.length === 0 && links.length === 0");
+    expect(source).not.toContain(">기획 화면</span>");
   });
 
   it("카드 상태와 본문 길이가 달라도 같은 높이를 유지한다", () => {

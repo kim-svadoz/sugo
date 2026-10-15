@@ -39,12 +39,13 @@ describe("Schedule 프로젝트 체크포인트 표시", () => {
     expect(result.map((item) => item.id)).toEqual(["shared", "mine"]);
   });
 
-  it("워크스페이스 관리 화면에는 만료 항목을 보존한다", () => {
+  it("워크스페이스 체크포인트에는 유효기간이 없는 공통 규칙만 보여준다", () => {
     const result = orderVisibleCheckpoints([
+      checkpoint("no-expiry", null),
       checkpoint("newer", "2026-10-20"),
       checkpoint("expired", "2026-10-01"),
     ], null, "2026-10-07");
 
-    expect(result.map((item) => item.id).sort()).toEqual(["expired", "newer"]);
+    expect(result.map((item) => item.id)).toEqual(["no-expiry"]);
   });
 });

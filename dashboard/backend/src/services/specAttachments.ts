@@ -11,6 +11,10 @@ export const IMAGE_TYPES: Record<string, string> = {
 };
 const NAME_PATTERN = /^\d{2}\.(png|jpg|webp|gif)$/;
 const MAX_ATTACHMENTS = 20;
+const REFERENCES_FILE = "references.json";
+const MAX_REFERENCES = 10;
+
+export type SpecReference = { title: string; url: string };
 
 type NodeCheck = { ok: true; locked: boolean } | { ok: false; errorCode: "NODE_NOT_FOUND" | "INVALID_LEVEL" };
 
@@ -46,6 +50,51 @@ export async function listSpecAttachments(db: DbClient, root: string, userId: st
   const dir = attachmentDir(root, userId, workspaceName, nodeId);
   const attachments: SpecAttachment[] = (await listNames(dir)).map((name) => ({ name, path: join(dir, name) }));
   return { ok: true as const, locked: node.locked, attachments };
+}
+
+function validReference(value: unknown): value is SpecReference {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+  if (typeof item.title !== "string" || !item.title.trim() || item.title.trim().length > 120 || typeof item.url !== "string") return false;
+  try {
+    const url = new URL(item.url);
+    return (url.protocol === "http:" || url.protocol === "https:") && item.url.length <= 2048;
+  } catch {
+    return false;
+  }
+}
+
+async function readReferences(dir: string): Promise<SpecReference[]> {
+  const raw = await readFile(join(dir, REFERENCES_FILE), "utf8").catch(() => null);
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(validReference) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function listSpecReferences(db: DbClient, root: string, userId: string, workspaceName: string, nodeId: string) {
+  const node = await specNode(db, userId, workspaceName, nodeId);
+  if (!node.ok) return node;
+  return { ok: true as const, locked: node.locked, links: await readReferences(attachmentDir(root, userId, workspaceName, nodeId)) };
+}
+
+export async function replaceSpecReferences(
+  db: DbClient, root: string, userId: string, workspaceName: string, nodeId: string, links: unknown,
+) {
+  const node = await specNode(db, userId, workspaceName, nodeId);
+  if (!node.ok) return node;
+  if (node.locked) return { ok: false as const, errorCode: "SPEC_LOCKED_AFTER_FEAT" as const };
+  if (!Array.isArray(links) || links.length > MAX_REFERENCES || !links.every(validReference)) {
+    return { ok: false as const, errorCode: "INVALID_REFERENCES" as const };
+  }
+  const normalized = links.map((item) => ({ title: item.title.trim(), url: item.url.trim() }));
+  const dir = attachmentDir(root, userId, workspaceName, nodeId);
+  await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, REFERENCES_FILE), JSON.stringify(normalized, null, 2), "utf8");
+  return { ok: true as const, links: normalized };
 }
 
 export async function addSpecAttachment(

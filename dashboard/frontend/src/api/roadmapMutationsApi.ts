@@ -128,6 +128,7 @@ export interface ScheduledSpec {
     title: string;
     summary: string | null;
     completed_at: string | null;
+    work_result_path?: string | null;
   }>;
 }
 
@@ -246,6 +247,19 @@ export function uploadSpecAttachment(userId: string, workspace: string, nodeId: 
 
 export function deleteSpecAttachment(userId: string, workspace: string, nodeId: string, name: string) {
   return apiJson<{ ok: true }>(withUserId(path(workspace, "/spec-attachments"), userId, { nodeId, name }), { method: "DELETE" });
+}
+
+export interface SpecReference { title: string; url: string }
+
+export function listSpecReferences(userId: string, workspace: string, nodeId: string) {
+  return apiJson<{ ok: true; locked: boolean; links: SpecReference[] }>(withUserId(path(workspace, "/spec-references"), userId, { nodeId }));
+}
+
+export function replaceSpecReferences(userId: string, workspace: string, nodeId: string, links: SpecReference[]) {
+  return apiJson<{ ok: true; links: SpecReference[] }>(withUserId(path(workspace, "/spec-references"), userId, { nodeId }), {
+    method: "PUT",
+    body: JSON.stringify({ links }),
+  });
 }
 
 async function blobUrl(url: string): Promise<string> {

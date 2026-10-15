@@ -20,7 +20,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setProject, setWorkBranch, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
-import { buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
+import { buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { OperationalPulse } from "../components/OperationalPulse.js";
@@ -32,6 +32,16 @@ const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 /** CheckpointPanel의 동일 헬퍼와 같은 1줄 — 순환 import를 피하려고 그대로 복제. */
 function repoName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() || path;
+}
+
+function latestWorkResultPath(spec: ScheduledSpec): string | null {
+  const entries = [...(spec.development_history ?? [])].sort((a, b) => b.version - a.version);
+  const fromHistory = entries.find((entry) => entry.work_result_path)?.work_result_path;
+  if (fromHistory) return fromHistory;
+  const focus = spec.focus_task_work_result;
+  return focus && typeof focus === "object" && typeof (focus as Record<string, unknown>).path === "string"
+    ? (focus as Record<string, string>).path
+    : null;
 }
 
 /** 표류(dropped)를 제외한 "미완료"만 마감 임박/초과 강조 대상으로 본다. */
@@ -883,21 +893,21 @@ export function SchedulePage() {
 
             <SpecAttachments workspace={selected.workspace_name} nodeId={selected.id} hasSpec={!!selected.spec_path} />
 
-            <section className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4" aria-label="실행 컨텍스트">
+            <section className="rounded-xl border border-white/[0.1] bg-white/[0.035] p-5" aria-label="작업 컨텍스트">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-[12.5px] font-semibold text-white">실행 컨텍스트</h3>
-                  <p className="mt-0.5 text-[10.5px] text-slate-500">구현 작업이 사용할 저장소와 Git 기준을 정의합니다.</p>
+                  <h3 className="text-sm font-semibold text-white">작업 컨텍스트</h3>
+                  <p className="mt-1 text-[11.5px] text-slate-300">마감 기준과 구현이 실행될 저장소를 확인합니다.</p>
                 </div>
                 {savedFlash && savedFlash !== "title" && <span className="text-[10px] font-semibold text-emerald-400">변경사항 저장됨</span>}
               </div>
               <div className="grid gap-3 xl:grid-cols-[0.7fr_1fr_1.3fr]">
                 <div>
-                  <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.08em] text-slate-500">완료 목표일</span>
+                  <span className="mb-1.5 block text-[11px] font-semibold text-slate-300">완료 목표일</span>
                   <DatePicker value={selected.due_date} onChange={(next) => void applyDueDate(selected, next)} />
                 </div>
                 <label className="block">
-                  <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.08em] text-slate-500">Repository</span>
+                  <span className="mb-1.5 block text-[11px] font-semibold text-slate-300">Repository</span>
                   <select
                     disabled={selected.has_run}
                     value={selected.project_path ?? ""}
@@ -909,7 +919,7 @@ export function SchedulePage() {
                   </select>
                 </label>
                 <label className="block">
-                  <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.08em] text-slate-500">Working branch</span>
+                  <span className="mb-1.5 block text-[11px] font-semibold text-slate-300">Working branch</span>
                   <input
                     disabled={selected.has_run || !selected.project_path}
                     value={branchDraft ?? selected.work_branch ?? ""}
@@ -926,11 +936,11 @@ export function SchedulePage() {
               </div>
             </section>
 
-            <section className="rounded-xl border border-white/[0.08] bg-slate-950/30 p-4" aria-label="Specification workflow">
+            {(!selected.has_run || selected.status === "done") && <section className="rounded-xl border border-white/[0.1] bg-slate-950/35 p-5" aria-label="개발 흐름">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                  <h3 className="text-[12.5px] font-semibold text-white">Specification workflow</h3>
-                  <p className="mt-1 text-[10.5px] text-slate-500">선택한 실행 환경에 맞는 SPEC 작성 명령을 생성합니다.</p>
+                  <h3 className="text-sm font-semibold text-white">{selected.status === "done" ? "후속 개발" : "개발 흐름"}</h3>
+                  <p className="mt-1 text-[11.5px] text-slate-300">{selected.status === "done" ? "완료 결과를 기준으로 다음 patch를 시작합니다." : "실행 에이전트를 선택하고 SPEC 작성 명령을 생성합니다."}</p>
                 </div>
               {scheduleSpecStage(selected) !== "in_progress" && (
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -950,13 +960,21 @@ export function SchedulePage() {
                   </button>
                 </div>
               )}
+              {selected.status === "done" && (
+                <button
+                  disabled={!latestWorkResultPath(selected)}
+                  onClick={() => { const path = latestWorkResultPath(selected); if (path) void copyWorkflowCommand("patch", buildPatchCommand(path)); }}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-violet-400 px-4 text-[12px] font-bold text-slate-950 transition-colors hover:bg-violet-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                >
+                  {copied === "patch" ? <Check size={14} /> : <Copy size={14} />} {copied === "patch" ? "복사됨" : latestWorkResultPath(selected) ? "Patch 명령 복사" : "Patch 준비 중"}
+                </button>
+              )}
               </div>
               {!selected.project_path && <p className="mt-3 text-[10.5px] text-amber-300">Repository를 선택하면 명령을 생성할 수 있습니다.</p>}
               {selected.spec_path && <p className="mt-3 truncate border-t border-white/[0.06] pt-3 font-mono text-[9.5px] text-slate-600" title={selected.spec_path}>{selected.spec_path}</p>}
-            </section>
+            </section>}
 
-            <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/[0.07] pt-3" aria-label="프로젝트 도구">
-              <span className="font-mono text-[9.5px] uppercase tracking-[0.1em] text-slate-600">프로젝트 도구</span>
+            <nav className="grid gap-3 border-t border-white/[0.08] pt-4 sm:grid-cols-2" aria-label="프로젝트 도구">
               <button
                 disabled={!selected.project_path}
                 onClick={() => {
@@ -964,15 +982,19 @@ export function SchedulePage() {
                   setCheckpointTarget({ workspace: selected.workspace_name, projectPath: selected.project_path, dueDate: selected.due_date });
                 }}
                 title={selected.project_path ? undefined : "먼저 위에서 대상 프로젝트를 지정해야 체크포인트를 관리할 수 있습니다"}
-                className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-400 transition-colors hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-35"
+                className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-3.5 text-left transition-colors hover:border-amber-400/30 hover:bg-amber-400/[0.06] disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <Shield size={13} /> 체크포인트 <ChevronRight size={12} />
+                <span className="rounded-lg bg-amber-400/10 p-2 text-amber-300"><Shield size={16} /></span>
+                <span className="min-w-0 flex-1"><strong className="block text-[13px] text-slate-100">워크스페이스 규칙 관리</strong><span className="mt-0.5 block text-[11px] text-slate-400">이 개발에 적용할 체크포인트를 확인합니다.</span></span>
+                <ChevronRight size={15} className="text-slate-500 group-hover:text-amber-300" />
               </button>
               <button
                 onClick={() => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.focus_task_id ?? selected.id })}
-                className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-400 transition-colors hover:text-cyan-200"
+                className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-3.5 text-left transition-colors hover:border-cyan-400/30 hover:bg-cyan-400/[0.06]"
               >
-                <Workflow size={13} /> Agent Canvas <ChevronRight size={12} />
+                <span className="rounded-lg bg-cyan-400/10 p-2 text-cyan-300"><Workflow size={16} /></span>
+                <span className="min-w-0 flex-1"><strong className="block text-[13px] text-slate-100">개발 계보 살펴보기</strong><span className="mt-0.5 block text-[11px] text-slate-400">Agent Canvas에서 feat와 patch 흐름을 엽니다.</span></span>
+                <ChevronRight size={15} className="text-slate-500 group-hover:text-cyan-300" />
               </button>
             </nav>
 

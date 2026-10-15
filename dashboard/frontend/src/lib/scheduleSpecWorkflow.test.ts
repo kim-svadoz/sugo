@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
-import { buildFeatCommand, buildSpecWriterCommand, scheduleSpecStage } from "./scheduleSpecWorkflow.js";
+import { buildFeatCommand, buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage } from "./scheduleSpecWorkflow.js";
 
 const base: ScheduledSpec = {
   id: "spec-manual-1", workspace_name: "shop", title: "결제 개선", status: "pending",
@@ -35,6 +35,12 @@ describe("Schedule SPEC workflow", () => {
   it("passes the configured work branch to feat", () => {
     expect(buildFeatCommand({ ...base, spec_path: "/example/spec.md", work_branch: "feature/payment" })).toContain(
       '--branch "feature/payment"',
+    );
+  });
+
+  it("builds the next patch from the latest completed work result", () => {
+    expect(buildPatchCommand("/work/shop/sugo/work-result-patch-v1.md")).toBe(
+      '/sugo:patch "/work/shop/sugo/work-result-patch-v1.md"',
     );
   });
 });

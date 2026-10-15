@@ -113,16 +113,16 @@ describe("GET /api/workspaces/schedule — §7B 워크스페이스 비종속 집
         { id: "spec1", title: "SPEC", level: "spec", status: "done" },
         { id: "run1", title: "RUN", level: "workstream", status: "done", parent: "spec1" },
         { id: "task1", title: "기본 구현", level: "task", status: "done", parent: "run1", lineage: [
-          { version: 1, title: "충돌 처리", completedAt: "2026-10-14T02:00:00Z", summary: "patch" },
-          { version: 0, title: "기본 구현", completedAt: "2026-10-13T01:00:00Z", summary: "feat" },
+          { version: 1, title: "충돌 처리", completedAt: "2026-10-14T02:00:00Z", summary: "patch", workResult: { path: "/work/result-patch-v1.md" } },
+          { version: 0, title: "기본 구현", completedAt: "2026-10-13T01:00:00Z", summary: "feat", workResult: { path: "/work/result.md" } },
         ] },
       ],
     }).expect(200);
 
     const res = await request(ctx.app).get("/api/workspaces/schedule").set("Authorization", ctx.auth).expect(200);
     expect(res.body.specs[0].development_history).toEqual([
-      expect.objectContaining({ task_id: "task1", version: 0, title: "기본 구현", completed_at: "2026-10-13T01:00:00Z" }),
-      expect.objectContaining({ task_id: "task1", version: 1, title: "충돌 처리", completed_at: "2026-10-14T02:00:00Z" }),
+      expect.objectContaining({ task_id: "task1", version: 0, title: "기본 구현", completed_at: "2026-10-13T01:00:00Z", work_result_path: "/work/result.md" }),
+      expect.objectContaining({ task_id: "task1", version: 1, title: "충돌 처리", completed_at: "2026-10-14T02:00:00Z", work_result_path: "/work/result-patch-v1.md" }),
     ]);
   });
 

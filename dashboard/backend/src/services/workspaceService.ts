@@ -208,7 +208,10 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
     const [historyCount, decisionCount, checkpointCount] = await Promise.all([
       countRows(db, "sugo_history", userId, ws.name),
       countRows(db, "sugo_decisions", userId, ws.name),
-      countRows(db, "sugo_checkpoints", userId, ws.name),
+      db.query<{ count: number }>(
+        "SELECT COUNT(*) as count FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? AND expires_at IS NULL",
+        [userId, ws.name],
+      ).then((rows) => Number(rows[0]?.count ?? 0)),
     ]);
     result.push({
       name: ws.name,
@@ -554,7 +557,7 @@ export interface ScheduledSpecRow {
   focus_task_runtime_assessment: unknown;
   focus_task_blocker_decision: { response: string; answered_by: string; answered_at: string } | null;
   focus_task_human_blocker: unknown;
-  development_history: Array<{ task_id: string; version: number; title: string; summary: string | null; completed_at: string | null }>;
+  development_history: Array<{ task_id: string; version: number; title: string; summary: string | null; completed_at: string | null; work_result_path: string | null }>;
 }
 
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
@@ -618,6 +621,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
           title: typeof entry.title === "string" && entry.title.trim() ? entry.title.trim() : task.title,
           summary,
           completed_at: typeof entry.completedAt === "string" ? entry.completedAt : null,
+          work_result_path: typeof workResult?.path === "string" ? workResult.path : null,
         };
       });
     }).sort((a, b) => (a.completed_at ?? "").localeCompare(b.completed_at ?? "") || a.version - b.version);
