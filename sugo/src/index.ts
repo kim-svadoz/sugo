@@ -46,6 +46,7 @@ import { handleSugoCommit, sugoCommitInputSchema } from "./tools/sugoCommit.js";
 import { migrateWorkDataDir } from "./work/storage.js";
 import { handleSugoWorkspace, sugoWorkspaceInputSchema } from "./tools/sugoWorkspace.js";
 import { handleSugoAwsContext, sugoAwsContextInputSchema } from "./tools/sugoAwsContext.js";
+import { handleSugoUninstall, sugoUninstallInputSchema } from "./tools/sugoUninstall.js";
 
 const server = new McpServer({
   name: "sugo",
@@ -330,6 +331,16 @@ server.registerTool(
     inputSchema: sugoDeleteInputSchema,
   },
   handleSugoDelete,
+);
+
+server.registerTool(
+  "sugo_uninstall",
+  {
+    title: "Preview or execute a clean Sugo uninstall",
+    description: "Sugo 소유 파일과 전역 데이터를 제거하고 Claude/Codex 프로젝트 설정을 설치 전 상태로 복원한다. preview 후 명시 확인이 필요하다.",
+    inputSchema: sugoUninstallInputSchema,
+  },
+  handleSugoUninstall,
 );
 
 server.registerTool(

@@ -2,6 +2,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { mkdir, readdir, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
+import { recordManagedFile } from "../harness/installManifest.js";
+import { relative } from "node:path";
 import { fetchCheckpointSync, type RemoteCheckpoint } from "../dashboard/fetch.js";
 import { parseFrontmatter, stringifyFrontmatter } from "./frontmatter.js";
 import { slugify } from "./slug.js";
@@ -235,6 +237,7 @@ export async function syncRemoteCheckpointsToRules(
     }
     await mkdir(join(projectPath, ".claude", "rules", cp.category ?? "general"), { recursive: true });
     if (existing !== content) await atomicWriteFile(target, content);
+    await recordManagedFile(projectPath, relative(projectPath, target).replace(/\\/g, "/"));
     result.appliedCount += 1;
   }
   return result;

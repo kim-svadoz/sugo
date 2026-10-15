@@ -480,9 +480,9 @@ var require_codegen = __commonJS({
       }
     };
     var Throw = class extends Node2 {
-      constructor(error2) {
+      constructor(error3) {
         super();
-        this.error = error2;
+        this.error = error3;
       }
       render({ _n }) {
         return `throw ${this.error};` + _n;
@@ -719,9 +719,9 @@ var require_codegen = __commonJS({
       }
     };
     var Catch = class extends BlockNode {
-      constructor(error2) {
+      constructor(error3) {
         super();
-        this.error = error2;
+        this.error = error3;
       }
       render(opts) {
         return `catch(${this.error})` + super.render(opts);
@@ -912,9 +912,9 @@ var require_codegen = __commonJS({
         this._blockNode(node);
         this.code(tryBody);
         if (catchCode) {
-          const error2 = this.name("e");
-          this._currNode = node.catch = new Catch(error2);
-          catchCode(error2);
+          const error3 = this.name("e");
+          this._currNode = node.catch = new Catch(error3);
+          catchCode(error3);
         }
         if (finallyCode) {
           this._currNode = node.finally = new Finally();
@@ -923,8 +923,8 @@ var require_codegen = __commonJS({
         return this._endBlockNode(Catch, Finally);
       }
       // `throw` statement
-      throw(error2) {
-        return this._leafNode(new Throw(error2));
+      throw(error3) {
+        return this._leafNode(new Throw(error3));
       }
       // start self-balancing block
       block(body2, nodeCount) {
@@ -1280,10 +1280,10 @@ var require_errors = __commonJS({
     exports2.keyword$DataError = {
       message: ({ keyword, schemaType }) => schemaType ? (0, codegen_1.str)`"${keyword}" keyword must be ${schemaType} ($data)` : (0, codegen_1.str)`"${keyword}" keyword is invalid ($data)`
     };
-    function reportError(cxt, error2 = exports2.keywordError, errorPaths, overrideAllErrors) {
+    function reportError(cxt, error3 = exports2.keywordError, errorPaths, overrideAllErrors) {
       const { it } = cxt;
       const { gen, compositeRule, allErrors } = it;
-      const errObj = errorObjectCode(cxt, error2, errorPaths);
+      const errObj = errorObjectCode(cxt, error3, errorPaths);
       if (overrideAllErrors !== null && overrideAllErrors !== void 0 ? overrideAllErrors : compositeRule || allErrors) {
         addError(gen, errObj);
       } else {
@@ -1291,10 +1291,10 @@ var require_errors = __commonJS({
       }
     }
     exports2.reportError = reportError;
-    function reportExtraError(cxt, error2 = exports2.keywordError, errorPaths) {
+    function reportExtraError(cxt, error3 = exports2.keywordError, errorPaths) {
       const { it } = cxt;
       const { gen, compositeRule, allErrors } = it;
-      const errObj = errorObjectCode(cxt, error2, errorPaths);
+      const errObj = errorObjectCode(cxt, error3, errorPaths);
       addError(gen, errObj);
       if (!(compositeRule || allErrors)) {
         returnErrors(it, names_1.default.vErrors);
@@ -1345,19 +1345,19 @@ var require_errors = __commonJS({
       schema: new codegen_1.Name("schema"),
       parentSchema: new codegen_1.Name("parentSchema")
     };
-    function errorObjectCode(cxt, error2, errorPaths) {
+    function errorObjectCode(cxt, error3, errorPaths) {
       const { createErrors } = cxt.it;
       if (createErrors === false)
         return (0, codegen_1._)`{}`;
-      return errorObject(cxt, error2, errorPaths);
+      return errorObject(cxt, error3, errorPaths);
     }
-    function errorObject(cxt, error2, errorPaths = {}) {
+    function errorObject(cxt, error3, errorPaths = {}) {
       const { gen, it } = cxt;
       const keyValues = [
         errorInstancePath(it, errorPaths),
         errorSchemaPath(cxt, errorPaths)
       ];
-      extraErrorProps(cxt, error2, keyValues);
+      extraErrorProps(cxt, error3, keyValues);
       return gen.object(...keyValues);
     }
     function errorInstancePath({ errorPath }, { instancePath }) {
@@ -1932,10 +1932,10 @@ var require_keyword = __commonJS({
       if (def.async && !schemaEnv.$async)
         throw new Error("async keyword in sync schema");
     }
-    function useKeyword(gen, keyword, result2) {
-      if (result2 === void 0)
+    function useKeyword(gen, keyword, result3) {
+      if (result3 === void 0)
         throw new Error(`keyword "${keyword}" failed to compile`);
-      return gen.scopeValue("keyword", typeof result2 == "function" ? { ref: result2 } : { ref: result2, code: (0, codegen_1.stringify)(result2) });
+      return gen.scopeValue("keyword", typeof result3 == "function" ? { ref: result3 } : { ref: result3, code: (0, codegen_1.stringify)(result3) });
     }
     function validSchemaType(schema, schemaType, allowUndefined = false) {
       return !schemaType.length || schemaType.some((st) => st === "array" ? Array.isArray(schema) : st === "object" ? schema && typeof schema == "object" && !Array.isArray(schema) : typeof schema == st || allowUndefined && typeof schema == "undefined");
@@ -2991,7 +2991,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve12.call(this, root, ref);
+      let _sch = resolve13.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3018,7 +3018,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve12(root, ref) {
+    function resolve13(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3649,55 +3649,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve12(baseURI, relativeURI, options) {
+    function resolve13(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative8, options, skipNormalization) {
+    function resolveComponent(base, relative9, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative8 = parse3(serialize(relative8, options), options);
+        relative9 = parse3(serialize(relative9, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative8.scheme) {
-        target.scheme = relative8.scheme;
-        target.userinfo = relative8.userinfo;
-        target.host = relative8.host;
-        target.port = relative8.port;
-        target.path = removeDotSegments(relative8.path || "");
-        target.query = relative8.query;
+      if (!options.tolerant && relative9.scheme) {
+        target.scheme = relative9.scheme;
+        target.userinfo = relative9.userinfo;
+        target.host = relative9.host;
+        target.port = relative9.port;
+        target.path = removeDotSegments(relative9.path || "");
+        target.query = relative9.query;
       } else {
-        if (relative8.userinfo !== void 0 || relative8.host !== void 0 || relative8.port !== void 0) {
-          target.userinfo = relative8.userinfo;
-          target.host = relative8.host;
-          target.port = relative8.port;
-          target.path = removeDotSegments(relative8.path || "");
-          target.query = relative8.query;
+        if (relative9.userinfo !== void 0 || relative9.host !== void 0 || relative9.port !== void 0) {
+          target.userinfo = relative9.userinfo;
+          target.host = relative9.host;
+          target.port = relative9.port;
+          target.path = removeDotSegments(relative9.path || "");
+          target.query = relative9.query;
         } else {
-          if (!relative8.path) {
+          if (!relative9.path) {
             target.path = base.path;
-            if (relative8.query !== void 0) {
-              target.query = relative8.query;
+            if (relative9.query !== void 0) {
+              target.query = relative9.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative8.path[0] === "/") {
-              target.path = removeDotSegments(relative8.path);
+            if (relative9.path[0] === "/") {
+              target.path = removeDotSegments(relative9.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative8.path;
+                target.path = "/" + relative9.path;
               } else if (!base.path) {
-                target.path = relative8.path;
+                target.path = relative9.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative8.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative9.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative8.query;
+            target.query = relative9.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative8.fragment;
+      target.fragment = relative9.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3907,7 +3907,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve12,
+      resolve: resolve13,
       resolveComponent,
       equal,
       serialize,
@@ -4712,7 +4712,7 @@ var require_limitNumber = __commonJS({
       exclusiveMaximum: { okStr: "<", ok: ops.LT, fail: ops.GTE },
       exclusiveMinimum: { okStr: ">", ok: ops.GT, fail: ops.LTE }
     };
-    var error2 = {
+    var error3 = {
       message: ({ keyword, schemaCode }) => (0, codegen_1.str)`must be ${KWDs[keyword].okStr} ${schemaCode}`,
       params: ({ keyword, schemaCode }) => (0, codegen_1._)`{comparison: ${KWDs[keyword].okStr}, limit: ${schemaCode}}`
     };
@@ -4721,7 +4721,7 @@ var require_limitNumber = __commonJS({
       type: "number",
       schemaType: "number",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { keyword, data, schemaCode } = cxt;
         cxt.fail$data((0, codegen_1._)`${data} ${KWDs[keyword].fail} ${schemaCode} || isNaN(${data})`);
@@ -4737,7 +4737,7 @@ var require_multipleOf = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     var codegen_1 = require_codegen();
-    var error2 = {
+    var error3 = {
       message: ({ schemaCode }) => (0, codegen_1.str)`must be multiple of ${schemaCode}`,
       params: ({ schemaCode }) => (0, codegen_1._)`{multipleOf: ${schemaCode}}`
     };
@@ -4746,7 +4746,7 @@ var require_multipleOf = __commonJS({
       type: "number",
       schemaType: "number",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, data, schemaCode, it } = cxt;
         const prec = it.opts.multipleOfPrecision;
@@ -4793,7 +4793,7 @@ var require_limitLength = __commonJS({
     var codegen_1 = require_codegen();
     var util_1 = require_util();
     var ucs2length_1 = require_ucs2length();
-    var error2 = {
+    var error3 = {
       message({ keyword, schemaCode }) {
         const comp = keyword === "maxLength" ? "more" : "fewer";
         return (0, codegen_1.str)`must NOT have ${comp} than ${schemaCode} characters`;
@@ -4805,7 +4805,7 @@ var require_limitLength = __commonJS({
       type: "string",
       schemaType: "number",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { keyword, data, schemaCode, it } = cxt;
         const op = keyword === "maxLength" ? codegen_1.operators.GT : codegen_1.operators.LT;
@@ -4825,7 +4825,7 @@ var require_pattern = __commonJS({
     var code_1 = require_code2();
     var util_1 = require_util();
     var codegen_1 = require_codegen();
-    var error2 = {
+    var error3 = {
       message: ({ schemaCode }) => (0, codegen_1.str)`must match pattern "${schemaCode}"`,
       params: ({ schemaCode }) => (0, codegen_1._)`{pattern: ${schemaCode}}`
     };
@@ -4834,7 +4834,7 @@ var require_pattern = __commonJS({
       type: "string",
       schemaType: "string",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, data, $data, schema, schemaCode, it } = cxt;
         const u = it.opts.unicodeRegExp ? "u" : "";
@@ -4860,7 +4860,7 @@ var require_limitProperties = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     var codegen_1 = require_codegen();
-    var error2 = {
+    var error3 = {
       message({ keyword, schemaCode }) {
         const comp = keyword === "maxProperties" ? "more" : "fewer";
         return (0, codegen_1.str)`must NOT have ${comp} than ${schemaCode} properties`;
@@ -4872,7 +4872,7 @@ var require_limitProperties = __commonJS({
       type: "object",
       schemaType: "number",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { keyword, data, schemaCode } = cxt;
         const op = keyword === "maxProperties" ? codegen_1.operators.GT : codegen_1.operators.LT;
@@ -4891,7 +4891,7 @@ var require_required = __commonJS({
     var code_1 = require_code2();
     var codegen_1 = require_codegen();
     var util_1 = require_util();
-    var error2 = {
+    var error3 = {
       message: ({ params: { missingProperty } }) => (0, codegen_1.str)`must have required property '${missingProperty}'`,
       params: ({ params: { missingProperty } }) => (0, codegen_1._)`{missingProperty: ${missingProperty}}`
     };
@@ -4900,7 +4900,7 @@ var require_required = __commonJS({
       type: "object",
       schemaType: "array",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, schema, schemaCode, data, $data, it } = cxt;
         const { opts } = it;
@@ -4971,7 +4971,7 @@ var require_limitItems = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     var codegen_1 = require_codegen();
-    var error2 = {
+    var error3 = {
       message({ keyword, schemaCode }) {
         const comp = keyword === "maxItems" ? "more" : "fewer";
         return (0, codegen_1.str)`must NOT have ${comp} than ${schemaCode} items`;
@@ -4983,7 +4983,7 @@ var require_limitItems = __commonJS({
       type: "array",
       schemaType: "number",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { keyword, data, schemaCode } = cxt;
         const op = keyword === "maxItems" ? codegen_1.operators.GT : codegen_1.operators.LT;
@@ -5014,7 +5014,7 @@ var require_uniqueItems = __commonJS({
     var codegen_1 = require_codegen();
     var util_1 = require_util();
     var equal_1 = require_equal();
-    var error2 = {
+    var error3 = {
       message: ({ params: { i: i2, j } }) => (0, codegen_1.str)`must NOT have duplicate items (items ## ${j} and ${i2} are identical)`,
       params: ({ params: { i: i2, j } }) => (0, codegen_1._)`{i: ${i2}, j: ${j}}`
     };
@@ -5023,7 +5023,7 @@ var require_uniqueItems = __commonJS({
       type: "array",
       schemaType: "boolean",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, data, $data, schema, parentSchema, schemaCode, it } = cxt;
         if (!$data && !schema)
@@ -5080,14 +5080,14 @@ var require_const = __commonJS({
     var codegen_1 = require_codegen();
     var util_1 = require_util();
     var equal_1 = require_equal();
-    var error2 = {
+    var error3 = {
       message: "must be equal to constant",
       params: ({ schemaCode }) => (0, codegen_1._)`{allowedValue: ${schemaCode}}`
     };
     var def = {
       keyword: "const",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, data, $data, schemaCode, schema } = cxt;
         if ($data || schema && typeof schema == "object") {
@@ -5109,7 +5109,7 @@ var require_enum = __commonJS({
     var codegen_1 = require_codegen();
     var util_1 = require_util();
     var equal_1 = require_equal();
-    var error2 = {
+    var error3 = {
       message: "must be equal to one of the allowed values",
       params: ({ schemaCode }) => (0, codegen_1._)`{allowedValues: ${schemaCode}}`
     };
@@ -5117,7 +5117,7 @@ var require_enum = __commonJS({
       keyword: "enum",
       schemaType: "array",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, data, $data, schema, schemaCode, it } = cxt;
         if (!$data && schema.length === 0)
@@ -5196,7 +5196,7 @@ var require_additionalItems = __commonJS({
     exports2.validateAdditionalItems = void 0;
     var codegen_1 = require_codegen();
     var util_1 = require_util();
-    var error2 = {
+    var error3 = {
       message: ({ params: { len } }) => (0, codegen_1.str)`must NOT have more than ${len} items`,
       params: ({ params: { len } }) => (0, codegen_1._)`{limit: ${len}}`
     };
@@ -5205,7 +5205,7 @@ var require_additionalItems = __commonJS({
       type: "array",
       schemaType: ["boolean", "object"],
       before: "uniqueItems",
-      error: error2,
+      error: error3,
       code(cxt) {
         const { parentSchema, it } = cxt;
         const { items } = parentSchema;
@@ -5324,7 +5324,7 @@ var require_items2020 = __commonJS({
     var util_1 = require_util();
     var code_1 = require_code2();
     var additionalItems_1 = require_additionalItems();
-    var error2 = {
+    var error3 = {
       message: ({ params: { len } }) => (0, codegen_1.str)`must NOT have more than ${len} items`,
       params: ({ params: { len } }) => (0, codegen_1._)`{limit: ${len}}`
     };
@@ -5333,7 +5333,7 @@ var require_items2020 = __commonJS({
       type: "array",
       schemaType: ["object", "boolean"],
       before: "uniqueItems",
-      error: error2,
+      error: error3,
       code(cxt) {
         const { schema, parentSchema, it } = cxt;
         const { prefixItems } = parentSchema;
@@ -5357,7 +5357,7 @@ var require_contains = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     var codegen_1 = require_codegen();
     var util_1 = require_util();
-    var error2 = {
+    var error3 = {
       message: ({ params: { min, max } }) => max === void 0 ? (0, codegen_1.str)`must contain at least ${min} valid item(s)` : (0, codegen_1.str)`must contain at least ${min} and no more than ${max} valid item(s)`,
       params: ({ params: { min, max } }) => max === void 0 ? (0, codegen_1._)`{minContains: ${min}}` : (0, codegen_1._)`{minContains: ${min}, maxContains: ${max}}`
     };
@@ -5367,7 +5367,7 @@ var require_contains = __commonJS({
       schemaType: ["object", "boolean"],
       before: "uniqueItems",
       trackErrors: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, schema, parentSchema, data, it } = cxt;
         let min;
@@ -5545,7 +5545,7 @@ var require_propertyNames = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     var codegen_1 = require_codegen();
     var util_1 = require_util();
-    var error2 = {
+    var error3 = {
       message: "property name must be valid",
       params: ({ params }) => (0, codegen_1._)`{propertyName: ${params.propertyName}}`
     };
@@ -5553,7 +5553,7 @@ var require_propertyNames = __commonJS({
       keyword: "propertyNames",
       type: "object",
       schemaType: ["object", "boolean"],
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, schema, data, it } = cxt;
         if ((0, util_1.alwaysValidSchema)(it, schema))
@@ -5590,7 +5590,7 @@ var require_additionalProperties = __commonJS({
     var codegen_1 = require_codegen();
     var names_1 = require_names();
     var util_1 = require_util();
-    var error2 = {
+    var error3 = {
       message: "must NOT have additional properties",
       params: ({ params }) => (0, codegen_1._)`{additionalProperty: ${params.additionalProperty}}`
     };
@@ -5600,7 +5600,7 @@ var require_additionalProperties = __commonJS({
       schemaType: ["boolean", "object"],
       allowUndefined: true,
       trackErrors: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, schema, parentSchema, data, errsCount, it } = cxt;
         if (!errsCount)
@@ -5874,7 +5874,7 @@ var require_oneOf = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     var codegen_1 = require_codegen();
     var util_1 = require_util();
-    var error2 = {
+    var error3 = {
       message: "must match exactly one schema in oneOf",
       params: ({ params }) => (0, codegen_1._)`{passingSchemas: ${params.passing}}`
     };
@@ -5882,7 +5882,7 @@ var require_oneOf = __commonJS({
       keyword: "oneOf",
       schemaType: "array",
       trackErrors: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, schema, parentSchema, it } = cxt;
         if (!Array.isArray(schema))
@@ -5959,7 +5959,7 @@ var require_if = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     var codegen_1 = require_codegen();
     var util_1 = require_util();
-    var error2 = {
+    var error3 = {
       message: ({ params }) => (0, codegen_1.str)`must match "${params.ifClause}" schema`,
       params: ({ params }) => (0, codegen_1._)`{failingKeyword: ${params.ifClause}}`
     };
@@ -5967,7 +5967,7 @@ var require_if = __commonJS({
       keyword: "if",
       schemaType: ["object", "boolean"],
       trackErrors: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, parentSchema, it } = cxt;
         if (parentSchema.then === void 0 && parentSchema.else === void 0) {
@@ -6093,7 +6093,7 @@ var require_format = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     var codegen_1 = require_codegen();
-    var error2 = {
+    var error3 = {
       message: ({ schemaCode }) => (0, codegen_1.str)`must match format "${schemaCode}"`,
       params: ({ schemaCode }) => (0, codegen_1._)`{format: ${schemaCode}}`
     };
@@ -6102,7 +6102,7 @@ var require_format = __commonJS({
       type: ["number", "string"],
       schemaType: "string",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt, ruleType) {
         const { gen, data, $data, schema, schemaCode, it } = cxt;
         const { opts, errSchemaPath, schemaEnv, self: self2 } = it;
@@ -6257,7 +6257,7 @@ var require_discriminator = __commonJS({
     var compile_1 = require_compile();
     var ref_error_1 = require_ref_error();
     var util_1 = require_util();
-    var error2 = {
+    var error3 = {
       message: ({ params: { discrError, tagName } }) => discrError === types_1.DiscrError.Tag ? `tag "${tagName}" must be string` : `value of tag "${tagName}" must be in oneOf`,
       params: ({ params: { discrError, tag, tagName } }) => (0, codegen_1._)`{error: ${discrError}, tag: ${tagName}, tagValue: ${tag}}`
     };
@@ -6265,7 +6265,7 @@ var require_discriminator = __commonJS({
       keyword: "discriminator",
       type: "object",
       schemaType: "object",
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, data, schema, parentSchema, it } = cxt;
         const { oneOf } = parentSchema;
@@ -6797,7 +6797,7 @@ var require_limit = __commonJS({
       formatExclusiveMaximum: { okStr: "<", ok: ops.LT, fail: ops.GTE },
       formatExclusiveMinimum: { okStr: ">", ok: ops.GT, fail: ops.LTE }
     };
-    var error2 = {
+    var error3 = {
       message: ({ keyword, schemaCode }) => (0, codegen_1.str)`should be ${KWDs[keyword].okStr} ${schemaCode}`,
       params: ({ keyword, schemaCode }) => (0, codegen_1._)`{comparison: ${KWDs[keyword].okStr}, limit: ${schemaCode}}`
     };
@@ -6806,7 +6806,7 @@ var require_limit = __commonJS({
       type: "string",
       schemaType: "string",
       $data: true,
-      error: error2,
+      error: error3,
       code(cxt) {
         const { gen, data, schemaCode, keyword, it } = cxt;
         const { opts, self: self2 } = it;
@@ -8608,8 +8608,8 @@ var ZodError = class _ZodError extends Error {
       return issue2.message;
     };
     const fieldErrors = { _errors: [] };
-    const processError = (error2) => {
-      for (const issue2 of error2.issues) {
+    const processError = (error3) => {
+      for (const issue2 of error3.issues) {
         if (issue2.code === "invalid_union") {
           issue2.unionErrors.map(processError);
         } else if (issue2.code === "invalid_return_type") {
@@ -8672,8 +8672,8 @@ var ZodError = class _ZodError extends Error {
   }
 };
 ZodError.create = (issues) => {
-  const error2 = new ZodError(issues);
-  return error2;
+  const error3 = new ZodError(issues);
+  return error3;
 };
 
 // node_modules/zod/v3/locales/en.js
@@ -8925,9 +8925,9 @@ var ParseInputLazyPath = class {
     return this._cachedPath;
   }
 };
-var handleResult = (ctx, result2) => {
-  if (isValid(result2)) {
-    return { success: true, data: result2.value };
+var handleResult = (ctx, result3) => {
+  if (isValid(result3)) {
+    return { success: true, data: result3.value };
   } else {
     if (!ctx.common.issues.length) {
       throw new Error("Validation failed but no issues detected.");
@@ -8937,8 +8937,8 @@ var handleResult = (ctx, result2) => {
       get error() {
         if (this._error)
           return this._error;
-        const error2 = new ZodError(ctx.common.issues);
-        this._error = error2;
+        const error3 = new ZodError(ctx.common.issues);
+        this._error = error3;
         return this._error;
       }
     };
@@ -8998,21 +8998,21 @@ var ZodType = class {
     };
   }
   _parseSync(input) {
-    const result2 = this._parse(input);
-    if (isAsync(result2)) {
+    const result3 = this._parse(input);
+    if (isAsync(result3)) {
       throw new Error("Synchronous parse encountered promise.");
     }
-    return result2;
+    return result3;
   }
   _parseAsync(input) {
-    const result2 = this._parse(input);
-    return Promise.resolve(result2);
+    const result3 = this._parse(input);
+    return Promise.resolve(result3);
   }
   parse(data, params) {
-    const result2 = this.safeParse(data, params);
-    if (result2.success)
-      return result2.data;
-    throw result2.error;
+    const result3 = this.safeParse(data, params);
+    if (result3.success)
+      return result3.data;
+    throw result3.error;
   }
   safeParse(data, params) {
     const ctx = {
@@ -9027,8 +9027,8 @@ var ZodType = class {
       data,
       parsedType: getParsedType(data)
     };
-    const result2 = this._parseSync({ data, path: ctx.path, parent: ctx });
-    return handleResult(ctx, result2);
+    const result3 = this._parseSync({ data, path: ctx.path, parent: ctx });
+    return handleResult(ctx, result3);
   }
   "~validate"(data) {
     const ctx = {
@@ -9044,9 +9044,9 @@ var ZodType = class {
     };
     if (!this["~standard"].async) {
       try {
-        const result2 = this._parseSync({ data, path: [], parent: ctx });
-        return isValid(result2) ? {
-          value: result2.value
+        const result3 = this._parseSync({ data, path: [], parent: ctx });
+        return isValid(result3) ? {
+          value: result3.value
         } : {
           issues: ctx.common.issues
         };
@@ -9060,17 +9060,17 @@ var ZodType = class {
         };
       }
     }
-    return this._parseAsync({ data, path: [], parent: ctx }).then((result2) => isValid(result2) ? {
-      value: result2.value
+    return this._parseAsync({ data, path: [], parent: ctx }).then((result3) => isValid(result3) ? {
+      value: result3.value
     } : {
       issues: ctx.common.issues
     });
   }
   async parseAsync(data, params) {
-    const result2 = await this.safeParseAsync(data, params);
-    if (result2.success)
-      return result2.data;
-    throw result2.error;
+    const result3 = await this.safeParseAsync(data, params);
+    if (result3.success)
+      return result3.data;
+    throw result3.error;
   }
   async safeParseAsync(data, params) {
     const ctx = {
@@ -9086,8 +9086,8 @@ var ZodType = class {
       parsedType: getParsedType(data)
     };
     const maybeAsyncResult = this._parse({ data, path: ctx.path, parent: ctx });
-    const result2 = await (isAsync(maybeAsyncResult) ? maybeAsyncResult : Promise.resolve(maybeAsyncResult));
-    return handleResult(ctx, result2);
+    const result3 = await (isAsync(maybeAsyncResult) ? maybeAsyncResult : Promise.resolve(maybeAsyncResult));
+    return handleResult(ctx, result3);
   }
   refine(check2, message) {
     const getIssueProperties = (val) => {
@@ -9100,13 +9100,13 @@ var ZodType = class {
       }
     };
     return this._refinement((val, ctx) => {
-      const result2 = check2(val);
+      const result3 = check2(val);
       const setError = () => ctx.addIssue({
         code: ZodIssueCode.custom,
         ...getIssueProperties(val)
       });
-      if (typeof Promise !== "undefined" && result2 instanceof Promise) {
-        return result2.then((data) => {
+      if (typeof Promise !== "undefined" && result3 instanceof Promise) {
+        return result3.then((data) => {
           if (!data) {
             setError();
             return false;
@@ -9115,7 +9115,7 @@ var ZodType = class {
           }
         });
       }
-      if (!result2) {
+      if (!result3) {
         setError();
         return false;
       } else {
@@ -10610,14 +10610,14 @@ var ZodArray = class _ZodArray extends ZodType {
     if (ctx.common.async) {
       return Promise.all([...ctx.data].map((item, i2) => {
         return def.type._parseAsync(new ParseInputLazyPath(ctx, item, ctx.path, i2));
-      })).then((result3) => {
-        return ParseStatus.mergeArray(status, result3);
+      })).then((result4) => {
+        return ParseStatus.mergeArray(status, result4);
       });
     }
-    const result2 = [...ctx.data].map((item, i2) => {
+    const result3 = [...ctx.data].map((item, i2) => {
       return def.type._parseSync(new ParseInputLazyPath(ctx, item, ctx.path, i2));
     });
-    return ParseStatus.mergeArray(status, result2);
+    return ParseStatus.mergeArray(status, result3);
   }
   get element() {
     return this._def.type;
@@ -11023,18 +11023,18 @@ var ZodUnion = class extends ZodType {
     const { ctx } = this._processInputParams(input);
     const options = this._def.options;
     function handleResults(results) {
-      for (const result2 of results) {
-        if (result2.result.status === "valid") {
-          return result2.result;
+      for (const result3 of results) {
+        if (result3.result.status === "valid") {
+          return result3.result;
         }
       }
-      for (const result2 of results) {
-        if (result2.result.status === "dirty") {
-          ctx.common.issues.push(...result2.ctx.common.issues);
-          return result2.result;
+      for (const result3 of results) {
+        if (result3.result.status === "dirty") {
+          ctx.common.issues.push(...result3.ctx.common.issues);
+          return result3.result;
         }
       }
-      const unionErrors = results.map((result2) => new ZodError(result2.ctx.common.issues));
+      const unionErrors = results.map((result3) => new ZodError(result3.ctx.common.issues));
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union,
         unionErrors
@@ -11072,15 +11072,15 @@ var ZodUnion = class extends ZodType {
           },
           parent: null
         };
-        const result2 = option._parseSync({
+        const result3 = option._parseSync({
           data: ctx.data,
           path: ctx.path,
           parent: childCtx
         });
-        if (result2.status === "valid") {
-          return result2;
-        } else if (result2.status === "dirty" && !dirty) {
-          dirty = { result: result2, ctx: childCtx };
+        if (result3.status === "valid") {
+          return result3;
+        } else if (result3.status === "dirty" && !dirty) {
+          dirty = { result: result3, ctx: childCtx };
         }
         if (childCtx.common.issues.length) {
           issues.push(childCtx.common.issues);
@@ -11593,25 +11593,25 @@ var ZodFunction = class _ZodFunction extends ZodType {
       });
       return INVALID;
     }
-    function makeArgsIssue(args2, error2) {
+    function makeArgsIssue(args2, error3) {
       return makeIssue({
         data: args2,
         path: ctx.path,
         errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, getErrorMap(), en_default].filter((x) => !!x),
         issueData: {
           code: ZodIssueCode.invalid_arguments,
-          argumentsError: error2
+          argumentsError: error3
         }
       });
     }
-    function makeReturnsIssue(returns, error2) {
+    function makeReturnsIssue(returns, error3) {
       return makeIssue({
         data: returns,
         path: ctx.path,
         errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, getErrorMap(), en_default].filter((x) => !!x),
         issueData: {
           code: ZodIssueCode.invalid_return_type,
-          returnTypeError: error2
+          returnTypeError: error3
         }
       });
     }
@@ -11620,15 +11620,15 @@ var ZodFunction = class _ZodFunction extends ZodType {
     if (this._def.returns instanceof ZodPromise) {
       const me = this;
       return OK(async function(...args2) {
-        const error2 = new ZodError([]);
+        const error3 = new ZodError([]);
         const parsedArgs = await me._def.args.parseAsync(args2, params).catch((e) => {
-          error2.addIssue(makeArgsIssue(args2, e));
-          throw error2;
+          error3.addIssue(makeArgsIssue(args2, e));
+          throw error3;
         });
-        const result2 = await Reflect.apply(fn, this, parsedArgs);
-        const parsedReturns = await me._def.returns._def.type.parseAsync(result2, params).catch((e) => {
-          error2.addIssue(makeReturnsIssue(result2, e));
-          throw error2;
+        const result3 = await Reflect.apply(fn, this, parsedArgs);
+        const parsedReturns = await me._def.returns._def.type.parseAsync(result3, params).catch((e) => {
+          error3.addIssue(makeReturnsIssue(result3, e));
+          throw error3;
         });
         return parsedReturns;
       });
@@ -11639,10 +11639,10 @@ var ZodFunction = class _ZodFunction extends ZodType {
         if (!parsedArgs.success) {
           throw new ZodError([makeArgsIssue(args2, parsedArgs.error)]);
         }
-        const result2 = Reflect.apply(fn, this, parsedArgs.data);
-        const parsedReturns = me._def.returns.safeParse(result2, params);
+        const result3 = Reflect.apply(fn, this, parsedArgs.data);
+        const parsedReturns = me._def.returns.safeParse(result3, params);
         if (!parsedReturns.success) {
-          throw new ZodError([makeReturnsIssue(result2, parsedReturns.error)]);
+          throw new ZodError([makeReturnsIssue(result3, parsedReturns.error)]);
         }
         return parsedReturns.data;
       });
@@ -11894,43 +11894,43 @@ var ZodEffects = class extends ZodType {
         return Promise.resolve(processed).then(async (processed2) => {
           if (status.value === "aborted")
             return INVALID;
-          const result2 = await this._def.schema._parseAsync({
+          const result3 = await this._def.schema._parseAsync({
             data: processed2,
             path: ctx.path,
             parent: ctx
           });
-          if (result2.status === "aborted")
+          if (result3.status === "aborted")
             return INVALID;
-          if (result2.status === "dirty")
-            return DIRTY(result2.value);
+          if (result3.status === "dirty")
+            return DIRTY(result3.value);
           if (status.value === "dirty")
-            return DIRTY(result2.value);
-          return result2;
+            return DIRTY(result3.value);
+          return result3;
         });
       } else {
         if (status.value === "aborted")
           return INVALID;
-        const result2 = this._def.schema._parseSync({
+        const result3 = this._def.schema._parseSync({
           data: processed,
           path: ctx.path,
           parent: ctx
         });
-        if (result2.status === "aborted")
+        if (result3.status === "aborted")
           return INVALID;
-        if (result2.status === "dirty")
-          return DIRTY(result2.value);
+        if (result3.status === "dirty")
+          return DIRTY(result3.value);
         if (status.value === "dirty")
-          return DIRTY(result2.value);
-        return result2;
+          return DIRTY(result3.value);
+        return result3;
       }
     }
     if (effect.type === "refinement") {
       const executeRefinement = (acc) => {
-        const result2 = effect.refinement(acc, checkCtx);
+        const result3 = effect.refinement(acc, checkCtx);
         if (ctx.common.async) {
-          return Promise.resolve(result2);
+          return Promise.resolve(result3);
         }
-        if (result2 instanceof Promise) {
+        if (result3 instanceof Promise) {
           throw new Error("Async refinement encountered during synchronous parse operation. Use .parseAsync instead.");
         }
         return acc;
@@ -11968,18 +11968,18 @@ var ZodEffects = class extends ZodType {
         });
         if (!isValid(base))
           return INVALID;
-        const result2 = effect.transform(base.value, checkCtx);
-        if (result2 instanceof Promise) {
+        const result3 = effect.transform(base.value, checkCtx);
+        if (result3 instanceof Promise) {
           throw new Error(`Asynchronous transform encountered during synchronous parse operation. Use .parseAsync instead.`);
         }
-        return { status: status.value, value: result2 };
+        return { status: status.value, value: result3 };
       } else {
         return this._def.schema._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx }).then((base) => {
           if (!isValid(base))
             return INVALID;
-          return Promise.resolve(effect.transform(base.value, checkCtx)).then((result2) => ({
+          return Promise.resolve(effect.transform(base.value, checkCtx)).then((result3) => ({
             status: status.value,
-            value: result2
+            value: result3
           }));
         });
       }
@@ -12076,18 +12076,18 @@ var ZodCatch = class extends ZodType {
         issues: []
       }
     };
-    const result2 = this._def.innerType._parse({
+    const result3 = this._def.innerType._parse({
       data: newCtx.data,
       path: newCtx.path,
       parent: {
         ...newCtx
       }
     });
-    if (isAsync(result2)) {
-      return result2.then((result3) => {
+    if (isAsync(result3)) {
+      return result3.then((result4) => {
         return {
           status: "valid",
-          value: result3.status === "valid" ? result3.value : this._def.catchValue({
+          value: result4.status === "valid" ? result4.value : this._def.catchValue({
             get error() {
               return new ZodError(newCtx.common.issues);
             },
@@ -12098,7 +12098,7 @@ var ZodCatch = class extends ZodType {
     } else {
       return {
         status: "valid",
-        value: result2.status === "valid" ? result2.value : this._def.catchValue({
+        value: result3.status === "valid" ? result3.value : this._def.catchValue({
           get error() {
             return new ZodError(newCtx.common.issues);
           },
@@ -12212,14 +12212,14 @@ var ZodPipeline = class _ZodPipeline extends ZodType {
 };
 var ZodReadonly = class extends ZodType {
   _parse(input) {
-    const result2 = this._def.innerType._parse(input);
+    const result3 = this._def.innerType._parse(input);
     const freeze = (data) => {
       if (isValid(data)) {
         data.value = Object.freeze(data.value);
       }
       return data;
     };
-    return isAsync(result2) ? result2.then((data) => freeze(data)) : freeze(result2);
+    return isAsync(result3) ? result3.then((data) => freeze(data)) : freeze(result3);
   }
   unwrap() {
     return this._def.innerType;
@@ -12959,10 +12959,10 @@ var initializer = (inst, def) => {
 };
 var $ZodError = $constructor("$ZodError", initializer);
 var $ZodRealError = $constructor("$ZodError", initializer, { Parent: Error });
-function flattenError(error2, mapper = (issue2) => issue2.message) {
+function flattenError(error3, mapper = (issue2) => issue2.message) {
   const fieldErrors = {};
   const formErrors = [];
-  for (const sub of error2.issues) {
+  for (const sub of error3.issues) {
     if (sub.path.length > 0) {
       fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
       fieldErrors[sub.path[0]].push(mapper(sub));
@@ -12972,13 +12972,13 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
   }
   return { formErrors, fieldErrors };
 }
-function formatError(error2, _mapper) {
+function formatError(error3, _mapper) {
   const mapper = _mapper || function(issue2) {
     return issue2.message;
   };
   const fieldErrors = { _errors: [] };
-  const processError = (error3) => {
-    for (const issue2 of error3.issues) {
+  const processError = (error4) => {
+    for (const issue2 of error4.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
         issue2.errors.map((issues) => processError({ issues }));
       } else if (issue2.code === "invalid_key") {
@@ -13005,59 +13005,59 @@ function formatError(error2, _mapper) {
       }
     }
   };
-  processError(error2);
+  processError(error3);
   return fieldErrors;
 }
 
 // node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
-  const result2 = schema._zod.run({ value, issues: [] }, ctx);
-  if (result2 instanceof Promise) {
+  const result3 = schema._zod.run({ value, issues: [] }, ctx);
+  if (result3 instanceof Promise) {
     throw new $ZodAsyncError();
   }
-  if (result2.issues.length) {
-    const e = new (_params?.Err ?? _Err)(result2.issues.map((iss) => finalizeIssue(iss, ctx, config())));
+  if (result3.issues.length) {
+    const e = new (_params?.Err ?? _Err)(result3.issues.map((iss) => finalizeIssue(iss, ctx, config())));
     captureStackTrace(e, _params?.callee);
     throw e;
   }
-  return result2.value;
+  return result3.value;
 };
 var parse = /* @__PURE__ */ _parse($ZodRealError);
 var _parseAsync = (_Err) => async (schema, value, _ctx, params) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
-  let result2 = schema._zod.run({ value, issues: [] }, ctx);
-  if (result2 instanceof Promise)
-    result2 = await result2;
-  if (result2.issues.length) {
-    const e = new (params?.Err ?? _Err)(result2.issues.map((iss) => finalizeIssue(iss, ctx, config())));
+  let result3 = schema._zod.run({ value, issues: [] }, ctx);
+  if (result3 instanceof Promise)
+    result3 = await result3;
+  if (result3.issues.length) {
+    const e = new (params?.Err ?? _Err)(result3.issues.map((iss) => finalizeIssue(iss, ctx, config())));
     captureStackTrace(e, params?.callee);
     throw e;
   }
-  return result2.value;
+  return result3.value;
 };
 var parseAsync = /* @__PURE__ */ _parseAsync($ZodRealError);
 var _safeParse = (_Err) => (schema, value, _ctx) => {
   const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
-  const result2 = schema._zod.run({ value, issues: [] }, ctx);
-  if (result2 instanceof Promise) {
+  const result3 = schema._zod.run({ value, issues: [] }, ctx);
+  if (result3 instanceof Promise) {
     throw new $ZodAsyncError();
   }
-  return result2.issues.length ? {
+  return result3.issues.length ? {
     success: false,
-    error: new (_Err ?? $ZodError)(result2.issues.map((iss) => finalizeIssue(iss, ctx, config())))
-  } : { success: true, data: result2.value };
+    error: new (_Err ?? $ZodError)(result3.issues.map((iss) => finalizeIssue(iss, ctx, config())))
+  } : { success: true, data: result3.value };
 };
 var safeParse = /* @__PURE__ */ _safeParse($ZodRealError);
 var _safeParseAsync = (_Err) => async (schema, value, _ctx) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
-  let result2 = schema._zod.run({ value, issues: [] }, ctx);
-  if (result2 instanceof Promise)
-    result2 = await result2;
-  return result2.issues.length ? {
+  let result3 = schema._zod.run({ value, issues: [] }, ctx);
+  if (result3 instanceof Promise)
+    result3 = await result3;
+  return result3.issues.length ? {
     success: false,
-    error: new _Err(result2.issues.map((iss) => finalizeIssue(iss, ctx, config())))
-  } : { success: true, data: result2.value };
+    error: new _Err(result3.issues.map((iss) => finalizeIssue(iss, ctx, config())))
+  } : { success: true, data: result3.value };
 };
 var safeParseAsync = /* @__PURE__ */ _safeParseAsync($ZodRealError);
 
@@ -13610,13 +13610,13 @@ var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
       return payload;
     };
     inst._zod.run = (payload, ctx) => {
-      const result2 = inst._zod.parse(payload, ctx);
-      if (result2 instanceof Promise) {
+      const result3 = inst._zod.parse(payload, ctx);
+      if (result3 instanceof Promise) {
         if (ctx.async === false)
           throw new $ZodAsyncError();
-        return result2.then((result3) => runChecks(result3, checks, ctx));
+        return result3.then((result4) => runChecks(result4, checks, ctx));
       }
-      return runChecks(result2, checks, ctx);
+      return runChecks(result3, checks, ctx);
     };
   }
   inst["~standard"] = {
@@ -14013,11 +14013,11 @@ var $ZodNever = /* @__PURE__ */ $constructor("$ZodNever", (inst, def) => {
     return payload;
   };
 });
-function handleArrayResult(result2, final, index) {
-  if (result2.issues.length) {
-    final.issues.push(...prefixIssues(index, result2.issues));
+function handleArrayResult(result3, final, index) {
+  if (result3.issues.length) {
+    final.issues.push(...prefixIssues(index, result3.issues));
   }
-  final.value[index] = result2.value;
+  final.value[index] = result3.value;
 }
 var $ZodArray = /* @__PURE__ */ $constructor("$ZodArray", (inst, def) => {
   $ZodType.init(inst, def);
@@ -14036,14 +14036,14 @@ var $ZodArray = /* @__PURE__ */ $constructor("$ZodArray", (inst, def) => {
     const proms = [];
     for (let i2 = 0; i2 < input.length; i2++) {
       const item = input[i2];
-      const result2 = def.element._zod.run({
+      const result3 = def.element._zod.run({
         value: item,
         issues: []
       }, ctx);
-      if (result2 instanceof Promise) {
-        proms.push(result2.then((result3) => handleArrayResult(result3, payload, i2)));
+      if (result3 instanceof Promise) {
+        proms.push(result3.then((result4) => handleArrayResult(result4, payload, i2)));
       } else {
-        handleArrayResult(result2, payload, i2);
+        handleArrayResult(result3, payload, i2);
       }
     }
     if (proms.length) {
@@ -14052,28 +14052,28 @@ var $ZodArray = /* @__PURE__ */ $constructor("$ZodArray", (inst, def) => {
     return payload;
   };
 });
-function handleObjectResult(result2, final, key) {
-  if (result2.issues.length) {
-    final.issues.push(...prefixIssues(key, result2.issues));
+function handleObjectResult(result3, final, key) {
+  if (result3.issues.length) {
+    final.issues.push(...prefixIssues(key, result3.issues));
   }
-  final.value[key] = result2.value;
+  final.value[key] = result3.value;
 }
-function handleOptionalObjectResult(result2, final, key, input) {
-  if (result2.issues.length) {
+function handleOptionalObjectResult(result3, final, key, input) {
+  if (result3.issues.length) {
     if (input[key] === void 0) {
       if (key in input) {
         final.value[key] = void 0;
       } else {
-        final.value[key] = result2.value;
+        final.value[key] = result3.value;
       }
     } else {
-      final.issues.push(...prefixIssues(key, result2.issues));
+      final.issues.push(...prefixIssues(key, result3.issues));
     }
-  } else if (result2.value === void 0) {
+  } else if (result3.value === void 0) {
     if (key in input)
       final.value[key] = void 0;
   } else {
-    final.value[key] = result2.value;
+    final.value[key] = result3.value;
   }
 }
 var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
@@ -14239,9 +14239,9 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
   };
 });
 function handleUnionResults(results, final, inst, ctx) {
-  for (const result2 of results) {
-    if (result2.issues.length === 0) {
-      final.value = result2.value;
+  for (const result3 of results) {
+    if (result3.issues.length === 0) {
+      final.value = result3.value;
       return final;
     }
   }
@@ -14249,7 +14249,7 @@ function handleUnionResults(results, final, inst, ctx) {
     code: "invalid_union",
     input: final.value,
     inst,
-    errors: results.map((result2) => result2.issues.map((iss) => finalizeIssue(iss, ctx, config())))
+    errors: results.map((result3) => result3.issues.map((iss) => finalizeIssue(iss, ctx, config())))
   });
   return final;
 }
@@ -14274,17 +14274,17 @@ var $ZodUnion = /* @__PURE__ */ $constructor("$ZodUnion", (inst, def) => {
     let async = false;
     const results = [];
     for (const option of def.options) {
-      const result2 = option._zod.run({
+      const result3 = option._zod.run({
         value: payload.value,
         issues: []
       }, ctx);
-      if (result2 instanceof Promise) {
-        results.push(result2);
+      if (result3 instanceof Promise) {
+        results.push(result3);
         async = true;
       } else {
-        if (result2.issues.length === 0)
-          return result2;
-        results.push(result2);
+        if (result3.issues.length === 0)
+          return result3;
+        results.push(result3);
       }
     }
     if (!async)
@@ -14417,21 +14417,21 @@ function mergeValues2(a, b) {
   }
   return { valid: false, mergeErrorPath: [] };
 }
-function handleIntersectionResults(result2, left, right) {
+function handleIntersectionResults(result3, left, right) {
   if (left.issues.length) {
-    result2.issues.push(...left.issues);
+    result3.issues.push(...left.issues);
   }
   if (right.issues.length) {
-    result2.issues.push(...right.issues);
+    result3.issues.push(...right.issues);
   }
-  if (aborted(result2))
-    return result2;
+  if (aborted(result3))
+    return result3;
   const merged = mergeValues2(left.value, right.value);
   if (!merged.valid) {
     throw new Error(`Unmergable intersection. Error path: ${JSON.stringify(merged.mergeErrorPath)}`);
   }
-  result2.value = merged.data;
-  return result2;
+  result3.value = merged.data;
+  return result3;
 }
 var $ZodRecord = /* @__PURE__ */ $constructor("$ZodRecord", (inst, def) => {
   $ZodType.init(inst, def);
@@ -14452,19 +14452,19 @@ var $ZodRecord = /* @__PURE__ */ $constructor("$ZodRecord", (inst, def) => {
       payload.value = {};
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
-          const result2 = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
-          if (result2 instanceof Promise) {
-            proms.push(result2.then((result3) => {
-              if (result3.issues.length) {
-                payload.issues.push(...prefixIssues(key, result3.issues));
+          const result3 = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
+          if (result3 instanceof Promise) {
+            proms.push(result3.then((result4) => {
+              if (result4.issues.length) {
+                payload.issues.push(...prefixIssues(key, result4.issues));
               }
-              payload.value[key] = result3.value;
+              payload.value[key] = result4.value;
             }));
           } else {
-            if (result2.issues.length) {
-              payload.issues.push(...prefixIssues(key, result2.issues));
+            if (result3.issues.length) {
+              payload.issues.push(...prefixIssues(key, result3.issues));
             }
-            payload.value[key] = result2.value;
+            payload.value[key] = result3.value;
           }
         }
       }
@@ -14504,19 +14504,19 @@ var $ZodRecord = /* @__PURE__ */ $constructor("$ZodRecord", (inst, def) => {
           payload.value[keyResult.value] = keyResult.value;
           continue;
         }
-        const result2 = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
-        if (result2 instanceof Promise) {
-          proms.push(result2.then((result3) => {
-            if (result3.issues.length) {
-              payload.issues.push(...prefixIssues(key, result3.issues));
+        const result3 = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
+        if (result3 instanceof Promise) {
+          proms.push(result3.then((result4) => {
+            if (result4.issues.length) {
+              payload.issues.push(...prefixIssues(key, result4.issues));
             }
-            payload.value[keyResult.value] = result3.value;
+            payload.value[keyResult.value] = result4.value;
           }));
         } else {
-          if (result2.issues.length) {
-            payload.issues.push(...prefixIssues(key, result2.issues));
+          if (result3.issues.length) {
+            payload.issues.push(...prefixIssues(key, result3.issues));
           }
-          payload.value[keyResult.value] = result2.value;
+          payload.value[keyResult.value] = result3.value;
         }
       }
     }
@@ -14628,11 +14628,11 @@ var $ZodDefault = /* @__PURE__ */ $constructor("$ZodDefault", (inst, def) => {
       payload.value = def.defaultValue;
       return payload;
     }
-    const result2 = def.innerType._zod.run(payload, ctx);
-    if (result2 instanceof Promise) {
-      return result2.then((result3) => handleDefaultResult(result3, def));
+    const result3 = def.innerType._zod.run(payload, ctx);
+    if (result3 instanceof Promise) {
+      return result3.then((result4) => handleDefaultResult(result4, def));
     }
-    return handleDefaultResult(result2, def);
+    return handleDefaultResult(result3, def);
   };
 });
 function handleDefaultResult(payload, def) {
@@ -14659,11 +14659,11 @@ var $ZodNonOptional = /* @__PURE__ */ $constructor("$ZodNonOptional", (inst, def
     return v ? new Set([...v].filter((x) => x !== void 0)) : void 0;
   });
   inst._zod.parse = (payload, ctx) => {
-    const result2 = def.innerType._zod.run(payload, ctx);
-    if (result2 instanceof Promise) {
-      return result2.then((result3) => handleNonOptionalResult(result3, inst));
+    const result3 = def.innerType._zod.run(payload, ctx);
+    if (result3 instanceof Promise) {
+      return result3.then((result4) => handleNonOptionalResult(result4, inst));
     }
-    return handleNonOptionalResult(result2, inst);
+    return handleNonOptionalResult(result3, inst);
   };
 });
 function handleNonOptionalResult(payload, inst) {
@@ -14683,15 +14683,15 @@ var $ZodCatch = /* @__PURE__ */ $constructor("$ZodCatch", (inst, def) => {
   defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
   defineLazy(inst._zod, "values", () => def.innerType._zod.values);
   inst._zod.parse = (payload, ctx) => {
-    const result2 = def.innerType._zod.run(payload, ctx);
-    if (result2 instanceof Promise) {
-      return result2.then((result3) => {
-        payload.value = result3.value;
-        if (result3.issues.length) {
+    const result3 = def.innerType._zod.run(payload, ctx);
+    if (result3 instanceof Promise) {
+      return result3.then((result4) => {
+        payload.value = result4.value;
+        if (result4.issues.length) {
           payload.value = def.catchValue({
             ...payload,
             error: {
-              issues: result3.issues.map((iss) => finalizeIssue(iss, ctx, config()))
+              issues: result4.issues.map((iss) => finalizeIssue(iss, ctx, config()))
             },
             input: payload.value
           });
@@ -14700,12 +14700,12 @@ var $ZodCatch = /* @__PURE__ */ $constructor("$ZodCatch", (inst, def) => {
         return payload;
       });
     }
-    payload.value = result2.value;
-    if (result2.issues.length) {
+    payload.value = result3.value;
+    if (result3.issues.length) {
       payload.value = def.catchValue({
         ...payload,
         error: {
-          issues: result2.issues.map((iss) => finalizeIssue(iss, ctx, config()))
+          issues: result3.issues.map((iss) => finalizeIssue(iss, ctx, config()))
         },
         input: payload.value
       });
@@ -14740,11 +14740,11 @@ var $ZodReadonly = /* @__PURE__ */ $constructor("$ZodReadonly", (inst, def) => {
   defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
   defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
   inst._zod.parse = (payload, ctx) => {
-    const result2 = def.innerType._zod.run(payload, ctx);
-    if (result2 instanceof Promise) {
-      return result2.then(handleReadonlyResult);
+    const result3 = def.innerType._zod.run(payload, ctx);
+    if (result3 instanceof Promise) {
+      return result3.then(handleReadonlyResult);
     }
-    return handleReadonlyResult(result2);
+    return handleReadonlyResult(result3);
   };
 });
 function handleReadonlyResult(payload) {
@@ -14767,8 +14767,8 @@ var $ZodCustom = /* @__PURE__ */ $constructor("$ZodCustom", (inst, def) => {
     return;
   };
 });
-function handleRefineResult(result2, payload, input, inst) {
-  if (!result2) {
+function handleRefineResult(result3, payload, input, inst) {
+  if (!result3) {
     const _iss = {
       code: "custom",
       input,
@@ -15424,11 +15424,11 @@ var JSONSchemaGenerator = class {
       }
       return seen.schema;
     }
-    const result2 = { schema: {}, count: 1, cycle: void 0, path: _params.path };
-    this.seen.set(schema, result2);
+    const result3 = { schema: {}, count: 1, cycle: void 0, path: _params.path };
+    this.seen.set(schema, result3);
     const overrideSchema = schema._zod.toJSONSchema?.();
     if (overrideSchema) {
-      result2.schema = overrideSchema;
+      result3.schema = overrideSchema;
     } else {
       const params = {
         ..._params,
@@ -15437,11 +15437,11 @@ var JSONSchemaGenerator = class {
       };
       const parent = schema._zod.parent;
       if (parent) {
-        result2.ref = parent;
+        result3.ref = parent;
         this.process(parent, params);
         this.seen.get(parent).isParent = true;
       } else {
-        const _json = result2.schema;
+        const _json = result3.schema;
         switch (def.type) {
           case "string": {
             const json2 = _json;
@@ -15463,7 +15463,7 @@ var JSONSchemaGenerator = class {
               if (regexes.length === 1)
                 json2.pattern = regexes[0].source;
               else if (regexes.length > 1) {
-                result2.schema.allOf = [
+                result3.schema.allOf = [
                   ...regexes.map((regex) => ({
                     ...this.target === "draft-7" ? { type: "string" } : {},
                     pattern: regex.source
@@ -15770,7 +15770,7 @@ var JSONSchemaGenerator = class {
           }
           case "nonoptional": {
             this.process(def.innerType, params);
-            result2.ref = def.innerType;
+            result3.ref = def.innerType;
             break;
           }
           case "success": {
@@ -15780,20 +15780,20 @@ var JSONSchemaGenerator = class {
           }
           case "default": {
             this.process(def.innerType, params);
-            result2.ref = def.innerType;
+            result3.ref = def.innerType;
             _json.default = JSON.parse(JSON.stringify(def.defaultValue));
             break;
           }
           case "prefault": {
             this.process(def.innerType, params);
-            result2.ref = def.innerType;
+            result3.ref = def.innerType;
             if (this.io === "input")
               _json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
             break;
           }
           case "catch": {
             this.process(def.innerType, params);
-            result2.ref = def.innerType;
+            result3.ref = def.innerType;
             let catchValue;
             try {
               catchValue = def.catchValue(void 0);
@@ -15821,30 +15821,30 @@ var JSONSchemaGenerator = class {
           case "pipe": {
             const innerType = this.io === "input" ? def.in._zod.def.type === "transform" ? def.out : def.in : def.out;
             this.process(innerType, params);
-            result2.ref = innerType;
+            result3.ref = innerType;
             break;
           }
           case "readonly": {
             this.process(def.innerType, params);
-            result2.ref = def.innerType;
+            result3.ref = def.innerType;
             _json.readOnly = true;
             break;
           }
           // passthrough types
           case "promise": {
             this.process(def.innerType, params);
-            result2.ref = def.innerType;
+            result3.ref = def.innerType;
             break;
           }
           case "optional": {
             this.process(def.innerType, params);
-            result2.ref = def.innerType;
+            result3.ref = def.innerType;
             break;
           }
           case "lazy": {
             const innerType = schema._zod.innerType;
             this.process(innerType, params);
-            result2.ref = innerType;
+            result3.ref = innerType;
             break;
           }
           case "custom": {
@@ -15861,14 +15861,14 @@ var JSONSchemaGenerator = class {
     }
     const meta = this.metadataRegistry.get(schema);
     if (meta)
-      Object.assign(result2.schema, meta);
+      Object.assign(result3.schema, meta);
     if (this.io === "input" && isTransforming(schema)) {
-      delete result2.schema.examples;
-      delete result2.schema.default;
+      delete result3.schema.examples;
+      delete result3.schema.default;
     }
-    if (this.io === "input" && result2.schema._prefault)
-      (_a = result2.schema).default ?? (_a.default = result2.schema._prefault);
-    delete result2.schema._prefault;
+    if (this.io === "input" && result3.schema._prefault)
+      (_a = result3.schema).default ?? (_a.default = result3.schema._prefault);
+    delete result3.schema._prefault;
     const _result = this.seen.get(schema);
     return _result.schema;
   }
@@ -15987,11 +15987,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     for (const entry of [...this.seen.entries()].reverse()) {
       flattenRef(entry[0], { target: this.target });
     }
-    const result2 = {};
+    const result3 = {};
     if (this.target === "draft-2020-12") {
-      result2.$schema = "https://json-schema.org/draft/2020-12/schema";
+      result3.$schema = "https://json-schema.org/draft/2020-12/schema";
     } else if (this.target === "draft-7") {
-      result2.$schema = "http://json-schema.org/draft-07/schema#";
+      result3.$schema = "http://json-schema.org/draft-07/schema#";
     } else {
       console.warn(`Invalid target: ${this.target}`);
     }
@@ -15999,9 +15999,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const id = params.external.registry.get(schema)?.id;
       if (!id)
         throw new Error("Schema is missing an `id` property");
-      result2.$id = params.external.uri(id);
+      result3.$id = params.external.uri(id);
     }
-    Object.assign(result2, root.def);
+    Object.assign(result3, root.def);
     const defs = params.external?.defs ?? {};
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
@@ -16013,14 +16013,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     } else {
       if (Object.keys(defs).length > 0) {
         if (this.target === "draft-2020-12") {
-          result2.$defs = defs;
+          result3.$defs = defs;
         } else {
-          result2.definitions = defs;
+          result3.definitions = defs;
         }
       }
     }
     try {
-      return JSON.parse(JSON.stringify(result2));
+      return JSON.parse(JSON.stringify(result3));
     } catch (_err) {
       throw new Error("Error converting schema to JSON.");
     }
@@ -16224,21 +16224,21 @@ function objectFromShape(shape) {
 }
 function safeParse2(schema, data) {
   if (isZ4Schema(schema)) {
-    const result3 = safeParse(schema, data);
-    return result3;
+    const result4 = safeParse(schema, data);
+    return result4;
   }
   const v3Schema = schema;
-  const result2 = v3Schema.safeParse(data);
-  return result2;
+  const result3 = v3Schema.safeParse(data);
+  return result3;
 }
 async function safeParseAsync2(schema, data) {
   if (isZ4Schema(schema)) {
-    const result3 = await safeParseAsync(schema, data);
-    return result3;
+    const result4 = await safeParseAsync(schema, data);
+    return result4;
   }
   const v3Schema = schema;
-  const result2 = await v3Schema.safeParseAsync(data);
-  return result2;
+  const result3 = await v3Schema.safeParseAsync(data);
+  return result3;
 }
 function getObjectShape(schema) {
   if (!schema)
@@ -16289,24 +16289,24 @@ function normalizeObjectSchema(schema) {
   }
   return void 0;
 }
-function getParseErrorMessage(error2) {
-  if (error2 && typeof error2 === "object") {
-    if ("message" in error2 && typeof error2.message === "string") {
-      return error2.message;
+function getParseErrorMessage(error3) {
+  if (error3 && typeof error3 === "object") {
+    if ("message" in error3 && typeof error3.message === "string") {
+      return error3.message;
     }
-    if ("issues" in error2 && Array.isArray(error2.issues) && error2.issues.length > 0) {
-      const firstIssue = error2.issues[0];
+    if ("issues" in error3 && Array.isArray(error3.issues) && error3.issues.length > 0) {
+      const firstIssue = error3.issues[0];
       if (firstIssue && typeof firstIssue === "object" && "message" in firstIssue) {
         return String(firstIssue.message);
       }
     }
     try {
-      return JSON.stringify(error2);
+      return JSON.stringify(error3);
     } catch {
-      return String(error2);
+      return String(error3);
     }
   }
-  return String(error2);
+  return String(error3);
 }
 function getSchemaDescription(schema) {
   return schema.description;
@@ -19088,14 +19088,14 @@ function escapeLiteralCheckValue(literal2, refs) {
 }
 var ALPHA_NUMERIC = new Set("ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz0123456789");
 function escapeNonAlphaNumeric(source) {
-  let result2 = "";
+  let result3 = "";
   for (let i2 = 0; i2 < source.length; i2++) {
     if (!ALPHA_NUMERIC.has(source[i2])) {
-      result2 += "\\";
+      result3 += "\\";
     }
-    result2 += source[i2];
+    result3 += source[i2];
   }
-  return result2;
+  return result3;
 }
 function addFormat(schema, value, message, refs) {
   if (schema.format || schema.anyOf?.some((x) => x.format)) {
@@ -19492,7 +19492,7 @@ function parseNumberDef(def, refs) {
 // node_modules/zod-to-json-schema/dist/esm/parsers/object.js
 function parseObjectDef(def, refs) {
   const forceOptionalIntoNullable = refs.target === "openAi";
-  const result2 = {
+  const result3 = {
     type: "object",
     properties: {}
   };
@@ -19521,19 +19521,19 @@ function parseObjectDef(def, refs) {
     if (parsedDef === void 0) {
       continue;
     }
-    result2.properties[propName] = parsedDef;
+    result3.properties[propName] = parsedDef;
     if (!propOptional) {
       required2.push(propName);
     }
   }
   if (required2.length) {
-    result2.required = required2;
+    result3.required = required2;
   }
   const additionalProperties = decideAdditionalProperties(def, refs);
   if (additionalProperties !== void 0) {
-    result2.additionalProperties = additionalProperties;
+    result3.additionalProperties = additionalProperties;
   }
-  return result2;
+  return result3;
 }
 function decideAdditionalProperties(def, refs) {
   if (def.catchall._def.typeName !== "ZodNever") {
@@ -19897,11 +19897,11 @@ function getMethodLiteral(schema) {
   return value;
 }
 function parseWithCompat(schema, data) {
-  const result2 = safeParse2(schema, data);
-  if (!result2.success) {
-    throw result2.error;
+  const result3 = safeParse2(schema, data);
+  if (!result3.success) {
+    throw result3.error;
   }
-  return result2.data;
+  return result3.data;
 }
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
@@ -19958,8 +19958,8 @@ var Protocol = class {
                     resolver(message);
                   } else {
                     const errorMessage = message;
-                    const error2 = new McpError(errorMessage.error.code, errorMessage.error.message, errorMessage.error.data);
-                    resolver(error2);
+                    const error3 = new McpError(errorMessage.error.code, errorMessage.error.message, errorMessage.error.data);
+                    resolver(error3);
                   }
                 } else {
                   const messageType = queuedMessage.type === "response" ? "Response" : "Error";
@@ -19979,12 +19979,12 @@ var Protocol = class {
             return await handleTaskResult();
           }
           if (isTerminal(task.status)) {
-            const result2 = await this._taskStore.getTaskResult(taskId, extra.sessionId);
+            const result3 = await this._taskStore.getTaskResult(taskId, extra.sessionId);
             this._clearTaskQueue(taskId);
             return {
-              ...result2,
+              ...result3,
               _meta: {
-                ...result2._meta,
+                ...result3._meta,
                 [RELATED_TASK_META_KEY]: {
                   taskId
                 }
@@ -20003,8 +20003,8 @@ var Protocol = class {
             nextCursor,
             _meta: {}
           };
-        } catch (error2) {
-          throw new McpError(ErrorCode.InvalidParams, `Failed to list tasks: ${error2 instanceof Error ? error2.message : String(error2)}`);
+        } catch (error3) {
+          throw new McpError(ErrorCode.InvalidParams, `Failed to list tasks: ${error3 instanceof Error ? error3.message : String(error3)}`);
         }
       });
       this.setRequestHandler(CancelTaskRequestSchema, async (request, extra) => {
@@ -20026,11 +20026,11 @@ var Protocol = class {
             _meta: {},
             ...cancelledTask
           };
-        } catch (error2) {
-          if (error2 instanceof McpError) {
-            throw error2;
+        } catch (error3) {
+          if (error3 instanceof McpError) {
+            throw error3;
           }
-          throw new McpError(ErrorCode.InvalidRequest, `Failed to cancel task: ${error2 instanceof Error ? error2.message : String(error2)}`);
+          throw new McpError(ErrorCode.InvalidRequest, `Failed to cancel task: ${error3 instanceof Error ? error3.message : String(error3)}`);
         }
       });
     }
@@ -20091,9 +20091,9 @@ var Protocol = class {
       this._onclose();
     };
     const _onerror = this.transport?.onerror;
-    this._transport.onerror = (error2) => {
-      _onerror?.(error2);
-      this._onerror(error2);
+    this._transport.onerror = (error3) => {
+      _onerror?.(error3);
+      this._onerror(error3);
     };
     const _onmessage = this._transport?.onmessage;
     this._transport.onmessage = (message, extra) => {
@@ -20124,22 +20124,22 @@ var Protocol = class {
       controller.abort();
     }
     this._requestHandlerAbortControllers.clear();
-    const error2 = McpError.fromError(ErrorCode.ConnectionClosed, "Connection closed");
+    const error3 = McpError.fromError(ErrorCode.ConnectionClosed, "Connection closed");
     this._transport = void 0;
     this.onclose?.();
     for (const handler of responseHandlers.values()) {
-      handler(error2);
+      handler(error3);
     }
   }
-  _onerror(error2) {
-    this.onerror?.(error2);
+  _onerror(error3) {
+    this.onerror?.(error3);
   }
   _onnotification(notification) {
     const handler = this._notificationHandlers.get(notification.method) ?? this.fallbackNotificationHandler;
     if (handler === void 0) {
       return;
     }
-    Promise.resolve().then(() => handler(notification)).catch((error2) => this._onerror(new Error(`Uncaught error in notification handler: ${error2}`)));
+    Promise.resolve().then(() => handler(notification)).catch((error3) => this._onerror(new Error(`Uncaught error in notification handler: ${error3}`)));
   }
   _onrequest(request, extra) {
     const handler = this._requestHandlers.get(request.method) ?? this.fallbackRequestHandler;
@@ -20159,9 +20159,9 @@ var Protocol = class {
           type: "error",
           message: errorResponse,
           timestamp: Date.now()
-        }, capturedTransport?.sessionId).catch((error2) => this._onerror(new Error(`Failed to enqueue error response: ${error2}`)));
+        }, capturedTransport?.sessionId).catch((error3) => this._onerror(new Error(`Failed to enqueue error response: ${error3}`)));
       } else {
-        capturedTransport?.send(errorResponse).catch((error2) => this._onerror(new Error(`Failed to send an error response: ${error2}`)));
+        capturedTransport?.send(errorResponse).catch((error3) => this._onerror(new Error(`Failed to send an error response: ${error3}`)));
       }
       return;
     }
@@ -20209,12 +20209,12 @@ var Protocol = class {
       if (taskCreationParams) {
         this.assertTaskHandlerCapability(request.method);
       }
-    }).then(() => handler(request, fullExtra)).then(async (result2) => {
+    }).then(() => handler(request, fullExtra)).then(async (result3) => {
       if (abortController.signal.aborted) {
         return;
       }
       const response = {
-        result: result2,
+        result: result3,
         jsonrpc: "2.0",
         id: request.id
       };
@@ -20227,7 +20227,7 @@ var Protocol = class {
       } else {
         await capturedTransport?.send(response);
       }
-    }, async (error2) => {
+    }, async (error3) => {
       if (abortController.signal.aborted) {
         return;
       }
@@ -20235,9 +20235,9 @@ var Protocol = class {
         jsonrpc: "2.0",
         id: request.id,
         error: {
-          code: Number.isSafeInteger(error2["code"]) ? error2["code"] : ErrorCode.InternalError,
-          message: error2.message ?? "Internal error",
-          ...error2["data"] !== void 0 && { data: error2["data"] }
+          code: Number.isSafeInteger(error3["code"]) ? error3["code"] : ErrorCode.InternalError,
+          message: error3.message ?? "Internal error",
+          ...error3["data"] !== void 0 && { data: error3["data"] }
         }
       };
       if (relatedTaskId && this._taskMessageQueue) {
@@ -20249,7 +20249,7 @@ var Protocol = class {
       } else {
         await capturedTransport?.send(errorResponse);
       }
-    }).catch((error2) => this._onerror(new Error(`Failed to send response: ${error2}`))).finally(() => {
+    }).catch((error3) => this._onerror(new Error(`Failed to send response: ${error3}`))).finally(() => {
       if (this._requestHandlerAbortControllers.get(request.id) === abortController) {
         this._requestHandlerAbortControllers.delete(request.id);
       }
@@ -20268,11 +20268,11 @@ var Protocol = class {
     if (timeoutInfo && responseHandler && timeoutInfo.resetTimeoutOnProgress) {
       try {
         this._resetTimeout(messageId);
-      } catch (error2) {
+      } catch (error3) {
         this._responseHandlers.delete(messageId);
         this._progressHandlers.delete(messageId);
         this._cleanupTimeout(messageId);
-        responseHandler(error2);
+        responseHandler(error3);
         return;
       }
     }
@@ -20286,8 +20286,8 @@ var Protocol = class {
       if (isJSONRPCResultResponse(response)) {
         resolver(response);
       } else {
-        const error2 = new McpError(response.error.code, response.error.message, response.error.data);
-        resolver(error2);
+        const error3 = new McpError(response.error.code, response.error.message, response.error.data);
+        resolver(error3);
       }
       return;
     }
@@ -20300,9 +20300,9 @@ var Protocol = class {
     this._cleanupTimeout(messageId);
     let isTaskResponse = false;
     if (isJSONRPCResultResponse(response) && response.result && typeof response.result === "object") {
-      const result2 = response.result;
-      if (result2.task && typeof result2.task === "object") {
-        const task = result2.task;
+      const result3 = response.result;
+      if (result3.task && typeof result3.task === "object") {
+        const task = result3.task;
         if (typeof task.taskId === "string") {
           isTaskResponse = true;
           this._taskProgressTokens.set(task.taskId, messageId);
@@ -20315,8 +20315,8 @@ var Protocol = class {
     if (isJSONRPCResultResponse(response)) {
       handler(response);
     } else {
-      const error2 = McpError.fromError(response.error.code, response.error.message, response.error.data);
-      handler(error2);
+      const error3 = McpError.fromError(response.error.code, response.error.message, response.error.data);
+      handler(error3);
     }
   }
   get transport() {
@@ -20359,12 +20359,12 @@ var Protocol = class {
     const { task } = options ?? {};
     if (!task) {
       try {
-        const result2 = await this.request(request, resultSchema, options);
-        yield { type: "result", result: result2 };
-      } catch (error2) {
+        const result3 = await this.request(request, resultSchema, options);
+        yield { type: "result", result: result3 };
+      } catch (error3) {
         yield {
           type: "error",
-          error: error2 instanceof McpError ? error2 : new McpError(ErrorCode.InternalError, String(error2))
+          error: error3 instanceof McpError ? error3 : new McpError(ErrorCode.InternalError, String(error3))
         };
       }
       return;
@@ -20383,8 +20383,8 @@ var Protocol = class {
         yield { type: "taskStatus", task: task2 };
         if (isTerminal(task2.status)) {
           if (task2.status === "completed") {
-            const result2 = await this.getTaskResult({ taskId }, resultSchema, options);
-            yield { type: "result", result: result2 };
+            const result3 = await this.getTaskResult({ taskId }, resultSchema, options);
+            yield { type: "result", result: result3 };
           } else if (task2.status === "failed") {
             yield {
               type: "error",
@@ -20399,18 +20399,18 @@ var Protocol = class {
           return;
         }
         if (task2.status === "input_required") {
-          const result2 = await this.getTaskResult({ taskId }, resultSchema, options);
-          yield { type: "result", result: result2 };
+          const result3 = await this.getTaskResult({ taskId }, resultSchema, options);
+          yield { type: "result", result: result3 };
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve12) => setTimeout(resolve12, pollInterval));
+        await new Promise((resolve13) => setTimeout(resolve13, pollInterval));
         options?.signal?.throwIfAborted();
       }
-    } catch (error2) {
+    } catch (error3) {
       yield {
         type: "error",
-        error: error2 instanceof McpError ? error2 : new McpError(ErrorCode.InternalError, String(error2))
+        error: error3 instanceof McpError ? error3 : new McpError(ErrorCode.InternalError, String(error3))
       };
     }
   }
@@ -20421,9 +20421,9 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve12, reject) => {
-      const earlyReject = (error2) => {
-        reject(error2);
+    return new Promise((resolve13, reject) => {
+      const earlyReject = (error3) => {
+        reject(error3);
       };
       if (!this._transport) {
         earlyReject(new Error("Not connected"));
@@ -20483,9 +20483,9 @@ var Protocol = class {
             requestId: messageId,
             reason: String(reason)
           }
-        }, { relatedRequestId, resumptionToken, onresumptiontoken }).catch((error3) => this._onerror(new Error(`Failed to send cancellation: ${error3}`)));
-        const error2 = reason instanceof McpError ? reason : new McpError(ErrorCode.RequestTimeout, String(reason));
-        reject(error2);
+        }, { relatedRequestId, resumptionToken, onresumptiontoken }).catch((error4) => this._onerror(new Error(`Failed to send cancellation: ${error4}`)));
+        const error3 = reason instanceof McpError ? reason : new McpError(ErrorCode.RequestTimeout, String(reason));
+        reject(error3);
       };
       this._responseHandlers.set(messageId, (response) => {
         if (options?.signal?.aborted) {
@@ -20499,10 +20499,10 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve12(parseResult.data);
+            resolve13(parseResult.data);
           }
-        } catch (error2) {
-          reject(error2);
+        } catch (error3) {
+          reject(error3);
         }
       });
       options?.signal?.addEventListener("abort", () => {
@@ -20526,14 +20526,14 @@ var Protocol = class {
           type: "request",
           message: jsonrpcRequest,
           timestamp: Date.now()
-        }).catch((error2) => {
+        }).catch((error3) => {
           this._cleanupTimeout(messageId);
-          reject(error2);
+          reject(error3);
         });
       } else {
-        this._transport.send(jsonrpcRequest, { relatedRequestId, resumptionToken, onresumptiontoken }).catch((error2) => {
+        this._transport.send(jsonrpcRequest, { relatedRequestId, resumptionToken, onresumptiontoken }).catch((error3) => {
           this._cleanupTimeout(messageId);
-          reject(error2);
+          reject(error3);
         });
       }
     });
@@ -20626,7 +20626,7 @@ var Protocol = class {
             }
           };
         }
-        this._transport?.send(jsonrpcNotification2, options).catch((error2) => this._onerror(error2));
+        this._transport?.send(jsonrpcNotification2, options).catch((error3) => this._onerror(error3));
       });
       return;
     }
@@ -20760,12 +20760,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve12, reject) => {
+    return new Promise((resolve13, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve12, interval);
+      const timeoutId = setTimeout(resolve13, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -20794,8 +20794,8 @@ var Protocol = class {
         }
         return task;
       },
-      storeTaskResult: async (taskId, status, result2) => {
-        await taskStore.storeTaskResult(taskId, status, result2, sessionId);
+      storeTaskResult: async (taskId, status, result3) => {
+        await taskStore.storeTaskResult(taskId, status, result3, sessionId);
         const task = await taskStore.getTask(taskId, sessionId);
         if (task) {
           const notification = TaskStatusNotificationSchema.parse({
@@ -20842,20 +20842,20 @@ function isPlainObject2(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 function mergeCapabilities(base, additional) {
-  const result2 = { ...base };
+  const result3 = { ...base };
   for (const key in additional) {
     const k = key;
     const addValue2 = additional[k];
     if (addValue2 === void 0)
       continue;
-    const baseValue = result2[k];
+    const baseValue = result3[k];
     if (isPlainObject2(baseValue) && isPlainObject2(addValue2)) {
-      result2[k] = { ...baseValue, ...addValue2 };
+      result3[k] = { ...baseValue, ...addValue2 };
     } else {
-      result2[k] = addValue2;
+      result3[k] = addValue2;
     }
   }
-  return result2;
+  return result3;
 }
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
@@ -21262,16 +21262,16 @@ var Server = class extends Protocol {
           throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage}`);
         }
         const { params } = validatedRequest.data;
-        const result2 = await Promise.resolve(handler(request, extra));
+        const result3 = await Promise.resolve(handler(request, extra));
         if (params.task) {
-          const taskValidationResult = safeParse2(CreateTaskResultSchema, result2);
+          const taskValidationResult = safeParse2(CreateTaskResultSchema, result3);
           if (!taskValidationResult.success) {
             const errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
             throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
           }
           return taskValidationResult.data;
         }
-        const validationResult = safeParse2(CallToolResultSchema, result2);
+        const validationResult = safeParse2(CallToolResultSchema, result3);
         if (!validationResult.success) {
           const errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
           throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call result: ${errorMessage}`);
@@ -21480,22 +21480,22 @@ var Server = class extends Protocol {
           throw new Error("Client does not support form elicitation.");
         }
         const formParams = params.mode === "form" ? params : { ...params, mode: "form" };
-        const result2 = await this.request({ method: "elicitation/create", params: formParams }, ElicitResultSchema, options);
-        if (result2.action === "accept" && result2.content && formParams.requestedSchema) {
+        const result3 = await this.request({ method: "elicitation/create", params: formParams }, ElicitResultSchema, options);
+        if (result3.action === "accept" && result3.content && formParams.requestedSchema) {
           try {
             const validator = this._jsonSchemaValidator.getValidator(formParams.requestedSchema);
-            const validationResult = validator(result2.content);
+            const validationResult = validator(result3.content);
             if (!validationResult.valid) {
               throw new McpError(ErrorCode.InvalidParams, `Elicitation response content does not match requested schema: ${validationResult.errorMessage}`);
             }
-          } catch (error2) {
-            if (error2 instanceof McpError) {
-              throw error2;
+          } catch (error3) {
+            if (error3 instanceof McpError) {
+              throw error3;
             }
-            throw new McpError(ErrorCode.InternalError, `Error validating elicitation response: ${error2 instanceof Error ? error2.message : String(error2)}`);
+            throw new McpError(ErrorCode.InternalError, `Error validating elicitation response: ${error3 instanceof Error ? error3.message : String(error3)}`);
           }
         }
-        return result2;
+        return result3;
       }
     }
   }
@@ -21621,9 +21621,9 @@ function issueToolNameWarning(name2, warnings) {
   }
 }
 function validateAndWarnToolName(name2) {
-  const result2 = validateToolName(name2);
-  issueToolNameWarning(name2, result2.warnings);
-  return result2.isValid;
+  const result3 = validateToolName(name2);
+  issueToolNameWarning(name2, result3.warnings);
+  return result3.isValid;
 }
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/mcp-server.js
@@ -21745,19 +21745,19 @@ var McpServer = class {
           return await this.handleAutomaticTaskPolling(tool, request, extra);
         }
         const args2 = await this.validateToolInput(tool, request.params.arguments, request.params.name);
-        const result2 = await this.executeToolHandler(tool, args2, extra);
+        const result3 = await this.executeToolHandler(tool, args2, extra);
         if (isTaskRequest) {
-          return result2;
+          return result3;
         }
-        await this.validateToolOutput(tool, result2, request.params.name);
-        return result2;
-      } catch (error2) {
-        if (error2 instanceof McpError) {
-          if (error2.code === ErrorCode.UrlElicitationRequired) {
-            throw error2;
+        await this.validateToolOutput(tool, result3, request.params.name);
+        return result3;
+      } catch (error3) {
+        if (error3 instanceof McpError) {
+          if (error3.code === ErrorCode.UrlElicitationRequired) {
+            throw error3;
           }
         }
-        return this.createToolError(error2 instanceof Error ? error2.message : String(error2));
+        return this.createToolError(error3 instanceof Error ? error3.message : String(error3));
       }
     });
     this._toolHandlersInitialized = true;
@@ -21790,8 +21790,8 @@ var McpServer = class {
     const schemaToParse = inputObj ?? tool.inputSchema;
     const parseResult = await safeParseAsync2(schemaToParse, args2);
     if (!parseResult.success) {
-      const error2 = "error" in parseResult ? parseResult.error : "Unknown error";
-      const errorMessage = getParseErrorMessage(error2);
+      const error3 = "error" in parseResult ? parseResult.error : "Unknown error";
+      const errorMessage = getParseErrorMessage(error3);
       throw new McpError(ErrorCode.InvalidParams, `Input validation error: Invalid arguments for tool ${toolName}: ${errorMessage}`);
     }
     return parseResult.data;
@@ -21799,24 +21799,24 @@ var McpServer = class {
   /**
    * Validates tool output against the tool's output schema.
    */
-  async validateToolOutput(tool, result2, toolName) {
+  async validateToolOutput(tool, result3, toolName) {
     if (!tool.outputSchema) {
       return;
     }
-    if (!("content" in result2)) {
+    if (!("content" in result3)) {
       return;
     }
-    if (result2.isError) {
+    if (result3.isError) {
       return;
     }
-    if (!result2.structuredContent) {
+    if (!result3.structuredContent) {
       throw new McpError(ErrorCode.InvalidParams, `Output validation error: Tool ${toolName} has an output schema but no structured content was provided`);
     }
     const outputObj = normalizeObjectSchema(tool.outputSchema);
-    const parseResult = await safeParseAsync2(outputObj, result2.structuredContent);
+    const parseResult = await safeParseAsync2(outputObj, result3.structuredContent);
     if (!parseResult.success) {
-      const error2 = "error" in parseResult ? parseResult.error : "Unknown error";
-      const errorMessage = getParseErrorMessage(error2);
+      const error3 = "error" in parseResult ? parseResult.error : "Unknown error";
+      const errorMessage = getParseErrorMessage(error3);
       throw new McpError(ErrorCode.InvalidParams, `Output validation error: Invalid structured content for tool ${toolName}: ${errorMessage}`);
     }
   }
@@ -21865,7 +21865,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve12) => setTimeout(resolve12, pollInterval));
+      await new Promise((resolve13) => setTimeout(resolve13, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -21957,8 +21957,8 @@ var McpServer = class {
         if (!template.resourceTemplate.listCallback) {
           continue;
         }
-        const result2 = await template.resourceTemplate.listCallback(extra);
-        for (const resource of result2.resources) {
+        const result3 = await template.resourceTemplate.listCallback(extra);
+        for (const resource of result3.resources) {
           templateResources.push({
             ...template.metadata,
             // the defined resource metadata should override the template metadata if present
@@ -22028,8 +22028,8 @@ var McpServer = class {
         const argsObj = normalizeObjectSchema(prompt.argsSchema);
         const parseResult = await safeParseAsync2(argsObj, request.params.arguments);
         if (!parseResult.success) {
-          const error2 = "error" in parseResult ? parseResult.error : "Unknown error";
-          const errorMessage = getParseErrorMessage(error2);
+          const error3 = "error" in parseResult ? parseResult.error : "Unknown error";
+          const errorMessage = getParseErrorMessage(error3);
           throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage}`);
         }
         const args2 = parseResult.data;
@@ -22475,8 +22475,8 @@ var StdioServerTransport = class {
       this._readBuffer.append(chunk);
       this.processReadBuffer();
     };
-    this._onerror = (error2) => {
-      this.onerror?.(error2);
+    this._onerror = (error3) => {
+      this.onerror?.(error3);
     };
   }
   /**
@@ -22498,8 +22498,8 @@ var StdioServerTransport = class {
           break;
         }
         this.onmessage?.(message);
-      } catch (error2) {
-        this.onerror?.(error2);
+      } catch (error3) {
+        this.onerror?.(error3);
       }
     }
   }
@@ -22514,12 +22514,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve12) => {
+    return new Promise((resolve13) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve12();
+        resolve13();
       } else {
-        this._stdout.once("drain", resolve12);
+        this._stdout.once("drain", resolve13);
       }
     });
   }
@@ -22529,8 +22529,8 @@ var StdioServerTransport = class {
 import { resolve as resolve4 } from "node:path";
 
 // src/harness/sync.ts
-import { mkdir as mkdir4, readFile as readFile3, unlink as unlink2 } from "node:fs/promises";
-import { basename, dirname as dirname5, join as join6 } from "node:path";
+import { access, mkdir as mkdir5, readFile as readFile4, unlink as unlink2 } from "node:fs/promises";
+import { basename, dirname as dirname6, join as join7 } from "node:path";
 
 // src/fsUtil.ts
 import { mkdir, open, rename, stat, unlink, writeFile } from "node:fs/promises";
@@ -22781,13 +22781,13 @@ function fetchFromLocal(harnessIds, libraryDir) {
   return { harnesses, warnings };
 }
 function fetchHarnesses(params) {
-  const result2 = fetchFromLocal(params.harnessIds, params.libraryDir);
+  const result3 = fetchFromLocal(params.harnessIds, params.libraryDir);
   if (params.repoUrl) {
-    result2.warnings.unshift(
+    result3.warnings.unshift(
       `repoUrl(${params.repoUrl})\uC774 \uC9C0\uC815\uB418\uC5C8\uC9C0\uB9CC git \uAE30\uBC18 \uD558\uB124\uC2A4 fetch\uB294 \uC544\uC9C1 \uAD6C\uD604\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4(\uB85C\uB4DC\uB9F5 \xA711-2). \uB85C\uCEEC \uD558\uB124\uC2A4 \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB85C \uD3F4\uBC31\uD569\uB2C8\uB2E4.`
     );
   }
-  return result2;
+  return result3;
 }
 
 // src/harness/libraryPath.ts
@@ -23536,9 +23536,9 @@ var ALL_RULES = [
   infraDocker,
   infraGithubActions
 ];
-function flattenDetected(result2) {
-  if (result2 === null) return [];
-  return Array.isArray(result2) ? result2 : [result2];
+function flattenDetected(result3) {
+  if (result3 === null) return [];
+  return Array.isArray(result3) ? result3 : [result3];
 }
 
 // src/harness/stackDetector.ts
@@ -23641,14 +23641,51 @@ function detectStack(projectPath, platform = process.platform) {
   return { languages, frameworks, dataStores, buildTools, infra, harnessIds, commands };
 }
 
+// src/harness/installManifest.ts
+import { mkdir as mkdir4, readFile as readFile3 } from "node:fs/promises";
+import { dirname as dirname5, join as join6 } from "node:path";
+function installManifestPath(projectPath) {
+  return join6(projectPath, "sugo", "install-manifest.json");
+}
+async function loadInstallManifest(projectPath) {
+  return readFile3(installManifestPath(projectPath), "utf8").then((raw) => JSON.parse(raw), () => null);
+}
+async function saveInstallManifest(manifest) {
+  const path = installManifestPath(manifest.projectPath);
+  const content = `${JSON.stringify({ ...manifest, managedFiles: [...new Set(manifest.managedFiles)].sort() }, null, 2)}
+`;
+  const existing = await readFile3(path, "utf8").catch(() => null);
+  if (existing === content) return;
+  await mkdir4(dirname5(path), { recursive: true });
+  await atomicWriteFile(path, content);
+}
+async function recordManagedFile(projectPath, relPath) {
+  const manifest = await loadInstallManifest(projectPath);
+  if (!manifest || manifest.managedFiles.includes(relPath)) return;
+  manifest.managedFiles.push(relPath);
+  await saveInstallManifest(manifest);
+}
+
 // src/harness/sync.ts
 async function writeTextIfChanged(path, content) {
-  const existing = await readFile3(path, "utf-8").catch(() => null);
+  const existing = await readFile4(path, "utf-8").catch(() => null);
   if (existing === content) return;
   await atomicWriteFile(path, content);
 }
 async function syncProjectHarness(args2) {
   const { projectPath } = args2;
+  const sugoDir = projectSugoDir(projectPath);
+  const rootClaudePath = join7(projectPath, "CLAUDE.md");
+  const rootAgentsPath = join7(projectPath, "AGENTS.md");
+  const existingManifest = await loadInstallManifest(projectPath);
+  const manifest = existingManifest ?? {
+    version: 1,
+    projectPath,
+    sugoDirExisted: await access(sugoDir).then(() => true, () => false),
+    rootClaudeOriginal: await readFile4(rootClaudePath, "utf8").catch(() => null),
+    rootAgentsOriginal: await readFile4(rootAgentsPath, "utf8").catch(() => null),
+    managedFiles: []
+  };
   const existingConfig = await loadProjectConfig(projectPath);
   const existingEntry = await findRegistryEntry(projectPath);
   const workspace = args2.workspace ?? existingEntry?.workspace;
@@ -23658,36 +23695,33 @@ async function syncProjectHarness(args2) {
   const { harnesses, warnings: fetchWarnings } = fetchHarnesses({ harnessIds, libraryDir, repoUrl: args2.repoUrl });
   const projectName = basename(projectPath);
   const composeResult = compose({ harnesses, projectName, workspace, detectedStack, fetchWarnings });
-  const sugoDir = projectSugoDir(projectPath);
-  const claudeMdPath = join6(sugoDir, "CLAUDE.md");
-  await mkdir4(sugoDir, { recursive: true });
-  const existingClaudeMd = await readFile3(claudeMdPath, "utf-8").catch(() => null);
+  const claudeMdPath = join7(sugoDir, "CLAUDE.md");
+  await mkdir5(sugoDir, { recursive: true });
+  const existingClaudeMd = await readFile4(claudeMdPath, "utf-8").catch(() => null);
   const claudeMdResult = writeClaudeIfChanged(existingClaudeMd, composeResult.claudeMd, (/* @__PURE__ */ new Date()).toISOString());
   if (claudeMdResult.changed) await atomicWriteFile(claudeMdPath, claudeMdResult.content);
   for (const file of composeResult.harnessFiles) {
-    const fullPath = join6(projectPath, file.relPath);
-    await mkdir4(dirname5(fullPath), { recursive: true });
+    const fullPath = join7(projectPath, file.relPath);
+    await mkdir5(dirname6(fullPath), { recursive: true });
     await writeTextIfChanged(fullPath, file.content);
   }
-  const claudeRulesDir = join6(projectPath, ".claude", "rules");
-  await mkdir4(claudeRulesDir, { recursive: true });
+  const claudeRulesDir = join7(projectPath, ".claude", "rules");
+  await mkdir5(claudeRulesDir, { recursive: true });
   const effectiveRuleFiles = buildEffectiveClaudeRuleFiles(harnesses);
   for (const ruleFile of effectiveRuleFiles) {
-    await writeTextIfChanged(join6(projectPath, ruleFile.relPath), ruleFile.content);
+    await writeTextIfChanged(join7(projectPath, ruleFile.relPath), ruleFile.content);
   }
   const currentRulePaths = new Set(effectiveRuleFiles.map((file) => file.relPath));
   const previousIds = existingConfig?.appliedHarnesses.map((h) => h.id) ?? [];
   for (const staleId of previousIds.filter((id) => !currentRulePaths.has(buildClaudeRuleFile(id, "").relPath))) {
-    const stalePath = join6(projectPath, buildClaudeRuleFile(staleId, "").relPath);
+    const stalePath = join7(projectPath, buildClaudeRuleFile(staleId, "").relPath);
     await unlink2(stalePath).catch(() => {
     });
   }
-  const rootClaudePath = join6(projectPath, "CLAUDE.md");
-  const existingRootClaude = await readFile3(rootClaudePath, "utf-8").catch(() => null);
+  const existingRootClaude = await readFile4(rootClaudePath, "utf-8").catch(() => null);
   const rootClaude = mergeRootClaudeReference(existingRootClaude, harnesses.map((h) => h.id));
   if (rootClaude.changed) await atomicWriteFile(rootClaudePath, rootClaude.content);
-  const rootAgentsPath = join6(projectPath, "AGENTS.md");
-  const existingRootAgents = await readFile3(rootAgentsPath, "utf-8").catch(() => null);
+  const existingRootAgents = await readFile4(rootAgentsPath, "utf-8").catch(() => null);
   const rootAgents = mergeRootAgentsReference(existingRootAgents);
   if (rootAgents.changed) await atomicWriteFile(rootAgentsPath, rootAgents.content);
   const now = (/* @__PURE__ */ new Date()).toISOString();
@@ -23716,6 +23750,14 @@ async function syncProjectHarness(args2) {
   const unchanged = existingConfig !== null && JSON.stringify({ ...candidateConfig, lastUpdated: existingConfig.lastUpdated }) === JSON.stringify(existingConfig);
   const config2 = unchanged ? existingConfig : candidateConfig;
   if (!unchanged) await saveProjectConfig(config2);
+  manifest.managedFiles = [
+    ...manifest.managedFiles,
+    "sugo/CLAUDE.md",
+    "sugo/config.json",
+    ...composeResult.harnessFiles.map((file) => file.relPath),
+    ...effectiveRuleFiles.map((file) => file.relPath)
+  ];
+  await saveInstallManifest(manifest);
   await registerProject({ path: projectPath, name: projectName, registeredAt: config2.registeredAt, workspace });
   return {
     projectName,
@@ -23730,15 +23772,15 @@ async function syncProjectHarness(args2) {
 }
 
 // src/hulk/workspace.ts
-import { mkdir as mkdir7, readdir as readdir2, readFile as readFile8, rm } from "node:fs/promises";
+import { mkdir as mkdir8, readdir as readdir2, readFile as readFile9, rm } from "node:fs/promises";
 import { isAbsolute as isAbsolute3, relative as relative3, resolve as resolve3 } from "node:path";
 
 // src/dashboard/config.ts
 import { userInfo } from "node:os";
-import { readFile as readFile4 } from "node:fs/promises";
-import { join as join7 } from "node:path";
+import { readFile as readFile5 } from "node:fs/promises";
+import { join as join8 } from "node:path";
 function settingsFilePath() {
-  return join7(sugoHomeDir(), ".claude", "sugo", "settings.json");
+  return join8(sugoHomeDir(), ".claude", "sugo", "settings.json");
 }
 function currentUsername() {
   try {
@@ -23759,7 +23801,7 @@ async function resolveDashboardConfig() {
     };
   }
   try {
-    const raw = await readFile4(settingsFilePath(), "utf-8");
+    const raw = await readFile5(settingsFilePath(), "utf-8");
     const parsed = JSON.parse(raw);
     const d = parsed.dashboard;
     if (d?.enabled && d.apiUrl) {
@@ -23771,50 +23813,50 @@ async function resolveDashboardConfig() {
 }
 
 // src/dashboard/retryQueue.ts
-import { mkdir as mkdir6, readFile as readFile6 } from "node:fs/promises";
+import { mkdir as mkdir7, readFile as readFile7 } from "node:fs/promises";
 
 // src/work/storage.ts
-import { copyFile, mkdir as mkdir5, readdir, readFile as readFile5, writeFile as writeFile2 } from "node:fs/promises";
-import { join as join8, relative } from "node:path";
+import { copyFile, mkdir as mkdir6, readdir, readFile as readFile6, writeFile as writeFile2 } from "node:fs/promises";
+import { join as join9, relative } from "node:path";
 function workRootDir() {
-  return join8(sugoHomeDir(), ".claude", "sugo", "work");
+  return join9(sugoHomeDir(), ".claude", "sugo", "work");
 }
 function legacyHulkRootDir() {
-  return join8(sugoHomeDir(), ".claude", "sugo", "hulk");
+  return join9(sugoHomeDir(), ".claude", "sugo", "hulk");
 }
 var MIGRATION_MARKER = ".hulk-migrated";
 function workspaceDir(workspace) {
-  return join8(workRootDir(), workspace);
+  return join9(workRootDir(), workspace);
 }
 function workspaceFilePath(workspace) {
-  return join8(workspaceDir(workspace), "workspace.json");
+  return join9(workspaceDir(workspace), "workspace.json");
 }
 function tasksFilePath(workspace) {
-  return join8(workspaceDir(workspace), "tasks.json");
+  return join9(workspaceDir(workspace), "tasks.json");
 }
 function tasksLockPath(workspace) {
   return `${tasksFilePath(workspace)}.lock`;
 }
 function checkpointsDir(workspace) {
-  return join8(workspaceDir(workspace), "checkpoints");
+  return join9(workspaceDir(workspace), "checkpoints");
 }
 function specsDir(workspace) {
-  return join8(workspaceDir(workspace), "specs");
+  return join9(workspaceDir(workspace), "specs");
 }
 function historyDir(workspace) {
-  return join8(workspaceDir(workspace), "history");
+  return join9(workspaceDir(workspace), "history");
 }
 function memoryFilePath(workspace) {
-  return join8(workspaceDir(workspace), "memory.md");
+  return join9(workspaceDir(workspace), "memory.md");
 }
 function roadmapFilePath(workspace) {
-  return join8(workspaceDir(workspace), "roadmap.json");
+  return join9(workspaceDir(workspace), "roadmap.json");
 }
 function roadmapLockPath(workspace) {
   return `${roadmapFilePath(workspace)}.lock`;
 }
 function syncRetryQueuePath() {
-  return join8(workRootDir(), "sync-retry-queue.json");
+  return join9(workRootDir(), "sync-retry-queue.json");
 }
 function syncRetryQueueLockPath() {
   return `${syncRetryQueuePath()}.lock`;
@@ -23827,7 +23869,7 @@ async function listFilesRecursively(dir, base = dir, acc = []) {
     return acc;
   }
   for (const entry of entries) {
-    const full = join8(dir, entry.name);
+    const full = join9(dir, entry.name);
     if (entry.isDirectory()) await listFilesRecursively(full, base, acc);
     else acc.push(relative(base, full));
   }
@@ -23835,7 +23877,7 @@ async function listFilesRecursively(dir, base = dir, acc = []) {
 }
 async function fileExists(path) {
   try {
-    await readFile5(path);
+    await readFile6(path);
     return true;
   } catch (err2) {
     return err2.code === "EISDIR";
@@ -23846,7 +23888,7 @@ async function migrateWorkDataDir() {
   const workRoot = workRootDir();
   const legacyRoot = legacyHulkRootDir();
   try {
-    if (await fileExists(join8(workRoot, MIGRATION_MARKER))) {
+    if (await fileExists(join9(workRoot, MIGRATION_MARKER))) {
       return { ...empty, alreadyMigrated: true };
     }
     const legacyFiles = await listFilesRecursively(legacyRoot);
@@ -23861,23 +23903,23 @@ async function migrateWorkDataDir() {
     let skipped = 0;
     let failures = 0;
     for (const rel of legacyFiles) {
-      const target = join8(workRoot, rel);
+      const target = join9(workRoot, rel);
       try {
         if (await fileExists(target)) {
           skipped++;
           continue;
         }
-        await mkdir5(join8(target, ".."), { recursive: true });
-        await copyFile(join8(legacyRoot, rel), target);
+        await mkdir6(join9(target, ".."), { recursive: true });
+        await copyFile(join9(legacyRoot, rel), target);
         copied++;
       } catch {
         failures++;
       }
     }
     if (failures === 0) {
-      await mkdir5(workRoot, { recursive: true });
+      await mkdir6(workRoot, { recursive: true });
       await writeFile2(
-        join8(workRoot, MIGRATION_MARKER),
+        join9(workRoot, MIGRATION_MARKER),
         JSON.stringify({ migratedAt: (/* @__PURE__ */ new Date()).toISOString(), copied, skipped, failures }, null, 2)
       );
       return { migrated: true, alreadyMigrated: false, copied, skipped, failures };
@@ -23889,7 +23931,7 @@ async function migrateWorkDataDir() {
 }
 
 // src/dashboard/retryQueue.ts
-import { dirname as dirname6 } from "node:path";
+import { dirname as dirname7 } from "node:path";
 var MAX_RETRY_QUEUE_ITEMS = 100;
 var MAX_RETRY_ATTEMPTS = 5;
 function discard(file, item, cause) {
@@ -23899,24 +23941,24 @@ function discard(file, item, cause) {
   file.discardedReasons[reason] = (file.discardedReasons[reason] ?? 0) + 1;
   console.warn(`[sugo] sync item discarded (${item.endpoint}): ${reason}`);
 }
-function failureFields(result2) {
+function failureFields(result3) {
   return {
-    status: result2.permanent ? "permanent_failure" : "pending",
-    lastHttpStatus: result2.httpStatus,
-    lastFailureReason: result2.reason ?? "delivery failed",
+    status: result3.permanent ? "permanent_failure" : "pending",
+    lastHttpStatus: result3.httpStatus,
+    lastFailureReason: result3.reason ?? "delivery failed",
     lastFailureAt: (/* @__PURE__ */ new Date()).toISOString()
   };
 }
 async function readQueueFile() {
   try {
-    const raw = await readFile6(syncRetryQueuePath(), "utf-8");
+    const raw = await readFile7(syncRetryQueuePath(), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { items: [] };
   }
 }
 async function writeQueueFile(file) {
-  await mkdir6(dirname6(syncRetryQueuePath()), { recursive: true });
+  await mkdir7(dirname7(syncRetryQueuePath()), { recursive: true });
   await atomicWriteFile(syncRetryQueuePath(), JSON.stringify(file, null, 2));
 }
 async function enqueueRetry(endpoint, method, data, failure) {
@@ -23958,10 +24000,10 @@ async function processRetryQueue(attempt) {
         continue;
       }
       const outcome = await attempt(item);
-      const result2 = typeof outcome === "boolean" ? { ok: outcome } : outcome;
-      if (result2.ok) continue;
-      const retried = { ...item, ...failureFields(result2), retryCount: item.retryCount + (result2.permanent ? 0 : 1) };
-      if (result2.permanent) {
+      const result3 = typeof outcome === "boolean" ? { ok: outcome } : outcome;
+      if (result3.ok) continue;
+      const retried = { ...item, ...failureFields(result3), retryCount: item.retryCount + (result3.permanent ? 0 : 1) };
+      if (result3.permanent) {
         remaining.push(retried);
         continue;
       }
@@ -24034,29 +24076,29 @@ function serializeDecision(userId, workspaceName, spec) {
     decisionDate: spec.created_at
   };
 }
-function compactWorkResult(result2, summaryOnly = false) {
-  if (!result2) return void 0;
+function compactWorkResult(result3, summaryOnly = false) {
+  if (!result3) return void 0;
   if (summaryOnly) {
-    const { path, startedAt, endedAt, model, summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, sourceRevision } = result2;
-    const report = result2.report ? {
-      schemaVersion: result2.report.schemaVersion,
-      kind: result2.report.kind,
-      patchVersion: result2.report.patchVersion,
-      completionGrade: result2.report.completionGrade,
-      completedAt: result2.report.completedAt,
-      bypassLabels: result2.report.bypassLabels,
-      summary: result2.report.summary,
-      verification: result2.report.verification,
+    const { path, startedAt, endedAt, model, summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, sourceRevision } = result3;
+    const report = result3.report ? {
+      schemaVersion: result3.report.schemaVersion,
+      kind: result3.report.kind,
+      patchVersion: result3.report.patchVersion,
+      completionGrade: result3.report.completionGrade,
+      completedAt: result3.report.completedAt,
+      bypassLabels: result3.report.bypassLabels,
+      summary: result3.report.summary,
+      verification: result3.report.verification,
       changedFiles: [],
       designDecisions: [],
       knownLimitations: []
     } : void 0;
-    return { path, startedAt, endedAt, model, summary: summary ?? result2.report?.summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, sourceRevision, report };
+    return { path, startedAt, endedAt, model, summary: summary ?? result3.report?.summary, parentTaskId, patchVersion, seed, runtimeVerified, wiringVerified, prRefs, sourceRevision, report };
   }
   return {
-    ...result2,
-    report: result2.report ? { ...result2.report, humanApprovals: void 0 } : void 0,
-    files: result2.files?.map((file) => {
+    ...result3,
+    report: result3.report ? { ...result3.report, humanApprovals: void 0 } : void 0,
+    files: result3.files?.map((file) => {
       const { path, change, diff } = file;
       const lines = diff?.split("\n");
       return {
@@ -24174,7 +24216,7 @@ async function drainRetryQueue() {
 
 // src/dashboard/workResultFiles.ts
 import { execFile } from "node:child_process";
-import { readFile as readFile7 } from "node:fs/promises";
+import { readFile as readFile8 } from "node:fs/promises";
 import { isAbsolute as isAbsolute2, relative as relative2, resolve as resolve2, sep } from "node:path";
 import { promisify } from "node:util";
 var execFileAsync = promisify(execFile);
@@ -24219,7 +24261,7 @@ async function snapshotWorkResultFiles(projectPath, paths, startedAt) {
     let content;
     if (change !== "deleted") {
       try {
-        const raw = await readFile7(safe.absolute);
+        const raw = await readFile8(safe.absolute);
         if (raw.byteLength <= MAX_CONTENT_BYTES && !raw.includes(0)) content = raw.toString("utf8");
       } catch {
       }
@@ -24336,7 +24378,7 @@ async function syncReviewArtifacts(workspaceName, taskId, sessionId, patchVersio
 // src/hulk/workspace.ts
 async function loadWorkspace(name2) {
   try {
-    const raw = await readFile8(workspaceFilePath(name2), "utf-8");
+    const raw = await readFile9(workspaceFilePath(name2), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -24351,7 +24393,7 @@ async function ensureWorkspace(name2, projectPath) {
     projects: Array.from(projects),
     created_at: existing?.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
   };
-  await mkdir7(workspaceDir(name2), { recursive: true });
+  await mkdir8(workspaceDir(name2), { recursive: true });
   await atomicWriteFile(workspaceFilePath(name2), JSON.stringify(workspace, null, 2));
   void syncWorkspace(workspace);
   return workspace;
@@ -24439,25 +24481,25 @@ var SugoAddArgs = external_exports.object(sugoAddInputSchema);
 async function handleSugoAdd(rawArgs) {
   const args2 = SugoAddArgs.parse(rawArgs);
   const projectPath = resolve4(args2.projectPath);
-  const result2 = await syncProjectHarness({ ...args2, projectPath });
-  if (result2.workspace) {
-    await ensureWorkspace(result2.workspace, projectPath);
+  const result3 = await syncProjectHarness({ ...args2, projectPath });
+  if (result3.workspace) {
+    await ensureWorkspace(result3.workspace, projectPath);
   }
   const payload = {
     ok: true,
     projectPath,
-    projectName: result2.projectName,
-    workspace: result2.workspace,
-    detectedStack: result2.config.detectedStack,
-    appliedHarnesses: result2.composeResult.appliedHarnesses,
-    warnings: result2.composeResult.warnings,
-    claudeMdPath: result2.claudeMdPath
+    projectName: result3.projectName,
+    workspace: result3.workspace,
+    detectedStack: result3.config.detectedStack,
+    appliedHarnesses: result3.composeResult.appliedHarnesses,
+    warnings: result3.composeResult.warnings,
+    claudeMdPath: result3.claudeMdPath
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
 // src/tools/sugoAnalyze.ts
-import { readFile as readFile11 } from "node:fs/promises";
+import { readFile as readFile12 } from "node:fs/promises";
 
 // src/analyze.ts
 var REQ_LINE_RE = /\bREQ-(\d+)\b\s*:?\s*(.*)$/gim;
@@ -24544,16 +24586,16 @@ function analyzePrdMatch(prdContent, fileContents) {
 }
 
 // src/readChangedFiles.ts
-import { readFile as readFile9 } from "node:fs/promises";
-import { isAbsolute as isAbsolute4, join as join9 } from "node:path";
+import { readFile as readFile10 } from "node:fs/promises";
+import { isAbsolute as isAbsolute4, join as join10 } from "node:path";
 var MAX_FILE_BYTES = 3e5;
 var MAX_FILES = 200;
 async function readFileContents(projectPath, changedFiles) {
   const contents = [];
   for (const rel of changedFiles.slice(0, MAX_FILES)) {
-    const full = isAbsolute4(rel) ? rel : join9(projectPath, rel);
+    const full = isAbsolute4(rel) ? rel : join10(projectPath, rel);
     try {
-      const content = await readFile9(full, "utf-8");
+      const content = await readFile10(full, "utf-8");
       if (content.length <= MAX_FILE_BYTES) contents.push(content);
     } catch {
       continue;
@@ -24564,29 +24606,29 @@ async function readFileContents(projectPath, changedFiles) {
 
 // src/session.ts
 import { randomBytes } from "node:crypto";
-import { mkdir as mkdir8, readdir as readdir3, readFile as readFile10 } from "node:fs/promises";
-import { join as join10 } from "node:path";
+import { mkdir as mkdir9, readdir as readdir3, readFile as readFile11 } from "node:fs/promises";
+import { join as join11 } from "node:path";
 function sessionsDir() {
-  return join10(sugoHomeDir(), ".claude", "sugo", "sessions");
+  return join11(sugoHomeDir(), ".claude", "sugo", "sessions");
 }
 function generateSessionId() {
   return `plan-${Date.now()}-${randomBytes(4).toString("hex")}`;
 }
 function sessionFilePath(id) {
-  return join10(sessionsDir(), `${id}.json`);
+  return join11(sessionsDir(), `${id}.json`);
 }
 async function saveSession(session) {
-  await mkdir8(sessionsDir(), { recursive: true });
+  await mkdir9(sessionsDir(), { recursive: true });
   session.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   await atomicWriteFile(sessionFilePath(session.id), JSON.stringify(session, null, 2));
 }
 async function loadSession(id) {
-  const raw = await readFile10(sessionFilePath(id), "utf-8");
+  const raw = await readFile11(sessionFilePath(id), "utf-8");
   return JSON.parse(raw);
 }
 async function sessionExists(id) {
   try {
-    await readFile10(sessionFilePath(id), "utf-8");
+    await readFile11(sessionFilePath(id), "utf-8");
     return true;
   } catch {
     return false;
@@ -24603,7 +24645,7 @@ async function loadAllSessions() {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile10(join10(sessionsDir(), name2), "utf-8");
+      const raw = await readFile11(join11(sessionsDir(), name2), "utf-8");
       sessions.push(JSON.parse(raw));
     } catch {
       continue;
@@ -24629,7 +24671,7 @@ async function handleSugoAnalyze(rawArgs) {
   }
   let prdContent;
   try {
-    prdContent = await readFile11(session.data.prdPath, "utf-8");
+    prdContent = await readFile12(session.data.prdPath, "utf-8");
   } catch {
     return errorResult("PRD_FILE_MISSING", `PRD \uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${session.data.prdPath}`);
   }
@@ -24826,12 +24868,13 @@ function errorResult3(errorCode, message) {
 
 // src/hulk/checkpoint.ts
 import { createHash as createHash2, randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir10, readdir as readdir4, readFile as readFile12, rm as rm3 } from "node:fs/promises";
-import { join as join12 } from "node:path";
+import { mkdir as mkdir11, readdir as readdir4, readFile as readFile13, rm as rm3 } from "node:fs/promises";
+import { join as join13 } from "node:path";
+import { relative as relative4 } from "node:path";
 
 // src/dashboard/fetch.ts
-import { mkdir as mkdir9, rm as rm2, writeFile as writeFile3 } from "node:fs/promises";
-import { join as join11 } from "node:path";
+import { mkdir as mkdir10, rm as rm2, writeFile as writeFile3 } from "node:fs/promises";
+import { join as join12 } from "node:path";
 async function fetchJson(path, timeoutMs) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled || !config2.apiUrl) return null;
@@ -24890,12 +24933,12 @@ async function downloadSpecAttachments(workspaceName, nodeId, destDir) {
   const headers = config2.apiToken ? { Authorization: `Bearer ${config2.apiToken}` } : void 0;
   await rm2(destDir, { recursive: true, force: true });
   if (list.attachments.length === 0) return [];
-  await mkdir9(destDir, { recursive: true });
+  await mkdir10(destDir, { recursive: true });
   const paths = [];
   for (const { name: name2 } of list.attachments) {
     const res = await fetch(`${config2.apiUrl}/api/workspaces/${ws}/roadmap/spec-attachments/file?${qs}&name=${encodeURIComponent(name2)}`, { headers });
     if (!res.ok) throw new Error(`SPEC_ATTACHMENT_DOWNLOAD_FAILED:${name2}:${res.status}`);
-    const target = join11(destDir, name2);
+    const target = join12(destDir, name2);
     await writeFile3(target, Buffer.from(await res.arrayBuffer()));
     paths.push(target);
   }
@@ -24955,8 +24998,8 @@ async function fetchCheckpointSync(workspaceName) {
   }));
 }
 async function fetchCalibratedRatio() {
-  const result2 = await fetchJson("/api/metrics/calibrated-ratio", 5e3);
-  return result2?.ratio ?? null;
+  const result3 = await fetchJson("/api/metrics/calibrated-ratio", 5e3);
+  return result3?.ratio ?? null;
 }
 async function fetchAwsContext(account = "default") {
   return fetchJson(`/api/aws-context?account=${encodeURIComponent(account)}`, 8e3);
@@ -25176,8 +25219,8 @@ function resolveYamlInteger$2(source, isExplicit) {
   if (isExplicit) {
     if (!YAML_INTEGER_EXPLICIT_PATTERN$1.test(source)) return NOT_RESOLVED;
   } else if (!YAML_INTEGER_IMPLICIT_PATTERN$1.test(source)) return NOT_RESOLVED;
-  const result2 = parseYamlInteger$2(source);
-  return Number.isFinite(result2) ? result2 : NOT_RESOLVED;
+  const result3 = parseYamlInteger$2(source);
+  return Number.isFinite(result3) ? result3 : NOT_RESOLVED;
 }
 var intCoreTag = defineScalarTag("tag:yaml.org,2002:int", {
   implicit: true,
@@ -25208,8 +25251,8 @@ function resolveYamlInteger$1(source, isExplicit) {
   if (isExplicit) {
     if (!YAML_INTEGER_EXPLICIT_PATTERN.test(source)) return NOT_RESOLVED;
   } else if (!YAML_INTEGER_IMPLICIT_PATTERN.test(source)) return NOT_RESOLVED;
-  const result2 = parseYamlInteger$1(source);
-  return Number.isFinite(result2) ? result2 : NOT_RESOLVED;
+  const result3 = parseYamlInteger$1(source);
+  return Number.isFinite(result3) ? result3 : NOT_RESOLVED;
 }
 var intJsonTag = defineScalarTag("tag:yaml.org,2002:int", {
   implicit: true,
@@ -25229,17 +25272,17 @@ function parseYamlInteger(source) {
   if (value.startsWith("0b")) return sign * parseInt(value.slice(2), 2);
   if (value.startsWith("0x")) return sign * parseInt(value.slice(2), 16);
   if (value.includes(":")) {
-    let result2 = 0;
-    for (const part of value.split(":")) result2 = result2 * 60 + Number(part);
-    return sign * result2;
+    let result3 = 0;
+    for (const part of value.split(":")) result3 = result3 * 60 + Number(part);
+    return sign * result3;
   }
   if (value !== "0" && value[0] === "0") return sign * parseInt(value, 8);
   return sign * parseInt(value, 10);
 }
 function resolveYamlInteger(source) {
   if (!YAML_INTEGER_PATTERN.test(source)) return NOT_RESOLVED;
-  const result2 = parseYamlInteger(source);
-  return Number.isFinite(result2) ? result2 : NOT_RESOLVED;
+  const result3 = parseYamlInteger(source);
+  return Number.isFinite(result3) ? result3 : NOT_RESOLVED;
 }
 var intYaml11Tag = defineScalarTag("tag:yaml.org,2002:int", {
   implicit: true,
@@ -25261,8 +25304,8 @@ function resolveYamlFloat$2(source) {
   if ("+-".includes(value[0])) value = value.slice(1);
   if (value === ".inf") return sign === 1 ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
   if (value === ".nan") return NaN;
-  const result2 = sign * parseFloat(value);
-  if (Number.isFinite(result2) || YAML_FLOAT_SPECIAL_PATTERN$1.test(source)) return result2;
+  const result3 = sign * parseFloat(value);
+  if (Number.isFinite(result3) || YAML_FLOAT_SPECIAL_PATTERN$1.test(source)) return result3;
   return NOT_RESOLVED;
 }
 function representYamlFloat$2(object3) {
@@ -25270,8 +25313,8 @@ function representYamlFloat$2(object3) {
   if (object3 === Number.POSITIVE_INFINITY) return ".inf";
   if (object3 === Number.NEGATIVE_INFINITY) return "-.inf";
   if (Object.is(object3, -0)) return "-0.0";
-  const result2 = object3.toString(10);
-  return /^[-+]?[0-9]+e/.test(result2) ? result2.replace("e", ".e") : result2;
+  const result3 = object3.toString(10);
+  return /^[-+]?[0-9]+e/.test(result3) ? result3.replace("e", ".e") : result3;
 }
 var floatCoreTag = defineScalarTag("tag:yaml.org,2002:float", {
   implicit: true,
@@ -25295,12 +25338,12 @@ function resolveYamlFloat$1(source, isExplicit) {
     if ("+-".includes(value[0])) value = value.slice(1);
     if (value === ".inf") return sign === 1 ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
     if (value === ".nan") return NaN;
-    const result3 = sign * parseFloat(value);
-    return Number.isFinite(result3) ? result3 : NOT_RESOLVED;
+    const result4 = sign * parseFloat(value);
+    return Number.isFinite(result4) ? result4 : NOT_RESOLVED;
   }
   if (!YAML_FLOAT_IMPLICIT_PATTERN.test(source)) return NOT_RESOLVED;
-  const result2 = Number(source);
-  if (Number.isFinite(result2)) return result2;
+  const result3 = Number(source);
+  if (Number.isFinite(result3)) return result3;
   return NOT_RESOLVED;
 }
 function representYamlFloat$1(object3) {
@@ -25308,8 +25351,8 @@ function representYamlFloat$1(object3) {
   if (object3 === Number.POSITIVE_INFINITY) return ".inf";
   if (object3 === Number.NEGATIVE_INFINITY) return "-.inf";
   if (Object.is(object3, -0)) return "-0.0";
-  const result2 = object3.toString(10);
-  return /^[-+]?[0-9]+e/.test(result2) ? result2.replace("e", ".e") : result2;
+  const result3 = object3.toString(10);
+  return /^[-+]?[0-9]+e/.test(result3) ? result3.replace("e", ".e") : result3;
 }
 var floatJsonTag = defineScalarTag("tag:yaml.org,2002:float", {
   implicit: true,
@@ -25327,12 +25370,12 @@ function resolveYamlFloat(source) {
   if ("+-".includes(value[0])) value = value.slice(1);
   if (value === ".inf") return sign === 1 ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
   if (value === ".nan") return NaN;
-  let result2 = 0;
+  let result3 = 0;
   if (value.includes(":")) {
-    for (const part of value.split(":")) result2 = result2 * 60 + Number(part);
-    result2 *= sign;
-  } else result2 = sign * parseFloat(value);
-  if (Number.isFinite(result2) || YAML_FLOAT_SPECIAL_PATTERN.test(source)) return result2;
+    for (const part of value.split(":")) result3 = result3 * 60 + Number(part);
+    result3 *= sign;
+  } else result3 = sign * parseFloat(value);
+  if (Number.isFinite(result3) || YAML_FLOAT_SPECIAL_PATTERN.test(source)) return result3;
   return NOT_RESOLVED;
 }
 function representYamlFloat(object3) {
@@ -25340,8 +25383,8 @@ function representYamlFloat(object3) {
   if (object3 === Number.POSITIVE_INFINITY) return ".inf";
   if (object3 === Number.NEGATIVE_INFINITY) return "-.inf";
   if (Object.is(object3, -0)) return "-0.0";
-  const result2 = object3.toString(10);
-  return /^[-+]?[0-9]+e/.test(result2) ? result2.replace("e", ".e") : result2;
+  const result3 = object3.toString(10);
+  return /^[-+]?[0-9]+e/.test(result3) ? result3.replace("e", ".e") : result3;
 }
 var floatYaml11Tag = defineScalarTag("tag:yaml.org,2002:float", {
   implicit: true,
@@ -25368,9 +25411,9 @@ function resolveYamlBinary(source) {
   const input = source.replace(/\s/g, "");
   if (input.length % 4 !== 0 || !BASE64_PATTERN.test(input)) return NOT_RESOLVED;
   const binary2 = atob(input);
-  const result2 = new Uint8Array(binary2.length);
-  for (let index = 0; index < binary2.length; index++) result2[index] = binary2.charCodeAt(index);
-  return result2;
+  const result3 = new Uint8Array(binary2.length);
+  for (let index = 0; index < binary2.length; index++) result3[index] = binary2.charCodeAt(index);
+  return result3;
 }
 function representYamlBinary(object3) {
   let binary2 = "";
@@ -25437,9 +25480,9 @@ function isPlainObject3(data) {
   return prototype === null || prototype === Object.prototype;
 }
 function pick2(object3, keys) {
-  const result2 = {};
-  for (const key of keys) if (object3[key] !== void 0) result2[key] = object3[key];
-  return result2;
+  const result3 = {};
+  for (const key of keys) if (object3[key] !== void 0) result3[key] = object3[key];
+  return result3;
 }
 var omapTag = defineSequenceTag("tag:yaml.org,2002:omap", {
   create: () => ({
@@ -25538,19 +25581,19 @@ function createTagDefinitionListMap() {
   };
 }
 function compileTags(tags) {
-  const result2 = [];
+  const result3 = [];
   for (const tag of tags) {
-    let index = result2.length;
-    for (let previousIndex = 0; previousIndex < result2.length; previousIndex++) {
-      const previous = result2[previousIndex];
+    let index = result3.length;
+    for (let previousIndex = 0; previousIndex < result3.length; previousIndex++) {
+      const previous = result3[previousIndex];
       if (previous.nodeKind === tag.nodeKind && previous.tagName === tag.tagName && previous.matchByTagPrefix === tag.matchByTagPrefix) {
         index = previousIndex;
         break;
       }
     }
-    result2[index] = tag;
+    result3[index] = tag;
   }
-  return result2;
+  return result3;
 }
 var Schema = class Schema2 {
   tags;
@@ -25742,27 +25785,27 @@ function makeSnippet(mark, options) {
     if (mark.position <= match.index && foundLineNo < 0) foundLineNo = lineStarts.length - 2;
   }
   if (foundLineNo < 0) foundLineNo = lineStarts.length - 1;
-  let result2 = "";
+  let result3 = "";
   const lineNoLength = Math.min(mark.line + opts.linesAfter, lineEnds.length).toString().length;
   const maxLineLength = opts.maxLength - (opts.indent + lineNoLength + 3);
   for (let i2 = 1; i2 <= opts.linesBefore; i2++) {
     if (foundLineNo - i2 < 0) break;
     const line2 = getLine(mark.buffer, lineStarts[foundLineNo - i2], lineEnds[foundLineNo - i2], mark.position - (lineStarts[foundLineNo] - lineStarts[foundLineNo - i2]), maxLineLength);
-    result2 = `${" ".repeat(opts.indent)}${padStart((mark.line - i2 + 1).toString(), lineNoLength)} | ${line2.str}
-${result2}`;
+    result3 = `${" ".repeat(opts.indent)}${padStart((mark.line - i2 + 1).toString(), lineNoLength)} | ${line2.str}
+${result3}`;
   }
   const line = getLine(mark.buffer, lineStarts[foundLineNo], lineEnds[foundLineNo], mark.position, maxLineLength);
-  result2 += `${" ".repeat(opts.indent)}${padStart((mark.line + 1).toString(), lineNoLength)} | ${line.str}
+  result3 += `${" ".repeat(opts.indent)}${padStart((mark.line + 1).toString(), lineNoLength)} | ${line.str}
 `;
-  result2 += `${"-".repeat(opts.indent + lineNoLength + 3 + line.pos)}^
+  result3 += `${"-".repeat(opts.indent + lineNoLength + 3 + line.pos)}^
 `;
   for (let i2 = 1; i2 <= opts.linesAfter; i2++) {
     if (foundLineNo + i2 >= lineEnds.length) break;
     const line2 = getLine(mark.buffer, lineStarts[foundLineNo + i2], lineEnds[foundLineNo + i2], mark.position - (lineStarts[foundLineNo] - lineStarts[foundLineNo + i2]), maxLineLength);
-    result2 += `${" ".repeat(opts.indent)}${padStart((mark.line + i2 + 1).toString(), lineNoLength)} | ${line2.str}
+    result3 += `${" ".repeat(opts.indent)}${padStart((mark.line + i2 + 1).toString(), lineNoLength)} | ${line2.str}
 `;
   }
-  return result2.replace(/\n$/, "");
+  return result3.replace(/\n$/, "");
 }
 function formatError2(exception, compact) {
   let where = "";
@@ -25899,61 +25942,61 @@ function foldedBreaks(count) {
   return "\n".repeat(count - 1);
 }
 function getPlainValue(input, start2, end) {
-  let result2 = "";
+  let result3 = "";
   let position = start2;
   let captureStart = start2;
   let captureEnd = start2;
   while (position < end) {
     const ch = input.charCodeAt(position);
     if (ch === 10 || ch === 13) {
-      result2 += input.slice(captureStart, captureEnd);
+      result3 += input.slice(captureStart, captureEnd);
       const fold = skipFoldedBreaks(input, position, end);
-      result2 += foldedBreaks(fold.breaks);
+      result3 += foldedBreaks(fold.breaks);
       position = captureStart = captureEnd = fold.position;
     } else {
       position++;
       if (ch !== 32 && ch !== 9) captureEnd = position;
     }
   }
-  return result2 + input.slice(captureStart, captureEnd);
+  return result3 + input.slice(captureStart, captureEnd);
 }
 function getSingleQuotedValue(input, start2, end) {
-  let result2 = "";
+  let result3 = "";
   let position = start2;
   let captureStart = start2;
   let captureEnd = start2;
   while (position < end) {
     const ch = input.charCodeAt(position);
     if (ch === 39) {
-      result2 += input.slice(captureStart, position) + "'";
+      result3 += input.slice(captureStart, position) + "'";
       position += 2;
       captureStart = captureEnd = position;
     } else if (ch === 10 || ch === 13) {
-      result2 += input.slice(captureStart, captureEnd);
+      result3 += input.slice(captureStart, captureEnd);
       const fold = skipFoldedBreaks(input, position, end);
-      result2 += foldedBreaks(fold.breaks);
+      result3 += foldedBreaks(fold.breaks);
       position = captureStart = captureEnd = fold.position;
     } else {
       position++;
       if (ch !== 32 && ch !== 9) captureEnd = position;
     }
   }
-  return result2 + input.slice(captureStart, end);
+  return result3 + input.slice(captureStart, end);
 }
 function getDoubleQuotedValue(input, start2, end) {
-  let result2 = "";
+  let result3 = "";
   let position = start2;
   let captureStart = start2;
   let captureEnd = start2;
   while (position < end) {
     const ch = input.charCodeAt(position);
     if (ch === 92) {
-      result2 += input.slice(captureStart, position);
+      result3 += input.slice(captureStart, position);
       position++;
       const escaped = input.charCodeAt(position);
       if (escaped === 10 || escaped === 13) position = skipFoldedBreaks(input, position, end).position;
       else if (escaped < 256 && simpleEscapeCheck[escaped]) {
-        result2 += simpleEscapeMap[escaped];
+        result3 += simpleEscapeMap[escaped];
         position++;
       } else {
         let hexLength = escapedHexLen$1(escaped);
@@ -25963,27 +26006,27 @@ function getDoubleQuotedValue(input, start2, end) {
           const digit = fromHexCode$1(input.charCodeAt(position));
           hexResult = (hexResult << 4) + digit;
         }
-        result2 += charFromCodepoint(hexResult);
+        result3 += charFromCodepoint(hexResult);
         position++;
       }
       captureStart = captureEnd = position;
     } else if (ch === 10 || ch === 13) {
-      result2 += input.slice(captureStart, captureEnd);
+      result3 += input.slice(captureStart, captureEnd);
       const fold = skipFoldedBreaks(input, position, end);
-      result2 += foldedBreaks(fold.breaks);
+      result3 += foldedBreaks(fold.breaks);
       position = captureStart = captureEnd = fold.position;
     } else {
       position++;
       if (ch !== 32 && ch !== 9) captureEnd = position;
     }
   }
-  return result2 + input.slice(captureStart, end);
+  return result3 + input.slice(captureStart, end);
 }
 function getBlockValue(input, start2, end, indent, chomping, folded) {
   const textIndent = indent < 0 ? 0 : indent;
   const region = input.slice(start2, end).replace(/\r\n?/g, "\n");
   const lines = region === "" ? [] : (region.endsWith("\n") ? region.slice(0, -1) : region).split("\n");
-  let result2 = "";
+  let result3 = "";
   let didReadContent = false;
   let emptyLines = 0;
   let atMoreIndented = false;
@@ -25998,23 +26041,23 @@ function getBlockValue(input, start2, end, indent, chomping, folded) {
     const first = content.charCodeAt(0);
     if (folded) if (first === 32 || first === 9) {
       atMoreIndented = true;
-      result2 += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
+      result3 += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
     } else if (atMoreIndented) {
       atMoreIndented = false;
-      result2 += "\n".repeat(emptyLines + 1);
+      result3 += "\n".repeat(emptyLines + 1);
     } else if (emptyLines === 0) {
-      if (didReadContent) result2 += " ";
-    } else result2 += "\n".repeat(emptyLines);
-    else result2 += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
-    result2 += content;
+      if (didReadContent) result3 += " ";
+    } else result3 += "\n".repeat(emptyLines);
+    else result3 += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
+    result3 += content;
     didReadContent = true;
     emptyLines = 0;
   }
-  if (chomping === 3) result2 += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
+  if (chomping === 3) result3 += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
   else if (chomping !== 2) {
-    if (didReadContent) result2 += "\n";
+    if (didReadContent) result3 += "\n";
   }
-  return result2;
+  return result3;
 }
 function getScalarValue(input, scalar) {
   if (scalar.valueStart === NO_RANGE$3) return "";
@@ -26077,9 +26120,9 @@ function throwError$1(state, message) {
 function finalizeCollection(state, position, tag, carrier) {
   try {
     return tag.finalize(carrier);
-  } catch (error2) {
-    if (error2 instanceof YAMLException) throw error2;
-    throwErrorAt(state.source, position, error2 instanceof Error ? error2.message : String(error2), state.filename);
+  } catch (error3) {
+    if (error3 instanceof YAMLException) throw error3;
+    throwErrorAt(state.source, position, error3 instanceof Error ? error3.message : String(error3), state.filename);
   }
 }
 function lookupTag(exact, prefix, tagName) {
@@ -26104,10 +26147,10 @@ function constructScalar(state, event) {
     const tagName = tagNameFull(rawTag, state.tagHandlers);
     const scalarTag = lookupTag(state.schema.exact.scalar, state.schema.prefix.scalar, tagName);
     if (scalarTag) {
-      const result2 = scalarTag.resolve(source, true, tagName);
-      if (result2 === NOT_RESOLVED) throwError$1(state, `cannot resolve a node with !<${tagName}> explicit tag`);
+      const result3 = scalarTag.resolve(source, true, tagName);
+      if (result3 === NOT_RESOLVED) throwError$1(state, `cannot resolve a node with !<${tagName}> explicit tag`);
       return {
-        value: result2,
+        value: result3,
         tag: scalarTag
       };
     }
@@ -26125,9 +26168,9 @@ function constructScalar(state, event) {
   if (event.style === 1) {
     const candidates = state.schema.implicitScalarByFirstChar.get(source.charAt(0)) ?? state.schema.implicitScalarAnyFirstChar;
     for (const tag of candidates) {
-      const result2 = tag.resolve(source, false, tag.tagName);
-      if (result2 !== NOT_RESOLVED) return {
-        value: result2,
+      const result3 = tag.resolve(source, false, tag.tagName);
+      if (result3 !== NOT_RESOLVED) return {
+        value: result3,
         tag
       };
     }
@@ -27394,7 +27437,7 @@ function encodeNonPrintable(character) {
 function indentString(string3, spaces) {
   const ind = " ".repeat(spaces);
   let position = 0;
-  let result2 = "";
+  let result3 = "";
   const length = string3.length;
   while (position < length) {
     let line;
@@ -27406,10 +27449,10 @@ function indentString(string3, spaces) {
       line = string3.slice(position, next + 1);
       position = next + 1;
     }
-    if (line.length && line !== "\n") result2 += ind;
-    result2 += line;
+    if (line.length && line !== "\n") result3 += ind;
+    result3 += line;
   }
-  return result2;
+  return result3;
 }
 function generateNextLine(state, level) {
   return `
@@ -27563,16 +27606,16 @@ function encodeFlowBreaks(string3, indent) {
   let nextLF = string3.indexOf("\n");
   if (nextLF === -1) return string3;
   const pad = " ".repeat(indent);
-  let result2 = string3.slice(0, nextLF);
+  let result3 = string3.slice(0, nextLF);
   const lineRe = /(\n+)([^\n]*)/g;
   lineRe.lastIndex = nextLF;
   let match;
   while (match = lineRe.exec(string3)) {
     const breaks = match[1].length;
     const line = match[2];
-    result2 += "\n".repeat(breaks + 1) + pad + line;
+    result3 += "\n".repeat(breaks + 1) + pad + line;
   }
-  return result2;
+  return result3;
 }
 function dropEndingNewline(string3) {
   return string3[string3.length - 1] === "\n" ? string3.slice(0, -1) : string3;
@@ -27582,7 +27625,7 @@ function foldBlockScalar(string3, width) {
   let nextLF = string3.indexOf("\n");
   if (nextLF === -1) nextLF = string3.length;
   lineRe.lastIndex = nextLF;
-  let result2 = foldLine(string3.slice(0, nextLF), width);
+  let result3 = foldLine(string3.slice(0, nextLF), width);
   let prevMoreIndented = string3[0] === "\n" || string3[0] === " ";
   let moreIndented;
   let match;
@@ -27590,10 +27633,10 @@ function foldBlockScalar(string3, width) {
     const prefix = match[1];
     const line = match[2];
     moreIndented = line[0] === " ";
-    result2 += prefix + (!prevMoreIndented && !moreIndented && line !== "" ? "\n" : "") + foldLine(line, width);
+    result3 += prefix + (!prevMoreIndented && !moreIndented && line !== "" ? "\n" : "") + foldLine(line, width);
     prevMoreIndented = moreIndented;
   }
-  return result2;
+  return result3;
 }
 function foldLine(line, width) {
   if (line === "" || line[0] === " ") return line;
@@ -27603,73 +27646,73 @@ function foldLine(line, width) {
   let end;
   let curr = 0;
   let next = 0;
-  let result2 = "";
+  let result3 = "";
   while (match = breakRe.exec(line)) {
     next = match.index;
     if (next - start2 > width) {
       end = curr > start2 ? curr : next;
-      result2 += `
+      result3 += `
 ${line.slice(start2, end)}`;
       start2 = end + 1;
     }
     curr = next;
   }
-  result2 += "\n";
-  if (line.length - start2 > width && curr > start2) result2 += `${line.slice(start2, curr)}
+  result3 += "\n";
+  if (line.length - start2 > width && curr > start2) result3 += `${line.slice(start2, curr)}
 ${line.slice(curr + 1)}`;
-  else result2 += line.slice(start2);
-  return result2.slice(1);
+  else result3 += line.slice(start2);
+  return result3.slice(1);
 }
 function escapeString(string3) {
-  let result2 = "";
+  let result3 = "";
   let char = 0;
   for (let i2 = 0; i2 < string3.length; char >= 65536 ? i2 += 2 : i2++) {
     char = codePointAt(string3, i2);
     const escapeSeq = ESCAPE_SEQUENCES[char];
     if (escapeSeq) {
-      result2 += escapeSeq;
+      result3 += escapeSeq;
       continue;
     }
     if (isPrintable(char)) {
-      result2 += string3[i2];
-      if (char >= 65536) result2 += string3[i2 + 1];
+      result3 += string3[i2];
+      if (char >= 65536) result3 += string3[i2 + 1];
       continue;
     }
-    result2 += encodeNonPrintable(char);
+    result3 += encodeNonPrintable(char);
   }
-  return result2;
+  return result3;
 }
 function writeFlowSequence(state, level, node) {
-  let result2 = "";
+  let result3 = "";
   for (let index = 0, length = node.items.length; index < length; index += 1) {
     const item = writeNode(state, level, node.items[index], {});
-    if (result2 !== "") result2 += `,${!state.flowSkipCommaSpace ? " " : ""}`;
-    result2 += item;
+    if (result3 !== "") result3 += `,${!state.flowSkipCommaSpace ? " " : ""}`;
+    result3 += item;
   }
-  const pad = state.flowBracketPadding && result2 !== "" ? " " : "";
-  return `[${pad}${result2}${pad}]`;
+  const pad = state.flowBracketPadding && result3 !== "" ? " " : "";
+  return `[${pad}${result3}${pad}]`;
 }
 function writeBlockSequence(state, level, node, compact) {
-  let result2 = "";
+  let result3 = "";
   for (let index = 0, length = node.items.length; index < length; index += 1) {
     const item = writeNode(state, level + 1, node.items[index], {
       block: true,
       compact: state.seqInlineFirst,
       isblockseq: true
     });
-    if (!compact || result2 !== "") result2 += generateNextLine(state, level);
-    if (item === "" || CHAR_LINE_FEED === item.charCodeAt(0)) result2 += "-";
-    else result2 += "- ";
-    result2 += item;
+    if (!compact || result3 !== "") result3 += generateNextLine(state, level);
+    if (item === "" || CHAR_LINE_FEED === item.charCodeAt(0)) result3 += "-";
+    else result3 += "- ";
+    result3 += item;
   }
-  return result2;
+  return result3;
 }
 function writeFlowMapping(state, level, node) {
-  let result2 = "";
+  let result3 = "";
   const items = sortMappingItems(state, node.items);
   for (const { key, value } of items) {
     let pairBuffer = "";
-    if (result2 !== "") pairBuffer += `,${!state.flowSkipCommaSpace ? " " : ""}`;
+    if (result3 !== "") pairBuffer += `,${!state.flowSkipCommaSpace ? " " : ""}`;
     const keyText = writeNode(state, level, key, { iskey: true });
     const explicitPair = keyText.length > 1024;
     if (explicitPair) pairBuffer += "? ";
@@ -27677,10 +27720,10 @@ function writeFlowMapping(state, level, node) {
     const valueText = writeNode(state, level, value, {});
     const sep4 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
     pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep4}${valueText}`;
-    result2 += pairBuffer;
+    result3 += pairBuffer;
   }
-  const pad = state.flowBracketPadding && result2 !== "" ? " " : "";
-  return `{${pad}${result2}${pad}}`;
+  const pad = state.flowBracketPadding && result3 !== "" ? " " : "";
+  return `{${pad}${result3}${pad}}`;
 }
 function sortKeyValue(key) {
   return key.kind === "scalar" ? key.value : key;
@@ -27702,11 +27745,11 @@ function sortMappingItems(state, items) {
   return copy;
 }
 function writeBlockMapping(state, level, node, compact) {
-  let result2 = "";
+  let result3 = "";
   const items = sortMappingItems(state, node.items);
   for (let index = 0, length = items.length; index < length; index += 1) {
     let pairBuffer = "";
-    if (!compact || result2 !== "") pairBuffer += generateNextLine(state, level);
+    if (!compact || result3 !== "") pairBuffer += generateNextLine(state, level);
     const { key, value } = items[index];
     const keyIsBlock = (key.kind === "mapping" || key.kind === "sequence") && !key.style.flow && key.items.length !== 0 || key.kind === "scalar" && (key.style.literal || key.style.folded);
     const keyText = keyIsBlock ? writeNode(state, level + 1, key, {
@@ -27734,9 +27777,9 @@ function writeBlockMapping(state, level, node, compact) {
     if (valueText === "" || CHAR_LINE_FEED === valueText.charCodeAt(0)) pairBuffer += `${keyColonSep}:`;
     else pairBuffer += `${keyColonSep}: `;
     pairBuffer += valueText;
-    result2 += pairBuffer;
+    result3 += pairBuffer;
   }
-  return result2;
+  return result3;
 }
 function cannotBeCompact(state, node, level) {
   return node.style.tagged || node.anchor !== void 0 || state.indent < 2 && level > 0;
@@ -27789,59 +27832,59 @@ function isOpenEnded(node) {
   return value.endsWith("\n\n") || value === "\n";
 }
 function writeDocumentDirectives(doc) {
-  let result2 = "";
+  let result3 = "";
   for (const directive of doc.directives) {
     if (directive.kind === "yaml") {
-      result2 += `%YAML ${directive.version}
+      result3 += `%YAML ${directive.version}
 `;
       continue;
     }
     const { handle: handle2, prefix } = directive;
-    result2 += `%TAG ${handle2} ${prefix}
+    result3 += `%TAG ${handle2} ${prefix}
 `;
   }
-  return result2;
+  return result3;
 }
 function present(documents, options) {
   const state = createPresenterState(options);
-  let result2 = "";
+  let result3 = "";
   let previousEnded = false;
   for (let index = 0; index < documents.length; index += 1) {
     const doc = documents[index];
     const directives = writeDocumentDirectives(doc);
     const hasDirectives = directives !== "";
     const marker = doc.explicitStart || hasDirectives || index > 0 && !previousEnded;
-    result2 += directives;
+    result3 += directives;
     if (doc.contents === null) {
-      if (marker) result2 += "---\n";
+      if (marker) result3 += "---\n";
     } else if (marker) {
       const body2 = writeNode(state, 0, doc.contents, {
         block: true,
         compact: true
       });
       const sep4 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
-      result2 += `---${sep4}${body2}
+      result3 += `---${sep4}${body2}
 `;
-    } else result2 += writeNode(state, 0, doc.contents, {
+    } else result3 += writeNode(state, 0, doc.contents, {
       block: true,
       compact: true
     }) + "\n";
     previousEnded = doc.explicitEnd || doc.contents !== null && isOpenEnded(doc.contents);
-    if (previousEnded) result2 += "...\n";
+    if (previousEnded) result3 += "...\n";
   }
-  return result2;
+  return result3;
 }
 var DEFAULT_DUMP_SCHEMA = YAML11_SCHEMA.withTags({
   ...intYaml11Tag,
   resolve: (source, isExplicit, tagName) => {
-    const result2 = intYaml11Tag.resolve(source, isExplicit, tagName);
-    return result2 === NOT_RESOLVED ? intCoreTag.resolve(source, isExplicit, tagName) : result2;
+    const result3 = intYaml11Tag.resolve(source, isExplicit, tagName);
+    return result3 === NOT_RESOLVED ? intCoreTag.resolve(source, isExplicit, tagName) : result3;
   }
 }, {
   ...floatYaml11Tag,
   resolve: (source, isExplicit, tagName) => {
-    const result2 = floatYaml11Tag.resolve(source, isExplicit, tagName);
-    return result2 === NOT_RESOLVED ? floatCoreTag.resolve(source, isExplicit, tagName) : result2;
+    const result3 = floatYaml11Tag.resolve(source, isExplicit, tagName);
+    return result3 === NOT_RESOLVED ? floatCoreTag.resolve(source, isExplicit, tagName) : result3;
   }
 });
 var DEFAULT_DUMP_OPTIONS = {
@@ -27926,7 +27969,7 @@ async function addCheckpoint(workspace, params) {
     expires_at: params.expires_at
   };
   const dir = checkpointsDir(workspace);
-  await mkdir10(dir, { recursive: true });
+  await mkdir11(dir, { recursive: true });
   const content = stringifyFrontmatter({
     id: checkpoint.id,
     title: checkpoint.title,
@@ -27936,7 +27979,7 @@ async function addCheckpoint(workspace, params) {
     created_at: checkpoint.created_at,
     expires_at: checkpoint.expires_at ?? null
   });
-  await atomicWriteFile(join12(dir, `${id}-${slugify(params.title)}.md`), content);
+  await atomicWriteFile(join13(dir, `${id}-${slugify(params.title)}.md`), content);
   return checkpoint;
 }
 async function listCheckpoints(workspace) {
@@ -27951,18 +27994,18 @@ async function listCheckpointFiles(workspace) {
   } catch {
     return [];
   }
-  const result2 = [];
+  const result3 = [];
   for (const name2 of names) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile12(join12(dir, name2), "utf-8");
+      const raw = await readFile13(join13(dir, name2), "utf-8");
       const { meta } = parseFrontmatter(raw);
-      result2.push({ filename: name2, checkpoint: meta });
+      result3.push({ filename: name2, checkpoint: meta });
     } catch {
       continue;
     }
   }
-  return result2;
+  return result3;
 }
 async function getCheckpoint(workspace, id) {
   const entries = await listCheckpointFiles(workspace);
@@ -27972,7 +28015,7 @@ async function removeCheckpoint(workspace, id) {
   const entries = await listCheckpointFiles(workspace);
   const found = entries.find((e) => e.checkpoint.id === id);
   if (!found) return false;
-  await rm3(join12(checkpointsDir(workspace), found.filename), { force: true });
+  await rm3(join13(checkpointsDir(workspace), found.filename), { force: true });
   return true;
 }
 async function migrateCheckpoints(workspace) {
@@ -27988,7 +28031,7 @@ async function migrateCheckpoints(workspace) {
       created_at: checkpoint.created_at ?? (/* @__PURE__ */ new Date()).toISOString(),
       expires_at: checkpoint.expires_at ?? null
     });
-    await atomicWriteFile(join12(dir, filename), content);
+    await atomicWriteFile(join13(dir, filename), content);
   }
   return entries.length;
 }
@@ -28042,15 +28085,15 @@ function wasEdited(content, cp, workspace) {
   return digest(without) !== match[1];
 }
 async function checkpointFiles(projectPath, id) {
-  const root = join12(projectPath, ".claude", "rules");
+  const root = join13(projectPath, ".claude", "rules");
   const found = [];
   async function walk(dir) {
     const entries = await readdir4(dir, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
-      const path = join12(dir, entry.name);
+      const path = join13(dir, entry.name);
       if (entry.isDirectory()) await walk(path);
       else if (entry.isFile() && entry.name.endsWith(".md")) {
-        const content = await readFile12(path, "utf8").catch(() => "");
+        const content = await readFile13(path, "utf8").catch(() => "");
         if (content.includes(`checkpoint-id: ${id}`) || content.includes(`Sugo checkpoint ${id} \xB7`)) found.push(path);
       }
     }
@@ -28059,63 +28102,64 @@ async function checkpointFiles(projectPath, id) {
   return found;
 }
 async function syncRemoteCheckpointsToRules(projectPath, workspace, remote, context, now = /* @__PURE__ */ new Date()) {
-  const result2 = { appliedCount: 0, removedCount: 0, conflicts: [] };
+  const result3 = { appliedCount: 0, removedCount: 0, conflicts: [] };
   for (const cp of remote) {
     const files = await checkpointFiles(projectPath, cp.id);
     const applicable = checkpointApplies(cp, context) && !isExpired(cp.expires_at, now);
-    const target = join12(projectPath, ".claude", "rules", cp.category ?? "general", `${cp.id}-${slugify(cp.title)}.md`);
+    const target = join13(projectPath, ".claude", "rules", cp.category ?? "general", `${cp.id}-${slugify(cp.title)}.md`);
     let blocked = false;
     for (const file of files.filter((path) => !applicable || path !== target)) {
-      const content2 = await readFile12(file, "utf8").catch(() => null);
+      const content2 = await readFile13(file, "utf8").catch(() => null);
       if (content2 === null) continue;
       if (wasEdited(content2, cp, workspace)) {
-        result2.conflicts.push(file);
+        result3.conflicts.push(file);
         blocked = true;
       } else {
         await rm3(file, { force: true });
-        result2.removedCount += 1;
+        result3.removedCount += 1;
       }
     }
     if (!applicable || blocked) continue;
     const content = checkpointBody(cp, workspace);
-    const existing = await readFile12(target, "utf8").catch(() => null);
+    const existing = await readFile13(target, "utf8").catch(() => null);
     if (existing !== null && existing !== content && wasEdited(existing, cp, workspace)) {
-      result2.conflicts.push(target);
+      result3.conflicts.push(target);
       continue;
     }
-    await mkdir10(join12(projectPath, ".claude", "rules", cp.category ?? "general"), { recursive: true });
+    await mkdir11(join13(projectPath, ".claude", "rules", cp.category ?? "general"), { recursive: true });
     if (existing !== content) await atomicWriteFile(target, content);
-    result2.appliedCount += 1;
+    await recordManagedFile(projectPath, relative4(projectPath, target).replace(/\\/g, "/"));
+    result3.appliedCount += 1;
   }
-  return result2;
+  return result3;
 }
 async function pullCheckpointsToRules(projectPath, workspace) {
   const remote = await fetchCheckpointSync(workspace);
   if (!remote) return null;
   const config2 = await loadProjectConfig(projectPath);
-  const result2 = await syncRemoteCheckpointsToRules(projectPath, workspace, remote, {
+  const result3 = await syncRemoteCheckpointsToRules(projectPath, workspace, remote, {
     projectName: config2?.projectName ?? "",
     harnessIds: config2?.detectedStack.harnessIds ?? []
   });
-  return result2.appliedCount;
+  return result3.appliedCount;
 }
 
 // src/hulk/memory.ts
-import { mkdir as mkdir11, readFile as readFile13 } from "node:fs/promises";
+import { mkdir as mkdir12, readFile as readFile14 } from "node:fs/promises";
 async function appendMemory(workspace, note) {
   const path = memoryFilePath(workspace);
-  const existing = await readFile13(path, "utf-8").catch(() => "");
+  const existing = await readFile14(path, "utf-8").catch(() => "");
   const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
 
 ${note}
 `;
   const next = existing ? `${existing}
 ${entry}` : entry;
-  await mkdir11(workspaceDir(workspace), { recursive: true });
+  await mkdir12(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(path, next);
 }
 async function readMemory(workspace) {
-  return readFile13(memoryFilePath(workspace), "utf-8").catch(() => "");
+  return readFile14(memoryFilePath(workspace), "utf-8").catch(() => "");
 }
 
 // src/tools/sugoCheckpoint.ts
@@ -28211,7 +28255,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.30.1" : "0.0.0-dev";
+  return true ? "0.31.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -28310,12 +28354,12 @@ function errorResult7(errorCode, message) {
 }
 
 // src/tools/sugoExplore.ts
-import { readFile as readFile14 } from "node:fs/promises";
-import { isAbsolute as isAbsolute5, join as join15 } from "node:path";
+import { readFile as readFile15 } from "node:fs/promises";
+import { isAbsolute as isAbsolute5, join as join16 } from "node:path";
 
 // src/ast/astParser.ts
 var import_web_tree_sitter = __toESM(require_tree_sitter(), 1);
-import { extname, join as join14 } from "node:path";
+import { extname, join as join15 } from "node:path";
 
 // src/ast/outline.ts
 var NODE_TYPE_MAP = {
@@ -28388,11 +28432,11 @@ function extractOutline(rootNode, language) {
 
 // src/ast/wasmGrammarPath.ts
 import { existsSync as existsSync4 } from "node:fs";
-import { dirname as dirname7, join as join13 } from "node:path";
+import { dirname as dirname8, join as join14 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 function defaultWasmGrammarsDir() {
-  const here = dirname7(fileURLToPath2(import.meta.url));
-  const candidates = [join13(here, "..", "..", "wasm-grammars"), join13(here, "..", "wasm-grammars")];
+  const here = dirname8(fileURLToPath2(import.meta.url));
+  const candidates = [join14(here, "..", "..", "wasm-grammars"), join14(here, "..", "wasm-grammars")];
   for (const c of candidates) {
     if (existsSync4(c)) return c;
   }
@@ -28431,7 +28475,7 @@ async function ensureInit() {
   if (!initPromise2) {
     const grammarsDir = defaultWasmGrammarsDir();
     initPromise2 = import_web_tree_sitter.default.init({
-      locateFile: (scriptName) => join14(grammarsDir, scriptName)
+      locateFile: (scriptName) => join15(grammarsDir, scriptName)
     });
   }
   return initPromise2;
@@ -28441,7 +28485,7 @@ async function loadLanguage(language) {
   if (cached2) return cached2;
   const wasmFile = LANGUAGE_FILE_MAP[language];
   if (!wasmFile) throw new Error(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC5B8\uC5B4: ${language}`);
-  const lang = await import_web_tree_sitter.default.Language.load(join14(defaultWasmGrammarsDir(), wasmFile));
+  const lang = await import_web_tree_sitter.default.Language.load(join15(defaultWasmGrammarsDir(), wasmFile));
   languageCache.set(language, lang);
   return lang;
 }
@@ -28471,10 +28515,10 @@ async function handleSugoExplore(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const f of args2.filePaths.slice(0, MAX_FILES2)) {
-    const full = isAbsolute5(f) ? f : join15(args2.projectPath, f);
+    const full = isAbsolute5(f) ? f : join16(args2.projectPath, f);
     let content;
     try {
-      content = await readFile14(full, "utf-8");
+      content = await readFile15(full, "utf-8");
     } catch {
       skipped.push({ path: f, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -28495,8 +28539,8 @@ async function handleSugoExplore(rawArgs) {
 }
 
 // src/tools/sugoGetProjectContext.ts
-import { readdir as readdir5, readFile as readFile16 } from "node:fs/promises";
-import { basename as basename2, join as join17 } from "node:path";
+import { readdir as readdir5, readFile as readFile17 } from "node:fs/promises";
+import { basename as basename2, join as join18 } from "node:path";
 
 // src/harness/toolRegistry.ts
 var HARNESS_TOOL_REGISTRY = [];
@@ -28575,8 +28619,8 @@ function featureBranchName(branch) {
 }
 
 // src/todoSpec.ts
-import { mkdir as mkdir12, readFile as readFile15 } from "node:fs/promises";
-import { join as join16 } from "node:path";
+import { mkdir as mkdir13, readFile as readFile16 } from "node:fs/promises";
+import { join as join17 } from "node:path";
 
 // src/gates.ts
 function ok2() {
@@ -28822,11 +28866,11 @@ function checkLethalTrifectaMitigationGate(lastCheck, trifectaMitigation) {
 
 // src/todoSpec.ts
 function todoSpecPath(projectPath, featureName) {
-  return join16(projectPath, "sugo", "docs", "feature", featureName, "TODO-SPEC.md");
+  return join17(projectPath, "sugo", "docs", "feature", featureName, "TODO-SPEC.md");
 }
 async function readTodoSpec(projectPath, featureName) {
   try {
-    return await readFile15(todoSpecPath(projectPath, featureName), "utf-8");
+    return await readFile16(todoSpecPath(projectPath, featureName), "utf-8");
   } catch {
     return null;
   }
@@ -28850,7 +28894,7 @@ async function createTodoSpec(projectPath, draft) {
     "## \uAC31\uC2E0 \uB85C\uADF8",
     ""
   ].join("\n");
-  await mkdir12(join16(projectPath, "sugo", "docs", "feature", draft.featureName), { recursive: true });
+  await mkdir13(join17(projectPath, "sugo", "docs", "feature", draft.featureName), { recursive: true });
   await atomicWriteFile(path, content);
   return { path, content };
 }
@@ -28909,7 +28953,7 @@ var sugoGetProjectContextInputSchema = {
 var SugoGetProjectContextArgs = external_exports.object(sugoGetProjectContextInputSchema);
 async function readIfExists(path) {
   try {
-    return await readFile16(path, "utf-8");
+    return await readFile17(path, "utf-8");
   } catch {
     return null;
   }
@@ -28923,7 +28967,7 @@ async function readRulesDir(rulesDir, excludeBasenames, isTopLevel = true) {
   }
   const rules = [];
   for (const entry of entries) {
-    const full = join17(rulesDir, entry.name);
+    const full = join18(rulesDir, entry.name);
     if (entry.isDirectory()) {
       rules.push(...await readRulesDir(full, excludeBasenames, false));
       continue;
@@ -28938,14 +28982,14 @@ async function readRulesDir(rulesDir, excludeBasenames, isTopLevel = true) {
 async function handleSugoGetProjectContext(rawArgs) {
   const args2 = SugoGetProjectContextArgs.parse(rawArgs);
   const { projectPath, changedFiles } = args2;
-  const claudeMd = await readIfExists(join17(projectPath, "sugo", "CLAUDE.md"));
+  const claudeMd = await readIfExists(join18(projectPath, "sugo", "CLAUDE.md"));
   const config2 = await loadProjectConfig(projectPath);
   const registryEntry = await findRegistryEntry(projectPath);
   const checkpointSync = registryEntry?.workspace ? await pullCheckpointsToRules(projectPath, registryEntry.workspace).catch(() => null) : null;
   const loaded = [];
   if (config2) {
     for (const applied of config2.appliedHarnesses) {
-      const content = await readIfExists(join17(projectPath, "sugo", "harness", applied.id, "harness.md"));
+      const content = await readIfExists(join18(projectPath, "sugo", "harness", applied.id, "harness.md"));
       if (content !== null) loaded.push({ id: applied.id, harnessMd: content });
     }
   }
@@ -28955,7 +28999,7 @@ async function handleSugoGetProjectContext(rawArgs) {
   );
   const harnesses = loaded.filter((h) => routing.selected.includes(h.id));
   const sugoManagedRuleFiles = new Set(loaded.map((h) => basename2(buildClaudeRuleFile(h.id, "").relPath)));
-  const rules = await readRulesDir(join17(projectPath, ".claude", "rules"), sugoManagedRuleFiles);
+  const rules = await readRulesDir(join18(projectPath, ".claude", "rules"), sugoManagedRuleFiles);
   const harnessToolGuides = resolveHarnessToolGuides(routing.selected);
   const branch = await currentGitBranch(projectPath);
   const fName = featureBranchName(branch);
@@ -28968,7 +29012,7 @@ async function handleSugoGetProjectContext(rawArgs) {
     checkpointSync: {
       attempted: !!registryEntry?.workspace,
       injectedCount: checkpointSync,
-      rulesRoot: join17(projectPath, ".claude", "rules")
+      rulesRoot: join18(projectPath, ".claude", "rules")
     },
     claudeMd,
     harnesses,
@@ -28993,16 +29037,16 @@ async function handleSugoGetProjectContext(rawArgs) {
 
 // src/hulk/history.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdir as mkdir13, readdir as readdir6, readFile as readFile17 } from "node:fs/promises";
-import { join as join18 } from "node:path";
+import { mkdir as mkdir14, readdir as readdir6, readFile as readFile18 } from "node:fs/promises";
+import { join as join19 } from "node:path";
 function generateWorkLogId() {
   return `wl-${Date.now()}-${randomBytes3(4).toString("hex")}`;
 }
 async function addWorkLog(workspace, params) {
   const workLog = { id: generateWorkLogId(), ...params };
   const dir = historyDir(workspace);
-  await mkdir13(dir, { recursive: true });
-  await atomicWriteFile(join18(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
+  await mkdir14(dir, { recursive: true });
+  await atomicWriteFile(join19(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
   void syncHistory(workspace, workLog, workLog.prRefs);
   return workLog;
 }
@@ -29018,7 +29062,7 @@ async function listWorkLogs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile17(join18(dir, name2), "utf-8");
+      const raw = await readFile18(join19(dir, name2), "utf-8");
       logs.push(JSON.parse(raw));
     } catch {
       continue;
@@ -29028,7 +29072,7 @@ async function listWorkLogs(workspace) {
 }
 async function getWorkLog(workspace, id) {
   try {
-    const raw = await readFile17(join18(historyDir(workspace), `${id}.json`), "utf-8");
+    const raw = await readFile18(join19(historyDir(workspace), `${id}.json`), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -29097,12 +29141,12 @@ function errorResult8(errorCode, message) {
 }
 
 // src/tools/sugoOverview.ts
-import { readFile as readFile18 } from "node:fs/promises";
-import { relative as relative4, sep as sep2 } from "node:path";
+import { readFile as readFile19 } from "node:fs/promises";
+import { relative as relative5, sep as sep2 } from "node:path";
 
 // src/overview.ts
 import { readdir as readdir7 } from "node:fs/promises";
-import { join as join19 } from "node:path";
+import { join as join20 } from "node:path";
 var IGNORED_DIR_NAMES = /* @__PURE__ */ new Set([
   "node_modules",
   "dist",
@@ -29127,9 +29171,9 @@ async function walkSourceFiles(rootDir, maxFiles) {
       if (results.length >= maxFiles) return;
       if (entry.isDirectory()) {
         if (entry.name.startsWith(".") || IGNORED_DIR_NAMES.has(entry.name)) continue;
-        await walk(join19(dir, entry.name));
+        await walk(join20(dir, entry.name));
       } else if (entry.isFile() && detectLanguage(entry.name)) {
-        results.push(join19(dir, entry.name));
+        results.push(join20(dir, entry.name));
       }
     }
   }
@@ -29150,10 +29194,10 @@ async function handleSugoOverview(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const full of files) {
-    const relPath = relative4(args2.projectPath, full).split(sep2).join("/");
+    const relPath = relative5(args2.projectPath, full).split(sep2).join("/");
     let content;
     try {
-      content = await readFile18(full, "utf-8");
+      content = await readFile19(full, "utf-8");
     } catch {
       skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -29182,17 +29226,17 @@ async function handleSugoOverview(rawArgs) {
 
 // src/sourceRevision.ts
 import { createHash as createHash3 } from "node:crypto";
-import { readFile as readFile19 } from "node:fs/promises";
-import { relative as relative5, resolve as resolve8, isAbsolute as isAbsolute6 } from "node:path";
+import { readFile as readFile20 } from "node:fs/promises";
+import { relative as relative6, resolve as resolve8, isAbsolute as isAbsolute6 } from "node:path";
 async function collectSourceRevision(projectPath, changedFiles, startedAt) {
-  const paths = [...new Set(changedFiles.map((f) => relative5(projectPath, resolve8(projectPath, f)).replace(/\\/g, "/")))].sort();
+  const paths = [...new Set(changedFiles.map((f) => relative6(projectPath, resolve8(projectPath, f)).replace(/\\/g, "/")))].sort();
   if (!paths.length || paths.some((p) => !p || p.startsWith("../") || isAbsolute6(p))) return void 0;
   const head = await runGit(["rev-parse", "HEAD"], projectPath);
   if (!head || !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(head)) return void 0;
   const files = [];
   for (const path of paths) {
     try {
-      files.push({ path, hash: createHash3("sha256").update(await readFile19(resolve8(projectPath, path))).digest("hex") });
+      files.push({ path, hash: createHash3("sha256").update(await readFile20(resolve8(projectPath, path))).digest("hex") });
     } catch (e) {
       if (e.code !== "ENOENT") return void 0;
       files.push({ path, hash: "deleted" });
@@ -29205,7 +29249,7 @@ async function collectSourceRevision(projectPath, changedFiles, startedAt) {
 }
 
 // src/tools/sugoPlan.ts
-import { readFile as readFile23 } from "node:fs/promises";
+import { readFile as readFile24 } from "node:fs/promises";
 
 // src/bootable.ts
 async function isProjectBootable(projectPath) {
@@ -29214,8 +29258,8 @@ async function isProjectBootable(projectPath) {
 }
 
 // src/bootScan.ts
-import { readdir as readdir8, readFile as readFile20 } from "node:fs/promises";
-import { join as join20 } from "node:path";
+import { readdir as readdir8, readFile as readFile21 } from "node:fs/promises";
+import { join as join21 } from "node:path";
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
 var MAX_FILES4 = 2e3;
 var MAX_FILE_BYTES4 = 3e5;
@@ -29231,9 +29275,9 @@ async function collectJavaFiles(dir, acc) {
     if (acc.length >= MAX_FILES4) return;
     if (entry.isDirectory()) {
       if (EXCLUDED_DIRS.has(entry.name)) continue;
-      await collectJavaFiles(join20(dir, entry.name), acc);
+      await collectJavaFiles(join21(dir, entry.name), acc);
     } else if (entry.isFile() && entry.name.endsWith(".java")) {
-      acc.push(join20(dir, entry.name));
+      acc.push(join21(dir, entry.name));
     }
   }
 }
@@ -29244,7 +29288,7 @@ async function scanForSpringBootTestAnnotation(projectPath) {
   const candidates = testFiles.length > 0 ? testFiles : files;
   for (const file of candidates) {
     try {
-      const content = await readFile20(file, "utf-8");
+      const content = await readFile21(file, "utf-8");
       if (content.length > MAX_FILE_BYTES4) continue;
       if (hasValidSpringBootTestAnnotation([content])) return true;
     } catch {
@@ -29255,12 +29299,12 @@ async function scanForSpringBootTestAnnotation(projectPath) {
 }
 
 // src/feature.ts
-import { mkdir as mkdir14 } from "node:fs/promises";
-import { join as join22 } from "node:path";
+import { mkdir as mkdir15 } from "node:fs/promises";
+import { join as join23 } from "node:path";
 
 // src/patch.ts
 import { readdir as readdir9 } from "node:fs/promises";
-import { dirname as dirname8, join as join21 } from "node:path";
+import { dirname as dirname9, join as join22 } from "node:path";
 var PatchEntryError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -29294,7 +29338,7 @@ function patchWorkResultFilename(version2) {
   return `work-result-patch-v${version2}.md`;
 }
 async function resolvePatchContext(workResultPath) {
-  const featureDir = dirname8(workResultPath);
+  const featureDir = dirname9(workResultPath);
   let filenames;
   try {
     filenames = await readdir9(featureDir);
@@ -29303,7 +29347,7 @@ async function resolvePatchContext(workResultPath) {
   }
   let parentPrdPath;
   if (filenames.includes("prd.md")) {
-    parentPrdPath = join21(featureDir, "prd.md");
+    parentPrdPath = join22(featureDir, "prd.md");
   } else {
     const latest = findLatestPrdPatchFilename(filenames);
     if (!latest) {
@@ -29312,7 +29356,7 @@ async function resolvePatchContext(workResultPath) {
         `\uBD80\uBAA8 PRD(prd.md \uB610\uB294 PRD-patch-v*.md)\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`
       );
     }
-    parentPrdPath = join21(featureDir, latest);
+    parentPrdPath = join22(featureDir, latest);
   }
   const version2 = computeNextPatchVersion(filenames);
   return { parentPrdPath, version: version2, baseWorkResultPath: workResultPath, featureDir };
@@ -29328,27 +29372,27 @@ function todayYyyymmdd() {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 }
 async function writePrdFile(projectPath, featureName, content) {
-  const featurePath = join22(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
-  const prdPath = join22(featurePath, "prd.md");
-  await mkdir14(featurePath, { recursive: true });
+  const featurePath = join23(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
+  const prdPath = join23(featurePath, "prd.md");
+  await mkdir15(featurePath, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath, prdPath };
 }
 async function writeWorkResultFile(featurePath, content) {
-  const workResultPath = join22(featurePath, "work-result.md");
-  await mkdir14(featurePath, { recursive: true });
+  const workResultPath = join23(featurePath, "work-result.md");
+  await mkdir15(featurePath, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
 async function writePatchPrdFile(featureDir, version2, content) {
-  const prdPath = join22(featureDir, patchPrdFilename(version2));
-  await mkdir14(featureDir, { recursive: true });
+  const prdPath = join23(featureDir, patchPrdFilename(version2));
+  await mkdir15(featureDir, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath: featureDir, prdPath };
 }
 async function writePatchWorkResultFile(featureDir, version2, content) {
-  const workResultPath = join22(featureDir, patchWorkResultFilename(version2));
-  await mkdir14(featureDir, { recursive: true });
+  const workResultPath = join23(featureDir, patchWorkResultFilename(version2));
+  await mkdir15(featureDir, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
@@ -29558,7 +29602,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash4 } from "node:crypto";
 import { stat as stat2 } from "node:fs/promises";
-import { isAbsolute as isAbsolute7, join as join23, relative as relative6 } from "node:path";
+import { isAbsolute as isAbsolute7, join as join24, relative as relative7 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash4("sha1").update(parts2.join("\n")).digest("hex");
@@ -29566,8 +29610,8 @@ function computeFingerprintFromEntries(entries) {
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
-    const full = isAbsolute7(f) ? f : join23(projectPath, f);
-    const relPath = isAbsolute7(f) ? relative6(projectPath, f) : f;
+    const full = isAbsolute7(f) ? f : join24(projectPath, f);
+    const relPath = isAbsolute7(f) ? relative7(projectPath, f) : f;
     try {
       const st = await stat2(full);
       entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
@@ -29775,16 +29819,16 @@ function computeCompletionGrade(labels, currentPatchVersion, approvals = []) {
   });
   return { grade: inScope.length === 0 ? "verified" : allApproved ? "verified_by_human" : "unverified", bypassLabels: inScope };
 }
-function renderBypassSummary(result2) {
-  if (result2.grade === "verified") return void 0;
-  const lines = result2.bypassLabels.map((l) => `- [${l.kind}] ${l.reason}`);
-  return `\uC644\uB8CC\uB4F1\uAE09: ${result2.grade} (\uC6B0\uD68C \uB77C\uBCA8 ${result2.bypassLabels.length}\uAC74)
+function renderBypassSummary(result3) {
+  if (result3.grade === "verified") return void 0;
+  const lines = result3.bypassLabels.map((l) => `- [${l.kind}] ${l.reason}`);
+  return `\uC644\uB8CC\uB4F1\uAE09: ${result3.grade} (\uC6B0\uD68C \uB77C\uBCA8 ${result3.bypassLabels.length}\uAC74)
 ${lines.join("\n")}`;
 }
 
 // src/hulk/roadmap.ts
-import { mkdir as mkdir15, readFile as readFile21 } from "node:fs/promises";
-import { dirname as dirname9, join as join24 } from "node:path";
+import { mkdir as mkdir16, readFile as readFile22 } from "node:fs/promises";
+import { dirname as dirname10, join as join25 } from "node:path";
 
 // src/hulk/roadmapGraph.ts
 function mergeRoadmapOwnership(localNodes, remoteOrdering) {
@@ -29841,13 +29885,13 @@ function topoSort(nodes) {
 }
 function readySet(nodes) {
   const byId = new Map(nodes.map((n) => [n.id, n]));
-  const result2 = [];
+  const result3 = [];
   for (const n of nodes) {
     if (n.status !== "pending") continue;
     const allDepsDone = n.dependsOn.every((dep) => byId.get(dep)?.status === "done");
-    if (allDepsDone) result2.push(n.id);
+    if (allDepsDone) result3.push(n.id);
   }
-  return result2;
+  return result3;
 }
 
 // src/hulk/roadmapReq.ts
@@ -29896,8 +29940,8 @@ function promotePrdRequirements(taskId, prdContent) {
 // src/hulk/roadmap.ts
 async function restoredPatchTitle(task) {
   if (!task.patchInfo) return task.title;
-  const patchPrdPath = task.patchInfo.prdPath ?? (task.prd_ref ? join24(dirname9(task.prd_ref), `PRD-patch-v${task.patchInfo.patchVersion}.md`) : void 0);
-  const prdContent = patchPrdPath ? await readFile21(patchPrdPath, "utf8").catch(() => void 0) : void 0;
+  const patchPrdPath = task.patchInfo.prdPath ?? (task.prd_ref ? join25(dirname10(task.prd_ref), `PRD-patch-v${task.patchInfo.patchVersion}.md`) : void 0);
+  const prdContent = patchPrdPath ? await readFile22(patchPrdPath, "utf8").catch(() => void 0) : void 0;
   return task.patchInfo.title ?? taskCycleTitle(task.patchInfo.seed, task.title, prdContent);
 }
 function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath) {
@@ -29925,7 +29969,7 @@ function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPa
 async function readRoadmapFile(workspace) {
   let file;
   try {
-    const raw = await readFile21(roadmapFilePath(workspace), "utf-8");
+    const raw = await readFile22(roadmapFilePath(workspace), "utf-8");
     file = JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
@@ -29933,11 +29977,11 @@ async function readRoadmapFile(workspace) {
   if (file.nodes.some((n) => n.workResult?.path && !n.workResult.report?.bypassLabels)) {
     const sessions = (await loadAllSessions()).filter((s) => s.state === "DONE" && s.data.hulkWorkspace === workspace);
     for (const node of file.nodes) {
-      const result2 = node.workResult;
-      if (!result2?.path || result2.report?.bypassLabels) continue;
-      const chain = sessions.find((s) => s.data.chainInfo.workResultPath === result2.path)?.data.chainInfo;
-      if (!chain?.workResultReport || !Array.isArray(chain.bypassLabels) || result2.report && result2.report.completedAt !== chain.workResultReport.completedAt) continue;
-      result2.report = {
+      const result3 = node.workResult;
+      if (!result3?.path || result3.report?.bypassLabels) continue;
+      const chain = sessions.find((s) => s.data.chainInfo.workResultPath === result3.path)?.data.chainInfo;
+      if (!chain?.workResultReport || !Array.isArray(chain.bypassLabels) || result3.report && result3.report.completedAt !== chain.workResultReport.completedAt) continue;
+      result3.report = {
         ...chain.workResultReport,
         bypassLabels: [...chain.bypassLabels],
         completionGrade: computeCompletionGrade(chain.bypassLabels, chain.workResultReport.patchVersion).grade
@@ -29947,7 +29991,7 @@ async function readRoadmapFile(workspace) {
   return file;
 }
 async function writeRoadmapFile(workspace, file) {
-  await mkdir15(workspaceDir(workspace), { recursive: true });
+  await mkdir16(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(roadmapFilePath(workspace), JSON.stringify(file, null, 2));
   void syncRoadmapSnapshot(workspace, file.nodes).catch(() => {
   });
@@ -30101,12 +30145,12 @@ async function replaceTaskRequirements(workspace, taskId, requirements) {
     });
   });
 }
-async function updateRoadmapNodeStatus(workspace, id, status, result2) {
+async function updateRoadmapNodeStatus(workspace, id, status, result3) {
   return withRoadmap(workspace, async (file) => {
     const node = file.nodes.find((n) => n.id === id);
     if (!node) return { ok: false, error: "NODE_NOT_FOUND", message: `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${id}` };
     node.status = status;
-    if (result2) node.result = result2;
+    if (result3) node.result = result3;
     await writeRoadmapFile(workspace, file);
     return { ok: true };
   });
@@ -30212,7 +30256,7 @@ async function backfillRoadmapTask(workspace, taskId, title) {
     return { ok: true };
   });
 }
-async function markRequirementDone(workspace, id, result2) {
+async function markRequirementDone(workspace, id, result3) {
   if (id.endsWith("::REQ-CONFIRM")) {
     return {
       ok: false,
@@ -30220,7 +30264,7 @@ async function markRequirementDone(workspace, id, result2) {
       message: "REQ-CONFIRM\uC740 \uC5D0\uC774\uC804\uD2B8\uAC00 \uC9C1\uC811 \uC644\uB8CC\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4 \u2014 \uC0AC\uC6A9\uC790 review_done\uC744 \uD1B5\uD574\uC11C\uB9CC \uC644\uB8CC\uB429\uB2C8\uB2E4."
     };
   }
-  return updateRoadmapNodeStatus(workspace, id, "done", result2);
+  return updateRoadmapNodeStatus(workspace, id, "done", result3);
 }
 async function completeTaskRequirements(workspace, taskId, summary, logId) {
   await withRoadmap(workspace, async (file) => {
@@ -30264,20 +30308,20 @@ async function pullRoadmapOrdering(workspace) {
 
 // src/hulk/task.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir16, readFile as readFile22 } from "node:fs/promises";
+import { mkdir as mkdir17, readFile as readFile23 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile22(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile23(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
   }
 }
 async function writeTasksFile(workspace, file) {
-  await mkdir16(workspaceDir(workspace), { recursive: true });
+  await mkdir17(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(tasksFilePath(workspace), JSON.stringify(file, null, 2));
 }
 async function addTask(workspace, params) {
@@ -31107,8 +31151,8 @@ async function git(projectPath, args2) {
   try {
     const { stdout } = await runFile("git", ["-C", projectPath, ...args2], { encoding: "utf8" });
     return stdout.trim();
-  } catch (error2) {
-    const stderr = error2 instanceof Error && "stderr" in error2 ? String(error2.stderr ?? "") : "";
+  } catch (error3) {
+    const stderr = error3 instanceof Error && "stderr" in error3 ? String(error3.stderr ?? "") : "";
     throw new WorkBranchError("WORK_BRANCH_GIT_FAILED", stderr.trim() || `git ${args2[0]} \uC2E4\uD328`);
   }
 }
@@ -31519,7 +31563,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "decompose" && existing) {
     if (!args2.manifest) return errorResult9("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     if (!existing.data.prdPath) return errorResult9("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    const prdContent = await readFile23(existing.data.prdPath, "utf-8").catch(() => "");
+    const prdContent = await readFile24(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
@@ -31573,12 +31617,12 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   const newSessionId = action === "start" ? generateSessionId() : sessionId;
-  const result2 = applyTransition(existing, action, newSessionId, {
+  const result3 = applyTransition(existing, action, newSessionId, {
     projectPath: args2.projectPath,
     featureName: args2.featureName,
     cancelReason: args2.cancelReason
   });
-  if (result2.ok && result2.abandonedChain) {
+  if (result3.ok && result3.abandonedChain) {
     newBypassLabels.push({
       kind: "abandonedChain",
       reason: args2.cancelReason,
@@ -31586,12 +31630,12 @@ async function handleSugoPlan(rawArgs) {
       recordedAt: (/* @__PURE__ */ new Date()).toISOString()
     });
   }
-  if (!result2.ok) {
-    return errorResult9(result2.errorCode ?? "UNKNOWN_ERROR", result2.message ?? "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958");
+  if (!result3.ok) {
+    return errorResult9(result3.errorCode ?? "UNKNOWN_ERROR", result3.message ?? "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958");
   }
-  let session = result2.session;
+  let session = result3.session;
   if (!session) {
-    const payload2 = { ok: true, sessionId: void 0, state: void 0, nextActionHints: result2.nextActionHints ?? [] };
+    const payload2 = { ok: true, sessionId: void 0, state: void 0, nextActionHints: result3.nextActionHints ?? [] };
     return { content: [{ type: "text", text: JSON.stringify(payload2, null, 2) }] };
   }
   if (newBypassLabels.length > 0) {
@@ -31688,7 +31732,7 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "start" && args2.specPath) {
-    const specExists = await readFile23(args2.specPath, "utf-8").then(() => true, () => false);
+    const specExists = await readFile24(args2.specPath, "utf-8").then(() => true, () => false);
     if (!specExists) return errorResult9("SPEC_FILE_NOT_FOUND", `\uC6D0\uBCF8 SPEC \uD30C\uC77C\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.specPath}`);
     const selectedId = session.data.specDraftSelection?.selectedId;
     const selected = session.data.specDraftSelection?.candidates.find((candidate) => candidate.id === selectedId);
@@ -31709,8 +31753,8 @@ async function handleSugoPlan(rawArgs) {
     try {
       const workBranch = await prepareWorkBranch(session.projectPath, args2.workBranch);
       session = { ...session, data: { ...session.data, workBranch } };
-    } catch (error2) {
-      if (error2 instanceof WorkBranchError) return errorResult9(error2.code, error2.message);
+    } catch (error3) {
+      if (error3 instanceof WorkBranchError) return errorResult9(error3.code, error3.message);
       return errorResult9("WORK_BRANCH_PREPARE_FAILED", "\uC791\uC5C5 \uBE0C\uB79C\uCE58\uB97C \uC900\uBE44\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
     }
   }
@@ -31747,7 +31791,7 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "prd" && args2.specPath) {
-    const specExists = await readFile23(args2.specPath, "utf-8").then(
+    const specExists = await readFile24(args2.specPath, "utf-8").then(
       () => true,
       () => false
     );
@@ -32145,8 +32189,8 @@ async function handleSugoPlan(rawArgs) {
     cancelledAt: session.cancelledAt,
     nextActionHints: session.state === "REVIEW_RUNNING" ? [
       "\uC0AC\uC6A9\uC790\uC5D0\uAC8C \uD655\uC778\uC744 \uBB3B\uAE30 \uC804\uC5D0 request_review_confirmation\uC73C\uB85C \uD604\uC7AC \uCC28\uC218\uC758 \uBCF4\uACE0\uC11C\uC640 \uBCC0\uACBD\uD30C\uC77C\uC744 \uBA3C\uC800 \uAC8C\uC2DC\uD558\uC138\uC694. \uAC8C\uC2DC \uC751\uB2F5\uC744 \uD655\uC778\uD55C \uB4A4 Dashboard\uC758 \uB9AC\uBDF0 \uBCF4\uACE0\uC11C HTML \uBC84\uD2BC\uC73C\uB85C \uC548\uB0B4\uD558\uC138\uC694. \uD130\uBBF8\uB110 \uC120\uD0DD\uCC3D\uC5D0\uC11C \uBBF8\uB9AC \uC2B9\uC778\uC744 \uBC1B\uC9C0 \uB9C8\uC138\uC694.",
-      ...result2.nextActionHints ?? []
-    ] : result2.nextActionHints ?? [],
+      ...result3.nextActionHints ?? []
+    ] : result3.nextActionHints ?? [],
     // §4.3-P DONE까지 남은 경로와 지금 막고 있는 것 — 막다른 길에 들어가기 전에 보이게 한다.
     completionPlan: buildCompletionPlan(session.state, session.data.chainInfo),
     // §4.3-T start에서만 채워진다. missing이면 clarify에서 최종 목표를 확정해 생성해야 한다.
@@ -32285,8 +32329,8 @@ function errorResult11(errorCode, message) {
 import { resolve as resolve9 } from "node:path";
 
 // src/harness/reset.ts
-import { mkdir as mkdir17, readFile as readFile24, rm as rm4 } from "node:fs/promises";
-import { join as join25 } from "node:path";
+import { mkdir as mkdir18, readFile as readFile25, rm as rm4 } from "node:fs/promises";
+import { join as join26 } from "node:path";
 var ResetProjectError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -32308,17 +32352,17 @@ async function resetProjectHarness(projectPath) {
     throw new ResetProjectError("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4(sugo/config.json \uC5C6\uC74C): ${projectPath}`);
   }
   const sugoDir = projectSugoDir(projectPath);
-  const claudeMdPath = join25(sugoDir, "CLAUDE.md");
+  const claudeMdPath = join26(sugoDir, "CLAUDE.md");
   let backedUpTo;
   try {
-    const current = await readFile24(claudeMdPath, "utf-8");
-    const backupDir = join25(sugoDir, "backup");
-    await mkdir17(backupDir, { recursive: true });
-    backedUpTo = join25(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
+    const current = await readFile25(claudeMdPath, "utf-8");
+    const backupDir = join26(sugoDir, "backup");
+    await mkdir18(backupDir, { recursive: true });
+    backedUpTo = join26(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
     await atomicWriteFile(backedUpTo, current);
   } catch {
   }
-  await rm4(join25(sugoDir, "harness"), { recursive: true, force: true });
+  await rm4(join26(sugoDir, "harness"), { recursive: true, force: true });
   await atomicWriteFile(claudeMdPath, RESET_CLAUDE_MD);
   await saveProjectConfig({ ...config2, appliedHarnesses: [], lastUpdated: (/* @__PURE__ */ new Date()).toISOString() });
   return { backedUpTo };
@@ -32440,7 +32484,7 @@ async function handleSugoRoadmap(rawArgs) {
       if (!args2.id || !args2.title || !args2.level) {
         return errorResult13("ADD_FIELDS_REQUIRED", "add action\uC5D0\uB294 id/title/level\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       }
-      const result2 = await addRoadmapNode(args2.workspace, {
+      const result3 = await addRoadmapNode(args2.workspace, {
         id: args2.id,
         title: args2.title,
         level: args2.level,
@@ -32451,31 +32495,31 @@ async function handleSugoRoadmap(rawArgs) {
         specPath: args2.specPath,
         note: args2.note
       });
-      if (!result2.ok) return errorResult13(result2.error, result2.message);
+      if (!result3.ok) return errorResult13(result3.error, result3.message);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "remove": {
       if (!args2.id) return errorResult13("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const result2 = await removeRoadmapNode(args2.workspace, args2.id);
-      if (!result2.ok) return errorResult13(result2.error, result2.message);
+      const result3 = await removeRoadmapNode(args2.workspace, args2.id);
+      if (!result3.ok) return errorResult13(result3.error, result3.message);
       return ok4({});
     }
     case "status": {
       if (!args2.id || !args2.status) return errorResult13("ID_AND_STATUS_REQUIRED", "status action\uC5D0\uB294 id\uC640 status\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const result2 = await updateRoadmapNodeStatus(args2.workspace, args2.id, args2.status, resultFrom(args2));
-      if (!result2.ok) return errorResult13(result2.error, result2.message);
+      const result3 = await updateRoadmapNodeStatus(args2.workspace, args2.id, args2.status, resultFrom(args2));
+      if (!result3.ok) return errorResult13(result3.error, result3.message);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "link": {
       if (!args2.fromId || !args2.toId) return errorResult13("FROM_TO_REQUIRED", "link action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const result2 = await linkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
-      if (!result2.ok) return errorResult13(result2.error, result2.message);
+      const result3 = await linkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
+      if (!result3.ok) return errorResult13(result3.error, result3.message);
       return ok4({});
     }
     case "unlink": {
       if (!args2.fromId || !args2.toId) return errorResult13("FROM_TO_REQUIRED", "unlink action\uC5D0\uB294 fromId\uC640 toId\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const result2 = await unlinkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
-      if (!result2.ok) return errorResult13(result2.error, result2.message);
+      const result3 = await unlinkRoadmapNodes(args2.workspace, args2.fromId, args2.toId);
+      if (!result3.ok) return errorResult13(result3.error, result3.message);
       return ok4({});
     }
     case "group": {
@@ -32523,8 +32567,8 @@ async function handleSugoRoadmap(rawArgs) {
         blockedNextStep: args2.blockedNextStep,
         createdAt: (/* @__PURE__ */ new Date()).toISOString()
       };
-      const result2 = await blockRoadmapNodeForHuman(args2.workspace, args2.id, blocker);
-      if (!result2.ok) return errorResult13(result2.error, result2.message);
+      const result3 = await blockRoadmapNodeForHuman(args2.workspace, args2.id, blocker);
+      if (!result3.ok) return errorResult13(result3.error, result3.message);
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };
       session.data.reviewConfirmation = {
         workspace: args2.workspace,
@@ -32583,8 +32627,8 @@ async function handleSugoRoadmap(rawArgs) {
         validation: chain.lastValidation
       });
       const blocker = buildReviewConfirmationBlocker({ sessionId: args2.sessionId, ...args2.reviewPacket, files, report });
-      const result2 = await blockRoadmapNodeForHuman(args2.workspace, args2.id, blocker);
-      if (!result2.ok) return errorResult13(result2.error, result2.message);
+      const result3 = await blockRoadmapNodeForHuman(args2.workspace, args2.id, blocker);
+      if (!result3.ok) return errorResult13(result3.error, result3.message);
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };
       await saveSession(session);
       await updateRoadmapNodeRuntimeAssessment(args2.workspace, args2.id, assessSession(session));
@@ -32608,8 +32652,8 @@ async function handleSugoRoadmap(rawArgs) {
       if (remote.blocker?.sessionId && remote.blocker.sessionId !== args2.sessionId) {
         return errorResult13("BLOCKER_SESSION_MISMATCH", "\uB300\uC2DC\uBCF4\uB4DC \uCC28\uB2E8\uC744 \uB9CC\uB4E0 \uC138\uC158\uACFC \uD604\uC7AC \uC138\uC158\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
       }
-      const result2 = await resumeRoadmapNodeWithDecision(args2.workspace, args2.id, args2.sessionId, remote.decision.response);
-      if (!result2.ok) return errorResult13(result2.error, result2.message);
+      const result3 = await resumeRoadmapNodeWithDecision(args2.workspace, args2.id, args2.sessionId, remote.decision.response);
+      if (!result3.ok) return errorResult13(result3.error, result3.message);
       session.data.humanDecisionGate = void 0;
       if (gate.blocker.kind === "review_confirmation") {
         const approvalLabel = gate.blocker.options.find((option) => option.id === "approve")?.label;
@@ -32641,8 +32685,8 @@ async function handleSugoRoadmap(rawArgs) {
     }
     case "mark_req": {
       if (!args2.id) return errorResult13("ID_REQUIRED", "mark_req action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const result2 = await markRequirementDone(args2.workspace, args2.id, resultFrom(args2));
-      if (!result2.ok) return errorResult13(result2.error, result2.message);
+      const result3 = await markRequirementDone(args2.workspace, args2.id, resultFrom(args2));
+      if (!result3.ok) return errorResult13(result3.error, result3.message);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
   }
@@ -32744,13 +32788,13 @@ var sugoRouteInputSchema = {
 var SugoRouteArgs = external_exports.object(sugoRouteInputSchema);
 async function handleSugoRoute(rawArgs) {
   const args2 = SugoRouteArgs.parse(rawArgs);
-  const result2 = routeInput(args2.input);
-  return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...result2 }, null, 2) }] };
+  const result3 = routeInput(args2.input);
+  return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...result3 }, null, 2) }] };
 }
 
 // src/hulk/spec.ts
-import { mkdir as mkdir18, readdir as readdir10, readFile as readFile25 } from "node:fs/promises";
-import { join as join26 } from "node:path";
+import { mkdir as mkdir19, readdir as readdir10, readFile as readFile26 } from "node:fs/promises";
+import { join as join27 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
     name: params.name,
@@ -32760,12 +32804,12 @@ async function addSpec(workspace, params) {
     created_at: (/* @__PURE__ */ new Date()).toISOString()
   };
   const dir = specsDir(workspace);
-  await mkdir18(dir, { recursive: true });
+  await mkdir19(dir, { recursive: true });
   const fileContent = stringifyFrontmatter(
     { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
     spec.content
   );
-  await atomicWriteFile(join26(dir, `${slugify(params.name)}.md`), fileContent);
+  await atomicWriteFile(join27(dir, `${slugify(params.name)}.md`), fileContent);
   void syncDecision(workspace, spec);
   return spec;
 }
@@ -32791,7 +32835,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile25(join26(dir, name2), "utf-8");
+      const raw = await readFile26(join27(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -32801,7 +32845,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile25(join26(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile26(join27(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -32852,8 +32896,8 @@ function errorResult14(errorCode, message) {
 }
 
 // src/tools/sugoSpecWriter.ts
-import { readFile as readFile26 } from "node:fs/promises";
-import { join as join27 } from "node:path";
+import { readFile as readFile27 } from "node:fs/promises";
+import { join as join28 } from "node:path";
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
   workspace: external_exports.string().min(1),
@@ -32889,16 +32933,16 @@ async function handleSugoSpecWriter(rawArgs) {
     return result({ ok: false, errorCode: "PROJECT_MISMATCH", expected: spec.projectPath, received: args2.projectPath });
   }
   if (args2.action === "context") {
-    const dir = join27(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const dir = join28(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     try {
       const attachments = await downloadSpecAttachments(args2.workspace, spec.id, dir);
       return result({ ok: true, spec, attachments: attachments ?? [], ...attachments === null && { attachmentsUnavailable: true } });
-    } catch (error2) {
-      return result({ ok: false, errorCode: "SPEC_ATTACHMENT_DOWNLOAD_FAILED", message: error2 instanceof Error ? error2.message : String(error2) });
+    } catch (error3) {
+      return result({ ok: false, errorCode: "SPEC_ATTACHMENT_DOWNLOAD_FAILED", message: error3 instanceof Error ? error3.message : String(error3) });
     }
   }
   if (!args2.specPath) return result({ ok: false, errorCode: "SPEC_PATH_REQUIRED" });
-  const text = await readFile26(args2.specPath, "utf-8").catch(() => null);
+  const text = await readFile27(args2.specPath, "utf-8").catch(() => null);
   if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args2.specPath });
   const warnings = lintSpecText(text);
   if (warnings.length > 0 && !args2.acceptLintWarnings) {
@@ -32912,8 +32956,8 @@ async function handleSugoSpecWriter(rawArgs) {
   try {
     await attachSpecDocument(args2.workspace, args2.specDraftId, args2.specPath);
     return result({ ok: true, specPath: args2.specPath, next: "Schedule\uC5D0\uC11C feat \uBA85\uB839\uC744 \uBCF5\uC0AC\uD574 \uC0C8 \uC138\uC158\uC5D0\uC11C \uC2E4\uD589\uD558\uC138\uC694." });
-  } catch (error2) {
-    return result({ ok: false, errorCode: "SPEC_ATTACH_FAILED", message: error2 instanceof Error ? error2.message : String(error2) });
+  } catch (error3) {
+    return result({ ok: false, errorCode: "SPEC_ATTACH_FAILED", message: error3 instanceof Error ? error3.message : String(error3) });
   }
 }
 
@@ -33107,16 +33151,16 @@ async function handleSugoUpdate(rawArgs) {
   if (!existing) {
     return errorResult16("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uBA3C\uC800 sugo_add\uB85C \uB4F1\uB85D\uD558\uC138\uC694: ${projectPath}`);
   }
-  const result2 = await syncProjectHarness({ ...args2, projectPath });
+  const result3 = await syncProjectHarness({ ...args2, projectPath });
   const payload = {
     ok: true,
     projectPath,
-    projectName: result2.projectName,
-    workspace: result2.workspace,
-    detectedStack: result2.config.detectedStack,
-    appliedHarnesses: result2.composeResult.appliedHarnesses,
-    warnings: result2.composeResult.warnings,
-    claudeMdPath: result2.claudeMdPath
+    projectName: result3.projectName,
+    workspace: result3.workspace,
+    detectedStack: result3.config.detectedStack,
+    appliedHarnesses: result3.composeResult.appliedHarnesses,
+    warnings: result3.composeResult.warnings,
+    claudeMdPath: result3.claudeMdPath
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
@@ -33225,8 +33269,8 @@ function evaluateAutoCheck(spec, ctx) {
 }
 
 // src/harness/validationConfig.ts
-import { readFile as readFile27 } from "node:fs/promises";
-import { join as join28 } from "node:path";
+import { readFile as readFile28 } from "node:fs/promises";
+import { join as join29 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
   const checks = (raw?.checks ?? []).filter((c) => !!c?.id).map((c) => ({
@@ -33239,18 +33283,18 @@ function parseValidationYaml(content) {
 }
 async function loadProjectValidationConfigs(projectPath) {
   const config2 = await loadProjectConfig(projectPath);
-  const result2 = /* @__PURE__ */ new Map();
-  if (!config2) return result2;
+  const result3 = /* @__PURE__ */ new Map();
+  if (!config2) return result3;
   for (const applied of config2.appliedHarnesses) {
-    const path = join28(projectPath, "sugo", "harness", applied.id, "validation.yaml");
+    const path = join29(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile27(path, "utf-8");
-      result2.set(applied.id, parseValidationYaml(content));
+      const content = await readFile28(path, "utf-8");
+      result3.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
     }
   }
-  return result2;
+  return result3;
 }
 
 // src/validate.ts
@@ -33338,7 +33382,7 @@ async function handleSugoValidate(rawArgs) {
   const session = await loadSession(args2.sessionId);
   const configs = await loadProjectValidationConfigs(session.projectPath);
   const autoResults = runAutoChecks(session.projectPath, session.data.chainInfo.changedFiles, configs);
-  const result2 = computeValidationVerdict(args2.validationResults, configs, autoResults);
+  const result3 = computeValidationVerdict(args2.validationResults, configs, autoResults);
   const updated = {
     ...session,
     data: {
@@ -33346,12 +33390,12 @@ async function handleSugoValidate(rawArgs) {
       chainInfo: {
         ...session.data.chainInfo,
         lastValidation: {
-          verdict: result2.verdict,
+          verdict: result3.verdict,
           checkedAt: (/* @__PURE__ */ new Date()).toISOString(),
-          fabricatedCount: result2.fabricated.length,
-          contradictionCount: result2.contradictions.length,
+          fabricatedCount: result3.fabricated.length,
+          contradictionCount: result3.contradictions.length,
           autoVerifiedCount: autoResults.size,
-          verifiedFailures: result2.results.filter((r) => r.source === "verified" && !r.passed && r.severity === "error").map((r) => ({ harnessId: r.harnessId, checkId: r.checkId, detail: r.detail ?? "" }))
+          verifiedFailures: result3.results.filter((r) => r.source === "verified" && !r.passed && r.severity === "error").map((r) => ({ harnessId: r.harnessId, checkId: r.checkId, detail: r.detail ?? "" }))
         }
       }
     }
@@ -33360,11 +33404,11 @@ async function handleSugoValidate(rawArgs) {
   const payload = {
     ok: true,
     sessionId: session.id,
-    verdict: result2.verdict,
-    results: result2.results,
-    fabricated: result2.fabricated,
-    uncoveredChecks: result2.uncoveredChecks,
-    contradictions: result2.contradictions,
+    verdict: result3.verdict,
+    results: result3.results,
+    fabricated: result3.fabricated,
+    uncoveredChecks: result3.uncoveredChecks,
+    contradictions: result3.contradictions,
     autoVerifiedCount: autoResults.size
   };
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
@@ -33884,22 +33928,22 @@ async function handleOperationalQuery(args2) {
   if (args2.query === "trace_artifact") {
     const resolved = await resolveTask(args2.taskId);
     if (resolved.error) return ontologyError(resolved.error, resolved.message);
-    const result3 = traceTaskArtifacts(resolved.session, resolved.task, await listRoadmapNodes(resolved.workspace), resolved.workspace);
-    return operationalResult(args2, result3);
+    const result4 = traceTaskArtifacts(resolved.session, resolved.task, await listRoadmapNodes(resolved.workspace), resolved.workspace);
+    return operationalResult(args2, result4);
   }
   const session = args2.sessionId ? await readSession(args2.sessionId) : await latestSessionForTask(args2.taskId);
   if (!session) {
     return ontologyError(args2.sessionId ? "SESSION_NOT_FOUND" : "SESSION_FOR_TASK_NOT_FOUND", args2.sessionId ? `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}` : `Task\uC5D0 \uC5F0\uACB0\uB41C \uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.taskId}`);
   }
-  const result2 = args2.query === "explain_state" ? explainSessionState(session) : args2.query === "explain_block" ? explainSessionBlock(session) : projectNextActions(session);
-  return operationalResult(args2, result2);
+  const result3 = args2.query === "explain_state" ? explainSessionState(session) : args2.query === "explain_block" ? explainSessionBlock(session) : projectNextActions(session);
+  return operationalResult(args2, result3);
 }
-function operationalResult(args2, result2) {
+function operationalResult(args2, result3) {
   return json({
     ok: true,
     model: ONTOLOGY_MODEL_IDENTITY,
     query: args2.query,
-    result: result2,
+    result: result3,
     ...args2.presentation ? { presentation: explanationProfileContract(args2.presentation) } : {}
   });
 }
@@ -34047,8 +34091,8 @@ function errorResult18(errorCode, message) {
 
 // src/work/gitHistory.ts
 import { execFile as execFile4 } from "node:child_process";
-import { mkdir as mkdir19, realpath } from "node:fs/promises";
-import { isAbsolute as isAbsolute8, join as join29, relative as relative7, resolve as resolve11, sep as sep3 } from "node:path";
+import { mkdir as mkdir20, realpath } from "node:fs/promises";
+import { isAbsolute as isAbsolute8, join as join30, relative as relative8, resolve as resolve11, sep as sep3 } from "node:path";
 import { promisify as promisify4 } from "node:util";
 var execFileAsync3 = promisify4(execFile4);
 async function git2(cwd, args2) {
@@ -34064,7 +34108,7 @@ async function repositoryScopes(projects) {
     const root = await git2(project, ["rev-parse", "--show-toplevel"]);
     if (!root) continue;
     const [canonicalRoot, canonicalProject] = await Promise.all([realpath(resolve11(root)), realpath(resolve11(project))]);
-    const rel = relative7(canonicalRoot, canonicalProject);
+    const rel = relative8(canonicalRoot, canonicalProject);
     if (isAbsolute8(rel) || rel === ".." || rel.startsWith(`..${sep3}`)) continue;
     const paths = byRoot.get(root) ?? /* @__PURE__ */ new Set();
     paths.add(rel ? rel.split(sep3).join("/") : ".");
@@ -34092,8 +34136,8 @@ async function backfillWorkspaceGitHistory(workspace) {
     }
   }
   const unique = [...new Map(logs.map((log) => [log.id, log])).values()];
-  await mkdir19(historyDir(workspace.name), { recursive: true });
-  await Promise.all(unique.map((log) => atomicWriteFile(join29(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
+  await mkdir20(historyDir(workspace.name), { recursive: true });
+  await Promise.all(unique.map((log) => atomicWriteFile(join30(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
   return unique;
 }
 
@@ -34132,19 +34176,19 @@ async function handleSugoWorkspace(rawArgs) {
     }
     case "delete": {
       if (!args2.name) return errorResult19("NAME_REQUIRED", "delete action\uC5D0\uB294 name\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
-      const result2 = await deleteWorkspace(args2.name, {
+      const result3 = await deleteWorkspace(args2.name, {
         purge: args2.purge,
         force: args2.force,
         keepData: args2.keep_data
       });
-      if (!result2.ok) return errorResult19(result2.errorCode, result2.message);
+      if (!result3.ok) return errorResult19(result3.errorCode, result3.message);
       return ok7({
         workspace: args2.name,
-        mode: result2.mode,
-        alreadyDeleted: result2.alreadyDeleted,
-        dataRemoved: result2.dataRemoved,
+        mode: result3.mode,
+        alreadyDeleted: result3.alreadyDeleted,
+        dataRemoved: result3.dataRemoved,
         // soft는 되살릴 수 있다는 걸 응답에서 바로 알려준다 — 몰라서 purge를 쓰는 게 최악이다.
-        note: result2.mode === "soft" ? "\uB370\uC774\uD130\uB294 \uBCF4\uC874\uB410\uC2B5\uB2C8\uB2E4. \uAC19\uC740 \uC774\uB984\uC73C\uB85C \uB2E4\uC2DC add\uD558\uBA74 \uBCF5\uAD6C\uB429\uB2C8\uB2E4." : "\uD558\uB4DC \uC0AD\uC81C\uB418\uC5B4 \uBCF5\uAD6C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."
+        note: result3.mode === "soft" ? "\uB370\uC774\uD130\uB294 \uBCF4\uC874\uB410\uC2B5\uB2C8\uB2E4. \uAC19\uC740 \uC774\uB984\uC73C\uB85C \uB2E4\uC2DC add\uD558\uBA74 \uBCF5\uAD6C\uB429\uB2C8\uB2E4." : "\uD558\uB4DC \uC0AD\uC81C\uB418\uC5B4 \uBCF5\uAD6C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."
       });
     }
     case "get": {
@@ -34308,6 +34352,105 @@ async function handleSugoAwsContextWithFetcher(rawArgs, fetcher) {
 }
 async function handleSugoAwsContext(rawArgs) {
   return handleSugoAwsContextWithFetcher(rawArgs, fetchAwsContext);
+}
+
+// src/tools/sugoUninstall.ts
+import { access as access2, readFile as readFile29, rm as rm5, rmdir, writeFile as writeFile4 } from "node:fs/promises";
+import { dirname as dirname11, join as join31, resolve as resolve12 } from "node:path";
+var CONFIRMATION = "DELETE_SUGO_DATA";
+var sugoUninstallInputSchema = {
+  action: external_exports.enum(["preview", "execute"]).default("preview"),
+  confirmation: external_exports.string().optional().describe(`execute \uC2DC \uC815\uD655\uD788 ${CONFIRMATION}`)
+};
+var Args2 = external_exports.object(sugoUninstallInputSchema);
+function withoutManagedBlock(content, start2, end) {
+  const startIndex = content.indexOf(start2);
+  const endIndex = content.indexOf(end);
+  if (startIndex < 0 || endIndex < startIndex) return content;
+  let before = content.slice(0, startIndex);
+  const after = content.slice(endIndex + end.length);
+  if (!after && before.endsWith("\n\n")) before = before.slice(0, -1);
+  return before + after;
+}
+async function restoreRoot(path, original, start2, end) {
+  const current = await readFile29(path, "utf8").catch(() => null);
+  if (current === null) return;
+  const stripped = withoutManagedBlock(current, start2, end);
+  if (original !== null && stripped.startsWith(original) && stripped.slice(original.length).trim() === "") await writeFile4(path, original);
+  else if (original === null && stripped.trim() === "") await rm5(path, { force: true });
+  else await writeFile4(path, stripped);
+}
+async function pruneEmptyParents(path, stopAt) {
+  let current = dirname11(path);
+  while (current.startsWith(stopAt) && current !== stopAt) {
+    const removed = await rmdir(current).then(() => true, () => false);
+    if (!removed) break;
+    current = dirname11(current);
+  }
+}
+async function cleanupProject(projectPath, manifest) {
+  const preserved = [];
+  if (manifest) {
+    await restoreRoot(
+      join31(projectPath, "CLAUDE.md"),
+      manifest.rootClaudeOriginal,
+      "<!-- sugo:harness-rules:start -->",
+      "<!-- sugo:harness-rules:end -->"
+    );
+    await restoreRoot(
+      join31(projectPath, "AGENTS.md"),
+      manifest.rootAgentsOriginal,
+      "<!-- sugo:project-context:start -->",
+      "<!-- sugo:project-context:end -->"
+    );
+    if (manifest.sugoDirExisted) {
+      for (const rel of manifest.managedFiles) {
+        const path = join31(projectPath, rel);
+        await rm5(path, { force: true, recursive: true });
+        await pruneEmptyParents(path, join31(projectPath, "sugo"));
+      }
+      await rm5(join31(projectPath, "sugo", "install-manifest.json"), { force: true });
+      await rmdir(join31(projectPath, "sugo")).catch(() => {
+      });
+      preserved.push("sugo/ (\uC124\uCE58 \uC804\uBD80\uD130 \uC874\uC7AC\uD558\uC5EC \uC18C\uC720\uAD8C \uBD88\uBA85 \uD30C\uC77C \uBCF4\uC874)");
+    } else {
+      await rm5(join31(projectPath, "sugo"), { force: true, recursive: true });
+    }
+    for (const rel of manifest.managedFiles.filter((path) => path.startsWith(".claude/rules/"))) {
+      await rm5(join31(projectPath, rel), { force: true });
+      await rmdir(dirname11(join31(projectPath, rel))).catch(() => {
+      });
+    }
+  } else {
+    preserved.push("\uC18C\uC720\uAD8C manifest \uC5C6\uC74C: \uD504\uB85C\uC81D\uD2B8 \uD30C\uC77C\uC744 \uBCF4\uC874\uD568");
+  }
+  return preserved;
+}
+async function handleSugoUninstall(rawArgs) {
+  const args2 = Args2.parse(rawArgs);
+  const projects = await loadRegistry();
+  const preview = await Promise.all(projects.map(async ({ path }) => ({
+    projectPath: resolve12(path),
+    ownershipRecorded: await loadInstallManifest(resolve12(path)) !== null
+  })));
+  if (args2.action === "preview") return result2({ ok: true, action: "preview", requiredConfirmation: CONFIRMATION, projects: preview });
+  if (args2.confirmation !== CONFIRMATION) return error2("CONFIRMATION_REQUIRED", `confirmation\uC5D0 ${CONFIRMATION}\uB97C \uC815\uD655\uD788 \uC785\uB825\uD574\uC57C \uD569\uB2C8\uB2E4.`);
+  const preserved = [];
+  for (const { path } of projects) {
+    const projectPath = resolve12(path);
+    const paths = await cleanupProject(projectPath, await loadInstallManifest(projectPath));
+    if (paths.length) preserved.push({ projectPath, paths });
+  }
+  const dataRoot = join31(sugoHomeDir(), ".claude", "sugo");
+  await rm5(dataRoot, { recursive: true, force: true });
+  const verifiedClean = !await access2(dataRoot).then(() => true, () => false);
+  return result2({ ok: true, action: "execute", verifiedClean, cleanedProjects: projects.length, preserved });
+}
+function result2(body2) {
+  return { content: [{ type: "text", text: JSON.stringify(body2, null, 2) }] };
+}
+function error2(errorCode, message) {
+  return { isError: true, ...result2({ ok: false, errorCode, message }) };
 }
 
 // src/index.ts
@@ -34521,6 +34664,15 @@ server.registerTool(
     inputSchema: sugoDeleteInputSchema
   },
   handleSugoDelete
+);
+server.registerTool(
+  "sugo_uninstall",
+  {
+    title: "Preview or execute a clean Sugo uninstall",
+    description: "Sugo \uC18C\uC720 \uD30C\uC77C\uACFC \uC804\uC5ED \uB370\uC774\uD130\uB97C \uC81C\uAC70\uD558\uACE0 Claude/Codex \uD504\uB85C\uC81D\uD2B8 \uC124\uC815\uC744 \uC124\uCE58 \uC804 \uC0C1\uD0DC\uB85C \uBCF5\uC6D0\uD55C\uB2E4. preview \uD6C4 \uBA85\uC2DC \uD655\uC778\uC774 \uD544\uC694\uD558\uB2E4.",
+    inputSchema: sugoUninstallInputSchema
+  },
+  handleSugoUninstall
 );
 server.registerTool(
   "sugo_status",

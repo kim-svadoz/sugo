@@ -1,4 +1,4 @@
-import { mkdir, readFile, unlink } from "node:fs/promises";
+import { access, mkdir, readFile, unlink } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
 import { loadProjectConfig, projectSugoDir, saveProjectConfig, type ProjectConfig } from "./config.js";
@@ -10,6 +10,7 @@ import { findRegistryEntry, registerProject } from "./registry.js";
 import { writeClaudeIfChanged } from "./claudeMdFreshness.js";
 import { buildClaudeRuleFile, buildEffectiveClaudeRuleFiles, mergeRootAgentsReference, mergeRootClaudeReference } from "./rulesFile.js";
 import { detectStack } from "./stackDetector.js";
+import { loadInstallManifest, saveInstallManifest, type InstallManifest } from "./installManifest.js";
 
 export interface SyncProjectHarnessArgs {
   projectPath: string;
@@ -48,6 +49,18 @@ async function writeTextIfChanged(path: string, content: string): Promise<void> 
  */
 export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<SyncProjectHarnessResult> {
   const { projectPath } = args;
+  const sugoDir = projectSugoDir(projectPath);
+  const rootClaudePath = join(projectPath, "CLAUDE.md");
+  const rootAgentsPath = join(projectPath, "AGENTS.md");
+  const existingManifest = await loadInstallManifest(projectPath);
+  const manifest: InstallManifest = existingManifest ?? {
+    version: 1,
+    projectPath,
+    sugoDirExisted: await access(sugoDir).then(() => true, () => false),
+    rootClaudeOriginal: await readFile(rootClaudePath, "utf8").catch(() => null),
+    rootAgentsOriginal: await readFile(rootAgentsPath, "utf8").catch(() => null),
+    managedFiles: [],
+  };
   const existingConfig = await loadProjectConfig(projectPath);
   const existingEntry = await findRegistryEntry(projectPath);
   const workspace = args.workspace ?? existingEntry?.workspace;
@@ -60,7 +73,6 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
   const projectName = basename(projectPath);
   const composeResult = compose({ harnesses, projectName, workspace, detectedStack, fetchWarnings });
 
-  const sugoDir = projectSugoDir(projectPath);
   const claudeMdPath = join(sugoDir, "CLAUDE.md");
   await mkdir(sugoDir, { recursive: true });
   // 내용이 안 바뀌었으면 재기록을 생략한다(§2 step 4 writeClaudeIfChanged) — 그래야 안 건드린
@@ -93,12 +105,10 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
 
   // 루트 CLAUDE.md는 Claude Code가 세션 시작 시 항상 읽는 파일이다 — 사람이 쓴 내용은 보존하고
   // sugo 관리 블록만 교체한다.
-  const rootClaudePath = join(projectPath, "CLAUDE.md");
   const existingRootClaude = await readFile(rootClaudePath, "utf-8").catch(() => null);
   const rootClaude = mergeRootClaudeReference(existingRootClaude, harnesses.map((h) => h.id));
   if (rootClaude.changed) await atomicWriteFile(rootClaudePath, rootClaude.content);
 
-  const rootAgentsPath = join(projectPath, "AGENTS.md");
   const existingRootAgents = await readFile(rootAgentsPath, "utf-8").catch(() => null);
   const rootAgents = mergeRootAgentsReference(existingRootAgents);
   if (rootAgents.changed) await atomicWriteFile(rootAgentsPath, rootAgents.content);
@@ -133,6 +143,15 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
     && JSON.stringify({ ...candidateConfig, lastUpdated: existingConfig.lastUpdated }) === JSON.stringify(existingConfig);
   const config = unchanged ? existingConfig : candidateConfig;
   if (!unchanged) await saveProjectConfig(config);
+
+  manifest.managedFiles = [
+    ...manifest.managedFiles,
+    "sugo/CLAUDE.md",
+    "sugo/config.json",
+    ...composeResult.harnessFiles.map((file) => file.relPath),
+    ...effectiveRuleFiles.map((file) => file.relPath),
+  ];
+  await saveInstallManifest(manifest);
 
   await registerProject({ path: projectPath, name: projectName, registeredAt: config.registeredAt, workspace });
 
