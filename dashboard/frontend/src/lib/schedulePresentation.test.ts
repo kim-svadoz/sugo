@@ -103,7 +103,8 @@ describe("schedule presentation", () => {
     expect(source).toContain('commitment.pipeline_status === "done"');
     expect(source).toContain('commitment.pipeline_status === "running"');
     expect(source).toContain(">진행 중</span>");
-    expect(source).toContain('{commitment.due_date && <span className="text-slate-300">{commitment.due_date}</span>}');
+    expect(source).toContain('<CalendarDays size={11} className="text-slate-500" />{commitment.due_date}');
+    expect(source).toContain("border-l border-white/10 pl-2");
     expect(source).toContain(">D-Day</span>");
     expect(source).toContain("D+{Math.abs(remaining)}");
     expect(source).not.toContain('{action.label !== "일정 닫기"');

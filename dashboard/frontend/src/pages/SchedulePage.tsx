@@ -572,15 +572,15 @@ export function SchedulePage() {
                                   {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300">파이프라인 완료</span>}
                                   {commitment.pipeline_status === "running" && <span className="shrink-0 rounded bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-sky-300">진행 중</span>}
                                 </div>
-                                <div className="mt-2 flex items-center gap-2 font-mono text-[11px] text-[var(--color-text-muted)]">
-                                  {commitment.due_date && <span className="text-slate-300">{commitment.due_date}</span>}
+                                <div className="mt-2 flex items-center text-[11px] text-[var(--color-text-muted)]">
+                                  {commitment.due_date && <span className="flex items-center gap-1.5 font-mono text-slate-300"><CalendarDays size={11} className="text-slate-500" />{commitment.due_date}</span>}
                                   {remaining === null
                                     ? <span>기한 미정</span>
                                     : remaining < 0
-                                      ? <span className="font-semibold text-rose-300">D+{Math.abs(remaining)}</span>
+                                      ? <span className="ml-2 border-l border-white/10 pl-2 font-mono font-semibold text-rose-300">D+{Math.abs(remaining)}</span>
                                       : remaining === 0
-                                        ? <span className="font-semibold text-cyan-200">D-Day</span>
-                                        : <span>D-{remaining}</span>}
+                                        ? <span className="ml-2 border-l border-white/10 pl-2 font-mono font-semibold text-cyan-200">D-Day</span>
+                                        : <span className="ml-2 border-l border-white/10 pl-2 font-mono font-semibold text-sky-300">D-{remaining}</span>}
                                 </div>
                               </div>
                               <DeploymentReach spec={spec} />
