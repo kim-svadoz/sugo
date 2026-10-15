@@ -77,7 +77,7 @@ export function buildCommitmentQueue<T extends ScheduleCommitment>(commitments: 
     .sort((left, right) => left.due_date.localeCompare(right.due_date));
   const inbox = open.filter((item) => item.due_date === null);
   const definitions: Array<Omit<CommitmentQueueGroup<T>, "items"> & { match: (item: T & { due_date: string }) => boolean }> = [
-    { id: "overdue", label: "기한 초과", description: "마감일이 지난 일정", match: (item) => item.due_date < todayKey },
+    { id: "overdue", label: "지난 일정 · 미종료", description: "마감일은 지났지만 종료하지 않은 SPEC", match: (item) => item.due_date < todayKey },
     { id: "today", label: "오늘", description: "오늘까지 마감", match: (item) => item.due_date === todayKey },
     { id: "next", label: "다음 7일", description: "7일 안에 마감", match: (item) => item.due_date > todayKey && item.due_date <= nextWeekKey },
     { id: "later", label: "이후 일정", description: "7일 이후 마감", match: (item) => item.due_date > nextWeekKey },

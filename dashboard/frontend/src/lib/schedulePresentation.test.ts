@@ -242,4 +242,10 @@ describe("schedule presentation", () => {
     expect(source).toContain('window.addEventListener("keydown", cancelArchive, true)');
     expect(source).toContain('|| !!archiveConfirm}');
   });
+
+  it("Agenda는 지난 미종료 SPEC과 7일 이후 등록 수를 함께 보여준다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain('state: "active" as const');
+    expect(source).toContain('{ label: "이후", value: commitmentPulse.later');
+  });
 });

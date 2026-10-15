@@ -171,13 +171,16 @@ export function SchedulePage() {
     if (!specs) return [];
     if (commitments === null) return legacyCommitments(specs);
     const specByKey = new Map(specs.map((spec) => [`${spec.workspace_name}:${spec.id}`, spec]));
-    const explicit = commitments.map((commitment) => {
+    const explicit = commitments.flatMap((commitment) => {
       const spec = specByKey.get(`${commitment.workspace_name}:${commitment.spec_id}`);
-      return {
+      if (!spec) return [];
+      return [{
         ...commitment,
+        // SPEC 종료는 archive가 정본이다. 과거의 commitment 완료 상태만으로 Agenda에서 숨기지 않는다.
+        state: "active" as const,
         pipeline_status: spec?.status,
         current_environment: spec?.deployment?.environment,
-      };
+      }];
     });
     const committedSpecs = new Set(commitments.map((item) => `${item.workspace_name}:${item.spec_id}`));
     const legacy = legacyCommitments(specs.filter((spec) => !committedSpecs.has(`${spec.workspace_name}:${spec.id}`)));
@@ -202,6 +205,7 @@ export function SchedulePage() {
     return {
       dueToday: open.filter((item) => item.due_date === todayKey).length,
       dueThisWeek: open.filter((item) => item.due_date && item.due_date >= todayKey && item.due_date <= weekEndKey).length,
+      later: open.filter((item) => item.due_date && item.due_date > weekEndKey).length,
       overdue: open.filter((item) => item.due_date && item.due_date < todayKey).length,
       unscheduled: open.filter((item) => !item.due_date).length,
     };
@@ -452,6 +456,7 @@ export function SchedulePage() {
             items={[
               { label: "오늘", value: commitmentPulse.dueToday, icon: Clock, tone: commitmentPulse.dueToday > 0 ? "cyan" : "neutral" },
               { label: "7일 내", value: commitmentPulse.dueThisWeek, icon: CalendarDays, tone: commitmentPulse.dueThisWeek > 0 ? "cyan" : "neutral" },
+              { label: "이후", value: commitmentPulse.later, icon: CalendarPlus, tone: commitmentPulse.later > 0 ? "cyan" : "neutral" },
               { label: "기한 초과", value: commitmentPulse.overdue, icon: AlertTriangle, tone: commitmentPulse.overdue > 0 ? "danger" : "neutral" },
               { label: "기한 미정", value: commitmentPulse.unscheduled, icon: CircleDashed, tone: commitmentPulse.unscheduled > 0 ? "warning" : "neutral" },
             ]}

@@ -92,5 +92,6 @@ describe("Schedule commitments", () => {
     expect(queue.map((group) => [group.id, group.items.map((entry) => entry.id)])).toEqual([
       ["overdue", ["overdue-done-run"]],
     ]);
+    expect(queue[0]).toMatchObject({ label: "지난 일정 · 미종료", description: "마감일은 지났지만 종료하지 않은 SPEC" });
   });
 });
