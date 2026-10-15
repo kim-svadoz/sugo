@@ -28,6 +28,7 @@ import { buildCommitmentQueue, commitmentNextAction, legacyCommitments, type Com
 import { updateScheduleCommitment } from "../api/scheduleCommitmentApi.js";
 import { archiveScheduleSpec, restoreScheduleSpec, type ScheduleSpecArchiveReason } from "../api/scheduleSpecArchiveApi.js";
 import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
+import { useSearchParams } from "react-router-dom";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -73,8 +74,11 @@ function DeploymentReach({ spec }: { spec: ScheduledSpec | null }) {
 
 export function SchedulePage() {
   const { userId } = useAuth();
+  const [searchParams] = useSearchParams();
   const { data: workspaces, error: workspaceError } = useWorkspaces();
   const { data: specs, memos, commitments, archives, refetch } = useSchedule();
+  const reviewWorkspace = searchParams.get("reviewWorkspace");
+  const reviewTargetOpened = useRef(false);
 
   const today = nowKST();
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
@@ -98,6 +102,18 @@ export function SchedulePage() {
     setProjectMenuOpen(false);
     setSelected(spec);
   }
+
+  useEffect(() => {
+    if (!reviewWorkspace || reviewTargetOpened.current || !specs?.length) return;
+    const workspaceSpecs = specs.filter((spec) => spec.workspace_name === reviewWorkspace);
+    const reviewTarget = workspaceSpecs.find((spec) => {
+      const kind = scheduleAttention(spec).kind;
+      return kind === "blocked" || kind === "attention" || kind === "verification";
+    }) ?? workspaceSpecs[0];
+    if (!reviewTarget) return;
+    reviewTargetOpened.current = true;
+    openSpec(reviewTarget);
+  }, [reviewWorkspace, specs]);
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
   // 안 보이면 사용자가 헷갈린다(2026-09-23 사용자 피드백). 성공 시 잠깐 "저장됨"을 보여준다.
   const [savedFlash, setSavedFlash] = useState<"due" | "project" | "branch" | "title" | null>(null);

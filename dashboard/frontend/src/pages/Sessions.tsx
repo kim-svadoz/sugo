@@ -696,7 +696,7 @@ export function Sessions() {
         onClick={() => {
           if (commandSummary.intent !== "attention") return;
           const needsAttention = workspaces.find((workspace) => (workspace.attentionCount ?? 0) > 0);
-          if (needsAttention) { setSelectedWorkspace(needsAttention.name); setAgentCanvasModal(needsAttention.name); }
+          if (needsAttention) navigate(`/schedule?reviewWorkspace=${encodeURIComponent(needsAttention.name)}`);
         }}
         className={cn(
           "command-brief ck-stage-in group flex w-full items-center justify-between gap-5 rounded-2xl border px-5 py-4 text-left",
@@ -713,7 +713,7 @@ export function Sessions() {
             <span className="mt-0.5 block text-[12.5px] text-[var(--color-text-muted)]">{commandSummary.detail}</span>
           </span>
         </span>
-        {commandSummary.intent === "attention" && <span className="shrink-0 text-[12px] font-semibold text-amber-200 transition-transform group-hover:translate-x-1">검토할 도메인 열기 →</span>}
+        {commandSummary.intent === "attention" && <span className="shrink-0 text-[12px] font-semibold text-amber-200 transition-transform group-hover:translate-x-1">확인할 작업 열기 →</span>}
       </button>
 
       {/* 도메인 목록 */}

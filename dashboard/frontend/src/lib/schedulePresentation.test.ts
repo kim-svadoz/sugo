@@ -216,6 +216,16 @@ describe("schedule presentation", () => {
     expect(checkpoint).toContain("WORKSPACE_RULES_TOOL.label");
   });
 
+  it("Workspaces 확인 필요 브리프는 Schedule의 해당 SPEC 상세를 연다", () => {
+    const workspaces = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
+    const schedule = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(workspaces).toContain("/schedule?reviewWorkspace=");
+    expect(workspaces).toContain("확인할 작업 열기 →");
+    expect(workspaces).not.toContain("검토할 도메인 열기 →");
+    expect(schedule).toContain('searchParams.get("reviewWorkspace")');
+    expect(schedule).toContain("openSpec(reviewTarget)");
+  });
+
   it("Canvas는 AI 작업 현황을 주 제목으로, Agent Canvas를 보조 명칭으로 쓴다", () => {
     const overlay = readFileSync(new URL("../components/AgentCanvasOverlay.tsx", import.meta.url), "utf8");
     const page = readFileSync(new URL("../pages/RoadmapPage.tsx", import.meta.url), "utf8");
