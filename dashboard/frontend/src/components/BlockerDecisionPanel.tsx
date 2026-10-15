@@ -21,7 +21,10 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => { setResponse(decision?.response ?? ""); setSaved(decision ?? null); }, [taskId, decision]);
+  useEffect(() => {
+    setResponse(decision?.response ?? "");
+    setSaved(decision ?? null);
+  }, [taskId, decision?.response, decision?.answered_at]);
 
   async function persist(value = response): Promise<BlockerDecision | null> {
     if (!userId || !value.trim()) return null;
