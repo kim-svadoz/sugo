@@ -1,5 +1,5 @@
 import { SpecDeploymentBadge } from "../components/SpecDeploymentBadge.js";
-import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { Archive, BookOpen, CalendarDays, CalendarPlus, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, FilePenLine, LayoutList, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
@@ -95,6 +95,7 @@ export function SchedulePage() {
   function openSpec(spec: ScheduledSpec) {
     setArchiveConfirm(null);
     setBranchDraft(null);
+    setProjectMenuOpen(false);
     setSelected(spec);
   }
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
@@ -104,10 +105,29 @@ export function SchedulePage() {
   // Canvas에 그대로 반영된다(2026-09-23 사용자 요청) — null이면 편집 중이 아님.
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
   const [branchDraft, setBranchDraft] = useState<string | null>(null);
+  const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+  const projectMenuRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [writerProvider, setWriterProvider] = useState<SpecWriterProvider>("claude");
   const [archiveConfirm, setArchiveConfirm] = useState<ScheduleSpecArchiveReason | null>(null);
   const [trashOpen, setTrashOpen] = useState(false);
+
+  useEffect(() => {
+    if (!projectMenuOpen) return;
+    const closeProjectMenu = (event: MouseEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent) {
+        if (event.key === "Escape") setProjectMenuOpen(false);
+        return;
+      }
+      if (!projectMenuRef.current?.contains(event.target as Node)) setProjectMenuOpen(false);
+    };
+    document.addEventListener("mousedown", closeProjectMenu);
+    window.addEventListener("keydown", closeProjectMenu);
+    return () => {
+      document.removeEventListener("mousedown", closeProjectMenu);
+      window.removeEventListener("keydown", closeProjectMenu);
+    };
+  }, [projectMenuOpen]);
 
   useEffect(() => {
     if (!archiveConfirm) return;
@@ -826,24 +846,33 @@ export function SchedulePage() {
                 </div>
                 {savedFlash && savedFlash !== "title" && <span className="text-[10px] font-semibold text-emerald-400">변경사항 저장됨</span>}
               </div>
-              <div className="grid overflow-hidden rounded-xl border border-white/[0.08] bg-black/20 xl:grid-cols-[0.72fr_1fr_1.3fr] xl:divide-x xl:divide-white/[0.07]">
+              <div className="grid rounded-xl border border-white/[0.08] bg-black/20 xl:grid-cols-[0.72fr_1fr_1.3fr] xl:divide-x xl:divide-white/[0.07]">
                 <div className="border-b border-white/[0.07] px-4 py-3 xl:border-b-0">
                   <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">완료 목표일</span>
                   <DatePicker className="h-8 border-0 bg-transparent px-0 py-0 font-mono shadow-none" value={selected.due_date} onChange={(next) => void applyDueDate(selected, next)} />
                 </div>
-                <label className="relative block border-b border-white/[0.07] px-4 py-3 xl:border-b-0">
+                <div ref={projectMenuRef} className="relative block border-b border-white/[0.07] px-4 py-3 xl:border-b-0">
                   <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">저장소</span>
-                  <select
+                  <button
+                    type="button"
                     disabled={selected.has_run}
-                    value={selected.project_path ?? ""}
-                    onChange={(e) => void applyProject(selected, e.target.value || null)}
-                    className="block h-8 w-full appearance-none border-0 bg-transparent py-0 pr-7 text-[13px] font-semibold text-slate-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                    aria-haspopup="listbox"
+                    aria-expanded={projectMenuOpen}
+                    onClick={() => setProjectMenuOpen((open) => !open)}
+                    className="flex h-8 w-full items-center justify-between gap-3 rounded-md text-left text-[13px] font-semibold text-slate-100 outline-none transition-colors hover:text-cyan-100 focus-visible:ring-2 focus-visible:ring-cyan-400/40 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <option value="">미지정</option>
-                    {selectedWorkspaceProjects.map((p) => <option key={p.project_path} value={p.project_path}>{repoName(p.project_path)}</option>)}
-                  </select>
-                  <ChevronDown size={14} className="pointer-events-none absolute bottom-[21px] right-4 text-slate-500" />
-                </label>
+                    <span className={cn("truncate", !selected.project_path && "text-slate-500")}>{selected.project_path ? repoName(selected.project_path) : "미지정"}</span>
+                    <ChevronDown size={14} className={cn("shrink-0 text-slate-500 transition-transform", projectMenuOpen && "rotate-180")} />
+                  </button>
+                  {projectMenuOpen && !selected.has_run && (
+                    <div role="listbox" aria-label="저장소 선택" className="absolute left-3 right-3 top-[calc(100%-4px)] z-30 overflow-hidden rounded-xl border border-white/[0.12] bg-slate-900 p-1.5 shadow-[0_18px_45px_rgba(0,0,0,0.5)]">
+                      {[{ project_path: "", label: "미지정" }, ...selectedWorkspaceProjects.map((project) => ({ project_path: project.project_path, label: repoName(project.project_path) }))].map((project) => {
+                        const active = (selected.project_path ?? "") === project.project_path;
+                        return <button key={project.project_path || "unset"} type="button" role="option" aria-selected={active} onClick={() => { setProjectMenuOpen(false); void applyProject(selected, project.project_path || null); }} className={cn("flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[12.5px] transition-colors", active ? "bg-cyan-400/10 text-cyan-100" : "text-slate-300 hover:bg-white/[0.06] hover:text-white")}><span className="truncate">{project.label}</span>{active && <Check size={13} className="shrink-0 text-cyan-300" />}</button>;
+                      })}
+                    </div>
+                  )}
+                </div>
                 <label className="block px-4 py-3">
                   <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">작업 브랜치</span>
                   <input

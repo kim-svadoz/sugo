@@ -166,6 +166,8 @@ describe("schedule presentation", () => {
     expect(source).toContain("작업 컨텍스트");
     expect(source).toContain("완료 목표일");
     expect(source).toContain("저장소");
+    expect(source).toContain('aria-haspopup="listbox"');
+    expect(source).toContain('aria-label="저장소 선택"');
     expect(source).toContain("작업 브랜치");
     expect(source).toContain("작업 준비");
     expect(source).toContain("실행 에이전트");
