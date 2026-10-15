@@ -30,6 +30,11 @@ describe("Playbook product lifecycle", () => {
     expect(source).toContain("저장된 실행 증거와 실제 결과를 비교합니다.");
     expect(source).toContain("통과 조건이 없으면 다음 단계로 이동하지 않습니다.");
     expect(source).toContain("테스트나 검토에서 문제가 나오면 구현 단계로 돌아갑니다.");
+    for (const agent of ["code-agent", "test-agent", "review-agent", "docs-agent"]) {
+      expect(source).toContain(`id: "${agent}"`);
+    }
+    expect(source).toContain("각 단계는 별도의 AI 에이전트가 실행합니다.");
+    expect(source).toContain("작업 결과와 실행 증거를 다음 에이전트에 인계합니다.");
   });
 
   it("Console 기능이 답하는 운영 질문과 효과를 설명한다", () => {

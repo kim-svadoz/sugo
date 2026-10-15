@@ -142,17 +142,23 @@ function Context() {
 
 function Delivery() {
   const agents = [
-    ["구현 담당", "기능 요구사항 단위로 코드를 변경합니다."],
-    ["테스트 담당", "새 테스트와 회귀 테스트를 실행하고 증거를 기록합니다."],
-    ["검토 담당", "개발 명세, 실행 결과, 계약, 위험을 확인합니다."],
-    ["문서 담당", "변경된 동작과 설명 문서를 일치시킵니다."],
+    { id: "code-agent", name: "구현 에이전트", role: "기능 요구사항 단위로 코드를 변경합니다." },
+    { id: "test-agent", name: "테스트 에이전트", role: "새 테스트와 회귀 테스트를 실행하고 증거를 기록합니다." },
+    { id: "review-agent", name: "검토 에이전트", role: "개발 명세, 실행 결과, 계약, 위험을 독립적으로 확인합니다." },
+    { id: "docs-agent", name: "문서 에이전트", role: "변경된 동작과 설명 문서를 일치시킵니다." },
   ];
   return (
     <div className="space-y-7">
       <PipelineMap />
       <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-          {agents.map(([name, role]) => <div key={name} className="border-t border-[var(--color-border)] py-4"><div className="text-[13px] font-semibold text-cyan-300">{name}</div><div className="mt-1.5 text-[14px] leading-relaxed text-[var(--color-text-muted)]">{role}</div></div>)}
+        <div>
+          <div className="mb-3">
+            <div className="text-[15px] font-semibold text-[var(--color-text-bright)]">각 단계는 별도의 AI 에이전트가 실행합니다.</div>
+            <p className="mt-1 text-[13px] leading-relaxed text-[var(--color-text-muted)]">각 에이전트는 자신의 책임만 수행합니다. 작업 결과와 실행 증거를 다음 에이전트에 인계합니다.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+            {agents.map((agent) => <div key={agent.id} className="border-t border-[var(--color-border)] py-4"><div className="flex flex-wrap items-center gap-2"><span className="text-[13px] font-semibold text-cyan-300">{agent.name}</span><span className="rounded border border-violet-400/25 bg-violet-400/8 px-1.5 py-0.5 font-mono text-[10px] text-violet-200">{agent.id}</span></div><div className="mt-1.5 text-[14px] leading-relaxed text-[var(--color-text-muted)]">{agent.role}</div></div>)}
+          </div>
         </div>
         <div>
           <Fact label="작업 순서" value="현재 상태에서 실행할 수 있는 다음 행동만 제시합니다." />
