@@ -20,7 +20,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { createQuickSpec, deleteQuickSpec, renameRoadmapNode, setDueDate, setProject, setWorkBranch, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
-import { buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
+import { buildFeatCommand, buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { OperationalPulse } from "../components/OperationalPulse.js";
@@ -943,7 +943,7 @@ export function SchedulePage() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-white">{selected.status === "done" ? "후속 개발" : "개발 흐름"}</h3>
-                  <p className="mt-1 text-[11.5px] text-slate-300">{selected.status === "done" ? "완료 결과를 기준으로 다음 patch를 시작합니다." : "실행 에이전트를 선택하고 SPEC 작성 명령을 생성합니다."}</p>
+                  <p className="mt-1 text-[11.5px] text-slate-300">{selected.status === "done" ? "완료 결과를 기준으로 다음 patch를 시작합니다." : scheduleSpecStage(selected) === "ready" ? "작성된 SPEC으로 feat를 시작하거나, 필요하면 SPEC을 다시 작성합니다." : "실행 에이전트를 선택하고 SPEC 작성 명령을 생성합니다."}</p>
                 </div>
               {scheduleSpecStage(selected) !== "in_progress" && (
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -956,11 +956,21 @@ export function SchedulePage() {
                   <button
                     disabled={!selected.project_path}
                     onClick={() => void copyWorkflowCommand(`writer-${writerProvider}`, buildSpecWriterCommand(selected, writerProvider))}
-                    className="mt-auto inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-400 px-4 text-[11.5px] font-bold text-slate-950 transition-colors hover:bg-violet-300 disabled:cursor-not-allowed disabled:opacity-40"
+                    className={cn("mt-auto inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-4 text-[11.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40", scheduleSpecStage(selected) === "ready" ? "border border-violet-400/40 bg-violet-400/10 text-violet-200 hover:bg-violet-400/20" : "bg-violet-400 text-slate-950 hover:bg-violet-300")}
                   >
                     {copied === `writer-${writerProvider}` ? <Check size={13} /> : <Copy size={13} />}
-                    {copied === `writer-${writerProvider}` ? "복사됨" : `${selected.spec_path ? "재작성" : "작성"} 명령 복사`}
+                    {copied === `writer-${writerProvider}` ? "복사됨" : scheduleSpecStage(selected) === "ready" ? "SPEC 재작성" : "SPEC 작성 명령 복사"}
                   </button>
+                  {scheduleSpecStage(selected) === "ready" && (
+                    <button
+                      disabled={!selected.project_path || !selected.spec_path}
+                      onClick={() => void copyWorkflowCommand("feat", buildFeatCommand(selected))}
+                      className="mt-auto inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-400 px-4 text-[11.5px] font-bold text-slate-950 transition-colors hover:bg-violet-300 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {copied === "feat" ? <Check size={13} /> : <Copy size={13} />}
+                      {copied === "feat" ? "복사됨" : "feat 시작"}
+                    </button>
+                  )}
                 </div>
               )}
               {selected.status === "done" && (

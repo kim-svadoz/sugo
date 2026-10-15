@@ -141,8 +141,9 @@ describe("schedule presentation", () => {
 
   it("준비된 SPEC에 중복 feat 명령 복사 버튼을 노출하지 않는다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).not.toContain("feat 명령 복사");
-    expect(source).not.toContain('copyWorkflowCommand("feat"');
+    expect(source).toContain("feat 시작");
+    expect(source).toContain("SPEC 재작성");
+    expect(source).toContain('copyWorkflowCommand("feat", buildFeatCommand(selected))');
   });
 
   it("SPEC 상세는 실행 컨텍스트와 단일 명령 행동으로 위계를 정리한다", () => {
