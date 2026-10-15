@@ -89,6 +89,7 @@ export function SchedulePage() {
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
   const [branchDraft, setBranchDraft] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [writerProvider, setWriterProvider] = useState<SpecWriterProvider>("claude");
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   // §7B 사용자 결정(2026-09-23): 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
@@ -873,84 +874,89 @@ export function SchedulePage() {
               {selected.spec_path && (
                 <button
                   onClick={() => setSpecDocumentTarget({ workspace: selected.workspace_name, nodeId: selected.id, title: selected.title })}
-                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-500/30 bg-slate-500/10 px-3 py-2.5 text-[12px] font-semibold text-slate-200 hover:bg-slate-500/20"
+                  className="mt-2 inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-300 transition-colors hover:text-cyan-200"
                 >
-                  <BookOpen size={14} /> {selected.has_run ? "SPEC 원문 읽기" : "SPEC 원문 읽기·수정"}
+                  <BookOpen size={13} /> {selected.has_run ? "SPEC 원문" : "SPEC 원문 편집"} <ChevronRight size={12} />
                 </button>
               )}
             </div>
 
             <SpecAttachments workspace={selected.workspace_name} nodeId={selected.id} hasSpec={!!selected.spec_path} />
 
-            <div>
-              <span className="mb-1 flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
-                마감일
-                {savedFlash === "due" && <span className="text-[10.5px] font-semibold text-emerald-400">저장됨</span>}
-              </span>
-              <DatePicker value={selected.due_date} onChange={(next) => void applyDueDate(selected, next)} />
-            </div>
+            <section className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4" aria-label="실행 컨텍스트">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-[12.5px] font-semibold text-white">실행 컨텍스트</h3>
+                  <p className="mt-0.5 text-[10.5px] text-slate-500">구현 작업이 사용할 저장소와 Git 기준을 정의합니다.</p>
+                </div>
+                {savedFlash && savedFlash !== "title" && <span className="text-[10px] font-semibold text-emerald-400">변경사항 저장됨</span>}
+              </div>
+              <div className="grid gap-3 xl:grid-cols-[0.7fr_1fr_1.3fr]">
+                <div>
+                  <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.08em] text-slate-500">완료 목표일</span>
+                  <DatePicker value={selected.due_date} onChange={(next) => void applyDueDate(selected, next)} />
+                </div>
+                <label className="block">
+                  <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.08em] text-slate-500">Repository</span>
+                  <select
+                    disabled={selected.has_run}
+                    value={selected.project_path ?? ""}
+                    onChange={(e) => void applyProject(selected, e.target.value || null)}
+                    className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-[13px] text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <option value="">미지정</option>
+                    {selectedWorkspaceProjects.map((p) => <option key={p.project_path} value={p.project_path}>{repoName(p.project_path)}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.08em] text-slate-500">Working branch</span>
+                  <input
+                    disabled={selected.has_run || !selected.project_path}
+                    value={branchDraft ?? selected.work_branch ?? ""}
+                    onChange={(event) => setBranchDraft(event.target.value)}
+                    onBlur={(event) => void applyWorkBranch(selected, event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") event.currentTarget.blur();
+                      if (event.key === "Escape") setBranchDraft(null);
+                    }}
+                    placeholder="현재 checkout 유지"
+                    className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 text-[13px] font-mono text-[var(--color-text)] placeholder:text-[var(--color-text-dim)] disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                </label>
+              </div>
+            </section>
 
-            <div>
-              <span className="mb-1 flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
-                대상 프로젝트 · 선택하면 바로 저장됩니다
-                {savedFlash === "project" && <span className="text-[10.5px] font-semibold text-emerald-400">저장됨</span>}
-              </span>
-              <select
-                disabled={selected.has_run}
-                value={selected.project_path ?? ""}
-                onChange={(e) => void applyProject(selected, e.target.value || null)}
-                className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-[13px] text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <option value="">프로젝트 미지정</option>
-                {selectedWorkspaceProjects.map((p) => (
-                  <option key={p.project_path} value={p.project_path}>
-                    {repoName(p.project_path)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <span className="mb-1 flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
-                작업 브랜치 · feat 시작 전에 준비합니다
-                {savedFlash === "branch" && <span className="text-[10.5px] font-semibold text-emerald-400">저장됨</span>}
-              </span>
-              <input
-                disabled={selected.has_run || !selected.project_path}
-                value={branchDraft ?? selected.work_branch ?? ""}
-                onChange={(event) => setBranchDraft(event.target.value)}
-                onBlur={(event) => void applyWorkBranch(selected, event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") event.currentTarget.blur();
-                  if (event.key === "Escape") setBranchDraft(null);
-                }}
-                className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 text-[13px] font-mono text-[var(--color-text)] placeholder:text-[var(--color-text-dim)] disabled:cursor-not-allowed disabled:opacity-60"
-              />
-              <p className="mt-1 text-[10.5px] text-[var(--color-text-dim)]">없으면 현재 브랜치에서 시작합니다.</p>
-            </div>
-
-            <div className="rounded-xl border border-[var(--color-border)] bg-slate-950/35 p-3">
-              <div className="mb-2 text-[12px] font-semibold text-[var(--color-text-bright)]">SPEC → feat</div>
+            <section className="rounded-xl border border-white/[0.08] bg-slate-950/30 p-4" aria-label="Specification workflow">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h3 className="text-[12.5px] font-semibold text-white">Specification workflow</h3>
+                  <p className="mt-1 text-[10.5px] text-slate-500">선택한 실행 환경에 맞는 SPEC 작성 명령을 생성합니다.</p>
+                </div>
               {scheduleSpecStage(selected) !== "in_progress" && (
-                <div className="grid grid-cols-2 gap-2">
-                  {(["claude", "codex"] as SpecWriterProvider[]).map((provider) => (
-                    <button
-                      key={provider}
-                      disabled={!selected.project_path}
-                      onClick={() => void copyWorkflowCommand(`writer-${provider}`, buildSpecWriterCommand(selected, provider))}
-                      className="flex items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-[12px] font-semibold text-violet-200 hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      {copied === `writer-${provider}` ? <Check size={13} /> : <Copy size={13} />}
-                      {provider === "claude" ? "Claude" : "Codex"}로 {selected.spec_path ? "다시 작성" : "SPEC 작성"}
-                    </button>
-                  ))}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div>
+                    <span className="mb-1 block font-mono text-[9.5px] uppercase tracking-[0.08em] text-slate-500">실행 에이전트</span>
+                    <div className="inline-flex rounded-lg border border-white/10 bg-black/20 p-0.5">
+                      {(["claude", "codex"] as SpecWriterProvider[]).map((provider) => <button key={provider} type="button" aria-pressed={writerProvider === provider} onClick={() => setWriterProvider(provider)} className={cn("rounded-md px-3 py-1.5 text-[11px] font-semibold transition-colors", writerProvider === provider ? "bg-violet-400/15 text-violet-200" : "text-slate-500 hover:text-slate-300")}>{provider === "claude" ? "Claude" : "Codex"}</button>)}
+                    </div>
+                  </div>
+                  <button
+                    disabled={!selected.project_path}
+                    onClick={() => void copyWorkflowCommand(`writer-${writerProvider}`, buildSpecWriterCommand(selected, writerProvider))}
+                    className="mt-auto inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-400 px-4 text-[11.5px] font-bold text-slate-950 transition-colors hover:bg-violet-300 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {copied === `writer-${writerProvider}` ? <Check size={13} /> : <Copy size={13} />}
+                    {copied === `writer-${writerProvider}` ? "복사됨" : `${selected.spec_path ? "재작성" : "작성"} 명령 복사`}
+                  </button>
                 </div>
               )}
-              {!selected.project_path && <p className="mt-2 text-[10.5px] text-amber-300">먼저 대상 프로젝트를 지정하세요.</p>}
-              {selected.spec_path && <p className="mt-2 break-all font-mono text-[10px] text-[var(--color-text-dim)]">{selected.spec_path}</p>}
-            </div>
+              </div>
+              {!selected.project_path && <p className="mt-3 text-[10.5px] text-amber-300">Repository를 선택하면 명령을 생성할 수 있습니다.</p>}
+              {selected.spec_path && <p className="mt-3 truncate border-t border-white/[0.06] pt-3 font-mono text-[9.5px] text-slate-600" title={selected.spec_path}>{selected.spec_path}</p>}
+            </section>
 
-            <div className="grid grid-cols-2 gap-2 pt-2">
+            <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/[0.07] pt-3" aria-label="프로젝트 도구">
+              <span className="font-mono text-[9.5px] uppercase tracking-[0.1em] text-slate-600">프로젝트 도구</span>
               <button
                 disabled={!selected.project_path}
                 onClick={() => {
@@ -958,17 +964,17 @@ export function SchedulePage() {
                   setCheckpointTarget({ workspace: selected.workspace_name, projectPath: selected.project_path, dueDate: selected.due_date });
                 }}
                 title={selected.project_path ? undefined : "먼저 위에서 대상 프로젝트를 지정해야 체크포인트를 관리할 수 있습니다"}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[12.5px] font-semibold text-amber-300 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-amber-500/10"
+                className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-400 transition-colors hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <Shield size={14} /> {selected.project_path ? `${repoName(selected.project_path)} 프로젝트 체크포인트` : "프로젝트 지정 후 체크포인트 관리"}
+                <Shield size={13} /> 체크포인트 <ChevronRight size={12} />
               </button>
               <button
                 onClick={() => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.focus_task_id ?? selected.id })}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-[12.5px] font-semibold text-cyan-300 hover:bg-cyan-500/20"
+                className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-400 transition-colors hover:text-cyan-200"
               >
-                <Workflow size={14} /> Canvas에서 보기
+                <Workflow size={13} /> Agent Canvas <ChevronRight size={12} />
               </button>
-            </div>
+            </nav>
 
             {selected.id.startsWith("spec-manual-") && (
               <div className="border-t border-rose-500/15 pt-4">

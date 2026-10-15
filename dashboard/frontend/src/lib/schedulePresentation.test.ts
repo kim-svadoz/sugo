@@ -142,6 +142,22 @@ describe("schedule presentation", () => {
     expect(source).not.toContain('copyWorkflowCommand("feat"');
   });
 
+  it("SPEC 상세는 실행 컨텍스트와 단일 명령 행동으로 위계를 정리한다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain("실행 컨텍스트");
+    expect(source).toContain("완료 목표일");
+    expect(source).toContain("Repository");
+    expect(source).toContain("Working branch");
+    expect(source).toContain("Specification workflow");
+    expect(source).toContain("실행 에이전트");
+    expect(source).toContain("명령 복사");
+    expect(source).toContain("프로젝트 도구");
+    expect(source).not.toContain("대상 프로젝트 · 선택하면 바로 저장됩니다");
+    expect(source).not.toContain("없으면 현재 브랜치에서 시작합니다.");
+    expect(source).not.toContain("SPEC → feat");
+    expect(source).not.toContain("grid grid-cols-2 gap-2 pt-2");
+  });
+
   it("카드 상태와 본문 길이가 달라도 같은 높이를 유지한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("h-[76px] flex-col items-start");
