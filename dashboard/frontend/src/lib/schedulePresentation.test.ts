@@ -113,6 +113,13 @@ describe("schedule presentation", () => {
     expect(source).not.toContain('className="line-clamp-1">{action.detail}</span>');
   });
 
+  it("Agenda 일정 구간 헤더는 카드보다 또렷한 시각적 위계를 유지한다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain('className="text-[14px] font-bold text-white">{group.label}</h3>');
+    expect(source).toContain('className="text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>');
+    expect(source).toContain('"h-2.5 w-2.5 rounded-full"');
+  });
+
   it("Schedule 카드 클릭은 상세만 열고 Canvas는 명시적 버튼으로만 연다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     const openSpecBody = source.match(/function openSpec\(spec: ScheduledSpec\) \{([\s\S]*?)\n  \}/)?.[1] ?? "";

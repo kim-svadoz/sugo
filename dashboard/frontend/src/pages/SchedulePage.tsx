@@ -555,11 +555,11 @@ export function SchedulePage() {
                 <div className="space-y-5">
                   {agenda.map((group) => (
                     <section key={group.id} aria-labelledby={`agenda-${group.id}`}>
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className={cn("h-2 w-2 rounded-full", group.id === "overdue" ? "bg-rose-400" : group.id === "today" ? "bg-cyan-300" : group.id === "next" ? "bg-blue-400" : "bg-slate-500")} />
-                        <h3 id={`agenda-${group.id}`} className="text-[13px] font-bold text-white">{group.label}</h3>
-                        <span className="rounded-full bg-white/[0.05] px-2 py-0.5 font-mono text-[10px] text-[var(--color-text-muted)]">{group.items.length}</span>
-                        <span className="text-[11px] text-[var(--color-text-dim)]">{group.description}</span>
+                      <div className="mb-2.5 flex items-center gap-2.5">
+                        <span className={cn("h-2.5 w-2.5 rounded-full", group.id === "overdue" ? "bg-rose-400" : group.id === "today" ? "bg-cyan-300" : group.id === "next" ? "bg-blue-400" : "bg-slate-500")} />
+                        <h3 id={`agenda-${group.id}`} className="text-[14px] font-bold text-white">{group.label}</h3>
+                        <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 font-mono text-[11px] text-[var(--color-text-muted)]">{group.items.length}</span>
+                        <span className="text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>
                       </div>
                       <div className="grid gap-2 xl:grid-cols-2">
                         {group.items.map((commitment) => {
