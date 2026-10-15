@@ -18,7 +18,7 @@ describe("dashboard checkpoint expiry reconciliation", () => {
     const active = await syncRemoteCheckpointsToRules(projectPath, "payments", [checkpoint], {
       projectName: "checkout-api",
       harnessIds: [],
-    }, new Date("2026-10-02T00:00:00.000Z"));
+    }, new Date(2026, 9, 2, 9, 0, 0));
     expect(active.appliedCount).toBe(1);
     const file = join(projectPath, ".claude", "rules", "general", "CP-remote-기간-한정-규칙.md");
     expect(await readFile(file, "utf8")).toContain("expires-at: 2026-10-02");
@@ -26,7 +26,7 @@ describe("dashboard checkpoint expiry reconciliation", () => {
     const expired = await syncRemoteCheckpointsToRules(projectPath, "payments", [checkpoint], {
       projectName: "checkout-api",
       harnessIds: [],
-    }, new Date("2026-10-02T15:00:00.000Z"));
+    }, new Date(2026, 9, 3, 0, 0, 0));
     expect(expired.appliedCount).toBe(0);
     expect(expired.removedCount).toBe(1);
     await expect(access(file)).rejects.toThrow();
@@ -44,14 +44,14 @@ describe("dashboard checkpoint expiry reconciliation", () => {
     await syncRemoteCheckpointsToRules(projectPath, "payments", [checkpoint], {
       projectName: "checkout-api",
       harnessIds: [],
-    }, new Date("2026-10-02T00:00:00.000Z"));
+    }, new Date(2026, 9, 2, 9, 0, 0));
     const file = join(projectPath, ".claude", "rules", "general", "CP-remote-기간-한정-규칙.md");
     await writeFile(file, `${await readFile(file, "utf8")}\n직접 수정\n`);
 
     const expired = await syncRemoteCheckpointsToRules(projectPath, "payments", [checkpoint], {
       projectName: "checkout-api",
       harnessIds: [],
-    }, new Date("2026-10-02T15:00:00.000Z"));
+    }, new Date(2026, 9, 3, 0, 0, 0));
     expect(expired.removedCount).toBe(0);
     expect(expired.conflicts).toEqual([file]);
     expect(await readFile(file, "utf8")).toContain("직접 수정");

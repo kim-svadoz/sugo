@@ -228,8 +228,10 @@ function atomicJson(path, value) {
   renameSync(temp, path);
 }
 
-function seoulDay(timestamp) {
-  return new Date(timestamp + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+function localDay(timestamp) {
+  const date = new Date(timestamp);
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 export function applyUsageBudget({ callCount, callSummaries = [], policy, usagePath, sessionId, now = Date.now() }) {
@@ -255,7 +257,7 @@ export function applyUsageBudget({ callCount, callSummaries = [], policy, usageP
   const tier = boundedInt(state.sessionTiers[sessionId], 0, 0, 100);
   const multiplier = tier + 1;
   const sessionUsed = state.events.filter((event) => event.sessionId === sessionId).reduce((sum, event) => sum + event.count, 0);
-  const dailyUsed = state.events.filter((event) => seoulDay(event.at) === seoulDay(now)).reduce((sum, event) => sum + event.count, 0);
+  const dailyUsed = state.events.filter((event) => localDay(event.at) === localDay(now)).reduce((sum, event) => sum + event.count, 0);
   const minuteUsed = state.events.filter((event) => event.at > now - 60_000).reduce((sum, event) => sum + event.count, 0);
   const limits = {
     session: normalized.sessionLimit * multiplier,

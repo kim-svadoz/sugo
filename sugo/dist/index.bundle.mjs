@@ -2991,7 +2991,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve13.call(this, root, ref);
+      let _sch = resolve14.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3018,7 +3018,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve13(root, ref) {
+    function resolve14(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3649,55 +3649,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve13(baseURI, relativeURI, options) {
+    function resolve14(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative9, options, skipNormalization) {
+    function resolveComponent(base, relative10, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative9 = parse3(serialize(relative9, options), options);
+        relative10 = parse3(serialize(relative10, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative9.scheme) {
-        target.scheme = relative9.scheme;
-        target.userinfo = relative9.userinfo;
-        target.host = relative9.host;
-        target.port = relative9.port;
-        target.path = removeDotSegments(relative9.path || "");
-        target.query = relative9.query;
+      if (!options.tolerant && relative10.scheme) {
+        target.scheme = relative10.scheme;
+        target.userinfo = relative10.userinfo;
+        target.host = relative10.host;
+        target.port = relative10.port;
+        target.path = removeDotSegments(relative10.path || "");
+        target.query = relative10.query;
       } else {
-        if (relative9.userinfo !== void 0 || relative9.host !== void 0 || relative9.port !== void 0) {
-          target.userinfo = relative9.userinfo;
-          target.host = relative9.host;
-          target.port = relative9.port;
-          target.path = removeDotSegments(relative9.path || "");
-          target.query = relative9.query;
+        if (relative10.userinfo !== void 0 || relative10.host !== void 0 || relative10.port !== void 0) {
+          target.userinfo = relative10.userinfo;
+          target.host = relative10.host;
+          target.port = relative10.port;
+          target.path = removeDotSegments(relative10.path || "");
+          target.query = relative10.query;
         } else {
-          if (!relative9.path) {
+          if (!relative10.path) {
             target.path = base.path;
-            if (relative9.query !== void 0) {
-              target.query = relative9.query;
+            if (relative10.query !== void 0) {
+              target.query = relative10.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative9.path[0] === "/") {
-              target.path = removeDotSegments(relative9.path);
+            if (relative10.path[0] === "/") {
+              target.path = removeDotSegments(relative10.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative9.path;
+                target.path = "/" + relative10.path;
               } else if (!base.path) {
-                target.path = relative9.path;
+                target.path = relative10.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative9.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative10.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative9.query;
+            target.query = relative10.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative9.fragment;
+      target.fragment = relative10.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3907,7 +3907,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve13,
+      resolve: resolve14,
       resolveComponent,
       equal,
       serialize,
@@ -20404,7 +20404,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve13) => setTimeout(resolve13, pollInterval));
+        await new Promise((resolve14) => setTimeout(resolve14, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error3) {
@@ -20421,7 +20421,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve13, reject) => {
+    return new Promise((resolve14, reject) => {
       const earlyReject = (error3) => {
         reject(error3);
       };
@@ -20499,7 +20499,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve13(parseResult.data);
+            resolve14(parseResult.data);
           }
         } catch (error3) {
           reject(error3);
@@ -20760,12 +20760,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve13, reject) => {
+    return new Promise((resolve14, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve13, interval);
+      const timeoutId = setTimeout(resolve14, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -21865,7 +21865,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve13) => setTimeout(resolve13, pollInterval));
+      await new Promise((resolve14) => setTimeout(resolve14, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -22514,12 +22514,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve13) => {
+    return new Promise((resolve14) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve13();
+        resolve14();
       } else {
-        this._stdout.once("drain", resolve13);
+        this._stdout.once("drain", resolve14);
       }
     });
   }
@@ -27732,8 +27732,8 @@ function writeFlowMapping(state, level, node) {
     if (explicitPair) pairBuffer += "? ";
     else if (state.quoteFlowKeys) pairBuffer += '"';
     const valueText = writeNode(state, level, value, {});
-    const sep4 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
-    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep4}${valueText}`;
+    const sep5 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
+    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep5}${valueText}`;
     result3 += pairBuffer;
   }
   const pad = state.flowBracketPadding && result3 !== "" ? " " : "";
@@ -27830,8 +27830,8 @@ function writeNode(state, level, node, ctx) {
       if (anchor !== null) props.push(anchor);
       if (tag !== null) props.push(tag);
     }
-    const sep4 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
-    body2 = `${props.join(" ")}${sep4}${body2}`;
+    const sep5 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
+    body2 = `${props.join(" ")}${sep5}${body2}`;
   }
   return body2;
 }
@@ -27876,8 +27876,8 @@ function present(documents, options) {
         block: true,
         compact: true
       });
-      const sep4 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
-      result3 += `---${sep4}${body2}
+      const sep5 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
+      result3 += `---${sep5}${body2}
 `;
     } else result3 += writeNode(state, 0, doc.contents, {
       block: true,
@@ -28049,11 +28049,12 @@ async function migrateCheckpoints(workspace) {
   }
   return entries.length;
 }
-function todayKst(now) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+function todayLocal(now) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 function isExpired(expiresAt, now) {
-  return !!expiresAt && /^\d{4}-\d{2}-\d{2}$/.test(expiresAt.slice(0, 10)) && expiresAt.slice(0, 10) < todayKst(now);
+  return !!expiresAt && /^\d{4}-\d{2}-\d{2}$/.test(expiresAt.slice(0, 10)) && expiresAt.slice(0, 10) < todayLocal(now);
 }
 function digest(value) {
   return createHash3("sha256").update(value).digest("hex");
@@ -28184,7 +28185,7 @@ var sugoCheckpointInputSchema = {
   title: external_exports.string().optional().describe("add action\uC5D0 \uD544\uC694"),
   category: external_exports.string().optional(),
   applies_to: external_exports.array(external_exports.string()).optional().describe("\uBE48 \uBC30\uC5F4/\uBBF8\uC9C0\uC815\uC774\uBA74 \uBCF4\uD3B8 \uCCB4\uD06C\uD3EC\uC778\uD2B8(\uD56D\uC0C1 \uC801\uC6A9)"),
-  expires_at: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("KST \uAE30\uC900 \uC774 \uB0A0\uC9DC\uAE4C\uC9C0 \uC720\uD6A8. \uB2E4\uC74C \uB0A0\uBD80\uD130 rules \uCEE8\uD14D\uC2A4\uD2B8\uC5D0\uC11C \uC81C\uC678"),
+  expires_at: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("\uC0AC\uC6A9\uC790 \uB85C\uCEEC \uB0A0\uC9DC \uAE30\uC900\uC73C\uB85C \uC774 \uB0A0\uC9DC\uAE4C\uC9C0 \uC720\uD6A8. \uB2E4\uC74C \uB0A0\uBD80\uD130 rules \uCEE8\uD14D\uC2A4\uD2B8\uC5D0\uC11C \uC81C\uC678"),
   checklist: external_exports.array(external_exports.string()).optional().describe("add action\uC5D0 \uD544\uC694"),
   note: external_exports.string().optional().describe("memory action\uC5D0 \uD544\uC694 \u2014 \uC790\uC720 \uBA54\uBAA8 \uD55C \uC904/\uC5EC\uB7EC \uC904"),
   projectPath: external_exports.string().optional().describe("pull action\uC5D0 \uD544\uC694 \u2014 \uC6D0\uACA9 \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C .claude/rules/\uB85C \uAE30\uB85D\uD560 \uD504\uB85C\uC81D\uD2B8")
@@ -28269,7 +28270,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.32.0" : "0.0.0-dev";
+  return true ? "0.33.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32910,8 +32911,8 @@ function errorResult14(errorCode, message) {
 }
 
 // src/tools/sugoSpecWriter.ts
-import { readFile as readFile27 } from "node:fs/promises";
-import { join as join29 } from "node:path";
+import { access as access3, readFile as readFile27 } from "node:fs/promises";
+import { isAbsolute as isAbsolute8, join as join29, relative as relative8, resolve as resolve10, sep as sep3 } from "node:path";
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
   workspace: external_exports.string().min(1),
@@ -32928,6 +32929,7 @@ var SPEC_LINT_RULES = [
   { kind: "line-number", pattern: /#L\d+|\blines?\s+\d+|\d+\s*번째\s*줄|\d+\s*행\b/i },
   { kind: "commit-hash", pattern: /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/ }
 ];
+var REQUIRED_SPEC_SECTIONS = ["\uBC30\uACBD/\uBAA9\uC801", "\uBC94\uC704", "\uC694\uAD6C\uC0AC\uD56D", "\uC644\uB8CC\uC870\uAC74", "\uC81C\uC57D", "Open Questions", "Sources"];
 function lintSpecText(text) {
   return text.split("\n").flatMap(
     (content, index) => SPEC_LINT_RULES.flatMap(({ kind, pattern }) => {
@@ -32936,7 +32938,38 @@ function lintSpecText(text) {
     })
   );
 }
+function validateSpecStructure(text) {
+  const headings = text.split("\n").map((line) => line.match(/^##\s+(.+?)\s*$/)?.[1]).filter((heading) => !!heading);
+  const positions = REQUIRED_SPEC_SECTIONS.map((section) => headings.indexOf(section));
+  return {
+    missingSections: REQUIRED_SPEC_SECTIONS.filter((_, index) => positions[index] < 0),
+    ordered: positions.every((position, index) => position >= 0 && (index === 0 || position > positions[index - 1]))
+  };
+}
 var result = (payload) => ({ content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] });
+function localDateKey(now = /* @__PURE__ */ new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+}
+function specSlug(title) {
+  return toNfc(title).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").trim().replace(/\s+/g, "-") || "spec";
+}
+async function nextSpecTarget(title) {
+  const date3 = localDateKey();
+  const root = join29(sugoHomeDir(), ".claude", "sugo", "specs");
+  const featureDir = join29(root, date3, specSlug(title));
+  let version2 = 1;
+  while (await access3(join29(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
+  const directory = join29(featureDir, `v${version2}`);
+  return { root, date: date3, version: version2, directory, path: join29(directory, "spec.md") };
+}
+function managedSpecPath(specPath) {
+  const root = resolve10(sugoHomeDir(), ".claude", "sugo", "specs");
+  const rel = relative8(root, resolve10(specPath));
+  if (!rel || rel.startsWith(`..${sep3}`) || rel === ".." || isAbsolute8(rel)) return false;
+  const parts2 = rel.split(sep3);
+  return parts2.length === 4 && /^\d{8}$/.test(parts2[0]) && parts2[1].length > 0 && /^v[1-9]\d*$/.test(parts2[2]) && parts2[3] === "spec.md";
+}
 async function handleSugoSpecWriter(rawArgs) {
   const args2 = Args.parse(rawArgs);
   const candidates = await fetchUnlinkedSpecDrafts(args2.workspace);
@@ -32950,14 +32983,32 @@ async function handleSugoSpecWriter(rawArgs) {
     const dir = join29(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     try {
       const attachments = await downloadSpecAttachments(args2.workspace, spec.id, dir);
-      return result({ ok: true, spec, attachments: attachments ?? [], ...attachments === null && { attachmentsUnavailable: true } });
+      const specTarget = await nextSpecTarget(spec.title);
+      return result({ ok: true, spec, specTarget, attachments: attachments ?? [], ...attachments === null && { attachmentsUnavailable: true } });
     } catch (error3) {
       return result({ ok: false, errorCode: "SPEC_ATTACHMENT_DOWNLOAD_FAILED", message: error3 instanceof Error ? error3.message : String(error3) });
     }
   }
   if (!args2.specPath) return result({ ok: false, errorCode: "SPEC_PATH_REQUIRED" });
+  if (!managedSpecPath(args2.specPath)) {
+    return result({
+      ok: false,
+      errorCode: "SPEC_PATH_OUTSIDE_MANAGED_ROOT",
+      message: "context \uC751\uB2F5\uC758 specTarget.path \uC544\uB798\uC5D0 \uC791\uC131\uD55C spec.md\uB9CC \uC5F0\uACB0\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    });
+  }
   const text = await readFile27(args2.specPath, "utf-8").catch(() => null);
   if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args2.specPath });
+  const structure = validateSpecStructure(text);
+  if (structure.missingSections.length > 0 || !structure.ordered) {
+    return result({
+      ok: false,
+      errorCode: "SPEC_STRUCTURE_INVALID",
+      message: "SPEC \uD544\uC218 \uC139\uC158\uC774 \uBE60\uC84C\uAC70\uB098 \uD45C\uC900 \uC21C\uC11C\uC640 \uB2E4\uB985\uB2C8\uB2E4.",
+      missingSections: structure.missingSections,
+      requiredOrder: REQUIRED_SPEC_SECTIONS
+    });
+  }
   const warnings = lintSpecText(text);
   if (warnings.length > 0 && !args2.acceptLintWarnings) {
     return result({
@@ -33149,7 +33200,7 @@ function errorResult15(errorCode, message) {
 }
 
 // src/tools/sugoUpdate.ts
-import { resolve as resolve10 } from "node:path";
+import { resolve as resolve11 } from "node:path";
 var sugoUpdateInputSchema = {
   projectPath: external_exports.string().describe("\uAC31\uC2E0\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C(\uC774\uBBF8 sugo_add\uB85C \uB4F1\uB85D\uB3FC \uC788\uC5B4\uC57C \uD568)"),
   repoUrl: external_exports.string().optional(),
@@ -33160,7 +33211,7 @@ var sugoUpdateInputSchema = {
 var SugoUpdateArgs = external_exports.object(sugoUpdateInputSchema);
 async function handleSugoUpdate(rawArgs) {
   const args2 = SugoUpdateArgs.parse(rawArgs);
-  const projectPath = resolve10(args2.projectPath);
+  const projectPath = resolve11(args2.projectPath);
   const existing = await findRegistryEntry(projectPath);
   if (!existing) {
     return errorResult16("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uBA3C\uC800 sugo_add\uB85C \uB4F1\uB85D\uD558\uC138\uC694: ${projectPath}`);
@@ -34106,7 +34157,7 @@ function errorResult18(errorCode, message) {
 // src/work/gitHistory.ts
 import { execFile as execFile4 } from "node:child_process";
 import { mkdir as mkdir20, realpath } from "node:fs/promises";
-import { isAbsolute as isAbsolute8, join as join31, relative as relative8, resolve as resolve11, sep as sep3 } from "node:path";
+import { isAbsolute as isAbsolute9, join as join31, relative as relative9, resolve as resolve12, sep as sep4 } from "node:path";
 import { promisify as promisify4 } from "node:util";
 var execFileAsync3 = promisify4(execFile4);
 async function git2(cwd, args2) {
@@ -34121,11 +34172,11 @@ async function repositoryScopes(projects) {
   for (const project of projects) {
     const root = await git2(project, ["rev-parse", "--show-toplevel"]);
     if (!root) continue;
-    const [canonicalRoot, canonicalProject] = await Promise.all([realpath(resolve11(root)), realpath(resolve11(project))]);
-    const rel = relative8(canonicalRoot, canonicalProject);
-    if (isAbsolute8(rel) || rel === ".." || rel.startsWith(`..${sep3}`)) continue;
+    const [canonicalRoot, canonicalProject] = await Promise.all([realpath(resolve12(root)), realpath(resolve12(project))]);
+    const rel = relative9(canonicalRoot, canonicalProject);
+    if (isAbsolute9(rel) || rel === ".." || rel.startsWith(`..${sep4}`)) continue;
     const paths = byRoot.get(root) ?? /* @__PURE__ */ new Set();
-    paths.add(rel ? rel.split(sep3).join("/") : ".");
+    paths.add(rel ? rel.split(sep4).join("/") : ".");
     byRoot.set(canonicalRoot, paths);
   }
   return [...byRoot].map(([root, paths]) => ({ root, paths: [...paths] }));
@@ -34369,8 +34420,8 @@ async function handleSugoAwsContext(rawArgs) {
 }
 
 // src/tools/sugoUninstall.ts
-import { access as access3, mkdir as mkdir21, readFile as readFile29, rename as rename2, rm as rm5, rmdir, writeFile as writeFile4 } from "node:fs/promises";
-import { dirname as dirname11, join as join32, resolve as resolve12 } from "node:path";
+import { access as access4, mkdir as mkdir21, readFile as readFile29, rename as rename2, rm as rm5, rmdir, writeFile as writeFile4 } from "node:fs/promises";
+import { dirname as dirname11, join as join32, resolve as resolve13 } from "node:path";
 import { createHash as createHash7 } from "node:crypto";
 var CONFIRMATION = "DELETE_SUGO_DATA";
 var sugoUninstallInputSchema = {
@@ -34464,32 +34515,32 @@ async function handleSugoUninstall(rawArgs) {
     await rm5(activeRoot, { recursive: true, force: true });
     await mkdir21(dirname11(activeRoot), { recursive: true });
     await rename2(archiveRoot, activeRoot);
-    for (const entry of archivedRegistry) await syncProjectHarness({ projectPath: resolve12(entry.path), workspace: entry.workspace });
+    for (const entry of archivedRegistry) await syncProjectHarness({ projectPath: resolve13(entry.path), workspace: entry.workspace });
     return result2({ ok: true, action: "restore", restoredProjects: archivedRegistry.length, active: true });
   }
   const projects = await loadRegistry();
   const preview = await Promise.all(projects.map(async ({ path }) => ({
-    projectPath: resolve12(path),
-    ownershipRecorded: await loadInstallManifest(resolve12(path)) !== null
+    projectPath: resolve13(path),
+    ownershipRecorded: await loadInstallManifest(resolve13(path)) !== null
   })));
   const requiredConfirmation = args2.mode === "purge" ? CONFIRMATION : "UNINSTALL_SUGO";
   if (args2.action === "preview") return result2({ ok: true, action: "preview", mode: args2.mode, requiredConfirmation, projects: preview, retainedDataPath: args2.mode === "retain" ? archiveRoot : null });
   if (args2.confirmation !== requiredConfirmation) return error2("CONFIRMATION_REQUIRED", `confirmation\uC5D0 ${requiredConfirmation}\uB97C \uC815\uD655\uD788 \uC785\uB825\uD574\uC57C \uD569\uB2C8\uB2E4.`);
   const preserved = [];
   for (const { path } of projects) {
-    const projectPath = resolve12(path);
+    const projectPath = resolve13(path);
     const paths = await cleanupProject(projectPath, await loadInstallManifest(projectPath));
     if (paths.length) preserved.push({ projectPath, paths });
   }
   if (args2.mode === "retain") {
     await mkdir21(productRoot, { recursive: true });
     await rm5(archiveRoot, { recursive: true, force: true });
-    if (await access3(activeRoot).then(() => true, () => false)) await rename2(activeRoot, archiveRoot);
+    if (await access4(activeRoot).then(() => true, () => false)) await rename2(activeRoot, archiveRoot);
   } else {
     await rm5(activeRoot, { recursive: true, force: true });
     await rm5(productRoot, { recursive: true, force: true });
   }
-  const verifiedClean = !await access3(activeRoot).then(() => true, () => false);
+  const verifiedClean = !await access4(activeRoot).then(() => true, () => false);
   return result2({ ok: true, action: "execute", mode: args2.mode, verifiedClean, cleanedProjects: projects.length, retainedDataPath: args2.mode === "retain" ? archiveRoot : null, preserved });
 }
 function result2(body2) {

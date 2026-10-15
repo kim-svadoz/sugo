@@ -61,10 +61,11 @@ Open Questions는 feat를 막는 목록이 아니다. 답이 없어도 feat는 �
 
 ## 파일 규칙과 완료
 
-- 루트: `/Users/demo-user/dev/spec`
-- 경로: `/Users/demo-user/dev/spec/YYYYMMDD/<feature-slug>/vN/spec.md` (Asia/Seoul 날짜, 다음 빈 vN)
-- `<feature-slug>`는 Schedule SPEC 제목의 공백을 `-`로 바꾼 것이다. 한글과 영문은 그대로 둔다(예: `홈-추천-인기-랭킹-영역-추가`).
+- 저장 경로를 직접 만들거나 추측하지 않는다. `context` 응답의 `specTarget.path`를 그대로 사용한다.
+- `specTarget`은 현재 사용자의 Sugo 활성 데이터 루트 아래에 `specs/YYYYMMDD/<feature-slug>/vN/spec.md`를 제안한다. 날짜는 사용자의 로컬 달력 기준이고, `vN`은 기존 문서를 덮어쓰지 않는 다음 빈 버전이다.
+- `<feature-slug>`는 Schedule SPEC 제목을 NFC로 정규화하고 경로에 사용할 수 없는 문자를 제거한 뒤 공백을 `-`로 바꾼다. 한글과 영문은 그대로 둔다.
 - UTF-8 Markdown으로 저장한다.
+- 2단계 섹션은 `배경/목적` → `범위` → `요구사항` → `완료조건` → `제약` → `Open Questions` → `Sources` 순서로 정확히 둔다. `complete`가 누락과 순서를 검증하므로 임의 이름으로 바꾸지 않는다.
 - Sources에는 SPEC 카드를 ID가 아니라 제목으로 적는다. `spec-manual-xxxxxxxx`의 해시처럼 보이는 부분이 lint의 커밋 해시 경고에 걸린다.
 - 저장 후 파일을 다시 읽어 필수 섹션, 완료조건, "넣지 않는 것"이 섞였는지, 첨부 이미지가 모두 `images/`에 복사되고 링크됐는지 점검한다.
 - 마지막으로 `sugo_spec_writer(action:"complete", workspace, projectPath, specDraftId, specPath)`를 호출한다.

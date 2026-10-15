@@ -50,11 +50,11 @@ describe('AWS readonly guard decision table', () => {
     expect(evaluateHookInput({ session_id: 'session', tool_input: { command: 'aws ecs describe-services' } }, { paths: sessionPaths, now: at + 31 * 61_000 }).decision).toBe('ask');
   });
 
-  it('resets minute, KST day, and session independently', () => {
+  it('resets minute, user-local day, and session independently', () => {
     const dir = mkdtempSync(join(tmpdir(), 'sugo-aws-reset-'));
     const usagePath = join(dir, 'usage.json');
     const policy = { ...DEFAULT_AWS_GUARD_POLICY, sessionLimit: 1, dailyLimit: 1, minuteLimit: 1 };
-    const beforeMidnight = Date.parse('2026-09-30T14:59:59Z');
+    const beforeMidnight = new Date(2026, 8, 30, 23, 59, 59).getTime();
     expect(applyUsageBudget({ callCount: 1, policy, usagePath, sessionId: 'a', now: beforeMidnight }).exceeded).toEqual([]);
     expect(applyUsageBudget({ callCount: 1, policy, usagePath, sessionId: 'b', now: beforeMidnight + 61_000 }).exceeded).toEqual([]);
     const next = applyUsageBudget({ callCount: 1, policy, usagePath, sessionId: 'a', now: beforeMidnight + 61_001 });

@@ -126,7 +126,7 @@ describe("stackDetector — 래퍼 명령의 OS 분기(양쪽 다 검증)", () =
  * 규칙을 좁게 유지한다 — 넓은 린트는 오탐으로 무력화된다.
  */
 describe("이식성 가드 — 배포되는 코드에 이 PC 전용 가정이 없다", () => {
-  const roots = ["src", "hooks"];
+  const roots = ["src", "hooks", "commands", "agents", "skills", "harness-library", "scripts", ".claude-plugin"];
 
   async function sourceFiles(): Promise<string[]> {
     const out: string[] = [];
@@ -134,7 +134,7 @@ describe("이식성 가드 — 배포되는 코드에 이 PC 전용 가정이 �
       for (const e of await readdir(dir, { withFileTypes: true })) {
         const full = join(dir, e.name);
         if (e.isDirectory()) await walk(full);
-        else if (/\.(ts|mjs|js)$/.test(e.name)) out.push(full);
+        else if (/\.(ts|mjs|js|md|json)$/.test(e.name)) out.push(full);
       }
     };
     const testDir = dirname(fileURLToPath(import.meta.url));
@@ -155,6 +155,26 @@ describe("이식성 가드 — 배포되는 코드에 이 PC 전용 가정이 �
     const offenders: string[] = [];
     for (const f of await sourceFiles()) {
       if (/["'`][A-Za-z]:[\\/]/.test(stripComments(readFileSync(f, "utf-8")))) offenders.push(f);
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("개발자 개인 홈 절대경로가 배포 파일에 하드코딩돼 있지 않다", async () => {
+    const offenders: string[] = [];
+    for (const f of await sourceFiles()) {
+      const source = stripComments(readFileSync(f, "utf-8"));
+      if (/\/(?:Users|home)\/[A-Za-z0-9._-]+\//.test(source) || /[A-Za-z]:\\\\Users\\\\[A-Za-z0-9._-]+\\\\/.test(source)) {
+        offenders.push(f);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("사용자 로컬 날짜를 제품 고정 시간대로 덮어쓰지 않는다", async () => {
+    const offenders: string[] = [];
+    for (const f of await sourceFiles()) {
+      const source = stripComments(readFileSync(f, "utf-8"));
+      if (/timeZone\s*:\s*["'`][^"'`]+["'`]|\bKST\b|\b(?:seoul|kst)Day\b|timestamp\s*\+\s*9\s*\*\s*60\s*\*\s*60/i.test(source)) offenders.push(f);
     }
     expect(offenders).toEqual([]);
   });

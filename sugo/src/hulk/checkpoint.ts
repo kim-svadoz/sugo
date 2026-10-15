@@ -132,12 +132,13 @@ export interface CheckpointReconcileResult {
   conflicts: string[];
 }
 
-function todayKst(now: Date): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+function todayLocal(now: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 function isExpired(expiresAt: string | undefined, now: Date): boolean {
-  return !!expiresAt && /^\d{4}-\d{2}-\d{2}$/.test(expiresAt.slice(0, 10)) && expiresAt.slice(0, 10) < todayKst(now);
+  return !!expiresAt && /^\d{4}-\d{2}-\d{2}$/.test(expiresAt.slice(0, 10)) && expiresAt.slice(0, 10) < todayLocal(now);
 }
 
 function digest(value: string): string {
