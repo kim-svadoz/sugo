@@ -809,23 +809,23 @@ export function SchedulePage() {
                   />
                 </div>
               )}
-              <section className="mt-3 rounded-xl border border-white/[0.09] bg-white/[0.025] p-3" aria-label="개발 이력">
+              <section className="mt-3 rounded-xl border border-white/[0.09] bg-white/[0.025] p-4" aria-label="개발 이력">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-[12.5px] font-semibold text-white">개발 이력</h3>
+                    <h3 className="text-[13.5px] font-semibold text-white">개발 이력</h3>
                   </div>
                   <span className="font-mono text-[10px] text-slate-500">{selected.development_history?.length ?? 0}회</span>
                 </div>
                 {(selected.development_history?.length ?? 0) > 0 ? (
-                  <ol className="mt-3 space-y-0">
+                  <ol className="mt-3.5 space-y-0">
                     {selected.development_history?.map((entry, index) => (
-                      <li key={`${entry.task_id}:${entry.version}`} className="relative flex gap-3 pb-3 last:pb-0">
+                      <li key={`${entry.task_id}:${entry.version}`} className="relative flex gap-3.5 pb-3.5 last:pb-0">
                         {index < (selected.development_history?.length ?? 0) - 1 && <span className="absolute left-[5px] top-3 h-full w-px bg-white/10" />}
                         <span className={cn("relative mt-1 h-[11px] w-[11px] shrink-0 rounded-full border-2", entry.version === 0 ? "border-cyan-300 bg-cyan-950" : "border-violet-300 bg-violet-950")} />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className={cn("rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase", entry.version === 0 ? "bg-cyan-400/10 text-cyan-200" : "bg-violet-400/10 text-violet-200")}>{entry.version === 0 ? "feat" : `patch ${entry.version}`}</span>
-                            <span className="text-[13px] font-semibold leading-relaxed text-slate-100">{entry.title}</span>
+                            <span className="text-[13.5px] font-semibold leading-relaxed text-slate-100">{entry.title}</span>
                           </div>
                           {entry.completed_at && <time className="mt-1 block font-mono text-[9.5px] text-slate-500">{entry.completed_at.slice(0, 10)}</time>}
                         </div>
@@ -847,19 +847,19 @@ export function SchedulePage() {
 
             <SpecAttachments workspace={selected.workspace_name} nodeId={selected.id} hasSpec={!!selected.spec_path} />
 
-            <section className="rounded-xl border border-white/[0.1] bg-white/[0.035] p-5" aria-label="작업 컨텍스트">
-              <div className="mb-3 flex items-center justify-between gap-3">
+            <section className="rounded-xl border border-white/[0.1] bg-white/[0.035] p-4" aria-label="작업 컨텍스트">
+              <div className="mb-2 flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-white">작업 컨텍스트</h3>
                 </div>
                 {savedFlash && savedFlash !== "title" && <span className="text-[10px] font-semibold text-emerald-400">변경사항 저장됨</span>}
               </div>
               <div className="grid rounded-xl border border-white/[0.08] bg-black/20 xl:grid-cols-[0.72fr_1fr_1.3fr] xl:divide-x xl:divide-white/[0.07]">
-                <div className="border-b border-white/[0.07] px-4 py-3 xl:border-b-0">
+                <div className="border-b border-white/[0.07] px-4 py-2.5 xl:border-b-0">
                   <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">완료 목표일</span>
                   <DatePicker className="h-8 border-0 bg-transparent px-0 py-0 font-mono shadow-none" value={selected.due_date} onChange={(next) => void applyDueDate(selected, next)} />
                 </div>
-                <div ref={projectMenuRef} className="relative block border-b border-white/[0.07] px-4 py-3 xl:border-b-0">
+                <div ref={projectMenuRef} className="relative block border-b border-white/[0.07] px-4 py-2.5 xl:border-b-0">
                   <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">저장소</span>
                   <button
                     type="button"
@@ -881,7 +881,7 @@ export function SchedulePage() {
                     </div>
                   )}
                 </div>
-                <label className="block px-4 py-3">
+                <label className="block px-4 py-2.5">
                   <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">작업 브랜치</span>
                   <input
                     disabled={selected.has_run || !selected.project_path}

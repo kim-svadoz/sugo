@@ -21,6 +21,7 @@ export function Skills() {
   const [agents, setAgents] = useState<AgentEntry[]>([]);
   const [skills, setSkills] = useState<SkillEntry[]>([]);
   const [selectedAgent, setSelectedAgent] = useState("all");
+  const [kindFilter, setKindFilter] = useState<"all" | "command">("all");
   const [q, setQ] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<SkillEntry | null>(null);
@@ -43,10 +44,11 @@ export function Skills() {
     const needle = q.trim().toLowerCase();
     return skills.filter(skill => {
       const byAgent = selectedAgent === "all" || accentKey(skill.agent ?? "") === accentKey(selectedAgent);
+      const byKind = kindFilter === "all" || skill.kind === "command" || skill.command;
       const text = `${skill.name} ${skill.description} ${skill.agent ?? ""}`.toLowerCase();
-      return byAgent && (!needle || text.includes(needle));
+      return byAgent && byKind && (!needle || text.includes(needle));
     });
-  }, [skills, selectedAgent, q]);
+  }, [skills, selectedAgent, kindFilter, q]);
 
   const selectedAgentMeta = agents.find(agent => agent.id === selectedAgent);
   const html = useMemo(() => detail ? marked.parse(visibleMarkdown(detail), { async: false }) as string : "", [detail]);
@@ -71,9 +73,15 @@ export function Skills() {
       {selectedAgentMeta?.description && <p className="mt-3 max-w-4xl text-xs leading-5 text-[var(--color-text-muted)]">{selectedAgentMeta.description}</p>}
     </section>}
 
-    <div className="relative max-w-md">
-      <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-dim)]" size={16} />
-      <input value={q} onChange={event => setQ(event.target.value)} aria-label="스킬 검색" placeholder="이름, 역할, 설명 검색" className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pl-9 pr-3 text-sm text-[var(--color-text)] outline-none transition focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/10" />
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="inline-flex rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-1" aria-label="항목 종류 필터">
+        <button onClick={() => setKindFilter("all")} aria-pressed={kindFilter === "all"} className={cn("rounded-md px-3 py-1.5 text-xs font-semibold transition-colors", kindFilter === "all" ? "bg-white/[0.09] text-white" : "text-[var(--color-text-muted)] hover:text-white")}>전체</button>
+        <button onClick={() => setKindFilter("command")} aria-pressed={kindFilter === "command"} className={cn("flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors", kindFilter === "command" ? "bg-violet-400/15 text-violet-200" : "text-[var(--color-text-muted)] hover:text-white")}><TerminalSquare size={13} /> Command <span className="font-mono text-[10px] opacity-65">{skills.filter(skill => skill.kind === "command" || skill.command).length}</span></button>
+      </div>
+      <div className="relative min-w-[260px] max-w-md flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-dim)]" size={16} />
+        <input value={q} onChange={event => setQ(event.target.value)} aria-label="스킬 검색" placeholder="이름, 역할, 설명 검색" className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pl-9 pr-3 text-sm text-[var(--color-text)] outline-none transition focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/10" />
+      </div>
     </div>
 
     {empty ? <div className="py-16 text-center text-sm text-[var(--color-text-muted)]">플러그인 경로가 연결되면 설치된 스킬이 여기에 표시됩니다.</div>
