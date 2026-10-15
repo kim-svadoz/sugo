@@ -87,21 +87,12 @@ function MarkdownEditor({
   const [view, setView] = useState<"write" | "preview">("write");
   return (
     <div className={className}>
-      <div className="mb-1.5 flex items-center gap-1 rounded-lg border border-[var(--color-border)] p-0.5 text-[11px] font-semibold">
-        <button
-          type="button"
-          onClick={() => setView("write")}
-          className={`flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 transition-colors ${view === "write" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]"}`}
-        >
-          <Pencil size={11} /> 작성
-        </button>
-        <button
-          type="button"
-          onClick={() => setView("preview")}
-          className={`flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 transition-colors ${view === "preview" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]"}`}
-        >
-          <Eye size={11} /> 미리보기
-        </button>
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-2.5">
+        <div><div className="text-[13px] font-semibold text-[var(--color-text-bright)]">규칙 내용</div><div className="mt-0.5 text-[11px] text-[var(--color-text-dim)]">Markdown</div></div>
+        <div className="flex items-center gap-1 rounded-lg bg-[var(--color-background)] p-1 text-[11px] font-semibold">
+          <button type="button" onClick={() => setView("write")} className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors ${view === "write" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]"}`}><Pencil size={12} /> 작성</button>
+          <button type="button" onClick={() => setView("preview")} className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors ${view === "preview" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]"}`}><Eye size={12} /> 미리보기</button>
+        </div>
       </div>
       {view === "write" ? (
         <textarea
@@ -109,13 +100,13 @@ function MarkdownEditor({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={"Markdown 문법으로 작성하세요 — # 제목, - 목록, **굵게** 등"}
-          rows={7}
-          className="ck-scroll w-full resize-y rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2 font-mono text-[12.5px] leading-6 text-[var(--color-text)] outline-none"
+          rows={9}
+          className="ck-scroll w-full resize-y bg-[#070b12] px-4 py-4 font-mono text-[13px] leading-6 text-slate-200 outline-none placeholder:text-slate-600"
         />
       ) : value.trim() ? (
-        <div className="md-body ck-scroll max-h-[260px] overflow-y-auto rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2" dangerouslySetInnerHTML={{ __html: renderMd(value) }} />
+        <div className="md-body ck-scroll min-h-[248px] max-h-[360px] overflow-y-auto bg-[#070b12] px-5 py-4" dangerouslySetInnerHTML={{ __html: renderMd(value) }} />
       ) : (
-        <div className="rounded border border-dashed border-[var(--color-border)] px-3 py-6 text-center text-[11.5px] text-[var(--color-text-dim)]">
+        <div className="min-h-[248px] bg-[#070b12] px-3 py-20 text-center text-[12px] text-[var(--color-text-dim)]">
           아직 내용이 없습니다 — 작성 탭에서 입력하면 여기 미리보기가 뜹니다.
         </div>
       )}
@@ -275,23 +266,19 @@ export function CheckpointPanel({
           </div>
         )}
         {/* 워크스페이스 단위 체크포인트 편집·일괄 적용. */}
-        <div className="mt-4 space-y-2 border-t border-[var(--color-border)] pt-3">
-          <div className="font-mono text-[11px] text-[var(--color-text-muted)]">새 체크포인트</div>
-          <div className="flex flex-wrap gap-2">
-            <label className="w-40 text-[10px] text-[var(--color-text-dim)]">규칙 폴더
-              <input value={cpDraft.category} onChange={(e) => setCpDraft({ ...cpDraft, category: e.target.value })} placeholder="general" className="mt-1 w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 font-mono text-[12px] text-[var(--color-text)]" />
-            </label>
-            <input
-              value={cpDraft.title}
-              onChange={(e) => setCpDraft({ ...cpDraft, title: e.target.value })}
-              placeholder="제목"
-              className="min-w-40 flex-1 rounded border border-[var(--color-border)] bg-[var(--color-background)] px-2 py-1 text-[12.5px] text-[var(--color-text)]"
-            />
+        <div className="mt-5 border-t border-[var(--color-border)] pt-5">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div><div className="text-[16px] font-semibold text-[var(--color-text-bright)]">새 규칙 작성</div><p className="mt-1 text-[12px] text-[var(--color-text-muted)]">작성할 규칙의 이름과 저장 위치를 먼저 정합니다.</p></div>
+            <span className="rounded-full border border-amber-400/25 bg-amber-400/[0.07] px-2.5 py-1 text-[10.5px] font-medium text-amber-200">체크포인트</span>
           </div>
-          <MarkdownEditor value={cpDraft.markdown} onChange={(markdown) => setCpDraft({ ...cpDraft, markdown })} />
-          <div className="block text-[10.5px] text-[var(--color-text-dim)]">유효기간
-            <div className="mt-1 flex items-center gap-2">
-              <div className="w-44">
+          <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+            <div className="grid gap-px bg-[var(--color-border)] sm:grid-cols-[210px_minmax(0,1fr)]">
+              <label className="bg-[var(--color-surface)] px-4 py-3"><span className="text-[11px] font-medium text-[var(--color-text-dim)]">규칙 폴더</span><input value={cpDraft.category} onChange={(e) => setCpDraft({ ...cpDraft, category: e.target.value })} placeholder="general" className="mt-1.5 w-full bg-transparent font-mono text-[13px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-dim)]" /></label>
+              <label className="bg-[var(--color-surface)] px-4 py-3"><span className="text-[11px] font-medium text-[var(--color-text-dim)]">규칙 이름</span><input value={cpDraft.title} onChange={(e) => setCpDraft({ ...cpDraft, title: e.target.value })} placeholder="예: 결제 승인 실패 시 재시도 기준" className="mt-1.5 w-full bg-transparent text-[14px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-dim)]" /></label>
+            </div>
+            <MarkdownEditor value={cpDraft.markdown} onChange={(markdown) => setCpDraft({ ...cpDraft, markdown })} />
+            <div className="flex flex-wrap items-end justify-between gap-4 border-t border-[var(--color-border)] px-4 py-3.5">
+              <div><div className="text-[11px] font-medium text-[var(--color-text-dim)]">적용 기간</div><div className="mt-2 flex flex-wrap items-center gap-2"><div className="w-44">
                 <DatePicker
                   value={cpDraft.expiresAt || null}
                   onChange={(expiresAt) => setCpDraft({ ...cpDraft, expiresAt: expiresAt ?? "" })}
@@ -317,9 +304,8 @@ export function CheckpointPanel({
               >
                 {!cpDraft.expiresAt && <Check size={12} />} 만료 없음
               </button>
-            </div>
-          </div>
-          <button
+              </div></div>
+              <button
             disabled={cpBusy || !cpDraft.title.trim() || !cpDraft.markdown.trim() || !userId}
             onClick={async () => {
               setCpBusy(true);
@@ -338,10 +324,12 @@ export function CheckpointPanel({
                 setCpBusy(false);
               }
             }}
-            className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[12px] font-bold text-amber-300 transition-colors hover:bg-amber-500/20 disabled:opacity-40"
+            className="rounded-lg border border-amber-400/45 bg-amber-400/10 px-4 py-2 text-[12px] font-bold text-amber-200 transition-colors hover:bg-amber-400/20 disabled:opacity-40"
           >
             체크포인트 저장
-          </button>
+              </button>
+            </div>
+          </div>
           <button disabled={cpBusy || checkpoints.data.length === 0 || !userId} onClick={async () => {
             setCpBusy(true);
             try {
@@ -349,7 +337,7 @@ export function CheckpointPanel({
               setCpApplyResult(result);
               setDirtyCheckpoints((current) => new Set([...current].filter((id) => !result.appliedIds.includes(id))));
             } finally { setCpBusy(false); }
-          }} className="w-full rounded-xl border border-amber-400/45 bg-gradient-to-r from-amber-500/15 to-orange-500/[0.06] px-4 py-2.5 text-[13px] font-bold text-amber-200 hover:border-amber-300 disabled:opacity-40">저장 후 적용 · 전체 프로젝트</button>
+          }} className="mt-3 w-full rounded-xl border border-amber-400/35 bg-gradient-to-r from-amber-500/12 to-orange-500/[0.05] px-4 py-2.5 text-[13px] font-bold text-amber-200 hover:border-amber-300 disabled:opacity-40">저장 후 적용 · 전체 프로젝트</button>
           {cpApplyResult && <div className={`rounded-lg border p-2.5 text-[11px] ${cpApplyResult.conflicts.length || cpApplyResult.failed.length ? "border-amber-400/35 bg-amber-400/[0.06] text-amber-100" : "border-emerald-400/30 bg-emerald-400/[0.05] text-emerald-200"}`}>
             <div className="font-semibold">{workspace} 적용 결과 · 변경된 체크포인트 {cpApplyResult.changedCheckpoints}건 · 파일 {cpApplyResult.filesWritten}개 적용 · {cpApplyResult.filesRemoved}개 정리</div>
             {cpApplyResult.expiredCheckpoints > 0 && <div className="mt-1 text-rose-200">만료 체크포인트 {cpApplyResult.expiredCheckpoints}건은 컨텍스트에서 제외했습니다.</div>}

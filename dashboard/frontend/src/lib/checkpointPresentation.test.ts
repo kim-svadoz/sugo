@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { orderVisibleCheckpoints } from "../components/CheckpointPanel.js";
 import type { Checkpoint } from "../hooks/useWorkspaceData.js";
+
+const panelSource = readFileSync(new URL("../components/CheckpointPanel.tsx", import.meta.url), "utf8");
 
 function checkpoint(id: string, expiresAt: string | null, appliesTo: string[] = []): Checkpoint {
   return {
@@ -47,5 +50,14 @@ describe("Schedule 프로젝트 체크포인트 표시", () => {
     ], null, "2026-10-07");
 
     expect(result.map((item) => item.id)).toEqual(["no-expiry"]);
+  });
+});
+
+describe("체크포인트 작성 화면", () => {
+  it("메타 정보, 규칙 본문, 적용 범위를 명확한 순서로 보여준다", () => {
+    expect(panelSource).toContain("새 규칙 작성");
+    expect(panelSource).toContain("작성할 규칙의 이름과 저장 위치를 먼저 정합니다.");
+    expect(panelSource).toContain("규칙 내용");
+    expect(panelSource).toContain("적용 기간");
   });
 });
