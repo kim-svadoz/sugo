@@ -22,6 +22,28 @@ async function boot() {
 }
 
 describe("Schedule commitment API", () => {
+  it("정식 SPEC도 삭제·종료 이유를 구분해 보관하고 복구한다", async () => {
+    const { app, db, auth } = await boot();
+
+    await request(app).post("/api/schedule/specs/archive").set("Authorization", auth).send({
+      workspaceName: "orders", specId: "spec-1", reason: "closed",
+    }).expect(200);
+
+    const active = await request(app).get("/api/workspaces/schedule").set("Authorization", auth).expect(200);
+    expect(active.body.specs).toEqual([]);
+    const archive = await request(app).get("/api/schedule/specs/archive").set("Authorization", auth).expect(200);
+    expect(archive.body.specs).toEqual([expect.objectContaining({
+      workspace_name: "orders", spec_id: "spec-1", title: "검색 필터", reason: "closed",
+    })]);
+    expect((await db.query<{ manual_status: string }>("SELECT manual_status FROM sugo_roadmap_nodes WHERE id = 'spec-1'"))[0].manual_status).toBe("dropped");
+
+    await request(app).post("/api/schedule/specs/restore").set("Authorization", auth).send({
+      workspaceName: "orders", specId: "spec-1",
+    }).expect(200);
+    expect((await request(app).get("/api/workspaces/schedule").set("Authorization", auth).expect(200)).body.specs).toHaveLength(1);
+    expect((await request(app).get("/api/schedule/specs/archive").set("Authorization", auth).expect(200)).body.specs).toEqual([]);
+  });
+
   it("Spec 상태와 독립된 작업 약속을 만들고 목록에서 돌려준다", async () => {
     const { app, auth } = await boot();
     const created = await request(app)

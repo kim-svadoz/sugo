@@ -85,15 +85,16 @@ describe("schedule presentation", () => {
     expect(source).toContain("setCommitmentClosed");
   });
 
-  it("내부 Commitment 용어를 사용자에게 약속으로 노출하지 않고 완료 행동을 카드에서 제공한다", () => {
+  it("Agenda 카드에는 완료 버튼 대신 최신 작업의 배포 범위를 제공한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).not.toContain("지금 지켜야 할 약속");
     expect(source).not.toContain("+ 새 약속");
     expect(source).not.toContain("작업 약속");
     expect(source).toContain("해야 할 일");
     expect(source).not.toContain("작업 목표 추가");
-    expect(source).toContain("일정 닫기");
-    expect(source).toContain("completeFromQueue");
+    expect(source).toContain("DeploymentReach");
+    expect(source).toContain('["LOCAL", "DEV", "STG", "PRD"]');
+    expect(source).not.toContain("completeFromQueue");
   });
 
   it("Schedule 카드 클릭은 상세만 열고 Canvas는 명시적 버튼으로만 연다", () => {
@@ -229,11 +230,12 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("border-slate-500/30 bg-slate-500/[0.09]");
   });
 
-  it("대시보드 수동 SPEC 상세에는 파일 보존을 알리는 2단계 삭제 UI가 있다", () => {
+  it("모든 SPEC 상세에는 복구 가능한 삭제·종료 UI가 있다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain('selected.id.startsWith("spec-manual-")');
+    expect(source).not.toContain('selected.id.startsWith("spec-manual-")');
     expect(source).toContain("이 SPEC을 삭제할까요?");
-    expect(source).toContain("로컬에 작성된 Markdown 파일은 삭제하지 않습니다.");
-    expect(source).toContain("SPEC과 계보 삭제");
+    expect(source).toContain("개발 이력과 파일은 지우지 않으며 휴지통에서 확인하고 복구할 수 있습니다.");
+    expect(source).toContain("SPEC 종료 처리");
+    expect(source).toContain("SPEC 휴지통");
   });
 });

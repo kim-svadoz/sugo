@@ -12,6 +12,7 @@ import {
   reopenScheduleCommitment,
   updateScheduleCommitment,
 } from "../services/scheduleCommitmentService.js";
+import { archiveScheduleSpec, listScheduleSpecArchives, restoreScheduleSpec } from "../services/scheduleSpecArchiveService.js";
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable();
 const memoBody = z.object({
@@ -37,6 +38,12 @@ const updateCommitmentBody = z.object({
   target: commitmentTarget,
   linkedRunId: z.string().trim().min(1).max(191).nullable(),
 }).strict();
+const specArchiveBody = z.object({
+  workspaceName: z.string().trim().min(1).max(255),
+  specId: z.string().trim().min(1).max(191),
+  reason: z.enum(["deleted", "closed"]),
+}).strict();
+const specRestoreBody = specArchiveBody.omit({ reason: true });
 
 export function createScheduleRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();
@@ -70,6 +77,22 @@ export function createScheduleRouter(db: DbClient, sessionSecret: string): Route
 
   router.get("/commitments", async (req, res, next) => {
     try { res.json({ commitments: await listScheduleCommitments(db, req.userId!) }); } catch (error) { next(error); }
+  });
+  router.get("/specs/archive", async (req, res, next) => {
+    try { res.json({ specs: await listScheduleSpecArchives(db, req.userId!) }); } catch (error) { next(error); }
+  });
+  router.post("/specs/archive", validateBody(specArchiveBody), async (req, res, next) => {
+    try {
+      const spec = await archiveScheduleSpec(db, req.userId!, req.body.workspaceName, req.body.specId, req.body.reason);
+      if (!spec) return void res.status(404).json({ error: "SPEC_NOT_FOUND" });
+      res.json({ spec });
+    } catch (error) { next(error); }
+  });
+  router.post("/specs/restore", validateBody(specRestoreBody), async (req, res, next) => {
+    try {
+      if (!await restoreScheduleSpec(db, req.userId!, req.body.workspaceName, req.body.specId)) return void res.status(404).json({ error: "ARCHIVED_SPEC_NOT_FOUND" });
+      res.json({ ok: true });
+    } catch (error) { next(error); }
   });
   router.post("/commitments", validateBody(createCommitmentBody), async (req, res, next) => {
     try {

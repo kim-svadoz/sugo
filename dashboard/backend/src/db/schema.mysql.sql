@@ -101,6 +101,19 @@ CREATE TABLE IF NOT EXISTS sugo_schedule_commitments (
   CONSTRAINT fk_schedule_commitments_user FOREIGN KEY (user_id) REFERENCES sugo_users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (
+  user_id VARCHAR(191) NOT NULL,
+  workspace_name VARCHAR(255) NOT NULL,
+  spec_id VARCHAR(191) NOT NULL,
+  reason ENUM('deleted','closed') NOT NULL,
+  title VARCHAR(512) NOT NULL,
+  archived_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  archived_by VARCHAR(191) NOT NULL,
+  PRIMARY KEY (user_id, workspace_name, spec_id),
+  KEY idx_schedule_spec_archives_time (user_id, archived_at),
+  CONSTRAINT fk_schedule_spec_archives_user FOREIGN KEY (user_id) REFERENCES sugo_users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS sugo_decisions (
   id VARCHAR(191) NOT NULL,
   user_id VARCHAR(191) NOT NULL,

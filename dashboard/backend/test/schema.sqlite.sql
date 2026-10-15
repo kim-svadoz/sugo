@@ -102,6 +102,17 @@ CREATE TABLE IF NOT EXISTS sugo_schedule_commitments (
 CREATE INDEX IF NOT EXISTS idx_schedule_commitments_due ON sugo_schedule_commitments(user_id, due_date);
 CREATE INDEX IF NOT EXISTS idx_schedule_commitments_spec ON sugo_schedule_commitments(user_id, workspace_name, spec_id);
 
+CREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (
+  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,
+  workspace_name TEXT NOT NULL,
+  spec_id TEXT NOT NULL,
+  reason TEXT NOT NULL CHECK (reason IN ('deleted','closed')),
+  title TEXT NOT NULL,
+  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  archived_by TEXT NOT NULL,
+  PRIMARY KEY (user_id, workspace_name, spec_id)
+);
+
 CREATE TABLE IF NOT EXISTS sugo_decisions (
   id TEXT NOT NULL,
   user_id TEXT NOT NULL,

@@ -3,6 +3,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { getSchedule, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { getScheduleMemos, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { getScheduleCommitments, type ScheduleCommitment } from "../api/scheduleCommitmentApi.js";
+import { getScheduleSpecArchives, type ScheduleSpecArchive } from "../api/scheduleSpecArchiveApi.js";
 
 const POLL_MS = 4000;
 
@@ -10,6 +11,7 @@ interface ScheduleSnapshot {
   data: ScheduledSpec[];
   memos: ScheduledMemo[];
   commitments: ScheduleCommitment[] | null;
+  archives: ScheduleSpecArchive[];
 }
 
 const scheduleCache = new Map<string, ScheduleSnapshot>();
@@ -22,8 +24,9 @@ function fetchScheduleSnapshot(userId: string): Promise<ScheduleSnapshot> {
     getSchedule(userId),
     getScheduleMemos(userId),
     getScheduleCommitments(userId).catch(() => null),
-  ]).then(([data, memos, commitments]) => {
-    const snapshot = { data, memos, commitments };
+    getScheduleSpecArchives(userId),
+  ]).then(([data, memos, commitments, archives]) => {
+    const snapshot = { data, memos, commitments, archives };
     scheduleCache.set(userId, snapshot);
     return snapshot;
   }).finally(() => scheduleRequests.delete(userId));
@@ -39,6 +42,7 @@ export function useSchedule() {
   const [data, setData] = useState<ScheduledSpec[] | null>(() => initial?.data ?? null);
   const [memos, setMemos] = useState<ScheduledMemo[] | null>(() => initial?.memos ?? null);
   const [commitments, setCommitments] = useState<ScheduleCommitment[] | null>(() => initial?.commitments ?? null);
+  const [archives, setArchives] = useState<ScheduleSpecArchive[]>(() => initial?.archives ?? []);
   const [loading, setLoading] = useState(() => !initial);
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
@@ -53,6 +57,7 @@ export function useSchedule() {
       setData(cached.data);
       setMemos(cached.memos);
       setCommitments(cached.commitments);
+      setArchives(cached.archives);
     }
     setLoading(!cached);
 
@@ -63,6 +68,7 @@ export function useSchedule() {
           setData(snapshot.data);
           setMemos(snapshot.memos);
           setCommitments(snapshot.commitments);
+          setArchives(snapshot.archives);
           setError(null);
         }
       } catch (err) {
@@ -80,5 +86,5 @@ export function useSchedule() {
     };
   }, [userId, refreshNonce]);
 
-  return { data, memos, commitments, loading, error, refetch };
+  return { data, memos, commitments, archives, loading, error, refetch };
 }

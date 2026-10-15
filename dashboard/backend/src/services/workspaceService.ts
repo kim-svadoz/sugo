@@ -572,6 +572,8 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
        FROM sugo_roadmap_nodes n
        LEFT JOIN sugo_workspaces w ON w.user_id = n.user_id AND w.name = n.workspace_name
       WHERE n.user_id = ? AND n.level = 'spec' AND (w.id IS NULL OR w.deleted_at IS NULL)
+        AND NOT EXISTS (SELECT 1 FROM sugo_schedule_spec_archives a
+                         WHERE a.user_id = n.user_id AND a.workspace_name = n.workspace_name AND a.spec_id = n.id)
       ORDER BY (n.due_date IS NULL), n.due_date, n.id`,
     [userId]
   );
