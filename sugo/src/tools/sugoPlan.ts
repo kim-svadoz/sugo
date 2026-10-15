@@ -279,10 +279,9 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
   // ── §3/§4.0 baseline_capture. code_done에도 동일 게이트를 남겨둔다(이중 방어).
   //
-  // ⚠️ decompose 경로는 이 보호를 **못 받는다.** PRD→DECOMPOSE→ORCHESTRATING→(integrate)→
-  // DOCS_PENDING이라 baseline_capture도 code_done도 안 거친다. §4 흐름도가 DOCS_PENDING 합류를
-  // 명시하는 근거는 "서브태스크 각자가 자기 검증을 끝냈다"는 전제인데, 서브태스크별 게이트가
-  // 아직 없다 — **이 경로는 현재 게이트 공백**이다.
+  // decompose 경로는 baseline_capture/code_done을 거치지 않으므로 integrate에서 같은 baseline·
+  // analyze·wiring·boot 게이트를 한 번 더 적용한다. 서브태스크별 미니 파이프라인은 강제하지 않되,
+  // 합류 지점의 검증 공백은 허용하지 않는다.
   if (action === "baseline_capture" && existing) {
     const baselineRequired = existing.data.baselineGate?.required ?? false;
     const baselineExitCode = existing.data.baselineGate?.evidence?.exitCode ?? null;

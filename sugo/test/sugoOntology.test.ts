@@ -31,7 +31,7 @@ describe("§2 sugo_ontology 도구", () => {
     for (const identity of identities) {
       expect(identity).toEqual({
         schemaVersion: 1,
-        revision: 3,
+        revision: 4,
         hashAlgorithm: "sha256",
         modelHash: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
       });

@@ -48,8 +48,11 @@ export async function registerProject(entry: RegistryEntry): Promise<void> {
 
   await withFileLock(registryLockPath(), async () => {
     const current = await readRegistryFile();
+    const normalizedEntry = { ...entry, path: normalizedPath };
+    const existing = current.find((e) => resolve(e.path) === normalizedPath);
+    if (existing && JSON.stringify(existing) === JSON.stringify(normalizedEntry)) return;
     const filtered = current.filter((e) => resolve(e.path) !== normalizedPath);
-    filtered.push({ ...entry, path: normalizedPath });
+    filtered.push(normalizedEntry);
     await atomicWriteFile(path, JSON.stringify(filtered, null, 2));
   });
 }

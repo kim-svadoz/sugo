@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -27,6 +27,34 @@ afterEach(() => {
 });
 
 describe("sugo_add — .claude/rules/ 실배선", () => {
+  it("같은 입력의 add/update를 반복해도 생성 파일과 레지스트리 상태가 바뀌지 않는다", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: {}, devDependencies: { typescript: "^5.4.0" } }));
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "stable-ws" });
+    const generated = [
+      join(projectDir, "AGENTS.md"),
+      join(projectDir, "CLAUDE.md"),
+      ...readdirSync(join(projectDir, ".claude", "rules")).map((name) => join(projectDir, ".claude", "rules", name)),
+      join(projectDir, "sugo", "CLAUDE.md"),
+      join(projectDir, "sugo", "config.json"),
+      join(fakeHome, ".claude", "sugo", "registry.json"),
+    ];
+    const first = new Map(generated.map((path) => [path, {
+      content: readFileSync(path, "utf-8"),
+      modifiedAt: statSync(path).mtimeMs,
+    }]));
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "stable-ws" });
+    await call(handleSugoUpdate, { projectPath: projectDir });
+
+    for (const path of generated) {
+      expect(readFileSync(path, "utf-8"), `${path} content`).toBe(first.get(path)?.content);
+      expect(statSync(path).mtimeMs, `${path} mtime`).toBe(first.get(path)?.modifiedAt);
+    }
+  });
+
   it("감지된 하네스마다 .claude/rules/*.md를 실제로 쓴다", async () => {
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));
     writeFileSync(join(projectDir, "tsconfig.json"), "{}");

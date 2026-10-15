@@ -210,6 +210,28 @@ describe("§2 온톨로지 drift lock", () => {
     }
   });
 
+  it("실행기의 직접 입력·연결 차단 조건을 next_actions에서 빠짐없이 설명한다", () => {
+    const expected: Record<string, string[]> = {
+      start: [
+        "SPEC_DRAFT_NOT_FOUND", "SPEC_DRAFT_PROJECT_MISMATCH", "SPEC_FILE_NOT_FOUND", "SPEC_PATH_MISMATCH",
+        "WORK_BRANCH_NOT_ALLOWED_FOR_PATCH", "SPEC_DRAFT_BRANCH_MISMATCH", "WORK_BRANCH_PREPARE_FAILED",
+      ],
+      prd: ["PRD_CONTENT_REQUIRED"],
+      decompose: ["MANIFEST_REQUIRED", "PRD_NOT_FOUND"],
+      subtask_start: ["SUBTASK_ID_REQUIRED", "SUBTASK_NOT_FOUND"],
+      subtask_done: ["SUBTASK_ID_REQUIRED", "SUBTASK_NOT_FOUND"],
+      integrate: ["MANIFEST_REQUIRED"],
+      test_done: ["TEST_PASSED_REQUIRED"],
+      review_done: [
+        "REVIEW_CONFIRMATION_REQUIRED", "REVIEW_CONFIRMATION_APPROVAL_REQUIRED", "SUMMARY_REQUIRED", "RUNTIME_CHECK_REQUIRED",
+      ],
+    };
+    for (const [actionName, gateIds] of Object.entries(expected)) {
+      const declared = ACTION_TYPES.find((action) => action.name === actionName)?.gates.map((gate) => gate.gateId) ?? [];
+      for (const gateId of gateIds) expect(declared, `${actionName}: ${gateId}`).toContain(gateId);
+    }
+  });
+
   it("SPEC oracle 게이트는 기록 액션이 아니라 실제 차단 액션 ready에 걸린다", () => {
     const gateIds = (actionName: string) =>
       ACTION_TYPES.find((action) => action.name === actionName)!.gates.map((gate) => gate.gateId);

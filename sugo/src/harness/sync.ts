@@ -33,6 +33,12 @@ export interface SyncProjectHarnessResult {
   claudeRulesFiles: string[];
 }
 
+async function writeTextIfChanged(path: string, content: string): Promise<void> {
+  const existing = await readFile(path, "utf-8").catch(() => null);
+  if (existing === content) return;
+  await atomicWriteFile(path, content);
+}
+
 /**
  * §2 하네스 서브시스템의 실제 동작(감지→fetch→합성→파일쓰기→config저장→레지스트리등록) — sugo_add와
  * sugo_update가 공유한다. **워크스페이스 보존:** workspace가 명시 안 되면(undefined) 기존
@@ -42,6 +48,9 @@ export interface SyncProjectHarnessResult {
  */
 export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<SyncProjectHarnessResult> {
   const { projectPath } = args;
+  const existingConfig = await loadProjectConfig(projectPath);
+  const existingEntry = await findRegistryEntry(projectPath);
+  const workspace = args.workspace ?? existingEntry?.workspace;
   const detectedStack = detectStack(projectPath);
   const harnessIds = Array.from(new Set([...detectedStack.harnessIds, ...(args.additionalStacks ?? [])]));
 
@@ -49,7 +58,7 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
   const { harnesses, warnings: fetchWarnings } = fetchHarnesses({ harnessIds, libraryDir, repoUrl: args.repoUrl });
 
   const projectName = basename(projectPath);
-  const composeResult = compose({ harnesses, projectName, workspace: args.workspace, detectedStack, fetchWarnings });
+  const composeResult = compose({ harnesses, projectName, workspace, detectedStack, fetchWarnings });
 
   const sugoDir = projectSugoDir(projectPath);
   const claudeMdPath = join(sugoDir, "CLAUDE.md");
@@ -62,10 +71,8 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
   for (const file of composeResult.harnessFiles) {
     const fullPath = join(projectPath, file.relPath);
     await mkdir(dirname(fullPath), { recursive: true });
-    await atomicWriteFile(fullPath, file.content);
+    await writeTextIfChanged(fullPath, file.content);
   }
-
-  const existingConfig = await loadProjectConfig(projectPath);
 
   // Claude Code는 `.claude/rules/*.md`를 재귀 자동로드한다 — 이게 실제 "규칙이 알아서 컨텍스트에
   // 들어오는" 경로다(sugo/harness/**는 sugo_get_project_context를 명시 호출해야만 읽힌다).
@@ -73,7 +80,7 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
   await mkdir(claudeRulesDir, { recursive: true });
   const effectiveRuleFiles = buildEffectiveClaudeRuleFiles(harnesses);
   for (const ruleFile of effectiveRuleFiles) {
-    await atomicWriteFile(join(projectPath, ruleFile.relPath), ruleFile.content);
+    await writeTextIfChanged(join(projectPath, ruleFile.relPath), ruleFile.content);
   }
   // 더 이상 적용되지 않는 하네스의 규칙 파일은 지운다 — 안 지우면 제거된 스택의 규칙이 계속
   // 자동로드된다(예: Next를 뺐는데 Next 규칙이 계속 붙는 조용한 misleading).
@@ -97,15 +104,20 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
   if (rootAgents.changed) await atomicWriteFile(rootAgentsPath, rootAgents.content);
 
   const now = new Date().toISOString();
-  const existingEntry = await findRegistryEntry(projectPath);
-  const config: ProjectConfig = {
+  const candidateConfig: ProjectConfig = {
     version: "0.1.0",
     projectPath,
     projectName,
     registeredAt: existingConfig?.registeredAt ?? now,
     lastUpdated: now,
     detectedStack,
-    appliedHarnesses: harnesses.map((h) => ({ id: h.id, version: h.version, appliedAt: now, contentHash: hashHarnessContent(h) })),
+    appliedHarnesses: harnesses.map((h) => {
+      const contentHash = hashHarnessContent(h);
+      const previous = existingConfig?.appliedHarnesses.find((item) =>
+        item.id === h.id && item.version === h.version && item.contentHash === contentHash,
+      );
+      return { id: h.id, version: h.version, appliedAt: previous?.appliedAt ?? now, contentHash };
+    }),
     autoCommitArtifacts: existingConfig?.autoCommitArtifacts ?? true,
     disabled: existingConfig?.disabled ?? false,
     verificationPolicy:
@@ -117,9 +129,11 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
             ...(args.contractEvidenceRequired !== undefined && { contractEvidenceRequired: args.contractEvidenceRequired }),
           },
   };
-  await saveProjectConfig(config);
+  const unchanged = existingConfig !== null
+    && JSON.stringify({ ...candidateConfig, lastUpdated: existingConfig.lastUpdated }) === JSON.stringify(existingConfig);
+  const config = unchanged ? existingConfig : candidateConfig;
+  if (!unchanged) await saveProjectConfig(config);
 
-  const workspace = args.workspace ?? existingEntry?.workspace;
   await registerProject({ path: projectPath, name: projectName, registeredAt: config.registeredAt, workspace });
 
   return {

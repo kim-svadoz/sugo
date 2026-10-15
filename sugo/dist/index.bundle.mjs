@@ -22842,8 +22842,11 @@ async function registerProject(entry) {
   const normalizedPath = resolve(entry.path);
   await withFileLock(registryLockPath(), async () => {
     const current = await readRegistryFile();
+    const normalizedEntry = { ...entry, path: normalizedPath };
+    const existing = current.find((e) => resolve(e.path) === normalizedPath);
+    if (existing && JSON.stringify(existing) === JSON.stringify(normalizedEntry)) return;
     const filtered = current.filter((e) => resolve(e.path) !== normalizedPath);
-    filtered.push({ ...entry, path: normalizedPath });
+    filtered.push(normalizedEntry);
     await atomicWriteFile(path, JSON.stringify(filtered, null, 2));
   });
 }
@@ -23639,14 +23642,22 @@ function detectStack(projectPath, platform = process.platform) {
 }
 
 // src/harness/sync.ts
+async function writeTextIfChanged(path, content) {
+  const existing = await readFile3(path, "utf-8").catch(() => null);
+  if (existing === content) return;
+  await atomicWriteFile(path, content);
+}
 async function syncProjectHarness(args2) {
   const { projectPath } = args2;
+  const existingConfig = await loadProjectConfig(projectPath);
+  const existingEntry = await findRegistryEntry(projectPath);
+  const workspace = args2.workspace ?? existingEntry?.workspace;
   const detectedStack = detectStack(projectPath);
   const harnessIds = Array.from(/* @__PURE__ */ new Set([...detectedStack.harnessIds, ...args2.additionalStacks ?? []]));
   const libraryDir = defaultHarnessLibraryDir();
   const { harnesses, warnings: fetchWarnings } = fetchHarnesses({ harnessIds, libraryDir, repoUrl: args2.repoUrl });
   const projectName = basename(projectPath);
-  const composeResult = compose({ harnesses, projectName, workspace: args2.workspace, detectedStack, fetchWarnings });
+  const composeResult = compose({ harnesses, projectName, workspace, detectedStack, fetchWarnings });
   const sugoDir = projectSugoDir(projectPath);
   const claudeMdPath = join6(sugoDir, "CLAUDE.md");
   await mkdir4(sugoDir, { recursive: true });
@@ -23656,14 +23667,13 @@ async function syncProjectHarness(args2) {
   for (const file of composeResult.harnessFiles) {
     const fullPath = join6(projectPath, file.relPath);
     await mkdir4(dirname5(fullPath), { recursive: true });
-    await atomicWriteFile(fullPath, file.content);
+    await writeTextIfChanged(fullPath, file.content);
   }
-  const existingConfig = await loadProjectConfig(projectPath);
   const claudeRulesDir = join6(projectPath, ".claude", "rules");
   await mkdir4(claudeRulesDir, { recursive: true });
   const effectiveRuleFiles = buildEffectiveClaudeRuleFiles(harnesses);
   for (const ruleFile of effectiveRuleFiles) {
-    await atomicWriteFile(join6(projectPath, ruleFile.relPath), ruleFile.content);
+    await writeTextIfChanged(join6(projectPath, ruleFile.relPath), ruleFile.content);
   }
   const currentRulePaths = new Set(effectiveRuleFiles.map((file) => file.relPath));
   const previousIds = existingConfig?.appliedHarnesses.map((h) => h.id) ?? [];
@@ -23681,15 +23691,20 @@ async function syncProjectHarness(args2) {
   const rootAgents = mergeRootAgentsReference(existingRootAgents);
   if (rootAgents.changed) await atomicWriteFile(rootAgentsPath, rootAgents.content);
   const now = (/* @__PURE__ */ new Date()).toISOString();
-  const existingEntry = await findRegistryEntry(projectPath);
-  const config2 = {
+  const candidateConfig = {
     version: "0.1.0",
     projectPath,
     projectName,
     registeredAt: existingConfig?.registeredAt ?? now,
     lastUpdated: now,
     detectedStack,
-    appliedHarnesses: harnesses.map((h) => ({ id: h.id, version: h.version, appliedAt: now, contentHash: hashHarnessContent(h) })),
+    appliedHarnesses: harnesses.map((h) => {
+      const contentHash = hashHarnessContent(h);
+      const previous = existingConfig?.appliedHarnesses.find(
+        (item) => item.id === h.id && item.version === h.version && item.contentHash === contentHash
+      );
+      return { id: h.id, version: h.version, appliedAt: previous?.appliedAt ?? now, contentHash };
+    }),
     autoCommitArtifacts: existingConfig?.autoCommitArtifacts ?? true,
     disabled: existingConfig?.disabled ?? false,
     verificationPolicy: args2.integrationGateEnforced === void 0 && args2.contractEvidenceRequired === void 0 ? existingConfig?.verificationPolicy : {
@@ -23698,8 +23713,9 @@ async function syncProjectHarness(args2) {
       ...args2.contractEvidenceRequired !== void 0 && { contractEvidenceRequired: args2.contractEvidenceRequired }
     }
   };
-  await saveProjectConfig(config2);
-  const workspace = args2.workspace ?? existingEntry?.workspace;
+  const unchanged = existingConfig !== null && JSON.stringify({ ...candidateConfig, lastUpdated: existingConfig.lastUpdated }) === JSON.stringify(existingConfig);
+  const config2 = unchanged ? existingConfig : candidateConfig;
+  if (!unchanged) await saveProjectConfig(config2);
   await registerProject({ path: projectPath, name: projectName, registeredAt: config2.registeredAt, workspace });
   return {
     projectName,
@@ -28195,7 +28211,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.30.0" : "0.0.0-dev";
+  return true ? "0.30.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30368,7 +30384,15 @@ var WORKFLOW_STATES = [
   "DONE"
 ];
 var ACTION_GATES = {
-  start: [],
+  start: [
+    { gateId: "SPEC_DRAFT_NOT_FOUND", checkedOnAction: "start", evidenceSource: "args.specDraftId + Dashboard draft candidates", enforcement: "hard" },
+    { gateId: "SPEC_DRAFT_PROJECT_MISMATCH", checkedOnAction: "start", evidenceSource: "selected draft projectPath \u2194 args.projectPath", enforcement: "hard" },
+    { gateId: "SPEC_FILE_NOT_FOUND", checkedOnAction: "start", evidenceSource: "args.specPath filesystem existence", enforcement: "hard" },
+    { gateId: "SPEC_PATH_MISMATCH", checkedOnAction: "start", evidenceSource: "selected draft specPath \u2194 args.specPath", enforcement: "hard" },
+    { gateId: "WORK_BRANCH_NOT_ALLOWED_FOR_PATCH", checkedOnAction: "start", evidenceSource: "patch mode + args.workBranch", enforcement: "hard" },
+    { gateId: "SPEC_DRAFT_BRANCH_MISMATCH", checkedOnAction: "start", evidenceSource: "selected draft workBranch \u2194 args.workBranch", enforcement: "hard" },
+    { gateId: "WORK_BRANCH_PREPARE_FAILED", checkedOnAction: "start", evidenceSource: "git branch preparation result", enforcement: "hard" }
+  ],
   clarify: [
     { gateId: "TODO_SPEC_DRAFT_INCOMPLETE", checkedOnAction: "clarify", evidenceSource: "args.todoSpecGoal + args.todoSpecItems", enforcement: "hard" },
     { gateId: "TODO_SPEC_DRAFT_CONFIRMATION_REQUIRED", checkedOnAction: "clarify", evidenceSource: "args.todoSpecUserConfirmed", enforcement: "hard" },
@@ -30377,6 +30401,7 @@ var ACTION_GATES = {
     { gateId: "SPEC_DRAFT_NOT_FOUND", checkedOnAction: "clarify", evidenceSource: "session.specDraftSelection.candidates", enforcement: "hard" }
   ],
   prd: [
+    { gateId: "PRD_CONTENT_REQUIRED", checkedOnAction: "prd", evidenceSource: "args.prdContent", enforcement: "hard" },
     { gateId: "CONFORMANCE_LEDGER_INCOMPLETE", checkedOnAction: "prd", evidenceSource: "args.prdContent In-Scope/DoD \u2194 declared REQ", enforcement: "hard" },
     { gateId: "PRD_TOO_SHORT", checkedOnAction: "prd", evidenceSource: "args.prdContent.length", enforcement: "hard" },
     { gateId: "PRD_MISSING_REQUIREMENTS", checkedOnAction: "prd", evidenceSource: "args.prdContent REQ-* count", enforcement: "hard" }
@@ -30385,17 +30410,22 @@ var ACTION_GATES = {
     { gateId: "ORACLE_OVERRIDE_REASON_REQUIRED", checkedOnAction: "oracle_done", evidenceSource: "args.uncovered + args.overrideReason", enforcement: "hard-with-explicit-bypass" }
   ],
   decompose: [
+    { gateId: "MANIFEST_REQUIRED", checkedOnAction: "decompose", evidenceSource: "args.manifest", enforcement: "hard" },
+    { gateId: "PRD_NOT_FOUND", checkedOnAction: "decompose", evidenceSource: "session.data.prdPath", enforcement: "hard" },
     { gateId: "MANIFEST_HAS_CYCLE", checkedOnAction: "decompose", evidenceSource: "args.manifest.subtasks[].dependsOn", enforcement: "hard" },
     { gateId: "MANIFEST_FILE_OVERLAP", checkedOnAction: "decompose", evidenceSource: "args.manifest.subtasks[].files", enforcement: "hard" },
     { gateId: "MANIFEST_REQUIREMENT_UNCOVERED", checkedOnAction: "decompose", evidenceSource: "PRD REQ-* \u2194 args.manifest.subtasks[].coversRequirements", enforcement: "hard" }
   ],
   subtask_start: [
+    { gateId: "SUBTASK_ID_REQUIRED", checkedOnAction: "subtask_start", evidenceSource: "args.subtaskId", enforcement: "hard" },
     { gateId: "SUBTASK_NOT_FOUND", checkedOnAction: "subtask_start", evidenceSource: "session.decomposeManifest + args.subtaskId", enforcement: "hard" }
   ],
   subtask_done: [
+    { gateId: "SUBTASK_ID_REQUIRED", checkedOnAction: "subtask_done", evidenceSource: "args.subtaskId", enforcement: "hard" },
     { gateId: "SUBTASK_NOT_FOUND", checkedOnAction: "subtask_done", evidenceSource: "session.decomposeManifest + args.subtaskId", enforcement: "hard" }
   ],
   integrate: [
+    { gateId: "MANIFEST_REQUIRED", checkedOnAction: "integrate", evidenceSource: "session.decomposeManifest", enforcement: "hard" },
     { gateId: "SUBTASKS_INCOMPLETE", checkedOnAction: "integrate", evidenceSource: "session.decomposeManifest.subtasks[].status", enforcement: "hard" },
     { gateId: "MANIFEST_FILE_OVERLAP", checkedOnAction: "integrate", evidenceSource: "session.decomposeManifest.subtasks[].changedFiles", enforcement: "hard" },
     { gateId: "ANALYZE_NOT_CALLED", checkedOnAction: "integrate", evidenceSource: "session.chainInfo.analyzeAttempts", enforcement: "hard" },
@@ -30429,6 +30459,7 @@ var ACTION_GATES = {
   ],
   test_start: [],
   test_done: [
+    { gateId: "TEST_PASSED_REQUIRED", checkedOnAction: "test_done", evidenceSource: "args.testPassed", enforcement: "hard" },
     { gateId: "TEST_EVIDENCE_MISSING", checkedOnAction: "test_done", evidenceSource: "session.chainInfo.testEvidence", enforcement: "hard" },
     { gateId: "TEST_EVIDENCE_MISMATCH", checkedOnAction: "test_done", evidenceSource: "args.testPassed \u2194 recorded evidence.derivedState", enforcement: "hard" },
     { gateId: "TEST_NOT_FULL_VERIFY", checkedOnAction: "test_done", evidenceSource: "recorded evidence.command", enforcement: "hard" },
@@ -30445,11 +30476,14 @@ var ACTION_GATES = {
   ],
   review_start: [],
   review_done: [
+    { gateId: "REVIEW_CONFIRMATION_REQUIRED", checkedOnAction: "review_done", evidenceSource: "Dashboard task + session.reviewConfirmation", enforcement: "hard" },
+    { gateId: "REVIEW_CONFIRMATION_APPROVAL_REQUIRED", checkedOnAction: "review_done", evidenceSource: "session.reviewConfirmation.decision", enforcement: "hard" },
     { gateId: "VALIDATE_NOT_CALLED", checkedOnAction: "review_done", evidenceSource: "session.chainInfo.lastValidation", enforcement: "hard" },
     { gateId: "VALIDATE_VERIFIED_FAILURE", checkedOnAction: "review_done", evidenceSource: "lastValidation.verifiedFailures", enforcement: "hard" },
     { gateId: "LETHAL_TRIFECTA_NOT_CALLED", checkedOnAction: "review_done", evidenceSource: "session.chainInfo.lastLethalTrifectaCheck", enforcement: "hard" },
     { gateId: "LETHAL_TRIFECTA_MITIGATION_REQUIRED", checkedOnAction: "review_done", evidenceSource: "trifecta warnings + args.trifectaMitigation", enforcement: "hard" },
     { gateId: "USER_CONFIRMATION_REQUIRED", checkedOnAction: "review_done", evidenceSource: "args.userConfirmed", enforcement: "hard" },
+    { gateId: "SUMMARY_REQUIRED", checkedOnAction: "review_done", evidenceSource: "args.summary", enforcement: "hard" },
     { gateId: "SUMMARY_TOO_FEW_LINES", checkedOnAction: "review_done", evidenceSource: "args.summary non-empty line count", enforcement: "hard" },
     { gateId: "SUMMARY_TOO_SHORT", checkedOnAction: "review_done", evidenceSource: "args.summary length", enforcement: "hard" },
     { gateId: "SUMMARY_LOW_CHAR_DIVERSITY", checkedOnAction: "review_done", evidenceSource: "args.summary unique characters", enforcement: "hard" },
@@ -30457,6 +30491,7 @@ var ACTION_GATES = {
     { gateId: "EVIDENCE_REUSE_NO_BASELINE", checkedOnAction: "review_done", evidenceSource: "session.testEvidenceFingerprint", enforcement: "hard" },
     { gateId: "EVIDENCE_REUSE_NOT_GREEN", checkedOnAction: "review_done", evidenceSource: "session.chainInfo.testPassedState", enforcement: "hard" },
     { gateId: "EVIDENCE_REUSE_FINGERPRINT_MISMATCH", checkedOnAction: "review_done", evidenceSource: "recorded \u2194 current changedFiles fingerprint", enforcement: "hard" },
+    { gateId: "RUNTIME_CHECK_REQUIRED", checkedOnAction: "review_done", evidenceSource: "args.runtimeCheck unless evidence is reused", enforcement: "hard" },
     { gateId: "RUNTIME_UNVERIFIED_GATE_FAILED", checkedOnAction: "review_done", evidenceSource: "args.runtimeCheck.runtimeVerified + unverifiedReason", enforcement: "hard-with-explicit-bypass" },
     { gateId: "RUNTIME_CLAIM_CONTRADICTS_EVIDENCE", checkedOnAction: "review_done", evidenceSource: "runtime claim \u2194 session.testPassedState", enforcement: "hard" },
     { gateId: "RUNTIME_WIRING_NOT_VERIFIED", checkedOnAction: "review_done", evidenceSource: "server bootable scan + args.runtimeCheck.wiringVerified", enforcement: "hard-with-explicit-bypass" },
@@ -33449,7 +33484,7 @@ var WORKFLOW_GRAPH_ANALYSIS = analyzeWorkflowGraph(
 
 // src/ontology/identity.ts
 var ONTOLOGY_SCHEMA_VERSION = 1;
-var ONTOLOGY_REVISION = 3;
+var ONTOLOGY_REVISION = 4;
 function canonicalJson(value) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return JSON.stringify(value);
   if (typeof value === "number") {

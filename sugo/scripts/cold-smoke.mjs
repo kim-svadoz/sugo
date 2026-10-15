@@ -14,7 +14,7 @@
  * 시나리오 A: 위 조건에서 핵심 기능이 다 되는가
  * 시나리오 B: 대시보드 URL은 있는데 서버가 죽어있을 때(DB 다운) 파이프라인이 막히는가
  */
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,6 +33,29 @@ function check(label, pass, detail = "") {
 /** 도구 호출이 진짜 성공했는가. MCP 검증 에러(__raw/__rpcError)는 ok 필드가 아예 없어서
  *  `r.ok !== false`만 보면 조용히 통과해버린다 — 실제로 한 번 그렇게 속았다. */
 const toolOk = (r) => r && r.__rpcError === undefined && r.__raw === undefined && r.ok !== false;
+
+function contentSnapshot(paths) {
+  const snapshot = {};
+  const visit = (path, key) => {
+    if (!existsSync(path)) return;
+    const entries = readdirSync(path, { withFileTypes: true });
+    for (const entry of entries) {
+      const childPath = join(path, entry.name);
+      const childKey = `${key}/${entry.name}`;
+      if (entry.isDirectory()) visit(childPath, childKey);
+      else snapshot[childKey] = readFileSync(childPath, "utf8");
+    }
+  };
+  for (const { path, key } of paths) {
+    if (!existsSync(path)) continue;
+    if (readdirSync(dirname(path), { withFileTypes: true }).find((entry) => entry.name === path.slice(dirname(path).length + 1))?.isDirectory()) {
+      visit(path, key);
+    } else {
+      snapshot[key] = readFileSync(path, "utf8");
+    }
+  }
+  return snapshot;
+}
 
 function makeInstall(root) {
   const install = join(root, "plugin");
@@ -101,33 +124,50 @@ async function runPipeline(callTool, project, featureName) {
   const start = await callTool("sugo_plan", { action: "start", projectPath: project, featureName });
   const sessionId = start.sessionId;
   if (!sessionId) return { ok: false, at: "start", detail: JSON.stringify(start).slice(0, 300) };
+  const ontologyAudit = [];
+  const transition = async (action, extra, expectedState) => {
+    const before = await callTool("sugo_ontology", { query: "next_actions", sessionId });
+    const declaredBefore = before.result?.actions?.some((candidate) => candidate.action === action) === true;
+    const result = await callTool("sugo_plan", { action, sessionId, ...extra });
+    if (result.ok === false || result.__rpcError) return result;
+    const after = await callTool("sugo_ontology", { query: "explain_state", sessionId });
+    ontologyAudit.push({
+      action,
+      declaredBefore,
+      stateMatches: after.result?.currentState === expectedState,
+      transitionMatches: after.result?.enteredBy?.recorded === true
+        && after.result?.enteredBy?.action === action
+        && after.result?.enteredBy?.toState === expectedState,
+    });
+    return result;
+  };
   const steps = [
-    ["clarify", {}],
-    ["prd", { prdContent: VALID_PRD }],
-    ["ready", {}],
-    ["baseline_capture", {}],
-    ["contract_start", {}],
-    ["contract_done", {}],
-    ["code_start", {}],
+    ["clarify", {}, "CLARIFY"],
+    ["prd", { prdContent: VALID_PRD }, "PRD"],
+    ["ready", {}, "READY"],
+    ["baseline_capture", {}, "BASELINE"],
+    ["contract_start", {}, "CONTRACT_RUNNING"],
+    ["contract_done", {}, "CODE_READY"],
+    ["code_start", {}, "CODE_RUNNING"],
   ];
-  for (const [action, extra] of steps) {
-    const r = await callTool("sugo_plan", { action, sessionId, ...extra });
+  for (const [action, extra, expectedState] of steps) {
+    const r = await transition(action, extra, expectedState);
     if (r.ok === false || r.__rpcError) return { ok: false, at: action, detail: JSON.stringify(r).slice(0, 300) };
   }
   await callTool("sugo_analyze", { sessionId, changedFiles: [] });
-  for (const [action, extra] of [
-    ["code_done", { changedFiles: [], wiringTestAdded: true }],
-    ["test_start", {}],
+  for (const [action, extra, expectedState] of [
+    ["code_done", { changedFiles: [], wiringTestAdded: true }, "CODE_DONE"],
+    ["test_start", {}, "TEST_RUNNING"],
   ]) {
-    const r = await callTool("sugo_plan", { action, sessionId, ...extra });
+    const r = await transition(action, extra, expectedState);
     if (r.ok === false || r.__rpcError) return { ok: false, at: action, detail: JSON.stringify(r).slice(0, 300) };
   }
   await callTool("sugo_record_test_evidence", { sessionId, command: "npm test", exitCode: 0, failed: 0 });
-  for (const [action, extra] of [
-    ["test_done", { testPassed: true }],
-    ["review_start", {}],
+  for (const [action, extra, expectedState] of [
+    ["test_done", { testPassed: true }, "TEST_DONE"],
+    ["review_start", {}, "REVIEW_RUNNING"],
   ]) {
-    const r = await callTool("sugo_plan", { action, sessionId, ...extra });
+    const r = await transition(action, extra, expectedState);
     if (r.ok === false || r.__rpcError) return { ok: false, at: action, detail: JSON.stringify(r).slice(0, 300) };
   }
   // review_done의 VALIDATE_NOT_CALLED 게이트 충족용 — 이 프로젝트에 적용된 하네스(default/framework
@@ -135,15 +175,15 @@ async function runPipeline(callTool, project, featureName) {
   await callTool("sugo_validate", { sessionId, validationResults: [] });
   // review_done의 LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용(§P6-1) — 빈 tools면 경고 없이 통과한다.
   await callTool("sugo_check_lethal_trifecta", { sessionId, tools: [] });
-  for (const [action, extra] of [
-    ["review_done", { userConfirmed: true, summary: GOOD_SUMMARY, runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true } }],
-    ["docs_done", {}],
-    ["commit", {}],
+  for (const [action, extra, expectedState] of [
+    ["review_done", { userConfirmed: true, summary: GOOD_SUMMARY, runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true } }, "DOCS_PENDING"],
+    ["docs_done", {}, "COMMIT_PENDING"],
+    ["commit", {}, "DONE"],
   ]) {
-    const r = await callTool("sugo_plan", { action, sessionId, ...extra });
+    const r = await transition(action, extra, expectedState);
     if (r.ok === false || r.__rpcError) return { ok: false, at: action, detail: JSON.stringify(r).slice(0, 300) };
   }
-  return { ok: true, sessionId };
+  return { ok: true, sessionId, ontologyAudit };
 }
 
 const root = mkdtempSync(join(tmpdir(), "sugo-cold-"));
@@ -171,6 +211,23 @@ try {
 
   const added = await A.callTool("sugo_add", { projectPath: projectA, workspace: "cold-ws" });
   check("sugo_add — 프로젝트 등록 + 하네스 합성(로컬 라이브러리)", toolOk(added), JSON.stringify(added).slice(0, 160));
+  const idempotencyPaths = [
+    { path: join(projectA, ".claude"), key: "project/.claude" },
+    { path: join(projectA, "sugo"), key: "project/sugo" },
+    { path: join(projectA, "AGENTS.md"), key: "project/AGENTS.md" },
+    { path: join(projectA, "CLAUDE.md"), key: "project/CLAUDE.md" },
+    { path: join(homeA, ".claude", "sugo", "registry.json"), key: "home/registry.json" },
+  ];
+  const firstInstallState = contentSnapshot(idempotencyPaths);
+  const repeatedAdd = await A.callTool("sugo_add", { projectPath: projectA, workspace: "cold-ws" });
+  const repeatedUpdate = await A.callTool("sugo_update", { projectPath: projectA });
+  const repeatedInstallState = contentSnapshot(idempotencyPaths);
+  check("sugo_add 반복 — 동일 입력을 중복 없이 수용", toolOk(repeatedAdd), JSON.stringify(repeatedAdd).slice(0, 160));
+  check("sugo_update 반복 — 기존 workspace를 보존", toolOk(repeatedUpdate) && repeatedUpdate.workspace === "cold-ws", JSON.stringify(repeatedUpdate).slice(0, 160));
+  check(
+    "콜드 설치 멱등성 — add/add/update 뒤 생성 파일·설정·레지스트리 바이트가 동일",
+    JSON.stringify(repeatedInstallState) === JSON.stringify(firstInstallState),
+  );
 
   // ── 체크포인트 ──
   const cpAdd = await A.callTool("sugo_checkpoint", {
@@ -217,6 +274,12 @@ try {
   // ── 파이프라인 완주 ──
   const pipe = await runPipeline(A.callTool, projectA, "로그인 기능");
   check("13게이트 파이프라인 완주(start→commit)", pipe.ok, pipe.ok ? "" : `${pipe.at}에서 막힘: ${pipe.detail}`);
+  check(
+    "13게이트 실제 전이 ↔ 온톨로지 허용 액션·도착 상태·전이 기록 일치",
+    pipe.ok && pipe.ontologyAudit?.length === 14
+      && pipe.ontologyAudit.every((row) => row.declaredBefore && row.stateMatches && row.transitionMatches),
+    JSON.stringify(pipe.ontologyAudit ?? []).slice(0, 280),
+  );
 
   // ── AST/wasm, 조회 도구 ──
   const ov = await A.callTool("sugo_overview", { projectPath: projectA });
@@ -240,7 +303,7 @@ try {
     "sugo_ontology — 배포 번들이 결정적 모델 식별자를 제공",
     toolOk(ontology)
       && ontology.model?.schemaVersion === 1
-      && ontology.model?.revision === 3
+      && ontology.model?.revision === 4
       && /^sha256:[a-f0-9]{64}$/.test(ontology.model?.modelHash ?? ""),
     JSON.stringify(ontology.model ?? ontology).slice(0, 200),
   );

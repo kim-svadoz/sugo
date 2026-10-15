@@ -17,7 +17,7 @@ afterEach(() => {
 });
 
 it("30 completed tasks strip snapshots without losing state, summary, patch paths or verification reasons", () => {
-  const bypassLabels = [{ kind: "runtimeUnverified", reason: "실서버 확인 필요", patchVersion: 0, recordedAt: "2026-10-08T00:00:00Z" }];
+  const bypassLabels = [{ kind: "runtimeUnverified" as const, reason: "실서버 확인 필요", patchVersion: 0, recordedAt: "2026-10-08T00:00:00Z" }];
   const result = { path: "/work/result.md", summary: "완료 요약", report: { schemaVersion: 1 as const, featureName: "완료", kind: "feat" as const, patchVersion: 0, completedAt: "2026-10-08T00:01:00Z", completionGrade: "unverified" as const, summary: "완료 요약", verification: { test: { state: "pass" as const }, runtimeVerified: false }, changedFiles: [], requirements: [], designDecisions: [], knownLimitations: [], bypassLabels }, files: [{ path: "a.ts", change: "modified" as const, content: "한".repeat(100_000), diff: "+added\n-removed\n" }] };
   const nodes: RoadmapNode[] = Array.from({ length: 30 }, (_, i) => ({ id: `task-${i}`, title: "완료", level: "task", status: "done", dependsOn: [], workResult: result, lineage: [{ version: 0, completedAt: "2026-10-02", summary: result.summary, workResult: result }] }));
   nodes.push({ id: "run-001", title: "RUN", level: "workstream", status: "done", dependsOn: [], workResult: result });
