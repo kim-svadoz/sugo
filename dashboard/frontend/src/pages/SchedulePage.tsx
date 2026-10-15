@@ -988,21 +988,24 @@ export function SchedulePage() {
             </nav>
 
             <div className="border-t border-white/[0.08] pt-4">
-              {archiveConfirm ? (
-                <div className={cn("rounded-xl border p-4", archiveConfirm === "deleted" ? "border-rose-500/30 bg-rose-500/[0.07]" : "border-amber-400/25 bg-amber-400/[0.06]") }>
-                  <p className="text-[13px] font-semibold text-white">{archiveConfirm === "deleted" ? "이 SPEC을 삭제할까요?" : "이 SPEC의 일정을 종료할까요?"}</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{archiveConfirm === "deleted" ? "잘못 만들었거나 더 이상 사용하지 않는 SPEC을 활성 화면에서 제거합니다." : "개발이 끝난 SPEC으로 기록하고 열려 있는 일정을 모두 완료 처리합니다."} 개발 이력과 파일은 지우지 않으며 휴지통에서 확인하고 복구할 수 있습니다.</p>
-                  <div className="mt-3 flex justify-end gap-2"><button disabled={busy} onClick={() => setArchiveConfirm(null)} className="rounded-lg px-3 py-1.5 text-[11.5px] text-slate-300 hover:bg-white/[0.05]">취소</button><button disabled={busy} onClick={() => void handleArchiveSpec(selected, archiveConfirm)} className={cn("rounded-lg border px-3 py-1.5 text-[11.5px] font-bold disabled:opacity-50", archiveConfirm === "deleted" ? "border-rose-500/40 bg-rose-500/15 text-rose-200" : "border-amber-400/35 bg-amber-400/10 text-amber-200")}>{busy ? "처리 중…" : archiveConfirm === "deleted" ? "휴지통으로 이동" : "종료 처리"}</button></div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between gap-4">
-                  <button onClick={() => setArchiveConfirm("deleted")} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] font-semibold text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-300"><Trash2 size={13} /> SPEC 삭제</button>
-                  <button onClick={() => setArchiveConfirm("closed")} className="flex items-center gap-1.5 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-[11.5px] font-semibold text-amber-200 hover:bg-amber-400/10"><Archive size={13} /> SPEC 종료 처리</button>
-                </div>
-              )}
+              <div className="flex items-center justify-between gap-4">
+                <button onClick={() => setArchiveConfirm("deleted")} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] font-semibold text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-300"><Trash2 size={13} /> SPEC 삭제</button>
+                <button onClick={() => setArchiveConfirm("closed")} className="flex items-center gap-1.5 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-[11.5px] font-semibold text-amber-200 hover:bg-amber-400/10"><Archive size={13} /> SPEC 종료 처리</button>
+              </div>
             </div>
           </div>
         </Modal>
+      )}
+
+      {selected && archiveConfirm && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-4 backdrop-blur-[2px]" onClick={() => !busy && setArchiveConfirm(null)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="spec-archive-confirm-title" className={cn("w-full max-w-md rounded-2xl border bg-[#0c131f] p-6 shadow-2xl", archiveConfirm === "deleted" ? "border-rose-500/35" : "border-amber-400/30")} onClick={(event) => event.stopPropagation()}>
+            <span className={cn("inline-flex rounded-lg p-2", archiveConfirm === "deleted" ? "bg-rose-400/10 text-rose-300" : "bg-amber-400/10 text-amber-200")}>{archiveConfirm === "deleted" ? <Trash2 size={18} /> : <Archive size={18} />}</span>
+            <h2 id="spec-archive-confirm-title" className="mt-4 text-lg font-bold text-white">{archiveConfirm === "deleted" ? "이 SPEC을 삭제할까요?" : "이 SPEC의 일정을 종료할까요?"}</h2>
+            <p className="mt-2 text-[12px] leading-6 text-slate-400">{archiveConfirm === "deleted" ? "잘못 만들었거나 더 이상 사용하지 않는 SPEC을 활성 화면에서 제거합니다." : "개발이 끝난 SPEC으로 기록하고 열려 있는 일정을 모두 완료 처리합니다."} 개발 이력과 파일은 지우지 않으며 휴지통에서 확인하고 복구할 수 있습니다.</p>
+            <div className="mt-6 flex justify-end gap-2"><button disabled={busy} onClick={() => setArchiveConfirm(null)} className="rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-300 hover:bg-white/[0.06]">취소</button><button disabled={busy} onClick={() => void handleArchiveSpec(selected, archiveConfirm)} className={cn("rounded-lg border px-4 py-2 text-[12px] font-bold disabled:opacity-50", archiveConfirm === "deleted" ? "border-rose-500/40 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25" : "border-amber-400/35 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20")}>{busy ? "처리 중…" : archiveConfirm === "deleted" ? "휴지통으로 이동" : "종료 처리"}</button></div>
+          </div>
+        </div>
       )}
 
       {trashOpen && <Modal onClose={() => setTrashOpen(false)} size="wide">
