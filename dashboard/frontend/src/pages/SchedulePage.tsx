@@ -1,6 +1,6 @@
 import { SpecDeploymentBadge } from "../components/SpecDeploymentBadge.js";
 import { useEffect, useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, Archive, BookOpen, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, FilePenLine, LayoutList, Pencil, Shield, Trash2, Workflow } from "lucide-react";
+import { Archive, BookOpen, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, FilePenLine, LayoutList, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -44,11 +44,6 @@ function latestWorkResultPath(spec: ScheduledSpec): string | null {
   return focus && typeof focus === "object" && typeof (focus as Record<string, unknown>).path === "string"
     ? (focus as Record<string, string>).path
     : null;
-}
-
-/** 표류(dropped)를 제외한 "미완료"만 마감 임박/초과 강조 대상으로 본다. */
-function isOpenStatus(spec: ScheduledSpec): boolean {
-  return spec.status !== "done" && spec.status !== "dropped";
 }
 
 function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compact?: boolean }) {
@@ -673,7 +668,6 @@ export function SchedulePage() {
                   <div className={cn("flex min-h-0 flex-1 flex-col gap-1", daySpecOverflowClass())}>
                     {dayChips.map((commitment) => {
                       const style = scheduleCardStyle(colorOf(commitment.workspace_name));
-                      const overdue = key < todayKey && commitment.state !== "completed" && commitment.state !== "cancelled";
                       const spec = specForCommitment(commitment);
                       const explicit = !commitment.id.startsWith("legacy:");
                       return (
@@ -689,11 +683,6 @@ export function SchedulePage() {
                           <button type="button" onClick={() => spec && openSpec(spec)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100">{commitment.title}</button>
                           {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">파이프라인 완료</span>}
                           {spec && <SpecDeploymentBadge deployment={spec.deployment} title={commitment.title} />}
-                          {overdue && (
-                            <span className="flex shrink-0 items-center gap-0.5 rounded bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
-                              <AlertTriangle size={9} /> 기한 초과
-                            </span>
-                          )}
                         </div>
                       );
                     })}

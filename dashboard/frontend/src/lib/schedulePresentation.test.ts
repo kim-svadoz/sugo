@@ -55,10 +55,10 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("{commitment.workspace_name}</span>");
   });
 
-  it("기한 초과는 외곽선 대신 명시적인 경고 배지로 표시한다", () => {
+  it("Calendar 카드는 날짜 위치와 중복되는 기한 초과 배지를 표시하지 않는다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain("기한 초과");
-    expect(source).not.toContain('overdue && "ring-1 ring-rose-400"');
+    expect(source).not.toContain("기한 초과");
+    expect(source).not.toContain("<AlertTriangle");
   });
 
   it("대시보드에서 먼저 만든 SPEC 초안을 구분한다", () => {
