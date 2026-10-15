@@ -45,6 +45,7 @@ import { taskGuidance } from "../../lib/taskGuidance.js";
 import { focusPathIds, focusRootId } from "./focusPath.js";
 import { presentSteKorean } from "../../lib/steKorean.js";
 import { getScheduleSpecArchives, restoreScheduleSpec, type ScheduleSpecArchive } from "../../api/scheduleSpecArchiveApi.js";
+import { SpecArchiveModal } from "../SpecArchiveModal.js";
 
 /** 설계안 치수 상수 — 그대로. */
 const NODE_W = 236;
@@ -1817,36 +1818,7 @@ export function RoadmapGraph({
         </div>
       )}
 
-      {archiveOpen && (
-        <div className="fixed inset-0 z-[96] flex items-center justify-center p-4" onMouseDown={() => setArchiveOpen(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="relative w-full max-w-lg rounded-xl border border-[var(--color-border)] ck-glass p-4" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="mb-1 flex items-center gap-2 text-[14px] font-semibold text-[var(--color-text)]">
-              🗄️ 보관함 <span className="text-[12px] text-[var(--color-text-muted)]">({archives.length})</span>
-            </div>
-            <p className="mb-3 text-[11px] text-[var(--color-text-dim)]">정상 종료한 SPEC입니다. 진행률과 전체 캔버스에서는 제외됩니다.</p>
-            <div className="ck-scroll max-h-80 space-y-1 overflow-auto pr-1">
-              {archives.map((archive) => (
-                <div key={archive.spec_id} className="flex items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2">
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] text-[var(--color-text-muted)]">{archive.title}</span>
-                  <span className="shrink-0 font-mono text-[10px] text-[var(--color-text-dim)]">{new Date(archive.archived_at).toLocaleDateString("ko-KR")}</span>
-                  <button
-                    disabled={busy}
-                    onClick={() => void run(async () => {
-                      await restoreScheduleSpec(userId!, workspace, archive.spec_id);
-                      await refreshArchives();
-                    })}
-                    className="shrink-0 rounded border border-emerald-500/40 px-2 py-0.5 text-[11px] text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-40"
-                  >
-                    복구
-                  </button>
-                </div>
-              ))}
-              {archives.length === 0 && <div className="py-8 text-center text-[12.5px] text-[var(--color-text-dim)]">보관된 SPEC이 없습니다</div>}
-            </div>
-          </div>
-        </div>
-      )}
+      {archiveOpen && <SpecArchiveModal items={archives} busy={busy} onClose={() => setArchiveOpen(false)} onRestore={(archive) => void run(async () => { await restoreScheduleSpec(userId!, workspace, archive.spec_id); await refreshArchives(); })} />}
     </div>
   );
 }

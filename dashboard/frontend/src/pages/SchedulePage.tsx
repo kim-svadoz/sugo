@@ -1,6 +1,6 @@
 import { SpecDeploymentBadge } from "../components/SpecDeploymentBadge.js";
 import { useEffect, useMemo, useState, type DragEvent } from "react";
-import { AlertTriangle, Archive, BookOpen, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, CircleDashed, Clock, Copy, FilePenLine, LayoutList, Pencil, RotateCcw, Shield, Trash2, Workflow } from "lucide-react";
+import { AlertTriangle, Archive, BookOpen, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, FilePenLine, LayoutList, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
@@ -23,7 +23,7 @@ import { createQuickSpec, renameRoadmapNode, setDueDate, setProject, setWorkBran
 import { buildFeatCommand, buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
-import { OperationalPulse } from "../components/OperationalPulse.js";
+import { SpecArchiveModal } from "../components/SpecArchiveModal.js";
 import { buildCommitmentQueue, commitmentNextAction, legacyCommitments, type CommitmentView } from "../lib/scheduleCommitment.js";
 import { updateScheduleCommitment } from "../api/scheduleCommitmentApi.js";
 import { archiveScheduleSpec, restoreScheduleSpec, type ScheduleSpecArchiveReason } from "../api/scheduleSpecArchiveApi.js";
@@ -196,21 +196,6 @@ export function SchedulePage() {
     }
     return map;
   }, [commitmentViews]);
-  const openCommitmentCount = useMemo(() => commitmentViews.filter((item) => item.state !== "completed" && item.state !== "cancelled").length, [commitmentViews]);
-  const commitmentPulse = useMemo(() => {
-    const open = commitmentViews.filter((item) => item.state === "planned" || item.state === "active");
-    const weekEnd = new Date(`${todayKey}T00:00:00Z`);
-    weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
-    const weekEndKey = weekEnd.toISOString().slice(0, 10);
-    return {
-      dueToday: open.filter((item) => item.due_date === todayKey).length,
-      dueThisWeek: open.filter((item) => item.due_date && item.due_date >= todayKey && item.due_date <= weekEndKey).length,
-      later: open.filter((item) => item.due_date && item.due_date > weekEndKey).length,
-      overdue: open.filter((item) => item.due_date && item.due_date < todayKey).length,
-      unscheduled: open.filter((item) => !item.due_date).length,
-    };
-  }, [commitmentViews, todayKey]);
-
   function specForCommitment(commitment: CommitmentView): ScheduledSpec | null {
     return specs?.find((spec) => spec.workspace_name === commitment.workspace_name && spec.id === commitment.spec_id) ?? null;
   }
@@ -425,26 +410,11 @@ export function SchedulePage() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">
-            Schedule{" "}
-            <span className="font-normal text-[var(--color-text-dim)]" title="현재 열려 있는 일정 수">
-              ({openCommitmentCount})
-            </span>
-          </h1>
-          <OperationalPulse
-            label="일정 운영 현황"
-            items={[
-              { label: "오늘", value: commitmentPulse.dueToday, icon: Clock, tone: commitmentPulse.dueToday > 0 ? "cyan" : "neutral" },
-              { label: "7일 내", value: commitmentPulse.dueThisWeek, icon: CalendarDays, tone: commitmentPulse.dueThisWeek > 0 ? "cyan" : "neutral" },
-              { label: "이후", value: commitmentPulse.later, icon: CalendarPlus, tone: commitmentPulse.later > 0 ? "cyan" : "neutral" },
-              { label: "기한 초과", value: commitmentPulse.overdue, icon: AlertTriangle, tone: commitmentPulse.overdue > 0 ? "danger" : "neutral" },
-              { label: "기한 미정", value: commitmentPulse.unscheduled, icon: CircleDashed, tone: commitmentPulse.unscheduled > 0 ? "warning" : "neutral" },
-            ]}
-          />
+          <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">Schedule</h1>
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => setTrashOpen(true)} className="relative flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white" title="삭제하거나 종료한 SPEC 보기">
-            <Archive size={15} /> 휴지통
+            <Archive size={15} /> 보관함
             {archives.length > 0 && <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 font-mono text-[9px] text-slate-300">{archives.length}</span>}
           </button>
           <div className="flex items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1" aria-label="일정 보기 방식">
@@ -986,23 +956,13 @@ export function SchedulePage() {
           <div role="dialog" aria-modal="true" aria-labelledby="spec-archive-confirm-title" className={cn("w-full max-w-md rounded-2xl border bg-[#0c131f] p-6 shadow-2xl", archiveConfirm === "deleted" ? "border-rose-500/35" : "border-amber-400/30")} onClick={(event) => event.stopPropagation()}>
             <span className={cn("inline-flex rounded-lg p-2", archiveConfirm === "deleted" ? "bg-rose-400/10 text-rose-300" : "bg-amber-400/10 text-amber-200")}>{archiveConfirm === "deleted" ? <Trash2 size={18} /> : <Archive size={18} />}</span>
             <h2 id="spec-archive-confirm-title" className="mt-4 text-lg font-bold text-white">{archiveConfirm === "deleted" ? "이 SPEC을 삭제할까요?" : "이 SPEC의 일정을 종료할까요?"}</h2>
-            <p className="mt-2 text-[12px] leading-6 text-slate-400">{archiveConfirm === "deleted" ? "잘못 만들었거나 더 이상 사용하지 않는 SPEC을 활성 화면에서 제거합니다." : "개발이 끝난 SPEC으로 기록하고 열려 있는 일정을 모두 완료 처리합니다."} 개발 이력과 파일은 지우지 않으며 휴지통에서 확인하고 복구할 수 있습니다.</p>
-            <div className="mt-6 flex justify-end gap-2"><button disabled={busy} onClick={() => setArchiveConfirm(null)} className="rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-300 hover:bg-white/[0.06]">취소</button><button disabled={busy} onClick={() => void handleArchiveSpec(selected, archiveConfirm)} className={cn("rounded-lg border px-4 py-2 text-[12px] font-bold disabled:opacity-50", archiveConfirm === "deleted" ? "border-rose-500/40 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25" : "border-amber-400/35 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20")}>{busy ? "처리 중…" : archiveConfirm === "deleted" ? "휴지통으로 이동" : "종료 처리"}</button></div>
+            <p className="mt-2 text-[12px] leading-6 text-slate-400">{archiveConfirm === "deleted" ? "잘못 만들었거나 더 이상 사용하지 않는 SPEC을 활성 화면에서 제거합니다." : "개발이 끝난 SPEC으로 기록하고 열려 있는 일정을 모두 완료 처리합니다."} 개발 이력과 파일은 지우지 않으며 보관함에서 확인하고 복구할 수 있습니다.</p>
+            <div className="mt-6 flex justify-end gap-2"><button disabled={busy} onClick={() => setArchiveConfirm(null)} className="rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-300 hover:bg-white/[0.06]">취소</button><button disabled={busy} onClick={() => void handleArchiveSpec(selected, archiveConfirm)} className={cn("rounded-lg border px-4 py-2 text-[12px] font-bold disabled:opacity-50", archiveConfirm === "deleted" ? "border-rose-500/40 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25" : "border-amber-400/35 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20")}>{busy ? "처리 중…" : archiveConfirm === "deleted" ? "보관함으로 이동" : "종료 처리"}</button></div>
           </div>
         </div>
       )}
 
-      {trashOpen && <Modal onClose={() => setTrashOpen(false)} size="wide">
-        <div>
-          <div className="flex items-start justify-between gap-4"><div><h2 className="text-xl font-bold text-white">SPEC 휴지통</h2><p className="mt-1 text-[12px] text-slate-400">삭제와 종료는 이력을 지우지 않습니다. 필요하면 원래 상태로 복구할 수 있습니다.</p></div><span className="rounded-full bg-white/[0.06] px-2.5 py-1 font-mono text-[11px] text-slate-300">{archives.length}</span></div>
-          <div className="mt-6 space-y-2">
-            {archives.length === 0 ? <div className="rounded-xl border border-dashed border-white/10 py-14 text-center text-sm text-slate-500">보관된 SPEC이 없습니다.</div> : archives.map(item => <article key={`${item.workspace_name}:${item.spec_id}`} className="flex items-center gap-4 rounded-xl border border-white/[0.09] bg-white/[0.025] px-4 py-3">
-              <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className={cn("rounded px-1.5 py-0.5 text-[9px] font-bold", item.reason === "closed" ? "bg-amber-400/10 text-amber-200" : "bg-rose-400/10 text-rose-200")}>{item.reason === "closed" ? "종료" : "삭제"}</span><h3 className="truncate text-[13px] font-semibold text-white">{item.title}</h3></div><p className="mt-1 font-mono text-[10px] text-slate-500">{item.workspace_name} · {new Date(item.archived_at).toLocaleString("ko-KR")}</p></div>
-              <button disabled={busy} onClick={async () => { if (!userId) return; setBusy(true); try { await restoreScheduleSpec(userId, item.workspace_name, item.spec_id); refetch(); } catch { setErrorMsg("SPEC을 복구하지 못했습니다."); } finally { setBusy(false); } }} className="flex shrink-0 items-center gap-1.5 rounded-lg border border-cyan-400/25 bg-cyan-400/[0.07] px-3 py-2 text-[11px] font-semibold text-cyan-200 hover:bg-cyan-400/10 disabled:opacity-40"><RotateCcw size={13} /> 복구</button>
-            </article>)}
-          </div>
-        </div>
-      </Modal>}
+      {trashOpen && <SpecArchiveModal items={archives} busy={busy} onClose={() => setTrashOpen(false)} onRestore={async item => { if (!userId) return; setBusy(true); try { await restoreScheduleSpec(userId, item.workspace_name, item.spec_id); refetch(); } catch { setErrorMsg("SPEC을 복구하지 못했습니다."); } finally { setBusy(false); } }} />}
 
       {/* 경량 Spec 추가(§7B "+ SPEC 일정 추가") */}
       {addOpen && (

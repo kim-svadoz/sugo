@@ -235,9 +235,9 @@ describe("schedule presentation", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).not.toContain('selected.id.startsWith("spec-manual-")');
     expect(source).toContain("이 SPEC을 삭제할까요?");
-    expect(source).toContain("개발 이력과 파일은 지우지 않으며 휴지통에서 확인하고 복구할 수 있습니다.");
+    expect(source).toContain("개발 이력과 파일은 지우지 않으며 보관함에서 확인하고 복구할 수 있습니다.");
     expect(source).toContain("SPEC 종료 처리");
-    expect(source).toContain("SPEC 휴지통");
+    expect(source).toContain("<SpecArchiveModal");
     expect(source).toContain('className="fixed inset-0 z-[80] flex items-center justify-center');
     expect(source).toContain('role="dialog" aria-modal="true"');
     expect(source).toContain('window.addEventListener("keydown", cancelArchive, true)');
@@ -247,6 +247,7 @@ describe("schedule presentation", () => {
   it("Agenda는 지난 미종료 SPEC과 7일 이후 등록 수를 함께 보여준다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain('state: "active" as const');
-    expect(source).toContain('{ label: "이후", value: commitmentPulse.later');
+    expect(source).toContain("agenda.map((group)");
+    expect(source).not.toContain("commitmentPulse");
   });
 });
