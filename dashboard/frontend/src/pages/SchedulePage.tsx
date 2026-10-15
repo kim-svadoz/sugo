@@ -544,14 +544,6 @@ export function SchedulePage() {
 
         {scheduleView === "agenda" ? (
           <section className="ck-glass command-stage ck-stage-in flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)]" aria-label="실행 대기열">
-            <div className="flex shrink-0 items-end justify-between border-b border-[var(--color-border)] px-5 py-4">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-cyan-300/80">WORK QUEUE</p>
-                <h2 className="mt-1 text-xl font-semibold text-[var(--color-text-bright)]">해야 할 일</h2>
-                <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">마감이 지난 일정부터, 아직 닫지 않은 일정을 우선순위대로 보여줍니다.</p>
-              </div>
-              <button type="button" onClick={() => setScheduleView("month")} className="rounded-lg px-3 py-2 text-[12px] font-semibold text-[var(--color-text-muted)] hover:bg-white/[0.05] hover:text-white">Calendar에서 전체 이력 보기 →</button>
-            </div>
             <div className="ck-scroll min-h-0 flex-1 overflow-auto p-4">
               {agenda.length === 0 ? (
                 <div className="flex h-full min-h-56 flex-col items-center justify-center text-center">

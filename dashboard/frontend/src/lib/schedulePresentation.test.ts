@@ -91,7 +91,9 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("지금 지켜야 할 약속");
     expect(source).not.toContain("+ 새 약속");
     expect(source).not.toContain("작업 약속");
-    expect(source).toContain("해야 할 일");
+    expect(source).not.toContain("WORK QUEUE");
+    expect(source).not.toContain("마감이 지난 일정부터, 아직 닫지 않은 일정을 우선순위대로 보여줍니다.");
+    expect(source).not.toContain("Calendar에서 전체 이력 보기");
     expect(source).not.toContain("작업 목표 추가");
     expect(source).toContain("DeploymentReach");
     expect(source).toContain('["LOCAL", "DEV", "STG", "PRD"]');
