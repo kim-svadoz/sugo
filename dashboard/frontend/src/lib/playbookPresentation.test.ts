@@ -5,7 +5,7 @@ const source = readFileSync(new URL("../pages/Playbook.tsx", import.meta.url), "
 
 describe("Playbook product lifecycle", () => {
   it("사용자의 AI 개발 가치 흐름을 여섯 단계로 안내한다", () => {
-    for (const label of ["기획을 기능 명세로", "팀의 판단을 규칙으로", "작업 단계 통제", "근거를 보고 판단", "후속 변경 잇기", "배포까지 확인"]) {
+    for (const label of ["기획을 기능 명세로", "팀의 판단을 규칙으로", "작업 단계 통제", "근거를 보고 판단", "후속 변경 잇기", "Console로 운영 확인"]) {
       expect(source).toContain(`label: "${label}"`);
     }
   });
@@ -21,6 +21,23 @@ describe("Playbook product lifecycle", () => {
     expect(source).toContain("사용자가 판단할 수 있는 상태");
     expect(source).toContain("개발 절차 완료, Git 전송, 실제 배포 완료");
     expect(source).toContain("코드 작성이 끝난 시점과 사용자가 기능을 받는 시점");
+  });
+
+  it("실제 개발 파이프라인과 단계별 신뢰 장치를 함께 설명한다", () => {
+    for (const step of ["프로젝트 파악", "요구사항 확정", "개발 준비", "기준 상태 확인", "계약 테스트", "구현", "테스트", "독립 검토와 사용자 확인", "문서와 커밋"]) {
+      expect(source).toContain(`name: "${step}"`);
+    }
+    expect(source).toContain("저장된 실행 증거와 실제 결과를 비교합니다.");
+    expect(source).toContain("통과 조건이 없으면 다음 단계로 이동하지 않습니다.");
+    expect(source).toContain("테스트나 검토에서 문제가 나오면 구현 단계로 돌아갑니다.");
+  });
+
+  it("Console 기능이 답하는 운영 질문과 효과를 설명한다", () => {
+    for (const feature of ["일정", "AI 작업 현황", "검토 보고서", "개발 이력", "배포 상태"]) {
+      expect(source).toContain(`name: "${feature}"`);
+    }
+    expect(source).toContain("지금 무엇을 해야 하는가?");
+    expect(source).toContain("무엇을 근거로 승인할 수 있는가?");
   });
 
   it("탭과 패널의 접근성 관계를 제공한다", () => {

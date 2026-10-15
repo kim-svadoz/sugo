@@ -14,6 +14,8 @@ import { cn } from "../lib/utils.js";
 
 type StageId = "intent" | "context" | "delivery" | "review" | "lineage" | "operations";
 type Stage = { id: StageId; order: string; label: string; eyebrow: string; title: string; outcome: string; icon: LucideIcon };
+type PipelineStep = { name: string; owner: string; proof: string };
+type ConsoleCapability = { name: string; question: string; answer: string };
 
 const STAGES: Stage[] = [
   { id: "intent", order: "01", label: "기획을 기능 명세로", eyebrow: "기획 정리", title: "흩어진 기획을 개발 기준으로 바꿉니다", outcome: "개발 전에 목표, 범위, 기능 요구사항, 확인 기준을 한 문서에 기록합니다.", icon: FileCode2 },
@@ -21,7 +23,27 @@ const STAGES: Stage[] = [
   { id: "delivery", order: "03", label: "작업 단계 통제", eyebrow: "개발 순서 관리", title: "큰 요청을 확인 가능한 단위로 나눕니다", outcome: "AI는 필요한 근거를 기록해야 다음 단계로 이동할 수 있습니다.", icon: ShieldCheck },
   { id: "review", order: "04", label: "근거를 보고 판단", eyebrow: "사용자 검토", title: "승인을 요청하기 전에 검토 자료를 제공합니다", outcome: "사용자는 변경 내용과 검증 결과를 확인한 뒤 다음 행동을 결정합니다.", icon: ClipboardCheck },
   { id: "lineage", order: "05", label: "후속 변경 잇기", eyebrow: "개발 이력 유지", title: "완료된 결과를 보존하고 다음 변경을 잇습니다", outcome: "Sugo는 각 후속 변경의 이유, 결과, 검증 기록을 별도로 보존합니다.", icon: GitBranch },
-  { id: "operations", order: "06", label: "배포까지 확인", eyebrow: "제품 반영 확인", title: "개발 완료와 실제 배포를 구분합니다", outcome: "Sugo는 작업, 코드, 배포 상태를 같은 기능 명세를 기준으로 연결합니다.", icon: Radar },
+  { id: "operations", order: "06", label: "Console로 운영 확인", eyebrow: "Sugo Console", title: "AI 작업을 운영 판단에 필요한 정보로 바꿉니다", outcome: "Console은 일정, 작업 근거, 개발 이력, 실제 배포 상태를 같은 기능 명세로 연결합니다.", icon: Radar },
+];
+
+const PIPELINE_STEPS: PipelineStep[] = [
+  { name: "프로젝트 파악", owner: "INIT → SCAN", proof: "저장소 구조와 실행 환경을 확인합니다." },
+  { name: "요구사항 확정", owner: "CLARIFY → PRD", proof: "질문으로 범위와 확인 기준을 확정합니다." },
+  { name: "개발 준비", owner: "JIRA(선택) → READY", proof: "작업 경계와 실행 순서를 확정합니다." },
+  { name: "기준 상태 확인", owner: "BASELINE", proof: "변경 전 테스트 결과를 기록합니다." },
+  { name: "계약 테스트", owner: "CONTRACT → CODE_READY", proof: "구현 전에 실패하는 계약을 먼저 확인합니다." },
+  { name: "구현", owner: "CODE_RUNNING → CODE_DONE", proof: "기능 요구사항별 변경과 분석 결과를 기록합니다." },
+  { name: "테스트", owner: "TEST_RUNNING → TEST_DONE", proof: "새 테스트와 회귀 테스트의 실제 결과를 대조합니다." },
+  { name: "독립 검토와 사용자 확인", owner: "REVIEW_RUNNING", proof: "명세, 계약, 실행 결과, 남은 위험을 확인합니다." },
+  { name: "문서와 커밋", owner: "DOCS → COMMIT → DONE", proof: "검증된 동작과 기록을 함께 보존합니다." },
+];
+
+const CONSOLE_CAPABILITIES: ConsoleCapability[] = [
+  { name: "일정", question: "지금 무엇을 해야 하는가?", answer: "준비, 진행, 검토 필요, 마감 경과 작업을 우선순위에 따라 보여줍니다." },
+  { name: "AI 작업 현황", question: "AI는 지금 어디까지 했는가?", answer: "기능 명세부터 작업, 기능 요구사항, 후속 변경까지 한 구조로 보여줍니다." },
+  { name: "검토 보고서", question: "무엇을 근거로 승인할 수 있는가?", answer: "변경 내용, 요구사항 충족 상태, 테스트, 실행 증거, 남은 위험을 모아 보여줍니다." },
+  { name: "개발 이력", question: "완료된 작업에서 무엇을 남겼는가?", answer: "AI가 완료한 기능과 주요 설계 결정을 시간순으로 보존합니다." },
+  { name: "배포 상태", question: "사용자는 어느 버전을 받고 있는가?", answer: "작업 커밋과 각 환경에서 실행 중인 이미지를 비교합니다." },
 ];
 
 function Fact({ label, value, tone }: { label: string; value: string; tone?: "good" | "warn" }) {
@@ -42,6 +64,31 @@ function Flow({ steps }: { steps: string[] }) {
           {index < steps.length - 1 && <span className="text-[var(--color-text-dim)]">→</span>}
         </div>
       ))}
+    </div>
+  );
+}
+
+function PipelineMap() {
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-[16px] font-semibold text-[var(--color-text-bright)]">실제 개발 파이프라인</h3>
+        <span className="text-[13px] text-[var(--color-text-dim)]">각 단계는 실행 결과를 남기고 다음 단계에 전달합니다.</span>
+      </div>
+      <ol className="grid gap-x-6 gap-y-5 md:grid-cols-3">
+        {PIPELINE_STEPS.map((step, index) => (
+          <li key={step.name} className="relative border-t-2 border-cyan-500/45 pt-3 md:min-h-[138px]">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-[11px] text-cyan-300">{String(index + 1).padStart(2, "0")}</span>
+              {index < PIPELINE_STEPS.length - 1 && <span aria-hidden="true" className={cn("text-[16px] text-[var(--color-text-dim)]", (index === 2 || index === 5) && "md:hidden")}>→</span>}
+            </div>
+            <div className="mt-2 text-[15px] font-semibold text-[var(--color-text-bright)]">{step.name}</div>
+            <div className="mt-1 text-[12px] font-medium text-cyan-300/80">{step.owner}</div>
+            <p className="mt-2 text-[13px] leading-relaxed text-[var(--color-text-muted)]">{step.proof}</p>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-4 border-l-2 border-amber-400/50 pl-3 text-[13px] leading-relaxed text-amber-200">테스트나 검토에서 문제가 나오면 구현 단계로 돌아갑니다. 기존 결과를 덮지 않고 재검증 기록을 추가합니다.</p>
     </div>
   );
 }
@@ -102,15 +149,15 @@ function Delivery() {
   ];
   return (
     <div className="space-y-7">
-      <Flow steps={["개발 명세", "변경 전 상태", "계약 테스트", "구현", "테스트", "검토", "문서"]} />
+      <PipelineMap />
       <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
         <div className="grid grid-cols-2 gap-x-6 gap-y-1">
           {agents.map(([name, role]) => <div key={name} className="border-t border-[var(--color-border)] py-4"><div className="text-[13px] font-semibold text-cyan-300">{name}</div><div className="mt-1.5 text-[14px] leading-relaxed text-[var(--color-text-muted)]">{role}</div></div>)}
         </div>
         <div>
           <Fact label="작업 순서" value="현재 상태에서 실행할 수 있는 다음 행동만 제시합니다." />
-          <Fact label="실행 증거" value="테스트 이름, 실행 명령, 결과, 변경 파일 정보를 저장된 기록과 비교합니다." />
-          <Fact label="작업 차단" value="근거가 없거나 결과가 다르면 다음 단계로 이동하지 않습니다. 부족한 조건도 표시합니다." tone="warn" />
+          <Fact label="실행 증거" value="저장된 실행 증거와 실제 결과를 비교합니다." />
+          <Fact label="작업 차단" value="통과 조건이 없으면 다음 단계로 이동하지 않습니다. 부족한 조건도 표시합니다." tone="warn" />
           <Fact label="얻는 효과" value="다른 환경에서도 다시 확인할 수 있는 완료 기록을 만듭니다." tone="good" />
         </div>
       </div>
@@ -163,14 +210,21 @@ function Operations() {
       <div className="grid grid-cols-4 overflow-hidden rounded border border-[var(--color-border)]">
         {envs.map(([env, detail], index) => <div key={env} className={cn("border-r border-[var(--color-border)] px-4 py-4 last:border-r-0", index < 3 && "bg-cyan-500/5")}><div className={cn("text-[13px] font-semibold", index < 3 ? "text-cyan-300" : "text-[var(--color-text-dim)]")}>{env}</div><div className="mt-1.5 text-[13px] text-[var(--color-text-muted)]">{detail}</div></div>)}
       </div>
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div>
-          <Fact label="일정" value="시작 전, 진행 중, 검토 필요, 마감일이 지난 미종료 기능 명세를 확인합니다." />
-          <Fact label="AI 작업 현황" value="기능 명세, 실행 차수, 작업, 기능 요구사항, 후속 변경을 한 구조에서 확인합니다." />
-          <Fact label="개발 이력" value="AI가 완료한 기능과 주요 설계 결정을 장기 기록으로 남깁니다." />
+      <div>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-[16px] font-semibold text-[var(--color-text-bright)]">Sugo Console이 답하는 질문</h3>
+          <span className="text-[13px] text-[var(--color-text-dim)]">작업 기록을 운영 판단에 필요한 정보로 바꿉니다.</span>
         </div>
-        <div>
-          <Fact label="배포 판정" value="작업 커밋과 각 환경에서 실행 중인 이미지를 비교합니다." />
+        <div className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
+          {CONSOLE_CAPABILITIES.map((feature) => (
+            <div key={feature.name} className="grid gap-2 py-4 md:grid-cols-[140px_260px_minmax(0,1fr)] md:gap-5">
+              <span className="text-[15px] font-semibold text-cyan-200">{feature.name}</span>
+              <span className="text-[14px] font-medium text-[var(--color-text-bright)]">{feature.question}</span>
+              <span className="text-[14px] leading-relaxed text-[var(--color-text-muted)]">{feature.answer}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 grid gap-6 lg:grid-cols-2">
           <Fact label="상태 구분" value="개발 절차 완료, Git 전송, 실제 배포 완료를 서로 다른 상태로 표시합니다." tone="warn" />
           <Fact label="얻는 효과" value="코드 작성이 끝난 시점과 사용자가 기능을 받는 시점을 구분할 수 있습니다." tone="good" />
         </div>
