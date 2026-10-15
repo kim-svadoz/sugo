@@ -47,6 +47,7 @@ import { historyContextTitle, historyDisplayDate, historyDisplayTitle } from "..
 import { workspacePulse } from "../lib/operationalPulse.js";
 import { OperationalPulse } from "../components/OperationalPulse.js";
 import { workspaceCommandSummary } from "../lib/experienceModel.js";
+import { DEVELOPMENT_LINEAGE_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
@@ -846,18 +847,19 @@ export function Sessions() {
                     <div className="mt-2 font-mono text-xs text-cyan-400">{ws.activeTaskCount} task 진행 중</div>
                   ) : null}
                 </div>
-                <div className="mt-4 flex items-center justify-end gap-2 border-t border-[var(--color-border)] pt-3">
-                  <div className="flex items-center gap-1.5">
+                <div className="mt-4 grid grid-cols-1 gap-2 border-t border-[var(--color-border)] pt-3 xl:grid-cols-2" aria-label="워크스페이스 도구">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedWorkspace(ws.name);
                         setCheckpointModal(ws.name);
                       }}
-                      className="flex items-center gap-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[11px] font-bold text-amber-300 outline-none transition-colors hover:bg-amber-500/20 focus-visible:bg-amber-500/25"
-                      title="체크포인트 관리"
+                      className="group flex min-w-0 items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.07] px-2.5 py-2 text-left outline-none transition-colors hover:border-amber-400/50 hover:bg-amber-500/[0.13] focus-visible:bg-amber-500/[0.16]"
+                      title={WORKSPACE_RULES_TOOL.workspaceDescription}
                     >
-                      <Shield size={12} /> {ws.checkpointCount}
+                      <Shield size={14} className="shrink-0 text-amber-300" />
+                      <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-slate-100">{WORKSPACE_RULES_TOOL.label}</span>
+                      <span className="shrink-0 rounded-md bg-amber-400/10 px-1.5 py-0.5 font-mono text-[10px] text-amber-300">{ws.checkpointCount}</span>
                     </button>
                     {(ws.roadmapCount ?? 0) > 0 && (
                       <button
@@ -865,13 +867,13 @@ export function Sessions() {
                           e.stopPropagation();
                           setAgentCanvasModal(ws.name);
                         }}
-                        className="flex items-center gap-1.5 rounded-lg border border-purple-500/40 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 px-3 py-1.5 text-xs font-bold text-purple-300 outline-none transition-all hover:from-purple-600/40 hover:to-indigo-600/40 focus-visible:brightness-125"
-                        title="Agent Canvas 전체화면으로 보기"
+                        className="group flex min-w-0 items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/[0.07] px-2.5 py-2 text-left outline-none transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/[0.13] focus-visible:bg-cyan-500/[0.16]"
+                        title={DEVELOPMENT_LINEAGE_TOOL.description}
                       >
-                        <Bot size={14} className="text-purple-300" /> Agent Canvas
+                        <Bot size={14} className="shrink-0 text-cyan-300" />
+                        <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-slate-100">{DEVELOPMENT_LINEAGE_TOOL.label}</span>
                       </button>
                     )}
-                  </div>
                 </div>
               </div>
             );

@@ -160,13 +160,29 @@ describe("schedule presentation", () => {
 
   it("완료 SPEC에는 후속 patch 행동과 읽기 쉬운 프로젝트 도구를 제공한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    const tools = readFileSync(new URL("./workspaceTools.ts", import.meta.url), "utf8");
     expect(source).toContain("후속 개발");
     expect(source).toContain("Patch 명령 복사");
     expect(source).toContain("작업 컨텍스트");
     expect(source).toContain("개발 흐름");
     expect(source).toContain("프로젝트 도구");
-    expect(source).toContain("워크스페이스 규칙 관리");
-    expect(source).toContain("개발 계보 살펴보기");
+    expect(source).toContain("WORKSPACE_RULES_TOOL.label");
+    expect(source).toContain("DEVELOPMENT_LINEAGE_TOOL.label");
+    expect(tools).toContain('label: "워크스페이스 규칙 관리"');
+    expect(tools).toContain('label: "개발 계보 살펴보기"');
+  });
+
+  it("Workspaces와 Schedule은 같은 도구 명칭과 설명 정본을 사용한다", () => {
+    const workspaces = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
+    const schedule = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    const checkpoint = readFileSync(new URL("../components/CheckpointPanel.tsx", import.meta.url), "utf8");
+    for (const source of [workspaces, schedule]) {
+      expect(source).toContain("WORKSPACE_RULES_TOOL.label");
+      expect(source).toContain("DEVELOPMENT_LINEAGE_TOOL.label");
+    }
+    expect(workspaces).toContain("grid-cols-1");
+    expect(workspaces).toContain("xl:grid-cols-2");
+    expect(checkpoint).toContain("WORKSPACE_RULES_TOOL.label");
   });
 
   it("기획 참고자료는 이미지와 링크를 함께 다루고 빈 읽기 전용 영역은 숨긴다", () => {

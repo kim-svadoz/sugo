@@ -12,6 +12,7 @@ import {
   updateWorkspaceCheckpoint,
   type WorkspaceCheckpointApplyResult,
 } from "../api/workspacesApi.js";
+import { WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
 import { useAuth } from "../auth/AuthContext.js";
 
 /** Sessions.tsx `repoName`과 동일한 1줄 헬퍼 — 순환 import를 피하려고 그대로 복제. */
@@ -169,7 +170,7 @@ export function CheckpointPanel({
       <Modal onClose={onClose} size="wide">
         <div className="checkpoint-panel">
         <h3 className="mb-1 flex items-center gap-2 text-[15px] font-semibold text-[var(--color-text-bright)]">
-          <Shield size={16} className="text-amber-400" /> {projectLabel ? `${projectLabel} 프로젝트 체크포인트` : `${workspace} 체크포인트`}
+          <Shield size={16} className="text-amber-400" /> {projectLabel ? `${projectLabel} 프로젝트 체크포인트` : `${workspace} · ${WORKSPACE_RULES_TOOL.label}`}
         </h3>
         <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
           <p>이 도메인의 프로젝트에서 작업 컨텍스트를 불러올 때 <code>.claude/rules/&lt;category&gt;/</code>로 동기화되어 Claude Code에 자동 주입됩니다.</p>

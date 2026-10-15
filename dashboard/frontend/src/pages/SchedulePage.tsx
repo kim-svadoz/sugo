@@ -26,6 +26,7 @@ import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateS
 import { OperationalPulse } from "../components/OperationalPulse.js";
 import { buildCommitmentQueue, commitmentNextAction, legacyCommitments, type CommitmentView } from "../lib/scheduleCommitment.js";
 import { completeScheduleCommitment, createScheduleCommitment, reopenScheduleCommitment, updateScheduleCommitment } from "../api/scheduleCommitmentApi.js";
+import { DEVELOPMENT_LINEAGE_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -985,7 +986,7 @@ export function SchedulePage() {
                 className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-3.5 text-left transition-colors hover:border-amber-400/30 hover:bg-amber-400/[0.06] disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <span className="rounded-lg bg-amber-400/10 p-2 text-amber-300"><Shield size={16} /></span>
-                <span className="min-w-0 flex-1"><strong className="block text-[13px] text-slate-100">워크스페이스 규칙 관리</strong><span className="mt-0.5 block text-[11px] text-slate-400">이 개발에 적용할 체크포인트를 확인합니다.</span></span>
+                <span className="min-w-0 flex-1"><strong className="block text-[13px] text-slate-100">{WORKSPACE_RULES_TOOL.label}</strong><span className="mt-0.5 block text-[11px] text-slate-400">{WORKSPACE_RULES_TOOL.projectDescription}</span></span>
                 <ChevronRight size={15} className="text-slate-500 group-hover:text-amber-300" />
               </button>
               <button
@@ -993,7 +994,7 @@ export function SchedulePage() {
                 className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-3.5 text-left transition-colors hover:border-cyan-400/30 hover:bg-cyan-400/[0.06]"
               >
                 <span className="rounded-lg bg-cyan-400/10 p-2 text-cyan-300"><Workflow size={16} /></span>
-                <span className="min-w-0 flex-1"><strong className="block text-[13px] text-slate-100">개발 계보 살펴보기</strong><span className="mt-0.5 block text-[11px] text-slate-400">Agent Canvas에서 feat와 patch 흐름을 엽니다.</span></span>
+                <span className="min-w-0 flex-1"><strong className="block text-[13px] text-slate-100">{DEVELOPMENT_LINEAGE_TOOL.label}</strong><span className="mt-0.5 block text-[11px] text-slate-400">{DEVELOPMENT_LINEAGE_TOOL.description}</span></span>
                 <ChevronRight size={15} className="text-slate-500 group-hover:text-cyan-300" />
               </button>
             </nav>
