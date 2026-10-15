@@ -43,7 +43,9 @@ export async function archiveScheduleSpec(
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [userId, workspaceName, specId, reason, title, now, userId],
   );
-  for (const id of subtree(rows, specId)) {
+  // 삭제는 폐기이므로 Canvas 폐기함에 남긴다. 정상 종료는 보관이며 dropped가 아니다.
+  // 종료된 subtree는 getRoadmap이 archive 정본을 기준으로 본문/진행률에서 제외한다.
+  if (reason === "deleted") for (const id of subtree(rows, specId)) {
     await db.exec(
       "UPDATE sugo_roadmap_nodes SET manual_status = 'dropped', manual_by = ?, manual_at = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
       [userId, now, userId, workspaceName, id],

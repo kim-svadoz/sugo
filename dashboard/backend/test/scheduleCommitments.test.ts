@@ -25,22 +25,46 @@ describe("Schedule commitment API", () => {
   it("정식 SPEC도 삭제·종료 이유를 구분해 보관하고 복구한다", async () => {
     const { app, db, auth } = await boot();
 
+    await db.exec(
+      "INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, status, parent) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      ["closed-run", "commitment-owner", "orders", "종료 RUN", "workstream", "done", "spec-1"],
+    );
+    await db.exec(
+      "INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, status, parent) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      ["closed-task", "commitment-owner", "orders", "종료 Task", "task", "in_progress", "closed-run"],
+    );
+    await db.exec(
+      "INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, status) VALUES (?, ?, ?, ?, ?, ?)",
+      ["active-spec", "commitment-owner", "orders", "활성 SPEC", "spec", "done"],
+    );
+    await db.exec(
+      "INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, status, parent) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      ["active-run", "commitment-owner", "orders", "활성 RUN", "workstream", "done", "active-spec"],
+    );
+    for (let i = 1; i <= 4; i++) await db.exec(
+      "INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, status, parent) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [`active-task-${i}`, "commitment-owner", "orders", `활성 Task ${i}`, "task", "done", "active-run"],
+    );
+
     await request(app).post("/api/schedule/specs/archive").set("Authorization", auth).send({
       workspaceName: "orders", specId: "spec-1", reason: "closed",
     }).expect(200);
 
     const active = await request(app).get("/api/workspaces/schedule").set("Authorization", auth).expect(200);
-    expect(active.body.specs).toEqual([]);
+    expect(active.body.specs.map((spec: { id: string }) => spec.id)).toEqual(["active-spec"]);
     const archive = await request(app).get("/api/schedule/specs/archive").set("Authorization", auth).expect(200);
     expect(archive.body.specs).toEqual([expect.objectContaining({
       workspace_name: "orders", spec_id: "spec-1", title: "검색 필터", reason: "closed",
     })]);
-    expect((await db.query<{ manual_status: string }>("SELECT manual_status FROM sugo_roadmap_nodes WHERE id = 'spec-1'"))[0].manual_status).toBe("dropped");
+    expect((await db.query<{ manual_status: string | null }>("SELECT manual_status FROM sugo_roadmap_nodes WHERE id = 'spec-1'"))[0].manual_status).toBeNull();
+    const canvas = await request(app).get("/api/workspaces/orders/roadmap").set("Authorization", auth).expect(200);
+    expect(canvas.body.nodes.map((node: { id: string }) => node.id)).not.toEqual(expect.arrayContaining(["spec-1", "closed-run", "closed-task"]));
+    expect(canvas.body.counts).toMatchObject({ done: 4, total: 4, in_progress: 0, dropped: 0 });
 
     await request(app).post("/api/schedule/specs/restore").set("Authorization", auth).send({
       workspaceName: "orders", specId: "spec-1",
     }).expect(200);
-    expect((await request(app).get("/api/workspaces/schedule").set("Authorization", auth).expect(200)).body.specs).toHaveLength(1);
+    expect((await request(app).get("/api/workspaces/schedule").set("Authorization", auth).expect(200)).body.specs).toHaveLength(2);
     expect((await request(app).get("/api/schedule/specs/archive").set("Authorization", auth).expect(200)).body.specs).toEqual([]);
   });
 

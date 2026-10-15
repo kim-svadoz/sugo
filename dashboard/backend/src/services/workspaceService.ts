@@ -429,10 +429,23 @@ type RoadmapNodeDbRow = Omit<RoadmapNodeRow, "depends_on" | "work_result" | "run
 };
 
 export async function getRoadmap(db: DbClient, userId: string, workspaceName: string): Promise<RoadmapNodeRow[]> {
-  const rows = await db.query<RoadmapNodeDbRow>(
+  const allRows = await db.query<RoadmapNodeDbRow>(
     "SELECT * FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? ORDER BY id",
     [userId, workspaceName]
   );
+  const closed = await db.query<{ spec_id: string }>(
+    "SELECT spec_id FROM sugo_schedule_spec_archives WHERE user_id = ? AND workspace_name = ? AND reason = 'closed'",
+    [userId, workspaceName],
+  );
+  const hidden = new Set(closed.map((row) => row.spec_id));
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const row of allRows) if (row.parent && hidden.has(row.parent) && !hidden.has(row.id)) {
+      hidden.add(row.id);
+      changed = true;
+    }
+  }
+  const rows = allRows.filter((row) => !hidden.has(row.id));
   // manual_status와 달리 manual_title은 서버에서 곧바로 유효 title로 합친다 — Canvas의
   // n.title 참조가 수십 곳이라 프론트에 매번 manual_title ?? title 판정을 시키는 대신,
   // "원본 CLI 제목을 따로 보여줄 UI가 없다"는 전제로 여기서 한 번에 정리한다.

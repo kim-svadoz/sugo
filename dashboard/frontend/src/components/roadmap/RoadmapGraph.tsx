@@ -44,6 +44,7 @@ import { filesForRoadmapScope, reviewArtifactLocator } from "./fileViewerModel.j
 import { taskGuidance } from "../../lib/taskGuidance.js";
 import { focusPathIds, focusRootId } from "./focusPath.js";
 import { presentSteKorean } from "../../lib/steKorean.js";
+import { getScheduleSpecArchives, restoreScheduleSpec, type ScheduleSpecArchive } from "../../api/scheduleSpecArchiveApi.js";
 
 /** 설계안 치수 상수 — 그대로. */
 const NODE_W = 236;
@@ -1088,6 +1089,8 @@ export function RoadmapGraph({
   const [focusedOnce, setFocusedOnce] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [binOpen, setBinOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [archives, setArchives] = useState<ScheduleSpecArchive[]>([]);
   const [busy, setBusy] = useState(false);
   /** 펼친 SPEC/RUN/lineage 집합. SPEC은 기본 펼침, lineage는 RUN을 열었을 때 계보가 곧바로
    * 보이도록 기본 펼침이다. RUN 자체는 접어서 첫 화면의 최상위 구조를 유지한다. */
@@ -1099,6 +1102,14 @@ export function RoadmapGraph({
   const [summaryOf, setSummaryOf] = useState<RoadmapNode | null>(null);
   const [specDocumentTarget, setSpecDocumentTarget] = useState<RoadmapNode | null>(null);
   const [renaming, setRenaming] = useState<{ node: RoadmapNode; value: string } | null>(null);
+
+  const refreshArchives = useCallback(async () => {
+    if (!userId) return;
+    const items = await getScheduleSpecArchives(userId);
+    setArchives(items.filter((archive) => archive.workspace_name === workspace && archive.reason === "closed"));
+  }, [userId, workspace]);
+
+  useEffect(() => { void refreshArchives(); }, [refreshArchives]);
 
   // 필터가 오면 그 목록을 쓴다. 단 **폴링 결과와 어긋나지 않게** id로 다시 맞춘다 —
   // 필터는 부모가 4초 전에 계산한 것이라, 그 사이 바뀐 상태를 그대로 들고 있을 수 있다.
@@ -1430,16 +1441,17 @@ export function RoadmapGraph({
   // 메뉴/폐기함은 여기서 Esc를 잡아 전파를 멈춘다. 안 그러면 메뉴만 닫으려 했는데
   // 바깥 모달의 Esc 핸들러까지 같이 발동해 캔버스 전체가 닫힌다.
   useEffect(() => {
-    if (!menu && !binOpen) return;
+    if (!menu && !binOpen && !archiveOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       e.stopPropagation();
       if (menu) setMenu(null);
-      else setBinOpen(false);
+      else if (binOpen) setBinOpen(false);
+      else setArchiveOpen(false);
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [menu, binOpen]);
+  }, [menu, binOpen, archiveOpen]);
 
 
   const selectedLineageItem = useMemo(
@@ -1531,7 +1543,7 @@ export function RoadmapGraph({
               <li>· TASK 카드를 클릭하면 오른쪽에 상세가 열립니다.</li>
               <li>· 배치는 <b>자동</b>입니다 — 카드를 끌어 옮기지 않습니다(빈 곳을 끌면 화면이 움직입니다).</li>
               <li>· RUN의 <b>Spec 편입·분리</b>는 오른쪽 패널의 드롭다운에서 합니다.</li>
-              <li>· RUN/SPEC <b>우클릭</b>으로 폐기하고, 우상단 폐기함에서 되돌립니다.</li>
+              <li>· RUN/SPEC <b>우클릭</b> 폐기는 폐기함에서, 정상 종료한 SPEC은 보관함에서 되돌립니다.</li>
               <li>· 노드에 마우스를 올리면 <b>연결된 것만</b> 밝아지고, 의존선에 ✕가 뜹니다.</li>
               <li>· REQ는 그래프가 아니라 <b>오른쪽 패널</b>에서 봅니다.</li>
             </ul>
@@ -1564,6 +1576,15 @@ export function RoadmapGraph({
               title="폐기함 — 버린 항목 보기/복구"
             >
               🗑️ 폐기함 {droppedTop.length}
+            </button>
+          )}
+          {archives.length > 0 && (
+            <button
+              onClick={() => setArchiveOpen(true)}
+              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-xs text-[var(--color-text-muted)] hover:border-cyan-400/50 hover:text-cyan-300"
+              title="보관함 — 정상 종료한 SPEC 보기/복구"
+            >
+              🗄️ 보관함 {archives.length}
             </button>
           )}
         </div>
@@ -1791,6 +1812,37 @@ export function RoadmapGraph({
               {droppedTop.length === 0 && (
                 <div className="py-8 text-center text-[12.5px] text-[var(--color-text-dim)]">폐기된 항목이 없습니다</div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {archiveOpen && (
+        <div className="fixed inset-0 z-[96] flex items-center justify-center p-4" onMouseDown={() => setArchiveOpen(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative w-full max-w-lg rounded-xl border border-[var(--color-border)] ck-glass p-4" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="mb-1 flex items-center gap-2 text-[14px] font-semibold text-[var(--color-text)]">
+              🗄️ 보관함 <span className="text-[12px] text-[var(--color-text-muted)]">({archives.length})</span>
+            </div>
+            <p className="mb-3 text-[11px] text-[var(--color-text-dim)]">정상 종료한 SPEC입니다. 진행률과 전체 캔버스에서는 제외됩니다.</p>
+            <div className="ck-scroll max-h-80 space-y-1 overflow-auto pr-1">
+              {archives.map((archive) => (
+                <div key={archive.spec_id} className="flex items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-2">
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] text-[var(--color-text-muted)]">{archive.title}</span>
+                  <span className="shrink-0 font-mono text-[10px] text-[var(--color-text-dim)]">{new Date(archive.archived_at).toLocaleDateString("ko-KR")}</span>
+                  <button
+                    disabled={busy}
+                    onClick={() => void run(async () => {
+                      await restoreScheduleSpec(userId!, workspace, archive.spec_id);
+                      await refreshArchives();
+                    })}
+                    className="shrink-0 rounded border border-emerald-500/40 px-2 py-0.5 text-[11px] text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-40"
+                  >
+                    복구
+                  </button>
+                </div>
+              ))}
+              {archives.length === 0 && <div className="py-8 text-center text-[12.5px] text-[var(--color-text-dim)]">보관된 SPEC이 없습니다</div>}
             </div>
           </div>
         </div>

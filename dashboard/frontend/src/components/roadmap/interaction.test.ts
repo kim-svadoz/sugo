@@ -3,6 +3,13 @@ import { describe, expect, it } from "vitest";
 import { shouldApplyHoverFocus } from "./interaction.js";
 
 describe("canvas selection interaction", () => {
+  it("정상 종료 SPEC은 폐기함과 분리된 보관함에서 복구한다", () => {
+    const source = readFileSync(new URL("./RoadmapGraph.tsx", import.meta.url), "utf8");
+    expect(source).toContain("보관함");
+    expect(source).toContain('archive.reason === "closed"');
+    expect(source).toContain("restoreScheduleSpec");
+  });
+
   it("SPEC/RUN은 제목 헤더 클릭으로만 접고 캔버스 노드 더블클릭은 사용하지 않는다", () => {
     const source = readFileSync(new URL("./RoadmapGraph.tsx", import.meta.url), "utf8");
     expect(source).not.toContain("onNodeDoubleClick=");
