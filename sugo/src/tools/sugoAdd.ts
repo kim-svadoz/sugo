@@ -1,4 +1,6 @@
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
+import { access } from "node:fs/promises";
+import { sugoHomeDir } from "../homeDir.js";
 import { z } from "zod";
 import { syncProjectHarness } from "../harness/sync.js";
 import { ensureWorkspace } from "../hulk/workspace.js";
@@ -27,6 +29,17 @@ const SugoAddArgs = z.object(sugoAddInputSchema);
 export async function handleSugoAdd(rawArgs: unknown) {
   const args = SugoAddArgs.parse(rawArgs);
   const projectPath = resolve(args.projectPath);
+  const retainedData = join(sugoHomeDir(), ".sugo", "data");
+  if (await access(retainedData).then(() => true, () => false)) {
+    return {
+      isError: true,
+      content: [{ type: "text" as const, text: JSON.stringify({
+        ok: false,
+        errorCode: "RETAINED_DATA_DECISION_REQUIRED",
+        message: "비활성 보관된 Sugo 데이터가 있습니다. sugo_uninstall(action:restore)로 복구하거나 action:discard로 폐기한 뒤 새로 시작하세요.",
+      }, null, 2) }],
+    };
+  }
 
   const result = await syncProjectHarness({ ...args, projectPath });
 

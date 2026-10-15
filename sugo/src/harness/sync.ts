@@ -10,7 +10,7 @@ import { findRegistryEntry, registerProject } from "./registry.js";
 import { writeClaudeIfChanged } from "./claudeMdFreshness.js";
 import { buildClaudeRuleFile, buildEffectiveClaudeRuleFiles, mergeRootAgentsReference, mergeRootClaudeReference } from "./rulesFile.js";
 import { detectStack } from "./stackDetector.js";
-import { loadInstallManifest, saveInstallManifest, type InstallManifest } from "./installManifest.js";
+import { fileBaseline, loadInstallManifest, saveInstallManifest, type InstallManifest } from "./installManifest.js";
 
 export interface SyncProjectHarnessArgs {
   projectPath: string;
@@ -57,8 +57,8 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
     version: 1,
     projectPath,
     sugoDirExisted: await access(sugoDir).then(() => true, () => false),
-    rootClaudeOriginal: await readFile(rootClaudePath, "utf8").catch(() => null),
-    rootAgentsOriginal: await readFile(rootAgentsPath, "utf8").catch(() => null),
+    rootClaudeOriginal: fileBaseline(await readFile(rootClaudePath, "utf8").catch(() => null)),
+    rootAgentsOriginal: fileBaseline(await readFile(rootAgentsPath, "utf8").catch(() => null)),
     managedFiles: [],
   };
   const existingConfig = await loadProjectConfig(projectPath);

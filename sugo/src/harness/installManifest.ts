@@ -1,13 +1,22 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
+import { createHash } from "node:crypto";
+
+export interface FileBaseline { existed: boolean; byteLength: number; sha256: string | null }
+export function fileBaseline(content: string | null): FileBaseline {
+  return content === null
+    ? { existed: false, byteLength: 0, sha256: null }
+    : { existed: true, byteLength: Buffer.byteLength(content), sha256: createHash("sha256").update(content).digest("hex") };
+}
 
 export interface InstallManifest {
   version: 1;
   projectPath: string;
   sugoDirExisted: boolean;
-  rootClaudeOriginal: string | null;
-  rootAgentsOriginal: string | null;
+  /** string|null은 0.31.0 legacy manifest 호환용. 새 manifest는 원문을 저장하지 않는다. */
+  rootClaudeOriginal: FileBaseline | string | null;
+  rootAgentsOriginal: FileBaseline | string | null;
   managedFiles: string[];
 }
 

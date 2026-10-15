@@ -47,6 +47,7 @@ import { migrateWorkDataDir } from "./work/storage.js";
 import { handleSugoWorkspace, sugoWorkspaceInputSchema } from "./tools/sugoWorkspace.js";
 import { handleSugoAwsContext, sugoAwsContextInputSchema } from "./tools/sugoAwsContext.js";
 import { handleSugoUninstall, sugoUninstallInputSchema } from "./tools/sugoUninstall.js";
+import { ensureRecoveryUtility } from "./lifecycle/recoveryInstaller.js";
 
 const server = new McpServer({
   name: "sugo",
@@ -337,7 +338,7 @@ server.registerTool(
   "sugo_uninstall",
   {
     title: "Preview or execute a clean Sugo uninstall",
-    description: "Sugo 소유 파일과 전역 데이터를 제거하고 Claude/Codex 프로젝트 설정을 설치 전 상태로 복원한다. preview 후 명시 확인이 필요하다.",
+    description: "프로젝트 영향을 제거하고 데이터를 비활성 보관(retain), 영구 삭제(purge), 명시 복구(restore), 보관본 폐기(discard)한다. 파괴 작업은 확인 문자열이 필요하다.",
     inputSchema: sugoUninstallInputSchema,
   },
   handleSugoUninstall,
@@ -435,6 +436,7 @@ server.registerTool(
 );
 
 async function main() {
+  await ensureRecoveryUtility().catch((error) => console.error("[sugo] recovery utility install failed:", error));
   // §9 WORK 리네임(hulk/ → work/): 어떤 도구든 데이터를 읽기 **전에** 끝나야 하므로 await한다.
   // 절대 던지지 않게 만들어져 있어 실패해도 기동을 막지 않는다(못 옮긴 파일은 마커를 안 남겨
   // 다음 부팅에 재시도된다).

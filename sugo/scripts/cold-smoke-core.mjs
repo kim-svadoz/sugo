@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 
 const source = join(dirname(fileURLToPath(import.meta.url)), "..");
-const shipped = [".claude-plugin", "dist", "harness-library", "wasm-grammars", "commands", "agents", "skills", "hooks"];
+const shipped = [".claude-plugin", "dist", "harness-library", "wasm-grammars", "commands", "agents", "skills", "hooks", "scripts"];
 const root = mkdtempSync(join(tmpdir(), "sugo-core-smoke-"));
 const failures = [];
 const check = (label, pass) => { console.log(`${pass ? "PASS" : "FAIL"} ${label}`); if (!pass) failures.push(label); };
@@ -47,10 +47,13 @@ try {
   check("콜드 add/add/update 성공", first.ok !== false && second.ok !== false && updated.ok !== false);
   check("설치 ownership manifest 멱등", readFileSync(join(project, "sugo", "install-manifest.json"), "utf8") === manifestBefore);
   const preview = await call("sugo_uninstall", { action: "preview" });
-  check("제거 preview와 명시 확인 계약", preview.requiredConfirmation === "DELETE_SUGO_DATA");
-  const removed = await call("sugo_uninstall", { action: "execute", confirmation: "DELETE_SUGO_DATA" });
+  check("제거 preview와 명시 확인 계약", preview.requiredConfirmation === "UNINSTALL_SUGO");
+  check("캐시 선삭제 복구용 독립 제거기 설치", existsSync(join(home, ".sugo", "bin", "sugo-uninstall.mjs")));
+  const removed = await call("sugo_uninstall", { action: "execute", mode: "retain", confirmation: "UNINSTALL_SUGO" });
   check("제거 후 전역 데이터 없음", removed.verifiedClean === true && !existsSync(join(home, ".claude", "sugo")));
   check("프로젝트 Sugo 데이터 없음", !existsSync(join(project, "sugo")));
+  check("데이터는 영향 없는 제품 영역에 보관", existsSync(join(home, ".sugo", "data", "registry.json")));
+  check("일반 제거 후 독립 제거기 유지", existsSync(join(home, ".sugo", "bin", "sugo-uninstall.mjs")));
   check("Claude/Codex 사용자 설정 원문 복원", readFileSync(join(project, "CLAUDE.md"), "utf8") === "# User Claude\n" && readFileSync(join(project, "AGENTS.md"), "utf8") === "# User Agents\n");
   check("사용자 규칙 보존", readFileSync(join(project, ".claude", "rules", "user.md"), "utf8") === "user rule\n");
   server.kill();
