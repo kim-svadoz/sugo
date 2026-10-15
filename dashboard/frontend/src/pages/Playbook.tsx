@@ -1,562 +1,63 @@
-import { useEffect, useMemo, useState } from "react";
-import { Boxes, GitBranch, LayoutDashboard, ShieldCheck, Wand2, Workflow, type LucideIcon } from "lucide-react";
-import { cn } from "../lib/utils.js";
+import { useState } from "react";
+import type { ReactNode } from "react";
+import { ArchiveRestore, CheckCircle2, ClipboardCheck, FileCode2, GitBranch, PackageCheck, Settings2, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
+import { cn } from "../lib/utils.js";
 
-const HERO_TEXT = "AI 에이전트 작업 맥락 관제 및 가이드북";
+type StageId = "install" | "rules" | "spec" | "review" | "patch" | "lifecycle";
+type Stage = { id: StageId; order: string; label: string; eyebrow: string; title: string; outcome: string; icon: LucideIcon };
 
-type TabId = 1 | 2 | 3 | 4 | 5 | 6;
-const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
-  { id: 1, label: "도메인 묶기", icon: Boxes },
-  { id: 2, label: "하네스 주입", icon: Wand2 },
-  { id: 3, label: "에이전트 체인", icon: Workflow },
-  { id: 4, label: "완료 검증", icon: ShieldCheck },
-  { id: 5, label: "패치 계보 & 기억", icon: GitBranch },
-  { id: 6, label: "로드맵 캔버스", icon: LayoutDashboard },
+const STAGES: Stage[] = [
+  { id: "install", order: "01", label: "설치와 등록", eyebrow: "COLD START", title: "빈 환경에서도 같은 시작점", outcome: "등록을 반복해도 결과가 달라지지 않습니다.", icon: PackageCheck },
+  { id: "rules", order: "02", label: "규칙 적용", eyebrow: "SHARED CONTEXT", title: "Claude와 Codex가 같은 규칙을 읽습니다", outcome: "도구가 달라도 프로젝트 판단 기준은 하나입니다.", icon: Settings2 },
+  { id: "spec", order: "03", label: "SPEC에서 개발", eyebrow: "CONTROLLED DELIVERY", title: "요구사항을 실행 가능한 작업으로 전환", outcome: "단계를 건너뛰지 않고 근거가 있어야 다음으로 갑니다.", icon: FileCode2 },
+  { id: "review", order: "04", label: "근거 검토", eyebrow: "HUMAN DECISION", title: "승인 요청보다 검토 자료가 먼저", outcome: "요약·REQ·검증·diff를 본 뒤 사람이 결정합니다.", icon: ClipboardCheck },
+  { id: "patch", order: "05", label: "후속 개발", eyebrow: "LINEAGE", title: "완료 이력은 고정하고 후속 변경은 이어서", outcome: "원본 결과를 덮지 않고 patch 차수로 축적합니다.", icon: GitBranch },
+  { id: "lifecycle", order: "06", label: "운영과 제거", eyebrow: "CLEAN LIFECYCLE", title: "설치와 제거의 경계를 명확하게", outcome: "비활성 보관, 복구, 완전 삭제를 의도대로 선택합니다.", icon: ArchiveRestore },
 ];
 
-/** 설계안 IntroBox 문구 — 그대로. */
-const INTRO: Record<TabId, string[]> = {
-  1: [
-    "AI는 레포 경계에서 맥락을 잃는다.",
-    "character-service와 inventory-service를 따로 작업하면 서로의 계약이 어긋난다.",
-    "한 워크스페이스로 묶으면 이력·체크포인트·로드맵을 함께 본다.",
-  ],
-  2: [
-    "팀 표준을 매번 설명할 필요가 없다.",
-    "sugo:add가 스택을 감지해 팀 규칙(ArchUnit·생성자 주입·패키지 비순환)을 CLAUDE.md로 합성하고 .claude/rules에 심는다.",
-    "이후 에이전트는 이 규칙 안에서만 움직인다.",
-  ],
-  3: [
-    "Sugo는 기능 하나를 명세부터 커밋까지 정해진 순서로 끌고 간다.",
-    "구현 단계에선 code-agent가 요구사항(REQ)을 하나씩 끝내며 진행바를 올리고, 전부 끝나야 다음 단계로 넘어간다.",
-    "내부적으로는 19개 상태를 게이트로 관리하며, 단계를 건너뛸 수 없다.",
-  ],
-  4: [
-    "완료는 선언이 아니라 증명이다.",
-    "Sugo는 '리뷰 통과'라는 말을 그대로 믿지 않는다.",
-    "커버리지·회귀·런타임·계약 게이트와 PRD 정합성 검사가 거짓 완료를 걸러낸다.",
-  ],
-  5: [
-    "완료됐다고 끝이 아니다.",
-    "/sugo:patch로 이어가면 원본 아래 패치 v1·v2·v3가 계보로 쌓이고, 각 패치마다 AI 작업요약이 남는다.",
-    "여기에 AI가 코드만 봐선 알 수 없는 회사 안쪽 맥락(도메인 규칙·사고 이력·법무 제약)을 체크포인트로 심어두면, 세션이 바뀌어도 그 판단이 유지된다.",
-  ],
-  6: [
-    "AI가 만든 결과를 눈으로 검증하고 관제하는 시각 컨트롤타워.",
-    "로드맵에서 노드를 클릭하면 요구사항 진행·AI 작업요약·변경 파일을 그 자리에서 확인한다.",
-    "검토가 끝나면 연결한 Git 서비스의 PR/MR까지 이어간다 — 대시보드가 모은 요약으로 pre-fill된다.",
-  ],
-};
-
-const HARNESS_STEPS = [
-  "🔍 스택 감지…",
-  "📦 Java 21 / Spring Boot 3.x / Gradle / PostgreSQL 감지",
-  "🧬 ArchUnit 규칙 주입 (패키지 비순환)",
-  "🧬 생성자 주입 강제",
-  "✅ 하네스 이식 완료",
-];
-
-const CODE_ASIS = `@Service
-public class CharacterService {
-    @Autowired
-    private CharacterRepository repository;
-}`;
-const CODE_TOBE = `@Service
-@RequiredArgsConstructor
-public class CharacterService {
-    private final CharacterRepository repository;
-}`;
-
-const HARNESS_BEHAVIOR = [
-  { label: "세션 시작", asis: "팀 규칙을 모른 채 작업 시작", tobe: ".claude/rules/framework-spring-3.x.md 자동 로드" },
-  { label: "코드 생성", asis: "필드 주입을 그대로 생성", tobe: "생성자 주입 규칙 안에서 코드 생성" },
-  { label: "검증", asis: "리뷰에서 뒤늦게 발견", tobe: "ConstructorInjectionRule 즉시 통과" },
-];
-
-/**
- * 에이전트 체인 — **플러그인 `ontology/model.ts`의 ACTIONS 전이 순서 그대로**다.
- * `state`는 그 단계가 도달하는 실제 상태, `gate`는 그 전이에 걸린 실제 게이트 코드다.
- *
- * 설계안의 9단계 목록에는 **베이스라인 포착**(기존 테스트가 그린인지 먼저 확인)과
- * **계약 테스트 작성**(실패하는 테스트를 먼저 쓴다)이 빠져 있어 여기서 채운다. 그 둘이 없으면
- * "게이트가 거짓 완료를 막는다"는 이 화면의 주장 자체가 성립하지 않는다.
- */
-const STEPS = [
-  { n: 1, key: "scan", title: "프로젝트 파악", sub: "스캔·세션 생성", state: "SCAN", gate: null },
-  { n: 2, key: "clarify", title: "요구사항 확정", sub: "질문으로 명확화", state: "CLARIFY", gate: null },
-  { n: 3, key: "prd", title: "명세 작성", sub: "PRD · 정합성 원장", state: "PRD", gate: "CONFORMANCE_LEDGER" },
-  { n: 4, key: "jira", title: "이슈 연동", sub: "Jira · 선택", state: "JIRA", gate: null },
-  { n: 5, key: "baseline", title: "베이스라인 포착", sub: "기존 테스트 그린 확인", state: "BASELINE", gate: "BASELINE_RED" },
-  { n: 6, key: "contract", title: "계약 테스트", sub: "실패하는 테스트 먼저", state: "CODE_READY", gate: "CONTRACT_NOT_AUTHORED" },
-  { n: 7, key: "implement", title: "구현", sub: "code-agent · REQ 하나씩", state: "CODE_DONE", gate: "WIRING_GATE_NOT_SATISFIED" },
-  { n: 8, key: "verify", title: "테스트·검증", sub: "test-agent · 회귀+신규", state: "TEST_DONE", gate: "TEST_EVIDENCE_MISMATCH" },
-  { n: 9, key: "review", title: "리뷰·감사", sub: "review-agent · 아키텍처", state: "DOCS_PENDING", gate: "PRD_COVERAGE_GATE_FAILED" },
-  { n: 10, key: "docs", title: "문서 갱신", sub: "docs-agent · README·docs", state: "COMMIT_PENDING", gate: null },
-  { n: 11, key: "commit", title: "커밋", sub: "fix/feat 자동", state: "DONE", gate: null },
-];
-const REQS = ["REQ-001", "REQ-002", "REQ-003", "REQ-004", "REQ-005", "REQ-006", "REQ-007"];
-/** STEPS에서 `implement`의 0-based 인덱스 — 여기서 REQ 진행바가 돈다. */
-const IMPLEMENT_INDEX = STEPS.findIndex((s) => s.key === "implement");
-
-/**
- * 완료 검증 항목. `gate`는 **플러그인에 실재하는 게이트 코드**다(`ontology/model.ts`).
- *
- * 앞 IntroBox가 "커버리지·회귀·**런타임**·계약 게이트"라고 말해놓고 런타임 줄이 없었다 —
- * 문구와 화면이 어긋나 있었다. `RUNTIME_UNVERIFIED_GATE_FAILED`는 review_done을 막는
- * 실제 게이트이므로 줄을 채웠다.
- *
- * ArchUnit만 gate가 null이다. 그건 프로젝트 하네스 규칙이지 플러그인 게이트가 아니다 —
- * 없는 코드를 지어 붙이면 이 학습화면이 거짓말을 하게 된다.
- */
-const AUDIT_ROWS = [
-  { key: "coverage", label: "커버리지", detail: "jacoco · 라인 80% 기준", gate: "PRD_COVERAGE_GATE_FAILED" },
-  { key: "regression", label: "회귀", detail: "CharacterServiceTest 전량", gate: "TEST_EVIDENCE_MISMATCH" },
-  { key: "runtime", label: "런타임", detail: "실제 기동·호출 증거 대조", gate: "RUNTIME_UNVERIFIED_GATE_FAILED" },
-  { key: "contract", label: "계약", detail: "character↔inventory 스펙 대조", gate: "CONTRACT_NOT_AUTHORED" },
-  { key: "archunit", label: "ArchUnit 규칙", detail: "ConstructorInjectionRule", gate: null },
-];
-
-const DEMO_PATCHES: Record<string, string> = {
-  v1: "404 예외처리 보강",
-  v2: "ETag / 304 캐싱",
-  v3: "조회 레이트리밋",
-};
-
-const SEED_RULES = [
-  "캐릭터 삭제 후 닉네임 30일 예약 — 재사용 금지(명의 도용 방지)",
-  "확률형 아이템 확률은 공시값이 원본 — 코드 상수 신뢰 금지(게임산업법 확률 공시)",
-  "만 18세 미만 계정은 심야(00~06시) 접속·결제 제한 — 청소년보호법",
-];
-
-const ROADMAP_NODES = [
-  { id: "t-026", label: "캐릭터 단건조회 API 추가", kind: "원본", status: "done" },
-  { id: "t-026-p1", label: "404 예외처리 보강", kind: "v1-patch", status: "done" },
-  { id: "t-026-p2", label: "ETag / 304 캐싱", kind: "v2-patch", status: "in_progress" },
-];
-
-/**
- * EndingCTA 4단계. 마켓플레이스명은 **자리표시자를 그대로 노출**해 "본인 값을 넣으라"고
- * 알린다 — 그럴싸한 가짜 호스트를 지어 넣으면 사용자가 그대로 복사해 실행하고 실패한다.
- */
-const ENDING_CTA = [
-  "/plugin update sugo@<marketplace>",
-  "/sugo:ws-add {workspace}",
-  "/sugo:add {등록할프로젝트경로} {workspace}",
-  "/sugo:feat {프로젝트}에서 캐릭터 단건조회 API 추가",
-];
-
-function IntroBox({ lines }: { lines: string[] }) {
-  return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-background)]/60 p-5">
-      <div className="flex gap-3">
-        <span className="shrink-0 text-[20px]">💡</span>
-        <div className="space-y-1.5">
-          {lines.map((l) => (
-            <p key={l} className="text-[15px] leading-relaxed text-[var(--color-text)]">
-              {l}
-            </p>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+function Fact({ label, value, tone }: { label: string; value: string; tone?: "good" | "warn" }) {
+  return <div className="grid grid-cols-[132px_1fr] gap-5 border-b border-[var(--color-border)]/70 py-3 last:border-b-0"><span className="font-mono text-[10.5px] uppercase tracking-[.12em] text-[var(--color-text-dim)]">{label}</span><span className={cn("text-[13px] leading-relaxed", tone === "good" ? "text-emerald-300" : tone === "warn" ? "text-amber-300" : "text-[var(--color-text)]")}>{value}</span></div>;
 }
 
-function CodeBlock({ title, code, tone }: { title: string; code: string; tone: "asis" | "tobe" }) {
-  return (
-    <div className="min-w-0 flex-1">
-      <div
-        className={cn(
-          "mb-1.5 inline-block rounded border px-2 py-0.5 font-mono text-[11px]",
-          tone === "asis" ? "border-rose-500/40 text-rose-300" : "border-emerald-500/40 text-emerald-300",
-        )}
-      >
-        {title}
-      </div>
-      <pre className="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-3 font-mono text-[11.5px] leading-relaxed text-[var(--color-text)]">
-        {code}
-      </pre>
-    </div>
-  );
+function Command({ children }: { children: string }) {
+  return <code className="block overflow-x-auto border-l-2 border-cyan-400 bg-[var(--color-background)] px-4 py-3 font-mono text-[12px] text-cyan-200">{children}</code>;
 }
 
-/**
- * 설계안 Playbook — **100% 시뮬레이션이다.** 네트워크 호출이 하나도 없고 화면의 숫자·로그·
- * 노드는 전부 이 파일 안의 상수다. 실제 데이터를 섞으면 "체험"과 "관제"가 뒤엉켜 사용자가 지금
- * 보는 게 자기 프로젝트인지 예시인지 구분을 못 한다.
- */
+function Install() {
+  return <div className="grid gap-8 lg:grid-cols-2"><div className="space-y-3"><Command>claude plugin marketplace add kim-svadoz/sugo</Command><Command>claude plugin install sugo@sugo-marketplace</Command><Command>/reload-plugins · /sugo:version</Command><p className="pt-2 text-[12px] leading-relaxed text-[var(--color-text-muted)]">배포 번들만으로 실행됩니다. Console이나 데이터베이스가 없어도 로컬 파이프라인을 시작할 수 있습니다.</p></div><div><Fact label="FIRST RUN" value="빈 HOME과 node_modules 없는 배포 형태에서 MCP 핵심 경로 검증"/><Fact label="REGISTER" value="Workspace와 프로젝트 등록을 멱등하게 합성"/><Fact label="PLATFORM" value="Windows · macOS · Linux 경로와 사용자 로컬 시간대 적용"/><Fact label="RESULT" value="같은 입력은 같은 관리 경계와 산출물 구조를 만듭니다." tone="good"/></div></div>;
+}
+
+function Rules() {
+  return <div className="grid gap-8 lg:grid-cols-2"><div><div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3"><span className="text-[13px] font-semibold text-[var(--color-text-bright)]">공통 정책 정본</span><span className="font-mono text-[11px] text-cyan-300">AGENTS.md</span></div><div className="mt-4 space-y-3 font-mono text-[12px] text-[var(--color-text-muted)]">{["Codex → AGENTS.md 직접 로드", "Claude → CLAUDE.md의 @AGENTS.md import", "양쪽 → .claude/rules/** 재귀 규칙 적용"].map(x => <div key={x} className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-400"/>{x}</div>)}</div></div><div><Fact label="STACK" value="언어 · 프레임워크 · 빌드 도구를 감지해 필요한 하네스만 선택"/><Fact label="DOMAIN" value="도메인 규칙 관리의 체크포인트를 프로젝트 규칙으로 동기화"/><Fact label="BOUNDARY" value="Sugo 관리 블록 밖의 사용자 설정은 수정하지 않음"/><Fact label="EFFECT" value="코드 생성과 검증이 같은 규칙을 사용합니다." tone="good"/></div></div>;
+}
+
+function Spec() {
+  const pipeline = ["SPEC", "PRD", "BASELINE", "CODE", "TEST", "REVIEW", "DOCS", "DONE"];
+  return <div className="space-y-7"><div className="flex flex-wrap gap-1.5">{pipeline.map((x, i) => <span key={x} className={cn("rounded-md border px-2.5 py-1.5 font-mono text-[10.5px]", i < 6 ? "border-cyan-500/35 bg-cyan-500/8 text-cyan-200" : "border-[var(--color-border)] text-[var(--color-text-dim)]")}>{x}</span>)}</div><div className="grid gap-8 lg:grid-cols-2"><div><Fact label="DRAFT" value="Schedule의 기획 이미지 · 문서 링크 · 작업 컨텍스트"/><Fact label="SPEC" value="<HOME>/.claude/sugo/specs/YYYYMMDD/<slug>/vN/spec.md"/><Fact label="FEATURE" value="<project>/sugo/features/YYYYMMDD/<slug>/prd.md"/></div><div><Fact label="VERSION" value="다시 작성하면 기존 파일을 덮지 않고 다음 vN 생성"/><Fact label="TIME" value="날짜 경계는 실행 사용자의 로컬 시간대 기준"/><Fact label="GATE" value="필수 섹션 · REQ · 증거가 없으면 다음 상태 전이를 차단" tone="warn"/></div></div></div>;
+}
+
+function Review() {
+  const evidence = [["작업 결과 요약", "무엇을 바꿨고 사용자 가치가 무엇인지"], ["REQ 충족 상태", "요구사항별 완료 · 미완료 · 판단 필요"], ["검증 증거", "명령 · 결과 · 런타임 · 계약 · 남은 위험"], ["변경 파일", "실제 본문과 기준점이 있는 diff"]];
+  return <div className="grid gap-8 lg:grid-cols-[1fr_320px]"><div className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">{evidence.map(([title, detail], i) => <div key={title} className="grid grid-cols-[34px_155px_1fr] items-center gap-3 py-3"><span className="font-mono text-[11px] text-cyan-300">0{i + 1}</span><span className="text-[13px] font-semibold text-[var(--color-text-bright)]">{title}</span><span className="text-[12px] text-[var(--color-text-muted)]">{detail}</span></div>)}</div><div className="border-l border-[var(--color-border)] pl-6"><div className="font-mono text-[10px] uppercase tracking-[.15em] text-amber-300">review_done gate</div><p className="mt-3 text-[14px] leading-relaxed text-[var(--color-text)]">검토 자료를 먼저 게시합니다. 사용자는 독립 HTML 보고서를 연 뒤 <b>확인, 진행</b>하거나 수정 내용을 저장해 재개합니다.</p><div className="mt-4 inline-flex items-center gap-2 rounded-md border border-emerald-500/35 bg-emerald-500/8 px-3 py-2 font-mono text-[11px] text-emerald-300"><ShieldCheck size={14}/> evidence before approval</div></div></div>;
+}
+
+function Patch() {
+  return <div className="grid gap-8 lg:grid-cols-2"><div className="relative space-y-2 border-l border-violet-500/40 pl-6">{["FEAT · 캐릭터 단건조회", "PATCH 1 · 404 계약 보강", "PATCH 2 · ETag 캐시 정책"].map((x, i) => <div key={x} className="relative py-2"><span className={cn("absolute -left-[29px] top-3.5 h-2 w-2 rounded-full ring-4 ring-[var(--color-surface)]", i ? "bg-violet-400" : "bg-cyan-400")}/><div className="font-mono text-[10px] text-[var(--color-text-dim)]">{i ? `REVISION 0${i}` : "ORIGINAL"}</div><div className="mt-0.5 text-[13px] text-[var(--color-text-bright)]">{x}</div></div>)}</div><div><Fact label="IMMUTABLE" value="완료된 feat의 요약 · 변경 파일 · 검증 결과는 후속 작업으로 바꾸지 않음"/><Fact label="PATCH" value="PRD-patch-vN과 work-result-patch-vN을 새 차수에 기록"/><Fact label="MEMORY" value="도메인 규칙과 판단 배경은 체크포인트로 다음 세션에 전달"/><Fact label="CONSOLE" value="AI 작업 현황에서 차수별 결과와 파일을 분리해 확인" tone="good"/></div></div>;
+}
+
+function Lifecycle() {
+  const items = [["UPDATE", "update + reload", "새 버전을 적용하고 기존 관리 데이터를 이어서 사용합니다."], ["UNINSTALL", "비활성 보관", "훅·명령·설정 영향은 제거하고 복구 가능한 데이터만 제품 경계 밖에 둡니다."], ["PURGE", "완전 삭제", "명시적으로 요청할 때 보관 데이터까지 삭제해 설치 전 상태로 돌아갑니다."]];
+  return <div className="grid gap-6 md:grid-cols-3">{items.map(([label, title, body], i) => <div key={label} className="border-t border-[var(--color-border)] pt-4"><div className={cn("font-mono text-[10px] tracking-[.14em]", i === 1 ? "text-amber-300" : i === 2 ? "text-rose-300" : "text-cyan-300")}>{label}</div><h3 className="mt-2 text-[15px] font-semibold text-[var(--color-text-bright)]">{title}</h3><p className="mt-2 text-[12px] leading-relaxed text-[var(--color-text-muted)]">{body}</p></div>)}</div>;
+}
+
+const CONTENT: Record<StageId, () => ReactNode> = { install: Install, rules: Rules, spec: Spec, review: Review, patch: Patch, lifecycle: Lifecycle };
+
+/** 실제 사용자 데이터를 읽지 않는 100% 시뮬레이션 화면이다. */
 export function Playbook() {
-  const [tab, setTab] = useState<TabId>(1);
-  const [typed, setTyped] = useState(0);
-  const [harnessStep, setHarnessStep] = useState(0);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [reqDone, setReqDone] = useState(0);
-  const [auditPass, setAuditPass] = useState<Record<string, boolean>>({});
-  const [blocked, setBlocked] = useState(true);
+  const [activeId, setActiveId] = useState<StageId>("install");
   const { pluginVersion } = useDashboardMeta();
-
-  const reduced = useMemo(
-    () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
-    [],
-  );
-
-  // 히어로 타이핑 — 1회 완주. reduced-motion이면 즉시 전체.
-  useEffect(() => {
-    if (reduced) {
-      setTyped(HERO_TEXT.length);
-      return;
-    }
-    const id = window.setInterval(() => {
-      setTyped((t) => {
-        if (t >= HERO_TEXT.length) {
-          window.clearInterval(id);
-          return t;
-        }
-        return t + 1;
-      });
-    }, 55);
-    return () => window.clearInterval(id);
-  }, [reduced]);
-
-  useEffect(() => {
-    if (tab !== 2) return;
-    setHarnessStep(0);
-    const id = window.setInterval(() => setHarnessStep((s) => (s >= HARNESS_STEPS.length ? s : s + 1)), 700);
-    return () => window.clearInterval(id);
-  }, [tab]);
-
-  // 탭3 — 구현 단계에서는 REQ를 하나씩 끝낸 **뒤에야** 다음 단계로 넘어간다(스펙의 핵심 연출).
-  useEffect(() => {
-    if (tab !== 3) return;
-    setStepIndex(0);
-    setReqDone(0);
-    const id = window.setInterval(() => {
-      setStepIndex((si) => {
-        if (si === IMPLEMENT_INDEX) {
-          setReqDone((r) => (r < REQS.length ? r + 1 : r));
-          return si;
-        }
-        return si >= STEPS.length - 1 ? si : si + 1;
-      });
-    }, 600);
-    return () => window.clearInterval(id);
-  }, [tab]);
-
-  useEffect(() => {
-    if (tab === 3 && stepIndex === IMPLEMENT_INDEX && reqDone >= REQS.length) {
-      const t = window.setTimeout(() => setStepIndex((s) => s + 1), 600);
-      return () => window.clearTimeout(t);
-    }
-  }, [tab, stepIndex, reqDone]);
-
-  // 탭4 — 순서대로 통과시키되 ArchUnit에서 막는다("완료는 선언이 아니라 증명").
-  useEffect(() => {
-    if (tab !== 4) return;
-    setAuditPass({});
-    setBlocked(true);
-    let i = 0;
-    const id = window.setInterval(() => {
-      const row = AUDIT_ROWS[i];
-      if (!row) {
-        window.clearInterval(id);
-        return;
-      }
-      setAuditPass((p) => ({ ...p, [row.key]: row.key !== "archunit" }));
-      i++;
-    }, 700);
-    return () => window.clearInterval(id);
-  }, [tab]);
-
-  return (
-    <div className="pb-compact relative">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="pb-aurora-a absolute -left-20 -top-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="pb-aurora-b absolute -right-16 top-32 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
-      </div>
-
-      <div className="group relative mx-auto w-[min(96vw,1680px)] max-w-none overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/80 p-10 shadow-2xl backdrop-blur-sm">
-        <div className="mb-1 flex flex-wrap items-center gap-3">
-          <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-bright)]">Sugo 플레이북</h1>
-          <span className="rounded-md border border-[var(--color-border)] px-2 py-0.5 font-mono text-[11.5px] text-[var(--color-text-muted)]">
-            v{pluginVersion ?? "—"}
-          </span>
-        </div>
-        <p className="mb-6 font-mono text-[14px] text-[var(--color-text-muted)]">
-          {HERO_TEXT.slice(0, typed)}
-          {typed < HERO_TEXT.length && <span className="pb-caret">▍</span>}
-        </p>
-
-        <div className="mb-6 flex flex-wrap gap-2">
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] transition-colors",
-                tab === id
-                  ? "bg-[var(--color-primary)] text-white"
-                  : "border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
-              )}
-            >
-              <Icon size={14} /> {label}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-5">
-          <IntroBox lines={INTRO[tab]} />
-
-          {tab === 1 && (
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              {["character-service", "inventory-service", "auth-service"].map((repo, i) => (
-                <div
-                  key={repo}
-                  className={cn(
-                    "rounded-xl border p-4 font-mono text-[12.5px]",
-                    i < 2
-                      ? "border-cyan-500/40 bg-cyan-500/5 text-cyan-200"
-                      : "border-[var(--color-border)] text-[var(--color-text-muted)]",
-                  )}
-                >
-                  📦 {repo}
-                  <div className="mt-1 text-[11px] text-[var(--color-text-dim)]">
-                    {i < 2 ? "workspace: game-core" : "미소속"}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {tab === 2 && (
-            <div className="space-y-4">
-              <div className="space-y-1 font-mono text-[12.5px]">
-                {HARNESS_STEPS.slice(0, harnessStep).map((s) => (
-                  <div key={s} className="pb-log-in text-[var(--color-text)]">
-                    {s}
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-3 md:flex-row">
-                <CodeBlock title="AS-IS" code={CODE_ASIS} tone="asis" />
-                <CodeBlock title="TO-BE" code={CODE_TOBE} tone="tobe" />
-              </div>
-              <div className="overflow-hidden rounded-xl border border-[var(--color-border)]">
-                <div className="grid grid-cols-[120px_1fr_1fr] bg-[var(--color-background)] px-4 py-2 font-mono text-[10.5px] uppercase tracking-wider text-[var(--color-text-dim)]">
-                  <span>동작 시점</span><span className="text-rose-300">AS-IS</span><span className="text-emerald-300">TO-BE</span>
-                </div>
-                {HARNESS_BEHAVIOR.map((row) => (
-                  <div key={row.label} className="grid grid-cols-[120px_1fr_1fr] gap-3 border-t border-[var(--color-border)] px-4 py-3 text-[12px]">
-                    <span className="font-semibold text-[var(--color-text)]">{row.label}</span>
-                    <span className="text-rose-200/80">{row.asis}</span>
-                    <span className="text-emerald-200">✓ {row.tobe}</span>
-                  </div>
-                ))}
-              </div>
-              {harnessStep >= HARNESS_STEPS.length && (
-                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-[12.5px] text-emerald-200">
-                  결과: 다음 Claude Code 세션부터 규칙이 자동으로 컨텍스트에 들어오고, 생성 코드와 검증 기준이 같은 하네스를 사용합니다.
-                </div>
-              )}
-              <p className="font-mono text-[11.5px] text-[var(--color-text-dim)]">CharacterService.java</p>
-            </div>
-          )}
-
-          {tab === 3 && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-1.5">
-                {STEPS.map((s, i) => (
-                  <div
-                    key={s.key}
-                    className={cn(
-                      "min-w-[132px] rounded-lg border px-2.5 py-1.5 text-[12.5px]",
-                      i < stepIndex
-                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                        : i === stepIndex
-                          ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-200"
-                          : "border-[var(--color-border)] text-[var(--color-text-dim)]",
-                    )}
-                  >
-                    <span className="font-mono">{s.n}.</span> {s.title}
-                    <div className="text-[11px] opacity-70">{s.sub}</div>
-                    {/* 실제 플러그인의 상태/게이트 코드를 그대로 노출한다 — 데모용 라벨이 아니라
-                        `ontology/model.ts`에 있는 값이라야 학습화면이 거짓말을 안 한다. */}
-                    <div className="mt-1 flex flex-wrap items-center gap-1 font-mono text-[9.5px]">
-                      <span className="rounded bg-[var(--color-border)]/60 px-1 py-px opacity-80">{s.state}</span>
-                      {s.gate && <span className="rounded bg-amber-500/15 px-1 py-px text-amber-300/90">🔒 {s.gate}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <div className="mb-1 flex items-center justify-between font-mono text-[11.5px] text-[var(--color-text-muted)]">
-                  <span>구현 — REQ 하나씩</span>
-                  <span>
-                    {reqDone}/{REQS.length}
-                  </span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-border)]">
-                  <div
-                    className="h-full rounded-full bg-cyan-400 transition-all duration-500"
-                    style={{ width: `${(reqDone / REQS.length) * 100}%` }}
-                  />
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {REQS.map((r, i) => (
-                    <span
-                      key={r}
-                      className={cn(
-                        "rounded border px-1.5 py-0.5 font-mono text-[10px]",
-                        i < reqDone
-                          ? "border-emerald-500/40 text-emerald-300"
-                          : "border-[var(--color-border)] text-[var(--color-text-dim)]",
-                      )}
-                    >
-                      {r}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {tab === 4 && (
-            <div className="space-y-3">
-              {AUDIT_ROWS.map((row) => {
-                const state = auditPass[row.key];
-                return (
-                  <div
-                    key={row.key}
-                    className="flex items-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2"
-                  >
-                    <span
-                      className={cn(
-                        "w-14 shrink-0 rounded border px-1.5 py-0.5 text-center font-mono text-[10px]",
-                        state === undefined
-                          ? "border-[var(--color-border)] text-[var(--color-text-dim)]"
-                          : state
-                            ? "border-emerald-500/40 text-emerald-300"
-                            : "border-rose-500/40 text-rose-300",
-                      )}
-                    >
-                      {state === undefined ? "…" : state ? "PASS" : "FAIL"}
-                    </span>
-                    <span className="text-[14px] text-[var(--color-text)]">{row.label}</span>
-                    {row.gate && (
-                      <span className="rounded bg-amber-500/15 px-1.5 py-px font-mono text-[10px] text-amber-300/90">
-                        🔒 {row.gate}
-                      </span>
-                    )}
-                    <span className="ml-auto font-mono text-[11.5px] text-[var(--color-text-dim)]">{row.detail}</span>
-                  </div>
-                );
-              })}
-              {blocked && auditPass.archunit === false && (
-                <div className="pb-slam rounded-lg border border-rose-500/40 bg-rose-500/10 p-4">
-                  <div className="font-mono text-[13px] font-bold text-rose-300">🚫 needs_fix — ArchUnit 규칙 위배</div>
-                  <p className="mt-1 text-[12.5px] text-rose-200/90">
-                    ConstructorInjectionRule: 생성자 final 누락이 검출됐습니다. '완료'는 선언이 아니라 증명입니다.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setAuditPass((current) => ({ ...current, archunit: true }));
-                      setBlocked(false);
-                    }}
-                    className="mt-2 rounded border border-rose-500/40 px-2 py-1 font-mono text-[11px] text-rose-200 hover:bg-rose-500/10"
-                  >
-                    생성자 주입으로 수정하고 재검증
-                  </button>
-                </div>
-              )}
-              {!blocked && auditPass.archunit === true && (
-                <div className="pb-slam rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4">
-                  <div className="font-mono text-[13px] font-bold text-emerald-300">✓ VERIFIED — 커밋 전이 잠금 해제</div>
-                  <p className="mt-1 text-[12.5px] text-emerald-100/90">
-                    위반 코드를 수정한 뒤 ArchUnit을 다시 실행했고, 5개 증거가 모두 PASS여서 DONE 전이가 허용됩니다.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {tab === 5 && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <div className="font-mono text-[11.5px] text-[var(--color-text-muted)]">패치 계보</div>
-                <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 font-mono text-[12px] text-[var(--color-text)]">
-                  원본 · 캐릭터 단건조회 API
-                </div>
-                {Object.entries(DEMO_PATCHES).map(([v, label], i) => (
-                  <div
-                    key={v}
-                    className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 font-mono text-[12px] text-violet-200"
-                    style={{ marginLeft: (i + 1) * 16 }}
-                  >
-                    {v} · {label}
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2">
-                <div className="font-mono text-[11.5px] text-[var(--color-text-muted)]">체크포인트로 심는 회사 맥락</div>
-                {SEED_RULES.map((r) => (
-                  <div
-                    key={r}
-                    className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[12.5px] leading-relaxed text-amber-100"
-                  >
-                    {r}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {tab === 6 && (
-            <div className="space-y-2">
-              <div className="rounded-lg border border-[var(--color-border)] bg-slate-500/10 px-3 py-2 font-mono text-[12.5px] text-[var(--color-text)]">
-                📄 SPEC · 캐릭터 단건조회 API 추가
-              </div>
-              <div
-                className="rounded-lg border border-[var(--color-border)] bg-slate-500/10 px-3 py-2 font-mono text-[12.5px] text-[var(--color-text)]"
-                style={{ marginLeft: 18 }}
-              >
-                🔁 RUN · character-service
-              </div>
-              {ROADMAP_NODES.map((n) => (
-                <div
-                  key={n.id}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg border px-3 py-2 font-mono text-[12px]",
-                    n.status === "done" ? "border-emerald-600/40 text-emerald-200" : "border-[#5c8bcc]/50 text-[#9dbdea]",
-                  )}
-                  style={{ marginLeft: 36 }}
-                >
-                  <span className="rounded border border-[var(--color-border)] px-1.5 py-0.5 text-[10px] text-[var(--color-text-dim)]">
-                    {n.kind}
-                  </span>
-                  {n.label}
-                </div>
-              ))}
-              <p className="pt-1 font-mono text-[11.5px] text-[var(--color-text-dim)]">SPEC ⊃ RUN ⊃ TASK ⊃ 요구사항</p>
-              <p className="font-mono text-[11.5px] text-[var(--color-text-dim)]">노드 클릭 → 우측에서 상세·PR</p>
-            </div>
-          )}
-
-          <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-5">
-            <div className="mb-2 text-[13px] font-semibold text-[var(--color-text-bright)]">시작하기</div>
-            <ol className="space-y-1.5">
-              {ENDING_CTA.map((cmd, i) => (
-                <li key={cmd} className="flex items-center gap-2 font-mono text-[12px]">
-                  <span className="w-4 shrink-0 text-[var(--color-text-dim)]">{i + 1}</span>
-                  <code className="rounded bg-[var(--color-background)] px-2 py-1 text-cyan-200">{cmd}</code>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-2 text-[11px] text-[var(--color-text-dim)]">
-              꺾쇠·중괄호는 자리표시자입니다 — 본인 마켓플레이스·워크스페이스 값으로 바꿔서 실행하세요.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const active = STAGES.find(x => x.id === activeId) ?? STAGES[0];
+  const Content = CONTENT[active.id];
+  return <div className="mx-auto w-full max-w-[1680px] pb-10"><header className="mb-7 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-border)] pb-6"><div><div className="mb-2 flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[.18em] text-cyan-300"><span className="h-px w-7 bg-cyan-400"/>PRODUCT OPERATING GUIDE</div><h1 className="text-[30px] font-semibold tracking-[-.03em] text-[var(--color-text-bright)]">Sugo 플레이북</h1><p className="mt-2 text-[13px] text-[var(--color-text-muted)]">설치부터 근거 검토, 후속 개발, 제거까지 실제 제품 수명주기를 따라갑니다.</p></div><span className="shrink-0 font-mono text-[11px] text-[var(--color-text-dim)]">PLUGIN {pluginVersion ? `v${pluginVersion}` : "—"} · SIMULATION</span></header><div className="grid min-w-0 gap-7 xl:grid-cols-[250px_minmax(0,1fr)]"><nav aria-label="Sugo 제품 수명주기" className="border-b border-[var(--color-border)] pb-5 xl:border-r xl:border-b-0 xl:pr-5 xl:pb-0"><div role="tablist" aria-orientation="vertical" className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:block xl:space-y-1">{STAGES.map(stage => { const Icon = stage.icon; const selected = stage.id === active.id; return <button key={stage.id} role="tab" aria-selected={selected} aria-controls={`playbook-panel-${stage.id}`} id={`playbook-tab-${stage.id}`} onClick={() => setActiveId(stage.id)} className={cn("flex w-full items-center gap-2 rounded-md px-2.5 py-2.5 text-left transition-colors xl:gap-3 xl:px-3 xl:py-3", selected ? "bg-cyan-500/10 text-[var(--color-text-bright)]" : "text-[var(--color-text-muted)] hover:bg-[var(--color-background)] hover:text-[var(--color-text)]")}><span className={cn("font-mono text-[10px]", selected ? "text-cyan-300" : "text-[var(--color-text-dim)]")}>{stage.order}</span><Icon size={15} className={selected ? "text-cyan-300" : "text-[var(--color-text-dim)]"}/><span className="text-[12px] font-medium xl:text-[13px]">{stage.label}</span></button>})}</div></nav><section role="tabpanel" id={`playbook-panel-${active.id}`} aria-labelledby={`playbook-tab-${active.id}`} className="min-w-0 px-1 py-1"><div className="mb-7 max-w-4xl"><div className="font-mono text-[10px] uppercase tracking-[.18em] text-cyan-300">{active.eyebrow}</div><h2 className="mt-2 text-[25px] font-semibold tracking-[-.025em] text-[var(--color-text-bright)]">{active.title}</h2><p className="mt-2 text-[14px] text-[var(--color-text-muted)]">{active.outcome}</p></div><Content/></section></div></div>;
 }

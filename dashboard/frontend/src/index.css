@@ -141,53 +141,6 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .adr-content td { padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--color-border); }
 .adr-content tr:hover td { background: var(--color-surface); }
 
-/* ──── Playbook (pb-) — reduced-motion에선 전면 정지 ──── */
-@keyframes pb-aurora-a { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(4%,-3%,0) scale(1.08); } }
-@keyframes pb-aurora-b { 0%,100% { transform: translate3d(0,0,0) scale(1.05); } 50% { transform: translate3d(-5%,4%,0) scale(0.96); } }
-.pb-aurora-a { animation: pb-aurora-a 24s ease-in-out infinite; }
-.pb-aurora-b { animation: pb-aurora-b 28s ease-in-out infinite; }
-
-@keyframes pb-caret { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
-.pb-caret { animation: pb-caret 1s step-end infinite; }
-
-@keyframes pb-ants { to { stroke-dashoffset: -16; } }
-.pb-ants { stroke-dasharray: 6 6; animation: pb-ants 0.6s linear infinite; }
-
-@keyframes pb-pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(139,92,246,0.55); } 70% { box-shadow: 0 0 0 10px rgba(139,92,246,0); } 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); } }
-.pb-pulse { animation: pb-pulse-ring 1.6s ease-out infinite; }
-
-@keyframes pb-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.pb-rise { animation: pb-rise 0.42s cubic-bezier(0.16,1,0.3,1) both; }
-
-@keyframes pb-log-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
-.pb-log-in { animation: pb-log-in 0.3s ease-out both; }
-
-@keyframes pb-slam { 0% { opacity: 0; transform: scale(1.15) translateY(-6px); } 55% { opacity: 1; transform: scale(0.97) translateY(0); } 70% { transform: scale(1.02); } 100% { transform: scale(1); } }
-.pb-slam { animation: pb-slam 0.5s cubic-bezier(0.16,1,0.3,1) both; }
-
-@keyframes pb-confetti-fall {
-  0% { opacity: 0; transform: translate(0,0) rotate(0deg); }
-  10% { opacity: 1; }
-  100% { opacity: 1; transform: translate(var(--pb-cx), var(--pb-cy)) rotate(var(--pb-cr)); }
-}
-@keyframes pb-confetti-reverse {
-  0% { opacity: 1; transform: translate(var(--pb-cx), var(--pb-cy)) rotate(var(--pb-cr)); }
-  100% { opacity: 0; transform: translate(0,0) rotate(0deg); }
-}
-.pb-confetti { position: absolute; top: 0; left: 50%; width: 8px; height: 8px; border-radius: 2px; will-change: transform, opacity; }
-.pb-confetti-fall { animation: pb-confetti-fall 1.1s cubic-bezier(0.2,0.6,0.3,1) forwards; }
-.pb-confetti-freeze { animation: pb-confetti-fall 1.1s cubic-bezier(0.2,0.6,0.3,1) forwards; animation-play-state: paused; }
-.pb-confetti-reverse { animation: pb-confetti-reverse 0.7s ease-in forwards; }
-
-@keyframes pb-pop { 0% { transform: scale(0.9); opacity: 0.4; } 60% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
-.pb-pop { animation: pb-pop 0.32s ease-out both; }
-
-@media (prefers-reduced-motion: reduce) {
-  .pb-aurora-a, .pb-aurora-b, .pb-caret, .pb-ants, .pb-pulse,
-  .pb-rise, .pb-log-in, .pb-slam, .pb-pop,
-  .pb-confetti-fall, .pb-confetti-freeze, .pb-confetti-reverse { animation: none !important; }
-}
-
 /* ──── Cyberpunk Console chrome (ck-) ──── */
 .ck-glass {
   background: rgba(13, 20, 32, 0.72);
@@ -214,11 +167,6 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
    (한때 여기서 의존을 잇게 만들었다가 스펙과 어긋나 되돌렸다 — §5.1 "읽기전용 뷰어".) */
 .react-flow__handle { cursor: default !important; pointer-events: none !important; }
 .react-flow__node-roadmap, .react-flow__node-container { cursor: pointer !important; }
-
-/* 설계안은 0.85였는데 이 빌드는 루트 폰트가 19px이라 실제로는 글씨가 작게 읽힌다.
-   학습용 화면이라 읽히는 게 우선이므로 0.95로 올렸다(1.0은 max-w-7xl 카드가 사이드바 옆
-   1600px 뷰포트에서 가로로 삐져나온다). */
-.pb-compact { zoom: 1.04; }
 
 .ck-card { transition: filter 0.2s ease; }
 .ck-card:hover { filter: brightness(1.05); }
