@@ -78,11 +78,12 @@ describe("schedule presentation", () => {
     expect(source).toContain("grid-rows-6 gap-1 overflow-auto p-px");
   });
 
-  it("파이프라인 완료와 일정 완료를 서로 다른 상태로 표시한다", () => {
+  it("SPEC 상세에서 별도 일정 닫기 상태를 노출하지 않는다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("파이프라인 완료");
-    expect(source).toContain("일정 닫기");
-    expect(source).toContain("setCommitmentClosed");
+    expect(source).not.toContain('aria-label="일정 상태"');
+    expect(source).not.toContain("setCommitmentClosed");
+    expect(source).not.toContain("Agenda에 다시 열기");
   });
 
   it("Agenda 카드에는 완료 버튼 대신 최신 작업의 배포 범위를 제공한다", () => {

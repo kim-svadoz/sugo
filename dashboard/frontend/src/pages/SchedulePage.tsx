@@ -25,7 +25,7 @@ import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { OperationalPulse } from "../components/OperationalPulse.js";
 import { buildCommitmentQueue, commitmentNextAction, legacyCommitments, type CommitmentView } from "../lib/scheduleCommitment.js";
-import { completeScheduleCommitment, reopenScheduleCommitment, updateScheduleCommitment } from "../api/scheduleCommitmentApi.js";
+import { updateScheduleCommitment } from "../api/scheduleCommitmentApi.js";
 import { archiveScheduleSpec, restoreScheduleSpec, type ScheduleSpecArchiveReason } from "../api/scheduleSpecArchiveApi.js";
 import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
 
@@ -214,26 +214,6 @@ export function SchedulePage() {
   function specForCommitment(commitment: CommitmentView): ScheduledSpec | null {
     return specs?.find((spec) => spec.workspace_name === commitment.workspace_name && spec.id === commitment.spec_id) ?? null;
   }
-  const selectedCommitments = useMemo(
-    () => selected ? commitmentViews.filter((item) => item.workspace_name === selected.workspace_name && item.spec_id === selected.id && !item.id.startsWith("legacy:")) : [],
-    [commitmentViews, selected],
-  );
-
-  async function setCommitmentClosed(commitment: CommitmentView, closed: boolean) {
-    if (!userId) return;
-    setBusy(true);
-    setErrorMsg(null);
-    try {
-      if (closed) await completeScheduleCommitment(userId, commitment.id);
-      else await reopenScheduleCommitment(userId, commitment.id);
-      refetch();
-    } catch {
-      setErrorMsg(closed ? "일정을 닫지 못했습니다." : "일정을 다시 열지 못했습니다.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   function jumpToDate(dueDate: string) {
     const [year, month] = dueDate.split("-").map(Number);
     setCursor({ year, month: month - 1 });
@@ -865,19 +845,6 @@ export function SchedulePage() {
                 ) : <p className="mt-3 text-[10.5px] text-slate-500">아직 실행된 feat 또는 patch가 없습니다.</p>}
               </section>
 
-              {selectedCommitments.length > 0 && (
-                <section className="mt-3 rounded-xl border border-white/[0.08] p-3" aria-label="일정 상태">
-                  <h3 className="text-[12px] font-semibold text-white">일정 상태</h3>
-                  <p className="mt-1 text-[10.5px] leading-relaxed text-slate-400">일정을 닫으면 파이프라인이나 개발 이력은 바뀌지 않고 Agenda에서만 내려갑니다. Calendar에는 계속 남습니다.</p>
-                  {selectedCommitments.map((commitment) => {
-                    const closed = commitment.state === "completed" || commitment.state === "cancelled";
-                    return <div key={commitment.id} className="mt-2 flex items-center justify-between gap-3 rounded-lg bg-black/20 px-3 py-2">
-                      <span className="font-mono text-[10px] text-slate-300">{commitment.due_date ?? "날짜 미정"}</span>
-                      <button type="button" disabled={busy} onClick={() => void setCommitmentClosed(commitment, !closed)} className="rounded-lg border border-white/10 px-2.5 py-1.5 text-[10.5px] font-semibold text-slate-200 hover:bg-white/[0.05] disabled:opacity-40">{closed ? "Agenda에 다시 열기" : "일정 닫기"}</button>
-                    </div>;
-                  })}
-                </section>
-              )}
               {selected.spec_path && (
                 <button
                   onClick={() => setSpecDocumentTarget({ workspace: selected.workspace_name, nodeId: selected.id, title: selected.title })}
