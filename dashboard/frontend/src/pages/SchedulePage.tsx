@@ -553,7 +553,6 @@ export function SchedulePage() {
                         {group.items.map((commitment) => {
                           const remaining = commitment.due_date ? daysUntil(commitment.due_date) : null;
                           const style = scheduleCardStyle(colorOf(commitment.workspace_name));
-                          const action = commitmentNextAction(commitment);
                           const spec = specForCommitment(commitment);
                           return (
                             <div
@@ -571,13 +570,17 @@ export function SchedulePage() {
                                 <div className="flex items-center gap-2">
                                   <span className="truncate text-[14px] font-semibold text-white">{commitment.title}</span>
                                   {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300">파이프라인 완료</span>}
+                                  {commitment.pipeline_status === "running" && <span className="shrink-0 rounded bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-sky-300">진행 중</span>}
                                 </div>
-                                {action.label !== "일정 닫기" && <p className="mt-1 text-[12px] font-semibold text-cyan-200">{action.label}</p>}
-                                <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
-                                  <span className="line-clamp-1">{action.detail}</span>
-                                  {commitment.due_date && <span className="font-mono text-slate-300">{commitment.due_date}</span>}
-                                  {group.id === "overdue" && remaining !== null && <span className="font-semibold text-rose-300">{Math.abs(remaining)}일 지남</span>}
-                                  {group.id === "next" && remaining !== null && <span>D-{remaining}</span>}
+                                <div className="mt-2 flex items-center gap-2 font-mono text-[11px] text-[var(--color-text-muted)]">
+                                  {commitment.due_date && <span className="text-slate-300">{commitment.due_date}</span>}
+                                  {remaining === null
+                                    ? <span>기한 미정</span>
+                                    : remaining < 0
+                                      ? <span className="font-semibold text-rose-300">D+{Math.abs(remaining)}</span>
+                                      : remaining === 0
+                                        ? <span className="font-semibold text-cyan-200">D-Day</span>
+                                        : <span>D-{remaining}</span>}
                                 </div>
                               </div>
                               <DeploymentReach spec={spec} />

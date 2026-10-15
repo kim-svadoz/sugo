@@ -98,6 +98,18 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("completeFromQueue");
   });
 
+  it("Agenda 카드는 파이프라인 상태 태그와 D-day만 간결하게 표시한다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain('commitment.pipeline_status === "done"');
+    expect(source).toContain('commitment.pipeline_status === "running"');
+    expect(source).toContain(">진행 중</span>");
+    expect(source).toContain('{commitment.due_date && <span className="text-slate-300">{commitment.due_date}</span>}');
+    expect(source).toContain(">D-Day</span>");
+    expect(source).toContain("D+{Math.abs(remaining)}");
+    expect(source).not.toContain('{action.label !== "일정 닫기"');
+    expect(source).not.toContain('className="line-clamp-1">{action.detail}</span>');
+  });
+
   it("Schedule 카드 클릭은 상세만 열고 Canvas는 명시적 버튼으로만 연다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     const openSpecBody = source.match(/function openSpec\(spec: ScheduledSpec\) \{([\s\S]*?)\n  \}/)?.[1] ?? "";
