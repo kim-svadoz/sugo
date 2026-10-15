@@ -107,6 +107,8 @@ describe("schedule presentation", () => {
   it("비어 있는 날짜 칸 더블클릭은 해당 날짜가 지정된 메모 추가를 연다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain('onDoubleClick={() => dayChips.length === 0 && dayMemos.length === 0 && setMemoTarget({ initialDate: key })}');
+    expect(source).toContain("더블클릭해 메모");
+    expect(source).not.toContain("> 메모 추가</button>");
   });
 
   it("Planning Inbox와 메모는 Calendar에서만 보인다", () => {
@@ -128,6 +130,7 @@ describe("schedule presentation", () => {
     expect(source).toContain("개발 이력");
     expect(source).toContain('entry.version === 0 ? "feat" : `patch ${entry.version}`');
     expect(source).not.toContain("spec-writer와 실행 에이전트가 함께 봅니다");
+    expect(source).not.toContain("이 SPEC에서 실행한 feat와 patch를 시간순으로 보여줍니다.");
   });
 
   it("개발 이력은 긴 제목만 남기고 중복 본문을 반복하지 않는다", () => {
@@ -154,6 +157,7 @@ describe("schedule presentation", () => {
     expect(source).toContain("프로젝트 도구");
     expect(source).not.toContain("대상 프로젝트 · 선택하면 바로 저장됩니다");
     expect(source).not.toContain("없으면 현재 브랜치에서 시작합니다.");
+    expect(source).not.toContain("마감 기준과 구현이 실행될 저장소를 확인합니다.");
     expect(source).not.toContain("SPEC → feat");
     expect(source).not.toContain("grid grid-cols-2 gap-2 pt-2");
   });
@@ -167,9 +171,9 @@ describe("schedule presentation", () => {
     expect(source).toContain("개발 흐름");
     expect(source).toContain("프로젝트 도구");
     expect(source).toContain("WORKSPACE_RULES_TOOL.label");
-    expect(source).toContain("DEVELOPMENT_LINEAGE_TOOL.label");
-    expect(tools).toContain('label: "워크스페이스 규칙 관리"');
-    expect(tools).toContain('label: "개발 계보 살펴보기"');
+    expect(source).toContain("AI_WORK_STATUS_TOOL.label");
+    expect(tools).toContain('label: "도메인 규칙 관리"');
+    expect(tools).toContain('label: "AI 작업 현황"');
   });
 
   it("Workspaces와 Schedule은 같은 도구 명칭과 설명 정본을 사용한다", () => {
@@ -178,11 +182,19 @@ describe("schedule presentation", () => {
     const checkpoint = readFileSync(new URL("../components/CheckpointPanel.tsx", import.meta.url), "utf8");
     for (const source of [workspaces, schedule]) {
       expect(source).toContain("WORKSPACE_RULES_TOOL.label");
-      expect(source).toContain("DEVELOPMENT_LINEAGE_TOOL.label");
+      expect(source).toContain("AI_WORK_STATUS_TOOL.label");
     }
-    expect(workspaces).toContain("grid-cols-1");
-    expect(workspaces).toContain("xl:grid-cols-2");
+    expect(workspaces).toContain("flex flex-wrap items-center gap-2");
+    expect(workspaces).not.toContain("md:col-span-2 xl:col-span-2");
     expect(checkpoint).toContain("WORKSPACE_RULES_TOOL.label");
+  });
+
+  it("Canvas는 AI 작업 현황을 주 제목으로, Agent Canvas를 보조 명칭으로 쓴다", () => {
+    const overlay = readFileSync(new URL("../components/AgentCanvasOverlay.tsx", import.meta.url), "utf8");
+    const page = readFileSync(new URL("../pages/RoadmapPage.tsx", import.meta.url), "utf8");
+    expect(overlay).toContain("AI_WORK_STATUS_TOOL.label");
+    expect(overlay).toContain("Agent Canvas · Spec");
+    expect(page).toContain("AI_WORK_STATUS_TOOL.label");
   });
 
   it("기획 참고자료는 이미지와 링크를 함께 다루고 빈 읽기 전용 영역은 숨긴다", () => {

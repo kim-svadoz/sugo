@@ -240,8 +240,8 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .workspace-command-card:hover { transform: translateY(-2px); }
 .workspace-command-card--selected {
   background: linear-gradient(135deg, rgba(21, 32, 51, 0.98), rgba(13, 20, 32, 0.92));
-  transform: translateY(-2px);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+  transform: translateY(-1px) scale(1.008);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
 }
 .command-detail { transform-origin: top center; }
 

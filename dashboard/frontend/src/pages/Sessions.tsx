@@ -47,7 +47,7 @@ import { historyContextTitle, historyDisplayDate, historyDisplayTitle } from "..
 import { workspacePulse } from "../lib/operationalPulse.js";
 import { OperationalPulse } from "../components/OperationalPulse.js";
 import { workspaceCommandSummary } from "../lib/experienceModel.js";
-import { DEVELOPMENT_LINEAGE_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
+import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
 
 /** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
@@ -794,7 +794,7 @@ export function Sessions() {
                   "ck-card workspace-command-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-4 transition-[opacity,filter,background-color,transform,box-shadow] duration-200",
                   WORKSPACE_CARD_FOCUS_CLASSES,
                   workspaceCardEmphasis(isSel, selectedWorkspace !== null),
-                  isSel && "workspace-command-card--selected md:col-span-2 xl:col-span-2",
+                  isSel && "workspace-command-card--selected",
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
@@ -847,14 +847,14 @@ export function Sessions() {
                     <div className="mt-2 font-mono text-xs text-cyan-400">{ws.activeTaskCount} task 진행 중</div>
                   ) : null}
                 </div>
-                <div className="mt-4 grid grid-cols-1 gap-2 border-t border-[var(--color-border)] pt-3 xl:grid-cols-2" aria-label="워크스페이스 도구">
+                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--color-border)] pt-3" aria-label="워크스페이스 도구">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedWorkspace(ws.name);
                         setCheckpointModal(ws.name);
                       }}
-                      className="group flex min-w-0 items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.07] px-2.5 py-2 text-left outline-none transition-colors hover:border-amber-400/50 hover:bg-amber-500/[0.13] focus-visible:bg-amber-500/[0.16]"
+                      className="group inline-flex max-w-full items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.07] px-2.5 py-1.5 text-left outline-none transition-colors hover:border-amber-400/50 hover:bg-amber-500/[0.13] focus-visible:bg-amber-500/[0.16]"
                       title={WORKSPACE_RULES_TOOL.workspaceDescription}
                     >
                       <Shield size={14} className="shrink-0 text-amber-300" />
@@ -867,11 +867,11 @@ export function Sessions() {
                           e.stopPropagation();
                           setAgentCanvasModal(ws.name);
                         }}
-                        className="group flex min-w-0 items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/[0.07] px-2.5 py-2 text-left outline-none transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/[0.13] focus-visible:bg-cyan-500/[0.16]"
-                        title={DEVELOPMENT_LINEAGE_TOOL.description}
+                        className="group inline-flex max-w-full items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/[0.07] px-2.5 py-1.5 text-left outline-none transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/[0.13] focus-visible:bg-cyan-500/[0.16]"
+                        title={AI_WORK_STATUS_TOOL.description}
                       >
                         <Bot size={14} className="shrink-0 text-cyan-300" />
-                        <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-slate-100">{DEVELOPMENT_LINEAGE_TOOL.label}</span>
+                        <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-slate-100">{AI_WORK_STATUS_TOOL.label}</span>
                       </button>
                     )}
                 </div>

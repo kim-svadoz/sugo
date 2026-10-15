@@ -43,8 +43,10 @@ export async function readReviewArtifact(db: DbClient, userId: string, workspace
   if (previous?.content == null) {
     return {
       ...artifact,
-      unavailableReason: artifact.unavailableReason
-        ?? "비교할 이전 차수의 본문이 없어 diff를 만들 수 없습니다.",
+      // 오래된 sync 데이터에는 기준 본문이 없을 수 있다. 이때 검토 자체를 막지 말고
+      // 현재 스냅샷 전체를 변경 영역으로 보여준다. 다음 차수부터는 저장된 본문끼리 비교된다.
+      diff: textDiff("", artifact.content),
+      unavailableReason: null,
     };
   }
   if (previous.content === artifact.content) {

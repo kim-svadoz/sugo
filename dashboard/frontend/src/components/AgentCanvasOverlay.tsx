@@ -3,6 +3,7 @@ import { ChevronRight, GitBranch, X } from "lucide-react";
 import { useRoadmap } from "../hooks/useRoadmap.js";
 import { RoadmapTab } from "./roadmap/RoadmapTab.js";
 import { LiveLogTail } from "./LiveConsole.js";
+import { AI_WORK_STATUS_TOOL } from "../lib/workspaceTools.js";
 
 /**
  * 설계안 로드맵(Agent Canvas) 전체화면 오버레이 — `z-[70]`.
@@ -62,14 +63,15 @@ export function AgentCanvasOverlay({
               {specLabel && (
                 <>
                   <ChevronRight size={12} />
-                  <span className="truncate font-mono">AGENT CANVAS: {specLabel}</span>
+                  <span className="truncate font-mono">{specLabel}</span>
                 </>
               )}
             </div>
             <div className="flex items-center gap-2">
               <GitBranch size={16} className="text-cyan-300" />
+              <strong className="text-[13px] text-[var(--color-text-bright)]">{AI_WORK_STATUS_TOOL.label}</strong>
               <span className="rounded border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 font-mono text-[10.5px] text-cyan-300">
-                4-Tier · Spec ⊃ Run ⊃ Task ⊃ REQ
+                Agent Canvas · Spec ⊃ Run ⊃ Task ⊃ REQ
               </span>
             </div>
           </div>
@@ -94,7 +96,7 @@ export function AgentCanvasOverlay({
         <div className="min-h-0 flex-1">
           {nodes.length === 0 ? (
             <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">
-              Agent Canvas 데이터가 없습니다
+              표시할 AI 작업이 없습니다
             </div>
           ) : (
             <RoadmapTab workspace={workspace} focusNodeId={focusNodeId} fill onEdited={refetch} onFileViewerChange={setFileViewerOpen} />

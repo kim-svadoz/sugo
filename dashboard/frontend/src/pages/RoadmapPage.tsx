@@ -4,6 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
 import { LiveLogTail } from "../components/LiveConsole.js";
 import { useRoadmap } from "../hooks/useRoadmap.js";
+import { AI_WORK_STATUS_TOOL } from "../lib/workspaceTools.js";
 
 /**
  * §5.1 `/roadmap/:workspace` — `fixed inset-0 z-50` 전체 팝업(사이드바까지 덮는다).
@@ -46,8 +47,9 @@ export function RoadmapPage() {
           ← 워크스페이스
         </button>
         <span className="font-mono text-[13px] font-bold text-[var(--color-text-bright)]">
-          {workspace} · Agent Canvas
+          {workspace} · {AI_WORK_STATUS_TOOL.label}
         </span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-dim)]">Agent Canvas</span>
         <span className="font-mono text-[11px] text-[var(--color-text-dim)]">Esc / ← 로 닫기</span>
         <div className="ml-auto flex items-center gap-2 font-mono text-[11px]">
           <span className="text-emerald-400">완료 {counts.done}</span>

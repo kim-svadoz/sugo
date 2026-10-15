@@ -26,7 +26,7 @@ import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateS
 import { OperationalPulse } from "../components/OperationalPulse.js";
 import { buildCommitmentQueue, commitmentNextAction, legacyCommitments, type CommitmentView } from "../lib/scheduleCommitment.js";
 import { completeScheduleCommitment, createScheduleCommitment, reopenScheduleCommitment, updateScheduleCommitment } from "../api/scheduleCommitmentApi.js";
-import { DEVELOPMENT_LINEAGE_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
+import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -479,7 +479,6 @@ export function SchedulePage() {
               <CalendarDays size={14} /> Calendar
             </button>
           </div>
-          <button onClick={() => setMemoTarget({})} className="flex items-center gap-1.5 rounded-lg border border-slate-500/40 bg-slate-500/10 px-3 py-1.5 text-[12.5px] font-semibold text-slate-200 transition-colors hover:bg-slate-500/20"><FilePenLine size={15} /> 메모 추가</button>
           <button
             onClick={() => setAddOpen(true)}
             className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20"
@@ -711,7 +710,7 @@ export function SchedulePage() {
                   onDragLeave={() => setDragOverKey((k) => (k === key ? null : k))}
                   onDrop={(e) => dropScheduleItem(e, key)}
                   className={cn(
-                    "flex flex-col gap-1 overflow-hidden rounded-lg border p-1.5 text-left",
+                    "group relative flex flex-col gap-1 overflow-hidden rounded-lg border p-1.5 text-left",
                     inMonth ? "border-[var(--color-border)] bg-[var(--color-background)]" : "border-transparent opacity-40",
                     isToday && "ring-1 ring-cyan-400/60",
                     dragOverKey === key && "border-cyan-400 bg-cyan-500/10",
@@ -723,6 +722,11 @@ export function SchedulePage() {
                     </span>
                     {holiday && <span className="truncate text-[9px] text-rose-400" title={holiday}>{holiday}</span>}
                   </div>
+                  {dayChips.length === 0 && dayMemos.length === 0 && inMonth && (
+                    <span className="pointer-events-none absolute inset-x-2 bottom-2 translate-y-1 text-center text-[9.5px] font-medium text-slate-500 opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+                      더블클릭해 메모
+                    </span>
+                  )}
                   <div className={cn("flex min-h-0 flex-1 flex-col gap-1", daySpecOverflowClass())}>
                     {dayChips.map((commitment) => {
                       const style = scheduleCardStyle(colorOf(commitment.workspace_name));
@@ -846,7 +850,6 @@ export function SchedulePage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-[12.5px] font-semibold text-white">개발 이력</h3>
-                    <p className="mt-0.5 text-[10.5px] text-slate-400">이 SPEC에서 실행한 feat와 patch를 시간순으로 보여줍니다.</p>
                   </div>
                   <span className="font-mono text-[10px] text-slate-500">{selected.development_history?.length ?? 0}회</span>
                 </div>
@@ -898,7 +901,6 @@ export function SchedulePage() {
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-white">작업 컨텍스트</h3>
-                  <p className="mt-1 text-[11.5px] text-slate-300">마감 기준과 구현이 실행될 저장소를 확인합니다.</p>
                 </div>
                 {savedFlash && savedFlash !== "title" && <span className="text-[10px] font-semibold text-emerald-400">변경사항 저장됨</span>}
               </div>
@@ -994,7 +996,7 @@ export function SchedulePage() {
                 className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-3.5 text-left transition-colors hover:border-cyan-400/30 hover:bg-cyan-400/[0.06]"
               >
                 <span className="rounded-lg bg-cyan-400/10 p-2 text-cyan-300"><Workflow size={16} /></span>
-                <span className="min-w-0 flex-1"><strong className="block text-[13px] text-slate-100">{DEVELOPMENT_LINEAGE_TOOL.label}</strong><span className="mt-0.5 block text-[11px] text-slate-400">{DEVELOPMENT_LINEAGE_TOOL.description}</span></span>
+                <span className="min-w-0 flex-1"><strong className="block text-[13px] text-slate-100">{AI_WORK_STATUS_TOOL.label}</strong><span className="mt-0.5 block text-[11px] text-slate-400">{AI_WORK_STATUS_TOOL.description}</span></span>
                 <ChevronRight size={15} className="text-slate-500 group-hover:text-cyan-300" />
               </button>
             </nav>

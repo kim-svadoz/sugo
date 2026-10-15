@@ -71,9 +71,9 @@ describe("review artifact API", () => {
       .query({ taskId: "task-1", path: "src/NoBase.java", patchVersion: 1 }).expect(200);
     expect(noBaseResult.body.artifact).toMatchObject({
       changeType: "modified",
-      diff: null,
-      unavailableReason: "비교할 이전 차수의 본문이 없어 diff를 만들 수 없습니다.",
+      unavailableReason: null,
     });
+    expect(noBaseResult.body.artifact.diff).toContain("+class NoBase {}");
     await db.close();
   });
 });
