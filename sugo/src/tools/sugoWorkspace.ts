@@ -5,7 +5,7 @@ import { syncCheckpoint, syncDecision, syncHistory, syncRoadmapSnapshot, syncTas
 import { listCheckpoints } from "../hulk/checkpoint.js";
 import { listWorkLogs } from "../hulk/history.js";
 import { appendMemory, readMemory } from "../hulk/memory.js";
-import { listRoadmapNodes, reconcileRoadmapWithTasks } from "../hulk/roadmap.js";
+import { backfillLegacyRoadmapWorkResults, listRoadmapNodes, reconcileRoadmapWithTasks } from "../hulk/roadmap.js";
 import { listSpecs } from "../hulk/spec.js";
 import { listTasks } from "../hulk/task.js";
 import { deleteWorkspace, ensureWorkspace, listWorkspaces, loadWorkspace } from "../hulk/workspace.js";
@@ -104,6 +104,7 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
         loadAllSessions(),
       ]);
       await reconcileRoadmapWithTasks(args.name, tasks);
+      const recoveredWorkResultCount = await backfillLegacyRoadmapWorkResults(args.name, tasks);
       const roadmapNodes = await listRoadmapNodes(args.name);
       // 세션은 projectPath만 알고 워크스페이스를 모른다 — 소속 프로젝트 경로로 걸러낸다.
       const sessions = sessionsForProjects(allSessions, workspace?.projects ?? []);
@@ -114,6 +115,7 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
         roadmapNodeCount: roadmapNodes.length,
         specCount: specs.length,
         historyCount: history.length,
+        recoveredWorkResultCount,
         tasks,
         roadmapNodes,
         sessions,
@@ -134,6 +136,7 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
       const history = await listWorkLogs(args.name);
       for (const log of history) await syncHistory(args.name, log);
       await reconcileRoadmapWithTasks(args.name, tasks);
+      const recoveredWorkResultCount = await backfillLegacyRoadmapWorkResults(args.name, tasks);
       const nodes = await listRoadmapNodes(args.name);
       await syncRoadmapSnapshot(args.name, nodes);
       // push는 fire-and-forget이라 여기서 큐를 한 바퀴 돌려야 "수동 재sync"가 실제로 나간다.
@@ -147,6 +150,7 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
           dashboard: "disabled",
           taskCount: tasks.length,
           roadmapNodeCount: nodes.length,
+          recoveredWorkResultCount,
           note: "대시보드가 설정되지 않아 전송하지 않았습니다. 로컬 데이터는 그대로 남아 있습니다.",
         });
       }
@@ -154,6 +158,7 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
         synced: true, dashboard: "enabled", taskCount: tasks.length, roadmapNodeCount: nodes.length,
         checkpointCount: checkpoints.length, decisionCount: specs.length, historyCount: history.length,
         importedGitHistoryCount: importedGitHistory.length,
+        recoveredWorkResultCount,
       });
     }
   }

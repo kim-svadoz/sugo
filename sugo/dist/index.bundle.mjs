@@ -28284,7 +28284,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.34.1" : "0.0.0-dev";
+  return true ? "0.34.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30133,6 +30133,49 @@ async function recordRoadmapWorkResult(workspace, taskId, workResult, lineageEnt
     });
     await writeRoadmapFile(workspace, { ...file, nodes });
   });
+}
+async function backfillLegacyRoadmapWorkResults(workspace, tasks) {
+  let count = 0;
+  for (const task of tasks) {
+    if (task.status !== "done" || !task.prd_ref) continue;
+    const node = await getRoadmapNode(workspace, task.id);
+    if (!node || node.workResult?.path) continue;
+    const prdExists = await readFile22(task.prd_ref, "utf8").then(() => true).catch(() => false);
+    if (!prdExists) continue;
+    const featureDir = dirname10(task.prd_ref);
+    const workResultPath = join26(featureDir, "work-result.md");
+    const summary = task.summary?.trim() || task.title;
+    const existing = await readFile22(workResultPath, "utf8").catch(() => null);
+    if (existing === null) {
+      await atomicWriteFile(
+        workResultPath,
+        `${summary}
+
+> \uAE30\uC874 \uC644\uB8CC \uC774\uB825\uC5D0\uC11C \uBCF5\uC6D0\uD55C work-result\uC785\uB2C8\uB2E4. \uC815\uC2DD Sugo commit \uAC8C\uC774\uD2B8 \uC99D\uAC70\uB294 \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.
+`
+      );
+    }
+    await recordRoadmapWorkResult(
+      workspace,
+      task.id,
+      {
+        path: workResultPath,
+        startedAt: task.started_at,
+        endedAt: task.completed_at,
+        summary,
+        parentTaskId: task.id,
+        patchVersion: 0
+      },
+      {
+        version: 0,
+        completedAt: task.completed_at ?? task.created_at,
+        title: task.title,
+        summary
+      }
+    );
+    count += 1;
+  }
+  return count;
 }
 async function addRoadmapNode(workspace, node) {
   return withRoadmap(workspace, async (file) => {
@@ -34300,6 +34343,7 @@ async function handleSugoWorkspace(rawArgs) {
         loadAllSessions()
       ]);
       await reconcileRoadmapWithTasks(args2.name, tasks);
+      const recoveredWorkResultCount = await backfillLegacyRoadmapWorkResults(args2.name, tasks);
       const roadmapNodes = await listRoadmapNodes(args2.name);
       const sessions = sessionsForProjects(allSessions, workspace?.projects ?? []);
       return ok7({
@@ -34309,6 +34353,7 @@ async function handleSugoWorkspace(rawArgs) {
         roadmapNodeCount: roadmapNodes.length,
         specCount: specs.length,
         historyCount: history.length,
+        recoveredWorkResultCount,
         tasks,
         roadmapNodes,
         sessions,
@@ -34329,6 +34374,7 @@ async function handleSugoWorkspace(rawArgs) {
       const history = await listWorkLogs(args2.name);
       for (const log of history) await syncHistory(args2.name, log);
       await reconcileRoadmapWithTasks(args2.name, tasks);
+      const recoveredWorkResultCount = await backfillLegacyRoadmapWorkResults(args2.name, tasks);
       const nodes = await listRoadmapNodes(args2.name);
       await syncRoadmapSnapshot(args2.name, nodes);
       await drainRetryQueue();
@@ -34339,6 +34385,7 @@ async function handleSugoWorkspace(rawArgs) {
           dashboard: "disabled",
           taskCount: tasks.length,
           roadmapNodeCount: nodes.length,
+          recoveredWorkResultCount,
           note: "\uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC124\uC815\uB418\uC9C0 \uC54A\uC544 \uC804\uC1A1\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uB85C\uCEEC \uB370\uC774\uD130\uB294 \uADF8\uB300\uB85C \uB0A8\uC544 \uC788\uC2B5\uB2C8\uB2E4."
         });
       }
@@ -34350,7 +34397,8 @@ async function handleSugoWorkspace(rawArgs) {
         checkpointCount: checkpoints.length,
         decisionCount: specs.length,
         historyCount: history.length,
-        importedGitHistoryCount: importedGitHistory.length
+        importedGitHistoryCount: importedGitHistory.length,
+        recoveredWorkResultCount
       });
     }
   }

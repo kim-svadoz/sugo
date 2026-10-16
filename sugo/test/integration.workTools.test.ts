@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -9,6 +9,7 @@ import { handleSugoStatus } from "../src/tools/sugoStatus.js";
 import { handleSugoTask } from "../src/tools/sugoTask.js";
 import { handleSugoWorkspace } from "../src/tools/sugoWorkspace.js";
 import { isWorkEnabled } from "../src/work/enabled.js";
+import { addTask } from "../src/hulk/task.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args?: unknown) {
@@ -66,6 +67,20 @@ describe("sugo_workspace(status) — 구 sugo_hulk(status) 흡수", () => {
     const result = await call(handleSugoWorkspace, { action: "status" });
     expect(result.isError).toBe(true);
     expect(result.data.errorCode).toBe("NAME_REQUIRED");
+  });
+
+  it("work-result 경로가 빠진 완료 작업은 status에서 patch 진입점을 자동 복구한다", async () => {
+    const featureDir = join(fakeHome, "project", "sugo", "features", "20261016", "completed");
+    mkdirSync(featureDir, { recursive: true });
+    const prdPath = join(featureDir, "prd.md");
+    writeFileSync(prdPath, "# PRD\n");
+    await call(handleSugoWorkspace, { action: "add", name: "ws1", projectPath: join(fakeHome, "project") });
+    await addTask("ws1", { title: "완료 작업", project: join(fakeHome, "project"), status: "done", prd_ref: prdPath });
+
+    const status = await call(handleSugoWorkspace, { action: "status", name: "ws1" });
+    const taskNode = status.data.roadmapNodes.find((node: { level: string }) => node.level === "task");
+    expect(taskNode.workResult.path).toBe(join(featureDir, "work-result.md"));
+    expect(existsSync(taskNode.workResult.path)).toBe(true);
   });
 });
 

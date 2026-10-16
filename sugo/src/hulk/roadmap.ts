@@ -266,7 +266,7 @@ export async function recordRoadmapWorkResult(
 export async function backfillLegacyRoadmapWorkResults(workspace: string, tasks: Task[]): Promise<number> {
   let count = 0;
   for (const task of tasks) {
-    if (task.status !== "done" || !task.summary || !task.prd_ref) continue;
+    if (task.status !== "done" || !task.prd_ref) continue;
     const node = await getRoadmapNode(workspace, task.id);
     if (!node || node.workResult?.path) continue;
 
@@ -276,11 +276,12 @@ export async function backfillLegacyRoadmapWorkResults(workspace: string, tasks:
     if (!prdExists) continue;
     const featureDir = dirname(task.prd_ref);
     const workResultPath = join(featureDir, "work-result.md");
+    const summary = task.summary?.trim() || task.title;
     const existing = await readFile(workResultPath, "utf8").catch(() => null);
     if (existing === null) {
       await atomicWriteFile(
         workResultPath,
-        `${task.summary}\n\n> 기존 완료 이력에서 복원한 work-result입니다. 정식 Sugo commit 게이트 증거는 포함하지 않습니다.\n`,
+        `${summary}\n\n> 기존 완료 이력에서 복원한 work-result입니다. 정식 Sugo commit 게이트 증거는 포함하지 않습니다.\n`,
       );
     }
     await recordRoadmapWorkResult(
@@ -290,7 +291,7 @@ export async function backfillLegacyRoadmapWorkResults(workspace: string, tasks:
         path: workResultPath,
         startedAt: task.started_at,
         endedAt: task.completed_at,
-        summary: task.summary,
+        summary,
         parentTaskId: task.id,
         patchVersion: 0,
       },
@@ -298,7 +299,7 @@ export async function backfillLegacyRoadmapWorkResults(workspace: string, tasks:
         version: 0,
         completedAt: task.completed_at ?? task.created_at,
         title: task.title,
-        summary: task.summary,
+        summary,
       },
     );
     count += 1;
