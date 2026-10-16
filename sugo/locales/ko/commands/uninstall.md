@@ -6,7 +6,7 @@ argument-hint: ""
 Sugo를 안전하게 제거한다. 이 명령은 되돌릴 수 없는 데이터 삭제를 포함하므로 아래 순서를 바꾸지 않는다.
 
 1. `sugo_uninstall(action: "preview", mode: "retain")`을 호출한다.
-2. 프로젝트 자동 규칙은 제거되며 데이터는 `~/.sugo/data`에 비활성 보관된다고 설명하고, 정확히 `UNINSTALL_SUGO`라고 입력받는다.
+2. 프로젝트 자동 규칙은 제거되고, 로컬 대시보드 서버는 멈추며, 데이터는 `~/.sugo/data`에 비활성 보관된다고 설명하고, 정확히 `UNINSTALL_SUGO`라고 입력받는다.
 3. `sugo_uninstall(action: "execute", mode: "retain", confirmation: "UNINSTALL_SUGO")`를 호출한다.
 4. `verifiedClean: true`를 확인한다. `preserved`가 있으면 소유권을 증명할 수 없어 안전하게 남긴 경로이므로 숨기지 말고 그대로 알린다.
 5. 정리가 검증된 뒤에만 `claude plugin uninstall sugo@sugo-marketplace --scope user`를 실행한다. 실패하면 데이터 정리는 완료됐지만 플러그인 캐시 제거가 실패했다고 구분해 보고한다.

@@ -23,7 +23,7 @@ import { spawn } from "node:child_process";
 // 이 스크립트 위치(sugo/scripts/) 기준 — 어느 OS/어느 cwd에서 실행해도 같게 동작해야 한다.
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 // 마켓플레이스 설치가 주는 것 = 저장소의 플러그인 디렉터리. node_modules/src/test는 안 온다.
-const SHIPPED = [".claude-plugin", "dist", "harness-library", "wasm-grammars", "commands", "agents", "skills", "hooks", "scripts"];
+const SHIPPED = [".claude-plugin", "dist", "dashboard-runtime", "harness-library", "wasm-grammars", "commands", "agents", "skills", "hooks", "scripts"];
 
 const results = [];
 function check(label, pass, detail = "") {

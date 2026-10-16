@@ -6,7 +6,7 @@ argument-hint: ""
 Uninstall Sugo safely. Keep this order because some operations are irreversible.
 
 1. Call `sugo_uninstall(action: "preview", mode: "retain")`.
-2. Explain that automatic project rules will be removed and data retained inactive in `~/.sugo/data`. Require the exact input `UNINSTALL_SUGO`.
+2. Explain that automatic project rules will be removed, the local dashboard server will be stopped, and data retained inactive in `~/.sugo/data`. Require the exact input `UNINSTALL_SUGO`.
 3. Call `sugo_uninstall(action: "execute", mode: "retain", confirmation: "UNINSTALL_SUGO")`.
 4. Require `verifiedClean: true`. Report every `preserved` path; ownership was not proven, so it was intentionally kept.
 5. Only then run `claude plugin uninstall sugo@sugo-marketplace --scope user`. If it fails, distinguish completed data cleanup from failed plugin-cache removal.

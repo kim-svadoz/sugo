@@ -1,11 +1,12 @@
 {
   "name": "sugo",
-  "version": "0.33.2",
+  "version": "0.34.0",
   "description": "Sugo - spec-based harness + enforced state-machine dev pipeline",
   "type": "module",
   "main": "dist/index.bundle.mjs",
   "scripts": {
     "prebuild": "node syncVersion.mjs",
+    "build:dashboard": "node ../dashboard/backend/build-bundle.mjs dashboard-runtime",
     "build": "node build.mjs",
     "sync-version": "node syncVersion.mjs",
     "test": "vitest run",

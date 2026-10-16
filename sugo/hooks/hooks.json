@@ -1,5 +1,14 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [{
+          "type": "command",
+          "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/dashboard-start.mjs\"",
+          "timeout": 15
+        }]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",

@@ -6,7 +6,7 @@ import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 
 const source = join(dirname(fileURLToPath(import.meta.url)), "..");
-const shipped = [".claude-plugin", "dist", "harness-library", "wasm-grammars", "commands", "agents", "skills", "hooks", "scripts"];
+const shipped = [".claude-plugin", "dist", "dashboard-runtime", "harness-library", "wasm-grammars", "commands", "agents", "skills", "hooks", "scripts"];
 const root = mkdtempSync(join(tmpdir(), "sugo-core-smoke-"));
 const failures = [];
 let dashboardServer;

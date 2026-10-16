@@ -6,6 +6,8 @@ import { loadInstallManifest, type InstallManifest } from "../harness/installMan
 import { loadRegistry } from "../harness/registry.js";
 import { syncProjectHarness } from "../harness/sync.js";
 import { createHash } from "node:crypto";
+import { currentSugoVersion } from "../version.js";
+import { dashboardPaths, ensureDashboard, fetchHealth, readServerState, stopDashboard } from "../lifecycle/dashboardRuntime.js";
 import type { FileBaseline } from "../harness/installManifest.js";
 
 const CONFIRMATION = "DELETE_SUGO_DATA";
@@ -79,7 +81,20 @@ async function cleanupProject(projectPath: string, manifest: InstallManifest | n
   return preserved;
 }
 
-export async function handleSugoUninstall(rawArgs: unknown) {
+export interface UninstallDeps {
+  /** restore가 대시보드를 다시 띄울 때 쓰는 플러그인 루트·빌드·포트. 기본은 실행 중인 번들 기준. */
+  pluginRoot?: string;
+  buildId?: string;
+  port?: number;
+}
+
+const DASHBOARD_RUNNING_MESSAGE = "대시보드 서버를 멈추지 못했습니다. 서버 프로세스를 직접 종료한 뒤 다시 실행하세요. 아무 데이터도 옮기거나 지우지 않았습니다.";
+
+export function handleSugoUninstall(rawArgs: unknown) {
+  return uninstallSugo(rawArgs, {});
+}
+
+export async function uninstallSugo(rawArgs: unknown, deps: UninstallDeps) {
   const args = Args.parse(rawArgs);
   const activeRoot = join(sugoHomeDir(), ".claude", "sugo");
   const productRoot = join(sugoHomeDir(), ".sugo");
@@ -92,11 +107,22 @@ export async function handleSugoUninstall(rawArgs: unknown) {
   if (args.action === "restore") {
     const archivedRegistry = await readFile(join(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null) as Array<{ path: string; workspace?: string }> | null;
     if (!archivedRegistry) return error("NO_RETAINED_DATA", "복구할 비활성 Sugo 데이터가 없습니다.");
+    // 재설치 뒤 첫 세션이 이미 새 대시보드를 띄웠을 수 있다. 데이터를 교체하기 전에 멈춘다.
+    const paths = dashboardPaths();
+    if (!(await stopDashboard(paths)).stopped) return error("DASHBOARD_STILL_RUNNING", DASHBOARD_RUNNING_MESSAGE);
     await rm(activeRoot, { recursive: true, force: true });
     await mkdir(dirname(activeRoot), { recursive: true });
     await rename(archiveRoot, activeRoot);
+    // 보관 당시의 실행 기록은 지금 프로세스와 무관하다.
+    await rm(paths.stateFile, { force: true });
+    await rm(paths.lockDir, { recursive: true, force: true });
     for (const entry of archivedRegistry) await syncProjectHarness({ projectPath: resolve(entry.path), workspace: entry.workspace });
-    return result({ ok: true, action: "restore", restoredProjects: archivedRegistry.length, active: true });
+    const dashboard = await ensureDashboard({
+      pluginRoot: deps.pluginRoot ?? join(dirname(process.argv[1] ?? ""), ".."),
+      buildId: deps.buildId ?? currentSugoVersion(),
+      port: deps.port,
+    });
+    return result({ ok: true, action: "restore", restoredProjects: archivedRegistry.length, active: true, dashboard: dashboard.kind });
   }
   const projects = await loadRegistry();
   const preview = await Promise.all(projects.map(async ({ path }) => ({
@@ -104,8 +130,15 @@ export async function handleSugoUninstall(rawArgs: unknown) {
     ownershipRecorded: (await loadInstallManifest(resolve(path))) !== null,
   })));
   const requiredConfirmation = args.mode === "purge" ? CONFIRMATION : "UNINSTALL_SUGO";
-  if (args.action === "preview") return result({ ok: true, action: "preview", mode: args.mode, requiredConfirmation, projects: preview, retainedDataPath: args.mode === "retain" ? archiveRoot : null });
+  const paths = dashboardPaths();
+  if (args.action === "preview") {
+    const state = await readServerState(paths);
+    const dashboardRunning = state !== null && (await fetchHealth(state.port)) !== null;
+    return result({ ok: true, action: "preview", mode: args.mode, requiredConfirmation, projects: preview, dashboardRunning, retainedDataPath: args.mode === "retain" ? archiveRoot : null });
+  }
   if (args.confirmation !== requiredConfirmation) return error("CONFIRMATION_REQUIRED", `confirmation에 ${requiredConfirmation}를 정확히 입력해야 합니다.`);
+  // 서버가 DB·로그를 열고 있는 채로 폴더를 옮기거나 지우면 안 된다(Windows는 실패한다). 되돌릴 수 없는 단계 전에 멈춘다.
+  if (!(await stopDashboard(paths)).stopped) return error("DASHBOARD_STILL_RUNNING", DASHBOARD_RUNNING_MESSAGE);
 
   const preserved: Array<{ projectPath: string; paths: string[] }> = [];
   for (const { path } of projects) {

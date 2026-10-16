@@ -15,14 +15,16 @@ const __filename = __sugoFileURLToPath(import.meta.url);
 const __dirname = __sugoDirname(__filename);
 `.trim();
 
-await build({
-  entryPoints: ["src/index.ts"],
+const common = {
   bundle: true,
   platform: "node",
   format: "esm",
-  outfile: "dist/index.bundle.mjs",
   banner: { js: banner },
   define: { __SUGO_VERSION__: JSON.stringify(pkg.version) },
-});
+};
 
-console.log("빌드 완료: dist/index.bundle.mjs");
+await build({ ...common, entryPoints: ["src/index.ts"], outfile: "dist/index.bundle.mjs" });
+// 세션 시작 훅: 대시보드 서버를 띄운다. 훅은 MCP 번들 전체를 로드하지 않도록 따로 번들한다.
+await build({ ...common, entryPoints: ["src/lifecycle/dashboardStartHook.ts"], outfile: "dist/dashboard-start.mjs" });
+
+console.log("빌드 완료: dist/index.bundle.mjs, dist/dashboard-start.mjs");
