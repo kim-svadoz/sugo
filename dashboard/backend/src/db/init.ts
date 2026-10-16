@@ -22,14 +22,19 @@ import { ensureGitConnectionProfileColumn } from "../services/gitConnectionServi
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export async function initDb(): Promise<DbClient> {
+export interface InitDbOptions {
+  /** 번들에는 test/ 디렉터리가 없으므로 번들러가 SQLite 스키마 텍스트를 직접 넘긴다. */
+  sqliteSchema?: string;
+}
+
+export async function initDb(options: InitDbOptions = {}): Promise<DbClient> {
   if (config.dbDriver === "sqlite") {
     const client = createSqliteClient(config.sqliteFile);
     // 리네임은 CREATE TABLE IF NOT EXISTS보다 **먼저** — 새 이름 테이블이 먼저 생기면
     // 구 테이블 데이터가 고아가 된다(migrations.ts 주석 참고).
     await migrateCanvasToRoadmap(client);
     const schemaPath = join(__dirname, "..", "..", "test", "schema.sqlite.sql");
-    await client.execScript(readFileSync(schemaPath, "utf8"));
+    await client.execScript(options.sqliteSchema ?? readFileSync(schemaPath, "utf8"));
     await migrateWstToRun(client);
     await ensureHumanCompletionTable(client);
     await migrateRoadmapRuntimeAssessment(client);

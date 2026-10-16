@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import express from "express";
 import { createRemoteJWKSet } from "jose";
 import { config } from "./config.js";
-import { initDb } from "./db/init.js";
+import { initDb, type InitDbOptions } from "./db/init.js";
 import type { DbClient } from "./db/client.js";
 import { createSyncRouter } from "./routes/sync.js";
 import { createActivityRouter } from "./routes/activity.js";
@@ -16,6 +16,7 @@ import { createGitConnectionsRouter } from "./routes/gitConnections.js";
 import { createAwsContextRouter } from "./routes/awsContext.js";
 import { createPrRouter } from "./routes/pr.js";
 import { createStatsRouter } from "./routes/stats.js";
+import { createWeeklyReportsRouter } from "./routes/weeklyReports.js";
 import { createHarnessRouter, createSkillsRouter } from "./routes/harness.js";
 import { createGithubAuthRouter } from "./routes/githubAuth.js";
 import { createTokensRouter } from "./routes/tokens.js";
@@ -36,7 +37,10 @@ import { corsWhitelist } from "./middleware/cors.js";
 import { errorMiddleware } from "./middleware/asyncHandler.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
+// 번들은 빌드 때 DASHBOARD_VERSION을 상수로 박는다(옆 디렉터리의 package.json은 플러그인 것이다).
+const pkg: { version: string } = process.env.DASHBOARD_VERSION
+  ? { version: process.env.DASHBOARD_VERSION }
+  : JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
 
 // IdP가 설정되지 않았을 때의 기본 구현(§11). 오버라이드 없이 여기까지 도달한 요청은 설정
 // 실수이므로, 검증 안 된 토큰을 조용히 받아들이는 대신 시끄럽게 fail-closed 한다.
@@ -73,13 +77,15 @@ export interface AppOverrides {
   skillsPath?: string;
   specAttachmentsPath?: string;
   awsGuardPolicyPath?: string;
+  staticDir?: string;
+  sqliteSchema?: InitDbOptions["sqliteSchema"];
 }
 
 export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const overrides: AppOverrides =
     dbOverrideOrOptions && "query" in dbOverrideOrOptions ? { db: dbOverrideOrOptions } : (dbOverrideOrOptions ?? {});
 
-  const db = overrides.db ?? (await initDb());
+  const db = overrides.db ?? (await initDb({ sqliteSchema: overrides.sqliteSchema }));
   const verifyJwt =
     overrides.verifyJwt ?? (config.oidc.jwksUri ? createJwtVerifier(createRemoteJWKSet(new URL(config.oidc.jwksUri)), config.oidc.issuer) : unconfiguredVerifyJwt());
   const oidcClient =
@@ -152,8 +158,18 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const statsRouter = createStatsRouter(db, sessionSecret);
   app.use("/api/stats", statsRouter);
   app.use("/api/metrics", statsRouter);
+  app.use("/api/weekly/reports", createWeeklyReportsRouter(db, sessionSecret));
   app.use("/api/harness", createHarnessRouter(harnessPath));
   app.use("/api/skills", createSkillsRouter(skillsPath));
+
+  const staticDir = overrides.staticDir ?? config.staticDir;
+  if (staticDir) {
+    app.use(express.static(staticDir));
+    // SPA 라우트(/sessions 등) 새로고침이 404가 되지 않게 API가 아닌 GET은 index.html로 돌려준다.
+    app.get(/^\/(?!api\/|health$).*/, (_req, res) => {
+      res.sendFile(join(staticDir, "index.html"));
+    });
+  }
 
   // 모든 라우트 뒤: 동기 throw / next(err)를 프로세스를 죽이지 않고 500으로 응답한다.
   app.use(errorMiddleware);
@@ -178,6 +194,7 @@ async function main() {
   });
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// 번들(standalone.ts)은 번들 파일이 곧 argv[1]이라 이 조건이 참이 된다 — 직접 listen하므로 끈다.
+if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main();
 }

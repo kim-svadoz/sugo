@@ -305,3 +305,14 @@ CREATE TABLE IF NOT EXISTS sugo_review_artifacts (
   updated_at VARCHAR(64) NOT NULL,
   KEY idx_review_artifact_lookup (user_id, workspace_name, task_id(191), patch_version)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sugo_weekly_reports (
+  user_id VARCHAR(191) NOT NULL,
+  week_id VARCHAR(16) NOT NULL,
+  start_date VARCHAR(10) NOT NULL,
+  end_date VARCHAR(10) NOT NULL,
+  generated_at VARCHAR(64) NOT NULL,
+  uploaded_at VARCHAR(64) NOT NULL,
+  report_json LONGTEXT NOT NULL,
+  PRIMARY KEY (user_id, week_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

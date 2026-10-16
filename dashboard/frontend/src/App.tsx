@@ -10,11 +10,12 @@ import { RoadmapPage } from "./pages/RoadmapPage.js";
 import { Skills } from "./pages/Skills.js";
 import { Harness } from "./pages/Harness.js";
 import { Playbook } from "./pages/Playbook.js";
+import { WeeklyPage } from "./pages/WeeklyPage.js";
 import { Settings } from "./pages/Settings.js";
 
 // §5: BrowserRouter -> AuthProvider. 공개: /login, /auth/callback.
 // 게이트(ProtectedRoute -> Layout): /(-> /sessions), sessions, roadmap/:workspace,
-// skills, harness, playbook, settings.
+// skills, harness, playbook, weekly, settings.
 export function App() {
   return (
     <BrowserRouter>
@@ -31,6 +32,7 @@ export function App() {
               <Route path="/skills" element={<Skills />} />
               <Route path="/harness" element={<Harness />} />
               <Route path="/playbook" element={<Playbook />} />
+              <Route path="/weekly" element={<WeeklyPage />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>

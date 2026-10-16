@@ -49,6 +49,21 @@ stop_previous() {
   rm -f "$PID_FILE"
 }
 
+# 플러그인이 세션 시작 때 띄우는 번들 대시보드가 같은 API 포트를 쓴다. 개발 서버가 대신 뜨도록 먼저 멈춘다.
+# PID는 다른 프로세스가 물려받을 수 있어서, 기록된 포트가 대시보드 health에 응답할 때만 종료한다.
+stop_bundled_dashboard() {
+  local state_file="$HOME/.claude/sugo/dashboard/server.json" pid
+  [ -f "$state_file" ] || return 0
+  pid="$(sed -n 's/.*"pid":\([0-9][0-9]*\).*/\1/p' "$state_file" | head -n 1)"
+  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null || return 0
+  curl -fsS --max-time 2 "http://127.0.0.1:$API_PORT/health" >/dev/null 2>&1 || return 0
+  kill "$pid" 2>/dev/null || true
+  for _ in {1..30}; do
+    kill -0 "$pid" 2>/dev/null || break
+    sleep 0.1
+  done
+}
+
 # 예전 실행기는 PID 파일이 없고 빈 포트를 찾아 계속 복제됐다. 알려진 개발 포트의 listener 중
 # cwd가 이 dashboard의 backend/frontend인 프로세스만 정리해 다른 로컬 앱은 건드리지 않는다.
 stop_stale_dashboard_listeners() {
@@ -86,6 +101,7 @@ wait_ports_free() {
 }
 
 stop_previous
+stop_bundled_dashboard
 stop_stale_dashboard_listeners
 wait_ports_free
 sugo_require_port_free "$API_PORT" "Sugo Dashboard API"

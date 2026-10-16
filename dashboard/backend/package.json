@@ -1,6 +1,6 @@
 {
   "name": "sugo-dashboard-backend",
-  "version": "0.26.9",
+  "version": "0.27.0",
   "description": "Sugo Dashboard backend - Express + TypeScript + MySQL",
   "type": "module",
   "main": "dist/index.js",
@@ -13,6 +13,7 @@
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "bundle": "node build-bundle.mjs",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.scripts.json",
     "typecheck:scripts": "tsc -p tsconfig.scripts.json"
   },

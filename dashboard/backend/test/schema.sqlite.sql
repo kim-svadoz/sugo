@@ -279,3 +279,14 @@ CREATE TABLE IF NOT EXISTS sugo_review_artifacts (
   file_path TEXT NOT NULL, change_type TEXT NOT NULL, content TEXT, diff_text TEXT,
   unavailable_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS sugo_weekly_reports (
+  user_id TEXT NOT NULL,
+  week_id TEXT NOT NULL,
+  start_date TEXT NOT NULL,
+  end_date TEXT NOT NULL,
+  generated_at TEXT NOT NULL,
+  uploaded_at TEXT NOT NULL,
+  report_json TEXT NOT NULL,
+  PRIMARY KEY (user_id, week_id)
+);

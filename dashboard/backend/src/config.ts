@@ -22,6 +22,8 @@ export const config = {
   // 미설정이면 빈 매니페스트/404로 안전 반환한다(가짜 데이터 금지).
   harnessPath: process.env.HARNESS_PATH ?? "",
   skillsPath: process.env.SKILLS_PATH ?? "",
+  // 설정되면 빌드된 프론트 정적 파일을 같은 프로세스·포트에서 서빙한다. 개발(vite dev)은 비워 둔다.
+  staticDir: process.env.DASHBOARD_STATIC_DIR ?? "",
   // Schedule SPEC에 붙여 넣은 기획 화면 이미지. spec-writer가 읽어 spec.md 버전 디렉터리로 복사한다.
   specAttachmentsPath: process.env.SPEC_ATTACHMENTS_PATH ?? join(homedir(), ".sugo-dashboard", "spec-attachments"),
   awsGuardPolicyPath: process.env.SUGO_AWS_GUARD_POLICY_PATH ?? join(homedir(), ".claude", "sugo", "aws-readonly-policy.json"),

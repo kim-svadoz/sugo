@@ -4,7 +4,8 @@ export const SIDEBAR_DESTINATIONS = [
   { to: "/skills", label: "Skills", shortcut: "3" },
   { to: "/harness", label: "Harness", shortcut: "4" },
   { to: "/playbook", label: "Playbook", shortcut: "5" },
-  { to: "/settings", label: "Settings", shortcut: "6" },
+  { to: "/weekly", label: "Weekly", shortcut: "6" },
+  { to: "/settings", label: "Settings", shortcut: "7" },
 ] as const;
 
 export function sidebarShortcutPath(key: string): string | null {
