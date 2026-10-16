@@ -10,6 +10,15 @@
       "source": "./sugo",
       "description": "스펙 기반 하네스 + 강제 상태머신 개발 파이프라인 (code→test→review→docs→commit)",
       "version": "0.33.1"
+    },
+    {
+      "name": "weekly",
+      "source": {
+        "source": "github",
+        "repo": "kim-svadoz/weekly-ai-report"
+      },
+      "description": "sugo 작업 기록과 git 커밋으로 주간 작업 보고서와 기술 학습 노트(HTML)를 만든다",
+      "version": "0.1.1"
     }
   ]
 }
