@@ -115,7 +115,8 @@ try {
   const updated = runHook(plugin2);
   const afterUpdate = await health();
   const stillThere = (await (await api("/api/workspaces")).json()).workspaces?.some((w) => w.name === "e2e-ws");
-  check("업데이트하면 새 버전 서버로 교체되고 데이터가 유지된다", updated.status === 0 && afterUpdate?.build === "99.0.0" && statePid() !== beforeUpdate && stillThere);
+  check("업데이트하면 새 버전 서버로 교체되고 데이터가 유지된다", updated.status === 0 && afterUpdate?.build === "99.0.0" && statePid() !== beforeUpdate && stillThere,
+    JSON.stringify({ status: updated.status, stdout: updated.stdout, stderr: updated.stderr, build: afterUpdate?.build, beforeUpdate, after: statePid(), stillThere }));
   const updatedPid = statePid();
   const sameAgain = runHook(plugin2);
   check("업데이트 뒤 같은 버전 세션은 다시 띄우지 않는다", sameAgain.stdout === "" && statePid() === updatedPid);
