@@ -126,7 +126,7 @@ describe("stackDetector — 래퍼 명령의 OS 분기(양쪽 다 검증)", () =
  * 규칙을 좁게 유지한다 — 넓은 린트는 오탐으로 무력화된다.
  */
 describe("이식성 가드 — 배포되는 코드에 이 PC 전용 가정이 없다", () => {
-  const roots = ["src", "hooks", "commands", "agents", "skills", "harness-library", "scripts", ".claude-plugin"];
+  const roots = ["src", "hooks", "commands", "agents", "skills", "locales", "harness-library", "scripts", ".claude-plugin"];
 
   async function sourceFiles(): Promise<string[]> {
     const out: string[] = [];

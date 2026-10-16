@@ -25,13 +25,13 @@ export interface AgentEntry {
 }
 
 export function listSkills(): Promise<{ skills: SkillEntry[] }> {
-  return apiJson<{ skills: SkillEntry[] }>("/api/skills");
+  return apiJson<{ skills: SkillEntry[] }>("/api/skills?locale=ko");
 }
 export function listAgents(): Promise<{ agents: AgentEntry[] }> {
   return apiJson<{ agents: AgentEntry[] }>("/api/skills/agents");
 }
 export async function getSkillContent(name: string, kind: "skill" | "command"): Promise<string> {
-  const res = await apiFetch(`/api/skills/${encodeURIComponent(name)}?kind=${kind}`);
+  const res = await apiFetch(`/api/skills/${encodeURIComponent(name)}?kind=${kind}&locale=ko`);
   if (!res.ok) throw new Error("스킬 본문을 불러오지 못했습니다.");
   return res.text();
 }

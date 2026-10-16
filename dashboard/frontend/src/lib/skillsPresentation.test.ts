@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const source = readFileSync(new URL("../pages/Skills.tsx", import.meta.url), "utf8");
+const apiSource = readFileSync(new URL("../api/catalogApi.ts", import.meta.url), "utf8");
 
 describe("Skills catalog presentation", () => {
   it("스킬과 Command를 서로 다른 1차 보기로 분리한다", () => {
@@ -18,5 +19,10 @@ describe("Skills catalog presentation", () => {
 
   it("같은 이름의 스킬과 Command 상세를 현재 카탈로그 종류로 구분해 조회한다", () => {
     expect(source).toContain("getSkillContent(selectedSkill.name, catalogView === \"commands\" ? \"command\" : \"skill\")");
+  });
+
+  it("실행 원문을 바꾸지 않고 목록과 상세에 한국어 표시 locale을 요청한다", () => {
+    expect(apiSource).toContain('"/api/skills?locale=ko"');
+    expect(apiSource).toContain("&locale=ko");
   });
 });

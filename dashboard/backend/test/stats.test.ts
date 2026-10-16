@@ -100,9 +100,13 @@ describe("§3.7 harness/skills — 미설정이면 빈 목록(404 아님)", () =
     try {
       mkdirSync(join(root, "skills", "spec-writer"), { recursive: true });
       mkdirSync(join(root, "commands"), { recursive: true });
+      mkdirSync(join(root, "locales", "ko", "skills", "spec-writer"), { recursive: true });
+      mkdirSync(join(root, "locales", "ko", "commands"), { recursive: true });
       writeFileSync(join(root, "skills", "spec-writer", "SKILL.md"), "---\nname: spec-writer\nagent: code-agent\ndescription: Turns a draft into an implementable specification.\n---\n\n# Spec writer\n\nSkill body.\n");
       writeFileSync(join(root, "commands", "spec-writer.md"), "---\ndescription: command duplicate\n---\n\n# command\n");
       writeFileSync(join(root, "commands", "status.md"), "---\ndescription: Shows the current pipeline state.\n---\n\n# Status\n");
+      writeFileSync(join(root, "locales", "ko", "skills", "spec-writer", "SKILL.md"), "---\nname: spec-writer\ndescription: 초안을 구현 가능한 스펙으로 작성합니다.\n---\n\n# 스펙 작성\n\n한국어 스킬 본문.\n");
+      writeFileSync(join(root, "locales", "ko", "commands", "spec-writer.md"), "---\ndescription: 스펙 작성 명령을 실행합니다.\n---\n\n# 한국어 명령\n");
       const db = createSqliteClient();
       await db.execScript(schema);
       const { app } = await createApp({ db, skillsPath: root });
@@ -114,6 +118,14 @@ describe("§3.7 harness/skills — 미설정이면 빈 목록(404 아님)", () =
       ]);
       expect((await request(app).get("/api/skills/spec-writer").query({ kind: "skill" }).expect(200)).text).toContain("Skill body.");
       expect((await request(app).get("/api/skills/spec-writer").query({ kind: "command" }).expect(200)).text).toContain("# command");
+      const localized = await request(app).get("/api/skills").query({ locale: "ko" }).expect(200);
+      expect(localized.body.skills.map((entry: { name: string; description: string }) => [entry.name, entry.description])).toEqual([
+        ["spec-writer", "초안을 구현 가능한 스펙으로 작성합니다."],
+        ["spec-writer", "스펙 작성 명령을 실행합니다."],
+        ["status", "Shows the current pipeline state."],
+      ]);
+      expect((await request(app).get("/api/skills/spec-writer").query({ kind: "skill", locale: "ko" }).expect(200)).text).toContain("한국어 스킬 본문.");
+      expect((await request(app).get("/api/skills/spec-writer").query({ kind: "command", locale: "ko" }).expect(200)).text).toContain("# 한국어 명령");
       await request(app).get("/api/skills/spec-writer").expect(400);
       await request(app).get("/api/skills/spec-writer").query({ kind: "agent" }).expect(400);
     } finally {

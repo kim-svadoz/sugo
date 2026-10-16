@@ -90,8 +90,9 @@ export function createHarnessRouter(harnessPath: string): Router {
 export function createSkillsRouter(skillsPath: string): Router {
   const router = Router();
 
-  router.get("/", (_req, res) => {
+  router.get("/", (req, res) => {
     if (!skillsPath || !existsSync(skillsPath)) return res.json({ skills: [] });
+    const localized = req.query.locale === "ko";
     const out: Array<{ name: string; agent: string | null; description: string; kind: "skill" | "command"; command: boolean }> = [];
     // 플러그인 레이아웃: skills/<name>/SKILL.md (서브디렉터리)
     const skillsDir = join(skillsPath, "skills");
@@ -99,7 +100,8 @@ export function createSkillsRouter(skillsPath: string): Router {
       for (const d of readdirSync(skillsDir, { withFileTypes: true })) {
         if (d.isDirectory() && existsSync(join(skillsDir, d.name, "SKILL.md"))) {
           const text = readFileSync(join(skillsDir, d.name, "SKILL.md"), "utf8");
-          out.push({ name: d.name, agent: frontmatterValue(text, "agent"), description: frontmatterValue(text, "description") ?? "", kind: "skill", command: false });
+          const displayText = localized ? localizedText(skillsPath, "skill", d.name) ?? text : text;
+          out.push({ name: d.name, agent: frontmatterValue(text, "agent"), description: frontmatterValue(displayText, "description") ?? "", kind: "skill", command: false });
         }
       }
     }
@@ -110,7 +112,8 @@ export function createSkillsRouter(skillsPath: string): Router {
         if (d.isFile() && d.name.endsWith(".md")) {
           const name = d.name.replace(/\.md$/, "");
           const text = readFileSync(join(cmdDir, d.name), "utf8");
-          out.push({ name, agent: frontmatterValue(text, "agent"), description: frontmatterValue(text, "description") ?? "", kind: "command", command: true });
+          const displayText = localized ? localizedText(skillsPath, "command", name) ?? text : text;
+          out.push({ name, agent: frontmatterValue(text, "agent"), description: frontmatterValue(displayText, "description") ?? "", kind: "command", command: true });
         }
       }
     }
@@ -149,6 +152,10 @@ export function createSkillsRouter(skillsPath: string): Router {
     const candidates = kind === "command"
       ? [join(skillsPath, "commands", req.params.name + ".md")]
       : [join(skillsPath, "skills", req.params.name, "SKILL.md"), join(skillsPath, req.params.name + ".md")];
+    if (req.query.locale === "ko") {
+      const localized = localizedText(skillsPath, kind, req.params.name);
+      if (localized) return res.type("text/markdown").send(localized);
+    }
     for (const candidate of candidates) if (existsSync(candidate)) return res.type("text/markdown").send(readFileSync(candidate, "utf8"));
     return res.status(404).json({ error: "not_found" });
   });
@@ -167,6 +174,17 @@ export function createSkillsRouter(skillsPath: string): Router {
   );
 
   return router;
+}
+
+function localizedText(skillsPath: string, kind: "skill" | "command", name: string): string | null {
+  const full = kind === "command"
+    ? join(skillsPath, "locales", "ko", "commands", name + ".md")
+    : join(skillsPath, "locales", "ko", "skills", name, "SKILL.md");
+  try {
+    return readFileSync(full, "utf8");
+  } catch {
+    return null;
+  }
 }
 
 
