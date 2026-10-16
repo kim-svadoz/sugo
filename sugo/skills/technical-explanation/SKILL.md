@@ -1,52 +1,43 @@
 ---
 name: technical-explanation
-description: '기술 내용을 ASD-STE100 English 또는 ASD-STE100 원칙 기반 한국어로 명확하게 설명한다. "ASD-STE100으로 설명해줘", "STE로 설명", "간결한 기술 영어로 설명" 요청에 사용한다. 사실·게이트·근거는 바꾸지 않는다.'
+description: 'Explain technical facts in ASD-STE100 English or STE-inspired Korean. Triggers include ASD-STE100으로 설명해줘, STE로 설명, and concise technical English. Preserve facts, gates, and evidence.'
 ---
 
 # Sugo Technical Explanation
 
-이 스킬은 판단 도구가 아니라 표현 계층이다. 원본의 상태, 근거, 식별자, 수치, 게이트 결과를
-변경하거나 보충하지 않는다.
+This skill changes presentation only. Never change or add states, evidence, identifiers, values, or gate results.
 
-## 입력과 사실 원본
+## Sources
 
-1. 사용자가 설명할 대상을 확인한다.
-2. Sugo 세션이나 Task의 상태를 설명할 때는 `sugo_ontology`의 `explain_state`, `explain_block`,
-   `next_actions` 중 필요한 질의를 먼저 호출한다.
-3. 한국어 설명은 `presentation:"ste-inspired-ko"`, 영어 설명은
-   `presentation:"asd-ste100-en"`을 지정한다.
-4. 응답의 `result`만 사실 원본으로 사용한다. `presentation.rules`는 문장 작성 규칙이지 새로운
-   사실이 아니다.
-5. 일반 코드나 문서를 설명할 때도 실제 코드·문서를 사실 원본으로 사용한다. 확인되지 않은 원인이나
-   효과를 지어내지 않는다.
+1. Identify the subject.
+2. For Sugo session or Task state, first call the required `sugo_ontology` query: `explain_state`, `explain_block`, or `next_actions`.
+3. Use `presentation:"ste-inspired-ko"` for Korean and `presentation:"asd-ste100-en"` for English.
+4. Treat only `result` as fact. `presentation.rules` controls writing and adds no facts.
+5. For other code or documents, use the actual source. Do not invent an unverified cause or effect.
 
-## 출력 모드
+## Output mode
 
-사용자가 영어를 명시하면 `ASD-STE100 English`를 사용한다. 언어를 지정하지 않고 한국어로
-질문하면 `STE-inspired Korean`을 사용한다.
+Use `ASD-STE100 English` when the user requests English. For a Korean request without a language choice, use `STE-inspired Korean`.
 
 ### STE-inspired Korean
 
-- 한 문장에는 한 주제 또는 한 행동만 쓴다.
-- 짧은 능동문을 쓴다.
-- 같은 개념에는 같은 용어를 쓴다.
-- 현재 상태 → 원인 또는 근거 → 필요한 행동 → 행동 뒤 단계 순서로 쓴다.
-- 전문 용어와 코드 식별자는 원문을 유지한다.
-- 결과를 `ASD-STE100 준수`라고 부르지 않는다. `ASD-STE100 원칙 기반 한국어`라고 표시한다.
+- Put one topic or action in each sentence.
+- Use short active sentences and one term per concept.
+- Order content as current state → cause or evidence → required action → next state.
+- Preserve technical terms and code identifiers.
+- Do not claim `ASD-STE100 준수`. Label it `ASD-STE100 원칙 기반 한국어`.
 
 ### ASD-STE100 English
 
-- `presentation.rules`를 전부 따른다.
-- 한 문장에 하나의 instruction 또는 topic만 쓴다.
-- 짧은 능동문을 쓰고 같은 대상을 같은 term으로 부른다.
-- condition은 관련 instruction 앞에 둔다.
-- 기술 명칭, 명령, 상태, 파일 경로는 바꾸지 않는다.
-- 공식 사전 및 전체 규칙 검사와 전문 검토가 없으면 `ASD-STE100 compliant`라고 단정하지 않는다.
-  필요하면 `ASD-STE100 style; compliance not verified`라고 표시한다.
+- Follow every `presentation.rules` item.
+- Put one instruction or topic in each sentence. Use short active sentences and one term per object.
+- Put a condition before its instruction.
+- Preserve technical names, commands, states, and file paths.
+- Without official dictionary checks, full rule validation, and expert review, do not claim `ASD-STE100 compliant`. Use `ASD-STE100 style; compliance not verified` when needed.
 
-## 금지
+## Prohibited
 
-- 설명을 쉽게 만들기 위해 차단 원인이나 실패를 생략하지 않는다.
-- 여러 선택지를 하나의 권고로 임의 축약하지 않는다.
-- `result`에 없는 다음 단계, 성공 여부, 인과관계를 추가하지 않는다.
-- 한국어 출력에 영어 통제 사전 준수를 주장하지 않는다.
+- Do not omit blockers or failures to simplify the explanation.
+- Do not collapse multiple options into one recommendation.
+- Do not add a next step, success claim, or causal link absent from `result`.
+- Do not claim English controlled-dictionary compliance for Korean output.

@@ -1,6 +1,6 @@
 ---
-description: '재설치 후 비활성 보관된 Sugo 데이터와 프로젝트 연결을 명시적으로 복구한다.'
+description: 'Explicitly restore retained Sugo data and project links after reinstall.'
 ---
 
-사용자가 기존 데이터 복구를 명시적으로 요청했을 때만 `sugo_uninstall(action: "restore")`를 호출한다.
-재설치만으로 자동 복구하거나 프로젝트 파일을 수정하지 않는다.
+Call `sugo_uninstall(action: "restore")` only after the user explicitly requests recovery.
+Reinstallation alone must not restore data or modify project files.

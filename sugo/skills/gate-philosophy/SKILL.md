@@ -1,27 +1,21 @@
 ---
 name: gate-philosophy
-description: 'sugo 게이트 철학. 통과는 동작 증명이고 프록시(테스트 그린, 정적 통과)는 증명이 아니며 우회는 명시 라벨로만 한다. code/test/review-agent가 게이트를 다룰 때, 그리고 미검증이나 환경부재로 우회하려 할 때 항상 따른다.'
+description: 'Sugo gate policy. Passing requires behavioral evidence, not proxies. Bypass only with explicit labels. Applies whenever an agent handles gates or unavailable environments.'
 ---
 
-# 게이트 철학 (GATE_PHILOSOPHY)
+# Gate philosophy (GATE_PHILOSOPHY)
 
-게이트는 자기보고가 아니라 실행 증거로만 상태 전이를 허용한다. 이 규칙은 약화시키지 않는다.
+Gates permit state transitions only from execution evidence, never self-report. Do not weaken this rule.
 
-## 4대 원칙
+## Principles
 
-1. 게이트는 행동을 증명한다. 통과는 동작 증명이다. 테스트 그린이나 정적 통과는 프록시일 뿐
-   증명이 아니다. 우회는 명시적인 미검증 라벨로만 한다.
-2. 순서를 강제한다. 스킵할 수 없고 상태머신 전제조건으로 서버가 차단한다. 클라이언트를 신뢰하지 않는다.
-3. 자기보고를 신뢰하지 않는다. 통과했다는 주장과 실제 실행 증거를 서버가 분리해 교차검증한다.
-   그린 증거가 있는데 환경부재를 주장하는 라벨 모순은 차단된다.
-4. 하위호환은 라벨로 처리한다. 새 게이트는 opt-in이거나 조건부이며, 미충족은 차단이 아니라 라벨로
-   남겨 교착을 피한다. 다만 라벨을 남용하면 완료 등급이 강등된다(§4.6).
+1. A gate proves behavior. Green tests and static checks are proxies, not behavioral proof. Bypass only with an explicit unverified label.
+2. Enforce order. The server blocks skipped state-machine prerequisites and does not trust the client.
+3. Do not trust self-report. The server cross-checks claims against execution evidence and rejects contradictory unavailable-environment labels.
+4. Use labels for compatibility. New gates are opt-in or conditional where specified. A label can avoid deadlock, but excessive labels reduce the completion grade (§4.6).
 
-## 실전 규율
+## Practice
 
-- 게이트가 막으면 라벨로 도망치지 말고 실제로 충족시킨다. 테스트를 진짜 돌리고, 실배선 테스트를
-  진짜 추가하고, 풀검증 명령으로 진짜 검증한다.
-- 빌드 환경이 없는 것 같은 환경 부재는 정직한 탈출구다. 다만 같은 세션에 그린 증거가 있으면
-  모순으로 차단된다.
-- 다음은 전부 안전측 기본값에 따라 차단한다: 확인했다면서 결과를 안 밝힘, 그린이라면서 증거 없음,
-  통과라면서 기록은 실패, 미검증이라면서 그린 증거 있음.
+- When blocked, satisfy the gate. Run the test, add the real wiring test, and execute the full verification command.
+- An unavailable build environment is a valid escape only when true. Existing green evidence in the same session makes that label contradictory.
+- Fail closed when a claim omits results, green lacks evidence, stored evidence failed, or an unverified claim conflicts with green evidence.

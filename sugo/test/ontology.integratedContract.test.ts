@@ -9,8 +9,56 @@ import { ACTION_TYPES } from "../src/ontology/model.js";
 import type { RoadmapNode, Task } from "../src/hulk/types.js";
 
 const FIXTURES = join(__dirname, "fixtures", "ontology");
+const PLUGIN_ROOT = join(__dirname, "..");
+
+function prompt(relativePath: string): string {
+  return readFileSync(join(PLUGIN_ROOT, relativePath), "utf8");
+}
+
+function expectInOrder(text: string, values: readonly string[]): void {
+  let cursor = -1;
+  for (const value of values) {
+    const next = text.indexOf(value, cursor + 1);
+    expect(next, `missing or out of order: ${value}`).toBeGreaterThan(cursor);
+    cursor = next;
+  }
+}
 
 describe("P4 operational ontology 통합 계약", () => {
+  it("모델 실행 프롬프트가 온톨로지 전이 순서와 핵심 게이트 계약을 보존한다", () => {
+    const feat = prompt("commands/feat.md");
+    const pipelineActions = ACTION_TYPES
+      .map((action) => action.name)
+      .filter((name) => !["oracle_done", "jira", "subtask_start", "subtask_done", "integrate", "test_reverify", "status", "cancel"].includes(name));
+
+    expectInOrder(feat, pipelineActions);
+    for (const gateId of [
+      "SPEC_DRAFT_SELECTION_REQUIRED",
+      "TODO_SPEC_DRAFT_CONFIRMATION_REQUIRED",
+      "GATE_KEEPER_BLOCKED",
+      "TODO_SPEC_SYNC_REQUIRED",
+      "TODO_SPEC_MISSING_AT_COMMIT",
+    ]) expect(feat).toContain(gateId);
+
+    const review = prompt("skills/review-validate/SKILL.md");
+    for (const gateId of [
+      "VALIDATE_NOT_CALLED",
+      "VALIDATE_VERIFIED_FAILURE",
+      "LETHAL_TRIFECTA_NOT_CALLED",
+      "LETHAL_TRIFECTA_MITIGATION_REQUIRED",
+      "RUNTIME_CLAIM_CONTRADICTS_EVIDENCE",
+      "LABEL_CONTRADICTION",
+      "RUNTIME_UNVERIFIED_GATE_FAILED",
+      "REVERIFY_EVIDENCE_STILL_FAIL",
+    ]) expect(review).toContain(gateId);
+
+    const specWriter = prompt("skills/spec-writer/SKILL.md");
+    expectInOrder(specWriter, ["`배경/목적`", "`범위`", "`요구사항`", "`완료조건`", "`제약`", "`Open Questions`", "`Sources`"]);
+    for (const contract of ["SPEC_NOT_EDITABLE", "SPEC_LINT_WARNINGS", "acceptLintWarnings:true", "specTarget.path"]) {
+      expect(specWriter).toContain(contract);
+    }
+  });
+
   it("설계안 16행 독립 골든 코퍼스가 모델 게이트와 실제 증명 테스트에 전부 연결된다", () => {
     const corpus = JSON.parse(readFileSync(join(FIXTURES, "appendix-b-corpus.json"), "utf8")) as {
       id: string;

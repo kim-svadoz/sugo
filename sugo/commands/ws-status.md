@@ -1,45 +1,33 @@
 ---
-description: 워크스페이스 대시보드. 진행 중인 세션·태스크·로드맵을 한눈에 보고, 중단된 세션을 이어받을 지점을 찾는다(readOnly).
+description: Workspace terminal dashboard. Show sessions, tasks, and roadmap, and identify where to resume. Read-only.
 argument-hint: "<워크스페이스 이름>"
 ---
 
-너는 워크스페이스 하나의 작업 현황을 터미널에 정리해 보여준다. 인자: $ARGUMENTS
+Show one workspace in the terminal. Input: $ARGUMENTS
 
-**목적은 "나중에 다시 와서 이어받기"다.** 터미널을 닫았다가 새 세션에서 돌아왔을 때, 어느
-세션이 어디서 왜 멈췄는지 보고 바로 재개할 수 있어야 한다.
+The purpose is later resumption. A new terminal session must show which session stopped, where, and why.
 
-## 절차
+## Procedure
 
-1. 이름이 없으면 `sugo_workspace(action:"list")`로 목록을 보여주고 어느 것인지 묻는다.
-2. `sugo_workspace(action:"status", name)` 한 번으로 태스크·로드맵·세션이 전부 온다.
-3. 이어받을 세션이 있으면 `sugo_plan(action:"status", sessionId)`로 다음 액션 힌트를 확인해
-   덧붙인다. **여러 개면 사용자가 고르게 한다 — 임의로 하나를 골라 진행하지 않는다.**
+1. If name is absent, call `sugo_workspace(action:"list")` and ask the user to choose.
+2. Call `sugo_workspace(action:"status", name)` once for tasks, roadmap, and sessions.
+3. For each resumable session, call `sugo_plan(action:"status", sessionId)` and append next-action hints. If several exist, let the user choose. Never select one automatically.
 
-## 출력
+## Output
 
-이 순서로 쓴다. 비어 있는 섹션은 아예 출력하지 않는다.
+Use this order and omit empty sections.
 
-**① 이어받을 세션** (`resumable: true`) — 가장 먼저, 가장 자세히.
-세션 ID 전체 값, `state`, `featureName`, 마지막 갱신 시각, `blockers`, 변경파일 수를 표로 낸다.
-마지막 갱신은 **`updatedAtLocal`(실행 머신 시간대)을 쓴다** — `updatedAt`은 UTC라 사람이 바로
-읽지 못한다. UTC를 직접 변환해 적지 말고 서버가 준 값을 그대로 쓴다.
-`blockers`는 서버가 세션 기록에서 뽑은 실측 신호다(테스트 실패 수, review 미통과,
-review 재시도 횟수) — 추정으로 보태거나 바꾸지 않는다. analyze의 어휘 진단 verdict는 blocker가 아니다.
+**① Resumable sessions** (`resumable: true`) — first and most detailed. Show full session ID, `state`, `featureName`, last update, `blockers`, and changed-file count. Use server-provided `updatedAtLocal`, not UTC `updatedAt` or a manual conversion. `blockers` are measured server signals such as failed tests, failed review, and review retry count. Do not infer or alter them. The analyze lexical verdict is not a blocker.
 
-**② 태스크** — `status`별로 묶는다(`in_progress` → `pending` → 나머지). `prd_ref` 경로를 함께
-낸다. 이어서 작업하려면 그 PRD를 읽어야 한다.
+**② Tasks** — group by `status`: `in_progress`, then `pending`, then others. Include `prd_ref` for resumption.
 
-**③ 로드맵** — 의존관계를 들여쓰기로 보인다. `sugo_roadmap(action:"ready", workspace)`를 따로
-불러 **지금 착수 가능한 노드**를 표시하면 가장 쓸모 있다.
-`{taskId}::REQ-CONFIRM`은 `sugo_plan(review_done)` 성공으로만 닫히므로 수동 완료를 권하지 않는다.
+**③ Roadmap** — indent dependencies. Call `sugo_roadmap(action:"ready", workspace)` and mark nodes ready now. `{taskId}::REQ-CONFIRM` closes only after successful `sugo_plan(review_done)`; do not recommend manual completion.
 
-**④ 요약 카운트** — 체크포인트·스펙·워크로그 개수는 한 줄로 줄인다.
+**④ Summary counts** — put checkpoint, specification, and work-log counts on one line.
 
-## 규율
+## Rules
 
-- 읽기 전용이다. 상태를 바꾸지 않는다.
-- **세션 ID를 축약하지 않는다.** 사용자가 그대로 복사해 재개에 써야 한다.
-- 세션이 0건이면 "아직 파이프라인을 돌린 적이 없다"고 사실대로 말한다. 태스크는
-  `sugo_plan(prd)`가 워크스페이스 등록 프로젝트에 대해 자동 생성하므로, 파이프라인을 한 번도
-  돌리지 않았으면 전부 비어 있는 게 정상이다.
-- `state`가 무슨 뜻인지 묻지 않아도 설명을 덧붙이지 마라. 막힌 세션이 있을 때만 그 지점을 짚는다.
+- Read-only. Do not change state.
+- Never shorten a session ID; the user must be able to copy it.
+- If there are no sessions, state that the pipeline has not run. `sugo_plan(prd)` creates tasks for registered workspace projects, so all sections can be empty before the first run.
+- Do not explain `state` unless asked. Point out the state only for a blocked session.
