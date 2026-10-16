@@ -18,7 +18,7 @@
         "url": "https://github.com/kim-svadoz/weekly-ai-report.git"
       },
       "description": "sugo 작업 기록과 git 커밋으로 주간 작업 보고서와 기술 학습 노트(HTML)를 만든다",
-      "version": "0.2.0"
+      "version": "0.2.1"
     }
   ]
 }
