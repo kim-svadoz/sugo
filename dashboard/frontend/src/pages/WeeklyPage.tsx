@@ -30,7 +30,7 @@ function LearningCard({ item }: { item: WeeklyLearningView }) {
   const panels: Array<[string, string[], string]> = [["핵심 개념", item.keyPoints, ""], ["동작 원리", item.howItWorks, ""], ["이번 작업에서의 예", item.example, "bg-[var(--color-background)]"], ["쓸 때", item.whenToUse, ""], ["피할 때", item.whenNotToUse, ""], ["흔한 함정", item.pitfalls, "border-amber-400/25 bg-amber-400/5"]];
   const rationale = [...item.rationaleRecorded, ...item.rationaleUnverified.map((value) => `근거 기록 없음 · ${value}`), ...(item.rationaleGeneral ? [`일반론 · ${item.rationaleGeneral}`] : [])];
   return <article className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-    <header className="flex flex-wrap items-center gap-2 border-b border-[var(--color-border)] px-5 py-4"><h3 className="mr-1 text-xl font-bold tracking-tight text-cyan-100">{item.name}</h3>{item.category && <Tag>{item.category}</Tag>}{item.level && <span className="rounded-full border border-violet-400/30 bg-violet-400/10 px-2.5 py-1 text-xs font-semibold text-violet-200">{item.level}</span>}</header>
+    <header className="flex flex-wrap items-center gap-2 border-b border-[var(--color-border)] px-5 py-4"><h3 className="mr-1 text-xl font-bold tracking-tight text-cyan-100">{item.name}</h3>{item.category && <Tag>{item.category}</Tag>}{item.level && <span className="rounded-full border border-violet-400/30 bg-violet-400/10 px-2.5 py-1 text-xs font-semibold text-violet-200">{item.level}</span>}{item.relatedTopics.length > 0 && <p className="mt-1 flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-400"><span className="font-semibold text-slate-500">쓰인 작업</span>{item.relatedTopics.map((topic) => <span key={topic} className="rounded-md bg-slate-400/10 px-2 py-0.5 text-slate-300">{topic}</span>)}</p>}</header>
     {item.definition && <p className="mx-5 mt-4 border-l-[3px] border-cyan-400 bg-cyan-400/[0.06] px-4 py-3 text-[16px] font-semibold leading-7 text-[var(--color-text-bright)]">{item.definition}</p>}
     <div className="grid gap-3 p-5 lg:grid-cols-2">{panels.map(([label, values, tone]) => values.length ? <section key={label} className={cn("rounded-lg border border-[var(--color-border)] px-4 py-3", tone)}><Label accent={label !== "흔한 함정"} warn={label === "흔한 함정"}>{label}</Label><Bullets items={values} warn={label === "흔한 함정"} /></section> : null)}</div>
     {item.alternatives.length > 0 && <section className="mx-5 mb-5 overflow-x-auto"><Label>대체재 비교</Label><table className="w-full min-w-[660px] text-left text-sm"><thead className="bg-[var(--color-background)] text-xs text-[var(--color-text-muted)]"><tr>{["대체재", "장점", "단점", "더 맞는 상황"].map((head) => <th key={head} className="border-b border-[var(--color-border)] px-3 py-2">{head}</th>)}</tr></thead><tbody>{item.alternatives.map((alt) => <tr key={alt.name} className="border-b border-[var(--color-border)] last:border-0"><td className="px-3 py-2 font-semibold">{alt.name}</td><td className="px-3 py-2">{alt.pros}</td><td className="px-3 py-2">{alt.cons}</td><td className="px-3 py-2">{alt.when}</td></tr>)}</tbody></table></section>}
@@ -41,10 +41,7 @@ function LearningCard({ item }: { item: WeeklyLearningView }) {
 function ReportBody({ detail }: { detail: WeeklyReportDetail }) {
   const view = useMemo(() => toWeeklyView(detail.report), [detail]);
   const [tab, setTab] = useState<"report" | "learning">("report");
-  const [filter, setFilter] = useState("all");
-  const visible = filter === "all" ? view.learning : view.learning.filter((item) => item.relatedTopics.includes(filter));
   const sections = [["plan", "지난주 계획", view.lastWeekPlan.length], ["topics", "주제", view.topics.length], ["blocked", "막힌 것", view.blocked.length], ["next", "다음 주", view.nextWeek.length]] as const;
-  const filters = ["all", ...view.topics.map((topic) => topic.title).filter((title) => view.learning.some((item) => item.relatedTopics.includes(title)))];
   return <div>
     <nav className="mb-5 flex gap-8 border-b border-[var(--color-border)]" aria-label="Weekly 보기">{([["report", "주간 작업", view.topics.length], ["learning", "기술 학습", view.learning.length]] as const).map(([key, label, count]) => <button key={key} onClick={() => setTab(key)} className={cn("-mb-px border-b-[3px] px-1 pb-3 text-base font-semibold", tab === key ? "border-cyan-400 text-cyan-200" : "border-transparent text-[var(--color-text-muted)]")}>{label}<Count>{count}</Count></button>)}</nav>
     {tab === "report" ? <div className="space-y-7">
@@ -56,8 +53,7 @@ function ReportBody({ detail }: { detail: WeeklyReportDetail }) {
       {view.nextWeek.length > 0 && <SimpleSection id="next" title="다음 주"><Bullets items={view.nextWeek} /></SimpleSection>}
     </div> : <div className="space-y-5">
       <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5"><h2 className="mb-2 text-sm font-semibold text-[var(--color-text-muted)]">이번 주 배운 것</h2><Bullets items={view.learningSummary} /></section>
-      <nav className="sticky top-0 z-10 flex flex-wrap gap-1 border-b border-[var(--color-border)] bg-[var(--color-background)] py-2" aria-label="주제별 기술 필터">{filters.map((value) => { const count = value === "all" ? view.learning.length : view.learning.filter((item) => item.relatedTopics.includes(value)).length; return <button key={value} onClick={() => setFilter(value)} className={cn("rounded-full px-3 py-1.5 text-sm", filter === value ? "bg-cyan-400/15 font-semibold text-cyan-200" : "text-[var(--color-text-muted)]")}>{value === "all" ? "전체" : value}<Count>{count}</Count></button>; })}</nav>
-      <div className="space-y-4">{visible.map((item) => <LearningCard key={item.name} item={item} />)}</div>
+      <div className="space-y-4">{view.learning.map((item) => <LearningCard key={item.name} item={item} />)}</div>
     </div>}
   </div>;
 }
