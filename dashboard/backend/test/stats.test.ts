@@ -149,6 +149,25 @@ describe("§3.7 harness/skills — 미설정이면 빈 목록(404 아님)", () =
       rmSync(root, { recursive: true, force: true });
     }
   });
+  it("사용자 수정본을 별도 경로에 저장하고 초기화하면 기본값으로 복원한다", async () => {
+    const root = mkdtempSync(join(tmpdir(), "sugo-harness-base-"));
+    const overrides = mkdtempSync(join(tmpdir(), "sugo-harness-overrides-"));
+    try {
+      mkdirSync(join(root, "default"), { recursive: true });
+      writeFileSync(join(root, "default", "harness.md"), "# Default\n");
+      const db = createSqliteClient();
+      await db.execScript(schema);
+      const auth = await seedUserToken(db, "u1");
+      const { app } = await createApp({ db, harnessPath: root, harnessOverridePath: overrides });
+      await request(app).put("/api/harness/override").set("Authorization", auth).send({ id: "default", content: "# Mine\n" }).expect(200);
+      expect((await request(app).get("/api/harness/source").query({ id: "default" }).expect(200)).body).toEqual({ content: "# Mine\n", customized: true });
+      await request(app).delete("/api/harness/override").set("Authorization", auth).query({ id: "default" }).expect(200);
+      expect((await request(app).get("/api/harness/source").query({ id: "default" }).expect(200)).body).toEqual({ content: "# Default\n", customized: false });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+      rmSync(overrides, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("§3.3 spec-content — decision을 slug로 매칭", () => {

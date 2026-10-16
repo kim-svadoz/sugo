@@ -61,6 +61,7 @@ Open Questions는 feat를 막는 목록이 아니다. 답이 없어도 feat는 �
 
 ## 파일 규칙과 완료
 
+- `context` 응답의 `draftContent`가 있으면 사용자가 Dashboard에서 쓴 초안이다. 의도와 사실을 유지하면서 필수 SPEC 구조로 정리한다.
 - 저장 경로를 직접 만들거나 추측하지 않는다. `context` 응답의 `specTarget.path`를 그대로 사용한다.
 - `specTarget`은 현재 사용자의 Sugo 활성 데이터 루트 아래에 `specs/YYYYMMDD/<feature-slug>/vN/spec.md`를 제안한다. 날짜는 사용자의 로컬 달력 기준이고, `vN`은 기존 문서를 덮어쓰지 않는 다음 빈 버전이다.
 - `<feature-slug>`는 Schedule SPEC 제목을 NFC로 정규화하고 경로에 사용할 수 없는 문자를 제거한 뒤 공백을 `-`로 바꾼다. 한글과 영문은 그대로 둔다.

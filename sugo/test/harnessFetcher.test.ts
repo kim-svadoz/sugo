@@ -1,4 +1,6 @@
 import { dirname, join } from "node:path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { fetchFromLocal, shouldSkipFetch } from "../src/harness/harnessFetcher.js";
@@ -51,6 +53,20 @@ describe("fetchFromLocal", () => {
   it("여러 id가 같은 폴백 대상으로 겹치면 중복 없이 하나만 남는다", () => {
     const { harnesses } = fetchFromLocal(["unknown/a", "unknown/b"], libraryDir);
     expect(harnesses.filter((h) => h.id === "default").length).toBe(1);
+  });
+
+  it("사용자 오버라이드는 본문만 교체하고 기본 validation을 유지한다", () => {
+    const overrideDir = mkdtempSync(join(tmpdir(), "sugo-harness-override-"));
+    try {
+      mkdirSync(join(overrideDir, "lang", "typescript"), { recursive: true });
+      writeFileSync(join(overrideDir, "lang", "typescript", "harness.md"), "# My TypeScript rules\n");
+      const original = fetchFromLocal(["lang/typescript"], libraryDir).harnesses.find((h) => h.id === "lang/typescript")!;
+      const customized = fetchFromLocal(["lang/typescript"], libraryDir, overrideDir).harnesses.find((h) => h.id === "lang/typescript")!;
+      expect(customized.harnessMd).toContain("My TypeScript rules");
+      expect(customized.validationYaml).toBe(original.validationYaml);
+    } finally {
+      rmSync(overrideDir, { recursive: true, force: true });
+    }
   });
 });
 

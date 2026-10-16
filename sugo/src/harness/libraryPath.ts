@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { sugoHomeDir } from "../homeDir.js";
 
 /**
  * harness-library/ 위치를 실행 컨텍스트와 무관하게 찾는다.
@@ -15,4 +16,9 @@ export function defaultHarnessLibraryDir(): string {
     if (existsSync(c)) return c;
   }
   return candidates[0];
+}
+
+/** 사용자가 수정한 하네스만 저장한다. 배포 캐시는 절대 수정하지 않는다. */
+export function userHarnessOverrideDir(): string {
+  return join(sugoHomeDir(), ".claude", "sugo", "harness-overrides");
 }

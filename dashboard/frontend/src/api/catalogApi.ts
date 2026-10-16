@@ -48,3 +48,12 @@ export async function getHarnessContent(id: string): Promise<string> {
   if (!res.ok) throw new Error("하네스 본문을 불러오지 못했습니다.");
   return res.text();
 }
+export function getHarnessSource(id: string): Promise<{ content: string; customized: boolean }> {
+  return apiJson(`/api/harness/source?id=${encodeURIComponent(id)}`);
+}
+export function saveHarnessOverride(id: string, content: string): Promise<{ ok: boolean; customized: boolean }> {
+  return apiJson("/api/harness/override", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, content }) });
+}
+export function resetHarnessOverride(id: string): Promise<{ ok: boolean; customized: boolean }> {
+  return apiJson(`/api/harness/override?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+}

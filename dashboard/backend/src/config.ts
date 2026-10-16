@@ -21,6 +21,7 @@ export const config = {
   // §9 CI가 빌드타임에 하네스 저장소를 클론해 구워두는 경로(§3.7 harness/skills 서빙 근거).
   // 미설정이면 빈 매니페스트/404로 안전 반환한다(가짜 데이터 금지).
   harnessPath: process.env.HARNESS_PATH ?? "",
+  harnessOverridePath: process.env.HARNESS_OVERRIDE_PATH ?? join(homedir(), ".claude", "sugo", "harness-overrides"),
   skillsPath: process.env.SKILLS_PATH ?? "",
   // 설정되면 빌드된 프론트 정적 파일을 같은 프로세스·포트에서 서빙한다. 개발(vite dev)은 비워 둔다.
   staticDir: process.env.DASHBOARD_STATIC_DIR ?? "",

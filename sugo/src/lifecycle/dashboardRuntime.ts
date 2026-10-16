@@ -184,6 +184,7 @@ async function startServer(runtimeEntry: string, options: EnsureOptions, paths: 
       SUGO_DASHBOARD_PORT: String(port),
       BUILD_ID: options.buildId,
       HARNESS_PATH: join(options.pluginRoot, "harness-library"),
+      HARNESS_OVERRIDE_PATH: join(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
       SKILLS_PATH: options.pluginRoot,
     },
   });

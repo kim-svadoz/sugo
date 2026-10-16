@@ -72,9 +72,11 @@ import {
   deleteSpecAttachment,
   listSpecAttachments,
   listSpecReferences,
+  readSpecDraft,
   readSpecAttachment,
   replaceSpecReferences,
   removeSpecAttachments,
+  writeSpecDraft,
 } from "../services/specAttachments.js";
 import { applyCheckpointToProjects, isCheckpointExpired, newCheckpointId } from "../services/checkpointApply.js";
 import { readReviewArtifact } from "../services/reviewArtifacts.js";
@@ -549,6 +551,22 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     const result = await replaceSpecReferences(db, specAttachmentsPath, userId, req.params.name, nodeId, req.body?.links);
     if (!result.ok) return void res.status(attachmentStatus(result.errorCode)).json(result);
     res.json(result);
+  });
+
+  router.get("/:name/roadmap/spec-draft", async (req, res) => {
+    const userId = requireUserId(req, res); if (!userId) return;
+    const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+    if (!nodeId) return void res.status(400).json({ ok: false, errorCode: "NODE_ID_REQUIRED" });
+    const result = await readSpecDraft(db, specAttachmentsPath, userId, req.params.name, nodeId);
+    res.status(result.ok ? 200 : attachmentStatus(result.errorCode)).json(result);
+  });
+
+  router.put("/:name/roadmap/spec-draft", async (req, res) => {
+    const userId = requireUserId(req, res); if (!userId) return;
+    const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+    if (!nodeId) return void res.status(400).json({ ok: false, errorCode: "NODE_ID_REQUIRED" });
+    const result = await writeSpecDraft(db, specAttachmentsPath, userId, req.params.name, nodeId, req.body?.content);
+    res.status(result.ok ? 200 : attachmentStatus(result.errorCode)).json(result);
   });
 
   router.put("/:name/roadmap/spec-document", validateBody(updateSpecDocumentContentSchema), async (req, res) => {

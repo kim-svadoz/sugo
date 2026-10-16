@@ -1,12 +1,14 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join, normalize, relative } from "node:path";
 import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
+import { requireUser } from "../auth/requireUser.js";
+import type { DbClient } from "../db/client.js";
 
 // §3.7 Harness (PUBLIC): 빌드타임에 구운 파일을 서빙. harnessPath가 미설정/부재면 빈
 // 매니페스트나 404로 안전 반환한다("실데이터만" — 없는 걸 지어내지 않는다).
 // 경로 traversal 방지: 요청 세그먼트를 정규화해 baseDir 밖으로 못 나가게 막는다.
-export function createHarnessRouter(harnessPath: string): Router {
+export function createHarnessRouter(harnessPath: string, overridePath = "", db?: DbClient, sessionSecret = ""): Router {
   const router = Router();
 
   router.get("/manifest", (_req, res) => {
@@ -67,7 +69,42 @@ export function createHarnessRouter(harnessPath: string): Router {
       return res.status(400).json({ error: "invalid_path" });
     }
     if (!existsSync(full)) return res.status(404).json({ error: "not_found" });
-    return res.type("text/markdown").send(readFileSync(full, "utf8"));
+    const override = overridePath ? join(overridePath, rel) : "";
+    return res.type("text/markdown").send(readFileSync(override && existsSync(override) ? override : full, "utf8"));
+  });
+
+  router.get("/source", (req, res) => {
+    const id = String(req.query.id ?? "");
+    const rel = normalize(join(id, "harness.md"));
+    const base = join(harnessPath, rel);
+    const inside = relative(harnessPath, base);
+    if (!id || inside.startsWith("..") || inside.includes("..")) return res.status(400).json({ error: "invalid_path" });
+    if (!existsSync(base)) return res.status(404).json({ error: "not_found" });
+    const override = overridePath ? join(overridePath, rel) : "";
+    const customized = Boolean(override && existsSync(override));
+    return res.json({ content: readFileSync(customized ? override : base, "utf8"), customized });
+  });
+
+  router.put("/override", ...(db ? [requireUser(db, sessionSecret)] : []), (req, res) => {
+    const id = String(req.body?.id ?? "");
+    const content = String(req.body?.content ?? "");
+    const rel = normalize(join(id, "harness.md"));
+    const base = join(harnessPath, rel);
+    const target = join(overridePath, rel);
+    if (!id || !overridePath || relative(harnessPath, base).startsWith("..") || relative(overridePath, target).startsWith("..")) return res.status(400).json({ error: "invalid_path" });
+    if (!existsSync(base)) return res.status(404).json({ error: "not_found" });
+    if (!content.trim() || Buffer.byteLength(content) > 1024 * 1024) return res.status(400).json({ error: "invalid_content" });
+    mkdirSync(join(overridePath, id), { recursive: true });
+    writeFileSync(target, content, "utf8");
+    return res.json({ ok: true, customized: true });
+  });
+
+  router.delete("/override", ...(db ? [requireUser(db, sessionSecret)] : []), (req, res) => {
+    const id = String(req.query.id ?? "");
+    const target = join(overridePath, normalize(join(id, "harness.md")));
+    if (!id || !overridePath || relative(overridePath, target).startsWith("..")) return res.status(400).json({ error: "invalid_path" });
+    rmSync(target, { force: true });
+    return res.json({ ok: true, customized: false });
   });
 
   router.get(

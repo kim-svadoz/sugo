@@ -218,6 +218,16 @@ export function createQuickSpec(
   });
 }
 
+export function getSpecDraft(userId: string, workspace: string, nodeId: string) {
+  return apiJson<{ ok: true; content: string; locked: boolean }>(withUserId(path(workspace, "/spec-draft"), userId, { nodeId }));
+}
+
+export function updateSpecDraft(userId: string, workspace: string, nodeId: string, content: string) {
+  return apiJson<{ ok: true; content: string; locked: boolean }>(withUserId(path(workspace, "/spec-draft"), userId, { nodeId }), {
+    method: "PUT", body: JSON.stringify({ content }),
+  });
+}
+
 /** Dashboard가 만든 수동 SPEC과 그 하위 계보만 삭제한다. 로컬 Markdown 파일은 보존된다. */
 export function deleteQuickSpec(userId: string, workspace: string, nodeId: string) {
   return apiJson<{ ok: true; deletedCount: number; filesPreserved: true }>(withUserId(path(workspace, "/quick-spec"), userId), {

@@ -22,14 +22,18 @@ function baseHarnessId(id: string): string | null {
   return parts.slice(0, 2).join("/");
 }
 
-function readHarnessDir(libraryDir: string, id: string): { harnessMd: string; validationYaml: string } | null {
+function readHarnessDir(libraryDir: string, id: string, overrideDir?: string): { harnessMd: string; validationYaml: string } | null {
   const dir = join(libraryDir, id);
   const harnessPath = join(dir, "harness.md");
   const validationPath = join(dir, "validation.yaml");
   if (!existsSync(harnessPath) || !existsSync(validationPath)) return null;
   return {
-    harnessMd: readFileSync(harnessPath, "utf-8"),
-    validationYaml: readFileSync(validationPath, "utf-8"),
+    harnessMd: overrideDir && existsSync(join(overrideDir, id, "harness.md"))
+      ? readFileSync(join(overrideDir, id, "harness.md"), "utf-8")
+      : readFileSync(harnessPath, "utf-8"),
+    validationYaml: overrideDir && existsSync(join(overrideDir, id, "validation.yaml"))
+      ? readFileSync(join(overrideDir, id, "validation.yaml"), "utf-8")
+      : readFileSync(validationPath, "utf-8"),
   };
 }
 
@@ -43,28 +47,28 @@ export interface FetchResult {
  * id 정확매치 실패 시 버전 접미사를 제거한 base id로 재시도, 그래도 없으면 default로 폴백(차단 안 함).
  * default 자체가 없으면(라이브러리 손상) 예외를 던진다 — 이건 진짜 설치 문제라 숨기면 안 됨.
  */
-export function fetchFromLocal(harnessIds: string[], libraryDir: string): FetchResult {
+export function fetchFromLocal(harnessIds: string[], libraryDir: string, overrideDir?: string): FetchResult {
   const harnesses: HarnessContent[] = [];
   const warnings: string[] = [];
 
   const idsToFetch = harnessIds.length > 0 ? harnessIds : [];
 
   for (const id of idsToFetch) {
-    let hit = readHarnessDir(libraryDir, id);
+    let hit = readHarnessDir(libraryDir, id, overrideDir);
     let resolvedId = id;
     let source: HarnessContent["source"] = "local";
 
     if (!hit) {
       const base = baseHarnessId(id);
       if (base) {
-        hit = readHarnessDir(libraryDir, base);
+        hit = readHarnessDir(libraryDir, base, overrideDir);
         if (hit) resolvedId = base;
       }
     }
 
     if (!hit) {
       warnings.push(`하네스 id "${id}"에 대한 로컬 콘텐츠를 찾지 못해 default로 폴백합니다.`);
-      hit = readHarnessDir(libraryDir, DEFAULT_HARNESS_ID);
+      hit = readHarnessDir(libraryDir, DEFAULT_HARNESS_ID, overrideDir);
       resolvedId = DEFAULT_HARNESS_ID;
       source = "default-fallback";
       if (!hit) {
@@ -85,7 +89,7 @@ export function fetchFromLocal(harnessIds: string[], libraryDir: string): FetchR
 
   // 아무 것도 감지되지 않았어도 default는 항상 포함(§2: 모든 프로젝트에 최소 공통 규칙 적용)
   if (!harnesses.some((h) => h.id === DEFAULT_HARNESS_ID)) {
-    const defaultHit = readHarnessDir(libraryDir, DEFAULT_HARNESS_ID);
+    const defaultHit = readHarnessDir(libraryDir, DEFAULT_HARNESS_ID, overrideDir);
     if (!defaultHit) {
       throw new Error(`로컬 하네스 라이브러리에 "${DEFAULT_HARNESS_ID}" 콘텐츠가 없습니다: ${libraryDir}`);
     }
@@ -104,6 +108,7 @@ export function fetchFromLocal(harnessIds: string[], libraryDir: string): FetchR
 export interface FetchHarnessesParams {
   harnessIds: string[];
   libraryDir: string;
+  overrideDir?: string;
   repoUrl?: string;
 }
 
@@ -112,7 +117,7 @@ export interface FetchHarnessesParams {
  * 폴백한다 — 차단하지 않는다(§2).
  */
 export function fetchHarnesses(params: FetchHarnessesParams): FetchResult {
-  const result = fetchFromLocal(params.harnessIds, params.libraryDir);
+  const result = fetchFromLocal(params.harnessIds, params.libraryDir, params.overrideDir);
   if (params.repoUrl) {
     result.warnings.unshift(
       `repoUrl(${params.repoUrl})이 지정되었지만 git 기반 하네스 fetch는 아직 구현되지 않았습니다(로드맵 §11-2). 로컬 하네스 라이브러리로 폴백합니다.`,

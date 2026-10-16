@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.34.0" : "0.0.0-dev";
+  return true ? "0.34.1" : "0.0.0-dev";
 }
 
 // src/lifecycle/dashboardRuntime.ts
@@ -135,6 +135,7 @@ async function startServer(runtimeEntry, options, paths, port) {
       SUGO_DASHBOARD_PORT: String(port),
       BUILD_ID: options.buildId,
       HARNESS_PATH: join(options.pluginRoot, "harness-library"),
+      HARNESS_OVERRIDE_PATH: join(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
       SKILLS_PATH: options.pluginRoot
     }
   });

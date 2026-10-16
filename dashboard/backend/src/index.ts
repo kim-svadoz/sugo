@@ -74,6 +74,7 @@ export interface AppOverrides {
   frontendUrl?: string;
   localDev?: LocalAuthConfig;
   harnessPath?: string;
+  harnessOverridePath?: string;
   skillsPath?: string;
   specAttachmentsPath?: string;
   awsGuardPolicyPath?: string;
@@ -113,6 +114,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const frontendUrl = overrides.frontendUrl ?? config.frontendUrl;
   const localDev = overrides.localDev ?? config.localDev;
   const harnessPath = overrides.harnessPath ?? config.harnessPath;
+  const harnessOverridePath = overrides.harnessOverridePath ?? config.harnessOverridePath;
   const skillsPath = overrides.skillsPath ?? config.skillsPath;
   const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
@@ -159,7 +161,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/stats", statsRouter);
   app.use("/api/metrics", statsRouter);
   app.use("/api/weekly/reports", createWeeklyReportsRouter(db, sessionSecret));
-  app.use("/api/harness", createHarnessRouter(harnessPath));
+  app.use("/api/harness", createHarnessRouter(harnessPath, harnessOverridePath, db, sessionSecret));
   app.use("/api/skills", createSkillsRouter(skillsPath));
 
   const staticDir = overrides.staticDir ?? config.staticDir;

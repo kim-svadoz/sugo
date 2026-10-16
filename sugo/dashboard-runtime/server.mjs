@@ -49,9 +49,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/depd/index.js
+// ../dashboard/backend/node_modules/depd/index.js
 var require_depd = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/depd/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/depd/index.js"(exports, module) {
     var relative4 = __require("path").relative;
     module.exports = depd;
     var basePath = process.cwd();
@@ -355,9 +355,9 @@ var require_depd = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/bytes/index.js
+// ../dashboard/backend/node_modules/bytes/index.js
 var require_bytes = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/bytes/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/bytes/index.js"(exports, module) {
     "use strict";
     module.exports = bytes;
     module.exports.format = format2;
@@ -444,9 +444,9 @@ var require_bytes = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/content-type/index.js
+// ../dashboard/backend/node_modules/content-type/index.js
 var require_content_type = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/content-type/index.js"(exports) {
+  "../dashboard/backend/node_modules/content-type/index.js"(exports) {
     "use strict";
     var PARAM_REGEXP = /; *([!#$%&'*+.^_`|~0-9A-Za-z-]+) *= *("(?:[\u000b\u0020\u0021\u0023-\u005b\u005d-\u007e\u0080-\u00ff]|\\[\u000b\u0020-\u00ff])*"|[!#$%&'*+.^_`|~0-9A-Za-z-]+) */g;
     var TEXT_REGEXP = /^[\u000b\u0020-\u007e\u0080-\u00ff]+$/;
@@ -548,9 +548,9 @@ var require_content_type = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/setprototypeof/index.js
+// ../dashboard/backend/node_modules/setprototypeof/index.js
 var require_setprototypeof = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/setprototypeof/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/setprototypeof/index.js"(exports, module) {
     "use strict";
     module.exports = Object.setPrototypeOf || ({ __proto__: [] } instanceof Array ? setProtoOf : mixinProperties);
     function setProtoOf(obj, proto) {
@@ -568,9 +568,9 @@ var require_setprototypeof = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/statuses/codes.json
+// ../dashboard/backend/node_modules/statuses/codes.json
 var require_codes = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/statuses/codes.json"(exports, module) {
+  "../dashboard/backend/node_modules/statuses/codes.json"(exports, module) {
     module.exports = {
       "100": "Continue",
       "101": "Switching Protocols",
@@ -639,9 +639,9 @@ var require_codes = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/statuses/index.js
+// ../dashboard/backend/node_modules/statuses/index.js
 var require_statuses = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/statuses/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/statuses/index.js"(exports, module) {
     "use strict";
     var codes = require_codes();
     module.exports = status;
@@ -710,9 +710,9 @@ var require_statuses = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/inherits/inherits_browser.js
+// ../dashboard/backend/node_modules/inherits/inherits_browser.js
 var require_inherits_browser = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/inherits/inherits_browser.js"(exports, module) {
+  "../dashboard/backend/node_modules/inherits/inherits_browser.js"(exports, module) {
     if (typeof Object.create === "function") {
       module.exports = function inherits(ctor, superCtor) {
         if (superCtor) {
@@ -742,9 +742,9 @@ var require_inherits_browser = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/inherits/inherits.js
+// ../dashboard/backend/node_modules/inherits/inherits.js
 var require_inherits = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/inherits/inherits.js"(exports, module) {
+  "../dashboard/backend/node_modules/inherits/inherits.js"(exports, module) {
     try {
       util4 = __require("util");
       if (typeof util4.inherits !== "function") throw "";
@@ -756,9 +756,9 @@ var require_inherits = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/toidentifier/index.js
+// ../dashboard/backend/node_modules/toidentifier/index.js
 var require_toidentifier = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/toidentifier/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/toidentifier/index.js"(exports, module) {
     "use strict";
     module.exports = toIdentifier;
     function toIdentifier(str) {
@@ -769,9 +769,9 @@ var require_toidentifier = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/http-errors/index.js
+// ../dashboard/backend/node_modules/http-errors/index.js
 var require_http_errors = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/http-errors/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/http-errors/index.js"(exports, module) {
     "use strict";
     var deprecate = require_depd()("http-errors");
     var setPrototypeOf = require_setprototypeof();
@@ -933,9 +933,9 @@ var require_http_errors = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/ms/index.js
+// ../dashboard/backend/node_modules/ms/index.js
 var require_ms = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/ms/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/ms/index.js"(exports, module) {
     var s2 = 1e3;
     var m3 = s2 * 60;
     var h5 = m3 * 60;
@@ -1035,9 +1035,9 @@ var require_ms = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/debug/src/debug.js
+// ../dashboard/backend/node_modules/debug/src/debug.js
 var require_debug = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/debug/src/debug.js"(exports, module) {
+  "../dashboard/backend/node_modules/debug/src/debug.js"(exports, module) {
     exports = module.exports = createDebug.debug = createDebug["default"] = createDebug;
     exports.coerce = coerce2;
     exports.disable = disable;
@@ -1140,9 +1140,9 @@ var require_debug = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/debug/src/browser.js
+// ../dashboard/backend/node_modules/debug/src/browser.js
 var require_browser = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/debug/src/browser.js"(exports, module) {
+  "../dashboard/backend/node_modules/debug/src/browser.js"(exports, module) {
     exports = module.exports = require_debug();
     exports.log = log;
     exports.formatArgs = formatArgs;
@@ -1226,9 +1226,9 @@ var require_browser = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/debug/src/node.js
+// ../dashboard/backend/node_modules/debug/src/node.js
 var require_node = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/debug/src/node.js"(exports, module) {
+  "../dashboard/backend/node_modules/debug/src/node.js"(exports, module) {
     var tty = __require("tty");
     var util4 = __require("util");
     exports = module.exports = require_debug();
@@ -1346,9 +1346,9 @@ var require_node = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/debug/src/index.js
+// ../dashboard/backend/node_modules/debug/src/index.js
 var require_src = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/debug/src/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/debug/src/index.js"(exports, module) {
     if (typeof process !== "undefined" && process.type === "renderer") {
       module.exports = require_browser();
     } else {
@@ -1357,9 +1357,9 @@ var require_src = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/destroy/index.js
+// ../dashboard/backend/node_modules/destroy/index.js
 var require_destroy = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/destroy/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/destroy/index.js"(exports, module) {
     "use strict";
     var EventEmitter = __require("events").EventEmitter;
     var ReadStream2 = __require("fs").ReadStream;
@@ -1444,9 +1444,9 @@ var require_destroy = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/safer-buffer/safer.js
+// ../dashboard/backend/node_modules/safer-buffer/safer.js
 var require_safer = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/safer-buffer/safer.js"(exports, module) {
+  "../dashboard/backend/node_modules/safer-buffer/safer.js"(exports, module) {
     "use strict";
     var buffer = __require("buffer");
     var Buffer3 = buffer.Buffer;
@@ -1512,9 +1512,9 @@ var require_safer = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/lib/bom-handling.js
+// ../dashboard/backend/node_modules/iconv-lite/lib/bom-handling.js
 var require_bom_handling = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/lib/bom-handling.js"(exports) {
+  "../dashboard/backend/node_modules/iconv-lite/lib/bom-handling.js"(exports) {
     "use strict";
     var BOMChar = "\uFEFF";
     exports.PrependBOM = PrependBOMWrapper;
@@ -1556,9 +1556,9 @@ var require_bom_handling = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/internal.js
+// ../dashboard/backend/node_modules/iconv-lite/encodings/internal.js
 var require_internal = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/internal.js"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/internal.js"(exports, module) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     module.exports = {
@@ -1700,9 +1700,9 @@ var require_internal = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/utf16.js
+// ../dashboard/backend/node_modules/iconv-lite/encodings/utf16.js
 var require_utf16 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/utf16.js"(exports) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/utf16.js"(exports) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     exports.utf16be = Utf16BECodec;
@@ -1816,9 +1816,9 @@ var require_utf16 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/utf7.js
+// ../dashboard/backend/node_modules/iconv-lite/encodings/utf7.js
 var require_utf7 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/utf7.js"(exports) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/utf7.js"(exports) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     exports.utf7 = Utf7Codec;
@@ -2017,9 +2017,9 @@ var require_utf7 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/sbcs-codec.js
+// ../dashboard/backend/node_modules/iconv-lite/encodings/sbcs-codec.js
 var require_sbcs_codec = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/sbcs-codec.js"(exports) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/sbcs-codec.js"(exports) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     exports._sbcs = SBCSCodec;
@@ -2073,9 +2073,9 @@ var require_sbcs_codec = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/sbcs-data.js
+// ../dashboard/backend/node_modules/iconv-lite/encodings/sbcs-data.js
 var require_sbcs_data = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/sbcs-data.js"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/sbcs-data.js"(exports, module) {
     "use strict";
     module.exports = {
       // Not supported by iconv, not sure why.
@@ -2222,9 +2222,9 @@ var require_sbcs_data = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/sbcs-data-generated.js
+// ../dashboard/backend/node_modules/iconv-lite/encodings/sbcs-data-generated.js
 var require_sbcs_data_generated = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/sbcs-data-generated.js"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/sbcs-data-generated.js"(exports, module) {
     "use strict";
     module.exports = {
       "437": "cp437",
@@ -2677,9 +2677,9 @@ var require_sbcs_data_generated = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/dbcs-codec.js
+// ../dashboard/backend/node_modules/iconv-lite/encodings/dbcs-codec.js
 var require_dbcs_codec = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/dbcs-codec.js"(exports) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/dbcs-codec.js"(exports) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     exports._dbcs = DBCSCodec;
@@ -3058,9 +3058,9 @@ var require_dbcs_codec = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/shiftjis.json
+// ../dashboard/backend/node_modules/iconv-lite/encodings/tables/shiftjis.json
 var require_shiftjis = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/shiftjis.json"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/tables/shiftjis.json"(exports, module) {
     module.exports = [
       ["0", "\0", 128],
       ["a1", "\uFF61", 62],
@@ -3189,9 +3189,9 @@ var require_shiftjis = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/eucjp.json
+// ../dashboard/backend/node_modules/iconv-lite/encodings/tables/eucjp.json
 var require_eucjp = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/eucjp.json"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/tables/eucjp.json"(exports, module) {
     module.exports = [
       ["0", "\0", 127],
       ["8ea1", "\uFF61", 62],
@@ -3377,9 +3377,9 @@ var require_eucjp = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/cp936.json
+// ../dashboard/backend/node_modules/iconv-lite/encodings/tables/cp936.json
 var require_cp936 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/cp936.json"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/tables/cp936.json"(exports, module) {
     module.exports = [
       ["0", "\0", 127, "\u20AC"],
       ["8140", "\u4E02\u4E04\u4E05\u4E06\u4E0F\u4E12\u4E17\u4E1F\u4E20\u4E21\u4E23\u4E26\u4E29\u4E2E\u4E2F\u4E31\u4E33\u4E35\u4E37\u4E3C\u4E40\u4E41\u4E42\u4E44\u4E46\u4E4A\u4E51\u4E55\u4E57\u4E5A\u4E5B\u4E62\u4E63\u4E64\u4E65\u4E67\u4E68\u4E6A", 5, "\u4E72\u4E74", 9, "\u4E7F", 6, "\u4E87\u4E8A"],
@@ -3647,9 +3647,9 @@ var require_cp936 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/gbk-added.json
+// ../dashboard/backend/node_modules/iconv-lite/encodings/tables/gbk-added.json
 var require_gbk_added = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/gbk-added.json"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/tables/gbk-added.json"(exports, module) {
     module.exports = [
       ["a140", "\uE4C6", 62],
       ["a180", "\uE505", 32],
@@ -3708,16 +3708,16 @@ var require_gbk_added = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/gb18030-ranges.json
+// ../dashboard/backend/node_modules/iconv-lite/encodings/tables/gb18030-ranges.json
 var require_gb18030_ranges = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/gb18030-ranges.json"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/tables/gb18030-ranges.json"(exports, module) {
     module.exports = { uChars: [128, 165, 169, 178, 184, 216, 226, 235, 238, 244, 248, 251, 253, 258, 276, 284, 300, 325, 329, 334, 364, 463, 465, 467, 469, 471, 473, 475, 477, 506, 594, 610, 712, 716, 730, 930, 938, 962, 970, 1026, 1104, 1106, 8209, 8215, 8218, 8222, 8231, 8241, 8244, 8246, 8252, 8365, 8452, 8454, 8458, 8471, 8482, 8556, 8570, 8596, 8602, 8713, 8720, 8722, 8726, 8731, 8737, 8740, 8742, 8748, 8751, 8760, 8766, 8777, 8781, 8787, 8802, 8808, 8816, 8854, 8858, 8870, 8896, 8979, 9322, 9372, 9548, 9588, 9616, 9622, 9634, 9652, 9662, 9672, 9676, 9680, 9702, 9735, 9738, 9793, 9795, 11906, 11909, 11913, 11917, 11928, 11944, 11947, 11951, 11956, 11960, 11964, 11979, 12284, 12292, 12312, 12319, 12330, 12351, 12436, 12447, 12535, 12543, 12586, 12842, 12850, 12964, 13200, 13215, 13218, 13253, 13263, 13267, 13270, 13384, 13428, 13727, 13839, 13851, 14617, 14703, 14801, 14816, 14964, 15183, 15471, 15585, 16471, 16736, 17208, 17325, 17330, 17374, 17623, 17997, 18018, 18212, 18218, 18301, 18318, 18760, 18811, 18814, 18820, 18823, 18844, 18848, 18872, 19576, 19620, 19738, 19887, 40870, 59244, 59336, 59367, 59413, 59417, 59423, 59431, 59437, 59443, 59452, 59460, 59478, 59493, 63789, 63866, 63894, 63976, 63986, 64016, 64018, 64021, 64025, 64034, 64037, 64042, 65074, 65093, 65107, 65112, 65127, 65132, 65375, 65510, 65536], gbChars: [0, 36, 38, 45, 50, 81, 89, 95, 96, 100, 103, 104, 105, 109, 126, 133, 148, 172, 175, 179, 208, 306, 307, 308, 309, 310, 311, 312, 313, 341, 428, 443, 544, 545, 558, 741, 742, 749, 750, 805, 819, 820, 7922, 7924, 7925, 7927, 7934, 7943, 7944, 7945, 7950, 8062, 8148, 8149, 8152, 8164, 8174, 8236, 8240, 8262, 8264, 8374, 8380, 8381, 8384, 8388, 8390, 8392, 8393, 8394, 8396, 8401, 8406, 8416, 8419, 8424, 8437, 8439, 8445, 8482, 8485, 8496, 8521, 8603, 8936, 8946, 9046, 9050, 9063, 9066, 9076, 9092, 9100, 9108, 9111, 9113, 9131, 9162, 9164, 9218, 9219, 11329, 11331, 11334, 11336, 11346, 11361, 11363, 11366, 11370, 11372, 11375, 11389, 11682, 11686, 11687, 11692, 11694, 11714, 11716, 11723, 11725, 11730, 11736, 11982, 11989, 12102, 12336, 12348, 12350, 12384, 12393, 12395, 12397, 12510, 12553, 12851, 12962, 12973, 13738, 13823, 13919, 13933, 14080, 14298, 14585, 14698, 15583, 15847, 16318, 16434, 16438, 16481, 16729, 17102, 17122, 17315, 17320, 17402, 17418, 17859, 17909, 17911, 17915, 17916, 17936, 17939, 17961, 18664, 18703, 18814, 18962, 19043, 33469, 33470, 33471, 33484, 33485, 33490, 33497, 33501, 33505, 33513, 33520, 33536, 33550, 37845, 37921, 37948, 38029, 38038, 38064, 38065, 38066, 38069, 38075, 38076, 38078, 39108, 39109, 39113, 39114, 39115, 39116, 39265, 39394, 189e3] };
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/cp949.json
+// ../dashboard/backend/node_modules/iconv-lite/encodings/tables/cp949.json
 var require_cp949 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/cp949.json"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/tables/cp949.json"(exports, module) {
     module.exports = [
       ["0", "\0", 127],
       ["8141", "\uAC02\uAC03\uAC05\uAC06\uAC0B", 4, "\uAC18\uAC1E\uAC1F\uAC21\uAC22\uAC23\uAC25", 6, "\uAC2E\uAC32\uAC33\uAC34"],
@@ -3994,9 +3994,9 @@ var require_cp949 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/cp950.json
+// ../dashboard/backend/node_modules/iconv-lite/encodings/tables/cp950.json
 var require_cp950 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/cp950.json"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/tables/cp950.json"(exports, module) {
     module.exports = [
       ["0", "\0", 127],
       ["a140", "\u3000\uFF0C\u3001\u3002\uFF0E\u2027\uFF1B\uFF1A\uFF1F\uFF01\uFE30\u2026\u2025\uFE50\uFE51\uFE52\xB7\uFE54\uFE55\uFE56\uFE57\uFF5C\u2013\uFE31\u2014\uFE33\u2574\uFE34\uFE4F\uFF08\uFF09\uFE35\uFE36\uFF5B\uFF5D\uFE37\uFE38\u3014\u3015\uFE39\uFE3A\u3010\u3011\uFE3B\uFE3C\u300A\u300B\uFE3D\uFE3E\u3008\u3009\uFE3F\uFE40\u300C\u300D\uFE41\uFE42\u300E\u300F\uFE43\uFE44\uFE59\uFE5A"],
@@ -4177,9 +4177,9 @@ var require_cp950 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/big5-added.json
+// ../dashboard/backend/node_modules/iconv-lite/encodings/tables/big5-added.json
 var require_big5_added = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/tables/big5-added.json"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/tables/big5-added.json"(exports, module) {
     module.exports = [
       ["8740", "\u43F0\u4C32\u4603\u45A6\u4578\u{27267}\u4D77\u45B3\u{27CB1}\u4CE2\u{27CC5}\u3B95\u4736\u4744\u4C47\u4C40\u{242BF}\u{23617}\u{27352}\u{26E8B}\u{270D2}\u4C57\u{2A351}\u474F\u45DA\u4C85\u{27C6C}\u4D07\u4AA4\u46A1\u{26B23}\u7225\u{25A54}\u{21A63}\u{23E06}\u{23F61}\u664D\u56FB"],
       ["8767", "\u7D95\u591D\u{28BB9}\u3DF4\u9734\u{27BEF}\u5BDB\u{21D5E}\u5AA4\u3625\u{29EB0}\u5AD1\u5BB7\u5CFC\u676E\u8593\u{29945}\u7461\u749D\u3875\u{21D53}\u{2369E}\u{26021}\u3EEC"],
@@ -4305,9 +4305,9 @@ var require_big5_added = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/dbcs-data.js
+// ../dashboard/backend/node_modules/iconv-lite/encodings/dbcs-data.js
 var require_dbcs_data = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/dbcs-data.js"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/dbcs-data.js"(exports, module) {
     "use strict";
     module.exports = {
       // == Japanese/ShiftJIS ====================================================
@@ -4480,9 +4480,9 @@ var require_dbcs_data = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/index.js
+// ../dashboard/backend/node_modules/iconv-lite/encodings/index.js
 var require_encodings = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/encodings/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/encodings/index.js"(exports, module) {
     "use strict";
     var modules = [
       require_internal(),
@@ -4506,9 +4506,9 @@ var require_encodings = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/lib/streams.js
+// ../dashboard/backend/node_modules/iconv-lite/lib/streams.js
 var require_streams = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/lib/streams.js"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/lib/streams.js"(exports, module) {
     "use strict";
     var Buffer3 = __require("buffer").Buffer;
     var Transform = __require("stream").Transform;
@@ -4607,9 +4607,9 @@ var require_streams = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/lib/extend-node.js
+// ../dashboard/backend/node_modules/iconv-lite/lib/extend-node.js
 var require_extend_node = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/lib/extend-node.js"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/lib/extend-node.js"(exports, module) {
     "use strict";
     var Buffer3 = __require("buffer").Buffer;
     module.exports = function(iconv) {
@@ -4769,9 +4769,9 @@ var require_extend_node = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/lib/index.js
+// ../dashboard/backend/node_modules/iconv-lite/lib/index.js
 var require_lib = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/iconv-lite/lib/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/iconv-lite/lib/index.js"(exports, module) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     var bomHandling = require_bom_handling();
@@ -4872,9 +4872,9 @@ var require_lib = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/unpipe/index.js
+// ../dashboard/backend/node_modules/unpipe/index.js
 var require_unpipe = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/unpipe/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/unpipe/index.js"(exports, module) {
     "use strict";
     module.exports = unpipe;
     function hasPipeDataListeners(stream) {
@@ -4910,9 +4910,9 @@ var require_unpipe = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/raw-body/index.js
+// ../dashboard/backend/node_modules/raw-body/index.js
 var require_raw_body = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/raw-body/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/raw-body/index.js"(exports, module) {
     "use strict";
     var asyncHooks = tryRequireAsyncHooks();
     var bytes = require_bytes();
@@ -5099,9 +5099,9 @@ var require_raw_body = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/ee-first/index.js
+// ../dashboard/backend/node_modules/ee-first/index.js
 var require_ee_first = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/ee-first/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/ee-first/index.js"(exports, module) {
     "use strict";
     module.exports = first;
     function first(stuff, done) {
@@ -5155,9 +5155,9 @@ var require_ee_first = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/on-finished/index.js
+// ../dashboard/backend/node_modules/on-finished/index.js
 var require_on_finished = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/on-finished/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/on-finished/index.js"(exports, module) {
     "use strict";
     module.exports = onFinished;
     module.exports.isFinished = isFinished;
@@ -5259,9 +5259,9 @@ var require_on_finished = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/lib/read.js
+// ../dashboard/backend/node_modules/body-parser/lib/read.js
 var require_read = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/lib/read.js"(exports, module) {
+  "../dashboard/backend/node_modules/body-parser/lib/read.js"(exports, module) {
     "use strict";
     var createError = require_http_errors();
     var destroy = require_destroy();
@@ -5386,9 +5386,9 @@ var require_read = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/media-typer/index.js
+// ../dashboard/backend/node_modules/media-typer/index.js
 var require_media_typer = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/media-typer/index.js"(exports) {
+  "../dashboard/backend/node_modules/media-typer/index.js"(exports) {
     var paramRegExp = /; *([!#$%&'\*\+\-\.0-9A-Z\^_`a-z\|~]+) *= *("(?:[ !\u0023-\u005b\u005d-\u007e\u0080-\u00ff]|\\[\u0020-\u007e])*"|[!#$%&'\*\+\-\.0-9A-Z\^_`a-z\|~]+) */g;
     var textRegExp = /^[\u0020-\u007e\u0080-\u00ff]+$/;
     var tokenRegExp = /^[!#$%&'\*\+\-\.0-9A-Z\^_`a-z\|~]+$/;
@@ -5510,9 +5510,9 @@ var require_media_typer = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mime-db/db.json
+// ../dashboard/backend/node_modules/mime-db/db.json
 var require_db = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mime-db/db.json"(exports, module) {
+  "../dashboard/backend/node_modules/mime-db/db.json"(exports, module) {
     module.exports = {
       "application/1d-interleaved-parityfec": {
         source: "iana"
@@ -14035,16 +14035,16 @@ var require_db = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mime-db/index.js
+// ../dashboard/backend/node_modules/mime-db/index.js
 var require_mime_db = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mime-db/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/mime-db/index.js"(exports, module) {
     module.exports = require_db();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mime-types/index.js
+// ../dashboard/backend/node_modules/mime-types/index.js
 var require_mime_types = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mime-types/index.js"(exports) {
+  "../dashboard/backend/node_modules/mime-types/index.js"(exports) {
     "use strict";
     var db2 = require_mime_db();
     var extname2 = __require("path").extname;
@@ -14132,9 +14132,9 @@ var require_mime_types = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/type-is/index.js
+// ../dashboard/backend/node_modules/type-is/index.js
 var require_type_is = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/type-is/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/type-is/index.js"(exports, module) {
     "use strict";
     var typer = require_media_typer();
     var mime = require_mime_types();
@@ -14237,9 +14237,9 @@ var require_type_is = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/lib/types/json.js
+// ../dashboard/backend/node_modules/body-parser/lib/types/json.js
 var require_json = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/lib/types/json.js"(exports, module) {
+  "../dashboard/backend/node_modules/body-parser/lib/types/json.js"(exports, module) {
     "use strict";
     var bytes = require_bytes();
     var contentType = require_content_type();
@@ -14371,9 +14371,9 @@ var require_json = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/lib/types/raw.js
+// ../dashboard/backend/node_modules/body-parser/lib/types/raw.js
 var require_raw = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/lib/types/raw.js"(exports, module) {
+  "../dashboard/backend/node_modules/body-parser/lib/types/raw.js"(exports, module) {
     "use strict";
     var bytes = require_bytes();
     var debug = require_src()("body-parser:raw");
@@ -14430,9 +14430,9 @@ var require_raw = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/lib/types/text.js
+// ../dashboard/backend/node_modules/body-parser/lib/types/text.js
 var require_text = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/lib/types/text.js"(exports, module) {
+  "../dashboard/backend/node_modules/body-parser/lib/types/text.js"(exports, module) {
     "use strict";
     var bytes = require_bytes();
     var contentType = require_content_type();
@@ -14499,24 +14499,24 @@ var require_text = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/type.js
+// ../dashboard/backend/node_modules/es-errors/type.js
 var require_type = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/type.js"(exports, module) {
+  "../dashboard/backend/node_modules/es-errors/type.js"(exports, module) {
     "use strict";
     module.exports = TypeError;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/object-inspect/util.inspect.js
+// ../dashboard/backend/node_modules/object-inspect/util.inspect.js
 var require_util_inspect = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/object-inspect/util.inspect.js"(exports, module) {
+  "../dashboard/backend/node_modules/object-inspect/util.inspect.js"(exports, module) {
     module.exports = __require("util").inspect;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/object-inspect/index.js
+// ../dashboard/backend/node_modules/object-inspect/index.js
 var require_object_inspect = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/object-inspect/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/object-inspect/index.js"(exports, module) {
     var hasMap = typeof Map === "function" && Map.prototype;
     var mapSizeDescriptor = Object.getOwnPropertyDescriptor && hasMap ? Object.getOwnPropertyDescriptor(Map.prototype, "size") : null;
     var mapSize = hasMap && mapSizeDescriptor && typeof mapSizeDescriptor.get === "function" ? mapSizeDescriptor.get : null;
@@ -15045,9 +15045,9 @@ var require_object_inspect = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/side-channel-list/index.js
+// ../dashboard/backend/node_modules/side-channel-list/index.js
 var require_side_channel_list = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/side-channel-list/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/side-channel-list/index.js"(exports, module) {
     "use strict";
     var inspect = require_object_inspect();
     var $TypeError = require_type();
@@ -15138,113 +15138,113 @@ var require_side_channel_list = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-object-atoms/index.js
+// ../dashboard/backend/node_modules/es-object-atoms/index.js
 var require_es_object_atoms = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-object-atoms/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/es-object-atoms/index.js"(exports, module) {
     "use strict";
     module.exports = Object;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/index.js
+// ../dashboard/backend/node_modules/es-errors/index.js
 var require_es_errors = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/es-errors/index.js"(exports, module) {
     "use strict";
     module.exports = Error;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/eval.js
+// ../dashboard/backend/node_modules/es-errors/eval.js
 var require_eval = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/eval.js"(exports, module) {
+  "../dashboard/backend/node_modules/es-errors/eval.js"(exports, module) {
     "use strict";
     module.exports = EvalError;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/range.js
+// ../dashboard/backend/node_modules/es-errors/range.js
 var require_range = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/range.js"(exports, module) {
+  "../dashboard/backend/node_modules/es-errors/range.js"(exports, module) {
     "use strict";
     module.exports = RangeError;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/ref.js
+// ../dashboard/backend/node_modules/es-errors/ref.js
 var require_ref = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/ref.js"(exports, module) {
+  "../dashboard/backend/node_modules/es-errors/ref.js"(exports, module) {
     "use strict";
     module.exports = ReferenceError;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/syntax.js
+// ../dashboard/backend/node_modules/es-errors/syntax.js
 var require_syntax = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/syntax.js"(exports, module) {
+  "../dashboard/backend/node_modules/es-errors/syntax.js"(exports, module) {
     "use strict";
     module.exports = SyntaxError;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/uri.js
+// ../dashboard/backend/node_modules/es-errors/uri.js
 var require_uri = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-errors/uri.js"(exports, module) {
+  "../dashboard/backend/node_modules/es-errors/uri.js"(exports, module) {
     "use strict";
     module.exports = URIError;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/abs.js
+// ../dashboard/backend/node_modules/math-intrinsics/abs.js
 var require_abs = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/abs.js"(exports, module) {
+  "../dashboard/backend/node_modules/math-intrinsics/abs.js"(exports, module) {
     "use strict";
     module.exports = Math.abs;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/floor.js
+// ../dashboard/backend/node_modules/math-intrinsics/floor.js
 var require_floor = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/floor.js"(exports, module) {
+  "../dashboard/backend/node_modules/math-intrinsics/floor.js"(exports, module) {
     "use strict";
     module.exports = Math.floor;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/max.js
+// ../dashboard/backend/node_modules/math-intrinsics/max.js
 var require_max = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/max.js"(exports, module) {
+  "../dashboard/backend/node_modules/math-intrinsics/max.js"(exports, module) {
     "use strict";
     module.exports = Math.max;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/min.js
+// ../dashboard/backend/node_modules/math-intrinsics/min.js
 var require_min = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/min.js"(exports, module) {
+  "../dashboard/backend/node_modules/math-intrinsics/min.js"(exports, module) {
     "use strict";
     module.exports = Math.min;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/pow.js
+// ../dashboard/backend/node_modules/math-intrinsics/pow.js
 var require_pow = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/pow.js"(exports, module) {
+  "../dashboard/backend/node_modules/math-intrinsics/pow.js"(exports, module) {
     "use strict";
     module.exports = Math.pow;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/round.js
+// ../dashboard/backend/node_modules/math-intrinsics/round.js
 var require_round = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/round.js"(exports, module) {
+  "../dashboard/backend/node_modules/math-intrinsics/round.js"(exports, module) {
     "use strict";
     module.exports = Math.round;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/isNaN.js
+// ../dashboard/backend/node_modules/math-intrinsics/isNaN.js
 var require_isNaN = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/isNaN.js"(exports, module) {
+  "../dashboard/backend/node_modules/math-intrinsics/isNaN.js"(exports, module) {
     "use strict";
     module.exports = Number.isNaN || function isNaN2(a5) {
       return a5 !== a5;
@@ -15252,9 +15252,9 @@ var require_isNaN = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/sign.js
+// ../dashboard/backend/node_modules/math-intrinsics/sign.js
 var require_sign = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/math-intrinsics/sign.js"(exports, module) {
+  "../dashboard/backend/node_modules/math-intrinsics/sign.js"(exports, module) {
     "use strict";
     var $isNaN = require_isNaN();
     module.exports = function sign4(number) {
@@ -15266,17 +15266,17 @@ var require_sign = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/gopd/gOPD.js
+// ../dashboard/backend/node_modules/gopd/gOPD.js
 var require_gOPD = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/gopd/gOPD.js"(exports, module) {
+  "../dashboard/backend/node_modules/gopd/gOPD.js"(exports, module) {
     "use strict";
     module.exports = Object.getOwnPropertyDescriptor;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/gopd/index.js
+// ../dashboard/backend/node_modules/gopd/index.js
 var require_gopd = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/gopd/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/gopd/index.js"(exports, module) {
     "use strict";
     var $gOPD = require_gOPD();
     if ($gOPD) {
@@ -15290,9 +15290,9 @@ var require_gopd = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-define-property/index.js
+// ../dashboard/backend/node_modules/es-define-property/index.js
 var require_es_define_property = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/es-define-property/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/es-define-property/index.js"(exports, module) {
     "use strict";
     var $defineProperty = Object.defineProperty || false;
     if ($defineProperty) {
@@ -15306,9 +15306,9 @@ var require_es_define_property = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/has-symbols/shams.js
+// ../dashboard/backend/node_modules/has-symbols/shams.js
 var require_shams = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/has-symbols/shams.js"(exports, module) {
+  "../dashboard/backend/node_modules/has-symbols/shams.js"(exports, module) {
     "use strict";
     module.exports = function hasSymbols() {
       if (typeof Symbol !== "function" || typeof Object.getOwnPropertySymbols !== "function") {
@@ -15361,9 +15361,9 @@ var require_shams = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/has-symbols/index.js
+// ../dashboard/backend/node_modules/has-symbols/index.js
 var require_has_symbols = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/has-symbols/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/has-symbols/index.js"(exports, module) {
     "use strict";
     var origSymbol = typeof Symbol !== "undefined" && Symbol;
     var hasSymbolSham = require_shams();
@@ -15385,26 +15385,26 @@ var require_has_symbols = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/get-proto/Reflect.getPrototypeOf.js
+// ../dashboard/backend/node_modules/get-proto/Reflect.getPrototypeOf.js
 var require_Reflect_getPrototypeOf = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/get-proto/Reflect.getPrototypeOf.js"(exports, module) {
+  "../dashboard/backend/node_modules/get-proto/Reflect.getPrototypeOf.js"(exports, module) {
     "use strict";
     module.exports = typeof Reflect !== "undefined" && Reflect.getPrototypeOf || null;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/get-proto/Object.getPrototypeOf.js
+// ../dashboard/backend/node_modules/get-proto/Object.getPrototypeOf.js
 var require_Object_getPrototypeOf = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/get-proto/Object.getPrototypeOf.js"(exports, module) {
+  "../dashboard/backend/node_modules/get-proto/Object.getPrototypeOf.js"(exports, module) {
     "use strict";
     var $Object = require_es_object_atoms();
     module.exports = $Object.getPrototypeOf || null;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/function-bind/implementation.js
+// ../dashboard/backend/node_modules/function-bind/implementation.js
 var require_implementation = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/function-bind/implementation.js"(exports, module) {
+  "../dashboard/backend/node_modules/function-bind/implementation.js"(exports, module) {
     "use strict";
     var ERROR_MESSAGE = "Function.prototype.bind called on incompatible ";
     var toStr = Object.prototype.toString;
@@ -15478,42 +15478,42 @@ var require_implementation = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/function-bind/index.js
+// ../dashboard/backend/node_modules/function-bind/index.js
 var require_function_bind = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/function-bind/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/function-bind/index.js"(exports, module) {
     "use strict";
     var implementation = require_implementation();
     module.exports = Function.prototype.bind || implementation;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bind-apply-helpers/functionCall.js
+// ../dashboard/backend/node_modules/call-bind-apply-helpers/functionCall.js
 var require_functionCall = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bind-apply-helpers/functionCall.js"(exports, module) {
+  "../dashboard/backend/node_modules/call-bind-apply-helpers/functionCall.js"(exports, module) {
     "use strict";
     module.exports = Function.prototype.call;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bind-apply-helpers/functionApply.js
+// ../dashboard/backend/node_modules/call-bind-apply-helpers/functionApply.js
 var require_functionApply = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bind-apply-helpers/functionApply.js"(exports, module) {
+  "../dashboard/backend/node_modules/call-bind-apply-helpers/functionApply.js"(exports, module) {
     "use strict";
     module.exports = Function.prototype.apply;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bind-apply-helpers/reflectApply.js
+// ../dashboard/backend/node_modules/call-bind-apply-helpers/reflectApply.js
 var require_reflectApply = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bind-apply-helpers/reflectApply.js"(exports, module) {
+  "../dashboard/backend/node_modules/call-bind-apply-helpers/reflectApply.js"(exports, module) {
     "use strict";
     module.exports = typeof Reflect !== "undefined" && Reflect && Reflect.apply;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bind-apply-helpers/actualApply.js
+// ../dashboard/backend/node_modules/call-bind-apply-helpers/actualApply.js
 var require_actualApply = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bind-apply-helpers/actualApply.js"(exports, module) {
+  "../dashboard/backend/node_modules/call-bind-apply-helpers/actualApply.js"(exports, module) {
     "use strict";
     var bind = require_function_bind();
     var $apply = require_functionApply();
@@ -15523,9 +15523,9 @@ var require_actualApply = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bind-apply-helpers/index.js
+// ../dashboard/backend/node_modules/call-bind-apply-helpers/index.js
 var require_call_bind_apply_helpers = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bind-apply-helpers/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/call-bind-apply-helpers/index.js"(exports, module) {
     "use strict";
     var bind = require_function_bind();
     var $TypeError = require_type();
@@ -15540,9 +15540,9 @@ var require_call_bind_apply_helpers = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/dunder-proto/get.js
+// ../dashboard/backend/node_modules/dunder-proto/get.js
 var require_get = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/dunder-proto/get.js"(exports, module) {
+  "../dashboard/backend/node_modules/dunder-proto/get.js"(exports, module) {
     "use strict";
     var callBind = require_call_bind_apply_helpers();
     var gOPD = require_gopd();
@@ -15571,9 +15571,9 @@ var require_get = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/get-proto/index.js
+// ../dashboard/backend/node_modules/get-proto/index.js
 var require_get_proto = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/get-proto/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/get-proto/index.js"(exports, module) {
     "use strict";
     var reflectGetProto = require_Reflect_getPrototypeOf();
     var originalGetProto = require_Object_getPrototypeOf();
@@ -15591,9 +15591,9 @@ var require_get_proto = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/hasown/index.js
+// ../dashboard/backend/node_modules/hasown/index.js
 var require_hasown = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/hasown/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/hasown/index.js"(exports, module) {
     "use strict";
     var call = Function.prototype.call;
     var $hasOwn = Object.prototype.hasOwnProperty;
@@ -15602,9 +15602,9 @@ var require_hasown = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/get-intrinsic/index.js
+// ../dashboard/backend/node_modules/get-intrinsic/index.js
 var require_get_intrinsic = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/get-intrinsic/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/get-intrinsic/index.js"(exports, module) {
     "use strict";
     var undefined2;
     var $Object = require_es_object_atoms();
@@ -15933,9 +15933,9 @@ var require_get_intrinsic = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bound/index.js
+// ../dashboard/backend/node_modules/call-bound/index.js
 var require_call_bound = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/call-bound/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/call-bound/index.js"(exports, module) {
     "use strict";
     var GetIntrinsic = require_get_intrinsic();
     var callBindBasic = require_call_bind_apply_helpers();
@@ -15956,9 +15956,9 @@ var require_call_bound = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/side-channel-map/index.js
+// ../dashboard/backend/node_modules/side-channel-map/index.js
 var require_side_channel_map = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/side-channel-map/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/side-channel-map/index.js"(exports, module) {
     "use strict";
     var GetIntrinsic = require_get_intrinsic();
     var callBound = require_call_bound();
@@ -16012,9 +16012,9 @@ var require_side_channel_map = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/side-channel-weakmap/index.js
+// ../dashboard/backend/node_modules/side-channel-weakmap/index.js
 var require_side_channel_weakmap = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/side-channel-weakmap/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/side-channel-weakmap/index.js"(exports, module) {
     "use strict";
     var GetIntrinsic = require_get_intrinsic();
     var callBound = require_call_bound();
@@ -16085,9 +16085,9 @@ var require_side_channel_weakmap = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/side-channel/index.js
+// ../dashboard/backend/node_modules/side-channel/index.js
 var require_side_channel = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/side-channel/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/side-channel/index.js"(exports, module) {
     "use strict";
     var $TypeError = require_type();
     var inspect = require_object_inspect();
@@ -16125,9 +16125,9 @@ var require_side_channel = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/qs/lib/formats.js
+// ../dashboard/backend/node_modules/qs/lib/formats.js
 var require_formats = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/qs/lib/formats.js"(exports, module) {
+  "../dashboard/backend/node_modules/qs/lib/formats.js"(exports, module) {
     "use strict";
     var replace = String.prototype.replace;
     var percentTwenties = /%20/g;
@@ -16151,9 +16151,9 @@ var require_formats = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/qs/lib/utils.js
+// ../dashboard/backend/node_modules/qs/lib/utils.js
 var require_utils = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/qs/lib/utils.js"(exports, module) {
+  "../dashboard/backend/node_modules/qs/lib/utils.js"(exports, module) {
     "use strict";
     var formats = require_formats();
     var getSideChannel = require_side_channel();
@@ -16453,9 +16453,9 @@ var require_utils = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/qs/lib/stringify.js
+// ../dashboard/backend/node_modules/qs/lib/stringify.js
 var require_stringify = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/qs/lib/stringify.js"(exports, module) {
+  "../dashboard/backend/node_modules/qs/lib/stringify.js"(exports, module) {
     "use strict";
     var getSideChannel = require_side_channel();
     var utils = require_utils();
@@ -16741,9 +16741,9 @@ var require_stringify = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/qs/lib/parse.js
+// ../dashboard/backend/node_modules/qs/lib/parse.js
 var require_parse = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/qs/lib/parse.js"(exports, module) {
+  "../dashboard/backend/node_modules/qs/lib/parse.js"(exports, module) {
     "use strict";
     var utils = require_utils();
     var has = Object.prototype.hasOwnProperty;
@@ -17070,9 +17070,9 @@ var require_parse = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/qs/lib/index.js
+// ../dashboard/backend/node_modules/qs/lib/index.js
 var require_lib2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/qs/lib/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/qs/lib/index.js"(exports, module) {
     "use strict";
     var stringify = require_stringify();
     var parse2 = require_parse();
@@ -17085,9 +17085,9 @@ var require_lib2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/lib/types/urlencoded.js
+// ../dashboard/backend/node_modules/body-parser/lib/types/urlencoded.js
 var require_urlencoded = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/lib/types/urlencoded.js"(exports, module) {
+  "../dashboard/backend/node_modules/body-parser/lib/types/urlencoded.js"(exports, module) {
     "use strict";
     var bytes = require_bytes();
     var contentType = require_content_type();
@@ -17261,9 +17261,9 @@ var require_urlencoded = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/index.js
+// ../dashboard/backend/node_modules/body-parser/index.js
 var require_body_parser = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/body-parser/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/body-parser/index.js"(exports, module) {
     "use strict";
     var deprecate = require_depd()("body-parser");
     var parsers = /* @__PURE__ */ Object.create(null);
@@ -17338,9 +17338,9 @@ var require_body_parser = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/merge-descriptors/index.js
+// ../dashboard/backend/node_modules/merge-descriptors/index.js
 var require_merge_descriptors = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/merge-descriptors/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/merge-descriptors/index.js"(exports, module) {
     "use strict";
     module.exports = merge2;
     var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -17366,9 +17366,9 @@ var require_merge_descriptors = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/encodeurl/index.js
+// ../dashboard/backend/node_modules/encodeurl/index.js
 var require_encodeurl = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/encodeurl/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/encodeurl/index.js"(exports, module) {
     "use strict";
     module.exports = encodeUrl;
     var ENCODE_CHARS_REGEXP = /(?:[^\x21\x23-\x3B\x3D\x3F-\x5F\x61-\x7A\x7C\x7E]|%(?:[^0-9A-Fa-f]|[0-9A-Fa-f][^0-9A-Fa-f]|$))+/g;
@@ -17380,9 +17380,9 @@ var require_encodeurl = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/escape-html/index.js
+// ../dashboard/backend/node_modules/escape-html/index.js
 var require_escape_html = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/escape-html/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/escape-html/index.js"(exports, module) {
     "use strict";
     var matchHtmlRegExp = /["'&<>]/;
     module.exports = escapeHtml;
@@ -17427,9 +17427,9 @@ var require_escape_html = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/parseurl/index.js
+// ../dashboard/backend/node_modules/parseurl/index.js
 var require_parseurl = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/parseurl/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/parseurl/index.js"(exports, module) {
     "use strict";
     var url = __require("url");
     var parse2 = url.parse;
@@ -17511,9 +17511,9 @@ var require_parseurl = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/finalhandler/index.js
+// ../dashboard/backend/node_modules/finalhandler/index.js
 var require_finalhandler = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/finalhandler/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/finalhandler/index.js"(exports, module) {
     "use strict";
     var debug = require_src()("finalhandler");
     var encodeUrl = require_encodeurl();
@@ -17661,9 +17661,9 @@ var require_finalhandler = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/array-flatten/array-flatten.js
+// ../dashboard/backend/node_modules/array-flatten/array-flatten.js
 var require_array_flatten = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/array-flatten/array-flatten.js"(exports, module) {
+  "../dashboard/backend/node_modules/array-flatten/array-flatten.js"(exports, module) {
     "use strict";
     module.exports = arrayFlatten;
     function flattenWithDepth(array, result, depth) {
@@ -17697,9 +17697,9 @@ var require_array_flatten = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/path-to-regexp/index.js
+// ../dashboard/backend/node_modules/path-to-regexp/index.js
 var require_path_to_regexp = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/path-to-regexp/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/path-to-regexp/index.js"(exports, module) {
     module.exports = pathToRegexp;
     var MATCHING_GROUP_REGEXP = /\\.|\((?:\?<(.*?)>)?(?!\?)/g;
     function pathToRegexp(path, keys, options) {
@@ -17806,9 +17806,9 @@ var require_path_to_regexp = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/router/layer.js
+// ../dashboard/backend/node_modules/express/lib/router/layer.js
 var require_layer = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/router/layer.js"(exports, module) {
+  "../dashboard/backend/node_modules/express/lib/router/layer.js"(exports, module) {
     "use strict";
     var pathRegexp = require_path_to_regexp();
     var debug = require_src()("express:router:layer");
@@ -17901,9 +17901,9 @@ var require_layer = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/methods/index.js
+// ../dashboard/backend/node_modules/methods/index.js
 var require_methods = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/methods/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/methods/index.js"(exports, module) {
     "use strict";
     var http2 = __require("http");
     module.exports = getCurrentNodeMethods() || getBasicNodeMethods();
@@ -17945,9 +17945,9 @@ var require_methods = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/router/route.js
+// ../dashboard/backend/node_modules/express/lib/router/route.js
 var require_route = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/router/route.js"(exports, module) {
+  "../dashboard/backend/node_modules/express/lib/router/route.js"(exports, module) {
     "use strict";
     var debug = require_src()("express:router:route");
     var flatten = require_array_flatten();
@@ -18057,9 +18057,9 @@ var require_route = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/utils-merge/index.js
+// ../dashboard/backend/node_modules/utils-merge/index.js
 var require_utils_merge = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/utils-merge/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/utils-merge/index.js"(exports, module) {
     exports = module.exports = function(a5, b5) {
       if (a5 && b5) {
         for (var key2 in b5) {
@@ -18071,9 +18071,9 @@ var require_utils_merge = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/router/index.js
+// ../dashboard/backend/node_modules/express/lib/router/index.js
 var require_router = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/router/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/express/lib/router/index.js"(exports, module) {
     "use strict";
     var Route = require_route();
     var Layer = require_layer();
@@ -18454,9 +18454,9 @@ var require_router = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/middleware/init.js
+// ../dashboard/backend/node_modules/express/lib/middleware/init.js
 var require_init = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/middleware/init.js"(exports) {
+  "../dashboard/backend/node_modules/express/lib/middleware/init.js"(exports) {
     "use strict";
     var setPrototypeOf = require_setprototypeof();
     exports.init = function(app2) {
@@ -18474,9 +18474,9 @@ var require_init = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/middleware/query.js
+// ../dashboard/backend/node_modules/express/lib/middleware/query.js
 var require_query = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/middleware/query.js"(exports, module) {
+  "../dashboard/backend/node_modules/express/lib/middleware/query.js"(exports, module) {
     "use strict";
     var merge2 = require_utils_merge();
     var parseUrl2 = require_parseurl();
@@ -18502,9 +18502,9 @@ var require_query = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/view.js
+// ../dashboard/backend/node_modules/express/lib/view.js
 var require_view = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/view.js"(exports, module) {
+  "../dashboard/backend/node_modules/express/lib/view.js"(exports, module) {
     "use strict";
     var debug = require_src()("express:view");
     var path = __require("path");
@@ -18582,9 +18582,9 @@ var require_view = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/safe-buffer/index.js
+// ../dashboard/backend/node_modules/safe-buffer/index.js
 var require_safe_buffer = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/safe-buffer/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/safe-buffer/index.js"(exports, module) {
     var buffer = __require("buffer");
     var Buffer3 = buffer.Buffer;
     function copyProps(src, dst) {
@@ -18640,9 +18640,9 @@ var require_safe_buffer = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/content-disposition/index.js
+// ../dashboard/backend/node_modules/content-disposition/index.js
 var require_content_disposition = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/content-disposition/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/content-disposition/index.js"(exports, module) {
     "use strict";
     module.exports = contentDisposition;
     module.exports.parse = parse2;
@@ -18803,9 +18803,9 @@ var require_content_disposition = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/etag/index.js
+// ../dashboard/backend/node_modules/etag/index.js
 var require_etag = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/etag/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/etag/index.js"(exports, module) {
     "use strict";
     module.exports = etag;
     var crypto5 = __require("crypto");
@@ -18845,9 +18845,9 @@ var require_etag = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/fresh/index.js
+// ../dashboard/backend/node_modules/fresh/index.js
 var require_fresh = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/fresh/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/fresh/index.js"(exports, module) {
     "use strict";
     var CACHE_CONTROL_NO_CACHE_REGEXP = /(?:^|,)\s*?no-cache\s*?(?:,|$)/;
     module.exports = fresh;
@@ -18918,16 +18918,16 @@ var require_fresh = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mime/types.json
+// ../dashboard/backend/node_modules/mime/types.json
 var require_types = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mime/types.json"(exports, module) {
+  "../dashboard/backend/node_modules/mime/types.json"(exports, module) {
     module.exports = { "application/andrew-inset": ["ez"], "application/applixware": ["aw"], "application/atom+xml": ["atom"], "application/atomcat+xml": ["atomcat"], "application/atomsvc+xml": ["atomsvc"], "application/bdoc": ["bdoc"], "application/ccxml+xml": ["ccxml"], "application/cdmi-capability": ["cdmia"], "application/cdmi-container": ["cdmic"], "application/cdmi-domain": ["cdmid"], "application/cdmi-object": ["cdmio"], "application/cdmi-queue": ["cdmiq"], "application/cu-seeme": ["cu"], "application/dash+xml": ["mpd"], "application/davmount+xml": ["davmount"], "application/docbook+xml": ["dbk"], "application/dssc+der": ["dssc"], "application/dssc+xml": ["xdssc"], "application/ecmascript": ["ecma"], "application/emma+xml": ["emma"], "application/epub+zip": ["epub"], "application/exi": ["exi"], "application/font-tdpfr": ["pfr"], "application/font-woff": [], "application/font-woff2": [], "application/geo+json": ["geojson"], "application/gml+xml": ["gml"], "application/gpx+xml": ["gpx"], "application/gxf": ["gxf"], "application/gzip": ["gz"], "application/hyperstudio": ["stk"], "application/inkml+xml": ["ink", "inkml"], "application/ipfix": ["ipfix"], "application/java-archive": ["jar", "war", "ear"], "application/java-serialized-object": ["ser"], "application/java-vm": ["class"], "application/javascript": ["js", "mjs"], "application/json": ["json", "map"], "application/json5": ["json5"], "application/jsonml+json": ["jsonml"], "application/ld+json": ["jsonld"], "application/lost+xml": ["lostxml"], "application/mac-binhex40": ["hqx"], "application/mac-compactpro": ["cpt"], "application/mads+xml": ["mads"], "application/manifest+json": ["webmanifest"], "application/marc": ["mrc"], "application/marcxml+xml": ["mrcx"], "application/mathematica": ["ma", "nb", "mb"], "application/mathml+xml": ["mathml"], "application/mbox": ["mbox"], "application/mediaservercontrol+xml": ["mscml"], "application/metalink+xml": ["metalink"], "application/metalink4+xml": ["meta4"], "application/mets+xml": ["mets"], "application/mods+xml": ["mods"], "application/mp21": ["m21", "mp21"], "application/mp4": ["mp4s", "m4p"], "application/msword": ["doc", "dot"], "application/mxf": ["mxf"], "application/octet-stream": ["bin", "dms", "lrf", "mar", "so", "dist", "distz", "pkg", "bpk", "dump", "elc", "deploy", "exe", "dll", "deb", "dmg", "iso", "img", "msi", "msp", "msm", "buffer"], "application/oda": ["oda"], "application/oebps-package+xml": ["opf"], "application/ogg": ["ogx"], "application/omdoc+xml": ["omdoc"], "application/onenote": ["onetoc", "onetoc2", "onetmp", "onepkg"], "application/oxps": ["oxps"], "application/patch-ops-error+xml": ["xer"], "application/pdf": ["pdf"], "application/pgp-encrypted": ["pgp"], "application/pgp-signature": ["asc", "sig"], "application/pics-rules": ["prf"], "application/pkcs10": ["p10"], "application/pkcs7-mime": ["p7m", "p7c"], "application/pkcs7-signature": ["p7s"], "application/pkcs8": ["p8"], "application/pkix-attr-cert": ["ac"], "application/pkix-cert": ["cer"], "application/pkix-crl": ["crl"], "application/pkix-pkipath": ["pkipath"], "application/pkixcmp": ["pki"], "application/pls+xml": ["pls"], "application/postscript": ["ai", "eps", "ps"], "application/prs.cww": ["cww"], "application/pskc+xml": ["pskcxml"], "application/raml+yaml": ["raml"], "application/rdf+xml": ["rdf"], "application/reginfo+xml": ["rif"], "application/relax-ng-compact-syntax": ["rnc"], "application/resource-lists+xml": ["rl"], "application/resource-lists-diff+xml": ["rld"], "application/rls-services+xml": ["rs"], "application/rpki-ghostbusters": ["gbr"], "application/rpki-manifest": ["mft"], "application/rpki-roa": ["roa"], "application/rsd+xml": ["rsd"], "application/rss+xml": ["rss"], "application/rtf": ["rtf"], "application/sbml+xml": ["sbml"], "application/scvp-cv-request": ["scq"], "application/scvp-cv-response": ["scs"], "application/scvp-vp-request": ["spq"], "application/scvp-vp-response": ["spp"], "application/sdp": ["sdp"], "application/set-payment-initiation": ["setpay"], "application/set-registration-initiation": ["setreg"], "application/shf+xml": ["shf"], "application/smil+xml": ["smi", "smil"], "application/sparql-query": ["rq"], "application/sparql-results+xml": ["srx"], "application/srgs": ["gram"], "application/srgs+xml": ["grxml"], "application/sru+xml": ["sru"], "application/ssdl+xml": ["ssdl"], "application/ssml+xml": ["ssml"], "application/tei+xml": ["tei", "teicorpus"], "application/thraud+xml": ["tfi"], "application/timestamped-data": ["tsd"], "application/vnd.3gpp.pic-bw-large": ["plb"], "application/vnd.3gpp.pic-bw-small": ["psb"], "application/vnd.3gpp.pic-bw-var": ["pvb"], "application/vnd.3gpp2.tcap": ["tcap"], "application/vnd.3m.post-it-notes": ["pwn"], "application/vnd.accpac.simply.aso": ["aso"], "application/vnd.accpac.simply.imp": ["imp"], "application/vnd.acucobol": ["acu"], "application/vnd.acucorp": ["atc", "acutc"], "application/vnd.adobe.air-application-installer-package+zip": ["air"], "application/vnd.adobe.formscentral.fcdt": ["fcdt"], "application/vnd.adobe.fxp": ["fxp", "fxpl"], "application/vnd.adobe.xdp+xml": ["xdp"], "application/vnd.adobe.xfdf": ["xfdf"], "application/vnd.ahead.space": ["ahead"], "application/vnd.airzip.filesecure.azf": ["azf"], "application/vnd.airzip.filesecure.azs": ["azs"], "application/vnd.amazon.ebook": ["azw"], "application/vnd.americandynamics.acc": ["acc"], "application/vnd.amiga.ami": ["ami"], "application/vnd.android.package-archive": ["apk"], "application/vnd.anser-web-certificate-issue-initiation": ["cii"], "application/vnd.anser-web-funds-transfer-initiation": ["fti"], "application/vnd.antix.game-component": ["atx"], "application/vnd.apple.installer+xml": ["mpkg"], "application/vnd.apple.mpegurl": ["m3u8"], "application/vnd.apple.pkpass": ["pkpass"], "application/vnd.aristanetworks.swi": ["swi"], "application/vnd.astraea-software.iota": ["iota"], "application/vnd.audiograph": ["aep"], "application/vnd.blueice.multipass": ["mpm"], "application/vnd.bmi": ["bmi"], "application/vnd.businessobjects": ["rep"], "application/vnd.chemdraw+xml": ["cdxml"], "application/vnd.chipnuts.karaoke-mmd": ["mmd"], "application/vnd.cinderella": ["cdy"], "application/vnd.claymore": ["cla"], "application/vnd.cloanto.rp9": ["rp9"], "application/vnd.clonk.c4group": ["c4g", "c4d", "c4f", "c4p", "c4u"], "application/vnd.cluetrust.cartomobile-config": ["c11amc"], "application/vnd.cluetrust.cartomobile-config-pkg": ["c11amz"], "application/vnd.commonspace": ["csp"], "application/vnd.contact.cmsg": ["cdbcmsg"], "application/vnd.cosmocaller": ["cmc"], "application/vnd.crick.clicker": ["clkx"], "application/vnd.crick.clicker.keyboard": ["clkk"], "application/vnd.crick.clicker.palette": ["clkp"], "application/vnd.crick.clicker.template": ["clkt"], "application/vnd.crick.clicker.wordbank": ["clkw"], "application/vnd.criticaltools.wbs+xml": ["wbs"], "application/vnd.ctc-posml": ["pml"], "application/vnd.cups-ppd": ["ppd"], "application/vnd.curl.car": ["car"], "application/vnd.curl.pcurl": ["pcurl"], "application/vnd.dart": ["dart"], "application/vnd.data-vision.rdz": ["rdz"], "application/vnd.dece.data": ["uvf", "uvvf", "uvd", "uvvd"], "application/vnd.dece.ttml+xml": ["uvt", "uvvt"], "application/vnd.dece.unspecified": ["uvx", "uvvx"], "application/vnd.dece.zip": ["uvz", "uvvz"], "application/vnd.denovo.fcselayout-link": ["fe_launch"], "application/vnd.dna": ["dna"], "application/vnd.dolby.mlp": ["mlp"], "application/vnd.dpgraph": ["dpg"], "application/vnd.dreamfactory": ["dfac"], "application/vnd.ds-keypoint": ["kpxx"], "application/vnd.dvb.ait": ["ait"], "application/vnd.dvb.service": ["svc"], "application/vnd.dynageo": ["geo"], "application/vnd.ecowin.chart": ["mag"], "application/vnd.enliven": ["nml"], "application/vnd.epson.esf": ["esf"], "application/vnd.epson.msf": ["msf"], "application/vnd.epson.quickanime": ["qam"], "application/vnd.epson.salt": ["slt"], "application/vnd.epson.ssf": ["ssf"], "application/vnd.eszigno3+xml": ["es3", "et3"], "application/vnd.ezpix-album": ["ez2"], "application/vnd.ezpix-package": ["ez3"], "application/vnd.fdf": ["fdf"], "application/vnd.fdsn.mseed": ["mseed"], "application/vnd.fdsn.seed": ["seed", "dataless"], "application/vnd.flographit": ["gph"], "application/vnd.fluxtime.clip": ["ftc"], "application/vnd.framemaker": ["fm", "frame", "maker", "book"], "application/vnd.frogans.fnc": ["fnc"], "application/vnd.frogans.ltf": ["ltf"], "application/vnd.fsc.weblaunch": ["fsc"], "application/vnd.fujitsu.oasys": ["oas"], "application/vnd.fujitsu.oasys2": ["oa2"], "application/vnd.fujitsu.oasys3": ["oa3"], "application/vnd.fujitsu.oasysgp": ["fg5"], "application/vnd.fujitsu.oasysprs": ["bh2"], "application/vnd.fujixerox.ddd": ["ddd"], "application/vnd.fujixerox.docuworks": ["xdw"], "application/vnd.fujixerox.docuworks.binder": ["xbd"], "application/vnd.fuzzysheet": ["fzs"], "application/vnd.genomatix.tuxedo": ["txd"], "application/vnd.geogebra.file": ["ggb"], "application/vnd.geogebra.tool": ["ggt"], "application/vnd.geometry-explorer": ["gex", "gre"], "application/vnd.geonext": ["gxt"], "application/vnd.geoplan": ["g2w"], "application/vnd.geospace": ["g3w"], "application/vnd.gmx": ["gmx"], "application/vnd.google-apps.document": ["gdoc"], "application/vnd.google-apps.presentation": ["gslides"], "application/vnd.google-apps.spreadsheet": ["gsheet"], "application/vnd.google-earth.kml+xml": ["kml"], "application/vnd.google-earth.kmz": ["kmz"], "application/vnd.grafeq": ["gqf", "gqs"], "application/vnd.groove-account": ["gac"], "application/vnd.groove-help": ["ghf"], "application/vnd.groove-identity-message": ["gim"], "application/vnd.groove-injector": ["grv"], "application/vnd.groove-tool-message": ["gtm"], "application/vnd.groove-tool-template": ["tpl"], "application/vnd.groove-vcard": ["vcg"], "application/vnd.hal+xml": ["hal"], "application/vnd.handheld-entertainment+xml": ["zmm"], "application/vnd.hbci": ["hbci"], "application/vnd.hhe.lesson-player": ["les"], "application/vnd.hp-hpgl": ["hpgl"], "application/vnd.hp-hpid": ["hpid"], "application/vnd.hp-hps": ["hps"], "application/vnd.hp-jlyt": ["jlt"], "application/vnd.hp-pcl": ["pcl"], "application/vnd.hp-pclxl": ["pclxl"], "application/vnd.hydrostatix.sof-data": ["sfd-hdstx"], "application/vnd.ibm.minipay": ["mpy"], "application/vnd.ibm.modcap": ["afp", "listafp", "list3820"], "application/vnd.ibm.rights-management": ["irm"], "application/vnd.ibm.secure-container": ["sc"], "application/vnd.iccprofile": ["icc", "icm"], "application/vnd.igloader": ["igl"], "application/vnd.immervision-ivp": ["ivp"], "application/vnd.immervision-ivu": ["ivu"], "application/vnd.insors.igm": ["igm"], "application/vnd.intercon.formnet": ["xpw", "xpx"], "application/vnd.intergeo": ["i2g"], "application/vnd.intu.qbo": ["qbo"], "application/vnd.intu.qfx": ["qfx"], "application/vnd.ipunplugged.rcprofile": ["rcprofile"], "application/vnd.irepository.package+xml": ["irp"], "application/vnd.is-xpr": ["xpr"], "application/vnd.isac.fcs": ["fcs"], "application/vnd.jam": ["jam"], "application/vnd.jcp.javame.midlet-rms": ["rms"], "application/vnd.jisp": ["jisp"], "application/vnd.joost.joda-archive": ["joda"], "application/vnd.kahootz": ["ktz", "ktr"], "application/vnd.kde.karbon": ["karbon"], "application/vnd.kde.kchart": ["chrt"], "application/vnd.kde.kformula": ["kfo"], "application/vnd.kde.kivio": ["flw"], "application/vnd.kde.kontour": ["kon"], "application/vnd.kde.kpresenter": ["kpr", "kpt"], "application/vnd.kde.kspread": ["ksp"], "application/vnd.kde.kword": ["kwd", "kwt"], "application/vnd.kenameaapp": ["htke"], "application/vnd.kidspiration": ["kia"], "application/vnd.kinar": ["kne", "knp"], "application/vnd.koan": ["skp", "skd", "skt", "skm"], "application/vnd.kodak-descriptor": ["sse"], "application/vnd.las.las+xml": ["lasxml"], "application/vnd.llamagraphics.life-balance.desktop": ["lbd"], "application/vnd.llamagraphics.life-balance.exchange+xml": ["lbe"], "application/vnd.lotus-1-2-3": ["123"], "application/vnd.lotus-approach": ["apr"], "application/vnd.lotus-freelance": ["pre"], "application/vnd.lotus-notes": ["nsf"], "application/vnd.lotus-organizer": ["org"], "application/vnd.lotus-screencam": ["scm"], "application/vnd.lotus-wordpro": ["lwp"], "application/vnd.macports.portpkg": ["portpkg"], "application/vnd.mcd": ["mcd"], "application/vnd.medcalcdata": ["mc1"], "application/vnd.mediastation.cdkey": ["cdkey"], "application/vnd.mfer": ["mwf"], "application/vnd.mfmp": ["mfm"], "application/vnd.micrografx.flo": ["flo"], "application/vnd.micrografx.igx": ["igx"], "application/vnd.mif": ["mif"], "application/vnd.mobius.daf": ["daf"], "application/vnd.mobius.dis": ["dis"], "application/vnd.mobius.mbk": ["mbk"], "application/vnd.mobius.mqy": ["mqy"], "application/vnd.mobius.msl": ["msl"], "application/vnd.mobius.plc": ["plc"], "application/vnd.mobius.txf": ["txf"], "application/vnd.mophun.application": ["mpn"], "application/vnd.mophun.certificate": ["mpc"], "application/vnd.mozilla.xul+xml": ["xul"], "application/vnd.ms-artgalry": ["cil"], "application/vnd.ms-cab-compressed": ["cab"], "application/vnd.ms-excel": ["xls", "xlm", "xla", "xlc", "xlt", "xlw"], "application/vnd.ms-excel.addin.macroenabled.12": ["xlam"], "application/vnd.ms-excel.sheet.binary.macroenabled.12": ["xlsb"], "application/vnd.ms-excel.sheet.macroenabled.12": ["xlsm"], "application/vnd.ms-excel.template.macroenabled.12": ["xltm"], "application/vnd.ms-fontobject": ["eot"], "application/vnd.ms-htmlhelp": ["chm"], "application/vnd.ms-ims": ["ims"], "application/vnd.ms-lrm": ["lrm"], "application/vnd.ms-officetheme": ["thmx"], "application/vnd.ms-outlook": ["msg"], "application/vnd.ms-pki.seccat": ["cat"], "application/vnd.ms-pki.stl": ["stl"], "application/vnd.ms-powerpoint": ["ppt", "pps", "pot"], "application/vnd.ms-powerpoint.addin.macroenabled.12": ["ppam"], "application/vnd.ms-powerpoint.presentation.macroenabled.12": ["pptm"], "application/vnd.ms-powerpoint.slide.macroenabled.12": ["sldm"], "application/vnd.ms-powerpoint.slideshow.macroenabled.12": ["ppsm"], "application/vnd.ms-powerpoint.template.macroenabled.12": ["potm"], "application/vnd.ms-project": ["mpp", "mpt"], "application/vnd.ms-word.document.macroenabled.12": ["docm"], "application/vnd.ms-word.template.macroenabled.12": ["dotm"], "application/vnd.ms-works": ["wps", "wks", "wcm", "wdb"], "application/vnd.ms-wpl": ["wpl"], "application/vnd.ms-xpsdocument": ["xps"], "application/vnd.mseq": ["mseq"], "application/vnd.musician": ["mus"], "application/vnd.muvee.style": ["msty"], "application/vnd.mynfc": ["taglet"], "application/vnd.neurolanguage.nlu": ["nlu"], "application/vnd.nitf": ["ntf", "nitf"], "application/vnd.noblenet-directory": ["nnd"], "application/vnd.noblenet-sealer": ["nns"], "application/vnd.noblenet-web": ["nnw"], "application/vnd.nokia.n-gage.data": ["ngdat"], "application/vnd.nokia.n-gage.symbian.install": ["n-gage"], "application/vnd.nokia.radio-preset": ["rpst"], "application/vnd.nokia.radio-presets": ["rpss"], "application/vnd.novadigm.edm": ["edm"], "application/vnd.novadigm.edx": ["edx"], "application/vnd.novadigm.ext": ["ext"], "application/vnd.oasis.opendocument.chart": ["odc"], "application/vnd.oasis.opendocument.chart-template": ["otc"], "application/vnd.oasis.opendocument.database": ["odb"], "application/vnd.oasis.opendocument.formula": ["odf"], "application/vnd.oasis.opendocument.formula-template": ["odft"], "application/vnd.oasis.opendocument.graphics": ["odg"], "application/vnd.oasis.opendocument.graphics-template": ["otg"], "application/vnd.oasis.opendocument.image": ["odi"], "application/vnd.oasis.opendocument.image-template": ["oti"], "application/vnd.oasis.opendocument.presentation": ["odp"], "application/vnd.oasis.opendocument.presentation-template": ["otp"], "application/vnd.oasis.opendocument.spreadsheet": ["ods"], "application/vnd.oasis.opendocument.spreadsheet-template": ["ots"], "application/vnd.oasis.opendocument.text": ["odt"], "application/vnd.oasis.opendocument.text-master": ["odm"], "application/vnd.oasis.opendocument.text-template": ["ott"], "application/vnd.oasis.opendocument.text-web": ["oth"], "application/vnd.olpc-sugar": ["xo"], "application/vnd.oma.dd2+xml": ["dd2"], "application/vnd.openofficeorg.extension": ["oxt"], "application/vnd.openxmlformats-officedocument.presentationml.presentation": ["pptx"], "application/vnd.openxmlformats-officedocument.presentationml.slide": ["sldx"], "application/vnd.openxmlformats-officedocument.presentationml.slideshow": ["ppsx"], "application/vnd.openxmlformats-officedocument.presentationml.template": ["potx"], "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ["xlsx"], "application/vnd.openxmlformats-officedocument.spreadsheetml.template": ["xltx"], "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ["docx"], "application/vnd.openxmlformats-officedocument.wordprocessingml.template": ["dotx"], "application/vnd.osgeo.mapguide.package": ["mgp"], "application/vnd.osgi.dp": ["dp"], "application/vnd.osgi.subsystem": ["esa"], "application/vnd.palm": ["pdb", "pqa", "oprc"], "application/vnd.pawaafile": ["paw"], "application/vnd.pg.format": ["str"], "application/vnd.pg.osasli": ["ei6"], "application/vnd.picsel": ["efif"], "application/vnd.pmi.widget": ["wg"], "application/vnd.pocketlearn": ["plf"], "application/vnd.powerbuilder6": ["pbd"], "application/vnd.previewsystems.box": ["box"], "application/vnd.proteus.magazine": ["mgz"], "application/vnd.publishare-delta-tree": ["qps"], "application/vnd.pvi.ptid1": ["ptid"], "application/vnd.quark.quarkxpress": ["qxd", "qxt", "qwd", "qwt", "qxl", "qxb"], "application/vnd.realvnc.bed": ["bed"], "application/vnd.recordare.musicxml": ["mxl"], "application/vnd.recordare.musicxml+xml": ["musicxml"], "application/vnd.rig.cryptonote": ["cryptonote"], "application/vnd.rim.cod": ["cod"], "application/vnd.rn-realmedia": ["rm"], "application/vnd.rn-realmedia-vbr": ["rmvb"], "application/vnd.route66.link66+xml": ["link66"], "application/vnd.sailingtracker.track": ["st"], "application/vnd.seemail": ["see"], "application/vnd.sema": ["sema"], "application/vnd.semd": ["semd"], "application/vnd.semf": ["semf"], "application/vnd.shana.informed.formdata": ["ifm"], "application/vnd.shana.informed.formtemplate": ["itp"], "application/vnd.shana.informed.interchange": ["iif"], "application/vnd.shana.informed.package": ["ipk"], "application/vnd.simtech-mindmapper": ["twd", "twds"], "application/vnd.smaf": ["mmf"], "application/vnd.smart.teacher": ["teacher"], "application/vnd.solent.sdkm+xml": ["sdkm", "sdkd"], "application/vnd.spotfire.dxp": ["dxp"], "application/vnd.spotfire.sfs": ["sfs"], "application/vnd.stardivision.calc": ["sdc"], "application/vnd.stardivision.draw": ["sda"], "application/vnd.stardivision.impress": ["sdd"], "application/vnd.stardivision.math": ["smf"], "application/vnd.stardivision.writer": ["sdw", "vor"], "application/vnd.stardivision.writer-global": ["sgl"], "application/vnd.stepmania.package": ["smzip"], "application/vnd.stepmania.stepchart": ["sm"], "application/vnd.sun.wadl+xml": ["wadl"], "application/vnd.sun.xml.calc": ["sxc"], "application/vnd.sun.xml.calc.template": ["stc"], "application/vnd.sun.xml.draw": ["sxd"], "application/vnd.sun.xml.draw.template": ["std"], "application/vnd.sun.xml.impress": ["sxi"], "application/vnd.sun.xml.impress.template": ["sti"], "application/vnd.sun.xml.math": ["sxm"], "application/vnd.sun.xml.writer": ["sxw"], "application/vnd.sun.xml.writer.global": ["sxg"], "application/vnd.sun.xml.writer.template": ["stw"], "application/vnd.sus-calendar": ["sus", "susp"], "application/vnd.svd": ["svd"], "application/vnd.symbian.install": ["sis", "sisx"], "application/vnd.syncml+xml": ["xsm"], "application/vnd.syncml.dm+wbxml": ["bdm"], "application/vnd.syncml.dm+xml": ["xdm"], "application/vnd.tao.intent-module-archive": ["tao"], "application/vnd.tcpdump.pcap": ["pcap", "cap", "dmp"], "application/vnd.tmobile-livetv": ["tmo"], "application/vnd.trid.tpt": ["tpt"], "application/vnd.triscape.mxs": ["mxs"], "application/vnd.trueapp": ["tra"], "application/vnd.ufdl": ["ufd", "ufdl"], "application/vnd.uiq.theme": ["utz"], "application/vnd.umajin": ["umj"], "application/vnd.unity": ["unityweb"], "application/vnd.uoml+xml": ["uoml"], "application/vnd.vcx": ["vcx"], "application/vnd.visio": ["vsd", "vst", "vss", "vsw"], "application/vnd.visionary": ["vis"], "application/vnd.vsf": ["vsf"], "application/vnd.wap.wbxml": ["wbxml"], "application/vnd.wap.wmlc": ["wmlc"], "application/vnd.wap.wmlscriptc": ["wmlsc"], "application/vnd.webturbo": ["wtb"], "application/vnd.wolfram.player": ["nbp"], "application/vnd.wordperfect": ["wpd"], "application/vnd.wqd": ["wqd"], "application/vnd.wt.stf": ["stf"], "application/vnd.xara": ["xar"], "application/vnd.xfdl": ["xfdl"], "application/vnd.yamaha.hv-dic": ["hvd"], "application/vnd.yamaha.hv-script": ["hvs"], "application/vnd.yamaha.hv-voice": ["hvp"], "application/vnd.yamaha.openscoreformat": ["osf"], "application/vnd.yamaha.openscoreformat.osfpvg+xml": ["osfpvg"], "application/vnd.yamaha.smaf-audio": ["saf"], "application/vnd.yamaha.smaf-phrase": ["spf"], "application/vnd.yellowriver-custom-menu": ["cmp"], "application/vnd.zul": ["zir", "zirz"], "application/vnd.zzazz.deck+xml": ["zaz"], "application/voicexml+xml": ["vxml"], "application/wasm": ["wasm"], "application/widget": ["wgt"], "application/winhlp": ["hlp"], "application/wsdl+xml": ["wsdl"], "application/wspolicy+xml": ["wspolicy"], "application/x-7z-compressed": ["7z"], "application/x-abiword": ["abw"], "application/x-ace-compressed": ["ace"], "application/x-apple-diskimage": [], "application/x-arj": ["arj"], "application/x-authorware-bin": ["aab", "x32", "u32", "vox"], "application/x-authorware-map": ["aam"], "application/x-authorware-seg": ["aas"], "application/x-bcpio": ["bcpio"], "application/x-bdoc": [], "application/x-bittorrent": ["torrent"], "application/x-blorb": ["blb", "blorb"], "application/x-bzip": ["bz"], "application/x-bzip2": ["bz2", "boz"], "application/x-cbr": ["cbr", "cba", "cbt", "cbz", "cb7"], "application/x-cdlink": ["vcd"], "application/x-cfs-compressed": ["cfs"], "application/x-chat": ["chat"], "application/x-chess-pgn": ["pgn"], "application/x-chrome-extension": ["crx"], "application/x-cocoa": ["cco"], "application/x-conference": ["nsc"], "application/x-cpio": ["cpio"], "application/x-csh": ["csh"], "application/x-debian-package": ["udeb"], "application/x-dgc-compressed": ["dgc"], "application/x-director": ["dir", "dcr", "dxr", "cst", "cct", "cxt", "w3d", "fgd", "swa"], "application/x-doom": ["wad"], "application/x-dtbncx+xml": ["ncx"], "application/x-dtbook+xml": ["dtb"], "application/x-dtbresource+xml": ["res"], "application/x-dvi": ["dvi"], "application/x-envoy": ["evy"], "application/x-eva": ["eva"], "application/x-font-bdf": ["bdf"], "application/x-font-ghostscript": ["gsf"], "application/x-font-linux-psf": ["psf"], "application/x-font-pcf": ["pcf"], "application/x-font-snf": ["snf"], "application/x-font-type1": ["pfa", "pfb", "pfm", "afm"], "application/x-freearc": ["arc"], "application/x-futuresplash": ["spl"], "application/x-gca-compressed": ["gca"], "application/x-glulx": ["ulx"], "application/x-gnumeric": ["gnumeric"], "application/x-gramps-xml": ["gramps"], "application/x-gtar": ["gtar"], "application/x-hdf": ["hdf"], "application/x-httpd-php": ["php"], "application/x-install-instructions": ["install"], "application/x-iso9660-image": [], "application/x-java-archive-diff": ["jardiff"], "application/x-java-jnlp-file": ["jnlp"], "application/x-latex": ["latex"], "application/x-lua-bytecode": ["luac"], "application/x-lzh-compressed": ["lzh", "lha"], "application/x-makeself": ["run"], "application/x-mie": ["mie"], "application/x-mobipocket-ebook": ["prc", "mobi"], "application/x-ms-application": ["application"], "application/x-ms-shortcut": ["lnk"], "application/x-ms-wmd": ["wmd"], "application/x-ms-wmz": ["wmz"], "application/x-ms-xbap": ["xbap"], "application/x-msaccess": ["mdb"], "application/x-msbinder": ["obd"], "application/x-mscardfile": ["crd"], "application/x-msclip": ["clp"], "application/x-msdos-program": [], "application/x-msdownload": ["com", "bat"], "application/x-msmediaview": ["mvb", "m13", "m14"], "application/x-msmetafile": ["wmf", "emf", "emz"], "application/x-msmoney": ["mny"], "application/x-mspublisher": ["pub"], "application/x-msschedule": ["scd"], "application/x-msterminal": ["trm"], "application/x-mswrite": ["wri"], "application/x-netcdf": ["nc", "cdf"], "application/x-ns-proxy-autoconfig": ["pac"], "application/x-nzb": ["nzb"], "application/x-perl": ["pl", "pm"], "application/x-pilot": [], "application/x-pkcs12": ["p12", "pfx"], "application/x-pkcs7-certificates": ["p7b", "spc"], "application/x-pkcs7-certreqresp": ["p7r"], "application/x-rar-compressed": ["rar"], "application/x-redhat-package-manager": ["rpm"], "application/x-research-info-systems": ["ris"], "application/x-sea": ["sea"], "application/x-sh": ["sh"], "application/x-shar": ["shar"], "application/x-shockwave-flash": ["swf"], "application/x-silverlight-app": ["xap"], "application/x-sql": ["sql"], "application/x-stuffit": ["sit"], "application/x-stuffitx": ["sitx"], "application/x-subrip": ["srt"], "application/x-sv4cpio": ["sv4cpio"], "application/x-sv4crc": ["sv4crc"], "application/x-t3vm-image": ["t3"], "application/x-tads": ["gam"], "application/x-tar": ["tar"], "application/x-tcl": ["tcl", "tk"], "application/x-tex": ["tex"], "application/x-tex-tfm": ["tfm"], "application/x-texinfo": ["texinfo", "texi"], "application/x-tgif": ["obj"], "application/x-ustar": ["ustar"], "application/x-virtualbox-hdd": ["hdd"], "application/x-virtualbox-ova": ["ova"], "application/x-virtualbox-ovf": ["ovf"], "application/x-virtualbox-vbox": ["vbox"], "application/x-virtualbox-vbox-extpack": ["vbox-extpack"], "application/x-virtualbox-vdi": ["vdi"], "application/x-virtualbox-vhd": ["vhd"], "application/x-virtualbox-vmdk": ["vmdk"], "application/x-wais-source": ["src"], "application/x-web-app-manifest+json": ["webapp"], "application/x-x509-ca-cert": ["der", "crt", "pem"], "application/x-xfig": ["fig"], "application/x-xliff+xml": ["xlf"], "application/x-xpinstall": ["xpi"], "application/x-xz": ["xz"], "application/x-zmachine": ["z1", "z2", "z3", "z4", "z5", "z6", "z7", "z8"], "application/xaml+xml": ["xaml"], "application/xcap-diff+xml": ["xdf"], "application/xenc+xml": ["xenc"], "application/xhtml+xml": ["xhtml", "xht"], "application/xml": ["xml", "xsl", "xsd", "rng"], "application/xml-dtd": ["dtd"], "application/xop+xml": ["xop"], "application/xproc+xml": ["xpl"], "application/xslt+xml": ["xslt"], "application/xspf+xml": ["xspf"], "application/xv+xml": ["mxml", "xhvml", "xvml", "xvm"], "application/yang": ["yang"], "application/yin+xml": ["yin"], "application/zip": ["zip"], "audio/3gpp": [], "audio/adpcm": ["adp"], "audio/basic": ["au", "snd"], "audio/midi": ["mid", "midi", "kar", "rmi"], "audio/mp3": [], "audio/mp4": ["m4a", "mp4a"], "audio/mpeg": ["mpga", "mp2", "mp2a", "mp3", "m2a", "m3a"], "audio/ogg": ["oga", "ogg", "spx"], "audio/s3m": ["s3m"], "audio/silk": ["sil"], "audio/vnd.dece.audio": ["uva", "uvva"], "audio/vnd.digital-winds": ["eol"], "audio/vnd.dra": ["dra"], "audio/vnd.dts": ["dts"], "audio/vnd.dts.hd": ["dtshd"], "audio/vnd.lucent.voice": ["lvp"], "audio/vnd.ms-playready.media.pya": ["pya"], "audio/vnd.nuera.ecelp4800": ["ecelp4800"], "audio/vnd.nuera.ecelp7470": ["ecelp7470"], "audio/vnd.nuera.ecelp9600": ["ecelp9600"], "audio/vnd.rip": ["rip"], "audio/wav": ["wav"], "audio/wave": [], "audio/webm": ["weba"], "audio/x-aac": ["aac"], "audio/x-aiff": ["aif", "aiff", "aifc"], "audio/x-caf": ["caf"], "audio/x-flac": ["flac"], "audio/x-m4a": [], "audio/x-matroska": ["mka"], "audio/x-mpegurl": ["m3u"], "audio/x-ms-wax": ["wax"], "audio/x-ms-wma": ["wma"], "audio/x-pn-realaudio": ["ram", "ra"], "audio/x-pn-realaudio-plugin": ["rmp"], "audio/x-realaudio": [], "audio/x-wav": [], "audio/xm": ["xm"], "chemical/x-cdx": ["cdx"], "chemical/x-cif": ["cif"], "chemical/x-cmdf": ["cmdf"], "chemical/x-cml": ["cml"], "chemical/x-csml": ["csml"], "chemical/x-xyz": ["xyz"], "font/collection": ["ttc"], "font/otf": ["otf"], "font/ttf": ["ttf"], "font/woff": ["woff"], "font/woff2": ["woff2"], "image/apng": ["apng"], "image/bmp": ["bmp"], "image/cgm": ["cgm"], "image/g3fax": ["g3"], "image/gif": ["gif"], "image/ief": ["ief"], "image/jp2": ["jp2", "jpg2"], "image/jpeg": ["jpeg", "jpg", "jpe"], "image/jpm": ["jpm"], "image/jpx": ["jpx", "jpf"], "image/ktx": ["ktx"], "image/png": ["png"], "image/prs.btif": ["btif"], "image/sgi": ["sgi"], "image/svg+xml": ["svg", "svgz"], "image/tiff": ["tiff", "tif"], "image/vnd.adobe.photoshop": ["psd"], "image/vnd.dece.graphic": ["uvi", "uvvi", "uvg", "uvvg"], "image/vnd.djvu": ["djvu", "djv"], "image/vnd.dvb.subtitle": [], "image/vnd.dwg": ["dwg"], "image/vnd.dxf": ["dxf"], "image/vnd.fastbidsheet": ["fbs"], "image/vnd.fpx": ["fpx"], "image/vnd.fst": ["fst"], "image/vnd.fujixerox.edmics-mmr": ["mmr"], "image/vnd.fujixerox.edmics-rlc": ["rlc"], "image/vnd.ms-modi": ["mdi"], "image/vnd.ms-photo": ["wdp"], "image/vnd.net-fpx": ["npx"], "image/vnd.wap.wbmp": ["wbmp"], "image/vnd.xiff": ["xif"], "image/webp": ["webp"], "image/x-3ds": ["3ds"], "image/x-cmu-raster": ["ras"], "image/x-cmx": ["cmx"], "image/x-freehand": ["fh", "fhc", "fh4", "fh5", "fh7"], "image/x-icon": ["ico"], "image/x-jng": ["jng"], "image/x-mrsid-image": ["sid"], "image/x-ms-bmp": [], "image/x-pcx": ["pcx"], "image/x-pict": ["pic", "pct"], "image/x-portable-anymap": ["pnm"], "image/x-portable-bitmap": ["pbm"], "image/x-portable-graymap": ["pgm"], "image/x-portable-pixmap": ["ppm"], "image/x-rgb": ["rgb"], "image/x-tga": ["tga"], "image/x-xbitmap": ["xbm"], "image/x-xpixmap": ["xpm"], "image/x-xwindowdump": ["xwd"], "message/rfc822": ["eml", "mime"], "model/gltf+json": ["gltf"], "model/gltf-binary": ["glb"], "model/iges": ["igs", "iges"], "model/mesh": ["msh", "mesh", "silo"], "model/vnd.collada+xml": ["dae"], "model/vnd.dwf": ["dwf"], "model/vnd.gdl": ["gdl"], "model/vnd.gtw": ["gtw"], "model/vnd.mts": ["mts"], "model/vnd.vtu": ["vtu"], "model/vrml": ["wrl", "vrml"], "model/x3d+binary": ["x3db", "x3dbz"], "model/x3d+vrml": ["x3dv", "x3dvz"], "model/x3d+xml": ["x3d", "x3dz"], "text/cache-manifest": ["appcache", "manifest"], "text/calendar": ["ics", "ifb"], "text/coffeescript": ["coffee", "litcoffee"], "text/css": ["css"], "text/csv": ["csv"], "text/hjson": ["hjson"], "text/html": ["html", "htm", "shtml"], "text/jade": ["jade"], "text/jsx": ["jsx"], "text/less": ["less"], "text/markdown": ["markdown", "md"], "text/mathml": ["mml"], "text/n3": ["n3"], "text/plain": ["txt", "text", "conf", "def", "list", "log", "in", "ini"], "text/prs.lines.tag": ["dsc"], "text/richtext": ["rtx"], "text/rtf": [], "text/sgml": ["sgml", "sgm"], "text/slim": ["slim", "slm"], "text/stylus": ["stylus", "styl"], "text/tab-separated-values": ["tsv"], "text/troff": ["t", "tr", "roff", "man", "me", "ms"], "text/turtle": ["ttl"], "text/uri-list": ["uri", "uris", "urls"], "text/vcard": ["vcard"], "text/vnd.curl": ["curl"], "text/vnd.curl.dcurl": ["dcurl"], "text/vnd.curl.mcurl": ["mcurl"], "text/vnd.curl.scurl": ["scurl"], "text/vnd.dvb.subtitle": ["sub"], "text/vnd.fly": ["fly"], "text/vnd.fmi.flexstor": ["flx"], "text/vnd.graphviz": ["gv"], "text/vnd.in3d.3dml": ["3dml"], "text/vnd.in3d.spot": ["spot"], "text/vnd.sun.j2me.app-descriptor": ["jad"], "text/vnd.wap.wml": ["wml"], "text/vnd.wap.wmlscript": ["wmls"], "text/vtt": ["vtt"], "text/x-asm": ["s", "asm"], "text/x-c": ["c", "cc", "cxx", "cpp", "h", "hh", "dic"], "text/x-component": ["htc"], "text/x-fortran": ["f", "for", "f77", "f90"], "text/x-handlebars-template": ["hbs"], "text/x-java-source": ["java"], "text/x-lua": ["lua"], "text/x-markdown": ["mkd"], "text/x-nfo": ["nfo"], "text/x-opml": ["opml"], "text/x-org": [], "text/x-pascal": ["p", "pas"], "text/x-processing": ["pde"], "text/x-sass": ["sass"], "text/x-scss": ["scss"], "text/x-setext": ["etx"], "text/x-sfv": ["sfv"], "text/x-suse-ymp": ["ymp"], "text/x-uuencode": ["uu"], "text/x-vcalendar": ["vcs"], "text/x-vcard": ["vcf"], "text/xml": [], "text/yaml": ["yaml", "yml"], "video/3gpp": ["3gp", "3gpp"], "video/3gpp2": ["3g2"], "video/h261": ["h261"], "video/h263": ["h263"], "video/h264": ["h264"], "video/jpeg": ["jpgv"], "video/jpm": ["jpgm"], "video/mj2": ["mj2", "mjp2"], "video/mp2t": ["ts"], "video/mp4": ["mp4", "mp4v", "mpg4"], "video/mpeg": ["mpeg", "mpg", "mpe", "m1v", "m2v"], "video/ogg": ["ogv"], "video/quicktime": ["qt", "mov"], "video/vnd.dece.hd": ["uvh", "uvvh"], "video/vnd.dece.mobile": ["uvm", "uvvm"], "video/vnd.dece.pd": ["uvp", "uvvp"], "video/vnd.dece.sd": ["uvs", "uvvs"], "video/vnd.dece.video": ["uvv", "uvvv"], "video/vnd.dvb.file": ["dvb"], "video/vnd.fvt": ["fvt"], "video/vnd.mpegurl": ["mxu", "m4u"], "video/vnd.ms-playready.media.pyv": ["pyv"], "video/vnd.uvvu.mp4": ["uvu", "uvvu"], "video/vnd.vivo": ["viv"], "video/webm": ["webm"], "video/x-f4v": ["f4v"], "video/x-fli": ["fli"], "video/x-flv": ["flv"], "video/x-m4v": ["m4v"], "video/x-matroska": ["mkv", "mk3d", "mks"], "video/x-mng": ["mng"], "video/x-ms-asf": ["asf", "asx"], "video/x-ms-vob": ["vob"], "video/x-ms-wm": ["wm"], "video/x-ms-wmv": ["wmv"], "video/x-ms-wmx": ["wmx"], "video/x-ms-wvx": ["wvx"], "video/x-msvideo": ["avi"], "video/x-sgi-movie": ["movie"], "video/x-smv": ["smv"], "x-conference/x-cooltalk": ["ice"] };
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mime/mime.js
+// ../dashboard/backend/node_modules/mime/mime.js
 var require_mime = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mime/mime.js"(exports, module) {
+  "../dashboard/backend/node_modules/mime/mime.js"(exports, module) {
     var path = __require("path");
     var fs = __require("fs");
     function Mime() {
@@ -18979,9 +18979,9 @@ var require_mime = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/send/node_modules/ms/index.js
+// ../dashboard/backend/node_modules/send/node_modules/ms/index.js
 var require_ms2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/send/node_modules/ms/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/send/node_modules/ms/index.js"(exports, module) {
     var s2 = 1e3;
     var m3 = s2 * 60;
     var h5 = m3 * 60;
@@ -19095,9 +19095,9 @@ var require_ms2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/range-parser/index.js
+// ../dashboard/backend/node_modules/range-parser/index.js
 var require_range_parser = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/range-parser/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/range-parser/index.js"(exports, module) {
     "use strict";
     module.exports = rangeParser;
     function rangeParser(size, str, options) {
@@ -19176,9 +19176,9 @@ var require_range_parser = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/send/index.js
+// ../dashboard/backend/node_modules/send/index.js
 var require_send = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/send/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/send/index.js"(exports, module) {
     "use strict";
     var createError = require_http_errors();
     var debug = require_src()("send");
@@ -19721,9 +19721,9 @@ var require_send = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/forwarded/index.js
+// ../dashboard/backend/node_modules/forwarded/index.js
 var require_forwarded = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/forwarded/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/forwarded/index.js"(exports, module) {
     "use strict";
     module.exports = forwarded;
     function forwarded(req) {
@@ -19768,9 +19768,9 @@ var require_forwarded = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/ipaddr.js/lib/ipaddr.js
+// ../dashboard/backend/node_modules/ipaddr.js/lib/ipaddr.js
 var require_ipaddr = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/ipaddr.js/lib/ipaddr.js"(exports, module) {
+  "../dashboard/backend/node_modules/ipaddr.js/lib/ipaddr.js"(exports, module) {
     (function() {
       var expandIPv6, ipaddr, ipv4Part, ipv4Regexes, ipv6Part, ipv6Regexes, matchCIDR, root5, zoneIndex;
       ipaddr = {};
@@ -20390,9 +20390,9 @@ var require_ipaddr = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/proxy-addr/index.js
+// ../dashboard/backend/node_modules/proxy-addr/index.js
 var require_proxy_addr = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/proxy-addr/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/proxy-addr/index.js"(exports, module) {
     "use strict";
     module.exports = proxyaddr;
     module.exports.all = alladdrs;
@@ -20549,9 +20549,9 @@ var require_proxy_addr = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/utils.js
+// ../dashboard/backend/node_modules/express/lib/utils.js
 var require_utils2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/utils.js"(exports) {
+  "../dashboard/backend/node_modules/express/lib/utils.js"(exports) {
     "use strict";
     var Buffer3 = require_safe_buffer().Buffer;
     var contentDisposition = require_content_disposition();
@@ -20687,9 +20687,9 @@ var require_utils2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/application.js
+// ../dashboard/backend/node_modules/express/lib/application.js
 var require_application = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/application.js"(exports, module) {
+  "../dashboard/backend/node_modules/express/lib/application.js"(exports, module) {
     "use strict";
     var finalhandler = require_finalhandler();
     var Router19 = require_router();
@@ -20963,9 +20963,9 @@ var require_application = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/negotiator/lib/charset.js
+// ../dashboard/backend/node_modules/negotiator/lib/charset.js
 var require_charset = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/negotiator/lib/charset.js"(exports, module) {
+  "../dashboard/backend/node_modules/negotiator/lib/charset.js"(exports, module) {
     "use strict";
     module.exports = preferredCharsets;
     module.exports.preferredCharsets = preferredCharsets;
@@ -21050,9 +21050,9 @@ var require_charset = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/negotiator/lib/encoding.js
+// ../dashboard/backend/node_modules/negotiator/lib/encoding.js
 var require_encoding = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/negotiator/lib/encoding.js"(exports, module) {
+  "../dashboard/backend/node_modules/negotiator/lib/encoding.js"(exports, module) {
     "use strict";
     module.exports = preferredEncodings;
     module.exports.preferredEncodings = preferredEncodings;
@@ -21148,9 +21148,9 @@ var require_encoding = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/negotiator/lib/language.js
+// ../dashboard/backend/node_modules/negotiator/lib/language.js
 var require_language = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/negotiator/lib/language.js"(exports, module) {
+  "../dashboard/backend/node_modules/negotiator/lib/language.js"(exports, module) {
     "use strict";
     module.exports = preferredLanguages;
     module.exports.preferredLanguages = preferredLanguages;
@@ -21243,9 +21243,9 @@ var require_language = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/negotiator/lib/mediaType.js
+// ../dashboard/backend/node_modules/negotiator/lib/mediaType.js
 var require_mediaType = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/negotiator/lib/mediaType.js"(exports, module) {
+  "../dashboard/backend/node_modules/negotiator/lib/mediaType.js"(exports, module) {
     "use strict";
     module.exports = preferredMediaTypes;
     module.exports.preferredMediaTypes = preferredMediaTypes;
@@ -21405,9 +21405,9 @@ var require_mediaType = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/negotiator/index.js
+// ../dashboard/backend/node_modules/negotiator/index.js
 var require_negotiator = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/negotiator/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/negotiator/index.js"(exports, module) {
     "use strict";
     var preferredCharsets = require_charset();
     var preferredEncodings = require_encoding();
@@ -21460,9 +21460,9 @@ var require_negotiator = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/accepts/index.js
+// ../dashboard/backend/node_modules/accepts/index.js
 var require_accepts = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/accepts/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/accepts/index.js"(exports, module) {
     "use strict";
     var Negotiator = require_negotiator();
     var mime = require_mime_types();
@@ -21541,9 +21541,9 @@ var require_accepts = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/request.js
+// ../dashboard/backend/node_modules/express/lib/request.js
 var require_request = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/request.js"(exports, module) {
+  "../dashboard/backend/node_modules/express/lib/request.js"(exports, module) {
     "use strict";
     var accepts = require_accepts();
     var deprecate = require_depd()("express");
@@ -21705,9 +21705,9 @@ var require_request = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/cookie-signature/index.js
+// ../dashboard/backend/node_modules/cookie-signature/index.js
 var require_cookie_signature = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/cookie-signature/index.js"(exports) {
+  "../dashboard/backend/node_modules/cookie-signature/index.js"(exports) {
     var crypto5 = __require("crypto");
     exports.sign = function(val, secret) {
       if ("string" !== typeof val) throw new TypeError("Cookie value must be provided as a string.");
@@ -21726,9 +21726,9 @@ var require_cookie_signature = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/cookie/index.js
+// ../dashboard/backend/node_modules/cookie/index.js
 var require_cookie = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/cookie/index.js"(exports) {
+  "../dashboard/backend/node_modules/cookie/index.js"(exports) {
     "use strict";
     exports.parse = parse2;
     exports.serialize = serialize;
@@ -21892,9 +21892,9 @@ var require_cookie = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/vary/index.js
+// ../dashboard/backend/node_modules/vary/index.js
 var require_vary = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/vary/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/vary/index.js"(exports, module) {
     "use strict";
     module.exports = vary;
     module.exports.append = append;
@@ -21965,9 +21965,9 @@ var require_vary = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/response.js
+// ../dashboard/backend/node_modules/express/lib/response.js
 var require_response = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/response.js"(exports, module) {
+  "../dashboard/backend/node_modules/express/lib/response.js"(exports, module) {
     "use strict";
     var Buffer3 = require_safe_buffer().Buffer;
     var contentDisposition = require_content_disposition();
@@ -22507,9 +22507,9 @@ var require_response = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/serve-static/index.js
+// ../dashboard/backend/node_modules/serve-static/index.js
 var require_serve_static = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/serve-static/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/serve-static/index.js"(exports, module) {
     "use strict";
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
@@ -22612,9 +22612,9 @@ var require_serve_static = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/express.js
+// ../dashboard/backend/node_modules/express/lib/express.js
 var require_express = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/lib/express.js"(exports, module) {
+  "../dashboard/backend/node_modules/express/lib/express.js"(exports, module) {
     "use strict";
     var bodyParser = require_body_parser();
     var EventEmitter = __require("events").EventEmitter;
@@ -22681,15 +22681,15 @@ var require_express = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/index.js
+// ../dashboard/backend/node_modules/express/index.js
 var require_express2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/express/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/express/index.js"(exports, module) {
     "use strict";
     module.exports = require_express();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/buffer_utils.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/buffer_utils.js
 function concat(...buffers) {
   const size = buffers.reduce((acc, { length }) => acc + length, 0);
   const buf2 = new Uint8Array(size);
@@ -22702,14 +22702,14 @@ function concat(...buffers) {
 }
 var encoder, decoder, MAX_INT32;
 var init_buffer_utils = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/buffer_utils.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/buffer_utils.js"() {
     encoder = new TextEncoder();
     decoder = new TextDecoder();
     MAX_INT32 = 2 ** 32;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/base64url.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/base64url.js
 import { Buffer as Buffer2 } from "node:buffer";
 function normalize(input) {
   let encoded = input;
@@ -22720,17 +22720,17 @@ function normalize(input) {
 }
 var encode, decode;
 var init_base64url = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/base64url.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/base64url.js"() {
     init_buffer_utils();
     encode = (input) => Buffer2.from(input).toString("base64url");
     decode = (input) => new Uint8Array(Buffer2.from(normalize(input), "base64url"));
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/util/errors.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/util/errors.js
 var JOSEError, JWTClaimValidationFailed, JWTExpired, JOSEAlgNotAllowed, JOSENotSupported, JWSInvalid, JWTInvalid, JWKSInvalid, JWKSNoMatchingKey, JWKSMultipleMatchingKeys, JWKSTimeout, JWSSignatureVerificationFailed;
 var init_errors = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/util/errors.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/util/errors.js"() {
     JOSEError = class extends Error {
       static code = "ERR_JOSE_GENERIC";
       code = "ERR_JOSE_GENERIC";
@@ -22818,28 +22818,28 @@ var init_errors = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/is_key_object.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/is_key_object.js
 import * as util from "node:util";
 var is_key_object_default;
 var init_is_key_object = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/is_key_object.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/is_key_object.js"() {
     is_key_object_default = (obj) => util.types.isKeyObject(obj);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/webcrypto.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/webcrypto.js
 import * as crypto2 from "node:crypto";
 import * as util2 from "node:util";
 var webcrypto2, webcrypto_default, isCryptoKey;
 var init_webcrypto = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/webcrypto.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/webcrypto.js"() {
     webcrypto2 = crypto2.webcrypto;
     webcrypto_default = webcrypto2;
     isCryptoKey = (key2) => util2.types.isCryptoKey(key2);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/crypto_key.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/crypto_key.js
 function unusable(name, prop = "algorithm.name") {
   return new TypeError(`CryptoKey does not support this operation, its ${prop} must be ${name}`);
 }
@@ -22938,11 +22938,11 @@ function checkSigCryptoKey(key2, alg, ...usages) {
   checkUsage(key2, usages);
 }
 var init_crypto_key = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/crypto_key.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/crypto_key.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/invalid_key_input.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/invalid_key_input.js
 function message(msg, actual, ...types4) {
   types4 = types4.filter(Boolean);
   if (types4.length > 2) {
@@ -22969,17 +22969,17 @@ function withAlg(alg, actual, ...types4) {
 }
 var invalid_key_input_default;
 var init_invalid_key_input = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/invalid_key_input.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/invalid_key_input.js"() {
     invalid_key_input_default = (actual, ...types4) => {
       return message("Key must be ", actual, ...types4);
     };
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/is_key_like.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/is_key_like.js
 var is_key_like_default, types3;
 var init_is_key_like = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/is_key_like.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/is_key_like.js"() {
     init_webcrypto();
     init_is_key_object();
     is_key_like_default = (key2) => is_key_object_default(key2) || isCryptoKey(key2);
@@ -22990,10 +22990,10 @@ var init_is_key_like = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/is_disjoint.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/is_disjoint.js
 var isDisjoint, is_disjoint_default;
 var init_is_disjoint = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/is_disjoint.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/is_disjoint.js"() {
     isDisjoint = (...headers) => {
       const sources = headers.filter(Boolean);
       if (sources.length === 0 || sources.length === 1) {
@@ -23019,7 +23019,7 @@ var init_is_disjoint = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/is_object.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/is_object.js
 function isObjectLike(value) {
   return typeof value === "object" && value !== null;
 }
@@ -23037,11 +23037,11 @@ function isObject(input) {
   return Object.getPrototypeOf(input) === proto;
 }
 var init_is_object = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/is_object.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/is_object.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/is_jwk.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/is_jwk.js
 function isJWK(key2) {
   return isObject(key2) && typeof key2.kty === "string";
 }
@@ -23055,16 +23055,16 @@ function isSecretJWK(key2) {
   return isJWK(key2) && key2.kty === "oct" && typeof key2.k === "string";
 }
 var init_is_jwk = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/is_jwk.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/is_jwk.js"() {
     init_is_object();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/get_named_curve.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/get_named_curve.js
 import { KeyObject } from "node:crypto";
 var namedCurveToJOSE, getNamedCurve2, get_named_curve_default;
 var init_get_named_curve = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/get_named_curve.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/get_named_curve.js"() {
     init_errors();
     init_webcrypto();
     init_is_key_object();
@@ -23121,11 +23121,11 @@ var init_get_named_curve = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/check_key_length.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/check_key_length.js
 import { KeyObject as KeyObject2 } from "node:crypto";
 var check_key_length_default;
 var init_check_key_length = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/check_key_length.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/check_key_length.js"() {
     check_key_length_default = (key2, alg) => {
       let modulusLength;
       try {
@@ -23143,11 +23143,11 @@ var init_check_key_length = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/jwk_to_key.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/jwk_to_key.js
 import { createPrivateKey, createPublicKey } from "node:crypto";
 var parse, jwk_to_key_default;
 var init_jwk_to_key = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/jwk_to_key.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/jwk_to_key.js"() {
     parse = (key2) => {
       if (key2.d) {
         return createPrivateKey({ format: "jwk", key: key2 });
@@ -23158,7 +23158,7 @@ var init_jwk_to_key = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/key/import.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/key/import.js
 async function importJWK(jwk, alg) {
   if (!isObject(jwk)) {
     throw new TypeError("JWK must be an object");
@@ -23182,7 +23182,7 @@ async function importJWK(jwk, alg) {
   }
 }
 var init_import = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/key/import.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/key/import.js"() {
     init_base64url();
     init_jwk_to_key();
     init_errors();
@@ -23190,7 +23190,7 @@ var init_import = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/check_key_type.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/check_key_type.js
 function checkKeyType(allowJwk, alg, key2, usage) {
   const symmetric = alg.startsWith("HS") || alg === "dir" || alg.startsWith("PBES2") || /^A\d{3}(?:GCM)?KW$/.test(alg);
   if (symmetric) {
@@ -23201,7 +23201,7 @@ function checkKeyType(allowJwk, alg, key2, usage) {
 }
 var tag, jwkMatchesOp, symmetricTypeCheck, asymmetricTypeCheck, check_key_type_default, checkKeyTypeWithJwk;
 var init_check_key_type = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/check_key_type.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/check_key_type.js"() {
     init_invalid_key_input();
     init_is_key_like();
     init_is_jwk();
@@ -23270,7 +23270,7 @@ var init_check_key_type = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/validate_crit.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/validate_crit.js
 function validateCrit(Err, recognizedDefault, recognizedOption, protectedHeader, joseHeader) {
   if (joseHeader.crit !== void 0 && protectedHeader?.crit === void 0) {
     throw new Err('"crit" (Critical) Header Parameter MUST be integrity protected');
@@ -23302,16 +23302,16 @@ function validateCrit(Err, recognizedDefault, recognizedOption, protectedHeader,
 }
 var validate_crit_default;
 var init_validate_crit = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/validate_crit.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/validate_crit.js"() {
     init_errors();
     validate_crit_default = validateCrit;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/validate_algorithms.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/validate_algorithms.js
 var validateAlgorithms, validate_algorithms_default;
 var init_validate_algorithms = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/validate_algorithms.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/validate_algorithms.js"() {
     validateAlgorithms = (option, algorithms) => {
       if (algorithms !== void 0 && (!Array.isArray(algorithms) || algorithms.some((s2) => typeof s2 !== "string"))) {
         throw new TypeError(`"${option}" option must be an array of strings`);
@@ -23325,7 +23325,7 @@ var init_validate_algorithms = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/dsa_digest.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/dsa_digest.js
 function dsaDigest(alg) {
   switch (alg) {
     case "PS256":
@@ -23349,12 +23349,12 @@ function dsaDigest(alg) {
   }
 }
 var init_dsa_digest = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/dsa_digest.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/dsa_digest.js"() {
     init_errors();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/node_key.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/node_key.js
 import { constants, KeyObject as KeyObject3 } from "node:crypto";
 function keyForCrypto(alg, key2) {
   let asymmetricKeyType;
@@ -23453,7 +23453,7 @@ function keyForCrypto(alg, key2) {
 }
 var ecCurveAlgMap;
 var init_node_key = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/node_key.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/node_key.js"() {
     init_get_named_curve();
     init_errors();
     init_check_key_length();
@@ -23466,7 +23466,7 @@ var init_node_key = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/hmac_digest.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/hmac_digest.js
 function hmacDigest(alg) {
   switch (alg) {
     case "HS256":
@@ -23480,12 +23480,12 @@ function hmacDigest(alg) {
   }
 }
 var init_hmac_digest = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/hmac_digest.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/hmac_digest.js"() {
     init_errors();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/get_sign_verify_key.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/get_sign_verify_key.js
 import { KeyObject as KeyObject4, createSecretKey } from "node:crypto";
 function getSignVerifyKey(alg, key2, usage) {
   if (key2 instanceof Uint8Array) {
@@ -23510,7 +23510,7 @@ function getSignVerifyKey(alg, key2, usage) {
   throw new TypeError(invalid_key_input_default(key2, ...types3, "Uint8Array", "JSON Web Key"));
 }
 var init_get_sign_verify_key = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/get_sign_verify_key.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/get_sign_verify_key.js"() {
     init_webcrypto();
     init_crypto_key();
     init_invalid_key_input();
@@ -23519,12 +23519,12 @@ var init_get_sign_verify_key = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/sign.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/sign.js
 import * as crypto3 from "node:crypto";
 import { promisify } from "node:util";
 var oneShotSign, sign2, sign_default;
 var init_sign = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/sign.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/sign.js"() {
     init_dsa_digest();
     init_hmac_digest();
     init_node_key();
@@ -23543,12 +23543,12 @@ var init_sign = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/verify.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/verify.js
 import * as crypto4 from "node:crypto";
 import { promisify as promisify2 } from "node:util";
 var oneShotVerify, verify2, verify_default;
 var init_verify = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/verify.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/verify.js"() {
     init_dsa_digest();
     init_node_key();
     init_sign();
@@ -23577,7 +23577,7 @@ var init_verify = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jws/flattened/verify.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/jws/flattened/verify.js
 async function flattenedVerify(jws, key2, options) {
   if (!isObject(jws)) {
     throw new JWSInvalid("Flattened JWS must be an object");
@@ -23683,7 +23683,7 @@ async function flattenedVerify(jws, key2, options) {
   return result;
 }
 var init_verify2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jws/flattened/verify.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/jws/flattened/verify.js"() {
     init_base64url();
     init_verify();
     init_errors();
@@ -23698,7 +23698,7 @@ var init_verify2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jws/compact/verify.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/jws/compact/verify.js
 async function compactVerify(jws, key2, options) {
   if (jws instanceof Uint8Array) {
     jws = decoder.decode(jws);
@@ -23718,25 +23718,25 @@ async function compactVerify(jws, key2, options) {
   return result;
 }
 var init_verify3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jws/compact/verify.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/jws/compact/verify.js"() {
     init_verify2();
     init_errors();
     init_buffer_utils();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/epoch.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/epoch.js
 var epoch_default;
 var init_epoch = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/epoch.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/epoch.js"() {
     epoch_default = (date3) => Math.floor(date3.getTime() / 1e3);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/secs.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/secs.js
 var minute, hour, day, week, year, REGEX, secs_default;
 var init_secs = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/secs.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/secs.js"() {
     minute = 60;
     hour = minute * 60;
     day = hour * 24;
@@ -23795,10 +23795,10 @@ var init_secs = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/jwt_claims_set.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/lib/jwt_claims_set.js
 var normalizeTyp, checkAudiencePresence, jwt_claims_set_default;
 var init_jwt_claims_set = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/lib/jwt_claims_set.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/lib/jwt_claims_set.js"() {
     init_errors();
     init_buffer_utils();
     init_epoch();
@@ -23901,7 +23901,7 @@ var init_jwt_claims_set = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jwt/verify.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/jwt/verify.js
 async function jwtVerify(jwt, key2, options) {
   const verified = await compactVerify(jwt, key2, options);
   if (verified.protectedHeader.crit?.includes("b64") && verified.protectedHeader.b64 === false) {
@@ -23915,17 +23915,17 @@ async function jwtVerify(jwt, key2, options) {
   return result;
 }
 var init_verify4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jwt/verify.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/jwt/verify.js"() {
     init_verify3();
     init_jwt_claims_set();
     init_errors();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jws/flattened/sign.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/jws/flattened/sign.js
 var FlattenedSign;
 var init_sign2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jws/flattened/sign.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/jws/flattened/sign.js"() {
     init_base64url();
     init_sign();
     init_is_disjoint();
@@ -24012,10 +24012,10 @@ var init_sign2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jws/compact/sign.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/jws/compact/sign.js
 var CompactSign;
 var init_sign3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jws/compact/sign.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/jws/compact/sign.js"() {
     init_sign2();
     CompactSign = class {
       _flattened;
@@ -24037,7 +24037,7 @@ var init_sign3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jwt/produce.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/jwt/produce.js
 function validateInput(label, input) {
   if (!Number.isFinite(input)) {
     throw new TypeError(`Invalid ${label} input`);
@@ -24046,7 +24046,7 @@ function validateInput(label, input) {
 }
 var ProduceJWT;
 var init_produce = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jwt/produce.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/jwt/produce.js"() {
     init_epoch();
     init_is_object();
     init_secs();
@@ -24113,10 +24113,10 @@ var init_produce = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jwt/sign.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/jwt/sign.js
 var SignJWT;
 var init_sign4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jwt/sign.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/jwt/sign.js"() {
     init_sign3();
     init_errors();
     init_buffer_utils();
@@ -24139,7 +24139,7 @@ var init_sign4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jwks/local.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/jwks/local.js
 function getKtyFromAlg(alg) {
   switch (typeof alg === "string" && alg.slice(0, 2)) {
     case "RS":
@@ -24191,7 +24191,7 @@ function createLocalJWKSet(jwks) {
 }
 var LocalJWKSet;
 var init_local = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jwks/local.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/jwks/local.js"() {
     init_import();
     init_errors();
     init_is_object();
@@ -24268,13 +24268,13 @@ var init_local = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/fetch_jwks.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/runtime/fetch_jwks.js
 import * as http from "node:http";
 import * as https from "node:https";
 import { once } from "node:events";
 var fetchJwks, fetch_jwks_default;
 var init_fetch_jwks = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/runtime/fetch_jwks.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/runtime/fetch_jwks.js"() {
     init_errors();
     init_buffer_utils();
     fetchJwks = async (url, timeout, options) => {
@@ -24317,7 +24317,7 @@ var init_fetch_jwks = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jwks/remote.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/jwks/remote.js
 function isCloudflareWorkers() {
   return typeof WebSocketPair !== "undefined" || typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers" || typeof EdgeRuntime !== "undefined" && EdgeRuntime === "vercel";
 }
@@ -24369,7 +24369,7 @@ function createRemoteJWKSet(url, options) {
 }
 var USER_AGENT, jwksCache, RemoteJWKSet;
 var init_remote = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/jwks/remote.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/jwks/remote.js"() {
     init_fetch_jwks();
     init_errors();
     init_local();
@@ -24456,15 +24456,15 @@ var init_remote = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/util/base64url.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/util/base64url.js
 var init_base64url2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/util/base64url.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/util/base64url.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/index.js
+// ../dashboard/backend/node_modules/jose/dist/node/esm/index.js
 var init_esm = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/jose/dist/node/esm/index.js"() {
+  "../dashboard/backend/node_modules/jose/dist/node/esm/index.js"() {
     init_verify4();
     init_sign4();
     init_remote();
@@ -24497,6 +24497,7 @@ var init_config = __esm({
       // §9 CI가 빌드타임에 하네스 저장소를 클론해 구워두는 경로(§3.7 harness/skills 서빙 근거).
       // 미설정이면 빈 매니페스트/404로 안전 반환한다(가짜 데이터 금지).
       harnessPath: process.env.HARNESS_PATH ?? "",
+      harnessOverridePath: process.env.HARNESS_OVERRIDE_PATH ?? join(homedir(), ".claude", "sugo", "harness-overrides"),
       skillsPath: process.env.SKILLS_PATH ?? "",
       // 설정되면 빌드된 프론트 정적 파일을 같은 프로세스·포트에서 서빙한다. 개발(vite dev)은 비워 둔다.
       staticDir: process.env.DASHBOARD_STATIC_DIR ?? "",
@@ -24678,9 +24679,9 @@ var init_humanCompletion = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/sql-escaper/lib/index.js
+// ../dashboard/backend/node_modules/sql-escaper/lib/index.js
 var require_lib3 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/sql-escaper/lib/index.js"(exports) {
+  "../dashboard/backend/node_modules/sql-escaper/lib/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.raw = exports.format = exports.escape = exports.arrayToList = exports.bufferToString = exports.objectToValues = exports.escapeId = exports.temporalToString = exports.dateToString = void 0;
@@ -25188,9 +25189,9 @@ var require_lib3 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/lru.min/lib/index.js
+// ../dashboard/backend/node_modules/lru.min/lib/index.js
 var require_lib4 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/lru.min/lib/index.js"(exports) {
+  "../dashboard/backend/node_modules/lru.min/lib/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createLRU = void 0;
@@ -25440,9 +25441,9 @@ var require_lib4 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/parser_cache.js
+// ../dashboard/backend/node_modules/mysql2/lib/parsers/parser_cache.js
 var require_parser_cache = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/parser_cache.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/parsers/parser_cache.js"(exports, module) {
     "use strict";
     var { createLRU } = require_lib4();
     var parserCache = createLRU({
@@ -25503,9 +25504,9 @@ var require_parser_cache = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/denque/index.js
+// ../dashboard/backend/node_modules/denque/index.js
 var require_denque = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/denque/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/denque/index.js"(exports, module) {
     "use strict";
     function Denque(array, options) {
       var options = options || {};
@@ -25818,9 +25819,9 @@ var require_denque = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/errors.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/errors.js
 var require_errors = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/errors.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/errors.js"(exports) {
     "use strict";
     exports.EE_CANTCREATEFILE = 1;
     exports.EE_READ = 2;
@@ -29767,9 +29768,9 @@ var require_errors = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/long/umd/index.js
+// ../dashboard/backend/node_modules/long/umd/index.js
 var require_umd = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/long/umd/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/long/umd/index.js"(exports, module) {
     (function(global2, factory) {
       function preferDefault(exports2) {
         return exports2.default || exports2;
@@ -30745,9 +30746,9 @@ var require_umd = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/bom-handling.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/bom-handling.js
 var require_bom_handling2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/bom-handling.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/bom-handling.js"(exports) {
     "use strict";
     var BOMChar = "\uFEFF";
     exports.PrependBOM = PrependBOMWrapper;
@@ -30791,9 +30792,9 @@ var require_bom_handling2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/helpers/merge-exports.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/helpers/merge-exports.js
 var require_merge_exports = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/helpers/merge-exports.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/helpers/merge-exports.js"(exports, module) {
     "use strict";
     var hasOwn2 = typeof Object.hasOwn === "undefined" ? Function.call.bind(Object.prototype.hasOwnProperty) : Object.hasOwn;
     function mergeModules(target, module2) {
@@ -30807,9 +30808,9 @@ var require_merge_exports = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/internal.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/internal.js
 var require_internal2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/internal.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/internal.js"(exports, module) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     module.exports = {
@@ -30988,9 +30989,9 @@ var require_internal2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf32.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf32.js
 var require_utf32 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf32.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf32.js"(exports) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     exports._utf32 = Utf32Codec;
@@ -31223,9 +31224,9 @@ var require_utf32 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf16.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf16.js
 var require_utf162 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf16.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf16.js"(exports) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     exports.utf16be = Utf16BECodec;
@@ -31366,9 +31367,9 @@ var require_utf162 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf7.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf7.js
 var require_utf72 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf7.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/utf7.js"(exports) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     exports.utf7 = Utf7Codec;
@@ -31584,9 +31585,9 @@ var require_utf72 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-codec.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-codec.js
 var require_sbcs_codec2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-codec.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-codec.js"(exports) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     exports._sbcs = SBCSCodec;
@@ -31646,9 +31647,9 @@ var require_sbcs_codec2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-data.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-data.js
 var require_sbcs_data2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-data.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-data.js"(exports, module) {
     "use strict";
     module.exports = {
       // Not supported by iconv, not sure why.
@@ -31801,9 +31802,9 @@ var require_sbcs_data2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-data-generated.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-data-generated.js
 var require_sbcs_data_generated2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-data-generated.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/sbcs-data-generated.js"(exports, module) {
     "use strict";
     module.exports = {
       "437": "cp437",
@@ -32256,9 +32257,9 @@ var require_sbcs_data_generated2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/dbcs-codec.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/dbcs-codec.js
 var require_dbcs_codec2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/dbcs-codec.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/dbcs-codec.js"(exports) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     exports._dbcs = DBCSCodec;
@@ -32716,9 +32717,9 @@ var require_dbcs_codec2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/shiftjis.json
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/shiftjis.json
 var require_shiftjis2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/shiftjis.json"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/shiftjis.json"(exports, module) {
     module.exports = [
       ["0", "\0", 128],
       ["a1", "\uFF61", 62],
@@ -32847,9 +32848,9 @@ var require_shiftjis2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/eucjp.json
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/eucjp.json
 var require_eucjp2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/eucjp.json"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/eucjp.json"(exports, module) {
     module.exports = [
       ["0", "\0", 127],
       ["8ea1", "\uFF61", 62],
@@ -33035,9 +33036,9 @@ var require_eucjp2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp936.json
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp936.json
 var require_cp9362 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp936.json"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp936.json"(exports, module) {
     module.exports = [
       ["0", "\0", 127, "\u20AC"],
       ["8140", "\u4E02\u4E04\u4E05\u4E06\u4E0F\u4E12\u4E17\u4E1F\u4E20\u4E21\u4E23\u4E26\u4E29\u4E2E\u4E2F\u4E31\u4E33\u4E35\u4E37\u4E3C\u4E40\u4E41\u4E42\u4E44\u4E46\u4E4A\u4E51\u4E55\u4E57\u4E5A\u4E5B\u4E62\u4E63\u4E64\u4E65\u4E67\u4E68\u4E6A", 5, "\u4E72\u4E74", 9, "\u4E7F", 6, "\u4E87\u4E8A"],
@@ -33305,9 +33306,9 @@ var require_cp9362 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/gbk-added.json
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/gbk-added.json
 var require_gbk_added2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/gbk-added.json"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/gbk-added.json"(exports, module) {
     module.exports = [
       ["a140", "\uE4C6", 62],
       ["a180", "\uE505", 32],
@@ -33367,16 +33368,16 @@ var require_gbk_added2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/gb18030-ranges.json
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/gb18030-ranges.json
 var require_gb18030_ranges2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/gb18030-ranges.json"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/gb18030-ranges.json"(exports, module) {
     module.exports = { uChars: [128, 165, 169, 178, 184, 216, 226, 235, 238, 244, 248, 251, 253, 258, 276, 284, 300, 325, 329, 334, 364, 463, 465, 467, 469, 471, 473, 475, 477, 506, 594, 610, 712, 716, 730, 930, 938, 962, 970, 1026, 1104, 1106, 8209, 8215, 8218, 8222, 8231, 8241, 8244, 8246, 8252, 8365, 8452, 8454, 8458, 8471, 8482, 8556, 8570, 8596, 8602, 8713, 8720, 8722, 8726, 8731, 8737, 8740, 8742, 8748, 8751, 8760, 8766, 8777, 8781, 8787, 8802, 8808, 8816, 8854, 8858, 8870, 8896, 8979, 9322, 9372, 9548, 9588, 9616, 9622, 9634, 9652, 9662, 9672, 9676, 9680, 9702, 9735, 9738, 9793, 9795, 11906, 11909, 11913, 11917, 11928, 11944, 11947, 11951, 11956, 11960, 11964, 11979, 12284, 12292, 12312, 12319, 12330, 12351, 12436, 12447, 12535, 12543, 12586, 12842, 12850, 12964, 13200, 13215, 13218, 13253, 13263, 13267, 13270, 13384, 13428, 13727, 13839, 13851, 14617, 14703, 14801, 14816, 14964, 15183, 15471, 15585, 16471, 16736, 17208, 17325, 17330, 17374, 17623, 17997, 18018, 18212, 18218, 18301, 18318, 18760, 18811, 18814, 18820, 18823, 18844, 18848, 18872, 19576, 19620, 19738, 19887, 40870, 59244, 59336, 59367, 59413, 59417, 59423, 59431, 59437, 59443, 59452, 59460, 59478, 59493, 63789, 63866, 63894, 63976, 63986, 64016, 64018, 64021, 64025, 64034, 64037, 64042, 65074, 65093, 65107, 65112, 65127, 65132, 65375, 65510, 65536], gbChars: [0, 36, 38, 45, 50, 81, 89, 95, 96, 100, 103, 104, 105, 109, 126, 133, 148, 172, 175, 179, 208, 306, 307, 308, 309, 310, 311, 312, 313, 341, 428, 443, 544, 545, 558, 741, 742, 749, 750, 805, 819, 820, 7922, 7924, 7925, 7927, 7934, 7943, 7944, 7945, 7950, 8062, 8148, 8149, 8152, 8164, 8174, 8236, 8240, 8262, 8264, 8374, 8380, 8381, 8384, 8388, 8390, 8392, 8393, 8394, 8396, 8401, 8406, 8416, 8419, 8424, 8437, 8439, 8445, 8482, 8485, 8496, 8521, 8603, 8936, 8946, 9046, 9050, 9063, 9066, 9076, 9092, 9100, 9108, 9111, 9113, 9131, 9162, 9164, 9218, 9219, 11329, 11331, 11334, 11336, 11346, 11361, 11363, 11366, 11370, 11372, 11375, 11389, 11682, 11686, 11687, 11692, 11694, 11714, 11716, 11723, 11725, 11730, 11736, 11982, 11989, 12102, 12336, 12348, 12350, 12384, 12393, 12395, 12397, 12510, 12553, 12851, 12962, 12973, 13738, 13823, 13919, 13933, 14080, 14298, 14585, 14698, 15583, 15847, 16318, 16434, 16438, 16481, 16729, 17102, 17122, 17315, 17320, 17402, 17418, 17859, 17909, 17911, 17915, 17916, 17936, 17939, 17961, 18664, 18703, 18814, 18962, 19043, 33469, 33470, 33471, 33484, 33485, 33490, 33497, 33501, 33505, 33513, 33520, 33536, 33550, 37845, 37921, 37948, 38029, 38038, 38064, 38065, 38066, 38069, 38075, 38076, 38078, 39108, 39109, 39113, 39114, 39115, 39116, 39265, 39394, 189e3] };
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp949.json
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp949.json
 var require_cp9492 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp949.json"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp949.json"(exports, module) {
     module.exports = [
       ["0", "\0", 127],
       ["8141", "\uAC02\uAC03\uAC05\uAC06\uAC0B", 4, "\uAC18\uAC1E\uAC1F\uAC21\uAC22\uAC23\uAC25", 6, "\uAC2E\uAC32\uAC33\uAC34"],
@@ -33653,9 +33654,9 @@ var require_cp9492 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp950.json
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp950.json
 var require_cp9502 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp950.json"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/cp950.json"(exports, module) {
     module.exports = [
       ["0", "\0", 127],
       ["a140", "\u3000\uFF0C\u3001\u3002\uFF0E\u2027\uFF1B\uFF1A\uFF1F\uFF01\uFE30\u2026\u2025\uFE50\uFE51\uFE52\xB7\uFE54\uFE55\uFE56\uFE57\uFF5C\u2013\uFE31\u2014\uFE33\u2574\uFE34\uFE4F\uFF08\uFF09\uFE35\uFE36\uFF5B\uFF5D\uFE37\uFE38\u3014\u3015\uFE39\uFE3A\u3010\u3011\uFE3B\uFE3C\u300A\u300B\uFE3D\uFE3E\u3008\u3009\uFE3F\uFE40\u300C\u300D\uFE41\uFE42\u300E\u300F\uFE43\uFE44\uFE59\uFE5A"],
@@ -33836,9 +33837,9 @@ var require_cp9502 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/big5-added.json
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/big5-added.json
 var require_big5_added2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/big5-added.json"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/tables/big5-added.json"(exports, module) {
     module.exports = [
       ["8740", "\u43F0\u4C32\u4603\u45A6\u4578\u{27267}\u4D77\u45B3\u{27CB1}\u4CE2\u{27CC5}\u3B95\u4736\u4744\u4C47\u4C40\u{242BF}\u{23617}\u{27352}\u{26E8B}\u{270D2}\u4C57\u{2A351}\u474F\u45DA\u4C85\u{27C6C}\u4D07\u4AA4\u46A1\u{26B23}\u7225\u{25A54}\u{21A63}\u{23E06}\u{23F61}\u664D\u56FB"],
       ["8767", "\u7D95\u591D\u{28BB9}\u3DF4\u9734\u{27BEF}\u5BDB\u{21D5E}\u5AA4\u3625\u{29EB0}\u5AD1\u5BB7\u5CFC\u676E\u8593\u{29945}\u7461\u749D\u3875\u{21D53}\u{2369E}\u{26021}\u3EEC"],
@@ -33964,9 +33965,9 @@ var require_big5_added2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/dbcs-data.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/dbcs-data.js
 var require_dbcs_data2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/dbcs-data.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/dbcs-data.js"(exports, module) {
     "use strict";
     module.exports = {
       // == Japanese/ShiftJIS ====================================================
@@ -34211,9 +34212,9 @@ var require_dbcs_data2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/index.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/index.js
 var require_encodings2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/encodings/index.js"(exports, module) {
     "use strict";
     var mergeModules = require_merge_exports();
     var modules = [
@@ -34236,9 +34237,9 @@ var require_encodings2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/streams.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/streams.js
 var require_streams2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/streams.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/streams.js"(exports, module) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     module.exports = function(streamModule) {
@@ -34333,9 +34334,9 @@ var require_streams2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/index.js
+// ../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/index.js
 var require_lib5 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/node_modules/iconv-lite/lib/index.js"(exports, module) {
     "use strict";
     var Buffer3 = require_safer().Buffer;
     var bomHandling = require_bom_handling2();
@@ -34465,9 +34466,9 @@ var require_lib5 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/string.js
+// ../dashboard/backend/node_modules/mysql2/lib/parsers/string.js
 var require_string = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/string.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/parsers/string.js"(exports) {
     "use strict";
     var Iconv = require_lib5();
     var { createLRU } = require_lib4();
@@ -34510,9 +34511,9 @@ var require_string = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/types.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/types.js
 var require_types2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/types.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/types.js"(exports, module) {
     "use strict";
     module.exports = {
       0: "DECIMAL",
@@ -34603,9 +34604,9 @@ var require_types2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/packet.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/packet.js
 var require_packet = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/packet.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/packet.js"(exports, module) {
     "use strict";
     var ErrorCodeToName = require_errors();
     var NativeBuffer = __require("buffer").Buffer;
@@ -35457,9 +35458,9 @@ var require_packet = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packet_parser.js
+// ../dashboard/backend/node_modules/mysql2/lib/packet_parser.js
 var require_packet_parser = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packet_parser.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packet_parser.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var MAX_PACKET_LENGTH = 16777215;
@@ -35624,9 +35625,9 @@ var require_packet_parser = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/auth_next_factor.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/auth_next_factor.js
 var require_auth_next_factor = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/auth_next_factor.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/auth_next_factor.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var AuthNextFactor = class _AuthNextFactor {
@@ -35658,9 +35659,9 @@ var require_auth_next_factor = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_request.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_request.js
 var require_auth_switch_request = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_request.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_request.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var AuthSwitchRequest = class _AuthSwitchRequest {
@@ -35692,9 +35693,9 @@ var require_auth_switch_request = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_request_more_data.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_request_more_data.js
 var require_auth_switch_request_more_data = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_request_more_data.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_request_more_data.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var AuthSwitchRequestMoreData = class _AuthSwitchRequestMoreData {
@@ -35723,9 +35724,9 @@ var require_auth_switch_request_more_data = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_response.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_response.js
 var require_auth_switch_response = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_response.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/auth_switch_response.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var AuthSwitchResponse = class _AuthSwitchResponse {
@@ -35752,9 +35753,9 @@ var require_auth_switch_response = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/binary_row.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/binary_row.js
 var require_binary_row = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/binary_row.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/binary_row.js"(exports, module) {
     "use strict";
     var Types = require_types2();
     var Packet = require_packet();
@@ -35838,9 +35839,9 @@ var require_binary_row = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/commands.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/commands.js
 var require_commands = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/commands.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/commands.js"(exports, module) {
     "use strict";
     module.exports = {
       SLEEP: 0,
@@ -35888,9 +35889,9 @@ var require_commands = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/binlog_dump.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/binlog_dump.js
 var require_binlog_dump = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/binlog_dump.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/binlog_dump.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var CommandCodes = require_commands();
@@ -35918,9 +35919,9 @@ var require_binlog_dump = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/client.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/client.js
 var require_client = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/client.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/client.js"(exports) {
     "use strict";
     exports.LONG_PASSWORD = 1;
     exports.FOUND_ROWS = 2;
@@ -35953,9 +35954,9 @@ var require_client = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/auth_41.js
+// ../dashboard/backend/node_modules/mysql2/lib/auth_41.js
 var require_auth_41 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/auth_41.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/auth_41.js"(exports) {
     "use strict";
     var crypto5 = __require("crypto");
     function sha1(msg, msg1, msg2) {
@@ -36012,9 +36013,9 @@ var require_auth_41 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/charset_encodings.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/charset_encodings.js
 var require_charset_encodings = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/charset_encodings.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/charset_encodings.js"(exports, module) {
     "use strict";
     var encodings = [
       "utf8",
@@ -36353,9 +36354,9 @@ var require_charset_encodings = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/change_user.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/change_user.js
 var require_change_user = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/change_user.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/change_user.js"(exports, module) {
     "use strict";
     var CommandCode = require_commands();
     var ClientConstants = require_client();
@@ -36448,9 +36449,9 @@ var require_change_user = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/close_statement.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/close_statement.js
 var require_close_statement = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/close_statement.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/close_statement.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var CommandCodes = require_commands();
@@ -36471,9 +36472,9 @@ var require_close_statement = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/field_flags.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/field_flags.js
 var require_field_flags = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/field_flags.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/field_flags.js"(exports) {
     "use strict";
     exports.NOT_NULL = 1;
     exports.PRI_KEY = 2;
@@ -36493,9 +36494,9 @@ var require_field_flags = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/column_definition.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/column_definition.js
 var require_column_definition = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/column_definition.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/column_definition.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var StringParser = require_string();
@@ -36757,9 +36758,9 @@ var require_column_definition = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/cursor.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/cursor.js
 var require_cursor = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/cursor.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/cursor.js"(exports, module) {
     "use strict";
     module.exports = {
       NO_CURSOR: 0,
@@ -36771,9 +36772,9 @@ var require_cursor = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/encode_parameter.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/encode_parameter.js
 var require_encode_parameter = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/encode_parameter.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/encode_parameter.js"(exports, module) {
     "use strict";
     var Types = require_types2();
     var Packet = require_packet();
@@ -36835,9 +36836,9 @@ var require_encode_parameter = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/execute.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/execute.js
 var require_execute = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/execute.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/execute.js"(exports, module) {
     "use strict";
     var CursorType = require_cursor();
     var CommandCodes = require_commands();
@@ -36967,9 +36968,9 @@ var require_execute = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/handshake.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/handshake.js
 var require_handshake = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/handshake.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/handshake.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var ClientConstants = require_client();
@@ -37077,9 +37078,9 @@ var require_handshake = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/handshake_response.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/handshake_response.js
 var require_handshake_response = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/handshake_response.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/handshake_response.js"(exports, module) {
     "use strict";
     var ClientConstants = require_client();
     var CharsetToEncoding = require_charset_encodings();
@@ -37238,9 +37239,9 @@ var require_handshake_response = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/prepare_statement.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/prepare_statement.js
 var require_prepare_statement = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/prepare_statement.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/prepare_statement.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var CommandCodes = require_commands();
@@ -37267,9 +37268,9 @@ var require_prepare_statement = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/prepared_statement_header.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/prepared_statement_header.js
 var require_prepared_statement_header = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/prepared_statement_header.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/prepared_statement_header.js"(exports, module) {
     "use strict";
     var PreparedStatementHeader = class {
       constructor(packet) {
@@ -37285,9 +37286,9 @@ var require_prepared_statement_header = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/query.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/query.js
 var require_query2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/query.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/query.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var CommandCode = require_commands();
@@ -37372,9 +37373,9 @@ var require_query2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/register_slave.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/register_slave.js
 var require_register_slave = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/register_slave.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/register_slave.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var CommandCodes = require_commands();
@@ -37412,9 +37413,9 @@ var require_register_slave = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/reset_connection.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/reset_connection.js
 var require_reset_connection = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/reset_connection.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/reset_connection.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var CommandCodes = require_commands();
@@ -37432,9 +37433,9 @@ var require_reset_connection = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/server_status.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/server_status.js
 var require_server_status = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/server_status.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/server_status.js"(exports) {
     "use strict";
     exports.SERVER_STATUS_IN_TRANS = 1;
     exports.SERVER_STATUS_AUTOCOMMIT = 2;
@@ -37453,9 +37454,9 @@ var require_server_status = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/encoding_charset.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/encoding_charset.js
 var require_encoding_charset = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/encoding_charset.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/encoding_charset.js"(exports, module) {
     "use strict";
     module.exports = {
       big5: 1,
@@ -37505,9 +37506,9 @@ var require_encoding_charset = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/session_track.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/session_track.js
 var require_session_track = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/session_track.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/session_track.js"(exports) {
     "use strict";
     exports.SYSTEM_VARIABLES = 0;
     exports.SCHEMA = 1;
@@ -37520,9 +37521,9 @@ var require_session_track = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/resultset_header.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/resultset_header.js
 var require_resultset_header = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/resultset_header.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/resultset_header.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var ClientConstants = require_client();
@@ -37630,9 +37631,9 @@ var require_resultset_header = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/ssl_request.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/ssl_request.js
 var require_ssl_request = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/ssl_request.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/ssl_request.js"(exports, module) {
     "use strict";
     var ClientConstants = require_client();
     var Packet = require_packet();
@@ -37660,9 +37661,9 @@ var require_ssl_request = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/text_row.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/text_row.js
 var require_text_row = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/text_row.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/text_row.js"(exports, module) {
     "use strict";
     var Packet = require_packet();
     var TextRow = class _TextRow {
@@ -37707,9 +37708,9 @@ var require_text_row = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/index.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/index.js
 var require_packets = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/index.js"(exports, module) {
     "use strict";
     var process2 = __require("process");
     var AuthNextFactor = require_auth_next_factor();
@@ -37839,9 +37840,9 @@ var require_packets = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/command.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/command.js
 var require_command = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/command.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/command.js"(exports, module) {
     "use strict";
     var EventEmitter = __require("events").EventEmitter;
     var Timers = __require("timers");
@@ -37893,9 +37894,9 @@ var require_command = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/mariadb_client.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/mariadb_client.js
 var require_mariadb_client = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/mariadb_client.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/mariadb_client.js"(exports) {
     "use strict";
     exports.MARIADB_CLIENT_PROGRESS = 1;
     exports.MARIADB_CLIENT_COM_MULTI = 2;
@@ -37906,9 +37907,9 @@ var require_mariadb_client = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/auth_plugins/sha256_password.js
+// ../dashboard/backend/node_modules/mysql2/lib/auth_plugins/sha256_password.js
 var require_sha256_password = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/auth_plugins/sha256_password.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/auth_plugins/sha256_password.js"(exports, module) {
     "use strict";
     var PLUGIN_NAME = "sha256_password";
     var crypto5 = __require("crypto");
@@ -37967,9 +37968,9 @@ var require_sha256_password = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/auth_plugins/caching_sha2_password.js
+// ../dashboard/backend/node_modules/mysql2/lib/auth_plugins/caching_sha2_password.js
 var require_caching_sha2_password = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/auth_plugins/caching_sha2_password.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/auth_plugins/caching_sha2_password.js"(exports, module) {
     "use strict";
     var PLUGIN_NAME = "caching_sha2_password";
     var crypto5 = __require("crypto");
@@ -38061,9 +38062,9 @@ var require_caching_sha2_password = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/auth_plugins/mysql_native_password.js
+// ../dashboard/backend/node_modules/mysql2/lib/auth_plugins/mysql_native_password.js
 var require_mysql_native_password = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/auth_plugins/mysql_native_password.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/auth_plugins/mysql_native_password.js"(exports, module) {
     "use strict";
     var auth41 = require_auth_41();
     module.exports = (pluginOptions) => ({ connection, command: command5 }) => {
@@ -38092,9 +38093,9 @@ var require_mysql_native_password = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/auth_plugins/mysql_clear_password.js
+// ../dashboard/backend/node_modules/mysql2/lib/auth_plugins/mysql_clear_password.js
 var require_mysql_clear_password = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/auth_plugins/mysql_clear_password.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/auth_plugins/mysql_clear_password.js"(exports, module) {
     "use strict";
     function bufferFromStr(str) {
       return Buffer.from(`${str}\0`);
@@ -38109,9 +38110,9 @@ var require_mysql_clear_password = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/auth_switch.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/auth_switch.js
 var require_auth_switch = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/auth_switch.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/auth_switch.js"(exports, module) {
     "use strict";
     var Packets = require_packets();
     var sha256_password = require_sha256_password();
@@ -38218,9 +38219,9 @@ var require_auth_switch = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/compressed_protocol.js
+// ../dashboard/backend/node_modules/mysql2/lib/compressed_protocol.js
 var require_compressed_protocol = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/compressed_protocol.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/compressed_protocol.js"(exports, module) {
     "use strict";
     var zlib2 = __require("zlib");
     var PacketParser = require_packet_parser();
@@ -38343,9 +38344,9 @@ var require_compressed_protocol = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/client_handshake.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/client_handshake.js
 var require_client_handshake = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/client_handshake.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/client_handshake.js"(exports, module) {
     "use strict";
     var Command2 = require_command();
     var Packets = require_packets();
@@ -38627,9 +38628,9 @@ var require_client_handshake = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/server_handshake.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/server_handshake.js
 var require_server_handshake = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/server_handshake.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/server_handshake.js"(exports, module) {
     "use strict";
     var CommandCode = require_commands();
     var Errors = require_errors();
@@ -38786,9 +38787,9 @@ var require_server_handshake = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/charsets.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/charsets.js
 var require_charsets = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/charsets.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/charsets.js"(exports) {
     "use strict";
     exports.BIG5_CHINESE_CI = 1;
     exports.LATIN2_CZECH_CS = 2;
@@ -39106,9 +39107,9 @@ var require_charsets = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/helpers.js
+// ../dashboard/backend/node_modules/mysql2/lib/helpers.js
 var require_helpers = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/helpers.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/helpers.js"(exports) {
     "use strict";
     function srcEscape(str) {
       return JSON.stringify({
@@ -39166,9 +39167,9 @@ ${msg}:
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/is-property/is-property.js
+// ../dashboard/backend/node_modules/is-property/is-property.js
 var require_is_property = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/is-property/is-property.js"(exports, module) {
+  "../dashboard/backend/node_modules/is-property/is-property.js"(exports, module) {
     "use strict";
     function isProperty(str) {
       return /^[$A-Z\_a-z\xaa\xb5\xba\xc0-\xd6\xd8-\xf6\xf8-\u02c1\u02c6-\u02d1\u02e0-\u02e4\u02ec\u02ee\u0370-\u0374\u0376\u0377\u037a-\u037d\u0386\u0388-\u038a\u038c\u038e-\u03a1\u03a3-\u03f5\u03f7-\u0481\u048a-\u0527\u0531-\u0556\u0559\u0561-\u0587\u05d0-\u05ea\u05f0-\u05f2\u0620-\u064a\u066e\u066f\u0671-\u06d3\u06d5\u06e5\u06e6\u06ee\u06ef\u06fa-\u06fc\u06ff\u0710\u0712-\u072f\u074d-\u07a5\u07b1\u07ca-\u07ea\u07f4\u07f5\u07fa\u0800-\u0815\u081a\u0824\u0828\u0840-\u0858\u08a0\u08a2-\u08ac\u0904-\u0939\u093d\u0950\u0958-\u0961\u0971-\u0977\u0979-\u097f\u0985-\u098c\u098f\u0990\u0993-\u09a8\u09aa-\u09b0\u09b2\u09b6-\u09b9\u09bd\u09ce\u09dc\u09dd\u09df-\u09e1\u09f0\u09f1\u0a05-\u0a0a\u0a0f\u0a10\u0a13-\u0a28\u0a2a-\u0a30\u0a32\u0a33\u0a35\u0a36\u0a38\u0a39\u0a59-\u0a5c\u0a5e\u0a72-\u0a74\u0a85-\u0a8d\u0a8f-\u0a91\u0a93-\u0aa8\u0aaa-\u0ab0\u0ab2\u0ab3\u0ab5-\u0ab9\u0abd\u0ad0\u0ae0\u0ae1\u0b05-\u0b0c\u0b0f\u0b10\u0b13-\u0b28\u0b2a-\u0b30\u0b32\u0b33\u0b35-\u0b39\u0b3d\u0b5c\u0b5d\u0b5f-\u0b61\u0b71\u0b83\u0b85-\u0b8a\u0b8e-\u0b90\u0b92-\u0b95\u0b99\u0b9a\u0b9c\u0b9e\u0b9f\u0ba3\u0ba4\u0ba8-\u0baa\u0bae-\u0bb9\u0bd0\u0c05-\u0c0c\u0c0e-\u0c10\u0c12-\u0c28\u0c2a-\u0c33\u0c35-\u0c39\u0c3d\u0c58\u0c59\u0c60\u0c61\u0c85-\u0c8c\u0c8e-\u0c90\u0c92-\u0ca8\u0caa-\u0cb3\u0cb5-\u0cb9\u0cbd\u0cde\u0ce0\u0ce1\u0cf1\u0cf2\u0d05-\u0d0c\u0d0e-\u0d10\u0d12-\u0d3a\u0d3d\u0d4e\u0d60\u0d61\u0d7a-\u0d7f\u0d85-\u0d96\u0d9a-\u0db1\u0db3-\u0dbb\u0dbd\u0dc0-\u0dc6\u0e01-\u0e30\u0e32\u0e33\u0e40-\u0e46\u0e81\u0e82\u0e84\u0e87\u0e88\u0e8a\u0e8d\u0e94-\u0e97\u0e99-\u0e9f\u0ea1-\u0ea3\u0ea5\u0ea7\u0eaa\u0eab\u0ead-\u0eb0\u0eb2\u0eb3\u0ebd\u0ec0-\u0ec4\u0ec6\u0edc-\u0edf\u0f00\u0f40-\u0f47\u0f49-\u0f6c\u0f88-\u0f8c\u1000-\u102a\u103f\u1050-\u1055\u105a-\u105d\u1061\u1065\u1066\u106e-\u1070\u1075-\u1081\u108e\u10a0-\u10c5\u10c7\u10cd\u10d0-\u10fa\u10fc-\u1248\u124a-\u124d\u1250-\u1256\u1258\u125a-\u125d\u1260-\u1288\u128a-\u128d\u1290-\u12b0\u12b2-\u12b5\u12b8-\u12be\u12c0\u12c2-\u12c5\u12c8-\u12d6\u12d8-\u1310\u1312-\u1315\u1318-\u135a\u1380-\u138f\u13a0-\u13f4\u1401-\u166c\u166f-\u167f\u1681-\u169a\u16a0-\u16ea\u16ee-\u16f0\u1700-\u170c\u170e-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176c\u176e-\u1770\u1780-\u17b3\u17d7\u17dc\u1820-\u1877\u1880-\u18a8\u18aa\u18b0-\u18f5\u1900-\u191c\u1950-\u196d\u1970-\u1974\u1980-\u19ab\u19c1-\u19c7\u1a00-\u1a16\u1a20-\u1a54\u1aa7\u1b05-\u1b33\u1b45-\u1b4b\u1b83-\u1ba0\u1bae\u1baf\u1bba-\u1be5\u1c00-\u1c23\u1c4d-\u1c4f\u1c5a-\u1c7d\u1ce9-\u1cec\u1cee-\u1cf1\u1cf5\u1cf6\u1d00-\u1dbf\u1e00-\u1f15\u1f18-\u1f1d\u1f20-\u1f45\u1f48-\u1f4d\u1f50-\u1f57\u1f59\u1f5b\u1f5d\u1f5f-\u1f7d\u1f80-\u1fb4\u1fb6-\u1fbc\u1fbe\u1fc2-\u1fc4\u1fc6-\u1fcc\u1fd0-\u1fd3\u1fd6-\u1fdb\u1fe0-\u1fec\u1ff2-\u1ff4\u1ff6-\u1ffc\u2071\u207f\u2090-\u209c\u2102\u2107\u210a-\u2113\u2115\u2119-\u211d\u2124\u2126\u2128\u212a-\u212d\u212f-\u2139\u213c-\u213f\u2145-\u2149\u214e\u2160-\u2188\u2c00-\u2c2e\u2c30-\u2c5e\u2c60-\u2ce4\u2ceb-\u2cee\u2cf2\u2cf3\u2d00-\u2d25\u2d27\u2d2d\u2d30-\u2d67\u2d6f\u2d80-\u2d96\u2da0-\u2da6\u2da8-\u2dae\u2db0-\u2db6\u2db8-\u2dbe\u2dc0-\u2dc6\u2dc8-\u2dce\u2dd0-\u2dd6\u2dd8-\u2dde\u2e2f\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303c\u3041-\u3096\u309d-\u309f\u30a1-\u30fa\u30fc-\u30ff\u3105-\u312d\u3131-\u318e\u31a0-\u31ba\u31f0-\u31ff\u3400-\u4db5\u4e00-\u9fcc\ua000-\ua48c\ua4d0-\ua4fd\ua500-\ua60c\ua610-\ua61f\ua62a\ua62b\ua640-\ua66e\ua67f-\ua697\ua6a0-\ua6ef\ua717-\ua71f\ua722-\ua788\ua78b-\ua78e\ua790-\ua793\ua7a0-\ua7aa\ua7f8-\ua801\ua803-\ua805\ua807-\ua80a\ua80c-\ua822\ua840-\ua873\ua882-\ua8b3\ua8f2-\ua8f7\ua8fb\ua90a-\ua925\ua930-\ua946\ua960-\ua97c\ua984-\ua9b2\ua9cf\uaa00-\uaa28\uaa40-\uaa42\uaa44-\uaa4b\uaa60-\uaa76\uaa7a\uaa80-\uaaaf\uaab1\uaab5\uaab6\uaab9-\uaabd\uaac0\uaac2\uaadb-\uaadd\uaae0-\uaaea\uaaf2-\uaaf4\uab01-\uab06\uab09-\uab0e\uab11-\uab16\uab20-\uab26\uab28-\uab2e\uabc0-\uabe2\uac00-\ud7a3\ud7b0-\ud7c6\ud7cb-\ud7fb\uf900-\ufa6d\ufa70-\ufad9\ufb00-\ufb06\ufb13-\ufb17\ufb1d\ufb1f-\ufb28\ufb2a-\ufb36\ufb38-\ufb3c\ufb3e\ufb40\ufb41\ufb43\ufb44\ufb46-\ufbb1\ufbd3-\ufd3d\ufd50-\ufd8f\ufd92-\ufdc7\ufdf0-\ufdfb\ufe70-\ufe74\ufe76-\ufefc\uff21-\uff3a\uff41-\uff5a\uff66-\uffbe\uffc2-\uffc7\uffca-\uffcf\uffd2-\uffd7\uffda-\uffdc][$A-Z\_a-z\xaa\xb5\xba\xc0-\xd6\xd8-\xf6\xf8-\u02c1\u02c6-\u02d1\u02e0-\u02e4\u02ec\u02ee\u0370-\u0374\u0376\u0377\u037a-\u037d\u0386\u0388-\u038a\u038c\u038e-\u03a1\u03a3-\u03f5\u03f7-\u0481\u048a-\u0527\u0531-\u0556\u0559\u0561-\u0587\u05d0-\u05ea\u05f0-\u05f2\u0620-\u064a\u066e\u066f\u0671-\u06d3\u06d5\u06e5\u06e6\u06ee\u06ef\u06fa-\u06fc\u06ff\u0710\u0712-\u072f\u074d-\u07a5\u07b1\u07ca-\u07ea\u07f4\u07f5\u07fa\u0800-\u0815\u081a\u0824\u0828\u0840-\u0858\u08a0\u08a2-\u08ac\u0904-\u0939\u093d\u0950\u0958-\u0961\u0971-\u0977\u0979-\u097f\u0985-\u098c\u098f\u0990\u0993-\u09a8\u09aa-\u09b0\u09b2\u09b6-\u09b9\u09bd\u09ce\u09dc\u09dd\u09df-\u09e1\u09f0\u09f1\u0a05-\u0a0a\u0a0f\u0a10\u0a13-\u0a28\u0a2a-\u0a30\u0a32\u0a33\u0a35\u0a36\u0a38\u0a39\u0a59-\u0a5c\u0a5e\u0a72-\u0a74\u0a85-\u0a8d\u0a8f-\u0a91\u0a93-\u0aa8\u0aaa-\u0ab0\u0ab2\u0ab3\u0ab5-\u0ab9\u0abd\u0ad0\u0ae0\u0ae1\u0b05-\u0b0c\u0b0f\u0b10\u0b13-\u0b28\u0b2a-\u0b30\u0b32\u0b33\u0b35-\u0b39\u0b3d\u0b5c\u0b5d\u0b5f-\u0b61\u0b71\u0b83\u0b85-\u0b8a\u0b8e-\u0b90\u0b92-\u0b95\u0b99\u0b9a\u0b9c\u0b9e\u0b9f\u0ba3\u0ba4\u0ba8-\u0baa\u0bae-\u0bb9\u0bd0\u0c05-\u0c0c\u0c0e-\u0c10\u0c12-\u0c28\u0c2a-\u0c33\u0c35-\u0c39\u0c3d\u0c58\u0c59\u0c60\u0c61\u0c85-\u0c8c\u0c8e-\u0c90\u0c92-\u0ca8\u0caa-\u0cb3\u0cb5-\u0cb9\u0cbd\u0cde\u0ce0\u0ce1\u0cf1\u0cf2\u0d05-\u0d0c\u0d0e-\u0d10\u0d12-\u0d3a\u0d3d\u0d4e\u0d60\u0d61\u0d7a-\u0d7f\u0d85-\u0d96\u0d9a-\u0db1\u0db3-\u0dbb\u0dbd\u0dc0-\u0dc6\u0e01-\u0e30\u0e32\u0e33\u0e40-\u0e46\u0e81\u0e82\u0e84\u0e87\u0e88\u0e8a\u0e8d\u0e94-\u0e97\u0e99-\u0e9f\u0ea1-\u0ea3\u0ea5\u0ea7\u0eaa\u0eab\u0ead-\u0eb0\u0eb2\u0eb3\u0ebd\u0ec0-\u0ec4\u0ec6\u0edc-\u0edf\u0f00\u0f40-\u0f47\u0f49-\u0f6c\u0f88-\u0f8c\u1000-\u102a\u103f\u1050-\u1055\u105a-\u105d\u1061\u1065\u1066\u106e-\u1070\u1075-\u1081\u108e\u10a0-\u10c5\u10c7\u10cd\u10d0-\u10fa\u10fc-\u1248\u124a-\u124d\u1250-\u1256\u1258\u125a-\u125d\u1260-\u1288\u128a-\u128d\u1290-\u12b0\u12b2-\u12b5\u12b8-\u12be\u12c0\u12c2-\u12c5\u12c8-\u12d6\u12d8-\u1310\u1312-\u1315\u1318-\u135a\u1380-\u138f\u13a0-\u13f4\u1401-\u166c\u166f-\u167f\u1681-\u169a\u16a0-\u16ea\u16ee-\u16f0\u1700-\u170c\u170e-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176c\u176e-\u1770\u1780-\u17b3\u17d7\u17dc\u1820-\u1877\u1880-\u18a8\u18aa\u18b0-\u18f5\u1900-\u191c\u1950-\u196d\u1970-\u1974\u1980-\u19ab\u19c1-\u19c7\u1a00-\u1a16\u1a20-\u1a54\u1aa7\u1b05-\u1b33\u1b45-\u1b4b\u1b83-\u1ba0\u1bae\u1baf\u1bba-\u1be5\u1c00-\u1c23\u1c4d-\u1c4f\u1c5a-\u1c7d\u1ce9-\u1cec\u1cee-\u1cf1\u1cf5\u1cf6\u1d00-\u1dbf\u1e00-\u1f15\u1f18-\u1f1d\u1f20-\u1f45\u1f48-\u1f4d\u1f50-\u1f57\u1f59\u1f5b\u1f5d\u1f5f-\u1f7d\u1f80-\u1fb4\u1fb6-\u1fbc\u1fbe\u1fc2-\u1fc4\u1fc6-\u1fcc\u1fd0-\u1fd3\u1fd6-\u1fdb\u1fe0-\u1fec\u1ff2-\u1ff4\u1ff6-\u1ffc\u2071\u207f\u2090-\u209c\u2102\u2107\u210a-\u2113\u2115\u2119-\u211d\u2124\u2126\u2128\u212a-\u212d\u212f-\u2139\u213c-\u213f\u2145-\u2149\u214e\u2160-\u2188\u2c00-\u2c2e\u2c30-\u2c5e\u2c60-\u2ce4\u2ceb-\u2cee\u2cf2\u2cf3\u2d00-\u2d25\u2d27\u2d2d\u2d30-\u2d67\u2d6f\u2d80-\u2d96\u2da0-\u2da6\u2da8-\u2dae\u2db0-\u2db6\u2db8-\u2dbe\u2dc0-\u2dc6\u2dc8-\u2dce\u2dd0-\u2dd6\u2dd8-\u2dde\u2e2f\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303c\u3041-\u3096\u309d-\u309f\u30a1-\u30fa\u30fc-\u30ff\u3105-\u312d\u3131-\u318e\u31a0-\u31ba\u31f0-\u31ff\u3400-\u4db5\u4e00-\u9fcc\ua000-\ua48c\ua4d0-\ua4fd\ua500-\ua60c\ua610-\ua61f\ua62a\ua62b\ua640-\ua66e\ua67f-\ua697\ua6a0-\ua6ef\ua717-\ua71f\ua722-\ua788\ua78b-\ua78e\ua790-\ua793\ua7a0-\ua7aa\ua7f8-\ua801\ua803-\ua805\ua807-\ua80a\ua80c-\ua822\ua840-\ua873\ua882-\ua8b3\ua8f2-\ua8f7\ua8fb\ua90a-\ua925\ua930-\ua946\ua960-\ua97c\ua984-\ua9b2\ua9cf\uaa00-\uaa28\uaa40-\uaa42\uaa44-\uaa4b\uaa60-\uaa76\uaa7a\uaa80-\uaaaf\uaab1\uaab5\uaab6\uaab9-\uaabd\uaac0\uaac2\uaadb-\uaadd\uaae0-\uaaea\uaaf2-\uaaf4\uab01-\uab06\uab09-\uab0e\uab11-\uab16\uab20-\uab26\uab28-\uab2e\uabc0-\uabe2\uac00-\ud7a3\ud7b0-\ud7c6\ud7cb-\ud7fb\uf900-\ufa6d\ufa70-\ufad9\ufb00-\ufb06\ufb13-\ufb17\ufb1d\ufb1f-\ufb28\ufb2a-\ufb36\ufb38-\ufb3c\ufb3e\ufb40\ufb41\ufb43\ufb44\ufb46-\ufbb1\ufbd3-\ufd3d\ufd50-\ufd8f\ufd92-\ufdc7\ufdf0-\ufdfb\ufe70-\ufe74\ufe76-\ufefc\uff21-\uff3a\uff41-\uff5a\uff66-\uffbe\uffc2-\uffc7\uffca-\uffcf\uffd2-\uffd7\uffda-\uffdc0-9\u0300-\u036f\u0483-\u0487\u0591-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7\u0610-\u061a\u064b-\u0669\u0670\u06d6-\u06dc\u06df-\u06e4\u06e7\u06e8\u06ea-\u06ed\u06f0-\u06f9\u0711\u0730-\u074a\u07a6-\u07b0\u07c0-\u07c9\u07eb-\u07f3\u0816-\u0819\u081b-\u0823\u0825-\u0827\u0829-\u082d\u0859-\u085b\u08e4-\u08fe\u0900-\u0903\u093a-\u093c\u093e-\u094f\u0951-\u0957\u0962\u0963\u0966-\u096f\u0981-\u0983\u09bc\u09be-\u09c4\u09c7\u09c8\u09cb-\u09cd\u09d7\u09e2\u09e3\u09e6-\u09ef\u0a01-\u0a03\u0a3c\u0a3e-\u0a42\u0a47\u0a48\u0a4b-\u0a4d\u0a51\u0a66-\u0a71\u0a75\u0a81-\u0a83\u0abc\u0abe-\u0ac5\u0ac7-\u0ac9\u0acb-\u0acd\u0ae2\u0ae3\u0ae6-\u0aef\u0b01-\u0b03\u0b3c\u0b3e-\u0b44\u0b47\u0b48\u0b4b-\u0b4d\u0b56\u0b57\u0b62\u0b63\u0b66-\u0b6f\u0b82\u0bbe-\u0bc2\u0bc6-\u0bc8\u0bca-\u0bcd\u0bd7\u0be6-\u0bef\u0c01-\u0c03\u0c3e-\u0c44\u0c46-\u0c48\u0c4a-\u0c4d\u0c55\u0c56\u0c62\u0c63\u0c66-\u0c6f\u0c82\u0c83\u0cbc\u0cbe-\u0cc4\u0cc6-\u0cc8\u0cca-\u0ccd\u0cd5\u0cd6\u0ce2\u0ce3\u0ce6-\u0cef\u0d02\u0d03\u0d3e-\u0d44\u0d46-\u0d48\u0d4a-\u0d4d\u0d57\u0d62\u0d63\u0d66-\u0d6f\u0d82\u0d83\u0dca\u0dcf-\u0dd4\u0dd6\u0dd8-\u0ddf\u0df2\u0df3\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e50-\u0e59\u0eb1\u0eb4-\u0eb9\u0ebb\u0ebc\u0ec8-\u0ecd\u0ed0-\u0ed9\u0f18\u0f19\u0f20-\u0f29\u0f35\u0f37\u0f39\u0f3e\u0f3f\u0f71-\u0f84\u0f86\u0f87\u0f8d-\u0f97\u0f99-\u0fbc\u0fc6\u102b-\u103e\u1040-\u1049\u1056-\u1059\u105e-\u1060\u1062-\u1064\u1067-\u106d\u1071-\u1074\u1082-\u108d\u108f-\u109d\u135d-\u135f\u1712-\u1714\u1732-\u1734\u1752\u1753\u1772\u1773\u17b4-\u17d3\u17dd\u17e0-\u17e9\u180b-\u180d\u1810-\u1819\u18a9\u1920-\u192b\u1930-\u193b\u1946-\u194f\u19b0-\u19c0\u19c8\u19c9\u19d0-\u19d9\u1a17-\u1a1b\u1a55-\u1a5e\u1a60-\u1a7c\u1a7f-\u1a89\u1a90-\u1a99\u1b00-\u1b04\u1b34-\u1b44\u1b50-\u1b59\u1b6b-\u1b73\u1b80-\u1b82\u1ba1-\u1bad\u1bb0-\u1bb9\u1be6-\u1bf3\u1c24-\u1c37\u1c40-\u1c49\u1c50-\u1c59\u1cd0-\u1cd2\u1cd4-\u1ce8\u1ced\u1cf2-\u1cf4\u1dc0-\u1de6\u1dfc-\u1dff\u200c\u200d\u203f\u2040\u2054\u20d0-\u20dc\u20e1\u20e5-\u20f0\u2cef-\u2cf1\u2d7f\u2de0-\u2dff\u302a-\u302f\u3099\u309a\ua620-\ua629\ua66f\ua674-\ua67d\ua69f\ua6f0\ua6f1\ua802\ua806\ua80b\ua823-\ua827\ua880\ua881\ua8b4-\ua8c4\ua8d0-\ua8d9\ua8e0-\ua8f1\ua900-\ua909\ua926-\ua92d\ua947-\ua953\ua980-\ua983\ua9b3-\ua9c0\ua9d0-\ua9d9\uaa29-\uaa36\uaa43\uaa4c\uaa4d\uaa50-\uaa59\uaa7b\uaab0\uaab2-\uaab4\uaab7\uaab8\uaabe\uaabf\uaac1\uaaeb-\uaaef\uaaf5\uaaf6\uabe3-\uabea\uabec\uabed\uabf0-\uabf9\ufb1e\ufe00-\ufe0f\ufe20-\ufe26\ufe33\ufe34\ufe4d-\ufe4f\uff10-\uff19\uff3f]*$/.test(str);
@@ -39177,9 +39178,9 @@ var require_is_property = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/generate-function/index.js
+// ../dashboard/backend/node_modules/generate-function/index.js
 var require_generate_function = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/generate-function/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/generate-function/index.js"(exports, module) {
     var util4 = __require("util");
     var isProperty = require_is_property();
     var INDENT_START = /[\{\[]/;
@@ -39336,9 +39337,9 @@ var require_generate_function = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/text_parser.js
+// ../dashboard/backend/node_modules/mysql2/lib/parsers/text_parser.js
 var require_text_parser = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/text_parser.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/parsers/text_parser.js"(exports, module) {
     "use strict";
     var Types = require_types2();
     var Charsets = require_charsets();
@@ -39520,9 +39521,9 @@ var require_text_parser = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/static_text_parser.js
+// ../dashboard/backend/node_modules/mysql2/lib/parsers/static_text_parser.js
 var require_static_text_parser = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/static_text_parser.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/parsers/static_text_parser.js"(exports, module) {
     "use strict";
     var Types = require_types2();
     var Charsets = require_charsets();
@@ -39670,9 +39671,9 @@ var require_static_text_parser = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/query.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/query.js
 var require_query3 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/query.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/query.js"(exports, module) {
     "use strict";
     var process2 = __require("process");
     var Timers = __require("timers");
@@ -39991,9 +39992,9 @@ var require_query3 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/close_statement.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/close_statement.js
 var require_close_statement2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/close_statement.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/close_statement.js"(exports, module) {
     "use strict";
     var Command2 = require_command();
     var Packets = require_packets();
@@ -40011,9 +40012,9 @@ var require_close_statement2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/binary_parser.js
+// ../dashboard/backend/node_modules/mysql2/lib/parsers/binary_parser.js
 var require_binary_parser = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/binary_parser.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/parsers/binary_parser.js"(exports, module) {
     "use strict";
     var FieldFlags = require_field_flags();
     var Charsets = require_charsets();
@@ -40239,9 +40240,9 @@ var require_binary_parser = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/static_binary_parser.js
+// ../dashboard/backend/node_modules/mysql2/lib/parsers/static_binary_parser.js
 var require_static_binary_parser = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/parsers/static_binary_parser.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/parsers/static_binary_parser.js"(exports, module) {
     "use strict";
     var FieldFlags = require_field_flags();
     var Charsets = require_charsets();
@@ -40433,9 +40434,9 @@ var require_static_binary_parser = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/execute.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/execute.js
 var require_execute2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/execute.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/execute.js"(exports, module) {
     "use strict";
     var Command2 = require_command();
     var Query = require_query3();
@@ -40533,9 +40534,9 @@ var require_execute2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/prepare.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/prepare.js
 var require_prepare = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/prepare.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/prepare.js"(exports, module) {
     "use strict";
     var Packets = require_packets();
     var Command2 = require_command();
@@ -40673,9 +40674,9 @@ var require_prepare = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/ping.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/ping.js
 var require_ping = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/ping.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/ping.js"(exports, module) {
     "use strict";
     var Command2 = require_command();
     var CommandCode = require_commands();
@@ -40706,9 +40707,9 @@ var require_ping = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/register_slave.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/register_slave.js
 var require_register_slave2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/register_slave.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/register_slave.js"(exports, module) {
     "use strict";
     var Command2 = require_command();
     var Packets = require_packets();
@@ -40734,9 +40735,9 @@ var require_register_slave2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/binlog_query_statusvars.js
+// ../dashboard/backend/node_modules/mysql2/lib/packets/binlog_query_statusvars.js
 var require_binlog_query_statusvars = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/packets/binlog_query_statusvars.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/packets/binlog_query_statusvars.js"(exports, module) {
     "use strict";
     var keys = {
       FLAGS2: 0,
@@ -40846,9 +40847,9 @@ var require_binlog_query_statusvars = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/binlog_dump.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/binlog_dump.js
 var require_binlog_dump2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/binlog_dump.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/binlog_dump.js"(exports, module) {
     "use strict";
     var Command2 = require_command();
     var Packets = require_packets();
@@ -40943,9 +40944,9 @@ var require_binlog_dump2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/change_user.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/change_user.js
 var require_change_user2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/change_user.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/change_user.js"(exports, module) {
     "use strict";
     var Command2 = require_command();
     var Packets = require_packets();
@@ -40998,9 +40999,9 @@ var require_change_user2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/reset_connection.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/reset_connection.js
 var require_reset_connection2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/reset_connection.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/reset_connection.js"(exports, module) {
     "use strict";
     var Command2 = require_command();
     var Packets = require_packets();
@@ -41028,9 +41029,9 @@ var require_reset_connection2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/quit.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/quit.js
 var require_quit = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/quit.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/quit.js"(exports, module) {
     "use strict";
     var Command2 = require_command();
     var CommandCode = require_commands();
@@ -41059,9 +41060,9 @@ var require_quit = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/index.js
+// ../dashboard/backend/node_modules/mysql2/lib/commands/index.js
 var require_commands2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/commands/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/commands/index.js"(exports, module) {
     "use strict";
     var ClientHandshake = require_client_handshake();
     var ServerHandshake = require_server_handshake();
@@ -41092,9 +41093,9 @@ var require_commands2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/package.json
+// ../dashboard/backend/node_modules/mysql2/package.json
 var require_package = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/package.json"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/package.json"(exports, module) {
     module.exports = {
       name: "mysql2",
       version: "3.23.1",
@@ -41193,9 +41194,9 @@ var require_package = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/aws-ssl-profiles/lib/profiles/ca/defaults.js
+// ../dashboard/backend/node_modules/aws-ssl-profiles/lib/profiles/ca/defaults.js
 var require_defaults = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/aws-ssl-profiles/lib/profiles/ca/defaults.js"(exports) {
+  "../dashboard/backend/node_modules/aws-ssl-profiles/lib/profiles/ca/defaults.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.defaults = void 0;
@@ -41319,9 +41320,9 @@ var require_defaults = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/aws-ssl-profiles/lib/profiles/ca/proxies.js
+// ../dashboard/backend/node_modules/aws-ssl-profiles/lib/profiles/ca/proxies.js
 var require_proxies = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/aws-ssl-profiles/lib/profiles/ca/proxies.js"(exports) {
+  "../dashboard/backend/node_modules/aws-ssl-profiles/lib/profiles/ca/proxies.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.proxies = void 0;
@@ -41335,9 +41336,9 @@ var require_proxies = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/aws-ssl-profiles/lib/index.js
+// ../dashboard/backend/node_modules/aws-ssl-profiles/lib/index.js
 var require_lib6 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/aws-ssl-profiles/lib/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/aws-ssl-profiles/lib/index.js"(exports, module) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var defaults_js_1 = require_defaults();
@@ -41354,9 +41355,9 @@ var require_lib6 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/ssl_profiles.js
+// ../dashboard/backend/node_modules/mysql2/lib/constants/ssl_profiles.js
 var require_ssl_profiles = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/constants/ssl_profiles.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/lib/constants/ssl_profiles.js"(exports) {
     "use strict";
     var awsCaBundle = require_lib6();
     exports["Amazon RDS"] = {
@@ -41365,9 +41366,9 @@ var require_ssl_profiles = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/connection_config.js
+// ../dashboard/backend/node_modules/mysql2/lib/connection_config.js
 var require_connection_config = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/connection_config.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/connection_config.js"(exports, module) {
     "use strict";
     var { URL: URL2 } = __require("url");
     var ClientConstants = require_client();
@@ -41619,9 +41620,9 @@ var require_connection_config = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/tracing.js
+// ../dashboard/backend/node_modules/mysql2/lib/tracing.js
 var require_tracing = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/tracing.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/tracing.js"(exports, module) {
     "use strict";
     var process2 = __require("process");
     var dc = (() => {
@@ -41678,9 +41679,9 @@ var require_tracing = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/named-placeholders/index.js
+// ../dashboard/backend/node_modules/named-placeholders/index.js
 var require_named_placeholders = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/named-placeholders/index.js"(exports, module) {
+  "../dashboard/backend/node_modules/named-placeholders/index.js"(exports, module) {
     "use strict";
     var RE_PARAM = /(?:\?)|(?::(\d+|(?:[a-zA-Z][a-zA-Z0-9_]*)))/g;
     var DQUOTE = 34;
@@ -41841,9 +41842,9 @@ var require_named_placeholders = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/base/connection.js
+// ../dashboard/backend/node_modules/mysql2/lib/base/connection.js
 var require_connection = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/base/connection.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/base/connection.js"(exports, module) {
     "use strict";
     var Net = __require("net");
     var Tls = __require("tls");
@@ -42785,9 +42786,9 @@ var require_connection = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/capture_local_err.js
+// ../dashboard/backend/node_modules/mysql2/lib/promise/capture_local_err.js
 var require_capture_local_err = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/capture_local_err.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/promise/capture_local_err.js"(exports, module) {
     "use strict";
     function captureStackHolder(constructorOpt) {
       const holder = {};
@@ -42805,9 +42806,9 @@ var require_capture_local_err = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/make_done_cb.js
+// ../dashboard/backend/node_modules/mysql2/lib/promise/make_done_cb.js
 var require_make_done_cb = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/make_done_cb.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/promise/make_done_cb.js"(exports, module) {
     "use strict";
     var { applyCapturedStack } = require_capture_local_err();
     function makeDoneCb(resolve4, reject, stackHolder) {
@@ -42824,9 +42825,9 @@ var require_make_done_cb = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/prepared_statement_info.js
+// ../dashboard/backend/node_modules/mysql2/lib/promise/prepared_statement_info.js
 var require_prepared_statement_info = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/prepared_statement_info.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/promise/prepared_statement_info.js"(exports, module) {
     "use strict";
     var { captureStackHolder } = require_capture_local_err();
     var makeDoneCb = require_make_done_cb();
@@ -42860,9 +42861,9 @@ var require_prepared_statement_info = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/inherit_events.js
+// ../dashboard/backend/node_modules/mysql2/lib/promise/inherit_events.js
 var require_inherit_events = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/inherit_events.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/promise/inherit_events.js"(exports, module) {
     "use strict";
     function inheritEvents(source, target, events) {
       const listeners = {};
@@ -42888,9 +42889,9 @@ var require_inherit_events = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/connection.js
+// ../dashboard/backend/node_modules/mysql2/lib/promise/connection.js
 var require_connection2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/connection.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/promise/connection.js"(exports, module) {
     "use strict";
     var EventEmitter = __require("events").EventEmitter;
     var PromisePreparedStatementInfo = require_prepared_statement_info();
@@ -43104,9 +43105,9 @@ var require_connection2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/connection.js
+// ../dashboard/backend/node_modules/mysql2/lib/connection.js
 var require_connection3 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/connection.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/connection.js"(exports, module) {
     "use strict";
     var BaseConnection = require_connection();
     var Connection = class extends BaseConnection {
@@ -43119,9 +43120,9 @@ var require_connection3 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/pool_connection.js
+// ../dashboard/backend/node_modules/mysql2/lib/promise/pool_connection.js
 var require_pool_connection = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/pool_connection.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/promise/pool_connection.js"(exports, module) {
     "use strict";
     var PromiseConnection = require_connection2();
     var PromisePoolConnection = class extends PromiseConnection {
@@ -43139,9 +43140,9 @@ var require_pool_connection = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/pool_connection.js
+// ../dashboard/backend/node_modules/mysql2/lib/pool_connection.js
 var require_pool_connection2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/pool_connection.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/pool_connection.js"(exports, module) {
     "use strict";
     var Connection = require_connection3();
     var PoolConnection = class extends Connection {
@@ -43210,9 +43211,9 @@ var require_pool_connection2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/base/pool.js
+// ../dashboard/backend/node_modules/mysql2/lib/base/pool.js
 var require_pool = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/base/pool.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/base/pool.js"(exports, module) {
     "use strict";
     var process2 = __require("process");
     var SqlString = require_lib3();
@@ -43510,9 +43511,9 @@ var require_pool = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/pool.js
+// ../dashboard/backend/node_modules/mysql2/lib/promise/pool.js
 var require_pool2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/pool.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/promise/pool.js"(exports, module) {
     "use strict";
     var EventEmitter = __require("events").EventEmitter;
     var {
@@ -43620,9 +43621,9 @@ var require_pool2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/pool.js
+// ../dashboard/backend/node_modules/mysql2/lib/pool.js
 var require_pool3 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/pool.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/pool.js"(exports, module) {
     "use strict";
     var BasePool = require_pool();
     var Pool = class extends BasePool {
@@ -43635,9 +43636,9 @@ var require_pool3 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/pool_config.js
+// ../dashboard/backend/node_modules/mysql2/lib/pool_config.js
 var require_pool_config = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/pool_config.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/pool_config.js"(exports, module) {
     "use strict";
     var ConnectionConfig = require_connection_config();
     var PoolConfig = class {
@@ -43658,9 +43659,9 @@ var require_pool_config = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/pool_cluster.js
+// ../dashboard/backend/node_modules/mysql2/lib/pool_cluster.js
 var require_pool_cluster = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/pool_cluster.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/pool_cluster.js"(exports, module) {
     "use strict";
     var process2 = __require("process");
     var Pool = require_pool3();
@@ -43968,9 +43969,9 @@ var require_pool_cluster = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/create_connection.js
+// ../dashboard/backend/node_modules/mysql2/lib/create_connection.js
 var require_create_connection = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/create_connection.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/create_connection.js"(exports, module) {
     "use strict";
     var Connection = require_connection3();
     var ConnectionConfig = require_connection_config();
@@ -43981,9 +43982,9 @@ var require_create_connection = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/create_pool.js
+// ../dashboard/backend/node_modules/mysql2/lib/create_pool.js
 var require_create_pool = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/create_pool.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/create_pool.js"(exports, module) {
     "use strict";
     var Pool = require_pool3();
     var PoolConfig = require_pool_config();
@@ -43994,9 +43995,9 @@ var require_create_pool = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/create_pool_cluster.js
+// ../dashboard/backend/node_modules/mysql2/lib/create_pool_cluster.js
 var require_create_pool_cluster = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/create_pool_cluster.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/create_pool_cluster.js"(exports, module) {
     "use strict";
     var PoolCluster = require_pool_cluster();
     function createPoolCluster(config2) {
@@ -44006,9 +44007,9 @@ var require_create_pool_cluster = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/pool_cluster.js
+// ../dashboard/backend/node_modules/mysql2/lib/promise/pool_cluster.js
 var require_pool_cluster2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/lib/promise/pool_cluster.js"(exports, module) {
+  "../dashboard/backend/node_modules/mysql2/lib/promise/pool_cluster.js"(exports, module) {
     "use strict";
     var { captureStackHolder } = require_capture_local_err();
     var PromisePoolConnection = require_pool_connection();
@@ -44065,9 +44066,9 @@ var require_pool_cluster2 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/promise.js
+// ../dashboard/backend/node_modules/mysql2/promise.js
 var require_promise = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/mysql2/promise.js"(exports) {
+  "../dashboard/backend/node_modules/mysql2/promise.js"(exports) {
     "use strict";
     var SqlString = require_lib3();
     var EventEmitter = __require("events").EventEmitter;
@@ -46728,10 +46729,10 @@ var init_init = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/helpers/util.js
+// ../dashboard/backend/node_modules/zod/v3/helpers/util.js
 var util3, objectUtil, ZodParsedType, getParsedType;
 var init_util = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/helpers/util.js"() {
+  "../dashboard/backend/node_modules/zod/v3/helpers/util.js"() {
     (function(util4) {
       util4.assertEqual = (_) => {
       };
@@ -46865,10 +46866,10 @@ var init_util = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/ZodError.js
+// ../dashboard/backend/node_modules/zod/v3/ZodError.js
 var ZodIssueCode, quotelessJson, ZodError;
 var init_ZodError = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/ZodError.js"() {
+  "../dashboard/backend/node_modules/zod/v3/ZodError.js"() {
     init_util();
     ZodIssueCode = util3.arrayToEnum([
       "invalid_type",
@@ -46989,10 +46990,10 @@ var init_ZodError = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/locales/en.js
+// ../dashboard/backend/node_modules/zod/v3/locales/en.js
 var errorMap, en_default;
 var init_en = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/locales/en.js"() {
+  "../dashboard/backend/node_modules/zod/v3/locales/en.js"() {
     init_ZodError();
     init_util();
     errorMap = (issue, _ctx) => {
@@ -47099,7 +47100,7 @@ var init_en = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/errors.js
+// ../dashboard/backend/node_modules/zod/v3/errors.js
 function setErrorMap(map3) {
   overrideErrorMap = map3;
 }
@@ -47108,13 +47109,13 @@ function getErrorMap() {
 }
 var overrideErrorMap;
 var init_errors2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/errors.js"() {
+  "../dashboard/backend/node_modules/zod/v3/errors.js"() {
     init_en();
     overrideErrorMap = en_default;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/helpers/parseUtil.js
+// ../dashboard/backend/node_modules/zod/v3/helpers/parseUtil.js
 function addIssueToContext(ctx, issueData) {
   const overrideMap = getErrorMap();
   const issue = makeIssue({
@@ -47136,7 +47137,7 @@ function addIssueToContext(ctx, issueData) {
 }
 var makeIssue, EMPTY_PATH, ParseStatus, INVALID, DIRTY, OK, isAborted, isDirty, isValid, isAsync;
 var init_parseUtil = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/helpers/parseUtil.js"() {
+  "../dashboard/backend/node_modules/zod/v3/helpers/parseUtil.js"() {
     init_errors2();
     init_en();
     makeIssue = (params) => {
@@ -47231,16 +47232,16 @@ var init_parseUtil = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/helpers/typeAliases.js
+// ../dashboard/backend/node_modules/zod/v3/helpers/typeAliases.js
 var init_typeAliases = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/helpers/typeAliases.js"() {
+  "../dashboard/backend/node_modules/zod/v3/helpers/typeAliases.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/helpers/errorUtil.js
+// ../dashboard/backend/node_modules/zod/v3/helpers/errorUtil.js
 var errorUtil;
 var init_errorUtil = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/helpers/errorUtil.js"() {
+  "../dashboard/backend/node_modules/zod/v3/helpers/errorUtil.js"() {
     (function(errorUtil2) {
       errorUtil2.errToObj = (message2) => typeof message2 === "string" ? { message: message2 } : message2 || {};
       errorUtil2.toString = (message2) => typeof message2 === "string" ? message2 : message2?.message;
@@ -47248,7 +47249,7 @@ var init_errorUtil = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/types.js
+// ../dashboard/backend/node_modules/zod/v3/types.js
 function processCreateParams(params) {
   if (!params)
     return {};
@@ -47442,7 +47443,7 @@ function custom(check, _params = {}, fatal) {
 }
 var ParseInputLazyPath, handleResult, ZodType, cuidRegex, cuid2Regex, ulidRegex, uuidRegex, nanoidRegex, jwtRegex, durationRegex, emailRegex, _emojiRegex, emojiRegex, ipv4Regex, ipv4CidrRegex, ipv6Regex, ipv6CidrRegex, base64Regex, base64urlRegex, dateRegexSource, dateRegex, ZodString, ZodNumber, ZodBigInt, ZodBoolean, ZodDate, ZodSymbol, ZodUndefined, ZodNull, ZodAny, ZodUnknown, ZodNever, ZodVoid, ZodArray, ZodObject, ZodUnion, getDiscriminator, ZodDiscriminatedUnion, ZodIntersection, ZodTuple, ZodRecord, ZodMap, ZodSet, ZodFunction, ZodLazy, ZodLiteral, ZodEnum, ZodNativeEnum, ZodPromise, ZodEffects, ZodOptional, ZodNullable, ZodDefault, ZodCatch, ZodNaN, BRAND, ZodBranded, ZodPipeline, ZodReadonly, late, ZodFirstPartyTypeKind, instanceOfType, stringType, numberType, nanType, bigIntType, booleanType, dateType, symbolType, undefinedType, nullType, anyType, unknownType, neverType, voidType, arrayType, objectType, strictObjectType, unionType, discriminatedUnionType, intersectionType, tupleType, recordType, mapType, setType, functionType, lazyType, literalType, enumType, nativeEnumType, promiseType, effectsType, optionalType, nullableType, preprocessType, pipelineType, ostring, onumber, oboolean, coerce, NEVER;
 var init_types = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/types.js"() {
+  "../dashboard/backend/node_modules/zod/v3/types.js"() {
     init_ZodError();
     init_errors2();
     init_errorUtil();
@@ -50704,7 +50705,7 @@ var init_types = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/external.js
+// ../dashboard/backend/node_modules/zod/v3/external.js
 var external_exports = {};
 __export(external_exports, {
   BRAND: () => BRAND,
@@ -50816,7 +50817,7 @@ __export(external_exports, {
   void: () => voidType
 });
 var init_external = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/v3/external.js"() {
+  "../dashboard/backend/node_modules/zod/v3/external.js"() {
     init_errors2();
     init_parseUtil();
     init_typeAliases();
@@ -50826,9 +50827,9 @@ var init_external = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/index.js
+// ../dashboard/backend/node_modules/zod/index.js
 var init_zod = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/zod/index.js"() {
+  "../dashboard/backend/node_modules/zod/index.js"() {
     init_external();
     init_external();
   }
@@ -51616,6 +51617,22 @@ async function listSpecReferences(db2, root5, userId2, workspaceName, nodeId) {
   if (!node.ok) return node;
   return { ok: true, locked: node.locked, links: await readReferences(attachmentDir(root5, userId2, workspaceName, nodeId)) };
 }
+async function readSpecDraft(db2, root5, userId2, workspaceName, nodeId) {
+  const node = await specNode(db2, userId2, workspaceName, nodeId);
+  if (!node.ok) return node;
+  const content = await readFile4(join5(attachmentDir(root5, userId2, workspaceName, nodeId), DRAFT_FILE), "utf8").catch(() => "");
+  return { ok: true, locked: node.locked, content };
+}
+async function writeSpecDraft(db2, root5, userId2, workspaceName, nodeId, content) {
+  const node = await specNode(db2, userId2, workspaceName, nodeId);
+  if (!node.ok) return node;
+  if (node.locked) return { ok: false, errorCode: "SPEC_LOCKED_AFTER_FEAT" };
+  if (typeof content !== "string" || content.length > 1e6) return { ok: false, errorCode: "INVALID_SPEC_DRAFT" };
+  const dir = attachmentDir(root5, userId2, workspaceName, nodeId);
+  await mkdir(dir, { recursive: true });
+  await writeFile2(join5(dir, DRAFT_FILE), content, "utf8");
+  return { ok: true, locked: false, content };
+}
 async function replaceSpecReferences(db2, root5, userId2, workspaceName, nodeId, links) {
   const node = await specNode(db2, userId2, workspaceName, nodeId);
   if (!node.ok) return node;
@@ -51663,7 +51680,7 @@ async function deleteSpecAttachment(db2, root5, userId2, workspaceName, nodeId, 
 async function removeSpecAttachments(root5, userId2, workspaceName, nodeId) {
   await rm(attachmentDir(root5, userId2, workspaceName, nodeId), { recursive: true, force: true });
 }
-var IMAGE_TYPES, NAME_PATTERN, MAX_ATTACHMENTS, REFERENCES_FILE, MAX_REFERENCES;
+var IMAGE_TYPES, NAME_PATTERN, MAX_ATTACHMENTS, REFERENCES_FILE, DRAFT_FILE, MAX_REFERENCES;
 var init_specAttachments = __esm({
   "../dashboard/backend/src/services/specAttachments.ts"() {
     "use strict";
@@ -51676,6 +51693,7 @@ var init_specAttachments = __esm({
     NAME_PATTERN = /^\d{2}\.(png|jpg|webp|gif)$/;
     MAX_ATTACHMENTS = 20;
     REFERENCES_FILE = "references.json";
+    DRAFT_FILE = "draft.md";
     MAX_REFERENCES = 10;
   }
 });
@@ -52268,6 +52286,22 @@ function createWorkspacesRouter(db2, sessionSecret2, specAttachmentsPath) {
     const result = await replaceSpecReferences(db2, specAttachmentsPath, userId2, req.params.name, nodeId, req.body?.links);
     if (!result.ok) return void res.status(attachmentStatus(result.errorCode)).json(result);
     res.json(result);
+  });
+  router.get("/:name/roadmap/spec-draft", async (req, res) => {
+    const userId2 = requireUserId(req, res);
+    if (!userId2) return;
+    const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+    if (!nodeId) return void res.status(400).json({ ok: false, errorCode: "NODE_ID_REQUIRED" });
+    const result = await readSpecDraft(db2, specAttachmentsPath, userId2, req.params.name, nodeId);
+    res.status(result.ok ? 200 : attachmentStatus(result.errorCode)).json(result);
+  });
+  router.put("/:name/roadmap/spec-draft", async (req, res) => {
+    const userId2 = requireUserId(req, res);
+    if (!userId2) return;
+    const nodeId = typeof req.query.nodeId === "string" ? req.query.nodeId : "";
+    if (!nodeId) return void res.status(400).json({ ok: false, errorCode: "NODE_ID_REQUIRED" });
+    const result = await writeSpecDraft(db2, specAttachmentsPath, userId2, req.params.name, nodeId, req.body?.content);
+    res.status(result.ok ? 200 : attachmentStatus(result.errorCode)).json(result);
   });
   router.put("/:name/roadmap/spec-document", validateBody(updateSpecDocumentContentSchema), async (req, res) => {
     const userId2 = requireUserId(req, res);
@@ -53513,9 +53547,9 @@ var init_weeklyReports = __esm({
 });
 
 // ../dashboard/backend/src/routes/harness.ts
-import { existsSync, readFileSync as readFileSync2, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync as readFileSync2, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join as join7, normalize as normalize2, relative as relative3 } from "node:path";
-function createHarnessRouter(harnessPath) {
+function createHarnessRouter(harnessPath, overridePath = "", db2, sessionSecret2 = "") {
   const router = (0, import_express12.Router)();
   router.get("/manifest", (_req, res) => {
     if (!harnessPath || !existsSync(harnessPath)) return res.json({ harnesses: [] });
@@ -53573,7 +53607,39 @@ ${readFileSync2(full, "utf8")}`);
       return res.status(400).json({ error: "invalid_path" });
     }
     if (!existsSync(full)) return res.status(404).json({ error: "not_found" });
-    return res.type("text/markdown").send(readFileSync2(full, "utf8"));
+    const override = overridePath ? join7(overridePath, rel) : "";
+    return res.type("text/markdown").send(readFileSync2(override && existsSync(override) ? override : full, "utf8"));
+  });
+  router.get("/source", (req, res) => {
+    const id = String(req.query.id ?? "");
+    const rel = normalize2(join7(id, "harness.md"));
+    const base = join7(harnessPath, rel);
+    const inside2 = relative3(harnessPath, base);
+    if (!id || inside2.startsWith("..") || inside2.includes("..")) return res.status(400).json({ error: "invalid_path" });
+    if (!existsSync(base)) return res.status(404).json({ error: "not_found" });
+    const override = overridePath ? join7(overridePath, rel) : "";
+    const customized = Boolean(override && existsSync(override));
+    return res.json({ content: readFileSync2(customized ? override : base, "utf8"), customized });
+  });
+  router.put("/override", ...db2 ? [requireUser(db2, sessionSecret2)] : [], (req, res) => {
+    const id = String(req.body?.id ?? "");
+    const content = String(req.body?.content ?? "");
+    const rel = normalize2(join7(id, "harness.md"));
+    const base = join7(harnessPath, rel);
+    const target = join7(overridePath, rel);
+    if (!id || !overridePath || relative3(harnessPath, base).startsWith("..") || relative3(overridePath, target).startsWith("..")) return res.status(400).json({ error: "invalid_path" });
+    if (!existsSync(base)) return res.status(404).json({ error: "not_found" });
+    if (!content.trim() || Buffer.byteLength(content) > 1024 * 1024) return res.status(400).json({ error: "invalid_content" });
+    mkdirSync(join7(overridePath, id), { recursive: true });
+    writeFileSync(target, content, "utf8");
+    return res.json({ ok: true, customized: true });
+  });
+  router.delete("/override", ...db2 ? [requireUser(db2, sessionSecret2)] : [], (req, res) => {
+    const id = String(req.query.id ?? "");
+    const target = join7(overridePath, normalize2(join7(id, "harness.md")));
+    if (!id || !overridePath || relative3(overridePath, target).startsWith("..")) return res.status(400).json({ error: "invalid_path" });
+    rmSync(target, { force: true });
+    return res.json({ ok: true, customized: false });
   });
   router.get(
     "/:domain/:category/:tech/:version",
@@ -53690,6 +53756,7 @@ var init_harness = __esm({
     "use strict";
     import_express12 = __toESM(require_express2(), 1);
     init_asyncHandler();
+    init_requireUser();
   }
 });
 
@@ -54060,10 +54127,10 @@ var init_httpClients = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/emitWarningIfUnsupportedVersion.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/emitWarningIfUnsupportedVersion.js
 var state, emitWarningIfUnsupportedVersion;
 var init_emitWarningIfUnsupportedVersion = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/emitWarningIfUnsupportedVersion.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/emitWarningIfUnsupportedVersion.js"() {
     state = {
       warningEmitted: false
     };
@@ -54091,10 +54158,10 @@ More information can be found at: https://a.co/c895JFp`);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/longPollMiddleware.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/longPollMiddleware.js
 var longPollMiddleware, longPollMiddlewareOptions, getLongPollPlugin;
 var init_longPollMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/longPollMiddleware.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/longPollMiddleware.js"() {
     longPollMiddleware = () => (next, context) => async (args) => {
       context.__retryLongPoll = true;
       return next(args);
@@ -54113,7 +54180,7 @@ var init_longPollMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setCredentialFeature.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setCredentialFeature.js
 function setCredentialFeature(credentials, feature, value) {
   if (!credentials.$source) {
     credentials.$source = {};
@@ -54122,23 +54189,23 @@ function setCredentialFeature(credentials, feature, value) {
   return credentials;
 }
 var init_setCredentialFeature = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setCredentialFeature.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setCredentialFeature.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/isStreamingPayload/isStreamingPayload.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/isStreamingPayload/isStreamingPayload.js
 import { Readable } from "node:stream";
 var isStreamingPayload;
 var init_isStreamingPayload = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/isStreamingPayload/isStreamingPayload.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/isStreamingPayload/isStreamingPayload.js"() {
     isStreamingPayload = (request) => request?.body instanceof Readable || typeof ReadableStream !== "undefined" && request?.body instanceof ReadableStream;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/middleware-stack/MiddlewareStack.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/middleware-stack/MiddlewareStack.js
 var getAllAliases, getMiddlewareNameWithAliases, constructStack, stepWeights, priorityWeights;
 var init_MiddlewareStack = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/middleware-stack/MiddlewareStack.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/middleware-stack/MiddlewareStack.js"() {
     getAllAliases = (name, aliases) => {
       const _aliases = [];
       if (name) {
@@ -54405,9 +54472,9 @@ var init_MiddlewareStack = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/types/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@smithy/types/dist-cjs/index.js
 var require_dist_cjs = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/types/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@smithy/types/dist-cjs/index.js"(exports) {
     var HttpAuthLocation;
     (function(HttpAuthLocation2) {
       HttpAuthLocation2["HEADER"] = "header";
@@ -54498,25 +54565,25 @@ var require_dist_cjs = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/getSmithyContext.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/getSmithyContext.js
 var import_types, getSmithyContext;
 var init_getSmithyContext = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/getSmithyContext.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/getSmithyContext.js"() {
     import_types = __toESM(require_dist_cjs());
     getSmithyContext = (context) => context[import_types.SMITHY_CONTEXT_KEY] || (context[import_types.SMITHY_CONTEXT_KEY] = {});
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/hasOwn.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/hasOwn.js
 function hasOwn(o3, k5) {
   return Object.prototype.hasOwnProperty.call(o3, k5);
 }
 var init_hasOwn = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/hasOwn.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/hasOwn.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/httpRequest.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/httpRequest.js
 function cloneQuery(query) {
   return Object.keys(query).reduce((carry, paramName) => {
     const param = query[paramName];
@@ -54528,7 +54595,7 @@ function cloneQuery(query) {
 }
 var HttpRequest;
 var init_httpRequest = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/httpRequest.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/httpRequest.js"() {
     HttpRequest = class _HttpRequest {
       method;
       protocol;
@@ -54578,10 +54645,10 @@ var init_httpRequest = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/httpResponse.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/httpResponse.js
 var HttpResponse;
 var init_httpResponse = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/httpResponse.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/httpResponse.js"() {
     HttpResponse = class {
       statusCode;
       reason;
@@ -54603,10 +54670,10 @@ var init_httpResponse = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/isValidHostLabel.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/isValidHostLabel.js
 var VALID_HOST_LABEL_REGEX, isValidHostLabel;
 var init_isValidHostLabel = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/isValidHostLabel.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/isValidHostLabel.js"() {
     VALID_HOST_LABEL_REGEX = new RegExp(`^(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63}$`);
     isValidHostLabel = (value, allowSubDomains = false) => {
       if (!allowSubDomains) {
@@ -54623,20 +54690,20 @@ var init_isValidHostLabel = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/isValidHostname.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/isValidHostname.js
 function isValidHostname(hostname) {
   const hostPattern = /^[a-z0-9][a-z0-9.-]*[a-z0-9]$/;
   return hostPattern.test(hostname);
 }
 var init_isValidHostname = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/isValidHostname.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/isValidHostname.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/normalizeProvider.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/normalizeProvider.js
 var normalizeProvider;
 var init_normalizeProvider = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/normalizeProvider.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/normalizeProvider.js"() {
     normalizeProvider = (input) => {
       if (typeof input === "function")
         return input;
@@ -54646,7 +54713,7 @@ var init_normalizeProvider = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/parseQueryString.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/parseQueryString.js
 function parseQueryString(querystring) {
   const query = {};
   querystring = querystring.replace(/^\?/, "");
@@ -54669,14 +54736,14 @@ function parseQueryString(querystring) {
   return query;
 }
 var init_parseQueryString = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/parseQueryString.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/parseQueryString.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/parseUrl.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/parseUrl.js
 var parseUrl;
 var init_parseUrl = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/parseUrl.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/parseUrl.js"() {
     init_parseQueryString();
     parseUrl = (url) => {
       if (typeof url === "string") {
@@ -54698,10 +54765,10 @@ var init_parseUrl = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/toEndpointV1.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/toEndpointV1.js
 var toEndpointV1;
 var init_toEndpointV1 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/toEndpointV1.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/toEndpointV1.js"() {
     init_hasOwn();
     init_parseUrl();
     toEndpointV1 = (endpoint2) => {
@@ -54725,9 +54792,9 @@ var init_toEndpointV1 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/index.js
 var init_transport = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/transport/index.js"() {
     init_getSmithyContext();
     init_hasOwn();
     init_httpRequest();
@@ -54741,28 +54808,28 @@ var init_transport = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/invalid-dependency/invalidFunction.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/invalid-dependency/invalidFunction.js
 var invalidFunction;
 var init_invalidFunction = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/invalid-dependency/invalidFunction.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/invalid-dependency/invalidFunction.js"() {
     invalidFunction = (message2) => () => {
       throw new Error(message2);
     };
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/invalid-dependency/invalidProvider.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/invalid-dependency/invalidProvider.js
 var invalidProvider;
 var init_invalidProvider = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/invalid-dependency/invalidProvider.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/invalid-dependency/invalidProvider.js"() {
     invalidProvider = (message2) => () => Promise.reject(message2);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/circularReplacer.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/circularReplacer.js
 var getCircularReplacer;
 var init_circularReplacer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/circularReplacer.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/circularReplacer.js"() {
     getCircularReplacer = () => {
       const seen = /* @__PURE__ */ new WeakSet();
       return (key2, value) => {
@@ -54778,20 +54845,20 @@ var init_circularReplacer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/sleep.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/sleep.js
 var sleep;
 var init_sleep = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/sleep.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/sleep.js"() {
     sleep = (seconds) => {
       return new Promise((resolve4) => setTimeout(resolve4, seconds * 1e3));
     };
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/waiter.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/waiter.js
 var waiterServiceDefaults, WaiterState, checkExceptions;
 var init_waiter = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/waiter.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/waiter.js"() {
     init_circularReplacer();
     waiterServiceDefaults = {
       minDelay: 2,
@@ -54827,10 +54894,10 @@ var init_waiter = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/poller.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/poller.js
 var runPolling, checkWarn403, createMessageFromResponse, exponentialBackoffWithJitter, randomInRange;
 var init_poller = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/poller.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/poller.js"() {
     init_circularReplacer();
     init_sleep();
     init_waiter();
@@ -54919,10 +54986,10 @@ var init_poller = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/validate.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/validate.js
 var validateWaiterOptions;
 var init_validate2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/validate.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/validate.js"() {
     validateWaiterOptions = (options) => {
       if (options.maxWaitTime <= 0) {
         throw new Error(`WaiterConfiguration.maxWaitTime must be greater than 0`);
@@ -54939,10 +55006,10 @@ var init_validate2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/createWaiter.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/createWaiter.js
 var abortTimeout, createWaiter;
 var init_createWaiter = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/createWaiter.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/createWaiter.js"() {
     init_poller();
     init_validate2();
     init_waiter();
@@ -54993,10 +55060,10 @@ var init_createWaiter = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/client.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/client.js
 var Client;
 var init_client3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/client.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/client.js"() {
     init_MiddlewareStack();
     Client = class {
       config;
@@ -55047,10 +55114,10 @@ var init_client3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/deref.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/deref.js
 var deref;
 var init_deref = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/deref.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/deref.js"() {
     deref = (schemaRef) => {
       if (typeof schemaRef === "function") {
         return schemaRef();
@@ -55060,10 +55127,10 @@ var init_deref = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/operation.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/operation.js
 var operation;
 var init_operation = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/operation.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/operation.js"() {
     operation = (namespace, name, traits, input, output) => ({
       name,
       namespace,
@@ -55074,10 +55141,10 @@ var init_operation = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaDeserializationMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaDeserializationMiddleware.js
 var schemaDeserializationMiddleware, findHeader;
 var init_schemaDeserializationMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaDeserializationMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaDeserializationMiddleware.js"() {
     init_transport();
     init_operation();
     schemaDeserializationMiddleware = (config2) => (next, context) => async (args) => {
@@ -55141,10 +55208,10 @@ var init_schemaDeserializationMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaSerializationMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaSerializationMiddleware.js
 var schemaSerializationMiddleware;
 var init_schemaSerializationMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaSerializationMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/schemaSerializationMiddleware.js"() {
     init_transport();
     init_operation();
     schemaSerializationMiddleware = (config2) => (next, context) => async (args) => {
@@ -55164,7 +55231,7 @@ var init_schemaSerializationMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/getSchemaSerdePlugin.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/getSchemaSerdePlugin.js
 function getSchemaSerdePlugin(config2) {
   return {
     applyToStack: (commandStack) => {
@@ -55176,7 +55243,7 @@ function getSchemaSerdePlugin(config2) {
 }
 var deserializerMiddlewareOption, serializerMiddlewareOption;
 var init_getSchemaSerdePlugin = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/getSchemaSerdePlugin.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/middleware/getSchemaSerdePlugin.js"() {
     init_schemaDeserializationMiddleware();
     init_schemaSerializationMiddleware();
     deserializerMiddlewareOption = {
@@ -55194,10 +55261,10 @@ var init_getSchemaSerdePlugin = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/Schema.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/Schema.js
 var Schema;
 var init_Schema = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/Schema.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/Schema.js"() {
     Schema = class {
       name;
       namespace;
@@ -55221,10 +55288,10 @@ var init_Schema = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/ListSchema.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/ListSchema.js
 var ListSchema, list;
 var init_ListSchema = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/ListSchema.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/ListSchema.js"() {
     init_Schema();
     ListSchema = class _ListSchema extends Schema {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/lis");
@@ -55240,10 +55307,10 @@ var init_ListSchema = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/MapSchema.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/MapSchema.js
 var MapSchema, map;
 var init_MapSchema = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/MapSchema.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/MapSchema.js"() {
     init_Schema();
     MapSchema = class _MapSchema extends Schema {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/map");
@@ -55261,10 +55328,10 @@ var init_MapSchema = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/OperationSchema.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/OperationSchema.js
 var OperationSchema, op;
 var init_OperationSchema = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/OperationSchema.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/OperationSchema.js"() {
     init_Schema();
     OperationSchema = class _OperationSchema extends Schema {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/ope");
@@ -55282,10 +55349,10 @@ var init_OperationSchema = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/StructureSchema.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/StructureSchema.js
 var StructureSchema, struct;
 var init_StructureSchema = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/StructureSchema.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/StructureSchema.js"() {
     init_Schema();
     StructureSchema = class _StructureSchema extends Schema {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/str");
@@ -55303,10 +55370,10 @@ var init_StructureSchema = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/ErrorSchema.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/ErrorSchema.js
 var ErrorSchema, error;
 var init_ErrorSchema = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/ErrorSchema.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/ErrorSchema.js"() {
     init_Schema();
     init_StructureSchema();
     ErrorSchema = class _ErrorSchema extends StructureSchema {
@@ -55325,7 +55392,7 @@ var init_ErrorSchema = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/translateTraits.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/translateTraits.js
 function translateTraits(indicator) {
   if (typeof indicator === "object") {
     return indicator;
@@ -55353,12 +55420,12 @@ function translateTraits(indicator) {
 }
 var traitsCache;
 var init_translateTraits = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/translateTraits.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/translateTraits.js"() {
     traitsCache = [];
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/NormalizedSchema.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/NormalizedSchema.js
 function member(memberSchema, memberName) {
   if (memberSchema instanceof NormalizedSchema) {
     return Object.assign(memberSchema, {
@@ -55371,7 +55438,7 @@ function member(memberSchema, memberName) {
 }
 var anno, simpleSchemaCacheN, simpleSchemaCacheS, NormalizedSchema, isMemberSchema, isStaticSchema;
 var init_NormalizedSchema = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/NormalizedSchema.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/NormalizedSchema.js"() {
     init_deref();
     init_translateTraits();
     anno = {
@@ -55647,10 +55714,10 @@ var init_NormalizedSchema = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/SimpleSchema.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/SimpleSchema.js
 var SimpleSchema, sim, simAdapter;
 var init_SimpleSchema = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/SimpleSchema.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/SimpleSchema.js"() {
     init_Schema();
     SimpleSchema = class _SimpleSchema extends Schema {
       static symbol = /* @__PURE__ */ Symbol.for("@smithy/sim");
@@ -55672,10 +55739,10 @@ var init_SimpleSchema = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/sentinels.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/sentinels.js
 var SCHEMA;
 var init_sentinels = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/sentinels.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/schemas/sentinels.js"() {
     SCHEMA = {
       BLOB: 21,
       STREAMING_BLOB: 42,
@@ -55695,10 +55762,10 @@ var init_sentinels = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/TypeRegistry.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/TypeRegistry.js
 var TypeRegistry;
 var init_TypeRegistry = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/TypeRegistry.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/TypeRegistry.js"() {
     TypeRegistry = class _TypeRegistry {
       namespace;
       schemas;
@@ -55808,7 +55875,7 @@ var init_TypeRegistry = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/index.js
 var schema_exports = {};
 __export(schema_exports, {
   ErrorSchema: () => ErrorSchema,
@@ -55840,7 +55907,7 @@ __export(schema_exports, {
   translateTraits: () => translateTraits
 });
 var init_schema = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/schema/index.js"() {
     init_deref();
     init_getSchemaSerdePlugin();
     init_ListSchema();
@@ -55858,7 +55925,7 @@ var init_schema = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/schemaLogFilter.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/schemaLogFilter.js
 function schemaLogFilter(schema4, data) {
   if (data == null) {
     return data;
@@ -55891,16 +55958,16 @@ function schemaLogFilter(schema4, data) {
 }
 var SENSITIVE_STRING;
 var init_schemaLogFilter = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/schemaLogFilter.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/schemaLogFilter.js"() {
     init_schema();
     SENSITIVE_STRING = "***SensitiveInformation***";
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/command.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/command.js
 var import_types2, Command, ClassBuilder;
 var init_command = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/command.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/command.js"() {
     import_types2 = __toESM(require_dist_cjs());
     init_MiddlewareStack();
     init_schemaLogFilter();
@@ -56043,18 +56110,18 @@ var init_command = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/constants.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/constants.js
 var SENSITIVE_STRING2;
 var init_constants = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/constants.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/constants.js"() {
     SENSITIVE_STRING2 = "***SensitiveInformation***";
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/create-aggregated-client.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/create-aggregated-client.js
 var createAggregatedClient;
 var init_create_aggregated_client = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/create-aggregated-client.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/create-aggregated-client.js"() {
     createAggregatedClient = (commands5, Client2, options) => {
       for (const [command5, CommandCtor] of Object.entries(commands5)) {
         const methodImpl = async function(args, optionsOrCb, cb) {
@@ -56103,10 +56170,10 @@ var init_create_aggregated_client = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/exceptions.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/exceptions.js
 var ServiceException, decorateServiceException;
 var init_exceptions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/exceptions.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/exceptions.js"() {
     ServiceException = class _ServiceException extends Error {
       $fault;
       $response;
@@ -56170,10 +56237,10 @@ var init_exceptions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/default-error-handler.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/default-error-handler.js
 var throwDefaultError, withBaseException, deserializeMetadata;
 var init_default_error_handler = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/default-error-handler.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/default-error-handler.js"() {
     init_exceptions();
     throwDefaultError = ({ output, parsedBody, exceptionCtor, errorCode }) => {
       const $metadata = deserializeMetadata(output);
@@ -56199,10 +56266,10 @@ var init_default_error_handler = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/defaults-mode.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/defaults-mode.js
 var loadConfigsForDefaultMode;
 var init_defaults_mode = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/defaults-mode.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/defaults-mode.js"() {
     loadConfigsForDefaultMode = (mode) => {
       switch (mode) {
         case "standard":
@@ -56232,10 +56299,10 @@ var init_defaults_mode = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/emitWarningIfUnsupportedVersion.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/emitWarningIfUnsupportedVersion.js
 var warningEmitted, emitWarningIfUnsupportedVersion2;
 var init_emitWarningIfUnsupportedVersion2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/emitWarningIfUnsupportedVersion.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/emitWarningIfUnsupportedVersion.js"() {
     warningEmitted = false;
     emitWarningIfUnsupportedVersion2 = (version) => {
       if (version && !warningEmitted && parseInt(version.substring(1, version.indexOf("."))) < 16) {
@@ -56245,10 +56312,10 @@ var init_emitWarningIfUnsupportedVersion2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/checksum.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/checksum.js
 var import_types3, knownAlgorithms, getChecksumConfiguration, resolveChecksumRuntimeConfig;
 var init_checksum = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/checksum.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/checksum.js"() {
     init_transport();
     import_types3 = __toESM(require_dist_cjs());
     knownAlgorithms = Object.values(import_types3.AlgorithmId);
@@ -56302,10 +56369,10 @@ var init_checksum = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/retry.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/retry.js
 var getRetryConfiguration, resolveRetryRuntimeConfig;
 var init_retry = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/retry.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/retry.js"() {
     getRetryConfiguration = (runtimeConfig) => {
       return {
         setRetryStrategy(retryStrategy) {
@@ -56324,10 +56391,10 @@ var init_retry = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/defaultExtensionConfiguration.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/defaultExtensionConfiguration.js
 var getDefaultExtensionConfiguration, getDefaultClientConfiguration, resolveDefaultRuntimeConfig;
 var init_defaultExtensionConfiguration = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/defaultExtensionConfiguration.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/extensions/defaultExtensionConfiguration.js"() {
     init_checksum();
     init_retry();
     getDefaultExtensionConfiguration = (runtimeConfig) => {
@@ -56340,18 +56407,18 @@ var init_defaultExtensionConfiguration = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/get-array-if-single-item.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/get-array-if-single-item.js
 var getArrayIfSingleItem;
 var init_get_array_if_single_item = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/get-array-if-single-item.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/get-array-if-single-item.js"() {
     getArrayIfSingleItem = (mayBeArray) => Array.isArray(mayBeArray) ? mayBeArray : [mayBeArray];
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/get-value-from-text-node.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/get-value-from-text-node.js
 var getValueFromTextNode;
 var init_get_value_from_text_node = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/get-value-from-text-node.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/get-value-from-text-node.js"() {
     init_transport();
     getValueFromTextNode = (obj) => {
       const textNodeName = "#text";
@@ -56369,20 +56436,20 @@ var init_get_value_from_text_node = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/is-serializable-header-value.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/is-serializable-header-value.js
 var isSerializableHeaderValue;
 var init_is_serializable_header_value = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/is-serializable-header-value.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/is-serializable-header-value.js"() {
     isSerializableHeaderValue = (value) => {
       return value != null;
     };
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/NoOpLogger.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/NoOpLogger.js
 var NoOpLogger;
 var init_NoOpLogger = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/NoOpLogger.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/NoOpLogger.js"() {
     NoOpLogger = class {
       trace() {
       }
@@ -56398,7 +56465,7 @@ var init_NoOpLogger = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/object-mapping.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/object-mapping.js
 function map2(arg0, arg1, arg2) {
   let target;
   let filter;
@@ -56429,7 +56496,7 @@ function map2(arg0, arg1, arg2) {
 }
 var convertMap, take, mapWithFilter, applyInstruction, nonNullish, pass;
 var init_object_mapping = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/object-mapping.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/object-mapping.js"() {
     init_transport();
     convertMap = (target) => {
       const output = {};
@@ -56496,10 +56563,10 @@ var init_object_mapping = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/ser-utils.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/ser-utils.js
 var serializeFloat, serializeDateTime;
 var init_ser_utils = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/ser-utils.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/ser-utils.js"() {
     serializeFloat = (value) => {
       if (value !== value) {
         return "NaN";
@@ -56517,10 +56584,10 @@ var init_ser_utils = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/serde-json.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/serde-json.js
 var _json;
 var init_serde_json = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/serde-json.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/serde-json.js"() {
     init_transport();
     _json = (obj) => {
       if (obj == null) {
@@ -56546,7 +56613,7 @@ var init_serde_json = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/client-command-builder.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/client-command-builder.js
 function makeBuilder(common, service, name, ep) {
   return function makeCommand(added, plugins, op2, $, smithyContext = {}) {
     const epMerged = Object.assign({}, common, added);
@@ -56558,12 +56625,12 @@ function makeBuilder(common, service, name, ep) {
   };
 }
 var init_client_command_builder = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/client-command-builder.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/client-command-builder.js"() {
     init_command();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/index.js
 var client_exports = {};
 __export(client_exports, {
   AlgorithmId: () => import_types3.AlgorithmId,
@@ -56607,7 +56674,7 @@ __export(client_exports, {
   withBaseException: () => withBaseException
 });
 var init_client4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/index.js"() {
     init_MiddlewareStack();
     init_transport();
     init_transport();
@@ -56638,18 +56705,18 @@ var init_client4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js
 var isArrayBuffer;
 var init_is_array_buffer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/is-array-buffer/is-array-buffer.js"() {
     isArrayBuffer = (arg) => typeof ArrayBuffer === "function" && arg instanceof ArrayBuffer || Object.prototype.toString.call(arg) === "[object ArrayBuffer]";
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js
 var fromArrayBuffer, fromString;
 var init_buffer_from = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-buffer-from/buffer-from.js"() {
     init_is_array_buffer();
     fromArrayBuffer = (input, offset = 0, length = input.byteLength - offset) => {
       if (!isArrayBuffer(input)) {
@@ -56666,10 +56733,10 @@ var init_buffer_from = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js
 var BASE64_REGEX, fromBase64;
 var init_fromBase64 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/fromBase64.js"() {
     init_buffer_from();
     BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
     fromBase64 = (input) => {
@@ -56685,10 +56752,10 @@ var init_fromBase64 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js
 var fromUtf8;
 var init_fromUtf8 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.js"() {
     init_buffer_from();
     fromUtf8 = (input) => {
       const buf2 = fromString(input, "utf8");
@@ -56697,10 +56764,10 @@ var init_fromUtf8 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js
 var toBase64;
 var init_toBase64 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.js"() {
     init_buffer_from();
     init_fromUtf8();
     toBase64 = (_input) => {
@@ -56718,7 +56785,7 @@ var init_toBase64 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js
 function bindUint8ArrayBlobAdapter(toUtf83, fromUtf83, toBase643, fromBase642) {
   return class Uint8ArrayBlobAdapter2 extends Uint8Array {
     static fromString(source, encoding = "utf-8") {
@@ -56743,14 +56810,14 @@ function bindUint8ArrayBlobAdapter(toUtf83, fromUtf83, toBase643, fromBase642) {
   };
 }
 var init_Uint8ArrayBlobAdapter = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/blob/Uint8ArrayBlobAdapter.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js
 var toUtf8;
 var init_toUtf8 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.js"() {
     init_buffer_from();
     toUtf8 = (input) => {
       if (typeof input === "string") {
@@ -56764,7 +56831,7 @@ var init_toUtf8 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/uuid/v4.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/uuid/v4.js
 function bindV4(getRandomValues2) {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return () => crypto.randomUUID();
@@ -56779,23 +56846,23 @@ function bindV4(getRandomValues2) {
 }
 var decimalToHex;
 var init_v4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/uuid/v4.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/uuid/v4.js"() {
     decimalToHex = Array.from({ length: 256 }, (_, i5) => i5.toString(16).padStart(2, "0"));
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/copyDocumentWithTransform.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/copyDocumentWithTransform.js
 var copyDocumentWithTransform;
 var init_copyDocumentWithTransform = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/copyDocumentWithTransform.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/copyDocumentWithTransform.js"() {
     copyDocumentWithTransform = (source, _schemaRef, _transform = (_) => _) => source;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/parse-utils.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/parse-utils.js
 var parseBoolean, expectBoolean, expectNumber, MAX_FLOAT, expectFloat32, expectLong, expectInt, expectInt32, expectShort, expectByte, expectSizedInt, castInt, expectNonNull, expectObject, expectString, expectUnion, strictParseDouble, strictParseFloat, strictParseFloat32, NUMBER_REGEX, parseNumber, limitedParseDouble, handleFloat, limitedParseFloat, limitedParseFloat32, parseFloatString, strictParseLong, strictParseInt, strictParseInt32, strictParseShort, strictParseByte, stackTraceWarning, logger;
 var init_parse_utils = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/parse-utils.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/parse-utils.js"() {
     init_transport();
     parseBoolean = (value) => {
       switch (value) {
@@ -57031,7 +57098,7 @@ var init_parse_utils = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/date-utils.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/date-utils.js
 function dateToUtcString(date3) {
   const year3 = date3.getUTCFullYear();
   const month = date3.getUTCMonth();
@@ -57048,7 +57115,7 @@ function dateToUtcString(date3) {
 }
 var DAYS, MONTHS, RFC3339, parseRfc3339DateTime, RFC3339_WITH_OFFSET, parseRfc3339DateTimeWithOffset, IMF_FIXDATE, RFC_850_DATE, ASC_TIME, parseRfc7231DateTime, parseEpochTimestamp, buildDate, parseTwoDigitYear, FIFTY_YEARS_IN_MILLIS, adjustRfc850Year, parseMonthByShortName, DAYS_IN_MONTH, validateDayOfMonth, isLeapYear, parseDateValue, parseMilliseconds, parseOffsetToMilliseconds, stripLeadingZeroes;
 var init_date_utils = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/date-utils.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/date-utils.js"() {
     init_parse_utils();
     DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -57223,10 +57290,10 @@ var init_date_utils = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/lazy-json.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/lazy-json.js
 var LazyJsonString;
 var init_lazy_json = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/lazy-json.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/lazy-json.js"() {
     LazyJsonString = function LazyJsonString2(val) {
       const str = Object.assign(new String(val), {
         deserializeJSON() {
@@ -57253,7 +57320,7 @@ var init_lazy_json = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/quote-header.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/quote-header.js
 function quoteHeader(part) {
   if (part.includes(",") || part.includes('"')) {
     part = `"${part.replace(/"/g, '\\"')}"`;
@@ -57261,11 +57328,11 @@ function quoteHeader(part) {
   return part;
 }
 var init_quote_header = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/quote-header.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/quote-header.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/schema-serde-lib/schema-date-utils.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/schema-serde-lib/schema-date-utils.js
 function range(v, min, max) {
   const _v = Number(v);
   if (_v < min || _v > max) {
@@ -57274,7 +57341,7 @@ function range(v, min, max) {
 }
 var ddd, mmm, time, date2, year2, RFC3339_WITH_OFFSET2, IMF_FIXDATE2, RFC_850_DATE2, ASC_TIME2, months, _parseEpochTimestamp, _parseRfc3339DateTimeWithOffset, _parseRfc7231DateTime;
 var init_schema_date_utils = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/schema-serde-lib/schema-date-utils.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/schema-serde-lib/schema-date-utils.js"() {
     ddd = `(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)(?:[ne|u?r]?s?day)?`;
     mmm = `(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)`;
     time = `(\\d?\\d):(\\d{2}):(\\d{2})(?:\\.(\\d+))?`;
@@ -57369,7 +57436,7 @@ var init_schema_date_utils = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/split-every.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/split-every.js
 function splitEvery(value, delimiter, numDelimiters) {
   if (numDelimiters <= 0 || !Number.isInteger(numDelimiters)) {
     throw new Error("Invalid number of delimiters (" + numDelimiters + ") for splitEvery.");
@@ -57397,14 +57464,14 @@ function splitEvery(value, delimiter, numDelimiters) {
   return compoundSegments;
 }
 var init_split_every = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/split-every.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/split-every.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/split-header.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/split-header.js
 var splitHeader;
 var init_split_header = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/split-header.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/split-header.js"() {
     splitHeader = (value) => {
       const z = value.length;
       const values = [];
@@ -57445,13 +57512,13 @@ var init_split_header = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/value/NumericValue.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/value/NumericValue.js
 function nv(input) {
   return new NumericValue(String(input), "bigDecimal");
 }
 var format, NumericValue;
 var init_NumericValue = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/value/NumericValue.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/value/NumericValue.js"() {
     format = /^-?((0|[1-9]\d*)(\.\d+)?|\.\d+)([eE][+-]?\d+)?$/;
     NumericValue = class _NumericValue {
       string;
@@ -57477,7 +57544,7 @@ var init_NumericValue = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-hex-encoding/hex-encoding.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-hex-encoding/hex-encoding.js
 function fromHex(encoded) {
   if (encoded.length % 2 !== 0) {
     throw new Error("Hex encoded strings must have an even number length");
@@ -57502,7 +57569,7 @@ function toHex(bytes) {
 }
 var SHORT_TO_HEX, HEX_TO_SHORT;
 var init_hex_encoding = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-hex-encoding/hex-encoding.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-hex-encoding/hex-encoding.js"() {
     SHORT_TO_HEX = {};
     HEX_TO_SHORT = {};
     for (let i5 = 0; i5 < 256; i5++) {
@@ -57516,11 +57583,11 @@ var init_hex_encoding = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-body-length/calculateBodyLength.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-body-length/calculateBodyLength.js
 import { ReadStream, fstatSync, lstatSync } from "node:fs";
 var calculateBodyLength;
 var init_calculateBodyLength = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-body-length/calculateBodyLength.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-body-length/calculateBodyLength.js"() {
     calculateBodyLength = (body) => {
       if (!body) {
         return 0;
@@ -57545,10 +57612,10 @@ var init_calculateBodyLength = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUint8Array.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUint8Array.js
 var toUint8Array;
 var init_toUint8Array = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUint8Array.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUint8Array.js"() {
     init_fromUtf8();
     toUint8Array = (data) => {
       if (data instanceof Uint8Array) {
@@ -57565,7 +57632,7 @@ var init_toUint8Array = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/concatBytes.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/concatBytes.js
 function concatBytes(arrays, length) {
   if (length === void 0) {
     length = 0;
@@ -57582,14 +57649,14 @@ function concatBytes(arrays, length) {
   return result;
 }
 var init_concatBytes = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/concatBytes.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/concatBytes.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/deserializerMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/deserializerMiddleware.js
 var deserializerMiddleware, findHeader2;
 var init_deserializerMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/deserializerMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/deserializerMiddleware.js"() {
     init_transport();
     deserializerMiddleware = (options, deserializer) => (next, context) => async (args) => {
       const { response } = await next(args);
@@ -57647,10 +57714,10 @@ var init_deserializerMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/ProviderError.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/ProviderError.js
 var ProviderError;
 var init_ProviderError = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/ProviderError.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/ProviderError.js"() {
     ProviderError = class _ProviderError extends Error {
       name = "ProviderError";
       tryNextLink;
@@ -57676,10 +57743,10 @@ var init_ProviderError = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/CredentialsProviderError.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/CredentialsProviderError.js
 var CredentialsProviderError;
 var init_CredentialsProviderError = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/CredentialsProviderError.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/CredentialsProviderError.js"() {
     init_ProviderError();
     CredentialsProviderError = class _CredentialsProviderError extends ProviderError {
       name = "CredentialsProviderError";
@@ -57691,10 +57758,10 @@ var init_CredentialsProviderError = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/TokenProviderError.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/TokenProviderError.js
 var TokenProviderError;
 var init_TokenProviderError = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/TokenProviderError.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/TokenProviderError.js"() {
     init_ProviderError();
     TokenProviderError = class _TokenProviderError extends ProviderError {
       name = "TokenProviderError";
@@ -57706,10 +57773,10 @@ var init_TokenProviderError = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/chain.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/chain.js
 var chain;
 var init_chain = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/chain.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/chain.js"() {
     init_ProviderError();
     chain = (...providers) => async () => {
       if (providers.length === 0) {
@@ -57733,18 +57800,18 @@ var init_chain = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/fromValue.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/fromValue.js
 var fromValue;
 var init_fromValue = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/fromValue.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/fromValue.js"() {
     fromValue = (staticValue) => () => Promise.resolve(staticValue);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/memoize.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/memoize.js
 var memoize;
 var init_memoize = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/memoize.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/property-provider/memoize.js"() {
     memoize = (provider, isExpired, requiresRefresh) => {
       let resolved;
       let pending;
@@ -57792,10 +57859,10 @@ var init_memoize = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/booleanSelector.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/booleanSelector.js
 var booleanSelector;
 var init_booleanSelector = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/booleanSelector.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/booleanSelector.js"() {
     booleanSelector = (obj, key2, type) => {
       if (!(key2 in obj))
         return void 0;
@@ -57808,10 +57875,10 @@ var init_booleanSelector = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/numberSelector.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/numberSelector.js
 var numberSelector;
 var init_numberSelector = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/numberSelector.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/numberSelector.js"() {
     numberSelector = (obj, key2, type) => {
       if (!(key2 in obj))
         return void 0;
@@ -57824,10 +57891,10 @@ var init_numberSelector = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/types.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/types.js
 var SelectorType;
 var init_types2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/types.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/util-config-provider/types.js"() {
     (function(SelectorType2) {
       SelectorType2["ENV"] = "env";
       SelectorType2["CONFIG"] = "shared config entry";
@@ -57835,12 +57902,12 @@ var init_types2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getHomeDir.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getHomeDir.js
 import { homedir as homedir3 } from "node:os";
 import { sep as sep2 } from "node:path";
 var homeDirCache, getHomeDirCacheKey, getHomeDir;
 var init_getHomeDir = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getHomeDir.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getHomeDir.js"() {
     homeDirCache = {};
     getHomeDirCacheKey = () => {
       if (process && process.geteuid) {
@@ -57864,22 +57931,22 @@ var init_getHomeDir = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getProfileName.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getProfileName.js
 var ENV_PROFILE, DEFAULT_PROFILE, getProfileName;
 var init_getProfileName = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getProfileName.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getProfileName.js"() {
     ENV_PROFILE = "AWS_PROFILE";
     DEFAULT_PROFILE = "default";
     getProfileName = (init) => init.profile || process.env[ENV_PROFILE] || DEFAULT_PROFILE;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFilepath.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFilepath.js
 import { createHash as createHash7 } from "node:crypto";
 import { join as join8 } from "node:path";
 var getSSOTokenFilepath;
 var init_getSSOTokenFilepath = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFilepath.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFilepath.js"() {
     init_getHomeDir();
     getSSOTokenFilepath = (id) => {
       const hasher = createHash7("sha1");
@@ -57889,11 +57956,11 @@ var init_getSSOTokenFilepath = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFromFile.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFromFile.js
 import { readFile as readFile6 } from "node:fs/promises";
 var tokenIntercept, getSSOTokenFromFile;
 var init_getSSOTokenFromFile = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFromFile.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSSOTokenFromFile.js"() {
     init_getSSOTokenFilepath();
     tokenIntercept = {};
     getSSOTokenFromFile = async (id) => {
@@ -57907,18 +57974,18 @@ var init_getSSOTokenFromFile = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/constants.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/constants.js
 var CONFIG_PREFIX_SEPARATOR;
 var init_constants2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/constants.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/constants.js"() {
     CONFIG_PREFIX_SEPARATOR = ".";
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigData.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigData.js
 var import_types4, getConfigData;
 var init_getConfigData = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigData.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigData.js"() {
     import_types4 = __toESM(require_dist_cjs());
     init_constants2();
     getConfigData = (data) => Object.entries(data).filter(([key2]) => {
@@ -57938,32 +58005,32 @@ var init_getConfigData = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigFilepath.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigFilepath.js
 import { join as join9 } from "node:path";
 var ENV_CONFIG_PATH, getConfigFilepath;
 var init_getConfigFilepath = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigFilepath.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getConfigFilepath.js"() {
     init_getHomeDir();
     ENV_CONFIG_PATH = "AWS_CONFIG_FILE";
     getConfigFilepath = () => process.env[ENV_CONFIG_PATH] || join9(getHomeDir(), ".aws", "config");
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getCredentialsFilepath.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getCredentialsFilepath.js
 import { join as join10 } from "node:path";
 var ENV_CREDENTIALS_PATH, getCredentialsFilepath;
 var init_getCredentialsFilepath = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getCredentialsFilepath.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getCredentialsFilepath.js"() {
     init_getHomeDir();
     ENV_CREDENTIALS_PATH = "AWS_SHARED_CREDENTIALS_FILE";
     getCredentialsFilepath = () => process.env[ENV_CREDENTIALS_PATH] || join10(getHomeDir(), ".aws", "credentials");
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseIni.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseIni.js
 var import_types5, prefixKeyRegex, profileNameBlockList, parseIni;
 var init_parseIni = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseIni.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseIni.js"() {
     import_types5 = __toESM(require_dist_cjs());
     init_constants2();
     prefixKeyRegex = /^([\w-]+)\s(["'])?([\w-@+.%:/]+)\2$/;
@@ -58016,11 +58083,11 @@ var init_parseIni = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/readFile.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/readFile.js
 import { readFile as fsReadFile } from "node:fs/promises";
 var filePromises, fileIntercept, readFile7;
 var init_readFile = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/readFile.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/readFile.js"() {
     filePromises = {};
     fileIntercept = {};
     readFile7 = (path, options) => {
@@ -58035,11 +58102,11 @@ var init_readFile = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSharedConfigFiles.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSharedConfigFiles.js
 import { join as join11 } from "node:path";
 var swallowError, loadSharedConfigFiles;
 var init_loadSharedConfigFiles = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSharedConfigFiles.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSharedConfigFiles.js"() {
     init_getConfigData();
     init_getConfigFilepath();
     init_getCredentialsFilepath();
@@ -58076,20 +58143,20 @@ var init_loadSharedConfigFiles = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSsoSessionData.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSsoSessionData.js
 var import_types6, getSsoSessionData;
 var init_getSsoSessionData = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSsoSessionData.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/getSsoSessionData.js"() {
     import_types6 = __toESM(require_dist_cjs());
     init_loadSharedConfigFiles();
     getSsoSessionData = (data) => Object.entries(data).filter(([key2]) => key2.startsWith(import_types6.IniSectionType.SSO_SESSION + CONFIG_PREFIX_SEPARATOR)).reduce((acc, [key2, value]) => ({ ...acc, [key2.substring(key2.indexOf(CONFIG_PREFIX_SEPARATOR) + 1)]: value }), {});
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSsoSessionData.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSsoSessionData.js
 var swallowError2, loadSsoSessionData;
 var init_loadSsoSessionData = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSsoSessionData.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/loadSsoSessionData.js"() {
     init_getConfigFilepath();
     init_getSsoSessionData();
     init_parseIni();
@@ -58099,10 +58166,10 @@ var init_loadSsoSessionData = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/mergeConfigFiles.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/mergeConfigFiles.js
 var mergeConfigFiles;
 var init_mergeConfigFiles = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/mergeConfigFiles.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/mergeConfigFiles.js"() {
     mergeConfigFiles = (...files) => {
       const merged = {};
       for (const file of files) {
@@ -58119,10 +58186,10 @@ var init_mergeConfigFiles = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseKnownFiles.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseKnownFiles.js
 var parseKnownFiles;
 var init_parseKnownFiles = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseKnownFiles.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/parseKnownFiles.js"() {
     init_loadSharedConfigFiles();
     init_mergeConfigFiles();
     parseKnownFiles = async (init) => {
@@ -58132,10 +58199,10 @@ var init_parseKnownFiles = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/externalDataInterceptor.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/externalDataInterceptor.js
 var externalDataInterceptor;
 var init_externalDataInterceptor = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/externalDataInterceptor.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/shared-ini-file-loader/externalDataInterceptor.js"() {
     init_getSSOTokenFromFile();
     init_readFile();
     externalDataInterceptor = {
@@ -58155,7 +58222,7 @@ var init_externalDataInterceptor = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/getSelectorName.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/getSelectorName.js
 function getSelectorName(functionString) {
   try {
     const constants2 = new Set(Array.from(functionString.match(/([A-Z_]){3,}/g) ?? []));
@@ -58168,14 +58235,14 @@ function getSelectorName(functionString) {
   }
 }
 var init_getSelectorName = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/getSelectorName.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/getSelectorName.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromEnv.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromEnv.js
 var fromEnv;
 var init_fromEnv = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromEnv.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromEnv.js"() {
     init_CredentialsProviderError();
     init_getSelectorName();
     fromEnv = (envVarSelector, options) => async () => {
@@ -58192,10 +58259,10 @@ var init_fromEnv = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromSharedConfigFiles.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromSharedConfigFiles.js
 var fromSharedConfigFiles;
 var init_fromSharedConfigFiles = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromSharedConfigFiles.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromSharedConfigFiles.js"() {
     init_CredentialsProviderError();
     init_getProfileName();
     init_loadSharedConfigFiles();
@@ -58220,20 +58287,20 @@ var init_fromSharedConfigFiles = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromStatic.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromStatic.js
 var isFunction, fromStatic;
 var init_fromStatic = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromStatic.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/fromStatic.js"() {
     init_fromValue();
     isFunction = (func) => typeof func === "function";
     fromStatic = (defaultValue) => isFunction(defaultValue) ? async () => await defaultValue() : fromValue(defaultValue);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/configLoader.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/configLoader.js
 var loadConfig;
 var init_configLoader = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/configLoader.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/node-config-provider/configLoader.js"() {
     init_chain();
     init_memoize();
     init_fromEnv();
@@ -58247,10 +58314,10 @@ var init_configLoader = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseDualstackEndpointConfigOptions.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseDualstackEndpointConfigOptions.js
 var ENV_USE_DUALSTACK_ENDPOINT, CONFIG_USE_DUALSTACK_ENDPOINT, DEFAULT_USE_DUALSTACK_ENDPOINT, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, nodeDualstackConfigSelectors;
 var init_NodeUseDualstackEndpointConfigOptions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseDualstackEndpointConfigOptions.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseDualstackEndpointConfigOptions.js"() {
     init_booleanSelector();
     init_types2();
     ENV_USE_DUALSTACK_ENDPOINT = "AWS_USE_DUALSTACK_ENDPOINT";
@@ -58269,10 +58336,10 @@ var init_NodeUseDualstackEndpointConfigOptions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseFipsEndpointConfigOptions.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseFipsEndpointConfigOptions.js
 var ENV_USE_FIPS_ENDPOINT, CONFIG_USE_FIPS_ENDPOINT, DEFAULT_USE_FIPS_ENDPOINT, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, nodeFipsConfigSelectors;
 var init_NodeUseFipsEndpointConfigOptions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseFipsEndpointConfigOptions.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/NodeUseFipsEndpointConfigOptions.js"() {
     init_booleanSelector();
     init_types2();
     ENV_USE_FIPS_ENDPOINT = "AWS_USE_FIPS_ENDPOINT";
@@ -58291,10 +58358,10 @@ var init_NodeUseFipsEndpointConfigOptions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/resolveCustomEndpointsConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/resolveCustomEndpointsConfig.js
 var resolveCustomEndpointsConfig;
 var init_resolveCustomEndpointsConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/resolveCustomEndpointsConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/resolveCustomEndpointsConfig.js"() {
     init_client4();
     resolveCustomEndpointsConfig = (input) => {
       const { tls, endpoint: endpoint2, urlParser, useDualstackEndpoint } = input;
@@ -58308,10 +58375,10 @@ var init_resolveCustomEndpointsConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/utils/getEndpointFromRegion.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/utils/getEndpointFromRegion.js
 var getEndpointFromRegion;
 var init_getEndpointFromRegion = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/utils/getEndpointFromRegion.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/utils/getEndpointFromRegion.js"() {
     getEndpointFromRegion = async (input) => {
       const { tls = true } = input;
       const region = await input.region();
@@ -58330,10 +58397,10 @@ var init_getEndpointFromRegion = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/resolveEndpointsConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/resolveEndpointsConfig.js
 var resolveEndpointsConfig;
 var init_resolveEndpointsConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/resolveEndpointsConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/endpointsConfig/resolveEndpointsConfig.js"() {
     init_client4();
     init_getEndpointFromRegion();
     resolveEndpointsConfig = (input) => {
@@ -58349,10 +58416,10 @@ var init_resolveEndpointsConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/constants.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/constants.js
 var AWS_EXECUTION_ENV, AWS_REGION_ENV, AWS_DEFAULT_REGION_ENV, ENV_IMDS_DISABLED, DEFAULTS_MODE_OPTIONS, IMDS_REGION_PATH, IMDS_TOKEN_PATH, X_AWS_EC2_METADATA_TOKEN, X_AWS_EC2_METADATA_TOKEN_TTL;
 var init_constants3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/constants.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/constants.js"() {
     AWS_EXECUTION_ENV = "AWS_EXECUTION_ENV";
     AWS_REGION_ENV = "AWS_REGION";
     AWS_DEFAULT_REGION_ENV = "AWS_DEFAULT_REGION";
@@ -58365,10 +58432,10 @@ var init_constants3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/getInstanceMetadataRegion.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/getInstanceMetadataRegion.js
 var TIMEOUT_MS, NEG_CACHE_TTL_MS, negativeCacheUntil, getInstanceMetadataRegion, cacheNegativeAndReturnUndefined, resolveImdsEndpoint, imdsRequest;
 var init_getInstanceMetadataRegion = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/getInstanceMetadataRegion.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/getInstanceMetadataRegion.js"() {
     init_constants3();
     TIMEOUT_MS = 1e3;
     NEG_CACHE_TTL_MS = 6e4;
@@ -58461,10 +58528,10 @@ var init_getInstanceMetadataRegion = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/config.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/config.js
 var REGION_ENV_NAME, REGION_INI_NAME, NODE_REGION_CONFIG_OPTIONS, NODE_REGION_CONFIG_FILE_OPTIONS;
 var init_config2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/config.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/config.js"() {
     init_getInstanceMetadataRegion();
     REGION_ENV_NAME = "AWS_REGION";
     REGION_INI_NAME = "region";
@@ -58485,10 +58552,10 @@ var init_config2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/checkRegion.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/checkRegion.js
 var validRegions, checkRegion;
 var init_checkRegion = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/checkRegion.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/checkRegion.js"() {
     init_transport();
     validRegions = /* @__PURE__ */ new Set();
     checkRegion = (region, check = isValidHostLabel) => {
@@ -58505,27 +58572,27 @@ var init_checkRegion = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/isFipsRegion.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/isFipsRegion.js
 var isFipsRegion;
 var init_isFipsRegion = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/isFipsRegion.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/isFipsRegion.js"() {
     isFipsRegion = (region) => typeof region === "string" && (region.startsWith("fips-") || region.endsWith("-fips"));
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/getRealRegion.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/getRealRegion.js
 var getRealRegion;
 var init_getRealRegion = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/getRealRegion.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/getRealRegion.js"() {
     init_isFipsRegion();
     getRealRegion = (region) => isFipsRegion(region) ? ["fips-aws-global", "aws-fips"].includes(region) ? "us-east-1" : region.replace(/fips-(dkr-|prod-)?|-fips/, "") : region;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/resolveRegionConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/resolveRegionConfig.js
 var resolveRegionConfig;
 var init_resolveRegionConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/resolveRegionConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionConfig/resolveRegionConfig.js"() {
     init_checkRegion();
     init_getRealRegion();
     init_isFipsRegion();
@@ -58553,34 +58620,34 @@ var init_resolveRegionConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getHostnameFromVariants.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getHostnameFromVariants.js
 var getHostnameFromVariants;
 var init_getHostnameFromVariants = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getHostnameFromVariants.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getHostnameFromVariants.js"() {
     getHostnameFromVariants = (variants = [], { useFipsEndpoint, useDualstackEndpoint }) => variants.find(({ tags }) => useFipsEndpoint === tags.includes("fips") && useDualstackEndpoint === tags.includes("dualstack"))?.hostname;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedHostname.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedHostname.js
 var getResolvedHostname;
 var init_getResolvedHostname = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedHostname.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedHostname.js"() {
     getResolvedHostname = (resolvedRegion, { regionHostname, partitionHostname }) => regionHostname ? regionHostname : partitionHostname ? partitionHostname.replace("{region}", resolvedRegion) : void 0;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedPartition.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedPartition.js
 var getResolvedPartition;
 var init_getResolvedPartition = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedPartition.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedPartition.js"() {
     getResolvedPartition = (region, { partitionHash }) => Object.keys(partitionHash || {}).find((key2) => partitionHash[key2].regions.includes(region)) ?? "aws";
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedSigningRegion.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedSigningRegion.js
 var getResolvedSigningRegion;
 var init_getResolvedSigningRegion = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedSigningRegion.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getResolvedSigningRegion.js"() {
     getResolvedSigningRegion = (hostname, { signingRegion, regionRegex, useFipsEndpoint }) => {
       if (signingRegion) {
         return signingRegion;
@@ -58595,10 +58662,10 @@ var init_getResolvedSigningRegion = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getRegionInfo.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getRegionInfo.js
 var getRegionInfo;
 var init_getRegionInfo = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getRegionInfo.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/config-resolver/regionInfo/getRegionInfo.js"() {
     init_getHostnameFromVariants();
     init_getResolvedHostname();
     init_getResolvedPartition();
@@ -58631,10 +58698,10 @@ var init_getRegionInfo = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/defaultsModeConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/defaultsModeConfig.js
 var AWS_DEFAULTS_MODE_ENV, AWS_DEFAULTS_MODE_CONFIG, NODE_DEFAULTS_MODE_CONFIG_OPTIONS;
 var init_defaultsModeConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/defaultsModeConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/defaultsModeConfig.js"() {
     AWS_DEFAULTS_MODE_ENV = "AWS_DEFAULTS_MODE";
     AWS_DEFAULTS_MODE_CONFIG = "defaults_mode";
     NODE_DEFAULTS_MODE_CONFIG_OPTIONS = {
@@ -58649,10 +58716,10 @@ var init_defaultsModeConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/resolveDefaultsModeConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/resolveDefaultsModeConfig.js
 var resolveDefaultsModeConfig, resolveNodeDefaultsModeAuto, inferPhysicalRegion;
 var init_resolveDefaultsModeConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/resolveDefaultsModeConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/defaults-mode/resolveDefaultsModeConfig.js"() {
     init_config2();
     init_getInstanceMetadataRegion();
     init_configLoader();
@@ -58700,7 +58767,7 @@ var init_resolveDefaultsModeConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/index.js
 var config_exports = {};
 __export(config_exports, {
   CONFIG_PREFIX_SEPARATOR: () => CONFIG_PREFIX_SEPARATOR,
@@ -58747,7 +58814,7 @@ __export(config_exports, {
   resolveRegionConfig: () => resolveRegionConfig
 });
 var init_config3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/config/index.js"() {
     init_ProviderError();
     init_CredentialsProviderError();
     init_TokenProviderError();
@@ -58780,10 +58847,10 @@ var init_config3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointUrlConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointUrlConfig.js
 var ENV_ENDPOINT_URL, CONFIG_ENDPOINT_URL, getEndpointUrlConfig;
 var init_getEndpointUrlConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointUrlConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointUrlConfig.js"() {
     init_config3();
     ENV_ENDPOINT_URL = "AWS_ENDPOINT_URL";
     CONFIG_ENDPOINT_URL = "endpoint_url";
@@ -58820,10 +58887,10 @@ var init_getEndpointUrlConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getIgnoreConfiguredEndpointUrls.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getIgnoreConfiguredEndpointUrls.js
 var ENV_IGNORE_CONFIGURED_ENDPOINT_URLS, CONFIG_IGNORE_CONFIGURED_ENDPOINT_URLS, ignoreConfiguredEndpointUrlsConfigSelectors;
 var init_getIgnoreConfiguredEndpointUrls = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getIgnoreConfiguredEndpointUrls.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getIgnoreConfiguredEndpointUrls.js"() {
     init_config3();
     ENV_IGNORE_CONFIGURED_ENDPOINT_URLS = "AWS_IGNORE_CONFIGURED_ENDPOINT_URLS";
     CONFIG_IGNORE_CONFIGURED_ENDPOINT_URLS = "ignore_configured_endpoint_urls";
@@ -58835,10 +58902,10 @@ var init_getIgnoreConfiguredEndpointUrls = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromConfig.js
 var getEndpointFromConfig;
 var init_getEndpointFromConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromConfig.js"() {
     init_config3();
     init_getEndpointUrlConfig();
     init_getIgnoreConfiguredEndpointUrls();
@@ -58852,10 +58919,10 @@ var init_getEndpointFromConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/service-customizations/s3.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/service-customizations/s3.js
 var resolveParamsForS3, DOMAIN_PATTERN, IP_ADDRESS_PATTERN, DOTS_PATTERN, isDnsCompatibleBucketName, isArnBucketName;
 var init_s3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/service-customizations/s3.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/service-customizations/s3.js"() {
     resolveParamsForS3 = async (endpointParams) => {
       const bucket = endpointParams?.Bucket || "";
       if (typeof endpointParams.Bucket === "string") {
@@ -58890,17 +58957,17 @@ var init_s3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/service-customizations/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/service-customizations/index.js
 var init_service_customizations = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/service-customizations/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/service-customizations/index.js"() {
     init_s3();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/createConfigValueProvider.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/createConfigValueProvider.js
 var createConfigValueProvider;
 var init_createConfigValueProvider = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/createConfigValueProvider.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/createConfigValueProvider.js"() {
     createConfigValueProvider = (configKey, canonicalEndpointParamKey, config2, isClientContextParam = false) => {
       const configProvider = async () => {
         let configValue;
@@ -58953,14 +59020,14 @@ var init_createConfigValueProvider = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/toEndpointV1.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/toEndpointV1.js
 var init_toEndpointV12 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/toEndpointV1.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/toEndpointV1.js"() {
     init_transport();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromInstructions.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromInstructions.js
 function bindGetEndpointFromInstructions(getEndpointFromConfig2) {
   return async (commandInput, instructionsSupplier, clientConfig, context) => {
     if (!clientConfig.isCustomEndpoint && !clientConfig.ignoreConfiguredEndpointUrls) {
@@ -58995,7 +59062,7 @@ function bindGetEndpointFromInstructions(getEndpointFromConfig2) {
 }
 var resolveParams;
 var init_getEndpointFromInstructions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromInstructions.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/adaptors/getEndpointFromInstructions.js"() {
     init_service_customizations();
     init_createConfigValueProvider();
     init_toEndpointV12();
@@ -59032,7 +59099,7 @@ var init_getEndpointFromInstructions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/endpointMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/endpointMiddleware.js
 function setFeature(context, feature, value) {
   if (!context.__smithy_context) {
     context.__smithy_context = { features: {} };
@@ -59078,13 +59145,13 @@ function bindEndpointMiddleware(getEndpointFromConfig2) {
   };
 }
 var init_endpointMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/endpointMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/endpointMiddleware.js"() {
     init_transport();
     init_getEndpointFromInstructions();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/getEndpointPlugin.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/getEndpointPlugin.js
 function bindGetEndpointPlugin(getEndpointFromConfig2) {
   const endpointMiddleware2 = bindEndpointMiddleware(getEndpointFromConfig2);
   return (config2, instructions) => ({
@@ -59098,7 +59165,7 @@ function bindGetEndpointPlugin(getEndpointFromConfig2) {
 }
 var serializerMiddlewareOption2, endpointMiddlewareOptions;
 var init_getEndpointPlugin = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/getEndpointPlugin.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/getEndpointPlugin.js"() {
     init_endpointMiddleware();
     serializerMiddlewareOption2 = {
       name: "serializerMiddleware",
@@ -59117,7 +59184,7 @@ var init_getEndpointPlugin = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/resolveEndpointConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/resolveEndpointConfig.js
 function bindResolveEndpointConfig(getEndpointFromConfig2) {
   return (input) => {
     const tls = input.tls ?? true;
@@ -59143,16 +59210,16 @@ function bindResolveEndpointConfig(getEndpointFromConfig2) {
   };
 }
 var init_resolveEndpointConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/resolveEndpointConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/resolveEndpointConfig.js"() {
     init_transport();
     init_toEndpointV12();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/bdd/BinaryDecisionDiagram.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/bdd/BinaryDecisionDiagram.js
 var BinaryDecisionDiagram;
 var init_BinaryDecisionDiagram = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/bdd/BinaryDecisionDiagram.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/bdd/BinaryDecisionDiagram.js"() {
     BinaryDecisionDiagram = class _BinaryDecisionDiagram {
       nodes;
       root;
@@ -59171,10 +59238,10 @@ var init_BinaryDecisionDiagram = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/cache/EndpointCache.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/cache/EndpointCache.js
 var EndpointCache;
 var init_EndpointCache = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/cache/EndpointCache.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/cache/EndpointCache.js"() {
     EndpointCache = class {
       capacity;
       data = /* @__PURE__ */ new Map();
@@ -59228,10 +59295,10 @@ var init_EndpointCache = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/EndpointError.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/EndpointError.js
 var EndpointError;
 var init_EndpointError = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/EndpointError.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/EndpointError.js"() {
     EndpointError = class extends Error {
       constructor(message2) {
         super(message2);
@@ -59241,22 +59308,22 @@ var init_EndpointError = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/index.js
 var init_types3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/types/index.js"() {
     init_EndpointError();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/debugId.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/debugId.js
 var debugId;
 var init_debugId = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/debugId.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/debugId.js"() {
     debugId = "endpoints";
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/toDebugString.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/toDebugString.js
 function toDebugString(input) {
   if (typeof input !== "object" || input == null) {
     return input;
@@ -59270,35 +59337,35 @@ function toDebugString(input) {
   return JSON.stringify(input, null, 2);
 }
 var init_toDebugString = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/toDebugString.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/toDebugString.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/index.js
 var init_debug = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/debug/index.js"() {
     init_debugId();
     init_toDebugString();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/customEndpointFunctions.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/customEndpointFunctions.js
 var customEndpointFunctions;
 var init_customEndpointFunctions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/customEndpointFunctions.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/customEndpointFunctions.js"() {
     customEndpointFunctions = {};
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/booleanEquals.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/booleanEquals.js
 var booleanEquals;
 var init_booleanEquals = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/booleanEquals.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/booleanEquals.js"() {
     booleanEquals = (value1, value2) => value1 === value2;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/coalesce.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/coalesce.js
 function coalesce(...args) {
   for (const arg of args) {
     if (arg != null) {
@@ -59308,14 +59375,14 @@ function coalesce(...args) {
   return void 0;
 }
 var init_coalesce = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/coalesce.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/coalesce.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttrPathList.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttrPathList.js
 var getAttrPathList;
 var init_getAttrPathList = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttrPathList.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttrPathList.js"() {
     init_types3();
     getAttrPathList = (path) => {
       const parts = path.split(".");
@@ -59343,10 +59410,10 @@ var init_getAttrPathList = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttr.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttr.js
 var getAttr;
 var init_getAttr = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttr.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttr.js"() {
     init_types3();
     init_getAttrPathList();
     getAttr = (value, path) => getAttrPathList(path).reduce((acc, index) => {
@@ -59361,44 +59428,44 @@ var init_getAttr = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/isSet.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/isSet.js
 var isSet;
 var init_isSet = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/isSet.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/isSet.js"() {
     isSet = (value) => value != null;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/ite.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/ite.js
 function ite(condition, trueValue, falseValue) {
   return condition ? trueValue : falseValue;
 }
 var init_ite = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/ite.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/ite.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/not.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/not.js
 var not;
 var init_not = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/not.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/not.js"() {
     not = (value) => !value;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/isIpAddress.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/isIpAddress.js
 var IP_V4_REGEX, isIpAddress;
 var init_isIpAddress = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/isIpAddress.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/isIpAddress.js"() {
     IP_V4_REGEX = new RegExp(`^(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}$`);
     isIpAddress = (value) => IP_V4_REGEX.test(value) || value.startsWith("[") && value.endsWith("]");
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/parseURL.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/parseURL.js
 var import_types12, DEFAULT_PORTS, parseURL;
 var init_parseURL = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/parseURL.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/parseURL.js"() {
     import_types12 = __toESM(require_dist_cjs());
     init_isIpAddress();
     DEFAULT_PORTS = {
@@ -59449,7 +59516,7 @@ var init_parseURL = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/split.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/split.js
 function split(value, delimiter, limit) {
   if (limit === 1) {
     return [value];
@@ -59464,22 +59531,22 @@ function split(value, delimiter, limit) {
   return parts.slice(0, limit - 1).concat(parts.slice(1).join(delimiter));
 }
 var init_split = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/split.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/split.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/stringEquals.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/stringEquals.js
 var stringEquals;
 var init_stringEquals = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/stringEquals.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/stringEquals.js"() {
     stringEquals = (value1, value2) => value1 === value2;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/substring.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/substring.js
 var substring;
 var init_substring = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/substring.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/substring.js"() {
     substring = (input, start, stop, reverse) => {
       if (input == null || start >= stop || input.length < stop || /[^\u0000-\u007f]/.test(input)) {
         return null;
@@ -59492,17 +59559,17 @@ var init_substring = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/uriEncode.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/uriEncode.js
 var uriEncode;
 var init_uriEncode = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/uriEncode.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/uriEncode.js"() {
     uriEncode = (value) => encodeURIComponent(value).replace(/[!*'()]/g, (c5) => `%${c5.charCodeAt(0).toString(16).toUpperCase()}`);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/index.js
 var init_lib = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/index.js"() {
     init_booleanEquals();
     init_coalesce();
     init_getAttr();
@@ -59518,10 +59585,10 @@ var init_lib = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/endpointFunctions.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/endpointFunctions.js
 var endpointFunctions;
 var init_endpointFunctions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/endpointFunctions.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/endpointFunctions.js"() {
     init_lib();
     endpointFunctions = {
       booleanEquals,
@@ -59540,10 +59607,10 @@ var init_endpointFunctions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateTemplate.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateTemplate.js
 var evaluateTemplate;
 var init_evaluateTemplate = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateTemplate.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateTemplate.js"() {
     init_lib();
     evaluateTemplate = (template, options) => {
       const evaluatedTemplateArr = [];
@@ -59579,20 +59646,20 @@ var init_evaluateTemplate = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getReferenceValue.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getReferenceValue.js
 var getReferenceValue;
 var init_getReferenceValue = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getReferenceValue.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getReferenceValue.js"() {
     getReferenceValue = ({ ref }, options) => {
       return options.referenceRecord[ref] ?? options.endpointParams[ref];
     };
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateExpression.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateExpression.js
 var evaluateExpression, callFunction, group;
 var init_evaluateExpression = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateExpression.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateExpression.js"() {
     init_types3();
     init_customEndpointFunctions();
     init_endpointFunctions();
@@ -59639,17 +59706,17 @@ var init_evaluateExpression = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/callFunction.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/callFunction.js
 var init_callFunction = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/callFunction.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/callFunction.js"() {
     init_evaluateExpression();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateCondition.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateCondition.js
 var evaluateCondition;
 var init_evaluateCondition = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateCondition.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateCondition.js"() {
     init_debug();
     init_types3();
     init_callFunction();
@@ -59669,10 +59736,10 @@ var init_evaluateCondition = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointHeaders.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointHeaders.js
 var getEndpointHeaders;
 var init_getEndpointHeaders = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointHeaders.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointHeaders.js"() {
     init_types3();
     init_evaluateExpression();
     getEndpointHeaders = (headers, options) => Object.entries(headers ?? {}).reduce((acc, [headerKey, headerVal]) => {
@@ -59688,10 +59755,10 @@ var init_getEndpointHeaders = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointProperties.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointProperties.js
 var getEndpointProperties, getEndpointProperty, group2;
 var init_getEndpointProperties = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointProperties.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointProperties.js"() {
     init_types3();
     init_evaluateTemplate();
     getEndpointProperties = (properties, options) => Object.entries(properties).reduce((acc, [propertyKey, propertyVal]) => {
@@ -59723,10 +59790,10 @@ var init_getEndpointProperties = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointUrl.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointUrl.js
 var getEndpointUrl;
 var init_getEndpointUrl = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointUrl.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/getEndpointUrl.js"() {
     init_types3();
     init_evaluateExpression();
     getEndpointUrl = (endpointUrl, options) => {
@@ -59744,10 +59811,10 @@ var init_getEndpointUrl = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/decideEndpoint.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/decideEndpoint.js
 var RESULT, decideEndpoint;
 var init_decideEndpoint = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/decideEndpoint.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/decideEndpoint.js"() {
     init_types3();
     init_evaluateCondition();
     init_evaluateExpression();
@@ -59793,10 +59860,10 @@ var init_decideEndpoint = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateConditions.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateConditions.js
 var evaluateConditions;
 var init_evaluateConditions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateConditions.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateConditions.js"() {
     init_debug();
     init_evaluateCondition();
     evaluateConditions = (conditions = [], options) => {
@@ -59826,10 +59893,10 @@ var init_evaluateConditions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateEndpointRule.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateEndpointRule.js
 var evaluateEndpointRule;
 var init_evaluateEndpointRule = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateEndpointRule.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateEndpointRule.js"() {
     init_debug();
     init_evaluateConditions();
     init_getEndpointHeaders();
@@ -59859,10 +59926,10 @@ var init_evaluateEndpointRule = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateErrorRule.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateErrorRule.js
 var evaluateErrorRule;
 var init_evaluateErrorRule = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateErrorRule.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateErrorRule.js"() {
     init_types3();
     init_evaluateConditions();
     init_evaluateExpression();
@@ -59881,10 +59948,10 @@ var init_evaluateErrorRule = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateRules.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateRules.js
 var evaluateRules, evaluateTreeRule, group3;
 var init_evaluateRules = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateRules.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/evaluateRules.js"() {
     init_types3();
     init_evaluateConditions();
     init_evaluateEndpointRule();
@@ -59925,17 +59992,17 @@ var init_evaluateRules = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/index.js
 var init_utils = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/utils/index.js"() {
     init_evaluateRules();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/resolveEndpoint.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/resolveEndpoint.js
 var resolveEndpoint;
 var init_resolveEndpoint = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/resolveEndpoint.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/resolveEndpoint.js"() {
     init_transport();
     init_debug();
     init_types3();
@@ -59964,10 +60031,10 @@ var init_resolveEndpoint = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/resolveEndpointRequiredConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/resolveEndpointRequiredConfig.js
 var resolveEndpointRequiredConfig;
 var init_resolveEndpointRequiredConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/resolveEndpointRequiredConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/middleware-endpoint/resolveEndpointRequiredConfig.js"() {
     resolveEndpointRequiredConfig = (input) => {
       const { endpoint: endpoint2 } = input;
       if (endpoint2 === void 0) {
@@ -59980,7 +60047,7 @@ var init_resolveEndpointRequiredConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/index.js
 var endpoints_exports = {};
 __export(endpoints_exports, {
   BinaryDecisionDiagram: () => BinaryDecisionDiagram,
@@ -60003,7 +60070,7 @@ __export(endpoints_exports, {
 });
 var getEndpointFromInstructions, resolveEndpointConfig, endpointMiddleware, getEndpointPlugin;
 var init_endpoints = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/endpoints/index.js"() {
     init_getEndpointFromConfig();
     init_getEndpointFromInstructions();
     init_endpointMiddleware();
@@ -60029,10 +60096,10 @@ var init_endpoints = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/serializerMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/serializerMiddleware.js
 var serializerMiddleware;
 var init_serializerMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/serializerMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/serializerMiddleware.js"() {
     init_endpoints();
     serializerMiddleware = (options, serializer) => (next, context) => async (args) => {
       const endpointConfig = options;
@@ -60049,7 +60116,7 @@ var init_serializerMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/serdePlugin.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/serdePlugin.js
 function getSerdePlugin(config2, serializer, deserializer) {
   return {
     applyToStack: (commandStack) => {
@@ -60060,7 +60127,7 @@ function getSerdePlugin(config2, serializer, deserializer) {
 }
 var deserializerMiddlewareOption2, serializerMiddlewareOption3;
 var init_serdePlugin = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/serdePlugin.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/middleware-serde/serdePlugin.js"() {
     init_deserializerMiddleware();
     init_serializerMiddleware();
     deserializerMiddlewareOption2 = {
@@ -60078,7 +60145,7 @@ var init_serdePlugin = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/hash-node/hash-node.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/hash-node/hash-node.js
 import { createHash as createHash8, createHmac as createHmac2 } from "node:crypto";
 function castSourceData(toCast, encoding) {
   if (Buffer.isBuffer(toCast)) {
@@ -60094,7 +60161,7 @@ function castSourceData(toCast, encoding) {
 }
 var Hash;
 var init_hash_node = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/hash-node/hash-node.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/hash-node/hash-node.js"() {
     init_buffer_from();
     init_toUint8Array();
     Hash = class {
@@ -60119,11 +60186,11 @@ var init_hash_node = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.js
 import { Readable as Readable2 } from "node:stream";
 var ChecksumStream;
 var init_ChecksumStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.js"() {
     init_toBase64();
     ChecksumStream = class extends Readable2 {
       expectedChecksum;
@@ -60201,10 +60268,10 @@ var init_ChecksumStream = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-type-check.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-type-check.js
 var isReadableStream, isBlob;
 var init_stream_type_check = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-type-check.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-type-check.js"() {
     isReadableStream = (stream) => typeof ReadableStream === "function" && (stream?.constructor?.name === ReadableStream.name || stream instanceof ReadableStream);
     isBlob = (blob) => {
       return typeof Blob === "function" && (blob?.constructor?.name === Blob.name || blob instanceof Blob);
@@ -60212,18 +60279,18 @@ var init_stream_type_check = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.browser.js
 var fromUtf82;
 var init_fromUtf8_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/fromUtf8.browser.js"() {
     fromUtf82 = (input) => new TextEncoder().encode(input);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/constants-for-browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/constants-for-browser.js
 var chars, alphabetByEncoding, alphabetByValue, bitsPerLetter, bitsPerByte, maxLetterValue;
 var init_constants_for_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/constants-for-browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/constants-for-browser.js"() {
     chars = `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/`;
     alphabetByEncoding = Object.entries(chars).reduce((acc, [i5, c5]) => {
       acc[c5] = Number(i5);
@@ -60236,7 +60303,7 @@ var init_constants_for_browser = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.browser.js
 function toBase642(_input) {
   let input;
   if (typeof _input === "string") {
@@ -60268,16 +60335,16 @@ function toBase642(_input) {
   return str;
 }
 var init_toBase64_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-base64/toBase64.browser.js"() {
     init_fromUtf8_browser();
     init_constants_for_browser();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.browser.js
 var ReadableStreamRef, ChecksumStream2;
 var init_ChecksumStream_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/ChecksumStream.browser.js"() {
     ReadableStreamRef = typeof ReadableStream === "function" ? ReadableStream : function() {
     };
     ChecksumStream2 = class extends ReadableStreamRef {
@@ -60285,10 +60352,10 @@ var init_ChecksumStream_browser = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/createChecksumStream.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/createChecksumStream.browser.js
 var createChecksumStream;
 var init_createChecksumStream_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/createChecksumStream.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/createChecksumStream.browser.js"() {
     init_toBase64_browser();
     init_stream_type_check();
     init_ChecksumStream_browser();
@@ -60326,7 +60393,7 @@ var init_createChecksumStream_browser = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/createChecksumStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/createChecksumStream.js
 function createChecksumStream2(init) {
   if (typeof ReadableStream === "function" && isReadableStream(init.source)) {
     return createChecksumStream(init);
@@ -60334,17 +60401,17 @@ function createChecksumStream2(init) {
   return new ChecksumStream(init);
 }
 var init_createChecksumStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/createChecksumStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/checksum/createChecksumStream.js"() {
     init_stream_type_check();
     init_ChecksumStream();
     init_createChecksumStream_browser();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/ByteArrayCollector.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/ByteArrayCollector.js
 var ByteArrayCollector;
 var init_ByteArrayCollector = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/ByteArrayCollector.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/ByteArrayCollector.js"() {
     ByteArrayCollector = class {
       allocByteArray;
       byteLength = 0;
@@ -60380,7 +60447,7 @@ var init_ByteArrayCollector = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/createBufferedReadable.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/createBufferedReadable.browser.js
 function createBufferedReadableStream(upstream, size, logger2) {
   const reader = upstream.getReader();
   let streamBufferingLoggedWarning = false;
@@ -60472,12 +60539,12 @@ function modeOf(chunk, allowBuffer = true) {
   return -1;
 }
 var init_createBufferedReadable_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/createBufferedReadable.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/createBufferedReadable.browser.js"() {
     init_ByteArrayCollector();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/createBufferedReadable.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/createBufferedReadable.js
 import { Readable as Readable3 } from "node:stream";
 function createBufferedReadable(upstream, size, logger2) {
   if (isReadableStream(upstream)) {
@@ -60533,17 +60600,17 @@ function createBufferedReadable(upstream, size, logger2) {
   return downstream;
 }
 var init_createBufferedReadable = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/createBufferedReadable.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/createBufferedReadable.js"() {
     init_ByteArrayCollector();
     init_createBufferedReadable_browser();
     init_stream_type_check();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/getAwsChunkedEncodingStream.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/getAwsChunkedEncodingStream.browser.js
 var getAwsChunkedEncodingStream;
 var init_getAwsChunkedEncodingStream_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/getAwsChunkedEncodingStream.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/getAwsChunkedEncodingStream.browser.js"() {
     getAwsChunkedEncodingStream = (readableStream, options) => {
       const { base64Encoder, bodyLengthChecker, checksumAlgorithmFn, checksumLocationName, streamHasher } = options;
       const checksumRequired = base64Encoder !== void 0 && bodyLengthChecker !== void 0 && checksumAlgorithmFn !== void 0 && checksumLocationName !== void 0 && streamHasher !== void 0;
@@ -60576,7 +60643,7 @@ ${value}\r
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/getAwsChunkedEncodingStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/getAwsChunkedEncodingStream.js
 import { Readable as Readable4 } from "node:stream";
 function getAwsChunkedEncodingStream2(stream, options) {
   const readable = stream;
@@ -60629,13 +60696,13 @@ function getAwsChunkedEncodingStream2(stream, options) {
   return awsChunkedEncodingStream;
 }
 var init_getAwsChunkedEncodingStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/getAwsChunkedEncodingStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/getAwsChunkedEncodingStream.js"() {
     init_getAwsChunkedEncodingStream_browser();
     init_stream_type_check();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.browser.js
 async function headStream(stream, bytes) {
   let byteLengthCounter = 0;
   const chunks2 = [];
@@ -60667,15 +60734,15 @@ async function headStream(stream, bytes) {
   return collected;
 }
 var init_headStream_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.browser.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.js
 import { Writable } from "node:stream";
 var headStream2, Collector;
 var init_headStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/headStream.js"() {
     init_concatBytes();
     init_headStream_browser();
     init_stream_type_check();
@@ -60717,10 +60784,10 @@ var init_headStream = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.browser.js
 var toUtf82;
 var init_toUtf8_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-utf8/toUtf8.browser.js"() {
     toUtf82 = (input) => {
       if (typeof input === "string") {
         return input;
@@ -60733,7 +60800,7 @@ var init_toUtf8_browser = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.browser.js
 async function collectBlob(blob) {
   return blob.arrayBuffer().then((ab) => new Uint8Array(ab));
 }
@@ -60755,7 +60822,7 @@ async function collectReadableStream(stream) {
 }
 var streamCollector;
 var init_stream_collector_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.browser.js"() {
     init_concatBytes();
     init_stream_type_check();
     streamCollector = async (stream) => {
@@ -60767,10 +60834,10 @@ var init_stream_collector_browser = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.browser.js
 var ERR_MSG_STREAM_HAS_BEEN_TRANSFORMED, sdkStreamMixin, isBlobInstance;
 var init_sdk_stream_mixin_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.browser.js"() {
     init_toBase64_browser();
     init_hex_encoding();
     init_toUtf8_browser();
@@ -60831,11 +60898,11 @@ var init_sdk_stream_mixin_browser = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.js
 import { Writable as Writable2 } from "node:stream";
 var streamCollector2, Collector2;
 var init_stream_collector = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/stream-collector.js"() {
     init_concatBytes();
     init_stream_collector_browser();
     init_stream_type_check();
@@ -60871,11 +60938,11 @@ var init_stream_collector = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.js
 import { Readable as Readable5 } from "node:stream";
 var ERR_MSG_STREAM_HAS_BEEN_TRANSFORMED2, sdkStreamMixin2;
 var init_sdk_stream_mixin = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/sdk-stream-mixin.js"() {
     init_buffer_from();
     init_sdk_stream_mixin_browser();
     init_stream_collector();
@@ -60926,7 +60993,7 @@ var init_sdk_stream_mixin = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/splitStream.browser.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/splitStream.browser.js
 async function splitStream(stream) {
   if (typeof stream.stream === "function") {
     stream = stream.stream();
@@ -60935,11 +61002,11 @@ async function splitStream(stream) {
   return readableStream.tee();
 }
 var init_splitStream_browser = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/splitStream.browser.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/splitStream.browser.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/splitStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/splitStream.js
 import { PassThrough } from "node:stream";
 async function splitStream2(stream) {
   if (isReadableStream(stream) || isBlob(stream)) {
@@ -60952,13 +61019,13 @@ async function splitStream2(stream) {
   return [stream1, stream2];
 }
 var init_splitStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/splitStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/util-stream/splitStream.js"() {
     init_splitStream_browser();
     init_stream_type_check();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/index.js
 var serde_exports = {};
 __export(serde_exports, {
   ChecksumStream: () => ChecksumStream,
@@ -61038,7 +61105,7 @@ __export(serde_exports, {
 import { getRandomValues } from "node:crypto";
 var Uint8ArrayBlobAdapter, _getRandomValues, v4, generateIdempotencyToken;
 var init_serde = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/serde/index.js"() {
     init_fromBase64();
     init_toBase64();
     init_Uint8ArrayBlobAdapter();
@@ -61082,10 +61149,10 @@ var init_serde = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/collect-stream-body.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/collect-stream-body.js
 var collectBody;
 var init_collect_stream_body = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/collect-stream-body.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/collect-stream-body.js"() {
     init_serde();
     collectBody = async (streamBody = new Uint8Array(), context) => {
       if (streamBody instanceof Uint8Array) {
@@ -61100,21 +61167,21 @@ var init_collect_stream_body = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/extended-encode-uri-component.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/extended-encode-uri-component.js
 function extendedEncodeURIComponent(str) {
   return encodeURIComponent(str).replace(/[!'()*]/g, function(c5) {
     return "%" + c5.charCodeAt(0).toString(16).toUpperCase();
   });
 }
 var init_extended_encode_uri_component = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/extended-encode-uri-component.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/extended-encode-uri-component.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/SerdeContext.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/SerdeContext.js
 var SerdeContext;
 var init_SerdeContext = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/SerdeContext.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/SerdeContext.js"() {
     SerdeContext = class {
       serdeContext;
       setSerdeContext(serdeContext) {
@@ -61124,7 +61191,7 @@ var init_SerdeContext = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/chunked-blob-reader/chunked-blob-reader.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/chunked-blob-reader/chunked-blob-reader.js
 async function blobReader(blob, onChunk, chunkSize = 1024 * 1024) {
   const size = blob.size;
   let totalBytesRead = 0;
@@ -61135,14 +61202,14 @@ async function blobReader(blob, onChunk, chunkSize = 1024 * 1024) {
   }
 }
 var init_chunked_blob_reader = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/chunked-blob-reader/chunked-blob-reader.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/chunked-blob-reader/chunked-blob-reader.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-blob-browser/blobHasher.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-blob-browser/blobHasher.js
 var blobHasher;
 var init_blobHasher = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-blob-browser/blobHasher.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-blob-browser/blobHasher.js"() {
     init_chunked_blob_reader();
     blobHasher = async function blobHasher2(hashCtor, blob) {
       const hash2 = new hashCtor();
@@ -61154,11 +61221,11 @@ var init_blobHasher = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/HashCalculator.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/HashCalculator.js
 import { Writable as Writable3 } from "node:stream";
 var HashCalculator;
 var init_HashCalculator = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/HashCalculator.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/HashCalculator.js"() {
     init_serde();
     HashCalculator = class extends Writable3 {
       hash;
@@ -61178,11 +61245,11 @@ var init_HashCalculator = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/fileStreamHasher.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/fileStreamHasher.js
 import { createReadStream } from "node:fs";
 var fileStreamHasher, isReadStream;
 var init_fileStreamHasher = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/fileStreamHasher.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/fileStreamHasher.js"() {
     init_HashCalculator();
     fileStreamHasher = (hashCtor, fileStream) => new Promise((resolve4, reject) => {
       if (!isReadStream(fileStream)) {
@@ -61209,10 +61276,10 @@ var init_fileStreamHasher = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/readableStreamHasher.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/readableStreamHasher.js
 var readableStreamHasher;
 var init_readableStreamHasher = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/readableStreamHasher.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/readableStreamHasher.js"() {
     init_HashCalculator();
     readableStreamHasher = (hashCtor, readableStream) => {
       if (readableStream.readableFlowing !== null) {
@@ -61235,7 +61302,7 @@ var init_readableStreamHasher = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Js.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Js.js
 function compress(state2, block) {
   let a5 = state2[0], b5 = state2[1], c5 = state2[2], d5 = state2[3];
   for (let i5 = 0; i5 < 64; ++i5) {
@@ -61269,7 +61336,7 @@ function compress(state2, block) {
 }
 var Md5Js, INIT, M, S, T;
 var init_Md5Js = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Js.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Js.js"() {
     init_serde();
     Md5Js = class {
       digestLength = 16;
@@ -61331,7 +61398,7 @@ var init_Md5Js = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Node.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Node.js
 import { createHash as createHash9 } from "node:crypto";
 function buildNativeClass() {
   return class Md5Node {
@@ -61351,7 +61418,7 @@ function buildNativeClass() {
 }
 var hasNativeCrypto, Md5Node;
 var init_Md5Node = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Node.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/md5/Md5Node.js"() {
     init_serde();
     init_Md5Js();
     hasNativeCrypto = (() => {
@@ -61366,10 +61433,10 @@ var init_Md5Node = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Js.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Js.js
 var CRC32_TABLE, ONES, Crc32Js;
 var init_Crc32Js = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Js.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Js.js"() {
     CRC32_TABLE = new Uint32Array(256);
     for (let i5 = 0; i5 < 256; ++i5) {
       let c5 = i5;
@@ -61403,7 +61470,7 @@ var init_Crc32Js = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Node.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Node.js
 import * as zlib from "node:zlib";
 function buildNativeClass2(nativeCrc32) {
   return class Crc32Node {
@@ -61427,17 +61494,17 @@ function buildNativeClass2(nativeCrc32) {
 }
 var zlibCrc32, Crc32Node;
 var init_Crc32Node = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Node.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/crc32/Crc32Node.js"() {
     init_Crc32Js();
     zlibCrc32 = typeof zlib.crc32 === "function" ? zlib.crc32 : void 0;
     Crc32Node = zlibCrc32 ? buildNativeClass2(zlibCrc32) : Crc32Js;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Js.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Js.js
 var BLOCK, DIGEST_LENGTH, MAX_HASHABLE_LENGTH, Sha256Js, INIT2, K;
 var init_Sha256Js = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Js.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Js.js"() {
     init_serde();
     BLOCK = 64;
     DIGEST_LENGTH = 32;
@@ -61672,7 +61739,7 @@ var init_Sha256Js = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Node.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Node.js
 import { createHash as createHash10, createHmac as createHmac3 } from "node:crypto";
 function buildNativeClass3() {
   return class Sha256Node {
@@ -61722,7 +61789,7 @@ function toBuffer(data) {
 }
 var hasNativeCrypto2, Sha256Node;
 var init_Sha256Node = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Node.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Node.js"() {
     init_Sha256Js();
     hasNativeCrypto2 = (() => {
       try {
@@ -61736,10 +61803,10 @@ var init_Sha256Node = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256WebCrypto.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256WebCrypto.js
 var digest2, sign3, importKey, subtle, MAX_PENDING_BYTES, Sha256WebCrypto;
 var init_Sha256WebCrypto = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256WebCrypto.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256WebCrypto.js"() {
     init_serde();
     init_Sha256Js();
     ({ digest: digest2, sign: sign3, importKey } = globalThis?.crypto?.subtle ?? {});
@@ -61812,7 +61879,7 @@ var init_Sha256WebCrypto = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/index.js
 var checksum_exports = {};
 __export(checksum_exports, {
   Crc32: () => Crc32Node,
@@ -61831,7 +61898,7 @@ __export(checksum_exports, {
   readableStreamHasher: () => readableStreamHasher
 });
 var init_checksum2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/index.js"() {
     init_blobHasher();
     init_fileStreamHasher();
     init_readableStreamHasher();
@@ -61846,7 +61913,7 @@ var init_checksum2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/Int64.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/Int64.js
 function negate(bytes) {
   for (let i5 = 0; i5 < 8; i5++) {
     bytes[i5] ^= 255;
@@ -61859,7 +61926,7 @@ function negate(bytes) {
 }
 var Int64;
 var init_Int64 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/Int64.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/Int64.js"() {
     init_serde();
     Int64 = class _Int64 {
       bytes;
@@ -61897,10 +61964,10 @@ var init_Int64 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/HeaderMarshaller.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/HeaderMarshaller.js
 var HeaderMarshaller, HEADER_VALUE_TYPE, BOOLEAN_TAG, BYTE_TAG, SHORT_TAG, INT_TAG, LONG_TAG, BINARY_TAG, STRING_TAG, TIMESTAMP_TAG, UUID_TAG, UUID_PATTERN;
 var init_HeaderMarshaller = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/HeaderMarshaller.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/HeaderMarshaller.js"() {
     init_transport();
     init_serde();
     init_Int64();
@@ -62090,7 +62157,7 @@ var init_HeaderMarshaller = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/splitMessage.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/splitMessage.js
 function splitMessage({ byteLength, byteOffset, buffer }) {
   if (byteLength < MINIMUM_MESSAGE_LENGTH) {
     throw new Error("Provided message too short to accommodate event stream message overhead");
@@ -62119,7 +62186,7 @@ function splitMessage({ byteLength, byteOffset, buffer }) {
 }
 var PRELUDE_MEMBER_LENGTH, PRELUDE_LENGTH, CHECKSUM_LENGTH, MINIMUM_MESSAGE_LENGTH;
 var init_splitMessage = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/splitMessage.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/splitMessage.js"() {
     init_checksum2();
     PRELUDE_MEMBER_LENGTH = 4;
     PRELUDE_LENGTH = PRELUDE_MEMBER_LENGTH * 2;
@@ -62128,10 +62195,10 @@ var init_splitMessage = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/EventStreamCodec.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/EventStreamCodec.js
 var EventStreamCodec;
 var init_EventStreamCodec = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/EventStreamCodec.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/EventStreamCodec.js"() {
     init_checksum2();
     init_HeaderMarshaller();
     init_splitMessage();
@@ -62202,10 +62269,10 @@ var init_EventStreamCodec = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/MessageDecoderStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/MessageDecoderStream.js
 var MessageDecoderStream;
 var init_MessageDecoderStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/MessageDecoderStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/MessageDecoderStream.js"() {
     MessageDecoderStream = class {
       options;
       constructor(options) {
@@ -62224,10 +62291,10 @@ var init_MessageDecoderStream = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/MessageEncoderStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/MessageEncoderStream.js
 var MessageEncoderStream;
 var init_MessageEncoderStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/MessageEncoderStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/MessageEncoderStream.js"() {
     MessageEncoderStream = class {
       options;
       constructor(options) {
@@ -62249,10 +62316,10 @@ var init_MessageEncoderStream = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/SmithyMessageDecoderStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/SmithyMessageDecoderStream.js
 var SmithyMessageDecoderStream;
 var init_SmithyMessageDecoderStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/SmithyMessageDecoderStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/SmithyMessageDecoderStream.js"() {
     SmithyMessageDecoderStream = class {
       options;
       constructor(options) {
@@ -62273,10 +62340,10 @@ var init_SmithyMessageDecoderStream = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/SmithyMessageEncoderStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/SmithyMessageEncoderStream.js
 var SmithyMessageEncoderStream;
 var init_SmithyMessageEncoderStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/SmithyMessageEncoderStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-codec/SmithyMessageEncoderStream.js"() {
     SmithyMessageEncoderStream = class {
       options;
       constructor(options) {
@@ -62295,7 +62362,7 @@ var init_SmithyMessageEncoderStream = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/getChunkedStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/getChunkedStream.js
 function getChunkedStream(source) {
   let currentMessageTotalLength = 0;
   let currentMessagePendingLength = 0;
@@ -62361,11 +62428,11 @@ function getChunkedStream(source) {
   };
 }
 var init_getChunkedStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/getChunkedStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/getChunkedStream.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/getUnmarshalledStream.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/getUnmarshalledStream.js
 function getUnmarshalledStream(source, options) {
   const messageUnmarshaller = getMessageUnmarshaller(options.deserializer, options.toUtf8);
   return {
@@ -62411,14 +62478,14 @@ function getMessageUnmarshaller(deserializer, toUtf83) {
   };
 }
 var init_getUnmarshalledStream = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/getUnmarshalledStream.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/getUnmarshalledStream.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/EventStreamMarshaller.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/EventStreamMarshaller.js
 var EventStreamMarshaller, eventStreamSerdeProvider;
 var init_EventStreamMarshaller = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/EventStreamMarshaller.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-universal/EventStreamMarshaller.js"() {
     init_EventStreamCodec();
     init_MessageDecoderStream();
     init_MessageEncoderStream();
@@ -62452,7 +62519,7 @@ var init_EventStreamMarshaller = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/EventStreamMarshaller.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/EventStreamMarshaller.js
 import { Readable as Readable6 } from "node:stream";
 async function* readableToIterable(readStream) {
   let streamEnded = false;
@@ -62482,7 +62549,7 @@ async function* readableToIterable(readStream) {
 }
 var EventStreamMarshaller2, eventStreamSerdeProvider2;
 var init_EventStreamMarshaller2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/EventStreamMarshaller.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/EventStreamMarshaller.js"() {
     init_EventStreamMarshaller();
     EventStreamMarshaller2 = class {
       universalMarshaller;
@@ -62504,10 +62571,10 @@ var init_EventStreamMarshaller2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/utils.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/utils.js
 var readableStreamToIterable, iterableToReadableStream;
 var init_utils2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/utils.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde/utils.js"() {
     readableStreamToIterable = (readableStream) => ({
       [Symbol.asyncIterator]: async function* () {
         const reader = readableStream.getReader();
@@ -62538,20 +62605,20 @@ var init_utils2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-config-resolver/EventStreamSerdeConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-config-resolver/EventStreamSerdeConfig.js
 var resolveEventStreamSerdeConfig;
 var init_EventStreamSerdeConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-config-resolver/EventStreamSerdeConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/eventstream-serde-config-resolver/EventStreamSerdeConfig.js"() {
     resolveEventStreamSerdeConfig = (input) => Object.assign(input, {
       eventStreamMarshaller: input.eventStreamSerdeProvider(input)
     });
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/EventStreamSerde.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/EventStreamSerde.js
 var EventStreamSerde;
 var init_EventStreamSerde = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/EventStreamSerde.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/EventStreamSerde.js"() {
     init_transport();
     init_schema();
     init_serde();
@@ -62824,7 +62891,7 @@ var init_EventStreamSerde = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/index.js
 var event_streams_exports = {};
 __export(event_streams_exports, {
   EventStreamCodec: () => EventStreamCodec,
@@ -62847,7 +62914,7 @@ __export(event_streams_exports, {
   universalEventStreamSerdeProvider: () => eventStreamSerdeProvider
 });
 var init_event_streams = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/event-streams/index.js"() {
     init_EventStreamCodec();
     init_HeaderMarshaller();
     init_Int64();
@@ -62865,10 +62932,10 @@ var init_event_streams = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/HttpProtocol.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/HttpProtocol.js
 var HttpProtocol;
 var init_HttpProtocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/HttpProtocol.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/HttpProtocol.js"() {
     init_transport();
     init_schema();
     init_transport();
@@ -63068,10 +63135,10 @@ var init_HttpProtocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/HttpBindingProtocol.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/HttpBindingProtocol.js
 var HttpBindingProtocol;
 var init_HttpBindingProtocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/HttpBindingProtocol.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/HttpBindingProtocol.js"() {
     init_transport();
     init_schema();
     init_serde();
@@ -63352,10 +63419,10 @@ var init_HttpBindingProtocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/RpcProtocol.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/RpcProtocol.js
 var RpcProtocol;
 var init_RpcProtocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/RpcProtocol.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/RpcProtocol.js"() {
     init_transport();
     init_schema();
     init_transport();
@@ -63451,10 +63518,10 @@ var init_RpcProtocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/resolve-path.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/resolve-path.js
 var resolvedPath;
 var init_resolve_path = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/resolve-path.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/resolve-path.js"() {
     init_extended_encode_uri_component();
     resolvedPath = (resolvedPath2, input, memberName, labelValueProvider, uriLabel, isGreedyLabel) => {
       if (input != null && input[memberName] !== void 0) {
@@ -63471,13 +63538,13 @@ var init_resolve_path = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/requestBuilder.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/requestBuilder.js
 function requestBuilder(input, context) {
   return new RequestBuilder(input, context);
 }
 var RequestBuilder;
 var init_requestBuilder = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/requestBuilder.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/requestBuilder.js"() {
     init_transport();
     init_resolve_path();
     RequestBuilder = class {
@@ -63547,7 +63614,7 @@ var init_requestBuilder = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/determineTimestampFormat.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/determineTimestampFormat.js
 function determineTimestampFormat(ns, settings) {
   if (settings.timestampFormat.useTrait) {
     if (ns.isTimestampSchema() && (ns.getSchema() === 5 || ns.getSchema() === 6 || ns.getSchema() === 7)) {
@@ -63559,14 +63626,14 @@ function determineTimestampFormat(ns, settings) {
   return bindingFormat ?? settings.timestampFormat.default;
 }
 var init_determineTimestampFormat = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/determineTimestampFormat.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/determineTimestampFormat.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/FromStringShapeDeserializer.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/FromStringShapeDeserializer.js
 var FromStringShapeDeserializer;
 var init_FromStringShapeDeserializer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/FromStringShapeDeserializer.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/FromStringShapeDeserializer.js"() {
     init_schema();
     init_serde();
     init_SerdeContext();
@@ -63634,10 +63701,10 @@ var init_FromStringShapeDeserializer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeDeserializer.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeDeserializer.js
 var HttpInterceptingShapeDeserializer;
 var init_HttpInterceptingShapeDeserializer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeDeserializer.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeDeserializer.js"() {
     init_schema();
     init_serde();
     init_SerdeContext();
@@ -63682,10 +63749,10 @@ var init_HttpInterceptingShapeDeserializer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/ToStringShapeSerializer.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/ToStringShapeSerializer.js
 var ToStringShapeSerializer;
 var init_ToStringShapeSerializer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/ToStringShapeSerializer.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/ToStringShapeSerializer.js"() {
     init_schema();
     init_serde();
     init_SerdeContext();
@@ -63778,10 +63845,10 @@ var init_ToStringShapeSerializer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeSerializer.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeSerializer.js
 var HttpInterceptingShapeSerializer;
 var init_HttpInterceptingShapeSerializer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeSerializer.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/serde/HttpInterceptingShapeSerializer.js"() {
     init_schema();
     init_ToStringShapeSerializer();
     HttpInterceptingShapeSerializer = class {
@@ -63818,10 +63885,10 @@ var init_HttpInterceptingShapeSerializer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/Field.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/Field.js
 var import_types23, Field;
 var init_Field = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/Field.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/Field.js"() {
     import_types23 = __toESM(require_dist_cjs());
     Field = class {
       name;
@@ -63851,10 +63918,10 @@ var init_Field = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/Fields.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/Fields.js
 var Fields;
 var init_Fields = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/Fields.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/Fields.js"() {
     Fields = class {
       entries = {};
       encoding;
@@ -63878,10 +63945,10 @@ var init_Fields = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/extensions/httpExtensionConfiguration.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/extensions/httpExtensionConfiguration.js
 var getHttpHandlerExtensionConfiguration, resolveHttpHandlerRuntimeConfig;
 var init_httpExtensionConfiguration = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/extensions/httpExtensionConfiguration.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/protocol-http/extensions/httpExtensionConfiguration.js"() {
     getHttpHandlerExtensionConfiguration = (runtimeConfig) => {
       if (runtimeConfig.logger && runtimeConfig.logger.constructor?.name !== "NoOpLogger") {
         runtimeConfig.requestHandler?.updateHttpClientConfig?.(/* @__PURE__ */ Symbol.for("logger"), runtimeConfig.logger);
@@ -63909,7 +63976,7 @@ var init_httpExtensionConfiguration = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/middleware-content-length/contentLengthMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/middleware-content-length/contentLengthMiddleware.js
 function contentLengthMiddleware(bodyLengthChecker) {
   return (next) => async (args) => {
     const request = args.request;
@@ -63936,7 +64003,7 @@ function contentLengthMiddleware(bodyLengthChecker) {
 }
 var CONTENT_LENGTH_HEADER, contentLengthMiddlewareOptions, getContentLengthPlugin;
 var init_contentLengthMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/middleware-content-length/contentLengthMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/middleware-content-length/contentLengthMiddleware.js"() {
     init_transport();
     CONTENT_LENGTH_HEADER = "content-length";
     contentLengthMiddlewareOptions = {
@@ -63953,25 +64020,25 @@ var init_contentLengthMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/util-uri-escape/escape-uri.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/util-uri-escape/escape-uri.js
 var escapeUri, hexEncode;
 var init_escape_uri = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/util-uri-escape/escape-uri.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/util-uri-escape/escape-uri.js"() {
     escapeUri = (uri) => encodeURIComponent(uri).replace(/[!'()*]/g, hexEncode);
     hexEncode = (c5) => `%${c5.charCodeAt(0).toString(16).toUpperCase()}`;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/util-uri-escape/escape-uri-path.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/util-uri-escape/escape-uri-path.js
 var escapeUriPath;
 var init_escape_uri_path = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/util-uri-escape/escape-uri-path.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/util-uri-escape/escape-uri-path.js"() {
     init_escape_uri();
     escapeUriPath = (uri) => uri.split("/").map(escapeUri).join("/");
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/querystring-builder/buildQueryString.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/querystring-builder/buildQueryString.js
 function buildQueryString(query) {
   const parts = [];
   for (let key2 of Object.keys(query).sort()) {
@@ -63992,12 +64059,12 @@ function buildQueryString(query) {
   return parts.join("&");
 }
 var init_buildQueryString = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/querystring-builder/buildQueryString.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/querystring-builder/buildQueryString.js"() {
     init_escape_uri();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/index.js
 var protocols_exports = {};
 __export(protocols_exports, {
   Field: () => Field,
@@ -64031,7 +64098,7 @@ __export(protocols_exports, {
   resolvedPath: () => resolvedPath
 });
 var init_protocols = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/protocols/index.js"() {
     init_collect_stream_body();
     init_extended_encode_uri_component();
     init_HttpBindingProtocol();
@@ -64060,10 +64127,10 @@ var init_protocols = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/constants.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/constants.js
 var CLOCK_SKEW_ERROR_CODES, THROTTLING_ERROR_CODES, TRANSIENT_ERROR_CODES, TRANSIENT_ERROR_STATUS_CODES, NODEJS_TIMEOUT_ERROR_CODES, NODEJS_NETWORK_ERROR_CODES;
 var init_constants4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/constants.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/constants.js"() {
     CLOCK_SKEW_ERROR_CODES = [
       "AccessDeniedException",
       "AuthFailure",
@@ -64096,13 +64163,13 @@ var init_constants4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/service-error-classification.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/service-error-classification.js
 function isNodeJsHttp2TransientError(error2) {
   return error2.code === "ERR_HTTP2_STREAM_ERROR" && error2.message.includes("NGHTTP2_REFUSED_STREAM");
 }
 var isRetryableByTrait, isClockSkewError, isClockSkewCorrectedError, isBrowserNetworkError, isThrottlingError, isTransientError, isServerError;
 var init_service_error_classification = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/service-error-classification.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/service-error-classification/service-error-classification.js"() {
     init_constants4();
     isRetryableByTrait = (error2) => error2?.$retryable !== void 0;
     isClockSkewError = (error2) => CLOCK_SKEW_ERROR_CODES.includes(error2.name);
@@ -64136,10 +64203,10 @@ var init_service_error_classification = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/constants.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/constants.js
 var DEFAULT_RETRY_DELAY_BASE, MAXIMUM_RETRY_DELAY, THROTTLING_RETRY_DELAY_BASE, INITIAL_RETRY_TOKENS, RETRY_COST, TIMEOUT_RETRY_COST, NO_RETRY_INCREMENT, INVOCATION_ID_HEADER, REQUEST_HEADER;
 var init_constants5 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/constants.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/constants.js"() {
     DEFAULT_RETRY_DELAY_BASE = 100;
     MAXIMUM_RETRY_DELAY = 20 * 1e3;
     THROTTLING_RETRY_DELAY_BASE = 500;
@@ -64152,7 +64219,7 @@ var init_constants5 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/parseRetryAfterHeader.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/parseRetryAfterHeader.js
 function parseRetryAfterHeader(response, logger2) {
   if (!HttpResponse.isInstance(response)) {
     return;
@@ -64198,17 +64265,17 @@ function getRetryAfterHint(response, logger2) {
   return parseRetryAfterHeader(response, logger2);
 }
 var init_parseRetryAfterHeader = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/parseRetryAfterHeader.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/parseRetryAfterHeader.js"() {
     init_transport();
     init_protocols();
     init_serde();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/util.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/util.js
 var asSdkError;
 var init_util2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/util.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/util.js"() {
     asSdkError = (error2) => {
       if (error2 instanceof Error)
         return error2;
@@ -64221,7 +64288,7 @@ var init_util2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retryMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retryMiddleware.js
 function bindRetryMiddleware(isStreamingPayload2) {
   return (options) => (next, context) => async (args) => {
     let retryStrategy = await options.retryStrategy();
@@ -64291,7 +64358,7 @@ function bindGetRetryPlugin(isStreamingPayload2) {
 }
 var cooldown, isRetryStrategyV2, getRetryErrorInfo, getRetryErrorType, retryMiddlewareOptions;
 var init_retryMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retryMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retryMiddleware.js"() {
     init_client4();
     init_protocols();
     init_serde();
@@ -64331,10 +64398,10 @@ var init_retryMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRateLimiter.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRateLimiter.js
 var DefaultRateLimiter;
 var init_DefaultRateLimiter = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRateLimiter.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRateLimiter.js"() {
     init_service_error_classification();
     DefaultRateLimiter = class _DefaultRateLimiter {
       static setTimeoutFn = (fn, delay) => setTimeout(fn, delay);
@@ -64448,10 +64515,10 @@ var init_DefaultRateLimiter = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/retries-2026-config.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/retries-2026-config.js
 var Retry;
 var init_retries_2026_config = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/retries-2026-config.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/retries-2026-config.js"() {
     Retry = class _Retry {
       static v2026 = typeof process !== "undefined" && process.env?.SMITHY_NEW_RETRIES_2026 === "true";
       static delay() {
@@ -64473,10 +64540,10 @@ var init_retries_2026_config = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryBackoffStrategy.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryBackoffStrategy.js
 var DefaultRetryBackoffStrategy;
 var init_DefaultRetryBackoffStrategy = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryBackoffStrategy.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryBackoffStrategy.js"() {
     init_constants5();
     init_retries_2026_config();
     DefaultRetryBackoffStrategy = class {
@@ -64494,10 +64561,10 @@ var init_DefaultRetryBackoffStrategy = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryToken.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryToken.js
 var DefaultRetryToken;
 var init_DefaultRetryToken = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryToken.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/DefaultRetryToken.js"() {
     init_constants5();
     DefaultRetryToken = class {
       delay;
@@ -64529,10 +64596,10 @@ var init_DefaultRetryToken = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/config.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/config.js
 var RETRY_MODES, DEFAULT_MAX_ATTEMPTS, DEFAULT_RETRY_MODE;
 var init_config4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/config.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/config.js"() {
     (function(RETRY_MODES2) {
       RETRY_MODES2["STANDARD"] = "standard";
       RETRY_MODES2["ADAPTIVE"] = "adaptive";
@@ -64542,10 +64609,10 @@ var init_config4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/StandardRetryStrategy.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/StandardRetryStrategy.js
 var refusal, StandardRetryStrategy;
 var init_StandardRetryStrategy = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/StandardRetryStrategy.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/StandardRetryStrategy.js"() {
     init_DefaultRetryBackoffStrategy();
     init_DefaultRetryToken();
     init_config4();
@@ -64642,10 +64709,10 @@ var init_StandardRetryStrategy = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/AdaptiveRetryStrategy.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/AdaptiveRetryStrategy.js
 var AdaptiveRetryStrategy;
 var init_AdaptiveRetryStrategy = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/AdaptiveRetryStrategy.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/AdaptiveRetryStrategy.js"() {
     init_DefaultRateLimiter();
     init_StandardRetryStrategy();
     init_config4();
@@ -64683,10 +64750,10 @@ var init_AdaptiveRetryStrategy = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/ConfiguredRetryStrategy.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/ConfiguredRetryStrategy.js
 var ConfiguredRetryStrategy;
 var init_ConfiguredRetryStrategy = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/ConfiguredRetryStrategy.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/util-retry/ConfiguredRetryStrategy.js"() {
     init_StandardRetryStrategy();
     init_retries_2026_config();
     ConfiguredRetryStrategy = class extends StandardRetryStrategy {
@@ -64707,10 +64774,10 @@ var init_ConfiguredRetryStrategy = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/defaultRetryQuota.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/defaultRetryQuota.js
 var getDefaultRetryQuota;
 var init_defaultRetryQuota = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/defaultRetryQuota.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/defaultRetryQuota.js"() {
     init_constants5();
     getDefaultRetryQuota = (initialRetryTokens, options) => {
       const MAX_CAPACITY = initialRetryTokens;
@@ -64741,19 +64808,19 @@ var init_defaultRetryQuota = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/delayDecider.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/delayDecider.js
 var defaultDelayDecider;
 var init_delayDecider = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/delayDecider.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/delayDecider.js"() {
     init_constants5();
     defaultDelayDecider = (delayBase, attempts) => Math.floor(Math.min(MAXIMUM_RETRY_DELAY, Math.random() * 2 ** attempts * delayBase));
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/retryDecider.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/retryDecider.js
 var defaultRetryDecider;
 var init_retryDecider = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/retryDecider.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/retryDecider.js"() {
     init_service_error_classification();
     defaultRetryDecider = (error2) => {
       if (!error2) {
@@ -64764,10 +64831,10 @@ var init_retryDecider = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/StandardRetryStrategy.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/StandardRetryStrategy.js
 var StandardRetryStrategy2, getDelayFromRetryAfterHeader;
 var init_StandardRetryStrategy2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/StandardRetryStrategy.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/StandardRetryStrategy.js"() {
     init_protocols();
     init_serde();
     init_service_error_classification();
@@ -64864,10 +64931,10 @@ var init_StandardRetryStrategy2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/AdaptiveRetryStrategy.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/AdaptiveRetryStrategy.js
 var AdaptiveRetryStrategy2;
 var init_AdaptiveRetryStrategy2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/AdaptiveRetryStrategy.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/retry-pre-sra-deprecated/AdaptiveRetryStrategy.js"() {
     init_DefaultRateLimiter();
     init_config4();
     init_StandardRetryStrategy2();
@@ -64893,10 +64960,10 @@ var init_AdaptiveRetryStrategy2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/configurations.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/configurations.js
 var ENV_MAX_ATTEMPTS, CONFIG_MAX_ATTEMPTS, NODE_MAX_ATTEMPT_CONFIG_OPTIONS, resolveRetryConfig, ENV_RETRY_MODE, CONFIG_RETRY_MODE, NODE_RETRY_MODE_CONFIG_OPTIONS;
 var init_configurations = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/configurations.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/configurations.js"() {
     init_client4();
     init_AdaptiveRetryStrategy();
     init_StandardRetryStrategy();
@@ -64961,10 +65028,10 @@ var init_configurations = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/omitRetryHeadersMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/omitRetryHeadersMiddleware.js
 var omitRetryHeadersMiddleware, omitRetryHeadersMiddlewareOptions, getOmitRetryHeadersPlugin;
 var init_omitRetryHeadersMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/omitRetryHeadersMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/middleware-retry/omitRetryHeadersMiddleware.js"() {
     init_protocols();
     init_constants5();
     omitRetryHeadersMiddleware = () => (next) => async (args) => {
@@ -64990,7 +65057,7 @@ var init_omitRetryHeadersMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/index.js
 var retry_exports = {};
 __export(retry_exports, {
   AdaptiveRetryStrategy: () => AdaptiveRetryStrategy,
@@ -65039,7 +65106,7 @@ __export(retry_exports, {
 });
 var retryMiddleware, getRetryPlugin;
 var init_retry2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/retry/index.js"() {
     init_isStreamingPayload();
     init_retryMiddleware();
     init_service_error_classification();
@@ -65063,7 +65130,7 @@ var init_retry2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setFeature.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setFeature.js
 function setFeature2(context, feature, value) {
   if (!context.__aws_sdk_context) {
     context.__aws_sdk_context = {
@@ -65075,13 +65142,13 @@ function setFeature2(context, feature, value) {
   context.__aws_sdk_context.features[feature] = value;
 }
 var init_setFeature = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setFeature.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setFeature.js"() {
     init_retry2();
     Retry.v2026 ||= typeof process === "object" && process.env?.AWS_NEW_RETRIES_2026 === "true";
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setTokenFeature.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setTokenFeature.js
 function setTokenFeature(token, feature, value) {
   if (!token.$source) {
     token.$source = {};
@@ -65090,17 +65157,17 @@ function setTokenFeature(token, feature, value) {
   return token;
 }
 var init_setTokenFeature = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setTokenFeature.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/setTokenFeature.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-host-header/hostHeaderMiddleware.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-host-header/hostHeaderMiddleware.js
 function resolveHostHeaderConfig(input) {
   return input;
 }
 var hostHeaderMiddleware, hostHeaderMiddlewareOptions, getHostHeaderPlugin;
 var init_hostHeaderMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-host-header/hostHeaderMiddleware.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-host-header/hostHeaderMiddleware.js"() {
     init_protocols();
     hostHeaderMiddleware = (options) => (next) => async (args) => {
       if (!HttpRequest.isInstance(args.request))
@@ -65133,10 +65200,10 @@ var init_hostHeaderMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-logger/loggerMiddleware.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-logger/loggerMiddleware.js
 var loggerMiddleware, loggerMiddlewareOptions, getLoggerPlugin;
 var init_loggerMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-logger/loggerMiddleware.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-logger/loggerMiddleware.js"() {
     loggerMiddleware = () => (next, context) => async (args) => {
       try {
         const response = await next(args);
@@ -65181,10 +65248,10 @@ var init_loggerMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/configuration.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/configuration.js
 var recursionDetectionMiddlewareOptions;
 var init_configuration = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/configuration.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/configuration.js"() {
     recursionDetectionMiddlewareOptions = {
       step: "build",
       tags: ["RECURSION_DETECTION", "TRACE_CONTEXT_PROPAGATION"],
@@ -65195,10 +65262,10 @@ var init_configuration = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws/lambda-invoke-store/dist-es/invoke-store.js
+// ../dashboard/backend/node_modules/@aws/lambda-invoke-store/dist-es/invoke-store.js
 var PROTECTED_KEYS, NO_GLOBAL_AWS_LAMBDA, InvokeStoreBase, InvokeStoreSingle, InvokeStoreMulti, InvokeStore;
 var init_invoke_store = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws/lambda-invoke-store/dist-es/invoke-store.js"() {
+  "../dashboard/backend/node_modules/@aws/lambda-invoke-store/dist-es/invoke-store.js"() {
     PROTECTED_KEYS = {
       REQUEST_ID: /* @__PURE__ */ Symbol.for("_AWS_LAMBDA_REQUEST_ID"),
       X_RAY_TRACE_ID: /* @__PURE__ */ Symbol.for("_AWS_LAMBDA_X_RAY_TRACE_ID"),
@@ -65322,7 +65389,7 @@ var init_invoke_store = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/recursionDetectionMiddleware.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/recursionDetectionMiddleware.js
 function sanitizeTraceHeaders(headers) {
   for (const header of Object.keys(headers)) {
     const lower = header.toLowerCase();
@@ -65334,7 +65401,7 @@ function sanitizeTraceHeaders(headers) {
 }
 var AWS_LAMBDA_FUNCTION_NAME, _X_AMZN_TRACE_ID, X_AMZN_TRACE_ID, TRACEPARENT, TRACESTATE, BAGGAGE, recursionDetectionMiddleware;
 var init_recursionDetectionMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/recursionDetectionMiddleware.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/recursionDetectionMiddleware.js"() {
     init_invoke_store();
     init_protocols();
     AWS_LAMBDA_FUNCTION_NAME = "AWS_LAMBDA_FUNCTION_NAME";
@@ -65386,10 +65453,10 @@ var init_recursionDetectionMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/getRecursionDetectionPlugin.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/getRecursionDetectionPlugin.js
 var getRecursionDetectionPlugin;
 var init_getRecursionDetectionPlugin = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/getRecursionDetectionPlugin.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-recursion-detection/getRecursionDetectionPlugin.js"() {
     init_configuration();
     init_recursionDetectionMiddleware();
     getRecursionDetectionPlugin = (options) => ({
@@ -65400,10 +65467,10 @@ var init_getRecursionDetectionPlugin = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/resolveAuthOptions.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/resolveAuthOptions.js
 var resolveAuthOptions;
 var init_resolveAuthOptions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/resolveAuthOptions.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/resolveAuthOptions.js"() {
     resolveAuthOptions = (candidateAuthOptions, authSchemePreference) => {
       if (!authSchemePreference || authSchemePreference.length === 0) {
         return candidateAuthOptions;
@@ -65427,7 +65494,7 @@ var init_resolveAuthOptions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/httpAuthSchemeMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/httpAuthSchemeMiddleware.js
 function convertHttpAuthSchemesToMap(httpAuthSchemes) {
   const map3 = /* @__PURE__ */ new Map();
   for (const scheme of httpAuthSchemes) {
@@ -65437,7 +65504,7 @@ function convertHttpAuthSchemesToMap(httpAuthSchemes) {
 }
 var httpAuthSchemeMiddleware;
 var init_httpAuthSchemeMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/httpAuthSchemeMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/httpAuthSchemeMiddleware.js"() {
     init_transport();
     init_resolveAuthOptions();
     httpAuthSchemeMiddleware = (config2, mwOptions) => (next, context) => async (args) => {
@@ -65476,10 +65543,10 @@ var init_httpAuthSchemeMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/getHttpAuthSchemeEndpointRuleSetPlugin.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/getHttpAuthSchemeEndpointRuleSetPlugin.js
 var httpAuthSchemeEndpointRuleSetMiddlewareOptions, getHttpAuthSchemeEndpointRuleSetPlugin;
 var init_getHttpAuthSchemeEndpointRuleSetPlugin = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/getHttpAuthSchemeEndpointRuleSetPlugin.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/getHttpAuthSchemeEndpointRuleSetPlugin.js"() {
     init_httpAuthSchemeMiddleware();
     httpAuthSchemeEndpointRuleSetMiddlewareOptions = {
       step: "serialize",
@@ -65500,10 +65567,10 @@ var init_getHttpAuthSchemeEndpointRuleSetPlugin = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/getHttpAuthSchemePlugin.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/getHttpAuthSchemePlugin.js
 var httpAuthSchemeMiddlewareOptions, getHttpAuthSchemePlugin;
 var init_getHttpAuthSchemePlugin = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/getHttpAuthSchemePlugin.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/getHttpAuthSchemePlugin.js"() {
     init_httpAuthSchemeMiddleware();
     httpAuthSchemeMiddlewareOptions = {
       step: "serialize",
@@ -65524,19 +65591,19 @@ var init_getHttpAuthSchemePlugin = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/index.js
 var init_middleware_http_auth_scheme = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-auth-scheme/index.js"() {
     init_httpAuthSchemeMiddleware();
     init_getHttpAuthSchemeEndpointRuleSetPlugin();
     init_getHttpAuthSchemePlugin();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/httpSigningMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/httpSigningMiddleware.js
 var defaultErrorHandler, defaultSuccessHandler, httpSigningMiddleware;
 var init_httpSigningMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/httpSigningMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/httpSigningMiddleware.js"() {
     init_protocols();
     init_transport();
     defaultErrorHandler = (signingProperties) => (error2) => {
@@ -65564,10 +65631,10 @@ var init_httpSigningMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/getHttpSigningMiddleware.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/getHttpSigningMiddleware.js
 var httpSigningMiddlewareOptions, getHttpSigningPlugin;
 var init_getHttpSigningMiddleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/getHttpSigningMiddleware.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/getHttpSigningMiddleware.js"() {
     init_httpSigningMiddleware();
     httpSigningMiddlewareOptions = {
       step: "finalizeRequest",
@@ -65586,18 +65653,18 @@ var init_getHttpSigningMiddleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/index.js
 var init_middleware_http_signing = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/middleware-http-signing/index.js"() {
     init_httpSigningMiddleware();
     init_getHttpSigningMiddleware();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/normalizeProvider.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/normalizeProvider.js
 var normalizeProvider2;
 var init_normalizeProvider2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/normalizeProvider.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/normalizeProvider.js"() {
     normalizeProvider2 = (input) => {
       if (typeof input === "function")
         return input;
@@ -65607,7 +65674,7 @@ var init_normalizeProvider2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/pagination/createPaginator.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/pagination/createPaginator.js
 function createPaginator(ClientCtor, CommandCtor, inputTokenName, outputTokenName, pageSizeTokenName) {
   return async function* paginateOperation(config2, input, ...additionalArguments) {
     const _input = input;
@@ -65634,7 +65701,7 @@ function createPaginator(ClientCtor, CommandCtor, inputTokenName, outputTokenNam
 }
 var makePagedClientRequest, get3;
 var init_createPaginator = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/pagination/createPaginator.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/pagination/createPaginator.js"() {
     makePagedClientRequest = async (CommandCtor, client, input, withCommand = (_) => _, ...args) => {
       let command5 = new CommandCtor(input);
       command5 = withCommand(command5) ?? command5;
@@ -65654,7 +65721,7 @@ var init_createPaginator = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/setFeature.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/setFeature.js
 function setFeature3(context, feature, value) {
   if (!context.__smithy_context) {
     context.__smithy_context = {
@@ -65666,14 +65733,14 @@ function setFeature3(context, feature, value) {
   context.__smithy_context.features[feature] = value;
 }
 var init_setFeature2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/setFeature.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/setFeature.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/DefaultIdentityProviderConfig.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/DefaultIdentityProviderConfig.js
 var DefaultIdentityProviderConfig;
 var init_DefaultIdentityProviderConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/DefaultIdentityProviderConfig.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/DefaultIdentityProviderConfig.js"() {
     init_transport();
     DefaultIdentityProviderConfig = class {
       authSchemes = /* @__PURE__ */ new Map();
@@ -65694,10 +65761,10 @@ var init_DefaultIdentityProviderConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpApiKeyAuth.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpApiKeyAuth.js
 var import_types24, HttpApiKeyAuthSigner;
 var init_httpApiKeyAuth = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpApiKeyAuth.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpApiKeyAuth.js"() {
     init_protocols();
     import_types24 = __toESM(require_dist_cjs());
     HttpApiKeyAuthSigner = class {
@@ -65728,10 +65795,10 @@ var init_httpApiKeyAuth = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpBearerAuth.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpBearerAuth.js
 var HttpBearerAuthSigner;
 var init_httpBearerAuth = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpBearerAuth.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/httpBearerAuth.js"() {
     init_protocols();
     HttpBearerAuthSigner = class {
       async sign(httpRequest, identity, signingProperties) {
@@ -65746,10 +65813,10 @@ var init_httpBearerAuth = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/noAuth.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/noAuth.js
 var NoAuthSigner;
 var init_noAuth = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/noAuth.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/noAuth.js"() {
     NoAuthSigner = class {
       async sign(httpRequest, identity, signingProperties) {
         return httpRequest;
@@ -65758,19 +65825,19 @@ var init_noAuth = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/index.js
 var init_httpAuthSchemes = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/httpAuthSchemes/index.js"() {
     init_httpApiKeyAuth();
     init_httpBearerAuth();
     init_noAuth();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/memoizeIdentityProvider.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/memoizeIdentityProvider.js
 var createIsIdentityExpiredFunction, EXPIRATION_MS, isIdentityExpired, doesIdentityRequireRefresh, memoizeIdentityProvider;
 var init_memoizeIdentityProvider = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/memoizeIdentityProvider.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/memoizeIdentityProvider.js"() {
     createIsIdentityExpiredFunction = (expirationMs) => function isIdentityExpired2(identity) {
       return doesIdentityRequireRefresh(identity) && identity.expiration.getTime() - Date.now() < expirationMs;
     };
@@ -65828,16 +65895,16 @@ var init_memoizeIdentityProvider = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/index.js
 var init_util_identity_and_auth = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/legacy-root-exports/util-identity-and-auth/index.js"() {
     init_DefaultIdentityProviderConfig();
     init_httpAuthSchemes();
     init_memoizeIdentityProvider();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/index.js
 var dist_es_exports = {};
 __export(dist_es_exports, {
   DefaultIdentityProviderConfig: () => DefaultIdentityProviderConfig,
@@ -65864,7 +65931,7 @@ __export(dist_es_exports, {
   setFeature: () => setFeature3
 });
 var init_dist_es = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/index.js"() {
     init_transport();
     init_middleware_http_auth_scheme();
     init_middleware_http_signing();
@@ -65876,7 +65943,7 @@ var init_dist_es = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/configurations.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/configurations.js
 function isValidUserAgentAppId(appId) {
   if (appId === void 0) {
     return true;
@@ -65904,16 +65971,16 @@ function resolveUserAgentConfig(input) {
 }
 var DEFAULT_UA_APP_ID;
 var init_configurations2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/configurations.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/configurations.js"() {
     init_dist_es();
     DEFAULT_UA_APP_ID = void 0;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/partitions.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/partitions.js
 var partitionsInfo;
 var init_partitions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/partitions.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/partitions.js"() {
     partitionsInfo = {
       "partitions": [
         {
@@ -66193,10 +66260,10 @@ var init_partitions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/partition.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/partition.js
 var selectedPartitionsInfo, selectedUserAgentPrefix, partition, setPartitionInfo, useDefaultPartitionInfo, getUserAgentPrefix;
 var init_partition = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/partition.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/partition.js"() {
     init_partitions();
     selectedPartitionsInfo = partitionsInfo;
     selectedUserAgentPrefix = "";
@@ -66240,7 +66307,7 @@ var init_partition = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/check-features.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/check-features.js
 async function checkFeatures(context, config2, args) {
   const request = args.request;
   if (request?.headers?.["smithy-protocol"] === "rpc-v2-cbor") {
@@ -66289,17 +66356,17 @@ async function checkFeatures(context, config2, args) {
 }
 var ACCOUNT_ID_ENDPOINT_REGEX;
 var init_check_features = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/check-features.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/check-features.js"() {
     init_retry2();
     init_setFeature();
     ACCOUNT_ID_ENDPOINT_REGEX = /\d{12}\.ddb/;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/constants.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/constants.js
 var USER_AGENT2, X_AMZ_USER_AGENT, SPACE, UA_NAME_SEPARATOR, UA_NAME_ESCAPE_REGEX, UA_VALUE_ESCAPE_REGEX, UA_ESCAPE_CHAR;
 var init_constants6 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/constants.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/constants.js"() {
     USER_AGENT2 = "user-agent";
     X_AMZ_USER_AGENT = "x-amz-user-agent";
     SPACE = " ";
@@ -66310,7 +66377,7 @@ var init_constants6 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/encode-features.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/encode-features.js
 function encodeFeatures(features) {
   let buffer = "";
   for (const key2 in features) {
@@ -66329,15 +66396,15 @@ function encodeFeatures(features) {
 }
 var BYTE_LIMIT;
 var init_encode_features = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/encode-features.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/encode-features.js"() {
     BYTE_LIMIT = 1024;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/user-agent-middleware.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/user-agent-middleware.js
 var userAgentMiddleware, escapeUserAgent, getUserAgentMiddlewareOptions, getUserAgentPlugin;
 var init_user_agent_middleware = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/user-agent-middleware.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/middleware-user-agent/user-agent-middleware.js"() {
     init_protocols();
     init_partition();
     init_check_features();
@@ -66413,11 +66480,11 @@ var init_user_agent_middleware = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getRuntimeUserAgentPair.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getRuntimeUserAgentPair.js
 import { versions } from "node:process";
 var getRuntimeUserAgentPair;
 var init_getRuntimeUserAgentPair = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getRuntimeUserAgentPair.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/getRuntimeUserAgentPair.js"() {
     getRuntimeUserAgentPair = () => {
       const runtimesToCheck = ["deno", "bun", "llrt"];
       for (const runtime of runtimesToCheck) {
@@ -66430,20 +66497,20 @@ var init_getRuntimeUserAgentPair = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/crt-availability.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/crt-availability.js
 var crtAvailability;
 var init_crt_availability = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/crt-availability.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/crt-availability.js"() {
     crtAvailability = {
       isCrtAvailable: false
     };
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/is-crt-available.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/is-crt-available.js
 var isCrtAvailable;
 var init_is_crt_available = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/is-crt-available.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/is-crt-available.js"() {
     init_crt_availability();
     isCrtAvailable = () => {
       if (crtAvailability.isCrtAvailable) {
@@ -66454,12 +66521,12 @@ var init_is_crt_available = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/defaultUserAgent.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/defaultUserAgent.js
 import { platform, release } from "node:os";
 import { env } from "node:process";
 var createDefaultUserAgentProvider, defaultUserAgent;
 var init_defaultUserAgent = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/defaultUserAgent.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/defaultUserAgent.js"() {
     init_getRuntimeUserAgentPair();
     init_is_crt_available();
     init_crt_availability();
@@ -66492,10 +66559,10 @@ var init_defaultUserAgent = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/nodeAppIdConfigOptions.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/nodeAppIdConfigOptions.js
 var UA_APP_ID_ENV_NAME, UA_APP_ID_INI_NAME, UA_APP_ID_INI_NAME_DEPRECATED, NODE_APP_ID_CONFIG_OPTIONS;
 var init_nodeAppIdConfigOptions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/nodeAppIdConfigOptions.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-node/nodeAppIdConfigOptions.js"() {
     init_configurations2();
     UA_APP_ID_ENV_NAME = "AWS_SDK_UA_APP_ID";
     UA_APP_ID_INI_NAME = "sdk_ua_app_id";
@@ -66508,9 +66575,9 @@ var init_nodeAppIdConfigOptions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/bowser/es5.js
+// ../dashboard/backend/node_modules/bowser/es5.js
 var require_es5 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/bowser/es5.js"(exports, module) {
+  "../dashboard/backend/node_modules/bowser/es5.js"(exports, module) {
     !(function(e5, t) {
       "object" == typeof exports && "object" == typeof module ? module.exports = t() : "function" == typeof define && define.amd ? define([], t) : "object" == typeof exports ? exports.bowser = t() : e5.bowser = t();
     })(exports, (function() {
@@ -67324,10 +67391,10 @@ var require_es5 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/createUserAgentStringParsingProvider.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/createUserAgentStringParsingProvider.js
 var createUserAgentStringParsingProvider;
 var init_createUserAgentStringParsingProvider = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/createUserAgentStringParsingProvider.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/createUserAgentStringParsingProvider.js"() {
     createUserAgentStringParsingProvider = ({ serviceId, clientVersion }) => async (config2) => {
       const module = await Promise.resolve().then(() => __toESM(require_es5()));
       const parse2 = module.parse ?? module.default.parse ?? (() => "");
@@ -67351,10 +67418,10 @@ var init_createUserAgentStringParsingProvider = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/defaultUserAgent.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/defaultUserAgent.js
 var fallback;
 var init_defaultUserAgent2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/defaultUserAgent.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/defaultUserAgent.js"() {
     fallback = {
       os(ua) {
         if (/iPhone|iPad|iPod/.test(ua))
@@ -67384,17 +67451,17 @@ var init_defaultUserAgent2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/isIpAddress.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/isIpAddress.js
 var init_isIpAddress2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/isIpAddress.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/isIpAddress.js"() {
     init_endpoints();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/isVirtualHostableS3Bucket.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/isVirtualHostableS3Bucket.js
 var isVirtualHostableS3Bucket;
 var init_isVirtualHostableS3Bucket = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/isVirtualHostableS3Bucket.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/isVirtualHostableS3Bucket.js"() {
     init_endpoints();
     init_isIpAddress2();
     isVirtualHostableS3Bucket = (value, allowSubDomains = false) => {
@@ -67423,10 +67490,10 @@ var init_isVirtualHostableS3Bucket = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/parseArn.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/parseArn.js
 var ARN_DELIMITER, RESOURCE_DELIMITER, parseArn;
 var init_parseArn = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/parseArn.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/lib/aws/parseArn.js"() {
     ARN_DELIMITER = ":";
     RESOURCE_DELIMITER = "/";
     parseArn = (value) => {
@@ -67448,10 +67515,10 @@ var init_parseArn = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/aws.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/aws.js
 var awsEndpointFunctions;
 var init_aws = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/aws.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/aws.js"() {
     init_endpoints();
     init_isVirtualHostableS3Bucket();
     init_parseArn();
@@ -67465,17 +67532,17 @@ var init_aws = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/resolveEndpoint.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/resolveEndpoint.js
 var init_resolveEndpoint2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/resolveEndpoint.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/resolveEndpoint.js"() {
     init_endpoints();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/resolveDefaultAwsRegionalEndpointsConfig.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/resolveDefaultAwsRegionalEndpointsConfig.js
 var resolveDefaultAwsRegionalEndpointsConfig, toEndpointV12;
 var init_resolveDefaultAwsRegionalEndpointsConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/resolveDefaultAwsRegionalEndpointsConfig.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/resolveDefaultAwsRegionalEndpointsConfig.js"() {
     init_protocols();
     resolveDefaultAwsRegionalEndpointsConfig = (input) => {
       if (typeof input.endpointProvider !== "function") {
@@ -67498,22 +67565,22 @@ var init_resolveDefaultAwsRegionalEndpointsConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/types/EndpointError.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/types/EndpointError.js
 var init_EndpointError2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/types/EndpointError.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/util-endpoints/types/EndpointError.js"() {
     init_endpoints();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/awsRegionConfig.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/awsRegionConfig.js
 var init_awsRegionConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/awsRegionConfig.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/awsRegionConfig.js"() {
     init_config3();
     init_config3();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/stsRegionDefaultResolver.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/stsRegionDefaultResolver.js
 function stsRegionDefaultResolver(loaderConfig = {}) {
   return loadConfig({
     ...NODE_REGION_CONFIG_OPTIONS,
@@ -67527,7 +67594,7 @@ function stsRegionDefaultResolver(loaderConfig = {}) {
 }
 var warning;
 var init_stsRegionDefaultResolver = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/stsRegionDefaultResolver.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/stsRegionDefaultResolver.js"() {
     init_config3();
     warning = {
       silence: false
@@ -67535,10 +67602,10 @@ var init_stsRegionDefaultResolver = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/extensions.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/extensions.js
 var getAwsRegionExtensionConfiguration, resolveAwsRegionExtensionConfiguration;
 var init_extensions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/extensions.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/region-config-resolver/extensions.js"() {
     getAwsRegionExtensionConfiguration = (runtimeConfig) => {
       return {
         setRegion(region) {
@@ -67557,7 +67624,7 @@ var init_extensions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/index.js
 var client_exports2 = {};
 __export(client_exports2, {
   DEFAULT_UA_APP_ID: () => DEFAULT_UA_APP_ID,
@@ -67612,7 +67679,7 @@ __export(client_exports2, {
   userAgentMiddleware: () => userAgentMiddleware
 });
 var init_client5 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/client/index.js"() {
     init_emitWarningIfUnsupportedVersion();
     init_longPollMiddleware();
     init_setCredentialFeature();
@@ -67643,28 +67710,28 @@ var init_client5 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getDateHeader.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getDateHeader.js
 var getDateHeader, getAgeHeader;
 var init_getDateHeader = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getDateHeader.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getDateHeader.js"() {
     init_protocols();
     getDateHeader = (response) => HttpResponse.isInstance(response) ? response.headers?.date ?? response.headers?.Date : void 0;
     getAgeHeader = (response) => HttpResponse.isInstance(response) ? response.headers?.age ?? response.headers?.Age : void 0;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getSkewCorrectedDate.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getSkewCorrectedDate.js
 var getSkewCorrectedDate;
 var init_getSkewCorrectedDate = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getSkewCorrectedDate.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getSkewCorrectedDate.js"() {
     getSkewCorrectedDate = (systemClockOffset) => new Date(Date.now() + systemClockOffset);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getUpdatedSystemClockOffset.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getUpdatedSystemClockOffset.js
 var getUpdatedSystemClockOffset;
 var init_getUpdatedSystemClockOffset = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getUpdatedSystemClockOffset.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getUpdatedSystemClockOffset.js"() {
     getUpdatedSystemClockOffset = (clockTime, currentSystemClockOffset, timeRequestSent, ageHeader) => {
       if (ageHeader !== void 0) {
         return currentSystemClockOffset;
@@ -67680,19 +67747,19 @@ var init_getUpdatedSystemClockOffset = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/index.js
 var init_utils3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/index.js"() {
     init_getDateHeader();
     init_getSkewCorrectedDate();
     init_getUpdatedSystemClockOffset();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4Signer.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4Signer.js
 var throwSigningPropertyError, validateSigningProperties, AwsSdkSigV4Signer, AWSSDKSigV4Signer;
 var init_AwsSdkSigV4Signer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4Signer.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4Signer.js"() {
     init_protocols();
     init_utils3();
     throwSigningPropertyError = (name, property) => {
@@ -67787,10 +67854,10 @@ var init_AwsSdkSigV4Signer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4ASigner.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4ASigner.js
 var AwsSdkSigV4ASigner;
 var init_AwsSdkSigV4ASigner = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4ASigner.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/AwsSdkSigV4ASigner.js"() {
     init_protocols();
     init_utils3();
     init_AwsSdkSigV4Signer();
@@ -67819,26 +67886,26 @@ var init_AwsSdkSigV4ASigner = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getArrayForCommaSeparatedString.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getArrayForCommaSeparatedString.js
 var getArrayForCommaSeparatedString;
 var init_getArrayForCommaSeparatedString = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getArrayForCommaSeparatedString.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getArrayForCommaSeparatedString.js"() {
     getArrayForCommaSeparatedString = (str) => typeof str === "string" && str.length > 0 ? str.split(",").map((item) => item.trim()) : [];
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getBearerTokenEnvKey.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getBearerTokenEnvKey.js
 var getBearerTokenEnvKey;
 var init_getBearerTokenEnvKey = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getBearerTokenEnvKey.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/utils/getBearerTokenEnvKey.js"() {
     getBearerTokenEnvKey = (signingName) => `AWS_BEARER_TOKEN_${signingName.replace(/[\s-]/g, "_").toUpperCase()}`;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/NODE_AUTH_SCHEME_PREFERENCE_OPTIONS.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/NODE_AUTH_SCHEME_PREFERENCE_OPTIONS.js
 var NODE_AUTH_SCHEME_PREFERENCE_ENV_KEY, NODE_AUTH_SCHEME_PREFERENCE_CONFIG_KEY, NODE_AUTH_SCHEME_PREFERENCE_OPTIONS;
 var init_NODE_AUTH_SCHEME_PREFERENCE_OPTIONS = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/NODE_AUTH_SCHEME_PREFERENCE_OPTIONS.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/NODE_AUTH_SCHEME_PREFERENCE_OPTIONS.js"() {
     init_getArrayForCommaSeparatedString();
     init_getBearerTokenEnvKey();
     NODE_AUTH_SCHEME_PREFERENCE_ENV_KEY = "AWS_AUTH_SCHEME_PREFERENCE";
@@ -67864,10 +67931,10 @@ var init_NODE_AUTH_SCHEME_PREFERENCE_OPTIONS = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4AConfig.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4AConfig.js
 var resolveAwsSdkSigV4AConfig, NODE_SIGV4A_CONFIG_OPTIONS;
 var init_resolveAwsSdkSigV4AConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4AConfig.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4AConfig.js"() {
     init_dist_es();
     init_config3();
     resolveAwsSdkSigV4AConfig = (config2) => {
@@ -67896,9 +67963,9 @@ var init_resolveAwsSdkSigV4AConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/signature-v4/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@smithy/signature-v4/dist-cjs/index.js
 var require_dist_cjs2 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/signature-v4/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@smithy/signature-v4/dist-cjs/index.js"(exports) {
     var { hasOwn: hasOwn2, fromUtf8: fromUtf83, fromHex: fromHex2, toHex: toHex2, toUint8Array: toUint8Array2, isArrayBuffer: isArrayBuffer2 } = (init_serde(), __toCommonJS(serde_exports));
     var { normalizeProvider: normalizeProvider3 } = (init_client4(), __toCommonJS(client_exports));
     var { escapeUri: escapeUri2, HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
@@ -68444,7 +68511,7 @@ ${toHex2(hashedRequest)}`;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4Config.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4Config.js
 function normalizeCredentialProvider(config2, { credentials, credentialDefaultProvider }) {
   let credentialsProvider;
   if (credentials) {
@@ -68478,7 +68545,7 @@ function bindCallerConfig(config2, credentialsProvider) {
 }
 var import_signature_v4, bindResolveAwsSdkSigV4Config;
 var init_resolveAwsSdkSigV4Config = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4Config.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4Config.js"() {
     init_client5();
     init_dist_es();
     import_signature_v4 = __toESM(require_dist_cjs2());
@@ -68582,9 +68649,9 @@ var init_resolveAwsSdkSigV4Config = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/index.js
 var init_aws_sdk = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/index.js"() {
     init_AwsSdkSigV4Signer();
     init_AwsSdkSigV4ASigner();
     init_NODE_AUTH_SCHEME_PREFERENCE_OPTIONS();
@@ -68593,10 +68660,10 @@ var init_aws_sdk = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/clock-skew-node-config.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/clock-skew-node-config.js
 var ENV_DISABLE_CLOCK_SKEW_CORRECTION, CONFIG_DISABLE_CLOCK_SKEW_CORRECTION, NODE_DISABLE_CLOCK_SKEW_CORRECTION_CONFIG_OPTIONS;
 var init_clock_skew_node_config = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/clock-skew-node-config.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/clock-skew-node-config.js"() {
     init_config3();
     ENV_DISABLE_CLOCK_SKEW_CORRECTION = "AWS_DISABLE_CLOCK_SKEW_CORRECTION";
     CONFIG_DISABLE_CLOCK_SKEW_CORRECTION = "disable_clock_skew_correction";
@@ -68608,17 +68675,17 @@ var init_clock_skew_node_config = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/clock-skew-defaults.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/clock-skew-defaults.js
 var DEFAULT_DISABLE_CLOCK_SKEW_CORRECTION;
 var init_clock_skew_defaults = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/clock-skew-defaults.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/clock-skew-defaults.js"() {
     init_config3();
     init_clock_skew_node_config();
     DEFAULT_DISABLE_CLOCK_SKEW_CORRECTION = loadConfig(NODE_DISABLE_CLOCK_SKEW_CORRECTION_CONFIG_OPTIONS);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/index.js
 var httpAuthSchemes_exports = {};
 __export(httpAuthSchemes_exports, {
   AWSSDKSigV4Signer: () => AWSSDKSigV4Signer,
@@ -68634,7 +68701,7 @@ __export(httpAuthSchemes_exports, {
 });
 var resolveAwsSdkSigV4Config, resolveAWSSDKSigV4Config;
 var init_httpAuthSchemes2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/index.js"() {
     init_aws_sdk();
     init_getBearerTokenEnvKey();
     init_aws_sdk();
@@ -68644,9 +68711,9 @@ var init_httpAuthSchemes2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-env/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/credential-provider-env/dist-cjs/index.js
 var require_dist_cjs3 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-env/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/credential-provider-env/dist-cjs/index.js"(exports) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client5(), __toCommonJS(client_exports2));
     var { CredentialsProviderError: CredentialsProviderError2 } = (init_config3(), __toCommonJS(config_exports));
     var ENV_KEY = "AWS_ACCESS_KEY_ID";
@@ -68687,9 +68754,9 @@ var require_dist_cjs3 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/credential-provider-imds/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@smithy/credential-provider-imds/dist-cjs/index.js
 var require_dist_cjs4 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/credential-provider-imds/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@smithy/credential-provider-imds/dist-cjs/index.js"(exports) {
     var { ProviderError: ProviderError2, CredentialsProviderError: CredentialsProviderError2, loadConfig: loadConfig2 } = (init_config3(), __toCommonJS(config_exports));
     var node_http = __require("node:http");
     var { parseUrl: parseUrl2 } = (init_protocols(), __toCommonJS(protocols_exports));
@@ -69031,9 +69098,9 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/node-http-handler/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@smithy/node-http-handler/dist-cjs/index.js
 var require_dist_cjs5 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/node-http-handler/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@smithy/node-http-handler/dist-cjs/index.js"(exports) {
     var { hasOwn: hasOwn2 } = (init_serde(), __toCommonJS(serde_exports));
     var { streamCollector: streamCollector7 } = (init_serde(), __toCommonJS(serde_exports));
     exports.streamCollector = streamCollector7;
@@ -69854,9 +69921,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-http/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/credential-provider-http/dist-cjs/index.js
 var require_dist_cjs6 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-http/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/credential-provider-http/dist-cjs/index.js"(exports) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client5(), __toCommonJS(client_exports2));
     var { CredentialsProviderError: CredentialsProviderError2 } = (init_config3(), __toCommonJS(config_exports));
     var { NodeHttpHandler } = require_dist_cjs5();
@@ -70013,7 +70080,7 @@ Set AWS_CONTAINER_CREDENTIALS_FULL_URI or AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/auth/httpAuthSchemeProvider.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/auth/httpAuthSchemeProvider.js
 function createAwsAuthSigv4HttpAuthOption(authParameters) {
   return {
     schemeId: "aws.auth#sigv4",
@@ -70036,7 +70103,7 @@ function createSmithyApiNoAuthHttpAuthOption(authParameters) {
 }
 var defaultSSOOIDCHttpAuthSchemeParametersProvider, defaultSSOOIDCHttpAuthSchemeProvider, resolveHttpAuthSchemeConfig;
 var init_httpAuthSchemeProvider = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/auth/httpAuthSchemeProvider.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/auth/httpAuthSchemeProvider.js"() {
     init_httpAuthSchemes2();
     init_client4();
     defaultSSOOIDCHttpAuthSchemeParametersProvider = async (config2, context, input) => {
@@ -70071,10 +70138,10 @@ var init_httpAuthSchemeProvider = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/EndpointParameters.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/EndpointParameters.js
 var resolveClientEndpointParameters, commonParams;
 var init_EndpointParameters = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/EndpointParameters.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/EndpointParameters.js"() {
     resolveClientEndpointParameters = (options) => {
       return Object.assign(options, {
         useDualstackEndpoint: options.useDualstackEndpoint ?? false,
@@ -70091,10 +70158,10 @@ var init_EndpointParameters = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/package.json
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/package.json
 var package_default;
 var init_package = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/package.json"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
       version: "3.997.46",
@@ -70219,10 +70286,10 @@ var init_package = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/cbor-types.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/cbor-types.js
 var majorUint64, majorNegativeInt64, majorUnstructuredByteString, majorUtf8String, majorList, majorMap, majorTag, majorSpecial, specialFalse, specialTrue, specialNull, specialUndefined, extendedOneByte, extendedFloat16, extendedFloat32, extendedFloat64, minorIndefinite, tagSymbol;
 var init_cbor_types = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/cbor-types.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/cbor-types.js"() {
     majorUint64 = 0;
     majorNegativeInt64 = 1;
     majorUnstructuredByteString = 2;
@@ -70244,10 +70311,10 @@ var init_cbor_types = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/parseCborBody.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/parseCborBody.js
 var loadSmithyRpcV2CborErrorCode;
 var init_parseCborBody = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/parseCborBody.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/parseCborBody.js"() {
     loadSmithyRpcV2CborErrorCode = (output, data) => {
       const sanitizeErrorCode2 = (rawValue) => {
         let cleanValue = rawValue;
@@ -70269,7 +70336,7 @@ var init_parseCborBody = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/codec-v2/CborShapeSerializer2.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/codec-v2/CborShapeSerializer2.js
 function loadCborStructIterator(ns) {
   const schema4 = ns.getSchema();
   const existing = schema4[CBOR_STRUCT_CACHE];
@@ -70830,7 +70897,7 @@ function writeTimestamp(date3) {
 }
 var CborShapeSerializer2, CBOR_STRUCT_CACHE, USE_BUFFER, textEncoder, INITIAL_BUFFER_SIZE, buf, view, cursor, STRING_CACHE_MAX, stringEncodeCache, encodeCacheEpoch, encodeCacheSaturated;
 var init_CborShapeSerializer2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/codec-v2/CborShapeSerializer2.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/codec-v2/CborShapeSerializer2.js"() {
     init_transport();
     init_protocols();
     init_schema();
@@ -70864,7 +70931,7 @@ var init_CborShapeSerializer2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/codec-v2/CborShapeDeserializer2.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/codec-v2/CborShapeDeserializer2.js
 function readValue(ns) {
   if (pos >= end) {
     throw new Error("unexpected end of CBOR payload.");
@@ -71467,7 +71534,7 @@ function transformObject(ns, value) {
 }
 var CborShapeDeserializer2, USE_BUFFER2, textDecoder, payload, isBuffer, dataView, pos, end, STRING_CACHE_SIZE, stringCache, stringCacheEpochs, cacheEpoch;
 var init_CborShapeDeserializer2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/codec-v2/CborShapeDeserializer2.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/codec-v2/CborShapeDeserializer2.js"() {
     init_transport();
     init_protocols();
     init_schema();
@@ -71502,10 +71569,10 @@ var init_CborShapeDeserializer2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/CborCodec.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/CborCodec.js
 var CborCodec;
 var init_CborCodec = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/CborCodec.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/CborCodec.js"() {
     init_protocols();
     init_CborShapeSerializer2();
     init_CborShapeDeserializer2();
@@ -71524,10 +71591,10 @@ var init_CborCodec = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/SmithyRpcV2CborProtocol.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/SmithyRpcV2CborProtocol.js
 var SmithyRpcV2CborProtocol;
 var init_SmithyRpcV2CborProtocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/SmithyRpcV2CborProtocol.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/SmithyRpcV2CborProtocol.js"() {
     init_protocols();
     init_schema();
     init_transport();
@@ -71627,18 +71694,18 @@ var init_SmithyRpcV2CborProtocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/index.js
+// ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/index.js
 var init_cbor = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/index.js"() {
+  "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/index.js"() {
     init_parseCborBody();
     init_SmithyRpcV2CborProtocol();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/ProtocolLib.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/ProtocolLib.js
 var ProtocolLib;
 var init_ProtocolLib = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/ProtocolLib.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/ProtocolLib.js"() {
     init_client4();
     init_schema();
     ProtocolLib = class {
@@ -71776,10 +71843,10 @@ var init_ProtocolLib = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/cbor/AwsSmithyRpcV2CborProtocol.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/cbor/AwsSmithyRpcV2CborProtocol.js
 var AwsSmithyRpcV2CborProtocol;
 var init_AwsSmithyRpcV2CborProtocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/cbor/AwsSmithyRpcV2CborProtocol.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/cbor/AwsSmithyRpcV2CborProtocol.js"() {
     init_cbor();
     init_schema();
     init_ProtocolLib();
@@ -71833,10 +71900,10 @@ var init_AwsSmithyRpcV2CborProtocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/ConfigurableSerdeContext.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/ConfigurableSerdeContext.js
 var SerdeContextConfig;
 var init_ConfigurableSerdeContext = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/ConfigurableSerdeContext.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/ConfigurableSerdeContext.js"() {
     SerdeContextConfig = class {
       serdeContext;
       setSerdeContext(serdeContext) {
@@ -71846,10 +71913,10 @@ var init_ConfigurableSerdeContext = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/UnionSerde.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/UnionSerde.js
 var UnionSerde;
 var init_UnionSerde = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/UnionSerde.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/UnionSerde.js"() {
     UnionSerde = class {
       from;
       to;
@@ -71879,7 +71946,7 @@ var init_UnionSerde = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/detectBufferParsing.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/detectBufferParsing.js
 function detectBufferParsing() {
   if (canParseBuffer === void 0) {
     try {
@@ -71897,11 +71964,11 @@ function detectBufferParsing() {
 }
 var canParseBuffer;
 var init_detectBufferParsing = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/detectBufferParsing.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/detectBufferParsing.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/jsonReviver.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/jsonReviver.js
 function jsonReviver(key2, value, context) {
   if (context?.source) {
     const numericString = context.source;
@@ -72016,12 +72083,12 @@ function expandExponentToBigInt(s2) {
   return negative ? -result : result;
 }
 var init_jsonReviver = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/jsonReviver.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/jsonReviver.js"() {
     init_serde();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/needsReviver.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/needsReviver.js
 function needsReviver(schema4) {
   const ns = NormalizedSchema.of(schema4);
   const raw = ns.getSchema();
@@ -72061,23 +72128,23 @@ function _check(ns, seen) {
 }
 var REVIVER_SYMBOL;
 var init_needsReviver = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/needsReviver.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/needsReviver.js"() {
     init_schema();
     REVIVER_SYMBOL = /* @__PURE__ */ Symbol.for("@aws-sdk/reviver");
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/common.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/common.js
 var collectBodyString;
 var init_common = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/common.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/common.js"() {
     init_protocols();
     init_serde();
     collectBodyString = (streamBody, context) => collectBody(streamBody, context).then((body) => (context?.utf8Encoder ?? toUtf8)(body));
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/parseJsonBody.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/parseJsonBody.js
 async function parseJsonBody(streamBody, context, schema4) {
   let parsingInput;
   if (detectBufferParsing() && typeof streamBody?.[Symbol.asyncIterator] === "function") {
@@ -72110,7 +72177,7 @@ async function parseJsonBody(streamBody, context, schema4) {
 }
 var parseJsonErrorBody, findKey, sanitizeErrorCode, loadRestJsonErrorCode, loadJsonRpcErrorCode, loadErrorCode;
 var init_parseJsonBody = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/parseJsonBody.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/parseJsonBody.js"() {
     init_protocols();
     init_common();
     init_detectBufferParsing();
@@ -72171,19 +72238,19 @@ var init_parseJsonBody = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/writeKey.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/writeKey.js
 function writeKey(obj) {
   Object.defineProperty(obj, "__proto__", { value: void 0, writable: true, enumerable: true, configurable: true });
 }
 var init_writeKey = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/writeKey.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/writeKey.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonShapeDeserializer2.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonShapeDeserializer2.js
 var JsonShapeDeserializer2;
 var init_JsonShapeDeserializer2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonShapeDeserializer2.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonShapeDeserializer2.js"() {
     init_protocols();
     init_schema();
     init_serde();
@@ -72383,10 +72450,10 @@ var init_JsonShapeDeserializer2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonBytesStringAdapter.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonBytesStringAdapter.js
 var JsonBytesStringAdapter, warned;
 var init_JsonBytesStringAdapter = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonBytesStringAdapter.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonBytesStringAdapter.js"() {
     init_serde();
     JsonBytesStringAdapter = class _JsonBytesStringAdapter extends Uint8Array {
       string = null;
@@ -72492,13 +72559,13 @@ var init_JsonBytesStringAdapter = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonShapeSerializer2.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonShapeSerializer2.js
 function alloc(size) {
   return JsonBytesStringAdapter.allocUnsafe(size);
 }
 var encoder2, OPEN_BRACE, CLOSE_BRACE, OPEN_BRACKET, CLOSE_BRACKET, QUOTE, COLON, COMMA, BACKSLASH, TRUE, FALSE, NULL, ESCAPE_TABLE, INITIAL_BUFFER_SIZE2, JsonShapeSerializer2;
 var init_JsonShapeSerializer2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonShapeSerializer2.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonShapeSerializer2.js"() {
     init_protocols();
     init_schema();
     init_serde();
@@ -73003,10 +73070,10 @@ var init_JsonShapeSerializer2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonCodec2.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonCodec2.js
 var JsonCodec2;
 var init_JsonCodec2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonCodec2.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v2/JsonCodec2.js"() {
     init_ConfigurableSerdeContext();
     init_JsonShapeDeserializer2();
     init_JsonShapeSerializer2();
@@ -73030,10 +73097,10 @@ var init_JsonCodec2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJsonRpcProtocol.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJsonRpcProtocol.js
 var AwsJsonRpcProtocol;
 var init_AwsJsonRpcProtocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJsonRpcProtocol.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJsonRpcProtocol.js"() {
     init_protocols();
     init_schema();
     init_ProtocolLib();
@@ -73113,10 +73180,10 @@ var init_AwsJsonRpcProtocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJson1_0Protocol.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJson1_0Protocol.js
 var AwsJson1_0Protocol;
 var init_AwsJson1_0Protocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJson1_0Protocol.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJson1_0Protocol.js"() {
     init_AwsJsonRpcProtocol();
     AwsJson1_0Protocol = class extends AwsJsonRpcProtocol {
       constructor({ defaultNamespace, errorTypeRegistries: errorTypeRegistries5, serviceTarget, awsQueryCompatible, jsonCodec }) {
@@ -73141,10 +73208,10 @@ var init_AwsJson1_0Protocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJson1_1Protocol.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJson1_1Protocol.js
 var AwsJson1_1Protocol;
 var init_AwsJson1_1Protocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJson1_1Protocol.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsJson1_1Protocol.js"() {
     init_AwsJsonRpcProtocol();
     AwsJson1_1Protocol = class extends AwsJsonRpcProtocol {
       constructor({ defaultNamespace, errorTypeRegistries: errorTypeRegistries5, serviceTarget, awsQueryCompatible, jsonCodec }) {
@@ -73169,10 +73236,10 @@ var init_AwsJson1_1Protocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsRestJsonProtocol.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsRestJsonProtocol.js
 var AwsRestJsonProtocol;
 var init_AwsRestJsonProtocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsRestJsonProtocol.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/AwsRestJsonProtocol.js"() {
     init_protocols();
     init_schema();
     init_ProtocolLib();
@@ -73261,10 +73328,10 @@ var init_AwsRestJsonProtocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonShapeDeserializer.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonShapeDeserializer.js
 var JsonShapeDeserializer;
 var init_JsonShapeDeserializer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonShapeDeserializer.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonShapeDeserializer.js"() {
     init_protocols();
     init_schema();
     init_serde();
@@ -73425,10 +73492,10 @@ var init_JsonShapeDeserializer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/jsonReplacer.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/jsonReplacer.js
 var NUMERIC_CONTROL_CHAR, JsonReplacer;
 var init_jsonReplacer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/jsonReplacer.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/jsonReplacer.js"() {
     init_serde();
     NUMERIC_CONTROL_CHAR = String.fromCharCode(925);
     JsonReplacer = class {
@@ -73478,10 +73545,10 @@ var init_jsonReplacer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonShapeSerializer.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonShapeSerializer.js
 var JsonShapeSerializer;
 var init_JsonShapeSerializer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonShapeSerializer.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonShapeSerializer.js"() {
     init_protocols();
     init_schema();
     init_serde();
@@ -73675,10 +73742,10 @@ var init_JsonShapeSerializer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonCodec.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonCodec.js
 var JsonCodec;
 var init_JsonCodec = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonCodec.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/codec-v1/JsonCodec.js"() {
     init_ConfigurableSerdeContext();
     init_JsonShapeDeserializer();
     init_JsonShapeSerializer();
@@ -73702,9 +73769,9 @@ var init_JsonCodec = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/xml-builder/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/xml-builder/dist-cjs/index.js
 var require_dist_cjs7 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/xml-builder/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/xml-builder/dist-cjs/index.js"(exports) {
     var ATTR_ESCAPE_RE = /[&<>"]/g;
     var ATTR_ESCAPE_MAP = {
       "&": "&amp;",
@@ -74063,10 +74130,10 @@ var require_dist_cjs7 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeDeserializer.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeDeserializer.js
 var import_xml_builder, XmlShapeDeserializer;
 var init_XmlShapeDeserializer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeDeserializer.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeDeserializer.js"() {
     import_xml_builder = __toESM(require_dist_cjs7());
     init_client4();
     init_protocols();
@@ -74220,10 +74287,10 @@ var init_XmlShapeDeserializer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/QueryShapeSerializer.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/QueryShapeSerializer.js
 var QueryShapeSerializer;
 var init_QueryShapeSerializer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/QueryShapeSerializer.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/QueryShapeSerializer.js"() {
     init_protocols();
     init_schema();
     init_serde();
@@ -74400,10 +74467,10 @@ var init_QueryShapeSerializer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/AwsQueryProtocol.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/AwsQueryProtocol.js
 var AwsQueryProtocol;
 var init_AwsQueryProtocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/AwsQueryProtocol.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/AwsQueryProtocol.js"() {
     init_protocols();
     init_schema();
     init_ProtocolLib();
@@ -74540,10 +74607,10 @@ var init_AwsQueryProtocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/AwsEc2QueryProtocol.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/AwsEc2QueryProtocol.js
 var AwsEc2QueryProtocol;
 var init_AwsEc2QueryProtocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/AwsEc2QueryProtocol.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/query/AwsEc2QueryProtocol.js"() {
     init_AwsQueryProtocol();
     AwsEc2QueryProtocol = class extends AwsQueryProtocol {
       options;
@@ -74568,10 +74635,10 @@ var init_AwsEc2QueryProtocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/parseXmlBody.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/parseXmlBody.js
 var import_xml_builder2, parseXmlBody, parseXmlErrorBody, loadRestXmlErrorCode;
 var init_parseXmlBody = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/parseXmlBody.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/parseXmlBody.js"() {
     import_xml_builder2 = __toESM(require_dist_cjs7());
     init_client4();
     init_common();
@@ -74620,10 +74687,10 @@ var init_parseXmlBody = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeSerializer.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeSerializer.js
 var import_xml_builder3, XmlShapeSerializer;
 var init_XmlShapeSerializer = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeSerializer.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlShapeSerializer.js"() {
     import_xml_builder3 = __toESM(require_dist_cjs7());
     init_protocols();
     init_schema();
@@ -74898,10 +74965,10 @@ var init_XmlShapeSerializer = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlCodec.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlCodec.js
 var XmlCodec;
 var init_XmlCodec = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlCodec.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/XmlCodec.js"() {
     init_ConfigurableSerdeContext();
     init_XmlShapeDeserializer();
     init_XmlShapeSerializer();
@@ -74925,10 +74992,10 @@ var init_XmlCodec = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/AwsRestXmlProtocol.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/AwsRestXmlProtocol.js
 var AwsRestXmlProtocol;
 var init_AwsRestXmlProtocol = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/AwsRestXmlProtocol.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/xml/AwsRestXmlProtocol.js"() {
     init_protocols();
     init_schema();
     init_ProtocolLib();
@@ -75024,10 +75091,10 @@ var init_AwsRestXmlProtocol = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/awsExpectUnion.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/awsExpectUnion.js
 var awsExpectUnion;
 var init_awsExpectUnion = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/awsExpectUnion.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/awsExpectUnion.js"() {
     init_serde();
     awsExpectUnion = (value) => {
       if (value == null) {
@@ -75041,10 +75108,10 @@ var init_awsExpectUnion = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/coercing-serializers.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/coercing-serializers.js
 var _toStr, _toBool, _toNum;
 var init_coercing_serializers = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/coercing-serializers.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/coercing-serializers.js"() {
     _toStr = (val) => {
       if (val == null) {
         return val;
@@ -75101,7 +75168,7 @@ var init_coercing_serializers = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/index.js
 var protocols_exports2 = {};
 __export(protocols_exports2, {
   AwsEc2QueryProtocol: () => AwsEc2QueryProtocol,
@@ -75135,7 +75202,7 @@ __export(protocols_exports2, {
   parseXmlErrorBody: () => parseXmlErrorBody
 });
 var init_protocols2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/index.js"() {
     init_AwsSmithyRpcV2CborProtocol();
     init_AwsJson1_0Protocol();
     init_AwsJson1_1Protocol();
@@ -75161,10 +75228,10 @@ var init_protocols2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/bdd.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/bdd.js
 var k, a, b, c, d, e, f, g, h, i, j, _data, root, r, nodes, bdd;
 var init_bdd = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/bdd.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/bdd.js"() {
     init_endpoints();
     k = "ref";
     a = -1;
@@ -75254,10 +75321,10 @@ var init_bdd = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/endpointResolver.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/endpointResolver.js
 var cache2, defaultEndpointResolver;
 var init_endpointResolver = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/endpointResolver.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/endpointResolver.js"() {
     init_client5();
     init_endpoints();
     init_bdd();
@@ -75275,10 +75342,10 @@ var init_endpointResolver = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/SSOOIDCServiceException.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/SSOOIDCServiceException.js
 var SSOOIDCServiceException;
 var init_SSOOIDCServiceException = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/SSOOIDCServiceException.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/SSOOIDCServiceException.js"() {
     init_client4();
     SSOOIDCServiceException = class _SSOOIDCServiceException extends ServiceException {
       constructor(options) {
@@ -75289,10 +75356,10 @@ var init_SSOOIDCServiceException = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/errors.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/errors.js
 var AccessDeniedException, AuthorizationPendingException, ExpiredTokenException, InternalServerException, InvalidClientException, InvalidGrantException, InvalidRequestException, InvalidScopeException, SlowDownException, UnauthorizedClientException, UnsupportedGrantTypeException;
 var init_errors3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/errors.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/errors.js"() {
     init_SSOOIDCServiceException();
     AccessDeniedException = class _AccessDeniedException extends SSOOIDCServiceException {
       name = "AccessDeniedException";
@@ -75477,10 +75544,10 @@ var init_errors3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/schemas/schemas_0.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/schemas/schemas_0.js
 var _ADE, _APE, _AT, _CS, _CT, _CTR, _CTRr, _CV, _ETE, _ICE, _IGE, _IRE, _ISE, _ISEn, _IT, _RT, _SDE, _UCE, _UGTE, _aT, _c, _cI, _cS, _cV, _co, _dC, _e, _eI, _ed, _gT, _h, _hE, _iT, _r, _rT, _rU, _s, _sc, _se, _tT, n0, _s_registry, SSOOIDCServiceException$, n0_registry, AccessDeniedException$, AuthorizationPendingException$, ExpiredTokenException$, InternalServerException$, InvalidClientException$, InvalidGrantException$, InvalidRequestException$, InvalidScopeException$, SlowDownException$, UnauthorizedClientException$, UnsupportedGrantTypeException$, errorTypeRegistries, AccessToken, ClientSecret, CodeVerifier, IdToken, RefreshToken, CreateTokenRequest$, CreateTokenResponse$, Scopes, CreateToken$;
 var init_schemas_0 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/schemas/schemas_0.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/schemas/schemas_0.js"() {
     init_schema();
     init_errors3();
     init_SSOOIDCServiceException();
@@ -75666,10 +75733,10 @@ var init_schemas_0 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeConfig.shared.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeConfig.shared.js
 var getRuntimeConfig;
 var init_runtimeConfig_shared = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeConfig.shared.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeConfig.shared.js"() {
     init_httpAuthSchemes2();
     init_protocols2();
     init_dist_es();
@@ -75719,10 +75786,10 @@ var init_runtimeConfig_shared = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeConfig.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeConfig.js
 var import_node_http_handler, getRuntimeConfig2;
 var init_runtimeConfig = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeConfig.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeConfig.js"() {
     init_package();
     init_client5();
     init_httpAuthSchemes2();
@@ -75766,10 +75833,10 @@ var init_runtimeConfig = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/auth/httpAuthExtensionConfiguration.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/auth/httpAuthExtensionConfiguration.js
 var getHttpAuthExtensionConfiguration, resolveHttpAuthRuntimeConfig;
 var init_httpAuthExtensionConfiguration = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/auth/httpAuthExtensionConfiguration.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/auth/httpAuthExtensionConfiguration.js"() {
     getHttpAuthExtensionConfiguration = (runtimeConfig) => {
       const _httpAuthSchemes = runtimeConfig.httpAuthSchemes;
       let _httpAuthSchemeProvider = runtimeConfig.httpAuthSchemeProvider;
@@ -75810,10 +75877,10 @@ var init_httpAuthExtensionConfiguration = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeExtensions.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeExtensions.js
 var resolveRuntimeExtensions;
 var init_runtimeExtensions = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeExtensions.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/runtimeExtensions.js"() {
     init_client5();
     init_client4();
     init_protocols();
@@ -75826,10 +75893,10 @@ var init_runtimeExtensions = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/SSOOIDCClient.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/SSOOIDCClient.js
 var SSOOIDCClient;
 var init_SSOOIDCClient = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/SSOOIDCClient.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/SSOOIDCClient.js"() {
     init_client5();
     init_dist_es();
     init_client4();
@@ -75879,10 +75946,10 @@ var init_SSOOIDCClient = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commandBuilder.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commandBuilder.js
 var command, _ep0, _mw0;
 var init_commandBuilder = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commandBuilder.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commandBuilder.js"() {
     init_client4();
     init_endpoints();
     init_EndpointParameters();
@@ -75892,10 +75959,10 @@ var init_commandBuilder = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/CreateTokenCommand.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/CreateTokenCommand.js
 var CreateTokenCommand;
 var init_CreateTokenCommand = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/CreateTokenCommand.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/CreateTokenCommand.js"() {
     init_commandBuilder();
     init_schemas_0();
     CreateTokenCommand = class extends command(_ep0, _mw0, "CreateToken", CreateToken$) {
@@ -75903,10 +75970,10 @@ var init_CreateTokenCommand = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/SSOOIDC.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/SSOOIDC.js
 var commands, SSOOIDC;
 var init_SSOOIDC = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/SSOOIDC.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/SSOOIDC.js"() {
     init_client4();
     init_CreateTokenCommand();
     init_SSOOIDCClient();
@@ -75919,17 +75986,17 @@ var init_SSOOIDC = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/index.js
 var init_commands = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/index.js"() {
     init_CreateTokenCommand();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/enums.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/enums.js
 var AccessDeniedExceptionReason, InvalidRequestExceptionReason;
 var init_enums = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/enums.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/enums.js"() {
     AccessDeniedExceptionReason = {
       KMS_ACCESS_DENIED: "KMS_AccessDeniedException"
     };
@@ -75942,13 +76009,13 @@ var init_enums = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/models_0.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/models_0.js
 var init_models_0 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/models_0.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/models/models_0.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/index.js
 var sso_oidc_exports = {};
 __export(sso_oidc_exports, {
   $Command: () => Command,
@@ -75988,7 +76055,7 @@ __export(sso_oidc_exports, {
   errorTypeRegistries: () => errorTypeRegistries
 });
 var init_sso_oidc = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/index.js"() {
     init_SSOOIDCClient();
     init_SSOOIDC();
     init_commands();
@@ -76001,9 +76068,9 @@ var init_sso_oidc = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/token-providers/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/token-providers/dist-cjs/index.js
 var require_dist_cjs8 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/token-providers/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/token-providers/dist-cjs/index.js"(exports) {
     var { setTokenFeature: setTokenFeature2 } = (init_client5(), __toCommonJS(client_exports2));
     var { getBearerTokenEnvKey: getBearerTokenEnvKey2 } = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
     var { TokenProviderError: TokenProviderError2, getSSOTokenFilepath: getSSOTokenFilepath2, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2, loadSsoSessionData: loadSsoSessionData2, getSSOTokenFromFile: getSSOTokenFromFile2, memoize: memoize2, chain: chain2 } = (init_config3(), __toCommonJS(config_exports));
@@ -76150,7 +76217,7 @@ var require_dist_cjs8 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/auth/httpAuthSchemeProvider.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/auth/httpAuthSchemeProvider.js
 function createAwsAuthSigv4HttpAuthOption2(authParameters) {
   return {
     schemeId: "aws.auth#sigv4",
@@ -76173,7 +76240,7 @@ function createSmithyApiNoAuthHttpAuthOption2(authParameters) {
 }
 var defaultSSOHttpAuthSchemeParametersProvider, defaultSSOHttpAuthSchemeProvider, resolveHttpAuthSchemeConfig2;
 var init_httpAuthSchemeProvider2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/auth/httpAuthSchemeProvider.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/auth/httpAuthSchemeProvider.js"() {
     init_httpAuthSchemes2();
     init_client4();
     defaultSSOHttpAuthSchemeParametersProvider = async (config2, context, input) => {
@@ -76208,10 +76275,10 @@ var init_httpAuthSchemeProvider2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/EndpointParameters.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/EndpointParameters.js
 var resolveClientEndpointParameters2, commonParams2;
 var init_EndpointParameters2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/EndpointParameters.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/EndpointParameters.js"() {
     resolveClientEndpointParameters2 = (options) => {
       return Object.assign(options, {
         useDualstackEndpoint: options.useDualstackEndpoint ?? false,
@@ -76228,10 +76295,10 @@ var init_EndpointParameters2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/bdd.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/bdd.js
 var k2, a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, _data2, root2, r2, nodes2, bdd2;
 var init_bdd2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/bdd.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/bdd.js"() {
     init_endpoints();
     k2 = "ref";
     a2 = -1;
@@ -76321,10 +76388,10 @@ var init_bdd2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/endpointResolver.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/endpointResolver.js
 var cache3, defaultEndpointResolver2;
 var init_endpointResolver2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/endpointResolver.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/endpointResolver.js"() {
     init_client5();
     init_endpoints();
     init_bdd2();
@@ -76342,10 +76409,10 @@ var init_endpointResolver2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/SSOServiceException.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/SSOServiceException.js
 var SSOServiceException;
 var init_SSOServiceException = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/SSOServiceException.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/SSOServiceException.js"() {
     init_client4();
     SSOServiceException = class _SSOServiceException extends ServiceException {
       constructor(options) {
@@ -76356,10 +76423,10 @@ var init_SSOServiceException = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/errors.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/errors.js
 var InvalidRequestException2, ResourceNotFoundException, TooManyRequestsException, UnauthorizedException;
 var init_errors4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/errors.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/errors.js"() {
     init_SSOServiceException();
     InvalidRequestException2 = class _InvalidRequestException extends SSOServiceException {
       name = "InvalidRequestException";
@@ -76412,10 +76479,10 @@ var init_errors4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/schemas/schemas_0.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/schemas/schemas_0.js
 var _ATT, _GRC, _GRCR, _GRCRe, _IRE2, _RC, _RNFE, _SAKT, _STT, _TMRE, _UE, _aI, _aKI, _aT2, _ai, _c2, _e2, _ex, _h2, _hE2, _hH, _hQ, _m, _rC, _rN, _rn, _s2, _sAK, _sT, _xasbt, n02, _s_registry2, SSOServiceException$, n0_registry2, InvalidRequestException$2, ResourceNotFoundException$, TooManyRequestsException$, UnauthorizedException$, errorTypeRegistries2, AccessTokenType, SecretAccessKeyType, SessionTokenType, GetRoleCredentialsRequest$, GetRoleCredentialsResponse$, RoleCredentials$, GetRoleCredentials$;
 var init_schemas_02 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/schemas/schemas_0.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/schemas/schemas_0.js"() {
     init_schema();
     init_errors4();
     init_SSOServiceException();
@@ -76533,10 +76600,10 @@ var init_schemas_02 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeConfig.shared.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeConfig.shared.js
 var getRuntimeConfig3;
 var init_runtimeConfig_shared2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeConfig.shared.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeConfig.shared.js"() {
     init_httpAuthSchemes2();
     init_protocols2();
     init_dist_es();
@@ -76586,10 +76653,10 @@ var init_runtimeConfig_shared2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeConfig.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeConfig.js
 var import_node_http_handler2, getRuntimeConfig4;
 var init_runtimeConfig2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeConfig.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeConfig.js"() {
     init_package();
     init_client5();
     init_httpAuthSchemes2();
@@ -76633,10 +76700,10 @@ var init_runtimeConfig2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/auth/httpAuthExtensionConfiguration.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/auth/httpAuthExtensionConfiguration.js
 var getHttpAuthExtensionConfiguration2, resolveHttpAuthRuntimeConfig2;
 var init_httpAuthExtensionConfiguration2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/auth/httpAuthExtensionConfiguration.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/auth/httpAuthExtensionConfiguration.js"() {
     getHttpAuthExtensionConfiguration2 = (runtimeConfig) => {
       const _httpAuthSchemes = runtimeConfig.httpAuthSchemes;
       let _httpAuthSchemeProvider = runtimeConfig.httpAuthSchemeProvider;
@@ -76677,10 +76744,10 @@ var init_httpAuthExtensionConfiguration2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeExtensions.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeExtensions.js
 var resolveRuntimeExtensions2;
 var init_runtimeExtensions2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeExtensions.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/runtimeExtensions.js"() {
     init_client5();
     init_client4();
     init_protocols();
@@ -76693,10 +76760,10 @@ var init_runtimeExtensions2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/SSOClient.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/SSOClient.js
 var SSOClient;
 var init_SSOClient = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/SSOClient.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/SSOClient.js"() {
     init_client5();
     init_dist_es();
     init_client4();
@@ -76746,10 +76813,10 @@ var init_SSOClient = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commandBuilder.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commandBuilder.js
 var command2, _ep02, _mw02;
 var init_commandBuilder2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commandBuilder.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commandBuilder.js"() {
     init_client4();
     init_endpoints();
     init_EndpointParameters2();
@@ -76759,10 +76826,10 @@ var init_commandBuilder2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/GetRoleCredentialsCommand.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/GetRoleCredentialsCommand.js
 var GetRoleCredentialsCommand;
 var init_GetRoleCredentialsCommand = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/GetRoleCredentialsCommand.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/GetRoleCredentialsCommand.js"() {
     init_commandBuilder2();
     init_schemas_02();
     GetRoleCredentialsCommand = class extends command2(_ep02, _mw02, "GetRoleCredentials", GetRoleCredentials$) {
@@ -76770,10 +76837,10 @@ var init_GetRoleCredentialsCommand = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/SSO.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/SSO.js
 var commands2, SSO;
 var init_SSO = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/SSO.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/SSO.js"() {
     init_client4();
     init_GetRoleCredentialsCommand();
     init_SSOClient();
@@ -76786,20 +76853,20 @@ var init_SSO = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/index.js
 var init_commands2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/index.js"() {
     init_GetRoleCredentialsCommand();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/models_0.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/models_0.js
 var init_models_02 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/models_0.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/models/models_0.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/index.js
 var sso_exports = {};
 __export(sso_exports, {
   $Command: () => Command,
@@ -76824,7 +76891,7 @@ __export(sso_exports, {
   errorTypeRegistries: () => errorTypeRegistries2
 });
 var init_sso = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/index.js"() {
     init_SSOClient();
     init_SSO();
     init_commands2();
@@ -76836,18 +76903,18 @@ var init_sso = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-sso/dist-cjs/loadSso-BGYXHf8s.js
+// ../dashboard/backend/node_modules/@aws-sdk/credential-provider-sso/dist-cjs/loadSso-BGYXHf8s.js
 var require_loadSso_BGYXHf8s = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-sso/dist-cjs/loadSso-BGYXHf8s.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/credential-provider-sso/dist-cjs/loadSso-BGYXHf8s.js"(exports) {
     var { GetRoleCredentialsCommand: GetRoleCredentialsCommand2, SSOClient: SSOClient2 } = (init_sso(), __toCommonJS(sso_exports));
     exports.GetRoleCredentialsCommand = GetRoleCredentialsCommand2;
     exports.SSOClient = SSOClient2;
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-sso/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/credential-provider-sso/dist-cjs/index.js
 var require_dist_cjs9 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-sso/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/credential-provider-sso/dist-cjs/index.js"(exports) {
     var { CredentialsProviderError: CredentialsProviderError2, getSSOTokenFromFile: getSSOTokenFromFile2, getProfileName: getProfileName2, parseKnownFiles: parseKnownFiles2, loadSsoSessionData: loadSsoSessionData2 } = (init_config3(), __toCommonJS(config_exports));
     var { setCredentialFeature: setCredentialFeature2 } = (init_client5(), __toCommonJS(client_exports2));
     var { fromSso } = require_dist_cjs8();
@@ -77024,9 +77091,9 @@ Reference: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.ht
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/signature-v4-multi-region/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/signature-v4-multi-region/dist-cjs/index.js
 var require_dist_cjs10 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/signature-v4-multi-region/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/signature-v4-multi-region/dist-cjs/index.js"(exports) {
     var { SignatureV4: SignatureV42, signatureV4aContainer } = require_dist_cjs2();
     var signatureV4CrtContainer = {
       CrtSignerV4: null
@@ -77156,10 +77223,10 @@ var require_dist_cjs10 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/bdd.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/bdd.js
 var q, a3, b3, c3, d3, e3, f3, g3, h3, i3, j3, k3, l, m, n, o, p, _data3, root3, r3, nodes3, bdd3;
 var init_bdd3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/bdd.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/bdd.js"() {
     init_endpoints();
     q = "ref";
     a3 = -1;
@@ -77325,10 +77392,10 @@ var init_bdd3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js
 var cache4, defaultEndpointResolver3;
 var init_endpointResolver3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js"() {
     init_client5();
     init_endpoints();
     init_bdd3();
@@ -77346,7 +77413,7 @@ var init_endpointResolver3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthSchemeProvider.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthSchemeProvider.js
 function createAwsAuthSigv4HttpAuthOption3(authParameters) {
   return {
     schemeId: "aws.auth#sigv4",
@@ -77384,7 +77451,7 @@ function createSmithyApiNoAuthHttpAuthOption3(authParameters) {
 }
 var import_signature_v4_multi_region, createEndpointRuleSetHttpAuthSchemeParametersProvider, _defaultSTSHttpAuthSchemeParametersProvider, defaultSTSHttpAuthSchemeParametersProvider, createEndpointRuleSetHttpAuthSchemeProvider, _defaultSTSHttpAuthSchemeProvider, defaultSTSHttpAuthSchemeProvider, resolveHttpAuthSchemeConfig3;
 var init_httpAuthSchemeProvider3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthSchemeProvider.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthSchemeProvider.js"() {
     init_httpAuthSchemes2();
     import_signature_v4_multi_region = __toESM(require_dist_cjs10());
     init_client4();
@@ -77483,10 +77550,10 @@ var init_httpAuthSchemeProvider3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/EndpointParameters.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/EndpointParameters.js
 var resolveClientEndpointParameters3, commonParams3;
 var init_EndpointParameters3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/EndpointParameters.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/EndpointParameters.js"() {
     resolveClientEndpointParameters3 = (options) => {
       return Object.assign(options, {
         useDualstackEndpoint: options.useDualstackEndpoint ?? false,
@@ -77505,10 +77572,10 @@ var init_EndpointParameters3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/STSServiceException.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/STSServiceException.js
 var STSServiceException;
 var init_STSServiceException = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/STSServiceException.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/STSServiceException.js"() {
     init_client4();
     STSServiceException = class _STSServiceException extends ServiceException {
       constructor(options) {
@@ -77519,10 +77586,10 @@ var init_STSServiceException = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/errors.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/errors.js
 var ExpiredTokenException2, MalformedPolicyDocumentException, PackedPolicyTooLargeException, RegionDisabledException, IDPRejectedClaimException, InvalidIdentityTokenException, IDPCommunicationErrorException;
 var init_errors5 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/errors.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/errors.js"() {
     init_STSServiceException();
     ExpiredTokenException2 = class _ExpiredTokenException extends STSServiceException {
       name = "ExpiredTokenException";
@@ -77612,10 +77679,10 @@ var init_errors5 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js
 var _A, _AKI, _AR, _ARI, _ARR, _ARRs, _ARU, _ARWWI, _ARWWIR, _ARWWIRs, _Au, _C, _CA, _DS, _E, _EI, _ETE2, _IDPCEE, _IDPRCE, _IITE, _K, _MPDE, _MSTS, _P, _PA, _PAr, _PC, _PCLT, _PCr, _PDT, _PI, _PPS, _PPTLE, _Pr, _RA, _RDE, _RSN, _SAK, _SFWIT, _SI, _SN, _ST, _STS, _STU, _T, _TC, _TTK, _Ta, _V, _WIT, _a, _aKST, _aQE, _c3, _cTT, _e3, _hE3, _m2, _pDLT, _s3, _tLT, n03, _s_registry3, STSServiceException$, n0_registry3, ExpiredTokenException$2, IDPCommunicationErrorException$, IDPRejectedClaimException$, InvalidIdentityTokenException$, MalformedPolicyDocumentException$, PackedPolicyTooLargeException$, RegionDisabledException$, errorTypeRegistries3, accessKeySecretType, clientTokenType, AssumedRoleUser$, AssumeRoleRequest$, AssumeRoleResponse$, AssumeRoleWithWebIdentityRequest$, AssumeRoleWithWebIdentityResponse$, Credentials$, PolicyDescriptorType$, ProvidedContext$, Tag$, policyDescriptorListType, ProvidedContextsListType, tagKeyListType, tagListType, AssumeRole$, AssumeRoleWithWebIdentity$;
 var init_schemas_03 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/schemas/schemas_0.js"() {
     init_schema();
     init_errors5();
     init_STSServiceException();
@@ -77872,10 +77939,10 @@ var init_schemas_03 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js
 var import_signature_v4_multi_region2, getRuntimeConfig5;
 var init_runtimeConfig_shared3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.shared.js"() {
     init_httpAuthSchemes2();
     init_protocols2();
     import_signature_v4_multi_region2 = __toESM(require_dist_cjs10());
@@ -77933,10 +78000,10 @@ var init_runtimeConfig_shared3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.js
 var import_node_http_handler3, getRuntimeConfig6;
 var init_runtimeConfig3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeConfig.js"() {
     init_package();
     init_client5();
     init_httpAuthSchemes2();
@@ -77999,10 +78066,10 @@ var init_runtimeConfig3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthExtensionConfiguration.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthExtensionConfiguration.js
 var getHttpAuthExtensionConfiguration3, resolveHttpAuthRuntimeConfig3;
 var init_httpAuthExtensionConfiguration3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthExtensionConfiguration.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/auth/httpAuthExtensionConfiguration.js"() {
     getHttpAuthExtensionConfiguration3 = (runtimeConfig) => {
       const _httpAuthSchemes = runtimeConfig.httpAuthSchemes;
       let _httpAuthSchemeProvider = runtimeConfig.httpAuthSchemeProvider;
@@ -78043,10 +78110,10 @@ var init_httpAuthExtensionConfiguration3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeExtensions.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeExtensions.js
 var resolveRuntimeExtensions3;
 var init_runtimeExtensions3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeExtensions.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/runtimeExtensions.js"() {
     init_client5();
     init_client4();
     init_protocols();
@@ -78059,10 +78126,10 @@ var init_runtimeExtensions3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STSClient.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STSClient.js
 var STSClient;
 var init_STSClient = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STSClient.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STSClient.js"() {
     init_client5();
     init_dist_es();
     init_client4();
@@ -78113,10 +78180,10 @@ var init_STSClient = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js
 var command3, _ep03, _mw03;
 var init_commandBuilder3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js"() {
     init_client4();
     init_endpoints();
     init_EndpointParameters3();
@@ -78126,10 +78193,10 @@ var init_commandBuilder3 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js
 var AssumeRoleCommand;
 var init_AssumeRoleCommand = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js"() {
     init_commandBuilder3();
     init_schemas_03();
     AssumeRoleCommand = class extends command3(_ep03, _mw03, "AssumeRole", AssumeRole$) {
@@ -78137,10 +78204,10 @@ var init_AssumeRoleCommand = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js
 var AssumeRoleWithWebIdentityCommand;
 var init_AssumeRoleWithWebIdentityCommand = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js"() {
     init_commandBuilder3();
     init_schemas_03();
     AssumeRoleWithWebIdentityCommand = class extends command3(_ep03, _mw03, "AssumeRoleWithWebIdentity", AssumeRoleWithWebIdentity$) {
@@ -78148,10 +78215,10 @@ var init_AssumeRoleWithWebIdentityCommand = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STS.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STS.js
 var commands3, STS;
 var init_STS = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STS.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/STS.js"() {
     init_client4();
     init_AssumeRoleCommand();
     init_AssumeRoleWithWebIdentityCommand();
@@ -78166,24 +78233,24 @@ var init_STS = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/index.js
 var init_commands3 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/index.js"() {
     init_AssumeRoleCommand();
     init_AssumeRoleWithWebIdentityCommand();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/models_0.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/models_0.js
 var init_models_03 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/models_0.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/models/models_0.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultStsRoleAssumers.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultStsRoleAssumers.js
 var getAccountIdFromAssumedRoleUser, resolveRegion, getDefaultRoleAssumer, getDefaultRoleAssumerWithWebIdentity, isH2;
 var init_defaultStsRoleAssumers = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultStsRoleAssumers.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultStsRoleAssumers.js"() {
     init_client5();
     init_AssumeRoleCommand();
     init_AssumeRoleWithWebIdentityCommand();
@@ -78288,10 +78355,10 @@ var init_defaultStsRoleAssumers = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultRoleAssumers.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultRoleAssumers.js
 var getCustomizableStsClientCtor, getDefaultRoleAssumer2, getDefaultRoleAssumerWithWebIdentity2, decorateDefaultCredentialProvider;
 var init_defaultRoleAssumers = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultRoleAssumers.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/defaultRoleAssumers.js"() {
     init_defaultStsRoleAssumers();
     init_STSClient();
     getCustomizableStsClientCtor = (baseCtor, customizations) => {
@@ -78317,7 +78384,7 @@ var init_defaultRoleAssumers = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/index.js
 var sts_exports = {};
 __export(sts_exports, {
   $Command: () => Command,
@@ -78359,7 +78426,7 @@ __export(sts_exports, {
   getDefaultRoleAssumerWithWebIdentity: () => getDefaultRoleAssumerWithWebIdentity2
 });
 var init_sts = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/index.js"() {
     init_STSClient();
     init_STS();
     init_commands3();
@@ -78372,7 +78439,7 @@ var init_sts = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthSchemeProvider.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthSchemeProvider.js
 function createAwsAuthSigv4HttpAuthOption4(authParameters) {
   return {
     schemeId: "aws.auth#sigv4",
@@ -78395,7 +78462,7 @@ function createSmithyApiNoAuthHttpAuthOption4(authParameters) {
 }
 var defaultSigninHttpAuthSchemeParametersProvider, defaultSigninHttpAuthSchemeProvider, resolveHttpAuthSchemeConfig4;
 var init_httpAuthSchemeProvider4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthSchemeProvider.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthSchemeProvider.js"() {
     init_httpAuthSchemes2();
     init_client4();
     defaultSigninHttpAuthSchemeParametersProvider = async (config2, context, input) => {
@@ -78430,10 +78497,10 @@ var init_httpAuthSchemeProvider4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/EndpointParameters.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/EndpointParameters.js
 var resolveClientEndpointParameters4, commonParams4;
 var init_EndpointParameters4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/EndpointParameters.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/EndpointParameters.js"() {
     resolveClientEndpointParameters4 = (options) => {
       return Object.assign(options, {
         useDualstackEndpoint: options.useDualstackEndpoint ?? false,
@@ -78450,10 +78517,10 @@ var init_EndpointParameters4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/bdd.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/bdd.js
 var s, a4, b4, c4, d4, e4, f4, g4, h4, i4, j4, k4, l2, m2, n2, o2, p2, q2, _data4, root4, r4, nodes4, bdd4;
 var init_bdd4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/bdd.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/bdd.js"() {
     init_endpoints();
     s = "ref";
     a4 = -1;
@@ -78653,10 +78720,10 @@ var init_bdd4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/endpointResolver.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/endpointResolver.js
 var cache5, defaultEndpointResolver4;
 var init_endpointResolver4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/endpointResolver.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/endpointResolver.js"() {
     init_client5();
     init_endpoints();
     init_bdd4();
@@ -78674,10 +78741,10 @@ var init_endpointResolver4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/SigninServiceException.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/SigninServiceException.js
 var SigninServiceException;
 var init_SigninServiceException = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/SigninServiceException.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/SigninServiceException.js"() {
     init_client4();
     SigninServiceException = class _SigninServiceException extends ServiceException {
       constructor(options) {
@@ -78688,10 +78755,10 @@ var init_SigninServiceException = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/errors.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/errors.js
 var AccessDeniedException2, InternalServerException2, TooManyRequestsError, ValidationException;
 var init_errors6 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/errors.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/errors.js"() {
     init_SigninServiceException();
     AccessDeniedException2 = class _AccessDeniedException extends SigninServiceException {
       name = "AccessDeniedException";
@@ -78752,10 +78819,10 @@ var init_errors6 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/schemas/schemas_0.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/schemas/schemas_0.js
 var _ADE2, _AT2, _COAT, _COATR, _COATRB, _COATRBr, _COATRr, _COATWIAM, _COATWIAMR, _COATWIAMRr, _ISE2, _OAAT, _RT2, _TMRE2, _VE, _aKI2, _aT3, _at, _c4, _cI2, _cV2, _co2, _e4, _eI2, _ei, _gT2, _gt, _h3, _hE4, _iT2, _jN, _m3, _r2, _rT2, _rU2, _s4, _sAK2, _sT2, _se2, _tI, _tO, _tT2, _tt, n04, _s_registry4, SigninServiceException$, n0_registry4, AccessDeniedException$2, InternalServerException$2, TooManyRequestsError$, ValidationException$, errorTypeRegistries4, OAuthAccessToken, RefreshToken2, AccessToken$, CreateOAuth2TokenRequest$, CreateOAuth2TokenRequestBody$, CreateOAuth2TokenResponse$, CreateOAuth2TokenResponseBody$, CreateOAuth2TokenWithIAMRequest$, CreateOAuth2TokenWithIAMResponse$, CreateOAuth2Token$, CreateOAuth2TokenWithIAM$;
 var init_schemas_04 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/schemas/schemas_0.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/schemas/schemas_0.js"() {
     init_schema();
     init_errors6();
     init_SigninServiceException();
@@ -78935,10 +79002,10 @@ var init_schemas_04 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.shared.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.shared.js
 var getRuntimeConfig7;
 var init_runtimeConfig_shared4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.shared.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.shared.js"() {
     init_httpAuthSchemes2();
     init_protocols2();
     init_dist_es();
@@ -78988,10 +79055,10 @@ var init_runtimeConfig_shared4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.js
 var import_node_http_handler4, getRuntimeConfig8;
 var init_runtimeConfig4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeConfig.js"() {
     init_package();
     init_client5();
     init_httpAuthSchemes2();
@@ -79035,10 +79102,10 @@ var init_runtimeConfig4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthExtensionConfiguration.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthExtensionConfiguration.js
 var getHttpAuthExtensionConfiguration4, resolveHttpAuthRuntimeConfig4;
 var init_httpAuthExtensionConfiguration4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthExtensionConfiguration.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/auth/httpAuthExtensionConfiguration.js"() {
     getHttpAuthExtensionConfiguration4 = (runtimeConfig) => {
       const _httpAuthSchemes = runtimeConfig.httpAuthSchemes;
       let _httpAuthSchemeProvider = runtimeConfig.httpAuthSchemeProvider;
@@ -79079,10 +79146,10 @@ var init_httpAuthExtensionConfiguration4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeExtensions.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeExtensions.js
 var resolveRuntimeExtensions4;
 var init_runtimeExtensions4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeExtensions.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/runtimeExtensions.js"() {
     init_client5();
     init_client4();
     init_protocols();
@@ -79095,10 +79162,10 @@ var init_runtimeExtensions4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/SigninClient.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/SigninClient.js
 var SigninClient;
 var init_SigninClient = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/SigninClient.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/SigninClient.js"() {
     init_client5();
     init_dist_es();
     init_client4();
@@ -79148,10 +79215,10 @@ var init_SigninClient = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commandBuilder.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commandBuilder.js
 var command4, _ep04, _ep1, _mw04;
 var init_commandBuilder4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commandBuilder.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commandBuilder.js"() {
     init_client4();
     init_endpoints();
     init_EndpointParameters4();
@@ -79166,10 +79233,10 @@ var init_commandBuilder4 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenCommand.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenCommand.js
 var CreateOAuth2TokenCommand;
 var init_CreateOAuth2TokenCommand = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenCommand.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenCommand.js"() {
     init_commandBuilder4();
     init_schemas_04();
     CreateOAuth2TokenCommand = class extends command4(_ep04, _mw04, "CreateOAuth2Token", CreateOAuth2Token$) {
@@ -79177,10 +79244,10 @@ var init_CreateOAuth2TokenCommand = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenWithIAMCommand.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenWithIAMCommand.js
 var CreateOAuth2TokenWithIAMCommand;
 var init_CreateOAuth2TokenWithIAMCommand = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenWithIAMCommand.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenWithIAMCommand.js"() {
     init_commandBuilder4();
     init_schemas_04();
     CreateOAuth2TokenWithIAMCommand = class extends command4(_ep1, _mw04, "CreateOAuth2TokenWithIAM", CreateOAuth2TokenWithIAM$) {
@@ -79188,10 +79255,10 @@ var init_CreateOAuth2TokenWithIAMCommand = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/Signin.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/Signin.js
 var commands4, Signin;
 var init_Signin = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/Signin.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/Signin.js"() {
     init_client4();
     init_CreateOAuth2TokenCommand();
     init_CreateOAuth2TokenWithIAMCommand();
@@ -79206,18 +79273,18 @@ var init_Signin = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/index.js
 var init_commands4 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/index.js"() {
     init_CreateOAuth2TokenCommand();
     init_CreateOAuth2TokenWithIAMCommand();
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/enums.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/enums.js
 var OAuth2ErrorCode;
 var init_enums2 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/enums.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/enums.js"() {
     OAuth2ErrorCode = {
       AUTHCODE_EXPIRED: "AUTHCODE_EXPIRED",
       CONFLICT: "CONFLICT",
@@ -79232,13 +79299,13 @@ var init_enums2 = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/models_0.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/models_0.js
 var init_models_04 = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/models_0.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/models/models_0.js"() {
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/index.js
 var signin_exports = {};
 __export(signin_exports, {
   $Command: () => Command,
@@ -79270,7 +79337,7 @@ __export(signin_exports, {
   errorTypeRegistries: () => errorTypeRegistries4
 });
 var init_signin = __esm({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/index.js"() {
+  "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/index.js"() {
     init_SigninClient();
     init_Signin();
     init_commands4();
@@ -79283,9 +79350,9 @@ var init_signin = __esm({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js
 var require_dist_cjs11 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js"(exports) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client5(), __toCommonJS(client_exports2));
     var { CredentialsProviderError: CredentialsProviderError2, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config3(), __toCommonJS(config_exports));
     var { HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
@@ -79568,9 +79635,9 @@ var require_dist_cjs11 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js
 var require_dist_cjs12 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js"(exports) {
     var { externalDataInterceptor: externalDataInterceptor2, CredentialsProviderError: CredentialsProviderError2, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config3(), __toCommonJS(config_exports));
     var { exec: exec3 } = __require("node:child_process");
     var { promisify: promisify7 } = __require("node:util");
@@ -79642,9 +79709,9 @@ var require_dist_cjs12 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/index.js
 var require_dist_cjs13 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/credential-provider-web-identity/dist-cjs/index.js"(exports) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client5(), __toCommonJS(client_exports2));
     var { CredentialsProviderError: CredentialsProviderError2, externalDataInterceptor: externalDataInterceptor2 } = (init_config3(), __toCommonJS(config_exports));
     var { readFileSync: readFileSync3 } = __require("node:fs");
@@ -79702,9 +79769,9 @@ var require_dist_cjs13 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-ini/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/credential-provider-ini/dist-cjs/index.js
 var require_dist_cjs14 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-ini/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/credential-provider-ini/dist-cjs/index.js"(exports) {
     var { CredentialsProviderError: CredentialsProviderError2, chain: chain2, getProfileName: getProfileName2, parseKnownFiles: parseKnownFiles2 } = (init_config3(), __toCommonJS(config_exports));
     var { setCredentialFeature: setCredentialFeature2 } = (init_client5(), __toCommonJS(client_exports2));
     var resolveCredentialSource = (credentialSource, profileName, logger2) => {
@@ -79899,9 +79966,9 @@ var require_dist_cjs14 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-node/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/credential-provider-node/dist-cjs/index.js
 var require_dist_cjs15 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/credential-provider-node/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/credential-provider-node/dist-cjs/index.js"(exports) {
     var { ENV_KEY, ENV_SECRET, fromEnv: fromEnv2 } = require_dist_cjs3();
     var { chain: chain2, CredentialsProviderError: CredentialsProviderError2, ENV_PROFILE: ENV_PROFILE2 } = (init_config3(), __toCommonJS(config_exports));
     var ENV_IMDS_DISABLED2 = "AWS_EC2_METADATA_DISABLED";
@@ -80055,9 +80122,9 @@ var require_dist_cjs15 = __commonJS({
   }
 });
 
-// ../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/client-codecommit/dist-cjs/index.js
+// ../dashboard/backend/node_modules/@aws-sdk/client-codecommit/dist-cjs/index.js
 var require_dist_cjs16 = __commonJS({
-  "../../../../../Users/demo-user/personal/projects/sugo/dashboard/backend/node_modules/@aws-sdk/client-codecommit/dist-cjs/index.js"(exports) {
+  "../dashboard/backend/node_modules/@aws-sdk/client-codecommit/dist-cjs/index.js"(exports) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client5(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
     var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client4(), __toCommonJS(client_exports));
@@ -89748,6 +89815,7 @@ async function createApp(dbOverrideOrOptions) {
   const frontendUrl = overrides.frontendUrl ?? config.frontendUrl;
   const localDev = overrides.localDev ?? config.localDev;
   const harnessPath = overrides.harnessPath ?? config.harnessPath;
+  const harnessOverridePath = overrides.harnessOverridePath ?? config.harnessOverridePath;
   const skillsPath = overrides.skillsPath ?? config.skillsPath;
   const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
@@ -89789,7 +89857,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use("/api/stats", statsRouter);
   app2.use("/api/metrics", statsRouter);
   app2.use("/api/weekly/reports", createWeeklyReportsRouter(db2, sessionSecret2));
-  app2.use("/api/harness", createHarnessRouter(harnessPath));
+  app2.use("/api/harness", createHarnessRouter(harnessPath, harnessOverridePath, db2, sessionSecret2));
   app2.use("/api/skills", createSkillsRouter(skillsPath));
   const staticDir2 = overrides.staticDir ?? config.staticDir;
   if (staticDir2) {
@@ -89851,7 +89919,7 @@ var init_index = __esm({
     init_cors();
     init_asyncHandler();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.27.0" ? { version: "0.27.0" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.27.1" ? { version: "0.27.1" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -89963,7 +90031,7 @@ await bootstrapLocalDashboard2(db, {
   settingsPath: join13(sugoDir, "settings.json")
 });
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.27.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.27.1", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

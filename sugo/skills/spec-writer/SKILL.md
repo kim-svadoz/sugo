@@ -59,6 +59,7 @@ Use one criterion: does the answer change required behavior or completion? If no
 ## File rules and completion
 
 - Use `specTarget.path` from context exactly. Do not construct or guess a path.
+- Treat `draftContent` as the user's primary draft. Preserve its intent and facts while converting it to the required SPEC structure.
 - `specTarget` selects `specs/YYYYMMDD/<feature-slug>/vN/spec.md` under the current user's active Sugo data root. YYYYMMDD uses the user's local calendar. vN is the next unused version.
 - Build `<feature-slug>` from the Schedule SPEC title: normalize to NFC, remove path-invalid characters, and replace spaces with `-`. Preserve Korean and Latin text.
 - Write UTF-8 Markdown.

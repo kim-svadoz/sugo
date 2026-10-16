@@ -136,6 +136,18 @@ export async function downloadSpecAttachments(workspaceName: string, nodeId: str
   return paths;
 }
 
+export async function fetchSpecDraft(workspaceName: string, nodeId: string): Promise<string | null> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return null;
+  const qs = new URLSearchParams({ nodeId });
+  if (config.userId) qs.set("userId", config.userId);
+  const result = await fetchJson<{ ok: true; content: string }>(
+    `/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap/spec-draft?${qs.toString()}`,
+    8000,
+  );
+  return result?.content ?? null;
+}
+
 /** spec-writer 완료는 다음 fetch에서 재시도하면 되는 조회가 아니라 사용자가 기다리는 제어 경로다. */
 export async function attachSpecDocument(workspaceName: string, nodeId: string, specPath: string): Promise<void> {
   const config = await resolveDashboardConfig();

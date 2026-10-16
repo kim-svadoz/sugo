@@ -1,7 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { z } from "zod";
-import { attachSpecDocument, downloadSpecAttachments, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
+import { attachSpecDocument, downloadSpecAttachments, fetchSpecDraft, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
 import { sugoHomeDir } from "../homeDir.js";
 import { toNfc } from "../unicodeName.js";
 
@@ -86,9 +86,12 @@ export async function handleSugoSpecWriter(rawArgs: unknown) {
   if (args.action === "context") {
     const dir = join(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args.workspace), encodeURIComponent(spec.id));
     try {
-      const attachments = await downloadSpecAttachments(args.workspace, spec.id, dir);
+      const [attachments, draftContent] = await Promise.all([
+        downloadSpecAttachments(args.workspace, spec.id, dir),
+        fetchSpecDraft(args.workspace, spec.id),
+      ]);
       const specTarget = await nextSpecTarget(spec.title);
-      return result({ ok: true, spec, specTarget, attachments: attachments ?? [], ...(attachments === null && { attachmentsUnavailable: true }) });
+      return result({ ok: true, spec, specTarget, draftContent: draftContent ?? "", attachments: attachments ?? [], ...(attachments === null && { attachmentsUnavailable: true }) });
     } catch (error) {
       return result({ ok: false, errorCode: "SPEC_ATTACHMENT_DOWNLOAD_FAILED", message: error instanceof Error ? error.message : String(error) });
     }

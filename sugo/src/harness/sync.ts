@@ -5,7 +5,7 @@ import { loadProjectConfig, projectSugoDir, saveProjectConfig, type ProjectConfi
 import { hashHarnessContent } from "./contentHash.js";
 import { compose, type ComposeResult } from "./harnessComposer.js";
 import { fetchHarnesses } from "./harnessFetcher.js";
-import { defaultHarnessLibraryDir } from "./libraryPath.js";
+import { defaultHarnessLibraryDir, userHarnessOverrideDir } from "./libraryPath.js";
 import { findRegistryEntry, registerProject } from "./registry.js";
 import { writeClaudeIfChanged } from "./claudeMdFreshness.js";
 import { buildClaudeRuleFile, buildEffectiveClaudeRuleFiles, mergeRootAgentsReference, mergeRootClaudeReference } from "./rulesFile.js";
@@ -68,7 +68,7 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
   const harnessIds = Array.from(new Set([...detectedStack.harnessIds, ...(args.additionalStacks ?? [])]));
 
   const libraryDir = defaultHarnessLibraryDir();
-  const { harnesses, warnings: fetchWarnings } = fetchHarnesses({ harnessIds, libraryDir, repoUrl: args.repoUrl });
+  const { harnesses, warnings: fetchWarnings } = fetchHarnesses({ harnessIds, libraryDir, overrideDir: userHarnessOverrideDir(), repoUrl: args.repoUrl });
 
   const projectName = basename(projectPath);
   const composeResult = compose({ harnesses, projectName, workspace, detectedStack, fetchWarnings });

@@ -12,6 +12,7 @@ export const IMAGE_TYPES: Record<string, string> = {
 const NAME_PATTERN = /^\d{2}\.(png|jpg|webp|gif)$/;
 const MAX_ATTACHMENTS = 20;
 const REFERENCES_FILE = "references.json";
+const DRAFT_FILE = "draft.md";
 const MAX_REFERENCES = 10;
 
 export type SpecReference = { title: string; url: string };
@@ -79,6 +80,24 @@ export async function listSpecReferences(db: DbClient, root: string, userId: str
   const node = await specNode(db, userId, workspaceName, nodeId);
   if (!node.ok) return node;
   return { ok: true as const, locked: node.locked, links: await readReferences(attachmentDir(root, userId, workspaceName, nodeId)) };
+}
+
+export async function readSpecDraft(db: DbClient, root: string, userId: string, workspaceName: string, nodeId: string) {
+  const node = await specNode(db, userId, workspaceName, nodeId);
+  if (!node.ok) return node;
+  const content = await readFile(join(attachmentDir(root, userId, workspaceName, nodeId), DRAFT_FILE), "utf8").catch(() => "");
+  return { ok: true as const, locked: node.locked, content };
+}
+
+export async function writeSpecDraft(db: DbClient, root: string, userId: string, workspaceName: string, nodeId: string, content: unknown) {
+  const node = await specNode(db, userId, workspaceName, nodeId);
+  if (!node.ok) return node;
+  if (node.locked) return { ok: false as const, errorCode: "SPEC_LOCKED_AFTER_FEAT" as const };
+  if (typeof content !== "string" || content.length > 1_000_000) return { ok: false as const, errorCode: "INVALID_SPEC_DRAFT" as const };
+  const dir = attachmentDir(root, userId, workspaceName, nodeId);
+  await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, DRAFT_FILE), content, "utf8");
+  return { ok: true as const, locked: false, content };
 }
 
 export async function replaceSpecReferences(

@@ -19,7 +19,7 @@ import { ScheduleMemoPanel, type ScheduleMemoDraft } from "../components/Schedul
 import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
-import { createQuickSpec, renameRoadmapNode, setDueDate, setProject, setWorkBranch, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
+import { createQuickSpec, getSpecDraft, renameRoadmapNode, setDueDate, setProject, setWorkBranch, updateSpecDraft, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { buildFeatCommand, buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
@@ -91,6 +91,7 @@ export function SchedulePage() {
   const [addWorkspace, setAddWorkspace] = useState("");
   const [addProjectPath, setAddProjectPath] = useState("");
   const [addDate, setAddDate] = useState<string | null>(null);
+  const [addDraft, setAddDraft] = useState("");
   // 생성 전에는 SPEC id가 없으므로 붙여 넣은 화면을 들고 있다가 생성 직후 올린다.
   const [addImages, setAddImages] = useState<Array<{ file: File; url: string }>>([]);
   const [busy, setBusy] = useState(false);
@@ -127,6 +128,8 @@ export function SchedulePage() {
   const [writerProvider, setWriterProvider] = useState<SpecWriterProvider>("claude");
   const [archiveConfirm, setArchiveConfirm] = useState<ScheduleSpecArchiveReason | null>(null);
   const [trashOpen, setTrashOpen] = useState(false);
+  const [detailDraft, setDetailDraft] = useState("");
+  const [draftSaved, setDraftSaved] = useState(false);
 
   useEffect(() => {
     if (!projectMenuOpen) return;
@@ -169,6 +172,16 @@ export function SchedulePage() {
     const fresh = specs.find((spec) => spec.id === selected.id && spec.workspace_name === selected.workspace_name);
     if (fresh && fresh !== selected) setSelected(fresh);
   }, [specs, selected]);
+
+  useEffect(() => {
+    if (!selected || selected.spec_path) return setDetailDraft("");
+    let cancelled = false;
+    if (!userId) return;
+    getSpecDraft(userId, selected.workspace_name, selected.id)
+      .then((value) => { if (!cancelled) setDetailDraft(value.content ?? ""); })
+      .catch(() => { if (!cancelled) setDetailDraft(""); });
+    return () => { cancelled = true; };
+  }, [selected?.id, selected?.workspace_name, selected?.spec_path, userId]);
 
   const todayKey = toDateKey(today);
   const grid = useMemo(() => buildMonthGrid(cursor.year, cursor.month), [cursor]);
@@ -378,6 +391,7 @@ export function SchedulePage() {
     setErrorMsg(null);
     try {
       const created = await createQuickSpec(userId, addWorkspace, addTitle.trim(), addDate, addProjectPath || null);
+      if (addDraft.trim()) await updateSpecDraft(userId, addWorkspace, created.id, addDraft);
       try {
         for (const image of addImages) await uploadSpecAttachment(userId, addWorkspace, created.id, image.file);
       } catch {
@@ -390,6 +404,7 @@ export function SchedulePage() {
       setAddWorkspace("");
       setAddProjectPath("");
       setAddDate(null);
+      setAddDraft("");
       refetch();
     } catch {
       setErrorMsg("일정 추가에 실패했습니다.");
@@ -561,7 +576,7 @@ export function SchedulePage() {
         {scheduleView === "agenda" ? (
           <section className="ck-glass command-stage ck-stage-in flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)]" aria-label="실행 대기열">
             <div className="ck-scroll min-h-0 flex-1 overflow-auto p-4">
-              {agenda.length === 0 ? (
+              {agenda.length === 0 && sortedMemos.length === 0 ? (
                 <div className="flex h-full min-h-56 flex-col items-center justify-center text-center">
                   <Check size={28} className="mb-3 text-emerald-300" />
                   <h3 className="text-base font-semibold text-white">해야 할 일이 없습니다</h3>
@@ -618,6 +633,18 @@ export function SchedulePage() {
                       </div>
                     </section>
                   ))}
+                  {sortedMemos.length > 0 && (
+                    <section aria-labelledby="agenda-memos">
+                      <div className="mb-2.5 flex items-center gap-2.5">
+                        <FilePenLine size={14} className="text-slate-300" />
+                        <h3 id="agenda-memos" className="text-[14px] font-bold text-white">메모</h3>
+                        <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 font-mono text-[11px] text-[var(--color-text-muted)]">{sortedMemos.length}</span>
+                      </div>
+                      <div className="grid gap-2 xl:grid-cols-2">
+                        {sortedMemos.map((memo) => <button key={memo.id} type="button" onClick={() => setMemoTarget({ memo })} className="flex min-h-[62px] items-center gap-3 rounded-xl border border-slate-400/25 bg-slate-400/[0.07] px-4 py-3 text-left transition-colors hover:bg-slate-400/[0.12]"><FilePenLine size={14} className="shrink-0 text-slate-300" /><span className="min-w-0 flex-1"><strong className="block truncate text-[13px] text-slate-100">{memo.title}</strong><span className="mt-1 block font-mono text-[10px] text-slate-500">{memo.due_date ?? "기한 없음"}</span></span></button>)}
+                      </div>
+                    </section>
+                  )}
                 </div>
               )}
             </div>
@@ -846,6 +873,16 @@ export function SchedulePage() {
               )}
             </div>
 
+            {!selected.spec_path && (
+              <section className="rounded-xl border border-white/[0.1] bg-white/[0.025] p-4" aria-label="SPEC 초안">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-white">SPEC 초안</h3>
+                  <button disabled={busy || !detailDraft.trim() || !userId} onClick={async () => { if (!userId) return; setBusy(true); setDraftSaved(false); try { await updateSpecDraft(userId, selected.workspace_name, selected.id, detailDraft); setDraftSaved(true); } finally { setBusy(false); } }} className="rounded-lg bg-cyan-500 px-3 py-1.5 text-[11px] font-bold text-slate-950 disabled:opacity-40">{draftSaved ? "저장됨" : "저장"}</button>
+                </div>
+                <textarea value={detailDraft} onChange={(event) => { setDetailDraft(event.target.value); setDraftSaved(false); }} rows={8} placeholder="문제, 목적, 범위, 완료 조건을 자유롭게 적으세요." className="block w-full resize-y rounded-xl border border-white/[0.1] bg-black/20 px-3 py-2.5 text-[13px] leading-6 text-slate-100 outline-none focus:border-cyan-400/50" />
+              </section>
+            )}
+
             <SpecAttachments workspace={selected.workspace_name} nodeId={selected.id} hasSpec={!!selected.spec_path} />
 
             <section className="rounded-xl border border-white/[0.1] bg-white/[0.035] p-4" aria-label="작업 컨텍스트">
@@ -1050,6 +1087,10 @@ export function SchedulePage() {
               <span className="mb-1 block text-[12px] text-[var(--color-text-muted)]">마감일(선택)</span>
               <DatePicker value={addDate} onChange={setAddDate} placeholder="선택 안 함" />
             </div>
+            <label className="block text-[12px] text-[var(--color-text-muted)]">
+              SPEC 초안
+              <textarea value={addDraft} onChange={(event) => setAddDraft(event.target.value)} rows={9} placeholder="문제, 목적, 범위, 완료 조건을 자유롭게 적으세요. 정식 SPEC 작성 시 이 내용을 구조화합니다." className="mt-1.5 block w-full resize-y rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2.5 text-[13px] leading-6 text-[var(--color-text)] outline-none focus:border-cyan-400/50" />
+            </label>
             <div className="space-y-2">
               <span className="block text-[12px] text-[var(--color-text-muted)]">기획 화면(선택)</span>
               {addImages.length > 0 && (

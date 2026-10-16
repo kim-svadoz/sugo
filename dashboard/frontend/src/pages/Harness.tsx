@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { marked } from "marked";
-import { Boxes, ChevronRight, Layers3 } from "lucide-react";
-import { getHarnessContent, getHarnessManifest, type HarnessManifestEntry } from "../api/catalogApi.js";
+import { Boxes, ChevronRight, Layers3, Pencil, RotateCcw } from "lucide-react";
+import { getHarnessManifest, getHarnessSource, resetHarnessOverride, saveHarnessOverride, type HarnessManifestEntry } from "../api/catalogApi.js";
 import { groupHarnessManifest, harnessCategoryLabel, harnessVersion, simplifyHarnessHeading, type HarnessTechnology } from "../lib/harnessCatalog.js";
 import { cn } from "../lib/utils.js";
 
@@ -14,6 +14,10 @@ export function Harness() {
   const [selectedId, setSelectedId] = useState("");
   const [content, setContent] = useState("");
   const [contentLoading, setContentLoading] = useState(false);
+  const [customized, setCustomized] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     getHarnessManifest()
@@ -47,14 +51,25 @@ export function Harness() {
     if (!selectedId) return setContent("");
     let cancelled = false;
     setContentLoading(true);
-    getHarnessContent(selectedId)
-      .then((value) => !cancelled && setContent(value))
+    setEditing(false);
+    getHarnessSource(selectedId)
+      .then((value) => { if (!cancelled) { setContent(value.content); setDraft(value.content); setCustomized(value.customized); } })
       .catch(() => !cancelled && setContent(""))
       .finally(() => !cancelled && setContentLoading(false));
     return () => { cancelled = true; };
   }, [selectedId]);
 
   const empty = loaded && manifest.length === 0;
+  const save = async () => {
+    setSaving(true);
+    try { await saveHarnessOverride(selectedId, draft); setContent(draft); setCustomized(true); setEditing(false); }
+    finally { setSaving(false); }
+  };
+  const reset = async () => {
+    setSaving(true);
+    try { await resetHarnessOverride(selectedId); const value = await getHarnessSource(selectedId); setContent(value.content); setDraft(value.content); setCustomized(false); setEditing(false); }
+    finally { setSaving(false); }
+  };
 
   return (
     <div className="space-y-6">
@@ -92,8 +107,15 @@ export function Harness() {
               </div>
             </aside>
             <div className="min-h-0 p-6">
+              <div className="mb-4 flex items-center justify-between gap-3 border-b border-[var(--color-border)] pb-4">
+                <div><span className={cn("rounded-md px-2 py-1 font-mono text-[11px]", customized ? "bg-amber-400/10 text-amber-200" : "bg-cyan-400/10 text-cyan-200")}>{customized ? "사용자 수정" : "Sugo 기본값"}</span><p className="mt-2 text-[11px] text-[var(--color-text-dim)]">저장한 규칙은 다음 프로젝트 동기화부터 적용됩니다.</p></div>
+                <div className="flex gap-2">
+                  {customized && <button disabled={saving} onClick={reset} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><RotateCcw size={13} /> 기본값 복원</button>}
+                  {editing ? <><button onClick={() => { setDraft(content); setEditing(false); }} className="px-3 py-2 text-xs text-[var(--color-text-muted)]">취소</button><button disabled={saving || !draft.trim()} onClick={save} className="rounded-lg bg-cyan-500 px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-40">{saving ? "저장 중…" : "저장"}</button></> : <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 px-3 py-2 text-xs font-semibold text-cyan-200"><Pencil size={13} /> 내 규칙으로 수정</button>}
+                </div>
+              </div>
               <div className="ck-scroll h-[calc(100vh-350px)] min-h-[360px] overflow-y-auto pr-3">
-                {contentLoading ? <div className="py-12 text-center font-mono text-sm text-[var(--color-text-dim)]">규칙을 불러오는 중…</div> : html ? <article className="md-body" dangerouslySetInnerHTML={{ __html: html }} /> : <div className="py-12 text-center text-sm text-[var(--color-text-muted)]">표시할 하네스 본문이 없습니다.</div>}
+                {contentLoading ? <div className="py-12 text-center font-mono text-sm text-[var(--color-text-dim)]">규칙을 불러오는 중…</div> : editing ? <textarea aria-label="하네스 규칙 편집" value={draft} onChange={(event) => setDraft(event.target.value)} className="min-h-full w-full resize-none rounded-xl border border-cyan-400/30 bg-[var(--color-background)] p-4 font-mono text-[13px] leading-6 text-[var(--color-text)] outline-none focus:border-cyan-400/70" /> : html ? <article className="md-body" dangerouslySetInnerHTML={{ __html: html }} /> : <div className="py-12 text-center text-sm text-[var(--color-text-muted)]">표시할 하네스 본문이 없습니다.</div>}
               </div>
             </div>
           </section>
