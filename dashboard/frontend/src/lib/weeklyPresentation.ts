@@ -7,7 +7,7 @@ export interface WeeklyTopicView {
   goal: string;
   done: string[];
   results: string[];
-  todo: string[];
+  todo: Array<{ text: string; kind: string }>;
 }
 
 export interface WeeklyPlanItemView {
@@ -72,7 +72,7 @@ export function toWeeklyView(report: Record<string, unknown>): WeeklyView {
         goal: text(topic.goal),
         done: strings(topic.done),
         results: strings(topic.results),
-        todo: textsOf(topic.todo),
+        todo: list(topic.todo).map((raw) => ({ text: text(record(raw).text), kind: text(record(raw).kind) })).filter((item) => item.text),
       };
     }),
     nextWeek: textsOf(report.next_week),

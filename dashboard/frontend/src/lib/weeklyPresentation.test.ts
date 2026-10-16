@@ -22,7 +22,7 @@ describe("weekly 보고서 화면 모델", () => {
     });
 
     expect(view.headline).toEqual(["요약 1", "요약 2"]);
-    expect(view.topics[0]).toMatchObject({ title: "대시보드 번들", workspace: "inventory", oneLine: "한 줄", done: ["완료 1"], todo: ["남은 일"] });
+    expect(view.topics[0]).toMatchObject({ title: "대시보드 번들", workspace: "inventory", oneLine: "한 줄", done: ["완료 1"], todo: [{ text: "남은 일", kind: "todo" }] });
     expect(view.nextWeek).toEqual(["다음 주 일"]);
     expect(view.blocked).toEqual(["막힌 일"]);
     expect(view.lastWeekPlan).toEqual([{ text: "지난주 계획", status: "done" }]);
@@ -47,5 +47,10 @@ describe("weekly 보고서 화면 모델", () => {
     expect(view.learning[0]).toMatchObject({ name: "Docker", category: "인프라", relatedTopics: ["배포"], keyPoints: ["이미지"] });
     expect(view.learning[0].alternatives[0].name).toBe("VM");
     expect(view.learning[0].quiz[0]).toEqual({ question: "이미지란?", answer: "실행 템플릿" });
+  });
+
+  it("남은 일의 종류를 버리지 않는다", () => {
+    const view = toWeeklyView({ topics: [{ title: "배포", todo: [{ text: "운영 승인", kind: "결정 필요" }] }] });
+    expect(view.topics[0].todo).toEqual([{ text: "운영 승인", kind: "결정 필요" }]);
   });
 });
