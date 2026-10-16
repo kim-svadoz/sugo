@@ -128,9 +128,11 @@ describe("schedule presentation", () => {
     expect(source).toContain('onClick={() => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.focus_task_id ?? selected.id })}');
   });
 
-  it("비어 있는 날짜 칸 더블클릭은 해당 날짜가 지정된 메모 추가를 연다", () => {
+  it("SPEC 카드가 있는 날짜도 셀의 빈 영역을 더블클릭하면 해당 날짜의 메모 추가를 연다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain('onDoubleClick={() => dayChips.length === 0 && dayMemos.length === 0 && setMemoTarget({ initialDate: key })}');
+    expect(source).toContain('onDoubleClick={() => setMemoTarget({ initialDate: key })}');
+    expect(source).toContain('onDoubleClick={(event) => event.stopPropagation()}');
+    expect(source).toContain('"group relative flex select-none flex-col');
     expect(source).toContain("더블클릭해 메모");
     expect(source).not.toContain("> 메모 추가</button>");
   });

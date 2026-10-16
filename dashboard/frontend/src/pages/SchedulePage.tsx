@@ -670,7 +670,7 @@ export function SchedulePage() {
               return (
                 <div
                   key={key}
-                  onDoubleClick={() => dayChips.length === 0 && dayMemos.length === 0 && setMemoTarget({ initialDate: key })}
+                  onDoubleClick={() => setMemoTarget({ initialDate: key })}
                   onDragOver={(e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = "move";
@@ -679,7 +679,7 @@ export function SchedulePage() {
                   onDragLeave={() => setDragOverKey((k) => (k === key ? null : k))}
                   onDrop={(e) => dropScheduleItem(e, key)}
                   className={cn(
-                    "group relative flex flex-col gap-1 overflow-hidden rounded-lg border p-1.5 text-left",
+                    "group relative flex select-none flex-col gap-1 overflow-hidden rounded-lg border p-1.5 text-left",
                     inMonth ? "border-[var(--color-border)] bg-[var(--color-background)]" : "border-transparent opacity-40",
                     isToday && "ring-1 ring-cyan-400/60",
                     dragOverKey === key && "border-cyan-400 bg-cyan-500/10",
@@ -705,6 +705,7 @@ export function SchedulePage() {
                         <div
                           key={commitment.id}
                           draggable={explicit || !!spec}
+                          onDoubleClick={(event) => event.stopPropagation()}
                           onDragStart={(e: DragEvent<HTMLDivElement>) => explicit ? startCommitmentDrag(e, commitment) : spec && startSpecDrag(e, spec)}
                           onDragEnd={() => setDragOverKey(null)}
                           style={style}
@@ -717,7 +718,7 @@ export function SchedulePage() {
                         </div>
                       );
                     })}
-                    {dayMemos.map((memo) => <div key={memo.id} draggable onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300" /><button type="button" onClick={() => setMemoTarget({ memo })} className="min-w-0 flex-1 truncate text-left">{memo.title}</button></div>)}
+                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300" /><button type="button" onClick={() => setMemoTarget({ memo })} className="min-w-0 flex-1 truncate text-left">{memo.title}</button></div>)}
                   </div>
                 </div>
               );

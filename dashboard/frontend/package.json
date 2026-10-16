@@ -1,6 +1,6 @@
 {
   "name": "sugo-dashboard-frontend",
-  "version": "0.26.6",
+  "version": "0.26.7",
   "description": "Sugo Dashboard frontend - React + Vite + Tailwind v4",
   "type": "module",
   "scripts": {
