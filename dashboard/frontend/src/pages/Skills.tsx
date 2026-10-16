@@ -38,9 +38,9 @@ export function Skills() {
   useEffect(() => {
     if (!selectedSkill) return setDetail("");
     let cancelled = false;
-    getSkillContent(selectedSkill.name).then(value => !cancelled && setDetail(value)).catch(() => !cancelled && setDetail(""));
+    getSkillContent(selectedSkill.name, catalogView === "commands" ? "command" : "skill").then(value => !cancelled && setDetail(value)).catch(() => !cancelled && setDetail(""));
     return () => { cancelled = true; };
-  }, [selectedSkill]);
+  }, [selectedSkill, catalogView]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -99,7 +99,7 @@ export function Skills() {
       : <div className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
         {filtered.map(skill => {
           const tone = AGENT_TONES[accentKey(skill.agent ?? "")] ?? FALLBACK_AGENT_TONE;
-          return <button key={skill.name} onClick={() => setSelectedSkill(skill)} className="group grid w-full grid-cols-[minmax(170px,0.7fr)_minmax(260px,1.5fr)_auto] items-center gap-5 px-2 py-3 text-left transition-colors hover:bg-[var(--color-surface-hover)] max-md:grid-cols-1 max-md:gap-1.5">
+          return <button key={`${skill.kind}:${skill.name}`} onClick={() => setSelectedSkill(skill)} className="group grid w-full grid-cols-[minmax(170px,0.7fr)_minmax(260px,1.5fr)_auto] items-center gap-5 px-2 py-3 text-left transition-colors hover:bg-[var(--color-surface-hover)] max-md:grid-cols-1 max-md:gap-1.5">
             <span className="flex items-center gap-2 font-mono text-[13px] font-semibold text-[var(--color-text-bright)]">{catalogView === "commands" ? <TerminalSquare size={15} /> : <BookOpen size={15} />} {skill.name}</span>
             <span className="line-clamp-2 text-[12.5px] leading-5 text-[var(--color-text-muted)]">{skill.description || "설명이 등록되지 않았습니다."}</span>
             <span className="flex justify-end gap-1.5 max-md:justify-start">{catalogView === "commands" ? <span className="rounded border border-violet-400/20 bg-violet-400/[0.06] px-2 py-0.5 font-mono text-[10px] text-violet-300">command</span> : skill.agent ? <span className={cn("rounded border px-2 py-0.5 font-mono text-[10px]", tone.chip, tone.icon)}>{skill.agent}</span> : <span className="rounded border border-cyan-400/20 bg-cyan-400/[0.05] px-2 py-0.5 text-[10px] text-cyan-200">공용</span>}</span>

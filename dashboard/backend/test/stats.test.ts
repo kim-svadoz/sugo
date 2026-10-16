@@ -95,7 +95,7 @@ describe("§3.7 harness/skills — 미설정이면 빈 목록(404 아님)", () =
     const res = await request(await app()).get("/api/skills").expect(200);
     expect(res.body.skills).toEqual([]);
   });
-  it("skills 카탈로그는 중복 이름을 합치고 설명·종류·원문을 제공한다", async () => {
+  it("skills 카탈로그는 같은 이름의 스킬과 Command를 별도 항목·설명·원문으로 제공한다", async () => {
     const root = mkdtempSync(join(tmpdir(), "sugo-skills-"));
     try {
       mkdirSync(join(root, "skills", "spec-writer"), { recursive: true });
@@ -108,10 +108,14 @@ describe("§3.7 harness/skills — 미설정이면 빈 목록(404 아님)", () =
       const { app } = await createApp({ db, skillsPath: root });
       const list = await request(app).get("/api/skills").expect(200);
       expect(list.body.skills).toEqual([
-        { name: "spec-writer", agent: "code-agent", description: "Turns a draft into an implementable specification.", kind: "skill", command: true },
+        { name: "spec-writer", agent: "code-agent", description: "Turns a draft into an implementable specification.", kind: "skill", command: false },
+        { name: "spec-writer", agent: null, description: "command duplicate", kind: "command", command: true },
         { name: "status", agent: null, description: "Shows the current pipeline state.", kind: "command", command: true },
       ]);
-      expect((await request(app).get("/api/skills/spec-writer").expect(200)).text).toContain("Skill body.");
+      expect((await request(app).get("/api/skills/spec-writer").query({ kind: "skill" }).expect(200)).text).toContain("Skill body.");
+      expect((await request(app).get("/api/skills/spec-writer").query({ kind: "command" }).expect(200)).text).toContain("# command");
+      await request(app).get("/api/skills/spec-writer").expect(400);
+      await request(app).get("/api/skills/spec-writer").query({ kind: "agent" }).expect(400);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

@@ -15,4 +15,8 @@ describe("Skills catalog presentation", () => {
     expect(source).toContain("공용 스킬");
     for (const label of ["구현", "테스트", "검토", "문서"]) expect(source).toContain(`"${label}"`);
   });
+
+  it("같은 이름의 스킬과 Command 상세를 현재 카탈로그 종류로 구분해 조회한다", () => {
+    expect(source).toContain("getSkillContent(selectedSkill.name, catalogView === \"commands\" ? \"command\" : \"skill\")");
+  });
 });
