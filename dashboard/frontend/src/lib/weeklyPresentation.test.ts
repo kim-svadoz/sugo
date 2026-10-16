@@ -37,4 +37,15 @@ describe("weekly 보고서 화면 모델", () => {
     expect(view.nextWeek).toEqual([]);
     expect(view.blocked).toEqual([]);
   });
+
+  it("기술 학습 내용과 주제 필터 관계를 보존한다", () => {
+    const view = toWeeklyView({
+      headline: [], topics: [{ title: "배포", one_line: "완료" }],
+      tech: { learning_summary: ["배포 구조를 익혔다"], items: [{ name: "Docker", category: "인프라", level: "실무", definition: "컨테이너 실행 단위", topics: ["배포"], key_points: ["이미지"], alternatives: [{ name: "VM", pros: "강한 격리", cons: "무거움", when: "OS 격리" }], quiz: [{ q: "이미지란?", a: "실행 템플릿" }] }] },
+    });
+    expect(view.learningSummary).toEqual(["배포 구조를 익혔다"]);
+    expect(view.learning[0]).toMatchObject({ name: "Docker", category: "인프라", relatedTopics: ["배포"], keyPoints: ["이미지"] });
+    expect(view.learning[0].alternatives[0].name).toBe("VM");
+    expect(view.learning[0].quiz[0]).toEqual({ question: "이미지란?", answer: "실행 템플릿" });
+  });
 });
