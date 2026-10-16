@@ -1,5 +1,6 @@
 import type { CompletionGrade, BypassLabel, HumanApprovalEvent } from "./labelGuard.js";
 import { formatSteInspiredKorean } from "./steKorean.js";
+import type { PostHocBaseline } from "./patch.js";
 
 export interface WorkResultRequirement {
   id: string;
@@ -31,6 +32,8 @@ export interface WorkResultReport {
   designDecisions: string[];
   knownLimitations: string[];
   seed?: string;
+  provenance?: "native" | "captured-post-hoc";
+  postHocCapture?: PostHocBaseline;
   verification: {
     test: WorkResultTestEvidence;
     runtimeVerified: boolean;
@@ -54,6 +57,8 @@ export interface BuildWorkResultReportInput {
   designDecisions?: string[];
   knownLimitations?: string[];
   seed?: string;
+  provenance?: "native" | "captured-post-hoc";
+  postHocCapture?: PostHocBaseline;
   testEvidence: WorkResultTestEvidence;
   runtimeVerified: boolean;
   wiringVerified?: boolean;
@@ -80,6 +85,8 @@ export function buildWorkResultReport(input: BuildWorkResultReportInput): WorkRe
     designDecisions: (input.designDecisions ?? []).map(formatSteInspiredKorean),
     knownLimitations: (input.knownLimitations ?? []).map(formatSteInspiredKorean),
     seed: input.seed?.trim() || undefined,
+    provenance: input.provenance,
+    postHocCapture: input.postHocCapture,
     verification: {
       test: { ...input.testEvidence },
       runtimeVerified: input.runtimeVerified,
@@ -109,6 +116,10 @@ export function renderWorkResultMarkdown(report: WorkResultReport): string {
     `# Work Result — ${report.featureName}`,
     "",
     `> ${kindLabel} · ${gradeLabel} · ${report.completedAt}`,
+    ...(report.provenance === "captured-post-hoc" ? [
+      "",
+      `> Provenance: captured-post-hoc · baseline \`${report.postHocCapture?.baselineRevision ?? "미기록"}\` · ${report.postHocCapture?.source ?? "미기록"}`,
+    ] : []),
     "",
     "## 결과 요약",
     "",

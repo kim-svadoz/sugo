@@ -429,6 +429,34 @@ try {
   check("대시보드 다운 상태에서도 checkpoint add 동작", toolOk(cpB), JSON.stringify(cpB).slice(0, 160));
   B.server.kill();
 
+  // ─────────────────────────────────────────────────────────────
+  console.log("\n[시나리오 C] 구버전 SPEC 저장소를 가진 기존 사용자 업그레이드");
+  const homeC = join(root, "homeC");
+  const legacySpec = join(homeC, "dev", "spec", "20261016", "legacy-feature", "v1", "spec.md");
+  const legacyState = join(homeC, ".claude", "sugo", "work", "legacy-ws", "roadmap.json");
+  mkdirSync(dirname(legacySpec), { recursive: true });
+  mkdirSync(dirname(legacyState), { recursive: true });
+  writeFileSync(legacySpec, "# Legacy feature\n\nREQ-1: Preserve this SPEC.\n");
+  writeFileSync(join(dirname(legacySpec), "spec.json"), JSON.stringify({ title: "legacy-feature" }));
+  writeFileSync(legacyState, JSON.stringify({ specPath: legacySpec }));
+
+  const C = startServer(install, homeC, {});
+  await handshake(C.rpc, C.server);
+  const managedSpec = join(homeC, ".claude", "sugo", "specs", "20261016", "legacy-feature", "v1", "spec.md");
+  const migrationMarker = join(homeC, ".claude", "sugo", "specs", ".legacy-dev-spec-migrated.json");
+  check(
+    "기동 시 기존 SPEC과 보조 파일을 관리 저장소로 자동 이관",
+    existsSync(managedSpec)
+      && readFileSync(managedSpec, "utf8") === readFileSync(legacySpec, "utf8")
+      && existsSync(join(dirname(managedSpec), "spec.json")),
+  );
+  check("이관은 원본을 보존하고 완료 마커를 기록", existsSync(legacySpec) && existsSync(migrationMarker));
+  check(
+    "기동 시 로컬 작업 데이터의 SPEC 절대경로를 새 경로로 교체",
+    JSON.parse(readFileSync(legacyState, "utf8")).specPath === managedSpec,
+  );
+  C.server.kill();
+
   console.log("\n[참고] 노출 도구 목록:\n  " + toolNames.join(", "));
 } catch (err) {
   check("스모크 실행", false, String(err));

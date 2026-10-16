@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,6 +11,7 @@ import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrife
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 import { handleSugoTask } from "../src/tools/sugoTask.js";
 import { listRoadmapNodes } from "../src/hulk/roadmap.js";
+import { loadSession } from "../src/session.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
@@ -96,6 +98,55 @@ describe("Patch 진입 — 반드시 거부", () => {
     });
     expect(result.isError).toBe(true);
     expect(result.data.errorCode).toBe("PATCH_PARENT_PRD_NOT_FOUND");
+  });
+});
+
+describe("사후 patch 연결 — 서버 강제 계약", () => {
+  function prepareGitPatch(): string {
+    execFileSync("git", ["init"], { cwd: projectDir });
+    execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: projectDir });
+    execFileSync("git", ["config", "user.name", "Test"], { cwd: projectDir });
+    writeFileSync(join(projectDir, "app.ts"), "export const value = 1;\n");
+    execFileSync("git", ["add", "app.ts"], { cwd: projectDir });
+    execFileSync("git", ["commit", "-m", "initial"], { cwd: projectDir });
+    const featureDir = join(projectDir, "sugo", "features", "20261016", "login");
+    mkdirSync(featureDir, { recursive: true });
+    writeFileSync(join(featureDir, "prd.md"), VALID_PRD);
+    writeFileSync(join(featureDir, "work-result.md"), "완료 결과");
+    return join(featureDir, "work-result.md");
+  }
+
+  it("captured-post-hoc는 기존 work-result와 사용자 의도를 모두 요구한다", async () => {
+    const noPatch = await call(handleSugoPlan, {
+      action: "start", projectPath: projectDir, featureName: "login", patchProvenance: "captured-post-hoc", seed: "수정 연결",
+    });
+    expect(noPatch.data.errorCode).toBe("POST_HOC_PATCH_REQUIRED");
+
+    const workResultPath = prepareGitPatch();
+    writeFileSync(join(projectDir, "app.ts"), "export const value = 2;\n");
+    const noSeed = await call(handleSugoPlan, {
+      action: "start", projectPath: projectDir, featureName: "login", workResultPath, patchProvenance: "captured-post-hoc",
+    });
+    expect(noSeed.data.errorCode).toBe("POST_HOC_SEED_REQUIRED");
+  });
+
+  it("dirty 변경의 Git 기준선·변경파일·출처를 세션과 patch PRD에 서버가 기록한다", async () => {
+    const workResultPath = prepareGitPatch();
+    writeFileSync(join(projectDir, "app.ts"), "export const value = 2;\n");
+    const start = await call(handleSugoPlan, {
+      action: "start", projectPath: projectDir, featureName: "login", workResultPath,
+      seed: "대화에서 수정한 값을 기존 login 작업에 연결", patchProvenance: "captured-post-hoc",
+    });
+    expect(start.isError).toBe(false);
+    const sessionId = start.data.sessionId as string;
+    const session = await loadSession(sessionId);
+    expect(session.data.postHocCapture).toMatchObject({ provenance: "captured-post-hoc", changedFiles: ["app.ts"], source: "working-tree" });
+
+    await call(handleSugoPlan, { action: "clarify", sessionId });
+    const prd = await call(handleSugoPlan, { action: "prd", sessionId, prdContent: VALID_PRD });
+    const content = readFileSync(prd.data.prdPath, "utf8");
+    expect(content).toContain("Provenance: captured-post-hoc");
+    expect(content).toContain(`Baseline: ${session.data.postHocCapture?.baselineRevision}`);
   });
 });
 

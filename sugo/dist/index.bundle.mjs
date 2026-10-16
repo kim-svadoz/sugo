@@ -1068,10 +1068,10 @@ var require_util = __commonJS({
     var codegen_1 = require_codegen();
     var code_1 = require_code();
     function toHash(arr) {
-      const hash = {};
+      const hash2 = {};
       for (const item of arr)
-        hash[item] = true;
-      return hash;
+        hash2[item] = true;
+      return hash2;
     }
     exports2.toHash = toHash;
     function alwaysValidSchema(it, schema) {
@@ -2904,9 +2904,9 @@ var require_compile = __commonJS({
       if (_sch)
         return _sch;
       const rootId = (0, resolve_1.getFullPath)(this.opts.uriResolver, sch.root.baseId);
-      const { es5, lines } = this.opts.code;
+      const { es5, lines: lines2 } = this.opts.code;
       const { ownProperties } = this.opts;
-      const gen = new codegen_1.CodeGen(this.scope, { es5, lines, ownProperties });
+      const gen = new codegen_1.CodeGen(this.scope, { es5, lines: lines2, ownProperties });
       let _ValidationError;
       if (sch.$async) {
         _ValidationError = gen.scopeValue("Error", {
@@ -2991,7 +2991,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve14.call(this, root, ref);
+      let _sch = resolve15.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3018,7 +3018,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve14(root, ref) {
+    function resolve15(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3649,55 +3649,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve14(baseURI, relativeURI, options) {
+    function resolve15(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative10, options, skipNormalization) {
+    function resolveComponent(base, relative12, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative10 = parse3(serialize(relative10, options), options);
+        relative12 = parse3(serialize(relative12, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative10.scheme) {
-        target.scheme = relative10.scheme;
-        target.userinfo = relative10.userinfo;
-        target.host = relative10.host;
-        target.port = relative10.port;
-        target.path = removeDotSegments(relative10.path || "");
-        target.query = relative10.query;
+      if (!options.tolerant && relative12.scheme) {
+        target.scheme = relative12.scheme;
+        target.userinfo = relative12.userinfo;
+        target.host = relative12.host;
+        target.port = relative12.port;
+        target.path = removeDotSegments(relative12.path || "");
+        target.query = relative12.query;
       } else {
-        if (relative10.userinfo !== void 0 || relative10.host !== void 0 || relative10.port !== void 0) {
-          target.userinfo = relative10.userinfo;
-          target.host = relative10.host;
-          target.port = relative10.port;
-          target.path = removeDotSegments(relative10.path || "");
-          target.query = relative10.query;
+        if (relative12.userinfo !== void 0 || relative12.host !== void 0 || relative12.port !== void 0) {
+          target.userinfo = relative12.userinfo;
+          target.host = relative12.host;
+          target.port = relative12.port;
+          target.path = removeDotSegments(relative12.path || "");
+          target.query = relative12.query;
         } else {
-          if (!relative10.path) {
+          if (!relative12.path) {
             target.path = base.path;
-            if (relative10.query !== void 0) {
-              target.query = relative10.query;
+            if (relative12.query !== void 0) {
+              target.query = relative12.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative10.path[0] === "/") {
-              target.path = removeDotSegments(relative10.path);
+            if (relative12.path[0] === "/") {
+              target.path = removeDotSegments(relative12.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative10.path;
+                target.path = "/" + relative12.path;
               } else if (!base.path) {
-                target.path = relative10.path;
+                target.path = relative12.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative10.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative12.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative10.query;
+            target.query = relative12.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative10.fragment;
+      target.fragment = relative12.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3907,7 +3907,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve14,
+      resolve: resolve15,
       resolveComponent,
       equal,
       serialize,
@@ -4047,8 +4047,8 @@ var require_core = __commonJS({
         this._loading = {};
         this._cache = /* @__PURE__ */ new Map();
         opts = this.opts = { ...opts, ...requiredOptions(opts) };
-        const { es5, lines } = this.opts.code;
-        this.scope = new codegen_2.ValueScope({ scope: {}, prefixes: EXT_SCOPE_NAMES, es5, lines });
+        const { es5, lines: lines2 } = this.opts.code;
+        this.scope = new codegen_2.ValueScope({ scope: {}, prefixes: EXT_SCOPE_NAMES, es5, lines: lines2 });
         this.logger = getLogger(opts.logger);
         const formatOpt = opts.validateFormats;
         opts.validateFormats = false;
@@ -13524,9 +13524,9 @@ var Doc = class {
       return;
     }
     const content = arg;
-    const lines = content.split("\n").filter((x) => x);
-    const minIndent = Math.min(...lines.map((x) => x.length - x.trimStart().length));
-    const dedented = lines.map((x) => x.slice(minIndent)).map((x) => " ".repeat(this.indent * 2) + x);
+    const lines2 = content.split("\n").filter((x) => x);
+    const minIndent = Math.min(...lines2.map((x) => x.length - x.trimStart().length));
+    const dedented = lines2.map((x) => x.slice(minIndent)).map((x) => " ".repeat(this.indent * 2) + x);
     for (const line of dedented) {
       this.content.push(line);
     }
@@ -13535,8 +13535,8 @@ var Doc = class {
     const F = Function;
     const args2 = this?.args;
     const content = this?.content ?? [``];
-    const lines = [...content.map((x) => `  ${x}`)];
-    return new F(...args2, lines.join("\n"));
+    const lines2 = [...content.map((x) => `  ${x}`)];
+    return new F(...args2, lines2.join("\n"));
   }
 };
 
@@ -20404,7 +20404,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve14) => setTimeout(resolve14, pollInterval));
+        await new Promise((resolve15) => setTimeout(resolve15, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error3) {
@@ -20421,7 +20421,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve14, reject) => {
+    return new Promise((resolve15, reject) => {
       const earlyReject = (error3) => {
         reject(error3);
       };
@@ -20499,7 +20499,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve14(parseResult.data);
+            resolve15(parseResult.data);
           }
         } catch (error3) {
           reject(error3);
@@ -20760,12 +20760,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve14, reject) => {
+    return new Promise((resolve15, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve14, interval);
+      const timeoutId = setTimeout(resolve15, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -21865,7 +21865,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve14) => setTimeout(resolve14, pollInterval));
+      await new Promise((resolve15) => setTimeout(resolve15, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -22514,12 +22514,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve14) => {
+    return new Promise((resolve15) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve14();
+        resolve15();
       } else {
-        this._stdout.once("drain", resolve14);
+        this._stdout.once("drain", resolve15);
       }
     });
   }
@@ -22629,12 +22629,12 @@ function hashHarnessContent(harness) {
 
 // src/harness/harnessComposer.ts
 function extractCoreRuleBullets(harnessMd, limit = 2) {
-  const lines = harnessMd.split(/\r?\n/);
-  const headingIdx = lines.findIndex((l) => /^#{1,3}\s*핵심 규칙/.test(l.trim()));
+  const lines2 = harnessMd.split(/\r?\n/);
+  const headingIdx = lines2.findIndex((l) => /^#{1,3}\s*핵심 규칙/.test(l.trim()));
   if (headingIdx === -1) return [];
   const bullets2 = [];
-  for (let i2 = headingIdx + 1; i2 < lines.length; i2++) {
-    const line = lines[i2].trim();
+  for (let i2 = headingIdx + 1; i2 < lines2.length; i2++) {
+    const line = lines2[i2].trim();
     if (/^#{1,3}\s/.test(line)) break;
     const m = line.match(/^(?:\d+\.|-)\s+(.*)$/);
     if (m) bullets2.push(m[1]);
@@ -22932,18 +22932,18 @@ function basenameOf(normalized) {
   const idx = normalized.lastIndexOf("/");
   return idx === -1 ? normalized : normalized.slice(idx + 1);
 }
-function extensionOf(basename3) {
-  const idx = basename3.lastIndexOf(".");
-  return idx <= 0 ? "" : basename3.slice(idx);
+function extensionOf(basename4) {
+  const idx = basename4.lastIndexOf(".");
+  return idx <= 0 ? "" : basename4.slice(idx);
 }
 function prefixesForFile(filePath) {
   const normalized = normalizePath(filePath);
-  const basename3 = basenameOf(normalized);
-  const byName = PREFIXES_BY_FILENAME[basename3];
+  const basename4 = basenameOf(normalized);
+  const byName = PREFIXES_BY_FILENAME[basename4];
   if (byName) return byName;
-  if (basename3.startsWith("next.config.")) return ["framework/nextjs", ...NODE_PREFIXES];
-  if (/^requirements.*\.txt$/.test(basename3)) return ["buildtool/pip", ...PYTHON_PREFIXES];
-  const byExt = PREFIXES_BY_EXTENSION[extensionOf(basename3)];
+  if (basename4.startsWith("next.config.")) return ["framework/nextjs", ...NODE_PREFIXES];
+  if (/^requirements.*\.txt$/.test(basename4)) return ["buildtool/pip", ...PYTHON_PREFIXES];
+  const byExt = PREFIXES_BY_EXTENSION[extensionOf(basename4)];
   return byExt ?? null;
 }
 function matchesPrefix(harnessId, prefix) {
@@ -24106,13 +24106,13 @@ function compactWorkResult(result3, summaryOnly = false) {
     report: result3.report ? { ...result3.report, humanApprovals: void 0 } : void 0,
     files: result3.files?.map((file) => {
       const { path, change, diff } = file;
-      const lines = diff?.split("\n");
+      const lines2 = diff?.split("\n");
       return {
         path,
         change,
-        ...lines ? {
-          additions: lines.filter((line) => line.startsWith("+") && !line.startsWith("+++")).length,
-          deletions: lines.filter((line) => line.startsWith("-") && !line.startsWith("---")).length
+        ...lines2 ? {
+          additions: lines2.filter((line) => line.startsWith("+") && !line.startsWith("+++")).length,
+          deletions: lines2.filter((line) => line.startsWith("-") && !line.startsWith("---")).length
         } : {
           ..."additions" in file && typeof file.additions === "number" ? { additions: file.additions } : {},
           ..."deletions" in file && typeof file.deletions === "number" ? { deletions: file.deletions } : {}
@@ -24355,6 +24355,12 @@ async function syncUser() {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
   await pushEvent("/api/sync/user", "POST", { userId: config2.userId });
+}
+async function syncSpecPathMigration(mappings) {
+  if (mappings.length === 0) return;
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled) return;
+  await pushEvent("/api/sync/spec-path-migration", "POST", { userId: config2.userId, mappings });
 }
 async function syncRoadmapLink(workspaceName, fromId, toId) {
   const config2 = await resolveDashboardConfig();
@@ -26053,12 +26059,12 @@ function getDoubleQuotedValue(input, start2, end) {
 function getBlockValue(input, start2, end, indent, chomping, folded) {
   const textIndent = indent < 0 ? 0 : indent;
   const region = input.slice(start2, end).replace(/\r\n?/g, "\n");
-  const lines = region === "" ? [] : (region.endsWith("\n") ? region.slice(0, -1) : region).split("\n");
+  const lines2 = region === "" ? [] : (region.endsWith("\n") ? region.slice(0, -1) : region).split("\n");
   let result3 = "";
   let didReadContent = false;
   let emptyLines = 0;
   let atMoreIndented = false;
-  for (const line of lines) {
+  for (const line of lines2) {
     let column = 0;
     while (column < textIndent && line.charCodeAt(column) === 32) column++;
     if (indent < 0 || column >= line.length) {
@@ -27746,8 +27752,8 @@ function writeFlowMapping(state, level, node) {
     if (explicitPair) pairBuffer += "? ";
     else if (state.quoteFlowKeys) pairBuffer += '"';
     const valueText = writeNode(state, level, value, {});
-    const sep5 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
-    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep5}${valueText}`;
+    const sep6 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
+    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep6}${valueText}`;
     result3 += pairBuffer;
   }
   const pad = state.flowBracketPadding && result3 !== "" ? " " : "";
@@ -27844,8 +27850,8 @@ function writeNode(state, level, node, ctx) {
       if (anchor !== null) props.push(anchor);
       if (tag !== null) props.push(tag);
     }
-    const sep5 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
-    body2 = `${props.join(" ")}${sep5}${body2}`;
+    const sep6 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
+    body2 = `${props.join(" ")}${sep6}${body2}`;
   }
   return body2;
 }
@@ -27890,8 +27896,8 @@ function present(documents, options) {
         block: true,
         compact: true
       });
-      const sep5 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
-      result3 += `---${sep5}${body2}
+      const sep6 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
+      result3 += `---${sep6}${body2}
 `;
     } else result3 += writeNode(state, 0, doc.contents, {
       block: true,
@@ -28284,7 +28290,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.34.2" : "0.0.0-dev";
+  return true ? "0.35.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -28751,17 +28757,17 @@ function checkUserConfirmationGate(userConfirmed) {
 }
 function validateSummaryQuality(summary) {
   const trimmed = summary.trim();
-  const lines = trimmed.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0).length;
+  const lines2 = trimmed.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0).length;
   const length = trimmed.length;
   const uniqueChars = new Set(trimmed.replace(/\s+/g, "")).size;
   const tokens = trimmed.split(/[^\p{L}\p{N}]+/u).filter((t) => t.length >= 2);
   const distinctTokens = new Set(tokens.map((t) => t.toLowerCase())).size;
   const errors = [];
-  if (lines < 3) errors.push("SUMMARY_TOO_FEW_LINES");
+  if (lines2 < 3) errors.push("SUMMARY_TOO_FEW_LINES");
   if (length < 30) errors.push("SUMMARY_TOO_SHORT");
   if (uniqueChars < 10) errors.push("SUMMARY_LOW_CHAR_DIVERSITY");
   if (distinctTokens < 5) errors.push("SUMMARY_LOW_TOKEN_DIVERSITY");
-  return { ok: errors.length === 0, lines, length, uniqueChars, distinctTokens, errors };
+  return { ok: errors.length === 0, lines: lines2, length, uniqueChars, distinctTokens, errors };
 }
 function checkRuntimeVerificationGate(testPassedState, runtimeCheck, bootable) {
   const labeled = !!(runtimeCheck.unverifiedReason && runtimeCheck.unverifiedReason.trim().length > 0);
@@ -28814,11 +28820,11 @@ var LEDGER_HEADING = /^#{1,6}\s*.*(in[-\s]?scope|범위|dod|완료\s*조건|defi
 var OUT_OF_SCOPE_HEADING = /out[-\s]?of[-\s]?scope|범위\s*외|제외/i;
 var REQ_REF = /\bREQ-\d+\b/gi;
 function validateConformanceLedger(prdContent) {
-  const lines = prdContent.split(/\r?\n/);
+  const lines2 = prdContent.split(/\r?\n/);
   const declaredReqs = /* @__PURE__ */ new Set();
   {
     let scanLedger = false;
-    for (const raw of lines) {
+    for (const raw of lines2) {
       const line = raw.trim();
       if (/^#{1,6}\s/.test(line)) {
         scanLedger = LEDGER_HEADING.test(line) && !OUT_OF_SCOPE_HEADING.test(line);
@@ -28832,7 +28838,7 @@ function validateConformanceLedger(prdContent) {
   const uncovered = [];
   const ghost = [];
   let inLedger = false;
-  for (const raw of lines) {
+  for (const raw of lines2) {
     const line = raw.trim();
     if (/^#{1,6}\s/.test(line)) {
       inLedger = LEDGER_HEADING.test(line) && !OUT_OF_SCOPE_HEADING.test(line);
@@ -29333,13 +29339,53 @@ import { join as join24 } from "node:path";
 
 // src/patch.ts
 import { readdir as readdir9 } from "node:fs/promises";
-import { dirname as dirname9, join as join23 } from "node:path";
+import { dirname as dirname9, join as join23, relative as relative7 } from "node:path";
 var PatchEntryError = class extends Error {
   constructor(code, message) {
     super(message);
     this.code = code;
   }
 };
+var PostHocEntryError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+  }
+};
+function lines(value) {
+  return value ? value.split("\n").map((line) => line.trim()).filter(Boolean) : [];
+}
+async function capturePostHocBaseline(projectPath, requestedBaseRevision, excludedPaths = []) {
+  const head = await runGit(["rev-parse", "HEAD"], projectPath);
+  if (!head || !/^[0-9a-f]{40,64}$/.test(head)) {
+    throw new PostHocEntryError("POST_HOC_GIT_REQUIRED", "\uC0AC\uD6C4 patch \uC5F0\uACB0\uC740 Git \uC800\uC7A5\uC18C\uC640 HEAD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  }
+  const excluded = excludedPaths.map((path) => relative7(projectPath, path).replace(/\\/g, "/").replace(/\/$/, ""));
+  const keep = (path) => !excluded.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+  const dirtyFiles = [.../* @__PURE__ */ new Set([
+    ...lines(await runGit(["diff", "--name-only", "HEAD"], projectPath)),
+    ...lines(await runGit(["ls-files", "--others", "--exclude-standard"], projectPath))
+  ])].filter(keep).sort();
+  if (dirtyFiles.length > 0) {
+    return { baselineRevision: head, headAtCapture: head, changedFiles: dirtyFiles, source: "working-tree", capturedAt: (/* @__PURE__ */ new Date()).toISOString() };
+  }
+  if (!requestedBaseRevision) {
+    throw new PostHocEntryError("POST_HOC_BASELINE_REQUIRED", "\uC774\uBBF8 \uCEE4\uBC0B\uB41C \uBCC0\uACBD\uC740 \uBCC0\uACBD \uC804 Git revision\uC744 \uC9C0\uC815\uD574\uC57C \uD569\uB2C8\uB2E4.");
+  }
+  const base = await runGit(["rev-parse", `${requestedBaseRevision}^{commit}`], projectPath);
+  if (!base || !/^[0-9a-f]{40,64}$/.test(base)) {
+    throw new PostHocEntryError("POST_HOC_BASELINE_INVALID", "\uC9C0\uC815\uD55C \uBCC0\uACBD \uC804 Git revision\uC744 \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  }
+  const ancestor = await runGit(["merge-base", "--is-ancestor", base, head], projectPath);
+  if (ancestor === null) {
+    throw new PostHocEntryError("POST_HOC_BASELINE_INVALID", "\uC9C0\uC815\uD55C revision\uC774 \uD604\uC7AC HEAD\uC758 \uC870\uC0C1\uC774 \uC544\uB2D9\uB2C8\uB2E4.");
+  }
+  const changedFiles = lines(await runGit(["diff", "--name-only", `${base}..${head}`], projectPath)).filter(keep).sort();
+  if (changedFiles.length === 0) {
+    throw new PostHocEntryError("POST_HOC_NO_CHANGES", "\uC9C0\uC815\uD55C \uAE30\uC900\uC120 \uC774\uD6C4 \uC5F0\uACB0\uD560 \uBCC0\uACBD\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  }
+  return { baselineRevision: base, headAtCapture: head, changedFiles, source: "committed-range", capturedAt: (/* @__PURE__ */ new Date()).toISOString() };
+}
 var PATCH_FILE_RE = /^(prd|work-result)-patch-v(\d+)\.md$/i;
 var PRD_PATCH_RE = /^prd-patch-v(\d+)\.md$/i;
 function computeNextPatchVersion(filenames) {
@@ -29631,7 +29677,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash5 } from "node:crypto";
 import { stat as stat2 } from "node:fs/promises";
-import { isAbsolute as isAbsolute7, join as join25, relative as relative7 } from "node:path";
+import { isAbsolute as isAbsolute7, join as join25, relative as relative8 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash5("sha1").update(parts2.join("\n")).digest("hex");
@@ -29640,7 +29686,7 @@ async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
     const full = isAbsolute7(f) ? f : join25(projectPath, f);
-    const relPath = isAbsolute7(f) ? relative7(projectPath, f) : f;
+    const relPath = isAbsolute7(f) ? relative8(projectPath, f) : f;
     try {
       const st = await stat2(full);
       entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
@@ -29741,6 +29787,8 @@ function buildWorkResultReport(input) {
     designDecisions: (input.designDecisions ?? []).map(formatSteInspiredKorean),
     knownLimitations: (input.knownLimitations ?? []).map(formatSteInspiredKorean),
     seed: input.seed?.trim() || void 0,
+    provenance: input.provenance,
+    postHocCapture: input.postHocCapture,
     verification: {
       test: { ...input.testEvidence },
       runtimeVerified: input.runtimeVerified,
@@ -29763,6 +29811,10 @@ function renderWorkResultMarkdown(report) {
     `# Work Result \u2014 ${report.featureName}`,
     "",
     `> ${kindLabel} \xB7 ${gradeLabel} \xB7 ${report.completedAt}`,
+    ...report.provenance === "captured-post-hoc" ? [
+      "",
+      `> Provenance: captured-post-hoc \xB7 baseline \`${report.postHocCapture?.baselineRevision ?? "\uBBF8\uAE30\uB85D"}\` \xB7 ${report.postHocCapture?.source ?? "\uBBF8\uAE30\uB85D"}`
+    ] : [],
     "",
     "## \uACB0\uACFC \uC694\uC57D",
     "",
@@ -29850,9 +29902,9 @@ function computeCompletionGrade(labels, currentPatchVersion, approvals = []) {
 }
 function renderBypassSummary(result3) {
   if (result3.grade === "verified") return void 0;
-  const lines = result3.bypassLabels.map((l) => `- [${l.kind}] ${l.reason}`);
+  const lines2 = result3.bypassLabels.map((l) => `- [${l.kind}] ${l.reason}`);
   return `\uC644\uB8CC\uB4F1\uAE09: ${result3.grade} (\uC6B0\uD68C \uB77C\uBCA8 ${result3.bypassLabels.length}\uAC74)
-${lines.join("\n")}`;
+${lines2.join("\n")}`;
 }
 
 // src/hulk/roadmap.ts
@@ -31286,6 +31338,8 @@ var sugoPlanInputSchema = {
   featureName: external_exports.string().optional().describe("start action\uC5D0 \uC120\uD0DD\uC801\uC73C\uB85C \uC0AC\uC6A9"),
   workResultPath: external_exports.string().optional().describe("start action: patch \uC9C4\uC785\uC810(\xA77) \u2014 \uAE30\uC874 work-result.md(\uB610\uB294 work-result-patch-vN.md) \uACBD\uB85C. \uBBF8\uC785\uB825\uC2DC \uAE30\uC874(\uC2E0\uADDC PRD) \uB3D9\uC791"),
   seed: external_exports.string().optional().describe("start action(\xA77.1 Patch \uC131\uC219\uD654): \uC774\uBC88 patch \uCC28\uC218\uC5D0 \uB300\uD55C \uC0AC\uC6A9\uC790 \uC9C0\uC2DC. review_done\uC774 work-result\uC5D0 \uD568\uAED8 \uAE30\uB85D\uD55C\uB2E4"),
+  patchProvenance: external_exports.enum(["native", "captured-post-hoc"]).optional().describe("start action: \uC77C\uBC18 patch\uB294 native, \uC774\uBBF8 \uC218\uD589\uD55C \uBCC0\uACBD \uC5F0\uACB0\uC740 captured-post-hoc"),
+  postHocBaseRevision: external_exports.string().optional().describe("captured-post-hoc\uC5D0\uC11C \uBCC0\uACBD\uC774 \uC774\uBBF8 \uCEE4\uBC0B\uB41C \uACBD\uC6B0 \uD544\uC694\uD55C \uBCC0\uACBD \uC804 Git revision"),
   specDraftDecision: external_exports.enum(["link", "new"]).optional().describe("clarify action: \uBBF8\uC5F0\uACB0 SPEC \uCD08\uC548 \uD6C4\uBCF4\uAC00 \uC788\uC73C\uBA74 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uBCF4\uC5EC\uC900 \uB4A4 \uAE30\uC874 \uCD08\uC548 \uC5F0\uACB0(link) \uB610\uB294 \uC0C8 SPEC \uC0DD\uC131(new)\uC744 \uBC18\uB4DC\uC2DC \uC120\uD0DD"),
   specDraftId: external_exports.string().optional().describe("start/clarify action: Dashboard\uC5D0\uC11C \uC120\uD0DD\uD55C spec-manual-* ID"),
   workBranch: external_exports.string().optional().describe("start action: feat \uC2DC\uC791 \uC804 \uC900\uBE44\uD560 Git \uBE0C\uB79C\uCE58"),
@@ -31688,6 +31742,18 @@ async function handleSugoPlan(rawArgs) {
       throw err2;
     }
   }
+  let postHocCapture;
+  if (action === "start" && args2.patchProvenance === "captured-post-hoc") {
+    if (!args2.workResultPath || !patchContext) return errorResult9("POST_HOC_PATCH_REQUIRED", "\uC0AC\uD6C4 \uC5F0\uACB0\uC740 \uAE30\uC874 work-result \uACBD\uB85C\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!args2.seed?.trim()) return errorResult9("POST_HOC_SEED_REQUIRED", "\uC0AC\uD6C4 \uC5F0\uACB0\uC740 \uD604\uC7AC \uB300\uD654\uC758 \uC0AC\uC6A9\uC790 \uC758\uB3C4 \uC694\uC57D\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    if (!args2.projectPath) return errorResult9("PROJECT_PATH_REQUIRED", "\uC0AC\uD6C4 \uC5F0\uACB0\uC740 \uD504\uB85C\uC81D\uD2B8 \uACBD\uB85C\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    try {
+      postHocCapture = await capturePostHocBaseline(args2.projectPath, args2.postHocBaseRevision, [patchContext.featureDir]);
+    } catch (error3) {
+      if (error3 instanceof PostHocEntryError) return errorResult9(error3.code, error3.message);
+      throw error3;
+    }
+  }
   const newSessionId = action === "start" ? generateSessionId() : sessionId;
   const result3 = applyTransition(existing, action, newSessionId, {
     projectPath: args2.projectPath,
@@ -31769,6 +31835,12 @@ async function handleSugoPlan(rawArgs) {
     session = {
       ...session,
       data: { ...session.data, mode: "patch", patch: patchContext, featurePath: patchContext.featureDir }
+    };
+  }
+  if (action === "start" && postHocCapture) {
+    session = {
+      ...session,
+      data: { ...session.data, postHocCapture: { ...postHocCapture, provenance: "captured-post-hoc" } }
     };
   }
   if (action === "start" && args2.seed) {
@@ -31900,9 +31972,13 @@ async function handleSugoPlan(rawArgs) {
     };
   }
   if (action === "prd" && args2.prdContent) {
+    const prdContent = session.data.postHocCapture ? `> Provenance: captured-post-hoc
+> Baseline: ${session.data.postHocCapture.baselineRevision}
+
+${args2.prdContent}` : args2.prdContent;
     const isPatch = session.data.mode === "patch" && session.data.patch;
-    const { featurePath, prdPath } = isPatch ? await writePatchPrdFile(session.data.patch.featureDir, session.data.patch.version, args2.prdContent) : await writePrdFile(session.projectPath, session.featureName, args2.prdContent);
-    const baseline = detectBaselineSignals(args2.prdContent);
+    const { featurePath, prdPath } = isPatch ? await writePatchPrdFile(session.data.patch.featureDir, session.data.patch.version, prdContent) : await writePrdFile(session.projectPath, session.featureName, prdContent);
+    const baseline = detectBaselineSignals(prdContent);
     session = {
       ...session,
       data: {
@@ -31914,7 +31990,7 @@ async function handleSugoPlan(rawArgs) {
     };
     const registryEntry = await findRegistryEntry(session.projectPath);
     if (registryEntry?.workspace) {
-      const cycleTitle = taskCycleTitle(session.data.seed, session.featureName, args2.prdContent);
+      const cycleTitle = taskCycleTitle(session.data.seed, session.featureName, prdContent);
       let task;
       const baseTask = isPatch ? await findTaskByPrdRef(registryEntry.workspace, session.data.patch.parentPrdPath) : null;
       if (baseTask) {
@@ -31987,20 +32063,24 @@ async function handleSugoPlan(rawArgs) {
           session.data.patch.baseWorkResultPath
         );
       }
-      const reqNodes = promotePrdRequirements(task.id, args2.prdContent);
+      const reqNodes = promotePrdRequirements(task.id, prdContent);
       if (reqNodes.length > 0) {
         await replaceTaskRequirements(registryEntry.workspace, task.id, reqNodes);
       }
     }
   }
   if (action === "code_done") {
+    const changedFiles = Array.from(/* @__PURE__ */ new Set([
+      ...args2.changedFiles ?? [],
+      ...session.data.postHocCapture?.changedFiles ?? []
+    ])).sort();
     session = {
       ...session,
       data: {
         ...session.data,
         chainInfo: {
           ...session.data.chainInfo,
-          changedFiles: args2.changedFiles ?? [],
+          changedFiles,
           codeGateAudit: {
             wiringTestAdded: args2.wiringTestAdded,
             dependencyRemoved: args2.dependencyRemoved,
@@ -32087,6 +32167,8 @@ async function handleSugoPlan(rawArgs) {
       designDecisions: args2.reportDetails?.designDecisions,
       knownLimitations: args2.reportDetails?.knownLimitations,
       seed: session.data.seed,
+      provenance: session.data.postHocCapture ? "captured-post-hoc" : "native",
+      postHocCapture: session.data.postHocCapture,
       testEvidence: {
         command: evidence?.command,
         exitCode: evidence?.exitCode,
@@ -32969,7 +33051,7 @@ function errorResult14(errorCode, message) {
 
 // src/tools/sugoSpecWriter.ts
 import { access as access3, readFile as readFile27 } from "node:fs/promises";
-import { isAbsolute as isAbsolute8, join as join29, relative as relative8, resolve as resolve10, sep as sep3 } from "node:path";
+import { isAbsolute as isAbsolute8, join as join29, relative as relative9, resolve as resolve10, sep as sep3 } from "node:path";
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
   workspace: external_exports.string().min(1),
@@ -33022,7 +33104,7 @@ async function nextSpecTarget(title) {
 }
 function managedSpecPath(specPath) {
   const root = resolve10(sugoHomeDir(), ".claude", "sugo", "specs");
-  const rel = relative8(root, resolve10(specPath));
+  const rel = relative9(root, resolve10(specPath));
   if (!rel || rel.startsWith(`..${sep3}`) || rel === ".." || isAbsolute8(rel)) return false;
   const parts2 = rel.split(sep3);
   return parts2.length === 4 && /^\d{8}$/.test(parts2[0]) && parts2[1].length > 0 && /^v[1-9]\d*$/.test(parts2[2]) && parts2[3] === "spec.md";
@@ -34217,7 +34299,7 @@ function errorResult18(errorCode, message) {
 // src/work/gitHistory.ts
 import { execFile as execFile4 } from "node:child_process";
 import { mkdir as mkdir20, realpath } from "node:fs/promises";
-import { isAbsolute as isAbsolute9, join as join31, relative as relative9, resolve as resolve12, sep as sep4 } from "node:path";
+import { isAbsolute as isAbsolute9, join as join31, relative as relative10, resolve as resolve12, sep as sep4 } from "node:path";
 import { promisify as promisify4 } from "node:util";
 var execFileAsync3 = promisify4(execFile4);
 async function git2(cwd, args2) {
@@ -34233,7 +34315,7 @@ async function repositoryScopes(projects) {
     const root = await git2(project, ["rev-parse", "--show-toplevel"]);
     if (!root) continue;
     const [canonicalRoot, canonicalProject] = await Promise.all([realpath(resolve12(root)), realpath(resolve12(project))]);
-    const rel = relative9(canonicalRoot, canonicalProject);
+    const rel = relative10(canonicalRoot, canonicalProject);
     if (isAbsolute9(rel) || rel === ".." || rel.startsWith(`..${sep4}`)) continue;
     const paths = byRoot.get(root) ?? /* @__PURE__ */ new Set();
     paths.add(rel ? rel.split(sep4).join("/") : ".");
@@ -34244,8 +34326,8 @@ async function repositoryScopes(projects) {
 async function backfillWorkspaceGitHistory(workspace) {
   const logs = [];
   for (const scope of await repositoryScopes(workspace.projects)) {
-    const lines = (await git2(scope.root, ["log", `--since=${workspace.created_at}`, "--format=%H%x09%cI%x09%s", "--", ...scope.paths])).split("\n").filter(Boolean);
-    for (const line of lines) {
+    const lines2 = (await git2(scope.root, ["log", `--since=${workspace.created_at}`, "--format=%H%x09%cI%x09%s", "--", ...scope.paths])).split("\n").filter(Boolean);
+    for (const line of lines2) {
       const [sha, completedAt, ...subjectParts] = line.split("	");
       if (!/^[0-9a-f]{40}$/i.test(sha) || !completedAt) continue;
       const files = (await git2(scope.root, ["diff-tree", "--root", "--no-commit-id", "--name-only", "-r", sha, "--", ...scope.paths])).split("\n").filter(Boolean);
@@ -34544,7 +34626,7 @@ function isAlive(pid) {
     return false;
   }
 }
-var sleep = (ms) => new Promise((resolve14) => setTimeout(resolve14, ms));
+var sleep = (ms) => new Promise((resolve15) => setTimeout(resolve15, ms));
 async function waitUntil(done, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -34807,6 +34889,119 @@ async function ensureRecoveryUtility() {
   const target = join34(sugoHomeDir(), ".sugo", "bin", "sugo-uninstall.mjs");
   await mkdir23(dirname12(target), { recursive: true });
   await copyFile2(source, target);
+}
+
+// src/specStorageMigration.ts
+import { createHash as createHash8 } from "node:crypto";
+import { copyFile as copyFile3, mkdir as mkdir24, readFile as readFile31, readdir as readdir11, rename as rename3, writeFile as writeFile5 } from "node:fs/promises";
+import { basename as basename3, dirname as dirname13, join as join35, relative as relative11, resolve as resolve14, sep as sep5 } from "node:path";
+function legacySpecRoot() {
+  return join35(sugoHomeDir(), "dev", "spec");
+}
+function managedSpecRoot() {
+  return join35(sugoHomeDir(), ".claude", "sugo", "specs");
+}
+function markerPath() {
+  return join35(managedSpecRoot(), ".legacy-dev-spec-migrated.json");
+}
+async function exists(path) {
+  return readFile31(path).then(() => true, () => false);
+}
+async function hash(path) {
+  return createHash8("sha256").update(await readFile31(path)).digest("hex");
+}
+async function findLegacySpecs(root) {
+  const found = [];
+  async function walk(dir) {
+    const entries = await readdir11(dir, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      const full = join35(dir, entry.name);
+      if (entry.isDirectory()) await walk(full);
+      else if (entry.name === "spec.md") found.push(full);
+    }
+  }
+  await walk(root);
+  return found.sort();
+}
+function validLegacyRelative(path) {
+  const parts2 = path.split(sep5);
+  return parts2.length === 4 && /^\d{8}$/.test(parts2[0]) && parts2[1].length > 0 && /^v[1-9]\d*$/.test(parts2[2]) && parts2[3] === "spec.md";
+}
+async function nextTarget(source, sourceRoot, targetRoot) {
+  const rel = relative11(sourceRoot, source);
+  const parts2 = rel.split(sep5);
+  const preferred = join35(targetRoot, rel);
+  if (!await exists(preferred) || await hash(preferred) === await hash(source)) return preferred;
+  const featureDir = join35(targetRoot, parts2[0], parts2[1]);
+  let version2 = 1;
+  while (await exists(join35(featureDir, `v${version2}`, "spec.md"))) version2 += 1;
+  return join35(featureDir, `v${version2}`, "spec.md");
+}
+async function copyVersionDirectory(sourceSpec, targetSpec) {
+  await mkdir24(dirname13(targetSpec), { recursive: true });
+  const entries = await readdir11(dirname13(sourceSpec), { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isFile() || entry.name === ".DS_Store") continue;
+    const target = join35(dirname13(targetSpec), entry.name);
+    if (!await exists(target)) await copyFile3(join35(dirname13(sourceSpec), entry.name), target);
+  }
+}
+async function writeMarker(marker) {
+  const path = markerPath();
+  await mkdir24(dirname13(path), { recursive: true });
+  const temp = `${path}.tmp`;
+  await writeFile5(temp, JSON.stringify(marker, null, 2) + "\n", "utf8");
+  await rename3(temp, path);
+}
+async function migrateLegacySpecStorage() {
+  const existingMarker = await readFile31(markerPath(), "utf8").then((text) => JSON.parse(text), () => null);
+  if (existingMarker?.version === 1) {
+    return { migrated: 0, alreadyMigrated: true, mappings: existingMarker.mappings, failures: [] };
+  }
+  const sourceRoot = legacySpecRoot();
+  const sources = await findLegacySpecs(sourceRoot);
+  if (sources.length === 0) return { migrated: 0, alreadyMigrated: false, mappings: [], failures: [] };
+  const targetRoot = managedSpecRoot();
+  const mappings = [];
+  const failures = [];
+  for (const source of sources) {
+    const rel = relative11(sourceRoot, source);
+    if (!validLegacyRelative(rel)) continue;
+    try {
+      const target = await nextTarget(source, sourceRoot, targetRoot);
+      await copyVersionDirectory(source, target);
+      mappings.push({ from: resolve14(source), to: resolve14(target) });
+    } catch (error3) {
+      failures.push(`${source}: ${error3 instanceof Error ? error3.message : String(error3)}`);
+    }
+  }
+  if (failures.length === 0) await writeMarker({ version: 1, migratedAt: (/* @__PURE__ */ new Date()).toISOString(), mappings });
+  return { migrated: mappings.length, alreadyMigrated: false, mappings, failures };
+}
+async function rewriteLocalSpecReferences(mappings) {
+  if (mappings.length === 0) return 0;
+  const root = join35(sugoHomeDir(), ".claude", "sugo");
+  let changed = 0;
+  async function walk(dir) {
+    const entries = await readdir11(dir, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      const full = join35(dir, entry.name);
+      if (entry.isDirectory()) await walk(full);
+      else if (entry.isFile() && entry.name.endsWith(".json") && basename3(full) !== basename3(markerPath())) {
+        const original = await readFile31(full, "utf8");
+        let updated = original;
+        for (const mapping of mappings) updated = updated.split(mapping.from).join(mapping.to);
+        if (updated !== original) {
+          const temp = `${full}.sugo-spec-migration.tmp`;
+          await writeFile5(temp, updated, "utf8");
+          await rename3(temp, full);
+          changed += 1;
+        }
+      }
+    }
+  }
+  await walk(root);
+  return changed;
 }
 
 // src/index.ts
@@ -35105,6 +35300,13 @@ server.registerTool(
 async function main() {
   await ensureRecoveryUtility().catch((error3) => console.error("[sugo] recovery utility install failed:", error3));
   await migrateWorkDataDir();
+  const specMigration = await migrateLegacySpecStorage();
+  if (specMigration.failures.length > 0) {
+    console.error(`[sugo] legacy SPEC migration incomplete (${specMigration.failures.length} failures)`);
+  } else {
+    await rewriteLocalSpecReferences(specMigration.mappings);
+    void syncSpecPathMigration(specMigration.mappings);
+  }
   void syncPluginVersion(currentSugoVersion());
   void syncUser();
   const transport = new StdioServerTransport();

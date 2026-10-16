@@ -8,7 +8,7 @@ import {
   sugoCheckLethalTrifectaInputSchema,
 } from "./tools/sugoCheckLethalTrifecta.js";
 import { handleSugoCheckpoint, sugoCheckpointInputSchema } from "./tools/sugoCheckpoint.js";
-import { syncPluginVersion, syncUser } from "./dashboard/sync.js";
+import { syncPluginVersion, syncSpecPathMigration, syncUser } from "./dashboard/sync.js";
 import { currentSugoVersion } from "./version.js";
 import { handleSugoDelete, sugoDeleteInputSchema } from "./tools/sugoDelete.js";
 import { handleSugoDisable, sugoDisableInputSchema } from "./tools/sugoDisable.js";
@@ -48,6 +48,7 @@ import { handleSugoWorkspace, sugoWorkspaceInputSchema } from "./tools/sugoWorks
 import { handleSugoAwsContext, sugoAwsContextInputSchema } from "./tools/sugoAwsContext.js";
 import { handleSugoUninstall, sugoUninstallInputSchema } from "./tools/sugoUninstall.js";
 import { ensureRecoveryUtility } from "./lifecycle/recoveryInstaller.js";
+import { migrateLegacySpecStorage, rewriteLocalSpecReferences } from "./specStorageMigration.js";
 
 const server = new McpServer({
   name: "sugo",
@@ -441,6 +442,13 @@ async function main() {
   // 절대 던지지 않게 만들어져 있어 실패해도 기동을 막지 않는다(못 옮긴 파일은 마커를 안 남겨
   // 다음 부팅에 재시도된다).
   await migrateWorkDataDir();
+  const specMigration = await migrateLegacySpecStorage();
+  if (specMigration.failures.length > 0) {
+    console.error(`[sugo] legacy SPEC migration incomplete (${specMigration.failures.length} failures)`);
+  } else {
+    await rewriteLocalSpecReferences(specMigration.mappings);
+    void syncSpecPathMigration(specMigration.mappings);
+  }
 
   // §7.2: 서버 기동 시 1회, 논블로킹으로 플러그인 버전/사용자를 대시보드에 알린다(disabled면 조용히 no-op).
   void syncPluginVersion(currentSugoVersion());

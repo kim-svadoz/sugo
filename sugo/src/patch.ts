@@ -1,5 +1,6 @@
 import { readdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
+import { runGit } from "./prRefs.js";
 
 export interface PatchContext {
   parentPrdPath: string;
@@ -15,6 +16,59 @@ export class PatchEntryError extends Error {
   ) {
     super(message);
   }
+}
+
+export interface PostHocBaseline {
+  baselineRevision: string;
+  headAtCapture: string;
+  changedFiles: string[];
+  source: "working-tree" | "committed-range";
+  capturedAt: string;
+}
+
+export class PostHocEntryError extends Error {
+  constructor(
+    public readonly code: "POST_HOC_GIT_REQUIRED" | "POST_HOC_BASELINE_REQUIRED" | "POST_HOC_BASELINE_INVALID" | "POST_HOC_NO_CHANGES",
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+function lines(value: string | null): string[] {
+  return value ? value.split("\n").map((line) => line.trim()).filter(Boolean) : [];
+}
+
+export async function capturePostHocBaseline(projectPath: string, requestedBaseRevision?: string, excludedPaths: string[] = []): Promise<PostHocBaseline> {
+  const head = await runGit(["rev-parse", "HEAD"], projectPath);
+  if (!head || !/^[0-9a-f]{40,64}$/.test(head)) {
+    throw new PostHocEntryError("POST_HOC_GIT_REQUIRED", "사후 patch 연결은 Git 저장소와 HEAD가 필요합니다.");
+  }
+  const excluded = excludedPaths.map((path) => relative(projectPath, path).replace(/\\/g, "/").replace(/\/$/, ""));
+  const keep = (path: string) => !excluded.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+  const dirtyFiles = [...new Set([
+    ...lines(await runGit(["diff", "--name-only", "HEAD"], projectPath)),
+    ...lines(await runGit(["ls-files", "--others", "--exclude-standard"], projectPath)),
+  ])].filter(keep).sort();
+  if (dirtyFiles.length > 0) {
+    return { baselineRevision: head, headAtCapture: head, changedFiles: dirtyFiles, source: "working-tree", capturedAt: new Date().toISOString() };
+  }
+  if (!requestedBaseRevision) {
+    throw new PostHocEntryError("POST_HOC_BASELINE_REQUIRED", "이미 커밋된 변경은 변경 전 Git revision을 지정해야 합니다.");
+  }
+  const base = await runGit(["rev-parse", `${requestedBaseRevision}^{commit}`], projectPath);
+  if (!base || !/^[0-9a-f]{40,64}$/.test(base)) {
+    throw new PostHocEntryError("POST_HOC_BASELINE_INVALID", "지정한 변경 전 Git revision을 확인할 수 없습니다.");
+  }
+  const ancestor = await runGit(["merge-base", "--is-ancestor", base, head], projectPath);
+  if (ancestor === null) {
+    throw new PostHocEntryError("POST_HOC_BASELINE_INVALID", "지정한 revision이 현재 HEAD의 조상이 아닙니다.");
+  }
+  const changedFiles = lines(await runGit(["diff", "--name-only", `${base}..${head}`], projectPath)).filter(keep).sort();
+  if (changedFiles.length === 0) {
+    throw new PostHocEntryError("POST_HOC_NO_CHANGES", "지정한 기준선 이후 연결할 변경이 없습니다.");
+  }
+  return { baselineRevision: base, headAtCapture: head, changedFiles, source: "committed-range", capturedAt: new Date().toISOString() };
 }
 
 const PATCH_FILE_RE = /^(prd|work-result)-patch-v(\d+)\.md$/i;

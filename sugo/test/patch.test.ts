@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,6 +10,7 @@ import {
   patchWorkResultFilename,
   PatchEntryError,
   resolvePatchContext,
+  capturePostHocBaseline,
 } from "../src/patch.js";
 
 describe("computeNextPatchVersion", () => {
@@ -110,5 +112,50 @@ describe("PatchEntryError", () => {
     const err = new PatchEntryError("PATCH_PARENT_PRD_NOT_FOUND", "메시지");
     expect(err.code).toBe("PATCH_PARENT_PRD_NOT_FOUND");
     expect(err).toBeInstanceOf(Error);
+  });
+});
+
+describe("capturePostHocBaseline", () => {
+  function gitProject(): string {
+    const dir = tmpFeatureDir();
+    execFileSync("git", ["init"], { cwd: dir });
+    execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: dir });
+    execFileSync("git", ["config", "user.name", "Test"], { cwd: dir });
+    writeFileSync(join(dir, "app.ts"), "export const value = 1;\n");
+    execFileSync("git", ["add", "app.ts"], { cwd: dir });
+    execFileSync("git", ["commit", "-m", "initial"], { cwd: dir });
+    return dir;
+  }
+
+  it("커밋되지 않은 현재 변경은 HEAD를 기준선으로 삼고 변경파일을 서버가 수집한다", async () => {
+    const dir = gitProject();
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: dir, encoding: "utf8" }).trim();
+    writeFileSync(join(dir, "app.ts"), "export const value = 2;\n");
+
+    await expect(capturePostHocBaseline(dir)).resolves.toMatchObject({
+      baselineRevision: head,
+      headAtCapture: head,
+      changedFiles: ["app.ts"],
+      source: "working-tree",
+    });
+  });
+
+  it("clean 저장소는 명시한 이전 revision이 없으면 거부한다", async () => {
+    const dir = gitProject();
+    await expect(capturePostHocBaseline(dir)).rejects.toMatchObject({ code: "POST_HOC_BASELINE_REQUIRED" });
+  });
+
+  it("이미 커밋된 변경은 검증된 ancestor revision부터 HEAD까지의 파일을 수집한다", async () => {
+    const dir = gitProject();
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: dir, encoding: "utf8" }).trim();
+    writeFileSync(join(dir, "app.ts"), "export const value = 3;\n");
+    execFileSync("git", ["add", "app.ts"], { cwd: dir });
+    execFileSync("git", ["commit", "-m", "change"], { cwd: dir });
+
+    await expect(capturePostHocBaseline(dir, base)).resolves.toMatchObject({
+      baselineRevision: base,
+      changedFiles: ["app.ts"],
+      source: "committed-range",
+    });
   });
 });

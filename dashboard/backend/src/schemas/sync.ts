@@ -113,6 +113,15 @@ export const roadmapSyncSchema = z.object({
   nodes: z.array(roadmapNodeSchema),
 });
 
+export const specPathMigrationSchema = z.object({
+  schemaVersion: z.number().int().positive().optional(),
+  userId: z.string().min(1),
+  mappings: z.array(z.object({
+    from: z.string().min(1).max(4096),
+    to: z.string().min(1).max(4096),
+  }).strict()).min(1).max(1000),
+}).strict();
+
 export const reviewArtifactSchema = z.object({
   schemaVersion: z.number().int().positive().optional(),
   userId: z.string().min(1),

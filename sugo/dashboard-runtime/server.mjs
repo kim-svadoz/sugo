@@ -45407,6 +45407,18 @@ async function syncRoadmap(db2, userId2, workspaceName, nodes5) {
     }
   }
 }
+async function migrateSpecPaths(db2, userId2, mappings) {
+  let updated = 0;
+  for (const mapping of mappings) {
+    if (mapping.from === mapping.to) continue;
+    const result = await db2.exec(
+      "UPDATE sugo_roadmap_nodes SET spec_path = ? WHERE user_id = ? AND spec_path = ?",
+      [mapping.to, userId2, mapping.from]
+    );
+    updated += result.affectedRows;
+  }
+  return updated;
+}
 var deletedAtColState, dueDateColState, projectPathColState, workBranchColState, manualTitleColState, blockerDecisionColsState, runtimeAssessmentColState, checkpointCreatedAtColState, checkpointExpiresAtColState;
 var init_syncService = __esm({
   "../dashboard/backend/src/services/syncService.ts"() {
@@ -50836,7 +50848,7 @@ var init_zod = __esm({
 });
 
 // ../dashboard/backend/src/schemas/sync.ts
-var userSchema, workspaceSchema, workspaceDeleteSchema, taskSchema, entityDeleteSchema, historySchema, decisionSchema, checkpointSchema, workspaceMetaSchema, pluginVersionSchema, roadmapNodeSchema, roadmapSyncSchema, reviewArtifactSchema, bulkSyncSchema, activityIngestSchema;
+var userSchema, workspaceSchema, workspaceDeleteSchema, taskSchema, entityDeleteSchema, historySchema, decisionSchema, checkpointSchema, workspaceMetaSchema, pluginVersionSchema, roadmapNodeSchema, roadmapSyncSchema, specPathMigrationSchema, reviewArtifactSchema, bulkSyncSchema, activityIngestSchema;
 var init_sync = __esm({
   "../dashboard/backend/src/schemas/sync.ts"() {
     "use strict";
@@ -50942,6 +50954,14 @@ var init_sync = __esm({
       workspaceName: external_exports.string().min(1),
       nodes: external_exports.array(roadmapNodeSchema)
     });
+    specPathMigrationSchema = external_exports.object({
+      schemaVersion: external_exports.number().int().positive().optional(),
+      userId: external_exports.string().min(1),
+      mappings: external_exports.array(external_exports.object({
+        from: external_exports.string().min(1).max(4096),
+        to: external_exports.string().min(1).max(4096)
+      }).strict()).min(1).max(1e3)
+    }).strict();
     reviewArtifactSchema = external_exports.object({
       schemaVersion: external_exports.number().int().positive().optional(),
       userId: external_exports.string().min(1),
@@ -51385,6 +51405,10 @@ function createSyncRouter(db2, sessionSecret2) {
   router.post("/roadmap", validateBody(roadmapSyncSchema), asyncHandler(async (req, res) => {
     await syncRoadmap(db2, req.body.userId, req.body.workspaceName, req.body.nodes);
     res.json({ ok: true });
+  }));
+  router.post("/spec-path-migration", validateBody(specPathMigrationSchema), asyncHandler(async (req, res) => {
+    const updated = await migrateSpecPaths(db2, req.userId, req.body.mappings);
+    res.json({ ok: true, updated });
   }));
   router.post("/review-artifact", validateBody(reviewArtifactSchema), asyncHandler(async (req, res) => {
     const { userId: _ignored, ...artifact } = req.body;
@@ -89919,7 +89943,7 @@ var init_index = __esm({
     init_cors();
     init_asyncHandler();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.27.1" ? { version: "0.27.1" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.28.0" ? { version: "0.28.0" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90031,7 +90055,7 @@ await bootstrapLocalDashboard2(db, {
   settingsPath: join13(sugoDir, "settings.json")
 });
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.27.1", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.28.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

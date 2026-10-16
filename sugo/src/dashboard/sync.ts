@@ -11,6 +11,7 @@ import type { Checkpoint, RoadmapNode, Spec, Task, Workspace, WorkLog } from "..
 import type { PrRefs } from "../prRefs.js";
 import type { RoadmapWorkResult } from "../hulk/types.js";
 import { sanitizeReviewArtifacts } from "./workResultFiles.js";
+import type { SpecPathMapping } from "../specStorageMigration.js";
 
 /**
  * §7.2 push 엔드포인트 얇은 래퍼들 — 호출부(hulk/*.ts, tools/sugoPlan.ts)는 로컬 쓰기가 끝난 뒤
@@ -119,6 +120,13 @@ export async function syncUser(): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
   await pushEvent("/api/sync/user", "POST", { userId: config.userId });
+}
+
+export async function syncSpecPathMigration(mappings: SpecPathMapping[]): Promise<void> {
+  if (mappings.length === 0) return;
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return;
+  await pushEvent("/api/sync/spec-path-migration", "POST", { userId: config.userId, mappings });
 }
 
 /**

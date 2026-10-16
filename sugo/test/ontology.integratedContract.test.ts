@@ -57,6 +57,11 @@ describe("P4 operational ontology 통합 계약", () => {
     for (const contract of ["SPEC_NOT_EDITABLE", "SPEC_LINT_WARNINGS", "acceptLintWarnings:true", "specTarget.path"]) {
       expect(specWriter).toContain(contract);
     }
+
+    const patchAttach = prompt("commands/patch-attach.md");
+    for (const contract of ["patchProvenance:\"captured-post-hoc\"", "postHocBaseRevision", "POST_HOC_BASELINE_REQUIRED"]) {
+      expect(patchAttach).toContain(contract);
+    }
   });
 
   it("설계안 16행 독립 골든 코퍼스가 모델 게이트와 실제 증명 테스트에 전부 연결된다", () => {

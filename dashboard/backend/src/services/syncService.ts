@@ -722,3 +722,20 @@ export async function syncRoadmap(
     }
   }
 }
+
+export async function migrateSpecPaths(
+  db: DbClient,
+  userId: string,
+  mappings: Array<{ from: string; to: string }>,
+): Promise<number> {
+  let updated = 0;
+  for (const mapping of mappings) {
+    if (mapping.from === mapping.to) continue;
+    const result = await db.exec(
+      "UPDATE sugo_roadmap_nodes SET spec_path = ? WHERE user_id = ? AND spec_path = ?",
+      [mapping.to, userId, mapping.from],
+    );
+    updated += result.affectedRows;
+  }
+  return updated;
+}

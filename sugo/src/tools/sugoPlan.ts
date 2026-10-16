@@ -58,7 +58,7 @@ import {
   renderBypassSummary,
   type BypassLabel,
 } from "../labelGuard.js";
-import { PatchEntryError, resolvePatchContext, type PatchContext } from "../patch.js";
+import { capturePostHocBaseline, PatchEntryError, PostHocEntryError, resolvePatchContext, type PatchContext, type PostHocBaseline } from "../patch.js";
 import { applyTransition } from "../planStateMachine.js";
 import { generateSessionId, loadAllSessions, loadSession, saveSession, sessionExists } from "../session.js";
 import { sessionsForProjects } from "../work/sessionSummary.js";
@@ -83,6 +83,10 @@ export const sugoPlanInputSchema = {
     .string()
     .optional()
     .describe("start action(§7.1 Patch 성숙화): 이번 patch 차수에 대한 사용자 지시. review_done이 work-result에 함께 기록한다"),
+  patchProvenance: z.enum(["native", "captured-post-hoc"]).optional()
+    .describe("start action: 일반 patch는 native, 이미 수행한 변경 연결은 captured-post-hoc"),
+  postHocBaseRevision: z.string().optional()
+    .describe("captured-post-hoc에서 변경이 이미 커밋된 경우 필요한 변경 전 Git revision"),
   specDraftDecision: z
     .enum(["link", "new"])
     .optional()
@@ -635,6 +639,18 @@ export async function handleSugoPlan(rawArgs: unknown) {
       throw err;
     }
   }
+  let postHocCapture: PostHocBaseline | undefined;
+  if (action === "start" && args.patchProvenance === "captured-post-hoc") {
+    if (!args.workResultPath || !patchContext) return errorResult("POST_HOC_PATCH_REQUIRED", "사후 연결은 기존 work-result 경로가 필요합니다.");
+    if (!args.seed?.trim()) return errorResult("POST_HOC_SEED_REQUIRED", "사후 연결은 현재 대화의 사용자 의도 요약이 필요합니다.");
+    if (!args.projectPath) return errorResult("PROJECT_PATH_REQUIRED", "사후 연결은 프로젝트 경로가 필요합니다.");
+    try {
+      postHocCapture = await capturePostHocBaseline(args.projectPath, args.postHocBaseRevision, [patchContext.featureDir]);
+    } catch (error) {
+      if (error instanceof PostHocEntryError) return errorResult(error.code, error.message);
+      throw error;
+    }
+  }
 
   // ── 순서강제(Gate Keeper) + 상태전이
   const newSessionId = action === "start" ? generateSessionId() : (sessionId as string);
@@ -735,6 +751,12 @@ export async function handleSugoPlan(rawArgs: unknown) {
     session = {
       ...session,
       data: { ...session.data, mode: "patch", patch: patchContext, featurePath: patchContext.featureDir },
+    };
+  }
+  if (action === "start" && postHocCapture) {
+    session = {
+      ...session,
+      data: { ...session.data, postHocCapture: { ...postHocCapture, provenance: "captured-post-hoc" } },
     };
   }
 
@@ -905,11 +927,14 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
   // ── 콘텐츠 게이트 통과 후 세션 데이터 반영(+파일 IO)
   if (action === "prd" && args.prdContent) {
+    const prdContent = session.data.postHocCapture
+      ? `> Provenance: captured-post-hoc\n> Baseline: ${session.data.postHocCapture.baselineRevision}\n\n${args.prdContent}`
+      : args.prdContent;
     const isPatch = session.data.mode === "patch" && session.data.patch;
     const { featurePath, prdPath } = isPatch
-      ? await writePatchPrdFile(session.data.patch!.featureDir, session.data.patch!.version, args.prdContent)
-      : await writePrdFile(session.projectPath, session.featureName, args.prdContent);
-    const baseline = detectBaselineSignals(args.prdContent);
+      ? await writePatchPrdFile(session.data.patch!.featureDir, session.data.patch!.version, prdContent)
+      : await writePrdFile(session.projectPath, session.featureName, prdContent);
+    const baseline = detectBaselineSignals(prdContent);
     session = {
       ...session,
       data: {
@@ -926,7 +951,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     // 워크스페이스 등록 전에 만들어짐) 새 Task로 안전하게 폴백한다(교착 방지).
     const registryEntry = await findRegistryEntry(session.projectPath);
     if (registryEntry?.workspace) {
-      const cycleTitle = taskCycleTitle(session.data.seed, session.featureName, args.prdContent);
+      const cycleTitle = taskCycleTitle(session.data.seed, session.featureName, prdContent);
       let task: Task;
       const baseTask = isPatch ? await findTaskByPrdRef(registryEntry.workspace, session.data.patch!.parentPrdPath) : null;
       if (baseTask) {
@@ -1010,7 +1035,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
           session.data.patch!.baseWorkResultPath,
         );
       }
-      const reqNodes = promotePrdRequirements(task.id, args.prdContent);
+      const reqNodes = promotePrdRequirements(task.id, prdContent);
       if (reqNodes.length > 0) {
         await replaceTaskRequirements(registryEntry.workspace, task.id, reqNodes);
       }
@@ -1018,13 +1043,17 @@ export async function handleSugoPlan(rawArgs: unknown) {
   }
 
   if (action === "code_done") {
+    const changedFiles = Array.from(new Set([
+      ...(args.changedFiles ?? []),
+      ...(session.data.postHocCapture?.changedFiles ?? []),
+    ])).sort();
     session = {
       ...session,
       data: {
         ...session.data,
         chainInfo: {
           ...session.data.chainInfo,
-          changedFiles: args.changedFiles ?? [],
+          changedFiles,
           codeGateAudit: {
             wiringTestAdded: args.wiringTestAdded,
             dependencyRemoved: args.dependencyRemoved,
@@ -1127,6 +1156,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
       designDecisions: args.reportDetails?.designDecisions,
       knownLimitations: args.reportDetails?.knownLimitations,
       seed: session.data.seed,
+      provenance: session.data.postHocCapture ? "captured-post-hoc" : "native",
+      postHocCapture: session.data.postHocCapture,
       testEvidence: {
         command: evidence?.command,
         exitCode: evidence?.exitCode,

@@ -73,4 +73,25 @@ describe("canonical work-result report", () => {
     expect(markdown).toContain("- 알려진 제한 사항 없음");
     expect(markdown).toContain("미검증");
   });
+
+  it("사후 연결 결과에 서버가 검증한 provenance와 Git 기준선을 표시한다", () => {
+    const report = buildWorkResultReport({
+      featureName: "로그인 보정",
+      kind: "patch",
+      patchVersion: 2,
+      completedAt: "2026-10-16T00:00:00.000Z",
+      completionGrade: "verified",
+      summary: "대화에서 수행한 변경을 기존 작업에 연결했다.",
+      changedFiles: ["app.ts"],
+      provenance: "captured-post-hoc",
+      postHocCapture: {
+        baselineRevision: "a".repeat(40), headAtCapture: "b".repeat(40), changedFiles: ["app.ts"],
+        source: "working-tree", capturedAt: "2026-10-16T00:00:00.000Z",
+      },
+      testEvidence: { state: "pass" },
+      runtimeVerified: true,
+    });
+    expect(renderWorkResultMarkdown(report)).toContain("Provenance: captured-post-hoc");
+    expect(renderWorkResultMarkdown(report)).toContain("`aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`");
+  });
 });

@@ -55,7 +55,7 @@ import type { CoverageMap } from "./consistency.js";
 import type { DecomposeManifest } from "./decompose.js";
 import type { HumanHoursEstimate } from "./humanHours.js";
 import type { BypassLabel } from "./labelGuard.js";
-import type { PatchContext } from "./patch.js";
+import type { PatchContext, PostHocBaseline } from "./patch.js";
 import type { TestEvidenceRecord, TestPassedState } from "./testEvidence.js";
 import type { JiraOption, LastLethalTrifectaCheck, SpecOracleState } from "./gates.js";
 import type { UnlinkedSpecDraft } from "./dashboard/fetch.js";
@@ -134,6 +134,7 @@ export interface SessionData {
     recordedAt: string;
   };
   patch?: PatchContext;
+  postHocCapture?: PostHocBaseline & { provenance: "captured-post-hoc" };
   baselineGate?: { required: boolean; signals: string[]; evidence?: TestEvidenceRecord };
   chainInfo: ChainInfo;
   commitContext?: unknown;
