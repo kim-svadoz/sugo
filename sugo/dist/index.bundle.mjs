@@ -28300,7 +28300,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.37.0" : "0.0.0-dev";
+  return true ? "0.37.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -34219,7 +34219,7 @@ async function handleSugoPrd() {
 // src/tools/sugoSetup.ts
 var sugoSetupInputSchema = {
   bitbucket: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Bitbucket \uC5F0\uB3D9 \uC124\uC815(\xA73.5). \uD1A0\uD070 \uC790\uCCB4\uB294 \uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC554\uD638\uD654 \uBCF4\uAD00\uD55C\uB2E4"),
-  jira: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Jira \uC5F0\uB3D9 \uC124\uC815. Jira 연동 \uBAA8\uB4C8\uC774 \uC788\uC744 \uB54C\uB9CC \uC758\uBBF8\uAC00 \uC788\uB2E4"),
+  jira: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Jira \uC5F0\uB3D9 \uC124\uC815. Jira \uC5F0\uB3D9 \uBAA8\uB4C8\uC774 \uC788\uC744 \uB54C\uB9CC \uC758\uBBF8\uAC00 \uC788\uB2E4"),
   initSecrets: external_exports.boolean().optional().describe("\uC2DC\uD06C\uB9BF \uC800\uC7A5\uC18C \uCD08\uAE30\uD654 \uC5EC\uBD80")
 };
 var SugoSetupArgs = external_exports.object(sugoSetupInputSchema);
@@ -34234,7 +34234,7 @@ async function handleSugoSetup(rawArgs) {
             ok: true,
             configured: false,
             received: args2,
-            note: "\uC774 \uBE4C\uB4DC\uB294 \uC5F0\uB3D9 \uC124\uC815\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Bitbucket PAT\uB294 \uB300\uC2DC\uBCF4\uB4DC Settings\uC5D0\uC11C \uB4F1\uB85D\uD558\uC138\uC694(\uC554\uD638\uD654 \uBCF4\uAD00, \xA73.5). Jira(Jira 연동)\uB294 \uC120\uD0DD \uBAA8\uB4C8\uC774\uB77C \uC774 \uBE4C\uB4DC\uC5D0 \uD3EC\uD568\uB3FC \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
+            note: "\uC774 \uBE4C\uB4DC\uB294 \uC5F0\uB3D9 \uC124\uC815\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Bitbucket PAT\uB294 \uB300\uC2DC\uBCF4\uB4DC Settings\uC5D0\uC11C \uB4F1\uB85D\uD558\uC138\uC694(\uC554\uD638\uD654 \uBCF4\uAD00, \xA73.5). Jira \uC5F0\uB3D9\uC740 \uC120\uD0DD \uBAA8\uB4C8\uC774\uB77C \uC774 \uBE4C\uB4DC\uC5D0 \uD3EC\uD568\uB3FC \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
           },
           null,
           2
