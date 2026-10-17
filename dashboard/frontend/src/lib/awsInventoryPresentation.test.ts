@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { summarizeSageMaker } from "./awsInventoryPresentation.js";
 
 describe("summarizeSageMaker", () => {
-  it("prioritizes serving endpoints and reduces versioned resources to counts", () => {
+  it("prioritizes inference endpoints and reduces versioned resources to counts", () => {
     const summary = summarizeSageMaker([
       { service: "sagemaker", kind: "endpoint", id: "ranker", metadata: { status: "InService" } },
       { service: "sagemaker", kind: "endpoint-config", id: "ranker-v2-config" },

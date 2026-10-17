@@ -14,21 +14,21 @@ const logs = 'aws logs filter-log-events --start-time 1790812800000 --end-time 1
 
 describe('AWS readonly guard decision table', () => {
   it.each([
-    ['aws ecs describe-services --cluster serving', 'allow'],
+    ['aws ecs describe-services --cluster orders', 'allow'],
     [metric, 'allow'],
     [logs, 'allow'],
     ['aws secretsmanager get-secret-value --secret-id prod', 'deny'],
     ['aws athena start-query-execution --query-string select', 'deny'],
-    ['aws ecs update-service --cluster serving', 'deny'],
-    ['aws ecs describe-services --cluster serving && aws ecs update-service --cluster serving', 'deny'],
+    ['aws ecs update-service --cluster orders', 'deny'],
+    ['aws ecs describe-services --cluster orders && aws ecs update-service --cluster orders', 'deny'],
     ['python -c "import boto3"', 'deny'],
-    ['bash -c "aws ecs describe-services --cluster serving"', 'deny'],
-    ['aws logs filter-log-events --log-group-name serving --limit 100', 'deny'],
+    ['bash -c "aws ecs describe-services --cluster orders"', 'deny'],
+    ['aws logs filter-log-events --log-group-name orders --limit 100', 'deny'],
     ['aws cloudwatch get-metric-statistics --start-time 2026-09-29T00:00:00Z --end-time 2026-10-01T00:00:00Z --period 60', 'ask'],
     ['aws cloudwatch get-metric-data --start-time 2026-10-01T00:00:00Z --end-time 2026-10-01T01:00:00Z --metric-data-queries file://queries.json', 'ask'],
     ['for i in a b; do aws ecs describe-services --cluster "$i"; done', 'ask'],
-    ['aws ecs describe-services --cluster serving | jq .services | head', 'allow'],
-    ['aws ecs describe-task-definition --task-definition serving', 'deny'],
+    ['aws ecs describe-services --cluster orders | jq .services | head', 'allow'],
+    ['aws ecs describe-task-definition --task-definition orders', 'deny'],
     ['npm test', 'ignore'],
   ])('%s => %s', (command, expected) => {
     expect(evaluateAwsCommand(command).decision).toBe(expected);
