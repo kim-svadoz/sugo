@@ -3,10 +3,10 @@ import { workResultSummaryHtml } from "./workResultSummaryHtml.js";
 
 describe("workResultSummaryHtml", () => {
   it("renders a markdown table as an HTML table", () => {
-    const html = workResultSummaryHtml("| 기존 | 신규 |\n|---|---|\n| LegacyRankingModule | NewRankingModule |");
+    const html = workResultSummaryHtml("| 기존 | 신규 |\n|---|---|\n| LegacyOrderService | NewOrderService |");
     expect(html).toContain("<table>");
     expect(html).toContain("<th>기존</th>");
-    expect(html).toContain("<td>NewRankingModule</td>");
+    expect(html).toContain("<td>NewOrderService</td>");
   });
 
   it("renders headings, lists and bold text", () => {

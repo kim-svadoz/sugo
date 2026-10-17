@@ -79,7 +79,7 @@ describe("§4.3-R test_reverify — 증거 스냅샷 데드락 해소", () => {
   it("기존 모듈 재스냅샷 뒤 code_start로 새 모듈을 구현하고 새 clean test_done이면 이전 라벨만 해소한다", async () => {
     const sessionId = await seedSession("REVIEW_RUNNING", "fail");
     await recordEvidence(sessionId, 0);
-    await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "RankingModuleTest 6/6, 로컬 의존 2건 제외" });
+    await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "OrderServiceTest 6/6, 로컬 의존 2건 제외" });
     const restarted = parse(await handleSugoPlan({ action: "code_start", sessionId }));
     expect(restarted.ok).toBe(true);
     let session = await loadSession(sessionId);
@@ -92,7 +92,7 @@ describe("§4.3-R test_reverify — 증거 스냅샷 데드락 해소", () => {
     expect(parse(await handleSugoPlan({ action: "test_done", sessionId, testPassed: true })).ok).toBe(true);
     session = await loadSession(sessionId);
     const label = session.data.chainInfo.bypassLabels![0];
-    expect(label.reason).toContain("RankingModule");
+    expect(label.reason).toContain("OrderService");
     expect(label.supersededByCycle).toBe(1);
     expect(computeCompletionGrade(session.data.chainInfo.bypassLabels!, 0).grade).toBe("verified");
   });

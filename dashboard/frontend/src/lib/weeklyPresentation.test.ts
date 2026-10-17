@@ -8,7 +8,7 @@ describe("weekly 보고서 화면 모델", () => {
       topics: [
         {
           title: "대시보드 번들",
-          workspace: "inventory",
+          workspace: "tools",
           category: "기능",
           one_line: "한 줄",
           done: ["완료 1"],
@@ -22,7 +22,7 @@ describe("weekly 보고서 화면 모델", () => {
     });
 
     expect(view.headline).toEqual(["요약 1", "요약 2"]);
-    expect(view.topics[0]).toMatchObject({ title: "대시보드 번들", workspace: "inventory", oneLine: "한 줄", done: ["완료 1"], todo: [{ text: "남은 일", kind: "todo" }] });
+    expect(view.topics[0]).toMatchObject({ title: "대시보드 번들", workspace: "tools", oneLine: "한 줄", done: ["완료 1"], todo: [{ text: "남은 일", kind: "todo" }] });
     expect(view.nextWeek).toEqual(["다음 주 일"]);
     expect(view.blocked).toEqual(["막힌 일"]);
     expect(view.lastWeekPlan).toEqual([{ text: "지난주 계획", status: "done" }]);

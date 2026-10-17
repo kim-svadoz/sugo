@@ -14,11 +14,11 @@ const plus = (n) => { const d = new Date(today); d.setDate(d.getDate() + n); ret
 const minus = (n) => { const d = new Date(today); d.setDate(d.getDate() - n); return iso(d); };
 
 const specs = [
-  { id: "spec-rd20", workspace_name: "orders", title: "주문 내역 화면 개편", status: "in_progress", due_date: plus(3), project_path: "/home/u1/projects/orders-api" },
-  { id: "spec-favorites", workspace_name: "orders", title: "관심 상품 추천", status: "pending", due_date: plus(3), project_path: null },
+  { id: "spec-order-history", workspace_name: "orders", title: "주문 내역 화면 개편", status: "in_progress", due_date: plus(3), project_path: "/home/u1/projects/orders-api" },
+  { id: "spec-notifications", workspace_name: "orders", title: "알림 설정 화면", status: "pending", due_date: plus(3), project_path: null },
   { id: "spec-overdue", workspace_name: "orders", title: "지난 마감(테스트)", status: "in_progress", due_date: minus(2), project_path: null },
   { id: "spec-profile", workspace_name: "profile", title: "프로필 API v2 마이그레이션", status: "pending", due_date: plus(10), project_path: null },
-  { id: "spec-manual-abc123", workspace_name: "inventory", title: "sugo 릴리스 체크리스트 정리", status: "pending", due_date: null, project_path: null },
+  { id: "spec-manual-abc123", workspace_name: "tools", title: "sugo 릴리스 체크리스트 정리", status: "pending", due_date: null, project_path: null },
   // 오늘 달력에는 안 보이는 먼 미래 마감(전체 목록 토글 + 클릭 시 마감월로 점프하는지 확인용).
   { id: "spec-far-future", workspace_name: "orders", title: "다음다음달 큰 개편", status: "pending", due_date: plus(70), project_path: "/home/u1/projects/orders-api" },
 ];
@@ -39,9 +39,9 @@ await page.route("**/api/**", (route) => {
     return route.fulfill({
       json: {
         workspaces: [
-          { name: "orders", projects: [{ project_path: "/home/u1/projects/orders-api", git_synced: 1 }, { project_path: "/home/u1/projects/shop-batch", git_synced: 0 }], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
+          { name: "orders", projects: [{ project_path: "/home/u1/projects/orders-api", git_synced: 1 }, { project_path: "/home/u1/projects/orders-batch", git_synced: 0 }], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
           { name: "profile", projects: [], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
-          { name: "inventory", projects: [], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
+          { name: "tools", projects: [], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
         ],
       },
     });
@@ -84,8 +84,8 @@ await page.route("**/api/**", (route) => {
     return route.fulfill({
       json: {
         nodes: [
-          { id: "spec-favorites", title: "관심 상품 추천", level: "spec", status: "pending", depends_on: [], parent: null, ref: null, note: null, spec_path: null, work_result: null, lineage: null, manual_status: null, pos_x: null, pos_y: null },
-          { id: "run-spec-favorites", title: "관심 상품 추천", level: "workstream", status: "pending", depends_on: [], parent: "spec-favorites", ref: null, note: null, spec_path: null, work_result: null, lineage: null, manual_status: null, pos_x: null, pos_y: null },
+          { id: "spec-notifications", title: "알림 설정 화면", level: "spec", status: "pending", depends_on: [], parent: null, ref: null, note: null, spec_path: null, work_result: null, lineage: null, manual_status: null, pos_x: null, pos_y: null },
+          { id: "run-spec-notifications", title: "알림 설정 화면", level: "workstream", status: "pending", depends_on: [], parent: "spec-notifications", ref: null, note: null, spec_path: null, work_result: null, lineage: null, manual_status: null, pos_x: null, pos_y: null },
         ],
         counts: { total: 2, pending: 2, in_progress: 0, done: 0, blocked: 0, dropped: 0 },
         issues: [],
@@ -104,8 +104,8 @@ async function shot(path, file) {
 
 await shot("/schedule", "schedule-01-calendar.png");
 
-// 칩 클릭 → 상세 패널. spec-favorites은 project_path=null이라 체크포인트 버튼이 비활성이어야 한다.
-await page.getByText("관심 상품 추천", { exact: true }).first().click();
+// 칩 클릭 → 상세 패널. spec-notifications은 project_path=null이라 체크포인트 버튼이 비활성이어야 한다.
+await page.getByText("알림 설정 화면", { exact: true }).first().click();
 await page.waitForTimeout(400);
 await page.screenshot({ path: join(OUT, "schedule-02-detail-no-project.png"), fullPage: false });
 
@@ -113,7 +113,7 @@ await page.screenshot({ path: join(OUT, "schedule-02-detail-no-project.png"), fu
 await page.locator('button[title^="이름 변경"]').click();
 await page.waitForTimeout(150);
 await page.screenshot({ path: join(OUT, "schedule-02b-title-editing.png"), fullPage: false });
-await page.locator("input").first().fill("이름 바꾼 관심 상품");
+await page.locator("input").first().fill("이름 바꾼 알림 설정");
 await page.keyboard.press("Enter");
 await page.waitForTimeout(300);
 await page.screenshot({ path: join(OUT, "schedule-02c-title-renamed-saved-flash.png"), fullPage: false });
@@ -172,7 +172,7 @@ await page.screenshot({ path: join(OUT, "schedule-07-back-to-schedule.png"), ful
 await page.keyboard.press("Escape");
 await page.waitForTimeout(200);
 
-// 이미 project_path가 실려온(실제 프로젝트 sync 유래) spec-rd20 — 별도 조작 없이도 라벨이 맞는지.
+// 이미 project_path가 실려온(실제 프로젝트 sync 유래) spec-order-history — 별도 조작 없이도 라벨이 맞는지.
 await page.getByText("주문 내역 화면 개편", { exact: true }).first().click();
 await page.waitForTimeout(400);
 await page.screenshot({ path: join(OUT, "schedule-08-detail-preassigned-project.png"), fullPage: false });

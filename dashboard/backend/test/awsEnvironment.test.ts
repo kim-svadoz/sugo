@@ -4,7 +4,7 @@ import { environmentOfAccount } from "../src/services/awsEnvironment.js";
 describe("environmentOfAccount", () => {
   it.each([
     ["team-dev", "dev"],
-    ["team-dev", "dev"],
+    ["dev-platform", "dev"],
     ["shop_stage", "stg"],
     ["Production Account", "prd"],
     ["prd", "prd"],

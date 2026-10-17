@@ -70,10 +70,10 @@ describe("AWS release pipeline linking", () => {
       inventory: [{ service: "codepipeline", resources: [{
         kind: "pipeline", id: "orders-api-pipeline", metadata: {
           repositoryName: "orders-api", branchName: "development", buildProject: "orders-api-build",
-          latestBuildNumber: 421, latestBuildCommit: "abc48af84feddeda", latestBuildStatus: "SUCCEEDED",
+          latestBuildNumber: 421, latestBuildCommit: "abc1234def567890", latestBuildStatus: "SUCCEEDED",
         },
       }] }],
     }]);
-    expect(linked).toEqual(expect.objectContaining({ baseBranch: "development", latestBuildNumber: 421, latestBuildCommit: "abc48af84feddeda" }));
+    expect(linked).toEqual(expect.objectContaining({ baseBranch: "development", latestBuildNumber: 421, latestBuildCommit: "abc1234def567890" }));
   });
 });

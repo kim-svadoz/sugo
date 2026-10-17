@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createAwsCodeCommitClient } from "../src/git/codeCommitClient.js";
 
-const repo = { baseUrl: "ap-northeast-2", namespace: "repos", repo: "recommendation-api", token: "", profile: "dev" };
+const repo = { baseUrl: "ap-northeast-2", namespace: "repos", repo: "orders-api", token: "", profile: "dev" };
 
 describe("AWS CodeCommit adapter", () => {
   it("passes region/profile to the SigV4 SDK client and creates a pull request", async () => {
@@ -13,7 +13,7 @@ describe("AWS CodeCommit adapter", () => {
     });
     const result = await client.createPullRequest(repo, { title: "Feature", description: "Body", fromBranch: "feat/x", toBranch: "development" });
     expect(configs).toEqual([{ region: "ap-northeast-2", profile: "dev" }]);
-    expect(commands[0].input).toMatchObject({ targets: [{ repositoryName: "recommendation-api", sourceReference: "feat/x", destinationReference: "development" }] });
+    expect(commands[0].input).toMatchObject({ targets: [{ repositoryName: "orders-api", sourceReference: "feat/x", destinationReference: "development" }] });
     expect(result).toEqual({ id: "42", url: expect.stringContaining("ap-northeast-2.console.aws.amazon.com") });
   });
 

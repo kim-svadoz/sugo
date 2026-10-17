@@ -36,8 +36,8 @@ let fakeHome: string;
 let projectDir: string;
 
 beforeEach(() => {
-  fakeHome = mkdtempSync(join(tmpdir(), "sugo-cj-home-"));
-  projectDir = mkdtempSync(join(tmpdir(), "sugo-cj-project-"));
+  fakeHome = mkdtempSync(join(tmpdir(), "sugo-consistency-home-"));
+  projectDir = mkdtempSync(join(tmpdir(), "sugo-consistency-project-"));
   process.env.SUGO_HOME_OVERRIDE = fakeHome;
 });
 
@@ -177,7 +177,7 @@ describe("sugo_hulk(judgment) — sugo_judgment_report 흡수, 전체 흐름 집
     await call(handleSugoPlan, { action: "commit", sessionId: s1 });
 
     // 세션 2: 환경부재 라벨(runtime unverified) 사용
-    const projectDir2 = mkdtempSync(join(tmpdir(), "sugo-cj-project2-"));
+    const projectDir2 = mkdtempSync(join(tmpdir(), "sugo-consistency-project2-"));
     const start2 = await call(handleSugoPlan, { action: "start", projectPath: projectDir2, featureName: "y" });
     const s2 = start2.data.sessionId;
     await call(handleSugoPlan, { action: "clarify", sessionId: s2 });

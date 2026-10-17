@@ -12,7 +12,7 @@ describe("History 표시 제목", () => {
 
   it("Markdown 제목과 작업 요약 라벨을 제거한다", () => {
     expect(historyDisplayTitle({
-      task_title: "favorite-items",
+      task_title: "search-empty-result",
       summary: "## 작업 요약\n\n- 빈 검색 결과는 전체 범위로 다시 조회한다.",
       id: "wl-2",
     })).toBe("빈 검색 결과는 전체 범위로 다시 조회한다.");

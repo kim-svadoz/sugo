@@ -19,3 +19,7 @@ Thumbs.db
 /docs/SUGO-ONTOLOGY-IMPROVEMENT-PLAN.md
 /dashboard/docs/roadmap-progress.md
 /dashboard/docs/SAAS-DEPLOYMENT-ROADMAP.md
+
+# 대시보드 체크포인트 동기화가 쓰는 개인 규칙과 로컬 DB 백업 — 업무 내용이 들어갈 수 있어 올리지 않는다
+**/.claude/rules/general/
+/dashboard/backend/local.db.bak*

@@ -158,7 +158,7 @@ it("recovers a task on another branch and a unique explicit recorded commit with
  try {
   git("init", "-b", "main"); git("config", "user.name", "Test"); git("config", "user.email", "test@example.com");
   writeFileSync(join(dir, "base.txt"), "base"); git("add", "."); git("commit", "-m", "base"); const base = git("rev-parse", "HEAD");
-  git("checkout", "-b", "feature/ranking"); writeFileSync(join(dir, "module.txt"), "new module\n"); git("add", "."); git("commit", "-m", "module"); const commit = git("rev-parse", "HEAD"); git("checkout", "main");
+  git("checkout", "-b", "feature/search"); writeFileSync(join(dir, "module.txt"), "new module\n"); git("add", "."); git("commit", "-m", "module"); const commit = git("rev-parse", "HEAD"); git("checkout", "main");
   const result = { startedAt: "2020-01-01", endedAt: new Date().toISOString(), path: join(dir, "sugo/features/task/work-result.md") };
   expect(await recoverLegacySource({ ...result, files: [{ path: "module.txt", content: "new module\n" }] }, new Set([dir]))).toMatchObject({ state: "committed", commit });
   expect(await recoverLegacySource({ ...result, summary: `직접 커밋함(커밋 ${commit.slice(0, 7)})` }, new Set([dir]))).toMatchObject({ state: "committed", commit, recoveredFrom: "legacy_recorded_commit" });

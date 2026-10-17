@@ -29,10 +29,10 @@ describe("workspace Git history backfill", () => {
     execFileSync("git", ["add", "other/ignored.ts"], { cwd: repo });
     execFileSync("git", ["commit", "-m", "chore: unrelated"], { cwd: repo });
 
-    const logs = await backfillWorkspaceGitHistory({ name: "inventory", projects: [join(repo, "dashboard")], created_at: "2000-01-01T00:00:00.000Z" });
+    const logs = await backfillWorkspaceGitHistory({ name: "tools", projects: [join(repo, "dashboard")], created_at: "2000-01-01T00:00:00.000Z" });
     expect(logs).toHaveLength(1);
     expect(logs[0]).toMatchObject({ task_title: "feat: add schedule memo", summary: "Sugo 파이프라인 외부에서 수행한 Git 저장소 이력입니다." });
     expect(logs[0].files_changed).toEqual(["dashboard/memo.ts"]);
-    expect(JSON.parse(readFileSync(join(home, ".claude", "sugo", "work", "inventory", "history", `${logs[0].id}.json`), "utf8"))).toMatchObject({ task_title: "feat: add schedule memo" });
+    expect(JSON.parse(readFileSync(join(home, ".claude", "sugo", "work", "tools", "history", `${logs[0].id}.json`), "utf8"))).toMatchObject({ task_title: "feat: add schedule memo" });
   });
 });

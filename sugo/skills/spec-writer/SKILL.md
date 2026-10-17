@@ -30,13 +30,13 @@ Claude and Codex share this SPEC-writing contract. Do not implement product code
 - Descriptions of current code behavior.
 - Assumptions derived by the agent from code, data, or documents.
 
-Use code or ontology research only in conversation to form questions and scope decisions.
+Use research on code, documents, or external tools only in conversation to form questions and scope decisions.
 
 ### Sources of fact
 
 - Use only user-provided requirements, screens, documents, and decisions as SPEC facts.
 - Do not put an unconfirmed item in requirements, completion criteria, or constraints. Put it in Open Questions only if the answer changes behavior or completion.
-- Use only business identifiers already used by the user, such as a module code or screen area code. Exclude identifiers found only through research.
+- Use only business identifiers already used by the user, such as a feature name or screen name. Exclude identifiers found only through research.
 - Do not invent APIs, identifiers, values, schedules, owners, or behavior.
 - Never overwrite an existing version.
 

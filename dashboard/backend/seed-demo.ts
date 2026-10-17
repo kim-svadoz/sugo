@@ -1,7 +1,7 @@
 /**
  * 로컬 데모 시드 — sqlite(./local.db)에 전체 시나리오 데이터를 넣는다.
  * 실행: npx tsx seed-demo.ts   (백엔드가 꺼져있거나 mysql 모드일 때 안전 — local.db 직접 씀)
- * userId는 실제 로그인 계정(github:58545240)으로 넣어야 대시보드에서 보인다.
+ * userId는 실제 로그인 계정(SUGO_SEED_USER_ID)으로 넣어야 대시보드에서 보인다.
  */
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -18,7 +18,7 @@ import {
   syncRoadmap,
 } from "./src/services/syncService.js";
 
-const USER = "github:58545240";
+const USER = process.env.SUGO_SEED_USER_ID ?? "github:12345";
 // 데모 프로젝트 경로는 화면에 그대로 찍힌다 — 이 PC의 Windows 경로를 박으면 mac에서 시드했을 때
 // 존재하지도 않는 경로가 대시보드에 뜬다(dev-local.mts와 같은 이유로 정정).
 const SPLEARN = join(homedir(), "splearn");
@@ -48,7 +48,7 @@ const lineage = (entries: Record<string, unknown>[]) => entries;
 async function main() {
   await db.execScript(readFileSync(join("test", "schema.sqlite.sql"), "utf8"));
 
-  await syncUser(db, { userId: USER, displayName: "김성현" });
+  await syncUser(db, { userId: USER, displayName: "Local Developer" });
 
   // ── 워크스페이스 2개 ─────────────────────────────────────────────
   await syncWorkspace(db, { userId: USER, name: "temp-workspace", projects: [SPLEARN], gitSyncedProjects: [SPLEARN] });

@@ -1,9 +1,9 @@
 // 실행 중인 로컬 백엔드(:3001)에 데모 데이터를 API로 시드한다.
-// 세션 서명키를 후보에서 자동 탐색해 userId=github:58545240로 넣는다.
+// 세션 서명키를 후보에서 자동 탐색해 userId=SUGO_SEED_USER_ID(기본 github:12345)로 넣는다.
 import { SignJWT } from "jose";
 import { homedir } from "node:os";
 import { join } from "node:path";
-const USER = "github:58545240";
+const USER = process.env.SUGO_SEED_USER_ID ?? "github:12345";
 import { LOCAL_API_URL } from "../port-contract.mjs";
 
 const BASE = LOCAL_API_URL;
@@ -32,7 +32,7 @@ async function main() {
   let token = null;
   for (const s of ["dev-secret-change-me", "local-dev-session-secret-change-me-please", ""]) {
     const t = await mint(s);
-    const r = await post("/api/sync/user", { userId: USER, displayName: "김성현" }, t);
+    const r = await post("/api/sync/user", { userId: USER, displayName: "Local Developer" }, t);
     if (r.ok) { token = t; console.log("세션 서명키 확인됨:", JSON.stringify(s)); break; }
   }
   if (!token) { console.error("❌ 세션 서명키를 못 찾음(백엔드 SESSION_SECRET 불일치). 백엔드 재시작 후 재시도."); process.exit(1); }

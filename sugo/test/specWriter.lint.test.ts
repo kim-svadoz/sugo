@@ -7,8 +7,8 @@ import { handleSugoSpecWriter, lintSpecText } from "../src/tools/sugoSpecWriter.
 
 // 구현 세부가 섞인 SPEC과 기획자 수준 SPEC의 예시 줄.
 const V1_LIKE = [
-  "## 현재 동작 (코드 확인, `main` abc48af)",
-  "- 코드: `account-api` `main` abc48af — `LoginService.java`, `SecurityConfig.java:81`",
+  "## 현재 동작 (코드 확인, `main` abc1234)",
+  "- 코드: `account-api` `main` abc1234 — `LoginService.java`, `SecurityConfig.java:81`",
   "| `src/main/java/com/example/account/service/LoginService.java` | 실패 횟수 처리 분기 |",
   "| `src/test/.../service/LoginServiceTest.java` | 신규 |",
 ].join("\n");
