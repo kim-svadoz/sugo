@@ -158,8 +158,8 @@ it("완료 산출물이 있는 patch 취소는 기존 Task 완료 상태를 복�
       { version: 2, title: "취소한 문서 선택 변경" },
     ];
     payload.nodes.unshift(
-      { id: "spec", title: "검색 필터", level: "spec", status: "in_progress" },
-      { id: "run", title: "검색 필터", level: "workstream", status: "in_progress", parent: "spec" },
+      { id: "spec", title: "검색필터", level: "spec", status: "in_progress" },
+      { id: "run", title: "검색필터", level: "workstream", status: "in_progress", parent: "spec" },
     );
     payload.nodes[2].parent = "run";
     await f.sync(payload);

@@ -204,11 +204,11 @@ describe("updateRoadmapNodeStatus", () => {
 
 describe("recordRoadmapWorkResult", () => {
   it("재동기화도 이미 시작된 patch 계보를 복원한다", async () => {
-    const featureDir = join(fakeHome, "project", "sugo", "features", "20261012", "검색 필터");
+    const featureDir = join(fakeHome, "project", "sugo", "features", "20261012", "검색필터");
     mkdirSync(featureDir, { recursive: true });
     const basePrdPath = join(featureDir, "prd.md");
-    writeFileSync(basePrdPath, "# PRD: 검색 필터\n");
-    writeFileSync(join(featureDir, "PRD-patch-v1.md"), "# PRD patch v1: 검색 필터 — 필터별 조회와 처리 순서\n");
+    writeFileSync(basePrdPath, "# PRD: 검색필터\n");
+    writeFileSync(join(featureDir, "PRD-patch-v1.md"), "# PRD patch v1: 검색필터 — 필터별 조회와 처리 순서\n");
     await upsertRoadmapNodes("ws1", [{
       id: "task-a", title: "최초 구현", level: "task", status: "done", dependsOn: [], parent: "run-task-a",
       workResult: { path: "/feature/work-result.md", summary: "feat 완료" },

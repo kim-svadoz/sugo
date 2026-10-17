@@ -49,7 +49,7 @@ describe("Schedule commitments", () => {
     const [adapted] = legacyCommitments([{
       id: "spec-1",
       workspace_name: "orders",
-      title: "검색 필터",
+      title: "검색필터",
       due_date: "2026-10-14",
       status: "done",
       project_path: null,

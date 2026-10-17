@@ -34,7 +34,7 @@ const blocker = {
 const spec = {
   id: "spec-review-demo",
   workspace_name: "orders",
-  title: "검색 필터 작업 결과",
+  title: "검색필터 작업 결과",
   status: "in_progress",
   due_date: "2026-10-16",
   project_path: "/workspace/orders-api",
@@ -47,7 +47,7 @@ const spec = {
   stale_task_count: 0,
   unverified_task_count: 0,
   focus_task_id: "task-review-demo",
-  focus_task_title: "검색 필터 구현",
+  focus_task_title: "검색필터 구현",
   focus_task_status: "blocked",
   focus_task_note: blocker.question,
   focus_task_updated_at: new Date().toISOString(),
@@ -70,7 +70,7 @@ await page.route("**/api/**", (route) => {
 });
 
 await page.goto(`${E2E_UI_URL}/schedule`, { waitUntil: "networkidle" });
-await page.getByText("검색 필터 작업 결과", { exact: true }).first().click();
+await page.getByText("검색필터 작업 결과", { exact: true }).first().click();
 await page.getByText("작업 결과 확인", { exact: true }).waitFor();
 const output = join(tmpdir(), "sugo-review-confirmation.png");
 await page.screenshot({ path: output, fullPage: false });

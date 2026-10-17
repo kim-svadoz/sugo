@@ -176,12 +176,12 @@ describe("patch lineage canvas model", () => {
   it("feat는 기능명을 유지하고 patch는 첫 REQ의 명사형 제목을 사용한다", () => {
     const task = node({
       id: "task",
-      title: "검색 필터",
+      title: "검색필터",
       lineage: [
-        { version: 0, title: "검색 필터", workResult: { seed: "최초 검색 필터 구현" } },
+        { version: 0, title: "검색필터", workResult: { seed: "최초 검색 필터 구현" } },
         {
           version: 1,
-          title: "검색 필터",
+          title: "검색필터",
           workResult: { seed: "1차 patch: 최신 문서 조회와 정렬을 적용한다" },
           requirements: [{ title: "alias 조회와 최신 문서 선택 (TODO-SPEC 항목: h)" }],
         },
@@ -190,7 +190,7 @@ describe("patch lineage canvas model", () => {
 
     const [chain] = buildLineageChains([task]);
     expect(chain.columns[0].map((item) => item.title)).toEqual([
-      "검색 필터",
+      "검색필터",
       "alias 조회와 최신 문서 선택",
     ]);
   });
@@ -199,7 +199,7 @@ describe("patch lineage canvas model", () => {
     const fullTitle = "2차 patch: 필터 종류가 늘어도 요청마다 필터 1개를 조회하도록 미리 대비한다.";
     const task = node({
       id: "task",
-      title: "검색 필터",
+      title: "검색필터",
       lineage: [{ version: 0, title: "최초 구현" }, { version: 2, title: fullTitle }],
     });
 

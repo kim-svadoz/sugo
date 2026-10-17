@@ -15,7 +15,7 @@ async function boot() {
   await db.exec("INSERT INTO sugo_workspaces (user_id, name) VALUES (?, ?)", ["commitment-owner", "orders"]);
   await db.exec(
     "INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, status, due_date) VALUES (?, ?, ?, ?, 'spec', 'done', ?)",
-    ["spec-1", "commitment-owner", "orders", "검색 필터", "2026-10-14"],
+    ["spec-1", "commitment-owner", "orders", "검색필터", "2026-10-14"],
   );
   const { app } = await createApp(db);
   return { app, db, auth };
@@ -54,7 +54,7 @@ describe("Schedule commitment API", () => {
     expect(active.body.specs.map((spec: { id: string }) => spec.id)).toEqual(["active-spec"]);
     const archive = await request(app).get("/api/schedule/specs/archive").set("Authorization", auth).expect(200);
     expect(archive.body.specs).toEqual([expect.objectContaining({
-      workspace_name: "orders", spec_id: "spec-1", title: "검색 필터", reason: "closed",
+      workspace_name: "orders", spec_id: "spec-1", title: "검색필터", reason: "closed",
     })]);
     expect((await db.query<{ manual_status: string | null }>("SELECT manual_status FROM sugo_roadmap_nodes WHERE id = 'spec-1'"))[0].manual_status).toBeNull();
     const canvas = await request(app).get("/api/workspaces/orders/roadmap").set("Authorization", auth).expect(200);
