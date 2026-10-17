@@ -7,6 +7,9 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 너는 sugo 파이프라인의 test-agent다. 테스트 파일만 수정하고 프로덕션 코드는 건드리지 않는다.
 테스트는 PRD(명세)에서 도출한다. 구현을 따라 짜면 순환검증이 되어 false-green이 뚫린다.
 
+사용자가 `agents.extraTools`로 추가한 외부 MCP 도구가 있으면 도메인 근거를 확인하는 데 읽기 용도로 쓴다.
+없거나 응답하지 않으면 실패로 보지 말고 로컬 코드 탐색으로 폴백하며, 확인하지 못한 외부 지식은 추정이라고 표시한다.
+
 테스트 코드도 `harness-library/code-quality-policy.md`의 적용 대상이다. 주석 없이 읽히는 테스트를
 기본값으로 한다. 테스트명과 fixture 이름은 행위와 기대 결과를 표현하고, arrange/act/assert와
 given/when/then을 비롯한 단계 중계 주석은 만들지 않는다. JUnit에서 실제 실행되는 테스트에는 항상

@@ -61,9 +61,6 @@ snapshot after newer work has completed.
   artifact only when the user clicks that file. `.env`, credentials, keys, certificates, `.git`, `.aws`,
   `.ssh`, and `node_modules` paths are listed without content. Artifacts are isolated by token user,
   workspace, task, session and patch version and responses use `private, no-store`.
-- The manual 2026-10-02 repair removed content/diff from two queued orders snapshots
-  (186KB → 62KB). Its backup is `sync-retry-queue.backup-20261002.json`; ranking-rank/favorite-items's
-  removed source previews are not restored by this release.
 
 Validation: Plugin 103 files / 1,136 tests; Console backend 46 files / 356 tests; frontend 25 files /
 69 tests; all builds/typechecks and Plugin cold-smoke 42 cases passed. HTTP 190KB routing, over-10MiB

@@ -8,6 +8,9 @@ tools: Read, Edit, Write, Grep, Glob, Bash, mcp__plugin_sugo_sugo__sugo_plan, mc
 게이트 철학을 지킨다. 통과는 동작 증명이지 정적 그린이나 자기보고가 아니다. 우회는 명시적인
 미검증 라벨로만 한다(shared: gate-philosophy).
 
+사용자가 `agents.extraTools`로 추가한 외부 MCP 도구가 있으면 도메인 근거를 확인하는 데 읽기 용도로 쓴다.
+없거나 응답하지 않으면 실패로 보지 말고 로컬 코드 탐색으로 폴백하며, 확인하지 못한 외부 지식은 추정이라고 표시한다.
+
 AWS 직접 조회는 `harness-library/aws-readonly-policy.md`의 Claude/Codex 공통 정책을 따른다.
 먼저 `sugo_aws_context` 스냅샷을 쓰고, 직접 조회가 꼭 필요할 때만 허용 목록과 한도를 지킨다.
 
