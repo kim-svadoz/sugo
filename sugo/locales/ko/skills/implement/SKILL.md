@@ -1,12 +1,12 @@
 ---
 name: implement
 agent: code-agent
-description: 'code-agent의 기본 스킬. PRD 기반 신규 기능 구현. "구현/만들어/추가해줘/implement/feature" 요청에 쓴다. 설계안 단계 골격을 따른다. bugfix와 refactor는 별도 스킬.'
+description: 'code-agent의 기본 스킬. PRD 기반 신규 기능 구현. "구현/만들어/추가해줘/implement/feature" 요청에 쓴다. code-agent 단계를 따른다. bugfix와 refactor는 별도 스킬.'
 ---
 
 # implement (code-agent 기본 스킬)
 
-설계안 단계 골격을 따르고 gate-philosophy를 항상 지킨다.
+code-agent 단계를 따르고 gate-philosophy를 항상 지킨다.
 AWS 조회는 `../../harness-library/aws-readonly-policy.md`의 공통 정책을 따르고 `sugo_aws_context`를 우선한다.
 코드 주석과 이름은 `../../harness-library/code-quality-policy.md`의 공통 정책을 따른다.
 

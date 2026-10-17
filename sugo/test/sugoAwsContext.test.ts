@@ -1,9 +1,40 @@
-import { describe, expect, it } from "vitest";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { resolveAwsEnvironmentAccount } from "../src/dashboard/config.js";
 import { handleSugoAwsContextWithFetcher } from "../src/tools/sugoAwsContext.js";
 
 function parse(result: Awaited<ReturnType<typeof handleSugoAwsContextWithFetcher>>) {
   return JSON.parse(result.content[0].text);
 }
+
+let home: string;
+const originalHome = process.env.SUGO_HOME_OVERRIDE;
+
+beforeEach(async () => {
+  home = await mkdtemp(join(tmpdir(), "sugo-aws-context-"));
+  process.env.SUGO_HOME_OVERRIDE = home;
+});
+
+afterEach(async () => {
+  if (originalHome === undefined) delete process.env.SUGO_HOME_OVERRIDE;
+  else process.env.SUGO_HOME_OVERRIDE = originalHome;
+  await rm(home, { recursive: true, force: true });
+});
+
+describe("resolveAwsEnvironmentAccount", () => {
+  it("설정이 없으면 환경 이름을 계정 표시 이름으로 그대로 쓴다", async () => {
+    expect(await resolveAwsEnvironmentAccount("dev")).toBe("dev");
+  });
+
+  it("settings.json의 aws.environments에 등록한 별칭만 계정 이름으로 바꾼다", async () => {
+    await mkdir(join(home, ".claude", "sugo"), { recursive: true });
+    await writeFile(join(home, ".claude", "sugo", "settings.json"), JSON.stringify({ aws: { environments: { dev: "team-dev" } } }));
+    expect(await resolveAwsEnvironmentAccount("dev")).toBe("team-dev");
+    expect(await resolveAwsEnvironmentAccount("prd")).toBe("prd");
+  });
+});
 
 describe("sugo_aws_context", () => {
   it("기본 응답은 리소스 이름을 싣지 않고 서비스별 개수만 보여준다", async () => {
@@ -27,11 +58,12 @@ describe("sugo_aws_context", () => {
   });
 
   it.each([
-    ["dev", "team-dev"],
-    ["stg", "team-stg"],
-    ["prd", "team-prd"],
-  ] as const)("%s 환경을 지정하면 %s 계정 snapshot을 요청한다", async (environment, accountName) => {
+    ["dev", { dev: "team-dev" }, "team-dev"],
+    ["prd", { dev: "team-dev" }, "prd"],
+    ["sandbox", {}, "sandbox"],
+  ] as const)("%s 환경은 사용자 별칭이 있으면 그 계정, 없으면 같은 이름의 계정 snapshot을 요청한다", async (environment, aliases, accountName) => {
     let requestedAccount: string | undefined;
+    const resolveAccount = async (env: string) => (aliases as Record<string, string>)[env] ?? env;
     const result = await handleSugoAwsContextWithFetcher({ environment }, async (account) => {
       requestedAccount = account;
       return {
@@ -44,7 +76,7 @@ describe("sugo_aws_context", () => {
         observedAt: "2026-09-29T00:00:00.000Z",
         inventory: [],
       };
-    });
+    }, resolveAccount);
     expect(requestedAccount).toBe(accountName);
     expect(parse(result)).toMatchObject({ ok: true, environment, activeAccount: accountName });
   });
@@ -76,9 +108,9 @@ describe("sugo_aws_context", () => {
       accountHint: "9012",
       principal: "developer",
       observedAt: "2026-09-30T00:00:00.000Z",
-      inventory: [{ service: "sagemaker", resources: [{ kind: "endpoint", id: "shop-ranker", metadata: { status: "InService" } }] }],
+      inventory: [{ service: "sagemaker", resources: [{ kind: "endpoint", id: "sample-ranker", metadata: { status: "InService" } }] }],
     }));
-    expect(parse(result).services).toEqual([{ service: "sagemaker", count: 1, status: "ok", resources: [{ kind: "endpoint", id: "shop-ranker", metadata: { status: "InService" } }] }]);
+    expect(parse(result).services).toEqual([{ service: "sagemaker", count: 1, status: "ok", resources: [{ kind: "endpoint", id: "sample-ranker", metadata: { status: "InService" } }] }]);
   });
 
   it.each(["lambda", "kinesis"] as const)("%s snapshot을 명시적으로 조회할 수 있다", async (service) => {

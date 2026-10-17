@@ -23817,6 +23817,16 @@ async function resolveDashboardConfig() {
   }
   return { enabled: false };
 }
+async function resolveAwsEnvironmentAccount(environment) {
+  try {
+    const raw = await readFile5(settingsFilePath(), "utf-8");
+    const parsed = JSON.parse(raw);
+    const mapped = parsed.aws?.environments?.[environment];
+    if (typeof mapped === "string" && mapped.trim()) return mapped.trim();
+  } catch {
+  }
+  return environment;
+}
 
 // src/dashboard/retryQueue.ts
 import { mkdir as mkdir7, readFile as readFile7 } from "node:fs/promises";
@@ -28290,7 +28300,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.35.4" : "0.0.0-dev";
+  return true ? "0.36.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30759,7 +30769,7 @@ var INVARIANTS = [
     id: "async-asymmetry",
     enforcedBy: "doc",
     statement: "\uD50C\uB7EC\uADF8\uC778\u2192\uB300\uC2DC\uBCF4\uB4DC push(fire-and-forget), pull\uC740 \uD50C\uB7EC\uADF8\uC778\uC774. \uB300\uC2DC\uBCF4\uB4DC\uB294 \uD50C\uB7EC\uADF8\uC778\uC744 \uBABB \uBD80\uB978\uB2E4",
-    enforcementRefs: [{ kind: "doc", path: "../spec/sugo-local-spec-v2.md", symbol: "async-asymmetry" }]
+    enforcementRefs: [{ kind: "doc", path: "../docs/invariants.md", symbol: "async-asymmetry" }]
   },
   {
     id: "no-silent-loss",
@@ -30809,7 +30819,7 @@ var INVARIANTS = [
     id: "user-truth",
     enforcedBy: "doc",
     statement: "\uC0AC\uC6A9\uC790\uAC00 \uBCF4\uB294 \uC0C1\uD0DC = \uC2E4\uC81C \uC0C1\uD0DC. \uAD34\uB9AC\uB294 \uACE7 \uBC84\uADF8",
-    enforcementRefs: [{ kind: "doc", path: "../spec/sugo-local-spec-v2.md", symbol: "user-truth" }]
+    enforcementRefs: [{ kind: "doc", path: "../docs/invariants.md", symbol: "user-truth" }]
   },
   {
     id: "gate-not-skippable",
@@ -32415,7 +32425,7 @@ var sugoRecordTestEvidenceInputSchema = {
   kind: external_exports.enum(["baseline", "feature"]).default("feature").describe("baseline=code_start \uC804 \uAE30\uC874 \uD14C\uC2A4\uD2B8(\xA74.0), feature=\uAD6C\uD604 \uD6C4 \uD14C\uC2A4\uD2B8(\xA74.2)"),
   command: external_exports.string().describe("\uC2E4\uD589\uD55C \uBA85\uB839(\uC608: npm test, ./gradlew test)"),
   exitCode: external_exports.number().optional().describe("\uD504\uB85C\uC138\uC2A4 \uC885\uB8CC\uCF54\uB4DC. 0\uC774\uBA74 \uADF8\uB9B0"),
-  // 설계안 정본 파라미터명. test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
+  // ux 정본 파라미터명. test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
   // undefined로 들어가 증거가 비어버린다 — 짧은 이름(total/passed/failed)도 하위호환으로
   // 받되, 정본 이름이 함께 오면 그쪽이 이긴다.
   totalTests: external_exports.number().optional().describe("\uC2E4\uD589\uB41C \uC804\uCCB4 \uD14C\uC2A4\uD2B8 \uC218"),
@@ -34512,20 +34522,16 @@ var AWS_SERVICES = [
   "ecs"
 ];
 var sugoAwsContextInputSchema = {
-  environment: external_exports.enum(["default", "dev", "stg", "prd"]).default("default").describe("\uC870\uD68C\uD560 AWS \uD658\uACBD. \uC0DD\uB7B5\uD558\uBA74 default(team-shared)"),
+  environment: external_exports.string().trim().min(1).default("default").describe(
+    "\uC870\uD68C\uD560 AWS \uD658\uACBD. Dashboard\uC5D0 \uB4F1\uB85D\uD55C \uACC4\uC815 \uD45C\uC2DC \uC774\uB984\uC774\uAC70\uB098 settings.json\uC758 aws.environments\uC5D0 \uB4F1\uB85D\uD55C \uBCC4\uCE6D. \uC0DD\uB7B5\uD558\uBA74 default"
+  ),
   services: external_exports.array(external_exports.enum(AWS_SERVICES)).optional().describe("\uC870\uD68C\uD560 \uC11C\uBE44\uC2A4. \uC0DD\uB7B5\uD558\uBA74 \uC804\uCCB4 \uC11C\uBE44\uC2A4 \uC694\uC57D"),
   includeResources: external_exports.boolean().default(false).describe("\uB9AC\uC18C\uC2A4 \uC2DD\uBCC4\uC790 \uD3EC\uD568 \uC5EC\uBD80. \uAE30\uBCF8 false\uB85C \uD1A0\uD070 \uC0AC\uC6A9\uC744 \uC81C\uD55C")
 };
 var SugoAwsContextArgs = external_exports.object(sugoAwsContextInputSchema);
-var ENVIRONMENT_ACCOUNTS = {
-  default: "default",
-  dev: "team-dev",
-  stg: "team-stg",
-  prd: "team-prd"
-};
-async function handleSugoAwsContextWithFetcher(rawArgs, fetcher) {
+async function handleSugoAwsContextWithFetcher(rawArgs, fetcher, resolveAccount = resolveAwsEnvironmentAccount) {
   const args2 = SugoAwsContextArgs.parse(rawArgs ?? {});
-  const account = ENVIRONMENT_ACCOUNTS[args2.environment];
+  const account = await resolveAccount(args2.environment);
   const context = await fetcher(account);
   if (!context?.connected) {
     return {
@@ -35094,7 +35100,7 @@ server.registerTool(
   "sugo_aws_context",
   {
     title: "Dashboard AWS context snapshot (readOnly)",
-    description: "Dashboard\uC5D0 \uC0AC\uC6A9\uC790\uAC00 \uC5F0\uACB0\uD558\uACE0 \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uC0C8\uB85C\uACE0\uCE68\uD55C AWS \uB9AC\uC18C\uC2A4 \uC2A4\uB0C5\uC0F7\uC744 \uC77D\uB294\uB2E4. \uD658\uACBD \uBBF8\uC9C0\uC815 \uC2DC default(team-shared), dev/stg/prd \uC9C0\uC815 \uC2DC \uB300\uC751 serving \uACC4\uC815\uC744 \uC77D\uB294\uB2E4. AWS\uB97C \uC9C1\uC811 \uC870\uD68C\uD558\uC9C0 \uC54A\uC73C\uBA70 \uAE30\uBCF8 \uC751\uB2F5\uC740 \uC11C\uBE44\uC2A4\uBCC4 \uAC1C\uC218\uB9CC \uBC18\uD658\uD55C\uB2E4.",
+    description: "Dashboard\uC5D0 \uC0AC\uC6A9\uC790\uAC00 \uC5F0\uACB0\uD558\uACE0 \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uC0C8\uB85C\uACE0\uCE68\uD55C AWS \uB9AC\uC18C\uC2A4 \uC2A4\uB0C5\uC0F7\uC744 \uC77D\uB294\uB2E4. environment\uB294 Dashboard \uACC4\uC815 \uD45C\uC2DC \uC774\uB984\uC774\uBA70, settings.json\uC758 aws.environments\uC5D0 \uB4F1\uB85D\uD55C \uBCC4\uCE6D\uB3C4 \uC4F8 \uC218 \uC788\uB2E4. AWS\uB97C \uC9C1\uC811 \uC870\uD68C\uD558\uC9C0 \uC54A\uC73C\uBA70 \uAE30\uBCF8 \uC751\uB2F5\uC740 \uC11C\uBE44\uC2A4\uBCC4 \uAC1C\uC218\uB9CC \uBC18\uD658\uD55C\uB2E4.",
     inputSchema: sugoAwsContextInputSchema
   },
   handleSugoAwsContext
@@ -35274,7 +35280,7 @@ server.registerTool(
   "sugo_setup",
   {
     title: "Integration setup (Bitbucket/Jira)",
-    description: "\xA71 \uC5F0\uB3D9 \uC124\uC815. \uC774 \uB85C\uCEEC \uBE4C\uB4DC\uB294 \uAC12\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uACE0 \uC5B4\uB514\uC11C \uC124\uC815\uD574\uC57C \uD558\uB294\uC9C0\uB9CC \uC54C\uB9B0\uB2E4(\uD1A0\uD070\uC740 \uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC554\uD638\uD654 \uBCF4\uAD00).",
+    description: "\xA71 \uC5F0\uB3D9 \uC124\uC815. Sugo\uB294 \uAC12\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uACE0 \uC5B4\uB514\uC11C \uC124\uC815\uD574\uC57C \uD558\uB294\uC9C0\uB9CC \uC54C\uB9B0\uB2E4(\uD1A0\uD070\uC740 \uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC554\uD638\uD654 \uBCF4\uAD00).",
     inputSchema: sugoSetupInputSchema
   },
   handleSugoSetup

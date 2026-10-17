@@ -8,7 +8,7 @@ function authHeaders(): Record<string, string> {
 }
 
 /**
- * 설계안 401 refresh — **단일 비행(single-flight)**.
+ * 401 refresh — **단일 비행(single-flight)**.
  *
  * 화면 하나가 여러 엔드포인트를 동시에 부르면 만료 순간 401이 한꺼번에 터진다. 각자 refresh를
  * 부르면 같은 refreshToken으로 동시 갱신이 일어나 서버가 회전시킨 토큰끼리 서로를 무효화한다.
@@ -60,7 +60,7 @@ export function onSessionExpired(): void {
 
 /**
  * 공개 SaaS(§Phase 1.5): 모든 호출에 Bearer 부착. **401이면 refresh 후 한 번만 재시도**하고,
- * refresh가 실패하면 그건 세션 종료라 로그인으로 보낸다(설계안).
+ * refresh가 실패하면 그건 세션 종료라 로그인으로 보낸다.
  *
  * 재시도를 한 번으로 제한하는 이유: 갱신한 토큰으로도 401이면 그건 만료가 아니라 권한 문제라
  * 다시 시도해도 결과가 같다 — 무한 루프만 만든다.
@@ -98,7 +98,7 @@ export function withUserId(path: string, userId: string, extra?: Record<string, 
   return `${path}?${params.toString()}`;
 }
 
-/** §3.3 `GET /api/workspaces/search?q=` — 설계안 툴바의 서버 전문검색(300ms 디바운스). */
+/** §3.3 `GET /api/workspaces/search?q=` — 툴바의 서버 전문검색(300ms 디바운스). */
 export interface HistorySearchResult {
   id: string;
   workspace_name: string;

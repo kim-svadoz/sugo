@@ -49,7 +49,7 @@ export function SubtaskPanel({
 }: {
   workspace: string;
   node: RoadmapNode;
-  /** 이 노드의 REQ(subtask) 자식들. **그래프가 아니라 여기서 보여주는 게 정본이다**(설계안). */
+  /** 이 노드의 REQ(subtask) 자식들. **그래프가 아니라 여기서 보여주는 게 정본이다**. */
   reqs?: RoadmapNode[];
   /** SPEC의 RUN, RUN의 TASK. TASK 진행률은 reqs를 사용한다. */
   children?: RoadmapNode[];
@@ -588,7 +588,7 @@ function FilesTab({ userId, workspace, taskId, sessionId, patchVersion, files, o
 }
 
 /**
- * REQ(subtask) 목록 — 설계안에서 REQ는 **그래프 노드가 아니라 이 패널**에 산다.
+ * REQ(subtask) 목록 — REQ는 **그래프 노드가 아니라 이 패널**에 산다.
  *
  * `{taskId}::REQ-CONFIRM`(사용자 최종확인)은 §9상 **에이전트가 못 닫고 사람의 review_done으로만**
  * 완료되는 노드라, 다른 REQ와 구분해 표시한다 — 이게 섞이면 "AI가 다 끝냈다"로 잘못 읽힌다.

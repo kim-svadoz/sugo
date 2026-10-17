@@ -8,7 +8,7 @@ export interface HarnessManifestEntry {
   [k: string]: unknown;
 }
 
-/** 설계안 — SkillList가 에이전트별로 필터링하려면 소속이 필요하다(frontmatter의 agent:). */
+/** SkillList가 에이전트별로 필터링하려면 소속이 필요하다(frontmatter의 agent:). */
 export interface SkillEntry {
   name: string;
   agent: string | null;

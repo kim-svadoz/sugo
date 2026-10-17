@@ -26,14 +26,14 @@ interface Cmd {
 }
 
 /**
- * 설계안 CommandPalette — portal(body) + ⌘K로 열린다(토글 자체는 Layout 소유).
+ * CommandPalette — portal(body) + ⌘K로 열린다(토글 자체는 Layout 소유).
  *
  * **실동작하는 명령만 넣는다.** "곧 지원" 같은 항목을 섞으면 한 번 헛되이 쓴 사용자는
  * 팔레트를 다시 안 연다. 네트워크 호출도 없다 — 전부 라우팅 아니면 reload다.
  *
  * 같은 이유로 **hint에 적는 단축키는 실제로 동작하는 것만 적는다**(⌘S/⌘P는 Layout이 처리,
  * ⌘R은 브라우저 기본 새로고침). ⌘W·⌘H는 브라우저/OS가 선점해 페이지가 가로챌 수 없으므로
- * 힌트를 달지 않는다 — 설계안과 다른 유일한 지점이고 의도된 것이다.
+ * 힌트를 달지 않는다 — 의도된 선택이다.
  */
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();

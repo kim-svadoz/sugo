@@ -262,13 +262,13 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // ── §5.0 oracle_done: 미커버 항목을 보고하면서 사유를 안 밝히는 것만 막는다(§설계안).
+  // ── §5.0 oracle_done: 미커버 항목을 보고하면서 사유를 안 밝히는 것만 막는다.
   if (action === "oracle_done") {
     const oracleResult = checkOracleDone(args.uncovered, args.overrideReason);
     if (!oracleResult.ok) return errorResult(oracleResult.code as GateBlockCode, oracleResult.message!);
   }
 
-  // ── 설계안 jira: 옵션 필수, link면 키 필수.
+  // ── jira: 옵션 필수, link면 키 필수.
   if (action === "jira") {
     const jiraResult = checkJiraOption(args.jiraOption, args.jiraKey);
     if (!jiraResult.ok) return errorResult(jiraResult.code as GateBlockCode, jiraResult.message!);
@@ -913,7 +913,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
-  // ── 설계안 jira: 선택을 세션에 남긴다. `"new"`는 실제 티켓을 만들지 않는다(스펙상 TODO) —
+  // ── jira: 선택을 세션에 남긴다. `"new"`는 실제 티켓을 만들지 않는다(스펙상 TODO) —
   // 만드는 척하지 않고 선택만 기록한다.
   if (action === "jira" && args.jiraOption) {
     session = {
@@ -946,7 +946,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
 
     // ── §8 HULK 연동: 프로젝트가 워크스페이스에 등록돼 있으면 Task를 자동 생성한다.
-    // §7.1 Patch 성숙화: patch 모드면 새 Task를 만들지 않고 원본 Run(=Task)을
+    // §7.1 Patch: patch 모드면 새 Task를 만들지 않고 원본 Run(=Task)을
     // 재사용한다 — base-task 매칭은 ref 파일명 우선(findTaskByPrdRef). 못 찾으면(예: 원본이
     // 워크스페이스 등록 전에 만들어짐) 새 Task로 안전하게 폴백한다(교착 방지).
     const registryEntry = await findRegistryEntry(session.projectPath);

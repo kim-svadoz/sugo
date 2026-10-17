@@ -164,7 +164,7 @@ export function createSkillsRouter(skillsPath: string): Router {
         }
       }
     }
-    // 설계안 SkillList는 `{name, agent}`로 에이전트별 필터링을 한다. 플러그인 레이아웃엔
+    // SkillList는 `{name, agent}`로 에이전트별 필터링을 한다. 플러그인 레이아웃엔
     // 스킬→에이전트 소속이 디렉터리에 안 드러나므로 SKILL.md frontmatter의 `agent:`를 읽는다.
     // 없으면 null — 추측해서 붙이면 잘못된 에이전트 밑에 스킬이 걸린다.
     res.json({ skills: out.sort((a, b) => a.name.localeCompare(b.name) || (a.kind === "skill" ? -1 : 1)) });
@@ -177,7 +177,7 @@ export function createSkillsRouter(skillsPath: string): Router {
     const agents = readdirSync(agentsDir, { withFileTypes: true })
       .filter((d) => (d.isFile() && d.name.endsWith(".md")) || d.isDirectory())
       .map((d) => d.name.replace(/\.md$/, ""));
-    // 설계안 에이전트 카드는 name/description을 쓴다. 파일 frontmatter에서 읽고,
+    // 에이전트 카드는 name/description을 쓴다. 파일 frontmatter에서 읽고,
     // 없으면 id를 그대로 name으로 둔다(설명을 지어내지 않는다).
     res.json({ agents: agents.map((id) => ({ id, ...readAgentMeta(agentsDir, id) })) });
   });

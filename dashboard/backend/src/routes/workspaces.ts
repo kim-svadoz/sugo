@@ -190,7 +190,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     res.json({ tasks: await getTasks(db, userId, req.params.name) });
   });
 
-  // 설계안 RoadmapTab이 `const { counts, issues } = roadmap`으로 받는다. 프론트에서 세지
+  // RoadmapTab이 `const { counts, issues } = roadmap`으로 받는다. 프론트에서 세지
   // 않고 서버가 세는 이유는, "진행 중심" 필터가 노드를 걸러낸 뒤에도 진행률은 **전체 기준**
   // 이어야 하기 때문이다 — 필터는 보기이지 진척이 아니다.
   router.get("/:name/roadmap", async (req, res) => {

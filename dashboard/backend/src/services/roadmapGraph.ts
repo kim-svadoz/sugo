@@ -1,6 +1,6 @@
-// Ported as-is (same algorithm, not copied source) from the plugin's
-// sugo/src/hulk/roadmapGraph.ts so both sides of the seam agree on ordering.
-// See spec/sugo-dashboard-spec-v1.md 설계안 "캔버스 DAG 규칙 (플러그인과 알고리즘 동일)".
+// Same algorithm as the plugin's sugo/src/hulk/roadmapGraph.ts so both sides of the
+// seam agree on ordering.
+// 캔버스 DAG 규칙은 플러그인과 같은 알고리즘을 쓴다.
 
 export interface GraphNode {
   id: string;
@@ -120,7 +120,7 @@ export function effectiveStatus(n: { status: string; manualStatus?: string | nul
 }
 
 /**
- * 진행률은 **task만** 센다(설계안: "roadmap count는 level='task'만").
+ * 진행률은 **task만** 센다.
  * spec/workstream은 그릇이고 subtask는 task 안의 세부라, 함께 세면 같은 일이 3번 세어진다.
  */
 export function roadmapCounts(nodes: RoadmapViewNode[]): RoadmapCounts {

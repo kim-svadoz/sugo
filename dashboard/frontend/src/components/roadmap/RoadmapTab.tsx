@@ -5,7 +5,7 @@ import { useRoadmap, type RoadmapNode } from "../../hooks/useRoadmap.js";
 import { cn } from "../../lib/utils.js";
 
 /**
- * 설계안 `filterActiveNodes` — "진행 중심" 보기.
+ * `filterActiveNodes` — "진행 중심" 보기.
  *
  * 규칙: **미완료** + **미완료와 dependsOn으로 맞닿은 완료** + **그릇(spec/workstream)** +
  * 살아남은 노드의 **조상·자손**.
@@ -60,7 +60,7 @@ export function filterActiveNodes(all: RoadmapNode[]): RoadmapNode[] {
 }
 
 /**
- * 설계안 RoadmapTab — 진행 요약 바 + 이상징후 경고 + 그래프.
+ * RoadmapTab — 진행 요약 바 + 이상징후 경고 + 그래프.
  *
  * counts는 **서버가** 센다. 여기서 세면 "진행 중심"으로 노드를 걸러낸 순간 진척률이 같이
  * 흔들린다 — 필터는 보기이지 진척이 아니다.

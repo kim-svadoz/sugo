@@ -1,7 +1,6 @@
--- Sugo Dashboard schema (MySQL, production target). See spec/sugo-dashboard-spec-v1.md §2.
--- Simplification: tables that the original creates lazily at runtime
--- (activity_events, bitbucket_tokens) are declared up front here instead — same
--- end-state shape, no meaningful behavioral difference for a fresh reimplementation.
+-- Sugo Console schema (MySQL, production target).
+-- Tables that could be created lazily at runtime (activity_events, bitbucket_tokens)
+-- are declared up front here.
 
 CREATE TABLE IF NOT EXISTS sugo_users (
   id VARCHAR(191) NOT NULL PRIMARY KEY,

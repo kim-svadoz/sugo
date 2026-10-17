@@ -91,7 +91,7 @@ function AwsContextCard() {
             <li><code className="text-[var(--color-text)]">aws sts get-caller-identity --profile my-account</code>로 로그인과 권한을 확인합니다.</li>
             <li>아래에 표시 이름·profile·region을 입력해 추가한 뒤 <b className="text-[var(--color-text)]">새로고침</b>하면 Sugo가 읽을 snapshot이 저장됩니다.</li>
           </ol>
-          <p className="mt-2 text-[var(--color-text-dim)]">환경별 조회를 쓰려면 표시 이름을 <code>default</code>, <code>team-dev</code>, <code>team-stg</code>, <code>team-prd</code>으로 등록하세요.</p>
+          <p className="mt-2 text-[var(--color-text-dim)]">에이전트는 표시 이름으로 계정을 고릅니다. 이름을 지정하지 않으면 <code>default</code>를 읽습니다. 표시 이름과 다른 환경 이름(예: <code>dev</code>)을 쓰려면 <code>~/.claude/sugo/settings.json</code>의 <code>aws.environments</code>에 연결하세요.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm text-[var(--color-text)]">표시 이름<input value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="예: 공용 계정" className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5" /></label>

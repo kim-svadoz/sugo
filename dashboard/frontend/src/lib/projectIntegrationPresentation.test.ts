@@ -3,25 +3,25 @@ import { initialIntegrationSelection, integrationStatusLabel } from "./projectIn
 import { awsAccountOptionLabel, awsAccountMetaLabel, moveIntegrationKeys, partitionIntegrationCandidates } from "./projectIntegrationPresentation.js";
 
 const candidates = [
-  { accountName: "team-dev", environment: "dev", service: "orders-api-service", cluster: "shop", images: ["repo/orders-api:1"], pinpointApplicationName: null },
+  { accountName: "team-dev", environment: "dev", service: "orders-api-service", cluster: "orders", images: ["repo/orders-api:1"], pinpointApplicationName: null },
   { accountName: "default", environment: "default", service: "unrelated", cluster: "misc", images: ["repo/unrelated:1"], pinpointApplicationName: null },
 ];
 const key = (item: { accountName: string; service: string; cluster?: string | null }) => `${item.accountName}\u0000${item.cluster ?? ""}\u0000${item.service}`;
 
 describe("project integration presentation", () => {
   it("separates the account identity from non-duplicated profile metadata", () => {
-    const account = { name: "team-prd", profile: "team-prd", region: "ap-northeast-2", accountHint: "1234", principal: "demo-user" };
+    const account = { name: "team-prd", profile: "team-prd", region: "ap-northeast-2", accountHint: "1234", principal: "developer" };
     expect(awsAccountOptionLabel(account)).toBe("team-prd · ••••1234");
-    expect(awsAccountMetaLabel(account)).toBe("profile team-prd · ap-northeast-2 · demo-user");
+    expect(awsAccountMetaLabel(account)).toBe("profile team-prd · ap-northeast-2 · developer");
   });
 
   it("preselects exact recommendations for an unconfigured local project", () => {
-    expect(initialIntegrationSelection({ workspace_name: "shop", project_path: "/work/orders-api", configured: false, selections: [] }, candidates, key)).toEqual([key(candidates[0])]);
+    expect(initialIntegrationSelection({ workspace_name: "orders", project_path: "/work/orders-api", configured: false, selections: [] }, candidates, key)).toEqual([key(candidates[0])]);
   });
 
   it("preserves explicit saved selections instead of recalculating recommendations", () => {
     const saved = { accountName: "default", environment: "default", service: "unrelated", cluster: "misc" };
-    expect(initialIntegrationSelection({ workspace_name: "shop", project_path: "/work/orders-api", configured: true, selections: [saved] }, candidates, key)).toEqual([key(saved)]);
+    expect(initialIntegrationSelection({ workspace_name: "orders", project_path: "/work/orders-api", configured: true, selections: [saved] }, candidates, key)).toEqual([key(saved)]);
   });
 
   it("distinguishes workspace registration from confirmed infrastructure mapping", () => {

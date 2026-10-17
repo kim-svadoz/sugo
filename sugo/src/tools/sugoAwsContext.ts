@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { resolveAwsEnvironmentAccount } from "../dashboard/config.js";
 import { fetchAwsContext, type DashboardAwsContext } from "../dashboard/fetch.js";
 
 const AWS_SERVICES = [
@@ -7,24 +8,24 @@ const AWS_SERVICES = [
 ] as const;
 
 export const sugoAwsContextInputSchema = {
-  environment: z.enum(["default", "dev", "stg", "prd"]).default("default").describe("조회할 AWS 환경. 생략하면 default(team-shared)"),
+  environment: z.string().trim().min(1).default("default").describe(
+    "조회할 AWS 환경. Dashboard에 등록한 계정 표시 이름이거나 settings.json의 aws.environments에 등록한 별칭. 생략하면 default",
+  ),
   services: z.array(z.enum(AWS_SERVICES)).optional().describe("조회할 서비스. 생략하면 전체 서비스 요약"),
   includeResources: z.boolean().default(false).describe("리소스 식별자 포함 여부. 기본 false로 토큰 사용을 제한"),
 };
 
 const SugoAwsContextArgs = z.object(sugoAwsContextInputSchema);
 type FetchAwsContext = (account: string) => Promise<DashboardAwsContext | null>;
+type ResolveAccount = (environment: string) => Promise<string>;
 
-const ENVIRONMENT_ACCOUNTS = {
-  default: "default",
-  dev: "team-dev",
-  stg: "team-stg",
-  prd: "team-prd",
-} as const;
-
-export async function handleSugoAwsContextWithFetcher(rawArgs: unknown, fetcher: FetchAwsContext) {
+export async function handleSugoAwsContextWithFetcher(
+  rawArgs: unknown,
+  fetcher: FetchAwsContext,
+  resolveAccount: ResolveAccount = resolveAwsEnvironmentAccount,
+) {
   const args = SugoAwsContextArgs.parse(rawArgs ?? {});
-  const account = ENVIRONMENT_ACCOUNTS[args.environment];
+  const account = await resolveAccount(args.environment);
   const context = await fetcher(account);
   if (!context?.connected) {
     return {

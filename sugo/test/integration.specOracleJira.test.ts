@@ -125,7 +125,7 @@ describe("§5.0 스펙 오라클 — 실제 파이프라인 통과", () => {
   });
 });
 
-describe("설계안 jira — 실제 파이프라인", () => {
+describe("jira — 실제 파이프라인", () => {
   it("jiraOption 없이 호출하면 막힌다", async () => {
     const sessionId = await toPrd();
     const r = await call({ action: "jira", sessionId });

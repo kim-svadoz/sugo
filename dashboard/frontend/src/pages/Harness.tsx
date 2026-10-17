@@ -73,7 +73,7 @@ export function Harness() {
 
   return (
     <div className="space-y-6">
-      {/* 설계안 Harness 헤더 — 제목 + 부제. */}
+      {/* Harness 헤더 — 제목 + 부제. */}
       <div>
         <h1 className="text-2xl font-bold text-[var(--color-text-bright)]">Harness</h1>
         <p className="text-[var(--color-text-muted)]">카테고리에서 기술을 고르고, 마지막에 버전별 규칙을 확인합니다.</p>

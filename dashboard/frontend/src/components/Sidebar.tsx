@@ -6,7 +6,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 
 /**
- * 설계안 Sidebar — 슬림 아이콘 LNB(w-16 md:w-20).
+ * Sidebar — 슬림 아이콘 LNB(w-16 md:w-20).
  *
  * **navItems 순서 엄수**(§5.2 표): Workspaces·Schedule·Skills·Harness·Playbook·Weekly·Settings.
  * Workspaces만 라우트가 `/sessions`이고 나머지는 라벨 소문자와 일치한다 — 홈이 원래
@@ -27,8 +27,7 @@ export function Sidebar() {
   return (
     <aside className="flex w-16 flex-col items-center border-r border-[var(--color-border)] bg-[var(--color-surface)] py-4 md:w-20">
       <Link to="/sessions" title="SUGÒ · for Claude Code" className="mb-6">
-        {/* 원본은 sugo-icon.jpg 자산. 로컬엔 그 이미지가 없어 동일 치수·링·글로우를 가진
-            문자 마크로 대체한다(가짜 자산을 만들어 넣지 않는다). */}
+        {/* 이미지 자산 없이 링·글로우를 가진 문자 마크를 쓴다. */}
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-background)] font-mono text-[15px] font-bold text-cyan-300 object-cover ring-1 ring-cyan-500/40 ck-glow-cyan md:h-11 md:w-11">
           S
         </span>

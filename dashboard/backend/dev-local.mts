@@ -30,7 +30,7 @@ const SECRET = process.env.SESSION_SECRET;
 if (!SECRET) throw new Error("SESSION_SECRET이 필요합니다.");
 
 /**
- * 데모 프로젝트 경로. 화면에 그대로 찍히는 값이라 이 PC의 `C:/Users/user/...`를 박아두면
+ * 데모 프로젝트 경로. 화면에 그대로 찍히는 값이라 이 PC의 `C:/Users/<사용자>/...`를 박아두면
  * mac에서 시드했을 때 존재하지도 않는 Windows 경로가 대시보드에 뜬다 — 실행하는 OS의
  * 홈 디렉터리 기준으로 만든다(같은 상수를 workspace와 task가 공유해야 매칭이 된다).
  */
@@ -118,7 +118,7 @@ await syncRoadmap(db, USER, "splearn", [
   { id: "t-005::REQ-CONFIRM", title: "사용자 최종확인", level: "subtask", status: "pending", parent: "t-005" },
 
   // 패치 계보 확인용 — patch는 새 Run을 만들지 않고 **원본 Run(run-001)에 귀속**된다.
-  // depth 0마다 새 컬럼, depth>0은 그 컬럼에 세로로 쌓인다(설계안 LineageChainNode).
+  // depth 0마다 새 컬럼, depth>0은 그 컬럼에 세로로 쌓인다.
   { id: "t-001-p1", title: "로그인 실패 카운터 추가", level: "task", status: "done", parent: "run-001", lineage: { root: "t-001", depth: 0, version: 1 } },
   { id: "t-001-p2", title: "계정 잠금 해제 스케줄러", level: "task", status: "done", parent: "run-001", lineage: { root: "t-001", depth: 1, version: 2 } },
   { id: "t-001-p3", title: "bcrypt cost 재조정", level: "task", status: "in_progress", parent: "run-001", lineage: { root: "t-001", depth: 0, version: 3 } },

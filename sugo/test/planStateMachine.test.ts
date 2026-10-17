@@ -15,7 +15,7 @@ function sessionAt(state: PlanSession["state"]): PlanSession {
   };
 }
 
-describe("순서강제 게이트 (설계안: Gate Keeper) — 반드시 거부", () => {
+describe("순서강제 게이트 (적대적 코퍼스: Gate Keeper) — 반드시 거부", () => {
   it("READY 상태에서 test_start를 호출하면 차단된다 (CODE_RUNNING/CODE_DONE 건너뛰기)", () => {
     const result = applyTransition(sessionAt("READY"), "test_start", "sid", {});
     expect(result.ok).toBe(false);

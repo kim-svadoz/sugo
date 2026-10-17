@@ -10,7 +10,7 @@ export interface FileStatEntry {
   mtimeMs: number;
 }
 
-/** 설계안: 대상 파일 `상대경로|size|mtimeMs` 정렬 후 sha1(내용해시 아님, 저렴). 순수 함수. */
+/** 대상 파일 `상대경로|size|mtimeMs` 정렬 후 sha1(내용해시 아님, 저렴). 순수 함수. */
 export function computeFingerprintFromEntries(entries: FileStatEntry[]): string {
   const parts = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash("sha1").update(parts.join("\n")).digest("hex");

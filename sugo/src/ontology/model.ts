@@ -403,7 +403,7 @@ export const INVARIANTS = [
     id: "async-asymmetry",
     enforcedBy: "doc",
     statement: "플러그인→대시보드 push(fire-and-forget), pull은 플러그인이. 대시보드는 플러그인을 못 부른다",
-    enforcementRefs: [{ kind: "doc", path: "../spec/sugo-local-spec-v2.md", symbol: "async-asymmetry" }],
+    enforcementRefs: [{ kind: "doc", path: "../docs/invariants.md", symbol: "async-asymmetry" }],
   },
   {
     id: "no-silent-loss",
@@ -453,7 +453,7 @@ export const INVARIANTS = [
     id: "user-truth",
     enforcedBy: "doc",
     statement: "사용자가 보는 상태 = 실제 상태. 괴리는 곧 버그",
-    enforcementRefs: [{ kind: "doc", path: "../spec/sugo-local-spec-v2.md", symbol: "user-truth" }],
+    enforcementRefs: [{ kind: "doc", path: "../docs/invariants.md", symbol: "user-truth" }],
   },
   {
     id: "gate-not-skippable",

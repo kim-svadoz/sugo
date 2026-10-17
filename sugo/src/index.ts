@@ -174,7 +174,7 @@ server.registerTool(
     title: "Dashboard AWS context snapshot (readOnly)",
     description:
       "Dashboard에 사용자가 연결하고 마지막으로 새로고침한 AWS 리소스 스냅샷을 읽는다. " +
-      "환경 미지정 시 default(team-shared), dev/stg/prd 지정 시 대응 환경 계정을 읽는다. " +
+      "environment는 Dashboard 계정 표시 이름이며, settings.json의 aws.environments에 등록한 별칭도 쓸 수 있다. " +
       "AWS를 직접 조회하지 않으며 기본 응답은 서비스별 개수만 반환한다.",
     inputSchema: sugoAwsContextInputSchema,
   },
@@ -408,7 +408,7 @@ server.registerTool(
   {
     title: "Integration setup (Bitbucket/Jira)",
     description:
-      "§1 연동 설정. 이 로컬 빌드는 값을 저장하지 않고 어디서 설정해야 하는지만 알린다(토큰은 대시보드가 암호화 보관).",
+      "§1 연동 설정. Sugo는 값을 저장하지 않고 어디서 설정해야 하는지만 알린다(토큰은 대시보드가 암호화 보관).",
     inputSchema: sugoSetupInputSchema,
   },
   handleSugoSetup,

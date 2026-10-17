@@ -8,7 +8,7 @@ describe("AWS ECS deployment linking", () => {
         accountName: "team-dev",
         region: "ap-northeast-2",
         observedAt: "2026-09-29T00:00:00.000Z",
-        inventory: [{ service: "ecs", resources: [{ kind: "service", id: "orders-api-service", metadata: { cluster: "shop-api-cluster", taskDefinition: "orders-api:343", revision: 343, rolloutState: "COMPLETED", desiredCount: 1, runningCount: 1, images: ["repo/orders-api:343"], deployedAt: "2026-09-28T08:03:00.000Z" } }] }],
+        inventory: [{ service: "ecs", resources: [{ kind: "service", id: "orders-api-service", metadata: { cluster: "orders-api-cluster", taskDefinition: "orders-api:343", revision: 343, rolloutState: "COMPLETED", desiredCount: 1, runningCount: 1, images: ["repo/orders-api:343"], deployedAt: "2026-09-28T08:03:00.000Z" } }] }],
       },
       {
         accountName: "team-prd",

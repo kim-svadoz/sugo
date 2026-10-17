@@ -8,7 +8,7 @@ import {
 } from "../src/harness/toolRegistry.js";
 
 describe("HARNESS_TOOL_REGISTRY 기본값", () => {
-  it("특화 MCP가 없는 로컬 빌드이라 기본은 빈 배열이다(§2 외부 구현 안전 기본값)", () => {
+  it("특화 MCP를 등록하지 않으면 기본은 빈 배열이다(§2 안전 기본값)", () => {
     expect(HARNESS_TOOL_REGISTRY).toEqual([]);
   });
 });

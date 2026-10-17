@@ -4,7 +4,7 @@ export interface HumanHoursEstimate {
   estimationBasis: string;
 }
 
-/** 설계안: "AI 실행분 × 보정비율(≈3.x) + 복잡도(요구수·재시도) 가산. 정밀치 아님." */
+/** "AI 실행분 × 보정비율(≈3.x) + 복잡도(요구수·재시도) 가산. 정밀치 아님." */
 const DEFAULT_RATIO = 3.5;
 
 /**

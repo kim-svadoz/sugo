@@ -10,7 +10,7 @@ export const sugoRecordTestEvidenceInputSchema = {
     .describe("baseline=code_start 전 기존 테스트(§4.0), feature=구현 후 테스트(§4.2)"),
   command: z.string().describe("실행한 명령(예: npm test, ./gradlew test)"),
   exitCode: z.number().optional().describe("프로세스 종료코드. 0이면 그린"),
-  // 설계안 정본 파라미터명. test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
+  // ux 정본 파라미터명. test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
   // undefined로 들어가 증거가 비어버린다 — 짧은 이름(total/passed/failed)도 하위호환으로
   // 받되, 정본 이름이 함께 오면 그쪽이 이긴다.
   totalTests: z.number().optional().describe("실행된 전체 테스트 수"),

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { checkRuntimeVerificationGate, checkUserConfirmationGate, validateSummaryQuality } from "../src/gates.js";
 
-describe("checkUserConfirmationGate — 설계안", () => {
+describe("checkUserConfirmationGate — 적대적 코퍼스", () => {
   it("userConfirmed 없음/false로 review_done을 부르면 거부한다", () => {
     const result = checkUserConfirmationGate(false);
     expect(result.ok).toBe(false);
@@ -13,7 +13,7 @@ describe("checkUserConfirmationGate — 설계안", () => {
   });
 });
 
-describe("validateSummaryQuality — 설계안: 반드시 거부", () => {
+describe("validateSummaryQuality — 적대적 코퍼스: 반드시 거부", () => {
   it("3줄 미만이면 거부한다", () => {
     const result = validateSummaryQuality("한 줄짜리 요약인데 길이는 서른자를 넘도록 충분히 길게 작성했습니다.");
     expect(result.ok).toBe(false);
@@ -64,7 +64,7 @@ describe("validateSummaryQuality — 반드시 허용", () => {
   });
 });
 
-describe("checkRuntimeVerificationGate — 설계안: 반드시 거부", () => {
+describe("checkRuntimeVerificationGate — 적대적 코퍼스: 반드시 거부", () => {
   it("runtimeVerified:false인데 환경부재 라벨이 없으면 거부한다", () => {
     const result = checkRuntimeVerificationGate("pass", { buildAttempted: true, testRun: true, runtimeVerified: false }, false);
     expect(result.ok).toBe(false);

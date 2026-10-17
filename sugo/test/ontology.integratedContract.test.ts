@@ -64,7 +64,7 @@ describe("P4 operational ontology 통합 계약", () => {
     }
   });
 
-  it("설계안 16행 독립 골든 코퍼스가 모델 게이트와 실제 증명 테스트에 전부 연결된다", () => {
+  it("적대적 코퍼스 16행 독립 골든 코퍼스가 모델 게이트와 실제 증명 테스트에 전부 연결된다", () => {
     const corpus = JSON.parse(readFileSync(join(FIXTURES, "appendix-b-corpus.json"), "utf8")) as {
       id: string;
       modelGateIds: string[];

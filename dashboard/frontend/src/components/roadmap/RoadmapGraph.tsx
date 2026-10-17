@@ -47,7 +47,7 @@ import { presentSteKorean } from "../../lib/steKorean.js";
 import { getScheduleSpecArchives, restoreScheduleSpec, type ScheduleSpecArchive } from "../../api/scheduleSpecArchiveApi.js";
 import { SpecArchiveModal } from "../SpecArchiveModal.js";
 
-/** 설계안 치수 상수 — 그대로. */
+/** 치수 상수 — 그대로. */
 const NODE_W = 236;
 const WS_CARD_W = 560;
 const CARD_H = TASK_CARD_HEIGHT;
@@ -69,7 +69,7 @@ const DROP_ROOM = 44;
 const BAND_H = 30;
 /** SPEC 안에서 RUN들이 가로로 늘어설 때의 간격(컨테이너 내부 dagre의 ranksep과 같은 값). */
 const RUN_GAP = 80;
-/** 설계안 stale 임계 — in_progress인 채 이만큼 지나면 경고를 띄운다(시간 단위). */
+/** stale 임계 — in_progress인 채 이만큼 지나면 경고를 띄운다(시간 단위). */
 const STALE_WARN_H = 6;
 const STALE_ALERT_H = 24;
 
@@ -87,10 +87,10 @@ function staleHours(n: RoadmapNode): number | null {
 /**
  * Spec에 편입되지 않은 RUN들을 담는 **가상 컨테이너**의 id.
  * 서버에 이런 노드는 없다 — 화면에서만 만든다. `assignRunToSpec(run, null)`로 분리한 RUN이
- * 최상위에 흩어져 "왜 여기 떠 있지"가 되는 걸 막고, 설계안의 📋미분류 밴드를 걸어준다.
+ * 최상위에 흩어져 "왜 여기 떠 있지"가 되는 걸 막고, 📋미분류 밴드를 걸어준다.
  */
 const UNASSIGNED = "__unassigned__";
-/** 설계안 패치 체인 치수. */
+/** 패치 체인 치수. */
 const PC_COL_W = 280;
 const PC_COL_GAP = 30;
 const PC_CARD_GAP = 18;
@@ -108,7 +108,7 @@ function effStatus(n: RoadmapNode): string {
   return workflowStatus(n);
 }
 
-/** 설계안 statusColor — ready(착수가능)가 in_progress보다 우선한다. */
+/** statusColor — ready(착수가능)가 in_progress보다 우선한다. */
 function statusColor(status: string, ready: boolean): string {
   if (status === "verification") return "#fbbf24";
   if (status === "blocked") return ALERT;
@@ -117,7 +117,7 @@ function statusColor(status: string, ready: boolean): string {
   return ({ done: "#455c4d", dropped: "#2e323d", pending: "#464b5a" } as Record<string, string>)[status] ?? "#464b5a";
 }
 
-/** 설계안 cardStyle — 테두리/액센트/한글 라벨. */
+/** cardStyle — 테두리/액센트/한글 라벨. */
 function cardStyle(status: string, ready: boolean, isGroup: boolean) {
   if (isGroup) return { border: "#4b5261", accent: "#4b5261", label: "워크스트림" };
   if (status === "blocked") return { border: ALERT, accent: ALERT, label: "막힘" };
@@ -152,13 +152,13 @@ type NodeData = {
   onViewSummary?: () => void;
   onViewSpec?: () => void;
   onRename?: () => void;
-  /** 미분류 밴드의 밑줄 y좌표. null이면 밴드 없음(설계안). */
+  /** 미분류 밴드의 밑줄 y좌표. null이면 밴드 없음. */
   bandBottom?: number | null;
   /**
-   * 설계안 WorkstreamContainer의 "＋ 여기에 놓기" 표시.
+   * WorkstreamContainer의 "＋ 여기에 놓기" 표시.
    *
    * 캔버스는 §5.1대로 **읽기전용 뷰어**라 카드를 끌 수 없고, 따라서 이 값을 켜는 곳이 지금은
-   * 없다. 마크업은 설계안에 있는 그대로 남겨둔다 — 나중에 캔버스 밖(목록 등)에서 끌어오는
+   * 없다. 마크업은 그대로 남겨둔다 — 나중에 캔버스 밖(목록 등)에서 끌어오는
    * 경로가 생기면 받을 자리가 이미 있는 셈이고, 지우면 스펙과 어긋난다.
    */
   isDropTarget?: boolean;
@@ -175,7 +175,7 @@ type NodeData = {
 type FlowNode = Node<NodeData, "roadmap" | "container" | "lineage">;
 
 /**
- * nodeTypes ① — 접힌 **task 카드**와 접힌 **SPEC/RUN 폴더 카드**를 둘 다 그린다(설계안).
+ * nodeTypes ① — 접힌 **task 카드**와 접힌 **SPEC/RUN 폴더 카드**를 둘 다 그린다.
  *
  * 접힌 SPEC/RUN은 일반 task 카드가 아니라 **폴더**다: `WS_CARD_W` 폭 + 대시 테두리 + 헤더 밴드
  * + 펼치기 chevron. 접힌 폴더는 카드 전체가 제목 헤더이므로 **한 번 클릭하면 펼쳐진다**.
@@ -257,7 +257,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
   }
 
   /**
-   * task 실행 카드 — 설계안 그대로.
+   * task 실행 카드.
    *
    * 상태 dot은 **깜빡이지 않는다.** `ck-pulse-dot`은 워크스페이스 카드·헤더 버전 뱃지·
    * "Polling 4s" 표시에만 쓰는 클래스다. 캔버스에 카드가 수십 장 깔린 화면에서 전부 깜빡이면
@@ -385,7 +385,7 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
         }}
         title={isBand ? "어느 Spec에도 편입되지 않은 RUN" : isSpec ? "SPEC(마스터 PRD)" : "RUN(실행 묶음)"}
       >
-        {/* 설계안 미분류 밴드 */}
+        {/* 미분류 밴드 */}
         {data.bandBottom != null && (
           <>
             <div
@@ -400,7 +400,7 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
             />
           </>
         )}
-        {/* 설계안 drop 타깃 */}
+        {/* drop 타깃 */}
         {data.isDropTarget && (
           <div
             className="pointer-events-none absolute inset-x-3 flex items-end justify-center pb-2"
@@ -452,7 +452,7 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
             {isSpec ? `RUN ${data.childCount ?? 0}개` : `task ${data.childCount ?? 0}개 (${data.doneChildCount ?? 0} done)`}
           </span>
 
-          {/* 설계안 헤더 우측 액션. SPEC 전용 뱃지/버튼은 SPEC에서만 뜬다. */}
+          {/* 헤더 우측 액션. SPEC 전용 뱃지/버튼은 SPEC에서만 뜬다. */}
           <div className="nodrag ml-auto flex shrink-0 items-center gap-2">
             {st === "verification" && <span className="rounded border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-xs font-semibold text-amber-300">검증</span>}
             {isSpec && data.specDone && (
@@ -514,7 +514,7 @@ function WorkstreamContainer({ data }: NodeProps<FlowNode>) {
 }
 
 /**
- * nodeTypes ③: patch 계보 체인(설계안).
+ * nodeTypes ③: patch 계보 체인.
  *
  * 카드 한 장이 아니라 **체인 하나가 노드 하나**다. 같은 컬럼 안의 버전 카드 사이만 violet
  * 점선으로 잇는다 — v0 위에는 연결 대상이 없으므로 stem을 그리지 않는다.
@@ -636,7 +636,7 @@ function LineageChainNode({ data }: NodeProps<FlowNode>) {
 const nodeTypes = { roadmap: RoadmapNodeCard, container: WorkstreamContainer, lineage: LineageChainNode };
 
 /**
- * edgeTypes ①: 지울 수 있는 의존 엣지(설계안 `DeletableEdge`).
+ * edgeTypes ①: 지울 수 있는 의존 엣지.
  *
  * `depends_on`(순서)은 §7에서 **대시보드 소유**로 못박은 컬럼이다. 소유한다는 건 사람이
  * 여기서 고친다는 뜻인데, 지금까지 화면에 지우는 수단이 없어서 한 번 들어온 링크는
@@ -720,7 +720,7 @@ function computeReady(nodes: RoadmapNode[]): Set<string> {
 /**
  * 그래프에 올릴 노드를 고른다.
  *
- * **subtask(REQ)는 그래프에 올리지 않는다(설계안).** nodeTypes는 roadmap(접힌 task/SPEC·RUN
+ * **subtask(REQ)는 그래프에 올리지 않는다.** nodeTypes는 roadmap(접힌 task/SPEC·RUN
  * 카드) / container(펼친 SPEC·RUN) / lineage(패치 체인) 셋뿐이고, REQ는 노드가 아니라
  * **오른쪽 SubtaskPanel의 "진행 N/M" 탭**에 들어간다. REQ까지 카드로 뿌리면 task 하나에
  * 카드가 3~5개씩 붙어 위상 그래프가 아니라 목록이 된다.
@@ -795,7 +795,7 @@ function layout(
   }
 
   /**
-   * **패치 체인 묶기(설계안).** `lineage`가 붙은 patch task들은 카드를 낱장으로 흩뿌리지 않고
+   * **패치 체인 묶기.** `lineage`가 붙은 patch task들은 카드를 낱장으로 흩뿌리지 않고
    * 계보 하나당 노드 하나(`chain:<root>`)로 묶는다 — 3차 패치까지 간 작업이 카드 네 장으로
    * 퍼지면 원본이 어느 것인지 안 보인다.
    *
@@ -824,7 +824,7 @@ function layout(
   }
 
   /**
-   * **미분류 밴드(설계안).** Spec이 하나라도 있는 로드맵에서 부모 없는 RUN은 "아직 어느 Spec에도
+   * **미분류 밴드.** Spec이 하나라도 있는 로드맵에서 부모 없는 RUN은 "아직 어느 Spec에도
    * 안 걸린 것"이라는 뜻이다 — 최상위에 그냥 흩뿌리면 Spec 컨테이너와 구분이 안 간다. 그래서
    * 가상 컨테이너 하나로 묶고 📋미분류 밴드를 얹는다.
    *
@@ -848,7 +848,7 @@ function layout(
   const innerTop = (id: string) => CONT_HEADER + (id === UNASSIGNED ? BAND_H : 0);
 
   /**
-   * **2단 레이아웃(설계안).** 펼친 컨테이너는 자식을 *옆에 늘어놓는 게 아니라 품는다* —
+   * **2단 레이아웃.** 펼친 컨테이너는 자식을 *옆에 늘어놓는 게 아니라 품는다* —
    * ReactFlow의 `parentId`로 실제 부모-자식이 되고, 자식 좌표는 부모 기준 상대좌표다.
    *
    * 그래서 안쪽부터 재귀로 크기를 정한다: 자식들을 컨테이너 내부 dagre(nodesep 24·ranksep 80)로
@@ -958,7 +958,7 @@ function layout(
 
   for (const r of roots) measure(r);
 
-  // 최상위 산개(설계안) — 컨테이너는 위에서 잰 실제 크기로 자리를 잡는다.
+  // 최상위 산개 — 컨테이너는 위에서 잰 실제 크기로 자리를 잡는다.
   const g = new dagre.graphlib.Graph();
   g.setGraph({ rankdir: "LR", nodesep: 44, ranksep: 150, marginx: 12, marginy: 12 });
   g.setDefaultEdgeLabel(() => ({}));
@@ -1055,8 +1055,8 @@ interface MenuState {
 }
 
 /**
- * 설계안 `RoadmapGraph` — **읽기전용 DAG 뷰어.** 전체화면 페이지(`/roadmap/:workspace`)와
- * Sessions의 Agent Canvas 오버레이 모달이 **같은 컴포넌트를 공유한다**(설계안이 오버레이
+ * `RoadmapGraph` — **읽기전용 DAG 뷰어.** 전체화면 페이지(`/roadmap/:workspace`)와
+ * Sessions의 Agent Canvas 오버레이 모달이 **같은 컴포넌트를 공유한다**(가 오버레이
  * 본문으로 `<RoadmapGraph fill />`을 그대로 쓴다).
  *
  * 두 자리에 각각 다른 뷰를 두면 "캔버스"라는 말이 화면마다 다른 걸 가리키게 되고, 폐기/편입
@@ -1235,7 +1235,7 @@ export function RoadmapGraph({
   );
 
   /**
-   * **포커스 모드(설계안).** 노드에 마우스를 올리면 그 노드와 **직접 이어진 것들만** 남기고
+   * **포커스 모드.** 노드에 마우스를 올리면 그 노드와 **직접 이어진 것들만** 남기고
    * 나머지를 흐린다. 엣지가 컨테이너를 넘나드는 그래프에서, 이 줄이 어디서 어디로 가는지
    * 눈으로 따라가는 건 사실상 불가능하다.
    *
@@ -1341,7 +1341,7 @@ export function RoadmapGraph({
           ...e,
           zIndex: focus && on ? 900 : undefined,
           style: { ...e.style, opacity: focus && !on ? 0.1 : 0.8 },
-          // hi(설계안) = 지금 포커스된 묶음에 속한 엣지. ✕는 여기에만 뜬다.
+          // hi = 지금 포커스된 묶음에 속한 엣지. ✕는 여기에만 뜬다.
           data: {
             ...e.data,
             onDelete: onDeleteEdge,
@@ -1432,7 +1432,7 @@ export function RoadmapGraph({
     });
   }, [flowNodes, focus, selectedId]);
 
-  /** 설계안 droppedTop — dropped인데 부모는 dropped가 아닌 "최상위 폐기"만. */
+  /** droppedTop — dropped인데 부모는 dropped가 아닌 "최상위 폐기"만. */
   const droppedTop = useMemo(() => {
     const byId = new Map(nodes.map((n) => [n.id, n]));
     const isDropped = (n?: RoadmapNode) => !!n && effStatus(n) === "dropped";
@@ -1528,7 +1528,7 @@ export function RoadmapGraph({
       )}
     >
       <div className="group/rf relative min-w-0 flex-1">
-        {/* 설계안 좌상단 — ℹ️ 가이드 */}
+        {/* 좌상단 — ℹ️ 가이드 */}
         <button
           onClick={() => setGuideOpen((v) => !v)}
           className="absolute left-3 top-3 z-30 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-xs text-[var(--color-text-muted)] hover:border-cyan-400/50 hover:text-cyan-300"
@@ -1600,7 +1600,7 @@ export function RoadmapGraph({
           proOptions={{ hideAttribution: true }}
           edgeTypes={edgeTypes}
           /**
-           * **읽기전용 뷰어(§5.1).** 설계안이 명시적으로 이렇게 못박는다:
+           * **읽기전용 뷰어(§5.1).** 이 명시적으로 이렇게 못박는다:
            * `nodesFocusable/nodesConnectable/nodesDraggable/elementsSelectable = false`.
            *
            * 캔버스는 **보는 자리**다. 구조를 바꾸는 일은 각각 제자리가 따로 있다 —
@@ -1616,7 +1616,7 @@ export function RoadmapGraph({
           deleteKeyCode={null}
           panOnDrag={[0, 1, 2]}
           zoomOnDoubleClick={false}
-          // 드래그용이 아니라 **크기 측정 변화**를 받기 위한 것이다(설계안에 그대로 있다).
+          // 드래그용이 아니라 **크기 측정 변화**를 받기 위한 것이다.
           onNodesChange={onNodesChange}
           onNodeMouseEnter={(_, node) => holdHover(node.id)}
           onNodeMouseLeave={() => holdHover(null)}
@@ -1628,7 +1628,7 @@ export function RoadmapGraph({
           onNodeContextMenu={(e, node) => {
             e.preventDefault();
             const n = nodes.find((x) => x.id === node.id);
-            // 설계안: 우클릭 메뉴는 RUN/SPEC에서만(task는 잠금 대상).
+            // 우클릭 메뉴는 RUN/SPEC에서만(task는 잠금 대상).
             if (!n || (n.level !== "workstream" && n.level !== "spec")) return;
             setMenu({ x: e.clientX, y: e.clientY, node: n });
           }}
@@ -1667,7 +1667,7 @@ export function RoadmapGraph({
               onEdited?.();
             }}
           />
-          {/* 설계안 SubtaskPanel — RUN Spec 편입/분리. RUN에서만 뜬다. */}
+          {/* SubtaskPanel — RUN Spec 편입/분리. RUN에서만 뜬다. */}
           {selectedNode.level === "workstream" && (
             <div className="mt-3 rounded-lg border border-[var(--color-border)] p-2.5">
               <div className="mb-1.5 font-mono text-[11px] text-[var(--color-text-muted)]">Spec 편입 / 분리</div>

@@ -31,11 +31,11 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "^mcp__domain[-_]ontology[-_]mcp__.*$",
+        "matcher": "^mcp__.*$",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/domain-ontology-presentation.mjs\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/mcp-presentation.mjs\"",
             "timeout": 10
           }
         ]

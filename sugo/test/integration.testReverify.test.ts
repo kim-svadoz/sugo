@@ -10,7 +10,7 @@ import type { PlanSession } from "../src/types.js";
 import { computeCompletionGrade } from "../src/labelGuard.js";
 
 /**
- * 2026-09-21 orders-api 세션에서 실제로 막힌 경로를 재현한다.
+ * 실사용 세션에서 막힌 경로를 재현한다.
  *
  * fail 증거로 `test_done`을 지나면 `testPassedState`가 fail로 박히고, 이후 올바른 그린 증거를
  * 다시 기록해도 `review_done`이 옛 판정을 보고 거부한다. forward-only라 `test_done`으로 되돌아갈
@@ -79,7 +79,7 @@ describe("§4.3-R test_reverify — 증거 스냅샷 데드락 해소", () => {
   it("기존 모듈 재스냅샷 뒤 code_start로 새 모듈을 구현하고 새 clean test_done이면 이전 라벨만 해소한다", async () => {
     const sessionId = await seedSession("REVIEW_RUNNING", "fail");
     await recordEvidence(sessionId, 0);
-    await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "RankingModule23Test 6/6, 로컬 의존 2건 제외" });
+    await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "RankingModuleTest 6/6, 로컬 의존 2건 제외" });
     const restarted = parse(await handleSugoPlan({ action: "code_start", sessionId }));
     expect(restarted.ok).toBe(true);
     let session = await loadSession(sessionId);

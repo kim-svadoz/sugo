@@ -17,7 +17,7 @@ export function fail(code: GateBlockCode, message: string): GateCheckResult {
   return { ok: false, code, message };
 }
 
-// ── PRD 최소 요건 (설계안: 본문 ≥100자, 요구사항(REQ) ≥1) ─────────────────────
+// ── PRD 최소 요건 (본문 ≥100자, 요구사항(REQ) ≥1) ─────────────────────
 
 export interface PrdValidation {
   ok: boolean;
@@ -126,7 +126,7 @@ export function checkRegistrationGlueGate(dependencyRemoved: boolean, registrati
 
 /**
  * 인정 기준: 줄 첫 비공백이 @SpringBootTest인 어노테이션 위치만. 주석/문자열 리터럴/슬라이스
- * 테스트(@WebMvcTest)는 이 정규식에 걸리지 않는다(거짓 그린 방지) — 설계안 boot-gate 코퍼스 참고.
+ * 테스트(@WebMvcTest)는 이 정규식에 걸리지 않는다(거짓 그린 방지) — 적대적 코퍼스 boot-gate 코퍼스 참고.
  */
 const SPRING_BOOT_TEST_ANNOTATION_RE = /^[ \t]*@SpringBootTest\b/m;
 
@@ -165,7 +165,7 @@ export interface SummaryQuality {
   errors: GateBlockCode[];
 }
 
-/** 설계안: 줄 ≥3, 길이 ≥30자, 공백제외 고유문자 ≥10, 2자이상 구별토큰 ≥5(반복문자 패딩 차단). */
+/** 줄 ≥3, 길이 ≥30자, 공백제외 고유문자 ≥10, 2자이상 구별토큰 ≥5(반복문자 패딩 차단). */
 export function validateSummaryQuality(summary: string): SummaryQuality {
   const trimmed = summary.trim();
   const lines = trimmed
@@ -233,10 +233,10 @@ export function checkRuntimeVerificationGate(
   return ok();
 }
 
-// ── §5.0 SPEC_ORACLE_NOT_RUN / 설계안·E.4 ────────────────────────────────
+// ── §5.0 SPEC_ORACLE_NOT_RUN / 5·E.4 ────────────────────────────────
 
 export interface SpecOracleState {
-  /** clarify의 q-spec 답변 경로가 실재할 때만 true(§설계안 prd 부수효과). */
+  /** clarify의 q-spec 답변 경로가 실재할 때만 true. */
   required: boolean;
   ran: boolean;
   ranAt?: string;
@@ -262,7 +262,7 @@ export function checkSpecOracleGate(specOracle: SpecOracleState | undefined): Ga
 }
 
 /**
- * 설계안: 미커버 항목을 보고하면서 사유를 안 밝히는 것을 막는다. "스펙에 있는데 PRD엔
+ * 5: 미커버 항목을 보고하면서 사유를 안 밝히는 것을 막는다. "스펙에 있는데 PRD엔
  * 없다"를 인지한 채로 그냥 넘어가는 게 가장 위험한 경로라, 넘어가려면 **왜 넘어가는지**를
  * 남기게 한다(차단이 아니라 기록 강제 — 정직한 탈출구는 열어둔다).
  */
@@ -280,7 +280,7 @@ export function checkOracleDone(
 
 export type JiraOption = "new" | "link" | "skip";
 
-/** 설계안: `jiraOption` 필수, `link`면 `jiraKey` 필수. */
+/** `jiraOption` 필수, `link`면 `jiraKey` 필수. */
 export function checkJiraOption(option: string | undefined, jiraKey: string | undefined): GateCheckResult {
   if (!option) return fail("JIRA_OPTION_REQUIRED", "jira action에는 jiraOption('new'|'link'|'skip')이 필요합니다.");
   if (option === "link" && !(jiraKey && jiraKey.trim().length > 0)) {
@@ -406,7 +406,7 @@ export function checkValidateVerifiedGate(lastValidation: LastValidation | undef
 // 점검했다 — 즉 요청 문구에 그 단어가 없으면 review_done이 트리펙타 위험을 전혀 안 보고 통과했다.
 // sugo_validate와 같은 2단 분리를 그대로 따른다: 호출 자체는 verdict 무관 하드 게이트(capability
 // 판정이 self-reported라 판정 내용으로 막을 수 없다), 경고가 있으면 완화사유 기록을 하드 게이트로
-// 요구한다(§설계안 ORACLE_OVERRIDE_REASON_REQUIRED와 같은 "정직한 탈출구" 패턴 — 위험을 인지한
+// 요구한다(§5 ORACLE_OVERRIDE_REASON_REQUIRED와 같은 "정직한 탈출구" 패턴 — 위험을 인지한
 // 채 넘어가려면 왜 넘어가는지를 남기게 한다. 무경고면 완화사유 없이 그대로 통과한다).
 
 export interface LastLethalTrifectaCheck {

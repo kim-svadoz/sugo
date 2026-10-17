@@ -1,5 +1,5 @@
 # Sugo Dashboard 로컬 개발 — ports.env의 고정 API/UI 포트를 한 번에 띄운다.
-# 사용법(PowerShell):  cd C:\Users\user\sugo\dashboard ;  ./dev.ps1
+# 사용법(PowerShell):  cd <저장소 경로>\dashboard ;  ./dev.ps1
 # 사전: backend/.env 에 GitHub OAuth App 값(GITHUB_CLIENT_ID/SECRET)만 채워두면 됨
 #       (backend/.env.example 복사). DB는 sqlite라 MySQL 불필요.
 $ErrorActionPreference = "Stop"

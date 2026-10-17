@@ -5,32 +5,32 @@ import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { handleSugoSpecWriter, lintSpecText } from "../src/tools/sugoSpecWriter.js";
 
-// 2026-10-01 인기 목록 화면 추가 spec v1(구현 세부 포함)과 v2(기획자 수준)에서 가져온 줄.
+// 구현 세부가 섞인 SPEC과 기획자 수준 SPEC의 예시 줄.
 const V1_LIKE = [
   "## 현재 동작 (코드 확인, `development` abc48af)",
-  "- 코드: `orders-api` `development` abc48af — `RankingModule26.java`, `ModuleRegistry.java:81`",
-  "| `src/main/java/com/example/recomapi/service/module/item/common/list/RankingModule26.java` | 타이틀 처리 분기 |",
-  "| `src/test/.../list/RankingModule26Test.java` | 신규 |",
+  "- 코드: `orders-api` `development` abc48af — `RankingModule.java`, `ModuleRegistry.java:81`",
+  "| `src/main/java/com/example/ordersapi/service/module/item/common/list/RankingModule.java` | 타이틀 처리 분기 |",
+  "| `src/test/.../list/RankingModuleTest.java` | 신규 |",
 ].join("\n");
 
 const V2_LIKE = [
-  "# 홈 - 추천 인기 랭킹 영역 추가",
+  "# 홈 - 인기 목록 영역 추가",
   "- SPEC: `spec-manual-53391678` (workspace `orders`)",
   "- 기한: 2026-10-16",
-  "- 추천 결과는 기존 \"기존 랭킹 추천\" 모듈(`RANKING_MODULE_26`)을 그대로 사용한다.",
+  "- 추천 결과는 기존 \"기존 랭킹 추천\" 모듈(`RANKING_MODULE`)을 그대로 사용한다.",
   "1. 신규 영역의 영역 이름",
   "- 기획 화면 \"16. 추천 기반 상품 랭킹 추천\" (사용자 제공, 2026-10-01)",
 ].join("\n");
 
 const VALID_SPEC = [
-  "# 홈 - 추천 인기 랭킹 영역 추가",
+  "# 홈 - 인기 목록 영역 추가",
   "## 배경/목적", "사용자에게 필요한 기능을 정의한다.",
   "## 범위", "### In", "- 신규 영역", "### Out", "- 운영 정책 변경",
   "## 요구사항", "### REQ-1: 신규 영역", "- 사용자는 신규 영역을 확인할 수 있다.",
   "## 완료조건", "- 신규 영역이 화면에 표시된다.",
   "## 제약", "- 없음",
   "## Open Questions", "- 없음",
-  "## Sources", "- 홈 - 추천 인기 랭킹 영역 추가",
+  "## Sources", "- 홈 - 인기 목록 영역 추가",
 ].join("\n\n");
 const V1_STRUCTURED = `${VALID_SPEC}\n\n${V1_LIKE}`;
 

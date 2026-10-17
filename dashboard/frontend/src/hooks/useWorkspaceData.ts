@@ -3,7 +3,7 @@ import { apiJson, withUserId } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 
 /**
- * 설계안이 쓰는 워크스페이스 상세 훅들(`useWorkspaceHistory`/`useWorkspaceDecisions`/
+ * 가 쓰는 워크스페이스 상세 훅들(`useWorkspaceHistory`/`useWorkspaceDecisions`/
  * `useWorkspaceCheckpoints`/`useWorkspaceRoadmap`). 전부 `{data, loading, refresh}` 같은 모양이라
  * 제네릭 하나로 만든다 — 네 벌을 복붙하면 하나만 고치고 나머지를 잊는다.
  *
@@ -89,7 +89,7 @@ export function useWorkspaceCheckpoints(workspace: string | null) {
   return useWorkspaceResource<Checkpoint>(workspace, "checkpoints", (raw: never) => (raw as { checkpoints: Checkpoint[] }).checkpoints ?? []);
 }
 
-/** 설계안 `formatDate` — 없으면 대시(빈 문자열이면 레이아웃이 흔들린다). */
+/** `formatDate` — 없으면 대시(빈 문자열이면 레이아웃이 흔들린다). */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);

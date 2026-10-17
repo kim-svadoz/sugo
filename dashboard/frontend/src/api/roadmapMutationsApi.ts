@@ -82,7 +82,7 @@ export async function getSpecContent(userId: string, workspace: string, title: s
 }
 
 /**
- * 의존 삭제(설계안 `DeletableEdge`의 ✕). **캔버스에서 하는 유일한 구조 변경**이다 —
+ * 의존 삭제. **캔버스에서 하는 유일한 구조 변경**이다 —
  * §5.1대로 캔버스는 읽기전용 뷰어라 노드 이동·링크 생성은 여기서 하지 않는다.
  * (백엔드에는 `POST /roadmap/position`·`/link`도 있지만 화면이 쓰지 않는다.)
  */

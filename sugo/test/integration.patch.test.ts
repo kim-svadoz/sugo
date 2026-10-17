@@ -277,7 +277,7 @@ describe("Patch 전체 흐름 (§7)", () => {
   });
 });
 
-describe("§7.1 Patch 성숙화 — Run 재사용 + seed + patchInfo + lineage", () => {
+describe("§7.1 Patch — Run 재사용 + seed + patchInfo + lineage", () => {
   it("patch 2차 진입은 새 Task를 만들지 않고 원본 Task를 재사용한다(prd_ref 매칭)", async () => {
     await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-patch" });
     const { workResultPath } = await runFirstRoundToReviewDone();

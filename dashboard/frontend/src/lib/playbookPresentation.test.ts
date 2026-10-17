@@ -13,7 +13,7 @@ describe("Playbook product lifecycle", () => {
   it("Claude와 Codex의 공통 규칙 및 SPEC의 사용자 가치를 명시한다", () => {
     expect(source).toContain("세션과 AI 도구가 바뀌어도 같은 판단 기준을 적용합니다.");
     expect(source).toContain("기획과 현재 제품의 차이");
-    expect(source).not.toContain("/Users/demo-user");
+    expect(source).not.toMatch(/\/Users\/[^/"'`]+\//);
   });
 
   it("승인보다 근거를 먼저 제시하고 개발부터 배포까지 구분한다", () => {

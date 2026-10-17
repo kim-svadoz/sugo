@@ -1,12 +1,12 @@
 ---
 name: implement
 agent: code-agent
-description: 'Implement a PRD-defined feature. Triggers: 구현/만들어/추가해줘/implement/feature. Follow Appendix C. Use bugfix or refactor for those intents.'
+description: 'Implement a PRD-defined feature. Triggers: 구현/만들어/추가해줘/implement/feature. Follow the code-agent steps. Use bugfix or refactor for those intents.'
 ---
 
 # implement (code-agent default)
 
-Follow Appendix C and gate-philosophy. For AWS reads, follow `../../harness-library/aws-readonly-policy.md` and prefer `sugo_aws_context`. Follow `../../harness-library/code-quality-policy.md` for comments and names.
+Follow the code-agent steps and gate-philosophy. For AWS reads, follow `../../harness-library/aws-readonly-policy.md` and prefer `sugo_aws_context`. Follow `../../harness-library/code-quality-policy.md` for comments and names.
 
 1. prereq: Verify the session and PRD. Load rules, harnesses, and CLAUDE.md with `sugo_get_project_context`.
 2. baseline: If §4.0 signals exist, record the green baseline before editing with `sugo_record_test_evidence`.

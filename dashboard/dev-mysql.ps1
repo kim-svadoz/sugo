@@ -1,6 +1,6 @@
 ﻿# Sugo Dashboard 로컬 확인 (실제 MySQL) — PowerShell 전용
 #
-#   cd C:\Users\user\sugo\dashboard
+#   cd <저장소 경로>\dashboard
 #   .\dev-mysql.ps1
 #
 # 하는 일: MySQL 기동 확인 → 백엔드(:3001) → 프론트 빌드+preview(:4173) → 시드 + dev-login.html.
@@ -50,7 +50,7 @@ if (Test-SugoPort $mysqlPort) {
   if (-not (Test-Path $mysqld)) { throw "mysqld를 못 찾음: $mysqld" }
   Write-Host "[dev] MySQL 기동…" -ForegroundColor Cyan
   Start-Process -FilePath $mysqld `
-    -ArgumentList '--datadir=C:\Users\user\sugo-mysql-data', "--port=$mysqlPort", '--bind-address=127.0.0.1' `
+    -ArgumentList "--datadir=$env:USERPROFILE\sugo-mysql-data", "--port=$mysqlPort", '--bind-address=127.0.0.1' `
     -WindowStyle Hidden
   Wait-SugoPort $mysqlPort "MySQL"
 }

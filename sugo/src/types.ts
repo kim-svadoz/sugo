@@ -172,9 +172,9 @@ export interface SessionData {
    * work-result에 실어둔다(reviewSummary와는 별개 — "이번 차수에 뭘 요청했는지" 자체를 보존). */
   seed?: string;
   /** §5.0 스펙 오라클(q-spec 대조) 상태. prd가 specPath 실재를 확인하면 required=true로 켜고,
-   * oracle_done이 ran=true로 기록하며, ready가 이 둘을 본다(§설계안). */
+   * oracle_done이 ran=true로 기록하며, ready가 이 둘을 본다. */
   specOracle?: SpecOracleState;
-  /** 설계안 jira 연동 선택 기록. `"new"`는 실제 티켓을 만들지 않는다(스펙상 TODO). */
+  /** jira 연동 선택 기록. `"new"`는 실제 티켓을 만들지 않는다(스펙상 TODO). */
   jira?: { option: JiraOption; jiraKey?: string; recordedAt: string };
   /**
    * §4.3-T 브랜치별 TODO-SPEC. `start`가 `feature/<이름>` 브랜치를 감지했을 때만 채워진다 —

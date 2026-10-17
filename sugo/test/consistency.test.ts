@@ -12,7 +12,7 @@ function baseMap(overrides: Partial<CoverageMap> = {}): CoverageMap {
   };
 }
 
-describe("checkCoverageGate — 설계안: 반드시 거부", () => {
+describe("checkCoverageGate — 적대적 코퍼스: 반드시 거부", () => {
   it("응답필드 asserted:false가 있으면 거부한다", () => {
     const result = checkCoverageGate(baseMap({ responseFields: [{ field: "token", asserted: false }] }));
     expect(result.ok).toBe(false);

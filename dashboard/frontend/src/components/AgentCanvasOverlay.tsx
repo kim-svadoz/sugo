@@ -6,7 +6,7 @@ import { LiveLogTail } from "./LiveConsole.js";
 import { AI_WORK_STATUS_TOOL } from "../lib/workspaceTools.js";
 
 /**
- * 설계안 로드맵(Agent Canvas) 전체화면 오버레이 — `z-[70]`.
+ * 로드맵(Agent Canvas) 전체화면 오버레이 — `z-[70]`.
  *
  * Sessions.tsx에 있던 걸 §7B SchedulePage와 공유하려고 분리했다(동작 변경 없음).
  * **본문은 `<RoadmapGraph fill />`이다(리스트가 아니다).** 전체화면 페이지와 같은 그래프를

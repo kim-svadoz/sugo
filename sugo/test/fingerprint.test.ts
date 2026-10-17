@@ -59,7 +59,7 @@ describe("computeChangedFilesFingerprint (실배선)", () => {
   });
 });
 
-describe("checkEvidenceReuseGate — 설계안: 반드시 거부", () => {
+describe("checkEvidenceReuseGate — 적대적 코퍼스: 반드시 거부", () => {
   it("reusedFromTestDone:true인데 변경파일 지문이 불일치하면 거부한다(리뷰 중 코드 수정)", () => {
     const result = checkEvidenceReuseGate(true, "fp-old", "fp-new", "pass");
     expect(result.ok).toBe(false);

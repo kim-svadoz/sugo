@@ -21,16 +21,16 @@ describe("/api/project-integrations", () => {
     await db.execScript(schema);
     const authorization = await seedProject(db, "u1", "recommendation", "/work/orders-api");
     await db.exec("INSERT INTO user_aws_context_accounts (user_id, name, profile, region, account_id, principal_arn, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)", ["u1", "team-dev", "dev", "ap-northeast-2", "123", "arn:test", "2026-09-30T00:00:00Z"]);
-    await db.exec("INSERT INTO user_aws_context_snapshots (user_id, account_name, payload, observed_at) VALUES (?, ?, ?, ?)", ["u1", "team-dev", JSON.stringify([{ service: "ecs", resources: [{ service: "ecs", kind: "service", id: "orders-api-service", metadata: { cluster: "shop", images: ["registry/orders-api:343"], pinpointApplicationName: "orders-api-dev" } }] }]), "2026-09-30T00:00:00Z"]);
+    await db.exec("INSERT INTO user_aws_context_snapshots (user_id, account_name, payload, observed_at) VALUES (?, ?, ?, ?)", ["u1", "team-dev", JSON.stringify([{ service: "ecs", resources: [{ service: "ecs", kind: "service", id: "orders-api-service", metadata: { cluster: "orders", images: ["registry/orders-api:343"], pinpointApplicationName: "orders-api-dev" } }] }]), "2026-09-30T00:00:00Z"]);
     const { app } = await createApp({ db });
 
     const initial = await request(app).get("/api/project-integrations").set("Authorization", authorization).expect(200);
     expect(initial.body.projects).toEqual([expect.objectContaining({ workspace_name: "recommendation", configured: false })]);
     expect(initial.body.candidates).toEqual([expect.objectContaining({ accountName: "team-dev", environment: "dev", service: "orders-api-service", pinpointApplicationName: "orders-api-dev" })]);
 
-    await request(app).put("/api/project-integrations").set("Authorization", authorization).send({ projectPath: "/work/orders-api", selections: [{ accountName: "team-dev", environment: "dev", service: "orders-api-service", cluster: "shop" }] }).expect(200);
+    await request(app).put("/api/project-integrations").set("Authorization", authorization).send({ projectPath: "/work/orders-api", selections: [{ accountName: "team-dev", environment: "dev", service: "orders-api-service", cluster: "orders" }] }).expect(200);
     const configured = await request(app).get("/api/project-integrations").set("Authorization", authorization).expect(200);
-    expect(configured.body.projects[0]).toMatchObject({ configured: true, selections: [{ accountName: "team-dev", environment: "dev", service: "orders-api-service", cluster: "shop" }] });
+    expect(configured.body.projects[0]).toMatchObject({ configured: true, selections: [{ accountName: "team-dev", environment: "dev", service: "orders-api-service", cluster: "orders" }] });
   });
 
   it("supports an explicit opt-out and prevents mapping another user's project", async () => {

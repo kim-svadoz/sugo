@@ -33,7 +33,7 @@ async function fetchNodes(db: Awaited<ReturnType<typeof createSqliteClient>>) {
   return rows;
 }
 
-describe("POST /api/sync/roadmap — 설계안 적대적 코퍼스 (실제 DB 위에서)", () => {
+describe("POST /api/sync/roadmap — 적대적 코퍼스 (실제 DB 위에서)", () => {
   it("반드시 지켜야: depends_on은 최초 1회만 seed된다", async () => {
     const { app, db, auth } = await freshApp();
     await request(app)

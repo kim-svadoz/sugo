@@ -1,4 +1,4 @@
-/** 설계안 Sessions에서 쓰던 두 뷰 — §7B CheckpointPanel/SchedulePage와 공유하려고 분리했다. */
+/** Sessions에서 쓰던 두 뷰 — §7B CheckpointPanel/SchedulePage와 공유하려고 분리했다. */
 export function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-8">

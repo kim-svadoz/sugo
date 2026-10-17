@@ -56,3 +56,20 @@ export async function resolveDashboardConfig(): Promise<DashboardConfig> {
 
   return { enabled: false };
 }
+
+/**
+ * `sugo_aws_context`의 환경 이름을 Dashboard에 등록한 AWS 계정 표시 이름으로 바꾼다.
+ * `settings.json`의 `aws.environments`(예: `{"dev": "my-dev-account"}`)에 사용자가 등록한 경우에만
+ * 별칭을 적용하고, 없으면 환경 이름을 계정 표시 이름으로 그대로 쓴다.
+ */
+export async function resolveAwsEnvironmentAccount(environment: string): Promise<string> {
+  try {
+    const raw = await readFile(settingsFilePath(), "utf-8");
+    const parsed = JSON.parse(raw) as { aws?: { environments?: Record<string, unknown> } };
+    const mapped = parsed.aws?.environments?.[environment];
+    if (typeof mapped === "string" && mapped.trim()) return mapped.trim();
+  } catch {
+    // 설정 파일이 없거나 파싱 실패 — 별칭 없이 환경 이름을 그대로 쓴다
+  }
+  return environment;
+}

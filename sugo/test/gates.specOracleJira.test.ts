@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { checkJiraOption, checkOracleDone, checkSpecOracleGate } from "../src/gates.js";
 
 /**
- * §5.0 `SPEC_ORACLE_NOT_RUN` + 설계안 게이트. 순수 함수 + mock 없음.
+ * §5.0 `SPEC_ORACLE_NOT_RUN` + 5/E.4 게이트. 순수 함수 + mock 없음.
  *
  * 이 게이트의 존재 이유: PRD를 썼다고 해서 **원본 스펙 문서(q-spec)를 실제로 대조했다는 뜻은
  * 아니다.** 대조 없이 ready로 넘어가면 "PRD에 없는 요구사항"이 조용히 누락된 채 코딩이 시작된다.
@@ -28,7 +28,7 @@ describe("§5.0 SPEC_ORACLE_NOT_RUN — ready 차단", () => {
   });
 });
 
-describe("설계안 oracle_done — 미커버 항목엔 사유 강제", () => {
+describe("oracle_done — 미커버 항목엔 사유 강제", () => {
   it("거부: uncovered가 있는데 overrideReason 없음", () => {
     const r = checkOracleDone([{ quote: "스펙 3.2 절 응답에 traceId 포함", reason: "PRD에 누락" }], undefined);
     expect(r.ok).toBe(false);
@@ -51,7 +51,7 @@ describe("설계안 oracle_done — 미커버 항목엔 사유 강제", () => {
   });
 });
 
-describe("설계안 jira — 옵션 강제", () => {
+describe("jira — 옵션 강제", () => {
   it("거부: jiraOption 미지정", () => {
     const r = checkJiraOption(undefined, undefined);
     expect(r.ok).toBe(false);

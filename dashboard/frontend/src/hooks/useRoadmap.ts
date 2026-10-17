@@ -110,7 +110,7 @@ export interface RoadmapNode {
   human_blocker?: HumanBlocker | null;
 }
 
-/** 설계안 RoadmapTab이 받는 봉투. counts/issues는 **서버가** 센다(전체 기준 진척). */
+/** RoadmapTab이 받는 봉투. counts/issues는 **서버가** 센다(전체 기준 진척). */
 export interface RoadmapCounts {
   verification?: number;
   total: number;

@@ -19,7 +19,7 @@ export function classifyVerifyCommand(command: string): VerifyCommandKind {
   return "not-enforceable";
 }
 
-/** 설계안: `gradlew check` / `mvn verify|install`만 풀검증으로 인정. 단순 test는 불인정. */
+/** `gradlew check` / `mvn verify|install`만 풀검증으로 인정. 단순 test는 불인정. */
 export function isFullVerifyCommand(command: string): boolean {
   return classifyVerifyCommand(command) === "full-verify";
 }
@@ -80,7 +80,7 @@ export function checkTestEvidenceGate(claimedTestPassed: boolean, evidence: Test
     );
   }
   // §4.2 풀검증 명령 강제: gradle/maven 프로젝트에서 pass 주장하려면 gradlew check / mvn verify|install
-  // 이어야 한다. 단순 test(gradlew test / mvn test)는 "test 그린은 증명 아님"으로 거부(설계안 코퍼스).
+  // 이어야 한다. 단순 test(gradlew test / mvn test)는 "test 그린은 증명 아님"으로 거부(적대적 코퍼스).
   // npm/pytest/go 등은 강제 불가(not-enforceable) → 통과시킨다(호출부가 미강제 라벨 노출).
   if (actuallyPassed && classifyVerifyCommand(evidence.command) === "partial-test") {
     return fail(

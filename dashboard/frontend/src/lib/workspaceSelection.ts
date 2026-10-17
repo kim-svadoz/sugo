@@ -2,7 +2,7 @@ export const WORKSPACE_CARD_FOCUS_CLASSES =
   "focus-visible:outline-none focus-visible:bg-cyan-400/[0.07]";
 
 /**
- * 설계안 도메인 색 팔레트. **이름이 아니라 목록 순서(index)로** 고른다 — 이름 해시로 고르면
+ * 도메인 색 팔레트. **이름이 아니라 목록 순서(index)로** 고른다 — 이름 해시로 고르면
  * 도메인이 하나 늘 때마다 기존 도메인 색이 같이 뒤바뀌어, 색으로 기억한 사람을 배신한다.
  *
  * Sessions.tsx의 홈 카드에 있던 걸 그대로 옮겼다(§7B Schedule 탭이 같은 색으로 칩을 그리려면

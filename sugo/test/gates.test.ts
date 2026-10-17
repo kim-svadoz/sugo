@@ -13,7 +13,7 @@ import {
 
 const LONG_ENOUGH_TEXT = "가".repeat(90);
 
-describe("validatePrd (설계안: 본문 ≥100자, REQ ≥1) — 반드시 거부", () => {
+describe("validatePrd — 반드시 거부", () => {
   it("100자 미만이면 거부한다", () => {
     const result = validatePrd("REQ-1: 짧은 PRD");
     expect(result.ok).toBe(false);
@@ -153,7 +153,7 @@ describe("checkRegistrationGlueGate", () => {
   });
 });
 
-describe("hasValidSpringBootTestAnnotation — 설계안: 반드시 거부", () => {
+describe("hasValidSpringBootTestAnnotation — 적대적 코퍼스: 반드시 거부", () => {
   it("주석 속 @SpringBootTest는 인정하지 않는다", () => {
     const content = "// @SpringBootTest\nclass FooTest {}";
     expect(hasValidSpringBootTestAnnotation([content])).toBe(false);
@@ -170,7 +170,7 @@ describe("hasValidSpringBootTestAnnotation — 설계안: 반드시 거부", () 
   });
 });
 
-describe("hasValidSpringBootTestAnnotation — 설계안: 반드시 허용", () => {
+describe("hasValidSpringBootTestAnnotation — 적대적 코퍼스: 반드시 허용", () => {
   it("줄 첫 비공백이 @SpringBootTest인 실제 어노테이션은 인정한다", () => {
     const content = "@SpringBootTest\nclass AppContextLoadTest {}";
     expect(hasValidSpringBootTestAnnotation([content])).toBe(true);

@@ -1,6 +1,7 @@
 import type { DbClient } from '../db/client.js';
 import { parseMaybeJson } from '../db/jsonColumn.js';
 import { upsertRow } from '../db/upsert.js';
+import { environmentOfAccount } from './awsEnvironment.js';
 
 export interface ProjectIntegrationSelection { accountName: string; service: string; environment: string; cluster?: string | null; }
 
@@ -9,7 +10,7 @@ export async function listProjectIntegrations(db: DbClient, userId: string) {
   const snapshots = await db.query<{ account_name: string; payload: unknown }>('SELECT account_name, payload FROM user_aws_context_snapshots WHERE user_id = ? ORDER BY account_name', [userId]);
   const candidates = snapshots.flatMap((snapshot) => parseMaybeJson<any[]>(snapshot.payload, []).flatMap((inventory) => inventory?.service === 'ecs' ? (inventory.resources ?? []) : []).filter((resource: any) => resource?.kind === 'service').map((resource: any) => ({
     accountName: snapshot.account_name,
-    environment: snapshot.account_name.endsWith('-env') ? snapshot.account_name.slice(0, -4) : snapshot.account_name,
+    environment: environmentOfAccount(snapshot.account_name),
     service: String(resource.id),
     cluster: typeof resource.metadata?.cluster === 'string' ? resource.metadata.cluster : null,
     pinpointApplicationName: typeof resource.metadata?.pinpointApplicationName === 'string' ? resource.metadata.pinpointApplicationName : null,

@@ -49,7 +49,7 @@ import { OperationalPulse } from "../components/OperationalPulse.js";
 import { workspaceCommandSummary } from "../lib/experienceModel.js";
 import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
 
-/** 설계안 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
+/** 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
 const APM_STATE = {
   OBSERVED: { label: "APM 관측", color: "text-emerald-300" },
@@ -74,7 +74,7 @@ function activeOf(ws: WorkspaceSummary): boolean {
   return (ws.activeTaskCount ?? 0) > 0;
 }
 
-/** 설계안 statusOf — 진행 중이 최우선, 그 다음 100% 완료, 나머지는 IDLE. */
+/** statusOf — 진행 중이 최우선, 그 다음 100% 완료, 나머지는 IDLE. */
 function statusOf(ws: WorkspaceSummary): { text: string; dot: string; pill: string; desc: string } {
   if (activeOf(ws)) {
     return {
@@ -205,7 +205,7 @@ export function Sessions() {
     [searchResults],
   );
 
-  // 설계안 디바운스 검색 — 2자 미만이면 결과를 비운다(한 글자에 전체 스캔을 돌리지 않는다).
+  // 디바운스 검색 — 2자 미만이면 결과를 비운다(한 글자에 전체 스캔을 돌리지 않는다).
   useEffect(() => {
     if (!isSearchMode || !userId) {
       setSearchResults([]);
@@ -227,7 +227,7 @@ export function Sessions() {
     return () => clearTimeout(t);
   }, [searchQuery, isSearchMode, userId]);
 
-  // Agent Canvas 오버레이가 열려 있는 동안 배경 스크롤을 잠근다(설계안).
+  // Agent Canvas 오버레이가 열려 있는 동안 배경 스크롤을 잠근다.
   useEffect(() => {
     if (!agentCanvasModal) return;
     const prev = document.body.style.overflow;
@@ -318,7 +318,7 @@ export function Sessions() {
   );
 
   /**
-   * 설계안 `renderDetail(ws)` — 검색 결과 행을 그 자리에서 펼친 본문.
+   * `renderDetail(ws)` — 검색 결과 행을 그 자리에서 펼친 본문.
    * 프로젝트 칩 + 인스펙터(History/ADR/Repositories)를 그대로 쓴다. 탭 본문을 여기에 다시
    * 쓰면 두 벌이 되어 한쪽만 고쳐지는 일이 반드시 생긴다.
    */
@@ -344,7 +344,7 @@ export function Sessions() {
 
   const renderInspector = (ws: WorkspaceSummary) => {
     // 검색 중에는 **걸린 이력만** 보여준다. 전체 이력을 그대로 띄우면 무엇이 검색에 걸렸는지
-    // 사람이 다시 눈으로 찾아야 한다(설계안 `getSearchResultHistory`).
+    // 사람이 다시 눈으로 찾아야 한다.
     // 검색 결과 행에는 key_decisions/files_changed가 없다(검색 API가 요약만 준다) — 칩은
     // 0으로 접히고, 상세는 모달을 열 때 전체 이력에서 다시 찾는다.
     const hist: { data: HistoryLog[]; loading: boolean } = isSearchMode
@@ -727,7 +727,7 @@ export function Sessions() {
         </div>
       ) : isSearchMode ? (
         /*
-         * 설계안 뷰 3종 중 **검색 모드** — 전폭 행 + 클릭하면 그 자리에서 펼쳐지는 상세.
+         * 뷰 3종 중 **검색 모드** — 전폭 행 + 클릭하면 그 자리에서 펼쳐지는 상세.
          * 검색은 "어느 도메인에 있나"를 찾는 행위라, 결과를 누를 때마다 아래 인스펙터로
          * 시선이 튀면 찾던 자리를 잃는다. 그래서 결과 안에서 바로 편다.
          */
@@ -917,7 +917,7 @@ export function Sessions() {
       )}
 
       {/*
-        하단 2단 — 좌 LiveConsole · 우 Pinned Inspector (설계안 MAIN RETURN 하단).
+        하단 2단 — 좌 LiveConsole · 우 Pinned Inspector.
         **검색 모드에선 띄우지 않는다.** 검색은 결과 행 안에서 바로 펼치는 뷰라, 아래에
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
@@ -1011,12 +1011,12 @@ export function Sessions() {
         <CheckpointPanel workspace={checkpointModal} onClose={() => setCheckpointModal(null)} />
       )}
 
-      {/* 로드맵(Agent Canvas) 전체화면 오버레이 모달 — z-[70] (설계안) */}
+      {/* 로드맵(Agent Canvas) 전체화면 오버레이 모달 — z-[70] */}
       {agentCanvasModal && (
         <AgentCanvasOverlay workspace={agentCanvasModal} onClose={() => setAgentCanvasModal(null)} />
       )}
 
-      {/* Guide 모달 — 상태 뱃지가 무슨 뜻인지(설계안 statusOf.desc) */}
+      {/* Guide 모달 — 상태 뱃지가 무슨 뜻인지 */}
       {showStatusGuide && (
         <div
           className="fixed inset-0 z-[90] flex items-center justify-center px-4"

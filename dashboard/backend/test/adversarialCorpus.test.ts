@@ -44,10 +44,10 @@ async function ids(db: DbClient): Promise<string[]> {
 }
 
 /**
- * 설계안 — 대시보드 적대적 코퍼스. **"반드시 막아야"(버그)를 먼저 시도해보고 실제로 막히는지**
+ * 적대적 코퍼스 — 대시보드 적대적 코퍼스. **"반드시 막아야"(버그)를 먼저 시도해보고 실제로 막히는지**
  * 확인하는 테스트다. 구조만 보는 테스트는 자기 구현을 확인하는 순환 검증이 되어 false-green이 뚫린다.
  */
-describe("설계안: roadmap sync 소유권 — 대시보드 소유 컬럼을 push가 못 덮는다", () => {
+describe("적대적 코퍼스: roadmap sync 소유권 — 대시보드 소유 컬럼을 push가 못 덮는다", () => {
   it("막아야: sync가 manual_status를 덮음", async () => {
     const { app, db, auth } = await freshApp();
     await syncRoadmap(app, auth, [{ id: "t1", title: "T", level: "task", status: "pending" }]);
@@ -87,7 +87,7 @@ describe("설계안: roadmap sync 소유권 — 대시보드 소유 컬럼을 pu
   });
 });
 
-describe("설계안: depends_on seed — 비어있을 때만", () => {
+describe("적대적 코퍼스: depends_on seed — 비어있을 때만", () => {
   it("막아야: 매 sync마다 재기록해 순서 편집을 무효화", async () => {
     const { app, db, auth } = await freshApp();
     await syncRoadmap(app, auth, [
@@ -119,7 +119,7 @@ describe("설계안: depends_on seed — 비어있을 때만", () => {
   });
 });
 
-describe("설계안: roadmap replace — non-workstream만 삭제", () => {
+describe("적대적 코퍼스: roadmap replace — non-workstream만 삭제", () => {
   it("막아야: payload에 없다고 수동 workstream 그룹까지 삭제", async () => {
     const { app, db, auth } = await freshApp();
     await syncRoadmap(app, auth, [{ id: "t1", title: "T1", level: "task", status: "pending" }]);
@@ -149,7 +149,7 @@ describe("설계안: roadmap replace — non-workstream만 삭제", () => {
   });
 });
 
-describe("설계안: deleted_at — 라이브 'No workspaces found' 사고 방지", () => {
+describe("적대적 코퍼스: deleted_at — 라이브 'No workspaces found' 사고 방지", () => {
   it("막아야: 컬럼이 없을 때 질의 실패를 catch해 빈 목록을 반환", async () => {
     __resetDeletedAtColState();
     const db = createSqliteClient();
@@ -167,7 +167,7 @@ describe("설계안: deleted_at — 라이브 'No workspaces found' 사고 방�
   });
 });
 
-describe("설계안: soft delete / discard / orphan RUN 요약 회귀", () => {
+describe("적대적 코퍼스: soft delete / discard / orphan RUN 요약 회귀", () => {
   it("막아야: delete가 무조건 하드삭제", async () => {
     const { app, db, auth } = await freshApp();
     await request(app).post("/api/sync/workspace").set("Authorization", auth).send({ userId: "u1", name: "ws1" }).expect(200);

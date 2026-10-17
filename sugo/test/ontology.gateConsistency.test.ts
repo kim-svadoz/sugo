@@ -132,8 +132,8 @@ describe("§4 Golden per-state action set", () => {
   });
 });
 
-/** 설계안 "순서강제(Gate Keeper)" 행 — 반드시 거부 / 반드시 허용. */
-describe("설계안 코퍼스: 순서강제", () => {
+/** 적대적 코퍼스 "순서강제(Gate Keeper)" 행 — 반드시 거부 / 반드시 허용. */
+describe("적대적 코퍼스: 순서강제", () => {
   it("거부: READY에서 code_start 직행(CODE_READY 아님)", () => {
     expect(ALLOWED_ACTIONS_BY_STATE.READY).not.toContain("code_start");
   });

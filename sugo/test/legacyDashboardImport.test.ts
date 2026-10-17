@@ -38,8 +38,8 @@ beforeEach(() => {
   source = join(work, "local.db");
   const db = new DatabaseSync(source);
   db.exec(readFileSync(schemaFile, "utf8"));
-  db.exec("INSERT INTO sugo_users (id, display_name) VALUES ('demo-user', 'demo-user')");
-  db.exec("INSERT INTO sugo_workspaces (user_id, name) VALUES ('demo-user', 'ws-1'), ('demo-user', 'ws-2')");
+  db.exec("INSERT INTO sugo_users (id, display_name) VALUES ('developer', 'developer')");
+  db.exec("INSERT INTO sugo_workspaces (user_id, name) VALUES ('developer', 'ws-1'), ('developer', 'ws-2')");
   db.close();
 });
 
@@ -58,7 +58,7 @@ describe("기존 dev-local DB 이전", () => {
     expect(out).toContain("sugo_workspaces: 2");
     expect(out).toContain("user_api_tokens: 0");
     const copy = new DatabaseSync(dashboardPaths(home).dataDir + "/dashboard.db", { readOnly: true });
-    expect(copy.prepare("SELECT id FROM sugo_users").all()).toEqual([{ id: "demo-user" }]);
+    expect(copy.prepare("SELECT id FROM sugo_users").all()).toEqual([{ id: "developer" }]);
     copy.close();
     expect(readFileSync(source).equals(before)).toBe(true);
     expect(statSync(join(dashboardPaths(home).dataDir, "dashboard.db")).mode & 0o077).toBe(0);

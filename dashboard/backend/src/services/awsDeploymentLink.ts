@@ -1,4 +1,5 @@
 import { basename } from "node:path";
+import { environmentOfAccount } from "./awsEnvironment.js";
 
 interface InventoryResource {
   kind: string;
@@ -74,10 +75,6 @@ function numberValue(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-function environmentOf(accountName: string): string {
-  return accountName.endsWith("-env") ? accountName.slice(0, -"-env".length) : accountName;
-}
-
 function healthStateOf(status: string | null, rolloutState: string | null, running: number | null, desired: number | null): AwsProjectDeployment["healthState"] {
   if (status && status !== "ACTIVE") return "INACTIVE";
   if (rolloutState === "FAILED") return "DEGRADED";
@@ -118,7 +115,7 @@ function linkExactService(targetName: string, snapshots: AwsDeploymentSnapshot[]
         linkMode: selections ? "confirmed" : "suggested",
         matchSource: imageMatches ? "image" : "service",
         accountName: snapshot.accountName,
-        environment: selection?.environment ?? environmentOf(snapshot.accountName),
+        environment: selection?.environment ?? environmentOfAccount(snapshot.accountName),
         region: snapshot.region,
         cluster: resourceCluster,
         service: resource.id,

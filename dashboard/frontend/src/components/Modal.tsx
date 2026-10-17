@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 
-/** 설계안 Checkpoints 모달에서 쓰던 걸 §7B SchedulePage와 공유하기 위해 분리했다.
+/** Checkpoints 모달에서 쓰던 걸 §7B SchedulePage와 공유하기 위해 분리했다.
  * 동작은 그대로(ESC 닫기, 오버레이 클릭 닫기, max-w-3xl) — 구현 아님. */
 export function Modal({
   children,

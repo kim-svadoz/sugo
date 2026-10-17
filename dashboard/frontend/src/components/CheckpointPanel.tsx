@@ -115,7 +115,7 @@ function MarkdownEditor({
 }
 
 /**
- * 설계안 Checkpoints 모달 — Sessions.tsx에 있던 걸 §7B(사용자 결정: 체크포인트/캔버스는
+ * Checkpoints 모달 — Sessions.tsx에 있던 걸 §7B(사용자 결정: 체크포인트/캔버스는
  * 다른 화면으로 리다이렉트하지 않고 그 자리에서 모달로만 뜬다)에 맞춰 자기완결형으로 뽑았다.
  * workspace 하나만 받아 내부에서 전부 처리하므로 Sessions.tsx·SchedulePage 어디서든
  * `<CheckpointPanel workspace={...} onClose={...} />`로 그대로 마운트하면 된다.

@@ -24,7 +24,7 @@ try {
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const post = async (path, body) => { const r = await fetch(`http://127.0.0.1:4000${path}`, { method: "POST", headers, body: JSON.stringify(body) }); assert.equal(r.status, 200, await r.text()); };
   await post("/api/sync/workspace", { userId, name: "human-e2e", projects: [] });
-  const labels = ["evidenceResnapshot", "runtimeUnverified"].map((kind, i) => ({ kind, reason: i ? "로컬 실행환경 부재" : "RankingModule23Test 6/6, 로컬 의존 테스트 2건 제외", patchVersion: 0, recordedAt: `2026-10-02T00:00:0${i}Z` }));
+  const labels = ["evidenceResnapshot", "runtimeUnverified"].map((kind, i) => ({ kind, reason: i ? "로컬 실행환경 부재" : "RankingModuleTest 6/6, 로컬 의존 테스트 2건 제외", patchVersion: 0, recordedAt: `2026-10-02T00:00:0${i}Z` }));
   const workResult = { sourceRevision: deploymentRevision, path: "/work/work-result.md", parentTaskId: "task-1", report: { schemaVersion: 1, kind: "feat", patchVersion: 0, completedAt: "2026-10-02", completionGrade: "unverified", bypassLabels: labels, summary: "인기 목록 화면 추가", changedFiles: ["RankingModule.java"], designDecisions: [], knownLimitations: [], verification: { test: { command: "gradlew check", total: 6, passed: 6, state: "pass" }, runtimeVerified: false } } };
   const runtimeAssessment = { projectionSchemaVersion: 1, status: "completed", currentStage: "DONE", nextActions: [], recommendedAction: null, humanDecisionRequired: false, blockers: ["analyze 미통과(partial)"], evidence: [] };
   await post("/api/sync/roadmap", { userId, workspaceName: "human-e2e", nodes: [

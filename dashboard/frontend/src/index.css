@@ -1,5 +1,4 @@
-/* 설계안 정본. 원본은 폰트를 index.html <link>로 로드하지만, 이 로컬은 index.html을
-   최소로 유지하고 있어 @import로 가져온다(결과 폰트 스택은 동일). */
+/* index.html을 최소로 유지하기 위해 폰트를 @import로 가져온다. */
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
 @import "tailwindcss";
@@ -163,7 +162,7 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .ck-pop { animation: ck-pop 0.11s ease-out both; transform-origin: top left; }
 
 /* 로드맵 캔버스: 연결 비활성이라 핸들은 순수 엣지 앵커 — 십자커서·hover 제거. */
-/* 설계안 그대로. 캔버스는 읽기전용 뷰어라 손잡이는 보이지도, 잡히지도 않는다.
+/* 캔버스는 읽기전용 뷰어라 손잡이는 보이지도, 잡히지도 않는다.
    (한때 여기서 의존을 잇게 만들었다가 스펙과 어긋나 되돌렸다 — §5.1 "읽기전용 뷰어".) */
 .react-flow__handle { cursor: default !important; pointer-events: none !important; }
 .react-flow__node-roadmap, .react-flow__node-container { cursor: pointer !important; }
@@ -218,10 +217,7 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
   .command-brief, .workspace-command-card, .workspace-command-card--selected { transform: none !important; }
 }
 
-/* ──── 설계안 밖의 로컬 추가분 ────────────────────────────────────
-   원본에 없는 유틸이지만 이 빌드의 Skills/Harness/Settings/Playbook이 실제로 의존한다.
-   설계안이 그 페이지들을 verbatim으로 주지 않아(C.4-a는 요약) 자체 작성했던 것들이라,
-   설계안 재현이 끝날 때까지 남겨둔다. 원본에는 없는 것임을 명시해 둔다. */
+/* ──── Skills/Harness/Settings/Playbook 공용 유틸 ──────────────────── */
 .ck-pill {
   display: inline-flex; align-items: center; gap: 0.3rem;
   padding: 0.1rem 0.5rem; border-radius: 999px;

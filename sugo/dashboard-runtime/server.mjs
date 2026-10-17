@@ -44381,6 +44381,29 @@ var init_migrations = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/awsEnvironment.ts
+function environmentOfAccount(accountName) {
+  const found = new Set(accountName.toLowerCase().split(/[-_.\s]+/).map((part) => ENVIRONMENT_TOKENS[part]).filter(Boolean));
+  return found.size === 1 ? [...found][0] : accountName;
+}
+var ENVIRONMENT_TOKENS;
+var init_awsEnvironment = __esm({
+  "../dashboard/backend/src/services/awsEnvironment.ts"() {
+    "use strict";
+    ENVIRONMENT_TOKENS = {
+      dev: "dev",
+      develop: "dev",
+      development: "dev",
+      stg: "stg",
+      stage: "stg",
+      staging: "stg",
+      prd: "prd",
+      prod: "prd",
+      production: "prd"
+    };
+  }
+});
+
 // ../dashboard/backend/src/services/awsDeploymentLink.ts
 import { basename } from "node:path";
 function stringValue(value) {
@@ -44388,9 +44411,6 @@ function stringValue(value) {
 }
 function numberValue(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-function environmentOf(accountName) {
-  return accountName.endsWith("-env") ? accountName.slice(0, -"-env".length) : accountName;
 }
 function healthStateOf(status, rolloutState, running, desired) {
   if (status && status !== "ACTIVE") return "INACTIVE";
@@ -44430,7 +44450,7 @@ function linkExactService(targetName, snapshots, pinpoint, selections) {
         linkMode: selections ? "confirmed" : "suggested",
         matchSource: imageMatches ? "image" : "service",
         accountName: snapshot.accountName,
-        environment: selection?.environment ?? environmentOf(snapshot.accountName),
+        environment: selection?.environment ?? environmentOfAccount(snapshot.accountName),
         region: snapshot.region,
         cluster: resourceCluster,
         service: resource2.id,
@@ -44495,6 +44515,7 @@ function linkAwsRelease(projectPath, snapshots) {
 var init_awsDeploymentLink = __esm({
   "../dashboard/backend/src/services/awsDeploymentLink.ts"() {
     "use strict";
+    init_awsEnvironment();
   }
 });
 
@@ -45720,7 +45741,7 @@ async function listWorkspaces(db2, userId2) {
       roadmap,
       roadmapCount: roadmap.total,
       roadmapDoneCount: roadmap.done,
-      // 설계안 statusOf/activeOf: "진행 중"의 기준은 태스크가 아니라 **캔버스 노드**다
+      // statusOf/activeOf: "진행 중"의 기준은 태스크가 아니라 **캔버스 노드**다
       // (카드가 "N task 진행 중"으로 쓰지만 값은 로드맵 active에서 온다).
       activeTaskCount: roadmap.active,
       historyCount,
@@ -89680,7 +89701,7 @@ async function listProjectIntegrations(db2, userId2) {
   const snapshots = await db2.query("SELECT account_name, payload FROM user_aws_context_snapshots WHERE user_id = ? ORDER BY account_name", [userId2]);
   const candidates = snapshots.flatMap((snapshot) => parseMaybeJson(snapshot.payload, []).flatMap((inventory) => inventory?.service === "ecs" ? inventory.resources ?? [] : []).filter((resource2) => resource2?.kind === "service").map((resource2) => ({
     accountName: snapshot.account_name,
-    environment: snapshot.account_name.endsWith("-serving") ? snapshot.account_name.slice(0, -8) : snapshot.account_name,
+    environment: environmentOfAccount(snapshot.account_name),
     service: String(resource2.id),
     cluster: typeof resource2.metadata?.cluster === "string" ? resource2.metadata.cluster : null,
     pinpointApplicationName: typeof resource2.metadata?.pinpointApplicationName === "string" ? resource2.metadata.pinpointApplicationName : null,
@@ -89700,6 +89721,7 @@ var init_projectIntegrationService = __esm({
     "use strict";
     init_jsonColumn();
     init_upsert();
+    init_awsEnvironment();
   }
 });
 
@@ -89943,7 +89965,7 @@ var init_index = __esm({
     init_cors();
     init_asyncHandler();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.28.4" ? { version: "0.28.4" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.29.0" ? { version: "0.29.0" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90055,7 +90077,7 @@ await bootstrapLocalDashboard2(db, {
   settingsPath: join13(sugoDir, "settings.json")
 });
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.28.4", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.29.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

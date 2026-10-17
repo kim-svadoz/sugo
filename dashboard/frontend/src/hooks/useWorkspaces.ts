@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiJson, withUserId } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 
-/** 백엔드 `listWorkspaces`가 설계안 카드/Inspector가 읽는 모양 그대로 내려준다. */
+/** 백엔드 `listWorkspaces`가 카드/Inspector가 읽는 모양 그대로 내려준다. */
 export interface WorkspaceSummary {
   name: string;
   projects: Array<{

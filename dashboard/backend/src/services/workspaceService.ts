@@ -69,7 +69,7 @@ export interface RoadmapCounts {
 }
 
 /**
- * 설계안 카드/Inspector가 실제로 읽는 필드들. 화면이 요구하는 모양을 그대로 돌려준다 —
+ * 카드/Inspector가 실제로 읽는 필드들. 화면이 요구하는 모양을 그대로 돌려준다 —
  * 프론트에서 카운트를 다시 계산하게 두면 목록 화면 하나 그리려고 워크스페이스마다 N번씩
  * 추가 조회를 하게 된다(도메인 8개면 32번).
  */
@@ -78,7 +78,7 @@ export interface WorkspaceSummary {
   projects: WorkspaceProjectRow[];
   taskCounts: TaskCounts;
   roadmap: RoadmapCounts;
-  /** 설계안 평평한 별칭 — `ws.roadmapCount` 형태로 직접 참조된다. */
+  /** 평평한 별칭 — `ws.roadmapCount` 형태로 직접 참조된다. */
   roadmapCount: number;
   roadmapDoneCount: number;
   activeTaskCount: number;
@@ -141,7 +141,7 @@ async function workspaceAttention(db: DbClient, userId: string, workspaceName: s
   return { count, label };
 }
 
-// 설계안: roadmap count는 level='task'만, active는 COALESCE(manual_status,status)='in_progress'.
+// roadmap count는 level='task'만, active는 COALESCE(manual_status,status)='in_progress'.
 // §7: **dropped는 분모에서 제외**한다 — 폐기는 "안 하기로 한 일"이라 진행률에 남아 있으면
 // 아무리 일해도 100%가 안 되는 분모가 된다.
 async function roadmapCounts(db: DbClient, userId: string, workspaceName: string): Promise<RoadmapCounts> {
@@ -238,7 +238,7 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
       roadmap,
       roadmapCount: roadmap.total,
       roadmapDoneCount: roadmap.done,
-      // 설계안 statusOf/activeOf: "진행 중"의 기준은 태스크가 아니라 **캔버스 노드**다
+      // statusOf/activeOf: "진행 중"의 기준은 태스크가 아니라 **캔버스 노드**다
       // (카드가 "N task 진행 중"으로 쓰지만 값은 로드맵 active에서 온다).
       activeTaskCount: roadmap.active,
       historyCount,
