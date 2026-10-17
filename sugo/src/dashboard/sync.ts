@@ -7,14 +7,13 @@ import {
   serializeHistory,
   serializeTask,
 } from "./serialize.js";
-import type { Checkpoint, RoadmapNode, Spec, Task, Workspace, WorkLog } from "../hulk/types.js";
+import type { Checkpoint, RoadmapNode, Spec, Task, Workspace, WorkLog } from "../work/types.js";
 import type { PrRefs } from "../prRefs.js";
-import type { RoadmapWorkResult } from "../hulk/types.js";
+import type { RoadmapWorkResult } from "../work/types.js";
 import { sanitizeReviewArtifacts } from "./workResultFiles.js";
-import type { SpecPathMapping } from "../specStorageMigration.js";
 
 /**
- * §7.2 push 엔드포인트 얇은 래퍼들 — 호출부(hulk/*.ts, tools/sugoPlan.ts)는 로컬 쓰기가 끝난 뒤
+ * §7.2 push 엔드포인트 얇은 래퍼들 — 호출부(work/*.ts, tools/sugoPlan.ts)는 로컬 쓰기가 끝난 뒤
  * `void syncXxx(...)`처럼 기다리지 않고 호출한다. pushEvent 자체가 disabled/실패를 조용히
  * 흡수하므로 이 래퍼들도 절대 던지지 않는다.
  *
@@ -120,13 +119,6 @@ export async function syncUser(): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
   await pushEvent("/api/sync/user", "POST", { userId: config.userId });
-}
-
-export async function syncSpecPathMigration(mappings: SpecPathMapping[]): Promise<void> {
-  if (mappings.length === 0) return;
-  const config = await resolveDashboardConfig();
-  if (!config.enabled) return;
-  await pushEvent("/api/sync/spec-path-migration", "POST", { userId: config.userId, mappings });
 }
 
 /**

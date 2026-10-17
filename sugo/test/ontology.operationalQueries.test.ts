@@ -5,7 +5,7 @@ import {
   projectNextActions,
   traceTaskArtifacts,
 } from "../src/ontology/operationalQueries.js";
-import type { RoadmapNode, Task } from "../src/hulk/types.js";
+import type { RoadmapNode, Task } from "../src/work/types.js";
 import type { PlanSession } from "../src/types.js";
 import { explanationProfileContract } from "../src/ontology/explanationProfile.js";
 
@@ -20,8 +20,8 @@ function session(overrides: Partial<PlanSession> = {}): PlanSession {
     data: {
       mode: "plan",
       prdPath: "/project/sugo/features/payment/prd.md",
-      hulkWorkspace: "payments",
-      hulkTaskId: "task-payment",
+      linkedWorkspace: "payments",
+      linkedTaskId: "task-payment",
       lastTransition: { action: "review_start", fromState: "TEST_DONE", toState: "REVIEW_RUNNING", recordedAt: "2026-10-01T00:55:00.000Z" },
       chainInfo: {
         changedFiles: ["src/pay.ts"], analyzeAttempts: 1, analyzePassed: true,

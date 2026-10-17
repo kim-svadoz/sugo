@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
-import type { RoadmapWorkResult } from "../hulk/types.js";
+import type { RoadmapWorkResult } from "../work/types.js";
 
 const execFileAsync = promisify(execFile);
 const MAX_CONTENT_BYTES = 200_000;

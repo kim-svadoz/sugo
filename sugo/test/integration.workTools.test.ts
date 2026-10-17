@@ -9,7 +9,7 @@ import { handleSugoStatus } from "../src/tools/sugoStatus.js";
 import { handleSugoTask } from "../src/tools/sugoTask.js";
 import { handleSugoWorkspace } from "../src/tools/sugoWorkspace.js";
 import { isWorkEnabled } from "../src/work/enabled.js";
-import { addTask } from "../src/hulk/task.js";
+import { addTask } from "../src/work/task.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args?: unknown) {
@@ -45,7 +45,7 @@ describe("§9 isWorkEnabled — 상수, 토글 개념 소멸", () => {
   });
 });
 
-describe("sugo_workspace(status) — 구 sugo_hulk(status) 흡수", () => {
+describe("sugo_workspace(status)", () => {
   it("워크스페이스의 task/checkpoint/roadmap/spec/history 개수를 모아 보여준다", async () => {
     await call(handleSugoWorkspace, { action: "add", name: "ws1", projectPath: "/tmp/p" });
     await call(handleSugoTask, { action: "add", workspace: "ws1", title: "T1", project: "/tmp/p" });
@@ -84,7 +84,7 @@ describe("sugo_workspace(status) — 구 sugo_hulk(status) 흡수", () => {
   });
 });
 
-describe("sugo_workspace(sync) — 구 sugo_hulk(sync) 흡수", () => {
+describe("sugo_workspace(sync)", () => {
   it("워크스페이스 전체(workspace/task/roadmap)를 다시 push한다(대시보드 disabled면 조용히 통과)", async () => {
     await call(handleSugoWorkspace, { action: "add", name: "ws1", projectPath: "/tmp/p" });
     await call(handleSugoTask, { action: "add", workspace: "ws1", title: "T1", project: "/tmp/p" });
@@ -99,7 +99,7 @@ describe("sugo_workspace(sync) — 구 sugo_hulk(sync) 흡수", () => {
   });
 });
 
-describe("sugo_status(health) — 구 sugo_hulk(health) 흡수", () => {
+describe("sugo_status(health)", () => {
   it("health:true면 대시보드 설정과 재시도 큐 크기를 함께 준다", async () => {
     const result = await call(handleSugoStatus, { health: true });
     expect(result.isError).toBe(false);
@@ -121,7 +121,7 @@ describe("sugo_status(health) — 구 sugo_hulk(health) 흡수", () => {
   });
 });
 
-describe("sugo_status(judgment) — 구 sugo_hulk(judgment) 흡수", () => {
+describe("sugo_status(judgment)", () => {
   it("세션이 없으면 totalSessions:0인 리포트를 준다", async () => {
     const result = await call(handleSugoStatus, { judgment: true });
     expect(result.isError).toBe(false);

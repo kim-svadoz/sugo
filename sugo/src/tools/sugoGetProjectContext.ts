@@ -3,7 +3,7 @@ import { basename, join } from "node:path";
 import { z } from "zod";
 import { loadProjectConfig } from "../harness/config.js";
 import { findRegistryEntry } from "../harness/registry.js";
-import { pullCheckpointsToRules } from "../hulk/checkpoint.js";
+import { pullCheckpointsToRules } from "../work/checkpoint.js";
 import { routeHarnessesForFiles } from "../harness/harnessRouting.js";
 import { buildClaudeRuleFile } from "../harness/rulesFile.js";
 import { mcpAllowPatterns, renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistry.js";

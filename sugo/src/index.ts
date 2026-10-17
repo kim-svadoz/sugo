@@ -8,7 +8,7 @@ import {
   sugoCheckLethalTrifectaInputSchema,
 } from "./tools/sugoCheckLethalTrifecta.js";
 import { handleSugoCheckpoint, sugoCheckpointInputSchema } from "./tools/sugoCheckpoint.js";
-import { syncPluginVersion, syncSpecPathMigration, syncUser } from "./dashboard/sync.js";
+import { syncPluginVersion, syncUser } from "./dashboard/sync.js";
 import { currentSugoVersion } from "./version.js";
 import { handleSugoDelete, sugoDeleteInputSchema } from "./tools/sugoDelete.js";
 import { handleSugoDisable, sugoDisableInputSchema } from "./tools/sugoDisable.js";
@@ -43,12 +43,10 @@ import { handleSugoOntology, sugoOntologyInputSchema } from "./tools/sugoOntolog
 import { handleSugoPrd, sugoPrdInputSchema } from "./tools/sugoPrd.js";
 import { handleSugoSetup, sugoSetupInputSchema } from "./tools/sugoSetup.js";
 import { handleSugoCommit, sugoCommitInputSchema } from "./tools/sugoCommit.js";
-import { migrateWorkDataDir } from "./work/storage.js";
 import { handleSugoWorkspace, sugoWorkspaceInputSchema } from "./tools/sugoWorkspace.js";
 import { handleSugoAwsContext, sugoAwsContextInputSchema } from "./tools/sugoAwsContext.js";
 import { handleSugoUninstall, sugoUninstallInputSchema } from "./tools/sugoUninstall.js";
 import { ensureRecoveryUtility } from "./lifecycle/recoveryInstaller.js";
-import { migrateLegacySpecStorage, rewriteLocalSpecReferences } from "./specStorageMigration.js";
 
 const server = new McpServer({
   name: "sugo",
@@ -184,7 +182,7 @@ server.registerTool(
 server.registerTool(
   "sugo_workspace",
   {
-    title: "HULK workspace CRUD + free-form memory",
+    title: "Workspace CRUD + free-form memory",
     description:
       "관련 프로젝트를 묶는 워크스페이스를 관리한다(add/list/get). remember/recall로 " +
       "워크스페이스별 자유 메모(memory.md)도 누적할 수 있다(§8).",
@@ -196,7 +194,7 @@ server.registerTool(
 server.registerTool(
   "sugo_task",
   {
-    title: "HULK task CRUD",
+    title: "Task CRUD",
     description:
       "워크스페이스 단위 작업 태스크를 관리한다(add/list/update/get). sugo_plan(prd)이 " +
       "워크스페이스 등록된 프로젝트에 대해 자동으로 in_progress 태스크를 생성한다(§8).",
@@ -208,7 +206,7 @@ server.registerTool(
 server.registerTool(
   "sugo_checkpoint",
   {
-    title: "HULK checkpoint CRUD (pre-commit reminders)",
+    title: "Checkpoint CRUD (pre-commit reminders)",
     description:
       "커밋 전 재발방지 체크리스트를 관리한다(add/get/list/remove/memory/read_memory/migrate/sync). " +
       "applies_to가 비어있으면 보편 체크포인트로 항상 적용되고, 아니면 프로젝트명/harnessId와 " +
@@ -221,7 +219,7 @@ server.registerTool(
 server.registerTool(
   "sugo_spec",
   {
-    title: "HULK long-lived spec knowledge CRUD",
+    title: "Long-lived spec knowledge CRUD",
     description: "아키텍처/API설계/비즈니스룰 등 장기 지식을 관리한다(add/list/get)(§8).",
     inputSchema: sugoSpecInputSchema,
   },
@@ -241,7 +239,7 @@ server.registerTool(
 server.registerTool(
   "sugo_history",
   {
-    title: "HULK work log CRUD",
+    title: "Work log CRUD",
     description:
       "완료 작업 이력(WorkLog)을 관리한다(add/list/get). sugo_plan(commit)이 워크스페이스 " +
       "등록된 프로젝트에 대해 자동으로 기록하지만, 파이프라인 밖 작업도 수동으로 남길 수 있다(§8).",
@@ -438,18 +436,6 @@ server.registerTool(
 
 async function main() {
   await ensureRecoveryUtility().catch((error) => console.error("[sugo] recovery utility install failed:", error));
-  // §9 WORK 리네임(hulk/ → work/): 어떤 도구든 데이터를 읽기 **전에** 끝나야 하므로 await한다.
-  // 절대 던지지 않게 만들어져 있어 실패해도 기동을 막지 않는다(못 옮긴 파일은 마커를 안 남겨
-  // 다음 부팅에 재시도된다).
-  await migrateWorkDataDir();
-  const specMigration = await migrateLegacySpecStorage();
-  if (specMigration.failures.length > 0) {
-    console.error(`[sugo] legacy SPEC migration incomplete (${specMigration.failures.length} failures)`);
-  } else {
-    await rewriteLocalSpecReferences(specMigration.mappings);
-    void syncSpecPathMigration(specMigration.mappings);
-  }
-
   // §7.2: 서버 기동 시 1회, 논블로킹으로 플러그인 버전/사용자를 대시보드에 알린다(disabled면 조용히 no-op).
   void syncPluginVersion(currentSugoVersion());
   void syncUser();

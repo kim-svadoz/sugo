@@ -8,7 +8,6 @@ import {
   historySchema,
   pluginVersionSchema,
   roadmapSyncSchema,
-  specPathMigrationSchema,
   reviewArtifactSchema,
   taskSchema,
   workspaceDeleteSchema,
@@ -33,7 +32,6 @@ import {
   syncHistory,
   syncPluginVersion,
   syncRoadmap,
-  migrateSpecPaths,
   syncTask,
   syncUser,
   syncWorkspace,
@@ -138,11 +136,6 @@ export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
   router.post("/roadmap", validateBody(roadmapSyncSchema), asyncHandler(async (req, res) => {
     await syncRoadmap(db, req.body.userId, req.body.workspaceName, req.body.nodes);
     res.json({ ok: true });
-  }));
-
-  router.post("/spec-path-migration", validateBody(specPathMigrationSchema), asyncHandler(async (req, res) => {
-    const updated = await migrateSpecPaths(db, req.userId!, req.body.mappings);
-    res.json({ ok: true, updated });
   }));
 
   router.post("/review-artifact", validateBody(reviewArtifactSchema), asyncHandler(async (req, res) => {

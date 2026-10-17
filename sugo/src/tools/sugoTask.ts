@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { addTask, getTask, listTasks, updateTask } from "../hulk/task.js";
+import { addTask, getTask, listTasks, updateTask } from "../work/task.js";
 import { loadAllSessions } from "../session.js";
 import { sessionForTask } from "../work/sessionSummary.js";
 
@@ -7,7 +7,7 @@ const TASK_STATUS = ["pending", "idea", "in_progress", "done", "dropped", "archi
 
 export const sugoTaskInputSchema = {
   action: z.enum(["add", "list", "update", "get"]),
-  workspace: z.string().describe("HULK 워크스페이스 이름"),
+  workspace: z.string().describe("워크스페이스 이름"),
   taskId: z.string().optional().describe("update/get action에 필요"),
   title: z.string().optional().describe("add action에 필요"),
   project: z.string().optional().describe("add action에 필요"),

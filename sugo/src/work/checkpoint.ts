@@ -8,7 +8,7 @@ import { fetchCheckpointSync, type RemoteCheckpoint } from "../dashboard/fetch.j
 import { parseFrontmatter, stringifyFrontmatter } from "./frontmatter.js";
 import { slugify } from "./slug.js";
 import { loadProjectConfig } from "../harness/config.js";
-import { checkpointsDir } from "../work/storage.js";
+import { checkpointsDir } from "./storage.js";
 import type { Checkpoint } from "./types.js";
 import { checkpointApplies } from "./matching.js";
 

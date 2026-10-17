@@ -41,14 +41,14 @@ export interface ImplementationReference {
 }
 
 export const OBJECT_TYPES = [
-  { name: "spec", layer: "roadmap", label: "Spec", meaning: "마스터 PRD(경로=소속). 로드맵 최상위 컨테이너", containedBy: null, implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
-  { name: "workstream", layer: "roadmap", label: "Run", meaning: "feat/patch 실행 단위. Spec 안에 시간순 적층", containedBy: "spec", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
-  { name: "task", layer: "roadmap", label: "Task", meaning: "레포별 실제 산출물. 진행률 기준 층", containedBy: "workstream", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }, { path: "src/hulk/types.ts", symbol: "interface Task" }] },
-  { name: "subtask", layer: "roadmap", label: "REQ", meaning: "Task 하위 세부 검증 스펙(요구사항)", containedBy: "task", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
-  { name: "step", layer: "roadmap", label: "Step(레거시)", meaning: "구 단계 단위. 신규 흐름 미사용", containedBy: "subtask", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
+  { name: "spec", layer: "roadmap", label: "Spec", meaning: "마스터 PRD(경로=소속). 로드맵 최상위 컨테이너", containedBy: null, implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
+  { name: "workstream", layer: "roadmap", label: "Run", meaning: "feat/patch 실행 단위. Spec 안에 시간순 적층", containedBy: "spec", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
+  { name: "task", layer: "roadmap", label: "Task", meaning: "레포별 실제 산출물. 진행률 기준 층", containedBy: "workstream", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }, { path: "src/work/types.ts", symbol: "interface Task" }] },
+  { name: "subtask", layer: "roadmap", label: "REQ", meaning: "Task 하위 세부 검증 스펙(요구사항)", containedBy: "task", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
+  { name: "step", layer: "roadmap", label: "Step(레거시)", meaning: "구 단계 단위. 신규 흐름 미사용", containedBy: "subtask", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
   { name: "session", layer: "runtime", label: "Session", meaning: "한 feat/patch 상태머신 실행과 그 감사 상태", containedBy: null, implementationRefs: [{ path: "src/types.ts", symbol: "interface PlanSession" }] },
   { name: "evidence", layer: "runtime", label: "Evidence", meaning: "게이트가 소비하는 baseline·contract·test·runtime·validation 실행 증거", containedBy: null, implementationRefs: [{ path: "src/testEvidence.ts", symbol: "interface TestEvidenceRecord" }, { path: "src/contractEvidence.ts", symbol: "interface ContractTestRecord" }] },
-  { name: "human_decision", layer: "runtime", label: "Human Decision", meaning: "질문·선택지·답변·복귀 action을 보존하는 사람 판단", containedBy: null, implementationRefs: [{ path: "src/hulk/types.ts", symbol: "interface HumanBlocker" }] },
+  { name: "human_decision", layer: "runtime", label: "Human Decision", meaning: "질문·선택지·답변·복귀 action을 보존하는 사람 판단", containedBy: null, implementationRefs: [{ path: "src/work/types.ts", symbol: "interface HumanBlocker" }] },
   { name: "artifact", layer: "runtime", label: "Artifact", meaning: "PRD·TODO-SPEC·work-result·commit/PR처럼 실행이 생산한 추적 가능 산출물", containedBy: null, implementationRefs: [{ path: "src/workResultReport.ts", symbol: "interface WorkResultReport" }] },
 ] as const satisfies readonly ObjectType[];
 
@@ -63,15 +63,15 @@ export interface LinkType {
 }
 
 export const LINK_TYPES = [
-  { name: "contains", from: "*", to: "*", meaning: "계층 포함(parent). spec→workstream→task→subtask", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "parent?: string" }] },
-  { name: "depends_on", from: "task", to: "task", meaning: "형제 순서/의존(DAG). to가 먼저 done이어야 from ready", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "dependsOn: string[]" }] },
-  { name: "lineage", from: "task", to: "task", meaning: "patch 계보(원본 아래 차수 체인). task 노드에만", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "lineage?: RoadmapLineageEntry[]" }] },
-  { name: "operates_on", from: "session", to: "task", meaning: "상태머신 session이 구현하는 로드맵 Task", implementationRefs: [{ path: "src/types.ts", symbol: "hulkTaskId?: string" }] },
+  { name: "contains", from: "*", to: "*", meaning: "계층 포함(parent). spec→workstream→task→subtask", implementationRefs: [{ path: "src/work/types.ts", symbol: "parent?: string" }] },
+  { name: "depends_on", from: "task", to: "task", meaning: "형제 순서/의존(DAG). to가 먼저 done이어야 from ready", implementationRefs: [{ path: "src/work/types.ts", symbol: "dependsOn: string[]" }] },
+  { name: "lineage", from: "task", to: "task", meaning: "patch 계보(원본 아래 차수 체인). task 노드에만", implementationRefs: [{ path: "src/work/types.ts", symbol: "lineage?: RoadmapLineageEntry[]" }] },
+  { name: "operates_on", from: "session", to: "task", meaning: "상태머신 session이 구현하는 로드맵 Task", implementationRefs: [{ path: "src/types.ts", symbol: "linkedTaskId?: string" }] },
   { name: "requires", from: "action", to: "evidence", meaning: "action 게이트가 전이를 위해 요구하는 실행 증거", implementationRefs: [{ path: "src/ontology/model.ts", symbol: "evidenceSource: string" }] },
   { name: "produces", from: "action", to: ["artifact", "evidence"], meaning: "action 실행이 생성·갱신하는 산출물 또는 증거", implementationRefs: [{ path: "src/types.ts", symbol: "testEvidence?: TestEvidenceRecord" }, { path: "src/types.ts", symbol: "workResultReport?: WorkResultReport" }] },
   { name: "blocks", from: "human_decision", to: "session", meaning: "미결정 사람 판단이 session의 다음 전이를 차단", implementationRefs: [{ path: "src/types.ts", symbol: "humanDecisionGate?:" }] },
-  { name: "resumes_at", from: "human_decision", to: "action", meaning: "판단 반영 후 같은 session에서 재개할 action", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "resumeAction: string" }] },
-  { name: "derived_from", from: "task", to: "task", meaning: "patch Task가 근거로 삼은 이전 완료 Task", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "parentTaskId: string" }] },
+  { name: "resumes_at", from: "human_decision", to: "action", meaning: "판단 반영 후 같은 session에서 재개할 action", implementationRefs: [{ path: "src/work/types.ts", symbol: "resumeAction: string" }] },
+  { name: "derived_from", from: "task", to: "task", meaning: "patch Task가 근거로 삼은 이전 완료 Task", implementationRefs: [{ path: "src/work/types.ts", symbol: "parentTaskId: string" }] },
 ] as const satisfies readonly LinkType[];
 
 // ── 2.3 WORKFLOW_STATES ──────────────────────────────────────────────────────

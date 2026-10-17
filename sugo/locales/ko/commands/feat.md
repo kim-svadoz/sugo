@@ -40,7 +40,7 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`, `-
      모델이 임의로 목록을 확정해 파일로 고정하지 않는다(고정되면 이후 모든 세션이 잘못된
      전제로 동작한다).
 3. `prd`로 PRD를 저장한다. 게이트 통과 조건은 **본문 100자 이상 + `REQ-N` 태그 1개 이상**(어디에
-   있든 인정, 헤딩 아니어도 됨)뿐이다. baseline 시그널 판정과 HULK Task/Run 생성이 함께 일어난다.
+   있든 인정, 헤딩 아니어도 됨)뿐이다. baseline 시그널 판정과 Task/Run 생성이 함께 일어난다.
    **Roadmap REQ 노드 심기는 별개로, `### REQ-N: 제목` 마크다운 헤딩 형식만 인식하는 더 엄격한
    계약이다** — 헤딩이 없으면 PRD는 정상 통과하지만 Roadmap에는 조용히 아무것도 안 심긴다(에러
    아님). Roadmap 추적이 필요하면 REQ를 헤딩으로 쓴다.
@@ -96,7 +96,7 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`, `-
 - analyze의 `partial`/`fail`은 PRD 단어와 코드 문자열의 겹침을 보여주는 비차단 진단이다. 이를
   통과시키려고 주석·이름을 바꾸거나 반복 호출하지 않는다.
 - PRD 이후 구현·검증 중 정책/범위/권한처럼 **사람만 결정할 수 있는 미확정 사항**이 발견되면
-  임의로 추측하지 않는다. 현재 `hulkWorkspace`와 `hulkTaskId`를 사용해
+  임의로 추측하지 않는다. 현재 `linkedWorkspace`와 `linkedTaskId`를 사용해
   `sugo_roadmap(action:"block_for_human", workspace, id, sessionId, stage, resumeAction,
   blockerSummary, question, context, options, blockedNextStep)`를 호출한다. 질문 한 줄만 보내지 말고
   무엇을 하다 멈췄는지, 판단 근거, 선택지별 영향을 모두 채운 뒤 작업을 멈춘다.

@@ -7,7 +7,7 @@ import { serializeRoadmapSnapshot, compactRoadmapPayload } from "../src/dashboar
 import { pushEvent, drainRetryQueue, classifyHttpFailure } from "../src/dashboard/client.js";
 import { listRetryQueue, enqueueRetry, processRetryQueue, retryQueueHealth } from "../src/dashboard/retryQueue.js";
 import { handleSugoStatus } from "../src/tools/sugoStatus.js";
-import type { RoadmapNode } from "../src/hulk/types.js";
+import type { RoadmapNode } from "../src/work/types.js";
 
 let home: string | undefined;
 afterEach(() => {

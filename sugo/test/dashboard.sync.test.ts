@@ -10,7 +10,6 @@ import {
   syncPluginVersion,
   syncRoadmapLink,
   syncRoadmapSnapshot,
-  syncSpecPathMigration,
   syncTask,
   syncUser,
   syncWorkspace,
@@ -201,14 +200,6 @@ describe("syncPluginVersion / syncUser", () => {
     await syncPluginVersion("0.1.0");
     await syncUser();
     expect(received.map((r) => r.path)).toEqual(["/api/sync/plugin-version", "/api/sync/user"]);
-  });
-});
-
-describe("syncSpecPathMigration", () => {
-  it("인증된 sync 경계로 원본 SPEC 경로 매핑을 보낸다", async () => {
-    await syncSpecPathMigration([{ from: "/old/spec.md", to: "/new/spec.md" }]);
-    expect(received[0].path).toBe("/api/sync/spec-path-migration");
-    expect(received[0].body).toMatchObject({ userId: "u1", mappings: [{ from: "/old/spec.md", to: "/new/spec.md" }] });
   });
 });
 

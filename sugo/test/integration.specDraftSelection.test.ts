@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRoadmap } from "../src/tools/sugoRoadmap.js";
-import { syncRemoteCheckpointsToRules } from "../src/hulk/checkpoint.js";
+import { syncRemoteCheckpointsToRules } from "../src/work/checkpoint.js";
 
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
   const res = await handler(args);

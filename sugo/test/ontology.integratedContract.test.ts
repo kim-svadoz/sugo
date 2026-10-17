@@ -6,7 +6,7 @@ import { validateOperationalContract } from "../src/ontology/contractValidation.
 import { explainSessionState, traceTaskArtifacts } from "../src/ontology/operationalQueries.js";
 import { projectSessionOntology } from "../src/ontology/runtimeProjection.js";
 import { ACTION_TYPES } from "../src/ontology/model.js";
-import type { RoadmapNode, Task } from "../src/hulk/types.js";
+import type { RoadmapNode, Task } from "../src/work/types.js";
 
 const FIXTURES = join(__dirname, "fixtures", "ontology");
 const PLUGIN_ROOT = join(__dirname, "..");

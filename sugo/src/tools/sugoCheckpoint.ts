@@ -6,14 +6,14 @@ import {
   migrateCheckpoints,
   pullCheckpointsToRules,
   removeCheckpoint,
-} from "../hulk/checkpoint.js";
-import { appendMemory, readMemory } from "../hulk/memory.js";
+} from "../work/checkpoint.js";
+import { appendMemory, readMemory } from "../work/memory.js";
 import { syncCheckpoint } from "../dashboard/sync.js";
 import { resolveDashboardConfig } from "../dashboard/config.js";
 
 export const sugoCheckpointInputSchema = {
   action: z.enum(["add", "get", "list", "remove", "memory", "read_memory", "migrate", "sync", "pull"]),
-  workspace: z.string().describe("HULK 워크스페이스 이름"),
+  workspace: z.string().describe("워크스페이스 이름"),
   id: z.string().optional().describe("get/remove/sync action에 필요"),
   title: z.string().optional().describe("add action에 필요"),
   category: z.string().optional(),

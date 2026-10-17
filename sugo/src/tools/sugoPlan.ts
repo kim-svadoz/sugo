@@ -42,14 +42,14 @@ import { loadProjectConfig } from "../harness/config.js";
 import { renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistry.js";
 import { findRegistryEntry } from "../harness/registry.js";
 import { estimateHumanHours } from "../humanHours.js";
-import { checkpointApplies } from "../hulk/matching.js";
+import { checkpointApplies } from "../work/matching.js";
 import { taskCycleTitle } from "../taskTitle.js";
-import { addWorkLog } from "../hulk/history.js";
-import { listCheckpoints, pullCheckpointsToRules } from "../hulk/checkpoint.js";
-import { backfillRoadmapTask, beginRoadmapPatch, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../hulk/roadmap.js";
-import { promotePrdRequirements } from "../hulk/roadmapReq.js";
-import { addTask, findTaskByPrdRef, listTasks, updateTask } from "../hulk/task.js";
-import type { Task, TaskPatchInfo } from "../hulk/types.js";
+import { addWorkLog } from "../work/history.js";
+import { listCheckpoints, pullCheckpointsToRules } from "../work/checkpoint.js";
+import { backfillRoadmapTask, beginRoadmapPatch, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../work/roadmap.js";
+import { promotePrdRequirements } from "../work/roadmapReq.js";
+import { addTask, findTaskByPrdRef, listTasks, updateTask } from "../work/task.js";
+import type { Task, TaskPatchInfo } from "../work/types.js";
 import {
   computeCompletionGrade,
   supersedePriorTestLabels,
@@ -182,7 +182,7 @@ export const sugoPlanInputSchema = {
   userReportedHumanHours: z
     .number()
     .optional()
-    .describe("commit action: 사람이 보고한 실제 소요시간(시간 단위) — HULK 생산성 지표 자가보정 루프(§8)"),
+    .describe("commit action: 사람이 보고한 실제 소요시간(시간 단위) — 생산성 지표 자가보정 루프"),
   coverageMap: z
     .object({
       acceptanceCriteria: z.array(z.object({ id: z.string(), covered: z.boolean() })),
@@ -460,14 +460,14 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
   if (action === "review_done" && existing) {
     const dashboard = await resolveDashboardConfig();
-    if (dashboard.enabled && existing.data.hulkWorkspace && existing.data.hulkTaskId) {
-      const remoteTask = await fetchBlockerDecision(existing.data.hulkWorkspace, existing.data.hulkTaskId);
+    if (dashboard.enabled && existing.data.linkedWorkspace && existing.data.linkedTaskId) {
+      const remoteTask = await fetchBlockerDecision(existing.data.linkedWorkspace, existing.data.linkedTaskId);
       if (remoteTask) {
         const confirmation = existing.data.reviewConfirmation;
-        if (!confirmation || confirmation.workspace !== existing.data.hulkWorkspace || confirmation.taskId !== existing.data.hulkTaskId) {
+        if (!confirmation || confirmation.workspace !== existing.data.linkedWorkspace || confirmation.taskId !== existing.data.linkedTaskId) {
           return errorResult(
             "REVIEW_CONFIRMATION_REQUIRED",
-            `review_done 전에 sugo_roadmap(action:"request_review_confirmation", workspace:"${existing.data.hulkWorkspace}", id:"${existing.data.hulkTaskId}", sessionId:"${existing.id}", reviewPacket:...)으로 작업 요약과 코드 diff를 Dashboard에 게시해야 합니다.`,
+            `review_done 전에 sugo_roadmap(action:"request_review_confirmation", workspace:"${existing.data.linkedWorkspace}", id:"${existing.data.linkedTaskId}", sessionId:"${existing.id}", reviewPacket:...)으로 작업 요약과 코드 diff를 Dashboard에 게시해야 합니다.`,
           );
         }
         if (confirmation.decision !== "approve") {
@@ -945,7 +945,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       },
     };
 
-    // ── §8 HULK 연동: 프로젝트가 워크스페이스에 등록돼 있으면 Task를 자동 생성한다.
+    // ── 워크스페이스 연동: 프로젝트가 워크스페이스에 등록돼 있으면 Task를 자동 생성한다.
     // §7.1 Patch: patch 모드면 새 Task를 만들지 않고 원본 Run(=Task)을
     // 재사용한다 — base-task 매칭은 ref 파일명 우선(findTaskByPrdRef). 못 찾으면(예: 원본이
     // 워크스페이스 등록 전에 만들어짐) 새 Task로 안전하게 폴백한다(교착 방지).
@@ -974,12 +974,12 @@ export async function handleSugoPlan(rawArgs: unknown) {
       }
       session = {
         ...session,
-        data: { ...session.data, hulkWorkspace: registryEntry.workspace, hulkTaskId: task.id },
+        data: { ...session.data, linkedWorkspace: registryEntry.workspace, linkedTaskId: task.id },
       };
 
       // ── §8.5 Roadmap DAG: task 레벨 노드를 보장하고, PRD의 ### REQ-XXX 헤딩을 자식 REQ
       // 노드(+ 항상 REQ-CONFIRM)로 심는다. 헤딩 형식 REQ가 하나도 없으면 심을 게 없어 no-op.
-      // task 노드 상태는 실제 HULK Task와 맞춰 in_progress로 갱신한다 — pending으로 남으면
+      // task 노드 상태는 실제 Task와 맞춰 in_progress로 갱신한다 — pending으로 남으면
       // 의존성 없는 이 노드가 readySet에 REQ와 나란히 잘못 섞여 나온다(스모크 테스트가 잡아낸 버그).
       await backfillRoadmapTask(registryEntry.workspace, task.id, session.featureName);
       await updateRoadmapNodeStatus(registryEntry.workspace, task.id, "in_progress");
@@ -1207,8 +1207,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
     // ── §3/§8.5 REQ/REQ-CONFIRM 자동완료: "사용자 확인이 곧 REQ 롤다운"이다. 승격된 REQ가 없는
     // 세션(워크스페이스 미등록, 헤딩 형식 REQ 없음 등)은 completeTaskRequirements 내부에서 조용히
     // no-op하므로 여기서 별도 분기 없이 항상 호출해도 안전하다.
-    if (session.data.hulkWorkspace && session.data.hulkTaskId) {
-      await completeTaskRequirements(session.data.hulkWorkspace, session.data.hulkTaskId, args.summary);
+    if (session.data.linkedWorkspace && session.data.linkedTaskId) {
+      await completeTaskRequirements(session.data.linkedWorkspace, session.data.linkedTaskId, args.summary);
     }
   }
 
@@ -1222,19 +1222,19 @@ export async function handleSugoPlan(rawArgs: unknown) {
     bypassSummary = renderBypassSummary(gradeResult);
   }
 
-  // ── §8 HULK 연동: commit 시점에 Task를 done으로 전환하고 WorkLog를 기록한다.
+  // ── 워크스페이스 연동: commit 시점에 Task를 done으로 전환하고 WorkLog를 기록한다.
   // 매칭되는 checkpoint는 정보성으로만 노출한다(체크리스트 완료 여부는 자기보고라 강제할 수 없음 —
   // sugo_validate와 같은 이유).
-  let hulk:
+  let workRecord:
     | { taskId: string; workLogId: string; checkpointsToReview: { id: string; title: string; checklist: string[] }[] }
     | undefined;
-  if (action === "commit" && session.data.hulkWorkspace && session.data.hulkTaskId) {
-    const workspace = session.data.hulkWorkspace;
+  if (action === "commit" && session.data.linkedWorkspace && session.data.linkedTaskId) {
+    const workspace = session.data.linkedWorkspace;
     // ── §7.2 prRefs: 완료 시점에 git 원격/브랜치를 읽어 대시보드 "Create PR" 버튼을 급전한다.
     // git 저장소가 아니거나 원격이 없으면 조용히 undefined(막지 않음).
     const prRefs = (await collectPrRefs(session.projectPath)) ?? undefined;
     const workLog = await addWorkLog(workspace, {
-      task_id: session.data.hulkTaskId,
+      task_id: session.data.linkedTaskId,
       task_title: taskCycleTitle(session.data.chainInfo.reviewSummary, session.featureName),
       completed_at: new Date().toISOString(),
       summary: session.data.chainInfo.reviewSummary,
@@ -1247,7 +1247,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       },
       prRefs,
     });
-    await updateTask(workspace, session.data.hulkTaskId, {
+    await updateTask(workspace, session.data.linkedTaskId, {
       status: "done",
       summary: session.data.chainInfo.reviewSummary,
       log_id: workLog.id,
@@ -1266,7 +1266,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       endedAt: completedAt,
       summary: session.data.chainInfo.reviewSummary,
       files: dashboardFiles,
-      parentTaskId: session.data.hulkTaskId,
+      parentTaskId: session.data.linkedTaskId,
       patchVersion,
       seed: session.data.seed,
       runtimeVerified: session.data.chainInfo.runtimeVerified,
@@ -1274,7 +1274,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       prRefs,
       report: session.data.chainInfo.workResultReport,
     };
-    await recordRoadmapWorkResult(workspace, session.data.hulkTaskId, workResult, {
+    await recordRoadmapWorkResult(workspace, session.data.linkedTaskId, workResult, {
       version: patchVersion ?? 0,
       completedAt,
       title: session.featureName,
@@ -1295,8 +1295,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
       }),
     );
 
-    hulk = {
-      taskId: session.data.hulkTaskId,
+    workRecord = {
+      taskId: session.data.linkedTaskId,
       workLogId: workLog.id,
       checkpointsToReview: applicable.map((cp) => ({ id: cp.id, title: cp.title, checklist: cp.checklist })),
     };
@@ -1325,10 +1325,10 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
   if (action !== "status") {
     await saveSession(session);
-    if (session.data.hulkWorkspace && session.data.hulkTaskId) {
+    if (session.data.linkedWorkspace && session.data.linkedTaskId) {
       await updateRoadmapNodeRuntimeAssessment(
-        session.data.hulkWorkspace,
-        session.data.hulkTaskId,
+        session.data.linkedWorkspace,
+        session.data.linkedTaskId,
         assessSession(session),
       );
     }
@@ -1336,10 +1336,10 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
   // Activity Stream은 선택적인 sugo_chain 호출이 아니라 실제 상태 전이를 정본으로 삼는다.
   // 성공한 전이만 여기 도달하므로 실패한 게이트를 handoff처럼 기록하지 않는다.
-  if (existing && session.data.hulkWorkspace) {
+  if (existing && session.data.linkedWorkspace) {
     const transitionActivity = activityForPlanTransition(action, existing.state, session.featureName);
     if (transitionActivity) {
-      void emitActivity({ workspaceName: session.data.hulkWorkspace, ...transitionActivity });
+      void emitActivity({ workspaceName: session.data.linkedWorkspace, ...transitionActivity });
     }
   }
 
@@ -1387,7 +1387,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       session.data.mode === "patch" && session.data.patch
         ? { parentPrdPath: session.data.patch.parentPrdPath, version: session.data.patch.version }
         : undefined,
-    hulk,
+    workRecord,
     decomposeManifest: session.data.decomposeManifest,
     harnessToolMenu,
     // §4.2 "정적검증 미강제" 라벨: test_done에서 npm/py/go 등 풀검증 강제 불가 명령이면 false로

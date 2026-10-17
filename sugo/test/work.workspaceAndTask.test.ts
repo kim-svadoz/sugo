@@ -2,13 +2,13 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { addTask, findTaskByPrdRef, getTask, listTasks, updateTask } from "../src/hulk/task.js";
-import { ensureWorkspace, listWorkspaces, loadWorkspace } from "../src/hulk/workspace.js";
+import { addTask, findTaskByPrdRef, getTask, listTasks, updateTask } from "../src/work/task.js";
+import { ensureWorkspace, listWorkspaces, loadWorkspace } from "../src/work/workspace.js";
 
 let fakeHome: string;
 
 beforeEach(() => {
-  fakeHome = mkdtempSync(join(tmpdir(), "sugo-hulk-home-"));
+  fakeHome = mkdtempSync(join(tmpdir(), "sugo-work-home-"));
   process.env.SUGO_HOME_OVERRIDE = fakeHome;
 });
 

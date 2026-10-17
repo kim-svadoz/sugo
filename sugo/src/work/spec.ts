@@ -4,7 +4,7 @@ import { atomicWriteFile } from "../fsUtil.js";
 import { syncDecision } from "../dashboard/sync.js";
 import { parseFrontmatter, stringifyFrontmatter } from "./frontmatter.js";
 import { slugify } from "./slug.js";
-import { specsDir } from "../work/storage.js";
+import { specsDir } from "./storage.js";
 import type { Spec, SpecType } from "./types.js";
 
 export interface AddSpecParams {

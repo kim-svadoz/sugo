@@ -2,7 +2,7 @@ import { access, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { syncRemoteCheckpointsToRules } from "../src/hulk/checkpoint.js";
+import { syncRemoteCheckpointsToRules } from "../src/work/checkpoint.js";
 
 describe("dashboard checkpoint expiry reconciliation", () => {
   it("유효한 체크포인트만 쓰고 다음 날에는 기존 관리 파일을 제거한다", async () => {

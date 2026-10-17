@@ -3,11 +3,11 @@ import { access } from "node:fs/promises";
 import { sugoHomeDir } from "../homeDir.js";
 import { z } from "zod";
 import { syncProjectHarness } from "../harness/sync.js";
-import { ensureWorkspace } from "../hulk/workspace.js";
+import { ensureWorkspace } from "../work/workspace.js";
 
 export const sugoAddInputSchema = {
   projectPath: z.string().describe("등록할 프로젝트의 절대경로"),
-  workspace: z.string().optional().describe("HULK 워크스페이스 이름 — 지정하면 프로젝트가 이 워크스페이스에 소속되어 prd/commit 시 Task/WorkLog가 자동 연동된다(§8)"),
+  workspace: z.string().optional().describe("워크스페이스 이름 — 지정하면 프로젝트가 이 워크스페이스에 소속되어 prd/commit 시 Task/WorkLog가 자동 연동된다(§8)"),
   repoUrl: z.string().optional().describe("하네스 저장소 git URL(현재 빌드는 미구현 — 로컬 라이브러리로 폴백)"),
   additionalStacks: z.array(z.string()).optional().describe("자동감지 결과에 추가로 강제 포함할 harnessId 목록"),
   integrationGateEnforced: z

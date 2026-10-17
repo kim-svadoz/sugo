@@ -1,5 +1,5 @@
 import { currentBlockers, remainingSteps } from "../completionPlan.js";
-import type { HumanBlocker } from "../hulk/types.js";
+import type { HumanBlocker } from "../work/types.js";
 import type { PlanSession } from "../types.js";
 import { ALLOWED_ACTIONS_BY_STATE } from "./derive.js";
 import type { ActionName, WorkflowState } from "./model.js";

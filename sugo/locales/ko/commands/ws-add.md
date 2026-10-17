@@ -1,9 +1,9 @@
 ---
-description: HULK 워크스페이스를 생성한다(관련 프로젝트 묶음). 대시보드 "Add Domain"이 이 커맨드를 복사해 준다.
+description: 워크스페이스를 생성한다(관련 프로젝트 묶음). 대시보드 "Add Domain"이 이 커맨드를 복사해 준다.
 argument-hint: <workspace 이름>
 ---
 
-너는 HULK 워크스페이스를 만든다(§8). 인자: $ARGUMENTS
+너는 워크스페이스를 만든다. 인자: $ARGUMENTS
 
 ## 절차
 - `sugo_workspace(action:"add", name)`로 워크스페이스를 만든다(`~/.claude/sugo/work/<name>/workspace.json`).

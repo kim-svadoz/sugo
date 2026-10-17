@@ -8,7 +8,7 @@ import { fetchRoadmapOrdering } from "../dashboard/fetch.js";
 import { syncRoadmapLink, syncRoadmapSnapshot, unsyncRoadmapLink } from "../dashboard/sync.js";
 import { mergeRoadmapOwnership, readySet, topoSort } from "./roadmapGraph.js";
 import { requirementNodeId } from "./roadmapReq.js";
-import { roadmapFilePath, roadmapLockPath, workspaceDir } from "../work/storage.js";
+import { roadmapFilePath, roadmapLockPath, workspaceDir } from "./storage.js";
 import type { SessionAssessment } from "../ontology/sessionAssessment.js";
 import { taskCycleTitle } from "../taskTitle.js";
 import type { HumanBlocker, RoadmapFile, RoadmapLineageEntry, RoadmapNode, RoadmapNodeResult, RoadmapNodeStatus, RoadmapWorkResult, Task } from "./types.js";
@@ -72,7 +72,7 @@ async function readRoadmapFile(workspace: string): Promise<RoadmapFile> {
     // Old completed sessions already own the canonical bypass labels, but old reports did not carry them.
     // Hydrate before workspace sync so existing tasks can be reviewed without rerunning the pipeline.
     if (file.nodes.some(n => n.workResult?.path && !n.workResult.report?.bypassLabels)) {
-      const sessions = (await loadAllSessions()).filter(s => s.state === "DONE" && s.data.hulkWorkspace === workspace);
+      const sessions = (await loadAllSessions()).filter(s => s.state === "DONE" && s.data.linkedWorkspace === workspace);
       for (const node of file.nodes) {
         const result = node.workResult;
         if (!result?.path || result.report?.bypassLabels) continue;
@@ -499,7 +499,7 @@ export async function groupRoadmapNodes(
   });
 }
 
-/** 로드맵 도입 이전에 생성된 HULK Task를 소급해서 task 레벨 노드로 승격한다(멱등 — 이미 있으면 no-op). */
+/** 로드맵 도입 이전에 생성된 Task를 소급해서 task 레벨 노드로 승격한다(멱등 — 이미 있으면 no-op). */
 export async function backfillRoadmapTask(workspace: string, taskId: string, title: string): Promise<RoadmapMutationResult> {
   return withRoadmap(workspace, async (file) => {
     if (file.nodes.some((n) => n.id === taskId)) return { ok: true };
@@ -558,7 +558,7 @@ export async function pullRoadmapOrdering(workspace: string): Promise<boolean> {
   if (!remote) return false;
   return withRoadmap(workspace, async (file) => {
     const merged = mergeRoadmapOwnership(file.nodes, remote);
-    const completedSessions = (await loadAllSessions()).filter(s => s.state === "DONE" && s.data.hulkWorkspace === workspace);
+    const completedSessions = (await loadAllSessions()).filter(s => s.state === "DONE" && s.data.linkedWorkspace === workspace);
     for (const node of merged) {
       const local = node.workResult;
       const incoming = remote.find(r => r.id === node.id)?.workResult;

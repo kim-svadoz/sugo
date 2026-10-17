@@ -1,5 +1,5 @@
-import type { HumanBlocker } from "./hulk/types.js";
-import type { RoadmapWorkResult } from "./hulk/types.js";
+import type { HumanBlocker } from "./work/types.js";
+import type { RoadmapWorkResult } from "./work/types.js";
 
 export interface ReviewConfirmationInput {
   sessionId: string;

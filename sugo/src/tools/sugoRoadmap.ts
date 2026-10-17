@@ -15,8 +15,8 @@ import {
   blockRoadmapNodeForHuman,
   resumeRoadmapNodeWithDecision,
   updateRoadmapNodeRuntimeAssessment,
-} from "../hulk/roadmap.js";
-import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../hulk/types.js";
+} from "../work/roadmap.js";
+import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../work/types.js";
 import { fetchBlockerDecision } from "../dashboard/fetch.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
 import { assessSession } from "../ontology/sessionAssessment.js";
@@ -44,7 +44,7 @@ export const sugoRoadmapInputSchema = {
     "request_review_confirmation",
     "resume_with_decision",
   ]),
-  workspace: z.string().describe("HULK 워크스페이스 이름"),
+  workspace: z.string().describe("워크스페이스 이름"),
   id: z.string().optional().describe("add/remove/status/get/mark_req action에 필요. add의 새 노드 id 또는 대상 노드 id"),
   title: z.string().optional().describe("add/group/backfill action에 필요"),
   level: z.enum(ROADMAP_LEVELS).optional().describe("add action에 필요"),
@@ -134,7 +134,7 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       return ok({});
     }
     case "backfill": {
-      if (!args.id || !args.title) return errorResult("BACKFILL_FIELDS_REQUIRED", "backfill action에는 id(HULK taskId)/title이 필요합니다.");
+      if (!args.id || !args.title) return errorResult("BACKFILL_FIELDS_REQUIRED", "backfill action에는 id(taskId)/title이 필요합니다.");
       await backfillRoadmapTask(args.workspace, args.id, args.title);
       return ok({ node: await getRoadmapNode(args.workspace, args.id) });
     }
@@ -156,7 +156,7 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       }
       if (!(await sessionExists(args.sessionId))) return errorResult("SESSION_NOT_FOUND", `세션을 찾을 수 없습니다: ${args.sessionId}`);
       const session = await loadSession(args.sessionId);
-      if (session.data.hulkWorkspace !== args.workspace || session.data.hulkTaskId !== args.id) {
+      if (session.data.linkedWorkspace !== args.workspace || session.data.linkedTaskId !== args.id) {
         return errorResult("BLOCKER_TARGET_MISMATCH", "현재 세션에 연결된 워크스페이스/Task와 차단 대상이 다릅니다.");
       }
       const blocker = {
@@ -192,7 +192,7 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       if (session.state !== "REVIEW_RUNNING") {
         return errorResult("REVIEW_CONFIRMATION_STATE_INVALID", "review 확인 요청은 REVIEW_RUNNING 상태에서만 만들 수 있습니다.");
       }
-      if (session.data.hulkWorkspace !== args.workspace || session.data.hulkTaskId !== args.id) {
+      if (session.data.linkedWorkspace !== args.workspace || session.data.linkedTaskId !== args.id) {
         return errorResult("BLOCKER_TARGET_MISMATCH", "현재 세션에 연결된 워크스페이스/Task와 확인 요청 대상이 다릅니다.");
       }
       const files = await snapshotReviewArtifacts(

@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { addWorkLog, getWorkLog, listWorkLogs } from "../hulk/history.js";
+import { addWorkLog, getWorkLog, listWorkLogs } from "../work/history.js";
 
 export const sugoHistoryInputSchema = {
   action: z.enum(["add", "list", "get"]),
-  workspace: z.string().describe("HULK 워크스페이스 이름"),
+  workspace: z.string().describe("워크스페이스 이름"),
   logId: z.string().optional().describe("get action에 필요"),
   task_id: z.string().optional().describe("add action에 필요"),
   task_title: z.string().optional().describe("add action에 필요"),

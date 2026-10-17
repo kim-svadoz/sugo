@@ -1,5 +1,5 @@
 import { ACTION_TYPES, LINK_TYPES } from "./model.js";
-import type { Task } from "../hulk/types.js";
+import type { Task } from "../work/types.js";
 import type { PlanSession } from "../types.js";
 import { assessSession, type SessionAssessment } from "./sessionAssessment.js";
 
@@ -70,10 +70,10 @@ export function projectSessionOntology(session: PlanSession, task?: Task | null)
     },
   });
 
-  if (!session.data.hulkTaskId) {
+  if (!session.data.linkedTaskId) {
     diagnostics.push({ code: "TASK_LINK_UNAVAILABLE", message: "세션에 연결된 Task ID가 없습니다." });
-  } else if (!task || task.id !== session.data.hulkTaskId) {
-    diagnostics.push({ code: "TASK_RECORD_NOT_FOUND", message: `연결된 Task를 로드하지 못했습니다: ${session.data.hulkTaskId}` });
+  } else if (!task || task.id !== session.data.linkedTaskId) {
+    diagnostics.push({ code: "TASK_RECORD_NOT_FOUND", message: `연결된 Task를 로드하지 못했습니다: ${session.data.linkedTaskId}` });
   } else {
     const taskId = `task:${task.id}`;
     putObject({ id: taskId, type: "task", label: task.title, attributes: { status: task.status, project: task.project } });

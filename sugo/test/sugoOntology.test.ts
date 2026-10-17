@@ -8,9 +8,9 @@ import { canonicalJson, deterministicModelHash } from "../src/ontology/identity.
 import { saveSession } from "../src/session.js";
 import type { PlanSession } from "../src/types.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
-import { ensureWorkspace } from "../src/hulk/workspace.js";
-import { addTask } from "../src/hulk/task.js";
-import { upsertRoadmapNodes } from "../src/hulk/roadmap.js";
+import { ensureWorkspace } from "../src/work/workspace.js";
+import { addTask } from "../src/work/task.js";
+import { upsertRoadmapNodes } from "../src/work/roadmap.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(args: unknown): Promise<any> {
@@ -166,7 +166,7 @@ describe("§2 sugo_ontology 도구", () => {
       await saveSession({
         ...querySession,
         id: "plan-task-query",
-        data: { ...querySession.data, hulkWorkspace: "payments", hulkTaskId: task.id },
+        data: { ...querySession.data, linkedWorkspace: "payments", linkedTaskId: task.id },
       });
       expect(await call({ query: "explain_block", taskId: task.id })).toMatchObject({
         ok: true, result: { sessionId: "plan-task-query", blocked: false },

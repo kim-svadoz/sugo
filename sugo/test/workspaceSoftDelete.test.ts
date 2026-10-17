@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { deleteWorkspace, ensureWorkspace, listWorkspaces, loadWorkspace } from "../src/hulk/workspace.js";
+import { deleteWorkspace, ensureWorkspace, listWorkspaces, loadWorkspace } from "../src/work/workspace.js";
 import { workspaceDir } from "../src/work/storage.js";
 
 let fakeHome: string;

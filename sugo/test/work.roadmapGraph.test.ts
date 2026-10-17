@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { mergeRoadmapOwnership, readySet, topoSort, wouldCreateCycle } from "../src/hulk/roadmapGraph.js";
-import type { RoadmapNode } from "../src/hulk/types.js";
+import { mergeRoadmapOwnership, readySet, topoSort, wouldCreateCycle } from "../src/work/roadmapGraph.js";
+import type { RoadmapNode } from "../src/work/types.js";
 
 function node(id: string, dependsOn: string[] = [], status: RoadmapNode["status"] = "pending"): RoadmapNode {
   return { id, title: id, level: "task", status, dependsOn };

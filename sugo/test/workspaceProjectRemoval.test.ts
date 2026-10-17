@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { registerProject } from "../src/harness/registry.js";
-import { deleteWorkspace, ensureWorkspace, loadWorkspace, removeProjectFromWorkspaces } from "../src/hulk/workspace.js";
+import { deleteWorkspace, ensureWorkspace, loadWorkspace, removeProjectFromWorkspaces } from "../src/work/workspace.js";
 import { handleSugoDelete } from "../src/tools/sugoDelete.js";
 
 let fakeHome: string;

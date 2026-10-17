@@ -4,7 +4,7 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 import { atomicWriteFile } from "../fsUtil.js";
 import { historyDir } from "./storage.js";
-import type { WorkLog, Workspace } from "../hulk/types.js";
+import type { WorkLog, Workspace } from "./types.js";
 
 const execFileAsync = promisify(execFile);
 

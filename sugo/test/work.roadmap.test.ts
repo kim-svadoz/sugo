@@ -22,8 +22,8 @@ import {
   blockRoadmapNodeForHuman,
   resumeRoadmapNodeWithDecision,
   upsertRoadmapNodes,
-} from "../src/hulk/roadmap.js";
-import { promotePrdRequirements, reqConfirmId } from "../src/hulk/roadmapReq.js";
+} from "../src/work/roadmap.js";
+import { promotePrdRequirements, reqConfirmId } from "../src/work/roadmapReq.js";
 
 let fakeHome: string;
 
@@ -438,7 +438,7 @@ describe("group — workstream으로 task들을 묶는다", () => {
   });
 });
 
-describe("backfillRoadmapTask — 기존 HULK Task를 소급 승격", () => {
+describe("backfillRoadmapTask — 기존 Task를 소급 승격", () => {
   it("아직 roadmap에 없는 taskId를 task 레벨 노드로 만든다", async () => {
     const result = await backfillRoadmapTask("ws1", "old-task-1", "예전 기능");
     expect(result.ok).toBe(true);

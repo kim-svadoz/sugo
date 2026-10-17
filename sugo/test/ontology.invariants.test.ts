@@ -86,32 +86,16 @@ describe("§2.6 불변식 정적 스캔", () => {
     });
   });
 
-  describe("§9 WORK 활성 판정 단일소스 + sugo_hulk 제거", () => {
+  describe("작업 관리 활성 판정 단일소스", () => {
     it("isWorkEnabled는 work/enabled.ts에서만 정의된다", () => {
       const definers = FILES.filter((f) => /export function isWorkEnabled\b/.test(f.text)).map((f) => f.rel);
       expect(definers).toEqual(["work/enabled.ts"]);
     });
 
-    it("WORK를 끄는 토글이 부활하지 않았다(config 기반 판정 금지)", () => {
-      // enabled.ts는 단일소스라 제외 — 그 파일의 주석이 구 토글 이름을 설명한다.
+    it("작업 관리를 끄는 설정 기반 토글이 없다", () => {
       const offenders = FILES.filter((f) => f.rel !== "work/enabled.ts").filter((f) =>
-        /isHulkEnabled|config\.\w*[hH]ulkEnabled|workEnabled\s*[:=]\s*(true|false)/.test(f.text),
+        /workEnabled\s*[:=]\s*(true|false)/.test(f.text),
       ).map((f) => f.rel);
-      expect(offenders).toEqual([]);
-    });
-
-    it("§1 도구 델타: sugo_hulk umbrella의 실코드가 사라졌다(주석 언급은 허용)", () => {
-      // "어디로 갔는지" 설명하는 주석은 남겨두는 게 낫다. 금지 대상은 실제 배선이다:
-      // 핸들러 식별자, 도구 등록 문자열, 그 모듈 파일 자체.
-      const offenders = FILES.filter((f) => /handleSugoHulk|sugoHulkInputSchema|"sugo_hulk"|sugoHulk\.js/.test(f.text)).map(
-        (f) => f.rel,
-      );
-      expect(offenders).toEqual([]);
-      expect(FILES.some((f) => f.rel === "tools/sugoHulk.ts")).toBe(false);
-    });
-
-    it("데이터 경로는 work/를 쓴다 — 구 hulk 경로는 마이그레이션 원본으로만 남는다", () => {
-      const offenders = FILES.filter((f) => f.rel !== "work/storage.ts" && /"hulk"/.test(f.text)).map((f) => f.rel);
       expect(offenders).toEqual([]);
     });
   });

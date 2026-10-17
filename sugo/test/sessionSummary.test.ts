@@ -117,9 +117,9 @@ describe("sessionsForProjects — 워크스페이스 소속 판정", () => {
 
 describe("sessionForTask — task ↔ session 연결", () => {
   const sessions = [
-    session({ id: "s-old", updatedAt: "2026-09-18T01:00:00.000Z", data: { hulkTaskId: "task-1" } } as Partial<PlanSession>),
-    session({ id: "s-new", updatedAt: "2026-09-18T05:00:00.000Z", data: { hulkTaskId: "task-1" } } as Partial<PlanSession>),
-    session({ id: "s-other", updatedAt: "2026-09-18T09:00:00.000Z", data: { hulkTaskId: "task-2" } } as Partial<PlanSession>),
+    session({ id: "s-old", updatedAt: "2026-09-18T01:00:00.000Z", data: { linkedTaskId: "task-1" } } as Partial<PlanSession>),
+    session({ id: "s-new", updatedAt: "2026-09-18T05:00:00.000Z", data: { linkedTaskId: "task-1" } } as Partial<PlanSession>),
+    session({ id: "s-other", updatedAt: "2026-09-18T09:00:00.000Z", data: { linkedTaskId: "task-2" } } as Partial<PlanSession>),
   ];
 
   it("해당 태스크의 세션 중 가장 최근 것을 돌려준다", () => {

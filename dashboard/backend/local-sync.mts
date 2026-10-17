@@ -1,12 +1,12 @@
 /** 기존 ~/.claude/sugo 데이터를 실행 중인 로컬 Dashboard API로 전량 동기화한다. */
 import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { listCheckpoints } from "../../sugo/src/hulk/checkpoint.js";
-import { listWorkLogs } from "../../sugo/src/hulk/history.js";
-import { backfillLegacyRoadmapWorkResults, listRoadmapNodes, reconcileRoadmapWithTasks } from "../../sugo/src/hulk/roadmap.js";
-import { listSpecs } from "../../sugo/src/hulk/spec.js";
-import { listTasks } from "../../sugo/src/hulk/task.js";
-import { listWorkspaces } from "../../sugo/src/hulk/workspace.js";
+import { listCheckpoints } from "../../sugo/src/work/checkpoint.js";
+import { listWorkLogs } from "../../sugo/src/work/history.js";
+import { backfillLegacyRoadmapWorkResults, listRoadmapNodes, reconcileRoadmapWithTasks } from "../../sugo/src/work/roadmap.js";
+import { listSpecs } from "../../sugo/src/work/spec.js";
+import { listTasks } from "../../sugo/src/work/task.js";
+import { listWorkspaces } from "../../sugo/src/work/workspace.js";
 import {
   syncCheckpoint,
   syncDecision,

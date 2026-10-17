@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, rm } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
 import { deleteWorkspaceSync, syncWorkspace } from "../dashboard/sync.js";
-import { workRootDir, workspaceDir, workspaceFilePath } from "../work/storage.js";
+import { workRootDir, workspaceDir, workspaceFilePath } from "./storage.js";
 import type { Workspace } from "./types.js";
 
 export async function loadWorkspace(name: string): Promise<Workspace | null> {

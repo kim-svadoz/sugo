@@ -1,4 +1,4 @@
-// Same algorithm as the plugin's sugo/src/hulk/roadmapGraph.ts so both sides of the
+// Same algorithm as the plugin's sugo/src/work/roadmapGraph.ts so both sides of the
 // seam agree on ordering.
 // 캔버스 DAG 규칙은 플러그인과 같은 알고리즘을 쓴다.
 

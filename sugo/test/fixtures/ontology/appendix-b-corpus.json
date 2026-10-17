@@ -14,5 +14,5 @@
   { "id": "prd-coverage", "modelGateIds": ["PRD_COVERAGE_INCOMPLETE"], "proofFiles": ["integration.pipeline13Gates.test.ts", "consistency.test.ts"] },
   { "id": "label-guard", "modelGateIds": ["LABEL_CONTRADICTION"], "proofFiles": ["labelGuard.test.ts", "integration.pipeline13Gates.test.ts"] },
   { "id": "evidence-reuse", "modelGateIds": ["EVIDENCE_REUSE_FINGERPRINT_MISMATCH"], "proofFiles": ["fingerprint.test.ts"] },
-  { "id": "req-completion", "modelGateIds": ["USER_CONFIRMATION_REQUIRED"], "proofFiles": ["gates.reviewDone.test.ts", "hulk.roadmapReq.test.ts"] }
+  { "id": "req-completion", "modelGateIds": ["USER_CONFIRMATION_REQUIRED"], "proofFiles": ["gates.reviewDone.test.ts", "work.roadmapReq.test.ts"] }
 ]

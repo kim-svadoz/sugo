@@ -1,4 +1,4 @@
-import type { Checkpoint, RoadmapNode, RoadmapWorkResult, Spec, Task, WorkLog } from "../hulk/types.js";
+import type { Checkpoint, RoadmapNode, RoadmapWorkResult, Spec, Task, WorkLog } from "../work/types.js";
 import type { PrRefs } from "../prRefs.js";
 
 /**

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseRequirementsFromPrd, promotePrdRequirements, reqConfirmId, requirementNodeId } from "../src/hulk/roadmapReq.js";
+import { parseRequirementsFromPrd, promotePrdRequirements, reqConfirmId, requirementNodeId } from "../src/work/roadmapReq.js";
 
 describe("parseRequirementsFromPrd — ### REQ-XXX: 헤딩만 인식한다", () => {
   it("스텁 범위 표시와 대시 구분자를 가진 실제 PRD 요구사항도 빠뜨리지 않는다", () => {

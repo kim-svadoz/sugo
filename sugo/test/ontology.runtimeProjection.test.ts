@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LINK_TYPES } from "../src/ontology/model.js";
 import { projectSessionOntology } from "../src/ontology/runtimeProjection.js";
-import type { Task } from "../src/hulk/types.js";
+import type { Task } from "../src/work/types.js";
 import type { PlanSession } from "../src/types.js";
 
 function session(overrides: Partial<PlanSession> = {}): PlanSession {
@@ -15,8 +15,8 @@ function session(overrides: Partial<PlanSession> = {}): PlanSession {
     data: {
       mode: "patch",
       prdPath: "/project/sugo/features/payment/prd.md",
-      hulkWorkspace: "payments",
-      hulkTaskId: "task-payment",
+      linkedWorkspace: "payments",
+      linkedTaskId: "task-payment",
       patch: { parentPrdPath: "/project/prd.md", version: 2, baseWorkResultPath: "/project/work-result.md", featureDir: "/project" },
       baselineGate: {
         required: true,

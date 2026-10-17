@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer } from "node:http";
 import { expect, it } from "vitest";
-import { addRoadmapNode, recordRoadmapWorkResult, pullRoadmapOrdering, getRoadmapNode } from "../src/hulk/roadmap.js";
+import { addRoadmapNode, recordRoadmapWorkResult, pullRoadmapOrdering, getRoadmapNode } from "../src/work/roadmap.js";
 import { buildWorkResultReport } from "../src/workResultReport.js";
 import { labelId } from "../src/labelGuard.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
@@ -52,7 +52,7 @@ it("pull applies dashboard-owned approval/revoke to work-result and rejects a di
     await pullRoadmapOrdering("ws");
     expect((await getRoadmapNode("ws", "task"))?.workResult?.report?.completionGrade).toBe("unverified");
     await saveSession({ id: "plan-legacy", state: "DONE", projectPath: home, featureName: "f", startedAt: "2026-10-02", updatedAt: "2026-10-02",
-      data: { mode: "plan", hulkWorkspace: "ws", hulkTaskId: "task", chainInfo: { changedFiles: [], analyzeAttempts: 0, analyzePassed: null,
+      data: { mode: "plan", linkedWorkspace: "ws", linkedTaskId: "task", chainInfo: { changedFiles: [], analyzeAttempts: 0, analyzePassed: null,
         testPassedState: "pass", reviewPassed: true, autoLoopRetryCount: 0, workResultPath: path, workResultReport: legacy, bypassLabels: [label] } } } as PlanSession);
     expect((await getRoadmapNode("ws", "task"))?.workResult?.report?.bypassLabels).toEqual([label]);
     remote = { path, report: { ...report, humanApprovals: [approval], completionGrade: "verified_by_human" } };

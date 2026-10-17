@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { addSpec, getSpec, listSpecs } from "../hulk/spec.js";
+import { addSpec, getSpec, listSpecs } from "../work/spec.js";
 
 const SPEC_TYPES = ["architecture", "api-design", "business-rule", "data-model", "flow", "other"] as const;
 
 export const sugoSpecInputSchema = {
   action: z.enum(["add", "list", "get"]),
-  workspace: z.string().describe("HULK 워크스페이스 이름"),
+  workspace: z.string().describe("워크스페이스 이름"),
   name: z.string().optional().describe("add/get action에 필요"),
   type: z.enum(SPEC_TYPES).optional().describe("add action에 필요"),
   tags: z.array(z.string()).optional(),

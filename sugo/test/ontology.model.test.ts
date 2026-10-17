@@ -13,10 +13,10 @@ import {
   WORKFLOW_STATES,
 } from "../src/ontology/model.js";
 import { PLAN_ACTIONS, PLAN_STATES } from "../src/types.js";
-import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../src/hulk/types.js";
+import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../src/work/types.js";
 
 /**
- * §2.6 drift lock — 온톨로지(선언)와 런타임(plan/types, hulk/types)이 갈라지는 순간 실패한다.
+ * §2.6 drift lock — 온톨로지(선언)와 런타임(plan/types, work/types)이 갈라지는 순간 실패한다.
  * 이 테스트가 없으면 model.ts는 "예쁜 문서"로 전락하고, 실제 강제력은 손관리 상수로 되돌아간다.
  */
 describe("§2 온톨로지 drift lock", () => {

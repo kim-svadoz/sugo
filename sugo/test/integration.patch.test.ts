@@ -10,7 +10,7 @@ import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidenc
 import { handleSugoCheckLethalTrifecta } from "../src/tools/sugoCheckLethalTrifecta.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
 import { handleSugoTask } from "../src/tools/sugoTask.js";
-import { listRoadmapNodes } from "../src/hulk/roadmap.js";
+import { listRoadmapNodes } from "../src/work/roadmap.js";
 import { loadSession } from "../src/session.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -360,7 +360,7 @@ describe("§7.1 Patch — Run 재사용 + seed + patchInfo + lineage", () => {
   });
 
   it("워크스페이스 미등록 프로젝트는 base-task를 찾을 수 없으므로 안전하게 새 Task를 만든다(폴백)", async () => {
-    // 워크스페이스에 아예 등록 안 함 — registryEntry.workspace가 없으므로 HULK 연동 자체가 no-op.
+    // 워크스페이스에 아예 등록 안 함 — registryEntry.workspace가 없으므로 워크스페이스 연동 자체가 no-op.
     const { workResultPath } = await runFirstRoundToReviewDone();
     const patchStart = await call(handleSugoPlan, {
       action: "start",

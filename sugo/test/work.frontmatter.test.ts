@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseFrontmatter, stringifyFrontmatter } from "../src/hulk/frontmatter.js";
+import { parseFrontmatter, stringifyFrontmatter } from "../src/work/frontmatter.js";
 
 describe("frontmatter round-trip", () => {
   it("meta + body를 직렬화했다가 그대로 복원한다", () => {

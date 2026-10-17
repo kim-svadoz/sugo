@@ -1,4 +1,4 @@
-import type { RoadmapNode, Task } from "../hulk/types.js";
+import type { RoadmapNode, Task } from "../work/types.js";
 import type { PlanSession } from "../types.js";
 import { ACTION_TYPES, type ActionName } from "./model.js";
 import { ALLOWED_ACTIONS_BY_STATE } from "./derive.js";
@@ -106,7 +106,7 @@ export function traceTaskArtifacts(session: PlanSession | null, task: Task, node
   return {
     querySchemaVersion: 1 as const,
     taskId: task.id,
-    workspace: workspace ?? session?.data.hulkWorkspace ?? null,
+    workspace: workspace ?? session?.data.linkedWorkspace ?? null,
     sessionId: session?.id ?? null,
     hierarchy: hierarchy.map(({ id, level, title, status, parent, specPath }) => ({ id, level, title, status, parent: parent ?? null, specPath: specPath ?? null })),
     artifacts,

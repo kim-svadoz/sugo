@@ -119,8 +119,8 @@ describe("commit → prRefs 수집 + WorkLog에 실림", () => {
     await call(handleSugoCheckLethalTrifecta, { sessionId: sessionId, tools: [] }); // LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용
     const session = await loadSession(sessionId);
     session.data.reviewConfirmation = {
-      workspace: session.data.hulkWorkspace!,
-      taskId: session.data.hulkTaskId!,
+      workspace: session.data.linkedWorkspace!,
+      taskId: session.data.linkedTaskId!,
       requestedAt: new Date().toISOString(),
       decision: "approve",
       answeredAt: new Date().toISOString(),

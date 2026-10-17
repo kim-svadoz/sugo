@@ -4,11 +4,11 @@ import { ALLOWED_ACTIONS_BY_STATE, PREREQUISITES, RESULT_STATE } from "../ontolo
 import { ONTOLOGY_MODEL_IDENTITY } from "../ontology/identity.js";
 import { projectSessionOntology } from "../ontology/runtimeProjection.js";
 import { loadAllSessions, loadSession, sessionExists } from "../session.js";
-import { getTask, listTasks } from "../hulk/task.js";
+import { getTask, listTasks } from "../work/task.js";
 import { WORKFLOW_GRAPH_ANALYSIS } from "../ontology/workflowGraph.js";
 import { explainSessionBlock, explainSessionState, projectNextActions, traceTaskArtifacts } from "../ontology/operationalQueries.js";
-import { listRoadmapNodes } from "../hulk/roadmap.js";
-import { listWorkspaces } from "../hulk/workspace.js";
+import { listRoadmapNodes } from "../work/roadmap.js";
+import { listWorkspaces } from "../work/workspace.js";
 import type { PlanSession } from "../types.js";
 import { EXPLANATION_PROFILES, explanationProfileContract } from "../ontology/explanationProfile.js";
 
@@ -90,8 +90,8 @@ export async function handleSugoOntology(rawArgs: unknown) {
       });
     }
     const session = await loadSession(args.sessionId);
-    const task = session.data.hulkWorkspace && session.data.hulkTaskId
-      ? await getTask(session.data.hulkWorkspace, session.data.hulkTaskId)
+    const task = session.data.linkedWorkspace && session.data.linkedTaskId
+      ? await getTask(session.data.linkedWorkspace, session.data.linkedTaskId)
       : null;
     return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, projection: projectSessionOntology(session, task) });
   }
@@ -196,7 +196,7 @@ async function readSession(id: string) {
 
 async function latestSessionForTask(taskId: string) {
   return (await loadAllSessions())
-    .filter((session) => session.data.hulkTaskId === taskId)
+    .filter((session) => session.data.linkedTaskId === taskId)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0] ?? null;
 }
 
@@ -208,9 +208,9 @@ async function resolveTask(taskId: string): Promise<{
   message?: string;
 }> {
   const session = await latestSessionForTask(taskId);
-  if (session?.data.hulkWorkspace) {
-    const task = await getTask(session.data.hulkWorkspace, taskId);
-    if (task) return { session, task, workspace: session.data.hulkWorkspace };
+  if (session?.data.linkedWorkspace) {
+    const task = await getTask(session.data.linkedWorkspace, taskId);
+    if (task) return { session, task, workspace: session.data.linkedWorkspace };
   }
   const matches: { workspace: string; task: NonNullable<Awaited<ReturnType<typeof getTask>>> }[] = [];
   for (const workspace of await listWorkspaces(true)) {
@@ -220,7 +220,7 @@ async function resolveTask(taskId: string): Promise<{
   if (matches.length === 0) return { session, error: "TASK_NOT_FOUND", message: `Task를 찾을 수 없습니다: ${taskId}` };
   if (matches.length > 1) return { session, error: "TASK_ID_AMBIGUOUS", message: `여러 워크스페이스에 같은 Task ID가 있습니다: ${taskId}` };
   const matched = matches[0];
-  return { session: session?.data.hulkWorkspace === matched.workspace ? session : null, ...matched };
+  return { session: session?.data.linkedWorkspace === matched.workspace ? session : null, ...matched };
 }
 
 function ontologyError(errorCode: string, message: string) {

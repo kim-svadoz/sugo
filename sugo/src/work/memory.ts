@@ -1,6 +1,6 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { atomicWriteFile } from "../fsUtil.js";
-import { memoryFilePath, workspaceDir } from "../work/storage.js";
+import { memoryFilePath, workspaceDir } from "./storage.js";
 
 /** work/<ws>/memory.md — "기억해" 명령으로 누적되는 자유 메모(§8) */
 export async function appendMemory(workspace: string, note: string): Promise<void> {

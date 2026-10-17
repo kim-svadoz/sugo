@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { z } from "zod";
-import { removeProjectFromWorkspaces } from "../hulk/workspace.js";
+import { removeProjectFromWorkspaces } from "../work/workspace.js";
 import { unregisterProject } from "../harness/registry.js";
 
 export const sugoDeleteInputSchema = {

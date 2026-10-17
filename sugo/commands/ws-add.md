@@ -1,9 +1,9 @@
 ---
-description: Create a HULK workspace that groups related projects. Dashboard “Add Domain” copies this command.
+description: Create a workspace that groups related projects. Dashboard “Add Domain” copies this command.
 argument-hint: <workspace 이름>
 ---
 
-Create a HULK workspace (§8). Input: $ARGUMENTS
+Create a workspace. Input: $ARGUMENTS
 
 ## Procedure
 - Create it with `sugo_workspace(action:"add", name)` at `~/.claude/sugo/work/<name>/workspace.json`.

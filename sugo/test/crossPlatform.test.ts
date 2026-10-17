@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { writePrdFile } from "../src/feature.js";
 import { detectStack } from "../src/harness/stackDetector.js";
-import { slugify } from "../src/hulk/slug.js";
+import { slugify } from "../src/work/slug.js";
 import { handleSugoOverview } from "../src/tools/sugoOverview.js";
 
 /**

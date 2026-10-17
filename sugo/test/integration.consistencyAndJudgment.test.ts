@@ -157,7 +157,7 @@ describe("auto-loop 재시도 카운트 (§4.5 신호)", () => {
   });
 });
 
-describe("sugo_hulk(judgment) — sugo_judgment_report 흡수, 전체 흐름 집계", () => {
+describe("sugo_status(judgment) — 전체 흐름 집계", () => {
   it("완료된 세션들의 신호를 정확히 집계한다", async () => {
     // 세션 1: 정상 완료(환경부재 없음)
     const s1 = await toTestRunning();

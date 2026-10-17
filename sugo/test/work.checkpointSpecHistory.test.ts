@@ -2,16 +2,16 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { addCheckpoint, listCheckpoints } from "../src/hulk/checkpoint.js";
-import { addWorkLog, getWorkLog, listWorkLogs } from "../src/hulk/history.js";
-import { checkpointApplies } from "../src/hulk/matching.js";
-import { appendMemory, readMemory } from "../src/hulk/memory.js";
-import { addSpec, getSpec, listSpecs } from "../src/hulk/spec.js";
+import { addCheckpoint, listCheckpoints } from "../src/work/checkpoint.js";
+import { addWorkLog, getWorkLog, listWorkLogs } from "../src/work/history.js";
+import { checkpointApplies } from "../src/work/matching.js";
+import { appendMemory, readMemory } from "../src/work/memory.js";
+import { addSpec, getSpec, listSpecs } from "../src/work/spec.js";
 
 let fakeHome: string;
 
 beforeEach(() => {
-  fakeHome = mkdtempSync(join(tmpdir(), "sugo-hulk2-home-"));
+  fakeHome = mkdtempSync(join(tmpdir(), "sugo-work2-home-"));
   process.env.SUGO_HOME_OVERRIDE = fakeHome;
 });
 

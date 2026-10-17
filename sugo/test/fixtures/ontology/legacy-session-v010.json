@@ -8,8 +8,8 @@
   "data": {
     "mode": "plan",
     "prdPath": "/legacy/project/sugo/features/20260801/legacy-checkout/prd.md",
-    "hulkWorkspace": "legacy-workspace",
-    "hulkTaskId": "task-legacy-checkout",
+    "linkedWorkspace": "legacy-workspace",
+    "linkedTaskId": "task-legacy-checkout",
     "chainInfo": {
       "changedFiles": ["src/checkout.ts"],
       "analyzeAttempts": 1,

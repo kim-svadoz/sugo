@@ -32,8 +32,8 @@ let fakeHome: string;
 let projectDir: string;
 
 beforeEach(() => {
-  fakeHome = mkdtempSync(join(tmpdir(), "sugo-hulke2e-home-"));
-  projectDir = mkdtempSync(join(tmpdir(), "sugo-hulke2e-project-"));
+  fakeHome = mkdtempSync(join(tmpdir(), "sugo-workrecords-home-"));
+  projectDir = mkdtempSync(join(tmpdir(), "sugo-workrecords-project-"));
   process.env.SUGO_HOME_OVERRIDE = fakeHome;
 });
 
@@ -43,11 +43,11 @@ afterEach(() => {
   rmSync(projectDir, { recursive: true, force: true });
 });
 
-describe("HULK 전체 흐름: workspace 등록 → prd 자동 Task → commit 자동 WorkLog", () => {
-  it("전체 파이프라인이 HULK 데이터를 정확히 누적한다", async () => {
+describe("워크스페이스 연동 전체 흐름: workspace 등록 → prd 자동 Task → commit 자동 WorkLog", () => {
+  it("전체 파이프라인이 작업 기록을 정확히 누적한다", async () => {
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: {}, devDependencies: { typescript: "^5.4.0" } }));
     // strict/moduleResolution 없는 빈 tsconfig는 lang/typescript(/5.x) 하네스의 auto 체크(실제 파일
-    // 실측)를 진짜로 위반한다 — 이 테스트가 검증하려는 건 HULK 누적이라 하네스 위반과 무관해야 한다.
+    // 실측)를 진짜로 위반한다 — 이 테스트가 검증하려는 건 작업 기록 누적이라 하네스 위반과 무관해야 한다.
     writeFileSync(join(projectDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { strict: true, moduleResolution: "bundler" } }));
 
     const add = await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a" });
@@ -110,13 +110,13 @@ describe("HULK 전체 흐름: workspace 등록 → prd 자동 Task → commit �
 
     const commit = await call(handleSugoPlan, { action: "commit", sessionId, userReportedHumanHours: 2.5 });
     expect(commit.isError).toBe(false);
-    expect(commit.data.hulk.taskId).toBe(taskId);
-    expect(commit.data.hulk.checkpointsToReview.length).toBe(1);
-    expect(commit.data.hulk.checkpointsToReview[0].checklist).toEqual(["strict 모드 확인", "any 없음 확인"]);
+    expect(commit.data.workRecord.taskId).toBe(taskId);
+    expect(commit.data.workRecord.checkpointsToReview.length).toBe(1);
+    expect(commit.data.workRecord.checkpointsToReview[0].checklist).toEqual(["strict 모드 확인", "any 없음 확인"]);
 
     const taskAfterCommit = await call(handleSugoTask, { action: "get", workspace: "team-a", taskId });
     expect(taskAfterCommit.data.task.status).toBe("done");
-    expect(taskAfterCommit.data.task.log_id).toBe(commit.data.hulk.workLogId);
+    expect(taskAfterCommit.data.task.log_id).toBe(commit.data.workRecord.workLogId);
 
     const history = await call(handleSugoHistory, { action: "list", workspace: "team-a" });
     expect(history.data.workLogs.length).toBe(1);
@@ -126,7 +126,7 @@ describe("HULK 전체 흐름: workspace 등록 → prd 자동 Task → commit �
     expect(history.data.workLogs[0].metrics.estimatedHumanHours).toBeGreaterThanOrEqual(0);
   });
 
-  it("워크스페이스 없는 프로젝트는 HULK 연동이 자동으로 스킵된다(하위호환)", async () => {
+  it("워크스페이스 없는 프로젝트는 워크스페이스 연동이 자동으로 스킵된다(하위호환)", async () => {
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "no-ws" });
     const sessionId = start.data.sessionId;
     await call(handleSugoPlan, { action: "clarify", sessionId });
@@ -134,7 +134,7 @@ describe("HULK 전체 흐름: workspace 등록 → prd 자동 Task → commit �
     expect(prd.isError).toBe(false);
 
     const status = await call(handleSugoPlan, { action: "status", sessionId });
-    expect(status.isError).toBe(false); // 세션 자체는 정상 진행, HULK 필드만 비어있음
+    expect(status.isError).toBe(false); // 세션 자체는 정상 진행, 연동 필드만 비어있음
   });
 
   it("sugo_workspace remember/recall이 정상 동작한다", async () => {

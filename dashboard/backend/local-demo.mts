@@ -10,7 +10,7 @@ import {
   syncTask,
   syncWorkspace,
 } from "../../sugo/src/dashboard/sync.js";
-import type { Checkpoint, RoadmapNode, Spec, Task, Workspace, WorkLog } from "../../sugo/src/hulk/types.js";
+import type { Checkpoint, RoadmapNode, Spec, Task, Workspace, WorkLog } from "../../sugo/src/work/types.js";
 import { initDb } from "./src/db/init.js";
 import { ingestActivity } from "./src/services/activityService.js";
 
