@@ -7,30 +7,30 @@ import { handleSugoSpecWriter, lintSpecText } from "../src/tools/sugoSpecWriter.
 
 // 구현 세부가 섞인 SPEC과 기획자 수준 SPEC의 예시 줄.
 const V1_LIKE = [
-  "## 현재 동작 (코드 확인, `development` abc48af)",
-  "- 코드: `orders-api` `development` abc48af — `RankingModule.java`, `ModuleRegistry.java:81`",
-  "| `src/main/java/com/example/ordersapi/service/module/item/common/list/RankingModule.java` | 타이틀 처리 분기 |",
-  "| `src/test/.../list/RankingModuleTest.java` | 신규 |",
+  "## 현재 동작 (코드 확인, `main` abc48af)",
+  "- 코드: `account-api` `main` abc48af — `LoginService.java`, `SecurityConfig.java:81`",
+  "| `src/main/java/com/example/account/service/LoginService.java` | 실패 횟수 처리 분기 |",
+  "| `src/test/.../service/LoginServiceTest.java` | 신규 |",
 ].join("\n");
 
 const V2_LIKE = [
-  "# 홈 - 인기 목록 영역 추가",
-  "- SPEC: `spec-manual-53391678` (workspace `orders`)",
-  "- 기한: 2026-10-16",
-  "- 추천 결과는 기존 \"기존 랭킹 추천\" 모듈(`RANKING_MODULE`)을 그대로 사용한다.",
-  "1. 신규 영역의 영역 이름",
-  "- 기획 화면 \"16. 추천 기반 상품 랭킹 추천\" (사용자 제공, 2026-10-01)",
+  "# 로그인 실패 횟수 제한",
+  "- SPEC: `spec-manual-10000001` (workspace `account`)",
+  "- 기한: 2026-11-02",
+  "- 잠금 해제는 기존 \"비밀번호 재설정\" 기능(`PASSWORD_RESET`)을 그대로 사용한다.",
+  "1. 잠금 기준 횟수",
+  "- 기획 화면 \"3. 로그인 실패 안내\" (사용자 제공, 2026-10-20)",
 ].join("\n");
 
 const VALID_SPEC = [
-  "# 홈 - 인기 목록 영역 추가",
-  "## 배경/목적", "사용자에게 필요한 기능을 정의한다.",
-  "## 범위", "### In", "- 신규 영역", "### Out", "- 운영 정책 변경",
-  "## 요구사항", "### REQ-1: 신규 영역", "- 사용자는 신규 영역을 확인할 수 있다.",
-  "## 완료조건", "- 신규 영역이 화면에 표시된다.",
+  "# 로그인 실패 횟수 제한",
+  "## 배경/목적", "반복된 로그인 실패로부터 계정을 보호한다.",
+  "## 범위", "### In", "- 실패 횟수 제한", "### Out", "- 비밀번호 정책 변경",
+  "## 요구사항", "### REQ-1: 계정 잠금", "- 5회 연속 실패하면 10분 동안 로그인할 수 없다.",
+  "## 완료조건", "- 잠긴 계정은 안내 문구를 본다.",
   "## 제약", "- 없음",
   "## Open Questions", "- 없음",
-  "## Sources", "- 홈 - 인기 목록 영역 추가",
+  "## Sources", "- 로그인 실패 횟수 제한",
 ].join("\n\n");
 const V1_STRUCTURED = `${VALID_SPEC}\n\n${V1_LIKE}`;
 
