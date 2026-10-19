@@ -7319,7 +7319,7 @@ var require_db = __commonJS({
         source: "iana",
         compressible: true
       },
-      "application/vnd.3gpp.mcdata-profile+xml": {
+      "application/vnd.3gpp.mcdata-user-profile+xml": {
         source: "iana",
         compressible: true
       },
@@ -7359,7 +7359,7 @@ var require_db = __commonJS({
         source: "iana",
         compressible: true
       },
-      "application/vnd.3gpp.mcptt-profile+xml": {
+      "application/vnd.3gpp.mcptt-user-profile+xml": {
         source: "iana",
         compressible: true
       },
@@ -7395,7 +7395,7 @@ var require_db = __commonJS({
         source: "iana",
         compressible: true
       },
-      "application/vnd.3gpp.mcvideo-profile+xml": {
+      "application/vnd.3gpp.mcvideo-user-profile+xml": {
         source: "iana",
         compressible: true
       },

@@ -59,7 +59,7 @@ const SugoOntologyArgs = z.object(sugoOntologyInputSchema);
  * 코드를 고치기 전에 "이 이음새에서 깨지면 안 되는 게 뭔지"를 한 번에 읽으라는 뜻이다.
  *
  * 파생 테이블(prerequisites/allowedActionsByState/resultState)도 함께 실어 보낸다. 선언만 주면
- * 호출자가 파생 규칙을 각자 구현하게 되고, 그게 곧 divergence다.
+ * 호출자가 파생 규칙을 각자 재구현하게 되고, 그게 곧 divergence다.
  */
 export async function handleSugoOntology(rawArgs: unknown) {
   const args = SugoOntologyArgs.parse(rawArgs);

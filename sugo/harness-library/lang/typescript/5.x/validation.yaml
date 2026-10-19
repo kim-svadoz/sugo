@@ -14,6 +14,6 @@ checks:
       file: "tsconfig.json"
       path: "compilerOptions.moduleResolution"
       in: ["bundler", "node16", "nodenext", "Bundler", "Node16", "NodeNext"]
-  - id: as-is-type-imports
+  - id: verbatim-type-imports
     description: "타입 전용 임포트를 import type으로 구분해야 한다"
     severity: warning

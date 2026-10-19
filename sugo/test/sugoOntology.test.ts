@@ -59,7 +59,7 @@ describe("sugo_ontology 도구", () => {
     expect(r.ok).toBe(true);
     expect(r.ontology.workflowStates).toEqual([...WORKFLOW_STATES]);
     expect(r.ontology.actionTypes).toHaveLength(ACTION_TYPES.length);
-    // 파생 테이블을 같이 주는 게 핵심 — 선언만 주면 호출자가 파생 규칙을 각자 구현하게 된다.
+    // 파생 테이블을 같이 주는 게 핵심 — 선언만 주면 호출자가 파생 규칙을 각자 재구현하게 된다.
     expect(r.derived.allowedActionsByState.PRD).toContain("oracle_done");
     expect(r.derived.prerequisites.ready).toEqual(["JIRA", "PRD"]);
     expect(r.derived.resultState.commit).toBe("DONE");

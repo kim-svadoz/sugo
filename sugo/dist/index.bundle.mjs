@@ -26521,7 +26521,7 @@ function readTagProperty(state, props, inFlow) {
   let tagName;
   if (isVerbatim) {
     while (ch !== 0 && ch !== 62) ch = state.input.charCodeAt(++state.position);
-    if (ch !== 62) throwError(state, "unexpected end of the stream within a as-is tag");
+    if (ch !== 62) throwError(state, "unexpected end of the stream within a verbatim tag");
     tagName = state.input.slice(suffixStart, state.position);
     state.position++;
   } else {
