@@ -12,7 +12,7 @@ import { E2E_UI_URL } from "../port-contract.mjs";
 
 const BASE = E2E_UI_URL;
 // Playwright의 `ControlOrMeta`가 호스트에 맞춰 macOS면 Meta, 그 외엔 Control을 보낸다 —
-// 직접 process.platform으로 갈래를 치지 않는다(그러면 이식성 가드에도 걸리고, 갈래마다
+// 직접 process.platform으로 갈래를 치지 않는다(그러면 플랫폼 하드코딩 검사에도 걸리고, 갈래마다
 // 검증이 반쪽이 된다). 앱 코드는 metaKey || ctrlKey를 둘 다 받는다.
 const MOD = "ControlOrMeta";
 

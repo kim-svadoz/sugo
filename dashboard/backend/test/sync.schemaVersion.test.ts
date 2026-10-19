@@ -94,11 +94,11 @@ describe("sync 라우터 end-to-end", () => {
       const res = await request(app)
         .post("/api/sync/user")
         .set("Authorization", auth)
-        .send({ userId: "u1", displayName: "Kim", schemaVersion: SYNC_SCHEMA_VERSION + 100 })
+        .send({ userId: "u1", displayName: "Alice", schemaVersion: SYNC_SCHEMA_VERSION + 100 })
         .expect(200);
       expect(res.headers["x-sugo-sync-schema-version"]).toBe(String(SYNC_SCHEMA_VERSION));
       const rows = await db.query<{ display_name: string }>("SELECT display_name FROM sugo_users WHERE id='u1'");
-      expect(rows).toEqual([{ display_name: "Kim" }]);
+      expect(rows).toEqual([{ display_name: "Alice" }]);
     } finally {
       warn.mockRestore();
       await db.close();

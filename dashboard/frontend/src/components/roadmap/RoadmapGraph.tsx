@@ -47,7 +47,7 @@ import { presentSteKorean } from "../../lib/steKorean.js";
 import { getScheduleSpecArchives, restoreScheduleSpec, type ScheduleSpecArchive } from "../../api/scheduleSpecArchiveApi.js";
 import { SpecArchiveModal } from "../SpecArchiveModal.js";
 
-/** 치수 상수 — 그대로. */
+/** 카드·컨테이너 치수 상수. */
 const NODE_W = 236;
 const WS_CARD_W = 560;
 const CARD_H = TASK_CARD_HEIGHT;

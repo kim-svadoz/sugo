@@ -38,12 +38,12 @@ describe("sqliteClient — dev/test stand-in DbClient", () => {
     const db = createSqliteClient();
     await db.execScript(schema);
 
-    await db.exec("INSERT INTO sugo_users (id, display_name) VALUES (?, ?)", ["u1", "Kim"]);
+    await db.exec("INSERT INTO sugo_users (id, display_name) VALUES (?, ?)", ["u1", "Alice"]);
     const rows = await db.query<{ id: string; display_name: string }>(
       "SELECT id, display_name FROM sugo_users WHERE id = ?",
       ["u1"]
     );
-    expect(rows).toEqual([{ id: "u1", display_name: "Kim" }]);
+    expect(rows).toEqual([{ id: "u1", display_name: "Alice" }]);
 
     const inserted = await db.exec(
       "INSERT INTO sugo_workspaces (user_id, name) VALUES (?, ?)",

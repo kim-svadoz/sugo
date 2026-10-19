@@ -19,10 +19,10 @@ async function freshApp() {
 describe("POST /api/sync/user", () => {
   it("creates a user and is idempotent on re-sync", async () => {
     const { app, db, auth } = await freshApp();
-    await request(app).post("/api/sync/user").set("Authorization", auth).send({ userId: "u1", displayName: "Kim" }).expect(200);
-    await request(app).post("/api/sync/user").set("Authorization", auth).send({ userId: "u1", displayName: "Kim2" }).expect(200);
+    await request(app).post("/api/sync/user").set("Authorization", auth).send({ userId: "u1", displayName: "Alice" }).expect(200);
+    await request(app).post("/api/sync/user").set("Authorization", auth).send({ userId: "u1", displayName: "Bob" }).expect(200);
     const rows = await db.query<{ display_name: string }>("SELECT display_name FROM sugo_users WHERE id='u1'");
-    expect(rows).toEqual([{ display_name: "Kim2" }]);
+    expect(rows).toEqual([{ display_name: "Bob" }]);
     await db.close();
   });
 

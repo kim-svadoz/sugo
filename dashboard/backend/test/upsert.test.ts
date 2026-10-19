@@ -10,25 +10,25 @@ describe("upsertRow", () => {
   it("inserts when the key doesn't exist yet", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);
-    await upsertRow(db, "sugo_users", { id: "u1" }, { display_name: "Kim" });
+    await upsertRow(db, "sugo_users", { id: "u1" }, { display_name: "Alice" });
     const rows = await db.query<{ id: string; display_name: string }>(
       "SELECT id, display_name FROM sugo_users WHERE id = ?",
       ["u1"]
     );
-    expect(rows).toEqual([{ id: "u1", display_name: "Kim" }]);
+    expect(rows).toEqual([{ id: "u1", display_name: "Alice" }]);
     await db.close();
   });
 
   it("updates in place when the key already exists", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);
-    await upsertRow(db, "sugo_users", { id: "u1" }, { display_name: "Kim" });
-    await upsertRow(db, "sugo_users", { id: "u1" }, { display_name: "Kim2" });
+    await upsertRow(db, "sugo_users", { id: "u1" }, { display_name: "Alice" });
+    await upsertRow(db, "sugo_users", { id: "u1" }, { display_name: "Bob" });
     const rows = await db.query<{ display_name: string }>(
       "SELECT display_name FROM sugo_users WHERE id = ?",
       ["u1"]
     );
-    expect(rows).toEqual([{ display_name: "Kim2" }]);
+    expect(rows).toEqual([{ display_name: "Bob" }]);
     await db.close();
   });
 

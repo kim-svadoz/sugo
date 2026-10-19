@@ -28,7 +28,7 @@ const blocker = {
     changes: ["사용자 ID와 완료 여부 조건을 함께 적용했습니다.", "조회 결과는 최대 30개로 제한했습니다."],
     tests: ["TodoServiceTest 37/37 통과", "기존 check 실패 1건은 별도 표시"],
     designDecisions: ["빈 목록은 캐시하지 않습니다.", "공통 코드는 함수 3줄만 추가했습니다."],
-    knownLimitations: ["운영 환경 시뮬레이터는 실행하지 않았습니다."],
+    knownLimitations: ["메일 발송은 실제로 실행하지 않았습니다."],
   },
 };
 const spec = {

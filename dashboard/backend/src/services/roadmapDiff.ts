@@ -1,5 +1,5 @@
-// Pure functions for the roadmap sync "replace semantics + ownership boundary"
-// contract. No IO here — src/services/syncService.ts
+// Pure functions for roadmap sync: snapshot replace semantics and the ownership boundary.
+// No IO here — src/services/syncService.ts
 // does the actual DB work using these as the decision layer, so the ownership
 // rules can be unit-tested without a database.
 

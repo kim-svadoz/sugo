@@ -302,7 +302,7 @@ async function getOrCreateWorkspaceId(db: DbClient, userId: string, name: string
   return Number(result.insertId);
 }
 
-// "workspace: projects replace + gitSyncedProjects"
+// workspace: replaces the project list and records gitSyncedProjects.
 export async function syncWorkspace(db: DbClient, input: SyncWorkspaceInput): Promise<void> {
   await ensureUser(db, input.userId);
   // 자가보강은 **진입 시점**에 한다. getOrCreateWorkspaceId의 UPDATE 분기에만 두면 신규

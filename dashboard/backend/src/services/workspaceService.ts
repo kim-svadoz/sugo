@@ -238,8 +238,8 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
       roadmap,
       roadmapCount: roadmap.total,
       roadmapDoneCount: roadmap.done,
-      // statusOf/activeOf: "진행 중"의 기준은 태스크가 아니라 **캔버스 노드**다
-      // (카드가 "N task 진행 중"으로 쓰지만 값은 로드맵 active에서 온다).
+      // "진행 중"의 기준은 태스크가 아니라 로드맵 노드다.
+      // 카드의 "N task 진행 중" 값도 로드맵 active에서 온다.
       activeTaskCount: roadmap.active,
       historyCount,
       decisionCount,
