@@ -5,6 +5,7 @@ import { DatePicker } from "./DatePicker.js";
 import { Modal } from "./Modal.js";
 import { safeMarkdown } from "../lib/safeMarkdown.js";
 import { MarkdownTextarea } from "./MarkdownTextarea.js";
+import { isMemoSaveShortcut } from "../lib/memoSaveShortcut.js";
 
 export interface ScheduleMemoDraft { title: string; contentMd: string; dueDate: string | null }
 
@@ -23,9 +24,18 @@ export function ScheduleMemoPanel({ memo, initialDate, busy, onSave, onDelete, o
   const [confirmDelete, setConfirmDelete] = useState(false);
   const rendered = useMemo(() => safeMarkdown(contentMd), [contentMd]);
   const changed = !memo || title !== memo.title || contentMd !== memo.content_md || dueDate !== memo.due_date;
+  const canSave = !busy && Boolean(title.trim()) && changed;
+  const save = () => {
+    if (!canSave) return;
+    void onSave({ title: title.trim(), contentMd, dueDate });
+  };
 
   return <Modal onClose={onClose} size="wide">
-    <div className="flex min-h-[62vh] flex-col gap-4">
+    <div className="flex min-h-[62vh] flex-col gap-4" onKeyDown={(event) => {
+      if (!isMemoSaveShortcut(event)) return;
+      event.preventDefault();
+      save();
+    }}>
       <header className="flex items-start justify-between gap-4">
         <div><div className="font-mono text-[10px] font-bold tracking-[0.14em] text-slate-400">SCHEDULE MEMO</div><h2 className="mt-1 text-lg font-bold text-[var(--color-text-bright)]">{memo ? "메모 수정" : "메모 추가"}</h2></div>
         <div className="flex rounded-lg border border-[var(--color-border)] p-0.5 text-[11px] font-semibold">
@@ -40,7 +50,7 @@ export function ScheduleMemoPanel({ memo, initialDate, busy, onSave, onDelete, o
       </div>
       <footer className="flex items-center justify-between border-t border-[var(--color-border)] pt-3">
         <div>{memo && (!confirmDelete ? <button disabled={busy} onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] font-semibold text-rose-400/80 hover:bg-rose-500/10"><Trash2 size={13} /> 삭제</button> : <div className="flex items-center gap-2 text-[11px] text-rose-200"><span>이 메모를 삭제할까요?</span><button disabled={busy} onClick={() => void onDelete?.()} className="rounded border border-rose-400/40 bg-rose-500/15 px-2 py-1 font-bold">삭제</button><button onClick={() => setConfirmDelete(false)} className="rounded border border-slate-500/30 px-2 py-1">취소</button></div>)}</div>
-        <button disabled={busy || !title.trim() || !changed} onClick={() => void onSave({ title: title.trim(), contentMd, dueDate })} className="flex items-center gap-1.5 rounded-lg border border-slate-400/40 bg-slate-400/15 px-4 py-2 text-[12px] font-bold text-slate-100 hover:bg-slate-400/25 disabled:cursor-not-allowed disabled:opacity-40"><Save size={13} /> {busy ? "저장 중…" : "저장"}</button>
+        <button disabled={!canSave} onClick={save} aria-keyshortcuts="Meta+S Control+S" title="저장 (⌘S / Ctrl+S)" className="flex items-center gap-1.5 rounded-lg border border-slate-400/40 bg-slate-400/15 px-4 py-2 text-[12px] font-bold text-slate-100 hover:bg-slate-400/25 disabled:cursor-not-allowed disabled:opacity-40"><Save size={13} /> {busy ? "저장 중…" : "저장"}</button>
       </footer>
     </div>
   </Modal>;
