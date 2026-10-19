@@ -287,6 +287,38 @@ describe("recordRoadmapWorkResult", () => {
     });
   });
 
+  it("사후 patch가 Task 표시명을 바꾼 뒤에도 v0에는 원래 feat 제목을 보존한다", async () => {
+    await upsertRoadmapNodes("ws1", [
+      { id: "run-a", title: "RUN", level: "workstream", status: "done", dependsOn: [] },
+      {
+        id: "task-a",
+        title: "안전재고 변경을 기존 작업에 연결한다",
+        level: "task",
+        status: "in_progress",
+        dependsOn: [],
+        parent: "run-a",
+      },
+    ]);
+
+    await beginRoadmapPatch(
+      "ws1",
+      "task-a",
+      1,
+      "inventory-safety-stock",
+      "2026-01-02T00:00:00.000Z",
+      "/feature/work-result.md",
+      "재고 재주문 수량 계산",
+    );
+
+    const task = await getRoadmapNode("ws1", "task-a");
+    expect(task?.lineage?.[0]).toMatchObject({
+      version: 0,
+      title: "재고 재주문 수량 계산",
+      workResult: { path: "/feature/work-result.md" },
+    });
+    expect(task?.lineage?.[1]).toMatchObject({ version: 1, title: "inventory-safety-stock" });
+  });
+
   it("완료 산출물은 Task/RUN에 기록하고 patch 계보는 Task에만 기록한다", async () => {
     await upsertRoadmapNodes("ws1", [
       { id: "run-a", title: "RUN", level: "workstream", status: "done", dependsOn: [] },

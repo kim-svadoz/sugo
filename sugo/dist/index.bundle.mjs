@@ -28221,7 +28221,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.37.8" : "0.0.0-dev";
+  return true ? "0.37.9" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29993,19 +29993,23 @@ async function restoredPatchTitle(task) {
   const prdContent = patchPrdPath ? await readFile21(patchPrdPath, "utf8").catch(() => void 0) : void 0;
   return task.patchInfo.title ?? taskCycleTitle(task.patchInfo.seed, task.title, prdContent);
 }
-function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath) {
+function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath, baseTitle) {
   const previousLineage = node.lineage ?? [];
   if (previousLineage.some((entry) => entry.version === patchVersion)) {
     return {
       ...node,
-      lineage: previousLineage.map((entry) => entry.version === patchVersion ? { ...entry, title } : entry)
+      lineage: previousLineage.map((entry) => {
+        if (entry.version === patchVersion) return { ...entry, title };
+        if (entry.version === 0 && baseTitle) return { ...entry, title: baseTitle };
+        return entry;
+      })
     };
   }
   const baseWorkResult = node.workResult?.path ? node.workResult : baseWorkResultPath ? { path: baseWorkResultPath, parentTaskId: node.id, patchVersion: 0 } : void 0;
   const featEntry = patchVersion > 0 && !previousLineage.some((entry) => entry.version === 0) && baseWorkResult?.path ? [{
     version: 0,
     completedAt: baseWorkResult.endedAt ?? baseWorkResult.startedAt ?? startedAt,
-    title: node.title,
+    title: baseTitle ?? node.title,
     summary: baseWorkResult.summary,
     workResult: { ...baseWorkResult, patchVersion: 0 }
   }] : [];
@@ -30109,7 +30113,8 @@ async function reconcileRoadmapWithTasks(workspace, tasks) {
         task.patchInfo.patchVersion,
         await restoredPatchTitle(task),
         task.started_at ?? task.created_at,
-        task.patchInfo.baseWorkResultPath
+        task.patchInfo.baseWorkResultPath,
+        task.title
       ) : nextTask);
       if (status === "done") {
         for (const [id, child] of byId) {
@@ -30124,9 +30129,9 @@ async function getRoadmapNode(workspace, id) {
   const file = await readRoadmapFile(workspace);
   return file.nodes.find((n) => n.id === id) ?? null;
 }
-async function beginRoadmapPatch(workspace, taskId, patchVersion, title, startedAt, baseWorkResultPath) {
+async function beginRoadmapPatch(workspace, taskId, patchVersion, title, startedAt, baseWorkResultPath, baseTitle) {
   await withRoadmap(workspace, async (file) => {
-    const nodes = file.nodes.map((node) => node.id === taskId && node.level === "task" ? withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath) : node);
+    const nodes = file.nodes.map((node) => node.id === taskId && node.level === "task" ? withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath, baseTitle) : node);
     await writeRoadmapFile(workspace, { ...file, nodes });
   });
 }
@@ -32043,7 +32048,8 @@ ${args2.prdContent}` : args2.prdContent;
           session.data.patch.version,
           cycleTitle,
           session.startedAt,
-          session.data.patch.baseWorkResultPath
+          session.data.patch.baseWorkResultPath,
+          baseTask?.title
         );
       }
       const reqNodes = promotePrdRequirements(task.id, prdContent);

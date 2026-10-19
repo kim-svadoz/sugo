@@ -1052,6 +1052,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
           cycleTitle,
           session.startedAt,
           session.data.patch!.baseWorkResultPath,
+          baseTask?.title,
         );
       }
       const reqNodes = promotePrdRequirements(task.id, prdContent);

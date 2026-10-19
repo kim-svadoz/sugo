@@ -30,12 +30,17 @@ function withStartedPatch(
   title: string,
   startedAt: string,
   baseWorkResultPath?: string,
+  baseTitle?: string,
 ): RoadmapNode {
   const previousLineage = node.lineage ?? [];
   if (previousLineage.some((entry) => entry.version === patchVersion)) {
     return {
       ...node,
-      lineage: previousLineage.map((entry) => entry.version === patchVersion ? { ...entry, title } : entry),
+      lineage: previousLineage.map((entry) => {
+        if (entry.version === patchVersion) return { ...entry, title };
+        if (entry.version === 0 && baseTitle) return { ...entry, title: baseTitle };
+        return entry;
+      }),
     };
   }
   const baseWorkResult = node.workResult?.path
@@ -49,7 +54,7 @@ function withStartedPatch(
     ? [{
         version: 0,
         completedAt: baseWorkResult.endedAt ?? baseWorkResult.startedAt ?? startedAt,
-        title: node.title,
+        title: baseTitle ?? node.title,
         summary: baseWorkResult.summary,
         workResult: { ...baseWorkResult, patchVersion: 0 },
       }]
@@ -183,6 +188,7 @@ export async function reconcileRoadmapWithTasks(workspace: string, tasks: Task[]
             await restoredPatchTitle(task),
             task.started_at ?? task.created_at,
             task.patchInfo.baseWorkResultPath,
+            task.title,
           )
         : nextTask);
       if (status === "done") {
@@ -210,10 +216,11 @@ export async function beginRoadmapPatch(
   title: string,
   startedAt: string,
   baseWorkResultPath?: string,
+  baseTitle?: string,
 ): Promise<void> {
   await withRoadmap(workspace, async (file) => {
     const nodes = file.nodes.map((node) => node.id === taskId && node.level === "task"
-      ? withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath)
+      ? withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath, baseTitle)
       : node);
     await writeRoadmapFile(workspace, { ...file, nodes });
   });
