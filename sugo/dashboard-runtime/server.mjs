@@ -45729,8 +45729,8 @@ async function listWorkspaces(db2, userId2) {
       roadmap,
       roadmapCount: roadmap.total,
       roadmapDoneCount: roadmap.done,
-      // statusOf/activeOf: "진행 중"의 기준은 태스크가 아니라 **캔버스 노드**다
-      // (카드가 "N task 진행 중"으로 쓰지만 값은 로드맵 active에서 온다).
+      // "진행 중"의 기준은 태스크가 아니라 로드맵 노드다.
+      // 카드의 "N task 진행 중" 값도 로드맵 active에서 온다.
       activeTaskCount: roadmap.active,
       historyCount,
       decisionCount,
@@ -89941,7 +89941,7 @@ var init_index = __esm({
     init_cors();
     init_asyncHandler();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.29.3" ? { version: "0.29.3" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.29.4" ? { version: "0.29.4" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90053,7 +90053,7 @@ await bootstrapLocalDashboard2(db, {
   settingsPath: join13(sugoDir, "settings.json")
 });
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.29.3", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.29.4", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

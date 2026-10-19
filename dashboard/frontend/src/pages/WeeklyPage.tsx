@@ -5,6 +5,57 @@ import { toWeeklyView, type WeeklyLearningView, type WeeklyTopicView } from "../
 import { buildWeeklyCalendar } from "../lib/weeklyCalendar.js";
 import { cn } from "../lib/utils.js";
 import { readWeeklyRouteState, writeWeeklyRouteState, type WeeklyDetailView } from "../lib/weeklyRouteState.js";
+import { selectWeeklySection } from "../lib/weeklyScrollSpy.js";
+
+function findScrollContainer(element: HTMLElement): HTMLElement | null {
+  let parent = element.parentElement;
+  while (parent) {
+    const overflowY = window.getComputedStyle(parent).overflowY;
+    if ((overflowY === "auto" || overflowY === "scroll") && parent.scrollHeight > parent.clientHeight) return parent;
+    parent = parent.parentElement;
+  }
+  return null;
+}
+
+function useWeeklyScrollSpy(ids: string[], enabled: boolean) {
+  const idsKey = ids.join("\u0000");
+  const [active, setActive] = useState(ids[0] ?? "");
+
+  useEffect(() => setActive(ids[0] ?? ""), [idsKey]);
+  useEffect(() => {
+    if (!enabled || !idsKey) return;
+    const elements = idsKey.split("\u0000").map((id) => document.getElementById(id)).filter((element): element is HTMLElement => Boolean(element));
+    if (elements.length === 0) return;
+    const scrollContainer = findScrollContainer(elements[0]);
+    const scrollTarget: HTMLElement | Window = scrollContainer ?? window;
+    let animationFrame = 0;
+    const update = () => {
+      animationFrame = 0;
+      const viewportTop = scrollContainer?.getBoundingClientRect().top ?? 0;
+      const viewportHeight = scrollContainer?.clientHeight ?? window.innerHeight;
+      const readingLine = viewportTop + Math.min(180, viewportHeight * 0.22);
+      const next = selectWeeklySection(elements.map((element) => {
+        const bounds = element.getBoundingClientRect();
+        return { id: element.id, top: bounds.top, bottom: bounds.bottom };
+      }), readingLine);
+      setActive((current) => current === next ? current : next);
+    };
+    const scheduleUpdate = () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(update);
+    };
+    scheduleUpdate();
+    scrollTarget.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    return () => {
+      scrollTarget.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+    };
+  }, [enabled, idsKey]);
+
+  return [active, setActive] as const;
+}
 
 function Bullets({ items, warn = false }: { items: string[]; warn?: boolean }) {
   return <ul className="space-y-1.5 text-[15px] leading-6 text-[var(--color-text)]">{items.map((item, index) => <li key={`${index}-${item}`} className="flex gap-2.5"><span className={cn("mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full", warn ? "bg-amber-400" : "bg-cyan-400/70")} /><span className="min-w-0 break-words">{item}</span></li>)}</ul>;
@@ -50,8 +101,8 @@ function ReportBody({ detail, tab, onTabChange }: { detail: WeeklyReportDetail; 
   const view = useMemo(() => toWeeklyView(detail.report), [detail]);
   const topicTabs = useMemo(() => view.topics.map((topic, index) => ({ id: `weekly-topic-${index}`, label: topic.title })), [view.topics]);
   const learningTabs = useMemo(() => view.learning.map((item, index) => ({ id: `weekly-learning-${index}`, label: item.name })), [view.learning]);
-  const [activeTopic, setActiveTopic] = useState(topicTabs[0]?.id ?? "");
-  const [activeLearning, setActiveLearning] = useState(learningTabs[0]?.id ?? "");
+  const [activeTopic, setActiveTopic] = useWeeklyScrollSpy(topicTabs.map((item) => item.id), tab === "report");
+  const [activeLearning, setActiveLearning] = useWeeklyScrollSpy(learningTabs.map((item) => item.id), tab === "learning");
   const jumpTo = (id: string, setActive: (id: string) => void) => { setActive(id); document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }); };
   const sections = [["plan", "지난주 계획", view.lastWeekPlan.length], ["topics", "주제", view.topics.length], ["blocked", "막힌 것", view.blocked.length], ["next", "다음 주", view.nextWeek.length]] as const;
   return <div>
