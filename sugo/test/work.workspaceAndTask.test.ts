@@ -116,10 +116,15 @@ describe("findTaskByPrdRef — base-task 매칭(patch가 원본 Run을 재사용
     expect(found?.id).toBe(task.id);
   });
 
-  it("정확 일치가 없으면 파일명만으로 폴백 매칭한다", async () => {
+  it("Windows와 POSIX 구분자 차이는 정규화해 매칭한다", async () => {
     const task = await addTask("team-a", { title: "A", project: "/tmp/proj1", prd_ref: "C:\\proj1\\sugo\\features\\x\\prd.md" });
     const found = await findTaskByPrdRef("team-a", "/proj1/sugo/features/x/prd.md");
     expect(found?.id).toBe(task.id);
+  });
+
+  it("파일명만 같은 다른 프로젝트의 PRD는 매칭하지 않는다", async () => {
+    await addTask("team-a", { title: "A", project: "/tmp/proj1", prd_ref: "/tmp/proj1/sugo/features/x/prd.md" });
+    expect(await findTaskByPrdRef("team-a", "/tmp/proj2/sugo/features/y/prd.md", "/tmp/proj2")).toBeNull();
   });
 
   it("일치하는 태스크가 없으면 null", async () => {

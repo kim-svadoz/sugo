@@ -59,7 +59,7 @@ describe("operational ontology 통합 계약", () => {
     }
 
     const patchAttach = prompt("commands/patch-attach.md");
-    for (const contract of ["patchProvenance:\"captured-post-hoc\"", "postHocBaseRevision", "POST_HOC_BASELINE_REQUIRED"]) {
+    for (const contract of ["patchProvenance:\"captured-post-hoc\"", "postHocBaseRevision", "postHocChangedFiles", "POST_HOC_BASELINE_REQUIRED", "POST_HOC_SCOPE_REQUIRED", "POST_HOC_DUPLICATE", "POST_HOC_LINEAGE_NOT_FOUND"]) {
       expect(patchAttach).toContain(contract);
     }
   });

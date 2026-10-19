@@ -1,5 +1,5 @@
-import { readdir } from "node:fs/promises";
-import { dirname, join, relative } from "node:path";
+import { realpath, readdir, stat } from "node:fs/promises";
+import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { runGit } from "./prRefs.js";
 
 export interface PatchContext {
@@ -11,7 +11,7 @@ export interface PatchContext {
 
 export class PatchEntryError extends Error {
   constructor(
-    public readonly code: "PATCH_FEATURE_DIR_NOT_FOUND" | "PATCH_PARENT_PRD_NOT_FOUND",
+    public readonly code: "PATCH_FEATURE_DIR_NOT_FOUND" | "PATCH_PARENT_PRD_NOT_FOUND" | "PATCH_WORK_RESULT_NOT_FOUND" | "PATCH_WORK_RESULT_INVALID" | "PATCH_PROJECT_MISMATCH",
     message: string,
   ) {
     super(message);
@@ -22,13 +22,13 @@ export interface PostHocBaseline {
   baselineRevision: string;
   headAtCapture: string;
   changedFiles: string[];
-  source: "working-tree" | "committed-range";
+  source: "working-tree" | "committed-range" | "mixed";
   capturedAt: string;
 }
 
 export class PostHocEntryError extends Error {
   constructor(
-    public readonly code: "POST_HOC_GIT_REQUIRED" | "POST_HOC_BASELINE_REQUIRED" | "POST_HOC_BASELINE_INVALID" | "POST_HOC_NO_CHANGES",
+    public readonly code: "POST_HOC_GIT_REQUIRED" | "POST_HOC_BASELINE_REQUIRED" | "POST_HOC_BASELINE_INVALID" | "POST_HOC_NO_CHANGES" | "POST_HOC_SCOPE_REQUIRED" | "POST_HOC_SCOPE_INVALID",
     message: string,
   ) {
     super(message);
@@ -39,7 +39,25 @@ function lines(value: string | null): string[] {
   return value ? value.split("\n").map((line) => line.trim()).filter(Boolean) : [];
 }
 
-export async function capturePostHocBaseline(projectPath: string, requestedBaseRevision?: string, excludedPaths: string[] = []): Promise<PostHocBaseline> {
+function normalizeRepoPath(path: string): string {
+  return path.replace(/\\/g, "/").replace(/^\.\//, "");
+}
+
+function selectConfirmedFiles(available: string[], requested: string[] | undefined): string[] {
+  if (requested === undefined) return available;
+  const selected = [...new Set(requested.map(normalizeRepoPath).filter(Boolean))].sort();
+  if (selected.length === 0) {
+    throw new PostHocEntryError("POST_HOC_SCOPE_REQUIRED", "연결할 변경 파일을 확인한 뒤 명시해야 합니다.");
+  }
+  const availableSet = new Set(available);
+  const invalid = selected.filter((path) => path.startsWith("../") || path.startsWith("/") || !availableSet.has(path));
+  if (invalid.length > 0) {
+    throw new PostHocEntryError("POST_HOC_SCOPE_INVALID", `현재 Git 변경에 없는 파일은 연결할 수 없습니다: ${invalid.join(", ")}`);
+  }
+  return selected;
+}
+
+export async function capturePostHocBaseline(projectPath: string, requestedBaseRevision?: string, excludedPaths: string[] = [], requestedChangedFiles?: string[]): Promise<PostHocBaseline> {
   const head = await runGit(["rev-parse", "HEAD"], projectPath);
   if (!head || !/^[0-9a-f]{40,64}$/.test(head)) {
     throw new PostHocEntryError("POST_HOC_GIT_REQUIRED", "사후 patch 연결은 Git 저장소와 HEAD가 필요합니다.");
@@ -50,8 +68,8 @@ export async function capturePostHocBaseline(projectPath: string, requestedBaseR
     ...lines(await runGit(["diff", "--name-only", "HEAD"], projectPath)),
     ...lines(await runGit(["ls-files", "--others", "--exclude-standard"], projectPath)),
   ])].filter(keep).sort();
-  if (dirtyFiles.length > 0) {
-    return { baselineRevision: head, headAtCapture: head, changedFiles: dirtyFiles, source: "working-tree", capturedAt: new Date().toISOString() };
+  if (dirtyFiles.length > 0 && !requestedBaseRevision) {
+    return { baselineRevision: head, headAtCapture: head, changedFiles: selectConfirmedFiles(dirtyFiles, requestedChangedFiles), source: "working-tree", capturedAt: new Date().toISOString() };
   }
   if (!requestedBaseRevision) {
     throw new PostHocEntryError("POST_HOC_BASELINE_REQUIRED", "이미 커밋된 변경은 변경 전 Git revision을 지정해야 합니다.");
@@ -64,11 +82,13 @@ export async function capturePostHocBaseline(projectPath: string, requestedBaseR
   if (ancestor === null) {
     throw new PostHocEntryError("POST_HOC_BASELINE_INVALID", "지정한 revision이 현재 HEAD의 조상이 아닙니다.");
   }
-  const changedFiles = lines(await runGit(["diff", "--name-only", `${base}..${head}`], projectPath)).filter(keep).sort();
+  const committedFiles = lines(await runGit(["diff", "--name-only", `${base}..${head}`], projectPath)).filter(keep);
+  const availableFiles = [...new Set([...committedFiles, ...dirtyFiles])].sort();
+  const changedFiles = selectConfirmedFiles(availableFiles, requestedChangedFiles);
   if (changedFiles.length === 0) {
     throw new PostHocEntryError("POST_HOC_NO_CHANGES", "지정한 기준선 이후 연결할 변경이 없습니다.");
   }
-  return { baselineRevision: base, headAtCapture: head, changedFiles, source: "committed-range", capturedAt: new Date().toISOString() };
+  return { baselineRevision: base, headAtCapture: head, changedFiles, source: dirtyFiles.length > 0 ? "mixed" : "committed-range", capturedAt: new Date().toISOString() };
 }
 
 const PATCH_FILE_RE = /^(prd|work-result)-patch-v(\d+)\.md$/i;
@@ -112,15 +132,33 @@ export function patchWorkResultFilename(version: number): string {
  * 계산한다. 같은 디렉터리의 prd.md를 부모 PRD로 우선하고, 없으면 PRD-patch-v*.md 최신본을 쓴다.
  * 둘 다 없으면 진입 불가(PATCH_PARENT_PRD_NOT_FOUND).
  */
-export async function resolvePatchContext(workResultPath: string): Promise<PatchContext> {
-  const featureDir = dirname(workResultPath);
+export async function resolvePatchContext(workResultPath: string, projectPath?: string): Promise<PatchContext> {
+  const resolvedWorkResult = resolve(workResultPath);
+  const resultName = basename(resolvedWorkResult);
+  if (!/^work-result(?:-patch-v\d+)?\.md$/i.test(resultName)) {
+    throw new PatchEntryError("PATCH_WORK_RESULT_INVALID", `정식 work-result 파일만 patch 진입점으로 사용할 수 있습니다: ${workResultPath}`);
+  }
+  const featureDir = dirname(resolvedWorkResult);
   let filenames: string[];
   try {
     filenames = await readdir(featureDir);
   } catch {
     throw new PatchEntryError("PATCH_FEATURE_DIR_NOT_FOUND", `feature 디렉터리를 찾을 수 없습니다: ${featureDir}`);
   }
-
+  try {
+    const entry = await stat(resolvedWorkResult);
+    if (!entry.isFile()) throw new Error("not a file");
+  } catch {
+    throw new PatchEntryError("PATCH_WORK_RESULT_NOT_FOUND", `work-result 파일을 찾을 수 없습니다: ${workResultPath}`);
+  }
+  if (projectPath) {
+    const featuresRoot = await realpath(resolve(projectPath, "sugo", "features")).catch(() => resolve(projectPath, "sugo", "features"));
+    const canonicalFeatureDir = await realpath(featureDir).catch(() => featureDir);
+    const rel = relative(featuresRoot, canonicalFeatureDir);
+    if (rel === "" || rel === ".." || rel.startsWith(`..${sep}`) || resolve(featuresRoot, rel) !== canonicalFeatureDir) {
+      throw new PatchEntryError("PATCH_PROJECT_MISMATCH", `work-result가 대상 프로젝트의 sugo/features에 속하지 않습니다: ${workResultPath}`);
+    }
+  }
   let parentPrdPath: string;
   if (filenames.includes("prd.md")) {
     parentPrdPath = join(featureDir, "prd.md");
@@ -137,5 +175,5 @@ export async function resolvePatchContext(workResultPath: string): Promise<Patch
 
   const version = computeNextPatchVersion(filenames);
 
-  return { parentPrdPath, version, baseWorkResultPath: workResultPath, featureDir };
+  return { parentPrdPath, version, baseWorkResultPath: resolvedWorkResult, featureDir };
 }

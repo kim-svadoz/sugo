@@ -71,6 +71,28 @@ describe("resolvePatchContext — 반드시 거부", () => {
       code: "PATCH_PARENT_PRD_NOT_FOUND",
     });
   });
+
+  it("실재하지 않거나 정식 work-result가 아닌 경로는 거부한다", async () => {
+    const dir = tmpFeatureDir();
+    writeFileSync(join(dir, "prd.md"), "REQ-1: 최초 요구사항");
+    await expect(resolvePatchContext(join(dir, "work-result.md"))).rejects.toMatchObject({
+      code: "PATCH_WORK_RESULT_NOT_FOUND",
+    });
+    writeFileSync(join(dir, "notes.md"), "임의 문서");
+    await expect(resolvePatchContext(join(dir, "notes.md"))).rejects.toMatchObject({
+      code: "PATCH_WORK_RESULT_INVALID",
+    });
+  });
+
+  it("대상 프로젝트의 sugo/features 밖에 있는 결과는 거부한다", async () => {
+    const project = tmpFeatureDir();
+    const outside = tmpFeatureDir();
+    writeFileSync(join(outside, "prd.md"), "REQ-1: 다른 프로젝트");
+    writeFileSync(join(outside, "work-result.md"), "완료 결과");
+    await expect(resolvePatchContext(join(outside, "work-result.md"), project)).rejects.toMatchObject({
+      code: "PATCH_PROJECT_MISMATCH",
+    });
+  });
 });
 
 describe("resolvePatchContext — 반드시 허용", () => {
@@ -140,6 +162,19 @@ describe("capturePostHocBaseline", () => {
     });
   });
 
+  it("사용자가 확정하지 않은 변경 범위는 거부하고 선택한 파일만 캡처한다", async () => {
+    const dir = gitProject();
+    writeFileSync(join(dir, "app.ts"), "export const value = 2;\n");
+    writeFileSync(join(dir, "unrelated.ts"), "export const unrelated = true;\n");
+
+    await expect(capturePostHocBaseline(dir, undefined, [], [])).rejects.toMatchObject({ code: "POST_HOC_SCOPE_REQUIRED" });
+    await expect(capturePostHocBaseline(dir, undefined, [], ["missing.ts"])).rejects.toMatchObject({ code: "POST_HOC_SCOPE_INVALID" });
+    await expect(capturePostHocBaseline(dir, undefined, [], ["app.ts"])).resolves.toMatchObject({
+      changedFiles: ["app.ts"],
+      source: "working-tree",
+    });
+  });
+
   it("clean 저장소는 명시한 이전 revision이 없으면 거부한다", async () => {
     const dir = gitProject();
     await expect(capturePostHocBaseline(dir)).rejects.toMatchObject({ code: "POST_HOC_BASELINE_REQUIRED" });
@@ -156,6 +191,21 @@ describe("capturePostHocBaseline", () => {
       baselineRevision: base,
       changedFiles: ["app.ts"],
       source: "committed-range",
+    });
+  });
+
+  it("커밋된 변경과 미커밋 변경이 함께 있으면 두 범위를 하나의 명시적 scope로 캡처한다", async () => {
+    const dir = gitProject();
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: dir, encoding: "utf8" }).trim();
+    writeFileSync(join(dir, "app.ts"), "export const value = 3;\n");
+    execFileSync("git", ["add", "app.ts"], { cwd: dir });
+    execFileSync("git", ["commit", "-m", "change"], { cwd: dir });
+    writeFileSync(join(dir, "followup.ts"), "export const followup = true;\n");
+
+    await expect(capturePostHocBaseline(dir, base, [], ["app.ts", "followup.ts"])).resolves.toMatchObject({
+      baselineRevision: base,
+      changedFiles: ["app.ts", "followup.ts"],
+      source: "mixed",
     });
   });
 });

@@ -128,6 +128,12 @@ describe("사후 patch 연결 — 서버 강제 계약", () => {
       action: "start", projectPath: projectDir, featureName: "login", workResultPath, patchProvenance: "captured-post-hoc",
     });
     expect(noSeed.data.errorCode).toBe("POST_HOC_SEED_REQUIRED");
+
+    const noScope = await call(handleSugoPlan, {
+      action: "start", projectPath: projectDir, featureName: "login", workResultPath,
+      seed: "수정 연결", patchProvenance: "captured-post-hoc",
+    });
+    expect(noScope.data.errorCode).toBe("POST_HOC_SCOPE_REQUIRED");
   });
 
   it("dirty 변경의 Git 기준선·변경파일·출처를 세션과 patch PRD에 서버가 기록한다", async () => {
@@ -135,7 +141,7 @@ describe("사후 patch 연결 — 서버 강제 계약", () => {
     writeFileSync(join(projectDir, "app.ts"), "export const value = 2;\n");
     const start = await call(handleSugoPlan, {
       action: "start", projectPath: projectDir, featureName: "login", workResultPath,
-      seed: "대화에서 수정한 값을 기존 login 작업에 연결", patchProvenance: "captured-post-hoc",
+      seed: "대화에서 수정한 값을 기존 login 작업에 연결", patchProvenance: "captured-post-hoc", postHocChangedFiles: ["app.ts"],
     });
     expect(start.isError).toBe(false);
     const sessionId = start.data.sessionId as string;
@@ -147,6 +153,60 @@ describe("사후 patch 연결 — 서버 강제 계약", () => {
     const content = readFileSync(prd.data.prdPath, "utf8");
     expect(content).toContain("Provenance: captured-post-hoc");
     expect(content).toContain(`Baseline: ${session.data.postHocCapture?.baselineRevision}`);
+  });
+
+  it("다른 프로젝트의 work-result에는 현재 프로젝트 변경을 연결하지 않는다", async () => {
+    prepareGitPatch();
+    writeFileSync(join(projectDir, "app.ts"), "export const value = 2;\n");
+    const other = mkdtempSync(join(tmpdir(), "sugo-other-project-"));
+    try {
+      const featureDir = join(other, "sugo", "features", "20261016", "other");
+      mkdirSync(featureDir, { recursive: true });
+      writeFileSync(join(featureDir, "prd.md"), VALID_PRD);
+      const foreignResult = join(featureDir, "work-result.md");
+      writeFileSync(foreignResult, "완료 결과");
+      const result = await call(handleSugoPlan, {
+        action: "start", projectPath: projectDir, featureName: "login", workResultPath: foreignResult,
+        seed: "잘못된 연결", patchProvenance: "captured-post-hoc", postHocChangedFiles: ["app.ts"],
+      });
+      expect(result.data.errorCode).toBe("PATCH_PROJECT_MISMATCH");
+    } finally {
+      rmSync(other, { recursive: true, force: true });
+    }
+  });
+
+  it("동일한 변경 범위와 계보를 두 번 연결하지 않는다", async () => {
+    const workResultPath = prepareGitPatch();
+    writeFileSync(join(projectDir, "app.ts"), "export const value = 2;\n");
+    const args = {
+      action: "start", projectPath: projectDir, featureName: "login", workResultPath,
+      seed: "동일 변경", patchProvenance: "captured-post-hoc", postHocChangedFiles: ["app.ts"],
+    };
+    expect((await call(handleSugoPlan, args)).isError).toBe(false);
+    const duplicate = await call(handleSugoPlan, args);
+    expect(duplicate.data.errorCode).toBe("POST_HOC_DUPLICATE");
+  });
+
+  it("등록된 Workspace에서 기존 Task 계보를 찾지 못하면 새 Task를 만들지 않고 중단한다", async () => {
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "post-hoc-missing-lineage" });
+    execFileSync("git", ["init"], { cwd: projectDir });
+    execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: projectDir });
+    execFileSync("git", ["config", "user.name", "Test"], { cwd: projectDir });
+    writeFileSync(join(projectDir, "app.ts"), "export const value = 1;\n");
+    execFileSync("git", ["add", "."], { cwd: projectDir });
+    execFileSync("git", ["commit", "-m", "initial"], { cwd: projectDir });
+    const featureDir = join(projectDir, "sugo", "features", "20261016", "login");
+    mkdirSync(featureDir, { recursive: true });
+    writeFileSync(join(featureDir, "prd.md"), VALID_PRD);
+    const workResultPath = join(featureDir, "work-result.md");
+    writeFileSync(workResultPath, "완료 결과");
+    writeFileSync(join(projectDir, "app.ts"), "export const value = 2;\n");
+
+    const result = await call(handleSugoPlan, {
+      action: "start", projectPath: projectDir, featureName: "login", workResultPath,
+      seed: "변경 연결", patchProvenance: "captured-post-hoc", postHocChangedFiles: ["app.ts"],
+    });
+    expect(result.data.errorCode).toBe("POST_HOC_LINEAGE_NOT_FOUND");
   });
 });
 

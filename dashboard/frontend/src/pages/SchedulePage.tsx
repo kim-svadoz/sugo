@@ -20,7 +20,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { createQuickSpec, getSpecDraft, renameRoadmapNode, setDueDate, setProject, setWorkBranch, updateSpecDraft, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
-import { buildFeatCommand, buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
+import { buildFeatCommand, buildPatchAttachCommand, buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { SpecArchiveModal } from "../components/SpecArchiveModal.js";
@@ -972,13 +972,22 @@ export function SchedulePage() {
                 </div>
               )}
               {selected.status === "done" && (
-                <button
-                  disabled={!latestWorkResultPath(selected)}
-                  onClick={() => { const path = latestWorkResultPath(selected); if (path) void copyWorkflowCommand("patch", buildPatchCommand(path)); }}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-violet-400 px-4 text-[12px] font-bold text-slate-950 transition-colors hover:bg-violet-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-                >
-                  {copied === "patch" ? <Check size={14} /> : <Copy size={14} />} {copied === "patch" ? "복사됨" : latestWorkResultPath(selected) ? "Patch 명령 복사" : "Patch 준비 중"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    disabled={!latestWorkResultPath(selected)}
+                    onClick={() => { const path = latestWorkResultPath(selected); if (path) void copyWorkflowCommand("patch", buildPatchCommand(path)); }}
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-violet-400 px-4 text-[12px] font-bold text-slate-950 transition-colors hover:bg-violet-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                  >
+                    {copied === "patch" ? <Check size={14} /> : <Copy size={14} />} {copied === "patch" ? "복사됨" : latestWorkResultPath(selected) ? "새 Patch 시작" : "Patch 준비 중"}
+                  </button>
+                  <button
+                    disabled={!latestWorkResultPath(selected)}
+                    onClick={() => { const path = latestWorkResultPath(selected); if (path) void copyWorkflowCommand("patch-attach", buildPatchAttachCommand(path)); }}
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-400/[0.08] px-4 text-[12px] font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:text-slate-500"
+                  >
+                    {copied === "patch-attach" ? <Check size={14} /> : <Copy size={14} />} {copied === "patch-attach" ? "복사됨" : "기존 변경 연결"}
+                  </button>
+                </div>
               )}
               </div>
               {!selected.project_path && <p className="mt-3 text-[10.5px] text-amber-300">Repository를 선택하면 명령을 생성할 수 있습니다.</p>}

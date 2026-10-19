@@ -96,11 +96,22 @@ AWS CLI 직접 호출 제한을 원하지 않으면 Console의 Settings에서 �
 /sugo:patch /absolute/path/to/work-result.md 제한 횟수를 설정으로 변경
 ```
 
+일반 대화에서 이미 수정한 내용을 뒤늦게 기존 작업에 연결할 때는 `patch-attach`를 사용합니다. 경로를
+생략하면 현재 프로젝트의 완료 결과 후보를 보여줍니다. Sugo는 Git 변경 파일을 먼저 보여주고 사용자가
+확정한 파일만 연결합니다. 다른 프로젝트의 결과, 기존 Dashboard 계보가 없는 결과, 이미 연결한 동일
+변경은 거부합니다.
+
+```text
+/sugo:patch-attach
+/sugo:patch-attach /absolute/path/to/work-result.md
+```
+
 | 자주 쓰는 명령 | 용도 |
 | --- | --- |
 | `/sugo:status` | 프로젝트 상태 확인. 세부 진단은 MCP `sugo_status`의 `health`·`judgment` 옵션 사용 |
 | `/sugo:ws-list`, `/sugo:ws-status` | Workspace 목록·진행상황 확인 |
 | `/sugo:spec-writer` | Schedule에서 선택한 SPEC 초안을 문서화하고 같은 카드에 연결 |
+| `/sugo:patch-attach` | 일반 대화에서 이미 만든 변경을 선택한 기존 작업의 다음 patch로 검증·연결 |
 | `/sugo:validate` | 프로젝트 하네스의 검증 규칙 대조 |
 | `/sugo:checkpoint-sync` | Console의 체크포인트를 프로젝트 규칙으로 가져오기 |
 | `/sugo:version` | 설치된 플러그인 버전 확인 |

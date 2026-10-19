@@ -99,13 +99,18 @@ export async function getTask(workspace: string, taskId: string): Promise<Task |
   return file.tasks.find((t) => t.id === taskId) ?? null;
 }
 
-/** base-task 매칭은 ref 파일명 우선: patch가 기존 Run을 재사용하려면 부모 PRD 경로로
- * 기존 태스크를 찾아야 한다. prd_ref가 정확히 일치하는 태스크를 우선하고, 없으면 파일명만이라도
- * 같은 태스크를 찾는다(경로 표기가 미묘하게 다른 경우의 방어적 폴백). */
-export async function findTaskByPrdRef(workspace: string, prdRefPath: string): Promise<Task | null> {
+function normalizedRef(path: string): string {
+  return path.replace(/\\/g, "/").replace(/^[A-Za-z]:/, "").replace(/\/{2,}/g, "/");
+}
+
+/** patch는 기존 Run만 재사용해야 한다. 전체 경로와 프로젝트 소유권을 함께 대조하며,
+ * 흔한 `prd.md` 파일명만으로는 절대 계보를 추측하지 않는다. */
+export async function findTaskByPrdRef(workspace: string, prdRefPath: string, projectPath?: string): Promise<Task | null> {
   const file = await readTasksFile(workspace);
-  const exact = file.tasks.find((t) => t.prd_ref === prdRefPath);
-  if (exact) return exact;
-  const targetFilename = prdRefPath.split(/[\\/]/).pop();
-  return file.tasks.find((t) => t.prd_ref && t.prd_ref.split(/[\\/]/).pop() === targetFilename) ?? null;
+  const target = normalizedRef(prdRefPath);
+  const project = projectPath ? normalizedRef(projectPath) : undefined;
+  return file.tasks.find((task) =>
+    !!task.prd_ref
+    && normalizedRef(task.prd_ref) === target
+    && (!project || normalizedRef(task.project) === project)) ?? null;
 }

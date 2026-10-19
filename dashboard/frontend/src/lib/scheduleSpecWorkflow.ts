@@ -29,3 +29,8 @@ export function buildPatchCommand(workResultPath: string): string {
   if (!workResultPath.trim()) throw new Error("WORK_RESULT_REQUIRED");
   return `/sugo:patch ${quoted(workResultPath)}`;
 }
+
+export function buildPatchAttachCommand(workResultPath: string): string {
+  if (!workResultPath.trim()) throw new Error("WORK_RESULT_REQUIRED");
+  return `/sugo:patch-attach ${quoted(workResultPath)}`;
+}

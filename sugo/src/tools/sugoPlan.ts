@@ -87,6 +87,8 @@ export const sugoPlanInputSchema = {
     .describe("start action: 일반 patch는 native, 이미 수행한 변경 연결은 captured-post-hoc"),
   postHocBaseRevision: z.string().optional()
     .describe("captured-post-hoc에서 변경이 이미 커밋된 경우 필요한 변경 전 Git revision"),
+  postHocChangedFiles: z.array(z.string()).optional()
+    .describe("captured-post-hoc에서 사용자가 연결 대상으로 확인한 저장소 상대경로 목록"),
   specDraftDecision: z
     .enum(["link", "new"])
     .optional()
@@ -633,7 +635,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
   let patchContext: PatchContext | undefined;
   if (action === "start" && args.workResultPath) {
     try {
-      patchContext = await resolvePatchContext(args.workResultPath);
+      patchContext = await resolvePatchContext(args.workResultPath, args.projectPath);
     } catch (err) {
       if (err instanceof PatchEntryError) return errorResult(err.code, err.message);
       throw err;
@@ -644,11 +646,26 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (!args.workResultPath || !patchContext) return errorResult("POST_HOC_PATCH_REQUIRED", "사후 연결은 기존 work-result 경로가 필요합니다.");
     if (!args.seed?.trim()) return errorResult("POST_HOC_SEED_REQUIRED", "사후 연결은 현재 대화의 사용자 의도 요약이 필요합니다.");
     if (!args.projectPath) return errorResult("PROJECT_PATH_REQUIRED", "사후 연결은 프로젝트 경로가 필요합니다.");
+    if (!args.postHocChangedFiles?.length) return errorResult("POST_HOC_SCOPE_REQUIRED", "Git 변경 목록을 사용자에게 보여주고 연결할 파일을 확정해야 합니다.");
     try {
-      postHocCapture = await capturePostHocBaseline(args.projectPath, args.postHocBaseRevision, [patchContext.featureDir]);
+      postHocCapture = await capturePostHocBaseline(args.projectPath, args.postHocBaseRevision, [patchContext.featureDir], args.postHocChangedFiles);
     } catch (error) {
       if (error instanceof PostHocEntryError) return errorResult(error.code, error.message);
       throw error;
+    }
+    const duplicate = (await loadAllSessions()).find((candidate) =>
+      candidate.projectPath === args.projectPath
+      && candidate.data.patch?.baseWorkResultPath === patchContext?.baseWorkResultPath
+      && candidate.data.postHocCapture?.baselineRevision === postHocCapture?.baselineRevision
+      && candidate.data.postHocCapture?.headAtCapture === postHocCapture?.headAtCapture
+      && JSON.stringify(candidate.data.postHocCapture?.changedFiles ?? []) === JSON.stringify(postHocCapture?.changedFiles ?? []));
+    if (duplicate) return errorResult("POST_HOC_DUPLICATE", `같은 변경 범위가 이미 연결되어 있습니다: ${duplicate.id}`);
+    const registryEntry = await findRegistryEntry(args.projectPath);
+    if (registryEntry?.workspace) {
+      const owner = await findTaskByPrdRef(registryEntry.workspace, patchContext.parentPrdPath, args.projectPath);
+      if (!owner) {
+        return errorResult("POST_HOC_LINEAGE_NOT_FOUND", "기존 Dashboard 작업 계보를 찾지 못했습니다. Workspace 동기화 후 대상 작업을 다시 선택하세요.");
+      }
     }
   }
 
@@ -953,7 +970,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (registryEntry?.workspace) {
       const cycleTitle = taskCycleTitle(session.data.seed, session.featureName, prdContent);
       let task: Task;
-      const baseTask = isPatch ? await findTaskByPrdRef(registryEntry.workspace, session.data.patch!.parentPrdPath) : null;
+      const baseTask = isPatch ? await findTaskByPrdRef(registryEntry.workspace, session.data.patch!.parentPrdPath, session.projectPath) : null;
       if (baseTask) {
         const patchInfo: TaskPatchInfo = {
           parentTaskId: baseTask.id,
@@ -964,13 +981,15 @@ export async function handleSugoPlan(rawArgs: unknown) {
           prdPath,
         };
         task = (await updateTask(registryEntry.workspace, baseTask.id, { status: "in_progress", patchInfo })) ?? baseTask;
-      } else {
+      } else if (!session.data.postHocCapture) {
         task = await addTask(registryEntry.workspace, {
           title: session.featureName,
           project: session.projectPath,
           status: "in_progress",
           prd_ref: prdPath,
         });
+      } else {
+        return errorResult("POST_HOC_LINEAGE_NOT_FOUND", "기존 Dashboard 작업 계보를 찾지 못해 patch를 새 작업으로 만들지 않았습니다.");
       }
       session = {
         ...session,
