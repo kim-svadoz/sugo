@@ -985,7 +985,7 @@ export function SchedulePage() {
                     onClick={() => { const path = latestWorkResultPath(selected); if (path) void copyWorkflowCommand("patch-attach", buildPatchAttachCommand(path)); }}
                     className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-400/[0.08] px-4 text-[12px] font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:text-slate-500"
                   >
-                    {copied === "patch-attach" ? <Check size={14} /> : <Copy size={14} />} {copied === "patch-attach" ? "복사됨" : "완료한 변경 등록"}
+                    {copied === "patch-attach" ? <Check size={14} /> : <Copy size={14} />} {copied === "patch-attach" ? "복사됨" : "작업 기록 이어붙이기"}
                   </button>
                 </div>
               )}
