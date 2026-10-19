@@ -89941,7 +89941,7 @@ var init_index = __esm({
     init_cors();
     init_asyncHandler();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.29.6" ? { version: "0.29.6" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.29.7" ? { version: "0.29.7" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90053,7 +90053,7 @@ await bootstrapLocalDashboard2(db, {
   settingsPath: join13(sugoDir, "settings.json")
 });
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.29.6", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.29.7", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

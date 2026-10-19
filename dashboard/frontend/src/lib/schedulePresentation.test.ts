@@ -196,7 +196,7 @@ describe("schedule presentation", () => {
     const tools = readFileSync(new URL("./workspaceTools.ts", import.meta.url), "utf8");
     expect(source).toContain("후속 개발");
     expect(source).toContain("새 Patch 시작");
-    expect(source).toContain("기존 변경 연결");
+    expect(source).toContain("완료한 변경 등록");
     expect(source).toContain("작업 컨텍스트");
     expect(source).toContain("작업 준비");
     expect(source).toContain("프로젝트 도구");

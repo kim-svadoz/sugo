@@ -317,8 +317,8 @@ function ProgressTab({
         )}
         {(node.level === "task" || node.level === "workstream") && (node.manual_status ?? node.status) === "done" && workResult?.path && (
           <button type="button" onClick={() => handleCopyPatchBridge("attach")} className="group flex min-h-[108px] flex-col rounded-xl border border-cyan-400/35 bg-gradient-to-br from-cyan-500/10 to-slate-500/[0.04] p-4 text-left transition-all hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-[0_0_24px_rgba(34,211,238,0.1)]">
-            <span className="flex items-center gap-2 text-base font-semibold text-cyan-100"><Copy size={18} /> 기존 변경 연결</span>
-            <span className="mt-auto flex items-center gap-1.5 pt-2 text-xs text-cyan-100/60">{patchCopied === "attach" ? <><Check size={14} /> 명령어 복사됨</> : "일반 대화에서 만든 변경을 검증합니다"}</span>
+            <span className="flex items-center gap-2 text-base font-semibold text-cyan-100"><Copy size={18} /> 완료한 변경 등록</span>
+            <span className="mt-auto flex items-center gap-1.5 pt-2 text-xs text-cyan-100/60">{patchCopied === "attach" ? <><Check size={14} /> 명령어 복사됨</> : "이미 만든 코드 변경을 다음 Patch로 검증·기록합니다"}</span>
           </button>
         )}
         <button type="button" onClick={() => setShowPr((value) => !value)} className="group flex min-h-[108px] flex-col rounded-xl border border-cyan-400/40 bg-gradient-to-br from-cyan-500/15 to-blue-500/[0.05] p-4 text-left transition-all hover:-translate-y-0.5 hover:border-cyan-300/70 hover:shadow-[0_0_24px_rgba(34,211,238,0.12)]">
