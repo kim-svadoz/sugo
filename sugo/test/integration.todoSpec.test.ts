@@ -12,10 +12,10 @@ import type { PlanSession } from "../src/types.js";
 const execFileAsync = promisify(execFile);
 
 /**
- * 스펙 원문의 "하고 싶은 것" 시나리오를 실제 git 저장소로 재현한다:
+ * TODO-SPEC 시나리오를 실제 git 저장소로 재현한다:
  * feature/<이름> 브랜치에서 최초 진입(TODO-SPEC 없음) → 확정 → 생성 → 부분 완료 →
  * 다음 세션에서 자동 로드. 브랜치 조회는 커밋이 최소 1개 있어야 동작한다(unborn HEAD는
- * `git rev-parse --abbrev-ref HEAD`가 exit 128로 실패한다 — 실측 확인).
+ * `git rev-parse --abbrev-ref HEAD`가 exit 128로 실패한다).
  */
 let fakeHome: string;
 let repo: string;
@@ -40,7 +40,7 @@ afterEach(() => {
 
 const parse = (r: { content: { text: string }[] }) => JSON.parse(r.content[0].text);
 
-describe("§4.3-T start — 브랜치 감지 + TODO-SPEC 존재 여부", () => {
+describe("start — 브랜치 감지 + TODO-SPEC 존재 여부", () => {
   it("feature/abc 브랜치에서 TODO-SPEC이 없으면 missing을 반환한다", async () => {
     const r = parse(await handleSugoPlan({ action: "start", projectPath: repo, featureName: "abc" }));
     expect(r.todoSpec.status).toBe("missing");
@@ -64,7 +64,7 @@ describe("§4.3-T start — 브랜치 감지 + TODO-SPEC 존재 여부", () => {
   });
 });
 
-describe("§4.3-T clarify — 최초 목표 분해 확정", () => {
+describe("clarify — 최초 목표 분해 확정", () => {
   it("사용자 확인 없이 확정하려 하면 거부한다", async () => {
     const started = parse(await handleSugoPlan({ action: "start", projectPath: repo, featureName: "abc" }));
     const r = parse(
@@ -103,7 +103,7 @@ describe("§4.3-T clarify — 최초 목표 분해 확정", () => {
   });
 });
 
-describe("§4.3-T commit 직전 — TODO-SPEC 동기화 게이트(COMMIT_PENDING으로 시딩)", () => {
+describe("commit 직전 — TODO-SPEC 동기화 게이트(COMMIT_PENDING으로 시딩)", () => {
   async function seedAtCommitPending(snapshotAtStart: string | null): Promise<string> {
     const id = `plan-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
     const session: PlanSession = {
@@ -195,7 +195,7 @@ describe("§4.3-T commit 직전 — TODO-SPEC 동기화 게이트(COMMIT_PENDING
   });
 });
 
-describe("§4.3-T start — 같은 프로젝트의 다른 resumable 세션을 알려준다(결정 ③, 강제 병합 아님)", () => {
+describe("start — 같은 프로젝트의 다른 resumable 세션을 알려준다(강제 병합 아님)", () => {
   it("이전 세션이 REVIEW_RUNNING으로 막혀 있으면 새 start 응답에 그 세션이 잡힌다", async () => {
     const stuck = parse(await handleSugoPlan({ action: "start", projectPath: repo, featureName: "abc" }));
     await saveSession({ ...(await loadSession(stuck.sessionId)), state: "REVIEW_RUNNING" });
@@ -220,8 +220,8 @@ describe("§4.3-T start — 같은 프로젝트의 다른 resumable 세션을 �
   });
 });
 
-describe("§4.3-T sugo_get_project_context — 세션과 무관하게 자동 로드", () => {
-  it("TODO-SPEC이 있으면 원문을 싣는다(sessionId 불필요)", async () => {
+describe("sugo_get_project_context — 세션과 무관하게 자동 로드", () => {
+  it("TODO-SPEC이 있으면 내용을 싣는다(sessionId 불필요)", async () => {
     const { writeFileSync, mkdirSync } = await import("node:fs");
     mkdirSync(join(repo, "sugo", "docs", "feature", "abc"), { recursive: true });
     writeFileSync(join(repo, "sugo", "docs", "feature", "abc", "TODO-SPEC.md"), "# abc\n## 남은 것\n- [ ] a");

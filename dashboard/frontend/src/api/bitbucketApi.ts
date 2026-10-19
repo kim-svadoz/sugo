@@ -7,7 +7,7 @@ export interface BitbucketStatus {
   updatedAt: string | null;
 }
 
-// §3.5/§6: AUTH-gated (Bearer) - apiFetch/apiJson already attach the token.
+// AUTH-gated (Bearer) - apiFetch/apiJson already attach the token.
 export function getBitbucketStatus(): Promise<BitbucketStatus> {
   return apiJson<BitbucketStatus>("/api/bitbucket");
 }

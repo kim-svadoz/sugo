@@ -34,16 +34,16 @@ beforeEach(() => {
 
 describe("human decision blocker", () => {
   it("records enough context to answer and only resumes the same session with a real decision", async () => {
-    await addRoadmapNode("ws1", { id: "T-1", title: "환불 승인", level: "task", status: "in_progress", dependsOn: [] });
+    await addRoadmapNode("ws1", { id: "T-1", title: "비밀번호 재설정 승인", level: "task", status: "in_progress", dependsOn: [] });
     await blockRoadmapNodeForHuman("ws1", "T-1", {
       schemaVersion: 1, sessionId: "plan-1", stage: "CODE_RUNNING", resumeAction: "code_done",
-      summary: "고액 환불 승인 정책 구현 중", question: "100만원 이상 환불은 누가 승인합니까?",
+      summary: "재설정 승인 정책 구현 중", question: "재설정 요청은 누가 승인합니까?",
       context: ["현재 기준이 없어 권한 검사를 구현할 수 없습니다."],
       options: [{ id: "team-lead", label: "팀장 승인", impact: "승인 지연은 늘지만 통제가 강화됩니다." }],
       blockedNextStep: "승인 정책 구현", createdAt: "2026-09-29T00:00:00.000Z",
     });
     const blocked = await getRoadmapNode("ws1", "T-1");
-    expect(blocked).toMatchObject({ status: "blocked", note: "100만원 이상 환불은 누가 승인합니까?", humanBlocker: { sessionId: "plan-1" } });
+    expect(blocked).toMatchObject({ status: "blocked", note: "재설정 요청은 누가 승인합니까?", humanBlocker: { sessionId: "plan-1" } });
 
     const wrong = await resumeRoadmapNodeWithDecision("ws1", "T-1", "plan-other", "팀장 승인");
     expect(wrong.ok).toBe(false);
@@ -204,11 +204,11 @@ describe("updateRoadmapNodeStatus", () => {
 
 describe("recordRoadmapWorkResult", () => {
   it("재동기화도 이미 시작된 patch 계보를 복원한다", async () => {
-    const featureDir = join(fakeHome, "project", "sugo", "features", "20261012", "검색필터");
+    const featureDir = join(fakeHome, "project", "sugo", "features", "20261012", "할 일 추가");
     mkdirSync(featureDir, { recursive: true });
     const basePrdPath = join(featureDir, "prd.md");
-    writeFileSync(basePrdPath, "# PRD: 검색필터\n");
-    writeFileSync(join(featureDir, "PRD-patch-v1.md"), "# PRD patch v1: 검색필터 — 필터별 조회와 처리 순서\n");
+    writeFileSync(basePrdPath, "# PRD: 할 일 추가\n");
+    writeFileSync(join(featureDir, "PRD-patch-v1.md"), "# PRD patch v1: 할 일 추가 — 항목별 등록과 처리 순서\n");
     await upsertRoadmapNodes("ws1", [{
       id: "task-a", title: "최초 구현", level: "task", status: "done", dependsOn: [], parent: "run-task-a",
       workResult: { path: "/feature/work-result.md", summary: "feat 완료" },
@@ -221,7 +221,7 @@ describe("recordRoadmapWorkResult", () => {
     }]);
     const task = await getRoadmapNode("ws1", "task-a");
     expect(task?.lineage?.map((entry) => entry.version)).toEqual([0, 1]);
-    expect(task?.lineage?.[1].title).toBe("필터별 조회와 처리 순서");
+    expect(task?.lineage?.[1].title).toBe("항목별 등록과 처리 순서");
   });
 
   it("patch 시작 즉시 완료된 feat v0와 진행 중 patch v1을 함께 보존한다", async () => {
@@ -347,7 +347,7 @@ describe("backfillLegacyRoadmapWorkResults", () => {
 });
 
 describe("markRequirementDone — 반드시 거부/허용", () => {
-  it("REQ-CONFIRM을 직접 완료 처리하려 하면 거부한다(에이전트 직접완료 금지, §8.5 코퍼스)", async () => {
+  it("REQ-CONFIRM을 직접 완료 처리하려 하면 거부한다(에이전트 직접완료 금지)", async () => {
     const nodes = promotePrdRequirements("t-1", "### REQ-1: A");
     await addRoadmapNode("ws1", { id: "t-1", title: "기능", level: "task", status: "in_progress", dependsOn: [] });
     await upsertRoadmapNodes("ws1", nodes);

@@ -1,6 +1,6 @@
 // sugo 플러그인 PreToolUse 스코프 가드.
 // test-agent은 테스트 파일만, docs-agent은 문서 파일만 Write/Edit 하도록 tools로는
-// 강제 불가한 "파일 경로" 제약을 훅에서 강제한다(§5b). 다른 에이전트/메인스레드는 통과.
+// 강제 불가한 "파일 경로" 제약을 훅에서 강제한다. 다른 에이전트/메인스레드는 통과.
 //
 // Claude Code hook 규약: PreToolUse 입력이 stdin(JSON)으로 들어오고, deny하려면
 //   {"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny",...}}
@@ -23,7 +23,7 @@ function base(p) {
 export function isTestFile(filePath) {
   const p = norm(filePath);
   const b = base(p);
-  // 원본 대소문자 basename(CamelCase 접미사 판별용)
+  // 입력 그대로의 대소문자 basename(CamelCase 접미사 판별용)
   const raw = String(filePath || '').replace(/\\/g, '/');
   const rb = raw.slice(raw.lastIndexOf('/') + 1);
   // 테스트 디렉터리
@@ -34,7 +34,7 @@ export function isTestFile(filePath) {
   if (/_test\.[a-z0-9]+$/.test(b)) return true; // foo_test.go, foo_test.py
   if (/_spec\.[a-z0-9]+$/.test(b)) return true; // foo_spec.rb
   if (/^test_[^/]*\.[a-z0-9]+$/.test(b)) return true; // test_foo.py
-  // CamelCase 접미사(FooTest.java, UserTests.cs, FooSpec.scala, FooIT.java) — 원본 대소문자로만
+  // CamelCase 접미사(FooTest.java, UserTests.cs, FooSpec.scala, FooIT.java) — 입력 그대로의 대소문자로만
   if (/(Test|Tests|Spec|Specs|IT|ITCase)\.[A-Za-z0-9]+$/.test(rb)) return true;
   return false;
 }

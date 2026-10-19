@@ -14,9 +14,9 @@ const IGNORED_DIR_NAMES = new Set([
 ]);
 
 /**
- * §D.7/sugo_overview: 프로젝트 전체를 재귀 스캔해 tree-sitter가 다루는 언어의 소스파일 경로를
- * 모은다. glob 같은 별도 의존성을 추가하는 대신 node:fs만으로 직접 걷는다(§D.1 완전 자체포함
- * 번들 원칙 — 새 npm 의존성은 번들 크기/esbuild 배너 문제를 다시 불러올 수 있어 피했다).
+ * sugo_overview: 프로젝트 전체를 재귀 스캔해 tree-sitter가 다루는 언어의 소스파일 경로를
+ * 모은다. glob 같은 별도 의존성을 추가하는 대신 node:fs만으로 직접 걷는다(자체포함
+ * 번들 원칙 — 새 npm 의존성은 번들 크기와 빌드 구성을 늘린다).
  * `.`으로 시작하는 디렉터리(.git 등)와 흔한 산출물 디렉터리는 건너뛴다. maxFiles에 도달하면 중단.
  */
 export async function walkSourceFiles(rootDir: string, maxFiles: number): Promise<string[]> {

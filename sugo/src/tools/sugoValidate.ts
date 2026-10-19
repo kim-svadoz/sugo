@@ -43,9 +43,9 @@ function runAutoChecks(
 }
 
 /**
- * §5 review 단계 진입점. 제출된 결과를 프로젝트에 실제 정의된 validation.yaml과 대조하고
+ * review 단계 진입점. 제출된 결과를 프로젝트에 실제 정의된 validation.yaml과 대조하고
  * (존재하지 않는 checkId는 fabricated로 분리), `auto`가 선언된 체크는 서버가 직접 실측해
- * **자기보고보다 실측을 우선**한다(§4.3 런타임 게이트와 같은 원칙).
+ * **자기보고보다 실측을 우선**한다(런타임 게이트와 같은 원칙).
  *
  * 여전히 review_done의 하드 게이트로 연결하지는 않는다. 자기보고 체크에는 "제출 자체가 없으면
  * 자동 pass"라는 한계가 그대로 남아서다(test/validate.test.ts에 고정). 다만 auto 체크는 그

@@ -3,8 +3,8 @@ import type { DetectionContext } from "./types.js";
 /**
  * validation.yaml 체크의 `auto` 선언 — 서버가 직접 확인할 수 있는 체크를 기술한다.
  *
- * 하네스 규칙은 지금까지 전부 review-agent의 자기보고였다. 여기 선언된 체크만큼은 서버가 실측해,
- * §4.3의 런타임 게이트가 그랬듯 **자기보고보다 실측을 우선**한다. 외부 도구(ESLint/ruff 등)에
+ * 하네스 규칙은 기본적으로 review-agent의 자기보고다. 여기 선언된 체크만큼은 서버가 실측해,
+ * 런타임 게이트처럼 **자기보고보다 실측을 우선**한다. 외부 도구(ESLint/ruff 등)에
  * 의존하지 않고 결정적으로 판정 가능한 것만 대상으로 한다 — 판정이 흔들리면 게이트로 쓸 수 없다.
  */
 export type AutoCheckSpec =
@@ -58,14 +58,14 @@ export function parseAutoSpec(raw: unknown): AutoCheckSpec | null {
   }
 
   if (kind === "changed-files-content-absent") {
-    // §P6-2: paths를 정적으로 받지 않는다 — 대상은 항상 "이번 세션에서 바뀐 파일"(ctx.changedFiles)이다.
+    // paths를 정적으로 받지 않는다 — 대상은 항상 "이번 세션에서 바뀐 파일"(ctx.changedFiles)이다.
     // no-secrets처럼 어떤 파일이 바뀔지 미리 알 수 없는 체크(하드코딩 시크릿은 아무 파일에나 생길 수
-    // 있다)에 file-content-absent의 고정 paths는 쓸 수 없어서 이 kind가 필요했다.
+    // 있다)에는 file-content-absent의 고정 paths를 쓸 수 없다.
     if (typeof obj.pattern !== "string" || obj.pattern.length === 0) {
       throw new Error("changed-files-content-absent에는 pattern이 필요합니다.");
     }
     // 대소문자 무시 — apiKey/API_KEY/Api-Key처럼 식별자 케이스가 다양해서, 여기서만 대소문자를
-    // 구분하면 동일한 위반을 케이스 차이로 놓친다. file-content-absent(기존)는 의미가 달라(빌드
+    // 구분하면 동일한 위반을 케이스 차이로 놓친다. file-content-absent는 의미가 달라(빌드
     // 스크립트의 고정 플래그 문자열 등) 대소문자 구분을 유지한다.
     return { kind, pattern: new RegExp(obj.pattern, "i") }; // 깨진 정규식은 여기서 던진다
   }

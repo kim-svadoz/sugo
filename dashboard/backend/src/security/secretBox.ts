@@ -6,7 +6,7 @@ export interface EncryptedSecret {
   tag: string;
 }
 
-// §8: "PAT 암호화: AES-256-GCM, 키 = SECRET_ENC_KEY(base64 32B)". ct/iv/tag
+// PAT 암호화: AES-256-GCM, 키 = SECRET_ENC_KEY(base64 32B). ct/iv/tag
 // stored separately (see user_bitbucket_tokens schema) - never plaintext.
 export function encryptSecret(plaintext: string, keyBase64: string): EncryptedSecret {
   const key = decodeKey(keyBase64);

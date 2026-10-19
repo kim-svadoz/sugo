@@ -3,7 +3,7 @@ description: 'sugo 핵심 파이프라인. 기능 한 건을 PRD에서 커밋까
 argument-hint: [--project <path>] [--spec <spec.md>] [--spec-draft <id>] [--branch <name>] <기능 설명>
 ---
 
-너는 sugo의 feat 파이프라인을 진행한다. `sugo_plan` 상태머신을 스펙 §3 순서대로 몰아가되 게이트를
+너는 sugo의 feat 파이프라인을 진행한다. `sugo_plan` 상태머신을 정의된 순서대로 몰아가되 게이트를
 약화시키지 않는다. 통과는 실행 증거로만 하고 우회는 명시적인 미검증 라벨로만 한다.
 
 요청: $ARGUMENTS
@@ -20,7 +20,7 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`, `-
    `workBranch`가 있으면 Sugo가 원격을 fetch한 뒤 작업 브랜치를 준비한다. 변경 중인 파일이 있거나
    로컬과 원격 이력이 갈라지면 자동 병합하지 말고 에러를 그대로 보고한다.
    workResultPath를 주면 patch로 분기한다(`/sugo:patch` 참고).
-   - **§4.3-T TODO-SPEC(하드 게이트, 브랜치 패턴이면 무조건 — opt-in 아님)**: 응답의 `todoSpec`을
+   - **TODO-SPEC(하드 게이트, 브랜치 패턴이면 무조건 — opt-in 아님)**: 응답의 `todoSpec`을
      본다. `status:"missing"`이면 아직 파일이 없다는 뜻이니 2번에서 최종 목표를 확정해야 한다.
      `status:"loaded"`면 `content`(원문, 요약 아님)를 그대로 읽어 "완료됨"/"남은 것"을 파악하고,
      이번 요청이 남은 항목 중 어디에 해당하는지 사용자와 짧게 맞춘다. `todoSpec` 필드 자체가
@@ -46,26 +46,26 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`, `-
    아님). Roadmap 추적이 필요하면 REQ를 헤딩으로 쓴다.
    TODO-SPEC이 있는 브랜치라면 REQ 태그 옆에 "TODO-SPEC 항목: b" 식으로 참조를 남긴다 — 강제
    게이트는 아니고, 나중에 사람이 PRD와 TODO-SPEC을 대조할 때 도움을 주는 정도다.
-   원본 SPEC에 기획 화면 이미지(`![...](images/...)`)가 있으면 PRD에 "기획 화면" 섹션을 두고 spec.md 기준으로
+   SPEC에 기획 화면 이미지(`![...](images/...)`)가 있으면 PRD에 "기획 화면" 섹션을 두고 spec.md 기준으로
    풀어 쓴 **절대 경로** 링크로 모두 옮긴다. PRD는 다른 위치에 저장되므로 상대경로를 그대로 쓰면 깨진다.
 4. PRD가 비대하면 `decompose` 후 `subtask_start`와 `subtask_done`을 거쳐 `integrate`로 간다.
    아니면 `ready`로 간다.
-5. `baseline_capture`: §4.0 시그널(런타임이나 JDK 상향, 의존성 제거)이 있으면 코딩 전에 그린
+5. `baseline_capture`: baseline 시그널(런타임이나 JDK 상향, 의존성 제거)이 있으면 코딩 전에 그린
    baseline이 필수다.
 6. `contract_start` 후 `contract_done`: **이 단계는 code-agent가 아니라 네(메인 에이전트) 몫이다**
    — `code_start`보다 앞서는 상태라 아직 서브에이전트를 안 띄웠다. 계약테스트를 test-first로 쓰고
    `sugo_record_contract_evidence(sessionId, contractId, phase:"red", command, exitCode)`로 구현 전
    실패를 직접 기록한다. 테스트가 불가능하면 라벨을 붙인다. green은 나중에 test-agent가 같은
-   `contractId`로 기록해 red→green 전이를 완성한다(§10).
+   `contractId`로 기록해 red→green 전이를 완성한다.
 7. `code_start`로 code-agent를 띄운다. 하네스 도구 메뉴가 주입된다.
-8. `code_done`: code-agent가 `sugo_analyze`를 실제로 호출한 뒤에 넘어간다(§4.1의 analyze, baseline,
+8. `code_done`: code-agent가 `sugo_analyze`를 실제로 호출한 뒤에 넘어간다(analyze, baseline,
    wiring, glue, boot 다중 게이트).
 9. `test_start`에서 test-agent로 넘기고(`sugo_chain`으로 인계 — 관례이지 서버가 강제하진 않는다,
    `test_start`/`review_start` 둘 다 게이트가 비어 있다) `test_done`에서 풀검증 명령 증거를
-   대조한다(§4.2).
+   대조한다.
 10. `review_start`에서 review-agent(읽기 전용)로 넘기고 `review_done`에서 게이트를 통과한다:
     `sugo_validate` 호출강제 + 서버 실측 우선, 사용자 확인, summary 품질, 런타임 검증,
-    계약증거(§4.3). PRD 커버리지는 `test_done`의 opt-in 게이트다(review_done이 아님). 여기서
+    계약증거. PRD 커버리지는 `test_done`의 opt-in 게이트다(review_done이 아님). 여기서
     REQ와 REQ-CONFIRM이 자동 완료된다.
     - review-agent가 근거를 반환하면 터미널에 긴 결과를 펼쳐 확인을 묻지 않는다.
       `sugo_roadmap(action:"request_review_confirmation", workspace, id, sessionId, reviewPacket)`으로
@@ -73,9 +73,9 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`, `-
     - Dashboard 결정을 `resume_with_decision`으로 검증한다. `확인, 진행`이면 `review_done`을 호출한다.
       `수정 필요`이면 review_done을 호출하지 않고 해당 내용을 code-agent에 전달한다.
 11. `docs_done`: docs-agent로 README 등을 갱신한다.
-12. `commit`: DONE에서만 커밋을 생성한다(§6, 2커밋 분리, push 금지). 커밋 전에 체크포인트를 확인한다.
+12. `commit`: DONE에서만 커밋을 생성한다(2커밋 분리, push 금지). 커밋 전에 체크포인트를 확인한다.
     커밋 메시지에는 `Co-Authored-By` trailer를 추가하지 않으며 Claude·Codex 등 AI 도구나 모델을 공동저자로 기록하지 않는다.
-    - **§4.3-T TODO-SPEC 동기화(하드 게이트)**: TODO-SPEC이 있는 브랜치인데 세션 시작 이후 파일이
+    - **TODO-SPEC 동기화(하드 게이트)**: TODO-SPEC이 있는 브랜치인데 세션 시작 이후 파일이
       전혀 안 바뀌었으면 서버가 `TODO_SPEC_SYNC_REQUIRED`(또는 파일 자체가 없으면
       `TODO_SPEC_MISSING_AT_COMMIT`)로 `sugo_plan(commit)`을 막는다. **막히면 실제 git commit을
       실행하지 않는다** — 이 세션이 다룬 항목을 TODO-SPEC의 "완료됨"으로 체크하거나, 새로 발견된
@@ -86,7 +86,7 @@ Dashboard에서 복사한 명령이면 `--project`, `--spec`, `--spec-draft`, `-
 
 - 상태를 건너뛰려 하지 않는다. 서버가 `GATE_KEEPER_BLOCKED`로 막는다.
 - 게이트가 막으면 에러코드를 사용자에게 그대로 전하고 실제로 충족시킨다. 라벨로 도망치지 않는다.
-- 환경 부재는 명시 라벨로만 쓴다. 남용하면 완료등급이 강등된다(§4.6).
+- 환경 부재는 명시 라벨로만 쓴다. 남용하면 완료등급이 강등된다.
 - 진행 상황은 대시보드로 논블로킹 미러링된다. 대시보드가 다운돼도 파이프라인은 막히지 않는다.
 
 ### 사람 판단 차단 계약

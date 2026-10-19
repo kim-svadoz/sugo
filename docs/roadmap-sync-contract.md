@@ -1,4 +1,4 @@
-# Roadmap sync size and failure contract — 2026-10-02
+# Roadmap sync size and failure contract
 
 Plugin 0.18.1 / Console 0.11.1 fixes roadmap sync failing at Express's default 100KB JSON limit.
 
@@ -65,5 +65,5 @@ snapshot after newer work has completed.
 Validation: Plugin 103 files / 1,136 tests; Console backend 46 files / 356 tests; frontend 25 files /
 69 tests; all builds/typechecks and Plugin cold-smoke 42 cases passed. HTTP 190KB routing, over-10MiB
 413, permanent-failure health, retry exhaustion/capacity and UTF-8 size bound are covered. Browser QA
-uses `dashboard/e2e/roadmap-payload-flow.mjs` with a real isolated SQLite API and Edge. MySQL was not
-available in this environment; this release changes neither SQL nor the database schema.
+uses `dashboard/e2e/roadmap-payload-flow.mjs` with a real isolated SQLite API and Edge. This release
+changes neither SQL nor the database schema.

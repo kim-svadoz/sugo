@@ -1,6 +1,6 @@
 import type { DbClient } from "../db/client.js";
 
-// §3.7 "calibrated-ratio (유일한 실측): sugo_history 지표의 median+IQR, ≥10행 필요, 1.0~10.0 클램프".
+// calibrated-ratio(유일한 실측): sugo_history 지표의 median+IQR, ≥10행 필요, 1.0~10.0 클램프.
 // 플러그인이 인간공수 추정(estimatedHumanHours = ai_hours × ratio)의 고정 3.5 대신 실측 보정비율을
 // 이 엔드포인트로 fetch한다(sugo/src/dashboard/fetch.ts fetchCalibratedRatio → humanHours.ts).
 
@@ -31,7 +31,7 @@ function quantile(sorted: number[], q: number): number {
 /**
  * 순수 함수: 각 행의 관측 비율 = userReportedHumanHours / (aiExecutionMinutes/60). IQR 밖(1.5×IQR)
  * outlier를 걸러낸 뒤 중앙값을 취하고 [1.0,10.0]로 클램프한다. 유효 표본이 10개 미만이면 null
- * (실측 부족 — 플러그인은 고정 기본값으로 폴백). "실데이터만, 가짜 없음" 원칙(§0/적대적 코퍼스): 표본이
+ * (실측 부족 — 플러그인은 고정 기본값으로 폴백). "실데이터만, 가짜 없음" 원칙: 표본이
  * 모자라면 그럴싸한 값을 지어내지 않고 null을 반환한다.
  */
 export function computeCalibratedRatio(rows: RatioSampleRow[]): number | null {

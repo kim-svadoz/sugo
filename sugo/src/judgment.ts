@@ -22,7 +22,7 @@ export interface JudgmentReport {
   runtimeUnverifiedSessions: number;
   /** code_done의 bootUnverifiedReason 라벨을 사용한 세션 수. */
   bootUnverifiedSessions: number;
-  /** sugo_validate에서 존재하지 않는 checkId가 하나라도 보고된 세션 수(§5 도구 재사용 시그널). */
+  /** sugo_validate에서 존재하지 않는 checkId가 하나라도 보고된 세션 수(도구 재사용 시그널). */
   fabricatedValidationSessions: number;
 }
 
@@ -31,10 +31,9 @@ function minutesBetween(fromIso: string, toIso: string): number {
 }
 
 /**
- * §4.5: 파이프라인에 배선되지 않는 관측 계층 — 게이트를 막지 않고, 누적된 세션 신호를 횡단
+ * 파이프라인에 배선되지 않는 관측 계층 — 게이트를 막지 않고, 누적된 세션 신호를 횡단
  * 집계해 "게이트가 새고 있나"를 한 장으로 낸다. 순수 함수(입력=세션 배열, 부수효과 없음).
- * 스펙의 followUpDefectsTotal(완료 후 결함)은 외부 이슈트래커 연동 없이는 계측 불가라 이번
- * 빌드에는 없음 — Jira 등은 스코프 밖(§12).
+ * 완료 후 결함 수는 외부 이슈트래커 연동 없이는 계측할 수 없어 집계하지 않는다.
  */
 export function computeJudgmentReport(sessions: PlanSession[]): JudgmentReport {
   const total = sessions.length;

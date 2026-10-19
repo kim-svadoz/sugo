@@ -34,7 +34,7 @@ function fetchScheduleSnapshot(userId: string): Promise<ScheduleSnapshot> {
   return request;
 }
 
-/** §7B Schedule 탭 — `useRoadmap`과 같은 4초 폴링 관례. 워크스페이스 하나가 아니라
+/** Schedule 탭 — `useRoadmap`과 같은 4초 폴링 관례. 워크스페이스 하나가 아니라
  * 로그인 사용자 전체를 가로질러 조회하므로 workspaceName 인자가 없다. */
 export function useSchedule() {
   const { userId } = useAuth();

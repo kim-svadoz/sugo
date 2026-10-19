@@ -89,7 +89,7 @@ function fetchWorkspaces(userId: string): Promise<WorkspaceSummary[]> {
   return request;
 }
 
-// §5: "AuthContext + feature 훅({data,loading,error} 형태)" - no Redux/Zustand.
+// AuthContext + feature hooks returning {data,loading,error} - no Redux/Zustand.
 export function useWorkspaces(): UseWorkspacesResult {
   const { userId } = useAuth();
   const [data, setData] = useState<WorkspaceSummary[] | null>(() => userId ? workspaceCache.get(userId) ?? null : null);

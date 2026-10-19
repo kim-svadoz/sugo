@@ -57,7 +57,7 @@ function session(overrides: Partial<PlanSession> = {}): PlanSession {
   };
 }
 
-describe("P1 runtime ontology projection", () => {
+describe("runtime ontology projection", () => {
   it("analyze partial을 실행 증거로 보존하고 차단으로 표시하지 않는다", () => {
     const base = session();
     const partial = session({

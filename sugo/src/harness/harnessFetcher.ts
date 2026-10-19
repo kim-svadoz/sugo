@@ -8,7 +8,7 @@ export const HARNESS_FETCH_COOLDOWN_MS = 5 * 60 * 1000;
 
 /**
  * 원격(git) 하네스 저장소 fetch 쿨다운 판정 — 순수 함수, git 연동 붙기 전에도 미리 테스트 가능.
- * 로컬 fetch는 네트워크 비용이 없으므로 이 쿨다운을 적용하지 않는다(§D.5).
+ * 로컬 fetch는 네트워크 비용이 없으므로 이 쿨다운을 적용하지 않는다.
  */
 export function shouldSkipFetch(lastFetchAtMs: number | null, nowMs: number, cooldownMs = HARNESS_FETCH_COOLDOWN_MS): boolean {
   if (lastFetchAtMs === null) return false;
@@ -87,7 +87,7 @@ export function fetchFromLocal(harnessIds: string[], libraryDir: string, overrid
     });
   }
 
-  // 아무 것도 감지되지 않았어도 default는 항상 포함(§2: 모든 프로젝트에 최소 공통 규칙 적용)
+  // 아무 것도 감지되지 않았어도 default는 항상 포함(모든 프로젝트에 최소 공통 규칙 적용)
   if (!harnesses.some((h) => h.id === DEFAULT_HARNESS_ID)) {
     const defaultHit = readHarnessDir(libraryDir, DEFAULT_HARNESS_ID, overrideDir);
     if (!defaultHit) {
@@ -114,13 +114,13 @@ export interface FetchHarnessesParams {
 
 /**
  * 하네스 fetch 진입점. repoUrl이 주어져도 git 연동은 아직 없어 경고만 남기고 로컬로
- * 폴백한다 — 차단하지 않는다(§2).
+ * 폴백한다 — 차단하지 않는다.
  */
 export function fetchHarnesses(params: FetchHarnessesParams): FetchResult {
   const result = fetchFromLocal(params.harnessIds, params.libraryDir, params.overrideDir);
   if (params.repoUrl) {
     result.warnings.unshift(
-      `repoUrl(${params.repoUrl})이 지정되었지만 git 기반 하네스 fetch는 아직 구현되지 않았습니다(로드맵 §11-2). 로컬 하네스 라이브러리로 폴백합니다.`,
+      `repoUrl(${params.repoUrl})이 지정되었지만 git 기반 하네스 fetch는 아직 구현되지 않았습니다. 로컬 하네스 라이브러리로 폴백합니다.`,
     );
   }
   return result;

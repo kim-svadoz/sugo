@@ -4,9 +4,8 @@ import { asyncHandler } from "../middleware/asyncHandler.js";
 import { requireUser } from "../auth/requireUser.js";
 import { getCalibratedRatio } from "../services/statsService.js";
 
-// §3.7 Stats/Metrics (PUBLIC). `/api/stats` + alias `/api/metrics`. usage/daily/trends는
-// 아직 미구현이라 스펙대로 0/빈값을 반환한다(가짜 데이터 금지 — "미구현 통계는 0 반환할지언정
-// 목데이터 아님", 적대적 코퍼스). calibrated-ratio만 실측(statsService).
+// Stats/Metrics (PUBLIC). `/api/stats` + alias `/api/metrics`. usage/daily/trends는
+// 아직 미구현이라 0/빈값을 반환한다(목데이터를 만들지 않는다). calibrated-ratio만 실측(statsService).
 export function createStatsRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();
   router.use(requireUser(db, sessionSecret)); // 공개 SaaS: 세션 또는 API 토큰 신원 강제
@@ -22,7 +21,7 @@ export function createStatsRouter(db: DbClient, sessionSecret: string): Router {
     }),
   );
 
-  // 미구현 통계 — 스펙대로 0/빈값(stub). 가짜 데이터 금지.
+  // 미구현 통계 — 0/빈값(stub). 가짜 데이터 금지.
   router.get("/usage", (_req, res) => res.json({ totalSessions: 0, totalTasks: 0, totalCommits: 0 }));
   router.get("/daily", (_req, res) => res.json({ days: [] }));
   router.get("/trends", (_req, res) => res.json({ trends: [] }));

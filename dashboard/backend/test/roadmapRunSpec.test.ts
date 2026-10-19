@@ -41,11 +41,11 @@ async function parentOf(db: DbClient, id: string): Promise<string | null> {
 }
 
 /**
- * §7 orphan RUN → Spec 편입/분리. **task 잠금과 달리 RUN은 재편입을 허용한다** —
+ * orphan RUN → Spec 편입/분리. **task 잠금과 달리 RUN은 재편입을 허용한다** —
  * task는 한 번 소속이 정해지면 이력이 붙지만, RUN(실행 단위)은 나중에 "이건 저 Spec 일이었다"고
  * 재분류하는 게 정상 작업 흐름이다.
  */
-describe("§7 assignRunToSpec", () => {
+describe("assignRunToSpec", () => {
   it("orphan RUN을 Spec에 편입한다", async () => {
     const db = await fresh();
     await seed(db, [
@@ -128,7 +128,7 @@ describe("§7 assignRunToSpec", () => {
   });
 });
 
-describe("§7 nextGroupId — run-NNN 생성기", () => {
+describe("nextGroupId — run-NNN 생성기", () => {
   it("비어 있으면 run-001", async () => {
     const db = await fresh();
     await seed(db, []);
@@ -170,11 +170,11 @@ describe("§7 nextGroupId — run-NNN 생성기", () => {
 });
 
 /**
- * §7 `wst-` → `run-` in-place 마이그레이션. id뿐 아니라 **참조 3곳(id·parent·depends_on)**을
+ * `wst-` → `run-` in-place 마이그레이션. id뿐 아니라 **참조 3곳(id·parent·depends_on)**을
  * 다 바꿔야 한다 — 하나라도 빠지면 dangling 참조가 되어 그래프가 조용히 끊긴다.
  * 길이가 같아(`wst-`/`run-` 둘 다 4자) depends_on JSON은 문자열 치환으로도 유효성이 유지된다.
  */
-describe("§7 migrateWstToRun", () => {
+describe("migrateWstToRun", () => {
   it("id·parent·depends_on 참조를 전부 옮긴다", async () => {
     const db = await fresh();
     await seed(db, [
@@ -225,7 +225,7 @@ describe("§7 migrateWstToRun", () => {
   });
 });
 
-describe("§3.3 POST /:name/roadmap/run-spec", () => {
+describe("POST /:name/roadmap/run-spec", () => {
   async function app1() {
     const db = await fresh();
     await seed(db, [
@@ -270,8 +270,8 @@ describe("§3.3 POST /:name/roadmap/run-spec", () => {
   });
 });
 
-/** 실제 MySQL 검증에서 잡은 회귀: NULL depends_on이 []로 변질되면 "미시딩"과 "빈 편집"이 뒤섞인다. */
-describe("§7 migrateWstToRun — NULL depends_on 보존", () => {
+/** 회귀 방지: NULL depends_on이 []로 변질되면 "미시딩"과 "빈 편집"이 뒤섞인다. */
+describe("migrateWstToRun — NULL depends_on 보존", () => {
   it("depends_on이 NULL이면 NULL로 남는다", async () => {
     const db = await fresh();
     await seed(db, [{ id: "wst-001", level: "workstream", depends: null }]);

@@ -10,7 +10,7 @@ import { isWorkEnabled } from "../work/enabled.js";
 
 export const sugoStatusInputSchema = {
   health: z.boolean().optional().describe("대시보드 연결 상태·재시도 큐 크기를 함께 반환한다"),
-  judgment: z.boolean().optional().describe("§5.8 판단품질 리포트를 함께 반환한다"),
+  judgment: z.boolean().optional().describe("판단품질 리포트를 함께 반환한다"),
   days: z.number().optional().describe("judgment: 최근 N일 이내 갱신된 세션만 집계(생략 시 전체)"),
   projectPath: z.string().optional().describe("이 경로의 프로젝트 하나만 조회한다"),
 };
@@ -18,9 +18,9 @@ export const sugoStatusInputSchema = {
 const SugoStatusArgs = z.object(sugoStatusInputSchema);
 
 /**
- * §1 `sugo_status` — 상태 대시보드 **+ 진단 흡수**.
+ * `sugo_status` — 상태 대시보드 **+ 진단 흡수**.
  *
- * `health`(대시보드 연결 진단)와 `judgment`(§5.8 판단품질 리포트)를 여기서 함께 받는다.
+ * `health`(대시보드 연결 진단)와 `judgment`(판단품질 리포트)를 여기서 함께 받는다.
  * 진단용 umbrella 도구를 따로 두면 "상태를 보려면 어느 도구를 불러야 하나"가 매번 헷갈린다.
  *
  * 파라미터가 없으면 등록 프로젝트 목록만 돌려준다.

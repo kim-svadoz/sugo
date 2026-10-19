@@ -14,7 +14,7 @@ export const sugoExploreInputSchema = {
 const SugoExploreArgs = z.object(sugoExploreInputSchema);
 
 /**
- * §D.7 code-agent 전용 AST 기반 코드베이스 탐색 — 정규식이 아니라 web-tree-sitter로 실제 파싱해
+ * code-agent 전용 AST 기반 코드베이스 탐색 — 정규식이 아니라 web-tree-sitter로 실제 파싱해
  * 클래스·메서드·함수·import를 추출한다. 코딩 전에 기존 구조를 이해하는 용도.
  */
 export async function handleSugoExplore(rawArgs: unknown) {

@@ -156,7 +156,7 @@ describe("GET /api/workspaces/:name/{decisions,history,checkpoints,tasks,roadmap
   });
 });
 
-describe("checkpoint CRUD via dashboard (§3.3)", () => {
+describe("checkpoint CRUD via dashboard", () => {
   it("creates, updates, and deletes a checkpoint", async () => {
     const { app, db, auth } = await seededApp();
     await request(app)
@@ -191,13 +191,12 @@ describe("checkpoint CRUD via dashboard (§3.3)", () => {
 });
 
 /**
- * §3.3 `ensureCheckpointCreatedAtColumn` 자가보강 — schema.sqlite.sql로 만든 테이블은 이미
+ * `ensureCheckpointCreatedAtColumn` 자가보강 — schema.sqlite.sql로 만든 테이블은 이미
  * created_at이 있어서(CREATE TABLE 안에 DEFAULT CURRENT_TIMESTAMP로 선언) 다른 모든 테스트가
- * ALTER 경로를 절대 타지 않는다. 실제 버그(2026-09-23, `ensureWorkspaceDeletedAtColumn`과
- * 같은 패턴으로 이 자가보강만 없이 배포된 기존 로컬 DB에서 재현)는 여기서만 잡힌다 —
+ * ALTER 경로를 절대 타지 않는다. 구 DB 업그레이드 경로의 버그는 여기서만 잡힌다 —
  * ALTER TABLE ADD COLUMN에 CURRENT_TIMESTAMP 같은 비상수 DEFAULT를 주면 sqlite가 거부한다.
  */
-describe("§3.3 ensureCheckpointCreatedAtColumn — 자가보강(구 DB 업그레이드 경로)", () => {
+describe("ensureCheckpointCreatedAtColumn — 자가보강(구 DB 업그레이드 경로)", () => {
   it("컬럼이 없는 기존 테이블에도 ALTER로 추가되고, 기존 행도 백필된다", async () => {
     __resetCheckpointCreatedAtColState();
     const db = createSqliteClient();
@@ -211,7 +210,7 @@ describe("§3.3 ensureCheckpointCreatedAtColumn — 자가보강(구 DB 업그�
   });
 });
 
-describe("§3.3 ensureCheckpointExpiresAtColumn — 자가보강", () => {
+describe("ensureCheckpointExpiresAtColumn — 자가보강", () => {
   it("기존 테이블에 nullable expires_at을 추가한다", async () => {
     __resetCheckpointExpiresAtColState();
     const db = createSqliteClient();
@@ -223,7 +222,7 @@ describe("§3.3 ensureCheckpointExpiresAtColumn — 자가보강", () => {
   });
 });
 
-describe("POST /api/workspaces/:name/checkpoints/apply — §7B 프로젝트 스코프", () => {
+describe("POST /api/workspaces/:name/checkpoints/apply — 프로젝트 스코프", () => {
   it("applies_to가 있으면 그 프로젝트에만 파일을 쓴다 — 워크스페이스 전체로 되돌아가지 않는다", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);

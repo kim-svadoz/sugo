@@ -10,7 +10,7 @@ import { seedUserToken } from "./testAuth.js";
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
-describe("computeCalibratedRatio (§3.7 유일한 실측)", () => {
+describe("computeCalibratedRatio — 실측 보정 비율", () => {
   it("반드시 지켜야: 표본 <10이면 null(실데이터 부족 — 가짜값 안 만듦)", () => {
     const rows = Array.from({ length: 9 }, () => ({ user_reported_human_hours: 3, ai_execution_minutes: 60 }));
     expect(computeCalibratedRatio(rows)).toBeNull();
@@ -81,7 +81,7 @@ describe("GET /api/metrics/calibrated-ratio (+ /api/stats alias)", () => {
   });
 });
 
-describe("§3.7 harness/skills — 미설정이면 빈 목록(404 아님)", () => {
+describe("harness/skills — 미설정이면 빈 목록(404 아님)", () => {
   async function app() {
     const db = createSqliteClient();
     await db.execScript(schema);
@@ -170,7 +170,7 @@ describe("§3.7 harness/skills — 미설정이면 빈 목록(404 아님)", () =
   });
 });
 
-describe("§3.3 spec-content — decision을 slug로 매칭", () => {
+describe("spec-content — decision을 slug로 매칭", () => {
   it("title로 decision content를 반환하고, 없으면 404", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);

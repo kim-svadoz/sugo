@@ -68,7 +68,7 @@ describe("POST /api/sync/workspace — projects replace semantics", () => {
 });
 
 describe("DELETE /api/sync/workspace", () => {
-  // v2 §4: 기본 삭제가 soft로 바뀌었다. 프로젝트 연결은 복구를 위해 남아 있어야 하고,
+  // 기본 삭제는 soft다. 프로젝트 연결은 복구를 위해 남아 있어야 하고,
   // 실제 cascade는 purge에서만 일어난다.
   it("기본(soft) 삭제는 workspace_projects를 남긴다(복구 가능해야 하므로)", async () => {
     const { app, db, auth } = await freshApp();

@@ -7,7 +7,7 @@ import { useRoadmap } from "../hooks/useRoadmap.js";
 import { AI_WORK_STATUS_TOOL } from "../lib/workspaceTools.js";
 
 /**
- * §5.1 `/roadmap/:workspace` — `fixed inset-0 z-50` 전체 팝업(사이드바까지 덮는다).
+ * `/roadmap/:workspace` — `fixed inset-0 z-50` 전체 팝업(사이드바까지 덮는다).
  *
  * 그래프 본체는 `RoadmapGraph`가 갖고 있고 여기는 **껍데기만** 담당한다 — Sessions의
  * Agent Canvas 오버레이도 같은 컴포넌트를 쓰므로 두 자리가 갈라지지 않는다.

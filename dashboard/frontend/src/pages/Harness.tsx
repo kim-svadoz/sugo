@@ -5,7 +5,7 @@ import { getHarnessManifest, getHarnessSource, resetHarnessOverride, saveHarness
 import { groupHarnessManifest, harnessCategoryLabel, harnessVersion, simplifyHarnessHeading, type HarnessTechnology } from "../lib/harnessCatalog.js";
 import { cn } from "../lib/utils.js";
 
-// §5 Harness — unified 마크다운 렌더 + manifest 칩. 데이터는 백엔드 /api/harness(HARNESS_PATH).
+// Harness — unified 마크다운 렌더 + manifest 칩. 데이터는 백엔드 /api/harness(HARNESS_PATH).
 export function Harness() {
   const [manifest, setManifest] = useState<HarnessManifestEntry[]>([]);
   const [loaded, setLoaded] = useState(false);

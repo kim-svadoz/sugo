@@ -17,7 +17,7 @@ export async function getRecentHistory(userId: string, limit: number): Promise<R
   return res.history;
 }
 
-/** §3.3 체크포인트 CRUD — Checkpoints 모달의 편집 경로. */
+/** 체크포인트 CRUD — Checkpoints 모달의 편집 경로. */
 export interface CheckpointInput {
   id?: string;
   category?: string;

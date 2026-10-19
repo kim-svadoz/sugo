@@ -19,8 +19,7 @@ import {
 } from "./src/services/syncService.js";
 
 const USER = process.env.SUGO_SEED_USER_ID ?? "github:12345";
-// 데모 프로젝트 경로는 화면에 그대로 찍힌다 — 이 PC의 Windows 경로를 박으면 mac에서 시드했을 때
-// 존재하지도 않는 경로가 대시보드에 뜬다(dev-local.mts와 같은 이유로 정정).
+// 데모 프로젝트 경로는 화면에 그대로 찍히므로 홈 디렉터리 기준으로 만든다.
 const SPLEARN = join(homedir(), "splearn");
 const PAYMENTS = join(homedir(), "work", "payments");
 const db = createSqliteClient("./local.db");
@@ -93,7 +92,7 @@ async function main() {
     { id: "p3", title: "정산 배치", level: "task", status: "done", dependsOn: ["p2"] },
   ]);
 
-  // ── History (calibrated-ratio용 표본 ≥10 + 실 데이터) ────────────
+  // ── History (calibrated-ratio용 표본 ≥10) ────────────
   for (let i = 0; i < 12; i++) {
     await syncHistory(db, {
       userId: USER, workspaceName: "temp-workspace", id: `h${i}`,

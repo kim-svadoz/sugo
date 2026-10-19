@@ -82,7 +82,7 @@ import { applyCheckpointToProjects, isCheckpointExpired, newCheckpointId } from 
 import { readReviewArtifact } from "../services/reviewArtifacts.js";
 
 function requireUserId(req: import("express").Request, res: import("express").Response): string | null {
-  // 공개 SaaS(§Phase 1): 신원은 인증 미들웨어가 세운 req.userId(토큰)만 신뢰. query userId 무시.
+  // 공개 SaaS: 신원은 인증 미들웨어가 세운 req.userId(토큰)만 신뢰. query userId 무시.
   const userId = req.userId ?? "";
   if (!userId) {
     res.status(401).json({ error: "unauthorized" });
@@ -99,7 +99,7 @@ function respondMutation(res: import("express").Response, result: { ok: true } |
   }
 }
 
-// §3.3: all PUBLIC, userId via query. Dashboard owns roadmap structure/order here.
+// all PUBLIC, userId via query. Dashboard owns roadmap structure/order here.
 function sendImage(res: import("express").Response, data: Buffer, ext: string) {
   res.type(ext === "jpg" ? "jpeg" : ext).set("Cache-Control", "no-store").send(data);
 }
@@ -137,7 +137,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     res.json({ workspaces: await listWorkspaces(db, userId) });
   });
 
-  // §7B Schedule 탭 — 워크스페이스 비종속. `/:name/...` 라우트보다 먼저 등록해야
+  // Schedule 탭 — 워크스페이스 비종속. `/:name/...` 라우트보다 먼저 등록해야
   // Express가 "schedule"을 workspace 이름으로 오인하지 않는다.
   router.get("/schedule", async (req, res) => {
     const userId = requireUserId(req, res);
@@ -223,7 +223,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     res.set("Cache-Control", "private, no-store").json({ artifact });
   });
 
-  // §3.3 Spec 원문 팝업(slug 매칭). title(또는 path 마지막 세그먼트)로 decision content를 찾는다.
+  // Spec 본문 팝업(slug 매칭). title(또는 path 마지막 세그먼트)로 decision content를 찾는다.
   router.get("/:name/spec-content", async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
@@ -367,7 +367,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     res.json({ ok: true });
   });
 
-  // §7 orphan RUN → Spec 편입/분리. specId:null이면 분리(미분류). task 잠금과 달리 RUN은
+  // orphan RUN → Spec 편입/분리. specId:null이면 분리(미분류). task 잠금과 달리 RUN은
   // 재편입을 허용한다 — 나중에 "이건 저 Spec 일이었다"고 재분류하는 게 정상 흐름이다.
   router.post("/:name/roadmap/run-spec", validateBody(runSpecSchema), async (req, res) => {
     const userId = requireUserId(req, res);
@@ -381,7 +381,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     res.json({ ok: true });
   });
 
-  // §7 폐기/복구. 삭제가 아니라 manual_status='dropped' override라 되돌릴 수 있다.
+  // 폐기/복구. 삭제가 아니라 manual_status='dropped' override라 되돌릴 수 있다.
   // 완료 항목이 하위에 있으면 409 — 이미 한 일을 "없던 일"로 만들지 않는다.
   router.post("/:name/roadmap/drop", validateBody(manualStatusClearSchema), async (req, res) => {
     const userId = requireUserId(req, res);
@@ -413,7 +413,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     res.json({ ok: true });
   });
 
-  // §7B Schedule 탭 — level='spec' 노드 전용. CLI(sugo_plan)는 이 경로를 절대 안 부른다.
+  // Schedule 탭 — level='spec' 노드 전용. CLI(sugo_plan)는 이 경로를 절대 안 부른다.
   router.post("/:name/roadmap/due-date", validateBody(dueDateSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
@@ -426,7 +426,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     res.json({ ok: true });
   });
 
-  // §7B 스펙별 프로젝트 지정("SPEC 상세 → 프로젝트 지정/변경"). due-date와 같은 모양.
+  // 스펙별 프로젝트 지정("SPEC 상세 → 프로젝트 지정/변경"). due-date와 같은 모양.
   router.post("/:name/roadmap/project", validateBody(setProjectSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;
@@ -580,7 +580,7 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     res.json(result);
   });
 
-  // §7B Run/Task 없이 level='spec' 노드만 단독 생성("+ 일정 추가").
+  // Run/Task 없이 level='spec' 노드만 단독 생성("+ 일정 추가").
   router.post("/:name/roadmap/quick-spec", validateBody(quickSpecSchema), async (req, res) => {
     const userId = requireUserId(req, res);
     if (!userId) return;

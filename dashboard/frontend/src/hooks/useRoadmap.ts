@@ -127,7 +127,7 @@ export interface RoadmapEnvelope {
 }
 const EMPTY_COUNTS: RoadmapCounts = { total: 0, pending: 0, in_progress: 0, done: 0, blocked: 0, dropped: 0 };
 
-// §4: "캔버스 Agent-Roadmap 오버레이는 getRoadmap을 4초 독립 폴링" - independent
+// The canvas Agent-Roadmap overlay polls getRoadmap every 4s, independent
 // from LiveConsole's own 4s poll (useActivityStream). Also exposes `refetch`
 // so mutations (manual-status, etc.) can refresh immediately instead of
 // waiting for the next 4s tick.

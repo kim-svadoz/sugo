@@ -51,7 +51,7 @@ export const sugoOntologyInputSchema = {
 const SugoOntologyArgs = z.object(sugoOntologyInputSchema);
 
 /**
- * §2 `sugo_ontology(view, boundary)` — 온톨로지 런타임 조회(readOnly).
+ * `sugo_ontology(view, boundary)` — 온톨로지 런타임 조회(readOnly).
  *
  * **왜 도구로 노출하나:** 모델이 소스에만 있으면 이 파이프라인을 실제로 운전하는 LLM은 그걸 못
  * 본다. "지금 상태에서 뭘 부를 수 있나", "이 경계에서 뭘 지켜야 하나"를 물어볼 수 있어야 게이트에
@@ -133,7 +133,7 @@ export async function handleSugoOntology(rawArgs: unknown) {
       allowedActionsByState: ALLOWED_ACTIONS_BY_STATE,
       workflowGraph: WORKFLOW_GRAPH_ANALYSIS,
     },
-    note: "derived.*는 ontology.actionTypes에서 파생된 값이다(§2.8) — 별도로 손관리되는 사본이 아니다.",
+    note: "derived.*는 ontology.actionTypes에서 파생된 값이다 — 별도로 손관리되는 사본이 아니다.",
   });
 }
 

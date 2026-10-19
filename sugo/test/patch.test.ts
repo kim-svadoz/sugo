@@ -14,7 +14,7 @@ import {
 } from "../src/patch.js";
 
 describe("computeNextPatchVersion", () => {
-  it("patch 파일이 하나도 없으면(원본 feat만 있음) 첫 patch인 v1을 반환한다", () => {
+  it("patch 파일이 하나도 없으면(최초 feat만 있음) 첫 patch인 v1을 반환한다", () => {
     expect(computeNextPatchVersion(["prd.md", "work-result.md"])).toBe(1);
   });
 
@@ -76,7 +76,7 @@ describe("resolvePatchContext — 반드시 거부", () => {
 describe("resolvePatchContext — 반드시 허용", () => {
   it("최초 feat 산출물만 있으면 prd.md를 부모로, 첫 patch 버전 1을 계산한다", async () => {
     const dir = tmpFeatureDir();
-    writeFileSync(join(dir, "prd.md"), "REQ-1: 원본 요구사항");
+    writeFileSync(join(dir, "prd.md"), "REQ-1: 최초 요구사항");
     writeFileSync(join(dir, "work-result.md"), "1차 요약");
 
     const ctx = await resolvePatchContext(join(dir, "work-result.md"));
@@ -85,9 +85,9 @@ describe("resolvePatchContext — 반드시 허용", () => {
     expect(ctx.featureDir).toBe(dir);
   });
 
-  it("prd.md가 있으면 patch가 쌓여도 항상 원본을 부모로 삼는다(각 patch는 원본 대비 델타)", async () => {
+  it("prd.md가 있으면 patch가 쌓여도 항상 최초 PRD를 부모로 삼는다(각 patch는 최초 PRD 대비 델타)", async () => {
     const dir = tmpFeatureDir();
-    writeFileSync(join(dir, "prd.md"), "REQ-1: 원본");
+    writeFileSync(join(dir, "prd.md"), "REQ-1: 최초");
     writeFileSync(join(dir, "PRD-patch-v2.md"), "REQ-1: 2차 변경분");
     writeFileSync(join(dir, "work-result-patch-v2.md"), "2차 요약");
 
@@ -96,7 +96,7 @@ describe("resolvePatchContext — 반드시 허용", () => {
     expect(ctx.version).toBe(3);
   });
 
-  it("prd.md가 없으면(원본 유실) PRD-patch-v*.md 최신본을 부모로 폴백한다", async () => {
+  it("prd.md가 없으면(최초 PRD 유실) PRD-patch-v*.md 최신본을 부모로 폴백한다", async () => {
     const dir = tmpFeatureDir();
     writeFileSync(join(dir, "PRD-patch-v2.md"), "REQ-1: 2차 변경분");
     writeFileSync(join(dir, "work-result-patch-v2.md"), "2차 요약");

@@ -10,9 +10,8 @@ import type { PlanSession } from "../src/types.js";
 import type { WorkflowState } from "../src/ontology/model.js";
 
 /**
- * §9-A 체인 구간 취소. 런타임은 원래부터 어느 상태에서든 취소를 허용해 왔는데
- * (planStateMachine의 cancel 분기가 전제 검사보다 먼저 실행된다) 선언은 금지처럼 보였다.
- * 2026-09-22에 그 선언만 보고 "취소 불가"로 잘못 판단해 사용자가 세션 파일을 손으로 지웠다.
+ * 체인 구간 취소. 런타임은 어느 상태에서든 취소를 허용한다
+ * (planStateMachine의 cancel 분기가 전제 검사보다 먼저 실행된다). 선언도 이와 일치해야 한다.
  */
 let fakeHome: string;
 
@@ -39,7 +38,7 @@ async function seed(state: WorkflowState): Promise<string> {
   return id;
 }
 
-describe("§9-A 선언과 런타임이 일치한다", () => {
+describe("선언과 런타임이 일치한다", () => {
   it("체인 구간에서도 허용목록에 cancel이 있다", () => {
     for (const s of CHAIN_ABANDON_STATES) {
       expect(ALLOWED_ACTIONS_BY_STATE[s], s).toContain("cancel");
@@ -52,7 +51,7 @@ describe("§9-A 선언과 런타임이 일치한다", () => {
   });
 });
 
-describe("§9-A 체인 구간 취소는 사유를 요구한다", () => {
+describe("체인 구간 취소는 사유를 요구한다", () => {
   it("사유 없이 취소하면 거부한다", async () => {
     const id = await seed("CODE_RUNNING");
     const r = parse(await handleSugoPlan({ action: "cancel", sessionId: id }));
@@ -88,7 +87,7 @@ describe("§9-A 체인 구간 취소는 사유를 요구한다", () => {
   });
 });
 
-describe("§4.3-P completionPlan 노출", () => {
+describe("completionPlan 노출", () => {
   it("status 응답에 남은 경로와 blocker가 실린다", async () => {
     const id = await seed("REVIEW_RUNNING");
     const r = parse(await handleSugoPlan({ action: "status", sessionId: id }));

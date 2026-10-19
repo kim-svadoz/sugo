@@ -1,6 +1,6 @@
 // 깨끗한 HOME에서 "플러그인만 설치"한 사용자의 대시보드 경험을 끝까지 실행해 확인한다.
 // 설치본(배포 파일만) → 세션 시작 훅 → 실제 MCP 동기화 → 화면 → 업데이트 → uninstall/restore/purge.
-// 서버는 임시 HOME과 빈 포트에서만 뜨고, 이 PC의 실제 ~/.claude/sugo와 개발 서버는 건드리지 않는다.
+// 서버는 임시 HOME과 빈 포트에서만 뜨고, 실제 ~/.claude/sugo와 개발 서버는 건드리지 않는다.
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";

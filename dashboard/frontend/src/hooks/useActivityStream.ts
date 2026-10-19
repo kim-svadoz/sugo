@@ -16,7 +16,7 @@ export interface ActivityEvent {
 }
 
 /**
- * §6 Activity Stream 4초 폴링(SSE 아님).
+ * Activity Stream 4초 폴링(SSE 아님).
  *
  * **history 폴백을 두지 않는다.** 스트림이 비었을 때 recent-history를 이벤트처럼 변환해 채우면
  * 사용자가 "지금 에이전트가 돌고 있다"고 오해한다 — 실시간 로그가 없다는 건 그 자체로 정보다.
@@ -40,7 +40,7 @@ export function useActivityStream(workspace?: string) {
         if (cancelled) return;
         setEvents(res.events ?? []);
       } catch {
-        // §4/§7: dashboard being unreachable/erroring must never break polling -
+        // A dashboard that is unreachable or erroring must never break polling -
         // just skip this tick and try again next interval.
       }
     }

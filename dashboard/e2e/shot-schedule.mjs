@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { E2E_UI_URL } from "../port-contract.mjs";
 
-// §7B Schedule 탭 자체 확인용 — shot.mjs와 같은 mock 패턴(실 백엔드 없이 API 라우트만 가짜로 채운다).
+// Schedule 탭 자체 확인용 — shot.mjs와 같은 mock 패턴(실 백엔드 없이 API 라우트만 가짜로 채운다).
 const OUT = process.env.CLAUDE_JOB_DIR ? join(process.env.CLAUDE_JOB_DIR, "tmp") : tmpdir();
 const BASE = E2E_UI_URL;
 
@@ -17,7 +17,7 @@ const specs = [
   { id: "spec-order-history", workspace_name: "orders", title: "주문 내역 화면 개편", status: "in_progress", due_date: plus(3), project_path: "/home/u1/projects/orders-api" },
   { id: "spec-notifications", workspace_name: "orders", title: "알림 설정 화면", status: "pending", due_date: plus(3), project_path: null },
   { id: "spec-overdue", workspace_name: "orders", title: "지난 마감(테스트)", status: "in_progress", due_date: minus(2), project_path: null },
-  { id: "spec-profile", workspace_name: "profile", title: "프로필 API v2 마이그레이션", status: "pending", due_date: plus(10), project_path: null },
+  { id: "spec-notices", workspace_name: "notices", title: "공지 목록 화면", status: "pending", due_date: plus(10), project_path: null },
   { id: "spec-manual-abc123", workspace_name: "tools", title: "sugo 릴리스 체크리스트 정리", status: "pending", due_date: null, project_path: null },
   // 오늘 달력에는 안 보이는 먼 미래 마감(전체 목록 토글 + 클릭 시 마감월로 점프하는지 확인용).
   { id: "spec-far-future", workspace_name: "orders", title: "다음다음달 큰 개편", status: "pending", due_date: plus(70), project_path: "/home/u1/projects/orders-api" },
@@ -40,7 +40,7 @@ await page.route("**/api/**", (route) => {
       json: {
         workspaces: [
           { name: "orders", projects: [{ project_path: "/home/u1/projects/orders-api", git_synced: 1 }, { project_path: "/home/u1/projects/orders-batch", git_synced: 0 }], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
-          { name: "profile", projects: [], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
+          { name: "notices", projects: [], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
           { name: "tools", projects: [], taskCounts: {}, roadmap: {}, roadmapCount: 0, roadmapDoneCount: 0, activeTaskCount: 0, historyCount: 0, decisionCount: 0, checkpointCount: 0, projectCount: 0, lastActivityAt: null },
         ],
       },

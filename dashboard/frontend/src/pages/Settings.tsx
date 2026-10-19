@@ -240,7 +240,7 @@ function ProjectIntegrationsCard() {
   </div>;
 }
 
-// 공개 SaaS(§Phase 1.5): 플러그인용 개인 API 토큰 발급/관리. 발급 시 평문은 딱 한 번만 보여준다.
+// 플러그인용 개인 API 토큰 발급/관리. 발급 시 평문은 딱 한 번만 보여준다.
 function ApiTokensCard() {
   const [tokens, setTokens] = useState<ApiTokenSummary[]>([]);
   const [name, setName] = useState("");

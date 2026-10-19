@@ -52,7 +52,7 @@ function buildTestToReviewPrompt(handoff: ChainHandoff): string {
   ].join("\n");
 }
 
-/** §5: sugo_chain — 에이전트 체인 핸드오프 객체 + 프롬프트 생성(순수 함수). */
+/** sugo_chain — 에이전트 체인 핸드오프 객체 + 프롬프트 생성(순수 함수). */
 export function buildChainPrompt(direction: ChainDirection, handoff: ChainHandoff): string {
   return direction === "code_to_test" ? buildCodeToTestPrompt(handoff) : buildTestToReviewPrompt(handoff);
 }

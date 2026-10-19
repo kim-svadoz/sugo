@@ -23,7 +23,7 @@ function detectNodeCommands(ctx: DetectionContext, buildToolIds: string[]): Dete
 }
 
 /** 빌드파일(build.gradle/build.gradle.kts 또는 pom.xml) 본문을 합쳐 읽는다 — 플러그인 존재 여부만
- * 확인할 것이므로 파싱은 안 하고 문자열 포함 검사로 충분하다(§P6-3: 추측 금지, 명시 신호만). */
+ * 확인할 것이므로 파싱은 안 하고 문자열 포함 검사로 충분하다(추측 금지, 명시 신호만). */
 function readBuildFileText(ctx: DetectionContext, paths: string[]): string {
   return paths.map((p) => ctx.readFile(p) ?? "").join("\n");
 }
@@ -33,7 +33,7 @@ function detectGradleCommands(ctx: DetectionContext, isWindows: boolean): Detect
   const hasSh = ctx.fileExists("gradlew");
   const exe = isWindows && hasBat ? ".\\gradlew.bat" : hasSh ? "./gradlew" : "gradle";
   const buildFile = readBuildFileText(ctx, ["build.gradle", "build.gradle.kts"]);
-  // §P6-3: checkstyle/spotbugs 플러그인이 실제로 적용돼 있을 때만 태스크를 제안한다 — 플러그인
+  // checkstyle/spotbugs 플러그인이 실제로 적용돼 있을 때만 태스크를 제안한다 — 플러그인
   // 없이 `checkstyleMain`을 부르면 태스크가 없어 매번 실패하는 게 확실하다(추측 금지 원칙).
   const lintTasks: string[] = [];
   if (/checkstyle/i.test(buildFile)) lintTasks.push("checkstyleMain");
@@ -78,7 +78,7 @@ function detectPythonCommands(ctx: DetectionContext, buildToolIds: string[]): De
 
 /**
  * 모든 DetectionRule을 실행해 카테고리별로 집계한다. dataStore/infra는 정보성으로만 채우고
- * harnessIds에는 넣지 않는다(§2).
+ * harnessIds에는 넣지 않는다.
  * commands는 감지된 buildTool 조합으로 best-effort 추정한다(정확한 보장 없음).
  */
 export function detectStack(projectPath: string, platform: NodeJS.Platform = process.platform): DetectedStack {

@@ -53,7 +53,7 @@ describe("MCP presentation hook", () => {
     expect(isPresentationTarget("mcp__team-knowledge__search", [])).toBe(false);
   });
 
-  it("사용자 출력에만 STE 원칙을 적용하고 사실 원본을 보존하도록 지시한다", () => {
+  it("사용자 출력에만 STE 원칙을 적용하고 사실 값을 보존하도록 지시한다", () => {
     const reminder = buildPresentationReminder("team-knowledge");
     expect(reminder).toContain("team-knowledge");
     expect(reminder).toContain("사용자에게 설명하거나 요약하는 문장");

@@ -1,9 +1,9 @@
 ---
-description: '프로젝트를 sugo에 등록한다. 기술스택 감지, 하네스 fetch, CLAUDE.md 합성, 레지스트리와 워크스페이스 등록 순으로 진행한다(§2).'
+description: '프로젝트를 sugo에 등록한다. 기술스택 감지, 하네스 fetch, CLAUDE.md 합성, 레지스트리와 워크스페이스 등록 순으로 진행한다.'
 argument-hint: "[projectPath] [workspace]"
 ---
 
-너는 프로젝트를 sugo에 등록한다(§2 하네스 적용 서브시스템). 인자: $ARGUMENTS
+너는 프로젝트를 sugo에 등록한다. 인자: $ARGUMENTS
 
 ## 절차
 1. `sugo_add(projectPath, workspace?, repoUrl?, additionalStacks?)`를 호출한다.

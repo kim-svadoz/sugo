@@ -1,5 +1,4 @@
--- SQLite translation of src/db/schema.mysql.sql, used only for local dev/testing
--- until a real MySQL instance is available (see docs/roadmap-progress.md).
+-- SQLite translation of src/db/schema.mysql.sql, used only for local dev/testing.
 -- Must stay behaviorally equivalent: same tables/columns/keys, syntax adapted
 -- (ENUM->TEXT+CHECK, JSON->TEXT, AUTO_INCREMENT->INTEGER PRIMARY KEY AUTOINCREMENT,
 -- TIMESTAMP->TEXT ISO8601, composite PKs as-is since SQLite supports them).

@@ -1,12 +1,11 @@
 /**
- * §2 오퍼레이셔널 온톨로지 — **선언(데이터)이며 런타임 로직이 없다.**
+ * 오퍼레이셔널 온톨로지 — **선언(데이터)이며 런타임 로직이 없다.**
  *
  * 상태·액션·전제·소유권·불변식·경계의 정본(SOT)이고, 코드/게이트/문서/MCP 주입이 전부 여기서
- * 파생·검증된다. 팔란티어 파운드리의 "오퍼레이셔널 온톨로지"(객체·링크·액션을 데이터가 아니라
- * **거버넌스**로 다루는 모델)에서 착안 — 여기선 워크플로우 자체를 온톨로지로 모델링해 순서·완료·
- * 소유권을 기계가 강제한다.
+ * 파생·검증된다. 객체·링크·액션을 데이터가 아니라 **거버넌스**로 다룬다 — 워크플로우 자체를
+ * 온톨로지로 모델링해 순서·완료·소유권을 기계가 강제한다.
  *
- * **왜 파일 하나로 몰았나(§2.8):** `PREREQUISITES`(전제)와 상태별 허용목록을 따로 손관리하면,
+ * **왜 파일 하나로 몰았나:** `PREREQUISITES`(전제)와 상태별 허용목록을 따로 손관리하면,
  * 액션을 하나 추가할 때 한 군데를 빠뜨려도 타입은 통과하고 런타임에 "게이트는 요구하는데
  * 허용목록엔 없어" 형태의 **데드락**으로만 드러난다. 둘 다 `ACTION_TYPES` 하나에서 파생하면
  * divergence가 구조적으로 불가능하고, `ontology/gate-consistency.test.ts`가 4계층 일치를 잠근다.
@@ -14,7 +13,7 @@
  * 이 파일에 함수를 넣지 말 것 — 파생은 `derive.ts`, 검증은 테스트의 몫이다.
  */
 
-// ── 2.1 OBJECT_TYPES ─────────────────────────────────────────────────────────
+// ── OBJECT_TYPES ─────────────────────────────────────────────────────────────
 
 /** 로드맵 노드 공통 상태. `RoadmapNodeStatus`와 컴파일타임 잠금(model.test.ts). */
 export const ALL_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"] as const;
@@ -52,7 +51,7 @@ export const OBJECT_TYPES = [
   { name: "artifact", layer: "runtime", label: "Artifact", meaning: "PRD·TODO-SPEC·work-result·commit/PR처럼 실행이 생산한 추적 가능 산출물", containedBy: null, implementationRefs: [{ path: "src/workResultReport.ts", symbol: "interface WorkResultReport" }] },
 ] as const satisfies readonly ObjectType[];
 
-// ── 2.2 LINK_TYPES ───────────────────────────────────────────────────────────
+// ── LINK_TYPES ───────────────────────────────────────────────────────────────
 
 export interface LinkType {
   name: string;
@@ -74,9 +73,9 @@ export const LINK_TYPES = [
   { name: "derived_from", from: "task", to: "task", meaning: "patch Task가 근거로 삼은 이전 완료 Task", implementationRefs: [{ path: "src/work/types.ts", symbol: "parentTaskId: string" }] },
 ] as const satisfies readonly LinkType[];
 
-// ── 2.3 WORKFLOW_STATES ──────────────────────────────────────────────────────
+// ── WORKFLOW_STATES ──────────────────────────────────────────────────────────
 
-/** §2.3 순서대로 19개. 이 배열이 `PLAN_STATES`의 정본이다. */
+/** 순서대로 19개. 이 배열이 `PLAN_STATES`의 정본이다. */
 export const WORKFLOW_STATES = [
   "INIT",
   "SCAN",
@@ -100,7 +99,7 @@ export const WORKFLOW_STATES = [
 ] as const;
 export type WorkflowState = (typeof WORKFLOW_STATES)[number];
 
-// ── 2.4 ACTION_TYPES ─────────────────────────────────────────────────────────
+// ── ACTION_TYPES ─────────────────────────────────────────────────────────────
 
 export interface ActionType {
   name: string;
@@ -256,8 +255,8 @@ export const ACTION_GATES = {
 } as const satisfies Record<string, readonly ActionGate[]>;
 
 /**
- * §2.4 거버넌스 전이 정본 23개. `fromStates`가 `PREREQUISITES`의 유일 원천이고,
- * 상태별 허용 액션도 여기서 역인덱싱으로 파생된다(§2.8).
+ * 거버넌스 전이 정본 23개. `fromStates`가 `PREREQUISITES`의 유일 원천이고,
+ * 상태별 허용 액션도 여기서 역인덱싱으로 파생된다.
  *
  * **데드락을 막는 전이 2건 — 지우지 말 것:**
  * - `oracle_done`: fromStates `[PRD, JIRA]` + `toState: null`. jira 전후 어디서 스펙 오라클을
@@ -290,8 +289,8 @@ export const ACTION_TYPES = [
   { name: "test_start", fromStates: ["CODE_DONE"], toState: "TEST_RUNNING", gates: ACTION_GATES.test_start },
   { name: "test_done", fromStates: ["TEST_RUNNING"], toState: "TEST_DONE", gates: ACTION_GATES.test_done },
   /**
-   * §4.3-R 증거 재스냅샷. `test_done`이 찍은 `testPassedState`/지문은 그 시점 값으로 고정돼,
-   * 이후 올바른 증거를 다시 기록해도 `review_done`이 옛 판정을 보고 막는 데드락이 있었다
+   * 증거 재스냅샷. `test_done`이 찍은 `testPassedState`/지문은 그 시점 값으로 고정돼,
+   * 이후 올바른 증거를 다시 기록해도 `review_done`이 옛 판정을 보고 막는 데드락이 생긴다
    * (forward-only라 `test_done`으로 되돌아갈 수도 없다). 상태는 그대로 두고 스냅샷만 다시 찍는다.
    * 게이트를 무르게 하는 게 아니라 `evidenceResnapshot` 라벨로 남겨 완료등급을 강등시킨다.
    */
@@ -304,8 +303,8 @@ export const ACTION_TYPES = [
     gates: ACTION_GATES.review_done,
   },
   { name: "docs_done", fromStates: ["DOCS_PENDING"], toState: "COMMIT_PENDING", gates: ACTION_GATES.docs_done },
-  // §4.3-T: feature/* 브랜치면 TODO-SPEC.md가 세션 시작 이후 갱신됐는지 확인한다(무조건 —
-  // opt-in 아님). 다른 §10 확장 게이트와 달리 브랜치 패턴 자체가 스위치다.
+  // feature/* 브랜치면 TODO-SPEC.md가 세션 시작 이후 갱신됐는지 확인한다(무조건 —
+  // opt-in 아님). 다른 확장 게이트와 달리 브랜치 패턴 자체가 스위치다.
   { name: "commit", fromStates: ["COMMIT_PENDING"], toState: "DONE", gates: ACTION_GATES.commit },
   { name: "status", fromStates: null, toState: null, gates: ACTION_GATES.status },
   { name: "cancel", fromStates: null, toState: null, gates: ACTION_GATES.cancel },
@@ -313,7 +312,7 @@ export const ACTION_TYPES = [
 
 export type ActionName = (typeof ACTION_TYPES)[number]["name"];
 
-// ── 보편 액션 정책 (§4 "정책 집합") ──────────────────────────────────────────
+// ── 보편 액션 정책 ──────────────────────────────────────────────────────────
 
 /** `start`가 허용되는 상태. 세션이 아예 없을 때(INIT 취급)와 끝난 뒤 새로 시작할 때. */
 export const START_STATES = ["INIT", "DONE"] as const;
@@ -338,18 +337,17 @@ export const CANCELLABLE_STATES = [
 ] as const;
 
 /**
- * §9-A 에이전트 체인 구간 — 여기서도 취소는 **되지만** 사유가 필수다.
+ * 에이전트 체인 구간 — 여기서도 취소는 **되지만** 사유가 필수다.
  *
  * 런타임(`planStateMachine.ts`의 cancel 분기)은 전제 검사보다 먼저 실행돼 어느 상태에서든 취소를
- * 허용해 왔다. 선언(`CANCELLABLE_STATES`)만 보고 "체인 구간은 취소 불가"라고 읽으면 틀린다 —
- * 실제로 2026-09-22에 그렇게 잘못 판단해 사용자가 세션 파일을 손으로 지웠다(기록이 안 남았다).
+ * 허용한다. 선언(`CANCELLABLE_STATES`)만 보고 "체인 구간은 취소 불가"라고 읽으면 틀린다.
  *
  * 선언을 사실에 맞추되, 체인 구간 취소는 "증거 체인을 끊고 접었다"는 뜻이므로 `cancelReason`을
- * 요구하고 `abandonedChain` 라벨로 남긴다. 막지 않고 기록한다(§4.6).
+ * 요구하고 `abandonedChain` 라벨로 남긴다. 막지 않고 기록한다.
  */
 export const CHAIN_ABANDON_STATES = ["CODE_RUNNING", "CODE_DONE", "TEST_RUNNING", "TEST_DONE", "REVIEW_RUNNING"] as const;
 
-// ── 2.5 OWNERSHIP ────────────────────────────────────────────────────────────
+// ── OWNERSHIP ────────────────────────────────────────────────────────────────
 
 export interface OwnershipEntry {
   concept: string;
@@ -368,7 +366,7 @@ export const OWNERSHIP = [
   { concept: "Bitbucket PAT", owner: "dashboard", note: "암호화 저장" },
 ] as const satisfies readonly OwnershipEntry[];
 
-// ── 2.6 INVARIANTS ───────────────────────────────────────────────────────────
+// ── INVARIANTS ───────────────────────────────────────────────────────────────
 
 /**
  * `enforcedBy`는 **정직하게** 표기한다 — gate/test만 기계보장이고 doc은 조언일 뿐이다.
@@ -468,7 +466,7 @@ export const INVARIANTS = [
 
 export type InvariantId = (typeof INVARIANTS)[number]["id"];
 
-// ── 2.7 BOUNDARIES ───────────────────────────────────────────────────────────
+// ── BOUNDARIES ───────────────────────────────────────────────────────────────
 
 export interface Boundary {
   name: string;
@@ -512,7 +510,7 @@ export interface IntentionalWorkflowCycle {
 
 /**
  * cycle은 기본적으로 결함이다. 실제 운영상 필요한 두 루프만 이름과 이유를 붙여 허용한다.
- * 새 cycle은 이 목록을 의식적으로 갱신하지 않는 한 P4 그래프 검증을 통과할 수 없다.
+ * 새 cycle은 이 목록을 의식적으로 갱신하지 않는 한 그래프 검증을 통과할 수 없다.
  */
 export const INTENTIONAL_WORKFLOW_CYCLES = [
   {
@@ -541,7 +539,7 @@ export interface EvidenceFlow {
 
 /**
  * 게이트가 소비하는 영속 증거만 선언한다. payload-only 입력과 action 내부 임시 판정은 제외한다.
- * producer/consumer 어느 한쪽도 없는 항목은 장식용 지식이므로 P4 검증에서 거부한다.
+ * producer/consumer 어느 한쪽도 없는 항목은 장식용 지식이므로 검증에서 거부한다.
  */
 export const EVIDENCE_FLOWS = [
   { id: "baseline", producedBy: "sugo_record_test_evidence", consumedBy: ["baseline_capture", "code_done", "integrate"], storageRef: "SessionData.baselineGate.evidence" },
@@ -552,7 +550,7 @@ export const EVIDENCE_FLOWS = [
   { id: "lethal-trifecta", producedBy: "sugo_check_lethal_trifecta", consumedBy: ["review_done"], storageRef: "ChainInfo.lastLethalTrifectaCheck" },
 ] as const satisfies readonly EvidenceFlow[];
 
-// ── 단일 export (§2.7 "전체 모델은 ONTOLOGY 객체로") ─────────────────────────
+// ── 단일 export ─────────────────────────────────────────
 
 export const ONTOLOGY = {
   objectTypes: OBJECT_TYPES,

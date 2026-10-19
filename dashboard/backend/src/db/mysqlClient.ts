@@ -10,7 +10,7 @@ export interface MySqlConfig {
   database: string;
 }
 
-// Spec §2: TIMESTAMP stored as UTC, connection forced to timezone 'Z' so
+// TIMESTAMP stored as UTC, connection forced to timezone 'Z' so
 // the driver never applies local-TZ conversion on read/write.
 export function createMySqlClient(config: MySqlConfig): DbClient {
   const pool = mysql.createPool({

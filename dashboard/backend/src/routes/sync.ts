@@ -47,11 +47,11 @@ const roadmapLinkSchema = z.object({
   toId: z.string().min(1),
 });
 
-// 공개 SaaS(§Phase 1, 스펙 §3.1 이탈): 토큰 인증 강제. body/query의 userId는 신뢰하지 않고
+// 공개 SaaS: 토큰 인증 강제. body/query의 userId는 신뢰하지 않고
 // 인증 미들웨어가 세운 req.userId로 덮어써서(bindUserId) 모든 핸들러가 토큰 신원만 쓰게 한다.
 export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();
-  // §3.1 계약 버전 소비는 인증보다 앞이든 뒤든 상관없지만, 인증 뒤에 둬서 미인증 요청까지
+  // 계약 버전 소비는 인증보다 앞이든 뒤든 상관없지만, 인증 뒤에 둬서 미인증 요청까지
   // 버전 경고를 찍지 않게 한다(로그 오염 방지).
   router.use(requireUser(db, sessionSecret));
   router.use(syncSchemaVersion());
@@ -144,7 +144,7 @@ export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
     res.json({ ok: true });
   }));
 
-  // §7.2 "POST /api/sync/roadmap/link + DELETE (링크 편집 전파)": 플러그인이 로컬에서 편집한
+  // POST /api/sync/roadmap/link + DELETE(링크 편집 전파): 플러그인이 로컬에서 편집한
   // 링크를 push한다. 스냅샷 replace와 별개 신호 — dependsOn 편집 의도를 그대로 적용한다
   // (fail-closed task↔task + 사이클 가드는 workspaceService가 이미 담당). 논블로킹이라 결과 상관없이 200.
   router.post("/roadmap/link", validateBody(roadmapLinkSchema), asyncHandler(async (req, res) => {

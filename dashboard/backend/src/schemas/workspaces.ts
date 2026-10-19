@@ -55,14 +55,14 @@ export const positionSchema = z.object({
   y: z.number(),
 });
 
-/** §7 orphan RUN → Spec. specId는 명시적 null(분리)을 허용해야 하므로 nullish. */
+/** orphan RUN → Spec. specId는 명시적 null(분리)을 허용해야 하므로 nullish. */
 export const runSpecSchema = z.object({
   nodeId: z.string().optional(),
   runId: z.string().min(1),
   specId: z.string().nullish(),
 });
 
-/** §7B Schedule 탭. dueDate는 'YYYY-MM-DD' 또는 명시적 null(기한 미정으로 되돌림). */
+/** Schedule 탭. dueDate는 'YYYY-MM-DD' 또는 명시적 null(기한 미정으로 되돌림). */
 export const dueDateSchema = z.object({
   nodeId: z.string().min(1),
   dueDate: z
@@ -71,7 +71,7 @@ export const dueDateSchema = z.object({
     .nullable(),
 });
 
-/** §7B 경량 Spec 생성 — Run/Task 없이 단독 level='spec' 노드만 만든다. */
+/** 경량 Spec 생성 — Run/Task 없이 단독 level='spec' 노드만 만든다. */
 export const quickSpecSchema = z.object({
   title: z.string().min(1),
   dueDate: z
@@ -81,7 +81,7 @@ export const quickSpecSchema = z.object({
   projectPath: z.string().nullish(),
 });
 
-/** §7B 스펙별 프로젝트 지정 — dueDateSchema와 같은 형태(null이면 해제). */
+/** 스펙별 프로젝트 지정 — dueDateSchema와 같은 형태(null이면 해제). */
 export const setProjectSchema = z.object({
   nodeId: z.string().min(1),
   projectPath: z.string().nullable(),

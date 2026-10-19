@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 /** VALID_PRD(baseline 시그널 없음)를 가정한 해피패스 진입 — baseline_capture/contract_start/
- * contract_done은 시그널이 없어 전부 no-op 통과한다(§3 선형화, resolveContractRequired 휴리스틱). */
+ * contract_done은 시그널이 없어 전부 no-op 통과한다(resolveContractRequired 휴리스틱). */
 async function startToReady(prdContent: string): Promise<string> {
   const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
   const sessionId = start.data.sessionId as string;
@@ -63,7 +63,7 @@ describe("PRD 콘텐츠 게이트", () => {
   });
 });
 
-describe("analyze 호출강제 게이트 (§4.1)", () => {
+describe("analyze 호출강제 게이트", () => {
   it("sugo_analyze를 호출하지 않고 code_done을 부르면 ANALYZE_NOT_CALLED로 거부된다", async () => {
     const sessionId = await startToReady(VALID_PRD);
     const codeDone = await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
@@ -87,8 +87,8 @@ describe("analyze 호출강제 게이트 (§4.1)", () => {
   });
 });
 
-/** baseline_capture 직전(READY)까지만 진행 — v1 스펙 선형화(§3)로 baseline 강제가 code_done이
- * 아니라 baseline_capture 자신에서 일어나므로, 이 describe 블록은 그 지점을 직접 검증한다. */
+/** baseline_capture 직전(READY)까지만 진행 — baseline 강제가 code_done이 아니라
+ * baseline_capture 자신에서 일어나므로, 이 describe 블록은 그 지점을 직접 검증한다. */
 async function startToReadyOnly(prdContent: string): Promise<string> {
   const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
   const sessionId = start.data.sessionId as string;
@@ -99,7 +99,7 @@ async function startToReadyOnly(prdContent: string): Promise<string> {
   return sessionId;
 }
 
-describe("baseline 게이트 (§4.0) — v1 스펙: baseline_capture 상태전이 자체에서 강제된다(§3 선형화)", () => {
+describe("baseline 게이트 — baseline_capture 상태전이 자체에서 강제된다", () => {
   it("baseline 시그널이 있는 PRD는 baseline evidence 없이 baseline_capture를 거부한다(READY에 머문다)", async () => {
     const sessionId = await startToReadyOnly(BASELINE_SIGNAL_PRD);
     const baselineCapture = await call(handleSugoPlan, { action: "baseline_capture", sessionId });
@@ -155,7 +155,7 @@ async function toBaseline(prdContent: string, recordGreenBaseline = false): Prom
   return sessionId;
 }
 
-describe("contract_done 게이트 (§3 신규 상태 — v1 스펙 델타)", () => {
+describe("contract_done 게이트", () => {
   it("baseline 위험시그널이 있는 PRD는(기본-on 휴리스틱) red 확인 없이 contract_done을 거부한다", async () => {
     const sessionId = await toBaseline(BASELINE_SIGNAL_PRD, true);
     await call(handleSugoPlan, { action: "contract_start", sessionId });
@@ -208,7 +208,7 @@ describe("contract_done 게이트 (§3 신규 상태 — v1 스펙 델타)", () 
     expect(contractDone.isError).toBe(false);
   });
 
-  it("§4.6 라벨-모순: baseline이 이미 그린으로 기록됐는데 contract environmentAbsent를 주장하면 거부한다", async () => {
+  it("라벨-모순: baseline이 이미 그린으로 기록됐는데 contract environmentAbsent를 주장하면 거부한다", async () => {
     // toBaseline이 baseline evidence를 exitCode=0(그린)으로 기록해두므로, 여기서 contract를
     // "환경이 없어서 못 돌린다"고 주장하는 것은 명백한 모순이다.
     const sessionId = await toBaseline(BASELINE_SIGNAL_PRD, true);
@@ -223,7 +223,7 @@ describe("contract_done 게이트 (§3 신규 상태 — v1 스펙 델타)", () 
   });
 });
 
-describe("wiring 게이트 (§4.1)", () => {
+describe("wiring 게이트", () => {
   it("application.yml 변경 + wiringTestAdded 없음이면 거부한다", async () => {
     const sessionId = await startToReady(VALID_PRD);
     await call(handleSugoAnalyze, { sessionId, changedFiles: ["application.yml"] });
@@ -249,7 +249,7 @@ describe("wiring 게이트 (§4.1)", () => {
   });
 });
 
-describe("registration-glue 게이트 (§4.1)", () => {
+describe("registration-glue 게이트", () => {
   it("dependencyRemoved:true인데 미점검이면 거부한다", async () => {
     const sessionId = await startToReady(VALID_PRD);
     await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
@@ -264,7 +264,7 @@ describe("registration-glue 게이트 (§4.1)", () => {
   });
 });
 
-describe("boot 게이트 (§4.1) — Spring Boot 프로젝트", () => {
+describe("boot 게이트 — Spring Boot 프로젝트", () => {
   async function markProjectAsSpringBoot() {
     await saveProjectConfig({
       version: "0.1.0",
@@ -335,7 +335,7 @@ describe("boot 게이트 (§4.1) — Spring Boot 프로젝트", () => {
   });
 });
 
-describe("test 증거대조 게이트 (§4.2)", () => {
+describe("test 증거대조 게이트", () => {
   async function toCodeDone(): Promise<string> {
     const sessionId = await startToReady(VALID_PRD);
     await call(handleSugoAnalyze, { sessionId, changedFiles: [] });

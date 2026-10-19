@@ -26,7 +26,7 @@ A08 소프트웨어와 데이터 무결성 실패 · A09 로깅과 모니터링 
 `{toolName, accessesPrivateData, processesUntrustedInput, communicatesExternally}`를 네가 직접 코드를
 읽고 판단해 채워 넣어야 한다. 신뢰 못할 휴리스틱을 피하려고 의도적으로 이렇게 설계됐다.
 
-**§P6-1: 이 호출은 이제 opt-in이 아니다.** `review-validate`(체인 기본 스킬)가 "보안" 관련 요청
+**이 호출은 이제 opt-in이 아니다.** `review-validate`(체인 기본 스킬)가 "보안" 관련 요청
 여부와 무관하게 매 review마다 무조건 호출하고, review_done이 호출 자체를 하드 게이트로 요구한다
 (`LETHAL_TRIFECTA_NOT_CALLED`). 이 `security` 스킬에서 다시 부르는 건 중복 호출이 아니라 —
 review-validate 단계에서 이미 판단한 capability를 OWASP 전체 점검의 맥락에서 다시 검토하는

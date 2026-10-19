@@ -1,4 +1,4 @@
-// §8: "{user,accessToken,refreshToken,expiresAt}를 localStorage['sugo_auth'](24h 상한)".
+// {user,accessToken,refreshToken,expiresAt}를 localStorage['sugo_auth']에 둔다(24h 상한).
 // Plain module-level store (not React state) so the non-component API client
 // (src/api/client.ts) can read/write it too without prop-drilling.
 

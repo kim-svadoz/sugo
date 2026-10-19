@@ -48,7 +48,7 @@ async function appWithNode(bitbucketClient: BitbucketClient) {
   return { app, db, token };
 }
 
-describe("GET/PUT/DELETE /api/bitbucket — §3.5, AUTH-gated", () => {
+describe("GET/PUT/DELETE /api/bitbucket — AUTH-gated", () => {
   it("requires a bearer token", async () => {
     const { app } = await appWithNode(new FakeBitbucketClient(true, null));
     await request(app).get("/api/bitbucket").expect(401);
@@ -85,7 +85,7 @@ describe("GET/PUT/DELETE /api/bitbucket — §3.5, AUTH-gated", () => {
   });
 });
 
-describe("POST /api/pr/create — §3.4/§6", () => {
+describe("POST /api/pr/create", () => {
   it("반드시 거부: NO_CONNECTION when no provider credential is stored", async () => {
     const { app, token } = await appWithNode(new FakeBitbucketClient(true, null));
     const res = await request(app)

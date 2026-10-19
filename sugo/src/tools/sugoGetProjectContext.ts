@@ -65,7 +65,7 @@ async function readRulesDir(
 }
 
 /**
- * §5: 서브에이전트가 작업 전 필수로 로드해야 하는 프로젝트 컨텍스트 — sugo/CLAUDE.md(합성 인덱스),
+ * 서브에이전트가 작업 전 필수로 로드해야 하는 프로젝트 컨텍스트 — sugo/CLAUDE.md(합성 인덱스),
  * 적용된 개별 하네스 본문, .claude/rules/*.md(있으면). 전부 파일이 SOT라 여기서는 그냥 읽어서
  * 모아줄 뿐 판정은 하지 않는다.
  */
@@ -103,11 +103,11 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
   const sugoManagedRuleFiles = new Set(loaded.map((h) => basename(buildClaudeRuleFile(h.id, "").relPath)));
   const rules = await readRulesDir(join(projectPath, ".claude", "rules"), sugoManagedRuleFiles);
 
-  // ── §2 하네스 도구 디스패치: 적용된 하네스에 매칭되는 특화 MCP 도구 안내를 실어준다.
+  // ── 하네스 도구 디스패치: 적용된 하네스에 매칭되는 하네스 전용 MCP 도구 안내를 실어준다.
   // 레지스트리가 비어있으면(기본값) toolMenu는 빈 문자열 — 조용히 아무 것도 없음.
   const harnessToolGuides = resolveHarnessToolGuides(routing.selected);
 
-  // ── §4.3-T `.claude/rules/` 스캔과 별개다. 사람이 규칙 파일을 심어야만 동작하는 방식이 아니라,
+  // ── TODO-SPEC은 `.claude/rules/` 스캔과 별개다. 사람이 규칙 파일을 심어야만 동작하는 방식이 아니라,
   // feature/* 브랜치 패턴만 맞으면 sessionId 없이도(다른 스킬 진입점이어도) 무조건 동작한다.
   const branch = await currentGitBranch(projectPath);
   const fName = featureBranchName(branch);

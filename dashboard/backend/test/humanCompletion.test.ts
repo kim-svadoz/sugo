@@ -154,12 +154,12 @@ it("완료 산출물이 있는 patch 취소는 기존 Task 완료 상태를 복�
     payload.nodes[0].runtimeAssessment = runtimeAssessment;
     payload.nodes[0].lineage = [
       { version: 0, title: "최초 구현", workResult: payload.nodes[0].workResult },
-      { version: 1, title: "캐시 보강", workResult: payload.nodes[0].workResult },
-      { version: 2, title: "취소한 문서 선택 변경" },
+      { version: 1, title: "입력 검증 보강", workResult: payload.nodes[0].workResult },
+      { version: 2, title: "취소한 정렬 변경" },
     ];
     payload.nodes.unshift(
-      { id: "spec", title: "검색필터", level: "spec", status: "in_progress" },
-      { id: "run", title: "검색필터", level: "workstream", status: "in_progress", parent: "spec" },
+      { id: "spec", title: "할 일 추가", level: "spec", status: "in_progress" },
+      { id: "run", title: "할 일 추가", level: "workstream", status: "in_progress", parent: "spec" },
     );
     payload.nodes[2].parent = "run";
     await f.sync(payload);

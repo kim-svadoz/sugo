@@ -1,9 +1,9 @@
 ---
-description: 'Register a project with Sugo: detect stack, fetch and compose harnesses, then register project and workspace (§2).'
+description: 'Register a project with Sugo: detect stack, fetch and compose harnesses, then register project and workspace.'
 argument-hint: "[projectPath] [workspace]"
 ---
 
-Register a project with Sugo (§2 harness subsystem). Input: $ARGUMENTS
+Register a project with Sugo. Input: $ARGUMENTS
 
 ## Procedure
 1. Call `sugo_add(projectPath, workspace?, repoUrl?, additionalStacks?)`.

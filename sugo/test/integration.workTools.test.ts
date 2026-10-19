@@ -30,11 +30,11 @@ afterEach(() => {
 });
 
 /**
- * §9/§1 umbrella 도구 없이 액션이 어디에 속하는지를 고정한다 — health/judgment는
+ * umbrella 도구 없이 액션이 어디에 속하는지를 고정한다 — health/judgment는
  * `sugo_status`, 워크스페이스 status/sync는 `sugo_workspace`. enable/disable/help는 두지
  * 않는다(토글은 무력한 no-op이고, help는 도구 description이 할 일이다).
  */
-describe("§9 isWorkEnabled — 상수, 토글 개념 소멸", () => {
+describe("isWorkEnabled — 상수, 토글 개념 소멸", () => {
   it("항상 true다", () => {
     expect(isWorkEnabled()).toBe(true);
   });
@@ -107,7 +107,7 @@ describe("sugo_status(health)", () => {
     expect(result.data.health.retryQueueSize).toBe(0);
   });
 
-  it("health를 안 주면 진단 블록이 아예 없다(기본은 v1과 동일한 프로젝트 목록)", async () => {
+  it("health를 안 주면 진단 블록이 아예 없다(기본은 프로젝트 목록)", async () => {
     const result = await call(handleSugoStatus, {});
     expect(result.data.health).toBeUndefined();
     expect(result.data.judgment).toBeUndefined();

@@ -24,7 +24,7 @@ export interface AddCheckpointParams {
   expires_at?: string;
 }
 
-/** work/<ws>/checkpoints/CP-<id>-<slug>.md (frontmatter+본문) — §8 */
+/** work/<ws>/checkpoints/CP-<id>-<slug>.md (frontmatter+본문) */
 export async function addCheckpoint(workspace: string, params: AddCheckpointParams): Promise<Checkpoint> {
   const id = generateCheckpointId();
   const checkpoint: Checkpoint = {
@@ -98,7 +98,7 @@ export async function removeCheckpoint(workspace: string, id: string): Promise<b
 }
 
 /**
- * §8 sugo_checkpoint(migrate): 기존 체크포인트 파일을 현재 canonical frontmatter 포맷으로
+ * sugo_checkpoint(migrate): 기존 체크포인트 파일을 현재 canonical frontmatter 포맷으로
  * 다시 써서 정규화한다. 파일이 손상되거나 필드가 부분적으로만 있어도 항상 완전한 Checkpoint
  * 셰이프로 다시 쓰는 통로다.
  */
@@ -121,10 +121,10 @@ export async function migrateCheckpoints(workspace: string): Promise<number> {
 }
 
 /**
- * §7.2 "/sugo:checkpoint-sync"(대시보드→로컬 pull): 원격 체크포인트를 프로젝트의
+ * "/sugo:checkpoint-sync"(대시보드→로컬 pull): 원격 체크포인트를 프로젝트의
  * `.claude/rules/<category>/<slug>.md`로 기록한다(sugo_get_project_context가 읽는 바로 그
- * 위치, §1 레이아웃). 대시보드가 꺼져있거나 응답이 없으면 null을 그대로 반환한다(호출부가
- * "가져온 게 없다"로 판단하게 — 에러가 아니다, §7.2 "다운돼도 막지 않는다").
+ * 위치). 대시보드가 꺼져있거나 응답이 없으면 null을 그대로 반환한다(호출부가
+ * "가져온 게 없다"로 판단하게 — 에러가 아니다. 대시보드가 다운돼도 막지 않는다).
  */
 export interface CheckpointReconcileResult {
   appliedCount: number;

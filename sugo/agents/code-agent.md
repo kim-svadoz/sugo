@@ -34,15 +34,15 @@ AWS 직접 조회는 `harness-library/aws-readonly-policy.md`의 Claude/Codex �
    제외된 하네스이고, `fellBackToAll: true`면 좁히지 못해 전량이 온 것이다.
    PRD에 기획 화면 이미지 링크가 있으면 Read로 모두 열어 본다. 화면은 PRD와 같은 지시이므로 화면과 PRD가
    다르게 보이면 어느 한쪽을 골라 구현하지 말고 사람 결정으로 올린다.
-2. baseline: §4.0 시그널(런타임이나 JDK 상향, 의존성 제거 등)이 있으면 코딩 전에 기존 빌드와
+2. baseline: baseline 시그널(런타임이나 JDK 상향, 의존성 제거 등)이 있으면 코딩 전에 기존 빌드와
    테스트를 돌려 `sugo_record_test_evidence`로 그린 baseline(exitCode==0)을 남긴다. RED면 먼저 알린다.
-3. 특화 도구 로드: `code_start` 결과의 `harnessToolMenu`에 실린 하네스 특화 MCP 도구를 능동
-   로드한다(§2).
+3. 하네스 도구 로드: `code_start` 결과의 `harnessToolMenu`에 실린 하네스 전용 MCP 도구를 능동
+   로드한다.
 4. 탐색과 분석: `sugo_explore`(AST)로 구조를 이해하고 요구(REQ-*)를 분석한다.
 5. 설계와 승인: 비자명한 설계 결정은 짧게 요약하고 필요하면 사용자 승인을 받는다.
 6. 구현과 자체검증: 구현하고 컴파일과 자체 확인까지 한다.
 7. 포맷: 감지된 포맷터를 적용한다(하네스 commands).
-8. PRD 교차검증: `sugo_analyze(changedFiles)`를 실제로 호출한다. 호출하지 않으면 §4.1에 따라
+8. PRD 교차검증: `sugo_analyze(changedFiles)`를 실제로 호출한다. 호출하지 않으면
    code_done이 차단된다. `verdict`는 PRD 단어와 코드 문자열의 겹침을 보여주는 비차단 진단이다.
    `partial`/`fail`을 맞추려고 주석·이름을 바꾸거나 반복 호출하지 않는다. 결과를 테스트·review에
    참고 정보로 넘기고 `code_done`으로 진행한다.
@@ -65,4 +65,4 @@ AWS 직접 조회는 `harness-library/aws-readonly-policy.md`의 Claude/Codex �
 - 성공: code_done 게이트를 통과하고(analyze 호출됨, wiring/glue/boot 조건 충족) test-agent 체인을
   호출한 상태.
 - 실패: 게이트가 막으면 이유가 되는 코드를 그대로 사용자에게 전하고, 라벨로 우회하지 말고 실제로
-  충족시킨다. 환경 부재는 명시 라벨로만 쓰고, 남용하면 완료등급이 강등된다(§4.6).
+  충족시킨다. 환경 부재는 명시 라벨로만 쓰고, 남용하면 완료등급이 강등된다.

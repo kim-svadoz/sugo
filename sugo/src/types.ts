@@ -1,7 +1,7 @@
 import { ACTION_TYPES, WORKFLOW_STATES, type ActionName } from "./ontology/model.js";
 
 /**
- * **상태·액션의 정본은 `ontology/model.ts`다(§2).** 여기 있는 것들은 전부 그 선언에서 파생된
+ * **상태·액션의 정본은 `ontology/model.ts`다.** 여기 있는 것들은 전부 그 선언에서 파생된
  * 별칭이거나(PLAN_STATES/PLAN_ACTIONS/PREREQUISITES/RESULT_STATE) 손관리가 정당한 보조
  * 테이블(NEXT_ACTION_HINTS)이다. 상태나 액션을 추가·수정하려면 model.ts만 고치면 된다 —
  * 여기에 사본을 만들면 `ontology/invariants.test.ts`의 정적 스캔이 실패한다.
@@ -90,7 +90,7 @@ export interface ChainInfo {
   wiringVerified?: boolean;
   autoLoopRetryCount: number;
   codeGateAudit?: CodeGateAudit;
-  /** sugo_chain 호출 감사로그(§5). test_start/review_start의 하드 게이트는 아니고 기록만 한다. */
+  /** sugo_chain 호출 감사로그. test_start/review_start의 하드 게이트는 아니고 기록만 한다. */
   chainHandoffs?: { direction: ChainDirection; calledAt: string }[];
   lastValidation?: {
     verdict: "pass" | "partial" | "fail";
@@ -101,22 +101,22 @@ export interface ChainInfo {
     /** 서버가 auto로 직접 실측해 실패로 확인한 체크 — review_done의 VALIDATE_VERIFIED_FAILURE 게이트가 본다. */
     verifiedFailures: { harnessId: string; checkId: string; detail: string }[];
   };
-  /** §P6-1: sugo_check_lethal_trifecta 호출 기록. review_done의 호출강제+완화사유 게이트가 본다. */
+  /** sugo_check_lethal_trifecta 호출 기록. review_done의 호출강제+완화사유 게이트가 본다. */
   lastLethalTrifectaCheck?: LastLethalTrifectaCheck;
-  /** review_done에서 계산한 값을 commit 시점(§8 WorkLog 기록)까지 들고 가기 위한 보존 필드. */
+  /** review_done에서 계산한 값을 commit 시점까지 들고 가기 위한 보존 필드. */
   humanHoursEstimate?: HumanHoursEstimate;
   reviewSummary?: string;
-  /** §4.5 판단품질 측정용 타임스탬프 — review_done 완료 시각(완료선언→실동작 갭 계산에 사용). */
+  /** 판단품질 측정용 타임스탬프 — review_done 완료 시각(완료선언→실동작 갭 계산에 사용). */
   reviewDoneAt?: string;
-  /** review_done의 runtimeCheck.unverifiedReason이 실제로 제출됐으면 보존(§4.5 environmentAbsentRate). */
+  /** review_done의 runtimeCheck.unverifiedReason이 실제로 제출됐으면 보존. */
   runtimeCheckUnverifiedReason?: string;
-  /** §10 PRD 정합성 게이트(선택 확장) — test_done에 제출된 커버리지맵을 감사 목적으로 보존. */
+  /** PRD 정합성 게이트(선택 확장) — test_done에 제출된 커버리지맵을 감사 목적으로 보존. */
   coverageMap?: CoverageMap;
   /** review_done이 실제로 증거 재사용(reusedFromTestDone)으로 통과했는지 감사 기록. */
   evidenceReused?: boolean;
-  /** §10 계약테스트 실행증거 — sugo_record_contract_evidence로 누적되는 red/green 기록. */
+  /** 계약테스트 실행증거 — sugo_record_contract_evidence로 누적되는 red/green 기록. */
   contractTests?: ContractTestRecord[];
-  /** §4.6 label-guard: 세션 동안 실제로 사용된 우회 라벨 누적(모순 검사를 통과한 것만). commit
+  /** label-guard: 세션 동안 실제로 사용된 우회 라벨 누적(모순 검사를 통과한 것만). commit
    * 시점에 completionGrade 강등 판정의 입력이 된다. */
   bypassLabels?: BypassLabel[];
 }
@@ -166,18 +166,18 @@ export interface SessionData {
     decision?: "link" | "new";
     selectedId?: string;
   };
-  /** §10 decompose 오케스트레이션(선택 확장) — DECOMPOSE/ORCHESTRATING 상태 동안의 서브태스크 매니페스트. */
+  /** decompose 오케스트레이션(선택 확장) — DECOMPOSE/ORCHESTRATING 상태 동안의 서브태스크 매니페스트. */
   decomposeManifest?: DecomposeManifest;
-  /** §7.1 start action에 전달된 사용자 지시. patch 모드에서 review_done이
+  /** start action에 전달된 사용자 지시. patch 모드에서 review_done이
    * work-result에 실어둔다(reviewSummary와는 별개 — "이번 차수에 뭘 요청했는지" 자체를 보존). */
   seed?: string;
-  /** §5.0 스펙 오라클(q-spec 대조) 상태. prd가 specPath 실재를 확인하면 required=true로 켜고,
+  /** 스펙 오라클(기준 스펙 문서 대조) 상태. prd가 specPath 실재를 확인하면 required=true로 켜고,
    * oracle_done이 ran=true로 기록하며, ready가 이 둘을 본다. */
   specOracle?: SpecOracleState;
-  /** jira 연동 선택 기록. `"new"`는 실제 티켓을 만들지 않는다(스펙상 TODO). */
+  /** jira 연동 선택 기록. `"new"`는 실제 티켓을 만들지 않는다(아직 미구현). */
   jira?: { option: JiraOption; jiraKey?: string; recordedAt: string };
   /**
-   * §4.3-T 브랜치별 TODO-SPEC. `start`가 `feature/<이름>` 브랜치를 감지했을 때만 채워진다 —
+   * 브랜치별 TODO-SPEC. `start`가 `feature/<이름>` 브랜치를 감지했을 때만 채워진다 —
    * 프로젝트가 sugo를 쓰기만 하면 이 판정 자체는 브랜치 패턴만으로 무조건 이뤄진다(opt-in 아님).
    * `snapshotAtStart`는 commit 게이트가 "파일이 실제로 움직였는가"를 판정하는 기준선이다.
    */

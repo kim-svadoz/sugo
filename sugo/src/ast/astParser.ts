@@ -63,7 +63,7 @@ export interface FileOutline {
 }
 
 /**
- * §D.7: web-tree-sitter로 언어별 WASM 파서를 로드해 소스를 구문트리로 파싱하고 클래스·메서드·
+ * web-tree-sitter로 언어별 WASM 파서를 로드해 소스를 구문트리로 파싱하고 클래스·메서드·
  * 함수·import를 추출한다(정규식이 아니라 실제 AST). 지원하지 않는 확장자는 null(스킵, 차단 아님).
  */
 export async function parseFileOutline(filePath: string, content: string): Promise<FileOutline | null> {

@@ -85,7 +85,7 @@ describe("wouldCreateCycle", () => {
   });
 });
 
-describe("mergeRoadmapOwnership — §7.2 소유권 경계", () => {
+describe("mergeRoadmapOwnership — 소유권 경계", () => {
   it("dependsOn/manual_status/pos_x/pos_y는 원격값으로 덮어쓴다", () => {
     const local = [{ ...node("A", ["OLD"]), title: "로컬 제목" }];
     const merged = mergeRoadmapOwnership(local, [{ id: "A", dependsOn: ["NEW"], manual_status: "in_review", pos_x: 5, pos_y: 9 }]);

@@ -58,7 +58,7 @@ function stripComments(source: string): string {
     .join("\n");
 }
 
-describe("이식성 가드 — 대시보드에 이 PC 전용 가정이 없다", () => {
+describe("이식성 가드 — 대시보드에 특정 PC 전용 가정이 없다", () => {
   it("드라이브 문자 절대경로(C:/… , C:\\… )가 하드코딩돼 있지 않다", () => {
     const offenders = collect().filter((f) => /["'`][A-Za-z]:[\\/]/.test(stripComments(readFileSync(f, "utf8"))));
     expect(offenders).toEqual([]);

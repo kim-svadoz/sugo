@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 
-/** Checkpoints 모달에서 쓰던 걸 §7B SchedulePage와 공유하기 위해 분리했다.
- * 동작은 그대로(ESC 닫기, 오버레이 클릭 닫기, max-w-3xl) — 구현 아님. */
+/** 공용 모달. ESC 닫기, 오버레이 클릭 닫기, 기본 max-w-3xl. */
 export function Modal({
   children,
   onClose,
@@ -11,7 +10,7 @@ export function Modal({
 }: {
   children: React.ReactNode;
   onClose: () => void;
-  /** §7B — 이 Modal 위에 다른 오버레이(체크포인트/캔버스)가 열려 있는 동안 true로 두면
+  /** 이 Modal 위에 다른 오버레이(체크포인트/캔버스)가 열려 있는 동안 true로 두면
    * Escape를 무시한다. 안 그러면 이 Modal과 위에 뜬 오버레이가 같은 keydown에 동시에
    * 반응해서 Esc 한 번에 둘 다 닫혀버린다(오버레이만 닫고 이 Modal로 돌아와야 하는데). */
   disableEscape?: boolean;

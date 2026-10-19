@@ -75,7 +75,7 @@ const PATCH_FILE_RE = /^(prd|work-result)-patch-v(\d+)\.md$/i;
 const PRD_PATCH_RE = /^prd-patch-v(\d+)\.md$/i;
 
 /**
- * 순수 함수(§7): 원본 feat는 대시보드 계보의 v0이고, 첫 patch는 v1이다.
+ * 순수 함수: 최초 feat는 대시보드 계보의 v0이고, 첫 patch는 v1이다.
  * 디렉터리에서 발견한 (prd|work-result)-patch-v(N).md 중 최대 N의 다음 버전을 정한다.
  */
 export function computeNextPatchVersion(filenames: string[]): number {
@@ -110,7 +110,7 @@ export function patchWorkResultFilename(version: number): string {
 /**
  * IO: workResultPath(기존 work-result.md 또는 work-result-patch-vN.md)로부터 patch 컨텍스트를
  * 계산한다. 같은 디렉터리의 prd.md를 부모 PRD로 우선하고, 없으면 PRD-patch-v*.md 최신본을 쓴다.
- * 둘 다 없으면 진입 불가(PATCH_PARENT_PRD_NOT_FOUND) — §7.
+ * 둘 다 없으면 진입 불가(PATCH_PARENT_PRD_NOT_FOUND).
  */
 export async function resolvePatchContext(workResultPath: string): Promise<PatchContext> {
   const featureDir = dirname(workResultPath);

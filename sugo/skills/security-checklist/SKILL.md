@@ -20,7 +20,7 @@ Warn when a registered tool or code path has all three capabilities:
 
 Together they create a data-exfiltration path. Call `sugo_check_lethal_trifecta(sessionId, tools[])`. The tool must not infer capabilities from names or descriptions. Read the code and provide `{toolName, accessesPrivateData, processesUntrustedInput, communicatesExternally}` for every inspected tool.
 
-Under §P6-1 this is not opt-in. `review-validate` calls it for every review, and review_done hard-gates missing calls with `LETHAL_TRIFECTA_NOT_CALLED`. The security skill re-evaluates those capabilities in the full OWASP context; the session retains the latest result.
+This call is not opt-in. `review-validate` calls it for every review, and review_done hard-gates missing calls with `LETHAL_TRIFECTA_NOT_CALLED`. The security skill re-evaluates those capabilities in the full OWASP context; the session retains the latest result.
 
 ## Rules
 

@@ -25,10 +25,10 @@ async function addWorkspace(app: unknown, auth: string, name: string, projects: 
 }
 
 /**
- * §4 워크스페이스 soft delete. 플러그인(§9)이 기본 soft로 삭제를 보내므로 대시보드도 같은 의미로
+ * 워크스페이스 soft delete. 플러그인이 기본 soft로 삭제를 보내므로 대시보드도 같은 의미로
  * 받아야 한다 — 여기서 하드 삭제하면 "복구 가능하다고 안내받은" 사용자의 데이터가 실제로는 사라진다.
  */
-describe("§4 DELETE /api/sync/workspace — 기본 soft", () => {
+describe("DELETE /api/sync/workspace — 기본 soft", () => {
   it("기본 삭제는 deleted_at만 찍고 행을 남긴다", async () => {
     const { app, db, auth } = await freshApp();
     await addWorkspace(app, auth, "ws1");
@@ -78,7 +78,7 @@ describe("§4 DELETE /api/sync/workspace — 기본 soft", () => {
   });
 });
 
-describe("§4 DELETE /api/sync/workspace — purge(하드)", () => {
+describe("DELETE /api/sync/workspace — purge(하드)", () => {
   it("purge:true면 워크스페이스 행과 관련 데이터가 사라진다", async () => {
     const { app, db, auth } = await freshApp();
     await addWorkspace(app, auth, "ws1", ["C:/a"]);
@@ -115,11 +115,11 @@ describe("§4 DELETE /api/sync/workspace — purge(하드)", () => {
 });
 
 /**
- * §4 자가보강. **코드가 마이그레이션보다 먼저 배포돼도 라이브가 안 깨지게** 하는 근본 방지책 —
+ * 자가보강. **코드가 마이그레이션보다 먼저 배포돼도 라이브가 안 깨지게** 하는 근본 방지책 —
  * 컬럼이 없고 ALTER 권한도 없으면 필터를 생략해 전부 노출한다(graceful degrade).
  * 숨김이 안 되는 건 불편이지만, 여기서 500을 내면 대시보드 전체가 멈춘다.
  */
-describe("§4 ensureWorkspaceDeletedAtColumn — 자가보강 + graceful degrade", () => {
+describe("ensureWorkspaceDeletedAtColumn — 자가보강 + graceful degrade", () => {
   it("컬럼이 없으면 ALTER로 추가한다", async () => {
     __resetDeletedAtColState();
     const db = createSqliteClient();

@@ -17,11 +17,11 @@ function allSourceFiles(dir: string, acc: string[] = []): string[] {
 const FILES = allSourceFiles(SRC).map((f) => ({ path: f, rel: relative(SRC, f).replace(/\\/g, "/"), text: readFileSync(f, "utf8") }));
 
 /**
- * §2.6 test 티어 불변식의 **정적 소스 스캔** 강제. LLM 판단이 아니라 문자열 검사로 CI에서 막는다
+ * test 티어 불변식의 **정적 소스 스캔** 강제. LLM 판단이 아니라 문자열 검사로 CI에서 막는다
  * (토큰 0). "규칙을 문서에 적어두면 지켜진다"는 착각을 없애는 게 목적 — 적어둔 규칙 중 기계가
  * 실제로 지킬 수 있는 것만 test 티어로 승격돼 여기 온다.
  */
-describe("§2.6 불변식 정적 스캔", () => {
+describe("불변식 정적 스캔", () => {
   it("test 티어로 선언된 불변식 중 여기서 강제하는 것들이 모델에 존재한다", () => {
     const testTier = INVARIANTS.filter((i) => i.enforcedBy === "test").map((i) => i.id);
     expect(testTier).toContain("no-fetch-bypass");
@@ -75,7 +75,7 @@ describe("§2.6 불변식 정적 스캔", () => {
       }
     });
 
-    it("model.ts는 선언만 — 함수 정의가 없다(§2 '런타임 로직 없음')", () => {
+    it("model.ts는 선언만 — 함수 정의가 없다(런타임 로직 없음)", () => {
       const model = FILES.find((f) => f.rel === "ontology/model.ts")!;
       expect(/export function |=>\s*\{/.test(model.text)).toBe(false);
     });

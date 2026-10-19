@@ -18,7 +18,7 @@ async function freshApp() {
   return { app, db, auth };
 }
 
-/** 미들웨어 단위 호출 — express 없이 req/res/next만 흉내낸다(§3.1 "미들웨어가 payload schemaVersion 소비"). */
+/** 미들웨어 단위 호출 — express 없이 req/res/next만 흉내낸다. */
 function run(body: unknown): { req: Partial<Request>; headers: Record<string, string>; nextCalls: number } {
   const req = { body } as Partial<Request>;
   const headers: Record<string, string> = {};
@@ -28,7 +28,7 @@ function run(body: unknown): { req: Partial<Request>; headers: Record<string, st
   return { req, headers, nextCalls };
 }
 
-describe("sync schemaVersion 미들웨어 (§3.1)", () => {
+describe("sync schemaVersion 미들웨어", () => {
   it("payload의 schemaVersion을 req.syncSchemaVersion으로 소비한다", () => {
     const { req, nextCalls } = run({ userId: "u1", schemaVersion: 1 });
     expect(req.syncSchemaVersion).toBe(1);
@@ -86,7 +86,7 @@ describe("sync schemaVersion 미들웨어 (§3.1)", () => {
   });
 });
 
-describe("sync 라우터 end-to-end (§3.1)", () => {
+describe("sync 라우터 end-to-end", () => {
   it("상위 schemaVersion payload도 200이고 데이터는 정상 저장된다", async () => {
     const { app, db, auth } = await freshApp();
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});

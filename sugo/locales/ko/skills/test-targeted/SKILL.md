@@ -20,7 +20,7 @@ description: 'test-agent 체인 기본 스킬. code-agent 핸드오프와 PRD를
 2. PRD 확인: `handoff.prdPath`로 PRD를 연다. 없으면 복구하거나 fallback 라벨을 붙인다.
 3. 명세에서 도출: PRD의 AC마다 테스트를 만들고 응답 필드마다 어서션을 넣는다. 통합레벨은 1개 이상.
 4. write/update: 테스트 파일만 수정한다.
-5. 풀검증 실행: `gradlew check` 또는 `mvn verify|install`을 쓴다. 단순 test는 §4.2에서 거부된다.
+5. 풀검증 실행: `gradlew check` 또는 `mvn verify|install`을 쓴다. 단순 test는 풀검증 게이트에서 거부된다.
    신규 실패는 spec_not_met, 기존 실패는 regression으로 분류한다.
 6. 증거 기록(필수): `sugo_record_test_evidence(sessionId, command, exitCode, totalTests, passedTests,
    failedTests)`(구 이름 `total/passed/failed`는 하위호환용 deprecated).

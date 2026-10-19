@@ -430,7 +430,7 @@ const buildtoolPoetry: DetectionRule = {
   },
 };
 
-/** dataStore/infra는 정보성 — harnessIds에는 포함되지 않음(§2 MVP 결정) */
+/** dataStore/infra는 정보성 — harnessIds에는 포함되지 않음 */
 function dataStoreRule(id: string, name: string, matchers: (pkg: PackageJson | null, javaSrc: string, pySrc: string) => boolean): DetectionRule {
   return {
     id,

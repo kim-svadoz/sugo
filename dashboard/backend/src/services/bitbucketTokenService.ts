@@ -9,7 +9,7 @@ export interface BitbucketTokenStatus {
   updatedAt: string | null;
 }
 
-// §3.5: "GET / — 상태만 {connected,hint,baseUrl,updatedAt}(토큰 반환 안 함)".
+// GET / — 상태만 {connected,hint,baseUrl,updatedAt}(토큰 반환 안 함).
 export async function getBitbucketTokenStatus(db: DbClient, userId: string): Promise<BitbucketTokenStatus> {
   const rows = await db.query<{ token_hint: string; base_url: string | null; updated_at: string }>(
     "SELECT token_hint, base_url, updated_at FROM user_bitbucket_tokens WHERE user_id = ?",
@@ -41,8 +41,8 @@ export async function deleteBitbucketToken(db: DbClient, userId: string): Promis
   await db.exec("DELETE FROM user_bitbucket_tokens WHERE user_id = ?", [userId]);
 }
 
-// Only called server-side when actually making a Bitbucket API call (§8:
-// "PR 호출시에만 서버 복호화") - never exposed via a route response.
+// Only called server-side when actually making a Bitbucket API call
+// (PR 호출 시에만 서버에서 복호화) - never exposed via a route response.
 export async function getDecryptedBitbucketToken(
   db: DbClient,
   userId: string,

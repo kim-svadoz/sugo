@@ -115,8 +115,8 @@ function MarkdownEditor({
 }
 
 /**
- * Checkpoints 모달 — Sessions.tsx에 있던 걸 §7B(사용자 결정: 체크포인트/캔버스는
- * 다른 화면으로 리다이렉트하지 않고 그 자리에서 모달로만 뜬다)에 맞춰 자기완결형으로 뽑았다.
+ * Checkpoints 모달 — 체크포인트는 다른 화면으로 리다이렉트하지 않고 그 자리에서 모달로만
+ * 뜨므로 자기완결형으로 만들었다.
  * workspace 하나만 받아 내부에서 전부 처리하므로 Sessions.tsx·SchedulePage 어디서든
  * `<CheckpointPanel workspace={...} onClose={...} />`로 그대로 마운트하면 된다.
  *
@@ -274,7 +274,7 @@ export function CheckpointPanel({
           <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
             <div className="grid gap-px bg-[var(--color-border)] sm:grid-cols-[210px_minmax(0,1fr)]">
               <label className="bg-[var(--color-surface)] px-4 py-3"><span className="text-[11px] font-medium text-[var(--color-text-dim)]">규칙 폴더</span><input value={cpDraft.category} onChange={(e) => setCpDraft({ ...cpDraft, category: e.target.value })} placeholder="general" className="mt-1.5 w-full bg-transparent font-mono text-[13px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-dim)]" /></label>
-              <label className="bg-[var(--color-surface)] px-4 py-3"><span className="text-[11px] font-medium text-[var(--color-text-dim)]">규칙 이름</span><input value={cpDraft.title} onChange={(e) => setCpDraft({ ...cpDraft, title: e.target.value })} placeholder="예: 결제 승인 실패 시 재시도 기준" className="mt-1.5 w-full bg-transparent text-[14px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-dim)]" /></label>
+              <label className="bg-[var(--color-surface)] px-4 py-3"><span className="text-[11px] font-medium text-[var(--color-text-dim)]">규칙 이름</span><input value={cpDraft.title} onChange={(e) => setCpDraft({ ...cpDraft, title: e.target.value })} placeholder="예: API 호출 실패 시 재시도 기준" className="mt-1.5 w-full bg-transparent text-[14px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-dim)]" /></label>
             </div>
             <MarkdownEditor value={cpDraft.markdown} onChange={(markdown) => setCpDraft({ ...cpDraft, markdown })} />
             <div className="flex flex-wrap items-end justify-between gap-4 border-t border-[var(--color-border)] px-4 py-3.5">

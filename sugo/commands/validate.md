@@ -3,7 +3,7 @@ description: 'Run review-stage harness validation from validation.yaml checks[].
 argument-hint: "[projectPath]"
 ---
 
-Run harness validation (§5). Input: $ARGUMENTS
+Run harness validation. Input: $ARGUMENTS
 
 ## Procedure
 - Call `sugo_validate(sessionId, validationResults)`. For every applied harness `validation.yaml` `checks[]` item `{id, description, severity}`, review-agent submits `{harnessId, checkId, passed, note?}`.

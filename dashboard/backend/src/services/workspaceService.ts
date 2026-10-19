@@ -142,7 +142,7 @@ async function workspaceAttention(db: DbClient, userId: string, workspaceName: s
 }
 
 // roadmap count는 level='task'만, active는 COALESCE(manual_status,status)='in_progress'.
-// §7: **dropped는 분모에서 제외**한다 — 폐기는 "안 하기로 한 일"이라 진행률에 남아 있으면
+// **dropped는 분모에서 제외**한다 — 폐기는 "안 하기로 한 일"이라 진행률에 남아 있으면
 // 아무리 일해도 100%가 안 되는 분모가 된다.
 async function roadmapCounts(db: DbClient, userId: string, workspaceName: string): Promise<RoadmapCounts> {
   const rows = (await getRoadmap(db, userId, workspaceName)).filter(n => n.level === "task");
@@ -172,7 +172,7 @@ async function taskCounts(db: DbClient, userId: string, workspaceName: string): 
 }
 
 export async function listWorkspaces(db: DbClient, userId: string): Promise<WorkspaceSummary[]> {
-  // §4 soft delete 필터. 컬럼이 없으면(코드가 마이그레이션보다 먼저 배포된 경우) 필터를 생략해
+  // soft delete 필터. 컬럼이 없으면(코드가 마이그레이션보다 먼저 배포된 경우) 필터를 생략해
   // 전부 노출한다 — 여기서 500을 내면 대시보드 전체가 멈춘다(graceful degrade).
   const hasDeletedCol = await ensureWorkspaceDeletedAtColumn(db);
   const workspaces = await db.query<{ id: number; name: string }>(
@@ -353,8 +353,8 @@ export async function getDecisions(db: DbClient, userId: string, workspaceName: 
 }
 
 /**
- * §3.3 "GET /:name/spec-content?path=&title= — Spec 원문(slug 매칭)". 대시보드엔 spec 파일 원문을
- * 저장하는 테이블이 없다(§2) — 플러그인이 Spec을 ADR로 sync하므로(sugo_decisions), title 또는 id를
+ * "GET /:name/spec-content?path=&title= — Spec 본문(slug 매칭)". 대시보드엔 spec 파일 본문을
+ * 저장하는 테이블이 없다 — 플러그인이 Spec을 ADR로 sync하므로(sugo_decisions), title 또는 id를
  * slug로 매칭해 decision content를 돌려준다. 없으면 null.
  */
 export async function getSpecContent(
@@ -466,7 +466,7 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
   const rows = allRows.filter((row) => !hidden.has(row.id));
   // manual_status와 달리 manual_title은 서버에서 곧바로 유효 title로 합친다 — Canvas의
   // n.title 참조가 수십 곳이라 프론트에 매번 manual_title ?? title 판정을 시키는 대신,
-  // "원본 CLI 제목을 따로 보여줄 UI가 없다"는 전제로 여기서 한 번에 정리한다.
+  // CLI 원래 제목을 따로 보여줄 UI가 없다는 전제로 여기서 한 번에 정리한다.
   const nodes = await Promise.all(rows.map(async (r) => {
     const lineage = parseMaybeJson<Array<Record<string, unknown>> | null>(r.lineage, null);
     const projectedLineage = lineage && await Promise.all(lineage.map(async entry => entry.workResult
@@ -560,7 +560,7 @@ export async function getBlockerDecision(db: DbClient, userId: string, workspace
   };
 }
 
-// ---- §7B Schedule 탭 (due_date는 dashboard 전용, CLI/플러그인 sync가 안 건드림) ----
+// ---- Schedule 탭 (due_date는 dashboard 전용, CLI/플러그인 sync가 안 건드림) ----
 
 export interface ScheduledSpecRow {
   deployment?: SpecDeployment;
@@ -592,7 +592,7 @@ export interface ScheduledSpecRow {
 }
 
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
- * 프론트가 due_date 유무로 캘린더/"기한 미정" 리스트를 나눈다(§7B). */
+ * 프론트가 due_date 유무로 캘린더/"기한 미정" 리스트를 나눈다. */
 export async function getScheduledSpecs(db: DbClient, userId: string): Promise<ScheduledSpecRow[]> {
   const rows = await db.query<Omit<ScheduledSpecRow, "has_run" | "task_count" | "done_task_count" | "active_task_count" | "blocked_task_count" | "stale_task_count" | "unverified_task_count" | "focus_task_id" | "focus_task_title" | "focus_task_status" | "focus_task_note" | "focus_task_updated_at" | "focus_task_work_result" | "focus_task_runtime_assessment" | "focus_task_blocker_decision" | "focus_task_human_blocker"> & { manual_title: string | null; has_run: number | boolean }>(
     `SELECT n.id, n.workspace_name, n.title, n.manual_title,
@@ -876,7 +876,7 @@ export async function setRoadmapWorkBranch(
 }
 
 /** Run/Task 없이 level='spec' 노드만 단독 생성한다. 사용자가 정식 feat 착수 전에
- * 일정만 먼저 잡아둘 때 쓴다(§7B "+ 일정 추가"). */
+ * 일정만 먼저 잡아둘 때 쓴다. */
 export async function createQuickSpec(
   db: DbClient,
   userId: string,
@@ -945,7 +945,7 @@ export async function deleteQuickSpec(
   return { ok: true, deletedCount: deleting.size, filesPreserved: true };
 }
 
-// ---- Checkpoint CRUD (§3.3, dashboard-initiated - separate from plugin sync) ----
+// ---- Checkpoint CRUD ----
 
 export interface CreateCheckpointInput {
   id?: string;
@@ -1035,7 +1035,7 @@ export async function deleteCheckpointRow(
   ]);
 }
 
-// ---- Roadmap mutations (§3.3 "대시보드가 구조/순서 소유") ----
+// ---- Roadmap mutations ----
 
 export type RoadmapMutationResult = { ok: true } | { ok: false; error: string; message: string };
 
@@ -1047,7 +1047,7 @@ async function loadGraphNodes(db: DbClient, userId: string, workspaceName: strin
   return rows.map((r) => ({ id: r.id, level: r.level, status: r.status, dependsOn: parseJsonArray(r.depends_on) }));
 }
 
-// §3.3: link/unlink는 task<->task만 허용(fail-closed), 사이클 생기면 거부.
+// link/unlink는 task<->task만 허용(fail-closed), 사이클 생기면 거부.
 export async function linkRoadmapNodes(
   db: DbClient,
   userId: string,
@@ -1164,9 +1164,9 @@ export async function setRoadmapParent(
 }
 
 /**
- * manual_status와 같은 오버레이 패턴 — 원본 `title`(CLI 진실)은 그대로 두고 `manual_title`에만
- * 쓴다. `title` 자체를 덮어쓰면 다음 CLI 재동기화(syncRoadmap)가 원래 제목으로 되돌려버린다
- * (2026-09-23 사용자가 실제로 겪음). 읽는 쪽은 전부 `manual_title ?? title`로 유효값을 판정한다.
+ * manual_status와 같은 오버레이 패턴 — 원래 `title`(CLI 진실)은 그대로 두고 `manual_title`에만
+ * 쓴다. `title` 자체를 덮어쓰면 다음 CLI 재동기화(syncRoadmap)가 원래 제목으로 되돌려버린다.
+ * 읽는 쪽은 전부 `manual_title ?? title`로 유효값을 판정한다.
  */
 export async function renameRoadmapNode(
   db: DbClient,
@@ -1183,7 +1183,7 @@ export async function renameRoadmapNode(
   ]);
 }
 
-// manual_status/manual_by/manual_at는 대시보드 소유 - sync가 절대 안 건드리는 컬럼(§7).
+// manual_status/manual_by/manual_at는 대시보드 소유 - sync가 절대 안 건드리는 컬럼.
 export async function setManualStatus(
   db: DbClient,
   userId: string,
@@ -1237,7 +1237,7 @@ export async function getTopoOrder(db: DbClient, userId: string, workspaceName: 
   return topoSort(nodes.map((n) => ({ id: n.id, dependsOn: n.dependsOn, status: n.status })));
 }
 
-// ── §7 폐기(discard) — 삭제가 아니라 dropped 재활용 ──────────────────────────
+// ── 폐기(discard) — 삭제가 아니라 dropped 재활용 ──────────────────────────
 
 export interface SubtreeResult {
   ok: boolean;
@@ -1289,7 +1289,7 @@ async function loadSubtreeRows(db: DbClient, userId: string, workspaceName: stri
 }
 
 /**
- * §7 `dropSubtree` — 노드를 **지우지 않고** `manual_status='dropped'`를 root + 전 자손에 cascade한다.
+ * `dropSubtree` — 노드를 **지우지 않고** `manual_status='dropped'`를 root + 전 자손에 cascade한다.
  *
  * DELETE로 만들면 이력이 소실되고 되돌릴 수 없다. 폐기는 "이건 안 한다"는 판단일 뿐이라 복구
  * 가능해야 하고, 진행률 분모에서만 빠지면 된다.
@@ -1333,7 +1333,7 @@ export async function dropSubtree(
 }
 
 /**
- * §7 `restoreSubtree` — **`manual_status='dropped'`인 것만** NULL로 되돌린다.
+ * `restoreSubtree` — **`manual_status='dropped'`인 것만** NULL로 되돌린다.
  * 사람이 손으로 찍은 다른 override(예: `done`)는 폐기와 무관하므로 보존한다 — 복구가 다른
  * 수동 판단까지 지워버리면 그건 복구가 아니라 또 다른 손실이다.
  */
@@ -1359,7 +1359,7 @@ export async function restoreSubtree(
   return { ok: true, affected };
 }
 
-// ── §7 orphan RUN → Spec 편입/분리 + run- 접두어 ────────────────────────────
+// ── orphan RUN → Spec 편입/분리 + run- 접두어 ────────────────────────────
 
 export interface AssignRunResult {
   ok: boolean;
@@ -1368,7 +1368,7 @@ export interface AssignRunResult {
 }
 
 /**
- * §7 `assignRunToSpec` — orphan RUN을 Spec에 편입하거나(`specId`) 분리한다(`null`).
+ * `assignRunToSpec` — orphan RUN을 Spec에 편입하거나(`specId`) 분리한다(`null`).
  *
  * **task 잠금과 달리 RUN은 재편입을 허용한다.** task는 소속이 정해지면 이력이 그 밑에 쌓이지만,
  * RUN(feat/patch 실행 단위)은 나중에 "이건 저 Spec 일이었다"고 재분류하는 게 정상 흐름이다.
@@ -1415,7 +1415,7 @@ export async function assignRunToSpec(
 }
 
 /**
- * §7 `nextGroupId` — `run-NNN`(3자리 pad) 생성기. **파서는 `run-` 단일형만 인식한다**(구 `wst-`는
+ * `nextGroupId` — `run-NNN`(3자리 pad) 생성기. **파서는 `run-` 단일형만 인식한다**(`wst-`는
  * 마이그레이션 대상이지 공존 대상이 아니다 — 둘 다 인식하면 번호 공간이 갈라진다).
  * 999를 넘으면 pad 없이 이어간다(자릿수를 잘라 충돌시키지 않는다).
  */
@@ -1433,7 +1433,7 @@ export async function nextGroupId(db: DbClient, userId: string, workspaceName: s
 }
 
 /**
- * §7 `wst-` → `run-` in-place 마이그레이션. **참조 3곳(id·parent·depends_on)을 전부** 옮긴다 —
+ * `wst-` → `run-` in-place 마이그레이션. **참조 3곳(id·parent·depends_on)을 전부** 옮긴다 —
  * 하나라도 빠지면 dangling 참조가 되어 그래프가 조용히 끊긴다(화면엔 "연결 없음"으로만 보인다).
  * 두 접두어가 같은 길이(4자)라 depends_on JSON은 문자열 치환으로도 유효성이 유지된다.
  *

@@ -18,7 +18,7 @@ async function call(args: unknown): Promise<any> {
   return JSON.parse(res.content[0].text);
 }
 
-describe("§2 sugo_ontology 도구", () => {
+describe("sugo_ontology 도구", () => {
   it("모든 조회 응답이 같은 버전·revision·결정적 모델 해시를 제공한다", async () => {
     const responses = await Promise.all([
       call({}),

@@ -1,4 +1,4 @@
-/** Sessions에서 쓰던 두 뷰 — §7B CheckpointPanel/SchedulePage와 공유하려고 분리했다. */
+/** Sessions·CheckpointPanel·SchedulePage가 함께 쓰는 두 뷰. */
 export function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-8">

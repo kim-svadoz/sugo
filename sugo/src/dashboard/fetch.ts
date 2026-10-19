@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { resolveDashboardConfig } from "./config.js";
 
 /**
- * §7.2 fetch(블로킹, 3~10s): 실패/disabled면 전부 null로 안전 폴백한다(호출부가 로컬 상태를
+ * fetch(블로킹, 3~10s): 실패/disabled면 전부 null로 안전 폴백한다(호출부가 로컬 상태를
  * 그대로 쓰면 된다) — 대시보드 다운이 파이프라인을 막지 않는다는 push쪽과 같은 원칙을 fetch
  * 쪽에서도 지킨다. push와 달리 재시도 큐에 쌓지 않는다(다음에 또 fetch하면 그만이라 큐가 필요 없다).
  */
@@ -165,7 +165,7 @@ export async function attachSpecDocument(workspaceName: string, nodeId: string, 
   }
 }
 
-/** GET /api/workspaces/{ws}/roadmap?userId= — §7.2 "대시보드=순서의 SOT".
+/** GET /api/workspaces/{ws}/roadmap?userId= — 대시보드가 순서의 SOT다.
  * 대시보드 응답은 `{nodes:[...]}`로 감싸며 snake_case(depends_on)를
  * 쓰므로, 이 경계에서 언랩 + camelCase 매핑을 한다(seam 어댑터). */
 export async function fetchRoadmapOrdering(workspaceName: string): Promise<RemoteRoadmapOrdering[] | null> {

@@ -88,7 +88,7 @@ export function computeRequirementCoverage(
   return { covered, uncovered };
 }
 
-/** §10 decompose 매니페스트 결정론 검증기: 사이클 → 파일겹침(계획) → 요구커버리지 순으로 확인. */
+/** decompose 매니페스트 결정론 검증기: 사이클 → 파일겹침(계획) → 요구커버리지 순으로 확인. */
 export function validateManifest(manifest: DecomposeManifest, prdRequirementIds: string[]): GateCheckResult {
   const cycle = findManifestCycle(manifest.subtasks);
   if (cycle) {

@@ -2,10 +2,10 @@ import type { Checkpoint, RoadmapNode, RoadmapWorkResult, Spec, Task, WorkLog } 
 import type { PrRefs } from "../prRefs.js";
 
 /**
- * §7.2 seam 직렬화 어댑터 — 플러그인 도메인 객체(snake_case, 중첩)를 대시보드 REST API가 기대하는
+ * seam 직렬화 어댑터 — 플러그인 도메인 객체(snake_case, 중첩)를 대시보드 REST API가 기대하는
  * **평평한 wire 포맷(camelCase, top-level 필드)**으로 변환한다.
  *
- * 변환 방향이 이쪽인 이유: 대시보드가 수신 계약의 주인이다(§2 "DB가 진실"). 플러그인이 맞춘다.
+ * 변환 방향이 이쪽인 이유: 대시보드가 수신 계약의 주인이다(DB가 진실). 플러그인이 맞춘다.
  * 이 파일은 **형태 변환만** 한다 — 경로는 양쪽이 `roadmap`으로 일치하므로 URL은 건드리지 않는다.
  */
 
@@ -116,7 +116,7 @@ export interface DecisionWire {
   decisionDate?: string;
 }
 
-/** §7.2 "POST /api/sync/decision(ADR) — sugo_spec(add)가 트리거". Spec을 ADR로 취급한다.
+/** POST /api/sync/decision(ADR) — sugo_spec(add)가 트리거한다. Spec을 ADR로 취급한다.
  * Spec에는 id/title이 없고 name이 식별자이므로 name을 id와 title 양쪽에 매핑한다. */
 export function serializeDecision(userId: string, workspaceName: string, spec: Spec): DecisionWire {
   return {
@@ -231,7 +231,7 @@ export interface WorkspaceWire {
   updatedAt: string;
 }
 
-/** prRefs는 §7.2에서 roadmap 노드의 workResult.prRefs로 흐르는 게 정본 경로다. 대시보드 history
+/** prRefs는 roadmap 노드의 workResult.prRefs로 흐르는 게 정본 경로다. 대시보드 history
  * 스키마엔 prRefs 필드가 없어(zod가 떨군다) history로 실어보내도 소비되지 않는다 — 이 어댑터는
  * history wire에서 prRefs를 의도적으로 제외한다(죽은 필드 안 보냄). */
 export type { PrRefs };

@@ -1068,10 +1068,10 @@ var require_util = __commonJS({
     var codegen_1 = require_codegen();
     var code_1 = require_code();
     function toHash(arr) {
-      const hash2 = {};
+      const hash = {};
       for (const item of arr)
-        hash2[item] = true;
-      return hash2;
+        hash[item] = true;
+      return hash;
     }
     exports2.toHash = toHash;
     function alwaysValidSchema(it, schema) {
@@ -2991,7 +2991,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve15.call(this, root, ref);
+      let _sch = resolve14.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3018,7 +3018,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve15(root, ref) {
+    function resolve14(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3649,55 +3649,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve15(baseURI, relativeURI, options) {
+    function resolve14(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative12, options, skipNormalization) {
+    function resolveComponent(base, relative10, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative12 = parse3(serialize(relative12, options), options);
+        relative10 = parse3(serialize(relative10, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative12.scheme) {
-        target.scheme = relative12.scheme;
-        target.userinfo = relative12.userinfo;
-        target.host = relative12.host;
-        target.port = relative12.port;
-        target.path = removeDotSegments(relative12.path || "");
-        target.query = relative12.query;
+      if (!options.tolerant && relative10.scheme) {
+        target.scheme = relative10.scheme;
+        target.userinfo = relative10.userinfo;
+        target.host = relative10.host;
+        target.port = relative10.port;
+        target.path = removeDotSegments(relative10.path || "");
+        target.query = relative10.query;
       } else {
-        if (relative12.userinfo !== void 0 || relative12.host !== void 0 || relative12.port !== void 0) {
-          target.userinfo = relative12.userinfo;
-          target.host = relative12.host;
-          target.port = relative12.port;
-          target.path = removeDotSegments(relative12.path || "");
-          target.query = relative12.query;
+        if (relative10.userinfo !== void 0 || relative10.host !== void 0 || relative10.port !== void 0) {
+          target.userinfo = relative10.userinfo;
+          target.host = relative10.host;
+          target.port = relative10.port;
+          target.path = removeDotSegments(relative10.path || "");
+          target.query = relative10.query;
         } else {
-          if (!relative12.path) {
+          if (!relative10.path) {
             target.path = base.path;
-            if (relative12.query !== void 0) {
-              target.query = relative12.query;
+            if (relative10.query !== void 0) {
+              target.query = relative10.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative12.path[0] === "/") {
-              target.path = removeDotSegments(relative12.path);
+            if (relative10.path[0] === "/") {
+              target.path = removeDotSegments(relative10.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative12.path;
+                target.path = "/" + relative10.path;
               } else if (!base.path) {
-                target.path = relative12.path;
+                target.path = relative10.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative12.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative10.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative12.query;
+            target.query = relative10.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative12.fragment;
+      target.fragment = relative10.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3907,7 +3907,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve15,
+      resolve: resolve14,
       resolveComponent,
       equal,
       serialize,
@@ -20404,7 +20404,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve15) => setTimeout(resolve15, pollInterval));
+        await new Promise((resolve14) => setTimeout(resolve14, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error3) {
@@ -20421,7 +20421,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve15, reject) => {
+    return new Promise((resolve14, reject) => {
       const earlyReject = (error3) => {
         reject(error3);
       };
@@ -20499,7 +20499,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve15(parseResult.data);
+            resolve14(parseResult.data);
           }
         } catch (error3) {
           reject(error3);
@@ -20760,12 +20760,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve15, reject) => {
+    return new Promise((resolve14, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve15, interval);
+      const timeoutId = setTimeout(resolve14, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -21865,7 +21865,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve15) => setTimeout(resolve15, pollInterval));
+      await new Promise((resolve14) => setTimeout(resolve14, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -22514,12 +22514,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve15) => {
+    return new Promise((resolve14) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve15();
+        resolve14();
       } else {
-        this._stdout.once("drain", resolve15);
+        this._stdout.once("drain", resolve14);
       }
     });
   }
@@ -22791,7 +22791,7 @@ function fetchHarnesses(params) {
   const result3 = fetchFromLocal(params.harnessIds, params.libraryDir, params.overrideDir);
   if (params.repoUrl) {
     result3.warnings.unshift(
-      `repoUrl(${params.repoUrl})\uC774 \uC9C0\uC815\uB418\uC5C8\uC9C0\uB9CC git \uAE30\uBC18 \uD558\uB124\uC2A4 fetch\uB294 \uC544\uC9C1 \uAD6C\uD604\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4(\uB85C\uB4DC\uB9F5 \xA711-2). \uB85C\uCEEC \uD558\uB124\uC2A4 \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB85C \uD3F4\uBC31\uD569\uB2C8\uB2E4.`
+      `repoUrl(${params.repoUrl})\uC774 \uC9C0\uC815\uB418\uC5C8\uC9C0\uB9CC git \uAE30\uBC18 \uD558\uB124\uC2A4 fetch\uB294 \uC544\uC9C1 \uAD6C\uD604\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uB85C\uCEEC \uD558\uB124\uC2A4 \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB85C \uD3F4\uBC31\uD569\uB2C8\uB2E4.`
     );
   }
   return result3;
@@ -22932,18 +22932,18 @@ function basenameOf(normalized) {
   const idx = normalized.lastIndexOf("/");
   return idx === -1 ? normalized : normalized.slice(idx + 1);
 }
-function extensionOf(basename4) {
-  const idx = basename4.lastIndexOf(".");
-  return idx <= 0 ? "" : basename4.slice(idx);
+function extensionOf(basename3) {
+  const idx = basename3.lastIndexOf(".");
+  return idx <= 0 ? "" : basename3.slice(idx);
 }
 function prefixesForFile(filePath) {
   const normalized = normalizePath(filePath);
-  const basename4 = basenameOf(normalized);
-  const byName = PREFIXES_BY_FILENAME[basename4];
+  const basename3 = basenameOf(normalized);
+  const byName = PREFIXES_BY_FILENAME[basename3];
   if (byName) return byName;
-  if (basename4.startsWith("next.config.")) return ["framework/nextjs", ...NODE_PREFIXES];
-  if (/^requirements.*\.txt$/.test(basename4)) return ["buildtool/pip", ...PYTHON_PREFIXES];
-  const byExt = PREFIXES_BY_EXTENSION[extensionOf(basename4)];
+  if (basename3.startsWith("next.config.")) return ["framework/nextjs", ...NODE_PREFIXES];
+  if (/^requirements.*\.txt$/.test(basename3)) return ["buildtool/pip", ...PYTHON_PREFIXES];
+  const byExt = PREFIXES_BY_EXTENSION[extensionOf(basename3)];
   return byExt ?? null;
 }
 function matchesPrefix(harnessId, prefix) {
@@ -23777,9 +23777,9 @@ async function syncProjectHarness(args2) {
   };
 }
 
-// src/hulk/workspace.ts
-import { mkdir as mkdir8, readdir as readdir2, readFile as readFile9, rm } from "node:fs/promises";
-import { isAbsolute as isAbsolute3, relative as relative3, resolve as resolve3 } from "node:path";
+// src/work/workspace.ts
+import { mkdir as mkdir7, readdir, readFile as readFile8, rm } from "node:fs/promises";
+import { isAbsolute as isAbsolute3, relative as relative2, resolve as resolve3 } from "node:path";
 
 // src/dashboard/config.ts
 import { userInfo } from "node:os";
@@ -23829,18 +23829,13 @@ async function resolveAwsEnvironmentAccount(environment) {
 }
 
 // src/dashboard/retryQueue.ts
-import { mkdir as mkdir7, readFile as readFile7 } from "node:fs/promises";
+import { mkdir as mkdir6, readFile as readFile6 } from "node:fs/promises";
 
 // src/work/storage.ts
-import { copyFile, mkdir as mkdir6, readdir, readFile as readFile6, writeFile as writeFile2 } from "node:fs/promises";
-import { join as join9, relative } from "node:path";
+import { join as join9 } from "node:path";
 function workRootDir() {
   return join9(sugoHomeDir(), ".claude", "sugo", "work");
 }
-function legacyHulkRootDir() {
-  return join9(sugoHomeDir(), ".claude", "sugo", "hulk");
-}
-var MIGRATION_MARKER = ".hulk-migrated";
 function workspaceDir(workspace) {
   return join9(workRootDir(), workspace);
 }
@@ -23877,74 +23872,6 @@ function syncRetryQueuePath() {
 function syncRetryQueueLockPath() {
   return `${syncRetryQueuePath()}.lock`;
 }
-async function listFilesRecursively(dir, base = dir, acc = []) {
-  let entries;
-  try {
-    entries = await readdir(dir, { withFileTypes: true });
-  } catch {
-    return acc;
-  }
-  for (const entry of entries) {
-    const full = join9(dir, entry.name);
-    if (entry.isDirectory()) await listFilesRecursively(full, base, acc);
-    else acc.push(relative(base, full));
-  }
-  return acc;
-}
-async function fileExists(path) {
-  try {
-    await readFile6(path);
-    return true;
-  } catch (err2) {
-    return err2.code === "EISDIR";
-  }
-}
-async function migrateWorkDataDir() {
-  const empty = { migrated: false, alreadyMigrated: false, copied: 0, skipped: 0, failures: 0 };
-  const workRoot = workRootDir();
-  const legacyRoot = legacyHulkRootDir();
-  try {
-    if (await fileExists(join9(workRoot, MIGRATION_MARKER))) {
-      return { ...empty, alreadyMigrated: true };
-    }
-    const legacyFiles = await listFilesRecursively(legacyRoot);
-    if (legacyFiles.length === 0) {
-      try {
-        await readdir(legacyRoot);
-      } catch {
-        return empty;
-      }
-    }
-    let copied = 0;
-    let skipped = 0;
-    let failures = 0;
-    for (const rel of legacyFiles) {
-      const target = join9(workRoot, rel);
-      try {
-        if (await fileExists(target)) {
-          skipped++;
-          continue;
-        }
-        await mkdir6(join9(target, ".."), { recursive: true });
-        await copyFile(join9(legacyRoot, rel), target);
-        copied++;
-      } catch {
-        failures++;
-      }
-    }
-    if (failures === 0) {
-      await mkdir6(workRoot, { recursive: true });
-      await writeFile2(
-        join9(workRoot, MIGRATION_MARKER),
-        JSON.stringify({ migratedAt: (/* @__PURE__ */ new Date()).toISOString(), copied, skipped, failures }, null, 2)
-      );
-      return { migrated: true, alreadyMigrated: false, copied, skipped, failures };
-    }
-    return { migrated: false, alreadyMigrated: false, copied, skipped, failures };
-  } catch {
-    return empty;
-  }
-}
 
 // src/dashboard/retryQueue.ts
 import { dirname as dirname7 } from "node:path";
@@ -23967,14 +23894,14 @@ function failureFields(result3) {
 }
 async function readQueueFile() {
   try {
-    const raw = await readFile7(syncRetryQueuePath(), "utf-8");
+    const raw = await readFile6(syncRetryQueuePath(), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { items: [] };
   }
 }
 async function writeQueueFile(file) {
-  await mkdir7(dirname7(syncRetryQueuePath()), { recursive: true });
+  await mkdir6(dirname7(syncRetryQueuePath()), { recursive: true });
   await atomicWriteFile(syncRetryQueuePath(), JSON.stringify(file, null, 2));
 }
 async function enqueueRetry(endpoint, method, data, failure) {
@@ -24232,8 +24159,8 @@ async function drainRetryQueue() {
 
 // src/dashboard/workResultFiles.ts
 import { execFile } from "node:child_process";
-import { readFile as readFile8 } from "node:fs/promises";
-import { isAbsolute as isAbsolute2, relative as relative2, resolve as resolve2, sep } from "node:path";
+import { readFile as readFile7 } from "node:fs/promises";
+import { isAbsolute as isAbsolute2, relative, resolve as resolve2, sep } from "node:path";
 import { promisify } from "node:util";
 var execFileAsync = promisify(execFile);
 var MAX_CONTENT_BYTES = 2e5;
@@ -24249,7 +24176,7 @@ function sanitizeReviewArtifacts(files) {
 function safeProjectFile(projectPath, path) {
   const root = resolve2(projectPath);
   const absolute = isAbsolute2(path) ? resolve2(path) : resolve2(root, path);
-  const rel = relative2(root, absolute);
+  const rel = relative(root, absolute);
   if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute2(rel)) return null;
   return { absolute, relative: rel.split(sep).join("/") };
 }
@@ -24277,7 +24204,7 @@ async function snapshotWorkResultFiles(projectPath, paths, startedAt) {
     let content;
     if (change !== "deleted") {
       try {
-        const raw = await readFile8(safe.absolute);
+        const raw = await readFile7(safe.absolute);
         if (raw.byteLength <= MAX_CONTENT_BYTES && !raw.includes(0)) content = raw.toString("utf8");
       } catch {
       }
@@ -24366,12 +24293,6 @@ async function syncUser() {
   if (!config2.enabled) return;
   await pushEvent("/api/sync/user", "POST", { userId: config2.userId });
 }
-async function syncSpecPathMigration(mappings) {
-  if (mappings.length === 0) return;
-  const config2 = await resolveDashboardConfig();
-  if (!config2.enabled) return;
-  await pushEvent("/api/sync/spec-path-migration", "POST", { userId: config2.userId, mappings });
-}
 async function syncRoadmapLink(workspaceName, fromId, toId) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
@@ -24397,10 +24318,10 @@ async function syncReviewArtifacts(workspaceName, taskId, sessionId, patchVersio
   ));
 }
 
-// src/hulk/workspace.ts
+// src/work/workspace.ts
 async function loadWorkspace(name2) {
   try {
-    const raw = await readFile9(workspaceFilePath(name2), "utf-8");
+    const raw = await readFile8(workspaceFilePath(name2), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -24415,7 +24336,7 @@ async function ensureWorkspace(name2, projectPath) {
     projects: Array.from(projects),
     created_at: existing?.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
   };
-  await mkdir8(workspaceDir(name2), { recursive: true });
+  await mkdir7(workspaceDir(name2), { recursive: true });
   await atomicWriteFile(workspaceFilePath(name2), JSON.stringify(workspace, null, 2));
   void syncWorkspace(workspace);
   return workspace;
@@ -24423,7 +24344,7 @@ async function ensureWorkspace(name2, projectPath) {
 async function listWorkspaces(includeDeleted = false) {
   let entries;
   try {
-    entries = await readdir2(workRootDir(), { withFileTypes: true });
+    entries = await readdir(workRootDir(), { withFileTypes: true });
   } catch {
     return [];
   }
@@ -24479,7 +24400,7 @@ async function deleteWorkspace(name2, options = {}) {
   if (!options.keepData) {
     const target = resolve3(workspaceDir(name2));
     const base = resolve3(workRootDir());
-    const rel = relative3(base, target);
+    const rel = relative2(base, target);
     const insideBase = rel.length > 0 && !rel.startsWith("..") && !isAbsolute3(rel) && target !== base;
     if (insideBase) {
       await rm(target, { recursive: true, force: true });
@@ -24493,11 +24414,11 @@ async function deleteWorkspace(name2, options = {}) {
 // src/tools/sugoAdd.ts
 var sugoAddInputSchema = {
   projectPath: external_exports.string().describe("\uB4F1\uB85D\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C"),
-  workspace: external_exports.string().optional().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984 \u2014 \uC9C0\uC815\uD558\uBA74 \uD504\uB85C\uC81D\uD2B8\uAC00 \uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uC5D0 \uC18C\uC18D\uB418\uC5B4 prd/commit \uC2DC Task/WorkLog\uAC00 \uC790\uB3D9 \uC5F0\uB3D9\uB41C\uB2E4(\xA78)"),
-  repoUrl: external_exports.string().optional().describe("\uD558\uB124\uC2A4 \uC800\uC7A5\uC18C git URL(\uD604\uC7AC \uBE4C\uB4DC\uB294 \uBBF8\uAD6C\uD604 \u2014 \uB85C\uCEEC \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB85C \uD3F4\uBC31)"),
+  workspace: external_exports.string().optional().describe("\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984 \u2014 \uC9C0\uC815\uD558\uBA74 \uD504\uB85C\uC81D\uD2B8\uAC00 \uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uC5D0 \uC18C\uC18D\uB418\uC5B4 prd/commit \uC2DC Task/WorkLog\uAC00 \uC790\uB3D9 \uC5F0\uB3D9\uB41C\uB2E4"),
+  repoUrl: external_exports.string().optional().describe("\uD558\uB124\uC2A4 \uC800\uC7A5\uC18C git URL(\uC544\uC9C1 \uBBF8\uAD6C\uD604 \u2014 \uB85C\uCEEC \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB85C \uD3F4\uBC31)"),
   additionalStacks: external_exports.array(external_exports.string()).optional().describe("\uC790\uB3D9\uAC10\uC9C0 \uACB0\uACFC\uC5D0 \uCD94\uAC00\uB85C \uAC15\uC81C \uD3EC\uD568\uD560 harnessId \uBAA9\uB85D"),
-  integrationGateEnforced: external_exports.boolean().optional().describe("\xA710 PRD \uC815\uD569\uC131 \uAC8C\uC774\uD2B8\uB97C opt-in\uC73C\uB85C \uAC15\uC81C\uD560\uC9C0(verificationPolicy). true\uBA74 test_done\uC5D0 coverageMap \uC81C\uCD9C\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4"),
-  contractEvidenceRequired: external_exports.boolean().optional().describe("\xA710 \uACC4\uC57D\uD14C\uC2A4\uD2B8 \uC2E4\uD589\uC99D\uAC70\uB97C opt-in\uC73C\uB85C \uAC15\uC81C\uD560\uC9C0(verificationPolicy). true\uBA74 review_done\uC5D0 red\u2192green \uC804\uC774 \uAE30\uB85D\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4")
+  integrationGateEnforced: external_exports.boolean().optional().describe("PRD \uC815\uD569\uC131 \uAC8C\uC774\uD2B8\uB97C opt-in\uC73C\uB85C \uAC15\uC81C\uD560\uC9C0(verificationPolicy). true\uBA74 test_done\uC5D0 coverageMap \uC81C\uCD9C\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4"),
+  contractEvidenceRequired: external_exports.boolean().optional().describe("\uACC4\uC57D\uD14C\uC2A4\uD2B8 \uC2E4\uD589\uC99D\uAC70\uB97C opt-in\uC73C\uB85C \uAC15\uC81C\uD560\uC9C0(verificationPolicy). true\uBA74 review_done\uC5D0 red\u2192green \uC804\uC774 \uAE30\uB85D\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4")
 };
 var SugoAddArgs = external_exports.object(sugoAddInputSchema);
 async function handleSugoAdd(rawArgs) {
@@ -24532,7 +24453,7 @@ async function handleSugoAdd(rawArgs) {
 }
 
 // src/tools/sugoAnalyze.ts
-import { readFile as readFile12 } from "node:fs/promises";
+import { readFile as readFile11 } from "node:fs/promises";
 
 // src/analyze.ts
 var REQ_LINE_RE = /\bREQ-(\d+)\b\s*:?\s*(.*)$/gim;
@@ -24619,7 +24540,7 @@ function analyzePrdMatch(prdContent, fileContents) {
 }
 
 // src/readChangedFiles.ts
-import { readFile as readFile10 } from "node:fs/promises";
+import { readFile as readFile9 } from "node:fs/promises";
 import { isAbsolute as isAbsolute4, join as join11 } from "node:path";
 var MAX_FILE_BYTES = 3e5;
 var MAX_FILES = 200;
@@ -24628,7 +24549,7 @@ async function readFileContents(projectPath, changedFiles) {
   for (const rel of changedFiles.slice(0, MAX_FILES)) {
     const full = isAbsolute4(rel) ? rel : join11(projectPath, rel);
     try {
-      const content = await readFile10(full, "utf-8");
+      const content = await readFile9(full, "utf-8");
       if (content.length <= MAX_FILE_BYTES) contents.push(content);
     } catch {
       continue;
@@ -24639,7 +24560,7 @@ async function readFileContents(projectPath, changedFiles) {
 
 // src/session.ts
 import { randomBytes } from "node:crypto";
-import { mkdir as mkdir9, readdir as readdir3, readFile as readFile11 } from "node:fs/promises";
+import { mkdir as mkdir8, readdir as readdir2, readFile as readFile10 } from "node:fs/promises";
 import { join as join12 } from "node:path";
 function sessionsDir() {
   return join12(sugoHomeDir(), ".claude", "sugo", "sessions");
@@ -24651,17 +24572,17 @@ function sessionFilePath(id) {
   return join12(sessionsDir(), `${id}.json`);
 }
 async function saveSession(session) {
-  await mkdir9(sessionsDir(), { recursive: true });
+  await mkdir8(sessionsDir(), { recursive: true });
   session.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   await atomicWriteFile(sessionFilePath(session.id), JSON.stringify(session, null, 2));
 }
 async function loadSession(id) {
-  const raw = await readFile11(sessionFilePath(id), "utf-8");
+  const raw = await readFile10(sessionFilePath(id), "utf-8");
   return JSON.parse(raw);
 }
 async function sessionExists(id) {
   try {
-    await readFile11(sessionFilePath(id), "utf-8");
+    await readFile10(sessionFilePath(id), "utf-8");
     return true;
   } catch {
     return false;
@@ -24670,7 +24591,7 @@ async function sessionExists(id) {
 async function loadAllSessions() {
   let entries;
   try {
-    entries = await readdir3(sessionsDir());
+    entries = await readdir2(sessionsDir());
   } catch {
     return [];
   }
@@ -24678,7 +24599,7 @@ async function loadAllSessions() {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile11(join12(sessionsDir(), name2), "utf-8");
+      const raw = await readFile10(join12(sessionsDir(), name2), "utf-8");
       sessions.push(JSON.parse(raw));
     } catch {
       continue;
@@ -24704,7 +24625,7 @@ async function handleSugoAnalyze(rawArgs) {
   }
   let prdContent;
   try {
-    prdContent = await readFile12(session.data.prdPath, "utf-8");
+    prdContent = await readFile11(session.data.prdPath, "utf-8");
   } catch {
     return errorResult("PRD_FILE_MISSING", `PRD \uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${session.data.prdPath}`);
   }
@@ -24854,7 +24775,7 @@ function checkLethalTrifecta(tools) {
 // src/tools/sugoCheckLethalTrifecta.ts
 var sugoCheckLethalTrifectaInputSchema = {
   sessionId: external_exports.string().describe(
-    "sugo_plan(start)\uC73C\uB85C \uBC1C\uAE09\uB41C \uC138\uC158 id. \xA7P6-1: review_done \uC804\uC5D0 \uC774 \uB3C4\uAD6C\uB97C \uCD5C\uC18C 1\uD68C \uD638\uCD9C\uD574\uC57C \uD558\uB294 \uD558\uB4DC \uAC8C\uC774\uD2B8(LETHAL_TRIFECTA_NOT_CALLED)\uC758 \uB300\uC0C1\uC774\uB77C, \uC138\uC158\uC5D0 \uD638\uCD9C \uAE30\uB85D\uC744 \uB0A8\uAE34\uB2E4."
+    "sugo_plan(start)\uC73C\uB85C \uBC1C\uAE09\uB41C \uC138\uC158 id. review_done \uC804\uC5D0 \uC774 \uB3C4\uAD6C\uB97C \uCD5C\uC18C 1\uD68C \uD638\uCD9C\uD574\uC57C \uD558\uB294 \uD558\uB4DC \uAC8C\uC774\uD2B8(LETHAL_TRIFECTA_NOT_CALLED)\uC758 \uB300\uC0C1\uC774\uB77C, \uC138\uC158\uC5D0 \uD638\uCD9C \uAE30\uB85D\uC744 \uB0A8\uAE34\uB2E4."
   ),
   tools: external_exports.array(
     external_exports.object({
@@ -24899,14 +24820,14 @@ function errorResult3(errorCode, message) {
   };
 }
 
-// src/hulk/checkpoint.ts
+// src/work/checkpoint.ts
 import { createHash as createHash3, randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir11, readdir as readdir4, readFile as readFile13, rm as rm3 } from "node:fs/promises";
+import { mkdir as mkdir10, readdir as readdir3, readFile as readFile12, rm as rm3 } from "node:fs/promises";
 import { join as join14 } from "node:path";
-import { relative as relative4 } from "node:path";
+import { relative as relative3 } from "node:path";
 
 // src/dashboard/fetch.ts
-import { mkdir as mkdir10, rm as rm2, writeFile as writeFile3 } from "node:fs/promises";
+import { mkdir as mkdir9, rm as rm2, writeFile as writeFile2 } from "node:fs/promises";
 import { join as join13 } from "node:path";
 async function fetchJson(path, timeoutMs) {
   const config2 = await resolveDashboardConfig();
@@ -24966,13 +24887,13 @@ async function downloadSpecAttachments(workspaceName, nodeId, destDir) {
   const headers = config2.apiToken ? { Authorization: `Bearer ${config2.apiToken}` } : void 0;
   await rm2(destDir, { recursive: true, force: true });
   if (list.attachments.length === 0) return [];
-  await mkdir10(destDir, { recursive: true });
+  await mkdir9(destDir, { recursive: true });
   const paths = [];
   for (const { name: name2 } of list.attachments) {
     const res = await fetch(`${config2.apiUrl}/api/workspaces/${ws}/roadmap/spec-attachments/file?${qs}&name=${encodeURIComponent(name2)}`, { headers });
     if (!res.ok) throw new Error(`SPEC_ATTACHMENT_DOWNLOAD_FAILED:${name2}:${res.status}`);
     const target = join13(destDir, name2);
-    await writeFile3(target, Buffer.from(await res.arrayBuffer()));
+    await writeFile2(target, Buffer.from(await res.arrayBuffer()));
     paths.push(target);
   }
   return paths;
@@ -27762,8 +27683,8 @@ function writeFlowMapping(state, level, node) {
     if (explicitPair) pairBuffer += "? ";
     else if (state.quoteFlowKeys) pairBuffer += '"';
     const valueText = writeNode(state, level, value, {});
-    const sep6 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
-    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep6}${valueText}`;
+    const sep5 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
+    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep5}${valueText}`;
     result3 += pairBuffer;
   }
   const pad = state.flowBracketPadding && result3 !== "" ? " " : "";
@@ -27860,8 +27781,8 @@ function writeNode(state, level, node, ctx) {
       if (anchor !== null) props.push(anchor);
       if (tag !== null) props.push(tag);
     }
-    const sep6 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
-    body2 = `${props.join(" ")}${sep6}${body2}`;
+    const sep5 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
+    body2 = `${props.join(" ")}${sep5}${body2}`;
   }
   return body2;
 }
@@ -27906,8 +27827,8 @@ function present(documents, options) {
         block: true,
         compact: true
       });
-      const sep6 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
-      result3 += `---${sep6}${body2}
+      const sep5 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
+      result3 += `---${sep5}${body2}
 `;
     } else result3 += writeNode(state, 0, doc.contents, {
       block: true,
@@ -27961,7 +27882,7 @@ function dump(input, options = {}) {
   });
 }
 
-// src/hulk/frontmatter.ts
+// src/work/frontmatter.ts
 function stringifyFrontmatter(meta, body2 = "") {
   const yaml = dump(meta).trimEnd();
   return `---
@@ -27982,7 +27903,7 @@ function toNfc(text) {
   return text.normalize("NFC");
 }
 
-// src/hulk/slug.ts
+// src/work/slug.ts
 function slugify(text) {
   return (
     // NFC 합성 먼저 — 아니면 mac발 조합형 한글이 `가-힣`에 안 걸려 전부 "untitled"로 붕괴한다.
@@ -27990,14 +27911,14 @@ function slugify(text) {
   );
 }
 
-// src/hulk/matching.ts
+// src/work/matching.ts
 function checkpointApplies(checkpoint, ctx) {
   const applies = checkpoint.applies_to;
   if (!applies || applies.length === 0) return true;
   return applies.some((tag) => tag === ctx.projectName || ctx.harnessIds.includes(tag));
 }
 
-// src/hulk/checkpoint.ts
+// src/work/checkpoint.ts
 function generateCheckpointId() {
   return `CP-${randomBytes2(4).toString("hex")}`;
 }
@@ -28013,7 +27934,7 @@ async function addCheckpoint(workspace, params) {
     expires_at: params.expires_at
   };
   const dir = checkpointsDir(workspace);
-  await mkdir11(dir, { recursive: true });
+  await mkdir10(dir, { recursive: true });
   const content = stringifyFrontmatter({
     id: checkpoint.id,
     title: checkpoint.title,
@@ -28034,7 +27955,7 @@ async function listCheckpointFiles(workspace) {
   const dir = checkpointsDir(workspace);
   let names;
   try {
-    names = await readdir4(dir);
+    names = await readdir3(dir);
   } catch {
     return [];
   }
@@ -28042,7 +27963,7 @@ async function listCheckpointFiles(workspace) {
   for (const name2 of names) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile13(join14(dir, name2), "utf-8");
+      const raw = await readFile12(join14(dir, name2), "utf-8");
       const { meta } = parseFrontmatter(raw);
       result3.push({ filename: name2, checkpoint: meta });
     } catch {
@@ -28133,12 +28054,12 @@ async function checkpointFiles(projectPath, id) {
   const root = join14(projectPath, ".claude", "rules");
   const found = [];
   async function walk(dir) {
-    const entries = await readdir4(dir, { withFileTypes: true }).catch(() => []);
+    const entries = await readdir3(dir, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
       const path = join14(dir, entry.name);
       if (entry.isDirectory()) await walk(path);
       else if (entry.isFile() && entry.name.endsWith(".md")) {
-        const content = await readFile13(path, "utf8").catch(() => "");
+        const content = await readFile12(path, "utf8").catch(() => "");
         if (content.includes(`checkpoint-id: ${id}`) || content.includes(`Sugo checkpoint ${id} \xB7`)) found.push(path);
       }
     }
@@ -28154,7 +28075,7 @@ async function syncRemoteCheckpointsToRules(projectPath, workspace, remote, cont
     const target = join14(projectPath, ".claude", "rules", cp.category ?? "general", `${cp.id}-${slugify(cp.title)}.md`);
     let blocked = false;
     for (const file of files.filter((path) => !applicable || path !== target)) {
-      const content2 = await readFile13(file, "utf8").catch(() => null);
+      const content2 = await readFile12(file, "utf8").catch(() => null);
       if (content2 === null) continue;
       if (wasEdited(content2, cp, workspace)) {
         result3.conflicts.push(file);
@@ -28166,14 +28087,14 @@ async function syncRemoteCheckpointsToRules(projectPath, workspace, remote, cont
     }
     if (!applicable || blocked) continue;
     const content = checkpointBody(cp, workspace);
-    const existing = await readFile13(target, "utf8").catch(() => null);
+    const existing = await readFile12(target, "utf8").catch(() => null);
     if (existing !== null && existing !== content && wasEdited(existing, cp, workspace)) {
       result3.conflicts.push(target);
       continue;
     }
-    await mkdir11(join14(projectPath, ".claude", "rules", cp.category ?? "general"), { recursive: true });
+    await mkdir10(join14(projectPath, ".claude", "rules", cp.category ?? "general"), { recursive: true });
     if (existing !== content) await atomicWriteFile(target, content);
-    await recordManagedFile(projectPath, relative4(projectPath, target).replace(/\\/g, "/"));
+    await recordManagedFile(projectPath, relative3(projectPath, target).replace(/\\/g, "/"));
     result3.appliedCount += 1;
   }
   return result3;
@@ -28189,28 +28110,28 @@ async function pullCheckpointsToRules(projectPath, workspace) {
   return result3.appliedCount;
 }
 
-// src/hulk/memory.ts
-import { mkdir as mkdir12, readFile as readFile14 } from "node:fs/promises";
+// src/work/memory.ts
+import { mkdir as mkdir11, readFile as readFile13 } from "node:fs/promises";
 async function appendMemory(workspace, note) {
   const path = memoryFilePath(workspace);
-  const existing = await readFile14(path, "utf-8").catch(() => "");
+  const existing = await readFile13(path, "utf-8").catch(() => "");
   const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
 
 ${note}
 `;
   const next = existing ? `${existing}
 ${entry}` : entry;
-  await mkdir12(workspaceDir(workspace), { recursive: true });
+  await mkdir11(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(path, next);
 }
 async function readMemory(workspace) {
-  return readFile14(memoryFilePath(workspace), "utf-8").catch(() => "");
+  return readFile13(memoryFilePath(workspace), "utf-8").catch(() => "");
 }
 
 // src/tools/sugoCheckpoint.ts
 var sugoCheckpointInputSchema = {
   action: external_exports.enum(["add", "get", "list", "remove", "memory", "read_memory", "migrate", "sync", "pull"]),
-  workspace: external_exports.string().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
+  workspace: external_exports.string().describe("\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
   id: external_exports.string().optional().describe("get/remove/sync action\uC5D0 \uD544\uC694"),
   title: external_exports.string().optional().describe("add action\uC5D0 \uD544\uC694"),
   category: external_exports.string().optional(),
@@ -28300,7 +28221,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.37.3" : "0.0.0-dev";
+  return true ? "0.37.4" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -28399,7 +28320,7 @@ function errorResult7(errorCode, message) {
 }
 
 // src/tools/sugoExplore.ts
-import { readFile as readFile15 } from "node:fs/promises";
+import { readFile as readFile14 } from "node:fs/promises";
 import { isAbsolute as isAbsolute5, join as join17 } from "node:path";
 
 // src/ast/astParser.ts
@@ -28563,7 +28484,7 @@ async function handleSugoExplore(rawArgs) {
     const full = isAbsolute5(f) ? f : join17(args2.projectPath, f);
     let content;
     try {
-      content = await readFile15(full, "utf-8");
+      content = await readFile14(full, "utf-8");
     } catch {
       skipped.push({ path: f, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -28584,7 +28505,7 @@ async function handleSugoExplore(rawArgs) {
 }
 
 // src/tools/sugoGetProjectContext.ts
-import { readdir as readdir5, readFile as readFile17 } from "node:fs/promises";
+import { readdir as readdir4, readFile as readFile16 } from "node:fs/promises";
 import { basename as basename2, join as join19 } from "node:path";
 
 // src/harness/toolRegistry.ts
@@ -28664,7 +28585,7 @@ function featureBranchName(branch) {
 }
 
 // src/todoSpec.ts
-import { mkdir as mkdir13, readFile as readFile16 } from "node:fs/promises";
+import { mkdir as mkdir12, readFile as readFile15 } from "node:fs/promises";
 import { join as join18 } from "node:path";
 
 // src/gates.ts
@@ -28808,7 +28729,7 @@ function checkSpecOracleGate(specOracle) {
   if (specOracle.ran) return ok2();
   return fail(
     "SPEC_ORACLE_NOT_RUN",
-    "q-spec \uC6D0\uBCF8 \uC2A4\uD399 \uB300\uC870(oracle)\uAC00 \uC544\uC9C1 \uAE30\uB85D\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4 \u2014 sugo_plan({action:'oracle_done', ...})\uC73C\uB85C \uB300\uC870 \uACB0\uACFC\uB97C \uBA3C\uC800 \uAE30\uB85D\uD558\uC138\uC694."
+    "\uAE30\uC900 \uC2A4\uD399 \uBB38\uC11C \uB300\uC870(oracle)\uAC00 \uC544\uC9C1 \uAE30\uB85D\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4 \u2014 sugo_plan({action:'oracle_done', ...})\uC73C\uB85C \uB300\uC870 \uACB0\uACFC\uB97C \uBA3C\uC800 \uAE30\uB85D\uD558\uC138\uC694."
   );
 }
 function checkOracleDone(uncovered, overrideReason) {
@@ -28915,7 +28836,7 @@ function todoSpecPath(projectPath, featureName) {
 }
 async function readTodoSpec(projectPath, featureName) {
   try {
-    return await readFile16(todoSpecPath(projectPath, featureName), "utf-8");
+    return await readFile15(todoSpecPath(projectPath, featureName), "utf-8");
   } catch {
     return null;
   }
@@ -28939,7 +28860,7 @@ async function createTodoSpec(projectPath, draft) {
     "## \uAC31\uC2E0 \uB85C\uADF8",
     ""
   ].join("\n");
-  await mkdir13(join18(projectPath, "sugo", "docs", "feature", draft.featureName), { recursive: true });
+  await mkdir12(join18(projectPath, "sugo", "docs", "feature", draft.featureName), { recursive: true });
   await atomicWriteFile(path, content);
   return { path, content };
 }
@@ -28998,7 +28919,7 @@ var sugoGetProjectContextInputSchema = {
 var SugoGetProjectContextArgs = external_exports.object(sugoGetProjectContextInputSchema);
 async function readIfExists(path) {
   try {
-    return await readFile17(path, "utf-8");
+    return await readFile16(path, "utf-8");
   } catch {
     return null;
   }
@@ -29006,7 +28927,7 @@ async function readIfExists(path) {
 async function readRulesDir(rulesDir, excludeBasenames, isTopLevel = true) {
   let entries;
   try {
-    entries = await readdir5(rulesDir, { withFileTypes: true });
+    entries = await readdir4(rulesDir, { withFileTypes: true });
   } catch {
     return [];
   }
@@ -29080,9 +29001,9 @@ async function handleSugoGetProjectContext(rawArgs) {
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
 }
 
-// src/hulk/history.ts
+// src/work/history.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdir as mkdir14, readdir as readdir6, readFile as readFile18 } from "node:fs/promises";
+import { mkdir as mkdir13, readdir as readdir5, readFile as readFile17 } from "node:fs/promises";
 import { join as join20 } from "node:path";
 function generateWorkLogId() {
   return `wl-${Date.now()}-${randomBytes3(4).toString("hex")}`;
@@ -29090,7 +29011,7 @@ function generateWorkLogId() {
 async function addWorkLog(workspace, params) {
   const workLog = { id: generateWorkLogId(), ...params };
   const dir = historyDir(workspace);
-  await mkdir14(dir, { recursive: true });
+  await mkdir13(dir, { recursive: true });
   await atomicWriteFile(join20(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
   void syncHistory(workspace, workLog, workLog.prRefs);
   return workLog;
@@ -29099,7 +29020,7 @@ async function listWorkLogs(workspace) {
   const dir = historyDir(workspace);
   let entries;
   try {
-    entries = await readdir6(dir);
+    entries = await readdir5(dir);
   } catch {
     return [];
   }
@@ -29107,7 +29028,7 @@ async function listWorkLogs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile18(join20(dir, name2), "utf-8");
+      const raw = await readFile17(join20(dir, name2), "utf-8");
       logs.push(JSON.parse(raw));
     } catch {
       continue;
@@ -29117,7 +29038,7 @@ async function listWorkLogs(workspace) {
 }
 async function getWorkLog(workspace, id) {
   try {
-    const raw = await readFile18(join20(historyDir(workspace), `${id}.json`), "utf-8");
+    const raw = await readFile17(join20(historyDir(workspace), `${id}.json`), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -29127,7 +29048,7 @@ async function getWorkLog(workspace, id) {
 // src/tools/sugoHistory.ts
 var sugoHistoryInputSchema = {
   action: external_exports.enum(["add", "list", "get"]),
-  workspace: external_exports.string().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
+  workspace: external_exports.string().describe("\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
   logId: external_exports.string().optional().describe("get action\uC5D0 \uD544\uC694"),
   task_id: external_exports.string().optional().describe("add action\uC5D0 \uD544\uC694"),
   task_title: external_exports.string().optional().describe("add action\uC5D0 \uD544\uC694"),
@@ -29186,11 +29107,11 @@ function errorResult8(errorCode, message) {
 }
 
 // src/tools/sugoOverview.ts
-import { readFile as readFile19 } from "node:fs/promises";
-import { relative as relative5, sep as sep2 } from "node:path";
+import { readFile as readFile18 } from "node:fs/promises";
+import { relative as relative4, sep as sep2 } from "node:path";
 
 // src/overview.ts
-import { readdir as readdir7 } from "node:fs/promises";
+import { readdir as readdir6 } from "node:fs/promises";
 import { join as join21 } from "node:path";
 var IGNORED_DIR_NAMES = /* @__PURE__ */ new Set([
   "node_modules",
@@ -29208,7 +29129,7 @@ async function walkSourceFiles(rootDir, maxFiles) {
     if (results.length >= maxFiles) return;
     let entries;
     try {
-      entries = await readdir7(dir, { withFileTypes: true });
+      entries = await readdir6(dir, { withFileTypes: true });
     } catch {
       return;
     }
@@ -29239,10 +29160,10 @@ async function handleSugoOverview(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const full of files) {
-    const relPath = relative5(args2.projectPath, full).split(sep2).join("/");
+    const relPath = relative4(args2.projectPath, full).split(sep2).join("/");
     let content;
     try {
-      content = await readFile19(full, "utf-8");
+      content = await readFile18(full, "utf-8");
     } catch {
       skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -29271,17 +29192,17 @@ async function handleSugoOverview(rawArgs) {
 
 // src/sourceRevision.ts
 import { createHash as createHash4 } from "node:crypto";
-import { readFile as readFile20 } from "node:fs/promises";
-import { relative as relative6, resolve as resolve8, isAbsolute as isAbsolute6 } from "node:path";
+import { readFile as readFile19 } from "node:fs/promises";
+import { relative as relative5, resolve as resolve8, isAbsolute as isAbsolute6 } from "node:path";
 async function collectSourceRevision(projectPath, changedFiles, startedAt) {
-  const paths = [...new Set(changedFiles.map((f) => relative6(projectPath, resolve8(projectPath, f)).replace(/\\/g, "/")))].sort();
+  const paths = [...new Set(changedFiles.map((f) => relative5(projectPath, resolve8(projectPath, f)).replace(/\\/g, "/")))].sort();
   if (!paths.length || paths.some((p) => !p || p.startsWith("../") || isAbsolute6(p))) return void 0;
   const head = await runGit(["rev-parse", "HEAD"], projectPath);
   if (!head || !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(head)) return void 0;
   const files = [];
   for (const path of paths) {
     try {
-      files.push({ path, hash: createHash4("sha256").update(await readFile20(resolve8(projectPath, path))).digest("hex") });
+      files.push({ path, hash: createHash4("sha256").update(await readFile19(resolve8(projectPath, path))).digest("hex") });
     } catch (e) {
       if (e.code !== "ENOENT") return void 0;
       files.push({ path, hash: "deleted" });
@@ -29294,7 +29215,7 @@ async function collectSourceRevision(projectPath, changedFiles, startedAt) {
 }
 
 // src/tools/sugoPlan.ts
-import { readFile as readFile24 } from "node:fs/promises";
+import { readFile as readFile23 } from "node:fs/promises";
 
 // src/bootable.ts
 async function isProjectBootable(projectPath) {
@@ -29303,7 +29224,7 @@ async function isProjectBootable(projectPath) {
 }
 
 // src/bootScan.ts
-import { readdir as readdir8, readFile as readFile21 } from "node:fs/promises";
+import { readdir as readdir7, readFile as readFile20 } from "node:fs/promises";
 import { join as join22 } from "node:path";
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
 var MAX_FILES4 = 2e3;
@@ -29312,7 +29233,7 @@ async function collectJavaFiles(dir, acc) {
   if (acc.length >= MAX_FILES4) return;
   let entries;
   try {
-    entries = await readdir8(dir, { withFileTypes: true });
+    entries = await readdir7(dir, { withFileTypes: true });
   } catch {
     return;
   }
@@ -29333,7 +29254,7 @@ async function scanForSpringBootTestAnnotation(projectPath) {
   const candidates = testFiles.length > 0 ? testFiles : files;
   for (const file of candidates) {
     try {
-      const content = await readFile21(file, "utf-8");
+      const content = await readFile20(file, "utf-8");
       if (content.length > MAX_FILE_BYTES4) continue;
       if (hasValidSpringBootTestAnnotation([content])) return true;
     } catch {
@@ -29344,12 +29265,12 @@ async function scanForSpringBootTestAnnotation(projectPath) {
 }
 
 // src/feature.ts
-import { mkdir as mkdir15 } from "node:fs/promises";
+import { mkdir as mkdir14 } from "node:fs/promises";
 import { join as join24 } from "node:path";
 
 // src/patch.ts
-import { readdir as readdir9 } from "node:fs/promises";
-import { dirname as dirname9, join as join23, relative as relative7 } from "node:path";
+import { readdir as readdir8 } from "node:fs/promises";
+import { dirname as dirname9, join as join23, relative as relative6 } from "node:path";
 var PatchEntryError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -29370,7 +29291,7 @@ async function capturePostHocBaseline(projectPath, requestedBaseRevision, exclud
   if (!head || !/^[0-9a-f]{40,64}$/.test(head)) {
     throw new PostHocEntryError("POST_HOC_GIT_REQUIRED", "\uC0AC\uD6C4 patch \uC5F0\uACB0\uC740 Git \uC800\uC7A5\uC18C\uC640 HEAD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
   }
-  const excluded = excludedPaths.map((path) => relative7(projectPath, path).replace(/\\/g, "/").replace(/\/$/, ""));
+  const excluded = excludedPaths.map((path) => relative6(projectPath, path).replace(/\\/g, "/").replace(/\/$/, ""));
   const keep = (path) => !excluded.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
   const dirtyFiles = [.../* @__PURE__ */ new Set([
     ...lines(await runGit(["diff", "--name-only", "HEAD"], projectPath)),
@@ -29426,7 +29347,7 @@ async function resolvePatchContext(workResultPath) {
   const featureDir = dirname9(workResultPath);
   let filenames;
   try {
-    filenames = await readdir9(featureDir);
+    filenames = await readdir8(featureDir);
   } catch {
     throw new PatchEntryError("PATCH_FEATURE_DIR_NOT_FOUND", `feature \uB514\uB809\uD130\uB9AC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`);
   }
@@ -29459,25 +29380,25 @@ function todayYyyymmdd() {
 async function writePrdFile(projectPath, featureName, content) {
   const featurePath = join24(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
   const prdPath = join24(featurePath, "prd.md");
-  await mkdir15(featurePath, { recursive: true });
+  await mkdir14(featurePath, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath, prdPath };
 }
 async function writeWorkResultFile(featurePath, content) {
   const workResultPath = join24(featurePath, "work-result.md");
-  await mkdir15(featurePath, { recursive: true });
+  await mkdir14(featurePath, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
 async function writePatchPrdFile(featureDir, version2, content) {
   const prdPath = join24(featureDir, patchPrdFilename(version2));
-  await mkdir15(featureDir, { recursive: true });
+  await mkdir14(featureDir, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath: featureDir, prdPath };
 }
 async function writePatchWorkResultFile(featureDir, version2, content) {
   const workResultPath = join24(featureDir, patchWorkResultFilename(version2));
-  await mkdir15(featureDir, { recursive: true });
+  await mkdir14(featureDir, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
@@ -29687,7 +29608,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash5 } from "node:crypto";
 import { stat as stat2 } from "node:fs/promises";
-import { isAbsolute as isAbsolute7, join as join25, relative as relative8 } from "node:path";
+import { isAbsolute as isAbsolute7, join as join25, relative as relative7 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash5("sha1").update(parts2.join("\n")).digest("hex");
@@ -29696,7 +29617,7 @@ async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
     const full = isAbsolute7(f) ? f : join25(projectPath, f);
-    const relPath = isAbsolute7(f) ? relative8(projectPath, f) : f;
+    const relPath = isAbsolute7(f) ? relative7(projectPath, f) : f;
     try {
       const st = await stat2(full);
       entries.push({ relPath, size: st.size, mtimeMs: st.mtimeMs });
@@ -29917,11 +29838,11 @@ function renderBypassSummary(result3) {
 ${lines2.join("\n")}`;
 }
 
-// src/hulk/roadmap.ts
-import { mkdir as mkdir16, readFile as readFile22 } from "node:fs/promises";
+// src/work/roadmap.ts
+import { mkdir as mkdir15, readFile as readFile21 } from "node:fs/promises";
 import { dirname as dirname10, join as join26 } from "node:path";
 
-// src/hulk/roadmapGraph.ts
+// src/work/roadmapGraph.ts
 function mergeRoadmapOwnership(localNodes, remoteOrdering) {
   const remoteById = new Map(remoteOrdering.map((r) => [r.id, r]));
   return localNodes.map((node) => {
@@ -29985,7 +29906,7 @@ function readySet(nodes) {
   return result3;
 }
 
-// src/hulk/roadmapReq.ts
+// src/work/roadmapReq.ts
 var REQ_HEADING_RE = /^#{1,6}[ \t]*REQ-(\d+)(?:[ \t]*(\([^\r\n)]+\)))?[ \t]*(?::|[—–])[ \t]*(.+)$/gim;
 function parseRequirementsFromPrd(prdContent) {
   const results = [];
@@ -30028,11 +29949,11 @@ function promotePrdRequirements(taskId, prdContent) {
   return nodes;
 }
 
-// src/hulk/roadmap.ts
+// src/work/roadmap.ts
 async function restoredPatchTitle(task) {
   if (!task.patchInfo) return task.title;
   const patchPrdPath = task.patchInfo.prdPath ?? (task.prd_ref ? join26(dirname10(task.prd_ref), `PRD-patch-v${task.patchInfo.patchVersion}.md`) : void 0);
-  const prdContent = patchPrdPath ? await readFile22(patchPrdPath, "utf8").catch(() => void 0) : void 0;
+  const prdContent = patchPrdPath ? await readFile21(patchPrdPath, "utf8").catch(() => void 0) : void 0;
   return task.patchInfo.title ?? taskCycleTitle(task.patchInfo.seed, task.title, prdContent);
 }
 function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath) {
@@ -30060,13 +29981,13 @@ function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPa
 async function readRoadmapFile(workspace) {
   let file;
   try {
-    const raw = await readFile22(roadmapFilePath(workspace), "utf-8");
+    const raw = await readFile21(roadmapFilePath(workspace), "utf-8");
     file = JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
   }
   if (file.nodes.some((n) => n.workResult?.path && !n.workResult.report?.bypassLabels)) {
-    const sessions = (await loadAllSessions()).filter((s) => s.state === "DONE" && s.data.hulkWorkspace === workspace);
+    const sessions = (await loadAllSessions()).filter((s) => s.state === "DONE" && s.data.linkedWorkspace === workspace);
     for (const node of file.nodes) {
       const result3 = node.workResult;
       if (!result3?.path || result3.report?.bypassLabels) continue;
@@ -30082,7 +30003,7 @@ async function readRoadmapFile(workspace) {
   return file;
 }
 async function writeRoadmapFile(workspace, file) {
-  await mkdir16(workspaceDir(workspace), { recursive: true });
+  await mkdir15(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(roadmapFilePath(workspace), JSON.stringify(file, null, 2));
   void syncRoadmapSnapshot(workspace, file.nodes).catch(() => {
   });
@@ -30202,12 +30123,12 @@ async function backfillLegacyRoadmapWorkResults(workspace, tasks) {
     if (task.status !== "done" || !task.prd_ref) continue;
     const node = await getRoadmapNode(workspace, task.id);
     if (!node || node.workResult?.path) continue;
-    const prdExists = await readFile22(task.prd_ref, "utf8").then(() => true).catch(() => false);
+    const prdExists = await readFile21(task.prd_ref, "utf8").then(() => true).catch(() => false);
     if (!prdExists) continue;
     const featureDir = dirname10(task.prd_ref);
     const workResultPath = join26(featureDir, "work-result.md");
     const summary = task.summary?.trim() || task.title;
-    const existing = await readFile22(workResultPath, "utf8").catch(() => null);
+    const existing = await readFile21(workResultPath, "utf8").catch(() => null);
     if (existing === null) {
       await atomicWriteFile(
         workResultPath,
@@ -30417,7 +30338,7 @@ async function pullRoadmapOrdering(workspace) {
   if (!remote) return false;
   return withRoadmap(workspace, async (file) => {
     const merged = mergeRoadmapOwnership(file.nodes, remote);
-    const completedSessions = (await loadAllSessions()).filter((s) => s.state === "DONE" && s.data.hulkWorkspace === workspace);
+    const completedSessions = (await loadAllSessions()).filter((s) => s.state === "DONE" && s.data.linkedWorkspace === workspace);
     for (const node of merged) {
       const local = node.workResult;
       const incoming = remote.find((r) => r.id === node.id)?.workResult;
@@ -30440,22 +30361,22 @@ async function pullRoadmapOrdering(workspace) {
   });
 }
 
-// src/hulk/task.ts
+// src/work/task.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir17, readFile as readFile23 } from "node:fs/promises";
+import { mkdir as mkdir16, readFile as readFile22 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile23(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile22(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
   }
 }
 async function writeTasksFile(workspace, file) {
-  await mkdir17(workspaceDir(workspace), { recursive: true });
+  await mkdir16(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(tasksFilePath(workspace), JSON.stringify(file, null, 2));
 }
 async function addTask(workspace, params) {
@@ -30519,26 +30440,26 @@ async function findTaskByPrdRef(workspace, prdRefPath) {
 // src/ontology/model.ts
 var ALL_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"];
 var OBJECT_TYPES = [
-  { name: "spec", layer: "roadmap", label: "Spec", meaning: "\uB9C8\uC2A4\uD130 PRD(\uACBD\uB85C=\uC18C\uC18D). \uB85C\uB4DC\uB9F5 \uCD5C\uC0C1\uC704 \uCEE8\uD14C\uC774\uB108", containedBy: null, implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
-  { name: "workstream", layer: "roadmap", label: "Run", meaning: "feat/patch \uC2E4\uD589 \uB2E8\uC704. Spec \uC548\uC5D0 \uC2DC\uAC04\uC21C \uC801\uCE35", containedBy: "spec", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
-  { name: "task", layer: "roadmap", label: "Task", meaning: "\uB808\uD3EC\uBCC4 \uC2E4\uC81C \uC0B0\uCD9C\uBB3C. \uC9C4\uD589\uB960 \uAE30\uC900 \uCE35", containedBy: "workstream", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }, { path: "src/hulk/types.ts", symbol: "interface Task" }] },
-  { name: "subtask", layer: "roadmap", label: "REQ", meaning: "Task \uD558\uC704 \uC138\uBD80 \uAC80\uC99D \uC2A4\uD399(\uC694\uAD6C\uC0AC\uD56D)", containedBy: "task", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
-  { name: "step", layer: "roadmap", label: "Step(\uB808\uAC70\uC2DC)", meaning: "\uAD6C \uB2E8\uACC4 \uB2E8\uC704. \uC2E0\uADDC \uD750\uB984 \uBBF8\uC0AC\uC6A9", containedBy: "subtask", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "RoadmapNode" }] },
+  { name: "spec", layer: "roadmap", label: "Spec", meaning: "\uB9C8\uC2A4\uD130 PRD(\uACBD\uB85C=\uC18C\uC18D). \uB85C\uB4DC\uB9F5 \uCD5C\uC0C1\uC704 \uCEE8\uD14C\uC774\uB108", containedBy: null, implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
+  { name: "workstream", layer: "roadmap", label: "Run", meaning: "feat/patch \uC2E4\uD589 \uB2E8\uC704. Spec \uC548\uC5D0 \uC2DC\uAC04\uC21C \uC801\uCE35", containedBy: "spec", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
+  { name: "task", layer: "roadmap", label: "Task", meaning: "\uB808\uD3EC\uBCC4 \uC2E4\uC81C \uC0B0\uCD9C\uBB3C. \uC9C4\uD589\uB960 \uAE30\uC900 \uCE35", containedBy: "workstream", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }, { path: "src/work/types.ts", symbol: "interface Task" }] },
+  { name: "subtask", layer: "roadmap", label: "REQ", meaning: "Task \uD558\uC704 \uC138\uBD80 \uAC80\uC99D \uC2A4\uD399(\uC694\uAD6C\uC0AC\uD56D)", containedBy: "task", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
+  { name: "step", layer: "roadmap", label: "Step(\uB808\uAC70\uC2DC)", meaning: "\uAD6C \uB2E8\uACC4 \uB2E8\uC704. \uC2E0\uADDC \uD750\uB984 \uBBF8\uC0AC\uC6A9", containedBy: "subtask", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
   { name: "session", layer: "runtime", label: "Session", meaning: "\uD55C feat/patch \uC0C1\uD0DC\uBA38\uC2E0 \uC2E4\uD589\uACFC \uADF8 \uAC10\uC0AC \uC0C1\uD0DC", containedBy: null, implementationRefs: [{ path: "src/types.ts", symbol: "interface PlanSession" }] },
   { name: "evidence", layer: "runtime", label: "Evidence", meaning: "\uAC8C\uC774\uD2B8\uAC00 \uC18C\uBE44\uD558\uB294 baseline\xB7contract\xB7test\xB7runtime\xB7validation \uC2E4\uD589 \uC99D\uAC70", containedBy: null, implementationRefs: [{ path: "src/testEvidence.ts", symbol: "interface TestEvidenceRecord" }, { path: "src/contractEvidence.ts", symbol: "interface ContractTestRecord" }] },
-  { name: "human_decision", layer: "runtime", label: "Human Decision", meaning: "\uC9C8\uBB38\xB7\uC120\uD0DD\uC9C0\xB7\uB2F5\uBCC0\xB7\uBCF5\uADC0 action\uC744 \uBCF4\uC874\uD558\uB294 \uC0AC\uB78C \uD310\uB2E8", containedBy: null, implementationRefs: [{ path: "src/hulk/types.ts", symbol: "interface HumanBlocker" }] },
+  { name: "human_decision", layer: "runtime", label: "Human Decision", meaning: "\uC9C8\uBB38\xB7\uC120\uD0DD\uC9C0\xB7\uB2F5\uBCC0\xB7\uBCF5\uADC0 action\uC744 \uBCF4\uC874\uD558\uB294 \uC0AC\uB78C \uD310\uB2E8", containedBy: null, implementationRefs: [{ path: "src/work/types.ts", symbol: "interface HumanBlocker" }] },
   { name: "artifact", layer: "runtime", label: "Artifact", meaning: "PRD\xB7TODO-SPEC\xB7work-result\xB7commit/PR\uCC98\uB7FC \uC2E4\uD589\uC774 \uC0DD\uC0B0\uD55C \uCD94\uC801 \uAC00\uB2A5 \uC0B0\uCD9C\uBB3C", containedBy: null, implementationRefs: [{ path: "src/workResultReport.ts", symbol: "interface WorkResultReport" }] }
 ];
 var LINK_TYPES = [
-  { name: "contains", from: "*", to: "*", meaning: "\uACC4\uCE35 \uD3EC\uD568(parent). spec\u2192workstream\u2192task\u2192subtask", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "parent?: string" }] },
-  { name: "depends_on", from: "task", to: "task", meaning: "\uD615\uC81C \uC21C\uC11C/\uC758\uC874(DAG). to\uAC00 \uBA3C\uC800 done\uC774\uC5B4\uC57C from ready", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "dependsOn: string[]" }] },
-  { name: "lineage", from: "task", to: "task", meaning: "patch \uACC4\uBCF4(\uC6D0\uBCF8 \uC544\uB798 \uCC28\uC218 \uCCB4\uC778). task \uB178\uB4DC\uC5D0\uB9CC", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "lineage?: RoadmapLineageEntry[]" }] },
-  { name: "operates_on", from: "session", to: "task", meaning: "\uC0C1\uD0DC\uBA38\uC2E0 session\uC774 \uAD6C\uD604\uD558\uB294 \uB85C\uB4DC\uB9F5 Task", implementationRefs: [{ path: "src/types.ts", symbol: "hulkTaskId?: string" }] },
+  { name: "contains", from: "*", to: "*", meaning: "\uACC4\uCE35 \uD3EC\uD568(parent). spec\u2192workstream\u2192task\u2192subtask", implementationRefs: [{ path: "src/work/types.ts", symbol: "parent?: string" }] },
+  { name: "depends_on", from: "task", to: "task", meaning: "\uD615\uC81C \uC21C\uC11C/\uC758\uC874(DAG). to\uAC00 \uBA3C\uC800 done\uC774\uC5B4\uC57C from ready", implementationRefs: [{ path: "src/work/types.ts", symbol: "dependsOn: string[]" }] },
+  { name: "lineage", from: "task", to: "task", meaning: "patch \uACC4\uBCF4(\uC6D0\uBCF8 \uC544\uB798 \uCC28\uC218 \uCCB4\uC778). task \uB178\uB4DC\uC5D0\uB9CC", implementationRefs: [{ path: "src/work/types.ts", symbol: "lineage?: RoadmapLineageEntry[]" }] },
+  { name: "operates_on", from: "session", to: "task", meaning: "\uC0C1\uD0DC\uBA38\uC2E0 session\uC774 \uAD6C\uD604\uD558\uB294 \uB85C\uB4DC\uB9F5 Task", implementationRefs: [{ path: "src/types.ts", symbol: "linkedTaskId?: string" }] },
   { name: "requires", from: "action", to: "evidence", meaning: "action \uAC8C\uC774\uD2B8\uAC00 \uC804\uC774\uB97C \uC704\uD574 \uC694\uAD6C\uD558\uB294 \uC2E4\uD589 \uC99D\uAC70", implementationRefs: [{ path: "src/ontology/model.ts", symbol: "evidenceSource: string" }] },
   { name: "produces", from: "action", to: ["artifact", "evidence"], meaning: "action \uC2E4\uD589\uC774 \uC0DD\uC131\xB7\uAC31\uC2E0\uD558\uB294 \uC0B0\uCD9C\uBB3C \uB610\uB294 \uC99D\uAC70", implementationRefs: [{ path: "src/types.ts", symbol: "testEvidence?: TestEvidenceRecord" }, { path: "src/types.ts", symbol: "workResultReport?: WorkResultReport" }] },
   { name: "blocks", from: "human_decision", to: "session", meaning: "\uBBF8\uACB0\uC815 \uC0AC\uB78C \uD310\uB2E8\uC774 session\uC758 \uB2E4\uC74C \uC804\uC774\uB97C \uCC28\uB2E8", implementationRefs: [{ path: "src/types.ts", symbol: "humanDecisionGate?:" }] },
-  { name: "resumes_at", from: "human_decision", to: "action", meaning: "\uD310\uB2E8 \uBC18\uC601 \uD6C4 \uAC19\uC740 session\uC5D0\uC11C \uC7AC\uAC1C\uD560 action", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "resumeAction: string" }] },
-  { name: "derived_from", from: "task", to: "task", meaning: "patch Task\uAC00 \uADFC\uAC70\uB85C \uC0BC\uC740 \uC774\uC804 \uC644\uB8CC Task", implementationRefs: [{ path: "src/hulk/types.ts", symbol: "parentTaskId: string" }] }
+  { name: "resumes_at", from: "human_decision", to: "action", meaning: "\uD310\uB2E8 \uBC18\uC601 \uD6C4 \uAC19\uC740 session\uC5D0\uC11C \uC7AC\uAC1C\uD560 action", implementationRefs: [{ path: "src/work/types.ts", symbol: "resumeAction: string" }] },
+  { name: "derived_from", from: "task", to: "task", meaning: "patch Task\uAC00 \uADFC\uAC70\uB85C \uC0BC\uC740 \uC774\uC804 \uC644\uB8CC Task", implementationRefs: [{ path: "src/work/types.ts", symbol: "parentTaskId: string" }] }
 ];
 var WORKFLOW_STATES = [
   "INIT",
@@ -30709,8 +30630,8 @@ var ACTION_TYPES = [
   { name: "test_start", fromStates: ["CODE_DONE"], toState: "TEST_RUNNING", gates: ACTION_GATES.test_start },
   { name: "test_done", fromStates: ["TEST_RUNNING"], toState: "TEST_DONE", gates: ACTION_GATES.test_done },
   /**
-   * §4.3-R 증거 재스냅샷. `test_done`이 찍은 `testPassedState`/지문은 그 시점 값으로 고정돼,
-   * 이후 올바른 증거를 다시 기록해도 `review_done`이 옛 판정을 보고 막는 데드락이 있었다
+   * 증거 재스냅샷. `test_done`이 찍은 `testPassedState`/지문은 그 시점 값으로 고정돼,
+   * 이후 올바른 증거를 다시 기록해도 `review_done`이 옛 판정을 보고 막는 데드락이 생긴다
    * (forward-only라 `test_done`으로 되돌아갈 수도 없다). 상태는 그대로 두고 스냅샷만 다시 찍는다.
    * 게이트를 무르게 하는 게 아니라 `evidenceResnapshot` 라벨로 남겨 완료등급을 강등시킨다.
    */
@@ -30723,8 +30644,8 @@ var ACTION_TYPES = [
     gates: ACTION_GATES.review_done
   },
   { name: "docs_done", fromStates: ["DOCS_PENDING"], toState: "COMMIT_PENDING", gates: ACTION_GATES.docs_done },
-  // §4.3-T: feature/* 브랜치면 TODO-SPEC.md가 세션 시작 이후 갱신됐는지 확인한다(무조건 —
-  // opt-in 아님). 다른 §10 확장 게이트와 달리 브랜치 패턴 자체가 스위치다.
+  // feature/* 브랜치면 TODO-SPEC.md가 세션 시작 이후 갱신됐는지 확인한다(무조건 —
+  // opt-in 아님). 다른 확장 게이트와 달리 브랜치 패턴 자체가 스위치다.
   { name: "commit", fromStates: ["COMMIT_PENDING"], toState: "DONE", gates: ACTION_GATES.commit },
   { name: "status", fromStates: null, toState: null, gates: ACTION_GATES.status },
   { name: "cancel", fromStates: null, toState: null, gates: ACTION_GATES.cancel }
@@ -31070,7 +30991,7 @@ function summarizeSession(session) {
   };
 }
 function sessionForTask(sessions, taskId) {
-  const matched = sessions.filter((s) => s.data?.hulkTaskId === taskId).sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
+  const matched = sessions.filter((s) => s.data?.linkedTaskId === taskId).sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
   return matched[0] ? summarizeSession(matched[0]) : void 0;
 }
 function sessionsForProjects(sessions, projectPaths) {
@@ -31346,16 +31267,16 @@ var sugoPlanInputSchema = {
   sessionId: external_exports.string().optional().describe("start \uC774\uC678\uC758 \uBAA8\uB4E0 action\uC5D0 \uD544\uC694. start \uACB0\uACFC\uB85C \uBC1C\uAE09\uB428"),
   projectPath: external_exports.string().optional().describe("start action\uC5D0 \uD544\uC694"),
   featureName: external_exports.string().optional().describe("start action\uC5D0 \uC120\uD0DD\uC801\uC73C\uB85C \uC0AC\uC6A9"),
-  workResultPath: external_exports.string().optional().describe("start action: patch \uC9C4\uC785\uC810(\xA77) \u2014 \uAE30\uC874 work-result.md(\uB610\uB294 work-result-patch-vN.md) \uACBD\uB85C. \uBBF8\uC785\uB825\uC2DC \uAE30\uC874(\uC2E0\uADDC PRD) \uB3D9\uC791"),
-  seed: external_exports.string().optional().describe("start action(\xA77.1 Patch \uC131\uC219\uD654): \uC774\uBC88 patch \uCC28\uC218\uC5D0 \uB300\uD55C \uC0AC\uC6A9\uC790 \uC9C0\uC2DC. review_done\uC774 work-result\uC5D0 \uD568\uAED8 \uAE30\uB85D\uD55C\uB2E4"),
+  workResultPath: external_exports.string().optional().describe("start action: patch \uC9C4\uC785\uC810 \u2014 \uAE30\uC874 work-result.md(\uB610\uB294 work-result-patch-vN.md) \uACBD\uB85C. \uBBF8\uC785\uB825\uC2DC \uAE30\uC874(\uC2E0\uADDC PRD) \uB3D9\uC791"),
+  seed: external_exports.string().optional().describe("start action: \uC774\uBC88 patch \uCC28\uC218\uC5D0 \uB300\uD55C \uC0AC\uC6A9\uC790 \uC9C0\uC2DC. review_done\uC774 work-result\uC5D0 \uD568\uAED8 \uAE30\uB85D\uD55C\uB2E4"),
   patchProvenance: external_exports.enum(["native", "captured-post-hoc"]).optional().describe("start action: \uC77C\uBC18 patch\uB294 native, \uC774\uBBF8 \uC218\uD589\uD55C \uBCC0\uACBD \uC5F0\uACB0\uC740 captured-post-hoc"),
   postHocBaseRevision: external_exports.string().optional().describe("captured-post-hoc\uC5D0\uC11C \uBCC0\uACBD\uC774 \uC774\uBBF8 \uCEE4\uBC0B\uB41C \uACBD\uC6B0 \uD544\uC694\uD55C \uBCC0\uACBD \uC804 Git revision"),
   specDraftDecision: external_exports.enum(["link", "new"]).optional().describe("clarify action: \uBBF8\uC5F0\uACB0 SPEC \uCD08\uC548 \uD6C4\uBCF4\uAC00 \uC788\uC73C\uBA74 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uBCF4\uC5EC\uC900 \uB4A4 \uAE30\uC874 \uCD08\uC548 \uC5F0\uACB0(link) \uB610\uB294 \uC0C8 SPEC \uC0DD\uC131(new)\uC744 \uBC18\uB4DC\uC2DC \uC120\uD0DD"),
   specDraftId: external_exports.string().optional().describe("start/clarify action: Dashboard\uC5D0\uC11C \uC120\uD0DD\uD55C spec-manual-* ID"),
   workBranch: external_exports.string().optional().describe("start action: feat \uC2DC\uC791 \uC804 \uC900\uBE44\uD560 Git \uBE0C\uB79C\uCE58"),
   prdContent: external_exports.string().optional().describe("prd action\uC5D0 \uD544\uC694. \uBCF8\uBB38 \u2265100\uC790, REQ-N \uD0DC\uADF8 \u22651"),
-  specPath: external_exports.string().optional().describe("start/prd action(\xA75.0): \uB300\uC870\uD560 \uC6D0\uBCF8 spec.md \uACBD\uB85C. \uC2E4\uC7AC\uD558\uBA74 specOracle\uC774 \uCF1C\uC838 ready \uC804\uC5D0 oracle_done\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4"),
-  uncovered: external_exports.array(external_exports.object({ quote: external_exports.string(), reason: external_exports.string() })).optional().describe("oracle_done: \uC6D0\uBCF8 \uC2A4\uD399\uC5D0 \uC788\uC73C\uB098 PRD\uAC00 \uBABB \uB36E\uC740 \uD56D\uBAA9\uB4E4(\uC778\uC6A9 + \uC0AC\uC720). 1\uAC74 \uC774\uC0C1\uC774\uBA74 overrideReason \uD544\uC218"),
+  specPath: external_exports.string().optional().describe("start/prd action: \uB300\uC870\uD560 \uAE30\uC900 spec.md \uACBD\uB85C. \uC2E4\uC7AC\uD558\uBA74 specOracle\uC774 \uCF1C\uC838 ready \uC804\uC5D0 oracle_done\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4"),
+  uncovered: external_exports.array(external_exports.object({ quote: external_exports.string(), reason: external_exports.string() })).optional().describe("oracle_done: \uAE30\uC900 \uC2A4\uD399\uC5D0 \uC788\uC73C\uB098 PRD\uAC00 \uBABB \uB36E\uC740 \uD56D\uBAA9\uB4E4(\uC778\uC6A9 + \uC0AC\uC720). 1\uAC74 \uC774\uC0C1\uC774\uBA74 overrideReason \uD544\uC218"),
   overrideReason: external_exports.string().optional().describe("oracle_done: \uBBF8\uCEE4\uBC84 \uD56D\uBAA9\uC744 \uB0A8\uAE34 \uCC44 \uC9C4\uD589\uD558\uB294 \uC0AC\uC720"),
   jiraOption: external_exports.enum(["new", "link", "skip"]).optional().describe("jira action\uC5D0 \uD544\uC694. 'link'\uBA74 jiraKey\uB3C4 \uD544\uC694"),
   jiraKey: external_exports.string().optional().describe("jira action\uC5D0\uC11C jiraOption:'link'\uC77C \uB54C\uC758 \uAE30\uC874 \uD2F0\uCF13 \uD0A4"),
@@ -31376,10 +31297,10 @@ var sugoPlanInputSchema = {
   reverifyReason: external_exports.string().optional().describe(
     "test_reverify action\uC5D0 \uD544\uC694. test_done \uC2DC\uC810 \uD310\uC815\uC774 \uC65C \uD2C0\uB838\uB294\uC9C0(\uC608: '\uC804\uCCB4 \uC2A4\uC704\uD2B8\uC5D0 \uBB34\uAD00\uD55C \uC0AC\uC804 \uACB0\uD568\uC774 \uC11E\uC5EC \uBC94\uC704\uB97C \uC881\uD600 \uC7AC\uC2E4\uD589'). evidenceResnapshot \uB77C\uBCA8\uB85C \uB0A8\uC544 \uC644\uB8CC\uB4F1\uAE09\uC774 unverified\uAC00 \uB41C\uB2E4"
   ),
-  contractEnvironmentAbsentReason: external_exports.string().optional().describe("contract_done: \uACC4\uC57D\uD14C\uC2A4\uD2B8\uB97C \uC2E4\uD589\uD560 \uD658\uACBD\uC774 \uC5C6\uC744 \uB54C red \uD655\uC778 \uC694\uAD6C\uB97C \uC6B0\uD68C\uD558\uB294 \uC0AC\uC720 \uB77C\uBCA8(\xA74.6 \uB77C\uBCA8-\uBAA8\uC21C \uAC80\uC0AC \uB300\uC0C1)"),
+  contractEnvironmentAbsentReason: external_exports.string().optional().describe("contract_done: \uACC4\uC57D\uD14C\uC2A4\uD2B8\uB97C \uC2E4\uD589\uD560 \uD658\uACBD\uC774 \uC5C6\uC744 \uB54C red \uD655\uC778 \uC694\uAD6C\uB97C \uC6B0\uD68C\uD558\uB294 \uC0AC\uC720 \uB77C\uBCA8"),
   testPassed: external_exports.boolean().optional().describe("test_done action\uC5D0 \uD544\uC694. \uC11C\uBC84\uC5D0 \uAE30\uB85D\uB41C test evidence\uC640 \uB300\uC870\uB41C\uB2E4"),
   userConfirmed: external_exports.boolean().optional().describe("review_done action\uC5D0 \uD544\uC694. work-result\uB97C \uC0AC\uB78C\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uD655\uC778\uBC1B\uC558\uB294\uC9C0"),
-  summary: external_exports.string().optional().describe("review_done action\uC5D0 \uD544\uC694. work-result \uC694\uC57D(\xA74.3: \uC904\u22653, \uAE38\uC774\u226530\uC790 \uB4F1)"),
+  summary: external_exports.string().optional().describe("review_done action\uC5D0 \uD544\uC694. work-result \uC694\uC57D(\uC904\u22653, \uAE38\uC774\u226530\uC790 \uB4F1)"),
   trifectaMitigation: external_exports.string().optional().describe(
     "review_done action: sugo_check_lethal_trifecta\uAC00 \uACBD\uACE0(3\uCD95 \uB3D9\uC2DC \uC131\uB9BD \uB3C4\uAD6C)\uB97C \uBCF4\uACE0\uD588\uC744 \uB54C\uB9CC \uD544\uC694. \uC5B4\uB5BB\uAC8C \uC644\uD654\uD588\uB294\uC9C0(\uC608: sub-agent \uACA9\uB9AC, \uC0AC\uB78C \uAC8C\uC774\uD2B8, capability \uC81C\uAC70). LETHAL_TRIFECTA_MITIGATION_REQUIRED \uAC8C\uC774\uD2B8 \uB300\uC0C1"
   ),
@@ -31395,15 +31316,15 @@ var sugoPlanInputSchema = {
     failures: external_exports.array(external_exports.string()).optional(),
     unverifiedReason: external_exports.string().optional().describe("\uD658\uACBD\uBD80\uC7AC\uB85C \uC6B0\uD68C\uD560 \uB54C\uC758 \uC0AC\uC720 \uB77C\uBCA8")
   }).optional().describe("review_done action\uC5D0 \uD544\uC694. \uC2E4\uC81C \uBE4C\uB4DC+\uD14C\uC2A4\uD2B8 \uACB0\uACFC"),
-  reusedFromTestDone: external_exports.boolean().optional().describe("review_done action: \xA710 \uC774\uC911 \uC2E4\uD589 \uC81C\uAC70 \u2014 test_done \uC99D\uAC70\uB97C \uC7AC\uC0AC\uC6A9\uD560\uC9C0. \uBCC0\uACBD\uD30C\uC77C \uC9C0\uBB38\uC774 \uC77C\uCE58\uD558\uBA74 runtimeCheck \uC5C6\uC774 \uD1B5\uACFC\uD55C\uB2E4"),
-  userReportedHumanHours: external_exports.number().optional().describe("commit action: \uC0AC\uB78C\uC774 \uBCF4\uACE0\uD55C \uC2E4\uC81C \uC18C\uC694\uC2DC\uAC04(\uC2DC\uAC04 \uB2E8\uC704) \u2014 HULK \uC0DD\uC0B0\uC131 \uC9C0\uD45C \uC790\uAC00\uBCF4\uC815 \uB8E8\uD504(\xA78)"),
+  reusedFromTestDone: external_exports.boolean().optional().describe("review_done action: \uC774\uC911 \uC2E4\uD589 \uC81C\uAC70 \u2014 test_done \uC99D\uAC70\uB97C \uC7AC\uC0AC\uC6A9\uD560\uC9C0. \uBCC0\uACBD\uD30C\uC77C \uC9C0\uBB38\uC774 \uC77C\uCE58\uD558\uBA74 runtimeCheck \uC5C6\uC774 \uD1B5\uACFC\uD55C\uB2E4"),
+  userReportedHumanHours: external_exports.number().optional().describe("commit action: \uC0AC\uB78C\uC774 \uBCF4\uACE0\uD55C \uC2E4\uC81C \uC18C\uC694\uC2DC\uAC04(\uC2DC\uAC04 \uB2E8\uC704) \u2014 \uC0DD\uC0B0\uC131 \uC9C0\uD45C \uC790\uAC00\uBCF4\uC815 \uB8E8\uD504"),
   coverageMap: external_exports.object({
     acceptanceCriteria: external_exports.array(external_exports.object({ id: external_exports.string(), covered: external_exports.boolean() })),
     responseFields: external_exports.array(external_exports.object({ field: external_exports.string(), asserted: external_exports.boolean() })),
     integrationTestCount: external_exports.number(),
     regressionChecked: external_exports.boolean(),
     regressionIntact: external_exports.boolean()
-  }).optional().describe("test_done action: \xA710 PRD \uC815\uD569\uC131 \uAC8C\uC774\uD2B8(\uC120\uD0DD \uD655\uC7A5) \u2014 verificationPolicy.integrationGateEnforced\uAC00 \uCF1C\uC838 \uC788\uC73C\uBA74 \uD544\uC218"),
+  }).optional().describe("test_done action: PRD \uC815\uD569\uC131 \uAC8C\uC774\uD2B8(\uC120\uD0DD \uD655\uC7A5) \u2014 verificationPolicy.integrationGateEnforced\uAC00 \uCF1C\uC838 \uC788\uC73C\uBA74 \uD544\uC218"),
   manifest: external_exports.object({
     subtasks: external_exports.array(
       external_exports.object({
@@ -31414,7 +31335,7 @@ var sugoPlanInputSchema = {
         coversRequirements: external_exports.array(external_exports.string()).default([])
       })
     )
-  }).optional().describe("decompose action\uC5D0 \uD544\uC694. \xA710 \uC624\uCF00\uC2A4\uD2B8\uB808\uC774\uC158 \uB9E4\uB2C8\uD398\uC2A4\uD2B8 \u2014 \uC0AC\uC774\uD074/\uD30C\uC77C\uACB9\uCE68/\uC694\uAD6C\uCEE4\uBC84\uB9AC\uC9C0\uB97C \uAC80\uC99D\uD55C\uB2E4"),
+  }).optional().describe("decompose action\uC5D0 \uD544\uC694. \uC624\uCF00\uC2A4\uD2B8\uB808\uC774\uC158 \uB9E4\uB2C8\uD398\uC2A4\uD2B8 \u2014 \uC0AC\uC774\uD074/\uD30C\uC77C\uACB9\uCE68/\uC694\uAD6C\uCEE4\uBC84\uB9AC\uC9C0\uB97C \uAC80\uC99D\uD55C\uB2E4"),
   subtaskId: external_exports.string().optional().describe("subtask_start/subtask_done action\uC5D0 \uD544\uC694"),
   subtaskChangedFiles: external_exports.array(external_exports.string()).optional().describe("subtask_done action: \uC774 \uC11C\uBE0C\uD0DC\uC2A4\uD06C\uAC00 \uC2E4\uC81C\uB85C \uBC14\uAFBC \uD30C\uC77C")
 };
@@ -31609,14 +31530,14 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "review_done" && existing) {
     const dashboard = await resolveDashboardConfig();
-    if (dashboard.enabled && existing.data.hulkWorkspace && existing.data.hulkTaskId) {
-      const remoteTask = await fetchBlockerDecision(existing.data.hulkWorkspace, existing.data.hulkTaskId);
+    if (dashboard.enabled && existing.data.linkedWorkspace && existing.data.linkedTaskId) {
+      const remoteTask = await fetchBlockerDecision(existing.data.linkedWorkspace, existing.data.linkedTaskId);
       if (remoteTask) {
         const confirmation = existing.data.reviewConfirmation;
-        if (!confirmation || confirmation.workspace !== existing.data.hulkWorkspace || confirmation.taskId !== existing.data.hulkTaskId) {
+        if (!confirmation || confirmation.workspace !== existing.data.linkedWorkspace || confirmation.taskId !== existing.data.linkedTaskId) {
           return errorResult9(
             "REVIEW_CONFIRMATION_REQUIRED",
-            `review_done \uC804\uC5D0 sugo_roadmap(action:"request_review_confirmation", workspace:"${existing.data.hulkWorkspace}", id:"${existing.data.hulkTaskId}", sessionId:"${existing.id}", reviewPacket:...)\uC73C\uB85C \uC791\uC5C5 \uC694\uC57D\uACFC \uCF54\uB4DC diff\uB97C Dashboard\uC5D0 \uAC8C\uC2DC\uD574\uC57C \uD569\uB2C8\uB2E4.`
+            `review_done \uC804\uC5D0 sugo_roadmap(action:"request_review_confirmation", workspace:"${existing.data.linkedWorkspace}", id:"${existing.data.linkedTaskId}", sessionId:"${existing.id}", reviewPacket:...)\uC73C\uB85C \uC791\uC5C5 \uC694\uC57D\uACFC \uCF54\uB4DC diff\uB97C Dashboard\uC5D0 \uAC8C\uC2DC\uD574\uC57C \uD569\uB2C8\uB2E4.`
           );
         }
         if (confirmation.decision !== "approve") {
@@ -31699,7 +31620,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "decompose" && existing) {
     if (!args2.manifest) return errorResult9("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     if (!existing.data.prdPath) return errorResult9("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    const prdContent = await readFile24(existing.data.prdPath, "utf-8").catch(() => "");
+    const prdContent = await readFile23(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
@@ -31886,8 +31807,8 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "start" && args2.specPath) {
-    const specExists = await readFile24(args2.specPath, "utf-8").then(() => true, () => false);
-    if (!specExists) return errorResult9("SPEC_FILE_NOT_FOUND", `\uC6D0\uBCF8 SPEC \uD30C\uC77C\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.specPath}`);
+    const specExists = await readFile23(args2.specPath, "utf-8").then(() => true, () => false);
+    if (!specExists) return errorResult9("SPEC_FILE_NOT_FOUND", `\uAE30\uC900 SPEC \uD30C\uC77C\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.specPath}`);
     const selectedId = session.data.specDraftSelection?.selectedId;
     const selected = session.data.specDraftSelection?.candidates.find((candidate) => candidate.id === selectedId);
     if (selected?.specPath && selected.specPath !== args2.specPath) {
@@ -31945,7 +31866,7 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "prd" && args2.specPath) {
-    const specExists = await readFile24(args2.specPath, "utf-8").then(
+    const specExists = await readFile23(args2.specPath, "utf-8").then(
       () => true,
       () => false
     );
@@ -32023,7 +31944,7 @@ ${args2.prdContent}` : args2.prdContent;
       }
       session = {
         ...session,
-        data: { ...session.data, hulkWorkspace: registryEntry.workspace, hulkTaskId: task.id }
+        data: { ...session.data, linkedWorkspace: registryEntry.workspace, linkedTaskId: task.id }
       };
       await backfillRoadmapTask(registryEntry.workspace, task.id, session.featureName);
       await updateRoadmapNodeStatus(registryEntry.workspace, task.id, "in_progress");
@@ -32220,8 +32141,8 @@ ${args2.prdContent}` : args2.prdContent;
         }
       }
     };
-    if (session.data.hulkWorkspace && session.data.hulkTaskId) {
-      await completeTaskRequirements(session.data.hulkWorkspace, session.data.hulkTaskId, args2.summary);
+    if (session.data.linkedWorkspace && session.data.linkedTaskId) {
+      await completeTaskRequirements(session.data.linkedWorkspace, session.data.linkedTaskId, args2.summary);
     }
   }
   let completionGrade;
@@ -32231,12 +32152,12 @@ ${args2.prdContent}` : args2.prdContent;
     completionGrade = gradeResult.grade;
     bypassSummary = renderBypassSummary(gradeResult);
   }
-  let hulk;
-  if (action === "commit" && session.data.hulkWorkspace && session.data.hulkTaskId) {
-    const workspace = session.data.hulkWorkspace;
+  let workRecord;
+  if (action === "commit" && session.data.linkedWorkspace && session.data.linkedTaskId) {
+    const workspace = session.data.linkedWorkspace;
     const prRefs = await collectPrRefs(session.projectPath) ?? void 0;
     const workLog = await addWorkLog(workspace, {
-      task_id: session.data.hulkTaskId,
+      task_id: session.data.linkedTaskId,
       task_title: taskCycleTitle(session.data.chainInfo.reviewSummary, session.featureName),
       completed_at: (/* @__PURE__ */ new Date()).toISOString(),
       summary: session.data.chainInfo.reviewSummary,
@@ -32249,7 +32170,7 @@ ${args2.prdContent}` : args2.prdContent;
       },
       prRefs
     });
-    await updateTask(workspace, session.data.hulkTaskId, {
+    await updateTask(workspace, session.data.linkedTaskId, {
       status: "done",
       summary: session.data.chainInfo.reviewSummary,
       log_id: workLog.id
@@ -32266,7 +32187,7 @@ ${args2.prdContent}` : args2.prdContent;
       endedAt: completedAt,
       summary: session.data.chainInfo.reviewSummary,
       files: dashboardFiles,
-      parentTaskId: session.data.hulkTaskId,
+      parentTaskId: session.data.linkedTaskId,
       patchVersion,
       seed: session.data.seed,
       runtimeVerified: session.data.chainInfo.runtimeVerified,
@@ -32274,7 +32195,7 @@ ${args2.prdContent}` : args2.prdContent;
       prRefs,
       report: session.data.chainInfo.workResultReport
     };
-    await recordRoadmapWorkResult(workspace, session.data.hulkTaskId, workResult, {
+    await recordRoadmapWorkResult(workspace, session.data.linkedTaskId, workResult, {
       version: patchVersion ?? 0,
       completedAt,
       title: session.featureName,
@@ -32293,8 +32214,8 @@ ${args2.prdContent}` : args2.prdContent;
         harnessIds: config2?.detectedStack.harnessIds ?? []
       })
     );
-    hulk = {
-      taskId: session.data.hulkTaskId,
+    workRecord = {
+      taskId: session.data.linkedTaskId,
       workLogId: workLog.id,
       checkpointsToReview: applicable.map((cp) => ({ id: cp.id, title: cp.title, checklist: cp.checklist }))
     };
@@ -32317,18 +32238,18 @@ ${args2.prdContent}` : args2.prdContent;
   }
   if (action !== "status") {
     await saveSession(session);
-    if (session.data.hulkWorkspace && session.data.hulkTaskId) {
+    if (session.data.linkedWorkspace && session.data.linkedTaskId) {
       await updateRoadmapNodeRuntimeAssessment(
-        session.data.hulkWorkspace,
-        session.data.hulkTaskId,
+        session.data.linkedWorkspace,
+        session.data.linkedTaskId,
         assessSession(session)
       );
     }
   }
-  if (existing && session.data.hulkWorkspace) {
+  if (existing && session.data.linkedWorkspace) {
     const transitionActivity = activityForPlanTransition(action, existing.state, session.featureName);
     if (transitionActivity) {
-      void emitActivity({ workspaceName: session.data.hulkWorkspace, ...transitionActivity });
+      void emitActivity({ workspaceName: session.data.linkedWorkspace, ...transitionActivity });
     }
   }
   let todoSpecResponse;
@@ -32355,9 +32276,9 @@ ${args2.prdContent}` : args2.prdContent;
       "\uC0AC\uC6A9\uC790\uC5D0\uAC8C \uD655\uC778\uC744 \uBB3B\uAE30 \uC804\uC5D0 request_review_confirmation\uC73C\uB85C \uD604\uC7AC \uCC28\uC218\uC758 \uBCF4\uACE0\uC11C\uC640 \uBCC0\uACBD\uD30C\uC77C\uC744 \uBA3C\uC800 \uAC8C\uC2DC\uD558\uC138\uC694. \uAC8C\uC2DC \uC751\uB2F5\uC744 \uD655\uC778\uD55C \uB4A4 Dashboard\uC758 \uB9AC\uBDF0 \uBCF4\uACE0\uC11C HTML \uBC84\uD2BC\uC73C\uB85C \uC548\uB0B4\uD558\uC138\uC694. \uD130\uBBF8\uB110 \uC120\uD0DD\uCC3D\uC5D0\uC11C \uBBF8\uB9AC \uC2B9\uC778\uC744 \uBC1B\uC9C0 \uB9C8\uC138\uC694.",
       ...result3.nextActionHints ?? []
     ] : result3.nextActionHints ?? [],
-    // §4.3-P DONE까지 남은 경로와 지금 막고 있는 것 — 막다른 길에 들어가기 전에 보이게 한다.
+    // DONE까지 남은 경로와 지금 막고 있는 것 — 막다른 길에 들어가기 전에 보이게 한다.
     completionPlan: buildCompletionPlan(session.state, session.data.chainInfo),
-    // §4.3-T start에서만 채워진다. missing이면 clarify에서 최종 목표를 확정해 생성해야 한다.
+    // start에서만 채워진다. missing이면 clarify에서 최종 목표를 확정해 생성해야 한다.
     todoSpec: todoSpecResponse,
     // feat 시작 시 사용자가 기존 초안 연결/새 SPEC 생성을 직접 고를 수 있도록 원문 후보를 반환한다.
     unlinkedSpecDrafts: action === "start" ? session.data.specDraftSelection?.candidates : void 0,
@@ -32368,10 +32289,10 @@ ${args2.prdContent}` : args2.prdContent;
     workResultPath: session.data.chainInfo.workResultPath,
     workBranch: action === "start" ? session.data.workBranch : void 0,
     patch: session.data.mode === "patch" && session.data.patch ? { parentPrdPath: session.data.patch.parentPrdPath, version: session.data.patch.version } : void 0,
-    hulk,
+    workRecord,
     decomposeManifest: session.data.decomposeManifest,
     harnessToolMenu,
-    // §4.2 "정적검증 미강제" 라벨: test_done에서 npm/py/go 등 풀검증 강제 불가 명령이면 false로
+    // "정적검증 미강제" 라벨: test_done에서 npm/py/go 등 풀검증 강제 불가 명령이면 false로
     // 노출한다(gradle/maven이면 true — 그쪽은 게이트가 gradlew check/mvn verify를 이미 강제).
     fullVerifyEnforceable: action === "test_done" && session.data.chainInfo.testEvidence ? isFullVerifyEnforceable(session.data.chainInfo.testEvidence.command) : void 0
   };
@@ -32422,10 +32343,10 @@ function errorResult10(errorCode, message) {
 // src/tools/sugoRecordTestEvidence.ts
 var sugoRecordTestEvidenceInputSchema = {
   sessionId: external_exports.string().describe("sugo_plan(start)\uC73C\uB85C \uBC1C\uAE09\uB41C \uC138\uC158 id"),
-  kind: external_exports.enum(["baseline", "feature"]).default("feature").describe("baseline=code_start \uC804 \uAE30\uC874 \uD14C\uC2A4\uD2B8(\xA74.0), feature=\uAD6C\uD604 \uD6C4 \uD14C\uC2A4\uD2B8(\xA74.2)"),
+  kind: external_exports.enum(["baseline", "feature"]).default("feature").describe("baseline=code_start \uC804 \uAE30\uC874 \uD14C\uC2A4\uD2B8, feature=\uAD6C\uD604 \uD6C4 \uD14C\uC2A4\uD2B8"),
   command: external_exports.string().describe("\uC2E4\uD589\uD55C \uBA85\uB839(\uC608: npm test, ./gradlew test)"),
   exitCode: external_exports.number().optional().describe("\uD504\uB85C\uC138\uC2A4 \uC885\uB8CC\uCF54\uB4DC. 0\uC774\uBA74 \uADF8\uB9B0"),
-  // ux 정본 파라미터명. test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
+  // 정본 파라미터명. test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
   // undefined로 들어가 증거가 비어버린다 — 짧은 이름(total/passed/failed)도 하위호환으로
   // 받되, 정본 이름이 함께 오면 그쪽이 이긴다.
   totalTests: external_exports.number().optional().describe("\uC2E4\uD589\uB41C \uC804\uCCB4 \uD14C\uC2A4\uD2B8 \uC218"),
@@ -32433,7 +32354,7 @@ var sugoRecordTestEvidenceInputSchema = {
   failedTests: external_exports.number().optional().describe("\uC2E4\uD328 \uC218"),
   skippedTests: external_exports.number().optional().describe("\uC2A4\uD0B5 \uC218"),
   rawOutput: external_exports.string().optional().describe("\uC6D0\uBB38 \uCD9C\uB825(\uAC10\uC0AC\uC6A9, \uC120\uD0DD)"),
-  /** @deprecated v1 이름 — 낡은 호출부 호환용. 새 코드는 totalTests/passedTests/failedTests를 쓴다. */
+  /** @deprecated 옛 이름 — 낡은 호출부 호환용. 새 코드는 totalTests/passedTests/failedTests를 쓴다. */
   total: external_exports.number().optional(),
   passed: external_exports.number().optional(),
   failed: external_exports.number().optional(),
@@ -32493,7 +32414,7 @@ function errorResult11(errorCode, message) {
 import { resolve as resolve9 } from "node:path";
 
 // src/harness/reset.ts
-import { mkdir as mkdir18, readFile as readFile25, rm as rm4 } from "node:fs/promises";
+import { mkdir as mkdir17, readFile as readFile24, rm as rm4 } from "node:fs/promises";
 import { join as join27 } from "node:path";
 var ResetProjectError = class extends Error {
   constructor(code, message) {
@@ -32519,9 +32440,9 @@ async function resetProjectHarness(projectPath) {
   const claudeMdPath = join27(sugoDir, "CLAUDE.md");
   let backedUpTo;
   try {
-    const current = await readFile25(claudeMdPath, "utf-8");
+    const current = await readFile24(claudeMdPath, "utf-8");
     const backupDir = join27(sugoDir, "backup");
-    await mkdir18(backupDir, { recursive: true });
+    await mkdir17(backupDir, { recursive: true });
     backedUpTo = join27(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
     await atomicWriteFile(backedUpTo, current);
   } catch {
@@ -32555,7 +32476,7 @@ function errorResult12(errorCode, message) {
   };
 }
 
-// src/hulk/types.ts
+// src/work/types.ts
 var ROADMAP_LEVELS = ["spec", "workstream", "task", "subtask", "step"];
 var ROADMAP_NODE_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"];
 
@@ -32607,7 +32528,7 @@ var sugoRoadmapInputSchema = {
     "request_review_confirmation",
     "resume_with_decision"
   ]),
-  workspace: external_exports.string().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
+  workspace: external_exports.string().describe("\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
   id: external_exports.string().optional().describe("add/remove/status/get/mark_req action\uC5D0 \uD544\uC694. add\uC758 \uC0C8 \uB178\uB4DC id \uB610\uB294 \uB300\uC0C1 \uB178\uB4DC id"),
   title: external_exports.string().optional().describe("add/group/backfill action\uC5D0 \uD544\uC694"),
   level: external_exports.enum(ROADMAP_LEVELS).optional().describe("add action\uC5D0 \uD544\uC694"),
@@ -32694,7 +32615,7 @@ async function handleSugoRoadmap(rawArgs) {
       return ok4({});
     }
     case "backfill": {
-      if (!args2.id || !args2.title) return errorResult13("BACKFILL_FIELDS_REQUIRED", "backfill action\uC5D0\uB294 id(HULK taskId)/title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+      if (!args2.id || !args2.title) return errorResult13("BACKFILL_FIELDS_REQUIRED", "backfill action\uC5D0\uB294 id(taskId)/title\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await backfillRoadmapTask(args2.workspace, args2.id, args2.title);
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
@@ -32716,7 +32637,7 @@ async function handleSugoRoadmap(rawArgs) {
       }
       if (!await sessionExists(args2.sessionId)) return errorResult13("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
       const session = await loadSession(args2.sessionId);
-      if (session.data.hulkWorkspace !== args2.workspace || session.data.hulkTaskId !== args2.id) {
+      if (session.data.linkedWorkspace !== args2.workspace || session.data.linkedTaskId !== args2.id) {
         return errorResult13("BLOCKER_TARGET_MISMATCH", "\uD604\uC7AC \uC138\uC158\uC5D0 \uC5F0\uACB0\uB41C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC640 \uCC28\uB2E8 \uB300\uC0C1\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
       }
       const blocker = {
@@ -32752,7 +32673,7 @@ async function handleSugoRoadmap(rawArgs) {
       if (session.state !== "REVIEW_RUNNING") {
         return errorResult13("REVIEW_CONFIRMATION_STATE_INVALID", "review \uD655\uC778 \uC694\uCCAD\uC740 REVIEW_RUNNING \uC0C1\uD0DC\uC5D0\uC11C\uB9CC \uB9CC\uB4E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
       }
-      if (session.data.hulkWorkspace !== args2.workspace || session.data.hulkTaskId !== args2.id) {
+      if (session.data.linkedWorkspace !== args2.workspace || session.data.linkedTaskId !== args2.id) {
         return errorResult13("BLOCKER_TARGET_MISMATCH", "\uD604\uC7AC \uC138\uC158\uC5D0 \uC5F0\uACB0\uB41C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC640 \uD655\uC778 \uC694\uCCAD \uB300\uC0C1\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
       }
       const files = await snapshotReviewArtifacts(
@@ -32956,8 +32877,8 @@ async function handleSugoRoute(rawArgs) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...result3 }, null, 2) }] };
 }
 
-// src/hulk/spec.ts
-import { mkdir as mkdir19, readdir as readdir10, readFile as readFile26 } from "node:fs/promises";
+// src/work/spec.ts
+import { mkdir as mkdir18, readdir as readdir9, readFile as readFile25 } from "node:fs/promises";
 import { join as join28 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
@@ -32968,7 +32889,7 @@ async function addSpec(workspace, params) {
     created_at: (/* @__PURE__ */ new Date()).toISOString()
   };
   const dir = specsDir(workspace);
-  await mkdir19(dir, { recursive: true });
+  await mkdir18(dir, { recursive: true });
   const fileContent = stringifyFrontmatter(
     { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
     spec.content
@@ -32991,7 +32912,7 @@ async function listSpecs(workspace) {
   const dir = specsDir(workspace);
   let entries;
   try {
-    entries = await readdir10(dir);
+    entries = await readdir9(dir);
   } catch {
     return [];
   }
@@ -32999,7 +32920,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile26(join28(dir, name2), "utf-8");
+      const raw = await readFile25(join28(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -33009,7 +32930,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile26(join28(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile25(join28(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -33020,7 +32941,7 @@ async function getSpec(workspace, name2) {
 var SPEC_TYPES = ["architecture", "api-design", "business-rule", "data-model", "flow", "other"];
 var sugoSpecInputSchema = {
   action: external_exports.enum(["add", "list", "get"]),
-  workspace: external_exports.string().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
+  workspace: external_exports.string().describe("\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
   name: external_exports.string().optional().describe("add/get action\uC5D0 \uD544\uC694"),
   type: external_exports.enum(SPEC_TYPES).optional().describe("add action\uC5D0 \uD544\uC694"),
   tags: external_exports.array(external_exports.string()).optional(),
@@ -33060,8 +32981,8 @@ function errorResult14(errorCode, message) {
 }
 
 // src/tools/sugoSpecWriter.ts
-import { access as access3, readFile as readFile27 } from "node:fs/promises";
-import { isAbsolute as isAbsolute8, join as join29, relative as relative9, resolve as resolve10, sep as sep3 } from "node:path";
+import { access as access3, readFile as readFile26 } from "node:fs/promises";
+import { isAbsolute as isAbsolute8, join as join29, relative as relative8, resolve as resolve10, sep as sep3 } from "node:path";
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
   workspace: external_exports.string().min(1),
@@ -33114,7 +33035,7 @@ async function nextSpecTarget(title) {
 }
 function managedSpecPath(specPath) {
   const root = resolve10(sugoHomeDir(), ".claude", "sugo", "specs");
-  const rel = relative9(root, resolve10(specPath));
+  const rel = relative8(root, resolve10(specPath));
   if (!rel || rel.startsWith(`..${sep3}`) || rel === ".." || isAbsolute8(rel)) return false;
   const parts2 = rel.split(sep3);
   return parts2.length === 4 && /^\d{8}$/.test(parts2[0]) && parts2[1].length > 0 && /^v[1-9]\d*$/.test(parts2[2]) && parts2[3] === "spec.md";
@@ -33149,7 +33070,7 @@ async function handleSugoSpecWriter(rawArgs) {
       message: "context \uC751\uB2F5\uC758 specTarget.path \uC544\uB798\uC5D0 \uC791\uC131\uD55C spec.md\uB9CC \uC5F0\uACB0\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     });
   }
-  const text = await readFile27(args2.specPath, "utf-8").catch(() => null);
+  const text = await readFile26(args2.specPath, "utf-8").catch(() => null);
   if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args2.specPath });
   const structure = validateSpecStructure(text);
   if (structure.missingSections.length > 0 || !structure.ordered) {
@@ -33237,7 +33158,7 @@ function isWorkEnabled() {
 // src/tools/sugoStatus.ts
 var sugoStatusInputSchema = {
   health: external_exports.boolean().optional().describe("\uB300\uC2DC\uBCF4\uB4DC \uC5F0\uACB0 \uC0C1\uD0DC\xB7\uC7AC\uC2DC\uB3C4 \uD050 \uD06C\uAE30\uB97C \uD568\uAED8 \uBC18\uD658\uD55C\uB2E4"),
-  judgment: external_exports.boolean().optional().describe("\xA75.8 \uD310\uB2E8\uD488\uC9C8 \uB9AC\uD3EC\uD2B8\uB97C \uD568\uAED8 \uBC18\uD658\uD55C\uB2E4"),
+  judgment: external_exports.boolean().optional().describe("\uD310\uB2E8\uD488\uC9C8 \uB9AC\uD3EC\uD2B8\uB97C \uD568\uAED8 \uBC18\uD658\uD55C\uB2E4"),
   days: external_exports.number().optional().describe("judgment: \uCD5C\uADFC N\uC77C \uC774\uB0B4 \uAC31\uC2E0\uB41C \uC138\uC158\uB9CC \uC9D1\uACC4(\uC0DD\uB7B5 \uC2DC \uC804\uCCB4)"),
   projectPath: external_exports.string().optional().describe("\uC774 \uACBD\uB85C\uC758 \uD504\uB85C\uC81D\uD2B8 \uD558\uB098\uB9CC \uC870\uD68C\uD55C\uB2E4")
 };
@@ -33292,7 +33213,7 @@ async function handleSugoStatus(rawArgs = {}) {
 var TASK_STATUS = ["pending", "idea", "in_progress", "done", "dropped", "archived"];
 var sugoTaskInputSchema = {
   action: external_exports.enum(["add", "list", "update", "get"]),
-  workspace: external_exports.string().describe("HULK \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
+  workspace: external_exports.string().describe("\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
   taskId: external_exports.string().optional().describe("update/get action\uC5D0 \uD544\uC694"),
   title: external_exports.string().optional().describe("add action\uC5D0 \uD544\uC694"),
   project: external_exports.string().optional().describe("add action\uC5D0 \uD544\uC694"),
@@ -33486,7 +33407,7 @@ function evaluateAutoCheck(spec, ctx) {
 }
 
 // src/harness/validationConfig.ts
-import { readFile as readFile28 } from "node:fs/promises";
+import { readFile as readFile27 } from "node:fs/promises";
 import { join as join30 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
@@ -33505,7 +33426,7 @@ async function loadProjectValidationConfigs(projectPath) {
   for (const applied of config2.appliedHarnesses) {
     const path = join30(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile28(path, "utf-8");
+      const content = await readFile27(path, "utf-8");
       result3.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -33809,10 +33730,10 @@ function projectSessionOntology(session, task) {
       cancelledAt: session.cancelledAt
     }
   });
-  if (!session.data.hulkTaskId) {
+  if (!session.data.linkedTaskId) {
     diagnostics.push({ code: "TASK_LINK_UNAVAILABLE", message: "\uC138\uC158\uC5D0 \uC5F0\uACB0\uB41C Task ID\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4." });
-  } else if (!task || task.id !== session.data.hulkTaskId) {
-    diagnostics.push({ code: "TASK_RECORD_NOT_FOUND", message: `\uC5F0\uACB0\uB41C Task\uB97C \uB85C\uB4DC\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${session.data.hulkTaskId}` });
+  } else if (!task || task.id !== session.data.linkedTaskId) {
+    diagnostics.push({ code: "TASK_RECORD_NOT_FOUND", message: `\uC5F0\uACB0\uB41C Task\uB97C \uB85C\uB4DC\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${session.data.linkedTaskId}` });
   } else {
     const taskId = `task:${task.id}`;
     putObject({ id: taskId, type: "task", label: task.title, attributes: { status: task.status, project: task.project } });
@@ -33975,7 +33896,7 @@ function traceTaskArtifacts(session, task, nodes, workspace) {
   return {
     querySchemaVersion: 1,
     taskId: task.id,
-    workspace: workspace ?? session?.data.hulkWorkspace ?? null,
+    workspace: workspace ?? session?.data.linkedWorkspace ?? null,
     sessionId: session?.id ?? null,
     hierarchy: hierarchy.map(({ id, level, title, status, parent, specPath }) => ({ id, level, title, status, parent: parent ?? null, specPath: specPath ?? null })),
     artifacts,
@@ -34082,7 +34003,7 @@ async function handleSugoOntology(rawArgs) {
       });
     }
     const session = await loadSession(args2.sessionId);
-    const task = session.data.hulkWorkspace && session.data.hulkTaskId ? await getTask(session.data.hulkWorkspace, session.data.hulkTaskId) : null;
+    const task = session.data.linkedWorkspace && session.data.linkedTaskId ? await getTask(session.data.linkedWorkspace, session.data.linkedTaskId) : null;
     return json({ ok: true, model: ONTOLOGY_MODEL_IDENTITY, projection: projectSessionOntology(session, task) });
   }
   if (args2.boundary) {
@@ -34120,7 +34041,7 @@ async function handleSugoOntology(rawArgs) {
       allowedActionsByState: ALLOWED_ACTIONS_BY_STATE,
       workflowGraph: WORKFLOW_GRAPH_ANALYSIS
     },
-    note: "derived.*\uB294 ontology.actionTypes\uC5D0\uC11C \uD30C\uC0DD\uB41C \uAC12\uC774\uB2E4(\xA72.8) \u2014 \uBCC4\uB3C4\uB85C \uC190\uAD00\uB9AC\uB418\uB294 \uC0AC\uBCF8\uC774 \uC544\uB2C8\uB2E4."
+    note: "derived.*\uB294 ontology.actionTypes\uC5D0\uC11C \uD30C\uC0DD\uB41C \uAC12\uC774\uB2E4 \u2014 \uBCC4\uB3C4\uB85C \uC190\uAD00\uB9AC\uB418\uB294 \uC0AC\uBCF8\uC774 \uC544\uB2C8\uB2E4."
   });
 }
 async function handleOperationalQuery(args2) {
@@ -34168,13 +34089,13 @@ async function readSession(id) {
   return await sessionExists(id) ? loadSession(id) : null;
 }
 async function latestSessionForTask(taskId) {
-  return (await loadAllSessions()).filter((session) => session.data.hulkTaskId === taskId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0] ?? null;
+  return (await loadAllSessions()).filter((session) => session.data.linkedTaskId === taskId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0] ?? null;
 }
 async function resolveTask(taskId) {
   const session = await latestSessionForTask(taskId);
-  if (session?.data.hulkWorkspace) {
-    const task = await getTask(session.data.hulkWorkspace, taskId);
-    if (task) return { session, task, workspace: session.data.hulkWorkspace };
+  if (session?.data.linkedWorkspace) {
+    const task = await getTask(session.data.linkedWorkspace, taskId);
+    if (task) return { session, task, workspace: session.data.linkedWorkspace };
   }
   const matches = [];
   for (const workspace of await listWorkspaces(true)) {
@@ -34184,7 +34105,7 @@ async function resolveTask(taskId) {
   if (matches.length === 0) return { session, error: "TASK_NOT_FOUND", message: `Task\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${taskId}` };
   if (matches.length > 1) return { session, error: "TASK_ID_AMBIGUOUS", message: `\uC5EC\uB7EC \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uC5D0 \uAC19\uC740 Task ID\uAC00 \uC788\uC2B5\uB2C8\uB2E4: ${taskId}` };
   const matched = matches[0];
-  return { session: session?.data.hulkWorkspace === matched.workspace ? session : null, ...matched };
+  return { session: session?.data.linkedWorkspace === matched.workspace ? session : null, ...matched };
 }
 function ontologyError(errorCode, message) {
   return json({ ok: false, model: ONTOLOGY_MODEL_IDENTITY, errorCode, message });
@@ -34218,7 +34139,7 @@ async function handleSugoPrd() {
 
 // src/tools/sugoSetup.ts
 var sugoSetupInputSchema = {
-  bitbucket: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Bitbucket \uC5F0\uB3D9 \uC124\uC815(\xA73.5). \uD1A0\uD070 \uC790\uCCB4\uB294 \uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC554\uD638\uD654 \uBCF4\uAD00\uD55C\uB2E4"),
+  bitbucket: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Bitbucket \uC5F0\uB3D9 \uC124\uC815. \uD1A0\uD070 \uC790\uCCB4\uB294 \uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC554\uD638\uD654 \uBCF4\uAD00\uD55C\uB2E4"),
   jira: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Jira \uC5F0\uB3D9 \uC124\uC815. Jira \uC5F0\uB3D9 \uBAA8\uB4C8\uC774 \uC788\uC744 \uB54C\uB9CC \uC758\uBBF8\uAC00 \uC788\uB2E4"),
   initSecrets: external_exports.boolean().optional().describe("\uC2DC\uD06C\uB9BF \uC800\uC7A5\uC18C \uCD08\uAE30\uD654 \uC5EC\uBD80")
 };
@@ -34234,7 +34155,7 @@ async function handleSugoSetup(rawArgs) {
             ok: true,
             configured: false,
             received: args2,
-            note: "\uC774 \uBE4C\uB4DC\uB294 \uC5F0\uB3D9 \uC124\uC815\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Bitbucket PAT\uB294 \uB300\uC2DC\uBCF4\uB4DC Settings\uC5D0\uC11C \uB4F1\uB85D\uD558\uC138\uC694(\uC554\uD638\uD654 \uBCF4\uAD00, \xA73.5). Jira \uC5F0\uB3D9\uC740 \uC120\uD0DD \uBAA8\uB4C8\uC774\uB77C \uC774 \uBE4C\uB4DC\uC5D0 \uD3EC\uD568\uB3FC \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
+            note: "\uD50C\uB7EC\uADF8\uC778\uC740 \uC5F0\uB3D9 \uC124\uC815\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Bitbucket PAT\uB294 \uB300\uC2DC\uBCF4\uB4DC Settings\uC5D0\uC11C \uB4F1\uB85D\uD558\uC138\uC694(\uC554\uD638\uD654 \uBCF4\uAD00). Jira \uC5F0\uB3D9\uC740 \uC120\uD0DD \uBAA8\uB4C8\uC774\uB77C \uAE30\uBCF8 \uBC30\uD3EC\uC5D0 \uD3EC\uD568\uB3FC \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
           },
           null,
           2
@@ -34290,7 +34211,7 @@ async function handleSugoCommit(rawArgs) {
             ok: true,
             message,
             executed: false,
-            note: "\uBA54\uC2DC\uC9C0\uB9CC \uC0DD\uC131\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uC774 \uB3C4\uAD6C\uB294 \uC800\uC7A5\uC18C\uB97C \uAC74\uB4DC\uB9AC\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4(\xA77 '\uC0DD\uC131\uB9CC'). \uC2E4\uC81C \uAE30\uB85D\uC740 \uD654\uC774\uD2B8\uB9AC\uC2A4\uD2B8 \uACBD\uB85C\uB9CC \uC2A4\uD14C\uC774\uC9D5\uD574 \uC0AC\uC6A9\uC790\uAC00 \uC9C1\uC811 \uC218\uD589\uD569\uB2C8\uB2E4."
+            note: "\uBA54\uC2DC\uC9C0\uB9CC \uC0DD\uC131\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uC774 \uB3C4\uAD6C\uB294 \uC800\uC7A5\uC18C\uB97C \uAC74\uB4DC\uB9AC\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uC2E4\uC81C \uAE30\uB85D\uC740 \uD654\uC774\uD2B8\uB9AC\uC2A4\uD2B8 \uACBD\uB85C\uB9CC \uC2A4\uD14C\uC774\uC9D5\uD574 \uC0AC\uC6A9\uC790\uAC00 \uC9C1\uC811 \uC218\uD589\uD569\uB2C8\uB2E4."
           },
           null,
           2
@@ -34308,8 +34229,8 @@ function errorResult18(errorCode, message) {
 
 // src/work/gitHistory.ts
 import { execFile as execFile4 } from "node:child_process";
-import { mkdir as mkdir20, realpath } from "node:fs/promises";
-import { isAbsolute as isAbsolute9, join as join31, relative as relative10, resolve as resolve12, sep as sep4 } from "node:path";
+import { mkdir as mkdir19, realpath } from "node:fs/promises";
+import { isAbsolute as isAbsolute9, join as join31, relative as relative9, resolve as resolve12, sep as sep4 } from "node:path";
 import { promisify as promisify4 } from "node:util";
 var execFileAsync3 = promisify4(execFile4);
 async function git2(cwd, args2) {
@@ -34325,7 +34246,7 @@ async function repositoryScopes(projects) {
     const root = await git2(project, ["rev-parse", "--show-toplevel"]);
     if (!root) continue;
     const [canonicalRoot, canonicalProject] = await Promise.all([realpath(resolve12(root)), realpath(resolve12(project))]);
-    const rel = relative10(canonicalRoot, canonicalProject);
+    const rel = relative9(canonicalRoot, canonicalProject);
     if (isAbsolute9(rel) || rel === ".." || rel.startsWith(`..${sep4}`)) continue;
     const paths = byRoot.get(root) ?? /* @__PURE__ */ new Set();
     paths.add(rel ? rel.split(sep4).join("/") : ".");
@@ -34353,7 +34274,7 @@ async function backfillWorkspaceGitHistory(workspace) {
     }
   }
   const unique = [...new Map(logs.map((log) => [log.id, log])).values()];
-  await mkdir20(historyDir(workspace.name), { recursive: true });
+  await mkdir19(historyDir(workspace.name), { recursive: true });
   await Promise.all(unique.map((log) => atomicWriteFile(join31(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
   return unique;
 }
@@ -34573,14 +34494,14 @@ async function handleSugoAwsContext(rawArgs) {
 }
 
 // src/tools/sugoUninstall.ts
-import { access as access4, mkdir as mkdir22, readFile as readFile30, rename as rename2, rm as rm6, rmdir, writeFile as writeFile4 } from "node:fs/promises";
+import { access as access4, mkdir as mkdir21, readFile as readFile29, rename as rename2, rm as rm6, rmdir, writeFile as writeFile3 } from "node:fs/promises";
 import { dirname as dirname11, join as join33, resolve as resolve13 } from "node:path";
 import { createHash as createHash7 } from "node:crypto";
 
 // src/lifecycle/dashboardRuntime.ts
 import { spawn } from "node:child_process";
 import { closeSync, existsSync as existsSync5, openSync } from "node:fs";
-import { mkdir as mkdir21, readFile as readFile29, rm as rm5, stat as stat3 } from "node:fs/promises";
+import { mkdir as mkdir20, readFile as readFile28, rm as rm5, stat as stat3 } from "node:fs/promises";
 import { join as join32 } from "node:path";
 var DEFAULT_DASHBOARD_PORT = 3001;
 function configuredDashboardPort() {
@@ -34609,7 +34530,7 @@ function isSupportedNode(version2 = process.versions.node) {
 }
 async function readServerState(paths) {
   try {
-    return JSON.parse(await readFile29(paths.stateFile, "utf8"));
+    return JSON.parse(await readFile28(paths.stateFile, "utf8"));
   } catch {
     return null;
   }
@@ -34632,7 +34553,7 @@ function isAlive(pid) {
     return false;
   }
 }
-var sleep = (ms) => new Promise((resolve15) => setTimeout(resolve15, ms));
+var sleep = (ms) => new Promise((resolve14) => setTimeout(resolve14, ms));
 async function waitUntil(done, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -34657,7 +34578,7 @@ async function stopDashboard(paths) {
 }
 async function readEnabled(settingsFile) {
   try {
-    const settings = JSON.parse(await readFile29(settingsFile, "utf8"));
+    const settings = JSON.parse(await readFile28(settingsFile, "utf8"));
     const enabled = settings.dashboard?.enabled;
     return typeof enabled === "boolean" ? enabled : void 0;
   } catch {
@@ -34665,10 +34586,10 @@ async function readEnabled(settingsFile) {
   }
 }
 async function acquireLock(paths) {
-  await mkdir21(paths.dataDir, { recursive: true });
+  await mkdir20(paths.dataDir, { recursive: true });
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await mkdir21(paths.lockDir);
+      await mkdir20(paths.lockDir);
       return true;
     } catch {
       const age = await stat3(paths.lockDir).then((s) => Date.now() - s.mtimeMs, () => 0);
@@ -34758,18 +34679,18 @@ function withoutManagedBlock(content, start2, end) {
   return before + after;
 }
 async function restoreRoot(path, original, start2, end) {
-  const current = await readFile30(path, "utf8").catch(() => null);
+  const current = await readFile29(path, "utf8").catch(() => null);
   if (current === null) return;
   const stripped = withoutManagedBlock(current, start2, end);
-  if (typeof original === "string" && stripped.startsWith(original) && stripped.slice(original.length).trim() === "") return writeFile4(path, original);
+  if (typeof original === "string" && stripped.startsWith(original) && stripped.slice(original.length).trim() === "") return writeFile3(path, original);
   if (original && typeof original === "object" && original.existed) {
     const bytes = Buffer.from(stripped);
     const prefix = bytes.subarray(0, original.byteLength).toString();
     const matches = createHash7("sha256").update(prefix).digest("hex") === original.sha256 && bytes.subarray(original.byteLength).toString().trim() === "";
-    return writeFile4(path, matches ? prefix : stripped);
+    return writeFile3(path, matches ? prefix : stripped);
   }
   if ((original === null || typeof original === "object" && !original.existed) && stripped.trim() === "") return rm6(path, { force: true });
-  await writeFile4(path, stripped);
+  await writeFile3(path, stripped);
 }
 async function pruneEmptyParents(path, stopAt) {
   let current = dirname11(path);
@@ -34832,12 +34753,12 @@ async function uninstallSugo(rawArgs, deps) {
     return result2({ ok: true, action: "discard", retainedDataRemoved: true });
   }
   if (args2.action === "restore") {
-    const archivedRegistry = await readFile30(join33(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
+    const archivedRegistry = await readFile29(join33(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
     if (!archivedRegistry) return error2("NO_RETAINED_DATA", "\uBCF5\uAD6C\uD560 \uBE44\uD65C\uC131 Sugo \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const paths2 = dashboardPaths();
     if (!(await stopDashboard(paths2)).stopped) return error2("DASHBOARD_STILL_RUNNING", DASHBOARD_RUNNING_MESSAGE);
     await rm6(activeRoot, { recursive: true, force: true });
-    await mkdir22(dirname11(activeRoot), { recursive: true });
+    await mkdir21(dirname11(activeRoot), { recursive: true });
     await rename2(archiveRoot, activeRoot);
     await rm6(paths2.stateFile, { force: true });
     await rm6(paths2.lockDir, { recursive: true, force: true });
@@ -34870,7 +34791,7 @@ async function uninstallSugo(rawArgs, deps) {
     if (paths2.length) preserved.push({ projectPath, paths: paths2 });
   }
   if (args2.mode === "retain") {
-    await mkdir22(productRoot, { recursive: true });
+    await mkdir21(productRoot, { recursive: true });
     await rm6(archiveRoot, { recursive: true, force: true });
     if (await access4(activeRoot).then(() => true, () => false)) await rename2(activeRoot, archiveRoot);
   } else {
@@ -34888,126 +34809,13 @@ function error2(errorCode, message) {
 }
 
 // src/lifecycle/recoveryInstaller.ts
-import { copyFile as copyFile2, mkdir as mkdir23 } from "node:fs/promises";
+import { copyFile, mkdir as mkdir22 } from "node:fs/promises";
 import { dirname as dirname12, join as join34 } from "node:path";
 async function ensureRecoveryUtility() {
   const source = join34(dirname12(process.argv[1] ?? ""), "..", "scripts", "sugo-uninstall-standalone.mjs");
   const target = join34(sugoHomeDir(), ".sugo", "bin", "sugo-uninstall.mjs");
-  await mkdir23(dirname12(target), { recursive: true });
-  await copyFile2(source, target);
-}
-
-// src/specStorageMigration.ts
-import { createHash as createHash8 } from "node:crypto";
-import { copyFile as copyFile3, mkdir as mkdir24, readFile as readFile31, readdir as readdir11, rename as rename3, writeFile as writeFile5 } from "node:fs/promises";
-import { basename as basename3, dirname as dirname13, join as join35, relative as relative11, resolve as resolve14, sep as sep5 } from "node:path";
-function legacySpecRoot() {
-  return join35(sugoHomeDir(), "dev", "spec");
-}
-function managedSpecRoot() {
-  return join35(sugoHomeDir(), ".claude", "sugo", "specs");
-}
-function markerPath() {
-  return join35(managedSpecRoot(), ".legacy-dev-spec-migrated.json");
-}
-async function exists(path) {
-  return readFile31(path).then(() => true, () => false);
-}
-async function hash(path) {
-  return createHash8("sha256").update(await readFile31(path)).digest("hex");
-}
-async function findLegacySpecs(root) {
-  const found = [];
-  async function walk(dir) {
-    const entries = await readdir11(dir, { withFileTypes: true }).catch(() => []);
-    for (const entry of entries) {
-      const full = join35(dir, entry.name);
-      if (entry.isDirectory()) await walk(full);
-      else if (entry.name === "spec.md") found.push(full);
-    }
-  }
-  await walk(root);
-  return found.sort();
-}
-function validLegacyRelative(path) {
-  const parts2 = path.split(sep5);
-  return parts2.length === 4 && /^\d{8}$/.test(parts2[0]) && parts2[1].length > 0 && /^v[1-9]\d*$/.test(parts2[2]) && parts2[3] === "spec.md";
-}
-async function nextTarget(source, sourceRoot, targetRoot) {
-  const rel = relative11(sourceRoot, source);
-  const parts2 = rel.split(sep5);
-  const preferred = join35(targetRoot, rel);
-  if (!await exists(preferred) || await hash(preferred) === await hash(source)) return preferred;
-  const featureDir = join35(targetRoot, parts2[0], parts2[1]);
-  let version2 = 1;
-  while (await exists(join35(featureDir, `v${version2}`, "spec.md"))) version2 += 1;
-  return join35(featureDir, `v${version2}`, "spec.md");
-}
-async function copyVersionDirectory(sourceSpec, targetSpec) {
-  await mkdir24(dirname13(targetSpec), { recursive: true });
-  const entries = await readdir11(dirname13(sourceSpec), { withFileTypes: true });
-  for (const entry of entries) {
-    if (!entry.isFile() || entry.name === ".DS_Store") continue;
-    const target = join35(dirname13(targetSpec), entry.name);
-    if (!await exists(target)) await copyFile3(join35(dirname13(sourceSpec), entry.name), target);
-  }
-}
-async function writeMarker(marker) {
-  const path = markerPath();
-  await mkdir24(dirname13(path), { recursive: true });
-  const temp = `${path}.tmp`;
-  await writeFile5(temp, JSON.stringify(marker, null, 2) + "\n", "utf8");
-  await rename3(temp, path);
-}
-async function migrateLegacySpecStorage() {
-  const existingMarker = await readFile31(markerPath(), "utf8").then((text) => JSON.parse(text), () => null);
-  if (existingMarker?.version === 1) {
-    return { migrated: 0, alreadyMigrated: true, mappings: existingMarker.mappings, failures: [] };
-  }
-  const sourceRoot = legacySpecRoot();
-  const sources = await findLegacySpecs(sourceRoot);
-  if (sources.length === 0) return { migrated: 0, alreadyMigrated: false, mappings: [], failures: [] };
-  const targetRoot = managedSpecRoot();
-  const mappings = [];
-  const failures = [];
-  for (const source of sources) {
-    const rel = relative11(sourceRoot, source);
-    if (!validLegacyRelative(rel)) continue;
-    try {
-      const target = await nextTarget(source, sourceRoot, targetRoot);
-      await copyVersionDirectory(source, target);
-      mappings.push({ from: resolve14(source), to: resolve14(target) });
-    } catch (error3) {
-      failures.push(`${source}: ${error3 instanceof Error ? error3.message : String(error3)}`);
-    }
-  }
-  if (failures.length === 0) await writeMarker({ version: 1, migratedAt: (/* @__PURE__ */ new Date()).toISOString(), mappings });
-  return { migrated: mappings.length, alreadyMigrated: false, mappings, failures };
-}
-async function rewriteLocalSpecReferences(mappings) {
-  if (mappings.length === 0) return 0;
-  const root = join35(sugoHomeDir(), ".claude", "sugo");
-  let changed = 0;
-  async function walk(dir) {
-    const entries = await readdir11(dir, { withFileTypes: true }).catch(() => []);
-    for (const entry of entries) {
-      const full = join35(dir, entry.name);
-      if (entry.isDirectory()) await walk(full);
-      else if (entry.isFile() && entry.name.endsWith(".json") && basename3(full) !== basename3(markerPath())) {
-        const original = await readFile31(full, "utf8");
-        let updated = original;
-        for (const mapping of mappings) updated = updated.split(mapping.from).join(mapping.to);
-        if (updated !== original) {
-          const temp = `${full}.sugo-spec-migration.tmp`;
-          await writeFile5(temp, updated, "utf8");
-          await rename3(temp, full);
-          changed += 1;
-        }
-      }
-    }
-  }
-  await walk(root);
-  return changed;
+  await mkdir22(dirname12(target), { recursive: true });
+  await copyFile(source, target);
 }
 
 // src/index.ts
@@ -35037,7 +34845,7 @@ server.registerTool(
   "sugo_analyze",
   {
     title: "Cross-validate PRD requirements against changed files",
-    description: "PRD\uC758 REQ-* \uD0A4\uC6CC\uB4DC\uC640 \uBCC0\uACBD\uD30C\uC77C \uBB38\uC790\uC5F4 \uACB9\uCE68\uC744 pass/partial/fail\uB85C \uBCF4\uC5EC\uC8FC\uB294 \uBE44\uCC28\uB2E8 \uC9C4\uB2E8\uC774\uB2E4. code_done \uAC8C\uC774\uD2B8\uB294 \uC774 \uB3C4\uAD6C\uC758 \uC2E4\uC81C \uD638\uCD9C \uC774\uB825(analyzeAttempts)\uB9CC \uD655\uC778\uD558\uBA70, \uD30C\uB77C\uBBF8\uD130\uB85C \uC804\uB2EC\uB41C analyzePassed \uAC19\uC740 \uC790\uAE30\uBCF4\uACE0\uB294 \uC2E0\uB8B0\uD558\uC9C0 \uC54A\uB294\uB2E4(\xA74.1).",
+    description: "PRD\uC758 REQ-* \uD0A4\uC6CC\uB4DC\uC640 \uBCC0\uACBD\uD30C\uC77C \uBB38\uC790\uC5F4 \uACB9\uCE68\uC744 pass/partial/fail\uB85C \uBCF4\uC5EC\uC8FC\uB294 \uBE44\uCC28\uB2E8 \uC9C4\uB2E8\uC774\uB2E4. code_done \uAC8C\uC774\uD2B8\uB294 \uC774 \uB3C4\uAD6C\uC758 \uC2E4\uC81C \uD638\uCD9C \uC774\uB825(analyzeAttempts)\uB9CC \uD655\uC778\uD558\uBA70, \uD30C\uB77C\uBBF8\uD130\uB85C \uC804\uB2EC\uB41C analyzePassed \uAC19\uC740 \uC790\uAE30\uBCF4\uACE0\uB294 \uC2E0\uB8B0\uD558\uC9C0 \uC54A\uB294\uB2E4.",
     inputSchema: sugoAnalyzeInputSchema
   },
   handleSugoAnalyze
@@ -35046,7 +34854,7 @@ server.registerTool(
   "sugo_record_test_evidence",
   {
     title: "Record test execution evidence (tamper-resistant)",
-    description: "\uD14C\uC2A4\uD2B8/\uBE4C\uB4DC \uC2E4\uD589 \uACB0\uACFC\uB97C \uC138\uC158\uC5D0 \uAE30\uB85D\uD55C\uB2E4. test_done/code_done(baseline) \uAC8C\uC774\uD2B8\uB294 \uC774 \uAE30\uB85D\uB9CC\uC744 \uC9C4\uC2E4\uB85C \uCDE8\uAE09\uD558\uBA70, \uB2E4\uB978 \uB3C4\uAD6C \uD638\uCD9C\uC758 testPassed \uC8FC\uC7A5\uC740 \uC774 \uAE30\uB85D\uACFC \uB300\uC870\uB420 \uBFD0\uC774\uB2E4(\xA74.2).",
+    description: "\uD14C\uC2A4\uD2B8/\uBE4C\uB4DC \uC2E4\uD589 \uACB0\uACFC\uB97C \uC138\uC158\uC5D0 \uAE30\uB85D\uD55C\uB2E4. test_done/code_done(baseline) \uAC8C\uC774\uD2B8\uB294 \uC774 \uAE30\uB85D\uB9CC\uC744 \uC9C4\uC2E4\uB85C \uCDE8\uAE09\uD558\uBA70, \uB2E4\uB978 \uB3C4\uAD6C \uD638\uCD9C\uC758 testPassed \uC8FC\uC7A5\uC740 \uC774 \uAE30\uB85D\uACFC \uB300\uC870\uB420 \uBFD0\uC774\uB2E4.",
     inputSchema: sugoRecordTestEvidenceInputSchema
   },
   handleSugoRecordTestEvidence
@@ -35055,7 +34863,7 @@ server.registerTool(
   "sugo_record_contract_evidence",
   {
     title: "Record contract test red\u2192green transition evidence",
-    description: "\uACC4\uC57D\uD14C\uC2A4\uD2B8\uC758 red(\uAD6C\uD604 \uC804 \uC2E4\uD328)/green(\uAD6C\uD604 \uD6C4 \uD1B5\uACFC) \uB2E8\uACC4\uB97C \uAC01\uAC01 \uAE30\uB85D\uD55C\uB2E4. review_done\uC758 contractEvidenceRequired \uAC8C\uC774\uD2B8\uB294 \uC774 red\u2192green \uC804\uC774\uB9CC \uC2E0\uB8B0\uD558\uBA70, green\uB9CC \uC788\uACE0 red\uAC00 \uC5C6\uC73C\uBA74(\uC790\uAE30\uBCF4\uACE0 \uC2B9\uACA9) \uAC70\uBD80\uD55C\uB2E4(\xA710).",
+    description: "\uACC4\uC57D\uD14C\uC2A4\uD2B8\uC758 red(\uAD6C\uD604 \uC804 \uC2E4\uD328)/green(\uAD6C\uD604 \uD6C4 \uD1B5\uACFC) \uB2E8\uACC4\uB97C \uAC01\uAC01 \uAE30\uB85D\uD55C\uB2E4. review_done\uC758 contractEvidenceRequired \uAC8C\uC774\uD2B8\uB294 \uC774 red\u2192green \uC804\uC774\uB9CC \uC2E0\uB8B0\uD558\uBA70, green\uB9CC \uC788\uACE0 red\uAC00 \uC5C6\uC73C\uBA74(\uC790\uAE30\uBCF4\uACE0 \uC2B9\uACA9) \uAC70\uBD80\uD55C\uB2E4.",
     inputSchema: sugoRecordContractEvidenceInputSchema
   },
   handleSugoRecordContractEvidence
@@ -35064,7 +34872,7 @@ server.registerTool(
   "sugo_check_lethal_trifecta",
   {
     title: "Check registered tools for the lethal trifecta risk pattern",
-    description: "(\uC0AC\uC124\uB370\uC774\uD130 \uC811\uADFC + \uC2E0\uB8B0\uD560 \uC218 \uC5C6\uB294 \uC785\uB825 \uCC98\uB9AC + \uC678\uBD80 \uD1B5\uC2E0)\uC774 \uD55C \uB3C4\uAD6C\uC5D0 \uB3D9\uC2DC\uC5D0 \uC788\uC73C\uBA74 \uACBD\uACE0\uD55C\uB2E4. capability\uB294 \uD638\uCD9C\uC790\uAC00 \uBA85\uC2DC\uC801\uC73C\uB85C \uC81C\uACF5\uD574\uC57C \uD55C\uB2E4(\uC790\uB3D9 \uCD94\uCE21 \uC548 \uD568)(\xA710). \xA7P6-1: review_done \uC804 \uCD5C\uC18C 1\uD68C \uD638\uCD9C\uC774 \uD558\uB4DC \uAC8C\uC774\uD2B8\uB2E4(LETHAL_TRIFECTA_NOT_CALLED) \u2014 \uACBD\uACE0\uAC00 \uC788\uC73C\uBA74 review_done\uC758 trifectaMitigation\uB3C4 \uD568\uAED8 \uD544\uC694\uD558\uB2E4.",
+    description: "(\uC0AC\uC124\uB370\uC774\uD130 \uC811\uADFC + \uC2E0\uB8B0\uD560 \uC218 \uC5C6\uB294 \uC785\uB825 \uCC98\uB9AC + \uC678\uBD80 \uD1B5\uC2E0)\uC774 \uD55C \uB3C4\uAD6C\uC5D0 \uB3D9\uC2DC\uC5D0 \uC788\uC73C\uBA74 \uACBD\uACE0\uD55C\uB2E4. capability\uB294 \uD638\uCD9C\uC790\uAC00 \uBA85\uC2DC\uC801\uC73C\uB85C \uC81C\uACF5\uD574\uC57C \uD55C\uB2E4(\uC790\uB3D9 \uCD94\uCE21 \uC548 \uD568). review_done \uC804 \uCD5C\uC18C 1\uD68C \uD638\uCD9C\uC774 \uD558\uB4DC \uAC8C\uC774\uD2B8\uB2E4(LETHAL_TRIFECTA_NOT_CALLED) \u2014 \uACBD\uACE0\uAC00 \uC788\uC73C\uBA74 review_done\uC758 trifectaMitigation\uB3C4 \uD568\uAED8 \uD544\uC694\uD558\uB2E4.",
     inputSchema: sugoCheckLethalTrifectaInputSchema
   },
   handleSugoCheckLethalTrifecta
@@ -35073,7 +34881,7 @@ server.registerTool(
   "sugo_chain",
   {
     title: "Generate agent chain handoff (code\u2192test / test\u2192review)",
-    description: "\uC138\uC158\uC758 \uD604\uC7AC \uC0C1\uD0DC(CODE_DONE/TEST_DONE)\uB85C \uBC29\uD5A5\uC744 \uD310\uB2E8\uD574 \uB2E4\uC74C \uC5D0\uC774\uC804\uD2B8\uC5D0\uAC8C \uB118\uAE38 \uD578\uB4DC\uC624\uD504 \uAC1D\uCCB4\uC640 \uD504\uB86C\uD504\uD2B8\uB97C \uC0DD\uC131\uD55C\uB2E4. code\u2192test\uB294 PRD\uB97C oracle\uB85C \uC0BC\uC73C\uB77C \uC9C0\uC2DC\uD558\uACE0, test\u2192review\uB294 \uC77D\uAE30\uC804\uC6A9 \uC6D0\uCE59\uC744 \uBA85\uC2DC\uD55C\uB2E4(\xA75).",
+    description: "\uC138\uC158\uC758 \uD604\uC7AC \uC0C1\uD0DC(CODE_DONE/TEST_DONE)\uB85C \uBC29\uD5A5\uC744 \uD310\uB2E8\uD574 \uB2E4\uC74C \uC5D0\uC774\uC804\uD2B8\uC5D0\uAC8C \uB118\uAE38 \uD578\uB4DC\uC624\uD504 \uAC1D\uCCB4\uC640 \uD504\uB86C\uD504\uD2B8\uB97C \uC0DD\uC131\uD55C\uB2E4. code\u2192test\uB294 PRD\uB97C oracle\uB85C \uC0BC\uC73C\uB77C \uC9C0\uC2DC\uD558\uACE0, test\u2192review\uB294 \uC77D\uAE30\uC804\uC6A9 \uC6D0\uCE59\uC744 \uBA85\uC2DC\uD55C\uB2E4.",
     inputSchema: sugoChainInputSchema
   },
   handleSugoChain
@@ -35082,7 +34890,7 @@ server.registerTool(
   "sugo_get_project_context",
   {
     title: "Load project context for sub-agents",
-    description: "sugo/CLAUDE.md(\uD569\uC131 \uC778\uB371\uC2A4), \uC801\uC6A9\uB41C \uAC1C\uBCC4 \uD558\uB124\uC2A4 \uBCF8\uBB38, .claude/rules/\uC758 \uD300 \uC804\uC6A9 \uADDC\uCE59(\uD558\uB124\uC2A4\uAC00 \uC4F4 \uD30C\uC77C \uC81C\uC678 \u2014 \uADF8\uAC74 Claude Code\uAC00 \uC790\uB3D9\uB85C\uB4DC\uD558\uBBC0\uB85C harnesses\uC5D0\uB9CC \uC2E3\uB294\uB2E4)\uC744 \uC77D\uC5B4 \uC11C\uBE0C\uC5D0\uC774\uC804\uD2B8\uAC00 \uC791\uC5C5 \uC804 \uB85C\uB4DC\uD574\uC57C \uD558\uB294 \uCEE8\uD14D\uC2A4\uD2B8\uB97C \uBAA8\uC544\uC900\uB2E4(\xA75). changedFiles\uB97C \uC8FC\uBA74 \uAD00\uB828 \uD558\uB124\uC2A4\uB9CC \uC120\uBCC4\uD55C\uB2E4.",
+    description: "sugo/CLAUDE.md(\uD569\uC131 \uC778\uB371\uC2A4), \uC801\uC6A9\uB41C \uAC1C\uBCC4 \uD558\uB124\uC2A4 \uBCF8\uBB38, .claude/rules/\uC758 \uD300 \uC804\uC6A9 \uADDC\uCE59(\uD558\uB124\uC2A4\uAC00 \uC4F4 \uD30C\uC77C \uC81C\uC678 \u2014 \uADF8\uAC74 Claude Code\uAC00 \uC790\uB3D9\uB85C\uB4DC\uD558\uBBC0\uB85C harnesses\uC5D0\uB9CC \uC2E3\uB294\uB2E4)\uC744 \uC77D\uC5B4 \uC11C\uBE0C\uC5D0\uC774\uC804\uD2B8\uAC00 \uC791\uC5C5 \uC804 \uB85C\uB4DC\uD574\uC57C \uD558\uB294 \uCEE8\uD14D\uC2A4\uD2B8\uB97C \uBAA8\uC544\uC900\uB2E4. changedFiles\uB97C \uC8FC\uBA74 \uAD00\uB828 \uD558\uB124\uC2A4\uB9CC \uC120\uBCC4\uD55C\uB2E4.",
     inputSchema: sugoGetProjectContextInputSchema
   },
   handleSugoGetProjectContext
@@ -35091,7 +34899,7 @@ server.registerTool(
   "sugo_validate",
   {
     title: "Cross-check submitted validation results against harness rules",
-    description: "review-agent\uAC00 \uC81C\uCD9C\uD55C \uAC80\uC99D \uACB0\uACFC\uB97C \uD504\uB85C\uC81D\uD2B8\uC5D0 \uC2E4\uC81C \uC815\uC758\uB41C validation.yaml\uACFC \uB300\uC870\uD55C\uB2E4. \uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 checkId\uB97C \uBCF4\uACE0\uD558\uBA74 fabricated\uB85C \uBD84\uB9AC\uD574 \uD310\uC815\uC5D0\uC11C \uBC30\uC81C\uD55C\uB2E4(\xA75).",
+    description: "review-agent\uAC00 \uC81C\uCD9C\uD55C \uAC80\uC99D \uACB0\uACFC\uB97C \uD504\uB85C\uC81D\uD2B8\uC5D0 \uC2E4\uC81C \uC815\uC758\uB41C validation.yaml\uACFC \uB300\uC870\uD55C\uB2E4. \uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 checkId\uB97C \uBCF4\uACE0\uD558\uBA74 fabricated\uB85C \uBD84\uB9AC\uD574 \uD310\uC815\uC5D0\uC11C \uBC30\uC81C\uD55C\uB2E4.",
     inputSchema: sugoValidateInputSchema
   },
   handleSugoValidate
@@ -35108,8 +34916,8 @@ server.registerTool(
 server.registerTool(
   "sugo_workspace",
   {
-    title: "HULK workspace CRUD + free-form memory",
-    description: "\uAD00\uB828 \uD504\uB85C\uC81D\uD2B8\uB97C \uBB36\uB294 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/list/get). remember/recall\uB85C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uBCC4 \uC790\uC720 \uBA54\uBAA8(memory.md)\uB3C4 \uB204\uC801\uD560 \uC218 \uC788\uB2E4(\xA78).",
+    title: "Workspace CRUD + free-form memory",
+    description: "\uAD00\uB828 \uD504\uB85C\uC81D\uD2B8\uB97C \uBB36\uB294 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/list/get). remember/recall\uB85C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uBCC4 \uC790\uC720 \uBA54\uBAA8(memory.md)\uB3C4 \uB204\uC801\uD560 \uC218 \uC788\uB2E4.",
     inputSchema: sugoWorkspaceInputSchema
   },
   handleSugoWorkspace
@@ -35117,8 +34925,8 @@ server.registerTool(
 server.registerTool(
   "sugo_task",
   {
-    title: "HULK task CRUD",
-    description: "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uB2E8\uC704 \uC791\uC5C5 \uD0DC\uC2A4\uD06C\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/list/update/get). sugo_plan(prd)\uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uC5D0 \uB300\uD574 \uC790\uB3D9\uC73C\uB85C in_progress \uD0DC\uC2A4\uD06C\uB97C \uC0DD\uC131\uD55C\uB2E4(\xA78).",
+    title: "Task CRUD",
+    description: "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uB2E8\uC704 \uC791\uC5C5 \uD0DC\uC2A4\uD06C\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/list/update/get). sugo_plan(prd)\uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uC5D0 \uB300\uD574 \uC790\uB3D9\uC73C\uB85C in_progress \uD0DC\uC2A4\uD06C\uB97C \uC0DD\uC131\uD55C\uB2E4.",
     inputSchema: sugoTaskInputSchema
   },
   handleSugoTask
@@ -35126,8 +34934,8 @@ server.registerTool(
 server.registerTool(
   "sugo_checkpoint",
   {
-    title: "HULK checkpoint CRUD (pre-commit reminders)",
-    description: "\uCEE4\uBC0B \uC804 \uC7AC\uBC1C\uBC29\uC9C0 \uCCB4\uD06C\uB9AC\uC2A4\uD2B8\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/get/list/remove/memory/read_memory/migrate/sync). applies_to\uAC00 \uBE44\uC5B4\uC788\uC73C\uBA74 \uBCF4\uD3B8 \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB85C \uD56D\uC0C1 \uC801\uC6A9\uB418\uACE0, \uC544\uB2C8\uBA74 \uD504\uB85C\uC81D\uD2B8\uBA85/harnessId\uC640 \uB9E4\uCE6D\uB420 \uB54C\uB9CC \uC801\uC6A9\uB41C\uB2E4. sync\uB294 \uB300\uC2DC\uBCF4\uB4DC\uB85C push\uB9CC \uD55C\uB2E4(pull\uC740 \uBBF8\uAD6C\uD604, \xA77.2/\xA78).",
+    title: "Checkpoint CRUD (pre-commit reminders)",
+    description: "\uCEE4\uBC0B \uC804 \uC7AC\uBC1C\uBC29\uC9C0 \uCCB4\uD06C\uB9AC\uC2A4\uD2B8\uB97C \uAD00\uB9AC\uD55C\uB2E4(add/get/list/remove/memory/read_memory/migrate/sync). applies_to\uAC00 \uBE44\uC5B4\uC788\uC73C\uBA74 \uBCF4\uD3B8 \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB85C \uD56D\uC0C1 \uC801\uC6A9\uB418\uACE0, \uC544\uB2C8\uBA74 \uD504\uB85C\uC81D\uD2B8\uBA85/harnessId\uC640 \uB9E4\uCE6D\uB420 \uB54C\uB9CC \uC801\uC6A9\uB41C\uB2E4. sync\uB294 \uB300\uC2DC\uBCF4\uB4DC\uB85C push\uB9CC \uD55C\uB2E4(pull\uC740 \uBBF8\uAD6C\uD604).",
     inputSchema: sugoCheckpointInputSchema
   },
   handleSugoCheckpoint
@@ -35135,8 +34943,8 @@ server.registerTool(
 server.registerTool(
   "sugo_spec",
   {
-    title: "HULK long-lived spec knowledge CRUD",
-    description: "\uC544\uD0A4\uD14D\uCC98/API\uC124\uACC4/\uBE44\uC988\uB2C8\uC2A4\uB8F0 \uB4F1 \uC7A5\uAE30 \uC9C0\uC2DD\uC744 \uAD00\uB9AC\uD55C\uB2E4(add/list/get)(\xA78).",
+    title: "Long-lived spec knowledge CRUD",
+    description: "\uC544\uD0A4\uD14D\uCC98/API\uC124\uACC4/\uBE44\uC988\uB2C8\uC2A4\uB8F0 \uB4F1 \uC7A5\uAE30 \uC9C0\uC2DD\uC744 \uAD00\uB9AC\uD55C\uB2E4(add/list/get).",
     inputSchema: sugoSpecInputSchema
   },
   handleSugoSpec
@@ -35153,8 +34961,8 @@ server.registerTool(
 server.registerTool(
   "sugo_history",
   {
-    title: "HULK work log CRUD",
-    description: "\uC644\uB8CC \uC791\uC5C5 \uC774\uB825(WorkLog)\uC744 \uAD00\uB9AC\uD55C\uB2E4(add/list/get). sugo_plan(commit)\uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uC5D0 \uB300\uD574 \uC790\uB3D9\uC73C\uB85C \uAE30\uB85D\uD558\uC9C0\uB9CC, \uD30C\uC774\uD504\uB77C\uC778 \uBC16 \uC791\uC5C5\uB3C4 \uC218\uB3D9\uC73C\uB85C \uB0A8\uAE38 \uC218 \uC788\uB2E4(\xA78).",
+    title: "Work log CRUD",
+    description: "\uC644\uB8CC \uC791\uC5C5 \uC774\uB825(WorkLog)\uC744 \uAD00\uB9AC\uD55C\uB2E4(add/list/get). sugo_plan(commit)\uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uC5D0 \uB300\uD574 \uC790\uB3D9\uC73C\uB85C \uAE30\uB85D\uD558\uC9C0\uB9CC, \uD30C\uC774\uD504\uB77C\uC778 \uBC16 \uC791\uC5C5\uB3C4 \uC218\uB3D9\uC73C\uB85C \uB0A8\uAE38 \uC218 \uC788\uB2E4.",
     inputSchema: sugoHistoryInputSchema
   },
   handleSugoHistory
@@ -35162,8 +34970,8 @@ server.registerTool(
 server.registerTool(
   "sugo_roadmap",
   {
-    title: "Roadmap DAG (\xA78.5) \u2014 dependsOn-ordered task/requirement graph",
-    description: "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uBCC4 \uB85C\uB4DC\uB9F5 DAG\uC640 \uC0AC\uB78C \uACB0\uC815 \uCC28\uB2E8\uC744 \uAD00\uB9AC\uD55C\uB2E4(add/remove/status/link/unlink/group/backfill/list/ready/get/mark_req/pull_ordering/block_for_human/request_review_confirmation/resume_with_decision). review \uD655\uC778 \uC694\uCCAD\uC740 \uC791\uC5C5 \uACB0\uACFC\uB97C Dashboard \uCE74\uB4DC\uB85C \uAD6C\uC870\uD654\uD55C\uB2E4. \uC0AC\uB78C \uCC28\uB2E8\uC740 \uAD6C\uC870\uD654\uB41C \uC0C1\uD669\xB7\uC9C8\uBB38\xB7\uC120\uD0DD\uC9C0\xB7\uC601\uD5A5\uC744 \uAE30\uB85D\uD558\uACE0, Dashboard \uACB0\uC815\uC744 \uAC19\uC740 sessionId\uC5D0\uC11C \uAC80\uC99D\uD574\uC57C\uB9CC \uC7AC\uAC1C\uD55C\uB2E4. link/unlink\uB294 task \uB808\uBCA8 \uB178\uB4DC\uB07C\uB9AC\uB9CC \uD5C8\uC6A9\uB418\uACE0(fail-closed), \uC0AC\uC774\uD074\uC744 \uB9CC\uB4DC\uB294 \uBCC0\uACBD\uC740 \uC804\uBD80 \uAC70\uBD80\uB41C\uB2E4. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)\uC740 \uC774 \uB3C4\uAD6C\uC758 mark_req\uB85C \uC9C1\uC811 \uC644\uB8CC\uD560 \uC218 \uC5C6\uB2E4 \u2014 sugo_plan(review_done)\uC774 \uC131\uACF5\uD560 \uB54C\uB9CC \uC790\uB3D9 \uC644\uB8CC\uB41C\uB2E4. pull_ordering\uC740 \uB300\uC2DC\uBCF4\uB4DC\uC5D0\uC11C dependsOn/manual_status/pos_x/pos_y(\uB300\uC2DC\uBCF4\uB4DC\uAC00 SOT\uC778 \uD544\uB4DC\uB9CC)\uB97C \uAC00\uC838\uC640 \uBCD1\uD569\uD55C\uB2E4(\xA78.5/\xA77.2).",
+    title: "Roadmap DAG \u2014 dependsOn-ordered task/requirement graph",
+    description: "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uBCC4 \uB85C\uB4DC\uB9F5 DAG\uC640 \uC0AC\uB78C \uACB0\uC815 \uCC28\uB2E8\uC744 \uAD00\uB9AC\uD55C\uB2E4(add/remove/status/link/unlink/group/backfill/list/ready/get/mark_req/pull_ordering/block_for_human/request_review_confirmation/resume_with_decision). review \uD655\uC778 \uC694\uCCAD\uC740 \uC791\uC5C5 \uACB0\uACFC\uB97C Dashboard \uCE74\uB4DC\uB85C \uAD6C\uC870\uD654\uD55C\uB2E4. \uC0AC\uB78C \uCC28\uB2E8\uC740 \uAD6C\uC870\uD654\uB41C \uC0C1\uD669\xB7\uC9C8\uBB38\xB7\uC120\uD0DD\uC9C0\xB7\uC601\uD5A5\uC744 \uAE30\uB85D\uD558\uACE0, Dashboard \uACB0\uC815\uC744 \uAC19\uC740 sessionId\uC5D0\uC11C \uAC80\uC99D\uD574\uC57C\uB9CC \uC7AC\uAC1C\uD55C\uB2E4. link/unlink\uB294 task \uB808\uBCA8 \uB178\uB4DC\uB07C\uB9AC\uB9CC \uD5C8\uC6A9\uB418\uACE0(fail-closed), \uC0AC\uC774\uD074\uC744 \uB9CC\uB4DC\uB294 \uBCC0\uACBD\uC740 \uC804\uBD80 \uAC70\uBD80\uB41C\uB2E4. REQ-CONFIRM(`{taskId}::REQ-CONFIRM`)\uC740 \uC774 \uB3C4\uAD6C\uC758 mark_req\uB85C \uC9C1\uC811 \uC644\uB8CC\uD560 \uC218 \uC5C6\uB2E4 \u2014 sugo_plan(review_done)\uC774 \uC131\uACF5\uD560 \uB54C\uB9CC \uC790\uB3D9 \uC644\uB8CC\uB41C\uB2E4. pull_ordering\uC740 \uB300\uC2DC\uBCF4\uB4DC\uC5D0\uC11C dependsOn/manual_status/pos_x/pos_y(\uB300\uC2DC\uBCF4\uB4DC\uAC00 SOT\uC778 \uD544\uB4DC\uB9CC)\uB97C \uAC00\uC838\uC640 \uBCD1\uD569\uD55C\uB2E4.",
     inputSchema: sugoRoadmapInputSchema
   },
   handleSugoRoadmap
@@ -35172,7 +34980,7 @@ server.registerTool(
   "sugo_explore",
   {
     title: "AST-based codebase exploration (not regex)",
-    description: "web-tree-sitter\uB85C \uC2E4\uC81C \uD30C\uC2F1\uD574 \uD074\uB798\uC2A4\xB7\uC778\uD130\uD398\uC774\uC2A4\xB7\uBA54\uC11C\uB4DC\xB7\uD568\uC218\xB7import\uB97C \uCD94\uCD9C\uD55C\uB2E4 (TypeScript/TSX/JavaScript/Python/Java \uC9C0\uC6D0). code-agent\uAC00 \uCF54\uB529 \uC804 \uAD6C\uC870\uB97C \uC774\uD574\uD558\uB294 \uC6A9\uB3C4(\xA7D.7).",
+    description: "web-tree-sitter\uB85C \uC2E4\uC81C \uD30C\uC2F1\uD574 \uD074\uB798\uC2A4\xB7\uC778\uD130\uD398\uC774\uC2A4\xB7\uBA54\uC11C\uB4DC\xB7\uD568\uC218\xB7import\uB97C \uCD94\uCD9C\uD55C\uB2E4 (TypeScript/TSX/JavaScript/Python/Java \uC9C0\uC6D0). code-agent\uAC00 \uCF54\uB529 \uC804 \uAD6C\uC870\uB97C \uC774\uD574\uD558\uB294 \uC6A9\uB3C4.",
     inputSchema: sugoExploreInputSchema
   },
   handleSugoExplore
@@ -35181,7 +34989,7 @@ server.registerTool(
   "sugo_update",
   {
     title: "Re-sync harness for an already-registered project",
-    description: "\uC774\uBBF8 sugo_add\uB85C \uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uC758 \uC2A4\uD0DD\uAC10\uC9C0\xB7\uD558\uB124\uC2A4\uB97C \uB2E4\uC2DC \uB3C8\uB2E4(sugo_add\uC640 \uB3D9\uC791 \uACF5\uC720). \uB4F1\uB85D\uB3FC \uC788\uC9C0 \uC54A\uC73C\uBA74 \uAC70\uBD80\uD55C\uB2E4 \u2014 \uC2E0\uADDC \uB4F1\uB85D\uC740 sugo_add\uC758 \uCC45\uC784(\xA79).",
+    description: "\uC774\uBBF8 sugo_add\uB85C \uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uC758 \uC2A4\uD0DD\uAC10\uC9C0\xB7\uD558\uB124\uC2A4\uB97C \uB2E4\uC2DC \uB3C8\uB2E4(sugo_add\uC640 \uB3D9\uC791 \uACF5\uC720). \uB4F1\uB85D\uB3FC \uC788\uC9C0 \uC54A\uC73C\uBA74 \uAC70\uBD80\uD55C\uB2E4 \u2014 \uC2E0\uADDC \uB4F1\uB85D\uC740 sugo_add\uC758 \uCC45\uC784.",
     inputSchema: sugoUpdateInputSchema
   },
   handleSugoUpdate
@@ -35190,7 +34998,7 @@ server.registerTool(
   "sugo_disable",
   {
     title: "Mark a registered project as disabled",
-    description: "\uD504\uB85C\uC81D\uD2B8\uB97C \uBE44\uD65C\uC131 \uD45C\uC2DC\uD55C\uB2E4(sugo/config.json.disabled=true). sugo_status\uC5D0 \uB178\uCD9C\uB41C\uB2E4(\xA79).",
+    description: "\uD504\uB85C\uC81D\uD2B8\uB97C \uBE44\uD65C\uC131 \uD45C\uC2DC\uD55C\uB2E4(sugo/config.json.disabled=true). sugo_status\uC5D0 \uB178\uCD9C\uB41C\uB2E4.",
     inputSchema: sugoDisableInputSchema
   },
   handleSugoDisable
@@ -35199,7 +35007,7 @@ server.registerTool(
   "sugo_enable",
   {
     title: "Re-enable a disabled project",
-    description: "sugo_disable\uB85C \uBE44\uD65C\uC131\uD654\uB41C \uD504\uB85C\uC81D\uD2B8\uB97C \uB2E4\uC2DC \uD65C\uC131\uD654\uD55C\uB2E4(\xA79).",
+    description: "sugo_disable\uB85C \uBE44\uD65C\uC131\uD654\uB41C \uD504\uB85C\uC81D\uD2B8\uB97C \uB2E4\uC2DC \uD65C\uC131\uD654\uD55C\uB2E4.",
     inputSchema: sugoEnableInputSchema
   },
   handleSugoEnable
@@ -35208,7 +35016,7 @@ server.registerTool(
   "sugo_reset",
   {
     title: "Reset applied harness state for a project",
-    description: "\uC801\uC6A9\uB41C \uD558\uB124\uC2A4 \uC0B0\uCD9C\uBB3C(sugo/harness/**, CLAUDE.md \uB0B4\uC6A9)\uB9CC \uC9C0\uC6B4\uB2E4 \u2014 \uB808\uC9C0\uC2A4\uD2B8\uB9AC \uB4F1\uB85D\xB7\uAC10\uC9C0\uB41C \uC2A4\uD0DD \uC815\uBCF4\uB294 \uC720\uC9C0\uD55C\uB2E4. \uAE30\uC874 CLAUDE.md\uB294 sugo/backup/\uC73C\uB85C \uBC31\uC5C5\uD55C\uB2E4(\xA79).",
+    description: "\uC801\uC6A9\uB41C \uD558\uB124\uC2A4 \uC0B0\uCD9C\uBB3C(sugo/harness/**, CLAUDE.md \uB0B4\uC6A9)\uB9CC \uC9C0\uC6B4\uB2E4 \u2014 \uB808\uC9C0\uC2A4\uD2B8\uB9AC \uB4F1\uB85D\xB7\uAC10\uC9C0\uB41C \uC2A4\uD0DD \uC815\uBCF4\uB294 \uC720\uC9C0\uD55C\uB2E4. \uAE30\uC874 CLAUDE.md\uB294 sugo/backup/\uC73C\uB85C \uBC31\uC5C5\uD55C\uB2E4.",
     inputSchema: sugoResetInputSchema
   },
   handleSugoReset
@@ -35217,7 +35025,7 @@ server.registerTool(
   "sugo_delete",
   {
     title: "Unregister a project from the global registry",
-    description: "\uB808\uC9C0\uC2A4\uD2B8\uB9AC(\uB4F1\uB85D \uBAA9\uB85D)\uC5D0\uC11C\uB9CC \uC81C\uAC70\uD55C\uB2E4 \u2014 \uD504\uB85C\uC81D\uD2B8\uC758 \uC2E4\uC81C \uD30C\uC77C(sugo/**)\uC740 \uC9C0\uC6B0\uC9C0 \uC54A\uB294\uB2E4(\xA79).",
+    description: "\uB808\uC9C0\uC2A4\uD2B8\uB9AC(\uB4F1\uB85D \uBAA9\uB85D)\uC5D0\uC11C\uB9CC \uC81C\uAC70\uD55C\uB2E4 \u2014 \uD504\uB85C\uC81D\uD2B8\uC758 \uC2E4\uC81C \uD30C\uC77C(sugo/**)\uC740 \uC9C0\uC6B0\uC9C0 \uC54A\uB294\uB2E4.",
     inputSchema: sugoDeleteInputSchema
   },
   handleSugoDelete
@@ -35235,7 +35043,7 @@ server.registerTool(
   "sugo_status",
   {
     title: "Local dashboard of all registered projects (readOnly)",
-    description: "\uB4F1\uB85D\uB41C \uBAA8\uB4E0 \uD504\uB85C\uC81D\uD2B8\uC758 \uC0C1\uD0DC(\uD65C\uC131\uD654 \uC5EC\uBD80, \uC801\uC6A9 \uD558\uB124\uC2A4 \uC218, \uAC10\uC9C0\uB41C \uC2A4\uD0DD \uB4F1)\uB97C \uBAA8\uC544 \uBCF4\uC5EC\uC900\uB2E4(\xA79).",
+    description: "\uB4F1\uB85D\uB41C \uBAA8\uB4E0 \uD504\uB85C\uC81D\uD2B8\uC758 \uC0C1\uD0DC(\uD65C\uC131\uD654 \uC5EC\uBD80, \uC801\uC6A9 \uD558\uB124\uC2A4 \uC218, \uAC10\uC9C0\uB41C \uC2A4\uD0DD \uB4F1)\uB97C \uBAA8\uC544 \uBCF4\uC5EC\uC900\uB2E4.",
     inputSchema: sugoStatusInputSchema
   },
   handleSugoStatus
@@ -35244,7 +35052,7 @@ server.registerTool(
   "sugo_overview",
   {
     title: "Whole-project AST-based structural onboarding",
-    description: "sugo_explore(\uD30C\uC77C \uBAA9\uB85D\uC744 \uC9C1\uC811 \uC9C0\uC815)\uC640 \uB2EC\uB9AC \uD504\uB85C\uC81D\uD2B8 \uC804\uCCB4\uB97C \uC2A4\uC2A4\uB85C \uAC78\uC5B4(\uCD5C\uB300 200\uAC1C \uD30C\uC77C) tree-sitter\uB85C \uD30C\uC2F1\uD55C \uAD6C\uC870 \uC694\uC57D JSON\uC744 \uB9CC\uB4E0\uB2E4(\xA79/\xA7D.7).",
+    description: "sugo_explore(\uD30C\uC77C \uBAA9\uB85D\uC744 \uC9C1\uC811 \uC9C0\uC815)\uC640 \uB2EC\uB9AC \uD504\uB85C\uC81D\uD2B8 \uC804\uCCB4\uB97C \uC2A4\uC2A4\uB85C \uAC78\uC5B4(\uCD5C\uB300 200\uAC1C \uD30C\uC77C) tree-sitter\uB85C \uD30C\uC2F1\uD55C \uAD6C\uC870 \uC694\uC57D JSON\uC744 \uB9CC\uB4E0\uB2E4.",
     inputSchema: sugoOverviewInputSchema
   },
   handleSugoOverview
@@ -35253,7 +35061,7 @@ server.registerTool(
   "sugo_route",
   {
     title: "Route a natural-language request to (agent, skill)",
-    description: '\uD30C\uC774\uD504\uB77C\uC778 \uBC16 \uB2E8\uBC1C \uC694\uCCAD("\uC774\uAC70 \uBC84\uADF8 \uACE0\uCCD0\uC918", "\uB9AC\uBDF0\uD574\uC918")\uC758 \uC790\uC5F0\uC5B4 \uC758\uB3C4\uB97C (agent, skill)\uB85C \uB9E4\uD551\uD55C\uB2E4(\xA75b). \uC774\uBC88 \uBE4C\uB4DC \uCD5C\uC18C\uC14B: code(implement/bugfix/refactor)\xB7test(targeted/full)\xB7review(validate/security)\xB7docs(readme).',
+    description: '\uD30C\uC774\uD504\uB77C\uC778 \uBC16 \uB2E8\uBC1C \uC694\uCCAD("\uC774\uAC70 \uBC84\uADF8 \uACE0\uCCD0\uC918", "\uB9AC\uBDF0\uD574\uC918")\uC758 \uC790\uC5F0\uC5B4 \uC758\uB3C4\uB97C (agent, skill)\uB85C \uB9E4\uD551\uD55C\uB2E4. \uC9C0\uC6D0 \uBC94\uC704: code(implement/bugfix/refactor)\xB7test(targeted/full)\xB7review(validate/security)\xB7docs(readme).',
     inputSchema: sugoRouteInputSchema
   },
   handleSugoRoute
@@ -35262,7 +35070,7 @@ server.registerTool(
   "sugo_version",
   {
     title: "Plugin version (readOnly)",
-    description: "\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804\uC744 \uBC18\uD658\uD55C\uB2E4. \uC6D0\uACA9 \uB9C8\uCF13\uD50C\uB808\uC774\uC2A4\uAC00 \uAD6C\uC131\uB3FC \uC788\uC9C0 \uC54A\uC544 \uC5C5\uB370\uC774\uD2B8 \uD655\uC778\uC740 \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294\uB2E4(\xA71/\xA7D.1).",
+    description: "\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804\uC744 \uBC18\uD658\uD55C\uB2E4. \uC6D0\uACA9 \uB9C8\uCF13\uD50C\uB808\uC774\uC2A4\uAC00 \uAD6C\uC131\uB3FC \uC788\uC9C0 \uC54A\uC544 \uC5C5\uB370\uC774\uD2B8 \uD655\uC778\uC740 \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294\uB2E4.",
     inputSchema: sugoVersionInputSchema
   },
   handleSugoVersion
@@ -35271,7 +35079,7 @@ server.registerTool(
   "sugo_ontology",
   {
     title: "Operational ontology (readOnly)",
-    description: "\xA72 \uC624\uD37C\uB808\uC774\uC154\uB110 \uC628\uD1A8\uB85C\uC9C0 \uC870\uD68C \u2014 \uC0C1\uD0DC\xB7\uC561\uC158\xB7\uC804\uC81C\xB7\uC18C\uC720\uAD8C\xB7\uBD88\uBCC0\uC2DD\xB7\uACBD\uACC4\uC758 \uC815\uBCF8. view\uB85C \uC139\uC158\uC744 \uC881\uD788\uAC70\uB098 boundary(handoff|sync|lifecycle|workflow)\uB85C \uADF8 \uC774\uC74C\uC0C8\uC758 \uACC4\uC57D\uACFC \uBD88\uBCC0\uC2DD\uC744 \uD568\uAED8 \uBCF8\uB2E4.",
+    description: "\uC624\uD37C\uB808\uC774\uC154\uB110 \uC628\uD1A8\uB85C\uC9C0 \uC870\uD68C \u2014 \uC0C1\uD0DC\xB7\uC561\uC158\xB7\uC804\uC81C\xB7\uC18C\uC720\uAD8C\xB7\uBD88\uBCC0\uC2DD\xB7\uACBD\uACC4\uC758 \uC815\uBCF8. view\uB85C \uC139\uC158\uC744 \uC881\uD788\uAC70\uB098 boundary(handoff|sync|lifecycle|workflow)\uB85C \uADF8 \uC774\uC74C\uC0C8\uC758 \uACC4\uC57D\uACFC \uBD88\uBCC0\uC2DD\uC744 \uD568\uAED8 \uBCF8\uB2E4.",
     inputSchema: sugoOntologyInputSchema
   },
   handleSugoOntology
@@ -35280,7 +35088,7 @@ server.registerTool(
   "sugo_setup",
   {
     title: "Integration setup (Bitbucket/Jira)",
-    description: "\xA71 \uC5F0\uB3D9 \uC124\uC815. Sugo\uB294 \uAC12\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uACE0 \uC5B4\uB514\uC11C \uC124\uC815\uD574\uC57C \uD558\uB294\uC9C0\uB9CC \uC54C\uB9B0\uB2E4(\uD1A0\uD070\uC740 \uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC554\uD638\uD654 \uBCF4\uAD00).",
+    description: "\uC5F0\uB3D9 \uC124\uC815. Sugo\uB294 \uAC12\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uACE0 \uC5B4\uB514\uC11C \uC124\uC815\uD574\uC57C \uD558\uB294\uC9C0\uB9CC \uC54C\uB9B0\uB2E4(\uD1A0\uD070\uC740 \uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC554\uD638\uD654 \uBCF4\uAD00).",
     inputSchema: sugoSetupInputSchema
   },
   handleSugoSetup
@@ -35289,7 +35097,7 @@ server.registerTool(
   "sugo_commit",
   {
     title: "Conventional Commit message (generate only)",
-    description: "\xA77 Conventional Commit \uBA54\uC2DC\uC9C0\uB97C \uC0DD\uC131\uD55C\uB2E4. DONE \uC0C1\uD0DC\uC5D0\uC11C\uB9CC \uB3D9\uC791\uD558\uBA70 \uC800\uC7A5\uC18C\uB97C \uBC14\uAFB8\uC9C0\uB294 \uC54A\uB294\uB2E4(\uC0DD\uC131\uB9CC).",
+    description: "Conventional Commit \uBA54\uC2DC\uC9C0\uB97C \uC0DD\uC131\uD55C\uB2E4. DONE \uC0C1\uD0DC\uC5D0\uC11C\uB9CC \uB3D9\uC791\uD558\uBA70 \uC800\uC7A5\uC18C\uB97C \uBC14\uAFB8\uC9C0\uB294 \uC54A\uB294\uB2E4(\uC0DD\uC131\uB9CC).",
     inputSchema: sugoCommitInputSchema
   },
   handleSugoCommit
@@ -35298,21 +35106,13 @@ server.registerTool(
   "sugo_prd",
   {
     title: "DEPRECATED \u2014 use sugo_plan(action:prd)",
-    description: "\xA71 \uD3D0\uAE30\uB41C \uB3C4\uAD6C. \uBB34\uC870\uAC74 \uAC70\uBD80\uD558\uACE0 sugo_plan(action:prd)\uB85C \uC548\uB0B4\uD55C\uB2E4 \u2014 \uC0C1\uD0DC\uBA38\uC2E0\uC744 \uC6B0\uD68C\uD558\uB294 PRD \uC0DD\uC131\uC740 \uAC8C\uC774\uD2B8\uB97C \uD1B5\uC9F8\uB85C \uBE60\uC838\uB098\uAC00\uB294 \uB4B7\uBB38\uC774\uC5C8\uB2E4.",
+    description: "\uD3D0\uAE30\uB41C \uB3C4\uAD6C. \uBB34\uC870\uAC74 \uAC70\uBD80\uD558\uACE0 sugo_plan(action:prd)\uB85C \uC548\uB0B4\uD55C\uB2E4 \u2014 \uC0C1\uD0DC\uBA38\uC2E0\uC744 \uC6B0\uD68C\uD558\uB294 PRD \uC0DD\uC131\uC740 \uAC8C\uC774\uD2B8\uB97C \uD1B5\uC9F8\uB85C \uBE60\uC838\uB098\uAC00\uB294 \uB4B7\uBB38\uC774\uC5C8\uB2E4.",
     inputSchema: sugoPrdInputSchema
   },
   handleSugoPrd
 );
 async function main() {
   await ensureRecoveryUtility().catch((error3) => console.error("[sugo] recovery utility install failed:", error3));
-  await migrateWorkDataDir();
-  const specMigration = await migrateLegacySpecStorage();
-  if (specMigration.failures.length > 0) {
-    console.error(`[sugo] legacy SPEC migration incomplete (${specMigration.failures.length} failures)`);
-  } else {
-    await rewriteLocalSpecReferences(specMigration.mappings);
-    void syncSpecPathMigration(specMigration.mappings);
-  }
   void syncPluginVersion(currentSugoVersion());
   void syncUser();
   const transport = new StdioServerTransport();

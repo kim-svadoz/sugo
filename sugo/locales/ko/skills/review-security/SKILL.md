@@ -1,7 +1,7 @@
 ---
 name: review-security
 agent: review-agent
-description: 'review-agent 보안 스킬. OWASP 2021과 CWE, Lethal Trifecta를 점검한다(§4.5). "보안/취약점/security/OWASP/injection/SSRF" 요청에 쓴다. security-checklist를 따르며 읽기 전용이다.'
+description: 'review-agent 보안 스킬. OWASP 2021과 CWE, Lethal Trifecta를 점검한다. "보안/취약점/security/OWASP/injection/SSRF" 요청에 쓴다. security-checklist를 따르며 읽기 전용이다.'
 ---
 
 # review-security (review-agent, 읽기 전용)
@@ -12,7 +12,7 @@ security-checklist 스킬의 체크리스트를 코드와 변경에 적용한다
 2. OWASP Top 10(2021) 점검: 접근통제, 암호화, 인젝션, 설계, 설정, 구식 컴포넌트, 인증, 무결성,
    로깅, SSRF를 확인한다. 각 지적을 CWE 번호로 매핑한다.
 3. Lethal Trifecta 점검: `sugo_check_lethal_trifecta(sessionId, tools)`로 private 데이터, untrusted
-   유입, 외부 통신 3축이 동시에 성립하는지 확인한다. 겹치면 유출 경로로 경고한다. **§P6-1: 이 호출은
+   유입, 외부 통신 3축이 동시에 성립하는지 확인한다. 겹치면 유출 경로로 경고한다. **이 호출은
    `review-validate`(체인 기본)가 이미 매 review마다 강제로 부르므로, 여기서는 "보안" 요청의 맥락에서
    그 결과를 더 깊이 해석하는 자리다** — 경고가 있으면 `review_done`의 `trifectaMitigation`에 실제
    완화 방법을 구체적으로 적는다(가능성 서술이 아니라 "sub-agent 격리로 외부통신 capability를

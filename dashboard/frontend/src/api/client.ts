@@ -59,7 +59,7 @@ export function onSessionExpired(): void {
 }
 
 /**
- * 공개 SaaS(§Phase 1.5): 모든 호출에 Bearer 부착. **401이면 refresh 후 한 번만 재시도**하고,
+ * 모든 호출에 Bearer 부착. **401이면 refresh 후 한 번만 재시도**하고,
  * refresh가 실패하면 그건 세션 종료라 로그인으로 보낸다.
  *
  * 재시도를 한 번으로 제한하는 이유: 갱신한 토큰으로도 401이면 그건 만료가 아니라 권한 문제라
@@ -91,14 +91,14 @@ export async function apiJson<T>(path: string, options?: RequestInit): Promise<T
   return res.json() as Promise<T>;
 }
 
-// PUBLIC routes (§3.1-§3.3) take userId as an explicit query param rather
+// PUBLIC routes take userId as an explicit query param rather
 // than deriving it from the Bearer token server-side.
 export function withUserId(path: string, userId: string, extra?: Record<string, string>): string {
   const params = new URLSearchParams({ userId, ...extra });
   return `${path}?${params.toString()}`;
 }
 
-/** §3.3 `GET /api/workspaces/search?q=` — 툴바의 서버 전문검색(300ms 디바운스). */
+/** `GET /api/workspaces/search?q=` — 툴바의 서버 전문검색(300ms 디바운스). */
 export interface HistorySearchResult {
   id: string;
   workspace_name: string;

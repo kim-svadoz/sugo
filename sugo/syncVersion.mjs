@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// §D.1 "4파일 하드 규칙": package.json의 version이 정본(source of truth)이고,
+// 버전 동기화 규칙: package.json의 version이 정본(source of truth)이고,
 // plugin.json / package-lock.json(2곳) / .claude-plugin/marketplace.json이 이를 따라간다.
 // 순수 함수로 분리해 test/syncVersion.test.ts에서 실제 파일 IO 없이 검증한다.
 

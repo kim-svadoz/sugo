@@ -116,10 +116,10 @@ export function SchedulePage() {
     openSpec(reviewTarget);
   }, [reviewWorkspace, specs]);
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
-  // 안 보이면 사용자가 헷갈린다(2026-09-23 사용자 피드백). 성공 시 잠깐 "저장됨"을 보여준다.
+  // 안 보이면 사용자가 헷갈린다. 성공 시 잠깐 "저장됨"을 보여준다.
   const [savedFlash, setSavedFlash] = useState<"due" | "project" | "branch" | "title" | null>(null);
   // Canvas의 이름 변경(✎)과 같은 API(renameRoadmapNode → manual_title)라 여기서 바꿔도
-  // Canvas에 그대로 반영된다(2026-09-23 사용자 요청) — null이면 편집 중이 아님.
+  // Canvas에 그대로 반영된다 — null이면 편집 중이 아님.
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
   const [branchDraft, setBranchDraft] = useState<string | null>(null);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
@@ -160,7 +160,7 @@ export function SchedulePage() {
     return () => window.removeEventListener("keydown", cancelArchive, true);
   }, [archiveConfirm, busy]);
 
-  // §7B 사용자 결정(2026-09-23): 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
+  // 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
   // Schedule 위에 겹쳐서 뜬다 — Esc를 누르면 그냥 이 오버레이만 닫히고 Schedule로 남는다.
   const [checkpointTarget, setCheckpointTarget] = useState<{ workspace: string; projectPath: string | null; dueDate: string | null } | null>(null);
   const [canvasOverlay, setCanvasOverlay] = useState<{ workspace: string; nodeId: string } | null>(null);
@@ -1032,7 +1032,7 @@ export function SchedulePage() {
 
       {trashOpen && <SpecArchiveModal items={archives} busy={busy} onClose={() => setTrashOpen(false)} onRestore={async item => { if (!userId) return; setBusy(true); try { await restoreScheduleSpec(userId, item.workspace_name, item.spec_id); refetch(); } catch { setErrorMsg("SPEC을 복구하지 못했습니다."); } finally { setBusy(false); } }} />}
 
-      {/* 경량 Spec 추가(§7B "+ SPEC 일정 추가") */}
+      {/* 경량 Spec 추가("+ SPEC 일정 추가") */}
       {addOpen && (
         <Modal onClose={() => setAddOpen(false)}>
           <div className="space-y-4">
@@ -1126,7 +1126,7 @@ export function SchedulePage() {
         </Modal>
       )}
 
-      {/* §7B 사용자 결정: 체크포인트/캔버스는 다른 화면으로 안 보내고 Schedule 위에 겹쳐서 연다.
+      {/* 체크포인트/캔버스는 다른 화면으로 안 보내고 Schedule 위에 겹쳐서 연다.
           Esc를 누르면 이 오버레이만 닫히고 Schedule로 그대로 남는다. */}
       {checkpointTarget && (
         <CheckpointPanel

@@ -10,7 +10,7 @@ export interface BitbucketRepoRef {
   token: string;
 }
 
-// §6: Bitbucket Server (Data Center) REST v1.0. Injected the same way
+// Bitbucket Server (Data Center) REST v1.0. Injected the same way
 // DbClient/OidcTokenClient are - real HTTP implementation for production,
 // fake in-memory one for tests (no real Bitbucket Server reachable here).
 export interface BitbucketClient {

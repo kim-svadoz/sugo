@@ -42,29 +42,29 @@ describe("blocked task decision", () => {
   });
 
   it("stores a human decision without pretending that the task resumed, and survives plugin re-sync", async () => {
-    const humanBlocker = { schemaVersion: 1, sessionId: "plan-1", stage: "CODE_RUNNING", resumeAction: "code_done", summary: "승인 정책 구현 중", question: "승인자는?", context: ["기준 없음"], options: [{ id: "lead", label: "팀장", impact: "통제 강화" }], blockedNextStep: "권한 검사", createdAt: "2026-09-29" };
-    const { app, auth } = await appWithNodes([{ id: "blocked-task", level: "task", status: "blocked", note: "승인 금액 기준 미확정", humanBlocker }]);
+    const humanBlocker = { schemaVersion: 1, sessionId: "plan-1", stage: "CODE_RUNNING", resumeAction: "code_done", summary: "비밀번호 재설정 구현 중", question: "재설정 링크 유효 시간은?", context: ["기준 없음"], options: [{ id: "short", label: "30분", impact: "보안 강화" }], blockedNextStep: "토큰 만료 처리", createdAt: "2026-09-29" };
+    const { app, auth } = await appWithNodes([{ id: "blocked-task", level: "task", status: "blocked", note: "링크 유효 시간 미정", humanBlocker }]);
 
     await request(app)
       .post("/api/workspaces/ws1/roadmap/blocker-decision")
       .query({ userId: "u1" }).set("Authorization", auth)
-      .send({ nodeId: "blocked-task", response: "100만원 이상은 팀장 승인을 받는다." })
+      .send({ nodeId: "blocked-task", response: "재설정 링크는 30분 뒤 만료한다." })
       .expect(200);
 
     await request(app)
       .post("/api/sync/roadmap").set("Authorization", auth)
-      .send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "blocked-task", title: "blocked-task", level: "task", status: "blocked", note: "승인 금액 기준 미확정", humanBlocker }] })
+      .send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "blocked-task", title: "blocked-task", level: "task", status: "blocked", note: "링크 유효 시간 미정", humanBlocker }] })
       .expect(200);
 
     const roadmap = await request(app).get("/api/workspaces/ws1/roadmap").query({ userId: "u1" }).set("Authorization", auth).expect(200);
     const task = roadmap.body.nodes.find((node: { id: string }) => node.id === "blocked-task");
     expect(task.status).toBe("blocked");
     expect(task.manual_status).toBeNull();
-    expect(task.blocker_decision).toMatchObject({ response: "100만원 이상은 팀장 승인을 받는다.", answered_by: "u1" });
+    expect(task.blocker_decision).toMatchObject({ response: "재설정 링크는 30분 뒤 만료한다.", answered_by: "u1" });
     expect(task.human_blocker).toMatchObject({ sessionId: "plan-1", resumeAction: "code_done" });
 
     const decision = await request(app).get("/api/workspaces/ws1/roadmap/blocker-decision").query({ userId: "u1", nodeId: "blocked-task" }).set("Authorization", auth).expect(200);
-    expect(decision.body).toMatchObject({ blocker: { sessionId: "plan-1" }, decision: { response: "100만원 이상은 팀장 승인을 받는다." } });
+    expect(decision.body).toMatchObject({ blocker: { sessionId: "plan-1" }, decision: { response: "재설정 링크는 30분 뒤 만료한다." } });
   });
 
   it("rejects decisions for a task that is not blocked", async () => {
@@ -227,8 +227,8 @@ describe("rename and parent mutations", () => {
       .send({ nodeId: "a", parentId: "ws-grp" })
       .expect(200);
 
-    // 원본 title(CLI 진실)은 그대로, manual_title에만 저장된다 — manual_status와 같은
-    // 오버레이 패턴(§3.3). GET /roadmap이 돌려주는 title은 이미 유효값으로 합쳐진 것.
+    // 플러그인이 보낸 title(CLI 진실)은 그대로, manual_title에만 저장된다 — manual_status와 같은
+    // 오버레이 패턴. GET /roadmap이 돌려주는 title은 이미 유효값으로 합쳐진 것.
     const rows = await db.query("SELECT title, manual_title, parent FROM sugo_roadmap_nodes WHERE id='a'");
     expect(rows).toEqual([{ title: "a", manual_title: "New Title", parent: "ws-grp" }]);
 
@@ -236,7 +236,7 @@ describe("rename and parent mutations", () => {
     expect(roadmap.body.nodes.find((n: { id: string }) => n.id === "a").title).toBe("New Title");
   });
 
-  it("CLI 재동기화가 대시보드에서 바꾼 이름을 되돌리지 않는다(2026-09-23 사용자가 실제로 겪음)", async () => {
+  it("CLI 재동기화가 대시보드에서 바꾼 이름을 되돌리지 않는다", async () => {
     const { app, db, auth } = await appWithNodes([{ id: "a", level: "task" }]);
     await request(app)
       .post("/api/workspaces/ws1/roadmap/rename")

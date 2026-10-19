@@ -160,7 +160,7 @@ describe("13게이트 유기적 완주 — feat 파이프라인 (Spring Boot + b
     expect(noEvidence.data.errorCode).toBe("TEST_EVIDENCE_MISSING");
     await call(handleSugoRecordTestEvidence, { sessionId, command: "./gradlew check", exitCode: 0, failed: 0 });
 
-    // (게이트 10) coverage: coverageMap이 미충족이면 test_done 거부 → 충족하면 통과(§10, test_done에 배선)
+    // (게이트 10) coverage: coverageMap이 미충족이면 test_done 거부 → 충족하면 통과(test_done에 배선)
     const badCoverage = await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true, coverageMap: INCOMPLETE_COVERAGE });
     expect(badCoverage.data.errorCode).toBe("PRD_COVERAGE_INCOMPLETE");
     const testDone = await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true, coverageMap: FULL_COVERAGE });
@@ -211,7 +211,7 @@ describe("13게이트 유기적 완주 — feat 파이프라인 (Spring Boot + b
   });
 });
 
-describe("patch 파이프라인 — 완주 + wiring 게이트 자동 트리거(§7)", () => {
+describe("patch 파이프라인 — 완주 + wiring 게이트 자동 트리거", () => {
   async function firstRoundToReviewDone(): Promise<string> {
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId as string;
@@ -240,7 +240,7 @@ describe("patch 파이프라인 — 완주 + wiring 게이트 자동 트리거(�
   it("1차 산출물로 patch 진입 → 배선변경 없어도 wiring 게이트가 자동 트리거되고, 충족하면 DONE까지 간다", async () => {
     const workResultPath = await firstRoundToReviewDone();
 
-    // patch 진입: data.patch.version=2로 표시된다
+    // patch 진입: data.patch.version=1로 표시된다
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login-patch", workResultPath });
     const sessionId = start.data.sessionId as string;
     expect(start.data.patch.version).toBe(1);

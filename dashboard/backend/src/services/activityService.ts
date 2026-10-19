@@ -33,7 +33,7 @@ export interface IngestActivityInput {
   details?: unknown;
 }
 
-// §3.2/§4: fire-and-forget, non-blocking - a single INSERT, no extra work.
+// Fire-and-forget, non-blocking - a single INSERT, no extra work.
 export async function ingestActivity(db: DbClient, input: IngestActivityInput): Promise<void> {
   await db.exec(
     `INSERT INTO sugo_activity_events
@@ -68,7 +68,7 @@ export interface ActivityStreamRow {
 
 type ActivityStreamDbRow = Omit<ActivityStreamRow, "details"> & { details: unknown };
 
-// §3.2/§4: polling read, most recent first.
+// Polling read, most recent first.
 export async function streamActivity(
   db: DbClient,
   userId: string,

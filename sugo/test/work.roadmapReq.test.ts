@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseRequirementsFromPrd, promotePrdRequirements, reqConfirmId, requirementNodeId } from "../src/work/roadmapReq.js";
 
 describe("parseRequirementsFromPrd — ### REQ-XXX: 헤딩만 인식한다", () => {
-  it("스텁 범위 표시와 대시 구분자를 가진 실제 PRD 요구사항도 빠뜨리지 않는다", () => {
+  it("스텁 범위 표시와 대시 구분자를 가진 PRD 요구사항도 빠뜨리지 않는다", () => {
     expect(parseRequirementsFromPrd("### REQ-001 (스텁): 알림 대상 조회\n### REQ-002 — 채널 후보\n### REQ-004 – fallback")).toEqual([
       { id: "REQ-001", title: "(스텁) 알림 대상 조회" },
       { id: "REQ-002", title: "채널 후보" },

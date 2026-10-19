@@ -13,7 +13,7 @@ async function freshApp() {
   return createApp(db);
 }
 
-describe("CORS whitelist (§8 fix for the original's wide-open cors())", () => {
+describe("CORS whitelist", () => {
   it("allows the whitelisted dev origin", async () => {
     const { app } = await freshApp();
     const res = await request(app).get("/health").set("Origin", "http://localhost:5175");

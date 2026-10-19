@@ -39,7 +39,7 @@ export function isPresentationTarget(toolName, servers) {
 export function buildPresentationReminder(server) {
   return [
     "[Sugo MCP presentation policy]",
-    `방금 ${server} MCP가 반환한 값은 사실 원본이다.`,
+    `방금 ${server} MCP가 반환한 값이 사실의 근거다.`,
     "이 결과를 내부 분석이나 에이전트 간 작업에 사용할 때는 표현 형식을 제한하지 않는다.",
     "이 결과를 사용자에게 설명하거나 요약하는 문장에는 ste-inspired-ko를 적용한다.",
     "한 문장에는 한 주제 또는 한 행동만 쓴다.",

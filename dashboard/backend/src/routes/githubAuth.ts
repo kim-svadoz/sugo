@@ -10,7 +10,7 @@ import {
 } from "../auth/github.js";
 import { issueSession, issueState, verifyState } from "../auth/session.js";
 
-// 공개 SaaS(§Phase 1) GitHub OAuth 웹 로그인.
+// 공개 SaaS GitHub OAuth 웹 로그인.
 //   GET /api/auth/github/login    → GitHub 인가로 302
 //   GET /api/auth/github/callback → code 교환·유저 프로비저닝·세션 발급 후 프론트로 302
 export function createGithubAuthRouter(

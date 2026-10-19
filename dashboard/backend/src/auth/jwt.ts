@@ -9,7 +9,7 @@ export interface JwtClaims {
 
 export type VerifyJwt = (token: string) => Promise<JwtClaims>;
 
-// §8: RS256/JWKS verification. `getKey` is injected (createRemoteJWKSet for
+// RS256/JWKS verification. `getKey` is injected (createRemoteJWKSet for
 // production, createLocalJWKSet for tests) so this never needs a real IdP
 // reachable over the network to be exercised.
 export function createJwtVerifier(getKey: JWTVerifyGetKey, issuer?: string): VerifyJwt {
@@ -21,7 +21,7 @@ export function createJwtVerifier(getKey: JWTVerifyGetKey, issuer?: string): Ver
   };
 }
 
-// §8: userId = account_id || preferred_username.split('@')[0]
+// userId = account_id || preferred_username.split('@')[0]
 export function deriveUserId(claims: JwtClaims): string {
   if (claims.account_id) return claims.account_id;
   if (claims.preferred_username) return claims.preferred_username.split("@")[0];

@@ -32,7 +32,7 @@ export interface TodoSpecDraft {
 }
 
 /**
- * 고정 템플릿(스펙 원문)으로 최초 파일을 만든다. **사용자가 확정한 목록만** 받는다 — 모델이
+ * 고정 템플릿으로 최초 파일을 만든다. **사용자가 확정한 목록만** 받는다 — 모델이
  * 임의로 지어낸 목록이 파일로 고정되면 이후 모든 세션이 잘못된 전제로 동작하므로, 이 함수를
  * 부르기 전에 반드시 사용자 확인을 거쳐야 한다(그 확인 자체는 clarify 단계의 프롬프트 책임 —
  * 서버는 "확정됐다"는 호출부의 주장을 신뢰할 수밖에 없다는 한계가 있다).
@@ -63,7 +63,7 @@ export async function createTodoSpec(projectPath: string, draft: TodoSpecDraft):
 
 /**
  * clarify 단계에서 최초 TODO-LIST를 확정할 때의 게이트. "모델이 임의로 확정하지 않는다"는
- * 스펙 요구를 §4.6과 같은 형태(자기보고 파라미터 강제)로 구현한다 — 진짜 확인이 일어났는지
+ * 같은 형태(자기보고 파라미터 강제)로 구현한다 — 진짜 확인이 일어났는지
  * 서버는 검증할 수 없고 `todoSpecUserConfirmed:true`라는 주장만 검증한다는 한계는
  * `checkUserConfirmationGate`와 동일하다.
  */
@@ -106,7 +106,7 @@ export function parseTodoSpecItems(content: string): TodoSpecItems {
 
 /**
  * "이번 세션이 다룬 항목이 실제로 체크됐는가"를 서버가 완전히 판정할 방법은 없다(그건 PRD↔TODO
- * 매핑처럼 자연어 대조가 필요하다 — 스펙 원문도 "강제 게이트는 아니어도 무방"이라 인정한 지점).
+ * 매핑처럼 자연어 대조가 필요하다).
  * 대신 **파일이 실제로 움직였는가**를 실측한다: start 시점 스냅샷과 commit 시점 내용을 비교해
  * 최소한 하나는 참이어야 한다 — done 집합이 늘었거나(뭔가 새로 체크됐다), remaining 집합이
  * 바뀌었다(새로 발견된 잔여 항목이 추가됐다).
@@ -121,7 +121,7 @@ export function todoSpecActuallySynced(snapshotAtStart: string | null, currentCo
 }
 
 /**
- * commit 직전 TODO-SPEC 동기화 게이트(§4.3-T). 파일이 없으면(생성이 안 됐다) 막고, 있는데
+ * commit 직전 TODO-SPEC 동기화 게이트. 파일이 없으면(생성이 안 됐다) 막고, 있는데
  * `todoSpecActuallySynced`가 false면 막는다. 둘 다 `syncReason`(우회 라벨)으로만 넘어간다.
  */
 export function checkTodoSpecSyncGate(

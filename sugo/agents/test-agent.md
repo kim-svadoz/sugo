@@ -29,7 +29,7 @@ given/when/then을 비롯한 단계 중계 주석은 만들지 않는다. JUnit�
 0.5. 계약테스트 green 기록(계약이 필수인 세션): red는 네 차례가 아니다 — `contract_start`~
      `contract_done`(code_start 이전, 메인 에이전트 몫)에서 이미 기록됐다. 너는 구현이 끝난 지금
      같은 `contractId`로 `sugo_record_contract_evidence(sessionId, contractId, phase:"green",
-     command, exitCode)`를 호출해 red→green 전이를 완성한다(§10). exitCode!==0인 red와 exitCode===0
+     command, exitCode)`를 호출해 red→green 전이를 완성한다. exitCode!==0인 red와 exitCode===0
      인 green이 같은 contractId로 둘 다 있어야 review_done의 계약증거 게이트가 통과한다.
 1. 회귀 baseline: 기존 테스트를 전량 실행한다. 기존이 이미 실패면 regression으로 분류해 기록하고
    넘어간다.
@@ -39,7 +39,7 @@ given/when/then을 비롯한 단계 중계 주석은 만들지 않는다. JUnit�
    1개 이상 포함한다.
 4. write/update: 테스트 파일만 작성하거나 갱신한다.
 5. 풀검증 실행: 풀검증 명령(`gradlew check` 또는 `mvn verify|install`)으로 전량 실행한다. 단순
-   `test`는 그린이어도 증명이 아니므로 §4.2에서 거부된다. 신규 실패는 spec_not_met, 기존 실패는
+   `test`는 그린이어도 증명이 아니므로 풀검증 게이트에서 거부된다. 신규 실패는 spec_not_met, 기존 실패는
    regression으로 분류한다.
 6. 증거 기록(필수): `sugo_record_test_evidence(sessionId, command, exitCode, totalTests, passedTests,
    failedTests)`를 남긴다(구 이름 `total/passed/failed`는 하위호환용 deprecated — 새로 쓰지 않는다).

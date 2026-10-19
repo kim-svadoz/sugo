@@ -1,7 +1,7 @@
 /**
  * 로컬 확인용 원클릭 준비 스크립트.
  *
- * 실제 MySQL에 **Spec ⊃ Run ⊃ Task ⊃ REQ 4층 헌법(§9)** 그대로의 시나리오 데이터를 넣고,
+ * 실제 MySQL에 **Spec ⊃ Run ⊃ Task ⊃ REQ 4층 헌법** 그대로의 시나리오 데이터를 넣고,
  * GitHub OAuth를 거치지 않고 들어갈 수 있는 세션 토큰을 발급한다. 로그인 우회 라우트를 서버에
  * 새로 뚫지 않는다 — 그런 건 한 번 만들면 프로덕션까지 따라간다. 대신 브라우저 쪽 정적
  * 페이지(`frontend/dist/dev-login.html`, 커밋 안 됨)가 세션을 심는다.
@@ -30,9 +30,8 @@ const SECRET = process.env.SESSION_SECRET;
 if (!SECRET) throw new Error("SESSION_SECRET이 필요합니다.");
 
 /**
- * 데모 프로젝트 경로. 화면에 그대로 찍히는 값이라 이 PC의 `C:/Users/<사용자>/...`를 박아두면
- * mac에서 시드했을 때 존재하지도 않는 Windows 경로가 대시보드에 뜬다 — 실행하는 OS의
- * 홈 디렉터리 기준으로 만든다(같은 상수를 workspace와 task가 공유해야 매칭이 된다).
+ * 데모 프로젝트 경로. 화면에 그대로 찍히므로 실행하는 OS의 홈 디렉터리 기준으로 만든다
+ * (같은 상수를 workspace와 task가 공유해야 매칭이 된다).
  */
 const SPLEARN = join(homedir(), "splearn");
 const SPLEARN_ADMIN = join(homedir(), "splearn-admin");
@@ -84,10 +83,10 @@ for (const [id, title, status, completedAt] of tasks) {
 }
 await syncTask(db, { userId: USER, workspaceName: "payments-api", id: "t-101", title: "결제 취소 API", project: PAYMENTS, status: "done", completedAt: iso(20) });
 
-// ── §9 4층 헌법: Spec ⊃ Run(workstream) ⊃ Task ⊃ REQ(subtask) ────────────────
+// ── 4층 헌법: Spec ⊃ Run(workstream) ⊃ Task ⊃ REQ(subtask) ────────────────
 // REQ에는 항상 `{taskId}::REQ-CONFIRM`(사용자 최종확인)이 붙는다 — 에이전트가 완료 못 하고
 // 사람의 review_done으로만 닫힌다.
-// depends_on은 **형제(같은 RUN 안) task 사이의 순서**다(플러그인 스펙 §링크타입 "task → task,
+// depends_on은 **형제(같은 RUN 안) task 사이의 순서**다(링크 타입 "task → task,
 // 형제 순서/의존"). RUN을 가로지르는 링크를 심으면 캔버스에 RUN 상자를 관통하는 대각선이
 // 그려져 "RUN이 RUN을 기다린다"는, 온톨로지에 없는 관계로 읽힌다. RUN 사이의 순서는 의존이
 // 아니라 포함(parent)과 status로만 표현한다.
@@ -117,7 +116,7 @@ await syncRoadmap(db, USER, "splearn", [
   { id: "t-005::REQ-007", title: "REQ-007 재설정 토큰 만료 30분", level: "subtask", status: "pending", parent: "t-005" },
   { id: "t-005::REQ-CONFIRM", title: "사용자 최종확인", level: "subtask", status: "pending", parent: "t-005" },
 
-  // 패치 계보 확인용 — patch는 새 Run을 만들지 않고 **원본 Run(run-001)에 귀속**된다.
+  // 패치 계보 확인용 — patch는 새 Run을 만들지 않고 **처음 Run(run-001)에 귀속**된다.
   // depth 0마다 새 컬럼, depth>0은 그 컬럼에 세로로 쌓인다.
   { id: "t-001-p1", title: "로그인 실패 카운터 추가", level: "task", status: "done", parent: "run-001", lineage: { root: "t-001", depth: 0, version: 1 } },
   { id: "t-001-p2", title: "계정 잠금 해제 스케줄러", level: "task", status: "done", parent: "run-001", lineage: { root: "t-001", depth: 1, version: 2 } },
@@ -221,9 +220,7 @@ await syncCheckpoint(db, {
 });
 
 // ── Activity(실시간 콘솔) — 핸드오프 체인이 보이도록 ─────────────────────────
-// agent는 null일 수 있다(에이전트가 아닌 SYSTEM 이벤트). ingestActivity도 `string | null`을
-// 받는데 이 튜플 주석만 `string`으로 좁아서 어긋나 있었다 — 이 파일이 어느 tsconfig에도
-// 없어서 지금까지 드러나지 않았다(tsconfig.scripts.json으로 검사 대상에 넣었다).
+// agent는 null일 수 있다(에이전트가 아닌 SYSTEM 이벤트). ingestActivity와 같이 `string | null`로 둔다.
 const feed: [number, string, string | null, string | null, string, string][] = [
   [46, "AGENT", "MAIN", "CODE", "EXECUTE", "t-003 OAuth 프로바이더 연동 — code-agent에 위임"],
   [42, "AGENT", "CODE", null, "EXECUTE", "GoogleOAuthClient 초안 작성 (3 files)"],

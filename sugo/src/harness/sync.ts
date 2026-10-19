@@ -41,7 +41,7 @@ async function writeTextIfChanged(path: string, content: string): Promise<void> 
 }
 
 /**
- * §2 하네스 서브시스템의 실제 동작(감지→fetch→합성→파일쓰기→config저장→레지스트리등록) — sugo_add와
+ * 하네스 서브시스템의 실제 동작(감지→fetch→합성→파일쓰기→config저장→레지스트리등록) — sugo_add와
  * sugo_update가 공유한다. **워크스페이스 보존:** workspace가 명시 안 되면(undefined) 기존
  * 레지스트리 엔트리의 workspace를 그대로 유지한다 — sugo_update 호출 시 workspace를 안 줬다고
  * 기존 소속이 사라지면 안 되기 때문(sugo_add로 최초 등록할 때는 애초에 기존 엔트리가 없어 자연히
@@ -75,7 +75,7 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
 
   const claudeMdPath = join(sugoDir, "CLAUDE.md");
   await mkdir(sugoDir, { recursive: true });
-  // 내용이 안 바뀌었으면 재기록을 생략한다(§2 step 4 writeClaudeIfChanged) — 그래야 안 건드린
+  // 내용이 안 바뀌었으면 재기록을 생략한다(writeClaudeIfChanged) — 그래야 안 건드린
   // 프로젝트를 재동기화만 해도 git이 dirty해지는 걸 피한다.
   const existingClaudeMd = await readFile(claudeMdPath, "utf-8").catch(() => null);
   const claudeMdResult = writeClaudeIfChanged(existingClaudeMd, composeResult.claudeMd, new Date().toISOString());

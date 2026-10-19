@@ -42,7 +42,7 @@ const pkg: { version: string } = process.env.DASHBOARD_VERSION
   ? { version: process.env.DASHBOARD_VERSION }
   : JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
 
-// IdP가 설정되지 않았을 때의 기본 구현(§11). 오버라이드 없이 여기까지 도달한 요청은 설정
+// IdP가 설정되지 않았을 때의 기본 구현. 오버라이드 없이 여기까지 도달한 요청은 설정
 // 실수이므로, 검증 안 된 토큰을 조용히 받아들이는 대신 시끄럽게 fail-closed 한다.
 function unconfiguredVerifyJwt(): VerifyJwt {
   return async () => {
@@ -131,7 +131,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/activity", createActivityRouter(db, sessionSecret));
   app.use("/api/workspaces", createWorkspacesRouter(db, sessionSecret, specAttachmentsPath));
   app.use("/api/schedule", createScheduleRouter(db, sessionSecret));
-  // 공개 SaaS(§Phase 1): GitHub OAuth 로그인 + API 토큰 관리. 기존 OIDC /api/auth보다 먼저 등록.
+  // 공개 SaaS: GitHub OAuth 로그인 + API 토큰 관리. 기존 OIDC /api/auth보다 먼저 등록.
   app.use("/api/auth/github", createGithubAuthRouter(db, githubOAuth, config.github, sessionSecret, config.frontendUrl));
   if (localDev.enabled) app.use("/api/auth/local", createLocalAuthRouter(db, sessionSecret, frontendUrl, localDev));
   app.use("/api/tokens", createTokensRouter(db, sessionSecret));
@@ -156,7 +156,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/pinpoint-context", createPinpointContextRouter(db, sessionSecret, pinpointClient));
   app.use('/api/project-integrations', createProjectIntegrationsRouter(db, sessionSecret));
   app.use("/api/pr", createPrRouter(db, sessionSecret, secretEncKey, gitProviderClients));
-  // §3.7: /api/stats + alias /api/metrics(플러그인이 calibrated-ratio를 여기로 fetch), harness, skills.
+  // /api/stats + alias /api/metrics(플러그인이 calibrated-ratio를 여기로 fetch), harness, skills.
   const statsRouter = createStatsRouter(db, sessionSecret);
   app.use("/api/stats", statsRouter);
   app.use("/api/metrics", statsRouter);
@@ -180,7 +180,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
 }
 
 async function main() {
-  // §3.1/§7 회복력: sync는 논블로킹이고 대시보드 다운이 플러그인을 막으면 안 된다. Express 4는
+  // 회복력: sync는 논블로킹이고 대시보드 다운이 플러그인을 막으면 안 된다. Express 4는
   // async 핸들러 reject를 자동으로 안 잡아 unhandledRejection으로 프로세스가 죽을 수 있으므로,
   // 프로세스 레벨 가드로 잘못된 push 하나가 전체 서버를 내리는 걸 막는다. 로그만 남기고 계속 산다.
   process.on("unhandledRejection", (reason) => {

@@ -10,11 +10,9 @@ import type { PlanSession } from "../src/types.js";
 import { computeCompletionGrade } from "../src/labelGuard.js";
 
 /**
- * 실사용 세션에서 막힌 경로를 재현한다.
- *
  * fail 증거로 `test_done`을 지나면 `testPassedState`가 fail로 박히고, 이후 올바른 그린 증거를
  * 다시 기록해도 `review_done`이 옛 판정을 보고 거부한다. forward-only라 `test_done`으로 되돌아갈
- * 수도 없어 파이프라인이 완전히 막혔다 — 결국 사용자가 sugo 밖에서 직접 커밋했다.
+ * 수도 없어 파이프라인이 막힌다. test_reverify가 이 경로를 푼다.
  */
 let fakeHome: string;
 
@@ -75,7 +73,7 @@ async function recordEvidence(sessionId: string, failed: number) {
   });
 }
 
-describe("§4.3-R test_reverify — 증거 스냅샷 데드락 해소", () => {
+describe("test_reverify — 증거 스냅샷 데드락 해소", () => {
   it("기존 모듈 재스냅샷 뒤 code_start로 새 모듈을 구현하고 새 clean test_done이면 이전 라벨만 해소한다", async () => {
     const sessionId = await seedSession("REVIEW_RUNNING", "fail");
     await recordEvidence(sessionId, 0);
@@ -163,9 +161,8 @@ describe("§4.3-R test_reverify — 증거 스냅샷 데드락 해소", () => {
     expect(result.errorCode).toBe("REVERIFY_EVIDENCE_STILL_FAIL");
   });
 
-  it("그린으로 test_done을 지나면 지문이 남아 reusedFromTestDone이 성립한다(보고 ②의 반증)", async () => {
-    // "reusedFromTestDone이 사실상 항상 실패"는 사실이 아니다 — fail로 test_done을 지났을 때만
-    // 지문이 안 남는다. 그 경우도 test_reverify로 복구된다.
+  it("그린으로 test_done을 지나면 지문이 남아 reusedFromTestDone이 성립한다", async () => {
+    // fail로 test_done을 지났을 때만 지문이 안 남는다. 그 경우도 test_reverify로 복구된다.
     const sessionId = await seedSession("TEST_RUNNING", null);
     await recordEvidence(sessionId, 0);
     await handleSugoPlan({ action: "test_done", sessionId, testPassed: true });

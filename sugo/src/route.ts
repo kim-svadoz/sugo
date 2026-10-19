@@ -21,8 +21,8 @@ export interface RouteResult {
 }
 
 /**
- * §5b 트리거 라우터 최소셋: "이번 범위 최소셋: code(implement/bugfix/refactor) · test(targeted+full)
- * · review(validate+security) · docs(readme)"만 구현한다. priority가 높을수록 우선(동률이면 이
+ * 트리거 라우터 최소셋: code(implement/bugfix/refactor) · test(targeted+full)
+ * · review(validate+security) · docs(readme)만 구현한다. priority가 높을수록 우선(동률이면 이
  * 배열의 앞쪽이 우선 — 그래서 더 구체적인 규칙을 먼저/더 높은 priority로 둔다).
  */
 export const ROUTES: RouteRule[] = [
@@ -85,7 +85,7 @@ function matchRule(rule: RouteRule, normalizedInput: string): RouteMatch | null 
   return { agent: rule.agent, skill: rule.skill, triggers_matched: matched };
 }
 
-/** 순수 함수: 자연어 입력을 (agent, skill)로 라우팅한다(§5b). 매칭 없으면 matched:false. */
+/** 순수 함수: 자연어 입력을 (agent, skill)로 라우팅한다. 매칭 없으면 matched:false. */
 export function routeInput(input: string): RouteResult {
   const normalized = input.toLowerCase();
   const matches: { rule: RouteRule; match: RouteMatch }[] = [];

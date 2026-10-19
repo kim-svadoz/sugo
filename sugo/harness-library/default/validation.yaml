@@ -11,7 +11,7 @@ checks:
     severity: error
     auto:
       kind: changed-files-content-absent
-      # §P6-2: "명백한 하드코딩 리터럴"만 잡는다(entropy 분석이나 gitleaks 규칙셋 이식은 비범위) —
+      # "명백한 하드코딩 리터럴"만 잡는다(entropy 분석이나 gitleaks 규칙셋은 범위 밖) —
       # key/secret/token/password 같은 이름 뒤에 8자 이상 영숫자/기호 리터럴이 따라오면 의심.
       pattern: "(api[_-]?key|secret|token|password)\\s*[:=]\\s*[\"'][A-Za-z0-9_\\-]{8,}[\"']"
   - id: no-out-of-scope-file-changes

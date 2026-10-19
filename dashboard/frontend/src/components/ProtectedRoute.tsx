@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.js";
 
-// §5: "ProtectedRoute는 isAuthenticated 게이트(로딩중 스피너, 아니면 /login)".
+// isAuthenticated 게이트. 인증되지 않았으면 /login으로 보낸다.
 // No separate loading phase here - authStore hydrates synchronously from
 // localStorage before first render, so there is nothing to await.
 export function ProtectedRoute() {

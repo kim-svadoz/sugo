@@ -7,7 +7,7 @@ import { E2E_UI_URL } from "../port-contract.mjs";
 const OUT = process.env.CLAUDE_JOB_DIR ? join(process.env.CLAUDE_JOB_DIR, "tmp") : tmpdir();
 const BASE = E2E_UI_URL;
 
-// 화면에 그대로 찍히는 mock 경로 — 이 PC의 Windows 경로를 박으면 mac 스크린샷에 없는 경로가 뜬다.
+// 화면에 그대로 찍히는 mock 경로 — 고정 경로를 박으면 다른 OS 스크린샷에 없는 경로가 뜬다.
 const SPLEARN = join(homedir(), "splearn");
 const PAYMENTS = join(homedir(), "work", "payments");
 

@@ -24,7 +24,7 @@ function expectInOrder(text: string, values: readonly string[]): void {
   }
 }
 
-describe("P4 operational ontology 통합 계약", () => {
+describe("operational ontology 통합 계약", () => {
   it("모델 실행 프롬프트가 온톨로지 전이 순서와 핵심 게이트 계약을 보존한다", () => {
     const feat = prompt("commands/feat.md");
     const pipelineActions = ACTION_TYPES
@@ -64,8 +64,8 @@ describe("P4 operational ontology 통합 계약", () => {
     }
   });
 
-  it("적대적 코퍼스 16행 독립 골든 코퍼스가 모델 게이트와 실제 증명 테스트에 전부 연결된다", () => {
-    const corpus = JSON.parse(readFileSync(join(FIXTURES, "appendix-b-corpus.json"), "utf8")) as {
+  it("적대적 입력 16행 독립 골든 목록이 모델 게이트와 실제 증명 테스트에 전부 연결된다", () => {
+    const corpus = JSON.parse(readFileSync(join(FIXTURES, "rejection-cases.json"), "utf8")) as {
       id: string;
       modelGateIds: string[];
       proofFiles: string[];

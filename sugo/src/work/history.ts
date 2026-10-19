@@ -10,7 +10,7 @@ function generateWorkLogId(): string {
   return `wl-${Date.now()}-${randomBytes(4).toString("hex")}`;
 }
 
-/** work/<ws>/history/<id>.json — 완료 작업 요약·결정·변경파일·커밋 + 생산성 지표(§8) */
+/** work/<ws>/history/<id>.json — 완료 작업 요약·결정·변경파일·커밋 + 생산성 지표 */
 export async function addWorkLog(workspace: string, params: Omit<WorkLog, "id">): Promise<WorkLog> {
   const workLog: WorkLog = { id: generateWorkLogId(), ...params };
   const dir = historyDir(workspace);

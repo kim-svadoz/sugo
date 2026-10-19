@@ -16,7 +16,7 @@ function todayYyyymmdd(): string {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 }
 
-/** 저장 레이아웃(§1): <project>/sugo/features/<yyyymmdd>/<feature>/prd.md */
+/** 저장 레이아웃: <project>/sugo/features/<yyyymmdd>/<feature>/prd.md */
 export async function writePrdFile(
   projectPath: string,
   featureName: string,
@@ -29,7 +29,7 @@ export async function writePrdFile(
   return { featurePath, prdPath };
 }
 
-/** 저장 레이아웃(§1): <project>/sugo/features/<yyyymmdd>/<feature>/work-result.md */
+/** 저장 레이아웃: <project>/sugo/features/<yyyymmdd>/<feature>/work-result.md */
 export async function writeWorkResultFile(featurePath: string, content: string): Promise<{ workResultPath: string }> {
   const workResultPath = join(featurePath, "work-result.md");
   await mkdir(featurePath, { recursive: true });
@@ -37,7 +37,7 @@ export async function writeWorkResultFile(featurePath: string, content: string):
   return { workResultPath };
 }
 
-/** §7 Patch: 1차 산출물을 덮어쓰지 않고 featureDir에 PRD-patch-vN.md를 새로 쓴다. */
+/** Patch: 1차 산출물을 덮어쓰지 않고 featureDir에 PRD-patch-vN.md를 새로 쓴다. */
 export async function writePatchPrdFile(
   featureDir: string,
   version: number,
@@ -49,7 +49,7 @@ export async function writePatchPrdFile(
   return { featurePath: featureDir, prdPath };
 }
 
-/** §7 Patch: featureDir에 work-result-patch-vN.md를 새로 쓴다. */
+/** Patch: featureDir에 work-result-patch-vN.md를 새로 쓴다. */
 export async function writePatchWorkResultFile(
   featureDir: string,
   version: number,

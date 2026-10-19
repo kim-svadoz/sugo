@@ -19,7 +19,7 @@ export const sugoHistoryInputSchema = {
 const SugoHistoryArgs = z.object(sugoHistoryInputSchema);
 
 /** sugo_plan(commit)이 워크스페이스 프로젝트에 대해 자동으로 WorkLog를 남기지만, 이 도구로
- * 수동 기록(파이프라인 밖 작업, patch 흐름 등)도 가능하다(§8). */
+ * 수동 기록(파이프라인 밖 작업, patch 흐름 등)도 가능하다. */
 export async function handleSugoHistory(rawArgs: unknown) {
   const args = SugoHistoryArgs.parse(rawArgs);
 

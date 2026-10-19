@@ -141,7 +141,7 @@ describe("commit → prRefs 수집 + WorkLog에 실림", () => {
     const commit = await call(handleSugoPlan, { action: "commit", sessionId });
     expect(commit.isError).toBe(false);
 
-    // commit이 WorkLog를 대시보드로 sync한다(평평한 history wire). prRefs는 §7.2 정본 경로가
+    // commit이 WorkLog를 대시보드로 sync한다(평평한 history wire). prRefs의 정본 경로는
     // roadmap 노드 workResult.prRefs라 history wire엔 실리지 않는다(seam 어댑터가 제외) — 대신
     // prRefs가 로컬 WorkLog에는 수집돼 있어야 한다(git 원격에서 repoSlug 추출).
     const historyPush = received.find((r) => r.path === "/api/sync/history");

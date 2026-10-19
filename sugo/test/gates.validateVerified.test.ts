@@ -41,7 +41,7 @@ describe("checkValidateVerifiedGate — 실측 실패만 막는다(자기보고�
   });
 
   it("verified 실패가 없으면 전체 verdict가 fail이어도 통과한다(자기보고 실패는 안 막음)", () => {
-    // 91%는 여전히 자기보고다 — 실측 안 된 실패로 파이프라인을 막으면 "확인 안 함"과
+    // 자기보고 실패는 실측이 아니다 — 실측 안 된 실패로 파이프라인을 막으면 "확인 안 함"과
     // "확인했더니 틀렸다"를 못 구분하게 된다.
     const result = checkValidateVerifiedGate(lastValidation({ verdict: "fail", verifiedFailures: [] }));
     expect(result.ok).toBe(true);

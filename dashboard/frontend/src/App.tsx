@@ -13,7 +13,7 @@ import { Playbook } from "./pages/Playbook.js";
 import { WeeklyPage } from "./pages/WeeklyPage.js";
 import { Settings } from "./pages/Settings.js";
 
-// §5: BrowserRouter -> AuthProvider. 공개: /login, /auth/callback.
+// BrowserRouter -> AuthProvider. 공개: /login, /auth/callback.
 // 게이트(ProtectedRoute -> Layout): /(-> /sessions), sessions, roadmap/:workspace,
 // skills, harness, playbook, weekly, settings.
 export function App() {

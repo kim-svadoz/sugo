@@ -17,7 +17,7 @@ export async function loadWorkspace(name: string): Promise<Workspace | null> {
 /**
  * 없으면 생성, 있으면 projects를 병합(중복 제거)한다.
  *
- * §9 **un-delete:** soft delete된 이름을 다시 쓰면 되살린다. 삭제가 숨김이었지 소멸이 아니었으므로
+ * **un-delete:** soft delete된 이름을 다시 쓰면 되살린다. 삭제가 숨김이었지 소멸이 아니었으므로
  * 기존 projects/created_at은 그대로 두고 `deleted_at`만 떼어낸다. 대시보드에도 재sync해서
  * 양쪽이 "삭제됨"으로 어긋난 채 남지 않게 한다.
  */
@@ -32,11 +32,11 @@ export async function ensureWorkspace(name: string, projectPath?: string): Promi
   };
   await mkdir(workspaceDir(name), { recursive: true });
   await atomicWriteFile(workspaceFilePath(name), JSON.stringify(workspace, null, 2));
-  void syncWorkspace(workspace); // §7.2 논블로킹 — 로컬 쓰기 완료 후 흘려보낸다(실패해도 이 함수는 이미 반환됨)
+  void syncWorkspace(workspace); // 논블로킹 — 로컬 쓰기 완료 후 흘려보낸다(실패해도 이 함수는 이미 반환됨)
   return workspace;
 }
 
-/** `includeDeleted`를 켜지 않으면 soft delete된 워크스페이스는 보이지 않는다(§9). */
+/** `includeDeleted`를 켜지 않으면 soft delete된 워크스페이스는 보이지 않는다. */
 export async function listWorkspaces(includeDeleted = false): Promise<Workspace[]> {
   let entries;
   try {
@@ -59,9 +59,8 @@ export async function listWorkspaces(includeDeleted = false): Promise<Workspace[
  * 프로젝트를 소속된 모든 워크스페이스의 `projects`에서 뺀다. 제거가 일어난 워크스페이스 이름을
  * 돌려준다(없으면 빈 배열).
  *
- * §9 `sugo_delete`가 레지스트리만 지우고 워크스페이스 멤버십은 남겨서, 등록돼 있지도 않은 경로가
- * `sugo_workspace(get)`에 계속 보이는 고아 항목이 생겼다. 빼는 경로가 아예 없어 사용자가
- * `workspace.json`을 손으로 고쳐야 했다.
+ * `sugo_delete`가 레지스트리만 지우고 워크스페이스 멤버십은 남기면, 등록돼 있지도 않은 경로가
+ * `sugo_workspace(get)`에 계속 보이는 고아 항목이 된다. 이 함수가 그 항목을 뺀다.
  *
  * soft delete된 워크스페이스도 대상에 포함한다 — 숨겨졌을 뿐 되살릴 수 있는 데이터라, 거기 남은
  * 고아는 `ensureWorkspace`로 복구했을 때 그대로 되살아난다.
@@ -72,13 +71,13 @@ export async function removeProjectFromWorkspaces(projectPath: string): Promise<
     if (!workspace.projects.includes(projectPath)) continue;
     const next: Workspace = { ...workspace, projects: workspace.projects.filter((p) => p !== projectPath) };
     await atomicWriteFile(workspaceFilePath(next.name), JSON.stringify(next, null, 2));
-    void syncWorkspace(next); // §7.2 논블로킹 — ensureWorkspace와 같은 방식
+    void syncWorkspace(next); // 논블로킹 — ensureWorkspace와 같은 방식
     affected.push(next.name);
   }
   return affected;
 }
 
-// ── §9 워크스페이스 soft delete ──────────────────────────────────────────────
+// ── 워크스페이스 soft delete ──────────────────────────────────────────────
 
 export interface DeleteWorkspaceOptions {
   /** 연결된 프로젝트가 있어도 하드 삭제를 진행한다. */
@@ -112,7 +111,7 @@ function isValidWorkspaceName(name: string): boolean {
 }
 
 /**
- * §9 워크스페이스 삭제. **기본은 soft** — "삭제"가 곧 데이터 소멸이면 실수 한 번으로 누적된
+ * 워크스페이스 삭제. **기본은 soft** — "삭제"가 곧 데이터 소멸이면 실수 한 번으로 누적된
  * 태스크·이력·체크포인트가 사라진다. 진짜 지우려면 `purge`를 명시해야 한다.
  *
  * - **soft(기본):** 이미 삭제됐으면 no-op(타임스탬프를 덮지 않는다 — 최초 삭제 시각이 정보다),

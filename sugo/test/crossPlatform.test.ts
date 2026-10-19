@@ -10,7 +10,7 @@ import { slugify } from "../src/work/slug.js";
 import { handleSugoOverview } from "../src/tools/sugoOverview.js";
 
 /**
- * 크로스플랫폼 동등성 코퍼스 — "Windows에서 통과 == mac에서 통과"를 호스트 OS와 무관하게 증명한다.
+ * 크로스플랫폼 동등성 테스트 — "Windows에서 통과 == mac에서 통과"를 호스트 OS와 무관하게 증명한다.
  * 플랫폼 차이가 실제로 존재하는 지점(유니코드 정규화 / 래퍼 명령 / 경로 구분자)만 다룬다.
  */
 
@@ -36,7 +36,7 @@ afterEach(() => {
 /**
  * 한글은 완성형(NFC)과 조합형(NFD)이 화면상 구별되지 않는다. macOS 경로에서 조합형이 흘러들어오면
  * 슬러그 화이트리스트 `가-힣`(완성형 전용)에 하나도 안 걸려 이름이 통째로 붕괴한다 — Windows에선
- * 재현되지 않는 mac 전용 사고라 코퍼스로 못박는다.
+ * 재현되지 않는 mac 전용 문제라 테스트로 고정한다.
  */
 describe("유니코드 정규화 — mac발 조합형 한글(NFD)", () => {
   it("반드시 허용: NFD 기능명이 NFC와 같은 슬러그를 낸다", () => {
@@ -122,10 +122,10 @@ describe("stackDetector — 래퍼 명령의 OS 분기(양쪽 다 검증)", () =
 });
 
 /**
- * 회귀 방지 가드. 여기서 잡는 건 "이 PC에서만 되는 코드"가 다시 스며드는 것 하나뿐이라
+ * 회귀 방지 가드. 여기서 잡는 건 "특정 PC에서만 되는 코드"가 다시 스며드는 것 하나뿐이라
  * 규칙을 좁게 유지한다 — 넓은 린트는 오탐으로 무력화된다.
  */
-describe("이식성 가드 — 배포되는 코드에 이 PC 전용 가정이 없다", () => {
+describe("이식성 가드 — 배포되는 코드에 특정 PC 전용 가정이 없다", () => {
   const roots = ["src", "hooks", "commands", "agents", "skills", "locales", "harness-library", "scripts", ".claude-plugin"];
 
   async function sourceFiles(): Promise<string[]> {

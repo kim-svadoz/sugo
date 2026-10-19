@@ -34,7 +34,7 @@ function fileBadgeColor(change: WorkResultFile["change"]): string {
   return "#f59e0b";
 }
 
-// §5 SubtaskPanel(폭 420, 탭 progress/summary/files).
+// SubtaskPanel(폭 420, 탭 progress/summary/files).
 // WorkResult 메타·수동 done/취소·PR 패널은 progress 탭에 있다.
 export function SubtaskPanel({
   workspace,
@@ -590,7 +590,7 @@ function FilesTab({ userId, workspace, taskId, sessionId, patchVersion, files, o
 /**
  * REQ(subtask) 목록 — REQ는 **그래프 노드가 아니라 이 패널**에 산다.
  *
- * `{taskId}::REQ-CONFIRM`(사용자 최종확인)은 §9상 **에이전트가 못 닫고 사람의 review_done으로만**
+ * `{taskId}::REQ-CONFIRM`(사용자 최종확인)은 **에이전트가 못 닫고 사람의 review_done으로만**
  * 완료되는 노드라, 다른 REQ와 구분해 표시한다 — 이게 섞이면 "AI가 다 끝냈다"로 잘못 읽힌다.
  */
 function ReqList({ reqs, workspace, node, onChanged }: { reqs: RoadmapNode[]; workspace: string; node: RoadmapNode; onChanged: () => void }) {

@@ -63,7 +63,7 @@ async function toTestRunning(): Promise<string> {
   return sessionId;
 }
 
-describe("§10 PRD 정합성 게이트 — opt-in 꺼져있으면(기본) coverageMap 없이도 통과", () => {
+describe("PRD 정합성 게이트 — opt-in 꺼져있으면(기본) coverageMap 없이도 통과", () => {
   it("integrationGateEnforced 미설정이면 coverageMap 없이 test_done이 통과한다", async () => {
     const sessionId = await toTestRunning();
     await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
@@ -72,7 +72,7 @@ describe("§10 PRD 정합성 게이트 — opt-in 꺼져있으면(기본) covera
   });
 });
 
-describe("§10 PRD 정합성 게이트 — opt-in 켜져 있으면 강제", () => {
+describe("PRD 정합성 게이트 — opt-in 켜져 있으면 강제", () => {
   it("coverageMap 없이 test_done을 호출하면 COVERAGE_MAP_REQUIRED로 거부한다", async () => {
     await call(handleSugoAdd, { projectPath: projectDir, integrationGateEnforced: true });
     const sessionId = await toTestRunning();
@@ -111,7 +111,7 @@ describe("§10 PRD 정합성 게이트 — opt-in 켜져 있으면 강제", () =
   });
 });
 
-describe("auto-loop 재시도 카운트 (§4.5 신호)", () => {
+describe("auto-loop 재시도 카운트", () => {
   it("TEST_DONE에서 code_start로 역방향 재진입하면 autoLoopRetryCount가 증가한다", async () => {
     const sessionId = await toTestRunning();
     await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 1, failed: 2 });
@@ -190,7 +190,7 @@ describe("sugo_status(judgment) — 전체 흐름 집계", () => {
     await call(handleSugoAnalyze, { sessionId: s2, changedFiles: [] });
     await call(handleSugoPlan, { action: "code_done", sessionId: s2, changedFiles: [] });
     await call(handleSugoPlan, { action: "test_start", sessionId: s2 });
-    // §4.6 label-guard: 이 세션은 "환경 자체가 없다"는 일관된 이야기여야 한다 — test_done에서
+    // label-guard: 이 세션은 "환경 자체가 없다"는 일관된 이야기여야 한다 — test_done에서
     // 이미 그린으로 통과했는데 review_done에서 환경부재를 주장하면 라벨-모순으로 거부되기 때문에,
     // test evidence도 함께 unverified로 기록한다(테스트가 실제로 검증됐다는 증거가 세션에 없어야 함).
     await call(handleSugoRecordTestEvidence, { sessionId: s2, command: "npm test", unverified: true, unverifiedReason: "환경 없음" });

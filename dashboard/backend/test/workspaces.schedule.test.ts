@@ -34,7 +34,7 @@ async function bootApp() {
   return { app, db, auth };
 }
 
-describe("GET /api/workspaces/schedule — §7B 워크스페이스 비종속 집계", () => {
+describe("GET /api/workspaces/schedule — 워크스페이스 비종속 집계", () => {
   it("전체 워크스페이스에서 level='spec' 노드만, due_date NULL 포함해서 반환한다", async () => {
     const ctx = await bootApp();
     await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }, { id: "run1", level: "workstream" }], ctx);
@@ -238,7 +238,7 @@ describe("GET/PUT /api/workspaces/:name/roadmap/spec-document — 원문 조회�
   });
 });
 
-describe("POST /api/workspaces/:name/roadmap/due-date — §7B", () => {
+describe("POST /api/workspaces/:name/roadmap/due-date", () => {
   it("level='spec' 노드에 날짜를 지정하면 즉시 반영된다", async () => {
     const { app, db, auth } = await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }]);
     await request(app)
@@ -298,7 +298,7 @@ describe("POST /api/workspaces/:name/roadmap/due-date — §7B", () => {
   });
 });
 
-describe("POST /api/workspaces/:name/roadmap/quick-spec — §7B 경량 Spec 생성", () => {
+describe("POST /api/workspaces/:name/roadmap/quick-spec — 경량 Spec 생성", () => {
   it("Run/Task 없이 level='spec' 노드만 만들고, 곧바로 /schedule에 나타난다", async () => {
     const { app, db, auth } = await bootApp();
     const res = await request(app)
@@ -363,7 +363,7 @@ describe("POST /api/workspaces/:name/roadmap/quick-spec — §7B 경량 Spec 생
   });
 });
 
-describe("POST /api/workspaces/:name/roadmap/project — §7B 스펙별 프로젝트 지정", () => {
+describe("POST /api/workspaces/:name/roadmap/project — 스펙별 프로젝트 지정", () => {
   it("level='spec' 노드에 프로젝트를 지정하면 즉시 반영된다", async () => {
     const { app, db, auth } = await appWithNodesIn("ws1", [{ id: "spec1", level: "spec" }]);
     await request(app)

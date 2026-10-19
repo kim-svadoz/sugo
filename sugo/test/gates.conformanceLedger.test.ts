@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { validateConformanceLedger } from "../src/gates.js";
 
 /**
- * §5.0 `CONFORMANCE_LEDGER_INCOMPLETE` — prd 차단.
+ * `CONFORMANCE_LEDGER_INCOMPLETE` — prd 차단.
  *
  * PRD에 In-Scope/DoD 항목을 적어놓고 그 중 일부를 REQ로 승격하지 않으면, 그 항목은 **아무
  * 게이트도 통과하지 않은 채 "하기로 한 일"로만 남는다.** 로드맵 subtask로 심기지 않으니
  * 진행률에도 안 잡히고, review_done의 PRD 커버리지 대조에도 안 걸린다 — 조용히 증발한다.
  * 그래서 원장(ledger) 항목과 REQ가 1:1로 맞물릴 때만 통과시킨다.
  */
-describe("§5.0 validateConformanceLedger", () => {
+describe("validateConformanceLedger", () => {
   const withReqs = "### REQ-001: 이메일 로그인\n### REQ-002: 소셜 로그인\n";
 
   it("허용: 원장 섹션이 아예 없으면 no-op(레거시 PRD 하위호환)", () => {

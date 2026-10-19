@@ -92,7 +92,7 @@ describe("harness-library 구조 가드", () => {
 
 describe("harness-library validation.yaml 내용 가드", () => {
   // parseValidationYaml은 관대하다(harnessId 누락→"unknown", severity 오타→"warning", id 없으면 제외).
-  // 파싱 결과만 보면 그 문제들이 정규화돼 사라지므로 원본 YAML을 직접 검사한다.
+  // 파싱 결과만 보면 그 문제들이 정규화돼 사라지므로 파싱 전 YAML을 직접 검사한다.
   const rawByHarness = harnessDirs.map((d) => ({
     id: harnessIdFromPath(d),
     raw: load(readFileSync(join(d, "validation.yaml"), "utf-8")) as RawYaml | null,

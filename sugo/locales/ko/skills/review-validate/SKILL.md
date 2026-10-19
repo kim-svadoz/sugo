@@ -23,7 +23,7 @@ description: 'review-agent 체인 기본 스킬. validation.yaml checks[] 기반
 6. 결과 분석: `verified` 실패는 review_done을 실제로 막는다(`VALIDATE_VERIFIED_FAILURE`) — 여기서
    미리 고치고 재검증한다. `self-reported`는 네 판정 그대로 참고만 된다. `contradictions`에 주장과
    실측이 어긋난 항목이 남는다.
-7. `sugo_check_lethal_trifecta(sessionId, tools)` 실행(**§P6-1: review_done 전 필수, opt-in
+7. `sugo_check_lethal_trifecta(sessionId, tools)` 실행(**review_done 전 필수, opt-in
    아님**): `changedFiles`가 새로 건드린 도구 호출·MCP 서버·네트워크 호출·파일 읽기 경로를 훑어
    capability(사설데이터 접근/신뢰불가 입력 처리/외부통신)를 네가 직접 판단해 채운다(이름/설명에서
    자동 추측 금지). 경고(3축 동시 성립)가 있으면 `review_done`에 `trifectaMitigation`(완화 방법)을
@@ -47,7 +47,7 @@ code-agent에 되돌릴지는 네 판단이다(재진입은 `autoLoopRetryCount`
 안 불렀으면 `LETHAL_TRIFECTA_NOT_CALLED`로, 경고가 있는데 완화사유가 없으면
 `LETHAL_TRIFECTA_MITIGATION_REQUIRED`로 review_done이 막힌다.**
 
-**증거 스냅샷이 낡아 어떤 인자로도 안 통과할 때(§4.3-R):** `test_done` 시점의 판정이
+**증거 스냅샷이 낡아 어떤 인자로도 안 통과할 때:** `test_done` 시점의 판정이
 `testPassedState`로 박히고 이후 그린 증거를 다시 기록해도 갱신되지 않는다. 그래서
 `runtimeVerified:true`는 `RUNTIME_CLAIM_CONTRADICTS_EVIDENCE`로, 라벨을 붙이면
 `LABEL_CONTRADICTION`으로, 안 붙이면 `RUNTIME_UNVERIFIED_GATE_FAILED`로 — 세 길이 다 막히는

@@ -19,7 +19,7 @@ const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as {
   DatabaseSync: new (path: string, options?: { readOnly?: boolean }) => Db;
 };
 const script = join(__dirname, "..", "scripts", "import-legacy-dashboard-db.mjs");
-// 임의로 만든 테이블 이름 대신 실제 대시보드 스키마로 원본 DB를 만든다.
+// 임의로 만든 테이블 이름 대신 실제 대시보드 스키마로 소스 DB를 만든다.
 const schemaFile = join(__dirname, "..", "..", "dashboard", "backend", "test", "schema.sqlite.sql");
 
 let home: string;
@@ -49,7 +49,7 @@ afterEach(() => {
 });
 
 describe("기존 dev-local DB 이전", () => {
-  it("사용자 데이터 폴더로 스냅샷을 복사하고 원본은 그대로 둔다", async () => {
+  it("사용자 데이터 폴더로 스냅샷을 복사하고 소스 DB는 그대로 둔다", async () => {
     const before = readFileSync(source);
 
     const { code, out } = await run([source]);
@@ -85,7 +85,7 @@ describe("기존 dev-local DB 이전", () => {
     expect(err).toContain("is running");
   });
 
-  it("원본이 없으면 실패한다", async () => {
+  it("소스 DB가 없으면 실패한다", async () => {
     const { code, err } = await run([join(work, "missing.db")]);
 
     expect(code).toBe(1);

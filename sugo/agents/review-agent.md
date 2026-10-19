@@ -16,8 +16,8 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
 
 ## 스킬
 
-- `validate`(체인 기본): `sugo/harness/<id>/validation.yaml` 기반 하네스 규칙 검증. **§P6-1부터
-  `sugo_check_lethal_trifecta` 호출도 이 체인 기본 경로에 포함된다** — "보안" 관련 요청일 때만
+- `validate`(체인 기본): `sugo/harness/<id>/validation.yaml` 기반 하네스 규칙 검증.
+  **`sugo_check_lethal_trifecta` 호출도 이 체인 기본 경로에 포함된다** — "보안" 관련 요청일 때만
   붙는 옵트인이 아니라 매 review마다 무조건 부른다.
 - `security`: OWASP 2021, CWE 매핑까지 포함한 전체 보안 점검(shared: security-checklist). Lethal
   Trifecta 자체는 이제 `validate`가 항상 부르므로, 이 스킬은 "보안/취약점" 요청에 OWASP Top 10을
@@ -40,7 +40,7 @@ tools: Read, Grep, Glob, mcp__plugin_sugo_sugo__sugo_get_project_context, mcp__p
    실측하고 그 결과가 네 주장을 덮어쓴다 — 확인하지 않은 항목을 통과로 올리지 않는다. 실측 실패가
    하나라도 있으면 review_done이 `VALIDATE_VERIFIED_FAILURE`로 막히므로, 여기서 미리 고치고
    재검증하는 게 낫다.
-6. `sugo_check_lethal_trifecta(sessionId, tools)` 실행(**§P6-1: review_done 전 필수 — 안 부르면
+6. `sugo_check_lethal_trifecta(sessionId, tools)` 실행(**review_done 전 필수 — 안 부르면
    `LETHAL_TRIFECTA_NOT_CALLED`로 막힌다**): 이번 변경(`changedFiles`)이 새로 추가하거나 건드린
    도구 호출·MCP 서버·네트워크 호출·파일 읽기 경로를 훑어, 각각의 capability(사설데이터 접근/
    신뢰불가 입력 처리/외부통신)를 **네가 실제로 판단해서** 채운다 — 이름이나 설명에서 자동으로
@@ -78,8 +78,8 @@ OWASP Top 10(2021)과 CWE 매핑을 점검한다. Lethal Trifecta 점검(`sugo_c
 - **서버가 `auto`로 실측해 실패로 확인한 항목이 하나라도 있으면 `VALIDATE_VERIFIED_FAILURE`로
   막힌다.** 자기보고로 통과했다고 주장해도 소용없다 — 실측이 이긴다. 이건 논쟁 대상이 아니라
   code-agent에게 돌려 고쳐야 할 사실이다.
-- **자기보고 실패(전체 verdict가 fail이어도 `verified` 아닌 것)는 이 게이트로 안 막는다.** 91%는
-  여전히 자기보고라, 하드 게이트로 걸면 "확인 안 함"과 "확인했더니 틀렸다"를 못 구분하게 된다 —
+- **자기보고 실패(전체 verdict가 fail이어도 `verified` 아닌 것)는 이 게이트로 안 막는다.** 대부분의
+  체크는 여전히 자기보고라, 하드 게이트로 걸면 "확인 안 함"과 "확인했더니 틀렸다"를 못 구분하게 된다 —
   이 경우엔 `sugo_chain`으로 스스로 되돌릴지 판단한다(재진입은 `autoLoopRetryCount`로 쌓이되
   서버가 강제하는 횟수 상한은 없다). 환경 부재가 아닌데 runtimeVerified=false를 주장하면
   런타임 게이트가 따로 막는다.

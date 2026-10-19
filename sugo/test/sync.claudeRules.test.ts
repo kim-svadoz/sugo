@@ -112,7 +112,7 @@ describe("sugo_add — .claude/rules/ 실배선", () => {
     expect(rootAgents.split("sugo:project-context:start").length).toBe(2);
   });
 
-  it("sugo/CLAUDE.md는 내용이 안 바뀌면 재기록을 생략한다(§2 step 4)", async () => {
+  it("sugo/CLAUDE.md는 내용이 안 바뀌면 재기록을 생략한다", async () => {
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: {} }));
     writeFileSync(join(projectDir, "tsconfig.json"), "{}");
     await call(handleSugoAdd, { projectPath: projectDir });

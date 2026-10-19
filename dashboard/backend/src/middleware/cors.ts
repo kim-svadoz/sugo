@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 
-// §8 "현재 냄새" fix: whitelist instead of wide-open cors(). Frontend attaches
-// Authorization: Bearer (§5), so Access-Control-Allow-Headers must include it.
+// Whitelist instead of wide-open cors(). Frontend attaches
+// Authorization: Bearer, so Access-Control-Allow-Headers must include it.
 export function corsWhitelist(allowedOrigins: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;

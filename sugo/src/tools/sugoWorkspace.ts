@@ -14,11 +14,10 @@ import { sessionsForProjects } from "../work/sessionSummary.js";
 import { backfillWorkspaceGitHistory } from "../work/gitHistory.js";
 
 /**
- * §1/§9 `sugo_workspace`. 워크스페이스에 대한 조작은 전부 여기 모은다 — `status`(데이터 요약)와
+ * `sugo_workspace`. 워크스페이스에 대한 조작은 전부 여기 모은다 — `status`(데이터 요약)와
  * `sync`(대시보드 재push)도 포함이다.
  *
- * ⚠️ `sync`는 스펙 도구 표의 action 목록(list/create/delete/status)에 없지만, "대시보드와
- * 어긋났을 때 수동으로 다시 밀어넣는" 실동작 기능이라 의도적으로 유지한다.
+ * `sync`는 "대시보드와 어긋났을 때 수동으로 다시 밀어넣는" 기능이다.
  */
 export const sugoWorkspaceInputSchema = {
   action: z.enum(["add", "list", "get", "remember", "recall", "status", "sync", "delete"]),
@@ -142,7 +141,7 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
       // push는 fire-and-forget이라 여기서 큐를 한 바퀴 돌려야 "수동 재sync"가 실제로 나간다.
       await drainRetryQueue();
       // 대시보드 미설정이면 위 push들은 전부 조용한 no-op이다 — `synced: true`는 거짓 보고가
-      // 된다(checkpoint sync와 같은 이유로 정정).
+      // 된다(checkpoint sync와 같은 이유).
       const config = await resolveDashboardConfig();
       if (!config.enabled) {
         return ok({

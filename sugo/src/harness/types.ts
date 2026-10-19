@@ -14,7 +14,7 @@ export interface DetectedStack {
   dataStores: DetectedItem[];
   buildTools: DetectedItem[];
   infra: DetectedItem[];
-  /** language/framework/buildTool 규칙의 id만 모음(중복제거). dataStore/infra는 정보성이라 제외한다(§2). */
+  /** language/framework/buildTool 규칙의 id만 모음(중복제거). dataStore/infra는 정보성이라 제외한다. */
   harnessIds: string[];
   commands: {
     build?: string;
@@ -29,7 +29,7 @@ export interface DetectedStack {
  */
 export interface DetectionContext {
   projectPath: string;
-  /** §P6-2: 이번 세션에서 변경된 파일 목록(상대경로 또는 절대경로). changed-files-content-absent
+  /** 이번 세션에서 변경된 파일 목록(상대경로 또는 절대경로). changed-files-content-absent
    * auto-check가 이걸 대상으로 돈다 — 정적 paths 목록이 아니라 "이번 diff"를 스캔해야 하는 체크용. */
   changedFiles: string[];
   fileExists(relPath: string): boolean;

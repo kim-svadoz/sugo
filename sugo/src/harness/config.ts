@@ -15,7 +15,7 @@ export interface VerificationPolicy {
   integrationGateEnforced?: boolean;
 }
 
-/** §9 config 스키마 */
+/** 프로젝트 config 스키마 */
 export interface ProjectConfig {
   version: string;
   projectPath: string;
@@ -25,8 +25,8 @@ export interface ProjectConfig {
   detectedStack: DetectedStack;
   appliedHarnesses: AppliedHarnessMeta[];
   autoCommitArtifacts?: boolean;
-  /** §9: 프로젝트를 비활성 처리(sugo_disable/sugo_enable). 게이트 자체를 우회시키지는 않는다 —
-   * sugo_status에 노출되는 상태 표시 용도(하드 동작 변경은 스펙에 명시돼 있지 않아 만들지 않았다). */
+  /** 프로젝트를 비활성 처리(sugo_disable/sugo_enable). 게이트 자체를 우회시키지는 않는다 —
+   * sugo_status에 노출되는 상태 표시 용도다. */
   disabled?: boolean;
   verificationPolicy?: VerificationPolicy;
 }

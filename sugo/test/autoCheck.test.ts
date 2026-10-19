@@ -108,7 +108,7 @@ describe("evaluateAutoCheck — file-content-absent", () => {
   });
 });
 
-describe("evaluateAutoCheck — changed-files-content-absent(§P6-2)", () => {
+describe("evaluateAutoCheck — changed-files-content-absent", () => {
   const spec = parseAutoSpec({
     kind: "changed-files-content-absent",
     pattern: "(api[_-]?key|secret|password)\\s*[:=]\\s*[\"'][A-Za-z0-9_\\-]{8,}[\"']",

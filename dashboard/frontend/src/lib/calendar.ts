@@ -1,4 +1,4 @@
-/** §7B Schedule 탭 — SchedulePage와 DatePicker가 같은 그리드 로직을 쓰도록 공용화했다. */
+/** SchedulePage와 DatePicker가 같은 그리드 로직을 쓰도록 공용화했다. */
 import { krHolidayName } from "./krHolidays.js";
 
 export function toDateKey(d: Date): string {

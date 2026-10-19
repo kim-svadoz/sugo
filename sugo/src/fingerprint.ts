@@ -37,7 +37,7 @@ export async function computeChangedFilesFingerprint(projectPath: string, change
 }
 
 /**
- * §10 이중 실행 제거: test_done에서 기록한 지문과 review_done 시점 지문을 대조한다.
+ * 이중 실행 제거: test_done에서 기록한 지문과 review_done 시점 지문을 대조한다.
  * reusedFromTestDone을 주장하지 않으면 no-op. 주장했는데 baseline(기록된 지문) 자체가 없거나,
  * test_done 증거가 pass가 아니거나, 지문이 불일치하면(리뷰 중 코드 수정) 거부 — 재실행 요구.
  */

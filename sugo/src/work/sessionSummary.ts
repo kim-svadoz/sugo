@@ -1,7 +1,7 @@
 import type { PlanSession } from "../types.js";
 
 /**
- * ISO 시각을 실행 머신의 시간대로 포맷한다. 파싱할 수 없으면 undefined를 돌려준다 — 원본 ISO는
+ * ISO 시각을 실행 머신의 시간대로 포맷한다. 파싱할 수 없으면 undefined를 돌려준다 — 원래 ISO는
  * 그대로 남으므로 여기서 추측값을 만들어 넣지 않는다.
  */
 function toLocalTime(iso: string | undefined): string | undefined {
@@ -33,7 +33,7 @@ export interface SessionSummary {
   /**
    * `updatedAt`을 실행 머신의 시간대로 포맷한 값(`2026-09-18 15:31:51 KST` 형태).
    *
-   * 원본 ISO는 UTC라 사람이 "언제 멈췄나"를 바로 못 읽는다. 시간대를 하드코딩하지 않고 시스템
+   * 원래 ISO는 UTC라 사람이 "언제 멈췄나"를 바로 못 읽는다. 시간대를 하드코딩하지 않고 시스템
    * 설정을 따른다 — 플러그인은 배포물이라 특정 지역을 박으면 다른 환경에서 틀린 시각을 보여준다.
    */
   updatedAtLocal?: string;
@@ -83,7 +83,7 @@ export function summarizeSession(session: PlanSession): SessionSummary {
 /**
  * 워크스페이스에 속한 프로젝트들의 세션만 골라 최신순으로 돌려준다.
  *
- * 세션은 `projectPath`만 알고 워크스페이스를 모른다(§8에서 워크스페이스는 레지스트리가 매핑한다).
+ * 세션은 `projectPath`만 알고 워크스페이스를 모른다.
  * 그래서 소속 판정은 호출부가 넘긴 경로 집합으로만 한다 — 여기서 레지스트리를 다시 읽으면
  * 등록이 해제된 프로젝트의 세션이 워크스페이스에서 조용히 사라진다.
  */

@@ -6,9 +6,9 @@ import { AgentBadge } from "./AgentBadge.js";
 import { formatActivityTime } from "../lib/activityTime.js";
 
 /**
- * §6 실시간 Activity Stream(폴링, SSE 아님).
+ * 실시간 Activity Stream(폴링, SSE 아님).
  *
- * **고정폭 5컬럼(v2 신규):** Col1 프롬프트 `>`(w-3) / Col2 타임스탬프(w-[92px]) /
+ * **고정폭 5컬럼:** Col1 프롬프트 `>`(w-3) / Col2 타임스탬프(w-[92px]) /
  * **Col3 뱃지 고정폭 w-[96px]** / Col4 도메인 / Col5 메시지(truncate).
  * 뱃지 칸을 "TEST → REVIEW" 최대폭으로 못박아야 도메인·메시지 시작점이 세로로 정렬된다 —
  * 안 그러면 핸드오프가 있는 줄만 오른쪽으로 밀려 로그가 계단처럼 보인다.
@@ -104,7 +104,7 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
   );
 }
 
-/** §6 워크스페이스별 tail — Agent Canvas 오버레이 하단에 붙는다. slice(0,40). */
+/** 워크스페이스별 tail — Agent Canvas 오버레이 하단에 붙는다. slice(0,40). */
 export function LiveLogTail({ workspace }: { workspace: string }) {
   const events = useActivityStream(workspace);
   const [expanded, setExpanded] = useState(false);

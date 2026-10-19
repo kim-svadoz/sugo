@@ -8,7 +8,7 @@ import {
 } from "../src/harness/toolRegistry.js";
 
 describe("HARNESS_TOOL_REGISTRY 기본값", () => {
-  it("특화 MCP를 등록하지 않으면 기본은 빈 배열이다(§2 안전 기본값)", () => {
+  it("하네스 도구 MCP를 등록하지 않으면 기본은 빈 배열이다(안전 기본값)", () => {
     expect(HARNESS_TOOL_REGISTRY).toEqual([]);
   });
 });
@@ -28,7 +28,7 @@ const SAMPLE_REGISTRY: HarnessToolEntry[] = [
   },
 ];
 
-describe("resolveHarnessToolGuides — 소문자 substring 매칭(§2)", () => {
+describe("resolveHarnessToolGuides — 소문자 substring 매칭", () => {
   it("appliedHarnessIds 중 match 문자열을 포함하는 항목만 골라낸다", () => {
     const result = resolveHarnessToolGuides(["be/framework/spring/3.x", "be/gradle/8.x"], SAMPLE_REGISTRY);
     expect(result).toHaveLength(1);
@@ -63,7 +63,7 @@ describe("mcpAllowPatterns", () => {
 });
 
 describe("renderToolMenu", () => {
-  it("빈 가이드면 빈 문자열(특화 도구 없음을 조용히 표시)", () => {
+  it("빈 가이드면 빈 문자열(하네스 도구 없음을 조용히 표시)", () => {
     expect(renderToolMenu([])).toBe("");
   });
 

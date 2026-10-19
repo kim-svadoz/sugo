@@ -55,7 +55,7 @@ describe("registerProject / loadRegistry — tmpdir을 HOME으로 쓰는 실배�
   });
 });
 
-describe("unregisterProject — sugo_delete(§9 라이프사이클, 레지스트리만 제거)", () => {
+describe("unregisterProject — sugo_delete(레지스트리만 제거)", () => {
   it("등록된 프로젝트를 제거하면 true를 반환하고 목록에서 사라진다", async () => {
     const path = join(fakeHome, "proj-c");
     await registerProject({ path, name: "proj-c", registeredAt: "2026-01-01T00:00:00.000Z" });

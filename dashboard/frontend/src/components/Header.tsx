@@ -1,7 +1,7 @@
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 
 /**
- * Header — h-16 ck-glass. **버전 뱃지 2축(§5.5)이 핵심**이다:
+ * Header — h-16 ck-glass. **버전 뱃지 2축이 핵심**이다:
  * - `Console v{dashboardVersion}` — 빌드타임에 박힌 대시보드 자신의 버전(회색 보더 + cyan).
  * - `Plugin v{pluginVersion}` — 마지막 sync에서 받은 플러그인 버전(emerald + 펄스닷).
  *   아직 sync된 적이 없으면 `—`. 버전을 지어내지 않는다 — "모른다"가 정확한 정보다.

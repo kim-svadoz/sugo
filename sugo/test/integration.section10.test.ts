@@ -42,9 +42,9 @@ afterEach(() => {
 
 /**
  * contractRedContractId가 주어지면 contract_start 이후 그 id로 red를 먼저 기록해두고 contract_done을
- * 부른다(§3 신규 gate: 계약필수인데 red가 하나도 없으면 이 단계에서 이미 막힌다 — 그 경계 자체는
+ * 부른다(계약필수인데 red가 하나도 없으면 이 단계에서 이미 막힌다 — 그 경계 자체는
  * integration.gates.test.ts의 "contract_done 게이트" 블록에서 전담 검증하고, 여기서는 review_done의
- * red→green 전체 재검증(§10)에 집중하기 위해 그 전제만 충족시켜둔다).
+ * red→green 전체 재검증에 집중하기 위해 그 전제만 충족시켜둔다).
  */
 async function toTestDonePass(
   prd = VALID_PRD,
@@ -81,7 +81,7 @@ async function toTestDonePass(
   return sessionId;
 }
 
-describe("§10 이중 실행 제거 — reusedFromTestDone", () => {
+describe("이중 실행 제거 — reusedFromTestDone", () => {
   it("파일이 그대로면 runtimeCheck 없이 review_done이 통과한다", async () => {
     const sessionId = await toTestDonePass();
     const result = await call(handleSugoPlan, {
@@ -112,7 +112,7 @@ describe("§10 이중 실행 제거 — reusedFromTestDone", () => {
   });
 });
 
-describe("§10 계약테스트 실행증거 — opt-in", () => {
+describe("계약테스트 실행증거 — opt-in", () => {
   it("opt-in 꺼져있으면(기본) 기록 없이도 review_done이 통과한다", async () => {
     const sessionId = await toTestDonePass();
     const result = await call(handleSugoPlan, {
@@ -125,7 +125,7 @@ describe("§10 계약테스트 실행증거 — opt-in", () => {
     expect(result.isError).toBe(false);
   });
 
-  it("§3 신규 gate: 필수인데 red 확인 자체가 없으면 code_start 전에 contract_done에서 이미 거부된다", async () => {
+  it("필수인데 red 확인 자체가 없으면 code_start 전에 contract_done에서 이미 거부된다", async () => {
     // contract_done 상태전이 자체가 막아 code_start조차 못 간다 — review_done까지 끌고 가지
     // 않고 앞단에서 빨리 실패시키는 게 이 게이트의 요점이다.
     await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
@@ -186,8 +186,8 @@ describe("§10 계약테스트 실행증거 — opt-in", () => {
   });
 });
 
-describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
-  // v2 §2.4: decompose 진입점은 PRD다(구 READY). 비대 PRD를 쪼개질지는 PRD 직후에 정한다.
+describe("decompose 오케스트레이션 — 전체 흐름", () => {
+  // decompose 진입점은 PRD다. 비대 PRD를 쪼개질지는 PRD 직후에 정한다.
   async function toPrd(prd = TWO_REQ_PRD): Promise<string> {
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId as string;
@@ -255,7 +255,7 @@ describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
     await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-1", subtaskChangedFiles: ["email.ts"] });
     await call(handleSugoPlan, { action: "subtask_done", sessionId, subtaskId: "S-2", subtaskChangedFiles: ["social.ts"] });
 
-    // P5-24 통합 게이트: 서브태스크마다 파이프라인을 강제하진 않지만, **합류 지점에서는 한 번**
+    // 통합 게이트: 서브태스크마다 파이프라인을 강제하진 않지만, **합류 지점에서는 한 번**
     // code_done과 같은 내용 게이트를 통과해야 한다. analyze 미호출이면 여기서 막힌다.
     const blocked = await call(handleSugoPlan, { action: "integrate", sessionId });
     expect(blocked.isError).toBe(true);
@@ -263,7 +263,7 @@ describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
 
     await call(handleSugoAnalyze, { sessionId, changedFiles: ["email.ts", "social.ts"] });
 
-    // v2 §4 흐름도: integrate는 CODE_RUNNING이 아니라 DOCS_PENDING으로 합류한다 — 서브태스크가
+    // integrate는 CODE_RUNNING이 아니라 DOCS_PENDING으로 합류한다 — 서브태스크가
     // 각자 구현을 끝낸 상태라 통합 후엔 코딩으로 되돌아가지 않고 문서화→커밋으로 간다.
     const integrateResult = await call(handleSugoPlan, { action: "integrate", sessionId });
     expect(integrateResult.isError).toBe(false);
@@ -303,7 +303,7 @@ describe("§10 decompose 오케스트레이션 — 전체 흐름", () => {
  * 지점**에서 code_done과 같은 내용 게이트를 통과해야 한다 — integrate가 DOCS_PENDING으로
  * 합류하면서 생기는 게이트 공백을 이걸로 닫는다.
  */
-describe("§10 통합 게이트 — 각자는 자유, 합류는 검증(P5-24)", () => {
+describe("통합 게이트 — 각자는 자유, 합류는 검증", () => {
   async function toOrchestrating(): Promise<string> {
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId as string;

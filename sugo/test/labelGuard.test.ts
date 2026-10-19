@@ -25,7 +25,7 @@ describe("hasGreenExecutionEvidence", () => {
   });
 });
 
-describe("§4.6 label-guard 코퍼스 — 라벨-모순(detectLabelContradiction) 반드시 거부", () => {
+describe("label-guard 적대적 입력 — 라벨-모순(detectLabelContradiction) 반드시 거부", () => {
   it("그린 증거 있는데 environmentAbsent류 라벨 주장 시 차단된다", () => {
     const result = detectLabelContradiction(true, true);
     expect(result.ok).toBe(false);
@@ -33,7 +33,7 @@ describe("§4.6 label-guard 코퍼스 — 라벨-모순(detectLabelContradiction
   });
 });
 
-describe("§4.6 label-guard 코퍼스 — 반드시 허용", () => {
+describe("label-guard 적대적 입력 — 반드시 허용", () => {
   it("실제 환경부재(그린 증거 없음)면 라벨을 그대로 허용한다", () => {
     expect(detectLabelContradiction(true, false).ok).toBe(true);
   });

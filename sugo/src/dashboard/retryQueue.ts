@@ -62,7 +62,7 @@ async function writeQueueFile(file: RetryQueueFile): Promise<void> {
   await atomicWriteFile(syncRetryQueuePath(), JSON.stringify(file, null, 2));
 }
 
-/** §7.2: 실패한 이벤트를 큐에 쌓는다. 최대 100항목 — 넘치면 가장 오래된 것부터 버린다(무한 축적 방지). */
+/** 실패한 이벤트를 큐에 쌓는다. 최대 100항목 — 넘치면 가장 오래된 것부터 버린다(무한 축적 방지). */
 export async function enqueueRetry(endpoint: string, method: "POST" | "DELETE", data: unknown, failure?: DeliveryResult): Promise<void> {
   await withFileLock(syncRetryQueueLockPath(), async () => {
     const file = await readQueueFile();

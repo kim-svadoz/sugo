@@ -10,16 +10,16 @@ const sugoPlanSource = readFileSync(join(SRC, "tools", "sugoPlan.ts"), "utf8");
 const stateMachineSource = readFileSync(join(SRC, "planStateMachine.ts"), "utf8");
 
 /**
- * §4 4계층 정합성 잠금. 한 액션이 실제로 실행되려면 독립된 4개 관문을 전부 통과해야 하고,
- * 넷 중 하나만 어긋나도 "한쪽은 허용, 다른쪽은 차단" 데드락이 된다. 과거 `oracle_done`(PRD/JIRA)과
- * `code_start`(REVIEW_RUNNING 역방향)가 정확히 이 방식으로 막혔다.
+ * 4계층 정합성 잠금. 한 액션이 실제로 실행되려면 독립된 4개 관문을 전부 통과해야 하고,
+ * 넷 중 하나만 어긋나도 "한쪽은 허용, 다른쪽은 차단" 데드락이 된다. 예를 들어 `oracle_done`(PRD/JIRA)과
+ * `code_start`(REVIEW_RUNNING 역방향)는 이 방식으로 막힐 수 있다.
  *
  *   1. Zod        PlanArgsSchema.action        — 없으면 INVALID
  *   2. 게이트키퍼  ALLOWED_ACTIONS_BY_STATE     — 없으면 GATE_KEEPER_BLOCKED
  *   3. dispatch   applyTransition/핸들러 배선   — 없으면 UNKNOWN_ACTION
  *   4. 온톨로지    ACTION_TYPES → PREREQUISITES — 없으면 PREREQUISITE_FAILED
  */
-describe("§4 4계층 정합성", () => {
+describe("4계층 정합성", () => {
   const ontologyNames = ACTION_TYPES.map((a) => a.name).sort();
 
   it("계층1(Zod) == 계층4(온톨로지): 양방향 차집합 0", () => {
@@ -64,7 +64,7 @@ describe("§4 4계층 정합성", () => {
     }
   });
 
-  it("PREREQUISITES는 fromStates!==null인 액션만 담는다(§2.8 파생 규칙)", () => {
+  it("PREREQUISITES는 fromStates!==null인 액션만 담는다(파생 규칙)", () => {
     for (const a of ACTION_TYPES) {
       if (a.fromStates === null) expect(a.name in PREREQUISITES).toBe(false);
       else expect([...(PREREQUISITES[a.name] ?? [])]).toEqual([...a.fromStates]);
@@ -91,10 +91,10 @@ describe("§4 4계층 정합성", () => {
 });
 
 /**
- * §4 Golden per-state action set — 파생 결과가 스펙 실측 표와 **정확히** 일치함을 증명한다.
+ * Golden per-state action set — 파생 결과가 골든 표와 **정확히** 일치함을 증명한다.
  * 이 표는 손으로 옮겨적은 독립 사본이다(파생 로직으로 다시 계산하면 순환 테스트가 된다).
  */
-describe("§4 Golden per-state action set", () => {
+describe("Golden per-state action set", () => {
   const GOLDEN: Record<WorkflowState, string[]> = {
     INIT: ["start", "status"],
     SCAN: ["clarify", "status", "cancel"],
@@ -107,13 +107,12 @@ describe("§4 Golden per-state action set", () => {
     BASELINE: ["contract_start", "status", "cancel"],
     CONTRACT_RUNNING: ["contract_done", "status", "cancel"],
     CODE_READY: ["code_start", "status", "cancel"],
-    // §9-A 체인 구간(CODE_RUNNING~REVIEW_RUNNING)에도 cancel이 있다. 런타임은 원래부터 허용해
-    // 왔고(cancel 분기가 전제 검사보다 먼저 실행된다) 선언만 금지처럼 보였다 — 그 불일치를
-    // 2026-09-22에 잘못 읽어 사용자가 세션 파일을 손으로 지웠다. 대신 사유를 요구한다.
+    // 체인 구간(CODE_RUNNING~REVIEW_RUNNING)에도 cancel이 있다. 런타임은 cancel 분기를 전제 검사보다
+    // 먼저 실행하므로 선언도 이와 맞춘다. 대신 사유를 요구한다.
     CODE_RUNNING: ["code_done", "cancel", "status"],
     CODE_DONE: ["test_start", "cancel", "status"],
     TEST_RUNNING: ["test_done", "cancel", "status"],
-    // test_reverify(§4.3-R): test_done이 찍은 증거 스냅샷을 최신 증거로 다시 찍는다. 상태를 바꾸지
+    // test_reverify: test_done이 찍은 증거 스냅샷을 최신 증거로 다시 찍는다. 상태를 바꾸지
     // 않는 기록성 액션이라 두 상태 모두에서 허용된다 — review_done이 막힌 뒤에야 문제를 알게 되므로
     // REVIEW_RUNNING에서도 열려 있어야 한다.
     TEST_DONE: ["review_start", "code_start", "test_reverify", "cancel", "status"],
@@ -132,8 +131,8 @@ describe("§4 Golden per-state action set", () => {
   });
 });
 
-/** 적대적 코퍼스 "순서강제(Gate Keeper)" 행 — 반드시 거부 / 반드시 허용. */
-describe("적대적 코퍼스: 순서강제", () => {
+/** 적대적 입력 "순서강제(Gate Keeper)" 행 — 반드시 거부 / 반드시 허용. */
+describe("적대적 입력: 순서강제", () => {
   it("거부: READY에서 code_start 직행(CODE_READY 아님)", () => {
     expect(ALLOWED_ACTIONS_BY_STATE.READY).not.toContain("code_start");
   });
@@ -142,13 +141,12 @@ describe("적대적 코퍼스: 순서강제", () => {
     expect(ALLOWED_ACTIONS_BY_STATE.CODE_DONE).not.toContain("test_done");
   });
 
-  it("허용(§9-A): 에이전트 체인 구간에서도 cancel이 열린다 — 단 사유 필수", () => {
-    // 원래 이 코퍼스 행은 "거부"였으나 선언만 그랬고 런타임은 줄곧 허용해 왔다(cancel 분기가
-    // 전제 검사보다 먼저 실행된다). 그 불일치 때문에 방치된 체인 세션을 닫을 길이 없다고
-    // 잘못 판단해 세션 파일을 손으로 지운 사고가 났다(2026-09-22).
+  it("허용: 에이전트 체인 구간에서도 cancel이 열린다 — 단 사유 필수", () => {
+    // 런타임은 cancel 분기를 전제 검사보다 먼저 실행한다. 선언이 이와 어긋나면 방치된 체인
+    // 세션을 닫을 길이 없어 보인다.
     //
-    // 원래 의도("체인 중간에 날리면 doer가 파일을 건드린 채 고아가 된다")는 막기가 아니라
-    // **기록**으로 지킨다 — cancelReason을 요구하고 abandonedChain 라벨을 남긴다.
+    // "체인 중간에 날리면 doer가 파일을 건드린 채 고아가 된다"는 위험은 막기가 아니라
+    // **기록**으로 다룬다 — cancelReason을 요구하고 abandonedChain 라벨을 남긴다.
     // 사유 강제는 런타임 규칙이라 integration.cancelChain.test.ts가 검증한다.
     for (const s of ["CODE_RUNNING", "CODE_DONE", "TEST_RUNNING", "TEST_DONE", "REVIEW_RUNNING"] as const) {
       expect(ALLOWED_ACTIONS_BY_STATE[s], s).toContain("cancel");
@@ -165,12 +163,12 @@ describe("적대적 코퍼스: 순서강제", () => {
     expect(ALLOWED_ACTIONS_BY_STATE.CODE_READY).toContain("code_start");
   });
 
-  it("허용(v2 데드락 수정): oracle_done이 PRD·JIRA 양쪽에서 열린다", () => {
+  it("허용(데드락 방지): oracle_done이 PRD·JIRA 양쪽에서 열린다", () => {
     expect(ALLOWED_ACTIONS_BY_STATE.PRD).toContain("oracle_done");
     expect(ALLOWED_ACTIONS_BY_STATE.JIRA).toContain("oracle_done");
   });
 
-  it("허용(v2 데드락 수정): code_start가 auto-loop 역방향 2개에서 열린다", () => {
+  it("허용(데드락 방지): code_start가 auto-loop 역방향 2개에서 열린다", () => {
     expect(ALLOWED_ACTIONS_BY_STATE.TEST_DONE).toContain("code_start");
     expect(ALLOWED_ACTIONS_BY_STATE.REVIEW_RUNNING).toContain("code_start");
   });

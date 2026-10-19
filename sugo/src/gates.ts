@@ -39,7 +39,7 @@ export function validatePrd(content: string): PrdValidation {
   return { ok: errors.length === 0, length, reqCount, errors };
 }
 
-// ── baseline 건강성 게이트 (§4.0) ────────────────────────────────────────────
+// ── baseline 건강성 게이트 ──────────────────────────────────────────────────
 
 export interface BaselineSignalResult {
   required: boolean;
@@ -71,7 +71,7 @@ export function checkBaselineGate(required: boolean, baselineEvidenceExitCode: n
   return ok();
 }
 
-// ── analyze 호출강제 (§4.1-1) ────────────────────────────────────────────────
+// ── analyze 호출강제 ─────────────────────────────────────────────────────────
 
 /** analyzePassed:true 같은 자기보고 파라미터가 아니라 서버가 기록한 호출 횟수만 본다. */
 export function checkAnalyzeGate(analyzeAttempts: number, hasPrd: boolean): GateCheckResult {
@@ -82,7 +82,7 @@ export function checkAnalyzeGate(analyzeAttempts: number, hasPrd: boolean): Gate
   return ok();
 }
 
-// ── wiring-gate (§4.1-3) ─────────────────────────────────────────────────────
+// ── wiring-gate ──────────────────────────────────────────────────────────────
 
 const WIRING_FILE_PATTERNS: RegExp[] = [
   /(^|[\\/])application(-[^\\/.]*)?\.(ya?ml|properties)$/i,
@@ -109,7 +109,7 @@ export function checkWiringGate(changedFiles: string[], mode: "plan" | "patch", 
   return ok();
 }
 
-// ── registration-glue 게이트 (§4.1-4) ────────────────────────────────────────
+// ── registration-glue 게이트 ─────────────────────────────────────────────────
 
 export function checkRegistrationGlueGate(dependencyRemoved: boolean, registrationGlueChecked: boolean): GateCheckResult {
   if (!dependencyRemoved) return ok();
@@ -122,11 +122,11 @@ export function checkRegistrationGlueGate(dependencyRemoved: boolean, registrati
   return ok();
 }
 
-// ── boot-gate (§4.1-5) ───────────────────────────────────────────────────────
+// ── boot-gate ────────────────────────────────────────────────────────────────
 
 /**
  * 인정 기준: 줄 첫 비공백이 @SpringBootTest인 어노테이션 위치만. 주석/문자열 리터럴/슬라이스
- * 테스트(@WebMvcTest)는 이 정규식에 걸리지 않는다(거짓 그린 방지) — 적대적 코퍼스 boot-gate 코퍼스 참고.
+ * 테스트(@WebMvcTest)는 이 정규식에 걸리지 않는다(거짓 그린 방지).
  */
 const SPRING_BOOT_TEST_ANNOTATION_RE = /^[ \t]*@SpringBootTest\b/m;
 
@@ -144,7 +144,7 @@ export function checkBootGate(bootable: boolean, annotationFound: boolean, bootU
   );
 }
 
-// ── review_done 3중 게이트 (§4.3) ────────────────────────────────────────────
+// ── review_done 3중 게이트 ───────────────────────────────────────────────────
 
 export function checkUserConfirmationGate(userConfirmed: boolean): GateCheckResult {
   if (!userConfirmed) {
@@ -197,7 +197,7 @@ export interface RuntimeCheck {
 
 /**
  * 런타임 검증 게이트. 핵심은 "자기보고보다 서버 기록이 우선"이다 — runtimeVerified:true를
- * 주장해도 test_done에서 기록된 testPassedState가 fail이면 무시하고 거부한다(§4.3 "loud label").
+ * 주장해도 test_done에서 기록된 testPassedState가 fail이면 무시하고 거부한다.
  * 부팅 가능 스택은 wiringVerified까지 명시적으로 요구한다("앱이 실제 뜨나").
  */
 export function checkRuntimeVerificationGate(
@@ -233,10 +233,10 @@ export function checkRuntimeVerificationGate(
   return ok();
 }
 
-// ── §5.0 SPEC_ORACLE_NOT_RUN / 5·E.4 ────────────────────────────────
+// ── SPEC_ORACLE_NOT_RUN ──────────────────────────────────────────────
 
 export interface SpecOracleState {
-  /** clarify의 q-spec 답변 경로가 실재할 때만 true. */
+  /** clarify에서 답한 기준 스펙 문서 경로가 실재할 때만 true. */
   required: boolean;
   ran: boolean;
   ranAt?: string;
@@ -246,23 +246,23 @@ export interface SpecOracleState {
 }
 
 /**
- * `ready` 차단 게이트. PRD를 썼다는 것과 **원본 스펙 문서를 실제로 대조했다는 것은 다른 사실**이다.
+ * `ready` 차단 게이트. PRD를 썼다는 것과 **기준 스펙 문서를 실제로 대조했다는 것은 다른 사실**이다.
  * 대조 없이 넘어가면 스펙에만 있고 PRD엔 없는 요구사항이 조용히 사라진 채 코딩이 시작된다.
  *
- * required가 아닐 때는 no-op — q-spec을 준 세션에서만 켜지는 조건부 게이트다(위험할 때만 조인다).
- * specOracle 자체가 없는 레거시 세션도 통과시킨다(하위호환, §5 "레거시 세션엔 기존 동작").
+ * required가 아닐 때는 no-op — 기준 스펙 문서를 준 세션에서만 켜지는 조건부 게이트다(위험할 때만 조인다).
+ * specOracle 자체가 없는 레거시 세션도 통과시킨다(하위호환).
  */
 export function checkSpecOracleGate(specOracle: SpecOracleState | undefined): GateCheckResult {
   if (!specOracle?.required) return ok();
   if (specOracle.ran) return ok();
   return fail(
     "SPEC_ORACLE_NOT_RUN",
-    "q-spec 원본 스펙 대조(oracle)가 아직 기록되지 않았습니다 — sugo_plan({action:'oracle_done', ...})으로 대조 결과를 먼저 기록하세요.",
+    "기준 스펙 문서 대조(oracle)가 아직 기록되지 않았습니다 — sugo_plan({action:'oracle_done', ...})으로 대조 결과를 먼저 기록하세요.",
   );
 }
 
 /**
- * 5: 미커버 항목을 보고하면서 사유를 안 밝히는 것을 막는다. "스펙에 있는데 PRD엔
+ * 미커버 항목을 보고하면서 사유를 안 밝히는 것을 막는다. "스펙에 있는데 PRD엔
  * 없다"를 인지한 채로 그냥 넘어가는 게 가장 위험한 경로라, 넘어가려면 **왜 넘어가는지**를
  * 남기게 한다(차단이 아니라 기록 강제 — 정직한 탈출구는 열어둔다).
  */
@@ -289,7 +289,7 @@ export function checkJiraOption(option: string | undefined, jiraKey: string | un
   return ok();
 }
 
-// ── §5.0 CONFORMANCE_LEDGER_INCOMPLETE (prd 차단) ────────────────────────────
+// ── CONFORMANCE_LEDGER_INCOMPLETE (prd 차단) ─────────────────────────────────
 
 /**
  * In-Scope / DoD 섹션의 항목들이 전부 실재하는 REQ에 매핑되는지 확인한다.
@@ -300,7 +300,7 @@ export function checkJiraOption(option: string | undefined, jiraKey: string | un
  * 통과시키는 게 이 게이트의 전부다.
  *
  * **Out-of-Scope는 대상이 아니다** — 안 하기로 한 일에 REQ를 요구하면 그게 더 이상하다.
- * 섹션이 아예 없으면 no-op(레거시 PRD 하위호환, §5 "레거시 세션엔 기존 동작").
+ * 섹션이 아예 없으면 no-op(레거시 PRD 하위호환).
  */
 const LEDGER_HEADING = /^#{1,6}\s*.*(in[-\s]?scope|범위|dod|완료\s*조건|definition of done)/i;
 const OUT_OF_SCOPE_HEADING = /out[-\s]?of[-\s]?scope|범위\s*외|제외/i;
@@ -363,8 +363,8 @@ export function validateConformanceLedger(prdContent: string): GateCheckResult {
   );
 }
 
-// ── sugo_validate 호출강제 + 실측 우선 게이트 (§4.3 확장) ────────────────────
-// 하네스 검증의 91%는 여전히 자기보고라 verdict 전체로 막으면 "확인 안 함"과 "확인했더니
+// ── sugo_validate 호출강제 + 실측 우선 게이트 ────────────────────────────────
+// 하네스 검증의 대부분은 여전히 자기보고라 verdict 전체로 막으면 "확인 안 함"과 "확인했더니
 // 틀렸다"를 못 구분한다(sugo_validate와 같은 이유로 하드 게이트를 안 걸어온 근거). 그래서 두
 // 게이트로 쪼갠다: 호출 자체는 강제하되(analyzeAttempts 게이트와 같은 패턴 — verdict 무관),
 // 실제로 막는 건 서버가 auto로 실측한 실패뿐이다. 이 부분만큼은 "제출 안 하면 통과"가 성립하지
@@ -389,8 +389,8 @@ export function checkValidateCalledGate(lastValidation: LastValidation | undefin
 
 /**
  * 서버가 직접 실측해 실패로 확인된 체크만 막는다. 자기보고 실패(전체 verdict가 fail이어도)는
- * 이 게이트로 막지 않는다 — self-reported 실패까지 하드 게이트로 걸면 "9% 실측 커버리지"로
- * 91%를 막는 게이트가 돼버려 오탐이 실제 진행을 막는 사고가 난다.
+ * 이 게이트로 막지 않는다 — self-reported 실패까지 하드 게이트로 걸면 일부만 실측한
+ * 커버리지로 나머지 전부를 막는 게이트가 돼버려 오탐이 실제 진행을 막는 사고가 난다.
  */
 export function checkValidateVerifiedGate(lastValidation: LastValidation | undefined): GateCheckResult {
   if (!lastValidation || lastValidation.verifiedFailures.length === 0) return ok();
@@ -401,12 +401,12 @@ export function checkValidateVerifiedGate(lastValidation: LastValidation | undef
   );
 }
 
-// ── sugo_check_lethal_trifecta 호출강제 + 완화사유 게이트(§P6-1) ─────────────
-// 기존엔 review-security라는 opt-in 스킬(요청에 "보안" 등 키워드가 있어야 붙는다)로만 트리펙타를
-// 점검했다 — 즉 요청 문구에 그 단어가 없으면 review_done이 트리펙타 위험을 전혀 안 보고 통과했다.
+// ── sugo_check_lethal_trifecta 호출강제 + 완화사유 게이트 ────────────────────
+// opt-in 스킬(요청에 "보안" 등 키워드가 있어야 붙는다)에만 맡기면 요청 문구에 그 단어가 없을 때
+// review_done이 트리펙타 위험을 전혀 안 보고 통과한다.
 // sugo_validate와 같은 2단 분리를 그대로 따른다: 호출 자체는 verdict 무관 하드 게이트(capability
 // 판정이 self-reported라 판정 내용으로 막을 수 없다), 경고가 있으면 완화사유 기록을 하드 게이트로
-// 요구한다(§5 ORACLE_OVERRIDE_REASON_REQUIRED와 같은 "정직한 탈출구" 패턴 — 위험을 인지한
+// 요구한다(ORACLE_OVERRIDE_REASON_REQUIRED와 같은 "정직한 탈출구" 패턴 — 위험을 인지한
 // 채 넘어가려면 왜 넘어가는지를 남기게 한다. 무경고면 완화사유 없이 그대로 통과한다).
 
 export interface LastLethalTrifectaCheck {

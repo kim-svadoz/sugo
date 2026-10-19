@@ -77,7 +77,7 @@ describe("checkContractEvidenceGate — 반드시 허용", () => {
   });
 });
 
-describe("§3 contract_done — checkContractStartedGate 반드시 거부", () => {
+describe("contract_done — checkContractStartedGate 반드시 거부", () => {
   it("계약필수인데 구현 전 red 확인 없이 contract_done을 호출하면 거부한다", () => {
     const result = checkContractStartedGate([], true);
     expect(result.ok).toBe(false);
@@ -99,7 +99,7 @@ describe("§3 contract_done — checkContractStartedGate 반드시 거부", () =
   });
 });
 
-describe("§3 contract_done — checkContractStartedGate 반드시 허용", () => {
+describe("contract_done — checkContractStartedGate 반드시 허용", () => {
   it("계약 불필요(정책 off)면 red 확인 없이도 통과한다", () => {
     expect(checkContractStartedGate([], false).ok).toBe(true);
   });
@@ -115,7 +115,7 @@ describe("§3 contract_done — checkContractStartedGate 반드시 허용", () =
   });
 });
 
-describe("resolveContractRequired — §9/§4.3 undefined면 기본-on 휴리스틱", () => {
+describe("resolveContractRequired — undefined면 기본-on 휴리스틱", () => {
   it("정책이 명시적으로 true면 그대로 강제한다", () => {
     expect(resolveContractRequired(true, { baselineRequired: false })).toBe(true);
   });

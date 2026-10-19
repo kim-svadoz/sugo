@@ -14,5 +14,5 @@ argument-hint: --workspace <name> --project <absolute-path> --spec-draft <id>
 돌려주면 사용자 승인 없이 `acceptLintWarnings:true`로 연결하지 않는다. context가 돌려준 기획 화면(`attachments`)은
 spec 버전 디렉터리의 `images/`로 복사해 spec.md에 상대경로로 넣는다.
 저장 위치는 스킬의 "파일 규칙"을 따른다(프로젝트 저장소 안이 아니다). Open Questions에는 답에 따라 구현할 동작이나
-완료조건이 달라지는 것만 쓰고, 담당자·일정·협의 같은 업무 조율은 쓰지 않는다.
+완료조건이 달라지는 것만 쓰고, 담당자·일정·협의 같은 진행 조율은 쓰지 않는다.
 

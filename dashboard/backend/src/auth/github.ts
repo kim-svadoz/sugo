@@ -1,4 +1,4 @@
-// 공개 SaaS(§Phase 1) GitHub OAuth. 인가코드 교환 + 유저 조회를 인터페이스로 추상화해
+// 공개 SaaS GitHub OAuth. 인가코드 교환 + 유저 조회를 인터페이스로 추상화해
 // 라우트/테스트에서 실제 HTTP 없이 주입 가능하게 한다(bitbucketClient 주입 패턴과 동일).
 
 export interface GithubUser {

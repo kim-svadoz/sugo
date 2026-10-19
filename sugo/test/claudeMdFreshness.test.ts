@@ -3,7 +3,7 @@ import { writeClaudeIfChanged } from "../src/harness/claudeMdFreshness.js";
 
 const BODY = "# demo — Sugo 하네스 인덱스\n\n## 적용된 하네스\n\n| id | version |\n";
 
-describe("writeClaudeIfChanged — 스펙 §2 step 4", () => {
+describe("writeClaudeIfChanged", () => {
   it("파일이 없으면 새로 쓴다", () => {
     const r = writeClaudeIfChanged(null, BODY, "2026-09-15");
     expect(r.changed).toBe(true);

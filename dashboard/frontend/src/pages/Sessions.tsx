@@ -1005,7 +1005,7 @@ export function Sessions() {
         </Modal>
       )}
 
-      {/* Checkpoints 모달 — 커밋 전 재발방지 체크리스트. §7B: SchedulePage와 공유하려고
+      {/* Checkpoints 모달 — 커밋 전 재발방지 체크리스트. SchedulePage와 공유하려고
           자기완결형 컴포넌트로 분리했다(동작 변경 없음). */}
       {checkpointModal && (
         <CheckpointPanel workspace={checkpointModal} onClose={() => setCheckpointModal(null)} />

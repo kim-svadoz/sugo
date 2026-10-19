@@ -108,9 +108,9 @@ describe("sugo_aws_context", () => {
       accountHint: "9012",
       principal: "developer",
       observedAt: "2026-09-30T00:00:00.000Z",
-      inventory: [{ service: "sagemaker", resources: [{ kind: "endpoint", id: "sample-ranker", metadata: { status: "InService" } }] }],
+      inventory: [{ service: "sagemaker", resources: [{ kind: "endpoint", id: "sample-endpoint", metadata: { status: "InService" } }] }],
     }));
-    expect(parse(result).services).toEqual([{ service: "sagemaker", count: 1, status: "ok", resources: [{ kind: "endpoint", id: "sample-ranker", metadata: { status: "InService" } }] }]);
+    expect(parse(result).services).toEqual([{ service: "sagemaker", count: 1, status: "ok", resources: [{ kind: "endpoint", id: "sample-endpoint", metadata: { status: "InService" } }] }]);
   });
 
   it.each(["lambda", "kinesis"] as const)("%s snapshot을 명시적으로 조회할 수 있다", async (service) => {

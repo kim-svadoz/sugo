@@ -102,8 +102,7 @@ describe("sugo_checkpoint 신규 action(get/remove/memory/read_memory/migrate/sy
     expect(list.data.checkpoints).toHaveLength(2);
   });
 
-  // §7.2 논블로킹은 맞지만, **하지 않은 일을 했다고 보고하면 안 된다.** 대시보드가 없는
-  // 콜드 환경에서 sync가 `synced: true`를 돌려주고 있었다 — 논블로킹과 거짓보고는 다르다.
+  // sync는 논블로킹이지만 하지 않은 일을 했다고 보고하면 안 된다. 논블로킹과 거짓보고는 다르다.
   it("대시보드 disabled면 sync는 막지 않되 synced:false로 사실대로 보고한다", async () => {
     const added = await call(handleSugoCheckpoint, { action: "add", workspace: "ws1", title: "동기화 대상", checklist: ["1"] });
     const synced = await call(handleSugoCheckpoint, { action: "sync", workspace: "ws1", id: added.data.checkpoint.id });
@@ -127,7 +126,7 @@ describe("sugo_checkpoint 신규 action(get/remove/memory/read_memory/migrate/sy
   });
 });
 
-describe("§2 하네스 도구 디스패치 — 레지스트리가 비어있는 기본 상태에서도 배선이 깨지지 않는다", () => {
+describe("하네스 도구 디스패치 — 레지스트리가 비어있는 기본 상태에서도 배선이 깨지지 않는다", () => {
   it("sugo_get_project_context는 harnessTools(빈 가이드)를 노출한다", async () => {
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ devDependencies: { typescript: "^5.4.0" } }));
     writeFileSync(join(projectDir, "tsconfig.json"), "{}");

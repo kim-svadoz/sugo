@@ -16,16 +16,16 @@ import { PLAN_ACTIONS, PLAN_STATES } from "../src/types.js";
 import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../src/work/types.js";
 
 /**
- * §2.6 drift lock — 온톨로지(선언)와 런타임(plan/types, work/types)이 갈라지는 순간 실패한다.
+ * drift lock — 온톨로지(선언)와 런타임(plan/types, work/types)이 갈라지는 순간 실패한다.
  * 이 테스트가 없으면 model.ts는 "예쁜 문서"로 전락하고, 실제 강제력은 손관리 상수로 되돌아간다.
  */
-describe("§2 온톨로지 drift lock", () => {
+describe("온톨로지 drift lock", () => {
   const packageRoot = resolve(__dirname, "..");
   it("WORKFLOW_STATES가 PLAN_STATES의 정본이다(순서까지 동일)", () => {
     expect([...PLAN_STATES]).toEqual([...WORKFLOW_STATES]);
   });
 
-  it("WORKFLOW_STATES는 §2.3대로 19개다", () => {
+  it("WORKFLOW_STATES는 19개다", () => {
     expect(WORKFLOW_STATES).toHaveLength(19);
   });
 
@@ -36,8 +36,7 @@ describe("§2 온톨로지 drift lock", () => {
     expect([...runtime].filter((n) => !ontology.has(n))).toEqual([]);
   });
 
-  it("ACTION_TYPES는 §4대로 24개다", () => {
-    // 23 → 24: §4.3-R test_reverify 추가(2026-09-22).
+  it("ACTION_TYPES는 24개다", () => {
     expect(ACTION_TYPES).toHaveLength(24);
   });
 
@@ -46,7 +45,7 @@ describe("§2 온톨로지 drift lock", () => {
     expect(roadmapObjects.map((o) => o.name)).toEqual([...ROADMAP_LEVELS]);
   });
 
-  it("P1 실행 객체 4종이 런타임 타입 근거와 함께 선언된다", () => {
+  it("실행 객체 4종이 런타임 타입 근거와 함께 선언된다", () => {
     const runtimeObjects = OBJECT_TYPES.filter((o) => (o as { layer?: string }).layer === "runtime") as unknown as {
       name: string;
       implementationRefs: { path: string; symbol: string }[];
@@ -62,7 +61,7 @@ describe("§2 온톨로지 drift lock", () => {
     }
   });
 
-  it("P1 핵심 관계 6종이 정확한 방향으로 선언된다", () => {
+  it("핵심 관계 6종이 정확한 방향으로 선언된다", () => {
     const links = new Map(LINK_TYPES.map((link) => [link.name, link]));
     expect(links.get("operates_on")).toMatchObject({ from: "session", to: "task" });
     expect(links.get("requires")).toMatchObject({ from: "action", to: "evidence" });
@@ -123,7 +122,7 @@ describe("§2 온톨로지 drift lock", () => {
 
   it("enforcedBy는 gate/test/doc 3종뿐이고 test 티어는 정적 스캔으로 실제 강제된다", () => {
     for (const i of INVARIANTS) expect(["gate", "test", "doc"]).toContain(i.enforcedBy);
-    // §2.6이 정적 스캔으로 CI 강제한다고 명시한 것들
+    // 정적 스캔으로 CI에서 강제하는 것들
     const byId = new Map(INVARIANTS.map((i) => [i.id, i.enforcedBy]));
     expect(byId.get("no-fetch-bypass")).toBe("test");
     expect(byId.get("single-source")).toBe("test");
@@ -187,7 +186,7 @@ describe("§2 온톨로지 drift lock", () => {
     );
   });
 
-  it("v2 데드락 수정 2건이 모델에 박혀 있다(회귀 방지)", () => {
+  it("데드락 방지 전이 2건이 모델에 박혀 있다(회귀 방지)", () => {
     const oracle = ACTION_TYPES.find((a) => a.name === "oracle_done")!;
     expect([...(oracle.fromStates ?? [])].sort()).toEqual(["JIRA", "PRD"]);
     expect(oracle.toState).toBeNull(); // 상태 미전이 — 기록만

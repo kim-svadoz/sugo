@@ -144,13 +144,13 @@ describe("detectStack — Java + Spring Boot + Maven 프로젝트", () => {
     expect(stack.commands.build).toBe("./mvnw compile");
   });
 
-  it("§P6-3: checkstyle 플러그인이 pom.xml에 없으면 lint 명령을 만들지 않는다(추측 금지)", () => {
+  it("checkstyle 플러그인이 pom.xml에 없으면 lint 명령을 만들지 않는다(추측 금지)", () => {
     const dir = makeProject();
     write(dir, "pom.xml", "<project></project>");
     expect(detectStack(dir).commands.lint).toBeUndefined();
   });
 
-  it("§P6-3: maven-checkstyle-plugin이 있으면 checkstyle:check를 lint로 제안한다", () => {
+  it("maven-checkstyle-plugin이 있으면 checkstyle:check를 lint로 제안한다", () => {
     const dir = makeProject();
     write(
       dir,
@@ -160,7 +160,7 @@ describe("detectStack — Java + Spring Boot + Maven 프로젝트", () => {
     expect(detectStack(dir).commands.lint).toBe("mvn checkstyle:check");
   });
 
-  it("§P6-3: spotbugs-maven-plugin도 있으면 두 골을 함께 제안한다", () => {
+  it("spotbugs-maven-plugin도 있으면 두 골을 함께 제안한다", () => {
     const dir = makeProject();
     write(
       dir,
@@ -173,7 +173,7 @@ describe("detectStack — Java + Spring Boot + Maven 프로젝트", () => {
     expect(detectStack(dir).commands.lint).toBe("mvn checkstyle:check spotbugs:check");
   });
 
-  it("§P6-3: mvnw가 있으면 lint 명령도 mvnw를 쓴다", () => {
+  it("mvnw가 있으면 lint 명령도 mvnw를 쓴다", () => {
     const dir = makeProject();
     write(
       dir,
@@ -185,7 +185,7 @@ describe("detectStack — Java + Spring Boot + Maven 프로젝트", () => {
   });
 });
 
-describe("detectStack — §P6-3 Gradle lint 명령", () => {
+describe("detectStack — Gradle lint 명령", () => {
   it("checkstyle/spotbugs 플러그인이 없으면 lint 명령을 만들지 않는다(추측 금지)", () => {
     const dir = makeProject();
     write(dir, "build.gradle", "plugins { id 'java' }");
@@ -236,34 +236,34 @@ describe("detectStack — Python 프로젝트", () => {
     expect(stack.commands.test).toBe("poetry run pytest");
   });
 
-  it("§P6-3: ruff/flake8 설정이 없으면 lint 명령을 만들지 않는다(추측 금지)", () => {
+  it("ruff/flake8 설정이 없으면 lint 명령을 만들지 않는다(추측 금지)", () => {
     const dir = makeProject();
     write(dir, "requirements.txt", "flask==3.0.0\n");
     expect(detectStack(dir).commands.lint).toBeUndefined();
   });
 
-  it("§P6-3: pyproject.toml에 [tool.ruff]가 있으면 ruff를 lint로 제안한다", () => {
+  it("pyproject.toml에 [tool.ruff]가 있으면 ruff를 lint로 제안한다", () => {
     const dir = makeProject();
     write(dir, "requirements.txt", "flask==3.0.0\n");
     write(dir, "pyproject.toml", "[tool.ruff]\nline-length = 100\n");
     expect(detectStack(dir).commands.lint).toBe("ruff check .");
   });
 
-  it("§P6-3: ruff.toml만 있어도(pyproject.toml에 섹션 없이) 감지한다", () => {
+  it("ruff.toml만 있어도(pyproject.toml에 섹션 없이) 감지한다", () => {
     const dir = makeProject();
     write(dir, "requirements.txt", "flask==3.0.0\n");
     write(dir, "ruff.toml", "line-length = 100\n");
     expect(detectStack(dir).commands.lint).toBe("ruff check .");
   });
 
-  it("§P6-3: .flake8이 있고 ruff 신호가 없으면 flake8을 lint로 제안한다", () => {
+  it(".flake8이 있고 ruff 신호가 없으면 flake8을 lint로 제안한다", () => {
     const dir = makeProject();
     write(dir, "requirements.txt", "flask==3.0.0\n");
     write(dir, ".flake8", "[flake8]\nmax-line-length = 100\n");
     expect(detectStack(dir).commands.lint).toBe("flake8");
   });
 
-  it("§P6-3: ruff와 flake8이 둘 다 있으면 ruff를 우선한다", () => {
+  it("ruff와 flake8이 둘 다 있으면 ruff를 우선한다", () => {
     const dir = makeProject();
     write(dir, "requirements.txt", "flask==3.0.0\n");
     write(dir, "pyproject.toml", "[tool.ruff]\n");
@@ -271,7 +271,7 @@ describe("detectStack — Python 프로젝트", () => {
     expect(detectStack(dir).commands.lint).toBe("ruff check .");
   });
 
-  it("§P6-3: poetry 프로젝트는 lint 명령에도 poetry run을 붙인다", () => {
+  it("poetry 프로젝트는 lint 명령에도 poetry run을 붙인다", () => {
     const dir = makeProject();
     write(dir, "pyproject.toml", '[tool.poetry]\nname = "demo"\n\n[tool.ruff]\n');
     expect(detectStack(dir).commands.lint).toBe("poetry run ruff check .");

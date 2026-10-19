@@ -42,7 +42,7 @@ describe("validatePrd — 반드시 허용", () => {
   });
 });
 
-describe("detectBaselineSignals (§4.0)", () => {
+describe("detectBaselineSignals", () => {
   it("JDK 상향 시그널을 감지한다", () => {
     const result = detectBaselineSignals("이번 작업은 JDK 버전을 상향합니다.");
     expect(result.required).toBe(true);
@@ -153,7 +153,7 @@ describe("checkRegistrationGlueGate", () => {
   });
 });
 
-describe("hasValidSpringBootTestAnnotation — 적대적 코퍼스: 반드시 거부", () => {
+describe("hasValidSpringBootTestAnnotation — 적대적 입력: 반드시 거부", () => {
   it("주석 속 @SpringBootTest는 인정하지 않는다", () => {
     const content = "// @SpringBootTest\nclass FooTest {}";
     expect(hasValidSpringBootTestAnnotation([content])).toBe(false);
@@ -170,7 +170,7 @@ describe("hasValidSpringBootTestAnnotation — 적대적 코퍼스: 반드시 �
   });
 });
 
-describe("hasValidSpringBootTestAnnotation — 적대적 코퍼스: 반드시 허용", () => {
+describe("hasValidSpringBootTestAnnotation — 적대적 입력: 반드시 허용", () => {
   it("줄 첫 비공백이 @SpringBootTest인 실제 어노테이션은 인정한다", () => {
     const content = "@SpringBootTest\nclass AppContextLoadTest {}";
     expect(hasValidSpringBootTestAnnotation([content])).toBe(true);

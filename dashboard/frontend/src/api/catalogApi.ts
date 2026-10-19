@@ -1,6 +1,6 @@
 import { apiJson, apiFetch } from "./client.js";
 
-// §3.7 Skills/Harness(PUBLIC 카탈로그). 로컬 미설정이면 빈값. SKILLS_PATH/HARNESS_PATH로 채운다.
+// Skills/Harness(PUBLIC 카탈로그). 로컬 미설정이면 빈값. SKILLS_PATH/HARNESS_PATH로 채운다.
 export interface HarnessManifestEntry {
   id?: string;
   name?: string;

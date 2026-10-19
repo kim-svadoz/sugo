@@ -99,7 +99,7 @@ async function approveDashboardReview(sessionId: string, taskId: string): Promis
   }
 }
 
-describe("§8.5 Roadmap DAG — sugo_plan(prd) 자동 REQ 승격", () => {
+describe("Roadmap DAG — sugo_plan(prd) 자동 REQ 승격", () => {
   it("### 헤딩 PRD가 있으면 REQ 노드 + REQ-CONFIRM이 자동으로 심긴다", async () => {
     await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a" });
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
@@ -136,11 +136,11 @@ describe("§8.5 Roadmap DAG — sugo_plan(prd) 자동 REQ 승격", () => {
   });
 });
 
-describe("§8.5 sugo_roadmap ready/get/mark_req", () => {
+describe("sugo_roadmap ready/get/mark_req", () => {
   it("의존 관계상 REQ-1만 ready하고, REQ-2는 REQ-1이 done이어야 ready된다", async () => {
     const { taskId } = await toReadyAndBeyond(HEADING_PRD);
     const ready1 = await call(handleSugoRoadmap, { action: "ready", workspace: "team-a" });
-    // 정확히 REQ-1만 ready여야 한다 — task 레벨 노드가 in_progress로 갱신되지 않으면(과거 버그)
+    // 정확히 REQ-1만 ready여야 한다 — task 레벨 노드가 in_progress로 갱신되지 않으면
     // 의존성 없는 그 노드도 여기 잘못 섞여 나온다.
     expect(ready1.data.ready).toEqual([`${taskId}::REQ-1`]);
 
@@ -149,7 +149,7 @@ describe("§8.5 sugo_roadmap ready/get/mark_req", () => {
     expect(ready2.data.ready).toContain(`${taskId}::REQ-2`);
   });
 
-  it("에이전트가 REQ-CONFIRM을 mark_req로 직접 완료하려 하면 거부된다(§8.5 코퍼스)", async () => {
+  it("에이전트가 REQ-CONFIRM을 mark_req로 직접 완료하려 하면 거부된다", async () => {
     await toReadyAndBeyond(HEADING_PRD);
     const list = await call(handleSugoRoadmap, { action: "list", workspace: "team-a" });
     const confirmId = list.data.nodes.find((n: { id: string }) => n.id.endsWith("::REQ-CONFIRM")).id;
@@ -159,7 +159,7 @@ describe("§8.5 sugo_roadmap ready/get/mark_req", () => {
   });
 });
 
-describe("§8.5 review_done → REQ/REQ-CONFIRM 자동완료", () => {
+describe("review_done → REQ/REQ-CONFIRM 자동완료", () => {
   it("review_done이 성공하면 해당 task의 모든 REQ와 REQ-CONFIRM이 done으로 롤다운된다", async () => {
     const { sessionId, taskId } = await toReadyAndBeyond(HEADING_PRD);
     await call(handleSugoPlan, { action: "code_start", sessionId });
@@ -193,7 +193,7 @@ describe("§8.5 review_done → REQ/REQ-CONFIRM 자동완료", () => {
   });
 });
 
-describe("§8.5 sugo_roadmap — link/unlink/group/backfill (task 레벨 관리)", () => {
+describe("sugo_roadmap — link/unlink/group/backfill (task 레벨 관리)", () => {
   it("review 결과를 Dashboard 확인 카드로 게시하고 같은 세션을 잠근다", async () => {
     const { sessionId, taskId } = await toReadyAndBeyond(HEADING_PRD);
     await call(handleSugoPlan, { action: "code_start", sessionId });

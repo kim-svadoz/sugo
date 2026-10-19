@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.js";
 
-// 공개 SaaS(§Phase 1.5): GitHub 콜백은 세션 토큰을 URL 프래그먼트(#session=)로 넘겨준다.
+// GitHub 콜백은 세션 토큰을 URL 프래그먼트(#session=)로 넘겨준다.
 // 여기서 파싱해 저장하고 프래그먼트를 지운다. React StrictMode(개발)가 useEffect를 2번 실행하므로
 // ref 가드로 1회만 처리한다(2회차엔 이미 프래그먼트가 지워져 있어 오탐 missing_session이 났었음).
 export function AuthCallback() {

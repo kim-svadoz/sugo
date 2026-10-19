@@ -3,7 +3,7 @@ import { apiJson, withUserId } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 
 /**
- * §5.5 버전 2축.
+ * 버전 2축.
  *
  * - **Console(대시보드) 버전은 빌드타임 상수**(`__DASHBOARD_VERSION__`)다. API로 받아오면
  *   백엔드가 죽었을 때 "지금 내가 무슨 버전을 보고 있는지"조차 알 수 없는데, 그건 장애 상황에서

@@ -78,11 +78,11 @@ export const sugoPlanInputSchema = {
   workResultPath: z
     .string()
     .optional()
-    .describe("start action: patch 진입점(§7) — 기존 work-result.md(또는 work-result-patch-vN.md) 경로. 미입력시 기존(신규 PRD) 동작"),
+    .describe("start action: patch 진입점 — 기존 work-result.md(또는 work-result-patch-vN.md) 경로. 미입력시 기존(신규 PRD) 동작"),
   seed: z
     .string()
     .optional()
-    .describe("start action(§7.1 Patch 성숙화): 이번 patch 차수에 대한 사용자 지시. review_done이 work-result에 함께 기록한다"),
+    .describe("start action: 이번 patch 차수에 대한 사용자 지시. review_done이 work-result에 함께 기록한다"),
   patchProvenance: z.enum(["native", "captured-post-hoc"]).optional()
     .describe("start action: 일반 patch는 native, 이미 수행한 변경 연결은 captured-post-hoc"),
   postHocBaseRevision: z.string().optional()
@@ -97,11 +97,11 @@ export const sugoPlanInputSchema = {
   specPath: z
     .string()
     .optional()
-    .describe("start/prd action(§5.0): 대조할 원본 spec.md 경로. 실재하면 specOracle이 켜져 ready 전에 oracle_done이 필수가 된다"),
+    .describe("start/prd action: 대조할 기준 spec.md 경로. 실재하면 specOracle이 켜져 ready 전에 oracle_done이 필수가 된다"),
   uncovered: z
     .array(z.object({ quote: z.string(), reason: z.string() }))
     .optional()
-    .describe("oracle_done: 원본 스펙에 있으나 PRD가 못 덮은 항목들(인용 + 사유). 1건 이상이면 overrideReason 필수"),
+    .describe("oracle_done: 기준 스펙에 있으나 PRD가 못 덮은 항목들(인용 + 사유). 1건 이상이면 overrideReason 필수"),
   overrideReason: z
     .string()
     .optional()
@@ -146,10 +146,10 @@ export const sugoPlanInputSchema = {
   contractEnvironmentAbsentReason: z
     .string()
     .optional()
-    .describe("contract_done: 계약테스트를 실행할 환경이 없을 때 red 확인 요구를 우회하는 사유 라벨(§4.6 라벨-모순 검사 대상)"),
+    .describe("contract_done: 계약테스트를 실행할 환경이 없을 때 red 확인 요구를 우회하는 사유 라벨"),
   testPassed: z.boolean().optional().describe("test_done action에 필요. 서버에 기록된 test evidence와 대조된다"),
   userConfirmed: z.boolean().optional().describe("review_done action에 필요. work-result를 사람에게 보여주고 확인받았는지"),
-  summary: z.string().optional().describe("review_done action에 필요. work-result 요약(§4.3: 줄≥3, 길이≥30자 등)"),
+  summary: z.string().optional().describe("review_done action에 필요. work-result 요약(줄≥3, 길이≥30자 등)"),
   trifectaMitigation: z
     .string()
     .optional()
@@ -178,7 +178,7 @@ export const sugoPlanInputSchema = {
   reusedFromTestDone: z
     .boolean()
     .optional()
-    .describe("review_done action: §10 이중 실행 제거 — test_done 증거를 재사용할지. 변경파일 지문이 일치하면 runtimeCheck 없이 통과한다"),
+    .describe("review_done action: 이중 실행 제거 — test_done 증거를 재사용할지. 변경파일 지문이 일치하면 runtimeCheck 없이 통과한다"),
   userReportedHumanHours: z
     .number()
     .optional()
@@ -192,7 +192,7 @@ export const sugoPlanInputSchema = {
       regressionIntact: z.boolean(),
     })
     .optional()
-    .describe("test_done action: §10 PRD 정합성 게이트(선택 확장) — verificationPolicy.integrationGateEnforced가 켜져 있으면 필수"),
+    .describe("test_done action: PRD 정합성 게이트(선택 확장) — verificationPolicy.integrationGateEnforced가 켜져 있으면 필수"),
   manifest: z
     .object({
       subtasks: z.array(
@@ -206,7 +206,7 @@ export const sugoPlanInputSchema = {
       ),
     })
     .optional()
-    .describe("decompose action에 필요. §10 오케스트레이션 매니페스트 — 사이클/파일겹침/요구커버리지를 검증한다"),
+    .describe("decompose action에 필요. 오케스트레이션 매니페스트 — 사이클/파일겹침/요구커버리지를 검증한다"),
   subtaskId: z.string().optional().describe("subtask_start/subtask_done action에 필요"),
   subtaskChangedFiles: z.array(z.string()).optional().describe("subtask_done action: 이 서브태스크가 실제로 바꾼 파일"),
 };
@@ -235,7 +235,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // ── §4.6 label-guard: 이번 호출에서 실제로 "우회 라벨"이 쓰였다면 여기 누적했다가, 상태전이가
+  // ── label-guard: 이번 호출에서 실제로 "우회 라벨"이 쓰였다면 여기 누적했다가, 상태전이가
   // 성공한 뒤 세션에 반영한다(차단이 아니라 강등용 감사 기록 — commit 시점에 completionGrade를 낮춘다).
   const newBypassLabels: BypassLabel[] = [];
   const currentPatchVersion = existing?.data.patch?.version ?? 0;
@@ -247,7 +247,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
-  // ── 콘텐츠 게이트(§4): 순서강제(prerequisite)와 별개로 액션별 페이로드를 검증한다.
+  // ── 콘텐츠 게이트: 순서강제(prerequisite)와 별개로 액션별 페이로드를 검증한다.
   // 상태 전이 전에 막아야 "READY로 되돌아갔다가 재시도" 같은 오염된 중간상태가 안 남는다.
   if (action === "prd") {
     if (!args.prdContent) return errorResult("PRD_CONTENT_REQUIRED", "prd action에는 prdContent가 필요합니다.");
@@ -262,7 +262,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // ── §5.0 oracle_done: 미커버 항목을 보고하면서 사유를 안 밝히는 것만 막는다.
+  // ── oracle_done: 미커버 항목을 보고하면서 사유를 안 밝히는 것만 막는다.
   if (action === "oracle_done") {
     const oracleResult = checkOracleDone(args.uncovered, args.overrideReason);
     if (!oracleResult.ok) return errorResult(oracleResult.code as GateBlockCode, oracleResult.message!);
@@ -274,14 +274,14 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (!jiraResult.ok) return errorResult(jiraResult.code as GateBlockCode, jiraResult.message!);
   }
 
-  // ── §5.0 ready: q-spec 대조(oracle)를 안 했으면 차단. PRD를 썼다는 것과 원본 스펙을 실제로
+  // ── ready: 기준 스펙 문서 대조(oracle)를 안 했으면 차단. PRD를 썼다는 것과 기준 스펙을 실제로
   // 대조했다는 것은 다른 사실이고, 대조 없이 넘어가면 스펙에만 있는 요구사항이 조용히 사라진다.
   if (action === "ready" && existing) {
     const oracleGate = checkSpecOracleGate(existing.data.specOracle);
     if (!oracleGate.ok) return errorResult(oracleGate.code as GateBlockCode, oracleGate.message!);
   }
 
-  // ── §3/§4.0 baseline_capture. code_done에도 동일 게이트를 남겨둔다(이중 방어).
+  // ── baseline_capture. code_done에도 동일 게이트를 남겨둔다(이중 방어).
   //
   // decompose 경로는 baseline_capture/code_done을 거치지 않으므로 integrate에서 같은 baseline·
   // analyze·wiring·boot 게이트를 한 번 더 적용한다. 서브태스크별 미니 파이프라인은 강제하지 않되,
@@ -293,9 +293,9 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (!baselineResult.ok) return errorResult(baselineResult.code as GateBlockCode, baselineResult.message!);
   }
 
-  // ── §3 contract_done: 구현 전 red 확인을 요구한다(review_done의 checkContractEvidenceGate는
+  // ── contract_done: 구현 전 red 확인을 요구한다(review_done의 checkContractEvidenceGate는
   // 나중에 red→green 전이 전체를 재검증 — 서로 다른 단계를 본다). resolveContractRequired는
-  // §9/§4.3 "undefined면 기본-on 휴리스틱"을 적용한다(contractEvidence.ts 주석 참고).
+  // "undefined면 기본-on 휴리스틱"을 적용한다(contractEvidence.ts 주석 참고).
   if (action === "contract_done" && existing) {
     const projectConfigForContractStart = await loadProjectConfig(existing.projectPath);
     const contractRequired = resolveContractRequired(projectConfigForContractStart?.verificationPolicy?.contractEvidenceRequired, {
@@ -366,7 +366,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     const evidenceResult = checkTestEvidenceGate(args.testPassed, existing.data.chainInfo.testEvidence ?? null);
     if (!evidenceResult.ok) return errorResult(evidenceResult.code as GateBlockCode, evidenceResult.message!);
 
-    // ── §4.6 label-guard: testEvidence가 unverified(환경부재 선언)로 기록됐다면, 같은 세션에
+    // ── label-guard: testEvidence가 unverified(환경부재 선언)로 기록됐다면, 같은 세션에
     // 이미 그린 증거(baseline 등 — 이 evidence 자신은 순환을 피하려 제외)가 있는지 대조한다.
     const feature = existing.data.chainInfo.testEvidence;
     if (feature?.derivedState === "unverified") {
@@ -386,7 +386,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       });
     }
 
-    // ── §10 PRD 정합성 게이트(선택 확장, opt-in): config.verificationPolicy.integrationGateEnforced가
+    // ── PRD 정합성 게이트(선택 확장, opt-in): config.verificationPolicy.integrationGateEnforced가
     // 켜져 있으면 coverageMap 제출을 강제한다. 꺼져 있으면 제출된 경우에만 검증(하위호환).
     const projectConfig = await loadProjectConfig(existing.projectPath);
     const enforced = projectConfig?.verificationPolicy?.integrationGateEnforced ?? false;
@@ -402,7 +402,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // ── §4.3-T TODO-SPEC 최초 확정 게이트. TODO-SPEC이 없는 feature/* 브랜치에서 clarify가 초안을
+  // ── TODO-SPEC 최초 확정 게이트. TODO-SPEC이 없는 feature/* 브랜치에서 clarify가 초안을
   // 들고 왔을 때만 발동한다(goal/items를 안 줬으면 아직 사용자와 논의 중이라는 뜻이라 건너뛴다).
   // "모델이 임의로 확정하지 않는다"를 자기보고 파라미터로 강제한다 — 진짜 확인이 일어났는지는
   // checkUserConfirmationGate와 같은 한계로 검증할 수 없다.
@@ -438,9 +438,9 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // ── §4.3-T TODO-SPEC 동기화 게이트. 브랜치가 feature/*가 아니었으면 session.data.todoSpec 자체가
+  // ── TODO-SPEC 동기화 게이트. 브랜치가 feature/*가 아니었으면 session.data.todoSpec 자체가
   // 없으므로 no-op. 파일을 다시 읽어 start 시점 스냅샷과 대조한다 — 세션에 저장해둔 스냅샷과
-  // 비교하는 것이지 서버가 "무엇을 했어야 하는지"를 추론하지 않는다(§4.3 판정 원칙과 동일).
+  // 비교하는 것이지 서버가 "무엇을 했어야 하는지"를 추론하지 않는다.
   if (action === "commit" && existing?.data.todoSpec) {
     const currentContent = await readTodoSpec(existing.projectPath, existing.data.todoSpec.featureName);
     const syncResult = checkTodoSpecSyncGate(existing.data.todoSpec.snapshotAtStart, currentContent, args.todoSpecSyncReason);
@@ -478,14 +478,14 @@ export async function handleSugoPlan(rawArgs: unknown) {
         }
       }
     }
-    // ── sugo_validate 호출강제 + 실측 우선(§4.3 확장). 서버가 auto로 직접 확인한 실패만 막는다 —
-    // 91%는 여전히 자기보고라 verdict 전체로 막으면 "확인 안 함"과 "확인했더니 틀렸다"를 못 구분한다.
+    // ── sugo_validate 호출강제 + 실측 우선. 서버가 auto로 직접 확인한 실패만 막는다 —
+    // 점수는 여전히 자기보고라 verdict 전체로 막으면 "확인 안 함"과 "확인했더니 틀렸다"를 못 구분한다.
     const validateCalledResult = checkValidateCalledGate(existing.data.chainInfo.lastValidation);
     if (!validateCalledResult.ok) return errorResult(validateCalledResult.code as GateBlockCode, validateCalledResult.message!);
     const validateVerifiedResult = checkValidateVerifiedGate(existing.data.chainInfo.lastValidation);
     if (!validateVerifiedResult.ok) return errorResult(validateVerifiedResult.code as GateBlockCode, validateVerifiedResult.message!);
 
-    // ── §P6-1: sugo_check_lethal_trifecta 호출강제 + 완화사유(sugo_validate와 같은 2단 분리).
+    // ── sugo_check_lethal_trifecta 호출강제 + 완화사유(sugo_validate와 같은 방식).
     // 이전엔 review-security라는 opt-in 스킬로만 트리펙타를 점검해, 요청 문구에 보안 관련
     // 키워드가 없으면 review_done이 트리펙타 위험을 전혀 안 보고 통과했다.
     const trifectaCalledResult = checkLethalTrifectaCalledGate(existing.data.chainInfo.lastLethalTrifectaCheck);
@@ -509,7 +509,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       );
     }
 
-    // ── §10 이중 실행 제거: reusedFromTestDone이면 지문이 일치할 때 runtimeCheck 없이 통과시킨다.
+    // ── 이중 실행 제거: reusedFromTestDone이면 지문이 일치할 때 runtimeCheck 없이 통과시킨다.
     let runtimeSatisfiedByReuse = false;
     if (args.reusedFromTestDone) {
       const currentFingerprint = await computeChangedFilesFingerprint(existing.projectPath, existing.data.chainInfo.changedFiles);
@@ -528,7 +528,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       const bootable = await isProjectBootable(existing.projectPath);
       const rc = args.runtimeCheck as RuntimeCheck;
       const labeled = !!rc.unverifiedReason && rc.unverifiedReason.trim().length > 0;
-      // ── §4.6 label-guard: 어떤 종류의 우회가 실제로 쓰이려는지 먼저 판별해 모순부터 검사한다.
+      // ── label-guard: 어떤 종류의 우회가 실제로 쓰이려는지 먼저 판별해 모순부터 검사한다.
       const claimsRuntimeAbsent = labeled && !rc.runtimeVerified;
       const claimsWiringAbsent = labeled && rc.runtimeVerified && bootable && rc.wiringVerified !== true;
       if (claimsRuntimeAbsent || claimsWiringAbsent) {
@@ -554,9 +554,9 @@ export async function handleSugoPlan(rawArgs: unknown) {
       }
     }
 
-    // ── §10 계약테스트 실행증거: config.verificationPolicy.contractEvidenceRequired가 켜져 있으면
+    // ── 계약테스트 실행증거: config.verificationPolicy.contractEvidenceRequired가 켜져 있으면
     // sugo_record_contract_evidence로 기록된 red→green 전이를 요구한다. resolveContractRequired로
-    // §9/§4.3 "undefined면 기본-on 휴리스틱"을 적용한다(contract_done 게이트와 동일 정책 판정).
+    // "undefined면 기본-on 휴리스틱"을 적용한다(contract_done 게이트와 동일 정책 판정).
     const projectConfigForContract = await loadProjectConfig(existing.projectPath);
     const contractRequired = resolveContractRequired(projectConfigForContract?.verificationPolicy?.contractEvidenceRequired, {
       baselineRequired: existing.data.baselineGate?.required ?? false,
@@ -565,7 +565,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (!contractResult.ok) return errorResult(contractResult.code as GateBlockCode, contractResult.message!);
   }
 
-  // ── §10 decompose 오케스트레이션(선택 확장): 매니페스트 결정론 검증(사이클·파일겹침·요구커버리지).
+  // ── decompose 오케스트레이션(선택 확장): 매니페스트 결정론 검증(사이클·파일겹침·요구커버리지).
   if (action === "decompose" && existing) {
     if (!args.manifest) return errorResult("MANIFEST_REQUIRED", "decompose action에는 manifest가 필요합니다.");
     if (!existing.data.prdPath) return errorResult("PRD_NOT_FOUND", "decompose 전에 PRD가 필요합니다.");
@@ -628,7 +628,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // ── §7 Patch 진입점: workResultPath가 주어지면 부모 PRD/버전을 미리 계산해둔다.
+  // ── Patch 진입점: workResultPath가 주어지면 부모 PRD/버전을 미리 계산해둔다.
   // 실패하면 세션을 만들기 전에 차단(오염된 patch 세션이 남지 않게).
   let patchContext: PatchContext | undefined;
   if (action === "start" && args.workResultPath) {
@@ -660,7 +660,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     cancelReason: args.cancelReason,
   });
 
-  // §9-A 체인 구간에서 접었으면 라벨로 남긴다 — "게이트를 통과해 끝냈다"와 구분되어야 한다.
+  // 체인 구간에서 접었으면 라벨로 남긴다 — "게이트를 통과해 끝냈다"와 구분되어야 한다.
   if (result.ok && result.abandonedChain) {
     newBypassLabels.push({
       kind: "abandonedChain",
@@ -682,7 +682,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
   }
 
-  // ── §4.6 label-guard: 콘텐츠 게이트 검사 중 실제로 쓰인 우회 라벨(모순검사 통과분)을 세션에 누적한다.
+  // ── label-guard: 콘텐츠 게이트 검사 중 실제로 쓰인 우회 라벨(모순검사 통과분)을 세션에 누적한다.
   if (newBypassLabels.length > 0) {
     session = {
       ...session,
@@ -702,7 +702,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       implementationStartedAt: new Date().toISOString() };
   }
 
-  // ── §4.5 판단품질 측정용 신호: TEST_DONE/REVIEW_RUNNING에서 code_start로 역방향 재진입하면
+  // ── 판단품질 측정용 신호: TEST_DONE/REVIEW_RUNNING에서 code_start로 역방향 재진입하면
   // auto-loop 재시도로 카운트한다(정상 최초 진입 READY→CODE_RUNNING은 카운트하지 않음).
   if (action === "code_start" && existing && (existing.state === "TEST_DONE" || existing.state === "REVIEW_RUNNING")) {
     session = {
@@ -714,7 +714,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
-  // ── §10 decompose 오케스트레이션: 매니페스트 생성/서브태스크 상태 갱신/integrate 시 changedFiles 합류.
+  // ── decompose 오케스트레이션: 매니페스트 생성/서브태스크 상태 갱신/integrate 시 changedFiles 합류.
   if (action === "decompose" && args.manifest) {
     const manifestWithStatus: DecomposeManifest = {
       subtasks: args.manifest.subtasks.map((s) => ({ ...s, status: "pending" as const })),
@@ -746,7 +746,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
-  // ── §7 Patch: start에서 계산해둔 patch 컨텍스트를 세션에 반영
+  // ── Patch: start에서 계산해둔 patch 컨텍스트를 세션에 반영
   if (action === "start" && patchContext) {
     session = {
       ...session,
@@ -760,7 +760,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
-  // ── §7.1 seed(사용자 지시)는 세션에 그대로 보존해뒀다가 review_done이 work-result에 싣는다.
+  // ── seed(사용자 지시)는 세션에 그대로 보존해뒀다가 review_done이 work-result에 싣는다.
   if (action === "start" && args.seed) {
     session = { ...session, data: { ...session.data, seed: args.seed } };
   }
@@ -801,11 +801,11 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // Dashboard에서 복사한 feat 명령은 세션 생성 시점부터 원본 SPEC을 고정한다. PRD 단계까지
+  // Dashboard에서 복사한 feat 명령은 세션 생성 시점부터 기준 SPEC을 고정한다. PRD 단계까지
   // 늦추면 중간 재개 세션에서 어느 SPEC으로 시작했는지 잃을 수 있으므로 start가 정본이다.
   if (action === "start" && args.specPath) {
     const specExists = await readFile(args.specPath, "utf-8").then(() => true, () => false);
-    if (!specExists) return errorResult("SPEC_FILE_NOT_FOUND", `원본 SPEC 파일을 찾을 수 없습니다: ${args.specPath}`);
+    if (!specExists) return errorResult("SPEC_FILE_NOT_FOUND", `기준 SPEC 파일을 찾을 수 없습니다: ${args.specPath}`);
     const selectedId = session.data.specDraftSelection?.selectedId;
     const selected = session.data.specDraftSelection?.candidates.find((candidate) => candidate.id === selectedId);
     if (selected?.specPath && selected.specPath !== args.specPath) {
@@ -846,7 +846,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
-  // ── §4.3-T TODO-SPEC 최초 생성. 게이트(위)를 통과했을 때만 도달한다 — 사용자 확인을 거친
+  // ── TODO-SPEC 최초 생성. 게이트(위)를 통과했을 때만 도달한다 — 사용자 확인을 거친
   // 초안만 파일로 고정한다.
   if (
     action === "clarify" &&
@@ -864,8 +864,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
     session = { ...session, data: { ...session.data, todoSpec: { ...session.data.todoSpec, snapshotAtStart: content } } };
   }
 
-  // ── §4.3-T TODO-SPEC 브랜치 감지. sugo를 쓰는 프로젝트라면 feature/* 브랜치에서 무조건
-  // 동작한다(opt-in 아님 — verificationPolicy로 끌 수 있는 §10 확장들과는 다르다). 브랜치가
+  // ── TODO-SPEC 브랜치 감지. sugo를 쓰는 프로젝트라면 feature/* 브랜치에서 무조건
+  // 동작한다(opt-in 아님 — verificationPolicy로 끌 수 있는 확장들과는 다르다). 브랜치가
   // 패턴이 아니거나 git 저장소가 아니면(currentGitBranch가 null) 조용히 no-op.
   if (action === "start") {
     const branch = await currentGitBranch(session.projectPath);
@@ -879,7 +879,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // ── §5.0 specOracle 켜기: **경로를 줬다는 주장이 아니라 파일이 실재하는지**를 서버가 확인한다.
+  // ── specOracle 켜기: **경로를 줬다는 주장이 아니라 파일이 실재하는지**를 서버가 확인한다.
   // 존재하지 않는 경로로 게이트를 켜면 영영 못 여는 세션이 되고, 반대로 자기보고만 믿으면
   // "스펙 있다고 했는데 없음"으로 게이트가 무력화된다.
   if (action === "prd" && args.specPath) {
@@ -895,7 +895,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // ── §5.0 oracle_done: 상태는 그대로 두고 대조 사실만 기록한다(ready 게이트의 근거).
+  // ── oracle_done: 상태는 그대로 두고 대조 사실만 기록한다(ready 게이트의 근거).
   if (action === "oracle_done") {
     const prev = session.data.specOracle ?? { required: false, ran: false };
     session = {
@@ -913,7 +913,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
-  // ── jira: 선택을 세션에 남긴다. `"new"`는 실제 티켓을 만들지 않는다(스펙상 TODO) —
+  // ── jira: 선택을 세션에 남긴다. `"new"`는 실제 티켓을 만들지 않는다(미구현) —
   // 만드는 척하지 않고 선택만 기록한다.
   if (action === "jira" && args.jiraOption) {
     session = {
@@ -946,8 +946,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
 
     // ── 워크스페이스 연동: 프로젝트가 워크스페이스에 등록돼 있으면 Task를 자동 생성한다.
-    // §7.1 Patch: patch 모드면 새 Task를 만들지 않고 원본 Run(=Task)을
-    // 재사용한다 — base-task 매칭은 ref 파일명 우선(findTaskByPrdRef). 못 찾으면(예: 원본이
+    // Patch: patch 모드면 새 Task를 만들지 않고 기존 Run(=Task)을
+    // 재사용한다 — base-task 매칭은 ref 파일명 우선(findTaskByPrdRef). 못 찾으면(예: 기존 Task가
     // 워크스페이스 등록 전에 만들어짐) 새 Task로 안전하게 폴백한다(교착 방지).
     const registryEntry = await findRegistryEntry(session.projectPath);
     if (registryEntry?.workspace) {
@@ -977,13 +977,13 @@ export async function handleSugoPlan(rawArgs: unknown) {
         data: { ...session.data, linkedWorkspace: registryEntry.workspace, linkedTaskId: task.id },
       };
 
-      // ── §8.5 Roadmap DAG: task 레벨 노드를 보장하고, PRD의 ### REQ-XXX 헤딩을 자식 REQ
+      // ── Roadmap DAG: task 레벨 노드를 보장하고, PRD의 ### REQ-XXX 헤딩을 자식 REQ
       // 노드(+ 항상 REQ-CONFIRM)로 심는다. 헤딩 형식 REQ가 하나도 없으면 심을 게 없어 no-op.
       // task 노드 상태는 실제 Task와 맞춰 in_progress로 갱신한다 — pending으로 남으면
       // 의존성 없는 이 노드가 readySet에 REQ와 나란히 잘못 섞여 나온다(스모크 테스트가 잡아낸 버그).
       await backfillRoadmapTask(registryEntry.workspace, task.id, session.featureName);
       await updateRoadmapNodeStatus(registryEntry.workspace, task.id, "in_progress");
-      // §9 4층 헌법: PRD 하나가 Spec, 실행 한 번이 Run, 저장소 산출물이 Task다.
+      // PRD 하나가 Spec, 실행 한 번이 Run, 저장소 산출물이 Task다.
       // 기존 구현은 Task→REQ만 만들어 Canvas의 핵심 계층이 영원히 비어 있었다.
       // patch는 같은 제품 작업의 다음 차수이지 새 실행 묶음이 아니다. 기존 Task가 속한 RUN을
       // 그대로 재사용해야 캔버스가 RUN 하나 안에서 v0-feat → vN-patch를 보여줄 수 있다.
@@ -1065,7 +1065,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
-  // §4.3-R test_reverify: 상태는 그대로 두고 test_done이 찍은 스냅샷만 최신 증거로 다시 찍는다.
+  // test_reverify: 상태는 그대로 두고 test_done이 찍은 스냅샷만 최신 증거로 다시 찍는다.
   // test_done과 같은 계산을 쓰되(지문 포함), 재스냅샷 사실을 라벨로 남겨 완료등급을 강등시킨다.
   if (action === "test_reverify" && existing) {
     const latest = existing.data.chainInfo.testEvidence;
@@ -1101,7 +1101,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
 
   if (action === "test_done" && existing?.data.chainInfo.testEvidence) {
     const derivedState = existing.data.chainInfo.testEvidence.derivedState;
-    // §10 이중 실행 제거: pass일 때만 지문을 남긴다 — fail/unverified 증거는 재사용 대상이 아니다.
+    // 이중 실행 제거: pass일 때만 지문을 남긴다 — fail/unverified 증거는 재사용 대상이 아니다.
     const testEvidenceFingerprint =
       derivedState === "pass"
         ? await computeChangedFilesFingerprint(session.projectPath, session.data.chainInfo.changedFiles)
@@ -1127,7 +1127,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     };
   }
 
-  // ── §2 하네스 도구 디스패치: code_start 순간에 적용된 하네스와 매칭되는 특화 MCP 도구 메뉴를
+  // ── 하네스 도구 디스패치: code_start 순간에 적용된 하네스와 매칭되는 전용 MCP 도구 메뉴를
   // 실어준다(레지스트리가 비어있으면 빈 문자열 — 그게 기본값이다).
   let harnessToolMenu: string | undefined;
   if (action === "code_start") {
@@ -1174,7 +1174,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     const { workResultPath } = isPatch
       ? await writePatchWorkResultFile(session.data.patch!.featureDir, session.data.patch!.version, workResultContent)
       : await writeWorkResultFile(featurePath, workResultContent);
-    // ── §7.2 calibrated-ratio fetch: 대시보드가 실측 중앙값으로 보정한 비율이 있으면 그걸 쓰고,
+    // ── calibrated-ratio fetch: 대시보드가 실측 중앙값으로 보정한 비율이 있으면 그걸 쓰고,
     // 없으면(disabled/실패) humanHours.ts의 고정 기본값(3.5)으로 안전하게 폴백한다.
     const calibratedRatio = await fetchCalibratedRatio();
     humanHoursEstimate = estimateHumanHours(
@@ -1204,7 +1204,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       },
     };
 
-    // ── §3/§8.5 REQ/REQ-CONFIRM 자동완료: "사용자 확인이 곧 REQ 롤다운"이다. 승격된 REQ가 없는
+    // ── REQ/REQ-CONFIRM 자동완료: "사용자 확인이 곧 REQ 롤다운"이다. 승격된 REQ가 없는
     // 세션(워크스페이스 미등록, 헤딩 형식 REQ 없음 등)은 completeTaskRequirements 내부에서 조용히
     // no-op하므로 여기서 별도 분기 없이 항상 호출해도 안전하다.
     if (session.data.linkedWorkspace && session.data.linkedTaskId) {
@@ -1212,7 +1212,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // ── §4.6 label-guard: commit 시점에 우회 라벨 누적분으로 completionGrade를 판정한다. 차단은
+  // ── label-guard: commit 시점에 우회 라벨 누적분으로 completionGrade를 판정한다. 차단은
   // 하지 않는다(교착 방지) — 대신 응답 최상단에 강제 노출해 "조용히 넘어가지 못하게" 한다.
   let completionGrade: import("../labelGuard.js").CompletionGrade | undefined;
   let bypassSummary: string | undefined;
@@ -1230,7 +1230,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     | undefined;
   if (action === "commit" && session.data.linkedWorkspace && session.data.linkedTaskId) {
     const workspace = session.data.linkedWorkspace;
-    // ── §7.2 prRefs: 완료 시점에 git 원격/브랜치를 읽어 대시보드 "Create PR" 버튼을 급전한다.
+    // ── prRefs: 완료 시점에 git 원격/브랜치를 읽어 대시보드 "Create PR" 버튼을 급전한다.
     // git 저장소가 아니거나 원격이 없으면 조용히 undefined(막지 않음).
     const prRefs = (await collectPrRefs(session.projectPath)) ?? undefined;
     const workLog = await addWorkLog(workspace, {
@@ -1301,7 +1301,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       checkpointsToReview: applicable.map((cp) => ({ id: cp.id, title: cp.title, checklist: cp.checklist })),
     };
 
-    // ── §7.2 Activity Stream: 태스크 완료 이벤트. 논블로킹 — 실패해도 commit 응답엔 영향 없다.
+    // ── Activity Stream: 태스크 완료 이벤트. 논블로킹 — 실패해도 commit 응답엔 영향 없다.
     void emitActivity({
       workspaceName: workspace,
       agent: "MAIN",
@@ -1310,7 +1310,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     });
   }
 
-  // P3 explain_state의 실행 근거. 상태를 실제로 바꾼 성공 action만 기록한다. oracle_done/status/cancel처럼
+  // explain_state의 실행 근거. 상태를 실제로 바꾼 성공 action만 기록한다. oracle_done/status/cancel처럼
   // 상태를 유지하는 호출이 마지막 진입 action을 덮으면 "이 상태가 어떻게 됐나"가 거짓이 된다.
   const previousState = existing?.state ?? "INIT";
   if (action !== "status" && session.state !== previousState) {
@@ -1343,7 +1343,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     }
   }
 
-  // ── §4.3-T start 응답: TODO-SPEC 원문(요약 아님 — 에이전트가 "완료됨"/"남은 것"을 직접 읽고
+  // ── start 응답: TODO-SPEC 원문(요약 아님 — 에이전트가 "완료됨"/"남은 것"을 직접 읽고
   // 판단하게 한다)과, 결정 ③(합칠지는 물어보되 강제 병합하지 않는다): 같은 프로젝트에 이미
   // 진행 중인 세션이 있으면 알려준다. 새로 만든 세션 자기 자신은 제외한다.
   let todoSpecResponse: { status: "missing" | "loaded"; path: string; content: string | null } | undefined;
@@ -1371,9 +1371,9 @@ export async function handleSugoPlan(rawArgs: unknown) {
       "사용자에게 확인을 묻기 전에 request_review_confirmation으로 현재 차수의 보고서와 변경파일을 먼저 게시하세요. 게시 응답을 확인한 뒤 Dashboard의 리뷰 보고서 HTML 버튼으로 안내하세요. 터미널 선택창에서 미리 승인을 받지 마세요.",
       ...(result.nextActionHints ?? []),
     ] : result.nextActionHints ?? [],
-    // §4.3-P DONE까지 남은 경로와 지금 막고 있는 것 — 막다른 길에 들어가기 전에 보이게 한다.
+    // DONE까지 남은 경로와 지금 막고 있는 것 — 막다른 길에 들어가기 전에 보이게 한다.
     completionPlan: buildCompletionPlan(session.state, session.data.chainInfo),
-    // §4.3-T start에서만 채워진다. missing이면 clarify에서 최종 목표를 확정해 생성해야 한다.
+    // start에서만 채워진다. missing이면 clarify에서 최종 목표를 확정해 생성해야 한다.
     todoSpec: todoSpecResponse,
     // feat 시작 시 사용자가 기존 초안 연결/새 SPEC 생성을 직접 고를 수 있도록 원문 후보를 반환한다.
     unlinkedSpecDrafts: action === "start" ? session.data.specDraftSelection?.candidates : undefined,
@@ -1390,7 +1390,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     workRecord,
     decomposeManifest: session.data.decomposeManifest,
     harnessToolMenu,
-    // §4.2 "정적검증 미강제" 라벨: test_done에서 npm/py/go 등 풀검증 강제 불가 명령이면 false로
+    // "정적검증 미강제" 라벨: test_done에서 npm/py/go 등 풀검증 강제 불가 명령이면 false로
     // 노출한다(gradle/maven이면 true — 그쪽은 게이트가 gradlew check/mvn verify를 이미 강제).
     fullVerifyEnforceable:
       action === "test_done" && session.data.chainInfo.testEvidence

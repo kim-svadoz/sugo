@@ -13,7 +13,7 @@ const V1_LIKE = [
   "| `src/test/.../service/LoginServiceTest.java` | 신규 |",
 ].join("\n");
 
-const V2_LIKE = [
+const GOOD_SPEC = [
   "# 로그인 실패 횟수 제한",
   "- SPEC: `spec-manual-10000001` (workspace `account`)",
   "- 기한: 2026-11-02",
@@ -35,13 +35,13 @@ const VALID_SPEC = [
 const V1_STRUCTURED = `${VALID_SPEC}\n\n${V1_LIKE}`;
 
 describe("spec-writer complete lint", () => {
-  it("v1처럼 구현 경로·파일:줄·커밋 해시가 있으면 각각 경고한다", () => {
+  it("구현 경로·파일:줄·커밋 해시가 있으면 각각 경고한다", () => {
     const kinds = new Set(lintSpecText(V1_LIKE).map((w) => w.kind));
     expect(kinds).toEqual(new Set(["implementation-path", "file-line", "commit-hash"]));
   });
 
-  it("v2처럼 업무 수준 이름·날짜·SPEC id만 있으면 경고가 없다", () => {
-    expect(lintSpecText(V2_LIKE)).toEqual([]);
+  it("기획 수준 이름·날짜·SPEC id만 있으면 경고가 없다", () => {
+    expect(lintSpecText(GOOD_SPEC)).toEqual([]);
   });
 
   it("줄 번호 표기를 잡는다", () => {
@@ -95,7 +95,7 @@ describe("spec-writer complete gate", () => {
     return JSON.parse(res.content[0].text);
   }
 
-  it("v1 같은 spec은 경고 목록을 돌려주고 연결하지 않는다", async () => {
+  it("구현 세부가 많은 spec은 경고 목록을 돌려주고 연결하지 않는다", async () => {
     const data = await complete(V1_STRUCTURED);
     expect(data.ok).toBe(false);
     expect(data.errorCode).toBe("SPEC_LINT_WARNINGS");
@@ -109,7 +109,7 @@ describe("spec-writer complete gate", () => {
     expect(attached).toHaveLength(1);
   });
 
-  it("v2 같은 spec은 바로 연결한다", async () => {
+  it("기획 수준 spec은 바로 연결한다", async () => {
     const data = await complete(VALID_SPEC);
     expect(data.ok).toBe(true);
     expect(attached).toHaveLength(1);

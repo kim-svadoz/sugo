@@ -15,14 +15,14 @@ function sessionAt(state: PlanSession["state"]): PlanSession {
   };
 }
 
-describe("순서강제 게이트 (적대적 코퍼스: Gate Keeper) — 반드시 거부", () => {
+describe("순서강제 게이트 (적대적 입력: Gate Keeper) — 반드시 거부", () => {
   it("READY 상태에서 test_start를 호출하면 차단된다 (CODE_RUNNING/CODE_DONE 건너뛰기)", () => {
     const result = applyTransition(sessionAt("READY"), "test_start", "sid", {});
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("PREREQUISITE_FAILED");
   });
 
-  it("v1 스펙 델타(§3 선형화): READY에서 code_start로 직행하면 차단된다(CODE_READY 아님)", () => {
+  it("선형화: READY에서 code_start로 직행하면 차단된다(CODE_READY 아님)", () => {
     const result = applyTransition(sessionAt("READY"), "code_start", "sid", {});
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("PREREQUISITE_FAILED");
@@ -85,7 +85,7 @@ describe("순서강제 게이트 — 반드시 허용", () => {
     expect(result.session?.state).toBe("CODE_RUNNING");
   });
 
-  it("v1 스펙 델타(§3): READY→BASELINE→CONTRACT_RUNNING→CODE_READY 선형화가 순서대로 통과한다", () => {
+  it("READY→BASELINE→CONTRACT_RUNNING→CODE_READY 선형화가 순서대로 통과한다", () => {
     let s = applyTransition(sessionAt("READY"), "baseline_capture", "sid", {}).session!;
     expect(s.state).toBe("BASELINE");
     s = applyTransition(s, "contract_start", s.id, {}).session!;
@@ -155,7 +155,7 @@ describe("순서강제 게이트 — 반드시 허용", () => {
     expect(result.session?.state).toBe("CODE_RUNNING");
   });
 
-  it("cancel은 임의 상태에서 허용된다 — 단 체인 구간은 사유가 필요하다(§9-A)", () => {
+  it("cancel은 임의 상태에서 허용된다 — 단 체인 구간은 사유가 필요하다", () => {
     // 체인 구간(CODE_RUNNING~REVIEW_RUNNING)은 "증거 체인을 끊고 접었다"는 뜻이라 사유를 요구한다.
     // 막는 게 아니라 abandonedChain 라벨로 기록하기 위한 최소 입력이다.
     const blocked = applyTransition(sessionAt("CODE_RUNNING"), "cancel", "sid", {});
@@ -194,8 +194,8 @@ describe("checkPrerequisite 단위 동작", () => {
   });
 });
 
-describe("§10 decompose 오케스트레이션 — 순서강제", () => {
-  // v2 §2.4: decompose의 진입점은 READY가 아니라 **PRD**다. 비대 PRD를 쪼개는 결정은 PRD를
+describe("decompose 오케스트레이션 — 순서강제", () => {
+  // decompose의 진입점은 READY가 아니라 **PRD**다. 비대 PRD를 쪼개는 결정은 PRD를
   // 쓴 직후에 내리는 것이지, ready(구현 착수 승인)를 받은 뒤가 아니다.
   it("PRD에서 decompose로 진입할 수 있다", () => {
     const result = applyTransition(sessionAt("PRD"), "decompose", "sid", {});
@@ -203,7 +203,7 @@ describe("§10 decompose 오케스트레이션 — 순서강제", () => {
     expect(result.session?.state).toBe("DECOMPOSE");
   });
 
-  it("READY에서 decompose는 거부된다(v2에서 진입점이 PRD로 옮겨짐)", () => {
+  it("READY에서 decompose는 거부된다(진입점은 PRD)", () => {
     const result = applyTransition(sessionAt("READY"), "decompose", "sid", {});
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("PREREQUISITE_FAILED");
@@ -227,7 +227,7 @@ describe("§10 decompose 오케스트레이션 — 순서강제", () => {
     expect(result.session?.state).toBe("ORCHESTRATING");
   });
 
-  // v2 §2.4/§4 흐름도: integrate는 CODE_RUNNING이 아니라 **DOCS_PENDING**으로 합류한다.
+  // integrate는 CODE_RUNNING이 아니라 **DOCS_PENDING**으로 합류한다.
   // 서브태스크 각각이 이미 자기 구현을 끝낸 상태라, 통합 후에는 코딩 단계로 되돌아갈 게 아니라
   // 문서화→커밋으로 이어진다.
   it("ORCHESTRATING에서 integrate로 DOCS_PENDING에 합류한다", () => {
@@ -259,11 +259,11 @@ describe("§10 decompose 오케스트레이션 — 순서강제", () => {
 });
 
 /**
- * v2 §2.4 신규 액션. `oracle_done`은 **상태를 바꾸지 않는** 유일한 기록성 액션이라 전이 로직에서
- * 별도 취급된다 — 이게 깨지면 PRD/JIRA 중 한쪽에서만 오라클을 기록할 수 있게 되어 ready가
- * 영영 안 열리는 데드락이 재발한다.
+ * `oracle_done`은 **상태를 바꾸지 않는** 기록성 액션이라 전이 로직에서 별도 취급된다 —
+ * 이게 깨지면 PRD/JIRA 중 한쪽에서만 오라클을 기록할 수 있게 되어 ready가 영영 안 열리는
+ * 데드락이 생긴다.
  */
-describe("v2 신규 액션 — jira / oracle_done", () => {
+describe("jira / oracle_done 액션", () => {
   it("PRD에서 jira로 진입한다", () => {
     const result = applyTransition(sessionAt("PRD"), "jira", "sid", {});
     expect(result.ok).toBe(true);
@@ -288,7 +288,7 @@ describe("v2 신규 액션 — jira / oracle_done", () => {
     expect(result.session?.state).toBe("PRD");
   });
 
-  it("oracle_done은 JIRA에서도 상태를 바꾸지 않는다(양쪽 진입 — 데드락 수정)", () => {
+  it("oracle_done은 JIRA에서도 상태를 바꾸지 않는다(양쪽 진입 — 데드락 방지)", () => {
     const result = applyTransition(sessionAt("JIRA"), "oracle_done", "sid", {});
     expect(result.ok).toBe(true);
     expect(result.session?.state).toBe("JIRA");

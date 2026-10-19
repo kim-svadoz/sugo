@@ -10,7 +10,7 @@ export const sugoDeleteInputSchema = {
 const SugoDeleteArgs = z.object(sugoDeleteInputSchema);
 
 /**
- * §9 라이프사이클 sugo_delete: **레지스트리에서 등록만 취소한다 — 프로젝트의 실제 파일(sugo/**)은
+ * 라이프사이클 sugo_delete: **레지스트리에서 등록만 취소한다 — 프로젝트의 실제 파일(sugo/**)은
  * 지우지 않는다.** "삭제"라는 이름과 달리 파일시스템 삭제가 아니다(사용자 프로젝트를 실수로
  * 날리는 위험을 피하기 위한 의도적 축소 — harness/registry.ts의 unregisterProject 주석 참고).
  *

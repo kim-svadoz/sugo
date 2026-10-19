@@ -157,9 +157,9 @@ type NodeData = {
   /**
    * WorkstreamContainer의 "＋ 여기에 놓기" 표시.
    *
-   * 캔버스는 §5.1대로 **읽기전용 뷰어**라 카드를 끌 수 없고, 따라서 이 값을 켜는 곳이 지금은
+   * 캔버스는 **읽기전용 뷰어**라 카드를 끌 수 없고, 따라서 이 값을 켜는 곳이 지금은
    * 없다. 마크업은 그대로 남겨둔다 — 나중에 캔버스 밖(목록 등)에서 끌어오는
-   * 경로가 생기면 받을 자리가 이미 있는 셈이고, 지우면 스펙과 어긋난다.
+   * 경로가 생기면 받을 자리가 이미 있는 셈이다.
    */
   isDropTarget?: boolean;
   /** lineage 노드 전용 — 이 체인에 묶인 patch 카드들(컬럼=sibling, 세로=serial). */
@@ -194,7 +194,7 @@ function RoadmapNodeCard({ data }: NodeProps<FlowNode>) {
      *
      * 카드 본체는 전파를 막지 않는다. 막으면 ReactFlow의 `onNodeClick`이 안 와서 이 노드가
      * 선택되지 않고, 그러면 오른쪽 패널이 안 열린다. **RUN의 Spec 편입/분리는 그 패널의
-     * 드롭다운이 유일한 경로**(§C.3, 캔버스는 읽기전용)라, 여기서 전파를 막으면 기능 자체가
+     * 드롭다운이 유일한 경로**(캔버스는 읽기전용)라, 여기서 전파를 막으면 기능 자체가
      * 손에 닿지 않게 된다.
      */
     const expandOnly = (e: React.MouseEvent) => {
@@ -638,9 +638,8 @@ const nodeTypes = { roadmap: RoadmapNodeCard, container: WorkstreamContainer, li
 /**
  * edgeTypes ①: 지울 수 있는 의존 엣지.
  *
- * `depends_on`(순서)은 §7에서 **대시보드 소유**로 못박은 컬럼이다. 소유한다는 건 사람이
- * 여기서 고친다는 뜻인데, 지금까지 화면에 지우는 수단이 없어서 한 번 들어온 링크는
- * 플러그인을 거치지 않고는 뺄 수가 없었다.
+ * `depends_on`(순서)은 **대시보드가 소유**하는 컬럼이다. 소유한다는 건 사람이 여기서
+ * 고친다는 뜻이라, 플러그인을 거치지 않고 화면에서 링크를 뺄 수 있어야 한다.
  *
  * 라벨은 hover에만 띄운다. 항상 띄우면 엣지가 많은 그래프에서 ✕가 노드를 다 가린다.
  */
@@ -693,8 +692,8 @@ function DeletableEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition,
 const edgeTypes = { deletable: DeletableEdge };
 
 /**
- * **의존(`depends_on`)은 task ↔ task 전용이다** — 플러그인 스펙 §"링크 타입"의 `task → task`,
- * 백엔드 `LINK_REQUIRES_TASK_LEVEL`과 같은 계약이다. RUN/SPEC 사이의 순서는 의존이 아니라
+ * **의존(`depends_on`)은 task ↔ task 전용이다** — 백엔드 `LINK_REQUIRES_TASK_LEVEL`과
+ * 같은 계약이다. RUN/SPEC 사이의 순서는 의존이 아니라
  * **포함(parent)** 으로 표현한다. 아무 레벨에나 링크를 그리면 "RUN이 RUN을 기다린다"는,
  * 온톨로지에 없는 관계가 화면에만 생겨난다.
  */
@@ -797,9 +796,9 @@ function layout(
   /**
    * **패치 체인 묶기.** `lineage`가 붙은 patch task들은 카드를 낱장으로 흩뿌리지 않고
    * 계보 하나당 노드 하나(`chain:<root>`)로 묶는다 — 3차 패치까지 간 작업이 카드 네 장으로
-   * 퍼지면 원본이 어느 것인지 안 보인다.
+   * 퍼지면 최초 구현이 어느 것인지 안 보인다.
    *
-   * 컬럼은 스펙 그대로 **depth 0마다 새로 열고, depth>0은 직전 컬럼에 세로로 쌓는다.**
+   * 컬럼은 **depth 0마다 새로 열고, depth>0은 직전 컬럼에 세로로 쌓는다.**
    */
   const chainCols = new Map<string, ChainItem[][]>();
   /** 체인 노드에 흡수돼 더 이상 낱개로 그려지지 않는 patch task들 — 엣지도 걸면 안 된다. */
@@ -810,8 +809,8 @@ function layout(
       const { id, root, parent, memberIds, columns } = chain;
       chainCols.set(id, columns);
 
-      // 원본 노드들을 빼고 체인 노드 한 개로 갈아끼운다. 소속(부모 RUN)은 첫 멤버를 따른다 —
-      // patch는 새 Run을 만들지 않고 **원본 Run에 귀속**되기 때문이다(플러그인 스펙 §성숙).
+      // 멤버 노드들을 빼고 체인 노드 한 개로 갈아끼운다. 소속(부모 RUN)은 첫 멤버를 따른다 —
+      // patch는 새 Run을 만들지 않고 **처음 Run에 귀속**되기 때문이다.
       const first = columns[0][0].node;
       const chainNode = { id, title: root, level: "task", status: effStatus(first), parent, lineage: {} } as RoadmapNode;
       byId.set(id, chainNode);
@@ -986,7 +985,7 @@ function layout(
         source: dep,
         target: n.id,
         type: "deletable",
-        // `animated`(점선 행진)는 스펙의 캔버스 엣지에 없다. 켜두면 진행중 의존선이 계속
+        // `animated`(점선 행진)는 쓰지 않는다. 켜두면 진행중 의존선이 계속
         // 꿈틀거려, 정작 봐야 할 상태 변화가 그 움직임에 묻힌다.
         style: { stroke: "rgba(148,163,184,0.45)" },
       });
@@ -999,7 +998,7 @@ function layout(
     const kind = kindOf(n);
     const s = size.get(n.id)!;
     const rootPos = g.node(n.id);
-    // **사람이 옮긴 자리(pos_x/pos_y)가 dagre를 이긴다.** §7에서 pos는 대시보드 소유다 —
+    // **사람이 옮긴 자리(pos_x/pos_y)가 dagre를 이긴다.** pos는 대시보드 소유다 —
     // 자동배치가 매번 덮어쓰면 "옮겼다"는 행위에 아무 의미가 없다. 가상 노드(체인·미분류)는
     // 서버에 없으니 저장된 좌표도 없다.
     // 자식은 measure가 이미 저장 자리를 반영해 childPos에 넣어뒀다(컨테이너 크기와 한 몸).
@@ -1056,7 +1055,7 @@ interface MenuState {
 
 /**
  * `RoadmapGraph` — **읽기전용 DAG 뷰어.** 전체화면 페이지(`/roadmap/:workspace`)와
- * Sessions의 Agent Canvas 오버레이 모달이 **같은 컴포넌트를 공유한다**(가 오버레이
+ * Sessions의 Agent Canvas 오버레이 모달이 **같은 컴포넌트를 공유한다**(오버레이
  * 본문으로 `<RoadmapGraph fill />`을 그대로 쓴다).
  *
  * 두 자리에 각각 다른 뷰를 두면 "캔버스"라는 말이 화면마다 다른 걸 가리키게 되고, 폐기/편입
@@ -1077,7 +1076,7 @@ export function RoadmapGraph({
   /** RoadmapTab의 "진행 중심" 결과. 주면 이 목록만 그린다(폴링은 계속 전체를 읽는다). */
   nodeFilter?: RoadmapNode[];
   onEdited?: () => void;
-  /** §7B Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). 로드된 뒤 그 노드로 팬 + 선택하고
+  /** Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). 로드된 뒤 그 노드로 팬 + 선택하고
    * 1회만 적용한다(이후 폴링 갱신에서 다시 튀지 않게 `focusedOnce`로 잠근다). */
   focusNodeId?: string;
   onFileViewerChange?: (open: boolean) => void;
@@ -1600,12 +1599,12 @@ export function RoadmapGraph({
           proOptions={{ hideAttribution: true }}
           edgeTypes={edgeTypes}
           /**
-           * **읽기전용 뷰어(§5.1).** 이 명시적으로 이렇게 못박는다:
+           * **읽기전용 뷰어.** 아래 속성을 모두 false로 둔다:
            * `nodesFocusable/nodesConnectable/nodesDraggable/elementsSelectable = false`.
            *
            * 캔버스는 **보는 자리**다. 구조를 바꾸는 일은 각각 제자리가 따로 있다 —
            * RUN의 Spec 편입/분리는 오른쪽 패널의 드롭다운, 폐기·복구는 우클릭 메뉴와 폐기함,
-           * 의존 삭제는 엣지의 ✕. 여기서 카드를 끌어 옮기는 조작은 스펙에 없다.
+           * 의존 삭제는 엣지의 ✕. 여기서 카드를 끌어 옮기는 조작은 지원하지 않는다.
            */
           nodesFocusable={false}
           nodesConnectable={false}
@@ -1830,7 +1829,7 @@ export function RoadmapGraphPanel(props: {
   onEdited?: () => void;
   /** RoadmapTab의 "진행 중심" 필터 결과를 그대로 흘려보낸다. */
   nodeFilter?: RoadmapNode[];
-  /** §7B Schedule 탭 딥링크. */
+  /** Schedule 탭 딥링크. */
   focusNodeId?: string;
   onFileViewerChange?: (open: boolean) => void;
 }) {

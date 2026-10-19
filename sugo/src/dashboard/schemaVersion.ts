@@ -1,5 +1,5 @@
 /**
- * §8.2 "모든 sync payload에 계약 버전(`DASHBOARD_SYNC_SCHEMA_VERSION`)을 싣고 양방향 graceful degrade."
+ * 모든 sync payload에 계약 버전(`DASHBOARD_SYNC_SCHEMA_VERSION`)을 싣고 양방향으로 graceful degrade한다.
  *
  * 플러그인과 대시보드는 **별개로 배포되는 두 레포**라 어느 쪽이 먼저 올라갈지 보장이 없다
  * (`cross-repo-contract` 불변식). 버전 숫자 자체가 뭔가를 분기시키진 않는다 — 수신 측이

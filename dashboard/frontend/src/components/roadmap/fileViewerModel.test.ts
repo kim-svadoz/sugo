@@ -100,7 +100,7 @@ describe("changed-file viewer model", () => {
     ]);
   });
 
-  it("SPEC/RUN은 feat와 patch 전체를 합치고 파일마다 원본 Task와 차수를 보존한다", () => {
+  it("SPEC/RUN은 feat와 patch 전체를 합치고 파일마다 소속 Task와 차수를 보존한다", () => {
     const task = node("task", "task", "run");
     task.lineage = [
       { version: 0, changedFiles: ["src/Feat.java", "src/Shared.java"], workResult: { patchVersion: 0 } },
@@ -116,7 +116,7 @@ describe("changed-file viewer model", () => {
     expect(files.find((file) => file.path === "src/Patch.java")).toMatchObject({ artifactTaskId: "task", artifactPatchVersion: 1 });
   });
 
-  it("합산 파일은 선택한 SPEC이 아니라 파일의 원본 Task/차수로 조회한다", () => {
+  it("합산 파일은 선택한 SPEC이 아니라 파일의 소속 Task/차수로 조회한다", () => {
     expect(reviewArtifactLocator(
       { path: "src/A.java", change: "modified", artifactTaskId: "task-a", artifactPatchVersion: 2 },
       { taskId: "spec", patchVersion: undefined },

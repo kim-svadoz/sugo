@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 저장소 개발 경로(dev-local)의 SQLite DB를 번들 대시보드의 사용자 데이터 폴더로 옮긴다.
-// 원본은 읽기 전용으로만 열고(개발 서버가 쓰는 중이어도 일관된 스냅샷), 원본 파일은 바꾸지 않는다.
+// 기존 DB는 읽기 전용으로만 열고(개발 서버가 쓰는 중이어도 일관된 스냅샷) 바꾸지 않는다.
 // 사용: node import-legacy-dashboard-db.mjs <기존 local.db 경로>
 import { DatabaseSync } from "node:sqlite";
 import { chmod, mkdir, readFile, rename, rm, stat } from "node:fs/promises";

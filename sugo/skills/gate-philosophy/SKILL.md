@@ -12,7 +12,7 @@ Gates permit state transitions only from execution evidence, never self-report. 
 1. A gate proves behavior. Green tests and static checks are proxies, not behavioral proof. Bypass only with an explicit unverified label.
 2. Enforce order. The server blocks skipped state-machine prerequisites and does not trust the client.
 3. Do not trust self-report. The server cross-checks claims against execution evidence and rejects contradictory unavailable-environment labels.
-4. Use labels for compatibility. New gates are opt-in or conditional where specified. A label can avoid deadlock, but excessive labels reduce the completion grade (§4.6).
+4. Use labels for compatibility. New gates are opt-in or conditional where specified. A label can avoid deadlock, but excessive labels reduce the completion grade.
 
 ## Practice
 

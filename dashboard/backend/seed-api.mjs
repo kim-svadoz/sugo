@@ -7,7 +7,7 @@ const USER = process.env.SUGO_SEED_USER_ID ?? "github:12345";
 import { LOCAL_API_URL } from "../port-contract.mjs";
 
 const BASE = LOCAL_API_URL;
-// 데모 경로는 화면에 그대로 찍힌다 — 이 PC의 Windows 경로를 박지 않는다(seed-demo.ts와 동일).
+// 데모 경로는 화면에 그대로 찍히므로 홈 디렉터리 기준으로 만든다.
 const SPLEARN = join(homedir(), "splearn");
 const PAYMENTS = join(homedir(), "work", "payments");
 

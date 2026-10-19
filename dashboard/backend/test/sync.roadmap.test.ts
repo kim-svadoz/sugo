@@ -33,7 +33,7 @@ async function fetchNodes(db: Awaited<ReturnType<typeof createSqliteClient>>) {
   return rows;
 }
 
-describe("POST /api/sync/roadmap — 적대적 코퍼스 (실제 DB 위에서)", () => {
+describe("POST /api/sync/roadmap — 적대적 입력 (실제 DB 위에서)", () => {
   it("반드시 지켜야: depends_on은 최초 1회만 seed된다", async () => {
     const { app, db, auth } = await freshApp();
     await request(app)
@@ -46,7 +46,7 @@ describe("POST /api/sync/roadmap — 적대적 코퍼스 (실제 DB 위에서)",
       .expect(200);
 
     // dashboard "owns" ordering after the initial seed: reorder manually via raw SQL
-    // (simulating what the roadmap mutation routes will do in a later stage)
+    // (simulating a roadmap mutation route)
     await db.exec("UPDATE sugo_roadmap_nodes SET depends_on = ? WHERE id = ?", [JSON.stringify(["manual-dep"]), "t1"]);
 
     // plugin re-syncs with a *different* dependsOn - must NOT overwrite the manual edit

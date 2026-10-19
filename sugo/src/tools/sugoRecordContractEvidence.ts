@@ -13,7 +13,7 @@ export const sugoRecordContractEvidenceInputSchema = {
 const SugoRecordContractEvidenceArgs = z.object(sugoRecordContractEvidenceInputSchema);
 
 /**
- * §10 계약테스트 실행증거: red(구현 전 실패)와 green(구현 후 통과)을 각각 별도 호출로 기록해야
+ * 계약테스트 실행증거: red(구현 전 실패)와 green(구현 후 통과)을 각각 별도 호출로 기록해야
  * review_done의 contractEvidenceRequired 게이트가 신뢰한다. 한 번에 "다 통과했다"고 자기보고할 수 없다.
  */
 export async function handleSugoRecordContractEvidence(rawArgs: unknown) {

@@ -55,7 +55,7 @@ afterEach(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
-describe("§7.2 대시보드 sync — 실제 파이프라인 배선 e2e", () => {
+describe("대시보드 sync — 실제 파이프라인 배선 e2e", () => {
   it("sugo_add(workspace)가 /api/sync/workspace를 논블로킹으로 쏜다", async () => {
     await call(handleSugoAdd, { projectPath: projectDir, workspace: "ws-sync" });
     await waitFor(() => received.includes("/api/sync/workspace"));

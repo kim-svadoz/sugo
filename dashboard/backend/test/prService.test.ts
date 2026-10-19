@@ -42,7 +42,7 @@ describe("collectDescendantTaskIds", () => {
   });
 });
 
-describe("resolveRefs — §6 scope 선택 PR", () => {
+describe("resolveRefs — scope 선택 PR", () => {
   async function seeded() {
     const db = createSqliteClient();
     await db.execScript(schema);

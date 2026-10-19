@@ -1,8 +1,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-// Spec §8 "환경변수". DB_DRIVER is an addition on top of the spec so local dev
-// can run against SQLite — production always sets DB_DRIVER=mysql (or leaves it
+// Environment variables. DB_DRIVER lets local dev
+// run against SQLite — production always sets DB_DRIVER=mysql (or leaves it
 // unset, which is the default).
 export const config = {
   host: process.env.HOST ?? "0.0.0.0",
@@ -18,7 +18,7 @@ export const config = {
   },
   pluginVersion: process.env.PLUGIN_VERSION ?? "0.0.0",
   secretEncKey: process.env.SECRET_ENC_KEY ?? "",
-  // §9 CI가 빌드타임에 하네스 저장소를 클론해 구워두는 경로(§3.7 harness/skills 서빙 근거).
+  // CI가 빌드타임에 하네스 저장소를 클론해 구워두는 경로(harness/skills 서빙에 쓴다).
   // 미설정이면 빈 매니페스트/404로 안전 반환한다(가짜 데이터 금지).
   harnessPath: process.env.HARNESS_PATH ?? "",
   harnessOverridePath: process.env.HARNESS_OVERRIDE_PATH ?? join(homedir(), ".claude", "sugo", "harness-overrides"),
@@ -28,7 +28,7 @@ export const config = {
   // Schedule SPEC에 붙여 넣은 기획 화면 이미지. spec-writer가 읽어 spec.md 버전 디렉터리로 복사한다.
   specAttachmentsPath: process.env.SPEC_ATTACHMENTS_PATH ?? join(homedir(), ".sugo-dashboard", "spec-attachments"),
   awsGuardPolicyPath: process.env.SUGO_AWS_GUARD_POLICY_PATH ?? join(homedir(), ".claude", "sugo", "aws-readonly-policy.json"),
-  // §8 "현재 냄새"가 지적하는 대로 cors()를 옵션 없이 열어두지 않는다 — 화이트리스트만 허용.
+  // cors()를 옵션 없이 열어두지 않는다 — 화이트리스트만 허용.
   // CORS_ORIGINS는 콤마 구분이고, 기본값은 로컬 개발용 Vite dev 서버 포트다.
   corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5175").split(",").map((s) => s.trim()).filter(Boolean),
   oidc: {
@@ -41,7 +41,7 @@ export const config = {
     redirectUri: process.env.OIDC_REDIRECT_URI ?? "",
     scope: "openid profile email offline_access",
   },
-  // 공개 SaaS(§Phase 1): GitHub OAuth 웹 로그인 + HS256 세션. OIDC와 별개 경로.
+  // 공개 SaaS: GitHub OAuth 웹 로그인 + HS256 세션. OIDC와 별개 경로.
   github: {
     clientId: process.env.GITHUB_CLIENT_ID ?? "",
     clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",

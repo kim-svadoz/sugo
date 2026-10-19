@@ -32,11 +32,11 @@ export interface SyncWorkspaceInput {
 }
 
 /**
- * §4 `deleted_at` 자가보강. 캐시된 삼상태 boolean —
+ * `deleted_at` 자가보강. 캐시된 삼상태 boolean —
  * information_schema(또는 SQLite의 PRAGMA)로 컬럼을 확인하고 없으면 ALTER,
  * **ALTER 권한이 없으면 false로 확정하고 이후 필터를 생략한다(graceful degrade).**
  *
- * 왜 이렇게까지 하나: 코드가 마이그레이션보다 먼저 배포되는 일은 실제로 일어난다. 그때
+ * 왜 이렇게까지 하나: 코드가 마이그레이션보다 먼저 배포될 수 있다. 그때
  * `WHERE deleted_at IS NULL`이 들어 있으면 **대시보드 전체가 500으로 죽는다.** 숨김이 잠깐 안
  * 되는 건 불편이지만, 죽는 건 사고다 — 그래서 안전측 기본값이 "필터 생략(전부 노출)"이다.
  *
@@ -70,7 +70,7 @@ export async function ensureWorkspaceDeletedAtColumn(db: DbClient): Promise<bool
   }
 }
 
-/** §7B `sugo_roadmap_nodes.due_date` 자가보강 — 위 `ensureWorkspaceDeletedAtColumn`과 같은 패턴. */
+/** `sugo_roadmap_nodes.due_date` 자가보강 — 위 `ensureWorkspaceDeletedAtColumn`과 같은 패턴. */
 let dueDateColState: boolean | null = null;
 
 /** 테스트 전용 — 모듈 레벨 캐시를 비운다. */
@@ -98,7 +98,7 @@ export async function ensureRoadmapDueDateColumn(db: DbClient): Promise<boolean>
 }
 
 /**
- * §7B `sugo_roadmap_nodes.project_path` 자가보강 — 위와 같은 패턴. 이 컬럼은 대시보드가
+ * `sugo_roadmap_nodes.project_path` 자가보강 — 위와 같은 패턴. 이 컬럼은 대시보드가
  * 직접 채우는 값이라 `syncRoadmap`의 UPDATE SET 절에는 절대 넣지 않는다 — CLI 재동기화가
  * 대시보드에서 지정한 프로젝트를 덮어쓰면 안 되기 때문이다.
  */
@@ -148,10 +148,10 @@ export async function ensureRoadmapWorkBranchColumn(db: DbClient): Promise<boole
 }
 
 /**
- * §3.3 `sugo_roadmap_nodes.manual_title` 자가보강 — 위와 같은 패턴. Canvas의 이름 변경(✎)이
+ * `sugo_roadmap_nodes.manual_title` 자가보강 — 위와 같은 패턴. Canvas의 이름 변경(✎)이
  * 쓰는 값이라 `syncRoadmap`의 UPDATE SET 절에는 넣지 않는다 — CLI가 다시 push하는 원래
  * 제목이 대시보드에서 바꾼 이름을 덮어쓰면 안 되기 때문이다(manual_status와 같은 오버레이
- * 패턴: 원본 `title`은 CLI 진실을 계속 유지하고, 표시는 `manual_title ?? title`로 판정).
+ * 패턴: 원래 `title`은 CLI 진실을 계속 유지하고, 표시는 `manual_title ?? title`로 판정).
  */
 let manualTitleColState: boolean | null = null;
 
@@ -223,8 +223,8 @@ export async function ensureRoadmapRuntimeAssessmentColumn(db: DbClient): Promis
 }
 
 /**
- * §3.3 `sugo_checkpoints.created_at` 자가보강 — 같은 패턴. 체크포인트 목록을 페이지네이션할 때
- * "처음 만든 순"으로 정렬할 기준이 필요해서 추가했다(2026-09-23). CLI 재동기화(`syncCheckpoint`)는
+ * `sugo_checkpoints.created_at` 자가보강 — 같은 패턴. 체크포인트 목록을 페이지네이션할 때
+ * "처음 만든 순"으로 정렬할 기준이 필요해서 추가했다. CLI 재동기화(`syncCheckpoint`)는
  * `upsertRow`로 UPDATE 시 이 컬럼을 SET에 넣지 않으므로 최초 생성 시각이 그대로 유지된다.
  */
 let checkpointCreatedAtColState: boolean | null = null;
@@ -245,12 +245,12 @@ export async function ensureCheckpointCreatedAtColumn(db: DbClient): Promise<boo
   }
   try {
     // node:sqlite(와 대부분의 SQLite 빌드)는 ALTER TABLE ADD COLUMN에 CURRENT_TIMESTAMP 같은
-    // "비상수" DEFAULT를 거부한다("Cannot add a column with non-constant default") — 실제로
-    // 로컬 DB에서 이것 때문에 모든 체크포인트 조회가 "no such column: created_at"로 매번
-    // 실패해 응답이 안 오는(무한 대기처럼 보이는) 문제가 났다(2026-09-23). 그래서 다른
+    // "비상수" DEFAULT를 거부한다("Cannot add a column with non-constant default") —
+    // 이 때문에 모든 체크포인트 조회가 "no such column: created_at"로 매번
+    // 실패해 응답이 안 오는(무한 대기처럼 보이는) 문제가 생긴다. 그래서 다른
     // 자가보강 컬럼들과 같은 패턴으로 NULL 허용 + 기본값 없이 추가하고, 기존 행은 즉시
     // 한 번 백필한다. CREATE TABLE(신규 설치)의 DEFAULT CURRENT_TIMESTAMP는 이 제약이
-    // 없어 그대로 둔다 — 문제는 ALTER 경로(기존 DB 업그레이드)에서만 있었다.
+    // 없어 그대로 둔다 — 문제는 ALTER 경로(기존 DB 업그레이드)에서만 생긴다.
     await db.exec("ALTER TABLE sugo_checkpoints ADD COLUMN created_at TIMESTAMP NULL");
     await db.exec("UPDATE sugo_checkpoints SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL");
     checkpointCreatedAtColState = true;
@@ -293,7 +293,7 @@ async function getOrCreateWorkspaceId(db: DbClient, userId: string, name: string
     [userId, name]
   );
   if (rows.length > 0) {
-    // §4 "soft delete 부활": 재sync는 곧 "이 워크스페이스를 다시 쓰고 있다"는 신호다.
+    // "soft delete 부활": 재sync는 곧 "이 워크스페이스를 다시 쓰고 있다"는 신호다.
     // 컬럼이 있을 때만 시도한다(없으면 애초에 soft delete도 안 걸려 있다).
     if (await ensureWorkspaceDeletedAtColumn(db)) {
       await db.exec("UPDATE sugo_workspaces SET deleted_at = NULL WHERE id = ?", [rows[0].id]);
@@ -304,10 +304,10 @@ async function getOrCreateWorkspaceId(db: DbClient, userId: string, name: string
   return Number(result.insertId);
 }
 
-// §3.1 "workspace: projects replace + gitSyncedProjects"
+// "workspace: projects replace + gitSyncedProjects"
 export async function syncWorkspace(db: DbClient, input: SyncWorkspaceInput): Promise<void> {
   await ensureUser(db, input.userId);
-  // §4 자가보강은 **진입 시점**에 한다. getOrCreateWorkspaceId의 UPDATE 분기에만 두면 신규
+  // 자가보강은 **진입 시점**에 한다. getOrCreateWorkspaceId의 UPDATE 분기에만 두면 신규
   // 워크스페이스를 만드는 경로에서는 컬럼이 안 생기고, 그 뒤 첫 soft delete가 올 때까지
   // 스키마가 비어 있는 상태가 유지된다(실제 로컬 MySQL에서 이 순서 문제를 잡았다).
   await ensureWorkspaceDeletedAtColumn(db);
@@ -344,9 +344,9 @@ export async function syncWorkspace(db: DbClient, input: SyncWorkspaceInput): Pr
 }
 
 /**
- * §4 `DELETE /api/sync/workspace` — **기본은 soft, `purge:true`여야 하드.**
+ * `DELETE /api/sync/workspace` — **기본은 soft, `purge:true`여야 하드.**
  *
- * 플러그인(§9)이 기본 soft로 보내고 사용자에게 "복구 가능하다"고 안내한다. 여기서 하드로 지우면
+ * 플러그인이 기본 soft로 보내고 사용자에게 "복구 가능하다"고 안내한다. 여기서 하드로 지우면
  * 그 안내가 거짓말이 된다 — 삭제 의미는 양쪽이 같아야 한다.
  *
  * 컬럼이 없어 soft가 불가능하면 **아무 것도 하지 않는다.** 여기서 하드로 폴백하면
@@ -604,7 +604,7 @@ interface RoadmapRow {
   depends_on: unknown;
 }
 
-// §3.1/§7 roadmap sync: 스냅샷 replace 시맨틱 + 소유권 경계(depends_on 최초1회 seed,
+// roadmap sync: 스냅샷 replace 시맨틱 + 소유권 경계(depends_on 최초1회 seed,
 // manual_status/manual_by/manual_at/pos_x/pos_y/due_date/project_path/manual_title은
 // upsert SET에서 물리적으로 제외).
 export async function syncRoadmap(

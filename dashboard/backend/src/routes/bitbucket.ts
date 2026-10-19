@@ -14,7 +14,7 @@ const putSchema = z.object({
   baseUrl: z.string().optional(),
 });
 
-// §3.5: 인증 필요. 세션(웹) 또는 API 토큰(플러그인) 둘 다 수용. GET은 토큰 미반환(hint/status만).
+// 인증 필요. 세션(웹) 또는 API 토큰(플러그인) 둘 다 수용. GET은 토큰 미반환(hint/status만).
 export function createBitbucketRouter(db: DbClient, sessionSecret: string, secretEncKey: string): Router {
   const router = Router();
   router.use(requireUser(db, sessionSecret));

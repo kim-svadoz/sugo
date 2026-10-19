@@ -1,9 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 
 /**
- * §3.1 "미들웨어가 payload `schemaVersion` 소비(`req.syncSchemaVersion`), 상위버전이면 로그만(500 금지)."
+ * payload `schemaVersion`을 `req.syncSchemaVersion`으로 세운다. 상위 버전이면 로그만 남긴다(500 금지).
  *
- * 플러그인(§8.2)과 대시보드는 별개 배포라 어느 쪽이 먼저 올라갈지 모른다. 이 미들웨어의 계약은
+ * 플러그인과 대시보드는 별개 배포라 어느 쪽이 먼저 올라갈지 모른다. 이 미들웨어의 계약은
  * **절대 요청을 막지 않는 것**이다 — 값이 없든, 쓰레기든, 우리보다 높든 전부 통과시킨다.
  * 막는 순간 "대시보드 배포가 플러그인 sync를 죽이는" 사고가 되고, sync는 fire-and-forget이라
  * 플러그인 쪽에선 조용한 유실로 보인다.

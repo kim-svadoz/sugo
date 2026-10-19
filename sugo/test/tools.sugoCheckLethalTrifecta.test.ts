@@ -24,7 +24,7 @@ afterEach(() => {
   rmSync(projectDir, { recursive: true, force: true });
 });
 
-describe("handleSugoCheckLethalTrifecta — §P6-1 세션 기록", () => {
+describe("handleSugoCheckLethalTrifecta — 세션 기록", () => {
   it("존재하지 않는 세션이면 SESSION_NOT_FOUND로 거부한다", async () => {
     const result = await call(handleSugoCheckLethalTrifecta, { sessionId: "no-such-session", tools: [] });
     expect(result.isError).toBe(true);

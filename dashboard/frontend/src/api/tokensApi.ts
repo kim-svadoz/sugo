@@ -1,6 +1,6 @@
 import { apiJson } from "./client.js";
 
-// 공개 SaaS(§Phase 1.5) 개인 API 토큰 관리(웹 세션 필요). 여기서 발급한 평문 토큰을
+// 개인 API 토큰 관리(웹 세션 필요). 여기서 발급한 평문 토큰을
 // 플러그인 설정(SUGO_DASHBOARD_API_TOKEN / settings.json dashboard.apiToken)에 붙여넣는다.
 export interface ApiTokenSummary {
   id: number;

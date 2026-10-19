@@ -58,7 +58,7 @@ export function collectDescendantTaskIds(nodes: NodeRow[], rootId: string): stri
   return result;
 }
 
-// §6 "scope 선택 PR": task=자기, run/spec=하위 task들. 브랜치 distinct 수집 ->
+// scope 선택 PR: task=자기, run/spec=하위 task들. 브랜치 distinct 수집 ->
 // 단일이면 OK, 여러 개면 MULTI_BRANCH, 하나도 없으면 NO_REFS.
 export async function resolveRefs(
   db: DbClient,

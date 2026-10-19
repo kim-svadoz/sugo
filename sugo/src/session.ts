@@ -37,7 +37,7 @@ export async function sessionExists(id: string): Promise<boolean> {
   }
 }
 
-/** §4.5 판단품질 측정용: 모든 세션 파일을 스캔해 로드한다. 손상된 파일은 조용히 건너뛴다. */
+/** 판단품질 측정용: 모든 세션 파일을 스캔해 로드한다. 손상된 파일은 조용히 건너뛴다. */
 export async function loadAllSessions(): Promise<PlanSession[]> {
   let entries: string[];
   try {

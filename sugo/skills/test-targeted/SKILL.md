@@ -14,7 +14,7 @@ Follow `../../harness-library/code-quality-policy.md` for test comments and name
 2. PRD: Open `handoff.prdPath`. Recover a missing PRD or apply the fallback label.
 3. derive: Add a test for every PRD AC, assertions for every response field, and at least one integration-level test.
 4. edit: Modify test files only.
-5. verify: Run `gradlew check` or `mvn verify|install`. Plain test fails §4.2. Classify new failures as spec_not_met and old failures as regression.
+5. verify: Run `gradlew check` or `mvn verify|install`. Plain test fails the full-verification gate. Classify new failures as spec_not_met and old failures as regression.
 6. evidence: Call `sugo_record_test_evidence(sessionId, command, exitCode, totalTests, passedTests, failedTests)`. Legacy `total/passed/failed` names are deprecated compatibility inputs.
 7. coverage: Produce AC and response-field coverage. When required, include the red→green contract transition consumed by review_done.
 

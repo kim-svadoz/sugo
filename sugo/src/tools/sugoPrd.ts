@@ -3,7 +3,7 @@ import { z } from "zod";
 export const sugoPrdInputSchema = {};
 
 /**
- * §1 `sugo_prd` — **DEPRECATED. 핸들러가 무조건 거부한다.**
+ * `sugo_prd` — **DEPRECATED. 핸들러가 무조건 거부한다.**
  *
  * PRD를 독립 도구로 만들 수 있으면 상태머신을 우회하는 뒷문이 된다. 그렇게 만든 PRD는 세션에
  * 안 붙으니 baseline/analyze/커버리지 게이트를 하나도 안 거치고 로드맵 REQ 승격도 안 된다.

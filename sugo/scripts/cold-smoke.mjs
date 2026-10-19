@@ -1,5 +1,5 @@
 /**
- * "DB 없는 콜드 맥북 + 플러그인만 다운로드" 재현 스모크.
+ * "DB 없는 빈 머신 + 플러그인만 다운로드" 재현 스모크.
  *
  * 실행:  node scripts/cold-smoke.mjs   (sugo/ 에서. 사전 `npm run build` 필요 — dist를 검사한다)
  *
@@ -31,7 +31,7 @@ function check(label, pass, detail = "") {
   console.log(`  ${pass ? "PASS" : "FAIL"}  ${label}${detail ? `  — ${detail}` : ""}`);
 }
 /** 도구 호출이 진짜 성공했는가. MCP 검증 에러(__raw/__rpcError)는 ok 필드가 아예 없어서
- *  `r.ok !== false`만 보면 조용히 통과해버린다 — 실제로 한 번 그렇게 속았다. */
+ *  `r.ok !== false`만 보면 조용히 통과해버린다. */
 const toolOk = (r) => r && r.__rpcError === undefined && r.__raw === undefined && r.ok !== false;
 
 function contentSnapshot(paths) {
@@ -66,7 +66,7 @@ function makeInstall(root) {
 
 function startServer(install, home, extraEnv) {
   const env = { ...process.env, SUGO_HOME_OVERRIDE: home, ...extraEnv };
-  // 콜드 조건: 이 PC에 남아있을 수 있는 대시보드 설정을 확실히 제거
+  // 콜드 조건: 실행 환경에 남아 있을 수 있는 대시보드 설정을 확실히 제거
   for (const k of ["SUGO_DASHBOARD_API_URL", "SUGO_DASHBOARD_USER_ID", "SUGO_DASHBOARD_API_TOKEN"]) {
     if (!(k in (extraEnv ?? {}))) delete env[k];
   }
@@ -173,7 +173,7 @@ async function runPipeline(callTool, project, featureName) {
   // review_done의 VALIDATE_NOT_CALLED 게이트 충족용 — 이 프로젝트에 적용된 하네스(default/framework
   // node)엔 auto 체크가 없어 빈 제출로도 verifiedFailures 없이 통과한다.
   await callTool("sugo_validate", { sessionId, validationResults: [] });
-  // review_done의 LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용(§P6-1) — 빈 tools면 경고 없이 통과한다.
+  // review_done의 LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용 — 빈 tools면 경고 없이 통과한다.
   await callTool("sugo_check_lethal_trifecta", { sessionId, tools: [] });
   for (const [action, extra, expectedState] of [
     ["review_done", { userConfirmed: true, summary: GOOD_SUMMARY, runtimeCheck: { buildAttempted: true, testRun: true, runtimeVerified: true } }, "DOCS_PENDING"],

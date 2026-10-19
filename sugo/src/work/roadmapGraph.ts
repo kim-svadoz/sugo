@@ -9,7 +9,7 @@ export interface RemoteOrderingEntry {
 }
 
 /**
- * §7.2 소유권 경계: 대시보드가 SOT인 필드(dependsOn/manual_status/pos_x/pos_y)만 원격값으로
+ * 소유권 경계: 대시보드가 SOT인 필드(dependsOn/manual_status/pos_x/pos_y)만 원격값으로
  * 덮어쓴다 — title/level/status/parent/ref/note/specPath/workResult 등 플러그인 소유 필드는
  * 절대 건드리지 않는다. 원격에 없는 로컬 전용 노드(대시보드가 아직 모르는 노드)는 그대로 둔다.
  */
@@ -36,8 +36,8 @@ export interface TopoSortResult {
 
 /**
  * Kahn 알고리즘 기반 위상정렬. 같은 in-degree(준비상태) 노드가 여럿이면 알파벳 순으로 뽑아
- * 결정론을 보장한다(§8.5). 사이클이 있으면 cyclic:true(부분 order만 반환). 존재하지 않는
- * 의존 id는 unknownDeps로 보고하고 in-degree 계산에서는 무시한다(§8.5 wouldCreateCycle과 별개).
+ * 결정론을 보장한다. 사이클이 있으면 cyclic:true(부분 order만 반환). 존재하지 않는
+ * 의존 id는 unknownDeps로 보고하고 in-degree 계산에서는 무시한다.
  */
 export function topoSort(nodes: RoadmapNode[]): TopoSortResult {
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -83,7 +83,7 @@ export function topoSort(nodes: RoadmapNode[]): TopoSortResult {
 }
 
 /**
- * 후보(pending) 노드 중 모든 의존성이 done인 것만 골라낸다(§8.5). 미지의 의존 id는
+ * 후보(pending) 노드 중 모든 의존성이 done인 것만 골라낸다. 미지의 의존 id는
  * "완료 아님"으로 안전측 처리한다 — 실제로 완료됐는지 확인할 길이 없는데 ready로 잘못
  * 판정하면 순서강제가 뚫리기 때문이다.
  */

@@ -90,7 +90,7 @@ export function wouldCreateCycle(nodes: GraphNode[], fromId: string, toId: strin
   return dependsOnFrom(toId);
 }
 
-// ─── 로드맵 진행 요약 + 이상징후(§C.3 RoadmapTab) ────────────────────────────
+// ─── 로드맵 진행 요약 + 이상징후(RoadmapTab) ────────────────────────────
 //
 // 화면이 `const { counts, issues } = roadmap`으로 받는 두 값을 여기서 만든다. 프론트에서
 // 세지 않고 서버가 세는 이유는 "진행 중심" 필터가 노드를 걸러낸 뒤에도 **전체 기준 진행률**이
@@ -114,7 +114,7 @@ export interface RoadmapViewNode extends GraphNode {
   verification?: boolean;
 }
 
-/** 사람이 수동으로 덮은 상태가 있으면 그게 우선(§3.3 manual_status). */
+/** 사람이 수동으로 덮은 상태가 있으면 그게 우선(manual_status). */
 export function effectiveStatus(n: { status: string; manualStatus?: string | null }): string {
   return (n.manualStatus ?? n.status ?? "pending").toLowerCase();
 }

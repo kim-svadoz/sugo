@@ -9,7 +9,7 @@ import { ingestActivity, streamActivity } from "../services/activityService.js";
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 500;
 
-// §3.2/§4: PUBLIC, non-blocking ingest + polling read (no SSE/WebSocket).
+// Non-blocking ingest + polling read (no SSE/WebSocket).
 // 핸들러는 asyncHandler로 감싸 에러가 프로세스를 죽이거나 요청을 행시키지 않고 500으로 끝나게 한다.
 export function createActivityRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();

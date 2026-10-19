@@ -150,8 +150,8 @@ describe("사후 patch 연결 — 서버 강제 계약", () => {
   });
 });
 
-describe("Patch 전체 흐름 (§7)", () => {
-  it("v0 feat 산출물로 첫 patch에 진입하면 mode=patch, version=1, 부모=원본 prd.md", async () => {
+describe("Patch 전체 흐름", () => {
+  it("v0 feat 산출물로 첫 patch에 진입하면 mode=patch, version=1, 부모=최초 prd.md", async () => {
     const { workResultPath, prdPath } = await runFirstRoundToReviewDone();
     expect(existsSync(workResultPath)).toBe(true);
     expect(existsSync(prdPath)).toBe(true);
@@ -184,7 +184,7 @@ describe("Patch 전체 흐름 (§7)", () => {
 
     expect(prdResult.isError).toBe(false);
     expect(prdResult.data.state).toBe("PRD");
-    expect(readFileSync(prdPath, "utf-8")).toBe(originalPrdContent); // 원본 불변
+    expect(readFileSync(prdPath, "utf-8")).toBe(originalPrdContent); // 최초 PRD 불변
     const patchPrdPath = join(join(prdPath, ".."), "PRD-patch-v1.md");
     expect(existsSync(patchPrdPath)).toBe(true);
     expect(readFileSync(patchPrdPath, "utf-8")).toBe(patchPrdContent);
@@ -221,7 +221,7 @@ describe("Patch 전체 흐름 (§7)", () => {
     expect(codeDoneOk.isError).toBe(false);
   });
 
-  it("v1 patch 산출물로 다음 patch에 진입하면 version=2, 부모는 여전히 원본 prd.md", async () => {
+  it("v1 patch 산출물로 다음 patch에 진입하면 version=2, 부모는 여전히 최초 prd.md", async () => {
     const { workResultPath: firstWorkResult, prdPath } = await runFirstRoundToReviewDone();
 
     const patchStart = await call(handleSugoPlan, {
@@ -277,8 +277,8 @@ describe("Patch 전체 흐름 (§7)", () => {
   });
 });
 
-describe("§7.1 Patch — Run 재사용 + seed + patchInfo + lineage", () => {
-  it("patch 2차 진입은 새 Task를 만들지 않고 원본 Task를 재사용한다(prd_ref 매칭)", async () => {
+describe("Patch — Run 재사용 + seed + patchInfo + lineage", () => {
+  it("patch 2차 진입은 새 Task를 만들지 않고 기존 Task를 재사용한다(prd_ref 매칭)", async () => {
     await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-patch" });
     const { workResultPath } = await runFirstRoundToReviewDone();
 
@@ -298,7 +298,7 @@ describe("§7.1 Patch — Run 재사용 + seed + patchInfo + lineage", () => {
     await call(handleSugoPlan, { action: "prd", sessionId, prdContent: "REQ-1: 재시도 로직 추가. " + "다".repeat(90) });
 
     const tasksAfterPatch = await call(handleSugoTask, { action: "list", workspace: "team-patch" });
-    // 새 Task가 생기지 않고 여전히 1개 — 원본 Run을 재사용했다는 증거.
+    // 새 Task가 생기지 않고 여전히 1개 — 기존 Run을 재사용했다는 증거.
     expect(tasksAfterPatch.data.tasks).toHaveLength(1);
     expect(tasksAfterPatch.data.tasks[0].id).toBe(originalTaskId);
     expect(tasksAfterPatch.data.tasks[0].status).toBe("in_progress");
@@ -310,7 +310,7 @@ describe("§7.1 Patch — Run 재사용 + seed + patchInfo + lineage", () => {
     expect(patchTask?.lineage?.[0].workResult?.path).toBe(workResultPath);
     expect(patchTask?.lineage?.[1].title).toBe("결제 실패 시 재시도 로직도 추가해달라는 요청이 있었다");
 
-    // patchInfo(lineage)가 기록됐다 — parentTaskId는 spec대로 "이 Task 자신"(재사용이므로 자기참조).
+    // patchInfo(lineage)가 기록됐다 — parentTaskId는 "이 Task 자신"(재사용이므로 자기참조).
     expect(tasksAfterPatch.data.tasks[0].patchInfo).toEqual(expect.objectContaining({
       parentTaskId: originalTaskId,
       patchVersion: 1,

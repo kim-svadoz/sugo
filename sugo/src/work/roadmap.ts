@@ -89,7 +89,7 @@ async function readRoadmapFile(workspace: string): Promise<RoadmapFile> {
 async function writeRoadmapFile(workspace: string, file: RoadmapFile): Promise<void> {
   await mkdir(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(roadmapFilePath(workspace), JSON.stringify(file, null, 2));
-  // §7.2: 모든 로드맵 변경은 결국 이 함수를 거치므로, 성공적인 로컬 쓰기 뒤 스냅샷 전체를
+  // 모든 로드맵 변경은 결국 이 함수를 거치므로, 성공적인 로컬 쓰기 뒤 스냅샷 전체를
   // 논블로킹으로 흘려보낸다(개별 뮤테이션 함수마다 push를 반복하지 않기 위한 단일 지점).
   void syncRoadmapSnapshot(workspace, file.nodes).catch(() => {
     // 대시보드/재시도 큐 장애는 로컬 에이전트 동작을 막지 않는다.
@@ -103,7 +103,7 @@ export interface RoadmapMutationResult {
 }
 
 /** roadmap.json은 여러 파이프라인 이벤트(prd/review_done/수동 편집)가 동시에 건드릴 수 있는
- * 공유 파일이라 락으로 감싼다(tasks.json/registry.json과 같은 원칙, §D.3). */
+ * 공유 파일이라 락으로 감싼다(tasks.json/registry.json과 같은 원칙). */
 async function withRoadmap<T>(workspace: string, fn: (file: RoadmapFile) => Promise<T> | T): Promise<T> {
   return withFileLock(roadmapLockPath(workspace), async () => {
     const file = await readRoadmapFile(workspace);
@@ -122,7 +122,7 @@ export async function listRoadmapNodes(
 }
 
 /**
- * v2 4층 헌법 이전 데이터(Task→REQ)를 Spec→Run→Task→REQ로 무손실 승격한다.
+ * 4층 구조(Spec→Run→Task→REQ) 이전 데이터(Task→REQ)를 Spec→Run→Task→REQ로 무손실 승격한다.
  * REQ-N은 PRD-local id라 workspace PK로 쓸 수 없으므로 parent task로 namespace한다.
  */
 export async function reconcileRoadmapWithTasks(workspace: string, tasks: Task[]): Promise<void> {
@@ -261,7 +261,7 @@ export async function recordRoadmapWorkResult(
 /**
  * v0.5 이전 또는 정식 commit 게이트 밖에서 완료된 Task는 status/summary만 있고 work-result가
  * 없을 수 있다. 그런 로컬 이력은 PRD 옆에 최소 work-result를 한 번만 복원해 Patch 진입점을
- * 제공한다. 원본 파일이나 이미 연결된 산출물은 절대 덮어쓰지 않는다.
+ * 제공한다. 기존 파일이나 이미 연결된 산출물은 절대 덮어쓰지 않는다.
  */
 export async function backfillLegacyRoadmapWorkResults(workspace: string, tasks: Task[]): Promise<number> {
   let count = 0;
@@ -270,7 +270,7 @@ export async function backfillLegacyRoadmapWorkResults(workspace: string, tasks:
     const node = await getRoadmapNode(workspace, task.id);
     if (!node || node.workResult?.path) continue;
 
-    // Patch는 같은 feature 디렉터리의 prd.md/PRD-patch-vN.md를 요구한다. 실제 PRD가 있는
+    // Patch는 같은 feature 디렉터리의 prd.md/PRD-patch-vN.md를 요구한다. PRD 파일이 있는
     // 완료 작업만 복원해, 존재하지 않는 산출물 경로를 버튼에 노출하지 않는다.
     const prdExists = await readFile(task.prd_ref, "utf8").then(() => true).catch(() => false);
     if (!prdExists) continue;
@@ -438,7 +438,7 @@ export async function removeRoadmapNode(workspace: string, id: string): Promise<
 }
 
 /**
- * §8.5 "링크 편집: link/unlink는 task↔task만(fail-closed)" — 두 노드가 모두 level:"task"가
+ * 링크 편집: link/unlink는 task↔task만 허용한다(fail-closed). 두 노드가 모두 level:"task"가
  * 아니면 안전측으로 거부한다(워크스트림/서브태스크 계층 구조는 group/promotePrdRequirements가
  * 별도로 관리하는 영역이라 이 도구로 임의로 뒤섞이면 안 된다).
  */
@@ -510,7 +510,7 @@ export async function backfillRoadmapTask(workspace: string, taskId: string, tit
 }
 
 /**
- * §8.5 코퍼스 "반드시 거부: 에이전트가 REQ-CONFIRM을 직접 done 처리" — id가 `::REQ-CONFIRM`으로
+ * 에이전트가 REQ-CONFIRM을 직접 done 처리하는 것은 거부한다. id가 `::REQ-CONFIRM`으로
  * 끝나면 이 경로로는 완료 불가. 오직 completeTaskRequirements(review_done 트리거)만 완료시킬 수 있다.
  */
 export async function markRequirementDone(
@@ -529,7 +529,7 @@ export async function markRequirementDone(
 }
 
 /**
- * §3/§8.5 "review_done → REQ + REQ-CONFIRM 자동완료": 이 taskId의 자식 노드(REQ들 + REQ-CONFIRM,
+ * review_done 시 REQ + REQ-CONFIRM 자동완료: 이 taskId의 자식 노드(REQ들 + REQ-CONFIRM,
  * parent===taskId)를 전부 done으로 롤다운한다. 승격된 REQ가 없는 taskId(워크스페이스 미등록 등)는
  * 조용히 no-op — sugo_plan의 review_done 핸들러가 워크스페이스 유무와 무관하게 항상 호출해도
  * 안전해야 하기 때문이다.
@@ -549,9 +549,9 @@ export async function getReadySet(workspace: string): Promise<string[]> {
 }
 
 /**
- * §7.2 fetch(dependsOn pull): 대시보드에서 순서(dependsOn 등)를 받아와 로컬 노드에 병합한다.
+ * 대시보드에서 순서(dependsOn 등)를 받아와 로컬 노드에 병합한다.
  * 대시보드가 꺼져있거나 응답이 없으면(null) 아무것도 안 바꾸고 false를 반환한다 — 로컬 상태가
- * 곧 안전한 폴백이다(§7.2 "대시보드 다운이 파이프라인을 막지 않는다").
+ * 곧 안전한 폴백이다(대시보드 다운이 파이프라인을 막지 않는다).
  */
 export async function pullRoadmapOrdering(workspace: string): Promise<boolean> {
   const remote = await fetchRoadmapOrdering(workspace);

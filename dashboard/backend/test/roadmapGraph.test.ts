@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { readySet, topoSort, wouldCreateCycle } from "../src/services/roadmapGraph.js";
 import type { GraphNode } from "../src/services/roadmapGraph.js";
 
-// Ported test corpus from sugo/test/work.roadmapGraph.test.ts (same algorithm,
-// both sides of the plugin<->dashboard seam must agree on ordering).
+// Mirrors sugo/test/work.roadmapGraph.test.ts. The plugin and the dashboard use the same algorithm,
+// so both sides must agree on ordering.
 function node(id: string, dependsOn: string[] = [], status: string = "pending"): GraphNode {
   return { id, dependsOn, status };
 }

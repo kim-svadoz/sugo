@@ -6,7 +6,7 @@ import { createApiToken, listApiTokens, revokeApiToken } from "../services/apiTo
 
 const createSchema = z.object({ name: z.string().max(191).optional() });
 
-// 공개 SaaS(§Phase 1) API 토큰 관리(웹 세션 필요). 사용자가 여기서 발급한 토큰을 플러그인
+// 공개 SaaS API 토큰 관리(웹 세션 필요). 사용자가 여기서 발급한 토큰을 플러그인
 // DashboardConfig.apiToken에 붙여넣고, 플러그인은 sync 시 Bearer로 보낸다.
 export function createTokensRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();

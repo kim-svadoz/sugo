@@ -75,7 +75,7 @@ export function RoadmapTab({
   workspace: string;
   onEdited?: () => void;
   fill?: boolean;
-  /** §7B Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). */
+  /** Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). */
   focusNodeId?: string;
   onFileViewerChange?: (open: boolean) => void;
 }) {

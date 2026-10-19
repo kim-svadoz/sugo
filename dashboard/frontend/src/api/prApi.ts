@@ -19,7 +19,7 @@ export interface PrCreateResponse {
   error?: string;
 }
 
-// §3.4/§6: AUTH-gated (Bearer) - apiFetch/apiJson already attach the token.
+// AUTH-gated (Bearer) - apiFetch/apiJson already attach the token.
 export function checkExistingPr(input: { workspace: string; nodeId: string; scope: PrScope; targetBranch?: string }) {
   return apiJson<PrExistingResponse>("/api/pr/existing", { method: "POST", body: JSON.stringify(input) });
 }

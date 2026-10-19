@@ -24,13 +24,12 @@ export function sanitizeCommitText(text: string): string {
 }
 
 /**
- * §7 `sugo_commit` — Conventional Commit **메시지를 만들어 돌려준다.**
+ * `sugo_commit` — Conventional Commit **메시지를 만들어 돌려준다.**
  *
- * **저장소를 실제로 바꾸지 않는다.** 스펙 표의 범위도 `in(생성만)`이다. 커밋은 되돌리기 어려운
- * 행위라 "무엇을 남길지" 판단까지만 하고 실행은 사람에게 넘긴다
- * (§7 "push 금지(사용자 직접)"와 같은 이유).
+ * **저장소를 실제로 바꾸지 않는다.** 커밋은 되돌리기 어려운 행위라 "무엇을 남길지" 판단까지만
+ * 하고 실행은 사람에게 넘긴다(push를 사용자가 직접 하는 것과 같은 이유).
  *
- * **DONE 상태에서만** 동작한다(§7) — 파이프라인을 다 통과하지 않은 작업에 메시지를 만들어주면
+ * **DONE 상태에서만** 동작한다 — 파이프라인을 다 통과하지 않은 작업에 메시지를 만들어주면
  * 게이트를 건너뛴 채 기록을 남길 길이 생긴다.
  */
 export async function handleSugoCommit(rawArgs: unknown) {
@@ -70,7 +69,7 @@ export async function handleSugoCommit(rawArgs: unknown) {
             message,
             executed: false,
             note:
-              "메시지만 생성했습니다 — 이 도구는 저장소를 건드리지 않습니다(§7 '생성만'). " +
+              "메시지만 생성했습니다 — 이 도구는 저장소를 건드리지 않습니다. " +
               "실제 기록은 화이트리스트 경로만 스테이징해 사용자가 직접 수행합니다.",
           },
           null,

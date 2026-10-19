@@ -11,7 +11,7 @@ export const sugoChainInputSchema = {
 const SugoChainArgs = z.object(sugoChainInputSchema);
 
 /**
- * §5 에이전트 체인 핸드오프. 세션의 현재 상태로 방향(code→test / test→review)을 판단한다.
+ * 에이전트 체인 핸드오프. 세션의 현재 상태로 방향(code→test / test→review)을 판단한다.
  * CODE_DONE 이후엔 test-agent 핸드오프, TEST_DONE 이후엔 review-agent 핸드오프를 생성한다.
  */
 export async function handleSugoChain(rawArgs: unknown) {

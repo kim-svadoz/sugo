@@ -11,7 +11,7 @@ export function classifyHttpFailure(status: number): DeliveryResult {
 }
 
 /**
- * §8.2 schemaVersion 주입 — **여기 한 곳**에서만 붙인다. 래퍼마다 손으로 달면 새 엔드포인트를
+ * schemaVersion 주입 — **여기 한 곳**에서만 붙인다. 래퍼마다 손으로 달면 새 엔드포인트를
  * 추가할 때 빠뜨리고, 빠뜨려도 아무도 안 죽어서(fail-open) 조용히 계약이 갈라진다. 아웃바운드가
  * 전부 pushEvent를 거치므로(`no-fetch-bypass` 불변식) 여기가 유일한 관문이다.
  *
@@ -66,7 +66,7 @@ async function sendOnce(apiUrl: string, endpoint: string, method: "POST" | "DELE
 }
 
 /**
- * §7.2 fire-and-forget POST/DELETE: 대시보드가 꺼져있거나(disabled) 다운돼있어도 이 함수는
+ * fire-and-forget POST/DELETE: 대시보드가 꺼져있거나(disabled) 다운돼있어도 이 함수는
  * 절대 던지지 않는다 — 실패하면 조용히 재시도 큐에 쌓아둘 뿐이다("대시보드 다운이 파이프라인을
  * 막지 않는다"). 호출부는 `void pushEvent(...)`처럼 기다리지 않고 흘려보내도 되고, 재시도
  * 큐잉까지 확실히 끝난 뒤 다음 코드로 넘어가고 싶으면 await해도 안전하다(둘 다 던지지 않음).
@@ -75,7 +75,7 @@ export async function pushEvent(endpoint: string, method: "POST" | "DELETE", dat
   const config = await resolveDashboardConfig();
   if (!config.enabled || !config.apiUrl) return;
   // 버전을 먼저 붙여두고 그 값을 전송·큐잉 양쪽에 쓴다 — WAL에 "실제로 전선에 나갈 것"과
-  // 똑같은 바이트가 남아야 재전송이 원본과 같은 계약으로 나간다.
+  // 똑같은 바이트가 남아야 재전송이 첫 전송과 같은 계약으로 나간다.
   const payload = withSchemaVersion(data);
   const ok = await sendOnce(config.apiUrl, endpoint, method, payload, timeoutMs, config.apiToken);
   if (!ok.ok) await enqueueRetry(endpoint, method, payload, ok);

@@ -38,7 +38,7 @@ export async function findRegistryEntry(projectPath: string): Promise<RegistryEn
 }
 
 /**
- * 레지스트리는 여러 sugo_add 호출이 동시에 건드릴 수 있는 공유 파일이라 wx 락으로 race를 막는다(§D.3).
+ * 레지스트리는 여러 sugo_add 호출이 동시에 건드릴 수 있는 공유 파일이라 wx 락으로 race를 막는다.
  * 같은 projectPath로 재등록하면 기존 엔트리를 갱신(중복 추가하지 않음).
  */
 export async function registerProject(entry: RegistryEntry): Promise<void> {
@@ -58,7 +58,7 @@ export async function registerProject(entry: RegistryEntry): Promise<void> {
 }
 
 /**
- * sugo_delete(§9 라이프사이클): 레지스트리에서만 제거한다 — 프로젝트의 실제 파일(sugo/**)은
+ * sugo_delete: 레지스트리에서만 제거한다 — 프로젝트의 실제 파일(sugo/**)은
  * 건드리지 않는다. "삭제"가 사용자 프로젝트 파일을 지우는 것으로 오해되면 위험하므로, 이 도구는
  * "sugo가 이 프로젝트 추적을 그만둔다"는 제어-평면 동작으로만 스코프를 좁혔다(파일은 사용자가
  * 알아서 정리하거나 재등록 시 그대로 재사용된다).

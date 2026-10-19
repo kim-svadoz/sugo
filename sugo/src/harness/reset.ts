@@ -24,10 +24,10 @@ const RESET_CLAUDE_MD = [
 ].join("\n");
 
 /**
- * §9 라이프사이클 sugo_reset: 적용된 하네스 산출물(sugo/harness/**, CLAUDE.md 내용)만 지운다 —
+ * sugo_reset: 적용된 하네스 산출물(sugo/harness/**, CLAUDE.md 내용)만 지운다 —
  * 레지스트리 등록·detectedStack(뭘 감지했는지)은 건드리지 않는다("등록 취소"가 아니라 "적용
  * 되돌리기"). 기존 CLAUDE.md는 sugo/backup/으로 백업해둔다 — 되돌릴 수 없는 손실을 만들지 않기
- * 위한 최소 안전장치(reset 자체가 이걸 필요하게 만드는 유일한 변경이라 이번에 같이 도입).
+ * 위한 최소 안전장치다.
  */
 export async function resetProjectHarness(projectPath: string): Promise<{ backedUpTo?: string }> {
   const config = await loadProjectConfig(projectPath);

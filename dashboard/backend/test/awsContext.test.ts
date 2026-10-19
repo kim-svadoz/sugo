@@ -27,13 +27,13 @@ describe("AWS context CLI adapter", () => {
       if (service === "elasticache") return { ReplicationGroups: [{ ReplicationGroupId: "orders-cache", Status: "available" }] };
       if (service === "opensearch") return { DomainNames: [{ DomainName: "orders-search", EngineType: "OpenSearch" }] };
       if (service === "cloudwatch") return { DashboardEntries: [{ DashboardName: "orders-dashboard" }] };
-      if (service === "lambda" && args[1] === "list-functions") return { Functions: [{ FunctionName: "events-consumer", Runtime: "nodejs20.x", Handler: "index.handler", State: "Active", LastModified: "2026-10-12T00:00:00Z", MemorySize: 512, Timeout: 60, EnvironmentVariableNames: ["EVENTS_TABLE", "STREAM_NAME"] }] };
-      if (service === "lambda" && args[1] === "list-event-source-mappings") return { EventSourceMappings: [{ FunctionArn: "arn:aws:lambda:ap-northeast-2:123456789012:function:events-consumer", EventSourceArn: "arn:aws:kinesis:ap-northeast-2:123456789012:stream/click-events", State: "Enabled", BatchSize: 100, StartingPosition: "LATEST" }] };
-      if (service === "kinesis" && args[1] === "list-streams") return { StreamSummaries: [{ StreamName: "click-events", StreamARN: "arn:aws:kinesis:ap-northeast-2:123456789012:stream/click-events", StreamStatus: "ACTIVE", StreamModeDetails: { StreamMode: "ON_DEMAND" }, StreamCreationTimestamp: "2026-10-01T00:00:00Z" }] };
+      if (service === "lambda" && args[1] === "list-functions") return { Functions: [{ FunctionName: "worker", Runtime: "nodejs20.x", Handler: "index.handler", State: "Active", LastModified: "2026-10-12T00:00:00Z", MemorySize: 512, Timeout: 60, EnvironmentVariableNames: ["EVENTS_TABLE", "STREAM_NAME"] }] };
+      if (service === "lambda" && args[1] === "list-event-source-mappings") return { EventSourceMappings: [{ FunctionArn: "arn:aws:lambda:ap-northeast-2:123456789012:function:worker", EventSourceArn: "arn:aws:kinesis:ap-northeast-2:123456789012:stream/app-events", State: "Enabled", BatchSize: 100, StartingPosition: "LATEST" }] };
+      if (service === "kinesis" && args[1] === "list-streams") return { StreamSummaries: [{ StreamName: "app-events", StreamARN: "arn:aws:kinesis:ap-northeast-2:123456789012:stream/app-events", StreamStatus: "ACTIVE", StreamModeDetails: { StreamMode: "ON_DEMAND" }, StreamCreationTimestamp: "2026-10-01T00:00:00Z" }] };
       if (service === "kinesis" && args[1] === "describe-stream-summary") return { StreamDescriptionSummary: { OpenShardCount: 4 } };
-      if (service === "sagemaker" && args[1] === "list-endpoints") return { Endpoints: [{ EndpointName: "search-ranker", EndpointStatus: "InService", CreationTime: "2026-09-01T00:00:00Z", LastModifiedTime: "2026-09-29T00:00:00Z" }] };
-      if (service === "sagemaker" && args[1] === "list-endpoint-configs") return { EndpointConfigs: [{ EndpointConfigName: "search-ranker-config", CreationTime: "2026-09-01T00:00:00Z" }] };
-      if (service === "sagemaker" && args[1] === "list-models") return { Models: [{ ModelName: "search-model", CreationTime: "2026-09-01T00:00:00Z" }] };
+      if (service === "sagemaker" && args[1] === "list-endpoints") return { Endpoints: [{ EndpointName: "api-endpoint", EndpointStatus: "InService", CreationTime: "2026-09-01T00:00:00Z", LastModifiedTime: "2026-09-29T00:00:00Z" }] };
+      if (service === "sagemaker" && args[1] === "list-endpoint-configs") return { EndpointConfigs: [{ EndpointConfigName: "api-endpoint-config", CreationTime: "2026-09-01T00:00:00Z" }] };
+      if (service === "sagemaker" && args[1] === "list-models") return { Models: [{ ModelName: "app-model", CreationTime: "2026-09-01T00:00:00Z" }] };
       if (service === "sagemaker" && args[1] === "list-notebook-instances") return { NotebookInstances: [{ NotebookInstanceName: "orders-analysis", NotebookInstanceStatus: "Stopped", InstanceType: "ml.t3.medium", CreationTime: "2026-09-01T00:00:00Z", LastModifiedTime: "2026-09-29T00:00:00Z" }] };
       if (service === "ecs" && args[1] === "list-tasks") return { taskArns: ["task1", "task2"] };
       if (service === "ecs" && args[1] === "describe-tasks") return { tasks: [1, 2].map(() => ({ lastStatus: "RUNNING", containers: [{ lastStatus: "RUNNING", name: "app", image: "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/orders-api:421", imageDigest: "sha256:abc" }] })) };
@@ -49,22 +49,22 @@ describe("AWS context CLI adapter", () => {
     expect(inventory.find(i => i.service === "ecs")?.resources.find(r => r.kind === "service")?.metadata?.runtimeImages).toEqual([1, 2].map(() => ({ image: "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/orders-api:421", imageDigest: "sha256:abc", tags: ["421"], container: "app" })));
     expect(inventory.find(i => i.service === "codepipeline")?.resources[0].metadata?.buildHistory).toEqual([expect.objectContaining({ number: 421, commit: "abc123" })]);
     expect(inventory.flatMap((item) => item.resources.map((resource) => resource.id))).toEqual(expect.arrayContaining([
-      "orders-api", "primary", "logs", "orders-build", "orders-pipeline", "orders", "orders-cache", "orders-search", "orders-dashboard", "events-consumer", "click-events", "search-ranker", "search-ranker-config", "search-model", "orders-analysis", "orders-cluster", "orders-api-service",
+      "orders-api", "primary", "logs", "orders-build", "orders-pipeline", "orders", "orders-cache", "orders-search", "orders-dashboard", "worker", "app-events", "api-endpoint", "api-endpoint-config", "app-model", "orders-analysis", "orders-cluster", "orders-api-service",
     ]));
     expect(inventory.find((item) => item.service === "lambda")?.resources[0]).toMatchObject({
       kind: "function",
-      id: "events-consumer",
+      id: "worker",
       metadata: {
         runtime: "nodejs20.x",
         environmentVariableNames: ["EVENTS_TABLE", "STREAM_NAME"],
-        eventSourceMappings: [{ eventSourceArn: "arn:aws:kinesis:ap-northeast-2:123456789012:stream/click-events", state: "Enabled", batchSize: 100, startingPosition: "LATEST" }],
+        eventSourceMappings: [{ eventSourceArn: "arn:aws:kinesis:ap-northeast-2:123456789012:stream/app-events", state: "Enabled", batchSize: 100, startingPosition: "LATEST" }],
       },
     });
-    expect(inventory.find((item) => item.service === "kinesis")?.resources[0]).toMatchObject({ kind: "stream", id: "click-events", metadata: { status: "ACTIVE", streamMode: "ON_DEMAND", openShardCount: 4 } });
+    expect(inventory.find((item) => item.service === "kinesis")?.resources[0]).toMatchObject({ kind: "stream", id: "app-events", metadata: { status: "ACTIVE", streamMode: "ON_DEMAND", openShardCount: 4 } });
     expect(inventory.find((item) => item.service === "sagemaker")?.resources).toEqual(expect.arrayContaining([
-      expect.objectContaining({ kind: "endpoint", id: "search-ranker", metadata: expect.objectContaining({ status: "InService" }) }),
-      expect.objectContaining({ kind: "endpoint-config", id: "search-ranker-config" }),
-      expect.objectContaining({ kind: "model", id: "search-model" }),
+      expect.objectContaining({ kind: "endpoint", id: "api-endpoint", metadata: expect.objectContaining({ status: "InService" }) }),
+      expect.objectContaining({ kind: "endpoint-config", id: "api-endpoint-config" }),
+      expect.objectContaining({ kind: "model", id: "app-model" }),
       expect.objectContaining({ kind: "notebook-instance", id: "orders-analysis", metadata: expect.objectContaining({ status: "Stopped" }) }),
     ]));
     expect(inventory.find((item) => item.service === "ecs")?.resources.find((item) => item.kind === "service")?.metadata).toMatchObject({ revision: 343, rolloutState: "COMPLETED", runningCount: 2, desiredCount: 2, deployedAt: "2026-09-28T08:03:00.000Z" });

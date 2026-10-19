@@ -5,7 +5,7 @@ import {
   shouldSeedDependsOn,
 } from "../src/services/roadmapDiff.js";
 
-// §7 적대적 코퍼스: "roadmap sync 소유권" — 반드시 막아야/반드시 지켜야를 그대로 인코딩.
+// roadmap sync 소유권: 반드시 막아야 할 것과 반드시 지켜야 할 것을 함께 검증한다.
 describe("computeNodesToDelete — replace 시맨틱", () => {
   it("반드시 막아야: payload에 없는 workstream까지 삭제하면 안 된다", () => {
     const existing = [

@@ -101,7 +101,7 @@ describe("Task CRUD", () => {
     expect(new Set(tasks.map((t) => t.id)).size).toBe(count);
   });
 
-  it("updateTask로 patchInfo를 기록할 수 있다(§7.1 Patch 성숙화)", async () => {
+  it("updateTask로 patchInfo를 기록할 수 있다", async () => {
     const task = await addTask("team-a", { title: "A", project: "/tmp/proj1", prd_ref: "/tmp/proj1/sugo/features/x/prd.md" });
     await updateTask("team-a", task.id, { patchInfo: { parentTaskId: task.id, patchVersion: 2, seed: "추가 요청사항" } });
     const updated = await getTask("team-a", task.id);
@@ -109,7 +109,7 @@ describe("Task CRUD", () => {
   });
 });
 
-describe("findTaskByPrdRef — §7.1 base-task 매칭(patch가 원본 Run을 재사용하기 위한 조회)", () => {
+describe("findTaskByPrdRef — base-task 매칭(patch가 원본 Run을 재사용하기 위한 조회)", () => {
   it("prd_ref가 정확히 일치하는 태스크를 찾는다", async () => {
     const task = await addTask("team-a", { title: "A", project: "/tmp/proj1", prd_ref: "/tmp/proj1/sugo/features/x/prd.md" });
     const found = await findTaskByPrdRef("team-a", "/tmp/proj1/sugo/features/x/prd.md");

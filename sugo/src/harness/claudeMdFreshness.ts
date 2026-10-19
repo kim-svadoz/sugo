@@ -1,5 +1,5 @@
 /**
- * 스펙 §2 step 4 `writeClaudeIfChanged` — sugo/CLAUDE.md는 매 sync마다 다시 합성되는데, 하네스
+ * `writeClaudeIfChanged` — sugo/CLAUDE.md는 매 sync마다 다시 합성되는데, 하네스
  * 내용이 안 바뀌었으면 재기록을 생략해 불필요한 git diff를 안 만든다. compose()는 순수함수로
  * 남겨야 해서(harnessComposer.test.ts가 전제) 타임스탬프는 이 IO 경계 계층에서 따로 붙인다.
  */

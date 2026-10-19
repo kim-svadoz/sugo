@@ -29,7 +29,7 @@ function decodeJwt(token: string): { sub?: string; exp?: number } {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const state = useSyncExternalStore(subscribeAuthState, getAuthState, getAuthState);
 
-  // 공개 SaaS(§Phase 1.5): 백엔드 GitHub OAuth로 302 → 콜백에서 #session= 프래그먼트로 복귀.
+  // 백엔드 GitHub OAuth로 302 → 콜백에서 #session= 프래그먼트로 복귀.
   const login = useCallback(() => {
     window.location.href = `${API_BASE}${LOCAL_DEV ? "/api/auth/local" : "/api/auth/github/login"}`;
   }, []);

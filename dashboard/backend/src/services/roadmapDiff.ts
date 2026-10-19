@@ -9,7 +9,7 @@ export interface ExistingRoadmapNode {
   dependsOn: string[];
 }
 
-// §7 "roadmap replace 시맨틱": payload에 없는 non-workstream 노드는 삭제,
+// roadmap replace 시맨틱: payload에 없는 non-workstream 노드는 삭제,
 // 수동 생성된 workstream 그룹은 payload에 없어도 보존한다.
 export function computeNodesToDelete(
   existing: ExistingRoadmapNode[],
@@ -25,7 +25,7 @@ export function cleanDanglingDeps(dependsOn: string[], deletedIds: ReadonlySet<s
   return dependsOn.filter((id) => !deletedIds.has(id));
 }
 
-// §7 소유권 경계: depends_on(순서)은 대시보드 소유 — sync는 "비어있을 때만" seed.
+// 소유권 경계: depends_on(순서)은 대시보드 소유 — sync는 "비어있을 때만" seed.
 // 신규 노드(existingDependsOn === undefined)는 항상 seed(최초 1회).
 export function shouldSeedDependsOn(existingDependsOn: string[] | undefined): boolean {
   if (existingDependsOn === undefined) return true;

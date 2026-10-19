@@ -4,14 +4,14 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 /**
- * §D.1 "4파일 하드 규칙"을 실제 파일에 대고 검사한다. syncVersion.test.ts는 순수 함수만 보므로
- * 하위 파일을 손으로 고쳐 정본과 어긋나게 만든 드리프트는 잡히지 않는다 — 실제로 plugin.json과
- * marketplace.json만 수기로 올려 package.json과 갈라진 릴리스 사고가 있었다. 그 경로를 막는다.
+ * "4파일 하드 규칙"을 실제 파일에 대고 검사한다. syncVersion.test.ts는 순수 함수만 보므로
+ * 하위 파일을 손으로 고쳐 정본과 어긋나게 만든 드리프트는 잡히지 않는다 — 예를 들어 plugin.json과
+ * marketplace.json만 수기로 올려 package.json과 갈라지는 경우다. 그 경로를 막는다.
  */
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (...segments: string[]) => JSON.parse(readFileSync(join(root, ...segments), "utf8"));
 
-describe("§D.1 4파일 하드 규칙 — 실제 파일 정합성", () => {
+describe("4파일 하드 규칙 — 실제 파일 정합성", () => {
   const version: string = read("package.json").version;
 
   it("정본 package.json의 version이 semver 형식이다", () => {
@@ -38,7 +38,7 @@ describe("§D.1 4파일 하드 규칙 — 실제 파일 정합성", () => {
 
   it("빌드 산출물에 주입된 __SUGO_VERSION__이 정본과 같다", () => {
     // build.mjs가 esbuild define으로 리터럴 치환하므로, 번들에 정본 버전 문자열이 그대로 박힌다.
-    // 재빌드를 빼먹고 커밋하면 sugo_version이 옛 버전을 보고하게 되는데 — 실제로 그랬다 — 이 검사가 막는다.
+    // 재빌드를 빼먹고 커밋하면 sugo_version이 옛 버전을 보고하게 되는데, 이 검사가 막는다.
     const bundle = readFileSync(join(root, "dist", "index.bundle.mjs"), "utf8");
     expect(bundle).toContain(`"${version}"`);
   });

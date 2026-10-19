@@ -46,20 +46,20 @@ await writeFile(join(projectPath, "OPS-SPEC.md"), `# 결제 운영 안정화
 
 ## 목표
 
-실패한 웹훅을 안전하게 재처리하고 고액 환불에는 이중 승인 정책을 적용합니다.
+실패한 웹훅을 안전하게 재처리하고 결제 완료 알림을 보냅니다.
 
 ## 작업 범위
 
 - 지수 백오프 기반 웹훅 재처리 큐
 - 재시도 한도를 넘긴 이벤트를 위한 DLQ 운영 도구
-- 고액 환불 이중 승인과 감사 로그
+- 결제 완료 알림 발송
 
-> 환불 승인 금액 기준은 법무 검토가 끝날 때까지 확정하지 않습니다.
+> 알림 채널은 아직 정하지 않았습니다.
 `, "utf8");
 const tasks: Task[] = [
   { id: "demo-checkout", title: "결제 중복 방지", project: "checkout-service", status: "done", priority: "high", summary: "멱등키 저장과 재시도 응답을 구현했습니다.", created_at: now, completed_at: now, prd_ref: join(projectPath, "prd.md") },
   { id: "demo-webhook", title: "웹훅 재처리", project: "checkout-service", status: "in_progress", priority: "medium", description: "실패 웹훅 재처리 큐", created_at: now, started_at: now },
-  { id: "demo-refund", title: "환불 승인 정책", project: "checkout-service", status: "pending", priority: "low", description: "정책 확정 대기", created_at: now },
+  { id: "demo-notify", title: "결제 완료 알림", project: "checkout-service", status: "pending", priority: "low", description: "알림 채널 확정 대기", created_at: now },
 ];
 
 const completedResult = {
@@ -226,20 +226,20 @@ const roadmap: RoadmapNode[] = [
   { id: "demo-webhook", title: "실패 웹훅 재처리 큐", level: "task", status: "in_progress", dependsOn: [], parent: "demo-run-webhook", ref: "demo-webhook" },
   { id: "demo-webhook::REQ-001", title: "지수 백오프 재시도", level: "subtask", status: "done", dependsOn: [], parent: "demo-webhook" },
   { id: "demo-webhook::REQ-002", title: "DLQ 운영 도구", level: "subtask", status: "in_progress", dependsOn: ["demo-webhook::REQ-001"], parent: "demo-webhook" },
-  { id: "demo-run-refund", title: "환불 승인 정책", level: "workstream", status: "blocked", dependsOn: [], parent: "demo-spec-ops", note: "법무 정책 확인 대기" },
-  { id: "demo-refund", title: "고액 환불 이중 승인", level: "task", status: "blocked", dependsOn: [], parent: "demo-run-refund", ref: "demo-refund", note: "100만원 이상 환불 요청의 최종 승인자를 선택해주세요.", humanBlocker: {
+  { id: "demo-run-notify", title: "결제 완료 알림", level: "workstream", status: "blocked", dependsOn: [], parent: "demo-spec-ops", note: "알림 채널 확인 대기" },
+  { id: "demo-notify", title: "결제 완료 알림 발송", level: "task", status: "blocked", dependsOn: [], parent: "demo-run-notify", ref: "demo-notify", note: "결제 완료 알림을 보낼 채널을 선택해주세요.", humanBlocker: {
     schemaVersion: 1,
-    sessionId: "plan-demo-refund",
+    sessionId: "plan-demo-notify",
     stage: "CODE_RUNNING",
     resumeAction: "code_done",
-    summary: "환불 승인 정책의 권한 검사를 구현하던 중 승인 주체가 SPEC에 없어 작업을 멈췄습니다.",
-    question: "100만원 이상 환불 요청의 최종 승인자를 선택해주세요.",
-    context: ["현재 일반 환불은 담당자가 승인합니다.", "고액 환불은 감사 로그와 이중 승인이 필요하지만 승인 역할이 정해지지 않았습니다.", "이 결정은 API 권한 검사와 승인 알림 대상에 함께 반영됩니다."],
+    summary: "결제 완료 알림을 구현하던 중 알림 채널이 SPEC에 없어 작업을 멈췄습니다.",
+    question: "결제 완료 알림을 보낼 채널을 선택해주세요.",
+    context: ["현재 결제 결과는 화면에만 표시합니다.", "알림 채널이 정해지지 않아 발송 모듈을 고를 수 없습니다.", "이 결정은 발송 모듈과 수신 설정 화면에 함께 반영됩니다."],
     options: [
-      { id: "team-lead", label: "팀장 승인", impact: "처리는 빠르지만 조직별 팀장 권한 매핑이 필요합니다." },
-      { id: "finance", label: "재무 담당자 승인", impact: "금액 통제는 강해지지만 처리 대기 시간이 늘어날 수 있습니다." },
+      { id: "email", label: "이메일", impact: "구현은 단순하지만 사용자가 늦게 확인할 수 있습니다." },
+      { id: "push", label: "앱 푸시", impact: "바로 전달되지만 푸시 토큰 관리가 필요합니다." },
     ],
-    blockedNextStep: "승인 역할에 따른 API 권한 검사와 알림 대상 구현",
+    blockedNextStep: "선택한 채널의 발송 모듈과 수신 설정 구현",
     createdAt: now,
   } },
 ];
@@ -271,7 +271,7 @@ const activityFeed = [
   { minAgo: 15, level: "AGENT", agent: "REVIEW", eventType: "EXECUTE", message: "런타임·배선·PRD 정합성 검증 완료" },
   { minAgo: 11, level: "SYSTEM", agent: "MAIN", eventType: "COMPLETED", message: "v2 patch 완료 · 동시 중복 요청 회귀 방지" },
   { minAgo: 6, level: "AGENT", agent: "CODE", eventType: "EXECUTE", message: "웹훅 재처리 큐 구현 중 · REQ 1/2 완료" },
-  { minAgo: 3, level: "WARN", agent: "MAIN", eventType: "SYSTEM", message: "환불 승인 정책 blocked · 법무 기준 확인 대기" },
+  { minAgo: 3, level: "WARN", agent: "MAIN", eventType: "SYSTEM", message: "결제 완료 알림 blocked · 알림 채널 확인 대기" },
 ] as const;
 for (const event of activityFeed) {
   await ingestActivity(db, {

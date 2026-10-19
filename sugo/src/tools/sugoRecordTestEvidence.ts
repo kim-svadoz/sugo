@@ -7,10 +7,10 @@ export const sugoRecordTestEvidenceInputSchema = {
   kind: z
     .enum(["baseline", "feature"])
     .default("feature")
-    .describe("baseline=code_start 전 기존 테스트(§4.0), feature=구현 후 테스트(§4.2)"),
+    .describe("baseline=code_start 전 기존 테스트, feature=구현 후 테스트"),
   command: z.string().describe("실행한 명령(예: npm test, ./gradlew test)"),
   exitCode: z.number().optional().describe("프로세스 종료코드. 0이면 그린"),
-  // ux 정본 파라미터명. test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
+  // 정본 파라미터명. test-agent가 부르는 계약이라 이름이 어긋나면 값이 조용히
   // undefined로 들어가 증거가 비어버린다 — 짧은 이름(total/passed/failed)도 하위호환으로
   // 받되, 정본 이름이 함께 오면 그쪽이 이긴다.
   totalTests: z.number().optional().describe("실행된 전체 테스트 수"),
@@ -18,7 +18,7 @@ export const sugoRecordTestEvidenceInputSchema = {
   failedTests: z.number().optional().describe("실패 수"),
   skippedTests: z.number().optional().describe("스킵 수"),
   rawOutput: z.string().optional().describe("원문 출력(감사용, 선택)"),
-  /** @deprecated v1 이름 — 낡은 호출부 호환용. 새 코드는 totalTests/passedTests/failedTests를 쓴다. */
+  /** @deprecated 옛 이름 — 낡은 호출부 호환용. 새 코드는 totalTests/passedTests/failedTests를 쓴다. */
   total: z.number().optional(),
   passed: z.number().optional(),
   failed: z.number().optional(),
@@ -31,7 +31,7 @@ const SugoRecordTestEvidenceArgs = z.object(sugoRecordTestEvidenceInputSchema);
 /**
  * 조작 방지의 핵심: 이 도구가 기록한 값만이 test_done/code_done 게이트가 신뢰하는 "실행 증거"다.
  * 다른 도구 파라미터의 testPassed:true 같은 자기보고 주장은 여기 기록과 대조될 뿐 그 자체로는
- * 아무것도 증명하지 않는다(§4.2).
+ * 아무것도 증명하지 않는다.
  */
 export async function handleSugoRecordTestEvidence(rawArgs: unknown) {
   const args = SugoRecordTestEvidenceArgs.parse(rawArgs);

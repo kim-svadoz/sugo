@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { routeInput } from "../src/route.js";
 
-describe("routeInput — §5b 트리거 라우터", () => {
+describe("routeInput — 트리거 라우터", () => {
   it("'버그 고쳐줘'는 code-agent/bugfix로 라우팅된다", () => {
     const result = routeInput("이거 버그 고쳐줘");
     expect(result.matched).toBe(true);

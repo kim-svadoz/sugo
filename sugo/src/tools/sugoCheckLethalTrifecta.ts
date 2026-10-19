@@ -6,7 +6,7 @@ export const sugoCheckLethalTrifectaInputSchema = {
   sessionId: z
     .string()
     .describe(
-      "sugo_plan(start)으로 발급된 세션 id. §P6-1: review_done 전에 이 도구를 최소 1회 호출해야 " +
+      "sugo_plan(start)으로 발급된 세션 id. review_done 전에 이 도구를 최소 1회 호출해야 " +
         "하는 하드 게이트(LETHAL_TRIFECTA_NOT_CALLED)의 대상이라, 세션에 호출 기록을 남긴다.",
     ),
   tools: z
@@ -27,9 +27,9 @@ export const sugoCheckLethalTrifectaInputSchema = {
 const SugoCheckLethalTrifectaArgs = z.object(sugoCheckLethalTrifectaInputSchema);
 
 /**
- * §10 + §P6-1: (사설데이터 접근 + 신뢰불가 입력 처리 + 외부통신) 3축 동시 보유 도구를 경고하고,
+ * (사설데이터 접근 + 신뢰불가 입력 처리 + 외부통신) 3축 동시 보유 도구를 경고하고,
  * 호출 사실과 경고를 세션에 기록한다. review_done의 checkLethalTrifectaCalledGate/
- * checkLethalTrifectaMitigationGate(§gates.ts)가 이 기록을 본다 — sugo_validate와 같은 이유로,
+ * checkLethalTrifectaMitigationGate(gates.ts)가 이 기록을 본다 — sugo_validate와 같은 이유로,
  * 매 review마다 호출 자체를 강제해야 opt-in 스킬 트리거 누락으로 트리펙타 점검이 조용히 생략되는
  * 걸 막을 수 있다.
  */

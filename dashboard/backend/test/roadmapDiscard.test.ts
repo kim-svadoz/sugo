@@ -44,11 +44,11 @@ async function fresh() {
 }
 
 /**
- * §7 폐기(discard) — **삭제가 아니라 `manual_status='dropped'` override.**
+ * 폐기(discard) — **삭제가 아니라 `manual_status='dropped'` override.**
  * 실제 DELETE면 이력이 소실되고 되돌릴 수 없다. 폐기는 "안 할 일"이라는 판단일 뿐이라
  * 복구 가능해야 하고, 진행률 분모에서만 빠지면 된다.
  */
-describe("§7 dropSubtree — BFS cascade", () => {
+describe("dropSubtree — BFS cascade", () => {
   it("루트와 전 자손에 dropped를 내린다", async () => {
     const db = await fresh();
     await seed(db, [
@@ -130,7 +130,7 @@ describe("§7 dropSubtree — BFS cascade", () => {
   });
 });
 
-describe("§7 restoreSubtree — dropped만 되돌린다", () => {
+describe("restoreSubtree — dropped만 되돌린다", () => {
   it("dropped인 것만 NULL로 돌리고 다른 override는 보존한다", async () => {
     const db = await fresh();
     await seed(db, [
@@ -163,7 +163,7 @@ describe("§7 restoreSubtree — dropped만 되돌린다", () => {
   });
 });
 
-describe("§7 진행률 분모에서 dropped 제외", () => {
+describe("진행률 분모에서 dropped 제외", () => {
   it("roadmap count가 dropped를 빼고 센다", async () => {
     const db = await fresh();
     await seed(db, [
@@ -184,7 +184,7 @@ describe("§7 진행률 분모에서 dropped 제외", () => {
   });
 });
 
-describe("§3.3 POST /:name/roadmap/drop · /restore", () => {
+describe("POST /:name/roadmap/drop · /restore", () => {
   async function app1() {
     const db = await fresh();
     await seed(db, [

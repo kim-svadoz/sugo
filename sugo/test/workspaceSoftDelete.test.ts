@@ -18,10 +18,10 @@ afterEach(() => {
 });
 
 /**
- * §9 워크스페이스 soft delete. "삭제"가 곧 **데이터 소멸**이면 실수 한 번으로 누적된 태스크·이력·
+ * 워크스페이스 soft delete. "삭제"가 곧 **데이터 소멸**이면 실수 한 번으로 누적된 태스크·이력·
  * 체크포인트가 사라진다. 기본은 숨김(deleted_at)이고, 진짜 지우는 건 purge를 명시해야만 한다.
  */
-describe("§9 deleteWorkspace — 기본 soft", () => {
+describe("deleteWorkspace — 기본 soft", () => {
   it("기본 삭제는 deleted_at만 찍고 데이터를 남긴다", async () => {
     await ensureWorkspace("ws1", "/tmp/p");
     const r = await deleteWorkspace("ws1");
@@ -73,7 +73,7 @@ describe("§9 deleteWorkspace — 기본 soft", () => {
   });
 });
 
-describe("§9 deleteWorkspace — purge(하드)", () => {
+describe("deleteWorkspace — purge(하드)", () => {
   it("purge는 디렉터리를 실제로 지운다", async () => {
     await ensureWorkspace("ws1");
     writeFileSync(join(workspaceDir("ws1"), "tasks.json"), "{}");
@@ -105,7 +105,7 @@ describe("§9 deleteWorkspace — purge(하드)", () => {
  * 이름이 그대로 경로에 붙으므로 traversal을 막지 않으면 `..`로 WORK 루트 밖을 지울 수 있다.
  * 화이트리스트(허용 문자만) + 삭제 직전 경로가 WORK base 하위인지 이중검증.
  */
-describe("§9 이름 화이트리스트 — traversal 방지", () => {
+describe("이름 화이트리스트 — traversal 방지", () => {
   it.each(["../evil", "a/b", "a\\b", "..", ".", "", "  ", "ws*1"])("거부: %j", async (name) => {
     const r = await deleteWorkspace(name, { purge: true, force: true });
     expect(r.ok).toBe(false);
@@ -130,7 +130,7 @@ describe("§9 이름 화이트리스트 — traversal 방지", () => {
   });
 });
 
-describe("§9 un-delete — getOrCreateWorkspace 재사용", () => {
+describe("un-delete — getOrCreateWorkspace 재사용", () => {
   it("삭제된 이름으로 ensureWorkspace를 부르면 되살아난다", async () => {
     await ensureWorkspace("ws1", "/tmp/p");
     await deleteWorkspace("ws1");
@@ -153,7 +153,7 @@ describe("§9 un-delete — getOrCreateWorkspace 재사용", () => {
   });
 });
 
-/** §1 도구 표면: `sugo_workspace delete`에 `force`/`purge`/`keep_data`가 노출된다. */
+/** 도구 표면: `sugo_workspace delete`에 `force`/`purge`/`keep_data`가 노출된다. */
 describe("sugo_workspace(delete) — 도구 표면", () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function call(args: unknown): Promise<any> {

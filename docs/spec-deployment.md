@@ -1,6 +1,6 @@
 # SPEC 배포 환경 — Plugin 0.20.0 / Console 0.13.4
 
-2026-10-06 사용자 결정. 개발 상태(초안/진행중/검증/완료)와 실제 배포 환경을 독립적으로 관리한다.
+개발 상태(초안/진행중/검증/완료)와 실제 배포 환경을 독립적으로 관리한다.
 개발 완료는 PRD 배포 완료를 뜻하지 않는다. 배포 태그는 승인이나 배포 명령을 실행하지 않는다.
 
 ## 표시
@@ -80,11 +80,10 @@ Plugin 0.20.0 / Console 0.13.4. DB 컬럼/테이블 추가는 없으며 기존 w
 연결된 각 계정을 새로고침한다. 기존 브라우저가 오래된 UI라면 Ctrl+Shift+R로 갱신한다.
 로컬 로그인으로 사람 승인이 가능하며 GitHub OAuth를 별도로 설정할 필요가 없다.
 
-```powershell
-git -C C:\dev\sugo push origin main
-git -C "$env:USERPROFILE\.claude\plugins\marketplaces\sugo-marketplace" pull --ff-only
+```text
 claude plugin update sugo@sugo-marketplace
-sd
+/reload-plugins
+bash dashboard/sd.sh
 ```
 
 

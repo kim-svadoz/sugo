@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { checkJiraOption, checkOracleDone, checkSpecOracleGate } from "../src/gates.js";
 
 /**
- * §5.0 `SPEC_ORACLE_NOT_RUN` + 5/E.4 게이트. 순수 함수 + mock 없음.
+ * `SPEC_ORACLE_NOT_RUN`·oracle_done·jira 게이트. 순수 함수 + mock 없음.
  *
- * 이 게이트의 존재 이유: PRD를 썼다고 해서 **원본 스펙 문서(q-spec)를 실제로 대조했다는 뜻은
+ * 이 게이트의 존재 이유: PRD를 썼다고 해서 **기준 스펙 문서를 실제로 대조했다는 뜻은
  * 아니다.** 대조 없이 ready로 넘어가면 "PRD에 없는 요구사항"이 조용히 누락된 채 코딩이 시작된다.
  * oracle_done은 그 대조를 **했다는 기록**이고, 안 했으면 ready가 막힌다.
  */
-describe("§5.0 SPEC_ORACLE_NOT_RUN — ready 차단", () => {
+describe("SPEC_ORACLE_NOT_RUN — ready 차단", () => {
   it("거부: 오라클이 required인데 미실행 상태로 ready", () => {
     const r = checkSpecOracleGate({ required: true, ran: false });
     expect(r.ok).toBe(false);
@@ -19,7 +19,7 @@ describe("§5.0 SPEC_ORACLE_NOT_RUN — ready 차단", () => {
     expect(checkSpecOracleGate({ required: true, ran: true }).ok).toBe(true);
   });
 
-  it("허용: q-spec이 없어 required가 아니면 no-op 통과", () => {
+  it("허용: 기준 스펙 문서가 없어 required가 아니면 no-op 통과", () => {
     expect(checkSpecOracleGate({ required: false, ran: false }).ok).toBe(true);
   });
 
@@ -42,7 +42,7 @@ describe("oracle_done — 미커버 항목엔 사유 강제", () => {
   });
 
   it("허용: uncovered가 있어도 사유를 밝히면 진행(정직한 탈출구)", () => {
-    expect(checkOracleDone([{ quote: "q", reason: "r" }], "차기 차수로 이관 합의됨").ok).toBe(true);
+    expect(checkOracleDone([{ quote: "q", reason: "r" }], "다음 버전에서 처리하기로 합의함").ok).toBe(true);
   });
 
   it("허용: 전부 커버됐으면 사유 불필요", () => {

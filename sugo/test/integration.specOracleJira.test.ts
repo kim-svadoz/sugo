@@ -34,8 +34,8 @@ async function toPrd(specPath?: string): Promise<string> {
   return sessionId;
 }
 
-describe("§5.0 스펙 오라클 — 실제 파이프라인 통과", () => {
-  it("q-spec이 없으면 게이트가 안 켜져 PRD→ready가 그대로 열린다", async () => {
+describe("스펙 오라클 — 실제 파이프라인 통과", () => {
+  it("기준 스펙 문서가 없으면 게이트가 안 켜져 PRD→ready가 그대로 열린다", async () => {
     const sessionId = await toPrd();
     const ready = await call({ action: "ready", sessionId });
     expect(ready.isError).toBe(false);
@@ -48,9 +48,9 @@ describe("§5.0 스펙 오라클 — 실제 파이프라인 통과", () => {
     expect(ready.isError).toBe(false);
   });
 
-  it("실재하는 q-spec이면 oracle_done 없이는 ready가 막힌다", async () => {
+  it("실재하는 기준 스펙 문서면 oracle_done 없이는 ready가 막힌다", async () => {
     const specPath = join(projectDir, "spec.md");
-    writeFileSync(specPath, "# 원본 스펙\n- 응답에 traceId 포함");
+    writeFileSync(specPath, "# 기준 스펙\n- 응답에 traceId 포함");
     const sessionId = await toPrd(specPath);
 
     const blocked = await call({ action: "ready", sessionId });
@@ -60,7 +60,7 @@ describe("§5.0 스펙 오라클 — 실제 파이프라인 통과", () => {
 
   it("oracle_done은 상태를 PRD에 그대로 두고 ready만 열어준다", async () => {
     const specPath = join(projectDir, "spec.md");
-    writeFileSync(specPath, "# 원본 스펙");
+    writeFileSync(specPath, "# 기준 스펙");
     const sessionId = await toPrd(specPath);
 
     const oracle = await call({ action: "oracle_done", sessionId });
@@ -74,7 +74,7 @@ describe("§5.0 스펙 오라클 — 실제 파이프라인 통과", () => {
 
   it("미커버 항목을 사유 없이 보고하면 oracle_done이 막히고 ready도 여전히 닫혀 있다", async () => {
     const specPath = join(projectDir, "spec.md");
-    writeFileSync(specPath, "# 원본 스펙");
+    writeFileSync(specPath, "# 기준 스펙");
     const sessionId = await toPrd(specPath);
 
     const blocked = await call({
@@ -92,7 +92,7 @@ describe("§5.0 스펙 오라클 — 실제 파이프라인 통과", () => {
 
   it("사유를 밝히면 미커버가 있어도 진행된다(정직한 탈출구)", async () => {
     const specPath = join(projectDir, "spec.md");
-    writeFileSync(specPath, "# 원본 스펙");
+    writeFileSync(specPath, "# 기준 스펙");
     const sessionId = await toPrd(specPath);
 
     const oracle = await call({
@@ -105,9 +105,9 @@ describe("§5.0 스펙 오라클 — 실제 파이프라인 통과", () => {
     expect((await call({ action: "ready", sessionId })).isError).toBe(false);
   });
 
-  it("JIRA를 경유해도 oracle_done을 거기서 기록할 수 있다(v2 데드락 수정 실증)", async () => {
+  it("JIRA를 경유해도 oracle_done을 거기서 기록할 수 있다(데드락 없음)", async () => {
     const specPath = join(projectDir, "spec.md");
-    writeFileSync(specPath, "# 원본 스펙");
+    writeFileSync(specPath, "# 기준 스펙");
     const sessionId = await toPrd(specPath);
 
     const jira = await call({ action: "jira", sessionId, jiraOption: "skip" });

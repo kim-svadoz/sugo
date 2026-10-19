@@ -11,7 +11,7 @@ import {
 export interface TransitionParams {
   projectPath?: string;
   featureName?: string;
-  /** §9-A cancel: 체인 구간에서 접을 때의 사유. 그 구간이 아니면 선택. */
+  /** cancel: 체인 구간에서 접을 때의 사유. 그 구간이 아니면 선택. */
   cancelReason?: string;
 }
 
@@ -35,7 +35,7 @@ export interface TransitionResult {
  * start/status/cancel은 전제상태가 없어(빈 배열) 항상 통과 — 단, cancel은 세션 존재를 요구(호출부에서 처리).
  */
 export function checkPrerequisite(action: PlanAction, currentState: PlanSession["state"] | null): TransitionResult {
-  // §2.8 파생 규칙상 PREREQUISITES는 fromStates!==null인 액션만 담는다 —
+  // 파생 규칙상 PREREQUISITES는 fromStates!==null인 액션만 담는다 —
   // 키 부재 = "전제 없음"(start/status/cancel)이고, 빈 배열과 같은 뜻이다.
   const allowed = PREREQUISITES[action];
   if (!allowed || allowed.length === 0) {
@@ -105,7 +105,7 @@ export function applyTransition(
     if (session.cancelledAt) {
       return { ok: false, errorCode: "ALREADY_CANCELLED", message: "이미 취소된 세션입니다." };
     }
-    // §9-A 체인 구간 취소는 "증거 체인을 끊고 접었다"는 뜻이라 사유를 요구한다. 호출부가
+    // 체인 구간 취소는 "증거 체인을 끊고 접었다"는 뜻이라 사유를 요구한다. 호출부가
     // abandonedChain 라벨로 남긴다 — 막지 않고 기록한다.
     const abandonsChain = (CHAIN_ABANDON_STATES as readonly string[]).includes(session.state);
     if (abandonsChain && !params.cancelReason?.trim()) {
@@ -126,8 +126,8 @@ export function applyTransition(
   const current = session as PlanSession;
   const resultState = RESULT_STATE[action];
   if (!resultState) {
-    // §2.4 `toState: null` = **기록성 액션**(현재는 oracle_done). 전제는 검사하되 상태는 그대로
-    // 둔다 — 이게 v2 데드락 수정의 핵심이다. oracle_done이 상태를 옮겨버리면 PRD/JIRA 중
+    // `toState: null` = **기록성 액션**(현재는 oracle_done). 전제는 검사하되 상태는 그대로
+    // 둔다 — 이게 데드락을 막는 핵심이다. oracle_done이 상태를 옮겨버리면 PRD/JIRA 중
     // 한쪽에서만 기록할 수 있게 되고, 다른 쪽에서 온 세션은 ready가 영영 안 열린다.
     // 부수효과(specOracle.ran 기록)는 호출부(tools/sugoPlan.ts)가 세션 데이터에 쓴다.
     //

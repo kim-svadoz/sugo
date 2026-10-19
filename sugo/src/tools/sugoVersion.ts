@@ -3,7 +3,7 @@ import { currentSugoVersion } from "../version.js";
 export const sugoVersionInputSchema = {};
 
 /**
- * §1/§D.1 `sugo_version`: 플러그인 버전 조회(readOnly). 업데이트 확인은 원격 마켓플레이스가
+ * `sugo_version`: 플러그인 버전 조회(readOnly). 업데이트 확인은 원격 마켓플레이스가
  * 구성돼야 의미가 있어, 그게 없는 동안은 "확인 불가"를 정직하게 밝힌다(가짜 업데이트 확인 금지).
  */
 export async function handleSugoVersion() {

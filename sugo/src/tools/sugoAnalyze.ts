@@ -12,7 +12,7 @@ export const sugoAnalyzeInputSchema = {
 const SugoAnalyzeArgs = z.object(sugoAnalyzeInputSchema);
 
 /**
- * §4.1 analyze 호출 기록과 비차단 어휘 진단을 만든다. pass/partial/fail은 PRD 단어와 변경 파일
+ * analyze 호출 기록과 비차단 어휘 진단을 만든다. pass/partial/fail은 PRD 단어와 변경 파일
  * 문자열의 겹침만 뜻하며 요구사항 충족 판정이 아니다. code_done은 서버가 남긴 호출 이력만 본다.
  */
 export async function handleSugoAnalyze(rawArgs: unknown) {

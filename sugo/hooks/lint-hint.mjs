@@ -1,4 +1,4 @@
-// sugo 플러그인 PostToolUse lint 힌트 훅(§P6-3).
+// sugo 플러그인 PostToolUse lint 힌트 훅.
 //
 // Edit가 끝난 직후 프로젝트의 lint 명령(sugo_add가 감지한 detectedStack.commands.lint)을 돌려,
 // 실패하면 stderr + exit 2로 Claude 컨텍스트에 실패 요약을 얹는다. Edit는 이미 실행된 뒤라 이
@@ -107,7 +107,7 @@ async function main() {
     process.exit(0);
   }
   const lintCommand = pickLintCommand(config);
-  if (!lintCommand) process.exit(0); // 감지된 lint 명령이 없으면 조용히 지나간다(§P6-3: 추측 금지)
+  if (!lintCommand) process.exit(0); // 감지된 lint 명령이 없으면 조용히 지나간다(추측 금지)
 
   const cooldownMs = Number(process.env.SUGO_LINT_HINT_COOLDOWN_MS) || DEFAULT_COOLDOWN_MS;
   const now = Date.now();

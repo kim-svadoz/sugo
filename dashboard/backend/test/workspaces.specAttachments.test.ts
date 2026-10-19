@@ -38,7 +38,7 @@ describe("Schedule SPEC 기획 화면 첨부", () => {
     expect(read.body).toMatchObject({ content: "## 배경\n첫 초안", locked: false });
   });
 
-  it("붙여 넣은 이미지를 순번 이름으로 저장하고 절대 경로와 함께 목록·원본을 돌려준다", async () => {
+  it("붙여 넣은 이미지를 순번 이름으로 저장하고 절대 경로와 함께 목록·파일을 돌려준다", async () => {
     expect((await upload(PNG).expect(200)).body.name).toBe("01.png");
     expect((await upload(PNG, "image/jpeg").expect(200)).body.name).toBe("02.jpg");
     const list = await request(ctx.app).get("/api/workspaces/ws1/roadmap/spec-attachments").query({ nodeId }).set("Authorization", ctx.auth).expect(200);

@@ -30,19 +30,19 @@ mock/jose-local이 아니라 **실제 인프라**로 대시보드+플러그인�
 5. 데이터 시딩: `/api/sync/user`,`/workspace`,`/task`,`/canvas`로 userId=`e2euser`(OIDC sub) 데이터.
 6. `node browser-flow.mjs`, `node bitbucket-flow.mjs`
 
-## 이 하네스로 실제 잡은 것 (2026-07-25)
-- **JSON 컬럼 반환 타입**(mysql2 파싱 vs sqlite 문자열) — 별도 커밋에서 수정.
-- **ISO 8601 datetime을 MySQL TIMESTAMP가 거부** + 그 에러가 프로세스를 죽임(회복력) — 수정.
+## 이 하네스가 잡는 문제
+- **JSON 컬럼 반환 타입**(mysql2 파싱 vs sqlite 문자열).
+- **ISO 8601 datetime을 MySQL TIMESTAMP가 거부** + 그 에러가 프로세스를 죽임(회복력).
 - **opaque OIDC access token → auth-gated 라우트 401**: OIDC provider가 opaque access token을
   발급하면(oidc-provider 기본/일부 Keycloak 설정) 프론트가 그걸 Bearer로 보내도 requireAuth의
-  JWKS 검증이 거부한다. → 대시보드가 id_token(항상 JWKS로 검증 가능한 JWT)을 Bearer로 반환하도록
-  수정(auth 라우터). IdP의 access-token 형식과 무관하게 동작.
+  JWKS 검증이 거부한다. → 대시보드는 id_token(항상 JWKS로 검증 가능한 JWT)을 Bearer로 반환한다
+  (auth 라우터). IdP의 access-token 형식과 무관하게 동작.
 
 ## 남은 residual(실물이 더 필요한 것)
 - 실제 Bitbucket Server(Data Center) 응답 형태 최종 일치(지금은 mock SHAPE).
 - 원격/배포 환경(원격 MySQL·네트워크 지연·실 Keycloak)에서의 재검증.
 
-## 사람 승인 완료등급 (2026-10-06)
+## 사람 승인 완료등급
 
 Node 22.15+와 `npm install`한 e2e/backend가 필요하다. native TypeScript resolve 훅을 사용한다.
 Frontend를 `VITE_API_BASE=http://localhost:4000`으로 빌드하고 :4173에서 preview한 뒤:

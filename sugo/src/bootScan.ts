@@ -26,7 +26,7 @@ async function collectJavaFiles(dir: string, acc: string[]): Promise<void> {
 }
 
 /**
- * §4.1 boot-gate 실측 스캔: 자기보고가 아니라 실제 .java 파일을 걸어서 @SpringBootTest
+ * boot-gate 실측 스캔: 자기보고가 아니라 실제 .java 파일을 걸어서 @SpringBootTest
  * 어노테이션(줄 첫 비공백)이 있는지 확인한다. *Test.java/*Tests.java/*IT.java를 우선 스캔하고,
  * 그런 파일이 하나도 없으면(네이밍 컨벤션이 다를 수 있어) 전체 .java로 폴백한다.
  */

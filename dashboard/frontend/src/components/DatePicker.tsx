@@ -8,12 +8,11 @@ import { cn } from "../lib/utils.js";
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 /**
- * §7B Schedule 탭 — 사용자 결정(2026-09-23): 마감일은 `<input type="date">` 텍스트 입력이
- * 아니라 실제 달력을 눌러서 고르는 형태여야 한다. 팝오버 안에서 SchedulePage 본체와 같은
- * KST 기준 월 그리드(`lib/calendar.ts`)를 그대로 재사용한다.
+ * 마감일은 `<input type="date">` 텍스트 입력이 아니라 달력을 눌러서 고른다. 팝오버 안에서
+ * SchedulePage 본체와 같은 KST 기준 월 그리드(`lib/calendar.ts`)를 그대로 재사용한다.
  *
  * 패널은 body에 포털로 그린다 — 트리거가 (Modal처럼) `overflow-auto`인 조상 안에 있으면
- * `position:absolute`만으로는 팝오버가 그 조상 경계에서 잘린다(실제로 재현·확인함).
+ * `position:absolute`만으로는 팝오버가 그 조상 경계에서 잘린다.
  */
 export function DatePicker({
   value,

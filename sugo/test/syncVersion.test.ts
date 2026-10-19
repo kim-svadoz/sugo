@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { syncMarketplaceJson, syncPackageLockJson, syncPluginJson } from "../syncVersion.mjs";
 
-describe("syncVersion — §D.1 4파일 하드 규칙 순수 함수", () => {
+describe("syncVersion — 4파일 하드 규칙 순수 함수", () => {
   describe("syncPluginJson", () => {
     it("버전이 다르면 갱신하고 changed:true를 돌려준다", () => {
       const { text, changed } = syncPluginJson(JSON.stringify({ name: "sugo", version: "0.1.0" }), "0.2.0");

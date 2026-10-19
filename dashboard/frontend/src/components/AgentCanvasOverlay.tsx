@@ -8,9 +8,9 @@ import { AI_WORK_STATUS_TOOL } from "../lib/workspaceTools.js";
 /**
  * 로드맵(Agent Canvas) 전체화면 오버레이 — `z-[70]`.
  *
- * Sessions.tsx에 있던 걸 §7B SchedulePage와 공유하려고 분리했다(동작 변경 없음).
+ * Sessions와 SchedulePage가 함께 쓴다.
  * **본문은 `<RoadmapGraph fill />`이다(리스트가 아니다).** 전체화면 페이지와 같은 그래프를
- * 그대로 띄우는 게 스펙이고, 그래야 "캔버스"가 화면마다 다른 걸 가리키지 않는다.
+ * 그대로 띄워야 "캔버스"가 화면마다 다른 걸 가리키지 않는다.
  *
  * 화면을 거의 다 쓴다(`m-3 flex-1`) — 위상 그래프를 좁은 모달에 넣으면 노드가 겹쳐서
  * 팬/줌을 해야만 읽히고, 그러면 "훑어보는" 용도 자체가 성립하지 않는다.
@@ -22,7 +22,7 @@ export function AgentCanvasOverlay({
 }: {
   workspace: string;
   onClose: () => void;
-  /** §7B Schedule 탭에서 특정 spec을 보려고 열었을 때. */
+  /** Schedule 탭에서 특정 spec을 보려고 열었을 때. */
   focusNodeId?: string;
 }) {
   const { data, refetch } = useRoadmap(workspace);

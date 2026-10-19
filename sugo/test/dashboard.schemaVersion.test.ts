@@ -41,7 +41,7 @@ afterEach(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
-describe("§8.2 schemaVersion — 모든 sync payload에 계약 버전을 싣는다", () => {
+describe("schemaVersion — 모든 sync payload에 계약 버전을 싣는다", () => {
   it("pushEvent가 POST 본문에 schemaVersion을 주입한다", async () => {
     await pushEvent("/api/sync/user", "POST", { userId: "u1" });
     expect(received[0].body.schemaVersion).toBe(DASHBOARD_SYNC_SCHEMA_VERSION);

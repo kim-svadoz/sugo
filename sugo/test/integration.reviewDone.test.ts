@@ -68,12 +68,12 @@ async function toTestDone(
   await call(handleSugoPlan, { action: "test_done", sessionId, testPassed });
   await call(handleSugoPlan, { action: "review_start", sessionId });
   if (!skipAutoValidate) {
-    // review_done의 VALIDATE_NOT_CALLED 게이트 충족용(§4.3 확장). 하네스 미적용 프로젝트라
+    // review_done의 VALIDATE_NOT_CALLED 게이트 충족용. 하네스 미적용 프로젝트라
     // validationResults가 비어 있어도 verifiedFailures 없이 통과한다.
     await call(handleSugoValidate, { sessionId, validationResults: [] });
   }
   if (!skipAutoTrifecta) {
-    // review_done의 LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용(§P6-1). 빈 tools면 경고 없이 통과한다.
+    // review_done의 LETHAL_TRIFECTA_NOT_CALLED 게이트 충족용. 빈 tools면 경고 없이 통과한다.
     await call(handleSugoCheckLethalTrifecta, { sessionId, tools: [] });
   }
   return sessionId;
@@ -166,7 +166,7 @@ describe("review_done — 런타임검증 게이트", () => {
   });
 
   it("환경부재 라벨로 우회할 수 있다", async () => {
-    // §4.6 label-guard: 그린 test evidence가 있는 채로 환경부재를 주장하면 라벨-모순으로 거부되므로,
+    // label-guard: 그린 test evidence가 있는 채로 환경부재를 주장하면 라벨-모순으로 거부되므로,
     // 이 세션은 test evidence부터 그린이 아니어야 한다(일관되게 "환경이 없었다"는 이야기).
     const sessionId = await toTestDone(false, 3);
     const result = await call(handleSugoPlan, {
@@ -306,7 +306,7 @@ describe("review_done — sugo_validate 호출강제 + 실측 우선 게이트(�
   });
 });
 
-describe("review_done — sugo_check_lethal_trifecta 호출강제 + 완화사유 게이트(§P6-1, 실배선)", () => {
+describe("review_done — sugo_check_lethal_trifecta 호출강제 + 완화사유 게이트(실배선)", () => {
   it("sugo_check_lethal_trifecta를 한 번도 안 부르면 review_done이 거부된다", async () => {
     const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ false, /* skipAutoTrifecta */ true);
     const result = await call(handleSugoPlan, {
@@ -376,7 +376,7 @@ describe("review_done — sugo_check_lethal_trifecta 호출강제 + 완화사유
   });
 });
 
-describe("review_done — no-secrets auto 실측(§P6-2, 실배선)", () => {
+describe("review_done — no-secrets auto 실측(실배선)", () => {
   it("이번 diff에 하드코딩된 시크릿이 있으면 자기보고로 우겨도 review_done이 거부된다", async () => {
     await call(handleSugoAdd, { projectPath: projectDir });
     mkdirSync(join(projectDir, "src"), { recursive: true });

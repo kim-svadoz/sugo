@@ -12,7 +12,7 @@ function evidence(derivedState: TestEvidenceRecord["derivedState"]): TestEvidenc
   } as TestEvidenceRecord;
 }
 
-describe("§4.3-R checkTestReverifyGate — 재스냅샷 전제 검사", () => {
+describe("checkTestReverifyGate — 재스냅샷 전제 검사", () => {
   it("그린 증거 + 사유가 있으면 통과한다", () => {
     expect(checkTestReverifyGate(evidence("pass"), "전체 스위트에 무관한 사전 결함이 섞여 범위를 좁혀 재실행")).toEqual({ ok: true });
   });

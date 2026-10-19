@@ -14,7 +14,7 @@ export const sugoUpdateInputSchema = {
 const SugoUpdateArgs = z.object(sugoUpdateInputSchema);
 
 /**
- * §9 라이프사이클 sugo_update: 이미 등록된 프로젝트의 스택감지·하네스를 다시 돈다(sugo_add와 같은
+ * 라이프사이클 sugo_update: 이미 등록된 프로젝트의 스택감지·하네스를 다시 돈다(sugo_add와 같은
  * 실제 동작을 harness/sync.ts로 공유). sugo_add와의 차이는 딱 하나 — **등록돼 있지 않으면 거부**한다
  * (신규 등록은 sugo_add의 책임이지 update의 책임이 아니다). workspace는 명시 안 하면 기존 소속을 유지한다.
  */

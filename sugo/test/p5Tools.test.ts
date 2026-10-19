@@ -26,7 +26,7 @@ afterEach(() => {
   rmSync(projectDir, { recursive: true, force: true });
 });
 
-describe("§1 sugo_prd — DEPRECATED 거부 스텁", () => {
+describe("sugo_prd — DEPRECATED 거부 스텁", () => {
   it("무조건 거부하고 대체 경로를 알려준다", async () => {
     const r = await call(handleSugoPrd as never);
     expect(r.isError).toBe(true);
@@ -35,7 +35,7 @@ describe("§1 sugo_prd — DEPRECATED 거부 스텁", () => {
   });
 });
 
-describe("§1 sugo_setup — 저장하지 않고 안내만", () => {
+describe("sugo_setup — 저장하지 않고 안내만", () => {
   it("설정한 척하지 않는다(configured:false)", async () => {
     const r = await call(handleSugoSetup as never, { bitbucket: { baseUrl: "https://bb.example.com" } });
     expect(r.isError).toBe(false);
@@ -50,10 +50,10 @@ describe("§1 sugo_setup — 저장하지 않고 안내만", () => {
 });
 
 /**
- * §7 sugo_commit은 **메시지 생성만** 한다. 저장소를 바꾸는 건 사람 몫이라 실행하지 않고,
+ * sugo_commit은 **메시지 생성만** 한다. 저장소를 바꾸는 건 사람 몫이라 실행하지 않고,
  * DONE이 아닌 세션엔 메시지조차 만들어주지 않는다 — 게이트를 건너뛴 기록의 뒷문을 막는다.
  */
-describe("§7 sugo_commit — DONE 전용 · 생성만", () => {
+describe("sugo_commit — DONE 전용 · 생성만", () => {
   async function sessionAt(done: boolean): Promise<string> {
     const start = await call(handleSugoPlan as never, { action: "start", projectPath: projectDir, featureName: "f" });
     const sessionId = start.data.sessionId as string;
