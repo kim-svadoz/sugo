@@ -62,6 +62,21 @@ claude plugin install sugo@sugo-marketplace
 
 배포 번들 `sugo/dist/index.bundle.mjs`가 저장소에 포함되어 있으므로, 플러그인을 사용하기 위해 별도로 `npm install`하거나 빌드할 필요는 없습니다. 플러그인 등록이 끝나면 Claude Code에서 `/reload-plugins`를 실행하고 `/sugo:version`으로 버전을 확인합니다.
 
+#### 설치하면 모든 프로젝트에 적용되는 훅
+
+플러그인 훅은 Sugo에 등록한 프로젝트만이 아니라 **Claude Code를 여는 모든 프로젝트**에서 동작합니다. 훅은 [`sugo/hooks/hooks.json`](sugo/hooks/hooks.json)에 정의되어 있습니다.
+
+| 시점 | 훅 | 동작 |
+| --- | --- | --- |
+| 세션 시작 | `dashboard-start` | 번들 Console을 백그라운드로 시작합니다. |
+| 세션 시작 | `agent-tools` | `agents.extraTools` 설정을 Sugo 에이전트 정의에 반영합니다. |
+| Bash 실행 전 | `aws-readonly-guard` | AWS CLI 직접 호출 중 읽기 정책에 없는 명령, 변경 명령, 비밀값 조회, 호출량 초과를 차단합니다. |
+| Write·Edit 실행 전 | `scope-guard` | Sugo의 `test-agent`는 테스트 파일만, `docs-agent`는 문서 파일만 수정하게 제한합니다. 다른 에이전트와 메인 대화에는 영향이 없습니다. |
+| Edit 실행 후 | `lint-hint` | Sugo에 등록한 프로젝트에서 lint가 실패하면 실패 요약을 Claude에게 전달합니다. 편집은 막지 않습니다. |
+| MCP 도구 실행 후 | `mcp-presentation` | `presentation.mcpServers`에 지정한 서버에만 적용되며, 설정이 없으면 아무 일도 하지 않습니다. |
+
+AWS CLI 직접 호출 제한을 원하지 않으면 Console의 Settings에서 직접 읽기를 끕니다. 훅 전체를 쓰지 않으려면 `/sugo:uninstall`로 플러그인을 제거합니다.
+
 ### 프로젝트 등록 → 기능 개발
 
 아래 경로는 작업할 프로젝트의 절대 경로로 바꾸세요. Windows에서는 `C:/dev/my-service`처럼 사용할 수 있습니다.
