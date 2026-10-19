@@ -36,7 +36,7 @@ describe("Schedule 프로젝트 체크포인트 표시", () => {
     const result = orderVisibleCheckpoints([
       checkpoint("shared", "2026-10-08"),
       checkpoint("mine", "2026-10-09", ["orders-api"]),
-      checkpoint("other", "2026-10-07", ["profile-api"]),
+      checkpoint("other", "2026-10-07", ["accounts-api"]),
     ], "orders-api", "2026-10-07");
 
     expect(result.map((item) => item.id)).toEqual(["shared", "mine"]);

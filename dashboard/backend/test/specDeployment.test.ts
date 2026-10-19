@@ -37,11 +37,11 @@ it("checks actual Git ancestry, unrelated revisions, squash equivalent files and
   writeFileSync(join(dir, "a.txt"), "feature"); writeFileSync(join(dir, "c.txt"), "squash"); git("add", "."); git("commit", "-m", "squash");
   expect(await commitIncluded(dir, source, git("rev-parse", "HEAD"))).toBe(true);
   expect(await commitIncluded(dir, source, "f".repeat(40))).toBeNull();
-  const image = `123.dkr.ecr.ap-northeast-2.amazonaws.com/${dir.split(/[\\/]/).at(-1)}:421`;
-  const metadata = { runningCount: 1, runtimeImages: [{ image, imageDigest: "sha256:abc", tags: ["421"] }] };
-  const snapshot = { accountName: "dev", region: "test", observedAt: new Date().toISOString(), inventory: [{ service: "codepipeline", resources: [{ kind: "pipeline", id: "p", metadata: { repositoryName: dir.split(/[\\/]/).at(-1), buildHistory: [{ number: 999, commit: base }, { number: 421, commit }] } }] }] };
-  expect(await resolveDeployedCommits(dir, metadata, snapshot)).toEqual([commit]); // running 421, not latest successful 999
-  expect(await resolveDeployedCommits(dir, { ...metadata, runtimeImages: [{ image, tags: ["421"] }] }, snapshot)).toBeNull();
+  const image = `123.dkr.ecr.ap-northeast-2.amazonaws.com/${dir.split(/[\\/]/).at(-1)}:1`;
+  const metadata = { runningCount: 1, runtimeImages: [{ image, imageDigest: "sha256:abc", tags: ["1"] }] };
+  const snapshot = { accountName: "dev", region: "test", observedAt: new Date().toISOString(), inventory: [{ service: "codepipeline", resources: [{ kind: "pipeline", id: "p", metadata: { repositoryName: dir.split(/[\\/]/).at(-1), buildHistory: [{ number: 999, commit: base }, { number: 1, commit }] } }] }] };
+  expect(await resolveDeployedCommits(dir, metadata, snapshot)).toEqual([commit]); // running 1, not latest successful 999
+  expect(await resolveDeployedCommits(dir, { ...metadata, runtimeImages: [{ image, tags: ["1"] }] }, snapshot)).toBeNull();
   expect(await resolveDeployedCommits(dir, { ...metadata, runtimeError: "AccessDenied" }, snapshot)).toBeNull();
   const db = createSqliteClient();
   try {
@@ -111,10 +111,10 @@ it("uses a separately connected build account for PRD and refuses an unrelated i
   writeFileSync(join(dir, "buildspec.yml"), `env:\n  variables:\n    ECR_URI: 123.dkr.ecr.test.amazonaws.com\n    REPOSITORY_NAME: ${name}\nphases:\n  build:\n    commands:\n      - IMAGE_TAG=$CODEBUILD_BUILD_NUMBER\n      - docker push \${ECR_URI}/\${REPOSITORY_NAME}:\${IMAGE_TAG}\n`);
   git("add", "."); git("commit", "-m", "build"); const commit = git("rev-parse", "HEAD");
   const production = { accountName: "prd", region: "test", observedAt: new Date().toISOString(), inventory: [] };
-  const build = { accountName: "default", region: "test", observedAt: new Date().toISOString(), inventory: [{ service: "codepipeline", resources: [{ kind: "pipeline", id: "p", metadata: { repositoryName: name, buildHistory: [{ number: 421, commit }] } }] }] };
-  const metadata = { runningCount: 1, runtimeImages: [{ image: `123.dkr.ecr.test.amazonaws.com/${name}:421`, imageDigest: "sha256:abc", tags: ["421"] }] };
+  const build = { accountName: "default", region: "test", observedAt: new Date().toISOString(), inventory: [{ service: "codepipeline", resources: [{ kind: "pipeline", id: "p", metadata: { repositoryName: name, buildHistory: [{ number: 1, commit }] } }] }] };
+  const metadata = { runningCount: 1, runtimeImages: [{ image: `123.dkr.ecr.test.amazonaws.com/${name}:1`, imageDigest: "sha256:abc", tags: ["1"] }] };
   expect(await resolveDeployedCommits(dir, metadata, production, [build])).toEqual([commit]);
-  expect(await resolveDeployedCommits(dir, { ...metadata, runtimeImages: [{ ...metadata.runtimeImages[0], image: `999.dkr.ecr.test.amazonaws.com/${name}:421` }] }, production, [build])).toBeNull();
+  expect(await resolveDeployedCommits(dir, { ...metadata, runtimeImages: [{ ...metadata.runtimeImages[0], image: `999.dkr.ecr.test.amazonaws.com/${name}:1` }] }, production, [build])).toBeNull();
   expect(await resolveDeployedCommits(dir, metadata, production, [{ ...build, observedAt: "2020-01-01" }])).toEqual([commit]);
   expect(await resolveDeployedCommits(dir, metadata, production, [{ ...build, observedAt: "2099-01-01" }])).toBeNull();
   const db = createSqliteClient();
@@ -122,7 +122,7 @@ it("uses a separately connected build account for PRD and refuses an unrelated i
    await db.execScript(readFileSync(new URL("./schema.sqlite.sql", import.meta.url), "utf8"));
    await syncWorkspace(db, { userId: "u", name: "ws", projects: [dir] });
    const service = { kind: "service", id: "api", metadata: { ...metadata, cluster: "cluster", status: "ACTIVE", rolloutState: "COMPLETED", desiredCount: 1, images: [metadata.runtimeImages[0].image] } };
-   const other = { kind: "service", id: "another-api", metadata: { ...service.metadata, images: ["123.dkr.ecr.test.amazonaws.com/another-repo:421"] } };
+   const other = { kind: "service", id: "another-api", metadata: { ...service.metadata, images: ["123.dkr.ecr.test.amazonaws.com/another-repo:1"] } };
    for (const account of ["default", "prd"]) await db.exec("INSERT INTO user_aws_context_accounts VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", account, "test", "test", "123", "test", new Date().toISOString()]);
    await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", "default", JSON.stringify(build.inventory), new Date().toISOString()]);
    await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", "prd", JSON.stringify([{ service: "ecs", resources: [service, other] }]), new Date().toISOString()]);

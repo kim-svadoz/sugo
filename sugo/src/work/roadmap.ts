@@ -259,7 +259,7 @@ export async function recordRoadmapWorkResult(
 }
 
 /**
- * v0.5 이전 또는 정식 commit 게이트 밖에서 완료된 Task는 status/summary만 있고 work-result가
+ * 정식 commit 게이트 밖에서 완료된 Task는 status/summary만 있고 work-result가
  * 없을 수 있다. 그런 로컬 이력은 PRD 옆에 최소 work-result를 한 번만 복원해 Patch 진입점을
  * 제공한다. 기존 파일이나 이미 연결된 산출물은 절대 덮어쓰지 않는다.
  */

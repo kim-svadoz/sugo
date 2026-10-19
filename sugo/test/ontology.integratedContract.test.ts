@@ -64,8 +64,8 @@ describe("operational ontology 통합 계약", () => {
     }
   });
 
-  it("적대적 입력 16행 독립 골든 목록이 모델 게이트와 실제 증명 테스트에 전부 연결된다", () => {
-    const corpus = JSON.parse(readFileSync(join(FIXTURES, "rejection-cases.json"), "utf8")) as {
+  it("적대적 입력 기준 목록이 모델 게이트와 실제 증명 테스트에 전부 연결된다", () => {
+    const rows = JSON.parse(readFileSync(join(FIXTURES, "rejection-cases.json"), "utf8")) as {
       id: string;
       modelGateIds: string[];
       proofFiles: string[];
@@ -77,8 +77,8 @@ describe("operational ontology 통합 계약", () => {
     ];
     const declaredGateIds = new Set<string>(ACTION_TYPES.flatMap((action) => action.gates.map((gate) => gate.gateId)));
 
-    expect(corpus.map((row) => row.id)).toEqual(expectedRows);
-    for (const row of corpus) {
+    expect(rows.map((row) => row.id)).toEqual(expectedRows);
+    for (const row of rows) {
       for (const gateId of row.modelGateIds) expect(declaredGateIds.has(gateId), `${row.id}: ${gateId}`).toBe(true);
       expect(row.proofFiles.length, `${row.id}: proof`).toBeGreaterThan(0);
       for (const proofFile of row.proofFiles) expect(readFileSync(join(__dirname, proofFile), "utf8").length).toBeGreaterThan(0);
@@ -123,9 +123,9 @@ describe("operational ontology 통합 계약", () => {
     });
   });
 
-  it("v0.10 과거 session/work-result를 최신 모델이 거짓 전이 없이 설명한다", () => {
-    const session = JSON.parse(readFileSync(join(FIXTURES, "legacy-session-v010.json"), "utf8")) as PlanSession;
-    const workResult = readFileSync(join(FIXTURES, "legacy-work-result-v010.md"), "utf8");
+  it("이전 형식의 session/work-result를 현재 모델이 거짓 전이 없이 설명한다", () => {
+    const session = JSON.parse(readFileSync(join(FIXTURES, "prior-format-session.json"), "utf8")) as PlanSession;
+    const workResult = readFileSync(join(FIXTURES, "prior-format-work-result.md"), "utf8");
     const task: Task = { id: "task-legacy-checkout", title: "legacy checkout", project: session.projectPath, status: "done", created_at: session.startedAt };
     const nodes: RoadmapNode[] = [
       { id: "spec-legacy", title: "legacy", level: "spec", status: "done", dependsOn: [] },

@@ -5,7 +5,7 @@ describe("environmentOfAccount", () => {
   it.each([
     ["team-dev", "dev"],
     ["dev-platform", "dev"],
-    ["shop_stage", "stg"],
+    ["app_stage", "stg"],
     ["Production Account", "prd"],
     ["prd", "prd"],
   ])("%s 계정은 %s 환경이다", (accountName, environment) => {

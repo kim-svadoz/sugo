@@ -20,7 +20,7 @@ describe("operational pulse", () => {
     ], "2026-10-14")).toEqual({ dueToday: 1, dueThisWeek: 2, overdue: 1, unscheduled: 1 });
   });
 
-  it("Workspaces 첫 랜딩은 첫 도메인을 한 번만 자동 선택한다", () => {
+  it("Workspaces 첫 랜딩은 첫 워크스페이스을 한 번만 자동 선택한다", () => {
     const source = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
     expect(source).toContain("initialSelectionApplied.current");
     expect(source).toContain("setSelectedWorkspace(workspaces[0].name)");

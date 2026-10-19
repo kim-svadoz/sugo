@@ -62,7 +62,7 @@ describe("대시보드 sync — 실제 파이프라인 배선 e2e", () => {
     expect(received).toContain("/api/sync/workspace");
   });
 
-  it("prd(헤딩 REQ)가 task+roadmap 스냅샷을 논블로킹으로 쏜다(대시보드 리네임 URL)", async () => {
+  it("prd(헤딩 REQ)가 task+roadmap 스냅샷을 논블로킹으로 쏜다", async () => {
     await call(handleSugoAdd, { projectPath: projectDir, workspace: "ws-sync" });
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId;

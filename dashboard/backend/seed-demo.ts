@@ -20,8 +20,8 @@ import {
 
 const USER = process.env.SUGO_SEED_USER_ID ?? "github:12345";
 // 데모 프로젝트 경로는 화면에 그대로 찍히므로 홈 디렉터리 기준으로 만든다.
-const SPLEARN = join(homedir(), "splearn");
-const PAYMENTS = join(homedir(), "work", "payments");
+const WEBAPP = join(homedir(), "webapp");
+const PAYMENTS = join(homedir(), "work", "webapp-payments");
 const db = createSqliteClient("./local.db");
 
 const workResult = (over: Record<string, unknown> = {}) => ({
@@ -50,7 +50,7 @@ async function main() {
   await syncUser(db, { userId: USER, displayName: "Local Developer" });
 
   // ── 워크스페이스 2개 ─────────────────────────────────────────────
-  await syncWorkspace(db, { userId: USER, name: "temp-workspace", projects: [SPLEARN], gitSyncedProjects: [SPLEARN] });
+  await syncWorkspace(db, { userId: USER, name: "temp-workspace", projects: [WEBAPP], gitSyncedProjects: [WEBAPP] });
   await syncWorkspace(db, { userId: USER, name: "payments-api", projects: [PAYMENTS], gitSyncedProjects: [] });
   await syncWorkspaceMeta(db, { userId: USER, workspaceName: "temp-workspace", goldenRule: "테스트 먼저, 게이트는 실행증거로만 통과", checkpointsVersion: 3 });
 
@@ -63,7 +63,7 @@ async function main() {
     ["t5", "레거시 인증 정리", "archived"],
   ];
   for (const [id, title, status] of tasks) {
-    await syncTask(db, { userId: USER, workspaceName: "temp-workspace", id, title, project: SPLEARN, status });
+    await syncTask(db, { userId: USER, workspaceName: "temp-workspace", id, title, project: WEBAPP, status });
   }
 
   // ── Roadmap (DAG: spec → workstream → tasks, work_result/lineage/prRefs) ──

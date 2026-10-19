@@ -122,8 +122,7 @@ describe("stackDetector — 래퍼 명령의 OS 분기(양쪽 다 검증)", () =
 });
 
 /**
- * 회귀 방지 가드. 여기서 잡는 건 "특정 PC에서만 되는 코드"가 다시 스며드는 것 하나뿐이라
- * 규칙을 좁게 유지한다 — 넓은 린트는 오탐으로 무력화된다.
+ * 회귀 방지 가드. 특정 환경에서만 되는 코드를 잡는 규칙만 좁게 둔다.
  */
 describe("이식성 가드 — 배포되는 코드에 특정 PC 전용 가정이 없다", () => {
   const roots = ["src", "hooks", "commands", "agents", "skills", "locales", "harness-library", "scripts", ".claude-plugin"];

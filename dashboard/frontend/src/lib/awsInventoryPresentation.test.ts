@@ -4,14 +4,14 @@ import { summarizeSageMaker } from "./awsInventoryPresentation.js";
 describe("summarizeSageMaker", () => {
   it("prioritizes inference endpoints and reduces versioned resources to counts", () => {
     const summary = summarizeSageMaker([
-      { service: "sagemaker", kind: "endpoint", id: "ranker", metadata: { status: "InService" } },
-      { service: "sagemaker", kind: "endpoint-config", id: "ranker-v2-config" },
-      { service: "sagemaker", kind: "endpoint-config", id: "ranker-v1-config" },
-      { service: "sagemaker", kind: "model", id: "ranker-v2" },
+      { service: "sagemaker", kind: "endpoint", id: "api-endpoint", metadata: { status: "InService" } },
+      { service: "sagemaker", kind: "endpoint-config", id: "api-endpoint-v2-config" },
+      { service: "sagemaker", kind: "endpoint-config", id: "api-endpoint-v1-config" },
+      { service: "sagemaker", kind: "model", id: "api-endpoint-v2" },
     ]);
 
     expect(summary).toEqual({
-      endpoints: [{ id: "ranker", status: "InService" }],
+      endpoints: [{ id: "api-endpoint", status: "InService" }],
       endpointCount: 1,
       endpointConfigCount: 2,
       modelCount: 1,

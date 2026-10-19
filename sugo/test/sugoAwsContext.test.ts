@@ -46,14 +46,14 @@ describe("sugo_aws_context", () => {
         activeAccount: "default",
         profile: "team-account",
         region: "ap-northeast-2",
-        accountHint: "9012",
+        accountHint: "0000",
         principal: "developer",
         observedAt: "2026-09-29T00:00:00.000Z",
         inventory: [{ service: "s3", resources: [{ kind: "bucket", id: "private-name" }] }],
       };
     });
     expect(requestedAccount).toBe("default");
-    expect(parse(result)).toMatchObject({ ok: true, accountHint: "9012", services: [{ service: "s3", count: 1, status: "ok" }] });
+    expect(parse(result)).toMatchObject({ ok: true, accountHint: "0000", services: [{ service: "s3", count: 1, status: "ok" }] });
     expect(result.content[0].text).not.toContain("private-name");
   });
 
@@ -71,7 +71,7 @@ describe("sugo_aws_context", () => {
         activeAccount: accountName,
         profile: accountName,
         region: "ap-northeast-2",
-        accountHint: "1234",
+        accountHint: "0000",
         principal: "developer",
         observedAt: "2026-09-29T00:00:00.000Z",
         inventory: [],
@@ -86,7 +86,7 @@ describe("sugo_aws_context", () => {
       connected: true,
       profile: "team-account",
       region: "ap-northeast-2",
-      accountHint: "9012",
+      accountHint: "0000",
       principal: "developer",
       observedAt: "2026-09-29T00:00:00.000Z",
       inventory: [
@@ -105,7 +105,7 @@ describe("sugo_aws_context", () => {
       connected: true,
       profile: "team-account",
       region: "ap-northeast-2",
-      accountHint: "9012",
+      accountHint: "0000",
       principal: "developer",
       observedAt: "2026-09-30T00:00:00.000Z",
       inventory: [{ service: "sagemaker", resources: [{ kind: "endpoint", id: "sample-endpoint", metadata: { status: "InService" } }] }],
@@ -118,7 +118,7 @@ describe("sugo_aws_context", () => {
       connected: true,
       profile: "team-account",
       region: "ap-northeast-2",
-      accountHint: "9012",
+      accountHint: "0000",
       principal: "developer",
       observedAt: "2026-10-12T00:00:00.000Z",
       inventory: [{ service, resources: [{ kind: service === "lambda" ? "function" : "stream", id: `sample-${service}` }] }],

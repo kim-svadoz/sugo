@@ -10,10 +10,9 @@ import type { OidcTokenClient, TokenResponse } from "../src/auth/oidcTokenClient
 
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
-// No real IdP is reachable from this environment, so tests sign their own
-// tokens with a local keypair and hand the verifier a local JWKS built from
-// the matching public key - same jose APIs the production path uses, just
-// with createLocalJWKSet instead of createRemoteJWKSet.
+// Tests sign their own tokens with a local keypair and hand the verifier a
+// local JWKS built from the matching public key - same jose APIs the
+// production path uses, just with createLocalJWKSet instead of createRemoteJWKSet.
 async function testIdentity() {
   const { publicKey, privateKey } = await generateKeyPair("RS256");
   const jwk = await exportJWK(publicKey);
@@ -50,7 +49,7 @@ async function freshApp() {
   const db = createSqliteClient();
   await db.execScript(schema);
   const { verifyJwt, sign } = await testIdentity();
-  const idToken = await sign({ account_id: "u1", name: "Kim" });
+  const idToken = await sign({ account_id: "u1", name: "Alice" });
   const oidcClient = new FakeOidcClient(idToken);
   const { app } = await createApp({ db, verifyJwt, oidcClient });
   return { app, db, verifyJwt, sign, idToken };
@@ -73,8 +72,8 @@ describe("POST /api/auth/token", () => {
     const { app, db, idToken } = await freshApp();
     const res = await request(app).post("/api/auth/token").send({ code: "valid-code" }).expect(200);
     expect(res.body.user).toEqual({ id: "u1" });
-    // accessToken은 이제 id_token(JWT) — IdP의 opaque access token 문제를 피하려 id_token을 Bearer로
-    // 준다(실제 OIDC provider e2e에서 발견). fake의 idToken이 그대로 accessToken으로 나온다.
+    // accessToken은 id_token(JWT)이다 — IdP의 opaque access token을 피하려 id_token을 Bearer로
+    // 준다. fake의 idToken이 그대로 accessToken으로 나온다.
     expect(res.body.accessToken).toBe(idToken);
     expect(res.body.refreshToken).toBe("refresh-1");
     expect(typeof res.body.expiresAt).toBe("number");
@@ -83,7 +82,7 @@ describe("POST /api/auth/token", () => {
     expect(verify.body.user).toEqual({ id: "u1" });
 
     const rows = await db.query("SELECT id, display_name FROM sugo_users WHERE id='u1'");
-    expect(rows).toEqual([{ id: "u1", display_name: "Kim" }]);
+    expect(rows).toEqual([{ id: "u1", display_name: "Alice" }]);
   });
 
   it("401s on an invalid code", async () => {
@@ -117,9 +116,9 @@ describe("POST /api/auth/verify", () => {
 
   it("derives userId from preferred_username when account_id is absent", async () => {
     const { app, sign } = await freshApp();
-    const token = await sign({ preferred_username: "kim@example.com" });
+    const token = await sign({ preferred_username: "alice@example.com" });
     const res = await request(app).post("/api/auth/verify").set("Authorization", `Bearer ${token}`).expect(200);
-    expect(res.body).toEqual({ user: { id: "kim" } });
+    expect(res.body).toEqual({ user: { id: "alice" } });
   });
 });
 
@@ -142,7 +141,7 @@ describe("requireAuth middleware (via a throwaway protected route)", () => {
     const db = createSqliteClient();
     await db.execScript(schema);
     const { app } = await createApp(db); // no auth overrides - simulates unconfigured env
-    // /api/auth/verify itself is PUBLIC but still needs a working verifier;
+    // /api/auth/verify itself needs a working verifier;
     // with OIDC unconfigured it must fail closed rather than accept anything.
     await request(app).post("/api/auth/verify").set("Authorization", "Bearer anything").expect(401);
   });

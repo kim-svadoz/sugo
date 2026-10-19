@@ -71,8 +71,7 @@ const lineageEntryTitle = (entry: HistoryEntry, taskTitle: string): string => {
 
 /**
  * Canvas contract: only TASKs may become patch lineage nodes. A RUN owns the task/chain and must
- * always remain a visible container. Current Sugo stores chronological history as an array on one
- * task; the legacy object shape is retained for already-synced dashboards.
+ * always remain a visible container. History is stored as an array on one task; the older object shape is still read.
  */
 export function buildLineageChains(nodes: RoadmapNode[]): LineageChain[] {
   const groups = new Map<string, LineageChainItem[]>();

@@ -13,7 +13,7 @@ const MAX_LIMIT = 500;
 // 핸들러는 asyncHandler로 감싸 에러가 프로세스를 죽이거나 요청을 행시키지 않고 500으로 끝나게 한다.
 export function createActivityRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();
-  // 공개 SaaS: 세션(웹) 또는 API 토큰(플러그인) 신원 강제. body/query userId는 신뢰하지 않는다.
+  // 세션(웹) 또는 API 토큰(플러그인) 신원 강제. body/query userId는 신뢰하지 않는다.
   router.use(requireUser(db, sessionSecret));
 
   router.post(

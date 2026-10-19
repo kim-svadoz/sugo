@@ -9,8 +9,7 @@ import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
  * Sidebar — 슬림 아이콘 LNB(w-16 md:w-20).
  *
  * **navItems 순서 엄수**: Workspaces·Schedule·Skills·Harness·Playbook·Weekly·Settings.
- * Workspaces만 라우트가 `/sessions`이고 나머지는 라벨 소문자와 일치한다 — 홈이 원래
- * "세션 목록"이었다가 "워크스페이스"로 라벨만 바뀐 흔적이라 URL과 라벨이 어긋나 있다.
+ * Workspaces만 라우트가 `/sessions`이고 나머지는 라벨 소문자와 일치한다.
  */
 const icons = [Shapes, CalendarDays, Zap, ShieldHalf, Wand2, FileText, SlidersHorizontal];
 const navItems = SIDEBAR_DESTINATIONS.map((item, index) => ({ ...item, icon: icons[index] }));

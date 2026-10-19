@@ -10,9 +10,8 @@ import type { PlanSession } from "../src/types.js";
 import { computeCompletionGrade } from "../src/labelGuard.js";
 
 /**
- * fail 증거로 `test_done`을 지나면 `testPassedState`가 fail로 박히고, 이후 올바른 그린 증거를
- * 다시 기록해도 `review_done`이 옛 판정을 보고 거부한다. forward-only라 `test_done`으로 되돌아갈
- * 수도 없어 파이프라인이 막힌다. test_reverify가 이 경로를 푼다.
+ * fail 증거로 `test_done`을 지나면 `testPassedState`가 fail로 남아, 그린 증거를 다시 기록해도
+ * `review_done`이 거부한다. forward-only라 `test_done`으로 되돌아갈 수도 없다. test_reverify가 이 경로를 푼다.
  */
 let fakeHome: string;
 
@@ -30,11 +29,7 @@ function parse(result: { content: { text: string }[] }) {
   return JSON.parse(result.content[0].text);
 }
 
-/**
- * 파이프라인 전 구간(start→clarify→prd→ready→baseline→code→test)을 밟으면 이 테스트의 관심사인
- * 재스냅샷 로직이 무관한 게이트 설정에 묻힌다. 그래서 세션 파일을 원하는 상태로 직접 만든다 —
- * 파일은 실제 저장소에 쓰이고 handleSugoPlan이 그대로 읽으므로 배선은 여전히 실측이다.
- */
+/** 세션 파일을 원하는 상태로 직접 만든다. handleSugoPlan이 그 파일을 그대로 읽는다. */
 async function seedSession(state: WorkflowState, testPassedState: "pass" | "fail" | null): Promise<string> {
   const id = `plan-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
   const session: PlanSession = {
@@ -77,7 +72,7 @@ describe("test_reverify — 증거 스냅샷 데드락 해소", () => {
   it("기존 모듈 재스냅샷 뒤 code_start로 새 모듈을 구현하고 새 clean test_done이면 이전 라벨만 해소한다", async () => {
     const sessionId = await seedSession("REVIEW_RUNNING", "fail");
     await recordEvidence(sessionId, 0);
-    await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "OrderServiceTest 6/6, 로컬 의존 2건 제외" });
+    await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "UserServiceTest 통과, 환경 의존 테스트 제외" });
     const restarted = parse(await handleSugoPlan({ action: "code_start", sessionId }));
     expect(restarted.ok).toBe(true);
     let session = await loadSession(sessionId);
@@ -90,14 +85,14 @@ describe("test_reverify — 증거 스냅샷 데드락 해소", () => {
     expect(parse(await handleSugoPlan({ action: "test_done", sessionId, testPassed: true })).ok).toBe(true);
     session = await loadSession(sessionId);
     const label = session.data.chainInfo.bypassLabels![0];
-    expect(label.reason).toContain("OrderService");
+    expect(label.reason).toContain("UserService");
     expect(label.supersededByCycle).toBe(1);
     expect(computeCompletionGrade(session.data.chainInfo.bypassLabels!, 0).grade).toBe("verified");
   });
-  it("재진입 후 옛 그린 증거를 재사용하면 이전 라벨을 해소하지 않는다", async () => {
+  it("재진입 후 이전 그린 증거를 재사용하면 이전 라벨을 해소하지 않는다", async () => {
     const sessionId = await seedSession("REVIEW_RUNNING", "fail");
     await recordEvidence(sessionId, 0);
-    await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "이전 구현의 재스냅샷" });
+    await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "재스냅샷" });
     await handleSugoPlan({ action: "code_start", sessionId });
     const session = await loadSession(sessionId);
     session.state = "TEST_RUNNING";
@@ -107,17 +102,17 @@ describe("test_reverify — 증거 스냅샷 데드락 해소", () => {
     expect((await loadSession(sessionId)).data.chainInfo.bypassLabels![0].supersededAt).toBeUndefined();
   });
   it("fail로 찍힌 스냅샷을 그린 증거로 다시 찍으면 testPassedState가 갱신된다", async () => {
-    // ① 무관한 사전 결함이 섞인 전체 스위트 실행 = fail → test_done이 fail로 박아둔 상태
+    // ① 일부 실패가 섞인 전체 스위트 실행 = fail → test_done이 fail로 박아둔 상태
     const sessionId = await seedSession("REVIEW_RUNNING", "fail");
 
-    // ② 범위를 좁힌 재실행 = pass. 증거는 갱신되지만 스냅샷은 fail 그대로다(이게 데드락의 원인).
+    // ② 범위를 좁힌 재실행 = pass. 증거는 갱신되지만 스냅샷은 fail 그대로다(스냅샷이 갱신되지 않은 상태).
     await recordEvidence(sessionId, 0);
     expect((await loadSession(sessionId)).data.chainInfo.testEvidence?.derivedState).toBe("pass");
     expect((await loadSession(sessionId)).data.chainInfo.testPassedState).toBe("fail");
 
     // ③ test_reverify로 스냅샷을 다시 찍는다.
     const reverified = parse(
-      await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "전체 스위트에 무관한 사전 결함이 섞여 범위를 좁혀 재실행" }),
+      await handleSugoPlan({ action: "test_reverify", sessionId, reverifyReason: "범위를 좁혀 재실행" }),
     );
     expect(reverified.ok).toBe(true);
     expect((await loadSession(sessionId)).data.chainInfo.testPassedState).toBe("pass");

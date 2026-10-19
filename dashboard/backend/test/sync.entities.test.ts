@@ -26,7 +26,7 @@ describe("POST /api/sync/user", () => {
     await db.close();
   });
 
-  it("401s without an API token (공개 SaaS 인증 강제)", async () => {
+  it("401s without an API token (인증 강제)", async () => {
     const { app } = await freshApp();
     await request(app).post("/api/sync/user").send({ userId: "u1" }).expect(401);
   });
@@ -69,7 +69,7 @@ describe("POST /api/sync/workspace — projects replace semantics", () => {
 
 describe("DELETE /api/sync/workspace", () => {
   // 기본 삭제는 soft다. 프로젝트 연결은 복구를 위해 남아 있어야 하고,
-  // 실제 cascade는 purge에서만 일어난다.
+  // cascade는 purge에서만 일어난다.
   it("기본(soft) 삭제는 workspace_projects를 남긴다(복구 가능해야 하므로)", async () => {
     const { app, db, auth } = await freshApp();
     await request(app).post("/api/sync/workspace").set("Authorization", auth).send({ userId: "u1", name: "ws1", projects: ["C:/a"] }).expect(200);
@@ -167,9 +167,9 @@ describe("plugin-version GET/POST", () => {
     let res = await request(app).get("/api/sync/plugin-version").set("Authorization", auth).expect(200);
     expect(res.body).toEqual({ version: null });
 
-    await request(app).post("/api/sync/plugin-version").set("Authorization", auth).send({ userId: "u1", version: "2.68.1" }).expect(200);
+    await request(app).post("/api/sync/plugin-version").set("Authorization", auth).send({ userId: "u1", version: "1.2.3" }).expect(200);
     res = await request(app).get("/api/sync/plugin-version").set("Authorization", auth).expect(200);
-    expect(res.body).toEqual({ version: "2.68.1" });
+    expect(res.body).toEqual({ version: "1.2.3" });
   });
 });
 

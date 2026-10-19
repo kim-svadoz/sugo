@@ -245,12 +245,10 @@ export async function ensureCheckpointCreatedAtColumn(db: DbClient): Promise<boo
   }
   try {
     // node:sqlite(와 대부분의 SQLite 빌드)는 ALTER TABLE ADD COLUMN에 CURRENT_TIMESTAMP 같은
-    // "비상수" DEFAULT를 거부한다("Cannot add a column with non-constant default") —
-    // 이 때문에 모든 체크포인트 조회가 "no such column: created_at"로 매번
-    // 실패해 응답이 안 오는(무한 대기처럼 보이는) 문제가 생긴다. 그래서 다른
-    // 자가보강 컬럼들과 같은 패턴으로 NULL 허용 + 기본값 없이 추가하고, 기존 행은 즉시
-    // 한 번 백필한다. CREATE TABLE(신규 설치)의 DEFAULT CURRENT_TIMESTAMP는 이 제약이
-    // 없어 그대로 둔다 — 문제는 ALTER 경로(기존 DB 업그레이드)에서만 생긴다.
+    // "비상수" DEFAULT를 거부한다("Cannot add a column with non-constant default").
+    // 그래서 다른 자가보강 컬럼들과 같은 패턴으로 NULL 허용 + 기본값 없이 추가하고,
+    // 이미 있는 행은 즉시 한 번 백필한다. CREATE TABLE의 DEFAULT CURRENT_TIMESTAMP는
+    // 이 제약이 없어 그대로 둔다. 제약은 ALTER 경로에서만 생긴다.
     await db.exec("ALTER TABLE sugo_checkpoints ADD COLUMN created_at TIMESTAMP NULL");
     await db.exec("UPDATE sugo_checkpoints SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL");
     checkpointCreatedAtColState = true;
@@ -309,7 +307,7 @@ export async function syncWorkspace(db: DbClient, input: SyncWorkspaceInput): Pr
   await ensureUser(db, input.userId);
   // 자가보강은 **진입 시점**에 한다. getOrCreateWorkspaceId의 UPDATE 분기에만 두면 신규
   // 워크스페이스를 만드는 경로에서는 컬럼이 안 생기고, 그 뒤 첫 soft delete가 올 때까지
-  // 스키마가 비어 있는 상태가 유지된다(실제 로컬 MySQL에서 이 순서 문제를 잡았다).
+  // 스키마가 비어 있는 상태가 유지된다.
   await ensureWorkspaceDeletedAtColumn(db);
   const workspaceId = await getOrCreateWorkspaceId(db, input.userId, input.name);
 

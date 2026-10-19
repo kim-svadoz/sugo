@@ -30,7 +30,7 @@ describe("SPEC_ORACLE_NOT_RUN — ready 차단", () => {
 
 describe("oracle_done — 미커버 항목엔 사유 강제", () => {
   it("거부: uncovered가 있는데 overrideReason 없음", () => {
-    const r = checkOracleDone([{ quote: "스펙 3.2 절 응답에 traceId 포함", reason: "PRD에 누락" }], undefined);
+    const r = checkOracleDone([{ quote: "응답에 traceId 포함", reason: "PRD에 누락" }], undefined);
     expect(r.ok).toBe(false);
     expect(r.code).toBe("ORACLE_OVERRIDE_REASON_REQUIRED");
   });

@@ -8,8 +8,7 @@ import { describe, expect, it } from "vitest";
  * `mcp__plugin_<plugin>_<server>__<tool>` 형태로 나간다). 접두어 없는 이름은 다른 서버의
  * 같은 이름과 부딪힐 여지를 남긴다.
  *
- * 29개 중 `version` 하나만 접두어가 없었고, 콜드 환경 스모크로 도구 목록을 눈으로 훑다가
- * 발견했다 — 단위테스트는 핸들러만 직접 호출해서 **등록된 이름을 아무도 안 보고 있었다.**
+ * 단위테스트는 핸들러를 직접 호출하므로, 등록된 이름은 이 테스트가 소스에서 읽어 검사한다.
  */
 const indexSource = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), "..", "src", "index.ts"),

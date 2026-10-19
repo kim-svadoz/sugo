@@ -9,8 +9,8 @@ import { formatActivityTime } from "../lib/activityTime.js";
  * 실시간 Activity Stream(폴링, SSE 아님).
  *
  * **고정폭 5컬럼:** Col1 프롬프트 `>`(w-3) / Col2 타임스탬프(w-[92px]) /
- * **Col3 뱃지 고정폭 w-[96px]** / Col4 도메인 / Col5 메시지(truncate).
- * 뱃지 칸을 "TEST → REVIEW" 최대폭으로 못박아야 도메인·메시지 시작점이 세로로 정렬된다 —
+ * **Col3 뱃지 고정폭 w-[96px]** / Col4 워크스페이스 / Col5 메시지(truncate).
+ * 뱃지 칸을 "TEST → REVIEW" 최대폭으로 못박아야 워크스페이스·메시지 시작점이 세로로 정렬된다 —
  * 안 그러면 핸드오프가 있는 줄만 오른쪽으로 밀려 로그가 계단처럼 보인다.
  *
  * **전량 렌더 + overflow 스크롤.** 앞의 N줄만 잘라 두면 버스트가 올 때 옛 로그가 밀려나고
@@ -35,7 +35,7 @@ function FeedLine({ ev, expanded = false }: { ev: ActivityEvent; expanded?: bool
   );
 }
 
-/** 전역 콘솔. `workspace`를 주면 그 도메인 로그만 거른다(Sessions 하단 2단이 그렇게 쓴다). */
+/** 전역 콘솔. `workspace`를 주면 그 워크스페이스 로그만 거른다(Sessions 하단 2단이 그렇게 쓴다). */
 export function LiveConsole({ workspace }: { workspace?: string } = {}) {
   const events = useActivityStream(workspace);
   const [full, setFull] = useState(false);

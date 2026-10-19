@@ -26,7 +26,7 @@ describe("canvas selection interaction", () => {
     expect(shouldApplyHoverFocus(null, null)).toBe(false);
   });
 
-  it("Canvas 원문 버튼은 제목 기반 ADR 검색 대신 Schedule과 같은 연결 SPEC 문서 뷰어를 연다", () => {
+  it("Canvas 원문 버튼은 Schedule과 같은 연결 SPEC 문서 뷰어를 연다", () => {
     const source = readFileSync(new URL("./RoadmapGraph.tsx", import.meta.url), "utf8");
     expect(source).toContain('import { SpecDocumentPanel } from "../SpecDocumentPanel.js"');
     expect(source).toContain("setSpecDocumentTarget(n)");

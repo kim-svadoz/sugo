@@ -273,7 +273,7 @@ CREATE TABLE IF NOT EXISTS user_pinpoint_snapshots (
   observed_at VARCHAR(64) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- SaaS(공개 배포) 전용: 플러그인이 sync 시 Bearer로 보내는 개인 API 토큰. 평문은 저장하지
+-- 플러그인이 sync 시 Bearer로 보내는 개인 API 토큰. 평문은 저장하지
 -- 않고 sha256 해시만 저장한다(user_bitbucket_tokens와 달리 복호화 불필요 — 대조만 함).
 CREATE TABLE IF NOT EXISTS user_api_tokens (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,

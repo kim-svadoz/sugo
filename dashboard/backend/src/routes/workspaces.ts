@@ -82,7 +82,7 @@ import { applyCheckpointToProjects, isCheckpointExpired, newCheckpointId } from 
 import { readReviewArtifact } from "../services/reviewArtifacts.js";
 
 function requireUserId(req: import("express").Request, res: import("express").Response): string | null {
-  // 공개 SaaS: 신원은 인증 미들웨어가 세운 req.userId(토큰)만 신뢰. query userId 무시.
+  // 신원은 인증 미들웨어가 세운 req.userId(토큰)만 신뢰. query userId 무시.
   const userId = req.userId ?? "";
   if (!userId) {
     res.status(401).json({ error: "unauthorized" });
@@ -99,7 +99,7 @@ function respondMutation(res: import("express").Response, result: { ok: true } |
   }
 }
 
-// all PUBLIC, userId via query. Dashboard owns roadmap structure/order here.
+// token-authenticated. Dashboard owns roadmap structure/order here.
 function sendImage(res: import("express").Response, data: Buffer, ext: string) {
   res.type(ext === "jpg" ? "jpeg" : ext).set("Cache-Control", "no-store").send(data);
 }

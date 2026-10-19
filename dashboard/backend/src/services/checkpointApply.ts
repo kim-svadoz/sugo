@@ -21,7 +21,7 @@ export interface CheckpointApplyResult {
   removed: Array<{ projectPath: string; file: string }>;
 }
 
-/** DATE 값은 KST 기준 해당 날짜의 끝까지 유효하다. */
+/** DATE 값은 해당 날짜의 끝까지 유효하다. */
 function dateOnly(value: string | Date | null | undefined): string | null {
   if (!value) return null;
   return value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
@@ -61,7 +61,7 @@ function digest(value: string): string {
 }
 
 function bodyWithoutHash(checkpoint: ApplicableCheckpoint, workspace: string): string {
-  const applies = checkpoint.appliesTo?.length ? `적용 대상: ${checkpoint.appliesTo.join(", ")}` : "도메인 전체 적용";
+  const applies = checkpoint.appliesTo?.length ? `적용 대상: ${checkpoint.appliesTo.join(", ")}` : "워크스페이스 전체 적용";
   return [
     "---",
     "sugo-managed: checkpoint",
@@ -74,7 +74,7 @@ function bodyWithoutHash(checkpoint: ApplicableCheckpoint, workspace: string): s
     "",
     `# ${checkpoint.title}`,
     "",
-    `> ${workspace} 도메인의 재발방지 컨텍스트 · ${applies}`,
+    `> ${workspace} 워크스페이스의 재발방지 컨텍스트 · ${applies}`,
     "",
     ...(checkpoint.learnedFrom?.trim()
       ? [checkpoint.learnedFrom.trim()]
@@ -88,6 +88,7 @@ function managedContent(checkpoint: ApplicableCheckpoint, workspace: string): st
   return body.replace("checkpoint-id:", `content-hash: ${digest(body)}\ncheckpoint-id:`);
 }
 
+/** hash 없이 고정 포맷으로 쓰인 파일의 원문. 문구는 이미 쓰인 파일과 같아야 하므로 바꾸지 않는다. */
 function legacyPluginContent(checkpoint: ApplicableCheckpoint, workspace: string): string {
   return [
     "---",
@@ -104,8 +105,8 @@ function legacyPluginContent(checkpoint: ApplicableCheckpoint, workspace: string
 
 function existingWasEdited(content: string, checkpoint: ApplicableCheckpoint, workspace: string): boolean {
   const match = content.match(/^content-hash:\s*([0-9a-f]{64})$/m);
-  // 0.6.1 자동 pull은 hash 없이 고정 포맷으로 썼다. 현재 원격 데이터로 재구성한 원문과 정확히
-  // 같을 때만 안전한 구형 관리 파일로 인정한다. 조금이라도 다르면 사람 수정 가능성이므로 충돌.
+  // hash 없이 고정 포맷으로 쓰인 파일은 현재 원격 데이터로 재구성한 원문과 정확히
+  // 같을 때만 관리 파일로 인정한다. 조금이라도 다르면 사람 수정 가능성이므로 충돌.
   if (!match) return content !== legacyPluginContent(checkpoint, workspace);
   const without = content.replace(/^content-hash:\s*[0-9a-f]{64}\n/m, "");
   return digest(without) !== match[1];

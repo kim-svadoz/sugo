@@ -57,9 +57,9 @@ describe("Schedule commitment API", () => {
       workspace_name: "orders", spec_id: "spec-1", title: "할 일 추가", reason: "closed",
     })]);
     expect((await db.query<{ manual_status: string | null }>("SELECT manual_status FROM sugo_roadmap_nodes WHERE id = 'spec-1'"))[0].manual_status).toBeNull();
-    const canvas = await request(app).get("/api/workspaces/orders/roadmap").set("Authorization", auth).expect(200);
-    expect(canvas.body.nodes.map((node: { id: string }) => node.id)).not.toEqual(expect.arrayContaining(["spec-1", "closed-run", "closed-task"]));
-    expect(canvas.body.counts).toMatchObject({ done: 4, total: 4, in_progress: 0, dropped: 0 });
+    const roadmap = await request(app).get("/api/workspaces/orders/roadmap").set("Authorization", auth).expect(200);
+    expect(roadmap.body.nodes.map((node: { id: string }) => node.id)).not.toEqual(expect.arrayContaining(["spec-1", "closed-run", "closed-task"]));
+    expect(roadmap.body.counts).toMatchObject({ done: 4, total: 4, in_progress: 0, dropped: 0 });
 
     await request(app).post("/api/schedule/specs/restore").set("Authorization", auth).send({
       workspaceName: "orders", specId: "spec-1",

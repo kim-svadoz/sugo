@@ -73,9 +73,9 @@ describe("GET /api/workspaces", () => {
     const { app, db, auth } = await seededApp();
     await db.exec("UPDATE sugo_workspace_projects SET project_path = '/work/orders-api' WHERE project_path = 'C:/a'");
     await db.exec("INSERT INTO user_aws_context_accounts (user_id, name, profile, region, account_id, principal_arn, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)", ["u1", "team-dev", "team-dev", "ap-northeast-2", "111111111111", "arn:aws:iam::111111111111:user/dev", "2026-09-29T00:00:00.000Z"]);
-    await db.exec("INSERT INTO user_aws_context_snapshots (user_id, account_name, payload, observed_at) VALUES (?, ?, ?, ?)", ["u1", "team-dev", JSON.stringify([{ service: "ecs", resources: [{ service: "ecs", kind: "service", id: "orders-api-service", metadata: { cluster: "orders-api-cluster", taskDefinition: "orders-api:343", revision: 343, rolloutState: "COMPLETED", desiredCount: 1, runningCount: 1 } }] }]), "2026-09-29T00:00:00.000Z"]);
+    await db.exec("INSERT INTO user_aws_context_snapshots (user_id, account_name, payload, observed_at) VALUES (?, ?, ?, ?)", ["u1", "team-dev", JSON.stringify([{ service: "ecs", resources: [{ service: "ecs", kind: "service", id: "orders-api-service", metadata: { cluster: "orders-api-cluster", taskDefinition: "orders-api:1", revision: 1, rolloutState: "COMPLETED", desiredCount: 1, runningCount: 1 } }] }]), "2026-09-29T00:00:00.000Z"]);
     const res = await request(app).get("/api/workspaces").set("Authorization", auth).expect(200);
-    expect(res.body.workspaces[0].projects[0]).toMatchObject({ aws_synced: 1, aws_deployments: [{ environment: "dev", revision: 343, service: "orders-api-service" }] });
+    expect(res.body.workspaces[0].projects[0]).toMatchObject({ aws_synced: 1, aws_deployments: [{ environment: "dev", revision: 1, service: "orders-api-service" }] });
   });
 
   it("차단·정체·미검증 완료 Task를 확인 필요 건수로 집계한다", async () => {

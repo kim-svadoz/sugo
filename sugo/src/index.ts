@@ -426,9 +426,9 @@ server.registerTool(
 server.registerTool(
   "sugo_prd",
   {
-    title: "DEPRECATED — use sugo_plan(action:prd)",
+    title: "Use sugo_plan(action:prd) instead",
     description:
-      "폐기된 도구. 무조건 거부하고 sugo_plan(action:prd)로 안내한다 — 상태머신을 우회하는 PRD 생성은 게이트를 통째로 빠져나가는 뒷문이었다.",
+      "사용하지 않는 도구. 무조건 거부하고 sugo_plan(action:prd)로 안내한다 — 상태머신을 우회하는 PRD 생성은 게이트를 통째로 빠져나가는 뒷문이었다.",
     inputSchema: sugoPrdInputSchema,
   },
   handleSugoPrd,

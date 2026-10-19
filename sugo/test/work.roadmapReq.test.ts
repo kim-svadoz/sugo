@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { parseRequirementsFromPrd, promotePrdRequirements, reqConfirmId, requirementNodeId } from "../src/work/roadmapReq.js";
 
 describe("parseRequirementsFromPrd — ### REQ-XXX: 헤딩만 인식한다", () => {
-  it("스텁 범위 표시와 대시 구분자를 가진 PRD 요구사항도 빠뜨리지 않는다", () => {
-    expect(parseRequirementsFromPrd("### REQ-001 (스텁): 알림 대상 조회\n### REQ-002 — 채널 후보\n### REQ-004 – fallback")).toEqual([
-      { id: "REQ-001", title: "(스텁) 알림 대상 조회" },
-      { id: "REQ-002", title: "채널 후보" },
-      { id: "REQ-004", title: "fallback" },
+  it("괄호 표시와 대시 구분자를 가진 요구사항도 빠뜨리지 않는다", () => {
+    expect(parseRequirementsFromPrd("### REQ-001 (초안): 할 일 추가\n### REQ-002 — 할 일 삭제\n### REQ-003 – 할 일 완료")).toEqual([
+      { id: "REQ-001", title: "(초안) 할 일 추가" },
+      { id: "REQ-002", title: "할 일 삭제" },
+      { id: "REQ-003", title: "할 일 완료" },
     ]);
   });
   it("### 헤딩 형식의 REQ를 순서대로 추출한다", () => {

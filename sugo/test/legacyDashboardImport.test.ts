@@ -19,7 +19,7 @@ const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as {
   DatabaseSync: new (path: string, options?: { readOnly?: boolean }) => Db;
 };
 const script = join(__dirname, "..", "scripts", "import-legacy-dashboard-db.mjs");
-// 임의로 만든 테이블 이름 대신 실제 대시보드 스키마로 소스 DB를 만든다.
+// 소스 DB는 대시보드 스키마로 만든다.
 const schemaFile = join(__dirname, "..", "..", "dashboard", "backend", "test", "schema.sqlite.sql");
 
 let home: string;
@@ -33,8 +33,8 @@ const run = (args: string[]) =>
   );
 
 beforeEach(() => {
-  home = mkdtempSync(join(tmpdir(), "sugo-legacy-home-"));
-  work = mkdtempSync(join(tmpdir(), "sugo-legacy-src-"));
+  home = mkdtempSync(join(tmpdir(), "sugo-import-home-"));
+  work = mkdtempSync(join(tmpdir(), "sugo-import-src-"));
   source = join(work, "local.db");
   const db = new DatabaseSync(source);
   db.exec(readFileSync(schemaFile, "utf8"));
@@ -48,7 +48,7 @@ afterEach(() => {
   rmSync(work, { recursive: true, force: true });
 });
 
-describe("기존 dev-local DB 이전", () => {
+describe("다른 위치의 DB 가져오기", () => {
   it("사용자 데이터 폴더로 스냅샷을 복사하고 소스 DB는 그대로 둔다", async () => {
     const before = readFileSync(source);
 

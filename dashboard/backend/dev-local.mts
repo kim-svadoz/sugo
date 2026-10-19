@@ -1,7 +1,7 @@
 /**
  * 로컬 확인용 원클릭 준비 스크립트.
  *
- * 실제 MySQL에 **Spec ⊃ Run ⊃ Task ⊃ REQ 4층 헌법** 그대로의 시나리오 데이터를 넣고,
+ * 실제 MySQL에 **Spec ⊃ Run ⊃ Task ⊃ REQ 4층 구조** 그대로의 시나리오 데이터를 넣고,
  * GitHub OAuth를 거치지 않고 들어갈 수 있는 세션 토큰을 발급한다. 로그인 우회 라우트를 서버에
  * 새로 뚫지 않는다 — 그런 건 한 번 만들면 프로덕션까지 따라간다. 대신 브라우저 쪽 정적
  * 페이지(`frontend/dist/dev-login.html`, 커밋 안 됨)가 세션을 심는다.
@@ -33,9 +33,9 @@ if (!SECRET) throw new Error("SESSION_SECRET이 필요합니다.");
  * 데모 프로젝트 경로. 화면에 그대로 찍히므로 실행하는 OS의 홈 디렉터리 기준으로 만든다
  * (같은 상수를 workspace와 task가 공유해야 매칭이 된다).
  */
-const SPLEARN = join(homedir(), "splearn");
-const SPLEARN_ADMIN = join(homedir(), "splearn-admin");
-const PAYMENTS = join(homedir(), "work", "payments");
+const WEBAPP = join(homedir(), "webapp");
+const WEBAPP_ADMIN = join(homedir(), "webapp-admin");
+const PAYMENTS = join(homedir(), "work", "webapp-payments");
 
 const db = await initDb();
 
@@ -53,9 +53,9 @@ await syncUser(db, { userId: USER, displayName: "로컬 개발" });
 await syncPluginVersion(db, USER, "0.1.0");
 await syncWorkspace(db, {
   userId: USER,
-  name: "splearn",
-  projects: [SPLEARN, SPLEARN_ADMIN],
-  gitSyncedProjects: [SPLEARN],
+  name: "webapp",
+  projects: [WEBAPP, WEBAPP_ADMIN],
+  gitSyncedProjects: [WEBAPP],
 });
 await syncWorkspace(db, { userId: USER, name: "payments-api", projects: [PAYMENTS], gitSyncedProjects: [] });
 
@@ -72,10 +72,10 @@ const tasks: [string, string, string, string?][] = [
 for (const [id, title, status, completedAt] of tasks) {
   await syncTask(db, {
     userId: USER,
-    workspaceName: "splearn",
+    workspaceName: "webapp",
     id,
     title,
-    project: SPLEARN,
+    project: WEBAPP,
     status,
     startedAt: status === "pending" ? undefined : iso(14),
     completedAt,
@@ -83,14 +83,14 @@ for (const [id, title, status, completedAt] of tasks) {
 }
 await syncTask(db, { userId: USER, workspaceName: "payments-api", id: "t-101", title: "결제 취소 API", project: PAYMENTS, status: "done", completedAt: iso(20) });
 
-// ── 4층 헌법: Spec ⊃ Run(workstream) ⊃ Task ⊃ REQ(subtask) ────────────────
+// ── 4층 구조: Spec ⊃ Run(workstream) ⊃ Task ⊃ REQ(subtask) ────────────────
 // REQ에는 항상 `{taskId}::REQ-CONFIRM`(사용자 최종확인)이 붙는다 — 에이전트가 완료 못 하고
 // 사람의 review_done으로만 닫힌다.
 // depends_on은 **형제(같은 RUN 안) task 사이의 순서**다(링크 타입 "task → task,
 // 형제 순서/의존"). RUN을 가로지르는 링크를 심으면 캔버스에 RUN 상자를 관통하는 대각선이
 // 그려져 "RUN이 RUN을 기다린다"는, 온톨로지에 없는 관계로 읽힌다. RUN 사이의 순서는 의존이
 // 아니라 포함(parent)과 status로만 표현한다.
-await syncRoadmap(db, USER, "splearn", [
+await syncRoadmap(db, USER, "webapp", [
   { id: "spec-auth", title: "인증 도메인 마스터 PRD", level: "spec", status: "in_progress", specPath: "docs/prd/auth.md" },
 
   { id: "run-001", title: "이메일 로그인", level: "workstream", status: "done", parent: "spec-auth" },
@@ -144,14 +144,14 @@ await syncRoadmap(db, USER, "payments-api", [
 
 // ── 완료 이력(WorkLog) + 생산성 지표 ─────────────────────────────────────────
 await syncHistory(db, {
-  userId: USER, workspaceName: "splearn", id: "log-t-001", taskId: "t-001", taskTitle: "EmailLoginService 구현",
+  userId: USER, workspaceName: "webapp", id: "log-t-001", taskId: "t-001", taskTitle: "EmailLoginService 구현",
   summary: "이메일+비밀번호 인증을 담당하는 EmailLoginService를 추가했다.\n비밀번호는 bcrypt(cost 12)로 해시하고, 기존 SecurityConfig의 필터 체인에 배선했다.\n단위테스트 12개 + @SpringBootTest 통합테스트 2개를 추가해 전부 통과를 확인했다.",
   keyDecisions: ["세션 대신 stateless JWT (ADR-001)", "bcrypt cost는 12 — 로그인 p99 180ms 내"],
   filesChanged: ["src/main/java/auth/EmailLoginService.java", "src/main/java/auth/SecurityConfig.java", "src/test/java/auth/EmailLoginServiceTest.java"],
   completedAt: iso(12), estimatedHumanHours: 6, userReportedHumanHours: 5, aiExecutionMinutes: 42, estimationBasis: "trace",
 });
 await syncHistory(db, {
-  userId: USER, workspaceName: "splearn", id: "log-t-002", taskId: "t-002", taskTitle: "로그인 컨트롤러 배선",
+  userId: USER, workspaceName: "webapp", id: "log-t-002", taskId: "t-002", taskTitle: "로그인 컨트롤러 배선",
   summary: "POST /auth/login 엔드포인트를 열고 EmailLoginService에 연결했다.\n요청/응답 DTO를 계약 테스트로 고정했고, 실패 응답은 401 + 코드만 반환해 계정 존재 여부가 새지 않게 했다.\n계약테스트 red→green 전이를 기록했다.",
   keyDecisions: ["실패 응답에 사유를 담지 않는다(계정 열거 방지)"],
   filesChanged: ["src/main/java/auth/AuthController.java", "src/test/java/auth/AuthContractTest.java"],
@@ -168,7 +168,7 @@ await syncHistory(db, {
 // SPEC 원문(📄) 버튼이 실제 내용을 보여주도록 — 백엔드 getSpecContent는 decisions를 id/title로
 // 매칭하므로, SPEC 노드 제목과 같은 제목의 ADR이 있어야 원문이 뜬다.
 await syncDecision(db, {
-  userId: USER, workspaceName: "splearn", id: "auth.md", title: "인증 도메인 마스터 PRD", status: "accepted",
+  userId: USER, workspaceName: "webapp", id: "auth.md", title: "인증 도메인 마스터 PRD", status: "accepted",
   content: `# 인증 도메인 마스터 PRD
 
 ## In-Scope
@@ -193,12 +193,12 @@ await syncDecision(db, {
 });
 
 await syncDecision(db, {
-  userId: USER, workspaceName: "splearn", id: "ADR-001", title: "세션 대신 JWT를 쓴다", status: "accepted",
+  userId: USER, workspaceName: "webapp", id: "ADR-001", title: "세션 대신 JWT를 쓴다", status: "accepted",
   content: "# ADR-001 — 세션 대신 JWT\n\n## 배경\n수평 확장 시 세션 스토어가 단일 병목이 된다.\n\n## 결정\nstateless JWT(RS256) + refresh 토큰.\n\n## 결과\n- 서버 간 세션 공유 불필요\n- 즉시 로그아웃은 불가 → refresh 만료(24h)로 절충",
   decisionDate: iso(14),
 });
 await syncDecision(db, {
-  userId: USER, workspaceName: "splearn", id: "ADR-002", title: "소셜 계정은 이메일로 병합하지 않는다", status: "accepted",
+  userId: USER, workspaceName: "webapp", id: "ADR-002", title: "소셜 계정은 이메일로 병합하지 않는다", status: "accepted",
   content: "# ADR-002 — 소셜 계정 병합 금지\n\n## 배경\n같은 이메일로 Google/로컬 계정이 각각 생길 수 있다.\n\n## 결정\n자동 병합하지 않고 **명시적 연결**만 허용한다.\n\n## 결과\n이메일 소유권 검증 없이 계정을 합치면 탈취 경로가 된다 — 그 위험을 UX 편의보다 우선한다.",
   decisionDate: iso(5),
 });
@@ -209,14 +209,14 @@ await syncDecision(db, {
 
 // ── 체크포인트(커밋 전 재발방지) ─────────────────────────────────────────────
 await syncCheckpoint(db, {
-  userId: USER, workspaceName: "splearn", id: "CP-001", title: "인증 변경 시 확인", category: "security",
+  userId: USER, workspaceName: "webapp", id: "CP-001", title: "인증 변경 시 확인", category: "security",
   checklist: ["실패 응답에 계정 존재 여부가 새지 않는가", "토큰 만료/갱신 경로에 테스트가 있는가", "비밀번호가 로그에 찍히지 않는가"],
   appliesTo: [], checkpointDate: iso(13),
 });
 await syncCheckpoint(db, {
-  userId: USER, workspaceName: "splearn", id: "CP-002", title: "DB 마이그레이션 확인", category: "db",
+  userId: USER, workspaceName: "webapp", id: "CP-002", title: "DB 마이그레이션 확인", category: "db",
   checklist: ["스키마 변경이 IF NOT EXISTS인가", "기존 데이터가 고아가 되지 않는가", "롤백 경로가 있는가"],
-  appliesTo: ["splearn"], checkpointDate: iso(8),
+  appliesTo: ["webapp"], checkpointDate: iso(8),
 });
 
 // ── Activity(실시간 콘솔) — 핸드오프 체인이 보이도록 ─────────────────────────
@@ -234,7 +234,7 @@ const feed: [number, string, string | null, string | null, string, string][] = [
 ];
 for (const [minAgo, level, agent, handoffTo, eventType, message] of feed) {
   await ingestActivity(db, {
-    userId: USER, workspace: "splearn", ts: new Date(Date.now() - minAgo * 60_000).toISOString(),
+    userId: USER, workspace: "webapp", ts: new Date(Date.now() - minAgo * 60_000).toISOString(),
     level, agent, handoffTo, eventType, message,
   });
 }
@@ -279,7 +279,7 @@ console.log(`
 ────────────────────────────────────────────────────────────────
 시드 완료 (userId=${USER}) — Spec ⊃ Run ⊃ Task ⊃ REQ 4층
 
-  splearn      spec-auth
+  webapp      spec-auth
                  ├ run-001 이메일 로그인      (done)     t-001·t-002 + REQ 5
                  ├ run-002 소셜 로그인        (진행중)   t-003·t-004 + REQ 5
                  ├ run-003 비밀번호 재설정    (막힘)     t-005 + REQ 2

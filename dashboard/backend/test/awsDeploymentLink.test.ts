@@ -8,7 +8,7 @@ describe("AWS ECS deployment linking", () => {
         accountName: "team-dev",
         region: "ap-northeast-2",
         observedAt: "2026-09-29T00:00:00.000Z",
-        inventory: [{ service: "ecs", resources: [{ kind: "service", id: "orders-api-service", metadata: { cluster: "orders-api-cluster", taskDefinition: "orders-api:343", revision: 343, rolloutState: "COMPLETED", desiredCount: 1, runningCount: 1, images: ["repo/orders-api:343"], deployedAt: "2026-09-28T08:03:00.000Z" } }] }],
+        inventory: [{ service: "ecs", resources: [{ kind: "service", id: "orders-api-service", metadata: { cluster: "orders-api-cluster", taskDefinition: "orders-api:1", revision: 1, rolloutState: "COMPLETED", desiredCount: 1, runningCount: 1, images: ["repo/orders-api:1"], deployedAt: "2026-09-28T08:03:00.000Z" } }] }],
       },
       {
         accountName: "team-prd",
@@ -18,7 +18,7 @@ describe("AWS ECS deployment linking", () => {
       },
     ]);
     expect(linked).toEqual([
-      expect.objectContaining({ environment: "dev", service: "orders-api-service", revision: 343, rolloutState: "COMPLETED", healthState: "HEALTHY", matchSource: "image", runningCount: 1, desiredCount: 1, deployedAt: "2026-09-28T08:03:00.000Z" }),
+      expect.objectContaining({ environment: "dev", service: "orders-api-service", revision: 1, rolloutState: "COMPLETED", healthState: "HEALTHY", matchSource: "image", runningCount: 1, desiredCount: 1, deployedAt: "2026-09-28T08:03:00.000Z" }),
     ]);
   });
 
@@ -42,8 +42,8 @@ describe("AWS ECS deployment linking", () => {
     const snapshots = [{
       accountName: "team-prd", region: "ap-northeast-2", observedAt: null,
       inventory: [{ service: "ecs", resources: [
-        { kind: "service", id: "orders-service", metadata: { status: "ACTIVE", desiredCount: 3, runningCount: 3, images: ["123.dkr.ecr.ap-northeast-2.amazonaws.com/orders-api:421"] } },
-        { kind: "service", id: "orders-api-service", metadata: { status: "ACTIVE", desiredCount: 3, runningCount: 3, images: ["123.dkr.ecr.ap-northeast-2.amazonaws.com/orders-api:421"] } },
+        { kind: "service", id: "orders-service", metadata: { status: "ACTIVE", desiredCount: 3, runningCount: 3, images: ["123.dkr.ecr.ap-northeast-2.amazonaws.com/orders-api:1"] } },
+        { kind: "service", id: "orders-api-service", metadata: { status: "ACTIVE", desiredCount: 3, runningCount: 3, images: ["123.dkr.ecr.ap-northeast-2.amazonaws.com/orders-api:1"] } },
       ] }],
     }];
     expect(linkAwsDeployments("/work/orders-api", snapshots)).toEqual([
@@ -70,10 +70,10 @@ describe("AWS release pipeline linking", () => {
       inventory: [{ service: "codepipeline", resources: [{
         kind: "pipeline", id: "orders-api-pipeline", metadata: {
           repositoryName: "orders-api", branchName: "development", buildProject: "orders-api-build",
-          latestBuildNumber: 421, latestBuildCommit: "abc1234def567890", latestBuildStatus: "SUCCEEDED",
+          latestBuildNumber: 1, latestBuildCommit: "abc1234def567890", latestBuildStatus: "SUCCEEDED",
         },
       }] }],
     }]);
-    expect(linked).toEqual(expect.objectContaining({ baseBranch: "development", latestBuildNumber: 421, latestBuildCommit: "abc1234def567890" }));
+    expect(linked).toEqual(expect.objectContaining({ baseBranch: "development", latestBuildNumber: 1, latestBuildCommit: "abc1234def567890" }));
   });
 });

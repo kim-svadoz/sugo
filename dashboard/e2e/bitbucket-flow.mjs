@@ -46,7 +46,7 @@ await fetch(BE + "/api/sync/roadmap", {
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     userId: "e2euser",
-    workspaceName: "demo-domain",
+    workspaceName: "demo-workspace",
     nodes: [
       { id: "t-1", title: "로그인 기능 구현", level: "task", status: "done",
         workResult: JSON.stringify({ prRefs: { baseUrl: BB, projectKey: "PROJ", repoSlug: "api", sourceBranch: "feat/login", targetBranch: "develop" } }) },
@@ -56,25 +56,25 @@ await fetch(BE + "/api/sync/roadmap", {
 });
 
 // 4) PR 생성 (실 HTTP: remoteBranchExists → findOpenPr(없음) → createPullRequest)
-const createRes = await authed("/api/pr/create", { method: "POST", body: JSON.stringify({ workspace: "demo-domain", nodeId: "t-1", scope: "task", title: "로그인 PR" }) });
+const createRes = await authed("/api/pr/create", { method: "POST", body: JSON.stringify({ workspace: "demo-workspace", nodeId: "t-1", scope: "task", title: "로그인 PR" }) });
 const created = await createRes.json();
 check("PR 생성 성공(실 Bitbucket HTTP 왕복)", createRes.status === 200 && created.pr?.id >= 101 && !created.existed, { status: createRes.status, created });
 check("생성된 PR URL이 mock 응답에서 파싱됨(links.self[0].href)", typeof created.pr?.url === "string" && created.pr.url.includes("/pr/"), created.pr);
 
 // 5) 기존 PR 재조회 → 이제 존재
-const existRes = await authed("/api/pr/existing", { method: "POST", body: JSON.stringify({ workspace: "demo-domain", nodeId: "t-1", scope: "task" }) });
+const existRes = await authed("/api/pr/existing", { method: "POST", body: JSON.stringify({ workspace: "demo-workspace", nodeId: "t-1", scope: "task" }) });
 const exist = await existRes.json();
 check("existing 재조회 → exists:true", exist.exists === true && exist.pr?.id >= 101, exist);
 
 // 6) 브랜치 미푸시(feat/ 아님) → BRANCH_NOT_PUSHED
 await fetch(BE + "/api/sync/roadmap", {
   method: "POST", headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ userId: "e2euser", workspaceName: "demo-domain", nodes: [
+  body: JSON.stringify({ userId: "e2euser", workspaceName: "demo-workspace", nodes: [
     { id: "t-2", title: "로그아웃 기능", level: "task", status: "done",
       workResult: JSON.stringify({ prRefs: { baseUrl: BB, projectKey: "PROJ", repoSlug: "api", sourceBranch: "wip/nothere", targetBranch: "develop" } }) },
   ]}),
 });
-const notPushed = await (await authed("/api/pr/create", { method: "POST", body: JSON.stringify({ workspace: "demo-domain", nodeId: "t-2", scope: "task" }) })).json();
+const notPushed = await (await authed("/api/pr/create", { method: "POST", body: JSON.stringify({ workspace: "demo-workspace", nodeId: "t-2", scope: "task" }) })).json();
 check("미푸시 브랜치 → BRANCH_NOT_PUSHED", notPushed.error === "BRANCH_NOT_PUSHED", notPushed);
 
 // 7) PAT 삭제

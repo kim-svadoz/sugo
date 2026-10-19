@@ -7,8 +7,7 @@ declare module "express-serve-static-core" {
   }
 }
 
-// requireAuth protects ONLY bitbucket/pr routes - sync/workspaces stay
-// PUBLIC (closed-network assumption).
+// requireAuth protects only the bitbucket/pr routes; other routes use their own auth middleware.
 export function requireAuth(verifyJwt: VerifyJwt) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const header = req.headers.authorization ?? "";

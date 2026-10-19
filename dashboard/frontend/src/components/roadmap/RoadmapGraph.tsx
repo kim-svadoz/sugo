@@ -1161,8 +1161,7 @@ export function RoadmapGraph({
   const actions = useMemo(
     () => ({
       onViewSummary: (n: RoadmapNode) => setSummaryOf(n),
-      // Schedule과 같은 node-id 기반 뷰어를 쓴다. 제목으로 ADR을 찾던 구식 경로는
-      // spec_path에 연결된 실제 파일과 어긋나므로 Canvas에서 사용하지 않는다.
+      // Schedule과 같은 node-id 기반 뷰어를 쓴다. 제목 검색은 spec_path에 연결된 실제 파일과 어긋날 수 있다.
       onViewSpec: (n: RoadmapNode) => setSpecDocumentTarget(n),
       onRename: (n: RoadmapNode) => setRenaming({ node: n, value: n.title }),
       onSelect: (id: string) => {

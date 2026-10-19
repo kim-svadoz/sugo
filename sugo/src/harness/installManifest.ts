@@ -14,7 +14,7 @@ export interface InstallManifest {
   version: 1;
   projectPath: string;
   sugoDirExisted: boolean;
-  /** string|null은 0.31.0 legacy manifest 호환용. 새 manifest는 원문을 저장하지 않는다. */
+  /** string|null은 이전 형식 manifest 호환용. 새 manifest는 원문을 저장하지 않는다. */
   rootClaudeOriginal: FileBaseline | string | null;
   rootAgentsOriginal: FileBaseline | string | null;
   managedFiles: string[];

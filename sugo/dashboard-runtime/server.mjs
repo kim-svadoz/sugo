@@ -24494,7 +24494,7 @@ var init_config = __esm({
       },
       pluginVersion: process.env.PLUGIN_VERSION ?? "0.0.0",
       secretEncKey: process.env.SECRET_ENC_KEY ?? "",
-      // CI가 빌드타임에 하네스 저장소를 클론해 구워두는 경로(harness/skills 서빙에 쓴다).
+      // 미리 만들어 둔 하네스/스킬 디렉터리 경로(harness/skills 서빙에 쓴다).
       // 미설정이면 빈 매니페스트/404로 안전 반환한다(가짜 데이터 금지).
       harnessPath: process.env.HARNESS_PATH ?? "",
       harnessOverridePath: process.env.HARNESS_OVERRIDE_PATH ?? join(homedir(), ".claude", "sugo", "harness-overrides"),
@@ -24517,7 +24517,7 @@ var init_config = __esm({
         redirectUri: process.env.OIDC_REDIRECT_URI ?? "",
         scope: "openid profile email offline_access"
       },
-      // 공개 SaaS: GitHub OAuth 웹 로그인 + HS256 세션. OIDC와 별개 경로.
+      // GitHub OAuth 웹 로그인 + HS256 세션. OIDC와 별개 경로.
       github: {
         clientId: process.env.GITHUB_CLIENT_ID ?? "",
         clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
@@ -44351,7 +44351,7 @@ async function migrateCanvasToRoadmap(db2) {
     const hasNew = await tableExists(db2, "sugo_roadmap_nodes");
     if (hasNew) {
       console.warn(
-        "[migration] sugo_canvas_nodes\uC640 sugo_roadmap_nodes\uAC00 \uBAA8\uB450 \uC874\uC7AC\uD569\uB2C8\uB2E4 \u2014 \uC790\uB3D9 \uBCD1\uD569\uC740 \uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uC5B4\uB290 \uCABD\uC774 \uC815\uBCF8\uC778\uC9C0 \uD655\uC778 \uD6C4 \uAD6C \uD14C\uC774\uBE14\uC744 \uC218\uB3D9\uC73C\uB85C \uC815\uB9AC\uD558\uC138\uC694."
+        "[migration] sugo_canvas_nodes\uC640 sugo_roadmap_nodes\uAC00 \uBAA8\uB450 \uC874\uC7AC\uD569\uB2C8\uB2E4 \u2014 \uC790\uB3D9 \uBCD1\uD569\uC740 \uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uC5B4\uB290 \uCABD\uC774 \uC815\uBCF8\uC778\uC9C0 \uD655\uC778 \uD6C4 \uC774\uC804 \uC774\uB984\uC758 \uD14C\uC774\uBE14\uC744 \uC218\uB3D9\uC73C\uB85C \uC815\uB9AC\uD558\uC138\uC694."
       );
       return;
     }
@@ -51756,7 +51756,7 @@ function digest(value) {
   return createHash6("sha256").update(value).digest("hex");
 }
 function bodyWithoutHash(checkpoint, workspace) {
-  const applies = checkpoint.appliesTo?.length ? `\uC801\uC6A9 \uB300\uC0C1: ${checkpoint.appliesTo.join(", ")}` : "\uB3C4\uBA54\uC778 \uC804\uCCB4 \uC801\uC6A9";
+  const applies = checkpoint.appliesTo?.length ? `\uC801\uC6A9 \uB300\uC0C1: ${checkpoint.appliesTo.join(", ")}` : "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC804\uCCB4 \uC801\uC6A9";
   return [
     "---",
     "sugo-managed: checkpoint",
@@ -51769,7 +51769,7 @@ function bodyWithoutHash(checkpoint, workspace) {
     "",
     `# ${checkpoint.title}`,
     "",
-    `> ${workspace} \uB3C4\uBA54\uC778\uC758 \uC7AC\uBC1C\uBC29\uC9C0 \uCEE8\uD14D\uC2A4\uD2B8 \xB7 ${applies}`,
+    `> ${workspace} \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uC758 \uC7AC\uBC1C\uBC29\uC9C0 \uCEE8\uD14D\uC2A4\uD2B8 \xB7 ${applies}`,
     "",
     ...checkpoint.learnedFrom?.trim() ? [checkpoint.learnedFrom.trim()] : (checkpoint.checklist ?? []).map((item) => `- ${item}`),
     ""
@@ -52823,7 +52823,7 @@ function createAuthRouter(db2, oidcConfig, oidcClient, verifyJwt) {
       res.json({
         user: { id: userId2 },
         // 프론트가 Bearer로 쓸 토큰. **id_token(JWT)을 준다** — OIDC access token은 IdP 설정에
-        // 따라 opaque일 수 있고(oidc-provider 기본/일부 Keycloak 설정), 그러면 requireAuth의 JWKS
+        // 따라 opaque일 수 있고, 그러면 requireAuth의 JWKS
         // 검증이 401로 거부한다. 대시보드는 어차피
         // id_token을 JWKS로 검증하므로, 이걸 Bearer로 쓰면 IdP의 access-token 형식과 무관하게
         // auth-gated 라우트(bitbucket/pr)가 동작한다.
@@ -89941,7 +89941,7 @@ var init_index = __esm({
     init_cors();
     init_asyncHandler();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.29.2" ? { version: "0.29.2" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.29.3" ? { version: "0.29.3" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90053,7 +90053,7 @@ await bootstrapLocalDashboard2(db, {
   settingsPath: join13(sugoDir, "settings.json")
 });
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.29.2", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.29.3", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

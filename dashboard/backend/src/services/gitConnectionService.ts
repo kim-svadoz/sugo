@@ -46,8 +46,8 @@ export async function listGitConnections(db: DbClient, userId: string): Promise<
     profile: row.credential_profile,
   }));
 
-  // Existing installations keep working without a destructive migration. Saving the
-  // connection from the new Settings screen writes it to the generic table.
+  // Tokens stored before the generic connection table are still reported. Saving the
+  // connection from the Settings screen writes it to the generic table.
   if (!statuses.some((status) => status.provider === "bitbucket_server")) {
     const legacy = await getBitbucketTokenStatus(db, userId);
     if (legacy.connected) statuses.push({ provider: "bitbucket_server", ...legacy, profile: null });

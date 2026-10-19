@@ -18,7 +18,7 @@ export const sugoRecordTestEvidenceInputSchema = {
   failedTests: z.number().optional().describe("실패 수"),
   skippedTests: z.number().optional().describe("스킵 수"),
   rawOutput: z.string().optional().describe("원문 출력(감사용, 선택)"),
-  /** @deprecated 옛 이름 — 낡은 호출부 호환용. 새 코드는 totalTests/passedTests/failedTests를 쓴다. */
+  /** @deprecated 이전 이름 — 호환용. 새 코드는 totalTests/passedTests/failedTests를 쓴다. */
   total: z.number().optional(),
   passed: z.number().optional(),
   failed: z.number().optional(),

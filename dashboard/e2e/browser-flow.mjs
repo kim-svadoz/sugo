@@ -56,11 +56,11 @@ try {
 
   // 6) Sessions에 실데이터(워크스페이스 카드) 렌더
   const bodyText = await page.textContent("body");
-  check("워크스페이스 카드(demo-domain) 렌더", bodyText.includes("demo-domain"), bodyText?.slice(0, 200));
+  check("워크스페이스 카드(demo-workspace) 렌더", bodyText.includes("demo-workspace"), bodyText?.slice(0, 200));
   check("Canvas Progress 표시", /Canvas Progress/i.test(bodyText), null);
 
   // 7) 워크스페이스 클릭 → Roadmap 페이지 + 한글 노드 렌더
-  await page.getByText("demo-domain").first().click().catch(() => {});
+  await page.getByText("demo-workspace").first().click().catch(() => {});
   await page.waitForTimeout(1500);
   const roadmapText = await page.textContent("body");
   check("Roadmap 페이지에 한글 노드 렌더(로그인 기능 구현)", roadmapText.includes("로그인 기능 구현"), page.url());

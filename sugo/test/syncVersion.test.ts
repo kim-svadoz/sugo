@@ -53,7 +53,7 @@ describe("syncVersion — 4파일 하드 규칙 순수 함수", () => {
   describe("syncMarketplaceJson", () => {
     const marketplaceFixture = {
       name: "sugo-marketplace",
-      owner: { name: "김성현" },
+      owner: { name: "owner" },
       plugins: [{ name: "sugo", source: "./sugo", version: "0.1.0" }],
     };
 

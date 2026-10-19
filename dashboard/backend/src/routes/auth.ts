@@ -16,9 +16,8 @@ export interface AuthRouterConfig {
   scope: string;
 }
 
-// GET /config PUBLIC, POST /token+/verify+/refresh exchange/verify a
-// bearer/id token. requireAuth (auth/requireAuth.ts) is what actually gates
-// bitbucket/pr routes - these endpoints themselves are PUBLIC.
+// GET /config and POST /token+/verify+/refresh exchange/verify a bearer/id
+// token. requireAuth (auth/requireAuth.ts) is what gates the bitbucket/pr routes.
 export function createAuthRouter(
   db: DbClient,
   oidcConfig: AuthRouterConfig,
@@ -45,7 +44,7 @@ export function createAuthRouter(
       res.json({
         user: { id: userId },
         // 프론트가 Bearer로 쓸 토큰. **id_token(JWT)을 준다** — OIDC access token은 IdP 설정에
-        // 따라 opaque일 수 있고(oidc-provider 기본/일부 Keycloak 설정), 그러면 requireAuth의 JWKS
+        // 따라 opaque일 수 있고, 그러면 requireAuth의 JWKS
         // 검증이 401로 거부한다. 대시보드는 어차피
         // id_token을 JWKS로 검증하므로, 이걸 Bearer로 쓰면 IdP의 access-token 형식과 무관하게
         // auth-gated 라우트(bitbucket/pr)가 동작한다.

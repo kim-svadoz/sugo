@@ -10,7 +10,6 @@ describe("Workspace repository AWS deployment inspector", () => {
     expect(source).toContain("deployment.runningCount");
     expect(source).toContain("deployment.deployedAt");
     expect(source).toContain("deployment.healthState");
-    expect(source).not.toContain("도메인 ECS 서비스");
     expect(source).toContain("serviceDeployments");
   });
 

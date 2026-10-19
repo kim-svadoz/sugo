@@ -62,8 +62,5 @@ snapshot after newer work has completed.
   `.ssh`, and `node_modules` paths are listed without content. Artifacts are isolated by token user,
   workspace, task, session and patch version and responses use `private, no-store`.
 
-Validation: Plugin 103 files / 1,136 tests; Console backend 46 files / 356 tests; frontend 25 files /
-69 tests; all builds/typechecks and Plugin cold-smoke 42 cases passed. HTTP 190KB routing, over-10MiB
-413, permanent-failure health, retry exhaustion/capacity and UTF-8 size bound are covered. Browser QA
-uses `dashboard/e2e/roadmap-payload-flow.mjs` with a real isolated SQLite API and Edge. This release
+Browser QA uses `dashboard/e2e/roadmap-payload-flow.mjs` with an isolated SQLite API. This release
 changes neither SQL nor the database schema.

@@ -22,7 +22,7 @@ async function tableExists(db: DbClient, name: string): Promise<boolean> {
 /**
  * `canvas` 이름을 쓰던 이전 DB를 `roadmap`으로 바꾼다.
  * 스키마 파일은 새 이름으로 `CREATE TABLE IF NOT EXISTS`를 돌리므로, 이 마이그레이션이
- * 없으면 기존 DB는 **빈 `sugo_roadmap_nodes`가 생기고 노드 데이터는 `sugo_canvas_nodes`에 남아
+ * 없으면 이미 만들어진 DB는 **빈 `sugo_roadmap_nodes`가 생기고 노드 데이터는 `sugo_canvas_nodes`에 남아
  * 고아가 된다**(화면엔 "노드 없음"으로 보이고 원인은 안 보임). 그래서 스키마 적용 **전에** 돈다.
  *
  * 둘 다 있으면 손대지 않는다 — 어느 쪽이 정본인지 코드가 알 수 없고, 잘못 고르면 조용한 유실이다.
@@ -36,7 +36,7 @@ export async function migrateCanvasToRoadmap(db: DbClient): Promise<void> {
     if (hasNew) {
       console.warn(
         "[migration] sugo_canvas_nodes와 sugo_roadmap_nodes가 모두 존재합니다 — 자동 병합은 하지 않습니다. " +
-          "어느 쪽이 정본인지 확인 후 구 테이블을 수동으로 정리하세요.",
+          "어느 쪽이 정본인지 확인 후 이전 이름의 테이블을 수동으로 정리하세요.",
       );
       return;
     }
@@ -51,7 +51,7 @@ export async function migrateCanvasToRoadmap(db: DbClient): Promise<void> {
 
 /**
  * Ontology snapshot 컬럼의 부팅 마이그레이션. sync 요청에서만 자가보강하면 그보다 먼저 실행되는
- * Workspace/Schedule 읽기가 구 DB에서 `no such column`로 죽는다. 읽기 전에 항상 실행하고,
+ * Workspace/Schedule 읽기가 컬럼 없는 DB에서 `no such column`로 죽는다. 읽기 전에 항상 실행하고,
  * CREATE TABLE IF NOT EXISTS가 이미 컬럼을 만든 신규 DB에서는 no-op이다.
  */
 export async function migrateRoadmapRuntimeAssessment(db: DbClient): Promise<boolean> {
@@ -59,7 +59,7 @@ export async function migrateRoadmapRuntimeAssessment(db: DbClient): Promise<boo
     await db.query("SELECT runtime_assessment FROM sugo_roadmap_nodes LIMIT 1");
     return true;
   } catch {
-    // 기존 설치본에는 컬럼이 없다.
+    // 컬럼이 없다.
   }
   try {
     // SQLite는 JSON을 type affinity로 허용하고 MySQL은 실제 JSON 검증을 적용한다. 신규 스키마와

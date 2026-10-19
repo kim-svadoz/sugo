@@ -118,7 +118,7 @@ export interface RoadmapWorkResult {
   runtimeVerified?: boolean;
   wiringVerified?: boolean;
   prRefs?: PrRefs;
-  /** v1 표준 리포트. summary/files 상위 필드는 구버전 Dashboard와의 호환을 위해 유지한다. */
+  /** v1 표준 리포트. summary/files 상위 필드는 이전 형식 Dashboard와의 호환을 위해 유지한다. */
   report?: WorkResultReport;
 }
 

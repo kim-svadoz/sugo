@@ -37,7 +37,7 @@ describe("4계층 정합성", () => {
   });
 
   it("계층3(dispatch): 모든 액션이 실행 경로에 도달한다", () => {
-    // 이 구현의 dispatch는 switch가 아니라 applyTransition의 특수처리 + RESULT_STATE 일반경로 +
+    // dispatch는 switch가 아니라 applyTransition의 특수처리 + RESULT_STATE 일반경로 +
     // sugoPlan.ts의 액션별 분기다. "어디에도 안 나타나는 액션"이 곧 UNKNOWN_ACTION이므로,
     // 세 곳 중 하나에는 반드시 잡혀야 한다.
     const stray: string[] = [];
@@ -91,7 +91,7 @@ describe("4계층 정합성", () => {
 });
 
 /**
- * Golden per-state action set — 파생 결과가 골든 표와 **정확히** 일치함을 증명한다.
+ * 상태별 허용 액션 기대 표 — 파생 결과가 이 표와 **정확히** 일치함을 증명한다.
  * 이 표는 손으로 옮겨적은 독립 사본이다(파생 로직으로 다시 계산하면 순환 테스트가 된다).
  */
 describe("Golden per-state action set", () => {
@@ -122,11 +122,11 @@ describe("Golden per-state action set", () => {
     DONE: ["status", "start"],
   };
 
-  it.each(WORKFLOW_STATES)("%s의 허용 액션 집합이 골든 표와 같다", (state) => {
+  it.each(WORKFLOW_STATES)("%s의 허용 액션 집합이 기대 표와 같다", (state) => {
     expect([...ALLOWED_ACTIONS_BY_STATE[state]].sort()).toEqual([...GOLDEN[state]].sort());
   });
 
-  it("골든 표가 19개 상태를 빠짐없이 덮는다", () => {
+  it("기대 표가 19개 상태를 빠짐없이 덮는다", () => {
     expect(Object.keys(GOLDEN).sort()).toEqual([...WORKFLOW_STATES].sort());
   });
 });

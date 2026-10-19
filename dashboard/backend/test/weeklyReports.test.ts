@@ -19,7 +19,7 @@ const body = (headline: string[]) => ({
   start: "2026-10-05",
   end: "2026-10-11",
   generatedAt: "2026-10-16T01:24:00",
-  report: { headline, topics: [{ title: "대시보드 번들" }] },
+  report: { headline, topics: [{ title: "로그인 개선" }] },
 });
 
 describe("/api/weekly/reports", () => {
@@ -32,7 +32,7 @@ describe("/api/weekly/reports", () => {
       { weekId: "2026-W41", start: "2026-10-05", end: "2026-10-11", generatedAt: "2026-10-16T01:24:00", headline: ["한 줄 요약"] },
     ]);
     const one = await request(app).get("/api/weekly/reports/2026-W41").set("Authorization", mine).expect(200);
-    expect(one.body.report.topics[0].title).toBe("대시보드 번들");
+    expect(one.body.report.topics[0].title).toBe("로그인 개선");
   });
 
   it("같은 주를 다시 올리면 덮어쓰고 목록은 최신 주부터다", async () => {

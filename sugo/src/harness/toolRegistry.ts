@@ -8,15 +8,13 @@ export interface HarnessToolEntry {
   match: string;
   /** 권한 allow-list용 기술 전용 MCP 네임스페이스(mcp__<server>__*). */
   mcpNamespace: string;
-  /** 그 기술 전용 MCP 도구 목록(코드검색·클래스조회 등). */
+  /** 그 기술 전용 MCP 도구 목록. */
   loadTools: string[];
   dispatch: HarnessDispatchRule[];
 }
 
 /**
- * 하네스 도구 디스패치 레지스트리. **기본값은 빈 배열이다.** 기술 전용 MCP가 없으면 비워 두거나
- * 로컬 도구(ripgrep 등)로 대체한다. 메커니즘(매칭/권한 패턴/메뉴 렌더링)만 갖춰두고 항목은 배포
- * 환경에 맞는 MCP가 생길 때 채운다.
+ * 하네스 도구 디스패치 레지스트리. 기본값은 빈 배열이며, 등록된 도구가 있을 때만 메뉴에 나타난다.
  */
 export const HARNESS_TOOL_REGISTRY: HarnessToolEntry[] = [];
 

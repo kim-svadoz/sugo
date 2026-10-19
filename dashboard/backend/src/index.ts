@@ -131,7 +131,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/activity", createActivityRouter(db, sessionSecret));
   app.use("/api/workspaces", createWorkspacesRouter(db, sessionSecret, specAttachmentsPath));
   app.use("/api/schedule", createScheduleRouter(db, sessionSecret));
-  // 공개 SaaS: GitHub OAuth 로그인 + API 토큰 관리. 기존 OIDC /api/auth보다 먼저 등록.
+  // GitHub OAuth 로그인 + API 토큰 관리. OIDC /api/auth보다 먼저 등록.
   app.use("/api/auth/github", createGithubAuthRouter(db, githubOAuth, config.github, sessionSecret, config.frontendUrl));
   if (localDev.enabled) app.use("/api/auth/local", createLocalAuthRouter(db, sessionSecret, frontendUrl, localDev));
   app.use("/api/tokens", createTokensRouter(db, sessionSecret));

@@ -5,10 +5,7 @@ import { describe, expect, it } from "vitest";
 
 /**
  * 이식성 회귀 가드 — 대시보드가 Windows/mac 어느 쪽에서도 같게 돌게 유지한다.
- *
- * 플러그인(`sugo/test/crossPlatform.test.ts`)에 같은 성격의 가드를 두고 나서, 대시보드
- * 시드 스크립트에 `C:/Users/<사용자>/...`가, e2e 스크린샷 경로에 `/tmp/...`가 남아 있는 걸
- * 뒤늦게 발견했다. 한쪽만 막으면 반대쪽으로 다시 들어온다.
+ * 플러그인(`sugo/test/crossPlatform.test.ts`)에도 같은 성격의 가드가 있다.
  *
  * 규칙은 좁게 유지한다 — 넓은 린트는 오탐이 쌓이면 아무도 안 보게 된다.
  */
@@ -17,10 +14,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const dashboard = join(here, "..", "..");
 
 /**
- * 스캔 대상은 **디렉터리 단위로** 잡는다. 처음엔 backend 루트의 스크립트를
- * `dev-local.mts` 하나만 화이트리스트로 넣었는데, 바로 옆의 `seed-demo.ts`에 똑같은
- * Windows 경로 하드코딩이 남아 있는 걸 못 잡았다 — **파일 이름을 나열하는 가드는
- * 형제 파일을 놓친다.**
+ * 스캔 대상은 **디렉터리 단위로** 잡는다. 파일 이름을 나열하는 가드는 형제 파일을 놓친다.
  */
 const SCAN_ROOTS = [
   join(dashboard, "backend"),

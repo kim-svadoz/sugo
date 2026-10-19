@@ -18,7 +18,7 @@ export const config = {
   },
   pluginVersion: process.env.PLUGIN_VERSION ?? "0.0.0",
   secretEncKey: process.env.SECRET_ENC_KEY ?? "",
-  // CI가 빌드타임에 하네스 저장소를 클론해 구워두는 경로(harness/skills 서빙에 쓴다).
+  // 미리 만들어 둔 하네스/스킬 디렉터리 경로(harness/skills 서빙에 쓴다).
   // 미설정이면 빈 매니페스트/404로 안전 반환한다(가짜 데이터 금지).
   harnessPath: process.env.HARNESS_PATH ?? "",
   harnessOverridePath: process.env.HARNESS_OVERRIDE_PATH ?? join(homedir(), ".claude", "sugo", "harness-overrides"),
@@ -41,7 +41,7 @@ export const config = {
     redirectUri: process.env.OIDC_REDIRECT_URI ?? "",
     scope: "openid profile email offline_access",
   },
-  // 공개 SaaS: GitHub OAuth 웹 로그인 + HS256 세션. OIDC와 별개 경로.
+  // GitHub OAuth 웹 로그인 + HS256 세션. OIDC와 별개 경로.
   github: {
     clientId: process.env.GITHUB_CLIENT_ID ?? "",
     clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",

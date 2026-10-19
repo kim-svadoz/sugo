@@ -10,7 +10,7 @@ function toLocalTime(iso: string | undefined): string | undefined {
   if (Number.isNaN(date.getTime())) return undefined;
   // `dateStyle`/`timeStyle`은 `timeZoneName` 같은 개별 옵션과 함께 쓸 수 없다(Intl 스펙 제약 —
   // 섞으면 "Invalid option" TypeError). 그래서 컴포넌트를 하나씩 지정한다.
-  // sv-SE 로캘이 `2026-09-18 15:31:51 GMT+9` 형태를 줘서 ISO에 가깝고 정렬·비교가 자연스럽다.
+  // sv-SE 로캘이 `YYYY-MM-DD HH:mm:ss GMT+9` 형태를 줘서 ISO에 가깝고 정렬·비교가 자연스럽다.
   return new Intl.DateTimeFormat("sv-SE", {
     year: "numeric",
     month: "2-digit",
@@ -31,7 +31,7 @@ export interface SessionSummary {
   startedAt?: string;
   updatedAt?: string;
   /**
-   * `updatedAt`을 실행 머신의 시간대로 포맷한 값(`2026-09-18 15:31:51 KST` 형태).
+   * `updatedAt`을 실행 머신의 시간대로 포맷한 값(`YYYY-MM-DD HH:mm:ss` 형태에 시간대 약어를 붙인다).
    *
    * 원래 ISO는 UTC라 사람이 "언제 멈췄나"를 바로 못 읽는다. 시간대를 하드코딩하지 않고 시스템
    * 설정을 따른다 — 플러그인은 배포물이라 특정 지역을 박으면 다른 환경에서 틀린 시각을 보여준다.

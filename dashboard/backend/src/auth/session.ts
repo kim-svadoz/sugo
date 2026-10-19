@@ -1,8 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import type { NextFunction, Request, Response } from "express";
 
-// 공개 SaaS 웹 세션: GitHub 로그인 후 발급하는 HS256 JWT. 프론트가 이걸 Bearer로
-// 들고 /api/tokens(토큰 관리)를 호출한다. OIDC(조직 IdP)와 무관한 독립 세션.
+// 웹 세션: GitHub 로그인 후 발급하는 HS256 JWT. 프론트가 이걸 Bearer로
+// 들고 /api/tokens(토큰 관리)를 호출한다. OIDC와 무관한 독립 세션.
 // state(CSRF)도 같은 대칭키로 서명한 단명 JWT로 처리해 stateless하게 유지한다.
 
 function key(secret: string): Uint8Array {

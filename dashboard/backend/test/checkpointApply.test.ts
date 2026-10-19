@@ -58,7 +58,7 @@ describe("checkpoint save-and-apply", () => {
     expect(second.unchanged).toHaveLength(1);
   });
 
-  it("KST 기준 유효일 당일까지 활성이고 다음 날부터 만료된다", () => {
+  it("UTC+9 기준 유효일 당일까지 활성이고 다음 날부터 만료된다", () => {
     expect(isCheckpointExpired("2026-10-02", new Date("2026-10-02T14:59:59.000Z"))).toBe(false);
     expect(isCheckpointExpired("2026-10-02", new Date("2026-10-02T15:00:00.000Z"))).toBe(true);
     expect(isCheckpointExpired(null, new Date("2030-01-01T00:00:00.000Z"))).toBe(false);
@@ -104,19 +104,19 @@ describe("checkpoint save-and-apply", () => {
     expect(await readFile(file, "utf8")).toContain("직접 수정");
   });
 
-  it("0.6.1 hash 없는 자동 pull 파일도 원문이 정확히 같으면 만료 정리한다", async () => {
-    const root = await mkdtemp(join(tmpdir(), "sugo-cp-expired-legacy-"));
+  it("hash 없는 고정 포맷 파일도 원문이 정확히 같으면 만료 정리한다", async () => {
+    const root = await mkdtemp(join(tmpdir(), "sugo-cp-expired-plain-"));
     const dir = join(root, ".claude", "rules", "general");
     await mkdir(dir, { recursive: true });
-    const file = join(dir, "CP-legacy-구형-규칙.md");
+    const file = join(dir, "CP-plain-단순-규칙.md");
     await writeFile(file, [
-      "---", 'description: "Sugo checkpoint CP-legacy · payments"', "---", "", "# 구형 규칙", "",
+      "---", 'description: "Sugo checkpoint CP-plain · payments"', "---", "", "# 단순 규칙", "",
       "> payments 도메인의 재발방지 컨텍스트 · 도메인 전체 적용", "", "- 확인",
     ].join("\n"));
 
     const result = await applyCheckpointToProjects({
       workspace: "payments",
-      checkpoint: { id: "CP-legacy", title: "구형 규칙", category: "general", checklist: ["확인"], expiresAt: "2000-01-01" },
+      checkpoint: { id: "CP-plain", title: "단순 규칙", category: "general", checklist: ["확인"], expiresAt: "2000-01-01" },
       projectPaths: [root],
     });
 

@@ -46,7 +46,7 @@ Assert-SugoPortFree $uiPort "Dashboard E2E UI"
 if (Test-SugoPort $mysqlPort) {
   Write-Host "[dev] MySQL 이미 떠 있음 (:$mysqlPort)" -ForegroundColor Green
 } else {
-  $mysqld = "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe"
+  $mysqld = if ($env:MYSQLD_PATH) { $env:MYSQLD_PATH } else { "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe" }
   if (-not (Test-Path $mysqld)) { throw "mysqld를 못 찾음: $mysqld" }
   Write-Host "[dev] MySQL 기동…" -ForegroundColor Cyan
   Start-Process -FilePath $mysqld `

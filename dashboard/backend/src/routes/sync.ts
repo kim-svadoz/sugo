@@ -47,7 +47,7 @@ const roadmapLinkSchema = z.object({
   toId: z.string().min(1),
 });
 
-// 공개 SaaS: 토큰 인증 강제. body/query의 userId는 신뢰하지 않고
+// 토큰 인증 강제. body/query의 userId는 신뢰하지 않고
 // 인증 미들웨어가 세운 req.userId로 덮어써서(bindUserId) 모든 핸들러가 토큰 신원만 쓰게 한다.
 export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();

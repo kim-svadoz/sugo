@@ -8,7 +8,7 @@ import { createMySqlClient } from "../backend/src/db/mysqlClient.ts";
 import { createApp } from "../backend/src/index.ts";
 import { issueSession } from "../backend/src/auth/session.ts";
 import { completionLabelId, ensureHumanCompletionTable } from "../backend/src/services/humanCompletion.ts";
-const connection = { host: process.env.MYSQL_HOST ?? "127.0.0.1", port: Number(process.env.MYSQL_PORT ?? 33077), user: process.env.MYSQL_USER ?? "root", password: process.env.MYSQL_PASSWORD ?? "" };
+const connection = { host: process.env.MYSQL_HOST ?? "127.0.0.1", port: Number(process.env.MYSQL_PORT ?? 33306), user: process.env.MYSQL_USER ?? "root", password: process.env.MYSQL_PASSWORD ?? "" };
 const database = `sugo_approval_test_${randomBytes(6).toString("hex")}`;
 const admin = createMySqlClient({ ...connection, database: "" });
 let db, server;

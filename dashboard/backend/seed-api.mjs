@@ -8,8 +8,8 @@ import { LOCAL_API_URL } from "../port-contract.mjs";
 
 const BASE = LOCAL_API_URL;
 // 데모 경로는 화면에 그대로 찍히므로 홈 디렉터리 기준으로 만든다.
-const SPLEARN = join(homedir(), "splearn");
-const PAYMENTS = join(homedir(), "work", "payments");
+const WEBAPP = join(homedir(), "webapp");
+const PAYMENTS = join(homedir(), "work", "webapp-payments");
 
 const mint = (secret) =>
   new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject(USER).setIssuedAt()
@@ -30,19 +30,19 @@ const wr = (over = {}) => ({
 
 async function main() {
   let token = null;
-  for (const s of ["dev-secret-change-me", "local-dev-session-secret-change-me-please", ""]) {
+  for (const s of ["dev-secret-change-me"]) {
     const t = await mint(s);
     const r = await post("/api/sync/user", { userId: USER, displayName: "Local Developer" }, t);
     if (r.ok) { token = t; console.log("세션 서명키 확인됨:", JSON.stringify(s)); break; }
   }
   if (!token) { console.error("❌ 세션 서명키를 못 찾음(백엔드 SESSION_SECRET 불일치). 백엔드 재시작 후 재시도."); process.exit(1); }
 
-  await post("/api/sync/workspace", { userId: USER, name: "temp-workspace", projects: [SPLEARN], gitSyncedProjects: [SPLEARN] }, token);
+  await post("/api/sync/workspace", { userId: USER, name: "temp-workspace", projects: [WEBAPP], gitSyncedProjects: [WEBAPP] }, token);
   await post("/api/sync/workspace", { userId: USER, name: "payments-api", projects: [PAYMENTS], gitSyncedProjects: [] }, token);
   await post("/api/sync/workspace-meta", { userId: USER, workspaceName: "temp-workspace", goldenRule: "테스트 먼저, 게이트는 실행증거로만 통과", checkpointsVersion: 3 }, token);
 
   for (const [id, title, status] of [["t1", "EmailLoginService 구현", "done"], ["t2", "로그인 컨트롤러 배선", "in_progress"], ["t3", "통합테스트", "pending"], ["t4", "비밀번호 재설정", "done"], ["t5", "레거시 인증 정리", "archived"]]) {
-    await post("/api/sync/task", { userId: USER, workspaceName: "temp-workspace", id, title, project: SPLEARN, status }, token);
+    await post("/api/sync/task", { userId: USER, workspaceName: "temp-workspace", id, title, project: WEBAPP, status }, token);
   }
 
   await post("/api/sync/roadmap", { userId: USER, workspaceName: "temp-workspace", nodes: [

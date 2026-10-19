@@ -34,13 +34,13 @@ mock/jose-local이 아니라 **실제 인프라**로 대시보드+플러그인�
 - **JSON 컬럼 반환 타입**(mysql2 파싱 vs sqlite 문자열).
 - **ISO 8601 datetime을 MySQL TIMESTAMP가 거부** + 그 에러가 프로세스를 죽임(회복력).
 - **opaque OIDC access token → auth-gated 라우트 401**: OIDC provider가 opaque access token을
-  발급하면(oidc-provider 기본/일부 Keycloak 설정) 프론트가 그걸 Bearer로 보내도 requireAuth의
+  발급하면(oidc-provider 기본 설정) 프론트가 그걸 Bearer로 보내도 requireAuth의
   JWKS 검증이 거부한다. → 대시보드는 id_token(항상 JWKS로 검증 가능한 JWT)을 Bearer로 반환한다
   (auth 라우터). IdP의 access-token 형식과 무관하게 동작.
 
 ## 남은 residual(실물이 더 필요한 것)
 - 실제 Bitbucket Server(Data Center) 응답 형태 최종 일치(지금은 mock SHAPE).
-- 원격/배포 환경(원격 MySQL·네트워크 지연·실 Keycloak)에서의 재검증.
+- 원격 MySQL·네트워크 지연이 있는 환경에서의 재검증.
 
 ## 사람 승인 완료등급
 
@@ -51,11 +51,11 @@ Frontend를 `VITE_API_BASE=http://localhost:4000`으로 빌드하고 :4173에서
 node --import ./register-source.mjs human-completion-flow.mjs <screenshots-dir>
 ```
 
-격리 SQLite HTTP 서버(:4000)와 실제 Edge에서 두 라벨의 부분/전체 승인·취소, 별도 경고 영역,
+격리 SQLite HTTP 서버(:4000)와 브라우저(`E2E_BROWSER_CHANNEL`로 채널 지정 가능)에서 두 라벨의 부분/전체 승인·취소, 별도 경고 영역,
 감사 이력 및 브라우저 오류를 확인한다. 서버는 종료 시 닫는다.
 
 ```bash
-MYSQL_HOST=127.0.0.1 MYSQL_PORT=33077 MYSQL_USER=root MYSQL_PASSWORD=... \
+MYSQL_HOST=127.0.0.1 MYSQL_PORT=33306 MYSQL_USER=root MYSQL_PASSWORD=... \
   node --import ./register-source.mjs human-completion-mysql.mjs
 ```
 

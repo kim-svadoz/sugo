@@ -23,7 +23,7 @@ export async function recoverLegacySource(result: any, owned: Set<string>): Prom
   const project = [...owned].filter(p => inside(p, resolve(result.path))).sort((a, b) => b.length - a.length)[0];
   if (!project) return null;
   if (!Array.isArray(result.files) || !result.files.length) {
-    // Old direct-commit tasks sometimes stored their SHA only in the result summary.
+    // Direct-commit tasks may store their SHA only in the result summary.
     // Never accept arbitrary hex text, ambiguous references, or an inaccessible Git object.
     const summary = typeof result.summary === "string" ? result.summary : result.report?.summary;
     if (typeof summary !== "string") return null;
@@ -95,6 +95,6 @@ export async function localLegacyWorkResults(userId: string, workspace: string):
     const path = join(directory, "roadmap.json"); if ((await stat(path)).size > 10 * 1024 * 1024) return results;
     const document = JSON.parse(await readFile(path, "utf8"));
     for (const node of document.nodes ?? []) if (node.level === "task" && node.workResult) results.set(node.id, node.workResult);
-  } catch { /* Legacy data is optional. */ }
+  } catch { /* This data is optional. */ }
   return results;
 }

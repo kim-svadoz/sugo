@@ -56,7 +56,7 @@ describe("POST /api/activity/ingest + GET /api/activity/stream", () => {
     expect(res.body.events[0].message).toBe("a");
   });
 
-  it("replays queued plugin events that used the legacy workspaceName field", async () => {
+  it("replays queued plugin events that used the workspaceName field", async () => {
     const { app, auth } = await freshApp();
     await request(app)
       .post("/api/activity/ingest")
@@ -69,7 +69,7 @@ describe("POST /api/activity/ingest + GET /api/activity/stream", () => {
     expect(res.body.events[0].message).toBe("queued completion");
   });
 
-  it("401s without an API token (공개 SaaS 인증 강제)", async () => {
+  it("401s without an API token (인증 강제)", async () => {
     const { app } = await freshApp();
     await request(app).get("/api/activity/stream").expect(401);
     await request(app).post("/api/activity/ingest").send({ userId: "u1", workspace: "ws1", message: "x" }).expect(401);

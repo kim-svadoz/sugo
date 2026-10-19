@@ -4,11 +4,11 @@ import { asyncHandler } from "../middleware/asyncHandler.js";
 import { requireUser } from "../auth/requireUser.js";
 import { getCalibratedRatio } from "../services/statsService.js";
 
-// Stats/Metrics (PUBLIC). `/api/stats` + alias `/api/metrics`. usage/daily/trends는
+// Stats/Metrics. `/api/stats` + alias `/api/metrics`. usage/daily/trends는
 // 아직 미구현이라 0/빈값을 반환한다(목데이터를 만들지 않는다). calibrated-ratio만 실측(statsService).
 export function createStatsRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();
-  router.use(requireUser(db, sessionSecret)); // 공개 SaaS: 세션 또는 API 토큰 신원 강제
+  router.use(requireUser(db, sessionSecret)); // 세션 또는 API 토큰 신원 강제
 
   router.get(
     "/calibrated-ratio",

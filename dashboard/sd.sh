@@ -64,7 +64,7 @@ stop_bundled_dashboard() {
   done
 }
 
-# 예전 실행기는 PID 파일이 없고 빈 포트를 찾아 계속 복제됐다. 알려진 개발 포트의 listener 중
+# PID 파일이 없는 실행기가 남긴 프로세스를 정리한다. 알려진 개발 포트의 listener 중
 # cwd가 이 dashboard의 backend/frontend인 프로세스만 정리해 다른 로컬 앱은 건드리지 않는다.
 stop_stale_dashboard_listeners() {
   command -v lsof >/dev/null 2>&1 || return

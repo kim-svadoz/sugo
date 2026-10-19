@@ -8,7 +8,7 @@ export const sugoSetupInputSchema = {
   jira: z
     .object({ baseUrl: z.string().optional(), projectKey: z.string().optional() })
     .optional()
-    .describe("Jira 연동 설정. Jira 연동 모듈이 있을 때만 의미가 있다"),
+    .describe("Jira 연동 설정. 이 빌드는 저장하지 않고 받은 값을 되돌려준다"),
   initSecrets: z.boolean().optional().describe("시크릿 저장소 초기화 여부"),
 };
 
@@ -37,7 +37,7 @@ export async function handleSugoSetup(rawArgs: unknown) {
             received: args,
             note:
               "플러그인은 연동 설정을 저장하지 않습니다. Bitbucket PAT는 대시보드 Settings에서 등록하세요(암호화 보관). " +
-              "Jira 연동은 선택 모듈이라 기본 배포에 포함돼 있지 않습니다.",
+              "Jira 연동 설정도 이 빌드에서는 저장하지 않습니다.",
           },
           null,
           2,

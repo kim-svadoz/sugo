@@ -114,7 +114,7 @@ export async function fetchUnlinkedSpecDrafts(workspaceName: string): Promise<Un
 
 /** Schedule SPEC에 붙여 넣은 기획 화면을 destDir로 내려받아 로컬 경로를 돌려준다.
  * 대시보드가 원격이어도 spec-writer가 파일로 읽고 spec 버전 디렉터리에 복사할 수 있게 매번 새로 받는다.
- * 첨부 API가 없는 구버전 Console이거나 대시보드가 꺼져 있으면 null. */
+ * 첨부 API가 없는 Console이거나 대시보드가 꺼져 있으면 null. */
 export async function downloadSpecAttachments(workspaceName: string, nodeId: string, destDir: string): Promise<string[] | null> {
   const ws = encodeURIComponent(workspaceName);
   const qs = `nodeId=${encodeURIComponent(nodeId)}`;

@@ -21,7 +21,7 @@ export function workspaceCommandSummary(pulse: WorkspaceCommandPulse): {
   }
   if (pulse.active > 0) {
     return {
-      headline: `${pulse.active}개 도메인이 실행 중입니다`,
+      headline: `${pulse.active}개 워크스페이스가 실행 중입니다`,
       detail: `완료 ${pulse.done}/${pulse.total} · 진행 중인 작업의 최신 변화를 확인하세요.`,
       intent: "active",
     };
@@ -35,7 +35,7 @@ export function workspaceCommandSummary(pulse: WorkspaceCommandPulse): {
   }
   return {
     headline: "지금 실행 중인 작업이 없습니다",
-    detail: `완료 ${pulse.done}/${pulse.total} · 대기 중인 도메인을 선택해 다음 작업을 확인하세요.`,
+    detail: `완료 ${pulse.done}/${pulse.total} · 대기 중인 워크스페이스를 선택해 다음 작업을 확인하세요.`,
     intent: "idle",
   };
 }

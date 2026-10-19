@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 저장소 개발 경로(dev-local)의 SQLite DB를 번들 대시보드의 사용자 데이터 폴더로 옮긴다.
-// 기존 DB는 읽기 전용으로만 열고(개발 서버가 쓰는 중이어도 일관된 스냅샷) 바꾸지 않는다.
-// 사용: node import-legacy-dashboard-db.mjs <기존 local.db 경로>
+// 원본 DB는 읽기 전용으로만 열고(개발 서버가 쓰는 중이어도 일관된 스냅샷) 바꾸지 않는다.
+// 사용: node import-legacy-dashboard-db.mjs <local.db 경로>
 import { DatabaseSync } from "node:sqlite";
 import { chmod, mkdir, readFile, rename, rm, stat } from "node:fs/promises";
 import { homedir } from "node:os";
@@ -9,7 +9,7 @@ import { join, resolve } from "node:path";
 
 const source = process.argv[2] ? resolve(process.argv[2]) : null;
 if (!source) {
-  console.error("Usage: node import-legacy-dashboard-db.mjs <path to existing local.db>");
+  console.error("Usage: node import-legacy-dashboard-db.mjs <path to local.db>");
   process.exit(2);
 }
 const home = process.env.SUGO_HOME_OVERRIDE ?? homedir();

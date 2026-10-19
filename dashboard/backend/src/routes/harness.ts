@@ -5,7 +5,7 @@ import { asyncHandler } from "../middleware/asyncHandler.js";
 import { requireUser } from "../auth/requireUser.js";
 import type { DbClient } from "../db/client.js";
 
-// Harness (PUBLIC): 빌드타임에 구운 파일을 서빙. harnessPath가 미설정/부재면 빈
+// Harness: 미리 만들어 둔 파일을 서빙. harnessPath가 미설정/부재면 빈
 // 매니페스트나 404로 안전 반환한다("실데이터만" — 없는 걸 지어내지 않는다).
 // 경로 traversal 방지: 요청 세그먼트를 정규화해 baseDir 밖으로 못 나가게 막는다.
 export function createHarnessRouter(harnessPath: string, overridePath = "", db?: DbClient, sessionSecret = ""): Router {
@@ -123,7 +123,7 @@ export function createHarnessRouter(harnessPath: string, overridePath = "", db?:
   return router;
 }
 
-// Skills (PUBLIC): 에이전트/스킬 프롬프트 파일 서빙. 동일 원칙(미설정이면 빈 목록).
+// Skills: 에이전트/스킬 프롬프트 파일 서빙. 동일 원칙(미설정이면 빈 목록).
 export function createSkillsRouter(skillsPath: string): Router {
   const router = Router();
 

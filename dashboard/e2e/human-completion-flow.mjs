@@ -24,16 +24,16 @@ try {
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const post = async (path, body) => { const r = await fetch(`http://127.0.0.1:4000${path}`, { method: "POST", headers, body: JSON.stringify(body) }); assert.equal(r.status, 200, await r.text()); };
   await post("/api/sync/workspace", { userId, name: "human-e2e", projects: [] });
-  const labels = ["evidenceResnapshot", "runtimeUnverified"].map((kind, i) => ({ kind, reason: i ? "로컬 실행환경 부재" : "OrderServiceTest 6/6, 로컬 의존 테스트 2건 제외", patchVersion: 0, recordedAt: `2026-10-02T00:00:0${i}Z` }));
-  const workResult = { sourceRevision: deploymentRevision, path: "/work/work-result.md", parentTaskId: "task-1", report: { schemaVersion: 1, kind: "feat", patchVersion: 0, completedAt: "2026-10-02", completionGrade: "unverified", bypassLabels: labels, summary: "주문 목록 화면 추가", changedFiles: ["OrderListController.java"], designDecisions: [], knownLimitations: [], verification: { test: { command: "gradlew check", total: 6, passed: 6, state: "pass" }, runtimeVerified: false } } };
+  const labels = ["evidenceResnapshot", "runtimeUnverified"].map((kind, i) => ({ kind, reason: i ? "로컬 실행환경 부재" : "UserServiceTest 통과, 환경 의존 테스트 제외", patchVersion: 0, recordedAt: `2026-10-02T00:00:0${i}Z` }));
+  const workResult = { sourceRevision: deploymentRevision, path: "/work/work-result.md", parentTaskId: "task-1", report: { schemaVersion: 1, kind: "feat", patchVersion: 0, completedAt: "2026-10-02", completionGrade: "unverified", bypassLabels: labels, summary: "회원가입 화면 추가", changedFiles: ["SignupController.java"], designDecisions: [], knownLimitations: [], verification: { test: { command: "npm test", total: 3, passed: 3, state: "pass" }, runtimeVerified: false } } };
   const runtimeAssessment = { projectionSchemaVersion: 1, status: "completed", currentStage: "DONE", nextActions: [], recommendedAction: null, humanDecisionRequired: false, blockers: ["analyze 미통과(partial)"], evidence: [] };
   await post("/api/sync/roadmap", { userId, workspaceName: "human-e2e", nodes: [
     { id: "spec-1", title: "사람 승인 SPEC", level: "spec", status: "done" },
     { id: "run-1", title: "사람 승인 RUN", parent: "spec-1", level: "workstream", status: "done", workResult },
-    { id: "task-1", title: "주문 목록 화면 추가", parent: "run-1", level: "task", status: "done", workResult, runtimeAssessment },
+    { id: "task-1", title: "회원가입 화면 추가", parent: "run-1", level: "task", status: "done", workResult, runtimeAssessment },
   ] });
   await seedDeployment(db, userId, "human-e2e");
-  browser = await chromium.launch({ channel: "msedge" });
+  browser = await chromium.launch({ channel: process.env.E2E_BROWSER_CHANNEL });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1200 } });
   let repairs = 0; page.on("request", req => { if (req.url().endsWith("/api/auth/local/session")) repairs++; });
   const errors = []; page.on("pageerror", e => errors.push(e.message));
@@ -69,7 +69,7 @@ try {
   assert.equal(await page.getByText("✅ 작업완료", { exact: true }).count(), 0);
   await page.getByText("검증 1", { exact: true }).first().waitFor();
   await shot("human-unverified");
-  await page.getByRole("textbox", { name: "evidenceResnapshot 승인 사유", exact: true }).fill("로컬 환경 의존 테스트 2건 제외, 코드와 무관");
+  await page.getByRole("textbox", { name: "evidenceResnapshot 승인 사유", exact: true }).fill("환경 의존 테스트 제외, 코드와 무관");
   await page.getByRole("button", { name: "사람 승인", exact: true }).first().click();
   await page.getByRole("textbox", { name: "evidenceResnapshot 승인 취소 사유" }).waitFor();
   await page.getByText("미검증", { exact: true }).first().waitFor();

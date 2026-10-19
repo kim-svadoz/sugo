@@ -44,7 +44,7 @@ try {
   assert.equal(response.status, 200);
   const stored = await response.json();
   assert.equal(stored.nodes.find((n) => n.id === "task-0").runtime_assessment.currentStage, "DONE");
-  browser = await chromium.launch({ channel: "msedge" });
+  browser = await chromium.launch({ channel: process.env.E2E_BROWSER_CHANNEL });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));

@@ -14,7 +14,7 @@ export interface StateEntryExplanation {
   inferredCandidates?: ActionName[];
 }
 
-/** 현재 상태와 그 진입 근거를 서버 기록만으로 설명한다. 구 세션은 후보임을 명시한다. */
+/** 현재 상태와 그 진입 근거를 서버 기록만으로 설명한다. 전이 기록이 없는 세션은 후보임을 명시한다. */
 export function explainSessionState(session: PlanSession) {
   const assessment = assessSession(session);
   const transition = session.data.lastTransition;

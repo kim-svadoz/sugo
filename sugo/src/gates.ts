@@ -250,7 +250,7 @@ export interface SpecOracleState {
  * 대조 없이 넘어가면 스펙에만 있고 PRD엔 없는 요구사항이 조용히 사라진 채 코딩이 시작된다.
  *
  * required가 아닐 때는 no-op — 기준 스펙 문서를 준 세션에서만 켜지는 조건부 게이트다(위험할 때만 조인다).
- * specOracle 자체가 없는 레거시 세션도 통과시킨다(하위호환).
+ * specOracle 자체가 없는 세션도 통과시킨다.
  */
 export function checkSpecOracleGate(specOracle: SpecOracleState | undefined): GateCheckResult {
   if (!specOracle?.required) return ok();
@@ -300,7 +300,7 @@ export function checkJiraOption(option: string | undefined, jiraKey: string | un
  * 통과시키는 게 이 게이트의 전부다.
  *
  * **Out-of-Scope는 대상이 아니다** — 안 하기로 한 일에 REQ를 요구하면 그게 더 이상하다.
- * 섹션이 아예 없으면 no-op(레거시 PRD 하위호환).
+ * 섹션이 아예 없으면 no-op.
  */
 const LEDGER_HEADING = /^#{1,6}\s*.*(in[-\s]?scope|범위|dod|완료\s*조건|definition of done)/i;
 const OUT_OF_SCOPE_HEADING = /out[-\s]?of[-\s]?scope|범위\s*외|제외/i;

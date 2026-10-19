@@ -29,12 +29,8 @@ afterEach(() => {
   rmSync(fakeHome, { recursive: true, force: true });
 });
 
-/**
- * umbrella 도구 없이 액션이 어디에 속하는지를 고정한다 — health/judgment는
- * `sugo_status`, 워크스페이스 status/sync는 `sugo_workspace`. enable/disable/help는 두지
- * 않는다(토글은 무력한 no-op이고, help는 도구 description이 할 일이다).
- */
-describe("isWorkEnabled — 상수, 토글 개념 소멸", () => {
+/** 액션이 어느 도구에 속하는지를 고정한다 — health/judgment는 `sugo_status`, 워크스페이스 status/sync는 `sugo_workspace`. */
+describe("isWorkEnabled — 상수", () => {
   it("항상 true다", () => {
     expect(isWorkEnabled()).toBe(true);
   });
@@ -57,7 +53,7 @@ describe("sugo_workspace(status)", () => {
     expect(status.isError).toBe(false);
     expect(status.data.taskCount).toBe(1);
     expect(status.data.checkpointCount).toBe(1);
-    // status 동기화가 기존 task 노드에 Spec→Run 부모를 자동 보강한다.
+    // status 동기화가 task 노드에 Spec→Run 부모를 자동 보강한다.
     expect(status.data.roadmapNodeCount).toBe(4);
     expect(status.data.specCount).toBe(1);
     expect(status.data.historyCount).toBe(0);
@@ -128,7 +124,7 @@ describe("sugo_status(judgment)", () => {
     expect(result.data.judgment.totalSessions).toBe(0);
   });
 
-  it("days로 필터링할 수 있다(구 windowDays)", async () => {
+  it("days로 필터링할 수 있다", async () => {
     const result = await call(handleSugoStatus, { judgment: true, days: 7 });
     expect(result.isError).toBe(false);
     expect(result.data.judgment).toBeDefined();

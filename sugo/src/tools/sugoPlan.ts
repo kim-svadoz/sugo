@@ -980,11 +980,11 @@ export async function handleSugoPlan(rawArgs: unknown) {
       // ── Roadmap DAG: task 레벨 노드를 보장하고, PRD의 ### REQ-XXX 헤딩을 자식 REQ
       // 노드(+ 항상 REQ-CONFIRM)로 심는다. 헤딩 형식 REQ가 하나도 없으면 심을 게 없어 no-op.
       // task 노드 상태는 실제 Task와 맞춰 in_progress로 갱신한다 — pending으로 남으면
-      // 의존성 없는 이 노드가 readySet에 REQ와 나란히 잘못 섞여 나온다(스모크 테스트가 잡아낸 버그).
+      // 의존성 없는 이 노드가 readySet에 REQ와 나란히 잘못 섞여 나온다.
       await backfillRoadmapTask(registryEntry.workspace, task.id, session.featureName);
       await updateRoadmapNodeStatus(registryEntry.workspace, task.id, "in_progress");
       // PRD 하나가 Spec, 실행 한 번이 Run, 저장소 산출물이 Task다.
-      // 기존 구현은 Task→REQ만 만들어 Canvas의 핵심 계층이 영원히 비어 있었다.
+      // Spec→Run→Task→REQ 4층을 모두 만들어야 Canvas의 핵심 계층이 채워진다.
       // patch는 같은 제품 작업의 다음 차수이지 새 실행 묶음이 아니다. 기존 Task가 속한 RUN을
       // 그대로 재사용해야 캔버스가 RUN 하나 안에서 v0-feat → vN-patch를 보여줄 수 있다.
       const existingTaskNode = isPatch ? await getRoadmapNode(registryEntry.workspace, task.id) : null;

@@ -4,12 +4,12 @@ import { blockerResumePrompt } from "./blockerDecision.js";
 describe("blockerResumePrompt", () => {
   it("carries the exact workspace, task and human decision back to the agent session", () => {
     expect(blockerResumePrompt({
-      workspace: "tmp-sugo-showcase",
+      workspace: "tmp-showcase",
       taskId: "demo-reset",
       taskTitle: "비밀번호 재설정 링크",
       question: "링크 유효 시간 미확정",
       response: "유효 시간은 30분으로 한다.",
-    })).toContain("workspace: tmp-sugo-showcase\ntask: demo-reset · 비밀번호 재설정 링크\n차단 질문: 링크 유효 시간 미확정\n사용자 결정: 유효 시간은 30분으로 한다.");
+    })).toContain("workspace: tmp-showcase\ntask: demo-reset · 비밀번호 재설정 링크\n차단 질문: 링크 유효 시간 미확정\n사용자 결정: 유효 시간은 30분으로 한다.");
   });
 
   it("requires the agent to consume the dashboard decision in the original session before resuming", () => {

@@ -217,7 +217,7 @@ describe("recordRoadmapWorkResult", () => {
       id: "task-a", title: "예외 처리 보강", project: "/project", status: "in_progress",
       created_at: "2026-01-01T00:00:00.000Z", started_at: "2026-01-02T00:00:00.000Z",
       prd_ref: basePrdPath,
-      patchInfo: { parentTaskId: "task-a", patchVersion: 1, seed: "필터별 조회와 세 단계 대체 조회를 추가한다" },
+      patchInfo: { parentTaskId: "task-a", patchVersion: 1, seed: "항목별 등록과 완료 처리를 추가한다" },
     }]);
     const task = await getRoadmapNode("ws1", "task-a");
     expect(task?.lineage?.map((entry) => entry.version)).toEqual([0, 1]);

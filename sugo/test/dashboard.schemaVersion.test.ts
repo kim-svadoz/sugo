@@ -53,9 +53,9 @@ describe("schemaVersion — 모든 sync payload에 계약 버전을 싣는다", 
     expect(received[0].body.schemaVersion).toBe(DASHBOARD_SYNC_SCHEMA_VERSION);
   });
 
-  it("도메인 필드를 덮어쓰지 않는다(주입은 추가일 뿐)", async () => {
-    await pushEvent("/api/sync/user", "POST", { userId: "u1", displayName: "Kim" });
-    expect(received[0].body).toMatchObject({ userId: "u1", displayName: "Kim" });
+  it("본문 필드를 덮어쓰지 않는다(주입은 추가일 뿐)", async () => {
+    await pushEvent("/api/sync/user", "POST", { userId: "u1", displayName: "Alice" });
+    expect(received[0].body).toMatchObject({ userId: "u1", displayName: "Alice" });
   });
 
   it("호출부가 명시한 schemaVersion이 있으면 그 값을 존중한다", async () => {

@@ -164,7 +164,7 @@ export function CheckpointPanel({
           <Shield size={16} className="text-amber-400" /> {projectLabel ? `${projectLabel} 프로젝트 체크포인트` : `${workspace} · ${WORKSPACE_RULES_TOOL.label}`}
         </h3>
         <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
-          <p>이 도메인의 프로젝트에서 작업 컨텍스트를 불러올 때 <code>.claude/rules/&lt;category&gt;/</code>로 동기화되어 Claude Code에 자동 주입됩니다.</p>
+          <p>이 워크스페이스의 프로젝트에서 작업 컨텍스트를 불러올 때 <code>.claude/rules/&lt;category&gt;/</code>로 동기화되어 Claude Code에 자동 주입됩니다.</p>
           {projectLabel ? (
             <p className="mt-1 text-[var(--color-text-dim)]">여기서 새로 만드는 체크포인트는 기본적으로 <strong className="text-amber-300">{projectLabel}</strong> 프로젝트에만 적용됩니다. 워크스페이스 전체 체크포인트도 함께 보입니다.</p>
           ) : (

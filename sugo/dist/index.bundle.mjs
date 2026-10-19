@@ -28023,7 +28023,7 @@ function checkpointBody(cp, workspace) {
     "",
     `# ${cp.title}`,
     "",
-    `> ${workspace} \uB3C4\uBA54\uC778\uC758 \uC7AC\uBC1C\uBC29\uC9C0 \uCEE8\uD14D\uC2A4\uD2B8 \xB7 ${cp.applies_to?.length ? `\uC801\uC6A9 \uB300\uC0C1: ${cp.applies_to.join(", ")}` : "\uB3C4\uBA54\uC778 \uC804\uCCB4 \uC801\uC6A9"}`,
+    `> ${workspace} \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uC758 \uC7AC\uBC1C\uBC29\uC9C0 \uCEE8\uD14D\uC2A4\uD2B8 \xB7 ${cp.applies_to?.length ? `\uC801\uC6A9 \uB300\uC0C1: ${cp.applies_to.join(", ")}` : "\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC804\uCCB4 \uC801\uC6A9"}`,
     "",
     ...cp.learned_from?.trim() ? [cp.learned_from.trim()] : cp.checklist.map((item) => `- ${item}`),
     ""
@@ -28221,7 +28221,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.37.4" : "0.0.0-dev";
+  return true ? "0.37.5" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30444,7 +30444,7 @@ var OBJECT_TYPES = [
   { name: "workstream", layer: "roadmap", label: "Run", meaning: "feat/patch \uC2E4\uD589 \uB2E8\uC704. Spec \uC548\uC5D0 \uC2DC\uAC04\uC21C \uC801\uCE35", containedBy: "spec", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
   { name: "task", layer: "roadmap", label: "Task", meaning: "\uB808\uD3EC\uBCC4 \uC2E4\uC81C \uC0B0\uCD9C\uBB3C. \uC9C4\uD589\uB960 \uAE30\uC900 \uCE35", containedBy: "workstream", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }, { path: "src/work/types.ts", symbol: "interface Task" }] },
   { name: "subtask", layer: "roadmap", label: "REQ", meaning: "Task \uD558\uC704 \uC138\uBD80 \uAC80\uC99D \uC2A4\uD399(\uC694\uAD6C\uC0AC\uD56D)", containedBy: "task", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
-  { name: "step", layer: "roadmap", label: "Step(\uB808\uAC70\uC2DC)", meaning: "\uAD6C \uB2E8\uACC4 \uB2E8\uC704. \uC2E0\uADDC \uD750\uB984 \uBBF8\uC0AC\uC6A9", containedBy: "subtask", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
+  { name: "step", layer: "roadmap", label: "Step", meaning: "\uB2E8\uACC4 \uB2E8\uC704. \uC0C8 \uD750\uB984\uC5D0\uC11C\uB294 \uC4F0\uC9C0 \uC54A\uB294\uB2E4", containedBy: "subtask", implementationRefs: [{ path: "src/work/types.ts", symbol: "RoadmapNode" }] },
   { name: "session", layer: "runtime", label: "Session", meaning: "\uD55C feat/patch \uC0C1\uD0DC\uBA38\uC2E0 \uC2E4\uD589\uACFC \uADF8 \uAC10\uC0AC \uC0C1\uD0DC", containedBy: null, implementationRefs: [{ path: "src/types.ts", symbol: "interface PlanSession" }] },
   { name: "evidence", layer: "runtime", label: "Evidence", meaning: "\uAC8C\uC774\uD2B8\uAC00 \uC18C\uBE44\uD558\uB294 baseline\xB7contract\xB7test\xB7runtime\xB7validation \uC2E4\uD589 \uC99D\uAC70", containedBy: null, implementationRefs: [{ path: "src/testEvidence.ts", symbol: "interface TestEvidenceRecord" }, { path: "src/contractEvidence.ts", symbol: "interface ContractTestRecord" }] },
   { name: "human_decision", layer: "runtime", label: "Human Decision", meaning: "\uC9C8\uBB38\xB7\uC120\uD0DD\uC9C0\xB7\uB2F5\uBCC0\xB7\uBCF5\uADC0 action\uC744 \uBCF4\uC874\uD558\uB294 \uC0AC\uB78C \uD310\uB2E8", containedBy: null, implementationRefs: [{ path: "src/work/types.ts", symbol: "interface HumanBlocker" }] },
@@ -32354,7 +32354,7 @@ var sugoRecordTestEvidenceInputSchema = {
   failedTests: external_exports.number().optional().describe("\uC2E4\uD328 \uC218"),
   skippedTests: external_exports.number().optional().describe("\uC2A4\uD0B5 \uC218"),
   rawOutput: external_exports.string().optional().describe("\uC6D0\uBB38 \uCD9C\uB825(\uAC10\uC0AC\uC6A9, \uC120\uD0DD)"),
-  /** @deprecated 옛 이름 — 낡은 호출부 호환용. 새 코드는 totalTests/passedTests/failedTests를 쓴다. */
+  /** @deprecated 이전 이름 — 호환용. 새 코드는 totalTests/passedTests/failedTests를 쓴다. */
   total: external_exports.number().optional(),
   passed: external_exports.number().optional(),
   failed: external_exports.number().optional(),
@@ -34126,7 +34126,7 @@ async function handleSugoPrd() {
           {
             ok: false,
             errorCode: "TOOL_DEPRECATED",
-            message: "sugo_prd\uB294 \uD3D0\uAE30\uB410\uC2B5\uB2C8\uB2E4. PRD\uB294 \uD30C\uC774\uD504\uB77C\uC778 \uC548\uC5D0\uC11C\uB9CC \uB9CC\uB4E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4 \u2014 sugo_plan({action:'prd', sessionId, prdContent})\uB97C \uC0AC\uC6A9\uD558\uC138\uC694.",
+            message: "sugo_prd\uB294 \uB354 \uC774\uC0C1 \uC0AC\uC6A9\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. PRD\uB294 \uD30C\uC774\uD504\uB77C\uC778 \uC548\uC5D0\uC11C\uB9CC \uB9CC\uB4E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4 \u2014 sugo_plan({action:'prd', sessionId, prdContent})\uB97C \uC0AC\uC6A9\uD558\uC138\uC694.",
             replacement: "sugo_plan(action:'prd')"
           },
           null,
@@ -34140,7 +34140,7 @@ async function handleSugoPrd() {
 // src/tools/sugoSetup.ts
 var sugoSetupInputSchema = {
   bitbucket: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Bitbucket \uC5F0\uB3D9 \uC124\uC815. \uD1A0\uD070 \uC790\uCCB4\uB294 \uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC554\uD638\uD654 \uBCF4\uAD00\uD55C\uB2E4"),
-  jira: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Jira \uC5F0\uB3D9 \uC124\uC815. Jira \uC5F0\uB3D9 \uBAA8\uB4C8\uC774 \uC788\uC744 \uB54C\uB9CC \uC758\uBBF8\uAC00 \uC788\uB2E4"),
+  jira: external_exports.object({ baseUrl: external_exports.string().optional(), projectKey: external_exports.string().optional() }).optional().describe("Jira \uC5F0\uB3D9 \uC124\uC815. \uC774 \uBE4C\uB4DC\uB294 \uC800\uC7A5\uD558\uC9C0 \uC54A\uACE0 \uBC1B\uC740 \uAC12\uC744 \uB418\uB3CC\uB824\uC900\uB2E4"),
   initSecrets: external_exports.boolean().optional().describe("\uC2DC\uD06C\uB9BF \uC800\uC7A5\uC18C \uCD08\uAE30\uD654 \uC5EC\uBD80")
 };
 var SugoSetupArgs = external_exports.object(sugoSetupInputSchema);
@@ -34155,7 +34155,7 @@ async function handleSugoSetup(rawArgs) {
             ok: true,
             configured: false,
             received: args2,
-            note: "\uD50C\uB7EC\uADF8\uC778\uC740 \uC5F0\uB3D9 \uC124\uC815\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Bitbucket PAT\uB294 \uB300\uC2DC\uBCF4\uB4DC Settings\uC5D0\uC11C \uB4F1\uB85D\uD558\uC138\uC694(\uC554\uD638\uD654 \uBCF4\uAD00). Jira \uC5F0\uB3D9\uC740 \uC120\uD0DD \uBAA8\uB4C8\uC774\uB77C \uAE30\uBCF8 \uBC30\uD3EC\uC5D0 \uD3EC\uD568\uB3FC \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
+            note: "\uD50C\uB7EC\uADF8\uC778\uC740 \uC5F0\uB3D9 \uC124\uC815\uC744 \uC800\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Bitbucket PAT\uB294 \uB300\uC2DC\uBCF4\uB4DC Settings\uC5D0\uC11C \uB4F1\uB85D\uD558\uC138\uC694(\uC554\uD638\uD654 \uBCF4\uAD00). Jira \uC5F0\uB3D9 \uC124\uC815\uB3C4 \uC774 \uBE4C\uB4DC\uC5D0\uC11C\uB294 \uC800\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
           },
           null,
           2
@@ -35105,8 +35105,8 @@ server.registerTool(
 server.registerTool(
   "sugo_prd",
   {
-    title: "DEPRECATED \u2014 use sugo_plan(action:prd)",
-    description: "\uD3D0\uAE30\uB41C \uB3C4\uAD6C. \uBB34\uC870\uAC74 \uAC70\uBD80\uD558\uACE0 sugo_plan(action:prd)\uB85C \uC548\uB0B4\uD55C\uB2E4 \u2014 \uC0C1\uD0DC\uBA38\uC2E0\uC744 \uC6B0\uD68C\uD558\uB294 PRD \uC0DD\uC131\uC740 \uAC8C\uC774\uD2B8\uB97C \uD1B5\uC9F8\uB85C \uBE60\uC838\uB098\uAC00\uB294 \uB4B7\uBB38\uC774\uC5C8\uB2E4.",
+    title: "Use sugo_plan(action:prd) instead",
+    description: "\uC0AC\uC6A9\uD558\uC9C0 \uC54A\uB294 \uB3C4\uAD6C. \uBB34\uC870\uAC74 \uAC70\uBD80\uD558\uACE0 sugo_plan(action:prd)\uB85C \uC548\uB0B4\uD55C\uB2E4 \u2014 \uC0C1\uD0DC\uBA38\uC2E0\uC744 \uC6B0\uD68C\uD558\uB294 PRD \uC0DD\uC131\uC740 \uAC8C\uC774\uD2B8\uB97C \uD1B5\uC9F8\uB85C \uBE60\uC838\uB098\uAC00\uB294 \uB4B7\uBB38\uC774\uC5C8\uB2E4.",
     inputSchema: sugoPrdInputSchema
   },
   handleSugoPrd

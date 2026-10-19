@@ -71,7 +71,7 @@ export interface RoadmapCounts {
 /**
  * 카드/Inspector가 실제로 읽는 필드들. 화면이 요구하는 모양을 그대로 돌려준다 —
  * 프론트에서 카운트를 다시 계산하게 두면 목록 화면 하나 그리려고 워크스페이스마다 N번씩
- * 추가 조회를 하게 된다(도메인 8개면 32번).
+ * 추가 조회를 하게 된다.
  */
 export interface WorkspaceSummary {
   name: string;
@@ -1416,7 +1416,7 @@ export async function assignRunToSpec(
 
 /**
  * `nextGroupId` — `run-NNN`(3자리 pad) 생성기. **파서는 `run-` 단일형만 인식한다**(`wst-`는
- * 마이그레이션 대상이지 공존 대상이 아니다 — 둘 다 인식하면 번호 공간이 갈라진다).
+ * 이전 접두어라 인식하지 않는다 — 둘 다 인식하면 번호 공간이 갈라진다).
  * 999를 넘으면 pad 없이 이어간다(자릿수를 잘라 충돌시키지 않는다).
  */
 export async function nextGroupId(db: DbClient, userId: string, workspaceName: string): Promise<string> {
@@ -1433,8 +1433,8 @@ export async function nextGroupId(db: DbClient, userId: string, workspaceName: s
 }
 
 /**
- * `wst-` → `run-` in-place 마이그레이션. **참조 3곳(id·parent·depends_on)을 전부** 옮긴다 —
- * 하나라도 빠지면 dangling 참조가 되어 그래프가 조용히 끊긴다(화면엔 "연결 없음"으로만 보인다).
+ * `wst-` → `run-` 접두어 변환. **참조 3곳(id·parent·depends_on)을 전부** 옮긴다 —
+ * 하나라도 빠지면 dangling 참조가 되어 그래프가 조용히 끊긴다.
  * 두 접두어가 같은 길이(4자)라 depends_on JSON은 문자열 치환으로도 유효성이 유지된다.
  *
  * 부팅 시 1회. 절대 던지지 않는다 — 마이그레이션 실패가 대시보드 기동을 막으면 안 된다.
@@ -1447,14 +1447,13 @@ export async function migrateWstToRun(db: DbClient): Promise<{ migrated: number 
     if (affected.length === 0) return { migrated: 0 };
 
     // **문자열 조작은 애플리케이션에서 한다.** SQL로 하면 MySQL(`CONCAT`/`SUBSTRING`)과
-    // SQLite(`||`/`SUBSTR`) 문법이 갈라져 한쪽에서만 도는 마이그레이션이 된다 — 이 프로젝트에서
-    // 이미 두 번 물린 함정이라 드라이버 중립으로 짠다.
+    // SQLite(`||`/`SUBSTR`) 문법이 갈라지므로 드라이버 중립으로 짠다.
     const rename = (v: string) => (v.startsWith("wst-") ? `run-${v.slice(4)}` : v);
     let migrated = 0;
 
     for (const row of affected) {
       // NULL은 NULL로 둔다. `[]`로 바꿔버리면 "순서를 아직 시딩 안 했다"(NULL)와 "비어 있도록
-      // 편집했다"(`[]`)의 구분이 사라진다 — 실제 MySQL 검증에서 이 변질을 잡았다.
+      // 편집했다"(`[]`)의 구분이 사라진다.
       const newDeps =
         row.depends_on === null || row.depends_on === undefined
           ? null

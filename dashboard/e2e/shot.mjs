@@ -8,12 +8,12 @@ const OUT = process.env.CLAUDE_JOB_DIR ? join(process.env.CLAUDE_JOB_DIR, "tmp")
 const BASE = E2E_UI_URL;
 
 // 화면에 그대로 찍히는 mock 경로 — 고정 경로를 박으면 다른 OS 스크린샷에 없는 경로가 뜬다.
-const SPLEARN = join(homedir(), "splearn");
-const PAYMENTS = join(homedir(), "work", "payments");
+const WEBAPP = join(homedir(), "webapp");
+const PAYMENTS = join(homedir(), "work", "webapp-payments");
 
 const workspaces = [{
   name: "temp-workspace",
-  projects: [{ project_path: SPLEARN, git_synced: 1 }],
+  projects: [{ project_path: WEBAPP, git_synced: 1 }],
   taskCounts: { pending: 2, in_progress: 1, done: 3, archived: 0 },
   roadmap: { total: 6, done: 3, active: 1 },
 }, {

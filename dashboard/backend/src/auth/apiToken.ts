@@ -1,6 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
-// SaaS(공개 배포) 전용 개인 API 토큰. 플러그인이 sync 시 Authorization: Bearer로 보낸다.
+// 개인 API 토큰. 플러그인이 sync 시 Authorization: Bearer로 보낸다.
 // 평문 토큰은 발급 순간 딱 한 번만 사용자에게 노출하고, 서버는 sha256 해시만 저장·대조한다.
 const TOKEN_PREFIX = "sugo_pat_";
 

@@ -1,4 +1,4 @@
 # sugo가 이 디렉터리를 프로젝트로 등록해 만드는 산출물(config.json·harness/·features/).
-# config.json에는 절대경로가 박혀 있어 다른 PC에서 의미가 없다. 하네스 규칙 자체는
+# config.json에는 절대경로가 들어 있어 클론마다 다르다. 하네스 규칙 자체는
 # .claude/rules/로 따로 나가므로 추적된다.
 /sugo/

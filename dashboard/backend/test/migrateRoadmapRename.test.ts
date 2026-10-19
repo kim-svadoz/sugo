@@ -20,8 +20,8 @@ async function tableNames(db: DbClient): Promise<string[]> {
   return rows.map((r) => r.name);
 }
 
-describe("canvas→roadmap 테이블 리네임 마이그레이션 (D1)", () => {
-  it("구 테이블만 있으면 데이터를 보존한 채 이름을 바꾼다", async () => {
+describe("테이블 이름 변경 마이그레이션", () => {
+  it("이전 이름의 테이블만 있으면 데이터를 보존한 채 이름을 바꾼다", async () => {
     const db = createSqliteClient();
     await db.exec(OLD);
     await db.exec("INSERT INTO sugo_canvas_nodes VALUES ('u1','ws1','run-001','R','workstream','pending')");
@@ -106,8 +106,8 @@ describe("canvas→roadmap 테이블 리네임 마이그레이션 (D1)", () => {
   });
 });
 
-describe("runtime_assessment 기존 DB 부팅 마이그레이션", () => {
-  it("sync 요청 전에도 기존 roadmap 테이블에 컬럼을 추가한다", async () => {
+describe("runtime_assessment 컬럼 부팅 마이그레이션", () => {
+  it("sync 요청 전에도 이미 있는 roadmap 테이블에 컬럼을 추가한다", async () => {
     const db = createSqliteClient();
     await db.exec(NEW);
 
@@ -118,7 +118,7 @@ describe("runtime_assessment 기존 DB 부팅 마이그레이션", () => {
     await db.close();
   });
 
-  it("두 번 실행해도 안전하고 기존 행을 보존한다", async () => {
+  it("두 번 실행해도 안전하고 행을 보존한다", async () => {
     const db = createSqliteClient();
     await db.exec(NEW);
     await db.exec("INSERT INTO sugo_roadmap_nodes VALUES ('u1','ws1','task-1','T','task','pending')");

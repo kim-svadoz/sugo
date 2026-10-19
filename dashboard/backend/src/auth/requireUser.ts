@@ -3,7 +3,7 @@ import type { DbClient } from "../db/client.js";
 import { resolveUserIdByToken } from "../services/apiTokenService.js";
 import { verifySession } from "./session.js";
 
-// 공개 SaaS: 데이터 라우트는 두 종류의 신원을 모두 받는다.
+// 데이터 라우트는 두 종류의 신원을 모두 받는다.
 //  - 브라우저(웹UI): GitHub 로그인으로 받은 세션 JWT
 //  - 플러그인/CLI: 웹UI에서 발급한 API 토큰(sugo_pat_...)
 // 어느 쪽이든 req.userId로 해석하고, body/query의 userId는 신뢰하지 않는다.
