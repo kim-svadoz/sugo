@@ -273,6 +273,17 @@ CREATE TABLE IF NOT EXISTS user_pinpoint_snapshots (
   observed_at VARCHAR(64) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS user_context_auto_refresh_runs (
+  user_id VARCHAR(191) NOT NULL,
+  day_key VARCHAR(10) NOT NULL,
+  status VARCHAR(16) NOT NULL,
+  started_at VARCHAR(64) NOT NULL,
+  completed_at VARCHAR(64) NULL,
+  error_message TEXT NULL,
+  PRIMARY KEY (user_id, day_key),
+  CONSTRAINT fk_context_auto_refresh_user FOREIGN KEY (user_id) REFERENCES sugo_users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- 플러그인이 sync 시 Bearer로 보내는 개인 API 토큰. 평문은 저장하지
 -- 않고 sha256 해시만 저장한다(user_bitbucket_tokens와 달리 복호화 불필요 — 대조만 함).
 CREATE TABLE IF NOT EXISTS user_api_tokens (

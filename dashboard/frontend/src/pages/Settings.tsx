@@ -14,8 +14,15 @@ import { getProjectIntegrations, saveProjectIntegration, type IntegrationCandida
 import { summarizeSageMaker } from "../lib/awsInventoryPresentation.js";
 import { awsAccountMetaLabel, awsAccountOptionLabel, initialIntegrationSelection, integrationStatusLabel, isExactIntegrationCandidate, moveIntegrationKeys, partitionIntegrationCandidates } from "../lib/projectIntegrationPresentation.js";
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
+import { snapshotAge } from "../lib/snapshotAge.js";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
+
+function useCurrentMinute() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 60_000); return () => window.clearInterval(timer); }, []);
+  return now;
+}
 
 const awsServiceLabels: Record<string, string> = {
   codecommit: "CodeCommit", athena: "Athena", s3: "S3", codebuild: "CodeBuild",
@@ -24,6 +31,7 @@ const awsServiceLabels: Record<string, string> = {
   ecs: "ECS",
 };
 function AwsContextCard() {
+  const now = useCurrentMinute();
   const [status, setStatus] = useState<AwsContextStatus | null>(null);
   const [accountName, setAccountName] = useState("");
   const [profile, setProfile] = useState("");
@@ -135,7 +143,7 @@ function AwsContextCard() {
             </div>;
           })}
         </div> : <div className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-4 text-center text-xs text-[var(--color-text-muted)]">표시할 AWS 리소스가 없습니다.</div>}
-        <div className="flex flex-wrap justify-end gap-x-3 font-mono text-[10px] text-[var(--color-text-dim)]"><span>읽기 전용 · 1시간 간격 · 계정별 하루 {status.refreshBudget?.dailyLimit ?? 4}회 제한</span><span>오늘 남음 {status.refreshBudget?.remainingToday ?? '-'}회</span>{status.refreshBudget?.nextAllowedAt && <span>다음 가능 {new Date(status.refreshBudget.nextAllowedAt).toLocaleString('ko-KR')}</span>}<span>마지막 조회 {status.observedAt ?? "없음"}</span></div>
+        <div className="flex flex-wrap justify-end gap-x-3 font-mono text-[10px] text-[var(--color-text-dim)]"><span>매일 08:00 KST 자동 동기화 · 수동 동기화 가능</span><span>계정별 하루 {status.refreshBudget?.dailyLimit ?? 4}회 제한</span><span>오늘 남음 {status.refreshBudget?.remainingToday ?? '-'}회</span>{status.refreshBudget?.nextAllowedAt && <span>다음 가능 {new Date(status.refreshBudget.nextAllowedAt).toLocaleString('ko-KR')}</span>}<span className={snapshotAge(status.observedAt, now).stale ? "text-amber-300" : ""}>마지막 동기화 {snapshotAge(status.observedAt, now).label}</span></div>
       </>}
     </div>
   </div>;
@@ -170,6 +178,7 @@ function AwsGuardPolicyCard() {
 }
 
 function PinpointContextCard() {
+  const now = useCurrentMinute();
   const [status, setStatus] = useState<PinpointStatus | null>(null);
   const [baseUrl, setBaseUrl] = useState('');
   const [busy, setBusy] = useState(false);
@@ -188,7 +197,7 @@ function PinpointContextCard() {
         {!status?.connected ? <button disabled={busy || !baseUrl} onClick={() => void run(() => connectPinpointContext(baseUrl))} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200 disabled:opacity-40">연결</button> : <><button disabled={busy} onClick={() => void run(refreshPinpointContext)} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200">동기화</button><button disabled={busy} onClick={() => void run(disconnectPinpointContext)} className="rounded border border-rose-400/30 px-3 text-sm text-rose-300">해제</button></>}
       </div>
       {status?.connected && <div className="grid gap-2 sm:grid-cols-2">{status.applications.map((app) => <div key={app.applicationName} className="rounded border border-[var(--color-border)] bg-black/10 px-3 py-2 text-xs"><div className="font-medium text-[var(--color-text)]">{app.applicationName}</div><div className="mt-1 text-[var(--color-text-muted)]">{app.state} · agent {app.runningAgentCount}/{app.agentCount} · 최근 5분 지연 표본 {app.sampleCount >= 5000 ? '5,000+' : app.sampleCount} / 표본 오류 {app.errorCount}</div></div>)}</div>}
-      <p className="text-[11px] text-[var(--color-text-dim)]">읽기 전용 · 수동 동기화 · 5분 캐시로 중복 호출을 막습니다. 마지막 동기화 {status?.observedAt ?? '없음'}</p>
+      <p className="text-[11px] text-[var(--color-text-dim)]">읽기 전용 · 매일 08:00 KST 자동 동기화 · 수동 동기화 가능 · 5분 중복 호출 방지 <span className={snapshotAge(status?.observedAt ?? null, now).stale ? "text-amber-300" : ""}>· 마지막 동기화 {snapshotAge(status?.observedAt ?? null, now).label}</span></p>
     </div>
   </div>;
 }

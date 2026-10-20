@@ -28232,7 +28232,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.37.15" : "0.0.0-dev";
+  return true ? "0.37.16" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts

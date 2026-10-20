@@ -35,6 +35,7 @@ import { createProjectIntegrationsRouter } from './routes/projectIntegrations.js
 import { createAwsGuardPolicyRouter } from './routes/awsGuardPolicy.js';
 import { corsWhitelist } from "./middleware/cors.js";
 import { errorMiddleware } from "./middleware/asyncHandler.js";
+import { startContextAutoRefresh } from "./services/contextAutoRefreshService.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // 번들은 빌드 때 DASHBOARD_VERSION을 상수로 박는다(옆 디렉터리의 package.json은 플러그인 것이다).
@@ -176,7 +177,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   // 모든 라우트 뒤: 동기 throw / next(err)를 프로세스를 죽이지 않고 500으로 응답한다.
   app.use(errorMiddleware);
 
-  return { app, db, verifyJwt };
+  return { app, db, verifyJwt, awsContextClient, pinpointClient };
 }
 
 async function main() {
@@ -190,7 +191,8 @@ async function main() {
     console.error("[dashboard] uncaughtException (프로세스 유지):", err.message);
   });
 
-  const { app } = await createApp();
+  const { app, db, awsContextClient, pinpointClient } = await createApp();
+  startContextAutoRefresh(db, awsContextClient, pinpointClient);
   app.listen(config.port, config.host, () => {
     console.log(`sugo-dashboard-backend listening on ${config.host}:${config.port} (db=${config.dbDriver})`);
   });

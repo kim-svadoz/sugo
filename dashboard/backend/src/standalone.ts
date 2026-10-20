@@ -63,13 +63,15 @@ process.env.SUGO_DASHBOARD_API_URL = apiUrl;
 const { createApp } = await import("./index.js");
 const { bootstrapLocalDashboard } = await import("./localBootstrap.js");
 
-const { app, db } = await createApp({ staticDir, sqliteSchema });
+const { app, db, awsContextClient, pinpointClient } = await createApp({ staticDir, sqliteSchema });
+const { startContextAutoRefresh } = await import("./services/contextAutoRefreshService.js");
 await bootstrapLocalDashboard(db, {
   userId,
   displayName,
   apiUrl,
   settingsPath: join(sugoDir, "settings.json"),
 });
+const stopContextAutoRefresh = startContextAutoRefresh(db, awsContextClient, pinpointClient);
 
 const server = app.listen(port, HOST, () => {
   void writeFile(stateFile, `${JSON.stringify({ pid: process.pid, port, version: process.env.DASHBOARD_VERSION, startedAt: new Date().toISOString() })}\n`);
@@ -81,6 +83,7 @@ server.on("error", (err) => {
 });
 
 async function shutdown() {
+  stopContextAutoRefresh();
   server.close();
   await db.close();
   await rm(stateFile, { force: true });
