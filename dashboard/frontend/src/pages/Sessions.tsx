@@ -788,24 +788,6 @@ export function Sessions() {
                       </span>
                     </div>
                   )}
-                  {ws.projects && ws.projects.length > 0 && (
-                    <div className="mt-2.5 flex flex-wrap gap-1">
-                      {ws.projects.slice(0, 4).map((p) => (
-                        <span
-                          key={p.project_path}
-                          title={p.project_path}
-                          className="rounded border border-[var(--color-border)] bg-slate-950 px-1.5 py-0.5 font-mono text-[10px] text-slate-400"
-                        >
-                          📦 {repoName(p.project_path)}
-                        </span>
-                      ))}
-                      {ws.projects.length > 4 && (
-                        <span className="rounded border border-[var(--color-border)] bg-slate-950 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
-                          +{ws.projects.length - 4}
-                        </span>
-                      )}
-                    </div>
-                  )}
                   {(ws.attentionCount ?? 0) > 0 ? (
                     <div className="mt-2 flex items-center gap-1.5 font-mono text-xs font-semibold text-amber-300" title={`${ws.attentionCount}개의 Task에 사람의 확인이 필요합니다`}>
                       <AlertTriangle size={13} /> {ws.attentionLabel ?? `확인 필요 ${ws.attentionCount}건`}

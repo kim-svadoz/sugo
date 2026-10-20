@@ -16,9 +16,9 @@ describe("sidebar keyboard navigation", () => {
 
   it("업무·탐색·제어 목적에 따라 내비게이션을 세 그룹으로 나눈다", () => {
     expect(SIDEBAR_GROUPS.map(({ label, items }) => ({ label, paths: items.map((item) => item.to) }))).toEqual([
-      { label: "WORK", paths: ["/sessions", "/schedule", "/weekly"] },
-      { label: "EXPLORE", paths: ["/skills", "/playbook"] },
-      { label: "CONTROL", paths: ["/harness", "/settings"] },
+      { label: "업무", paths: ["/sessions", "/schedule", "/weekly"] },
+      { label: "둘러보기", paths: ["/skills", "/playbook"] },
+      { label: "환경", paths: ["/harness", "/settings"] },
     ]);
   });
 
