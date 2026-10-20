@@ -1,11 +1,11 @@
 import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
-import { syncDecision } from "../dashboard/sync.js";
 import { parseFrontmatter, stringifyFrontmatter } from "./frontmatter.js";
 import { slugify } from "./slug.js";
 import { specsDir } from "./storage.js";
 import type { Spec, SpecType } from "./types.js";
+import { syncSpec } from "../dashboard/sync.js";
 
 export interface AddSpecParams {
   name: string;
@@ -30,7 +30,7 @@ export async function addSpec(workspace: string, params: AddSpecParams): Promise
     spec.content,
   );
   await atomicWriteFile(join(dir, `${slugify(params.name)}.md`), fileContent);
-  void syncDecision(workspace, spec);
+  void syncSpec(workspace, spec);
   return spec;
 }
 

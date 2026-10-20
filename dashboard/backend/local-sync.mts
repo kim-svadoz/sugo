@@ -9,7 +9,7 @@ import { listTasks } from "../../sugo/src/work/task.js";
 import { listWorkspaces } from "../../sugo/src/work/workspace.js";
 import {
   syncCheckpoint,
-  syncDecision,
+  syncSpec,
   syncHistory,
   syncPluginVersion,
   syncRoadmapSnapshot,
@@ -54,7 +54,7 @@ for (const workspace of workspaces) {
   historyCount += history.length;
 
   const specs = await listSpecs(workspace.name);
-  for (const spec of specs) await syncDecision(workspace.name, spec);
+  for (const spec of specs) await syncSpec(workspace.name, spec);
   specCount += specs.length;
 
   // 정식 장기 Spec이 없던 옛 작업도 Canvas의 "원문"에서 끊기지 않게 한다.
@@ -64,7 +64,7 @@ for (const workspace of workspaces) {
     if (!task.prd_ref || specNames.has(task.title)) continue;
     const content = await readFile(task.prd_ref, "utf8").catch(() => null);
     if (!content) continue;
-    await syncDecision(workspace.name, {
+    await syncSpec(workspace.name, {
       name: task.title,
       type: "other",
       tags: ["prd-fallback"],

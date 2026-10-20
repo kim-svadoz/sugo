@@ -12,7 +12,7 @@ import {
   syncWorkspace,
   syncTask,
   syncHistory,
-  syncDecision,
+  syncSpec,
   syncCheckpoint,
   syncWorkspaceMeta,
   syncRoadmap,
@@ -105,9 +105,7 @@ async function main() {
     });
   }
 
-  // ── Decisions (ADR) ─────────────────────────────────────────────
-  await syncDecision(db, { userId: USER, workspaceName: "temp-workspace", id: "adr-1", title: "인증 방식으로 JWT 채택", status: "accepted", content: "## 맥락\n세션 스토어 부담을 줄이기 위해\n## 결정\nJWT(HS256) + 리프레시\n## 결과\n무상태 인증" });
-  await syncDecision(db, { userId: USER, workspaceName: "temp-workspace", id: "adr-2", title: "비밀번호 해시 bcrypt", status: "accepted", content: "cost 12로 bcrypt 사용" });
+  await syncSpec(db, { userId: USER, workspaceName: "temp-workspace", id: "auth-spec", title: "인증 기능 명세", status: "active", content: "JWT 인증과 리프레시 토큰 요구사항" });
 
   // ── Checkpoints ─────────────────────────────────────────────────
   await syncCheckpoint(db, { userId: USER, workspaceName: "temp-workspace", id: "CP-001", title: "배선 변경 시 통합테스트 필수", checklist: ["application.yml 변경 확인", "mock 없는 배선 테스트"] });

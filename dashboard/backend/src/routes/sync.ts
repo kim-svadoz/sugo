@@ -3,7 +3,7 @@ import type { DbClient } from "../db/client.js";
 import {
   bulkSyncSchema,
   checkpointSchema,
-  decisionSchema,
+  specSchema,
   entityDeleteSchema,
   historySchema,
   pluginVersionSchema,
@@ -22,13 +22,13 @@ import { syncSchemaVersion } from "../middleware/syncSchemaVersion.js";
 import { requireUser } from "../auth/requireUser.js";
 import {
   deleteCheckpoint,
-  deleteDecision,
+  deleteSpec,
   deleteHistory,
   deleteTask,
   deleteWorkspace,
   getPluginVersion,
   syncCheckpoint,
-  syncDecision,
+  syncSpec,
   syncHistory,
   syncPluginVersion,
   syncRoadmap,
@@ -108,13 +108,13 @@ export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
     res.json({ ok: true });
   }));
 
-  router.post("/decision", validateBody(decisionSchema), asyncHandler(async (req, res) => {
-    await syncDecision(db, req.body);
+  router.post("/spec", validateBody(specSchema), asyncHandler(async (req, res) => {
+    await syncSpec(db, req.body);
     res.json({ ok: true });
   }));
 
-  router.delete("/decision", validateBody(entityDeleteSchema), asyncHandler(async (req, res) => {
-    await deleteDecision(db, req.body.userId, req.body.workspaceName, req.body.id);
+  router.delete("/spec", validateBody(entityDeleteSchema), asyncHandler(async (req, res) => {
+    await deleteSpec(db, req.body.userId, req.body.workspaceName, req.body.id);
     res.json({ ok: true });
   }));
 
@@ -164,7 +164,7 @@ export function createSyncRouter(db: DbClient, sessionSecret: string): Router {
     for (const w of body.workspaces ?? []) await syncWorkspace(db, { ...w, userId: uid });
     for (const t of body.tasks ?? []) await syncTask(db, { ...t, userId: uid });
     for (const h of body.history ?? []) await syncHistory(db, { ...h, userId: uid });
-    for (const d of body.decisions ?? []) await syncDecision(db, { ...d, userId: uid });
+    for (const spec of body.specs ?? []) await syncSpec(db, { ...spec, userId: uid });
     for (const c of body.checkpoints ?? []) await syncCheckpoint(db, { ...c, userId: uid });
     for (const m of body.workspaceMeta ?? []) await syncWorkspaceMeta(db, { ...m, userId: uid });
     for (const r of body.roadmap ?? []) await syncRoadmap(db, uid, r.workspaceName, r.nodes);

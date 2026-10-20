@@ -83,7 +83,6 @@ export interface WorkspaceSummary {
   roadmapDoneCount: number;
   activeTaskCount: number;
   historyCount: number;
-  decisionCount: number;
   checkpointCount: number;
   projectCount: number;
   /** 사람이 지금 확인해야 할 task(차단·6h 정체·미검증 완료)의 합계와 최우선 요약. */
@@ -223,9 +222,8 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
     const tasks = await taskCounts(db, userId, ws.name);
     const roadmap = await roadmapCounts(db, userId, ws.name);
     const attention = await workspaceAttention(db, userId, ws.name);
-    const [historyCount, decisionCount, checkpointCount] = await Promise.all([
+    const [historyCount, checkpointCount] = await Promise.all([
       countRows(db, "sugo_history", userId, ws.name),
-      countRows(db, "sugo_decisions", userId, ws.name),
       db.query<{ count: number }>(
         "SELECT COUNT(*) as count FROM sugo_checkpoints WHERE user_id = ? AND workspace_name = ? AND expires_at IS NULL",
         [userId, ws.name],
@@ -242,7 +240,6 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
       // 카드의 "N task 진행 중" 값도 로드맵 active에서 온다.
       activeTaskCount: roadmap.active,
       historyCount,
-      decisionCount,
       checkpointCount,
       projectCount: projects.length,
       attentionCount: attention.count,
@@ -345,17 +342,9 @@ export async function getCheckpointSync(db: DbClient, userId: string, workspaceN
   return rows.map(normalizeCheckpointRow);
 }
 
-export async function getDecisions(db: DbClient, userId: string, workspaceName: string) {
-  return db.query(
-    "SELECT id, title, status, content, decision_date FROM sugo_decisions WHERE user_id = ? AND workspace_name = ? ORDER BY id",
-    [userId, workspaceName]
-  );
-}
-
 /**
  * "GET /:name/spec-content?path=&title= — Spec 본문(slug 매칭)". 대시보드엔 spec 파일 본문을
- * 저장하는 테이블이 없다 — 플러그인이 Spec을 ADR로 sync하므로(sugo_decisions), title 또는 id를
- * slug로 매칭해 decision content를 돌려준다. 없으면 null.
+ * 플러그인이 동기화한 SPEC 원문에서 title 또는 id를 매칭한다. 없으면 null.
  */
 export async function getSpecContent(
   db: DbClient,
@@ -364,7 +353,7 @@ export async function getSpecContent(
   title: string,
 ): Promise<{ title: string; content: string | null } | null> {
   const rows = await db.query<{ id: string; title: string; content: string | null }>(
-    "SELECT id, title, content FROM sugo_decisions WHERE user_id = ? AND workspace_name = ? AND (id = ? OR title = ?) LIMIT 1",
+    "SELECT id, title, content FROM sugo_specs WHERE user_id = ? AND workspace_name = ? AND (id = ? OR title = ?) LIMIT 1",
     [userId, workspaceName, title, title],
   );
   if (rows.length === 0) return null;

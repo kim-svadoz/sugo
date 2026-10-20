@@ -49,6 +49,17 @@ export async function migrateCanvasToRoadmap(db: DbClient): Promise<void> {
   }
 }
 
+/** ADR 뷰를 제거하면서 SPEC 원문 저장소만 의미가 분명한 이름으로 보존한다. */
+export async function migrateDecisionsToSpecs(db: DbClient): Promise<void> {
+  try {
+    if (!(await tableExists(db, "sugo_decisions")) || await tableExists(db, "sugo_specs")) return;
+    await db.exec("ALTER TABLE sugo_decisions RENAME TO sugo_specs");
+    console.info("[migration] sugo_decisions → sugo_specs 리네임 완료.");
+  } catch (err) {
+    console.warn(`[migration] decisions→specs 리네임 실패(계속 진행): ${(err as Error).message}`);
+  }
+}
+
 /**
  * Ontology snapshot 컬럼의 부팅 마이그레이션. sync 요청에서만 자가보강하면 그보다 먼저 실행되는
  * Workspace/Schedule 읽기가 컬럼 없는 DB에서 `no such column`로 죽는다. 읽기 전에 항상 실행하고,

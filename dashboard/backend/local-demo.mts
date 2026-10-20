@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   syncCheckpoint,
-  syncDecision,
+  syncSpec,
   syncHistory,
   syncRoadmapSnapshot,
   syncTask,
@@ -252,7 +252,7 @@ await syncWorkspace(workspace);
 for (const task of tasks) await syncTask(workspaceName, task);
 await syncRoadmapSnapshot(workspaceName, roadmap);
 await syncCheckpoint(workspaceName, checkpoint);
-await syncDecision(workspaceName, spec);
+await syncSpec(workspaceName, spec);
 await syncHistory(workspaceName, history);
 
 // Live Console까지 쇼케이스 한 화면에서 검증할 수 있도록 feat 파이프라인의 대표 이벤트를 심는다.

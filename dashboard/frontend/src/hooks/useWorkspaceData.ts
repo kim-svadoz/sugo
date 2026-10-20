@@ -3,8 +3,7 @@ import { apiJson, withUserId } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 
 /**
- * Sessions 화면이 쓰는 워크스페이스 상세 훅들(`useWorkspaceHistory`/`useWorkspaceDecisions`/
- * `useWorkspaceCheckpoints`/`useWorkspaceRoadmap`). 전부 `{data, loading, refresh}` 같은 모양이라
+ * Sessions 화면이 쓰는 워크스페이스 상세 훅들. 전부 `{data, loading, refresh}` 같은 모양이라
  * 제네릭 하나로 만든다 — 네 벌을 복붙하면 하나만 고치고 나머지를 잊는다.
  *
  * `workspace`가 null이면 조회하지 않는다(카드를 아직 안 골랐을 때 헛된 요청 방지).
@@ -57,14 +56,6 @@ export interface HistoryLog {
   created_at: string;
 }
 
-export interface Decision {
-  id: string;
-  title: string;
-  status: string | null;
-  content: string | null;
-  decision_date: string | null;
-}
-
 export interface Checkpoint {
   id: string;
   category: string;
@@ -79,10 +70,6 @@ export interface Checkpoint {
 
 export function useWorkspaceHistory(workspace: string | null) {
   return useWorkspaceResource<HistoryLog>(workspace, "history", (raw: never) => (raw as { history: HistoryLog[] }).history ?? []);
-}
-
-export function useWorkspaceDecisions(workspace: string | null) {
-  return useWorkspaceResource<Decision>(workspace, "decisions", (raw: never) => (raw as { decisions: Decision[] }).decisions ?? []);
 }
 
 export function useWorkspaceCheckpoints(workspace: string | null) {

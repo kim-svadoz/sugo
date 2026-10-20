@@ -112,12 +112,12 @@ CREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (
   PRIMARY KEY (user_id, workspace_name, spec_id)
 );
 
-CREATE TABLE IF NOT EXISTS sugo_decisions (
+CREATE TABLE IF NOT EXISTS sugo_specs (
   id TEXT NOT NULL,
   user_id TEXT NOT NULL,
   workspace_name TEXT NOT NULL,
   title TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'accepted',
+  status TEXT NOT NULL DEFAULT 'active',
   content TEXT,
   decision_date TEXT,
   PRIMARY KEY (user_id, workspace_name, id)

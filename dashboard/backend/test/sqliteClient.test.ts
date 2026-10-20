@@ -23,7 +23,7 @@ describe("sqliteClient — dev/test stand-in DbClient", () => {
         "sugo_workspace_projects",
         "sugo_tasks",
         "sugo_history",
-        "sugo_decisions",
+        "sugo_specs",
         "sugo_checkpoints",
         "sugo_workspace_meta",
         "sugo_roadmap_nodes",

@@ -42,7 +42,7 @@ async function seededApp() {
     .post("/api/sync/history").set("Authorization", auth)
     .send({ userId: "u1", workspaceName: "ws1", id: "h1", taskId: "t2", taskTitle: "저장 당시 제목", summary: "finished the thing" });
   await request(app)
-    .post("/api/sync/decision").set("Authorization", auth)
+    .post("/api/sync/spec").set("Authorization", auth)
     .send({ userId: "u1", workspaceName: "ws1", id: "d1", title: "Use SQLite locally" });
   await request(app)
     .post("/api/sync/checkpoint").set("Authorization", auth)
@@ -135,12 +135,9 @@ describe("GET /api/workspaces/checkpoint-sync", () => {
   });
 });
 
-describe("GET /api/workspaces/:name/{decisions,history,checkpoints,tasks,roadmap}", () => {
+describe("GET /api/workspaces/:name/{history,checkpoints,tasks,roadmap}", () => {
   it("returns per-workspace data", async () => {
     const { app, db, auth } = await seededApp();
-    const decisions = await request(app).get("/api/workspaces/ws1/decisions").query({ userId: "u1" }).set("Authorization", auth).expect(200);
-    expect(decisions.body.decisions).toHaveLength(1);
-
     const tasks = await request(app).get("/api/workspaces/ws1/tasks").query({ userId: "u1" }).set("Authorization", auth).expect(200);
     expect(tasks.body.tasks).toHaveLength(2);
 

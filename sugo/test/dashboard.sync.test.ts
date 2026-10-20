@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   syncCheckpoint,
-  syncDecision,
+  syncSpec,
   syncHistory,
   syncPluginVersion,
   syncRoadmapLink,
@@ -183,10 +183,10 @@ describe("syncHistory", () => {
   });
 });
 
-describe("syncDecision", () => {
-  it("/api/sync/decision으로 Spec을 ADR wire(id/title=name)로 보낸다", async () => {
-    await syncDecision("ws1", { name: "인증 방식", type: "architecture", tags: [], content: "JWT", created_at: "t" });
-    expect(received[0].path).toBe("/api/sync/decision");
+describe("syncSpec", () => {
+  it("/api/sync/spec으로 SPEC 원문을 보낸다", async () => {
+    await syncSpec("ws1", { name: "인증 방식", type: "architecture", tags: [], content: "JWT", created_at: "t" });
+    expect(received[0].path).toBe("/api/sync/spec");
     const body = received[0].body as Record<string, unknown>;
     expect(body.id).toBe("인증 방식");
     expect(body.title).toBe("인증 방식");

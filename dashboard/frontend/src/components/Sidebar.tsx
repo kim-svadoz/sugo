@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { CalendarDays, FileText, RefreshCw, Shapes, ShieldHalf, SlidersHorizontal, Wand2, Zap } from "lucide-react";
 import { cn } from "../lib/utils.js";
-import { SIDEBAR_DESTINATIONS } from "../lib/sidebarNavigation.js";
+import { SIDEBAR_GROUPS } from "../lib/sidebarNavigation.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 
@@ -11,8 +11,7 @@ import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
  * **navItems 순서 엄수**: Workspaces·Schedule·Skills·Harness·Playbook·Weekly·Settings.
  * Workspaces만 라우트가 `/sessions`이고 나머지는 라벨 소문자와 일치한다.
  */
-const icons = [Shapes, CalendarDays, Zap, ShieldHalf, Wand2, FileText, SlidersHorizontal];
-const navItems = SIDEBAR_DESTINATIONS.map((item, index) => ({ ...item, icon: icons[index] }));
+const icons = { workspaces: Shapes, schedule: CalendarDays, weekly: FileText, skills: Zap, playbook: Wand2, harness: ShieldHalf, settings: SlidersHorizontal } as const;
 
 export function Sidebar() {
   const { pluginVersion } = useDashboardMeta();
@@ -31,8 +30,13 @@ export function Sidebar() {
           S
         </span>
       </Link>
-      <nav className="flex w-full flex-1 flex-col items-center gap-1.5 px-1.5">
-        {navItems.map(({ to, icon: Icon, label, shortcut }) => (
+      <nav className="flex w-full flex-1 flex-col px-1.5">
+        {SIDEBAR_GROUPS.map((group, groupIndex) => <section key={group.label} aria-label={group.title} className={cn("w-full", groupIndex > 0 && "mt-3 border-t border-white/[0.07] pt-3")}>
+          <div className="mb-1.5 px-1 text-center font-mono text-[7px] font-bold tracking-[0.16em] text-[var(--color-text-dim)]" title={group.title}>{group.label}</div>
+          <div className="space-y-1">
+          {group.items.map(({ to, icon: iconName, label, shortcut }) => {
+            const Icon = icons[iconName];
+            return (
           <NavLink
             key={to}
             to={to}
@@ -57,7 +61,10 @@ export function Sidebar() {
               </>
             )}
           </NavLink>
-        ))}
+            );
+          })}
+          </div>
+        </section>)}
       </nav>
       <div className="mt-4 flex flex-col items-center gap-3">
         <button

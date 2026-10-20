@@ -113,12 +113,12 @@ CREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (
   CONSTRAINT fk_schedule_spec_archives_user FOREIGN KEY (user_id) REFERENCES sugo_users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS sugo_decisions (
+CREATE TABLE IF NOT EXISTS sugo_specs (
   id VARCHAR(191) NOT NULL,
   user_id VARCHAR(191) NOT NULL,
   workspace_name VARCHAR(255) NOT NULL,
   title VARCHAR(512) NOT NULL,
-  status VARCHAR(64) NOT NULL DEFAULT 'accepted',
+  status VARCHAR(64) NOT NULL DEFAULT 'active',
   content MEDIUMTEXT NULL,
   decision_date TIMESTAMP NULL,
   PRIMARY KEY (user_id, workspace_name, id)

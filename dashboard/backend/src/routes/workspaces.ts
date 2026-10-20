@@ -36,7 +36,6 @@ import {
   getCheckpointSync,
   getBlockerDecision,
   getCheckpoints,
-  getDecisions,
   getHistory,
   getRecentHistory,
   getRoadmap,
@@ -164,12 +163,6 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     if (!userId) return;
     const workspace = typeof req.query.workspace === "string" ? req.query.workspace : undefined;
     res.json({ checkpoints: await getCheckpointSync(db, userId, workspace) });
-  });
-
-  router.get("/:name/decisions", async (req, res) => {
-    const userId = requireUserId(req, res);
-    if (!userId) return;
-    res.json({ decisions: await getDecisions(db, userId, req.params.name) });
   });
 
   router.get("/:name/history", async (req, res) => {

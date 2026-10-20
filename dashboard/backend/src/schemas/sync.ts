@@ -56,7 +56,7 @@ export const historySchema = z.object({
   estimationBasis: z.string().nullish(),
 });
 
-export const decisionSchema = z.object({
+export const specSchema = z.object({
   userId: z.string().min(1),
   workspaceName: z.string().min(1),
   id: z.string().min(1),
@@ -132,7 +132,7 @@ export const bulkSyncSchema = z.object({
   workspaces: z.array(workspaceSchema).optional(),
   tasks: z.array(taskSchema).optional(),
   history: z.array(historySchema).optional(),
-  decisions: z.array(decisionSchema).optional(),
+  specs: z.array(specSchema).optional(),
   checkpoints: z.array(checkpointSchema).optional(),
   workspaceMeta: z.array(workspaceMetaSchema).optional(),
   roadmap: z.array(roadmapSyncSchema).optional(),

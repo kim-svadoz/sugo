@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import type { DbClient } from "./client.js";
 import { createMySqlClient } from "./mysqlClient.js";
 import { createSqliteClient } from "./sqliteClient.js";
-import { migrateCanvasToRoadmap, migrateRoadmapRuntimeAssessment } from "./migrations.js";
+import { migrateCanvasToRoadmap, migrateDecisionsToSpecs, migrateRoadmapRuntimeAssessment } from "./migrations.js";
 import { migrateWstToRun } from "../services/workspaceService.js";
 import {
   ensureCheckpointCreatedAtColumn,
@@ -33,6 +33,7 @@ export async function initDb(options: InitDbOptions = {}): Promise<DbClient> {
     // 리네임은 CREATE TABLE IF NOT EXISTS보다 **먼저** — 새 이름 테이블이 먼저 생기면
     // 이전 이름 테이블의 데이터가 고아가 된다(migrations.ts 주석 참고).
     await migrateCanvasToRoadmap(client);
+    await migrateDecisionsToSpecs(client);
     const schemaPath = join(__dirname, "..", "..", "test", "schema.sqlite.sql");
     await client.execScript(options.sqliteSchema ?? readFileSync(schemaPath, "utf8"));
     await migrateWstToRun(client);
@@ -51,6 +52,7 @@ export async function initDb(options: InitDbOptions = {}): Promise<DbClient> {
   }
   const client = createMySqlClient(config.mysql);
   await migrateCanvasToRoadmap(client);
+  await migrateDecisionsToSpecs(client);
   const schemaPath = join(__dirname, "schema.mysql.sql");
   await client.execScript(readFileSync(schemaPath, "utf8"));
   // `wst-` 접두어 → `run-`. 테이블이 있어야 하므로 스키마 적용 뒤에 돈다.

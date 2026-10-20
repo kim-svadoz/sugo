@@ -16,7 +16,7 @@ import { issueSession } from "./src/auth/session.js";
 import { ingestActivity } from "./src/services/activityService.js";
 import {
   syncCheckpoint,
-  syncDecision,
+  syncSpec,
   syncHistory,
   syncPluginVersion,
   syncRoadmap,
@@ -40,7 +40,7 @@ const PAYMENTS = join(homedir(), "work", "webapp-payments");
 const db = await initDb();
 
 /** 재실행이 누적되지 않게 이 사용자 데이터를 먼저 비운다(시드는 멱등해야 한다). */
-for (const t of ["sugo_roadmap_nodes", "sugo_tasks", "sugo_history", "sugo_decisions", "sugo_checkpoints", "sugo_activity_events"]) {
+for (const t of ["sugo_roadmap_nodes", "sugo_tasks", "sugo_history", "sugo_specs", "sugo_checkpoints", "sugo_activity_events"]) {
   try {
     await db.exec(`DELETE FROM ${t} WHERE user_id = ?`, [USER]);
   } catch {
@@ -164,11 +164,9 @@ await syncHistory(db, {
   completedAt: iso(20), estimatedHumanHours: 8, userReportedHumanHours: 7, aiExecutionMinutes: 55, estimationBasis: "trace",
 });
 
-// ── ADR ──────────────────────────────────────────────────────────────────────
-// SPEC 원문(📄) 버튼이 실제 내용을 보여주도록 — 백엔드 getSpecContent는 decisions를 id/title로
-// 매칭하므로, SPEC 노드 제목과 같은 제목의 ADR이 있어야 원문이 뜬다.
-await syncDecision(db, {
-  userId: USER, workspaceName: "webapp", id: "auth.md", title: "인증 도메인 마스터 PRD", status: "accepted",
+// ── SPEC 원문 ────────────────────────────────────────────────────────────────
+await syncSpec(db, {
+  userId: USER, workspaceName: "webapp", id: "auth.md", title: "인증 도메인 마스터 PRD", status: "active",
   content: `# 인증 도메인 마스터 PRD
 
 ## In-Scope
@@ -190,21 +188,6 @@ await syncDecision(db, {
 ### REQ-005: 최초 로그인 시 계정 생성
 ### REQ-007: 재설정 토큰 만료 30분`,
   decisionDate: iso(16),
-});
-
-await syncDecision(db, {
-  userId: USER, workspaceName: "webapp", id: "ADR-001", title: "세션 대신 JWT를 쓴다", status: "accepted",
-  content: "# ADR-001 — 세션 대신 JWT\n\n## 배경\n수평 확장 시 세션 스토어가 단일 병목이 된다.\n\n## 결정\nstateless JWT(RS256) + refresh 토큰.\n\n## 결과\n- 서버 간 세션 공유 불필요\n- 즉시 로그아웃은 불가 → refresh 만료(24h)로 절충",
-  decisionDate: iso(14),
-});
-await syncDecision(db, {
-  userId: USER, workspaceName: "webapp", id: "ADR-002", title: "소셜 계정은 이메일로 병합하지 않는다", status: "accepted",
-  content: "# ADR-002 — 소셜 계정 병합 금지\n\n## 배경\n같은 이메일로 Google/로컬 계정이 각각 생길 수 있다.\n\n## 결정\n자동 병합하지 않고 **명시적 연결**만 허용한다.\n\n## 결과\n이메일 소유권 검증 없이 계정을 합치면 탈취 경로가 된다 — 그 위험을 UX 편의보다 우선한다.",
-  decisionDate: iso(5),
-});
-await syncDecision(db, {
-  userId: USER, workspaceName: "payments-api", id: "ADR-101", title: "멱등키는 클라이언트가 생성한다", status: "accepted",
-  content: "# ADR-101\n\n재시도 주체가 클라이언트라 키도 클라이언트가 쥐는 게 맞다.", decisionDate: iso(22),
 });
 
 // ── 체크포인트(커밋 전 재발방지) ─────────────────────────────────────────────

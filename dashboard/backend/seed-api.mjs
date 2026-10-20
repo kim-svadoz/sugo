@@ -70,8 +70,7 @@ async function main() {
     await post("/api/sync/history", { userId: USER, workspaceName: "temp-workspace", id: `h${i}`, taskTitle: i % 2 ? "로그인 컨트롤러 배선" : "EmailLoginService 구현", summary: `작업 ${i}: 기능 구현 및 검증 완료`, keyDecisions: ["JWT 채택", "bcrypt 해시"], filesChanged: [{ path: "EmailLoginService.java", change: "added" }], estimatedHumanHours: 3 + (i % 3), aiExecutionMinutes: 40 + i * 3 }, token);
   }
 
-  await post("/api/sync/decision", { userId: USER, workspaceName: "temp-workspace", id: "adr-1", title: "인증 방식으로 JWT 채택", status: "accepted", content: "## 맥락\n세션 스토어 부담 감소\n## 결정\nJWT(HS256)+리프레시\n## 결과\n무상태 인증" }, token);
-  await post("/api/sync/decision", { userId: USER, workspaceName: "temp-workspace", id: "adr-2", title: "비밀번호 해시 bcrypt", status: "accepted", content: "cost 12로 bcrypt 사용" }, token);
+  await post("/api/sync/spec", { userId: USER, workspaceName: "temp-workspace", id: "auth-spec", title: "인증 기능 명세", status: "active", content: "JWT 인증과 리프레시 토큰 요구사항" }, token);
   await post("/api/sync/checkpoint", { userId: USER, workspaceName: "temp-workspace", id: "CP-001", title: "배선 변경 시 통합테스트 필수", checklist: ["application.yml 변경 확인", "mock 없는 배선 테스트"] }, token);
   await post("/api/sync/checkpoint", { userId: USER, workspaceName: "temp-workspace", id: "CP-002", title: "PR 전 브랜치 push 확인", checklist: ["원격 브랜치 존재", "타깃 develop"] }, token);
 

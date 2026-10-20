@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { drainRetryQueue } from "../dashboard/client.js";
 import { resolveDashboardConfig } from "../dashboard/config.js";
-import { syncCheckpoint, syncDecision, syncHistory, syncRoadmapSnapshot, syncTask, syncWorkspace } from "../dashboard/sync.js";
+import { syncCheckpoint, syncHistory, syncRoadmapSnapshot, syncSpec, syncTask, syncWorkspace } from "../dashboard/sync.js";
 import { listCheckpoints } from "../work/checkpoint.js";
 import { listWorkLogs } from "../work/history.js";
 import { appendMemory, readMemory } from "../work/memory.js";
@@ -131,7 +131,7 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
       const checkpoints = await listCheckpoints(args.name);
       for (const checkpoint of checkpoints) await syncCheckpoint(args.name, checkpoint);
       const specs = await listSpecs(args.name);
-      for (const spec of specs) await syncDecision(args.name, spec);
+      for (const spec of specs) await syncSpec(args.name, spec);
       const history = await listWorkLogs(args.name);
       for (const log of history) await syncHistory(args.name, log);
       await reconcileRoadmapWithTasks(args.name, tasks);
@@ -155,7 +155,7 @@ export async function handleSugoWorkspace(rawArgs: unknown) {
       }
       return ok({
         synced: true, dashboard: "enabled", taskCount: tasks.length, roadmapNodeCount: nodes.length,
-        checkpointCount: checkpoints.length, decisionCount: specs.length, historyCount: history.length,
+        checkpointCount: checkpoints.length, specCount: specs.length, historyCount: history.length,
         importedGitHistoryCount: importedGitHistory.length,
         recoveredWorkResultCount,
       });

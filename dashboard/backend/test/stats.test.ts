@@ -177,7 +177,7 @@ describe("spec-content — decision을 slug로 매칭", () => {
     const auth = await seedUserToken(db, "u1");
     const { app } = await createApp(db);
     await request(app)
-      .post("/api/sync/decision")
+      .post("/api/sync/spec")
       .set("Authorization", auth)
       .send({ userId: "u1", workspaceName: "ws1", id: "인증", title: "인증 방식", content: "JWT 채택" })
       .expect(200);

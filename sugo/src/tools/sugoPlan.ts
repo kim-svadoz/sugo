@@ -1294,7 +1294,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       prRefs,
       report: session.data.chainInfo.workResultReport,
     };
-    const completedPrd = patchVersion > 0
+    const completedPrd = (patchVersion ?? 0) > 0
       ? await readFile(session.data.prdPath ?? "", "utf8").catch(() => undefined)
       : undefined;
     await recordRoadmapWorkResult(workspace, session.data.linkedTaskId, workResult, {

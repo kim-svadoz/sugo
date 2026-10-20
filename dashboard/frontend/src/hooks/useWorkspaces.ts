@@ -59,7 +59,6 @@ export interface WorkspaceSummary {
   roadmapDoneCount: number;
   activeTaskCount: number;
   historyCount: number;
-  decisionCount: number;
   checkpointCount: number;
   projectCount: number;
   attentionCount: number;

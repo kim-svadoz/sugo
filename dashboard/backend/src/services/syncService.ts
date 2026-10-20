@@ -358,7 +358,7 @@ export async function deleteWorkspace(
 ): Promise<void> {
   if (options.purge) {
     // 관련 테이블은 FK CASCADE가 없는 것들(복합PK 테이블)이라 명시적으로 지운다.
-    for (const table of ["sugo_tasks", "sugo_history", "sugo_decisions", "sugo_checkpoints", "sugo_workspace_meta", "sugo_roadmap_nodes"]) {
+    for (const table of ["sugo_tasks", "sugo_history", "sugo_specs", "sugo_checkpoints", "sugo_workspace_meta", "sugo_roadmap_nodes"]) {
       try {
         await db.exec(`DELETE FROM ${table} WHERE user_id = ? AND workspace_name = ?`, [userId, name]);
       } catch {
@@ -465,7 +465,7 @@ export async function deleteHistory(db: DbClient, userId: string, workspaceName:
   ]);
 }
 
-export interface SyncDecisionInput {
+export interface SyncSpecInput {
   userId: string;
   workspaceName: string;
   id: string;
@@ -475,23 +475,23 @@ export interface SyncDecisionInput {
   decisionDate?: string | null;
 }
 
-export async function syncDecision(db: DbClient, input: SyncDecisionInput): Promise<void> {
+export async function syncSpec(db: DbClient, input: SyncSpecInput): Promise<void> {
   await ensureUser(db, input.userId);
   await upsertRow(
     db,
-    "sugo_decisions",
+    "sugo_specs",
     { user_id: input.userId, workspace_name: input.workspaceName, id: input.id },
     {
       title: input.title,
-      status: input.status ?? "accepted",
+      status: input.status ?? "active",
       content: input.content ?? null,
       decision_date: toDbDateTime(input.decisionDate),
     }
   );
 }
 
-export async function deleteDecision(db: DbClient, userId: string, workspaceName: string, id: string): Promise<void> {
-  await db.exec("DELETE FROM sugo_decisions WHERE user_id = ? AND workspace_name = ? AND id = ?", [
+export async function deleteSpec(db: DbClient, userId: string, workspaceName: string, id: string): Promise<void> {
+  await db.exec("DELETE FROM sugo_specs WHERE user_id = ? AND workspace_name = ? AND id = ?", [
     userId,
     workspaceName,
     id,

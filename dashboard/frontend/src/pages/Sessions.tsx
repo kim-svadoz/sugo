@@ -4,7 +4,6 @@ import {
   Activity,
   AlertTriangle,
   Bot,
-  FileText,
   FolderOpen,
   Gauge,
   GitBranch,
@@ -27,10 +26,7 @@ import { cn } from "../lib/utils.js";
 import { WORKSPACE_CARD_FOCUS_CLASSES, getWorkspaceColor, workspaceCardEmphasis, workspaceCardShadow } from "../lib/workspaceSelection.js";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import {
-  formatDate,
-  useWorkspaceDecisions,
   useWorkspaceHistory,
-  type Decision,
   type HistoryLog,
 } from "../hooks/useWorkspaceData.js";
 import { LiveConsole } from "../components/LiveConsole.js";
@@ -61,7 +57,6 @@ const APM_STATE = {
 
 const INSPECTOR_TABS = [
   { id: "repositories" as const, label: "Repositories", icon: Package },
-  { id: "adr" as const, label: "ADR", icon: FileText },
   { id: "history" as const, label: "History", icon: History },
 ];
 type TabType = (typeof INSPECTOR_TABS)[number]["id"];
@@ -151,7 +146,6 @@ export function Sessions() {
   const [showStatusGuide, setShowStatusGuide] = useState(false);
   const [addCopied, setAddCopied] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<HistoryLog | null>(null);
-  const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
   const [checkpointModal, setCheckpointModal] = useState<string | null>(null);
   const [agentCanvasModal, setAgentCanvasModal] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<HistorySearchResult[]>([]);
@@ -159,7 +153,6 @@ export function Sessions() {
   const { userId } = useAuth();
 
   const history = useWorkspaceHistory(selectedWorkspace);
-  const decisions = useWorkspaceDecisions(selectedWorkspace);
 
   const workspaces = useMemo(() => data ?? [], [data]);
   const pulse = useMemo(() => workspacePulse(workspaces), [workspaces]);
@@ -308,12 +301,6 @@ export function Sessions() {
           <span>{ws.historyCount}</span>
         </div>
       )}
-      {ws.decisionCount > 0 && (
-        <div className="flex items-center gap-1 text-sky-400" title="ADR">
-          <FileText size={14} />
-          <span>{ws.decisionCount}</span>
-        </div>
-      )}
       {ws.checkpointCount > 0 && (
         <div className="flex items-center gap-1 text-amber-400" title="Checkpoints">
           <AlertTriangle size={14} />
@@ -325,7 +312,7 @@ export function Sessions() {
 
   /**
    * `renderDetail(ws)` — 검색 결과 행을 그 자리에서 펼친 본문.
-   * 프로젝트 칩 + 인스펙터(History/ADR/Repositories)를 그대로 쓴다. 탭 본문을 여기에 다시
+   * 프로젝트 칩 + 인스펙터(History/Repositories)를 그대로 쓴다. 탭 본문을 여기에 다시
    * 쓰면 두 벌이 되어 한쪽만 고쳐지는 일이 반드시 생긴다.
    */
   const renderDetail = (ws: WorkspaceSummary) => (
@@ -361,8 +348,7 @@ export function Sessions() {
           loading: false,
         }
       : { data: history.data, loading: history.loading };
-    const total =
-      activeTab === "history" ? hist.data.length : activeTab === "adr" ? ws.decisionCount : (ws.projects?.length ?? 0);
+    const total = activeTab === "history" ? hist.data.length : (ws.projects?.length ?? 0);
     const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
     const page = Math.min(inspectorPage, pages - 1);
     const s = page * PAGE_SIZE;
@@ -380,8 +366,7 @@ export function Sessions() {
           <div className="flex gap-1.5 font-mono text-xs">
             {INSPECTOR_TABS.map((t) => {
               const Icon = t.icon;
-              const count =
-                t.id === "history" ? hist.data.length : t.id === "adr" ? ws.decisionCount : (ws.projects?.length ?? 0);
+              const count = t.id === "history" ? hist.data.length : (ws.projects?.length ?? 0);
               return (
                 <button
                   key={t.id}
@@ -527,43 +512,7 @@ export function Sessions() {
                 })}
               </div>
             )
-          ) : decisions.loading ? (
-            <LoadingSpinner />
-          ) : decisions.data.length === 0 ? (
-            <EmptyState message="No ADR (Architecture Decision Records)" />
-          ) : (
-            <div className="space-y-1">
-              {decisions.data.slice(s, s + PAGE_SIZE).map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => setSelectedDecision(d)}
-                  className="flex w-full items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-left transition-colors hover:border-blue-500/50"
-                >
-                  <span className="shrink-0 rounded bg-blue-500/20 px-1.5 py-0.5 font-mono text-[10px] text-blue-400">
-                    {d.id}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--color-text)]">{d.title}</span>
-                  {d.status && (
-                    <span
-                      className={cn(
-                        "shrink-0 rounded px-1.5 py-0.5 font-mono text-[9px] font-bold",
-                        d.status === "승인됨" || d.status === "accepted"
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-gray-500/20 text-gray-400",
-                      )}
-                    >
-                      {d.status}
-                    </span>
-                  )}
-                  {d.decision_date && (
-                    <span className="shrink-0 font-mono text-[10px] text-[var(--color-text-dim)]">
-                      {formatDate(d.decision_date)}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+          ) : null}
         </div>
 
         {total > PAGE_SIZE && (
@@ -997,29 +946,6 @@ export function Sessions() {
               </ul>
             </div>
           )}
-        </Modal>
-      )}
-
-      {/* ADR 상세 모달 */}
-      {selectedDecision && (
-        <Modal onClose={() => setSelectedDecision(null)}>
-          <div className="mb-3 flex items-center gap-2">
-            <span className="rounded bg-blue-500/20 px-1.5 py-0.5 font-mono text-[10px] text-blue-400">
-              {selectedDecision.id}
-            </span>
-            {selectedDecision.status && (
-              <span className="rounded bg-gray-500/20 px-1.5 py-0.5 font-mono text-[9px] font-bold text-gray-400">
-                {selectedDecision.status}
-              </span>
-            )}
-            <span className="font-mono text-[11px] text-[var(--color-text-dim)]">
-              {formatDate(selectedDecision.decision_date)}
-            </span>
-          </div>
-          <h3 className="mb-3 text-[15px] font-semibold text-[var(--color-text-bright)]">{selectedDecision.title}</h3>
-          <div className="adr-content whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text)]">
-            {selectedDecision.content ?? "(본문 없음)"}
-          </div>
         </Modal>
       )}
 

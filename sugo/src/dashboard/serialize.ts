@@ -106,7 +106,7 @@ export function serializeCheckpoint(userId: string, workspaceName: string, cp: C
   };
 }
 
-export interface DecisionWire {
+export interface SpecWire {
   userId: string;
   workspaceName: string;
   id: string;
@@ -116,18 +116,8 @@ export interface DecisionWire {
   decisionDate?: string;
 }
 
-/** POST /api/sync/decision(ADR) — sugo_spec(add)가 트리거한다. Spec을 ADR로 취급한다.
- * Spec에는 id/title이 없고 name이 식별자이므로 name을 id와 title 양쪽에 매핑한다. */
-export function serializeDecision(userId: string, workspaceName: string, spec: Spec): DecisionWire {
-  return {
-    userId,
-    workspaceName,
-    id: spec.name,
-    title: spec.name,
-    status: "accepted",
-    content: spec.content,
-    decisionDate: spec.created_at,
-  };
+export function serializeSpec(userId: string, workspaceName: string, spec: Spec): SpecWire {
+  return { userId, workspaceName, id: spec.name, title: spec.name, status: "active", content: spec.content, decisionDate: spec.created_at };
 }
 
 export interface RoadmapNodeWire {

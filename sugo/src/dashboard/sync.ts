@@ -3,8 +3,8 @@ import { resolveDashboardConfig } from "./config.js";
 import {
   serializeRoadmapSnapshot,
   serializeCheckpoint,
-  serializeDecision,
   serializeHistory,
+  serializeSpec,
   serializeTask,
 } from "./serialize.js";
 import type { Checkpoint, RoadmapNode, Spec, Task, Workspace, WorkLog } from "../work/types.js";
@@ -100,11 +100,10 @@ export async function syncHistory(workspaceName: string, workLog: WorkLog, _prRe
   await pushEvent("/api/sync/history", "POST", serializeHistory(config.userId, workspaceName, workLog));
 }
 
-/** `/api/sync/decision`(ADR) — sugo_spec(add)가 트리거한다. Spec을 그대로 "결정 기록"으로 취급한다. */
-export async function syncDecision(workspaceName: string, spec: Spec): Promise<void> {
+export async function syncSpec(workspaceName: string, spec: Spec): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
-  await pushEvent("/api/sync/decision", "POST", serializeDecision(config.userId, workspaceName, spec));
+  await pushEvent("/api/sync/spec", "POST", serializeSpec(config.userId, workspaceName, spec));
 }
 
 /** `/api/sync/plugin-version` — 서버 기동 시 1회. */

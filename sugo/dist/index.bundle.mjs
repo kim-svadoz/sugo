@@ -24008,16 +24008,8 @@ function serializeCheckpoint(userId, workspaceName, cp) {
     expiresAt: cp.expires_at
   };
 }
-function serializeDecision(userId, workspaceName, spec) {
-  return {
-    userId,
-    workspaceName,
-    id: spec.name,
-    title: spec.name,
-    status: "accepted",
-    content: spec.content,
-    decisionDate: spec.created_at
-  };
+function serializeSpec(userId, workspaceName, spec) {
+  return { userId, workspaceName, id: spec.name, title: spec.name, status: "active", content: spec.content, decisionDate: spec.created_at };
 }
 function compactWorkResult(result3, summaryOnly = false) {
   if (!result3) return void 0;
@@ -24278,10 +24270,10 @@ async function syncHistory(workspaceName, workLog, _prRefs) {
   if (!config2.enabled) return;
   await pushEvent("/api/sync/history", "POST", serializeHistory(config2.userId, workspaceName, workLog));
 }
-async function syncDecision(workspaceName, spec) {
+async function syncSpec(workspaceName, spec) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled) return;
-  await pushEvent("/api/sync/decision", "POST", serializeDecision(config2.userId, workspaceName, spec));
+  await pushEvent("/api/sync/spec", "POST", serializeSpec(config2.userId, workspaceName, spec));
 }
 async function syncPluginVersion(version2) {
   const config2 = await resolveDashboardConfig();
@@ -28232,7 +28224,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.37.18" : "0.0.0-dev";
+  return true ? "0.37.19" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32268,7 +32260,7 @@ ${args2.prdContent}` : args2.prdContent;
       prRefs,
       report: session.data.chainInfo.workResultReport
     };
-    const completedPrd = patchVersion > 0 ? await readFile23(session.data.prdPath ?? "", "utf8").catch(() => void 0) : void 0;
+    const completedPrd = (patchVersion ?? 0) > 0 ? await readFile23(session.data.prdPath ?? "", "utf8").catch(() => void 0) : void 0;
     await recordRoadmapWorkResult(workspace, session.data.linkedTaskId, workResult, {
       version: patchVersion ?? 0,
       completedAt,
@@ -32975,7 +32967,7 @@ async function addSpec(workspace, params) {
     spec.content
   );
   await atomicWriteFile(join28(dir, `${slugify(params.name)}.md`), fileContent);
-  void syncDecision(workspace, spec);
+  void syncSpec(workspace, spec);
   return spec;
 }
 function parseSpecFile(raw) {
@@ -34554,7 +34546,7 @@ async function handleSugoWorkspace(rawArgs) {
       const checkpoints = await listCheckpoints(args2.name);
       for (const checkpoint of checkpoints) await syncCheckpoint(args2.name, checkpoint);
       const specs = await listSpecs(args2.name);
-      for (const spec of specs) await syncDecision(args2.name, spec);
+      for (const spec of specs) await syncSpec(args2.name, spec);
       const history = await listWorkLogs(args2.name);
       for (const log of history) await syncHistory(args2.name, log);
       await reconcileRoadmapWithTasks(args2.name, tasks);
@@ -34579,7 +34571,7 @@ async function handleSugoWorkspace(rawArgs) {
         taskCount: tasks.length,
         roadmapNodeCount: nodes.length,
         checkpointCount: checkpoints.length,
-        decisionCount: specs.length,
+        specCount: specs.length,
         historyCount: history.length,
         importedGitHistoryCount: importedGitHistory.length,
         recoveredWorkResultCount
