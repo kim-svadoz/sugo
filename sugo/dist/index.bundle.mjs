@@ -28224,7 +28224,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.37.21" : "0.0.0-dev";
+  return true ? "0.37.22" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30111,7 +30111,9 @@ async function reconcileRoadmapWithTasks(workspace, tasks) {
         ...existing ?? { id: task.id, title: task.title, level: "task", dependsOn: [], ref: task.id },
         title: task.title,
         level: "task",
-        status,
+        // Task 파일은 사람의 답변을 알지 못한다. 명시적인 humanBlocker가 남아 있는 동안
+        // 주기적 reconcile이 blocked를 in_progress로 되돌리면 Dashboard 결정 저장도 막힌다.
+        status: existing?.humanBlocker ? "blocked" : status,
         parent: existing?.parent?.startsWith("run-") ? existing.parent : runId,
         specPath: task.prd_ref
       };

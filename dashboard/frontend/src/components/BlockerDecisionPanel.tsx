@@ -21,9 +21,13 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [decisionNotice, setDecisionNotice] = useState<string | null>(null);
   useEffect(() => {
     setResponse(decision?.response ?? "");
     setSaved(decision ?? null);
+    setConfirmDiscard(false);
+    setDecisionNotice(null);
   }, [taskId, decision?.response, decision?.answered_at]);
 
   async function persist(value = response): Promise<BlockerDecision | null> {
@@ -35,11 +39,12 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
     } catch { setError("결정을 저장하지 못했습니다."); return null; }
     finally { setBusy(false); }
   }
-  async function copyResume(nextResponse = response) {
+  async function copyResume(nextResponse = response, notice?: string) {
     const normalized = nextResponse.trim();
     const value = saved?.response === normalized ? saved : await persist(normalized);
     if (!value) return;
     await navigator.clipboard.writeText(blockerResumePrompt({ workspace, taskId, taskTitle, question: blocker?.question || question || "차단 원인 확인 필요", response: value.response, sessionId: blocker?.sessionId, resumeAction: blocker?.resumeAction }));
+    setDecisionNotice(notice ?? null);
     setCopied(true); window.setTimeout(() => setCopied(false), 1800);
   }
 
@@ -47,16 +52,30 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
     ? reviewConfirmationSections(blocker.reviewPacket)
     : [];
   const responseReady = response.trim().length > 0 && response.trim() !== "수정 필요 —";
+  const revisionText = response === "확인, 진행" ? "" : response;
+
+  function approveReview() {
+    if (revisionText.trim() && !confirmDiscard) {
+      setConfirmDiscard(true);
+      return;
+    }
+    setResponse("확인, 진행");
+    setConfirmDiscard(false);
+    void copyResume("확인, 진행", "승인으로 저장했습니다. 재개 프롬프트를 복사했습니다.");
+  }
 
   if (Boolean(blocker?.kind === "review_confirmation")) return <section id="review-confirmation-panel" className="space-y-3 rounded-xl border border-amber-300/25 bg-amber-300/[0.04] p-4">
     <h3 className="text-sm font-semibold text-white">작업 결과 확인</h3>
     <p className="text-xs leading-relaxed text-slate-300">보고서를 확인한 뒤 아래에서 진행 또는 수정 요청을 선택하세요. 선택하면 결정을 저장하고 재개 프롬프트를 한 번에 복사합니다.</p>
     <button type="button" onClick={onOpenReport} disabled={!onOpenReport} className="w-full rounded-lg border border-violet-300/30 bg-violet-400/10 px-4 py-3 text-sm font-semibold text-violet-100">리뷰 보고서 HTML로 열기 ↗</button>
-    <button type="button" disabled={busy} onClick={() => { setResponse("확인, 진행"); void copyResume("확인, 진행"); }} className="w-full rounded-lg bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-200 disabled:opacity-50">{copied && saved?.response === "확인, 진행" ? "복사됨 · 작업 세션에 붙여넣기" : "검토 완료 · 재개 프롬프트 복사"}</button>
-    <div className="flex items-center gap-3 text-[11px] text-slate-400"><span className="h-px flex-1 bg-white/10" /><span>수정이 필요하면</span><span className="h-px flex-1 bg-white/10" /></div>
-    <label className="block text-xs text-slate-300">수정 요청<textarea value={response === "확인, 진행" ? "" : response} onChange={event => setResponse(event.target.value)} placeholder="수정할 부분을 구체적으로 입력하세요" className="mt-2 min-h-24 w-full rounded-lg border border-white/15 bg-slate-950/50 p-3 text-sm text-white" /></label>
-    <button type="button" disabled={busy || !responseReady || response === "확인, 진행"} onClick={() => void copyResume()} className="w-full rounded-lg border border-white/20 px-4 py-3 text-sm text-white disabled:opacity-40">{copied && saved?.response !== "확인, 진행" ? "복사됨 · 작업 세션에 붙여넣기" : "수정 요청 저장 · 재개 프롬프트 복사"}</button>
-    {copied && <p role="status" className="text-xs text-emerald-200">원래 작업 세션에 프롬프트를 붙여넣으면 검증 후 파이프라인이 재개됩니다.</p>}
+    <label className="block text-xs text-slate-300">수정 요청 내용<textarea value={revisionText} onChange={event => { setResponse(event.target.value); setConfirmDiscard(false); setDecisionNotice(null); }} placeholder="수정이 필요할 때만 구체적으로 입력하세요" className="mt-2 min-h-24 w-full rounded-lg border border-white/15 bg-slate-950/50 p-3 text-sm text-white" /></label>
+    {confirmDiscard && <div role="alert" className="rounded-lg border border-amber-300/30 bg-amber-300/[0.08] px-3 py-2 text-xs leading-relaxed text-amber-100"><strong>입력한 수정 요청이 있습니다.</strong> 승인하면 이 내용은 저장되지 않습니다. 승인하려면 ‘그래도 승인’을 누르세요.</div>}
+    <div className="grid grid-cols-2 gap-2">
+      <button type="button" disabled={busy} onClick={approveReview} className="rounded-lg bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-200 disabled:opacity-50">{confirmDiscard ? "그래도 승인" : "승인하고 진행"}</button>
+      <button type="button" disabled={busy || !revisionText.trim()} onClick={() => void copyResume(revisionText, "수정 요청으로 저장했습니다. 재개 프롬프트를 복사했습니다.")} className="rounded-lg border border-rose-300/25 bg-rose-400/[0.06] px-4 py-3 text-sm font-semibold text-rose-100 disabled:opacity-40">수정 요청</button>
+    </div>
+    {decisionNotice && <p role="status" className="rounded-lg bg-black/20 px-3 py-2 text-xs text-emerald-200">{decisionNotice}</p>}
+    {copied && <p className="text-xs text-slate-400">원래 작업 세션에 프롬프트를 붙여넣으면 검증 후 파이프라인이 재개됩니다.</p>}
     {error && <p role="alert" className="text-xs text-rose-300">{error}</p>}
   </section>;
 

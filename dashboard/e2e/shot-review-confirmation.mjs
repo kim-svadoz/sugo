@@ -6,6 +6,7 @@ import { E2E_UI_URL } from "../port-contract.mjs";
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
 const page = await context.newPage();
+page.on("pageerror", error => console.error("PAGEERROR", error.message));
 const blocker = {
   schemaVersion: 1,
   kind: "review_confirmation",
@@ -64,17 +65,26 @@ await page.route("**/api/**", (route) => {
   if (url.includes("/api/sync/plugin-version")) return route.fulfill({ json: { version: "0.26.0" } });
   if (url.includes("/api/workspaces/schedule")) return route.fulfill({ json: { specs: [spec] } });
   if (url.includes("/api/schedule/commitments")) return route.fulfill({ json: { commitments: [] } });
+  if (url.includes("/api/schedule/specs/archive")) return route.fulfill({ json: { specs: [] } });
+  if (url.includes("/spec-attachments")) return route.fulfill({ json: { ok: true, locked: true, attachments: [] } });
+  if (url.includes("/spec-references")) return route.fulfill({ json: { ok: true, locked: true, links: [] } });
   if (url.includes("/api/schedule/memos")) return route.fulfill({ json: { memos: [] } });
   if (url.includes("/api/workspaces")) return route.fulfill({ json: { workspaces: [{ name: "orders", projects: [] }] } });
   return route.fulfill({ json: {} });
 });
 
-await page.goto(`${E2E_UI_URL}/schedule`, { waitUntil: "networkidle" });
+// Console은 상태 갱신 요청을 주기적으로 보낼 수 있다. networkidle은 화면 준비 조건이 아니다.
+await page.goto(`${E2E_UI_URL}/schedule`, { waitUntil: "domcontentloaded" });
 await page.getByText("할 일 목록 작업 결과", { exact: true }).first().click();
 await page.getByText("작업 결과 확인", { exact: true }).waitFor();
 const output = join(tmpdir(), "sugo-review-confirmation.png");
 await page.screenshot({ path: output, fullPage: false });
 console.log(output);
+await page.getByPlaceholder("수정이 필요할 때만 구체적으로 입력하세요").fill("빈 목록 문구를 다시 확인해 주세요.");
+await page.getByRole("button", { name: "승인하고 진행" }).click();
+await page.getByRole("alert").getByText("입력한 수정 요청이 있습니다.", { exact: true }).waitFor();
+await page.screenshot({ path: join(tmpdir(), "sugo-review-confirmation-warning.png"), fullPage: false });
+console.log(join(tmpdir(), "sugo-review-confirmation-warning.png"));
 const reportPromise = page.waitForEvent("popup");
 await page.getByRole("button", { name: "리뷰 보고서 HTML로 열기" }).click();
 const report = await reportPromise;

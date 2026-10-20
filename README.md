@@ -194,7 +194,9 @@ Schedule에서 작성한 최초 SPEC은 특정 개발자 경로가 아니라 실
 
 Weekly 탭은 [weekly](https://github.com/kim-svadoz/weekly-ai-report) 플러그인이 만든 주간 보고서를 보여줍니다. weekly가 보고서를 만들 때 플러그인 토큰으로 Console에 올리며(방향은 weekly → Console 한쪽), 보고서는 올린 사용자 본인에게만 보입니다. weekly가 없으면 탭은 비어 있습니다. 이미 만든 주는 `sh ~/.weekly/app/scripts/weekly.sh push --all`로 올립니다.
 
-이 저장소의 개발용 `dashboard/sd.sh`도 같은 API 포트(3001)를 씁니다. `sd`는 플러그인이 띄운 서버를 먼저 멈추고 개발 서버를 띄웁니다. 개발 서버는 `dashboard/backend/local.db`를, 플러그인이 띄운 서버는 `~/.claude/sugo/dashboard/dashboard.db`를 쓰므로 두 데이터는 따로입니다. 기존 `local.db` 데이터를 플러그인 서버로 옮기려면 서버를 멈춘 상태에서 한 번 실행합니다.
+이 저장소의 개발용 `dashboard/sd.sh`도 같은 API 포트(3001)를 씁니다. `sd`는 플러그인이 띄운 서버를 먼저 멈추고 개발 서버를 띄웁니다. 개발 서버와 설치형 Console은 모두 `~/.claude/sugo/dashboard/dashboard.db`를 정본으로 사용합니다. 따라서 5175 개발 화면과 3001 설치형 화면을 전환해도 일정·메모·보관함·Weekly·외부 컨텍스트가 갈라지지 않습니다. 격리 DB가 필요한 테스트만 `SQLITE_FILE`을 명시합니다.
+
+2026-10-20 이전 개발 실행이 만든 `dashboard/backend/local.db`가 있고 사용자 DB가 아직 생성되지 않았다면, 서버를 멈춘 상태에서 한 번 가져올 수 있습니다.
 
 ```bash
 node sugo/scripts/import-legacy-dashboard-db.mjs dashboard/backend/local.db
@@ -229,7 +231,7 @@ bash dashboard/sd.sh ports
 
 - UI: **http://localhost:5175**
 - 로컬 로그인: **http://localhost:3001/api/auth/local**
-- DB: `dashboard/backend/local.db`
+- DB: `~/.claude/sugo/dashboard/dashboard.db` (설치형 Console과 공용)
 - 플러그인 연결 설정: `~/.claude/sugo/settings.json`
 
 이 모드는 `LOCAL_DEV_MODE=1`로 OAuth를 우회하는 개인용 실행입니다. 기본적으로 `tmp-sugo-showcase` 데모 데이터도 준비하며, 데모 없이 포그라운드에서 실행하려면 `SUGO_LOCAL_DEMO=0 bash dashboard/dev-local.sh`를 사용합니다. API와 UI는 loopback에 바인딩됩니다.

@@ -159,7 +159,7 @@ describe("checkpoint CRUD via dashboard", () => {
     await request(app)
       .post("/api/workspaces/ws1/checkpoints")
       .query({ userId: "u1" }).set("Authorization", auth)
-      .send({ id: "CP-002", title: "new one", expiresAt: "2026-10-02" })
+      .send({ id: "CP-002", title: "new one", expiresAt: "2099-10-02" })
       .expect(200);
 
     await request(app)

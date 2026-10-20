@@ -31,4 +31,10 @@ describe("local dashboard launcher", () => {
   it("showcase 데이터는 명시적으로 요청할 때만 시드한다", () => {
     expect(devLocal).toContain('if [ "${SUGO_LOCAL_DEMO:-0}" = "1" ]; then');
   });
+
+  it("개발 실행과 설치형 Console이 같은 사용자 DB를 정본으로 쓴다", () => {
+    expect(devLocal).toContain('SUGO_DATA_HOME="${SUGO_HOME_OVERRIDE:-$HOME}/.claude/sugo"');
+    expect(devLocal).toContain('export SQLITE_FILE="${SQLITE_FILE:-$SUGO_DATA_HOME/dashboard/dashboard.db}"');
+    expect(devLocal).not.toContain('$BACKEND_DIR/local.db');
+  });
 });

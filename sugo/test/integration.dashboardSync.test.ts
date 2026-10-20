@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { handleSugoAdd } from "../src/tools/sugoAdd.js";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
+import { syncAllWorkspaceData } from "../src/dashboard/syncAll.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
@@ -80,5 +81,27 @@ describe("대시보드 sync — 실제 파이프라인 배선 e2e", () => {
     await call(handleSugoAdd, { projectPath: projectDir, workspace: "ws-nosync" });
     await new Promise((r) => setTimeout(r, 50));
     expect(received).toHaveLength(0);
+  });
+
+  it("세션 시작 안전망은 이미 존재하는 로컬 정본 전체를 다시 전송한다", async () => {
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "ws-recover" });
+    const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "recover-me" });
+    await call(handleSugoPlan, { action: "clarify", sessionId: start.data.sessionId });
+    await call(handleSugoPlan, {
+      action: "prd",
+      sessionId: start.data.sessionId,
+      prdContent: "### REQ-1: 복구 대상\n" + "가".repeat(90),
+    });
+    await waitFor(() => received.includes("/api/sync/roadmap"));
+
+    received.length = 0;
+    const result = await syncAllWorkspaceData();
+
+    expect(result.workspaceCount).toBe(1);
+    expect(result.taskCount).toBe(1);
+    expect(result.roadmapNodeCount).toBeGreaterThan(0);
+    expect(received).toContain("/api/sync/workspace");
+    expect(received).toContain("/api/sync/task");
+    expect(received).toContain("/api/sync/roadmap");
   });
 });

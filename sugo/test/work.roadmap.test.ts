@@ -152,6 +152,42 @@ describe("upsertRoadmapNodes — PRD REQ 승격 심기", () => {
 });
 
 describe("reconcileRoadmapWithTasks — 레거시 데이터 4층 승격", () => {
+  it("사람의 결정을 기다리는 task는 Task 파일이 in_progress여도 blocked를 유지한다", async () => {
+    await upsertRoadmapNodes("ws1", [{
+      id: "task-a",
+      title: "검토 대기 작업",
+      level: "task",
+      status: "blocked",
+      dependsOn: [],
+      humanBlocker: {
+        schemaVersion: 1,
+        kind: "review_confirmation",
+        sessionId: "plan-review",
+        stage: "REVIEW_RUNNING",
+        resumeAction: "review_done",
+        summary: "검토 결과를 기다립니다.",
+        question: "이대로 진행할까요?",
+        context: [],
+        options: [],
+        blockedNextStep: "review_done",
+        createdAt: "2026-10-20T00:00:00.000Z",
+      },
+    }]);
+
+    await reconcileRoadmapWithTasks("ws1", [{
+      id: "task-a",
+      title: "검토 대기 작업",
+      project: "/tmp/a",
+      status: "in_progress",
+      created_at: "2026-10-20T00:00:00.000Z",
+    }]);
+
+    expect(await getRoadmapNode("ws1", "task-a")).toMatchObject({
+      status: "blocked",
+      humanBlocker: { sessionId: "plan-review" },
+    });
+  });
+
   it("REQ id를 task로 namespace하고 Spec→Run→Task 계층과 완료 상태를 복구한다", async () => {
     await upsertRoadmapNodes("ws1", [
       { id: "task-a", title: "A", level: "task", status: "in_progress", dependsOn: [] },

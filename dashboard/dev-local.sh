@@ -6,7 +6,9 @@ DASHBOARD_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$DASHBOARD_ROOT/port-contract.sh"
 BACKEND_DIR="$DASHBOARD_ROOT/backend"
 FRONTEND_DIR="$DASHBOARD_ROOT/frontend"
-SECRET_FILE="$BACKEND_DIR/.local-session-secret"
+SUGO_DATA_HOME="${SUGO_HOME_OVERRIDE:-$HOME}/.claude/sugo"
+DASHBOARD_DATA_DIR="$SUGO_DATA_HOME/dashboard"
+SECRET_FILE="$DASHBOARD_DATA_DIR/session-secret"
 
 info() { printf '\033[36m[local]\033[0m %s\n' "$1"; }
 ok() { printf '\033[32m[local]\033[0m %s\n' "$1"; }
@@ -19,6 +21,7 @@ for project_dir in "$BACKEND_DIR" "$FRONTEND_DIR"; do
   fi
 done
 
+mkdir -p "$DASHBOARD_DATA_DIR"
 if [ ! -f "$SECRET_FILE" ]; then
   node -e "process.stdout.write(require('crypto').randomBytes(32).toString('base64'))" > "$SECRET_FILE"
   chmod 600 "$SECRET_FILE"
@@ -34,7 +37,7 @@ sugo_require_port_free "$UI_PORT" "Sugo Dashboard UI"
 export HOST="127.0.0.1"
 export PORT="$API_PORT"
 export DB_DRIVER="sqlite"
-export SQLITE_FILE="${SQLITE_FILE:-$BACKEND_DIR/local.db}"
+export SQLITE_FILE="${SQLITE_FILE:-$SUGO_DATA_HOME/dashboard/dashboard.db}"
 export SESSION_SECRET="$(cat "$SECRET_FILE")"
 export LOCAL_DEV_MODE="1"
 export LOCAL_DEV_USER_ID="${LOCAL_DEV_USER_ID:-$(id -un)}"

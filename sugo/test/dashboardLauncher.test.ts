@@ -173,6 +173,13 @@ describe("배포물 정합성", () => {
     expect(existsSync(join(root, "dist", "dashboard-start.mjs"))).toBe(true);
   });
 
+  it("SessionStart 훅은 Dashboard가 준비되면 로컬 파일 정본을 자동 동기화한다", () => {
+    const source = readFileSync(join(root, "src", "lifecycle", "dashboardStartHook.ts"), "utf8");
+    expect(source).toContain('import { syncAllWorkspaceData } from "../dashboard/syncAll.js"');
+    expect(source).toContain('result.kind === "started" || result.kind === "running"');
+    expect(source).toContain("await syncAllWorkspaceData()");
+  });
+
   it("서버 번들과 프론트 정적 파일이 플러그인에 실려 있다", () => {
     expect(existsSync(join(root, "dashboard-runtime", "server.mjs"))).toBe(true);
     expect(existsSync(join(root, "dashboard-runtime", "web", "index.html"))).toBe(true);
