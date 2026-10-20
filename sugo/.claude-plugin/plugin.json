@@ -1,6 +1,6 @@
 {
   "name": "sugo",
-  "version": "0.37.27",
+  "version": "0.37.28",
   "description": "Spec-based harness + enforced state-machine dev pipeline",
   "author": {
     "name": "김성현"

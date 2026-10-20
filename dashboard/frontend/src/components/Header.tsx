@@ -1,6 +1,5 @@
-import { useLocation } from "react-router-dom";
+import { ShieldCheck } from "lucide-react";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
-import { headerTitleForPath } from "../lib/sidebarNavigation.js";
 
 /**
  * Header — h-16 ck-glass. **버전 뱃지 2축이 핵심**이다:
@@ -13,15 +12,19 @@ import { headerTitleForPath } from "../lib/sidebarNavigation.js";
  */
 export function Header() {
   const { dashboardVersion, pluginVersion } = useDashboardMeta();
-  const { pathname } = useLocation();
-  const pageTitle = headerTitleForPath(pathname);
 
   return (
     <header className="flex h-14 items-center justify-between gap-6 border-b border-white/[0.055] bg-[var(--color-surface)]/70 px-6 ck-glass">
-      <div className="flex min-w-0 items-center gap-2 text-[13px]">
-        <span className="font-medium text-[var(--color-text-dim)]">Console</span>
-        <span className="text-[var(--color-text-dim)]/50" aria-hidden="true">/</span>
-        <h1 className="truncate font-semibold text-[var(--color-text-bright)]">{pageTitle}</h1>
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-400/[0.08] text-emerald-300 ring-1 ring-inset ring-emerald-300/15">
+          <ShieldCheck size={14} strokeWidth={1.9} aria-hidden="true" />
+        </span>
+        <div className="flex min-w-0 items-baseline gap-3">
+          <span className="shrink-0 text-[12.5px] font-semibold text-[var(--color-text)]">Evidence-driven engineering</span>
+          <span className="hidden truncate text-[11.5px] text-[var(--color-text-muted)] lg:block">
+            SPEC부터 구현·검증·승인까지, AI 개발을 반복 가능한 제품 흐름으로 만듭니다.
+          </span>
+        </div>
       </div>
       <div className="flex items-center gap-2">
         <span

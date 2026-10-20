@@ -31,11 +31,6 @@ export const SIDEBAR_GROUPS = [
 
 export const SIDEBAR_DESTINATIONS: readonly SidebarItem[] = SIDEBAR_GROUPS.flatMap((group) => [...group.items]);
 
-export function headerTitleForPath(pathname: string): string {
-  if (pathname.startsWith("/roadmap/")) return "Agent Canvas";
-  return SIDEBAR_DESTINATIONS.find((item) => pathname === item.to)?.label ?? "Workspaces";
-}
-
 export function sidebarShortcutPath(key: string): string | null {
   return SIDEBAR_DESTINATIONS.find((item) => item.shortcut === key)?.to ?? null;
 }

@@ -42,10 +42,12 @@ describe("sidebar keyboard navigation", () => {
     expect(source).not.toContain("truncate text-[12px] font-medium leading-none");
   });
 
-  it("전역 헤더는 마케팅 문구 대신 현재 화면 이름을 표시한다", () => {
+  it("전역 헤더는 페이지 제목을 반복하지 않고 제품의 엔지니어링 가치를 설명한다", () => {
     const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
-    expect(source).toContain("useLocation");
-    expect(source).toContain("headerTitleForPath");
+    expect(source).toContain("Evidence-driven engineering");
+    expect(source).toContain("AI 개발을 반복 가능한 제품 흐름으로 만듭니다.");
+    expect(source).not.toContain("useLocation");
+    expect(source).not.toContain("headerTitleForPath");
     expect(source).not.toContain("AI Engineering Control Plane");
     expect(source).not.toContain("From specification to verified delivery.");
     expect(source).not.toContain("차곡차곡");
