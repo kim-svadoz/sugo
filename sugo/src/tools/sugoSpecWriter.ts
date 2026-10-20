@@ -24,6 +24,15 @@ const SPEC_LINT_RULES: { kind: string; pattern: RegExp }[] = [
   { kind: "commit-hash", pattern: /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/ },
 ];
 const REQUIRED_SPEC_SECTIONS = ["배경/목적", "범위", "요구사항", "완료조건", "제약", "Open Questions", "Sources"] as const;
+const PLANNING_SOURCE_REFERENCE = /(기획\s*(?:참고\s*)?자료|참고\s*자료|첨부\s*(?:파일|자료|이미지)|기획\s*화면)/i;
+const EXPLICIT_NO_PLANNING_SOURCE = /(기획\s*(?:참고\s*)?자료|참고\s*자료|첨부\s*(?:파일|자료|이미지)|기획\s*화면)\s*[:：-]?\s*(?:해당\s*)?(?:없음|없습니다|사용하지\s*않음)/i;
+const EXTERNAL_SOURCE_LINK = /https?:\/\/\S+|\[[^\]]+\]\([^)]+\)/i;
+
+export function referencedPlanningSourceMissing(draftContent: string, attachmentCount: number): boolean {
+  if (attachmentCount > 0 || !PLANNING_SOURCE_REFERENCE.test(draftContent)) return false;
+  if (EXPLICIT_NO_PLANNING_SOURCE.test(draftContent) || EXTERNAL_SOURCE_LINK.test(draftContent)) return false;
+  return true;
+}
 
 export function lintSpecText(text: string): { line: number; kind: string; match: string }[] {
   return text.split("\n").flatMap((content, index) =>
@@ -90,6 +99,16 @@ export async function handleSugoSpecWriter(rawArgs: unknown) {
         downloadSpecAttachments(args.workspace, spec.id, dir),
         fetchSpecDraft(args.workspace, spec.id),
       ]);
+      if (attachments && referencedPlanningSourceMissing(draftContent ?? "", attachments.length)) {
+        return result({
+          ok: false,
+          errorCode: "SPEC_REFERENCED_SOURCE_MISSING",
+          message: "SPEC 초안이 기획참고자료를 가리키지만 연결된 파일이나 링크가 없습니다. Schedule SPEC 카드에 자료를 첨부하거나 현재 대화에 올려 달라고 요청하세요. 자료를 받기 전에는 SPEC을 완성 처리하지 마세요.",
+          spec,
+          draftContent: draftContent ?? "",
+          attachments: [],
+        });
+      }
       const specTarget = await nextSpecTarget(spec.title);
       return result({ ok: true, spec, specTarget, draftContent: draftContent ?? "", attachments: attachments ?? [], ...(attachments === null && { attachmentsUnavailable: true }) });
     } catch (error) {

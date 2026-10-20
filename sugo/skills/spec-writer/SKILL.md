@@ -14,6 +14,7 @@ Claude and Codex share this SPEC-writing contract. Do not implement product code
 3. Stop on `SPEC_NOT_EDITABLE`. A SPEC linked to feat is immutable; use patch for later changes.
 4. Call `sugo_get_project_context(projectPath)` for harnesses, rules, checkpoints, and TODO-SPEC.
 5. Open every local planning image path in context `attachments`. If `attachmentsUnavailable`, tell the user that this Dashboard version does not support attachments.
+6. Stop on `SPEC_REFERENCED_SOURCE_MISSING`. Tell the user that the draft refers to planning material but no file or link is connected. Ask the user to attach it to the Schedule SPEC card or the current conversation. Do not complete the SPEC before receiving it.
 
 ## Writing
 

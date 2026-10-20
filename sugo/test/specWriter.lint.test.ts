@@ -55,11 +55,13 @@ describe("spec-writer complete gate", () => {
   let dir: string;
   let attached: string[];
   let attachmentNames: string[];
+  let draftContent: string;
 
   beforeEach(async () => {
     dir = mkdtempSync(join(tmpdir(), "sugo-spec-lint-"));
     attached = [];
     attachmentNames = ["01.png", "02.jpg"];
+    draftContent = "";
     process.env.SUGO_HOME_OVERRIDE = dir;
     server = createServer((req, res) => {
       if (req.url?.includes("/spec-attachments/file")) {
@@ -68,6 +70,7 @@ describe("spec-writer complete gate", () => {
       }
       res.writeHead(200, { "Content-Type": "application/json" });
       if (req.url?.includes("/spec-attachments")) return res.end(JSON.stringify({ ok: true, locked: false, attachments: attachmentNames.map((name) => ({ name })) }));
+      if (req.url?.includes("/spec-draft")) return res.end(JSON.stringify({ ok: true, content: draftContent }));
       if (req.method === "POST") {
         attached.push(req.url ?? "");
         return res.end("{}");
@@ -145,6 +148,29 @@ describe("spec-writer complete gate", () => {
     const second = JSON.parse((await handleSugoSpecWriter({ action: "context", workspace: "ws", specDraftId: "spec-manual-1" })).content[0].text);
     expect(second.attachments.map((p: string) => p.split(/[\\/]/).pop())).toEqual(["02.jpg"]);
     expect(existsSync(first.attachments[0])).toBe(false);
+  });
+
+  it("초안이 기획참고자료를 가리키지만 파일이나 링크가 없으면 첨부 요청 없이 진행하지 않는다", async () => {
+    attachmentNames = [];
+    draftContent = "회의록의 기획참고자료를 기준으로 자바 담당 범위를 정리한다.";
+
+    const data = JSON.parse((await handleSugoSpecWriter({ action: "context", workspace: "ws", specDraftId: "spec-manual-1" })).content[0].text);
+
+    expect(data.ok).toBe(false);
+    expect(data.errorCode).toBe("SPEC_REFERENCED_SOURCE_MISSING");
+  });
+
+  it("기획참고자료 링크가 있거나 자료 없음이 명시되면 빈 첨부를 허용한다", async () => {
+    attachmentNames = [];
+    for (const content of [
+      "기획참고자료: https://wiki.example.com/planning/123",
+      "기획참고자료: 없음",
+    ]) {
+      draftContent = content;
+      const data = JSON.parse((await handleSugoSpecWriter({ action: "context", workspace: "ws", specDraftId: "spec-manual-1" })).content[0].text);
+      expect(data.ok).toBe(true);
+      expect(data.attachments).toEqual([]);
+    }
   });
 
   it("context는 이미 존재하는 SPEC 버전을 덮어쓰지 않고 다음 빈 버전을 제안한다", async () => {

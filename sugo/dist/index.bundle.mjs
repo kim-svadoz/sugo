@@ -28221,7 +28221,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.37.11" : "0.0.0-dev";
+  return true ? "0.37.12" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -33058,6 +33058,14 @@ var SPEC_LINT_RULES = [
   { kind: "commit-hash", pattern: /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/ }
 ];
 var REQUIRED_SPEC_SECTIONS = ["\uBC30\uACBD/\uBAA9\uC801", "\uBC94\uC704", "\uC694\uAD6C\uC0AC\uD56D", "\uC644\uB8CC\uC870\uAC74", "\uC81C\uC57D", "Open Questions", "Sources"];
+var PLANNING_SOURCE_REFERENCE = /(기획\s*(?:참고\s*)?자료|참고\s*자료|첨부\s*(?:파일|자료|이미지)|기획\s*화면)/i;
+var EXPLICIT_NO_PLANNING_SOURCE = /(기획\s*(?:참고\s*)?자료|참고\s*자료|첨부\s*(?:파일|자료|이미지)|기획\s*화면)\s*[:：-]?\s*(?:해당\s*)?(?:없음|없습니다|사용하지\s*않음)/i;
+var EXTERNAL_SOURCE_LINK = /https?:\/\/\S+|\[[^\]]+\]\([^)]+\)/i;
+function referencedPlanningSourceMissing(draftContent, attachmentCount) {
+  if (attachmentCount > 0 || !PLANNING_SOURCE_REFERENCE.test(draftContent)) return false;
+  if (EXPLICIT_NO_PLANNING_SOURCE.test(draftContent) || EXTERNAL_SOURCE_LINK.test(draftContent)) return false;
+  return true;
+}
 function lintSpecText(text) {
   return text.split("\n").flatMap(
     (content, index) => SPEC_LINT_RULES.flatMap(({ kind, pattern }) => {
@@ -33114,6 +33122,16 @@ async function handleSugoSpecWriter(rawArgs) {
         downloadSpecAttachments(args2.workspace, spec.id, dir),
         fetchSpecDraft(args2.workspace, spec.id)
       ]);
+      if (attachments && referencedPlanningSourceMissing(draftContent ?? "", attachments.length)) {
+        return result({
+          ok: false,
+          errorCode: "SPEC_REFERENCED_SOURCE_MISSING",
+          message: "SPEC \uCD08\uC548\uC774 \uAE30\uD68D\uCC38\uACE0\uC790\uB8CC\uB97C \uAC00\uB9AC\uD0A4\uC9C0\uB9CC \uC5F0\uACB0\uB41C \uD30C\uC77C\uC774\uB098 \uB9C1\uD06C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4. Schedule SPEC \uCE74\uB4DC\uC5D0 \uC790\uB8CC\uB97C \uCCA8\uBD80\uD558\uAC70\uB098 \uD604\uC7AC \uB300\uD654\uC5D0 \uC62C\uB824 \uB2EC\uB77C\uACE0 \uC694\uCCAD\uD558\uC138\uC694. \uC790\uB8CC\uB97C \uBC1B\uAE30 \uC804\uC5D0\uB294 SPEC\uC744 \uC644\uC131 \uCC98\uB9AC\uD558\uC9C0 \uB9C8\uC138\uC694.",
+          spec,
+          draftContent: draftContent ?? "",
+          attachments: []
+        });
+      }
       const specTarget = await nextSpecTarget(spec.title);
       return result({ ok: true, spec, specTarget, draftContent: draftContent ?? "", attachments: attachments ?? [], ...attachments === null && { attachmentsUnavailable: true } });
     } catch (error3) {

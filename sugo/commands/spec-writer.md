@@ -5,6 +5,8 @@ argument-hint: --workspace <name> --project <absolute-path> --spec-draft <id>
 
 Read and follow the `spec-writer` skill exactly.
 
+If context returns `SPEC_REFERENCED_SOURCE_MISSING`, stop and ask for the referenced planning material. Never replace a missing source with a summary or an assumption.
+
 Input: $ARGUMENTS
 
 First call `sugo_spec_writer(action:"context")` to verify editability and select the exact Schedule SPEC. Load project context with `sugo_get_project_context`.
