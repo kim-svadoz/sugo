@@ -14,4 +14,5 @@ After writing and validating spec.md, call `sugo_spec_writer(action:"complete")`
 Write a product-level specification. Exclude file paths, line numbers, current implementation details, and research assumptions. If complete returns `SPEC_LINT_WARNINGS`, do not use `acceptLintWarnings:true` without user approval.
 Copy every planning image from `attachments` into the spec version's `images/` directory and use relative links in spec.md.
 Review every planning document returned in `references` and list its link under Sources. If a link cannot be read, ask the user for the document instead of completing the SPEC without it.
+Before writing, inspect the current project's established domain terms and relevant product flow. Show the user a concise alignment review and resolve behavior-changing questions. Completion requires `reviewEvidence`; do not claim that review without real project files and every returned source.
 Follow the skill's file rules; the destination is outside the project repository. Open Questions may contain only decisions that change behavior or completion criteria, not ownership, schedule, or coordination.

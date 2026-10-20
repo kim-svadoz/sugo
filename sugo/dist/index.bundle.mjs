@@ -28232,7 +28232,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.37.13" : "0.0.0-dev";
+  return true ? "0.37.14" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -33050,7 +33050,7 @@ function errorResult14(errorCode, message) {
 }
 
 // src/tools/sugoSpecWriter.ts
-import { access as access3, readFile as readFile26 } from "node:fs/promises";
+import { access as access3, readFile as readFile26, stat as stat4 } from "node:fs/promises";
 import { isAbsolute as isAbsolute8, join as join29, relative as relative8, resolve as resolve11, sep as sep4 } from "node:path";
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
@@ -33059,7 +33059,15 @@ var sugoSpecWriterInputSchema = {
   projectPath: external_exports.string().optional(),
   specPath: external_exports.string().optional(),
   /** lint 경고를 사용자에게 보여주고 연결 승인을 받은 뒤에만 true로 다시 호출한다. */
-  acceptLintWarnings: external_exports.boolean().optional()
+  acceptLintWarnings: external_exports.boolean().optional(),
+  reviewEvidence: external_exports.object({
+    projectFiles: external_exports.array(external_exports.string()).min(1),
+    attachmentPaths: external_exports.array(external_exports.string()),
+    referenceUrls: external_exports.array(external_exports.string().url()),
+    alignmentSummary: external_exports.string().min(30),
+    blockingQuestionsResolved: external_exports.boolean(),
+    unreadableSources: external_exports.array(external_exports.string())
+  }).optional()
 };
 var Args = external_exports.object(sugoSpecWriterInputSchema);
 var SPEC_LINT_RULES = [
@@ -33117,6 +33125,18 @@ function managedSpecPath(specPath) {
   const parts2 = rel.split(sep4);
   return parts2.length === 4 && /^\d{8}$/.test(parts2[0]) && parts2[1].length > 0 && /^v[1-9]\d*$/.test(parts2[2]) && parts2[3] === "spec.md";
 }
+async function invalidProjectReviewFiles(projectPath, paths) {
+  const root = resolve11(projectPath);
+  const invalid = [];
+  for (const path of paths) {
+    const target = resolve11(root, path);
+    const rel = relative8(root, target);
+    const inside = rel !== ".." && !rel.startsWith(`..${sep4}`) && !isAbsolute8(rel);
+    const isFile = inside && await stat4(target).then((entry) => entry.isFile(), () => false);
+    if (!isFile) invalid.push(path);
+  }
+  return invalid;
+}
 async function handleSugoSpecWriter(rawArgs) {
   const args2 = Args.parse(rawArgs);
   const candidates = await fetchUnlinkedSpecDrafts(args2.workspace);
@@ -33170,6 +33190,48 @@ async function handleSugoSpecWriter(rawArgs) {
   }
   const text = await readFile26(args2.specPath, "utf-8").catch(() => null);
   if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args2.specPath });
+  if (args2.projectPath) {
+    if (!args2.reviewEvidence) {
+      return result({
+        ok: false,
+        errorCode: "SPEC_REVIEW_EVIDENCE_REQUIRED",
+        message: "\uD604\uC7AC \uD504\uB85C\uC81D\uD2B8\uC758 \uC6A9\uC5B4\xB7\uD750\uB984\uACFC \uC5F0\uACB0\uB41C \uAE30\uD68D\uC790\uB8CC\uB97C \uB300\uC870\uD55C \uC99D\uAC70\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4. \uD504\uB85C\uC81D\uD2B8 \uD30C\uC77C\uACFC \uBAA8\uB4E0 \uCCA8\uBD80\xB7\uB9C1\uD06C\uB97C \uD655\uC778\uD558\uACE0 \uD575\uC2EC \uC9C8\uBB38\uC744 \uC0AC\uC6A9\uC790\uC640 \uD655\uC815\uD55C \uB4A4 \uB2E4\uC2DC \uD638\uCD9C\uD558\uC138\uC694."
+      });
+    }
+    if (!args2.reviewEvidence.blockingQuestionsResolved || args2.reviewEvidence.unreadableSources.length > 0) {
+      return result({
+        ok: false,
+        errorCode: "SPEC_REVIEW_INCOMPLETE",
+        message: "\uC77D\uC9C0 \uBABB\uD55C \uC790\uB8CC\uAC00 \uC788\uAC70\uB098 \uAD6C\uD604 \uBC29\uD5A5\uC744 \uBC14\uAFB8\uB294 \uC9C8\uBB38\uC774 \uB0A8\uC558\uC2B5\uB2C8\uB2E4. \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uC790\uB8CC \uB610\uB294 \uACB0\uC815\uC744 \uC694\uCCAD\uD558\uC138\uC694.",
+        unreadableSources: args2.reviewEvidence.unreadableSources
+      });
+    }
+    const invalidFiles = await invalidProjectReviewFiles(args2.projectPath, args2.reviewEvidence.projectFiles);
+    if (invalidFiles.length > 0) {
+      return result({ ok: false, errorCode: "SPEC_REVIEW_PROJECT_FILE_INVALID", invalidFiles });
+    }
+    const attachmentDir = join29(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const [attachments, references] = await Promise.all([
+      downloadSpecAttachments(args2.workspace, spec.id, attachmentDir),
+      fetchSpecReferences(args2.workspace, spec.id)
+    ]);
+    if (attachments === null || references === null) {
+      return result({ ok: false, errorCode: "SPEC_REVIEW_SOURCE_UNAVAILABLE", message: "Dashboard\uC758 \uAE30\uD68D\uC790\uB8CC \uBAA9\uB85D\uC744 \uAC80\uC99D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4." });
+    }
+    const reviewedAttachments = new Set(args2.reviewEvidence.attachmentPaths.map((path) => resolve11(path)));
+    const reviewedReferences = new Set(args2.reviewEvidence.referenceUrls);
+    const missingAttachments = attachments.filter((path) => !reviewedAttachments.has(resolve11(path)));
+    const missingReferences = references.filter((reference) => !reviewedReferences.has(reference.url));
+    if (missingAttachments.length > 0 || missingReferences.length > 0) {
+      return result({
+        ok: false,
+        errorCode: "SPEC_REVIEW_SOURCE_INCOMPLETE",
+        message: "Dashboard\uAC00 \uC804\uB2EC\uD55C \uAE30\uD68D\uC790\uB8CC\uB97C \uBAA8\uB450 \uD655\uC778\uD574\uC57C \uD569\uB2C8\uB2E4.",
+        missingAttachments,
+        missingReferences
+      });
+    }
+  }
   const structure = validateSpecStructure(text);
   if (structure.missingSections.length > 0 || !structure.ordered) {
     return result({
@@ -34599,7 +34661,7 @@ import { createHash as createHash7 } from "node:crypto";
 // src/lifecycle/dashboardRuntime.ts
 import { spawn } from "node:child_process";
 import { closeSync, existsSync as existsSync5, openSync } from "node:fs";
-import { mkdir as mkdir20, readFile as readFile28, rm as rm5, stat as stat4 } from "node:fs/promises";
+import { mkdir as mkdir20, readFile as readFile28, rm as rm5, stat as stat5 } from "node:fs/promises";
 import { join as join32 } from "node:path";
 var DEFAULT_DASHBOARD_PORT = 3001;
 function configuredDashboardPort() {
@@ -34690,7 +34752,7 @@ async function acquireLock(paths) {
       await mkdir20(paths.lockDir);
       return true;
     } catch {
-      const age = await stat4(paths.lockDir).then((s) => Date.now() - s.mtimeMs, () => 0);
+      const age = await stat5(paths.lockDir).then((s) => Date.now() - s.mtimeMs, () => 0);
       if (age < LOCK_STALE_MS) return false;
       await rm5(paths.lockDir, { recursive: true, force: true });
     }
@@ -35051,7 +35113,7 @@ server.registerTool(
   "sugo_spec_writer",
   {
     title: "Dashboard SPEC writer bridge",
-    description: "Schedule SPEC \uCD08\uC548 \uCEE8\uD14D\uC2A4\uD2B8\uB97C \uC77D\uACE0 \uC644\uC131\uB41C spec.md \uACBD\uB85C\uB97C \uB2E4\uC2DC \uC5F0\uACB0\uD55C\uB2E4. feat \uC2DC\uC791 \uB4A4\uC5D0\uB294 \uC218\uC815\uC774 \uAC70\uBD80\uB41C\uB2E4. complete\uB294 \uAD6C\uD604 \uACBD\uB85C\xB7\uC904 \uBC88\uD638\xB7\uCEE4\uBC0B \uD574\uC2DC \uBB38\uAD6C\uAC00 \uC788\uC73C\uBA74 SPEC_LINT_WARNINGS\uB85C \uC5F0\uACB0\uC744 \uBCF4\uB958\uD558\uBA70, \uC0AC\uC6A9\uC790 \uC2B9\uC778 \uB4A4\uC5D0\uB9CC acceptLintWarnings:true\uB85C \uC7AC\uD638\uCD9C\uD55C\uB2E4.",
+    description: "Schedule SPEC \uCD08\uC548\xB7\uC774\uBBF8\uC9C0\xB7\uAE30\uD68D \uB9C1\uD06C\uB97C \uC77D\uACE0 \uC644\uC131\uB41C spec.md\uB97C \uC5F0\uACB0\uD55C\uB2E4. feat \uC2DC\uC791 \uB4A4\uC5D0\uB294 \uC218\uC815\uC774 \uAC70\uBD80\uB41C\uB2E4. complete\uB294 \uC2E4\uC81C \uD504\uB85C\uC81D\uD2B8 \uD30C\uC77C, \uBAA8\uB4E0 \uAE30\uD68D\uC790\uB8CC, \uC6A9\uC5B4\xB7\uD750\uB984 \uC815\uD569\uC131, \uD575\uC2EC \uC9C8\uBB38 \uD655\uC815\uC774 \uB2F4\uAE34 reviewEvidence\uB97C \uAC80\uC99D\uD558\uBA70 \uAD6C\uD604 \uC138\uBD80 lint \uACBD\uACE0\uB294 \uC0AC\uC6A9\uC790 \uC2B9\uC778 \uB4A4\uC5D0\uB9CC \uD5C8\uC6A9\uD55C\uB2E4.",
     inputSchema: sugoSpecWriterInputSchema
   },
   handleSugoSpecWriter

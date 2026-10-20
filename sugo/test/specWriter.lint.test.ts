@@ -121,6 +121,89 @@ describe("spec-writer complete gate", () => {
     expect(attached).toHaveLength(1);
   });
 
+  it("프로젝트가 지정된 SPEC은 현행 용어와 자료를 대조한 증거 없이 완료하지 않는다", async () => {
+    const projectPath = join(dir, "project");
+    mkdirSync(projectPath, { recursive: true });
+    writeFileSync(join(projectPath, "README.md"), "# Existing product vocabulary");
+    const specPath = join(dir, ".claude", "sugo", "specs", "20261015", "t", "v1", "spec.md");
+    mkdirSync(dirname(specPath), { recursive: true });
+    writeFileSync(specPath, VALID_SPEC);
+
+    const data = JSON.parse((await handleSugoSpecWriter({
+      action: "complete",
+      workspace: "ws",
+      projectPath,
+      specDraftId: "spec-manual-1",
+      specPath,
+    })).content[0].text);
+
+    expect(data.ok).toBe(false);
+    expect(data.errorCode).toBe("SPEC_REVIEW_EVIDENCE_REQUIRED");
+    expect(attached).toEqual([]);
+  });
+
+  it("프로젝트와 모든 기획자료를 확인하고 핵심 질문을 확정한 경우에만 완료한다", async () => {
+    const projectPath = join(dir, "reviewed-project");
+    mkdirSync(projectPath, { recursive: true });
+    writeFileSync(join(projectPath, "README.md"), "# Existing product vocabulary");
+    attachmentNames = [];
+    referenceLinks = [{ title: "MAB 기획", url: "https://wiki.example.com/mab" }];
+    const specPath = join(dir, ".claude", "sugo", "specs", "20261015", "t", "v1", "spec.md");
+    mkdirSync(dirname(specPath), { recursive: true });
+    writeFileSync(specPath, VALID_SPEC);
+
+    const data = JSON.parse((await handleSugoSpecWriter({
+      action: "complete",
+      workspace: "ws",
+      projectPath,
+      specDraftId: "spec-manual-1",
+      specPath,
+      reviewEvidence: {
+        projectFiles: ["README.md"],
+        attachmentPaths: [],
+        referenceUrls: ["https://wiki.example.com/mab"],
+        alignmentSummary: "현재 제품 용어와 진입 흐름을 대조했고 새 기능의 제품 경계를 사용자와 확정했다.",
+        blockingQuestionsResolved: true,
+        unreadableSources: [],
+      },
+    })).content[0].text);
+
+    expect(data.ok).toBe(true);
+    expect(attached).toHaveLength(1);
+  });
+
+  it("Dashboard가 전달한 기획 링크를 하나라도 검토 증거에서 누락하면 완료하지 않는다", async () => {
+    const projectPath = join(dir, "incomplete-review-project");
+    mkdirSync(projectPath, { recursive: true });
+    writeFileSync(join(projectPath, "README.md"), "# Existing product vocabulary");
+    attachmentNames = [];
+    referenceLinks = [{ title: "MAB 기획", url: "https://wiki.example.com/mab" }];
+    const specPath = join(dir, ".claude", "sugo", "specs", "20261015", "t", "v1", "spec.md");
+    mkdirSync(dirname(specPath), { recursive: true });
+    writeFileSync(specPath, VALID_SPEC);
+
+    const data = JSON.parse((await handleSugoSpecWriter({
+      action: "complete",
+      workspace: "ws",
+      projectPath,
+      specDraftId: "spec-manual-1",
+      specPath,
+      reviewEvidence: {
+        projectFiles: ["README.md"],
+        attachmentPaths: [],
+        referenceUrls: [],
+        alignmentSummary: "현재 제품 용어와 진입 흐름을 대조했지만 연결된 기획 링크는 확인하지 않았다.",
+        blockingQuestionsResolved: true,
+        unreadableSources: [],
+      },
+    })).content[0].text);
+
+    expect(data.ok).toBe(false);
+    expect(data.errorCode).toBe("SPEC_REVIEW_SOURCE_INCOMPLETE");
+    expect(data.missingReferences).toEqual(referenceLinks);
+    expect(attached).toEqual([]);
+  });
+
   it("필수 SPEC 섹션이 빠지면 연결하지 않고 누락 목록을 반환한다", async () => {
     const data = await complete("# 제목\n\n## 요구사항\n\n### REQ-1: 동작\n본문은 충분히 길지만 필수 구조가 빠진 문서이므로 연결되면 안 됩니다. 사용자마다 다른 형식이 생기는 것을 완료 게이트에서 차단해야 합니다.");
     expect(data.ok).toBe(false);

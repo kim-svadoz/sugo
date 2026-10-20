@@ -33,6 +33,7 @@ try {
       return;
     }
     if (req.url?.includes("/spec-attachments")) return res.end(JSON.stringify({ attachments: [] }));
+    if (req.url?.includes("/spec-references")) return res.end(JSON.stringify({ links: [] }));
     return res.end(JSON.stringify({ nodes: [{
       id: "spec-manual-cold", title: "콜드 시작 기능", level: "spec", status: "pending", parent: null,
       project_path: project, spec_path: null,
@@ -71,7 +72,14 @@ try {
   check("최초 SPEC 경로는 현재 사용자 Sugo 데이터 루트에서 계산", specContext.specTarget?.path.startsWith(expectedSpecRoot) && /[/\\]v1[/\\]spec\.md$/.test(specContext.specTarget.path));
   mkdirSync(dirname(specContext.specTarget.path), { recursive: true });
   writeFileSync(specContext.specTarget.path, "# 콜드 시작 기능\n\n## 배경/목적\n배포 번들 경로 계약을 검증합니다.\n\n## 범위\n사용자별 저장 위치를 사용합니다.\n\n## 요구사항\n### REQ-1: 경로\n개인 하드코딩 없이 동작합니다.\n\n## 완료조건\nSPEC이 연결됩니다.\n\n## 제약\n없음\n\n## Open Questions\n없음\n\n## Sources\n콜드 시작 기능\n");
-  const specComplete = await call("sugo_spec_writer", { action: "complete", workspace: "core", projectPath: project, specDraftId: "spec-manual-cold", specPath: specContext.specTarget.path });
+  const specComplete = await call("sugo_spec_writer", {
+    action: "complete", workspace: "core", projectPath: project, specDraftId: "spec-manual-cold", specPath: specContext.specTarget.path,
+    reviewEvidence: {
+      projectFiles: ["package.json"], attachmentPaths: [], referenceUrls: [],
+      alignmentSummary: "콜드 프로젝트의 package.json을 읽고 사용자별 SPEC 저장 위치 계약과 현재 프로젝트 경계를 확인했습니다.",
+      blockingQuestionsResolved: true, unreadableSources: [],
+    },
+  });
   check("배포 번들 최초 SPEC 연결", specComplete.ok === true && attachedSpecPath === specContext.specTarget.path);
   const nextSpecContext = await call("sugo_spec_writer", { action: "context", workspace: "core", projectPath: project, specDraftId: "spec-manual-cold" });
   check("기존 SPEC을 덮지 않고 다음 버전 제안", nextSpecContext.specTarget?.version === 2 && /[/\\]v2[/\\]spec\.md$/.test(nextSpecContext.specTarget.path));

@@ -1,4 +1,4 @@
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { z } from "zod";
 import { attachSpecDocument, downloadSpecAttachments, fetchSpecDraft, fetchSpecReferences, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
@@ -13,6 +13,14 @@ export const sugoSpecWriterInputSchema = {
   specPath: z.string().optional(),
   /** lint 경고를 사용자에게 보여주고 연결 승인을 받은 뒤에만 true로 다시 호출한다. */
   acceptLintWarnings: z.boolean().optional(),
+  reviewEvidence: z.object({
+    projectFiles: z.array(z.string()).min(1),
+    attachmentPaths: z.array(z.string()),
+    referenceUrls: z.array(z.string().url()),
+    alignmentSummary: z.string().min(30),
+    blockingQuestionsResolved: z.boolean(),
+    unreadableSources: z.array(z.string()),
+  }).optional(),
 };
 
 const Args = z.object(sugoSpecWriterInputSchema);
@@ -83,6 +91,19 @@ function managedSpecPath(specPath: string): boolean {
   return parts.length === 4 && /^\d{8}$/.test(parts[0]) && parts[1].length > 0 && /^v[1-9]\d*$/.test(parts[2]) && parts[3] === "spec.md";
 }
 
+async function invalidProjectReviewFiles(projectPath: string, paths: string[]): Promise<string[]> {
+  const root = resolve(projectPath);
+  const invalid: string[] = [];
+  for (const path of paths) {
+    const target = resolve(root, path);
+    const rel = relative(root, target);
+    const inside = rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);
+    const isFile = inside && await stat(target).then((entry) => entry.isFile(), () => false);
+    if (!isFile) invalid.push(path);
+  }
+  return invalid;
+}
+
 export async function handleSugoSpecWriter(rawArgs: unknown) {
   const args = Args.parse(rawArgs);
   const candidates = await fetchUnlinkedSpecDrafts(args.workspace);
@@ -136,6 +157,48 @@ export async function handleSugoSpecWriter(rawArgs: unknown) {
   }
   const text = await readFile(args.specPath, "utf-8").catch(() => null);
   if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args.specPath });
+  if (args.projectPath) {
+    if (!args.reviewEvidence) {
+      return result({
+        ok: false,
+        errorCode: "SPEC_REVIEW_EVIDENCE_REQUIRED",
+        message: "현재 프로젝트의 용어·흐름과 연결된 기획자료를 대조한 증거가 필요합니다. 프로젝트 파일과 모든 첨부·링크를 확인하고 핵심 질문을 사용자와 확정한 뒤 다시 호출하세요.",
+      });
+    }
+    if (!args.reviewEvidence.blockingQuestionsResolved || args.reviewEvidence.unreadableSources.length > 0) {
+      return result({
+        ok: false,
+        errorCode: "SPEC_REVIEW_INCOMPLETE",
+        message: "읽지 못한 자료가 있거나 구현 방향을 바꾸는 질문이 남았습니다. 사용자에게 자료 또는 결정을 요청하세요.",
+        unreadableSources: args.reviewEvidence.unreadableSources,
+      });
+    }
+    const invalidFiles = await invalidProjectReviewFiles(args.projectPath, args.reviewEvidence.projectFiles);
+    if (invalidFiles.length > 0) {
+      return result({ ok: false, errorCode: "SPEC_REVIEW_PROJECT_FILE_INVALID", invalidFiles });
+    }
+    const attachmentDir = join(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args.workspace), encodeURIComponent(spec.id));
+    const [attachments, references] = await Promise.all([
+      downloadSpecAttachments(args.workspace, spec.id, attachmentDir),
+      fetchSpecReferences(args.workspace, spec.id),
+    ]);
+    if (attachments === null || references === null) {
+      return result({ ok: false, errorCode: "SPEC_REVIEW_SOURCE_UNAVAILABLE", message: "Dashboard의 기획자료 목록을 검증할 수 없습니다." });
+    }
+    const reviewedAttachments = new Set(args.reviewEvidence.attachmentPaths.map((path) => resolve(path)));
+    const reviewedReferences = new Set(args.reviewEvidence.referenceUrls);
+    const missingAttachments = attachments.filter((path) => !reviewedAttachments.has(resolve(path)));
+    const missingReferences = references.filter((reference) => !reviewedReferences.has(reference.url));
+    if (missingAttachments.length > 0 || missingReferences.length > 0) {
+      return result({
+        ok: false,
+        errorCode: "SPEC_REVIEW_SOURCE_INCOMPLETE",
+        message: "Dashboard가 전달한 기획자료를 모두 확인해야 합니다.",
+        missingAttachments,
+        missingReferences,
+      });
+    }
+  }
   const structure = validateSpecStructure(text);
   if (structure.missingSections.length > 0 || !structure.ordered) {
     return result({

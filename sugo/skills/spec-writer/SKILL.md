@@ -17,6 +17,22 @@ Claude and Codex share this SPEC-writing contract. Do not implement product code
    If `attachmentsUnavailable` or `referencesUnavailable`, tell the user that this Dashboard version cannot provide that source type.
 6. Stop on `SPEC_REFERENCED_SOURCE_MISSING`. Tell the user that the draft refers to planning material but no file or link is connected. Ask the user to attach it to the Schedule SPEC card or the current conversation. Do not complete the SPEC before receiving it.
 
+## Project alignment review
+
+Before writing, inspect the current project as a product engineer would. This step is mandatory, not optional research.
+
+1. Read the nearest project overview and the relevant product/domain documentation.
+2. Inspect the existing entry flow, domain terms, persisted concepts, and extension seam related to the requested feature. Use focused code exploration; do not scan unrelated areas.
+3. Use an available domain ontology or project knowledge tool when it covers this project. Treat it as navigation evidence and verify important claims against current code or documentation.
+4. Present a concise alignment review in the conversation:
+   - user term → existing project term,
+   - current product flow that the feature changes,
+   - conflicts or missing decisions,
+   - the proposed product boundary.
+5. Ask the user only questions whose answers change required behavior, scope, data meaning, or completion. Do not write or complete the SPEC until those blocking questions are resolved.
+
+Do not turn this review into an implementation design. Its purpose is to prevent a plausible but locally incompatible SPEC.
+
 ## Writing
 
 - The user's direct request to run this skill authorizes writing.
@@ -29,14 +45,15 @@ Claude and Codex share this SPEC-writing contract. Do not implement product code
 ### Exclude from the SPEC
 
 - File paths, line numbers, commit hashes, and class- or method-level implementation.
-- Descriptions of current code behavior.
+- Class-, method-, or file-level descriptions of current code behavior. Product-level current behavior and established domain terms are allowed when verified and relevant.
 - Assumptions derived by the agent from code, data, or documents.
 
 Use research on code, documents, or external tools only in conversation to form questions and scope decisions.
 
 ### Sources of fact
 
-- Use only user-provided requirements, screens, documents, and decisions as SPEC facts.
+- Use user-provided requirements, screens, documents, and decisions as facts about desired behavior.
+- Use verified project code and documentation only for current-state terminology, existing product behavior, compatibility constraints, and the boundary being changed. They do not authorize new desired behavior.
 - Do not put an unconfirmed item in requirements, completion criteria, or constraints. Put it in Open Questions only if the answer changes behavior or completion.
 - Use only business identifiers already used by the user, such as a feature name or screen name. Exclude identifiers found only through research.
 - Do not invent APIs, identifiers, values, schedules, owners, or behavior.
@@ -69,7 +86,8 @@ Use one criterion: does the answer change required behavior or completion? If no
 - Use this exact level-two section order: `배경/목적` → `범위` → `요구사항` → `완료조건` → `제약` → `Open Questions` → `Sources`. Complete validates names and order.
 - In Sources, use the SPEC title, not its ID. A `spec-manual-xxxxxxxx` suffix can trigger the commit-hash lint.
 - Re-read the file. Check required sections, observable completion criteria, excluded content, and that every attachment was copied to and linked from `images/`.
-- Call `sugo_spec_writer(action:"complete", workspace, projectPath, specDraftId, specPath)`.
+- Call `sugo_spec_writer(action:"complete", workspace, projectPath, specDraftId, specPath, reviewEvidence)`.
+  `reviewEvidence` must contain every inspected project-relative file, every reviewed attachment path, every reviewed reference URL, a factual alignment summary, `blockingQuestionsResolved:true`, and an empty `unreadableSources`. The server rejects missing files, omitted Dashboard sources, unreadable sources, and unresolved blocking questions.
 - `SPEC_LINT_WARNINGS` means no link was created. Fix the warned lines in a new vN+1 and call complete again. To retain warnings, show them to the user and obtain explicit approval before retrying with `acceptLintWarnings:true`.
 - Lint detects implementation paths such as `src/main/` and `src/test/`, file-and-line patterns, line references, and commit-like hashes. It cannot detect ordinary prose about current code or research assumptions; no warning does not prove product-level quality.
 - On success, report only the absolute path and the next action: “Schedule에서 feat 명령 복사”.

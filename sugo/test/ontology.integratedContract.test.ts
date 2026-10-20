@@ -54,7 +54,7 @@ describe("operational ontology 통합 계약", () => {
 
     const specWriter = prompt("skills/spec-writer/SKILL.md");
     expectInOrder(specWriter, ["`배경/목적`", "`범위`", "`요구사항`", "`완료조건`", "`제약`", "`Open Questions`", "`Sources`"]);
-    for (const contract of ["SPEC_NOT_EDITABLE", "SPEC_LINT_WARNINGS", "acceptLintWarnings:true", "specTarget.path"]) {
+    for (const contract of ["SPEC_NOT_EDITABLE", "SPEC_REFERENCED_SOURCE_MISSING", "SPEC_LINT_WARNINGS", "acceptLintWarnings:true", "reviewEvidence", "specTarget.path"]) {
       expect(specWriter).toContain(contract);
     }
 
