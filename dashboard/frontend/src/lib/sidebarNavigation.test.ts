@@ -29,6 +29,14 @@ describe("sidebar keyboard navigation", () => {
     expect(source).toContain("text-xs");
   });
 
+  it("영문 하강 문자를 자르지 않고 제품 홈을 독립된 브랜드 버튼으로 표시한다", () => {
+    const source = readFileSync(new URL("../components/Sidebar.tsx", import.meta.url), "utf8");
+    expect(source).toContain('aria-label="SUGO 홈"');
+    expect(source).toContain("작업 허브");
+    expect(source).toContain("leading-5");
+    expect(source).not.toContain("truncate text-[12px] font-medium leading-none");
+  });
+
   it("사이드바 범위를 벗어난 숫자와 일반 키는 이동하지 않는다", () => {
     expect(sidebarShortcutPath("0")).toBeNull();
     expect(sidebarShortcutPath("8")).toBeNull();
