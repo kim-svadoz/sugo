@@ -1,10 +1,11 @@
 export interface SidebarItem { to: string; label: string; shortcut: string; icon: "workspaces" | "schedule" | "weekly" | "skills" | "playbook" | "harness" | "settings" }
-export interface SidebarGroup { label: string; title: string; items: readonly SidebarItem[] }
+export interface SidebarGroup { label: string; title: string; tone: "cyan" | "violet" | "amber"; items: readonly SidebarItem[] }
 
 export const SIDEBAR_GROUPS = [
   {
     label: "WORK",
     title: "업무 공간",
+    tone: "cyan",
     items: [
       { to: "/sessions", label: "Workspaces", shortcut: "1", icon: "workspaces" },
       { to: "/schedule", label: "Schedule", shortcut: "2", icon: "schedule" },
@@ -14,6 +15,7 @@ export const SIDEBAR_GROUPS = [
   {
     label: "EXPLORE",
     title: "Sugo 둘러보기",
+    tone: "violet",
     items: [
       { to: "/skills", label: "Skills", shortcut: "4", icon: "skills" },
       { to: "/playbook", label: "Playbook", shortcut: "5", icon: "playbook" },
@@ -22,6 +24,7 @@ export const SIDEBAR_GROUPS = [
   {
     label: "CONTROL",
     title: "동작 설정",
+    tone: "amber",
     items: [
       { to: "/harness", label: "Harness", shortcut: "6", icon: "harness" },
       { to: "/settings", label: "Settings", shortcut: "7", icon: "settings" },
