@@ -28232,7 +28232,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.37.17" : "0.0.0-dev";
+  return true ? "0.37.18" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29713,7 +29713,7 @@ function estimateHumanHours(startedAtIso, nowIso2, analyzeAttempts, autoLoopRetr
 
 // src/taskTitle.ts
 function prdHeadingTitle(prdContent) {
-  const heading = prdContent?.match(/^#\s+PRD(?:\s+patch\s+v\d+)?\s*:\s*(.+)$/im)?.[1]?.trim();
+  const heading = prdContent?.match(/^#\s+PRD(?:[\s-]+patch[\s-]*v\d+)?\s*(?::|[—–-])\s*(.+)$/im)?.[1]?.trim();
   if (!heading) return null;
   const [, patchSubject] = heading.split(/\s+[—–]\s+/, 2);
   if (patchSubject?.trim()) return patchSubject.trim();
@@ -29727,6 +29727,10 @@ function taskCycleTitle(seed, fallback, prdContent) {
   const normalized = firstLine.replace(/^#{1,6}\s*/, "").replace(/^(?:[-*+]\s+|\d+[.)]\s+)/, "").replace(/^(?:v?\d+\s*(?:차\s*)?patch)\s*[:·-]?\s*/i, "").replace(/\s+/g, " ").trim();
   if (!normalized) return fallback;
   return normalized.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? normalized;
+}
+function completedCycleTitle(input) {
+  if (input.version <= 0) return input.featureName;
+  return input.patchInfoTitle ?? taskCycleTitle(input.seed, input.featureName, input.prdContent);
 }
 
 // src/steKorean.ts
@@ -32239,7 +32243,7 @@ ${args2.prdContent}` : args2.prdContent;
       },
       prRefs
     });
-    await updateTask(workspace, session.data.linkedTaskId, {
+    const completedTask = await updateTask(workspace, session.data.linkedTaskId, {
       status: "done",
       summary: session.data.chainInfo.reviewSummary,
       log_id: workLog.id
@@ -32264,10 +32268,17 @@ ${args2.prdContent}` : args2.prdContent;
       prRefs,
       report: session.data.chainInfo.workResultReport
     };
+    const completedPrd = patchVersion > 0 ? await readFile23(session.data.prdPath ?? "", "utf8").catch(() => void 0) : void 0;
     await recordRoadmapWorkResult(workspace, session.data.linkedTaskId, workResult, {
       version: patchVersion ?? 0,
       completedAt,
-      title: session.featureName,
+      title: completedCycleTitle({
+        version: patchVersion ?? 0,
+        featureName: session.featureName,
+        patchInfoTitle: completedTask?.patchInfo?.title,
+        seed: session.data.seed,
+        prdContent: completedPrd
+      }),
       summary: session.data.chainInfo.reviewSummary,
       changedFiles: session.data.chainInfo.changedFiles,
       seed: session.data.seed,

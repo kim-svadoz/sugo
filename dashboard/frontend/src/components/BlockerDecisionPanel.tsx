@@ -35,8 +35,9 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
     } catch { setError("결정을 저장하지 못했습니다."); return null; }
     finally { setBusy(false); }
   }
-  async function copyResume() {
-    const value = saved?.response === response.trim() ? saved : await persist();
+  async function copyResume(nextResponse = response) {
+    const normalized = nextResponse.trim();
+    const value = saved?.response === normalized ? saved : await persist(normalized);
     if (!value) return;
     await navigator.clipboard.writeText(blockerResumePrompt({ workspace, taskId, taskTitle, question: blocker?.question || question || "차단 원인 확인 필요", response: value.response, sessionId: blocker?.sessionId, resumeAction: blocker?.resumeAction }));
     setCopied(true); window.setTimeout(() => setCopied(false), 1800);
@@ -49,12 +50,13 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
 
   if (Boolean(blocker?.kind === "review_confirmation")) return <section id="review-confirmation-panel" className="space-y-3 rounded-xl border border-amber-300/25 bg-amber-300/[0.04] p-4">
     <h3 className="text-sm font-semibold text-white">작업 결과 확인</h3>
-    <p className="text-xs leading-relaxed text-slate-300">보고서에서 변경 내용과 검증 결과를 확인한 뒤 진행 여부를 결정하세요.</p>
+    <p className="text-xs leading-relaxed text-slate-300">보고서를 확인한 뒤 아래에서 진행 또는 수정 요청을 선택하세요. 선택하면 결정을 저장하고 재개 프롬프트를 한 번에 복사합니다.</p>
     <button type="button" onClick={onOpenReport} disabled={!onOpenReport} className="w-full rounded-lg border border-violet-300/30 bg-violet-400/10 px-4 py-3 text-sm font-semibold text-violet-100">리뷰 보고서 HTML로 열기 ↗</button>
-    <button type="button" disabled={busy || saved?.response === "확인, 진행"} onClick={() => { setResponse("확인, 진행"); void persist("확인, 진행"); }} className="w-full rounded-lg bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-200 disabled:opacity-50">{saved?.response === "확인, 진행" ? "진행 결정 저장됨" : "확인, 진행"}</button>
-    <label className="block text-xs text-slate-300">변경할 내용<textarea value={response === "확인, 진행" ? "" : response} onChange={event => setResponse(event.target.value)} placeholder="수정할 부분을 구체적으로 입력하세요" className="mt-2 min-h-24 w-full rounded-lg border border-white/15 bg-slate-950/50 p-3 text-sm text-white" /></label>
-    <button type="button" disabled={busy || !responseReady || response === "확인, 진행"} onClick={() => void copyResume()} className="w-full rounded-lg border border-white/20 px-4 py-3 text-sm text-white disabled:opacity-40">{copied ? "복사됨" : "저장 후 재개 프롬프트 복사"}</button>
-    {saved?.response === "확인, 진행" && <p role="status" className="text-xs text-emerald-200">결정을 저장했습니다. 작업 세션에서 계속 진행하면 이 결정을 확인하고 재개합니다.</p>}
+    <button type="button" disabled={busy} onClick={() => { setResponse("확인, 진행"); void copyResume("확인, 진행"); }} className="w-full rounded-lg bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-200 disabled:opacity-50">{copied && saved?.response === "확인, 진행" ? "복사됨 · 작업 세션에 붙여넣기" : "검토 완료 · 재개 프롬프트 복사"}</button>
+    <div className="flex items-center gap-3 text-[11px] text-slate-400"><span className="h-px flex-1 bg-white/10" /><span>수정이 필요하면</span><span className="h-px flex-1 bg-white/10" /></div>
+    <label className="block text-xs text-slate-300">수정 요청<textarea value={response === "확인, 진행" ? "" : response} onChange={event => setResponse(event.target.value)} placeholder="수정할 부분을 구체적으로 입력하세요" className="mt-2 min-h-24 w-full rounded-lg border border-white/15 bg-slate-950/50 p-3 text-sm text-white" /></label>
+    <button type="button" disabled={busy || !responseReady || response === "확인, 진행"} onClick={() => void copyResume()} className="w-full rounded-lg border border-white/20 px-4 py-3 text-sm text-white disabled:opacity-40">{copied && saved?.response !== "확인, 진행" ? "복사됨 · 작업 세션에 붙여넣기" : "수정 요청 저장 · 재개 프롬프트 복사"}</button>
+    {copied && <p role="status" className="text-xs text-emerald-200">원래 작업 세션에 프롬프트를 붙여넣으면 검증 후 파이프라인이 재개됩니다.</p>}
     {error && <p role="alert" className="text-xs text-rose-300">{error}</p>}
   </section>;
 

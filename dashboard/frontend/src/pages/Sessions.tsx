@@ -16,6 +16,7 @@ import {
   Rows3,
   Calendar,
   CheckCircle2,
+  ChevronRight,
   FileCode,
   Lightbulb,
   Search,
@@ -146,6 +147,7 @@ export function Sessions() {
   const [statusFilter, setStatusFilter] = useState<"all" | "recent">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [inspectorPage, setInspectorPage] = useState(0);
+  const [expandedRepository, setExpandedRepository] = useState<string | null>(null);
   const [showStatusGuide, setShowStatusGuide] = useState(false);
   const [addCopied, setAddCopied] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<HistoryLog | null>(null);
@@ -170,6 +172,10 @@ export function Sessions() {
     initialSelectionApplied.current = true;
     setSelectedWorkspace(workspaces[0].name);
   }, [workspaces]);
+
+  useEffect(() => {
+    setExpandedRepository(null);
+  }, [selectedWorkspace, inspectorPage]);
 
   useEffect(() => {
     const closeGuideOnEscape = (event: KeyboardEvent) => {
@@ -407,18 +413,28 @@ export function Sessions() {
                 const imageVersions = p.aws_deployments.map((deployment) => deployment.images[0]?.split(":").at(-1) ?? null);
                 const releaseComparison = compareRelease(p.aws_release, p.local_git, imageVersions);
                 const releaseState = RELEASE_STATE[releaseComparison];
+                const isExpanded = expandedRepository === p.project_path;
                 return (
                 <li
                   key={p.project_path}
-                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2.5 text-[13px]"
+                  className="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] text-[13px]"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate font-mono text-sm font-semibold text-[var(--color-text-bright)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
+                  <button
+                    type="button"
+                    aria-expanded={isExpanded}
+                    onClick={() => setExpandedRepository(isExpanded ? null : p.project_path)}
+                    className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.025]"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <ChevronRight size={14} className={cn("shrink-0 text-[var(--color-text-dim)] transition-transform", isExpanded && "rotate-90 text-cyan-300")} />
+                      <span className="truncate font-mono text-sm font-semibold text-[var(--color-text-bright)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
+                    </span>
                     <div className="flex shrink-0 gap-1.5">
                       {p.git_synced === 1 && <span className="rounded border border-emerald-400/25 bg-emerald-400/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">Git Synced</span>}
                       {p.aws_synced === 1 && <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">{p.aws_deployments.some((deployment) => deployment.linkMode === 'confirmed') ? 'AWS Synced' : 'AWS Suggested'}</span>}
                     </div>
-                  </div>
+                  </button>
+                  {isExpanded && <div className="border-t border-[var(--color-border)] px-3 pb-3">
                   {p.aws_release && <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border border-cyan-400/20 bg-cyan-400/[0.04] px-2.5 py-2 text-[11px] leading-5 text-[var(--color-text-muted)]">
                     <span>배포 기준 <b className="text-cyan-200">{p.aws_release.baseBranch}</b></span>
                     <span>로컬 <b className="text-[var(--color-text)]">{p.local_git.branch ?? "detached"}@{shortCommit(p.local_git.headCommit)}</b></span>
@@ -454,6 +470,8 @@ export function Sessions() {
                       })}
                     </div>
                   </section>)}
+                  {!p.aws_release && serviceDeployments.length === 0 && <p className="py-3 text-[12px] text-[var(--color-text-muted)]">표시할 배포 정보가 없습니다.</p>}
+                  </div>}
                 </li>
                 );
               })}

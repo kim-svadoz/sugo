@@ -1,5 +1,5 @@
 function prdHeadingTitle(prdContent: string | undefined): string | null {
-  const heading = prdContent?.match(/^#\s+PRD(?:\s+patch\s+v\d+)?\s*:\s*(.+)$/im)?.[1]?.trim();
+  const heading = prdContent?.match(/^#\s+PRD(?:[\s-]+patch[\s-]*v\d+)?\s*(?::|[—–-])\s*(.+)$/im)?.[1]?.trim();
   if (!heading) return null;
   const [, patchSubject] = heading.split(/\s+[—–]\s+/, 2);
   if (patchSubject?.trim()) return patchSubject.trim();
@@ -19,4 +19,16 @@ export function taskCycleTitle(seed: string | undefined, fallback: string, prdCo
     .trim();
   if (!normalized) return fallback;
   return normalized.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? normalized;
+}
+
+export function completedCycleTitle(input: {
+  version: number;
+  featureName: string;
+  patchInfoTitle?: string;
+  seed?: string;
+  prdContent?: string;
+}): string {
+  if (input.version <= 0) return input.featureName;
+  return input.patchInfoTitle
+    ?? taskCycleTitle(input.seed, input.featureName, input.prdContent);
 }

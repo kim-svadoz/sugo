@@ -19,6 +19,25 @@ import { snapshotAge } from "../lib/snapshotAge.js";
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 const contextAutoRefreshDescription = "Dashboard 실행 중에는 매일 08:00 KST 자동 동기화 · 꺼져 있었다면 다음 실행 시 갱신 · 수동 동기화 가능";
 
+function ContextRefreshStatus({ observedAt, now, dailyLimit, remainingToday, nextAllowedAt }: {
+  observedAt: string | null;
+  now: Date;
+  dailyLimit?: number;
+  remainingToday?: number;
+  nextAllowedAt?: string | null;
+}) {
+  const age = snapshotAge(observedAt, now);
+  return <div className="mt-3 border-t border-[var(--color-border)] pt-3 text-[11px]">
+    <p className="text-cyan-200/90">{contextAutoRefreshDescription}</p>
+    <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[var(--color-text-muted)]">
+      {dailyLimit != null && <span>계정별 하루 {dailyLimit}회 제한</span>}
+      {remainingToday != null && <span>오늘 남음 {remainingToday}회</span>}
+      {nextAllowedAt && <span>다음 가능 {new Date(nextAllowedAt).toLocaleString("ko-KR")}</span>}
+      <span className={age.stale ? "text-amber-300" : "text-[var(--color-text)]"}>마지막 동기화 {age.label}</span>
+    </div>
+  </div>;
+}
+
 function useCurrentMinute() {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 60_000); return () => window.clearInterval(timer); }, []);
@@ -79,15 +98,18 @@ function AwsContextCard() {
   }
 
   return <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-    <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] px-5 py-4">
-      <div>
-        <h2 className="text-base font-semibold text-[var(--color-text)]">AWS Context</h2>
-        <p className="text-xs text-[var(--color-text-muted)]">로컬 AWS 프로필로 공용 리소스 인벤토리를 연결합니다</p>
+    <div className="border-b border-[var(--color-border)] px-5 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-[var(--color-text)]">AWS Context</h2>
+          <p className="text-xs text-[var(--color-text-muted)]">로컬 AWS 프로필로 공용 리소스 인벤토리를 연결합니다</p>
+        </div>
+        {status?.connected && <div className="flex items-center gap-2">
+          <button type="button" disabled={busy} onClick={() => void refreshAll()} className="rounded-md border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200 disabled:opacity-40">{busy ? "동기화 중…" : "AWS 전체 동기화"}</button>
+          <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span>
+        </div>}
       </div>
-      {status?.connected && <div className="flex items-center gap-2">
-        <button type="button" disabled={busy} onClick={() => void refreshAll()} className="rounded-md border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200 disabled:opacity-40">{busy ? "동기화 중…" : "AWS 전체 동기화"}</button>
-        <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span>
-      </div>}
+      {status?.connected && <ContextRefreshStatus observedAt={status.observedAt} now={now} dailyLimit={status.refreshBudget?.dailyLimit ?? 4} remainingToday={status.refreshBudget?.remainingToday} nextAllowedAt={status.refreshBudget?.nextAllowedAt} />}
     </div>
     <div className="space-y-4 p-5">
       {error && <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{error}</div>}
@@ -144,7 +166,6 @@ function AwsContextCard() {
             </div>;
           })}
         </div> : <div className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-4 text-center text-xs text-[var(--color-text-muted)]">표시할 AWS 리소스가 없습니다.</div>}
-        <div className="flex flex-wrap justify-end gap-x-3 font-mono text-[10px] text-[var(--color-text-dim)]"><span>{contextAutoRefreshDescription}</span><span>계정별 하루 {status.refreshBudget?.dailyLimit ?? 4}회 제한</span><span>오늘 남음 {status.refreshBudget?.remainingToday ?? '-'}회</span>{status.refreshBudget?.nextAllowedAt && <span>다음 가능 {new Date(status.refreshBudget.nextAllowedAt).toLocaleString('ko-KR')}</span>}<span className={snapshotAge(status.observedAt, now).stale ? "text-amber-300" : ""}>마지막 동기화 {snapshotAge(status.observedAt, now).label}</span></div>
       </>}
     </div>
   </div>;
@@ -188,9 +209,12 @@ function PinpointContextCard() {
   useEffect(() => { void load(); }, []);
   async function run(action: () => Promise<unknown>) { setBusy(true); try { await action(); await load(); } catch (err) { setError(String(err)); } finally { setBusy(false); } }
   return <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-    <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
-      <div><h2 className="text-base font-semibold text-[var(--color-text)]">Pinpoint APM</h2><p className="text-xs text-[var(--color-text-muted)]">ECS 생존과 분리해 실제 에이전트 관측 상태를 읽습니다</p></div>
-      {status?.connected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span>}
+    <div className="border-b border-[var(--color-border)] px-5 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <div><h2 className="text-base font-semibold text-[var(--color-text)]">Pinpoint APM</h2><p className="text-xs text-[var(--color-text-muted)]">ECS 생존과 분리해 실제 에이전트 관측 상태를 읽습니다</p></div>
+        {status?.connected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span>}
+      </div>
+      {status?.connected && <ContextRefreshStatus observedAt={status.observedAt} now={now} />}
     </div>
     <div className="space-y-3 p-5">
       {error && <div className="rounded border border-rose-500/30 px-3 py-2 text-xs text-rose-300">{error}</div>}
@@ -198,7 +222,7 @@ function PinpointContextCard() {
         {!status?.connected ? <button disabled={busy || !baseUrl} onClick={() => void run(() => connectPinpointContext(baseUrl))} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200 disabled:opacity-40">연결</button> : <><button disabled={busy} onClick={() => void run(refreshPinpointContext)} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200">동기화</button><button disabled={busy} onClick={() => void run(disconnectPinpointContext)} className="rounded border border-rose-400/30 px-3 text-sm text-rose-300">해제</button></>}
       </div>
       {status?.connected && <div className="grid gap-2 sm:grid-cols-2">{status.applications.map((app) => <div key={app.applicationName} className="rounded border border-[var(--color-border)] bg-black/10 px-3 py-2 text-xs"><div className="font-medium text-[var(--color-text)]">{app.applicationName}</div><div className="mt-1 text-[var(--color-text-muted)]">{app.state} · agent {app.runningAgentCount}/{app.agentCount} · 최근 5분 지연 표본 {app.sampleCount >= 5000 ? '5,000+' : app.sampleCount} / 표본 오류 {app.errorCount}</div></div>)}</div>}
-      <p className="text-[11px] text-[var(--color-text-dim)]">읽기 전용 · {contextAutoRefreshDescription} · 5분 중복 호출 방지 <span className={snapshotAge(status?.observedAt ?? null, now).stale ? "text-amber-300" : ""}>· 마지막 동기화 {snapshotAge(status?.observedAt ?? null, now).label}</span></p>
+      <p className="text-[11px] text-[var(--color-text-dim)]">읽기 전용 · 5분 중복 호출 방지</p>
     </div>
   </div>;
 }

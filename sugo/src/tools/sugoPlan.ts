@@ -43,7 +43,7 @@ import { renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistr
 import { findRegistryEntry } from "../harness/registry.js";
 import { estimateHumanHours } from "../humanHours.js";
 import { checkpointApplies } from "../work/matching.js";
-import { taskCycleTitle } from "../taskTitle.js";
+import { completedCycleTitle, taskCycleTitle } from "../taskTitle.js";
 import { addWorkLog } from "../work/history.js";
 import { listCheckpoints, pullCheckpointsToRules } from "../work/checkpoint.js";
 import { backfillRoadmapTask, beginRoadmapPatch, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../work/roadmap.js";
@@ -1267,7 +1267,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       },
       prRefs,
     });
-    await updateTask(workspace, session.data.linkedTaskId, {
+    const completedTask = await updateTask(workspace, session.data.linkedTaskId, {
       status: "done",
       summary: session.data.chainInfo.reviewSummary,
       log_id: workLog.id,
@@ -1294,10 +1294,19 @@ export async function handleSugoPlan(rawArgs: unknown) {
       prRefs,
       report: session.data.chainInfo.workResultReport,
     };
+    const completedPrd = patchVersion > 0
+      ? await readFile(session.data.prdPath ?? "", "utf8").catch(() => undefined)
+      : undefined;
     await recordRoadmapWorkResult(workspace, session.data.linkedTaskId, workResult, {
       version: patchVersion ?? 0,
       completedAt,
-      title: session.featureName,
+      title: completedCycleTitle({
+        version: patchVersion ?? 0,
+        featureName: session.featureName,
+        patchInfoTitle: completedTask?.patchInfo?.title,
+        seed: session.data.seed,
+        prdContent: completedPrd,
+      }),
       summary: session.data.chainInfo.reviewSummary,
       changedFiles: session.data.chainInfo.changedFiles,
       seed: session.data.seed,
