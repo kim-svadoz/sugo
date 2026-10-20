@@ -16,14 +16,17 @@ describe("Schedule SPEC workflow", () => {
   });
 
   it("builds provider-specific writer commands with the same binding keys", () => {
-    expect(buildSpecWriterCommand(base, "claude")).toContain("/sugo:spec-writer");
-    expect(buildSpecWriterCommand(base, "codex")).toContain("$sugo:spec-writer");
+    const claude = buildSpecWriterCommand(base, "claude");
+    const codex = buildSpecWriterCommand(base, "codex");
+    expect(claude).toContain("/sugo:spec-writer");
+    expect(codex).toContain("$sugo:spec-writer");
     for (const provider of ["claude", "codex"] as const) {
       const command = buildSpecWriterCommand(base, provider);
       expect(command).toContain('--workspace "shop"');
       expect(command).toContain('--project "/work/shop"');
       expect(command).toContain('--spec-draft "spec-manual-1"');
     }
+    expect(codex).toContain(claude.replace("/sugo:spec-writer ", ""));
   });
 
   it("pins feat to the exact written spec and dashboard node", () => {

@@ -58,6 +58,13 @@ describe("operational ontology 통합 계약", () => {
       expect(specWriter).toContain(contract);
     }
 
+    const specWriterCommand = prompt("commands/spec-writer.md");
+    expect(specWriterCommand).toContain("Read and follow the `spec-writer` skill exactly.");
+    expect(specWriterCommand).toContain("Input: $ARGUMENTS");
+    expect(specWriterCommand).not.toContain("First call `sugo_spec_writer");
+    expect(specWriterCommand).not.toContain("SPEC_LINT_WARNINGS");
+    expect(specWriterCommand).not.toContain("reviewEvidence");
+
     const patchAttach = prompt("commands/patch-attach.md");
     for (const contract of ["patchProvenance:\"captured-post-hoc\"", "postHocBaseRevision", "postHocChangedFiles", "POST_HOC_BASELINE_REQUIRED", "POST_HOC_SCOPE_REQUIRED", "POST_HOC_DUPLICATE", "POST_HOC_LINEAGE_NOT_FOUND"]) {
       expect(patchAttach).toContain(contract);
