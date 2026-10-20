@@ -13,4 +13,5 @@ First call `sugo_spec_writer(action:"context")` to verify editability and select
 After writing and validating spec.md, call `sugo_spec_writer(action:"complete")` and link its absolute path to the same SPEC card. Do not implement the product or start feat.
 Write a product-level specification. Exclude file paths, line numbers, current implementation details, and research assumptions. If complete returns `SPEC_LINT_WARNINGS`, do not use `acceptLintWarnings:true` without user approval.
 Copy every planning image from `attachments` into the spec version's `images/` directory and use relative links in spec.md.
+Review every planning document returned in `references` and list its link under Sources. If a link cannot be read, ask the user for the document instead of completing the SPEC without it.
 Follow the skill's file rules; the destination is outside the project repository. Open Questions may contain only decisions that change behavior or completion criteria, not ownership, schedule, or coordination.

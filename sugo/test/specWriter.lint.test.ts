@@ -56,12 +56,14 @@ describe("spec-writer complete gate", () => {
   let attached: string[];
   let attachmentNames: string[];
   let draftContent: string;
+  let referenceLinks: Array<{ title: string; url: string }>;
 
   beforeEach(async () => {
     dir = mkdtempSync(join(tmpdir(), "sugo-spec-lint-"));
     attached = [];
     attachmentNames = ["01.png", "02.jpg"];
     draftContent = "";
+    referenceLinks = [];
     process.env.SUGO_HOME_OVERRIDE = dir;
     server = createServer((req, res) => {
       if (req.url?.includes("/spec-attachments/file")) {
@@ -70,6 +72,7 @@ describe("spec-writer complete gate", () => {
       }
       res.writeHead(200, { "Content-Type": "application/json" });
       if (req.url?.includes("/spec-attachments")) return res.end(JSON.stringify({ ok: true, locked: false, attachments: attachmentNames.map((name) => ({ name })) }));
+      if (req.url?.includes("/spec-references")) return res.end(JSON.stringify({ ok: true, locked: false, links: referenceLinks }));
       if (req.url?.includes("/spec-draft")) return res.end(JSON.stringify({ ok: true, content: draftContent }));
       if (req.method === "POST") {
         attached.push(req.url ?? "");
@@ -158,6 +161,17 @@ describe("spec-writer complete gate", () => {
 
     expect(data.ok).toBe(false);
     expect(data.errorCode).toBe("SPEC_REFERENCED_SOURCE_MISSING");
+  });
+
+  it("Schedule SPEC 카드에 저장한 기획 문서 링크를 context에 전달한다", async () => {
+    attachmentNames = [];
+    draftContent = "기획참고자료를 기준으로 범위를 정리한다.";
+    referenceLinks = [{ title: "MAB 정리", url: "https://wiki.example.com/mab" }];
+
+    const data = JSON.parse((await handleSugoSpecWriter({ action: "context", workspace: "ws", specDraftId: "spec-manual-1" })).content[0].text);
+
+    expect(data.ok).toBe(true);
+    expect(data.references).toEqual(referenceLinks);
   });
 
   it("기획참고자료 링크가 있거나 자료 없음이 명시되면 빈 첨부를 허용한다", async () => {

@@ -136,6 +136,24 @@ export async function downloadSpecAttachments(workspaceName: string, nodeId: str
   return paths;
 }
 
+export interface SpecReference {
+  title: string;
+  url: string;
+}
+
+/** Schedule SPEC 카드에 저장한 기획 문서 링크를 spec-writer 컨텍스트로 전달한다. */
+export async function fetchSpecReferences(workspaceName: string, nodeId: string): Promise<SpecReference[] | null> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled) return null;
+  const qs = new URLSearchParams({ nodeId });
+  if (config.userId) qs.set("userId", config.userId);
+  const result = await fetchJson<{ links: SpecReference[] }>(
+    `/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap/spec-references?${qs.toString()}`,
+    8000,
+  );
+  return result?.links ?? null;
+}
+
 export async function fetchSpecDraft(workspaceName: string, nodeId: string): Promise<string | null> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return null;

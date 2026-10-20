@@ -1,7 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { z } from "zod";
-import { attachSpecDocument, downloadSpecAttachments, fetchSpecDraft, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
+import { attachSpecDocument, downloadSpecAttachments, fetchSpecDraft, fetchSpecReferences, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
 import { sugoHomeDir } from "../homeDir.js";
 import { toNfc } from "../unicodeName.js";
 
@@ -28,8 +28,8 @@ const PLANNING_SOURCE_REFERENCE = /(기획\s*(?:참고\s*)?자료|참고\s*자�
 const EXPLICIT_NO_PLANNING_SOURCE = /(기획\s*(?:참고\s*)?자료|참고\s*자료|첨부\s*(?:파일|자료|이미지)|기획\s*화면)\s*[:：-]?\s*(?:해당\s*)?(?:없음|없습니다|사용하지\s*않음)/i;
 const EXTERNAL_SOURCE_LINK = /https?:\/\/\S+|\[[^\]]+\]\([^)]+\)/i;
 
-export function referencedPlanningSourceMissing(draftContent: string, attachmentCount: number): boolean {
-  if (attachmentCount > 0 || !PLANNING_SOURCE_REFERENCE.test(draftContent)) return false;
+export function referencedPlanningSourceMissing(draftContent: string, sourceCount: number): boolean {
+  if (sourceCount > 0 || !PLANNING_SOURCE_REFERENCE.test(draftContent)) return false;
   if (EXPLICIT_NO_PLANNING_SOURCE.test(draftContent) || EXTERNAL_SOURCE_LINK.test(draftContent)) return false;
   return true;
 }
@@ -95,11 +95,12 @@ export async function handleSugoSpecWriter(rawArgs: unknown) {
   if (args.action === "context") {
     const dir = join(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args.workspace), encodeURIComponent(spec.id));
     try {
-      const [attachments, draftContent] = await Promise.all([
+      const [attachments, references, draftContent] = await Promise.all([
         downloadSpecAttachments(args.workspace, spec.id, dir),
+        fetchSpecReferences(args.workspace, spec.id),
         fetchSpecDraft(args.workspace, spec.id),
       ]);
-      if (attachments && referencedPlanningSourceMissing(draftContent ?? "", attachments.length)) {
+      if (attachments && references && referencedPlanningSourceMissing(draftContent ?? "", attachments.length + references.length)) {
         return result({
           ok: false,
           errorCode: "SPEC_REFERENCED_SOURCE_MISSING",
@@ -107,10 +108,20 @@ export async function handleSugoSpecWriter(rawArgs: unknown) {
           spec,
           draftContent: draftContent ?? "",
           attachments: [],
+          references: [],
         });
       }
       const specTarget = await nextSpecTarget(spec.title);
-      return result({ ok: true, spec, specTarget, draftContent: draftContent ?? "", attachments: attachments ?? [], ...(attachments === null && { attachmentsUnavailable: true }) });
+      return result({
+        ok: true,
+        spec,
+        specTarget,
+        draftContent: draftContent ?? "",
+        attachments: attachments ?? [],
+        references: references ?? [],
+        ...(attachments === null && { attachmentsUnavailable: true }),
+        ...(references === null && { referencesUnavailable: true }),
+      });
     } catch (error) {
       return result({ ok: false, errorCode: "SPEC_ATTACHMENT_DOWNLOAD_FAILED", message: error instanceof Error ? error.message : String(error) });
     }
