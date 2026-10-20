@@ -20,9 +20,9 @@ export function Header() {
           <ShieldCheck size={14} strokeWidth={1.9} aria-hidden="true" />
         </span>
         <div className="flex min-w-0 items-baseline gap-3">
-          <span className="shrink-0 text-[12.5px] font-semibold text-[var(--color-text)]">Evidence-driven engineering</span>
+          <span className="shrink-0 text-[12.5px] font-semibold text-[var(--color-text)]">AI development lifecycle</span>
           <span className="hidden truncate text-[11.5px] text-[var(--color-text-muted)] lg:block">
-            SPEC부터 구현·검증·승인까지, AI 개발을 반복 가능한 제품 흐름으로 만듭니다.
+            기획부터 구현·검증·운영까지 하나의 흐름으로 관리합니다.
           </span>
         </div>
       </div>

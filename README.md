@@ -1,14 +1,14 @@
 # Sugo
 
-**AI 개발을 반복 가능한 제품 흐름으로 만드는 증거 기반 개발 파이프라인과 운영 콘솔.**
+**AI 코딩을 실제 개발 프로세스로 연결합니다.**
 
-Sugo는 Claude Code와 Codex가 같은 프로젝트 규칙을 읽게 하고, SPEC부터 구현·테스트·리뷰·문서화까지의 순서를 게이트로 관리합니다. “완료했다”는 응답 대신 저장된 실행 증거를 확인하며, 사람이 승인하기 전 작업 요약·REQ·검증 결과·실제 diff를 먼저 제공합니다. 설치와 제거의 경계도 관리해 다른 사용자의 빈 환경에서 시작해도 같은 구조와 동작을 재현합니다.
+Sugo는 Claude Code와 Codex의 작업을 **기획부터 구현, 테스트, 리뷰, 운영까지** 연결하는 개발 도구입니다. 모든 에이전트에 같은 프로젝트 규칙을 적용하고, 모델의 “완료” 응답이 아니라 실제 테스트 결과와 변경 기록으로 작업을 확인합니다. Console에서는 일정, SPEC, 진행 상태, 검토 결과와 배포 상태를 한곳에서 추적합니다.
 
 이 저장소에는 독립적으로 버전을 관리하는 두 제품이 있습니다.
 
 | 제품 | 역할 | 구현·버전 |
 | --- | --- | --- |
-| **Sugo Plugin** | Claude Code 명령·에이전트·훅과 MCP 서버. 프로젝트 등록, 개발 파이프라인, 실행 증거·작업 관리 | [sugo/](sugo/) · [package.json](sugo/package.json) |
+| **Sugo Plugin** | Claude Code 명령·에이전트·훅과 MCP 서버. 프로젝트 등록, 개발 단계 제어, 테스트·작업 기록 관리 | [sugo/](sugo/) · [package.json](sugo/package.json) |
 | **Sugo Console** | Workspace, Schedule, Agent Canvas와 연동 설정을 제공하는 웹 대시보드 | [dashboard/](dashboard/) · [frontend](dashboard/frontend/package.json) / [backend](dashboard/backend/package.json) |
 
 **플러그인의 로컬 개발 파이프라인은 Console이나 DB 없이 사용할 수 있습니다.** Console을 연결하면 작업 상태와 이력을 동기화하고, 일정·스펙·사람의 결정을 같은 화면에서 관리합니다.
@@ -17,7 +17,7 @@ Sugo는 Claude Code와 Codex가 같은 프로젝트 규칙을 읽게 하고, SPE
 
 - [무엇을 할 수 있나요?](#무엇을-할-수-있나요)
 - [설치와 첫 작업](#설치와-첫-작업)
-- [제품 수명주기](#제품-수명주기)
+- [설치·복구·삭제](#설치복구삭제)
 - [작업이 진행되는 방식](#작업이-진행되는-방식)
 - [Console 실행](#console-실행)
 - [플러그인과 Console 연결](#플러그인과-console-연결)
@@ -30,14 +30,14 @@ Sugo는 Claude Code와 Codex가 같은 프로젝트 규칙을 읽게 하고, SPE
 
 ## 무엇을 할 수 있나요?
 
-- **Claude와 Codex에 같은 규칙 적용** — 언어·프레임워크·빌드 도구를 감지해 하네스를 합성합니다. `AGENTS.md`를 공통 정책 연결점으로 사용하고, Claude는 `CLAUDE.md`의 import를 통해 같은 `.claude/rules/**`를 읽습니다.
-- **단계를 지키는 개발** — PRD, baseline, 계약 테스트, 구현, 테스트, 리뷰, 문서화의 전제조건을 검사합니다. 테스트를 통과했다는 응답은 저장된 실행 증거와 대조합니다.
-- **스펙에서 후속 수정까지 추적** — Schedule의 SPEC 초안과 기획 화면을 `spec.md`로 정리하고, feat와 patch의 PRD·work-result·요구사항·계보를 연결합니다.
-- **승인 전에 근거 검토** — `review_done` 전에 작업 요약, 요구사항 충족 상태, 테스트·런타임 증거, 설계 결정, 남은 위험과 실제 코드 diff를 Console에서 확인합니다.
-- **막힌 이유와 다음 행동 확인** — 온톨로지 모델에서 허용 액션을 파생합니다. 세션 조회로 현재 상태, 부족한 증거, 사람의 결정 필요 여부와 다음 행동을 확인합니다.
-- **팀의 작업 기억 유지** — Workspace별 Task, 체크포인트, 스펙·ADR, 완료 이력과 로드맵을 관리합니다. **도메인 규칙 관리**의 체크포인트는 프로젝트 규칙으로 내려받아 다음 Claude/Codex 세션에도 적용합니다.
-- **깨끗한 설치·제거** — 일반 제거는 Sugo의 영향을 끊고 데이터를 비활성 보관합니다. 명시 복구와 완전 삭제를 분리해 재설치만으로 과거 설정이 되살아나거나 사용자 설정이 오염되지 않게 합니다.
-- **구현과 운영 맥락 함께 보기** — AST 기반 코드 탐색, Git 제공자 연동, AWS 리소스·배포 snapshot, Pinpoint 연동을 제공합니다.
+- **하나의 규칙으로 작업** — 언어·프레임워크·빌드 도구를 감지하고 프로젝트 규칙을 Claude와 Codex에 동일하게 적용합니다.
+- **개발 순서와 품질 기준 유지** — SPEC, baseline, 계약 테스트, 구현, 테스트, 리뷰, 문서화의 선행 조건을 확인합니다. 테스트 완료 여부는 실제 실행 결과와 대조합니다.
+- **처음 기획부터 후속 수정까지 추적** — Schedule의 초안을 구현 가능한 `spec.md`로 정리하고, feat와 patch의 요구사항·결과·변경 이력을 연결합니다.
+- **검토할 내용을 한곳에 정리** — 승인 전에 작업 요약, 요구사항 충족 상태, 테스트와 런타임 결과, 설계 결정, 남은 위험과 실제 diff를 보여줍니다.
+- **중단된 작업도 정확히 재개** — 현재 상태, 막힌 이유, 사람의 결정이 필요한 항목과 다음 행동을 확인하고 같은 흐름에서 다시 시작합니다.
+- **프로젝트 지식 유지** — Workspace별 Task, 체크포인트, SPEC, 완료 이력과 로드맵을 관리합니다. 체크포인트는 프로젝트 규칙으로 내려받아 다음 Claude/Codex 세션에도 적용합니다.
+- **개발과 운영 상태를 함께 확인** — AST 기반 코드 탐색, Git 제공자 연동, AWS 리소스·배포 snapshot과 Pinpoint 연동을 제공합니다.
+- **안전하게 설치하고 제거** — 일반 제거는 데이터를 보관하고, 복구와 완전 삭제는 명시적으로 분리합니다.
 
 하네스에는 Java·JavaScript·TypeScript·Python, Spring·Node·Express·React·Next.js, Gradle·Maven·npm·pnpm·Yarn·pip·Poetry 규칙이 포함되어 있습니다. 실제 적용 항목은 감지 결과에 따라 달라지며, 없는 버전은 기본 하네스로 폴백합니다. 전체 목록은 [harness-library](sugo/harness-library/)에서 확인하세요.
 
@@ -129,7 +129,7 @@ claude plugin update sugo@sugo-marketplace
 
 이후 Claude Code에서 `/reload-plugins`를 실행합니다. 플러그인 버전 문자열이 업데이트 신호이므로, 소스만 바뀌고 버전이 그대로인 변경은 설치본에 반영되지 않을 수 있습니다.
 
-## 제품 수명주기
+## 설치·복구·삭제
 
 Sugo는 설치 여부와 데이터 보존 여부를 분리합니다. 플러그인 캐시가 지워졌는데 프로젝트 훅만 남거나, 재설치만으로 과거 규칙이 다시 활성화되는 상태를 정상 흐름으로 보지 않습니다.
 
@@ -155,13 +155,13 @@ flowchart LR
     G --> H[DONE]
 ```
 
-위 그림은 일반적인 작업 흐름입니다. 실제 상태 전이에는 스펙 대조, 큰 작업의 분해·통합, 재검증·취소 등이 있으며, [온톨로지 모델](sugo/src/ontology/model.ts)과 [`sugo_plan`](sugo/src/tools/sugoPlan.ts)이 허용 순서와 조건을 결정합니다.
+위 그림은 기본 개발 흐름입니다. 실제 작업에서는 스펙 대조, 큰 작업의 분해·통합, 재검증·취소도 처리합니다. [온톨로지 모델](sugo/src/ontology/model.ts)과 [`sugo_plan`](sugo/src/tools/sugoPlan.ts)이 현재 상태에서 가능한 다음 단계와 조건을 결정합니다.
 
 - **code-agent → test-agent → review-agent → docs-agent**가 역할을 나눕니다. 리뷰 에이전트는 읽기 전용입니다.
-- baseline이 필요한 변경, 계약 테스트의 red→green 기록, 실제 분석·검증 호출, 테스트 증거와 변경 파일 지문 등을 단계별로 확인합니다. 적용 조건이 다른 게이트도 있으므로 모든 작업에 같은 검증을 무조건 실행하는 구조는 아닙니다.
-- 검증 환경 부재나 우회는 사유를 기록하며 완료등급에 반영됩니다. 게이트가 막히면 반환된 코드와 부족한 조건을 확인합니다.
+- baseline이 필요한 변경, 계약 테스트의 red→green 기록, 실제 분석·검증 호출, 테스트 결과와 변경 파일 지문 등을 단계별로 확인합니다. 작업 성격에 따라 필요한 조건만 적용합니다.
+- 검증 환경이 없거나 단계를 우회하면 사유를 기록하고 완료 등급에 반영합니다. 진행이 멈추면 부족한 조건과 해결 방법을 함께 반환합니다.
 - 정책·범위처럼 사람만 결정할 수 있는 문제는 질문·선택지·복귀 액션과 함께 Console에 기록합니다. 결정 후에는 같은 세션에서 재개합니다.
-- `feature/*` 브랜치에서는 최종 목표를 담는 `TODO-SPEC` 확인·갱신 게이트가 적용됩니다.
+- `feature/*` 브랜치에서는 최종 목표를 담는 `TODO-SPEC`을 확인하고 최신 상태로 유지합니다.
 
 review-agent는 최종 완료 전에 `reviewPacket`을 게시합니다. 이 패킷에는 작업 요약, 변경 내용, 테스트, 설계 결정, 남은 위험과 변경 파일이 들어갑니다. Console의 **작업 요약**은 이 근거를 독립 HTML 보고서로 열고, **변경 파일**은 실제 코드와 diff를 파일별로 불러옵니다. 사용자가 REQ의 최종 확인을 완료해야 `review_done`이 통과하며, 그 뒤 최종 `work-result.md`가 확정됩니다. 최신 patch를 취소하면 해당 시도는 계보에 보존하되 원래 Task의 표시는 직전 유효 완료 상태로 돌아갑니다.
 
@@ -194,7 +194,7 @@ Schedule에서 작성한 최초 SPEC은 특정 개발자 경로가 아니라 실
 
 Weekly 탭은 [weekly](https://github.com/kim-svadoz/weekly-ai-report) 플러그인이 만든 주간 보고서를 보여줍니다. weekly가 보고서를 만들 때 플러그인 토큰으로 Console에 올리며(방향은 weekly → Console 한쪽), 보고서는 올린 사용자 본인에게만 보입니다. weekly가 없으면 탭은 비어 있습니다. 이미 만든 주는 `sh ~/.weekly/app/scripts/weekly.sh push --all`로 올립니다.
 
-이 저장소의 개발용 `dashboard/sd.sh`도 같은 API 포트(3001)를 씁니다. `sd`는 플러그인이 띄운 서버를 먼저 멈추고 개발 서버를 띄웁니다. 개발 서버와 설치형 Console은 모두 `~/.claude/sugo/dashboard/dashboard.db`를 정본으로 사용합니다. 따라서 5175 개발 화면과 3001 설치형 화면을 전환해도 일정·메모·보관함·Weekly·외부 컨텍스트가 갈라지지 않습니다. 격리 DB가 필요한 테스트만 `SQLITE_FILE`을 명시합니다.
+이 저장소의 개발용 `dashboard/sd.sh`도 같은 API 포트(3001)를 씁니다. `sd`는 플러그인이 띄운 서버를 먼저 멈추고 개발 서버를 띄웁니다. 개발 서버와 설치형 Console은 모두 `~/.claude/sugo/dashboard/dashboard.db`를 사용합니다. 따라서 5175 개발 화면과 3001 설치형 화면을 전환해도 일정·메모·보관함·Weekly·외부 컨텍스트가 갈라지지 않습니다. 격리 DB가 필요한 테스트만 `SQLITE_FILE`을 명시합니다.
 
 2026-10-20 이전 개발 실행이 만든 `dashboard/backend/local.db`가 있고 사용자 DB가 아직 생성되지 않았다면, 서버를 멈춘 상태에서 한 번 가져올 수 있습니다.
 
@@ -271,7 +271,7 @@ API·UI 로그 창이 열리면 **http://localhost:5175**에서 로그인합니�
 | 일반 로컬 개발 | `3001` | `5175` |
 | MySQL / E2E | `4000` | `4173` |
 
-포트 정본은 [`dashboard/ports.env`](dashboard/ports.env)입니다. 포트가 이미 사용 중이면 다른 번호로 자동 이동하지 않습니다.
+포트 설정은 [`dashboard/ports.env`](dashboard/ports.env)에서 관리합니다. 포트가 이미 사용 중이면 다른 번호로 자동 이동하지 않습니다.
 
 macOS/Linux는 `MYSQLD_BIN`·`MYSQL_DATADIR`로 설치 위치를 지정할 수 있습니다. **Windows MySQL 실행기의 데이터 디렉터리와 DB 설정은 자기 환경에 맞게 확인·수정한 뒤 실행하세요.** 준비가 끝나면 `dashboard/`에서 해당 스크립트를 실행하고 `http://localhost:4173/dev-login.html`로 접속합니다.
 
@@ -281,7 +281,7 @@ macOS/Linux는 `MYSQLD_BIN`·`MYSQL_DATADIR`로 설치 위치를 지정할 수 �
 
 | 화면 | 할 수 있는 일 |
 | --- | --- |
-| **Workspaces** | 프로젝트 묶음, **도메인 규칙 관리**, AI 작업 현황, Repository·ADR·이력 확인 |
+| **Workspaces** | 프로젝트 묶음, **도메인 규칙 관리**, AI 작업 현황, Repository·작업 이력 확인 |
 | **Schedule** | SPEC 일정, 기획 이미지·문서 링크, 작업 준비, 배포 상태와 보관함 관리 |
 | **Agent Canvas** | Spec/Run/Task/REQ, patch 계보, 승인 근거, 실제 변경 코드와 차단 원인 확인 |
 | **Skills / Harness** | 실제 플러그인의 Agent·Command·Skill과 적용 코딩 규칙 열람 |
@@ -340,7 +340,7 @@ Lambda snapshot은 함수 이름·runtime·handler·상태·수정 시각·메�
 
 AWS snapshot 조회와 에이전트의 직접 CLI 조회는 구분됩니다. 직접 조회는 [읽기 정책](sugo/harness-library/aws-readonly-policy.md)의 허용 목록·호출량·시간 범위를 적용하며, 기본 예산은 세션 30회 / 사용자 로컬 날짜 기준 하루 200회 / 분당 10회입니다. Settings에서 직접 읽기를 끄거나 예산을 조절할 수 있습니다.
 
-백엔드의 세션 서명키·Git 토큰 암호화 키·CORS·DB·연동 경로는 [`config.ts`](dashboard/backend/src/config.ts)가 정본입니다. 원격 배포에서는 로컬 인증 우회나 개발용 고정 키를 사용하지 않습니다.
+백엔드의 세션 서명키·Git 토큰 암호화 키·CORS·DB·연동 경로는 [`config.ts`](dashboard/backend/src/config.ts)에서 관리합니다. 원격 배포에서는 로컬 인증 우회나 개발용 고정 키를 사용하지 않습니다.
 
 ## 데이터와 동기화
 
@@ -458,7 +458,7 @@ npx vitest run
 
 작업 전에 [AGENTS.md](AGENTS.md)를 읽으세요. 게이트를 약화시키지 않습니다.
 
-- **Plugin:** `sugo/package.json` 버전이 정본입니다. `npm run build`가 매니페스트·lockfile 버전을 동기화하고 번들을 만듭니다. 번들도 함께 커밋합니다.
+- **Plugin:** 버전은 `sugo/package.json`에서 관리합니다. `npm run build`가 매니페스트·lockfile 버전을 동기화하고 번들을 만듭니다. 번들도 함께 커밋합니다.
 - **Console:** frontend/backend 버전을 함께 올리고 각각의 lockfile을 갱신합니다. Console 버전 배지는 프론트 빌드 시 주입됩니다.
 - **문서만 변경:** 런타임 동작이 같으면 버전을 올리지 않습니다.
 - `git add`와 `git commit`은 별도 단계로 실행합니다. 배포 동작을 바꾼 릴리스는 저장소 규칙에 따라 검증·커밋·push까지 마칩니다.
@@ -481,7 +481,7 @@ npx vitest run
 
 ## 현재 범위와 참고 문서
 
-MCP 서버, Claude Code 플러그인과 로컬 Console 실행 경로가 구현되어 있습니다. AST 탐색도 포함됩니다. 프로젝트 규칙은 Codex와 Claude가 같은 정본을 읽도록 연결하지만, slash command와 Claude Code 훅 자체는 Claude Code 런타임 기능입니다. Codex에서는 같은 MCP 도구·스킬·프로젝트 컨텍스트를 통해 동작합니다. `sugo_setup`은 연동 설정을 저장하지 않으며, 원격 Git 하네스 fetch는 현재 배포 범위에 포함되지 않습니다.
+MCP 서버, Claude Code 플러그인과 로컬 Console 실행 경로가 구현되어 있습니다. AST 탐색도 포함됩니다. Codex와 Claude는 같은 프로젝트 규칙을 읽지만, slash command와 Claude Code 훅 자체는 Claude Code 런타임 기능입니다. Codex에서는 같은 MCP 도구·스킬·프로젝트 컨텍스트를 통해 동작합니다. `sugo_setup`은 연동 설정을 저장하지 않으며, 원격 Git 하네스 fetch는 현재 배포 범위에 포함되지 않습니다.
 
 | 문서 | 읽는 목적 |
 | --- | --- |
