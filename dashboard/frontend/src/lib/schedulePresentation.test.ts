@@ -193,10 +193,12 @@ describe("schedule presentation", () => {
 
   it("완료 SPEC에는 후속 patch 행동과 읽기 쉬운 프로젝트 도구를 제공한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    const canvasPanel = readFileSync(new URL("../components/SubtaskPanel.tsx", import.meta.url), "utf8");
     const tools = readFileSync(new URL("./workspaceTools.ts", import.meta.url), "utf8");
     expect(source).toContain("후속 개발");
     expect(source).toContain("새 Patch 시작");
     expect(source).toContain("작업 기록 이어붙이기");
+    expect(canvasPanel).not.toContain("작업 기록 이어붙이기");
     expect(source).toContain("작업 컨텍스트");
     expect(source).toContain("작업 준비");
     expect(source).toContain("프로젝트 도구");

@@ -31,11 +31,18 @@ export function Sidebar() {
         </span>
         <span className="font-mono text-[12px] font-semibold tracking-[0.12em] text-[var(--color-text)]">SUGO</span>
       </Link>
-      <nav className="flex w-full flex-1 flex-col gap-7">
-        {SIDEBAR_GROUPS.map((group) => {
+      <nav className="flex w-full flex-1 flex-col gap-5">
+        {SIDEBAR_GROUPS.map((group, groupIndex) => {
           return <section key={group.label} aria-label={group.title} className="w-full">
-          <div className="mb-2 px-3" title={group.title}>
-            <span className="text-[10px] font-semibold tracking-[-0.01em] text-[var(--color-text-dim)]">{group.label}</span>
+          <div
+            data-sidebar-group-heading
+            className="mb-1.5 flex items-center gap-2 rounded-lg bg-white/[0.028] px-2.5 py-2 ring-1 ring-inset ring-white/[0.045]"
+            title={group.title}
+          >
+            <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md bg-cyan-400/[0.09] font-mono text-[9px] font-semibold text-cyan-300/80">
+              {groupIndex + 1}
+            </span>
+            <span className="text-xs font-semibold leading-none tracking-[-0.015em] text-[var(--color-text-muted)]">{group.label}</span>
           </div>
           <div className="space-y-0.5">
           {group.items.map(({ to, icon: iconName, label, shortcut }) => {

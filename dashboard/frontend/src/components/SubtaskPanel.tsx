@@ -166,7 +166,7 @@ function ProgressTab({
   onReviewResult: () => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const [patchCopied, setPatchCopied] = useState<"patch" | "attach" | null>(null);
+  const [patchCopied, setPatchCopied] = useState(false);
   const [showPr, setShowPr] = useState(false);
 
   async function handleManualDone() {
@@ -191,12 +191,11 @@ function ProgressTab({
     }
   }
 
-  function handleCopyPatchBridge(mode: "patch" | "attach" = "patch") {
+  function handleCopyPatchBridge() {
     if (!workResult?.path) return;
-    const cmd = mode === "attach" ? `/sugo:patch-attach ${JSON.stringify(workResult.path)}` : `/sugo:patch ${JSON.stringify(workResult.path)}`;
-    void navigator.clipboard?.writeText(cmd);
-    setPatchCopied(mode);
-    window.setTimeout(() => setPatchCopied(null), 1800);
+    void navigator.clipboard?.writeText(`/sugo:patch ${JSON.stringify(workResult.path)}`);
+    setPatchCopied(true);
+    window.setTimeout(() => setPatchCopied(false), 1800);
   }
 
   const duration = durationLabel(workResult?.startedAt, workResult?.endedAt);
@@ -212,7 +211,7 @@ function ProgressTab({
     }
     if (guidance.action === "review_verification") document.querySelector<HTMLButtonElement>("#completion-review [data-review-open]")?.click();
     if (guidance.action === "review_result") onReviewResult();
-    if (guidance.action === "continue_patch") handleCopyPatchBridge("patch");
+    if (guidance.action === "continue_patch") handleCopyPatchBridge();
     if (guidance.action === "create_pr") setShowPr(true);
   }
 
@@ -310,15 +309,9 @@ function ProgressTab({
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {(node.level === "task" || node.level === "workstream") && (node.manual_status ?? node.status) === "done" && workResult?.path && (
-          <button type="button" onClick={() => handleCopyPatchBridge("patch")} className="group flex min-h-[108px] flex-col rounded-xl border border-violet-400/45 bg-gradient-to-br from-violet-500/15 to-fuchsia-500/[0.06] p-4 text-left transition-all hover:-translate-y-0.5 hover:border-violet-300/70 hover:shadow-[0_0_24px_rgba(139,92,246,0.14)]">
+          <button type="button" onClick={handleCopyPatchBridge} className="group flex min-h-[108px] flex-col rounded-xl border border-violet-400/45 bg-gradient-to-br from-violet-500/15 to-fuchsia-500/[0.06] p-4 text-left transition-all hover:-translate-y-0.5 hover:border-violet-300/70 hover:shadow-[0_0_24px_rgba(139,92,246,0.14)]">
             <span className="flex items-center gap-2 text-base font-semibold text-violet-200"><Sparkles size={18} /> Patch 이어가기</span>
-            <span className="mt-auto flex items-center gap-1.5 pt-2 text-xs text-violet-200/60">{patchCopied === "patch" ? <><Check size={14} /> 명령어 복사됨</> : <><Copy size={14} /> 새 변경을 시작합니다</>}</span>
-          </button>
-        )}
-        {(node.level === "task" || node.level === "workstream") && (node.manual_status ?? node.status) === "done" && workResult?.path && (
-          <button type="button" onClick={() => handleCopyPatchBridge("attach")} className="group flex min-h-[108px] flex-col rounded-xl border border-cyan-400/35 bg-gradient-to-br from-cyan-500/10 to-slate-500/[0.04] p-4 text-left transition-all hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-[0_0_24px_rgba(34,211,238,0.1)]">
-            <span className="flex items-center gap-2 text-base font-semibold text-cyan-100"><Copy size={18} /> 작업 기록 이어붙이기</span>
-            <span className="mt-auto flex items-center gap-1.5 pt-2 text-xs text-cyan-100/60">{patchCopied === "attach" ? <><Check size={14} /> 명령어 복사됨</> : "이미 만든 코드 변경을 다음 Patch로 검증·기록합니다"}</span>
+            <span className="mt-auto flex items-center gap-1.5 pt-2 text-xs text-violet-200/60">{patchCopied ? <><Check size={14} /> 명령어 복사됨</> : <><Copy size={14} /> 새 변경을 시작합니다</>}</span>
           </button>
         )}
         <button type="button" onClick={() => setShowPr((value) => !value)} className="group flex min-h-[108px] flex-col rounded-xl border border-cyan-400/40 bg-gradient-to-br from-cyan-500/15 to-blue-500/[0.05] p-4 text-left transition-all hover:-translate-y-0.5 hover:border-cyan-300/70 hover:shadow-[0_0_24px_rgba(34,211,238,0.12)]">
