@@ -28,24 +28,25 @@ export function Sidebar() {
         to="/sessions"
         aria-label="SUGO 홈"
         title="SUGO 홈"
-        className="group mb-7 ml-1 flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-400/[0.07] shadow-[0_8px_24px_rgba(0,0,0,0.18)] transition hover:border-cyan-300/45 hover:bg-cyan-400/[0.12]"
+        className="group mb-8 flex h-10 items-center gap-2.5 px-2"
       >
-        <span data-sugo-home-mark className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-gradient-to-br from-cyan-300/15 to-cyan-500/[0.04] font-mono text-[14px] font-bold text-cyan-100 ring-1 ring-inset ring-cyan-200/20 transition group-hover:ring-cyan-200/40">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-400/[0.08] font-mono text-[12px] font-bold text-cyan-100 ring-1 ring-inset ring-cyan-200/20 transition group-hover:bg-cyan-400/[0.13]">
           S
         </span>
+        <span className="flex min-w-0 items-baseline gap-1.5">
+          <span className="font-mono text-[12px] font-bold tracking-[0.12em] text-[var(--color-text)]">SUGO</span>
+          <span className="font-mono text-[9px] text-cyan-300/65">Console</span>
+        </span>
       </Link>
-      <nav className="flex w-full flex-1 flex-col gap-5">
-        {SIDEBAR_GROUPS.map((group, groupIndex) => {
+      <nav className="flex w-full flex-1 flex-col gap-6">
+        {SIDEBAR_GROUPS.map((group) => {
           return <section key={group.label} aria-label={group.title} className="w-full">
           <div
             data-sidebar-group-heading
-            className="mb-1.5 flex items-center gap-2 rounded-lg bg-white/[0.028] px-2.5 py-2 ring-1 ring-inset ring-white/[0.045]"
+            className="mb-1.5 px-3 font-mono text-[9px] font-medium uppercase leading-5 tracking-[0.14em] text-[var(--color-text-dim)]"
             title={group.title}
           >
-            <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md bg-cyan-400/[0.09] font-mono text-[9px] font-semibold text-cyan-300/80">
-              {groupIndex + 1}
-            </span>
-            <span className="text-xs font-semibold leading-none tracking-[-0.015em] text-[var(--color-text-muted)]">{group.label}</span>
+            {group.label}
           </div>
           <div className="space-y-0.5">
           {group.items.map(({ to, icon: iconName, label, shortcut }) => {

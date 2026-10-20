@@ -15,36 +15,39 @@ describe("sidebar keyboard navigation", () => {
     ]);
   });
 
-  it("업무·탐색·제어 목적에 따라 내비게이션을 세 그룹으로 나눈다", () => {
+  it("작업 흐름·지식·시스템 목적에 따라 내비게이션을 세 그룹으로 나눈다", () => {
     expect(SIDEBAR_GROUPS.map(({ label, items }) => ({ label, paths: items.map((item) => item.to) }))).toEqual([
-      { label: "업무", paths: ["/sessions", "/schedule", "/weekly"] },
-      { label: "둘러보기", paths: ["/skills", "/playbook"] },
-      { label: "환경", paths: ["/harness", "/settings"] },
+      { label: "Workflow", paths: ["/sessions", "/schedule", "/weekly"] },
+      { label: "Knowledge", paths: ["/skills", "/playbook"] },
+      { label: "System", paths: ["/harness", "/settings"] },
     ]);
   });
 
-  it("그룹 제목은 작은 보조문구가 아니라 독립된 시각 영역으로 표시한다", () => {
+  it("그룹 제목은 번호나 카드 없이 조용한 섹션 라벨로 표시한다", () => {
     const source = readFileSync(new URL("../components/Sidebar.tsx", import.meta.url), "utf8");
     expect(source).toContain("data-sidebar-group-heading");
-    expect(source).toContain("text-xs");
+    expect(source).not.toContain("groupIndex + 1");
+    expect(source).not.toContain("bg-white/[0.028]");
   });
 
-  it("사이드바는 중복 브랜드 문구 없이 간결한 홈 마크만 표시한다", () => {
+  it("사이드바 한 곳에 테두리 없는 SUGO Console 워드마크를 표시한다", () => {
     const source = readFileSync(new URL("../components/Sidebar.tsx", import.meta.url), "utf8");
     expect(source).toContain('aria-label="SUGO 홈"');
-    expect(source).toContain("data-sugo-home-mark");
+    expect(source).toContain("SUGO");
+    expect(source).toContain("Console");
+    expect(source).not.toContain("shadow-[0_8px_24px");
     expect(source).not.toContain("Control Plane");
-    expect(source).not.toContain(">SUGO<");
     expect(source).not.toContain("작업 허브");
     expect(source).toContain("leading-5");
     expect(source).not.toContain("truncate text-[12px] font-medium leading-none");
   });
 
-  it("전역 헤더 한 곳에서 제품 범주와 검증된 전달 가치를 명확한 문장으로 설명한다", () => {
+  it("전역 헤더는 마케팅 문구 대신 현재 화면 이름을 표시한다", () => {
     const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
-    expect(source).toContain("AI Engineering Control Plane");
-    expect(source).toContain("From specification to verified delivery.");
-    expect(source).not.toContain("SPEC</span> · AGENTS · EVIDENCE · DELIVERY");
+    expect(source).toContain("useLocation");
+    expect(source).toContain("headerTitleForPath");
+    expect(source).not.toContain("AI Engineering Control Plane");
+    expect(source).not.toContain("From specification to verified delivery.");
     expect(source).not.toContain("차곡차곡");
     expect(source).not.toContain("가져왔다냥");
   });

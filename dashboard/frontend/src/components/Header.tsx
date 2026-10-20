@@ -1,4 +1,6 @@
+import { useLocation } from "react-router-dom";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
+import { headerTitleForPath } from "../lib/sidebarNavigation.js";
 
 /**
  * Header — h-16 ck-glass. **버전 뱃지 2축이 핵심**이다:
@@ -11,20 +13,15 @@ import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
  */
 export function Header() {
   const { dashboardVersion, pluginVersion } = useDashboardMeta();
+  const { pathname } = useLocation();
+  const pageTitle = headerTitleForPath(pathname);
 
   return (
-    <header className="relative flex h-20 items-center justify-between gap-6 overflow-hidden border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 px-7 ck-glass">
-      <span className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-cyan-300/60 to-transparent" aria-hidden="true" />
-      <div className="flex min-w-0 items-center gap-5">
-        <div className="flex shrink-0 items-baseline gap-2.5">
-          <h1 className="text-[23px] font-semibold tracking-[-0.035em] text-[var(--color-text-bright)]">SUGÒ</h1>
-          <span className="font-mono text-[13px] font-medium text-cyan-300">Console</span>
-        </div>
-        <span className="hidden h-8 w-px bg-white/[0.10] sm:block" aria-hidden="true" />
-        <div className="hidden min-w-0 flex-col gap-0.5 sm:flex">
-          <span className="text-[12px] font-semibold leading-4 tracking-[0.01em] text-[var(--color-text)]">AI Engineering Control Plane</span>
-          <span className="truncate text-[11px] leading-4 tracking-[0.01em] text-[var(--color-text-dim)]">From specification to verified delivery.</span>
-        </div>
+    <header className="flex h-14 items-center justify-between gap-6 border-b border-white/[0.055] bg-[var(--color-surface)]/70 px-6 ck-glass">
+      <div className="flex min-w-0 items-center gap-2 text-[13px]">
+        <span className="font-medium text-[var(--color-text-dim)]">Console</span>
+        <span className="text-[var(--color-text-dim)]/50" aria-hidden="true">/</span>
+        <h1 className="truncate font-semibold text-[var(--color-text-bright)]">{pageTitle}</h1>
       </div>
       <div className="flex items-center gap-2">
         <span

@@ -3,7 +3,7 @@ export interface SidebarGroup { label: string; title: string; items: readonly Si
 
 export const SIDEBAR_GROUPS = [
   {
-    label: "업무",
+    label: "Workflow",
     title: "업무 공간",
     items: [
       { to: "/sessions", label: "Workspaces", shortcut: "1", icon: "workspaces" },
@@ -12,7 +12,7 @@ export const SIDEBAR_GROUPS = [
     ],
   },
   {
-    label: "둘러보기",
+    label: "Knowledge",
     title: "Sugo 둘러보기",
     items: [
       { to: "/skills", label: "Skills", shortcut: "4", icon: "skills" },
@@ -20,7 +20,7 @@ export const SIDEBAR_GROUPS = [
     ],
   },
   {
-    label: "환경",
+    label: "System",
     title: "동작 설정",
     items: [
       { to: "/harness", label: "Harness", shortcut: "6", icon: "harness" },
@@ -30,6 +30,11 @@ export const SIDEBAR_GROUPS = [
 ] as const satisfies readonly SidebarGroup[];
 
 export const SIDEBAR_DESTINATIONS: readonly SidebarItem[] = SIDEBAR_GROUPS.flatMap((group) => [...group.items]);
+
+export function headerTitleForPath(pathname: string): string {
+  if (pathname.startsWith("/roadmap/")) return "Agent Canvas";
+  return SIDEBAR_DESTINATIONS.find((item) => pathname === item.to)?.label ?? "Workspaces";
+}
 
 export function sidebarShortcutPath(key: string): string | null {
   return SIDEBAR_DESTINATIONS.find((item) => item.shortcut === key)?.to ?? null;
