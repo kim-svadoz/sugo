@@ -13,20 +13,17 @@ export function Header() {
   const { dashboardVersion, pluginVersion } = useDashboardMeta();
 
   return (
-    <header className="flex h-16 items-center justify-between gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 px-6 ck-glass">
-      <div className="flex min-w-0 items-center gap-4">
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-lg font-semibold tracking-tight text-[var(--color-text-bright)]">SUGÒ</h1>
-          <span className="font-mono text-[13px] font-medium text-cyan-300/85">Console</span>
+    <header className="relative flex h-20 items-center justify-between gap-6 overflow-hidden border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 px-7 ck-glass">
+      <span className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-cyan-300/60 to-transparent" aria-hidden="true" />
+      <div className="flex min-w-0 items-center gap-5">
+        <div className="flex shrink-0 items-baseline gap-2.5">
+          <h1 className="text-[23px] font-semibold tracking-[-0.035em] text-[var(--color-text-bright)]">SUGÒ</h1>
+          <span className="font-mono text-[13px] font-medium text-cyan-300">Console</span>
         </div>
-        <span className="hidden h-5 w-px bg-white/[0.09] sm:block" aria-hidden="true" />
-        <div className="hidden min-w-0 flex-col sm:flex">
-          <span className="font-mono text-[9px] font-semibold uppercase leading-4 tracking-[0.17em] text-[var(--color-text-muted)]">
-            Engineering Control Plane
-          </span>
-          <span className="truncate font-mono text-[9px] uppercase leading-4 tracking-[0.12em] text-[var(--color-text-dim)]">
-            <span className="text-cyan-300/65">SPEC</span> · AGENTS · EVIDENCE · DELIVERY
-          </span>
+        <span className="hidden h-8 w-px bg-white/[0.10] sm:block" aria-hidden="true" />
+        <div className="hidden min-w-0 flex-col gap-0.5 sm:flex">
+          <span className="text-[12px] font-semibold leading-4 tracking-[0.01em] text-[var(--color-text)]">AI Engineering Control Plane</span>
+          <span className="truncate text-[11px] leading-4 tracking-[0.01em] text-[var(--color-text-dim)]">From specification to verified delivery.</span>
         </div>
       </div>
       <div className="flex items-center gap-2">

@@ -29,22 +29,22 @@ describe("sidebar keyboard navigation", () => {
     expect(source).toContain("text-xs");
   });
 
-  it("영문 하강 문자를 자르지 않고 제품 홈을 독립된 브랜드 버튼으로 표시한다", () => {
+  it("사이드바는 중복 브랜드 문구 없이 간결한 홈 마크만 표시한다", () => {
     const source = readFileSync(new URL("../components/Sidebar.tsx", import.meta.url), "utf8");
     expect(source).toContain('aria-label="SUGO 홈"');
-    expect(source).toContain("Control Plane");
+    expect(source).toContain("data-sugo-home-mark");
+    expect(source).not.toContain("Control Plane");
+    expect(source).not.toContain(">SUGO<");
     expect(source).not.toContain("작업 허브");
     expect(source).toContain("leading-5");
     expect(source).not.toContain("truncate text-[12px] font-medium leading-none");
   });
 
-  it("전역 헤더는 제품 범주와 핵심 가치 축을 설명하고 감성 문구를 사용하지 않는다", () => {
+  it("전역 헤더 한 곳에서 제품 범주와 검증된 전달 가치를 명확한 문장으로 설명한다", () => {
     const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
-    expect(source).toContain("Engineering Control Plane");
-    expect(source).toContain("SPEC");
-    expect(source).toContain("AGENTS");
-    expect(source).toContain("EVIDENCE");
-    expect(source).toContain("DELIVERY");
+    expect(source).toContain("AI Engineering Control Plane");
+    expect(source).toContain("From specification to verified delivery.");
+    expect(source).not.toContain("SPEC</span> · AGENTS · EVIDENCE · DELIVERY");
     expect(source).not.toContain("차곡차곡");
     expect(source).not.toContain("가져왔다냥");
   });
