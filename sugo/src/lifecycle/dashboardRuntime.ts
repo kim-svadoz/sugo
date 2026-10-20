@@ -172,6 +172,58 @@ export interface EnsureOptions {
   paths?: DashboardPaths;
 }
 
+export type DashboardControlAction = "status" | "start" | "restart" | "stop";
+
+export interface DashboardControlResult {
+  action: DashboardControlAction;
+  running: boolean;
+  managed: boolean;
+  url: string;
+  version?: string;
+  build?: string;
+  message?: string;
+}
+
+async function dashboardStatus(action: DashboardControlAction, options: EnsureOptions): Promise<DashboardControlResult> {
+  const port = options.port ?? configuredDashboardPort();
+  const paths = options.paths ?? dashboardPaths();
+  const [health, state] = await Promise.all([fetchHealth(port), readServerState(paths)]);
+  return {
+    action,
+    running: health !== null,
+    managed: health !== null && state?.port === port,
+    url: `http://localhost:${port}`,
+    ...(health ? { version: health.version, build: health.build } : {}),
+  };
+}
+
+/** 사용자 명령에서 자동 시작과 같은 런타임을 상태 확인·시작·재시작·정지한다. */
+export async function controlDashboard(action: DashboardControlAction, options: EnsureOptions): Promise<DashboardControlResult> {
+  if (action === "status") return dashboardStatus(action, options);
+
+  const paths = options.paths ?? dashboardPaths();
+  if (action === "stop") {
+    const stopped = await stopDashboard(paths);
+    const result = await dashboardStatus(action, options);
+    if (stopped.unverified) result.message = "Sugo가 시작한 서버인지 확인할 수 없어 종료하지 않았습니다.";
+    return result;
+  }
+
+  if (action === "restart") {
+    const stopped = await stopDashboard(paths);
+    if (stopped.unverified) {
+      const result = await dashboardStatus(action, options);
+      result.message = "Sugo가 시작한 서버인지 확인할 수 없어 재시작하지 않았습니다.";
+      return result;
+    }
+  }
+
+  const ensured = await ensureDashboard({ ...options, paths });
+  const result = await dashboardStatus(action, options);
+  if ("message" in ensured && ensured.message) result.message = ensured.message;
+  return result;
+}
+
 async function startServer(runtimeEntry: string, options: EnsureOptions, paths: DashboardPaths, port: number): Promise<EnsureResult> {
   const log = openSync(paths.logFile, "a");
   let exited = false;

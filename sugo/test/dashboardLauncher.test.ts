@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  controlDashboard,
   dashboardPaths,
   ensureDashboard,
   fetchHealth,
@@ -161,6 +162,35 @@ describe("서버 정지", () => {
   });
 });
 
+describe("사용자 Console 관리", () => {
+  it("상태 확인은 서버를 시작하지 않고 고정 주소와 실행 여부를 알려준다", async () => {
+    expect(await controlDashboard("status", { pluginRoot, buildId: "1.0.0", port, paths })).toEqual({
+      action: "status",
+      running: false,
+      managed: false,
+      url: `http://localhost:${port}`,
+    });
+    expect(await fetchHealth(port)).toBeNull();
+  });
+
+  it("start, restart, stop을 사용자가 명시적으로 제어한다", async () => {
+    const started = await controlDashboard("start", { pluginRoot, buildId: "1.0.0", port, paths });
+    const firstPid = (await readServerState(paths))?.pid;
+    expect(started).toMatchObject({ action: "start", running: true, managed: true, build: "1.0.0" });
+
+    const restarted = await controlDashboard("restart", { pluginRoot, buildId: "1.0.0", port, paths });
+    expect(restarted).toMatchObject({ action: "restart", running: true, managed: true, build: "1.0.0" });
+    expect((await readServerState(paths))?.pid).not.toBe(firstPid);
+
+    expect(await controlDashboard("stop", { pluginRoot, buildId: "1.0.0", port, paths })).toEqual({
+      action: "stop",
+      running: false,
+      managed: false,
+      url: `http://localhost:${port}`,
+    });
+  });
+});
+
 describe("배포물 정합성", () => {
   const root = join(__dirname, "..");
   const consolePackage = join(root, "..", "dashboard", "backend", "package.json");
@@ -171,6 +201,13 @@ describe("배포물 정합성", () => {
 
     expect(command).toContain("${CLAUDE_PLUGIN_ROOT}/dist/dashboard-start.mjs");
     expect(existsSync(join(root, "dist", "dashboard-start.mjs"))).toBe(true);
+  });
+
+  it("사용자가 Console을 직접 관리하는 명령과 도구를 배포한다", () => {
+    expect(existsSync(join(root, "commands", "console.md"))).toBe(true);
+    const command = readFileSync(join(root, "commands", "console.md"), "utf8");
+    expect(command).toContain("sugo_console");
+    expect(readFileSync(join(root, "src", "index.ts"), "utf8")).toContain('"sugo_console"');
   });
 
   it("SessionStart 훅은 Dashboard가 준비되면 로컬 파일 정본을 자동 동기화한다", () => {

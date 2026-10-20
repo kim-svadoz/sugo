@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { CalendarDays, FileText, RefreshCw, Shapes, ShieldHalf, SlidersHorizontal, Wand2, Zap } from "lucide-react";
+import { CalendarDays, FileText, RefreshCw, Shapes, ShieldHalf, SlidersHorizontal, Wand2, Workflow, Zap } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { SIDEBAR_GROUPS } from "../lib/sidebarNavigation.js";
 import { useAuth } from "../auth/AuthContext.js";
@@ -28,25 +28,25 @@ export function Sidebar() {
         to="/sessions"
         aria-label="SUGO 홈"
         title="SUGO 홈"
-        className="group mb-8 flex h-10 items-center gap-2.5 px-2"
+        className="group mb-7 flex items-center gap-3 border-b border-white/[0.065] px-1 pb-5 pt-1"
       >
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-400/[0.08] font-mono text-[12px] font-bold text-cyan-100 ring-1 ring-inset ring-cyan-200/20 transition group-hover:bg-cyan-400/[0.13]">
-          S
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-300/25 via-cyan-400/15 to-violet-400/20 text-cyan-100 ring-1 ring-inset ring-cyan-200/30 shadow-[0_8px_24px_rgba(34,211,238,0.08)] transition group-hover:ring-cyan-200/45">
+          <Workflow size={19} strokeWidth={2} aria-hidden="true" />
         </span>
-        <span className="flex min-w-0 items-baseline gap-1.5">
-          <span className="font-mono text-[12px] font-bold tracking-[0.12em] text-[var(--color-text)]">SUGO</span>
-          <span className="font-mono text-[9px] text-cyan-300/65">Console</span>
+        <span className="min-w-0">
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-[13px] font-bold tracking-[0.08em] text-[var(--color-text-bright)]">SUGO</span>
+            <span className="font-mono text-[9px] text-cyan-300/75">Console</span>
+          </span>
+          <span className="mt-0.5 block truncate text-[9.5px] font-medium tracking-[-0.01em] text-[var(--color-text-muted)]">AI 개발 워크플로우</span>
         </span>
       </Link>
       <nav className="flex w-full flex-1 flex-col gap-6">
         {SIDEBAR_GROUPS.map((group) => {
           return <section key={group.label} aria-label={group.title} className="w-full">
-          <div
-            data-sidebar-group-heading
-            className="mb-1.5 px-3 font-mono text-[9px] font-medium uppercase leading-5 tracking-[0.14em] text-[var(--color-text-dim)]"
-            title={group.title}
-          >
-            {group.label}
+          <div data-sidebar-group-heading className="mb-2 flex items-center gap-2 px-2" title={group.title}>
+            <span className="font-mono text-[9.5px] font-semibold uppercase leading-5 tracking-[0.2em] text-slate-400/90">{group.label}</span>
+            <span data-sidebar-group-line className="h-px min-w-0 flex-1 bg-gradient-to-r from-white/[0.13] to-transparent" aria-hidden="true" />
           </div>
           <div className="space-y-0.5">
           {group.items.map(({ to, icon: iconName, label, shortcut }) => {

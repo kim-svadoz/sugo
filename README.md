@@ -112,6 +112,7 @@ AWS CLI 직접 호출 제한을 원하지 않으면 Console의 Settings에서 �
 | `/sugo:ws-list`, `/sugo:ws-status` | Workspace 목록·진행상황 확인 |
 | `/sugo:spec-writer` | Schedule에서 선택한 SPEC 초안을 문서화하고 같은 카드에 연결 |
 | `/sugo:patch-attach` | 일반 대화에서 이미 만든 변경을 선택한 기존 작업의 다음 patch로 검증·연결 |
+| `/sugo:console status\|start\|restart\|stop` | 설치형 Console의 상태 확인·시작·재시작·종료 |
 | `/sugo:validate` | 프로젝트 하네스의 검증 규칙 대조 |
 | `/sugo:checkpoint-sync` | Console의 체크포인트를 프로젝트 규칙으로 가져오기 |
 | `/sugo:version` | 설치된 플러그인 버전 확인 |
@@ -183,7 +184,8 @@ Schedule에서 작성한 최초 SPEC은 특정 개발자 경로가 아니라 실
 
 플러그인을 설치하면 Console도 함께 설치됩니다. 저장소를 복제하거나 별도 명령을 실행할 필요가 없습니다.
 
-- **세션 시작 때 자동 실행**: 새 세션을 열면 로컬 Console이 백그라운드로 뜨고, 사용자와 플러그인 API 토큰을 만든 뒤 `~/.claude/sugo/settings.json`의 `dashboard` 연결을 켭니다. 첫 실행 때만 주소(`http://localhost:3001`)를 알립니다.
+- **새 Claude Code 세션에서 자동 실행**: 새 세션을 열면 로컬 Console이 백그라운드로 뜨고, 사용자와 플러그인 API 토큰을 만든 뒤 `~/.claude/sugo/settings.json`의 `dashboard` 연결을 켭니다. 설치형 주소는 `http://localhost:3001`입니다.
+- **현재 세션에서 직접 관리**: `/sugo:console status`, `/sugo:console start`, `/sugo:console restart`, `/sugo:console stop`을 사용합니다. `/reload-plugins`는 명령과 도구를 다시 읽지만 세션 시작 훅은 다시 실행하지 않으므로, 업데이트 직후 Console이 꺼져 있으면 `/sugo:console start`를 실행합니다.
 - **한 프로세스, 한 포트**: 빌드된 서버가 UI와 API를 함께 제공합니다. 개발 서버나 `npm ci`가 필요하지 않습니다.
 - **데이터 위치**: DB, 세션 비밀, 로그는 `~/.claude/sugo/dashboard/`에 있습니다. 플러그인을 업데이트해도 유지됩니다.
 - **이미 떠 있으면 다시 띄우지 않습니다.** 플러그인을 업데이트하면 다음 세션 시작 때 새 버전 서버로 바뀝니다. 같은 포트에 다른 Console(개발용 등)이 응답 중이면 건드리지 않고 그대로 씁니다.
@@ -469,6 +471,7 @@ npx vitest run
 | --- | --- |
 | 설치·업데이트 실패 | GitHub 접속과 Git 설정 확인 |
 | `sd` 명령을 찾을 수 없음 | 저장소 루트에서 `bash dashboard/sd.sh` 사용. 전역 명령은 별도 등록 필요 |
+| `http://localhost:3001` 연결 거부 | Claude Code에서 `/sugo:console status`로 확인한 뒤 `/sugo:console start` 또는 `/sugo:console restart` 실행 |
 | UI가 열리지 않거나 포트 점유 오류 | 일반 로컬 UI는 `5175`, E2E UI는 `4173`. `ports.env`와 실행 중인 프로세스 확인 |
 | GitHub 로그인 503 | `GITHUB_CLIENT_ID`·`GITHUB_CLIENT_SECRET`, callback URL과 환경변수 로드 방식 확인 |
 | 로컬 작업은 DONE인데 Canvas가 갱신되지 않음 | `sugo_status(health:true)`의 연결·큐·영구 실패 사유 확인. API 주소와 토큰 점검 |

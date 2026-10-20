@@ -23,29 +23,30 @@ describe("sidebar keyboard navigation", () => {
     ]);
   });
 
-  it("그룹 제목은 번호나 카드 없이 조용한 섹션 라벨로 표시한다", () => {
+  it("그룹 제목은 번호 없이 라벨과 구분선으로 영역을 분명하게 나눈다", () => {
     const source = readFileSync(new URL("../components/Sidebar.tsx", import.meta.url), "utf8");
     expect(source).toContain("data-sidebar-group-heading");
     expect(source).not.toContain("groupIndex + 1");
-    expect(source).not.toContain("bg-white/[0.028]");
+    expect(source).toContain("data-sidebar-group-line");
+    expect(source).toContain("tracking-[0.2em]");
   });
 
-  it("사이드바 한 곳에 테두리 없는 SUGO Console 워드마크를 표시한다", () => {
+  it("사이드바에 제품명과 역할을 설명하는 브랜드 블록을 표시한다", () => {
     const source = readFileSync(new URL("../components/Sidebar.tsx", import.meta.url), "utf8");
     expect(source).toContain('aria-label="SUGO 홈"');
     expect(source).toContain("SUGO");
     expect(source).toContain("Console");
-    expect(source).not.toContain("shadow-[0_8px_24px");
+    expect(source).toContain("AI 개발 워크플로우");
+    expect(source).toContain("Workflow");
     expect(source).not.toContain("Control Plane");
     expect(source).not.toContain("작업 허브");
-    expect(source).toContain("leading-5");
-    expect(source).not.toContain("truncate text-[12px] font-medium leading-none");
   });
 
-  it("전역 헤더는 페이지 제목을 반복하지 않고 익숙한 말로 제품 범위를 설명한다", () => {
+  it("전역 헤더는 추상 슬로건 대신 Console 실행 상태와 주소를 표시한다", () => {
     const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
-    expect(source).toContain("AI development lifecycle");
-    expect(source).toContain("기획부터 구현·검증·운영까지 하나의 흐름으로 관리합니다.");
+    expect(source).toContain("Console running");
+    expect(source).toContain("window.location.host");
+    expect(source).not.toContain("AI development lifecycle");
     expect(source).not.toContain("Evidence-driven engineering");
     expect(source).not.toContain("반복 가능한 제품 흐름");
     expect(source).not.toContain("useLocation");

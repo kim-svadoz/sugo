@@ -39,6 +39,7 @@ import { handleSugoTask, sugoTaskInputSchema } from "./tools/sugoTask.js";
 import { handleSugoUpdate, sugoUpdateInputSchema } from "./tools/sugoUpdate.js";
 import { handleSugoValidate, sugoValidateInputSchema } from "./tools/sugoValidate.js";
 import { handleSugoVersion, sugoVersionInputSchema } from "./tools/sugoVersion.js";
+import { handleSugoConsole, sugoConsoleInputSchema } from "./tools/sugoConsole.js";
 import { handleSugoOntology, sugoOntologyInputSchema } from "./tools/sugoOntology.js";
 import { handleSugoPrd, sugoPrdInputSchema } from "./tools/sugoPrd.js";
 import { handleSugoSetup, sugoSetupInputSchema } from "./tools/sugoSetup.js";
@@ -380,6 +381,16 @@ server.registerTool(
 
 // 이름은 반드시 `sugo_` 접두어를 유지한다 — 여기만 bare `version`이었는데, MCP 도구명은
 // 클라이언트에서 서버들 사이 전역으로 노출되므로 다른 서버의 `version`과 부딪힐 수 있다.
+server.registerTool(
+  "sugo_console",
+  {
+    title: "Local Sugo Console management",
+    description: "로컬 Sugo Console의 상태를 확인하고 시작·재시작·정지한다. 기본 주소는 http://localhost:3001이다.",
+    inputSchema: sugoConsoleInputSchema,
+  },
+  handleSugoConsole,
+);
+
 server.registerTool(
   "sugo_version",
   {

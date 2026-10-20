@@ -12,6 +12,7 @@ import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
  */
 export function Header() {
   const { dashboardVersion, pluginVersion } = useDashboardMeta();
+  const consoleAddress = window.location.host;
 
   return (
     <header className="flex h-14 items-center justify-between gap-6 border-b border-white/[0.055] bg-[var(--color-surface)]/70 px-6 ck-glass">
@@ -20,10 +21,8 @@ export function Header() {
           <ShieldCheck size={14} strokeWidth={1.9} aria-hidden="true" />
         </span>
         <div className="flex min-w-0 items-baseline gap-3">
-          <span className="shrink-0 text-[12.5px] font-semibold text-[var(--color-text)]">AI development lifecycle</span>
-          <span className="hidden truncate text-[11.5px] text-[var(--color-text-muted)] lg:block">
-            기획부터 구현·검증·운영까지 하나의 흐름으로 관리합니다.
-          </span>
+          <span className="shrink-0 text-[12.5px] font-semibold text-[var(--color-text)]">Console running</span>
+          <span className="hidden font-mono text-[11px] text-[var(--color-text-muted)] sm:block">{consoleAddress}</span>
         </div>
       </div>
       <div className="flex items-center gap-2">
