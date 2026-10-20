@@ -32,9 +32,21 @@ describe("sidebar keyboard navigation", () => {
   it("영문 하강 문자를 자르지 않고 제품 홈을 독립된 브랜드 버튼으로 표시한다", () => {
     const source = readFileSync(new URL("../components/Sidebar.tsx", import.meta.url), "utf8");
     expect(source).toContain('aria-label="SUGO 홈"');
-    expect(source).toContain("작업 허브");
+    expect(source).toContain("Control Plane");
+    expect(source).not.toContain("작업 허브");
     expect(source).toContain("leading-5");
     expect(source).not.toContain("truncate text-[12px] font-medium leading-none");
+  });
+
+  it("전역 헤더는 제품 범주와 핵심 가치 축을 설명하고 감성 문구를 사용하지 않는다", () => {
+    const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
+    expect(source).toContain("Engineering Control Plane");
+    expect(source).toContain("SPEC");
+    expect(source).toContain("AGENTS");
+    expect(source).toContain("EVIDENCE");
+    expect(source).toContain("DELIVERY");
+    expect(source).not.toContain("차곡차곡");
+    expect(source).not.toContain("가져왔다냥");
   });
 
   it("사이드바 범위를 벗어난 숫자와 일반 키는 이동하지 않는다", () => {

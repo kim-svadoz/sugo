@@ -27,7 +27,7 @@ export function Sidebar() {
       <Link
         to="/sessions"
         aria-label="SUGO 홈"
-        title="SUGO 작업 허브"
+        title="SUGO Engineering Control Plane"
         className="group mb-6 flex min-h-14 items-center gap-2.5 rounded-xl border border-cyan-400/15 bg-gradient-to-br from-cyan-400/[0.08] to-white/[0.025] px-2.5 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition hover:border-cyan-300/30 hover:from-cyan-400/[0.12]"
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-cyan-400/[0.11] font-mono text-[14px] font-bold text-cyan-200 ring-1 ring-cyan-300/30 transition group-hover:ring-cyan-300/50">
@@ -35,7 +35,7 @@ export function Sidebar() {
         </span>
         <span className="min-w-0">
           <span className="block font-mono text-[12px] font-bold tracking-[0.12em] text-[var(--color-text)]">SUGO</span>
-          <span className="mt-0.5 block text-[10px] font-medium leading-4 text-[var(--color-text-dim)]">작업 허브</span>
+          <span className="mt-0.5 block font-mono text-[9px] font-medium uppercase leading-4 tracking-[0.08em] text-cyan-200/55">Control Plane</span>
         </span>
       </Link>
       <nav className="flex w-full flex-1 flex-col gap-5">

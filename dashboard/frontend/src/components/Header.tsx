@@ -14,13 +14,20 @@ export function Header() {
 
   return (
     <header className="flex h-16 items-center justify-between gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 px-6 ck-glass">
-      <div className="flex min-w-0 flex-col justify-center">
-        <h1 className="text-lg font-semibold tracking-tight text-[var(--color-text-bright)]">
-          SUGÒ <span className="font-mono text-[13px] text-cyan-400/80">Console</span>
-        </h1>
-        <p className="truncate text-[12.5px] italic tracking-wide text-slate-300">
-          "여기, 차곡차곡 쌓아온 기록을 가져왔다냥!"
-        </p>
+      <div className="flex min-w-0 items-center gap-4">
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-lg font-semibold tracking-tight text-[var(--color-text-bright)]">SUGÒ</h1>
+          <span className="font-mono text-[13px] font-medium text-cyan-300/85">Console</span>
+        </div>
+        <span className="hidden h-5 w-px bg-white/[0.09] sm:block" aria-hidden="true" />
+        <div className="hidden min-w-0 flex-col sm:flex">
+          <span className="font-mono text-[9px] font-semibold uppercase leading-4 tracking-[0.17em] text-[var(--color-text-muted)]">
+            Engineering Control Plane
+          </span>
+          <span className="truncate font-mono text-[9px] uppercase leading-4 tracking-[0.12em] text-[var(--color-text-dim)]">
+            <span className="text-cyan-300/65">SPEC</span> · AGENTS · EVIDENCE · DELIVERY
+          </span>
+        </div>
       </div>
       <div className="flex items-center gap-2">
         <span
