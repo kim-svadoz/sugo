@@ -13,5 +13,8 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("Pinpoint APM");
     expect(source).toContain("프로젝트 외부 연동");
     expect(source).toContain("Git 서비스 연결");
+    expect(source).toContain("데이터 연결 → 프로젝트 적용 → 접근 제어");
+    expect(source.indexOf('id: "pinpoint"')).toBeLessThan(source.indexOf('id: "projects"'));
+    expect(source.indexOf('id: "projects"')).toBeLessThan(source.indexOf('id: "guard"'));
   });
 });

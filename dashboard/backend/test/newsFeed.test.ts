@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_NEWS_SOURCES, fetchNewsFeed, selectLocalizedNews } from "../src/services/newsFeedService.js";
 
-describe("AI news feed", () => {
+describe("technology brief feed", () => {
   it("공식 RSS 항목을 최신순으로 정규화하고 HTML을 제거한다", async () => {
     const xml = `<?xml version="1.0"?><rss><channel><item><title>New &amp; useful</title><link>https://example.com/news</link><pubDate>Tue, 20 Oct 2026 01:00:00 GMT</pubDate><description><![CDATA[<p>Details</p>]]></description></item></channel></rss>`;
     const feed = await fetchNewsFeed([{ source: "OpenAI", category: "AI", language: "en", url: "https://example.com/rss" }], async () => new Response(xml));
@@ -17,9 +17,12 @@ describe("AI news feed", () => {
     expect(feed[0]?.source).toBe("GitHub");
   });
 
-  it("한국어 소스를 우선하면서 글로벌 공식 소식도 함께 구성한다", () => {
-    expect(DEFAULT_NEWS_SOURCES.filter((source) => source.language === "ko")).toHaveLength(3);
-    expect(DEFAULT_NEWS_SOURCES.length).toBeGreaterThanOrEqual(6);
+  it("국내외 공식 엔지니어링 블로그를 함께 구성한다", () => {
+    expect(DEFAULT_NEWS_SOURCES.filter((source) => source.language === "ko").length).toBeGreaterThanOrEqual(3);
+    expect(DEFAULT_NEWS_SOURCES.length).toBeGreaterThanOrEqual(10);
+    expect(DEFAULT_NEWS_SOURCES.map((source) => source.source)).toEqual(expect.arrayContaining([
+      "Meta Engineering", "Cloudflare", "Netflix TechBlog", "Kakao Tech", "NAVER D2", "Toss Tech",
+    ]));
     const item = (source: string, language: "ko" | "en", hour: number) => ({ source, category: "AI", language, title: source, url: `https://example.com/${source}`, publishedAt: `2026-10-20T0${hour}:00:00.000Z`, summary: null });
     const selected = selectLocalizedNews([
       item("국문1", "ko", 6), item("국문2", "ko", 5), item("국문3", "ko", 4), item("영문1", "en", 3), item("영문2", "en", 2), item("영문3", "en", 1),

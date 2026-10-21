@@ -3,12 +3,16 @@ export interface NewsSource { source: string; category: string; language: NewsLa
 export interface NewsItem { source: string; category: string; language: NewsLanguage; title: string; url: string; publishedAt: string; summary: string | null }
 
 export const DEFAULT_NEWS_SOURCES: readonly NewsSource[] = [
-  { source: "GeekNews", category: "기술 동향", language: "ko", url: "https://news.hada.io/rss/news" },
-  { source: "AI타임스", category: "인공지능", language: "ko", url: "https://www.aitimes.com/rss/allArticle.xml" },
-  { source: "MIT 테크놀로지 리뷰 코리아", category: "기술 분석", language: "ko", url: "https://www.technologyreview.kr/feed/" },
-  { source: "OpenAI", category: "인공지능", language: "en", url: "https://openai.com/news/rss.xml" },
-  { source: "Google AI", category: "인공지능", language: "en", url: "https://blog.google/technology/ai/rss/" },
-  { source: "GitHub", category: "개발 도구", language: "en", url: "https://github.blog/changelog/feed/" },
+  { source: "Kakao Tech", category: "제품·플랫폼", language: "ko", url: "https://tech.kakao.com/feed/" },
+  { source: "NAVER D2", category: "개발·아키텍처", language: "ko", url: "https://d2.naver.com/d2.atom" },
+  { source: "Toss Tech", category: "제품 엔지니어링", language: "ko", url: "https://toss.tech/rss.xml" },
+  { source: "LINE Engineering", category: "개발·아키텍처", language: "ko", url: "https://techblog.lycorp.co.jp/ko/feed/index.xml" },
+  { source: "Meta Engineering", category: "대규모 시스템", language: "en", url: "https://engineering.fb.com/feed/" },
+  { source: "Cloudflare", category: "인프라·보안", language: "en", url: "https://blog.cloudflare.com/rss/" },
+  { source: "Netflix TechBlog", category: "플랫폼 엔지니어링", language: "en", url: "https://netflixtechblog.com/feed" },
+  { source: "Spotify Engineering", category: "제품 엔지니어링", language: "en", url: "https://engineering.atspotify.com/feed/" },
+  { source: "GitHub Engineering", category: "개발 생산성", language: "en", url: "https://github.blog/engineering/feed/" },
+  { source: "OpenAI", category: "AI 엔지니어링", language: "en", url: "https://openai.com/news/rss.xml" },
 ];
 
 function decodeXml(value: string): string {

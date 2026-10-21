@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHomeAttention } from "./homePresentation.js";
+import { buildHomeAttention, buildHomeBrief } from "./homePresentation.js";
 
 const base = {
   workspace_name: "sample-workspace",
@@ -41,5 +41,18 @@ describe("Home attention", () => {
       { ...base, id: "done-soon", title: "배포 준비 작업", status: "done", due_date: "2026-10-23", done_task_count: 1, active_task_count: 0, focus_task_status: "done" },
     ], new Date("2026-10-21T00:00:00Z"));
     expect(items.map(({ title, label }) => ({ title, label }))).toEqual([{ title: "배포 준비 작업", label: "D-2" }]);
+  });
+
+  it("결정·마감·이어갈 작업을 서로 겹치지 않게 브리핑한다", () => {
+    const brief = buildHomeBrief([
+      { ...base, id: "review", title: "결정 필요", due_date: "2026-10-30", blocked_task_count: 1, focus_task_status: "blocked", focus_task_note: "검토 결정이 필요합니다." },
+      { ...base, id: "due", title: "마감 확인", due_date: "2026-10-22", has_run: false, active_task_count: 0, focus_task_status: null },
+      { ...base, id: "active", title: "계속 구현", due_date: "2026-10-30", focus_task_title: "API 구현", focus_task_updated_at: "2026-10-21T09:00:00.000Z" },
+    ], new Date("2026-10-21T00:00:00Z"));
+
+    expect(brief.decisions.map((item) => item.title)).toEqual(["결정 필요"]);
+    expect(brief.deadlines.map((item) => item.title)).toEqual(["마감 확인"]);
+    expect(brief.resume.map((item) => item.title)).toEqual(["계속 구현"]);
+    expect(brief.resume[0]?.detail).toContain("API 구현");
   });
 });

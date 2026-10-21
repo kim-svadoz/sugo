@@ -24,9 +24,9 @@ const contextAutoRefreshDescription = "Dashboard 실행 중에는 매일 08:00 K
 type IntegrationSectionId = "aws" | "guard" | "pinpoint" | "projects" | "git";
 const INTEGRATION_SECTIONS: ReadonlyArray<{ id: IntegrationSectionId; label: string }> = [
   { id: "aws", label: "AWS Context" },
-  { id: "guard", label: "AWS 직접 조회 안전장치" },
   { id: "pinpoint", label: "Pinpoint APM" },
   { id: "projects", label: "프로젝트 외부 연동" },
+  { id: "guard", label: "AWS 직접 조회 안전장치" },
   { id: "git", label: "Git 서비스 연결" },
 ];
 
@@ -37,14 +37,16 @@ function DetailToggle({ expanded, onClick }: { expanded: boolean; onClick: () =>
   </button>;
 }
 
-function ContextRefreshStatus({ observedAt, now, dailyLimit, remainingToday, nextAllowedAt }: {
+function ContextRefreshStatus({ observedAt, now, dailyLimit, remainingToday, nextAllowedAt, compact }: {
   observedAt: string | null;
   now: Date;
   dailyLimit?: number;
   remainingToday?: number;
   nextAllowedAt?: string | null;
+  compact?: boolean;
 }) {
   const age = snapshotAge(observedAt, now);
+  if (compact) return <span className={`hidden text-[10px] font-mono sm:inline ${age.stale ? "text-amber-300" : "text-[var(--color-text-muted)]"}`}>마지막 동기화 {age.label}</span>;
   return <div className="mt-3 border-t border-[var(--color-border)] pt-3 text-[11px]">
     <p className="text-cyan-200/90">{contextAutoRefreshDescription}</p>
     <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[var(--color-text-muted)]">
@@ -124,6 +126,7 @@ function AwsContextCard({ expanded, onToggle }: { expanded: boolean; onToggle: (
         </div>
         <div className="flex items-center gap-2">
         {status?.connected && <>
+          <ContextRefreshStatus observedAt={status.observedAt} now={now} compact />
           <button type="button" disabled={busy} onClick={() => void refreshAll()} className="rounded-md border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200 disabled:opacity-40">{busy ? "동기화 중…" : "AWS 전체 동기화"}</button>
           <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span>
         </>}
@@ -233,14 +236,14 @@ function PinpointContextCard({ expanded, onToggle }: { expanded: boolean; onTogg
     <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] px-5 py-4`}>
       <div className="flex items-center justify-between gap-3">
         <div><h2 className="text-base font-semibold text-[var(--color-text)]">Pinpoint APM</h2><p className="text-xs text-[var(--color-text-muted)]">ECS 생존과 분리해 실제 에이전트 관측 상태를 읽습니다</p></div>
-        <div className="flex items-center gap-2">{status?.connected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span>}<DetailToggle expanded={expanded} onClick={onToggle} /></div>
+        <div className="flex items-center gap-2">{status?.connected && <><ContextRefreshStatus observedAt={status.observedAt} now={now} compact /><button disabled={busy} onClick={() => void run(refreshPinpointContext)} className="rounded-md border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200 disabled:opacity-40">{busy ? "동기화 중…" : "Pinpoint 동기화"}</button><span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span></>}<DetailToggle expanded={expanded} onClick={onToggle} /></div>
       </div>
       {expanded && status?.connected && <ContextRefreshStatus observedAt={status.observedAt} now={now} />}
     </div>
     {expanded && <div className="space-y-3 p-5">
       {error && <div className="rounded border border-rose-500/30 px-3 py-2 text-xs text-rose-300">{error}</div>}
       <div className="flex gap-2"><input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://pinpoint.example.com" className="min-w-0 flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm" />
-        {!status?.connected ? <button disabled={busy || !baseUrl} onClick={() => void run(() => connectPinpointContext(baseUrl))} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200 disabled:opacity-40">연결</button> : <><button disabled={busy} onClick={() => void run(refreshPinpointContext)} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200">동기화</button><button disabled={busy} onClick={() => void run(disconnectPinpointContext)} className="rounded border border-rose-400/30 px-3 text-sm text-rose-300">해제</button></>}
+        {!status?.connected ? <button disabled={busy || !baseUrl} onClick={() => void run(() => connectPinpointContext(baseUrl))} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200 disabled:opacity-40">연결</button> : <button disabled={busy} onClick={() => void run(disconnectPinpointContext)} className="rounded border border-rose-400/30 px-3 text-sm text-rose-300">연결 해제</button>}
       </div>
       {status?.connected && <div className="grid gap-2 sm:grid-cols-2">{status.applications.map((app) => <div key={app.applicationName} className="rounded border border-[var(--color-border)] bg-black/10 px-3 py-2 text-xs"><div className="font-medium text-[var(--color-text)]">{app.applicationName}</div><div className="mt-1 text-[var(--color-text-muted)]">{app.state} · agent {app.runningAgentCount}/{app.agentCount} · 최근 5분 지연 표본 {app.sampleCount >= 5000 ? '5,000+' : app.sampleCount} / 표본 오류 {app.errorCount}</div></div>)}</div>}
       <p className="text-[11px] text-[var(--color-text-dim)]">읽기 전용 · 5분 중복 호출 방지</p>
@@ -466,6 +469,7 @@ export function Settings() {
     <div className="mx-auto max-w-5xl space-y-5">
       <PageHeading eyebrow="SYSTEM INTEGRATIONS" title="외부 연동" description="저장소와 운영 환경을 연결하고, Sugo가 사용할 외부 서비스의 범위를 관리합니다." />
 
+      <div className="flex items-center justify-between"><div><h2 className="text-sm font-semibold text-[var(--color-text)]">연동 흐름</h2><p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">데이터 연결 → 프로젝트 적용 → 접근 제어</p></div><p className="text-[10px] text-[var(--color-text-dim)]">동기화 가능한 소스는 접힌 상태에서도 바로 갱신할 수 있습니다.</p></div>
       <nav aria-label="외부 연동 섹션" className="ck-scroll flex gap-1 overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5">
         {INTEGRATION_SECTIONS.map((section) => <button key={section.id} type="button" aria-pressed={expandedSection === section.id} onClick={() => openSection(section.id)} className={`shrink-0 rounded-lg px-3.5 py-2 text-xs font-medium transition ${expandedSection === section.id ? "bg-cyan-400/12 text-cyan-200 ring-1 ring-cyan-400/35" : "text-[var(--color-text-muted)] hover:bg-white/[0.04] hover:text-[var(--color-text)]"}`}>{section.label}</button>)}
       </nav>
@@ -473,9 +477,9 @@ export function Settings() {
       {!LOCAL_DEV && <ApiTokensCard />}
 
       <AwsContextCard expanded={expandedSection === "aws"} onToggle={() => toggleSection("aws")} />
-      <AwsGuardPolicyCard expanded={expandedSection === "guard"} onToggle={() => toggleSection("guard")} />
       <PinpointContextCard expanded={expandedSection === "pinpoint"} onToggle={() => toggleSection("pinpoint")} />
       <ProjectIntegrationsCard expanded={expandedSection === "projects"} onToggle={() => toggleSection("projects")} />
+      <AwsGuardPolicyCard expanded={expandedSection === "guard"} onToggle={() => toggleSection("guard")} />
 
       <div id="integration-git" className="scroll-mt-24 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className={`${expandedSection === "git" ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] px-5 py-4`}>

@@ -52853,12 +52853,16 @@ var init_newsFeedService = __esm({
   "../dashboard/backend/src/services/newsFeedService.ts"() {
     "use strict";
     DEFAULT_NEWS_SOURCES = [
-      { source: "GeekNews", category: "\uAE30\uC220 \uB3D9\uD5A5", language: "ko", url: "https://news.hada.io/rss/news" },
-      { source: "AI\uD0C0\uC784\uC2A4", category: "\uC778\uACF5\uC9C0\uB2A5", language: "ko", url: "https://www.aitimes.com/rss/allArticle.xml" },
-      { source: "MIT \uD14C\uD06C\uB180\uB85C\uC9C0 \uB9AC\uBDF0 \uCF54\uB9AC\uC544", category: "\uAE30\uC220 \uBD84\uC11D", language: "ko", url: "https://www.technologyreview.kr/feed/" },
-      { source: "OpenAI", category: "\uC778\uACF5\uC9C0\uB2A5", language: "en", url: "https://openai.com/news/rss.xml" },
-      { source: "Google AI", category: "\uC778\uACF5\uC9C0\uB2A5", language: "en", url: "https://blog.google/technology/ai/rss/" },
-      { source: "GitHub", category: "\uAC1C\uBC1C \uB3C4\uAD6C", language: "en", url: "https://github.blog/changelog/feed/" }
+      { source: "Kakao Tech", category: "\uC81C\uD488\xB7\uD50C\uB7AB\uD3FC", language: "ko", url: "https://tech.kakao.com/feed/" },
+      { source: "NAVER D2", category: "\uAC1C\uBC1C\xB7\uC544\uD0A4\uD14D\uCC98", language: "ko", url: "https://d2.naver.com/d2.atom" },
+      { source: "Toss Tech", category: "\uC81C\uD488 \uC5D4\uC9C0\uB2C8\uC5B4\uB9C1", language: "ko", url: "https://toss.tech/rss.xml" },
+      { source: "LINE Engineering", category: "\uAC1C\uBC1C\xB7\uC544\uD0A4\uD14D\uCC98", language: "ko", url: "https://techblog.lycorp.co.jp/ko/feed/index.xml" },
+      { source: "Meta Engineering", category: "\uB300\uADDC\uBAA8 \uC2DC\uC2A4\uD15C", language: "en", url: "https://engineering.fb.com/feed/" },
+      { source: "Cloudflare", category: "\uC778\uD504\uB77C\xB7\uBCF4\uC548", language: "en", url: "https://blog.cloudflare.com/rss/" },
+      { source: "Netflix TechBlog", category: "\uD50C\uB7AB\uD3FC \uC5D4\uC9C0\uB2C8\uC5B4\uB9C1", language: "en", url: "https://netflixtechblog.com/feed" },
+      { source: "Spotify Engineering", category: "\uC81C\uD488 \uC5D4\uC9C0\uB2C8\uC5B4\uB9C1", language: "en", url: "https://engineering.atspotify.com/feed/" },
+      { source: "GitHub Engineering", category: "\uAC1C\uBC1C \uC0DD\uC0B0\uC131", language: "en", url: "https://github.blog/engineering/feed/" },
+      { source: "OpenAI", category: "AI \uC5D4\uC9C0\uB2C8\uC5B4\uB9C1", language: "en", url: "https://openai.com/news/rss.xml" }
     ];
   }
 });
@@ -90158,7 +90162,7 @@ var init_index = __esm({
     init_asyncHandler();
     init_contextAutoRefreshService();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.30.9" ? { version: "0.30.9" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.31.0" ? { version: "0.31.0" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90277,7 +90281,7 @@ await bootstrapLocalDashboard2(db, {
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.30.9", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.31.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

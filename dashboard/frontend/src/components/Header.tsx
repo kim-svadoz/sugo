@@ -7,14 +7,16 @@ import { useLocalWeather } from "../hooks/useLocalWeather.js";
 import { useProfile } from "../hooks/useProfile.js";
 
 const SUGO_TIPS = [
-  "계획부터 운영까지, AI와 함께하는 개발 업무를 한곳에서 이어갑니다.",
-  "Schedule에서 마감이 가까운 SPEC과 사람의 판단이 필요한 작업을 먼저 확인하세요.",
-  "Workspace에서 도메인별 개발 흐름과 실제 배포 상태를 함께 추적할 수 있습니다.",
-  "검토가 필요하면 승인하거나 수정 요청을 남겨 같은 작업 흐름을 이어가세요.",
-  "Harness 규칙은 기술과 버전에 맞는 검증 기준을 프로젝트에 일관되게 적용합니다.",
-  "Skills에서는 AI가 작업 중 사용하는 규칙과 역할을 미리 확인할 수 있습니다.",
-  "Weekly에서 한 주의 작업 결과와 새로 얻은 기술 지식을 다시 살펴보세요.",
-  "작업 결과의 테스트·변경 파일·배포 근거를 확인한 뒤 SPEC을 종료하세요.",
+  "Schedule은 D-2부터 미종료 SPEC을 Home의 ‘마감 전 확인’에 올립니다.",
+  "검토 화면에서 수정 요청을 남기면 확정하지 않은 채 같은 Patch로 대화를 이어갈 수 있습니다.",
+  "리뷰 보고서와 마지막 Patch의 변경 파일을 함께 보면 결과와 구현 근거를 빠르게 대조할 수 있습니다.",
+  "파이프라인 완료는 SPEC 완료가 아닙니다. 배포와 운영 확인 뒤 직접 SPEC을 종료하세요.",
+  "Harness에서 기술과 버전을 선택하면 프로젝트에 적용될 실제 규칙 원문을 미리 볼 수 있습니다.",
+  "Workspace의 도메인 규칙은 프로젝트 .claude/rules와 동기화되어 다음 AI 작업의 기준이 됩니다.",
+  "Integrations의 직접 조회 안전장치는 외부 시스템을 읽을 때 허용 범위와 비용을 함께 제한합니다.",
+  "Weekly 리포트는 완료 목록보다 작업 결과와 새로 축적된 지식을 다시 찾는 데 유용합니다.",
+  "Home의 ‘결정 대기’는 AI가 멈춘 작업이 아니라 사람의 판단이 있어야 안전하게 진행되는 작업입니다.",
+  "프로필의 Preferences에서 표시 이름과 날씨 생활권을 설정하면 이 브라우저에 바로 적용됩니다.",
 ] as const;
 
 /**
@@ -37,10 +39,17 @@ export function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
   const [tipPhase, setTipPhase] = useState<"idle" | "exit" | "enter">("idle");
+  const [now, setNow] = useState(() => new Date());
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  const date = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "long" }).format(new Date());
+  const date = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "long" }).format(now);
+  const time = new Intl.DateTimeFormat("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false }).format(now);
 
   useEffect(() => setProfileOpen(false), [pathname]);
+  useEffect(() => {
+    if (!isHome) return;
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [isHome]);
   useEffect(() => {
     if (isHome) return;
     const interval = window.setInterval(() => {
@@ -65,9 +74,9 @@ export function Header() {
       <div className="flex min-w-0 items-center gap-3">
         {isHome && <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-400/[0.08] text-cyan-300 ring-1 ring-inset ring-cyan-300/15"><CalendarDays size={14} strokeWidth={1.9} aria-hidden="true" /></span>}
         {isHome ? <div className="flex min-w-0 items-center gap-2.5 text-[12.5px] font-semibold text-[var(--color-text)]">
-          <span>{date}</span>
+          <span>{date}</span><span className="font-mono font-normal tabular-nums text-[var(--color-text-muted)]">{time}</span>
           {region ? <><span className="h-1 w-1 rounded-full bg-slate-600" /><CloudSun size={14} className="text-slate-400" aria-hidden="true" /><span className="font-normal text-[var(--color-text-muted)]">{region.label} {weather ? `${weather.temperature}° · ${weather.label}` : "날씨 확인 중…"}</span></> : <button type="button" onClick={() => navigate("/preferences?tab=weather")} className="font-normal text-cyan-300 hover:text-cyan-100">날씨 지역 설정</button>}
-        </div> : <div className="flex min-w-0 items-center gap-2.5 overflow-hidden" aria-live="polite" aria-label="Sugo 활용 팁"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-400/[0.08] text-amber-300 ring-1 ring-inset ring-amber-300/15"><Lightbulb size={13} strokeWidth={1.9} aria-hidden="true" /></span><span className={`truncate text-[12.5px] font-medium text-[var(--color-text)] motion-reduce:transform-none motion-reduce:transition-none ${tipPhase === "enter" ? "translate-y-2 opacity-0" : tipPhase === "exit" ? "-translate-y-2 opacity-0 transition-all duration-300" : "translate-y-0 opacity-100 transition-all duration-300"}`}>{SUGO_TIPS[tipIndex]}</span></div>}
+        </div> : <div className="flex min-w-0 items-center gap-3 overflow-hidden" aria-live="polite" aria-label="Sugo 활용 팁"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-400/[0.08] text-amber-300 ring-1 ring-inset ring-amber-300/15"><Lightbulb size={15} strokeWidth={1.9} aria-hidden="true" /></span><span className={`truncate text-[13.5px] font-medium text-[var(--color-text)] motion-reduce:transform-none motion-reduce:transition-none ${tipPhase === "enter" ? "translate-y-2 opacity-0" : tipPhase === "exit" ? "-translate-y-2 opacity-0 transition-all duration-300" : "translate-y-0 opacity-100 transition-all duration-300"}`}>{SUGO_TIPS[tipIndex]}</span></div>}
       </div>
       <div className="flex items-center gap-2">
         <span
