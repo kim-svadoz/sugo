@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# `sd`: 기존 개인용 Sugo Dashboard를 정리하고 최신 소스로 백그라운드 재시작한다.
+# `sd`: 최신 소스를 설치 사용자와 같은 단일 포트 Console로 빌드·재시작한다.
 set -euo pipefail
 
 SOURCE_PATH="${BASH_SOURCE[0]}"
@@ -12,6 +12,8 @@ DASHBOARD_ROOT="$(cd "$(dirname "$SOURCE_PATH")" && pwd)"
 source "$DASHBOARD_ROOT/port-contract.sh"
 BACKEND_DIR="$DASHBOARD_ROOT/backend"
 FRONTEND_DIR="$DASHBOARD_ROOT/frontend"
+PLUGIN_DIR="$DASHBOARD_ROOT/../sugo"
+RUNTIME_ENTRY="$PLUGIN_DIR/dashboard-runtime/server.mjs"
 TEMP_ROOT="${TMPDIR:-/tmp}"
 TEMP_ROOT="${TEMP_ROOT%/}"
 STATE_DIR="${SUGO_DASHBOARD_STATE_DIR:-$TEMP_ROOT/sugo-dashboard-${UID}}"
@@ -19,7 +21,6 @@ PID_FILE="$STATE_DIR/supervisor.pid"
 LOG_FILE="$STATE_DIR/dashboard.log"
 LAUNCH_LABEL="com.sugo.dashboard.local"
 API_PORT="$SUGO_LOCAL_API_PORT"
-UI_PORT="$SUGO_LOCAL_UI_PORT"
 
 if [ "${1:-}" = "ports" ]; then
   sugo_print_port_contract
@@ -49,12 +50,12 @@ stop_previous() {
   rm -f "$PID_FILE"
 }
 
-# 플러그인이 세션 시작 때 띄우는 번들 대시보드가 같은 API 포트를 쓴다. 개발 서버가 대신 뜨도록 먼저 멈춘다.
+# 플러그인이 세션 시작 때 띄운 이전 번들이 같은 포트를 쓴다. 최신 소스 런타임으로 교체하기 전에 멈춘다.
 # PID는 다른 프로세스가 물려받을 수 있어서, 기록된 포트가 대시보드 health에 응답할 때만 종료한다.
 stop_bundled_dashboard() {
   local state_file="$HOME/.claude/sugo/dashboard/server.json" pid
   [ -f "$state_file" ] || return 0
-  pid="$(sed -n 's/.*"pid":\([0-9][0-9]*\).*/\1/p' "$state_file" | head -n 1)"
+  pid="$(sed -n 's/.*"pid":\([0-9][0-9]*\).*/\1/p' "$state_file" 2>/dev/null || true)"
   [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null || return 0
   curl -fsS --max-time 2 "http://127.0.0.1:$API_PORT/health" >/dev/null 2>&1 || return 0
   kill "$pid" 2>/dev/null || true
@@ -64,8 +65,8 @@ stop_bundled_dashboard() {
   done
 }
 
-# PID 파일이 없는 실행기가 남긴 프로세스를 정리한다. 알려진 개발 포트의 listener 중
-# cwd가 이 dashboard의 backend/frontend인 프로세스만 정리해 다른 로컬 앱은 건드리지 않는다.
+# PID 파일이 없는 예전 분리형 개발 서버를 정리한다. API 포트 listener 중 cwd가 이
+# dashboard backend인 프로세스만 정리해 다른 로컬 앱은 건드리지 않는다.
 stop_stale_dashboard_listeners() {
   command -v lsof >/dev/null 2>&1 || return
   local pid cwd
@@ -78,7 +79,6 @@ stop_stale_dashboard_listeners() {
   done < <(
     {
       lsof -tiTCP:"$API_PORT" -sTCP:LISTEN 2>/dev/null || true
-      lsof -tiTCP:"$UI_PORT" -sTCP:LISTEN 2>/dev/null || true
     } | sort -u
   )
 }
@@ -87,11 +87,11 @@ stop_stale_dashboard_listeners() {
 # 느린 종료(진행 중 요청 처리 등)일 때 --strictPort 재기동과 레이스를 일으킨다 — 포트가
 # 실제로 비는 것을 최대 5초까지 폴링하고, 그래도 안 비면(다른 프로세스가 점유 등) 밑에서
 # 어차피 --strictPort가 명확한 에러로 실패하게 둔다.
-wait_ports_free() {
+wait_port_free() {
   command -v lsof >/dev/null 2>&1 || return 0
   local waited=0
   while [ "$waited" -lt 50 ]; do
-    if ! lsof -tiTCP:"$API_PORT" -sTCP:LISTEN >/dev/null 2>&1 && ! lsof -tiTCP:"$UI_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+    if ! lsof -tiTCP:"$API_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
       return 0
     fi
     sleep 0.1
@@ -100,12 +100,14 @@ wait_ports_free() {
   return 0
 }
 
+# 중단 시간은 최소화한다. 먼저 현재 소스를 실제 배포 형태(backend bundle + frontend static)로 만든다.
+(cd "$PLUGIN_DIR" && npm run build:dashboard)
+
 stop_previous
 stop_bundled_dashboard
 stop_stale_dashboard_listeners
-wait_ports_free
+wait_port_free
 sugo_require_port_free "$API_PORT" "Sugo Dashboard API"
-sugo_require_port_free "$UI_PORT" "Sugo Dashboard UI"
 
 : > "$LOG_FILE"
 run_mode="nohup"
@@ -113,11 +115,11 @@ supervisor_pid=""
 if [ "$(uname -s)" = "Darwin" ] && command -v launchctl >/dev/null 2>&1; then
   run_mode="launchctl"
   launchctl submit -l "$LAUNCH_LABEL" -o "$LOG_FILE" -e "$LOG_FILE" -- \
-    /usr/bin/env PATH="$PATH" DASHBOARD_API_PORT="$API_PORT" DASHBOARD_UI_PORT="$UI_PORT" \
-    "$DASHBOARD_ROOT/dev-local.sh"
+    /usr/bin/env PATH="$PATH" SUGO_DASHBOARD_PORT="$API_PORT" BUILD_ID="source" \
+    node "$RUNTIME_ENTRY"
 else
-  nohup env DASHBOARD_API_PORT="$API_PORT" DASHBOARD_UI_PORT="$UI_PORT" \
-    "$DASHBOARD_ROOT/dev-local.sh" >"$LOG_FILE" 2>&1 </dev/null &
+  nohup env SUGO_DASHBOARD_PORT="$API_PORT" BUILD_ID="source" \
+    node "$RUNTIME_ENTRY" >"$LOG_FILE" 2>&1 </dev/null &
   supervisor_pid=$!
   printf '%s\n' "$supervisor_pid" > "$PID_FILE"
 fi
@@ -133,7 +135,7 @@ service_alive() {
 for _ in {1..120}; do
   if grep -q "Dashboard →" "$LOG_FILE"; then
     url="$(sed -n 's/.*Dashboard → //p' "$LOG_FILE" | tail -n 1)"
-    printf 'Sugo Dashboard 재시작 완료: %s\n' "${url:-http://localhost:$UI_PORT}"
+    printf 'Sugo Console 재시작 완료: %s\n' "${url:-http://localhost:$API_PORT}"
     printf '로그: %s\n' "$LOG_FILE"
     exit 0
   fi

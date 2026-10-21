@@ -435,7 +435,7 @@ export function Settings() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-8">
       <div>
-        <h1 className="mb-1 text-2xl font-bold text-[var(--color-text-bright)]">Settings</h1>
+        <h1 className="mb-1 text-2xl font-bold text-[var(--color-text-bright)]">Integrations</h1>
         <p className="text-sm text-[var(--color-text-muted)]">외부 연동을 설정합니다.</p>
       </div>
 

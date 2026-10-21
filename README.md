@@ -196,7 +196,7 @@ Schedule에서 작성한 최초 SPEC은 특정 개발자 경로가 아니라 실
 
 Weekly 탭은 [weekly](https://github.com/kim-svadoz/weekly-ai-report) 플러그인이 만든 주간 보고서를 보여줍니다. weekly가 보고서를 만들 때 플러그인 토큰으로 Console에 올리며(방향은 weekly → Console 한쪽), 보고서는 올린 사용자 본인에게만 보입니다. weekly가 없으면 탭은 비어 있습니다. 이미 만든 주는 `sh ~/.weekly/app/scripts/weekly.sh push --all`로 올립니다.
 
-이 저장소의 개발용 `dashboard/sd.sh`도 같은 API 포트(3001)를 씁니다. `sd`는 플러그인이 띄운 서버를 먼저 멈추고 개발 서버를 띄웁니다. 개발 서버와 설치형 Console은 모두 `~/.claude/sugo/dashboard/dashboard.db`를 사용합니다. 따라서 5175 개발 화면과 3001 설치형 화면을 전환해도 일정·메모·보관함·Weekly·외부 컨텍스트가 갈라지지 않습니다. 격리 DB가 필요한 테스트만 `SQLITE_FILE`을 명시합니다.
+이 저장소의 개발용 `dashboard/sd.sh`도 설치 사용자와 동일한 단일 주소 `http://localhost:3001`을 사용합니다. 현재 소스를 배포 형태로 빌드한 뒤 플러그인이 띄운 이전 서버를 교체하며, 설치형 Console과 같은 `~/.claude/sugo/dashboard/dashboard.db`를 사용합니다. `5175` Vite 서버는 개발자가 화면을 임시 확인할 때만 사용하고 사용자 동선으로 안내하지 않습니다. 격리 DB가 필요한 테스트만 `SQLITE_FILE`을 명시합니다.
 
 2026-10-20 이전 개발 실행이 만든 `dashboard/backend/local.db`가 있고 사용자 DB가 아직 생성되지 않았다면, 서버를 멈춘 상태에서 한 번 가져올 수 있습니다.
 
@@ -289,7 +289,9 @@ macOS/Linux는 `MYSQLD_BIN`·`MYSQL_DATADIR`로 설치 위치를 지정할 수 �
 | **Skills / Harness** | 실제 플러그인의 Agent·Command·Skill과 적용 코딩 규칙 열람 |
 | **Playbook** | SPEC 설계, 팀 맥락, 작업 통제, 근거 검토, patch 계보와 실배포 추적을 배우는 사용 시나리오 |
 | **Weekly** | weekly 플러그인이 올린 주간 보고서(요약·주제·다음 주·막힌 일) |
-| **Settings** | Git 제공자, AWS·Pinpoint, 프로젝트 연동, API 토큰과 조회 정책 관리 |
+| **Home** | D-1 이내 일정과 사람의 확인이 필요한 작업, 한국어 우선 AI·개발 뉴스, 저장한 지역의 날씨 표시 |
+| **Integrations** | Git 제공자, AWS·Pinpoint, 프로젝트 연동, API 토큰과 조회 정책 관리 |
+| **Preferences** | 사용자 정보와 Home 날씨 지역 등 로컬 시스템 환경 설정 |
 
 Agent Canvas는 자동 배치되는 읽기 전용 뷰어입니다. Schedule에서 열면 선택한 작업을 확대해 시작하고, Task 선택 시 캔버스와 오른쪽 검사 패널을 70:30으로 배치합니다. 검사 패널은 **개요 · 작업 요약 · 변경 파일**로 나뉩니다. 작업 요약은 승인용 HTML 보고서로 열리며, 변경 파일은 하단 뷰어나 전체 화면에서 파일 목록, 구문 강조, 이전·다음 변경 영역 이동을 제공합니다. 변경 영역 이동은 파일 안의 실제 diff 구간에서 멈추며 처음이나 끝으로 순환하지 않습니다.
 

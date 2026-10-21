@@ -12,9 +12,11 @@ import { Harness } from "./pages/Harness.js";
 import { Playbook } from "./pages/Playbook.js";
 import { WeeklyPage } from "./pages/WeeklyPage.js";
 import { Settings } from "./pages/Settings.js";
+import { Home } from "./pages/Home.js";
+import { Preferences } from "./pages/Preferences.js";
 
 // BrowserRouter -> AuthProvider. 공개: /login, /auth/callback.
-// 게이트(ProtectedRoute -> Layout): /(-> /sessions), sessions, roadmap/:workspace,
+// 게이트(ProtectedRoute -> Layout): /(-> /home), home, sessions, roadmap/:workspace,
 // skills, harness, playbook, weekly, settings.
 export function App() {
   return (
@@ -25,7 +27,8 @@ export function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
-              <Route path="/" element={<Navigate to="/sessions" replace />} />
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/home" element={<Home />} />
               <Route path="/sessions" element={<Sessions />} />
               <Route path="/schedule" element={<SchedulePage />} />
               <Route path="/roadmap/:workspace" element={<RoadmapPage />} />
@@ -34,6 +37,7 @@ export function App() {
               <Route path="/playbook" element={<Playbook />} />
               <Route path="/weekly" element={<WeeklyPage />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/preferences" element={<Preferences />} />
             </Route>
           </Route>
         </Routes>

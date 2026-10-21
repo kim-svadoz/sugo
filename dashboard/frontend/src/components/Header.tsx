@@ -1,5 +1,9 @@
-import { ShieldCheck } from "lucide-react";
+import { CalendarDays, ChevronDown, CloudSun, LogOut, Settings2, Sparkles, UserRound } from "lucide-react";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext.js";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
+import { useLocalWeather } from "../hooks/useLocalWeather.js";
 
 /**
  * Header — h-16 ck-glass. **버전 뱃지 2축이 핵심**이다:
@@ -12,18 +16,24 @@ import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
  */
 export function Header() {
   const { dashboardVersion, pluginVersion } = useDashboardMeta();
-  const consoleAddress = window.location.host;
+  const { userId, logout } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isHome = pathname === "/home";
+  const { weather, region } = useLocalWeather(isHome);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const date = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "long" }).format(new Date());
 
   return (
     <header className="flex h-14 items-center justify-between gap-6 border-b border-white/[0.055] bg-[var(--color-surface)]/70 px-6 ck-glass">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-400/[0.08] text-emerald-300 ring-1 ring-inset ring-emerald-300/15">
-          <ShieldCheck size={14} strokeWidth={1.9} aria-hidden="true" />
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-400/[0.08] text-cyan-300 ring-1 ring-inset ring-cyan-300/15">
+          {isHome ? <CalendarDays size={14} strokeWidth={1.9} aria-hidden="true" /> : <Sparkles size={14} strokeWidth={1.9} aria-hidden="true" />}
         </span>
-        <div className="flex min-w-0 items-baseline gap-3">
-          <span className="shrink-0 text-[12.5px] font-semibold text-[var(--color-text)]">Console running</span>
-          <span className="hidden font-mono text-[11px] text-[var(--color-text-muted)] sm:block">{consoleAddress}</span>
-        </div>
+        {isHome ? <div className="flex min-w-0 items-center gap-2.5 text-[12.5px] font-semibold text-[var(--color-text)]">
+          <span>{date}</span>
+          {region ? <><span className="h-1 w-1 rounded-full bg-slate-600" /><CloudSun size={14} className="text-slate-400" aria-hidden="true" /><span className="font-normal text-[var(--color-text-muted)]">{region.label} {weather ? `${weather.temperature}° · ${weather.label}` : "날씨 확인 중…"}</span></> : <button type="button" onClick={() => navigate("/preferences?tab=weather")} className="font-normal text-cyan-300 hover:text-cyan-100">날씨 지역 설정</button>}
+        </div> : <span className="truncate text-[12.5px] font-medium text-[var(--color-text)]">계획부터 운영까지, AI와 함께하는 개발 업무를 한곳에서 이어갑니다.</span>}
       </div>
       <div className="flex items-center gap-2">
         <span
@@ -41,6 +51,17 @@ export function Header() {
           <span className="text-emerald-400/70">Plugin</span>
           <span className="text-emerald-200">{pluginVersion ? `v${pluginVersion}` : "—"}</span>
         </span>
+        <div className="relative ml-1">
+          <button type="button" aria-label="프로필 메뉴" aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)} className="flex h-8 items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.035] px-2 text-slate-300 hover:bg-white/[0.07] hover:text-white">
+            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-cyan-400/10 text-[9px] font-bold text-cyan-200">{(userId?.slice(0, 2) ?? "?").toUpperCase()}</span>
+            <ChevronDown size={13} className="text-slate-500" />
+          </button>
+          {profileOpen && <div className="absolute right-0 top-10 z-50 w-52 overflow-hidden rounded-xl border border-white/[0.10] bg-[var(--color-surface)] p-1.5 shadow-2xl">
+            <div className="border-b border-white/[0.07] px-3 py-2.5"><div className="flex items-center gap-2 text-sm font-semibold text-slate-100"><UserRound size={14} className="text-cyan-300" />{userId}</div><div className="mt-1 text-[10px] text-slate-500">로컬 Sugo 사용자</div></div>
+            <button type="button" onClick={() => { setProfileOpen(false); navigate("/preferences"); }} className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05] hover:text-white"><Settings2 size={14} />시스템 설정</button>
+            <button type="button" onClick={() => { logout(); navigate("/login"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-slate-400 hover:bg-rose-500/10 hover:text-rose-300"><LogOut size={14} />로그아웃</button>
+          </div>}
+        </div>
       </div>
     </header>
   );

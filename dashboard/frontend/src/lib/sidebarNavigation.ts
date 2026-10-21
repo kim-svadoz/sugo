@@ -1,9 +1,9 @@
-export interface SidebarItem { to: string; label: string; shortcut: string; icon: "workspaces" | "schedule" | "weekly" | "skills" | "playbook" | "harness" | "settings" }
+export interface SidebarItem { to: string; label: string; shortcut: string; icon: "workspaces" | "schedule" | "weekly" | "skills" | "playbook" | "harness" | "integrations" | "preferences" }
 export interface SidebarGroup { label: string; title: string; items: readonly SidebarItem[] }
 
 export const SIDEBAR_GROUPS = [
   {
-    label: "Workflow",
+    label: "Work",
     title: "업무 공간",
     items: [
       { to: "/sessions", label: "Workspaces", shortcut: "1", icon: "workspaces" },
@@ -12,7 +12,7 @@ export const SIDEBAR_GROUPS = [
     ],
   },
   {
-    label: "Knowledge",
+    label: "Guides",
     title: "Sugo 둘러보기",
     items: [
       { to: "/skills", label: "Skills", shortcut: "4", icon: "skills" },
@@ -20,11 +20,12 @@ export const SIDEBAR_GROUPS = [
     ],
   },
   {
-    label: "System",
+    label: "Settings",
     title: "동작 설정",
     items: [
       { to: "/harness", label: "Harness", shortcut: "6", icon: "harness" },
-      { to: "/settings", label: "Settings", shortcut: "7", icon: "settings" },
+      { to: "/settings", label: "Integrations", shortcut: "7", icon: "integrations" },
+      { to: "/preferences", label: "Preferences", shortcut: "8", icon: "preferences" },
     ],
   },
 ] as const satisfies readonly SidebarGroup[];

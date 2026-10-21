@@ -20692,7 +20692,7 @@ var require_application = __commonJS({
   "../dashboard/backend/node_modules/express/lib/application.js"(exports, module) {
     "use strict";
     var finalhandler = require_finalhandler();
-    var Router19 = require_router();
+    var Router20 = require_router();
     var methods = require_methods();
     var middleware = require_init();
     var query = require_query();
@@ -20757,7 +20757,7 @@ var require_application = __commonJS({
     };
     app2.lazyrouter = function lazyrouter() {
       if (!this._router) {
-        this._router = new Router19({
+        this._router = new Router20({
           caseSensitive: this.enabled("case sensitive routing"),
           strict: this.enabled("strict routing")
         });
@@ -20906,7 +20906,7 @@ var require_application = __commonJS({
     };
     app2.del = deprecate.function(app2.delete, "app.del: Use app.delete instead");
     app2.render = function render(name, options, callback) {
-      var cache6 = this.cache;
+      var cache7 = this.cache;
       var done = callback;
       var engines = this.engines;
       var opts = options;
@@ -20925,7 +20925,7 @@ var require_application = __commonJS({
         renderOptions.cache = this.enabled("view cache");
       }
       if (renderOptions.cache) {
-        view2 = cache6[name];
+        view2 = cache7[name];
       }
       if (!view2) {
         var View2 = this.get("view");
@@ -20941,7 +20941,7 @@ var require_application = __commonJS({
           return done(err);
         }
         if (renderOptions.cache) {
-          cache6[name] = view2;
+          cache7[name] = view2;
         }
       }
       tryRender(view2, renderOptions, done);
@@ -22621,7 +22621,7 @@ var require_express = __commonJS({
     var mixin = require_merge_descriptors();
     var proto = require_application();
     var Route = require_route();
-    var Router19 = require_router();
+    var Router20 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -22644,7 +22644,7 @@ var require_express = __commonJS({
     exports.request = req;
     exports.response = res;
     exports.Route = Route;
-    exports.Router = Router19;
+    exports.Router = Router20;
     exports.json = bodyParser.json;
     exports.query = require_query();
     exports.raw = bodyParser.raw;
@@ -24165,8 +24165,8 @@ function clone(obj) {
   }
   return JSON.parse(JSON.stringify(obj));
 }
-async function importWithAlgCache(cache6, jwk, alg) {
-  const cached = cache6.get(jwk) || cache6.set(jwk, {}).get(jwk);
+async function importWithAlgCache(cache7, jwk, alg) {
+  const cached = cache7.get(jwk) || cache7.set(jwk, {}).get(jwk);
   if (cached[alg] === void 0) {
     const key2 = await importJWK({ ...jwk, ext: true }, alg);
     if (key2 instanceof Uint8Array || key2.type !== "public") {
@@ -30144,24 +30144,24 @@ var require_umd = __commonJS({
         var INT_CACHE = {};
         var UINT_CACHE = {};
         function fromInt(value, unsigned) {
-          var obj, cachedObj, cache6;
+          var obj, cachedObj, cache7;
           if (unsigned) {
             value >>>= 0;
-            if (cache6 = 0 <= value && value < 256) {
+            if (cache7 = 0 <= value && value < 256) {
               cachedObj = UINT_CACHE[value];
               if (cachedObj) return cachedObj;
             }
             obj = fromBits(value, 0, true);
-            if (cache6) UINT_CACHE[value] = obj;
+            if (cache7) UINT_CACHE[value] = obj;
             return obj;
           } else {
             value |= 0;
-            if (cache6 = -128 <= value && value < 128) {
+            if (cache7 = -128 <= value && value < 128) {
               cachedObj = INT_CACHE[value];
               if (cachedObj) return cachedObj;
             }
             obj = fromBits(value, value < 0 ? -1 : 0, false);
-            if (cache6) INT_CACHE[value] = obj;
+            if (cache7) INT_CACHE[value] = obj;
             return obj;
           }
         }
@@ -41745,15 +41745,15 @@ var require_named_placeholders = __commonJS({
         config2.placeholder = "?";
       }
       let ncache = 100;
-      let cache6;
+      let cache7;
       if (typeof config2.cache === "number") {
         ncache = config2.cache;
       }
       if (typeof config2.cache === "object") {
-        cache6 = config2.cache;
+        cache7 = config2.cache;
       }
-      if (config2.cache !== false && !cache6) {
-        cache6 = require_lib4().createLRU({ max: ncache });
+      if (config2.cache !== false && !cache7) {
+        cache7 = require_lib4().createLRU({ max: ncache });
       }
       function toArrayParams(tree, params) {
         const arr = [];
@@ -41799,12 +41799,12 @@ var require_named_placeholders = __commonJS({
       }
       function compile(query, paramsObj) {
         let tree;
-        if (cache6 && (tree = cache6.get(query))) {
+        if (cache7 && (tree = cache7.get(query))) {
           return toArrayParams(tree, paramsObj);
         }
         tree = join14(parse2(query));
-        if (cache6) {
-          cache6.set(query, tree);
+        if (cache7) {
+          cache7.set(query, tree);
         }
         return toArrayParams(tree, paramsObj);
       }
@@ -49943,12 +49943,12 @@ var init_types = __esm({
         const valueType = this._def.valueType;
         function finalizeSet(elements2) {
           const parsedSet = /* @__PURE__ */ new Set();
-          for (const element of elements2) {
-            if (element.status === "aborted")
+          for (const element2 of elements2) {
+            if (element2.status === "aborted")
               return INVALID;
-            if (element.status === "dirty")
+            if (element2.status === "dirty")
               status.dirty();
-            parsedSet.add(element.value);
+            parsedSet.add(element2.value);
           }
           return { status: status.value, value: parsedSet };
         }
@@ -52779,6 +52779,119 @@ var init_schedule = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/newsFeedService.ts
+function decodeXml(value) {
+  return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/\s+/g, " ").trim();
+}
+function element(block, names) {
+  for (const name of names) {
+    const match = block.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`, "i"));
+    if (match?.[1]) return decodeXml(match[1]);
+  }
+  return null;
+}
+function linkOf(block) {
+  const text2 = element(block, ["link"]);
+  if (text2?.startsWith("http")) return text2;
+  const href = block.match(/<link[^>]+href=["']([^"']+)["'][^>]*>/i)?.[1];
+  return href?.startsWith("http") ? href : null;
+}
+function parseFeed(xml, source) {
+  const blocks = [...xml.matchAll(/<(item|entry)(?:\s[^>]*)?>([\s\S]*?)<\/\1>/gi)].map((match) => match[2]);
+  return blocks.flatMap((block) => {
+    const title = element(block, ["title"]);
+    const url = linkOf(block);
+    const dateText = element(block, ["pubDate", "published", "updated"]);
+    if (!title || !url || !dateText) return [];
+    const timestamp = Date.parse(dateText);
+    if (Number.isNaN(timestamp)) return [];
+    const summary = element(block, ["description", "summary", "content"]);
+    return [{ source: source.source, category: source.category, language: source.language, title, url, publishedAt: new Date(timestamp).toISOString(), summary }];
+  });
+}
+function selectLocalizedNews(items, language, limit) {
+  const diversify = (candidates, count) => {
+    const bySource = /* @__PURE__ */ new Map();
+    for (const item of candidates) bySource.set(item.source, [...bySource.get(item.source) ?? [], item]);
+    const selected2 = [];
+    while (selected2.length < count) {
+      let added = false;
+      for (const sourceItems of bySource.values()) {
+        const item = sourceItems.shift();
+        if (!item) continue;
+        selected2.push(item);
+        added = true;
+        if (selected2.length === count) break;
+      }
+      if (!added) break;
+    }
+    return selected2;
+  };
+  const localized = items.filter((item) => item.language === language);
+  const global2 = items.filter((item) => item.language !== language);
+  const localLimit = Math.min(localized.length, Math.ceil(limit * 0.6));
+  const selected = [...diversify(localized, localLimit), ...diversify(global2, limit - localLimit)];
+  if (selected.length < limit) {
+    const selectedUrls = new Set(selected.map((item) => item.url));
+    selected.push(...items.filter((item) => !selectedUrls.has(item.url)).slice(0, limit - selected.length));
+  }
+  return selected;
+}
+async function fetchNewsFeed(sources = DEFAULT_NEWS_SOURCES, fetcher = fetch) {
+  const results = await Promise.allSettled(sources.map(async (source) => {
+    const response = await fetcher(source.url, { signal: AbortSignal.timeout(5e3), headers: { "user-agent": "Sugo-Console/1.0" } });
+    if (!response.ok) throw new Error(`${source.source} RSS HTTP ${response.status}`);
+    return parseFeed(await response.text(), source);
+  }));
+  return results.flatMap((result) => result.status === "fulfilled" ? result.value : []).sort((a5, b5) => Date.parse(b5.publishedAt) - Date.parse(a5.publishedAt));
+}
+var DEFAULT_NEWS_SOURCES;
+var init_newsFeedService = __esm({
+  "../dashboard/backend/src/services/newsFeedService.ts"() {
+    "use strict";
+    DEFAULT_NEWS_SOURCES = [
+      { source: "GeekNews", category: "\uAE30\uC220 \uB3D9\uD5A5", language: "ko", url: "https://news.hada.io/rss/news" },
+      { source: "AI\uD0C0\uC784\uC2A4", category: "\uC778\uACF5\uC9C0\uB2A5", language: "ko", url: "https://www.aitimes.com/rss/allArticle.xml" },
+      { source: "MIT \uD14C\uD06C\uB180\uB85C\uC9C0 \uB9AC\uBDF0 \uCF54\uB9AC\uC544", category: "\uAE30\uC220 \uBD84\uC11D", language: "ko", url: "https://www.technologyreview.kr/feed/" },
+      { source: "OpenAI", category: "\uC778\uACF5\uC9C0\uB2A5", language: "en", url: "https://openai.com/news/rss.xml" },
+      { source: "Google AI", category: "\uC778\uACF5\uC9C0\uB2A5", language: "en", url: "https://blog.google/technology/ai/rss/" },
+      { source: "GitHub", category: "\uAC1C\uBC1C \uB3C4\uAD6C", language: "en", url: "https://github.blog/changelog/feed/" }
+    ];
+  }
+});
+
+// ../dashboard/backend/src/routes/news.ts
+function createNewsRouter() {
+  const router = (0, import_express5.Router)();
+  router.get("/", async (req, res, next) => {
+    try {
+      const language = req.query.locale === "ko" ? "ko" : "en";
+      if (!cache2 || cache2.expiresAt <= Date.now()) {
+        const items = await fetchNewsFeed();
+        cache2 = { items, fetchedAt: (/* @__PURE__ */ new Date()).toISOString(), expiresAt: Date.now() + CACHE_MS };
+      }
+      res.json({
+        items: selectLocalizedNews(cache2.items, language, 20),
+        fetchedAt: cache2.fetchedAt,
+        sourceCount: new Set(cache2.items.map((item) => item.source)).size
+      });
+    } catch (error2) {
+      next(error2);
+    }
+  });
+  return router;
+}
+var import_express5, CACHE_MS, cache2;
+var init_news = __esm({
+  "../dashboard/backend/src/routes/news.ts"() {
+    "use strict";
+    import_express5 = __toESM(require_express2(), 1);
+    init_newsFeedService();
+    CACHE_MS = 30 * 60 * 1e3;
+    cache2 = null;
+  }
+});
+
 // ../dashboard/backend/src/auth/jwt.ts
 function createJwtVerifier(getKey, issuer) {
   return async (token) => {
@@ -52803,7 +52916,7 @@ var init_jwt = __esm({
 
 // ../dashboard/backend/src/routes/auth.ts
 function createAuthRouter(db2, oidcConfig, oidcClient, verifyJwt) {
-  const router = (0, import_express5.Router)();
+  const router = (0, import_express6.Router)();
   router.get("/config", (_req, res) => {
     res.json({
       authEndpoint: oidcConfig.authEndpoint,
@@ -52865,11 +52978,11 @@ function createAuthRouter(db2, oidcConfig, oidcClient, verifyJwt) {
   });
   return router;
 }
-var import_express5, tokenSchema, refreshSchema;
+var import_express6, tokenSchema, refreshSchema;
 var init_auth = __esm({
   "../dashboard/backend/src/routes/auth.ts"() {
     "use strict";
-    import_express5 = __toESM(require_express2(), 1);
+    import_express6 = __toESM(require_express2(), 1);
     init_zod();
     init_jwt();
     init_validate();
@@ -52881,7 +52994,7 @@ var init_auth = __esm({
 
 // ../dashboard/backend/src/routes/bitbucket.ts
 function createBitbucketRouter(db2, sessionSecret2, secretEncKey) {
-  const router = (0, import_express6.Router)();
+  const router = (0, import_express7.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.get("/", async (req, res) => {
     const status = await getBitbucketTokenStatus(db2, req.userId);
@@ -52901,11 +53014,11 @@ function createBitbucketRouter(db2, sessionSecret2, secretEncKey) {
   });
   return router;
 }
-var import_express6, putSchema;
+var import_express7, putSchema;
 var init_bitbucket = __esm({
   "../dashboard/backend/src/routes/bitbucket.ts"() {
     "use strict";
-    import_express6 = __toESM(require_express2(), 1);
+    import_express7 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -52954,7 +53067,7 @@ var init_provider = __esm({
 
 // ../dashboard/backend/src/routes/gitConnections.ts
 function createGitConnectionsRouter(db2, sessionSecret2, secretEncKey) {
-  const router = (0, import_express7.Router)();
+  const router = (0, import_express8.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.get("/", async (req, res) => {
     res.json({ providers: gitProviderCatalog, connections: await listGitConnections(db2, req.userId) });
@@ -52983,11 +53096,11 @@ function createGitConnectionsRouter(db2, sessionSecret2, secretEncKey) {
   });
   return router;
 }
-var import_express7, providerSchema, connectionSchema;
+var import_express8, providerSchema, connectionSchema;
 var init_gitConnections = __esm({
   "../dashboard/backend/src/routes/gitConnections.ts"() {
     "use strict";
-    import_express7 = __toESM(require_express2(), 1);
+    import_express8 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -53151,7 +53264,7 @@ var init_awsContextService = __esm({
 
 // ../dashboard/backend/src/routes/awsContext.ts
 function createAwsContextRouter(db2, sessionSecret2, client) {
-  const router = (0, import_express8.Router)();
+  const router = (0, import_express9.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.get("/", async (req, res) => {
     const account = typeof req.query.account === "string" ? req.query.account.trim() : void 0;
@@ -53205,11 +53318,11 @@ function createAwsContextRouter(db2, sessionSecret2, client) {
   });
   return router;
 }
-var import_express8, connectSchema, accountSchema;
+var import_express9, connectSchema, accountSchema;
 var init_awsContext = __esm({
   "../dashboard/backend/src/routes/awsContext.ts"() {
     "use strict";
-    import_express8 = __toESM(require_express2(), 1);
+    import_express9 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -53284,7 +53397,7 @@ var init_prService = __esm({
 
 // ../dashboard/backend/src/routes/pr.ts
 function createPrRouter(db2, sessionSecret2, secretEncKey, clients) {
-  const router = (0, import_express9.Router)();
+  const router = (0, import_express10.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.post("/existing", validateBody(existingSchema), async (req, res) => {
     const { workspace, nodeId, scope } = req.body;
@@ -53347,11 +53460,11 @@ function createPrRouter(db2, sessionSecret2, secretEncKey, clients) {
   });
   return router;
 }
-var import_express9, scopeEnum, createSchema, existingSchema;
+var import_express10, scopeEnum, createSchema, existingSchema;
 var init_pr = __esm({
   "../dashboard/backend/src/routes/pr.ts"() {
     "use strict";
-    import_express9 = __toESM(require_express2(), 1);
+    import_express10 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -53428,7 +53541,7 @@ var init_statsService = __esm({
 
 // ../dashboard/backend/src/routes/stats.ts
 function createStatsRouter(db2, sessionSecret2) {
-  const router = (0, import_express10.Router)();
+  const router = (0, import_express11.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.get(
     "/calibrated-ratio",
@@ -53443,11 +53556,11 @@ function createStatsRouter(db2, sessionSecret2) {
   router.get("/trends", (_req, res) => res.json({ trends: [] }));
   return router;
 }
-var import_express10;
+var import_express11;
 var init_stats = __esm({
   "../dashboard/backend/src/routes/stats.ts"() {
     "use strict";
-    import_express10 = __toESM(require_express2(), 1);
+    import_express11 = __toESM(require_express2(), 1);
     init_asyncHandler();
     init_requireUser();
     init_statsService();
@@ -53510,7 +53623,7 @@ var init_weeklyReportService = __esm({
 
 // ../dashboard/backend/src/routes/weeklyReports.ts
 function createWeeklyReportsRouter(db2, sessionSecret2) {
-  const router = (0, import_express11.Router)();
+  const router = (0, import_express12.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.put(
     "/:weekId",
@@ -53544,11 +53657,11 @@ function createWeeklyReportsRouter(db2, sessionSecret2) {
   );
   return router;
 }
-var import_express11, weekIdPattern, datePattern, reportSchema;
+var import_express12, weekIdPattern, datePattern, reportSchema;
 var init_weeklyReports = __esm({
   "../dashboard/backend/src/routes/weeklyReports.ts"() {
     "use strict";
-    import_express11 = __toESM(require_express2(), 1);
+    import_express12 = __toESM(require_express2(), 1);
     init_zod();
     init_asyncHandler();
     init_requireUser();
@@ -53569,7 +53682,7 @@ var init_weeklyReports = __esm({
 import { existsSync, mkdirSync, readFileSync as readFileSync2, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join as join7, normalize as normalize2, relative as relative3 } from "node:path";
 function createHarnessRouter(harnessPath, overridePath = "", db2, sessionSecret2 = "") {
-  const router = (0, import_express12.Router)();
+  const router = (0, import_express13.Router)();
   router.get("/manifest", (_req, res) => {
     if (!harnessPath || !existsSync(harnessPath)) return res.json({ harnesses: [] });
     if (existsSync(join7(harnessPath, "manifest.json"))) {
@@ -53675,7 +53788,7 @@ ${readFileSync2(full, "utf8")}`);
   return router;
 }
 function createSkillsRouter(skillsPath) {
-  const router = (0, import_express12.Router)();
+  const router = (0, import_express13.Router)();
   router.get("/", (req, res) => {
     if (!skillsPath || !existsSync(skillsPath)) return res.json({ skills: [] });
     const localized = req.query.locale === "ko";
@@ -53769,11 +53882,11 @@ function readAgentMeta(agentsDir, id) {
   }
   return { name: id, description: "" };
 }
-var import_express12;
+var import_express13;
 var init_harness = __esm({
   "../dashboard/backend/src/routes/harness.ts"() {
     "use strict";
-    import_express12 = __toESM(require_express2(), 1);
+    import_express13 = __toESM(require_express2(), 1);
     init_asyncHandler();
     init_requireUser();
   }
@@ -53834,7 +53947,7 @@ var init_github = __esm({
 // ../dashboard/backend/src/routes/githubAuth.ts
 import { randomUUID as randomUUID3 } from "node:crypto";
 function createGithubAuthRouter(db2, github, cfg, sessionSecret2, frontendUrl) {
-  const router = (0, import_express13.Router)();
+  const router = (0, import_express14.Router)();
   router.get("/login", async (_req, res) => {
     if (!cfg.clientId || !sessionSecret2) {
       res.status(503).json({ error: "github_login_unconfigured" });
@@ -53867,11 +53980,11 @@ function createGithubAuthRouter(db2, github, cfg, sessionSecret2, frontendUrl) {
   });
   return router;
 }
-var import_express13;
+var import_express14;
 var init_githubAuth = __esm({
   "../dashboard/backend/src/routes/githubAuth.ts"() {
     "use strict";
-    import_express13 = __toESM(require_express2(), 1);
+    import_express14 = __toESM(require_express2(), 1);
     init_syncService();
     init_github();
     init_session();
@@ -53880,7 +53993,7 @@ var init_githubAuth = __esm({
 
 // ../dashboard/backend/src/routes/tokens.ts
 function createTokensRouter(db2, sessionSecret2) {
-  const router = (0, import_express14.Router)();
+  const router = (0, import_express15.Router)();
   router.use(requireSession(sessionSecret2));
   router.post("/", async (req, res) => {
     const parsed = createSchema2.safeParse(req.body ?? {});
@@ -53904,11 +54017,11 @@ function createTokensRouter(db2, sessionSecret2) {
   });
   return router;
 }
-var import_express14, createSchema2;
+var import_express15, createSchema2;
 var init_tokens = __esm({
   "../dashboard/backend/src/routes/tokens.ts"() {
     "use strict";
-    import_express14 = __toESM(require_express2(), 1);
+    import_express15 = __toESM(require_express2(), 1);
     init_zod();
     init_session();
     init_apiTokenService();
@@ -53918,7 +54031,7 @@ var init_tokens = __esm({
 
 // ../dashboard/backend/src/routes/localAuth.ts
 function createLocalAuthRouter(db2, sessionSecret2, frontendUrl, local) {
-  const router = (0, import_express15.Router)();
+  const router = (0, import_express16.Router)();
   router.get("/session", requireSession(sessionSecret2), async (req, res, next) => {
     try {
       if (!local.enabled) return res.status(404).json({ error: "local_dev_disabled" });
@@ -53944,11 +54057,11 @@ function createLocalAuthRouter(db2, sessionSecret2, frontendUrl, local) {
   });
   return router;
 }
-var import_express15;
+var import_express16;
 var init_localAuth = __esm({
   "../dashboard/backend/src/routes/localAuth.ts"() {
     "use strict";
-    import_express15 = __toESM(require_express2(), 1);
+    import_express16 = __toESM(require_express2(), 1);
     init_session();
     init_syncService();
   }
@@ -70372,9 +70485,9 @@ function loadCborStructIterator(ns) {
   for (let i5 = 0; i5 < memberNames.length; ++i5) {
     encodedKeys[i5] = encodeCborStringKey(memberNames[i5]);
   }
-  const cache6 = { memberNames, memberSchemas, encodedKeys };
-  schema4[CBOR_STRUCT_CACHE] = cache6;
-  return cache6;
+  const cache7 = { memberNames, memberSchemas, encodedKeys };
+  schema4[CBOR_STRUCT_CACHE] = cache7;
+  return cache7;
 }
 function encodeCborStringKey(s2) {
   let utf8Bytes;
@@ -70539,8 +70652,8 @@ function writeStruct(ns, value, serdeContext) {
     }
     return;
   }
-  const cache6 = loadCborStructIterator(ns);
-  const { memberNames, memberSchemas, encodedKeys } = cache6;
+  const cache7 = loadCborStructIterator(ns);
+  const { memberNames, memberSchemas, encodedKeys } = cache7;
   const z = memberNames.length;
   let headerSize;
   if (z < 24) {
@@ -71006,8 +71119,8 @@ function readMap(ns) {
 }
 function readStruct(ns, count, startPos) {
   const isUnion = ns.isUnionSchema();
-  const cache6 = loadCborStructIterator(ns);
-  const { memberSchemas, encodedKeys, memberNames } = cache6;
+  const cache7 = loadCborStructIterator(ns);
+  const { memberSchemas, encodedKeys, memberNames } = cache7;
   const z = encodedKeys.length;
   const result = {};
   let unknownKey;
@@ -71190,8 +71303,8 @@ function readListIndefinite(ns) {
 function readMapIndefinite(ns) {
   pos += 1;
   if (ns.isStructSchema()) {
-    const cache6 = loadCborStructIterator(ns);
-    const { memberSchemas, encodedKeys, memberNames } = cache6;
+    const cache7 = loadCborStructIterator(ns);
+    const { memberSchemas, encodedKeys, memberNames } = cache7;
     const z = encodedKeys.length;
     const isUnion = ns.isUnionSchema();
     const result = {};
@@ -75341,18 +75454,18 @@ var init_bdd = __esm({
 });
 
 // ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/endpointResolver.js
-var cache2, defaultEndpointResolver;
+var cache3, defaultEndpointResolver;
 var init_endpointResolver = __esm({
   "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/endpoint/endpointResolver.js"() {
     init_client5();
     init_endpoints();
     init_bdd();
-    cache2 = new EndpointCache({
+    cache3 = new EndpointCache({
       size: 50,
       params: ["Endpoint", "Region", "UseDualStack", "UseFIPS"]
     });
     defaultEndpointResolver = (endpointParams, context = {}) => {
-      return cache2.get(endpointParams, () => decideEndpoint(bdd, {
+      return cache3.get(endpointParams, () => decideEndpoint(bdd, {
         endpointParams,
         logger: context.logger
       }));
@@ -76408,18 +76521,18 @@ var init_bdd2 = __esm({
 });
 
 // ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/endpointResolver.js
-var cache3, defaultEndpointResolver2;
+var cache4, defaultEndpointResolver2;
 var init_endpointResolver2 = __esm({
   "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/endpoint/endpointResolver.js"() {
     init_client5();
     init_endpoints();
     init_bdd2();
-    cache3 = new EndpointCache({
+    cache4 = new EndpointCache({
       size: 50,
       params: ["Endpoint", "Region", "UseDualStack", "UseFIPS"]
     });
     defaultEndpointResolver2 = (endpointParams, context = {}) => {
-      return cache3.get(endpointParams, () => decideEndpoint(bdd2, {
+      return cache4.get(endpointParams, () => decideEndpoint(bdd2, {
         endpointParams,
         logger: context.logger
       }));
@@ -77412,18 +77525,18 @@ var init_bdd3 = __esm({
 });
 
 // ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js
-var cache4, defaultEndpointResolver3;
+var cache5, defaultEndpointResolver3;
 var init_endpointResolver3 = __esm({
   "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/endpoint/endpointResolver.js"() {
     init_client5();
     init_endpoints();
     init_bdd3();
-    cache4 = new EndpointCache({
+    cache5 = new EndpointCache({
       size: 50,
       params: ["Endpoint", "Region", "UseDualStack", "UseFIPS", "UseGlobalEndpoint"]
     });
     defaultEndpointResolver3 = (endpointParams, context = {}) => {
-      return cache4.get(endpointParams, () => decideEndpoint(bdd3, {
+      return cache5.get(endpointParams, () => decideEndpoint(bdd3, {
         endpointParams,
         logger: context.logger
       }));
@@ -78740,18 +78853,18 @@ var init_bdd4 = __esm({
 });
 
 // ../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/endpointResolver.js
-var cache5, defaultEndpointResolver4;
+var cache6, defaultEndpointResolver4;
 var init_endpointResolver4 = __esm({
   "../dashboard/backend/node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/endpoint/endpointResolver.js"() {
     init_client5();
     init_endpoints();
     init_bdd4();
-    cache5 = new EndpointCache({
+    cache6 = new EndpointCache({
       size: 50,
       params: ["Endpoint", "IsControlPlane", "IsOAuthEndpoint", "Region", "UseDualStack", "UseFIPS"]
     });
     defaultEndpointResolver4 = (endpointParams, context = {}) => {
-      return cache5.get(endpointParams, () => decideEndpoint(bdd4, {
+      return cache6.get(endpointParams, () => decideEndpoint(bdd4, {
         endpointParams,
         logger: context.logger
       }));
@@ -80296,12 +80409,12 @@ var require_dist_cjs16 = __commonJS({
       r5 + 3
     ]);
     var bdd5 = BinaryDecisionDiagram2.from(nodes5, root5, _data5.conditions, _data5.results);
-    var cache6 = new EndpointCache2({
+    var cache7 = new EndpointCache2({
       size: 50,
       params: ["Endpoint", "Region", "UseDualStack", "UseFIPS"]
     });
     var defaultEndpointResolver5 = (endpointParams, context = {}) => {
-      return cache6.get(endpointParams, () => decideEndpoint2(bdd5, {
+      return cache7.get(endpointParams, () => decideEndpoint2(bdd5, {
         endpointParams,
         logger: context.logger
       }));
@@ -89633,7 +89746,7 @@ var init_pinpointContextService = __esm({
 
 // ../dashboard/backend/src/routes/pinpointContext.ts
 function createPinpointContextRouter(db2, secret, client) {
-  const router = (0, import_express16.Router)();
+  const router = (0, import_express17.Router)();
   router.use(requireUser(db2, secret));
   router.get("/", async (req, res) => res.json(await getPinpointContext(db2, req.userId)));
   router.put("/", validateBody(schema), async (req, res) => {
@@ -89656,11 +89769,11 @@ function createPinpointContextRouter(db2, secret, client) {
   });
   return router;
 }
-var import_express16, schema;
+var import_express17, schema;
 var init_pinpointContext = __esm({
   "../dashboard/backend/src/routes/pinpointContext.ts"() {
     "use strict";
-    import_express16 = __toESM(require_express2(), 1);
+    import_express17 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -89701,7 +89814,7 @@ var init_projectIntegrationService = __esm({
 
 // ../dashboard/backend/src/routes/projectIntegrations.ts
 function createProjectIntegrationsRouter(db2, secret) {
-  const router = (0, import_express17.Router)();
+  const router = (0, import_express18.Router)();
   router.use(requireUser(db2, secret));
   router.get("/", async (req, res) => res.json(await listProjectIntegrations(db2, req.userId)));
   router.put("/", validateBody(schema2), async (req, res) => {
@@ -89714,11 +89827,11 @@ function createProjectIntegrationsRouter(db2, secret) {
   });
   return router;
 }
-var import_express17, schema2;
+var import_express18, schema2;
 var init_projectIntegrations = __esm({
   "../dashboard/backend/src/routes/projectIntegrations.ts"() {
     "use strict";
-    import_express17 = __toESM(require_express2(), 1);
+    import_express18 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -89738,7 +89851,7 @@ async function load(path) {
   }
 }
 function createAwsGuardPolicyRouter(db2, secret, path) {
-  const router = (0, import_express18.Router)();
+  const router = (0, import_express19.Router)();
   router.use(requireUser(db2, secret));
   router.get("/", async (_req, res) => res.json(await load(path)));
   router.put("/", validateBody(schema3), async (req, res) => {
@@ -89752,11 +89865,11 @@ function createAwsGuardPolicyRouter(db2, secret, path) {
   });
   return router;
 }
-var import_express18, defaultAwsGuardPolicy, schema3;
+var import_express19, defaultAwsGuardPolicy, schema3;
 var init_awsGuardPolicy = __esm({
   "../dashboard/backend/src/routes/awsGuardPolicy.ts"() {
     "use strict";
-    import_express18 = __toESM(require_express2(), 1);
+    import_express19 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -89908,12 +90021,13 @@ async function createApp(dbOverrideOrOptions) {
   const skillsPath = overrides.skillsPath ?? config.skillsPath;
   const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
-  const app2 = (0, import_express19.default)();
+  const app2 = (0, import_express20.default)();
   app2.use(corsWhitelist(config.corsOrigins));
-  app2.use(import_express19.default.json({ limit: "10mb" }));
+  app2.use(import_express20.default.json({ limit: "10mb" }));
   app2.get("/health", (_req, res) => {
     res.json({ status: "ok", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });
   });
+  app2.use("/api/news", createNewsRouter());
   app2.use("/api/sync", createSyncRouter(db2, sessionSecret2));
   app2.use("/api/activity", createActivityRouter(db2, sessionSecret2));
   app2.use("/api/workspaces", createWorkspacesRouter(db2, sessionSecret2, specAttachmentsPath));
@@ -89950,7 +90064,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use("/api/skills", createSkillsRouter(skillsPath));
   const staticDir2 = overrides.staticDir ?? config.staticDir;
   if (staticDir2) {
-    app2.use(import_express19.default.static(staticDir2));
+    app2.use(import_express20.default.static(staticDir2));
     app2.get(/^\/(?!api\/|health$).*/, (_req, res) => {
       res.sendFile(join12(staticDir2, "index.html"));
     });
@@ -89971,11 +90085,11 @@ async function main() {
     console.log(`sugo-dashboard-backend listening on ${config.host}:${config.port} (db=${config.dbDriver})`);
   });
 }
-var import_express19, __dirname2, pkg;
+var import_express20, __dirname2, pkg;
 var init_index = __esm({
   "../dashboard/backend/src/index.ts"() {
     "use strict";
-    import_express19 = __toESM(require_express2(), 1);
+    import_express20 = __toESM(require_express2(), 1);
     init_esm();
     init_config();
     init_init();
@@ -89983,6 +90097,7 @@ var init_index = __esm({
     init_activity();
     init_workspaces2();
     init_schedule();
+    init_news();
     init_auth();
     init_bitbucket();
     init_gitConnections();
@@ -90010,7 +90125,7 @@ var init_index = __esm({
     init_asyncHandler();
     init_contextAutoRefreshService();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.29.23" ? { version: "0.29.23" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.30.0" ? { version: "0.30.0" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90124,7 +90239,7 @@ await bootstrapLocalDashboard2(db, {
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.29.23", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.30.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

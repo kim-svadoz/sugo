@@ -10,6 +10,7 @@ import { createSyncRouter } from "./routes/sync.js";
 import { createActivityRouter } from "./routes/activity.js";
 import { createWorkspacesRouter } from "./routes/workspaces.js";
 import { createScheduleRouter } from "./routes/schedule.js";
+import { createNewsRouter } from "./routes/news.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createBitbucketRouter } from "./routes/bitbucket.js";
 import { createGitConnectionsRouter } from "./routes/gitConnections.js";
@@ -127,6 +128,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });
   });
+  app.use("/api/news", createNewsRouter());
 
   app.use("/api/sync", createSyncRouter(db, sessionSecret));
   app.use("/api/activity", createActivityRouter(db, sessionSecret));

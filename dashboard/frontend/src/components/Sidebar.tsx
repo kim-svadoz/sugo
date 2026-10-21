@@ -1,9 +1,7 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import { CalendarDays, FileText, RefreshCw, Shapes, ShieldHalf, SlidersHorizontal, Wand2, Workflow, Zap } from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
+import { CalendarDays, FileText, Plug, Shapes, ShieldHalf, SlidersHorizontal, Wand2, Workflow, Zap } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { SIDEBAR_GROUPS } from "../lib/sidebarNavigation.js";
-import { useAuth } from "../auth/AuthContext.js";
-import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 
 /**
  * Sidebar — 슬림 아이콘 LNB(w-16 md:w-20).
@@ -11,21 +9,13 @@ import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
  * **navItems 순서 엄수**: Workspaces·Schedule·Skills·Harness·Playbook·Weekly·Settings.
  * Workspaces만 라우트가 `/sessions`이고 나머지는 라벨 소문자와 일치한다.
  */
-const icons = { workspaces: Shapes, schedule: CalendarDays, weekly: FileText, skills: Zap, playbook: Wand2, harness: ShieldHalf, settings: SlidersHorizontal } as const;
+const icons = { workspaces: Shapes, schedule: CalendarDays, weekly: FileText, skills: Zap, playbook: Wand2, harness: ShieldHalf, integrations: Plug, preferences: SlidersHorizontal } as const;
 
 export function Sidebar() {
-  const { pluginVersion } = useDashboardMeta();
-  const { userId, logout } = useAuth();
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   return (
     <aside className="flex w-40 shrink-0 flex-col border-r border-white/[0.055] bg-[color-mix(in_srgb,var(--color-surface)_96%,black)] px-3 py-4 md:w-44">
       <Link
-        to="/sessions"
+        to="/home"
         aria-label="SUGO 홈"
         title="SUGO 홈"
         className="group mb-7 flex items-center gap-3 border-b border-white/[0.065] px-1 pb-5 pt-1"
@@ -35,18 +25,17 @@ export function Sidebar() {
         </span>
         <span className="min-w-0">
           <span className="flex items-baseline gap-1.5">
-            <span className="text-[13px] font-bold tracking-[0.08em] text-[var(--color-text-bright)]">SUGO</span>
-            <span className="font-mono text-[9px] text-cyan-300/75">Console</span>
+            <span className="text-[15px] font-bold tracking-[0.08em] text-[var(--color-text-bright)]">SUGO</span>
           </span>
-          <span className="mt-0.5 block truncate text-[9.5px] font-medium tracking-[-0.01em] text-[var(--color-text-muted)]">AI 개발 워크플로우</span>
+          <span className="mt-0.5 block truncate text-[12px] font-medium tracking-[-0.01em] text-slate-300">AI 개발 워크플로우</span>
         </span>
       </Link>
       <nav className="flex w-full flex-1 flex-col gap-6">
         {SIDEBAR_GROUPS.map((group) => {
           return <section key={group.label} aria-label={group.title} className="w-full">
           <div data-sidebar-group-heading className="mb-2 flex items-center gap-2 px-2" title={group.title}>
-            <span className="font-mono text-[9.5px] font-semibold uppercase leading-5 tracking-[0.2em] text-slate-400/90">{group.label}</span>
-            <span data-sidebar-group-line className="h-px min-w-0 flex-1 bg-gradient-to-r from-white/[0.13] to-transparent" aria-hidden="true" />
+            <span className="font-mono text-[11px] font-semibold uppercase leading-5 tracking-[0.14em] text-slate-300">{group.label}</span>
+            <span data-sidebar-group-line className="h-px min-w-0 flex-1 bg-gradient-to-r from-white/[0.2] to-transparent" aria-hidden="true" />
           </div>
           <div className="space-y-0.5">
           {group.items.map(({ to, icon: iconName, label, shortcut }) => {
@@ -79,23 +68,6 @@ export function Sidebar() {
           </div>
         </section>})}
       </nav>
-      <div className="mt-4 flex items-center justify-between border-t border-white/[0.055] px-2 pt-4">
-        <button
-          onClick={() => window.location.reload()}
-          title="수동 새로고침"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-cyan-300"
-        >
-          <RefreshCw size={16} />
-        </button>
-        <button
-          onClick={handleLogout}
-          title={`${userId} · 로그아웃`}
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.045] text-[10px] font-bold text-[var(--color-text-muted)] ring-1 ring-white/[0.07] transition-colors hover:bg-rose-500/10 hover:text-rose-300 hover:ring-rose-500/20"
-        >
-          {(userId?.slice(0, 2) ?? "?").toUpperCase()}
-        </button>
-        <span className="font-mono text-[9px] text-[var(--color-text-dim)]">v{pluginVersion ?? "—"}</span>
-      </div>
     </aside>
   );
 }
