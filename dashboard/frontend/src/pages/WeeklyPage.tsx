@@ -7,6 +7,7 @@ import { cn } from "../lib/utils.js";
 import { PageHeading } from "../components/PageHeading.js";
 import { readWeeklyRouteState, writeWeeklyRouteState, type WeeklyDetailView } from "../lib/weeklyRouteState.js";
 import { selectWeeklySection } from "../lib/weeklyScrollSpy.js";
+import { ArrowRight } from "lucide-react";
 
 function findScrollContainer(element: HTMLElement): HTMLElement | null {
   let parent = element.parentElement;
@@ -138,10 +139,10 @@ function WeeklyIndex({ reports, onOpen }: { reports: WeeklyReportSummary[]; onOp
     if (next >= 0) setMonthIndex(next);
   };
   return <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-    <section className="space-y-3" aria-label="주간 작업 목록">{reports.map((report) => <button key={report.weekId} onMouseEnter={() => moveHighlight(report.weekId)} onMouseLeave={() => setHovered(null)} onFocus={() => moveHighlight(report.weekId)} onBlur={() => setHovered(null)} onClick={() => onOpen(report.weekId)} className={cn("block w-full rounded-xl border bg-[var(--color-surface)] px-5 py-4 text-left transition", hovered === report.weekId ? "border-cyan-400 ring-2 ring-cyan-400/40" : "border-[var(--color-border)] hover:border-cyan-400/60")}>
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><strong className="font-mono text-lg text-cyan-100">{report.weekId}</strong><span className="font-mono text-xs text-slate-400">{report.start} — {report.end}</span></div>
-      <div className="mt-3 space-y-1">{report.headline.slice(0, 3).map((headline) => <p key={headline} className="truncate text-[15px] leading-6 text-slate-200">{headline}</p>)}</div>
-      <span className="mt-3 inline-block text-xs font-semibold text-cyan-300">보고서 열기 →</span>
+    <section className="space-y-3" aria-label="주간 작업 목록">{reports.map((report) => <button key={report.weekId} aria-label={`${report.weekId} 주간 작업 리포트 열기`} onMouseEnter={() => moveHighlight(report.weekId)} onMouseLeave={() => setHovered(null)} onFocus={() => moveHighlight(report.weekId)} onBlur={() => setHovered(null)} onClick={() => onOpen(report.weekId)} className={cn("group flex w-full items-center gap-4 rounded-xl border bg-[var(--color-surface)] px-5 py-4 text-left transition", hovered === report.weekId ? "border-cyan-400 ring-2 ring-cyan-400/35" : "border-[var(--color-border)] hover:border-cyan-400/60")}>
+      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><strong className="font-mono text-lg text-cyan-100">{report.weekId}</strong><span className="font-mono text-xs text-[var(--color-text-muted)]">{report.start} — {report.end}</span></div>
+      <div className="mt-3 space-y-1">{report.headline.slice(0, 3).map((headline) => <p key={headline} className="truncate text-[15px] leading-6 text-[var(--color-text)]">{headline}</p>)}</div></div>
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--color-border)] text-[var(--color-text-muted)] transition group-hover:border-cyan-400/40 group-hover:bg-cyan-400/10 group-hover:text-cyan-200"><ArrowRight size={16} /></span>
     </button>)}</section>
     {month && <aside className="sticky top-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4" aria-label="주간 보고서 달력">
       <header className="mb-3 flex items-center justify-between"><button aria-label="이전 달" disabled={monthIndex === 0} onClick={() => setMonthIndex((value) => value - 1)} className="h-8 w-8 rounded-md border border-[var(--color-border)] text-slate-300 disabled:opacity-30">‹</button><strong className="text-base text-slate-100">{month.label}</strong><button aria-label="다음 달" disabled={monthIndex === months.length - 1} onClick={() => setMonthIndex((value) => value + 1)} className="h-8 w-8 rounded-md border border-[var(--color-border)] text-slate-300 disabled:opacity-30">›</button></header>
@@ -159,7 +160,7 @@ export function WeeklyPage() {
   useEffect(() => { listWeeklyReports().then(setReports).catch(() => setReports([])); }, []);
   useEffect(() => { if (!selected) return setDetail(null); let cancelled = false; setDetail(null); getWeeklyReport(selected).then((value) => !cancelled && setDetail(value)).catch(() => !cancelled && setDetail(null)); return () => { cancelled = true; }; }, [selected]);
   const selectedReport = reports?.find((report) => report.weekId === selected);
-  return <div className="space-y-6"><PageHeading eyebrow="WEEKLY REVIEW" title="주간 작업" description="한 주의 작업 결과와 기술 학습을 기록하고 다시 확인합니다." />{selected ? <>
+  return <div className="space-y-6"><PageHeading eyebrow="WEEKLY REVIEW" title="주간 작업 리포트" description="한 주의 작업 결과와 기술 학습을 기록하고 다시 확인합니다." />{selected ? <>
     <header className="flex flex-wrap items-end justify-between gap-3"><button onClick={() => setSearchParams(writeWeeklyRouteState(searchParams, null, "report"), { replace: true })} className="text-sm font-semibold text-cyan-300 hover:text-cyan-100">← 전체 주 목록</button>{selectedReport && <p className="font-mono text-sm text-slate-400">{selectedReport.weekId} · {selectedReport.start} — {selectedReport.end}</p>}</header>
     <main>{detail ? <ReportBody detail={detail} tab={routeState.view} onTabChange={(view) => setSearchParams(writeWeeklyRouteState(searchParams, selected, view), { replace: true })} /> : <div className="h-28 animate-pulse rounded-xl bg-[var(--color-surface)]" />}</main>
   </> : <>
