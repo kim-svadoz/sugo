@@ -15,6 +15,7 @@ export function Layout() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       if (!(e.metaKey || e.ctrlKey)) return;
       const shortcutPath = sidebarShortcutPath(e.key);
       if (shortcutPath && !isTextEditingTarget(e.target)) {
