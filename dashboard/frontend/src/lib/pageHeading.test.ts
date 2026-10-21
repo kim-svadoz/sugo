@@ -12,6 +12,8 @@ describe("page heading typography", () => {
   it("워크스페이스는 중복 Domains 행 없이 제목과 운영 도구를 한 줄에 배치한다", () => {
     const source = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
     expect(source).toContain("워크스페이스 운영 도구");
+    expect(source).toContain("WORKSPACE OPERATIONS");
+    expect(source).toContain("도메인 관리");
     expect(source).not.toContain("Domains <span");
     expect(source).not.toContain("전체 워크스페이스 운영 현황");
   });
@@ -19,8 +21,10 @@ describe("page heading typography", () => {
   it("Home 이외의 상단 헤더는 여러 Sugo 활용 팁을 순환한다", () => {
     const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
     expect(source).toContain("SUGO_TIPS");
-    expect(source).toContain("5_000");
+    expect(source).toContain("7_000");
     expect(source).toContain("Sugo 활용 팁");
+    expect(source).toContain("text-amber-300");
+    expect(source).not.toContain('>TIP</span>');
   });
 
   it("Home에서 연 SPEC 상세는 닫을 때 Home으로 돌아간다", () => {

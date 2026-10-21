@@ -50,7 +50,7 @@ export function Header() {
         setTipPhase("enter");
         window.requestAnimationFrame(() => window.requestAnimationFrame(() => setTipPhase("idle")));
       }, 280);
-    }, 5_000);
+    }, 7_000);
     return () => window.clearInterval(interval);
   }, [isHome]);
   useEffect(() => {
@@ -63,13 +63,11 @@ export function Header() {
   return (
     <header className="flex h-14 items-center justify-between gap-6 border-b border-white/[0.055] bg-[var(--color-surface)]/70 px-6 ck-glass">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-400/[0.08] text-cyan-300 ring-1 ring-inset ring-cyan-300/15">
-          {isHome ? <CalendarDays size={14} strokeWidth={1.9} aria-hidden="true" /> : <Lightbulb size={14} strokeWidth={1.9} aria-hidden="true" />}
-        </span>
+        {isHome && <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-400/[0.08] text-cyan-300 ring-1 ring-inset ring-cyan-300/15"><CalendarDays size={14} strokeWidth={1.9} aria-hidden="true" /></span>}
         {isHome ? <div className="flex min-w-0 items-center gap-2.5 text-[12.5px] font-semibold text-[var(--color-text)]">
           <span>{date}</span>
           {region ? <><span className="h-1 w-1 rounded-full bg-slate-600" /><CloudSun size={14} className="text-slate-400" aria-hidden="true" /><span className="font-normal text-[var(--color-text-muted)]">{region.label} {weather ? `${weather.temperature}° · ${weather.label}` : "날씨 확인 중…"}</span></> : <button type="button" onClick={() => navigate("/preferences?tab=weather")} className="font-normal text-cyan-300 hover:text-cyan-100">날씨 지역 설정</button>}
-        </div> : <div className="flex min-w-0 items-center gap-2 overflow-hidden" aria-live="polite" aria-label="Sugo 활용 팁"><span className="shrink-0 font-mono text-[10px] font-bold tracking-[0.12em] text-cyan-300">TIP</span><span className={`truncate text-[12.5px] font-medium text-[var(--color-text)] motion-reduce:transform-none motion-reduce:transition-none ${tipPhase === "enter" ? "translate-y-2 opacity-0" : tipPhase === "exit" ? "-translate-y-2 opacity-0 transition-all duration-300" : "translate-y-0 opacity-100 transition-all duration-300"}`}>{SUGO_TIPS[tipIndex]}</span></div>}
+        </div> : <div className="flex min-w-0 items-center gap-2.5 overflow-hidden" aria-live="polite" aria-label="Sugo 활용 팁"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-400/[0.08] text-amber-300 ring-1 ring-inset ring-amber-300/15"><Lightbulb size={13} strokeWidth={1.9} aria-hidden="true" /></span><span className={`truncate text-[12.5px] font-medium text-[var(--color-text)] motion-reduce:transform-none motion-reduce:transition-none ${tipPhase === "enter" ? "translate-y-2 opacity-0" : tipPhase === "exit" ? "-translate-y-2 opacity-0 transition-all duration-300" : "translate-y-0 opacity-100 transition-all duration-300"}`}>{SUGO_TIPS[tipIndex]}</span></div>}
       </div>
       <div className="flex items-center gap-2">
         <span
