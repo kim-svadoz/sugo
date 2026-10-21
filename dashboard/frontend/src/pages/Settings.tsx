@@ -400,7 +400,7 @@ function ApiTokensCard() {
 }
 
 export function Settings() {
-  const [expandedSection, setExpandedSection] = useState<IntegrationSectionId | null>("aws");
+  const [expandedSection, setExpandedSection] = useState<IntegrationSectionId | null>(null);
   const [providers, setProviders] = useState<GitProviderDescriptor[] | null>(null);
   const [connections, setConnections] = useState<GitConnectionStatus[]>([]);
   const [selected, setSelected] = useState<GitProviderId | null>(null);
@@ -455,7 +455,6 @@ export function Settings() {
   }
 
   function openSection(section: IntegrationSectionId) {
-    setExpandedSection(section);
     window.requestAnimationFrame(() => document.getElementById(`integration-${section}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 

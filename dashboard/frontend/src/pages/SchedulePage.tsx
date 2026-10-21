@@ -109,6 +109,10 @@ export function SchedulePage() {
     setSelected(spec);
   }
 
+  function openMemo(memo: ScheduledMemo) {
+    setMemoTarget({ memo });
+  }
+
   useEffect(() => {
     if (!reviewWorkspace || reviewTargetOpened.current || !specs?.length) return;
     const reviewTarget = findScheduleReviewTarget(specs, reviewWorkspace, reviewSpec, (spec) => {
@@ -559,10 +563,7 @@ export function SchedulePage() {
                   draggable
                   onDragStart={(event) => startMemoDrag(event, memo)}
                   onDragEnd={() => setDragOverKey(null)}
-                  onClick={() => {
-                    setMemoTarget({ memo });
-                    if (memo.due_date) jumpToDate(memo.due_date);
-                  }}
+                  onClick={() => openMemo(memo)}
                   className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border border-slate-400/45 bg-slate-400/[0.14] px-2.5 py-1.5 text-left text-[12px] font-medium text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing"
                 >
                   <span className="flex min-w-0 items-center gap-1.5"><FilePenLine size={11} className="shrink-0 text-slate-300" /><span className="truncate">{memo.title}</span></span>
@@ -642,7 +643,7 @@ export function SchedulePage() {
                         <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 font-mono text-[11px] text-[var(--color-text-muted)]">{sortedMemos.length}</span>
                       </div>
                       <div className="grid gap-2 xl:grid-cols-2">
-                        {sortedMemos.map((memo) => <button key={memo.id} type="button" onClick={() => setMemoTarget({ memo })} className="flex min-h-[62px] items-center gap-3 rounded-xl border border-slate-400/25 bg-slate-400/[0.07] px-4 py-3 text-left transition-colors hover:bg-slate-400/[0.12]"><FilePenLine size={14} className="shrink-0 text-slate-300" /><span className="min-w-0 flex-1"><strong className="block truncate text-[13px] text-slate-100">{memo.title}</strong><span className="mt-1 block font-mono text-[10px] text-slate-500">{memo.due_date ?? "기한 없음"}</span></span></button>)}
+                        {sortedMemos.map((memo) => <button key={memo.id} type="button" onClick={() => openMemo(memo)} className="flex min-h-[62px] items-center gap-3 rounded-xl border border-slate-400/25 bg-slate-400/[0.07] px-4 py-3 text-left transition-colors hover:bg-slate-400/[0.12]"><FilePenLine size={14} className="shrink-0 text-slate-300" /><span className="min-w-0 flex-1"><strong className="block truncate text-[13px] text-slate-100">{memo.title}</strong><span className="mt-1 block font-mono text-[10px] text-slate-500">{memo.due_date ?? "기한 없음"}</span></span></button>)}
                       </div>
                     </section>
                   )}
@@ -746,7 +747,7 @@ export function SchedulePage() {
                         </div>
                       );
                     })}
-                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300" /><button type="button" onClick={() => setMemoTarget({ memo })} className="min-w-0 flex-1 truncate text-left">{memo.title}</button></div>)}
+                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300" /><button type="button" onClick={() => openMemo(memo)} className="min-w-0 flex-1 truncate text-left">{memo.title}</button></div>)}
                   </div>
                 </div>
               );
