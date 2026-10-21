@@ -13,6 +13,14 @@ describe("page heading typography", () => {
     const source = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
     expect(source).toContain("워크스페이스 운영 도구");
     expect(source).not.toContain("Domains <span");
+    expect(source).not.toContain("전체 워크스페이스 운영 현황");
+  });
+
+  it("Home 이외의 상단 헤더는 여러 Sugo 활용 팁을 순환한다", () => {
+    const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
+    expect(source).toContain("SUGO_TIPS");
+    expect(source).toContain("5_000");
+    expect(source).toContain("Sugo 활용 팁");
   });
 
   it("Home에서 연 SPEC 상세는 닫을 때 Home으로 돌아간다", () => {

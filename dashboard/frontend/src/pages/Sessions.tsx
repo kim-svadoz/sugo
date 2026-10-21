@@ -42,7 +42,6 @@ import { compareRelease, shortCommit, type ReleaseComparison } from "../lib/awsR
 import { presentSteKorean } from "../lib/steKorean.js";
 import { historyContextTitle, historyDisplayDate, historyDisplayTitle } from "../lib/historyPresentation.js";
 import { workspacePulse } from "../lib/operationalPulse.js";
-import { OperationalPulse } from "../components/OperationalPulse.js";
 import { workspaceCommandSummary } from "../lib/experienceModel.js";
 import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
 
@@ -548,21 +547,10 @@ export function Sessions() {
   return (
     <div className="flex h-[calc(100vh-7rem)] min-h-[640px] flex-col gap-4">
       <section aria-label="워크스페이스 운영 도구" className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="shrink-0 text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-bright)]">
-              워크스페이스 <span className="align-middle text-sm font-normal text-[var(--color-text-dim)]">({filteredWorkspaces.length})</span>
-            </h1>
-            <OperationalPulse
-              label="전체 워크스페이스 운영 현황"
-              items={[
-                { label: "진행", value: pulse.active, icon: Activity, tone: pulse.active > 0 ? "cyan" : "neutral" },
-                { label: "확인 필요", value: pulse.attention, icon: AlertTriangle, tone: pulse.attention > 0 ? "warning" : "neutral" },
-                { label: "완료", value: pulse.total > 0 ? `${pulse.done}/${pulse.total}` : "—", icon: CheckCircle2, tone: pulse.total > 0 && pulse.done === pulse.total ? "success" : "neutral" },
-              ]}
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+        <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-bright)]">워크스페이스 <span className="align-middle text-sm font-normal text-[var(--color-text-dim)]">({filteredWorkspaces.length})</span></h1>
+        <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-[var(--color-text-muted)]">도메인별 개발 흐름과 운영 상태를 한곳에서 확인합니다.</p>
+          <div className="flex h-9 flex-wrap items-center gap-2">
             <button onClick={() => setShowStatusGuide(true)} className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-2.5 py-1.5 font-mono text-xs text-slate-400 transition-all hover:border-cyan-500/40 hover:text-cyan-400"><Info size={13} /> Guide</button>
             <div className="relative w-56">
               <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
@@ -580,7 +568,6 @@ export function Sessions() {
             <button onClick={copyAddDomain} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/10" title="/sugo:ws-add 명령 복사"><Plus size={14} /> {addCopied ? "복사됨 · /sugo:ws-add" : "Add Domain"}</button>
           </div>
         </div>
-        <p className="text-sm text-[var(--color-text-muted)]">도메인별 개발 흐름과 운영 상태를 한곳에서 확인합니다.</p>
       </section>
       {isSearchMode && (
         <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-3">

@@ -458,11 +458,8 @@ export function SchedulePage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description="SPEC의 마감과 확인이 필요한 작업을 한곳에서 관리합니다." />
-        </div>
-        <div className="flex items-center gap-2">
+      <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description="SPEC의 마감과 확인이 필요한 작업을 한곳에서 관리합니다." action={
+        <div className="flex h-9 items-center gap-2">
           <button type="button" onClick={() => setTrashOpen(true)} className="relative flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white" title="삭제하거나 종료한 SPEC 보기">
             <Archive size={15} /> 보관함
             {archives.length > 0 && <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 font-mono text-[9px] text-slate-300">{archives.length}</span>}
@@ -492,7 +489,7 @@ export function SchedulePage() {
             <CalendarPlus size={15} /> SPEC 일정 추가
           </button>
         </div>
-      </div>
+      } />
 
       {errorMsg && (
         <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">{errorMsg}</div>
