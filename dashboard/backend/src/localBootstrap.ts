@@ -9,7 +9,7 @@ import { chmod, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { DbClient } from "./db/client.js";
 import { createApiToken, resolveUserIdByToken } from "./services/apiTokenService.js";
-import { syncUser } from "./services/syncService.js";
+import { ensureUser } from "./services/syncService.js";
 
 export interface LocalBootstrapInput {
   userId: string;
@@ -32,7 +32,8 @@ async function readSettings(settingsPath: string): Promise<Record<string, unknow
 }
 
 export async function bootstrapLocalDashboard(db: DbClient, input: LocalBootstrapInput): Promise<LocalBootstrapResult> {
-  await syncUser(db, { userId: input.userId, displayName: input.displayName });
+  await ensureUser(db, input.userId);
+  await db.exec("UPDATE sugo_users SET display_name = COALESCE(NULLIF(display_name, ''), ?) WHERE id = ?", [input.displayName, input.userId]);
   const settings = await readSettings(input.settingsPath);
   const dashboard = (settings.dashboard ?? {}) as Record<string, unknown>;
   const existingToken = typeof dashboard.apiToken === "string" ? dashboard.apiToken : undefined;

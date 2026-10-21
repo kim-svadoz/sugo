@@ -20,7 +20,9 @@ const dataDir = join(sugoDir, "dashboard");
 const secretFile = join(dataDir, "session-secret");
 const stateFile = join(dataDir, "server.json");
 const port = Number(process.env.SUGO_DASHBOARD_PORT ?? DEFAULT_PORT);
-const staticDir = process.env.DASHBOARD_STATIC_DIR ?? join(dirname(fileURLToPath(import.meta.url)), "web");
+const runtimeDir = dirname(fileURLToPath(import.meta.url));
+const pluginRoot = dirname(runtimeDir);
+const staticDir = process.env.DASHBOARD_STATIC_DIR ?? join(runtimeDir, "web");
 const userId = process.env.LOCAL_DEV_USER_ID ?? userInfo().username;
 const displayName = process.env.LOCAL_DEV_DISPLAY_NAME ?? userId;
 
@@ -59,6 +61,8 @@ process.env.LOCAL_DEV_DISPLAY_NAME = displayName;
 process.env.FRONTEND_URL = apiUrl;
 process.env.CORS_ORIGINS = apiUrl;
 process.env.SUGO_DASHBOARD_API_URL = apiUrl;
+process.env.HARNESS_PATH = join(pluginRoot, "harness-library");
+process.env.SKILLS_PATH = pluginRoot;
 
 const { createApp } = await import("./index.js");
 const { bootstrapLocalDashboard } = await import("./localBootstrap.js");

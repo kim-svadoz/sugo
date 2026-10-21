@@ -23,7 +23,6 @@ function daysUntil(dueDate: string, now: Date): number {
 
 export function buildHomeAttention(specs: ScheduledSpec[], now = new Date()): HomeAttentionItem[] {
   const items = specs.flatMap<HomeAttentionItem>((spec) => {
-    if (spec.status === "done") return [];
     const guidance = scheduleAttention(spec, now.getTime());
     if (["blocked", "attention", "verification"].includes(guidance.kind)) {
       return [{
@@ -39,7 +38,7 @@ export function buildHomeAttention(specs: ScheduledSpec[], now = new Date()): Ho
     }
     if (!spec.due_date) return [];
     const remaining = daysUntil(spec.due_date, now);
-    if (remaining > 1) return [];
+    if (remaining > 2) return [];
     return [{
       id: spec.id,
       workspace: spec.workspace_name,

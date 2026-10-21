@@ -20,7 +20,7 @@ describe("Home attention", () => {
     expect(buildHomeAttention([{ ...base, id: "s1", title: "정상 작업", due_date: "2026-10-30" }], new Date("2026-10-21T00:00:00Z"))).toEqual([]);
   });
 
-  it("사람 확인과 D-1 이내 마감을 실제 작업 제목·이유와 함께 보여준다", () => {
+  it("사람 확인과 D-2 이내 마감을 실제 작업 제목·이유와 함께 보여준다", () => {
     const items = buildHomeAttention([
       { ...base, id: "review", title: "검색 결과 페이지 개선", due_date: "2026-10-30", blocked_task_count: 1, focus_task_status: "blocked", focus_task_note: "검토 결정이 필요합니다." },
       { ...base, id: "later", title: "이틀 뒤 작업", due_date: "2026-10-23", has_run: false, active_task_count: 0, focus_task_status: null },
@@ -30,8 +30,16 @@ describe("Home attention", () => {
     expect(items.map(({ title, label }) => ({ title, label }))).toEqual([
       { title: "검색 결과 페이지 개선", label: "차단" },
       { title: "MAB 서빙영역 1차", label: "D-1" },
+      { title: "이틀 뒤 작업", label: "D-2" },
     ]);
     expect(items[0]?.detail).toContain("검토 결정");
     expect(items[1]?.detail).toContain("2026-10-22");
+  });
+
+  it("파이프라인 완료 상태여도 보관하지 않은 D-2 SPEC은 보여준다", () => {
+    const items = buildHomeAttention([
+      { ...base, id: "done-soon", title: "배포 준비 작업", status: "done", due_date: "2026-10-23", done_task_count: 1, active_task_count: 0, focus_task_status: "done" },
+    ], new Date("2026-10-21T00:00:00Z"));
+    expect(items.map(({ title, label }) => ({ title, label }))).toEqual([{ title: "배포 준비 작업", label: "D-2" }]);
   });
 });

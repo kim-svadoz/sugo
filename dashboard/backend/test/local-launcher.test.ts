@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 describe("local dashboard launcher", () => {
   const launcher = readFileSync(new URL("../../sd.sh", import.meta.url), "utf8");
   const devLocal = readFileSync(new URL("../../dev-local.sh", import.meta.url), "utf8");
+  const standalone = readFileSync(new URL("../src/standalone.ts", import.meta.url), "utf8");
 
   it("사용자와 같은 단일 포트 런타임을 빌드하고 백그라운드로 재시작한다", () => {
     expect(launcher).toContain("readlink");
@@ -40,5 +41,10 @@ describe("local dashboard launcher", () => {
     expect(devLocal).toContain('SUGO_DATA_HOME="${SUGO_HOME_OVERRIDE:-$HOME}/.claude/sugo"');
     expect(devLocal).toContain('export SQLITE_FILE="${SQLITE_FILE:-$SUGO_DATA_HOME/dashboard/dashboard.db}"');
     expect(devLocal).not.toContain('$BACKEND_DIR/local.db');
+  });
+
+  it("설치형 Console이 번들에 포함된 기본 Harness와 Skills를 자동으로 사용한다", () => {
+    expect(standalone).toContain('process.env.HARNESS_PATH = join(pluginRoot, "harness-library")');
+    expect(standalone).toContain('process.env.SKILLS_PATH = pluginRoot');
   });
 });

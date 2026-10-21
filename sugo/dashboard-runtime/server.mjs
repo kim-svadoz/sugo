@@ -20692,7 +20692,7 @@ var require_application = __commonJS({
   "../dashboard/backend/node_modules/express/lib/application.js"(exports, module) {
     "use strict";
     var finalhandler = require_finalhandler();
-    var Router20 = require_router();
+    var Router21 = require_router();
     var methods = require_methods();
     var middleware = require_init();
     var query = require_query();
@@ -20757,7 +20757,7 @@ var require_application = __commonJS({
     };
     app2.lazyrouter = function lazyrouter() {
       if (!this._router) {
-        this._router = new Router20({
+        this._router = new Router21({
           caseSensitive: this.enabled("case sensitive routing"),
           strict: this.enabled("strict routing")
         });
@@ -22621,7 +22621,7 @@ var require_express = __commonJS({
     var mixin = require_merge_descriptors();
     var proto = require_application();
     var Route = require_route();
-    var Router20 = require_router();
+    var Router21 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -22644,7 +22644,7 @@ var require_express = __commonJS({
     exports.request = req;
     exports.response = res;
     exports.Route = Route;
-    exports.Router = Router20;
+    exports.Router = Router21;
     exports.json = bodyParser.json;
     exports.query = require_query();
     exports.raw = bodyParser.raw;
@@ -52892,6 +52892,34 @@ var init_news = __esm({
   }
 });
 
+// ../dashboard/backend/src/routes/profile.ts
+function createProfileRouter(db2, sessionSecret2) {
+  const router = (0, import_express6.Router)();
+  router.use(requireUser(db2, sessionSecret2));
+  router.get("/", async (req, res) => {
+    const rows = await db2.query("SELECT id, display_name FROM sugo_users WHERE id = ?", [req.userId]);
+    const user = rows[0];
+    res.json({ userId: req.userId, displayName: user?.display_name?.trim() || req.userId });
+  });
+  router.put("/", async (req, res) => {
+    const parsed = updateSchema.safeParse(req.body ?? {});
+    if (!parsed.success) return void res.status(400).json({ error: "invalid_display_name" });
+    await db2.exec("UPDATE sugo_users SET display_name = ? WHERE id = ?", [parsed.data.displayName, req.userId]);
+    res.json({ userId: req.userId, displayName: parsed.data.displayName });
+  });
+  return router;
+}
+var import_express6, updateSchema;
+var init_profile = __esm({
+  "../dashboard/backend/src/routes/profile.ts"() {
+    "use strict";
+    import_express6 = __toESM(require_express2(), 1);
+    init_zod();
+    init_requireUser();
+    updateSchema = external_exports.object({ displayName: external_exports.string().trim().min(1).max(80) });
+  }
+});
+
 // ../dashboard/backend/src/auth/jwt.ts
 function createJwtVerifier(getKey, issuer) {
   return async (token) => {
@@ -52916,7 +52944,7 @@ var init_jwt = __esm({
 
 // ../dashboard/backend/src/routes/auth.ts
 function createAuthRouter(db2, oidcConfig, oidcClient, verifyJwt) {
-  const router = (0, import_express6.Router)();
+  const router = (0, import_express7.Router)();
   router.get("/config", (_req, res) => {
     res.json({
       authEndpoint: oidcConfig.authEndpoint,
@@ -52978,11 +53006,11 @@ function createAuthRouter(db2, oidcConfig, oidcClient, verifyJwt) {
   });
   return router;
 }
-var import_express6, tokenSchema, refreshSchema;
+var import_express7, tokenSchema, refreshSchema;
 var init_auth = __esm({
   "../dashboard/backend/src/routes/auth.ts"() {
     "use strict";
-    import_express6 = __toESM(require_express2(), 1);
+    import_express7 = __toESM(require_express2(), 1);
     init_zod();
     init_jwt();
     init_validate();
@@ -52994,7 +53022,7 @@ var init_auth = __esm({
 
 // ../dashboard/backend/src/routes/bitbucket.ts
 function createBitbucketRouter(db2, sessionSecret2, secretEncKey) {
-  const router = (0, import_express7.Router)();
+  const router = (0, import_express8.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.get("/", async (req, res) => {
     const status = await getBitbucketTokenStatus(db2, req.userId);
@@ -53014,11 +53042,11 @@ function createBitbucketRouter(db2, sessionSecret2, secretEncKey) {
   });
   return router;
 }
-var import_express7, putSchema;
+var import_express8, putSchema;
 var init_bitbucket = __esm({
   "../dashboard/backend/src/routes/bitbucket.ts"() {
     "use strict";
-    import_express7 = __toESM(require_express2(), 1);
+    import_express8 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -53067,7 +53095,7 @@ var init_provider = __esm({
 
 // ../dashboard/backend/src/routes/gitConnections.ts
 function createGitConnectionsRouter(db2, sessionSecret2, secretEncKey) {
-  const router = (0, import_express8.Router)();
+  const router = (0, import_express9.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.get("/", async (req, res) => {
     res.json({ providers: gitProviderCatalog, connections: await listGitConnections(db2, req.userId) });
@@ -53096,11 +53124,11 @@ function createGitConnectionsRouter(db2, sessionSecret2, secretEncKey) {
   });
   return router;
 }
-var import_express8, providerSchema, connectionSchema;
+var import_express9, providerSchema, connectionSchema;
 var init_gitConnections = __esm({
   "../dashboard/backend/src/routes/gitConnections.ts"() {
     "use strict";
-    import_express8 = __toESM(require_express2(), 1);
+    import_express9 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -53264,7 +53292,7 @@ var init_awsContextService = __esm({
 
 // ../dashboard/backend/src/routes/awsContext.ts
 function createAwsContextRouter(db2, sessionSecret2, client) {
-  const router = (0, import_express9.Router)();
+  const router = (0, import_express10.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.get("/", async (req, res) => {
     const account = typeof req.query.account === "string" ? req.query.account.trim() : void 0;
@@ -53318,11 +53346,11 @@ function createAwsContextRouter(db2, sessionSecret2, client) {
   });
   return router;
 }
-var import_express9, connectSchema, accountSchema;
+var import_express10, connectSchema, accountSchema;
 var init_awsContext = __esm({
   "../dashboard/backend/src/routes/awsContext.ts"() {
     "use strict";
-    import_express9 = __toESM(require_express2(), 1);
+    import_express10 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -53397,7 +53425,7 @@ var init_prService = __esm({
 
 // ../dashboard/backend/src/routes/pr.ts
 function createPrRouter(db2, sessionSecret2, secretEncKey, clients) {
-  const router = (0, import_express10.Router)();
+  const router = (0, import_express11.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.post("/existing", validateBody(existingSchema), async (req, res) => {
     const { workspace, nodeId, scope } = req.body;
@@ -53460,11 +53488,11 @@ function createPrRouter(db2, sessionSecret2, secretEncKey, clients) {
   });
   return router;
 }
-var import_express10, scopeEnum, createSchema, existingSchema;
+var import_express11, scopeEnum, createSchema, existingSchema;
 var init_pr = __esm({
   "../dashboard/backend/src/routes/pr.ts"() {
     "use strict";
-    import_express10 = __toESM(require_express2(), 1);
+    import_express11 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -53541,7 +53569,7 @@ var init_statsService = __esm({
 
 // ../dashboard/backend/src/routes/stats.ts
 function createStatsRouter(db2, sessionSecret2) {
-  const router = (0, import_express11.Router)();
+  const router = (0, import_express12.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.get(
     "/calibrated-ratio",
@@ -53556,11 +53584,11 @@ function createStatsRouter(db2, sessionSecret2) {
   router.get("/trends", (_req, res) => res.json({ trends: [] }));
   return router;
 }
-var import_express11;
+var import_express12;
 var init_stats = __esm({
   "../dashboard/backend/src/routes/stats.ts"() {
     "use strict";
-    import_express11 = __toESM(require_express2(), 1);
+    import_express12 = __toESM(require_express2(), 1);
     init_asyncHandler();
     init_requireUser();
     init_statsService();
@@ -53623,7 +53651,7 @@ var init_weeklyReportService = __esm({
 
 // ../dashboard/backend/src/routes/weeklyReports.ts
 function createWeeklyReportsRouter(db2, sessionSecret2) {
-  const router = (0, import_express12.Router)();
+  const router = (0, import_express13.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.put(
     "/:weekId",
@@ -53657,11 +53685,11 @@ function createWeeklyReportsRouter(db2, sessionSecret2) {
   );
   return router;
 }
-var import_express12, weekIdPattern, datePattern, reportSchema;
+var import_express13, weekIdPattern, datePattern, reportSchema;
 var init_weeklyReports = __esm({
   "../dashboard/backend/src/routes/weeklyReports.ts"() {
     "use strict";
-    import_express12 = __toESM(require_express2(), 1);
+    import_express13 = __toESM(require_express2(), 1);
     init_zod();
     init_asyncHandler();
     init_requireUser();
@@ -53682,7 +53710,7 @@ var init_weeklyReports = __esm({
 import { existsSync, mkdirSync, readFileSync as readFileSync2, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join as join7, normalize as normalize2, relative as relative3 } from "node:path";
 function createHarnessRouter(harnessPath, overridePath = "", db2, sessionSecret2 = "") {
-  const router = (0, import_express13.Router)();
+  const router = (0, import_express14.Router)();
   router.get("/manifest", (_req, res) => {
     if (!harnessPath || !existsSync(harnessPath)) return res.json({ harnesses: [] });
     if (existsSync(join7(harnessPath, "manifest.json"))) {
@@ -53788,7 +53816,7 @@ ${readFileSync2(full, "utf8")}`);
   return router;
 }
 function createSkillsRouter(skillsPath) {
-  const router = (0, import_express13.Router)();
+  const router = (0, import_express14.Router)();
   router.get("/", (req, res) => {
     if (!skillsPath || !existsSync(skillsPath)) return res.json({ skills: [] });
     const localized = req.query.locale === "ko";
@@ -53882,11 +53910,11 @@ function readAgentMeta(agentsDir, id) {
   }
   return { name: id, description: "" };
 }
-var import_express13;
+var import_express14;
 var init_harness = __esm({
   "../dashboard/backend/src/routes/harness.ts"() {
     "use strict";
-    import_express13 = __toESM(require_express2(), 1);
+    import_express14 = __toESM(require_express2(), 1);
     init_asyncHandler();
     init_requireUser();
   }
@@ -53947,7 +53975,7 @@ var init_github = __esm({
 // ../dashboard/backend/src/routes/githubAuth.ts
 import { randomUUID as randomUUID3 } from "node:crypto";
 function createGithubAuthRouter(db2, github, cfg, sessionSecret2, frontendUrl) {
-  const router = (0, import_express14.Router)();
+  const router = (0, import_express15.Router)();
   router.get("/login", async (_req, res) => {
     if (!cfg.clientId || !sessionSecret2) {
       res.status(503).json({ error: "github_login_unconfigured" });
@@ -53980,11 +54008,11 @@ function createGithubAuthRouter(db2, github, cfg, sessionSecret2, frontendUrl) {
   });
   return router;
 }
-var import_express14;
+var import_express15;
 var init_githubAuth = __esm({
   "../dashboard/backend/src/routes/githubAuth.ts"() {
     "use strict";
-    import_express14 = __toESM(require_express2(), 1);
+    import_express15 = __toESM(require_express2(), 1);
     init_syncService();
     init_github();
     init_session();
@@ -53993,7 +54021,7 @@ var init_githubAuth = __esm({
 
 // ../dashboard/backend/src/routes/tokens.ts
 function createTokensRouter(db2, sessionSecret2) {
-  const router = (0, import_express15.Router)();
+  const router = (0, import_express16.Router)();
   router.use(requireSession(sessionSecret2));
   router.post("/", async (req, res) => {
     const parsed = createSchema2.safeParse(req.body ?? {});
@@ -54017,11 +54045,11 @@ function createTokensRouter(db2, sessionSecret2) {
   });
   return router;
 }
-var import_express15, createSchema2;
+var import_express16, createSchema2;
 var init_tokens = __esm({
   "../dashboard/backend/src/routes/tokens.ts"() {
     "use strict";
-    import_express15 = __toESM(require_express2(), 1);
+    import_express16 = __toESM(require_express2(), 1);
     init_zod();
     init_session();
     init_apiTokenService();
@@ -54031,7 +54059,7 @@ var init_tokens = __esm({
 
 // ../dashboard/backend/src/routes/localAuth.ts
 function createLocalAuthRouter(db2, sessionSecret2, frontendUrl, local) {
-  const router = (0, import_express16.Router)();
+  const router = (0, import_express17.Router)();
   router.get("/session", requireSession(sessionSecret2), async (req, res, next) => {
     try {
       if (!local.enabled) return res.status(404).json({ error: "local_dev_disabled" });
@@ -54057,11 +54085,11 @@ function createLocalAuthRouter(db2, sessionSecret2, frontendUrl, local) {
   });
   return router;
 }
-var import_express16;
+var import_express17;
 var init_localAuth = __esm({
   "../dashboard/backend/src/routes/localAuth.ts"() {
     "use strict";
-    import_express16 = __toESM(require_express2(), 1);
+    import_express17 = __toESM(require_express2(), 1);
     init_session();
     init_syncService();
   }
@@ -89746,7 +89774,7 @@ var init_pinpointContextService = __esm({
 
 // ../dashboard/backend/src/routes/pinpointContext.ts
 function createPinpointContextRouter(db2, secret, client) {
-  const router = (0, import_express17.Router)();
+  const router = (0, import_express18.Router)();
   router.use(requireUser(db2, secret));
   router.get("/", async (req, res) => res.json(await getPinpointContext(db2, req.userId)));
   router.put("/", validateBody(schema), async (req, res) => {
@@ -89769,11 +89797,11 @@ function createPinpointContextRouter(db2, secret, client) {
   });
   return router;
 }
-var import_express17, schema;
+var import_express18, schema;
 var init_pinpointContext = __esm({
   "../dashboard/backend/src/routes/pinpointContext.ts"() {
     "use strict";
-    import_express17 = __toESM(require_express2(), 1);
+    import_express18 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -89814,7 +89842,7 @@ var init_projectIntegrationService = __esm({
 
 // ../dashboard/backend/src/routes/projectIntegrations.ts
 function createProjectIntegrationsRouter(db2, secret) {
-  const router = (0, import_express18.Router)();
+  const router = (0, import_express19.Router)();
   router.use(requireUser(db2, secret));
   router.get("/", async (req, res) => res.json(await listProjectIntegrations(db2, req.userId)));
   router.put("/", validateBody(schema2), async (req, res) => {
@@ -89827,11 +89855,11 @@ function createProjectIntegrationsRouter(db2, secret) {
   });
   return router;
 }
-var import_express18, schema2;
+var import_express19, schema2;
 var init_projectIntegrations = __esm({
   "../dashboard/backend/src/routes/projectIntegrations.ts"() {
     "use strict";
-    import_express18 = __toESM(require_express2(), 1);
+    import_express19 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -89851,7 +89879,7 @@ async function load(path) {
   }
 }
 function createAwsGuardPolicyRouter(db2, secret, path) {
-  const router = (0, import_express19.Router)();
+  const router = (0, import_express20.Router)();
   router.use(requireUser(db2, secret));
   router.get("/", async (_req, res) => res.json(await load(path)));
   router.put("/", validateBody(schema3), async (req, res) => {
@@ -89865,11 +89893,11 @@ function createAwsGuardPolicyRouter(db2, secret, path) {
   });
   return router;
 }
-var import_express19, defaultAwsGuardPolicy, schema3;
+var import_express20, defaultAwsGuardPolicy, schema3;
 var init_awsGuardPolicy = __esm({
   "../dashboard/backend/src/routes/awsGuardPolicy.ts"() {
     "use strict";
-    import_express19 = __toESM(require_express2(), 1);
+    import_express20 = __toESM(require_express2(), 1);
     init_zod();
     init_requireUser();
     init_validate();
@@ -90021,13 +90049,14 @@ async function createApp(dbOverrideOrOptions) {
   const skillsPath = overrides.skillsPath ?? config.skillsPath;
   const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
-  const app2 = (0, import_express20.default)();
+  const app2 = (0, import_express21.default)();
   app2.use(corsWhitelist(config.corsOrigins));
-  app2.use(import_express20.default.json({ limit: "10mb" }));
+  app2.use(import_express21.default.json({ limit: "10mb" }));
   app2.get("/health", (_req, res) => {
     res.json({ status: "ok", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });
   });
   app2.use("/api/news", createNewsRouter());
+  app2.use("/api/profile", createProfileRouter(db2, sessionSecret2));
   app2.use("/api/sync", createSyncRouter(db2, sessionSecret2));
   app2.use("/api/activity", createActivityRouter(db2, sessionSecret2));
   app2.use("/api/workspaces", createWorkspacesRouter(db2, sessionSecret2, specAttachmentsPath));
@@ -90064,7 +90093,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use("/api/skills", createSkillsRouter(skillsPath));
   const staticDir2 = overrides.staticDir ?? config.staticDir;
   if (staticDir2) {
-    app2.use(import_express20.default.static(staticDir2));
+    app2.use(import_express21.default.static(staticDir2));
     app2.get(/^\/(?!api\/|health$).*/, (_req, res) => {
       res.sendFile(join12(staticDir2, "index.html"));
     });
@@ -90085,11 +90114,11 @@ async function main() {
     console.log(`sugo-dashboard-backend listening on ${config.host}:${config.port} (db=${config.dbDriver})`);
   });
 }
-var import_express20, __dirname2, pkg;
+var import_express21, __dirname2, pkg;
 var init_index = __esm({
   "../dashboard/backend/src/index.ts"() {
     "use strict";
-    import_express20 = __toESM(require_express2(), 1);
+    import_express21 = __toESM(require_express2(), 1);
     init_esm();
     init_config();
     init_init();
@@ -90098,6 +90127,7 @@ var init_index = __esm({
     init_workspaces2();
     init_schedule();
     init_news();
+    init_profile();
     init_auth();
     init_bitbucket();
     init_gitConnections();
@@ -90125,7 +90155,7 @@ var init_index = __esm({
     init_asyncHandler();
     init_contextAutoRefreshService();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.30.0" ? { version: "0.30.0" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.30.1" ? { version: "0.30.1" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90147,7 +90177,8 @@ async function readSettings(settingsPath) {
   }
 }
 async function bootstrapLocalDashboard(db2, input) {
-  await syncUser(db2, { userId: input.userId, displayName: input.displayName });
+  await ensureUser(db2, input.userId);
+  await db2.exec("UPDATE sugo_users SET display_name = COALESCE(NULLIF(display_name, ''), ?) WHERE id = ?", [input.displayName, input.userId]);
   const settings = await readSettings(input.settingsPath);
   const dashboard = settings.dashboard ?? {};
   const existingToken = typeof dashboard.apiToken === "string" ? dashboard.apiToken : void 0;
@@ -90193,7 +90224,9 @@ var dataDir = join13(sugoDir, "dashboard");
 var secretFile = join13(dataDir, "session-secret");
 var stateFile = join13(dataDir, "server.json");
 var port = Number(process.env.SUGO_DASHBOARD_PORT ?? DEFAULT_PORT);
-var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join13(dirname6(fileURLToPath3(import.meta.url)), "web");
+var runtimeDir = dirname6(fileURLToPath3(import.meta.url));
+var pluginRoot = dirname6(runtimeDir);
+var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join13(runtimeDir, "web");
 var userId = process.env.LOCAL_DEV_USER_ID ?? userInfo().username;
 var displayName = process.env.LOCAL_DEV_DISPLAY_NAME ?? userId;
 async function loadOrCreateSecret() {
@@ -90227,6 +90260,8 @@ process.env.LOCAL_DEV_DISPLAY_NAME = displayName;
 process.env.FRONTEND_URL = apiUrl;
 process.env.CORS_ORIGINS = apiUrl;
 process.env.SUGO_DASHBOARD_API_URL = apiUrl;
+process.env.HARNESS_PATH = join13(pluginRoot, "harness-library");
+process.env.SKILLS_PATH = pluginRoot;
 var { createApp: createApp2 } = await Promise.resolve().then(() => (init_index(), index_exports));
 var { bootstrapLocalDashboard: bootstrapLocalDashboard2 } = await Promise.resolve().then(() => (init_localBootstrap(), localBootstrap_exports));
 var { app, db, awsContextClient, pinpointClient } = await createApp2({ staticDir, sqliteSchema: schema_sqlite_default });
@@ -90239,7 +90274,7 @@ await bootstrapLocalDashboard2(db, {
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.30.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.30.1", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

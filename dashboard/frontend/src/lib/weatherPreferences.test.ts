@@ -12,15 +12,21 @@ describe("weather preferences", () => {
     vi.stubGlobal("window", { dispatchEvent: vi.fn() });
   });
 
-  it("광역 지역만 제공하고 정밀 위치를 저장하지 않는다", () => {
-    expect(WEATHER_REGIONS.map((region) => region.id)).toContain("seoul");
-    expect(WEATHER_REGIONS.map((region) => region.id)).toContain("gyeonggi");
+  it("광역 단위가 아닌 사용자가 알아볼 수 있는 대표 도시를 제공한다", () => {
+    expect(WEATHER_REGIONS.map((region) => region.id)).toContain("seoul-cityhall");
+    expect(WEATHER_REGIONS.map((region) => region.id)).toContain("suwon");
+    expect(WEATHER_REGIONS.find((region) => region.id === "suwon")?.label).toBe("경기도 · 수원");
     expect(WEATHER_REGIONS.every((region) => Number.isFinite(region.latitude) && Number.isFinite(region.longitude))).toBe(true);
   });
 
   it("선택한 지역을 한 번 저장해 다음 실행에도 사용한다", () => {
     expect(getWeatherRegion()).toBeNull();
-    setWeatherRegion("gyeonggi");
-    expect(getWeatherRegion()?.label).toBe("경기");
+    setWeatherRegion("suwon");
+    expect(getWeatherRegion()?.label).toBe("경기도 · 수원");
+  });
+
+  it("기존 광역 설정은 가까운 대표 도시로 이어받는다", () => {
+    values.set("sugo_weather_region", "seoul");
+    expect(getWeatherRegion()?.label).toBe("서울특별시 · 시청");
   });
 });

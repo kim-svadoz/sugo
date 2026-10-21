@@ -1,9 +1,10 @@
 import { CalendarDays, ChevronDown, CloudSun, LogOut, Settings2, Sparkles, UserRound } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.js";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 import { useLocalWeather } from "../hooks/useLocalWeather.js";
+import { useProfile } from "../hooks/useProfile.js";
 
 /**
  * Header — h-16 ck-glass. **버전 뱃지 2축이 핵심**이다:
@@ -21,8 +22,18 @@ export function Header() {
   const { pathname } = useLocation();
   const isHome = pathname === "/home";
   const { weather, region } = useLocalWeather(isHome);
+  const { displayName } = useProfile(userId);
   const [profileOpen, setProfileOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const date = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "long" }).format(new Date());
+
+  useEffect(() => setProfileOpen(false), [pathname]);
+  useEffect(() => {
+    if (!profileOpen) return;
+    const close = (event: PointerEvent) => { if (!profileMenuRef.current?.contains(event.target as Node)) setProfileOpen(false); };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [profileOpen]);
 
   return (
     <header className="flex h-14 items-center justify-between gap-6 border-b border-white/[0.055] bg-[var(--color-surface)]/70 px-6 ck-glass">
@@ -51,13 +62,13 @@ export function Header() {
           <span className="text-emerald-400/70">Plugin</span>
           <span className="text-emerald-200">{pluginVersion ? `v${pluginVersion}` : "—"}</span>
         </span>
-        <div className="relative ml-1">
+        <div ref={profileMenuRef} className="relative ml-1">
           <button type="button" aria-label="프로필 메뉴" aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)} className="flex h-8 items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.035] px-2 text-slate-300 hover:bg-white/[0.07] hover:text-white">
-            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-cyan-400/10 text-[9px] font-bold text-cyan-200">{(userId?.slice(0, 2) ?? "?").toUpperCase()}</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-cyan-400/10 text-[9px] font-bold text-cyan-200">{displayName.slice(0, 2).toUpperCase()}</span>
             <ChevronDown size={13} className="text-slate-500" />
           </button>
           {profileOpen && <div className="absolute right-0 top-10 z-50 w-52 overflow-hidden rounded-xl border border-white/[0.10] bg-[var(--color-surface)] p-1.5 shadow-2xl">
-            <div className="border-b border-white/[0.07] px-3 py-2.5"><div className="flex items-center gap-2 text-sm font-semibold text-slate-100"><UserRound size={14} className="text-cyan-300" />{userId}</div><div className="mt-1 text-[10px] text-slate-500">로컬 Sugo 사용자</div></div>
+            <div className="border-b border-white/[0.07] px-3 py-2.5"><div className="flex items-center gap-2 text-sm font-semibold text-slate-100"><UserRound size={14} className="text-cyan-300" />{displayName}</div><div className="mt-1 text-[10px] text-slate-500">{userId} · 로컬 Sugo 사용자</div></div>
             <button type="button" onClick={() => { setProfileOpen(false); navigate("/preferences"); }} className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05] hover:text-white"><Settings2 size={14} />시스템 설정</button>
             <button type="button" onClick={() => { logout(); navigate("/login"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-slate-400 hover:bg-rose-500/10 hover:text-rose-300"><LogOut size={14} />로그아웃</button>
           </div>}

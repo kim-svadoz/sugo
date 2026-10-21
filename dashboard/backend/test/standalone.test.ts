@@ -87,6 +87,13 @@ describe("로컬 연결 부트스트랩", () => {
     expect(readSettings().dashboard.apiToken).toBe(first);
   });
 
+  it("사용자가 정한 닉네임은 Console 재시작 때 OS 이름으로 덮어쓰지 않는다", async () => {
+    await bootstrapLocalDashboard(db, input());
+    await db.exec("UPDATE sugo_users SET display_name = ? WHERE id = ?", ["내 닉네임", "me"]);
+    await bootstrapLocalDashboard(db, { ...input(), displayName: "OS Account" });
+    expect(await db.query("SELECT display_name FROM sugo_users WHERE id = ?", ["me"])).toEqual([{ display_name: "내 닉네임" }]);
+  });
+
   it("DB에서 무효한 토큰은 새로 발급하고 다른 설정 키는 보존한다", async () => {
     const settingsPath = input().settingsPath;
     await bootstrapLocalDashboard(db, input());
