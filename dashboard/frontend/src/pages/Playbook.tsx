@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
+import { PageHeading } from "../components/PageHeading.js";
 import { cn } from "../lib/utils.js";
 
 type StageId = "intent" | "context" | "delivery" | "review" | "lineage" | "operations";
@@ -249,10 +250,7 @@ export function Playbook() {
   const Content = CONTENT[active.id];
   return (
     <div className="mx-auto w-full max-w-[1680px] pb-10">
-      <header className="mb-7 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-border)] pb-6">
-        <div><div className="mb-2 flex items-center gap-2 text-[12px] font-semibold tracking-[.12em] text-cyan-300"><span className="h-px w-7 bg-cyan-400" />AI 개발 플레이북</div><h1 className="text-[34px] font-semibold tracking-[-.03em] text-[var(--color-text-bright)]">AI에 개발을 맡겨도 판단 기준을 유지합니다</h1><p className="mt-3 text-[16px] leading-relaxed text-[var(--color-text-muted)]">요청을 명확히 정리합니다. 팀의 규칙을 적용합니다. 실행 근거를 확인합니다. 실제 배포 상태까지 추적합니다.</p></div>
-        <span className="shrink-0 text-[12px] text-[var(--color-text-dim)]">Plugin {pluginVersion ? `v${pluginVersion}` : "—"} · 기능 안내</span>
-      </header>
+      <div className="mb-7 border-b border-[var(--color-border)] pb-6"><PageHeading eyebrow="DELIVERY PLAYBOOK" title="실행 플레이북" description="요청을 정리하고 팀의 규칙을 적용한 뒤, 실행 근거와 실제 배포 상태까지 추적합니다." action={<span className="shrink-0 text-[12px] text-[var(--color-text-dim)]">Plugin {pluginVersion ? `v${pluginVersion}` : "—"} · 기능 안내</span>} /></div>
       <div className="grid min-w-0 gap-7 xl:grid-cols-[260px_minmax(0,1fr)]">
         <nav aria-label="AI 개발 사용 시나리오" className="border-b border-[var(--color-border)] pb-5 xl:border-r xl:border-b-0 xl:pr-5 xl:pb-0"><div role="tablist" aria-orientation="vertical" className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:block xl:space-y-1">{STAGES.map((stage) => { const Icon = stage.icon; const selected = stage.id === active.id; return <button key={stage.id} role="tab" aria-selected={selected} aria-controls={`playbook-panel-${stage.id}`} id={`playbook-tab-${stage.id}`} onClick={() => setActiveId(stage.id)} className={cn("flex w-full items-center gap-2 rounded px-3 py-3 text-left transition-colors xl:gap-3 xl:px-3.5 xl:py-3.5", selected ? "bg-cyan-500/10 text-[var(--color-text-bright)]" : "text-[var(--color-text-muted)] hover:bg-[var(--color-background)] hover:text-[var(--color-text)]")}><span className={cn("font-mono text-[11px]", selected ? "text-cyan-300" : "text-[var(--color-text-dim)]")}>{stage.order}</span><Icon size={17} className={selected ? "text-cyan-300" : "text-[var(--color-text-dim)]"} /><span className="text-[14px] font-medium">{stage.label}</span></button>; })}</div></nav>
         <section role="tabpanel" id={`playbook-panel-${active.id}`} aria-labelledby={`playbook-tab-${active.id}`} className="min-w-0 px-1 py-1"><div className="mb-8 max-w-4xl"><div className="text-[12px] font-semibold tracking-[.1em] text-cyan-300">{active.eyebrow}</div><h2 className="mt-2.5 text-[29px] font-semibold tracking-[-.025em] text-[var(--color-text-bright)]">{active.title}</h2><p className="mt-3 text-[16px] leading-relaxed text-[var(--color-text-muted)]">{active.outcome}</p></div><Content /></section>

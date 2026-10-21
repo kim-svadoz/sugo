@@ -5,6 +5,7 @@ import { getSkillContent, listAgents, listSkills, type AgentEntry, type SkillEnt
 import { Modal } from "../components/Modal.js";
 import { AGENT_TONES, FALLBACK_AGENT_TONE } from "../lib/colorSystem.js";
 import { cn } from "../lib/utils.js";
+import { PageHeading } from "../components/PageHeading.js";
 
 const agentIcons: Record<string, LucideIcon> = { code: Code2, test: TestTube2, docs: FileText, review: GitPullRequest, sugo: Workflow };
 const agentLabels: Record<string, string> = { code: "구현", test: "테스트", review: "검토", docs: "문서", sugo: "공용" };
@@ -60,10 +61,7 @@ export function Skills() {
   const commonCount = skills.filter(skill => skill.kind === "skill" && !skill.agent).length;
 
   return <div className="space-y-5">
-    <header className="flex items-end justify-between gap-4">
-      <div><h1 className="text-2xl font-bold text-[var(--color-text-bright)]">Skills</h1><p className="mt-1 text-sm text-[var(--color-text-muted)]">{catalogView === "skills" ? "AI가 작업 중 적용하는 규칙" : "사용자가 직접 시작하는 명령"}</p></div>
-      <span className="font-mono text-xs text-[var(--color-text-dim)]">{skillCount} skills · {commandCount} commands</span>
-    </header>
+    <PageHeading eyebrow="AI CAPABILITIES" title="스킬 카탈로그" description={catalogView === "skills" ? "AI가 작업 중 적용하는 전문 규칙과 역할을 확인합니다." : "사용자가 직접 시작할 수 있는 명령을 확인합니다."} action={<span className="font-mono text-xs text-[var(--color-text-dim)]">{skillCount} skills · {commandCount} commands</span>} />
 
     {!empty && <section aria-label="카탈로그 종류" className="border-y border-[var(--color-border)] py-3">
       <div className="inline-flex rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-1">

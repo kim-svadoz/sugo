@@ -28,8 +28,9 @@ import { buildCommitmentQueue, commitmentNextAction, legacyCommitments, type Com
 import { updateScheduleCommitment } from "../api/scheduleCommitmentApi.js";
 import { archiveScheduleSpec, restoreScheduleSpec, type ScheduleSpecArchiveReason } from "../api/scheduleSpecArchiveApi.js";
 import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { findScheduleReviewTarget } from "../lib/scheduleReviewTarget.js";
+import { PageHeading } from "../components/PageHeading.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -76,10 +77,12 @@ function DeploymentReach({ spec }: { spec: ScheduledSpec | null }) {
 export function SchedulePage() {
   const { userId } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { data: workspaces, error: workspaceError } = useWorkspaces();
   const { data: specs, memos, commitments, archives, refetch } = useSchedule();
   const reviewWorkspace = searchParams.get("reviewWorkspace");
   const reviewSpec = searchParams.get("reviewSpec");
+  const returnTo = searchParams.get("returnTo");
   const reviewTargetOpened = useRef(false);
 
   const today = nowKST();
@@ -445,7 +448,7 @@ export function SchedulePage() {
   if (!schedulePresentationReady(specs, workspaces)) {
     return (
       <div className="flex h-full min-h-0 flex-col gap-4">
-        <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">Schedule</h1>
+        <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description="SPEC의 마감과 확인이 필요한 작업을 한곳에서 관리합니다." />
         <div className="ck-glass ck-card flex min-h-0 flex-1 items-center justify-center text-[12px] text-[var(--color-text-dim)]">
           {workspaceError ? "워크스페이스 색상 정보를 불러오지 못했습니다." : "불러오는 중…"}
         </div>
@@ -457,7 +460,7 @@ export function SchedulePage() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-lg font-semibold text-[var(--color-text-bright)]">Schedule</h1>
+          <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description="SPEC의 마감과 확인이 필요한 작업을 한곳에서 관리합니다." />
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => setTrashOpen(true)} className="relative flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white" title="삭제하거나 종료한 SPEC 보기">
@@ -765,6 +768,7 @@ export function SchedulePage() {
           onClose={() => {
             setSelected(null);
             setTitleDraft(null);
+            if (returnTo === "home") navigate("/home");
           }}
           disableEscape={!!checkpointTarget || !!canvasOverlay || !!specDocumentTarget || !!archiveConfirm}
         >

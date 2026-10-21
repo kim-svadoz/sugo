@@ -4,6 +4,7 @@ import { getWeeklyReport, listWeeklyReports, type WeeklyReportDetail, type Weekl
 import { toWeeklyView, type WeeklyLearningView, type WeeklyTopicView } from "../lib/weeklyPresentation.js";
 import { buildWeeklyCalendar } from "../lib/weeklyCalendar.js";
 import { cn } from "../lib/utils.js";
+import { PageHeading } from "../components/PageHeading.js";
 import { readWeeklyRouteState, writeWeeklyRouteState, type WeeklyDetailView } from "../lib/weeklyRouteState.js";
 import { selectWeeklySection } from "../lib/weeklyScrollSpy.js";
 
@@ -158,10 +159,10 @@ export function WeeklyPage() {
   useEffect(() => { listWeeklyReports().then(setReports).catch(() => setReports([])); }, []);
   useEffect(() => { if (!selected) return setDetail(null); let cancelled = false; setDetail(null); getWeeklyReport(selected).then((value) => !cancelled && setDetail(value)).catch(() => !cancelled && setDetail(null)); return () => { cancelled = true; }; }, [selected]);
   const selectedReport = reports?.find((report) => report.weekId === selected);
-  return <div className="space-y-6">{selected ? <>
-    <header className="flex flex-wrap items-end justify-between gap-3"><div><button onClick={() => setSearchParams(writeWeeklyRouteState(searchParams, null, "report"), { replace: true })} className="mb-3 text-sm font-semibold text-cyan-300 hover:text-cyan-100">← 전체 주 목록</button><h1 className="text-2xl font-bold text-slate-100">주간 작업</h1></div>{selectedReport && <p className="font-mono text-sm text-slate-400">{selectedReport.weekId} · {selectedReport.start} — {selectedReport.end}</p>}</header>
+  return <div className="space-y-6"><PageHeading eyebrow="WEEKLY REVIEW" title="주간 작업" description="한 주의 작업 결과와 기술 학습을 기록하고 다시 확인합니다." />{selected ? <>
+    <header className="flex flex-wrap items-end justify-between gap-3"><button onClick={() => setSearchParams(writeWeeklyRouteState(searchParams, null, "report"), { replace: true })} className="text-sm font-semibold text-cyan-300 hover:text-cyan-100">← 전체 주 목록</button>{selectedReport && <p className="font-mono text-sm text-slate-400">{selectedReport.weekId} · {selectedReport.start} — {selectedReport.end}</p>}</header>
     <main>{detail ? <ReportBody detail={detail} tab={routeState.view} onTabChange={(view) => setSearchParams(writeWeeklyRouteState(searchParams, selected, view), { replace: true })} /> : <div className="h-28 animate-pulse rounded-xl bg-[var(--color-surface)]" />}</main>
-  </> : <><header><h1 className="text-2xl font-bold text-slate-100">Weekly</h1><p className="mt-1 text-sm text-slate-400">한 주를 선택하면 작업 내용과 기술 학습을 확인할 수 있습니다.</p></header>
+  </> : <>
     {reports !== null && reports.length === 0 ? <p className="text-sm text-slate-400">보고서가 없습니다.</p> : reports && <WeeklyIndex reports={reports} onOpen={(weekId) => setSearchParams(writeWeeklyRouteState(searchParams, weekId, "report"), { replace: true })} />}
   </>}
   </div>;

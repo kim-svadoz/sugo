@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useProfile } from "../hooks/useProfile.js";
 import { getWeatherRegion, setWeatherRegion, WEATHER_REGIONS } from "../lib/weatherPreferences.js";
 import { cn } from "../lib/utils.js";
+import { PageHeading } from "../components/PageHeading.js";
 
 type PreferencesTab = "general" | "weather";
 
@@ -20,7 +21,7 @@ export function Preferences() {
   const selectTab = (next: PreferencesTab) => setSearchParams(next === "general" ? {} : { tab: next }, { replace: true });
 
   return <div className="mx-auto max-w-5xl space-y-5">
-    <div><div className="font-mono text-[10px] font-semibold tracking-[0.16em] text-cyan-300">SYSTEM PREFERENCES</div><h1 className="mt-2 text-2xl font-semibold text-[var(--color-text-bright)]">시스템 설정</h1><p className="mt-1 text-sm text-[var(--color-text-muted)]">이 브라우저에서 사용하는 Sugo의 기본 환경을 설정합니다.</p></div>
+    <PageHeading eyebrow="SYSTEM PREFERENCES" title="시스템 설정" description="이 브라우저에서 사용하는 Sugo의 기본 환경을 설정합니다." />
     <div className="flex gap-1 border-b border-[var(--color-border)]" role="tablist" aria-label="시스템 설정">
       {([['general', '일반', MonitorCog], ['weather', '날씨', CloudSun]] as const).map(([id, label, Icon]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => selectTab(id)} className={cn("flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors", tab === id ? "border-cyan-300 text-cyan-200" : "border-transparent text-[var(--color-text-muted)] hover:text-white")}><Icon size={15} />{label}</button>)}
     </div>

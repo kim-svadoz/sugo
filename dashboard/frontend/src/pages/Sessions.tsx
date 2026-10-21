@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "../lib/utils.js";
+import { PageHeading } from "../components/PageHeading.js";
 import { WORKSPACE_CARD_FOCUS_CLASSES, getWorkspaceColor, workspaceCardEmphasis, workspaceCardShadow } from "../lib/workspaceSelection.js";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import {
@@ -547,6 +548,7 @@ export function Sessions() {
 
   return (
     <div className="flex h-[calc(100vh-7rem)] min-h-[640px] flex-col gap-4">
+      <PageHeading eyebrow="WORKSPACE OPERATIONS" title="워크스페이스" description="도메인별 개발 흐름과 운영 상태를 한곳에서 확인합니다." />
       {isSearchMode && (
         <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-3">
           <p className="text-sm text-[var(--color-text)]">

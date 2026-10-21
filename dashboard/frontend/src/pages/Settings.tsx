@@ -15,6 +15,7 @@ import { summarizeSageMaker } from "../lib/awsInventoryPresentation.js";
 import { awsAccountMetaLabel, awsAccountOptionLabel, initialIntegrationSelection, integrationStatusLabel, isExactIntegrationCandidate, moveIntegrationKeys, partitionIntegrationCandidates } from "../lib/projectIntegrationPresentation.js";
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
 import { snapshotAge } from "../lib/snapshotAge.js";
+import { PageHeading } from "../components/PageHeading.js";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 const contextAutoRefreshDescription = "Dashboard 실행 중에는 매일 08:00 KST 자동 동기화 · 꺼져 있었다면 다음 실행 시 갱신 · 수동 동기화 가능";
@@ -433,11 +434,8 @@ export function Settings() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-8">
-      <div>
-        <h1 className="mb-1 text-2xl font-bold text-[var(--color-text-bright)]">Integrations</h1>
-        <p className="text-sm text-[var(--color-text-muted)]">외부 연동을 설정합니다.</p>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-5">
+      <PageHeading eyebrow="SYSTEM INTEGRATIONS" title="외부 연동" description="저장소와 운영 환경을 연결하고, Sugo가 사용할 외부 서비스의 범위를 관리합니다." />
 
       {!LOCAL_DEV && <ApiTokensCard />}
 

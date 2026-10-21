@@ -4,6 +4,7 @@ import { Boxes, ChevronRight, Layers3, Pencil, RotateCcw } from "lucide-react";
 import { getHarnessManifest, getHarnessSource, resetHarnessOverride, saveHarnessOverride, type HarnessManifestEntry } from "../api/catalogApi.js";
 import { groupHarnessManifest, harnessCategoryLabel, harnessVersion, simplifyHarnessHeading, type HarnessTechnology } from "../lib/harnessCatalog.js";
 import { cn } from "../lib/utils.js";
+import { PageHeading } from "../components/PageHeading.js";
 
 // Harness — unified 마크다운 렌더 + manifest 칩. 데이터는 백엔드 /api/harness(HARNESS_PATH).
 export function Harness() {
@@ -73,11 +74,10 @@ export function Harness() {
 
   return (
     <div className="space-y-6">
-      {/* Harness 헤더 — 제목 + 부제. */}
-      <div>
-        <h1 className="text-2xl font-bold text-[var(--color-text-bright)]">Harness</h1>
-        <p className="text-[var(--color-text-muted)]">카테고리에서 기술을 고르고, 마지막에 버전별 규칙을 확인합니다.</p>
-      </div>
+      <PageHeading eyebrow="ENGINEERING HARNESS" title="하네스 규칙" description="기술과 버전에 맞는 검증 규칙을 선택하고, 프로젝트마다 일관된 개발 기준을 적용합니다." />
+      <section className="grid gap-3 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.035] p-4 md:grid-cols-3" aria-label="하네스 사용 안내">
+        {[['01', '기술 선택', '프로젝트에 사용하는 프레임워크·언어·빌드 도구를 고릅니다.'], ['02', '버전 확인', '선택한 기술의 버전에 맞는 기본 규칙을 확인합니다.'], ['03', '프로젝트 적용', '저장한 규칙은 다음 동기화부터 해당 프로젝트의 검증 기준으로 사용됩니다.']].map(([step, title, text]) => <div key={step} className="flex gap-3"><span className="font-mono text-[11px] font-semibold text-cyan-300">{step}</span><div><h2 className="text-sm font-semibold text-slate-100">{title}</h2><p className="mt-1 text-xs leading-5 text-slate-400">{text}</p></div></div>)}
+      </section>
 
       {empty ? (
         <div className="ck-glass ck-card ck-scan space-y-2 text-sm text-slate-300">
