@@ -23,7 +23,6 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "../lib/utils.js";
-import { PageHeading } from "../components/PageHeading.js";
 import { WORKSPACE_CARD_FOCUS_CLASSES, getWorkspaceColor, workspaceCardEmphasis, workspaceCardShadow } from "../lib/workspaceSelection.js";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import {
@@ -548,7 +547,41 @@ export function Sessions() {
 
   return (
     <div className="flex h-[calc(100vh-7rem)] min-h-[640px] flex-col gap-4">
-      <PageHeading eyebrow="WORKSPACE OPERATIONS" title="워크스페이스" description="도메인별 개발 흐름과 운영 상태를 한곳에서 확인합니다." />
+      <section aria-label="워크스페이스 운영 도구" className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="shrink-0 text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-bright)]">
+              워크스페이스 <span className="align-middle text-sm font-normal text-[var(--color-text-dim)]">({filteredWorkspaces.length})</span>
+            </h1>
+            <OperationalPulse
+              label="전체 워크스페이스 운영 현황"
+              items={[
+                { label: "진행", value: pulse.active, icon: Activity, tone: pulse.active > 0 ? "cyan" : "neutral" },
+                { label: "확인 필요", value: pulse.attention, icon: AlertTriangle, tone: pulse.attention > 0 ? "warning" : "neutral" },
+                { label: "완료", value: pulse.total > 0 ? `${pulse.done}/${pulse.total}` : "—", icon: CheckCircle2, tone: pulse.total > 0 && pulse.done === pulse.total ? "success" : "neutral" },
+              ]}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => setShowStatusGuide(true)} className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-2.5 py-1.5 font-mono text-xs text-slate-400 transition-all hover:border-cyan-500/40 hover:text-cyan-400"><Info size={13} /> Guide</button>
+            <div className="relative w-56">
+              <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+              <input type="text" placeholder="Search history..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 pl-8 pr-7 text-[13px] text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-500/60" />
+              {isSearching && <div className="absolute right-2.5 top-1/2 -translate-y-1/2"><div className="h-3.5 w-3.5 animate-spin rounded-full border-b-2 border-cyan-400" /></div>}
+              {searchQuery && !isSearching && <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><X size={14} /></button>}
+            </div>
+            <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 text-[12.5px]">
+              {([['all', 'All Domains'], ['recent', 'Recently Active (30d)']] as const).map(([f, label]) => <button key={f} onClick={() => setStatusFilter(f)} className={cn("rounded-md px-2.5 py-1 transition-colors", statusFilter === f ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")}>{label}</button>)}
+            </div>
+            <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5">
+              <button onClick={() => setViewMode("grid")} className={cn("rounded-md p-1.5", viewMode === "grid" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")} title="Grid View"><LayoutGrid size={15} /></button>
+              <button onClick={() => setViewMode("list")} className={cn("rounded-md p-1.5", viewMode === "list" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")} title="Compact List View"><Rows3 size={15} /></button>
+            </div>
+            <button onClick={copyAddDomain} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/10" title="/sugo:ws-add 명령 복사"><Plus size={14} /> {addCopied ? "복사됨 · /sugo:ws-add" : "Add Domain"}</button>
+          </div>
+        </div>
+        <p className="text-sm text-[var(--color-text-muted)]">도메인별 개발 흐름과 운영 상태를 한곳에서 확인합니다.</p>
+      </section>
       {isSearchMode && (
         <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-3">
           <p className="text-sm text-[var(--color-text)]">
@@ -557,108 +590,6 @@ export function Sessions() {
           </p>
         </div>
       )}
-
-      {/* 1단 통합 툴바 — Domains(N) ··· Guide · 검색 · 필터 · 뷰토글 · Add Domain */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="shrink-0 text-lg font-semibold text-[var(--color-text-bright)]">
-            Domains <span className="text-sm font-normal text-[var(--color-text-dim)]">({filteredWorkspaces.length})</span>
-          </h2>
-          <OperationalPulse
-            label="전체 도메인 운영 현황"
-            items={[
-              { label: "진행", value: pulse.active, icon: Activity, tone: pulse.active > 0 ? "cyan" : "neutral" },
-              { label: "확인 필요", value: pulse.attention, icon: AlertTriangle, tone: pulse.attention > 0 ? "warning" : "neutral" },
-              { label: "완료", value: pulse.total > 0 ? `${pulse.done}/${pulse.total}` : "—", icon: CheckCircle2, tone: pulse.total > 0 && pulse.done === pulse.total ? "success" : "neutral" },
-            ]}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setShowStatusGuide(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-2.5 py-1.5 font-mono text-xs text-slate-400 transition-all hover:border-cyan-500/40 hover:text-cyan-400"
-          >
-            <Info size={13} /> Guide
-          </button>
-          <div className="relative w-56">
-            <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
-            <input
-              type="text"
-              placeholder="Search history..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 pl-8 pr-7 text-[13px] text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-500/60"
-            />
-            {isSearching && (
-              <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                <div className="h-3.5 w-3.5 animate-spin rounded-full border-b-2 border-cyan-400" />
-              </div>
-            )}
-            {searchQuery && !isSearching && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-          <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 text-[12.5px]">
-            {(
-              [
-                ["all", "All Domains"],
-                ["recent", "Recently Active (30d)"],
-              ] as const
-            ).map(([f, label]) => (
-              <button
-                key={f}
-                onClick={() => setStatusFilter(f)}
-                className={cn(
-                  "rounded-md px-2.5 py-1 transition-colors",
-                  statusFilter === f
-                    ? "bg-cyan-500/15 text-cyan-200"
-                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "rounded-md p-1.5",
-                viewMode === "grid"
-                  ? "bg-cyan-500/15 text-cyan-200"
-                  : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
-              )}
-              title="Grid View"
-            >
-              <LayoutGrid size={15} />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "rounded-md p-1.5",
-                viewMode === "list"
-                  ? "bg-cyan-500/15 text-cyan-200"
-                  : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
-              )}
-              title="Compact List View"
-            >
-              <Rows3 size={15} />
-            </button>
-          </div>
-          <button
-            onClick={copyAddDomain}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/10"
-            title="/sugo:ws-add 명령 복사"
-          >
-            <Plus size={14} /> {addCopied ? "복사됨 · /sugo:ws-add" : "Add Domain"}
-          </button>
-        </div>
-      </div>
 
       <button
         type="button"
