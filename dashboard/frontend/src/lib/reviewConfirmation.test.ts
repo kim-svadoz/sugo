@@ -26,6 +26,8 @@ describe("reviewConfirmationSections", () => {
     expect(source).toContain("입력한 수정 요청이 있습니다");
     expect(source).toContain("승인으로 저장했습니다");
     expect(source).toContain("수정 요청으로 저장했습니다");
+    expect(source).toContain("이번 변경 파일 diff 보기");
+    expect(source).not.toContain("원래 작업 세션에 프롬프트를 붙여넣으면");
     expect(source).not.toContain(">확인, 진행</button>");
     expect(source).not.toContain("진행 결정 저장됨");
   });

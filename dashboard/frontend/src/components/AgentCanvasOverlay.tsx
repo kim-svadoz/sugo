@@ -19,11 +19,13 @@ export function AgentCanvasOverlay({
   workspace,
   onClose,
   focusNodeId,
+  initialFilePath,
 }: {
   workspace: string;
   onClose: () => void;
   /** Schedule 탭에서 특정 spec을 보려고 열었을 때. */
   focusNodeId?: string;
+  initialFilePath?: string;
 }) {
   const { data, refetch } = useRoadmap(workspace);
   const nodes = data ?? [];
@@ -99,7 +101,7 @@ export function AgentCanvasOverlay({
               표시할 AI 작업이 없습니다
             </div>
           ) : (
-            <RoadmapTab workspace={workspace} focusNodeId={focusNodeId} fill onEdited={refetch} onFileViewerChange={setFileViewerOpen} />
+            <RoadmapTab workspace={workspace} focusNodeId={focusNodeId} initialFilePath={initialFilePath} fill onEdited={refetch} onFileViewerChange={setFileViewerOpen} />
           )}
         </div>
 

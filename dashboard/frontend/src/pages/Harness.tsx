@@ -87,7 +87,7 @@ export function Harness() {
           </p>
         </div>
       ) : (
-        <div className="grid min-h-[calc(100vh-210px)] grid-cols-[minmax(0,1fr)_minmax(0,2fr)] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] max-xl:grid-cols-1">
+        <div className="grid min-h-[calc(100vh-210px)] grid-cols-[minmax(350px,0.72fr)_minmax(0,2.28fr)] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] max-xl:grid-cols-1">
           <section className="border-r border-[var(--color-border)] p-6 max-xl:border-b max-xl:border-r-0">
             <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label="하네스 카테고리">
               {categories.map((key) => (
@@ -99,7 +99,7 @@ export function Harness() {
               {visibleGroups.map((group) => <TechnologyCard key={group.key} group={group} selected={technologyKey === group.key} onClick={() => setTechnologyKey(group.key)} />)}
             </div>
           </section>
-          <section className="grid min-h-0 grid-cols-[150px_minmax(0,1fr)] max-md:grid-cols-1">
+          <section className="grid min-h-0 grid-cols-[112px_minmax(0,1fr)] max-md:grid-cols-1">
             <aside className="border-r border-[var(--color-border)] bg-[var(--color-background)]/35 p-4 max-md:border-b max-md:border-r-0">
               <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-dim)]"><Layers3 size={13} /> 버전</div>
               <div className="flex flex-col gap-1.5 max-md:flex-row max-md:flex-wrap">

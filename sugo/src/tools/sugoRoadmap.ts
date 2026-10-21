@@ -20,7 +20,7 @@ import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../work/types.js";
 import { fetchBlockerDecision } from "../dashboard/fetch.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
 import { assessSession } from "../ontology/sessionAssessment.js";
-import { buildReviewConfirmationBlocker } from "../reviewConfirmation.js";
+import { buildReviewConfirmationBlocker, reviewDecisionResumeAction } from "../reviewConfirmation.js";
 import { snapshotReviewArtifacts } from "../dashboard/workResultFiles.js";
 import { syncReviewArtifacts } from "../dashboard/sync.js";
 import { buildWorkResultReport } from "../workResultReport.js";
@@ -266,7 +266,7 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       await updateRoadmapNodeRuntimeAssessment(args.workspace, args.id, assessSession(session));
       return ok({
         decision: remote.decision,
-        resumeAction: remote.blocker?.resumeAction,
+        resumeAction: reviewDecisionResumeAction(gate.blocker, remote.decision.response),
         node: await getRoadmapNode(args.workspace, args.id),
       });
     }

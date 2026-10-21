@@ -1069,6 +1069,7 @@ export function RoadmapGraph({
   onEdited,
   nodeFilter,
   focusNodeId,
+  initialFilePath,
   onFileViewerChange,
 }: {
   workspace: string;
@@ -1079,6 +1080,7 @@ export function RoadmapGraph({
   /** Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). 로드된 뒤 그 노드로 팬 + 선택하고
    * 1회만 적용한다(이후 폴링 갱신에서 다시 튀지 않게 `focusedOnce`로 잠근다). */
   focusNodeId?: string;
+  initialFilePath?: string;
   onFileViewerChange?: (open: boolean) => void;
 }) {
   const { userId } = useAuth();
@@ -1196,6 +1198,7 @@ export function RoadmapGraph({
   );
   const [guideOpen, setGuideOpen] = useState(false);
   const [fileViewer, setFileViewer] = useState<{ file: WorkResultFile; expanded: boolean } | null>(null);
+  const [initialFileOpened, setInitialFileOpened] = useState(false);
   useEffect(() => {
     onFileViewerChange?.(Boolean(fileViewer));
     return () => onFileViewerChange?.(false);
@@ -1473,6 +1476,13 @@ export function RoadmapGraph({
     () => selectedNode ? filesForRoadmapScope(selectedNode, data ?? nodes) : [],
     [selectedNode, data, nodes],
   );
+  useEffect(() => {
+    if (!initialFilePath || initialFileOpened || !selectedNode) return;
+    const file = selectedFiles.find((candidate) => candidate.path === initialFilePath);
+    if (!file) return;
+    setInitialFileOpened(true);
+    setFileViewer({ file, expanded: true });
+  }, [initialFilePath, initialFileOpened, selectedFiles, selectedNode]);
   const selectViewerFile = useCallback(async (file: WorkResultFile) => {
     if (file.diff || (file.content && file.change !== "modified" && !file.unavailableReason) || !userId || !selectedNode) {
       setFileViewer((current) => ({ file, expanded: current?.expanded ?? true }));
@@ -1830,6 +1840,7 @@ export function RoadmapGraphPanel(props: {
   nodeFilter?: RoadmapNode[];
   /** Schedule 탭 딥링크. */
   focusNodeId?: string;
+  initialFilePath?: string;
   onFileViewerChange?: (open: boolean) => void;
 }) {
   return (

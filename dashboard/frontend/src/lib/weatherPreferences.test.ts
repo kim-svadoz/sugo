@@ -14,6 +14,7 @@ describe("weather preferences", () => {
 
   it("광역 단위가 아닌 사용자가 알아볼 수 있는 대표 도시를 제공한다", () => {
     expect(WEATHER_REGIONS.map((region) => region.id)).toContain("seoul-cityhall");
+    expect(WEATHER_REGIONS.find((region) => region.id === "seoul-gangnam")?.label).toBe("서울특별시 · 강남");
     expect(WEATHER_REGIONS.map((region) => region.id)).toContain("suwon");
     expect(WEATHER_REGIONS.find((region) => region.id === "suwon")?.label).toBe("경기도 · 수원");
     expect(WEATHER_REGIONS.every((region) => Number.isFinite(region.latitude) && Number.isFinite(region.longitude))).toBe(true);

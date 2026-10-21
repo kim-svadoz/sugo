@@ -70,6 +70,7 @@ export function RoadmapTab({
   onEdited,
   fill,
   focusNodeId,
+  initialFilePath,
   onFileViewerChange,
 }: {
   workspace: string;
@@ -77,6 +78,7 @@ export function RoadmapTab({
   fill?: boolean;
   /** Schedule 탭 딥링크(`/roadmap/:workspace?focus=`). */
   focusNodeId?: string;
+  initialFilePath?: string;
   onFileViewerChange?: (open: boolean) => void;
 }) {
   const { data, counts, issues, loading } = useRoadmap(workspace);
@@ -146,10 +148,10 @@ export function RoadmapTab({
 
       {fill ? (
         <div className="min-h-0 flex-1">
-          <RoadmapGraphPanel workspace={workspace} onEdited={onEdited} nodeFilter={visible} focusNodeId={focusNodeId} onFileViewerChange={onFileViewerChange} fill />
+          <RoadmapGraphPanel workspace={workspace} onEdited={onEdited} nodeFilter={visible} focusNodeId={focusNodeId} initialFilePath={initialFilePath} onFileViewerChange={onFileViewerChange} fill />
         </div>
       ) : (
-        <RoadmapGraphPanel workspace={workspace} onEdited={onEdited} nodeFilter={visible} focusNodeId={focusNodeId} onFileViewerChange={onFileViewerChange} />
+        <RoadmapGraphPanel workspace={workspace} onEdited={onEdited} nodeFilter={visible} focusNodeId={focusNodeId} initialFilePath={initialFilePath} onFileViewerChange={onFileViewerChange} />
       )}
     </div>
   );

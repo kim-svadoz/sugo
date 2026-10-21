@@ -29,6 +29,7 @@ import { updateScheduleCommitment } from "../api/scheduleCommitmentApi.js";
 import { archiveScheduleSpec, restoreScheduleSpec, type ScheduleSpecArchiveReason } from "../api/scheduleSpecArchiveApi.js";
 import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
 import { useSearchParams } from "react-router-dom";
+import { findScheduleReviewTarget } from "../lib/scheduleReviewTarget.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -78,6 +79,7 @@ export function SchedulePage() {
   const { data: workspaces, error: workspaceError } = useWorkspaces();
   const { data: specs, memos, commitments, archives, refetch } = useSchedule();
   const reviewWorkspace = searchParams.get("reviewWorkspace");
+  const reviewSpec = searchParams.get("reviewSpec");
   const reviewTargetOpened = useRef(false);
 
   const today = nowKST();
@@ -106,15 +108,14 @@ export function SchedulePage() {
 
   useEffect(() => {
     if (!reviewWorkspace || reviewTargetOpened.current || !specs?.length) return;
-    const workspaceSpecs = specs.filter((spec) => spec.workspace_name === reviewWorkspace);
-    const reviewTarget = workspaceSpecs.find((spec) => {
+    const reviewTarget = findScheduleReviewTarget(specs, reviewWorkspace, reviewSpec, (spec) => {
       const kind = scheduleAttention(spec).kind;
       return kind === "blocked" || kind === "attention" || kind === "verification";
-    }) ?? workspaceSpecs[0];
+    });
     if (!reviewTarget) return;
     reviewTargetOpened.current = true;
     openSpec(reviewTarget);
-  }, [reviewWorkspace, specs]);
+  }, [reviewSpec, reviewWorkspace, specs]);
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
   // 안 보이면 사용자가 헷갈린다. 성공 시 잠깐 "저장됨"을 보여준다.
   const [savedFlash, setSavedFlash] = useState<"due" | "project" | "branch" | "title" | null>(null);
@@ -163,7 +164,7 @@ export function SchedulePage() {
   // 체크포인트/캔버스는 다른 화면으로 리다이렉트하지 않고
   // Schedule 위에 겹쳐서 뜬다 — Esc를 누르면 그냥 이 오버레이만 닫히고 Schedule로 남는다.
   const [checkpointTarget, setCheckpointTarget] = useState<{ workspace: string; projectPath: string | null; dueDate: string | null } | null>(null);
-  const [canvasOverlay, setCanvasOverlay] = useState<{ workspace: string; nodeId: string } | null>(null);
+  const [canvasOverlay, setCanvasOverlay] = useState<{ workspace: string; nodeId: string; filePath?: string } | null>(null);
   const [specDocumentTarget, setSpecDocumentTarget] = useState<{ workspace: string; nodeId: string; title: string } | null>(null);
 
   // spec-writer는 다른 터미널에서 완료되므로 4초 폴링 결과를 열린 상세에도 반영한다.
@@ -826,6 +827,7 @@ export function SchedulePage() {
                 <div className="mt-3">
                   <BlockerDecisionPanel
                     onOpenReport={() => openWorkResultHtml(selected.title, null, [], selected.focus_task_human_blocker?.reviewPacket)}
+                    onOpenDiff={selected.focus_task_human_blocker?.reviewPacket?.files?.[0] ? () => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.focus_task_id!, filePath: selected.focus_task_human_blocker!.reviewPacket!.files![0].path }) : undefined}
                     userId={userId}
                     workspace={selected.workspace_name}
                     taskId={selected.focus_task_id}
@@ -1149,6 +1151,7 @@ export function SchedulePage() {
         <AgentCanvasOverlay
           workspace={canvasOverlay.workspace}
           focusNodeId={canvasOverlay.nodeId}
+          initialFilePath={canvasOverlay.filePath}
           onClose={() => setCanvasOverlay(null)}
         />
       )}

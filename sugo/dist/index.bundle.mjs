@@ -28224,7 +28224,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.39.1" : "0.0.0-dev";
+  return true ? "0.39.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32582,6 +32582,11 @@ function buildReviewConfirmationBlocker(input) {
     }
   };
 }
+function reviewDecisionResumeAction(blocker, response) {
+  if (blocker.kind !== "review_confirmation") return blocker.resumeAction;
+  const approvalLabel = blocker.options.find((option) => option.id === "approve")?.label;
+  return response === approvalLabel ? blocker.resumeAction : "code_start";
+}
 
 // src/tools/sugoRoadmap.ts
 var sugoRoadmapInputSchema = {
@@ -32832,7 +32837,7 @@ async function handleSugoRoadmap(rawArgs) {
       await updateRoadmapNodeRuntimeAssessment(args2.workspace, args2.id, assessSession(session));
       return ok4({
         decision: remote.decision,
-        resumeAction: remote.blocker?.resumeAction,
+        resumeAction: reviewDecisionResumeAction(gate.blocker, remote.decision.response),
         node: await getRoadmapNode(args2.workspace, args2.id)
       });
     }

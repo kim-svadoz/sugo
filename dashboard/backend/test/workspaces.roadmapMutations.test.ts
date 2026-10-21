@@ -67,6 +67,19 @@ describe("blocked task decision", () => {
     expect(decision.body).toMatchObject({ blocker: { sessionId: "plan-1" }, decision: { response: "재설정 링크는 30분 뒤 만료한다." } });
   });
 
+  it("플러그인이 결정을 소비해 작업을 재개하면 저장된 답변을 비운다", async () => {
+    const humanBlocker = { schemaVersion: 1, sessionId: "plan-1", stage: "REVIEW_RUNNING", resumeAction: "review_done", summary: "검토", question: "진행?", context: [], options: [], blockedNextStep: "검토", createdAt: "2026-10-21" };
+    const { app, auth } = await appWithNodes([{ id: "review-task", level: "task", status: "blocked", humanBlocker }]);
+    await request(app).post("/api/workspaces/ws1/roadmap/blocker-decision").query({ userId: "u1" }).set("Authorization", auth).send({ nodeId: "review-task", response: "수정해 주세요" }).expect(200);
+
+    await request(app).post("/api/sync/roadmap").set("Authorization", auth).send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "review-task", title: "review-task", level: "task", status: "in_progress" }] }).expect(200);
+
+    const roadmap = await request(app).get("/api/workspaces/ws1/roadmap").query({ userId: "u1" }).set("Authorization", auth).expect(200);
+    const task = roadmap.body.nodes.find((node: { id: string }) => node.id === "review-task");
+    expect(task.blocker_decision).toBeNull();
+    expect(task.human_blocker).toBeNull();
+  });
+
   it("rejects decisions for a task that is not blocked", async () => {
     const { app, auth } = await appWithNodes([{ id: "active-task", level: "task", status: "in_progress" }]);
     const response = await request(app)

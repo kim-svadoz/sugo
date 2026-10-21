@@ -127,6 +127,8 @@ export function SubtaskPanel({
             requirementsUnavailable={requirementsUnavailable}
             onChanged={onChanged}
             onReviewResult={() => setTab("summary")}
+            files={files}
+            onOpenFile={onOpenFile}
           />
         )}
         {tab === "summary" && <SummaryTab title={node.title} workResult={workResult} reviewPacket={reviewPacket} requirements={node.level === "task" ? progressItems : []} />}
@@ -154,6 +156,8 @@ function ProgressTab({
   requirementsUnavailable,
   onChanged,
   onReviewResult,
+  files,
+  onOpenFile,
 }: {
   userId: string | null;
   workspace: string;
@@ -164,6 +168,8 @@ function ProgressTab({
   requirementsUnavailable: boolean;
   onChanged: () => void;
   onReviewResult: () => void;
+  files: WorkResultFile[];
+  onOpenFile: (file: WorkResultFile, expanded?: boolean) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [patchCopied, setPatchCopied] = useState(false);
@@ -283,6 +289,7 @@ function ProgressTab({
           blocker={node.human_blocker}
           onSaved={onChanged}
           onOpenReport={() => openWorkResultHtml(node.title, workResult, progressItems, node.human_blocker?.reviewPacket)}
+          onOpenDiff={files[0] ? () => onOpenFile(files[0], true) : undefined}
         />
       )}
       {requirementsUnavailable ? (

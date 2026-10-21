@@ -10,6 +10,7 @@ export const WEATHER_REGION_CHANGED = "sugo:weather-region-changed";
 
 export const WEATHER_REGIONS: readonly WeatherRegion[] = [
   { id: "seoul-cityhall", label: "서울특별시 · 시청", latitude: 37.5665, longitude: 126.9780 },
+  { id: "seoul-gangnam", label: "서울특별시 · 강남", latitude: 37.4979, longitude: 127.0276 },
   { id: "suwon", label: "경기도 · 수원", latitude: 37.2636, longitude: 127.0286 },
   { id: "seongnam", label: "경기도 · 성남", latitude: 37.4200, longitude: 127.1265 },
   { id: "goyang", label: "경기도 · 고양", latitude: 37.6584, longitude: 126.8320 },

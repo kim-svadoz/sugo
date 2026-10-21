@@ -5,7 +5,7 @@ import { blockerResumePrompt } from "../lib/blockerDecision.js";
 import { presentSteKorean } from "../lib/steKorean.js";
 import { reviewConfirmationSections } from "../lib/reviewConfirmation.js";
 
-export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, question, decision, blocker, onSaved, onOpenReport }: {
+export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, question, decision, blocker, onSaved, onOpenReport, onOpenDiff }: {
   userId: string | null;
   workspace: string;
   taskId: string;
@@ -15,6 +15,7 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
   blocker?: HumanBlocker | null;
   onSaved?: () => void;
   onOpenReport?: () => void;
+  onOpenDiff?: () => void;
 }) {
   const [response, setResponse] = useState(decision?.response ?? "");
   const [saved, setSaved] = useState<BlockerDecision | null>(decision ?? null);
@@ -67,15 +68,17 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
   if (Boolean(blocker?.kind === "review_confirmation")) return <section id="review-confirmation-panel" className="space-y-3 rounded-xl border border-amber-300/25 bg-amber-300/[0.04] p-4">
     <h3 className="text-sm font-semibold text-white">작업 결과 확인</h3>
     <p className="text-xs leading-relaxed text-slate-300">보고서를 확인한 뒤 아래에서 진행 또는 수정 요청을 선택하세요. 선택하면 결정을 저장하고 재개 프롬프트를 한 번에 복사합니다.</p>
-    <button type="button" onClick={onOpenReport} disabled={!onOpenReport} className="w-full rounded-lg border border-violet-300/30 bg-violet-400/10 px-4 py-3 text-sm font-semibold text-violet-100">리뷰 보고서 HTML로 열기 ↗</button>
+    <div className="grid grid-cols-2 gap-2">
+      <button type="button" onClick={onOpenReport} disabled={!onOpenReport} className="rounded-lg border border-violet-300/30 bg-violet-400/10 px-4 py-3 text-sm font-semibold text-violet-100 disabled:opacity-40">리뷰 보고서 HTML로 열기 ↗</button>
+      <button type="button" onClick={onOpenDiff} disabled={!onOpenDiff} className="rounded-lg border border-cyan-300/30 bg-cyan-400/[0.08] px-4 py-3 text-sm font-semibold text-cyan-100 disabled:opacity-40">이번 변경 파일 diff 보기 ↗</button>
+    </div>
     <label className="block text-xs text-slate-300">수정 요청 내용<textarea value={revisionText} onChange={event => { setResponse(event.target.value); setConfirmDiscard(false); setDecisionNotice(null); }} placeholder="수정이 필요할 때만 구체적으로 입력하세요" className="mt-2 min-h-24 w-full rounded-lg border border-white/15 bg-slate-950/50 p-3 text-sm text-white" /></label>
     {confirmDiscard && <div role="alert" className="rounded-lg border border-amber-300/30 bg-amber-300/[0.08] px-3 py-2 text-xs leading-relaxed text-amber-100"><strong>입력한 수정 요청이 있습니다.</strong> 승인하면 이 내용은 저장되지 않습니다. 승인하려면 ‘그래도 승인’을 누르세요.</div>}
     <div className="grid grid-cols-2 gap-2">
       <button type="button" disabled={busy} onClick={approveReview} className="rounded-lg bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-200 disabled:opacity-50">{confirmDiscard ? "그래도 승인" : "승인하고 진행"}</button>
-      <button type="button" disabled={busy || !revisionText.trim()} onClick={() => void copyResume(revisionText, "수정 요청으로 저장했습니다. 재개 프롬프트를 복사했습니다.")} className="rounded-lg border border-rose-300/25 bg-rose-400/[0.06] px-4 py-3 text-sm font-semibold text-rose-100 disabled:opacity-40">수정 요청</button>
+      <button type="button" disabled={busy || !revisionText.trim()} onClick={() => void copyResume(revisionText, "수정 요청으로 저장했습니다. 재개 프롬프트를 복사했습니다. 원래 작업 세션에 붙여넣어 이어가세요.")} className="rounded-lg border border-rose-300/25 bg-rose-400/[0.06] px-4 py-3 text-sm font-semibold text-rose-100 disabled:opacity-40">수정 요청</button>
     </div>
     {decisionNotice && <p role="status" className="rounded-lg bg-black/20 px-3 py-2 text-xs text-emerald-200">{decisionNotice}</p>}
-    {copied && <p className="text-xs text-slate-400">원래 작업 세션에 프롬프트를 붙여넣으면 검증 후 파이프라인이 재개됩니다.</p>}
     {error && <p role="alert" className="text-xs text-rose-300">{error}</p>}
   </section>;
 

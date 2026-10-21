@@ -673,6 +673,11 @@ export async function syncRoadmap(
 
     const sets = ["title = ?", "level = ?", "status = ?", "parent = ?", "ref = ?", "note = ?", "spec_path = ?", "blocker_context = ?", "synced_at = CURRENT_TIMESTAMP"];
     const params: unknown[] = [node.title, node.level, node.status, node.parent ?? null, node.ref ?? null, node.note ?? null, node.specPath ?? null, blockerContextJson];
+    // 플러그인이 사람의 결정을 소비해 차단을 해제한 순간, Dashboard의 입력값도 소비한다.
+    // blocked 상태의 재동기화는 폴링일 수 있으므로 그때는 사용자가 저장한 결정을 보존한다.
+    if (node.humanBlocker === undefined && node.status !== "blocked") {
+      sets.push("blocker_response = NULL", "blocker_answered_by = NULL", "blocker_answered_at = NULL");
+    }
     // 구버전 플러그인은 필드를 보내지 않는다. 이때 마지막으로 저장된 신형 projection을
     // null로 지우지 않아야 롤링 업데이트 중에도 Dashboard 판정이 흔들리지 않는다.
     if (hasRuntimeAssessment && node.runtimeAssessment !== undefined) {

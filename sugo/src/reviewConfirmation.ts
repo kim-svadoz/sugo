@@ -39,3 +39,9 @@ export function buildReviewConfirmationBlocker(input: ReviewConfirmationInput): 
     },
   };
 }
+
+export function reviewDecisionResumeAction(blocker: HumanBlocker, response: string): string {
+  if (blocker.kind !== "review_confirmation") return blocker.resumeAction;
+  const approvalLabel = blocker.options.find((option) => option.id === "approve")?.label;
+  return response === approvalLabel ? blocker.resumeAction : "code_start";
+}
