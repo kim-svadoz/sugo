@@ -504,10 +504,10 @@ export function SchedulePage() {
         <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">{errorMsg}</div>
       )}
 
-      <div className={cn("grid min-h-0 flex-1 grid-cols-1 gap-3 2xl:gap-4", scheduleView === "month" && "max-[1900px]:grid-rows-[auto_minmax(0,1fr)] min-[1901px]:grid-cols-[220px_1fr]")}>
+      <div className={cn("grid min-h-0 flex-1 grid-cols-1 gap-3 2xl:gap-4", scheduleView === "month" && "grid-cols-[clamp(150px,14vw,220px)_minmax(0,1fr)]")}>
         {scheduleView === "month" && (
         <div
-          className="ck-glass ck-card flex flex-col gap-2 overflow-auto p-3 transition-colors max-[1900px]:max-h-44"
+          className="ck-glass ck-card flex min-w-0 flex-col gap-2 overflow-auto p-3 transition-colors"
           onDragOver={(event) => {
             if (panelMode !== "backlog") return;
             event.preventDefault();
@@ -549,10 +549,9 @@ export function SchedulePage() {
                     type="button"
                     onClick={() => spec && openSpec(spec)}
                     style={style}
-                    className="flex h-[76px] flex-col items-start gap-1 overflow-hidden rounded-lg border px-2.5 py-2 text-left text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)]"
-                    title={`${commitment.workspace_name} · ${commitment.title}`}
+                    className="flex min-h-[76px] flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)]"
                   >
-                    <span className="w-full truncate whitespace-nowrap break-keep text-[12.5px] font-semibold">{commitment.title}</span>
+                    <span className="w-full break-keep text-[12.5px] font-semibold leading-5">{commitment.title}</span>
                     <span className="text-[10px] text-cyan-200">{action.label}</span>
                     <span className="line-clamp-2 text-[9.5px] text-[var(--color-text-dim)]">{action.detail}</span>
                   </button>
@@ -694,7 +693,7 @@ export function SchedulePage() {
           </div>
 
           <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-1 overflow-auto p-px">
-            {grid.map((day) => {
+            {grid.map((day, dayIndex) => {
               const key = toDateKey(day);
               const inMonth = day.getMonth() === cursor.month;
               const dayChips = byDate.get(key) ?? [];
@@ -743,7 +742,6 @@ export function SchedulePage() {
                           onDragStart={(e: DragEvent<HTMLDivElement>) => explicit ? startCommitmentDrag(e, commitment) : spec && startSpecDrag(e, spec)}
                           onDragEnd={() => setDragOverKey(null)}
                           className="shrink-0"
-                          title={`${commitment.workspace_name} · ${commitment.title}`}
                         >
                           <button
                             type="button"
@@ -752,7 +750,7 @@ export function SchedulePage() {
                             className="group/marker relative hidden h-2.5 w-2.5 rounded-[3px] border border-white/35 shadow-[0_0_7px_rgba(255,255,255,0.16)] max-[1900px]:block"
                             style={{ backgroundColor: colorOf(commitment.workspace_name) }}
                           >
-                            <span className={cn("pointer-events-none absolute top-full z-50 mt-2 w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/marker:translate-y-0 group-hover/marker:opacity-100 group-focus-visible/marker:translate-y-0 group-focus-visible/marker:opacity-100", day.getDay() >= 5 ? "right-0" : "left-0")}>
+                            <span className={cn("pointer-events-none absolute z-50 w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/marker:translate-y-0 group-hover/marker:opacity-100 group-focus-visible/marker:translate-y-0 group-focus-visible/marker:opacity-100", dayIndex >= 21 ? "bottom-full mb-2" : "top-full mt-2", day.getDay() >= 5 ? "right-0" : "left-0")}>
                               <span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300/75">일정 미리보기</span>
                               <strong className="mt-1.5 block text-[12px] leading-5 text-white">{commitment.title}</strong>
                               <span className="mt-1 block text-[9px] text-slate-500">{commitment.workspace_name} · {commitment.due_date ?? "날짜 미정"}</span>
@@ -766,7 +764,7 @@ export function SchedulePage() {
                         </div>
                       );
                     })}
-                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="group/memo relative flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1900px]:min-h-0 max-[1900px]:h-2.5 max-[1900px]:w-2.5 max-[1900px]:rounded-[3px] max-[1900px]:border-slate-200/55 max-[1900px]:bg-slate-200/75 max-[1900px]:p-0" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1900px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`메모 · ${memo.title}`} className="min-w-0 flex-1 truncate text-left max-[1900px]:absolute max-[1900px]:inset-0 max-[1900px]:text-transparent">{memo.title}</button><span className={cn("pointer-events-none absolute top-full z-50 mt-2 hidden w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/memo:translate-y-0 group-hover/memo:opacity-100 group-focus-within/memo:translate-y-0 group-focus-within/memo:opacity-100 max-[1900px]:block", day.getDay() >= 5 ? "right-0" : "left-0")}><span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-slate-400">메모 미리보기</span><strong className="mt-1.5 block text-[12px] leading-5 text-white">{memo.title}</strong><span className="mt-1 block text-[9px] text-slate-500">{memo.due_date ?? "일정 없음"}</span><span className="mt-2 block line-clamp-3 text-[10px] font-normal leading-4 text-slate-300">{memoPreview(memo.content_md)}</span></span></div>)}
+                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="group/memo relative flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1900px]:min-h-0 max-[1900px]:h-2.5 max-[1900px]:w-2.5 max-[1900px]:rounded-[3px] max-[1900px]:border-slate-200/55 max-[1900px]:bg-slate-200/75 max-[1900px]:p-0"><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1900px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`메모 · ${memo.title}`} className="min-w-0 flex-1 truncate text-left max-[1900px]:absolute max-[1900px]:inset-0 max-[1900px]:text-transparent">{memo.title}</button><span className={cn("pointer-events-none absolute z-50 hidden w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/memo:translate-y-0 group-hover/memo:opacity-100 group-focus-within/memo:translate-y-0 group-focus-within/memo:opacity-100 max-[1900px]:block", dayIndex >= 21 ? "bottom-full mb-2" : "top-full mt-2", day.getDay() >= 5 ? "right-0" : "left-0")}><span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-slate-400">메모 미리보기</span><strong className="mt-1.5 block text-[12px] leading-5 text-white">{memo.title}</strong><span className="mt-1 block text-[9px] text-slate-500">{memo.due_date ?? "일정 없음"}</span><span className="mt-2 block line-clamp-3 text-[10px] font-normal leading-4 text-slate-300">{memoPreview(memo.content_md)}</span></span></div>)}
                   </div>
                 </div>
               );

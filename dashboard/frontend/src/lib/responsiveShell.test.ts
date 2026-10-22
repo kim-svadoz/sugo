@@ -18,14 +18,17 @@ describe("responsive dashboard shell", () => {
     expect(schedule).toContain('aria-label={`메모 · ${memo.title}`}');
     expect(schedule).toContain("group-hover/marker:opacity-100");
     expect(schedule).toContain("rounded-[3px]");
-    expect(schedule).toContain("whitespace-nowrap break-keep");
+    expect(schedule).not.toContain("truncate whitespace-nowrap break-keep");
     expect(schedule).toContain("backgroundColor: colorOf(commitment.workspace_name)");
     expect(schedule).not.toContain("backgroundColor: getWorkspaceColor(commitment.workspace_name, 0)");
     expect(schedule).toContain("일정 미리보기");
     expect(schedule).not.toContain("calendarPreviewSummary(spec)");
     expect(schedule).not.toContain("nextAction.label");
-    expect(schedule).toContain('min-[1901px]:grid-cols-[220px_1fr]');
-    expect(schedule).toContain("max-[1900px]:max-h-44");
+    expect(schedule).toContain('grid-cols-[clamp(150px,14vw,220px)_minmax(0,1fr)]');
+    expect(schedule).not.toContain("max-[1900px]:max-h-44");
+    expect(schedule).toContain("dayIndex >= 21 ? \"bottom-full mb-2\" : \"top-full mt-2\"");
+    expect(schedule).toContain("break-keep text-[12.5px]");
+    expect(schedule).not.toContain('title={`${commitment.workspace_name} · ${commitment.title}`}');
   });
 
   it("keeps workspace cards and their actions inside the viewport", () => {
