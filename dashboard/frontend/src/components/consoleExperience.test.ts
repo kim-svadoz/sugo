@@ -24,6 +24,9 @@ describe("Console 정보 구조", () => {
     expect(home).toContain("{day.weekday}");
     expect(home).not.toContain('day.isToday ? "오늘"');
     expect(home).toContain("border-cyan-200/80");
+    expect(home).toContain('day.isToday ? "border-cyan-200/80 bg-transparent');
+    expect(home).not.toContain("setRegion(value); setSelectedDay(undefined)");
+    expect(home).toContain("setRegion(value); setPage(1)");
     expect(home).toContain("'전체'");
     expect(home).toContain("'국내'");
     expect(home).toContain("'국외'");
@@ -35,9 +38,10 @@ describe("Console 정보 구조", () => {
     expect(liveConsole).toContain("inline-flex items-center");
   });
 
-  it("Engineering Feed는 시각 메타데이터 대신 오전 8시 갱신 규칙을 안내한다", () => {
+  it("Engineering Feed는 군더더기 갱신 문구 없이 기술 블로그 모음임을 설명한다", () => {
     expect(home).toContain("Engineering Feed");
-    expect(home).toContain("매일 오전 8시 갱신");
+    expect(home).toContain("기술 블로그 모음");
+    expect(home).not.toContain("매일 오전 8시 갱신");
     expect(home).not.toContain("collectedAt(feed.fetchedAt)");
     expect(home).not.toContain("relativeTime(item.publishedAt)");
   });

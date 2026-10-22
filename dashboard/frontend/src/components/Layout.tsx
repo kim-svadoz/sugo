@@ -51,11 +51,11 @@ export function Layout() {
   }, [navigate]);
 
   return (
-    <div className="flex h-[calc(100vh/1.1)]">
+    <div className="flex h-full min-h-0">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-3 lg:p-5 2xl:p-6">
           <Outlet />
         </main>
       </div>

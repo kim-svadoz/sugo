@@ -81,4 +81,16 @@ describe("Home 학습 리뷰 대상", () => {
     expect(note?.learnings.some((item) => item.includes("메서드 계약"))).toBe(true);
     expect(note?.learnings.some((item) => item.includes("Mapper/Assembler"))).toBe(true);
   });
+
+  it("검증 로그는 변경 목록에서 빼고 축약된 제거 문장은 의도가 드러나게 정제한다", () => {
+    const spec = {
+      id: "catalog-scroll", workspace_name: "catalog-service", title: "상품 목록 - 연속 로딩", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
+      development_history: [{ ...history(4, "2026-10-21T03:00:00.000Z"), work_result: { patchVersion: 4, report: { patchVersion: 4, summary: "개수 없는 조회와 LIMITED_RESULT는 제거; baseline 63/63, clean check 75/75(contextLoads 포함); 운영 시뮬레이터로 로컬 호출 확인", designDecisions: [], knownLimitations: [] } } }],
+    } as ScheduledSpec;
+
+    const note = selectLearningReviewNote([{ spec, history: spec.development_history![0] }]);
+
+    expect(note?.summary).toEqual(["page_size 없이 호출하던 미사용 조회 경로와 LIMITED_RESULT 분기를 제거해, 조회 계약을 page_size 기준 하나로 단순화했다."]);
+    expect(note?.summary.join(" ")).not.toMatch(/baseline|gradle|clean check|시뮬레이터/i);
+  });
 });

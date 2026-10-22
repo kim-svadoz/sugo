@@ -547,7 +547,7 @@ export function SchedulePage() {
                     className="flex h-[76px] flex-col items-start gap-1 overflow-hidden rounded-lg border px-2.5 py-2 text-left text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)]"
                     title={`${commitment.workspace_name} · ${commitment.title}`}
                   >
-                    <span className="w-full truncate text-[12.5px] font-semibold">{commitment.title}</span>
+                    <span className="w-full truncate whitespace-nowrap break-keep text-[12.5px] font-semibold">{commitment.title}</span>
                     <span className="text-[10px] text-cyan-200">{action.label}</span>
                     <span className="line-clamp-2 text-[9.5px] text-[var(--color-text-dim)]">{action.detail}</span>
                   </button>
@@ -725,7 +725,7 @@ export function SchedulePage() {
                       더블클릭해 메모
                     </span>
                   )}
-                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1", daySpecOverflowClass())}>
+                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1 max-[1500px]:flex-row max-[1500px]:flex-wrap max-[1500px]:content-start max-[1500px]:overflow-hidden", daySpecOverflowClass())}>
                     {dayChips.map((commitment) => {
                       const style = scheduleCardStyle(colorOf(commitment.workspace_name));
                       const spec = specForCommitment(commitment);
@@ -737,17 +737,19 @@ export function SchedulePage() {
                           onDoubleClick={(event) => event.stopPropagation()}
                           onDragStart={(e: DragEvent<HTMLDivElement>) => explicit ? startCommitmentDrag(e, commitment) : spec && startSpecDrag(e, spec)}
                           onDragEnd={() => setDragOverKey(null)}
-                          style={style}
-                          className="flex min-h-[26px] shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)]"
+                          className="shrink-0"
                           title={`${commitment.workspace_name} · ${commitment.title}`}
                         >
-                          <button type="button" onClick={() => spec && openSpec(spec)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100">{commitment.title}</button>
-                          {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">파이프라인 완료</span>}
-                          {spec && <SpecDeploymentBadge deployment={spec.deployment} title={commitment.title} />}
+                          <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1500px]:hidden">
+                            <button type="button" onClick={() => spec && openSpec(spec)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100">{commitment.title}</button>
+                            {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">파이프라인 완료</span>}
+                            {spec && <SpecDeploymentBadge deployment={spec.deployment} title={commitment.title} />}
+                          </div>
+                          <button type="button" onClick={() => spec && openSpec(spec)} aria-label={`${commitment.title} 열기`} className="hidden max-[1500px]:flex h-3 w-3 shrink-0 items-center justify-center rounded-full ring-1 ring-white/25 transition-transform hover:scale-125" style={{ backgroundColor: String(style.borderLeftColor ?? "#22d3ee") }} />
                         </div>
                       );
                     })}
-                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300" /><button type="button" onClick={() => openMemo(memo)} className="min-w-0 flex-1 truncate text-left">{memo.title}</button></div>)}
+                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1500px]:min-h-0 max-[1500px]:h-3 max-[1500px]:w-3 max-[1500px]:rounded-full max-[1500px]:border-slate-300/40 max-[1500px]:bg-slate-300/70 max-[1500px]:p-0" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1500px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`${memo.title} 메모 열기`} className="min-w-0 flex-1 truncate text-left max-[1500px]:sr-only">{memo.title}</button></div>)}
                   </div>
                 </div>
               );

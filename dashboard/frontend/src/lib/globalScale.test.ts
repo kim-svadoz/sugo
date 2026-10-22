@@ -14,7 +14,8 @@ describe("Console 기본 화면 스케일", () => {
   it("확대된 셸이 viewport 아래로 잘리지 않는다", () => {
     const css = fs.readFileSync(path.resolve("src/index.css"), "utf8");
     const source = fs.readFileSync(path.resolve("src/components/Layout.tsx"), "utf8");
-    expect(source).toContain("h-[calc(100vh/1.1)]");
+    expect(source).toContain("h-full min-h-0");
+    expect(source).not.toContain("h-[calc(100vh/1.1)]");
     expect(css).toMatch(/html\s*\{[^}]*overflow:\s*hidden;/s);
     expect(css).toMatch(/body\s*\{[^}]*height:\s*calc\(100vh\s*\/\s*1\.1\);[^}]*overflow:\s*hidden;/s);
     expect(css).toMatch(/#root\s*\{[^}]*height:\s*100%;[^}]*min-height:\s*0;/s);

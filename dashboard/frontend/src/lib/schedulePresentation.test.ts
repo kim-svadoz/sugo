@@ -216,7 +216,7 @@ describe("schedule presentation", () => {
       expect(source).toContain("WORKSPACE_RULES_TOOL.label");
       expect(source).toContain("AI_WORK_STATUS_TOOL.label");
     }
-    expect(workspaces).toContain("flex flex-wrap items-center gap-2");
+    expect(workspaces).toContain("grid grid-cols-2 gap-2");
     expect(workspaces).not.toContain("md:col-span-2 xl:col-span-2");
     expect(checkpoint).toContain("WORKSPACE_RULES_TOOL.label");
   });

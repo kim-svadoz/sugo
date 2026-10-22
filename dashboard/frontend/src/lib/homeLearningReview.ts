@@ -44,6 +44,10 @@ function conciseLines(values: Array<string | null | undefined>, limit: number): 
   return values
     .flatMap((value) => (value ?? "").split(/\n+|;\s*|(?<=[.!?])\s+/))
     .map((value) => value.replace(/\s+/g, " ").replace(/^[-•]\s*/, "").replace(/\s*\(사용자 결정\)\.?$/, ".").trim())
+    .filter((value) => !/\b(?:baseline|gradle|clean check)\b|시뮬레이터.*(?:호출|확인)|\b\d+\/\d+\s*(?:통과|포함)?/i.test(value))
+    .map((value) => /개수 없는 조회와\s+LIMITED_RESULT(?:는|를)?\s*제거/.test(value)
+      ? "page_size 없이 호출하던 미사용 조회 경로와 LIMITED_RESULT 분기를 제거해, 조회 계약을 page_size 기준 하나로 단순화했다."
+      : value)
     .filter((value) => value.length >= 8)
     .map((value) => value.length > 190 ? `${value.slice(0, 187).trim()}…` : value)
     .filter((value, index, all) => all.indexOf(value) === index)
