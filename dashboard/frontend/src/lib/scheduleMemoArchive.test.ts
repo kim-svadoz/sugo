@@ -15,5 +15,7 @@ describe("schedule memo archive", () => {
     expect(page).toContain("memoArchives");
     expect(page).toContain("restoreScheduleMemo");
     expect(modal).toContain("보관된 메모");
+    expect(modal).toContain("개발 일정");
+    expect(modal).toContain('section === "memo"');
   });
 });

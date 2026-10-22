@@ -49,6 +49,20 @@ function latestWorkResultPath(spec: ScheduledSpec): string | null {
     : null;
 }
 
+function calendarPreviewSummary(spec: ScheduledSpec | null): string {
+  if (!spec) return "연결된 개발 기록이 없습니다.";
+  if (spec.focus_task_note?.trim()) return spec.focus_task_note.trim();
+  const latest = [...(spec.development_history ?? [])]
+    .filter((entry) => entry.summary?.trim())
+    .sort((left, right) => right.version - left.version)[0];
+  return latest?.summary?.trim() ?? "아직 기록된 작업 요약이 없습니다.";
+}
+
+function memoPreview(content: string): string {
+  const plain = content.replace(/^#{1,6}\s+/gm, "").replace(/[-*`]\s*/g, " ").replace(/\s+/g, " ").trim();
+  return plain || "작성된 상세 내용이 없습니다.";
+}
+
 function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compact?: boolean }) {
   const guidance = scheduleAttention(spec);
   const tone = ({
@@ -725,11 +739,12 @@ export function SchedulePage() {
                       더블클릭해 메모
                     </span>
                   )}
-                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1 max-[1900px]:flex-row max-[1900px]:flex-wrap max-[1900px]:content-start max-[1900px]:overflow-hidden", daySpecOverflowClass())}>
+                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1 max-[1900px]:flex-row max-[1900px]:flex-wrap max-[1900px]:content-start max-[1900px]:!overflow-visible", daySpecOverflowClass())}>
                     {dayChips.map((commitment) => {
                       const style = scheduleCardStyle(colorOf(commitment.workspace_name));
                       const spec = specForCommitment(commitment);
                       const explicit = !commitment.id.startsWith("legacy:");
+                      const nextAction = commitmentNextAction(commitment);
                       return (
                         <div
                           key={commitment.id}
@@ -745,9 +760,15 @@ export function SchedulePage() {
                             onClick={() => spec && openSpec(spec)}
                             aria-label={`개발 일정 · ${commitment.title}`}
                             className="group/marker relative hidden h-2.5 w-2.5 rounded-[3px] border border-white/35 shadow-[0_0_7px_rgba(255,255,255,0.16)] max-[1900px]:block"
-                            style={{ backgroundColor: getWorkspaceColor(commitment.workspace_name, 0) }}
+                            style={{ backgroundColor: colorOf(commitment.workspace_name) }}
                           >
-                            <span className="pointer-events-none absolute bottom-full right-0 z-30 mb-1.5 w-max max-w-52 translate-y-1 rounded-md border border-slate-600 bg-slate-950 px-2 py-1 text-[10px] font-medium leading-4 text-slate-100 opacity-0 shadow-xl transition-all group-hover/marker:translate-y-0 group-hover/marker:opacity-100 group-focus-visible/marker:translate-y-0 group-focus-visible/marker:opacity-100">{commitment.title}</span>
+                            <span className={cn("pointer-events-none absolute top-full z-50 mt-2 w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/marker:translate-y-0 group-hover/marker:opacity-100 group-focus-visible/marker:translate-y-0 group-focus-visible/marker:opacity-100", day.getDay() >= 5 ? "right-0" : "left-0")}>
+                              <span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300/75">일정 미리보기</span>
+                              <strong className="mt-1.5 block text-[12px] leading-5 text-white">{commitment.title}</strong>
+                              <span className="mt-1 block text-[9px] text-slate-500">{commitment.workspace_name} · {commitment.due_date ?? "날짜 미정"}</span>
+                              <span className="mt-2 block line-clamp-3 text-[10px] font-normal leading-4 text-slate-300">{calendarPreviewSummary(spec)}</span>
+                              <span className="mt-2 flex items-center justify-between border-t border-white/[0.07] pt-2 text-[9px]"><span className="font-semibold text-cyan-200">{nextAction.label}</span><span className="text-slate-500">{commitment.pipeline_status === "done" ? "파이프라인 완료" : commitment.pipeline_status === "running" ? "진행 중" : "시작 전"}</span></span>
+                            </span>
                           </button>
                           <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1900px]:hidden">
                             <button type="button" onClick={() => spec && openSpec(spec)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100">{commitment.title}</button>
@@ -757,7 +778,7 @@ export function SchedulePage() {
                         </div>
                       );
                     })}
-                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="group/memo relative flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1900px]:min-h-0 max-[1900px]:h-2.5 max-[1900px]:w-2.5 max-[1900px]:rounded-[3px] max-[1900px]:border-slate-200/55 max-[1900px]:bg-slate-200/75 max-[1900px]:p-0" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1900px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`메모 · ${memo.title}`} className="min-w-0 flex-1 truncate text-left max-[1900px]:absolute max-[1900px]:inset-0 max-[1900px]:text-transparent">{memo.title}</button><span className="pointer-events-none absolute bottom-full right-0 z-30 mb-1.5 hidden w-max max-w-52 translate-y-1 rounded-md border border-slate-600 bg-slate-950 px-2 py-1 text-[10px] font-medium leading-4 text-slate-100 opacity-0 shadow-xl transition-all group-hover/memo:translate-y-0 group-hover/memo:opacity-100 group-focus-within/memo:translate-y-0 group-focus-within/memo:opacity-100 max-[1900px]:block">{memo.title}</span></div>)}
+                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="group/memo relative flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1900px]:min-h-0 max-[1900px]:h-2.5 max-[1900px]:w-2.5 max-[1900px]:rounded-[3px] max-[1900px]:border-slate-200/55 max-[1900px]:bg-slate-200/75 max-[1900px]:p-0" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1900px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`메모 · ${memo.title}`} className="min-w-0 flex-1 truncate text-left max-[1900px]:absolute max-[1900px]:inset-0 max-[1900px]:text-transparent">{memo.title}</button><span className={cn("pointer-events-none absolute top-full z-50 mt-2 hidden w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/memo:translate-y-0 group-hover/memo:opacity-100 group-focus-within/memo:translate-y-0 group-focus-within/memo:opacity-100 max-[1900px]:block", day.getDay() >= 5 ? "right-0" : "left-0")}><span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-slate-400">메모 미리보기</span><strong className="mt-1.5 block text-[12px] leading-5 text-white">{memo.title}</strong><span className="mt-1 block text-[9px] text-slate-500">{memo.due_date ?? "일정 없음"}</span><span className="mt-2 block line-clamp-3 text-[10px] font-normal leading-4 text-slate-300">{memoPreview(memo.content_md)}</span></span></div>)}
                   </div>
                 </div>
               );
