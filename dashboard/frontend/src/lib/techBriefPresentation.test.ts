@@ -8,6 +8,7 @@ describe("Tech Brief 최근 7일", () => {
     expect(result.days).toHaveLength(7);
     expect(result.items).toHaveLength(2);
     expect(result.pageCount).toBe(2);
-    expect(result.days[0]).toMatchObject({ key: "2026-10-22", count: 12 });
+    expect(result.days.at(-1)).toMatchObject({ key: "2026-10-22", count: 12 });
+    expect(result.days[0]?.key).toBe("2026-10-16");
   });
 });

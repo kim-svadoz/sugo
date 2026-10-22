@@ -15,8 +15,9 @@ describe("Console 정보 구조", () => {
 
   it("버전은 헤더 액션에서 빼고 사이드바 하단의 보조 정보로 둔다", () => {
     expect(header).not.toContain("Console</span>");
-    expect(sidebar).toContain("Console {dashboardVersion}");
-    expect(sidebar).toContain("Plugin {pluginVersion");
+    expect(sidebar).toContain("Sugo 화면");
+    expect(sidebar).toContain("개발 자동화");
+    expect(sidebar).not.toContain("<span>Console {dashboardVersion}");
   });
 
   it("Engineering Feed는 시각 메타데이터 대신 오전 8시 갱신 규칙을 안내한다", () => {

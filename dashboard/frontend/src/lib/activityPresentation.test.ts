@@ -18,7 +18,15 @@ describe("워크스페이스 작업 신호", () => {
     ]);
 
     expect(summary.result).toBe("인덱스 전환과 검증을 완료했다.");
-    expect(summary.stages).toEqual(["CODE", "TEST", "REVIEW", "DOCS", "MAIN"]);
+    expect(summary.stages).toEqual(["구현", "테스트", "검토", "문서화", "커밋"]);
     expect(summary.revisions).toBe(1);
+  });
+
+  it("내부 MAIN 명칭 대신 사용자가 이해할 수 있는 단계 설명을 제공한다", () => {
+    const summary = summarizeActivity([
+      event(2, "MAIN", null, "완료", "COMPLETED"),
+      event(1, "DOCS", "MAIN", "완료 처리 인계"),
+    ]);
+    expect(summary.stages).toEqual(["문서화", "커밋"]);
   });
 });

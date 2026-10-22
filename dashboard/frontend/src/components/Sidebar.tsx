@@ -70,8 +70,9 @@ export function Sidebar() {
           </div>
         </section>})}
       </nav>
-      <div className="mt-5 border-t border-white/[0.055] px-2 pt-3 font-mono text-[9px] leading-5 text-slate-500" title="설치 버전">
-        <span>Console {dashboardVersion}</span><span className="mx-1.5 text-slate-700">·</span><span>Plugin {pluginVersion ?? "—"}</span>
+      <div className="mt-5 space-y-1 border-t border-white/[0.055] px-2 pt-3 text-[9px] leading-4 text-slate-500" title="현재 설치된 Sugo 구성요소 버전">
+        <div className="flex items-center justify-between gap-2"><span>Sugo 화면</span><span className="font-mono text-slate-400">v{dashboardVersion}</span></div>
+        <div className="flex items-center justify-between gap-2"><span>개발 자동화</span><span className="font-mono text-slate-400">v{pluginVersion ?? "—"}</span></div>
       </div>
     </aside>
   );

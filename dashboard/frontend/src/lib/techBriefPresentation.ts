@@ -14,7 +14,7 @@ function localDateKey(value: string | Date): string {
 
 export function buildSevenDayFeed(items: NewsItem[], fetchedAt: string, selectedDay?: string, page = 1, pageSize = 10) {
   const anchor = new Date(fetchedAt);
-  const days: TechBriefDay[] = Array.from({ length: 7 }, (_, offset) => {
+  const recentFirst: TechBriefDay[] = Array.from({ length: 7 }, (_, offset) => {
     const date = new Date(anchor);
     date.setHours(12, 0, 0, 0);
     date.setDate(date.getDate() - offset);
@@ -26,7 +26,8 @@ export function buildSevenDayFeed(items: NewsItem[], fetchedAt: string, selected
       count: items.filter((item) => localDateKey(item.publishedAt) === key).length,
     };
   });
-  const effectiveDay = days.some((day) => day.key === selectedDay) ? selectedDay! : (days.find((day) => day.count > 0)?.key ?? days[0]!.key);
+  const effectiveDay = recentFirst.some((day) => day.key === selectedDay) ? selectedDay! : (recentFirst.find((day) => day.count > 0)?.key ?? recentFirst[0]!.key);
+  const days = recentFirst.reverse();
   const dayItems = items.filter((item) => localDateKey(item.publishedAt) === effectiveDay);
   const pageCount = Math.max(1, Math.ceil(dayItems.length / pageSize));
   const safePage = Math.min(Math.max(1, page), pageCount);

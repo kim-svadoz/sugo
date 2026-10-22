@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { buildMonthGrid, dayAccentClass, nowKST, toDateKey } from "../lib/calendar.js";
 import { krHolidayName } from "../lib/krHolidays.js";
+import { placePopover } from "../lib/popoverPosition.js";
 import { cn } from "../lib/utils.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -30,7 +31,7 @@ export function DatePicker({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; placement: "top" | "bottom" } | null>(null);
   const initial = value ? new Date(`${value}T00:00:00`) : nowKST();
   const [cursor, setCursor] = useState({ year: initial.getFullYear(), month: initial.getMonth() });
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -38,12 +39,20 @@ export function DatePicker({
 
   const reposition = () => {
     const rect = buttonRef.current?.getBoundingClientRect();
-    if (rect) setPos({ top: rect.bottom + 4, left: rect.left });
+    if (!rect) return;
+    const panel = panelRef.current?.getBoundingClientRect();
+    const next = placePopover(
+      rect,
+      { width: panel?.width ?? 288, height: panel?.height ?? 320 },
+      { width: window.innerWidth, height: window.innerHeight },
+    );
+    setPos((current) => current?.top === next.top && current.left === next.left && current.placement === next.placement ? current : next);
   };
 
   useEffect(() => {
     if (!open) return;
     reposition();
+    const frame = window.requestAnimationFrame(reposition);
     function onDocMouseDown(e: MouseEvent) {
       const target = e.target as Node;
       if (buttonRef.current?.contains(target) || panelRef.current?.contains(target)) return;
@@ -62,6 +71,7 @@ export function DatePicker({
     // scroll은 버블링하지 않으므로 capture:true로 걸어야 Modal 내부 스크롤도 잡힌다.
     document.addEventListener("scroll", reposition, true);
     return () => {
+      window.cancelAnimationFrame(frame);
       document.removeEventListener("mousedown", onDocMouseDown);
       document.removeEventListener("keydown", onKey, true);
       window.removeEventListener("resize", reposition);
@@ -91,6 +101,7 @@ export function DatePicker({
             ref={panelRef}
             role="dialog"
             aria-label={`${ariaLabel ?? placeholder} 달력`}
+            data-placement={pos.placement}
             style={{ position: "fixed", top: pos.top, left: pos.left }}
             className="z-[100] w-72 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2.5 shadow-2xl"
           >
