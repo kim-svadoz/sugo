@@ -49,15 +49,6 @@ function latestWorkResultPath(spec: ScheduledSpec): string | null {
     : null;
 }
 
-function calendarPreviewSummary(spec: ScheduledSpec | null): string {
-  if (!spec) return "연결된 개발 기록이 없습니다.";
-  if (spec.focus_task_note?.trim()) return spec.focus_task_note.trim();
-  const latest = [...(spec.development_history ?? [])]
-    .filter((entry) => entry.summary?.trim())
-    .sort((left, right) => right.version - left.version)[0];
-  return latest?.summary?.trim() ?? "아직 기록된 작업 요약이 없습니다.";
-}
-
 function memoPreview(content: string): string {
   const plain = content.replace(/^#{1,6}\s+/gm, "").replace(/[-*`]\s*/g, " ").replace(/\s+/g, " ").trim();
   return plain || "작성된 상세 내용이 없습니다.";
@@ -513,10 +504,10 @@ export function SchedulePage() {
         <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">{errorMsg}</div>
       )}
 
-      <div className={cn("grid min-h-0 flex-1 grid-cols-1 gap-3 2xl:gap-4", scheduleView === "month" && "lg:grid-cols-[190px_1fr] 2xl:grid-cols-[220px_1fr]")}>
+      <div className={cn("grid min-h-0 flex-1 grid-cols-1 gap-3 2xl:gap-4", scheduleView === "month" && "max-[1900px]:grid-rows-[auto_minmax(0,1fr)] min-[1901px]:grid-cols-[220px_1fr]")}>
         {scheduleView === "month" && (
         <div
-          className="ck-glass ck-card flex flex-col gap-2 overflow-auto p-3 transition-colors"
+          className="ck-glass ck-card flex flex-col gap-2 overflow-auto p-3 transition-colors max-[1900px]:max-h-44"
           onDragOver={(event) => {
             if (panelMode !== "backlog") return;
             event.preventDefault();
@@ -744,7 +735,6 @@ export function SchedulePage() {
                       const style = scheduleCardStyle(colorOf(commitment.workspace_name));
                       const spec = specForCommitment(commitment);
                       const explicit = !commitment.id.startsWith("legacy:");
-                      const nextAction = commitmentNextAction(commitment);
                       return (
                         <div
                           key={commitment.id}
@@ -766,8 +756,6 @@ export function SchedulePage() {
                               <span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300/75">일정 미리보기</span>
                               <strong className="mt-1.5 block text-[12px] leading-5 text-white">{commitment.title}</strong>
                               <span className="mt-1 block text-[9px] text-slate-500">{commitment.workspace_name} · {commitment.due_date ?? "날짜 미정"}</span>
-                              <span className="mt-2 block line-clamp-3 text-[10px] font-normal leading-4 text-slate-300">{calendarPreviewSummary(spec)}</span>
-                              <span className="mt-2 flex items-center justify-between border-t border-white/[0.07] pt-2 text-[9px]"><span className="font-semibold text-cyan-200">{nextAction.label}</span><span className="text-slate-500">{commitment.pipeline_status === "done" ? "파이프라인 완료" : commitment.pipeline_status === "running" ? "진행 중" : "시작 전"}</span></span>
                             </span>
                           </button>
                           <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1900px]:hidden">

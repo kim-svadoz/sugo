@@ -21,6 +21,13 @@ describe("Skills catalog presentation", () => {
     expect(source).toContain("getSkillContent(selectedSkill.name, catalogView === \"commands\" ? \"command\" : \"skill\")");
   });
 
+  it("카탈로그와 담당 필터를 다른 화면의 보조 탭과 같은 밀도로 표시한다", () => {
+    expect(source).toContain('aria-label="카탈로그 종류" className="border-y border-[var(--color-border)] py-2"');
+    expect(source).toContain('rounded-md px-3 py-1.5 text-[12px]');
+    expect(source).toContain('rounded-md px-2.5 py-1.5 text-[12px]');
+    expect(source).not.toContain('rounded-md px-4 py-2 text-sm');
+  });
+
   it("실행 원문을 바꾸지 않고 목록과 상세에 한국어 표시 locale을 요청한다", () => {
     expect(apiSource).toContain('"/api/skills?locale=ko"');
     expect(apiSource).toContain("&locale=ko");

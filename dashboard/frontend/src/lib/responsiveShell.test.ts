@@ -22,8 +22,10 @@ describe("responsive dashboard shell", () => {
     expect(schedule).toContain("backgroundColor: colorOf(commitment.workspace_name)");
     expect(schedule).not.toContain("backgroundColor: getWorkspaceColor(commitment.workspace_name, 0)");
     expect(schedule).toContain("일정 미리보기");
-    expect(schedule).toContain("commitmentNextAction(commitment)");
-    expect(schedule).toContain("spec.focus_task_note");
+    expect(schedule).not.toContain("calendarPreviewSummary(spec)");
+    expect(schedule).not.toContain("nextAction.label");
+    expect(schedule).toContain('min-[1901px]:grid-cols-[220px_1fr]');
+    expect(schedule).toContain("max-[1900px]:max-h-44");
   });
 
   it("keeps workspace cards and their actions inside the viewport", () => {
