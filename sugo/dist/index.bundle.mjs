@@ -28224,7 +28224,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.42.8" : "0.0.0-dev";
+  return true ? "0.42.9" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32804,13 +32804,6 @@ async function handleSugoRoadmap(rawArgs) {
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };
       await saveSession(session);
       await updateRoadmapNodeRuntimeAssessment(args2.workspace, args2.id, assessSession(session));
-      void emitActivity({
-        workspaceName: args2.workspace,
-        agent: "REVIEW",
-        eventType: "SYSTEM",
-        message: `${session.featureName} \xB7 \uBCC0\uACBD \uD30C\uC77C ${files.length}\uAC1C\uC640 \uAC80\uC99D \uACB0\uACFC\uB97C \uD655\uC778\uD574 \uC8FC\uC138\uC694`,
-        details: { phase: "user_confirmation", status: "waiting", taskId: args2.id, summary: args2.reviewPacket.summary }
-      });
       return ok4({
         awaitingHumanDecision: true,
         presentation: "dashboard",

@@ -20,11 +20,19 @@ describe("Console 정보 구조", () => {
     expect(sidebar).not.toContain("<span>Console {dashboardVersion}");
   });
 
-  it("피드는 오늘 표시와 국내외 필터를 제공한다", () => {
-    expect(home).toContain("오늘");
+  it("피드는 요일을 유지하고 오늘은 밝은 테두리로만 구분하며 국내외 필터를 제공한다", () => {
+    expect(home).toContain("{day.weekday}");
+    expect(home).not.toContain('day.isToday ? "오늘"');
+    expect(home).toContain("border-cyan-200/80");
     expect(home).toContain("'전체'");
     expect(home).toContain("'국내'");
     expect(home).toContain("'국외'");
+  });
+
+  it("작업 흐름은 늘어나는 그리드가 아니라 화살표로 이어진 작은 단계 카드다", () => {
+    expect(liveConsole).not.toContain('className="grid grid-cols-3 gap-1.5"');
+    expect(liveConsole).toContain('aria-hidden="true">→</span>');
+    expect(liveConsole).toContain("inline-flex items-center");
   });
 
   it("Engineering Feed는 시각 메타데이터 대신 오전 8시 갱신 규칙을 안내한다", () => {
