@@ -8,6 +8,7 @@ export interface LearningReviewNote {
   workspace: string;
   updatedAt: string;
   patchVersion: number;
+  patchVersions: number[];
   summary: string[];
   decisions: string[];
   learnings: string[];
@@ -57,7 +58,13 @@ function learningCandidates(decisions: string[]): string[] {
   if (decisions.some((value) => /캐시/.test(value) && /인덱스별/.test(value))) {
     learnings.push("데이터 원천이 분리되면 캐시도 원천별로 분리하고, 조회 키는 도메인 식별자로 유지한다.");
   }
-  return learnings.slice(0, 2);
+  if (decisions.some((value) => /메서드|\w+\([^)]*\)|LIMITED_RESULT|오버로드/.test(value))) {
+    learnings.push("호출 경로가 하나라면 메서드 계약도 하나로 유지하고, 사용되지 않는 변형 API는 제거한다.");
+  }
+  if (decisions.some((value) => /Mapper|Assembler|DTO|record|interface/.test(value))) {
+    learnings.push("문서 구조가 같으면 변환 책임은 기존 Mapper/Assembler 경계에 유지하고 중복 변환 코드를 만들지 않는다.");
+  }
+  return learnings.slice(0, 3);
 }
 
 function reviewDecisions(decisions: string[]): string[] {
@@ -66,25 +73,33 @@ function reviewDecisions(decisions: string[]): string[] {
 }
 
 export function selectLearningReviewNote(items: Array<{ spec: ScheduledSpec; history: DevelopmentHistory }>): LearningReviewNote | null {
-  for (const { spec, history } of items) {
-    const result = spec.focus_task_work_result as ReviewResult | null | undefined;
-    const report = result?.report;
-    const patchVersion = report?.patchVersion ?? result?.patchVersion;
-    if (patchVersion !== history.version) continue;
+  for (const anchor of items) {
+    const anchorDate = anchor.history.completed_at ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date(anchor.history.completed_at)) : "";
+    const group = items.filter(({ spec, history }) => spec.id === anchor.spec.id && spec.workspace_name === anchor.spec.workspace_name && Boolean(anchorDate) && Boolean(history.completed_at) && new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date(history.completed_at!)) === anchorDate);
+    const records = (group.length > 0 ? group : [anchor]).map(({ spec, history }) => {
+      const embedded = history.work_result as ReviewResult | null | undefined;
+      const focused = spec.focus_task_work_result as ReviewResult | null | undefined;
+      const result = embedded ?? ((focused?.report?.patchVersion ?? focused?.patchVersion) === history.version ? focused : null);
+      return { spec, history, result, report: result?.report };
+    }).filter((record) => record.result || record.history.summary);
+    if (records.length === 0) continue;
+    const ordered = records.sort((a, b) => a.history.version - b.history.version);
+    const latest = ordered[ordered.length - 1];
 
-    const allDecisions = conciseLines(report?.designDecisions ?? [], 8);
+    const allDecisions = conciseLines(ordered.flatMap(({ report }) => report?.designDecisions ?? []), 12);
     const decisions = reviewDecisions(allDecisions);
-    const improvements = conciseLines(report?.knownLimitations ?? [], 2);
-    const summary = conciseLines([report?.summary, result?.summary, history.summary], 2);
+    const improvements = conciseLines(ordered.flatMap(({ report }) => report?.knownLimitations ?? []), 2);
+    const summary = conciseLines(ordered.flatMap(({ report, result, history }) => [report?.summary, result?.summary, history.summary]), 2);
     if (decisions.length === 0 && improvements.length === 0 && summary.length === 0) continue;
-    const test = report?.verification?.test;
+    const test = latest.report?.verification?.test;
 
     return {
-      specId: spec.id,
-      workTitle: spec.title,
-      workspace: spec.workspace_name,
-      updatedAt: history.completed_at ?? spec.focus_task_updated_at ?? "",
-      patchVersion,
+      specId: anchor.spec.id,
+      workTitle: anchor.spec.title,
+      workspace: anchor.spec.workspace_name,
+      updatedAt: latest.history.completed_at ?? anchor.spec.focus_task_updated_at ?? "",
+      patchVersion: latest.history.version,
+      patchVersions: ordered.map(({ history }) => history.version),
       summary,
       decisions,
       learnings: learningCandidates(allDecisions),
@@ -94,8 +109,8 @@ export function selectLearningReviewNote(items: Array<{ spec: ScheduledSpec; his
         passed: test?.passed,
         failed: test?.failed,
         state: test?.state,
-        runtimeVerified: report?.verification?.runtimeVerified,
-        validationVerdict: report?.verification?.validationVerdict,
+        runtimeVerified: latest.report?.verification?.runtimeVerified,
+        validationVerdict: latest.report?.verification?.validationVerdict,
       },
     };
   }

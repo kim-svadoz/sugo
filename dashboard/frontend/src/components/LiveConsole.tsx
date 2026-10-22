@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { CheckCircle2, ListTree, Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import { useActivityStream, type ActivityEvent } from "../hooks/useActivityStream.js";
 import { AgentBadge } from "./AgentBadge.js";
 import { formatActivityTime } from "../lib/activityTime.js";
+import { summarizeActivity } from "../lib/activityPresentation.js";
 
 /**
  * 실시간 Activity Stream(폴링, SSE 아님).
@@ -40,6 +41,7 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
   const events = useActivityStream(workspace);
   const [full, setFull] = useState(false);
   const visible = workspace ? events.filter((e) => e.workspace_name === workspace) : events;
+  const summary = summarizeActivity(visible);
 
   useEffect(() => {
     if (!full) return;
@@ -63,20 +65,21 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
   return (
     <>
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="mb-2 flex shrink-0 items-center justify-between border-b border-[var(--color-border)] pb-2">
-          <span className="flex items-center gap-1.5 font-mono text-[12px] font-semibold text-[var(--color-text-bright)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 ck-pulse-dot" /> LIVE CONSOLE
-            {workspace && <span className="text-[11px] font-normal text-[var(--color-text-dim)]">· {workspace}</span>}
-          </span>
+        <div className="mb-3 flex shrink-0 items-center justify-between border-b border-[var(--color-border)] pb-2.5">
+          <span className="flex items-center gap-2 text-[12px] font-semibold text-[var(--color-text-bright)]"><ListTree size={14} className="text-cyan-300" />최근 작업 신호</span>
           <button
             type="button"
             onClick={() => setFull(true)}
-            className="font-mono text-[11px] text-[var(--color-text-muted)] transition-colors hover:text-cyan-300"
+            className="text-[11px] font-medium text-cyan-300 transition-colors hover:text-cyan-100"
           >
-            VIEW FULL CONSOLE
+            전체 기록
           </button>
         </div>
-        {renderFeed()}
+        {visible.length === 0 ? <div className="flex min-h-40 items-center justify-center text-[12px] text-[var(--color-text-dim)]">새 작업 신호가 없습니다.</div> : <div className="space-y-3">
+          <section className="rounded-lg border border-emerald-300/10 bg-emerald-300/[0.035] px-3.5 py-3"><div className="flex items-center gap-2 text-[10px] font-semibold text-emerald-300"><CheckCircle2 size={13} />최근 결과</div><p className="mt-2 line-clamp-3 text-[12px] leading-5 text-slate-300">{summary.result ?? visible[0].message}</p></section>
+          {summary.stages.length > 0 && <section><div className="mb-2 text-[10px] font-medium text-slate-500">최종 작업 흐름</div><div className="flex flex-wrap items-center gap-1.5">{summary.stages.map((stage, index) => <span key={`${stage}:${index}`} className="flex items-center gap-1.5"><span className="rounded-md border border-white/[0.07] bg-white/[0.025] px-2 py-1 font-mono text-[9px] text-slate-300">{stage}</span>{index < summary.stages.length - 1 && <span className="text-[10px] text-slate-700">→</span>}</span>)}</div></section>}
+          <div className="flex items-center justify-between border-t border-white/[0.055] pt-2.5 text-[10px] text-slate-500"><span className="flex items-center gap-1.5"><RotateCcw size={11} />다시 구현한 횟수</span><strong className="font-mono font-medium text-slate-300">{summary.revisions}</strong></div>
+        </div>}
       </div>
 
       {full && createPortal(
@@ -87,7 +90,7 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="mb-2 flex shrink-0 items-center justify-between border-b border-[var(--color-border)] pb-2">
-              <span className="font-mono text-[13px] font-semibold text-[var(--color-text-bright)]">FULL CONSOLE</span>
+              <span className="text-[13px] font-semibold text-[var(--color-text-bright)]">전체 작업 기록</span>
               <button
                 onClick={() => setFull(false)}
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"

@@ -10,4 +10,9 @@ describe("Console 기본 화면 스케일", () => {
     expect(css).toContain('[class~="text-[10px]"] { font-size: 11px !important; }');
     expect(css).toContain('[class~="text-[13px]"] { font-size: 14px !important; }');
   });
+
+  it("확대된 셸이 viewport 아래로 잘리지 않는다", () => {
+    const source = fs.readFileSync(path.resolve("src/components/Layout.tsx"), "utf8");
+    expect(source).toContain("h-[calc(100vh/1.1)]");
+  });
 });

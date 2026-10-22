@@ -51,7 +51,7 @@ export function Layout() {
   }, [navigate]);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-[calc(100vh/1.1)]">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />

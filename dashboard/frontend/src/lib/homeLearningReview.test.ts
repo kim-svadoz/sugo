@@ -54,4 +54,21 @@ describe("Home 학습 리뷰 대상", () => {
     expect(note?.verification).not.toHaveProperty("command");
     expect(note).not.toHaveProperty("resultPath");
   });
+
+  it("같은 날 같은 FEAT에서 완료한 patch를 하나의 리뷰로 병합하고 코드 학습을 남긴다", () => {
+    const spec = {
+      id: "catalog-scroll", workspace_name: "catalog-service", title: "상품 목록 - 연속 로딩", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
+      development_history: [
+        { ...history(3, "2026-10-21T01:00:00.000Z"), work_result: { patchVersion: 3, report: { patchVersion: 3, summary: "조회 계약을 정리했다.", designDecisions: ["findProducts(userId, size) 하나로 합치고 LIMITED_RESULT는 제거한다."], knownLimitations: [] } } },
+        { ...history(4, "2026-10-21T03:00:00.000Z"), work_result: { patchVersion: 4, report: { patchVersion: 4, summary: "문서 변환을 재사용했다.", designDecisions: ["ProductDocMapper를 수정 없이 재사용한다."], knownLimitations: [] } } },
+      ],
+    } as ScheduledSpec;
+
+    const note = selectLearningReviewNote(spec.development_history!.map((entry) => ({ spec, history: entry })));
+
+    expect(note?.patchVersions).toEqual([3, 4]);
+    expect(note?.summary).toEqual(["조회 계약을 정리했다.", "문서 변환을 재사용했다."]);
+    expect(note?.learnings.some((item) => item.includes("메서드 계약"))).toBe(true);
+    expect(note?.learnings.some((item) => item.includes("Mapper/Assembler"))).toBe(true);
+  });
 });

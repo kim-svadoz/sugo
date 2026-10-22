@@ -2,6 +2,7 @@ import { Link, NavLink } from "react-router-dom";
 import { CalendarDays, FileText, Plug, Shapes, ShieldHalf, SlidersHorizontal, Wand2, Workflow, Zap } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { SIDEBAR_GROUPS } from "../lib/sidebarNavigation.js";
+import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 
 /**
  * Sidebar — 슬림 아이콘 LNB(w-16 md:w-20).
@@ -12,6 +13,7 @@ import { SIDEBAR_GROUPS } from "../lib/sidebarNavigation.js";
 const icons = { workspaces: Shapes, schedule: CalendarDays, weekly: FileText, skills: Zap, playbook: Wand2, harness: ShieldHalf, integrations: Plug, preferences: SlidersHorizontal } as const;
 
 export function Sidebar() {
+  const { dashboardVersion, pluginVersion } = useDashboardMeta();
   return (
     <aside className="flex w-40 shrink-0 flex-col border-r border-white/[0.055] bg-[color-mix(in_srgb,var(--color-surface)_96%,black)] px-3 py-4 md:w-44">
       <Link
@@ -68,6 +70,9 @@ export function Sidebar() {
           </div>
         </section>})}
       </nav>
+      <div className="mt-5 border-t border-white/[0.055] px-2 pt-3 font-mono text-[9px] leading-5 text-slate-500" title="설치 버전">
+        <span>Console {dashboardVersion}</span><span className="mx-1.5 text-slate-700">·</span><span>Plugin {pluginVersion ?? "—"}</span>
+      </div>
     </aside>
   );
 }

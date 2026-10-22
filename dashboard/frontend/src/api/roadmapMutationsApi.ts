@@ -129,6 +129,7 @@ export interface ScheduledSpec {
     summary: string | null;
     completed_at: string | null;
     work_result_path?: string | null;
+    work_result?: unknown;
   }>;
 }
 

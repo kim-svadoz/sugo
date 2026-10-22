@@ -2,7 +2,6 @@ import { CalendarDays, ChevronDown, CloudSun, Lightbulb, LogOut, Settings2, User
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.js";
-import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 import { useLocalWeather } from "../hooks/useLocalWeather.js";
 import { useProfile } from "../hooks/useProfile.js";
 
@@ -19,17 +18,7 @@ const SUGO_TIPS = [
   "프로필의 Preferences에서 표시 이름과 날씨 생활권을 설정하면 이 브라우저에 바로 적용됩니다.",
 ] as const;
 
-/**
- * Header — h-16 ck-glass. **버전 뱃지 2축이 핵심**이다:
- * - `Console v{dashboardVersion}` — 빌드타임에 박힌 대시보드 자신의 버전(회색 보더 + cyan).
- * - `Plugin v{pluginVersion}` — 마지막 sync에서 받은 플러그인 버전(emerald + 펄스닷).
- *   아직 sync된 적이 없으면 `—`. 버전을 지어내지 않는다 — "모른다"가 정확한 정보다.
- *
- * 두 축을 나란히 두는 이유: 문제가 생겼을 때 "웹이 낡은 건지 플러그인이 낡은 건지"가
- * 첫 번째 분기점인데, 하나만 보이면 그 판단을 못 한다.
- */
 export function Header() {
-  const { dashboardVersion, pluginVersion } = useDashboardMeta();
   const { userId, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -79,21 +68,6 @@ export function Header() {
         </div> : <div className="flex min-w-0 items-center gap-3 overflow-hidden" aria-live="polite" aria-label="Sugo 활용 팁"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-400/[0.08] text-amber-300 ring-1 ring-inset ring-amber-300/15"><Lightbulb size={15} strokeWidth={1.9} aria-hidden="true" /></span><span className={`truncate text-[13.5px] font-medium text-[var(--color-text)] motion-reduce:transform-none motion-reduce:transition-none ${tipPhase === "enter" ? "translate-y-2 opacity-0" : tipPhase === "exit" ? "-translate-y-2 opacity-0 transition-all duration-300" : "translate-y-0 opacity-100 transition-all duration-300"}`}>{SUGO_TIPS[tipIndex]}</span></div>}
       </div>
       <div className="flex items-center gap-2">
-        <span
-          className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 font-mono text-[11.5px] text-slate-300"
-          title="Sugo 웹 대시보드 콘솔 버전"
-        >
-          <span className="text-slate-500">Console</span>
-          <span className="text-cyan-300">v{dashboardVersion}</span>
-        </span>
-        <span
-          className="inline-flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1.5 font-mono text-[11.5px] text-emerald-300"
-          title="내가 설치한 Sugo 플러그인 버전 (마지막 sync 시점)"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 ck-pulse-dot" />
-          <span className="text-emerald-400/70">Plugin</span>
-          <span className="text-emerald-200">{pluginVersion ? `v${pluginVersion}` : "—"}</span>
-        </span>
         <div ref={profileMenuRef} className="relative ml-1">
           <button type="button" aria-label="프로필 메뉴" aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)} className="flex h-8 items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.035] px-2 text-slate-300 hover:bg-white/[0.07] hover:text-white">
             <span className="flex h-5 w-5 items-center justify-center rounded-md bg-cyan-400/10 text-[9px] font-bold text-cyan-200">{displayName.slice(0, 2).toUpperCase()}</span>

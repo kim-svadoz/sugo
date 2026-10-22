@@ -577,7 +577,7 @@ export interface ScheduledSpecRow {
   focus_task_runtime_assessment: unknown;
   focus_task_blocker_decision: { response: string; answered_by: string; answered_at: string } | null;
   focus_task_human_blocker: unknown;
-  development_history: Array<{ task_id: string; version: number; title: string; summary: string | null; completed_at: string | null; work_result_path: string | null }>;
+  development_history: Array<{ task_id: string; version: number; title: string; summary: string | null; completed_at: string | null; work_result_path: string | null; work_result: Record<string, unknown> | null }>;
 }
 
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
@@ -644,6 +644,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
           summary,
           completed_at: typeof entry.completedAt === "string" ? entry.completedAt : null,
           work_result_path: typeof workResult?.path === "string" ? workResult.path : null,
+          work_result: workResult,
         };
       });
     }).sort((a, b) => (a.completed_at ?? "").localeCompare(b.completed_at ?? "") || a.version - b.version);
