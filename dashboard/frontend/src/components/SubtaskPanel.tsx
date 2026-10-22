@@ -107,7 +107,7 @@ export function SubtaskPanel({
             className={`flex-1 py-2.5 ${tab === t ? "ck-glow-cyan" : "opacity-60 hover:opacity-100"}`}
           >
             {t === "progress"
-              ? requirementsUnavailable ? "개요 · REQ 기록 없음" : `개요 · ${progress.label} ${progress.done}/${progress.total}`
+              ? requirementsUnavailable ? "개요 · 개발 사항 기록 없음" : `개요 · ${node.level === "task" ? "주요 개발 사항" : progress.label} ${progress.done}/${progress.total}`
               : t === "summary"
                 ? "작업 요약"
                 : `변경 파일 ${files.length}`}
@@ -293,12 +293,12 @@ function ProgressTab({
         />
       )}
       {requirementsUnavailable ? (
-        <div className="rounded-lg border border-[var(--color-border)] p-3 text-[12px] text-[var(--color-text-muted)]">이 차수의 REQ 기록이 없습니다.</div>
+        <div className="rounded-lg border border-[var(--color-border)] p-3 text-[12px] text-[var(--color-text-muted)]">이 차수의 주요 개발 사항 기록이 없습니다.</div>
       ) : <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-4">
         <div className="flex items-end justify-between">
           <div>
             <div className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-text-dim)]">실제 진행</div>
-            <div className="mt-1 text-sm text-[var(--color-text-muted)]">{progress.label} 기준</div>
+            <div className="mt-1 text-sm text-[var(--color-text-muted)]">{node.level === "task" ? "주요 개발 사항" : `${progress.label} 기준`}</div>
           </div>
           <div className="font-mono text-2xl font-semibold text-cyan-300">
             {progress.done}<span className="text-base text-[var(--color-text-dim)]">/{progress.total}</span>

@@ -13,6 +13,7 @@ export const DEFAULT_NEWS_SOURCES: readonly NewsSource[] = [
   { source: "How we build Myrealtrip", category: "제품·여행", language: "ko", url: "https://medium.com/feed/myrealtrip-product" },
   { source: "카카오페이 기술 블로그", category: "핀테크·플랫폼", language: "ko", url: "https://tech.kakaopay.com/rss" },
   { source: "당근 기술 블로그", category: "로컬·플랫폼", language: "ko", url: "https://medium.com/feed/daangn" },
+  { source: "올리브영 테크블로그", category: "커머스·플랫폼", language: "ko", url: "https://oliveyoung.tech/rss.xml" },
   { source: "Meta Engineering", category: "대규모 시스템", language: "en", url: "https://engineering.fb.com/feed/" },
   { source: "Cloudflare", category: "인프라·보안", language: "en", url: "https://blog.cloudflare.com/rss/" },
   { source: "Netflix TechBlog", category: "플랫폼 엔지니어링", language: "en", url: "https://netflixtechblog.com/feed" },
@@ -85,6 +86,21 @@ export function selectLocalizedNews(items: NewsItem[], language: NewsLanguage, l
     selected.push(...items.filter((item) => !selectedUrls.has(item.url)).slice(0, limit - selected.length));
   }
   return selected;
+}
+
+function utcDateKey(value: string): string {
+  return value.slice(0, 10);
+}
+
+/** UI가 날짜별로 10개씩 페이징할 수 있도록 최근 7개 캘린더 날짜의 글을 빠짐없이 제공한다. */
+export function selectWeeklyNews(items: NewsItem[], language: NewsLanguage, now = new Date()): NewsItem[] {
+  const latestDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const oldestDay = new Date(latestDay);
+  oldestDay.setUTCDate(oldestDay.getUTCDate() - 6);
+  const cutoff = oldestDay.toISOString().slice(0, 10);
+  const recent = items.filter((item) => utcDateKey(item.publishedAt) >= cutoff && utcDateKey(item.publishedAt) <= utcDateKey(latestDay.toISOString()));
+  return selectLocalizedNews(recent, language, recent.length)
+    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
 }
 
 export async function fetchNewsFeed(sources: readonly NewsSource[] = DEFAULT_NEWS_SOURCES, fetcher: typeof fetch = fetch): Promise<NewsItem[]> {

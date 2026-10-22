@@ -52840,6 +52840,17 @@ function selectLocalizedNews(items, language, limit) {
   }
   return selected;
 }
+function utcDateKey(value) {
+  return value.slice(0, 10);
+}
+function selectWeeklyNews(items, language, now = /* @__PURE__ */ new Date()) {
+  const latestDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const oldestDay = new Date(latestDay);
+  oldestDay.setUTCDate(oldestDay.getUTCDate() - 6);
+  const cutoff = oldestDay.toISOString().slice(0, 10);
+  const recent = items.filter((item) => utcDateKey(item.publishedAt) >= cutoff && utcDateKey(item.publishedAt) <= utcDateKey(latestDay.toISOString()));
+  return selectLocalizedNews(recent, language, recent.length).sort((a5, b5) => Date.parse(b5.publishedAt) - Date.parse(a5.publishedAt));
+}
 async function fetchNewsFeed(sources = DEFAULT_NEWS_SOURCES, fetcher = fetch) {
   const results = await Promise.allSettled(sources.map(async (source) => {
     const response = await fetcher(source.url, { signal: AbortSignal.timeout(5e3), headers: { "user-agent": "Sugo-Console/1.0" } });
@@ -52863,6 +52874,7 @@ var init_newsFeedService = __esm({
       { source: "How we build Myrealtrip", category: "\uC81C\uD488\xB7\uC5EC\uD589", language: "ko", url: "https://medium.com/feed/myrealtrip-product" },
       { source: "\uCE74\uCE74\uC624\uD398\uC774 \uAE30\uC220 \uBE14\uB85C\uADF8", category: "\uD540\uD14C\uD06C\xB7\uD50C\uB7AB\uD3FC", language: "ko", url: "https://tech.kakaopay.com/rss" },
       { source: "\uB2F9\uADFC \uAE30\uC220 \uBE14\uB85C\uADF8", category: "\uB85C\uCEEC\xB7\uD50C\uB7AB\uD3FC", language: "ko", url: "https://medium.com/feed/daangn" },
+      { source: "\uC62C\uB9AC\uBE0C\uC601 \uD14C\uD06C\uBE14\uB85C\uADF8", category: "\uCEE4\uBA38\uC2A4\xB7\uD50C\uB7AB\uD3FC", language: "ko", url: "https://oliveyoung.tech/rss.xml" },
       { source: "Meta Engineering", category: "\uB300\uADDC\uBAA8 \uC2DC\uC2A4\uD15C", language: "en", url: "https://engineering.fb.com/feed/" },
       { source: "Cloudflare", category: "\uC778\uD504\uB77C\xB7\uBCF4\uC548", language: "en", url: "https://blog.cloudflare.com/rss/" },
       { source: "Netflix TechBlog", category: "\uD50C\uB7AB\uD3FC \uC5D4\uC9C0\uB2C8\uC5B4\uB9C1", language: "en", url: "https://netflixtechblog.com/feed" },
@@ -52884,7 +52896,7 @@ function createNewsRouter() {
         cache2 = { items, fetchedAt: (/* @__PURE__ */ new Date()).toISOString(), expiresAt: Date.now() + CACHE_MS };
       }
       res.json({
-        items: selectLocalizedNews(cache2.items, language, 20),
+        items: selectWeeklyNews(cache2.items, language),
         fetchedAt: cache2.fetchedAt,
         sourceCount: DEFAULT_NEWS_SOURCES.length,
         sources: DEFAULT_NEWS_SOURCES.map((source) => {
@@ -90179,7 +90191,7 @@ var init_index = __esm({
     init_asyncHandler();
     init_contextAutoRefreshService();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.32.1" ? { version: "0.32.1" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.33.0" ? { version: "0.33.0" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90298,7 +90310,7 @@ await bootstrapLocalDashboard2(db, {
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.32.1", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.33.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

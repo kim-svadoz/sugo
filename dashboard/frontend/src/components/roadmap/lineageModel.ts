@@ -2,7 +2,7 @@ import type { RoadmapNode } from "../../hooks/useRoadmap.js";
 import { repositoryRelativePath } from "./fileViewerModel.js";
 
 type HistoryRequirement = { id?: unknown; title?: unknown; status?: unknown; covered?: boolean };
-type HistoryReport = { requirements?: unknown };
+type HistoryReport = { requirements?: unknown; summary?: unknown };
 type HistoryEntry = {
   version?: unknown;
   title?: unknown;
@@ -46,6 +46,16 @@ const conciseTitle = (value: unknown): string | null => {
     .trim();
   if (!normalized) return null;
   return normalized.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? normalized;
+};
+
+const developmentItemsFromSummary = (value: unknown): HistoryRequirement[] => {
+  if (typeof value !== "string") return [];
+  return value.split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length >= 8)
+    .filter((line) => !/(?:baseline|clean check|gradlew|테스트|검증|통과|리뷰|확인|대시보드 결정)/i.test(line))
+    .slice(0, 6)
+    .map((title, index) => ({ id: `WORK-${index + 1}`, title, status: "done" }));
 };
 
 const lineageEntryTitle = (entry: HistoryEntry, taskTitle: string): string => {
@@ -155,7 +165,9 @@ const requirementNodes = (item: LineageChainItem): RoadmapNode[] => {
   const patchSeed = conciseTitle(workResult?.seed ?? item.entry.seed);
   const patchRequirements = Array.isArray(report?.requirements) && report.requirements.length > 0
     ? report.requirements
-    : patchSeed
+    : developmentItemsFromSummary(report?.summary).length > 0
+      ? developmentItemsFromSummary(report?.summary)
+      : patchSeed
       ? [{ id: `PATCH-${item.version}`, title: patchSeed, status: item.node.status === "done" ? "done" : item.node.status }]
       : [];
   const requirements = item.version === 0 ? item.entry.requirements : patchRequirements;

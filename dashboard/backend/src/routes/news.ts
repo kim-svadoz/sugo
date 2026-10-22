@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { DEFAULT_NEWS_SOURCES, fetchNewsFeed, selectLocalizedNews, type NewsItem, type NewsLanguage } from "../services/newsFeedService.js";
+import { DEFAULT_NEWS_SOURCES, fetchNewsFeed, selectWeeklyNews, type NewsItem, type NewsLanguage } from "../services/newsFeedService.js";
 
 const CACHE_MS = 30 * 60 * 1000;
 let cache: { items: NewsItem[]; fetchedAt: string; expiresAt: number } | null = null;
@@ -14,7 +14,7 @@ export function createNewsRouter(): Router {
         cache = { items, fetchedAt: new Date().toISOString(), expiresAt: Date.now() + CACHE_MS };
       }
       res.json({
-        items: selectLocalizedNews(cache.items, language, 20),
+        items: selectWeeklyNews(cache.items, language),
         fetchedAt: cache.fetchedAt,
         sourceCount: DEFAULT_NEWS_SOURCES.length,
         sources: DEFAULT_NEWS_SOURCES.map((source) => {

@@ -147,6 +147,31 @@ describe("patch lineage canvas model", () => {
     ]);
   });
 
+  it("patch 보고서에 REQ 배열이 없어도 작업 요약의 주요 개발 사항을 각각 복원한다", () => {
+    const task = node({
+      id: "task",
+      lineage: [
+        { version: 0, title: "최초 구현" },
+        {
+          version: 4,
+          workResult: {
+            seed: "하나의 긴 작업 지시",
+            report: {
+              requirements: [],
+              summary: "새 인덱스를 조회한다.\n기존 영역은 기존 인덱스를 유지한다.\n캐시를 인덱스별로 분리한다.\nbaseline 63/63, clean check 75/75 통과.\nos-prd 실데이터와 로컬 호출로 확인.",
+            },
+          },
+        },
+      ],
+    });
+    const [chain] = buildLineageChains([task]);
+    expect(lineageSelection(chain.columns[0][1]).reqs.map((req) => req.title)).toEqual([
+      "새 인덱스를 조회한다.",
+      "기존 영역은 기존 인덱스를 유지한다.",
+      "캐시를 인덱스별로 분리한다.",
+    ]);
+  });
+
   it("취소한 최신 patch만 폐기로 남기고 이전 완료 차수는 완료로 유지한다", () => {
     const task = node({
       id: "task",

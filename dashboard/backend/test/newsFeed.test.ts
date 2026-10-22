@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_NEWS_SOURCES, fetchNewsFeed, selectLocalizedNews } from "../src/services/newsFeedService.js";
+import { DEFAULT_NEWS_SOURCES, fetchNewsFeed, selectLocalizedNews, selectWeeklyNews } from "../src/services/newsFeedService.js";
 
 describe("technology brief feed", () => {
   it("공식 RSS 항목을 최신순으로 정규화하고 HTML을 제거한다", async () => {
@@ -21,7 +21,7 @@ describe("technology brief feed", () => {
     expect(DEFAULT_NEWS_SOURCES.filter((source) => source.language === "ko").length).toBeGreaterThanOrEqual(3);
     expect(DEFAULT_NEWS_SOURCES.length).toBeGreaterThanOrEqual(10);
     expect(DEFAULT_NEWS_SOURCES.map((source) => source.source)).toEqual(expect.arrayContaining([
-      "Meta Engineering", "Cloudflare", "Netflix TechBlog", "Kakao Tech", "NAVER D2", "Toss Tech",
+      "Meta Engineering", "Cloudflare", "Netflix TechBlog", "Kakao Tech", "NAVER D2", "Toss Tech", "올리브영 테크블로그",
     ]));
     const item = (source: string, language: "ko" | "en", hour: number) => ({ source, category: "AI", language, title: source, url: `https://example.com/${source}`, publishedAt: `2026-10-20T0${hour}:00:00.000Z`, summary: null });
     const selected = selectLocalizedNews([
@@ -29,6 +29,19 @@ describe("technology brief feed", () => {
     ], "ko", 5);
     expect(selected.filter((news) => news.language === "ko")).toHaveLength(3);
     expect(selected.some((news) => news.language === "en")).toBe(true);
+  });
+
+  it("최근 7일의 글을 날짜별 페이징이 가능하도록 빠짐없이 제공한다", () => {
+    const now = new Date("2026-10-22T12:00:00.000Z");
+    const items = [
+      ...Array.from({ length: 12 }, (_, index) => ({ source: `소스${index}`, category: "개발", language: "ko" as const, title: `오늘-${index}`, url: `https://example.com/today/${index}`, publishedAt: `2026-10-22T${String(index).padStart(2, "0")}:00:00.000Z`, summary: null })),
+      { source: "어제", category: "개발", language: "ko" as const, title: "어제 글", url: "https://example.com/yesterday", publishedAt: "2026-10-21T09:00:00.000Z", summary: null },
+      { source: "오래됨", category: "개발", language: "ko" as const, title: "8일 전", url: "https://example.com/old", publishedAt: "2026-10-14T09:00:00.000Z", summary: null },
+    ];
+    const selected = selectWeeklyNews(items, "ko", now);
+    expect(selected.filter((item) => item.publishedAt.startsWith("2026-10-22"))).toHaveLength(12);
+    expect(selected.some((item) => item.title === "어제 글")).toBe(true);
+    expect(selected.some((item) => item.title === "8일 전")).toBe(false);
   });
 
   it("한 매체의 최신 글이 많아도 뉴스 목록을 독점하지 않는다", () => {
