@@ -14,6 +14,14 @@ export interface NewsFeed {
   items: NewsItem[];
   fetchedAt: string;
   sourceCount: number;
+  sources: Array<{
+    name: string;
+    category: string;
+    language: "ko" | "en";
+    url: string;
+    status: "active" | "pending";
+    lastPublishedAt: string | null;
+  }>;
 }
 
 export async function getNewsFeed(locale = "ko"): Promise<NewsFeed> {

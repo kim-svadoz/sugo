@@ -7,10 +7,10 @@ import { useLocalWeather } from "../hooks/useLocalWeather.js";
 import { useProfile } from "../hooks/useProfile.js";
 
 const SUGO_TIPS = [
-  "Schedule은 D-2부터 미종료 SPEC을 Home의 ‘마감 전 확인’에 올립니다.",
+  "Schedule은 D-2부터 종료되지 않은 개발 항목을 Home의 ‘마감 전 확인’에 올립니다.",
   "검토 화면에서 수정 요청을 남기면 확정하지 않은 채 같은 Patch로 대화를 이어갈 수 있습니다.",
   "리뷰 보고서와 마지막 Patch의 변경 파일을 함께 보면 결과와 구현 근거를 빠르게 대조할 수 있습니다.",
-  "파이프라인 완료는 SPEC 완료가 아닙니다. 배포와 운영 확인 뒤 직접 SPEC을 종료하세요.",
+  "파이프라인 완료와 개발 항목의 종료는 다릅니다. 배포와 운영 확인 뒤 직접 작업을 종료하세요.",
   "Harness에서 기술과 버전을 선택하면 프로젝트에 적용될 실제 규칙 원문을 미리 볼 수 있습니다.",
   "Workspace의 도메인 규칙은 프로젝트 .claude/rules와 동기화되어 다음 AI 작업의 기준이 됩니다.",
   "Integrations의 직접 조회 안전장치는 외부 시스템을 읽을 때 허용 범위와 비용을 함께 제한합니다.",

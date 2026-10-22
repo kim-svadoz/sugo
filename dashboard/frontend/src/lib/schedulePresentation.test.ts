@@ -273,9 +273,9 @@ describe("schedule presentation", () => {
   it("모든 SPEC 상세에는 복구 가능한 삭제·종료 UI가 있다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).not.toContain('selected.id.startsWith("spec-manual-")');
-    expect(source).toContain("이 SPEC을 삭제할까요?");
+    expect(source).toContain("이 작업을 삭제할까요?");
     expect(source).toContain("개발 이력과 파일은 지우지 않으며 보관함에서 확인하고 복구할 수 있습니다.");
-    expect(source).toContain("SPEC 종료 처리");
+    expect(source).toContain("작업 종료");
     expect(source).toContain("<SpecArchiveModal");
     expect(source).toContain('className="fixed inset-0 z-[80] flex items-center justify-center');
     expect(source).toContain('role="dialog" aria-modal="true"');

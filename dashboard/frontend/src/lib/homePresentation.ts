@@ -51,7 +51,7 @@ export function buildHomeAttention(specs: ScheduledSpec[], now = new Date()): Ho
       title: spec.title,
       label: remaining < 0 ? `D+${Math.abs(remaining)}` : remaining === 0 ? "D-DAY" : `D-${remaining}`,
       detail: `${spec.due_date} 마감 · ${guidance.nextAction}`,
-      actionLabel: "SPEC 열기",
+      actionLabel: "작업 보기",
       tone: "due",
       priority: remaining < 0 ? 2 : 3 + remaining,
     }];

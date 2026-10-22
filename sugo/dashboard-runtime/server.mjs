@@ -52857,6 +52857,12 @@ var init_newsFeedService = __esm({
       { source: "NAVER D2", category: "\uAC1C\uBC1C\xB7\uC544\uD0A4\uD14D\uCC98", language: "ko", url: "https://d2.naver.com/d2.atom" },
       { source: "Toss Tech", category: "\uC81C\uD488 \uC5D4\uC9C0\uB2C8\uC5B4\uB9C1", language: "ko", url: "https://toss.tech/rss.xml" },
       { source: "LINE Engineering", category: "\uAC1C\uBC1C\xB7\uC544\uD0A4\uD14D\uCC98", language: "ko", url: "https://techblog.lycorp.co.jp/ko/feed/index.xml" },
+      { source: "MUSINSA Tech", category: "\uCEE4\uBA38\uC2A4\xB7\uD50C\uB7AB\uD3FC", language: "ko", url: "https://medium.com/feed/musinsa-tech" },
+      { source: "\uC624\uB298\uC758\uC9D1 Engineering", category: "\uC81C\uD488\xB7\uD50C\uB7AB\uD3FC", language: "ko", url: "https://www.bucketplace.com/sitemap-0.xml" },
+      { source: "KREAM \uAE30\uC220 \uBE14\uB85C\uADF8", category: "\uCEE4\uBA38\uC2A4\xB7\uD50C\uB7AB\uD3FC", language: "ko", url: "https://medium.com/feed/kream-%EA%B8%B0%EC%88%A0-%EB%B8%94%EB%A1%9C%EA%B7%B8" },
+      { source: "How we build Myrealtrip", category: "\uC81C\uD488\xB7\uC5EC\uD589", language: "ko", url: "https://medium.com/feed/myrealtrip-product" },
+      { source: "\uCE74\uCE74\uC624\uD398\uC774 \uAE30\uC220 \uBE14\uB85C\uADF8", category: "\uD540\uD14C\uD06C\xB7\uD50C\uB7AB\uD3FC", language: "ko", url: "https://tech.kakaopay.com/rss" },
+      { source: "\uB2F9\uADFC \uAE30\uC220 \uBE14\uB85C\uADF8", category: "\uB85C\uCEEC\xB7\uD50C\uB7AB\uD3FC", language: "ko", url: "https://medium.com/feed/daangn" },
       { source: "Meta Engineering", category: "\uB300\uADDC\uBAA8 \uC2DC\uC2A4\uD15C", language: "en", url: "https://engineering.fb.com/feed/" },
       { source: "Cloudflare", category: "\uC778\uD504\uB77C\xB7\uBCF4\uC548", language: "en", url: "https://blog.cloudflare.com/rss/" },
       { source: "Netflix TechBlog", category: "\uD50C\uB7AB\uD3FC \uC5D4\uC9C0\uB2C8\uC5B4\uB9C1", language: "en", url: "https://netflixtechblog.com/feed" },
@@ -52880,7 +52886,18 @@ function createNewsRouter() {
       res.json({
         items: selectLocalizedNews(cache2.items, language, 20),
         fetchedAt: cache2.fetchedAt,
-        sourceCount: new Set(cache2.items.map((item) => item.source)).size
+        sourceCount: DEFAULT_NEWS_SOURCES.length,
+        sources: DEFAULT_NEWS_SOURCES.map((source) => {
+          const items = cache2.items.filter((item) => item.source === source.source);
+          return {
+            name: source.source,
+            category: source.category,
+            language: source.language,
+            url: source.url,
+            status: items.length > 0 ? "active" : "pending",
+            lastPublishedAt: items[0]?.publishedAt ?? null
+          };
+        })
       });
     } catch (error2) {
       next(error2);
@@ -90162,7 +90179,7 @@ var init_index = __esm({
     init_asyncHandler();
     init_contextAutoRefreshService();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.31.1" ? { version: "0.31.1" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.32.0" ? { version: "0.32.0" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90281,7 +90298,7 @@ await bootstrapLocalDashboard2(db, {
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.31.1", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.32.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

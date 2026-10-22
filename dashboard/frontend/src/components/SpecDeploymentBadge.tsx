@@ -29,7 +29,7 @@ export function SpecDeploymentBadge({ deployment, title }: { deployment?: SpecDe
   return <>
     <button ref={button} type="button" aria-label={`배포 환경 ${label}`} title="배포 환경 보기" onClick={e => { e.stopPropagation(); setOpen(true); }} className="nodrag nopan shrink-0 rounded border border-[var(--color-deployment)]/40 bg-[var(--color-deployment)]/10 px-1.5 py-0.5 text-[10px] font-bold text-blue-300 hover:bg-[var(--color-deployment)]/20">{label}</button>
     {open && createPortal(<div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4" onClick={e => { e.stopPropagation(); if (e.target === e.currentTarget) setOpen(false); }}>
-      <div ref={dialog} role="dialog" aria-modal="true" aria-label="SPEC 배포 환경" className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b111b] p-6 text-sm text-slate-200 shadow-2xl">
+      <div ref={dialog} role="dialog" aria-modal="true" aria-label="작업 배포 환경" className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b111b] p-6 text-sm text-slate-200 shadow-2xl">
         <div className="flex items-center justify-between gap-4"><h2 className="font-semibold text-slate-400">배포 환경</h2><button type="button" onClick={() => setOpen(false)} className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-800 hover:text-white">닫기</button></div>
         <p className="mt-5 text-xl font-bold leading-snug">{title}</p>
         <div className="mt-5 rounded-xl bg-sky-500/10 px-4 py-4"><p className="text-xs text-slate-400">최신 작업 반영</p><p className="mt-1 text-3xl font-bold text-sky-300">{label}</p></div>

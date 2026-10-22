@@ -293,7 +293,7 @@ export function CheckpointPanel({
                   onClick={() => setCpDraft({ ...cpDraft, expiresAt: defaultExpiresAt })}
                   className={`rounded border px-2 py-1.5 text-[10.5px] transition-colors ${cpDraft.expiresAt === defaultExpiresAt ? "border-cyan-400/60 bg-cyan-400/15 font-semibold text-cyan-200" : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-cyan-500/30 hover:text-cyan-300"}`}
                 >
-                  SPEC 마감일까지
+                  개발 목표일까지
                 </button>
               )}
               <button

@@ -452,7 +452,7 @@ export function SchedulePage() {
   if (!schedulePresentationReady(specs, workspaces)) {
     return (
       <div className="flex h-full min-h-0 flex-col gap-4">
-        <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description="SPEC의 마감과 확인이 필요한 작업을 한곳에서 관리합니다." />
+        <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description="개발 항목의 목표일과 확인이 필요한 작업을 한곳에서 관리합니다." />
         <div className="ck-glass ck-card flex min-h-0 flex-1 items-center justify-center text-[12px] text-[var(--color-text-dim)]">
           {workspaceError ? "워크스페이스 색상 정보를 불러오지 못했습니다." : "불러오는 중…"}
         </div>
@@ -462,9 +462,9 @@ export function SchedulePage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description="SPEC의 마감과 확인이 필요한 작업을 한곳에서 관리합니다." action={
+      <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description="개발 항목의 목표일과 확인이 필요한 작업을 한곳에서 관리합니다." action={
         <div className="flex h-9 items-center gap-2">
-          <button type="button" onClick={() => setTrashOpen(true)} className="relative flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white" title="삭제하거나 종료한 SPEC 보기">
+          <button type="button" onClick={() => setTrashOpen(true)} className="relative flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white" title="삭제하거나 종료한 작업 보기">
             <Archive size={15} /> 보관함
             {archives.length > 0 && <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 font-mono text-[9px] text-slate-300">{archives.length}</span>}
           </button>
@@ -490,7 +490,7 @@ export function SchedulePage() {
             onClick={() => setAddOpen(true)}
             className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20"
           >
-            <CalendarPlus size={15} /> SPEC 일정 추가
+            <CalendarPlus size={15} /> 개발 일정 추가
           </button>
         </div>
       } />
@@ -872,7 +872,7 @@ export function SchedulePage() {
                   onClick={() => setSpecDocumentTarget({ workspace: selected.workspace_name, nodeId: selected.id, title: selected.title })}
                   className="mt-2 inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-300 transition-colors hover:text-cyan-200"
                 >
-                  <BookOpen size={13} /> {selected.has_run ? "SPEC 원문" : "SPEC 원문 편집"} <ChevronRight size={12} />
+                  <BookOpen size={13} /> {selected.has_run ? "개발 명세" : "개발 명세 편집"} <ChevronRight size={12} />
                 </button>
               )}
             </div>
@@ -1024,8 +1024,8 @@ export function SchedulePage() {
 
             <div className="border-t border-white/[0.08] pt-4">
               <div className="flex items-center justify-between gap-4">
-                <button onClick={() => setArchiveConfirm("deleted")} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] font-semibold text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-300"><Trash2 size={13} /> SPEC 삭제</button>
-                <button onClick={() => setArchiveConfirm("closed")} className="flex items-center gap-1.5 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-[11.5px] font-semibold text-amber-200 hover:bg-amber-400/10"><Archive size={13} /> SPEC 종료 처리</button>
+                <button onClick={() => setArchiveConfirm("deleted")} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] font-semibold text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-300"><Trash2 size={13} /> 작업 삭제</button>
+                <button onClick={() => setArchiveConfirm("closed")} className="flex items-center gap-1.5 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-[11.5px] font-semibold text-amber-200 hover:bg-amber-400/10"><Archive size={13} /> 작업 종료</button>
               </div>
             </div>
           </div>
@@ -1036,8 +1036,8 @@ export function SchedulePage() {
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-4 backdrop-blur-[2px]" onClick={() => !busy && setArchiveConfirm(null)}>
           <div role="dialog" aria-modal="true" aria-labelledby="spec-archive-confirm-title" className={cn("w-full max-w-md rounded-2xl border bg-[#0c131f] p-6 shadow-2xl", archiveConfirm === "deleted" ? "border-rose-500/35" : "border-amber-400/30")} onClick={(event) => event.stopPropagation()}>
             <span className={cn("inline-flex rounded-lg p-2", archiveConfirm === "deleted" ? "bg-rose-400/10 text-rose-300" : "bg-amber-400/10 text-amber-200")}>{archiveConfirm === "deleted" ? <Trash2 size={18} /> : <Archive size={18} />}</span>
-            <h2 id="spec-archive-confirm-title" className="mt-4 text-lg font-bold text-white">{archiveConfirm === "deleted" ? "이 SPEC을 삭제할까요?" : "이 SPEC의 일정을 종료할까요?"}</h2>
-            <p className="mt-2 text-[12px] leading-6 text-slate-400">{archiveConfirm === "deleted" ? "잘못 만들었거나 더 이상 사용하지 않는 SPEC을 활성 화면에서 제거합니다." : "개발이 끝난 SPEC으로 기록하고 열려 있는 일정을 모두 완료 처리합니다."} 개발 이력과 파일은 지우지 않으며 보관함에서 확인하고 복구할 수 있습니다.</p>
+            <h2 id="spec-archive-confirm-title" className="mt-4 text-lg font-bold text-white">{archiveConfirm === "deleted" ? "이 작업을 삭제할까요?" : "이 개발 항목을 종료할까요?"}</h2>
+            <p className="mt-2 text-[12px] leading-6 text-slate-400">{archiveConfirm === "deleted" ? "잘못 만들었거나 더 이상 사용하지 않는 작업을 활성 화면에서 제거합니다." : "개발이 끝난 항목으로 기록하고 열려 있는 일정을 모두 완료 처리합니다."} 개발 이력과 파일은 지우지 않으며 보관함에서 확인하고 복구할 수 있습니다.</p>
             <div className="mt-6 flex justify-end gap-2"><button disabled={busy} onClick={() => setArchiveConfirm(null)} className="rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-300 hover:bg-white/[0.06]">취소</button><button disabled={busy} onClick={() => void handleArchiveSpec(selected, archiveConfirm)} className={cn("rounded-lg border px-4 py-2 text-[12px] font-bold disabled:opacity-50", archiveConfirm === "deleted" ? "border-rose-500/40 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25" : "border-amber-400/35 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20")}>{busy ? "처리 중…" : archiveConfirm === "deleted" ? "보관함으로 이동" : "종료 처리"}</button></div>
           </div>
         </div>
@@ -1049,7 +1049,7 @@ export function SchedulePage() {
       {addOpen && (
         <Modal onClose={() => setAddOpen(false)}>
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-[var(--color-text-bright)]">SPEC 일정 추가</h2>
+            <h2 className="text-lg font-bold text-[var(--color-text-bright)]">개발 일정 추가</h2>
             <p className="text-[12px] text-[var(--color-text-muted)]">
               최상위 SPEC 초안의 제목과 마감일만 먼저 잡아둡니다. Run/Task와 <code>/sugo:feat</code> 파이프라인은 아직 연결되지 않습니다.
             </p>
