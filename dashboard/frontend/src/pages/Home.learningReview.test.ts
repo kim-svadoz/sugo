@@ -14,4 +14,12 @@ describe("Home 학습 리뷰 노트", () => {
     expect(source).toContain("이 작업의 학습 리뷰");
     expect(source).toContain("selectLearningReviewNote(review.items)");
   });
+
+  it("리뷰에 원본 명령과 경로를 펼치지 않고 판단·학습·다음 확인만 보여준다", () => {
+    expect(source).toContain("판단과 대안");
+    expect(source).toContain("남긴 학습");
+    expect(source).toContain("다음 확인");
+    expect(source).not.toContain("근거 기록 ·");
+    expect(source).not.toContain("{test.command");
+  });
 });

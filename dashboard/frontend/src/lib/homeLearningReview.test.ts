@@ -23,4 +23,35 @@ describe("Home 학습 리뷰 대상", () => {
     const note = selectLearningReviewNote([{ spec: infiniteScroll, history: infiniteScroll.development_history![0] }, { spec: userProfile, history: userProfile.development_history![0] }]);
     expect(note).toMatchObject({ workspace: "catalog-service", patchVersion: 4, workTitle: "상품 목록 - 연속 로딩" });
   });
+
+  it("원본 작업 결과를 그대로 펼치지 않고 리뷰할 핵심만 중복 없이 압축한다", () => {
+    const spec = {
+      id: "catalog-scroll", workspace_name: "catalog-service", title: "상품 목록 - 연속 로딩", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
+      focus_task_work_result: {
+        path: "/private/work-result.json",
+        patchVersion: 4,
+        report: {
+          patchVersion: 4,
+          summary: "전용 인덱스를 적용했다. 조회 키를 정리했다. 운영 설정을 확인했다.",
+          designDecisions: [
+            "화면 식별자를 하드코딩하지 않고 layout_key로 분기한다.",
+            "기존 캐시를 재사용하는 대신 인덱스별 캐시를 유지한다.",
+            "화면 식별자를 하드코딩하지 않고 layout_key로 분기한다.",
+            "운영과 같은 키 형식을 쓴다.",
+          ],
+          knownLimitations: ["운영 설정 확인이 필요하다.", "배포 후 지표 확인이 필요하다.", "문서를 갱신한다."],
+          verification: { test: { command: "./gradlew clean check", state: "pass", total: 75, passed: 75 }, runtimeVerified: true, validationVerdict: "pass" },
+        },
+      },
+      development_history: [history(4, "2026-10-21T01:00:00.000Z")],
+    } as ScheduledSpec;
+
+    const note = selectLearningReviewNote([{ spec, history: spec.development_history![0] }]);
+
+    expect(note?.summary).toHaveLength(2);
+    expect(note?.decisions).toHaveLength(2);
+    expect(note?.improvements).toHaveLength(2);
+    expect(note?.verification).not.toHaveProperty("command");
+    expect(note).not.toHaveProperty("resultPath");
+  });
 });

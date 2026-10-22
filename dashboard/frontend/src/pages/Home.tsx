@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, BookOpenText, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, GitPullRequest, Library, Star, Terminal, X } from "lucide-react";
+import { ArrowRight, BookOpenText, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, GitPullRequest, Library, Star, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNewsFeed, type NewsFeed, type NewsItem } from "../api/newsApi.js";
@@ -68,26 +68,18 @@ function LearningReviewModal({ note, onClose }: { note: LearningReviewNote; onCl
         <h3 className="mt-4 text-base font-semibold text-slate-100">{note.workTitle}</h3>
       </header>
 
-      <section className="mt-5 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.035] p-5">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-cyan-100"><Code2 size={16} className="text-cyan-300" />핵심 변경</h3>
-        <ul className="mt-3 grid gap-2 md:grid-cols-2">{note.summary.map((item, index) => <li key={`${index}:${item}`} className="text-[12px] leading-6 text-slate-300">{item}</li>)}</ul>
+      <section className="mt-5 rounded-xl border border-[var(--color-border)] bg-white/[0.015] px-5 py-4">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-100"><Code2 size={15} className="text-cyan-300" />이번 변경</h3>
+        <ul className="mt-3 space-y-2">{note.summary.map((item, index) => <li key={`${index}:${item}`} className="flex gap-3 text-[12px] leading-6 text-slate-300"><span className="text-cyan-300">{index + 1}.</span>{item}</li>)}</ul>
       </section>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,.85fr)]">
-        <div className="space-y-4">
-          <section className="rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-5"><h3 className="text-sm font-semibold text-slate-100">설계 판단</h3><ul className="mt-3 space-y-2">{note.decisions.map((item, index) => <li key={`${index}:${item}`} className="flex gap-3 text-[12px] leading-6 text-slate-300"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />{item}</li>)}</ul></section>
-          <section className="rounded-xl border border-violet-300/15 bg-violet-300/[0.025] p-5"><h3 className="text-sm font-semibold text-violet-100">학습 내용</h3><p className="mt-1 text-[10px] text-slate-500">다음 구현에도 재사용할 수 있는 원칙</p><ul className="mt-3 space-y-2">{note.learnings.map((item, index) => <li key={`${index}:${item}`} className="text-[12px] leading-6 text-slate-300">{item}</li>)}</ul></section>
-          {note.alternatives.length > 0 && <section className="rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-5"><h3 className="text-sm font-semibold text-slate-100">대안과 트레이드오프</h3><ul className="mt-3 space-y-2">{note.alternatives.map((item, index) => <li key={`${index}:${item}`} className="text-[12px] leading-6 text-slate-400">{item}</li>)}</ul></section>}
-        </div>
-
-        <div className="space-y-4"><section className="rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-5">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-100"><CheckCircle2 size={16} className="text-emerald-400" />검증 근거</h3>
-          <dl className="mt-3 space-y-3 text-xs"><div className="flex items-center justify-between gap-4"><dt className="text-slate-500">테스트</dt><dd className="text-slate-200">{testLabel}</dd></div><div className="flex items-center justify-between gap-4"><dt className="text-slate-500">실행 검증</dt><dd className="text-slate-200">{runtimeLabel}</dd></div><div className="flex items-center justify-between gap-4"><dt className="text-slate-500">최종 판정</dt><dd className="text-slate-200">{verdictLabel}</dd></div></dl>
-          {test.command && <div className="mt-4 flex gap-2 rounded-lg bg-black/25 px-3 py-2.5 font-mono text-[10px] leading-5 text-slate-400"><Terminal size={13} className="mt-0.5 shrink-0 text-cyan-300" /><span className="break-all">{test.command}</span></div>}
-        </section><section className="rounded-xl border border-amber-300/15 bg-amber-300/[0.025] p-5"><h3 className="flex items-center gap-2 text-sm font-semibold text-amber-100"><AlertTriangle size={16} className="text-amber-300" />다음 보완</h3>{note.improvements.length > 0 ? <ul className="mt-3 space-y-2">{note.improvements.map((item, index) => <li key={`${index}:${item}`} className="text-[12px] leading-6 text-slate-300">{item}</li>)}</ul> : <p className="mt-3 text-xs text-slate-500">기록된 후속 보완 사항이 없습니다.</p>}</section></div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <section className="rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-5"><h3 className="text-sm font-semibold text-slate-100">판단과 대안</h3><ul className="mt-3 space-y-2">{note.decisions.map((item, index) => <li key={`${index}:${item}`} className="flex gap-3 text-[12px] leading-6 text-slate-300"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />{item}</li>)}</ul></section>
+        <section className="rounded-xl border border-violet-300/15 bg-violet-300/[0.025] p-5"><h3 className="text-sm font-semibold text-violet-100">남긴 학습</h3><ul className="mt-3 space-y-2">{note.learnings.map((item, index) => <li key={`${index}:${item}`} className="text-[12px] leading-6 text-slate-300">{item}</li>)}</ul></section>
       </div>
 
-      {note.resultPath && <footer className="mt-4 flex items-start gap-2 border-t border-[var(--color-border)] pt-4 font-mono text-[10px] leading-5 text-slate-600"><BookOpenText size={13} className="mt-0.5 shrink-0" /><span className="break-all">근거 기록 · {note.resultPath}</span></footer>}
+      <section className="mt-4 rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-5"><h3 className="text-sm font-semibold text-slate-100">다음 확인</h3>{note.improvements.length > 0 ? <ul className="mt-3 grid gap-2 md:grid-cols-2">{note.improvements.map((item, index) => <li key={`${index}:${item}`} className="text-[12px] leading-6 text-slate-300">{item}</li>)}</ul> : <p className="mt-3 text-xs text-slate-500">추가로 확인할 사항이 없습니다.</p>}</section>
+      <footer className="mt-4 flex items-center gap-2 rounded-lg bg-emerald-400/[0.04] px-4 py-3 text-[11px] text-slate-400"><CheckCircle2 size={14} className="text-emerald-400" /><span>검증</span><strong className="font-medium text-slate-200">{testLabel}</strong><span>·</span><span>{runtimeLabel}</span><span>·</span><span>{verdictLabel}</span></footer>
     </article>
   </Modal>;
 }

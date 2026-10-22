@@ -7,15 +7,12 @@ export interface LearningReviewNote {
   workTitle: string;
   workspace: string;
   updatedAt: string;
-  resultPath: string | null;
   patchVersion: number;
   summary: string[];
   decisions: string[];
   learnings: string[];
-  alternatives: string[];
   improvements: string[];
   verification: {
-    command?: string;
     total?: number;
     passed?: number;
     failed?: number;
@@ -63,8 +60,9 @@ function learningCandidates(decisions: string[]): string[] {
   return learnings.slice(0, 2);
 }
 
-function alternativeCandidates(decisions: string[]): string[] {
-  return decisions.filter((value) => /대신|제거|유지|재사용|트레이드오프/.test(value)).slice(0, 2);
+function reviewDecisions(decisions: string[]): string[] {
+  const tradeoffs = decisions.filter((value) => /대신|제거|유지|재사용|트레이드오프/.test(value));
+  return [...tradeoffs, ...decisions].filter((value, index, all) => all.indexOf(value) === index).slice(0, 2);
 }
 
 export function selectLearningReviewNote(items: Array<{ spec: ScheduledSpec; history: DevelopmentHistory }>): LearningReviewNote | null {
@@ -75,9 +73,9 @@ export function selectLearningReviewNote(items: Array<{ spec: ScheduledSpec; his
     if (patchVersion !== history.version) continue;
 
     const allDecisions = conciseLines(report?.designDecisions ?? [], 8);
-    const decisions = allDecisions.slice(0, 4);
-    const improvements = conciseLines(report?.knownLimitations ?? [], 3);
-    const summary = conciseLines([report?.summary, result?.summary, history.summary], 3);
+    const decisions = reviewDecisions(allDecisions);
+    const improvements = conciseLines(report?.knownLimitations ?? [], 2);
+    const summary = conciseLines([report?.summary, result?.summary, history.summary], 2);
     if (decisions.length === 0 && improvements.length === 0 && summary.length === 0) continue;
     const test = report?.verification?.test;
 
@@ -86,15 +84,12 @@ export function selectLearningReviewNote(items: Array<{ spec: ScheduledSpec; his
       workTitle: spec.title,
       workspace: spec.workspace_name,
       updatedAt: history.completed_at ?? spec.focus_task_updated_at ?? "",
-      resultPath: result?.path ?? null,
       patchVersion,
       summary,
       decisions,
       learnings: learningCandidates(allDecisions),
-      alternatives: alternativeCandidates(allDecisions),
       improvements,
       verification: {
-        command: test?.command,
         total: test?.total,
         passed: test?.passed,
         failed: test?.failed,
