@@ -63,12 +63,12 @@ export function Skills() {
   return <div className="space-y-5">
     <PageHeading eyebrow="AI CAPABILITIES" title="스킬 카탈로그" description={catalogView === "skills" ? "AI가 작업 중 적용하는 전문 규칙과 역할을 확인합니다." : "사용자가 직접 시작할 수 있는 명령을 확인합니다."} action={<span className="font-mono text-xs text-[var(--color-text-dim)]">{skillCount} skills · {commandCount} commands</span>} />
 
-    {!empty && <section aria-label="카탈로그 종류" className="border-y border-[var(--color-border)] py-2">
+    {!empty && <section aria-label="카탈로그 종류" className="flex flex-wrap items-center gap-3">
       <div className="inline-flex rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5">
         <button onClick={() => setCatalogView("skills")} aria-pressed={catalogView === "skills"} className={cn("flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-semibold transition-colors", catalogView === "skills" ? "bg-cyan-400/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-white")}><BookOpen size={13} /> 스킬 <span className="font-mono text-[9px] opacity-65">{skillCount}</span></button>
         <button onClick={() => setCatalogView("commands")} aria-pressed={catalogView === "commands"} className={cn("flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-semibold transition-colors", catalogView === "commands" ? "bg-violet-400/15 text-violet-200" : "text-[var(--color-text-muted)] hover:text-white")}><TerminalSquare size={13} /> Command <span className="font-mono text-[9px] opacity-65">{commandCount}</span></button>
       </div>
-      <p className="mt-2 text-[12px] text-[var(--color-text-muted)]">{catalogView === "skills" ? "스킬은 AI가 작업 중 적용하는 규칙입니다." : "Command는 사용자가 직접 시작하는 명령입니다."}</p>
+      <p className="text-[12px] text-[var(--color-text-muted)]">{catalogView === "skills" ? "스킬은 AI가 작업 중 적용하는 규칙입니다." : "Command는 사용자가 직접 시작하는 명령입니다."}</p>
     </section>}
 
     {!empty && catalogView === "skills" && <section aria-label="스킬 담당 필터">
@@ -94,7 +94,7 @@ export function Skills() {
 
     {empty ? <div className="py-16 text-center text-sm text-[var(--color-text-muted)]">플러그인 경로가 연결되면 설치된 스킬이 여기에 표시됩니다.</div>
       : filtered.length === 0 ? <div className="py-16 text-center text-sm text-[var(--color-text-muted)]">조건에 맞는 스킬이 없습니다.</div>
-      : <div className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
+      : <div className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/35">
         {filtered.map(skill => {
           const tone = AGENT_TONES[accentKey(skill.agent ?? "")] ?? FALLBACK_AGENT_TONE;
           return <button key={`${skill.kind}:${skill.name}`} onClick={() => setSelectedSkill(skill)} className="group grid w-full grid-cols-[minmax(170px,0.7fr)_minmax(260px,1.5fr)_auto] items-center gap-5 px-2 py-3 text-left transition-colors hover:bg-[var(--color-surface-hover)] max-md:grid-cols-1 max-md:gap-1.5">

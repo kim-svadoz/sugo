@@ -589,18 +589,18 @@ export function Sessions() {
           if (needsAttention) navigate(`/schedule?reviewWorkspace=${encodeURIComponent(needsAttention.name)}`);
         }}
         className={cn(
-          "command-brief ck-stage-in group flex w-full shrink-0 items-center justify-between gap-5 rounded-2xl border px-4 py-3 text-left 2xl:px-5 2xl:py-4",
+          "command-brief ck-stage-in group flex w-full shrink-0 items-center justify-between gap-4 rounded-xl border px-3 py-2 text-left 2xl:px-4 2xl:py-2.5",
           commandSummary.intent === "attention" ? "border-amber-400/25 bg-amber-400/[0.055]" : "border-[var(--color-border)] bg-[var(--color-surface)]/75",
           commandSummary.intent === "attention" ? "cursor-pointer hover:border-amber-300/45" : "cursor-default",
         )}
       >
-        <span className="flex min-w-0 items-center gap-3">
-          <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", commandSummary.intent === "attention" ? "bg-amber-400/12 text-amber-300" : commandSummary.intent === "stable" ? "bg-emerald-400/10 text-emerald-300" : "bg-cyan-400/10 text-cyan-300")}>
-            {commandSummary.intent === "attention" ? <AlertTriangle size={19} /> : commandSummary.intent === "stable" ? <CheckCircle2 size={19} /> : <Activity size={19} />}
+        <span className="flex min-w-0 items-center gap-2.5">
+          <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", commandSummary.intent === "attention" ? "bg-amber-400/12 text-amber-300" : commandSummary.intent === "stable" ? "bg-emerald-400/10 text-emerald-300" : "bg-cyan-400/10 text-cyan-300")}>
+            {commandSummary.intent === "attention" ? <AlertTriangle size={16} /> : commandSummary.intent === "stable" ? <CheckCircle2 size={16} /> : <Activity size={16} />}
           </span>
           <span className="min-w-0">
-            <span className="block text-[15px] font-semibold text-white">{commandSummary.headline}</span>
-            <span className="mt-0.5 block text-[12.5px] text-[var(--color-text-muted)]">{commandSummary.detail}</span>
+            <span className="block text-[13px] font-semibold text-white">{commandSummary.headline}</span>
+            <span className="block text-[11px] text-[var(--color-text-muted)]">{commandSummary.detail}</span>
           </span>
         </span>
         {commandSummary.intent === "attention" && <span className="shrink-0 text-[12px] font-semibold text-amber-200 transition-transform group-hover:translate-x-1">확인할 작업 열기 →</span>}
@@ -681,7 +681,7 @@ export function Sessions() {
                   if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
                 }}
                 className={cn(
-                  "ck-card workspace-command-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-4 transition-[opacity,filter,background-color,transform,box-shadow] duration-200",
+                  "ck-card workspace-command-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-3 transition-[opacity,filter,background-color,transform,box-shadow] duration-200",
                   WORKSPACE_CARD_FOCUS_CLASSES,
                   workspaceCardEmphasis(isSel, selectedWorkspace !== null),
                   isSel && "workspace-command-card--selected",
@@ -719,7 +719,7 @@ export function Sessions() {
                     <div className="mt-2 font-mono text-xs text-cyan-400">{ws.activeTaskCount} task 진행 중</div>
                   ) : null}
                 </div>
-                <div className="mt-4 flex flex-nowrap items-center gap-2 border-t border-[var(--color-border)] pt-3" aria-label="워크스페이스 도구">
+                <div className="mt-3 flex flex-nowrap items-center gap-2 border-t border-[var(--color-border)] pt-2.5" aria-label="워크스페이스 도구">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -794,11 +794,11 @@ export function Sessions() {
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
       {selected && !isSearchMode && (
-        <div key={selected.name} className="command-detail ck-stage-in grid min-h-[300px] flex-1 grid-cols-1 gap-3 lg:grid-cols-10">
-          <div className="ck-glass flex min-h-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3 lg:col-span-3">
+        <div key={selected.name} className="command-detail ck-stage-in grid min-h-[340px] flex-1 grid-cols-1 gap-3 lg:grid-cols-10">
+          <div className="ck-glass flex min-h-[340px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3 lg:col-span-3">
             <LiveConsole workspace={selected.name} />
           </div>
-          <div className="ck-glass flex min-h-[300px] flex-col rounded-xl border border-[var(--color-border)] p-3 lg:col-span-7">
+          <div className="ck-glass flex min-h-[340px] flex-col rounded-xl border border-[var(--color-border)] p-3 lg:col-span-7">
             {renderInspector(selected)}
           </div>
         </div>

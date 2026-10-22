@@ -22,7 +22,7 @@ describe("Skills catalog presentation", () => {
   });
 
   it("카탈로그와 담당 필터를 다른 화면의 보조 탭과 같은 밀도로 표시한다", () => {
-    expect(source).toContain('aria-label="카탈로그 종류" className="border-y border-[var(--color-border)] py-2"');
+    expect(source).toContain('aria-label="카탈로그 종류" className="flex flex-wrap items-center gap-3"');
     expect(source).toContain('rounded-md px-3 py-1.5 text-[12px]');
     expect(source).toContain('rounded-md px-2.5 py-1.5 text-[12px]');
     expect(source).not.toContain('rounded-md px-4 py-2 text-sm');

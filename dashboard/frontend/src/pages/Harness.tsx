@@ -79,11 +79,16 @@ export function Harness() {
         {[['01', '기술 선택', '프로젝트에 사용하는 프레임워크·언어·빌드 도구를 고릅니다.'], ['02', '버전 확인', '선택한 기술의 버전에 맞는 기본 규칙을 확인합니다.'], ['03', '프로젝트 적용', '저장한 규칙은 다음 동기화부터 해당 프로젝트의 검증 기준으로 사용됩니다.']].map(([step, title, text]) => <div key={step} className="flex min-w-0 gap-2 max-[1900px]:gap-1.5"><span className="shrink-0 font-mono text-[10px] font-semibold text-cyan-300">{step}</span><div className="min-w-0"><h2 className="text-[13px] font-semibold text-slate-100 max-[1900px]:text-[11px]">{title}</h2><p className="mt-0.5 text-[11px] leading-4 text-slate-400 max-[1900px]:text-[10px] max-[1900px]:leading-[1.45]">{text}</p></div></div>)}
       </section>
 
-      <div className="grid grid-cols-4 gap-2" role="tablist" aria-label="하네스 카테고리">
-        {categories.map((key) => (
-          <button key={key} role="tab" aria-selected={category === key} onClick={() => setCategory(key)} className={cn("min-w-0 rounded-lg border px-3 py-2 text-[13px] font-semibold transition-colors max-[1900px]:px-2 max-[1900px]:py-1.5 max-[1900px]:text-[11px]", category === key ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-200" : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-cyan-400/30 hover:text-[var(--color-text)]")}>{harnessCategoryLabel(key)}<span className="ml-1.5 font-mono text-[9px] opacity-60">{groups.filter((group) => group.category === key).length}</span></button>
-        ))}
-      </div>
+      <section aria-label="규칙 선택" className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/45 p-3">
+        <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+          <div><h2 className="text-[13px] font-semibold text-[var(--color-text-bright)]">규칙 선택</h2><p className="mt-0.5 text-[10px] text-[var(--color-text-dim)]">기술 분류를 선택한 뒤 아래에서 기술과 버전을 지정합니다.</p></div>
+        </div>
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="하네스 카테고리">
+          {categories.map((key) => (
+            <button key={key} role="tab" aria-selected={category === key} onClick={() => setCategory(key)} className={cn("min-w-[108px] rounded-lg border px-4 py-1.5 text-[12px] font-semibold transition-colors", category === key ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-200" : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-cyan-400/30 hover:text-[var(--color-text)]")}>{harnessCategoryLabel(key)}<span className="ml-1.5 font-mono text-[9px] opacity-60">{groups.filter((group) => group.category === key).length}</span></button>
+          ))}
+        </div>
+      </section>
 
       {empty ? (
         <div className="ck-glass ck-card ck-scan space-y-2 text-sm text-slate-300">

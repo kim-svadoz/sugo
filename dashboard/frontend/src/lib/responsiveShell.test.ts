@@ -43,7 +43,8 @@ describe("responsive dashboard shell", () => {
 
   it("keeps harness navigation aligned and compact on laptop screens", () => {
     const harness = source("../pages/Harness.tsx");
-    expect(harness).toContain('className="grid grid-cols-4 gap-2"');
+    expect(harness).toContain('className="flex flex-wrap gap-2" role="tablist"');
+    expect(harness).toContain("min-w-[108px]");
     expect(harness).toContain("max-[1900px]:grid-cols-[280px_minmax(0,1fr)]");
     expect(harness).toContain("max-[1900px]:text-[11px]");
     expect(harness).toContain("whitespace-nowrap");
