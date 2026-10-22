@@ -8,6 +8,7 @@ import { useSchedule } from "../hooks/useSchedule.js";
 import { buildHomeBrief } from "../lib/homePresentation.js";
 import { Modal } from "../components/Modal.js";
 import { buildSevenDayFeed } from "../lib/techBriefPresentation.js";
+import { selectLearningReviewNote, type LearningReviewNote } from "../lib/homeLearningReview.js";
 
 function relativeTime(value: string): string {
   const hours = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 3_600_000));
@@ -47,73 +48,6 @@ function recentReview(specs: ScheduledSpec[]): { label: string; items: Array<{ s
   return { label: yesterdayItems.length > 0 ? "어제의 작업" : "최근 작업 리뷰", items: selected.slice(0, 3) };
 }
 
-interface LearningReviewNote {
-  title: string;
-  body: string;
-  workTitle: string;
-  workspace: string;
-  updatedAt: string;
-  resultPath: string | null;
-  patchVersion: number | null;
-  decisions: string[];
-  risks: string[];
-  verification: {
-    command?: string;
-    total?: number;
-    passed?: number;
-    failed?: number;
-    state?: string;
-    runtimeVerified?: boolean;
-    validationVerdict?: string;
-  };
-}
-
-function technicalPoint(specs: ScheduledSpec[]): LearningReviewNote | null {
-  const candidates = specs.flatMap((spec) => {
-    const result = spec.focus_task_work_result as {
-      path?: string;
-      patchVersion?: number;
-      summary?: string;
-      report?: {
-        summary?: string;
-        patchVersion?: number;
-        designDecisions?: string[];
-        knownLimitations?: string[];
-        verification?: {
-          test?: { command?: string; total?: number; passed?: number; failed?: number; state?: string };
-          runtimeVerified?: boolean;
-          validationVerdict?: string;
-        };
-      };
-    } | null | undefined;
-    const decision = result?.report?.designDecisions?.find(Boolean);
-    const risk = result?.report?.knownLimitations?.find(Boolean);
-    if (!decision && !risk) return [];
-    const test = result?.report?.verification?.test;
-    return [{
-      title: decision ? "이번 작업에서 내린 설계 결정" : "리뷰에 남은 기술적 주의점",
-      body: firstSentence(decision ?? risk),
-      workTitle: spec.focus_task_title ?? spec.title,
-      workspace: spec.workspace_name,
-      updatedAt: spec.focus_task_updated_at ?? "",
-      resultPath: result?.path ?? null,
-      patchVersion: result?.report?.patchVersion ?? result?.patchVersion ?? null,
-      decisions: result?.report?.designDecisions?.filter(Boolean) ?? [],
-      risks: result?.report?.knownLimitations?.filter(Boolean) ?? [],
-      verification: {
-        command: test?.command,
-        total: test?.total,
-        passed: test?.passed,
-        failed: test?.failed,
-        state: test?.state,
-        runtimeVerified: result?.report?.verification?.runtimeVerified,
-        validationVerdict: result?.report?.verification?.validationVerdict,
-      },
-    }];
-  });
-  return candidates.sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0] ?? null;
-}
-
 function LearningReviewModal({ note, onClose }: { note: LearningReviewNote; onClose: () => void }) {
   const test = note.verification;
   const testLabel = test.total == null ? (test.state === "pass" ? "통과" : "기록 없음") : `${test.passed ?? 0}/${test.total} 통과${test.failed ? ` · ${test.failed} 실패` : ""}`;
@@ -125,7 +59,7 @@ function LearningReviewModal({ note, onClose }: { note: LearningReviewNote; onCl
       <header className="border-b border-[var(--color-border)] pb-5">
         <div className="font-mono text-[10px] font-semibold tracking-[0.18em] text-cyan-300">LEARNING REVIEW</div>
         <h2 className="mt-2 text-2xl font-semibold tracking-[-0.025em] text-white">학습 리뷰 노트</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-400">구현 중 내린 판단과 검증 근거를 다음 작업에서도 재사용할 수 있도록 정리했습니다.</p>
+        <p className="mt-2 text-sm leading-6 text-slate-400">{note.workTitle}에서 확인된 변경과 판단만 간결하게 정리했습니다.</p>
         <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
           <span className="rounded-md border border-white/[0.08] bg-white/[0.025] px-2 py-1 text-slate-300">{note.workspace}</span>
           {note.patchVersion != null && <span className="rounded-md border border-violet-300/15 bg-violet-300/[0.06] px-2 py-1 text-violet-200">{note.patchVersion === 0 ? "FEAT" : `PATCH ${note.patchVersion}`}</span>}
@@ -134,23 +68,24 @@ function LearningReviewModal({ note, onClose }: { note: LearningReviewNote; onCl
         <h3 className="mt-4 text-base font-semibold text-slate-100">{note.workTitle}</h3>
       </header>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,.85fr)]">
-        <section className="rounded-xl border border-cyan-300/15 bg-cyan-300/[0.035] p-5">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-cyan-100"><Code2 size={16} className="text-cyan-300" />설계 결정</h3>
-          {note.decisions.length > 0 ? <ul className="mt-3 space-y-3">{note.decisions.map((item, index) => <li key={`${index}:${item}`} className="flex gap-3 text-[13px] leading-6 text-slate-200"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />{item}</li>)}</ul> : <p className="mt-3 text-xs text-slate-500">기록된 설계 결정이 없습니다.</p>}
-        </section>
+      <section className="mt-5 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.035] p-5">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-cyan-100"><Code2 size={16} className="text-cyan-300" />핵심 변경</h3>
+        <ul className="mt-3 grid gap-2 md:grid-cols-2">{note.summary.map((item, index) => <li key={`${index}:${item}`} className="text-[12px] leading-6 text-slate-300">{item}</li>)}</ul>
+      </section>
 
-        <section className="rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-5">
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,.85fr)]">
+        <div className="space-y-4">
+          <section className="rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-5"><h3 className="text-sm font-semibold text-slate-100">설계 판단</h3><ul className="mt-3 space-y-2">{note.decisions.map((item, index) => <li key={`${index}:${item}`} className="flex gap-3 text-[12px] leading-6 text-slate-300"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />{item}</li>)}</ul></section>
+          <section className="rounded-xl border border-violet-300/15 bg-violet-300/[0.025] p-5"><h3 className="text-sm font-semibold text-violet-100">학습 내용</h3><p className="mt-1 text-[10px] text-slate-500">다음 구현에도 재사용할 수 있는 원칙</p><ul className="mt-3 space-y-2">{note.learnings.map((item, index) => <li key={`${index}:${item}`} className="text-[12px] leading-6 text-slate-300">{item}</li>)}</ul></section>
+          {note.alternatives.length > 0 && <section className="rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-5"><h3 className="text-sm font-semibold text-slate-100">대안과 트레이드오프</h3><ul className="mt-3 space-y-2">{note.alternatives.map((item, index) => <li key={`${index}:${item}`} className="text-[12px] leading-6 text-slate-400">{item}</li>)}</ul></section>}
+        </div>
+
+        <div className="space-y-4"><section className="rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-5">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-100"><CheckCircle2 size={16} className="text-emerald-400" />검증 근거</h3>
           <dl className="mt-3 space-y-3 text-xs"><div className="flex items-center justify-between gap-4"><dt className="text-slate-500">테스트</dt><dd className="text-slate-200">{testLabel}</dd></div><div className="flex items-center justify-between gap-4"><dt className="text-slate-500">실행 검증</dt><dd className="text-slate-200">{runtimeLabel}</dd></div><div className="flex items-center justify-between gap-4"><dt className="text-slate-500">최종 판정</dt><dd className="text-slate-200">{verdictLabel}</dd></div></dl>
           {test.command && <div className="mt-4 flex gap-2 rounded-lg bg-black/25 px-3 py-2.5 font-mono text-[10px] leading-5 text-slate-400"><Terminal size={13} className="mt-0.5 shrink-0 text-cyan-300" /><span className="break-all">{test.command}</span></div>}
-        </section>
+        </section><section className="rounded-xl border border-amber-300/15 bg-amber-300/[0.025] p-5"><h3 className="flex items-center gap-2 text-sm font-semibold text-amber-100"><AlertTriangle size={16} className="text-amber-300" />다음 보완</h3>{note.improvements.length > 0 ? <ul className="mt-3 space-y-2">{note.improvements.map((item, index) => <li key={`${index}:${item}`} className="text-[12px] leading-6 text-slate-300">{item}</li>)}</ul> : <p className="mt-3 text-xs text-slate-500">기록된 후속 보완 사항이 없습니다.</p>}</section></div>
       </div>
-
-      <section className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[0.025] p-5">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-100"><AlertTriangle size={16} className="text-amber-300" />남은 사항과 위험</h3>
-        {note.risks.length > 0 ? <ul className="mt-3 space-y-2">{note.risks.map((item, index) => <li key={`${index}:${item}`} className="flex gap-3 text-xs leading-6 text-slate-300"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300" />{item}</li>)}</ul> : <p className="mt-3 text-xs text-slate-500">기록된 제한 사항이 없습니다.</p>}
-      </section>
 
       {note.resultPath && <footer className="mt-4 flex items-start gap-2 border-t border-[var(--color-border)] pt-4 font-mono text-[10px] leading-5 text-slate-600"><BookOpenText size={13} className="mt-0.5 shrink-0" /><span className="break-all">근거 기록 · {note.resultPath}</span></footer>}
     </article>
@@ -191,7 +126,7 @@ export function Home() {
   const [reviewNoteOpen, setReviewNoteOpen] = useState(false);
   const brief = useMemo(() => buildHomeBrief(specs ?? []), [specs]);
   const review = useMemo(() => recentReview(specs ?? []), [specs]);
-  const point = useMemo(() => technicalPoint(specs ?? []), [specs]);
+  const point = useMemo(() => selectLearningReviewNote(review.items), [review.items]);
   const openWork = (workspace: string, id: string) => navigate(`/schedule?reviewWorkspace=${encodeURIComponent(workspace)}&reviewSpec=${encodeURIComponent(id)}&returnTo=home`);
 
   useEffect(() => {
@@ -205,11 +140,10 @@ export function Home() {
 
     <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,.85fr)]">
       <div className="space-y-4">
-        <section className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"><header className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4"><div><h2 className="text-lg font-semibold text-white">{review.label}</h2><p className="mt-1 text-[11px] text-slate-400">완료 기록을 한 일·쟁점·검증·남은 사항의 맥락으로 다시 봅니다.</p></div><Code2 size={18} className="text-cyan-300" /></header>{review.items.length > 0 ? <div>{review.items.map(({ spec, history }) => <button key={`${spec.id}:${history.version}`} type="button" onClick={() => openWork(spec.workspace_name, spec.id)} className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-[var(--color-border)] px-5 py-4 text-left last:border-b-0 hover:bg-white/[0.02]"><span className="min-w-0"><span className="flex items-center gap-2"><strong className="truncate text-[13px] text-slate-100">{spec.title}</strong><span className="shrink-0 rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[9px] text-violet-200">{history.version === 0 ? "FEAT" : `PATCH ${history.version}`}</span></span><span className="mt-2 line-clamp-2 text-[11px] leading-5 text-slate-400">{firstSentence(history.summary)}</span><span className="mt-2 flex items-center gap-2 text-[9px] text-slate-600"><CheckCircle2 size={11} className="text-emerald-400" />파이프라인 완료 · {spec.workspace_name} · {history.completed_at ? relativeTime(history.completed_at) : ""}</span></span><ChevronRight size={16} className="text-slate-600" /></button>)}</div> : <div className="flex min-h-48 items-center justify-center px-6 text-center text-xs text-slate-500">최근 완료된 개발 기록이 없습니다.</div>}</section>
+        <section className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"><header className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4"><div><h2 className="text-lg font-semibold text-white">{review.label}</h2><p className="mt-1 text-[11px] text-slate-400">완료 기록을 한 일·쟁점·검증·남은 사항의 맥락으로 다시 봅니다.</p></div><Code2 size={18} className="text-cyan-300" /></header>{review.items.length > 0 ? <div>{review.items.map(({ spec, history }) => <div key={`${spec.id}:${history.version}`} className="border-b border-[var(--color-border)] last:border-b-0"><button type="button" onClick={() => openWork(spec.workspace_name, spec.id)} className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 text-left hover:bg-white/[0.02]"><span className="min-w-0"><span className="flex items-center gap-2"><strong className="truncate text-[13px] text-slate-100">{spec.title}</strong><span className="shrink-0 rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[9px] text-violet-200">{history.version === 0 ? "FEAT" : `PATCH ${history.version}`}</span></span><span className="mt-2 line-clamp-2 text-[11px] leading-5 text-slate-400">{firstSentence(history.summary)}</span><span className="mt-2 flex items-center gap-2 text-[9px] text-slate-600"><CheckCircle2 size={11} className="text-emerald-400" />파이프라인 완료 · {spec.workspace_name} · {history.completed_at ? relativeTime(history.completed_at) : ""}</span></span><ChevronRight size={16} className="text-slate-600" /></button>{point?.specId === spec.id && point.patchVersion === history.version && <div className="relative mx-5 mb-4 flex items-center gap-3 rounded-lg border border-cyan-300/15 bg-cyan-300/[0.045] px-4 py-3"><span className="absolute -top-2 left-5 h-2 w-px bg-cyan-300/40" /><span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-cyan-300/10 text-cyan-300"><span className="absolute inset-0 animate-ping rounded-md border border-cyan-300/15" /><Code2 size={13} /></span><span className="min-w-0 flex-1"><strong className="block text-[11px] text-cyan-100">이 작업의 학습 리뷰</strong><span className="mt-0.5 block truncate text-[10px] text-slate-400">설계 판단 {point.decisions.length}개 · 학습 {point.learnings.length}개 · 다음 보완 {point.improvements.length}개</span></span><button type="button" onClick={() => setReviewNoteOpen(true)} className="flex shrink-0 items-center gap-1 text-[10px] font-medium text-cyan-300">리뷰 노트 보기<ArrowRight size={11} /></button></div>}</div>)}</div> : <div className="flex min-h-48 items-center justify-center px-6 text-center text-xs text-slate-500">최근 완료된 개발 기록이 없습니다.</div>}</section>
 
         <section className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"><header className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4"><div><h2 className="text-lg font-semibold text-white">오늘의 리뷰</h2><p className="mt-1 text-[11px] text-slate-400">승인, 수정 또는 기술적 판단이 실제로 필요한 작업만 표시합니다.</p></div><GitPullRequest size={18} className="text-violet-300" /></header>{brief.decisions.length > 0 ? <div>{brief.decisions.map((item) => <button key={`${item.workspace}:${item.id}`} type="button" onClick={() => openWork(item.workspace, item.id)} className="flex w-full items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 text-left last:border-b-0 hover:bg-white/[0.02]"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-400/10 text-violet-300"><Eye size={15} /></span><span className="min-w-0 flex-1"><strong className="block truncate text-[13px] text-slate-100">{item.title}</strong><span className="mt-1 block truncate text-[11px] text-slate-400">{item.detail}</span></span><span className="flex items-center gap-1 text-[10px] font-medium text-cyan-300">{item.actionLabel}<ArrowRight size={11} /></span></button>)}</div> : <div className="flex min-h-28 flex-col items-center justify-center px-6 text-center"><CheckCircle2 size={20} className="text-emerald-400" /><strong className="mt-2.5 text-[13px] text-slate-200">판단을 기다리는 리뷰가 없습니다</strong><span className="mt-1 text-[10px] text-slate-500">새 검토 요청이 도착하면 이곳에서 바로 이어갈 수 있습니다.</span></div>}</section>
 
-        {point && <section className="rounded-xl border border-cyan-300/15 bg-[linear-gradient(110deg,rgba(16,39,53,.72),rgba(10,17,29,.92))] px-5 py-4"><div className="flex items-start gap-4"><span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-300/10 text-cyan-300"><Code2 size={15} /></span><div className="min-w-0 flex-1"><div className="text-[9px] font-semibold tracking-[0.16em] text-cyan-300">리뷰 노트</div><h2 className="mt-1.5 text-[14px] font-semibold text-slate-100">{point.title}</h2><p className="mt-2 line-clamp-3 text-[11px] leading-5 text-slate-400">{point.body}</p></div><button type="button" onClick={() => setReviewNoteOpen(true)} className="mt-1 flex shrink-0 items-center gap-1 text-[10px] text-cyan-300">근거 보기<ArrowRight size={11} /></button></div></section>}
       </div>
 
       <TechBrief feed={newsFeed} userId={userId} />
