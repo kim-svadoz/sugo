@@ -9,4 +9,12 @@ describe("Weekly index presentation", () => {
     expect(source).not.toContain("보고서 열기 →");
     expect(source).toContain("<ArrowRight");
   });
+
+  it("keeps the weekly index readable at laptop and wide-monitor widths", () => {
+    expect(source).toContain("mx-auto w-full max-w-[1680px]");
+    expect(source).toContain("min-[1100px]:grid-cols-[minmax(0,1fr)_clamp(280px,22vw,330px)]");
+    expect(source).toContain("px-4 py-3");
+    expect(source).toContain("text-[12.5px] leading-5");
+    expect(source).toContain("font-mono text-[11px]");
+  });
 });
