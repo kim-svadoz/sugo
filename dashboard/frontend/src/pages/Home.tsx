@@ -65,7 +65,6 @@ function LearningReviewModal({ note, onClose }: { note: LearningReviewNote; onCl
           {note.patchVersion != null && <span className="rounded-md border border-violet-300/15 bg-violet-300/[0.06] px-2 py-1 text-violet-200">{note.patchVersion === 0 ? "FEAT" : `PATCH ${note.patchVersion}`}</span>}
           {note.updatedAt && <span>{relativeTime(note.updatedAt)} 기록</span>}
         </div>
-        <h3 className="mt-4 text-base font-semibold text-slate-100">{note.workTitle}</h3>
       </header>
 
       <section className="mt-5 rounded-xl border border-[var(--color-border)] bg-white/[0.015] px-5 py-4">
