@@ -27,4 +27,11 @@ describe("plan transition activity", () => {
     expect(activityForPlanTransition("status", "CODE_RUNNING", "결제 중복 방지")).toBeNull();
     expect(activityForPlanTransition("commit", "COMMIT_PENDING", "결제 중복 방지")).toBeNull();
   });
+
+  it("다음 단계에는 직전 단계의 실제 결과를 요약해 전달한다", () => {
+    expect(activityForPlanTransition("review_start", "TEST_DONE", "결제 중복 방지", { testSummary: "75/75 통과 · ./gradlew check" })?.message)
+      .toContain("75/75 통과");
+    expect(activityForPlanTransition("docs_done", "DOCS_PENDING", "결제 중복 방지", { workResultPath: "docs/work-result.md" })?.message)
+      .toContain("docs/work-result.md");
+  });
 });

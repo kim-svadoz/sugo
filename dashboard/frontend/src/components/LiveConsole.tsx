@@ -22,11 +22,11 @@ function FeedLine({ ev, expanded = false }: { ev: ActivityEvent; expanded?: bool
   return (
     <div className="ck-line-in flex items-start gap-1.5 font-mono text-[11.5px] leading-relaxed">
       <span className="w-3 shrink-0 text-[var(--color-text-dim)]">&gt;</span>
-      <span className="w-[92px] shrink-0 font-semibold text-slate-300" title="한국 표준시 (KST)">[{formatActivityTime(ev.ts)}]</span>
-      <span className="w-[96px] shrink-0 overflow-hidden whitespace-nowrap">
+      <span className="w-[116px] shrink-0 whitespace-nowrap font-semibold text-slate-300" title="한국 표준시 (KST)">[{formatActivityTime(ev.ts)}]</span>
+      <span className="w-[112px] shrink-0 overflow-hidden whitespace-nowrap">
         <AgentBadge agent={ev.agent} handoffTo={ev.handoff_to} />
       </span>
-      <span className="shrink-0 text-[var(--color-text-muted)]">{ev.workspace_name}</span>
+      <span className="w-28 shrink-0 truncate text-[var(--color-text-muted)]" title={ev.workspace_name}>{ev.workspace_name}</span>
       <span
         className={`log-message-body min-w-0 flex-1 ${expanded ? "whitespace-pre-wrap break-words" : "truncate"}`}
       >
@@ -76,8 +76,8 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
           </button>
         </div>
         {visible.length === 0 ? <div className="flex min-h-40 items-center justify-center text-[12px] text-[var(--color-text-dim)]">새 작업 신호가 없습니다.</div> : <div className="space-y-3">
-          <section className="rounded-lg border border-emerald-300/10 bg-emerald-300/[0.035] px-3.5 py-3"><div className="flex items-center gap-2 text-[10px] font-semibold text-emerald-300"><CheckCircle2 size={13} />최근 결과</div><p className="mt-2 line-clamp-3 text-[12px] leading-5 text-slate-300">{summary.result ?? visible[0].message}</p></section>
-          {summary.stages.length > 0 && <section><div className="mb-2 text-[10px] font-medium text-slate-500">최종 작업 흐름</div><div className="flex flex-wrap items-center gap-1.5">{summary.stages.map((stage, index) => <span key={`${stage}:${index}`} className="flex items-center gap-1.5"><span className="rounded-md border border-white/[0.07] bg-white/[0.025] px-2 py-1 font-mono text-[9px] text-slate-300">{stage}</span>{index < summary.stages.length - 1 && <span className="text-[10px] text-slate-700">→</span>}</span>)}</div></section>}
+          <section className="rounded-lg border border-emerald-300/10 bg-emerald-300/[0.035] px-3.5 py-3"><div className="flex items-center gap-2 text-[10px] font-semibold text-emerald-300"><CheckCircle2 size={13} />최근 결과</div><ul className="mt-2 space-y-1.5">{(summary.result.length > 0 ? summary.result : [visible[0].message]).map((line, index) => <li key={`${index}:${line}`} className="flex gap-2 text-[11px] leading-5 text-slate-300"><span className="text-emerald-300/60">•</span><span className="line-clamp-2">{line}</span></li>)}</ul></section>
+          {summary.stages.length > 0 && <section><div className="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium text-slate-500"><span>작업 흐름</span><span className={summary.stages.every((stage) => stage.status === "complete") ? "text-emerald-300" : "text-cyan-300"}>{summary.currentLabel}</span></div><div className="grid grid-cols-3 gap-1.5">{summary.stages.map((stage) => <span key={stage.label} className={`rounded-md border px-2 py-1.5 text-center text-[9px] font-medium ${stage.status === "complete" ? "border-emerald-300/20 bg-emerald-300/[0.07] text-emerald-200" : stage.status === "active" ? "border-cyan-300/35 bg-cyan-300/[0.1] text-cyan-100 shadow-[0_0_14px_rgba(34,211,238,0.08)]" : "border-white/[0.06] bg-white/[0.015] text-slate-600"}`}>{stage.label}</span>)}</div></section>}
           <div className="flex items-center justify-between border-t border-white/[0.055] pt-2.5 text-[10px] text-slate-500"><span className="flex items-center gap-1.5"><RotateCcw size={11} />다시 구현한 횟수</span><strong className="font-mono font-medium text-slate-300">{summary.revisions}</strong></div>
         </div>}
       </div>
@@ -86,7 +86,7 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" onMouseDown={() => setFull(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative flex h-[80vh] w-full max-w-5xl flex-col rounded-xl border border-cyan-500/40 ck-glass ck-glow-cyan p-4"
+            className="relative flex h-[80vh] w-full max-w-7xl flex-col rounded-xl border border-cyan-500/40 ck-glass ck-glow-cyan p-4"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="mb-2 flex shrink-0 items-center justify-between border-b border-[var(--color-border)] pb-2">

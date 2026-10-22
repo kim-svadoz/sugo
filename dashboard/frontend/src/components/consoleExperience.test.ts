@@ -15,9 +15,16 @@ describe("Console 정보 구조", () => {
 
   it("버전은 헤더 액션에서 빼고 사이드바 하단의 보조 정보로 둔다", () => {
     expect(header).not.toContain("Console</span>");
-    expect(sidebar).toContain("Sugo 화면");
-    expect(sidebar).toContain("개발 자동화");
+    expect(sidebar).toContain("Sugo 대시보드");
+    expect(sidebar).toContain("워크플로우 엔진");
     expect(sidebar).not.toContain("<span>Console {dashboardVersion}");
+  });
+
+  it("피드는 오늘 표시와 국내외 필터를 제공한다", () => {
+    expect(home).toContain("오늘");
+    expect(home).toContain("'전체'");
+    expect(home).toContain("'국내'");
+    expect(home).toContain("'국외'");
   });
 
   it("Engineering Feed는 시각 메타데이터 대신 오전 8시 갱신 규칙을 안내한다", () => {

@@ -13,6 +13,7 @@ export interface ActivityEvent {
   handoff_to: string | null;
   event_type: string;
   message: string;
+  details?: unknown;
 }
 
 /**

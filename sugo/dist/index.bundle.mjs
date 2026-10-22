@@ -28224,7 +28224,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.42.7" : "0.0.0-dev";
+  return true ? "0.42.8" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29514,27 +29514,28 @@ function resolveContractRequired(policyValue, sessionCtx) {
 }
 
 // src/dashboard/activity.ts
-function activityForPlanTransition(action, fromState, featureName) {
+function activityForPlanTransition(action, fromState, featureName, context = {}) {
+  const changed = context.changedFiles?.length ? `${context.changedFiles.length}\uAC1C \uD30C\uC77C \uBCC0\uACBD` : "\uAD6C\uD604 \uACB0\uACFC \uAE30\uB85D";
   if (action === "code_start") {
     const agent = fromState === "REVIEW_RUNNING" ? "REVIEW" : fromState === "TEST_DONE" ? "TEST" : "MAIN";
     return {
       agent,
       handoffTo: "CODE",
       eventType: "HANDOFF",
-      message: agent === "MAIN" ? `${featureName} \uAD6C\uD604 \uC2DC\uC791` : `${featureName} \uAD6C\uD604 \uC7AC\uC9C4\uC785`
+      message: agent === "MAIN" ? `${featureName} \uAD6C\uD604 \uC2DC\uC791 \xB7 \uBAA9\uD45C\uC640 \uC801\uC6A9 \uADDC\uCE59 \uD655\uC778` : `${featureName} \uC7AC\uAD6C\uD604 \uC2DC\uC791 \xB7 \uAC80\uD1A0 \uD53C\uB4DC\uBC31 \uBC18\uC601`
     };
   }
   if (action === "test_start") {
-    return { agent: "CODE", handoffTo: "TEST", eventType: "HANDOFF", message: `${featureName} \uD14C\uC2A4\uD2B8 \uC778\uACC4` };
+    return { agent: "CODE", handoffTo: "TEST", eventType: "HANDOFF", message: `${featureName} \uAD6C\uD604 \uC644\uB8CC \xB7 ${changed}` };
   }
   if (action === "review_start") {
-    return { agent: "TEST", handoffTo: "REVIEW", eventType: "HANDOFF", message: `${featureName} \uB9AC\uBDF0 \uC778\uACC4` };
+    return { agent: "TEST", handoffTo: "REVIEW", eventType: "HANDOFF", message: `${featureName} \uAC80\uC99D \uC644\uB8CC \xB7 ${context.testSummary ?? "\uD14C\uC2A4\uD2B8 \uC99D\uAC70 \uD655\uC778"}` };
   }
   if (action === "review_done") {
-    return { agent: "REVIEW", handoffTo: "DOCS", eventType: "HANDOFF", message: `${featureName} \uBB38\uC11C\uD654 \uC778\uACC4` };
+    return { agent: "REVIEW", handoffTo: "DOCS", eventType: "HANDOFF", message: `${featureName} \uC0AC\uC6A9\uC790 \uD655\uC778 \uC644\uB8CC \xB7 ${context.reviewSummary ?? "\uAC80\uD1A0 \uACB0\uACFC \uC2B9\uC778"}` };
   }
   if (action === "docs_done") {
-    return { agent: "DOCS", handoffTo: "MAIN", eventType: "HANDOFF", message: `${featureName} \uC644\uB8CC \uCC98\uB9AC \uC778\uACC4` };
+    return { agent: "DOCS", handoffTo: "MAIN", eventType: "HANDOFF", message: `${featureName} \uBB38\uC11C\uD654 \uC644\uB8CC \xB7 ${context.workResultPath ?? "\uC791\uC5C5 \uACB0\uACFC \uAE30\uB85D \uC800\uC7A5"} \xB7 \uCEE4\uBC0B \uC900\uBE44` };
   }
   return null;
 }
@@ -32321,7 +32322,14 @@ ${args2.prdContent}` : args2.prdContent;
     }
   }
   if (existing && session.data.linkedWorkspace) {
-    const transitionActivity = activityForPlanTransition(action, existing.state, session.featureName);
+    const evidence = session.data.chainInfo.testEvidence;
+    const testSummary = evidence ? `${evidence.passed ?? 0}/${evidence.total ?? 0} \uD1B5\uACFC${evidence.command ? ` \xB7 ${evidence.command}` : ""}` : void 0;
+    const transitionActivity = activityForPlanTransition(action, existing.state, session.featureName, {
+      changedFiles: session.data.chainInfo.changedFiles,
+      testSummary,
+      reviewSummary: session.data.chainInfo.reviewSummary,
+      workResultPath: session.data.chainInfo.workResultPath
+    });
     if (transitionActivity) {
       void emitActivity({ workspaceName: session.data.linkedWorkspace, ...transitionActivity });
     }
@@ -32796,6 +32804,13 @@ async function handleSugoRoadmap(rawArgs) {
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };
       await saveSession(session);
       await updateRoadmapNodeRuntimeAssessment(args2.workspace, args2.id, assessSession(session));
+      void emitActivity({
+        workspaceName: args2.workspace,
+        agent: "REVIEW",
+        eventType: "SYSTEM",
+        message: `${session.featureName} \xB7 \uBCC0\uACBD \uD30C\uC77C ${files.length}\uAC1C\uC640 \uAC80\uC99D \uACB0\uACFC\uB97C \uD655\uC778\uD574 \uC8FC\uC138\uC694`,
+        details: { phase: "user_confirmation", status: "waiting", taskId: args2.id, summary: args2.reviewPacket.summary }
+      });
       return ok4({
         awaitingHumanDecision: true,
         presentation: "dashboard",

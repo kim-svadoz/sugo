@@ -42,7 +42,7 @@ type ReviewResult = {
 
 function conciseLines(values: Array<string | null | undefined>, limit: number): string[] {
   return values
-    .flatMap((value) => (value ?? "").split(/\n+|(?<=[.!?])\s+/))
+    .flatMap((value) => (value ?? "").split(/\n+|;\s*|(?<=[.!?])\s+/))
     .map((value) => value.replace(/\s+/g, " ").replace(/^[-•]\s*/, "").replace(/\s*\(사용자 결정\)\.?$/, ".").trim())
     .filter((value) => value.length >= 8)
     .map((value) => value.length > 190 ? `${value.slice(0, 187).trim()}…` : value)
@@ -87,9 +87,10 @@ export function selectLearningReviewNote(items: Array<{ spec: ScheduledSpec; his
     const latest = ordered[ordered.length - 1];
 
     const allDecisions = conciseLines(ordered.flatMap(({ report }) => report?.designDecisions ?? []), 12);
-    const decisions = reviewDecisions(allDecisions);
+    const summary = conciseLines(ordered.flatMap(({ report, result, history }) => [report?.summary, result?.summary, history.summary]), 6);
+    const explicitSummaryDecisions = summary.filter((value) => /대신|제거|유지|재사용|분리|변경/.test(value));
+    const decisions = reviewDecisions([...allDecisions, ...explicitSummaryDecisions]);
     const improvements = conciseLines(ordered.flatMap(({ report }) => report?.knownLimitations ?? []), 2);
-    const summary = conciseLines(ordered.flatMap(({ report, result, history }) => [report?.summary, result?.summary, history.summary]), 2);
     if (decisions.length === 0 && improvements.length === 0 && summary.length === 0) continue;
     const test = latest.report?.verification?.test;
 

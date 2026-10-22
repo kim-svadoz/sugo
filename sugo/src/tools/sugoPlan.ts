@@ -1366,7 +1366,16 @@ export async function handleSugoPlan(rawArgs: unknown) {
   // Activity Stream은 선택적인 sugo_chain 호출이 아니라 실제 상태 전이를 정본으로 삼는다.
   // 성공한 전이만 여기 도달하므로 실패한 게이트를 handoff처럼 기록하지 않는다.
   if (existing && session.data.linkedWorkspace) {
-    const transitionActivity = activityForPlanTransition(action, existing.state, session.featureName);
+    const evidence = session.data.chainInfo.testEvidence;
+    const testSummary = evidence
+      ? `${evidence.passed ?? 0}/${evidence.total ?? 0} 통과${evidence.command ? ` · ${evidence.command}` : ""}`
+      : undefined;
+    const transitionActivity = activityForPlanTransition(action, existing.state, session.featureName, {
+      changedFiles: session.data.chainInfo.changedFiles,
+      testSummary,
+      reviewSummary: session.data.chainInfo.reviewSummary,
+      workResultPath: session.data.chainInfo.workResultPath,
+    });
     if (transitionActivity) {
       void emitActivity({ workspaceName: session.data.linkedWorkspace, ...transitionActivity });
     }

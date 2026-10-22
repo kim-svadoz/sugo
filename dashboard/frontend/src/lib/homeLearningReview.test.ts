@@ -48,11 +48,21 @@ describe("Home 학습 리뷰 대상", () => {
 
     const note = selectLearningReviewNote([{ spec, history: spec.development_history![0] }]);
 
-    expect(note?.summary).toHaveLength(2);
+    expect(note?.summary).toHaveLength(3);
     expect(note?.decisions).toHaveLength(2);
     expect(note?.improvements).toHaveLength(2);
     expect(note?.verification).not.toHaveProperty("command");
     expect(note).not.toHaveProperty("resultPath");
+  });
+
+  it("세미콜론으로 뭉친 변경 요약을 독립된 검토 항목으로 나눈다", () => {
+    const spec = {
+      id: "feed-cache", workspace_name: "sample-workspace", title: "피드 캐시 정리", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
+      development_history: [{ ...history(2, "2026-10-21T01:00:00.000Z"), work_result: { patchVersion: 2, report: { patchVersion: 2, summary: "신규 인덱스를 읽는다; 기존 조회는 유지한다; 미사용 API는 제거한다; 캐시 키는 사용자 ID를 쓴다", designDecisions: [], knownLimitations: [] } } }],
+    } as ScheduledSpec;
+    const note = selectLearningReviewNote([{ spec, history: spec.development_history![0] }]);
+    expect(note?.summary).toHaveLength(4);
+    expect(note?.decisions).toEqual(expect.arrayContaining([expect.stringContaining("유지"), expect.stringContaining("제거")]));
   });
 
   it("같은 날 같은 FEAT에서 완료한 patch를 하나의 리뷰로 병합하고 코드 학습을 남긴다", () => {

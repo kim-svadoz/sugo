@@ -17,8 +17,9 @@ describe("워크스페이스 작업 신호", () => {
       event(3, "REVIEW", "CODE", "infinite-scroll 구현 재진입"),
     ]);
 
-    expect(summary.result).toBe("인덱스 전환과 검증을 완료했다.");
-    expect(summary.stages).toEqual(["구현", "테스트", "검토", "문서화", "커밋"]);
+    expect(summary.result).toEqual(["인덱스 전환과 검증을 완료했다.", "상세 근거"]);
+    expect(summary.stages.map((stage) => stage.label)).toEqual(["구현", "테스트", "검토", "사용자 확인", "문서화", "커밋"]);
+    expect(summary.stages.every((stage) => stage.status === "complete")).toBe(true);
     expect(summary.revisions).toBe(1);
   });
 
@@ -27,6 +28,14 @@ describe("워크스페이스 작업 신호", () => {
       event(2, "MAIN", null, "완료", "COMPLETED"),
       event(1, "DOCS", "MAIN", "완료 처리 인계"),
     ]);
-    expect(summary.stages).toEqual(["문서화", "커밋"]);
+    expect(summary.stages.find((stage) => stage.label === "사용자 확인")?.status).toBe("complete");
+    expect(summary.stages.find((stage) => stage.label === "커밋")?.status).toBe("complete");
+  });
+
+  it("사용자 확인 요청에서 대기 중인 현재 단계를 강조한다", () => {
+    const confirmation = { ...event(3, "REVIEW", null, "변경 파일 4개와 검증 결과를 확인해 주세요.", "SYSTEM"), details: { phase: "user_confirmation", status: "waiting" } };
+    const summary = summarizeActivity([confirmation, event(2, "TEST", "REVIEW", "75/75 테스트 통과"), event(1, "CODE", "TEST", "4개 파일 구현 완료")]);
+    expect(summary.stages.find((stage) => stage.label === "사용자 확인")?.status).toBe("active");
+    expect(summary.currentLabel).toBe("사용자 확인 대기");
   });
 });
