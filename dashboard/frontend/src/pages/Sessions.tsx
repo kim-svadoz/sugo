@@ -545,11 +545,11 @@ export function Sessions() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
-      <section aria-label="워크스페이스 운영 도구" className="space-y-2">
+    <div className="flex min-h-full flex-col gap-3 2xl:gap-4">
+      <section aria-label="워크스페이스 운영 도구" className="page-heading shrink-0 space-y-1 2xl:space-y-2">
         <div>
-          <div className="font-mono text-[11px] font-semibold tracking-[0.18em] text-cyan-300">WORKSPACE OPERATIONS</div>
-          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-bright)]">도메인 관리 <span className="align-middle text-sm font-normal text-[var(--color-text-dim)]">({filteredWorkspaces.length})</span></h1>
+          <div className="page-heading__eyebrow font-mono text-[11px] font-semibold tracking-[0.18em] text-cyan-300">WORKSPACE OPERATIONS</div>
+          <h1 className="page-heading__title mt-1 text-xl font-semibold tracking-[-0.02em] text-[var(--color-text-bright)] 2xl:mt-2 2xl:text-2xl">도메인 관리 <span className="align-middle text-sm font-normal text-[var(--color-text-dim)]">({filteredWorkspaces.length})</span></h1>
         </div>
         <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-[var(--color-text-muted)]">도메인별 개발 흐름과 운영 상태를 한곳에서 확인합니다.</p>
@@ -589,7 +589,7 @@ export function Sessions() {
           if (needsAttention) navigate(`/schedule?reviewWorkspace=${encodeURIComponent(needsAttention.name)}`);
         }}
         className={cn(
-          "command-brief ck-stage-in group flex w-full items-center justify-between gap-5 rounded-2xl border px-5 py-4 text-left",
+          "command-brief ck-stage-in group flex w-full shrink-0 items-center justify-between gap-5 rounded-2xl border px-4 py-3 text-left 2xl:px-5 2xl:py-4",
           commandSummary.intent === "attention" ? "border-amber-400/25 bg-amber-400/[0.055]" : "border-[var(--color-border)] bg-[var(--color-surface)]/75",
           commandSummary.intent === "attention" ? "cursor-pointer hover:border-amber-300/45" : "cursor-default",
         )}
@@ -664,7 +664,7 @@ export function Sessions() {
           })}
         </div>
       ) : viewMode === "grid" ? (
-        <div className="ck-scroll grid max-h-[360px] grid-cols-1 gap-2.5 overflow-auto pr-1 md:grid-cols-2 min-[1350px]:grid-cols-3 min-[1900px]:grid-cols-4">
+        <div className="grid shrink-0 grid-cols-1 gap-2.5 md:grid-cols-2 min-[1350px]:grid-cols-3 min-[1900px]:grid-cols-4">
           {filteredWorkspaces.map((ws, wi) => {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);
@@ -719,14 +719,14 @@ export function Sessions() {
                     <div className="mt-2 font-mono text-xs text-cyan-400">{ws.activeTaskCount} task 진행 중</div>
                   ) : null}
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[var(--color-border)] pt-3" aria-label="워크스페이스 도구">
+                <div className="mt-4 flex flex-nowrap items-center gap-2 border-t border-[var(--color-border)] pt-3" aria-label="워크스페이스 도구">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedWorkspace(ws.name);
                         setCheckpointModal(ws.name);
                       }}
-                      className="group inline-flex min-w-0 items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/[0.07] px-2 py-1.5 text-left outline-none transition-colors hover:border-amber-400/50 hover:bg-amber-500/[0.13] focus-visible:bg-amber-500/[0.16]"
+                      className="group inline-flex min-w-0 flex-none items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/[0.07] px-2.5 py-1.5 text-left outline-none transition-colors hover:border-amber-400/50 hover:bg-amber-500/[0.13] focus-visible:bg-amber-500/[0.16]"
                       title={WORKSPACE_RULES_TOOL.workspaceDescription}
                     >
                       <Shield size={14} className="shrink-0 text-amber-300" />
@@ -739,7 +739,7 @@ export function Sessions() {
                           e.stopPropagation();
                           setAgentCanvasModal(ws.name);
                         }}
-                        className="group inline-flex min-w-0 items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/[0.07] px-2 py-1.5 text-left outline-none transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/[0.13] focus-visible:bg-cyan-500/[0.16]"
+                        className="group inline-flex min-w-0 flex-none items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/[0.07] px-2.5 py-1.5 text-left outline-none transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/[0.13] focus-visible:bg-cyan-500/[0.16]"
                         title={AI_WORK_STATUS_TOOL.description}
                       >
                         <Bot size={14} className="shrink-0 text-cyan-300" />

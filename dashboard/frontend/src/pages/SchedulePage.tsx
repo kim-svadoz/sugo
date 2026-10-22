@@ -499,7 +499,7 @@ export function SchedulePage() {
         <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">{errorMsg}</div>
       )}
 
-      <div className={cn("grid min-h-0 flex-1 grid-cols-1 gap-4", scheduleView === "month" && "lg:grid-cols-[220px_1fr]")}>
+      <div className={cn("grid min-h-0 flex-1 grid-cols-1 gap-3 2xl:gap-4", scheduleView === "month" && "lg:grid-cols-[190px_1fr] 2xl:grid-cols-[220px_1fr]")}>
         {scheduleView === "month" && (
         <div
           className="ck-glass ck-card flex flex-col gap-2 overflow-auto p-3 transition-colors"
@@ -725,7 +725,19 @@ export function SchedulePage() {
                       더블클릭해 메모
                     </span>
                   )}
-                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1 max-[1500px]:flex-row max-[1500px]:flex-wrap max-[1500px]:content-start max-[1500px]:overflow-hidden", daySpecOverflowClass())}>
+                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1 max-[1800px]:flex-row max-[1800px]:flex-wrap max-[1800px]:content-start max-[1800px]:overflow-hidden", daySpecOverflowClass())}>
+                    {dayChips.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => { const first = specForCommitment(dayChips[0]); if (first) openSpec(first); }}
+                        className="absolute bottom-1.5 right-1.5 z-10 hidden h-5 items-center gap-1 rounded-full border border-cyan-300/55 bg-cyan-300/12 px-1.5 shadow-[0_0_10px_rgba(34,211,238,0.12)] max-[1800px]:flex"
+                        title={dayChips.map((item) => item.title).join("\n")}
+                        aria-label={`${dayChips.length}개 개발 일정: ${dayChips.map((item) => item.title).join(", ")}`}
+                      >
+                        {dayChips.slice(0, 3).map((item) => <span key={item.id} className="h-2.5 w-2.5 rounded-full ring-1 ring-white/30" style={{ backgroundColor: getWorkspaceColor(item.workspace_name, 0) }} />)}
+                        <span className="font-mono text-[9px] font-bold text-cyan-100">{dayChips.length}</span>
+                      </button>
+                    )}
                     {dayChips.map((commitment) => {
                       const style = scheduleCardStyle(colorOf(commitment.workspace_name));
                       const spec = specForCommitment(commitment);
@@ -740,16 +752,15 @@ export function SchedulePage() {
                           className="shrink-0"
                           title={`${commitment.workspace_name} · ${commitment.title}`}
                         >
-                          <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1500px]:hidden">
+                          <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1800px]:hidden">
                             <button type="button" onClick={() => spec && openSpec(spec)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100">{commitment.title}</button>
                             {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">파이프라인 완료</span>}
                             {spec && <SpecDeploymentBadge deployment={spec.deployment} title={commitment.title} />}
                           </div>
-                          <button type="button" onClick={() => spec && openSpec(spec)} aria-label={`${commitment.title} 열기`} className="hidden max-[1500px]:flex h-3 w-3 shrink-0 items-center justify-center rounded-full ring-1 ring-white/25 transition-transform hover:scale-125" style={{ backgroundColor: String(style.borderLeftColor ?? "#22d3ee") }} />
                         </div>
                       );
                     })}
-                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1500px]:min-h-0 max-[1500px]:h-3 max-[1500px]:w-3 max-[1500px]:rounded-full max-[1500px]:border-slate-300/40 max-[1500px]:bg-slate-300/70 max-[1500px]:p-0" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1500px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`${memo.title} 메모 열기`} className="min-w-0 flex-1 truncate text-left max-[1500px]:sr-only">{memo.title}</button></div>)}
+                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1800px]:min-h-0 max-[1800px]:h-3 max-[1800px]:w-3 max-[1800px]:rounded-full max-[1800px]:border-slate-300/40 max-[1800px]:bg-slate-300/70 max-[1800px]:p-0" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1800px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`${memo.title} 메모 열기`} className="min-w-0 flex-1 truncate text-left max-[1800px]:sr-only">{memo.title}</button></div>)}
                   </div>
                 </div>
               );

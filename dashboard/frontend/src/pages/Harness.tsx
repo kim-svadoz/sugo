@@ -87,15 +87,15 @@ export function Harness() {
           </p>
         </div>
       ) : (
-        <div className="grid min-h-0 grid-cols-[minmax(350px,0.72fr)_minmax(0,2.28fr)] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] max-[1500px]:grid-cols-1">
-          <section className="border-r border-[var(--color-border)] p-4 max-[1500px]:border-b max-[1500px]:border-r-0 2xl:p-6">
+        <div className="grid min-h-0 grid-cols-[minmax(320px,0.62fr)_minmax(0,2.38fr)] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] max-[1800px]:grid-cols-[minmax(250px,0.5fr)_minmax(0,2.5fr)]">
+          <section className="border-r border-[var(--color-border)] p-4 2xl:p-6">
             <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label="하네스 카테고리">
               {categories.map((key) => (
                 <button key={key} role="tab" aria-selected={category === key} onClick={() => setCategory(key)} className={cn("rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors", category === key ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-200" : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-cyan-400/30 hover:text-[var(--color-text)]")}>{harnessCategoryLabel(key)}<span className="ml-2 font-mono text-[10px] opacity-60">{groups.filter((group) => group.category === key).length}</span></button>
               ))}
             </div>
             <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-dim)]"><Boxes size={14} /> 기술 선택</div>
-            <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1 md:grid-cols-3 xl:grid-cols-4 min-[1501px]:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
               {visibleGroups.map((group) => <TechnologyCard key={group.key} group={group} selected={technologyKey === group.key} onClick={() => setTechnologyKey(group.key)} />)}
             </div>
           </section>
