@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpenText, CheckCircle2, ChevronRight, Code2, Eye, GitPullRequest, Library, Star, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, BookOpenText, CheckCircle2, ChevronRight, Code2, Eye, GitPullRequest, Library, Star, Terminal, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNewsFeed, type NewsFeed, type NewsItem } from "../api/newsApi.js";
@@ -6,6 +6,7 @@ import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { buildHomeBrief } from "../lib/homePresentation.js";
+import { Modal } from "../components/Modal.js";
 
 function relativeTime(value: string): string {
   const hours = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 3_600_000));
@@ -45,15 +46,114 @@ function recentReview(specs: ScheduledSpec[]): { label: string; items: Array<{ s
   return { label: yesterdayItems.length > 0 ? "어제의 작업" : "최근 작업 리뷰", items: selected.slice(0, 3) };
 }
 
-function technicalPoint(specs: ScheduledSpec[]): { title: string; body: string; workspace: string; id: string } | null {
+interface LearningReviewNote {
+  title: string;
+  body: string;
+  workTitle: string;
+  workspace: string;
+  updatedAt: string;
+  resultPath: string | null;
+  patchVersion: number | null;
+  decisions: string[];
+  risks: string[];
+  verification: {
+    command?: string;
+    total?: number;
+    passed?: number;
+    failed?: number;
+    state?: string;
+    runtimeVerified?: boolean;
+    validationVerdict?: string;
+  };
+}
+
+function technicalPoint(specs: ScheduledSpec[]): LearningReviewNote | null {
   const candidates = specs.flatMap((spec) => {
-    const result = spec.focus_task_work_result as { report?: { designDecisions?: string[]; knownLimitations?: string[] } } | null | undefined;
+    const result = spec.focus_task_work_result as {
+      path?: string;
+      patchVersion?: number;
+      summary?: string;
+      report?: {
+        summary?: string;
+        patchVersion?: number;
+        designDecisions?: string[];
+        knownLimitations?: string[];
+        verification?: {
+          test?: { command?: string; total?: number; passed?: number; failed?: number; state?: string };
+          runtimeVerified?: boolean;
+          validationVerdict?: string;
+        };
+      };
+    } | null | undefined;
     const decision = result?.report?.designDecisions?.find(Boolean);
     const risk = result?.report?.knownLimitations?.find(Boolean);
     if (!decision && !risk) return [];
-    return [{ title: decision ? "이번 작업에서 내린 설계 결정" : "리뷰에 남은 기술적 주의점", body: firstSentence(decision ?? risk), workspace: spec.workspace_name, id: spec.id, updatedAt: spec.focus_task_updated_at ?? "" }];
+    const test = result?.report?.verification?.test;
+    return [{
+      title: decision ? "이번 작업에서 내린 설계 결정" : "리뷰에 남은 기술적 주의점",
+      body: firstSentence(decision ?? risk),
+      workTitle: spec.focus_task_title ?? spec.title,
+      workspace: spec.workspace_name,
+      updatedAt: spec.focus_task_updated_at ?? "",
+      resultPath: result?.path ?? null,
+      patchVersion: result?.report?.patchVersion ?? result?.patchVersion ?? null,
+      decisions: result?.report?.designDecisions?.filter(Boolean) ?? [],
+      risks: result?.report?.knownLimitations?.filter(Boolean) ?? [],
+      verification: {
+        command: test?.command,
+        total: test?.total,
+        passed: test?.passed,
+        failed: test?.failed,
+        state: test?.state,
+        runtimeVerified: result?.report?.verification?.runtimeVerified,
+        validationVerdict: result?.report?.verification?.validationVerdict,
+      },
+    }];
   });
   return candidates.sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0] ?? null;
+}
+
+function LearningReviewModal({ note, onClose }: { note: LearningReviewNote; onClose: () => void }) {
+  const test = note.verification;
+  const testLabel = test.total == null ? (test.state === "pass" ? "통과" : "기록 없음") : `${test.passed ?? 0}/${test.total} 통과${test.failed ? ` · ${test.failed} 실패` : ""}`;
+  const runtimeLabel = test.runtimeVerified === true ? "실행 환경 확인" : test.runtimeVerified === false ? "실행 환경 미확인" : "기록 없음";
+  const verdictLabel = test.validationVerdict === "pass" ? "통과" : test.validationVerdict === "partial" ? "부분 확인" : test.validationVerdict === "fail" ? "실패" : "기록 없음";
+
+  return <Modal onClose={onClose} size="wide">
+    <article>
+      <header className="border-b border-[var(--color-border)] pb-5">
+        <div className="font-mono text-[10px] font-semibold tracking-[0.18em] text-cyan-300">LEARNING REVIEW</div>
+        <h2 className="mt-2 text-2xl font-semibold tracking-[-0.025em] text-white">학습 리뷰 노트</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-400">구현 중 내린 판단과 검증 근거를 다음 작업에서도 재사용할 수 있도록 정리했습니다.</p>
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
+          <span className="rounded-md border border-white/[0.08] bg-white/[0.025] px-2 py-1 text-slate-300">{note.workspace}</span>
+          {note.patchVersion != null && <span className="rounded-md border border-violet-300/15 bg-violet-300/[0.06] px-2 py-1 text-violet-200">{note.patchVersion === 0 ? "FEAT" : `PATCH ${note.patchVersion}`}</span>}
+          {note.updatedAt && <span>{relativeTime(note.updatedAt)} 기록</span>}
+        </div>
+        <h3 className="mt-4 text-base font-semibold text-slate-100">{note.workTitle}</h3>
+      </header>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,.85fr)]">
+        <section className="rounded-xl border border-cyan-300/15 bg-cyan-300/[0.035] p-5">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-cyan-100"><Code2 size={16} className="text-cyan-300" />설계 결정</h3>
+          {note.decisions.length > 0 ? <ul className="mt-3 space-y-3">{note.decisions.map((item, index) => <li key={`${index}:${item}`} className="flex gap-3 text-[13px] leading-6 text-slate-200"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />{item}</li>)}</ul> : <p className="mt-3 text-xs text-slate-500">기록된 설계 결정이 없습니다.</p>}
+        </section>
+
+        <section className="rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-5">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-100"><CheckCircle2 size={16} className="text-emerald-400" />검증 근거</h3>
+          <dl className="mt-3 space-y-3 text-xs"><div className="flex items-center justify-between gap-4"><dt className="text-slate-500">테스트</dt><dd className="text-slate-200">{testLabel}</dd></div><div className="flex items-center justify-between gap-4"><dt className="text-slate-500">실행 검증</dt><dd className="text-slate-200">{runtimeLabel}</dd></div><div className="flex items-center justify-between gap-4"><dt className="text-slate-500">최종 판정</dt><dd className="text-slate-200">{verdictLabel}</dd></div></dl>
+          {test.command && <div className="mt-4 flex gap-2 rounded-lg bg-black/25 px-3 py-2.5 font-mono text-[10px] leading-5 text-slate-400"><Terminal size={13} className="mt-0.5 shrink-0 text-cyan-300" /><span className="break-all">{test.command}</span></div>}
+        </section>
+      </div>
+
+      <section className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[0.025] p-5">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-100"><AlertTriangle size={16} className="text-amber-300" />남은 사항과 위험</h3>
+        {note.risks.length > 0 ? <ul className="mt-3 space-y-2">{note.risks.map((item, index) => <li key={`${index}:${item}`} className="flex gap-3 text-xs leading-6 text-slate-300"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300" />{item}</li>)}</ul> : <p className="mt-3 text-xs text-slate-500">기록된 제한 사항이 없습니다.</p>}
+      </section>
+
+      {note.resultPath && <footer className="mt-4 flex items-start gap-2 border-t border-[var(--color-border)] pt-4 font-mono text-[10px] leading-5 text-slate-600"><BookOpenText size={13} className="mt-0.5 shrink-0" /><span className="break-all">근거 기록 · {note.resultPath}</span></footer>}
+    </article>
+  </Modal>;
 }
 
 function TechBrief({ feed, userId }: { feed: NewsFeed | null; userId: string | null }) {
@@ -82,6 +182,7 @@ export function Home() {
   const { userId } = useAuth();
   const navigate = useNavigate();
   const [newsFeed, setNewsFeed] = useState<NewsFeed | null>(null);
+  const [reviewNoteOpen, setReviewNoteOpen] = useState(false);
   const brief = useMemo(() => buildHomeBrief(specs ?? []), [specs]);
   const review = useMemo(() => recentReview(specs ?? []), [specs]);
   const point = useMemo(() => technicalPoint(specs ?? []), [specs]);
@@ -102,10 +203,11 @@ export function Home() {
 
         <section className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"><header className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4"><div><h2 className="text-lg font-semibold text-white">오늘의 리뷰</h2><p className="mt-1 text-[11px] text-slate-400">승인, 수정 또는 기술적 판단이 실제로 필요한 작업만 표시합니다.</p></div><GitPullRequest size={18} className="text-violet-300" /></header>{brief.decisions.length > 0 ? <div>{brief.decisions.map((item) => <button key={`${item.workspace}:${item.id}`} type="button" onClick={() => openWork(item.workspace, item.id)} className="flex w-full items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 text-left last:border-b-0 hover:bg-white/[0.02]"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-400/10 text-violet-300"><Eye size={15} /></span><span className="min-w-0 flex-1"><strong className="block truncate text-[13px] text-slate-100">{item.title}</strong><span className="mt-1 block truncate text-[11px] text-slate-400">{item.detail}</span></span><span className="flex items-center gap-1 text-[10px] font-medium text-cyan-300">{item.actionLabel}<ArrowRight size={11} /></span></button>)}</div> : <div className="flex min-h-28 flex-col items-center justify-center px-6 text-center"><CheckCircle2 size={20} className="text-emerald-400" /><strong className="mt-2.5 text-[13px] text-slate-200">판단을 기다리는 리뷰가 없습니다</strong><span className="mt-1 text-[10px] text-slate-500">새 검토 요청이 도착하면 이곳에서 바로 이어갈 수 있습니다.</span></div>}</section>
 
-        {point && <section className="rounded-xl border border-cyan-300/15 bg-[linear-gradient(110deg,rgba(16,39,53,.72),rgba(10,17,29,.92))] px-5 py-4"><div className="flex items-start gap-4"><span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-300/10 text-cyan-300"><Code2 size={15} /></span><div className="min-w-0 flex-1"><div className="text-[9px] font-semibold tracking-[0.16em] text-cyan-300">리뷰 노트</div><h2 className="mt-1.5 text-[14px] font-semibold text-slate-100">{point.title}</h2><p className="mt-2 line-clamp-3 text-[11px] leading-5 text-slate-400">{point.body}</p></div><button type="button" onClick={() => openWork(point.workspace, point.id)} className="mt-1 flex shrink-0 items-center gap-1 text-[10px] text-cyan-300">근거 보기<ArrowRight size={11} /></button></div></section>}
+        {point && <section className="rounded-xl border border-cyan-300/15 bg-[linear-gradient(110deg,rgba(16,39,53,.72),rgba(10,17,29,.92))] px-5 py-4"><div className="flex items-start gap-4"><span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-300/10 text-cyan-300"><Code2 size={15} /></span><div className="min-w-0 flex-1"><div className="text-[9px] font-semibold tracking-[0.16em] text-cyan-300">리뷰 노트</div><h2 className="mt-1.5 text-[14px] font-semibold text-slate-100">{point.title}</h2><p className="mt-2 line-clamp-3 text-[11px] leading-5 text-slate-400">{point.body}</p></div><button type="button" onClick={() => setReviewNoteOpen(true)} className="mt-1 flex shrink-0 items-center gap-1 text-[10px] text-cyan-300">근거 보기<ArrowRight size={11} /></button></div></section>}
       </div>
 
       <TechBrief feed={newsFeed} userId={userId} />
     </div>
+    {point && reviewNoteOpen && <LearningReviewModal note={point} onClose={() => setReviewNoteOpen(false)} />}
   </div>;
 }
