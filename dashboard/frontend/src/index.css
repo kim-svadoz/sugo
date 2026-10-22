@@ -57,8 +57,8 @@
   --color-danger: #fb7185;         /* rose-400 — 실패/차단 */
 }
 
-/* Pretendard가 x-height가 낮아 rem 기반 UI 전체를 비례 확대. */
-html { font-size: 19px; }
+/* 100% 브라우저 배율에서도 110%로 보던 정보 밀도와 가독성을 기본값으로 제공한다. */
+html { font-size: 21px; }
 
 body {
   margin: 0;
@@ -71,6 +71,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 #root { min-height: 100vh; }
+
+/* 일부 화면에 남은 px 기반 보조 문구도 rem 기반 셸과 같은 비율로 키운다. */
+[class~="text-[8px]"] { font-size: 9px !important; }
+[class~="text-[9px]"] { font-size: 10px !important; }
+[class~="text-[10px]"] { font-size: 11px !important; }
+[class~="text-[10.5px]"] { font-size: 11.5px !important; }
+[class~="text-[11px]"] { font-size: 12px !important; }
+[class~="text-[11.5px]"] { font-size: 12.5px !important; }
+[class~="text-[12px]"] { font-size: 13px !important; }
+[class~="text-[12.5px]"] { font-size: 13.75px !important; }
+[class~="text-[13px]"] { font-size: 14px !important; }
+[class~="text-[14px]"] { font-size: 15.5px !important; }
+[class~="text-[15px]"] { font-size: 16.5px !important; }
+[class~="text-[16px]"] { font-size: 17.5px !important; }
 
 /* 사이버펑크 다크 그리드 — main까지 직접 타깃 + !important. */
 body, #root, main, .bg-grid-pattern {
