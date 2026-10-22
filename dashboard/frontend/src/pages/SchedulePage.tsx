@@ -22,7 +22,7 @@ import { useSchedule } from "../hooks/useSchedule.js";
 import { createQuickSpec, getSpecDraft, renameRoadmapNode, setDueDate, setProject, setWorkBranch, updateSpecDraft, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { buildFeatCommand, buildPatchAttachCommand, buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
-import { createScheduleMemo, deleteScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
+import { createScheduleMemo, deleteScheduleMemo, restoreScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { SpecArchiveModal } from "../components/SpecArchiveModal.js";
 import { buildCommitmentQueue, commitmentNextAction, legacyCommitments, type CommitmentView } from "../lib/scheduleCommitment.js";
 import { updateScheduleCommitment } from "../api/scheduleCommitmentApi.js";
@@ -79,7 +79,7 @@ export function SchedulePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { data: workspaces, error: workspaceError } = useWorkspaces();
-  const { data: specs, memos, commitments, archives, refetch } = useSchedule();
+  const { data: specs, memos, commitments, archives, memoArchives, refetch } = useSchedule();
   const reviewWorkspace = searchParams.get("reviewWorkspace");
   const reviewSpec = searchParams.get("reviewSpec");
   const returnTo = searchParams.get("returnTo");
@@ -389,7 +389,7 @@ export function SchedulePage() {
     if (!userId || !memoTarget?.memo) return;
     setBusy(true);
     try { await deleteScheduleMemo(userId, memoTarget.memo.id); setMemoTarget(null); refetch(); }
-    catch { setErrorMsg("메모 삭제에 실패했습니다."); }
+    catch { setErrorMsg("메모를 보관하지 못했습니다."); }
     finally { setBusy(false); }
   }
 
@@ -466,7 +466,7 @@ export function SchedulePage() {
         <div className="flex h-9 items-center gap-2">
           <button type="button" onClick={() => setTrashOpen(true)} className="relative flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white" title="삭제하거나 종료한 작업 보기">
             <Archive size={15} /> 보관함
-            {archives.length > 0 && <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 font-mono text-[9px] text-slate-300">{archives.length}</span>}
+            {archives.length + memoArchives.length > 0 && <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 font-mono text-[9px] text-slate-300">{archives.length + memoArchives.length}</span>}
           </button>
           <div className="flex items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1" aria-label="일정 보기 방식">
             <button
@@ -708,7 +708,7 @@ export function SchedulePage() {
                   onDragLeave={() => setDragOverKey((k) => (k === key ? null : k))}
                   onDrop={(e) => dropScheduleItem(e, key)}
                   className={cn(
-                    "group relative flex select-none flex-col gap-1 overflow-hidden rounded-lg border p-1.5 text-left",
+                    "group relative flex select-none flex-col gap-1 overflow-visible rounded-lg border p-1.5 text-left",
                     inMonth ? "border-[var(--color-border)] bg-[var(--color-background)]" : "border-transparent opacity-40",
                     isToday && "ring-1 ring-cyan-400/60",
                     dragOverKey === key && "border-cyan-400 bg-cyan-500/10",
@@ -725,19 +725,7 @@ export function SchedulePage() {
                       더블클릭해 메모
                     </span>
                   )}
-                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1 max-[1800px]:flex-row max-[1800px]:flex-wrap max-[1800px]:content-start max-[1800px]:overflow-hidden", daySpecOverflowClass())}>
-                    {dayChips.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => { const first = specForCommitment(dayChips[0]); if (first) openSpec(first); }}
-                        className="absolute bottom-1.5 right-1.5 z-10 hidden h-5 items-center gap-1 rounded-full border border-cyan-300/55 bg-cyan-300/12 px-1.5 shadow-[0_0_10px_rgba(34,211,238,0.12)] max-[1800px]:flex"
-                        title={dayChips.map((item) => item.title).join("\n")}
-                        aria-label={`${dayChips.length}개 개발 일정: ${dayChips.map((item) => item.title).join(", ")}`}
-                      >
-                        {dayChips.slice(0, 3).map((item) => <span key={item.id} className="h-2.5 w-2.5 rounded-full ring-1 ring-white/30" style={{ backgroundColor: getWorkspaceColor(item.workspace_name, 0) }} />)}
-                        <span className="font-mono text-[9px] font-bold text-cyan-100">{dayChips.length}</span>
-                      </button>
-                    )}
+                  <div className={cn("flex min-h-0 flex-1 flex-col gap-1 max-[1900px]:flex-row max-[1900px]:flex-wrap max-[1900px]:content-start max-[1900px]:overflow-hidden", daySpecOverflowClass())}>
                     {dayChips.map((commitment) => {
                       const style = scheduleCardStyle(colorOf(commitment.workspace_name));
                       const spec = specForCommitment(commitment);
@@ -752,7 +740,16 @@ export function SchedulePage() {
                           className="shrink-0"
                           title={`${commitment.workspace_name} · ${commitment.title}`}
                         >
-                          <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1800px]:hidden">
+                          <button
+                            type="button"
+                            onClick={() => spec && openSpec(spec)}
+                            aria-label={`개발 일정 · ${commitment.title}`}
+                            className="group/marker relative hidden h-2.5 w-2.5 rounded-[3px] border border-white/35 shadow-[0_0_7px_rgba(255,255,255,0.16)] max-[1900px]:block"
+                            style={{ backgroundColor: getWorkspaceColor(commitment.workspace_name, 0) }}
+                          >
+                            <span className="pointer-events-none absolute bottom-full right-0 z-30 mb-1.5 w-max max-w-52 translate-y-1 rounded-md border border-slate-600 bg-slate-950 px-2 py-1 text-[10px] font-medium leading-4 text-slate-100 opacity-0 shadow-xl transition-all group-hover/marker:translate-y-0 group-hover/marker:opacity-100 group-focus-visible/marker:translate-y-0 group-focus-visible/marker:opacity-100">{commitment.title}</span>
+                          </button>
+                          <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1900px]:hidden">
                             <button type="button" onClick={() => spec && openSpec(spec)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100">{commitment.title}</button>
                             {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">파이프라인 완료</span>}
                             {spec && <SpecDeploymentBadge deployment={spec.deployment} title={commitment.title} />}
@@ -760,7 +757,7 @@ export function SchedulePage() {
                         </div>
                       );
                     })}
-                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1800px]:min-h-0 max-[1800px]:h-3 max-[1800px]:w-3 max-[1800px]:rounded-full max-[1800px]:border-slate-300/40 max-[1800px]:bg-slate-300/70 max-[1800px]:p-0" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1800px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`${memo.title} 메모 열기`} className="min-w-0 flex-1 truncate text-left max-[1800px]:sr-only">{memo.title}</button></div>)}
+                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="group/memo relative flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1900px]:min-h-0 max-[1900px]:h-2.5 max-[1900px]:w-2.5 max-[1900px]:rounded-[3px] max-[1900px]:border-slate-200/55 max-[1900px]:bg-slate-200/75 max-[1900px]:p-0" title={`메모 · ${memo.title}`}><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1900px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`메모 · ${memo.title}`} className="min-w-0 flex-1 truncate text-left max-[1900px]:absolute max-[1900px]:inset-0 max-[1900px]:text-transparent">{memo.title}</button><span className="pointer-events-none absolute bottom-full right-0 z-30 mb-1.5 hidden w-max max-w-52 translate-y-1 rounded-md border border-slate-600 bg-slate-950 px-2 py-1 text-[10px] font-medium leading-4 text-slate-100 opacity-0 shadow-xl transition-all group-hover/memo:translate-y-0 group-hover/memo:opacity-100 group-focus-within/memo:translate-y-0 group-focus-within/memo:opacity-100 max-[1900px]:block">{memo.title}</span></div>)}
                   </div>
                 </div>
               );
@@ -1056,7 +1053,7 @@ export function SchedulePage() {
         </div>
       )}
 
-      {trashOpen && <SpecArchiveModal items={archives} busy={busy} onClose={() => setTrashOpen(false)} onRestore={async item => { if (!userId) return; setBusy(true); try { await restoreScheduleSpec(userId, item.workspace_name, item.spec_id); refetch(); } catch { setErrorMsg("SPEC을 복구하지 못했습니다."); } finally { setBusy(false); } }} />}
+      {trashOpen && <SpecArchiveModal items={archives} memos={memoArchives} busy={busy} onClose={() => setTrashOpen(false)} onRestore={async item => { if (!userId) return; setBusy(true); try { await restoreScheduleSpec(userId, item.workspace_name, item.spec_id); refetch(); } catch { setErrorMsg("개발 항목을 복구하지 못했습니다."); } finally { setBusy(false); } }} onRestoreMemo={async memo => { if (!userId) return; setBusy(true); try { await restoreScheduleMemo(userId, memo.id); refetch(); } catch { setErrorMsg("메모를 복구하지 못했습니다."); } finally { setBusy(false); } }} />}
 
       {/* 경량 Spec 추가("+ SPEC 일정 추가") */}
       {addOpen && (

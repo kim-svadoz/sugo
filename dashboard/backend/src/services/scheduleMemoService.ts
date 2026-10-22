@@ -8,11 +8,17 @@ export interface ScheduleMemo {
   due_date: string | null;
   created_at: string;
   updated_at: string;
+  archived_at?: string | null;
+}
+
+export async function ensureScheduleMemoArchivedAtColumn(db: DbClient): Promise<void> {
+  try { await db.query("SELECT archived_at FROM sugo_schedule_memos LIMIT 1"); return; } catch { /* upgrade schema */ }
+  await db.exec("ALTER TABLE sugo_schedule_memos ADD COLUMN archived_at TIMESTAMP NULL DEFAULT NULL");
 }
 
 export async function listScheduleMemos(db: DbClient, userId: string): Promise<ScheduleMemo[]> {
   return db.query<ScheduleMemo>(
-    "SELECT id, title, content_md, due_date, created_at, updated_at FROM sugo_schedule_memos WHERE user_id = ? ORDER BY (due_date IS NULL), due_date, created_at",
+    "SELECT id, title, content_md, due_date, created_at, updated_at FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NULL ORDER BY (due_date IS NULL), due_date, created_at",
     [userId],
   );
 }
@@ -42,7 +48,7 @@ export async function updateScheduleMemo(
 ): Promise<ScheduleMemo | null> {
   const updatedAt = new Date().toISOString();
   const result = await db.exec(
-    "UPDATE sugo_schedule_memos SET title = ?, content_md = ?, due_date = ?, updated_at = ? WHERE user_id = ? AND id = ?",
+    "UPDATE sugo_schedule_memos SET title = ?, content_md = ?, due_date = ?, updated_at = ? WHERE user_id = ? AND id = ? AND archived_at IS NULL",
     [input.title, input.contentMd, input.dueDate, updatedAt, userId, id],
   );
   if (result.affectedRows === 0) return null;
@@ -60,13 +66,31 @@ export async function setScheduleMemoDueDate(
   dueDate: string | null,
 ): Promise<boolean> {
   const result = await db.exec(
-    "UPDATE sugo_schedule_memos SET due_date = ?, updated_at = ? WHERE user_id = ? AND id = ?",
+    "UPDATE sugo_schedule_memos SET due_date = ?, updated_at = ? WHERE user_id = ? AND id = ? AND archived_at IS NULL",
     [dueDate, new Date().toISOString(), userId, id],
   );
   return result.affectedRows > 0;
 }
 
 export async function deleteScheduleMemo(db: DbClient, userId: string, id: string): Promise<boolean> {
-  const result = await db.exec("DELETE FROM sugo_schedule_memos WHERE user_id = ? AND id = ?", [userId, id]);
+  const result = await db.exec(
+    "UPDATE sugo_schedule_memos SET archived_at = ?, updated_at = ? WHERE user_id = ? AND id = ? AND archived_at IS NULL",
+    [new Date().toISOString(), new Date().toISOString(), userId, id],
+  );
+  return result.affectedRows > 0;
+}
+
+export async function listArchivedScheduleMemos(db: DbClient, userId: string): Promise<ScheduleMemo[]> {
+  return db.query<ScheduleMemo>(
+    "SELECT id, title, content_md, due_date, created_at, updated_at, archived_at FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL ORDER BY archived_at DESC",
+    [userId],
+  );
+}
+
+export async function restoreScheduleMemo(db: DbClient, userId: string, id: string): Promise<boolean> {
+  const result = await db.exec(
+    "UPDATE sugo_schedule_memos SET archived_at = NULL, updated_at = ? WHERE user_id = ? AND id = ? AND archived_at IS NOT NULL",
+    [new Date().toISOString(), userId, id],
+  );
   return result.affectedRows > 0;
 }

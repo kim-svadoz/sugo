@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireUser } from "../auth/requireUser.js";
 import type { DbClient } from "../db/client.js";
 import { validateBody } from "../schemas/validate.js";
-import { createScheduleMemo, deleteScheduleMemo, listScheduleMemos, setScheduleMemoDueDate, updateScheduleMemo } from "../services/scheduleMemoService.js";
+import { createScheduleMemo, deleteScheduleMemo, listArchivedScheduleMemos, listScheduleMemos, restoreScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo } from "../services/scheduleMemoService.js";
 import {
   completeScheduleCommitment,
   createScheduleCommitment,
@@ -52,6 +52,9 @@ export function createScheduleRouter(db: DbClient, sessionSecret: string): Route
   router.get("/memos", async (_req, res, next) => {
     try { res.json({ memos: await listScheduleMemos(db, _req.userId!) }); } catch (error) { next(error); }
   });
+  router.get("/memos/archive", async (req, res, next) => {
+    try { res.json({ memos: await listArchivedScheduleMemos(db, req.userId!) }); } catch (error) { next(error); }
+  });
   router.post("/memos", validateBody(memoBody), async (req, res, next) => {
     try { res.status(201).json({ memo: await createScheduleMemo(db, req.userId!, req.body) }); } catch (error) { next(error); }
   });
@@ -71,6 +74,12 @@ export function createScheduleRouter(db: DbClient, sessionSecret: string): Route
   router.delete("/memos/:id", async (req, res, next) => {
     try {
       if (!await deleteScheduleMemo(db, req.userId!, req.params.id)) return void res.status(404).json({ error: "MEMO_NOT_FOUND" });
+      res.json({ ok: true });
+    } catch (error) { next(error); }
+  });
+  router.post("/memos/:id/restore", async (req, res, next) => {
+    try {
+      if (!await restoreScheduleMemo(db, req.userId!, req.params.id)) return void res.status(404).json({ error: "ARCHIVED_MEMO_NOT_FOUND" });
       res.json({ ok: true });
     } catch (error) { next(error); }
   });

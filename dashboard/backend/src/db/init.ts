@@ -19,6 +19,7 @@ import {
 import { config } from "../config.js";
 import { pruneExpiredActivityEvents } from "../services/activityService.js";
 import { ensureGitConnectionProfileColumn } from "../services/gitConnectionService.js";
+import { ensureScheduleMemoArchivedAtColumn } from "../services/scheduleMemoService.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +48,7 @@ export async function initDb(options: InitDbOptions = {}): Promise<DbClient> {
     await ensureCheckpointCreatedAtColumn(client);
     await ensureCheckpointExpiresAtColumn(client);
     await ensureGitConnectionProfileColumn(client);
+    await ensureScheduleMemoArchivedAtColumn(client);
     await pruneExpiredActivityEvents(client);
     return client;
   }
@@ -69,6 +71,7 @@ export async function initDb(options: InitDbOptions = {}): Promise<DbClient> {
   await ensureCheckpointCreatedAtColumn(client);
   await ensureCheckpointExpiresAtColumn(client);
   await ensureGitConnectionProfileColumn(client);
+  await ensureScheduleMemoArchivedAtColumn(client);
   await pruneExpiredActivityEvents(client);
   return client;
 }

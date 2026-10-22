@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS sugo_schedule_memos (
   title TEXT NOT NULL,
   content_md TEXT NOT NULL,
   due_date TEXT,
+  archived_at TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id, id)

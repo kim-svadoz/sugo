@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthContext.js";
 import { getSchedule, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
-import { getScheduleMemos, type ScheduledMemo } from "../api/scheduleMemoApi.js";
+import { getArchivedScheduleMemos, getScheduleMemos, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { getScheduleCommitments, type ScheduleCommitment } from "../api/scheduleCommitmentApi.js";
 import { getScheduleSpecArchives, type ScheduleSpecArchive } from "../api/scheduleSpecArchiveApi.js";
 
@@ -12,6 +12,7 @@ interface ScheduleSnapshot {
   memos: ScheduledMemo[];
   commitments: ScheduleCommitment[] | null;
   archives: ScheduleSpecArchive[];
+  memoArchives: ScheduledMemo[];
 }
 
 const scheduleCache = new Map<string, ScheduleSnapshot>();
@@ -25,8 +26,9 @@ function fetchScheduleSnapshot(userId: string): Promise<ScheduleSnapshot> {
     getScheduleMemos(userId),
     getScheduleCommitments(userId).catch(() => null),
     getScheduleSpecArchives(userId),
-  ]).then(([data, memos, commitments, archives]) => {
-    const snapshot = { data, memos, commitments, archives };
+    getArchivedScheduleMemos(userId),
+  ]).then(([data, memos, commitments, archives, memoArchives]) => {
+    const snapshot = { data, memos, commitments, archives, memoArchives };
     scheduleCache.set(userId, snapshot);
     return snapshot;
   }).finally(() => scheduleRequests.delete(userId));
@@ -43,6 +45,7 @@ export function useSchedule() {
   const [memos, setMemos] = useState<ScheduledMemo[] | null>(() => initial?.memos ?? null);
   const [commitments, setCommitments] = useState<ScheduleCommitment[] | null>(() => initial?.commitments ?? null);
   const [archives, setArchives] = useState<ScheduleSpecArchive[]>(() => initial?.archives ?? []);
+  const [memoArchives, setMemoArchives] = useState<ScheduledMemo[]>(() => initial?.memoArchives ?? []);
   const [loading, setLoading] = useState(() => !initial);
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
@@ -58,6 +61,7 @@ export function useSchedule() {
       setMemos(cached.memos);
       setCommitments(cached.commitments);
       setArchives(cached.archives);
+      setMemoArchives(cached.memoArchives);
     }
     setLoading(!cached);
 
@@ -69,6 +73,7 @@ export function useSchedule() {
           setMemos(snapshot.memos);
           setCommitments(snapshot.commitments);
           setArchives(snapshot.archives);
+          setMemoArchives(snapshot.memoArchives);
           setError(null);
         }
       } catch (err) {
@@ -86,5 +91,5 @@ export function useSchedule() {
     };
   }, [userId, refreshNonce]);
 
-  return { data, memos, commitments, archives, loading, error, refetch };
+  return { data, memos, commitments, archives, memoArchives, loading, error, refetch };
 }

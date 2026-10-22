@@ -46696,6 +46696,80 @@ var init_gitConnectionService = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/scheduleMemoService.ts
+import { randomBytes as randomBytes3 } from "node:crypto";
+async function ensureScheduleMemoArchivedAtColumn(db2) {
+  try {
+    await db2.query("SELECT archived_at FROM sugo_schedule_memos LIMIT 1");
+    return;
+  } catch {
+  }
+  await db2.exec("ALTER TABLE sugo_schedule_memos ADD COLUMN archived_at TIMESTAMP NULL DEFAULT NULL");
+}
+async function listScheduleMemos(db2, userId2) {
+  return db2.query(
+    "SELECT id, title, content_md, due_date, created_at, updated_at FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NULL ORDER BY (due_date IS NULL), due_date, created_at",
+    [userId2]
+  );
+}
+async function createScheduleMemo(db2, userId2, input) {
+  const id = `memo-${randomBytes3(8).toString("hex")}`;
+  await db2.exec(
+    "INSERT INTO sugo_schedule_memos (id, user_id, title, content_md, due_date) VALUES (?, ?, ?, ?, ?)",
+    [id, userId2, input.title, input.contentMd, input.dueDate]
+  );
+  const [created] = await db2.query(
+    "SELECT id, title, content_md, due_date, created_at, updated_at FROM sugo_schedule_memos WHERE user_id = ? AND id = ?",
+    [userId2, id]
+  );
+  return created;
+}
+async function updateScheduleMemo(db2, userId2, id, input) {
+  const updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+  const result = await db2.exec(
+    "UPDATE sugo_schedule_memos SET title = ?, content_md = ?, due_date = ?, updated_at = ? WHERE user_id = ? AND id = ? AND archived_at IS NULL",
+    [input.title, input.contentMd, input.dueDate, updatedAt, userId2, id]
+  );
+  if (result.affectedRows === 0) return null;
+  const [updated] = await db2.query(
+    "SELECT id, title, content_md, due_date, created_at, updated_at FROM sugo_schedule_memos WHERE user_id = ? AND id = ?",
+    [userId2, id]
+  );
+  return updated;
+}
+async function setScheduleMemoDueDate(db2, userId2, id, dueDate) {
+  const result = await db2.exec(
+    "UPDATE sugo_schedule_memos SET due_date = ?, updated_at = ? WHERE user_id = ? AND id = ? AND archived_at IS NULL",
+    [dueDate, (/* @__PURE__ */ new Date()).toISOString(), userId2, id]
+  );
+  return result.affectedRows > 0;
+}
+async function deleteScheduleMemo(db2, userId2, id) {
+  const result = await db2.exec(
+    "UPDATE sugo_schedule_memos SET archived_at = ?, updated_at = ? WHERE user_id = ? AND id = ? AND archived_at IS NULL",
+    [(/* @__PURE__ */ new Date()).toISOString(), (/* @__PURE__ */ new Date()).toISOString(), userId2, id]
+  );
+  return result.affectedRows > 0;
+}
+async function listArchivedScheduleMemos(db2, userId2) {
+  return db2.query(
+    "SELECT id, title, content_md, due_date, created_at, updated_at, archived_at FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL ORDER BY archived_at DESC",
+    [userId2]
+  );
+}
+async function restoreScheduleMemo(db2, userId2, id) {
+  const result = await db2.exec(
+    "UPDATE sugo_schedule_memos SET archived_at = NULL, updated_at = ? WHERE user_id = ? AND id = ? AND archived_at IS NOT NULL",
+    [(/* @__PURE__ */ new Date()).toISOString(), userId2, id]
+  );
+  return result.affectedRows > 0;
+}
+var init_scheduleMemoService = __esm({
+  "../dashboard/backend/src/services/scheduleMemoService.ts"() {
+    "use strict";
+  }
+});
+
 // ../dashboard/backend/src/db/init.ts
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -46718,6 +46792,7 @@ async function initDb(options = {}) {
     await ensureCheckpointCreatedAtColumn(client2);
     await ensureCheckpointExpiresAtColumn(client2);
     await ensureGitConnectionProfileColumn(client2);
+    await ensureScheduleMemoArchivedAtColumn(client2);
     await pruneExpiredActivityEvents(client2);
     return client2;
   }
@@ -46737,6 +46812,7 @@ async function initDb(options = {}) {
   await ensureCheckpointCreatedAtColumn(client);
   await ensureCheckpointExpiresAtColumn(client);
   await ensureGitConnectionProfileColumn(client);
+  await ensureScheduleMemoArchivedAtColumn(client);
   await pruneExpiredActivityEvents(client);
   return client;
 }
@@ -46753,6 +46829,7 @@ var init_init = __esm({
     init_config();
     init_activityService();
     init_gitConnectionService();
+    init_scheduleMemoService();
     __dirname = dirname2(fileURLToPath(import.meta.url));
   }
 });
@@ -51085,12 +51162,12 @@ var init_syncSchemaVersion = __esm({
 });
 
 // ../dashboard/backend/src/auth/apiToken.ts
-import { createHash as createHash4, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+import { createHash as createHash4, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 function hashApiToken(token) {
   return createHash4("sha256").update(token, "utf8").digest("hex");
 }
 function generateApiToken() {
-  const raw = TOKEN_PREFIX + randomBytes3(24).toString("base64url");
+  const raw = TOKEN_PREFIX + randomBytes4(24).toString("base64url");
   return { token: raw, hash: hashApiToken(raw), hint: raw.slice(-6) };
 }
 function looksLikeApiToken(token) {
@@ -51727,7 +51804,7 @@ var init_specAttachments = __esm({
 });
 
 // ../dashboard/backend/src/services/checkpointApply.ts
-import { createHash as createHash6, randomBytes as randomBytes4 } from "node:crypto";
+import { createHash as createHash6, randomBytes as randomBytes5 } from "node:crypto";
 import { basename as basename4, isAbsolute as isAbsolute4, join as join6 } from "node:path";
 import { mkdir as mkdir2, readFile as readFile5, readdir as readdir2, rm as rm2, writeFile as writeFile3 } from "node:fs/promises";
 function dateOnly(value) {
@@ -51747,7 +51824,7 @@ function isCheckpointExpired(expiresAt, now = /* @__PURE__ */ new Date()) {
   return date3 < todayKst;
 }
 function newCheckpointId() {
-  return `CP-${randomBytes4(4).toString("hex")}`;
+  return `CP-${randomBytes5(4).toString("hex")}`;
 }
 function safeSegment(value, fallback2) {
   const segment = value.trim() || fallback2;
@@ -52381,56 +52458,6 @@ var init_workspaces2 = __esm({
   }
 });
 
-// ../dashboard/backend/src/services/scheduleMemoService.ts
-import { randomBytes as randomBytes5 } from "node:crypto";
-async function listScheduleMemos(db2, userId2) {
-  return db2.query(
-    "SELECT id, title, content_md, due_date, created_at, updated_at FROM sugo_schedule_memos WHERE user_id = ? ORDER BY (due_date IS NULL), due_date, created_at",
-    [userId2]
-  );
-}
-async function createScheduleMemo(db2, userId2, input) {
-  const id = `memo-${randomBytes5(8).toString("hex")}`;
-  await db2.exec(
-    "INSERT INTO sugo_schedule_memos (id, user_id, title, content_md, due_date) VALUES (?, ?, ?, ?, ?)",
-    [id, userId2, input.title, input.contentMd, input.dueDate]
-  );
-  const [created] = await db2.query(
-    "SELECT id, title, content_md, due_date, created_at, updated_at FROM sugo_schedule_memos WHERE user_id = ? AND id = ?",
-    [userId2, id]
-  );
-  return created;
-}
-async function updateScheduleMemo(db2, userId2, id, input) {
-  const updatedAt = (/* @__PURE__ */ new Date()).toISOString();
-  const result = await db2.exec(
-    "UPDATE sugo_schedule_memos SET title = ?, content_md = ?, due_date = ?, updated_at = ? WHERE user_id = ? AND id = ?",
-    [input.title, input.contentMd, input.dueDate, updatedAt, userId2, id]
-  );
-  if (result.affectedRows === 0) return null;
-  const [updated] = await db2.query(
-    "SELECT id, title, content_md, due_date, created_at, updated_at FROM sugo_schedule_memos WHERE user_id = ? AND id = ?",
-    [userId2, id]
-  );
-  return updated;
-}
-async function setScheduleMemoDueDate(db2, userId2, id, dueDate) {
-  const result = await db2.exec(
-    "UPDATE sugo_schedule_memos SET due_date = ?, updated_at = ? WHERE user_id = ? AND id = ?",
-    [dueDate, (/* @__PURE__ */ new Date()).toISOString(), userId2, id]
-  );
-  return result.affectedRows > 0;
-}
-async function deleteScheduleMemo(db2, userId2, id) {
-  const result = await db2.exec("DELETE FROM sugo_schedule_memos WHERE user_id = ? AND id = ?", [userId2, id]);
-  return result.affectedRows > 0;
-}
-var init_scheduleMemoService = __esm({
-  "../dashboard/backend/src/services/scheduleMemoService.ts"() {
-    "use strict";
-  }
-});
-
 // ../dashboard/backend/src/services/scheduleCommitmentService.ts
 import { randomUUID as randomUUID2 } from "node:crypto";
 async function getCommitment(db2, userId2, id) {
@@ -52628,6 +52655,13 @@ function createScheduleRouter(db2, sessionSecret2) {
       next(error2);
     }
   });
+  router.get("/memos/archive", async (req, res, next) => {
+    try {
+      res.json({ memos: await listArchivedScheduleMemos(db2, req.userId) });
+    } catch (error2) {
+      next(error2);
+    }
+  });
   router.post("/memos", validateBody(memoBody), async (req, res, next) => {
     try {
       res.status(201).json({ memo: await createScheduleMemo(db2, req.userId, req.body) });
@@ -52655,6 +52689,14 @@ function createScheduleRouter(db2, sessionSecret2) {
   router.delete("/memos/:id", async (req, res, next) => {
     try {
       if (!await deleteScheduleMemo(db2, req.userId, req.params.id)) return void res.status(404).json({ error: "MEMO_NOT_FOUND" });
+      res.json({ ok: true });
+    } catch (error2) {
+      next(error2);
+    }
+  });
+  router.post("/memos/:id/restore", async (req, res, next) => {
+    try {
+      if (!await restoreScheduleMemo(db2, req.userId, req.params.id)) return void res.status(404).json({ error: "ARCHIVED_MEMO_NOT_FOUND" });
       res.json({ ok: true });
     } catch (error2) {
       next(error2);
@@ -90192,7 +90234,7 @@ var init_index = __esm({
     init_asyncHandler();
     init_contextAutoRefreshService();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.33.11" ? { version: "0.33.11" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.33.12" ? { version: "0.33.12" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90250,7 +90292,7 @@ import { dirname as dirname6, join as join13 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // ../dashboard/backend/test/schema.sqlite.sql
-var schema_sqlite_default = "-- SQLite translation of src/db/schema.mysql.sql, used only for local dev/testing.\n-- Must stay behaviorally equivalent: same tables/columns/keys, syntax adapted\n-- (ENUM->TEXT+CHECK, JSON->TEXT, AUTO_INCREMENT->INTEGER PRIMARY KEY AUTOINCREMENT,\n-- TIMESTAMP->TEXT ISO8601, composite PKs as-is since SQLite supports them).\n\nPRAGMA foreign_keys = ON;\n\nCREATE TABLE IF NOT EXISTS sugo_users (\n  id TEXT PRIMARY KEY,\n  display_name TEXT,\n  plugin_version TEXT,\n  version_updated_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspaces (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  name TEXT NOT NULL,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  deleted_at TIMESTAMP NULL DEFAULT NULL,\n  UNIQUE (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_projects (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  workspace_id INTEGER NOT NULL REFERENCES sugo_workspaces(id) ON DELETE CASCADE,\n  project_path TEXT NOT NULL,\n  git_synced INTEGER NOT NULL DEFAULT 0,\n  UNIQUE (workspace_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_tasks (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  project TEXT,\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','archived')),\n  priority TEXT,\n  description TEXT,\n  summary TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  started_at TEXT,\n  completed_at TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_history (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  task_id TEXT,\n  task_title TEXT,\n  summary TEXT,\n  key_decisions TEXT,\n  files_changed TEXT,\n  notes TEXT,\n  estimated_human_hours REAL,\n  user_reported_human_hours REAL,\n  ai_execution_minutes REAL,\n  estimation_basis TEXT,\n  completed_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_memos (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  title TEXT NOT NULL,\n  content_md TEXT NOT NULL,\n  due_date TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_memos_due ON sugo_schedule_memos(user_id, due_date);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_commitments (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  due_date TEXT,\n  state TEXT NOT NULL DEFAULT 'planned' CHECK (state IN ('planned','active','completed','cancelled')),\n  target TEXT NOT NULL DEFAULT 'custom' CHECK (target IN ('implementation','review','dev','stg','prd','custom')),\n  linked_run_id TEXT,\n  completed_at TEXT,\n  completed_by TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_due ON sugo_schedule_commitments(user_id, due_date);\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_spec ON sugo_schedule_commitments(user_id, workspace_name, spec_id);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  reason TEXT NOT NULL CHECK (reason IN ('deleted','closed')),\n  title TEXT NOT NULL,\n  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  archived_by TEXT NOT NULL,\n  PRIMARY KEY (user_id, workspace_name, spec_id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_specs (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'active',\n  content TEXT,\n  decision_date TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_checkpoints (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  category TEXT NOT NULL DEFAULT 'general',\n  title TEXT NOT NULL,\n  learned_from TEXT,\n  checklist TEXT,\n  applies_to TEXT,\n  checkpoint_date TEXT,\n  expires_at TEXT,\n  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_meta (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  golden_rule TEXT,\n  checkpoints_version INTEGER NOT NULL DEFAULT 0,\n  PRIMARY KEY (user_id, workspace_name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  level TEXT NOT NULL CHECK (level IN ('spec','workstream','task','subtask','step')),\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','blocked','dropped')),\n  depends_on TEXT,\n  parent TEXT,\n  ref TEXT,\n  note TEXT,\n  spec_path TEXT,\n  work_result TEXT,\n  lineage TEXT,\n  manual_status TEXT CHECK (manual_status IS NULL OR manual_status IN ('pending','in_progress','done','blocked','dropped')),\n  manual_by TEXT,\n  manual_at TEXT,\n  pos_x REAL,\n  pos_y REAL,\n  due_date TEXT,\n  project_path TEXT,\n  work_branch TEXT,\n  manual_title TEXT,\n  blocker_response TEXT,\n  blocker_answered_by TEXT,\n  blocker_answered_at TEXT,\n  blocker_context TEXT,\n  runtime_assessment TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  synced_at TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_activity_events (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  ts TEXT NOT NULL,\n  level TEXT NOT NULL DEFAULT 'INFO' CHECK (level IN ('AGENT','INFO','WARN','ERROR','SYSTEM')),\n  agent TEXT CHECK (agent IS NULL OR agent IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  handoff_to TEXT CHECK (handoff_to IS NULL OR handoff_to IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  event_type TEXT NOT NULL DEFAULT 'SYSTEM' CHECK (event_type IN ('EXECUTE','HANDOFF','COMPLETED','SYSTEM')),\n  message TEXT NOT NULL,\n  details TEXT\n);\nCREATE INDEX IF NOT EXISTS idx_activity_user_ws_ts ON sugo_activity_events (user_id, workspace_name, ts);\n\nCREATE TABLE IF NOT EXISTS user_bitbucket_tokens (\n  user_id TEXT PRIMARY KEY,\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS user_git_connections (\n  user_id TEXT NOT NULL,\n  provider TEXT NOT NULL CHECK (provider IN ('github','gitlab','bitbucket_server','aws_codecommit')),\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  credential_profile TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, provider)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_accounts (\n  user_id TEXT NOT NULL,\n  name TEXT NOT NULL,\n  profile TEXT NOT NULL,\n  region TEXT NOT NULL,\n  account_id TEXT NOT NULL,\n  principal_arn TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_snapshots (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  payload TEXT NOT NULL,\n  observed_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_preferences (\n  user_id TEXT NOT NULL PRIMARY KEY,\n  active_account_name TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_refresh_budget (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  day_key TEXT NOT NULL,\n  day_count INTEGER NOT NULL,\n  last_started_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_project_integration_mappings (\n  user_id TEXT NOT NULL,\n  project_path TEXT NOT NULL,\n  selections TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS user_pinpoint_context (user_id TEXT PRIMARY KEY, base_url TEXT NOT NULL, updated_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_pinpoint_snapshots (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, observed_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_context_auto_refresh_runs (user_id TEXT NOT NULL, day_key TEXT NOT NULL, status TEXT NOT NULL, started_at TEXT NOT NULL, completed_at TEXT, error_message TEXT, PRIMARY KEY (user_id, day_key));\n\nCREATE TABLE IF NOT EXISTS user_api_tokens (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  name TEXT,\n  token_hash TEXT NOT NULL UNIQUE,\n  token_hint TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  last_used_at TEXT\n);\n\nCREATE TABLE IF NOT EXISTS sugo_review_artifacts (\n  artifact_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, workspace_name TEXT NOT NULL,\n  task_id TEXT NOT NULL, session_id TEXT NOT NULL, patch_version INTEGER NOT NULL,\n  file_path TEXT NOT NULL, change_type TEXT NOT NULL, content TEXT, diff_text TEXT,\n  unavailable_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS sugo_weekly_reports (\n  user_id TEXT NOT NULL,\n  week_id TEXT NOT NULL,\n  start_date TEXT NOT NULL,\n  end_date TEXT NOT NULL,\n  generated_at TEXT NOT NULL,\n  uploaded_at TEXT NOT NULL,\n  report_json TEXT NOT NULL,\n  PRIMARY KEY (user_id, week_id)\n);\n";
+var schema_sqlite_default = "-- SQLite translation of src/db/schema.mysql.sql, used only for local dev/testing.\n-- Must stay behaviorally equivalent: same tables/columns/keys, syntax adapted\n-- (ENUM->TEXT+CHECK, JSON->TEXT, AUTO_INCREMENT->INTEGER PRIMARY KEY AUTOINCREMENT,\n-- TIMESTAMP->TEXT ISO8601, composite PKs as-is since SQLite supports them).\n\nPRAGMA foreign_keys = ON;\n\nCREATE TABLE IF NOT EXISTS sugo_users (\n  id TEXT PRIMARY KEY,\n  display_name TEXT,\n  plugin_version TEXT,\n  version_updated_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspaces (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  name TEXT NOT NULL,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  deleted_at TIMESTAMP NULL DEFAULT NULL,\n  UNIQUE (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_projects (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  workspace_id INTEGER NOT NULL REFERENCES sugo_workspaces(id) ON DELETE CASCADE,\n  project_path TEXT NOT NULL,\n  git_synced INTEGER NOT NULL DEFAULT 0,\n  UNIQUE (workspace_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_tasks (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  project TEXT,\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','archived')),\n  priority TEXT,\n  description TEXT,\n  summary TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  started_at TEXT,\n  completed_at TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_history (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  task_id TEXT,\n  task_title TEXT,\n  summary TEXT,\n  key_decisions TEXT,\n  files_changed TEXT,\n  notes TEXT,\n  estimated_human_hours REAL,\n  user_reported_human_hours REAL,\n  ai_execution_minutes REAL,\n  estimation_basis TEXT,\n  completed_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_memos (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  title TEXT NOT NULL,\n  content_md TEXT NOT NULL,\n  due_date TEXT,\n  archived_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_memos_due ON sugo_schedule_memos(user_id, due_date);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_commitments (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  due_date TEXT,\n  state TEXT NOT NULL DEFAULT 'planned' CHECK (state IN ('planned','active','completed','cancelled')),\n  target TEXT NOT NULL DEFAULT 'custom' CHECK (target IN ('implementation','review','dev','stg','prd','custom')),\n  linked_run_id TEXT,\n  completed_at TEXT,\n  completed_by TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_due ON sugo_schedule_commitments(user_id, due_date);\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_spec ON sugo_schedule_commitments(user_id, workspace_name, spec_id);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  reason TEXT NOT NULL CHECK (reason IN ('deleted','closed')),\n  title TEXT NOT NULL,\n  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  archived_by TEXT NOT NULL,\n  PRIMARY KEY (user_id, workspace_name, spec_id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_specs (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'active',\n  content TEXT,\n  decision_date TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_checkpoints (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  category TEXT NOT NULL DEFAULT 'general',\n  title TEXT NOT NULL,\n  learned_from TEXT,\n  checklist TEXT,\n  applies_to TEXT,\n  checkpoint_date TEXT,\n  expires_at TEXT,\n  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_meta (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  golden_rule TEXT,\n  checkpoints_version INTEGER NOT NULL DEFAULT 0,\n  PRIMARY KEY (user_id, workspace_name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  level TEXT NOT NULL CHECK (level IN ('spec','workstream','task','subtask','step')),\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','blocked','dropped')),\n  depends_on TEXT,\n  parent TEXT,\n  ref TEXT,\n  note TEXT,\n  spec_path TEXT,\n  work_result TEXT,\n  lineage TEXT,\n  manual_status TEXT CHECK (manual_status IS NULL OR manual_status IN ('pending','in_progress','done','blocked','dropped')),\n  manual_by TEXT,\n  manual_at TEXT,\n  pos_x REAL,\n  pos_y REAL,\n  due_date TEXT,\n  project_path TEXT,\n  work_branch TEXT,\n  manual_title TEXT,\n  blocker_response TEXT,\n  blocker_answered_by TEXT,\n  blocker_answered_at TEXT,\n  blocker_context TEXT,\n  runtime_assessment TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  synced_at TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_activity_events (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  ts TEXT NOT NULL,\n  level TEXT NOT NULL DEFAULT 'INFO' CHECK (level IN ('AGENT','INFO','WARN','ERROR','SYSTEM')),\n  agent TEXT CHECK (agent IS NULL OR agent IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  handoff_to TEXT CHECK (handoff_to IS NULL OR handoff_to IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  event_type TEXT NOT NULL DEFAULT 'SYSTEM' CHECK (event_type IN ('EXECUTE','HANDOFF','COMPLETED','SYSTEM')),\n  message TEXT NOT NULL,\n  details TEXT\n);\nCREATE INDEX IF NOT EXISTS idx_activity_user_ws_ts ON sugo_activity_events (user_id, workspace_name, ts);\n\nCREATE TABLE IF NOT EXISTS user_bitbucket_tokens (\n  user_id TEXT PRIMARY KEY,\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS user_git_connections (\n  user_id TEXT NOT NULL,\n  provider TEXT NOT NULL CHECK (provider IN ('github','gitlab','bitbucket_server','aws_codecommit')),\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  credential_profile TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, provider)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_accounts (\n  user_id TEXT NOT NULL,\n  name TEXT NOT NULL,\n  profile TEXT NOT NULL,\n  region TEXT NOT NULL,\n  account_id TEXT NOT NULL,\n  principal_arn TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_snapshots (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  payload TEXT NOT NULL,\n  observed_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_preferences (\n  user_id TEXT NOT NULL PRIMARY KEY,\n  active_account_name TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_refresh_budget (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  day_key TEXT NOT NULL,\n  day_count INTEGER NOT NULL,\n  last_started_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_project_integration_mappings (\n  user_id TEXT NOT NULL,\n  project_path TEXT NOT NULL,\n  selections TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS user_pinpoint_context (user_id TEXT PRIMARY KEY, base_url TEXT NOT NULL, updated_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_pinpoint_snapshots (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, observed_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_context_auto_refresh_runs (user_id TEXT NOT NULL, day_key TEXT NOT NULL, status TEXT NOT NULL, started_at TEXT NOT NULL, completed_at TEXT, error_message TEXT, PRIMARY KEY (user_id, day_key));\n\nCREATE TABLE IF NOT EXISTS user_api_tokens (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  name TEXT,\n  token_hash TEXT NOT NULL UNIQUE,\n  token_hint TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  last_used_at TEXT\n);\n\nCREATE TABLE IF NOT EXISTS sugo_review_artifacts (\n  artifact_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, workspace_name TEXT NOT NULL,\n  task_id TEXT NOT NULL, session_id TEXT NOT NULL, patch_version INTEGER NOT NULL,\n  file_path TEXT NOT NULL, change_type TEXT NOT NULL, content TEXT, diff_text TEXT,\n  unavailable_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS sugo_weekly_reports (\n  user_id TEXT NOT NULL,\n  week_id TEXT NOT NULL,\n  start_date TEXT NOT NULL,\n  end_date TEXT NOT NULL,\n  generated_at TEXT NOT NULL,\n  uploaded_at TEXT NOT NULL,\n  report_json TEXT NOT NULL,\n  PRIMARY KEY (user_id, week_id)\n);\n";
 
 // ../dashboard/backend/src/standalone.ts
 var DEFAULT_PORT = 3001;
@@ -90311,7 +90353,7 @@ await bootstrapLocalDashboard2(db, {
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.33.11", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.33.12", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

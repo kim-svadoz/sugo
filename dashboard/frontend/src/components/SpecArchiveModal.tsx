@@ -1,14 +1,18 @@
-import { Archive, RotateCcw, X } from "lucide-react";
+import { Archive, FilePenLine, RotateCcw, X } from "lucide-react";
 import { useEffect } from "react";
 import type { ScheduleSpecArchive } from "../api/scheduleSpecArchiveApi.js";
 import { cn } from "../lib/utils.js";
+import type { ScheduledMemo } from "../api/scheduleMemoApi.js";
 
-export function SpecArchiveModal({ items, busy, onClose, onRestore }: {
+export function SpecArchiveModal({ items, memos = [], busy, onClose, onRestore, onRestoreMemo }: {
   items: ScheduleSpecArchive[];
+  memos?: ScheduledMemo[];
   busy: boolean;
   onClose: () => void;
   onRestore: (item: ScheduleSpecArchive) => void;
+  onRestoreMemo?: (memo: ScheduledMemo) => void;
 }) {
+  const total = items.length + memos.length;
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey, true);
@@ -20,14 +24,22 @@ export function SpecArchiveModal({ items, busy, onClose, onRestore }: {
       <header className="flex items-start justify-between gap-4 border-b border-white/[0.08] px-6 py-5">
         <div className="flex items-start gap-3">
           <span className="rounded-xl bg-cyan-400/10 p-2 text-cyan-300"><Archive size={18} /></span>
-          <div><h2 id="spec-archive-title" className="text-[16px] font-bold text-white">종료된 작업</h2><p className="mt-1 text-[11.5px] text-slate-400">활성 화면에서 내려간 개발 항목입니다. 개발 이력은 유지되며 언제든 복구할 수 있습니다.</p></div>
+          <div><h2 id="spec-archive-title" className="text-[16px] font-bold text-white">보관함</h2><p className="mt-1 text-[11.5px] text-slate-400">활성 화면에서 내려간 개발 항목과 메모를 확인하고 복구할 수 있습니다.</p></div>
         </div>
-        <div className="flex items-center gap-2"><span className="rounded-full bg-white/[0.06] px-2.5 py-1 font-mono text-[10px] text-slate-300">{items.length}</span><button type="button" onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/[0.06] hover:text-white" aria-label="보관함 닫기"><X size={17} /></button></div>
+        <div className="flex items-center gap-2"><span className="rounded-full bg-white/[0.06] px-2.5 py-1 font-mono text-[10px] text-slate-300">{total}</span><button type="button" onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/[0.06] hover:text-white" aria-label="보관함 닫기"><X size={17} /></button></div>
       </header>
       <div className="ck-scroll max-h-[55vh] space-y-2 overflow-auto p-5">
-        {items.length === 0 ? <div className="rounded-xl border border-dashed border-white/10 py-14 text-center text-sm text-slate-500">종료된 작업이 없습니다.</div> : items.map((item) => <article key={`${item.workspace_name}:${item.spec_id}`} className="flex items-center gap-4 rounded-xl border border-white/[0.09] bg-white/[0.025] px-4 py-3">
+        {total === 0 && <div className="rounded-xl border border-dashed border-white/10 py-14 text-center text-sm text-slate-500">보관된 항목이 없습니다.</div>}
+        {items.length > 0 && <h3 className="px-1 pt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">종료된 개발 항목 · {items.length}</h3>}
+        {items.map((item) => <article key={`${item.workspace_name}:${item.spec_id}`} className="flex items-center gap-4 rounded-xl border border-white/[0.09] bg-white/[0.025] px-4 py-3">
           <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className={cn("rounded px-1.5 py-0.5 text-[9px] font-bold", item.reason === "closed" ? "bg-amber-400/10 text-amber-200" : "bg-rose-400/10 text-rose-200")}>{item.reason === "closed" ? "종료" : "삭제"}</span><h3 className="truncate text-[13px] font-semibold text-white">{item.title}</h3></div><p className="mt-1 font-mono text-[10px] text-slate-500">{item.workspace_name} · {new Date(item.archived_at).toLocaleString("ko-KR")}</p></div>
           <button type="button" disabled={busy} onClick={() => onRestore(item)} className="flex shrink-0 items-center gap-1.5 rounded-lg border border-cyan-400/25 bg-cyan-400/[0.07] px-3 py-2 text-[11px] font-semibold text-cyan-200 hover:bg-cyan-400/10 disabled:opacity-40"><RotateCcw size={13} /> 복구</button>
+        </article>)}
+        {memos.length > 0 && <h3 className="px-1 pt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">보관된 메모 · {memos.length}</h3>}
+        {memos.map((memo) => <article key={memo.id} className="flex items-center gap-4 rounded-xl border border-slate-400/15 bg-slate-300/[0.025] px-4 py-3">
+          <span className="rounded-lg bg-slate-400/10 p-2 text-slate-300"><FilePenLine size={15} /></span>
+          <div className="min-w-0 flex-1"><h4 className="truncate text-[13px] font-semibold text-white">{memo.title}</h4><p className="mt-1 font-mono text-[10px] text-slate-500">{memo.due_date ? `일정 ${memo.due_date}` : "일정 없음"} · {memo.archived_at ? new Date(memo.archived_at).toLocaleString("ko-KR") : ""}</p></div>
+          <button type="button" disabled={busy} onClick={() => onRestoreMemo?.(memo)} className="flex shrink-0 items-center gap-1.5 rounded-lg border border-cyan-400/25 bg-cyan-400/[0.07] px-3 py-2 text-[11px] font-semibold text-cyan-200 hover:bg-cyan-400/10 disabled:opacity-40"><RotateCcw size={13} /> 복구</button>
         </article>)}
       </div>
     </section>

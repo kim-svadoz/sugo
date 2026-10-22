@@ -664,7 +664,7 @@ export function Sessions() {
           })}
         </div>
       ) : viewMode === "grid" ? (
-        <div className="grid shrink-0 grid-cols-1 gap-2.5 md:grid-cols-2 min-[1350px]:grid-cols-3 min-[1900px]:grid-cols-4">
+        <div className="workspace-card-grid grid shrink-0 grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
           {filteredWorkspaces.map((ws, wi) => {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);

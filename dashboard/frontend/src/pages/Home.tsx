@@ -10,25 +10,13 @@ import { Modal } from "../components/Modal.js";
 import { buildSevenDayFeed, filterNewsByRegion, type NewsRegion } from "../lib/techBriefPresentation.js";
 import { selectLearningReviewNote, type LearningReviewNote } from "../lib/homeLearningReview.js";
 import { technicalIdentifierParts } from "../lib/technicalIdentifiers.js";
+import { dailyGreeting } from "../lib/homeGreeting.js";
 
 function relativeTime(value: string): string {
   const hours = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 3_600_000));
   if (hours < 1) return "방금 전";
   if (hours < 24) return `${hours}시간 전`;
   return `${Math.floor(hours / 24)}일 전`;
-}
-
-const GREETINGS = {
-  dawn: ["조용한 시간, 어제의 개발을 정리해볼까요?", "이른 시작이네요. 리뷰할 흐름부터 살펴볼까요?"],
-  morning: ["좋은 아침입니다. 어제의 개발부터 이어볼까요?", "좋은 아침입니다. 오늘의 리뷰를 준비했습니다."],
-  afternoon: ["좋은 오후입니다. 남은 리뷰를 이어볼까요?", "오후의 작업 전, 개발 흐름을 짚어볼까요?"],
-  evening: ["오늘의 개발을 마무리하며 살펴볼까요?", "마무리하기 전, 남은 기술 쟁점을 확인해볼까요?"],
-} as const;
-
-function dailyGreeting(now = new Date()): string {
-  const hour = now.getHours();
-  const group = hour < 6 ? GREETINGS.dawn : hour < 12 ? GREETINGS.morning : hour < 18 ? GREETINGS.afternoon : GREETINGS.evening;
-  return group[now.getDate() % group.length];
 }
 
 function firstSentence(value: string | null | undefined): string {

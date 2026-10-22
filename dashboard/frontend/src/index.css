@@ -85,6 +85,26 @@ body {
   .page-heading__meta > p { font-size: 0.75rem !important; line-height: 1.25rem !important; }
 }
 
+@media (max-width: 1900px) {
+  .harness-page .md-body {
+    font-size: 0.78rem;
+    line-height: 1.65;
+    letter-spacing: -0.012em;
+  }
+
+  .harness-page .md-body h1,
+  .harness-page .md-body h2,
+  .harness-page .md-body h3 {
+    letter-spacing: -0.025em;
+  }
+}
+
+@media (min-width: 2100px) {
+  .workspace-card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* 일부 화면에 남은 px 기반 보조 문구도 rem 기반 셸과 같은 비율로 키운다. */
 [class~="text-[8px]"] { font-size: 9px !important; }
 [class~="text-[9px]"] { font-size: 10px !important; }
