@@ -6,7 +6,7 @@
 
 Sugo는 기능 하나를 요구사항·완료 조건 정리 → 구현 → 테스트 → 최종 검증 → 사용자 승인 → 문서작업 → 작업결과 리포트 순서로 진행한다. 각 단계는 실제 테스트 실행 기록과 변경 파일을 확인한 뒤에 다음 단계로 넘어간다. 최종 승인은 사람이 diff를 보고 한다.
 
-![Console Home: 메인 에이전트와 전문 에이전트의 현재 작업](docs/images/console-home.png)
+![Console Home: SPEC 작성부터 커밋까지의 작업 흐름](docs/images/console-home.png)
 
 ## 해결하는 문제
 
@@ -28,7 +28,7 @@ Sugo는 기능 하나를 요구사항·완료 조건 정리 → 구현 → 테�
 | 기획 초안을 구현 가능한 스펙으로 작성하고 일정 관리 | Console Schedule, `/sugo:spec-writer` |
 | 완료된 기능의 후속 수정을 원래 작업에 연결 | `/sugo:patch` |
 | 일반 대화로 수정한 내용을 기존 작업에 연결 | `/sugo:patch-attach` |
-| 작업 결과와 학습 내용 회고 | Console Home 학습 노트, [weekly](https://github.com/kim-svadoz/weekly-ai-report) 주간 보고 |
+| 작업 결과와 학습 내용 회고 | Console Home 학습 노트, Console Weekly 주간 보고서 |
 
 한 줄 수정과 실험 코드에는 맞지 않는다. 일반 대화로 처리하고, 남길 변경만 `/sugo:patch-attach`로 연결한다.
 
@@ -92,18 +92,18 @@ flowchart LR
 | 작업 | Console | 명령 |
 | --- | --- | --- |
 | 일정·스펙 준비 | Schedule에 개발 일정을 만들고 기획 문서 링크와 화면 캡처를 붙인다 | 일정 카드에서 복사한 `/sugo:spec-writer`, `/sugo:feat --spec` |
-| 진행 확인 | Home 작업실: 에이전트별 현재 작업. Workspaces 작업장: 작업별 진행 단계 | `/sugo:ws-status` |
+| 진행 확인 | Home 작업 흐름: 지금 진행 중인 단계. Workspaces 작업장: 작업별 진행 단계와 완료 기록 | `/sugo:ws-status` |
 | 사람의 결정 | 정책·범위 질문과 승인 요청이 Home과 Schedule에 표시된다 | — |
 | 승인 | Agent Canvas에서 요구사항 충족 상태, 테스트 결과, 남은 위험, diff를 확인한다 | — |
 | 재발 방지 | Workspaces 도메인 규칙에 등록한다 | `/sugo:checkpoint-sync`로 `.claude/rules/`에 반영 |
 | 후속 수정 | 완료 작업의 이력을 확인한다 | `/sugo:patch` |
-| 주간 회고 | Weekly에서 주간 보고서와 기술 학습 노트를 본다 | weekly 플러그인 필요 |
+| 주간 회고 | Weekly에서 주간 보고서와 기술 학습 노트를 본다. 생성 일정은 Preferences에서 정한다 | — |
 
 `/sugo:feat` 하나에 동작 변경 하나를 담는다. PRD가 크면 하위 작업으로 나눠 진행한 뒤 통합한다.
 
-**진행 확인** · 도메인 안에서 동시에 진행 중인 작업과 각 작업의 단계
+**진행 확인** · 선택한 작업의 진행 단계와, 그 작업의 완료 기록
 
-![Workspaces 작업장: 작업별 진행 단계](docs/images/console-workspaces.png)
+![Workspaces 작업장: 작업별 진행 단계와 완료 기록](docs/images/console-workspaces.png)
 
 **사용자 승인** · 검증 결과와 변경 파일 diff를 보고 승인하거나 수정을 요청한다
 
@@ -158,16 +158,18 @@ flowchart LR
 
 | 화면 | 내용 |
 | --- | --- |
-| Home | 3D 작업실, 오늘 이어갈 작업과 승인 요청, 최근 완료 작업과 학습 노트, 기술 블로그 피드 |
+| Home | 작업 흐름, 오늘 이어갈 작업과 승인 요청, 최근 완료 작업과 학습 노트, 기술 블로그 피드 |
 | Workspaces | 도메인별 프로젝트·도메인 규칙·작업 이력, 작업별 진행 단계, Agent Canvas(작업 그래프, patch 이력, 승인 근거, diff) |
 | Schedule | 스펙 일정, 기획 링크와 메모, 배포 상태 |
-| Weekly | [weekly](https://github.com/kim-svadoz/weekly-ai-report) 플러그인의 주간 보고서 |
+| Weekly | 주간 보고서와 기술 학습 노트 |
 | Skills, Playbook | 에이전트·명령·스킬 목록, 사용 시나리오 |
 | Harness | 프로젝트에 적용되는 코딩 규칙 |
 | Integrations | Git 서비스, AWS, Pinpoint 연결, 플러그인 API 토큰 |
-| Preferences | 표시 이름, 날씨 지역 |
+| Preferences | 표시 이름, 날씨 지역, Weekly 생성 일정(요일·시각, Claude 모델, 추가 저장소, 예약 실행 토큰) |
 
-Home 3D 작업실은 메인 에이전트 1명과 전문 에이전트 4명(구현·테스트·검증·문서작업)의 현재 상태를 활동 이벤트 기준으로 표시한다. 대기 중인 에이전트는 라운지에, 작업 중인 에이전트는 책상에 있다. 승인 요청이 있으면 메인 에이전트가 사용자 확인 카운터에 있다. 영역을 누르면 상세와 해당 화면 링크가 열린다. WebGL이 없거나 움직임 줄이기 설정이면 2D 지도로 표시한다.
+Home 작업 흐름은 SPEC 작성부터 커밋 출고까지의 단계를 한 줄로 표시한다. 활동 이벤트가 들어오면 현재 단계가 선택되고, 오른쪽에 그 단계가 하는 일과 남기는 결과가 나온다. 아래 카드는 하네스, 도메인, Weekly 화면으로 이동한다.
+
+Workspaces 작업장은 도메인에서 진행 중인 작업을 작업별 레인으로 나눠 표시한다. 레인을 고르면 아래 최근 작업 요약이 그 작업의 완료 기록으로 바뀐다.
 
 Console 데이터는 `~/.claude/sugo/dashboard/`에 저장되고 업데이트 후에도 유지된다. Console이 꺼져 있어도 파이프라인은 진행하고 동기화는 나중에 전송한다.
 

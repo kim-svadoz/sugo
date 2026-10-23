@@ -70,11 +70,15 @@ try {
   await page.locator('section[aria-label="오늘의 Sugo 작업 장면"]').screenshot({ path: join(out, "console-home.png") });
   await page.locator("div.grid").filter({ hasText: "Engineering Feed" }).last().screenshot({ path: join(out, "console-home-feed.png") });
 
-  await page.setViewportSize({ width: 1440, height: 900 });
+  // 작업장, 연결 레일, 최근 작업 요약을 한 장에 담는다.
+  await page.setViewportSize({ width: 1440, height: 1600 });
   await page.goto(`${base}/sessions`, { waitUntil: "networkidle" });
   await page.getByText("payments", { exact: true }).first().click();
   await page.waitForTimeout(2500);
-  await page.locator(".work-floor").first().screenshot({ path: join(out, "console-workspaces.png") });
+  const floor = await page.locator('section[aria-label="payments 작업장"]').boundingBox();
+  const summary = await page.locator(".command-detail").first().boundingBox();
+  await page.screenshot({ path: join(out, "console-workspaces.png"), fullPage: true, clip: { x: floor.x - 8, y: floor.y - 8, width: floor.width + 16, height: summary.y + 300 - floor.y } });
+  await page.setViewportSize({ width: 1440, height: 900 });
 
   await page.goto(`${base}/schedule?reviewWorkspace=payments&reviewSpec=pay-spec-webhook`, { waitUntil: "networkidle" });
   await page.waitForTimeout(3500);

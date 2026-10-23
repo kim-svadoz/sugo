@@ -6,7 +6,7 @@
 
 Sugo runs each feature in this order: requirements and acceptance criteria → implementation → tests → final verification → user approval → docs work → work result report. Each step moves on only after Sugo checks the real test run records and the changed files. A person gives the final approval after reading the diff.
 
-![Console Home: what the main agent and the specialist agents do now](docs/images/console-home.png)
+![Console Home: the work flow from spec to commit](docs/images/console-home.png)
 
 ## Problems it solves
 
@@ -28,7 +28,7 @@ Sugo runs each feature in this order: requirements and acceptance criteria → i
 | Turn a planning draft into an implementable spec and schedule it | Console Schedule, `/sugo:spec-writer` |
 | Connect a later fix to the original task | `/sugo:patch` |
 | Connect changes from a normal chat to an existing task | `/sugo:patch-attach` |
-| Review results and learnings | Console Home learning notes, [weekly](https://github.com/kim-svadoz/weekly-ai-report) reports |
+| Review results and learnings | Console Home learning notes, Console Weekly reports |
 
 Do not use it for one-line fixes or throwaway experiments. Use a normal chat, and connect only the changes you keep with `/sugo:patch-attach`.
 
@@ -92,18 +92,18 @@ Each feature produces a PRD, test records, verification material, and a work res
 | Task | Console | Command |
 | --- | --- | --- |
 | Prepare schedule and spec | Create a schedule in Schedule and attach planning links and screen captures | `/sugo:spec-writer` and `/sugo:feat --spec`, copied from the schedule card |
-| Check progress | Home workroom: current work per agent. Workspaces work floor: step per task | `/sugo:ws-status` |
+| Check progress | Home work flow: the step in progress now. Workspaces work floor: step and finished records per task | `/sugo:ws-status` |
 | Human decisions | Policy and scope questions and approval requests appear in Home and Schedule | — |
 | Approve | In the Agent Canvas, check requirement status, test results, open risks, and the diff | — |
 | Prevent repeats | Add the rule to Workspaces domain rules | `/sugo:checkpoint-sync` writes it to `.claude/rules/` |
 | Later fix | Check the history of the finished task | `/sugo:patch` |
-| Weekly review | Read the weekly report and learning notes in Weekly | Requires the weekly plugin |
+| Weekly review | Read the weekly report and learning notes in Weekly. Set the generation schedule in Preferences | — |
 
 Put one behavior change in each `/sugo:feat`. If a PRD is large, Sugo splits it into subtasks and integrates them.
 
-**Check progress** · tasks that run at the same time in a domain, and the step of each task
+**Check progress** · the step of the selected task, and the finished records of that task
 
-![Workspaces work floor: step per task](docs/images/console-workspaces.png)
+![Workspaces work floor: step and finished records per task](docs/images/console-workspaces.png)
 
 **User approval** · read the verification result and the changed-file diff, then approve or request changes
 
@@ -158,16 +158,18 @@ Arguments are defined in [`sugo/commands/`](sugo/commands/).
 
 | Screen | Content |
 | --- | --- |
-| Home | 3D workroom, work to continue and approval requests, recent finished work and learning notes, engineering-blog feed |
+| Home | Work flow, work to continue and approval requests, recent finished work and learning notes, engineering-blog feed |
 | Workspaces | Projects, domain rules, and history per domain; step per task; Agent Canvas (task graph, patch history, approval evidence, diff) |
 | Schedule | Spec schedule, planning links and memos, deployment state |
-| Weekly | Weekly reports from the [weekly](https://github.com/kim-svadoz/weekly-ai-report) plugin |
+| Weekly | Weekly reports and learning notes |
 | Skills, Playbook | Agents, commands, and skills; usage scenarios |
 | Harness | Coding rules for your projects |
 | Integrations | Git providers, AWS, Pinpoint, plugin API tokens |
-| Preferences | Display name, weather region |
+| Preferences | Display name, weather region, Weekly generation schedule (day and time, Claude model, extra repositories, scheduled-run token) |
 
-The Home 3D workroom shows the current state of one main agent and four specialist agents (code, test, verification, docs) from activity events. Agents that wait sit in the lounge. Agents that work sit at their desks. When an approval request waits, the main agent stands at the user confirmation counter. Select an area to open its details and a link to its page. Without WebGL or with reduced motion, Home shows a 2D map.
+The Home work flow shows the steps from spec to commit in one row. When an activity event arrives, the current step is selected, and the right panel shows what that step does and what it hands on. The cards below open the Harness, domain, and Weekly screens.
+
+The Workspaces work floor shows each task in progress in a domain as its own lane. When you select a lane, the recent work summary below changes to the finished records of that task.
 
 Console data is in `~/.claude/sugo/dashboard/` and stays after updates. If the Console is off, the pipeline continues and sends sync data later.
 
