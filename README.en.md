@@ -142,7 +142,7 @@ Open `http://localhost:3001`. It starts with each new Claude Code session.
 | Integrations | Git providers, AWS, Pinpoint, and plugin API tokens |
 | Preferences | Display name, weather region |
 
-The work world on Home shows the main agent reading specs and handing work to the code, test, review, and docs specialists, harness guidelines reaching every agent, the user confirmation desk, this week's results stacking up in the Weekly store, and one site per domain, all from real events. Select a domain to see the steps each of its tasks went through. The work floor on Workspaces splits parallel code tasks in a domain into separate lanes.
+The work map on Home is a top-down view of the planning room, main control room, harness library, the code, test, review, and docs rooms, the user confirmation desk, the commit dock, the Weekly store, and one site per domain. The main agent and specialists move with real events. Hover a room to see its state and select it to open the matching page. The work floor on Workspaces splits parallel code tasks in a domain into separate lanes.
 
 Console data is in `~/.claude/sugo/dashboard/` and survives updates. If the Console is down, the pipeline continues and sends sync data later.
 

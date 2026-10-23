@@ -422,7 +422,8 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .wk-ship { animation: wk-ship 2.4s ease-in-out infinite; }
 .wk--seated .wk-body { animation: wk-breathe 4.5s ease-in-out infinite; }
 .wk-booth--active .wk-station, .wk-booth .wk-station { opacity: 1; }
-.wk-domain { cursor: pointer; }
+.wk-domain, .wk-zone { cursor: pointer; }
+.wk-zone:focus-visible { outline: none; stroke: #22d3ee; stroke-width: 2; }
 .wk-domain:hover { filter: brightness(1.25); }
 .wk-domain:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }
 @keyframes wk-bell { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(14deg); } 75% { transform: rotate(-14deg); } }

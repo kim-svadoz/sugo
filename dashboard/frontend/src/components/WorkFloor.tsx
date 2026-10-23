@@ -1,6 +1,8 @@
 import { Pin } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useActivityStream } from "../hooks/useActivityStream.js";
+import { useSchedule } from "../hooks/useSchedule.js";
+import { resolveTaskTitle } from "../lib/taskTitle.js";
 import { FLOOR_STATIONS, selectFloorLanes, type FloorActivity, type FloorLane, type FloorStationId } from "../lib/workFloor.js";
 import { BlockPerson, Mug } from "./BlockPerson.js";
 
@@ -96,7 +98,7 @@ function headlineOf(lane: FloorLane): string {
   return state.station === "commit" ? "마지막 작업을 끝내고 쉬는 중" : "새 작업을 기다리는 중";
 }
 
-function Lane({ lane, now, compact }: { lane: FloorLane; now: number; compact: boolean }) {
+function Lane({ lane, now, compact, title }: { lane: FloorLane; now: number; compact: boolean; title: { title: string; kind: string | null } }) {
   const { state } = lane;
   const index = FLOOR_STATIONS.findIndex((station) => station.id === state.station);
   const [walking, setWalking] = useState(false);
@@ -112,10 +114,10 @@ function Lane({ lane, now, compact }: { lane: FloorLane; now: number; compact: b
 
   return <div className="work-floor__lane">
     <div className="flex min-w-0 items-center gap-2.5">
-      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${state.live ? "bg-cyan-300/[0.12] text-cyan-200" : "bg-white/[0.04] text-slate-400"}`}><Pin size={13} strokeWidth={2} /></span>
-      <strong className="max-w-[18rem] shrink-0 truncate text-[13px] text-white" title={lane.name}>{lane.name}</strong>
-      <span className={`shrink-0 text-[12px] font-semibold ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-400"}`}>{headlineOf(lane)}</span>
-      {state.message && <span className="min-w-0 truncate text-[12px] text-slate-500" title={state.message}>{state.message}</span>}
+      <Pin size={15} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
+      {title.kind && <span className="shrink-0 rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[10px] text-violet-200">{title.kind}</span>}
+      <strong className="min-w-0 truncate text-[13px] text-white" title={title.title}>{title.title}</strong>
+      <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>
       {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
     </div>
     <div className={compact ? "mx-auto max-w-[760px]" : undefined}>
@@ -157,9 +159,10 @@ export function WorkFloor({ workspace }: { workspace: string }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
   const lanes = selectFloorLanes(events, now);
+  const { data: specs } = useSchedule();
   if (lanes.length === 0) return <div className="work-floor py-3 text-center text-[12px] text-slate-500">이 도메인에는 아직 작업 기록이 없습니다.</div>;
   return <div className="work-floor space-y-3">
     {lanes.length > 1 && <div className="text-[11px] font-semibold text-cyan-200">동시에 진행 중인 작업 {lanes.length}개</div>}
-    {lanes.map((lane, index) => <div key={lane.key} className={index > 0 ? "border-t border-white/[0.06] pt-3" : undefined}><Lane lane={lane} now={now} compact={lanes.length > 1} /></div>)}
+    {lanes.map((lane, index) => <div key={lane.key} className={index > 0 ? "border-t border-white/[0.06] pt-3" : undefined}><Lane lane={lane} now={now} compact={lanes.length > 1} title={resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, name: lane.name }, specs ?? [])} /></div>)}
   </div>;
 }

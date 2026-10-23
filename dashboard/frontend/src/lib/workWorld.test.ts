@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ActivityEvent } from "../hooks/useActivityStream.js";
-import { selectWorldState, taskTimelines, weekBins } from "./workWorld.js";
+import { selectWorldState, weekBins } from "./workWorld.js";
 
 const NOW = Date.parse("2026-10-23T03:00:00Z");
 let nextId = 1;
@@ -41,38 +41,6 @@ describe("selectWorldState", () => {
 
   it("할 일이 없으면 자기 자리에서 쉰다", () => {
     expect(selectWorldState([], NOW)).toMatchObject({ mainSpot: "desk", mainActivity: "resting", activeSpecialist: null });
-  });
-});
-
-describe("taskTimelines", () => {
-  it("작업마다 실제로 거친 단계를 시간 순서대로 모은다(재구현 반복 포함)", () => {
-    const events = [
-      event({ ts: "2026-10-23 01:00:00", agent: "MAIN", handoff_to: "CODE" }),
-      event({ ts: "2026-10-23 01:10:00", agent: "CODE", handoff_to: "TEST" }),
-      event({ ts: "2026-10-23 01:20:00", agent: "TEST", handoff_to: "REVIEW" }),
-      event({ ts: "2026-10-23 01:30:00", agent: "REVIEW", handoff_to: "CODE" }),
-      event({ ts: "2026-10-23 01:05:00", workspace_name: "park", agent: "MAIN", handoff_to: "CODE", details: { task: { id: "t-9", name: "산책로 지도" } } }),
-    ];
-    const [first, second] = taskTimelines(events);
-    expect(first).toMatchObject({ name: "선박 검수 화면", workspace: "harbor" });
-    expect(first.steps.map((step) => step.station)).toEqual(["code", "test", "review", "code"]);
-    expect(second).toMatchObject({ name: "산책로 지도", workspace: "park" });
-  });
-
-  it("작업 식별자가 없는 옛 완료 이벤트는 같은 도메인에서 직전에 진행된 작업에 붙인다", () => {
-    const legacy = { details: undefined };
-    const events = [
-      event({ ...legacy, ts: "2026-10-23 01:00:00", agent: "DOCS", handoff_to: "MAIN", message: "scroll-feed 완료 처리 인계" }),
-      event({ ...legacy, ts: "2026-10-23 01:00:10", agent: "MAIN", event_type: "COMPLETED", message: "v3는 인덱스를 새로 읽는다" }),
-    ];
-    const timelines = taskTimelines(events);
-    expect(timelines.map((timeline) => timeline.name)).toEqual(["scroll-feed"]);
-    expect(timelines[0].steps).toHaveLength(2);
-  });
-
-  it("도메인을 지정하면 그 도메인의 작업만 모은다", () => {
-    const events = [event({ ts: "2026-10-23 01:00:00", agent: "MAIN", handoff_to: "CODE" }), event({ ts: "2026-10-23 01:05:00", workspace_name: "park", agent: "MAIN", handoff_to: "CODE" })];
-    expect(taskTimelines(events, "park").map((timeline) => timeline.workspace)).toEqual(["park"]);
   });
 });
 

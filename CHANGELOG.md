@@ -4,6 +4,12 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## Plugin 0.47.0 · Console 0.38.0 — 2026-10-23
+
+- Home 작업 세계를 위에서 내려다보는 작업장 지도로 바꿨습니다. 방마다 실제 상태가 보이고, 마우스를 올리면 상세가, 누르면 Schedule·Harness·Skills·Weekly·Workspaces로 이동합니다.
+- Home의 작업 흐름 기록을 없앴습니다.
+- Workspaces 작업장 레인 머리에 빨간 핀, FEAT/PATCH 차수, 일정 제목만 보여줍니다.
+
 ## Plugin 0.46.0 · Console 0.37.0 — 2026-10-23
 
 - Home에 작업 세계를 추가했습니다. 메인 에이전트 한 명이 기획실의 SPEC을 보고 구현·테스트·검토·문서 전문 인력에게 작업을 맡기고, 사용자 확인 창구를 거쳐 커밋을 출고합니다. Harness 지침이 모든 인력에게 전달되고, 이번 주 완료는 Weekly 창고에 요일별로 쌓입니다.

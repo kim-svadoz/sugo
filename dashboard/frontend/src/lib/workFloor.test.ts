@@ -10,7 +10,7 @@ function event(partial: Partial<ActivityEvent> & { ts: string }): ActivityEvent 
 
 describe("eventTask", () => {
   it("플러그인이 보낸 작업 식별자를 쓴다", () => {
-    expect(eventTask(event({ ts: "2026-10-23 02:00:00" }))).toEqual({ key: "payments:t-login", name: "로그인 실패 제한" });
+    expect(eventTask(event({ ts: "2026-10-23 02:00:00" }))).toEqual({ key: "payments:t-login", name: "로그인 실패 제한", taskId: "t-login" });
   });
 
   it("식별자가 없는 옛 이벤트는 메시지 첫 단어(작업 이름)로 묶는다", () => {

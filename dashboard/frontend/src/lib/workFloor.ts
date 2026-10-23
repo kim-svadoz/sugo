@@ -29,7 +29,7 @@ export interface FloorState {
   at?: number;
   lastAt: Partial<Record<FloorStationId, FloorEvent>>;
 }
-export interface FloorLane { key: string; name: string; state: FloorState }
+export interface FloorLane { key: string; name: string; taskId?: string; workspace: string; state: FloorState }
 
 export const LIVE_WINDOW_MS = 15 * 60_000;
 const CELEBRATE_WINDOW_MS = 5 * 60_000;
@@ -40,9 +40,9 @@ function detailsOf(event: ActivityEvent): { task?: { id?: unknown; name?: unknow
 }
 
 /** 작업 묶음 키. 플러그인이 보낸 task.id를 쓰고, 그 전의 이벤트는 메시지 첫 단어(작업 이름)로 묶는다. */
-export function eventTask(event: ActivityEvent): { key: string; name: string } {
+export function eventTask(event: ActivityEvent): { key: string; name: string; taskId?: string } {
   const task = detailsOf(event).task;
-  if (task && typeof task.id === "string") return { key: `${event.workspace_name}:${task.id}`, name: typeof task.name === "string" ? task.name : task.id };
+  if (task && typeof task.id === "string") return { key: `${event.workspace_name}:${task.id}`, name: typeof task.name === "string" ? task.name : task.id, taskId: task.id };
   const name = event.message.trim().split(/\s+/)[0] || event.workspace_name;
   return { key: `${event.workspace_name}:${name}`, name };
 }
@@ -91,15 +91,15 @@ export function selectFloorState(events: readonly ActivityEvent[], now = Date.no
  * 이벤트를 작업별로 묶는다. 작업 식별자가 없는 옛 COMPLETED 이벤트는 메시지가 검토 요약이라 작업 이름이 없으므로,
  * 같은 도메인에서 직전에 진행된 작업에 붙인다.
  */
-export function groupByTask(events: readonly ActivityEvent[]): Map<string, { name: string; workspace: string; events: ActivityEvent[] }> {
-  const groups = new Map<string, { name: string; workspace: string; events: ActivityEvent[] }>();
-  const lastKey = new Map<string, { key: string; name: string }>();
+export function groupByTask(events: readonly ActivityEvent[]): Map<string, { name: string; taskId?: string; workspace: string; events: ActivityEvent[] }> {
+  const groups = new Map<string, { name: string; taskId?: string; workspace: string; events: ActivityEvent[] }>();
+  const lastKey = new Map<string, { key: string; name: string; taskId?: string }>();
   const ordered = [...events].sort((a, b) => parseActivityTime(a.ts).getTime() - parseActivityTime(b.ts).getTime());
   for (const event of ordered) {
     const legacy = !detailsOf(event).task;
     const task = legacy && event.event_type === "COMPLETED" && lastKey.has(event.workspace_name) ? lastKey.get(event.workspace_name)! : eventTask(event);
     if (event.event_type !== "SYSTEM") lastKey.set(event.workspace_name, task);
-    const group = groups.get(task.key) ?? { name: task.name, workspace: event.workspace_name, events: [] };
+    const group = groups.get(task.key) ?? { name: task.name, taskId: task.taskId, workspace: event.workspace_name, events: [] };
     group.events.push(event);
     groups.set(task.key, group);
   }
@@ -109,7 +109,7 @@ export function groupByTask(events: readonly ActivityEvent[]): Map<string, { nam
 /** 작업별 레인. 진행 중(최근 이벤트 또는 확인 대기)인 작업을 모두 보여주고, 없으면 가장 최근 작업 하나만 보여준다. */
 export function selectFloorLanes(events: readonly ActivityEvent[], now = Date.now(), max = 3): FloorLane[] {
   const lanes = [...groupByTask(events).entries()]
-    .map(([key, group]) => ({ key, name: group.name, state: selectFloorState(group.events, now) }))
+    .map(([key, group]) => ({ key, name: group.name, taskId: group.taskId, workspace: group.workspace, state: selectFloorState(group.events, now) }))
     .filter((lane) => lane.state.at !== undefined)
     .sort((a, b) => (b.state.at ?? 0) - (a.state.at ?? 0));
   const live = lanes.filter((lane) => lane.state.live);
