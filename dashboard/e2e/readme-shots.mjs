@@ -58,6 +58,9 @@ try {
   await page.goto(`${base}/schedule?reviewWorkspace=payments&reviewSpec=pay-spec-webhook`, { waitUntil: "networkidle" });
   await page.waitForTimeout(3500);
   await page.screenshot({ path: join(out, "console-approval.png") });
+  await page.getByRole("button", { name: /diff 보기/ }).first().click();
+  await page.waitForTimeout(4000);
+  await page.screenshot({ path: join(out, "console-diff.png") });
 
   await page.goto(`${base}/schedule`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Agenda/ }).first().click();

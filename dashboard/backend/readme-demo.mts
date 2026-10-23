@@ -4,7 +4,7 @@
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { syncRoadmapSnapshot, syncTask, syncWorkspace } from "../../sugo/src/dashboard/sync.js";
+import { syncReviewArtifacts, syncRoadmapSnapshot, syncTask, syncWorkspace } from "../../sugo/src/dashboard/sync.js";
 import { buildReviewConfirmationBlocker } from "../../sugo/src/reviewConfirmation.js";
 import type { RoadmapNode, Task } from "../../sugo/src/work/types.js";
 import { initDb } from "./src/db/init.js";
@@ -79,8 +79,10 @@ class CheckoutIdempotencyTest {
 const webhookFiles = [
   {
     path: "src/main/java/webhook/RetryScheduler.java",
-    change: "added" as const,
+    change: "modified" as const,
     content: `package webhook;
+
+import java.time.Duration;
 
 public class RetryScheduler {
     private static final int MAX_ATTEMPTS = 6;
@@ -94,11 +96,27 @@ public class RetryScheduler {
     }
 }
 `,
-    diff: "+ 지수 백오프 재시도 간격\n+ 6회 초과 시 DLQ 이동",
+    diff: `@@ -3,10 +3,14 @@
+ import java.time.Duration;
+ 
+ public class RetryScheduler {
+-    private static final int MAX_ATTEMPTS = 3;
++    private static final int MAX_ATTEMPTS = 6;
+ 
+     public Duration nextDelay(int attempt) {
+-        return Duration.ofSeconds(30);
++        return Duration.ofSeconds((long) Math.pow(2, attempt) * 15);
++    }
++
++    public boolean shouldMoveToDeadLetter(int attempt) {
++        return attempt >= MAX_ATTEMPTS;
+     }
+ }
+`,
   },
   {
     path: "src/test/java/webhook/RetrySchedulerTest.java",
-    change: "added" as const,
+    change: "modified" as const,
     content: `package webhook;
 
 class RetrySchedulerTest {
@@ -113,7 +131,20 @@ class RetrySchedulerTest {
     }
 }
 `,
-    diff: "+ 백오프·DLQ 경계 테스트",
+    diff: `@@ -4,6 +4,11 @@ class RetrySchedulerTest {
+     @Test
+-    void delayIsConstant() {
+-        assertThat(scheduler.nextDelay(2)).isEqualTo(Duration.ofSeconds(30));
++    void delayDoublesEachAttempt() {
++        assertThat(scheduler.nextDelay(2)).isEqualTo(Duration.ofSeconds(60));
++    }
++
++    @Test
++    void movesToDeadLetterAfterMaxAttempts() {
++        assertThat(scheduler.shouldMoveToDeadLetter(6)).isTrue();
+     }
+ }
+`,
   },
 ];
 
@@ -226,6 +257,8 @@ for (const [workspace, task] of tasks) await syncTask(workspace, task);
 await syncRoadmapSnapshot("payments", paymentsRoadmap);
 await syncRoadmapSnapshot("search", searchRoadmap);
 await syncRoadmapSnapshot("mobile-app", mobileRoadmap);
+// 승인 화면의 "변경 파일 diff 보기"가 실제 코드를 보여주도록 검증 대상 파일을 올린다.
+await syncReviewArtifacts("payments", "pay-task-webhook", "readme-demo-webhook", 0, webhookFiles);
 
 const db = await initDb();
 const dueDates: Array<[string, string, number]> = [

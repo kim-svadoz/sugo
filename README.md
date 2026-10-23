@@ -6,6 +6,8 @@
 
 Sugo는 기능 하나를 요구사항·완료 조건 정리 → 구현 → 테스트 → 최종 검증 → 사용자 승인 → 문서작업 → 작업결과 리포트 순서로 진행한다. 각 단계는 실제 테스트 실행 기록과 변경 파일을 확인한 뒤에 다음 단계로 넘어간다. 최종 승인은 사람이 diff를 보고 한다.
 
+![Console Home: 메인 에이전트와 전문 에이전트의 현재 작업](docs/images/console-home.png)
+
 ## 해결하는 문제
 
 | 문제 | Sugo의 처리 |
@@ -98,6 +100,21 @@ flowchart LR
 | 주간 회고 | Weekly에서 주간 보고서와 기술 학습 노트를 본다 | weekly 플러그인 필요 |
 
 `/sugo:feat` 하나에 동작 변경 하나를 담는다. PRD가 크면 하위 작업으로 나눠 진행한 뒤 통합한다.
+
+**진행 확인** · 도메인 안에서 동시에 진행 중인 작업과 각 작업의 단계
+
+![Workspaces 작업장: 작업별 진행 단계](docs/images/console-workspaces.png)
+
+**사용자 승인** · 검증 결과와 변경 파일 diff를 보고 승인하거나 수정을 요청한다
+
+<p>
+  <img src="docs/images/console-approval.png" alt="작업 결과 확인과 승인" width="49%">
+  <img src="docs/images/console-diff.png" alt="변경 파일 diff" width="49%">
+</p>
+
+**일정·스펙 준비** · 마감 기준으로 묶은 개발 일정
+
+![Schedule: 마감 기준 개발 일정](docs/images/console-schedule.png)
 
 ## 설치 시 변경 사항
 
