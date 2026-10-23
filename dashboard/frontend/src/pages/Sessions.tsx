@@ -19,6 +19,7 @@ import {
   ChevronRight,
   FileCode,
   Lightbulb,
+  Pin,
   Search,
   Shield,
   X,
@@ -139,6 +140,7 @@ export function Sessions() {
 
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
   const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
+  const [selectedTaskTitle, setSelectedTaskTitle] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("repositories");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<"all" | "recent">("all");
@@ -798,21 +800,25 @@ export function Sessions() {
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
       {selected && !isSearchMode && (
-        <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} /></section>
+        <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} onSelectedTitleChange={setSelectedTaskTitle} /></section>
       )}
       {selected && !isSearchMode && (
-        <div className="pointer-events-none grid h-9 grid-cols-1 lg:grid-cols-10" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">
-          <div className="flex items-center justify-center lg:col-span-3">
-            <div className="ck-summary-bridge flex h-full flex-col items-center justify-center text-cyan-200/65">
-              <span className="h-3 border-l border-dashed border-cyan-300/35" />
-              <span className="flex items-center gap-1.5 text-[10px] font-medium tracking-[0.04em]"><ArrowDown size={11} strokeWidth={1.8} />선택한 작업의 완료 기록</span>
-            </div>
+        <div key={selectedTaskKey ?? "none"} className="pointer-events-none relative z-10 -my-3 grid h-16 grid-cols-1 lg:grid-cols-10 2xl:-my-4" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">
+          <div className="ck-summary-bridge relative flex items-center justify-center lg:col-span-3">
+            <span className="ck-bridge-rail absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 rounded-full" />
+            {[0, 0.6, 1.2].map((delay) => <span key={delay} className="ck-bridge-spark" style={{ animationDelay: `${delay}s` }} />)}
+            <span className="ck-stage-in relative flex max-w-[92%] items-center gap-1.5 rounded-full border border-cyan-300/30 bg-[#0a1424] px-3 py-1 text-[11px] font-medium text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,.18)]">
+              <Pin size={12} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
+              <span className="truncate">{selectedTaskTitle ?? "선택한 작업"}</span>
+              <span className="shrink-0 text-cyan-300/70">완료 기록</span>
+              <ArrowDown size={12} strokeWidth={2} className="ck-summary-flow shrink-0 text-cyan-300" />
+            </span>
           </div>
         </div>
       )}
       {selected && !isSearchMode && (
         <div key={selected.name} className="command-detail ck-stage-in grid min-h-[340px] flex-1 grid-cols-1 items-start gap-3 lg:grid-cols-10">
-          <div className="ck-glass flex min-h-[260px] max-h-[360px] self-start flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3 lg:col-span-3">
+          <div className="ck-glass flex min-h-[260px] max-h-[360px] self-start flex-col overflow-hidden rounded-xl border border-cyan-300/25 p-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)] lg:col-span-3">
             <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
           </div>
           <div className="ck-glass flex min-h-[340px] max-h-[680px] self-start flex-col rounded-xl border border-[var(--color-border)] p-3 lg:col-span-7">
