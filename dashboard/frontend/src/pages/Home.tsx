@@ -7,7 +7,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { buildHomeBrief } from "../lib/homePresentation.js";
 import { Modal } from "../components/Modal.js";
-import { WorkFloor } from "../components/WorkFloor.js";
+import { WorkWorld } from "../components/WorkWorld.js";
 import { buildSevenDayFeed, filterNewsByRegion, type NewsRegion } from "../lib/techBriefPresentation.js";
 import { selectLearningReviewNote, type LearningReviewNote } from "../lib/homeLearningReview.js";
 import { technicalIdentifierParts } from "../lib/technicalIdentifiers.js";
@@ -131,7 +131,7 @@ export function Home() {
         </div>
         <button type="button" onClick={() => navigate(brief.decisions.length > 0 ? "/schedule" : "/sessions")} className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-300/[0.08] px-4 py-3 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-300/[0.14]">{brief.decisions.length > 0 ? "판단할 작업 열기" : "작업 흐름 보기"}<ArrowRight size={13} /></button>
       </div>
-      <div className="relative mt-4 border-t border-white/[0.06] pt-3"><WorkFloor waitingReviews={brief.decisions.length} /></div>
+      <div className="relative mt-4 border-t border-white/[0.06] pt-3"><WorkWorld specs={specs ?? []} waitingReviews={brief.decisions.length} /></div>
     </section>
 
     <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,.85fr)]">

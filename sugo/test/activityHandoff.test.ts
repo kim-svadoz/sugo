@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityForPlanTransition } from "../src/dashboard/activity.js";
+import { activityForPlanTransition, activityTaskDetails, reviewConfirmationActivity } from "../src/dashboard/activity.js";
 
 describe("plan transition activity", () => {
   it.each([
@@ -33,5 +33,15 @@ describe("plan transition activity", () => {
       .toContain("75/75 통과");
     expect(activityForPlanTransition("docs_done", "DOCS_PENDING", "결제 중복 방지", { workResultPath: "docs/work-result.md" })?.message)
       .toContain("docs/work-result.md");
+  });
+
+  it("이벤트에 작업 식별자를 실어 Console이 작업별로 묶을 수 있게 한다", () => {
+    expect(activityTaskDetails({ id: "s-1", featureName: "결제 중복 방지", data: { linkedTaskId: "t-9" } })).toEqual({ task: { id: "t-9", sessionId: "s-1", name: "결제 중복 방지" } });
+    expect(activityTaskDetails({ id: "s-2", featureName: "검색 필터", data: {} })).toEqual({ task: { id: "s-2", sessionId: "s-2", name: "검색 필터" } });
+  });
+
+  it("검토 결과를 게시하면 사용자 확인 대기 이벤트를 만든다", () => {
+    expect(reviewConfirmationActivity("결제 중복 방지")).toMatchObject({ agent: "REVIEW", eventType: "EXECUTE", stage: "user_confirmation" });
+    expect(reviewConfirmationActivity("결제 중복 방지").message).toContain("사용자 확인 요청");
   });
 });

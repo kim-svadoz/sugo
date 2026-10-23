@@ -28224,7 +28224,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.45.0" : "0.0.0-dev";
+  return true ? "0.46.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29538,6 +29538,12 @@ function activityForPlanTransition(action, fromState, featureName, context = {})
     return { agent: "DOCS", handoffTo: "MAIN", eventType: "HANDOFF", message: `${featureName} \uBB38\uC11C\uD654 \uC644\uB8CC \xB7 ${context.workResultPath ?? "\uC791\uC5C5 \uACB0\uACFC \uAE30\uB85D \uC800\uC7A5"} \xB7 \uCEE4\uBC0B \uC900\uBE44` };
   }
   return null;
+}
+function activityTaskDetails(session) {
+  return { task: { id: session.data.linkedTaskId ?? session.id, sessionId: session.id, name: session.featureName } };
+}
+function reviewConfirmationActivity(featureName) {
+  return { agent: "REVIEW", eventType: "EXECUTE", stage: "user_confirmation", message: `${featureName} \uC0AC\uC6A9\uC790 \uD655\uC778 \uC694\uCCAD \xB7 Console\uC5D0\uC11C \uC2B9\uC778 \uB300\uAE30` };
 }
 var ACTIVITY_TIMEOUT_MS = 3e3;
 async function emitActivity(event) {
@@ -32298,7 +32304,8 @@ ${args2.prdContent}` : args2.prdContent;
       workspaceName: workspace,
       agent: "MAIN",
       eventType: "COMPLETED",
-      message: session.data.chainInfo.reviewSummary ?? `${session.featureName} \uC644\uB8CC`
+      message: session.data.chainInfo.reviewSummary ?? `${session.featureName} \uC644\uB8CC`,
+      details: activityTaskDetails(session)
     });
   }
   const previousState = existing?.state ?? "INIT";
@@ -32331,7 +32338,7 @@ ${args2.prdContent}` : args2.prdContent;
       workResultPath: session.data.chainInfo.workResultPath
     });
     if (transitionActivity) {
-      void emitActivity({ workspaceName: session.data.linkedWorkspace, ...transitionActivity });
+      void emitActivity({ workspaceName: session.data.linkedWorkspace, ...transitionActivity, details: activityTaskDetails(session) });
     }
   }
   let todoSpecResponse;
@@ -32804,6 +32811,8 @@ async function handleSugoRoadmap(rawArgs) {
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };
       await saveSession(session);
       await updateRoadmapNodeRuntimeAssessment(args2.workspace, args2.id, assessSession(session));
+      const { stage, ...confirmation } = reviewConfirmationActivity(session.featureName);
+      void emitActivity({ workspaceName: args2.workspace, ...confirmation, details: { ...activityTaskDetails(session), stage } });
       return ok4({
         awaitingHumanDecision: true,
         presentation: "dashboard",

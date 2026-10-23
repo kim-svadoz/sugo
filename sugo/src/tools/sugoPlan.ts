@@ -7,7 +7,7 @@ import { scanForSpringBootTestAnnotation } from "../bootScan.js";
 import { writePatchPrdFile, writePatchWorkResultFile, writePrdFile, writeWorkResultFile } from "../feature.js";
 import { checkCoverageGate } from "../consistency.js";
 import { checkContractEvidenceGate, checkContractStartedGate, resolveContractRequired } from "../contractEvidence.js";
-import { activityForPlanTransition, emitActivity } from "../dashboard/activity.js";
+import { activityForPlanTransition, emitActivity, activityTaskDetails } from "../dashboard/activity.js";
 import { resolveDashboardConfig } from "../dashboard/config.js";
 import { fetchBlockerDecision, fetchCalibratedRatio, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
 import { snapshotWorkResultFiles } from "../dashboard/workResultFiles.js";
@@ -1336,6 +1336,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       agent: "MAIN",
       eventType: "COMPLETED",
       message: session.data.chainInfo.reviewSummary ?? `${session.featureName} 완료`,
+      details: activityTaskDetails(session),
     });
   }
 
@@ -1377,7 +1378,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       workResultPath: session.data.chainInfo.workResultPath,
     });
     if (transitionActivity) {
-      void emitActivity({ workspaceName: session.data.linkedWorkspace, ...transitionActivity });
+      void emitActivity({ workspaceName: session.data.linkedWorkspace, ...transitionActivity, details: activityTaskDetails(session) });
     }
   }
 

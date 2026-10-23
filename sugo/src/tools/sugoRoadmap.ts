@@ -22,6 +22,7 @@ import { loadSession, saveSession, sessionExists } from "../session.js";
 import { assessSession } from "../ontology/sessionAssessment.js";
 import { buildReviewConfirmationBlocker, reviewDecisionResumeAction } from "../reviewConfirmation.js";
 import { snapshotReviewArtifacts } from "../dashboard/workResultFiles.js";
+import { activityTaskDetails, emitActivity, reviewConfirmationActivity } from "../dashboard/activity.js";
 import { syncReviewArtifacts } from "../dashboard/sync.js";
 import { buildWorkResultReport } from "../workResultReport.js";
 import { computeCompletionGrade } from "../labelGuard.js";
@@ -225,6 +226,8 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       session.data.humanDecisionGate = { workspace: args.workspace, taskId: args.id, blocker };
       await saveSession(session);
       await updateRoadmapNodeRuntimeAssessment(args.workspace, args.id, assessSession(session));
+      const { stage, ...confirmation } = reviewConfirmationActivity(session.featureName);
+      void emitActivity({ workspaceName: args.workspace, ...confirmation, details: { ...activityTaskDetails(session), stage } });
       return ok({
         awaitingHumanDecision: true,
         presentation: "dashboard",

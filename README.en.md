@@ -142,7 +142,7 @@ Open `http://localhost:3001`. It starts with each new Claude Code session.
 | Integrations | Git providers, AWS, Pinpoint, and plugin API tokens |
 | Preferences | Display name, weather region |
 
-The work floor on Home and Workspaces shows a worker at the pipeline station that matches the latest event: working on the current stage, waiting for your review, or stopped where a run paused.
+The work world on Home shows the main agent reading specs and handing work to the code, test, review, and docs specialists, harness guidelines reaching every agent, the user confirmation desk, this week's results stacking up in the Weekly store, and one site per domain, all from real events. Select a domain to see the steps each of its tasks went through. The work floor on Workspaces splits parallel code tasks in a domain into separate lanes.
 
 Console data is in `~/.claude/sugo/dashboard/` and survives updates. If the Console is down, the pipeline continues and sends sync data later.
 
