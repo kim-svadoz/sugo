@@ -19,8 +19,8 @@ export const MAIN_SPOTS: Record<MainSpot, { position: Vec2; facing: number }> = 
   test: { position: [DESK_X.TEST + 1.5, 1.3], facing: -Math.PI / 2 },
   review: { position: [DESK_X.REVIEW + 1.5, 1.3], facing: -Math.PI / 2 },
   docs: { position: [DESK_X.DOCS + 1.5, 1.3], facing: -Math.PI / 2 },
-  confirm: { position: [9.4, 1], facing: Math.PI / 2 },
-  dock: { position: [5.8, 6.6], facing: Math.PI / 2 },
+  confirm: { position: [4.5, 5.7], facing: Math.PI },
+  dock: { position: [8.2, 6.6], facing: Math.PI / 2 },
 };
 
 export interface Placement { at: string; position: Vec2; facing: number; pose: FigurePose }

@@ -19,9 +19,10 @@ describe("Console 정보 구조", () => {
     expect(liveConsole).toContain("전체 기록");
   });
 
-  it("작업 레인에서 최근 요약으로 흐르는 점선 안내를 표시한다", () => {
-    expect(workFloor).toContain("작업 결과 요약으로 연결");
-    expect(workFloor).toContain("ck-summary-flow");
+  it("작업 레인과 최근 요약 사이에 읽을 수 있는 연결 브리지를 표시한다", () => {
+    expect(sessions).toContain("완료 결과가 아래 요약으로 이어집니다");
+    expect(sessions).toContain("ck-summary-bridge");
+    expect(workFloor).not.toContain("작업 결과 요약으로 연결");
   });
 
   it("최근 작업 요약과 Inspector는 서로의 높이를 늘리지 않는다", () => {
@@ -32,7 +33,11 @@ describe("Console 정보 구조", () => {
   it("작업실은 네 전문 에이전트와 사용자 확인·커밋 출고 흐름을 각각 표시한다", () => {
     expect(workRoom).not.toContain('label: "전문 인력 작업실"');
     for (const label of ["코드 작성", "테스트", "검토", "문서 작업", "사용자 확인", "커밋 출고"]) expect(workRoom).toContain(`label: "${label}"`);
-    expect(workRoom).toContain("WorkflowBeam");
+    expect(workRoom).toContain('label: "START · SPEC 작성"');
+    expect(workRoom).toContain("WorkflowPath");
+    expect(workRoom).not.toContain("WorkflowBeam");
+    expect(workRoom).not.toContain('label="배정"');
+    expect(workRoom.indexOf('id: "confirm"')).toBeLessThan(workRoom.indexOf('id: "dock"'));
     expect(workRoom).toContain("하네스 공급선");
   });
 

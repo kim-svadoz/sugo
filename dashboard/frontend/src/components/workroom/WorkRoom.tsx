@@ -17,18 +17,18 @@ import { Minifig, type FigureRole } from "./Minifig.js";
 type ZoneId = "spec" | "control" | "harness" | "code" | "test" | "review" | "docs" | "confirm" | "lounge" | "dock" | "weekly" | "domains";
 interface Zone { id: ZoneId; label: string; center: [number, number]; size: [number, number]; tint: string; route: string; page: string }
 const ZONES: Zone[] = [
-  { id: "spec", label: "기획실 · SPEC", center: [-9, -5.8], size: [7, 5.4], tint: "#2563eb", route: "/schedule", page: "Schedule" },
+  { id: "spec", label: "START · SPEC 작성", center: [-9, -5.8], size: [7, 5.4], tint: "#2563eb", route: "/schedule", page: "Schedule" },
   { id: "control", label: "메인 데스크", center: [-1, -6.2], size: [6, 4.6], tint: "#0891b2", route: "/sessions", page: "Workspaces" },
   { id: "harness", label: "Harness 지침", center: [7, -6.6], size: [8, 3.8], tint: "#d97706", route: "/harness", page: "Harness" },
   { id: "code", label: "코드 작성", center: [-8, 0], size: [3.5, 4.2], tint: "#0891b2", route: "/skills", page: "Code Agent" },
   { id: "test", label: "테스트", center: [-4, 0], size: [3.5, 4.2], tint: "#059669", route: "/skills", page: "Test Agent" },
   { id: "review", label: "검토", center: [0, 0], size: [3.5, 4.2], tint: "#7c3aed", route: "/skills", page: "Review Agent" },
   { id: "docs", label: "문서 작업", center: [4, 0], size: [3.5, 4.2], tint: "#db2777", route: "/skills", page: "Docs Agent" },
-  { id: "confirm", label: "사용자 확인", center: [10.6, 0.6], size: [4.4, 6], tint: "#7c3aed", route: "/schedule", page: "Schedule" },
+  { id: "confirm", label: "사용자 확인", center: [4.5, 6.7], size: [4.6, 3.4], tint: "#7c3aed", route: "/schedule", page: "Schedule" },
   { id: "lounge", label: "대기 라운지", center: [-10, 6.2], size: [6, 4.6], tint: "#64748b", route: "/skills", page: "Skills" },
   { id: "domains", label: "도메인 현장", center: [-6.5, 6.8], size: [4.6, 3.4], tint: "#16a34a", route: "/sessions", page: "Workspaces" },
-  { id: "weekly", label: "Weekly", center: [0, 6.8], size: [4.4, 3.4], tint: "#db2777", route: "/weekly", page: "Weekly" },
-  { id: "dock", label: "커밋 출고", center: [7.5, 6.8], size: [6.4, 3.4], tint: "#ca8a04", route: "/sessions", page: "Workspaces" },
+  { id: "weekly", label: "Weekly", center: [-1.5, 6.8], size: [4.4, 3.4], tint: "#db2777", route: "/weekly", page: "Weekly" },
+  { id: "dock", label: "커밋 출고", center: [10.2, 6.8], size: [5.8, 3.4], tint: "#ca8a04", route: "/sessions", page: "Workspaces" },
 ];
 function zoneAt(x: number, z: number): ZoneId | null {
   return ZONES.find((zone) => Math.abs(x - zone.center[0]) <= zone.size[0] / 2 && Math.abs(z - zone.center[1]) <= zone.size[1] / 2)?.id ?? null;
@@ -37,7 +37,7 @@ const ROLE: Record<Specialist, FigureRole> = { CODE: "code", TEST: "test", REVIE
 const AGENT_LABEL: Record<Specialist, string> = { CODE: "구현", TEST: "테스트", REVIEW: "검토", DOCS: "문서" };
 const POSTIT = ["#fde047", "#f9a8d4", "#86efac", "#7dd3fc", "#fdba74", "#c4b5fd"];
 const ZONE_COPY: Record<ZoneId, { work: string; output: string; step: string }> = {
-  spec: { step: "01 · 계획", work: "목표·범위·완료 조건을 SPEC으로 고정합니다.", output: "확정된 개발 일정과 구현 가능한 요구사항" },
+  spec: { step: "START · 사용자", work: "사용자가 목표·범위·완료 조건을 SPEC으로 정해 작업을 시작합니다.", output: "확정된 개발 일정과 구현 가능한 요구사항" },
   control: { step: "02 · 배정", work: "메인 에이전트가 현재 상태를 읽고 다음 담당을 호출합니다.", output: "담당·순서·증거가 연결된 실행 지시" },
   harness: { step: "모든 단계", work: "프로젝트 기술과 버전에 맞는 하네스 규칙을 각 담당에게 공급합니다.", output: "자동 검증 가능한 팀 기준" },
   code: { step: "03 · 코드 작성", work: "코드 에이전트가 SPEC 범위 안에서 제품 코드를 구현합니다.", output: "구현 변경과 테스트 담당에게 넘길 근거" },
@@ -97,13 +97,24 @@ function GuideBeam({ to }: { to: [number, number, number] }) {
 }
 
 /** 제품 작업이 실제로 넘어가는 방향. 하네스 공급선과 색·속도를 분리해 의미를 섞지 않는다. */
-function WorkflowBeam({ from, to, color, label }: { from: [number, number, number]; to: [number, number, number]; color: string; label: string }) {
+function WorkflowPath({ from, to, color, delay = 0 }: { from: [number, number, number]; to: [number, number, number]; color: string; delay?: number }) {
   const ref = useRef<{ material: { dashOffset: number } } | null>(null);
+  const marker = useRef<Mesh>(null);
   useFrame((_, delta) => { if (ref.current) ref.current.material.dashOffset -= delta * 1.8; });
   const middle: [number, number, number] = [(from[0] + to[0]) / 2, 1.2, (from[2] + to[2]) / 2];
+  useFrame((state) => {
+    if (!marker.current) return;
+    const t = (state.clock.elapsedTime * 0.22 + delay) % 1;
+    const inverse = 1 - t;
+    marker.current.position.set(
+      inverse * inverse * from[0] + 2 * inverse * t * middle[0] + t * t * to[0],
+      inverse * inverse * from[1] + 2 * inverse * t * middle[1] + t * t * to[1],
+      inverse * inverse * from[2] + 2 * inverse * t * middle[2] + t * t * to[2],
+    );
+  });
   return <group>
-    <QuadraticBezierLine ref={ref as never} start={from} end={to} mid={middle} color={color} lineWidth={2} dashed dashSize={0.36} gapSize={0.18} transparent opacity={0.72} />
-    <Html position={middle} center className="pointer-events-none select-none"><div className="whitespace-nowrap rounded-full border border-white/10 bg-slate-950/85 px-1.5 py-0.5 text-[9px] font-semibold" style={{ color }}>{label} →</div></Html>
+    <QuadraticBezierLine ref={ref as never} start={from} end={to} mid={middle} color={color} lineWidth={1.6} dashed dashSize={0.3} gapSize={0.24} transparent opacity={0.55} />
+    <mesh ref={marker}><sphereGeometry args={[0.11, 12, 8]} /><M color={color} emissive={color} intensity={1.2} /></mesh>
   </group>;
 }
 
@@ -127,10 +138,10 @@ function Conveyor({ shipping }: { shipping: boolean }) {
   </group>;
 }
 
-function Bell({ ringing }: { ringing: boolean }) {
+function Bell({ ringing, position }: { ringing: boolean; position: [number, number, number] }) {
   const ref = useRef<Mesh>(null);
   useFrame((state) => { if (ref.current) { ref.current.rotation.z = ringing ? Math.sin(state.clock.elapsedTime * 14) * 0.3 : 0; (ref.current.material as MeshStandardMaterial).emissiveIntensity = ringing ? 0.6 + Math.sin(state.clock.elapsedTime * 6) * 0.4 : 0.1; } });
-  return <mesh ref={ref} position={[10.2, 1.18, 0.4]} castShadow><sphereGeometry args={[0.16, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={0.1} metalness={0.6} roughness={0.3} /></mesh>;
+  return <mesh ref={ref} position={position} castShadow><sphereGeometry args={[0.16, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={0.1} metalness={0.6} roughness={0.3} /></mesh>;
 }
 
 /**
@@ -153,7 +164,7 @@ function FitCamera() {
   const { camera, size } = useThree();
   useEffect(() => {
     camera.lookAt(0, 0, 0.5);
-    (camera as unknown as { zoom: number }).zoom = Math.min(size.width / 34.5, size.height / 22.5);
+    (camera as unknown as { zoom: number }).zoom = Math.min(size.width / 31, size.height / 20.5);
     camera.updateProjectionMatrix();
   }, [camera, size.width, size.height]);
   return null;
@@ -162,7 +173,7 @@ function FitCamera() {
 function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: ZoneId | null; setHover: (zone: ZoneId | null) => void; onSelect: (zone: ZoneId) => void }) {
   const { placement, world, plannedSpecs, bins, domains, waitingReviews, working } = data;
   return <>
-    <OrthographicCamera makeDefault position={[22, 21, 22]} near={0.1} far={200} />
+    <OrthographicCamera makeDefault position={[17, 27, 23]} near={0.1} far={200} />
     <FitCamera />
     <ambientLight intensity={0.55} />
     <hemisphereLight args={["#cbd5e1", "#0f172a", 0.6]} />
@@ -200,13 +211,14 @@ function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: Zo
     {[9.6, 10.9].map((x) => <group key={x}><Box p={[x, 1.1, -9.1]} s={[1.2, 2.2, 0.5]} c="#78350f" />{[0.45, 1.1, 1.75].map((y, row) => Array.from({ length: 5 }, (_, book) => <Box key={`${row}-${book}`} p={[x - 0.42 + book * 0.21, y, -9]} s={[0.16, 0.5, 0.36]} c={POSTIT[(book + row + Math.round(x)) % POSTIT.length]} cast={false} />))}</group>)}
     {[...SPECIALISTS.map((agent) => [DESK_X[agent], 1.5, DESK_Z - 0.3] as [number, number, number]), [-1, 1.6, -7.2] as [number, number, number]].map((to, index) => <GuideBeam key={index} to={to} />)}
 
-    {/* 실행 흐름: 청록(배정) → 역할별 단계 → 보라(사용자 확인) → 금색(커밋 출고). */}
-    <WorkflowBeam from={[-1, 1.1, -5.8]} to={[-8, 1.1, -1.1]} color="#22d3ee" label="배정" />
-    <WorkflowBeam from={[-8, 1.05, 0.8]} to={[-4, 1.05, 0.8]} color="#2dd4bf" label="코드" />
-    <WorkflowBeam from={[-4, 1.05, 0.8]} to={[0, 1.05, 0.8]} color="#34d399" label="테스트" />
-    <WorkflowBeam from={[0, 1.05, 0.8]} to={[4, 1.05, 0.8]} color="#a78bfa" label="검토" />
-    <WorkflowBeam from={[4, 1.05, 0.8]} to={[9.8, 1.05, 0.8]} color="#c4b5fd" label="사용자 확인" />
-    <WorkflowBeam from={[10.6, 1.05, 2.5]} to={[7.5, 1.05, 5.2]} color="#fbbf24" label="커밋" />
+    {/* 작업 경로는 역 이름만 남기고, 움직이는 불빛으로 SPEC → 사용자 확인 → 커밋 순서를 보여준다. */}
+    <WorkflowPath from={[-7.2, 1.1, -5.8]} to={[-2.4, 1.1, -5.8]} color="#38bdf8" delay={0} />
+    <WorkflowPath from={[-1.8, 1.1, -5.1]} to={[-8, 1.1, -1.1]} color="#22d3ee" delay={0.12} />
+    <WorkflowPath from={[-8, 1.05, 0.8]} to={[-4, 1.05, 0.8]} color="#2dd4bf" delay={0.24} />
+    <WorkflowPath from={[-4, 1.05, 0.8]} to={[0, 1.05, 0.8]} color="#34d399" delay={0.36} />
+    <WorkflowPath from={[0, 1.05, 0.8]} to={[4, 1.05, 0.8]} color="#a78bfa" delay={0.48} />
+    <WorkflowPath from={[4, 1.05, 1.1]} to={[4.5, 1.05, 5.4]} color="#c4b5fd" delay={0.6} />
+    <WorkflowPath from={[6.3, 1.05, 6.7]} to={[7.5, 1.05, 6.7]} color="#fbbf24" delay={0.72} />
 
     {/* 전문 인력 책상 */}
     {SPECIALISTS.map((agent) => {
@@ -233,15 +245,15 @@ function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: Zo
     <Plant x={13} z={-8.6} />
 
     {/* 사용자 확인 카운터 */}
-    <RoundedBox args={[1, 1.05, 4]} radius={0.06} position={[10.6, 0.52, 0.6]} castShadow receiveShadow><M color="#4c1d95" /></RoundedBox>
-    <Box p={[10.6, 1.09, 0.6]} s={[1.2, 0.06, 4.2]} c="#c4b5fd" />
-    <Bell ringing={waitingReviews > 0 || world.mainActivity === "waiting"} />
-    <Chair x={12} z={0.6} facing={-Math.PI / 2} />
+    <RoundedBox args={[3.6, 1.05, 1]} radius={0.06} position={[4.5, 0.52, 6.7]} castShadow receiveShadow><M color="#4c1d95" /></RoundedBox>
+    <Box p={[4.5, 1.09, 6.7]} s={[3.8, 0.06, 1.2]} c="#c4b5fd" />
+    <Bell ringing={waitingReviews > 0 || world.mainActivity === "waiting"} position={[4.3, 1.18, 6.5]} />
+    <Chair x={4.5} z={8} facing={Math.PI} />
 
     {/* 커밋 출고 · Weekly 선반 · 도메인 모형 */}
-    <group position={[8.9, 0, 0]}><Conveyor shipping={world.mainSpot === "dock"} /></group>
-    <Box p={[0, 1.1, 6.2]} s={[4, 2.2, 0.4]} c="#3f3f46" />{[0.02, 0.48, 0.94, 1.4].map((y) => <Box key={y} p={[0, y + 0.06, 6.75]} s={[4, 0.06, 0.9]} c="#52525b" />)}
-    {bins.map((count, day) => Array.from({ length: Math.min(count, 4) }, (_, level) => <Box key={`${day}-${level}`} p={[-1.7 + day * 0.56, 0.3 + level * 0.46, 6.8]} s={[0.42, 0.4, 0.42]} c={POSTIT[(day + level) % POSTIT.length]} />))}
+    <group position={[11.6, 0, 0]}><Conveyor shipping={world.mainSpot === "dock"} /></group>
+    <Box p={[-1.5, 1.1, 6.2]} s={[4, 2.2, 0.4]} c="#3f3f46" />{[0.02, 0.48, 0.94, 1.4].map((y) => <Box key={y} p={[-1.5, y + 0.06, 6.75]} s={[4, 0.06, 0.9]} c="#52525b" />)}
+    {bins.map((count, day) => Array.from({ length: Math.min(count, 4) }, (_, level) => <Box key={`${day}-${level}`} p={[-3.2 + day * 0.56, 0.3 + level * 0.46, 6.8]} s={[0.42, 0.4, 0.42]} c={POSTIT[(day + level) % POSTIT.length]} />))}
     <RoundedBox args={[3.8, 0.12, 2.4]} radius={0.04} position={[-6.5, 0.74, 6.8]} castShadow receiveShadow><M color="#e2e8f0" /></RoundedBox>
     {[[-8.1, 6], [-4.9, 6], [-8.1, 7.6], [-4.9, 7.6]].map(([x, z]) => <Box key={`${x}${z}`} p={[x, 0.37, z]} s={[0.08, 0.74, 0.08]} c="#64748b" />)}
     {domains.map((domain, index) => {
@@ -258,7 +270,7 @@ function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: Zo
     {world.mainActivity === "waiting" && <Html position={[placement.main.position[0], 2.6, placement.main.position[1]]} center className="pointer-events-none"><div className="rounded-full bg-violet-400 px-2 py-0.5 text-[12px] font-bold text-slate-900 shadow-lg">?</div></Html>}
 
     {/* 구역 이름과 마우스 영역 */}
-    {ZONES.map((zone) => <Html key={zone.id} position={[zone.center[0] - zone.size[0] / 2 + 0.4, 0.05, zone.center[1] - zone.size[1] / 2 + 0.4]} className="pointer-events-none select-none"><div className={`whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${hover === zone.id ? "bg-white text-slate-900" : "bg-slate-950/60 text-slate-300"}`}>{zone.label}</div></Html>)}
+    {ZONES.map((zone) => <Html key={zone.id} position={[zone.center[0] - zone.size[0] / 2 + 0.4, 0.05, zone.center[1] - zone.size[1] / 2 + 0.4]} className="pointer-events-none select-none"><div className={`whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${zone.id === "spec" ? "border-cyan-300/45 bg-cyan-400/20 text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,.2)]" : hover === zone.id ? "border-white bg-white text-slate-900" : "border-transparent bg-slate-950/60 text-slate-300"}`}>{zone.label}</div></Html>)}
     {/* 영역 판정: 가구 중간 높이의 보이지 않는 판 하나로 클릭 지점의 좌표를 구한다. 영역마다 볼륨을 세우면 앞쪽 영역이 뒤쪽을 가린다. */}
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.6, 0]}
       onPointerMove={(event) => { const zone = zoneAt(event.point.x, event.point.z); setHover(zone); document.body.style.cursor = zone ? "pointer" : ""; }}
