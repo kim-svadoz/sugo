@@ -21,6 +21,25 @@ const home = await mkdtemp(join(tmpdir(), "sugo-readme-"));
 const env = { ...process.env, SUGO_HOME_OVERRIDE: home, SUGO_DASHBOARD_PORT: String(port), LOCAL_DEV_USER_ID: "readme-demo", LOCAL_DEV_DISPLAY_NAME: "Demo", README_DEMO_ROOT: home };
 for (const key of ["SUGO_DASHBOARD_API_URL", "SUGO_DASHBOARD_API_TOKEN", "SUGO_DASHBOARD_USER_ID", "SQLITE_FILE", "SUGO_SETTINGS_FILE"]) delete env[key];
 
+/** Home 엔지니어링 피드 예시. 외부 RSS 대신 이 브라우저 안에서만 응답을 고정한다. 실제 회사·블로그 이름을 쓰지 않는다. */
+function demoNewsFeed() {
+  const sources = [
+    ["Platform Notes", "플랫폼", "ko"], ["Backend Diary", "백엔드", "ko"], ["Data Craft", "데이터", "ko"],
+    ["Scale Weekly", "Infrastructure", "en"], ["Testing Field Guide", "Quality", "en"], ["Frontend Journal", "Frontend", "en"],
+  ].map(([name, category, language]) => ({ name, category, language, url: "https://example.com", status: "active", lastPublishedAt: new Date().toISOString() }));
+  const titles = [
+    [0, "배포 파이프라인을 10분에서 3분으로 줄인 과정"], [3, "Designing idempotent payment APIs"], [1, "Kotlin 코루틴으로 외부 API 병렬 호출 다루기"],
+    [4, "Contract tests that catch breaking changes early"], [2, "실시간 추천 피처 스토어 운영 기록"], [5, "Rendering large tables without jank"],
+    [0, "멀티 리전 Redis 장애 대응 훈련"], [3, "Rate limiting at the edge"], [1, "트랜잭션 아웃박스 패턴 도입기"],
+    [4, "Flaky test triage playbook"], [2, "Athena 비용을 절반으로 줄인 파티션 설계"], [5, "Accessibility checks in CI"],
+  ];
+  const items = titles.map(([source, title], index) => ({
+    source: sources[source].name, category: sources[source].category, language: sources[source].language,
+    title, url: `https://example.com/posts/${index + 1}`, publishedAt: new Date(Date.now() - index * 11 * 3_600_000).toISOString(), summary: null,
+  }));
+  return { items, fetchedAt: new Date().toISOString(), sourceCount: sources.length, sources };
+}
+
 async function waitForHealth() {
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try { if ((await fetch(`${base}/health`)).ok) return; } catch { /* 아직 기동 중 */ }
@@ -43,11 +62,13 @@ try {
   const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
   const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 })).newPage();
   await page.goto(`${base}/api/auth/local`, { waitUntil: "networkidle" });
+  await page.route("**/api/news**", (route) => route.fulfill({ json: demoNewsFeed() }));
 
   await page.setViewportSize({ width: 1440, height: 1500 });
   await page.goto(`${base}/home`, { waitUntil: "networkidle" });
   await page.waitForTimeout(7000);
   await page.locator('section[aria-label="오늘의 Sugo 작업 장면"]').screenshot({ path: join(out, "console-home.png") });
+  await page.locator("div.grid").filter({ hasText: "Engineering Feed" }).last().screenshot({ path: join(out, "console-home-feed.png") });
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`${base}/sessions`, { waitUntil: "networkidle" });

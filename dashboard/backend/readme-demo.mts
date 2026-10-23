@@ -205,11 +205,11 @@ const paymentsRoadmap: RoadmapNode[] = [
   { id: "pay-run-guard", title: "결제 중복 방지", level: "workstream", status: "done", dependsOn: [], parent: "pay-spec-guard", workResult: guardV1 },
   { id: "pay-task-guard", title: "멱등키 기반 중복 결제 차단", level: "task", status: "done", dependsOn: [], parent: "pay-run-guard", ref: "pay-task-guard", workResult: guardV1, lineage: [
     { version: 0, completedAt: guardV0.endedAt, title: "최초 구현", summary: guardV0.summary, changedFiles: guardV0.report.changedFiles, workResult: { path: guardV0.path, summary: guardV0.summary, patchVersion: 0 }, requirements: [{ id: "요구사항 1", title: "멱등키를 저장한다", status: "done" as const }], runtimeVerified: true, wiringVerified: true },
-    { version: 1, completedAt: guardV1.endedAt, title: "동시성 보강", summary: guardV1.summary, changedFiles: guardV1.report.changedFiles, workResult: guardV1, requirements: [{ id: "요구사항 2", title: "동시 요청에서 한 건만 승인한다", status: "done" as const }], seed: "동시 요청 보강", runtimeVerified: true, wiringVerified: true },
+    { version: 1, completedAt: guardV1.endedAt, title: "동시성 보강", summary: guardV1.summary, changedFiles: guardV1.report.changedFiles, requirements: [{ id: "요구사항 2", title: "동시 요청에서 한 건만 승인한다", status: "done" as const }], seed: "동시 요청 보강", runtimeVerified: true, wiringVerified: true },
   ] },
   { id: "pay-spec-webhook", title: "웹훅 재처리", level: "spec", status: "in_progress", dependsOn: [], specPath: join(paySpec, "webhook-retry.md") },
   { id: "pay-run-webhook", title: "웹훅 재처리", level: "workstream", status: "in_progress", dependsOn: [], parent: "pay-spec-webhook" },
-  { id: "pay-task-webhook", title: "실패 웹훅 재처리 큐", level: "task", status: "blocked", dependsOn: [], parent: "pay-run-webhook", ref: "pay-task-webhook", workResult: webhookResult, humanBlocker: webhookBlocker },
+  { id: "pay-task-webhook", title: "실패 웹훅 재처리 큐", level: "task", status: "blocked", dependsOn: [], parent: "pay-run-webhook", ref: "pay-task-webhook", note: "검증 결과 확인 대기 · 재시도 간격과 DLQ 이동 조건 승인 필요", workResult: webhookResult, humanBlocker: webhookBlocker },
   { id: "pay-task-webhook::1", title: "지수 백오프로 재시도한다", level: "subtask", status: "done", dependsOn: [], parent: "pay-task-webhook" },
   { id: "pay-task-webhook::2", title: "6회 실패 시 DLQ로 옮긴다", level: "subtask", status: "done", dependsOn: [], parent: "pay-task-webhook" },
   { id: "pay-spec-refund", title: "부분 환불 API", level: "spec", status: "in_progress", dependsOn: [], specPath: join(paySpec, "partial-refund.md") },
@@ -227,7 +227,7 @@ const searchRoadmap: RoadmapNode[] = [
   { id: "search-spec-filter", title: "검색 필터 저장", level: "spec", status: "done", dependsOn: [], specPath: join(searchApi, "docs", "specs", "saved-filter.md") },
   { id: "search-run-filter", title: "검색 필터 저장", level: "workstream", status: "done", dependsOn: [], parent: "search-spec-filter", workResult: filterResult },
   { id: "search-task-filter", title: "필터 저장·불러오기", level: "task", status: "done", dependsOn: [], parent: "search-run-filter", ref: "search-task-filter", workResult: filterResult, lineage: [
-    { version: 0, completedAt: filterResult.endedAt, title: "최초 구현", summary: filterResult.summary, changedFiles: filterResult.report.changedFiles, workResult: filterResult, requirements: [{ id: "요구사항 1", title: "필터를 저장한다", status: "done" as const }], runtimeVerified: true, wiringVerified: true },
+    { version: 0, completedAt: filterResult.endedAt, title: "최초 구현", summary: filterResult.summary, changedFiles: filterResult.report.changedFiles, requirements: [{ id: "요구사항 1", title: "필터를 저장한다", status: "done" as const }], runtimeVerified: true, wiringVerified: true },
   ] },
   { id: "search-spec-typo", title: "오타 교정 제안", level: "spec", status: "in_progress", dependsOn: [], specPath: join(searchApi, "docs", "specs", "typo-correction.md") },
   { id: "search-run-typo", title: "오타 교정 제안", level: "workstream", status: "in_progress", dependsOn: [], parent: "search-spec-typo" },
