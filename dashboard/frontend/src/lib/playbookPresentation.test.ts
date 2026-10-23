@@ -65,4 +65,10 @@ describe("Playbook product lifecycle", () => {
     expect(source).toContain("PLAYBOOK_INTENTS");
     expect(source).toContain("setActiveId(intent.stage)");
   });
+
+  it("첫 개발 일정을 일정 작성 화면에서 바로 시작한다", () => {
+    expect(source).toContain("첫 개발 일정 만들기");
+    expect(source).toContain('/schedule?create=1');
+    expect(source).not.toContain("기능 안내");
+  });
 });

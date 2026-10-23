@@ -11,8 +11,9 @@ describe("Home 학습 리뷰 노트", () => {
   });
 
   it("리뷰 노트는 어제의 작업 영역 안에서 같은 작업의 학습 리뷰로 연결한다", () => {
-    expect(source).toContain("이 작업의 학습 리뷰");
-    expect(source).toContain("selectLearningReviewNote(review.items)");
+    expect(source).toContain("마지막 결과 학습 리뷰");
+    expect(source).toContain("latestHistory");
+    expect(source).toContain("histories.slice(0, 4)");
   });
 
   it("리뷰에 원본 명령과 경로를 펼치지 않고 판단·학습·다음 확인만 보여준다", () => {

@@ -5,24 +5,27 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useLocalWeather } from "../hooks/useLocalWeather.js";
 import { useProfile } from "../hooks/useProfile.js";
 
-const SUGO_TIPS = [
-  "Schedule은 D-2부터 종료되지 않은 개발 항목을 Home의 ‘마감 전 확인’에 올립니다.",
-  "검토 화면에서 수정 요청을 남기면 확정하지 않은 채 같은 Patch로 대화를 이어갈 수 있습니다.",
-  "리뷰 보고서와 마지막 Patch의 변경 파일을 함께 보면 결과와 구현 근거를 빠르게 대조할 수 있습니다.",
-  "파이프라인 완료와 개발 항목의 종료는 다릅니다. 배포와 운영 확인 뒤 직접 작업을 종료하세요.",
-  "Harness에서 기술과 버전을 선택하면 프로젝트에 적용될 실제 규칙 원문을 미리 볼 수 있습니다.",
-  "Workspace의 도메인 규칙은 프로젝트 .claude/rules와 동기화되어 다음 AI 작업의 기준이 됩니다.",
-  "Integrations의 직접 조회 안전장치는 외부 시스템을 읽을 때 허용 범위와 비용을 함께 제한합니다.",
-  "Weekly 리포트는 완료 목록보다 작업 결과와 새로 축적된 지식을 다시 찾는 데 유용합니다.",
-  "Home의 ‘결정 대기’는 AI가 멈춘 작업이 아니라 사람의 판단이 있어야 안전하게 진행되는 작업입니다.",
-  "프로필의 Preferences에서 표시 이름과 날씨 생활권을 설정하면 이 브라우저에 바로 적용됩니다.",
-] as const;
+const PAGE_TIPS: Array<[RegExp, readonly string[]]> = [
+  [/^\/schedule/, ["일정 관리는 개발 항목의 목표일과 진행 기록을 함께 묶어, 다음에 할 일을 놓치지 않게 합니다.", "캘린더에 작업을 배치하면 여러 프로젝트의 마감과 진행 흐름을 한눈에 비교할 수 있습니다."]],
+  [/^\/weekly/, ["주간 작업 리포트는 완료 결과와 새로 배운 내용을 주별로 모아, 지난 결정을 다음 작업에 다시 쓰게 합니다."]],
+  [/^\/skills/, ["스킬 카탈로그는 에이전트별 전문 규칙과 직접 실행할 명령을 보여줘, Sugo가 일하는 방식을 이해하게 합니다."]],
+  [/^\/harness/, ["하네스 규칙은 기술과 버전에 맞는 검증 기준을 적용해, 프로젝트가 달라도 같은 품질을 유지하게 합니다."]],
+  [/^\/playbook/, ["실행 플레이북은 일정 작성부터 검토와 후속 수정까지 연결해, 처음 써도 다음 행동을 바로 찾게 합니다."]],
+  [/^\/integrations/, ["연동 관리는 외부 시스템의 조회 범위와 비용을 제한해, 필요한 운영 근거를 안전하게 가져옵니다."]],
+  [/^\/preferences/, ["환경 설정은 표시 방식과 생활권을 내 작업 환경에 맞춰, 매일 확인할 정보를 더 정확하게 만듭니다."]],
+  [/^\/(sessions|workspaces)/, ["워크스페이스는 프로젝트별 진행 상태와 작업 근거를 묶어, 어디를 먼저 살펴볼지 빠르게 알려줍니다."]],
+];
+
+function tipsForPath(pathname: string): readonly string[] {
+  return PAGE_TIPS.find(([pattern]) => pattern.test(pathname))?.[1] ?? ["Sugo는 기획부터 검증까지의 근거를 연결해, 다음 행동을 안전하게 선택하도록 돕습니다."];
+}
 
 export function Header() {
   const { userId, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isHome = pathname === "/home";
+  const tips = tipsForPath(pathname);
   const { weather, region } = useLocalWeather(isHome);
   const { displayName } = useProfile(userId);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -40,17 +43,18 @@ export function Header() {
     return () => window.clearInterval(timer);
   }, [isHome]);
   useEffect(() => {
-    if (isHome) return;
+    if (isHome || tips.length < 2) return;
     const interval = window.setInterval(() => {
       setTipPhase("exit");
       window.setTimeout(() => {
-        setTipIndex((current) => (current + 1) % SUGO_TIPS.length);
+        setTipIndex((current) => (current + 1) % tips.length);
         setTipPhase("enter");
         window.requestAnimationFrame(() => window.requestAnimationFrame(() => setTipPhase("idle")));
       }, 280);
     }, 7_000);
     return () => window.clearInterval(interval);
-  }, [isHome]);
+  }, [isHome, tips.length]);
+  useEffect(() => setTipIndex(0), [pathname]);
   useEffect(() => {
     if (!profileOpen) return;
     const close = (event: PointerEvent) => { if (!profileMenuRef.current?.contains(event.target as Node)) setProfileOpen(false); };
@@ -65,7 +69,7 @@ export function Header() {
         {isHome ? <div className="flex min-w-0 items-center gap-2.5 text-[12.5px] font-semibold text-[var(--color-text)]">
           <span>{date}</span><span className="font-mono font-normal tabular-nums text-[var(--color-text-muted)]">{time}</span>
           {region ? <><span className="h-1 w-1 rounded-full bg-slate-600" /><CloudSun size={14} className="text-slate-400" aria-hidden="true" /><span className="font-normal text-[var(--color-text-muted)]">{region.label} {weather ? `${weather.temperature}° · ${weather.label}` : "날씨 확인 중…"}</span></> : <button type="button" onClick={() => navigate("/preferences?tab=weather")} className="font-normal text-cyan-300 hover:text-cyan-100">날씨 지역 설정</button>}
-        </div> : <div className="flex min-w-0 items-center gap-3 overflow-hidden" aria-live="polite" aria-label="Sugo 활용 팁"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-400/[0.08] text-amber-300 ring-1 ring-inset ring-amber-300/15"><Lightbulb size={15} strokeWidth={1.9} aria-hidden="true" /></span><span className={`truncate text-[13.5px] font-medium text-[var(--color-text)] motion-reduce:transform-none motion-reduce:transition-none ${tipPhase === "enter" ? "translate-y-2 opacity-0" : tipPhase === "exit" ? "-translate-y-2 opacity-0 transition-all duration-300" : "translate-y-0 opacity-100 transition-all duration-300"}`}>{SUGO_TIPS[tipIndex]}</span></div>}
+        </div> : <div className="flex min-w-0 items-center gap-3 overflow-hidden" aria-live="polite" aria-label="Sugo 활용 팁"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-400/[0.08] text-amber-300 ring-1 ring-inset ring-amber-300/15"><Lightbulb size={15} strokeWidth={1.9} aria-hidden="true" /></span><span className={`truncate text-[14px] font-medium text-[var(--color-text)] motion-reduce:transform-none motion-reduce:transition-none ${tipPhase === "enter" ? "translate-y-2 opacity-0" : tipPhase === "exit" ? "-translate-y-2 opacity-0 transition-all duration-300" : "translate-y-0 opacity-100 transition-all duration-300"}`}>{tips[tipIndex]}</span></div>}
       </div>
       <div className="flex items-center gap-2">
         <div ref={profileMenuRef} className="relative ml-1">

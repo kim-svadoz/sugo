@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { CommandPalette } from "./CommandPalette.js";
 import { Header } from "./Header.js";
-import { ExperienceRail } from "./ExperienceRail.js";
 import { Sidebar } from "./Sidebar.js";
 import { isTextEditingTarget, sidebarShortcutPath } from "../lib/sidebarNavigation.js";
 
@@ -56,7 +55,6 @@ export function Layout() {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <ExperienceRail />
         <main className="flex-1 overflow-auto p-3 lg:p-5 2xl:p-6">
           <Outlet />
         </main>

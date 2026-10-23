@@ -108,6 +108,10 @@ export function SchedulePage() {
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (searchParams.get("create") === "1") setAddOpen(true);
+  }, [searchParams]);
+
   function openSpec(spec: ScheduledSpec) {
     setArchiveConfirm(null);
     setBranchDraft(null);
@@ -458,7 +462,7 @@ export function SchedulePage() {
   if (!schedulePresentationReady(specs, workspaces)) {
     return (
       <div className="flex h-full min-h-0 flex-col gap-4">
-        <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description="개발 항목의 목표일과 확인이 필요한 작업을 한곳에서 관리합니다." />
+        <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description={scheduleView === "month" ? "각 작업 일정을 드래그해 캘린더에 배치하고 목표일을 한눈에 관리합니다." : "개발 항목의 목표일과 확인이 필요한 작업을 한곳에서 관리합니다."} />
         <div className="ck-glass ck-card flex min-h-0 flex-1 items-center justify-center text-[12px] text-[var(--color-text-dim)]">
           {workspaceError ? "워크스페이스 색상 정보를 불러오지 못했습니다." : "불러오는 중…"}
         </div>
@@ -468,7 +472,7 @@ export function SchedulePage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description="개발 항목의 목표일과 확인이 필요한 작업을 한곳에서 관리합니다." action={
+      <PageHeading eyebrow="DELIVERY SCHEDULE" title="일정 관리" description={scheduleView === "month" ? "각 작업 일정을 드래그해 캘린더에 배치하고 목표일을 한눈에 관리합니다." : "개발 항목의 목표일과 확인이 필요한 작업을 한곳에서 관리합니다."} action={
         <div className="flex h-9 items-center gap-2">
           <button type="button" onClick={() => setTrashOpen(true)} className="relative flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white" title="삭제하거나 종료한 작업 보기">
             <Archive size={15} /> 보관함

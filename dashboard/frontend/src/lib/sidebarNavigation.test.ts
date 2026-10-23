@@ -50,8 +50,8 @@ describe("sidebar keyboard navigation", () => {
     const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
     expect(source).toContain("useLocation");
     expect(source).toContain("useLocalWeather");
-    expect(source).toContain("Schedule은 D-2부터 종료되지 않은 개발 항목");
-    expect(source).toContain("Harness에서 기술과 버전을 선택하면");
+    expect(source).toContain("일정 관리는 개발 항목의 목표일과 진행 기록을 함께 묶어");
+    expect(source).toContain("하네스 규칙은 기술과 버전에 맞는 검증 기준을 적용해");
     expect(source).toContain("{time}");
     expect(source).not.toContain("Console running");
     expect(source).not.toContain("window.location.host");

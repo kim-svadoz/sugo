@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Blocks,
+  CalendarPlus,
   CheckCircle2,
   ClipboardCheck,
   FileCode2,
@@ -9,7 +11,6 @@ import {
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
-import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
 import { PageHeading } from "../components/PageHeading.js";
 import { cn } from "../lib/utils.js";
 
@@ -256,12 +257,12 @@ const CONTENT: Record<StageId, () => ReactNode> = { intent: Intent, context: Con
 /** 실제 사용자 데이터를 읽지 않는 100% 시뮬레이션 화면이다. */
 export function Playbook() {
   const [activeId, setActiveId] = useState<StageId>("intent");
-  const { pluginVersion } = useDashboardMeta();
+  const navigate = useNavigate();
   const active = STAGES.find((stage) => stage.id === activeId) ?? STAGES[0];
   const Content = CONTENT[active.id];
   return (
     <div className="mx-auto w-full max-w-[1680px] pb-10">
-      <div className="mb-7 border-b border-[var(--color-border)] pb-6"><PageHeading eyebrow="DELIVERY PLAYBOOK" title="실행 플레이북" description="요청을 정리하고 팀의 규칙을 적용한 뒤, 실행 근거와 실제 배포 상태까지 추적합니다." action={<span className="shrink-0 text-[12px] text-[var(--color-text-dim)]">Plugin {pluginVersion ? `v${pluginVersion}` : "—"} · 기능 안내</span>} /></div>
+      <div className="mb-7 border-b border-[var(--color-border)] pb-6"><PageHeading eyebrow="DELIVERY PLAYBOOK" title="실행 플레이북" description="요청을 정리하고 팀의 규칙을 적용한 뒤, 실행 근거와 실제 배포 상태까지 추적합니다." action={<button type="button" onClick={() => navigate("/schedule?create=1")} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-cyan-300/30 bg-cyan-300/[0.08] px-3 text-[12px] font-semibold text-cyan-100 hover:bg-cyan-300/[0.14]"><CalendarPlus size={15} />첫 개발 일정 만들기</button>} /></div>
       <section className="mb-7 rounded-xl border border-violet-300/15 bg-gradient-to-r from-violet-400/[0.05] via-transparent to-cyan-400/[0.04] p-4" aria-label="목적별 Sugo 사용 안내"><div className="mb-3 flex items-baseline justify-between gap-3"><h2 className="text-[15px] font-semibold text-white">지금 무엇을 하려 하나요?</h2><span className="text-[10px] text-slate-500">목적을 고르면 관련 흐름으로 바로 이동합니다.</span></div><div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">{PLAYBOOK_INTENTS.map((intent) => <button key={intent.label} type="button" onClick={() => setActiveId(intent.stage)} className={cn("rounded-lg border p-3 text-left transition hover:-translate-y-0.5", active.id === intent.stage ? "border-cyan-300/35 bg-cyan-300/[0.07]" : "border-white/[0.07] bg-black/10 hover:border-violet-300/25")}><strong className="block text-[12px] text-slate-100">{intent.label}</strong><span className="mt-1 block text-[10px] leading-4 text-slate-400">{intent.detail}</span></button>)}</div></section>
       <div className="grid min-w-0 gap-7 xl:grid-cols-[260px_minmax(0,1fr)]">
         <nav aria-label="AI 개발 사용 시나리오" className="border-b border-[var(--color-border)] pb-5 xl:border-r xl:border-b-0 xl:pr-5 xl:pb-0"><div role="tablist" aria-orientation="vertical" className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:block xl:space-y-1">{STAGES.map((stage) => { const Icon = stage.icon; const selected = stage.id === active.id; return <button key={stage.id} role="tab" aria-selected={selected} aria-controls={`playbook-panel-${stage.id}`} id={`playbook-tab-${stage.id}`} onClick={() => setActiveId(stage.id)} className={cn("flex w-full items-center gap-2 rounded px-3 py-3 text-left transition-colors xl:gap-3 xl:px-3.5 xl:py-3.5", selected ? "bg-cyan-500/10 text-[var(--color-text-bright)]" : "text-[var(--color-text-muted)] hover:bg-[var(--color-background)] hover:text-[var(--color-text)]")}><span className={cn("font-mono text-[11px]", selected ? "text-cyan-300" : "text-[var(--color-text-dim)]")}>{stage.order}</span><Icon size={17} className={selected ? "text-cyan-300" : "text-[var(--color-text-dim)]"} /><span className="text-[14px] font-medium">{stage.label}</span></button>; })}</div></nav>
