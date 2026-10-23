@@ -96,6 +96,17 @@ GITHUB_REDIRECT_URI=http://localhost:3001/api/auth/github/callback
 - 문서만 바뀌면 버전을 올리지 않습니다.
 - `git add`와 `git commit`은 따로 실행합니다.
 
+## README 스크린샷
+
+화면을 바꿨으면 README 이미지를 다시 만든다. 데모 데이터만 쓰는 임시 Console(포트 3199, 임시 HOME)에서 찍으므로 사용자 DB와 3001 포트는 쓰지 않는다.
+
+```bash
+cd sugo && npm run build:dashboard && cd ..
+node dashboard/e2e/readme-shots.mjs   # docs/images/console-*.png 갱신
+```
+
+데모 데이터는 `dashboard/backend/readme-demo.mts`에 있다. 회사·실제 업무 이름을 넣지 않는다.
+
 ## 설계 문서
 
 | 문서 | 내용 |
