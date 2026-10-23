@@ -353,3 +353,90 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .checkpoint-panel [class~="text-[15px]"] { font-size: 16px !important; }
 .checkpoint-panel [class~="text-[16px]"] { font-size: 17px !important; }
 .checkpoint-panel .md-body.md-body-compact { font-size: 13px; }
+
+/* ──── 작업 장면(레고형 작업자) ──────────────────────────────────── */
+.wf * { animation-fill-mode: both; }
+.wf-figure { animation: wf-bob 3s ease-in-out infinite; }
+.wf-eyes { transform-box: fill-box; transform-origin: center; animation: wf-blink 5s infinite; }
+.wf-core { animation: wf-core 2.4s ease-in-out infinite; }
+.wf-arm-r { transform-box: view-box; transform-origin: 44px 27px; }
+.wf-arm-l { transform-box: view-box; transform-origin: 24px 27px; }
+.wf-figure--reviewing-board .wf-arm-r { animation: wf-arm-point 4s ease-in-out infinite; }
+.wf-figure--sorting .wf-arm-r { animation: wf-arm-swing 1.5s ease-in-out infinite; }
+.wf-figure--planning .wf-arm-r { animation: wf-arm-reach 1.1s ease-in-out infinite; }
+.wf-figure--stacking .wf-arm-r { animation: wf-arm-lift 0.8s ease-in-out infinite; }
+.wf-figure--switching-tools .wf-arm-r { animation: wf-arm-show 1.5s ease-in-out infinite; }
+.wf-figure--reading-manual .wf-arm-r, .wf-figure--briefing .wf-arm-r { transform: rotate(-30deg); }
+.wf-figure--measuring .wf-arm-r { animation: wf-arm-reach 2.4s ease-in-out infinite; }
+.wf-figure--connecting .wf-arm-r { animation: wf-arm-push 3s ease-in-out infinite; }
+.wf-figure--tuning .wf-arm-r { animation: wf-arm-twist 2s ease-in-out infinite; }
+.wf-figure--building .wf-arm-r { animation: wf-arm-hammer 0.6s ease-in-out infinite; }
+.wf-figure--inspecting .wf-arm-r { animation: wf-arm-sweep 3s ease-in-out infinite; }
+.wf-figure--reviewing .wf-arm-r { animation: wf-arm-tick 0.7s ease-in-out infinite; }
+.wf-figure--writing .wf-arm-r { animation: wf-arm-scribble 0.5s ease-in-out infinite; }
+.wf-figure--celebrating { animation: wf-hop 0.9s ease-in-out infinite; }
+.wf-figure--celebrating .wf-arm-r { transform: rotate(-150deg); }
+.wf-figure--celebrating .wf-arm-l { transform: rotate(150deg); }
+
+.wf-bar { transform-box: fill-box; transform-origin: bottom; animation: wf-grow 2.8s ease-in-out infinite; }
+.wf-blink-check, .wf-pass { animation: wf-flash 3s ease-in-out infinite; }
+.wf-steam { animation: wf-steam 2.4s ease-in-out infinite; }
+.wf-sort { animation: wf-sort 4.5s ease-in-out infinite; }
+.wf-sort-0 { --dx: 56px; }
+.wf-sort-1 { --dx: 92px; animation-delay: 1.5s; }
+.wf-sort-2 { --dx: 128px; animation-delay: 3s; }
+.wf-drop { animation: wf-drop 3.3s ease-out infinite; }
+.wf-stack { animation: wf-appear 4s ease-out infinite; }
+.wf-step, .wf-build { animation: wf-appear 3.2s ease-out infinite; }
+.wf-slot { animation: wf-highlight 6s infinite; }
+.wf-tool { animation: wf-turn 6s infinite; }
+.wf-page { transform-box: fill-box; transform-origin: left; animation: wf-flip 2s ease-in-out infinite; }
+.wf-ruler { animation: wf-slide 2.4s ease-in-out infinite; }
+.wf-snap { animation: wf-snap 3s ease-in-out infinite; }
+.wf-spark { transform-box: fill-box; transform-origin: center; animation: wf-spark 3s ease-out infinite; }
+.wf-dial { transform-box: fill-box; transform-origin: center; animation: wf-dial 4s ease-in-out infinite; }
+.wf-knob { animation: wf-knob 3s ease-in-out infinite; }
+.wf-line { transform-box: fill-box; transform-origin: left; animation: wf-write 3s ease-out infinite; }
+.wf-note { animation: wf-note 2.8s ease-out infinite; }
+.wf-scan { animation: wf-scan 3s ease-in-out infinite; }
+.wf-tick { stroke-dasharray: 12; animation: wf-tick 2.8s ease-out infinite; }
+.wf-sparkle { transform-box: fill-box; transform-origin: center; animation: wf-twinkle 1.6s ease-in-out infinite; }
+
+@keyframes wf-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+@keyframes wf-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
+@keyframes wf-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+@keyframes wf-core { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@keyframes wf-arm-point { 0%, 100% { transform: rotate(0deg); } 35%, 65% { transform: rotate(-55deg); } }
+@keyframes wf-arm-swing { 0%, 100% { transform: rotate(-15deg); } 50% { transform: rotate(-60deg); } }
+@keyframes wf-arm-reach { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(-55deg); } }
+@keyframes wf-arm-lift { 0%, 100% { transform: rotate(-20deg); } 50% { transform: rotate(-85deg); } }
+@keyframes wf-arm-show { 0%, 100% { transform: rotate(-30deg); } 50% { transform: rotate(-40deg); } }
+@keyframes wf-arm-push { 0%, 100% { transform: rotate(-30deg); } 50% { transform: rotate(-65deg); } }
+@keyframes wf-arm-twist { 0%, 100% { transform: rotate(-40deg); } 50% { transform: rotate(-58deg); } }
+@keyframes wf-arm-hammer { 0%, 100% { transform: rotate(-60deg); } 50% { transform: rotate(-15deg); } }
+@keyframes wf-arm-sweep { 0%, 100% { transform: rotate(-35deg); } 50% { transform: rotate(-55deg); } }
+@keyframes wf-arm-tick { 0%, 100% { transform: rotate(-35deg); } 50% { transform: rotate(-45deg); } }
+@keyframes wf-arm-scribble { 0%, 100% { transform: rotate(-38deg); } 50% { transform: rotate(-44deg); } }
+@keyframes wf-grow { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+@keyframes wf-flash { 0%, 40% { opacity: 0; } 55%, 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes wf-steam { 0% { opacity: 0; transform: translateY(2px); } 50% { opacity: 0.8; } 100% { opacity: 0; transform: translateY(-4px); } }
+@keyframes wf-sort { 0% { opacity: 0; transform: translate(0, 0); } 8% { opacity: 1; } 45% { transform: translate(var(--dx), -8px); } 65% { opacity: 1; transform: translate(var(--dx), 20px); } 80%, 100% { opacity: 0; transform: translate(var(--dx), 20px); } }
+@keyframes wf-drop { 0% { opacity: 0; transform: translateY(-26px); } 25%, 80% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(0); } }
+@keyframes wf-appear { 0% { opacity: 0; transform: translateY(-12px); } 12%, 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(0); } }
+@keyframes wf-highlight { 0%, 24% { opacity: 1; } 25%, 100% { opacity: 0.35; } }
+@keyframes wf-turn { 0%, 24% { opacity: 1; } 25%, 100% { opacity: 0; } }
+@keyframes wf-flip { 0%, 40% { transform: scaleX(1); } 60%, 100% { transform: scaleX(-1); } }
+@keyframes wf-slide { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
+@keyframes wf-snap { 0%, 15% { transform: translateX(0); } 50%, 80% { transform: translate(-28px, 8px); } 100% { transform: translateX(0); } }
+@keyframes wf-spark { 0%, 45% { opacity: 0; transform: scale(0.4); } 55% { opacity: 1; transform: scale(1); } 75%, 100% { opacity: 0; transform: scale(1.6); } }
+@keyframes wf-dial { 0%, 100% { transform: rotate(-60deg); } 50% { transform: rotate(60deg); } }
+@keyframes wf-knob { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(22px); } }
+@keyframes wf-write { 0% { opacity: 0; transform: scaleX(0); } 20%, 85% { opacity: 1; transform: scaleX(1); } 100% { opacity: 0; transform: scaleX(1); } }
+@keyframes wf-note { 0% { opacity: 0; transform: translateY(-6px); } 20%, 85% { opacity: 0.85; transform: translateY(0); } 100% { opacity: 0; } }
+@keyframes wf-scan { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(60px); } }
+@keyframes wf-tick { 0%, 20% { stroke-dashoffset: 12; } 40%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 12; } }
+@keyframes wf-twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.6); } 50% { opacity: 1; transform: scale(1.1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .wf, .wf * { animation: none !important; }
+}

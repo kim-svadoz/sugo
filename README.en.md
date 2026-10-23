@@ -142,6 +142,8 @@ Open `http://localhost:3001`. It starts with each new Claude Code session.
 | Integrations | Git providers, AWS, Pinpoint, and plugin API tokens |
 | Preferences | Display name, weather region |
 
+The worker figure next to each page title acts out the current pipeline stage (code, test, review, docs) while work is running.
+
 Console data is in `~/.claude/sugo/dashboard/` and survives updates. If the Console is down, the pipeline continues and sends sync data later.
 
 ## Configuration

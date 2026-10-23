@@ -7,6 +7,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { buildHomeBrief } from "../lib/homePresentation.js";
 import { Modal } from "../components/Modal.js";
+import { WorkScene } from "../components/WorkScene.js";
 import { buildSevenDayFeed, filterNewsByRegion, type NewsRegion } from "../lib/techBriefPresentation.js";
 import { selectLearningReviewNote, type LearningReviewNote } from "../lib/homeLearningReview.js";
 import { technicalIdentifierParts } from "../lib/technicalIdentifiers.js";
@@ -119,7 +120,7 @@ export function Home() {
   }, []);
 
   return <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-5">
-    <section className="pt-1"><h1 className="text-[30px] font-semibold tracking-[-0.035em] text-[var(--color-text-bright)]">{dailyGreeting()}</h1><p className="mt-2 text-[14px] text-[var(--color-text-muted)]">{loading ? "개발 기록을 정리하고 있습니다." : brief.decisions.length > 0 ? `오늘 직접 판단할 리뷰가 ${brief.decisions.length}개 있습니다.` : "현재 판단을 기다리는 리뷰는 없습니다."}</p></section>
+    <section className="flex items-end justify-between gap-6 pt-1"><div className="min-w-0"><h1 className="text-[30px] font-semibold tracking-[-0.035em] text-[var(--color-text-bright)]">{dailyGreeting()}</h1><p className="mt-2 text-[14px] text-[var(--color-text-muted)]">{loading ? "개발 기록을 정리하고 있습니다." : brief.decisions.length > 0 ? `오늘 확인할 리뷰가 ${brief.decisions.length}개 있습니다.` : "지금 확인할 리뷰는 없습니다."}</p></div><WorkScene className="hidden xl:block" /></section>
 
     <section className="relative overflow-hidden rounded-2xl border border-cyan-300/15 bg-[linear-gradient(110deg,rgba(8,47,73,.42),rgba(10,18,32,.92)_48%,rgba(76,29,149,.16))] px-5 py-4" aria-label="오늘의 Sugo 작업 장면">
       <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-cyan-300/[0.06] blur-3xl" />

@@ -142,6 +142,8 @@ flowchart LR
 | Integrations | Git 서비스, AWS, Pinpoint 연결과 플러그인 API 토큰 |
 | Preferences | 표시 이름, 날씨 지역 |
 
+각 화면 제목 옆의 작업자는 파이프라인이 돌 때 지금 단계(구현·테스트·검토·문서)를 동작으로 보여줍니다.
+
 Console 데이터는 `~/.claude/sugo/dashboard/`에 있고 업데이트해도 유지됩니다. Console이 꺼져 있어도 파이프라인은 진행하고, 동기화는 나중에 보냅니다.
 
 ## 설정

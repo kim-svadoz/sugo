@@ -34,6 +34,7 @@ import { Modal } from "../components/Modal.js";
 import { LoadingSpinner, EmptyState } from "../components/StatusViews.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
 import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
+import { WorkScene } from "../components/WorkScene.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
@@ -547,10 +548,10 @@ export function Sessions() {
   return (
     <div className="flex min-h-full flex-col gap-3 2xl:gap-4">
       <section aria-label="워크스페이스 운영 도구" className="page-heading shrink-0 space-y-1 2xl:space-y-2">
-        <div>
+        <div className="flex items-end justify-between gap-6"><div>
           <div className="page-heading__eyebrow font-mono text-[11px] font-semibold tracking-[0.18em] text-cyan-300">WORKSPACE OPERATIONS</div>
           <h1 className="page-heading__title mt-1 text-xl font-semibold tracking-[-0.02em] text-[var(--color-text-bright)] 2xl:mt-2 2xl:text-2xl">도메인 관리 <span className="align-middle text-sm font-normal text-[var(--color-text-dim)]">({filteredWorkspaces.length})</span></h1>
-        </div>
+        </div><WorkScene className="hidden xl:block" /></div>
         <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-[var(--color-text-muted)]">도메인별 개발 흐름과 운영 상태를 한곳에서 확인합니다.</p>
           <div className="flex min-h-9 flex-wrap items-center justify-end gap-2">
