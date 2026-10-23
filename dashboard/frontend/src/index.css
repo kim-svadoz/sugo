@@ -238,6 +238,8 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .ck-pulse-dot { animation: ck-pulse-dot 1.8s ease-in-out infinite; }
 @keyframes ck-summary-flow { 0%, 100% { opacity: .35; transform: translateY(0); } 50% { opacity: 1; transform: translateY(3px); } }
 .ck-summary-flow { animation: ck-summary-flow 1.6s ease-in-out infinite; }
+@keyframes ck-work-route { from { left: 7%; } to { left: 93%; } }
+.ck-work-route-dot { animation: ck-work-route 7s linear infinite; }
 
 @keyframes ck-line-in { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
 .ck-line-in { animation: ck-line-in 0.28s ease-out both; }
@@ -256,7 +258,7 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .ck-scroll::-webkit-scrollbar-track { background: transparent; }
 
 @media (prefers-reduced-motion: reduce) {
-  .ck-pulse-dot, .ck-line-in, .ck-stage-in, .ck-summary-flow { animation: none !important; }
+  .ck-pulse-dot, .ck-line-in, .ck-stage-in, .ck-summary-flow, .ck-work-route-dot { animation: none !important; }
   .ck-scan::after { animation: none !important; }
   .command-brief, .workspace-command-card, .workspace-command-card--selected { transform: none !important; }
 }

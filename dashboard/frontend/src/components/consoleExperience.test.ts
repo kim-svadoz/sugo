@@ -7,7 +7,7 @@ const sidebar = readFileSync(new URL("./Sidebar.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../pages/Home.tsx", import.meta.url), "utf8");
 const sessions = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
 const workFloor = readFileSync(new URL("./WorkFloor.tsx", import.meta.url), "utf8");
-const workRoom = readFileSync(new URL("./workroom/WorkRoom.tsx", import.meta.url), "utf8");
+const workBoard = readFileSync(new URL("./WorkBoard.tsx", import.meta.url), "utf8");
 
 describe("Console 정보 구조", () => {
   it("최근 작업은 간결한 결과 요약과 전체 기록만 보여준다", () => {
@@ -31,17 +31,16 @@ describe("Console 정보 구조", () => {
   });
 
   it("작업실은 네 전문 에이전트와 사용자 확인·커밋 출고 흐름을 각각 표시한다", () => {
-    expect(workRoom).not.toContain('label: "전문 인력 작업실"');
-    for (const label of ["코드 작성", "테스트", "검토", "문서 작업", "사용자 확인", "커밋 출고"]) expect(workRoom).toContain(`label: "${label}"`);
-    expect(workRoom).toContain('label: "START · SPEC 작성"');
-    expect(workRoom).toContain("WorkflowRoute");
-    expect(workRoom).not.toContain("WorkflowBeam");
-    expect(workRoom).not.toContain("WorkflowPath");
-    expect(workRoom).not.toContain('label="배정"');
-    expect(workRoom).not.toContain("AGENT_LABEL[agent]");
-    expect(workRoom.match(/<GuideBeam to=/g)?.length).toBe(1);
-    expect(workRoom.indexOf('id: "confirm"')).toBeLessThan(workRoom.indexOf('id: "dock"'));
-    expect(workRoom).toContain("하네스 공급선");
+    expect(home).toContain("<WorkBoard");
+    expect(home).not.toContain("<WorkRoom");
+    expect(workBoard).not.toContain("Canvas");
+    for (const label of ["코드 작성", "테스트", "검토", "문서 작업", "사용자 확인", "커밋 출고"]) expect(workBoard).toContain(`label: "${label}"`);
+    expect(workBoard).toContain('label: "SPEC 작성"');
+    expect(workBoard).toContain("grid-cols-8");
+    expect(workBoard).toContain("xl:grid-cols-[minmax(0,6fr)_220px]");
+    expect(workBoard).toContain("top-[178px]");
+    expect(workBoard).toContain("ck-work-route-dot");
+    expect(workBoard.match(/하네스 기준/g)?.length).toBe(1);
   });
 
   it("버전은 헤더 액션에서 빼고 사이드바 하단의 보조 정보로 둔다", () => {
