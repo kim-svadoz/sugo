@@ -1,6 +1,6 @@
 {
   "name": "sugo-marketplace",
-  "description": "sugo 플러그인 배포용 마켓플레이스",
+  "description": "Sugo 플러그인과 주간 작업 보고 플러그인 weekly 배포용 마켓플레이스",
   "owner": {
     "name": "김성현"
   },
@@ -8,7 +8,7 @@
     {
       "name": "sugo",
       "source": "./sugo",
-      "description": "스펙 기반 하네스 + 강제 상태머신 개발 파이프라인 (code→test→review→docs→commit)",
+      "description": "AI 코딩 에이전트가 스펙 → 구현 → 테스트 → 리뷰 → 문서 순서를 실행 근거로 통과하게 하는 개발 파이프라인",
       "version": "0.43.1"
     },
     {
