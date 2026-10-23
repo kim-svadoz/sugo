@@ -40,4 +40,10 @@ describe("Skills catalog presentation", () => {
     expect(source).not.toContain("selectedAgentMeta?.description");
     expect(source).toContain("agentSkillContext(selectedAgent)");
   });
+
+  it("역할별 에이전트가 작업을 넘기는 구조를 조직도로 보여준다", () => {
+    expect(source).toContain("Sugo 작업 조직도");
+    expect(source).toContain("요청과 근거를 다음 역할에 인계합니다");
+    expect(source).toContain("AGENT_FLOW");
+  });
 });

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { marked } from "marked";
-import { BookOpen, Code2, FileText, GitPullRequest, Search, TestTube2, TerminalSquare, Workflow, type LucideIcon } from "lucide-react";
+import { ArrowRight, BookOpen, Code2, FileText, GitPullRequest, Search, TestTube2, TerminalSquare, Workflow, type LucideIcon } from "lucide-react";
 import { getSkillContent, listAgents, listSkills, type AgentEntry, type SkillEntry } from "../api/catalogApi.js";
 import { Modal } from "../components/Modal.js";
 import { AGENT_TONES, FALLBACK_AGENT_TONE } from "../lib/colorSystem.js";
@@ -16,6 +16,13 @@ const agentContexts: Record<string, string> = {
   docs: "완료된 변경을 문서화하는 단계에서 적용합니다.",
 };
 type CatalogView = "skills" | "commands";
+
+const AGENT_FLOW = [
+  { id: "code-agent", label: "구현", detail: "기능 요구사항을 코드로 바꿉니다.", icon: Code2 },
+  { id: "test-agent", label: "테스트", detail: "기대 동작과 회귀를 실행해 확인합니다.", icon: TestTube2 },
+  { id: "review-agent", label: "검토", detail: "명세와 실행 증거를 독립적으로 대조합니다.", icon: GitPullRequest },
+  { id: "docs-agent", label: "문서", detail: "검증된 동작과 판단을 다음 작업에 남깁니다.", icon: FileText },
+] as const;
 
 function accentKey(id: string): string {
   const base = id.replace(/-agent$/, "").toLowerCase();
@@ -80,6 +87,11 @@ export function Skills() {
 
   return <div className="space-y-5">
     <PageHeading eyebrow="AI CAPABILITIES" title="스킬 카탈로그" description={catalogView === "skills" ? "AI가 작업 중 적용하는 전문 규칙과 역할을 확인합니다." : "사용자가 직접 시작할 수 있는 명령을 확인합니다."} action={<span className="font-mono text-xs text-[var(--color-text-dim)]">{skillCount} skills · {commandCount} commands</span>} />
+
+    {!empty && catalogView === "skills" && <section className="overflow-hidden rounded-xl border border-cyan-300/15 bg-gradient-to-r from-cyan-400/[0.045] via-[var(--color-surface)] to-violet-400/[0.04] p-4" aria-label="Sugo 에이전트 작업 조직도">
+      <div className="flex flex-wrap items-end justify-between gap-3"><div><div className="font-mono text-[9px] font-bold tracking-[0.16em] text-cyan-300">AGENT HANDOFF</div><h2 className="mt-1 text-[15px] font-semibold text-white">Sugo 작업 조직도</h2></div><p className="text-[10px] text-slate-400">각 에이전트는 요청과 근거를 다음 역할에 인계합니다.</p></div>
+      <div className="mt-3 grid gap-2 md:grid-cols-4">{AGENT_FLOW.map((agent, index) => { const Icon = agent.icon; const count = skills.filter((skill) => skill.kind === "skill" && skill.agent === agent.id).length; return <button key={agent.id} type="button" onClick={() => setSelectedAgent(agent.id)} className="group relative rounded-lg border border-white/[0.07] bg-black/10 p-3 text-left transition hover:-translate-y-0.5 hover:border-cyan-300/25 hover:bg-cyan-300/[0.035]"><span className="flex items-center justify-between"><span className="grid h-7 w-7 place-items-center rounded-md bg-cyan-300/[0.08] text-cyan-200"><Icon size={14} /></span><span className="font-mono text-[9px] text-slate-500">{count}개 스킬</span></span><strong className="mt-2 block text-[12px] text-slate-100">{agent.label} 에이전트</strong><span className="mt-1 block text-[10px] leading-4 text-slate-400">{agent.detail}</span>{index < AGENT_FLOW.length - 1 && <ArrowRight size={13} className="absolute -right-[12px] top-1/2 z-10 hidden -translate-y-1/2 text-cyan-300/40 md:block" />}</button>; })}</div>
+    </section>}
 
     {!empty && <section aria-label="카탈로그 종류" className="flex flex-wrap items-center gap-3">
       <div className="inline-flex rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5">

@@ -27,6 +27,13 @@ const STAGES: Stage[] = [
   { id: "operations", order: "06", label: "Console로 운영 확인", eyebrow: "Sugo Console", title: "AI 작업을 운영 판단에 필요한 정보로 바꿉니다", outcome: "Console은 일정, 작업 근거, 개발 이력, 실제 배포 상태를 같은 기능 명세로 연결합니다.", icon: Radar },
 ];
 
+const PLAYBOOK_INTENTS: Array<{ label: string; detail: string; stage: StageId }> = [
+  { label: "새 기능을 시작하고 싶어요", detail: "일정 초안에서 구현 가능한 SPEC을 만듭니다.", stage: "intent" },
+  { label: "AI가 왜 멈췄는지 알고 싶어요", detail: "단계별 통과 조건과 필요한 판단을 확인합니다.", stage: "delivery" },
+  { label: "완료 결과를 검토하고 싶어요", detail: "변경과 실행 근거를 보고 승인 여부를 판단합니다.", stage: "review" },
+  { label: "후속 수정을 이어가고 싶어요", detail: "완료 결과를 보존한 채 새 PATCH를 연결합니다.", stage: "lineage" },
+] as const;
+
 const PIPELINE_STEPS: PipelineStep[] = [
   { name: "개발 일정 작성", owner: "SCHEDULE", proof: "사람이 목표일, 저장소, 초안과 기획 자료를 한 SPEC 일정에 모읍니다." },
   { name: "SPEC 확정", owner: "SPEC WRITER", proof: "AI와 대화하며 범위, 완료 기준과 미결정을 구현 가능한 명세로 확정합니다." },
@@ -255,6 +262,7 @@ export function Playbook() {
   return (
     <div className="mx-auto w-full max-w-[1680px] pb-10">
       <div className="mb-7 border-b border-[var(--color-border)] pb-6"><PageHeading eyebrow="DELIVERY PLAYBOOK" title="실행 플레이북" description="요청을 정리하고 팀의 규칙을 적용한 뒤, 실행 근거와 실제 배포 상태까지 추적합니다." action={<span className="shrink-0 text-[12px] text-[var(--color-text-dim)]">Plugin {pluginVersion ? `v${pluginVersion}` : "—"} · 기능 안내</span>} /></div>
+      <section className="mb-7 rounded-xl border border-violet-300/15 bg-gradient-to-r from-violet-400/[0.05] via-transparent to-cyan-400/[0.04] p-4" aria-label="목적별 Sugo 사용 안내"><div className="mb-3 flex items-baseline justify-between gap-3"><h2 className="text-[15px] font-semibold text-white">지금 무엇을 하려 하나요?</h2><span className="text-[10px] text-slate-500">목적을 고르면 관련 흐름으로 바로 이동합니다.</span></div><div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">{PLAYBOOK_INTENTS.map((intent) => <button key={intent.label} type="button" onClick={() => setActiveId(intent.stage)} className={cn("rounded-lg border p-3 text-left transition hover:-translate-y-0.5", active.id === intent.stage ? "border-cyan-300/35 bg-cyan-300/[0.07]" : "border-white/[0.07] bg-black/10 hover:border-violet-300/25")}><strong className="block text-[12px] text-slate-100">{intent.label}</strong><span className="mt-1 block text-[10px] leading-4 text-slate-400">{intent.detail}</span></button>)}</div></section>
       <div className="grid min-w-0 gap-7 xl:grid-cols-[260px_minmax(0,1fr)]">
         <nav aria-label="AI 개발 사용 시나리오" className="border-b border-[var(--color-border)] pb-5 xl:border-r xl:border-b-0 xl:pr-5 xl:pb-0"><div role="tablist" aria-orientation="vertical" className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:block xl:space-y-1">{STAGES.map((stage) => { const Icon = stage.icon; const selected = stage.id === active.id; return <button key={stage.id} role="tab" aria-selected={selected} aria-controls={`playbook-panel-${stage.id}`} id={`playbook-tab-${stage.id}`} onClick={() => setActiveId(stage.id)} className={cn("flex w-full items-center gap-2 rounded px-3 py-3 text-left transition-colors xl:gap-3 xl:px-3.5 xl:py-3.5", selected ? "bg-cyan-500/10 text-[var(--color-text-bright)]" : "text-[var(--color-text-muted)] hover:bg-[var(--color-background)] hover:text-[var(--color-text)]")}><span className={cn("font-mono text-[11px]", selected ? "text-cyan-300" : "text-[var(--color-text-dim)]")}>{stage.order}</span><Icon size={17} className={selected ? "text-cyan-300" : "text-[var(--color-text-dim)]"} /><span className="text-[14px] font-medium">{stage.label}</span></button>; })}</div></nav>
         <section role="tabpanel" id={`playbook-panel-${active.id}`} aria-labelledby={`playbook-tab-${active.id}`} className="min-w-0 px-1 py-1"><div className="mb-8 max-w-4xl"><div className="text-[12px] font-semibold tracking-[.1em] text-cyan-300">{active.eyebrow}</div><h2 className="mt-2.5 text-[29px] font-semibold tracking-[-.025em] text-[var(--color-text-bright)]">{active.title}</h2><p className="mt-3 text-[16px] leading-relaxed text-[var(--color-text-muted)]">{active.outcome}</p></div><Content /></section>

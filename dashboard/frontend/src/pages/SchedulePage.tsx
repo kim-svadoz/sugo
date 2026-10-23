@@ -965,7 +965,7 @@ export function SchedulePage() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-white">{selected.status === "done" ? "후속 개발" : "작업 준비"}</h3>
-                  <p className="mt-1 text-[11.5px] text-slate-300">{selected.status === "done" ? "완료 결과를 기준으로 다음 patch를 시작합니다." : scheduleSpecStage(selected) === "ready" ? "작성된 SPEC으로 feat를 시작하거나, 필요하면 SPEC을 다시 작성합니다." : "실행 에이전트를 선택하고 SPEC 작성 명령을 생성합니다."}</p>
+                  <p className="mt-1 text-[11.5px] text-slate-300">{selected.status === "done" ? "마지막 완료 결과를 기준으로 다음 patch를 시작합니다." : scheduleSpecStage(selected) === "ready" ? "작성된 SPEC으로 feat를 시작하거나, 필요하면 SPEC을 다시 작성합니다." : "실행 에이전트를 선택하고 SPEC 작성 명령을 생성합니다."}</p>
                 </div>
               {scheduleSpecStage(selected) !== "in_progress" && (
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

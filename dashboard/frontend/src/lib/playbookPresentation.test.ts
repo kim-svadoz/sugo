@@ -59,4 +59,10 @@ describe("Playbook product lifecycle", () => {
     expect(source).toContain('role="tabpanel"');
     expect(source).toContain("aria-selected={selected}");
   });
+
+  it("사용 목적에서 바로 관련 사용 시나리오를 열 수 있다", () => {
+    expect(source).toContain("지금 무엇을 하려 하나요?");
+    expect(source).toContain("PLAYBOOK_INTENTS");
+    expect(source).toContain("setActiveId(intent.stage)");
+  });
 });

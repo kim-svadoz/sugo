@@ -55,4 +55,13 @@ describe("Home attention", () => {
     expect(brief.resume.map((item) => item.title)).toEqual(["계속 구현"]);
     expect(brief.resume[0]?.detail).toContain("API 구현");
   });
+
+  it("Home이 보여줄 오늘의 작업 신호를 계산한다", () => {
+    const brief = buildHomeBrief([
+      { ...base, id: "review", title: "결정 필요", blocked_task_count: 1, focus_task_status: "blocked" },
+      { ...base, id: "active", title: "구현 중", focus_task_updated_at: "2026-10-21T09:00:00.000Z" },
+    ], new Date("2026-10-21T00:00:00Z"));
+    expect(brief.decisions).toHaveLength(1);
+    expect(brief.resume).toHaveLength(1);
+  });
 });
