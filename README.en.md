@@ -142,7 +142,7 @@ Open `http://localhost:3001`. It starts with each new Claude Code session.
 | Integrations | Git providers, AWS, Pinpoint, and plugin API tokens |
 | Preferences | Display name, weather region |
 
-The worker figure next to each page title acts out the current pipeline stage (code, test, review, docs) while work is running.
+The work floor on Home and Workspaces shows a worker at the pipeline station that matches the latest event: working on the current stage, waiting for your review, or stopped where a run paused.
 
 Console data is in `~/.claude/sugo/dashboard/` and survives updates. If the Console is down, the pipeline continues and sends sync data later.
 

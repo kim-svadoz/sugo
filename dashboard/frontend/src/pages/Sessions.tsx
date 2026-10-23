@@ -34,7 +34,7 @@ import { Modal } from "../components/Modal.js";
 import { LoadingSpinner, EmptyState } from "../components/StatusViews.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
 import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
-import { WorkScene } from "../components/WorkScene.js";
+import { WorkFloor } from "../components/WorkFloor.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
@@ -548,10 +548,10 @@ export function Sessions() {
   return (
     <div className="flex min-h-full flex-col gap-3 2xl:gap-4">
       <section aria-label="워크스페이스 운영 도구" className="page-heading shrink-0 space-y-1 2xl:space-y-2">
-        <div className="flex items-end justify-between gap-6"><div>
+        <div>
           <div className="page-heading__eyebrow font-mono text-[11px] font-semibold tracking-[0.18em] text-cyan-300">WORKSPACE OPERATIONS</div>
           <h1 className="page-heading__title mt-1 text-xl font-semibold tracking-[-0.02em] text-[var(--color-text-bright)] 2xl:mt-2 2xl:text-2xl">도메인 관리 <span className="align-middle text-sm font-normal text-[var(--color-text-dim)]">({filteredWorkspaces.length})</span></h1>
-        </div><WorkScene className="hidden xl:block" /></div>
+        </div>
         <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-[var(--color-text-muted)]">도메인별 개발 흐름과 운영 상태를 한곳에서 확인합니다.</p>
           <div className="flex min-h-9 flex-wrap items-center justify-end gap-2">
@@ -794,6 +794,9 @@ export function Sessions() {
         **검색 모드에선 띄우지 않는다.** 검색은 결과 행 안에서 바로 펼치는 뷰라, 아래에
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
+      {selected && !isSearchMode && (
+        <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} /></section>
+      )}
       {selected && !isSearchMode && (
         <div key={selected.name} className="command-detail ck-stage-in grid min-h-[340px] flex-1 grid-cols-1 gap-3 lg:grid-cols-10">
           <div className="ck-glass flex min-h-[340px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3 lg:col-span-3">
