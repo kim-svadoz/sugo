@@ -28224,7 +28224,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.43.1" : "0.0.0-dev";
+  return true ? "0.43.2" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts

@@ -4,6 +4,8 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## Plugin 0.43.2 · Console 0.34.2 — 2026-10-23
+
 ### 수정
 - AWS 읽기 가드가 `grep -i aws`, `git commit -m "... aws ..."`처럼 `aws`를 검색어·메시지로만 쓰는 명령을 차단하던 오탐을 고쳤습니다. 파이프라인 전체가 문자열을 실행할 수 없는 명령일 때만 검사를 건너뜁니다.
 - AWS 읽기 가드가 `git -c alias.x="!aws ..."`처럼 `!` 뒤에 오는 AWS 호출을 놓치던 문제를 고쳤습니다.
