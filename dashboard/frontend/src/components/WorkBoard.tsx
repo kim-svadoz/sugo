@@ -18,7 +18,7 @@ import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { selectWorldState, weekBins, type MainSpot, type Specialist } from "../lib/workWorld.js";
 
-type StationId = "spec" | "control" | "code" | "test" | "review" | "docs" | "confirm" | "dock";
+type StationId = "spec" | "control" | "code" | "test" | "review" | "confirm" | "docs" | "dock";
 
 interface Station {
   id: StationId;
@@ -37,8 +37,8 @@ const STATIONS: Station[] = [
   { id: "code", label: "코드 작성", step: "02", icon: Code2, color: "#2dd4bf", specialist: "CODE", work: "코드 에이전트가 SPEC 범위의 제품 코드를 구현합니다.", output: "검증할 구현 결과" },
   { id: "test", label: "테스트", step: "03", icon: FlaskConical, color: "#34d399", specialist: "TEST", work: "테스트 에이전트가 요구사항과 회귀 동작을 실행합니다.", output: "통과 또는 실패 실행 증거" },
   { id: "review", label: "검토", step: "04", icon: ShieldCheck, color: "#a78bfa", specialist: "REVIEW", work: "검토 에이전트가 명세와 실행 결과, 남은 위험을 대조합니다.", output: "승인 가능한 결과와 판단 항목" },
-  { id: "docs", label: "문서 작업", step: "05", icon: BookOpenText, color: "#f472b6", specialist: "DOCS", work: "문서 에이전트가 검증된 사용자 동작만 기록합니다.", output: "코드와 일치하는 변경 기록" },
-  { id: "confirm", label: "사용자 확인", step: "06", icon: UserCheck, color: "#c4b5fd", work: "AI가 결정할 수 없는 선택만 사용자에게 요청합니다.", output: "승인 또는 수정 지시" },
+  { id: "confirm", label: "사용자 확인", step: "05", icon: UserCheck, color: "#c4b5fd", work: "AI가 결정할 수 없는 선택만 사용자에게 요청합니다.", output: "승인 또는 수정 지시" },
+  { id: "docs", label: "문서 작업", step: "06", icon: BookOpenText, color: "#f472b6", specialist: "DOCS", work: "문서 에이전트가 검증된 사용자 동작만 기록합니다.", output: "코드와 일치하는 변경 기록" },
   { id: "dock", label: "커밋 출고", step: "DONE", icon: GitCommitHorizontal, color: "#fbbf24", work: "검증과 문서화가 끝난 결과를 커밋 단위로 보존합니다.", output: "다음 작업이 이어받을 완료 기록" },
 ];
 

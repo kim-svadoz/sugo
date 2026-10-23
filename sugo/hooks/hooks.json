@@ -2,25 +2,35 @@
   "hooks": {
     "SessionStart": [
       {
-        "hooks": [{
-          "type": "command",
-          "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/dashboard-start.mjs\"",
-          "timeout": 15
-        }, {
-          "type": "command",
-          "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/agent-tools.mjs\"",
-          "timeout": 10
-        }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/dashboard-start.mjs\"",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/agent-tools.mjs\"",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [{
-          "type": "command",
-          "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/aws-readonly-guard.mjs\"",
-          "timeout": 10
-        }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/aws-readonly-guard.mjs\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/commit-body.py\"",
+            "timeout": 10
+          }
+        ]
       },
       {
         "matcher": "Write|Edit",

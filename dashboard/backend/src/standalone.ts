@@ -63,12 +63,16 @@ process.env.CORS_ORIGINS = apiUrl;
 process.env.SUGO_DASHBOARD_API_URL = apiUrl;
 process.env.HARNESS_PATH = join(pluginRoot, "harness-library");
 process.env.SKILLS_PATH = pluginRoot;
+process.env.SUGO_WEEKLY_ENGINE = join(pluginRoot, "weekly");
+// Weekly 데이터도 Console과 같은 HOME을 쓴다. 임시 HOME으로 띄운 Console이 사용자의 ~/.weekly를 건드리지 않게 한다.
+process.env.WEEKLY_HOME ??= join(sugoHome, ".weekly");
 
 const { createApp } = await import("./index.js");
 const { bootstrapLocalDashboard } = await import("./localBootstrap.js");
 
 const { app, db, awsContextClient, pinpointClient } = await createApp({ staticDir, sqliteSchema });
 const { startContextAutoRefresh } = await import("./services/contextAutoRefreshService.js");
+const { startWeeklySchedule } = await import("./services/weeklyScheduleService.js");
 await bootstrapLocalDashboard(db, {
   userId,
   displayName,
@@ -76,6 +80,7 @@ await bootstrapLocalDashboard(db, {
   settingsPath: join(sugoDir, "settings.json"),
 });
 const stopContextAutoRefresh = startContextAutoRefresh(db, awsContextClient, pinpointClient);
+const stopWeeklySchedule = startWeeklySchedule({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 
 const server = app.listen(port, HOST, () => {
   void writeFile(stateFile, `${JSON.stringify({ pid: process.pid, port, version: process.env.DASHBOARD_VERSION, startedAt: new Date().toISOString() })}\n`);
@@ -88,6 +93,7 @@ server.on("error", (err) => {
 
 async function shutdown() {
   stopContextAutoRefresh();
+  stopWeeklySchedule();
   server.close();
   await db.close();
   await rm(stateFile, { force: true });

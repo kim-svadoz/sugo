@@ -4962,10 +4962,10 @@ var require_raw_body = __commonJS({
       if (done) {
         return readStream(stream, encoding, length, limit, wrap(done));
       }
-      return new Promise(function executor(resolve4, reject) {
+      return new Promise(function executor(resolve5, reject) {
         readStream(stream, encoding, length, limit, function onRead(err, buf2) {
           if (err) return reject(err);
-          resolve4(buf2);
+          resolve5(buf2);
         });
       });
     }
@@ -18512,8 +18512,8 @@ var require_view = __commonJS({
     var dirname8 = path.dirname;
     var basename5 = path.basename;
     var extname2 = path.extname;
-    var join15 = path.join;
-    var resolve4 = path.resolve;
+    var join16 = path.join;
+    var resolve5 = path.resolve;
     module.exports = View;
     function View(name, options) {
       var opts = options || {};
@@ -18547,7 +18547,7 @@ var require_view = __commonJS({
       debug('lookup "%s"', name);
       for (var i5 = 0; i5 < roots.length && !path2; i5++) {
         var root5 = roots[i5];
-        var loc = resolve4(root5, name);
+        var loc = resolve5(root5, name);
         var dir = dirname8(loc);
         var file = basename5(loc);
         path2 = this.resolve(dir, file);
@@ -18558,16 +18558,16 @@ var require_view = __commonJS({
       debug('render "%s"', this.path);
       this.engine(this.path, options, callback);
     };
-    View.prototype.resolve = function resolve5(dir, file) {
+    View.prototype.resolve = function resolve6(dir, file) {
       var ext = this.ext;
-      var path2 = join15(dir, file);
-      var stat3 = tryStat(path2);
-      if (stat3 && stat3.isFile()) {
+      var path2 = join16(dir, file);
+      var stat4 = tryStat(path2);
+      if (stat4 && stat4.isFile()) {
         return path2;
       }
-      path2 = join15(dir, basename5(file, ext), "index" + ext);
-      stat3 = tryStat(path2);
-      if (stat3 && stat3.isFile()) {
+      path2 = join16(dir, basename5(file, ext), "index" + ext);
+      stat4 = tryStat(path2);
+      if (stat4 && stat4.isFile()) {
         return path2;
       }
     };
@@ -18837,9 +18837,9 @@ var require_etag = __commonJS({
       }
       return obj && typeof obj === "object" && "ctime" in obj && toString.call(obj.ctime) === "[object Date]" && "mtime" in obj && toString.call(obj.mtime) === "[object Date]" && "ino" in obj && typeof obj.ino === "number" && "size" in obj && typeof obj.size === "number";
     }
-    function stattag(stat3) {
-      var mtime = stat3.mtime.getTime().toString(16);
-      var size = stat3.size.toString(16);
+    function stattag(stat4) {
+      var mtime = stat4.mtime.getTime().toString(16);
+      var size = stat4.size.toString(16);
       return '"' + size + "-" + mtime + '"';
     }
   }
@@ -19198,9 +19198,9 @@ var require_send = __commonJS({
     var Stream = __require("stream");
     var util4 = __require("util");
     var extname2 = path.extname;
-    var join15 = path.join;
+    var join16 = path.join;
     var normalize3 = path.normalize;
-    var resolve4 = path.resolve;
+    var resolve5 = path.resolve;
     var sep3 = path.sep;
     var BYTES_RANGE_REGEXP = /^ *bytes=/;
     var MAX_MAXAGE = 60 * 60 * 24 * 365 * 1e3;
@@ -19237,7 +19237,7 @@ var require_send = __commonJS({
       this._maxage = opts.maxAge || opts.maxage;
       this._maxage = typeof this._maxage === "string" ? ms(this._maxage) : Number(this._maxage);
       this._maxage = !isNaN(this._maxage) ? Math.min(Math.max(0, this._maxage), MAX_MAXAGE) : 0;
-      this._root = opts.root ? resolve4(opts.root) : null;
+      this._root = opts.root ? resolve5(opts.root) : null;
       if (!this._root && opts.from) {
         this.from(opts.from);
       }
@@ -19261,7 +19261,7 @@ var require_send = __commonJS({
       return this;
     }, "send.index: pass index as option");
     SendStream.prototype.root = function root5(path2) {
-      this._root = resolve4(String(path2));
+      this._root = resolve5(String(path2));
       debug("root %s", this._root);
       return this;
     };
@@ -19417,7 +19417,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = path2.split(sep3);
-        path2 = normalize3(join15(root5, path2));
+        path2 = normalize3(join16(root5, path2));
       } else {
         if (UP_PATH_REGEXP.test(path2)) {
           debug('malicious path "%s"', path2);
@@ -19425,7 +19425,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = normalize3(path2).split(sep3);
-        path2 = resolve4(path2);
+        path2 = resolve5(path2);
       }
       if (containsDotFile(parts)) {
         var access = this._dotfiles;
@@ -19452,8 +19452,8 @@ var require_send = __commonJS({
       this.sendFile(path2);
       return res;
     };
-    SendStream.prototype.send = function send2(path2, stat3) {
-      var len = stat3.size;
+    SendStream.prototype.send = function send2(path2, stat4) {
+      var len = stat4.size;
       var options = this.options;
       var opts = {};
       var res = this.res;
@@ -19465,7 +19465,7 @@ var require_send = __commonJS({
         return;
       }
       debug('pipe "%s"', path2);
-      this.setHeader(path2, stat3);
+      this.setHeader(path2, stat4);
       this.type(path2);
       if (this.isConditionalGET()) {
         if (this.isPreconditionFailure()) {
@@ -19521,14 +19521,14 @@ var require_send = __commonJS({
       var i5 = 0;
       var self2 = this;
       debug('stat "%s"', path2);
-      fs.stat(path2, function onstat(err, stat3) {
+      fs.stat(path2, function onstat(err, stat4) {
         if (err && err.code === "ENOENT" && !extname2(path2) && path2[path2.length - 1] !== sep3) {
           return next(err);
         }
         if (err) return self2.onStatError(err);
-        if (stat3.isDirectory()) return self2.redirect(path2);
-        self2.emit("file", path2, stat3);
-        self2.send(path2, stat3);
+        if (stat4.isDirectory()) return self2.redirect(path2);
+        self2.emit("file", path2, stat4);
+        self2.send(path2, stat4);
       });
       function next(err) {
         if (self2._extensions.length <= i5) {
@@ -19536,11 +19536,11 @@ var require_send = __commonJS({
         }
         var p3 = path2 + "." + self2._extensions[i5++];
         debug('stat "%s"', p3);
-        fs.stat(p3, function(err2, stat3) {
+        fs.stat(p3, function(err2, stat4) {
           if (err2) return next(err2);
-          if (stat3.isDirectory()) return next();
-          self2.emit("file", p3, stat3);
-          self2.send(p3, stat3);
+          if (stat4.isDirectory()) return next();
+          self2.emit("file", p3, stat4);
+          self2.send(p3, stat4);
         });
       }
     };
@@ -19552,13 +19552,13 @@ var require_send = __commonJS({
           if (err) return self2.onStatError(err);
           return self2.error(404);
         }
-        var p3 = join15(path2, self2._index[i5]);
+        var p3 = join16(path2, self2._index[i5]);
         debug('stat "%s"', p3);
-        fs.stat(p3, function(err2, stat3) {
+        fs.stat(p3, function(err2, stat4) {
           if (err2) return next(err2);
-          if (stat3.isDirectory()) return next();
-          self2.emit("file", p3, stat3);
-          self2.send(p3, stat3);
+          if (stat4.isDirectory()) return next();
+          self2.emit("file", p3, stat4);
+          self2.send(p3, stat4);
         });
       }
       next();
@@ -19593,9 +19593,9 @@ var require_send = __commonJS({
       debug("content-type %s", type2);
       res.setHeader("Content-Type", type2 + (charset ? "; charset=" + charset : ""));
     };
-    SendStream.prototype.setHeader = function setHeader(path2, stat3) {
+    SendStream.prototype.setHeader = function setHeader(path2, stat4) {
       var res = this.res;
-      this.emit("headers", res, path2, stat3);
+      this.emit("headers", res, path2, stat4);
       if (this._acceptRanges && !res.getHeader("Accept-Ranges")) {
         debug("accept ranges");
         res.setHeader("Accept-Ranges", "bytes");
@@ -19609,12 +19609,12 @@ var require_send = __commonJS({
         res.setHeader("Cache-Control", cacheControl);
       }
       if (this._lastModified && !res.getHeader("Last-Modified")) {
-        var modified = stat3.mtime.toUTCString();
+        var modified = stat4.mtime.toUTCString();
         debug("modified %s", modified);
         res.setHeader("Last-Modified", modified);
       }
       if (this._etag && !res.getHeader("ETag")) {
-        var val = etag(stat3);
+        var val = etag(stat4);
         debug("etag %s", val);
         res.setHeader("ETag", val);
       }
@@ -20705,7 +20705,7 @@ var require_application = __commonJS({
     var deprecate = require_depd()("express");
     var flatten = require_array_flatten();
     var merge2 = require_utils_merge();
-    var resolve4 = __require("path").resolve;
+    var resolve5 = __require("path").resolve;
     var setPrototypeOf = require_setprototypeof();
     var hasOwnProperty = Object.prototype.hasOwnProperty;
     var slice = Array.prototype.slice;
@@ -20744,7 +20744,7 @@ var require_application = __commonJS({
       this.mountpath = "/";
       this.locals.settings = this.settings;
       this.set("view", View);
-      this.set("views", resolve4("views"));
+      this.set("views", resolve5("views"));
       this.set("jsonp callback name", "callback");
       if (env2 === "production") {
         this.enable("view cache");
@@ -21989,7 +21989,7 @@ var require_response = __commonJS({
     var send = require_send();
     var extname2 = path.extname;
     var mime = send.mime;
-    var resolve4 = path.resolve;
+    var resolve5 = path.resolve;
     var vary = require_vary();
     var res = Object.create(http2.ServerResponse.prototype);
     module.exports = res;
@@ -22248,7 +22248,7 @@ var require_response = __commonJS({
       }
       opts = Object.create(opts);
       opts.headers = headers;
-      var fullPath = !opts.root ? resolve4(path2) : path2;
+      var fullPath = !opts.root ? resolve5(path2) : path2;
       return this.sendFile(fullPath, opts, done);
     };
     res.contentType = res.type = function contentType(type) {
@@ -22514,7 +22514,7 @@ var require_serve_static = __commonJS({
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
     var parseUrl2 = require_parseurl();
-    var resolve4 = __require("path").resolve;
+    var resolve5 = __require("path").resolve;
     var send = require_send();
     var url = __require("url");
     module.exports = serveStatic;
@@ -22534,7 +22534,7 @@ var require_serve_static = __commonJS({
         throw new TypeError("option setHeaders must be function");
       }
       opts.maxage = opts.maxage || opts.maxAge || 0;
-      opts.root = resolve4(root5);
+      opts.root = resolve5(root5);
       var onDirectory = redirect ? createRedirectDirectoryListener() : createNotFoundDirectoryListener();
       return function serveStatic2(req, res, next) {
         if (req.method !== "GET" && req.method !== "HEAD") {
@@ -41776,7 +41776,7 @@ var require_named_placeholders = __commonJS({
         }
         return s2;
       }
-      function join15(tree) {
+      function join16(tree) {
         if (tree.length === 1) {
           return tree;
         }
@@ -41802,7 +41802,7 @@ var require_named_placeholders = __commonJS({
         if (cache7 && (tree = cache7.get(query))) {
           return toArrayParams(tree, paramsObj);
         }
-        tree = join15(parse2(query));
+        tree = join16(parse2(query));
         if (cache7) {
           cache7.set(query, tree);
         }
@@ -41961,11 +41961,11 @@ var require_connection = __commonJS({
             const config2 = this.config;
             tracePromise(
               connectChannel,
-              () => new Promise((resolve4, reject) => {
+              () => new Promise((resolve5, reject) => {
                 let onConnect, onError;
                 onConnect = (param) => {
                   this.removeListener("error", onError);
-                  resolve4(param);
+                  resolve5(param);
                 };
                 onError = (err) => {
                   this.removeListener("connect", onConnect);
@@ -42390,9 +42390,9 @@ var require_connection = __commonJS({
         } else if (shouldTrace(queryChannel)) {
           tracePromise(
             queryChannel,
-            () => new Promise((resolve4, reject) => {
+            () => new Promise((resolve5, reject) => {
               cmdQuery.once("error", reject);
-              cmdQuery.once("end", () => resolve4());
+              cmdQuery.once("end", () => resolve5());
               this.addCommand(cmdQuery);
             }),
             () => {
@@ -42539,12 +42539,12 @@ var require_connection = __commonJS({
         } else if (shouldTrace(executeChannel)) {
           tracePromise(
             executeChannel,
-            () => new Promise((resolve4, reject) => {
+            () => new Promise((resolve5, reject) => {
               prepareAndExecute((err) => {
                 executeCommand.emit("error", err);
               });
               executeCommand.once("error", reject);
-              executeCommand.once("end", () => resolve4());
+              executeCommand.once("end", () => resolve5());
             }),
             () => {
               const server2 = getServerContext(this.config);
@@ -42811,13 +42811,13 @@ var require_make_done_cb = __commonJS({
   "../dashboard/backend/node_modules/mysql2/lib/promise/make_done_cb.js"(exports, module) {
     "use strict";
     var { applyCapturedStack } = require_capture_local_err();
-    function makeDoneCb(resolve4, reject, stackHolder) {
+    function makeDoneCb(resolve5, reject, stackHolder) {
       return function(err, rows, fields) {
         if (err) {
           applyCapturedStack(err, stackHolder);
           reject(err);
         } else {
-          resolve4([rows, fields]);
+          resolve5([rows, fields]);
         }
       };
     }
@@ -42841,8 +42841,8 @@ var require_prepared_statement_info = __commonJS({
         const stackHolder = captureStackHolder(
           _PromisePreparedStatementInfo.prototype.execute
         );
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           if (parameters) {
             s2.execute(parameters, done);
           } else {
@@ -42851,9 +42851,9 @@ var require_prepared_statement_info = __commonJS({
         });
       }
       close() {
-        return new this.Promise((resolve4) => {
+        return new this.Promise((resolve5) => {
           this.statement.close();
-          resolve4();
+          resolve5();
         });
       }
     };
@@ -42926,8 +42926,8 @@ var require_connection2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           if (params !== void 0) {
             c5.query(query, params, done);
           } else {
@@ -42943,8 +42943,8 @@ var require_connection2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           if (params !== void 0) {
             c5.execute(query, params, done);
           } else {
@@ -42953,8 +42953,8 @@ var require_connection2 = __commonJS({
         });
       }
       end() {
-        return new this.Promise((resolve4) => {
-          this.connection.end(resolve4);
+        return new this.Promise((resolve5) => {
+          this.connection.end(resolve5);
         });
       }
       async [Symbol.asyncDispose]() {
@@ -42967,16 +42967,16 @@ var require_connection2 = __commonJS({
         const stackHolder = captureStackHolder(
           _PromiseConnection.prototype.beginTransaction
         );
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           c5.beginTransaction(done);
         });
       }
       commit() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.commit);
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           c5.commit(done);
         });
       }
@@ -42985,21 +42985,21 @@ var require_connection2 = __commonJS({
         const stackHolder = captureStackHolder(
           _PromiseConnection.prototype.rollback
         );
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           c5.rollback(done);
         });
       }
       ping() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.ping);
-        return new this.Promise((resolve4, reject) => {
+        return new this.Promise((resolve5, reject) => {
           c5.ping((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve4(true);
+              resolve5(true);
             }
           });
         });
@@ -43007,13 +43007,13 @@ var require_connection2 = __commonJS({
       reset() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.reset);
-        return new this.Promise((resolve4, reject) => {
+        return new this.Promise((resolve5, reject) => {
           c5.reset((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve4();
+              resolve5();
             }
           });
         });
@@ -43021,13 +43021,13 @@ var require_connection2 = __commonJS({
       connect() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.connect);
-        return new this.Promise((resolve4, reject) => {
+        return new this.Promise((resolve5, reject) => {
           c5.connect((err, param) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve4(param);
+              resolve5(param);
             }
           });
         });
@@ -43036,7 +43036,7 @@ var require_connection2 = __commonJS({
         const c5 = this.connection;
         const promiseImpl = this.Promise;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.prepare);
-        return new this.Promise((resolve4, reject) => {
+        return new this.Promise((resolve5, reject) => {
           c5.prepare(options, (err, statement) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
@@ -43046,7 +43046,7 @@ var require_connection2 = __commonJS({
                 statement,
                 promiseImpl
               );
-              resolve4(wrappedStatement);
+              resolve5(wrappedStatement);
             }
           });
         });
@@ -43056,13 +43056,13 @@ var require_connection2 = __commonJS({
         const stackHolder = captureStackHolder(
           _PromiseConnection.prototype.changeUser
         );
-        return new this.Promise((resolve4, reject) => {
+        return new this.Promise((resolve5, reject) => {
           c5.changeUser(options, (err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve4();
+              resolve5();
             }
           });
         });
@@ -43533,12 +43533,12 @@ var require_pool2 = __commonJS({
       }
       getConnection() {
         const corePool = this.pool;
-        return new this.Promise((resolve4, reject) => {
+        return new this.Promise((resolve5, reject) => {
           corePool.getConnection((err, coreConnection) => {
             if (err) {
               reject(err);
             } else {
-              resolve4(new PromisePoolConnection(coreConnection, this.Promise));
+              resolve5(new PromisePoolConnection(coreConnection, this.Promise));
             }
           });
         });
@@ -43554,8 +43554,8 @@ var require_pool2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           if (args !== void 0) {
             corePool.query(sql, args, done);
           } else {
@@ -43571,8 +43571,8 @@ var require_pool2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           if (args) {
             corePool.execute(sql, args, done);
           } else {
@@ -43583,13 +43583,13 @@ var require_pool2 = __commonJS({
       end() {
         const corePool = this.pool;
         const stackHolder = captureStackHolder(_PromisePool.prototype.end);
-        return new this.Promise((resolve4, reject) => {
+        return new this.Promise((resolve5, reject) => {
           corePool.end((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve4();
+              resolve5();
             }
           });
         });
@@ -44021,12 +44021,12 @@ var require_pool_cluster2 = __commonJS({
       }
       getConnection() {
         const corePoolNamespace = this.poolNamespace;
-        return new this.Promise((resolve4, reject) => {
+        return new this.Promise((resolve5, reject) => {
           corePoolNamespace.getConnection((err, coreConnection) => {
             if (err) {
               reject(err);
             } else {
-              resolve4(new PromisePoolConnection(coreConnection, this.Promise));
+              resolve5(new PromisePoolConnection(coreConnection, this.Promise));
             }
           });
         });
@@ -44041,8 +44041,8 @@ var require_pool_cluster2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           corePoolNamespace.query(sql, values, done);
         });
       }
@@ -44056,8 +44056,8 @@ var require_pool_cluster2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           corePoolNamespace.execute(sql, values, done);
         });
       }
@@ -44096,9 +44096,9 @@ var require_promise = __commonJS({
           "no Promise implementation available.Use promise-enabled node version or pass userland Promise implementation as parameter, for example: { Promise: require('bluebird') }"
         );
       }
-      return new thePromise((resolve4, reject) => {
+      return new thePromise((resolve5, reject) => {
         coreConnection.once("connect", () => {
-          resolve4(new PromiseConnection(coreConnection, thePromise));
+          resolve5(new PromiseConnection(coreConnection, thePromise));
         });
         coreConnection.once("error", (err) => {
           applyCapturedStack(err, stackHolder);
@@ -44125,7 +44125,7 @@ var require_promise = __commonJS({
       }
       getConnection(pattern, selector) {
         const corePoolCluster = this.poolCluster;
-        return new this.Promise((resolve4, reject) => {
+        return new this.Promise((resolve5, reject) => {
           corePoolCluster.getConnection(
             pattern,
             selector,
@@ -44133,7 +44133,7 @@ var require_promise = __commonJS({
               if (err) {
                 reject(err);
               } else {
-                resolve4(new PromisePoolConnection(coreConnection, this.Promise));
+                resolve5(new PromisePoolConnection(coreConnection, this.Promise));
               }
             }
           );
@@ -44147,8 +44147,8 @@ var require_promise = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           corePoolCluster.query(sql, args, done);
         });
       }
@@ -44162,8 +44162,8 @@ var require_promise = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve4, reject) => {
-          const done = makeDoneCb(resolve4, reject, stackHolder);
+        return new this.Promise((resolve5, reject) => {
+          const done = makeDoneCb(resolve5, reject, stackHolder);
           corePoolCluster.execute(sql, args, done);
         });
       }
@@ -44176,13 +44176,13 @@ var require_promise = __commonJS({
       end() {
         const corePoolCluster = this.poolCluster;
         const stackHolder = captureStackHolder(_PromisePoolCluster.prototype.end);
-        return new this.Promise((resolve4, reject) => {
+        return new this.Promise((resolve5, reject) => {
           corePoolCluster.end((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve4();
+              resolve5();
             }
           });
         });
@@ -55111,7 +55111,7 @@ var sleep;
 var init_sleep = __esm({
   "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/sleep.js"() {
     sleep = (seconds) => {
-      return new Promise((resolve4) => setTimeout(resolve4, seconds * 1e3));
+      return new Promise((resolve5) => setTimeout(resolve5, seconds * 1e3));
     };
   }
 });
@@ -55276,8 +55276,8 @@ var init_createWaiter = __esm({
     init_waiter();
     abortTimeout = (abortSignal) => {
       let onAbort;
-      const promise = new Promise((resolve4) => {
-        onAbort = () => resolve4({ state: WaiterState.ABORTED });
+      const promise = new Promise((resolve5) => {
+        onAbort = () => resolve5({ state: WaiterState.ABORTED });
         if (typeof abortSignal.addEventListener === "function") {
           abortSignal.addEventListener("abort", onAbort);
         } else {
@@ -58751,7 +58751,7 @@ var init_getInstanceMetadataRegion = __esm({
     };
     imdsRequest = async (options) => {
       const { request } = await import("node:http");
-      return new Promise((resolve4, reject) => {
+      return new Promise((resolve5, reject) => {
         const req = request({
           hostname: options.hostname,
           port: options.port,
@@ -58779,7 +58779,7 @@ var init_getInstanceMetadataRegion = __esm({
           const chunks2 = [];
           res.on("data", (chunk) => chunks2.push(chunk));
           res.on("end", () => {
-            resolve4(Buffer.concat(chunks2));
+            resolve5(Buffer.concat(chunks2));
             req.destroy();
           });
         });
@@ -61011,7 +61011,7 @@ var init_headStream = __esm({
       if (isReadableStream(stream)) {
         return headStream(stream, bytes);
       }
-      return new Promise((resolve4, reject) => {
+      return new Promise((resolve5, reject) => {
         const collector = new Collector();
         collector.limit = bytes;
         stream.pipe(collector);
@@ -61022,7 +61022,7 @@ var init_headStream = __esm({
         collector.on("error", reject);
         collector.on("finish", function() {
           const bytes2 = concatBytes(this.buffers);
-          resolve4(bytes2);
+          resolve5(bytes2);
         });
       });
     };
@@ -61174,7 +61174,7 @@ var init_stream_collector = __esm({
       if (isReadableStream(stream)) {
         return collectReadableStream(stream);
       }
-      return new Promise((resolve4, reject) => {
+      return new Promise((resolve5, reject) => {
         const collector = new Collector2();
         const nodeStream = stream;
         nodeStream.pipe(collector);
@@ -61185,7 +61185,7 @@ var init_stream_collector = __esm({
         collector.on("error", reject);
         collector.on("finish", function() {
           const bytes = concatBytes(this.bufferedBytes);
-          resolve4(bytes);
+          resolve5(bytes);
         });
       });
     };
@@ -61512,7 +61512,7 @@ var fileStreamHasher, isReadStream;
 var init_fileStreamHasher = __esm({
   "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/fileStreamHasher.js"() {
     init_HashCalculator();
-    fileStreamHasher = (hashCtor, fileStream) => new Promise((resolve4, reject) => {
+    fileStreamHasher = (hashCtor, fileStream) => new Promise((resolve5, reject) => {
       if (!isReadStream(fileStream)) {
         reject(new Error("Unable to calculate hash for non-file streams."));
         return;
@@ -61530,7 +61530,7 @@ var init_fileStreamHasher = __esm({
       });
       hashCalculator.on("error", reject);
       hashCalculator.on("finish", function() {
-        hash2.digest().then(resolve4).catch(reject);
+        hash2.digest().then(resolve5).catch(reject);
       });
     });
     isReadStream = (stream) => typeof stream.path === "string";
@@ -61549,14 +61549,14 @@ var init_readableStreamHasher = __esm({
       const hash2 = new hashCtor();
       const hashCalculator = new HashCalculator(hash2);
       readableStream.pipe(hashCalculator);
-      return new Promise((resolve4, reject) => {
+      return new Promise((resolve5, reject) => {
         readableStream.on("error", (err) => {
           hashCalculator.end();
           reject(err);
         });
         hashCalculator.on("error", reject);
         hashCalculator.on("finish", () => {
-          hash2.digest().then(resolve4).catch(reject);
+          hash2.digest().then(resolve5).catch(reject);
         });
       });
     };
@@ -62801,7 +62801,7 @@ async function* readableToIterable(readStream) {
     streamEnded = true;
   });
   while (!generationEnded) {
-    const value = await new Promise((resolve4) => setTimeout(() => resolve4(records.shift()), 0));
+    const value = await new Promise((resolve5) => setTimeout(() => resolve5(records.shift()), 0));
     if (value) {
       yield value;
     }
@@ -64627,7 +64627,7 @@ var init_retryMiddleware = __esm({
     init_constants5();
     init_parseRetryAfterHeader();
     init_util2();
-    cooldown = (ms) => new Promise((resolve4) => setTimeout(resolve4, ms));
+    cooldown = (ms) => new Promise((resolve5) => setTimeout(resolve5, ms));
     isRetryStrategyV2 = (retryStrategy) => typeof retryStrategy.acquireInitialRetryToken !== "undefined" && typeof retryStrategy.refreshRetryTokenForRetry !== "undefined" && typeof retryStrategy.recordSuccess !== "undefined";
     getRetryErrorInfo = (error2, logger2) => {
       const errorInfo = {
@@ -64725,7 +64725,7 @@ var init_DefaultRateLimiter = __esm({
         this.refillTokenBucket();
         while (amount > this.availableTokens) {
           const delay = (amount - this.availableTokens) / this.fillRate * 1e3;
-          await new Promise((resolve4) => _DefaultRateLimiter.setTimeoutFn(resolve4, delay));
+          await new Promise((resolve5) => _DefaultRateLimiter.setTimeoutFn(resolve5, delay));
           this.refillTokenBucket();
         }
         this.availableTokens = this.availableTokens - amount;
@@ -65163,7 +65163,7 @@ var init_StandardRetryStrategy2 = __esm({
               const delayFromResponse = getDelayFromRetryAfterHeader(err.$response);
               const delay = Math.max(delayFromResponse || 0, delayFromDecider);
               totalDelay += delay;
-              await new Promise((resolve4) => setTimeout(resolve4, delay));
+              await new Promise((resolve5) => setTimeout(resolve5, delay));
               continue;
             }
             if (!err.$metadata) {
@@ -69033,7 +69033,7 @@ var require_dist_cjs4 = __commonJS({
     var DEFAULT_MAX_RETRIES = 0;
     var providerConfigFromInit = ({ maxRetries = DEFAULT_MAX_RETRIES, timeout = DEFAULT_TIMEOUT }) => ({ maxRetries, timeout });
     function httpRequest(options) {
-      return new Promise((resolve4, reject) => {
+      return new Promise((resolve5, reject) => {
         const req = node_http.request({
           method: "GET",
           ...options,
@@ -69058,7 +69058,7 @@ var require_dist_cjs4 = __commonJS({
             chunks2.push(chunk);
           });
           res.on("end", () => {
-            resolve4(Buffer.concat(chunks2));
+            resolve5(Buffer.concat(chunks2));
             req.destroy();
           });
         });
@@ -69502,21 +69502,21 @@ var require_dist_cjs5 = __commonJS({
       let sendBody = true;
       if (!externalAgent && expect === "100-continue") {
         sendBody = await Promise.race([
-          new Promise((resolve4) => {
-            timeoutId = Number(timing.setTimeout(() => resolve4(true), Math.max(MIN_WAIT_TIME, maxContinueTimeoutMs)));
+          new Promise((resolve5) => {
+            timeoutId = Number(timing.setTimeout(() => resolve5(true), Math.max(MIN_WAIT_TIME, maxContinueTimeoutMs)));
           }),
-          new Promise((resolve4) => {
+          new Promise((resolve5) => {
             httpRequest.on("continue", () => {
               timing.clearTimeout(timeoutId);
-              resolve4(true);
+              resolve5(true);
             });
             httpRequest.on("response", () => {
               timing.clearTimeout(timeoutId);
-              resolve4(false);
+              resolve5(false);
             });
             httpRequest.on("error", () => {
               timing.clearTimeout(timeoutId);
-              resolve4(false);
+              resolve5(false);
             });
           })
         ]);
@@ -69592,13 +69592,13 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return socketWarningTimestamp;
       }
       constructor(options) {
-        this.configProvider = new Promise((resolve4, reject) => {
+        this.configProvider = new Promise((resolve5, reject) => {
           if (typeof options === "function") {
             options().then((_options) => {
-              resolve4(this.resolveDefaultConfig(_options));
+              resolve5(this.resolveDefaultConfig(_options));
             }).catch(reject);
           } else {
-            resolve4(this.resolveDefaultConfig(options));
+            resolve5(this.resolveDefaultConfig(options));
           }
         });
       }
@@ -69630,7 +69630,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             timing.clearTimeout(socketTimeoutId);
             timing.clearTimeout(keepAliveTimeoutId);
           };
-          const resolve4 = async (arg) => {
+          const resolve5 = async (arg) => {
             await writeRequestBodyPromise;
             clearTimeouts();
             _resolve(arg);
@@ -69694,7 +69694,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
               headers: getTransformedHeaders(res.headers),
               body: res
             });
-            resolve4({ response: httpResponse });
+            resolve5({ response: httpResponse });
           });
           req.on("error", (err) => {
             if (NODEJS_TIMEOUT_ERROR_CODES2.includes(err.code)) {
@@ -70022,13 +70022,13 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return new _NodeHttp2Handler(instanceOrOptions);
       }
       constructor(options) {
-        this.configProvider = new Promise((resolve4, reject) => {
+        this.configProvider = new Promise((resolve5, reject) => {
           if (typeof options === "function") {
             options().then((opts) => {
-              resolve4(opts || {});
+              resolve5(opts || {});
             }).catch(reject);
           } else {
-            resolve4(options || {});
+            resolve5(options || {});
           }
         });
       }
@@ -70053,7 +70053,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return new Promise((_resolve, _reject) => {
           let fulfilled = false;
           let writeRequestBodyPromise = void 0;
-          const resolve4 = async (arg) => {
+          const resolve5 = async (arg) => {
             await writeRequestBodyPromise;
             _resolve(arg);
           };
@@ -70138,7 +70138,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
               body: clientHttp2Stream
             });
             fulfilled = true;
-            resolve4({ response: httpResponse });
+            resolve5({ response: httpResponse });
             if (useIsolatedSession) {
               session.close();
               clientHttp2Stream.on("end", () => {
@@ -70270,7 +70270,7 @@ var require_dist_cjs6 = __commonJS({
           try {
             return await toRetry();
           } catch (e5) {
-            await new Promise((resolve4) => setTimeout(resolve4, delayMs));
+            await new Promise((resolve5) => setTimeout(resolve5, delayMs));
           }
         }
         return await toRetry();
@@ -76381,11 +76381,11 @@ var require_dist_cjs8 = __commonJS({
         throw new TokenProviderError2(`Value not present for '${key2}' in SSO Token${forRefresh ? ". Cannot refresh" : ""}. ${REFRESH_MESSAGE}`, false);
       }
     };
-    var { writeFile: writeFile8 } = promises;
+    var { writeFile: writeFile9 } = promises;
     var writeSSOTokenToFile = (id, ssoToken) => {
       const tokenFilepath = getSSOTokenFilepath2(id);
       const tokenString = JSON.stringify(ssoToken, null, 2);
-      return writeFile8(tokenFilepath, tokenString);
+      return writeFile9(tokenFilepath, tokenString);
     };
     var lastRefreshAttemptTimes = /* @__PURE__ */ new Map();
     var fromSso = (init = {}) => async ({ callerClientConfig } = {}) => {
@@ -79620,7 +79620,7 @@ var require_dist_cjs11 = __commonJS({
     var { createHash: createHash11, createPrivateKey: createPrivateKey2, createPublicKey: createPublicKey2, sign: sign4 } = __require("node:crypto");
     var { promises } = __require("node:fs");
     var { homedir: homedir6 } = __require("node:os");
-    var { dirname: dirname8, join: join15 } = __require("node:path");
+    var { dirname: dirname8, join: join16 } = __require("node:path");
     var LoginCredentialsFetcher = class _LoginCredentialsFetcher {
       profileData;
       init;
@@ -79784,10 +79784,10 @@ var require_dist_cjs11 = __commonJS({
         await promises.writeFile(tokenFilePath, JSON.stringify(token, null, 2), "utf8");
       }
       getTokenFilePath() {
-        const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join15(homedir6(), ".aws", "login", "cache");
+        const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join16(homedir6(), ".aws", "login", "cache");
         const loginSessionBytes = Buffer.from(this.loginSession, "utf8");
         const loginSessionSha256 = createHash11("sha256").update(loginSessionBytes).digest("hex");
-        return join15(directory, `${loginSessionSha256}.json`);
+        return join16(directory, `${loginSessionSha256}.json`);
       }
       derToRawSignature(derSignature) {
         let offset = 2;
@@ -90102,15 +90102,136 @@ var init_contextAutoRefreshService = __esm({
   }
 });
 
-// ../dashboard/backend/src/services/weeklySettingsService.ts
-import { chmod, mkdir as mkdir4, readFile as readFile9, stat as stat2, writeFile as writeFile5 } from "node:fs/promises";
-import { homedir as homedir4 } from "node:os";
-import { join as join12 } from "node:path";
+// ../dashboard/backend/src/services/weeklyScheduleService.ts
+var weeklyScheduleService_exports = {};
+__export(weeklyScheduleService_exports, {
+  findWeeklyEngine: () => findWeeklyEngine,
+  latestWeeklySlot: () => latestWeeklySlot,
+  retireLegacyWeeklyAgents: () => retireLegacyWeeklyAgents,
+  startWeeklySchedule: () => startWeeklySchedule,
+  weeklyEngineCandidates: () => weeklyEngineCandidates,
+  weeklyHomeDir: () => weeklyHomeDir,
+  weeklyRunDecision: () => weeklyRunDecision
+});
 import { execFile as execFile5 } from "node:child_process";
+import { appendFile, mkdir as mkdir4, readdir as readdir3, readFile as readFile9, stat as stat2, unlink as unlink3, writeFile as writeFile5 } from "node:fs/promises";
+import { homedir as homedir4 } from "node:os";
+import { dirname as dirname4, join as join12, resolve as resolve4 } from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
 import { promisify as promisify7 } from "node:util";
+function weeklyHomeDir() {
+  return process.env.WEEKLY_HOME ?? join12(homedir4(), ".weekly");
+}
+function latestWeeklySlot(now, schedule) {
+  const slot = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getDay() - schedule.weekday + 7) % 7, schedule.hour, schedule.minute);
+  if (slot > now) slot.setDate(slot.getDate() - 7);
+  return slot;
+}
+function weeklyRunDecision(now, schedule, handled) {
+  if (!schedule.enabled) return { run: false, record: null };
+  const slot = latestWeeklySlot(now, schedule).toISOString();
+  if (handled === null) return { run: false, record: slot };
+  return handled < slot ? { run: true, record: slot } : { run: false, record: null };
+}
+function weeklyEngineCandidates() {
+  const here = dirname4(fileURLToPath2(import.meta.url));
+  return [process.env.SUGO_WEEKLY_ENGINE, resolve4(here, "../weekly"), resolve4(here, "../../../../sugo/weekly")].filter((path) => Boolean(path));
+}
+async function findWeeklyEngine(candidates = weeklyEngineCandidates()) {
+  for (const candidate of candidates) {
+    try {
+      await stat2(join12(candidate, "run.mjs"));
+      return candidate;
+    } catch {
+    }
+  }
+  return null;
+}
+async function retireLegacyWeeklyAgents(home = homedir4()) {
+  const agents = join12(home, "Library", "LaunchAgents");
+  let names;
+  try {
+    names = await readdir3(agents);
+  } catch {
+    return [];
+  }
+  const legacy = names.filter((name) => /^com\..+\.weekly-ai-report(-server)?\.plist$/.test(name));
+  for (const name of legacy) {
+    const path = join12(agents, name);
+    await execFileAsync3("launchctl", ["bootout", `gui/${process.getuid?.() ?? 0}`, path]).catch(() => void 0);
+    await unlink3(path);
+  }
+  return legacy;
+}
+async function readSchedule(configPath) {
+  try {
+    const schedule = JSON.parse(await readFile9(configPath, "utf8")).schedule ?? {};
+    return { enabled: schedule.enabled ?? false, weekday: schedule.weekday ?? 5, hour: schedule.hour ?? 17, minute: schedule.minute ?? 0 };
+  } catch {
+    return { enabled: false, weekday: 5, hour: 17, minute: 0 };
+  }
+}
+function startWeeklySchedule(options = {}) {
+  const weeklyHome = options.weeklyHome ?? weeklyHomeDir();
+  const handledPath = join12(weeklyHome, "last-scheduled-slot");
+  const logPath = join12(weeklyHome, "scheduled-run.log");
+  const engine = options.engine ?? (() => findWeeklyEngine());
+  const build = options.build ?? ((path) => execFileAsync3(process.execPath, [join12(path, "run.mjs"), "build"], { cwd: path, timeout: 30 * 6e4, maxBuffer: 16 * 1024 * 1024 }));
+  let running = false;
+  let stopped = false;
+  const tick = async () => {
+    if (running || stopped) return;
+    running = true;
+    try {
+      const handled = await readFile9(handledPath, "utf8").then((value) => value.trim() || null, () => null);
+      const decision = weeklyRunDecision(/* @__PURE__ */ new Date(), await readSchedule(join12(weeklyHome, "config.json")), handled);
+      if (decision.record === null) return;
+      await mkdir4(weeklyHome, { recursive: true });
+      await writeFile5(handledPath, `${decision.record}
+`, "utf8");
+      if (!decision.run) return;
+      const path = await engine();
+      if (!path) throw new Error("weekly engine not found");
+      const out = await build(path);
+      await appendFile(logPath, `[${(/* @__PURE__ */ new Date()).toISOString()}] ok ${decision.record}
+${out.stdout.slice(-2e3)}
+`);
+    } catch (error2) {
+      const message2 = error2 instanceof Error ? error2.message : String(error2);
+      console.error("[dashboard] weekly scheduled run failed:", message2);
+      await appendFile(logPath, `[${(/* @__PURE__ */ new Date()).toISOString()}] failed ${message2.slice(0, 2e3)}
+`).catch(() => void 0);
+    } finally {
+      running = false;
+    }
+  };
+  const timer = setInterval(() => {
+    void tick();
+  }, options.intervalMs ?? 6e4);
+  timer.unref?.();
+  void retireLegacyWeeklyAgents(options.home).then((retired) => {
+    if (retired.length > 0) console.log(`[dashboard] retired weekly LaunchAgents: ${retired.join(", ")}`);
+  }).catch((error2) => console.error("[dashboard] weekly LaunchAgent cleanup failed:", error2 instanceof Error ? error2.message : error2));
+  void tick();
+  return () => {
+    stopped = true;
+    clearInterval(timer);
+  };
+}
+var execFileAsync3;
+var init_weeklyScheduleService = __esm({
+  "../dashboard/backend/src/services/weeklyScheduleService.ts"() {
+    "use strict";
+    execFileAsync3 = promisify7(execFile5);
+  }
+});
+
+// ../dashboard/backend/src/services/weeklySettingsService.ts
+import { chmod, mkdir as mkdir5, readFile as readFile10, stat as stat3, writeFile as writeFile6 } from "node:fs/promises";
+import { join as join13 } from "node:path";
 async function exists(path) {
   try {
-    await stat2(path);
+    await stat3(path);
     return true;
   } catch {
     return false;
@@ -90130,23 +90251,17 @@ function normalizeConfig(config2) {
 }
 async function readStoredConfig(path) {
   try {
-    return JSON.parse(await readFile9(path, "utf8"));
+    return JSON.parse(await readFile10(path, "utf8"));
   } catch {
     return null;
   }
 }
 function createWeeklySettingsService(options = {}) {
-  const weeklyHome = options.weeklyHome ?? join12(homedir4(), ".weekly");
-  const configPath = join12(weeklyHome, "config.json");
-  const tokenPath = join12(weeklyHome, "claude.token");
-  const setupMarkerPath = join12(weeklyHome, "setup-complete");
-  const enginePath = join12(weeklyHome, "app");
-  const defaultApplySchedule = async (settings) => {
-    if (!await exists(enginePath)) throw new Error("weekly_engine_unavailable");
-    const args = settings.enabled ? ["-m", "weekly_report.install", "on", "--weekday", String(settings.weekday), "--time", `${String(settings.hour).padStart(2, "0")}:${String(settings.minute).padStart(2, "0")}`, "--model", settings.model === "default" ? "" : settings.model] : ["-m", "weekly_report.install", "off"];
-    await execFileAsync3("python3", args, { cwd: enginePath, timeout: 3e4 });
-  };
-  const applySchedule = options.applySchedule ?? defaultApplySchedule;
+  const findEngine = options.findEngine ?? (() => findWeeklyEngine());
+  const weeklyHome = options.weeklyHome ?? weeklyHomeDir();
+  const configPath = join13(weeklyHome, "config.json");
+  const tokenPath = join13(weeklyHome, "claude.token");
+  const setupMarkerPath = join13(weeklyHome, "setup-complete");
   return {
     async get() {
       const stored = await readStoredConfig(configPath);
@@ -90154,11 +90269,11 @@ function createWeeklySettingsService(options = {}) {
         ...normalizeConfig(stored ?? {}),
         configured: stored !== null && await exists(setupMarkerPath),
         tokenConfigured: await exists(tokenPath),
-        engineAvailable: await exists(enginePath)
+        engineAvailable: await findEngine() !== null
       };
     },
     async save(settings, token) {
-      await mkdir4(weeklyHome, { recursive: true });
+      await mkdir5(weeklyHome, { recursive: true });
       const previous = await readStoredConfig(configPath) ?? {};
       const next = {
         ...previous,
@@ -90167,33 +90282,32 @@ function createWeeklySettingsService(options = {}) {
       };
       if (settings.model === "default") delete next.model;
       else next.model = settings.model;
-      await writeFile5(configPath, `${JSON.stringify(next, null, 2)}
+      await writeFile6(configPath, `${JSON.stringify(next, null, 2)}
 `, { encoding: "utf8", mode: 384 });
       await chmod(configPath, 384);
       if (token?.trim()) {
-        await writeFile5(tokenPath, `${token.trim()}
+        await writeFile6(tokenPath, `${token.trim()}
 `, { encoding: "utf8", mode: 384 });
         await chmod(tokenPath, 384);
       }
-      await writeFile5(setupMarkerPath, "configured-by-sugo-console\n", { encoding: "utf8", mode: 384 });
-      await applySchedule(settings);
+      await writeFile6(setupMarkerPath, "configured-by-sugo-console\n", { encoding: "utf8", mode: 384 });
       return this.get();
     },
     async deleteToken() {
-      const { unlink: unlink3 } = await import("node:fs/promises");
+      const { unlink: unlink4 } = await import("node:fs/promises");
       try {
-        await unlink3(tokenPath);
+        await unlink4(tokenPath);
       } catch (error2) {
         if (error2.code !== "ENOENT") throw error2;
       }
     }
   };
 }
-var execFileAsync3, defaults;
+var defaults;
 var init_weeklySettingsService = __esm({
   "../dashboard/backend/src/services/weeklySettingsService.ts"() {
     "use strict";
-    execFileAsync3 = promisify7(execFile5);
+    init_weeklyScheduleService();
     defaults = {
       enabled: true,
       weekday: 5,
@@ -90210,8 +90324,8 @@ var index_exports = {};
 __export(index_exports, {
   createApp: () => createApp
 });
-import { fileURLToPath as fileURLToPath2, pathToFileURL } from "node:url";
-import { dirname as dirname5, join as join13 } from "node:path";
+import { fileURLToPath as fileURLToPath3, pathToFileURL } from "node:url";
+import { dirname as dirname5, join as join14 } from "node:path";
 function unconfiguredVerifyJwt() {
   return async () => {
     throw new Error("OIDC_JWKS_URI not configured");
@@ -90303,7 +90417,7 @@ async function createApp(dbOverrideOrOptions) {
   if (staticDir2) {
     app2.use(import_express21.default.static(staticDir2));
     app2.get(/^\/(?!api\/|health$).*/, (_req, res) => {
-      res.sendFile(join13(staticDir2, "index.html"));
+      res.sendFile(join14(staticDir2, "index.html"));
     });
   }
   app2.use(errorMiddleware);
@@ -90363,8 +90477,8 @@ var init_index = __esm({
     init_asyncHandler();
     init_contextAutoRefreshService();
     init_weeklySettingsService();
-    __dirname2 = dirname5(fileURLToPath2(import.meta.url));
-    pkg = "0.41.4" ? { version: "0.41.4" } : JSON.parse(readFileSync(join13(__dirname2, "..", "package.json"), "utf8"));
+    __dirname2 = dirname5(fileURLToPath3(import.meta.url));
+    pkg = "0.42.0" ? { version: "0.42.0" } : JSON.parse(readFileSync(join14(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90376,11 +90490,11 @@ var localBootstrap_exports = {};
 __export(localBootstrap_exports, {
   bootstrapLocalDashboard: () => bootstrapLocalDashboard
 });
-import { chmod as chmod2, mkdir as mkdir5, readFile as readFile10, rename as rename2, writeFile as writeFile6 } from "node:fs/promises";
+import { chmod as chmod2, mkdir as mkdir6, readFile as readFile11, rename as rename2, writeFile as writeFile7 } from "node:fs/promises";
 import { dirname as dirname6 } from "node:path";
 async function readSettings(settingsPath) {
   try {
-    return JSON.parse(await readFile10(settingsPath, "utf8"));
+    return JSON.parse(await readFile11(settingsPath, "utf8"));
   } catch {
     return {};
   }
@@ -90398,9 +90512,9 @@ async function bootstrapLocalDashboard(db2, input) {
     ...settings,
     dashboard: { ...dashboard, enabled: true, apiUrl: input.apiUrl, userId: input.userId, apiToken }
   };
-  await mkdir5(dirname6(input.settingsPath), { recursive: true });
+  await mkdir6(dirname6(input.settingsPath), { recursive: true });
   const tempPath = `${input.settingsPath}.tmp-${process.pid}`;
-  await writeFile6(tempPath, `${JSON.stringify(next, null, 2)}
+  await writeFile7(tempPath, `${JSON.stringify(next, null, 2)}
 `, { mode: 384 });
   await rename2(tempPath, input.settingsPath);
   await chmod2(input.settingsPath, 384);
@@ -90416,10 +90530,10 @@ var init_localBootstrap = __esm({
 
 // ../dashboard/backend/src/standalone.ts
 import { randomBytes as randomBytes6 } from "node:crypto";
-import { chmod as chmod3, mkdir as mkdir6, readFile as readFile11, rm as rm3, writeFile as writeFile7 } from "node:fs/promises";
+import { chmod as chmod3, mkdir as mkdir7, readFile as readFile12, rm as rm3, writeFile as writeFile8 } from "node:fs/promises";
 import { homedir as homedir5, userInfo } from "node:os";
-import { dirname as dirname7, join as join14 } from "node:path";
-import { fileURLToPath as fileURLToPath3 } from "node:url";
+import { dirname as dirname7, join as join15 } from "node:path";
+import { fileURLToPath as fileURLToPath4 } from "node:url";
 
 // ../dashboard/backend/test/schema.sqlite.sql
 var schema_sqlite_default = "-- SQLite translation of src/db/schema.mysql.sql, used only for local dev/testing.\n-- Must stay behaviorally equivalent: same tables/columns/keys, syntax adapted\n-- (ENUM->TEXT+CHECK, JSON->TEXT, AUTO_INCREMENT->INTEGER PRIMARY KEY AUTOINCREMENT,\n-- TIMESTAMP->TEXT ISO8601, composite PKs as-is since SQLite supports them).\n\nPRAGMA foreign_keys = ON;\n\nCREATE TABLE IF NOT EXISTS sugo_users (\n  id TEXT PRIMARY KEY,\n  display_name TEXT,\n  plugin_version TEXT,\n  version_updated_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspaces (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  name TEXT NOT NULL,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  deleted_at TIMESTAMP NULL DEFAULT NULL,\n  UNIQUE (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_projects (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  workspace_id INTEGER NOT NULL REFERENCES sugo_workspaces(id) ON DELETE CASCADE,\n  project_path TEXT NOT NULL,\n  git_synced INTEGER NOT NULL DEFAULT 0,\n  UNIQUE (workspace_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_tasks (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  project TEXT,\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','archived')),\n  priority TEXT,\n  description TEXT,\n  summary TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  started_at TEXT,\n  completed_at TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_history (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  task_id TEXT,\n  task_title TEXT,\n  summary TEXT,\n  key_decisions TEXT,\n  files_changed TEXT,\n  notes TEXT,\n  estimated_human_hours REAL,\n  user_reported_human_hours REAL,\n  ai_execution_minutes REAL,\n  estimation_basis TEXT,\n  completed_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_memos (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  title TEXT NOT NULL,\n  content_md TEXT NOT NULL,\n  due_date TEXT,\n  archived_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_memos_due ON sugo_schedule_memos(user_id, due_date);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_commitments (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  due_date TEXT,\n  state TEXT NOT NULL DEFAULT 'planned' CHECK (state IN ('planned','active','completed','cancelled')),\n  target TEXT NOT NULL DEFAULT 'custom' CHECK (target IN ('implementation','review','dev','stg','prd','custom')),\n  linked_run_id TEXT,\n  completed_at TEXT,\n  completed_by TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_due ON sugo_schedule_commitments(user_id, due_date);\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_spec ON sugo_schedule_commitments(user_id, workspace_name, spec_id);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  reason TEXT NOT NULL CHECK (reason IN ('deleted','closed')),\n  title TEXT NOT NULL,\n  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  archived_by TEXT NOT NULL,\n  PRIMARY KEY (user_id, workspace_name, spec_id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_specs (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'active',\n  content TEXT,\n  decision_date TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_checkpoints (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  category TEXT NOT NULL DEFAULT 'general',\n  title TEXT NOT NULL,\n  learned_from TEXT,\n  checklist TEXT,\n  applies_to TEXT,\n  checkpoint_date TEXT,\n  expires_at TEXT,\n  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_meta (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  golden_rule TEXT,\n  checkpoints_version INTEGER NOT NULL DEFAULT 0,\n  PRIMARY KEY (user_id, workspace_name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  level TEXT NOT NULL CHECK (level IN ('spec','workstream','task','subtask','step')),\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','blocked','dropped')),\n  depends_on TEXT,\n  parent TEXT,\n  ref TEXT,\n  note TEXT,\n  spec_path TEXT,\n  work_result TEXT,\n  lineage TEXT,\n  manual_status TEXT CHECK (manual_status IS NULL OR manual_status IN ('pending','in_progress','done','blocked','dropped')),\n  manual_by TEXT,\n  manual_at TEXT,\n  pos_x REAL,\n  pos_y REAL,\n  due_date TEXT,\n  project_path TEXT,\n  work_branch TEXT,\n  manual_title TEXT,\n  blocker_response TEXT,\n  blocker_answered_by TEXT,\n  blocker_answered_at TEXT,\n  blocker_context TEXT,\n  runtime_assessment TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  synced_at TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_activity_events (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  ts TEXT NOT NULL,\n  level TEXT NOT NULL DEFAULT 'INFO' CHECK (level IN ('AGENT','INFO','WARN','ERROR','SYSTEM')),\n  agent TEXT CHECK (agent IS NULL OR agent IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  handoff_to TEXT CHECK (handoff_to IS NULL OR handoff_to IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  event_type TEXT NOT NULL DEFAULT 'SYSTEM' CHECK (event_type IN ('EXECUTE','HANDOFF','COMPLETED','SYSTEM')),\n  message TEXT NOT NULL,\n  details TEXT\n);\nCREATE INDEX IF NOT EXISTS idx_activity_user_ws_ts ON sugo_activity_events (user_id, workspace_name, ts);\n\nCREATE TABLE IF NOT EXISTS user_bitbucket_tokens (\n  user_id TEXT PRIMARY KEY,\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS user_git_connections (\n  user_id TEXT NOT NULL,\n  provider TEXT NOT NULL CHECK (provider IN ('github','gitlab','bitbucket_server','aws_codecommit')),\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  credential_profile TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, provider)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_accounts (\n  user_id TEXT NOT NULL,\n  name TEXT NOT NULL,\n  profile TEXT NOT NULL,\n  region TEXT NOT NULL,\n  account_id TEXT NOT NULL,\n  principal_arn TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_snapshots (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  payload TEXT NOT NULL,\n  observed_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_preferences (\n  user_id TEXT NOT NULL PRIMARY KEY,\n  active_account_name TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_refresh_budget (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  day_key TEXT NOT NULL,\n  day_count INTEGER NOT NULL,\n  last_started_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_project_integration_mappings (\n  user_id TEXT NOT NULL,\n  project_path TEXT NOT NULL,\n  selections TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS user_pinpoint_context (user_id TEXT PRIMARY KEY, base_url TEXT NOT NULL, updated_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_pinpoint_snapshots (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, observed_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_context_auto_refresh_runs (user_id TEXT NOT NULL, day_key TEXT NOT NULL, status TEXT NOT NULL, started_at TEXT NOT NULL, completed_at TEXT, error_message TEXT, PRIMARY KEY (user_id, day_key));\n\nCREATE TABLE IF NOT EXISTS user_api_tokens (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  name TEXT,\n  token_hash TEXT NOT NULL UNIQUE,\n  token_hint TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  last_used_at TEXT\n);\n\nCREATE TABLE IF NOT EXISTS sugo_review_artifacts (\n  artifact_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, workspace_name TEXT NOT NULL,\n  task_id TEXT NOT NULL, session_id TEXT NOT NULL, patch_version INTEGER NOT NULL,\n  file_path TEXT NOT NULL, change_type TEXT NOT NULL, content TEXT, diff_text TEXT,\n  unavailable_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS sugo_weekly_reports (\n  user_id TEXT NOT NULL,\n  week_id TEXT NOT NULL,\n  start_date TEXT NOT NULL,\n  end_date TEXT NOT NULL,\n  generated_at TEXT NOT NULL,\n  uploaded_at TEXT NOT NULL,\n  report_json TEXT NOT NULL,\n  PRIMARY KEY (user_id, week_id)\n);\n";
@@ -90428,23 +90542,23 @@ var schema_sqlite_default = "-- SQLite translation of src/db/schema.mysql.sql, u
 var DEFAULT_PORT = 3001;
 var HOST = "127.0.0.1";
 var sugoHome = process.env.SUGO_HOME_OVERRIDE ?? homedir5();
-var sugoDir = join14(sugoHome, ".claude", "sugo");
-var dataDir = join14(sugoDir, "dashboard");
-var secretFile = join14(dataDir, "session-secret");
-var stateFile = join14(dataDir, "server.json");
+var sugoDir = join15(sugoHome, ".claude", "sugo");
+var dataDir = join15(sugoDir, "dashboard");
+var secretFile = join15(dataDir, "session-secret");
+var stateFile = join15(dataDir, "server.json");
 var port = Number(process.env.SUGO_DASHBOARD_PORT ?? DEFAULT_PORT);
-var runtimeDir = dirname7(fileURLToPath3(import.meta.url));
+var runtimeDir = dirname7(fileURLToPath4(import.meta.url));
 var pluginRoot = dirname7(runtimeDir);
-var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join14(runtimeDir, "web");
+var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join15(runtimeDir, "web");
 var userId = process.env.LOCAL_DEV_USER_ID ?? userInfo().username;
 var displayName = process.env.LOCAL_DEV_DISPLAY_NAME ?? userId;
 async function loadOrCreateSecret() {
   try {
-    return (await readFile11(secretFile, "utf8")).trim();
+    return (await readFile12(secretFile, "utf8")).trim();
   } catch {
   }
   const secret = randomBytes6(32).toString("base64");
-  await writeFile7(secretFile, secret, { mode: 384 });
+  await writeFile8(secretFile, secret, { mode: 384 });
   await chmod3(secretFile, 384);
   return secret;
 }
@@ -90454,14 +90568,14 @@ process.on("unhandledRejection", (reason) => {
 process.on("uncaughtException", (err) => {
   console.error("[dashboard] uncaughtException (\uD504\uB85C\uC138\uC2A4 \uC720\uC9C0):", err.message);
 });
-await mkdir6(dataDir, { recursive: true });
+await mkdir7(dataDir, { recursive: true });
 var sessionSecret = await loadOrCreateSecret();
 var apiUrl = `http://localhost:${port}`;
 process.env.SUGO_DASHBOARD_EMBEDDED = "1";
 process.env.HOST = HOST;
 process.env.PORT = String(port);
 process.env.DB_DRIVER = "sqlite";
-process.env.SQLITE_FILE = join14(dataDir, "dashboard.db");
+process.env.SQLITE_FILE = join15(dataDir, "dashboard.db");
 process.env.SESSION_SECRET = sessionSecret;
 process.env.LOCAL_DEV_MODE = "1";
 process.env.LOCAL_DEV_USER_ID = userId;
@@ -90469,21 +90583,25 @@ process.env.LOCAL_DEV_DISPLAY_NAME = displayName;
 process.env.FRONTEND_URL = apiUrl;
 process.env.CORS_ORIGINS = apiUrl;
 process.env.SUGO_DASHBOARD_API_URL = apiUrl;
-process.env.HARNESS_PATH = join14(pluginRoot, "harness-library");
+process.env.HARNESS_PATH = join15(pluginRoot, "harness-library");
 process.env.SKILLS_PATH = pluginRoot;
+process.env.SUGO_WEEKLY_ENGINE = join15(pluginRoot, "weekly");
+process.env.WEEKLY_HOME ??= join15(sugoHome, ".weekly");
 var { createApp: createApp2 } = await Promise.resolve().then(() => (init_index(), index_exports));
 var { bootstrapLocalDashboard: bootstrapLocalDashboard2 } = await Promise.resolve().then(() => (init_localBootstrap(), localBootstrap_exports));
 var { app, db, awsContextClient, pinpointClient } = await createApp2({ staticDir, sqliteSchema: schema_sqlite_default });
 var { startContextAutoRefresh: startContextAutoRefresh2 } = await Promise.resolve().then(() => (init_contextAutoRefreshService(), contextAutoRefreshService_exports));
+var { startWeeklySchedule: startWeeklySchedule2 } = await Promise.resolve().then(() => (init_weeklyScheduleService(), weeklyScheduleService_exports));
 await bootstrapLocalDashboard2(db, {
   userId,
   displayName,
   apiUrl,
-  settingsPath: join14(sugoDir, "settings.json")
+  settingsPath: join15(sugoDir, "settings.json")
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
+var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile7(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.41.4", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.42.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });
@@ -90493,6 +90611,7 @@ server.on("error", (err) => {
 });
 async function shutdown() {
   stopContextAutoRefresh();
+  stopWeeklySchedule();
   server.close();
   await db.close();
   await rm3(stateFile, { force: true });

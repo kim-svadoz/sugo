@@ -6,3 +6,7 @@ node_modules/
 # 절대경로가 박혀 있어 다른 PC에서 의미도 없다. 하네스 규칙 자체는 .claude/rules/로
 # 따로 나가므로 추적된다.
 /sugo/
+
+# Python 바이트코드(Weekly 엔진·커밋 본문 훅)
+__pycache__/
+.pytest_cache/

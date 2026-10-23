@@ -4,6 +4,13 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.0 / Console 0.42.0] - 2026-10-23
+
+- Weekly 엔진을 Sugo 플러그인에 내장합니다. 별도 weekly 플러그인 없이 Console이 Preferences의 일정대로 주간 보고서를 만들고, `/sugo:weekly`로 바로 만들 수도 있습니다. Python 3.12 이상이 필요합니다.
+- 예약은 Console이 실행합니다. Console이 꺼져 있던 동안 지난 예약은 다음에 켜질 때 한 번 만듭니다. 기존 weekly 플러그인의 LaunchAgent는 Console이 시작할 때 정리하며, `~/.weekly`의 설정·보고서·토큰은 그대로 씁니다. 기존 weekly 플러그인은 `claude plugin uninstall weekly@sugo-marketplace`로 지웁니다.
+- 커밋 본문 확인 훅을 Sugo로 옮깁니다. Claude가 본문 없이 커밋하면 목적을 쓰게 합니다.
+- Home 작업 흐름의 단계 순서를 실제 파이프라인과 같은 검토 → 사용자 확인 → 문서 작업으로 고칩니다.
+
 ## [Plugin 0.50.4 / Console 0.41.4] - 2026-10-23
 
 - 첫 완료 전인 진행 중 기능도 Workspaces 레인에 일정 제목과 FEAT 차수로 표시합니다. 이전에는 `이력 연결 안 됨`으로 나왔습니다.

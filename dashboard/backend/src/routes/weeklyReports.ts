@@ -17,7 +17,7 @@ const reportSchema = z.object({
   report: z.record(z.unknown()),
 });
 
-// weekly 플러그인이 플러그인 토큰으로 올리고, 웹 세션이 본인 것만 읽는다.
+// Sugo 내장 Weekly 엔진이 플러그인 토큰으로 올리고, 웹 세션이 본인 것만 읽는다.
 // 두 방향 모두 신원은 토큰에서만 정해지므로 다른 사용자의 보고서는 보이지 않는다.
 const settingsSchema = z.object({
   enabled: z.boolean(),

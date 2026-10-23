@@ -35,6 +35,9 @@ describe("Console 정보 구조", () => {
     expect(home).not.toContain("<WorkRoom");
     expect(workBoard).not.toContain("Canvas");
     for (const label of ["코드 작성", "테스트", "검토", "문서 작업", "사용자 확인", "커밋 출고"]) expect(workBoard).toContain(`label: "${label}"`);
+    // 실제 파이프라인 순서: 검토 → 사용자 확인 → 문서 작업.
+    expect(workBoard.indexOf('label: "검토"')).toBeLessThan(workBoard.indexOf('label: "사용자 확인"'));
+    expect(workBoard.indexOf('label: "사용자 확인"')).toBeLessThan(workBoard.indexOf('label: "문서 작업"'));
     expect(workBoard).toContain('label: "SPEC 작성"');
     expect(workBoard).toContain("grid-cols-8");
     expect(workBoard).toContain("xl:grid-cols-[minmax(0,6fr)_220px]");

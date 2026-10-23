@@ -1,10 +1,6 @@
 import { chmod, mkdir, readFile, stat, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { dirname, join } from "node:path";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-
-const execFileAsync = promisify(execFile);
+import { join } from "node:path";
+import { findWeeklyEngine, weeklyHomeDir } from "./weeklyScheduleService.js";
 
 export type WeeklyModel = "default" | "sonnet" | "opus";
 
@@ -30,9 +26,10 @@ interface StoredConfig {
   [key: string]: unknown;
 }
 
+/** 예약 실행은 Console 타이머(weeklyScheduleService)가 config.json을 읽어 처리한다. 저장만 하면 다음 확인부터 적용된다. */
 export interface WeeklySettingsServiceOptions {
   weeklyHome?: string;
-  applySchedule?: (settings: WeeklySettings) => Promise<void>;
+  findEngine?: () => Promise<string | null>;
 }
 
 const defaults: WeeklySettings = {
@@ -66,20 +63,12 @@ async function readStoredConfig(path: string): Promise<StoredConfig | null> {
 }
 
 export function createWeeklySettingsService(options: WeeklySettingsServiceOptions = {}) {
-  const weeklyHome = options.weeklyHome ?? join(homedir(), ".weekly");
+  const findEngine = options.findEngine ?? (() => findWeeklyEngine());
+  const weeklyHome = options.weeklyHome ?? weeklyHomeDir();
   const configPath = join(weeklyHome, "config.json");
   const tokenPath = join(weeklyHome, "claude.token");
   const setupMarkerPath = join(weeklyHome, "setup-complete");
-  const enginePath = join(weeklyHome, "app");
 
-  const defaultApplySchedule = async (settings: WeeklySettings) => {
-    if (!(await exists(enginePath))) throw new Error("weekly_engine_unavailable");
-    const args = settings.enabled
-      ? ["-m", "weekly_report.install", "on", "--weekday", String(settings.weekday), "--time", `${String(settings.hour).padStart(2, "0")}:${String(settings.minute).padStart(2, "0")}`, "--model", settings.model === "default" ? "" : settings.model]
-      : ["-m", "weekly_report.install", "off"];
-    await execFileAsync("python3", args, { cwd: enginePath, timeout: 30_000 });
-  };
-  const applySchedule = options.applySchedule ?? defaultApplySchedule;
 
   return {
     async get(): Promise<WeeklySettingsView> {
@@ -88,7 +77,7 @@ export function createWeeklySettingsService(options: WeeklySettingsServiceOption
         ...normalizeConfig(stored ?? {}),
         configured: stored !== null && await exists(setupMarkerPath),
         tokenConfigured: await exists(tokenPath),
-        engineAvailable: await exists(enginePath),
+        engineAvailable: (await findEngine()) !== null,
       };
     },
 
@@ -109,7 +98,6 @@ export function createWeeklySettingsService(options: WeeklySettingsServiceOption
         await chmod(tokenPath, 0o600);
       }
       await writeFile(setupMarkerPath, "configured-by-sugo-console\n", { encoding: "utf8", mode: 0o600 });
-      await applySchedule(settings);
       return this.get();
     },
 
