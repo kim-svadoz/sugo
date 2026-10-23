@@ -22,10 +22,12 @@ describe("Playbook product lifecycle", () => {
     expect(source).toContain("코드 작성이 끝난 시점과 사용자가 기능을 받는 시점");
   });
 
-  it("실제 개발 파이프라인과 단계별 신뢰 장치를 함께 설명한다", () => {
-    for (const step of ["프로젝트 파악", "요구사항 확정", "개발 준비", "기준 상태 확인", "계약 테스트", "구현", "테스트", "독립 검토와 사용자 확인", "문서와 커밋"]) {
+  it("Schedule SPEC에서 시작하는 최신 FEAT 파이프라인과 단계별 신뢰 장치를 설명한다", () => {
+    for (const step of ["개발 일정 작성", "SPEC 확정", "FEAT 준비", "계약 테스트", "구현", "테스트", "독립 검토", "사용자 확인", "문서와 커밋"]) {
       expect(source).toContain(`name: "${step}"`);
     }
+    expect(source).toContain("프로젝트 파악 · 요구사항 확정 · 기준 상태 확인");
+    expect(source).toContain("메인 에이전트가 PRD와 요구사항을 정리");
     expect(source).toContain("저장된 실행 증거와 실제 결과를 비교합니다.");
     expect(source).toContain("통과 조건이 없으면 다음 단계로 이동하지 않습니다.");
     expect(source).toContain("테스트나 검토에서 문제가 나오면 구현 단계로 돌아갑니다.");
@@ -34,6 +36,13 @@ describe("Playbook product lifecycle", () => {
     }
     expect(source).toContain("각 단계는 별도의 AI 에이전트가 실행합니다.");
     expect(source).toContain("작업 결과와 실행 증거를 다음 에이전트에 인계합니다.");
+  });
+
+  it("완료 결과에서 PATCH를 시작하거나 기존 작업 기록을 이어 붙이는 방법을 안내한다", () => {
+    expect(source).toContain("새 Patch 시작");
+    expect(source).toContain("작업 기록 이어붙이기");
+    expect(source).toContain("이미 끝낸 변경을 같은 개발 이력에 연결");
+    expect(source).toContain("일정 관리");
   });
 
   it("Console 기능이 답하는 운영 질문과 효과를 설명한다", () => {

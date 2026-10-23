@@ -31,6 +31,7 @@ import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { findScheduleReviewTarget } from "../lib/scheduleReviewTarget.js";
 import { PageHeading } from "../components/PageHeading.js";
+import { latestDevelopmentPreview } from "../lib/scheduleDevelopmentPreview.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -733,6 +734,7 @@ export function SchedulePage() {
                     {dayChips.map((commitment) => {
                       const style = scheduleCardStyle(colorOf(commitment.workspace_name));
                       const spec = specForCommitment(commitment);
+                      const preview = spec ? latestDevelopmentPreview(spec) : null;
                       const explicit = !commitment.id.startsWith("legacy:");
                       return (
                         <div
@@ -754,6 +756,7 @@ export function SchedulePage() {
                               <span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300/75">일정 미리보기</span>
                               <strong className="mt-1.5 block text-[12px] leading-5 text-white">{commitment.title}</strong>
                               <span className="mt-1 block text-[9px] text-slate-500">{commitment.workspace_name} · {commitment.due_date ?? "날짜 미정"}</span>
+                              {preview ? <span className="mt-2 block border-t border-white/10 pt-2"><span className="block font-mono text-[9px] font-bold text-violet-200">최근 작업 · {preview.label}</span><span className="mt-1 block line-clamp-3 text-[10px] font-normal leading-4 text-slate-300">{preview.summary}</span></span> : <span className="mt-2 block border-t border-white/10 pt-2 text-[10px] text-slate-500">아직 완료된 개발 이력이 없습니다.</span>}
                             </span>
                           </button>
                           <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1900px]:hidden">
@@ -1008,6 +1011,7 @@ export function SchedulePage() {
                   >
                     {copied === "patch-attach" ? <Check size={14} /> : <Copy size={14} />} {copied === "patch-attach" ? "복사됨" : "작업 기록 이어붙이기"}
                   </button>
+                  <p className="basis-full text-[10px] leading-4 text-slate-500">이미 끝낸 변경을 최신 개발 이력에 연결합니다.</p>
                 </div>
               )}
               </div>

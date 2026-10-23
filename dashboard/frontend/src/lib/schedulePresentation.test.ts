@@ -198,6 +198,7 @@ describe("schedule presentation", () => {
     expect(source).toContain("후속 개발");
     expect(source).toContain("새 Patch 시작");
     expect(source).toContain("작업 기록 이어붙이기");
+    expect(source).toContain("이미 끝낸 변경을 최신 개발 이력에 연결합니다.");
     expect(canvasPanel).not.toContain("작업 기록 이어붙이기");
     expect(source).toContain("작업 컨텍스트");
     expect(source).toContain("작업 준비");
@@ -206,6 +207,13 @@ describe("schedule presentation", () => {
     expect(source).toContain("AI_WORK_STATUS_TOOL.label");
     expect(tools).toContain('label: "도메인 규칙 관리"');
     expect(tools).toContain('label: "AI 작업 현황"');
+  });
+
+  it("작은 화면의 일정 점은 최신 FEAT/PATCH와 작업 요약을 미리 보여준다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain("latestDevelopmentPreview(spec)");
+    expect(source).toContain("preview.label");
+    expect(source).toContain("preview.summary");
   });
 
   it("Workspaces와 Schedule은 같은 도구 명칭과 설명 정본을 사용한다", () => {

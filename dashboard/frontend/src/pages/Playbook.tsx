@@ -28,15 +28,15 @@ const STAGES: Stage[] = [
 ];
 
 const PIPELINE_STEPS: PipelineStep[] = [
-  { name: "프로젝트 파악", owner: "INIT → SCAN", proof: "저장소 구조와 실행 환경을 확인합니다." },
-  { name: "요구사항 확정", owner: "CLARIFY → PRD", proof: "질문으로 범위와 확인 기준을 확정합니다." },
-  { name: "개발 준비", owner: "JIRA(선택) → READY", proof: "작업 경계와 실행 순서를 확정합니다." },
-  { name: "기준 상태 확인", owner: "BASELINE", proof: "변경 전 테스트 결과를 기록합니다." },
-  { name: "계약 테스트", owner: "CONTRACT → CODE_READY", proof: "구현 전에 실패하는 계약을 먼저 확인합니다." },
-  { name: "구현", owner: "CODE_RUNNING → CODE_DONE", proof: "기능 요구사항별 변경과 분석 결과를 기록합니다." },
-  { name: "테스트", owner: "TEST_RUNNING → TEST_DONE", proof: "새 테스트와 회귀 테스트의 실제 결과를 대조합니다." },
-  { name: "독립 검토와 사용자 확인", owner: "REVIEW_RUNNING", proof: "명세, 계약, 실행 결과, 남은 위험을 확인합니다." },
-  { name: "문서와 커밋", owner: "DOCS → COMMIT → DONE", proof: "검증된 동작과 기록을 함께 보존합니다." },
+  { name: "개발 일정 작성", owner: "SCHEDULE", proof: "사람이 목표일, 저장소, 초안과 기획 자료를 한 SPEC 일정에 모읍니다." },
+  { name: "SPEC 확정", owner: "SPEC WRITER", proof: "AI와 대화하며 범위, 완료 기준과 미결정을 구현 가능한 명세로 확정합니다." },
+  { name: "FEAT 준비", owner: "INIT → READY", proof: "메인 에이전트가 PRD와 요구사항을 정리하고 프로젝트 파악 · 요구사항 확정 · 기준 상태 확인을 수행합니다." },
+  { name: "계약 테스트", owner: "CONTRACT → CODE READY", proof: "구현 전에 기대 동작을 테스트로 만들고 실제 실패를 확인합니다." },
+  { name: "구현", owner: "CODE RUNNING → DONE", proof: "구현 에이전트가 요구사항별 변경과 분석 결과를 기록합니다." },
+  { name: "테스트", owner: "TEST RUNNING → DONE", proof: "테스트 에이전트가 새 테스트와 전체 회귀 결과를 대조합니다." },
+  { name: "독립 검토", owner: "REVIEW RUNNING", proof: "검토 에이전트가 명세, 계약, 실행 결과와 남은 위험을 확인합니다." },
+  { name: "사용자 확인", owner: "확인 · 수정 요청", proof: "사람이 검토 보고서를 보고 완료하거나 같은 작업에서 수정을 이어갑니다." },
+  { name: "문서와 커밋", owner: "DOCS → COMMIT → DONE", proof: "확인된 동작, 설명과 개발 이력을 함께 보존합니다." },
 ];
 
 const CONSOLE_CAPABILITIES: ConsoleCapability[] = [
@@ -201,6 +201,10 @@ function Lineage() {
         {history.map((item, index) => <div key={item} className="relative py-3"><span className={cn("absolute -left-[29px] top-4.5 h-2 w-2 rounded-full ring-4 ring-[var(--color-surface)]", index ? "bg-violet-400" : "bg-cyan-400")} /><div className="text-[11px] font-semibold text-[var(--color-text-dim)]">{index ? `후속 변경 ${index}` : "첫 개발"}</div><div className="mt-1 text-[15px] text-[var(--color-text-bright)]">{item}</div><div className="mt-1.5 text-[13px] text-[var(--color-text-dim)]">작업 요약 · 기능 요구사항 · 검증 결과 · 변경 파일을 별도로 보존합니다.</div></div>)}
       </div>
       <div>
+        <div className="mb-5 rounded-lg border border-cyan-400/20 bg-cyan-400/[0.05] px-4 py-3">
+          <div className="text-[13px] font-semibold text-cyan-200">일정 관리에서 이어가기</div>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--color-text-muted)]"><b className="text-[var(--color-text-bright)]">새 Patch 시작</b>은 완료 결과에서 새 후속 개발을 시작합니다. <b className="text-[var(--color-text-bright)]">작업 기록 이어붙이기</b>는 이미 끝낸 변경을 같은 개발 이력에 연결할 때 사용합니다.</p>
+        </div>
         <Fact label="완료 결과 보존" value="첫 개발 결과는 후속 변경의 진행 상태로 바뀌지 않습니다." />
         <Fact label="차수별 비교" value="각 변경의 의도와 구현 결과를 따로 열어 비교합니다." />
         <Fact label="변경 취소" value="최신 변경을 취소해도 직전 완료 상태와 취소한 시도 기록을 보존합니다." />

@@ -72,7 +72,6 @@ export function Skills() {
     });
   }, [skills, selectedAgent, catalogView, q]);
 
-  const selectedAgentMeta = agents.find(agent => agent.id === selectedAgent);
   const html = useMemo(() => detail ? marked.parse(visibleMarkdown(detail), { async: false }) as string : "", [detail]);
   const empty = loaded && agents.length === 0 && skills.length === 0;
   const skillCount = skills.filter(skill => skill.kind === "skill").length;
@@ -102,7 +101,7 @@ export function Skills() {
           return <button key={agent.id} onClick={() => setSelectedAgent(active ? "all" : agent.id)} aria-pressed={active} className={cn("flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[12px] transition-all", active ? cn("border-transparent bg-[var(--color-surface-hover)] ring-1", tone.ring, tone.icon) : "border-transparent text-[var(--color-text-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-text)]")}><Icon size={13} /><span>{agentDisplayLabel(agent.id)}</span><span className="font-mono text-[9px] opacity-60">{count}</span></button>;
         })}
       </div>
-      <p className="mt-2 max-w-4xl text-[11px] leading-5 text-[var(--color-text-muted)]">{agentSkillContext(selectedAgent)}{selectedAgentMeta?.description ? ` ${selectedAgentMeta.description}` : ""}</p>
+      <p className="mt-2 max-w-4xl text-[11px] leading-5 text-[var(--color-text-muted)]">{agentSkillContext(selectedAgent)}</p>
     </section>}
 
     <div className="flex flex-wrap items-center gap-3">

@@ -35,4 +35,9 @@ describe("Skills catalog presentation", () => {
     expect(apiSource).toContain('"/api/skills?locale=ko"');
     expect(apiSource).toContain("&locale=ko");
   });
+
+  it("사용자 안내에는 에이전트 원문의 영문 설명을 덧붙이지 않는다", () => {
+    expect(source).not.toContain("selectedAgentMeta?.description");
+    expect(source).toContain("agentSkillContext(selectedAgent)");
+  });
 });
