@@ -20,7 +20,7 @@ describe("Console 정보 구조", () => {
   });
 
   it("작업 레인과 최근 요약 사이에 읽을 수 있는 연결 브리지를 표시한다", () => {
-    expect(sessions).toContain("완료 결과가 아래 요약으로 이어집니다");
+    expect(sessions).toContain("선택한 작업의 완료 기록");
     expect(sessions).toContain("ck-summary-bridge");
     expect(workFloor).not.toContain("작업 결과 요약으로 연결");
   });
@@ -38,8 +38,9 @@ describe("Console 정보 구조", () => {
     expect(workBoard).toContain('label: "SPEC 작성"');
     expect(workBoard).toContain("grid-cols-8");
     expect(workBoard).toContain("xl:grid-cols-[minmax(0,6fr)_220px]");
-    expect(workBoard).toContain("top-[178px]");
-    expect(workBoard).toContain("ck-work-route-dot");
+    expect(workBoard).not.toContain("ck-work-route-dot");
+    expect(workBoard).toContain('label: "오케스트레이터"');
+    expect(workBoard).not.toContain("관련 화면 열기");
     expect(workBoard.match(/하네스 기준/g)?.length).toBe(1);
   });
 

@@ -801,12 +801,11 @@ export function Sessions() {
         <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} /></section>
       )}
       {selected && !isSearchMode && (
-        <div className="pointer-events-none grid h-10 grid-cols-1 lg:grid-cols-10" aria-label="완료 결과가 최근 작업 요약으로 연결됨">
+        <div className="pointer-events-none grid h-9 grid-cols-1 lg:grid-cols-10" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">
           <div className="flex items-center justify-center lg:col-span-3">
-            <div className="ck-summary-bridge ck-summary-flow flex h-8 w-[min(92%,320px)] items-center justify-center gap-2 rounded-b-xl border-x border-b border-cyan-300/20 bg-cyan-300/[0.055] px-4 text-[11px] font-medium text-cyan-100/75 shadow-[0_8px_24px_rgba(34,211,238,0.06)]">
-              <span className="h-px flex-1 border-t border-dashed border-cyan-300/30" />
-              <span>완료 결과가 아래 요약으로 이어집니다</span>
-              <ArrowDown size={14} strokeWidth={1.8} className="shrink-0 text-cyan-300/70" />
+            <div className="ck-summary-bridge flex h-full flex-col items-center justify-center text-cyan-200/65">
+              <span className="h-3 border-l border-dashed border-cyan-300/35" />
+              <span className="flex items-center gap-1.5 text-[10px] font-medium tracking-[0.04em]"><ArrowDown size={11} strokeWidth={1.8} />선택한 작업의 완료 기록</span>
             </div>
           </div>
         </div>
