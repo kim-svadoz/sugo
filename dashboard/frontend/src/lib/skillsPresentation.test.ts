@@ -13,8 +13,11 @@ describe("Skills catalog presentation", () => {
 
   it("스킬 보기에서 공용 스킬과 에이전트 전용 스킬을 구분한다", () => {
     expect(source).toContain('setSelectedAgent("common")');
-    expect(source).toContain("공용 스킬");
-    for (const label of ["구현", "테스트", "검토", "문서"]) expect(source).toContain(`"${label}"`);
+    expect(source).toContain("모든 에이전트");
+    for (const label of ["구현 에이전트", "테스트 에이전트", "검토 에이전트", "문서 에이전트"]) expect(source).toContain(`"${label}"`);
+    expect(source).toContain("이 스킬을 적용하는 주체");
+    expect(source).toContain("agentSkillContext");
+    expect(source).toContain("agentDisplayLabel(skill.agent)");
   });
 
   it("같은 이름의 스킬과 Command 상세를 현재 카탈로그 종류로 구분해 조회한다", () => {
