@@ -111,10 +111,10 @@ export function selectFloorLanes(events: readonly ActivityEvent[], now = Date.no
   const lanes = [...groupByTask(events).entries()]
     .map(([key, group]) => ({ key, name: group.name, taskId: group.taskId, projectPath: group.projectPath, workspace: group.workspace, state: selectFloorState(group.events, now) }))
     .filter((lane) => lane.state.at !== undefined)
-    .sort((a, b) => {
-      const priority = (lane: FloorLane) => lane.state.activity === "waiting" ? 0 : lane.state.live ? 1 : lane.state.activity === "paused" ? 2 : 3;
-      return priority(a) - priority(b) || (b.state.at ?? 0) - (a.state.at ?? 0);
-    });
-  const live = lanes.filter((lane) => lane.state.live);
+    .sort((a, b) => (b.state.at ?? 0) - (a.state.at ?? 0));
+  const live = lanes.filter((lane) => lane.state.live).sort((a, b) => {
+    const priority = (lane: FloorLane) => lane.state.activity === "waiting" ? 0 : 1;
+    return priority(a) - priority(b) || (b.state.at ?? 0) - (a.state.at ?? 0);
+  });
   return (live.length > 0 ? live : lanes.slice(0, 1)).slice(0, max);
 }

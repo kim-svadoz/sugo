@@ -7,7 +7,7 @@ import type { Group, Mesh, MeshStandardMaterial } from "three";
 import type { ScheduledSpec } from "../../api/roadmapMutationsApi.js";
 import { useActivityStream } from "../../hooks/useActivityStream.js";
 import { useWorkspaces } from "../../hooks/useWorkspaces.js";
-import { placeEvents, selectFloorLanes, type FloorStationId } from "../../lib/workFloor.js";
+import { selectFloorLanes } from "../../lib/workFloor.js";
 import { DESK_X, DESK_Z, SPECIALISTS, placeAgents } from "../../lib/workRoom.js";
 import { resolveTaskTitle } from "../../lib/taskTitle.js";
 import { selectWorldState, weekBins, type Specialist } from "../../lib/workWorld.js";
@@ -31,10 +31,19 @@ function zoneAt(x: number, z: number): ZoneId | null {
   return ZONES.find((zone) => Math.abs(x - zone.center[0]) <= zone.size[0] / 2 && Math.abs(z - zone.center[1]) <= zone.size[1] / 2)?.id ?? null;
 }
 const ROLE: Record<Specialist, FigureRole> = { CODE: "code", TEST: "test", REVIEW: "review", DOCS: "docs" };
-const STATION: Record<Specialist, FloorStationId> = { CODE: "code", TEST: "test", REVIEW: "review", DOCS: "docs" };
 const AGENT_LABEL: Record<Specialist, string> = { CODE: "구현", TEST: "테스트", REVIEW: "검토", DOCS: "문서" };
 const POSTIT = ["#fde047", "#f9a8d4", "#86efac", "#7dd3fc", "#fdba74", "#c4b5fd"];
-const DAY = ["월", "화", "수", "목", "금", "토", "일"];
+const ZONE_COPY: Record<ZoneId, { role: string; value: string }> = {
+  spec: { role: "개발을 시작하기 전에 목표와 범위를 SPEC으로 고정합니다.", value: "빠진 요구사항을 구현 전에 드러내 재작업을 줄입니다." },
+  control: { role: "메인 에이전트가 현재 단계와 다음 담당을 판단해 작업을 연결합니다.", value: "결과와 실행 근거가 끊기지 않도록 전체 파이프라인을 통제합니다." },
+  harness: { role: "프로젝트 기술과 버전에 맞는 규칙을 모든 에이전트에게 전달합니다.", value: "팀 기준을 매번 설명하지 않아도 같은 품질로 작업하게 합니다." },
+  work: { role: "구현·테스트·검토·문서 전문 인력이 맡은 단계만 수행합니다.", value: "역할을 분리해 자기검증을 피하고 다음 단계에 증거를 넘깁니다." },
+  confirm: { role: "AI가 대신 결정할 수 없는 선택과 리뷰를 사용자에게 전달합니다.", value: "사람의 판단이 필요한 순간에만 멈추고, 답을 받아 곧바로 이어갑니다." },
+  lounge: { role: "작업이 없는 전문 인력이 다음 호출을 기다리는 공간입니다.", value: "일하는 역할과 쉬는 역할을 한눈에 구분할 수 있습니다." },
+  dock: { role: "검증과 문서화가 끝난 변경을 완료 결과로 묶어 출고합니다.", value: "완료 근거를 다음 PATCH와 Weekly에서 다시 쓸 수 있게 남깁니다." },
+  weekly: { role: "완료 결과와 학습을 주 단위로 묶어 다시 볼 수 있게 보관합니다.", value: "지난 판단과 반복되는 문제를 다음 계획에 재사용합니다." },
+  domains: { role: "프로젝트를 업무 도메인으로 묶어 진행 상태와 규칙을 관리합니다.", value: "여러 저장소도 같은 목적의 작업 흐름으로 한곳에서 추적합니다." },
+};
 
 function M({ color, emissive, intensity = 0.8, opacity }: { color: string; emissive?: string; intensity?: number; opacity?: number }) {
   return <meshStandardMaterial color={color} roughness={0.55} emissive={emissive ?? "#000"} emissiveIntensity={emissive ? intensity : 0} transparent={opacity !== undefined} opacity={opacity ?? 1} />;
@@ -141,6 +150,8 @@ function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: Zo
     <ambientLight intensity={0.55} />
     <hemisphereLight args={["#cbd5e1", "#0f172a", 0.6]} />
     <directionalLight position={[12, 22, 10]} intensity={1.3} castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-18} shadow-camera-right={18} shadow-camera-top={14} shadow-camera-bottom={-14} />
+    {world.live && <pointLight position={[-1, 4, -6.5]} color="#22d3ee" intensity={18} distance={8} decay={2} />}
+    {SPECIALISTS.filter((agent) => working.includes(agent)).map((agent) => <pointLight key={agent} position={[DESK_X[agent], 3.2, DESK_Z]} color="#67e8f9" intensity={15} distance={6} decay={2} />)}
 
     {/* 바닥과 벽 */}
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow><planeGeometry args={[27, 19]} /><M color="#1c2433" /></mesh>
@@ -254,11 +265,9 @@ export default function WorkRoom({ specs, waitingReviews }: { specs: ScheduledSp
   const placement = placeAgents(world);
   const lanes = selectFloorLanes(events, now);
   const bins = useMemo(() => weekBins(specs, new Date(now)), [specs, now]);
-  const lastAt = useMemo(() => { const result: Partial<Record<FloorStationId, number>> = {}; for (const item of placeEvents(events)) result[item.station] ??= item.at; return result; }, [events]);
   const domains = (workspaces ?? []).slice(0, 6);
   const [hover, setHover] = useState<ZoneId | null>(null);
   const [focus, setFocus] = useState<ZoneId | null>(null);
-  const titleOf = (station: FloorStationId) => { const lane = lanes.find((item) => item.state.live && item.state.station === station); return lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, name: lane.name }, specs) : null; };
   const lead = lanes[0] && world.live ? resolveTaskTitle({ workspace: lanes[0].workspace, taskId: lanes[0].taskId, name: lanes[0].name }, specs) : null;
 
 
@@ -267,21 +276,7 @@ export default function WorkRoom({ specs, waitingReviews }: { specs: ScheduledSp
       : world.activeSpecialist ? `${AGENT_LABEL[world.activeSpecialist]} 인력에게 작업을 맡겼습니다`
       : world.mainSpot === "dock" ? (world.mainActivity === "celebrating" ? "작업을 끝내고 출고했습니다" : "커밋할 결과를 포장하는 중") : "작업을 나눠 지시하는 중"
     : world.mainActivity === "waiting" ? `확인할 리뷰 ${waitingReviews}개가 카운터에서 기다립니다`
-    : world.mainSpot === "spec" ? `시작 전 SPEC ${plannedSpecs}개를 살펴보는 중` : "지금 진행 중인 작업은 없습니다";
-
-  function detail(zone: Zone): string[] {
-    switch (zone.id) {
-      case "spec": return [`시작 전 SPEC ${plannedSpecs}개`, `전체 일정 ${specs.length}개`];
-      case "control": return [headline, lead ? `${lead.kind ? `${lead.kind} · ` : ""}${lead.title}` : ""];
-      case "harness": return ["프로젝트 규칙과 체크포인트를 모든 에이전트에게 전달합니다."];
-      case "work": return SPECIALISTS.map((agent) => { const title = titleOf(STATION[agent]); const last = lastAt[STATION[agent]]; return `${AGENT_LABEL[agent]} · ${world.activeSpecialists.includes(agent) ? `작업 중${title ? ` · ${title.title}` : ""}` : "대기"}${last ? ` · 마지막 ${relativeTime(last, now)}` : ""}`; });
-      case "lounge": { const resting = SPECIALISTS.filter((agent) => !world.activeSpecialists.includes(agent)); return [resting.length ? `대기 중 · ${resting.map((agent) => AGENT_LABEL[agent]).join(", ")}` : "모든 인력이 작업 중입니다"]; }
-      case "confirm": return [waitingReviews > 0 ? `확인할 리뷰 ${waitingReviews}개` : "기다리는 확인 요청이 없습니다"];
-      case "dock": return [lastAt.commit ? `마지막 출고 ${relativeTime(lastAt.commit, now)}` : "출고 기록 없음"];
-      case "weekly": return [`이번 주 완료 ${bins.reduce((sum, count) => sum + count, 0)}건`, DAY.map((day, index) => `${day} ${bins[index]}`).join(" · ")];
-      case "domains": return domains.map((domain) => `${domain.name} · 진행 ${domain.activeTaskCount} · 완료 ${domain.roadmap.done}`);
-    }
-  }
+    : world.mainSpot === "spec" ? `시작 전 SPEC ${plannedSpecs}개를 살펴보는 중` : "Sugo가 쉬면서 다음 작업을 기다리고 있습니다";
   const focused = ZONES.find((zone) => zone.id === (focus ?? "control"))!;
   const hovered = hover && !focus ? ZONES.find((zone) => zone.id === hover)! : null;
 
@@ -298,14 +293,11 @@ export default function WorkRoom({ specs, waitingReviews }: { specs: ScheduledSp
         <Canvas shadows dpr={[1, 2]} events={zoomSafeEvents} onPointerMissed={() => setFocus(null)}>
           <Scene data={{ placement, world, plannedSpecs, bins, domains, waitingReviews, working: world.activeSpecialists }} hover={hover} setHover={setHover} onSelect={setFocus} />
         </Canvas>
-        {hovered && <div className="pointer-events-none absolute left-3 top-3 max-w-xs rounded-lg border border-white/10 bg-slate-950/90 px-3 py-2 text-[11px] text-slate-300 shadow-xl"><div className="font-semibold text-white">{hovered.label}</div>{detail(hovered).filter(Boolean).slice(0, 2).map((line) => <div key={line} className="mt-0.5">{line}</div>)}</div>}
+        {hovered && <div className="pointer-events-none absolute left-3 top-3 max-w-xs rounded-lg border border-white/10 bg-slate-950/90 px-3 py-2 text-[11px] text-slate-300 shadow-xl"><div className="font-semibold text-white">{hovered.label}</div><div className="mt-0.5">{ZONE_COPY[hovered.id].role}</div></div>}
       </div>
       <aside className="flex min-h-[320px] flex-col bg-slate-950/55 p-5">
-        <div className="text-[9px] font-semibold tracking-[0.16em] text-slate-500">현재 SUGO 흐름</div>
-        <div className="mt-3 grid grid-cols-3 gap-1.5">{[{ label: "진행", value: world.live ? 1 : 0, tone: "text-cyan-200" }, { label: "확인", value: waitingReviews, tone: "text-violet-200" }, { label: "완료", value: bins.reduce((sum, count) => sum + count, 0), tone: "text-emerald-200" }].map((item) => <div key={item.label} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2"><span className="block text-[9px] text-slate-500">{item.label}</span><strong className={`mt-1 block font-mono text-lg ${item.tone}`}>{item.value}</strong></div>)}</div>
-        <div className="my-5 border-t border-white/[0.07]" />
         <div><div className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: focused.tint }}>{focused.page}</div><h3 className="mt-1 text-[15px] font-semibold text-white">{focused.label}</h3></div>
-        <div className="mt-3 space-y-1.5 text-[12px] leading-5 text-slate-300">{detail(focused).filter(Boolean).map((line) => <p key={line}>{line}</p>)}</div>
+        <div className="mt-5 space-y-5 text-[12px] leading-5"><div><span className="text-[9px] font-semibold tracking-[0.14em] text-slate-500">역할</span><p className="mt-1 text-slate-200">{ZONE_COPY[focused.id].role}</p></div><div><span className="text-[9px] font-semibold tracking-[0.14em] text-slate-500">얻는 효과</span><p className="mt-1 text-slate-300">{ZONE_COPY[focused.id].value}</p></div></div>
         <button type="button" onClick={() => navigate(focused.route)} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-lg border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-[12px] font-semibold text-cyan-100 hover:bg-cyan-300/20">{focused.page} 열기<ArrowRight size={13} /></button>
       </aside>
     </div>

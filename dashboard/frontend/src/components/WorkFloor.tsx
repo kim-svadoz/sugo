@@ -115,9 +115,10 @@ function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: Retur
   return <div className="work-floor__lane">
     <div className="flex min-w-0 items-center gap-2.5">
       <Pin size={15} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
+      <strong className="shrink-0 text-[13px] text-white" title={title.title}>{title.title}</strong>
       {title.kind && <span className="shrink-0 rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[10px] text-violet-200">{title.kind}</span>}
+      {title.summary && <span className="min-w-0 truncate text-[11px] text-slate-400" title={title.summary}>{title.summary}</span>}
       {title.project && <span className="shrink-0 rounded border border-white/[0.08] bg-white/[0.025] px-1.5 py-0.5 font-mono text-[10px] text-slate-400">{title.project}</span>}
-      <strong className="min-w-0 truncate text-[13px] text-white" title={title.title}>{title.title}</strong>
       {!title.linked && <span className="shrink-0 text-[10px] text-amber-300">이력 연결 안 됨</span>}
       <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>
       {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}

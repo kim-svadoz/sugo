@@ -70,12 +70,23 @@ describe("selectFloorLanes", () => {
     expect(lanes.map((lane) => [lane.name, lane.state.station])).toEqual([["검색 필터", "test"], ["로그인 실패 제한", "code"]]);
   });
 
-  it("진행 중인 작업이 없으면 멈춘 작업을 완료 작업보다 먼저 보여준다", () => {
+  it("진행 중인 작업이 없으면 오래전에 멈춘 작업이 아니라 가장 최근 완료 작업을 보여준다", () => {
     const events = [
       event({ ts: "2026-10-22 02:50:00", agent: "MAIN", event_type: "COMPLETED" }),
       event({ ts: "2026-10-21 02:55:00", agent: "CODE", handoff_to: "TEST", details: { task: { id: "t-search", name: "검색 필터" } } }),
     ];
-    expect(selectFloorLanes(events, NOW).map((lane) => lane.name)).toEqual(["검색 필터"]);
+    expect(selectFloorLanes(events, NOW).map((lane) => lane.name)).toEqual(["로그인 실패 제한"]);
+  });
+
+  it("식별자가 없던 옛 이벤트도 마지막 COMPLETED를 직전 파이프라인 작업에 붙인다", () => {
+    const events = [
+      event({ ts: "2026-10-21 01:45:40", details: undefined, agent: "CODE", handoff_to: "TEST", message: "infinite-scroll-discovery 테스트 인계" }),
+      event({ ts: "2026-10-21 01:57:55", details: undefined, agent: "REVIEW", handoff_to: "DOCS", message: "infinite-scroll-discovery 문서화 인계" }),
+      event({ ts: "2026-10-21 01:58:09", details: undefined, agent: "DOCS", handoff_to: "MAIN", message: "infinite-scroll-discovery 완료 처리 인계" }),
+      event({ ts: "2026-10-21 01:58:22", details: undefined, agent: "MAIN", event_type: "COMPLETED", message: "order-scroll 최종 결과" }),
+    ];
+    const [lane] = selectFloorLanes(events, NOW);
+    expect(lane).toMatchObject({ name: "infinite-scroll-discovery", state: { station: "commit", activity: "resting" } });
   });
 
   it("사용자 확인을 기다리는 작업은 진행 중 레인으로 남는다", () => {
