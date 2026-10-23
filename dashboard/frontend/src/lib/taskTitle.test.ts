@@ -31,6 +31,11 @@ describe("resolveTaskTitle", () => {
     expect(resolveTaskTitle({ workspace: "wrong", specId: "spec-search", name: "같은 이름" }, specs)).toMatchObject({ title: "검색 필터 저장", kind: "FEAT", project: "search-api", linked: true });
   });
 
+  it("완료 이력이 없는 진행 중 FEAT는 일정의 현재 작업 ID로 연결한다", () => {
+    const pending = [{ id: "spec-refund", workspace_name: "shop", project_path: "/repos/payment-api", title: "부분 환불 API", focus_task_id: "task-refund", development_history: [] }];
+    expect(resolveTaskTitle({ workspace: "shop", taskId: "task-refund", name: "partial-refund" }, pending)).toEqual({ title: "부분 환불 API", kind: "FEAT", project: "payment-api", summary: null, linked: true });
+  });
+
   it("옛 이벤트 제목이 달라도 완료 시각이 같은 일정 이력에 연결한다", () => {
     const timed = [{ id: "spec-stock", workspace_name: "inventory", project_path: "/repos/inventory", title: "테스트 스펙", development_history: [
       { task_id: "task-stock", version: 1, title: "재고 재주문 수량 계산", summary: "안전재고를 반영했습니다.", completed_at: "2026-10-19T07:25:41.396Z", work_result_path: "/features/inventory-reorder/work-result-patch-v1.md" },

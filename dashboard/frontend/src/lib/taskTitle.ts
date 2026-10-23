@@ -3,6 +3,7 @@ interface TitledSpec {
   workspace_name: string;
   project_path?: string | null;
   title: string;
+  focus_task_id?: string | null;
   development_history?: ReadonlyArray<{ task_id: string; version: number; title: string; summary?: string | null; completed_at?: string | null; work_result_path?: string | null }>;
 }
 
@@ -12,7 +13,7 @@ export interface ResolvedTaskTitle { title: string; kind: string | null; project
 export function resolveTaskTitle(task: { workspace: string; taskId?: string; specId?: string; projectPath?: string; name: string; at?: number }, specs: readonly TitledSpec[]): ResolvedTaskTitle {
   const candidates = specs.filter((candidate) => candidate.workspace_name === task.workspace && (!task.projectPath || candidate.project_path === task.projectPath));
   const spec = specs.find((candidate) => candidate.id === task.specId) ?? candidates.find((candidate) => (candidate.development_history ?? []).some((history) =>
-    task.taskId ? history.task_id === task.taskId : history.title === task.name || (history.work_result_path ?? "").split("/").includes(task.name))) ?? (task.at ? candidates.find((candidate) => (candidate.development_history ?? []).some((history) => history.completed_at && Math.abs(Date.parse(history.completed_at) - task.at!) < 5_000)) : undefined);
+    task.taskId ? history.task_id === task.taskId : history.title === task.name || (history.work_result_path ?? "").split("/").includes(task.name))) ?? (task.taskId ? candidates.find((candidate) => candidate.focus_task_id === task.taskId) : undefined) ?? (task.at ? candidates.find((candidate) => (candidate.development_history ?? []).some((history) => history.completed_at && Math.abs(Date.parse(history.completed_at) - task.at!) < 5_000)) : undefined);
   if (!spec) return { title: task.name, kind: null, project: null, summary: null, linked: false };
   const latestHistory = [...(spec.development_history ?? [])].sort((a, b) => b.version - a.version)[0];
   const latest = latestHistory?.version ?? 0;
