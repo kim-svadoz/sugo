@@ -1,5 +1,5 @@
 import { ArrowRight, BookOpenText, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, GitPullRequest, Library, Star, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNewsFeed, type NewsFeed, type NewsItem } from "../api/newsApi.js";
 import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
@@ -8,6 +8,17 @@ import { useSchedule } from "../hooks/useSchedule.js";
 import { buildHomeBrief } from "../lib/homePresentation.js";
 import { Modal } from "../components/Modal.js";
 import { WorkMap } from "../components/WorkMap.js";
+
+const WorkRoom = lazy(() => import("../components/workroom/WorkRoom.js"));
+
+/** 3D 작업실은 WebGL이 있고 움직임 줄이기를 쓰지 않을 때만 띄운다. 그 밖에는 2D 지도를 쓴다. */
+function canRender3D(): boolean {
+  try {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+    const canvas = document.createElement("canvas");
+    return Boolean(canvas.getContext("webgl2") ?? canvas.getContext("webgl"));
+  } catch { return false; }
+}
 import { buildSevenDayFeed, filterNewsByRegion, type NewsRegion } from "../lib/techBriefPresentation.js";
 import { selectLearningReviewNote, type LearningReviewNote } from "../lib/homeLearningReview.js";
 import { technicalIdentifierParts } from "../lib/technicalIdentifiers.js";
@@ -108,6 +119,7 @@ export function Home() {
   const navigate = useNavigate();
   const [newsFeed, setNewsFeed] = useState<NewsFeed | null>(null);
   const [reviewNoteOpen, setReviewNoteOpen] = useState(false);
+  const [use3D] = useState(canRender3D);
   const brief = useMemo(() => buildHomeBrief(specs ?? []), [specs]);
   const review = useMemo(() => recentReview(specs ?? []), [specs]);
   const point = useMemo(() => selectLearningReviewNote(review.items.map(({ spec, latestHistory }) => ({ spec, history: latestHistory }))), [review.items]);
@@ -131,7 +143,7 @@ export function Home() {
         </div>
         <button type="button" onClick={() => navigate(brief.decisions.length > 0 ? "/schedule" : "/sessions")} className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-300/[0.08] px-4 py-3 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-300/[0.14]">{brief.decisions.length > 0 ? "판단할 작업 열기" : "작업 흐름 보기"}<ArrowRight size={13} /></button>
       </div>
-      <div className="relative mt-4 border-t border-white/[0.06] pt-3"><WorkMap specs={specs ?? []} waitingReviews={brief.decisions.length} /></div>
+      <div className="relative mt-4 border-t border-white/[0.06] pt-3">{use3D ? <Suspense fallback={<WorkMap specs={specs ?? []} waitingReviews={brief.decisions.length} />}><WorkRoom specs={specs ?? []} waitingReviews={brief.decisions.length} /></Suspense> : <WorkMap specs={specs ?? []} waitingReviews={brief.decisions.length} />}</div>
     </section>
 
     <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,.85fr)]">
