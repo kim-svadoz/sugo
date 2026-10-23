@@ -5,9 +5,7 @@ import { useActivityStream, type ActivityEvent } from "../hooks/useActivityStrea
 import { AgentBadge } from "./AgentBadge.js";
 import { formatActivityTime } from "../lib/activityTime.js";
 import { summarizeActivity } from "../lib/activityPresentation.js";
-import { eventTask, groupByTask } from "../lib/workFloor.js";
-import { useSchedule } from "../hooks/useSchedule.js";
-import { resolveTaskTitle } from "../lib/taskTitle.js";
+import { groupByTask } from "../lib/workFloor.js";
 
 /**
  * 실시간 Activity Stream(폴링, SSE 아님).
@@ -42,13 +40,11 @@ function FeedLine({ ev, expanded = false }: { ev: ActivityEvent; expanded?: bool
 /** 전역 콘솔. `workspace`를 주면 그 워크스페이스 로그만 거른다(Sessions 하단 2단이 그렇게 쓴다). */
 export function LiveConsole({ workspace, taskKey }: { workspace?: string; taskKey?: string | null } = {}) {
   const events = useActivityStream(workspace);
-  const { data: specs } = useSchedule();
   const [full, setFull] = useState(false);
   const byWorkspace = workspace ? events.filter((e) => e.workspace_name === workspace) : events;
   const visible = taskKey ? groupByTask(byWorkspace).get(taskKey)?.events.slice().reverse() ?? [] : byWorkspace;
   const summary = summarizeActivity(visible);
-  const task = visible[0] ? eventTask(visible[0]) : null;
-  const title = task ? resolveTaskTitle({ workspace: visible[0].workspace_name, taskId: task.taskId, projectPath: task.projectPath, name: task.name, at: Date.parse(visible[0].ts) }, specs ?? []) : null;
+  const hasCompletedResult = visible.some((event) => event.event_type.toUpperCase() === "COMPLETED");
 
   useEffect(() => {
     if (!full) return;
@@ -82,8 +78,7 @@ export function LiveConsole({ workspace, taskKey }: { workspace?: string; taskKe
             전체 기록
           </button>
         </div>
-        {visible.length === 0 ? <div className="flex min-h-40 items-center justify-center text-[12px] text-[var(--color-text-dim)]">새 작업 신호가 없습니다.</div> : <div className="space-y-3">
-          {title && <div className="flex min-w-0 flex-wrap items-center gap-2"><strong className="truncate text-[11px] text-slate-200">{title.title}</strong>{title.kind && <span className="rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[9px] text-violet-200">{title.kind}</span>}{title.project && <span className="inline-flex items-center gap-1 rounded border border-white/10 px-1.5 py-0.5 font-mono text-[9px] text-slate-400"><span aria-hidden="true">📦</span>{title.project}</span>}</div>}
+        {!hasCompletedResult ? <div className="flex min-h-40 flex-col items-center justify-center px-5 text-center"><span className="relative mb-3 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-300/[0.05]"><span className="absolute h-2 w-2 animate-ping rounded-full bg-cyan-300/30" /><span className="h-2 w-2 rounded-full bg-cyan-300/70" /></span><strong className="text-[12px] text-slate-300">작업 결과를 기다리고 있습니다</strong><span className="mt-1 max-w-xs text-[10px] leading-5 text-[var(--color-text-dim)]">작업이 완료되면 이곳에 결과를 3~4줄로 정리합니다.</span></div> : <div className="space-y-3">
           <ul className="space-y-2 border-l border-emerald-300/20 pl-3">{(summary.result.length > 0 ? summary.result : [visible[0].message]).slice(0, 4).map((line, index) => <li key={`${index}:${line}`} className="flex gap-2 text-[11px] leading-5 text-slate-300"><span className="text-emerald-300/60">•</span><span className="line-clamp-2">{line}</span></li>)}</ul>
         </div>}
       </div>

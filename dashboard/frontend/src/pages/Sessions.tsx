@@ -800,11 +800,11 @@ export function Sessions() {
         <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} /></section>
       )}
       {selected && !isSearchMode && (
-        <div key={selected.name} className="command-detail ck-stage-in grid min-h-[340px] flex-1 grid-cols-1 gap-3 lg:grid-cols-10">
-          <div className="ck-glass flex min-h-[340px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3 lg:col-span-3">
+        <div key={selected.name} className="command-detail ck-stage-in grid min-h-[340px] flex-1 grid-cols-1 items-start gap-3 lg:grid-cols-10">
+          <div className="ck-glass flex min-h-[260px] max-h-[360px] self-start flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3 lg:col-span-3">
             <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
           </div>
-          <div className="ck-glass flex min-h-[340px] flex-col rounded-xl border border-[var(--color-border)] p-3 lg:col-span-7">
+          <div className="ck-glass flex min-h-[340px] max-h-[680px] self-start flex-col rounded-xl border border-[var(--color-border)] p-3 lg:col-span-7">
             {renderInspector(selected)}
           </div>
         </div>

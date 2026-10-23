@@ -93,4 +93,15 @@ describe("Home 학습 리뷰 대상", () => {
     expect(note?.summary).toEqual(["page_size 없이 호출하던 미사용 조회 경로와 LIMITED_RESULT 분기를 제거해, 조회 계약을 page_size 기준 하나로 단순화했다."]);
     expect(note?.summary.join(" ")).not.toMatch(/baseline|gradle|clean check|시뮬레이터/i);
   });
+
+  it("정상 하네스·린트·검증 통과 보고는 학습 변경에서 제외하고 위반만 남긴다", () => {
+    const spec = {
+      id: "review-signal", workspace_name: "sample-workspace", title: "리뷰 신호 정리", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
+      development_history: [{ ...history(1, "2026-10-21T03:00:00.000Z"), work_result: { patchVersion: 1, report: { patchVersion: 1, summary: "sugo_validate verdict는 pass이고 경고는 없다. 린트 규칙을 준수했다. 하네스 규칙과 구현이 불일치해 수정이 필요하다.", designDecisions: [], knownLimitations: [] } } }],
+    } as ScheduledSpec;
+
+    const note = selectLearningReviewNote([{ spec, history: spec.development_history![0] }]);
+
+    expect(note?.summary).toEqual(["하네스 규칙과 구현이 불일치해 수정이 필요하다."]);
+  });
 });

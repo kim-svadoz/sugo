@@ -14,18 +14,21 @@ import { selectWorldState, weekBins, type Specialist } from "../../lib/workWorld
 import { relativeTime } from "../WorkFloor.js";
 import { Minifig, type FigureRole } from "./Minifig.js";
 
-type ZoneId = "spec" | "control" | "harness" | "confirm" | "work" | "lounge" | "dock" | "weekly" | "domains";
+type ZoneId = "spec" | "control" | "harness" | "code" | "test" | "review" | "docs" | "confirm" | "lounge" | "dock" | "weekly" | "domains";
 interface Zone { id: ZoneId; label: string; center: [number, number]; size: [number, number]; tint: string; route: string; page: string }
 const ZONES: Zone[] = [
   { id: "spec", label: "기획실 · SPEC", center: [-9, -5.8], size: [7, 5.4], tint: "#2563eb", route: "/schedule", page: "Schedule" },
   { id: "control", label: "메인 데스크", center: [-1, -6.2], size: [6, 4.6], tint: "#0891b2", route: "/sessions", page: "Workspaces" },
   { id: "harness", label: "Harness 지침", center: [7, -6.6], size: [8, 3.8], tint: "#d97706", route: "/harness", page: "Harness" },
-  { id: "work", label: "전문 인력 작업실", center: [-2, 0.4], size: [16, 4.2], tint: "#0e7490", route: "/skills", page: "Skills" },
+  { id: "code", label: "코드 작성", center: [-8, 0], size: [3.5, 4.2], tint: "#0891b2", route: "/skills", page: "Code Agent" },
+  { id: "test", label: "테스트", center: [-4, 0], size: [3.5, 4.2], tint: "#059669", route: "/skills", page: "Test Agent" },
+  { id: "review", label: "검토", center: [0, 0], size: [3.5, 4.2], tint: "#7c3aed", route: "/skills", page: "Review Agent" },
+  { id: "docs", label: "문서 작업", center: [4, 0], size: [3.5, 4.2], tint: "#db2777", route: "/skills", page: "Docs Agent" },
   { id: "confirm", label: "사용자 확인", center: [10.6, 0.6], size: [4.4, 6], tint: "#7c3aed", route: "/schedule", page: "Schedule" },
   { id: "lounge", label: "대기 라운지", center: [-10, 6.2], size: [6, 4.6], tint: "#64748b", route: "/skills", page: "Skills" },
-  { id: "dock", label: "커밋 출고", center: [-1.4, 6.8], size: [6.4, 3.4], tint: "#ca8a04", route: "/sessions", page: "Workspaces" },
-  { id: "weekly", label: "Weekly", center: [5, 6.8], size: [4.4, 3.4], tint: "#db2777", route: "/weekly", page: "Weekly" },
-  { id: "domains", label: "도메인 현장", center: [10.6, 6.8], size: [4.4, 3.4], tint: "#16a34a", route: "/sessions", page: "Workspaces" },
+  { id: "domains", label: "도메인 현장", center: [-6.5, 6.8], size: [4.6, 3.4], tint: "#16a34a", route: "/sessions", page: "Workspaces" },
+  { id: "weekly", label: "Weekly", center: [0, 6.8], size: [4.4, 3.4], tint: "#db2777", route: "/weekly", page: "Weekly" },
+  { id: "dock", label: "커밋 출고", center: [7.5, 6.8], size: [6.4, 3.4], tint: "#ca8a04", route: "/sessions", page: "Workspaces" },
 ];
 function zoneAt(x: number, z: number): ZoneId | null {
   return ZONES.find((zone) => Math.abs(x - zone.center[0]) <= zone.size[0] / 2 && Math.abs(z - zone.center[1]) <= zone.size[1] / 2)?.id ?? null;
@@ -33,16 +36,19 @@ function zoneAt(x: number, z: number): ZoneId | null {
 const ROLE: Record<Specialist, FigureRole> = { CODE: "code", TEST: "test", REVIEW: "review", DOCS: "docs" };
 const AGENT_LABEL: Record<Specialist, string> = { CODE: "구현", TEST: "테스트", REVIEW: "검토", DOCS: "문서" };
 const POSTIT = ["#fde047", "#f9a8d4", "#86efac", "#7dd3fc", "#fdba74", "#c4b5fd"];
-const ZONE_COPY: Record<ZoneId, { role: string; value: string }> = {
-  spec: { role: "개발을 시작하기 전에 목표와 범위를 SPEC으로 고정합니다.", value: "빠진 요구사항을 구현 전에 드러내 재작업을 줄입니다." },
-  control: { role: "메인 에이전트가 현재 단계와 다음 담당을 판단해 작업을 연결합니다.", value: "결과와 실행 근거가 끊기지 않도록 전체 파이프라인을 통제합니다." },
-  harness: { role: "프로젝트 기술과 버전에 맞는 규칙을 모든 에이전트에게 전달합니다.", value: "팀 기준을 매번 설명하지 않아도 같은 품질로 작업하게 합니다." },
-  work: { role: "구현·테스트·검토·문서 전문 인력이 맡은 단계만 수행합니다.", value: "역할을 분리해 자기검증을 피하고 다음 단계에 증거를 넘깁니다." },
-  confirm: { role: "AI가 대신 결정할 수 없는 선택과 리뷰를 사용자에게 전달합니다.", value: "사람의 판단이 필요한 순간에만 멈추고, 답을 받아 곧바로 이어갑니다." },
-  lounge: { role: "작업이 없는 전문 인력이 다음 호출을 기다리는 공간입니다.", value: "일하는 역할과 쉬는 역할을 한눈에 구분할 수 있습니다." },
-  dock: { role: "검증과 문서화가 끝난 변경을 완료 결과로 묶어 출고합니다.", value: "완료 근거를 다음 PATCH와 Weekly에서 다시 쓸 수 있게 남깁니다." },
-  weekly: { role: "완료 결과와 학습을 주 단위로 묶어 다시 볼 수 있게 보관합니다.", value: "지난 판단과 반복되는 문제를 다음 계획에 재사용합니다." },
-  domains: { role: "프로젝트를 업무 도메인으로 묶어 진행 상태와 규칙을 관리합니다.", value: "여러 저장소도 같은 목적의 작업 흐름으로 한곳에서 추적합니다." },
+const ZONE_COPY: Record<ZoneId, { work: string; output: string; step: string }> = {
+  spec: { step: "01 · 계획", work: "목표·범위·완료 조건을 SPEC으로 고정합니다.", output: "확정된 개발 일정과 구현 가능한 요구사항" },
+  control: { step: "02 · 배정", work: "메인 에이전트가 현재 상태를 읽고 다음 담당을 호출합니다.", output: "담당·순서·증거가 연결된 실행 지시" },
+  harness: { step: "모든 단계", work: "프로젝트 기술과 버전에 맞는 하네스 규칙을 각 담당에게 공급합니다.", output: "자동 검증 가능한 팀 기준" },
+  code: { step: "03 · 코드 작성", work: "코드 에이전트가 SPEC 범위 안에서 제품 코드를 구현합니다.", output: "구현 변경과 테스트 담당에게 넘길 근거" },
+  test: { step: "04 · 테스트", work: "테스트 에이전트가 요구사항과 회귀 동작을 독립적으로 실행합니다.", output: "실패 재현 또는 통과한 실행 증거" },
+  review: { step: "05 · 검토", work: "검토 에이전트가 명세·보안·실행 결과를 대조합니다.", output: "사용자 판단이 필요한 위험과 승인 가능한 결과" },
+  docs: { step: "06 · 문서", work: "문서 에이전트가 검증된 사용자 동작만 기록합니다.", output: "코드와 일치하는 사용·변경 기록" },
+  confirm: { step: "07 · 사용자 확인", work: "AI가 결정할 수 없는 선택만 사용자에게 요청합니다.", output: "승인·수정 지시 또는 다음 단계 결정" },
+  lounge: { step: "대기", work: "호출되지 않은 전문 에이전트가 다음 작업을 기다립니다.", output: "동시 작업과 유휴 역할을 구분하는 상태" },
+  dock: { step: "08 · 완료", work: "검증과 문서화가 끝난 결과를 커밋 단위로 출고합니다.", output: "다음 PATCH와 Weekly가 재사용할 완료 기록" },
+  weekly: { step: "회고", work: "완료 결과와 의미 있는 학습을 주 단위로 묶습니다.", output: "다음 계획에 재사용할 판단과 반복 위험" },
+  domains: { step: "작업 현황", work: "프로젝트를 업무 도메인으로 묶어 현재 작업과 운영 상태를 보여줍니다.", output: "여러 저장소를 목적별로 추적하는 단일 현황" },
 };
 
 function M({ color, emissive, intensity = 0.8, opacity }: { color: string; emissive?: string; intensity?: number; opacity?: number }) {
@@ -88,6 +94,17 @@ function GuideBeam({ to }: { to: [number, number, number] }) {
   const ref = useRef<{ material: { dashOffset: number } } | null>(null);
   useFrame((_, delta) => { if (ref.current) ref.current.material.dashOffset -= delta * 0.9; });
   return <QuadraticBezierLine ref={ref as never} start={[7, 2.1, -8.7]} end={to} mid={[(7 + to[0]) / 2, 4.2, (-8.7 + to[2]) / 2]} color="#f59e0b" lineWidth={1.6} dashed dashSize={0.25} gapSize={0.22} transparent opacity={0.75} />;
+}
+
+/** 제품 작업이 실제로 넘어가는 방향. 하네스 공급선과 색·속도를 분리해 의미를 섞지 않는다. */
+function WorkflowBeam({ from, to, color, label }: { from: [number, number, number]; to: [number, number, number]; color: string; label: string }) {
+  const ref = useRef<{ material: { dashOffset: number } } | null>(null);
+  useFrame((_, delta) => { if (ref.current) ref.current.material.dashOffset -= delta * 1.8; });
+  const middle: [number, number, number] = [(from[0] + to[0]) / 2, 1.2, (from[2] + to[2]) / 2];
+  return <group>
+    <QuadraticBezierLine ref={ref as never} start={from} end={to} mid={middle} color={color} lineWidth={2} dashed dashSize={0.36} gapSize={0.18} transparent opacity={0.72} />
+    <Html position={middle} center className="pointer-events-none select-none"><div className="whitespace-nowrap rounded-full border border-white/10 bg-slate-950/85 px-1.5 py-0.5 text-[9px] font-semibold" style={{ color }}>{label} →</div></Html>
+  </group>;
 }
 
 function Pulse({ children, active }: { children: ReactNode; active: boolean }) {
@@ -183,6 +200,14 @@ function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: Zo
     {[9.6, 10.9].map((x) => <group key={x}><Box p={[x, 1.1, -9.1]} s={[1.2, 2.2, 0.5]} c="#78350f" />{[0.45, 1.1, 1.75].map((y, row) => Array.from({ length: 5 }, (_, book) => <Box key={`${row}-${book}`} p={[x - 0.42 + book * 0.21, y, -9]} s={[0.16, 0.5, 0.36]} c={POSTIT[(book + row + Math.round(x)) % POSTIT.length]} cast={false} />))}</group>)}
     {[...SPECIALISTS.map((agent) => [DESK_X[agent], 1.5, DESK_Z - 0.3] as [number, number, number]), [-1, 1.6, -7.2] as [number, number, number]].map((to, index) => <GuideBeam key={index} to={to} />)}
 
+    {/* 실행 흐름: 청록(배정) → 역할별 단계 → 보라(사용자 확인) → 금색(커밋 출고). */}
+    <WorkflowBeam from={[-1, 1.1, -5.8]} to={[-8, 1.1, -1.1]} color="#22d3ee" label="배정" />
+    <WorkflowBeam from={[-8, 1.05, 0.8]} to={[-4, 1.05, 0.8]} color="#2dd4bf" label="코드" />
+    <WorkflowBeam from={[-4, 1.05, 0.8]} to={[0, 1.05, 0.8]} color="#34d399" label="테스트" />
+    <WorkflowBeam from={[0, 1.05, 0.8]} to={[4, 1.05, 0.8]} color="#a78bfa" label="검토" />
+    <WorkflowBeam from={[4, 1.05, 0.8]} to={[9.8, 1.05, 0.8]} color="#c4b5fd" label="사용자 확인" />
+    <WorkflowBeam from={[10.6, 1.05, 2.5]} to={[7.5, 1.05, 5.2]} color="#fbbf24" label="커밋" />
+
     {/* 전문 인력 책상 */}
     {SPECIALISTS.map((agent) => {
       const x = DESK_X[agent];
@@ -214,14 +239,14 @@ function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: Zo
     <Chair x={12} z={0.6} facing={-Math.PI / 2} />
 
     {/* 커밋 출고 · Weekly 선반 · 도메인 모형 */}
-    <Conveyor shipping={world.mainSpot === "dock"} />
-    <Box p={[5, 1.1, 6.2]} s={[4, 2.2, 0.4]} c="#3f3f46" />{[0.02, 0.48, 0.94, 1.4].map((y) => <Box key={y} p={[5, y + 0.06, 6.75]} s={[4, 0.06, 0.9]} c="#52525b" />)}
-    {bins.map((count, day) => Array.from({ length: Math.min(count, 4) }, (_, level) => <Box key={`${day}-${level}`} p={[3.3 + day * 0.56, 0.3 + level * 0.46, 6.8]} s={[0.42, 0.4, 0.42]} c={POSTIT[(day + level) % POSTIT.length]} />))}
-    <RoundedBox args={[3.8, 0.12, 2.4]} radius={0.04} position={[10.6, 0.74, 6.8]} castShadow receiveShadow><M color="#e2e8f0" /></RoundedBox>
-    {[[9, 6], [12.2, 6], [9, 7.6], [12.2, 7.6]].map(([x, z]) => <Box key={`${x}${z}`} p={[x, 0.37, z]} s={[0.08, 0.74, 0.08]} c="#64748b" />)}
+    <group position={[8.9, 0, 0]}><Conveyor shipping={world.mainSpot === "dock"} /></group>
+    <Box p={[0, 1.1, 6.2]} s={[4, 2.2, 0.4]} c="#3f3f46" />{[0.02, 0.48, 0.94, 1.4].map((y) => <Box key={y} p={[0, y + 0.06, 6.75]} s={[4, 0.06, 0.9]} c="#52525b" />)}
+    {bins.map((count, day) => Array.from({ length: Math.min(count, 4) }, (_, level) => <Box key={`${day}-${level}`} p={[-1.7 + day * 0.56, 0.3 + level * 0.46, 6.8]} s={[0.42, 0.4, 0.42]} c={POSTIT[(day + level) % POSTIT.length]} />))}
+    <RoundedBox args={[3.8, 0.12, 2.4]} radius={0.04} position={[-6.5, 0.74, 6.8]} castShadow receiveShadow><M color="#e2e8f0" /></RoundedBox>
+    {[[-8.1, 6], [-4.9, 6], [-8.1, 7.6], [-4.9, 7.6]].map(([x, z]) => <Box key={`${x}${z}`} p={[x, 0.37, z]} s={[0.08, 0.74, 0.08]} c="#64748b" />)}
     {domains.map((domain, index) => {
       const h = 0.3 + Math.min(1.2, domain.roadmap.total * 0.12);
-      return <group key={domain.name} position={[9.3 + (index % 3) * 1.25, 0.8, 6.3 + Math.floor(index / 3) * 1]}>
+      return <group key={domain.name} position={[-7.8 + (index % 3) * 1.25, 0.8, 6.3 + Math.floor(index / 3) * 1]}>
         <Box p={[0, h / 2, 0]} s={[0.7, h, 0.6]} c={["#0e7490", "#7c3aed", "#b45309", "#047857", "#be185d", "#1d4ed8"][index % 6]} />
         <Box p={[0, h + 0.03, 0]} s={[0.5, 0.06, 0.4]} c={domain.activeTaskCount > 0 ? "#fde047" : "#475569"} e={domain.activeTaskCount > 0 ? "#fde047" : undefined} />
       </group>;
@@ -279,6 +304,8 @@ export default function WorkRoom({ specs, waitingReviews }: { specs: ScheduledSp
     : world.mainSpot === "spec" ? `시작 전 SPEC ${plannedSpecs}개를 살펴보는 중` : "Sugo가 쉬면서 다음 작업을 기다리고 있습니다";
   const focused = ZONES.find((zone) => zone.id === (focus ?? "control"))!;
   const hovered = hover && !focus ? ZONES.find((zone) => zone.id === hover)! : null;
+  const activeZone: ZoneId = world.mainSpot === "desk" ? "control" : world.mainSpot;
+  const focusedActive = focused.id === activeZone || (focused.id === "harness" && world.live);
 
   return <div className="work-world">
     <div className="flex min-w-0 items-center gap-2.5">
@@ -288,16 +315,18 @@ export default function WorkRoom({ specs, waitingReviews }: { specs: ScheduledSp
       {lead && <span className="min-w-0 truncate text-[12px] text-slate-400">{lead.kind ? `${lead.kind} · ` : ""}{lead.title}</span>}
       {world.live && world.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(world.at, now)}</span>}
     </div>
-    <div className="mt-2 grid min-h-[640px] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0b1220] xl:grid-cols-[minmax(0,2.1fr)_minmax(280px,.9fr)]">
+    <div className="mt-2 grid min-h-[640px] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0b1220] xl:grid-cols-[minmax(0,2.65fr)_minmax(300px,.75fr)]">
       <div className="relative h-[640px] min-w-0 border-b border-white/[0.06] xl:border-b-0 xl:border-r">
         <Canvas shadows dpr={[1, 2]} events={zoomSafeEvents} onPointerMissed={() => setFocus(null)}>
           <Scene data={{ placement, world, plannedSpecs, bins, domains, waitingReviews, working: world.activeSpecialists }} hover={hover} setHover={setHover} onSelect={setFocus} />
         </Canvas>
-        {hovered && <div className="pointer-events-none absolute left-3 top-3 max-w-xs rounded-lg border border-white/10 bg-slate-950/90 px-3 py-2 text-[11px] text-slate-300 shadow-xl"><div className="font-semibold text-white">{hovered.label}</div><div className="mt-0.5">{ZONE_COPY[hovered.id].role}</div></div>}
+        {hovered && <div className="pointer-events-none absolute left-3 top-3 max-w-xs rounded-lg border border-white/10 bg-slate-950/90 px-3 py-2 text-[11px] text-slate-300 shadow-xl"><div className="font-semibold text-white">{hovered.label}</div><div className="mt-0.5">{ZONE_COPY[hovered.id].work}</div></div>}
       </div>
       <aside className="flex min-h-[320px] flex-col bg-slate-950/55 p-5">
-        <div><div className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: focused.tint }}>{focused.page}</div><h3 className="mt-1 text-[15px] font-semibold text-white">{focused.label}</h3></div>
-        <div className="mt-5 space-y-5 text-[12px] leading-5"><div><span className="text-[9px] font-semibold tracking-[0.14em] text-slate-500">역할</span><p className="mt-1 text-slate-200">{ZONE_COPY[focused.id].role}</p></div><div><span className="text-[9px] font-semibold tracking-[0.14em] text-slate-500">얻는 효과</span><p className="mt-1 text-slate-300">{ZONE_COPY[focused.id].value}</p></div></div>
+        <div className="flex items-start justify-between gap-3"><div><div className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: focused.tint }}>{focused.page}</div><h3 className="mt-1 text-[17px] font-semibold text-white">{focused.label}</h3></div><span className={`rounded-full border px-2 py-1 text-[9px] font-semibold ${focusedActive ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-200" : "border-white/10 bg-white/[0.025] text-slate-500"}`}>{focusedActive ? "현재 연결됨" : "대기"}</span></div>
+        <div className="mt-4 rounded-lg border border-white/[0.07] bg-black/15 px-3.5 py-3"><span className="font-mono text-[10px] font-semibold tracking-[0.12em]" style={{ color: focused.tint }}>{ZONE_COPY[focused.id].step}</span><p className="mt-2 text-[12px] leading-5 text-slate-200">{ZONE_COPY[focused.id].work}</p></div>
+        <div className="mt-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-3"><span className="text-[9px] font-semibold tracking-[0.14em] text-slate-500">다음 단계로 넘기는 것</span><p className="mt-1.5 text-[12px] leading-5 text-slate-300">{ZONE_COPY[focused.id].output}</p></div>
+        <p className="mt-4 text-[10px] leading-5 text-slate-500">지도 위 점선은 작업 인계, 노란 선은 모든 에이전트에 공급되는 하네스 기준을 뜻합니다.</p>
         <button type="button" onClick={() => navigate(focused.route)} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-lg border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-[12px] font-semibold text-cyan-100 hover:bg-cyan-300/20">{focused.page} 열기<ArrowRight size={13} /></button>
       </aside>
     </div>

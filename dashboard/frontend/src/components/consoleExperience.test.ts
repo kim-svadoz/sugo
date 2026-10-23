@@ -5,13 +5,35 @@ const liveConsole = readFileSync(new URL("./LiveConsole.tsx", import.meta.url), 
 const header = readFileSync(new URL("./Header.tsx", import.meta.url), "utf8");
 const sidebar = readFileSync(new URL("./Sidebar.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../pages/Home.tsx", import.meta.url), "utf8");
+const sessions = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
+const workFloor = readFileSync(new URL("./WorkFloor.tsx", import.meta.url), "utf8");
+const workRoom = readFileSync(new URL("./workroom/WorkRoom.tsx", import.meta.url), "utf8");
 
 describe("Console 정보 구조", () => {
   it("최근 작업은 간결한 결과 요약과 전체 기록만 보여준다", () => {
     expect(liveConsole).toContain("최근 작업 요약");
+    expect(liveConsole).not.toContain("title.title");
+    expect(liveConsole).toContain("작업이 완료되면 이곳에 결과를 3~4줄로 정리합니다");
     expect(liveConsole).not.toContain("다시 구현한 횟수");
     expect(liveConsole).not.toContain("작업 흐름");
     expect(liveConsole).toContain("전체 기록");
+  });
+
+  it("작업 레인에서 최근 요약으로 흐르는 점선 안내를 표시한다", () => {
+    expect(workFloor).toContain("작업 결과 요약으로 연결");
+    expect(workFloor).toContain("ck-summary-flow");
+  });
+
+  it("최근 작업 요약과 Inspector는 서로의 높이를 늘리지 않는다", () => {
+    expect(sessions).toContain("items-start");
+    expect(sessions).toContain("self-start");
+  });
+
+  it("작업실은 네 전문 에이전트와 사용자 확인·커밋 출고 흐름을 각각 표시한다", () => {
+    expect(workRoom).not.toContain('label: "전문 인력 작업실"');
+    for (const label of ["코드 작성", "테스트", "검토", "문서 작업", "사용자 확인", "커밋 출고"]) expect(workRoom).toContain(`label: "${label}"`);
+    expect(workRoom).toContain("WorkflowBeam");
+    expect(workRoom).toContain("하네스 공급선");
   });
 
   it("버전은 헤더 액션에서 빼고 사이드바 하단의 보조 정보로 둔다", () => {
