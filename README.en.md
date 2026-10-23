@@ -6,7 +6,7 @@
 
 Sugo runs each feature in this order: requirements and acceptance criteria → implementation → tests → final verification → user approval → docs work → work result report. Each step moves on only after Sugo checks the real test run records and the changed files. A person gives the final approval after reading the diff.
 
-![Console Home: the work flow from spec to commit](docs/images/console-home.png)
+![Console Home: work flow, approval requests, recent work reviews, engineering-blog feed](docs/images/console-home.png)
 
 ## Problems it solves
 
@@ -39,6 +39,7 @@ Do not use it for one-line fixes or throwaway experiments. Use a normal chat, an
 - Claude Code or the Codex app
 - Git
 - Node.js 22.5 or later. The Console uses `node:sqlite`. With an older Node, only the Console does not start.
+- Python 3.12 or later. Only Weekly report generation needs it.
 
 ### Install
 
@@ -97,13 +98,27 @@ Each feature produces a PRD, test records, verification material, and a work res
 | Approve | In the Agent Canvas, check requirement status, test results, open risks, and the diff | — |
 | Prevent repeats | Add the rule to Workspaces domain rules | `/sugo:checkpoint-sync` writes it to `.claude/rules/` |
 | Later fix | Check the history of the finished task | `/sugo:patch` |
-| Weekly review | Read the weekly report and learning notes in Weekly. Set the generation schedule in Preferences | — |
+| Weekly review | Read the weekly report and learning notes in Weekly. Set the generation schedule in Preferences | `/sugo:weekly` builds one now |
 
 Put one behavior change in each `/sugo:feat`. If a PRD is large, Sugo splits it into subtasks and integrates them.
 
-**Check progress** · the step of the selected task, and the finished records of that task
+**Prepare schedule and spec** · place development schedules on their due dates
 
-![Workspaces work floor: step and finished records per task](docs/images/console-workspaces.png)
+![Schedule Calendar: development schedule by due date](docs/images/console-calendar.png)
+
+**Domains and domain rules** · group the projects of one business area into a domain, and keep the same context and conventions with domain rules
+
+![Domain management: progress and domain rule count per domain](docs/images/console-domains.png)
+
+![Domain rules: rules for the whole domain and rules for one project](docs/images/console-checkpoints.png)
+
+- Each domain card shows progress, blocked tasks, and the number of domain rules.
+- A domain rule applies to the whole domain or to one project. Each rule records why it exists and what to check.
+- `/sugo:checkpoint-sync` writes the rules to `.claude/rules/<category>/` in each project. Claude Code and Codex read these rules before they work. The next task in the same domain starts from the same conventions.
+
+**Check progress** · on the domain work floor, see the step and finished records of the selected task. The Inspector below lists the projects registered in the domain
+
+![Workspaces work floor: step, finished records, and projects of the domain](docs/images/console-workspaces.png)
 
 **User approval** · read the verification result and the changed-file diff, then approve or request changes
 
@@ -111,10 +126,6 @@ Put one behavior change in each `/sugo:feat`. If a PRD is large, Sugo splits it 
   <img src="docs/images/console-approval.png" alt="Work result review and approval" width="49%">
   <img src="docs/images/console-diff.png" alt="Changed-file diff" width="49%">
 </p>
-
-**Prepare schedule and spec** · development schedule grouped by due date
-
-![Schedule: development schedule by due date](docs/images/console-schedule.png)
 
 ## What installing Sugo changes
 
@@ -125,6 +136,7 @@ Hooks run in every Claude Code project, including projects that you did not regi
 | Session start | `dashboard-start` | Starts the local Console in the background |
 | Session start | `agent-tools` | Applies `agents.extraTools` to Sugo agents |
 | Before Bash | `aws-readonly-guard` | Blocks AWS CLI calls that write, read secrets, or exceed the budget |
+| Before Bash | `commit-body` | Makes Claude add a body when it commits without one. Weekly reads the purpose of work from commit bodies. Turn off with `WEEKLY_COMMIT_BODY=off` |
 | Before Write/Edit | `scope-guard` | Limits the scope of test-agent and docs-agent |
 | After Edit | `lint-hint` | Sends lint failures in registered projects to Claude. Does not block edits |
 | After MCP calls | `mcp-presentation` | Applies only to servers in `presentation.mcpServers`. Off by default |
@@ -132,6 +144,7 @@ Hooks run in every Claude Code project, including projects that you did not regi
 - The local Console starts at `http://localhost:3001`. It accepts connections from `127.0.0.1` only. To turn it off, set `"dashboard": {"enabled": false}` in `~/.claude/sugo/settings.json`.
 - Sugo writes `sugo/`, `.claude/rules/`, and a Sugo-managed block in `AGENTS.md` and `CLAUDE.md` to registered projects. Your own text stays.
 - Network: Sugo sends no telemetry. The Console fetches public engineering-blog RSS feeds for Home, a web font from a CDN, and Open-Meteo only if you set a weather region.
+- Weekly: the Console builds the weekly report on the schedule in Preferences. One build calls `claude -p` twice. Data is in `~/.weekly/`.
 
 ## Commands
 
@@ -147,6 +160,7 @@ Hooks run in every Claude Code project, including projects that you did not regi
 | `/sugo:validate` | Check the project against its rules |
 | `/sugo:checkpoint-sync` | Copy Console domain rules to `.claude/rules/` |
 | `/sugo:console` | Local Console `status`, `start`, `restart`, `stop` |
+| `/sugo:weekly` | Build the weekly report and learning notes now |
 | `/sugo:version` | Show the installed version |
 | `/sugo:uninstall`, `/sugo:restore`, `/sugo:purge`, `/sugo:fresh-start` | Remove, restore, delete |
 
@@ -208,6 +222,7 @@ If you deleted the plugin cache first, run `node ~/.sugo/bin/sugo-uninstall.mjs 
 | `<project>/.claude/rules/` | Harness coding rules, Console domain rules |
 | `~/.claude/sugo/` | Registry, sessions, workspaces, specs, settings, Console data |
 | `~/.sugo/` | Archived data, standalone uninstaller |
+| `~/.weekly/` | Weekly settings, weekly reports, scheduled-run token. The uninstall commands do not delete it |
 
 ## Supported stacks
 

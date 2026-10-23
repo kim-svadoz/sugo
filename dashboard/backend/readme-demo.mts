@@ -9,6 +9,7 @@ import { buildReviewConfirmationBlocker } from "../../sugo/src/reviewConfirmatio
 import type { RoadmapNode, Task } from "../../sugo/src/work/types.js";
 import { initDb } from "./src/db/init.js";
 import { ingestActivity } from "./src/services/activityService.js";
+import { createCheckpoint } from "./src/services/workspaceService.js";
 
 const root = process.env.README_DEMO_ROOT;
 const userId = process.env.LOCAL_DEV_USER_ID;
@@ -283,5 +284,15 @@ const events = [
 for (const event of events) {
   await ingestActivity(db, { userId, workspace: event.workspace, ts: at(-event.minAgo * 60_000), level: "AGENT", agent: event.agent, handoffTo: event.handoffTo, eventType: event.eventType, message: event.message, details: event.details });
 }
+// 도메인 규칙: 같은 도메인의 모든 작업이 같은 맥락과 규약을 따르게 하는 기록. 도메인 전체용 1건과 프로젝트 전용 2건.
+const checkpoints = [
+  { id: "cp-pay-money", category: "결제 규칙", title: "금액은 원 단위 정수(long)로만 계산한다", appliesTo: [],
+    learnedFrom: "부분 환불에서 double 계산으로 1원 오차가 났다.\n\n- 금액 필드와 계산은 `long`(원 단위)을 쓴다\n- 비율 계산은 마지막에 한 번만 반올림한다\n- 테스트에 0원·최대 한도 경계를 넣는다" },
+  { id: "cp-pay-idempotency", category: "외부 연동", title: "PG 승인·취소 요청에는 멱등키를 항상 붙인다", appliesTo: ["payment-api"],
+    learnedFrom: "타임아웃 재시도에서 승인이 두 번 났다.\n\n- 요청마다 주문 ID 기반 멱등키를 만든다\n- 재시도는 같은 멱등키로만 한다\n- 멱등키 충돌 테스트를 포함한다" },
+  { id: "cp-settle-kst", category: "배치", title: "정산 배치는 KST 자정 경계를 테스트한다", appliesTo: ["settlement-batch"],
+    learnedFrom: "UTC 기준 집계로 23시 결제가 다음 날 정산에 들어갔다.\n\n- 집계 기간은 Asia/Seoul로 자른다\n- 23:59:59와 00:00:00 경계 테스트를 둔다" },
+];
+for (const checkpoint of checkpoints) await createCheckpoint(db, userId, "payments", { ...checkpoint, checkpointDate: dateOnly(-5) });
 await db.close();
 console.log("[readme-demo] workspaces=3 specs=7 events=" + events.length);

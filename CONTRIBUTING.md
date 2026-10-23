@@ -16,6 +16,7 @@
 sugo/                             플러그인: commands, agents, skills, hooks, harness-library, src, test
 sugo/dist/                        빌드된 MCP 번들(커밋 대상)
 sugo/dashboard-runtime/           플러그인에 실리는 빌드된 Console(커밋 대상)
+sugo/weekly/                      Weekly 엔진(Python 표준 라이브러리). Console 예약과 /sugo:weekly가 run.mjs로 실행
 dashboard/backend/                Express + TypeScript, SQLite 또는 MySQL
 dashboard/frontend/               React + Vite + Tailwind + React Flow
 dashboard/e2e/                    실제 MySQL·OIDC·브라우저 검증
@@ -30,6 +31,7 @@ docs/                             설계 불변식과 계약
 | `dashboard/backend/` | `npm ci` | `npm run typecheck`, `npm run build`, `npm test` |
 | `dashboard/frontend/` | `npm ci` | `npm run typecheck`, `npm run build`, 아래 Vitest 명령 |
 | `dashboard/e2e/` | `npm ci` | [dashboard/e2e/README.md](dashboard/e2e/README.md) 참고 |
+| `sugo/weekly/` | Python 3.12 이상, `pip install pytest` | `python3 -m pytest -q tests` |
 
 프론트엔드에는 아직 `test` 스크립트와 Vitest 의존성이 없습니다.
 

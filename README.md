@@ -6,7 +6,7 @@
 
 Sugo는 기능 하나를 요구사항·완료 조건 정리 → 구현 → 테스트 → 최종 검증 → 사용자 승인 → 문서작업 → 작업결과 리포트 순서로 진행한다. 각 단계는 실제 테스트 실행 기록과 변경 파일을 확인한 뒤에 다음 단계로 넘어간다. 최종 승인은 사람이 diff를 보고 한다.
 
-![Console Home: SPEC 작성부터 커밋까지의 작업 흐름](docs/images/console-home.png)
+![Console Home: 작업 흐름, 승인 요청, 최근 작업 리뷰, 기술 블로그 피드](docs/images/console-home.png)
 
 ## 해결하는 문제
 
@@ -39,6 +39,7 @@ Sugo는 기능 하나를 요구사항·완료 조건 정리 → 구현 → 테�
 - Claude Code 또는 Codex 앱
 - Git
 - Node.js 22.5 이상. Console이 `node:sqlite`를 사용한다. 버전이 낮으면 Console만 시작하지 않는다.
+- Python 3.12 이상. Weekly 주간 보고서를 만들 때만 필요하다.
 
 ### 설치
 
@@ -97,13 +98,27 @@ flowchart LR
 | 승인 | Agent Canvas에서 요구사항 충족 상태, 테스트 결과, 남은 위험, diff를 확인한다 | — |
 | 재발 방지 | Workspaces 도메인 규칙에 등록한다 | `/sugo:checkpoint-sync`로 `.claude/rules/`에 반영 |
 | 후속 수정 | 완료 작업의 이력을 확인한다 | `/sugo:patch` |
-| 주간 회고 | Weekly에서 주간 보고서와 기술 학습 노트를 본다. 생성 일정은 Preferences에서 정한다 | — |
+| 주간 회고 | Weekly에서 주간 보고서와 기술 학습 노트를 본다. 생성 일정은 Preferences에서 정한다 | `/sugo:weekly`로 바로 생성 |
 
 `/sugo:feat` 하나에 동작 변경 하나를 담는다. PRD가 크면 하위 작업으로 나눠 진행한 뒤 통합한다.
 
-**진행 확인** · 선택한 작업의 진행 단계와, 그 작업의 완료 기록
+**일정·스펙 준비** · 개발 일정을 마감일에 배치한다
 
-![Workspaces 작업장: 작업별 진행 단계와 완료 기록](docs/images/console-workspaces.png)
+![Schedule Calendar: 마감일 기준 개발 일정](docs/images/console-calendar.png)
+
+**도메인과 도메인 규칙** · 같은 업무 영역의 프로젝트를 한 도메인으로 묶고, 도메인 규칙으로 같은 맥락과 규약을 유지한다
+
+![도메인 관리: 도메인별 진행 상태와 도메인 규칙 수](docs/images/console-domains.png)
+
+![도메인 규칙: 도메인 전체 규칙과 프로젝트 전용 규칙](docs/images/console-checkpoints.png)
+
+- 도메인 카드에 진행 상태, 차단 건수, 도메인 규칙 수가 나온다.
+- 도메인 규칙은 도메인 전체 또는 특정 프로젝트에 적용한다. 규칙마다 생긴 이유와 확인 항목을 적는다.
+- `/sugo:checkpoint-sync`가 규칙을 각 프로젝트의 `.claude/rules/<분류>/`에 쓴다. Claude Code와 Codex는 작업 전에 이 규칙을 읽는다. 같은 도메인의 다음 작업은 같은 규약에서 시작한다.
+
+**진행 확인** · 도메인의 작업장에서 선택한 작업의 진행 단계와 완료 기록을 본다. 아래 Inspector에 도메인에 등록한 프로젝트가 나온다
+
+![Workspaces 작업장: 작업별 진행 단계, 완료 기록, 도메인의 프로젝트](docs/images/console-workspaces.png)
 
 **사용자 승인** · 검증 결과와 변경 파일 diff를 보고 승인하거나 수정을 요청한다
 
@@ -111,10 +126,6 @@ flowchart LR
   <img src="docs/images/console-approval.png" alt="작업 결과 확인과 승인" width="49%">
   <img src="docs/images/console-diff.png" alt="변경 파일 diff" width="49%">
 </p>
-
-**일정·스펙 준비** · 마감 기준으로 묶은 개발 일정
-
-![Schedule: 마감 기준 개발 일정](docs/images/console-schedule.png)
 
 ## 설치 시 변경 사항
 
@@ -125,6 +136,7 @@ flowchart LR
 | 세션 시작 | `dashboard-start` | 로컬 Console을 백그라운드로 시작 |
 | 세션 시작 | `agent-tools` | `agents.extraTools` 설정을 Sugo 에이전트에 반영 |
 | Bash 실행 전 | `aws-readonly-guard` | 쓰기·비밀값 조회·예산 초과 AWS CLI 호출 차단 |
+| Bash 실행 전 | `commit-body` | Claude가 본문 없이 커밋하면 목적을 쓰게 한다. Weekly가 커밋 본문에서 작업 목적을 읽는다. `WEEKLY_COMMIT_BODY=off`로 끈다 |
 | Write·Edit 실행 전 | `scope-guard` | test-agent와 docs-agent의 수정 범위 제한 |
 | Edit 실행 후 | `lint-hint` | 등록 프로젝트의 lint 실패를 Claude에 전달. 편집은 막지 않음 |
 | MCP 호출 후 | `mcp-presentation` | `presentation.mcpServers`에 지정한 서버에만 적용. 기본 꺼짐 |
@@ -132,6 +144,7 @@ flowchart LR
 - 로컬 Console이 `http://localhost:3001`에서 시작한다. `127.0.0.1` 접속만 받는다. 끄려면 `~/.claude/sugo/settings.json`에 `"dashboard": {"enabled": false}`.
 - 등록 프로젝트에 `sugo/`, `.claude/rules/`, `AGENTS.md`·`CLAUDE.md`의 Sugo 관리 블록을 쓴다. 사용자 작성 내용은 유지한다.
 - 네트워크: 사용 통계를 보내지 않는다. Console은 Home 피드용 공개 기술 블로그 RSS, 웹 폰트 CDN, 날씨 지역 설정 시 Open-Meteo를 호출한다.
+- Weekly: Console이 Preferences의 일정에 맞춰 주간 보고서를 만든다. 한 번 생성할 때 `claude -p`를 2회 호출한다. 데이터는 `~/.weekly/`에 둔다.
 
 ## 명령
 
@@ -147,6 +160,7 @@ flowchart LR
 | `/sugo:validate` | 프로젝트 규칙 위반 검사 |
 | `/sugo:checkpoint-sync` | Console 도메인 규칙을 `.claude/rules/`로 가져오기 |
 | `/sugo:console` | 로컬 Console `status`, `start`, `restart`, `stop` |
+| `/sugo:weekly` | 주간 보고서와 기술 학습 노트를 지금 생성 |
 | `/sugo:version` | 설치 버전 확인 |
 | `/sugo:uninstall`, `/sugo:restore`, `/sugo:purge`, `/sugo:fresh-start` | 제거, 복구, 삭제 |
 
@@ -208,6 +222,7 @@ Console 데이터는 `~/.claude/sugo/dashboard/`에 저장되고 업데이트 �
 | `<project>/.claude/rules/` | 하네스 코딩 규칙, Console 도메인 규칙 |
 | `~/.claude/sugo/` | 등록 정보, 세션, Workspace, 스펙, 설정, Console 데이터 |
 | `~/.sugo/` | 보관 데이터, 독립 제거기 |
+| `~/.weekly/` | Weekly 설정, 주간 보고서, 예약 실행 토큰. 제거 명령은 지우지 않는다 |
 
 ## 지원 스택
 

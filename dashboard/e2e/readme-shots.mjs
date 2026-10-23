@@ -63,12 +63,20 @@ try {
   const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 })).newPage();
   await page.goto(`${base}/api/auth/local`, { waitUntil: "networkidle" });
   await page.route("**/api/news**", (route) => route.fulfill({ json: demoNewsFeed() }));
+  // 처음 설정 안내가 뜨지 않도록 날씨 지역과 Weekly 설정을 채운다. 날씨는 외부 API 대신 고정 응답을 준다.
+  await page.route("https://api.open-meteo.com/**", (route) => route.fulfill({ json: { current: { temperature_2m: 18, weather_code: 1 } } }));
+  await page.evaluate(() => localStorage.setItem("sugo_weather_region", "seoul-cityhall"));
+  const weeklySaved = await page.evaluate(async () => (await fetch("/api/weekly/reports/settings/current", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${JSON.parse(localStorage.getItem("sugo_auth") ?? "{}").accessToken}` }, body: JSON.stringify({ enabled: false, weekday: 5, hour: 17, minute: 0, model: "default", extraRepositories: [] }) })).status);
+  if (weeklySaved !== 200) throw new Error(`weekly settings ${weeklySaved}`);
 
   await page.setViewportSize({ width: 1440, height: 1500 });
   await page.goto(`${base}/home`, { waitUntil: "networkidle" });
   await page.waitForTimeout(7000);
-  await page.locator('section[aria-label="오늘의 Sugo 작업 장면"]').screenshot({ path: join(out, "console-home.png") });
-  await page.locator("div.grid").filter({ hasText: "Engineering Feed" }).last().screenshot({ path: join(out, "console-home-feed.png") });
+  // 사이드바와 상단 바까지 포함한 Home 전체. 본문은 내부 스크롤이라 화면 높이를 본문 높이로 늘려 한 번에 찍는다.
+  const homeHeight = await page.evaluate(() => Math.max(...[...document.querySelectorAll("main, main *")].filter((el) => el.scrollHeight > el.clientHeight + 4).map((el) => el.scrollHeight), document.body.scrollHeight));
+  await page.setViewportSize({ width: 1440, height: homeHeight + 120 });
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: join(out, "console-home.png") });
 
   // 작업장, 연결 레일, 최근 작업 요약을 한 장에 담는다.
   await page.setViewportSize({ width: 1440, height: 1600 });
@@ -78,7 +86,15 @@ try {
   const floor = await page.locator('section[aria-label="payments 작업장"]').boundingBox();
   const summary = await page.locator(".command-detail").first().boundingBox();
   await page.screenshot({ path: join(out, "console-workspaces.png"), fullPage: true, clip: { x: floor.x - 8, y: floor.y - 8, width: floor.width + 16, height: summary.y + 300 - floor.y } });
+  // 도메인 관리: 도메인 목록과 선택한 도메인의 프로젝트, 도메인 규칙.
+  await page.screenshot({ path: join(out, "console-domains.png"), fullPage: true, clip: { x: 0, y: 0, width: 1440, height: floor.y - 8 } });
+  const rulesButton = page.getByRole("button", { name: /도메인 규칙 관리/ });
+  await page.locator("div").filter({ hasText: "payments" }).filter({ has: rulesButton }).last().getByRole("button", { name: /도메인 규칙 관리/ }).click();
+  await page.waitForTimeout(1500);
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: join(out, "console-checkpoints.png") });
+  await page.keyboard.press("Escape");
 
   await page.goto(`${base}/schedule?reviewWorkspace=payments&reviewSpec=pay-spec-webhook`, { waitUntil: "networkidle" });
   await page.waitForTimeout(3500);
@@ -90,7 +106,11 @@ try {
   await page.goto(`${base}/schedule`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Agenda/ }).first().click();
   await page.waitForTimeout(1500);
-  await page.screenshot({ path: join(out, "console-schedule.png") });
+  // 캘린더는 폭이 1900px을 넘어야 칸 안에 일정 제목을 보인다.
+  await page.setViewportSize({ width: 2000, height: 1000 });
+  await page.getByRole("button", { name: /Calendar/ }).first().click();
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: join(out, "console-calendar.png") });
 
   await browser.close();
   console.log(`[readme-shots] ${out}`);
