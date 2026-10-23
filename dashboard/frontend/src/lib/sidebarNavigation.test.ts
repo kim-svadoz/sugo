@@ -50,8 +50,9 @@ describe("sidebar keyboard navigation", () => {
     const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
     expect(source).toContain("useLocation");
     expect(source).toContain("useLocalWeather");
-    expect(source).toContain("일정 관리는 개발 항목의 목표일과 진행 기록을 함께 묶어");
-    expect(source).toContain("하네스 규칙은 기술과 버전에 맞는 검증 기준을 적용해");
+    const tips = readFileSync(new URL("./pageTips.ts", import.meta.url), "utf8");
+    expect(tips).toContain("일정 관리는 개발 항목의 목표일과 진행 기록을 함께 묶어");
+    expect(tips).toContain("하네스 규칙은 기술과 버전에 맞는 검증 기준을 적용해");
     expect(source).toContain("{time}");
     expect(source).not.toContain("Console running");
     expect(source).not.toContain("window.location.host");

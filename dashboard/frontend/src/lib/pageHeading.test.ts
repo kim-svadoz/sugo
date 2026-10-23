@@ -20,7 +20,7 @@ describe("page heading typography", () => {
 
   it("Home 이외의 상단 헤더는 여러 Sugo 활용 팁을 순환한다", () => {
     const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
-    expect(source).toContain("PAGE_TIPS");
+    expect(readFileSync(new URL("./pageTips.ts", import.meta.url), "utf8")).toContain("PAGE_TIPS");
     expect(source).toContain("tipsForPath(pathname)");
     expect(source).toContain("7_000");
     expect(source).toContain("Sugo 활용 팁");
