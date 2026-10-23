@@ -1,4 +1,4 @@
-import { Html, OrthographicCamera, QuadraticBezierLine, RoundedBox } from "@react-three/drei";
+import { Html, Line, OrthographicCamera, QuadraticBezierLine, RoundedBox } from "@react-three/drei";
 import { Canvas, events as pointerEvents, useFrame, useThree, type EventManager } from "@react-three/fiber";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -97,24 +97,33 @@ function GuideBeam({ to }: { to: [number, number, number] }) {
 }
 
 /** 제품 작업이 실제로 넘어가는 방향. 하네스 공급선과 색·속도를 분리해 의미를 섞지 않는다. */
-function WorkflowPath({ from, to, color, delay = 0 }: { from: [number, number, number]; to: [number, number, number]; color: string; delay?: number }) {
+const WORKFLOW_POINTS: [number, number, number][] = [
+  [-7.2, 1.08, -5.8], [-2.4, 1.08, -5.8], [-1.8, 1.08, -5.1],
+  [-8, 1.08, -1.1], [-8, 1.08, 0.8], [-4, 1.08, 0.8], [0, 1.08, 0.8],
+  [4, 1.08, 0.8], [4.5, 1.08, 5.4], [6.3, 1.08, 6.7], [7.5, 1.08, 6.7],
+];
+
+function WorkflowRoute() {
   const ref = useRef<{ material: { dashOffset: number } } | null>(null);
   const marker = useRef<Mesh>(null);
   useFrame((_, delta) => { if (ref.current) ref.current.material.dashOffset -= delta * 1.8; });
-  const middle: [number, number, number] = [(from[0] + to[0]) / 2, 1.2, (from[2] + to[2]) / 2];
   useFrame((state) => {
     if (!marker.current) return;
-    const t = (state.clock.elapsedTime * 0.22 + delay) % 1;
-    const inverse = 1 - t;
+    const progress = (state.clock.elapsedTime * 0.16) % 1;
+    const scaled = progress * (WORKFLOW_POINTS.length - 1);
+    const index = Math.min(Math.floor(scaled), WORKFLOW_POINTS.length - 2);
+    const t = scaled - index;
+    const from = WORKFLOW_POINTS[index];
+    const to = WORKFLOW_POINTS[index + 1];
     marker.current.position.set(
-      inverse * inverse * from[0] + 2 * inverse * t * middle[0] + t * t * to[0],
-      inverse * inverse * from[1] + 2 * inverse * t * middle[1] + t * t * to[1],
-      inverse * inverse * from[2] + 2 * inverse * t * middle[2] + t * t * to[2],
+      from[0] + (to[0] - from[0]) * t,
+      from[1] + (to[1] - from[1]) * t,
+      from[2] + (to[2] - from[2]) * t,
     );
   });
   return <group>
-    <QuadraticBezierLine ref={ref as never} start={from} end={to} mid={middle} color={color} lineWidth={1.6} dashed dashSize={0.3} gapSize={0.24} transparent opacity={0.55} />
-    <mesh ref={marker}><sphereGeometry args={[0.11, 12, 8]} /><M color={color} emissive={color} intensity={1.2} /></mesh>
+    <Line ref={ref as never} points={WORKFLOW_POINTS} color="#67e8f9" lineWidth={1.7} dashed dashSize={0.3} gapSize={0.24} transparent opacity={0.52} />
+    <mesh ref={marker}><sphereGeometry args={[0.12, 12, 8]} /><M color="#a5f3fc" emissive="#22d3ee" intensity={1.2} /></mesh>
   </group>;
 }
 
@@ -173,7 +182,7 @@ function FitCamera() {
 function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: ZoneId | null; setHover: (zone: ZoneId | null) => void; onSelect: (zone: ZoneId) => void }) {
   const { placement, world, plannedSpecs, bins, domains, waitingReviews, working } = data;
   return <>
-    <OrthographicCamera makeDefault position={[17, 27, 23]} near={0.1} far={200} />
+    <OrthographicCamera makeDefault position={[7, 34, 25]} near={0.1} far={200} />
     <FitCamera />
     <ambientLight intensity={0.55} />
     <hemisphereLight args={["#cbd5e1", "#0f172a", 0.6]} />
@@ -209,16 +218,10 @@ function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: Zo
     <Box p={[6, 1.85, -9.42]} s={[5, 2.1, 0.1]} c="#a16207" />
     <PostIts x={4.0} y={2.6} z={-9.35} cols={9} rows={4} count={30} gap={0.48} />
     {[9.6, 10.9].map((x) => <group key={x}><Box p={[x, 1.1, -9.1]} s={[1.2, 2.2, 0.5]} c="#78350f" />{[0.45, 1.1, 1.75].map((y, row) => Array.from({ length: 5 }, (_, book) => <Box key={`${row}-${book}`} p={[x - 0.42 + book * 0.21, y, -9]} s={[0.16, 0.5, 0.36]} c={POSTIT[(book + row + Math.round(x)) % POSTIT.length]} cast={false} />))}</group>)}
-    {[...SPECIALISTS.map((agent) => [DESK_X[agent], 1.5, DESK_Z - 0.3] as [number, number, number]), [-1, 1.6, -7.2] as [number, number, number]].map((to, index) => <GuideBeam key={index} to={to} />)}
+    <GuideBeam to={[-1, 1.6, -7.2]} />
 
-    {/* 작업 경로는 역 이름만 남기고, 움직이는 불빛으로 SPEC → 사용자 확인 → 커밋 순서를 보여준다. */}
-    <WorkflowPath from={[-7.2, 1.1, -5.8]} to={[-2.4, 1.1, -5.8]} color="#38bdf8" delay={0} />
-    <WorkflowPath from={[-1.8, 1.1, -5.1]} to={[-8, 1.1, -1.1]} color="#22d3ee" delay={0.12} />
-    <WorkflowPath from={[-8, 1.05, 0.8]} to={[-4, 1.05, 0.8]} color="#2dd4bf" delay={0.24} />
-    <WorkflowPath from={[-4, 1.05, 0.8]} to={[0, 1.05, 0.8]} color="#34d399" delay={0.36} />
-    <WorkflowPath from={[0, 1.05, 0.8]} to={[4, 1.05, 0.8]} color="#a78bfa" delay={0.48} />
-    <WorkflowPath from={[4, 1.05, 1.1]} to={[4.5, 1.05, 5.4]} color="#c4b5fd" delay={0.6} />
-    <WorkflowPath from={[6.3, 1.05, 6.7]} to={[7.5, 1.05, 6.7]} color="#fbbf24" delay={0.72} />
+    {/* SPEC부터 출고까지 이어지는 단 하나의 작업 경로. */}
+    <WorkflowRoute />
 
     {/* 전문 인력 책상 */}
     {SPECIALISTS.map((agent) => {
@@ -232,7 +235,6 @@ function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: Zo
         {agent === "TEST" && [0, 1, 2].map((index) => <mesh key={index} position={[x + 0.6 + index * 0.22, 0.9, DESK_Z + 0.2]}><sphereGeometry args={[0.07, 12, 8]} /><M color={on ? "#34d399" : "#334155"} emissive={on ? "#34d399" : undefined} /></mesh>)}
         {agent === "REVIEW" && <Box p={[x + 0.75, 0.84, DESK_Z + 0.15]} s={[0.46, 0.03, 0.6]} c="#f8fafc" cast={false} />}
         {agent === "DOCS" && [0, 1, 2].map((index) => <Box key={index} p={[x + 0.8, 0.86 + index * 0.1, DESK_Z + 0.1]} s={[0.5, 0.09, 0.66]} c={POSTIT[index + 2]} />)}
-        <Html position={[x, 2.15, DESK_Z - 0.3]} center className="pointer-events-none select-none"><div className={`whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-semibold ${on ? "border-cyan-300/50 bg-cyan-400/20 text-cyan-50" : "border-white/10 bg-slate-900/70 text-slate-400"}`}>{AGENT_LABEL[agent]}{on ? " · 작업 중" : ""}</div></Html>
       </group>;
     })}
 
@@ -338,7 +340,7 @@ export default function WorkRoom({ specs, waitingReviews }: { specs: ScheduledSp
         <div className="flex items-start justify-between gap-3"><div><div className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: focused.tint }}>{focused.page}</div><h3 className="mt-1 text-[17px] font-semibold text-white">{focused.label}</h3></div><span className={`rounded-full border px-2 py-1 text-[9px] font-semibold ${focusedActive ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-200" : "border-white/10 bg-white/[0.025] text-slate-500"}`}>{focusedActive ? "현재 연결됨" : "대기"}</span></div>
         <div className="mt-4 rounded-lg border border-white/[0.07] bg-black/15 px-3.5 py-3"><span className="font-mono text-[10px] font-semibold tracking-[0.12em]" style={{ color: focused.tint }}>{ZONE_COPY[focused.id].step}</span><p className="mt-2 text-[12px] leading-5 text-slate-200">{ZONE_COPY[focused.id].work}</p></div>
         <div className="mt-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-3"><span className="text-[9px] font-semibold tracking-[0.14em] text-slate-500">다음 단계로 넘기는 것</span><p className="mt-1.5 text-[12px] leading-5 text-slate-300">{ZONE_COPY[focused.id].output}</p></div>
-        <p className="mt-4 text-[10px] leading-5 text-slate-500">지도 위 점선은 작업 인계, 노란 선은 모든 에이전트에 공급되는 하네스 기준을 뜻합니다.</p>
+        <p className="mt-4 text-[10px] leading-5 text-slate-500">청록 경로는 SPEC부터 출고까지의 작업 순서, 노란 선은 메인 데스크에 공급되는 하네스 기준을 뜻합니다.</p>
         <button type="button" onClick={() => navigate(focused.route)} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-lg border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-[12px] font-semibold text-cyan-100 hover:bg-cyan-300/20">{focused.page} 열기<ArrowRight size={13} /></button>
       </aside>
     </div>

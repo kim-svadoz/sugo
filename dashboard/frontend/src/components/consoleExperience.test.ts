@@ -34,9 +34,12 @@ describe("Console 정보 구조", () => {
     expect(workRoom).not.toContain('label: "전문 인력 작업실"');
     for (const label of ["코드 작성", "테스트", "검토", "문서 작업", "사용자 확인", "커밋 출고"]) expect(workRoom).toContain(`label: "${label}"`);
     expect(workRoom).toContain('label: "START · SPEC 작성"');
-    expect(workRoom).toContain("WorkflowPath");
+    expect(workRoom).toContain("WorkflowRoute");
     expect(workRoom).not.toContain("WorkflowBeam");
+    expect(workRoom).not.toContain("WorkflowPath");
     expect(workRoom).not.toContain('label="배정"');
+    expect(workRoom).not.toContain("AGENT_LABEL[agent]");
+    expect(workRoom.match(/<GuideBeam to=/g)?.length).toBe(1);
     expect(workRoom.indexOf('id: "confirm"')).toBeLessThan(workRoom.indexOf('id: "dock"'));
     expect(workRoom).toContain("하네스 공급선");
   });
