@@ -38,6 +38,7 @@ import { createAwsGuardPolicyRouter } from './routes/awsGuardPolicy.js';
 import { corsWhitelist } from "./middleware/cors.js";
 import { errorMiddleware } from "./middleware/asyncHandler.js";
 import { startContextAutoRefresh } from "./services/contextAutoRefreshService.js";
+import { createWeeklySettingsService, type WeeklySettingsService } from "./services/weeklySettingsService.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // 번들은 빌드 때 DASHBOARD_VERSION을 상수로 박는다(옆 디렉터리의 package.json은 플러그인 것이다).
@@ -83,6 +84,7 @@ export interface AppOverrides {
   awsGuardPolicyPath?: string;
   staticDir?: string;
   sqliteSchema?: InitDbOptions["sqliteSchema"];
+  weeklySettingsService?: WeeklySettingsService;
 }
 
 export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
@@ -121,6 +123,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const skillsPath = overrides.skillsPath ?? config.skillsPath;
   const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
+  const weeklySettingsService = overrides.weeklySettingsService ?? createWeeklySettingsService();
 
   const app = express();
   app.use(corsWhitelist(config.corsOrigins));
@@ -165,7 +168,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const statsRouter = createStatsRouter(db, sessionSecret);
   app.use("/api/stats", statsRouter);
   app.use("/api/metrics", statsRouter);
-  app.use("/api/weekly/reports", createWeeklyReportsRouter(db, sessionSecret));
+  app.use("/api/weekly/reports", createWeeklyReportsRouter(db, sessionSecret, weeklySettingsService));
   app.use("/api/harness", createHarnessRouter(harnessPath, harnessOverridePath, db, sessionSecret));
   app.use("/api/skills", createSkillsRouter(skillsPath));
 

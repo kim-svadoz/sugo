@@ -16480,7 +16480,7 @@ var require_stringify = __commonJS({
     };
     var toISO = Date.prototype.toISOString;
     var defaultFormat = formats["default"];
-    var defaults = {
+    var defaults2 = {
       addQueryPrefix: false,
       allowDots: false,
       allowEmptyArrays: false,
@@ -16541,14 +16541,14 @@ var require_stringify = __commonJS({
       }
       if (obj === null) {
         if (strictNullHandling) {
-          return formatter(encoder3 && !encodeValuesOnly ? encoder3(prefix, defaults.encoder, charset, "key", format2) : prefix);
+          return formatter(encoder3 && !encodeValuesOnly ? encoder3(prefix, defaults2.encoder, charset, "key", format2) : prefix);
         }
         obj = "";
       }
       if (isNonNullishPrimitive(obj) || utils.isBuffer(obj)) {
         if (encoder3) {
-          var keyValue = encodeValuesOnly ? prefix : encoder3(prefix, defaults.encoder, charset, "key", format2);
-          return [formatter(keyValue) + "=" + formatter(encoder3(obj, defaults.encoder, charset, "value", format2))];
+          var keyValue = encodeValuesOnly ? prefix : encoder3(prefix, defaults2.encoder, charset, "key", format2);
+          return [formatter(keyValue) + "=" + formatter(encoder3(obj, defaults2.encoder, charset, "value", format2))];
         }
         return [formatter(prefix) + "=" + formatter(String(obj))];
       }
@@ -16611,7 +16611,7 @@ var require_stringify = __commonJS({
     };
     var normalizeStringifyOptions = function normalizeStringifyOptions2(opts) {
       if (!opts) {
-        return defaults;
+        return defaults2;
       }
       if (typeof opts.allowEmptyArrays !== "undefined" && typeof opts.allowEmptyArrays !== "boolean") {
         throw new TypeError("`allowEmptyArrays` option can only be `true` or `false`, when provided");
@@ -16622,7 +16622,7 @@ var require_stringify = __commonJS({
       if (opts.encoder !== null && typeof opts.encoder !== "undefined" && typeof opts.encoder !== "function") {
         throw new TypeError("Encoder has to be a function.");
       }
-      var charset = opts.charset || defaults.charset;
+      var charset = opts.charset || defaults2.charset;
       if (typeof opts.charset !== "undefined" && opts.charset !== "utf-8" && opts.charset !== "iso-8859-1") {
         throw new TypeError("The charset option must be either utf-8, iso-8859-1, or undefined");
       }
@@ -16634,7 +16634,7 @@ var require_stringify = __commonJS({
         format2 = opts.format;
       }
       var formatter = formats.formatters[format2];
-      var filter = defaults.filter;
+      var filter = defaults2.filter;
       if (typeof opts.filter === "function" || isArray(opts.filter)) {
         filter = opts.filter;
       }
@@ -16644,32 +16644,32 @@ var require_stringify = __commonJS({
       } else if ("indices" in opts) {
         arrayFormat = opts.indices ? "indices" : "repeat";
       } else {
-        arrayFormat = defaults.arrayFormat;
+        arrayFormat = defaults2.arrayFormat;
       }
       if ("commaRoundTrip" in opts && typeof opts.commaRoundTrip !== "boolean") {
         throw new TypeError("`commaRoundTrip` must be a boolean, or absent");
       }
-      var allowDots = typeof opts.allowDots === "undefined" ? opts.encodeDotInKeys === true ? true : defaults.allowDots : !!opts.allowDots;
+      var allowDots = typeof opts.allowDots === "undefined" ? opts.encodeDotInKeys === true ? true : defaults2.allowDots : !!opts.allowDots;
       return {
-        addQueryPrefix: typeof opts.addQueryPrefix === "boolean" ? opts.addQueryPrefix : defaults.addQueryPrefix,
+        addQueryPrefix: typeof opts.addQueryPrefix === "boolean" ? opts.addQueryPrefix : defaults2.addQueryPrefix,
         allowDots,
-        allowEmptyArrays: typeof opts.allowEmptyArrays === "boolean" ? !!opts.allowEmptyArrays : defaults.allowEmptyArrays,
+        allowEmptyArrays: typeof opts.allowEmptyArrays === "boolean" ? !!opts.allowEmptyArrays : defaults2.allowEmptyArrays,
         arrayFormat,
         charset,
-        charsetSentinel: typeof opts.charsetSentinel === "boolean" ? opts.charsetSentinel : defaults.charsetSentinel,
+        charsetSentinel: typeof opts.charsetSentinel === "boolean" ? opts.charsetSentinel : defaults2.charsetSentinel,
         commaRoundTrip: !!opts.commaRoundTrip,
-        delimiter: typeof opts.delimiter === "undefined" ? defaults.delimiter : opts.delimiter,
-        encode: typeof opts.encode === "boolean" ? opts.encode : defaults.encode,
-        encodeDotInKeys: typeof opts.encodeDotInKeys === "boolean" ? opts.encodeDotInKeys : defaults.encodeDotInKeys,
-        encoder: typeof opts.encoder === "function" ? opts.encoder : defaults.encoder,
-        encodeValuesOnly: typeof opts.encodeValuesOnly === "boolean" ? opts.encodeValuesOnly : defaults.encodeValuesOnly,
+        delimiter: typeof opts.delimiter === "undefined" ? defaults2.delimiter : opts.delimiter,
+        encode: typeof opts.encode === "boolean" ? opts.encode : defaults2.encode,
+        encodeDotInKeys: typeof opts.encodeDotInKeys === "boolean" ? opts.encodeDotInKeys : defaults2.encodeDotInKeys,
+        encoder: typeof opts.encoder === "function" ? opts.encoder : defaults2.encoder,
+        encodeValuesOnly: typeof opts.encodeValuesOnly === "boolean" ? opts.encodeValuesOnly : defaults2.encodeValuesOnly,
         filter,
         format: format2,
         formatter,
-        serializeDate: typeof opts.serializeDate === "function" ? opts.serializeDate : defaults.serializeDate,
-        skipNulls: typeof opts.skipNulls === "boolean" ? opts.skipNulls : defaults.skipNulls,
+        serializeDate: typeof opts.serializeDate === "function" ? opts.serializeDate : defaults2.serializeDate,
+        skipNulls: typeof opts.skipNulls === "boolean" ? opts.skipNulls : defaults2.skipNulls,
         sort: typeof opts.sort === "function" ? opts.sort : null,
-        strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults.strictNullHandling
+        strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults2.strictNullHandling
       };
     };
     module.exports = function(object, opts) {
@@ -16748,7 +16748,7 @@ var require_parse = __commonJS({
     var utils = require_utils();
     var has = Object.prototype.hasOwnProperty;
     var isArray = Array.isArray;
-    var defaults = {
+    var defaults2 = {
       allowDots: false,
       allowEmptyArrays: false,
       allowPrototypes: false,
@@ -16837,10 +16837,10 @@ var require_parse = __commonJS({
         var key2;
         var val;
         if (pos2 === -1) {
-          key2 = options.decoder(part, defaults.decoder, charset, "key");
+          key2 = options.decoder(part, defaults2.decoder, charset, "key");
           val = options.strictNullHandling ? null : "";
         } else {
-          key2 = options.decoder(part.slice(0, pos2), defaults.decoder, charset, "key");
+          key2 = options.decoder(part.slice(0, pos2), defaults2.decoder, charset, "key");
           if (key2 !== null) {
             val = utils.maybeMap(
               parseArrayValue(
@@ -16850,7 +16850,7 @@ var require_parse = __commonJS({
                 part.indexOf("[]=") === -1
               ),
               function(encodedVal) {
-                return options.decoder(encodedVal, defaults.decoder, charset, "value");
+                return options.decoder(encodedVal, defaults2.decoder, charset, "value");
               }
             );
           }
@@ -17000,7 +17000,7 @@ var require_parse = __commonJS({
     };
     var normalizeParseOptions = function normalizeParseOptions2(opts) {
       if (!opts) {
-        return defaults;
+        return defaults2;
       }
       if (typeof opts.allowEmptyArrays !== "undefined" && typeof opts.allowEmptyArrays !== "boolean") {
         throw new TypeError("`allowEmptyArrays` option can only be `true` or `false`, when provided");
@@ -17017,35 +17017,35 @@ var require_parse = __commonJS({
       if (typeof opts.throwOnLimitExceeded !== "undefined" && typeof opts.throwOnLimitExceeded !== "boolean") {
         throw new TypeError("`throwOnLimitExceeded` option must be a boolean");
       }
-      var charset = typeof opts.charset === "undefined" ? defaults.charset : opts.charset;
-      var duplicates = typeof opts.duplicates === "undefined" ? defaults.duplicates : opts.duplicates;
+      var charset = typeof opts.charset === "undefined" ? defaults2.charset : opts.charset;
+      var duplicates = typeof opts.duplicates === "undefined" ? defaults2.duplicates : opts.duplicates;
       if (duplicates !== "combine" && duplicates !== "first" && duplicates !== "last") {
         throw new TypeError("The duplicates option must be either combine, first, or last");
       }
-      var allowDots = typeof opts.allowDots === "undefined" ? opts.decodeDotInKeys === true ? true : defaults.allowDots : !!opts.allowDots;
+      var allowDots = typeof opts.allowDots === "undefined" ? opts.decodeDotInKeys === true ? true : defaults2.allowDots : !!opts.allowDots;
       return {
         allowDots,
-        allowEmptyArrays: typeof opts.allowEmptyArrays === "boolean" ? !!opts.allowEmptyArrays : defaults.allowEmptyArrays,
-        allowPrototypes: typeof opts.allowPrototypes === "boolean" ? opts.allowPrototypes : defaults.allowPrototypes,
-        allowSparse: typeof opts.allowSparse === "boolean" ? opts.allowSparse : defaults.allowSparse,
-        arrayLimit: typeof opts.arrayLimit === "number" ? opts.arrayLimit : defaults.arrayLimit,
+        allowEmptyArrays: typeof opts.allowEmptyArrays === "boolean" ? !!opts.allowEmptyArrays : defaults2.allowEmptyArrays,
+        allowPrototypes: typeof opts.allowPrototypes === "boolean" ? opts.allowPrototypes : defaults2.allowPrototypes,
+        allowSparse: typeof opts.allowSparse === "boolean" ? opts.allowSparse : defaults2.allowSparse,
+        arrayLimit: typeof opts.arrayLimit === "number" ? opts.arrayLimit : defaults2.arrayLimit,
         charset,
-        charsetSentinel: typeof opts.charsetSentinel === "boolean" ? opts.charsetSentinel : defaults.charsetSentinel,
-        comma: typeof opts.comma === "boolean" ? opts.comma : defaults.comma,
-        decodeDotInKeys: typeof opts.decodeDotInKeys === "boolean" ? opts.decodeDotInKeys : defaults.decodeDotInKeys,
-        decoder: typeof opts.decoder === "function" ? opts.decoder : defaults.decoder,
-        delimiter: typeof opts.delimiter === "string" || utils.isRegExp(opts.delimiter) ? opts.delimiter : defaults.delimiter,
+        charsetSentinel: typeof opts.charsetSentinel === "boolean" ? opts.charsetSentinel : defaults2.charsetSentinel,
+        comma: typeof opts.comma === "boolean" ? opts.comma : defaults2.comma,
+        decodeDotInKeys: typeof opts.decodeDotInKeys === "boolean" ? opts.decodeDotInKeys : defaults2.decodeDotInKeys,
+        decoder: typeof opts.decoder === "function" ? opts.decoder : defaults2.decoder,
+        delimiter: typeof opts.delimiter === "string" || utils.isRegExp(opts.delimiter) ? opts.delimiter : defaults2.delimiter,
         // eslint-disable-next-line no-implicit-coercion, no-extra-parens
-        depth: typeof opts.depth === "number" || opts.depth === false ? +opts.depth : defaults.depth,
+        depth: typeof opts.depth === "number" || opts.depth === false ? +opts.depth : defaults2.depth,
         duplicates,
         ignoreQueryPrefix: opts.ignoreQueryPrefix === true,
-        interpretNumericEntities: typeof opts.interpretNumericEntities === "boolean" ? opts.interpretNumericEntities : defaults.interpretNumericEntities,
-        parameterLimit: typeof opts.parameterLimit === "number" ? opts.parameterLimit : defaults.parameterLimit,
+        interpretNumericEntities: typeof opts.interpretNumericEntities === "boolean" ? opts.interpretNumericEntities : defaults2.interpretNumericEntities,
+        parameterLimit: typeof opts.parameterLimit === "number" ? opts.parameterLimit : defaults2.parameterLimit,
         parseArrays: opts.parseArrays !== false,
-        plainObjects: typeof opts.plainObjects === "boolean" ? opts.plainObjects : defaults.plainObjects,
-        strictDepth: typeof opts.strictDepth === "boolean" ? !!opts.strictDepth : defaults.strictDepth,
-        strictMerge: typeof opts.strictMerge === "boolean" ? !!opts.strictMerge : defaults.strictMerge,
-        strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults.strictNullHandling,
+        plainObjects: typeof opts.plainObjects === "boolean" ? opts.plainObjects : defaults2.plainObjects,
+        strictDepth: typeof opts.strictDepth === "boolean" ? !!opts.strictDepth : defaults2.strictDepth,
+        strictMerge: typeof opts.strictMerge === "boolean" ? !!opts.strictMerge : defaults2.strictMerge,
+        strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults2.strictNullHandling,
         throwOnLimitExceeded: typeof opts.throwOnLimitExceeded === "boolean" ? opts.throwOnLimitExceeded : false
       };
     };
@@ -18509,10 +18509,10 @@ var require_view = __commonJS({
     var debug = require_src()("express:view");
     var path = __require("path");
     var fs = __require("fs");
-    var dirname7 = path.dirname;
+    var dirname8 = path.dirname;
     var basename5 = path.basename;
     var extname2 = path.extname;
-    var join14 = path.join;
+    var join15 = path.join;
     var resolve4 = path.resolve;
     module.exports = View;
     function View(name, options) {
@@ -18548,7 +18548,7 @@ var require_view = __commonJS({
       for (var i5 = 0; i5 < roots.length && !path2; i5++) {
         var root5 = roots[i5];
         var loc = resolve4(root5, name);
-        var dir = dirname7(loc);
+        var dir = dirname8(loc);
         var file = basename5(loc);
         path2 = this.resolve(dir, file);
       }
@@ -18560,14 +18560,14 @@ var require_view = __commonJS({
     };
     View.prototype.resolve = function resolve5(dir, file) {
       var ext = this.ext;
-      var path2 = join14(dir, file);
-      var stat2 = tryStat(path2);
-      if (stat2 && stat2.isFile()) {
+      var path2 = join15(dir, file);
+      var stat3 = tryStat(path2);
+      if (stat3 && stat3.isFile()) {
         return path2;
       }
-      path2 = join14(dir, basename5(file, ext), "index" + ext);
-      stat2 = tryStat(path2);
-      if (stat2 && stat2.isFile()) {
+      path2 = join15(dir, basename5(file, ext), "index" + ext);
+      stat3 = tryStat(path2);
+      if (stat3 && stat3.isFile()) {
         return path2;
       }
     };
@@ -18837,9 +18837,9 @@ var require_etag = __commonJS({
       }
       return obj && typeof obj === "object" && "ctime" in obj && toString.call(obj.ctime) === "[object Date]" && "mtime" in obj && toString.call(obj.mtime) === "[object Date]" && "ino" in obj && typeof obj.ino === "number" && "size" in obj && typeof obj.size === "number";
     }
-    function stattag(stat2) {
-      var mtime = stat2.mtime.getTime().toString(16);
-      var size = stat2.size.toString(16);
+    function stattag(stat3) {
+      var mtime = stat3.mtime.getTime().toString(16);
+      var size = stat3.size.toString(16);
       return '"' + size + "-" + mtime + '"';
     }
   }
@@ -19198,7 +19198,7 @@ var require_send = __commonJS({
     var Stream = __require("stream");
     var util4 = __require("util");
     var extname2 = path.extname;
-    var join14 = path.join;
+    var join15 = path.join;
     var normalize3 = path.normalize;
     var resolve4 = path.resolve;
     var sep3 = path.sep;
@@ -19417,7 +19417,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = path2.split(sep3);
-        path2 = normalize3(join14(root5, path2));
+        path2 = normalize3(join15(root5, path2));
       } else {
         if (UP_PATH_REGEXP.test(path2)) {
           debug('malicious path "%s"', path2);
@@ -19452,8 +19452,8 @@ var require_send = __commonJS({
       this.sendFile(path2);
       return res;
     };
-    SendStream.prototype.send = function send2(path2, stat2) {
-      var len = stat2.size;
+    SendStream.prototype.send = function send2(path2, stat3) {
+      var len = stat3.size;
       var options = this.options;
       var opts = {};
       var res = this.res;
@@ -19465,7 +19465,7 @@ var require_send = __commonJS({
         return;
       }
       debug('pipe "%s"', path2);
-      this.setHeader(path2, stat2);
+      this.setHeader(path2, stat3);
       this.type(path2);
       if (this.isConditionalGET()) {
         if (this.isPreconditionFailure()) {
@@ -19521,14 +19521,14 @@ var require_send = __commonJS({
       var i5 = 0;
       var self2 = this;
       debug('stat "%s"', path2);
-      fs.stat(path2, function onstat(err, stat2) {
+      fs.stat(path2, function onstat(err, stat3) {
         if (err && err.code === "ENOENT" && !extname2(path2) && path2[path2.length - 1] !== sep3) {
           return next(err);
         }
         if (err) return self2.onStatError(err);
-        if (stat2.isDirectory()) return self2.redirect(path2);
-        self2.emit("file", path2, stat2);
-        self2.send(path2, stat2);
+        if (stat3.isDirectory()) return self2.redirect(path2);
+        self2.emit("file", path2, stat3);
+        self2.send(path2, stat3);
       });
       function next(err) {
         if (self2._extensions.length <= i5) {
@@ -19536,11 +19536,11 @@ var require_send = __commonJS({
         }
         var p3 = path2 + "." + self2._extensions[i5++];
         debug('stat "%s"', p3);
-        fs.stat(p3, function(err2, stat2) {
+        fs.stat(p3, function(err2, stat3) {
           if (err2) return next(err2);
-          if (stat2.isDirectory()) return next();
-          self2.emit("file", p3, stat2);
-          self2.send(p3, stat2);
+          if (stat3.isDirectory()) return next();
+          self2.emit("file", p3, stat3);
+          self2.send(p3, stat3);
         });
       }
     };
@@ -19552,13 +19552,13 @@ var require_send = __commonJS({
           if (err) return self2.onStatError(err);
           return self2.error(404);
         }
-        var p3 = join14(path2, self2._index[i5]);
+        var p3 = join15(path2, self2._index[i5]);
         debug('stat "%s"', p3);
-        fs.stat(p3, function(err2, stat2) {
+        fs.stat(p3, function(err2, stat3) {
           if (err2) return next(err2);
-          if (stat2.isDirectory()) return next();
-          self2.emit("file", p3, stat2);
-          self2.send(p3, stat2);
+          if (stat3.isDirectory()) return next();
+          self2.emit("file", p3, stat3);
+          self2.send(p3, stat3);
         });
       }
       next();
@@ -19593,9 +19593,9 @@ var require_send = __commonJS({
       debug("content-type %s", type2);
       res.setHeader("Content-Type", type2 + (charset ? "; charset=" + charset : ""));
     };
-    SendStream.prototype.setHeader = function setHeader(path2, stat2) {
+    SendStream.prototype.setHeader = function setHeader(path2, stat3) {
       var res = this.res;
-      this.emit("headers", res, path2, stat2);
+      this.emit("headers", res, path2, stat3);
       if (this._acceptRanges && !res.getHeader("Accept-Ranges")) {
         debug("accept ranges");
         res.setHeader("Accept-Ranges", "bytes");
@@ -19609,12 +19609,12 @@ var require_send = __commonJS({
         res.setHeader("Cache-Control", cacheControl);
       }
       if (this._lastModified && !res.getHeader("Last-Modified")) {
-        var modified = stat2.mtime.toUTCString();
+        var modified = stat3.mtime.toUTCString();
         debug("modified %s", modified);
         res.setHeader("Last-Modified", modified);
       }
       if (this._etag && !res.getHeader("ETag")) {
-        var val = etag(stat2);
+        var val = etag(stat3);
         debug("etag %s", val);
         res.setHeader("ETag", val);
       }
@@ -41776,7 +41776,7 @@ var require_named_placeholders = __commonJS({
         }
         return s2;
       }
-      function join14(tree) {
+      function join15(tree) {
         if (tree.length === 1) {
           return tree;
         }
@@ -41802,7 +41802,7 @@ var require_named_placeholders = __commonJS({
         if (cache7 && (tree = cache7.get(query))) {
           return toArrayParams(tree, paramsObj);
         }
-        tree = join14(parse2(query));
+        tree = join15(parse2(query));
         if (cache7) {
           cache7.set(query, tree);
         }
@@ -53729,7 +53729,7 @@ var init_weeklyReportService = __esm({
 });
 
 // ../dashboard/backend/src/routes/weeklyReports.ts
-function createWeeklyReportsRouter(db2, sessionSecret2) {
+function createWeeklyReportsRouter(db2, sessionSecret2, settingsService) {
   const router = (0, import_express13.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.put(
@@ -53751,6 +53751,19 @@ function createWeeklyReportsRouter(db2, sessionSecret2) {
       res.json({ reports: await listWeeklyReports(db2, req.userId) });
     })
   );
+  if (settingsService) {
+    router.get("/settings/current", asyncHandler(async (_req, res) => {
+      res.json(await settingsService.get());
+    }));
+    router.put("/settings/current", validateBody(settingsSchema), asyncHandler(async (req, res) => {
+      const { token, ...settings } = req.body;
+      res.json(await settingsService.save(settings, token));
+    }));
+    router.delete("/settings/token", asyncHandler(async (_req, res) => {
+      await settingsService.deleteToken();
+      res.json({ ok: true });
+    }));
+  }
   router.get(
     "/:weekId",
     asyncHandler(async (req, res) => {
@@ -53764,7 +53777,7 @@ function createWeeklyReportsRouter(db2, sessionSecret2) {
   );
   return router;
 }
-var import_express13, weekIdPattern, datePattern, reportSchema;
+var import_express13, weekIdPattern, datePattern, reportSchema, settingsSchema;
 var init_weeklyReports = __esm({
   "../dashboard/backend/src/routes/weeklyReports.ts"() {
     "use strict";
@@ -53781,6 +53794,15 @@ var init_weeklyReports = __esm({
       end: external_exports.string().regex(datePattern),
       generatedAt: external_exports.string().min(1).max(64),
       report: external_exports.record(external_exports.unknown())
+    });
+    settingsSchema = external_exports.object({
+      enabled: external_exports.boolean(),
+      weekday: external_exports.number().int().min(0).max(6),
+      hour: external_exports.number().int().min(0).max(23),
+      minute: external_exports.number().int().min(0).max(59),
+      model: external_exports.enum(["default", "sonnet", "opus"]),
+      extraRepositories: external_exports.array(external_exports.string().trim().min(1).max(1024)).max(50),
+      token: external_exports.string().trim().min(1).max(16384).optional()
     });
   }
 });
@@ -65233,9 +65255,9 @@ var init_configurations = __esm({
       },
       default: DEFAULT_MAX_ATTEMPTS
     };
-    resolveRetryConfig = (input, defaults) => {
+    resolveRetryConfig = (input, defaults2) => {
       const { retryStrategy, retryMode } = input;
-      const { defaultMaxAttempts = DEFAULT_MAX_ATTEMPTS, defaultBaseDelay = Retry.delay() } = defaults ?? {};
+      const { defaultMaxAttempts = DEFAULT_MAX_ATTEMPTS, defaultBaseDelay = Retry.delay() } = defaults2 ?? {};
       const maxAttemptsProvider = normalizeProvider(input.maxAttempts ?? defaultMaxAttempts);
       let controller = retryStrategy ? Promise.resolve(retryStrategy) : void 0;
       const getDefault = async () => {
@@ -76359,11 +76381,11 @@ var require_dist_cjs8 = __commonJS({
         throw new TokenProviderError2(`Value not present for '${key2}' in SSO Token${forRefresh ? ". Cannot refresh" : ""}. ${REFRESH_MESSAGE}`, false);
       }
     };
-    var { writeFile: writeFile7 } = promises;
+    var { writeFile: writeFile8 } = promises;
     var writeSSOTokenToFile = (id, ssoToken) => {
       const tokenFilepath = getSSOTokenFilepath2(id);
       const tokenString = JSON.stringify(ssoToken, null, 2);
-      return writeFile7(tokenFilepath, tokenString);
+      return writeFile8(tokenFilepath, tokenString);
     };
     var lastRefreshAttemptTimes = /* @__PURE__ */ new Map();
     var fromSso = (init = {}) => async ({ callerClientConfig } = {}) => {
@@ -79597,8 +79619,8 @@ var require_dist_cjs11 = __commonJS({
     var { HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
     var { createHash: createHash11, createPrivateKey: createPrivateKey2, createPublicKey: createPublicKey2, sign: sign4 } = __require("node:crypto");
     var { promises } = __require("node:fs");
-    var { homedir: homedir5 } = __require("node:os");
-    var { dirname: dirname7, join: join14 } = __require("node:path");
+    var { homedir: homedir6 } = __require("node:os");
+    var { dirname: dirname8, join: join15 } = __require("node:path");
     var LoginCredentialsFetcher = class _LoginCredentialsFetcher {
       profileData;
       init;
@@ -79754,7 +79776,7 @@ var require_dist_cjs11 = __commonJS({
       }
       async saveToken(token) {
         const tokenFilePath = this.getTokenFilePath();
-        const directory = dirname7(tokenFilePath);
+        const directory = dirname8(tokenFilePath);
         try {
           await promises.mkdir(directory, { recursive: true });
         } catch (error2) {
@@ -79762,10 +79784,10 @@ var require_dist_cjs11 = __commonJS({
         await promises.writeFile(tokenFilePath, JSON.stringify(token, null, 2), "utf8");
       }
       getTokenFilePath() {
-        const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join14(homedir5(), ".aws", "login", "cache");
+        const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join15(homedir6(), ".aws", "login", "cache");
         const loginSessionBytes = Buffer.from(this.loginSession, "utf8");
         const loginSessionSha256 = createHash11("sha256").update(loginSessionBytes).digest("hex");
-        return join14(directory, `${loginSessionSha256}.json`);
+        return join15(directory, `${loginSessionSha256}.json`);
       }
       derToRawSignature(derSignature) {
         let offset = 2;
@@ -79879,7 +79901,7 @@ var require_dist_cjs12 = __commonJS({
   "../dashboard/backend/node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js"(exports) {
     var { externalDataInterceptor: externalDataInterceptor2, CredentialsProviderError: CredentialsProviderError2, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config3(), __toCommonJS(config_exports));
     var { exec: exec3 } = __require("node:child_process");
-    var { promisify: promisify7 } = __require("node:util");
+    var { promisify: promisify8 } = __require("node:util");
     var { setCredentialFeature: setCredentialFeature2 } = (init_client5(), __toCommonJS(client_exports2));
     var getValidatedProcessCredentials = (profileName, data, profiles) => {
       if (data.Version !== 1) {
@@ -79915,7 +79937,7 @@ var require_dist_cjs12 = __commonJS({
       if (profiles[profileName]) {
         const credentialProcess = profile["credential_process"];
         if (credentialProcess !== void 0) {
-          const execPromise = promisify7(externalDataInterceptor2?.getTokenRecord?.().exec ?? exec3);
+          const execPromise = promisify8(externalDataInterceptor2?.getTokenRecord?.().exec ?? exec3);
           try {
             const { stdout } = await execPromise(credentialProcess);
             let data;
@@ -90080,13 +90102,116 @@ var init_contextAutoRefreshService = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/weeklySettingsService.ts
+import { chmod, mkdir as mkdir4, readFile as readFile9, stat as stat2, writeFile as writeFile5 } from "node:fs/promises";
+import { homedir as homedir4 } from "node:os";
+import { join as join12 } from "node:path";
+import { execFile as execFile5 } from "node:child_process";
+import { promisify as promisify7 } from "node:util";
+async function exists(path) {
+  try {
+    await stat2(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function normalizeConfig(config2) {
+  const schedule = config2.schedule ?? {};
+  const model = config2.model === "sonnet" || config2.model === "opus" ? config2.model : "default";
+  return {
+    enabled: typeof schedule.enabled === "boolean" ? schedule.enabled : defaults.enabled,
+    weekday: Number.isInteger(schedule.weekday) ? Math.min(6, Math.max(0, schedule.weekday)) : defaults.weekday,
+    hour: Number.isInteger(schedule.hour) ? Math.min(23, Math.max(0, schedule.hour)) : defaults.hour,
+    minute: Number.isInteger(schedule.minute) ? Math.min(59, Math.max(0, schedule.minute)) : defaults.minute,
+    model,
+    extraRepositories: Array.isArray(config2.git_repos) ? config2.git_repos.filter((value) => typeof value === "string") : []
+  };
+}
+async function readStoredConfig(path) {
+  try {
+    return JSON.parse(await readFile9(path, "utf8"));
+  } catch {
+    return null;
+  }
+}
+function createWeeklySettingsService(options = {}) {
+  const weeklyHome = options.weeklyHome ?? join12(homedir4(), ".weekly");
+  const configPath = join12(weeklyHome, "config.json");
+  const tokenPath = join12(weeklyHome, "claude.token");
+  const setupMarkerPath = join12(weeklyHome, "setup-complete");
+  const enginePath = join12(weeklyHome, "app");
+  const defaultApplySchedule = async (settings) => {
+    if (!await exists(enginePath)) throw new Error("weekly_engine_unavailable");
+    const args = settings.enabled ? ["-m", "weekly_report.install", "on", "--weekday", String(settings.weekday), "--time", `${String(settings.hour).padStart(2, "0")}:${String(settings.minute).padStart(2, "0")}`, "--model", settings.model === "default" ? "" : settings.model] : ["-m", "weekly_report.install", "off"];
+    await execFileAsync3("python3", args, { cwd: enginePath, timeout: 3e4 });
+  };
+  const applySchedule = options.applySchedule ?? defaultApplySchedule;
+  return {
+    async get() {
+      const stored = await readStoredConfig(configPath);
+      return {
+        ...normalizeConfig(stored ?? {}),
+        configured: stored !== null && await exists(setupMarkerPath),
+        tokenConfigured: await exists(tokenPath),
+        engineAvailable: await exists(enginePath)
+      };
+    },
+    async save(settings, token) {
+      await mkdir4(weeklyHome, { recursive: true });
+      const previous = await readStoredConfig(configPath) ?? {};
+      const next = {
+        ...previous,
+        schedule: { enabled: settings.enabled, weekday: settings.weekday, hour: settings.hour, minute: settings.minute },
+        git_repos: settings.extraRepositories
+      };
+      if (settings.model === "default") delete next.model;
+      else next.model = settings.model;
+      await writeFile5(configPath, `${JSON.stringify(next, null, 2)}
+`, { encoding: "utf8", mode: 384 });
+      await chmod(configPath, 384);
+      if (token?.trim()) {
+        await writeFile5(tokenPath, `${token.trim()}
+`, { encoding: "utf8", mode: 384 });
+        await chmod(tokenPath, 384);
+      }
+      await writeFile5(setupMarkerPath, "configured-by-sugo-console\n", { encoding: "utf8", mode: 384 });
+      await applySchedule(settings);
+      return this.get();
+    },
+    async deleteToken() {
+      const { unlink: unlink3 } = await import("node:fs/promises");
+      try {
+        await unlink3(tokenPath);
+      } catch (error2) {
+        if (error2.code !== "ENOENT") throw error2;
+      }
+    }
+  };
+}
+var execFileAsync3, defaults;
+var init_weeklySettingsService = __esm({
+  "../dashboard/backend/src/services/weeklySettingsService.ts"() {
+    "use strict";
+    execFileAsync3 = promisify7(execFile5);
+    defaults = {
+      enabled: true,
+      weekday: 5,
+      hour: 17,
+      minute: 0,
+      model: "default",
+      extraRepositories: []
+    };
+  }
+});
+
 // ../dashboard/backend/src/index.ts
 var index_exports = {};
 __export(index_exports, {
   createApp: () => createApp
 });
 import { fileURLToPath as fileURLToPath2, pathToFileURL } from "node:url";
-import { dirname as dirname4, join as join12 } from "node:path";
+import { dirname as dirname5, join as join13 } from "node:path";
 function unconfiguredVerifyJwt() {
   return async () => {
     throw new Error("OIDC_JWKS_URI not configured");
@@ -90131,6 +90256,7 @@ async function createApp(dbOverrideOrOptions) {
   const skillsPath = overrides.skillsPath ?? config.skillsPath;
   const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
+  const weeklySettingsService = overrides.weeklySettingsService ?? createWeeklySettingsService();
   const app2 = (0, import_express21.default)();
   app2.use(corsWhitelist(config.corsOrigins));
   app2.use(import_express21.default.json({ limit: "10mb" }));
@@ -90170,14 +90296,14 @@ async function createApp(dbOverrideOrOptions) {
   const statsRouter = createStatsRouter(db2, sessionSecret2);
   app2.use("/api/stats", statsRouter);
   app2.use("/api/metrics", statsRouter);
-  app2.use("/api/weekly/reports", createWeeklyReportsRouter(db2, sessionSecret2));
+  app2.use("/api/weekly/reports", createWeeklyReportsRouter(db2, sessionSecret2, weeklySettingsService));
   app2.use("/api/harness", createHarnessRouter(harnessPath, harnessOverridePath, db2, sessionSecret2));
   app2.use("/api/skills", createSkillsRouter(skillsPath));
   const staticDir2 = overrides.staticDir ?? config.staticDir;
   if (staticDir2) {
     app2.use(import_express21.default.static(staticDir2));
     app2.get(/^\/(?!api\/|health$).*/, (_req, res) => {
-      res.sendFile(join12(staticDir2, "index.html"));
+      res.sendFile(join13(staticDir2, "index.html"));
     });
   }
   app2.use(errorMiddleware);
@@ -90236,8 +90362,9 @@ var init_index = __esm({
     init_cors();
     init_asyncHandler();
     init_contextAutoRefreshService();
-    __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.40.7" ? { version: "0.40.7" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    init_weeklySettingsService();
+    __dirname2 = dirname5(fileURLToPath2(import.meta.url));
+    pkg = "0.41.0" ? { version: "0.41.0" } : JSON.parse(readFileSync(join13(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90249,11 +90376,11 @@ var localBootstrap_exports = {};
 __export(localBootstrap_exports, {
   bootstrapLocalDashboard: () => bootstrapLocalDashboard
 });
-import { chmod, mkdir as mkdir4, readFile as readFile9, rename as rename2, writeFile as writeFile5 } from "node:fs/promises";
-import { dirname as dirname5 } from "node:path";
+import { chmod as chmod2, mkdir as mkdir5, readFile as readFile10, rename as rename2, writeFile as writeFile6 } from "node:fs/promises";
+import { dirname as dirname6 } from "node:path";
 async function readSettings(settingsPath) {
   try {
-    return JSON.parse(await readFile9(settingsPath, "utf8"));
+    return JSON.parse(await readFile10(settingsPath, "utf8"));
   } catch {
     return {};
   }
@@ -90271,12 +90398,12 @@ async function bootstrapLocalDashboard(db2, input) {
     ...settings,
     dashboard: { ...dashboard, enabled: true, apiUrl: input.apiUrl, userId: input.userId, apiToken }
   };
-  await mkdir4(dirname5(input.settingsPath), { recursive: true });
+  await mkdir5(dirname6(input.settingsPath), { recursive: true });
   const tempPath = `${input.settingsPath}.tmp-${process.pid}`;
-  await writeFile5(tempPath, `${JSON.stringify(next, null, 2)}
+  await writeFile6(tempPath, `${JSON.stringify(next, null, 2)}
 `, { mode: 384 });
   await rename2(tempPath, input.settingsPath);
-  await chmod(input.settingsPath, 384);
+  await chmod2(input.settingsPath, 384);
   return { tokenReused };
 }
 var init_localBootstrap = __esm({
@@ -90289,9 +90416,9 @@ var init_localBootstrap = __esm({
 
 // ../dashboard/backend/src/standalone.ts
 import { randomBytes as randomBytes6 } from "node:crypto";
-import { chmod as chmod2, mkdir as mkdir5, readFile as readFile10, rm as rm3, writeFile as writeFile6 } from "node:fs/promises";
-import { homedir as homedir4, userInfo } from "node:os";
-import { dirname as dirname6, join as join13 } from "node:path";
+import { chmod as chmod3, mkdir as mkdir6, readFile as readFile11, rm as rm3, writeFile as writeFile7 } from "node:fs/promises";
+import { homedir as homedir5, userInfo } from "node:os";
+import { dirname as dirname7, join as join14 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // ../dashboard/backend/test/schema.sqlite.sql
@@ -90300,25 +90427,25 @@ var schema_sqlite_default = "-- SQLite translation of src/db/schema.mysql.sql, u
 // ../dashboard/backend/src/standalone.ts
 var DEFAULT_PORT = 3001;
 var HOST = "127.0.0.1";
-var sugoHome = process.env.SUGO_HOME_OVERRIDE ?? homedir4();
-var sugoDir = join13(sugoHome, ".claude", "sugo");
-var dataDir = join13(sugoDir, "dashboard");
-var secretFile = join13(dataDir, "session-secret");
-var stateFile = join13(dataDir, "server.json");
+var sugoHome = process.env.SUGO_HOME_OVERRIDE ?? homedir5();
+var sugoDir = join14(sugoHome, ".claude", "sugo");
+var dataDir = join14(sugoDir, "dashboard");
+var secretFile = join14(dataDir, "session-secret");
+var stateFile = join14(dataDir, "server.json");
 var port = Number(process.env.SUGO_DASHBOARD_PORT ?? DEFAULT_PORT);
-var runtimeDir = dirname6(fileURLToPath3(import.meta.url));
-var pluginRoot = dirname6(runtimeDir);
-var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join13(runtimeDir, "web");
+var runtimeDir = dirname7(fileURLToPath3(import.meta.url));
+var pluginRoot = dirname7(runtimeDir);
+var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join14(runtimeDir, "web");
 var userId = process.env.LOCAL_DEV_USER_ID ?? userInfo().username;
 var displayName = process.env.LOCAL_DEV_DISPLAY_NAME ?? userId;
 async function loadOrCreateSecret() {
   try {
-    return (await readFile10(secretFile, "utf8")).trim();
+    return (await readFile11(secretFile, "utf8")).trim();
   } catch {
   }
   const secret = randomBytes6(32).toString("base64");
-  await writeFile6(secretFile, secret, { mode: 384 });
-  await chmod2(secretFile, 384);
+  await writeFile7(secretFile, secret, { mode: 384 });
+  await chmod3(secretFile, 384);
   return secret;
 }
 process.on("unhandledRejection", (reason) => {
@@ -90327,14 +90454,14 @@ process.on("unhandledRejection", (reason) => {
 process.on("uncaughtException", (err) => {
   console.error("[dashboard] uncaughtException (\uD504\uB85C\uC138\uC2A4 \uC720\uC9C0):", err.message);
 });
-await mkdir5(dataDir, { recursive: true });
+await mkdir6(dataDir, { recursive: true });
 var sessionSecret = await loadOrCreateSecret();
 var apiUrl = `http://localhost:${port}`;
 process.env.SUGO_DASHBOARD_EMBEDDED = "1";
 process.env.HOST = HOST;
 process.env.PORT = String(port);
 process.env.DB_DRIVER = "sqlite";
-process.env.SQLITE_FILE = join13(dataDir, "dashboard.db");
+process.env.SQLITE_FILE = join14(dataDir, "dashboard.db");
 process.env.SESSION_SECRET = sessionSecret;
 process.env.LOCAL_DEV_MODE = "1";
 process.env.LOCAL_DEV_USER_ID = userId;
@@ -90342,7 +90469,7 @@ process.env.LOCAL_DEV_DISPLAY_NAME = displayName;
 process.env.FRONTEND_URL = apiUrl;
 process.env.CORS_ORIGINS = apiUrl;
 process.env.SUGO_DASHBOARD_API_URL = apiUrl;
-process.env.HARNESS_PATH = join13(pluginRoot, "harness-library");
+process.env.HARNESS_PATH = join14(pluginRoot, "harness-library");
 process.env.SKILLS_PATH = pluginRoot;
 var { createApp: createApp2 } = await Promise.resolve().then(() => (init_index(), index_exports));
 var { bootstrapLocalDashboard: bootstrapLocalDashboard2 } = await Promise.resolve().then(() => (init_localBootstrap(), localBootstrap_exports));
@@ -90352,11 +90479,11 @@ await bootstrapLocalDashboard2(db, {
   userId,
   displayName,
   apiUrl,
-  settingsPath: join13(sugoDir, "settings.json")
+  settingsPath: join14(sugoDir, "settings.json")
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.40.7", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile7(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.41.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

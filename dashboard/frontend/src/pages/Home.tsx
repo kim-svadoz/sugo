@@ -14,7 +14,7 @@ import { technicalIdentifierParts } from "../lib/technicalIdentifiers.js";
 import { dailyGreeting } from "../lib/homeGreeting.js";
 import { useProfile } from "../hooks/useProfile.js";
 import { getWeatherRegion } from "../lib/weatherPreferences.js";
-import { getWeeklyPreferences } from "../lib/weeklyPreferences.js";
+import { getWeeklySettings } from "../api/weeklyApi.js";
 
 function relativeTime(value: string): string {
   const hours = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 3_600_000));
@@ -112,7 +112,8 @@ export function Home() {
   const navigate = useNavigate();
   const [newsFeed, setNewsFeed] = useState<NewsFeed | null>(null);
   const [selectedNote, setSelectedNote] = useState<LearningReviewNote | null>(null);
-  const setupMissing = [!profile?.displayName ? "표시 이름" : null, !getWeatherRegion() ? "날씨 생활권" : null, !getWeeklyPreferences() ? "주간 리포트" : null].filter(Boolean) as string[];
+  const [weeklyConfigured, setWeeklyConfigured] = useState<boolean | null>(null);
+  const setupMissing = [!profile?.displayName ? "표시 이름" : null, !getWeatherRegion() ? "날씨 생활권" : null, weeklyConfigured === false ? "주간 리포트" : null].filter(Boolean) as string[];
   const brief = useMemo(() => buildHomeBrief(specs ?? []), [specs]);
   const review = useMemo(() => recentReview(specs ?? []), [specs]);
   const notes = useMemo(() => new Map(review.items.flatMap(({ spec, histories }) => {
@@ -124,6 +125,11 @@ export function Home() {
   useEffect(() => {
     let cancelled = false;
     getNewsFeed("ko").then((feed) => { if (!cancelled) setNewsFeed(feed); }).catch(() => { if (!cancelled) setNewsFeed({ items: [], fetchedAt: new Date().toISOString(), sourceCount: 0, sources: [] }); });
+    return () => { cancelled = true; };
+  }, []);
+  useEffect(() => {
+    let cancelled = false;
+    getWeeklySettings().then((settings) => { if (!cancelled) setWeeklyConfigured(settings.configured); }).catch(() => { if (!cancelled) setWeeklyConfigured(null); });
     return () => { cancelled = true; };
   }, []);
 

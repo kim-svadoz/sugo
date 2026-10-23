@@ -1,4 +1,4 @@
-import { CalendarClock, Check, ChevronDown, CloudSun, MapPin, MonitorCog, Search } from "lucide-react";
+import { CalendarClock, Check, ChevronDown, CloudSun, Copy, KeyRound, MapPin, MonitorCog, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.js";
@@ -6,7 +6,7 @@ import { useProfile } from "../hooks/useProfile.js";
 import { getWeatherRegion, setWeatherRegion, WEATHER_REGIONS } from "../lib/weatherPreferences.js";
 import { cn } from "../lib/utils.js";
 import { PageHeading } from "../components/PageHeading.js";
-import { getWeeklyPreferences, setWeeklyPreferences } from "../lib/weeklyPreferences.js";
+import { deleteWeeklyToken, getWeeklySettings, saveWeeklySettings, type WeeklySettingsInput } from "../api/weeklyApi.js";
 
 type PreferencesTab = "general" | "weather" | "weekly";
 
@@ -21,9 +21,19 @@ export function Preferences() {
   const [regionQuery, setRegionQuery] = useState("");
   const [nickname, setNickname] = useState(displayName);
   const [saved, setSaved] = useState(false);
-  const [weekly, setWeekly] = useState(() => getWeeklyPreferences() ?? { enabled: true, day: 5, hour: 17 });
+  const [weekly, setWeekly] = useState<WeeklySettingsInput>({ enabled: true, weekday: 5, hour: 17, minute: 0, model: "default", extraRepositories: [] });
+  const [weeklyLoading, setWeeklyLoading] = useState(true);
+  const [weeklyError, setWeeklyError] = useState("");
+  const [tokenConfigured, setTokenConfigured] = useState(false);
+  const [token, setToken] = useState("");
+  const [repositoryDraft, setRepositoryDraft] = useState("");
   const [weeklySaved, setWeeklySaved] = useState(false);
   useEffect(() => setNickname(displayName), [displayName]);
+  useEffect(() => {
+    let cancelled = false;
+    getWeeklySettings().then((value) => { if (!cancelled) { setWeekly({ enabled: value.enabled, weekday: value.weekday, hour: value.hour, minute: value.minute, model: value.model, extraRepositories: value.extraRepositories }); setTokenConfigured(value.tokenConfigured); setWeeklyLoading(false); } }).catch(() => { if (!cancelled) { setWeeklyError("주간 리포트 설정을 불러오지 못했습니다."); setWeeklyLoading(false); } });
+    return () => { cancelled = true; };
+  }, []);
   const selectTab = (next: PreferencesTab) => setSearchParams(next === "general" ? {} : { tab: next }, { replace: true });
   const currentRegion = WEATHER_REGIONS.find((region) => region.id === selectedRegion);
   const visibleRegions = WEATHER_REGIONS.filter((region) => region.label.toLowerCase().includes(regionQuery.trim().toLowerCase()));
@@ -55,12 +65,23 @@ export function Preferences() {
       </div>
       {selectedRegion && <p className="mt-3 text-xs text-emerald-300">Home 날씨에 자동 적용됩니다.</p>}
     </section> : <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-      <h2 className="text-base font-semibold text-slate-100">주간 작업 리포트</h2><p className="mt-1 text-xs leading-5 text-slate-400">주간 리포트는 Sugo에 기본 포함됩니다. 별도 플러그인 명령 없이 요약 시점만 정하면 됩니다.</p>
-      <div className="mt-5 max-w-xl space-y-3 rounded-xl border border-[var(--color-border)] bg-black/10 p-4">
-        <label className="flex items-center justify-between gap-4"><span><strong className="block text-sm text-slate-100">자동 주간 정리</strong><span className="mt-1 block text-[10px] text-slate-500">완료 기록을 한 주 단위로 묶어 Weekly에서 확인합니다.</span></span><input type="checkbox" checked={weekly.enabled} onChange={(event) => { setWeekly({ ...weekly, enabled: event.target.checked }); setWeeklySaved(false); }} className="h-4 w-4 accent-cyan-400" /></label>
-        <div className="space-y-3 border-t border-white/[0.06] pt-3"><div><span className="text-[11px] text-slate-400">정리 요일</span><div className="mt-1.5 flex flex-wrap gap-1">{[[1,"월"],[2,"화"],[3,"수"],[4,"목"],[5,"금"]].map(([value,label]) => <button key={value} type="button" onClick={() => { setWeekly({ ...weekly, day: Number(value) }); setWeeklySaved(false); }} className={cn("rounded-md border px-3 py-1.5 text-xs", weekly.day === value ? "border-cyan-300/40 bg-cyan-300/10 text-cyan-100" : "border-white/[0.07] text-slate-400")}>{label}</button>)}</div></div><div><span className="text-[11px] text-slate-400">정리 시각</span><div className="ck-scroll mt-1.5 flex max-w-full gap-1 overflow-x-auto pb-1">{Array.from({ length: 12 }, (_, index) => index + 8).map((hour) => <button key={hour} type="button" onClick={() => { setWeekly({ ...weekly, hour }); setWeeklySaved(false); }} className={cn("shrink-0 rounded-md border px-2.5 py-1.5 font-mono text-[11px]", weekly.hour === hour ? "border-cyan-300/40 bg-cyan-300/10 text-cyan-100" : "border-white/[0.07] text-slate-400")}>{String(hour).padStart(2,"0")}:00</button>)}</div></div></div>
-        <button type="button" onClick={() => { setWeeklyPreferences(weekly); setWeeklySaved(true); }} className="rounded-lg bg-cyan-400/15 px-4 py-2 text-xs font-semibold text-cyan-100">설정 저장</button>{weeklySaved && <span className="ml-3 text-xs text-emerald-300">저장됨</span>}
-      </div>
+      <h2 className="text-base font-semibold text-slate-100">주간 작업 리포트</h2><p className="mt-1 text-xs leading-5 text-slate-400">Sugo가 등록된 작업을 매주 정리해 Weekly에 남깁니다. 일정, Claude 모델과 예약 실행 토큰을 여기서 함께 관리합니다.</p>
+      {weeklyLoading ? <p className="mt-5 text-xs text-slate-500">설정을 불러오는 중입니다.</p> : <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <div className="space-y-4 rounded-xl border border-[var(--color-border)] bg-black/10 p-4">
+          <label className="flex items-center justify-between gap-4"><span><strong className="block text-sm text-slate-100">자동 주간 정리</strong><span className="mt-1 block text-[10px] text-slate-500">완료 기록을 한 주 단위로 묶어 Weekly에서 확인합니다.</span></span><input type="checkbox" checked={weekly.enabled} onChange={(event) => { setWeekly({ ...weekly, enabled: event.target.checked }); setWeeklySaved(false); }} className="h-4 w-4 accent-cyan-400" /></label>
+          <div className="border-t border-white/[0.06] pt-3"><span className="text-[11px] text-slate-400">생성 요일</span><div className="mt-1.5 grid grid-cols-7 gap-1">{[[1,"월"],[2,"화"],[3,"수"],[4,"목"],[5,"금"],[6,"토"],[0,"일"]].map(([value,label]) => <button key={value} type="button" onClick={() => { setWeekly({ ...weekly, weekday: Number(value) }); setWeeklySaved(false); }} className={cn("rounded-md border px-2 py-2 text-xs", weekly.weekday === value ? "border-cyan-300/40 bg-cyan-300/10 text-cyan-100" : "border-white/[0.07] text-slate-400")}>{label}</button>)}</div></div>
+          <div className="grid gap-3 sm:grid-cols-[.8fr_1.2fr]"><label className="text-[11px] text-slate-400">생성 시각<input type="time" value={`${String(weekly.hour).padStart(2,"0")}:${String(weekly.minute).padStart(2,"0")}`} onChange={(event) => { const [hour, minute] = event.target.value.split(":").map(Number); setWeekly({ ...weekly, hour, minute }); setWeeklySaved(false); }} className="mt-1.5 block w-full rounded-lg border border-white/[0.08] bg-[#070d18] px-3 py-2 text-sm text-slate-100" /></label><div><span className="text-[11px] text-slate-400">Claude 모델</span><div className="mt-1.5 grid grid-cols-3 gap-1">{([['default','기본'],['sonnet','Sonnet'],['opus','Opus']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => { setWeekly({ ...weekly, model: value }); setWeeklySaved(false); }} className={cn("rounded-lg border px-2 py-2 text-[11px]", weekly.model === value ? "border-violet-300/35 bg-violet-300/10 text-violet-100" : "border-white/[0.07] text-slate-400")}>{label}</button>)}</div></div></div>
+          <div className="border-t border-white/[0.06] pt-3"><span className="text-[11px] text-slate-400">추가 저장소</span><p className="mt-1 text-[10px] text-slate-500">Sugo에 등록된 프로젝트는 자동으로 포함됩니다. 그 밖의 로컬 저장소만 추가하세요.</p><div className="mt-2 flex gap-2"><input value={repositoryDraft} onChange={(event) => setRepositoryDraft(event.target.value)} placeholder="/경로/저장소" className="min-w-0 flex-1 rounded-lg border border-white/[0.08] bg-[#070d18] px-3 py-2 text-xs text-slate-100" /><button type="button" aria-label="저장소 추가" onClick={() => { const value = repositoryDraft.trim(); if (value && !weekly.extraRepositories.includes(value)) setWeekly({ ...weekly, extraRepositories: [...weekly.extraRepositories, value] }); setRepositoryDraft(""); setWeeklySaved(false); }} className="rounded-lg border border-cyan-300/20 px-3 text-cyan-200"><Plus size={14} /></button></div>{weekly.extraRepositories.map((repo) => <div key={repo} className="mt-2 flex items-center gap-2 rounded-md bg-white/[0.025] px-3 py-2 font-mono text-[10px] text-slate-300"><span className="min-w-0 flex-1 truncate">{repo}</span><button type="button" aria-label={`${repo} 삭제`} onClick={() => setWeekly({ ...weekly, extraRepositories: weekly.extraRepositories.filter((value) => value !== repo) })}><Trash2 size={12} /></button></div>)}</div>
+        </div>
+        <div className="space-y-4 rounded-xl border border-[var(--color-border)] bg-black/10 p-4">
+          <div><div className="flex items-center gap-2"><KeyRound size={15} className="text-violet-300" /><strong className="text-sm text-slate-100">예약 실행용 Claude 토큰</strong></div><p className="mt-2 text-[10px] leading-5 text-slate-500">터미널에서 아래 명령으로 토큰을 만든 뒤 입력하세요. 토큰은 이 컴퓨터에 권한 600으로 저장되며 화면과 API에는 다시 표시되지 않습니다.</p></div>
+          <div className="flex items-center gap-2 rounded-lg border border-white/[0.07] bg-[#070d18] px-3 py-2"><code className="min-w-0 flex-1 text-xs text-cyan-100">claude setup-token</code><button type="button" aria-label="명령 복사" onClick={() => void navigator.clipboard.writeText("claude setup-token")} className="text-slate-400 hover:text-cyan-200"><Copy size={14} /></button></div>
+          <label className="block text-[11px] text-slate-400">{tokenConfigured ? "새 토큰으로 변경" : "Claude 토큰"}<input type="password" autoComplete="new-password" value={token} onChange={(event) => { setToken(event.target.value); setWeeklySaved(false); }} placeholder={tokenConfigured ? "변경할 때만 입력" : "토큰 붙여넣기"} className="mt-1.5 block w-full rounded-lg border border-white/[0.08] bg-[#070d18] px-3 py-2.5 text-sm text-slate-100" /></label>
+          <div className="flex items-center justify-between rounded-lg border border-white/[0.06] px-3 py-2"><span className={cn("text-[11px]", tokenConfigured ? "text-emerald-300" : "text-amber-200")}>{tokenConfigured ? "토큰 설정됨" : "토큰 설정 필요"}</span>{tokenConfigured && <button type="button" onClick={() => void deleteWeeklyToken().then(() => { setTokenConfigured(false); setWeeklySaved(false); })} className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-rose-300"><Trash2 size={12} />삭제</button>}</div>
+          <p className="text-[10px] leading-5 text-slate-500">기존 Weekly 설정이 있으면 처음 저장할 때 Sugo가 그대로 이어받습니다. 이후 별도 설정 페이지를 열 필요가 없습니다.</p>
+        </div>
+        <div className="flex items-center gap-3 lg:col-span-2"><button type="button" onClick={() => { setWeeklyError(""); void saveWeeklySettings({ ...weekly, ...(token.trim() ? { token: token.trim() } : {}) }).then((value) => { setToken(""); setTokenConfigured(value.tokenConfigured); setWeeklySaved(true); }).catch(() => setWeeklyError("설정을 저장하거나 예약을 적용하지 못했습니다.")); }} className="rounded-lg bg-cyan-400/15 px-4 py-2 text-xs font-semibold text-cyan-100">설정 저장</button>{weeklySaved && <span className="text-xs text-emerald-300">예약에 적용됨</span>}{weeklyError && <span className="text-xs text-rose-300">{weeklyError}</span>}</div>
+      </div>}
     </section>}
   </div>;
 }

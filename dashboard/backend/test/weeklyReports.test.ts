@@ -11,7 +11,13 @@ const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 async function freshApp() {
   const db = createSqliteClient();
   await db.execScript(schema);
-  const { app } = await createApp(db);
+  const settings = { enabled: true, weekday: 6, hour: 8, minute: 0, model: "opus" as const, extraRepositories: [], configured: true, tokenConfigured: false, engineAvailable: true };
+  const weeklySettingsService = {
+    get: async () => settings,
+    save: async (value: typeof settings, token?: string) => ({ ...value, configured: true, tokenConfigured: Boolean(token), engineAvailable: true }),
+    deleteToken: async () => undefined,
+  };
+  const { app } = await createApp({ db, weeklySettingsService });
   return { app, db, mine: await seedUserToken(db, "me"), other: await seedUserToken(db, "other") };
 }
 
@@ -66,5 +72,15 @@ describe("/api/weekly/reports", () => {
   it("보고서가 없으면 빈 목록이다", async () => {
     const { app, mine } = await freshApp();
     expect((await request(app).get("/api/weekly/reports").set("Authorization", mine)).body).toEqual({ reports: [] });
+  });
+
+  it("주간 설정은 토·일과 모델을 받고 토큰을 응답에 노출하지 않는다", async () => {
+    const { app, mine } = await freshApp();
+    const current = await request(app).get("/api/weekly/reports/settings/current").set("Authorization", mine).expect(200);
+    expect(current.body.weekday).toBe(6);
+
+    const saved = await request(app).put("/api/weekly/reports/settings/current").set("Authorization", mine).send({ enabled: true, weekday: 0, hour: 9, minute: 30, model: "sonnet", extraRepositories: [], token: "hidden" }).expect(200);
+    expect(saved.body).toMatchObject({ weekday: 0, model: "sonnet", tokenConfigured: true });
+    expect(saved.body).not.toHaveProperty("token");
   });
 });
