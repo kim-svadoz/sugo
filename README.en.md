@@ -133,8 +133,8 @@ Open `http://localhost:3001`. It starts with each new Claude Code session.
 
 | Screen | Use |
 | --- | --- |
-| Home | Recent work with learning notes, approvals waiting for you, engineering-blog feed |
-| Workspaces | Projects, domain rules, task history. The Agent Canvas shows the task graph, patch lineage, approval evidence, and diffs |
+| Home | 3D workroom (who is doing what now), work to continue and reviews to confirm, recent work with learning notes, engineering-blog feed |
+| Workspaces | Projects, rules, and history per domain; the work floor (a stage lane per running task); the Agent Canvas (task graph, patch lineage, approval evidence, diffs) |
 | Schedule | Spec schedule, planning links and memos, deployment state |
 | Weekly | Reports from the [weekly](https://github.com/kim-svadoz/weekly-ai-report) plugin |
 | Skills, Playbook | Sugo's agents, commands, skills, and usage scenarios |
@@ -142,7 +142,7 @@ Open `http://localhost:3001`. It starts with each new Claude Code session.
 | Integrations | Git providers, AWS, Pinpoint, and plugin API tokens |
 | Preferences | Display name, weather region |
 
-The 3D workroom on Home puts the planning whiteboard, main desk, harness wall, specialist desks, waiting lounge, user confirmation counter, commit conveyor, Weekly shelf, and domain models in one space. Idle specialists sit in the lounge and walk to their desks when real events call them. Select an area to open its details and page link. Without WebGL or with reduced motion, Home shows a 2D map instead. The work floor on Workspaces splits parallel code tasks in a domain into separate lanes.
+The 3D workroom on Home shows one main agent and four specialists (code, test, review, docs) moving with real activity events. Idle specialists wait in the lounge and walk to their desks when called; when a review needs you, the main agent waits at the user confirmation counter. Select an area to open its details and page link. Without WebGL or with reduced motion, Home shows a 2D map instead.
 
 Console data is in `~/.claude/sugo/dashboard/` and survives updates. If the Console is down, the pipeline continues and sends sync data later.
 
