@@ -5,6 +5,26 @@ import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
 const history = (version: number, completedAt: string) => ({ task_id: `task-${version}`, version, title: `patch ${version}`, summary: "완료 요약", completed_at: completedAt });
 
 describe("Home 학습 리뷰 대상", () => {
+  it("축약된 이력보다 같은 차수의 전체 focus 보고서를 우선한다", () => {
+    const spec = {
+      id: "generic", workspace_name: "sample", title: "검색 개선", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
+      focus_task_work_result: { patchVersion: 2, report: { patchVersion: 2, summary: "전체 결과", designDecisions: ["기존 조회 경계를 재사용했다."], knownLimitations: ["운영 지표 확인이 남았다."] } },
+      development_history: [{ ...history(2, "2026-10-21T01:00:00.000Z"), work_result: { patchVersion: 2, report: { patchVersion: 2, summary: "축약 결과", designDecisions: [], knownLimitations: [] } } }],
+    } as ScheduledSpec;
+    const note = selectLearningReviewNote([{ spec, history: spec.development_history![0] }]);
+    expect(note?.decisions).toEqual(["기존 조회 경계를 재사용했다."]);
+    expect(note?.improvements).toEqual(["운영 지표 확인이 남았다."]);
+  });
+
+  it("특정 업무 식별자 없이 보고서의 설계 판단을 범용 학습으로 보여준다", () => {
+    const spec = {
+      id: "generic", workspace_name: "sample", title: "검색 개선", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
+      development_history: [{ ...history(1, "2026-10-21T01:00:00.000Z"), work_result: { patchVersion: 1, report: { patchVersion: 1, summary: "완료", designDecisions: ["기존 저장소 경계를 재사용해 중복 변환을 제거했다."], knownLimitations: [] } } }],
+    } as ScheduledSpec;
+    const note = selectLearningReviewNote([{ spec, history: spec.development_history![0] }]);
+    expect(note?.learnings).toEqual(["기존 저장소 경계를 재사용해 중복 변환을 제거했다."]);
+  });
+
   it("전체 focus 갱신 시각이 아니라 어제의 작업과 같은 작업·같은 patch 결과를 선택한다", () => {
     const userProfile = {
       id: "notify-settings", workspace_name: "account", title: "알림 설정 분류", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
@@ -78,8 +98,10 @@ describe("Home 학습 리뷰 대상", () => {
 
     expect(note?.patchVersions).toEqual([3, 4]);
     expect(note?.summary).toEqual(["조회 계약을 정리했다.", "문서 변환을 재사용했다."]);
-    expect(note?.learnings.some((item) => item.includes("메서드 계약"))).toBe(true);
-    expect(note?.learnings.some((item) => item.includes("Mapper/Assembler"))).toBe(true);
+    expect(note?.learnings).toEqual([
+      "findProducts(userId, size) 하나로 합치고 LIMITED_RESULT는 제거한다.",
+      "ProductDocMapper를 수정 없이 재사용한다.",
+    ]);
   });
 
   it("검증 로그는 변경 목록에서 빼고 축약된 제거 문장은 의도가 드러나게 정제한다", () => {

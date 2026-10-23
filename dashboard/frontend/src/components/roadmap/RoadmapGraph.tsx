@@ -1501,7 +1501,7 @@ export function RoadmapGraph({
     setFileViewer((current) => ({ file: loaded, expanded: current?.expanded ?? true }));
   }, [selectedNode, userId, workspace]);
   useEffect(() => {
-    if (!fileViewer || !userId || !selectedNode || (!fileViewer.file.unavailableReason && (fileViewer.file.diff || fileViewer.file.change !== "modified"))) return;
+    if (!fileViewer || !userId || !selectedNode || (!fileViewer.file.unavailableReason && (fileViewer.file.diff || fileViewer.file.content))) return;
     let cancelled = false;
     const file = fileViewer.file;
     const latest = selectedFiles.find(candidate => candidate.path === file.path) ?? file;

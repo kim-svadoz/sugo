@@ -3,6 +3,12 @@ import { describe, expect, it } from "vitest";
 import { shouldApplyHoverFocus } from "./interaction.js";
 
 describe("canvas selection interaction", () => {
+  it("인라인 내용이 없는 추가 파일도 서버 산출물을 조회한다", () => {
+    const source = readFileSync(new URL("./RoadmapGraph.tsx", import.meta.url), "utf8");
+    expect(source).toContain("fileViewer.file.diff || fileViewer.file.content");
+    expect(source).not.toContain('fileViewer.file.change !== "modified"');
+  });
+
   it("정상 종료 SPEC은 폐기함과 분리된 보관함에서 복구한다", () => {
     const source = readFileSync(new URL("./RoadmapGraph.tsx", import.meta.url), "utf8");
     expect(source).toContain("보관함");

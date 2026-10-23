@@ -90011,17 +90011,25 @@ var init_cors = __esm({
 // ../dashboard/backend/src/services/contextAutoRefreshService.ts
 var contextAutoRefreshService_exports = {};
 __export(contextAutoRefreshService_exports, {
-  kstRefreshDay: () => kstRefreshDay,
+  localRefreshDay: () => localRefreshDay,
   runDueContextRefresh: () => runDueContextRefresh,
   startContextAutoRefresh: () => startContextAutoRefresh
 });
-function kstRefreshDay(now = /* @__PURE__ */ new Date()) {
-  const shifted = new Date(now.getTime() + KST_OFFSET_MS);
-  if (shifted.getUTCHours() < 8) return null;
-  return shifted.toISOString().slice(0, 10);
+function localRefreshDay(now = /* @__PURE__ */ new Date(), timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  if (Number(values.hour) < 8) return null;
+  return `${values.year}-${values.month}-${values.day}`;
 }
-async function runDueContextRefresh(db2, now, refreshAws, refreshPinpoint) {
-  const day2 = kstRefreshDay(now);
+async function runDueContextRefresh(db2, now, refreshAws, refreshPinpoint, timeZone) {
+  const day2 = localRefreshDay(now, timeZone);
   if (!day2) return;
   const users = await db2.query(`SELECT user_id, MAX(has_aws) AS has_aws, MAX(has_pinpoint) AS has_pinpoint FROM (
     SELECT user_id, 1 AS has_aws, 0 AS has_pinpoint FROM user_aws_context_accounts
@@ -90042,22 +90050,19 @@ async function runDueContextRefresh(db2, now, refreshAws, refreshPinpoint) {
     }
   }
 }
-function millisecondsUntilNextEightKst(now) {
-  const shifted = new Date(now.getTime() + KST_OFFSET_MS);
-  const todayAtEight = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate(), 8);
-  const target = todayAtEight > shifted.getTime() ? todayAtEight : todayAtEight + 24 * 60 * 6e4;
-  return target - shifted.getTime();
-}
 function startContextAutoRefresh(db2, aws, pinpoint) {
   let stopped = false;
   let timer = null;
   const run = () => runDueContextRefresh(db2, /* @__PURE__ */ new Date(), (userId2) => refreshAllAwsContexts(db2, userId2, aws), (userId2) => refreshPinpointContext(db2, userId2, pinpoint)).catch((error2) => console.error("[dashboard] context auto refresh failed:", error2 instanceof Error ? error2.message : error2));
   const schedule = () => {
     if (stopped) return;
+    const now = /* @__PURE__ */ new Date();
+    const nextHour = new Date(now);
+    nextHour.setMinutes(60, 0, 0);
     timer = setTimeout(async () => {
       await run();
       schedule();
-    }, millisecondsUntilNextEightKst(/* @__PURE__ */ new Date()));
+    }, nextHour.getTime() - now.getTime());
     timer.unref?.();
   };
   void run();
@@ -90067,13 +90072,11 @@ function startContextAutoRefresh(db2, aws, pinpoint) {
     if (timer) clearTimeout(timer);
   };
 }
-var KST_OFFSET_MS;
 var init_contextAutoRefreshService = __esm({
   "../dashboard/backend/src/services/contextAutoRefreshService.ts"() {
     "use strict";
     init_awsContextService();
     init_pinpointContextService();
-    KST_OFFSET_MS = 9 * 60 * 6e4;
   }
 });
 
@@ -90234,7 +90237,7 @@ var init_index = __esm({
     init_asyncHandler();
     init_contextAutoRefreshService();
     __dirname2 = dirname4(fileURLToPath2(import.meta.url));
-    pkg = "0.40.6" ? { version: "0.40.6" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.40.7" ? { version: "0.40.7" } : JSON.parse(readFileSync(join12(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90353,7 +90356,7 @@ await bootstrapLocalDashboard2(db, {
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var server = app.listen(port, HOST, () => {
-  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.40.6", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile6(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.40.7", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

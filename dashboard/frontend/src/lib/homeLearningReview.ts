@@ -57,23 +57,6 @@ function conciseLines(values: Array<string | null | undefined>, limit: number): 
     .slice(0, limit);
 }
 
-function learningCandidates(decisions: string[]): string[] {
-  const learnings: string[] = [];
-  if (decisions.some((value) => /하드코딩/.test(value)) && decisions.some((value) => /layout_key/.test(value))) {
-    learnings.push("동작 분기는 화면 식별자를 하드코딩하지 않고 런타임 구성값(layout_key)을 기준으로 둔다.");
-  }
-  if (decisions.some((value) => /캐시/.test(value) && /인덱스별/.test(value))) {
-    learnings.push("데이터 원천이 분리되면 캐시도 원천별로 분리하고, 조회 키는 도메인 식별자로 유지한다.");
-  }
-  if (decisions.some((value) => /메서드|\w+\([^)]*\)|LIMITED_RESULT|오버로드/.test(value))) {
-    learnings.push("호출 경로가 하나라면 메서드 계약도 하나로 유지하고, 사용되지 않는 변형 API는 제거한다.");
-  }
-  if (decisions.some((value) => /Mapper|Assembler|DTO|record|interface/.test(value))) {
-    learnings.push("문서 구조가 같으면 변환 책임은 기존 Mapper/Assembler 경계에 유지하고 중복 변환 코드를 만들지 않는다.");
-  }
-  return learnings.slice(0, 3);
-}
-
 function reviewDecisions(decisions: string[]): string[] {
   const tradeoffs = decisions.filter((value) => /대신|제거|유지|재사용|트레이드오프/.test(value));
   return [...tradeoffs, ...decisions].filter((value, index, all) => all.indexOf(value) === index).slice(0, 2);
@@ -86,7 +69,8 @@ export function selectLearningReviewNote(items: Array<{ spec: ScheduledSpec; his
     const records = (group.length > 0 ? group : [anchor]).map(({ spec, history }) => {
       const embedded = history.work_result as ReviewResult | null | undefined;
       const focused = spec.focus_task_work_result as ReviewResult | null | undefined;
-      const result = embedded ?? ((focused?.report?.patchVersion ?? focused?.patchVersion) === history.version ? focused : null);
+      const focusedVersion = focused?.report?.patchVersion ?? focused?.patchVersion;
+      const result = focusedVersion === history.version ? focused : embedded;
       return { spec, history, result, report: result?.report };
     }).filter((record) => record.result || record.history.summary);
     if (records.length === 0) continue;
@@ -110,7 +94,7 @@ export function selectLearningReviewNote(items: Array<{ spec: ScheduledSpec; his
       patchVersions: ordered.map(({ history }) => history.version),
       summary,
       decisions,
-      learnings: learningCandidates(allDecisions),
+      learnings: allDecisions.slice(0, 3),
       improvements,
       verification: {
         total: test?.total,

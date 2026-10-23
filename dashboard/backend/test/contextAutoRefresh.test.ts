@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { kstRefreshDay, runDueContextRefresh } from "../src/services/contextAutoRefreshService.js";
+import { localRefreshDay, runDueContextRefresh } from "../src/services/contextAutoRefreshService.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -7,9 +7,9 @@ import { join } from "node:path";
 const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 
 describe("daily AWS and Pinpoint refresh", () => {
-  it("is not due before 08:00 KST", () => {
-    expect(kstRefreshDay(new Date("2026-10-20T22:59:59.000Z"))).toBeNull();
-    expect(kstRefreshDay(new Date("2026-10-20T23:00:00.000Z"))).toBe("2026-10-21");
+  it("사용자 시간대의 오전 8시를 갱신 기준으로 삼는다", () => {
+    expect(localRefreshDay(new Date("2026-10-20T14:59:59.000Z"), "America/Los_Angeles")).toBeNull();
+    expect(localRefreshDay(new Date("2026-10-20T15:00:00.000Z"), "America/Los_Angeles")).toBe("2026-10-20");
   });
 
   it("runs AWS before Pinpoint once per KST day and catches up after 08:00", async () => {
@@ -23,8 +23,8 @@ describe("daily AWS and Pinpoint refresh", () => {
     const refreshPinpoint = vi.fn(async () => { order.push("pinpoint"); });
 
     const now = new Date("2026-10-21T02:00:00.000Z");
-    await runDueContextRefresh(db, now, refreshAws, refreshPinpoint);
-    await runDueContextRefresh(db, now, refreshAws, refreshPinpoint);
+    await runDueContextRefresh(db, now, refreshAws, refreshPinpoint, "Asia/Seoul");
+    await runDueContextRefresh(db, now, refreshAws, refreshPinpoint, "Asia/Seoul");
 
     expect(order).toEqual(["aws", "pinpoint"]);
     await db.close();
