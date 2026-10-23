@@ -100,6 +100,30 @@ function isBoundary(token) {
   return [";", "&&", "||", "|", "(", ")", "$(", ";;"].includes(token);
 }
 
+// 인자로 받은 문자열을 실행할 방법이 없는 명령. 파이프라인 전체가 이 명령들로만 이뤄질 때에만
+// "aws"는 검색어·메시지 같은 데이터다. sort(--compress-program)·awk·sed·find·xargs처럼 실행 경로가
+// 있는 명령, 그리고 PAGER 같은 환경변수 접두사는 실행 경로가 되므로 제외한다.
+const DATA_ONLY_COMMANDS = new Set(["grep", "egrep", "fgrep", "rg", "echo", "printf", "cat", "head", "tail", "wc", "uniq", "cut", "tr", "ls", "cd", "pwd", "diff", "jq", "true", "git"]);
+const DATA_ONLY_GIT_SUBCOMMANDS = new Set(["commit", "log", "show", "diff", "status", "blame", "add", "branch", "tag"]);
+
+function isDataOnlySegment([head, ...args]) {
+  if (!DATA_ONLY_COMMANDS.has(head)) return false;
+  if (head === "rg") return !args.some((arg) => arg.startsWith("--pre"));
+  if (head === "git") return DATA_ONLY_GIT_SUBCOMMANDS.has(args[0]);
+  return true;
+}
+
+export function isDataOnlyCommand(command) {
+  const value = String(command || "");
+  if (/[\r\n`]|\$\(|[<>]\(/.test(value)) return false;
+  const segments = [[]];
+  for (const token of shellTokens(value)) {
+    if (isBoundary(token) || token === "&") segments.push([]);
+    else segments[segments.length - 1].push(token);
+  }
+  return segments.every((segment) => segment.length === 0 || isDataOnlySegment(segment));
+}
+
 export function extractAwsCalls(command) {
   const tokens = shellTokens(String(command || ""));
   const calls = [];
@@ -197,10 +221,11 @@ function evaluateCall(call, policy) {
 
 export function evaluateAwsCommand(command, policy = DEFAULT_AWS_GUARD_POLICY) {
   const value = String(command || "");
+  if (isDataOnlyCommand(value)) return { decision: "ignore", code: "not_aws", reason: "AWS 호출이 아닙니다.", calls: [] };
   if (/\b(?:boto3|botocore)\b|@aws-sdk\/|\baws-sdk\b/i.test(value)) return deny("sdk_uninspectable", "AWS SDK 스크립트는 읽기 전용 여부를 정적으로 보장할 수 없습니다.");
   if (/https?:\/\/[^\s'\"]*amazonaws\.com/i.test(value)) return deny("endpoint_bypass", "AWS endpoint 직접 호출은 허용 목록 검사를 우회할 수 있습니다.");
   const calls = extractAwsCalls(value);
-  if (calls.length === 0 && /(^|[;&|()\s'"`])(?:[^\s'\"]*\/)?aws(?:\.exe)?\s/i.test(value)) return deny("shell_uninspectable", "중첩 셸 문자열의 AWS 호출은 안전하게 분해할 수 없습니다.");
+  if (calls.length === 0 && /(^|[;&|()\s'"`!])(?:[^\s'\"]*\/)?aws(?:\.exe)?\s/i.test(value)) return deny("shell_uninspectable", "중첩 셸 문자열의 AWS 호출은 안전하게 분해할 수 없습니다.");
   if (calls.length === 0) return { decision: "ignore", code: "not_aws", reason: "AWS 호출이 아닙니다.", calls };
   const results = calls.map((call) => ({ call, ...evaluateCall(call, normalizeAwsGuardPolicy(policy)) }));
   const denied = results.find((result) => result.decision === "deny");
