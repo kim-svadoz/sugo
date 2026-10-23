@@ -1,0 +1,65 @@
+# 변경 기록
+
+Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 실려 배포되므로 Console이 바뀌면 Plugin 버전도 함께 오릅니다. 설치된 버전은 `/sugo:version` 또는 Console 사이드바 하단에서 확인합니다.
+
+## [Unreleased]
+
+### 수정
+- AWS 읽기 가드가 `grep -i aws`, `git commit -m "... aws ..."`처럼 `aws`를 검색어·메시지로만 쓰는 명령을 차단하던 오탐을 고쳤습니다. 파이프라인 전체가 문자열을 실행할 수 없는 명령일 때만 검사를 건너뜁니다.
+- AWS 읽기 가드가 `git -c alias.x="!aws ..."`처럼 `!` 뒤에 오는 AWS 호출을 놓치던 문제를 고쳤습니다.
+
+### 변경
+- 플러그인 매니페스트에 homepage, repository, license, keywords를 추가하고 설명을 통일했습니다.
+- README를 한국어 기본과 영어판으로 나누고 CONTRIBUTING과 이 변경 기록을 추가했습니다.
+
+## Plugin 0.42 · Console 0.33 — 2026-10-22 ~ 23
+
+- Home에 기술 블로그 피드(최근 7일, 국내·국외 구분, 즐겨찾기)를 추가했습니다.
+- 완료 작업의 학습 리뷰 노트가 변경, 판단과 대안, 남긴 학습, 다음 확인, 검증 결과를 보여줍니다.
+- 리뷰·워크플로 상태에서 필요한 조치로 바로 이동합니다.
+- Schedule에 메모 보관함, 개발 이력 미리보기, 후속 작업 안내를 추가했습니다.
+- Skills 화면이 스킬을 어느 에이전트가 쓰는지 보여줍니다.
+- 기본 화면 배율을 110%로 올리고 노트북부터 대형 모니터까지 레이아웃을 맞췄습니다.
+
+## Plugin 0.41 · Console 0.32 — 2026-10-22
+
+- Home을 아침 엔지니어링 리뷰로 바꿨습니다. 어제(없으면 최근) 끝낸 작업과 승인 대기 작업을 먼저 보여줍니다.
+
+## Plugin 0.40 · Console 0.31 — 2026-10-21
+
+- Home 브리핑과 외부 연동 동기화 화면을 다시 설계했습니다.
+
+## Plugin 0.39 · Console 0.30 — 2026-10-21
+
+- Home과 Preferences(표시 이름, 날씨 지역)를 추가했습니다.
+- 페이지 제목과 돌아가기 이동을 통일하고, Integrations와 Weekly 화면을 정리했습니다.
+
+## Plugin 0.38 — 2026-10-21
+
+- `/sugo:console`과 `sugo_console`을 추가했습니다. 현재 세션에서 Console을 확인·시작·재시작·종료합니다.
+
+## Plugin 0.37 · Console 0.29 — 2026-10-17 ~ 21
+
+- `agents.extraTools`로 Sugo 에이전트에 외부 MCP 도구를 추가할 수 있습니다.
+- `/sugo:patch-attach`가 연결할 파일 범위를 먼저 확인받고, 같은 변경의 중복 연결을 막고, 기준 FEAT 제목을 유지합니다.
+- `/sugo:spec-writer`가 참조한 원천이 없으면 멈추고, 프로젝트 기준과 맞는지 리뷰를 요구합니다.
+- 등록한 AWS·Pinpoint 맥락을 매일 자동으로 갱신합니다.
+- 사이드바를 Work · Guides · Settings로 묶고 ADR 화면을 없앴습니다.
+
+## Plugin 0.36 · Console 0.29.0 — 2026-10-17
+
+- AWS 환경 별칭(`aws.environments`)과 MCP 설명 설정(`presentation.mcpServers`)을 `~/.claude/sugo/settings.json` 사용자 설정으로 옮겼습니다.
+
+## Plugin 0.35 · Console 0.28 — 2026-10-16
+
+- 최초 스펙을 사용자 홈의 관리 영역(`~/.claude/sugo/specs/`)에 버전별로 저장합니다.
+- 일반 대화에서 만든 변경은 사후 patch로만 기존 작업에 연결합니다.
+- Weekly 첫 화면을 목록과 달력으로 나눴습니다.
+
+## Plugin 0.34 · Console 0.27 — 2026-10-16
+
+- Console을 플러그인에 기본 탑재했습니다. 새 세션을 열면 `http://localhost:3001`에서 자동으로 시작합니다.
+
+## 0.33 이전 — 2026-07 ~ 2026-10-15
+
+비공개 개발 기간입니다. 게이트 파이프라인, 하네스 라이브러리, Console 기본 화면을 만들었습니다. 자세한 내용은 커밋 기록을 참고하세요.
