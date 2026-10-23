@@ -90364,7 +90364,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname5(fileURLToPath2(import.meta.url));
-    pkg = "0.41.1" ? { version: "0.41.1" } : JSON.parse(readFileSync(join13(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.41.2" ? { version: "0.41.2" } : JSON.parse(readFileSync(join13(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90483,7 +90483,7 @@ await bootstrapLocalDashboard2(db, {
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var server = app.listen(port, HOST, () => {
-  void writeFile7(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.41.1", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile7(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.41.2", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

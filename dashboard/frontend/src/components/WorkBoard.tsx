@@ -88,18 +88,23 @@ export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; w
           })}
         </div>
 
-        <div className="mt-10 grid grid-cols-[1.15fr_1fr_1fr] gap-3">
-          <button type="button" onClick={() => navigate("/harness")} className="flex min-h-32 items-center gap-4 rounded-xl border border-amber-300/15 bg-amber-300/[0.045] px-5 text-left hover:border-amber-300/30">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-300/10 text-amber-300"><ClipboardCheck size={23} /></span>
-            <span><strong className="block text-[13px] font-semibold tracking-[0.01em] text-amber-100">하네스 기준</strong><span className="mt-1.5 block text-[11px] leading-5 text-slate-400">오케스트레이터가 프로젝트 규칙을 읽고 각 담당의 검증 기준에 반영합니다.</span></span>
+        <div className="pointer-events-none relative my-5 h-3" aria-hidden="true">
+          <div className="absolute inset-x-[7%] top-1/2 h-px bg-gradient-to-r from-cyan-400/15 via-cyan-300/55 to-amber-300/35" />
+          <span className="ck-work-route-dot absolute left-[7%] top-1/2 -ml-[5px] -mt-[5px] h-2.5 w-2.5 rounded-full bg-cyan-200 shadow-[0_0_16px_rgba(103,232,249,.95)]" />
+        </div>
+
+        <div className="grid grid-cols-[1.15fr_1fr_1fr] gap-3">
+          <button type="button" onClick={() => navigate("/harness")} className="flex min-h-32 flex-col justify-start gap-3 rounded-xl border border-amber-300/15 bg-amber-300/[0.045] px-5 py-4 text-left hover:border-amber-300/30">
+            <span className="flex items-center gap-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-300/10 text-amber-300"><ClipboardCheck size={22} /></span><strong className="text-[16px] font-semibold tracking-[0.01em] text-amber-100">하네스 기준</strong></span>
+            <span className="block text-[13.5px] leading-6 text-slate-300">오케스트레이터가 프로젝트 규칙을 읽고 각 담당의 검증 기준에 반영합니다.</span>
           </button>
-          <button type="button" onClick={() => navigate("/sessions")} className="flex min-h-32 items-center gap-4 rounded-xl border border-emerald-300/15 bg-emerald-300/[0.035] px-5 text-left hover:border-emerald-300/30">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-300/10 text-emerald-300"><Archive size={23} /></span>
-            <span><strong className="block text-[13px] font-semibold tracking-[0.01em] text-emerald-100">도메인 현장</strong><span className="mt-1.5 block text-[11px] leading-5 text-slate-400">{domainCount}개 도메인의 작업과 배포 상태</span></span>
+          <button type="button" onClick={() => navigate("/sessions")} className="flex min-h-32 flex-col justify-start gap-3 rounded-xl border border-emerald-300/15 bg-emerald-300/[0.035] px-5 py-4 text-left hover:border-emerald-300/30">
+            <span className="flex items-center gap-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-300/10 text-emerald-300"><Archive size={22} /></span><strong className="text-[16px] font-semibold tracking-[0.01em] text-emerald-100">도메인 현장</strong></span>
+            <span className="block text-[13.5px] leading-6 text-slate-300">{domainCount}개 도메인의 작업과 배포 상태</span>
           </button>
-          <button type="button" onClick={() => navigate("/weekly")} className="flex min-h-32 items-center gap-4 rounded-xl border border-violet-300/15 bg-violet-300/[0.035] px-5 text-left hover:border-violet-300/30">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-300/10 text-violet-300"><CheckCircle2 size={23} /></span>
-            <span><strong className="block text-[13px] font-semibold tracking-[0.02em] text-violet-100">Weekly</strong><span className="mt-1.5 block text-[11px] leading-5 text-slate-400">이번 주 완료 결과 {completedThisWeek}건</span></span>
+          <button type="button" onClick={() => navigate("/weekly")} className="flex min-h-32 flex-col justify-start gap-3 rounded-xl border border-violet-300/15 bg-violet-300/[0.035] px-5 py-4 text-left hover:border-violet-300/30">
+            <span className="flex items-center gap-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-300/10 text-violet-300"><CheckCircle2 size={22} /></span><strong className="text-[16px] font-semibold tracking-[0.02em] text-violet-100">Weekly</strong></span>
+            <span className="block text-[13.5px] leading-6 text-slate-300">이번 주 완료 결과 {completedThisWeek}건</span>
           </button>
         </div>
       </div>

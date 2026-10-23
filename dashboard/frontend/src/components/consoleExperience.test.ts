@@ -38,7 +38,7 @@ describe("Console 정보 구조", () => {
     expect(workBoard).toContain('label: "SPEC 작성"');
     expect(workBoard).toContain("grid-cols-8");
     expect(workBoard).toContain("xl:grid-cols-[minmax(0,6fr)_220px]");
-    expect(workBoard).not.toContain("ck-work-route-dot");
+    expect(workBoard).toContain("ck-work-route-dot");
     expect(workBoard).toContain('label: "오케스트레이터"');
     expect(workBoard).not.toContain("관련 화면 열기");
     expect(workBoard.match(/하네스 기준/g)?.length).toBe(1);
