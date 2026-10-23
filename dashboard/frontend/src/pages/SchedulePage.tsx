@@ -756,7 +756,7 @@ export function SchedulePage() {
                               <span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300/75">일정 미리보기</span>
                               <strong className="mt-1.5 block text-[12px] leading-5 text-white">{commitment.title}</strong>
                               <span className="mt-1 block text-[9px] text-slate-500">{commitment.workspace_name} · {commitment.due_date ?? "날짜 미정"}</span>
-                              {preview ? <span className="mt-2 block border-t border-white/10 pt-2"><span className="block font-mono text-[9px] font-bold text-violet-200">최근 작업 · {preview.label}</span><span className="mt-1 block line-clamp-3 text-[10px] font-normal leading-4 text-slate-300">{preview.summary}</span></span> : <span className="mt-2 block border-t border-white/10 pt-2 text-[10px] text-slate-500">아직 완료된 개발 이력이 없습니다.</span>}
+                              {preview ? <span className="mt-2 block border-t border-white/10 pt-2"><span className="block font-mono text-[9px] font-bold text-violet-200">최근 작업 · {preview.label}</span><span className="mt-1 block line-clamp-1 text-[10px] font-normal leading-4 text-slate-300">{preview.title}</span></span> : <span className="mt-2 block border-t border-white/10 pt-2 text-[10px] text-slate-500">아직 완료된 개발 이력이 없습니다.</span>}
                             </span>
                           </button>
                           <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1900px]:hidden">
@@ -1000,18 +1000,21 @@ export function SchedulePage() {
                   <button
                     disabled={!latestWorkResultPath(selected)}
                     onClick={() => { const path = latestWorkResultPath(selected); if (path) void copyWorkflowCommand("patch", buildPatchCommand(path)); }}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-violet-400 px-4 text-[12px] font-bold text-slate-950 transition-colors hover:bg-violet-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                    className="inline-flex min-h-10 w-[156px] items-center justify-center gap-2 rounded-lg bg-violet-400 px-4 text-[12px] font-bold text-slate-950 transition-colors hover:bg-violet-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
                   >
                     {copied === "patch" ? <Check size={14} /> : <Copy size={14} />} {copied === "patch" ? "복사됨" : latestWorkResultPath(selected) ? "새 Patch 시작" : "Patch 준비 중"}
                   </button>
-                  <button
-                    disabled={!latestWorkResultPath(selected)}
-                    onClick={() => { const path = latestWorkResultPath(selected); if (path) void copyWorkflowCommand("patch-attach", buildPatchAttachCommand(path)); }}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-400/[0.08] px-4 text-[12px] font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:text-slate-500"
-                  >
-                    {copied === "patch-attach" ? <Check size={14} /> : <Copy size={14} />} {copied === "patch-attach" ? "복사됨" : "작업 기록 이어붙이기"}
-                  </button>
-                  <p className="basis-full text-[10px] leading-4 text-slate-500">이미 끝낸 변경을 최신 개발 이력에 연결합니다.</p>
+                  <span className="group/attach-help relative inline-flex">
+                    <button
+                      disabled={!latestWorkResultPath(selected)}
+                      onClick={() => { const path = latestWorkResultPath(selected); if (path) void copyWorkflowCommand("patch-attach", buildPatchAttachCommand(path)); }}
+                      aria-describedby="patch-attach-help"
+                      className="inline-flex min-h-10 w-[174px] items-center justify-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-400/[0.08] px-4 text-[12px] font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:text-slate-500"
+                    >
+                      {copied === "patch-attach" ? <Check size={14} /> : <Copy size={14} />} {copied === "patch-attach" ? "복사됨" : "작업 기록 이어붙이기"}
+                    </button>
+                    <span id="patch-attach-help" role="tooltip" className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-lg border border-slate-600/70 bg-[#080f1b] px-3 py-2 text-[10px] leading-4 text-slate-300 opacity-0 shadow-xl transition-opacity group-hover/attach-help:opacity-100 group-focus-within/attach-help:opacity-100">이미 끝낸 변경을 최신 개발 이력에 연결합니다.</span>
+                  </span>
                 </div>
               )}
               </div>

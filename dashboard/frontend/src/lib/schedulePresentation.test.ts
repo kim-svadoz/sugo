@@ -198,7 +198,12 @@ describe("schedule presentation", () => {
     expect(source).toContain("후속 개발");
     expect(source).toContain("새 Patch 시작");
     expect(source).toContain("작업 기록 이어붙이기");
-    expect(source).toContain("이미 끝낸 변경을 최신 개발 이력에 연결합니다.");
+    expect(source).toContain("group/attach-help");
+    expect(source).toContain("group-hover/attach-help:opacity-100");
+    expect(source).toContain("group-focus-within/attach-help:opacity-100");
+    expect(source).not.toContain('className="basis-full text-[10px]');
+    expect(source).toContain("w-[156px]");
+    expect(source).toContain("w-[174px]");
     expect(canvasPanel).not.toContain("작업 기록 이어붙이기");
     expect(source).toContain("작업 컨텍스트");
     expect(source).toContain("작업 준비");
@@ -213,7 +218,9 @@ describe("schedule presentation", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("latestDevelopmentPreview(spec)");
     expect(source).toContain("preview.label");
-    expect(source).toContain("preview.summary");
+    expect(source).toContain("preview.title");
+    expect(source).toContain("line-clamp-1");
+    expect(source).not.toContain("preview.summary");
   });
 
   it("Workspaces와 Schedule은 같은 도구 명칭과 설명 정본을 사용한다", () => {
