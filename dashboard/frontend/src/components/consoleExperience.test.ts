@@ -7,9 +7,10 @@ const sidebar = readFileSync(new URL("./Sidebar.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../pages/Home.tsx", import.meta.url), "utf8");
 
 describe("Console 정보 구조", () => {
-  it("라이브 원문 대신 최근 결과와 작업 흐름을 먼저 보여준다", () => {
+  it("최근 작업은 간결한 결과 요약과 전체 기록만 보여준다", () => {
     expect(liveConsole).toContain("최근 작업 신호");
-    expect(liveConsole).toContain("다시 구현한 횟수");
+    expect(liveConsole).not.toContain("다시 구현한 횟수");
+    expect(liveConsole).not.toContain("작업 흐름");
     expect(liveConsole).toContain("전체 기록");
   });
 
@@ -30,12 +31,6 @@ describe("Console 정보 구조", () => {
     expect(home).toContain("'전체'");
     expect(home).toContain("'국내'");
     expect(home).toContain("'국외'");
-  });
-
-  it("작업 흐름은 늘어나는 그리드가 아니라 화살표로 이어진 작은 단계 카드다", () => {
-    expect(liveConsole).not.toContain('className="grid grid-cols-3 gap-1.5"');
-    expect(liveConsole).toContain('aria-hidden="true">→</span>');
-    expect(liveConsole).toContain("inline-flex items-center");
   });
 
   it("Engineering Feed는 군더더기 갱신 문구 없이 기술 블로그 모음임을 설명한다", () => {

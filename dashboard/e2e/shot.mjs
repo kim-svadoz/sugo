@@ -13,15 +13,20 @@ const PAYMENTS = join(homedir(), "work", "webapp-payments");
 
 const workspaces = [{
   name: "temp-workspace",
-  projects: [{ project_path: WEBAPP, git_synced: 1 }],
+  projects: [{ project_path: WEBAPP, git_synced: 1, aws_synced: 0, aws_release: null, local_git: { branch: "feature/login", headCommit: "abc1234", baseCommit: "def5678", dirty: false }, aws_deployments: [] }],
   taskCounts: { pending: 2, in_progress: 1, done: 3, archived: 0 },
   roadmap: { total: 6, done: 3, active: 1 },
+  roadmapCount: 6, roadmapDoneCount: 3, activeTaskCount: 1, historyCount: 9, checkpointCount: 2, projectCount: 1, attentionCount: 1, attentionLabel: "검토 필요", lastActivityAt: new Date().toISOString(),
 }, {
   name: "payments-api",
-  projects: [{ project_path: PAYMENTS, git_synced: 0 }],
+  projects: [{ project_path: PAYMENTS, git_synced: 0, aws_synced: 0, aws_release: null, local_git: { branch: "main", headCommit: "789abcd", baseCommit: "789abcd", dirty: false }, aws_deployments: [] }],
   taskCounts: { pending: 0, in_progress: 0, done: 5, archived: 1 },
   roadmap: { total: 5, done: 5, active: 0 },
+  roadmapCount: 5, roadmapDoneCount: 5, activeTaskCount: 0, historyCount: 4, checkpointCount: 1, projectCount: 1, attentionCount: 0, attentionLabel: null, lastActivityAt: new Date(Date.now() - 3600000).toISOString(),
 }];
+
+const specs = [{ id: "spec1", workspace_name: "temp-workspace", title: "이메일 로그인", status: "in_progress", due_date: "2026-10-24", project_path: WEBAPP, spec_path: null, has_run: true, task_count: 3, done_task_count: 2, active_task_count: 1, development_history: [{ task_id: "t2", version: 4, title: "로그인 컨트롤러 배선", summary: "인증 경로와 오류 응답을 연결했습니다.", completed_at: new Date().toISOString() }] }];
+const activity = [{ id: 1, workspace_name: "temp-workspace", ts: new Date().toISOString(), level: "info", agent: "code-agent", handoff_to: null, event_type: "code_done", message: "인증 경로와 오류 응답을 연결했습니다.", details: { task: { id: "t2", sessionId: "session-1", name: "이메일 로그인", projectPath: WEBAPP } } }];
 
 const roadmapNodes = [
   { id: "spec1", title: "이메일 로그인 스펙", level: "spec", status: "done", depends_on: [], parent: null, ref: null, note: null, spec_path: null, work_result: null, lineage: null, manual_status: null, pos_x: null, pos_y: null },
@@ -40,6 +45,12 @@ await page.addInitScript(() => {
 await page.route("**/health", (r) => r.fulfill({ json: { status: "ok", version: "0.1.0", build: "dev" } }));
 await page.route("**/api/**", (route) => {
   const u = route.request().url();
+  if (u.includes("/api/workspaces/schedule")) return route.fulfill({ json: { specs } });
+  if (u.includes("/api/schedule/commitments")) return route.fulfill({ json: { commitments: [] } });
+  if (u.includes("/api/schedule/memos")) return route.fulfill({ json: { memos: [] } });
+  if (u.includes("/api/schedule/specs/archive")) return route.fulfill({ json: { specs: [] } });
+  if (u.includes("/api/activity/stream")) return route.fulfill({ json: { events: activity } });
+  if (u.includes("/api/profile")) return route.fulfill({ json: { profile: { displayName: "개발자" } } });
   if (u.includes("/api/sync/plugin-version")) return route.fulfill({ json: { version: "2.81.12" } });
   if (u.includes("/api/workspaces/") && u.includes("/roadmap")) return route.fulfill({ json: { nodes: roadmapNodes } });
   if (u.includes("/api/workspaces")) return route.fulfill({ json: { workspaces } });
@@ -58,6 +69,8 @@ async function shot(path, file) {
 }
 await shot("/login", "01-login.png");
 await shot("/sessions", "02-sessions.png");
+await shot("/home", "02-home.png");
+await shot("/preferences?tab=weekly", "02-preferences-weekly.png");
 await shot("/roadmap/temp-workspace", "03-roadmap.png");
 await shot("/playbook", "04-playbook.png");
 await shot("/skills", "05-skills.png");

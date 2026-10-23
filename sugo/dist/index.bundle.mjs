@@ -28224,7 +28224,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.48.1" : "0.0.0-dev";
+  return true ? "0.49.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29540,7 +29540,7 @@ function activityForPlanTransition(action, fromState, featureName, context = {})
   return null;
 }
 function activityTaskDetails(session) {
-  return { task: { id: session.data.linkedTaskId ?? session.id, sessionId: session.id, name: session.featureName } };
+  return { task: { id: session.data.linkedTaskId ?? session.id, sessionId: session.id, name: session.featureName, projectPath: session.projectPath } };
 }
 function reviewConfirmationActivity(featureName) {
   return { agent: "REVIEW", eventType: "EXECUTE", stage: "user_confirmation", message: `${featureName} \uC0AC\uC6A9\uC790 \uD655\uC778 \uC694\uCCAD \xB7 Console\uC5D0\uC11C \uC2B9\uC778 \uB300\uAE30` };

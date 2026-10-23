@@ -137,6 +137,7 @@ export function Sessions() {
   const navigate = useNavigate();
 
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
+  const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("repositories");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<"all" | "recent">("all");
@@ -168,6 +169,7 @@ export function Sessions() {
 
   useEffect(() => {
     setExpandedRepository(null);
+    setSelectedTaskKey(null);
   }, [selectedWorkspace, inspectorPage]);
 
   useEffect(() => {
@@ -795,12 +797,12 @@ export function Sessions() {
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
       {selected && !isSearchMode && (
-        <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} /></section>
+        <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} /></section>
       )}
       {selected && !isSearchMode && (
         <div key={selected.name} className="command-detail ck-stage-in grid min-h-[340px] flex-1 grid-cols-1 gap-3 lg:grid-cols-10">
           <div className="ck-glass flex min-h-[340px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] p-3 lg:col-span-3">
-            <LiveConsole workspace={selected.name} />
+            <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
           </div>
           <div className="ck-glass flex min-h-[340px] flex-col rounded-xl border border-[var(--color-border)] p-3 lg:col-span-7">
             {renderInspector(selected)}

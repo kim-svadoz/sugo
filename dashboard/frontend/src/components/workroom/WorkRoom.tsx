@@ -1,6 +1,6 @@
 import { Html, OrthographicCamera, QuadraticBezierLine, RoundedBox } from "@react-three/drei";
 import { Canvas, events as pointerEvents, useFrame, useThree, type EventManager } from "@react-three/fiber";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Group, Mesh, MeshStandardMaterial } from "three";
@@ -282,7 +282,7 @@ export default function WorkRoom({ specs, waitingReviews }: { specs: ScheduledSp
       case "domains": return domains.map((domain) => `${domain.name} · 진행 ${domain.activeTaskCount} · 완료 ${domain.roadmap.done}`);
     }
   }
-  const focused = focus ? ZONES.find((zone) => zone.id === focus)! : null;
+  const focused = ZONES.find((zone) => zone.id === (focus ?? "control"))!;
   const hovered = hover && !focus ? ZONES.find((zone) => zone.id === hover)! : null;
 
   return <div className="work-world">
@@ -293,16 +293,21 @@ export default function WorkRoom({ specs, waitingReviews }: { specs: ScheduledSp
       {lead && <span className="min-w-0 truncate text-[12px] text-slate-400">{lead.kind ? `${lead.kind} · ` : ""}{lead.title}</span>}
       {world.live && world.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(world.at, now)}</span>}
     </div>
-    <div className="relative mt-2 h-[640px] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0b1220]">
-      <Canvas shadows dpr={[1, 2]} events={zoomSafeEvents} onPointerMissed={() => setFocus(null)}>
-        <Scene data={{ placement, world, plannedSpecs, bins, domains, waitingReviews, working: world.activeSpecialists }} hover={hover} setHover={setHover} onSelect={setFocus} />
-      </Canvas>
-      {hovered && <div className="pointer-events-none absolute left-3 top-3 max-w-xs rounded-lg border border-white/10 bg-slate-950/90 px-3 py-2 text-[11px] text-slate-300 shadow-xl"><div className="font-semibold text-white">{hovered.label}</div>{detail(hovered).filter(Boolean).slice(0, 2).map((line) => <div key={line} className="mt-0.5">{line}</div>)}</div>}
-      {focused && <aside className="absolute inset-y-3 right-3 flex w-72 flex-col rounded-xl border border-white/10 bg-slate-950/95 p-4 shadow-2xl">
-        <div className="flex items-start justify-between gap-2"><div><div className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: focused.tint }}>{focused.page}</div><h3 className="mt-1 text-[15px] font-semibold text-white">{focused.label}</h3></div><button type="button" aria-label="닫기" onClick={() => setFocus(null)} className="rounded-md p-1 text-slate-400 hover:bg-white/5 hover:text-white"><X size={15} /></button></div>
+    <div className="mt-2 grid min-h-[640px] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0b1220] xl:grid-cols-[minmax(0,2.1fr)_minmax(280px,.9fr)]">
+      <div className="relative h-[640px] min-w-0 border-b border-white/[0.06] xl:border-b-0 xl:border-r">
+        <Canvas shadows dpr={[1, 2]} events={zoomSafeEvents} onPointerMissed={() => setFocus(null)}>
+          <Scene data={{ placement, world, plannedSpecs, bins, domains, waitingReviews, working: world.activeSpecialists }} hover={hover} setHover={setHover} onSelect={setFocus} />
+        </Canvas>
+        {hovered && <div className="pointer-events-none absolute left-3 top-3 max-w-xs rounded-lg border border-white/10 bg-slate-950/90 px-3 py-2 text-[11px] text-slate-300 shadow-xl"><div className="font-semibold text-white">{hovered.label}</div>{detail(hovered).filter(Boolean).slice(0, 2).map((line) => <div key={line} className="mt-0.5">{line}</div>)}</div>}
+      </div>
+      <aside className="flex min-h-[320px] flex-col bg-slate-950/55 p-5">
+        <div className="text-[9px] font-semibold tracking-[0.16em] text-slate-500">현재 SUGO 흐름</div>
+        <div className="mt-3 grid grid-cols-3 gap-1.5">{[{ label: "진행", value: world.live ? 1 : 0, tone: "text-cyan-200" }, { label: "확인", value: waitingReviews, tone: "text-violet-200" }, { label: "완료", value: bins.reduce((sum, count) => sum + count, 0), tone: "text-emerald-200" }].map((item) => <div key={item.label} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2"><span className="block text-[9px] text-slate-500">{item.label}</span><strong className={`mt-1 block font-mono text-lg ${item.tone}`}>{item.value}</strong></div>)}</div>
+        <div className="my-5 border-t border-white/[0.07]" />
+        <div><div className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: focused.tint }}>{focused.page}</div><h3 className="mt-1 text-[15px] font-semibold text-white">{focused.label}</h3></div>
         <div className="mt-3 space-y-1.5 text-[12px] leading-5 text-slate-300">{detail(focused).filter(Boolean).map((line) => <p key={line}>{line}</p>)}</div>
         <button type="button" onClick={() => navigate(focused.route)} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-lg border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-[12px] font-semibold text-cyan-100 hover:bg-cyan-300/20">{focused.page} 열기<ArrowRight size={13} /></button>
-      </aside>}
+      </aside>
     </div>
   </div>;
 }

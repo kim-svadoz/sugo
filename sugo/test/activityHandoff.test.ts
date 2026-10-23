@@ -36,8 +36,8 @@ describe("plan transition activity", () => {
   });
 
   it("이벤트에 작업 식별자를 실어 Console이 작업별로 묶을 수 있게 한다", () => {
-    expect(activityTaskDetails({ id: "s-1", featureName: "결제 중복 방지", data: { linkedTaskId: "t-9" } })).toEqual({ task: { id: "t-9", sessionId: "s-1", name: "결제 중복 방지" } });
-    expect(activityTaskDetails({ id: "s-2", featureName: "검색 필터", data: {} })).toEqual({ task: { id: "s-2", sessionId: "s-2", name: "검색 필터" } });
+    expect(activityTaskDetails({ id: "s-1", featureName: "결제 중복 방지", projectPath: "/repos/payments", data: { linkedTaskId: "t-9" } })).toEqual({ task: { id: "t-9", sessionId: "s-1", name: "결제 중복 방지", projectPath: "/repos/payments" } });
+    expect(activityTaskDetails({ id: "s-2", featureName: "검색 필터", projectPath: "/repos/search", data: {} })).toEqual({ task: { id: "s-2", sessionId: "s-2", name: "검색 필터", projectPath: "/repos/search" } });
   });
 
   it("검토 결과를 게시하면 사용자 확인 대기 이벤트를 만든다", () => {

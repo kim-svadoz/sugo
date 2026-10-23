@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { CheckCircle2, ListTree, Maximize2, Minimize2, RotateCcw } from "lucide-react";
+import { ListTree, Maximize2, Minimize2 } from "lucide-react";
 import { useActivityStream, type ActivityEvent } from "../hooks/useActivityStream.js";
 import { AgentBadge } from "./AgentBadge.js";
 import { formatActivityTime } from "../lib/activityTime.js";
 import { summarizeActivity } from "../lib/activityPresentation.js";
+import { eventTask } from "../lib/workFloor.js";
+import { useSchedule } from "../hooks/useSchedule.js";
+import { resolveTaskTitle } from "../lib/taskTitle.js";
 
 /**
  * 실시간 Activity Stream(폴링, SSE 아님).
@@ -37,11 +40,15 @@ function FeedLine({ ev, expanded = false }: { ev: ActivityEvent; expanded?: bool
 }
 
 /** 전역 콘솔. `workspace`를 주면 그 워크스페이스 로그만 거른다(Sessions 하단 2단이 그렇게 쓴다). */
-export function LiveConsole({ workspace }: { workspace?: string } = {}) {
+export function LiveConsole({ workspace, taskKey }: { workspace?: string; taskKey?: string | null } = {}) {
   const events = useActivityStream(workspace);
+  const { data: specs } = useSchedule();
   const [full, setFull] = useState(false);
-  const visible = workspace ? events.filter((e) => e.workspace_name === workspace) : events;
+  const byWorkspace = workspace ? events.filter((e) => e.workspace_name === workspace) : events;
+  const visible = taskKey ? byWorkspace.filter((event) => eventTask(event).key === taskKey) : byWorkspace;
   const summary = summarizeActivity(visible);
+  const task = visible[0] ? eventTask(visible[0]) : null;
+  const title = task ? resolveTaskTitle({ workspace: visible[0].workspace_name, taskId: task.taskId, projectPath: task.projectPath, name: task.name }, specs ?? []) : null;
 
   useEffect(() => {
     if (!full) return;
@@ -66,7 +73,7 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
     <>
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="mb-3 flex shrink-0 items-center justify-between border-b border-[var(--color-border)] pb-2.5">
-          <span className="flex items-center gap-2 text-[12px] font-semibold text-[var(--color-text-bright)]"><ListTree size={14} className="text-cyan-300" />최근 작업 신호</span>
+          <span className="flex min-w-0 items-center gap-2 text-[12px] font-semibold text-[var(--color-text-bright)]"><ListTree size={14} className="shrink-0 text-cyan-300" />{title?.kind && <span className="rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[9px] text-violet-200">{title.kind}</span>}{title?.project && <span className="rounded border border-white/10 px-1.5 py-0.5 font-mono text-[9px] text-slate-400">{title.project}</span>}<span className="truncate">{title?.title ?? "최근 작업 신호"}</span></span>
           <button
             type="button"
             onClick={() => setFull(true)}
@@ -76,9 +83,7 @@ export function LiveConsole({ workspace }: { workspace?: string } = {}) {
           </button>
         </div>
         {visible.length === 0 ? <div className="flex min-h-40 items-center justify-center text-[12px] text-[var(--color-text-dim)]">새 작업 신호가 없습니다.</div> : <div className="space-y-3">
-          <section className="rounded-lg border border-emerald-300/10 bg-emerald-300/[0.035] px-3.5 py-3"><div className="flex items-center gap-2 text-[10px] font-semibold text-emerald-300"><CheckCircle2 size={13} />최근 결과</div><ul className="mt-2 space-y-1.5">{(summary.result.length > 0 ? summary.result : [visible[0].message]).map((line, index) => <li key={`${index}:${line}`} className="flex gap-2 text-[11px] leading-5 text-slate-300"><span className="text-emerald-300/60">•</span><span className="line-clamp-2">{line}</span></li>)}</ul></section>
-          {summary.stages.length > 0 && <section><div className="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium text-slate-500"><span>작업 흐름</span><span className={summary.stages.every((stage) => stage.status === "complete") ? "text-emerald-300" : "text-cyan-300"}>{summary.currentLabel}</span></div><div className="flex flex-wrap items-center gap-y-1.5">{summary.stages.map((stage, index) => <span key={stage.label} className="inline-flex items-center"><span className={`whitespace-nowrap rounded-md border px-2.5 py-1.5 text-center text-[9px] font-medium ${stage.status === "complete" ? "border-emerald-300/20 bg-emerald-300/[0.07] text-emerald-200" : stage.status === "active" ? "border-cyan-300/35 bg-cyan-300/[0.1] text-cyan-100 shadow-[0_0_14px_rgba(34,211,238,0.08)]" : "border-white/[0.06] bg-white/[0.015] text-slate-600"}`}>{stage.label}</span>{index < summary.stages.length - 1 && <span className="px-1.5 font-mono text-[10px] text-slate-600" aria-hidden="true">→</span>}</span>)}</div></section>}
-          <div className="flex items-center justify-between border-t border-white/[0.055] pt-2.5 text-[10px] text-slate-500"><span className="flex items-center gap-1.5"><RotateCcw size={11} />다시 구현한 횟수</span><strong className="font-mono font-medium text-slate-300">{summary.revisions}</strong></div>
+          <ul className="space-y-2 border-l border-emerald-300/20 pl-3">{(summary.result.length > 0 ? summary.result : [visible[0].message]).slice(0, 4).map((line, index) => <li key={`${index}:${line}`} className="flex gap-2 text-[11px] leading-5 text-slate-300"><span className="text-emerald-300/60">•</span><span className="line-clamp-2">{line}</span></li>)}</ul>
         </div>}
       </div>
 

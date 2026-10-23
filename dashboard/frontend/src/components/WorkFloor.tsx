@@ -1,4 +1,4 @@
-import { Pin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pin } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useSchedule } from "../hooks/useSchedule.js";
@@ -98,7 +98,7 @@ function headlineOf(lane: FloorLane): string {
   return state.station === "commit" ? "마지막 작업을 끝내고 쉬는 중" : "새 작업을 기다리는 중";
 }
 
-function Lane({ lane, now, compact, title }: { lane: FloorLane; now: number; compact: boolean; title: { title: string; kind: string | null } }) {
+function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: ReturnType<typeof resolveTaskTitle> }) {
   const { state } = lane;
   const index = FLOOR_STATIONS.findIndex((station) => station.id === state.station);
   const [walking, setWalking] = useState(false);
@@ -116,11 +116,13 @@ function Lane({ lane, now, compact, title }: { lane: FloorLane; now: number; com
     <div className="flex min-w-0 items-center gap-2.5">
       <Pin size={15} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
       {title.kind && <span className="shrink-0 rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[10px] text-violet-200">{title.kind}</span>}
+      {title.project && <span className="shrink-0 rounded border border-white/[0.08] bg-white/[0.025] px-1.5 py-0.5 font-mono text-[10px] text-slate-400">{title.project}</span>}
       <strong className="min-w-0 truncate text-[13px] text-white" title={title.title}>{title.title}</strong>
+      {!title.linked && <span className="shrink-0 text-[10px] text-amber-300">이력 연결 안 됨</span>}
       <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>
       {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
     </div>
-    <div className={compact ? "mx-auto max-w-[760px]" : undefined}>
+    <div>
     <svg viewBox="0 0 960 150" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label={`${lane.name} · ${headlineOf(lane)}`}>
       <rect x="0" y={FLOOR_Y} width="960" height="10" rx="3" fill="#0f172a" />
       {FLOOR_STATIONS.slice(0, -1).map((item, step) => <path key={item.id} d={`M${benchX(step) + 74} ${FLOOR_Y + 5} H${benchX(step + 1) - 26}`} stroke={state.passed.includes(item.id) ? C.emerald : "#334155"} strokeWidth="2" strokeDasharray="5 5" />)}
@@ -144,7 +146,7 @@ function Lane({ lane, now, compact, title }: { lane: FloorLane; now: number; com
         const active = item.id === state.station;
         return <div key={item.id} title={last ? `${last.message} · ${relativeTime(last.at, now)}` : "아직 기록 없음"} className={`rounded-md px-1.5 py-1 text-center ${active ? "bg-cyan-300/[0.08] ring-1 ring-inset ring-cyan-300/25" : ""}`}>
           <div className={`truncate text-[11.5px] font-semibold ${active ? "text-cyan-100" : state.passed.includes(item.id) ? "text-emerald-300" : "text-slate-400"}`}>{item.label}</div>
-          {!compact && <div className="mt-0.5 truncate font-mono text-[10px] text-slate-500">{last ? relativeTime(last.at, now) : "—"}</div>}
+          <div className="mt-0.5 truncate font-mono text-[10px] text-slate-500">{last ? relativeTime(last.at, now) : "—"}</div>
         </div>;
       })}
     </div>
@@ -153,16 +155,21 @@ function Lane({ lane, now, compact, title }: { lane: FloorLane; now: number; com
 }
 
 /** Workspaces의 코드 작업 흐름. 같은 도메인에서 동시에 진행 중인 작업은 작업별 레인으로 나눈다. */
-export function WorkFloor({ workspace }: { workspace: string }) {
+export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void }) {
   const all = useActivityStream(workspace);
   const events = all.filter((event) => event.workspace_name === workspace);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
   const lanes = selectFloorLanes(events, now);
   const { data: specs } = useSchedule();
+  const requestedIndex = selectedTaskKey ? lanes.findIndex((lane) => lane.key === selectedTaskKey) : -1;
+  const activeIndex = requestedIndex >= 0 ? requestedIndex : 0;
+  const lane = lanes[activeIndex];
+  useEffect(() => { if (lane && lane.key !== selectedTaskKey) onSelectedTaskChange?.(lane.key); }, [lane, onSelectedTaskChange, selectedTaskKey]);
   if (lanes.length === 0) return <div className="work-floor py-3 text-center text-[12px] text-slate-500">이 도메인에는 아직 작업 기록이 없습니다.</div>;
-  return <div className="work-floor space-y-3">
-    {lanes.length > 1 && <div className="text-[11px] font-semibold text-cyan-200">동시에 진행 중인 작업 {lanes.length}개</div>}
-    {lanes.map((lane, index) => <div key={lane.key} className={index > 0 ? "border-t border-white/[0.06] pt-3" : undefined}><Lane lane={lane} now={now} compact={lanes.length > 1} title={resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, name: lane.name }, specs ?? [])} /></div>)}
+  const move = (delta: number) => onSelectedTaskChange?.(lanes[(activeIndex + delta + lanes.length) % lanes.length].key);
+  return <div className="work-floor space-y-2">
+    {lanes.length > 1 && <div className="flex items-center justify-end gap-2"><span className="mr-1 text-[10px] text-slate-500">현재 작업 <strong className="font-mono text-cyan-200">{activeIndex + 1} / {lanes.length}</strong></span><button type="button" aria-label="이전 작업" onClick={() => move(-1)} className="rounded-md border border-white/10 p-1 text-slate-400 hover:text-cyan-200"><ChevronLeft size={14} /></button><button type="button" aria-label="다음 작업" onClick={() => move(1)} className="rounded-md border border-white/10 p-1 text-slate-400 hover:text-cyan-200"><ChevronRight size={14} /></button></div>}
+    <Lane lane={lane} now={now} title={resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, projectPath: lane.projectPath, name: lane.name }, specs ?? [])} />
   </div>;
 }

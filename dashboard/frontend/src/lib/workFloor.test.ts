@@ -70,12 +70,12 @@ describe("selectFloorLanes", () => {
     expect(lanes.map((lane) => [lane.name, lane.state.station])).toEqual([["검색 필터", "test"], ["로그인 실패 제한", "code"]]);
   });
 
-  it("진행 중인 작업이 없으면 가장 최근 작업 하나만 보여준다", () => {
+  it("진행 중인 작업이 없으면 멈춘 작업을 완료 작업보다 먼저 보여준다", () => {
     const events = [
       event({ ts: "2026-10-22 02:50:00", agent: "MAIN", event_type: "COMPLETED" }),
       event({ ts: "2026-10-21 02:55:00", agent: "CODE", handoff_to: "TEST", details: { task: { id: "t-search", name: "검색 필터" } } }),
     ];
-    expect(selectFloorLanes(events, NOW).map((lane) => lane.name)).toEqual(["로그인 실패 제한"]);
+    expect(selectFloorLanes(events, NOW).map((lane) => lane.name)).toEqual(["검색 필터"]);
   });
 
   it("사용자 확인을 기다리는 작업은 진행 중 레인으로 남는다", () => {
@@ -83,6 +83,14 @@ describe("selectFloorLanes", () => {
       event({ ts: "2026-10-22 02:50:00", agent: "REVIEW", event_type: "EXECUTE", details: { task: { id: "t-a", name: "A" }, stage: "user_confirmation" } }),
       event({ ts: "2026-10-23 02:58:00", agent: "MAIN", handoff_to: "CODE", details: { task: { id: "t-b", name: "B" } } }),
     ];
-    expect(selectFloorLanes(events, NOW).map((lane) => lane.name)).toEqual(["B", "A"]);
+    expect(selectFloorLanes(events, NOW).map((lane) => lane.name)).toEqual(["A", "B"]);
+  });
+
+  it("사용자 확인, 진행, 일시 정지, 최근 완료 순으로 전환 대상을 정렬한다", () => {
+    const events = [
+      event({ ts: "2026-10-22 02:50:00", agent: "REVIEW", event_type: "EXECUTE", details: { task: { id: "wait", name: "확인" }, stage: "user_confirmation" } }),
+      event({ ts: "2026-10-23 02:58:00", agent: "MAIN", handoff_to: "CODE", details: { task: { id: "live", name: "진행" } } }),
+    ];
+    expect(selectFloorLanes(events, NOW).map((lane) => lane.name)).toEqual(["확인", "진행"]);
   });
 });

@@ -54,8 +54,8 @@ export function activityForPlanTransition(action: string, fromState: string, fea
 }
 
 /** 같은 도메인에서 작업 여러 개가 동시에 돌 때 Console이 이벤트를 작업별로 묶는 키. */
-export function activityTaskDetails(session: { id: string; featureName: string; data: { linkedTaskId?: string } }) {
-  return { task: { id: session.data.linkedTaskId ?? session.id, sessionId: session.id, name: session.featureName } };
+export function activityTaskDetails(session: { id: string; featureName: string; projectPath: string; data: { linkedTaskId?: string } }) {
+  return { task: { id: session.data.linkedTaskId ?? session.id, sessionId: session.id, name: session.featureName, projectPath: session.projectPath } };
 }
 
 /** review-agent가 검토 결과를 게시해 사람의 확인을 기다리기 시작한 시점. 상태 전이가 아니라 전이 사이의 대기다. */
