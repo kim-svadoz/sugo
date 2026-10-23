@@ -61,6 +61,11 @@ describe("selectFloorState", () => {
 });
 
 describe("selectFloorLanes", () => {
+  it("식별자가 없는 옛 이벤트도 공백이 포함된 전체 작업 제목을 보존한다", () => {
+    const events = [event({ ts: "2026-10-15 06:41:23", details: undefined, agent: "MAIN", handoff_to: "CODE", message: "상품홈 - 분류 API 추가개발 구현 시작" })];
+    expect(selectFloorLanes(events, NOW)[0]?.name).toBe("상품홈 - 분류 API 추가개발");
+  });
+
   it("같은 도메인에서 동시에 진행 중인 작업은 작업별 레인으로 나눈다", () => {
     const events = [
       event({ ts: "2026-10-23 02:50:00", agent: "MAIN", handoff_to: "CODE" }),

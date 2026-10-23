@@ -30,4 +30,11 @@ describe("resolveTaskTitle", () => {
   it("spec ID가 있으면 표시 이름 추측보다 우선한다", () => {
     expect(resolveTaskTitle({ workspace: "wrong", specId: "spec-search", name: "같은 이름" }, specs)).toMatchObject({ title: "검색 필터 저장", kind: "FEAT", project: "search-api", linked: true });
   });
+
+  it("옛 이벤트 제목이 달라도 완료 시각이 같은 일정 이력에 연결한다", () => {
+    const timed = [{ id: "spec-stock", workspace_name: "inventory", project_path: "/repos/inventory", title: "테스트 스펙", development_history: [
+      { task_id: "task-stock", version: 1, title: "재고 재주문 수량 계산", summary: "안전재고를 반영했습니다.", completed_at: "2026-10-19T07:25:41.396Z", work_result_path: "/features/inventory-reorder/work-result-patch-v1.md" },
+    ] }];
+    expect(resolveTaskTitle({ workspace: "inventory", name: "inventory-safety-stock", at: Date.parse("2026-10-19T07:25:41.512Z") }, timed)).toMatchObject({ title: "재고 재주문 수량 계산", kind: "PATCH 1", project: "inventory", linked: true });
+  });
 });

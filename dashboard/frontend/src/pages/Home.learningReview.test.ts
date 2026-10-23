@@ -6,7 +6,7 @@ const source = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 describe("Home 학습 리뷰 노트", () => {
   it("근거 보기는 Schedule로 이동하지 않고 홈 안에서 학습 리뷰 노트를 연다", () => {
     expect(source).toContain("학습 리뷰 노트");
-    expect(source).toContain("setReviewNoteOpen(true)");
+    expect(source).toContain("setSelectedNote(note)");
     expect(source).not.toContain("onClick={() => openWork(point.workspace, point.id)}");
   });
 
@@ -14,6 +14,11 @@ describe("Home 학습 리뷰 노트", () => {
     expect(source).toContain("마지막 결과 학습 리뷰");
     expect(source).toContain("latestHistory");
     expect(source).toContain("histories.slice(0, 4)");
+  });
+
+  it("최근 작업마다 각자의 학습 리뷰 진입점을 표시한다", () => {
+    expect(source).not.toContain("point?.specId === spec.id");
+    expect(source).toContain("notes.get(spec.id)");
   });
 
   it("리뷰에 원본 명령과 경로를 펼치지 않고 판단·학습·다음 확인만 보여준다", () => {

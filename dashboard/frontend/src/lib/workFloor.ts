@@ -43,7 +43,7 @@ function detailsOf(event: ActivityEvent): { task?: { id?: unknown; name?: unknow
 export function eventTask(event: ActivityEvent): { key: string; name: string; taskId?: string; projectPath?: string } {
   const task = detailsOf(event).task;
   if (task && typeof task.id === "string") return { key: `${event.workspace_name}:${task.id}`, name: typeof task.name === "string" ? task.name : task.id, taskId: task.id, ...(typeof task.projectPath === "string" ? { projectPath: task.projectPath } : {}) };
-  const name = event.message.trim().split(/\s+/)[0] || event.workspace_name;
+  const name = event.message.trim().replace(/\s+(?:구현 시작|구현 재진입|테스트 인계|리뷰 인계|문서화 인계|완료 처리 인계)$/, "") || event.workspace_name;
   return { key: `${event.workspace_name}:${name}`, name };
 }
 

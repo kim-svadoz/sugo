@@ -5,7 +5,7 @@ import { useActivityStream, type ActivityEvent } from "../hooks/useActivityStrea
 import { AgentBadge } from "./AgentBadge.js";
 import { formatActivityTime } from "../lib/activityTime.js";
 import { summarizeActivity } from "../lib/activityPresentation.js";
-import { eventTask } from "../lib/workFloor.js";
+import { eventTask, groupByTask } from "../lib/workFloor.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { resolveTaskTitle } from "../lib/taskTitle.js";
 
@@ -45,10 +45,10 @@ export function LiveConsole({ workspace, taskKey }: { workspace?: string; taskKe
   const { data: specs } = useSchedule();
   const [full, setFull] = useState(false);
   const byWorkspace = workspace ? events.filter((e) => e.workspace_name === workspace) : events;
-  const visible = taskKey ? byWorkspace.filter((event) => eventTask(event).key === taskKey) : byWorkspace;
+  const visible = taskKey ? groupByTask(byWorkspace).get(taskKey)?.events.slice().reverse() ?? [] : byWorkspace;
   const summary = summarizeActivity(visible);
   const task = visible[0] ? eventTask(visible[0]) : null;
-  const title = task ? resolveTaskTitle({ workspace: visible[0].workspace_name, taskId: task.taskId, projectPath: task.projectPath, name: task.name }, specs ?? []) : null;
+  const title = task ? resolveTaskTitle({ workspace: visible[0].workspace_name, taskId: task.taskId, projectPath: task.projectPath, name: task.name, at: Date.parse(visible[0].ts) }, specs ?? []) : null;
 
   useEffect(() => {
     if (!full) return;
@@ -73,7 +73,7 @@ export function LiveConsole({ workspace, taskKey }: { workspace?: string; taskKe
     <>
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="mb-3 flex shrink-0 items-center justify-between border-b border-[var(--color-border)] pb-2.5">
-          <span className="flex min-w-0 items-center gap-2 text-[12px] font-semibold text-[var(--color-text-bright)]"><ListTree size={14} className="shrink-0 text-cyan-300" />{title?.kind && <span className="rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[9px] text-violet-200">{title.kind}</span>}{title?.project && <span className="rounded border border-white/10 px-1.5 py-0.5 font-mono text-[9px] text-slate-400">{title.project}</span>}<span className="truncate">{title?.title ?? "최근 작업 신호"}</span></span>
+          <span className="flex items-center gap-2 text-[12px] font-semibold text-[var(--color-text-bright)]"><ListTree size={14} className="shrink-0 text-cyan-300" />최근 작업 요약</span>
           <button
             type="button"
             onClick={() => setFull(true)}
@@ -83,6 +83,7 @@ export function LiveConsole({ workspace, taskKey }: { workspace?: string; taskKe
           </button>
         </div>
         {visible.length === 0 ? <div className="flex min-h-40 items-center justify-center text-[12px] text-[var(--color-text-dim)]">새 작업 신호가 없습니다.</div> : <div className="space-y-3">
+          {title && <div className="flex min-w-0 flex-wrap items-center gap-2"><strong className="truncate text-[11px] text-slate-200">{title.title}</strong>{title.kind && <span className="rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[9px] text-violet-200">{title.kind}</span>}{title.project && <span className="inline-flex items-center gap-1 rounded border border-white/10 px-1.5 py-0.5 font-mono text-[9px] text-slate-400"><span aria-hidden="true">📦</span>{title.project}</span>}</div>}
           <ul className="space-y-2 border-l border-emerald-300/20 pl-3">{(summary.result.length > 0 ? summary.result : [visible[0].message]).slice(0, 4).map((line, index) => <li key={`${index}:${line}`} className="flex gap-2 text-[11px] leading-5 text-slate-300"><span className="text-emerald-300/60">•</span><span className="line-clamp-2">{line}</span></li>)}</ul>
         </div>}
       </div>

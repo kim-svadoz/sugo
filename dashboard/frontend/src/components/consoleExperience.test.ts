@@ -8,7 +8,7 @@ const home = readFileSync(new URL("../pages/Home.tsx", import.meta.url), "utf8")
 
 describe("Console 정보 구조", () => {
   it("최근 작업은 간결한 결과 요약과 전체 기록만 보여준다", () => {
-    expect(liveConsole).toContain("최근 작업 신호");
+    expect(liveConsole).toContain("최근 작업 요약");
     expect(liveConsole).not.toContain("다시 구현한 횟수");
     expect(liveConsole).not.toContain("작업 흐름");
     expect(liveConsole).toContain("전체 기록");

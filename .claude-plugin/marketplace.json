@@ -9,7 +9,7 @@
       "name": "sugo",
       "source": "./sugo",
       "description": "AI 코딩 에이전트가 스펙 → 구현 → 테스트 → 리뷰 → 문서 순서를 실행 근거로 통과하게 하는 개발 파이프라인",
-      "version": "0.49.1"
+      "version": "0.49.2"
     },
     {
       "name": "weekly",
