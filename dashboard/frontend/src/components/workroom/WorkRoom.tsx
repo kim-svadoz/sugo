@@ -1,5 +1,5 @@
-import { CameraControls, Html, OrthographicCamera, QuadraticBezierLine, RoundedBox } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Html, OrthographicCamera, QuadraticBezierLine, RoundedBox } from "@react-three/drei";
+import { Canvas, events as pointerEvents, useFrame, useThree, type EventManager } from "@react-three/fiber";
 import { ArrowRight, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +27,9 @@ const ZONES: Zone[] = [
   { id: "weekly", label: "Weekly", center: [5, 6.8], size: [4.4, 3.4], tint: "#db2777", route: "/weekly", page: "Weekly" },
   { id: "domains", label: "도메인 현장", center: [10.6, 6.8], size: [4.4, 3.4], tint: "#16a34a", route: "/sessions", page: "Workspaces" },
 ];
+function zoneAt(x: number, z: number): ZoneId | null {
+  return ZONES.find((zone) => Math.abs(x - zone.center[0]) <= zone.size[0] / 2 && Math.abs(z - zone.center[1]) <= zone.size[1] / 2)?.id ?? null;
+}
 const ROLE: Record<Specialist, FigureRole> = { CODE: "code", TEST: "test", REVIEW: "review", DOCS: "docs" };
 const STATION: Record<Specialist, FloorStationId> = { CODE: "code", TEST: "test", REVIEW: "review", DOCS: "docs" };
 const AGENT_LABEL: Record<Specialist, string> = { CODE: "구현", TEST: "테스트", REVIEW: "검토", DOCS: "문서" };
@@ -104,11 +107,37 @@ function Bell({ ringing }: { ringing: boolean }) {
   return <mesh ref={ref} position={[10.2, 1.18, 0.4]} castShadow><sphereGeometry args={[0.16, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={0.1} metalness={0.6} roughness={0.3} /></mesh>;
 }
 
-function Scene({ data, hover, setHover, onSelect, controls }: { data: SceneData; hover: ZoneId | null; setHover: (zone: ZoneId | null) => void; onSelect: (zone: ZoneId) => void; controls: React.RefObject<CameraControls | null> }) {
+/**
+ * Console은 body에 CSS zoom(1.1)을 쓴다. R3F 기본 계산(offsetX ÷ 캔버스 크기)은 두 값의 배율이 달라
+ * 오른쪽으로 갈수록 클릭 위치가 어긋나므로, 같은 기준인 clientX와 화면상 캔버스 영역으로 계산한다.
+ */
+function zoomSafeEvents(store: Parameters<typeof pointerEvents>[0]): EventManager<HTMLElement> {
+  return {
+    ...pointerEvents(store),
+    compute(event, state) {
+      const rect = state.gl.domElement.getBoundingClientRect();
+      state.pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+      state.raycaster.setFromCamera(state.pointer, state.camera);
+    },
+  };
+}
+
+/** 고정 시점. 작업실 바닥 전체가 화면에 꽉 차도록 확대 비율만 맞춘다(회전·확대 조작 없음). */
+function FitCamera() {
+  const { camera, size } = useThree();
+  useEffect(() => {
+    camera.lookAt(0, 0, 0.5);
+    (camera as unknown as { zoom: number }).zoom = Math.min(size.width / 34.5, size.height / 22.5);
+    camera.updateProjectionMatrix();
+  }, [camera, size.width, size.height]);
+  return null;
+}
+
+function Scene({ data, hover, setHover, onSelect }: { data: SceneData; hover: ZoneId | null; setHover: (zone: ZoneId | null) => void; onSelect: (zone: ZoneId) => void }) {
   const { placement, world, plannedSpecs, bins, domains, waitingReviews, working } = data;
   return <>
-    <OrthographicCamera makeDefault position={[22, 21, 22]} zoom={26} near={0.1} far={200} />
-    <CameraControls ref={controls} makeDefault minPolarAngle={0.65} maxPolarAngle={1.05} minAzimuthAngle={0.35} maxAzimuthAngle={1.2} minZoom={18} maxZoom={90} dollyToCursor />
+    <OrthographicCamera makeDefault position={[22, 21, 22]} near={0.1} far={200} />
+    <FitCamera />
     <ambientLight intensity={0.55} />
     <hemisphereLight args={["#cbd5e1", "#0f172a", 0.6]} />
     <directionalLight position={[12, 22, 10]} intensity={1.3} castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-18} shadow-camera-right={18} shadow-camera-top={14} shadow-camera-bottom={-14} />
@@ -194,12 +223,13 @@ function Scene({ data, hover, setHover, onSelect, controls }: { data: SceneData;
 
     {/* 구역 이름과 마우스 영역 */}
     {ZONES.map((zone) => <Html key={zone.id} position={[zone.center[0] - zone.size[0] / 2 + 0.4, 0.05, zone.center[1] - zone.size[1] / 2 + 0.4]} className="pointer-events-none select-none"><div className={`whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${hover === zone.id ? "bg-white text-slate-900" : "bg-slate-950/60 text-slate-300"}`}>{zone.label}</div></Html>)}
-    {ZONES.map((zone) => <mesh key={zone.id} rotation={[-Math.PI / 2, 0, 0]} position={[zone.center[0], 0.02, zone.center[1]]}
-      onPointerOver={(event) => { event.stopPropagation(); setHover(zone.id); document.body.style.cursor = "pointer"; }}
+    {/* 영역 판정: 가구 중간 높이의 보이지 않는 판 하나로 클릭 지점의 좌표를 구한다. 영역마다 볼륨을 세우면 앞쪽 영역이 뒤쪽을 가린다. */}
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.6, 0]}
+      onPointerMove={(event) => { const zone = zoneAt(event.point.x, event.point.z); setHover(zone); document.body.style.cursor = zone ? "pointer" : ""; }}
       onPointerOut={() => { setHover(null); document.body.style.cursor = ""; }}
-      onClick={(event) => { event.stopPropagation(); onSelect(zone.id); }}>
-      <planeGeometry args={zone.size} /><meshBasicMaterial transparent opacity={0} depthWrite={false} />
-    </mesh>)}
+      onClick={(event) => { const zone = zoneAt(event.point.x, event.point.z); if (zone) { event.stopPropagation(); onSelect(zone); } }}>
+      <planeGeometry args={[27, 19]} /><meshBasicMaterial transparent opacity={0} depthWrite={false} />
+    </mesh>
   </>;
 }
 
@@ -228,19 +258,9 @@ export default function WorkRoom({ specs, waitingReviews }: { specs: ScheduledSp
   const domains = (workspaces ?? []).slice(0, 6);
   const [hover, setHover] = useState<ZoneId | null>(null);
   const [focus, setFocus] = useState<ZoneId | null>(null);
-  const controls = useRef<CameraControls | null>(null);
   const titleOf = (station: FloorStationId) => { const lane = lanes.find((item) => item.state.live && item.state.station === station); return lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, name: lane.name }, specs) : null; };
   const lead = lanes[0] && world.live ? resolveTaskTitle({ workspace: lanes[0].workspace, taskId: lanes[0].taskId, name: lanes[0].name }, specs) : null;
 
-  useEffect(() => {
-    const control = controls.current;
-    if (!control) return;
-    if (!focus) { void control.setLookAt(22, 21, 22, 0, 0, 0.5, true); void control.zoomTo(26, true); return; }
-    const zone = ZONES.find((item) => item.id === focus)!;
-    const [cx, cz] = zone.center;
-    void control.setLookAt(cx + 22, 21, cz + 22, cx, 0.6, cz, true);
-    void control.zoomTo(Math.min(80, 300 / Math.max(zone.size[0], zone.size[1] * 1.4)), true);
-  }, [focus]);
 
   const headline = world.live
     ? world.mainActivity === "waiting" ? "사용자 확인을 기다리는 중"
@@ -273,9 +293,9 @@ export default function WorkRoom({ specs, waitingReviews }: { specs: ScheduledSp
       {lead && <span className="min-w-0 truncate text-[12px] text-slate-400">{lead.kind ? `${lead.kind} · ` : ""}{lead.title}</span>}
       {world.live && world.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(world.at, now)}</span>}
     </div>
-    <div className="relative mt-2 h-[540px] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0b1220]">
-      <Canvas shadows dpr={[1, 2]} onPointerMissed={() => setFocus(null)}>
-        <Scene data={{ placement, world, plannedSpecs, bins, domains, waitingReviews, working: world.activeSpecialists }} hover={hover} setHover={setHover} onSelect={setFocus} controls={controls} />
+    <div className="relative mt-2 h-[640px] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0b1220]">
+      <Canvas shadows dpr={[1, 2]} events={zoomSafeEvents} onPointerMissed={() => setFocus(null)}>
+        <Scene data={{ placement, world, plannedSpecs, bins, domains, waitingReviews, working: world.activeSpecialists }} hover={hover} setHover={setHover} onSelect={setFocus} />
       </Canvas>
       {hovered && <div className="pointer-events-none absolute left-3 top-3 max-w-xs rounded-lg border border-white/10 bg-slate-950/90 px-3 py-2 text-[11px] text-slate-300 shadow-xl"><div className="font-semibold text-white">{hovered.label}</div>{detail(hovered).filter(Boolean).slice(0, 2).map((line) => <div key={line} className="mt-0.5">{line}</div>)}</div>}
       {focused && <aside className="absolute inset-y-3 right-3 flex w-72 flex-col rounded-xl border border-white/10 bg-slate-950/95 p-4 shadow-2xl">

@@ -142,7 +142,7 @@ Open `http://localhost:3001`. It starts with each new Claude Code session.
 | Integrations | Git providers, AWS, Pinpoint, and plugin API tokens |
 | Preferences | Display name, weather region |
 
-The 3D workroom on Home puts the planning whiteboard, main desk, harness wall, specialist desks, waiting lounge, user confirmation counter, commit conveyor, Weekly shelf, and domain models in one space. Idle specialists sit in the lounge and walk to their desks when real events call them. Select an area to move the camera there and open its details and page link. Without WebGL or with reduced motion, Home shows a 2D map instead. The work floor on Workspaces splits parallel code tasks in a domain into separate lanes.
+The 3D workroom on Home puts the planning whiteboard, main desk, harness wall, specialist desks, waiting lounge, user confirmation counter, commit conveyor, Weekly shelf, and domain models in one space. Idle specialists sit in the lounge and walk to their desks when real events call them. Select an area to open its details and page link. Without WebGL or with reduced motion, Home shows a 2D map instead. The work floor on Workspaces splits parallel code tasks in a domain into separate lanes.
 
 Console data is in `~/.claude/sugo/dashboard/` and survives updates. If the Console is down, the pipeline continues and sends sync data later.
 
