@@ -11,8 +11,8 @@ describe("latestDevelopmentPreview", () => {
 
   it("버전 0은 FEAT로 표시한다", () => {
     expect(latestDevelopmentPreview({ development_history: [
-      { version: 0, title: "알림 설정 분류 API 추가", summary: null },
-    ] })).toEqual({ label: "FEAT", title: "알림 설정 분류 API 추가" });
+      { version: 0, title: "알림 설정 API 추가", summary: null },
+    ] })).toEqual({ label: "FEAT", title: "알림 설정 API 추가" });
   });
 
   it("완료 이력이 없으면 아직 기록이 없음을 알린다", () => {

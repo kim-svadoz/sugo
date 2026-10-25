@@ -29,7 +29,7 @@ function demoNewsFeed() {
   ].map(([name, category, language]) => ({ name, category, language, url: "https://example.com", status: "active", lastPublishedAt: new Date().toISOString() }));
   const titles = [
     [0, "배포 파이프라인을 10분에서 3분으로 줄인 과정"], [3, "Designing idempotent payment APIs"], [1, "Kotlin 코루틴으로 외부 API 병렬 호출 다루기"],
-    [4, "Contract tests that catch breaking changes early"], [2, "실시간 추천 피처 스토어 운영 기록"], [5, "Rendering large tables without jank"],
+    [4, "Contract tests that catch breaking changes early"], [2, "실시간 집계 파이프라인 운영 기록"], [5, "Rendering large tables without jank"],
     [0, "멀티 리전 Redis 장애 대응 훈련"], [3, "Rate limiting at the edge"], [1, "트랜잭션 아웃박스 패턴 도입기"],
     [4, "Flaky test triage playbook"], [2, "Athena 비용을 절반으로 줄인 파티션 설계"], [5, "Accessibility checks in CI"],
   ];

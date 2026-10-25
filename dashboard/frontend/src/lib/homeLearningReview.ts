@@ -48,9 +48,6 @@ function conciseLines(values: Array<string | null | undefined>, limit: number): 
     .filter((value) => !(/(?:sugo_validate|린트|하네스|trifecta|게이트|규칙)/i.test(value)
       && /(?:pass|통과|준수|문제\s*없|경고(?:는|가)?\s*없|위반(?:은|이)?\s*없|정상)/i.test(value)
       && !/(?:fail|실패|위반|불일치|오류|틀렸|수정\s*(?:필요|해야)|경고\s*(?:있|발생))/i.test(value)))
-    .map((value) => /개수 없는 조회와\s+LIMITED_RESULT(?:는|를)?\s*제거/.test(value)
-      ? "page_size 없이 호출하던 미사용 조회 경로와 LIMITED_RESULT 분기를 제거해, 조회 계약을 page_size 기준 하나로 단순화했다."
-      : value)
     .filter((value) => value.length >= 8)
     .map((value) => value.length > 190 ? `${value.slice(0, 187).trim()}…` : value)
     .filter((value, index, all) => all.indexOf(value) === index)

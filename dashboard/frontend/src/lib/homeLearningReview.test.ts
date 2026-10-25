@@ -27,16 +27,16 @@ describe("Home 학습 리뷰 대상", () => {
 
   it("전체 focus 갱신 시각이 아니라 어제의 작업과 같은 작업·같은 patch 결과를 선택한다", () => {
     const userProfile = {
-      id: "notify-settings", workspace_name: "account", title: "알림 설정 분류", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
+      id: "notify-settings", workspace_name: "account", title: "알림 설정 분리", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
       focus_task_updated_at: "2026-10-22T01:00:00.000Z",
       focus_task_work_result: { patchVersion: 1, report: { patchVersion: 1, designDecisions: ["다른 작업 결정"], knownLimitations: [], verification: { test: { state: "pass" } } } },
       development_history: [history(1, "2026-10-20T01:00:00.000Z")],
     } as ScheduledSpec;
     const infiniteScroll = {
       id: "catalog-scroll", workspace_name: "catalog-service", title: "상품 목록 - 연속 로딩", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
-      focus_task_title: "무한스크롤 order-scroll 인덱스 전환",
+      focus_task_title: "무한 스크롤 인덱스 전환",
       focus_task_updated_at: "2026-10-21T01:00:00.000Z",
-      focus_task_work_result: { patchVersion: 4, report: { patchVersion: 4, summary: "전용 인덱스를 적용했다.", designDecisions: ["화면 식별자를 하드코딩하지 않고 layout_key로 분기한다."], knownLimitations: ["운영 설정 확인이 필요하다."], verification: { test: { state: "pass", total: 75, passed: 75 }, runtimeVerified: true, validationVerdict: "pass" } } },
+      focus_task_work_result: { patchVersion: 4, report: { patchVersion: 4, summary: "전용 인덱스를 적용했다.", designDecisions: ["화면 이름을 하드코딩하지 않고 설정값으로 분기한다."], knownLimitations: ["운영 설정 확인이 필요하다."], verification: { test: { state: "pass", total: 75, passed: 75 }, runtimeVerified: true, validationVerdict: "pass" } } },
       development_history: [history(4, "2026-10-21T01:00:00.000Z")],
     } as ScheduledSpec;
 
@@ -54,9 +54,9 @@ describe("Home 학습 리뷰 대상", () => {
           patchVersion: 4,
           summary: "전용 인덱스를 적용했다. 조회 키를 정리했다. 운영 설정을 확인했다.",
           designDecisions: [
-            "화면 식별자를 하드코딩하지 않고 layout_key로 분기한다.",
+            "화면 이름을 하드코딩하지 않고 설정값으로 분기한다.",
             "기존 캐시를 재사용하는 대신 인덱스별 캐시를 유지한다.",
-            "화면 식별자를 하드코딩하지 않고 layout_key로 분기한다.",
+            "화면 이름을 하드코딩하지 않고 설정값으로 분기한다.",
             "운영과 같은 키 형식을 쓴다.",
           ],
           knownLimitations: ["운영 설정 확인이 필요하다.", "배포 후 지표 확인이 필요하다.", "문서를 갱신한다."],
@@ -89,7 +89,7 @@ describe("Home 학습 리뷰 대상", () => {
     const spec = {
       id: "catalog-scroll", workspace_name: "catalog-service", title: "상품 목록 - 연속 로딩", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
       development_history: [
-        { ...history(3, "2026-10-21T01:00:00.000Z"), work_result: { patchVersion: 3, report: { patchVersion: 3, summary: "조회 계약을 정리했다.", designDecisions: ["findProducts(userId, size) 하나로 합치고 LIMITED_RESULT는 제거한다."], knownLimitations: [] } } },
+        { ...history(3, "2026-10-21T01:00:00.000Z"), work_result: { patchVersion: 3, report: { patchVersion: 3, summary: "조회 계약을 정리했다.", designDecisions: ["findProducts(userId, size) 하나로 합치고 개수 없는 조회는 제거한다."], knownLimitations: [] } } },
         { ...history(4, "2026-10-21T03:00:00.000Z"), work_result: { patchVersion: 4, report: { patchVersion: 4, summary: "문서 변환을 재사용했다.", designDecisions: ["ProductDocMapper를 수정 없이 재사용한다."], knownLimitations: [] } } },
       ],
     } as ScheduledSpec;
@@ -99,20 +99,20 @@ describe("Home 학습 리뷰 대상", () => {
     expect(note?.patchVersions).toEqual([3, 4]);
     expect(note?.summary).toEqual(["조회 계약을 정리했다.", "문서 변환을 재사용했다."]);
     expect(note?.learnings).toEqual([
-      "findProducts(userId, size) 하나로 합치고 LIMITED_RESULT는 제거한다.",
+      "findProducts(userId, size) 하나로 합치고 개수 없는 조회는 제거한다.",
       "ProductDocMapper를 수정 없이 재사용한다.",
     ]);
   });
 
-  it("검증 로그는 변경 목록에서 빼고 축약된 제거 문장은 의도가 드러나게 정제한다", () => {
+  it("검증 로그는 변경 목록에서 뺀다", () => {
     const spec = {
       id: "catalog-scroll", workspace_name: "catalog-service", title: "상품 목록 - 연속 로딩", status: "done", due_date: null, project_path: null, spec_path: null, has_run: true,
-      development_history: [{ ...history(4, "2026-10-21T03:00:00.000Z"), work_result: { patchVersion: 4, report: { patchVersion: 4, summary: "개수 없는 조회와 LIMITED_RESULT는 제거; baseline 63/63, clean check 75/75(contextLoads 포함); 운영 시뮬레이터로 로컬 호출 확인", designDecisions: [], knownLimitations: [] } } }],
+      development_history: [{ ...history(4, "2026-10-21T03:00:00.000Z"), work_result: { patchVersion: 4, report: { patchVersion: 4, summary: "개수 없는 조회 경로를 제거했다; baseline 63/63, clean check 75/75(contextLoads 포함); 시뮬레이터로 로컬 호출 확인", designDecisions: [], knownLimitations: [] } } }],
     } as ScheduledSpec;
 
     const note = selectLearningReviewNote([{ spec, history: spec.development_history![0] }]);
 
-    expect(note?.summary).toEqual(["page_size 없이 호출하던 미사용 조회 경로와 LIMITED_RESULT 분기를 제거해, 조회 계약을 page_size 기준 하나로 단순화했다."]);
+    expect(note?.summary).toEqual(["개수 없는 조회 경로를 제거했다"]);
     expect(note?.summary.join(" ")).not.toMatch(/baseline|gradle|clean check|시뮬레이터/i);
   });
 
