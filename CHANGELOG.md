@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.29 / Console 0.42.29] - 2026-10-26
+
+- Engineering Feed의 `즐겨찾기`를 `보관`으로 바꾸고, 보관 해제한 글을 다시 되돌릴 수 있게 했습니다.
+
 ## [Plugin 0.51.28 / Console 0.42.28] - 2026-10-26
 
 - Home 작업 구간을 읽기 쉬운 기본 글꼴과 구간 레일로 다시 표현하고, Workspaces 도메인 카드의 높이와 여백을 줄였습니다.

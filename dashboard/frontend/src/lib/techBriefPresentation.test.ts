@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { buildSevenDayFeed, filterNewsByRegion } from "./techBriefPresentation.js";
+
+const home = readFileSync(new URL("../pages/Home.tsx", import.meta.url), "utf8");
 
 describe("Tech Brief 최근 7일", () => {
   it("7개 날짜를 만들고 선택한 날짜의 글을 10개씩 나눈다", () => {
@@ -19,5 +22,14 @@ describe("Tech Brief 최근 7일", () => {
     ];
     expect(filterNewsByRegion(items, "domestic").map((item) => item.language)).toEqual(["ko"]);
     expect(filterNewsByRegion(items, "global").map((item) => item.language)).toEqual(["en"]);
+  });
+
+  it("7일이 지난 보관 글을 유지하고 실수로 해제한 글을 복구한다", () => {
+    expect(home).toContain("보관 {saved.length");
+    expect(home).toContain("sugo-tech-brief-recently-removed");
+    expect(home).toContain("보관에서 뺐습니다.");
+    expect(home).toContain("되돌리기");
+    expect(home).toContain('aria-label={isSaved ? "보관 해제" : "보관하기"}');
+    expect(home).not.toContain("즐겨찾기");
   });
 });
