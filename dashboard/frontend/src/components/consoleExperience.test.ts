@@ -41,6 +41,9 @@ describe("Console 정보 구조", () => {
     for (const signal of ["idle", "working", "waiting", "paused", "complete"]) expect(workFloor).toContain(`${signal}: {`);
     expect(workFloor).toContain('signal="idle" label="새 작업 대기"');
     expect(workFloor).toContain("signal={signalOf(lane)}");
+    expect(workFloor).toContain('role="tooltip"');
+    expect(workFloor).toContain("group-hover/worksite-sign:opacity-100");
+    expect(workFloor).toContain("group-focus-within/worksite-sign:opacity-100");
   });
 
   it("최근 작업 요약과 Inspector는 서로의 높이를 늘리지 않는다", () => {

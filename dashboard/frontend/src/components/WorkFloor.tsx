@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Pin } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { resolveTaskTitle } from "../lib/taskTitle.js";
@@ -154,12 +154,16 @@ const SIGNAL_STYLE: Record<WorksiteSignal, { frame: string; light: string; glow:
 /** 현실의 작업장 간판처럼 도메인 이름 앞에서 현재 운영 상태를 알린다. */
 function WorksiteSign({ signal, label }: { signal: WorksiteSignal; label: string }) {
   const style = SIGNAL_STYLE[signal];
-  return <span className={`relative inline-flex h-6 w-7 shrink-0 items-center justify-center rounded-md border ${style.frame}`} role="img" aria-label={`도메인 작업장 상태: ${label}`} title={`도메인 작업장 상태: ${label}`}>
-    <svg viewBox="0 0 20 18" width="17" height="15" aria-hidden="true">
-      <path d="M5 6V3.5h10V6M3.5 6.5h13v8h-13z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-      <path d="M7 10h6M7 12.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.75" />
-    </svg>
-    <span className={`absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-[#0b1220] ${style.light} ${style.glow ? "animate-pulse shadow-[0_0_8px_currentColor]" : ""}`} aria-hidden="true" />
+  const tooltipId = useId();
+  return <span className="group/worksite-sign relative inline-flex shrink-0">
+    <span className={`relative inline-flex h-6 w-7 items-center justify-center rounded-md border outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-300/60 ${style.frame}`} role="img" tabIndex={0} aria-label={`도메인 작업장 상태: ${label}`} aria-describedby={tooltipId}>
+      <svg viewBox="0 0 20 18" width="17" height="15" aria-hidden="true">
+        <path d="M5 6V3.5h10V6M3.5 6.5h13v8h-13z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M7 10h6M7 12.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.75" />
+      </svg>
+      <span className={`absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-[#0b1220] ${style.light} ${style.glow ? "animate-pulse shadow-[0_0_8px_currentColor]" : ""}`} aria-hidden="true" />
+    </span>
+    <span id={tooltipId} role="tooltip" className="pointer-events-none absolute left-0 top-full z-50 mt-2 translate-y-1 whitespace-nowrap rounded-lg border border-slate-600/80 bg-[#080f1b] px-2.5 py-1.5 text-[11px] font-medium text-slate-100 opacity-0 shadow-xl transition-all group-hover/worksite-sign:translate-y-0 group-hover/worksite-sign:opacity-100 group-focus-within/worksite-sign:translate-y-0 group-focus-within/worksite-sign:opacity-100">현재 상태 · {label}</span>
   </span>;
 }
 
