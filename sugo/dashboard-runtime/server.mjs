@@ -53675,6 +53675,11 @@ var init_stats = __esm({
 });
 
 // ../dashboard/backend/src/services/weeklyReportService.ts
+function countsOf(report) {
+  const size = (value) => Array.isArray(value) ? value.length : 0;
+  const tech = report.tech !== null && typeof report.tech === "object" ? report.tech : {};
+  return { topics: size(report.topics), learnings: size(tech.items), blocked: size(report.blocked), nextWeek: size(report.next_week) };
+}
 function headlineOf(report) {
   const headline = report.headline;
   return Array.isArray(headline) ? headline.filter((line) => typeof line === "string") : [];
@@ -53698,13 +53703,10 @@ async function listWeeklyReports(db2, userId2) {
     "SELECT week_id, start_date, end_date, generated_at, report_json FROM sugo_weekly_reports WHERE user_id = ? ORDER BY week_id DESC",
     [userId2]
   );
-  return rows.map((row) => ({
-    weekId: row.week_id,
-    start: row.start_date,
-    end: row.end_date,
-    generatedAt: row.generated_at,
-    headline: headlineOf(JSON.parse(row.report_json))
-  }));
+  return rows.map((row) => {
+    const report = JSON.parse(row.report_json);
+    return { weekId: row.week_id, start: row.start_date, end: row.end_date, generatedAt: row.generated_at, headline: headlineOf(report), counts: countsOf(report) };
+  });
 }
 async function getWeeklyReport(db2, userId2, weekId) {
   const rows = await db2.query(
@@ -90478,7 +90480,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname5(fileURLToPath3(import.meta.url));
-    pkg = "0.42.6" ? { version: "0.42.6" } : JSON.parse(readFileSync(join14(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.42.7" ? { version: "0.42.7" } : JSON.parse(readFileSync(join14(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90601,7 +90603,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.42.6", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.42.7", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

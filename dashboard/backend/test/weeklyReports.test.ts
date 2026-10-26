@@ -35,7 +35,7 @@ describe("/api/weekly/reports", () => {
 
     const list = await request(app).get("/api/weekly/reports").set("Authorization", mine).expect(200);
     expect(list.body.reports).toEqual([
-      { weekId: "2026-W41", start: "2026-10-05", end: "2026-10-11", generatedAt: "2026-10-16T01:24:00", headline: ["한 줄 요약"] },
+      { weekId: "2026-W41", start: "2026-10-05", end: "2026-10-11", generatedAt: "2026-10-16T01:24:00", headline: ["한 줄 요약"], counts: { topics: 1, learnings: 0, blocked: 0, nextWeek: 0 } },
     ]);
     const one = await request(app).get("/api/weekly/reports/2026-W41").set("Authorization", mine).expect(200);
     expect(one.body.report.topics[0].title).toBe("로그인 개선");

@@ -134,6 +134,12 @@ const RELEASE_STATE: Record<ReleaseComparison, { label: string; color: string; d
   UNKNOWN: { label: "비교 불가", color: "border-slate-400/30 bg-slate-400/10 text-slate-300", description: "커밋·빌드·이미지 중 비교에 필요한 정보가 부족합니다." },
 };
 
+const SUMMARY_WIDTH_KEY = "sugo.workspaces.summaryWidth";
+const SUMMARY_WIDTH_DEFAULT = 30;
+const SUMMARY_WIDTH_MIN = 22;
+const SUMMARY_WIDTH_MAX = 58;
+const clampSummaryWidth = (value: number) => Math.min(SUMMARY_WIDTH_MAX, Math.max(SUMMARY_WIDTH_MIN, value));
+
 export function Sessions() {
   const { data, loading } = useWorkspaces();
   const navigate = useNavigate();
@@ -141,6 +147,33 @@ export function Sessions() {
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
   const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
   const [selectedTaskTitle, setSelectedTaskTitle] = useState<string | null>(null);
+  // 최근 작업 요약(왼쪽) 폭. Inspector와 연결 레일이 같은 값을 따른다. 사용자가 정한 폭은 이 브라우저에만 기억한다.
+  const [summaryWidth, setSummaryWidth] = useState(() => {
+    try { const saved = Number(localStorage.getItem(SUMMARY_WIDTH_KEY)); return saved >= SUMMARY_WIDTH_MIN && saved <= SUMMARY_WIDTH_MAX ? saved : SUMMARY_WIDTH_DEFAULT; } catch { return SUMMARY_WIDTH_DEFAULT; }
+  });
+  useEffect(() => { try { localStorage.setItem(SUMMARY_WIDTH_KEY, String(Math.round(summaryWidth))); } catch { /* 저장이 막힌 브라우저에서는 이번 화면에서만 유지한다. */ } }, [summaryWidth]);
+  const splitRef = useRef<HTMLDivElement>(null);
+  const startSummaryResize = (event: React.PointerEvent<HTMLDivElement>) => {
+    const box = splitRef.current?.getBoundingClientRect();
+    if (!box || box.width === 0) return;
+    event.preventDefault();
+    const handle = event.currentTarget;
+    handle.setPointerCapture(event.pointerId);
+    const move = (next: PointerEvent) => setSummaryWidth(clampSummaryWidth(((next.clientX - box.left) / box.width) * 100));
+    const stop = () => {
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", stop);
+      handle.removeEventListener("pointercancel", stop);
+      document.body.style.removeProperty("cursor");
+      document.body.style.removeProperty("user-select");
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", stop);
+    handle.addEventListener("pointercancel", stop);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+  const splitStyle = { "--summary-w": `${summaryWidth}%` } as React.CSSProperties;
   const [activeTab, setActiveTab] = useState<TabType>("repositories");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<"all" | "recent">("all");
@@ -803,8 +836,8 @@ export function Sessions() {
         <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} onSelectedTitleChange={setSelectedTaskTitle} /></section>
       )}
       {selected && !isSearchMode && (
-        <div key={selectedTaskKey ?? "none"} className="pointer-events-none relative z-10 -my-3 grid h-16 grid-cols-1 lg:grid-cols-10 2xl:-my-4" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">
-          <div className="ck-summary-bridge relative flex items-center justify-center lg:col-span-3">
+        <div key={selectedTaskKey ?? "none"} style={splitStyle} className="pointer-events-none relative z-10 -my-3 flex h-16 2xl:-my-4" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">
+          <div className="ck-summary-bridge relative flex w-full items-center justify-center lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
             <span className="ck-bridge-rail absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 rounded-full" />
             {[0, 0.6, 1.2].map((delay) => <span key={delay} className="ck-bridge-spark" style={{ animationDelay: `${delay}s` }} />)}
             <span className="ck-stage-in relative flex max-w-[92%] items-center gap-1.5 rounded-full border border-cyan-300/30 bg-[#0a1424] px-3 py-1 text-[11px] font-medium text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,.18)]">
@@ -817,11 +850,17 @@ export function Sessions() {
         </div>
       )}
       {selected && !isSearchMode && (
-        <div key={selected.name} className="command-detail ck-stage-in grid min-h-[340px] flex-1 grid-cols-1 items-start gap-3 lg:grid-cols-10">
-          <div className="ck-glass flex min-h-[260px] max-h-[360px] self-start flex-col overflow-hidden rounded-xl border border-cyan-300/25 p-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)] lg:col-span-3">
+        <div key={selected.name} ref={splitRef} style={splitStyle} className="command-detail ck-stage-in flex min-h-[340px] flex-1 flex-col items-start gap-3 lg:flex-row lg:gap-0">
+          <div className="ck-glass flex min-h-[260px] max-h-[360px] w-full self-start flex-col overflow-hidden rounded-xl border border-cyan-300/25 p-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)] lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
             <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
           </div>
-          <div className="ck-glass flex min-h-[340px] max-h-[680px] self-start flex-col rounded-xl border border-[var(--color-border)] p-3 lg:col-span-7">
+          <div role="separator" aria-orientation="vertical" aria-label="최근 작업 요약과 Inspector 폭 조절" aria-valuemin={SUMMARY_WIDTH_MIN} aria-valuemax={SUMMARY_WIDTH_MAX} aria-valuenow={Math.round(summaryWidth)} tabIndex={0} title="드래그해 폭 조절, 더블클릭하면 기본 폭"
+            onPointerDown={startSummaryResize} onDoubleClick={() => setSummaryWidth(SUMMARY_WIDTH_DEFAULT)}
+            onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); setSummaryWidth((value) => clampSummaryWidth(value + (event.key === "ArrowLeft" ? -2 : 2))); } }}
+            className="group hidden w-4 shrink-0 cursor-col-resize touch-none items-center justify-center self-stretch outline-none lg:flex">
+            <span className="h-14 w-[3px] rounded-full bg-white/10 transition-colors group-hover:bg-cyan-300/60 group-focus-visible:bg-cyan-300" />
+          </div>
+          <div className="ck-glass flex min-h-[340px] max-h-[680px] w-full min-w-0 self-start flex-col rounded-xl border border-[var(--color-border)] p-3 lg:min-w-[360px] lg:flex-1">
             {renderInspector(selected)}
           </div>
         </div>

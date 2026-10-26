@@ -6,6 +6,7 @@ export interface WeeklyReportSummary {
   end: string;
   generatedAt: string;
   headline: string[];
+  counts?: { topics: number; learnings: number; blocked: number; nextWeek: number };
 }
 
 export interface WeeklyReportDetail {
