@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { ListTree, Maximize2, Minimize2 } from "lucide-react";
 import { useActivityStream, type ActivityEvent } from "../hooks/useActivityStream.js";
 import { AgentBadge } from "./AgentBadge.js";
@@ -38,74 +37,34 @@ function FeedLine({ ev, expanded = false }: { ev: ActivityEvent; expanded?: bool
 }
 
 /** 전역 콘솔. `workspace`를 주면 그 워크스페이스 로그만 거른다(Sessions 하단 2단이 그렇게 쓴다). */
-export function LiveConsole({ workspace, taskKey }: { workspace?: string; taskKey?: string | null } = {}) {
+/** 고른 작업(없으면 도메인 전체)의 기록. 최근 작업 요약과 Inspector Activity 탭이 같은 목록을 쓴다. */
+export function useTaskActivity(workspace?: string, taskKey?: string | null): ActivityEvent[] {
   const events = useActivityStream(workspace);
-  const [full, setFull] = useState(false);
   const byWorkspace = workspace ? events.filter((e) => e.workspace_name === workspace) : events;
-  const visible = taskKey ? groupByTask(byWorkspace).get(taskKey)?.events.slice().reverse() ?? [] : byWorkspace;
+  return taskKey ? groupByTask(byWorkspace).get(taskKey)?.events.slice().reverse() ?? [] : byWorkspace;
+}
+
+export function LiveConsole({ workspace, taskKey }: { workspace?: string; taskKey?: string | null } = {}) {
+  const visible = useTaskActivity(workspace, taskKey);
   const summary = summarizeActivity(visible);
   const hasCompletedResult = visible.some((event) => event.event_type.toUpperCase() === "COMPLETED");
 
-  useEffect(() => {
-    if (!full) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setFull(false);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [full]);
-
-  const renderFeed = (expanded = false) => (
-    <div className="ck-scroll min-h-0 flex-1 space-y-0.5 overflow-auto pr-1">
-      {visible.length === 0 ? (
-        <div className="py-8 text-center text-[12px] text-[var(--color-text-dim)]">이벤트 대기 중</div>
-      ) : (
-        visible.map((ev, i) => <FeedLine key={`${ev.id}-${i}`} ev={ev} expanded={expanded} />)
-      )}
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="mb-3 flex shrink-0 items-center border-b border-[var(--color-border)] pb-2.5">
+        <span className="flex items-center gap-2 text-[12px] font-semibold text-[var(--color-text-bright)]"><ListTree size={14} className="shrink-0 text-cyan-300" />최근 작업 요약</span>
+      </div>
+      {!hasCompletedResult ? <div className="flex min-h-40 flex-col items-center justify-center px-5 text-center"><span className="relative mb-3 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-300/[0.05]"><span className="absolute h-2 w-2 animate-ping rounded-full bg-cyan-300/30" /><span className="h-2 w-2 rounded-full bg-cyan-300/70" /></span><strong className="text-[12px] text-slate-300">작업 결과를 기다리고 있습니다</strong><span className="mt-1 max-w-xs text-[10px] leading-5 text-[var(--color-text-dim)]">작업이 완료되면 이곳에 결과를 3~4줄로 정리합니다.</span></div> : <div className="space-y-3">
+        <ul className="space-y-2 border-l border-emerald-300/20 pl-3">{(summary.result.length > 0 ? summary.result : [visible[0].message]).slice(0, 4).map((line, index) => <li key={`${index}:${line}`} className="flex gap-2 text-[13px] leading-6 text-slate-300"><span className="text-emerald-300/60">•</span><span className="line-clamp-2">{line}</span></li>)}</ul>
+      </div>}
     </div>
   );
+}
 
-  return (
-    <>
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="mb-3 flex shrink-0 items-center justify-between border-b border-[var(--color-border)] pb-2.5">
-          <span className="flex items-center gap-2 text-[12px] font-semibold text-[var(--color-text-bright)]"><ListTree size={14} className="shrink-0 text-cyan-300" />최근 작업 요약</span>
-          <button
-            type="button"
-            onClick={() => setFull(true)}
-            className="text-[11px] font-medium text-cyan-300 transition-colors hover:text-cyan-100"
-          >
-            전체 기록
-          </button>
-        </div>
-        {!hasCompletedResult ? <div className="flex min-h-40 flex-col items-center justify-center px-5 text-center"><span className="relative mb-3 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-300/[0.05]"><span className="absolute h-2 w-2 animate-ping rounded-full bg-cyan-300/30" /><span className="h-2 w-2 rounded-full bg-cyan-300/70" /></span><strong className="text-[12px] text-slate-300">작업 결과를 기다리고 있습니다</strong><span className="mt-1 max-w-xs text-[10px] leading-5 text-[var(--color-text-dim)]">작업이 완료되면 이곳에 결과를 3~4줄로 정리합니다.</span></div> : <div className="space-y-3">
-          <ul className="space-y-2 border-l border-emerald-300/20 pl-3">{(summary.result.length > 0 ? summary.result : [visible[0].message]).slice(0, 4).map((line, index) => <li key={`${index}:${line}`} className="flex gap-2 text-[13px] leading-6 text-slate-300"><span className="text-emerald-300/60">•</span><span className="line-clamp-2">{line}</span></li>)}</ul>
-        </div>}
-      </div>
-
-      {full && createPortal(
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" onMouseDown={() => setFull(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div
-            className="relative flex h-[80vh] w-full max-w-7xl flex-col rounded-xl border border-cyan-500/40 ck-glass ck-glow-cyan p-4"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <div className="mb-2 flex shrink-0 items-center justify-between border-b border-[var(--color-border)] pb-2">
-              <span className="text-[13px] font-semibold text-[var(--color-text-bright)]">전체 작업 기록</span>
-              <button
-                onClick={() => setFull(false)}
-                className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-              >
-                닫기
-              </button>
-            </div>
-            {renderFeed(true)}
-          </div>
-        </div>,
-        document.body,
-      )}
-    </>
-  );
+/** Inspector Activity 탭: 고른 작업의 기록 전체. 메시지는 생략하지 않고 줄바꿈한다. */
+export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
+  if (events.length === 0) return <div className="py-8 text-center text-[12px] text-[var(--color-text-dim)]">이벤트 대기 중</div>;
+  return <div className="space-y-0.5">{events.map((ev, i) => <FeedLine key={`${ev.id}-${i}`} ev={ev} expanded />)}</div>;
 }
 
 /** 워크스페이스별 tail — Agent Canvas 오버레이 하단에 붙는다. slice(0,40). */

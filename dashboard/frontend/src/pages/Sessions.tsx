@@ -22,6 +22,7 @@ import {
   Search,
   Shield,
   X,
+  ListTree,
 } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { WORKSPACE_CARD_FOCUS_CLASSES, getWorkspaceColor, workspaceCardEmphasis, workspaceCardShadow } from "../lib/workspaceSelection.js";
@@ -30,7 +31,7 @@ import {
   useWorkspaceHistory,
   type HistoryLog,
 } from "../hooks/useWorkspaceData.js";
-import { LiveConsole } from "../components/LiveConsole.js";
+import { ActivityFeed, LiveConsole, useTaskActivity } from "../components/LiveConsole.js";
 import { Modal } from "../components/Modal.js";
 import { LoadingSpinner, EmptyState } from "../components/StatusViews.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
@@ -59,6 +60,7 @@ const APM_STATE = {
 const INSPECTOR_TABS = [
   { id: "repositories" as const, label: "Repositories", icon: Package },
   { id: "history" as const, label: "History", icon: History },
+  { id: "activity" as const, label: "Activity", icon: ListTree },
 ];
 type TabType = (typeof INSPECTOR_TABS)[number]["id"];
 
@@ -145,6 +147,7 @@ export function Sessions() {
 
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
   const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
+  const taskActivity = useTaskActivity(selectedWorkspace ?? undefined, selectedTaskKey);
   // 최근 작업 요약(왼쪽) 폭. Inspector와 연결 레일이 같은 값을 따른다. 사용자가 정한 폭은 이 브라우저에만 기억한다.
   const [summaryWidth, setSummaryWidth] = useState(() => {
     try { const saved = Number(localStorage.getItem(SUMMARY_WIDTH_KEY)); return saved >= SUMMARY_WIDTH_MIN && saved <= SUMMARY_WIDTH_MAX ? saved : SUMMARY_WIDTH_DEFAULT; } catch { return SUMMARY_WIDTH_DEFAULT; }
@@ -395,7 +398,7 @@ export function Sessions() {
           loading: false,
         }
       : { data: history.data, loading: history.loading };
-    const total = activeTab === "history" ? hist.data.length : (ws.projects?.length ?? 0);
+    const total = activeTab === "history" ? hist.data.length : activeTab === "activity" ? 0 : (ws.projects?.length ?? 0);
     const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
     const page = Math.min(inspectorPage, pages - 1);
     const s = page * PAGE_SIZE;
@@ -413,7 +416,7 @@ export function Sessions() {
           <div className="flex gap-1.5 font-mono text-xs">
             {INSPECTOR_TABS.map((t) => {
               const Icon = t.icon;
-              const count = t.id === "history" ? hist.data.length : (ws.projects?.length ?? 0);
+              const count = t.id === "history" ? hist.data.length : t.id === "activity" ? taskActivity.length : (ws.projects?.length ?? 0);
               return (
                 <button
                   key={t.id}
@@ -559,6 +562,8 @@ export function Sessions() {
                 })}
               </div>
             )
+          ) : activeTab === "activity" ? (
+            <ActivityFeed events={taskActivity} />
           ) : null}
         </div>
 
@@ -855,7 +860,7 @@ export function Sessions() {
       {selected && !isSearchMode && (
         <div key={selected.name} ref={splitRef} style={splitStyle} className="command-detail ck-stage-in flex min-h-[340px] flex-1 flex-col items-start gap-3 lg:flex-row lg:gap-0">
           <div className="ck-glass flex min-h-[260px] max-h-[360px] w-full self-start flex-col overflow-hidden rounded-xl border border-cyan-300/25 p-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)] lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
-            {floorIdle && <FloorTaskHeader workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />}
+            <FloorTaskHeader workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />
             <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
           </div>
           <div role="separator" aria-orientation="vertical" aria-label="최근 작업 요약과 Inspector 폭 조절" aria-valuemin={SUMMARY_WIDTH_MIN} aria-valuemax={SUMMARY_WIDTH_MAX} aria-valuenow={Math.round(summaryWidth)} tabIndex={0} title="드래그해 폭 조절, 더블클릭하면 기본 폭"

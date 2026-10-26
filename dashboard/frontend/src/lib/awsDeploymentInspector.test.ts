@@ -13,10 +13,10 @@ describe("Workspace repository AWS deployment inspector", () => {
     expect(source).toContain("serviceDeployments");
   });
 
-  it("opens repositories first and keeps history as the third tab", () => {
+  it("opens repositories first, then history, then activity", () => {
     const source = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
     expect(source).toMatch(/INSPECTOR_TABS = \[\s*\{ id: "repositories"/);
-    expect(source).toMatch(/\{ id: "history"[^\n]+\},\s*\];/);
+    expect(source).toMatch(/\{ id: "history"[^\n]+\},\s*\{ id: "activity"[^\n]+\},\s*\];/);
     expect(source).toContain('useState<TabType>("repositories")');
   });
 });

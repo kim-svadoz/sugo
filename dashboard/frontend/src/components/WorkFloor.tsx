@@ -139,7 +139,7 @@ function TaskHeader({ title, at, now, children }: { title: ReturnType<typeof res
   </div>;
 }
 
-function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: ReturnType<typeof resolveTaskTitle> }) {
+function Lane({ lane, now }: { lane: FloorLane; now: number }) {
   const { state } = lane;
   const index = FLOOR_STATIONS.findIndex((station) => station.id === state.station);
   const [walking, setWalking] = useState(false);
@@ -154,9 +154,11 @@ function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: Retur
   const poseClass = `wk--${state.activity} wk--at-${state.station} ${walking ? "wk--walking" : ""}`;
 
   return <div className="work-floor__lane">
-    <TaskHeader title={title} at={state.at} now={now}>
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+      <strong className="shrink-0 text-[13px] text-white">{lane.workspace} 작업장</strong>
       <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>
-    </TaskHeader>
+      {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
+    </div>
     <div className="mx-auto w-full max-w-[88%]">
     <svg viewBox="0 0 960 150" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label={`${lane.name} · ${headlineOf(lane)}`}>
       <rect x="0" y={FLOOR_Y} width="960" height="10" rx="3" fill="#0f172a" />
@@ -196,7 +198,6 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, on
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
   const lanes = selectFloorLanes(events, now);
-  const { data: specs } = useSchedule();
   const requestedIndex = selectedTaskKey ? lanes.findIndex((lane) => lane.key === selectedTaskKey) : -1;
   const activeIndex = requestedIndex >= 0 ? requestedIndex : 0;
   const lane = lanes[activeIndex];
@@ -207,11 +208,8 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, on
   const idle = lanes.length > 0 ? lanes.every((item) => isFloorIdle(item.state, now)) : null;
   const lastAt = lanes.reduce<number | undefined>((latest, item) => item.state.at !== undefined && (latest === undefined || item.state.at > latest) ? item.state.at : latest, undefined);
   useEffect(() => { if (idle !== null) onIdleChange?.(idle); }, [idle, onIdleChange]);
-  const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, specs ?? []) : null;
   if (lanes.length === 0) return <div className="work-floor py-3 text-center text-[12px] text-slate-500">이 도메인에는 아직 작업 기록이 없습니다.</div>;
-  const move = (delta: number) => onSelectedTaskChange?.(lanes[(activeIndex + delta + lanes.length) % lanes.length].key);
-  const nav = lanes.length > 1 && <div className="flex items-center justify-end gap-2"><span className="mr-1 text-[10px] text-slate-500">현재 작업 <strong className="font-mono text-cyan-200">{activeIndex + 1} / {lanes.length}</strong></span><button type="button" aria-label="이전 작업" onClick={() => move(-1)} className="rounded-md border border-white/10 p-1 text-slate-400 hover:text-cyan-200"><ChevronLeft size={14} /></button><button type="button" aria-label="다음 작업" onClick={() => move(1)} className="rounded-md border border-white/10 p-1 text-slate-400 hover:text-cyan-200"><ChevronRight size={14} /></button></div>;
-  // 쉬는 중: 작업장은 도메인 상태만 보여 준다. 고른 작업의 제목은 아래 최근 작업 요약 카드(FloorTaskHeader)가 맡는다.
+  // 작업장 머리는 도메인 상태만 보여 준다. 고른 작업의 제목과 넘김은 아래 최근 작업 요약 카드(FloorTaskHeader)가 맡는다.
   if (idle) return <div className="work-floor relative pb-1">
     <div className="flex items-center gap-2.5">
       <strong className="text-[13px] text-white">{workspace} 작업장</strong>
@@ -220,12 +218,11 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, on
     <div className="mx-auto w-full max-w-[88%]"><IdleFloor /></div>
   </div>;
   return <div className="work-floor relative space-y-2 pb-1">
-    {nav}
-    {title && <Lane lane={lane} now={now} title={title} />}
+    <Lane lane={lane} now={now} />
   </div>;
 }
 
-/** 작업장이 쉬는 중일 때 최근 작업 요약 카드 위에 붙는 작업 머리. 여러 작업이면 넘겨 볼 수 있다. */
+/** 최근 작업 요약 카드 맨 위의 작업 머리. 여러 작업이면 넘겨 보고, 위 작업장 장면도 같은 작업으로 바뀐다. */
 export function FloorTaskHeader({ workspace, selectedTaskKey, onSelectedTaskChange }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void }) {
   const all = useActivityStream(workspace);
   const now = Date.now();

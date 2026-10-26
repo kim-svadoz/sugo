@@ -10,13 +10,14 @@ const workFloor = readFileSync(new URL("./WorkFloor.tsx", import.meta.url), "utf
 const workBoard = readFileSync(new URL("./WorkBoard.tsx", import.meta.url), "utf8");
 
 describe("Console 정보 구조", () => {
-  it("최근 작업은 간결한 결과 요약과 전체 기록만 보여준다", () => {
+  it("최근 작업은 간결한 결과 요약만 보여주고 전체 기록은 Inspector Activity 탭에 둔다", () => {
     expect(liveConsole).toContain("최근 작업 요약");
     expect(liveConsole).not.toContain("title.title");
     expect(liveConsole).toContain("작업이 완료되면 이곳에 결과를 3~4줄로 정리합니다");
     expect(liveConsole).not.toContain("다시 구현한 횟수");
     expect(liveConsole).not.toContain("작업 흐름");
-    expect(liveConsole).toContain("전체 기록");
+    expect(liveConsole).not.toContain("전체 기록");
+    expect(sessions).toContain('label: "Activity"');
   });
 
   it("작업 레인과 최근 요약 사이에 읽을 수 있는 연결 브리지를 표시한다", () => {
