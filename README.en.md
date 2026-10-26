@@ -4,7 +4,7 @@
 
 [한국어](README.md)
 
-Sugo runs each feature in this order: requirements and acceptance criteria → implementation → tests → final verification → user approval → docs work → work result report. Each step moves on only after Sugo checks the real test run records and the changed files. A person gives the final approval after reading the diff.
+Sugo runs each feature in this order: requirements and acceptance criteria → implementation → tests → final verification → user approval → docs work → work result report → commit. Each step moves on only after Sugo checks the real test run records and the changed files. A person gives the final approval after reading the diff. Sugo makes the commit. You push.
 
 ![Console Home: work flow, approval requests, recent work reviews, engineering-blog feed](docs/images/console-home.png)
 
@@ -71,20 +71,19 @@ Use absolute paths.
 
 ```mermaid
 flowchart LR
-    A[Requirements and acceptance criteria] --> B[Acceptance tests] --> C[Implementation] --> D[Test run] --> E[Final verification] --> F[User approval] --> G[Docs work] --> H[Work result report]
+    A[Requirements and acceptance criteria] --> B[Contract tests] --> C[Implementation] --> D[Test run] --> E[Final verification] --> F[User approval] --> G[Docs work] --> H[Work result report] --> I[Commit]
 ```
 
 1. Requirements and acceptance criteria: Sugo writes the request as a PRD and sets acceptance criteria for each requirement. Out-of-scope work is removed here.
-2. Acceptance tests: when needed, Sugo writes the acceptance criteria as contract tests first and confirms that they fail. A baseline locks existing behavior that must not change.
+2. Contract tests: when needed, Sugo writes the acceptance criteria as contract tests first and confirms that they fail. A baseline locks existing behavior that must not change.
 3. Implementation and test run: `code-agent` implements. `test-agent` runs the tests and records the results.
 4. Final verification: `review-agent` (read-only) checks rule violations and security and prepares the verification material.
 5. User approval: a person reads the verification material and the diff in the Console and approves each requirement.
 6. Docs work: `docs-agent` updates the project docs for the change.
 7. Work result report: Sugo saves the change summary, design decisions, open risks, and test evidence to `work-result.md`. The next patch and the Weekly report use this history. On `feature/*` branches, Sugo updates TODO-SPEC with done and remaining work and checks it before the commit.
+8. Commit: when all steps pass, Sugo makes the commit. The commit message has no AI co-author. Sugo does not push.
 
 If a step stops, Sugo returns the missing condition and how to fix it. Answer policy or scope questions in the Console, and the same session continues.
-
-Done does not mean pushed. You run `git commit` and `git push`.
 
 ## How to use
 
@@ -102,11 +101,15 @@ Each feature produces a PRD, test records, verification material, and a work res
 
 Put one behavior change in each `/sugo:feat`. If a PRD is large, Sugo splits it into subtasks and integrates them.
 
-**Prepare schedule and spec** · place development schedules on their due dates
+#### Prepare schedule and spec
+
+Place development schedules on their due dates.
 
 ![Schedule Calendar: development schedule by due date](docs/images/console-calendar.png)
 
-**Domains and domain rules** · group the projects of one business area into a domain, and keep the same context and conventions with domain rules
+#### Domains and domain rules
+
+Group the projects of one business area into a domain, and keep the same context and conventions with domain rules.
 
 ![Domain management: progress and domain rule count per domain](docs/images/console-domains.png)
 
@@ -116,11 +119,15 @@ Put one behavior change in each `/sugo:feat`. If a PRD is large, Sugo splits it 
 - A domain rule applies to the whole domain or to one project. Each rule records why it exists and what to check.
 - `/sugo:checkpoint-sync` writes the rules to `.claude/rules/<category>/` in each project. Claude Code and Codex read these rules before they work. The next task in the same domain starts from the same conventions.
 
-**Check progress** · on the domain work floor, see the step and finished records of the selected task. The Inspector below lists the projects registered in the domain
+#### Check progress
+
+On the domain work floor, see the step and finished records of the selected task. The Inspector below lists the projects registered in the domain.
 
 ![Workspaces work floor: step, finished records, and projects of the domain](docs/images/console-workspaces.png)
 
-**User approval** · read the verification result and the changed-file diff, then approve or request changes
+#### User approval
+
+Read the verification result and the changed-file diff, then approve or request changes.
 
 <p>
   <img src="docs/images/console-approval.png" alt="Work result review and approval" width="49%">
@@ -226,7 +233,11 @@ If you deleted the plugin cache first, run `node ~/.sugo/bin/sugo-uninstall.mjs 
 
 ## Supported stacks
 
-Java, JavaScript, TypeScript, Python · Spring, Node, Express, React, Next.js · Gradle, Maven, npm, pnpm, Yarn, pip, Poetry. Other stacks use the default rules. Rule sources: [`sugo/harness-library/`](sugo/harness-library/).
+- Languages: Java, JavaScript, TypeScript, Python
+- Frameworks: Spring, Node, Express, React, Next.js
+- Build tools: Gradle, Maven, npm, pnpm, Yarn, pip, Poetry
+
+Other stacks use the default rules. Rule sources: [`sugo/harness-library/`](sugo/harness-library/).
 
 ## Troubleshooting
 
