@@ -14,6 +14,7 @@ describe("page heading typography", () => {
     expect(source).toContain("워크스페이스 운영 도구");
     expect(source).toContain("WORKSPACE OPERATIONS");
     expect(source).toContain("도메인 관리");
+    expect(source).not.toContain("({filteredWorkspaces.length})");
     expect(source).not.toContain("Domains <span");
     expect(source).not.toContain("전체 워크스페이스 운영 현황");
   });
