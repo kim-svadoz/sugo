@@ -8,6 +8,20 @@ Sugo runs each feature in this order: requirements and acceptance criteria → i
 
 ![Console Home: work flow, approval requests, recent work reviews, engineering-blog feed](docs/images/console-home.png)
 
+## How Sugo sees AI development
+
+An AI agent is a fast colleague. It writes code, runs tests, and fixes docs in no time. What it doesn't know on its own is what to build, how this team works, and how far it may reach. Leave that unsaid and the output keeps piling up, but little of it can be trusted as is, and the checking falls back on people.
+
+Sugo fills that gap in three ways.
+
+**The spec comes first.** Specs are written before code (Spec-Driven Development). A planning draft in Schedule becomes a buildable spec through `/sugo:spec-writer`, and `/sugo:feat` attaches acceptance criteria to each requirement. Agents work from that spec, and verification uses the same spec.
+
+**The working environment is designed.** Rather than asking agents to do well every time, Sugo builds an environment where doing well is the natural outcome (harness engineering). Agents read the coding rules for the project stack (the harness) and the domain rules before they start, the order of steps is fixed, and a step cannot move on without execution records. Claude and Codex read the same rule files, so the standard stays the same whichever agent does the work.
+
+**Roles are split.** No single agent does everything. The main session acts as the orchestrator and sets the order. The code agent implements, the test agent touches only test files, and the docs agent touches only docs. The review agent never edits code; it reads and checks rules and security. Reports are matched against execution records instead of being taken at face value, so one agent's mistake doesn't carry into the next step.
+
+That changes what is left for people. Following the diff line by line to see whether tests really ran is already done by Sugo. People decide whether the requirements they set were met and whether the remaining risk is acceptable, then approve. Why each decision was made stays in the work result report and the domain rules, so the next task or the next person doesn't start the same thinking from scratch.
+
 ## Problems it solves
 
 | Problem | What Sugo does |
@@ -255,6 +269,14 @@ Other stacks use the default rules. Rule sources: [`sugo/harness-library/`](sugo
 | Behavior is old after an update | `/reload-plugins`, then check `/sugo:version` |
 | Finished work is not in the Console | Ask the agent to call `sugo_status` with `health: true` and check connection and sync errors |
 | Old work is missing after a reinstall | Expected. Run `/sugo:restore`, or `/sugo:fresh-start` to start over |
+
+## What we learned building it
+
+- Using AI agents well depends more on the environment than on the prompt. The same model works far more reliably where the spec, rules, and order are in place.
+- Execution records count more than an agent's word. Instead of a "tests passed" report, the actual run result moves work to the next step.
+- Progress is counted in features. What matters is how many features are fully finished, not how many commits or PRs were added. That's why one `/sugo:feat` holds one behavior change, and later patches stay in the same history.
+- People's time goes to judgment. What a machine can check is left to the machine; people decide what to build and whether to accept the result.
+- Mistakes become rules. A problem you hit once becomes a domain rule that every agent follows from the next session on. The more you use it, the sturdier the environment gets.
 
 ## More
 
