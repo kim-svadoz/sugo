@@ -113,7 +113,7 @@ const poll=()=>call('/job').then(({j})=>{showJob(j); if(j&&j.state==='running'){
 if(!S.token){srv.textContent='보고서 생성은 Sugo Console의 Weekly 예약 또는 /sugo:weekly로 한다.';document.querySelectorAll('button.go').forEach(b=>b.disabled=true);}
 else{srv.textContent='최신 여부 확인 중…';
   call('/status').then(({j})=>{(j.weeks||[]).forEach(w=>setCard(w.week,w)); srv.textContent=''; showJob(j.job); if(j.job&&j.job.state==='running') poll();})
-  .catch(()=>{srv.textContent='수집 서버에 연결할 수 없다. launchctl kickstart -k gui/$(id -u)/com.'+S.user+'.weekly-ai-report-server 로 켠다.';
+  .catch(()=>{srv.textContent='수집 서버에 연결할 수 없다. 보고서는 Sugo Console의 Weekly 예약 또는 /sugo:weekly로 만든다.';
     document.querySelectorAll('button.go').forEach(b=>b.disabled=true);});}
 document.querySelectorAll('button.go').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation(); const w=b.closest('.card').dataset.week;
   b.disabled=true;b.textContent='시작 중…';
