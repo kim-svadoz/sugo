@@ -25,15 +25,13 @@ export function visibleRegisteredSpecs<T extends ScheduleStatusItem>(specs: T[],
   return specs.filter((spec) => spec.due_date !== null && !(spec.status === "done" && spec.due_date < todayKey));
 }
 
-/** 워크스페이스 색은 소속을 찾는 4px 레일에 집중한다. 넓은 본문 표면은 중립색을 유지해
- * 제목과 상태 배지가 색 면적에 묻히지 않게 한다. */
+/** 도메인 색은 소속을 찾는 4px 레일에만 쓴다. 카드 표면과 테두리는 모두 중립색이다. */
 export function scheduleCardStyle(color: string) {
   return {
-    borderColor: `${color}52`,
+    borderColor: "var(--color-border)",
     borderLeftColor: color,
     borderLeftWidth: 4,
-    background: `linear-gradient(105deg, ${color}18 0%, rgba(11, 17, 29, 0.96) 42%, rgba(11, 17, 29, 0.98) 100%)`,
-    boxShadow: `inset 0 0 0 1px ${color}1F`,
+    backgroundColor: "rgba(11, 17, 29, 0.96)",
   };
 }
 

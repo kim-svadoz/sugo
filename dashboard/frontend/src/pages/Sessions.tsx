@@ -24,7 +24,7 @@ import {
   ListTree,
 } from "lucide-react";
 import { cn } from "../lib/utils.js";
-import { WORKSPACE_CARD_FOCUS_CLASSES, getWorkspaceColor, workspaceCardEmphasis, workspaceCardShadow } from "../lib/workspaceSelection.js";
+import { WORKSPACE_CARD_FOCUS_CLASSES, workspaceCardEmphasis } from "../lib/workspaceSelection.js";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import {
   useWorkspaceHistory,
@@ -660,10 +660,9 @@ export function Sessions() {
          * 시선이 튀면 찾던 자리를 잃는다. 그래서 결과 안에서 바로 편다.
          */
         <div className="ck-scroll max-h-[560px] space-y-1.5 overflow-auto pr-1">
-          {filteredWorkspaces.map((ws, wi) => {
+          {filteredWorkspaces.map((ws) => {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);
-            const color = getWorkspaceColor(ws.name, wi);
             return (
               <div
                 key={ws.name}
@@ -671,7 +670,6 @@ export function Sessions() {
                   "rounded-lg border border-[var(--color-border)] transition-[opacity,filter,background-color] duration-200",
                   workspaceCardEmphasis(isSel, selectedWorkspace !== null),
                 )}
-                style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
                 <div
                   role="button"
@@ -703,11 +701,10 @@ export function Sessions() {
         </div>
       ) : viewMode === "grid" ? (
         <div className="workspace-card-grid grid shrink-0 grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
-          {filteredWorkspaces.map((ws, wi) => {
+          {filteredWorkspaces.map((ws) => {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);
             const h = healthOf(ws);
-            const color = getWorkspaceColor(ws.name, wi);
             return (
               <div
                 key={ws.name}
@@ -724,7 +721,6 @@ export function Sessions() {
                   workspaceCardEmphasis(isSel, selectedWorkspace !== null),
                   isSel && "workspace-command-card--selected",
                 )}
-                style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">
@@ -792,10 +788,9 @@ export function Sessions() {
       ) : (
         /* Compact List — 단일 행 */
         <div className="ck-scroll max-h-[360px] space-y-1 overflow-auto pr-1">
-          {filteredWorkspaces.map((ws, wi) => {
+          {filteredWorkspaces.map((ws) => {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);
-            const color = getWorkspaceColor(ws.name, wi);
             return (
               <div
                 key={ws.name}
@@ -811,7 +806,6 @@ export function Sessions() {
                   WORKSPACE_CARD_FOCUS_CLASSES,
                   workspaceCardEmphasis(isSel, selectedWorkspace !== null),
                 )}
-                style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
                 <span className={cn("h-2 w-2 shrink-0 rounded-full ck-pulse-dot", st.dot)} />
                 <span className="w-48 shrink-0 truncate font-mono text-[13px] font-semibold tracking-[-0.01em] text-slate-100">{ws.name}</span>

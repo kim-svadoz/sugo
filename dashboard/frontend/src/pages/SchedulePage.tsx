@@ -199,7 +199,7 @@ export function SchedulePage() {
   const todayKey = toDateKey(today);
   const grid = useMemo(() => buildMonthGrid(cursor.year, cursor.month), [cursor]);
 
-  /** 홈 화면 도메인 카드와 완전히 같은 색(목록 순서 기반) — 화면마다 색이 따로 계산되면 안 된다. */
+  /** Schedule 안에서만 쓰는 도메인 식별색. 카드 표면이 아니라 왼쪽 표식에만 적용한다. */
   const colorOf = useMemo(() => {
     const order = new Map((workspaces ?? []).map((w, i) => [w.name, i]));
     return (name: string) => getWorkspaceColor(name, order.get(name) ?? 0);
@@ -593,7 +593,7 @@ export function SchedulePage() {
                   {agenda.map((group) => (
                     <section key={group.id} aria-labelledby={`agenda-${group.id}`}>
                       <div className="mb-2.5 flex items-center gap-2.5">
-                        <span className={cn("h-2.5 w-2.5 rounded-full", group.id === "overdue" ? "bg-rose-400" : group.id === "today" ? "bg-cyan-300" : group.id === "next" ? "bg-blue-400" : "bg-slate-500")} />
+                        <span className="h-2.5 w-2.5 rounded-full bg-slate-500" />
                         <h3 id={`agenda-${group.id}`} className="text-[14px] font-bold text-white">{group.label}</h3>
                         <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 font-mono text-[11px] text-[var(--color-text-muted)]">{group.items.length}</span>
                         <span className="text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>
@@ -748,7 +748,7 @@ export function SchedulePage() {
                             type="button"
                             onClick={() => spec && openSpec(spec)}
                             aria-label={`개발 일정 · ${commitment.title}`}
-                            className="group/marker relative hidden h-2.5 w-2.5 rounded-[3px] border border-white/35 shadow-[0_0_7px_rgba(255,255,255,0.16)] max-[1900px]:block"
+                            className="group/marker relative hidden h-2.5 w-1 rounded-sm shadow-[0_0_6px_rgba(255,255,255,0.12)] max-[1900px]:block"
                             style={{ backgroundColor: colorOf(commitment.workspace_name) }}
                           >
                             <span className={cn("pointer-events-none absolute z-50 w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/marker:translate-y-0 group-hover/marker:opacity-100 group-focus-visible/marker:translate-y-0 group-focus-visible/marker:opacity-100", dayIndex >= 21 ? "bottom-full mb-2" : "top-full mt-2", day.getDay() >= 5 ? "right-0" : "left-0")}>

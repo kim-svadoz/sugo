@@ -36,14 +36,14 @@ describe("schedule presentation", () => {
     expect(visibleRegisteredSpecs(specs, "2026-10-07")).toEqual(specs.slice(1, 4));
   });
 
-  it("워크스페이스 색은 굵은 레일에 집중하고 카드 표면은 절제한다", () => {
+  it("도메인 색은 왼쪽 레일에만 쓰고 카드 표면과 테두리는 중립색을 쓴다", () => {
     const style = scheduleCardStyle("#fb923c");
     expect(style.borderLeftColor).toBe("#fb923c");
     expect(style.borderLeftWidth).toBe(4);
-    expect(style.background).toContain("#fb923c18");
-    expect(style.background).toContain("rgba(11, 17, 29, 0.98)");
-    expect(style.background).not.toContain("#fb923c2E");
-    expect(style.boxShadow).toContain("#fb923c1F");
+    expect(style.borderColor).toBe("var(--color-border)");
+    expect(style.backgroundColor).toBe("rgba(11, 17, 29, 0.96)");
+    expect(style).not.toHaveProperty("background");
+    expect(style).not.toHaveProperty("boxShadow");
     expect(style).not.toHaveProperty("color");
   });
 
@@ -117,7 +117,8 @@ describe("schedule presentation", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain('className="text-[14px] font-bold text-white">{group.label}</h3>');
     expect(source).toContain('className="text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>');
-    expect(source).toContain('"h-2.5 w-2.5 rounded-full"');
+    expect(source).toContain('"h-2.5 w-2.5 rounded-full bg-slate-500"');
+    expect(source).not.toContain('group.id === "overdue" ? "bg-rose-400"');
   });
 
   it("Schedule 카드 클릭은 상세만 열고 Canvas는 명시적 버튼으로만 연다", () => {
