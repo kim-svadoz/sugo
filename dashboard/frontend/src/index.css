@@ -443,9 +443,67 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 }
 
 /* Integrations는 지도에서 고른 한 작업을 수행하는 전용 작업면이다. */
-.integration-workbench button { min-height: 2.5rem; }
+.settings-interface button,
+.settings-interface input,
+.settings-interface select {
+  font-family: inherit;
+  letter-spacing: -0.01em;
+}
+.settings-interface button { line-height: 1.25; }
+.settings-interface input,
+.settings-interface select {
+  border-radius: 8px;
+  font-size: 14px;
+}
+/* html font-size가 21px이라 rem 대신 px로 고정한다. 주변 text-[11px]·text-sm 계열과 크기를 맞춘다. */
+.settings-action {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+.settings-action-primary {
+  border: 1px solid rgba(103, 232, 249, 0.34);
+  background: rgba(34, 211, 238, 0.1);
+  color: #cffafe;
+}
+.settings-action-primary:hover { background: rgba(34, 211, 238, 0.16); }
+.settings-action-secondary {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  color: var(--color-text-muted);
+}
+.settings-action-secondary:hover {
+  border-color: rgba(103, 232, 249, 0.28);
+  color: #a5f3fc;
+}
+.settings-action-danger {
+  border: 1px solid rgba(251, 113, 133, 0.22);
+  color: #fda4af;
+}
+.settings-action-compact { min-height: 32px; padding: 5px 11px; font-size: 12.5px; }
+.settings-interface .settings-action:disabled { cursor: not-allowed; opacity: 0.35; }
+.settings-field {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+  padding: 8px 12px;
+  color: var(--color-text);
+  font-size: 14px;
+  line-height: 20px;
+  transition: border-color 160ms ease;
+}
+.settings-field:focus { outline: none; border-color: rgba(103, 232, 249, 0.45); }
+.settings-field::placeholder { color: var(--color-text-dim); }
+.integration-workbench button { min-height: 38px; }
 .integration-workbench input[type="text"],
 .integration-workbench input[type="password"],
 .integration-workbench input[type="number"],
-.integration-workbench select { min-height: 2.625rem; font-size: 0.875rem; }
+.integration-workbench select { min-height: 40px; }
 .integration-workbench label { line-height: 1.5; }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   deleteGitConnection,
   getGitConnections,
@@ -20,7 +21,7 @@ import { Activity, Boxes, ChevronDown, Cloud, GitBranch, Plus } from "lucide-rea
 import type { LucideIcon } from "lucide-react";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
-const contextAutoRefreshDescription = "Dashboard 실행 중에는 매일 08:00 KST 자동 동기화 · 꺼져 있었다면 다음 실행 시 갱신 · 수동 동기화 가능";
+const contextAutoRefreshDescription = "Console이 켜져 있으면 매일 이 PC 시간 기준 08:00에 자동으로 동기화합니다. 꺼져 있었다면 다음에 켜질 때 동기화하고, 언제든 직접 동기화할 수 있습니다.";
 
 type IntegrationSectionId = "aws" | "pinpoint" | "projects" | "git";
 type IntegrationViewId = IntegrationSectionId | "catalog";
@@ -32,7 +33,7 @@ const INTEGRATION_SECTIONS: ReadonlyArray<{ id: IntegrationSectionId; label: str
 ];
 
 function DetailToggle({ expanded, onClick }: { expanded: boolean; onClick: () => void }) {
-  return <button type="button" aria-expanded={expanded} onClick={onClick} className="flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--color-border)] px-2.5 py-1.5 text-xs text-[var(--color-text-muted)] transition hover:border-cyan-400/40 hover:text-cyan-200">
+  return <button type="button" aria-expanded={expanded} onClick={onClick} className="settings-action settings-action-secondary settings-action-compact shrink-0 gap-1.5">
     {expanded ? "접기" : "자세히 보기"}
     <ChevronDown size={14} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
   </button>;
@@ -128,8 +129,8 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
         <div className="flex items-center gap-2">
         {status?.connected && <>
           <ContextRefreshStatus observedAt={status.observedAt} now={now} compact />
-          <button type="button" disabled={busy} onClick={() => void refreshAll()} className="rounded-md border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200 disabled:opacity-40">{busy ? "동기화 중…" : "AWS 전체 동기화"}</button>
-          <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span>
+          <button type="button" disabled={busy} onClick={() => void refreshAll()} className="settings-action settings-action-secondary settings-action-compact">{busy ? "동기화 중…" : "AWS 전체 동기화"}</button>
+          <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[11px] text-emerald-300">연결됨</span>
         </>}
         {!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}
         </div>
@@ -139,7 +140,7 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
     {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
       {error && <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{error}</div>}
       {status === null ? <div className="text-sm text-[var(--color-text-muted)]">불러오는 중…</div> : !status.connected || adding ? <>
-        {status.connected && <div className="flex items-center justify-between"><div className="text-sm font-medium text-[var(--color-text)]">AWS 계정 추가</div><button type="button" onClick={() => setAdding(false)} className="text-xs text-[var(--color-text-muted)]">취소</button></div>}
+        {status.connected && <div className="flex items-center justify-between"><div className="text-sm font-medium text-[var(--color-text)]">AWS 계정 추가</div><button type="button" onClick={() => setAdding(false)} className="settings-action settings-action-secondary settings-action-compact">취소</button></div>}
         <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
           <div className="mb-2 font-semibold text-cyan-200">AWS Context 연결 순서</div>
           <ol className="list-decimal space-y-1 pl-4">
@@ -150,23 +151,23 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
           <p className="mt-2 text-[var(--color-text-dim)]">에이전트는 표시 이름으로 계정을 고릅니다. 이름을 지정하지 않으면 <code>default</code>를 읽습니다. 표시 이름과 다른 환경 이름(예: <code>dev</code>)을 쓰려면 <code>~/.claude/sugo/settings.json</code>의 <code>aws.environments</code>에 연결하세요.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm text-[var(--color-text)]">표시 이름<input value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="예: 공용 계정" className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5" /></label>
-          <label className="text-sm text-[var(--color-text)]">AWS profile<input value={profile} onChange={(event) => setProfile(event.target.value)} placeholder="예: team-account" className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5" /></label>
-          <label className="text-sm text-[var(--color-text)]">기본 region<input value={region} onChange={(event) => setRegion(event.target.value)} className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5" /></label>
+          <label className="text-sm text-[var(--color-text)]">표시 이름<input value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="예: 공용 계정" className="settings-field mt-1.5 w-full" /></label>
+          <label className="text-sm text-[var(--color-text)]">AWS profile<input value={profile} onChange={(event) => setProfile(event.target.value)} placeholder="예: team-account" className="settings-field mt-1.5 w-full" /></label>
+          <label className="text-sm text-[var(--color-text)]">기본 region<input value={region} onChange={(event) => setRegion(event.target.value)} className="settings-field mt-1.5 w-full" /></label>
         </div>
-        <button type="button" disabled={busy || !accountName || !profile || !region} onClick={() => void connect()} className="ck-glow-cyan rounded-md border border-cyan-400/50 px-3 py-1.5 text-sm disabled:opacity-40">계정 확인 후 추가</button>
+        <button type="button" disabled={busy || !accountName || !profile || !region} onClick={() => void connect()} className="settings-action settings-action-primary">계정 확인 후 추가</button>
         <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">AWS CLI의 로컬 자격 증명을 읽기 전용으로 사용합니다. 키는 Dashboard에 저장하지 않습니다.</p>
       </> : <>
         <div className="rounded-lg border border-emerald-400/25 bg-emerald-400/[0.05] px-4 py-3">
           <div className="flex flex-wrap items-end gap-2">
             <label className="min-w-[14rem] flex-1 text-xs text-[var(--color-text-muted)]">화면에서 볼 AWS 계정
-              <select value={status.activeAccount ?? ""} disabled={busy} onChange={(event) => void select(event.target.value)} className="mt-1.5 w-full rounded-md border border-emerald-400/20 bg-[var(--color-background)] px-3 py-2 text-sm text-emerald-100">
+              <select value={status.activeAccount ?? ""} disabled={busy} onChange={(event) => void select(event.target.value)} className="settings-field mt-1.5 w-full">
                 {status.accounts.map((account) => <option key={account.name} value={account.name}>{awsAccountOptionLabel(account)}</option>)}
               </select>
             </label>
-            <button type="button" disabled={busy} onClick={() => setAdding(true)} className="rounded-md border border-cyan-400/40 px-3 py-2 text-sm text-cyan-200">계정 추가</button>
-            <button type="button" disabled={busy} onClick={() => void refresh()} className="rounded-md border border-cyan-400/40 px-3 py-2 text-sm text-cyan-200">새로고침</button>
-            <button type="button" disabled={busy} onClick={() => void disconnect()} className="rounded-md border border-rose-500/30 px-3 py-2 text-sm text-rose-300">연결 해제</button>
+            <button type="button" disabled={busy} onClick={() => setAdding(true)} className="settings-action settings-action-primary">계정 추가</button>
+            <button type="button" disabled={busy} onClick={() => void refresh()} className="settings-action settings-action-secondary">새로고침</button>
+            <button type="button" disabled={busy} onClick={() => void disconnect()} className="settings-action settings-action-danger">연결 해제</button>
           </div>
           {status.activeAccount && <div className="mt-2 font-mono text-[11px] text-[var(--color-text-dim)]">{awsAccountMetaLabel(status.accounts.find((account) => account.name === status.activeAccount)!)}</div>}
         </div>
@@ -207,7 +208,7 @@ function AwsAccessPolicySettings() {
     } catch (error) { setMessage(String(error)); }
     finally { setBusy(false); }
   }
-  const numberField = (label: string, key: 'sessionLimit' | 'dailyLimit' | 'minuteLimit') => <label className="text-xs text-[var(--color-text-muted)]">{label}<input type="number" min="1" value={policy?.[key] ?? ''} onChange={(event) => setPolicy((current) => current ? { ...current, [key]: Number(event.target.value) } : current)} className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-text)]" /></label>;
+  const numberField = (label: string, key: 'sessionLimit' | 'dailyLimit' | 'minuteLimit') => <label className="text-xs text-[var(--color-text-muted)]">{label}<input type="number" min="1" value={policy?.[key] ?? ''} onChange={(event) => setPolicy((current) => current ? { ...current, [key]: Number(event.target.value) } : current)} className="settings-field mt-1.5 w-full" /></label>;
   return <section aria-labelledby="aws-access-policy" className="border-t border-white/[0.08] pt-7">
     <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="font-mono text-[10px] font-semibold tracking-[0.18em] text-violet-300/70">ACCESS POLICY</p><h3 id="aws-access-policy" className="mt-1 text-base font-semibold text-[var(--color-text)]">AWS 읽기 범위</h3><p className="mt-1 text-xs text-[var(--color-text-muted)]">연결한 AWS를 AI가 직접 조회할지와 호출 한도를 이곳에서 관리합니다.</p></div>{policy && <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${policy.directReadEnabled ? "border-emerald-300/25 text-emerald-300" : "border-white/10 text-[var(--color-text-muted)]"}`}>{policy.directReadEnabled ? "직접 조회 사용" : "저장 정보만 사용"}</span>}</div>
     <div className="mt-5 space-y-5">
@@ -215,7 +216,7 @@ function AwsAccessPolicySettings() {
         <label className="flex items-start justify-between gap-4 border-y border-white/[0.08] py-4"><span><b className="block text-sm text-[var(--color-text)]">에이전트 직접 AWS 읽기</b><span className="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">켜도 쓰기·비밀·고비용 조회는 차단됩니다. 끄면 위에서 동기화한 정보만 사용합니다.</span></span><input type="checkbox" checked={policy.directReadEnabled} onChange={(event) => setPolicy({ ...policy, directReadEnabled: event.target.checked })} className="mt-1" /></label>
         <div className="grid gap-3 sm:grid-cols-3">{numberField('세션당 호출', 'sessionLimit')}{numberField('하루당 호출 (KST)', 'dailyLimit')}{numberField('1분당 호출', 'minuteLimit')}</div>
         <p className="text-[11px] leading-relaxed text-[var(--color-text-dim)]">한도를 넘거나 넓은 범위를 요청하면 실행 전에 확인을 받습니다. 감사 기록에는 비밀값을 제외한 명령과 결정만 남깁니다.</p>
-        <div className="flex items-center justify-between gap-3"><span className="text-xs text-[var(--color-text-muted)]">{message}</span><button type="button" disabled={busy} onClick={() => void save()} className="rounded-md border border-cyan-400/40 px-3 py-1.5 text-sm text-cyan-200 disabled:opacity-40">{busy ? '저장 중…' : '정책 저장'}</button></div>
+        <div className="flex items-center justify-between gap-3"><span className="text-xs text-[var(--color-text-muted)]">{message}</span><button type="button" disabled={busy} onClick={() => void save()} className="settings-action settings-action-primary">{busy ? '저장 중…' : '정책 저장'}</button></div>
       </>}
     </div>
   </section>;
@@ -234,14 +235,14 @@ function PinpointContextCard({ expanded, onToggle, focused = false, onConnection
     <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] ${focused ? "bg-cyan-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}>
       <div className="flex items-center justify-between gap-3">
         <div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>Pinpoint APM</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>애플리케이션의 실제 실행 상태와 성능 지표를 읽습니다.</p></div>
-        <div className="flex items-center gap-2">{status?.connected && <><ContextRefreshStatus observedAt={status.observedAt} now={now} compact /><button disabled={busy} onClick={() => void run(refreshPinpointContext)} className="rounded-md border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200 disabled:opacity-40">{busy ? "동기화 중…" : "Pinpoint 동기화"}</button><span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span></>}{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
+        <div className="flex items-center gap-2">{status?.connected && <><ContextRefreshStatus observedAt={status.observedAt} now={now} compact /><button disabled={busy} onClick={() => void run(refreshPinpointContext)} className="settings-action settings-action-secondary settings-action-compact">{busy ? "동기화 중…" : "Pinpoint 동기화"}</button><span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[11px] text-emerald-300">연결됨</span></>}{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
       </div>
       {expanded && status?.connected && <ContextRefreshStatus observedAt={status.observedAt} now={now} />}
     </div>
     {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
       {error && <div className="rounded border border-rose-500/30 px-3 py-2 text-xs text-rose-300">{error}</div>}
-      <div className="flex gap-2"><input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://pinpoint.example.com" className="min-w-0 flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm" />
-        {!status?.connected ? <button disabled={busy || !baseUrl} onClick={() => void run(() => connectPinpointContext(baseUrl))} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200 disabled:opacity-40">연결</button> : <button disabled={busy} onClick={() => void run(disconnectPinpointContext)} className="rounded border border-rose-400/30 px-3 text-sm text-rose-300">연결 해제</button>}
+      <div className="flex gap-2"><input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://pinpoint.example.com" className="settings-field min-w-0 flex-1" />
+        {!status?.connected ? <button disabled={busy || !baseUrl} onClick={() => void run(() => connectPinpointContext(baseUrl))} className="settings-action settings-action-primary">연결</button> : <button disabled={busy} onClick={() => void run(disconnectPinpointContext)} className="settings-action settings-action-danger">연결 해제</button>}
       </div>
       {status?.connected && <div><div className="mb-3"><strong className="text-sm text-[var(--color-text)]">수집 중인 애플리케이션</strong><p className="mt-1 text-[11px] text-[var(--color-text-muted)]">실행 상태와 최근 5분 성능 표본을 요약합니다.</p></div><div className="divide-y divide-white/[0.07] border-y border-white/[0.08]">{status.applications.map((app) => <div key={app.applicationName} className="grid gap-2 px-1 py-4 text-xs sm:grid-cols-[minmax(0,1fr)_8rem_14rem] sm:items-center"><div className="font-medium text-[var(--color-text)]">{app.applicationName}</div><div className={app.state === "running" ? "text-emerald-300" : "text-[var(--color-text-muted)]"}>{app.state} · agent {app.runningAgentCount}/{app.agentCount}</div><div className="text-right text-[var(--color-text-muted)]">표본 {app.sampleCount >= 5000 ? '5,000+' : app.sampleCount} · 오류 {app.errorCount}</div></div>)}</div></div>}
       <p className="text-[11px] text-[var(--color-text-dim)]">읽기 전용 · 5분 중복 호출 방지</p>
@@ -267,18 +268,23 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false }: { expa
   const toggleSelection = (value: string) => setSelected((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
   async function save(disable = false) { if (!path) return; setBusy(true); try { const values = disable ? [] : candidates.filter((item) => selected.includes(key(item))).map(({ accountName, service, environment, cluster }) => ({ accountName, service, environment, cluster })); await saveProjectIntegration(path, values); await load(path); } finally { setBusy(false); } }
   return <div id="integration-projects" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "bg-violet-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>프로젝트 외부 연동</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>등록 프로젝트 {projects.length}개 · 연결 설정 {projects.filter((item) => item.configured).length}개</p></div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
+    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "bg-violet-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>프로젝트 외부 연동</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>등록 프로젝트 {projects.length}개, 연결 설정 {projects.filter((item) => item.configured).length}개</p></div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
     {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
-      {projects.length === 0 ? <p className="text-xs text-[var(--color-text-dim)]">등록된 프로젝트가 없습니다.</p> : <>
-        <div className="grid gap-4 border-y border-white/[0.07] py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-center"><div><strong className="block text-sm text-[var(--color-text)]">적용할 프로젝트</strong><span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">프로젝트마다 사용할 운영 근거를 고릅니다.</span></div><select value={path} onChange={(event) => { const next = event.target.value; const nextProject = projects.find((item) => item.project_path === next); setPath(next); setSelected(initialIntegrationSelection(nextProject, candidates, key)); }} className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm">{projects.map((item) => <option key={item.project_path} value={item.project_path}>{item.workspace_name} · {item.project_path.split('/').at(-1)} · {integrationStatusLabel(item)}</option>)}</select></div>
-        {project && <div className={project.configured ? "rounded border border-emerald-400/25 bg-emerald-400/[0.05] px-3 py-2 text-xs text-emerald-200" : "rounded border border-amber-400/25 bg-amber-400/[0.05] px-3 py-2 text-xs text-amber-100"}>{project.configured ? project.selections.length ? `외부 연동 ${project.selections.length}개가 확정되어 Inspector에서 AWS Synced로 사용됩니다.` : "이 프로젝트는 외부 연동을 사용하지 않도록 확정되어 있습니다." : `로컬 Workspace 등록은 완료됐지만 AWS·APM 연결은 아직 확정되지 않았습니다. 정확 일치 후보 ${suggestionCount}개를 미리 선택했습니다.`}</div>}
-        <div className="flex items-center justify-between gap-4 pt-2"><div><strong className="text-sm text-[var(--color-text)]">사용할 운영 데이터</strong><span className="ml-2 font-mono text-xs text-cyan-300">{selected.length}개 선택</span></div><input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="계정·서비스·환경 검색" className="w-64 max-w-[50%] rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm" /></div>
+      <div className="border-y border-cyan-300/15 bg-cyan-300/[0.025] px-4 py-4">
+        <div className="flex items-start justify-between gap-4"><div className="min-w-0 flex-1"><strong className="text-sm text-cyan-100">연결 방법</strong><p className="mt-1 max-w-3xl text-xs leading-5 text-[var(--color-text-muted)]">Sugo 프로젝트를 AWS에서 실제로 돌고 있는 ECS 서비스와 연결합니다. 저장한 연결은 Workspaces Inspector의 운영 정보와 Schedule의 DEV, STG, PRD 배포 상태 표시에 쓰입니다.</p></div><Link to="/sessions" className="settings-action settings-action-secondary shrink-0">Workspaces 열기</Link></div>
+        <ol className="mt-4 grid gap-3 text-xs sm:grid-cols-3"><li className="flex gap-2"><span className="font-mono text-cyan-300">01</span><span><b className="block text-[var(--color-text)]">프로젝트 등록</b><span className="mt-0.5 block text-[var(--color-text-dim)]"><code className="font-mono text-[11px] text-cyan-200">/sugo:add</code>로 저장소를 도메인에 등록합니다.</span></span></li><li className="flex gap-2"><span className="font-mono text-cyan-300">02</span><span><b className="block text-[var(--color-text)]">AWS 동기화</b><span className="mt-0.5 block text-[var(--color-text-dim)]">위 AWS 계정을 연결하고 동기화하면 ECS 서비스가 후보로 나옵니다.</span></span></li><li className="flex gap-2"><span className="font-mono text-cyan-300">03</span><span><b className="block text-[var(--color-text)]">확인 후 저장</b><span className="mt-0.5 block text-[var(--color-text-dim)]">일치 후보는 미리 체크됩니다. 저장해야 연결됩니다.</span></span></li></ol>
+        <p className="mt-4 border-t border-white/[0.06] pt-3 text-[11px] leading-5 text-[var(--color-text-dim)]"><b className="text-amber-200">프로젝트와 일치</b> 기준: 저장소 폴더 이름이 ECS 서비스 이름(끝의 <code className="font-mono">-service</code> 제외) 또는 컨테이너 이미지 이름과 같습니다. 이름이 다르면 목록에서 직접 고릅니다.</p>
+      </div>
+      {projects.length === 0 ? <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] pb-5"><p className="text-xs text-[var(--color-text-dim)]">아직 등록된 프로젝트가 없습니다. <code className="font-mono text-[11px] text-cyan-200">/sugo:add</code>로 저장소를 도메인에 등록하면 이곳에서 운영 정보를 연결할 수 있습니다.</p><Link to="/sessions" className="settings-action settings-action-primary">Workspaces 열기</Link></div> : <>
+        <div className="grid gap-4 border-y border-white/[0.07] py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-center"><div><strong className="block text-sm text-[var(--color-text)]">적용할 프로젝트</strong><span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">프로젝트마다 사용할 운영 근거를 고릅니다.</span></div><select value={path} onChange={(event) => { const next = event.target.value; const nextProject = projects.find((item) => item.project_path === next); setPath(next); setSelected(initialIntegrationSelection(nextProject, candidates, key)); }} className="settings-field w-full">{projects.map((item) => <option key={item.project_path} value={item.project_path}>{item.workspace_name} / {item.project_path.split('/').at(-1)} ({integrationStatusLabel(item)})</option>)}</select></div>
+        {project && <div className={project.configured ? "rounded border border-emerald-400/25 bg-emerald-400/[0.05] px-3 py-2 text-xs text-emerald-200" : "rounded border border-amber-400/25 bg-amber-400/[0.05] px-3 py-2 text-xs text-amber-100"}>{project.configured ? project.selections.length ? `외부 연동 ${project.selections.length}개가 확정되어 Inspector에서 AWS Synced로 사용됩니다.` : "이 프로젝트는 외부 연동을 사용하지 않도록 확정되어 있습니다." : `Workspace 등록은 끝났지만 AWS와 APM 연결은 아직 저장하지 않았습니다. 일치 후보 ${suggestionCount}개를 미리 체크했습니다.`}</div>}
+        <div className="flex items-center justify-between gap-4 pt-2"><div><strong className="text-sm text-[var(--color-text)]">사용할 운영 데이터</strong><span className="ml-2 font-mono text-xs text-cyan-300">{selected.length}개 선택</span></div><input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="계정, 서비스, 환경 검색" className="settings-field w-64 max-w-[50%]" /></div>
         <div className="ck-scroll max-h-80 divide-y divide-white/[0.06] overflow-auto border-y border-white/[0.07]">
           {visibleCandidates.length === 0 && <div className="px-3 py-10 text-center text-xs text-[var(--color-text-dim)]">연결된 운영 데이터에서 적용 가능한 항목을 찾지 못했습니다.</div>}
-          {visibleCandidates.map((item) => { const itemKey = key(item); const enabled = selected.includes(itemKey); return <label key={itemKey} className={`flex cursor-pointer items-center gap-4 px-3 py-3.5 transition ${enabled ? 'bg-cyan-300/[0.045]' : 'hover:bg-white/[0.025]'}`}><input type="checkbox" checked={enabled} onChange={() => toggleSelection(itemKey)} className="h-4 w-4 accent-cyan-300" /><span className="min-w-0 flex-1"><span className="text-sm text-[var(--color-text)]"><b className="text-cyan-200">{item.environment.toUpperCase()}</b> · {item.service}</span><span className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{item.accountName} / {item.cluster ?? 'cluster 미확인'}{item.pinpointApplicationName ? ` / Pinpoint ${item.pinpointApplicationName}` : ''}</span></span>{isSuggested(item) && <span className="rounded-full border border-amber-400/25 px-2 py-1 text-[9px] text-amber-200">프로젝트와 일치</span>}<span className={`w-14 text-right text-[10px] font-semibold ${enabled ? 'text-emerald-300' : 'text-[var(--color-text-dim)]'}`}>{enabled ? '사용' : '미사용'}</span></label>; })}
+          {visibleCandidates.map((item) => { const itemKey = key(item); const enabled = selected.includes(itemKey); return <label key={itemKey} className={`flex cursor-pointer items-center gap-4 px-3 py-3.5 transition ${enabled ? 'bg-cyan-300/[0.045]' : 'hover:bg-white/[0.025]'}`}><input type="checkbox" checked={enabled} onChange={() => toggleSelection(itemKey)} className="h-4 w-4 accent-cyan-300" /><span className="min-w-0 flex-1"><span className="text-sm text-[var(--color-text)]"><b className="text-cyan-200">{item.environment.toUpperCase()}</b> {item.service}</span><span className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{item.accountName} / {item.cluster ?? 'cluster 미확인'}{item.pinpointApplicationName ? ` / Pinpoint ${item.pinpointApplicationName}` : ''}</span></span>{isSuggested(item) && <span className="rounded-full border border-amber-400/25 px-2 py-1 text-[11px] text-amber-200">프로젝트와 일치</span>}<span className={`w-14 text-right text-[11px] font-semibold ${enabled ? 'text-emerald-300' : 'text-[var(--color-text-dim)]'}`}>{enabled ? '사용' : '미사용'}</span></label>; })}
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2"><p className="text-[11px] text-[var(--color-text-dim)]">선택한 데이터만 이 프로젝트의 Inspector와 AI 작업 근거에 사용합니다.</p><div className="flex gap-2"><button disabled={busy || selected.length === 0} onClick={() => void save()} className="rounded-full border border-cyan-400/40 px-4 py-2 text-xs font-semibold text-cyan-200 disabled:opacity-40">{project?.configured ? '선택 내용 저장' : '프로젝트에 적용'}</button><button disabled={busy} onClick={() => void save(true)} className="rounded-full px-4 py-2 text-xs text-[var(--color-text-muted)] hover:text-rose-300">연동 없이 사용</button></div></div>
-        <p className="text-[11px] text-[var(--color-text-dim)]">확정 전 후보는 Inspector에서 AWS Suggested로만 표시됩니다. 저장 후에는 AWS Synced가 되며, Pinpoint는 선택한 ECS 서비스의 에이전트 설정이 확인된 경우에만 함께 연결됩니다.</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2"><p className="text-[11px] text-[var(--color-text-dim)]">선택한 데이터만 이 프로젝트의 Inspector와 배포 상태에 사용합니다.</p><div className="flex gap-2"><button disabled={busy || selected.length === 0} onClick={() => void save()} className="settings-action settings-action-primary">{project?.configured ? '선택 내용 저장' : '프로젝트에 적용'}</button><button disabled={busy} onClick={() => void save(true)} className="settings-action settings-action-secondary">연동 없이 사용</button></div></div>
+        <p className="text-[11px] text-[var(--color-text-dim)]">저장 전에는 Inspector에 제안으로만 보이고, 저장하면 연결된 운영 정보로 바뀝니다. Pinpoint는 선택한 ECS 서비스에서 에이전트 설정이 확인될 때 함께 연결됩니다.</p>
       </>}
     </div>}
   </div>;
@@ -342,7 +348,7 @@ function ApiTokensCard() {
           <code className="block break-all font-mono text-xs" style={{ color: "var(--color-primary)" }}>
             {fresh}
           </code>
-          <button type="button" onClick={() => setFresh(null)} className="text-xs underline opacity-70">
+          <button type="button" onClick={() => setFresh(null)} className="settings-action settings-action-secondary settings-action-compact">
             닫기
           </button>
         </div>
@@ -353,13 +359,13 @@ function ApiTokensCard() {
           placeholder="토큰 이름 (예: laptop)"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 rounded bg-white/5 px-2 py-1 text-sm"
+          className="settings-field flex-1"
         />
         <button
           type="button"
           disabled={busy}
           onClick={() => void handleCreate()}
-          className="ck-glow-cyan rounded px-3 py-1 text-xs"
+          className="settings-action settings-action-primary settings-action-compact"
           style={{ border: "1px solid var(--color-primary)" }}
         >
           발급
@@ -376,7 +382,7 @@ function ApiTokensCard() {
               type="button"
               disabled={busy}
               onClick={() => void handleRevoke(t.id)}
-              className="text-xs text-red-400 hover:underline"
+              className="settings-action settings-action-danger settings-action-compact"
             >
               폐기
             </button>
@@ -506,7 +512,7 @@ export function Settings() {
   const availableConnectionNames = [!awsConnected && "AWS", !pinpointConnected && "APM"].filter(Boolean).join(" · ");
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="settings-interface mx-auto max-w-6xl space-y-6">
       <PageHeading eyebrow="SYSTEM INTEGRATIONS" title="외부 연동" description="저장소와 운영 환경을 연결하고, Sugo가 사용할 외부 서비스의 범위를 관리합니다." />
 
       <section aria-label="외부 연동 구조" className="relative overflow-hidden border-y border-[var(--color-border)] bg-[linear-gradient(90deg,rgba(34,211,238,0.035),transparent_42%,rgba(139,92,246,0.035))] px-4 py-7 sm:px-7">
@@ -587,7 +593,7 @@ export function Settings() {
                         {connection.provider === "aws_codecommit" && <div className="mt-1 text-xs text-emerald-300/75">AWS 자격 증명 체인{connection.profile ? ` · ${connection.profile}` : " · default"}</div>}
                         {connection.baseUrl && <div className="mt-1 font-mono text-[11px] text-[var(--color-text-dim)]">{connection.baseUrl}</div>}
                       </div>
-                      <button type="button" disabled={busy} onClick={() => void handleDisconnect(connection.provider)} className="rounded border border-rose-500/40 px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10">연결 해제</button>
+                      <button type="button" disabled={busy} onClick={() => void handleDisconnect(connection.provider)} className="settings-action settings-action-danger settings-action-compact">연결 해제</button>
                     </div>
                   </div>
                 );
@@ -626,7 +632,7 @@ export function Settings() {
                 </div>
                 <label className="block text-sm text-[var(--color-text)]">
                   AWS profile (선택)
-                  <input type="text" placeholder="default" value={profile} onChange={(event) => setProfile(event.target.value)} className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-sm text-[var(--color-text)]" />
+                  <input type="text" placeholder="default" value={profile} onChange={(event) => setProfile(event.target.value)} className="settings-field mt-1.5 w-full" />
                 </label>
               </> : <>
               <label className="block text-sm text-[var(--color-text)]">
@@ -639,7 +645,7 @@ export function Settings() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && token) void handleConnect();
                   }}
-                  className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-sm text-[var(--color-text)]"
+                  className="settings-field mt-1.5 w-full"
                 />
               </label>
               <input
@@ -647,14 +653,14 @@ export function Settings() {
                 placeholder={requiresBaseUrl ? "Base URL (필수)" : `Base URL (선택, 기본 ${provider.defaultBaseUrl})`}
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
-                className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-2.5 py-1.5 text-sm text-[var(--color-text)]"
+                className="settings-field w-full"
               />
               </>}
               <button
                 type="button"
                 disabled={busy || (!usesAwsCredentials && !token) || (requiresBaseUrl && !baseUrl)}
                 onClick={() => void handleConnect()}
-                className="ck-glow-cyan rounded-md px-3 py-1.5 text-sm disabled:opacity-40"
+                className="settings-action settings-action-primary"
                 style={{ border: "1px solid var(--color-primary)" }}
               >
                 안전하게 저장

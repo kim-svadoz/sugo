@@ -10,7 +10,7 @@ describe("local Settings presentation", () => {
     expect(header).toContain("AWS 전체 동기화");
     expect(header.indexOf("AWS 전체 동기화")).toBeLessThan(header.indexOf("연결됨"));
     expect(header).toContain("ContextRefreshStatus");
-    expect(source).toContain("꺼져 있었다면 다음 실행 시 갱신");
+    expect(source).toContain("꺼져 있었다면 다음에 켜질 때 동기화");
   });
 
   it("Pinpoint도 접힌 헤더에서 최신 동기화 시각과 동기화 액션을 제공한다", () => {
