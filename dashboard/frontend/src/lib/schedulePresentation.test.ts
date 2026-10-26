@@ -113,11 +113,11 @@ describe("schedule presentation", () => {
     expect(source).not.toContain('className="line-clamp-1">{action.detail}</span>');
   });
 
-  it("Agenda 일정 구간 헤더는 카드보다 또렷한 시각적 위계를 유지한다", () => {
+  it("Agenda 일정 구간 헤더는 카드 제목과 구분되는 작은 라벨로 표시한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("agenda.map((group, index)");
     expect(source).toContain('{String(index + 1).padStart(2, "0")}');
-    expect(source).toContain('className="text-[14px] font-bold text-white">{group.label}</h3>');
+    expect(source).toContain('className="text-[12px] font-semibold tracking-[0.08em] text-slate-400">{group.label}</h3>');
     expect(source).toContain('aria-hidden="true" className="h-px min-w-6 flex-1 bg-white/10"');
     expect(source).toContain('className="shrink-0 text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>');
     expect(source).not.toContain('"h-2.5 w-2.5 rounded-full bg-slate-500"');
