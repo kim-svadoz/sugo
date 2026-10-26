@@ -16,7 +16,7 @@ import { awsAccountMetaLabel, awsAccountOptionLabel, initialIntegrationSelection
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
 import { snapshotAge } from "../lib/snapshotAge.js";
 import { PageHeading } from "../components/PageHeading.js";
-import { Activity, Boxes, CheckCircle2, ChevronDown, Cloud, GitBranch, Plus, ShieldCheck } from "lucide-react";
+import { Activity, Boxes, ChevronDown, Cloud, GitBranch, Plus, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
@@ -392,11 +392,12 @@ function ApiTokensCard() {
   );
 }
 
-function IntegrationNode({ section, selected, onSelect, align = "left" }: {
+function IntegrationNode({ section, selected, onSelect, align = "left", status }: {
   section: (typeof INTEGRATION_SECTIONS)[number];
   selected: boolean;
   onSelect: (id: IntegrationViewId) => void;
   align?: "left" | "right";
+  status?: "connected" | "available";
 }) {
   const Icon = section.icon;
   return <button
@@ -406,7 +407,7 @@ function IntegrationNode({ section, selected, onSelect, align = "left" }: {
     className={`group flex min-h-16 items-center gap-3 border-l-2 px-3 py-2.5 text-left transition ${selected ? "border-cyan-300 bg-cyan-300/[0.07]" : "border-white/[0.06] hover:border-white/20 hover:bg-white/[0.025]"} ${align === "right" ? "lg:flex-row-reverse lg:border-l-0 lg:border-r-2 lg:text-right" : ""}`}
   >
     <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full border transition ${selected ? "border-cyan-300/40 bg-cyan-300/10 text-cyan-200" : "border-white/[0.08] text-[var(--color-text-muted)] group-hover:text-[var(--color-text)]"}`}><Icon size={16} /></span>
-    <span className="min-w-0"><strong className={`block text-sm ${selected ? "text-cyan-100" : "text-[var(--color-text)]"}`}>{section.label}</strong><span className="mt-0.5 block truncate text-[10px] text-[var(--color-text-muted)]">{section.description}</span></span>
+    <span className="min-w-0 flex-1"><span className={`flex items-center gap-2 ${align === "right" ? "lg:justify-end" : ""}`}><strong className={`block text-sm ${selected ? "text-cyan-100" : "text-[var(--color-text)]"}`}>{section.label}</strong>{status && <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${status === "connected" ? "border-emerald-300/20 bg-emerald-300/[0.08] text-emerald-300" : "border-white/10 text-[var(--color-text-dim)]"}`}>{status === "connected" ? "연결됨" : "연결 가능"}</span>}</span><span className="mt-0.5 block truncate text-[10px] text-[var(--color-text-muted)]">{section.description}</span></span>
   </button>;
 }
 
@@ -415,23 +416,22 @@ function IntegrationCatalog({ awsConnected, pinpointConnected, onSelect }: {
   pinpointConnected: boolean;
   onSelect: (id: IntegrationSectionId) => void;
 }) {
-  const options = INTEGRATION_SECTIONS.filter((section) =>
-    section.id === "aws" ? !awsConnected : section.id === "pinpoint" ? !pinpointConnected : false,
-  );
+  const options = INTEGRATION_SECTIONS.filter((section) => section.id === "aws" || section.id === "pinpoint");
   return <div className="p-7 sm:p-9">
     <p className="font-mono text-[10px] font-semibold tracking-[0.22em] text-cyan-300/70">AVAILABLE CONNECTIONS</p>
     <h2 className="mt-2 text-xl font-semibold text-[var(--color-text)]">필요한 운영 도구만 연결하세요</h2>
     <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">Sugo의 개발 흐름은 외부 서비스 없이도 동작합니다. 사용하는 환경만 추가하면 연결 지도와 프로젝트 설정이 그 환경에 맞춰 바뀝니다.</p>
-    {options.length > 0 ? <div className="mt-7 divide-y divide-white/[0.07] border-y border-white/[0.07]">
+    <div className="mt-7 divide-y divide-white/[0.07] border-y border-white/[0.07]">
       {options.map((section) => {
         const Icon = section.icon;
+        const connected = section.id === "aws" ? awsConnected : pinpointConnected;
         return <button key={section.id} type="button" onClick={() => onSelect(section.id)} className="group flex w-full items-center gap-4 py-5 text-left">
           <span className="grid h-11 w-11 place-items-center rounded-full border border-white/[0.09] text-[var(--color-text-muted)] transition group-hover:border-cyan-300/35 group-hover:text-cyan-200"><Icon size={18} /></span>
-          <span className="min-w-0 flex-1"><strong className="block text-base text-[var(--color-text)]">{section.label}</strong><span className="mt-1 block text-xs text-[var(--color-text-muted)]">{section.description}</span></span>
-          <span className="text-xs font-semibold text-cyan-300">설정 시작 →</span>
+          <span className="min-w-0 flex-1"><span className="flex items-center gap-2"><strong className="block text-base text-[var(--color-text)]">{section.label}</strong><span className={`text-[10px] font-semibold ${connected ? "text-emerald-300" : "text-[var(--color-text-dim)]"}`}>{connected ? "● 연결됨" : "미연결"}</span></span><span className="mt-1 block text-xs text-[var(--color-text-muted)]">{section.description}</span>{section.id === "aws" && <span className="mt-1.5 block text-[10px] text-violet-200/70">연결하면 프로젝트 적용과 접근 정책을 함께 설정할 수 있습니다.</span>}</span>
+          <span className={`text-xs font-semibold ${connected ? "text-emerald-300" : "text-cyan-300"}`}>{connected ? "연결 관리 →" : "연결 설정 →"}</span>
         </button>;
       })}
-    </div> : <div className="mt-7 flex items-center gap-3 border-y border-emerald-300/15 py-5 text-sm text-emerald-200"><CheckCircle2 size={18} />현재 제공하는 연동이 모두 연결되어 있습니다.</div>}
+    </div>
   </div>;
 }
 
@@ -507,7 +507,6 @@ export function Settings() {
   const activeControlSections = awsConnected
     ? INTEGRATION_SECTIONS.filter((section) => section.id === "projects" || section.id === "guard")
     : [];
-  const hasOptionalConnection = !awsConnected || !pinpointConnected;
   const availableConnectionNames = [!awsConnected && "AWS", !pinpointConnected && "APM"].filter(Boolean).join(" · ");
 
   return (
@@ -518,10 +517,10 @@ export function Settings() {
         <div aria-hidden="true" className="absolute inset-x-[12%] top-1/2 h-px bg-gradient-to-r from-transparent via-cyan-300/25 to-transparent" />
         <div className="relative grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_11rem_minmax(0,1fr)]">
           <div>
-            <p className="mb-3 font-mono text-[10px] font-semibold tracking-[0.22em] text-cyan-300/70">CONNECTED SOURCES</p>
+            <div className="mb-3 flex items-center justify-between gap-3"><p className="font-mono text-[10px] font-semibold tracking-[0.22em] text-cyan-300/70">CONNECTED SOURCES</p><span className="rounded-full border border-emerald-300/20 bg-emerald-300/[0.06] px-2 py-1 text-[9px] font-semibold text-emerald-300">{activeSourceSections.length}개 사용 중</span></div>
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-              {activeSourceSections.map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} />)}
-              {hasOptionalConnection && <button type="button" aria-pressed={selectedSection === "catalog"} onClick={() => setSelectedSection("catalog")} className={`flex min-h-14 items-center gap-3 border-l-2 px-3 py-2 text-left transition ${selectedSection === "catalog" ? "border-cyan-300 bg-cyan-300/[0.07] text-cyan-100" : "border-dashed border-white/[0.09] text-[var(--color-text-muted)] hover:border-cyan-300/30 hover:text-cyan-200"}`}><span className="grid h-8 w-8 place-items-center rounded-full border border-dashed border-current/30"><Plus size={15} /></span><span><strong className="block text-sm">연결 가능한 도구</strong><span className="mt-0.5 block text-[10px]">{availableConnectionNames} 지원</span></span></button>}
+              {activeSourceSections.map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} status="connected" />)}
+              <button type="button" aria-pressed={selectedSection === "catalog"} onClick={() => setSelectedSection("catalog")} className={`flex min-h-14 items-center gap-3 border-l-2 px-3 py-2 text-left transition ${selectedSection === "catalog" ? "border-cyan-300 bg-cyan-300/[0.07] text-cyan-100" : "border-dashed border-white/[0.09] text-[var(--color-text-muted)] hover:border-cyan-300/30 hover:text-cyan-200"}`}><span className="grid h-8 w-8 place-items-center rounded-full border border-dashed border-current/30"><Plus size={15} /></span><span><strong className="block text-sm">지원 도구 관리</strong><span className="mt-0.5 block text-[10px]">{availableConnectionNames || "AWS · APM 연결 관리"}</span></span></button>
             </div>
           </div>
           <div className="relative mx-auto grid h-36 w-36 place-items-center rounded-full border border-cyan-300/25 bg-[#071422] shadow-[0_0_48px_rgba(34,211,238,0.08)]">
@@ -529,8 +528,8 @@ export function Settings() {
             <div className="text-center"><strong className="block text-lg tracking-[0.18em] text-cyan-100">SUGO</strong><span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">READ-ONLY HUB</span></div>
           </div>
           <div>
-            <p className="mb-3 text-right font-mono text-[10px] font-semibold tracking-[0.22em] text-violet-300/70">CONTROL PLANE</p>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <p className="mb-3 text-right font-mono text-[10px] font-semibold tracking-[0.22em] text-violet-300/70">{awsConnected ? "AWS OPERATIONS" : "CONTROL PLANE"}</p>
+            <div className={`grid gap-2 sm:grid-cols-2 lg:grid-cols-1 ${awsConnected ? "border-r border-violet-300/15 pr-3" : ""}`}>
               {activeControlSections.map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} align="right" />)}
               {activeControlSections.length === 0 && <p className="border-r-2 border-dashed border-white/[0.07] px-3 py-4 text-right text-[11px] leading-5 text-[var(--color-text-dim)]">운영 데이터가 연결되면<br />프로젝트 적용과 접근 정책이 열립니다.</p>}
             </div>

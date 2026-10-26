@@ -9,7 +9,10 @@ describe("Integrations section navigation", () => {
     expect(source).toContain('aria-label="외부 연동 구조"');
     expect(source).toContain("selected={selectedSection === section.id}");
     expect(source).toContain("activeSourceSections");
-    expect(source).toContain("hasOptionalConnection");
+    expect(source).toContain("지원 도구 관리");
+    expect(source).toContain("● 연결됨");
+    expect(source).toContain('align = "left", status');
+    expect(source).toContain("개 사용 중");
     expect(source).toContain("필요한 운영 도구만 연결하세요");
     expect(source).toContain("AWS Context");
     expect(source).toContain("AWS 직접 조회 안전장치");
