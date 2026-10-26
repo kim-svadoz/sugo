@@ -52,13 +52,13 @@ function activeStation(mainSpot: MainSpot, specialist?: Specialist | null): Stat
   return mainSpot;
 }
 
-function HandwrittenGroup({ children, tone }: { children: string; tone: "human" | "ai" }) {
-  const stroke = tone === "human" ? "#fcd34d" : "#67e8f9";
-  return <span className={`flex min-w-0 flex-col items-center px-1 ${tone === "human" ? "text-amber-200" : "text-cyan-200/80"}`}>
-    <span className="-rotate-1 whitespace-nowrap font-['Nanum_Pen_Script','Gaegu','Bradley_Hand',cursive] text-[13px] font-normal tracking-[0.04em]">{children}</span>
-    <svg aria-hidden="true" viewBox="0 0 100 12" preserveAspectRatio="none" className="mt-0.5 h-2.5 w-full overflow-visible opacity-70">
-      <path d="M1 1 C8 1 8 9 17 9 H43 C48 9 48 11 50 11 C52 11 52 9 57 9 H83 C92 9 92 1 99 1" fill="none" stroke={stroke} strokeWidth="1.15" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+function WorkflowGroupRail({ children, tone }: { children: string; tone: "human" | "ai" }) {
+  const rail = tone === "human" ? "bg-amber-300/45" : "bg-cyan-300/35";
+  const text = tone === "human" ? "text-amber-100" : "text-cyan-100";
+  return <span className="flex h-8 min-w-0 items-center gap-2 px-1">
+    <span aria-hidden="true" className={`h-px min-w-2 flex-1 ${rail}`} />
+    <span className={`whitespace-nowrap text-[12px] font-semibold leading-none tracking-[-0.01em] ${text}`}>{children}</span>
+    <span aria-hidden="true" className={`h-px min-w-2 flex-1 ${rail}`} />
   </span>;
 }
 
@@ -89,10 +89,10 @@ export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; w
     <div className="mt-3 grid min-h-[470px] overflow-hidden rounded-xl border border-white/[0.07] bg-[#080f1c] xl:grid-cols-[minmax(0,6fr)_220px]">
       <div className="relative min-w-0 overflow-hidden p-5">
         <div className="mb-1 grid grid-cols-8 gap-2 px-1" aria-label="사람과 AI의 작업 구간">
-          <HandwrittenGroup tone="human">사람이 정함</HandwrittenGroup>
-          <span className="col-span-4"><HandwrittenGroup tone="ai">AI가 이어서 작업</HandwrittenGroup></span>
-          <HandwrittenGroup tone="human">사람이 확인</HandwrittenGroup>
-          <span className="col-span-2"><HandwrittenGroup tone="ai">AI가 정리·출고</HandwrittenGroup></span>
+          <WorkflowGroupRail tone="human">사용자 정의</WorkflowGroupRail>
+          <span className="col-span-4"><WorkflowGroupRail tone="ai">AI 실행</WorkflowGroupRail></span>
+          <WorkflowGroupRail tone="human">사용자 확인</WorkflowGroupRail>
+          <span className="col-span-2"><WorkflowGroupRail tone="ai">AI 정리·출고</WorkflowGroupRail></span>
         </div>
         <div className="relative z-10 grid grid-cols-8 gap-2">
           {STATIONS.map((station) => {

@@ -716,7 +716,7 @@ export function Sessions() {
                   if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
                 }}
                 className={cn(
-                  "ck-card workspace-command-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-3 transition-[opacity,filter,background-color,transform,box-shadow] duration-200",
+                  "ck-card workspace-command-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-2.5 transition-[opacity,filter,background-color,transform,box-shadow] duration-200",
                   WORKSPACE_CARD_FOCUS_CLASSES,
                   workspaceCardEmphasis(isSel, selectedWorkspace !== null),
                   isSel && "workspace-command-card--selected",
@@ -733,8 +733,8 @@ export function Sessions() {
                     </span>
                   </div>
                   {h !== null && (
-                    <div className="mt-2 rounded-lg border border-[var(--color-border)] bg-slate-950/60 p-2.5 text-[11.5px]">
-                      <span className="mb-1 block text-[var(--color-text-muted)]">작업 진행</span>
+                    <div className="mt-1.5 rounded-lg border border-[var(--color-border)] bg-slate-950/60 px-2 py-1.5 text-[11px]">
+                      <span className="mr-2 text-[var(--color-text-muted)]">작업 진행</span>
                       <span
                         className={cn(
                           "font-bold",
@@ -753,7 +753,7 @@ export function Sessions() {
                     <div className="mt-2 text-xs font-medium text-cyan-300">작업 {ws.activeTaskCount}개 진행 중</div>
                   ) : null}
                 </div>
-                <div className="mt-3 flex flex-nowrap items-center gap-2 border-t border-[var(--color-border)] pt-2.5" aria-label="워크스페이스 도구">
+                <div className="mt-2 flex flex-nowrap items-center gap-2 border-t border-[var(--color-border)] pt-2" aria-label="워크스페이스 도구">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

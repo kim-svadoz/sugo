@@ -8,7 +8,7 @@ const skills = readFileSync(new URL("../pages/Skills.tsx", import.meta.url), "ut
 describe("주요 운영 화면의 정보 밀도", () => {
   it("도메인 요약과 카드는 작게 유지하고 작업 상세 영역은 더 크게 확보한다", () => {
     expect(sessions).toContain("command-brief ck-stage-in group flex w-full shrink-0 items-center justify-between gap-4 rounded-xl border px-3 py-2");
-    expect(sessions).toContain("workspace-command-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-3");
+    expect(sessions).toContain("workspace-command-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-2.5");
     expect(sessions).toContain("command-detail ck-stage-in flex min-h-[340px]");
     // 최근 작업 요약과 Inspector는 같은 폭 값을 나눠 쓰고, 사이 핸들로 폭을 조절한다.
     expect(sessions).toContain('role="separator" aria-orientation="vertical"');
