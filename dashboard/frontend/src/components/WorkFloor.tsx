@@ -133,6 +133,36 @@ function headlineOf(lane: FloorLane): string {
   return "새 작업 대기";
 }
 
+type WorksiteSignal = "idle" | "working" | "waiting" | "paused" | "complete";
+
+function signalOf(lane: FloorLane): WorksiteSignal {
+  if (lane.state.activity === "waiting") return "waiting";
+  if (lane.state.activity === "paused") return "paused";
+  if (lane.state.activity === "celebrating") return "complete";
+  if (lane.state.live) return "working";
+  return "idle";
+}
+
+const SIGNAL_STYLE: Record<WorksiteSignal, { frame: string; light: string; glow: boolean }> = {
+  idle: { frame: "border-slate-600/70 bg-slate-800/45 text-slate-400", light: "bg-slate-400", glow: false },
+  working: { frame: "border-cyan-400/45 bg-cyan-400/[0.08] text-cyan-200", light: "bg-cyan-300", glow: true },
+  waiting: { frame: "border-violet-400/45 bg-violet-400/[0.08] text-violet-200", light: "bg-violet-300", glow: true },
+  paused: { frame: "border-amber-400/45 bg-amber-400/[0.08] text-amber-200", light: "bg-amber-300", glow: false },
+  complete: { frame: "border-emerald-400/45 bg-emerald-400/[0.08] text-emerald-200", light: "bg-emerald-300", glow: true },
+};
+
+/** 현실의 작업장 간판처럼 도메인 이름 앞에서 현재 운영 상태를 알린다. */
+function WorksiteSign({ signal, label }: { signal: WorksiteSignal; label: string }) {
+  const style = SIGNAL_STYLE[signal];
+  return <span className={`relative inline-flex h-6 w-7 shrink-0 items-center justify-center rounded-md border ${style.frame}`} role="img" aria-label={`도메인 작업장 상태: ${label}`} title={`도메인 작업장 상태: ${label}`}>
+    <svg viewBox="0 0 20 18" width="17" height="15" aria-hidden="true">
+      <path d="M5 6V3.5h10V6M3.5 6.5h13v8h-13z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M7 10h6M7 12.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.75" />
+    </svg>
+    <span className={`absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-[#0b1220] ${style.light} ${style.glow ? "animate-pulse shadow-[0_0_8px_currentColor]" : ""}`} aria-hidden="true" />
+  </span>;
+}
+
 function TaskHeader({ title, at, now, children }: { title: ReturnType<typeof resolveTaskTitle>; at?: number; now: number; children?: ReactNode }) {
   return <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
     <Pin size={15} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
@@ -161,6 +191,7 @@ function Lane({ lane, now }: { lane: FloorLane; now: number }) {
 
   return <div className="work-floor__lane">
     <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+      <WorksiteSign signal={signalOf(lane)} label={headlineOf(lane)} />
       <strong className="shrink-0 text-[13px] text-white">{lane.workspace}</strong>
       <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>
       {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
@@ -218,6 +249,7 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, on
   // 작업장 머리는 도메인 상태만 보여 준다. 고른 작업의 제목과 넘김은 아래 최근 작업 요약 카드(FloorTaskHeader)가 맡는다.
   if (idle) return <div className="work-floor relative pb-1">
     <div className="flex items-center gap-2.5">
+      <WorksiteSign signal="idle" label="새 작업 대기" />
       <strong className="text-[13px] text-white">{workspace}</strong>
       <span className="shrink-0 text-[11.5px] text-cyan-200">· 새 작업 대기</span>
       <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-400">{lastCompletionLabelOf(lastAt, now)}</span>

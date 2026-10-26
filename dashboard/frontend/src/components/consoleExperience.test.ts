@@ -35,6 +35,14 @@ describe("Console 정보 구조", () => {
     expect(workFloor).not.toContain("째 쉬는 중");
   });
 
+  it("작업장 간판의 상태등으로 대기·진행·확인·중단·완료를 구분한다", () => {
+    expect(workFloor).toContain("function WorksiteSign");
+    expect(workFloor).toContain("도메인 작업장 상태:");
+    for (const signal of ["idle", "working", "waiting", "paused", "complete"]) expect(workFloor).toContain(`${signal}: {`);
+    expect(workFloor).toContain('signal="idle" label="새 작업 대기"');
+    expect(workFloor).toContain("signal={signalOf(lane)}");
+  });
+
   it("최근 작업 요약과 Inspector는 서로의 높이를 늘리지 않는다", () => {
     expect(sessions).toContain("items-start");
     expect(sessions).toContain("self-start");
