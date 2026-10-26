@@ -2,18 +2,19 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("Integrations section navigation", () => {
-  it("다섯 설정 카드는 기본으로 접히고 상단 탭은 펼침 상태를 바꾸지 않는다", () => {
+  it("연동 구조에서 하나의 대상을 선택해 상세 화면을 전환한다", () => {
     const source = readFileSync(new URL("../pages/Settings.tsx", import.meta.url), "utf8");
     expect(source).toContain("INTEGRATION_SECTIONS");
-    expect(source).toContain('useState<IntegrationSectionId | null>(null)');
-    const openSection = source.match(/function openSection[\s\S]*?\n  }/)?.[0] ?? "";
-    expect(openSection).not.toContain("setExpandedSection");
+    expect(source).toContain('useState<IntegrationSectionId>("aws")');
+    expect(source).toContain('aria-label="외부 연동 구조"');
+    expect(source).toContain("selected={selectedSection === section.id}");
     expect(source).toContain("AWS Context");
     expect(source).toContain("AWS 직접 조회 안전장치");
     expect(source).toContain("Pinpoint APM");
     expect(source).toContain("프로젝트 외부 연동");
     expect(source).toContain("Git 서비스 연결");
-    expect(source).toContain("데이터 연결 → 프로젝트 적용 → 접근 제어");
+    expect(source).toContain("DATA SOURCES");
+    expect(source).toContain("CONTROL PLANE");
     expect(source.indexOf('id: "pinpoint"')).toBeLessThan(source.indexOf('id: "projects"'));
     expect(source.indexOf('id: "projects"')).toBeLessThan(source.indexOf('id: "guard"'));
   });
