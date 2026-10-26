@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.23 / Console 0.42.23] - 2026-10-26
+
+- Home 작업 흐름은 처음 열 때 오케스트레이터 대신 첫 단계인 SPEC 작성을 선택합니다.
+
 ## [Plugin 0.51.22 / Console 0.42.22] - 2026-10-26
 
 - Workspaces의 화면 안내 버튼과 안내 창을 제거했습니다.

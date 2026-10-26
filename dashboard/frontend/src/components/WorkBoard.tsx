@@ -53,7 +53,7 @@ export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; w
   const events = useActivityStream();
   const { data: workspaces } = useWorkspaces();
   const [now, setNow] = useState(() => Date.now());
-  const [selected, setSelected] = useState<StationId>("control");
+  const [selected, setSelected] = useState<StationId>("spec");
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
 
   const plannedSpecs = specs.filter((spec) => !spec.has_run).length;
