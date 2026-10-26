@@ -9,7 +9,6 @@ import {
   Gauge,
   GitBranch,
   History,
-  Info,
   LayoutGrid,
   Package,
   Plus,
@@ -192,7 +191,6 @@ export function Sessions() {
   const [searchQuery, setSearchQuery] = useState("");
   const [inspectorPage, setInspectorPage] = useState(0);
   const [expandedRepository, setExpandedRepository] = useState<string | null>(null);
-  const [showStatusGuide, setShowStatusGuide] = useState(false);
   const [addCopied, setAddCopied] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<HistoryLog | null>(null);
   const [checkpointModal, setCheckpointModal] = useState<string | null>(null);
@@ -219,18 +217,6 @@ export function Sessions() {
     setExpandedRepository(null);
     setSelectedTaskKey(null);
   }, [selectedWorkspace, inspectorPage]);
-
-  useEffect(() => {
-    const closeGuideOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && showStatusGuide) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        setShowStatusGuide(false);
-      }
-    };
-    window.addEventListener("keydown", closeGuideOnEscape);
-    return () => window.removeEventListener("keydown", closeGuideOnEscape);
-  }, [showStatusGuide]);
 
   const filteredWorkspaces = useMemo(() => {
     let list = workspaces;
@@ -607,7 +593,6 @@ export function Sessions() {
         <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-[var(--color-text-muted)]">도메인별 개발 흐름과 운영 상태를 한곳에서 확인합니다.</p>
           <div className="flex min-h-9 flex-wrap items-center justify-end gap-2">
-            <button onClick={() => setShowStatusGuide(true)} className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-muted)] transition-colors hover:border-cyan-500/40 hover:text-cyan-300"><Info size={14} /> 화면 안내</button>
             <div className="relative w-56">
               <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
               <input type="text" placeholder="작업 이력 검색" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 pl-8 pr-7 text-[13px] text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-500/60" />
@@ -936,52 +921,6 @@ export function Sessions() {
         <AgentCanvasOverlay workspace={agentCanvasModal} onClose={() => setAgentCanvasModal(null)} />
       )}
 
-      {/* 화면 안내 — 목록의 상태와 수치를 실제 사용 흐름에 맞춰 설명한다. */}
-      {showStatusGuide && (
-        <div
-          className="fixed inset-0 z-[90] flex items-center justify-center px-4"
-          onMouseDown={() => setShowStatusGuide(false)}
-        >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div
-            className="relative w-full max-w-xl rounded-2xl border border-[var(--color-border)] ck-glass p-6 shadow-2xl"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <h3 className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.02em] text-[var(--color-text-bright)]">
-                  <Info size={17} className="text-cyan-300" /> 도메인 목록 보는 법
-                </h3>
-                <p className="mt-1.5 text-[12.5px] leading-5 text-[var(--color-text-muted)]">각 행에서 작업 상태와 기록 규모를 확인하고, 행을 누르면 해당 도메인의 작업장과 최근 결과를 볼 수 있습니다.</p>
-              </div>
-              <button
-                onClick={() => setShowStatusGuide(false)}
-                className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <section className="rounded-xl border border-[var(--color-border)] bg-black/15 p-4">
-                <h4 className="text-[11px] font-semibold tracking-[0.12em] text-cyan-300">작업 상태</h4>
-                <ul className="mt-3 space-y-3 text-[12.5px] text-[var(--color-text-muted)]">
-                  {[{ dot: "bg-amber-400", label: "진행 중", desc: "AI가 작업을 수행 중" }, { dot: "bg-emerald-400", label: "완료", desc: "등록된 작업을 모두 마침" }, { dot: "bg-slate-500", label: "대기", desc: "진행 세션 없이 다음 작업을 기다림" }].map((row) => (
-                    <li key={row.label} className="flex items-start gap-2.5"><span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", row.dot)} /><span><strong className="font-semibold text-slate-200">{row.label}</strong><span className="mt-0.5 block">{row.desc}</span></span></li>
-                  ))}
-                </ul>
-              </section>
-              <section className="rounded-xl border border-[var(--color-border)] bg-black/15 p-4">
-                <h4 className="text-[11px] font-semibold tracking-[0.12em] text-violet-300">행에 표시되는 수치</h4>
-                <dl className="mt-3 space-y-3 text-[12.5px]">
-                  <div><dt className="font-semibold text-slate-200">작업 2/2</dt><dd className="mt-0.5 text-[var(--color-text-muted)]">완료한 작업 / 등록된 작업</dd></div>
-                  <div><dt className="font-semibold text-slate-200">이력 · 규칙</dt><dd className="mt-0.5 text-[var(--color-text-muted)]">저장된 기록과 작업 전 확인할 기준</dd></div>
-                  <div><dt className="font-semibold text-slate-200">완료율</dt><dd className="mt-0.5 text-[var(--color-text-muted)]">등록된 작업 전체의 진행 비율</dd></div>
-                </dl>
-              </section>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

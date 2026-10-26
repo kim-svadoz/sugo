@@ -15,10 +15,10 @@ describe("도메인 목록 표현", () => {
     expect(source).toContain("도메인 추가");
   });
 
-  it("화면 안내에서 목록 수치와 클릭 결과를 설명한다", () => {
-    expect(source).toContain("화면 안내");
-    expect(source).toContain("도메인 목록 보는 법");
+  it("목록의 수치가 자체적으로 의미를 드러낸다", () => {
     expect(source).toContain("완료한 작업 / 등록된 작업");
-    expect(source).toContain("행을 누르면 해당 도메인의 작업장과 최근 결과를 볼 수 있습니다.");
+    expect(source).toContain("저장된 작업 이력");
+    expect(source).toContain("작업 전에 확인할 도메인 규칙");
+    expect(source).not.toContain("화면 안내");
   });
 });
