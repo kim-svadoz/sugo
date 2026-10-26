@@ -35,7 +35,7 @@ import { Modal } from "../components/Modal.js";
 import { LoadingSpinner, EmptyState } from "../components/StatusViews.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
 import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
-import { WorkFloor } from "../components/WorkFloor.js";
+import { FloorTaskHeader, WorkFloor } from "../components/WorkFloor.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
@@ -179,7 +179,7 @@ export function Sessions() {
     <span className="ck-bridge-rail absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 rounded-full" />
     {[0, 0.6, 1.2].map((delay) => <span key={delay} className="ck-bridge-spark" style={{ animationDelay: `${delay}s` }} />)}
     <span className="ck-stage-in relative flex items-center gap-1.5 rounded-full border border-cyan-300/30 bg-[#0a1424] px-3 py-1 text-[11px] font-medium text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,.18)]">
-      <span className="shrink-0">완료 기록</span>
+      <span className="shrink-0">{floorIdle ? "마지막 완료 기록" : "완료 기록"}</span>
       <ArrowDown size={12} strokeWidth={2} className="ck-summary-flow shrink-0 text-cyan-300" />
     </span>
   </>;
@@ -841,10 +841,10 @@ export function Sessions() {
         **검색 모드에선 띄우지 않는다.** 검색은 결과 행 안에서 바로 펼치는 뷰라, 아래에
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
-      {selected && !isSearchMode && !floorIdle && (
+      {selected && !isSearchMode && (
         <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} onIdleChange={setFloorIdle} /></section>
       )}
-      {selected && !isSearchMode && !floorIdle && (
+      {selected && !isSearchMode && (
         <div key={selectedTaskKey ?? "none"} style={splitStyle} className="pointer-events-none relative z-10 -my-3 flex h-16 2xl:-my-4" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">
           <div className="ck-summary-bridge relative flex w-full items-center justify-center lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
             <span className="ck-bridge-socket absolute -top-[2px] left-1/2 h-[3px] w-14 -translate-x-1/2 rounded-full" />
@@ -854,13 +854,10 @@ export function Sessions() {
       )}
       {selected && !isSearchMode && (
         <div key={selected.name} ref={splitRef} style={splitStyle} className="command-detail ck-stage-in flex min-h-[340px] flex-1 flex-col items-start gap-3 lg:flex-row lg:gap-0">
-          {floorIdle ? <div className="flex w-full flex-col lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
-            <WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} onIdleChange={setFloorIdle} idleSummary={<div className="flex max-h-[340px] flex-col overflow-hidden"><LiveConsole workspace={selected.name} taskKey={selectedTaskKey} /></div>} />
-          </div> : <>
           <div className="ck-glass flex min-h-[260px] max-h-[360px] w-full self-start flex-col overflow-hidden rounded-xl border border-cyan-300/25 p-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)] lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
+            {floorIdle && <FloorTaskHeader workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />}
             <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
           </div>
-          </>}
           <div role="separator" aria-orientation="vertical" aria-label="최근 작업 요약과 Inspector 폭 조절" aria-valuemin={SUMMARY_WIDTH_MIN} aria-valuemax={SUMMARY_WIDTH_MAX} aria-valuenow={Math.round(summaryWidth)} tabIndex={0} title="드래그해 폭 조절, 더블클릭하면 기본 폭"
             onPointerDown={startSummaryResize} onDoubleClick={() => setSummaryWidth(SUMMARY_WIDTH_DEFAULT)}
             onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); setSummaryWidth((value) => clampSummaryWidth(value + (event.key === "ArrowLeft" ? -2 : 2))); } }}

@@ -88,29 +88,33 @@ export function StationProp({ id, x, y, working, waiting = false }: { id: FloorS
   }
 }
 
-/** 도메인의 모든 작업이 4일 넘게 기록이 없을 때 작업자 카드에 쓰는 한 줄 문구. */
-function idleMessageOf(lastAt: number | undefined, now: number): string {
-  if (lastAt === undefined) return "아직 작업 기록이 없습니다.";
-  return `${Math.floor((now - lastAt) / (24 * 60 * 60_000))}일 동안 새 작업이 없어 쉬는 중입니다.`;
-}
+const LOUNGE_X = benchX(FLOOR_STATIONS.length - 1) + 150;
 
-function RestingWorker({ lastAt, now }: { lastAt: number | undefined; now: number }) {
-  return <section className="ck-glass flex flex-col items-center rounded-xl border border-white/[0.08] px-4 py-3 text-center" aria-label="작업자 상태">
-    <svg viewBox="0 -18 220 116" className="h-[104px] w-[198px]" role="img" aria-label="쉬는 중인 작업자">
-      <rect x="6" y="88" width="208" height="4" rx="2" fill="#0f172a" />
-      {/* 소파 */}
+/** 도메인의 모든 작업이 4일 넘게 기록이 없을 때: 작업대는 불을 끄고, 작업자는 커밋 다음 칸의 휴게 공간에서 쉰다. */
+function IdleFloor() {
+  return <svg viewBox="0 8 1200 162" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label="작업대는 꺼져 있고 작업자는 휴게 공간에서 쉬는 중">
+    <rect x="0" y={FLOOR_Y} width="1200" height="10" rx="3" fill="#0f172a" />
+    <g opacity="0.28" style={{ filter: "grayscale(1)" }}>
+      {FLOOR_STATIONS.slice(0, -1).map((item, step) => <path key={item.id} d={`M${benchX(step) + 74} ${FLOOR_Y + 5} H${benchX(step + 1) - 26}`} stroke="#334155" strokeWidth="2" strokeDasharray="5 5" />)}
+      {FLOOR_STATIONS.map((item, step) => <StationProp key={item.id} id={item.id} x={benchX(step)} y={FLOOR_Y} working={false} />)}
+    </g>
+    {FLOOR_STATIONS.map((item, step) => <text key={item.id} x={benchX(step) + 26} y={FLOOR_Y + 30} textAnchor="middle" fontSize="13" fill="#475569">{item.label}</text>)}
+    <path d={`M${LOUNGE_X - 40} 30 V${FLOOR_Y + 10}`} stroke="#334155" strokeWidth="2" strokeDasharray="4 6" />
+    <ellipse cx={LOUNGE_X + 70} cy={FLOOR_Y + 4} rx="92" ry="7" fill={C.cyan} opacity="0.12" />
+    <g transform={`translate(${LOUNGE_X} ${FLOOR_Y - 88})`}>
       <rect x="22" y="52" width="92" height="22" rx="7" fill="#1e3a5f" />
       <rect x="16" y="64" width="104" height="16" rx="6" fill="#244a73" />
       <rect x="24" y="80" width="5" height="9" fill="#0f172a" /><rect x="107" y="80" width="5" height="9" fill="#0f172a" />
       <g transform="translate(68 93)"><BlockPerson role="main" seated className="wk--resting" leftHand={<Mug />} /></g>
       {[0, 1, 2].map((index) => <text key={index} className="wk-zzz" x={92 + index * 9} y={10 - index * 9} fontSize={9 + index * 2} fontWeight="700" fill="#67e8f9" style={{ animationDelay: `${index * 0.6}s` }}>z</text>)}
-      {/* 끝낸 작업: 출고 상자와 완료 깃발 */}
-      <rect x="140" y="62" width="34" height="26" rx="2" fill="#a16207" /><rect x="140" y="62" width="34" height="7" fill="#ca8a04" /><rect x="154" y="62" width="6" height="26" fill="#fde68a" opacity="0.55" />
-      <circle cx="173" cy="60" r="8" fill="#10b981" /><path d="M169 60 l3 3 l5 -6" stroke="#04281e" strokeWidth="2" fill="none" />
-      <rect x="190" y="30" width="3" height="58" fill="#64748b" /><path d="M193 30 h18 l-5 6 l5 6 h-18 z" fill="#10b981" />
-    </svg>
-    <p className="mt-1.5 whitespace-nowrap text-[12.5px] leading-5 text-slate-400">{idleMessageOf(lastAt, now)}</p>
-  </section>;
+    </g>
+    <text x={LOUNGE_X + 68} y={FLOOR_Y + 30} textAnchor="middle" fontSize="13" fill="#67e8f9" opacity="0.8">휴게 공간</text>
+  </svg>;
+}
+
+function restLabelOf(lastAt: number | undefined, now: number): string {
+  if (lastAt === undefined) return "아직 작업 기록 없음";
+  return `${Math.floor((now - lastAt) / (24 * 60 * 60_000))}일째 쉬는 중`;
 }
 
 function headlineOf(lane: FloorLane): string {
@@ -123,7 +127,19 @@ function headlineOf(lane: FloorLane): string {
   return state.station === "commit" ? "마지막 작업을 끝내고 쉬는 중" : "새 작업을 기다리는 중";
 }
 
-function Lane({ lane, now, title, idle, idleSummary }: { lane: FloorLane; now: number; title: ReturnType<typeof resolveTaskTitle>; idle: boolean; idleSummary?: ReactNode }) {
+function TaskHeader({ title, at, now, children }: { title: ReturnType<typeof resolveTaskTitle>; at?: number; now: number; children?: ReactNode }) {
+  return <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+    <Pin size={15} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
+    <strong className="shrink-0 text-[13px] text-white" title={title.title}>{title.title}</strong>
+    {title.kind && <span className="shrink-0 rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[10px] text-violet-200">{title.kind}</span>}
+    {title.project && <span className="inline-flex shrink-0 items-center gap-1 rounded border border-white/[0.08] bg-white/[0.025] px-1.5 py-0.5 font-mono text-[10px] text-slate-400"><span aria-hidden="true">📦</span>{title.project}</span>}
+    {!title.linked && <span className="shrink-0 text-[10px] text-amber-300">이력 연결 안 됨</span>}
+    {children}
+    {at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(at, now)}</span>}
+  </div>;
+}
+
+function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: ReturnType<typeof resolveTaskTitle> }) {
   const { state } = lane;
   const index = FLOOR_STATIONS.findIndex((station) => station.id === state.station);
   const [walking, setWalking] = useState(false);
@@ -138,16 +154,9 @@ function Lane({ lane, now, title, idle, idleSummary }: { lane: FloorLane; now: n
   const poseClass = `wk--${state.activity} wk--at-${state.station} ${walking ? "wk--walking" : ""}`;
 
   return <div className="work-floor__lane">
-    <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-      <Pin size={15} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
-      <strong className="shrink-0 text-[13px] text-white" title={title.title}>{title.title}</strong>
-      {title.kind && <span className="shrink-0 rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[10px] text-violet-200">{title.kind}</span>}
-      {title.project && <span className="inline-flex shrink-0 items-center gap-1 rounded border border-white/[0.08] bg-white/[0.025] px-1.5 py-0.5 font-mono text-[10px] text-slate-400"><span aria-hidden="true">📦</span>{title.project}</span>}
-      {!title.linked && <span className="shrink-0 text-[10px] text-amber-300">이력 연결 안 됨</span>}
-      {(!idle || state.activity === "paused") && <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>}
-      {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
-    </div>
-    {idle ? null : <>
+    <TaskHeader title={title} at={state.at} now={now}>
+      <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>
+    </TaskHeader>
     <div className="mx-auto w-full max-w-[88%]">
     <svg viewBox="0 0 960 150" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label={`${lane.name} · ${headlineOf(lane)}`}>
       <rect x="0" y={FLOOR_Y} width="960" height="10" rx="3" fill="#0f172a" />
@@ -176,13 +185,12 @@ function Lane({ lane, now, title, idle, idleSummary }: { lane: FloorLane; now: n
         </div>;
       })}
     </div>
-    </div></>}
-    {idle && idleSummary && <div className="mt-3 border-t border-white/[0.06] pt-3">{idleSummary}</div>}
+    </div>
   </div>;
 }
 
 /** Workspaces의 코드 작업 흐름. 같은 도메인에서 동시에 진행 중인 작업은 작업별 레인으로 나눈다. */
-export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, onIdleChange, idleSummary }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void; onIdleChange?: (idle: boolean) => void; idleSummary?: ReactNode }) {
+export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, onIdleChange }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void; onIdleChange?: (idle: boolean) => void }) {
   const all = useActivityStream(workspace);
   const events = all.filter((event) => event.workspace_name === workspace);
   const [now, setNow] = useState(() => Date.now());
@@ -203,16 +211,34 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, on
   if (lanes.length === 0) return <div className="work-floor py-3 text-center text-[12px] text-slate-500">이 도메인에는 아직 작업 기록이 없습니다.</div>;
   const move = (delta: number) => onSelectedTaskChange?.(lanes[(activeIndex + delta + lanes.length) % lanes.length].key);
   const nav = lanes.length > 1 && <div className="flex items-center justify-end gap-2"><span className="mr-1 text-[10px] text-slate-500">현재 작업 <strong className="font-mono text-cyan-200">{activeIndex + 1} / {lanes.length}</strong></span><button type="button" aria-label="이전 작업" onClick={() => move(-1)} className="rounded-md border border-white/10 p-1 text-slate-400 hover:text-cyan-200"><ChevronLeft size={14} /></button><button type="button" aria-label="다음 작업" onClick={() => move(1)} className="rounded-md border border-white/10 p-1 text-slate-400 hover:text-cyan-200"><ChevronRight size={14} /></button></div>;
-  // 쉬는 중: 작업자 카드와 마지막 작업 요약 카드를 따로 둔다. 작업자는 도메인 상태이고 요약은 고른 작업의 기록이다.
-  if (idle) return <div className="work-floor flex flex-col gap-3">
-    <RestingWorker lastAt={lastAt} now={now} />
-    <section className="ck-glass space-y-2 rounded-xl border border-cyan-300/25 px-4 py-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)]" aria-label={`${workspace} 마지막 작업`}>
-      {nav}
-      {title && <Lane lane={lane} now={now} title={title} idle idleSummary={idleSummary} />}
-    </section>
+  // 쉬는 중: 작업장은 도메인 상태만 보여 준다. 고른 작업의 제목은 아래 최근 작업 요약 카드(FloorTaskHeader)가 맡는다.
+  if (idle) return <div className="work-floor relative pb-1">
+    <div className="flex items-center gap-2.5">
+      <strong className="text-[13px] text-white">{workspace} 작업장</strong>
+      <span className="ml-auto shrink-0 text-[11.5px] text-slate-400">{restLabelOf(lastAt, now)}</span>
+    </div>
+    <div className="mx-auto w-full max-w-[88%]"><IdleFloor /></div>
   </div>;
   return <div className="work-floor relative space-y-2 pb-1">
     {nav}
-    {title && <Lane lane={lane} now={now} title={title} idle={false} />}
+    {title && <Lane lane={lane} now={now} title={title} />}
+  </div>;
+}
+
+/** 작업장이 쉬는 중일 때 최근 작업 요약 카드 위에 붙는 작업 머리. 여러 작업이면 넘겨 볼 수 있다. */
+export function FloorTaskHeader({ workspace, selectedTaskKey, onSelectedTaskChange }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void }) {
+  const all = useActivityStream(workspace);
+  const now = Date.now();
+  const lanes = selectFloorLanes(all.filter((event) => event.workspace_name === workspace), now);
+  const { data: specs } = useSchedule();
+  const index = Math.max(0, selectedTaskKey ? lanes.findIndex((lane) => lane.key === selectedTaskKey) : 0);
+  const lane = lanes[index];
+  if (!lane) return null;
+  const title = resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, specs ?? []);
+  const move = (delta: number) => onSelectedTaskChange?.(lanes[(index + delta + lanes.length) % lanes.length].key);
+  return <div className="mb-2 border-b border-white/[0.06] pb-2.5">
+    <TaskHeader title={title} at={lane.state.at} now={now}>
+      {lanes.length > 1 && <span className="flex items-center gap-1"><button type="button" aria-label="이전 작업" onClick={() => move(-1)} className="rounded-md border border-white/10 p-0.5 text-slate-400 hover:text-cyan-200"><ChevronLeft size={13} /></button><span className="font-mono text-[10px] text-slate-500">{index + 1}/{lanes.length}</span><button type="button" aria-label="다음 작업" onClick={() => move(1)} className="rounded-md border border-white/10 p-0.5 text-slate-400 hover:text-cyan-200"><ChevronRight size={13} /></button></span>}
+    </TaskHeader>
   </div>;
 }
