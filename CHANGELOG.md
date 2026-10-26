@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.30 / Console 0.42.30] - 2026-10-26
+
+- Engineering Feed의 추적 채널 목록에서 수집용 RSS·Atom 주소로 이동하는 링크를 제거했습니다.
+
 ## [Plugin 0.51.29 / Console 0.42.29] - 2026-10-26
 
 - Engineering Feed의 `즐겨찾기`를 `보관`으로 바꾸고, 보관 해제한 글을 다시 되돌릴 수 있게 했습니다.

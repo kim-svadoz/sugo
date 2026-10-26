@@ -32,4 +32,10 @@ describe("Tech Brief 최근 7일", () => {
     expect(home).toContain('aria-label={isSaved ? "보관 해제" : "보관하기"}');
     expect(home).not.toContain("즐겨찾기");
   });
+
+  it("추적 채널은 수집 주소를 외부 페이지로 열지 않는다", () => {
+    expect(home).toContain('role="list" aria-label="추적 채널 목록"');
+    expect(home).toContain('role="listitem"');
+    expect(home).not.toContain('href={source.url}');
+  });
 });
