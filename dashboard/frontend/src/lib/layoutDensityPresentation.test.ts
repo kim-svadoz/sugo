@@ -12,7 +12,9 @@ describe("주요 운영 화면의 정보 밀도", () => {
     expect(sessions).toContain("command-detail ck-stage-in flex min-h-[340px]");
     // 최근 작업 요약과 Inspector는 같은 폭 값을 나눠 쓰고, 사이 핸들로 폭을 조절한다.
     expect(sessions).toContain('role="separator" aria-orientation="vertical"');
-    expect(sessions.match(/lg:w-\[var\(--summary-w\)\]/g)?.length).toBe(2);
+    expect(sessions.match(/lg:w-\[var\(--summary-w\)\]/g)?.length).toBe(3);
+    // 쉬는 작업장은 최근 작업 요약 위로 옮겨 왼쪽 열 하나로 잇는다.
+    expect(sessions).toContain("onIdleChange={setFloorIdle}");
   });
 
   it("하네스 안내와 실제 규칙 선택을 구분하고 카테고리를 내용 너비로 표시한다", () => {

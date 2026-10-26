@@ -123,7 +123,7 @@ function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: Retur
   const poseClass = `wk--${state.activity} wk--at-${state.station} ${walking ? "wk--walking" : ""}`;
 
   return <div className="work-floor__lane">
-    <div className="flex min-w-0 items-center gap-2.5">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
       <Pin size={15} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
       <strong className="shrink-0 text-[13px] text-white" title={title.title}>{title.title}</strong>
       {title.kind && <span className="shrink-0 rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[10px] text-violet-200">{title.kind}</span>}
@@ -132,7 +132,17 @@ function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: Retur
       {!idle && <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>}
       {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
     </div>
-    {idle ? <p className="mt-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5 text-[12.5px] text-slate-400">{idleMessageOf(lane, now)}</p> : <>
+    {idle ? <div className="mt-2 flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] py-1.5 pl-1 pr-3.5">
+      <svg viewBox="0 -12 132 108" className="h-[78px] w-[96px] shrink-0" aria-hidden="true">
+        <rect x="4" y="88" width="124" height="4" rx="2" fill="#0f172a" />
+        <rect x="26" y="44" width="10" height="34" rx="3" fill="#334155" />
+        <rect x="26" y="70" width="70" height="9" rx="3" fill="#334155" />
+        <rect x="30" y="79" width="4" height="10" fill="#1e293b" /><rect x="88" y="79" width="4" height="10" fill="#1e293b" />
+        <g transform="translate(62 78)"><BlockPerson role="main" seated className="wk--resting" leftHand={<Mug />} /></g>
+        {[0, 1, 2].map((index) => <text key={index} className="wk-zzz" x={86 + index * 9} y={4 - index * 9} fontSize={9 + index * 2} fontWeight="700" fill="#67e8f9" style={{ animationDelay: `${index * 0.6}s` }}>z</text>)}
+      </svg>
+      <p className="min-w-0 text-[12.5px] leading-5 text-slate-400">{idleMessageOf(lane, now)}</p>
+    </div> : <>
     <div className="mx-auto w-full max-w-[88%]">
     <svg viewBox="0 0 960 150" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label={`${lane.name} · ${headlineOf(lane)}`}>
       <rect x="0" y={FLOOR_Y} width="960" height="10" rx="3" fill="#0f172a" />
@@ -166,7 +176,7 @@ function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: Retur
 }
 
 /** Workspaces의 코드 작업 흐름. 같은 도메인에서 동시에 진행 중인 작업은 작업별 레인으로 나눈다. */
-export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void }) {
+export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, onIdleChange }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void; onIdleChange?: (idle: boolean) => void }) {
   const all = useActivityStream(workspace);
   const events = all.filter((event) => event.workspace_name === workspace);
   const [now, setNow] = useState(() => Date.now());
@@ -177,6 +187,10 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange }: 
   const activeIndex = requestedIndex >= 0 ? requestedIndex : 0;
   const lane = lanes[activeIndex];
   useEffect(() => { if (lane && lane.key !== selectedTaskKey) onSelectedTaskChange?.(lane.key); }, [lane, onSelectedTaskChange, selectedTaskKey]);
+  // 선택된 레인이 쉬는 중이면 Workspaces가 작업장을 최근 작업 요약 위로 옮겨 한 줄기로 잇는다.
+  // 레인이 없을 때(불러오는 중 포함)는 알리지 않는다. 알리면 배치가 바뀌며 다시 마운트되어 빈 상태를 반복한다.
+  const idle = lane ? isFloorIdle(lane.state, now) : null;
+  useEffect(() => { if (idle !== null) onIdleChange?.(idle); }, [idle, onIdleChange]);
   const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, specs ?? []) : null;
   if (lanes.length === 0) return <div className="work-floor py-3 text-center text-[12px] text-slate-500">이 도메인에는 아직 작업 기록이 없습니다.</div>;
   const move = (delta: number) => onSelectedTaskChange?.(lanes[(activeIndex + delta + lanes.length) % lanes.length].key);

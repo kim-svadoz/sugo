@@ -172,6 +172,17 @@ export function Sessions() {
     document.body.style.userSelect = "none";
   };
   const splitStyle = { "--summary-w": `${summaryWidth}%` } as React.CSSProperties;
+  // 작업장이 쉬는 중이면(4일 넘게 기록 없음) 작업장을 최근 작업 요약 위로 옮겨 왼쪽 열 하나로 잇는다.
+  const [floorIdle, setFloorIdle] = useState(false);
+  useEffect(() => { setFloorIdle(false); }, [selectedWorkspace]);
+  const summaryBridge = <>
+    <span className="ck-bridge-rail absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 rounded-full" />
+    {[0, 0.6, 1.2].map((delay) => <span key={delay} className="ck-bridge-spark" style={{ animationDelay: `${delay}s` }} />)}
+    <span className="ck-stage-in relative flex items-center gap-1.5 rounded-full border border-cyan-300/30 bg-[#0a1424] px-3 py-1 text-[11px] font-medium text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,.18)]">
+      <span className="shrink-0">완료 기록</span>
+      <ArrowDown size={12} strokeWidth={2} className="ck-summary-flow shrink-0 text-cyan-300" />
+    </span>
+  </>;
   const [activeTab, setActiveTab] = useState<TabType>("repositories");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<"all" | "recent">("all");
@@ -830,26 +841,30 @@ export function Sessions() {
         **검색 모드에선 띄우지 않는다.** 검색은 결과 행 안에서 바로 펼치는 뷰라, 아래에
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
-      {selected && !isSearchMode && (
-        <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} /></section>
+      {selected && !isSearchMode && !floorIdle && (
+        <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} onIdleChange={setFloorIdle} /></section>
       )}
-      {selected && !isSearchMode && (
+      {selected && !isSearchMode && !floorIdle && (
         <div key={selectedTaskKey ?? "none"} style={splitStyle} className="pointer-events-none relative z-10 -my-3 flex h-16 2xl:-my-4" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">
           <div className="ck-summary-bridge relative flex w-full items-center justify-center lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
-            <span className="ck-bridge-rail absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 rounded-full" />
-            {[0, 0.6, 1.2].map((delay) => <span key={delay} className="ck-bridge-spark" style={{ animationDelay: `${delay}s` }} />)}
-            <span className="ck-stage-in relative flex max-w-[92%] items-center gap-1.5 rounded-full border border-cyan-300/30 bg-[#0a1424] px-3 py-1 text-[11px] font-medium text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,.18)]">
-              <span className="shrink-0">완료 기록</span>
-              <ArrowDown size={12} strokeWidth={2} className="ck-summary-flow shrink-0 text-cyan-300" />
-            </span>
+            <span className="ck-bridge-socket absolute -top-[2px] left-1/2 h-[3px] w-14 -translate-x-1/2 rounded-full" />
+            {summaryBridge}
           </div>
         </div>
       )}
       {selected && !isSearchMode && (
         <div key={selected.name} ref={splitRef} style={splitStyle} className="command-detail ck-stage-in flex min-h-[340px] flex-1 flex-col items-start gap-3 lg:flex-row lg:gap-0">
+          {floorIdle ? <div className="flex w-full flex-col lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
+            <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} onIdleChange={setFloorIdle} /></section>
+            <div key={selectedTaskKey ?? "none"} className="pointer-events-none relative z-10 -my-2 flex h-12 items-center justify-center" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">{summaryBridge}</div>
+            <div className="ck-glass flex min-h-[260px] max-h-[360px] w-full flex-col overflow-hidden rounded-xl border border-cyan-300/25 p-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)]">
+            <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
+          </div>
+          </div> : <>
           <div className="ck-glass flex min-h-[260px] max-h-[360px] w-full self-start flex-col overflow-hidden rounded-xl border border-cyan-300/25 p-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)] lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
             <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
           </div>
+          </>}
           <div role="separator" aria-orientation="vertical" aria-label="최근 작업 요약과 Inspector 폭 조절" aria-valuemin={SUMMARY_WIDTH_MIN} aria-valuemax={SUMMARY_WIDTH_MAX} aria-valuenow={Math.round(summaryWidth)} tabIndex={0} title="드래그해 폭 조절, 더블클릭하면 기본 폭"
             onPointerDown={startSummaryResize} onDoubleClick={() => setSummaryWidth(SUMMARY_WIDTH_DEFAULT)}
             onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); setSummaryWidth((value) => clampSummaryWidth(value + (event.key === "ArrowLeft" ? -2 : 2))); } }}
