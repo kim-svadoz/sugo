@@ -441,3 +441,11 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 @media (prefers-reduced-motion: reduce) {
   .work-floor *, .work-world *, .wk-mover { animation: none !important; transition: none !important; }
 }
+
+/* Integrations는 지도에서 고른 한 작업을 수행하는 전용 작업면이다. */
+.integration-workbench button { min-height: 2.5rem; }
+.integration-workbench input[type="text"],
+.integration-workbench input[type="password"],
+.integration-workbench input[type="number"],
+.integration-workbench select { min-height: 2.625rem; font-size: 0.875rem; }
+.integration-workbench label { line-height: 1.5; }

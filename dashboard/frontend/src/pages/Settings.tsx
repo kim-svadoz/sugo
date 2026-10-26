@@ -12,17 +12,18 @@ import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsCo
 import { connectPinpointContext, disconnectPinpointContext, getPinpointContext, refreshPinpointContext, type PinpointStatus } from '../api/pinpointContextApi.js';
 import { getProjectIntegrations, saveProjectIntegration, type IntegrationCandidate, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
 import { summarizeSageMaker } from "../lib/awsInventoryPresentation.js";
-import { awsAccountMetaLabel, awsAccountOptionLabel, initialIntegrationSelection, integrationStatusLabel, isExactIntegrationCandidate, moveIntegrationKeys, partitionIntegrationCandidates } from "../lib/projectIntegrationPresentation.js";
+import { awsAccountMetaLabel, awsAccountOptionLabel, initialIntegrationSelection, integrationStatusLabel, isExactIntegrationCandidate, partitionIntegrationCandidates } from "../lib/projectIntegrationPresentation.js";
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
 import { snapshotAge } from "../lib/snapshotAge.js";
 import { PageHeading } from "../components/PageHeading.js";
-import { Activity, Boxes, ChevronDown, Cloud, GitBranch, ShieldCheck } from "lucide-react";
+import { Activity, Boxes, CheckCircle2, ChevronDown, Cloud, GitBranch, Plus, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 const contextAutoRefreshDescription = "Dashboard 실행 중에는 매일 08:00 KST 자동 동기화 · 꺼져 있었다면 다음 실행 시 갱신 · 수동 동기화 가능";
 
 type IntegrationSectionId = "aws" | "guard" | "pinpoint" | "projects" | "git";
+type IntegrationViewId = IntegrationSectionId | "catalog";
 const INTEGRATION_SECTIONS: ReadonlyArray<{ id: IntegrationSectionId; label: string; description: string; group: string; icon: LucideIcon }> = [
   { id: "aws", label: "AWS", description: "배포와 클라우드 리소스", group: "데이터 연결", icon: Cloud },
   { id: "pinpoint", label: "APM", description: "실행 상태와 성능 지표", group: "데이터 연결", icon: Activity },
@@ -71,7 +72,7 @@ const awsServiceLabels: Record<string, string> = {
   opensearch: "OpenSearch", cloudwatch: "CloudWatch", lambda: "Lambda", kinesis: "Kinesis", sagemaker: "SageMaker",
   ecs: "ECS",
 };
-function AwsContextCard({ expanded, onToggle, focused = false }: { expanded: boolean; onToggle: () => void; focused?: boolean }) {
+function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChange }: { expanded: boolean; onToggle: () => void; focused?: boolean; onConnectionChange?: (connected: boolean) => void }) {
   const now = useCurrentMinute();
   const [status, setStatus] = useState<AwsContextStatus | null>(null);
   const [accountName, setAccountName] = useState("");
@@ -82,7 +83,7 @@ function AwsContextCard({ expanded, onToggle, focused = false }: { expanded: boo
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
-    try { setStatus(await getAwsContext()); setError(null); } catch (err) { setError(String(err)); }
+    try { const next = await getAwsContext(); setStatus(next); onConnectionChange?.(next.connected); setError(null); } catch (err) { setError(String(err)); }
   }
   useEffect(() => { void load(); }, []);
 
@@ -119,11 +120,11 @@ function AwsContextCard({ expanded, onToggle, focused = false }: { expanded: boo
   }
 
   return <div id="integration-aws" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] px-5 py-4`}>
+    <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] ${focused ? "bg-cyan-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-[var(--color-text)]">AWS Context</h2>
-          <p className="text-xs text-[var(--color-text-muted)]">로컬 AWS 프로필로 공용 리소스 인벤토리를 연결합니다</p>
+          <h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>AWS Context</h2>
+          <p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>로컬 AWS 프로필로 공용 리소스 인벤토리를 연결합니다</p>
         </div>
         <div className="flex items-center gap-2">
         {status?.connected && <>
@@ -136,7 +137,7 @@ function AwsContextCard({ expanded, onToggle, focused = false }: { expanded: boo
       </div>
       {expanded && status?.connected && <ContextRefreshStatus observedAt={status.observedAt} now={now} dailyLimit={status.refreshBudget?.dailyLimit ?? 4} remainingToday={status.refreshBudget?.remainingToday} nextAllowedAt={status.refreshBudget?.nextAllowedAt} />}
     </div>
-    {expanded && <div className="space-y-4 p-5">
+    {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
       {error && <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{error}</div>}
       {status === null ? <div className="text-sm text-[var(--color-text-muted)]">불러오는 중…</div> : !status.connected || adding ? <>
         {status.connected && <div className="flex items-center justify-between"><div className="text-sm font-medium text-[var(--color-text)]">AWS 계정 추가</div><button type="button" onClick={() => setAdding(false)} className="text-xs text-[var(--color-text-muted)]">취소</button></div>}
@@ -212,8 +213,8 @@ function AwsGuardPolicyCard({ expanded, onToggle, focused = false }: { expanded:
   }
   const numberField = (label: string, key: 'sessionLimit' | 'dailyLimit' | 'minuteLimit') => <label className="text-xs text-[var(--color-text-muted)]">{label}<input type="number" min="1" value={policy?.[key] ?? ''} onChange={(event) => setPolicy((current) => current ? { ...current, [key]: Number(event.target.value) } : current)} className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-text)]" /></label>;
   return <div id="integration-guard" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] px-5 py-4`}><div><h2 className="text-base font-semibold text-[var(--color-text)]">AWS 직접 조회 안전장치</h2><p className="text-xs text-[var(--color-text-muted)]">{policy ? (policy.directReadEnabled ? "직접 읽기 사용 중 · 호출량 제한 적용" : "저장된 AWS Context만 사용 중") : "에이전트의 허용 목록 기반 읽기와 호출량을 제한합니다"}</p></div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
-    {expanded && <div className="space-y-4 p-5">
+    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "bg-violet-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>AWS 직접 조회 안전장치</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>{policy ? (policy.directReadEnabled ? "직접 읽기 사용 중 · 호출량 제한 적용" : "저장된 AWS Context만 사용 중") : "에이전트의 허용 목록 기반 읽기와 호출량을 제한합니다"}</p></div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
+    {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
       {!policy ? <p className="text-sm text-[var(--color-text-muted)]">불러오는 중…</p> : <>
         <label className="flex items-start justify-between gap-4 rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-3"><span><b className="block text-sm text-[var(--color-text)]">에이전트 직접 AWS 읽기</b><span className="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">켜도 쓰기·비밀·고비용 조회는 항상 차단됩니다. 끄면 저장된 AWS Context만 사용합니다.</span></span><input type="checkbox" checked={policy.directReadEnabled} onChange={(event) => setPolicy({ ...policy, directReadEnabled: event.target.checked })} className="mt-1" /></label>
         <div className="grid gap-3 sm:grid-cols-3">{numberField('세션당 호출', 'sessionLimit')}{numberField('하루당 호출 (KST)', 'dailyLimit')}{numberField('1분당 호출', 'minuteLimit')}</div>
@@ -224,24 +225,24 @@ function AwsGuardPolicyCard({ expanded, onToggle, focused = false }: { expanded:
   </div>;
 }
 
-function PinpointContextCard({ expanded, onToggle, focused = false }: { expanded: boolean; onToggle: () => void; focused?: boolean }) {
+function PinpointContextCard({ expanded, onToggle, focused = false, onConnectionChange }: { expanded: boolean; onToggle: () => void; focused?: boolean; onConnectionChange?: (connected: boolean) => void }) {
   const now = useCurrentMinute();
   const [status, setStatus] = useState<PinpointStatus | null>(null);
   const [baseUrl, setBaseUrl] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  async function load() { try { const next = await getPinpointContext(); setStatus(next); if (next.baseUrl) setBaseUrl(next.baseUrl); setError(null); } catch (err) { setError(String(err)); } }
+  async function load() { try { const next = await getPinpointContext(); setStatus(next); onConnectionChange?.(next.connected); if (next.baseUrl) setBaseUrl(next.baseUrl); setError(null); } catch (err) { setError(String(err)); } }
   useEffect(() => { void load(); }, []);
   async function run(action: () => Promise<unknown>) { setBusy(true); try { await action(); await load(); } catch (err) { setError(String(err)); } finally { setBusy(false); } }
   return <div id="integration-pinpoint" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] px-5 py-4`}>
+    <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] ${focused ? "bg-cyan-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}>
       <div className="flex items-center justify-between gap-3">
-        <div><h2 className="text-base font-semibold text-[var(--color-text)]">Pinpoint APM</h2><p className="text-xs text-[var(--color-text-muted)]">ECS 생존과 분리해 실제 에이전트 관측 상태를 읽습니다</p></div>
+        <div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>Pinpoint APM</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>애플리케이션의 실제 실행 상태와 성능 지표를 읽습니다.</p></div>
         <div className="flex items-center gap-2">{status?.connected && <><ContextRefreshStatus observedAt={status.observedAt} now={now} compact /><button disabled={busy} onClick={() => void run(refreshPinpointContext)} className="rounded-md border border-cyan-400/40 px-2.5 py-1 text-xs text-cyan-200 disabled:opacity-40">{busy ? "동기화 중…" : "Pinpoint 동기화"}</button><span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">연결됨</span></>}{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
       </div>
       {expanded && status?.connected && <ContextRefreshStatus observedAt={status.observedAt} now={now} />}
     </div>
-    {expanded && <div className="space-y-3 p-5">
+    {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
       {error && <div className="rounded border border-rose-500/30 px-3 py-2 text-xs text-rose-300">{error}</div>}
       <div className="flex gap-2"><input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://pinpoint.example.com" className="min-w-0 flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm" />
         {!status?.connected ? <button disabled={busy || !baseUrl} onClick={() => void run(() => connectPinpointContext(baseUrl))} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200 disabled:opacity-40">연결</button> : <button disabled={busy} onClick={() => void run(disconnectPinpointContext)} className="rounded border border-rose-400/30 px-3 text-sm text-rose-300">연결 해제</button>}
@@ -255,9 +256,8 @@ function PinpointContextCard({ expanded, onToggle, focused = false }: { expanded
 function ProjectIntegrationsCard({ expanded, onToggle, focused = false }: { expanded: boolean; onToggle: () => void; focused?: boolean }) {
   const [projects, setProjects] = useState<ProjectIntegration[]>([]); const [candidates, setCandidates] = useState<IntegrationCandidate[]>([]);
   const [path, setPath] = useState(''); const [selected, setSelected] = useState<string[]>([]); const [filter, setFilter] = useState(''); const [busy, setBusy] = useState(false);
-  const [checkedAvailable, setCheckedAvailable] = useState<string[]>([]); const [checkedApplied, setCheckedApplied] = useState<string[]>([]);
   const key = (item: { accountName: string; service: string; cluster?: string | null }) => `${item.accountName}\u0000${item.cluster ?? ''}\u0000${item.service}`;
-  async function load(nextPath?: string) { const data = await getProjectIntegrations(); setProjects(data.projects); setCandidates(data.candidates); const target = nextPath || path || data.projects[0]?.project_path || ''; const targetProject = data.projects.find((item) => item.project_path === target); setPath(target); setSelected(initialIntegrationSelection(targetProject, data.candidates, key)); setCheckedAvailable([]); setCheckedApplied([]); }
+  async function load(nextPath?: string) { const data = await getProjectIntegrations(); setProjects(data.projects); setCandidates(data.candidates); const target = nextPath || path || data.projects[0]?.project_path || ''; const targetProject = data.projects.find((item) => item.project_path === target); setPath(target); setSelected(initialIntegrationSelection(targetProject, data.candidates, key)); }
   useEffect(() => { void load(); }, []);
   const project = projects.find((item) => item.project_path === path);
   const isSuggested = (item: IntegrationCandidate) => isExactIntegrationCandidate(path, item);
@@ -267,32 +267,21 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false }: { expa
   const sortCandidates = (items: IntegrationCandidate[]) => items.filter(filterCandidate).sort((left, right) => Number(isSuggested(right)) - Number(isSuggested(left)) || left.environment.localeCompare(right.environment) || left.service.localeCompare(right.service));
   const available = sortCandidates(partitioned.available);
   const applied = sortCandidates(partitioned.applied);
-  const toggleChecked = (values: string[], setValues: (next: string[]) => void, value: string) => setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
-  const move = (direction: 'add' | 'remove') => {
-    const checked = direction === 'add' ? checkedAvailable : checkedApplied;
-    setSelected((current) => moveIntegrationKeys(current, checked, direction));
-    setCheckedAvailable([]); setCheckedApplied([]);
-  };
+  const visibleCandidates = [...applied, ...available];
+  const toggleSelection = (value: string) => setSelected((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
   async function save(disable = false) { if (!path) return; setBusy(true); try { const values = disable ? [] : candidates.filter((item) => selected.includes(key(item))).map(({ accountName, service, environment, cluster }) => ({ accountName, service, environment, cluster })); await saveProjectIntegration(path, values); await load(path); } finally { setBusy(false); } }
   return <div id="integration-projects" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] px-5 py-4`}><div><h2 className="text-base font-semibold text-[var(--color-text)]">프로젝트 외부 연동</h2><p className="text-xs text-[var(--color-text-muted)]">등록 프로젝트 {projects.length}개 · 연결 설정 {projects.filter((item) => item.configured).length}개</p></div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
-    {expanded && <div className="space-y-3 p-5">
+    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "bg-violet-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>프로젝트 외부 연동</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>등록 프로젝트 {projects.length}개 · 연결 설정 {projects.filter((item) => item.configured).length}개</p></div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
+    {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
       {projects.length === 0 ? <p className="text-xs text-[var(--color-text-dim)]">등록된 프로젝트가 없습니다.</p> : <>
-        <select value={path} onChange={(event) => { const next = event.target.value; const nextProject = projects.find((item) => item.project_path === next); setPath(next); setSelected(initialIntegrationSelection(nextProject, candidates, key)); setCheckedAvailable([]); setCheckedApplied([]); }} className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm">{projects.map((item) => <option key={item.project_path} value={item.project_path}>{item.workspace_name} · {item.project_path.split('/').at(-1)} · {integrationStatusLabel(item)}</option>)}</select>
+        <div className="grid gap-4 border-y border-white/[0.07] py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-center"><div><strong className="block text-sm text-[var(--color-text)]">적용할 프로젝트</strong><span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">프로젝트마다 사용할 운영 근거를 고릅니다.</span></div><select value={path} onChange={(event) => { const next = event.target.value; const nextProject = projects.find((item) => item.project_path === next); setPath(next); setSelected(initialIntegrationSelection(nextProject, candidates, key)); }} className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm">{projects.map((item) => <option key={item.project_path} value={item.project_path}>{item.workspace_name} · {item.project_path.split('/').at(-1)} · {integrationStatusLabel(item)}</option>)}</select></div>
         {project && <div className={project.configured ? "rounded border border-emerald-400/25 bg-emerald-400/[0.05] px-3 py-2 text-xs text-emerald-200" : "rounded border border-amber-400/25 bg-amber-400/[0.05] px-3 py-2 text-xs text-amber-100"}>{project.configured ? project.selections.length ? `외부 연동 ${project.selections.length}개가 확정되어 Inspector에서 AWS Synced로 사용됩니다.` : "이 프로젝트는 외부 연동을 사용하지 않도록 확정되어 있습니다." : `로컬 Workspace 등록은 완료됐지만 AWS·APM 연결은 아직 확정되지 않았습니다. 정확 일치 후보 ${suggestionCount}개를 미리 선택했습니다.`}</div>}
-        <input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="계정·ECS 서비스·Pinpoint 앱 검색" className="w-full rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm" />
-        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-          <div className="overflow-hidden rounded border border-[var(--color-border)]"><div className="border-b border-[var(--color-border)] bg-white/[0.025] px-3 py-2 text-xs font-semibold text-[var(--color-text)]">추가 가능한 후보 <span className="ml-1 font-mono text-[var(--color-text-dim)]">{available.length}</span></div><div className="ck-scroll h-56 space-y-1 overflow-auto p-2">
-            {available.length === 0 && <div className="px-2 py-8 text-center text-xs text-[var(--color-text-dim)]">추가할 후보가 없습니다.</div>}
-            {available.map((item) => <label key={key(item)} className="flex cursor-pointer items-start gap-2 rounded px-2 py-1.5 hover:bg-white/[0.03]"><input type="checkbox" checked={checkedAvailable.includes(key(item))} onChange={() => toggleChecked(checkedAvailable, setCheckedAvailable, key(item))} /><span className="min-w-0 text-xs"><b className="text-cyan-200">{item.environment.toUpperCase()}</b> · {item.service}{isSuggested(item) && <span className="ml-2 rounded border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 text-[9px] text-amber-200">정확 일치</span>}<span className="block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{item.accountName} / {item.cluster ?? 'cluster 미확인'}{item.pinpointApplicationName ? ` / Pinpoint ${item.pinpointApplicationName}` : ''}</span></span></label>)}
-          </div></div>
-          <div className="flex items-center justify-center gap-2 md:flex-col"><button type="button" disabled={checkedAvailable.length === 0} onClick={() => move('add')} aria-label="선택 후보 추가" className="rounded border border-cyan-400/40 px-3 py-1.5 text-sm text-cyan-200 disabled:opacity-30">›</button><button type="button" disabled={checkedApplied.length === 0} onClick={() => move('remove')} aria-label="선택 연결 제거" className="rounded border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-text-muted)] disabled:opacity-30">‹</button></div>
-          <div className="overflow-hidden rounded border border-cyan-400/25 bg-cyan-400/[0.025]"><div className="border-b border-cyan-400/20 bg-cyan-400/[0.04] px-3 py-2 text-xs font-semibold text-cyan-100">{project?.configured ? '현재 적용된 연결' : '연결 예정'} <span className="ml-1 font-mono text-cyan-300/70">{applied.length}</span></div><div className="ck-scroll h-56 space-y-1 overflow-auto p-2">
-            {applied.length === 0 && <div className="px-2 py-8 text-center text-xs text-[var(--color-text-dim)]">적용할 연결이 없습니다.</div>}
-            {applied.map((item) => <label key={key(item)} className="flex cursor-pointer items-start gap-2 rounded px-2 py-1.5 hover:bg-white/[0.03]"><input type="checkbox" checked={checkedApplied.includes(key(item))} onChange={() => toggleChecked(checkedApplied, setCheckedApplied, key(item))} /><span className="min-w-0 text-xs"><b className="text-cyan-200">{item.environment.toUpperCase()}</b> · {item.service}<span className="block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{item.accountName} / {item.cluster ?? 'cluster 미확인'}{item.pinpointApplicationName ? ` / Pinpoint ${item.pinpointApplicationName}` : ''}</span></span></label>)}
-          </div></div>
+        <div className="flex items-center justify-between gap-4 pt-2"><div><strong className="text-sm text-[var(--color-text)]">사용할 운영 데이터</strong><span className="ml-2 font-mono text-xs text-cyan-300">{selected.length}개 선택</span></div><input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="계정·서비스·환경 검색" className="w-64 max-w-[50%] rounded border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm" /></div>
+        <div className="ck-scroll max-h-80 divide-y divide-white/[0.06] overflow-auto border-y border-white/[0.07]">
+          {visibleCandidates.length === 0 && <div className="px-3 py-10 text-center text-xs text-[var(--color-text-dim)]">연결된 운영 데이터에서 적용 가능한 항목을 찾지 못했습니다.</div>}
+          {visibleCandidates.map((item) => { const itemKey = key(item); const enabled = selected.includes(itemKey); return <label key={itemKey} className={`flex cursor-pointer items-center gap-4 px-3 py-3.5 transition ${enabled ? 'bg-cyan-300/[0.045]' : 'hover:bg-white/[0.025]'}`}><input type="checkbox" checked={enabled} onChange={() => toggleSelection(itemKey)} className="h-4 w-4 accent-cyan-300" /><span className="min-w-0 flex-1"><span className="text-sm text-[var(--color-text)]"><b className="text-cyan-200">{item.environment.toUpperCase()}</b> · {item.service}</span><span className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{item.accountName} / {item.cluster ?? 'cluster 미확인'}{item.pinpointApplicationName ? ` / Pinpoint ${item.pinpointApplicationName}` : ''}</span></span>{isSuggested(item) && <span className="rounded-full border border-amber-400/25 px-2 py-1 text-[9px] text-amber-200">프로젝트와 일치</span>}<span className={`w-14 text-right text-[10px] font-semibold ${enabled ? 'text-emerald-300' : 'text-[var(--color-text-dim)]'}`}>{enabled ? '사용' : '미사용'}</span></label>; })}
         </div>
-        <div className="flex gap-2"><button disabled={busy || selected.length === 0} onClick={() => void save()} className="rounded border border-cyan-400/40 px-3 py-1.5 text-xs text-cyan-200 disabled:opacity-40">{project?.configured ? `${selected.length}개 연결로 갱신` : `${selected.length}개 연결 확정`}</button><button disabled={busy} onClick={() => void save(true)} className="rounded border border-rose-400/30 px-3 py-1.5 text-xs text-rose-300">외부 연동 사용 안 함</button></div>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2"><p className="text-[11px] text-[var(--color-text-dim)]">선택한 데이터만 이 프로젝트의 Inspector와 AI 작업 근거에 사용합니다.</p><div className="flex gap-2"><button disabled={busy || selected.length === 0} onClick={() => void save()} className="rounded-full border border-cyan-400/40 px-4 py-2 text-xs font-semibold text-cyan-200 disabled:opacity-40">{project?.configured ? '선택 내용 저장' : '프로젝트에 적용'}</button><button disabled={busy} onClick={() => void save(true)} className="rounded-full px-4 py-2 text-xs text-[var(--color-text-muted)] hover:text-rose-300">연동 없이 사용</button></div></div>
         <p className="text-[11px] text-[var(--color-text-dim)]">확정 전 후보는 Inspector에서 AWS Suggested로만 표시됩니다. 저장 후에는 AWS Synced가 되며, Pinpoint는 선택한 ECS 서비스의 에이전트 설정이 확인된 경우에만 함께 연결됩니다.</p>
       </>}
     </div>}
@@ -406,7 +395,7 @@ function ApiTokensCard() {
 function IntegrationNode({ section, selected, onSelect, align = "left" }: {
   section: (typeof INTEGRATION_SECTIONS)[number];
   selected: boolean;
-  onSelect: (id: IntegrationSectionId) => void;
+  onSelect: (id: IntegrationViewId) => void;
   align?: "left" | "right";
 }) {
   const Icon = section.icon;
@@ -421,8 +410,35 @@ function IntegrationNode({ section, selected, onSelect, align = "left" }: {
   </button>;
 }
 
+function IntegrationCatalog({ awsConnected, pinpointConnected, onSelect }: {
+  awsConnected: boolean;
+  pinpointConnected: boolean;
+  onSelect: (id: IntegrationSectionId) => void;
+}) {
+  const options = INTEGRATION_SECTIONS.filter((section) =>
+    section.id === "aws" ? !awsConnected : section.id === "pinpoint" ? !pinpointConnected : false,
+  );
+  return <div className="p-7 sm:p-9">
+    <p className="font-mono text-[10px] font-semibold tracking-[0.22em] text-cyan-300/70">AVAILABLE CONNECTIONS</p>
+    <h2 className="mt-2 text-xl font-semibold text-[var(--color-text)]">필요한 운영 도구만 연결하세요</h2>
+    <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">Sugo의 개발 흐름은 외부 서비스 없이도 동작합니다. 사용하는 환경만 추가하면 연결 지도와 프로젝트 설정이 그 환경에 맞춰 바뀝니다.</p>
+    {options.length > 0 ? <div className="mt-7 divide-y divide-white/[0.07] border-y border-white/[0.07]">
+      {options.map((section) => {
+        const Icon = section.icon;
+        return <button key={section.id} type="button" onClick={() => onSelect(section.id)} className="group flex w-full items-center gap-4 py-5 text-left">
+          <span className="grid h-11 w-11 place-items-center rounded-full border border-white/[0.09] text-[var(--color-text-muted)] transition group-hover:border-cyan-300/35 group-hover:text-cyan-200"><Icon size={18} /></span>
+          <span className="min-w-0 flex-1"><strong className="block text-base text-[var(--color-text)]">{section.label}</strong><span className="mt-1 block text-xs text-[var(--color-text-muted)]">{section.description}</span></span>
+          <span className="text-xs font-semibold text-cyan-300">설정 시작 →</span>
+        </button>;
+      })}
+    </div> : <div className="mt-7 flex items-center gap-3 border-y border-emerald-300/15 py-5 text-sm text-emerald-200"><CheckCircle2 size={18} />현재 제공하는 연동이 모두 연결되어 있습니다.</div>}
+  </div>;
+}
+
 export function Settings() {
-  const [selectedSection, setSelectedSection] = useState<IntegrationSectionId>("aws");
+  const [selectedSection, setSelectedSection] = useState<IntegrationViewId>("git");
+  const [awsConnected, setAwsConnected] = useState(false);
+  const [pinpointConnected, setPinpointConnected] = useState(false);
   const [providers, setProviders] = useState<GitProviderDescriptor[] | null>(null);
   const [connections, setConnections] = useState<GitConnectionStatus[]>([]);
   const [selected, setSelected] = useState<GitProviderId | null>(null);
@@ -445,6 +461,15 @@ export function Settings() {
 
   useEffect(() => {
     void refresh();
+  }, []);
+
+  useEffect(() => {
+    void Promise.allSettled([getAwsContext(), getPinpointContext()]).then(([aws, pinpoint]) => {
+      if (aws.status === "fulfilled") setAwsConnected(aws.value.connected);
+      if (pinpoint.status === "fulfilled") setPinpointConnected(pinpoint.value.connected);
+      const failures = [aws, pinpoint].filter((result) => result.status === "rejected");
+      if (failures.length > 0) setError("일부 연동 상태를 확인하지 못했습니다. 상세 화면에서 다시 확인하세요.");
+    });
   }, []);
 
   async function handleConnect() {
@@ -476,6 +501,15 @@ export function Settings() {
     }
   }
 
+  const activeSourceSections = INTEGRATION_SECTIONS.filter((section) =>
+    section.id === "git" || (section.id === "aws" && awsConnected) || (section.id === "pinpoint" && pinpointConnected),
+  );
+  const activeControlSections = awsConnected
+    ? INTEGRATION_SECTIONS.filter((section) => section.id === "projects" || section.id === "guard")
+    : [];
+  const hasOptionalConnection = !awsConnected || !pinpointConnected;
+  const availableConnectionNames = [!awsConnected && "AWS", !pinpointConnected && "APM"].filter(Boolean).join(" · ");
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeading eyebrow="SYSTEM INTEGRATIONS" title="외부 연동" description="저장소와 운영 환경을 연결하고, Sugo가 사용할 외부 서비스의 범위를 관리합니다." />
@@ -484,9 +518,10 @@ export function Settings() {
         <div aria-hidden="true" className="absolute inset-x-[12%] top-1/2 h-px bg-gradient-to-r from-transparent via-cyan-300/25 to-transparent" />
         <div className="relative grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_11rem_minmax(0,1fr)]">
           <div>
-            <p className="mb-3 font-mono text-[10px] font-semibold tracking-[0.22em] text-cyan-300/70">DATA SOURCES</p>
+            <p className="mb-3 font-mono text-[10px] font-semibold tracking-[0.22em] text-cyan-300/70">CONNECTED SOURCES</p>
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-              {INTEGRATION_SECTIONS.filter((section) => section.group === "데이터 연결").map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} />)}
+              {activeSourceSections.map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} />)}
+              {hasOptionalConnection && <button type="button" aria-pressed={selectedSection === "catalog"} onClick={() => setSelectedSection("catalog")} className={`flex min-h-14 items-center gap-3 border-l-2 px-3 py-2 text-left transition ${selectedSection === "catalog" ? "border-cyan-300 bg-cyan-300/[0.07] text-cyan-100" : "border-dashed border-white/[0.09] text-[var(--color-text-muted)] hover:border-cyan-300/30 hover:text-cyan-200"}`}><span className="grid h-8 w-8 place-items-center rounded-full border border-dashed border-current/30"><Plus size={15} /></span><span><strong className="block text-sm">연결 가능한 도구</strong><span className="mt-0.5 block text-[10px]">{availableConnectionNames} 지원</span></span></button>}
             </div>
           </div>
           <div className="relative mx-auto grid h-36 w-36 place-items-center rounded-full border border-cyan-300/25 bg-[#071422] shadow-[0_0_48px_rgba(34,211,238,0.08)]">
@@ -496,7 +531,8 @@ export function Settings() {
           <div>
             <p className="mb-3 text-right font-mono text-[10px] font-semibold tracking-[0.22em] text-violet-300/70">CONTROL PLANE</p>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-              {INTEGRATION_SECTIONS.filter((section) => section.group !== "데이터 연결").map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} align="right" />)}
+              {activeControlSections.map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} align="right" />)}
+              {activeControlSections.length === 0 && <p className="border-r-2 border-dashed border-white/[0.07] px-3 py-4 text-right text-[11px] leading-5 text-[var(--color-text-dim)]">운영 데이터가 연결되면<br />프로젝트 적용과 접근 정책이 열립니다.</p>}
             </div>
           </div>
         </div>
@@ -504,24 +540,25 @@ export function Settings() {
 
       {!LOCAL_DEV && <ApiTokensCard />}
 
-      <section className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_20px_70px_rgba(0,0,0,0.16)]">
-      {selectedSection === "aws" && <AwsContextCard expanded onToggle={() => undefined} focused />}
-      {selectedSection === "pinpoint" && <PinpointContextCard expanded onToggle={() => undefined} focused />}
+      <section className="integration-workbench overflow-hidden border-y border-[var(--color-border)] bg-[linear-gradient(135deg,rgba(15,23,42,0.78),rgba(6,12,22,0.9))] shadow-[0_20px_70px_rgba(0,0,0,0.12)]">
+      {selectedSection === "catalog" && <IntegrationCatalog awsConnected={awsConnected} pinpointConnected={pinpointConnected} onSelect={setSelectedSection} />}
+      {selectedSection === "aws" && <AwsContextCard expanded onToggle={() => undefined} focused onConnectionChange={setAwsConnected} />}
+      {selectedSection === "pinpoint" && <PinpointContextCard expanded onToggle={() => undefined} focused onConnectionChange={setPinpointConnected} />}
       {selectedSection === "projects" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused />}
       {selectedSection === "guard" && <AwsGuardPolicyCard expanded onToggle={() => undefined} focused />}
 
       {selectedSection === "git" && <div id="integration-git" className="scroll-mt-24 overflow-hidden">
-        <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] px-5 py-4">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-cyan-300/[0.025] px-7 py-6 sm:px-9">
           <div className="flex items-center gap-2.5">
-          <span className="text-[var(--color-primary)]">⑂</span>
+          <span className="grid h-10 w-10 place-items-center rounded-full border border-cyan-300/20 text-[var(--color-primary)]"><GitBranch size={17} /></span>
           <div>
-            <h2 className="text-base font-semibold text-[var(--color-text)]">Git 서비스 연결</h2>
-            <p className="text-xs text-[var(--color-text-muted)]">{connections.length > 0 ? `${connections.length}개 서비스 연결됨` : "로컬 모드 사용 중 · 외부 Git 연결 없음"}</p>
+            <h2 className="text-xl font-semibold text-[var(--color-text)]">Git 작업 경로</h2>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">{connections.length > 0 ? `${connections.length}개 원격 서비스가 변경 이력과 연결되어 있습니다.` : "로컬 저장소만으로 작업 중입니다. 원격 서비스는 필요할 때 연결할 수 있습니다."}</p>
           </div>
           </div>
         </div>
 
-        <div className="space-y-4 p-5">
+        <div className="space-y-5 p-7 sm:p-9">
           {error && (
             <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
               {error}
@@ -535,7 +572,7 @@ export function Settings() {
             </div>
           ) : (
             <>
-              <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3">
+              <div className="border-y border-[var(--color-border)] px-1 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-medium text-[var(--color-text)]">로컬 모드</div>
@@ -572,7 +609,7 @@ export function Settings() {
                       type="button"
                       disabled={connected || planned}
                       onClick={() => { setSelected(provider.id); setBaseUrl(provider.defaultBaseUrl ?? ""); }}
-                      className={`rounded-lg border px-3 py-3 text-left transition ${selected === provider.id ? "border-cyan-400 bg-cyan-400/10" : "border-[var(--color-border)] bg-white/[0.02] hover:bg-white/[0.04]"} disabled:cursor-default disabled:opacity-50`}
+                      className={`border-l-2 px-4 py-3 text-left transition ${selected === provider.id ? "border-cyan-300 bg-cyan-300/[0.06]" : "border-white/[0.08] hover:border-white/20 hover:bg-white/[0.025]"} disabled:cursor-default disabled:opacity-50`}
                     >
                       <div className="flex items-center justify-between gap-2 text-sm font-medium text-[var(--color-text)]">
                         {provider.label}
