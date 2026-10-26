@@ -26,6 +26,15 @@ describe("Console 정보 구조", () => {
     expect(workFloor).not.toContain("작업 결과 요약으로 연결");
   });
 
+  it("쉬는 공간을 파이프라인 단계처럼 붙이지 않고 시작점에서 다음 작업 배정을 기다린다", () => {
+    expect(workFloor).toContain("작업 배정 대기");
+    expect(workFloor).toContain("진행 중인 파이프라인 없음");
+    expect(workFloor).toContain("· 새 작업 대기");
+    expect(workFloor).toContain("마지막 완료 ${relativeTime(lastAt, now)}");
+    expect(workFloor).not.toContain("휴게 공간");
+    expect(workFloor).not.toContain("째 쉬는 중");
+  });
+
   it("최근 작업 요약과 Inspector는 서로의 높이를 늘리지 않는다", () => {
     expect(sessions).toContain("items-start");
     expect(sessions).toContain("self-start");

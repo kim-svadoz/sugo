@@ -88,43 +88,49 @@ export function StationProp({ id, x, y, working, waiting = false }: { id: FloorS
   }
 }
 
-const LOUNGE_X = benchX(FLOOR_STATIONS.length - 1) + 150;
-
-/** 도메인의 모든 작업이 4일 넘게 기록이 없을 때: 작업대는 불을 끄고, 작업자는 커밋 다음 칸의 휴게 공간에서 쉰다. */
+/** 도메인에 진행 중인 작업이 없을 때: 파이프라인은 꺼 두고, 작업자는 시작점에서 다음 요청을 확인한다. */
 function IdleFloor() {
-  return <svg viewBox="0 8 1200 162" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label="작업대는 꺼져 있고 작업자는 휴게 공간에서 쉬는 중">
+  const dispatchX = 48;
+  const pipelineOffset = 205;
+  const pipelineScale = 0.84;
+  return <svg viewBox="0 0 1200 174" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label="진행 중인 파이프라인이 없어 작업 배정 데스크에서 다음 요청을 기다리는 중">
     <rect x="0" y={FLOOR_Y} width="1200" height="10" rx="3" fill="#0f172a" />
-    <g opacity="0.28" style={{ filter: "grayscale(1)" }}>
+    <g transform={`translate(${pipelineOffset} ${FLOOR_Y * (1 - pipelineScale)}) scale(${pipelineScale})`} opacity="0.24" style={{ filter: "grayscale(1)" }}>
       {FLOOR_STATIONS.slice(0, -1).map((item, step) => <path key={item.id} d={`M${benchX(step) + 74} ${FLOOR_Y + 5} H${benchX(step + 1) - 26}`} stroke="#334155" strokeWidth="2" strokeDasharray="5 5" />)}
       {FLOOR_STATIONS.map((item, step) => <StationProp key={item.id} id={item.id} x={benchX(step)} y={FLOOR_Y} working={false} />)}
     </g>
-    {FLOOR_STATIONS.map((item, step) => <text key={item.id} x={benchX(step) + 26} y={FLOOR_Y + 30} textAnchor="middle" fontSize="13" fill="#475569">{item.label}</text>)}
-    <path d={`M${LOUNGE_X - 40} 30 V${FLOOR_Y + 10}`} stroke="#334155" strokeWidth="2" strokeDasharray="4 6" />
-    <ellipse cx={LOUNGE_X + 70} cy={FLOOR_Y + 4} rx="92" ry="7" fill={C.cyan} opacity="0.12" />
-    <g transform={`translate(${LOUNGE_X} ${FLOOR_Y - 88})`}>
-      <rect x="22" y="52" width="92" height="22" rx="7" fill="#1e3a5f" />
-      <rect x="16" y="64" width="104" height="16" rx="6" fill="#244a73" />
-      <rect x="24" y="80" width="5" height="9" fill="#0f172a" /><rect x="107" y="80" width="5" height="9" fill="#0f172a" />
-      <g transform="translate(68 93)"><BlockPerson role="main" seated className="wk--resting" leftHand={<Mug />} /></g>
-      {[0, 1, 2].map((index) => <text key={index} className="wk-zzz" x={92 + index * 9} y={10 - index * 9} fontSize={9 + index * 2} fontWeight="700" fill="#67e8f9" style={{ animationDelay: `${index * 0.6}s` }}>z</text>)}
+    {FLOOR_STATIONS.map((item, step) => <text key={item.id} x={pipelineOffset + (benchX(step) + 26) * pipelineScale} y={FLOOR_Y + 30} textAnchor="middle" fontSize="12" fill="#475569">{item.label}</text>)}
+    <path d={`M174 ${FLOOR_Y + 5} H${pipelineOffset + 10}`} stroke={C.cyan} strokeWidth="2" strokeDasharray="3 7" opacity="0.4" />
+    <circle cx="184" cy={FLOOR_Y + 5} r="3" fill={C.cyan} opacity="0.75" className="wk-pass" />
+    <g transform={`translate(${dispatchX} ${FLOOR_Y - 92})`}>
+      <ellipse cx="61" cy="96" rx="70" ry="7" fill={C.cyan} opacity="0.12" />
+      <rect x="0" y="23" width="60" height="38" rx="4" fill="#0f172a" stroke="#164e63" />
+      <rect x="7" y="30" width="46" height="22" rx="2" fill="#082f49" />
+      <circle cx="45" cy="34" r="2.5" fill={C.emerald} className="wk-pass" />
+      <path d="M12 40 H36 M12 46 H29" stroke="#67e8f9" strokeWidth="2" strokeLinecap="round" opacity="0.65" />
+      <rect x="24" y="61" width="12" height="7" rx="1" fill={C.steel} />
+      <rect x="2" y="68" width="98" height="8" rx="2" fill={C.bench} />
+      <rect x="9" y="76" width="6" height="20" fill="#172033" /><rect x="86" y="76" width="6" height="20" fill="#172033" />
+      <g transform="translate(104 94)"><BlockPerson role="main" seated className="wk--resting" rightHand={<rect x="14" y="-48" width="15" height="12" rx="1" fill={C.paper} />} /></g>
     </g>
-    <text x={LOUNGE_X + 68} y={FLOOR_Y + 30} textAnchor="middle" fontSize="13" fill="#67e8f9" opacity="0.8">휴게 공간</text>
+    <text x="109" y={FLOOR_Y + 30} textAnchor="middle" fontSize="12" fontWeight="600" fill="#a5f3fc">작업 배정 대기</text>
+    <text x="720" y="24" textAnchor="middle" fontSize="11" fill="#475569">진행 중인 파이프라인 없음</text>
   </svg>;
 }
 
-function restLabelOf(lastAt: number | undefined, now: number): string {
-  if (lastAt === undefined) return "아직 작업 기록 없음";
-  return `${Math.floor((now - lastAt) / (24 * 60 * 60_000))}일째 쉬는 중`;
+function lastCompletionLabelOf(lastAt: number | undefined, now: number): string {
+  if (lastAt === undefined) return "작업 기록 없음";
+  return `마지막 완료 ${relativeTime(lastAt, now)}`;
 }
 
 function headlineOf(lane: FloorLane): string {
   const { state } = lane;
   const station = FLOOR_STATIONS.find((item) => item.id === state.station)!;
-  if (state.activity === "celebrating") return "작업을 끝냈습니다";
-  if (state.activity === "waiting") return "사용자 확인을 기다리는 중";
-  if (state.live) return station.working;
-  if (state.activity === "paused") return `${station.label} 단계에서 멈춤`;
-  return state.station === "commit" ? "마지막 작업을 끝내고 쉬는 중" : "새 작업을 기다리는 중";
+  if (state.activity === "celebrating") return "작업 완료";
+  if (state.activity === "waiting") return "사용자 확인 대기";
+  if (state.live) return `${station.label} 진행 중`;
+  if (state.activity === "paused") return `${station.label}에서 멈춤`;
+  return "새 작업 대기";
 }
 
 function TaskHeader({ title, at, now, children }: { title: ReturnType<typeof resolveTaskTitle>; at?: number; now: number; children?: ReactNode }) {
@@ -155,7 +161,7 @@ function Lane({ lane, now }: { lane: FloorLane; now: number }) {
 
   return <div className="work-floor__lane">
     <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-      <strong className="shrink-0 text-[13px] text-white">{lane.workspace} 작업장</strong>
+      <strong className="shrink-0 text-[13px] text-white">{lane.workspace}</strong>
       <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>
       {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
     </div>
@@ -202,9 +208,9 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, on
   const activeIndex = requestedIndex >= 0 ? requestedIndex : 0;
   const lane = lanes[activeIndex];
   useEffect(() => { if (lane && lane.key !== selectedTaskKey) onSelectedTaskChange?.(lane.key); }, [lane, onSelectedTaskChange, selectedTaskKey]);
-  // 선택된 레인이 쉬는 중이면 Workspaces가 작업장을 최근 작업 요약 위로 옮겨 한 줄기로 잇는다.
+  // 선택된 레인이 대기 중이면 Workspaces가 작업장을 최근 작업 요약 위로 옮겨 한 줄기로 잇는다.
   // 레인이 없을 때(불러오는 중 포함)는 알리지 않는다. 알리면 배치가 바뀌며 다시 마운트되어 빈 상태를 반복한다.
-  // 도메인의 모든 작업이 쉬는 중일 때만 쉬는 배치로 바꾼다. 다른 작업이 진행 중이면 지난 작업을 골라도 장면을 보여 준다.
+  // 도메인의 모든 작업이 대기 중일 때만 대기 배치로 바꾼다. 다른 작업이 진행 중이면 지난 작업을 골라도 장면을 보여 준다.
   const idle = lanes.length > 0 ? lanes.every((item) => isFloorIdle(item.state, now)) : null;
   const lastAt = lanes.reduce<number | undefined>((latest, item) => item.state.at !== undefined && (latest === undefined || item.state.at > latest) ? item.state.at : latest, undefined);
   useEffect(() => { if (idle !== null) onIdleChange?.(idle); }, [idle, onIdleChange]);
@@ -212,8 +218,9 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, on
   // 작업장 머리는 도메인 상태만 보여 준다. 고른 작업의 제목과 넘김은 아래 최근 작업 요약 카드(FloorTaskHeader)가 맡는다.
   if (idle) return <div className="work-floor relative pb-1">
     <div className="flex items-center gap-2.5">
-      <strong className="text-[13px] text-white">{workspace} 작업장</strong>
-      <span className="ml-auto shrink-0 text-[11.5px] text-slate-400">{restLabelOf(lastAt, now)}</span>
+      <strong className="text-[13px] text-white">{workspace}</strong>
+      <span className="shrink-0 text-[11.5px] text-cyan-200">· 새 작업 대기</span>
+      <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-400">{lastCompletionLabelOf(lastAt, now)}</span>
     </div>
     <div className="mx-auto w-full max-w-[88%]"><IdleFloor /></div>
   </div>;

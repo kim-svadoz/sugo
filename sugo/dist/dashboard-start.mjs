@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.51.16" : "0.0.0-dev";
+  return true ? "0.51.17" : "0.0.0-dev";
 }
 
 // src/dashboard/syncAll.ts
