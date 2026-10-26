@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.31 / Console 0.42.31] - 2026-10-26
+
+- Schedule의 일정 구간을 색상 원형 대신 표시 순서에 따른 번호와 중립 구분선으로 구분합니다.
+
 ## [Plugin 0.51.30 / Console 0.42.30] - 2026-10-26
 
 - Engineering Feed의 추적 채널 목록에서 수집용 RSS·Atom 주소로 이동하는 링크를 제거했습니다.

@@ -115,9 +115,12 @@ describe("schedule presentation", () => {
 
   it("Agenda 일정 구간 헤더는 카드보다 또렷한 시각적 위계를 유지한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain("agenda.map((group, index)");
+    expect(source).toContain('{String(index + 1).padStart(2, "0")}');
     expect(source).toContain('className="text-[14px] font-bold text-white">{group.label}</h3>');
-    expect(source).toContain('className="text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>');
-    expect(source).toContain('"h-2.5 w-2.5 rounded-full bg-slate-500"');
+    expect(source).toContain('aria-hidden="true" className="h-px min-w-6 flex-1 bg-white/10"');
+    expect(source).toContain('className="shrink-0 text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>');
+    expect(source).not.toContain('"h-2.5 w-2.5 rounded-full bg-slate-500"');
     expect(source).not.toContain('group.id === "overdue" ? "bg-rose-400"');
   });
 
@@ -302,7 +305,7 @@ describe("schedule presentation", () => {
   it("Agenda는 지난 미종료 SPEC과 7일 이후 등록 수를 함께 보여준다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain('state: "active" as const');
-    expect(source).toContain("agenda.map((group)");
+    expect(source).toContain("agenda.map((group, index)");
     expect(source).not.toContain("commitmentPulse");
   });
 });

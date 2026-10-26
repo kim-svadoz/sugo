@@ -590,13 +590,16 @@ export function SchedulePage() {
                 </div>
               ) : (
                 <div className="space-y-5">
-                  {agenda.map((group) => (
+                  {agenda.map((group, index) => (
                     <section key={group.id} aria-labelledby={`agenda-${group.id}`}>
                       <div className="mb-2.5 flex items-center gap-2.5">
-                        <span className="h-2.5 w-2.5 rounded-full bg-slate-500" />
+                        <span className="font-mono text-[11px] font-semibold tracking-[0.12em] text-slate-500">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
                         <h3 id={`agenda-${group.id}`} className="text-[14px] font-bold text-white">{group.label}</h3>
                         <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 font-mono text-[11px] text-[var(--color-text-muted)]">{group.items.length}</span>
-                        <span className="text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>
+                        <span aria-hidden="true" className="h-px min-w-6 flex-1 bg-white/10" />
+                        <span className="shrink-0 text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>
                       </div>
                       <div className="grid gap-2 xl:grid-cols-2">
                         {group.items.map((commitment) => {
