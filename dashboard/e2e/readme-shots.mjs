@@ -112,6 +112,12 @@ try {
   await page.waitForTimeout(1500);
   await page.screenshot({ path: join(out, "console-calendar.png") });
 
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.goto(`${base}/weekly`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /주간 작업 리포트 열기/ }).first().click();
+  await page.waitForTimeout(2000);
+  await page.screenshot({ path: join(out, "console-weekly.png") });
+
   await browser.close();
   console.log(`[readme-shots] ${out}`);
 } finally {
