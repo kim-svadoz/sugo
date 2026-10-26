@@ -133,17 +133,17 @@ function LatestWeek({ report, highlighted, onHover, onLeave, onOpen }: { report:
   const counts = report.counts;
   const stats: Array<[string, number | undefined, boolean]> = [["주제", counts?.topics, false], ["기술 학습", counts?.learnings, false], ["막힌 것", counts?.blocked, true], ["다음 주", counts?.nextWeek, false]];
   return <section aria-label="최근 주간 보고서" onMouseEnter={() => onHover(report.weekId)} onMouseLeave={onLeave} className={cn("overflow-hidden rounded-2xl border bg-[linear-gradient(135deg,rgba(34,211,238,0.07),rgba(15,23,42,0.55)_45%,rgba(139,92,246,0.06))] transition", highlighted ? "border-cyan-400/60" : "border-[var(--color-border)]")}>
-    <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-white/[0.06] px-6 py-4">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><span className="font-mono text-[11px] font-semibold tracking-[0.18em] text-cyan-300">LATEST</span><strong className="font-mono text-[19px] text-white">{report.weekId}</strong><span className="font-mono text-[12px] text-slate-400">{report.start} — {report.end}</span></div>
+    <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-white/[0.06] px-5 py-3">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><span className="font-mono text-[11px] font-semibold tracking-[0.18em] text-cyan-300">LATEST</span><strong className="font-mono text-[16px] text-white">{report.weekId}</strong><span className="font-mono text-[12px] text-slate-400">{report.start} — {report.end}</span></div>
       <span className="font-mono text-[11px] text-slate-500">생성 {report.generatedAt.slice(0, 10)}</span>
     </header>
-    <div className="grid gap-6 px-6 py-5 lg:grid-cols-[minmax(0,1fr)_auto]">
-      <ul className="space-y-3">{report.headline.slice(0, 3).map((headline) => <li key={headline} className="flex gap-3 break-keep text-[15px] leading-7 text-slate-100"><span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />{headline}</li>)}</ul>
-      {counts && <dl className="grid grid-cols-2 gap-2 self-start sm:grid-cols-4 lg:grid-cols-2">{stats.map(([label, value, warn]) => <div key={label} className="min-w-[104px] rounded-xl border border-white/[0.07] bg-black/20 px-3.5 py-2.5"><dt className="text-[11px] text-slate-400">{label}</dt><dd className={cn("mt-1 font-mono text-[21px] font-semibold leading-none", warn && value ? "text-amber-200" : "text-white")}>{value ?? 0}</dd></div>)}</dl>}
+    <div className="grid gap-5 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+      <ul className="space-y-2">{report.headline.slice(0, 3).map((headline) => <li key={headline} className="flex gap-2.5 break-keep text-[13.5px] leading-6 text-slate-100"><span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />{headline}</li>)}</ul>
+      {counts && <dl className="grid grid-cols-2 gap-2 self-start sm:grid-cols-4 lg:grid-cols-2">{stats.map(([label, value, warn]) => <div key={label} className="min-w-[88px] rounded-lg border border-white/[0.07] bg-black/20 px-3 py-2"><dt className="text-[11px] text-slate-400">{label}</dt><dd className={cn("mt-1 font-mono text-[17px] font-semibold leading-none", warn && value ? "text-amber-200" : "text-white")}>{value ?? 0}</dd></div>)}</dl>}
     </div>
-    <footer className="flex flex-wrap gap-2 border-t border-white/[0.06] px-6 py-3.5">
-      <button type="button" aria-label={`${report.weekId} 주간 작업 리포트 열기`} onClick={() => onOpen(report.weekId, "report")} className="settings-action settings-action-primary gap-1.5">주간 작업<ArrowRight size={14} /></button>
-      <button type="button" onClick={() => onOpen(report.weekId, "learning")} className="settings-action settings-action-secondary">기술 학습</button>
+    <footer className="flex flex-wrap gap-2 border-t border-white/[0.06] px-5 py-3">
+      <button type="button" aria-label={`${report.weekId} 주간 작업 리포트 열기`} onClick={() => onOpen(report.weekId, "report")} className="settings-action settings-action-primary settings-action-compact gap-1.5">주간 작업<ArrowRight size={14} /></button>
+      <button type="button" onClick={() => onOpen(report.weekId, "learning")} className="settings-action settings-action-secondary settings-action-compact">기술 학습</button>
     </footer>
   </section>;
 }

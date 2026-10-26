@@ -5,7 +5,8 @@ import path from "node:path";
 describe("Console 기본 화면 스케일", () => {
   it("브라우저 100%에서 기존 110% 수준의 기본 크기를 제공한다", () => {
     const css = fs.readFileSync(path.resolve("src/index.css"), "utf8");
-    expect(css).toMatch(/html\s*\{[^}]*font-size:\s*21px;/s);
+    // 큰 모니터는 21px을 유지하고 노트북 폭에서는 rem 기반 여백·카드가 과하게 커지지 않도록 줄인다.
+    expect(css).toMatch(/html\s*\{[^}]*font-size:\s*clamp\(16px,\s*calc\(5\.5px \+ 0\.82vw\),\s*21px\);/s);
     expect(css).toMatch(/body\s*\{[^}]*zoom:\s*1\.1;/s);
     expect(css).toContain('[class~="text-[10px]"] { font-size: 11px !important; }');
     expect(css).toContain('[class~="text-[13px]"] { font-size: 14px !important; }');

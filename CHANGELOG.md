@@ -4,6 +4,11 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.9 / Console 0.42.9] - 2026-10-26
+
+- Console의 기준 크기가 화면 폭을 따릅니다. 큰 모니터는 그대로이고, 노트북 폭에서는 여백, 카드, 버튼이 한 단계 작아져 Workspaces, Schedule, Weekly 첫 화면에 더 많은 내용이 들어갑니다.
+- Weekly 최신 보고서 카드의 글자와 여백을 줄여 다른 요소와 크기를 맞춥니다.
+
 ## [Plugin 0.51.8 / Console 0.42.8] - 2026-10-26
 
 - Integrations와 Preferences의 글자 크기를 다른 화면과 같은 기준으로 맞춥니다. 이 두 화면은 rem 기준 글자 크기를 써서 다른 화면보다 한두 단계 크게 보였습니다.
