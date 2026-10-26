@@ -589,15 +589,14 @@ export function SchedulePage() {
                   <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">열려 있는 마감 일정이 없습니다. 완료·과거 일정은 Calendar에서 확인할 수 있습니다.</p>
                 </div>
               ) : (
-                <div className="space-y-5">
+                <div className="space-y-7">
                   {agenda.map((group, index) => (
                     <section key={group.id} aria-labelledby={`agenda-${group.id}`}>
-                      <div className="mb-2.5 flex items-center gap-2.5">
+                      <div className="mb-2 flex items-center gap-2.5">
                         <span className="font-mono text-[12px] font-semibold tracking-[0.12em] text-slate-500">
                           {String(index + 1).padStart(2, "0")}
                         </span>
                         <h3 id={`agenda-${group.id}`} className="text-[15px] font-semibold tracking-[0.04em] text-slate-400">{group.label}</h3>
-                        <span aria-hidden="true" className="h-px min-w-6 flex-1 bg-white/10" />
                         <span className="shrink-0 text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>
                       </div>
                       <div className="grid gap-2 xl:grid-cols-2">

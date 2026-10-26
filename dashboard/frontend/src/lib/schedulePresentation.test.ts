@@ -119,8 +119,9 @@ describe("schedule presentation", () => {
     expect(source).toContain('{String(index + 1).padStart(2, "0")}');
     expect(source).toContain('className="font-mono text-[12px] font-semibold tracking-[0.12em] text-slate-500"');
     expect(source).toContain('className="text-[15px] font-semibold tracking-[0.04em] text-slate-400">{group.label}</h3>');
-    expect(source).toContain('aria-hidden="true" className="h-px min-w-6 flex-1 bg-white/10"');
-    expect(source).toContain('className="shrink-0 text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>');
+    expect(source).toContain('className="space-y-7"');
+    expect(source).toContain('className="mb-2 flex items-center gap-2.5"');
+    expect(source).not.toContain('aria-hidden="true" className="h-px min-w-6 flex-1 bg-white/10"');
     expect(source).not.toContain('"h-2.5 w-2.5 rounded-full bg-slate-500"');
     expect(source).not.toContain('group.id === "overdue" ? "bg-rose-400"');
   });
