@@ -172,6 +172,12 @@ Workspaces 작업장에서는 선택한 작업이 지금 어느 단계에 있는
   <img src="docs/images/console-diff.png" alt="변경 파일 diff" width="49%">
 </p>
 
+### 작업 이력
+
+한 작업의 최초 구현(FEAT)과 이후의 patch가 하나의 개발 이력으로 이어집니다. 차수마다 무엇을 바꿨는지와 날짜가 남고, 마지막 결과를 기준으로 다음 patch를 시작합니다.
+
+![작업 이력: 최초 구현부터 patch 4차까지의 개발 이력](docs/images/console-lineage.png)
+
 ### 주간 회고
 
 Weekly는 한 주의 완료 결과와 커밋 본문을 모아 주간 보고서와 기술 학습 노트를 만듭니다. 보고서는 지난주 계획, 주제별 상황과 목적, 막힌 것, 다음 주 계획으로 나뉩니다. 생성 일정은 Preferences에서 정합니다.

@@ -172,6 +172,12 @@ Read the verification result and the changed-file diff, then approve or request 
   <img src="docs/images/console-diff.png" alt="Changed-file diff" width="49%">
 </p>
 
+### Work history
+
+A task's first implementation (FEAT) and its later patches stay in one development history. Each round records what changed and when, and the next patch starts from the latest result.
+
+![Work history: development history from the first implementation to patch 4](docs/images/console-lineage.png)
+
 ### Weekly review
 
 Weekly collects the finished results and commit bodies of one week into a weekly report and technical learning notes. The report has last week's plan, the situation and goal of each topic, blockers, and next week's plan. Set the generation schedule in Preferences.

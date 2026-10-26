@@ -102,6 +102,10 @@ try {
   await page.getByRole("button", { name: /diff 보기/ }).first().click();
   await page.waitForTimeout(4000);
   await page.screenshot({ path: join(out, "console-diff.png") });
+  // 한 작업의 계보: 최초 구현(FEAT)부터 patch 4차까지의 개발 이력.
+  await page.goto(`${base}/schedule?reviewWorkspace=payments&reviewSpec=payments-spec-coupon`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(3500);
+  await page.screenshot({ path: join(out, "console-lineage.png") });
 
   await page.goto(`${base}/schedule`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Agenda/ }).first().click();
