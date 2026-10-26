@@ -79,7 +79,7 @@ export function LiveConsole({ workspace, taskKey }: { workspace?: string; taskKe
           </button>
         </div>
         {!hasCompletedResult ? <div className="flex min-h-40 flex-col items-center justify-center px-5 text-center"><span className="relative mb-3 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-300/[0.05]"><span className="absolute h-2 w-2 animate-ping rounded-full bg-cyan-300/30" /><span className="h-2 w-2 rounded-full bg-cyan-300/70" /></span><strong className="text-[12px] text-slate-300">작업 결과를 기다리고 있습니다</strong><span className="mt-1 max-w-xs text-[10px] leading-5 text-[var(--color-text-dim)]">작업이 완료되면 이곳에 결과를 3~4줄로 정리합니다.</span></div> : <div className="space-y-3">
-          <ul className="space-y-2 border-l border-emerald-300/20 pl-3">{(summary.result.length > 0 ? summary.result : [visible[0].message]).slice(0, 4).map((line, index) => <li key={`${index}:${line}`} className="flex gap-2 text-[11px] leading-5 text-slate-300"><span className="text-emerald-300/60">•</span><span className="line-clamp-2">{line}</span></li>)}</ul>
+          <ul className="space-y-2 border-l border-emerald-300/20 pl-3">{(summary.result.length > 0 ? summary.result : [visible[0].message]).slice(0, 4).map((line, index) => <li key={`${index}:${line}`} className="flex gap-2 text-[13px] leading-6 text-slate-300"><span className="text-emerald-300/60">•</span><span className="line-clamp-2">{line}</span></li>)}</ul>
         </div>}
       </div>
 

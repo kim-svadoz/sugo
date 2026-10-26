@@ -4,6 +4,11 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.8 / Console 0.42.8] - 2026-10-26
+
+- Integrations와 Preferences의 글자 크기를 다른 화면과 같은 기준으로 맞춥니다. 이 두 화면은 rem 기준 글자 크기를 써서 다른 화면보다 한두 단계 크게 보였습니다.
+- Workspaces 최근 작업 요약의 본문 글자를 키웁니다.
+
 ## [Plugin 0.51.7 / Console 0.42.7] - 2026-10-26
 
 - Workspaces에서 최근 작업 요약과 Inspector 사이 경계를 드래그해 폭을 바꿀 수 있습니다. 한쪽이 바뀌면 다른 쪽과 연결 레일이 함께 맞춰지고, 더블클릭하면 기본 폭으로 돌아갑니다. 작업장 장면은 조금 작게 표시합니다.
