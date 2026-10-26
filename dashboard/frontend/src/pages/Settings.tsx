@@ -16,20 +16,19 @@ import { awsAccountMetaLabel, awsAccountOptionLabel, initialIntegrationSelection
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
 import { snapshotAge } from "../lib/snapshotAge.js";
 import { PageHeading } from "../components/PageHeading.js";
-import { Activity, Boxes, ChevronDown, Cloud, GitBranch, Plus, ShieldCheck } from "lucide-react";
+import { Activity, Boxes, ChevronDown, Cloud, GitBranch, Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 const contextAutoRefreshDescription = "Dashboard 실행 중에는 매일 08:00 KST 자동 동기화 · 꺼져 있었다면 다음 실행 시 갱신 · 수동 동기화 가능";
 
-type IntegrationSectionId = "aws" | "guard" | "pinpoint" | "projects" | "git";
+type IntegrationSectionId = "aws" | "pinpoint" | "projects" | "git";
 type IntegrationViewId = IntegrationSectionId | "catalog";
 const INTEGRATION_SECTIONS: ReadonlyArray<{ id: IntegrationSectionId; label: string; description: string; group: string; icon: LucideIcon }> = [
   { id: "aws", label: "AWS", description: "배포와 클라우드 리소스", group: "데이터 연결", icon: Cloud },
   { id: "pinpoint", label: "APM", description: "실행 상태와 성능 지표", group: "데이터 연결", icon: Activity },
   { id: "git", label: "Git", description: "원격 저장소와 변경 이력", group: "데이터 연결", icon: GitBranch },
   { id: "projects", label: "프로젝트 적용", description: "연결 정보를 작업 공간에 배정", group: "적용 범위", icon: Boxes },
-  { id: "guard", label: "접근 정책", description: "읽기 범위와 호출 한도", group: "안전장치", icon: ShieldCheck },
 ];
 
 function DetailToggle({ expanded, onClick }: { expanded: boolean; onClick: () => void }) {
@@ -171,33 +170,30 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
           </div>
           {status.activeAccount && <div className="mt-2 font-mono text-[11px] text-[var(--color-text-dim)]">{awsAccountMetaLabel(status.accounts.find((account) => account.name === status.activeAccount)!)}</div>}
         </div>
-        {status.inventory.some((item) => item.resources.length > 0) ? <div className="grid gap-2 sm:grid-cols-3">
+        {status.inventory.some((item) => item.resources.length > 0) ? <div><div className="mb-3 flex items-end justify-between gap-3"><div><strong className="text-sm text-[var(--color-text)]">가져온 운영 정보</strong><p className="mt-1 text-[11px] text-[var(--color-text-muted)]">서비스별 개수와 일부 항목만 요약합니다.</p></div><span className="text-[10px] text-[var(--color-text-dim)]">전체 목록은 동기화 데이터에 보존</span></div><div className="divide-y divide-white/[0.07] border-y border-white/[0.08]">
           {status.inventory.filter((item) => item.resources.length > 0).map((item) => {
             if (item.service === "sagemaker") {
               const summary = summarizeSageMaker(item.resources);
-              return <div key={item.service} className="rounded-lg border border-violet-400/25 bg-violet-400/[0.04] px-3 py-2">
+              return <div key={item.service} className="grid gap-2 px-1 py-4 sm:grid-cols-[10rem_7rem_minmax(0,1fr)] sm:items-center">
                 <div className="text-sm font-medium text-[var(--color-text)]">SageMaker AI</div>
-                <div className="mt-1 text-xs text-violet-200">Endpoint {summary.endpointCount}</div>
-                <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-[var(--color-text-muted)]">
-                  <span className="rounded bg-white/[0.04] px-1.5 py-0.5">Config {summary.endpointConfigCount}</span>
-                  <span className="rounded bg-white/[0.04] px-1.5 py-0.5">Model {summary.modelCount}</span>
-                  {summary.notebookCount > 0 && <span className="rounded bg-white/[0.04] px-1.5 py-0.5">Notebook {summary.notebookCount}</span>}
-                </div>
-                {summary.endpoints.length > 0 ? <ul className="mt-2 space-y-1">{summary.endpoints.map((endpoint) => <li key={endpoint.id} className="flex items-center justify-between gap-2 text-[11px]" title={endpoint.id}><span className="truncate font-mono text-[var(--color-text-muted)]">{endpoint.id}</span><span className={endpoint.status === "InService" ? "shrink-0 text-emerald-300" : "shrink-0 text-amber-300"}>{endpoint.status ?? "상태 미확인"}</span></li>)}</ul> : <p className="mt-2 text-[11px] text-[var(--color-text-dim)]">서비스 중인 Endpoint 없음</p>}
+                <div className="text-xs text-violet-200">Endpoint {summary.endpointCount}</div>
+                <div className="truncate text-right font-mono text-[10px] text-[var(--color-text-muted)]">Config {summary.endpointConfigCount} · Model {summary.modelCount}{summary.notebookCount > 0 ? ` · Notebook ${summary.notebookCount}` : ""}</div>
               </div>;
             }
-            return <div key={item.service} className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-2">
-              <div className="text-sm"><span className="font-medium text-[var(--color-text)]">{awsServiceLabels[item.service] ?? item.service}</span><span className="float-right font-mono text-xs text-[var(--color-text-muted)]">{item.resources.length}</span></div>
-              <ul className="mt-2 max-h-32 space-y-1 overflow-auto">{item.resources.map((resource) => <li key={`${resource.kind}:${resource.id}`} className="truncate font-mono text-[10px] text-[var(--color-text-muted)]" title={resource.id}>{resource.id}</li>)}</ul>
+            return <div key={item.service} className="grid gap-2 px-1 py-4 sm:grid-cols-[10rem_7rem_minmax(0,1fr)] sm:items-center">
+              <div className="text-sm font-medium text-[var(--color-text)]">{awsServiceLabels[item.service] ?? item.service}</div>
+              <div className="font-mono text-xs text-cyan-200">{item.resources.length}개</div>
+              <div className="truncate text-right font-mono text-[10px] text-[var(--color-text-muted)]" title={item.resources.map((resource) => resource.id).join(", ")}>{item.resources.slice(0, 3).map((resource) => resource.id).join(" · ")}{item.resources.length > 3 ? ` 외 ${item.resources.length - 3}개` : ""}</div>
             </div>;
           })}
-        </div> : <div className="rounded-lg border border-[var(--color-border)] bg-black/10 px-3 py-4 text-center text-xs text-[var(--color-text-muted)]">표시할 AWS 리소스가 없습니다.</div>}
+        </div></div> : <div className="border-y border-[var(--color-border)] px-3 py-5 text-center text-xs text-[var(--color-text-muted)]">표시할 AWS 리소스가 없습니다.</div>}
+        <AwsAccessPolicySettings />
       </>}
     </div>}
   </div>;
 }
 
-function AwsGuardPolicyCard({ expanded, onToggle, focused = false }: { expanded: boolean; onToggle: () => void; focused?: boolean }) {
+function AwsAccessPolicySettings() {
   const [policy, setPolicy] = useState<AwsGuardPolicy | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -212,17 +208,17 @@ function AwsGuardPolicyCard({ expanded, onToggle, focused = false }: { expanded:
     finally { setBusy(false); }
   }
   const numberField = (label: string, key: 'sessionLimit' | 'dailyLimit' | 'minuteLimit') => <label className="text-xs text-[var(--color-text-muted)]">{label}<input type="number" min="1" value={policy?.[key] ?? ''} onChange={(event) => setPolicy((current) => current ? { ...current, [key]: Number(event.target.value) } : current)} className="mt-1.5 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-text)]" /></label>;
-  return <div id="integration-guard" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "bg-violet-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>AWS 직접 조회 안전장치</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>{policy ? (policy.directReadEnabled ? "직접 읽기 사용 중 · 호출량 제한 적용" : "저장된 AWS Context만 사용 중") : "에이전트의 허용 목록 기반 읽기와 호출량을 제한합니다"}</p></div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
-    {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
+  return <section aria-labelledby="aws-access-policy" className="border-t border-white/[0.08] pt-7">
+    <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="font-mono text-[10px] font-semibold tracking-[0.18em] text-violet-300/70">ACCESS POLICY</p><h3 id="aws-access-policy" className="mt-1 text-base font-semibold text-[var(--color-text)]">AWS 읽기 범위</h3><p className="mt-1 text-xs text-[var(--color-text-muted)]">연결한 AWS를 AI가 직접 조회할지와 호출 한도를 이곳에서 관리합니다.</p></div>{policy && <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${policy.directReadEnabled ? "border-emerald-300/25 text-emerald-300" : "border-white/10 text-[var(--color-text-muted)]"}`}>{policy.directReadEnabled ? "직접 조회 사용" : "저장 정보만 사용"}</span>}</div>
+    <div className="mt-5 space-y-5">
       {!policy ? <p className="text-sm text-[var(--color-text-muted)]">불러오는 중…</p> : <>
-        <label className="flex items-start justify-between gap-4 rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-3"><span><b className="block text-sm text-[var(--color-text)]">에이전트 직접 AWS 읽기</b><span className="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">켜도 쓰기·비밀·고비용 조회는 항상 차단됩니다. 끄면 저장된 AWS Context만 사용합니다.</span></span><input type="checkbox" checked={policy.directReadEnabled} onChange={(event) => setPolicy({ ...policy, directReadEnabled: event.target.checked })} className="mt-1" /></label>
+        <label className="flex items-start justify-between gap-4 border-y border-white/[0.08] py-4"><span><b className="block text-sm text-[var(--color-text)]">에이전트 직접 AWS 읽기</b><span className="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">켜도 쓰기·비밀·고비용 조회는 차단됩니다. 끄면 위에서 동기화한 정보만 사용합니다.</span></span><input type="checkbox" checked={policy.directReadEnabled} onChange={(event) => setPolicy({ ...policy, directReadEnabled: event.target.checked })} className="mt-1" /></label>
         <div className="grid gap-3 sm:grid-cols-3">{numberField('세션당 호출', 'sessionLimit')}{numberField('하루당 호출 (KST)', 'dailyLimit')}{numberField('1분당 호출', 'minuteLimit')}</div>
-        <div className="rounded-md border border-[var(--color-border)] bg-black/10 px-3 py-2 text-[11px] leading-relaxed text-[var(--color-text-dim)]">기본값은 30 / 200 / 10입니다. 초과·넓은 시간 범위·셸 반복은 실행 전에 확인을 요청하며, 감사 로그에는 비밀값을 제거한 명령과 결정만 남깁니다.</div>
+        <p className="text-[11px] leading-relaxed text-[var(--color-text-dim)]">한도를 넘거나 넓은 범위를 요청하면 실행 전에 확인을 받습니다. 감사 기록에는 비밀값을 제외한 명령과 결정만 남깁니다.</p>
         <div className="flex items-center justify-between gap-3"><span className="text-xs text-[var(--color-text-muted)]">{message}</span><button type="button" disabled={busy} onClick={() => void save()} className="rounded-md border border-cyan-400/40 px-3 py-1.5 text-sm text-cyan-200 disabled:opacity-40">{busy ? '저장 중…' : '정책 저장'}</button></div>
       </>}
-    </div>}
-  </div>;
+    </div>
+  </section>;
 }
 
 function PinpointContextCard({ expanded, onToggle, focused = false, onConnectionChange }: { expanded: boolean; onToggle: () => void; focused?: boolean; onConnectionChange?: (connected: boolean) => void }) {
@@ -247,7 +243,7 @@ function PinpointContextCard({ expanded, onToggle, focused = false, onConnection
       <div className="flex gap-2"><input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://pinpoint.example.com" className="min-w-0 flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm" />
         {!status?.connected ? <button disabled={busy || !baseUrl} onClick={() => void run(() => connectPinpointContext(baseUrl))} className="rounded border border-cyan-400/40 px-3 text-sm text-cyan-200 disabled:opacity-40">연결</button> : <button disabled={busy} onClick={() => void run(disconnectPinpointContext)} className="rounded border border-rose-400/30 px-3 text-sm text-rose-300">연결 해제</button>}
       </div>
-      {status?.connected && <div className="grid gap-2 sm:grid-cols-2">{status.applications.map((app) => <div key={app.applicationName} className="rounded border border-[var(--color-border)] bg-black/10 px-3 py-2 text-xs"><div className="font-medium text-[var(--color-text)]">{app.applicationName}</div><div className="mt-1 text-[var(--color-text-muted)]">{app.state} · agent {app.runningAgentCount}/{app.agentCount} · 최근 5분 지연 표본 {app.sampleCount >= 5000 ? '5,000+' : app.sampleCount} / 표본 오류 {app.errorCount}</div></div>)}</div>}
+      {status?.connected && <div><div className="mb-3"><strong className="text-sm text-[var(--color-text)]">수집 중인 애플리케이션</strong><p className="mt-1 text-[11px] text-[var(--color-text-muted)]">실행 상태와 최근 5분 성능 표본을 요약합니다.</p></div><div className="divide-y divide-white/[0.07] border-y border-white/[0.08]">{status.applications.map((app) => <div key={app.applicationName} className="grid gap-2 px-1 py-4 text-xs sm:grid-cols-[minmax(0,1fr)_8rem_14rem] sm:items-center"><div className="font-medium text-[var(--color-text)]">{app.applicationName}</div><div className={app.state === "running" ? "text-emerald-300" : "text-[var(--color-text-muted)]"}>{app.state} · agent {app.runningAgentCount}/{app.agentCount}</div><div className="text-right text-[var(--color-text-muted)]">표본 {app.sampleCount >= 5000 ? '5,000+' : app.sampleCount} · 오류 {app.errorCount}</div></div>)}</div></div>}
       <p className="text-[11px] text-[var(--color-text-dim)]">읽기 전용 · 5분 중복 호출 방지</p>
     </div>}
   </div>;
@@ -420,7 +416,7 @@ function IntegrationCatalog({ awsConnected, pinpointConnected, onSelect }: {
   return <div className="p-7 sm:p-9">
     <p className="font-mono text-[10px] font-semibold tracking-[0.22em] text-cyan-300/70">AVAILABLE CONNECTIONS</p>
     <h2 className="mt-2 text-xl font-semibold text-[var(--color-text)]">필요한 운영 도구만 연결하세요</h2>
-    <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">Sugo의 개발 흐름은 외부 서비스 없이도 동작합니다. 사용하는 환경만 추가하면 연결 지도와 프로젝트 설정이 그 환경에 맞춰 바뀝니다.</p>
+    <p className="mt-2 text-sm text-[var(--color-text-muted)]">외부 서비스 없이도 개발 흐름은 동작합니다. 필요한 운영 도구만 연결하면 관련 설정이 열립니다.</p>
     <div className="mt-7 divide-y divide-white/[0.07] border-y border-white/[0.07]">
       {options.map((section) => {
         const Icon = section.icon;
@@ -436,7 +432,7 @@ function IntegrationCatalog({ awsConnected, pinpointConnected, onSelect }: {
 }
 
 export function Settings() {
-  const [selectedSection, setSelectedSection] = useState<IntegrationViewId>("git");
+  const [selectedSection, setSelectedSection] = useState<IntegrationViewId>("catalog");
   const [awsConnected, setAwsConnected] = useState(false);
   const [pinpointConnected, setPinpointConnected] = useState(false);
   const [providers, setProviders] = useState<GitProviderDescriptor[] | null>(null);
@@ -505,7 +501,7 @@ export function Settings() {
     section.id === "git" || (section.id === "aws" && awsConnected) || (section.id === "pinpoint" && pinpointConnected),
   );
   const activeControlSections = awsConnected
-    ? INTEGRATION_SECTIONS.filter((section) => section.id === "projects" || section.id === "guard")
+    ? INTEGRATION_SECTIONS.filter((section) => section.id === "projects")
     : [];
   const availableConnectionNames = [!awsConnected && "AWS", !pinpointConnected && "APM"].filter(Boolean).join(" · ");
 
@@ -519,8 +515,8 @@ export function Settings() {
           <div>
             <div className="mb-3 flex items-center justify-between gap-3"><p className="font-mono text-[10px] font-semibold tracking-[0.22em] text-cyan-300/70">CONNECTED SOURCES</p><span className="rounded-full border border-emerald-300/20 bg-emerald-300/[0.06] px-2 py-1 text-[9px] font-semibold text-emerald-300">{activeSourceSections.length}개 사용 중</span></div>
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+              <button type="button" aria-pressed={selectedSection === "catalog"} onClick={() => setSelectedSection("catalog")} className={`flex min-h-20 items-center gap-3 border-l-2 px-4 py-3 text-left transition sm:col-span-3 lg:col-span-1 ${selectedSection === "catalog" ? "border-cyan-300 bg-cyan-300/[0.09] text-cyan-100" : "border-cyan-300/35 bg-cyan-300/[0.035] text-cyan-100 hover:bg-cyan-300/[0.07]"}`}><span className="grid h-10 w-10 place-items-center rounded-full border border-cyan-300/30 bg-cyan-300/[0.06]"><Plus size={17} /></span><span className="min-w-0 flex-1"><strong className="block text-base">지원 도구 관리</strong><span className="mt-1 block text-[11px] text-[var(--color-text-muted)]">{availableConnectionNames ? `${availableConnectionNames} 연결 가능` : "AWS · APM 연결 상태와 설정 보기"}</span></span><span className="text-xs font-semibold text-cyan-300">열기 →</span></button>
               {activeSourceSections.map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} status="connected" />)}
-              <button type="button" aria-pressed={selectedSection === "catalog"} onClick={() => setSelectedSection("catalog")} className={`flex min-h-14 items-center gap-3 border-l-2 px-3 py-2 text-left transition ${selectedSection === "catalog" ? "border-cyan-300 bg-cyan-300/[0.07] text-cyan-100" : "border-dashed border-white/[0.09] text-[var(--color-text-muted)] hover:border-cyan-300/30 hover:text-cyan-200"}`}><span className="grid h-8 w-8 place-items-center rounded-full border border-dashed border-current/30"><Plus size={15} /></span><span><strong className="block text-sm">지원 도구 관리</strong><span className="mt-0.5 block text-[10px]">{availableConnectionNames || "AWS · APM 연결 관리"}</span></span></button>
             </div>
           </div>
           <div className="relative mx-auto grid h-36 w-36 place-items-center rounded-full border border-cyan-300/25 bg-[#071422] shadow-[0_0_48px_rgba(34,211,238,0.08)]">
@@ -528,10 +524,10 @@ export function Settings() {
             <div className="text-center"><strong className="block text-lg tracking-[0.18em] text-cyan-100">SUGO</strong><span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">READ-ONLY HUB</span></div>
           </div>
           <div>
-            <p className="mb-3 text-right font-mono text-[10px] font-semibold tracking-[0.22em] text-violet-300/70">{awsConnected ? "AWS OPERATIONS" : "CONTROL PLANE"}</p>
+            <p className="mb-3 text-right font-mono text-[10px] font-semibold tracking-[0.22em] text-violet-300/70">{awsConnected ? "PROJECT SCOPE" : "CONTROL PLANE"}</p>
             <div className={`grid gap-2 sm:grid-cols-2 lg:grid-cols-1 ${awsConnected ? "border-r border-violet-300/15 pr-3" : ""}`}>
               {activeControlSections.map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} align="right" />)}
-              {activeControlSections.length === 0 && <p className="border-r-2 border-dashed border-white/[0.07] px-3 py-4 text-right text-[11px] leading-5 text-[var(--color-text-dim)]">운영 데이터가 연결되면<br />프로젝트 적용과 접근 정책이 열립니다.</p>}
+              {activeControlSections.length === 0 && <p className="border-r-2 border-dashed border-white/[0.07] px-3 py-4 text-right text-[11px] leading-5 text-[var(--color-text-dim)]">AWS를 연결하면 프로젝트별 운영 정보 적용이 열립니다.</p>}
             </div>
           </div>
         </div>
@@ -544,7 +540,6 @@ export function Settings() {
       {selectedSection === "aws" && <AwsContextCard expanded onToggle={() => undefined} focused onConnectionChange={setAwsConnected} />}
       {selectedSection === "pinpoint" && <PinpointContextCard expanded onToggle={() => undefined} focused onConnectionChange={setPinpointConnected} />}
       {selectedSection === "projects" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused />}
-      {selectedSection === "guard" && <AwsGuardPolicyCard expanded onToggle={() => undefined} focused />}
 
       {selectedSection === "git" && <div id="integration-git" className="scroll-mt-24 overflow-hidden">
         <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-cyan-300/[0.025] px-7 py-6 sm:px-9">
