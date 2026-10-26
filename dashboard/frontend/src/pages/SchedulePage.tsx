@@ -597,7 +597,6 @@ export function SchedulePage() {
                           {String(index + 1).padStart(2, "0")}
                         </span>
                         <h3 id={`agenda-${group.id}`} className="text-[14px] font-bold text-white">{group.label}</h3>
-                        <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 font-mono text-[11px] text-[var(--color-text-muted)]">{group.items.length}</span>
                         <span aria-hidden="true" className="h-px min-w-6 flex-1 bg-white/10" />
                         <span className="shrink-0 text-[11.5px] text-[var(--color-text-dim)]">{group.description}</span>
                       </div>
@@ -647,7 +646,6 @@ export function SchedulePage() {
                       <div className="mb-2.5 flex items-center gap-2.5">
                         <FilePenLine size={14} className="text-slate-300" />
                         <h3 id="agenda-memos" className="text-[14px] font-bold text-white">메모</h3>
-                        <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 font-mono text-[11px] text-[var(--color-text-muted)]">{sortedMemos.length}</span>
                       </div>
                       <div className="grid gap-2 xl:grid-cols-2">
                         {sortedMemos.map((memo) => <button key={memo.id} type="button" onClick={() => openMemo(memo)} className="flex min-h-[62px] items-center gap-3 rounded-xl border border-slate-400/25 bg-slate-400/[0.07] px-4 py-3 text-left transition-colors hover:bg-slate-400/[0.12]"><FilePenLine size={14} className="shrink-0 text-slate-300" /><span className="min-w-0 flex-1"><strong className="block truncate text-[13px] text-slate-100">{memo.title}</strong><span className="mt-1 block font-mono text-[10px] text-slate-500">{memo.due_date ?? "기한 없음"}</span></span></button>)}
