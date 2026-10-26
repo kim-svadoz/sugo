@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ActivityEvent } from "../hooks/useActivityStream.js";
-import { FLOOR_STATIONS, eventTask, floorCollapsedByDefault, selectFloorLanes, selectFloorState } from "./workFloor.js";
+import { FLOOR_STATIONS, eventTask, isFloorIdle, selectFloorLanes, selectFloorState } from "./workFloor.js";
 
 const NOW = Date.parse("2026-10-23T03:00:00Z");
 let nextId = 1;
@@ -124,8 +124,11 @@ describe("selectFloorLanes", () => {
     expect(finished.passed).toEqual(["order", "code", "test", "review", "confirm", "docs", "commit"]);
   });
 
-  it("진행 중이 아닌 레인만 기본으로 접는다", () => {
-    expect(floorCollapsedByDefault({ live: true })).toBe(false);
-    expect(floorCollapsedByDefault({ live: false })).toBe(true);
+  it("4일 넘게 기록이 없는 레인만 장면 대신 문구로 보여 준다", () => {
+    const day = 24 * 60 * 60_000;
+    expect(isFloorIdle({ live: true, at: NOW - 10 * day }, NOW)).toBe(false);
+    expect(isFloorIdle({ live: false, at: NOW - 3 * day }, NOW)).toBe(false);
+    expect(isFloorIdle({ live: false, at: NOW - 5 * day }, NOW)).toBe(true);
+    expect(isFloorIdle({ live: false, at: undefined }, NOW)).toBe(true);
   });
 });

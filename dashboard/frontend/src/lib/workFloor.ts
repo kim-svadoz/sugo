@@ -75,9 +75,12 @@ export function currentRound<T extends { event: ActivityEvent }>(placed: readonl
   return end < 0 ? [...placed] : placed.slice(0, end);
 }
 
-/** 진행 중이 아닌 레인(완료, 멈춤, 대기)은 접어서 한 줄로 보여 준다. */
-export function floorCollapsedByDefault(state: Pick<FloorState, "live">): boolean {
-  return !state.live;
+/** 이 기간 동안 기록이 없으면 장면 대신 상태 문구 한 줄만 보여 준다. */
+export const FLOOR_IDLE_AFTER_MS = 4 * 24 * 60 * 60_000;
+
+export function isFloorIdle(state: Pick<FloorState, "live" | "at">, now = Date.now()): boolean {
+  if (state.live) return false;
+  return state.at === undefined || now - state.at > FLOOR_IDLE_AFTER_MS;
 }
 
 export function selectFloorState(events: readonly ActivityEvent[], now = Date.now(), context: { waitingReviews?: number } = {}): FloorState {
