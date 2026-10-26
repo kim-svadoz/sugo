@@ -187,7 +187,7 @@ Arguments are defined in [`sugo/commands/`](sugo/commands/).
 
 | Screen | Content |
 | --- | --- |
-| Home | Work flow, work to continue and approval requests, recent finished work and learning notes, engineering-blog feed |
+| Home | Work flow, work to continue and approval requests, recent finished work and learning notes, engineering-blog feed and saved posts |
 | Workspaces | Projects, domain rules, and history per domain; step per task; Agent Canvas (task graph, patch history, approval evidence, diff) |
 | Schedule | Spec schedule, planning links and memos, deployment state |
 | Weekly | Weekly reports and learning notes |
@@ -196,9 +196,9 @@ Arguments are defined in [`sugo/commands/`](sugo/commands/).
 | Integrations | Git providers, AWS, Pinpoint, plugin API tokens |
 | Preferences | Display name, weather region, Weekly generation schedule (day and time, Claude model, extra repositories, scheduled-run token) |
 
-The Home work flow shows the steps from spec to commit in one row. When an activity event arrives, the current step is selected, and the right panel shows what that step does and what it hands on. The cards below open the Harness, domain, and Weekly screens.
+The Home work flow shows the steps from spec to commit in one row. The steps are split into human stages (user definition, user confirmation) and AI stages (AI execution, AI wrap-up and commit). Human stages are amber and AI stages are cyan. When an activity event arrives, the current step is selected, and the right panel shows what that step does and what it hands on. The cards below open the Harness, domain, and Weekly screens.
 
-The Workspaces work floor shows each task in progress in a domain as its own lane. When you select a lane, the recent work summary below changes to the finished records of that task.
+The Workspaces work floor shows the current step of the selected task as a picture. When a domain has more than one task, use the arrows on the recent work summary card to switch tasks. The work floor and the recent work summary change together.
 
 Console data is in `~/.claude/sugo/dashboard/` and stays after updates. If the Console is off, the pipeline continues and sends sync data later.
 
