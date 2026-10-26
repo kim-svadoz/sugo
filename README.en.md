@@ -121,9 +121,11 @@ Group the projects of one business area into a domain, and keep the same context
 
 #### Check progress
 
-On the domain work floor, see the step and finished records of the selected task. The Inspector below lists the projects registered in the domain.
+On the domain work floor, see the current step of the selected task. The recent work summary card below shows the task title and its finished result. When there is no record for more than 4 days, the stations go dark and the worker rests in the lounge.
 
-![Workspaces work floor: step, finished records, and projects of the domain](docs/images/console-workspaces.png)
+The Inspector on the right shows the domain projects (Repositories), finished history (History), and the step records of the selected task (Activity). Drag the border between the summary card and the Inspector to change their widths.
+
+![Workspaces work floor: task step, recent work summary, Inspector](docs/images/console-workspaces.png)
 
 #### User approval
 
@@ -133,6 +135,12 @@ Read the verification result and the changed-file diff, then approve or request 
   <img src="docs/images/console-approval.png" alt="Work result review and approval" width="49%">
   <img src="docs/images/console-diff.png" alt="Changed-file diff" width="49%">
 </p>
+
+#### Weekly review
+
+Weekly collects the finished results and commit bodies of one week into a weekly report and technical learning notes. The report has last week's plan, the situation and goal of each topic, blockers, and next week's plan.
+
+![Weekly: weekly work report](docs/images/console-weekly.png)
 
 ## What installing Sugo changes
 

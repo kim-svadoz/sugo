@@ -121,9 +121,11 @@ flowchart LR
 
 #### 진행 확인
 
-도메인의 작업장에서 선택한 작업의 진행 단계와 완료 기록을 본다. 아래 Inspector에 도메인에 등록한 프로젝트가 나온다.
+도메인의 작업장에서 선택한 작업이 지금 어느 단계에 있는지 본다. 그 아래 최근 작업 요약 카드에 작업 제목과 완료 결과가 나온다. 4일 넘게 기록이 없으면 작업대가 꺼지고 작업자는 휴게 공간에서 쉰다.
 
-![Workspaces 작업장: 작업별 진행 단계, 완료 기록, 도메인의 프로젝트](docs/images/console-workspaces.png)
+오른쪽 Inspector에는 도메인의 프로젝트(Repositories), 완료 이력(History), 선택한 작업의 단계별 기록(Activity)이 나온다. 요약 카드와 Inspector 사이 경계를 끌어 폭을 바꾼다.
+
+![Workspaces 작업장: 작업 진행 단계, 최근 작업 요약, Inspector](docs/images/console-workspaces.png)
 
 #### 사용자 승인
 
@@ -133,6 +135,12 @@ flowchart LR
   <img src="docs/images/console-approval.png" alt="작업 결과 확인과 승인" width="49%">
   <img src="docs/images/console-diff.png" alt="변경 파일 diff" width="49%">
 </p>
+
+#### 주간 회고
+
+Weekly는 한 주의 완료 결과와 커밋 본문을 모아 주간 보고서와 기술 학습 노트를 만든다. 보고서는 지난주 계획, 주제별 상황과 목적, 막힌 것, 다음 주 계획으로 나뉜다.
+
+![Weekly: 주간 작업 리포트](docs/images/console-weekly.png)
 
 ## 설치 시 변경 사항
 
