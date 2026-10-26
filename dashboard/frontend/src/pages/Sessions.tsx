@@ -73,29 +73,29 @@ function activeOf(ws: WorkspaceSummary): boolean {
   return (ws.activeTaskCount ?? 0) > 0;
 }
 
-/** statusOf — 진행 중이 최우선, 그 다음 100% 완료, 나머지는 IDLE. */
+/** statusOf — 진행 중이 최우선, 그 다음 100% 완료, 나머지는 대기. */
 function statusOf(ws: WorkspaceSummary): { text: string; dot: string; pill: string; desc: string } {
   if (activeOf(ws)) {
     return {
-      text: "IN PROGRESS",
+      text: "진행 중",
       dot: "bg-amber-400",
       pill: "border-amber-500/30 bg-amber-500/10 text-amber-300",
-      desc: "IN PROGRESS — 캔버스에 진행 중인 task가 있음(AI 착수~사용자 완료 전)",
+      desc: "AI가 현재 작업을 수행하고 있습니다.",
     };
   }
   if (healthOf(ws) === 100) {
     return {
-      text: "COMPLETED",
+      text: "완료",
       dot: "bg-emerald-400",
       pill: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-      desc: "COMPLETED — 이 도메인 Agent Canvas의 모든 Task 100% 완료",
+      desc: "이 도메인에 등록된 작업을 모두 마쳤습니다.",
     };
   }
   return {
-    text: "IDLE",
+    text: "대기",
     dot: "bg-slate-500",
     pill: "border-slate-500/30 bg-slate-500/10 text-slate-400",
-    desc: "IDLE — 진행 세션 없음 · 미완료 Task 남음(대기)",
+    desc: "진행 중인 세션은 없고, 시작할 작업이 남아 있습니다.",
   };
 }
 
@@ -311,24 +311,24 @@ export function Sessions() {
         {health !== null && (
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px]",
+              "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium",
               health >= 90
                 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
                 : health >= 50
                   ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
                   : "border-rose-500/30 bg-rose-500/10 text-rose-300",
             )}
-            title="로드맵 완료율(Health)"
+            title="등록된 작업의 완료율"
           >
-            <Gauge size={11} /> {health}% health
+            <Gauge size={12} /> 완료율 {health}%
           </span>
         )}
         {active && (
           <span
             className="inline-flex items-center gap-1 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 text-[11px] text-cyan-300"
-            title="에이전트 실시간 작업 중(최근 로그 수신)"
+            title="최근 로그가 수신된 AI 작업"
           >
-            <Activity size={11} /> active
+            <Activity size={11} /> 작업 중
           </span>
         )}
       </div>
@@ -336,25 +336,25 @@ export function Sessions() {
   };
 
   const renderCounts = (ws: WorkspaceSummary) => (
-    <div className="flex items-center gap-3 text-sm">
+    <div className="flex items-center gap-3 text-[12px]">
       {(ws.roadmapCount ?? 0) > 0 && (
-        <div className="flex items-center gap-1 text-emerald-400" title="Agent Canvas 진행">
+        <div className="flex items-center gap-1.5 text-emerald-300" title="완료한 작업 / 등록된 작업">
           <GitBranch size={14} />
-          <span>
+          <span className="font-medium"><span className="text-[var(--color-text-muted)]">작업</span>{" "}
             {ws.roadmapDoneCount ?? 0}/{ws.roadmapCount}
           </span>
         </div>
       )}
       {ws.historyCount > 0 && (
-        <div className="flex items-center gap-1 text-violet-400" title="History">
+        <div className="flex items-center gap-1.5 text-violet-300" title="저장된 작업 이력">
           <History size={14} />
-          <span>{ws.historyCount}</span>
+          <span className="font-medium"><span className="text-[var(--color-text-muted)]">이력</span> {ws.historyCount}</span>
         </div>
       )}
       {ws.checkpointCount > 0 && (
-        <div className="flex items-center gap-1 text-amber-400" title="Checkpoints">
+        <div className="flex items-center gap-1.5 text-amber-300" title="작업 전에 확인할 도메인 규칙">
           <AlertTriangle size={14} />
-          <span>{ws.checkpointCount}</span>
+          <span className="font-medium"><span className="text-[var(--color-text-muted)]">규칙</span> {ws.checkpointCount}</span>
         </div>
       )}
     </div>
@@ -607,21 +607,21 @@ export function Sessions() {
         <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-[var(--color-text-muted)]">도메인별 개발 흐름과 운영 상태를 한곳에서 확인합니다.</p>
           <div className="flex min-h-9 flex-wrap items-center justify-end gap-2">
-            <button onClick={() => setShowStatusGuide(true)} className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-2.5 py-1.5 font-mono text-xs text-slate-400 transition-all hover:border-cyan-500/40 hover:text-cyan-400"><Info size={13} /> Guide</button>
+            <button onClick={() => setShowStatusGuide(true)} className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-muted)] transition-colors hover:border-cyan-500/40 hover:text-cyan-300"><Info size={14} /> 화면 안내</button>
             <div className="relative w-56">
               <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
-              <input type="text" placeholder="Search history..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 pl-8 pr-7 text-[13px] text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-500/60" />
+              <input type="text" placeholder="작업 이력 검색" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 pl-8 pr-7 text-[13px] text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-500/60" />
               {isSearching && <div className="absolute right-2.5 top-1/2 -translate-y-1/2"><div className="h-3.5 w-3.5 animate-spin rounded-full border-b-2 border-cyan-400" /></div>}
               {searchQuery && !isSearching && <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><X size={14} /></button>}
             </div>
             <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 text-[12.5px]">
-              {([['all', 'All Domains'], ['recent', 'Recently Active (30d)']] as const).map(([f, label]) => <button key={f} onClick={() => setStatusFilter(f)} className={cn("rounded-md px-2.5 py-1 transition-colors", statusFilter === f ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")}>{label}</button>)}
+              {([['all', '전체 도메인'], ['recent', '최근 활동 30일']] as const).map(([f, label]) => <button key={f} onClick={() => setStatusFilter(f)} className={cn("rounded-md px-2.5 py-1 transition-colors", statusFilter === f ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")}>{label}</button>)}
             </div>
             <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5">
-              <button onClick={() => setViewMode("grid")} className={cn("rounded-md p-1.5", viewMode === "grid" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")} title="Grid View"><LayoutGrid size={15} /></button>
-              <button onClick={() => setViewMode("list")} className={cn("rounded-md p-1.5", viewMode === "list" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")} title="Compact List View"><Rows3 size={15} /></button>
+              <button onClick={() => setViewMode("grid")} className={cn("rounded-md p-1.5", viewMode === "grid" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")} title="카드로 보기"><LayoutGrid size={15} /></button>
+              <button onClick={() => setViewMode("list")} className={cn("rounded-md p-1.5", viewMode === "list" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")} title="목록으로 보기"><Rows3 size={15} /></button>
             </div>
-            <button onClick={copyAddDomain} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/10" title="/sugo:ws-add 명령 복사"><Plus size={14} /> {addCopied ? "복사됨 · /sugo:ws-add" : "Add Domain"}</button>
+            <button onClick={copyAddDomain} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/10" title="/sugo:ws-add 명령 복사"><Plus size={14} /> {addCopied ? "복사됨 · /sugo:ws-add" : "도메인 추가"}</button>
           </div>
         </div>
       </section>
@@ -747,29 +747,29 @@ export function Sessions() {
                       <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full ck-pulse-dot", st.dot)} />
                       <h3 className="truncate font-mono text-sm font-bold text-white">{ws.name}</h3>
                     </div>
-                    <span className={cn("shrink-0 rounded border px-2 py-0.5 font-mono text-[10px] font-bold", st.pill)}>
+                    <span className={cn("shrink-0 rounded-md border px-2 py-1 text-[10.5px] font-semibold", st.pill)}>
                       {st.text}
                     </span>
                   </div>
                   {h !== null && (
-                    <div className="mt-2 rounded border border-[var(--color-border)] bg-slate-950/60 p-2 font-mono text-[11px]">
-                      <span className="mb-0.5 block text-slate-500">Canvas Progress:</span>
+                    <div className="mt-2 rounded-lg border border-[var(--color-border)] bg-slate-950/60 p-2.5 text-[11.5px]">
+                      <span className="mb-1 block text-[var(--color-text-muted)]">작업 진행</span>
                       <span
                         className={cn(
                           "font-bold",
                           h >= 90 ? "text-emerald-400" : h >= 50 ? "text-amber-400" : "text-rose-400",
                         )}
                       >
-                        {ws.roadmapDoneCount ?? 0}/{ws.roadmapCount} tasks done ({h}%)
+                        {ws.roadmapDoneCount ?? 0}/{ws.roadmapCount} 완료 · {h}%
                       </span>
                     </div>
                   )}
                   {(ws.attentionCount ?? 0) > 0 ? (
-                    <div className="mt-2 flex items-center gap-1.5 font-mono text-xs font-semibold text-amber-300" title={`${ws.attentionCount}개의 Task에 사람의 확인이 필요합니다`}>
+                    <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-amber-300" title={`${ws.attentionCount}개의 작업에 사람의 확인이 필요합니다`}>
                       <AlertTriangle size={13} /> {ws.attentionLabel ?? `확인 필요 ${ws.attentionCount}건`}
                     </div>
                   ) : activeOf(ws) ? (
-                    <div className="mt-2 font-mono text-xs text-cyan-400">{ws.activeTaskCount} task 진행 중</div>
+                    <div className="mt-2 text-xs font-medium text-cyan-300">작업 {ws.activeTaskCount}개 진행 중</div>
                   ) : null}
                 </div>
                 <div className="mt-3 flex flex-nowrap items-center gap-2 border-t border-[var(--color-border)] pt-2.5" aria-label="워크스페이스 도구">
@@ -822,15 +822,15 @@ export function Sessions() {
                   if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
                 }}
                 className={cn(
-                  "ck-card flex cursor-pointer items-center gap-3 rounded-lg border border-[var(--color-border)] px-3 py-2 transition-[opacity,filter,background-color] duration-200",
+                  "ck-card flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--color-border)] px-4 py-2.5 transition-[opacity,filter,background-color] duration-200",
                   WORKSPACE_CARD_FOCUS_CLASSES,
                   workspaceCardEmphasis(isSel, selectedWorkspace !== null),
                 )}
                 style={{ boxShadow: workspaceCardShadow(color, isSel) }}
               >
                 <span className={cn("h-2 w-2 shrink-0 rounded-full ck-pulse-dot", st.dot)} />
-                <span className="w-48 shrink-0 truncate font-mono text-[13px] font-bold text-white">{ws.name}</span>
-                <span className={cn("shrink-0 rounded border px-2 py-0.5 font-mono text-[10px] font-bold", st.pill)}>
+                <span className="w-48 shrink-0 truncate font-mono text-[13px] font-semibold tracking-[-0.01em] text-slate-100">{ws.name}</span>
+                <span className={cn("shrink-0 rounded-md border px-2 py-1 text-[10.5px] font-semibold", st.pill)}>
                   {st.text}
                 </span>
                 <div className="flex-1">{renderCounts(ws)}</div>
@@ -936,7 +936,7 @@ export function Sessions() {
         <AgentCanvasOverlay workspace={agentCanvasModal} onClose={() => setAgentCanvasModal(null)} />
       )}
 
-      {/* Guide 모달 — 상태 뱃지가 무슨 뜻인지 */}
+      {/* 화면 안내 — 목록의 상태와 수치를 실제 사용 흐름에 맞춰 설명한다. */}
       {showStatusGuide && (
         <div
           className="fixed inset-0 z-[90] flex items-center justify-center px-4"
@@ -944,13 +944,16 @@ export function Sessions() {
         >
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-lg rounded-xl border border-cyan-500/40 ck-glass ck-glow-cyan p-5"
+            className="relative w-full max-w-xl rounded-2xl border border-[var(--color-border)] ck-glass p-6 shadow-2xl"
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[var(--color-text-bright)]">
-                <Info size={16} className="text-cyan-300" /> 상태 가이드
-              </h3>
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.02em] text-[var(--color-text-bright)]">
+                  <Info size={17} className="text-cyan-300" /> 도메인 목록 보는 법
+                </h3>
+                <p className="mt-1.5 text-[12.5px] leading-5 text-[var(--color-text-muted)]">각 행에서 작업 상태와 기록 규모를 확인하고, 행을 누르면 해당 도메인의 작업장과 최근 결과를 볼 수 있습니다.</p>
+              </div>
               <button
                 onClick={() => setShowStatusGuide(false)}
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
@@ -958,20 +961,24 @@ export function Sessions() {
                 <X size={16} />
               </button>
             </div>
-            <ul className="space-y-2.5 text-[13px] text-[var(--color-text-muted)]">
-              {(
-                [
-                  { dot: "bg-amber-400", desc: "IN PROGRESS — 캔버스에 진행 중인 task가 있음(AI 착수~사용자 완료 전)" },
-                  { dot: "bg-emerald-400", desc: "COMPLETED — 이 도메인 Agent Canvas의 모든 Task 100% 완료" },
-                  { dot: "bg-slate-500", desc: "IDLE — 진행 세션 없음 · 미완료 Task 남음(대기)" },
-                ] as const
-              ).map((row) => (
-                <li key={row.desc} className="flex items-start gap-2.5">
-                  <span className={cn("mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full", row.dot)} />
-                  <span>{row.desc}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <section className="rounded-xl border border-[var(--color-border)] bg-black/15 p-4">
+                <h4 className="text-[11px] font-semibold tracking-[0.12em] text-cyan-300">작업 상태</h4>
+                <ul className="mt-3 space-y-3 text-[12.5px] text-[var(--color-text-muted)]">
+                  {[{ dot: "bg-amber-400", label: "진행 중", desc: "AI가 작업을 수행 중" }, { dot: "bg-emerald-400", label: "완료", desc: "등록된 작업을 모두 마침" }, { dot: "bg-slate-500", label: "대기", desc: "진행 세션 없이 다음 작업을 기다림" }].map((row) => (
+                    <li key={row.label} className="flex items-start gap-2.5"><span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", row.dot)} /><span><strong className="font-semibold text-slate-200">{row.label}</strong><span className="mt-0.5 block">{row.desc}</span></span></li>
+                  ))}
+                </ul>
+              </section>
+              <section className="rounded-xl border border-[var(--color-border)] bg-black/15 p-4">
+                <h4 className="text-[11px] font-semibold tracking-[0.12em] text-violet-300">행에 표시되는 수치</h4>
+                <dl className="mt-3 space-y-3 text-[12.5px]">
+                  <div><dt className="font-semibold text-slate-200">작업 2/2</dt><dd className="mt-0.5 text-[var(--color-text-muted)]">완료한 작업 / 등록된 작업</dd></div>
+                  <div><dt className="font-semibold text-slate-200">이력 · 규칙</dt><dd className="mt-0.5 text-[var(--color-text-muted)]">저장된 기록과 작업 전 확인할 기준</dd></div>
+                  <div><dt className="font-semibold text-slate-200">완료율</dt><dd className="mt-0.5 text-[var(--color-text-muted)]">등록된 작업 전체의 진행 비율</dd></div>
+                </dl>
+              </section>
+            </div>
           </div>
         </div>
       )}

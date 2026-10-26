@@ -273,8 +273,16 @@ export function CheckpointPanel({
           </div>
           <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
             <div className="grid gap-px bg-[var(--color-border)] sm:grid-cols-[210px_minmax(0,1fr)]">
-              <label className="bg-[var(--color-surface)] px-4 py-3"><span className="text-[11px] font-medium text-[var(--color-text-dim)]">규칙 폴더</span><input value={cpDraft.category} onChange={(e) => setCpDraft({ ...cpDraft, category: e.target.value })} placeholder="general" className="mt-1.5 w-full bg-transparent font-mono text-[13px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-dim)]" /></label>
-              <label className="bg-[var(--color-surface)] px-4 py-3"><span className="text-[11px] font-medium text-[var(--color-text-dim)]">규칙 이름</span><input value={cpDraft.title} onChange={(e) => setCpDraft({ ...cpDraft, title: e.target.value })} placeholder="예: API 호출 실패 시 재시도 기준" className="mt-1.5 w-full bg-transparent text-[14px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-dim)]" /></label>
+              <label className="bg-[var(--color-surface)] px-4 py-3">
+                <span className="block text-[11px] font-semibold text-[var(--color-text)]">규칙 폴더</span>
+                <span className="mt-0.5 block text-[9.5px] leading-4 text-[var(--color-text-dim)]">.claude/rules/ 아래에 저장할 폴더를 입력하세요.</span>
+                <input value={cpDraft.category} onChange={(e) => setCpDraft({ ...cpDraft, category: e.target.value })} placeholder="예: general" aria-label="규칙 폴더 입력" className="settings-field mt-2 w-full border-cyan-300/25 bg-black/30 font-mono hover:border-cyan-300/45 focus:shadow-[0_0_0_3px_rgba(34,211,238,0.12)]" />
+              </label>
+              <label className="bg-[var(--color-surface)] px-4 py-3">
+                <span className="block text-[11px] font-semibold text-[var(--color-text)]">규칙 이름</span>
+                <span className="mt-0.5 block text-[9.5px] leading-4 text-[var(--color-text-dim)]">규칙 목록과 파일 제목에 표시할 이름을 입력하세요.</span>
+                <input value={cpDraft.title} onChange={(e) => setCpDraft({ ...cpDraft, title: e.target.value })} placeholder="예: API 호출 실패 시 재시도 기준" aria-label="규칙 이름 입력" className="settings-field mt-2 w-full border-cyan-300/25 bg-black/30 hover:border-cyan-300/45 focus:shadow-[0_0_0_3px_rgba(34,211,238,0.12)]" />
+              </label>
             </div>
             <MarkdownEditor value={cpDraft.markdown} onChange={(markdown) => setCpDraft({ ...cpDraft, markdown })} />
             <div className="flex flex-wrap items-end justify-between gap-4 border-t border-[var(--color-border)] px-4 py-3.5">

@@ -60,4 +60,12 @@ describe("체크포인트 작성 화면", () => {
     expect(panelSource).toContain("규칙 내용");
     expect(panelSource).toContain("적용 기간");
   });
+
+  it("규칙 폴더와 이름을 직접 입력하는 칸으로 분명하게 표시한다", () => {
+    expect(panelSource).toContain('aria-label="규칙 폴더 입력"');
+    expect(panelSource).toContain('aria-label="규칙 이름 입력"');
+    expect(panelSource).toContain(".claude/rules/ 아래에 저장할 폴더를 입력하세요.");
+    expect(panelSource).toContain("규칙 목록과 파일 제목에 표시할 이름을 입력하세요.");
+    expect(panelSource.match(/settings-field mt-2 w-full border-cyan-300\/25 bg-black\/30/g)?.length).toBe(2);
+  });
 });
