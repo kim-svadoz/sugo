@@ -65,6 +65,16 @@ describe("Console 정보 구조", () => {
     expect(workBoard).toContain("xl:grid-cols-[minmax(0,6fr)_220px]");
     expect(workBoard).toContain("ck-work-route-dot");
     expect(workBoard).toContain('label: "오케스트레이터"');
+    expect(workBoard).toContain('owner: "human", role: "사용자 입력"');
+    expect(workBoard).toContain('owner: "human", role: "사용자 승인"');
+    expect(workBoard).toContain('owner: "ai", role: "AI 실행"');
+    expect(workBoard).toContain('owner: "ai", role: "AI 정리·출고"');
+    expect(workBoard).toContain("사용자 정의");
+    expect(workBoard).toContain("AI 작업 구간");
+    expect(workBoard).toContain("사용자 승인");
+    expect(workBoard).toContain("AI 정리·출고");
+    expect(workBoard).toContain("focused.owner === \"human\"");
+    expect(workBoard).toContain("bg-[var(--color-surface)]");
     expect(workBoard).not.toContain("관련 화면 열기");
     expect(workBoard.match(/하네스 기준/g)?.length).toBe(1);
   });
