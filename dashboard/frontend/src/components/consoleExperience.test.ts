@@ -81,7 +81,10 @@ describe("Console 정보 구조", () => {
     expect(workBoard).not.toContain('color: "#34d399"');
     expect(workBoard).not.toContain('color: "#a78bfa"');
     expect(workBoard).toContain('aria-label="사람과 AI의 작업 구간"');
-    expect(workBoard).toContain('font-serif italic');
+    expect(workBoard).toContain("HandwrittenGroup");
+    expect(workBoard).toContain('viewBox="0 0 100 12"');
+    expect(workBoard).toContain('font-[\'Nanum_Pen_Script\',\'Gaegu\',\'Bradley_Hand\',cursive]');
+    expect(workBoard).not.toContain("↳ 사람이 정함");
     expect(workBoard).not.toContain('aria-label="사용자와 AI의 작업 구간"');
     expect(workBoard).not.toContain("관련 화면 열기");
     expect(workBoard.match(/하네스 기준/g)?.length).toBe(1);
