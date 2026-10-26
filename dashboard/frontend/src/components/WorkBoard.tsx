@@ -25,7 +25,6 @@ interface Station {
   label: string;
   step: string;
   icon: ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
-  color: string;
   work: string;
   output: string;
   owner: "human" | "ai";
@@ -33,15 +32,18 @@ interface Station {
   specialist?: Specialist;
 }
 
+const HUMAN_ACCENT = "#fbbf24";
+const AI_ACCENT = "#67e8f9";
+
 const STATIONS: Station[] = [
-  { id: "spec", label: "SPEC 작성", step: "START", icon: FilePenLine, color: "#fbbf24", owner: "human", role: "사용자 입력", work: "사용자가 목표와 완료 조건을 정해 개발을 시작합니다.", output: "구현 가능한 SPEC" },
-  { id: "control", label: "오케스트레이터", step: "01", icon: Network, color: "#38bdf8", owner: "ai", role: "AI 실행", work: "메인 Claude 세션이 현재 상태를 읽고 다음 담당과 실행 순서를 조율합니다.", output: "담당과 근거가 연결된 작업 지시" },
-  { id: "code", label: "코드 작성", step: "02", icon: Code2, color: "#2dd4bf", owner: "ai", role: "AI 실행", specialist: "CODE", work: "코드 에이전트가 SPEC 범위의 제품 코드를 구현합니다.", output: "검증할 구현 결과" },
-  { id: "test", label: "테스트", step: "03", icon: FlaskConical, color: "#34d399", owner: "ai", role: "AI 실행", specialist: "TEST", work: "테스트 에이전트가 요구사항과 회귀 동작을 실행합니다.", output: "통과 또는 실패 실행 증거" },
-  { id: "review", label: "검토", step: "04", icon: ShieldCheck, color: "#a78bfa", owner: "ai", role: "AI 실행", specialist: "REVIEW", work: "검토 에이전트가 명세와 실행 결과, 남은 위험을 대조합니다.", output: "승인 가능한 결과와 판단 항목" },
-  { id: "confirm", label: "사용자 확인", step: "05", icon: UserCheck, color: "#fbbf24", owner: "human", role: "사용자 승인", work: "AI가 결정할 수 없는 선택만 사용자에게 요청합니다.", output: "승인 또는 수정 지시" },
-  { id: "docs", label: "문서 작업", step: "06", icon: BookOpenText, color: "#818cf8", owner: "ai", role: "AI 정리·출고", specialist: "DOCS", work: "문서 에이전트가 검증된 사용자 동작만 기록합니다.", output: "코드와 일치하는 변경 기록" },
-  { id: "dock", label: "커밋 출고", step: "DONE", icon: GitCommitHorizontal, color: "#60a5fa", owner: "ai", role: "AI 정리·출고", work: "검증과 문서화가 끝난 결과를 커밋 단위로 보존합니다.", output: "다음 작업이 이어받을 완료 기록" },
+  { id: "spec", label: "SPEC 작성", step: "START", icon: FilePenLine, owner: "human", role: "사용자 입력", work: "사용자가 목표와 완료 조건을 정해 개발을 시작합니다.", output: "구현 가능한 SPEC" },
+  { id: "control", label: "오케스트레이터", step: "01", icon: Network, owner: "ai", role: "AI 실행", work: "메인 Claude 세션이 현재 상태를 읽고 다음 담당과 실행 순서를 조율합니다.", output: "담당과 근거가 연결된 작업 지시" },
+  { id: "code", label: "코드 작성", step: "02", icon: Code2, owner: "ai", role: "AI 실행", specialist: "CODE", work: "코드 에이전트가 SPEC 범위의 제품 코드를 구현합니다.", output: "검증할 구현 결과" },
+  { id: "test", label: "테스트", step: "03", icon: FlaskConical, owner: "ai", role: "AI 실행", specialist: "TEST", work: "테스트 에이전트가 요구사항과 회귀 동작을 실행합니다.", output: "통과 또는 실패 실행 증거" },
+  { id: "review", label: "검토", step: "04", icon: ShieldCheck, owner: "ai", role: "AI 실행", specialist: "REVIEW", work: "검토 에이전트가 명세와 실행 결과, 남은 위험을 대조합니다.", output: "승인 가능한 결과와 판단 항목" },
+  { id: "confirm", label: "사용자 확인", step: "05", icon: UserCheck, owner: "human", role: "사용자 승인", work: "AI가 결정할 수 없는 선택만 사용자에게 요청합니다.", output: "승인 또는 수정 지시" },
+  { id: "docs", label: "문서 작업", step: "06", icon: BookOpenText, owner: "ai", role: "AI 정리·출고", specialist: "DOCS", work: "문서 에이전트가 검증된 사용자 동작만 기록합니다.", output: "코드와 일치하는 변경 기록" },
+  { id: "dock", label: "커밋 출고", step: "DONE", icon: GitCommitHorizontal, owner: "ai", role: "AI 정리·출고", work: "검증과 문서화가 끝난 결과를 커밋 단위로 보존합니다.", output: "다음 작업이 이어받을 완료 기록" },
 ];
 
 function activeStation(mainSpot: MainSpot, specialist?: Specialist | null): StationId {
@@ -76,15 +78,16 @@ export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; w
 
     <div className="mt-3 grid min-h-[470px] overflow-hidden rounded-xl border border-white/[0.07] bg-[#080f1c] xl:grid-cols-[minmax(0,6fr)_220px]">
       <div className="relative min-w-0 overflow-hidden p-5">
-        <div className="mb-2 grid grid-cols-8 gap-2 text-[9px] font-semibold tracking-[0.12em]" aria-label="사용자와 AI의 작업 구간">
-          <span className="rounded-md border border-amber-300/15 bg-amber-300/[0.05] px-2 py-1.5 text-amber-200">사용자 정의</span>
-          <span className="col-span-4 rounded-md border border-cyan-300/10 bg-cyan-300/[0.035] px-2 py-1.5 text-cyan-200/80">AI 작업 구간</span>
-          <span className="rounded-md border border-amber-300/15 bg-amber-300/[0.05] px-2 py-1.5 text-amber-200">사용자 승인</span>
-          <span className="col-span-2 rounded-md border border-blue-300/10 bg-blue-300/[0.035] px-2 py-1.5 text-blue-200/80">AI 정리·출고</span>
+        <div className="mb-1 grid grid-cols-8 gap-2 px-1 text-[10px] font-serif italic tracking-[0.02em]" aria-label="사람과 AI의 작업 구간">
+          <span className="-rotate-1 text-amber-200">↳ 사람이 정함</span>
+          <span className="col-span-4 rotate-[0.2deg] text-cyan-200/75">↳ AI가 이어서 작업</span>
+          <span className="-rotate-1 text-amber-200">↳ 사람이 확인</span>
+          <span className="col-span-2 rotate-[0.3deg] text-cyan-200/75">↳ AI가 정리·출고</span>
         </div>
         <div className="relative z-10 grid grid-cols-8 gap-2">
           {STATIONS.map((station) => {
             const Icon = station.icon;
+            const accent = station.owner === "human" ? HUMAN_ACCENT : AI_ACCENT;
             const isActive = world.live && active === station.id || station.id === "confirm" && waitingReviews > 0;
             const isSelected = selected === station.id;
             const selectedClass = station.owner === "human"
@@ -94,9 +97,9 @@ export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; w
               ? "border-amber-300/15 bg-[#121a27] hover:border-amber-200/35 hover:bg-amber-300/[0.035]"
               : "border-cyan-300/[0.08] bg-[#0d1727] hover:border-cyan-200/25 hover:bg-cyan-300/[0.025]";
             return <div key={station.id} className="relative min-w-0"><button type="button" onClick={() => setSelected(station.id)} className={`group flex min-h-[142px] w-full min-w-0 flex-col rounded-xl border px-3 py-3 text-left transition ${isSelected ? selectedClass : idleClass}`}>
-              <span className="flex items-center justify-between gap-1"><span className="font-mono text-[9px] font-semibold" style={{ color: station.color }}>{station.step}</span>{isActive && <span className="h-1.5 w-1.5 rounded-full bg-cyan-200 ck-pulse-dot" />}</span>
-              <span className="mt-5 flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-black/20" style={{ color: station.color }}><Icon size={20} strokeWidth={1.7} /></span>
-              <strong className="mt-3 line-clamp-2 min-h-8 text-[10px] leading-4 text-slate-100">{station.label}</strong>
+              <span className="flex items-center justify-between gap-1"><span className="font-mono text-[9px] font-semibold" style={{ color: accent }}>{station.step}</span>{isActive && <span className={`h-1.5 w-1.5 rounded-full ck-pulse-dot ${station.owner === "human" ? "bg-amber-200" : "bg-cyan-200"}`} />}</span>
+              <span className={`mt-5 flex h-10 w-10 items-center justify-center rounded-xl border ${station.owner === "human" ? "border-amber-300/20 bg-amber-300/[0.07]" : "border-cyan-300/15 bg-cyan-300/[0.055]"}`} style={{ color: accent }}><Icon size={20} strokeWidth={1.7} /></span>
+              <strong className={`mt-3 line-clamp-2 min-h-8 text-[10px] leading-4 ${station.owner === "human" ? "text-amber-100" : "text-cyan-50"}`}>{station.label}</strong>
               <span className="mt-1 text-[9px] text-slate-500">{isActive ? "현재 작업 중" : station.id === "spec" && plannedSpecs > 0 ? `시작 전 ${plannedSpecs}개` : "대기"}</span>
             </button></div>;
           })}
@@ -124,7 +127,7 @@ export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; w
       </div>
 
       <aside className="flex min-h-[300px] flex-col border-l border-white/[0.07] bg-slate-950/45 p-4">
-        <div className="flex items-center justify-between gap-2"><span className="font-mono text-[9px] font-semibold tracking-[0.15em]" style={{ color: focused.color }}>{focused.step}</span><span className={`rounded-full border px-2 py-1 text-[9px] font-semibold ${focused.owner === "human" ? "border-amber-300/20 bg-amber-300/[0.07] text-amber-200" : "border-cyan-300/15 bg-cyan-300/[0.05] text-cyan-200"}`}>{focused.role}</span></div>
+        <div className="flex items-center justify-between gap-2"><span className="font-mono text-[9px] font-semibold tracking-[0.15em]" style={{ color: focused.owner === "human" ? HUMAN_ACCENT : AI_ACCENT }}>{focused.step}</span><span className={`rounded-full border px-2 py-1 text-[9px] font-semibold ${focused.owner === "human" ? "border-amber-300/20 bg-amber-300/[0.07] text-amber-200" : "border-cyan-300/15 bg-cyan-300/[0.05] text-cyan-200"}`}>{focused.role}</span></div>
         <h3 className="mt-2 text-[16px] font-semibold text-white">{focused.label}</h3>
         <div className="mt-5 rounded-xl border border-white/[0.07] bg-black/15 p-3"><span className="text-[9px] text-slate-500">하는 일</span><p className="mt-2 text-[11px] leading-5 text-slate-200">{focused.work}</p></div>
         <div className="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3"><span className="text-[9px] text-slate-500">남기는 결과</span><p className="mt-2 text-[11px] leading-5 text-slate-300">{focused.output}</p></div>
