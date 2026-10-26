@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ActivityEvent } from "../hooks/useActivityStream.js";
-import { FLOOR_STATIONS, eventTask, selectFloorLanes, selectFloorState } from "./workFloor.js";
+import { FLOOR_STATIONS, eventTask, floorCollapsedByDefault, selectFloorLanes, selectFloorState } from "./workFloor.js";
 
 const NOW = Date.parse("2026-10-23T03:00:00Z");
 let nextId = 1;
@@ -108,5 +108,24 @@ describe("selectFloorLanes", () => {
       event({ ts: "2026-10-23 02:58:00", agent: "MAIN", handoff_to: "CODE", details: { task: { id: "live", name: "진행" } } }),
     ];
     expect(selectFloorLanes(events, NOW).map((lane) => lane.name)).toEqual(["확인", "진행"]);
+  });
+
+  it("단계 시각은 지금 차수의 이벤트만 쓰고, 완료한 작업은 모든 단계를 지난 것으로 본다", () => {
+    const events = [
+      event({ ts: "2026-10-20 01:00:00", agent: "DOCS", handoff_to: "MAIN", message: "이전 차수 문서" }),
+      event({ ts: "2026-10-20 01:05:00", agent: "MAIN", event_type: "COMPLETED", message: "이전 차수 완료" }),
+      event({ ts: "2026-10-23 01:00:00", agent: "MAIN", handoff_to: "CODE", message: "이번 차수 구현 시작" }),
+    ];
+    const state = selectFloorState(events, NOW);
+    expect(state.lastAt.code?.message).toBe("이번 차수 구현 시작");
+    expect(state.lastAt.commit).toBeUndefined();
+    expect(state.lastAt.docs).toBeUndefined();
+    const finished = selectFloorState([event({ ts: "2026-10-22 09:00:00", agent: "MAIN", event_type: "COMPLETED" })], NOW);
+    expect(finished.passed).toEqual(["order", "code", "test", "review", "confirm", "docs", "commit"]);
+  });
+
+  it("진행 중이 아닌 레인만 기본으로 접는다", () => {
+    expect(floorCollapsedByDefault({ live: true })).toBe(false);
+    expect(floorCollapsedByDefault({ live: false })).toBe(true);
   });
 });

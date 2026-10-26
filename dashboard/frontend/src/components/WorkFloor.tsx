@@ -1,9 +1,9 @@
-import { ChevronLeft, ChevronRight, Pin } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Pin } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { resolveTaskTitle } from "../lib/taskTitle.js";
-import { FLOOR_STATIONS, selectFloorLanes, type FloorActivity, type FloorLane, type FloorStationId } from "../lib/workFloor.js";
+import { FLOOR_STATIONS, selectFloorLanes, type FloorActivity, type FloorLane, type FloorStationId, floorCollapsedByDefault } from "../lib/workFloor.js";
 import { BlockPerson, Mug } from "./BlockPerson.js";
 
 export const C = { cyan: "#22d3ee", violet: "#a78bfa", amber: "#fbbf24", emerald: "#34d399", rose: "#fb7185", paper: "#e2e8f0", ink: "#64748b", steel: "#334155", bench: "#1e293b" };
@@ -98,7 +98,7 @@ function headlineOf(lane: FloorLane): string {
   return state.station === "commit" ? "마지막 작업을 끝내고 쉬는 중" : "새 작업을 기다리는 중";
 }
 
-function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: ReturnType<typeof resolveTaskTitle> }) {
+function Lane({ lane, now, title, collapsed, onToggle }: { lane: FloorLane; now: number; title: ReturnType<typeof resolveTaskTitle>; collapsed: boolean; onToggle: () => void }) {
   const { state } = lane;
   const index = FLOOR_STATIONS.findIndex((station) => station.id === state.station);
   const [walking, setWalking] = useState(false);
@@ -121,8 +121,15 @@ function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: Retur
       {!title.linked && <span className="shrink-0 text-[10px] text-amber-300">이력 연결 안 됨</span>}
       <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>
       {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
+      <button type="button" onClick={onToggle} aria-expanded={!collapsed} className={`${state.at ? "" : "ml-auto "}inline-flex shrink-0 items-center gap-1 rounded-md border border-white/[0.08] px-2 py-1 text-[11px] text-slate-400 transition hover:border-cyan-300/30 hover:text-cyan-200`}>{collapsed ? <>장면 보기<ChevronDown size={12} /></> : <>접기<ChevronUp size={12} /></>}</button>
     </div>
-    <div className="mx-auto w-full max-w-[88%]">
+    {collapsed ? <div className="mt-2 grid grid-cols-7 gap-1.5" aria-label="단계 요약">{FLOOR_STATIONS.map((item) => {
+      const done = state.passed.includes(item.id);
+      const current = !done && item.id === state.station;
+      const last = state.lastAt[item.id];
+      return <div key={item.id} title={last ? `${last.message} · ${relativeTime(last.at, now)}` : "이번 차수에 기록 없음"} className={`flex min-w-0 items-center justify-center gap-1 rounded-md border px-1.5 py-1 text-[11.5px] ${done ? "border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-200" : current ? "border-amber-300/30 bg-amber-300/[0.08] text-amber-100" : "border-white/[0.06] text-slate-500"}`}>{done && <Check size={11} className="shrink-0" />}<span className="truncate">{item.label}</span></div>;
+    })}</div> : <>
+    <div className="mx-auto w-full max-w-[min(88%,calc(40vw+260px))]">
     <svg viewBox="0 0 960 150" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label={`${lane.name} · ${headlineOf(lane)}`}>
       <rect x="0" y={FLOOR_Y} width="960" height="10" rx="3" fill="#0f172a" />
       {FLOOR_STATIONS.slice(0, -1).map((item, step) => <path key={item.id} d={`M${benchX(step) + 74} ${FLOOR_Y + 5} H${benchX(step + 1) - 26}`} stroke={state.passed.includes(item.id) ? C.emerald : "#334155"} strokeWidth="2" strokeDasharray="5 5" />)}
@@ -144,18 +151,20 @@ function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: Retur
       {FLOOR_STATIONS.map((item) => {
         const last = state.lastAt[item.id];
         const active = item.id === state.station;
-        return <div key={item.id} title={last ? `${last.message} · ${relativeTime(last.at, now)}` : "아직 기록 없음"} className={`rounded-md px-1.5 py-1 text-center ${active ? "bg-cyan-300/[0.08] ring-1 ring-inset ring-cyan-300/25" : ""}`}>
+        return <div key={item.id} title={last ? `${last.message} · ${relativeTime(last.at, now)}` : "이번 차수에 기록 없음"} className={`rounded-md px-1.5 py-1 text-center ${active ? "bg-cyan-300/[0.08] ring-1 ring-inset ring-cyan-300/25" : ""}`}>
           <div className={`truncate text-[11.5px] font-semibold ${active ? "text-cyan-100" : state.passed.includes(item.id) ? "text-emerald-300" : "text-slate-400"}`}>{item.label}</div>
           <div className="mt-0.5 truncate font-mono text-[10px] text-slate-500">{last ? relativeTime(last.at, now) : "—"}</div>
         </div>;
       })}
     </div>
-    </div>
+    </div></>}
   </div>;
 }
 
 /** Workspaces의 코드 작업 흐름. 같은 도메인에서 동시에 진행 중인 작업은 작업별 레인으로 나눈다. */
-export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, onSelectedTitleChange }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void; onSelectedTitleChange?: (title: string | null) => void }) {
+export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void }) {
+  // 레인별로 사용자가 직접 펼치거나 접은 상태. 정하지 않은 레인은 진행 중일 때만 펼친다.
+  const [manual, setManual] = useState<Record<string, boolean>>({});
   const all = useActivityStream(workspace);
   const events = all.filter((event) => event.workspace_name === workspace);
   const [now, setNow] = useState(() => Date.now());
@@ -167,11 +176,10 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, on
   const lane = lanes[activeIndex];
   useEffect(() => { if (lane && lane.key !== selectedTaskKey) onSelectedTaskChange?.(lane.key); }, [lane, onSelectedTaskChange, selectedTaskKey]);
   const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, specs ?? []) : null;
-  useEffect(() => { onSelectedTitleChange?.(title?.title ?? null); }, [title?.title, onSelectedTitleChange]);
   if (lanes.length === 0) return <div className="work-floor py-3 text-center text-[12px] text-slate-500">이 도메인에는 아직 작업 기록이 없습니다.</div>;
   const move = (delta: number) => onSelectedTaskChange?.(lanes[(activeIndex + delta + lanes.length) % lanes.length].key);
   return <div className="work-floor relative space-y-2 pb-1">
     {lanes.length > 1 && <div className="flex items-center justify-end gap-2"><span className="mr-1 text-[10px] text-slate-500">현재 작업 <strong className="font-mono text-cyan-200">{activeIndex + 1} / {lanes.length}</strong></span><button type="button" aria-label="이전 작업" onClick={() => move(-1)} className="rounded-md border border-white/10 p-1 text-slate-400 hover:text-cyan-200"><ChevronLeft size={14} /></button><button type="button" aria-label="다음 작업" onClick={() => move(1)} className="rounded-md border border-white/10 p-1 text-slate-400 hover:text-cyan-200"><ChevronRight size={14} /></button></div>}
-    {title && <Lane lane={lane} now={now} title={title} />}
+    {title && <Lane lane={lane} now={now} title={title} collapsed={manual[lane.key] ?? floorCollapsedByDefault(lane.state)} onToggle={() => setManual((current) => ({ ...current, [lane.key]: !(current[lane.key] ?? floorCollapsedByDefault(lane.state)) }))} />}
   </div>;
 }

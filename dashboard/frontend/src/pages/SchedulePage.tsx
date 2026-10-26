@@ -50,11 +50,6 @@ function latestWorkResultPath(spec: ScheduledSpec): string | null {
     : null;
 }
 
-function memoPreview(content: string): string {
-  const plain = content.replace(/^#{1,6}\s+/gm, "").replace(/[-*`]\s*/g, " ").replace(/\s+/g, " ").trim();
-  return plain || "작성된 상세 내용이 없습니다.";
-}
-
 function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compact?: boolean }) {
   const guidance = scheduleAttention(spec);
   const tone = ({
@@ -771,7 +766,7 @@ export function SchedulePage() {
                         </div>
                       );
                     })}
-                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="group/memo relative flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1900px]:min-h-0 max-[1900px]:h-2.5 max-[1900px]:w-2.5 max-[1900px]:rounded-[3px] max-[1900px]:border-slate-200/55 max-[1900px]:bg-slate-200/75 max-[1900px]:p-0"><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1900px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`메모 · ${memo.title}`} className="min-w-0 flex-1 truncate text-left max-[1900px]:absolute max-[1900px]:inset-0 max-[1900px]:text-transparent">{memo.title}</button><span className={cn("pointer-events-none absolute z-50 hidden w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/memo:translate-y-0 group-hover/memo:opacity-100 group-focus-within/memo:translate-y-0 group-focus-within/memo:opacity-100 max-[1900px]:block", dayIndex >= 21 ? "bottom-full mb-2" : "top-full mt-2", day.getDay() >= 5 ? "right-0" : "left-0")}><span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-slate-400">메모 미리보기</span><strong className="mt-1.5 block text-[12px] leading-5 text-white">{memo.title}</strong><span className="mt-1 block text-[9px] text-slate-500">{memo.due_date ?? "일정 없음"}</span><span className="mt-2 block line-clamp-3 text-[10px] font-normal leading-4 text-slate-300">{memoPreview(memo.content_md)}</span></span></div>)}
+                    {dayMemos.map((memo) => <div key={memo.id} draggable onDoubleClick={(event) => event.stopPropagation()} onDragStart={(event: DragEvent<HTMLDivElement>) => startMemoDrag(event, memo)} onDragEnd={() => setDragOverKey(null)} className="group/memo relative flex min-h-[26px] shrink-0 cursor-grab items-center gap-1.5 rounded-md border border-slate-400/45 bg-slate-400/[0.14] px-2 py-0.5 text-left text-[11px] text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing max-[1900px]:min-h-0 max-[1900px]:h-2.5 max-[1900px]:w-2.5 max-[1900px]:rounded-[3px] max-[1900px]:border-slate-200/55 max-[1900px]:bg-slate-200/75 max-[1900px]:p-0"><FilePenLine size={10} className="shrink-0 text-slate-300 max-[1900px]:hidden" /><button type="button" onClick={() => openMemo(memo)} aria-label={`메모 · ${memo.title}`} className="min-w-0 flex-1 truncate text-left max-[1900px]:absolute max-[1900px]:inset-0 max-[1900px]:text-transparent">{memo.title}</button><span className={cn("pointer-events-none absolute z-50 hidden max-w-60 translate-y-1 truncate whitespace-nowrap rounded-lg border border-slate-600/80 bg-[#080f1b] px-2.5 py-1.5 text-left text-[12px] font-medium text-white opacity-0 shadow-xl transition-all group-hover/memo:translate-y-0 group-hover/memo:opacity-100 group-focus-within/memo:translate-y-0 group-focus-within/memo:opacity-100 max-[1900px]:block", dayIndex >= 21 ? "bottom-full mb-2" : "top-full mt-2", day.getDay() >= 5 ? "right-0" : "left-0")}>{memo.title}</span></div>)}
                   </div>
                 </div>
               );

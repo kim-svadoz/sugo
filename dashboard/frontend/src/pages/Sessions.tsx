@@ -19,7 +19,6 @@ import {
   ChevronRight,
   FileCode,
   Lightbulb,
-  Pin,
   Search,
   Shield,
   X,
@@ -146,7 +145,6 @@ export function Sessions() {
 
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
   const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
-  const [selectedTaskTitle, setSelectedTaskTitle] = useState<string | null>(null);
   // 최근 작업 요약(왼쪽) 폭. Inspector와 연결 레일이 같은 값을 따른다. 사용자가 정한 폭은 이 브라우저에만 기억한다.
   const [summaryWidth, setSummaryWidth] = useState(() => {
     try { const saved = Number(localStorage.getItem(SUMMARY_WIDTH_KEY)); return saved >= SUMMARY_WIDTH_MIN && saved <= SUMMARY_WIDTH_MAX ? saved : SUMMARY_WIDTH_DEFAULT; } catch { return SUMMARY_WIDTH_DEFAULT; }
@@ -833,7 +831,7 @@ export function Sessions() {
         같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
       */}
       {selected && !isSearchMode && (
-        <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} onSelectedTitleChange={setSelectedTaskTitle} /></section>
+        <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} /></section>
       )}
       {selected && !isSearchMode && (
         <div key={selectedTaskKey ?? "none"} style={splitStyle} className="pointer-events-none relative z-10 -my-3 flex h-16 2xl:-my-4" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">
@@ -841,9 +839,7 @@ export function Sessions() {
             <span className="ck-bridge-rail absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 rounded-full" />
             {[0, 0.6, 1.2].map((delay) => <span key={delay} className="ck-bridge-spark" style={{ animationDelay: `${delay}s` }} />)}
             <span className="ck-stage-in relative flex max-w-[92%] items-center gap-1.5 rounded-full border border-cyan-300/30 bg-[#0a1424] px-3 py-1 text-[11px] font-medium text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,.18)]">
-              <Pin size={12} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
-              <span className="truncate">{selectedTaskTitle ?? "선택한 작업"}</span>
-              <span className="shrink-0 text-cyan-300/70">완료 기록</span>
+              <span className="shrink-0">완료 기록</span>
               <ArrowDown size={12} strokeWidth={2} className="ck-summary-flow shrink-0 text-cyan-300" />
             </span>
           </div>

@@ -68,10 +68,22 @@ export function placeEvents(events: readonly ActivityEvent[]) {
     .sort((a, b) => b.at - a.at);
 }
 
+/** 지금 차수의 이벤트만 남긴다. 직전 완료(COMPLETED) 이전 차수의 시각이 지금 단계 표시에 섞이지 않게 한다. */
+export function currentRound<T extends { event: ActivityEvent }>(placed: readonly T[]): T[] {
+  const from = placed[0]?.event.event_type === "COMPLETED" ? 1 : 0;
+  const end = placed.findIndex((item, index) => index >= from && item.event.event_type === "COMPLETED");
+  return end < 0 ? [...placed] : placed.slice(0, end);
+}
+
+/** 진행 중이 아닌 레인(완료, 멈춤, 대기)은 접어서 한 줄로 보여 준다. */
+export function floorCollapsedByDefault(state: Pick<FloorState, "live">): boolean {
+  return !state.live;
+}
+
 export function selectFloorState(events: readonly ActivityEvent[], now = Date.now(), context: { waitingReviews?: number } = {}): FloorState {
   const placed = placeEvents(events);
   const lastAt: FloorState["lastAt"] = {};
-  for (const item of placed) lastAt[item.station] ??= { message: item.event.message, at: item.at };
+  for (const item of currentRound(placed)) lastAt[item.station] ??= { message: item.event.message, at: item.at };
   const latest = placed[0];
   const base = latest ? { workspace: latest.event.workspace_name, message: latest.event.message, at: latest.at, lastAt } : { lastAt };
   if (latest?.station === "confirm") return { ...base, station: "confirm", activity: "waiting", live: true, passed: passedBefore("confirm") };
@@ -84,7 +96,7 @@ export function selectFloorState(events: readonly ActivityEvent[], now = Date.no
   if ((context.waitingReviews ?? 0) > 0) return { station: "confirm", activity: "waiting", live: false, passed: [], lastAt };
   if (!latest) return { station: "order", activity: "resting", live: false, passed: [], lastAt };
   const finished = latest.station === "commit";
-  return { ...base, station: latest.station, activity: finished ? "resting" : "paused", live: false, passed: finished ? [] : passedBefore(latest.station) };
+  return { ...base, station: latest.station, activity: finished ? "resting" : "paused", live: false, passed: finished ? FLOOR_STATIONS.map((item) => item.id) : passedBefore(latest.station) };
 }
 
 /**
