@@ -107,7 +107,7 @@ function headlineOf(lane: FloorLane): string {
   return state.station === "commit" ? "마지막 작업을 끝내고 쉬는 중" : "새 작업을 기다리는 중";
 }
 
-function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: ReturnType<typeof resolveTaskTitle> }) {
+function Lane({ lane, now, title, idleSummary }: { lane: FloorLane; now: number; title: ReturnType<typeof resolveTaskTitle>; idleSummary?: ReactNode }) {
   const idle = isFloorIdle(lane.state, now);
   const { state } = lane;
   const index = FLOOR_STATIONS.findIndex((station) => station.id === state.station);
@@ -132,16 +132,21 @@ function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: Retur
       {!idle && <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>}
       {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
     </div>
-    {idle ? <div className="mt-2 flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] py-1.5 pl-1 pr-3.5">
-      <svg viewBox="0 -12 132 108" className="h-[78px] w-[96px] shrink-0" aria-hidden="true">
-        <rect x="4" y="88" width="124" height="4" rx="2" fill="#0f172a" />
-        <rect x="26" y="44" width="10" height="34" rx="3" fill="#334155" />
-        <rect x="26" y="70" width="70" height="9" rx="3" fill="#334155" />
-        <rect x="30" y="79" width="4" height="10" fill="#1e293b" /><rect x="88" y="79" width="4" height="10" fill="#1e293b" />
-        <g transform="translate(62 78)"><BlockPerson role="main" seated className="wk--resting" leftHand={<Mug />} /></g>
-        {[0, 1, 2].map((index) => <text key={index} className="wk-zzz" x={86 + index * 9} y={4 - index * 9} fontSize={9 + index * 2} fontWeight="700" fill="#67e8f9" style={{ animationDelay: `${index * 0.6}s` }}>z</text>)}
+    {idle ? <div className="mt-3 flex flex-col items-center text-center">
+      <svg viewBox="0 -18 220 116" className="h-[104px] w-[198px]" role="img" aria-label="작업을 끝내고 쉬는 중">
+        <rect x="6" y="88" width="208" height="4" rx="2" fill="#0f172a" />
+        {/* 소파 */}
+        <rect x="22" y="52" width="92" height="22" rx="7" fill="#1e3a5f" />
+        <rect x="16" y="64" width="104" height="16" rx="6" fill="#244a73" />
+        <rect x="24" y="80" width="5" height="9" fill="#0f172a" /><rect x="107" y="80" width="5" height="9" fill="#0f172a" />
+        <g transform="translate(68 93)"><BlockPerson role="main" seated className="wk--resting" leftHand={<Mug />} /></g>
+        {[0, 1, 2].map((index) => <text key={index} className="wk-zzz" x={92 + index * 9} y={10 - index * 9} fontSize={9 + index * 2} fontWeight="700" fill="#67e8f9" style={{ animationDelay: `${index * 0.6}s` }}>z</text>)}
+        {/* 끝낸 작업: 출고 상자와 완료 깃발 */}
+        <rect x="140" y="62" width="34" height="26" rx="2" fill="#a16207" /><rect x="140" y="62" width="34" height="7" fill="#ca8a04" /><rect x="154" y="62" width="6" height="26" fill="#fde68a" opacity="0.55" />
+        <circle cx="173" cy="60" r="8" fill="#10b981" /><path d="M169 60 l3 3 l5 -6" stroke="#04281e" strokeWidth="2" fill="none" />
+        <rect x="190" y="30" width="3" height="58" fill="#64748b" /><path d="M193 30 h18 l-5 6 l5 6 h-18 z" fill="#10b981" />
       </svg>
-      <p className="min-w-0 text-[12.5px] leading-5 text-slate-400">{idleMessageOf(lane, now)}</p>
+      <p className="mt-1.5 max-w-[34ch] break-keep text-[12.5px] leading-5 text-slate-400">{idleMessageOf(lane, now)}</p>
     </div> : <>
     <div className="mx-auto w-full max-w-[88%]">
     <svg viewBox="0 0 960 150" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label={`${lane.name} · ${headlineOf(lane)}`}>
@@ -172,11 +177,12 @@ function Lane({ lane, now, title }: { lane: FloorLane; now: number; title: Retur
       })}
     </div>
     </div></>}
+    {idle && idleSummary && <div className="mt-3 border-t border-white/[0.06] pt-3">{idleSummary}</div>}
   </div>;
 }
 
 /** Workspaces의 코드 작업 흐름. 같은 도메인에서 동시에 진행 중인 작업은 작업별 레인으로 나눈다. */
-export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, onIdleChange }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void; onIdleChange?: (idle: boolean) => void }) {
+export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, onIdleChange, idleSummary }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void; onIdleChange?: (idle: boolean) => void; idleSummary?: ReactNode }) {
   const all = useActivityStream(workspace);
   const events = all.filter((event) => event.workspace_name === workspace);
   const [now, setNow] = useState(() => Date.now());
@@ -196,6 +202,6 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, on
   const move = (delta: number) => onSelectedTaskChange?.(lanes[(activeIndex + delta + lanes.length) % lanes.length].key);
   return <div className="work-floor relative space-y-2 pb-1">
     {lanes.length > 1 && <div className="flex items-center justify-end gap-2"><span className="mr-1 text-[10px] text-slate-500">현재 작업 <strong className="font-mono text-cyan-200">{activeIndex + 1} / {lanes.length}</strong></span><button type="button" aria-label="이전 작업" onClick={() => move(-1)} className="rounded-md border border-white/10 p-1 text-slate-400 hover:text-cyan-200"><ChevronLeft size={14} /></button><button type="button" aria-label="다음 작업" onClick={() => move(1)} className="rounded-md border border-white/10 p-1 text-slate-400 hover:text-cyan-200"><ChevronRight size={14} /></button></div>}
-    {title && <Lane lane={lane} now={now} title={title} />}
+    {title && <Lane lane={lane} now={now} title={title} idleSummary={idleSummary} />}
   </div>;
 }

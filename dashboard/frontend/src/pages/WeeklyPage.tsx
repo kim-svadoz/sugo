@@ -143,7 +143,6 @@ function LatestWeek({ report, highlighted, onHover, onLeave, onOpen }: { report:
     </div>
     <footer className="flex flex-wrap gap-2 border-t border-white/[0.06] px-5 py-3">
       <button type="button" aria-label={`${report.weekId} 주간 작업 리포트 열기`} onClick={() => onOpen(report.weekId, "report")} className="settings-action settings-action-primary settings-action-compact gap-1.5">주간 작업<ArrowRight size={14} /></button>
-      <button type="button" onClick={() => onOpen(report.weekId, "learning")} className="settings-action settings-action-secondary settings-action-compact">기술 학습</button>
     </footer>
   </section>;
 }

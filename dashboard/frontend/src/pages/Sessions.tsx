@@ -855,11 +855,7 @@ export function Sessions() {
       {selected && !isSearchMode && (
         <div key={selected.name} ref={splitRef} style={splitStyle} className="command-detail ck-stage-in flex min-h-[340px] flex-1 flex-col items-start gap-3 lg:flex-row lg:gap-0">
           {floorIdle ? <div className="flex w-full flex-col lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
-            <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} onIdleChange={setFloorIdle} /></section>
-            <div key={selectedTaskKey ?? "none"} className="pointer-events-none relative z-10 -my-2 flex h-12 items-center justify-center" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">{summaryBridge}</div>
-            <div className="ck-glass flex min-h-[260px] max-h-[360px] w-full flex-col overflow-hidden rounded-xl border border-cyan-300/25 p-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)]">
-            <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
-          </div>
+            <section className="ck-glass rounded-xl border border-cyan-300/25 px-4 py-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)]" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} onIdleChange={setFloorIdle} idleSummary={<div className="flex max-h-[340px] flex-col overflow-hidden"><LiveConsole workspace={selected.name} taskKey={selectedTaskKey} /></div>} /></section>
           </div> : <>
           <div className="ck-glass flex min-h-[260px] max-h-[360px] w-full self-start flex-col overflow-hidden rounded-xl border border-cyan-300/25 p-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)] lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
             <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
