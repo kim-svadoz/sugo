@@ -118,7 +118,7 @@ describe("schedule presentation", () => {
     expect(source).toContain("agenda.map((group, index)");
     expect(source).toContain('{String(index + 1).padStart(2, "0")}');
     expect(source).toContain('className="font-mono text-[16px] font-semibold tracking-[0.1em] text-slate-500"');
-    expect(source).toContain('className="text-[17px] font-semibold tracking-[0.04em] text-slate-400">{group.label}</h3>');
+    expect(source).toContain('className="relative -top-px text-[17px] font-semibold tracking-[0.04em] text-slate-400">{group.label}</h3>');
     expect(source).toContain('className="space-y-7"');
     expect(source).toContain('className="mb-[6px] flex items-center gap-2.5"');
     expect(source).not.toContain('aria-hidden="true" className="h-px min-w-6 flex-1 bg-white/10"');

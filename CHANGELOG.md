@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.42 / Console 0.42.41] - 2026-10-27
+
+- Schedule의 일정 구간 제목을 1px 올려 순서 번호와 시각적 높이를 맞췄습니다.
+
 ## [Plugin 0.51.41 / Console 0.42.40] - 2026-10-27
 
 - Schedule의 일정 구간 번호·제목 크기와 헤더 간격을 조정해 그룹 연결성을 높였습니다.

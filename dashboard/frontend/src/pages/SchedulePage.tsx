@@ -596,7 +596,7 @@ export function SchedulePage() {
                         <span className="font-mono text-[16px] font-semibold tracking-[0.1em] text-slate-500">
                           {String(index + 1).padStart(2, "0")}
                         </span>
-                        <h3 id={`agenda-${group.id}`} className="text-[17px] font-semibold tracking-[0.04em] text-slate-400">{group.label}</h3>
+                        <h3 id={`agenda-${group.id}`} className="relative -top-px text-[17px] font-semibold tracking-[0.04em] text-slate-400">{group.label}</h3>
                       </div>
                       <div className="grid gap-2 xl:grid-cols-2">
                         {group.items.map((commitment) => {
