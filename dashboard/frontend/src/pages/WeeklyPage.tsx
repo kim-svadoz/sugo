@@ -131,7 +131,7 @@ const monthLabel = (date: string) => `${date.slice(0, 4)}년 ${Number(date.slice
 /** 가장 최근 주는 크게 보여 주고, 열지 않아도 무엇이 담겼는지 항목 수로 알린다. */
 function LatestWeek({ report, highlighted, onHover, onLeave, onOpen }: { report: WeeklyReportSummary; highlighted: boolean; onHover: (weekId: string) => void; onLeave: () => void; onOpen: (weekId: string, view?: WeeklyDetailView) => void }) {
   const counts = report.counts;
-  const stats: Array<[string, number | undefined, boolean]> = [["주제", counts?.topics, false], ["기술 학습", counts?.learnings, false], ["막힌 것", counts?.blocked, true], ["다음 주", counts?.nextWeek, false]];
+  const stats: Array<[string, number | undefined]> = [["주제", counts?.topics], ["기술 학습", counts?.learnings], ["다음 주", counts?.nextWeek]];
   return <section aria-label="최근 주간 보고서" onMouseEnter={() => onHover(report.weekId)} onMouseLeave={onLeave} className={cn("overflow-hidden rounded-2xl border bg-[linear-gradient(135deg,rgba(34,211,238,0.07),rgba(15,23,42,0.55)_45%,rgba(139,92,246,0.06))] transition", highlighted ? "border-cyan-400/60" : "border-[var(--color-border)]")}>
     <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-white/[0.06] px-5 py-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><span className="font-mono text-[11px] font-semibold tracking-[0.18em] text-cyan-300">LATEST</span><strong className="font-mono text-[16px] text-white">{report.weekId}</strong><span className="font-mono text-[12px] text-slate-400">{report.start} — {report.end}</span></div>
@@ -139,7 +139,7 @@ function LatestWeek({ report, highlighted, onHover, onLeave, onOpen }: { report:
     </header>
     <div className="grid gap-5 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_auto]">
       <ul className="space-y-2">{report.headline.slice(0, 3).map((headline) => <li key={headline} className="flex gap-2.5 break-keep text-[13.5px] leading-6 text-slate-100"><span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />{headline}</li>)}</ul>
-      {counts && <dl className="grid grid-cols-2 gap-2 self-start sm:grid-cols-4 lg:grid-cols-2">{stats.map(([label, value, warn]) => <div key={label} className="min-w-[88px] rounded-lg border border-white/[0.07] bg-black/20 px-3 py-2"><dt className="text-[11px] text-slate-400">{label}</dt><dd className={cn("mt-1 font-mono text-[17px] font-semibold leading-none", warn && value ? "text-amber-200" : "text-white")}>{value ?? 0}</dd></div>)}</dl>}
+      {counts && <dl className="grid grid-cols-2 gap-2 self-start sm:grid-cols-3 lg:grid-cols-2">{stats.map(([label, value]) => <div key={label} className="min-w-[88px] rounded-lg border border-white/[0.07] bg-black/20 px-3 py-2"><dt className="text-[11px] text-slate-400">{label}</dt><dd className="mt-1 font-mono text-[17px] font-semibold leading-none text-white">{value ?? 0}</dd></div>)}</dl>}
     </div>
     <footer className="flex flex-wrap gap-2 border-t border-white/[0.06] px-5 py-3">
       <button type="button" aria-label={`${report.weekId} 주간 작업 리포트 열기`} onClick={() => onOpen(report.weekId, "report")} className="settings-action settings-action-primary settings-action-compact gap-1.5">주간 작업<ArrowRight size={14} /></button>
@@ -167,7 +167,7 @@ function WeeklyIndex({ reports, onOpen }: { reports: WeeklyReportSummary[]; onOp
         <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">{items.map((report) => <button key={report.weekId} type="button" aria-label={`${report.weekId} 주간 작업 리포트 열기`} onMouseEnter={() => moveHighlight(report.weekId)} onMouseLeave={() => setHovered(null)} onFocus={() => moveHighlight(report.weekId)} onBlur={() => setHovered(null)} onClick={() => onOpen(report.weekId)} className={cn("group grid w-full grid-cols-[88px_minmax(0,1fr)_auto] items-center gap-4 border-b border-white/[0.05] px-4 py-3 text-left transition last:border-b-0 sm:grid-cols-[88px_196px_minmax(0,1fr)_auto]", hovered === report.weekId ? "bg-cyan-400/[0.07]" : "hover:bg-white/[0.025]")}>
           <strong className="font-mono text-[13px] text-cyan-100">{report.weekId}</strong>
           <span className="hidden whitespace-nowrap font-mono text-[11px] text-[var(--color-text-muted)] sm:block">{report.start} — {report.end}</span>
-          <span className="min-w-0"><span className="block truncate text-[12.5px] leading-5 text-[var(--color-text)]">{report.headline[0] ?? "요약 없음"}</span>{report.counts && <span className="mt-0.5 block text-[11px] text-slate-500">주제 {report.counts.topics}, 기술 학습 {report.counts.learnings}{report.counts.blocked ? <span className="text-amber-300/80">, 막힌 것 {report.counts.blocked}</span> : null}</span>}</span>
+          <span className="min-w-0"><span className="block truncate text-[12.5px] leading-5 text-[var(--color-text)]">{report.headline[0] ?? "요약 없음"}</span>{report.counts && <span className="mt-0.5 block text-[11px] text-slate-500">주제 {report.counts.topics}, 기술 학습 {report.counts.learnings}</span>}</span>
           <span className="grid h-7 w-7 place-items-center rounded-full border border-[var(--color-border)] text-[var(--color-text-muted)] transition group-hover:border-cyan-400/40 group-hover:bg-cyan-400/10 group-hover:text-cyan-200"><ArrowRight size={13} /></span>
         </button>)}</div>
       </div>)}</section>}

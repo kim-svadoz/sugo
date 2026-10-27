@@ -17,4 +17,9 @@ describe("Weekly index presentation", () => {
     expect(source).toContain("text-[12.5px] leading-5");
     expect(source).toContain("font-mono text-[11px]");
   });
+
+  it("does not reduce weekly blockers to a repeated index count", () => {
+    expect(source).not.toContain('["막힌 것", counts?.blocked, true]');
+    expect(source).not.toContain("막힌 것 {report.counts.blocked}");
+  });
 });
