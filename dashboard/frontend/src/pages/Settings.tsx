@@ -289,22 +289,7 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspac
       {registrationOnly && saveMessage && <div role="status" className="border border-emerald-400/25 bg-emerald-400/[0.06] px-4 py-3 text-xs font-semibold text-emerald-200">✓ {saveMessage}</div>}
       {!registrationOnly && statusOnly && (projects.length === 0 ? <div className="py-8 text-center text-xs text-[var(--color-text-dim)]">등록된 프로젝트가 없습니다.</div> : <div className="divide-y divide-white/[0.07] border-y border-white/[0.08]">{projects.map((item) => { const summary = summarizeSavedIntegrations(item.selections); return <div key={item.project_path} className="grid gap-3 px-1 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] sm:items-center"><div><strong className="font-mono text-sm text-[var(--color-text)]">{item.workspace_name} / {item.project_path.split('/').at(-1)}</strong><span className="mt-1 block text-[11px] text-[var(--color-text-dim)]">{item.configured ? item.selections.length > 0 ? `${item.selections.length}개 서비스 연결됨` : "운영 정보 사용 안 함" : "서비스 매핑 안 됨"}</span></div><div className="flex flex-wrap gap-2">{summary.flatMap((group) => group.services.map((service) => <span key={`${group.environment}-${service}`} className="border border-emerald-300/15 bg-emerald-300/[0.025] px-2.5 py-1.5 text-[11px] text-[var(--color-text)]"><b className="mr-1.5 font-mono text-emerald-300">{group.environment}</b>{service}</span>))}{summary.length === 0 && <span className="text-xs text-[var(--color-text-muted)]">연결된 ECS 서비스 없음</span>}</div></div>})}</div>)}
       {!registrationOnly && !statusOnly && <>
-      <div className="break-keep border-y border-cyan-300/15 bg-cyan-300/[0.025] px-5 py-4">
-        <div className="flex items-start justify-between gap-6">
-          <div className="min-w-0 flex-1">
-            <strong className="text-sm text-cyan-100">연결 방법</strong>
-            <p className="mt-1.5 text-[12.5px] leading-6 text-[var(--color-text-muted)]">Sugo 프로젝트를 AWS에서 돌고 있는 ECS 서비스와 연결합니다.</p>
-            <p className="text-[12.5px] leading-6 text-[var(--color-text-muted)]">저장한 연결은 Workspaces Inspector와 Schedule의 배포 상태(DEV, STG, PRD)에 쓰입니다.</p>
-          </div>
-          <Link to="/sessions" className="settings-action settings-action-secondary settings-action-compact shrink-0">Workspaces 열기</Link>
-        </div>
-        <ol className="mt-4 grid gap-x-6 gap-y-3 border-t border-white/[0.06] pt-4 sm:grid-cols-3">
-          <li className="flex gap-2.5"><span className="font-mono text-[12px] text-cyan-300">01</span><span className="min-w-0"><b className="block text-[13px] text-[var(--color-text)]">프로젝트 등록</b><span className="mt-0.5 block text-[12px] leading-5 text-[var(--color-text-dim)]">위 등록 폼 또는 <code className="font-mono text-[11px] text-cyan-200">/sugo:add</code> 사용</span></span></li>
-          <li className="flex gap-2.5"><span className="font-mono text-[12px] text-cyan-300">02</span><span className="min-w-0"><b className="block text-[13px] text-[var(--color-text)]">AWS 동기화</b><span className="mt-0.5 block text-[12px] leading-5 text-[var(--color-text-dim)]">계정을 동기화하면 ECS 서비스가 후보로 표시</span></span></li>
-          <li className="flex gap-2.5"><span className="font-mono text-[12px] text-cyan-300">03</span><span className="min-w-0"><b className="block text-[13px] text-[var(--color-text)]">확인 후 저장</b><span className="mt-0.5 block text-[12px] leading-5 text-[var(--color-text-dim)]">일치 후보는 미리 체크, 저장해야 연결</span></span></li>
-        </ol>
-        <p className="mt-4 rounded-lg bg-black/20 px-3 py-2 text-[11.5px] leading-5 text-[var(--color-text-dim)]"><b className="text-amber-200">프로젝트와 일치</b> 기준: 저장소 폴더 이름이 ECS 서비스 이름(끝의 <code className="font-mono">-service</code> 제외) 또는 컨테이너 이미지 이름과 같습니다. 다르면 목록에서 직접 고릅니다.</p>
-      </div>
+      <div className="flex items-center justify-between gap-4 border-y border-white/[0.07] px-1 py-3"><details className="text-xs text-[var(--color-text-muted)]"><summary className="font-semibold text-[var(--color-text)]">서비스 매핑 기준</summary><p className="mt-2 max-w-3xl leading-5">프로젝트 이름과 ECS 서비스·컨테이너 이미지 이름이 일치하면 후보로 표시합니다. 실제 연결은 저장할 때 확정됩니다.</p></details><Link to="/sessions" className="settings-action settings-action-secondary settings-action-compact shrink-0">Workspaces 열기</Link></div>
       {!registrationOnly && !statusOnly && (projects.length === 0 ? <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] pb-5"><p className="text-xs text-[var(--color-text-dim)]">아직 등록된 프로젝트가 없습니다. 위 등록 폼이나 <code className="font-mono text-[11px] text-cyan-200">/sugo:add</code> 중 편한 방법을 사용할 수 있습니다.</p><button type="button" onClick={() => setRegistering(true)} className="settings-action settings-action-primary">프로젝트 등록</button></div> : <>
         <div className="grid gap-4 border-y border-white/[0.07] py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-center"><div><strong className="block text-sm text-[var(--color-text)]">적용할 프로젝트</strong><span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">프로젝트마다 사용할 운영 근거를 고릅니다.</span></div><select value={path} onChange={(event) => { const next = event.target.value; const nextProject = projects.find((item) => item.project_path === next); setPath(next); setSelected(initialIntegrationSelection(nextProject, candidates, key)); setSaveMessage(null); }} className="settings-field w-full">{projects.map((item) => <option key={item.project_path} value={item.project_path}>{item.workspace_name} / {item.project_path.split('/').at(-1)} ({integrationStatusLabel(item)})</option>)}</select></div>
         {saveMessage && <div role="status" className="border border-emerald-400/25 bg-emerald-400/[0.06] px-4 py-3 text-xs font-semibold text-emerald-200">✓ {saveMessage}</div>}
@@ -513,7 +498,7 @@ function ProjectGitConnections({ workspaces }: { workspaces: WorkspaceSummary[] 
 
 export function Settings() {
   const [searchParams] = useSearchParams();
-  const [selectedSection, setSelectedSection] = useState<IntegrationViewId>("overview");
+  const [selectedSection, setSelectedSection] = useState<IntegrationViewId>("registration");
   const [awsConnected, setAwsConnected] = useState(false);
   const [pinpointConnected, setPinpointConnected] = useState(false);
   const [providers, setProviders] = useState<GitProviderDescriptor[] | null>(null);
@@ -584,22 +569,31 @@ export function Settings() {
   }
 
   const repositorySummary = summarizeRepositoryConnections(workspaces);
+  const activeGroup = selectedSection === "registration" || selectedSection === "serviceMapping"
+    ? "projects"
+    : selectedSection === "overview" || selectedSection === "projects"
+      ? "status"
+      : "services";
+  const visibleProviders = providers?.filter((provider) => selectedSection === "aws" ? provider.id === "aws_codecommit" : provider.id !== "aws_codecommit") ?? null;
+  const visibleConnections = connections.filter((connection) => selectedSection === "aws" ? connection.provider === "aws_codecommit" : connection.provider !== "aws_codecommit");
 
   return (
     <div className="settings-interface mx-auto max-w-6xl space-y-6">
       <PageHeading eyebrow="SYSTEM INTEGRATIONS" title="외부 연동" description="저장소와 운영 환경을 연결하고, Sugo가 사용할 외부 서비스의 범위를 관리합니다." />
 
-      <ConnectionJourney projectCount={repositorySummary.projectCount} remoteCount={repositorySummary.remoteProjectCount} permissionCount={connections.length} awsConnected={awsConnected} pinpointConnected={pinpointConnected} onOpenGit={() => setSelectedSection("overview")} />
+      <nav aria-label="외부 연동 단계" className="grid border-y border-[var(--color-border)] md:grid-cols-3">
+        {[
+          { id: "projects", number: "01", label: "프로젝트", description: "등록과 서비스 매핑", target: "registration" as const },
+          { id: "services", number: "02", label: "외부 서비스", description: "인증과 사용 범위", target: "aws" as const },
+          { id: "status", number: "03", label: "연결 현황", description: "읽기 전용 결과", target: "overview" as const },
+        ].map((item) => <button key={item.id} type="button" aria-pressed={activeGroup === item.id} onClick={() => setSelectedSection(item.target)} className={`grid min-h-20 grid-cols-[2rem_1fr] border-b border-[var(--color-border)] px-5 py-4 text-left transition md:border-b-0 md:border-r ${activeGroup === item.id ? "bg-cyan-300/[0.055] shadow-[inset_0_-2px_var(--color-primary)]" : "hover:bg-white/[0.02]"}`}><span className="row-span-2 font-mono text-xs text-cyan-300">{item.number}</span><strong className="text-sm text-[var(--color-text)]">{item.label}</strong><small className="mt-1 text-[11px] text-[var(--color-text-dim)]">{item.description}</small></button>)}
+      </nav>
 
-      <nav aria-label="연동 설정" className="flex flex-wrap items-stretch border-y border-[var(--color-border)]">
-        <div className="flex flex-wrap items-center border-b border-[var(--color-border)] px-2 sm:border-b-0 sm:border-r">
-          <span className="px-3 py-3 text-[10px] font-semibold tracking-[0.12em] text-emerald-300/75">현황 확인</span>
-          {[{ id: "overview" as const, label: "코드 저장소" }, { id: "projects" as const, label: "서비스 상태" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-emerald-300 text-emerald-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
-        </div>
-        <div className="flex flex-1 flex-wrap items-center px-2">
-          <span className="px-3 py-3 text-[10px] font-semibold tracking-[0.12em] text-cyan-300/75">연동 구성</span>
-          {[{ id: "registration" as const, label: "프로젝트 등록" }, { id: "serviceMapping" as const, label: "서비스 매핑" }, { id: "git" as const, label: "PR 작업 권한" }, { id: "aws" as const, label: `AWS 데이터 소스${awsConnected ? " · 연결됨" : ""}` }, { id: "pinpoint" as const, label: `모니터링${pinpointConnected ? " · 연결됨" : ""}` }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
-        </div>
+      <nav aria-label={`${activeGroup} 세부 화면`} className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2">
+        {(activeGroup === "projects" ? [{ id: "registration" as const, label: "프로젝트 등록" }, { id: "serviceMapping" as const, label: "서비스 매핑" }]
+          : activeGroup === "services" ? [{ id: "aws" as const, label: `AWS${awsConnected ? " · 연결됨" : ""}` }, { id: "git" as const, label: "GitHub · GitLab" }, { id: "pinpoint" as const, label: `Pinpoint${pinpointConnected ? " · 연결됨" : ""}` }]
+          : [{ id: "overview" as const, label: "코드 저장소" }, { id: "projects" as const, label: "서비스 상태" }]
+        ).map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
       </nav>
 
       {!LOCAL_DEV && <ApiTokensCard />}
@@ -612,8 +606,8 @@ export function Settings() {
       {selectedSection === "projects" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} statusOnly />}
       {selectedSection === "serviceMapping" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} />}
 
-      {(selectedSection === "overview" || selectedSection === "git") && <div id="integration-git" className="scroll-mt-24 overflow-hidden">
-        <div className="integration-panel-header flex items-center justify-between gap-3 border-b border-[var(--color-border)]">
+      {(selectedSection === "overview" || selectedSection === "git" || selectedSection === "aws") && <div id="integration-git" className="scroll-mt-24 overflow-hidden">
+        {selectedSection !== "aws" && <div className="integration-panel-header flex items-center justify-between gap-3 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2.5">
           <span className="grid h-10 w-10 place-items-center rounded-full border border-cyan-300/20 text-[var(--color-primary)]"><GitBranch size={17} /></span>
           <div>
@@ -621,11 +615,11 @@ export function Settings() {
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">{selectedSection === "overview" ? "등록한 로컬 프로젝트의 Git remote를 읽어 현재 연결 상태만 보여줍니다." : "Sugo가 원격 서비스에서 PR을 직접 조회하거나 만들 때만 추가로 설정합니다."}</p>
           </div>
           </div>
-        </div>
+        </div>}
 
         <div className="integration-panel-body space-y-5">
           {selectedSection === "overview" && <ProjectGitConnections workspaces={workspaces} />}
-          {selectedSection === "git" && <>
+          {(selectedSection === "git" || selectedSection === "aws") && <>
           {error && (
             <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
               {error}
@@ -633,7 +627,7 @@ export function Settings() {
           )}
           </>}
 
-          {selectedSection === "git" && (providers === null ? (
+          {(selectedSection === "git" || selectedSection === "aws") && (visibleProviders === null ? (
             <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
               <span className="inline-block h-4 w-4 animate-spin rounded-full border-b-2 border-[var(--color-primary)]" />
               불러오는 중…
@@ -643,15 +637,15 @@ export function Settings() {
               <div className="border-y border-[var(--color-border)] px-1 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-sm font-medium text-[var(--color-text)]">PR 조회·생성 권한 <span className="font-normal text-[var(--color-text-dim)]">· 선택</span></div>
-                    <div className="mt-0.5 text-xs leading-5 text-[var(--color-text-muted)]">코드 저장소 화면은 Git remote를 읽은 현황입니다. 여기서는 Sugo가 GitHub·GitLab·CodeCommit API로 PR을 조회하거나 만들 권한만 설정합니다. 서비스 상태·APM 연결과도 별개입니다.</div>
+                    <div className="text-sm font-medium text-[var(--color-text)]">{selectedSection === "aws" ? "CodeCommit PR 작업" : "PR 조회·생성 권한"} <span className="font-normal text-[var(--color-text-dim)]">· 선택</span></div>
+                    <div className="mt-0.5 text-xs leading-5 text-[var(--color-text-muted)]">{selectedSection === "aws" ? "같은 AWS 인증으로 CodeCommit PR을 조회하거나 만듭니다." : "원격 저장소의 PR을 조회하거나 만들 때만 설정합니다."}</div>
                   </div>
-                  <span className="shrink-0 bg-white/[0.035] px-2.5 py-1 text-[10px] font-semibold text-[var(--color-text-muted)]">{connections.length > 0 ? `${connections.length}개 권한 설정` : "설정 안 함"}</span>
+                  <span className="shrink-0 bg-white/[0.035] px-2.5 py-1 text-[10px] font-semibold text-[var(--color-text-muted)]">{visibleConnections.length > 0 ? "사용 중" : "사용 안 함"}</span>
                 </div>
               </div>
 
-              {connections.map((connection) => {
-                const provider = providers.find((item) => item.id === connection.provider);
+              {visibleConnections.map((connection) => {
+                const provider = visibleProviders.find((item) => item.id === connection.provider);
                 return (
                   <div key={connection.provider} className="rounded-lg border border-emerald-500/35 bg-emerald-500/8 px-4 py-3">
                     <div className="flex items-start justify-between gap-3">
@@ -668,7 +662,7 @@ export function Settings() {
               })}
 
               <div className="grid gap-2 sm:grid-cols-2">
-                {providers.map((provider) => {
+                {visibleProviders.map((provider) => {
                   const connected = connections.some((item) => item.provider === provider.id);
                   const planned = provider.status === "planned";
                   const detectedProjects = repositorySummary.providerProjects[provider.id] ?? [];
@@ -690,8 +684,8 @@ export function Settings() {
                 })}
               </div>
 
-              {selected && (() => {
-                const provider = providers.find((item) => item.id === selected)!;
+              {selected && visibleProviders.some((provider) => provider.id === selected) && (() => {
+                const provider = visibleProviders.find((item) => item.id === selected)!;
                 const requiresBaseUrl = provider.id === "bitbucket_server";
                 const usesAwsCredentials = provider.authMode === "aws_default_chain";
                 const detectedProjects = repositorySummary.providerProjects[provider.id] ?? [];
