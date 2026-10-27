@@ -10,6 +10,7 @@ import { ensureWorkspaceDeletedAtColumn } from "./syncService.js";
 import { readySet, topoSort, wouldCreateCycle } from "./roadmapGraph.js";
 import { parseJsonArray, parseMaybeJson } from "../db/jsonColumn.js";
 import { linkAwsDeployments, linkAwsRelease, type AwsDeploymentSnapshot, type AwsProjectDeployment, type AwsProjectRelease, type PinpointApplicationSnapshot, type ProjectIntegrationSelection } from "./awsDeploymentLink.js";
+import { describeRemoteGit, type RemoteGitState } from "../git/remoteGit.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -22,6 +23,17 @@ export interface WorkspaceProjectRow {
   aws_deployments: AwsProjectDeployment[];
   aws_release: AwsProjectRelease | null;
   local_git: LocalGitState;
+  remote_git: RemoteGitState | null;
+}
+
+async function readRemoteGitState(projectPath: string): Promise<RemoteGitState | null> {
+  try {
+    const { stdout } = await execFileAsync("git", ["-C", projectPath, "remote", "get-url", "origin"], { timeout: 5_000 });
+    const remoteUrl = stdout.trim();
+    return remoteUrl ? describeRemoteGit(remoteUrl) : null;
+  } catch {
+    return null;
+  }
 }
 
 async function resolveBaseCommit(projectPath: string, baseBranch: string | null): Promise<string | null> {
@@ -217,7 +229,11 @@ export async function listWorkspaces(db: DbClient, userId: string): Promise<Work
     const projects: WorkspaceProjectRow[] = await Promise.all(projectRows.map(async (project) => {
       const deployments = linkAwsDeployments(project.project_path, awsSnapshots, pinpointSnapshots, integrationMappings.has(project.project_path) ? integrationMappings.get(project.project_path) : undefined);
       const release = linkAwsRelease(project.project_path, awsSnapshots);
-      return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments, aws_release: release, local_git: await readLocalGitState(project.project_path, release?.baseBranch ?? null) };
+      const [localGit, remoteGit] = await Promise.all([
+        readLocalGitState(project.project_path, release?.baseBranch ?? null),
+        readRemoteGitState(project.project_path),
+      ]);
+      return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments, aws_release: release, local_git: localGit, remote_git: remoteGit };
     }));
     const tasks = await taskCounts(db, userId, ws.name);
     const roadmap = await roadmapCounts(db, userId, ws.name);

@@ -19,6 +19,12 @@ export interface WorkspaceSummary {
       latestBuildAt: string | null;
     } | null;
     local_git: { branch: string | null; headCommit: string | null; baseCommit: string | null; dirty: boolean };
+    remote_git: {
+      remoteUrl: string;
+      provider: "github" | "gitlab" | "bitbucket_server" | "aws_codecommit" | "git_remote";
+      providerLabel: string;
+      repository: string;
+    } | null;
     aws_deployments: Array<{
       linkMode: "suggested" | "confirmed";
       accountName: string;

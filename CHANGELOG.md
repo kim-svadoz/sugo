@@ -4,6 +4,11 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.46 / Console 0.42.45] - 2026-10-27
+
+- Integrations에서 로컬 Git, GitHub·GitLab·CodeCommit 같은 원격 저장소, AWS 운영 연결을 서로 다른 상태로 안내하고 프로젝트별 실제 `origin` 연결을 보여줍니다.
+- Workspace Inspector의 모호한 `Git Synced`·`AWS Suggested` 태그를 실제 연결 대상과 확정 여부가 드러나는 한글 상태로 바꿨습니다.
+
 ## [Plugin 0.51.45 / Console 0.42.44] - 2026-10-27
 
 - Weekly 상세의 `주간 보고서 목록` 버튼을 페이지 제목 영역 오른쪽으로 옮겼습니다.

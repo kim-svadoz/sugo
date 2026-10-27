@@ -46,9 +46,16 @@ import { historyContextTitle, historyDisplayDate, historyDisplayTitle } from "..
 import { workspacePulse } from "../lib/operationalPulse.js";
 import { workspaceCommandSummary } from "../lib/experienceModel.js";
 import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
+import { repositoryConnectionBadges, type RepositoryBadgeTone } from "../lib/repositoryConnectionPresentation.js";
 
 /** 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
+const REPOSITORY_BADGE_CLASS: Record<RepositoryBadgeTone, string> = {
+  local: "border-slate-400/20 bg-slate-400/[0.07] text-slate-300",
+  remote: "border-cyan-400/25 bg-cyan-400/10 text-cyan-200",
+  suggested: "border-amber-400/25 bg-amber-400/10 text-amber-200",
+  confirmed: "border-emerald-400/25 bg-emerald-400/10 text-emerald-300",
+};
 const APM_STATE = {
   OBSERVED: { label: "APM 관측", color: "text-emerald-300" },
   STALE: { label: "APM 지연", color: "text-amber-300" },
@@ -435,6 +442,16 @@ export function Sessions() {
                 const releaseComparison = compareRelease(p.aws_release, p.local_git, imageVersions);
                 const releaseState = RELEASE_STATE[releaseComparison];
                 const isExpanded = expandedRepository === p.project_path;
+                const awsLinkMode = p.aws_deployments.some((deployment) => deployment.linkMode === "confirmed")
+                  ? "confirmed"
+                  : p.aws_deployments.length > 0
+                    ? "suggested"
+                    : null;
+                const connectionBadges = repositoryConnectionBadges({
+                  localGitAvailable: p.local_git.headCommit != null,
+                  remoteProviderLabel: p.remote_git?.providerLabel ?? null,
+                  awsLinkMode,
+                });
                 return (
                 <li
                   key={p.project_path}
@@ -451,8 +468,7 @@ export function Sessions() {
                       <span className="truncate font-mono text-sm font-semibold text-[var(--color-text-bright)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
                     </span>
                     <div className="flex shrink-0 gap-1.5">
-                      {p.git_synced === 1 && <span className="rounded border border-emerald-400/25 bg-emerald-400/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">Git Synced</span>}
-                      {p.aws_synced === 1 && <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">{p.aws_deployments.some((deployment) => deployment.linkMode === 'confirmed') ? 'AWS Synced' : 'AWS Suggested'}</span>}
+                      {connectionBadges.map((badge) => <span key={badge.label} className={`rounded border px-1.5 py-0.5 text-[10px] font-bold ${REPOSITORY_BADGE_CLASS[badge.tone]}`}>{badge.label}</span>)}
                     </div>
                   </button>
                   {isExpanded && <div className="border-t border-[var(--color-border)] px-3 pb-3">

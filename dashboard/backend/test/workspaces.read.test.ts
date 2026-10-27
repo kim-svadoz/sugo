@@ -61,7 +61,7 @@ describe("GET /api/workspaces", () => {
     expect(ws.name).toBe("ws1");
     expect(ws.projects).toEqual([{
       project_path: "C:/a", git_synced: 1, aws_synced: 0, aws_deployments: [], aws_release: null,
-      local_git: { branch: null, headCommit: null, baseCommit: null, dirty: false },
+      local_git: { branch: null, headCommit: null, baseCommit: null, dirty: false }, remote_git: null,
     }]);
     expect(ws.taskCounts).toEqual({ pending: 0, in_progress: 1, done: 1, archived: 0 });
     expect(ws.roadmap).toEqual({ total: 2, done: 1, active: 1 });

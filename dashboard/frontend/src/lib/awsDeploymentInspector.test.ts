@@ -2,9 +2,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("Workspace repository AWS deployment inspector", () => {
-  it("shows AWS synced and environment deployment details", () => {
+  it("separates repository connections from AWS deployment details", () => {
     const source = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
-    expect(source).toContain("AWS Synced");
+    expect(source).toContain("repositoryConnectionBadges");
+    expect(source).toContain("remoteProviderLabel: p.remote_git?.providerLabel");
+    expect(source).toContain("awsLinkMode");
     expect(source).toContain("p.aws_deployments.map");
     expect(source).toContain("deployment.taskDefinition");
     expect(source).toContain("deployment.runningCount");

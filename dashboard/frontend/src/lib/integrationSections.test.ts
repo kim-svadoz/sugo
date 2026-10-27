@@ -12,7 +12,9 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("지원 도구 관리");
     expect(source).toContain("● 연결됨");
     expect(source).toContain('align = "left", status');
-    expect(source).toContain("개 사용 중");
+    expect(source).toContain("외부 {externalConnectionCount}개 · 로컬 Git");
+    expect(source).toContain("로컬 Git은 준비됐습니다");
+    expect(source).toContain("프로젝트별 연결");
     expect(source).toContain("필요한 운영 도구만 연결하세요");
     expect(source).toContain("AWS Context");
     expect(source).toContain("AWS 읽기 범위");
@@ -21,7 +23,7 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("프로젝트 외부 연동");
     expect(source).toContain("Git 작업 경로");
     expect(source).toContain("CONNECTED SOURCES");
-    expect(source).toContain("CONTROL PLANE");
+    expect(source).toContain("OPTIONAL OPERATIONS");
     expect(source.indexOf('id: "pinpoint"')).toBeLessThan(source.indexOf('id: "projects"'));
     expect(source).not.toContain('id: "guard"');
   });

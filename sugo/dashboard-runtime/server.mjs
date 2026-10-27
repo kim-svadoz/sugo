@@ -45582,12 +45582,42 @@ var init_roadmapGraph = __esm({
   }
 });
 
+// ../dashboard/backend/src/git/remoteGit.ts
+function repositoryFromUrl(remoteUrl) {
+  const codeCommit = remoteUrl.match(/\/v1\/repos\/([^/?#]+)/i)?.[1];
+  if (codeCommit) return codeCommit.replace(/\.git$/i, "");
+  const withoutQuery = remoteUrl.split(/[?#]/, 1)[0] ?? remoteUrl;
+  const scpPath = withoutQuery.match(/^[^/@\s]+@[^:\s]+:(.+)$/)?.[1];
+  const path = scpPath ?? withoutQuery.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]+\/?/i, "");
+  return path.replace(/^\/+/, "").replace(/^scm\//i, "").replace(/\.git$/i, "");
+}
+function describeRemoteGit(remoteUrl) {
+  const normalized = remoteUrl.toLowerCase();
+  const provider = normalized.includes("github.com") ? "github" : normalized.includes("gitlab") ? "gitlab" : normalized.includes("git-codecommit.") ? "aws_codecommit" : normalized.includes("bitbucket") ? "bitbucket_server" : "git_remote";
+  const providerLabel = provider === "github" ? "GitHub" : provider === "gitlab" ? "GitLab" : provider === "aws_codecommit" ? "AWS CodeCommit" : provider === "bitbucket_server" ? "Bitbucket Server" : "Git \uC6D0\uACA9 \uC800\uC7A5\uC18C";
+  return { remoteUrl, provider, providerLabel, repository: repositoryFromUrl(remoteUrl) };
+}
+var init_remoteGit = __esm({
+  "../dashboard/backend/src/git/remoteGit.ts"() {
+    "use strict";
+  }
+});
+
 // ../dashboard/backend/src/services/workspaceService.ts
 import { randomBytes } from "node:crypto";
 import { execFile as execFile3 } from "node:child_process";
 import { readFile as readFile3, rename as renameFile, unlink, writeFile } from "node:fs/promises";
 import { basename as basename3, dirname, extname, isAbsolute as isAbsolute3, join as join3, resolve as resolve3, sep } from "node:path";
 import { promisify as promisify5 } from "node:util";
+async function readRemoteGitState(projectPath) {
+  try {
+    const { stdout } = await execFileAsync("git", ["-C", projectPath, "remote", "get-url", "origin"], { timeout: 5e3 });
+    const remoteUrl = stdout.trim();
+    return remoteUrl ? describeRemoteGit(remoteUrl) : null;
+  } catch {
+    return null;
+  }
+}
 async function resolveBaseCommit(projectPath, baseBranch) {
   if (!baseBranch) return null;
   for (const ref of [`refs/remotes/origin/${baseBranch}`, `refs/heads/${baseBranch}`]) {
@@ -45721,7 +45751,11 @@ async function listWorkspaces(db2, userId2) {
     const projects = await Promise.all(projectRows.map(async (project) => {
       const deployments = linkAwsDeployments(project.project_path, awsSnapshots, pinpointSnapshots, integrationMappings.has(project.project_path) ? integrationMappings.get(project.project_path) : void 0);
       const release2 = linkAwsRelease(project.project_path, awsSnapshots);
-      return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments, aws_release: release2, local_git: await readLocalGitState(project.project_path, release2?.baseBranch ?? null) };
+      const [localGit, remoteGit] = await Promise.all([
+        readLocalGitState(project.project_path, release2?.baseBranch ?? null),
+        readRemoteGitState(project.project_path)
+      ]);
+      return { ...project, aws_synced: deployments.length > 0 ? 1 : 0, aws_deployments: deployments, aws_release: release2, local_git: localGit, remote_git: remoteGit };
     }));
     const tasks = await taskCounts(db2, userId2, ws.name);
     const roadmap = await roadmapCounts2(db2, userId2, ws.name);
@@ -46491,6 +46525,7 @@ var init_workspaceService = __esm({
     init_roadmapGraph();
     init_jsonColumn();
     init_awsDeploymentLink();
+    init_remoteGit();
     execFileAsync = promisify5(execFile3);
     STALE_ATTENTION_HOURS = 6;
     historySelect = `SELECT h.id, h.workspace_name, h.task_id, h.task_title,
@@ -90480,7 +90515,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname5(fileURLToPath3(import.meta.url));
-    pkg = "0.42.44" ? { version: "0.42.44" } : JSON.parse(readFileSync(join14(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.42.45" ? { version: "0.42.45" } : JSON.parse(readFileSync(join14(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90603,7 +90638,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.42.44", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.42.45", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });
