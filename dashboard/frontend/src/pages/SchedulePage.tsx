@@ -593,7 +593,7 @@ export function SchedulePage() {
                   {agenda.map((group, index) => (
                     <section key={group.id} aria-labelledby={`agenda-${group.id}`}>
                       <div className="mb-2 flex items-center gap-2.5">
-                        <span className="font-mono text-[13px] font-semibold tracking-[0.12em] text-slate-500">
+                        <span className="font-mono text-[14px] font-semibold tracking-[0.12em] text-slate-500">
                           {String(index + 1).padStart(2, "0")}
                         </span>
                         <h3 id={`agenda-${group.id}`} className="text-[16px] font-semibold tracking-[0.04em] text-slate-400">{group.label}</h3>

@@ -117,7 +117,7 @@ describe("schedule presentation", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("agenda.map((group, index)");
     expect(source).toContain('{String(index + 1).padStart(2, "0")}');
-    expect(source).toContain('className="font-mono text-[13px] font-semibold tracking-[0.12em] text-slate-500"');
+    expect(source).toContain('className="font-mono text-[14px] font-semibold tracking-[0.12em] text-slate-500"');
     expect(source).toContain('className="text-[16px] font-semibold tracking-[0.04em] text-slate-400">{group.label}</h3>');
     expect(source).toContain('className="space-y-7"');
     expect(source).toContain('className="mb-2 flex items-center gap-2.5"');
