@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.48 / Console 0.42.47] - 2026-10-27
+
+- Integrations를 연결 현황·프로젝트 매핑·저장소 작업 권한으로 분리하고, ECS/APM 선택의 저장 전 변경과 실제 연결 완료 상태를 구분해 보여줍니다.
+
 ## [Plugin 0.51.47 / Console 0.42.46] - 2026-10-27
 
 - Integrations에서 CodeCommit helper 형식의 실제 remote를 올바르게 감지하고, 프로젝트 연결·저장소 작업 권한·AWS/APM 운영 연결을 한 흐름에서 구분해 보여줍니다.

@@ -43,3 +43,26 @@ export function moveIntegrationKeys(current: string[], checked: string[], direct
   const removed = new Set(checked);
   return current.filter((value) => !removed.has(value));
 }
+
+export function hasIntegrationSelectionChanges(
+  saved: Array<{ accountName: string; service: string; cluster?: string | null }>,
+  selected: string[],
+  key: KeyFn,
+): boolean {
+  const savedKeys = saved.map(key).sort();
+  const selectedKeys = [...selected].sort();
+  return savedKeys.length !== selectedKeys.length || savedKeys.some((value, index) => value !== selectedKeys[index]);
+}
+
+export function summarizeSavedIntegrations(
+  selections: Array<{ environment: string; service: string }>,
+): Array<{ environment: string; services: string[] }> {
+  const grouped = new Map<string, string[]>();
+  for (const selection of selections) {
+    const environment = selection.environment.toUpperCase();
+    const services = grouped.get(environment) ?? [];
+    if (!services.includes(selection.service)) services.push(selection.service);
+    grouped.set(environment, services);
+  }
+  return [...grouped.entries()].map(([environment, services]) => ({ environment, services }));
+}
