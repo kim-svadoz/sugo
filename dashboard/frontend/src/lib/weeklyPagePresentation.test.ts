@@ -8,6 +8,8 @@ describe("Weekly index presentation", () => {
     expect(source).toContain('title="주간 작업 리포트"');
     expect(source).toContain("← 주간 보고서 목록");
     expect(source).not.toContain("← 전체 주 목록");
+    expect(source).toContain("action={selected ?");
+    expect(source).toContain('className="flex justify-end"');
     expect(source).not.toContain("보고서 열기 →");
     expect(source).toContain("<ArrowRight");
   });
