@@ -198,7 +198,6 @@ export function Sessions() {
   const [searchQuery, setSearchQuery] = useState("");
   const [inspectorPage, setInspectorPage] = useState(0);
   const [expandedRepository, setExpandedRepository] = useState<string | null>(null);
-  const [addCopied, setAddCopied] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<HistoryLog | null>(null);
   const [checkpointModal, setCheckpointModal] = useState<string | null>(null);
   const [agentCanvasModal, setAgentCanvasModal] = useState<string | null>(null);
@@ -280,12 +279,6 @@ export function Sessions() {
   }, [agentCanvasModal]);
 
   const selected = filteredWorkspaces.find((w) => w.name === selectedWorkspace) ?? null;
-
-  const copyAddDomain = () => {
-    void navigator.clipboard?.writeText("/sugo:ws-add").catch(() => {});
-    setAddCopied(true);
-    setTimeout(() => setAddCopied(false), 2000);
-  };
 
   if (loading) {
     return (
@@ -622,7 +615,7 @@ export function Sessions() {
               <button onClick={() => setViewMode("grid")} className={cn("rounded-md p-1.5", viewMode === "grid" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")} title="카드로 보기"><LayoutGrid size={15} /></button>
               <button onClick={() => setViewMode("list")} className={cn("rounded-md p-1.5", viewMode === "list" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")} title="목록으로 보기"><Rows3 size={15} /></button>
             </div>
-            <button onClick={copyAddDomain} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/10" title="/sugo:ws-add 명령 복사"><Plus size={14} /> {addCopied ? "복사됨 · /sugo:ws-add" : "도메인 추가"}</button>
+            <button onClick={() => navigate('/settings?section=projects&register=1')} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/10"><Plus size={14} /> 프로젝트 등록</button>
           </div>
         </div>
       </section>

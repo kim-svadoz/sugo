@@ -1,9 +1,8 @@
-import { join, resolve } from "node:path";
-import { access } from "node:fs/promises";
-import { sugoHomeDir } from "../homeDir.js";
+import { resolve } from "node:path";
 import { z } from "zod";
 import { syncProjectHarness } from "../harness/sync.js";
 import { ensureWorkspace } from "../work/workspace.js";
+import { assertProjectRegistrationAllowed, registerSugoProject } from "../projectRegistration.js";
 
 export const sugoAddInputSchema = {
   projectPath: z.string().describe("등록할 프로젝트의 절대경로"),
@@ -29,23 +28,28 @@ const SugoAddArgs = z.object(sugoAddInputSchema);
 export async function handleSugoAdd(rawArgs: unknown) {
   const args = SugoAddArgs.parse(rawArgs);
   const projectPath = resolve(args.projectPath);
-  const retainedData = join(sugoHomeDir(), ".sugo", "data");
-  if (await access(retainedData).then(() => true, () => false)) {
-    return {
-      isError: true,
-      content: [{ type: "text" as const, text: JSON.stringify({
-        ok: false,
-        errorCode: "RETAINED_DATA_DECISION_REQUIRED",
-        message: "비활성 보관된 Sugo 데이터가 있습니다. sugo_uninstall(action:restore)로 복구하거나 action:discard로 폐기한 뒤 새로 시작하세요.",
-      }, null, 2) }],
-    };
+  if (args.workspace && !args.repoUrl && !args.additionalStacks && args.integrationGateEnforced === undefined && args.contractEvidenceRequired === undefined) {
+    try {
+      const payload = await registerSugoProject({ projectPath, workspace: args.workspace });
+      return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
+    } catch (error) {
+      if (typeof error === "object" && error && "code" in error && error.code === "RETAINED_DATA_DECISION_REQUIRED") {
+        return { isError: true, content: [{ type: "text" as const, text: JSON.stringify({ ok: false, errorCode: error.code, message: error instanceof Error ? error.message : String(error) }, null, 2) }] };
+      }
+      throw error;
+    }
+  }
+
+  try { await assertProjectRegistrationAllowed(); }
+  catch (error) {
+    if (typeof error === "object" && error && "code" in error && error.code === "RETAINED_DATA_DECISION_REQUIRED") {
+      return { isError: true, content: [{ type: "text" as const, text: JSON.stringify({ ok: false, errorCode: error.code, message: error instanceof Error ? error.message : String(error) }, null, 2) }] };
+    }
+    throw error;
   }
 
   const result = await syncProjectHarness({ ...args, projectPath });
-
-  if (result.workspace) {
-    await ensureWorkspace(result.workspace, projectPath);
-  }
+  if (result.workspace) await ensureWorkspace(result.workspace, projectPath);
 
   const payload = {
     ok: true,

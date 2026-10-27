@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   deleteGitConnection,
   getGitConnections,
@@ -11,13 +11,13 @@ import {
 import { createToken, listTokens, revokeToken, type ApiTokenSummary } from "../api/tokensApi.js";
 import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsContexts, refreshAwsContext, selectAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
 import { connectPinpointContext, disconnectPinpointContext, getPinpointContext, refreshPinpointContext, type PinpointStatus } from '../api/pinpointContextApi.js';
-import { getProjectIntegrations, saveProjectIntegration, type IntegrationCandidate, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
+import { getProjectIntegrations, registerProject, saveProjectIntegration, type IntegrationCandidate, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
 import { summarizeSageMaker } from "../lib/awsInventoryPresentation.js";
 import { awsAccountMetaLabel, awsAccountOptionLabel, hasIntegrationSelectionChanges, initialIntegrationSelection, integrationStatusLabel, isExactIntegrationCandidate, partitionIntegrationCandidates, summarizeSavedIntegrations } from "../lib/projectIntegrationPresentation.js";
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
 import { snapshotAge } from "../lib/snapshotAge.js";
 import { PageHeading } from "../components/PageHeading.js";
-import { Activity, ArrowRight, Boxes, Check, ChevronDown, Cloud, FolderGit2, GitBranch, HardDrive } from "lucide-react";
+import { Activity, ArrowRight, Boxes, Check, ChevronDown, Cloud, FolderGit2, FolderPlus, GitBranch, HardDrive, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import { summarizeRepositoryConnections } from "../lib/integrationConnectionSummary.js";
@@ -252,9 +252,10 @@ function PinpointContextCard({ expanded, onToggle, focused = false, onConnection
   </div>;
 }
 
-function ProjectIntegrationsCard({ expanded, onToggle, focused = false }: { expanded: boolean; onToggle: () => void; focused?: boolean }) {
+function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspaceNames, startRegistering = false }: { expanded: boolean; onToggle: () => void; focused?: boolean; workspaceNames: string[]; startRegistering?: boolean }) {
   const [projects, setProjects] = useState<ProjectIntegration[]>([]); const [candidates, setCandidates] = useState<IntegrationCandidate[]>([]);
   const [path, setPath] = useState(''); const [selected, setSelected] = useState<string[]>([]); const [filter, setFilter] = useState(''); const [busy, setBusy] = useState(false); const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [registering, setRegistering] = useState(startRegistering); const [registrationPath, setRegistrationPath] = useState(''); const [domainMode, setDomainMode] = useState<'existing' | 'new'>(workspaceNames.length > 0 ? 'existing' : 'new'); const [registrationWorkspace, setRegistrationWorkspace] = useState(workspaceNames[0] ?? ''); const [newWorkspace, setNewWorkspace] = useState(''); const [registrationError, setRegistrationError] = useState<string | null>(null);
   const key = (item: { accountName: string; service: string; cluster?: string | null }) => `${item.accountName}\u0000${item.cluster ?? ''}\u0000${item.service}`;
   async function load(nextPath?: string) { const data = await getProjectIntegrations(); setProjects(data.projects); setCandidates(data.candidates); const target = nextPath || path || data.projects[0]?.project_path || ''; const targetProject = data.projects.find((item) => item.project_path === target); setPath(target); setSelected(initialIntegrationSelection(targetProject, data.candidates, key)); }
   useEffect(() => { void load(); }, []);
@@ -271,10 +272,20 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false }: { expa
   const applied = sortCandidates(partitioned.applied);
   const visibleCandidates = [...applied, ...available];
   const toggleSelection = (value: string) => setSelected((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
+  async function submitRegistration() { const workspace = domainMode === 'new' ? newWorkspace.trim() : registrationWorkspace; if (!registrationPath.trim() || !workspace) return; setBusy(true); setRegistrationError(null); try { const result = await registerProject(registrationPath.trim(), workspace); await load(result.projectPath); setRegistering(false); setRegistrationPath(''); setSaveMessage(`${result.projectName} 프로젝트를 ${result.workspace} 도메인에 등록했습니다.`); } catch (error) { setRegistrationError(error instanceof Error ? error.message : String(error)); } finally { setBusy(false); } }
   async function save(disable = false) { if (!path) return; setBusy(true); setSaveMessage(null); try { const values = disable ? [] : candidates.filter((item) => selected.includes(key(item))).map(({ accountName, service, environment, cluster }) => ({ accountName, service, environment, cluster })); await saveProjectIntegration(path, values); await load(path); setSaveMessage(disable ? "외부 운영 정보 사용을 해제했습니다." : `${values.length}개 운영 서비스를 연결했습니다.`); } finally { setBusy(false); } }
   return <div id="integration-projects" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "bg-violet-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>프로젝트 외부 연동</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>등록 프로젝트 {projects.length}개, 연결 설정 {projects.filter((item) => item.configured).length}개</p></div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
+    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "bg-violet-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>프로젝트 외부 연동</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>등록 프로젝트 {projects.length}개, 연결 설정 {projects.filter((item) => item.configured).length}개</p></div><div className="flex items-center gap-2"><button type="button" onClick={() => { setRegistering(true); setRegistrationError(null); }} className="settings-action settings-action-primary"><FolderPlus size={15} /> 프로젝트 등록</button>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div></div>
     {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
+      {registering && <section aria-label="새 프로젝트 등록" className="border-y border-cyan-300/25 bg-cyan-300/[0.025] px-5 py-5">
+        <div className="flex items-start justify-between gap-4"><div><strong className="text-base text-cyan-100">도메인과 프로젝트 등록</strong><p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">Console에서도 <code className="font-mono text-cyan-200">/sugo:add</code>와 같은 엔진을 실행합니다. 스택 감지와 프로젝트 규칙 적용까지 함께 처리됩니다.</p></div><button type="button" onClick={() => setRegistering(false)} aria-label="등록 폼 닫기" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><X size={17} /></button></div>
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,.85fr)]">
+          <div><label htmlFor="registration-project-path" className="mb-2 block text-xs font-semibold text-[var(--color-text)]">로컬 프로젝트 절대경로</label><input id="registration-project-path" value={registrationPath} onChange={(event) => setRegistrationPath(event.target.value)} placeholder="/Users/name/dev/my-project" className="settings-field w-full font-mono" /><p className="mt-1.5 text-[11px] text-[var(--color-text-dim)]">현재 PC에 존재하는 프로젝트 폴더를 입력합니다.</p></div>
+          <div><span className="mb-2 block text-xs font-semibold text-[var(--color-text)]">연결할 도메인</span><div className="mb-2 grid grid-cols-2 gap-2"><button type="button" aria-pressed={domainMode === 'existing'} disabled={workspaceNames.length === 0} onClick={() => setDomainMode('existing')} className={`settings-action justify-center ${domainMode === 'existing' ? 'settings-action-primary' : 'settings-action-secondary'}`}>기존 도메인</button><button type="button" aria-pressed={domainMode === 'new'} onClick={() => setDomainMode('new')} className={`settings-action justify-center ${domainMode === 'new' ? 'settings-action-primary' : 'settings-action-secondary'}`}>새 도메인</button></div>{domainMode === 'existing' ? <select value={registrationWorkspace} onChange={(event) => setRegistrationWorkspace(event.target.value)} className="settings-field w-full">{workspaceNames.map((name) => <option key={name} value={name}>{name}</option>)}</select> : <input value={newWorkspace} onChange={(event) => setNewWorkspace(event.target.value)} placeholder="예: content-platform" className="settings-field w-full" />}</div>
+        </div>
+        {registrationError && <p role="alert" className="mt-3 text-xs text-rose-300">{registrationError}</p>}
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.07] pt-4"><p className="text-[11px] text-[var(--color-text-dim)]">등록 후 Git 원격 저장소와 AWS·APM 연결 후보를 이 화면에서 이어서 확인합니다.</p><div className="flex gap-2"><button type="button" onClick={() => setRegistering(false)} className="settings-action settings-action-secondary">취소</button><button type="button" disabled={busy || !registrationPath.trim() || !(domainMode === 'new' ? newWorkspace.trim() : registrationWorkspace)} onClick={() => void submitRegistration()} className="settings-action settings-action-primary">{busy ? '등록 중…' : '프로젝트 등록'}</button></div></div>
+      </section>}
       <div className="break-keep border-y border-cyan-300/15 bg-cyan-300/[0.025] px-5 py-4">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0 flex-1">
@@ -285,13 +296,13 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false }: { expa
           <Link to="/sessions" className="settings-action settings-action-secondary settings-action-compact shrink-0">Workspaces 열기</Link>
         </div>
         <ol className="mt-4 grid gap-x-6 gap-y-3 border-t border-white/[0.06] pt-4 sm:grid-cols-3">
-          <li className="flex gap-2.5"><span className="font-mono text-[12px] text-cyan-300">01</span><span className="min-w-0"><b className="block text-[13px] text-[var(--color-text)]">프로젝트 등록</b><span className="mt-0.5 block text-[12px] leading-5 text-[var(--color-text-dim)]"><code className="font-mono text-[11px] text-cyan-200">/sugo:add</code>로 저장소를 도메인에 등록</span></span></li>
+          <li className="flex gap-2.5"><span className="font-mono text-[12px] text-cyan-300">01</span><span className="min-w-0"><b className="block text-[13px] text-[var(--color-text)]">프로젝트 등록</b><span className="mt-0.5 block text-[12px] leading-5 text-[var(--color-text-dim)]">위 등록 폼 또는 <code className="font-mono text-[11px] text-cyan-200">/sugo:add</code> 사용</span></span></li>
           <li className="flex gap-2.5"><span className="font-mono text-[12px] text-cyan-300">02</span><span className="min-w-0"><b className="block text-[13px] text-[var(--color-text)]">AWS 동기화</b><span className="mt-0.5 block text-[12px] leading-5 text-[var(--color-text-dim)]">계정을 동기화하면 ECS 서비스가 후보로 표시</span></span></li>
           <li className="flex gap-2.5"><span className="font-mono text-[12px] text-cyan-300">03</span><span className="min-w-0"><b className="block text-[13px] text-[var(--color-text)]">확인 후 저장</b><span className="mt-0.5 block text-[12px] leading-5 text-[var(--color-text-dim)]">일치 후보는 미리 체크, 저장해야 연결</span></span></li>
         </ol>
         <p className="mt-4 rounded-lg bg-black/20 px-3 py-2 text-[11.5px] leading-5 text-[var(--color-text-dim)]"><b className="text-amber-200">프로젝트와 일치</b> 기준: 저장소 폴더 이름이 ECS 서비스 이름(끝의 <code className="font-mono">-service</code> 제외) 또는 컨테이너 이미지 이름과 같습니다. 다르면 목록에서 직접 고릅니다.</p>
       </div>
-      {projects.length === 0 ? <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] pb-5"><p className="text-xs text-[var(--color-text-dim)]">아직 등록된 프로젝트가 없습니다. <code className="font-mono text-[11px] text-cyan-200">/sugo:add</code>로 저장소를 도메인에 등록하면 이곳에서 운영 정보를 연결할 수 있습니다.</p><Link to="/sessions" className="settings-action settings-action-primary">Workspaces 열기</Link></div> : <>
+      {projects.length === 0 ? <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] pb-5"><p className="text-xs text-[var(--color-text-dim)]">아직 등록된 프로젝트가 없습니다. 위 등록 폼이나 <code className="font-mono text-[11px] text-cyan-200">/sugo:add</code> 중 편한 방법을 사용할 수 있습니다.</p><button type="button" onClick={() => setRegistering(true)} className="settings-action settings-action-primary">프로젝트 등록</button></div> : <>
         <div className="grid gap-4 border-y border-white/[0.07] py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-center"><div><strong className="block text-sm text-[var(--color-text)]">적용할 프로젝트</strong><span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">프로젝트마다 사용할 운영 근거를 고릅니다.</span></div><select value={path} onChange={(event) => { const next = event.target.value; const nextProject = projects.find((item) => item.project_path === next); setPath(next); setSelected(initialIntegrationSelection(nextProject, candidates, key)); setSaveMessage(null); }} className="settings-field w-full">{projects.map((item) => <option key={item.project_path} value={item.project_path}>{item.workspace_name} / {item.project_path.split('/').at(-1)} ({integrationStatusLabel(item)})</option>)}</select></div>
         {saveMessage && <div role="status" className="border border-emerald-400/25 bg-emerald-400/[0.06] px-4 py-3 text-xs font-semibold text-emerald-200">✓ {saveMessage}</div>}
         {project && project.configured && project.selections.length > 0 ? <section aria-label="현재 연결된 운영 서비스" className="border-y border-emerald-300/20 bg-emerald-300/[0.025] px-4 py-4"><div className="flex items-center justify-between gap-3"><div><strong className="text-sm text-emerald-200">현재 연결됨</strong><p className="mt-1 text-[11px] text-[var(--color-text-muted)]">저장과 동기화가 끝나 Inspector와 일정에서 사용하는 운영 서비스입니다.</p></div><span className="font-mono text-xs text-emerald-300">{project.selections.length}개</span></div><div className="mt-3 flex flex-wrap gap-2">{savedSummary.flatMap((group) => group.services.map((service) => <span key={`${group.environment}-${service}`} className="border border-emerald-300/15 bg-black/15 px-2.5 py-1.5 text-[11px] text-[var(--color-text)]"><b className="mr-1.5 font-mono text-emerald-300">{group.environment}</b>{service}</span>))}</div></section> : project && <div className={project.configured ? "border-y border-white/[0.08] px-4 py-3 text-xs text-[var(--color-text-muted)]" : "border-y border-amber-400/20 bg-amber-400/[0.035] px-4 py-3 text-xs text-amber-100"}>{project.configured ? "이 프로젝트는 외부 운영 정보를 사용하지 않도록 저장되어 있습니다." : `아직 저장된 연결이 없습니다. 일치 후보 ${suggestionCount}개는 제안일 뿐이며 저장 전에는 적용되지 않습니다.`}</div>}
@@ -498,6 +509,7 @@ function ProjectGitConnections({ workspaces }: { workspaces: WorkspaceSummary[] 
 }
 
 export function Settings() {
+  const [searchParams] = useSearchParams();
   const [selectedSection, setSelectedSection] = useState<IntegrationViewId>("overview");
   const [awsConnected, setAwsConnected] = useState(false);
   const [pinpointConnected, setPinpointConnected] = useState(false);
@@ -510,6 +522,10 @@ export function Settings() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data: workspaces } = useWorkspaces();
+
+  useEffect(() => {
+    if (searchParams.get('section') === 'projects') setSelectedSection('projects');
+  }, [searchParams]);
 
   async function refresh() {
     try {
@@ -582,7 +598,7 @@ export function Settings() {
       {selectedSection === "catalog" && <IntegrationCatalog awsConnected={awsConnected} pinpointConnected={pinpointConnected} onSelect={setSelectedSection} />}
       {selectedSection === "aws" && <AwsContextCard expanded onToggle={() => undefined} focused onConnectionChange={setAwsConnected} />}
       {selectedSection === "pinpoint" && <PinpointContextCard expanded onToggle={() => undefined} focused onConnectionChange={setPinpointConnected} />}
-      {selectedSection === "projects" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused />}
+      {selectedSection === "projects" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} startRegistering={searchParams.get('register') === '1'} />}
 
       {(selectedSection === "overview" || selectedSection === "git") && <div id="integration-git" className="scroll-mt-24 overflow-hidden">
         <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-cyan-300/[0.025] px-7 py-6 sm:px-9">

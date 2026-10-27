@@ -16,6 +16,29 @@ async function seedProject(db: ReturnType<typeof createSqliteClient>, userId: st
 }
 
 describe("/api/project-integrations", () => {
+  it("registers a local project through the shared Sugo registrar", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    const authorization = await seedUserToken(db, "u1");
+    const calls: Array<{ projectPath: string; workspace: string }> = [];
+    const { app } = await createApp({
+      db,
+      projectRegistrar: async (input) => {
+        calls.push(input);
+        return { ok: true, projectPath: input.projectPath, projectName: "orders-api", workspace: input.workspace, detectedStack: { languages: ["typescript"], frameworks: [], buildTools: [], harnessIds: [] }, appliedHarnesses: [], warnings: [] };
+      },
+    });
+
+    const response = await request(app)
+      .post("/api/project-integrations/register")
+      .set("Authorization", authorization)
+      .send({ projectPath: "/work/orders-api", workspace: "orders" })
+      .expect(201);
+
+    expect(calls).toEqual([{ projectPath: "/work/orders-api", workspace: "orders" }]);
+    expect(response.body).toMatchObject({ ok: true, projectName: "orders-api", workspace: "orders" });
+  });
+
   it("offers saved ECS candidates and persists an explicit project mapping", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);

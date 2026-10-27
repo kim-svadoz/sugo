@@ -4962,10 +4962,10 @@ var require_raw_body = __commonJS({
       if (done) {
         return readStream(stream, encoding, length, limit, wrap(done));
       }
-      return new Promise(function executor(resolve5, reject) {
+      return new Promise(function executor(resolve6, reject) {
         readStream(stream, encoding, length, limit, function onRead(err, buf2) {
           if (err) return reject(err);
-          resolve5(buf2);
+          resolve6(buf2);
         });
       });
     }
@@ -18513,7 +18513,7 @@ var require_view = __commonJS({
     var basename5 = path.basename;
     var extname2 = path.extname;
     var join16 = path.join;
-    var resolve5 = path.resolve;
+    var resolve6 = path.resolve;
     module.exports = View;
     function View(name, options) {
       var opts = options || {};
@@ -18547,7 +18547,7 @@ var require_view = __commonJS({
       debug('lookup "%s"', name);
       for (var i5 = 0; i5 < roots.length && !path2; i5++) {
         var root5 = roots[i5];
-        var loc = resolve5(root5, name);
+        var loc = resolve6(root5, name);
         var dir = dirname8(loc);
         var file = basename5(loc);
         path2 = this.resolve(dir, file);
@@ -18558,7 +18558,7 @@ var require_view = __commonJS({
       debug('render "%s"', this.path);
       this.engine(this.path, options, callback);
     };
-    View.prototype.resolve = function resolve6(dir, file) {
+    View.prototype.resolve = function resolve7(dir, file) {
       var ext = this.ext;
       var path2 = join16(dir, file);
       var stat4 = tryStat(path2);
@@ -19200,7 +19200,7 @@ var require_send = __commonJS({
     var extname2 = path.extname;
     var join16 = path.join;
     var normalize3 = path.normalize;
-    var resolve5 = path.resolve;
+    var resolve6 = path.resolve;
     var sep3 = path.sep;
     var BYTES_RANGE_REGEXP = /^ *bytes=/;
     var MAX_MAXAGE = 60 * 60 * 24 * 365 * 1e3;
@@ -19237,7 +19237,7 @@ var require_send = __commonJS({
       this._maxage = opts.maxAge || opts.maxage;
       this._maxage = typeof this._maxage === "string" ? ms(this._maxage) : Number(this._maxage);
       this._maxage = !isNaN(this._maxage) ? Math.min(Math.max(0, this._maxage), MAX_MAXAGE) : 0;
-      this._root = opts.root ? resolve5(opts.root) : null;
+      this._root = opts.root ? resolve6(opts.root) : null;
       if (!this._root && opts.from) {
         this.from(opts.from);
       }
@@ -19261,7 +19261,7 @@ var require_send = __commonJS({
       return this;
     }, "send.index: pass index as option");
     SendStream.prototype.root = function root5(path2) {
-      this._root = resolve5(String(path2));
+      this._root = resolve6(String(path2));
       debug("root %s", this._root);
       return this;
     };
@@ -19425,15 +19425,15 @@ var require_send = __commonJS({
           return res;
         }
         parts = normalize3(path2).split(sep3);
-        path2 = resolve5(path2);
+        path2 = resolve6(path2);
       }
       if (containsDotFile(parts)) {
-        var access = this._dotfiles;
-        if (access === void 0) {
-          access = parts[parts.length - 1][0] === "." ? this._hidden ? "allow" : "ignore" : "allow";
+        var access2 = this._dotfiles;
+        if (access2 === void 0) {
+          access2 = parts[parts.length - 1][0] === "." ? this._hidden ? "allow" : "ignore" : "allow";
         }
-        debug('%s dotfile "%s"', access, path2);
-        switch (access) {
+        debug('%s dotfile "%s"', access2, path2);
+        switch (access2) {
           case "allow":
             break;
           case "deny":
@@ -20705,7 +20705,7 @@ var require_application = __commonJS({
     var deprecate = require_depd()("express");
     var flatten = require_array_flatten();
     var merge2 = require_utils_merge();
-    var resolve5 = __require("path").resolve;
+    var resolve6 = __require("path").resolve;
     var setPrototypeOf = require_setprototypeof();
     var hasOwnProperty = Object.prototype.hasOwnProperty;
     var slice = Array.prototype.slice;
@@ -20744,7 +20744,7 @@ var require_application = __commonJS({
       this.mountpath = "/";
       this.locals.settings = this.settings;
       this.set("view", View);
-      this.set("views", resolve5("views"));
+      this.set("views", resolve6("views"));
       this.set("jsonp callback name", "callback");
       if (env2 === "production") {
         this.enable("view cache");
@@ -21989,7 +21989,7 @@ var require_response = __commonJS({
     var send = require_send();
     var extname2 = path.extname;
     var mime = send.mime;
-    var resolve5 = path.resolve;
+    var resolve6 = path.resolve;
     var vary = require_vary();
     var res = Object.create(http2.ServerResponse.prototype);
     module.exports = res;
@@ -22248,7 +22248,7 @@ var require_response = __commonJS({
       }
       opts = Object.create(opts);
       opts.headers = headers;
-      var fullPath = !opts.root ? resolve5(path2) : path2;
+      var fullPath = !opts.root ? resolve6(path2) : path2;
       return this.sendFile(fullPath, opts, done);
     };
     res.contentType = res.type = function contentType(type) {
@@ -22514,7 +22514,7 @@ var require_serve_static = __commonJS({
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
     var parseUrl2 = require_parseurl();
-    var resolve5 = __require("path").resolve;
+    var resolve6 = __require("path").resolve;
     var send = require_send();
     var url = __require("url");
     module.exports = serveStatic;
@@ -22534,7 +22534,7 @@ var require_serve_static = __commonJS({
         throw new TypeError("option setHeaders must be function");
       }
       opts.maxage = opts.maxage || opts.maxAge || 0;
-      opts.root = resolve5(root5);
+      opts.root = resolve6(root5);
       var onDirectory = redirect ? createRedirectDirectoryListener() : createNotFoundDirectoryListener();
       return function serveStatic2(req, res, next) {
         if (req.method !== "GET" && req.method !== "HEAD") {
@@ -41961,11 +41961,11 @@ var require_connection = __commonJS({
             const config2 = this.config;
             tracePromise(
               connectChannel,
-              () => new Promise((resolve5, reject) => {
+              () => new Promise((resolve6, reject) => {
                 let onConnect, onError;
                 onConnect = (param) => {
                   this.removeListener("error", onError);
-                  resolve5(param);
+                  resolve6(param);
                 };
                 onError = (err) => {
                   this.removeListener("connect", onConnect);
@@ -42390,9 +42390,9 @@ var require_connection = __commonJS({
         } else if (shouldTrace(queryChannel)) {
           tracePromise(
             queryChannel,
-            () => new Promise((resolve5, reject) => {
+            () => new Promise((resolve6, reject) => {
               cmdQuery.once("error", reject);
-              cmdQuery.once("end", () => resolve5());
+              cmdQuery.once("end", () => resolve6());
               this.addCommand(cmdQuery);
             }),
             () => {
@@ -42539,12 +42539,12 @@ var require_connection = __commonJS({
         } else if (shouldTrace(executeChannel)) {
           tracePromise(
             executeChannel,
-            () => new Promise((resolve5, reject) => {
+            () => new Promise((resolve6, reject) => {
               prepareAndExecute((err) => {
                 executeCommand.emit("error", err);
               });
               executeCommand.once("error", reject);
-              executeCommand.once("end", () => resolve5());
+              executeCommand.once("end", () => resolve6());
             }),
             () => {
               const server2 = getServerContext(this.config);
@@ -42811,13 +42811,13 @@ var require_make_done_cb = __commonJS({
   "../dashboard/backend/node_modules/mysql2/lib/promise/make_done_cb.js"(exports, module) {
     "use strict";
     var { applyCapturedStack } = require_capture_local_err();
-    function makeDoneCb(resolve5, reject, stackHolder) {
+    function makeDoneCb(resolve6, reject, stackHolder) {
       return function(err, rows, fields) {
         if (err) {
           applyCapturedStack(err, stackHolder);
           reject(err);
         } else {
-          resolve5([rows, fields]);
+          resolve6([rows, fields]);
         }
       };
     }
@@ -42841,8 +42841,8 @@ var require_prepared_statement_info = __commonJS({
         const stackHolder = captureStackHolder(
           _PromisePreparedStatementInfo.prototype.execute
         );
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           if (parameters) {
             s2.execute(parameters, done);
           } else {
@@ -42851,9 +42851,9 @@ var require_prepared_statement_info = __commonJS({
         });
       }
       close() {
-        return new this.Promise((resolve5) => {
+        return new this.Promise((resolve6) => {
           this.statement.close();
-          resolve5();
+          resolve6();
         });
       }
     };
@@ -42926,8 +42926,8 @@ var require_connection2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           if (params !== void 0) {
             c5.query(query, params, done);
           } else {
@@ -42943,8 +42943,8 @@ var require_connection2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           if (params !== void 0) {
             c5.execute(query, params, done);
           } else {
@@ -42953,8 +42953,8 @@ var require_connection2 = __commonJS({
         });
       }
       end() {
-        return new this.Promise((resolve5) => {
-          this.connection.end(resolve5);
+        return new this.Promise((resolve6) => {
+          this.connection.end(resolve6);
         });
       }
       async [Symbol.asyncDispose]() {
@@ -42967,16 +42967,16 @@ var require_connection2 = __commonJS({
         const stackHolder = captureStackHolder(
           _PromiseConnection.prototype.beginTransaction
         );
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           c5.beginTransaction(done);
         });
       }
       commit() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.commit);
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           c5.commit(done);
         });
       }
@@ -42985,21 +42985,21 @@ var require_connection2 = __commonJS({
         const stackHolder = captureStackHolder(
           _PromiseConnection.prototype.rollback
         );
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           c5.rollback(done);
         });
       }
       ping() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.ping);
-        return new this.Promise((resolve5, reject) => {
+        return new this.Promise((resolve6, reject) => {
           c5.ping((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve5(true);
+              resolve6(true);
             }
           });
         });
@@ -43007,13 +43007,13 @@ var require_connection2 = __commonJS({
       reset() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.reset);
-        return new this.Promise((resolve5, reject) => {
+        return new this.Promise((resolve6, reject) => {
           c5.reset((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve5();
+              resolve6();
             }
           });
         });
@@ -43021,13 +43021,13 @@ var require_connection2 = __commonJS({
       connect() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.connect);
-        return new this.Promise((resolve5, reject) => {
+        return new this.Promise((resolve6, reject) => {
           c5.connect((err, param) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve5(param);
+              resolve6(param);
             }
           });
         });
@@ -43036,7 +43036,7 @@ var require_connection2 = __commonJS({
         const c5 = this.connection;
         const promiseImpl = this.Promise;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.prepare);
-        return new this.Promise((resolve5, reject) => {
+        return new this.Promise((resolve6, reject) => {
           c5.prepare(options, (err, statement) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
@@ -43046,7 +43046,7 @@ var require_connection2 = __commonJS({
                 statement,
                 promiseImpl
               );
-              resolve5(wrappedStatement);
+              resolve6(wrappedStatement);
             }
           });
         });
@@ -43056,13 +43056,13 @@ var require_connection2 = __commonJS({
         const stackHolder = captureStackHolder(
           _PromiseConnection.prototype.changeUser
         );
-        return new this.Promise((resolve5, reject) => {
+        return new this.Promise((resolve6, reject) => {
           c5.changeUser(options, (err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve5();
+              resolve6();
             }
           });
         });
@@ -43533,12 +43533,12 @@ var require_pool2 = __commonJS({
       }
       getConnection() {
         const corePool = this.pool;
-        return new this.Promise((resolve5, reject) => {
+        return new this.Promise((resolve6, reject) => {
           corePool.getConnection((err, coreConnection) => {
             if (err) {
               reject(err);
             } else {
-              resolve5(new PromisePoolConnection(coreConnection, this.Promise));
+              resolve6(new PromisePoolConnection(coreConnection, this.Promise));
             }
           });
         });
@@ -43554,8 +43554,8 @@ var require_pool2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           if (args !== void 0) {
             corePool.query(sql, args, done);
           } else {
@@ -43571,8 +43571,8 @@ var require_pool2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           if (args) {
             corePool.execute(sql, args, done);
           } else {
@@ -43583,13 +43583,13 @@ var require_pool2 = __commonJS({
       end() {
         const corePool = this.pool;
         const stackHolder = captureStackHolder(_PromisePool.prototype.end);
-        return new this.Promise((resolve5, reject) => {
+        return new this.Promise((resolve6, reject) => {
           corePool.end((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve5();
+              resolve6();
             }
           });
         });
@@ -44021,12 +44021,12 @@ var require_pool_cluster2 = __commonJS({
       }
       getConnection() {
         const corePoolNamespace = this.poolNamespace;
-        return new this.Promise((resolve5, reject) => {
+        return new this.Promise((resolve6, reject) => {
           corePoolNamespace.getConnection((err, coreConnection) => {
             if (err) {
               reject(err);
             } else {
-              resolve5(new PromisePoolConnection(coreConnection, this.Promise));
+              resolve6(new PromisePoolConnection(coreConnection, this.Promise));
             }
           });
         });
@@ -44041,8 +44041,8 @@ var require_pool_cluster2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           corePoolNamespace.query(sql, values, done);
         });
       }
@@ -44056,8 +44056,8 @@ var require_pool_cluster2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           corePoolNamespace.execute(sql, values, done);
         });
       }
@@ -44096,9 +44096,9 @@ var require_promise = __commonJS({
           "no Promise implementation available.Use promise-enabled node version or pass userland Promise implementation as parameter, for example: { Promise: require('bluebird') }"
         );
       }
-      return new thePromise((resolve5, reject) => {
+      return new thePromise((resolve6, reject) => {
         coreConnection.once("connect", () => {
-          resolve5(new PromiseConnection(coreConnection, thePromise));
+          resolve6(new PromiseConnection(coreConnection, thePromise));
         });
         coreConnection.once("error", (err) => {
           applyCapturedStack(err, stackHolder);
@@ -44125,7 +44125,7 @@ var require_promise = __commonJS({
       }
       getConnection(pattern, selector) {
         const corePoolCluster = this.poolCluster;
-        return new this.Promise((resolve5, reject) => {
+        return new this.Promise((resolve6, reject) => {
           corePoolCluster.getConnection(
             pattern,
             selector,
@@ -44133,7 +44133,7 @@ var require_promise = __commonJS({
               if (err) {
                 reject(err);
               } else {
-                resolve5(new PromisePoolConnection(coreConnection, this.Promise));
+                resolve6(new PromisePoolConnection(coreConnection, this.Promise));
               }
             }
           );
@@ -44147,8 +44147,8 @@ var require_promise = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           corePoolCluster.query(sql, args, done);
         });
       }
@@ -44162,8 +44162,8 @@ var require_promise = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve5, reject) => {
-          const done = makeDoneCb(resolve5, reject, stackHolder);
+        return new this.Promise((resolve6, reject) => {
+          const done = makeDoneCb(resolve6, reject, stackHolder);
           corePoolCluster.execute(sql, args, done);
         });
       }
@@ -44176,13 +44176,13 @@ var require_promise = __commonJS({
       end() {
         const corePoolCluster = this.poolCluster;
         const stackHolder = captureStackHolder(_PromisePoolCluster.prototype.end);
-        return new this.Promise((resolve5, reject) => {
+        return new this.Promise((resolve6, reject) => {
           corePoolCluster.end((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve5();
+              resolve6();
             }
           });
         });
@@ -55150,7 +55150,7 @@ var sleep;
 var init_sleep = __esm({
   "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/sleep.js"() {
     sleep = (seconds) => {
-      return new Promise((resolve5) => setTimeout(resolve5, seconds * 1e3));
+      return new Promise((resolve6) => setTimeout(resolve6, seconds * 1e3));
     };
   }
 });
@@ -55315,8 +55315,8 @@ var init_createWaiter = __esm({
     init_waiter();
     abortTimeout = (abortSignal) => {
       let onAbort;
-      const promise = new Promise((resolve5) => {
-        onAbort = () => resolve5({ state: WaiterState.ABORTED });
+      const promise = new Promise((resolve6) => {
+        onAbort = () => resolve6({ state: WaiterState.ABORTED });
         if (typeof abortSignal.addEventListener === "function") {
           abortSignal.addEventListener("abort", onAbort);
         } else {
@@ -58790,7 +58790,7 @@ var init_getInstanceMetadataRegion = __esm({
     };
     imdsRequest = async (options) => {
       const { request } = await import("node:http");
-      return new Promise((resolve5, reject) => {
+      return new Promise((resolve6, reject) => {
         const req = request({
           hostname: options.hostname,
           port: options.port,
@@ -58818,7 +58818,7 @@ var init_getInstanceMetadataRegion = __esm({
           const chunks2 = [];
           res.on("data", (chunk) => chunks2.push(chunk));
           res.on("end", () => {
-            resolve5(Buffer.concat(chunks2));
+            resolve6(Buffer.concat(chunks2));
             req.destroy();
           });
         });
@@ -61050,7 +61050,7 @@ var init_headStream = __esm({
       if (isReadableStream(stream)) {
         return headStream(stream, bytes);
       }
-      return new Promise((resolve5, reject) => {
+      return new Promise((resolve6, reject) => {
         const collector = new Collector();
         collector.limit = bytes;
         stream.pipe(collector);
@@ -61061,7 +61061,7 @@ var init_headStream = __esm({
         collector.on("error", reject);
         collector.on("finish", function() {
           const bytes2 = concatBytes(this.buffers);
-          resolve5(bytes2);
+          resolve6(bytes2);
         });
       });
     };
@@ -61213,7 +61213,7 @@ var init_stream_collector = __esm({
       if (isReadableStream(stream)) {
         return collectReadableStream(stream);
       }
-      return new Promise((resolve5, reject) => {
+      return new Promise((resolve6, reject) => {
         const collector = new Collector2();
         const nodeStream = stream;
         nodeStream.pipe(collector);
@@ -61224,7 +61224,7 @@ var init_stream_collector = __esm({
         collector.on("error", reject);
         collector.on("finish", function() {
           const bytes = concatBytes(this.bufferedBytes);
-          resolve5(bytes);
+          resolve6(bytes);
         });
       });
     };
@@ -61551,7 +61551,7 @@ var fileStreamHasher, isReadStream;
 var init_fileStreamHasher = __esm({
   "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/fileStreamHasher.js"() {
     init_HashCalculator();
-    fileStreamHasher = (hashCtor, fileStream) => new Promise((resolve5, reject) => {
+    fileStreamHasher = (hashCtor, fileStream) => new Promise((resolve6, reject) => {
       if (!isReadStream(fileStream)) {
         reject(new Error("Unable to calculate hash for non-file streams."));
         return;
@@ -61569,7 +61569,7 @@ var init_fileStreamHasher = __esm({
       });
       hashCalculator.on("error", reject);
       hashCalculator.on("finish", function() {
-        hash2.digest().then(resolve5).catch(reject);
+        hash2.digest().then(resolve6).catch(reject);
       });
     });
     isReadStream = (stream) => typeof stream.path === "string";
@@ -61588,14 +61588,14 @@ var init_readableStreamHasher = __esm({
       const hash2 = new hashCtor();
       const hashCalculator = new HashCalculator(hash2);
       readableStream.pipe(hashCalculator);
-      return new Promise((resolve5, reject) => {
+      return new Promise((resolve6, reject) => {
         readableStream.on("error", (err) => {
           hashCalculator.end();
           reject(err);
         });
         hashCalculator.on("error", reject);
         hashCalculator.on("finish", () => {
-          hash2.digest().then(resolve5).catch(reject);
+          hash2.digest().then(resolve6).catch(reject);
         });
       });
     };
@@ -62840,7 +62840,7 @@ async function* readableToIterable(readStream) {
     streamEnded = true;
   });
   while (!generationEnded) {
-    const value = await new Promise((resolve5) => setTimeout(() => resolve5(records.shift()), 0));
+    const value = await new Promise((resolve6) => setTimeout(() => resolve6(records.shift()), 0));
     if (value) {
       yield value;
     }
@@ -64666,7 +64666,7 @@ var init_retryMiddleware = __esm({
     init_constants5();
     init_parseRetryAfterHeader();
     init_util2();
-    cooldown = (ms) => new Promise((resolve5) => setTimeout(resolve5, ms));
+    cooldown = (ms) => new Promise((resolve6) => setTimeout(resolve6, ms));
     isRetryStrategyV2 = (retryStrategy) => typeof retryStrategy.acquireInitialRetryToken !== "undefined" && typeof retryStrategy.refreshRetryTokenForRetry !== "undefined" && typeof retryStrategy.recordSuccess !== "undefined";
     getRetryErrorInfo = (error2, logger2) => {
       const errorInfo = {
@@ -64764,7 +64764,7 @@ var init_DefaultRateLimiter = __esm({
         this.refillTokenBucket();
         while (amount > this.availableTokens) {
           const delay = (amount - this.availableTokens) / this.fillRate * 1e3;
-          await new Promise((resolve5) => _DefaultRateLimiter.setTimeoutFn(resolve5, delay));
+          await new Promise((resolve6) => _DefaultRateLimiter.setTimeoutFn(resolve6, delay));
           this.refillTokenBucket();
         }
         this.availableTokens = this.availableTokens - amount;
@@ -65202,7 +65202,7 @@ var init_StandardRetryStrategy2 = __esm({
               const delayFromResponse = getDelayFromRetryAfterHeader(err.$response);
               const delay = Math.max(delayFromResponse || 0, delayFromDecider);
               totalDelay += delay;
-              await new Promise((resolve5) => setTimeout(resolve5, delay));
+              await new Promise((resolve6) => setTimeout(resolve6, delay));
               continue;
             }
             if (!err.$metadata) {
@@ -69072,7 +69072,7 @@ var require_dist_cjs4 = __commonJS({
     var DEFAULT_MAX_RETRIES = 0;
     var providerConfigFromInit = ({ maxRetries = DEFAULT_MAX_RETRIES, timeout = DEFAULT_TIMEOUT }) => ({ maxRetries, timeout });
     function httpRequest(options) {
-      return new Promise((resolve5, reject) => {
+      return new Promise((resolve6, reject) => {
         const req = node_http.request({
           method: "GET",
           ...options,
@@ -69097,7 +69097,7 @@ var require_dist_cjs4 = __commonJS({
             chunks2.push(chunk);
           });
           res.on("end", () => {
-            resolve5(Buffer.concat(chunks2));
+            resolve6(Buffer.concat(chunks2));
             req.destroy();
           });
         });
@@ -69541,21 +69541,21 @@ var require_dist_cjs5 = __commonJS({
       let sendBody = true;
       if (!externalAgent && expect === "100-continue") {
         sendBody = await Promise.race([
-          new Promise((resolve5) => {
-            timeoutId = Number(timing.setTimeout(() => resolve5(true), Math.max(MIN_WAIT_TIME, maxContinueTimeoutMs)));
+          new Promise((resolve6) => {
+            timeoutId = Number(timing.setTimeout(() => resolve6(true), Math.max(MIN_WAIT_TIME, maxContinueTimeoutMs)));
           }),
-          new Promise((resolve5) => {
+          new Promise((resolve6) => {
             httpRequest.on("continue", () => {
               timing.clearTimeout(timeoutId);
-              resolve5(true);
+              resolve6(true);
             });
             httpRequest.on("response", () => {
               timing.clearTimeout(timeoutId);
-              resolve5(false);
+              resolve6(false);
             });
             httpRequest.on("error", () => {
               timing.clearTimeout(timeoutId);
-              resolve5(false);
+              resolve6(false);
             });
           })
         ]);
@@ -69631,13 +69631,13 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return socketWarningTimestamp;
       }
       constructor(options) {
-        this.configProvider = new Promise((resolve5, reject) => {
+        this.configProvider = new Promise((resolve6, reject) => {
           if (typeof options === "function") {
             options().then((_options) => {
-              resolve5(this.resolveDefaultConfig(_options));
+              resolve6(this.resolveDefaultConfig(_options));
             }).catch(reject);
           } else {
-            resolve5(this.resolveDefaultConfig(options));
+            resolve6(this.resolveDefaultConfig(options));
           }
         });
       }
@@ -69669,7 +69669,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             timing.clearTimeout(socketTimeoutId);
             timing.clearTimeout(keepAliveTimeoutId);
           };
-          const resolve5 = async (arg) => {
+          const resolve6 = async (arg) => {
             await writeRequestBodyPromise;
             clearTimeouts();
             _resolve(arg);
@@ -69733,7 +69733,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
               headers: getTransformedHeaders(res.headers),
               body: res
             });
-            resolve5({ response: httpResponse });
+            resolve6({ response: httpResponse });
           });
           req.on("error", (err) => {
             if (NODEJS_TIMEOUT_ERROR_CODES2.includes(err.code)) {
@@ -70061,13 +70061,13 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return new _NodeHttp2Handler(instanceOrOptions);
       }
       constructor(options) {
-        this.configProvider = new Promise((resolve5, reject) => {
+        this.configProvider = new Promise((resolve6, reject) => {
           if (typeof options === "function") {
             options().then((opts) => {
-              resolve5(opts || {});
+              resolve6(opts || {});
             }).catch(reject);
           } else {
-            resolve5(options || {});
+            resolve6(options || {});
           }
         });
       }
@@ -70092,7 +70092,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return new Promise((_resolve, _reject) => {
           let fulfilled = false;
           let writeRequestBodyPromise = void 0;
-          const resolve5 = async (arg) => {
+          const resolve6 = async (arg) => {
             await writeRequestBodyPromise;
             _resolve(arg);
           };
@@ -70177,7 +70177,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
               body: clientHttp2Stream
             });
             fulfilled = true;
-            resolve5({ response: httpResponse });
+            resolve6({ response: httpResponse });
             if (useIsolatedSession) {
               session.close();
               clientHttp2Stream.on("end", () => {
@@ -70309,7 +70309,7 @@ var require_dist_cjs6 = __commonJS({
           try {
             return await toRetry();
           } catch (e5) {
-            await new Promise((resolve5) => setTimeout(resolve5, delayMs));
+            await new Promise((resolve6) => setTimeout(resolve6, delayMs));
           }
         }
         return await toRetry();
@@ -89980,11 +89980,66 @@ var init_projectIntegrationService = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/projectRegistrar.ts
+import { execFile as execFile5 } from "node:child_process";
+import { access } from "node:fs/promises";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
+import { resolve as resolve4 } from "node:path";
+async function registrarPath() {
+  const configured = process.env.SUGO_PROJECT_REGISTRAR_PATH;
+  const candidates = [
+    configured,
+    fileURLToPath2(new URL("../dist/dashboard-register.mjs", import.meta.url)),
+    resolve4(process.cwd(), "../../sugo/dist/dashboard-register.mjs"),
+    resolve4(process.cwd(), "sugo/dist/dashboard-register.mjs")
+  ].filter((value) => Boolean(value));
+  for (const candidate of candidates) {
+    if (await access(candidate).then(() => true, () => false)) return candidate;
+  }
+  throw Object.assign(new Error("Sugo \uD504\uB85C\uC81D\uD2B8 \uB4F1\uB85D \uC5D4\uC9C4\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uD50C\uB7EC\uADF8\uC778\uC744 \uB2E4\uC2DC \uBE4C\uB4DC\uD558\uAC70\uB098 \uC5C5\uB370\uC774\uD2B8\uD558\uC138\uC694."), { code: "PROJECT_REGISTRAR_UNAVAILABLE" });
+}
+var runProjectRegistrar;
+var init_projectRegistrar = __esm({
+  "../dashboard/backend/src/services/projectRegistrar.ts"() {
+    "use strict";
+    runProjectRegistrar = async (input) => {
+      const script = await registrarPath();
+      return new Promise((resolveResult, reject) => {
+        const child = execFile5(process.execPath, [script], { timeout: 12e4, maxBuffer: 2 * 1024 * 1024 }, (error2, stdout, stderr) => {
+          if (error2) {
+            let detail = {};
+            try {
+              detail = JSON.parse(stderr);
+            } catch {
+              detail = { error: stderr.trim() || error2.message };
+            }
+            reject(Object.assign(new Error(detail.error || "\uD504\uB85C\uC81D\uD2B8 \uB4F1\uB85D\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4."), { code: detail.code || "PROJECT_REGISTRATION_FAILED" }));
+            return;
+          }
+          try {
+            resolveResult(JSON.parse(stdout));
+          } catch {
+            reject(Object.assign(new Error("\uD504\uB85C\uC81D\uD2B8 \uB4F1\uB85D \uC5D4\uC9C4\uC758 \uC751\uB2F5\uC744 \uC77D\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4."), { code: "PROJECT_REGISTRAR_INVALID_RESPONSE" }));
+          }
+        });
+        child.stdin?.end(JSON.stringify(input));
+      });
+    };
+  }
+});
+
 // ../dashboard/backend/src/routes/projectIntegrations.ts
-function createProjectIntegrationsRouter(db2, secret) {
+function createProjectIntegrationsRouter(db2, secret, registrar = runProjectRegistrar) {
   const router = (0, import_express19.Router)();
   router.use(requireUser(db2, secret));
   router.get("/", async (req, res) => res.json(await listProjectIntegrations(db2, req.userId)));
+  router.post("/register", validateBody(registrationSchema), async (req, res) => {
+    try {
+      res.status(201).json(await registrar(req.body));
+    } catch (error2) {
+      res.status(409).json({ error: error2?.code ?? "PROJECT_REGISTRATION_FAILED", message: error2 instanceof Error ? error2.message : String(error2) });
+    }
+  });
   router.put("/", validateBody(schema2), async (req, res) => {
     try {
       await saveProjectIntegration(db2, req.userId, req.body.projectPath, req.body.selections);
@@ -89995,7 +90050,7 @@ function createProjectIntegrationsRouter(db2, secret) {
   });
   return router;
 }
-var import_express19, schema2;
+var import_express19, schema2, registrationSchema;
 var init_projectIntegrations = __esm({
   "../dashboard/backend/src/routes/projectIntegrations.ts"() {
     "use strict";
@@ -90004,7 +90059,12 @@ var init_projectIntegrations = __esm({
     init_requireUser();
     init_validate();
     init_projectIntegrationService();
+    init_projectRegistrar();
     schema2 = external_exports.object({ projectPath: external_exports.string().min(1).max(1024), selections: external_exports.array(external_exports.object({ accountName: external_exports.string().min(1).max(191), service: external_exports.string().min(1).max(512), environment: external_exports.string().min(1).max(64), cluster: external_exports.string().max(512).nullable().optional() })).max(100) });
+    registrationSchema = external_exports.object({
+      projectPath: external_exports.string().trim().min(1).max(2048),
+      workspace: external_exports.string().trim().regex(/^[A-Za-z0-9._-]+$/).refine((value) => value !== "." && value !== "..")
+    }).strict();
   }
 });
 
@@ -90152,11 +90212,11 @@ __export(weeklyScheduleService_exports, {
   weeklyHomeDir: () => weeklyHomeDir,
   weeklyRunDecision: () => weeklyRunDecision
 });
-import { execFile as execFile5 } from "node:child_process";
+import { execFile as execFile6 } from "node:child_process";
 import { appendFile, mkdir as mkdir4, readdir as readdir3, readFile as readFile9, stat as stat2, unlink as unlink3, writeFile as writeFile5 } from "node:fs/promises";
 import { homedir as homedir4 } from "node:os";
-import { dirname as dirname4, join as join12, resolve as resolve4 } from "node:path";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
+import { dirname as dirname4, join as join12, resolve as resolve5 } from "node:path";
+import { fileURLToPath as fileURLToPath3 } from "node:url";
 import { promisify as promisify7 } from "node:util";
 function weeklyHomeDir() {
   return process.env.WEEKLY_HOME ?? join12(homedir4(), ".weekly");
@@ -90173,8 +90233,8 @@ function weeklyRunDecision(now, schedule, handled) {
   return handled < slot ? { run: true, record: slot } : { run: false, record: null };
 }
 function weeklyEngineCandidates() {
-  const here = dirname4(fileURLToPath2(import.meta.url));
-  return [process.env.SUGO_WEEKLY_ENGINE, resolve4(here, "../weekly"), resolve4(here, "../../../../sugo/weekly")].filter((path) => Boolean(path));
+  const here = dirname4(fileURLToPath3(import.meta.url));
+  return [process.env.SUGO_WEEKLY_ENGINE, resolve5(here, "../weekly"), resolve5(here, "../../../../sugo/weekly")].filter((path) => Boolean(path));
 }
 async function findWeeklyEngine(candidates = weeklyEngineCandidates()) {
   for (const candidate of candidates) {
@@ -90261,7 +90321,7 @@ var execFileAsync3;
 var init_weeklyScheduleService = __esm({
   "../dashboard/backend/src/services/weeklyScheduleService.ts"() {
     "use strict";
-    execFileAsync3 = promisify7(execFile5);
+    execFileAsync3 = promisify7(execFile6);
   }
 });
 
@@ -90363,7 +90423,7 @@ var index_exports = {};
 __export(index_exports, {
   createApp: () => createApp
 });
-import { fileURLToPath as fileURLToPath3, pathToFileURL } from "node:url";
+import { fileURLToPath as fileURLToPath4, pathToFileURL } from "node:url";
 import { dirname as dirname5, join as join14 } from "node:path";
 function unconfiguredVerifyJwt() {
   return async () => {
@@ -90444,7 +90504,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use("/api/aws-context", createAwsContextRouter(db2, sessionSecret2, awsContextClient2));
   app2.use("/api/aws-guard-policy", createAwsGuardPolicyRouter(db2, sessionSecret2, awsGuardPolicyPath));
   app2.use("/api/pinpoint-context", createPinpointContextRouter(db2, sessionSecret2, pinpointClient2));
-  app2.use("/api/project-integrations", createProjectIntegrationsRouter(db2, sessionSecret2));
+  app2.use("/api/project-integrations", createProjectIntegrationsRouter(db2, sessionSecret2, overrides.projectRegistrar));
   app2.use("/api/pr", createPrRouter(db2, sessionSecret2, secretEncKey, gitProviderClients));
   const statsRouter = createStatsRouter(db2, sessionSecret2);
   app2.use("/api/stats", statsRouter);
@@ -90516,8 +90576,8 @@ var init_index = __esm({
     init_asyncHandler();
     init_contextAutoRefreshService();
     init_weeklySettingsService();
-    __dirname2 = dirname5(fileURLToPath3(import.meta.url));
-    pkg = "0.42.47" ? { version: "0.42.47" } : JSON.parse(readFileSync(join14(__dirname2, "..", "package.json"), "utf8"));
+    __dirname2 = dirname5(fileURLToPath4(import.meta.url));
+    pkg = "0.43.0" ? { version: "0.43.0" } : JSON.parse(readFileSync(join14(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90572,7 +90632,7 @@ import { randomBytes as randomBytes6 } from "node:crypto";
 import { chmod as chmod3, mkdir as mkdir7, readFile as readFile12, rm as rm3, writeFile as writeFile8 } from "node:fs/promises";
 import { homedir as homedir5, userInfo } from "node:os";
 import { dirname as dirname7, join as join15 } from "node:path";
-import { fileURLToPath as fileURLToPath4 } from "node:url";
+import { fileURLToPath as fileURLToPath5 } from "node:url";
 
 // ../dashboard/backend/test/schema.sqlite.sql
 var schema_sqlite_default = "-- SQLite translation of src/db/schema.mysql.sql, used only for local dev/testing.\n-- Must stay behaviorally equivalent: same tables/columns/keys, syntax adapted\n-- (ENUM->TEXT+CHECK, JSON->TEXT, AUTO_INCREMENT->INTEGER PRIMARY KEY AUTOINCREMENT,\n-- TIMESTAMP->TEXT ISO8601, composite PKs as-is since SQLite supports them).\n\nPRAGMA foreign_keys = ON;\n\nCREATE TABLE IF NOT EXISTS sugo_users (\n  id TEXT PRIMARY KEY,\n  display_name TEXT,\n  plugin_version TEXT,\n  version_updated_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspaces (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  name TEXT NOT NULL,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  deleted_at TIMESTAMP NULL DEFAULT NULL,\n  UNIQUE (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_projects (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  workspace_id INTEGER NOT NULL REFERENCES sugo_workspaces(id) ON DELETE CASCADE,\n  project_path TEXT NOT NULL,\n  git_synced INTEGER NOT NULL DEFAULT 0,\n  UNIQUE (workspace_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_tasks (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  project TEXT,\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','archived')),\n  priority TEXT,\n  description TEXT,\n  summary TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  started_at TEXT,\n  completed_at TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_history (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  task_id TEXT,\n  task_title TEXT,\n  summary TEXT,\n  key_decisions TEXT,\n  files_changed TEXT,\n  notes TEXT,\n  estimated_human_hours REAL,\n  user_reported_human_hours REAL,\n  ai_execution_minutes REAL,\n  estimation_basis TEXT,\n  completed_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_memos (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  title TEXT NOT NULL,\n  content_md TEXT NOT NULL,\n  due_date TEXT,\n  archived_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_memos_due ON sugo_schedule_memos(user_id, due_date);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_commitments (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  due_date TEXT,\n  state TEXT NOT NULL DEFAULT 'planned' CHECK (state IN ('planned','active','completed','cancelled')),\n  target TEXT NOT NULL DEFAULT 'custom' CHECK (target IN ('implementation','review','dev','stg','prd','custom')),\n  linked_run_id TEXT,\n  completed_at TEXT,\n  completed_by TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_due ON sugo_schedule_commitments(user_id, due_date);\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_spec ON sugo_schedule_commitments(user_id, workspace_name, spec_id);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  reason TEXT NOT NULL CHECK (reason IN ('deleted','closed')),\n  title TEXT NOT NULL,\n  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  archived_by TEXT NOT NULL,\n  PRIMARY KEY (user_id, workspace_name, spec_id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_specs (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'active',\n  content TEXT,\n  decision_date TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_checkpoints (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  category TEXT NOT NULL DEFAULT 'general',\n  title TEXT NOT NULL,\n  learned_from TEXT,\n  checklist TEXT,\n  applies_to TEXT,\n  checkpoint_date TEXT,\n  expires_at TEXT,\n  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_meta (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  golden_rule TEXT,\n  checkpoints_version INTEGER NOT NULL DEFAULT 0,\n  PRIMARY KEY (user_id, workspace_name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  level TEXT NOT NULL CHECK (level IN ('spec','workstream','task','subtask','step')),\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','blocked','dropped')),\n  depends_on TEXT,\n  parent TEXT,\n  ref TEXT,\n  note TEXT,\n  spec_path TEXT,\n  work_result TEXT,\n  lineage TEXT,\n  manual_status TEXT CHECK (manual_status IS NULL OR manual_status IN ('pending','in_progress','done','blocked','dropped')),\n  manual_by TEXT,\n  manual_at TEXT,\n  pos_x REAL,\n  pos_y REAL,\n  due_date TEXT,\n  project_path TEXT,\n  work_branch TEXT,\n  manual_title TEXT,\n  blocker_response TEXT,\n  blocker_answered_by TEXT,\n  blocker_answered_at TEXT,\n  blocker_context TEXT,\n  runtime_assessment TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  synced_at TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_activity_events (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  ts TEXT NOT NULL,\n  level TEXT NOT NULL DEFAULT 'INFO' CHECK (level IN ('AGENT','INFO','WARN','ERROR','SYSTEM')),\n  agent TEXT CHECK (agent IS NULL OR agent IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  handoff_to TEXT CHECK (handoff_to IS NULL OR handoff_to IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  event_type TEXT NOT NULL DEFAULT 'SYSTEM' CHECK (event_type IN ('EXECUTE','HANDOFF','COMPLETED','SYSTEM')),\n  message TEXT NOT NULL,\n  details TEXT\n);\nCREATE INDEX IF NOT EXISTS idx_activity_user_ws_ts ON sugo_activity_events (user_id, workspace_name, ts);\n\nCREATE TABLE IF NOT EXISTS user_bitbucket_tokens (\n  user_id TEXT PRIMARY KEY,\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS user_git_connections (\n  user_id TEXT NOT NULL,\n  provider TEXT NOT NULL CHECK (provider IN ('github','gitlab','bitbucket_server','aws_codecommit')),\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  credential_profile TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, provider)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_accounts (\n  user_id TEXT NOT NULL,\n  name TEXT NOT NULL,\n  profile TEXT NOT NULL,\n  region TEXT NOT NULL,\n  account_id TEXT NOT NULL,\n  principal_arn TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_snapshots (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  payload TEXT NOT NULL,\n  observed_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_preferences (\n  user_id TEXT NOT NULL PRIMARY KEY,\n  active_account_name TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_refresh_budget (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  day_key TEXT NOT NULL,\n  day_count INTEGER NOT NULL,\n  last_started_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_project_integration_mappings (\n  user_id TEXT NOT NULL,\n  project_path TEXT NOT NULL,\n  selections TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS user_pinpoint_context (user_id TEXT PRIMARY KEY, base_url TEXT NOT NULL, updated_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_pinpoint_snapshots (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, observed_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_context_auto_refresh_runs (user_id TEXT NOT NULL, day_key TEXT NOT NULL, status TEXT NOT NULL, started_at TEXT NOT NULL, completed_at TEXT, error_message TEXT, PRIMARY KEY (user_id, day_key));\n\nCREATE TABLE IF NOT EXISTS user_api_tokens (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  name TEXT,\n  token_hash TEXT NOT NULL UNIQUE,\n  token_hint TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  last_used_at TEXT\n);\n\nCREATE TABLE IF NOT EXISTS sugo_review_artifacts (\n  artifact_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, workspace_name TEXT NOT NULL,\n  task_id TEXT NOT NULL, session_id TEXT NOT NULL, patch_version INTEGER NOT NULL,\n  file_path TEXT NOT NULL, change_type TEXT NOT NULL, content TEXT, diff_text TEXT,\n  unavailable_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS sugo_weekly_reports (\n  user_id TEXT NOT NULL,\n  week_id TEXT NOT NULL,\n  start_date TEXT NOT NULL,\n  end_date TEXT NOT NULL,\n  generated_at TEXT NOT NULL,\n  uploaded_at TEXT NOT NULL,\n  report_json TEXT NOT NULL,\n  PRIMARY KEY (user_id, week_id)\n);\n";
@@ -90586,7 +90646,7 @@ var dataDir = join15(sugoDir, "dashboard");
 var secretFile = join15(dataDir, "session-secret");
 var stateFile = join15(dataDir, "server.json");
 var port = Number(process.env.SUGO_DASHBOARD_PORT ?? DEFAULT_PORT);
-var runtimeDir = dirname7(fileURLToPath4(import.meta.url));
+var runtimeDir = dirname7(fileURLToPath5(import.meta.url));
 var pluginRoot = dirname7(runtimeDir);
 var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join15(runtimeDir, "web");
 var userId = process.env.LOCAL_DEV_USER_ID ?? userInfo().username;
@@ -90640,7 +90700,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.42.47", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.43.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

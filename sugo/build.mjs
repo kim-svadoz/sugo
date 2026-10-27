@@ -26,5 +26,6 @@ const common = {
 await build({ ...common, entryPoints: ["src/index.ts"], outfile: "dist/index.bundle.mjs" });
 // 세션 시작 훅: 대시보드 서버를 띄운다. 훅은 MCP 번들 전체를 로드하지 않도록 따로 번들한다.
 await build({ ...common, entryPoints: ["src/lifecycle/dashboardStartHook.ts"], outfile: "dist/dashboard-start.mjs" });
+await build({ ...common, entryPoints: ["src/dashboardRegister.ts"], outfile: "dist/dashboard-register.mjs" });
 
-console.log("빌드 완료: dist/index.bundle.mjs, dist/dashboard-start.mjs");
+console.log("빌드 완료: dist/index.bundle.mjs, dist/dashboard-start.mjs, dist/dashboard-register.mjs");

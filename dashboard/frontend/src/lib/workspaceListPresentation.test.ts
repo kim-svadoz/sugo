@@ -12,7 +12,7 @@ describe("도메인 목록 표현", () => {
     expect(source).not.toContain("% health");
     expect(source).toContain("작업 이력 검색");
     expect(source).toContain("전체 도메인");
-    expect(source).toContain("도메인 추가");
+    expect(source).toContain("프로젝트 등록");
   });
 
   it("목록의 수치가 자체적으로 의미를 드러낸다", () => {

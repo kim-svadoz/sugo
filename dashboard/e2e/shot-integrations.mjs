@@ -6,6 +6,7 @@ const base = process.env.SUGO_UI_URL ?? "http://127.0.0.1:5175";
 const output = process.env.SUGO_SCREENSHOT ?? join(tmpdir(), "sugo-integrations.png");
 const detailOutput = output.replace(/\.png$/i, "-git.png");
 const mappingOutput = output.replace(/\.png$/i, "-mapping.png");
+const registrationOutput = output.replace(/\.png$/i, "-registration.png");
 const projects = [
   {
     project_path: "/work/catalog-api",
@@ -73,5 +74,8 @@ await page.waitForTimeout(250);
 console.log("active integration tab", await page.locator('nav[aria-label="연동 설정"] button[aria-pressed="true"]').allTextContents());
 console.log("integration tab borders", await page.locator('nav[aria-label="연동 설정"] button').evaluateAll((items) => items.map((item) => [item.textContent, item.getAttribute('aria-pressed'), getComputedStyle(item).borderBottomColor])));
 await page.screenshot({ path: mappingOutput, fullPage: true });
-console.log(output, detailOutput, mappingOutput);
+await page.getByRole("button", { name: "프로젝트 등록" }).first().click();
+await page.getByRole("region", { name: "새 프로젝트 등록" }).waitFor({ timeout: 5_000 });
+await page.screenshot({ path: registrationOutput, fullPage: true });
+console.log(output, detailOutput, mappingOutput, registrationOutput);
 await browser.close();

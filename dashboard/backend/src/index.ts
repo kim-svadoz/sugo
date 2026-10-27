@@ -34,6 +34,7 @@ import { createAwsCliContextClient, type AwsContextClient } from "./aws/contextC
 import { createHttpPinpointClient, type PinpointClient } from "./pinpoint/client.js";
 import { createPinpointContextRouter } from "./routes/pinpointContext.js";
 import { createProjectIntegrationsRouter } from './routes/projectIntegrations.js';
+import type { ProjectRegistrar } from './services/projectRegistrar.js';
 import { createAwsGuardPolicyRouter } from './routes/awsGuardPolicy.js';
 import { corsWhitelist } from "./middleware/cors.js";
 import { errorMiddleware } from "./middleware/asyncHandler.js";
@@ -85,6 +86,7 @@ export interface AppOverrides {
   staticDir?: string;
   sqliteSchema?: InitDbOptions["sqliteSchema"];
   weeklySettingsService?: WeeklySettingsService;
+  projectRegistrar?: ProjectRegistrar;
 }
 
 export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
@@ -162,7 +164,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/aws-context", createAwsContextRouter(db, sessionSecret, awsContextClient));
   app.use("/api/aws-guard-policy", createAwsGuardPolicyRouter(db, sessionSecret, awsGuardPolicyPath));
   app.use("/api/pinpoint-context", createPinpointContextRouter(db, sessionSecret, pinpointClient));
-  app.use('/api/project-integrations', createProjectIntegrationsRouter(db, sessionSecret));
+  app.use('/api/project-integrations', createProjectIntegrationsRouter(db, sessionSecret, overrides.projectRegistrar));
   app.use("/api/pr", createPrRouter(db, sessionSecret, secretEncKey, gitProviderClients));
   // /api/stats + alias /api/metrics(플러그인이 calibrated-ratio를 여기로 fetch), harness, skills.
   const statsRouter = createStatsRouter(db, sessionSecret);
