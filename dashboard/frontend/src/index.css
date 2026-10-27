@@ -522,3 +522,15 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .integration-workbench input[type="number"],
 .integration-workbench select { min-height: 40px; }
 .integration-workbench label { line-height: 1.5; }
+.integration-panel-header {
+  min-height: 92px;
+  padding: 24px 36px;
+  background: rgba(34, 211, 238, 0.025);
+}
+.integration-panel-body { padding: 28px 36px 32px; }
+.integration-panel-body > section,
+.integration-panel-body > div { max-width: 100%; }
+@media (max-width: 640px) {
+  .integration-panel-header { min-height: 80px; padding: 20px; }
+  .integration-panel-body { padding: 20px; }
+}

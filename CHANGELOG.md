@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.52.4 / Console 0.43.4] - 2026-10-27
+
+- Integrations의 비어 보이던 서비스 상태를 복구하고, 현황·연동 구성 탭의 헤더와 본문·입력·버튼 규격을 통일합니다.
+
 ## [Plugin 0.52.3 / Console 0.43.3] - 2026-10-27
 
 - Integrations의 서비스 상태는 저장된 ECS 연결만 보여주고, 프로젝트별 ECS 선택과 저장은 별도의 서비스 매핑 설정으로 분리합니다.

@@ -8,7 +8,7 @@ describe("Integrations section navigation", () => {
     expect(source).toContain('useState<IntegrationViewId>("overview")');
     expect(source).toContain('aria-label="연동 설정"');
     expect(source).toContain("현황 확인");
-    expect(source).toContain("직접 설정");
+    expect(source).toContain("연동 구성");
     expect(source).toContain("summarizeRepositoryConnections");
     expect(source).toContain('label: "프로젝트 등록"');
     expect(source).toContain('label: "코드 저장소"');
@@ -30,6 +30,7 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("서비스 상태");
     expect(source).toContain("서비스 매핑");
     expect(source).toContain("statusOnly");
+    expect(source.indexOf("!registrationOnly && statusOnly")).toBeLessThan(source.indexOf("!registrationOnly && !statusOnly && <>"));
     expect(source).toContain("AWS CLI 또는 SSO 로그인 정보를 사용하므로 별도 토큰은 필요하지 않습니다");
     expect(source).not.toContain("외부 서비스 연결은 다음 단계에서 별도로 선택합니다");
     expect(source).not.toContain("Console에서도");

@@ -122,7 +122,7 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
   }
 
   return <div id="integration-aws" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] ${focused ? "bg-cyan-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}>
+    <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] ${focused ? "integration-panel-header" : "px-5 py-4"}`}>
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>AWS Context</h2>
@@ -139,7 +139,7 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
       </div>
       {expanded && status?.connected && <ContextRefreshStatus observedAt={status.observedAt} now={now} dailyLimit={status.refreshBudget?.dailyLimit ?? 4} remainingToday={status.refreshBudget?.remainingToday} nextAllowedAt={status.refreshBudget?.nextAllowedAt} />}
     </div>
-    {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
+    {expanded && <div className={`space-y-5 ${focused ? "integration-panel-body" : "p-5"}`}>
       {error && <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{error}</div>}
       {status === null ? <div className="text-sm text-[var(--color-text-muted)]">불러오는 중…</div> : !status.connected || adding ? <>
         {status.connected && <div className="flex items-center justify-between"><div className="text-sm font-medium text-[var(--color-text)]">AWS 계정 추가</div><button type="button" onClick={() => setAdding(false)} className="settings-action settings-action-secondary settings-action-compact">취소</button></div>}
@@ -234,14 +234,14 @@ function PinpointContextCard({ expanded, onToggle, focused = false, onConnection
   useEffect(() => { void load(); }, []);
   async function run(action: () => Promise<unknown>) { setBusy(true); try { await action(); await load(); } catch (err) { setError(String(err)); } finally { setBusy(false); } }
   return <div id="integration-pinpoint" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] ${focused ? "bg-cyan-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}>
+    <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] ${focused ? "integration-panel-header" : "px-5 py-4"}`}>
       <div className="flex items-center justify-between gap-3">
         <div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>Pinpoint APM</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>애플리케이션의 실제 실행 상태와 성능 지표를 읽습니다.</p></div>
         <div className="flex items-center gap-2">{status?.connected && <><ContextRefreshStatus observedAt={status.observedAt} now={now} compact /><button disabled={busy} onClick={() => void run(refreshPinpointContext)} className="settings-action settings-action-secondary settings-action-compact">{busy ? "동기화 중…" : "Pinpoint 동기화"}</button><span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[11px] text-emerald-300">연결됨</span></>}{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
       </div>
       {expanded && status?.connected && <ContextRefreshStatus observedAt={status.observedAt} now={now} />}
     </div>
-    {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
+    {expanded && <div className={`space-y-5 ${focused ? "integration-panel-body" : "p-5"}`}>
       {error && <div className="rounded border border-rose-500/30 px-3 py-2 text-xs text-rose-300">{error}</div>}
       <div className="flex gap-2"><input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://pinpoint.example.com" className="settings-field min-w-0 flex-1" />
         {!status?.connected ? <button disabled={busy || !baseUrl} onClick={() => void run(() => connectPinpointContext(baseUrl))} className="settings-action settings-action-primary">연결</button> : <button disabled={busy} onClick={() => void run(disconnectPinpointContext)} className="settings-action settings-action-danger">연결 해제</button>}
@@ -275,8 +275,8 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspac
   async function submitRegistration() { const workspace = domainMode === 'new' ? newWorkspace.trim() : registrationWorkspace; if (!registrationPath.trim() || !workspace) return; setBusy(true); setRegistrationError(null); try { const result = await registerProject(registrationPath.trim(), workspace); await load(result.projectPath); if (!registrationOnly) setRegistering(false); setRegistrationPath(''); setSaveMessage(`${result.projectName} 프로젝트를 ${result.workspace} 도메인에 등록했습니다.`); } catch (error) { setRegistrationError(error instanceof Error ? error.message : String(error)); } finally { setBusy(false); } }
   async function save(disable = false) { if (!path) return; setBusy(true); setSaveMessage(null); try { const values = disable ? [] : candidates.filter((item) => selected.includes(key(item))).map(({ accountName, service, environment, cluster }) => ({ accountName, service, environment, cluster })); await saveProjectIntegration(path, values); await load(path); setSaveMessage(disable ? "외부 운영 정보 사용을 해제했습니다." : `${values.length}개 운영 서비스를 연결했습니다.`); } finally { setBusy(false); } }
   return <div id="integration-projects" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "bg-violet-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>{registrationOnly ? "프로젝트 등록" : statusOnly ? "서비스 상태" : "서비스 매핑"}</h2>{!registrationOnly && <p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>{statusOnly ? `저장된 ECS 연결을 기준으로 등록 프로젝트 ${projects.length}개의 서비스 상태를 보여줍니다.` : "프로젝트에서 사용할 ECS 서비스를 선택하고 저장합니다."}</p>}</div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
-    {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
+    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "integration-panel-header" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>{registrationOnly ? "프로젝트 등록" : statusOnly ? "서비스 상태" : "서비스 매핑"}</h2>{!registrationOnly && <p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>{statusOnly ? `저장된 ECS 연결을 기준으로 등록 프로젝트 ${projects.length}개의 서비스 상태를 보여줍니다.` : "프로젝트에서 사용할 ECS 서비스를 선택하고 저장합니다."}</p>}</div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
+    {expanded && <div className={`space-y-5 ${focused ? "integration-panel-body" : "p-5"}`}>
       {registering && <section aria-label="새 프로젝트 등록" className="border-y border-cyan-300/25 bg-cyan-300/[0.025] px-5 py-5">
         <div className="flex items-start justify-between gap-4"><strong className="text-base text-cyan-100">도메인과 프로젝트 등록</strong>{!registrationOnly && <button type="button" onClick={() => setRegistering(false)} aria-label="등록 폼 닫기" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><X size={17} /></button>}</div>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,.85fr)]">
@@ -287,6 +287,7 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspac
         <div className="mt-5 flex justify-end gap-2 border-t border-white/[0.07] pt-4">{!registrationOnly && <button type="button" onClick={() => setRegistering(false)} className="settings-action settings-action-secondary">취소</button>}<button type="button" disabled={busy || !registrationPath.trim() || !(domainMode === 'new' ? newWorkspace.trim() : registrationWorkspace)} onClick={() => void submitRegistration()} className="settings-action settings-action-primary">{busy ? '등록 중…' : '프로젝트 등록'}</button></div>
       </section>}
       {registrationOnly && saveMessage && <div role="status" className="border border-emerald-400/25 bg-emerald-400/[0.06] px-4 py-3 text-xs font-semibold text-emerald-200">✓ {saveMessage}</div>}
+      {!registrationOnly && statusOnly && (projects.length === 0 ? <div className="py-8 text-center text-xs text-[var(--color-text-dim)]">등록된 프로젝트가 없습니다.</div> : <div className="divide-y divide-white/[0.07] border-y border-white/[0.08]">{projects.map((item) => { const summary = summarizeSavedIntegrations(item.selections); return <div key={item.project_path} className="grid gap-3 px-1 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] sm:items-center"><div><strong className="font-mono text-sm text-[var(--color-text)]">{item.workspace_name} / {item.project_path.split('/').at(-1)}</strong><span className="mt-1 block text-[11px] text-[var(--color-text-dim)]">{item.configured ? item.selections.length > 0 ? `${item.selections.length}개 서비스 연결됨` : "운영 정보 사용 안 함" : "서비스 매핑 안 됨"}</span></div><div className="flex flex-wrap gap-2">{summary.flatMap((group) => group.services.map((service) => <span key={`${group.environment}-${service}`} className="border border-emerald-300/15 bg-emerald-300/[0.025] px-2.5 py-1.5 text-[11px] text-[var(--color-text)]"><b className="mr-1.5 font-mono text-emerald-300">{group.environment}</b>{service}</span>))}{summary.length === 0 && <span className="text-xs text-[var(--color-text-muted)]">연결된 ECS 서비스 없음</span>}</div></div>})}</div>)}
       {!registrationOnly && !statusOnly && <>
       <div className="break-keep border-y border-cyan-300/15 bg-cyan-300/[0.025] px-5 py-4">
         <div className="flex items-start justify-between gap-6">
@@ -304,7 +305,6 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspac
         </ol>
         <p className="mt-4 rounded-lg bg-black/20 px-3 py-2 text-[11.5px] leading-5 text-[var(--color-text-dim)]"><b className="text-amber-200">프로젝트와 일치</b> 기준: 저장소 폴더 이름이 ECS 서비스 이름(끝의 <code className="font-mono">-service</code> 제외) 또는 컨테이너 이미지 이름과 같습니다. 다르면 목록에서 직접 고릅니다.</p>
       </div>
-      {!registrationOnly && statusOnly && (projects.length === 0 ? <div className="py-8 text-center text-xs text-[var(--color-text-dim)]">등록된 프로젝트가 없습니다.</div> : <div className="divide-y divide-white/[0.07] border-y border-white/[0.08]">{projects.map((item) => { const summary = summarizeSavedIntegrations(item.selections); return <div key={item.project_path} className="grid gap-3 px-1 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] sm:items-center"><div><strong className="font-mono text-sm text-[var(--color-text)]">{item.workspace_name} / {item.project_path.split('/').at(-1)}</strong><span className="mt-1 block text-[11px] text-[var(--color-text-dim)]">{item.configured ? item.selections.length > 0 ? `${item.selections.length}개 서비스 연결됨` : "운영 정보 사용 안 함" : "서비스 매핑 안 됨"}</span></div><div className="flex flex-wrap gap-2">{summary.flatMap((group) => group.services.map((service) => <span key={`${group.environment}-${service}`} className="border border-emerald-300/15 bg-emerald-300/[0.025] px-2.5 py-1.5 text-[11px] text-[var(--color-text)]"><b className="mr-1.5 font-mono text-emerald-300">{group.environment}</b>{service}</span>))}{summary.length === 0 && <span className="text-xs text-[var(--color-text-muted)]">연결된 ECS 서비스 없음</span>}</div></div>})}</div>)}
       {!registrationOnly && !statusOnly && (projects.length === 0 ? <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] pb-5"><p className="text-xs text-[var(--color-text-dim)]">아직 등록된 프로젝트가 없습니다. 위 등록 폼이나 <code className="font-mono text-[11px] text-cyan-200">/sugo:add</code> 중 편한 방법을 사용할 수 있습니다.</p><button type="button" onClick={() => setRegistering(true)} className="settings-action settings-action-primary">프로젝트 등록</button></div> : <>
         <div className="grid gap-4 border-y border-white/[0.07] py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-center"><div><strong className="block text-sm text-[var(--color-text)]">적용할 프로젝트</strong><span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">프로젝트마다 사용할 운영 근거를 고릅니다.</span></div><select value={path} onChange={(event) => { const next = event.target.value; const nextProject = projects.find((item) => item.project_path === next); setPath(next); setSelected(initialIntegrationSelection(nextProject, candidates, key)); setSaveMessage(null); }} className="settings-field w-full">{projects.map((item) => <option key={item.project_path} value={item.project_path}>{item.workspace_name} / {item.project_path.split('/').at(-1)} ({integrationStatusLabel(item)})</option>)}</select></div>
         {saveMessage && <div role="status" className="border border-emerald-400/25 bg-emerald-400/[0.06] px-4 py-3 text-xs font-semibold text-emerald-200">✓ {saveMessage}</div>}
@@ -597,7 +597,7 @@ export function Settings() {
           {[{ id: "overview" as const, label: "코드 저장소" }, { id: "projects" as const, label: "서비스 상태" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-emerald-300 text-emerald-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
         </div>
         <div className="flex flex-1 flex-wrap items-center px-2">
-          <span className="px-3 py-3 text-[10px] font-semibold tracking-[0.12em] text-cyan-300/75">직접 설정</span>
+          <span className="px-3 py-3 text-[10px] font-semibold tracking-[0.12em] text-cyan-300/75">연동 구성</span>
           {[{ id: "registration" as const, label: "프로젝트 등록" }, { id: "serviceMapping" as const, label: "서비스 매핑" }, { id: "git" as const, label: "PR 작업 권한" }, { id: "aws" as const, label: `AWS 데이터 소스${awsConnected ? " · 연결됨" : ""}` }, { id: "pinpoint" as const, label: `모니터링${pinpointConnected ? " · 연결됨" : ""}` }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
         </div>
       </nav>
@@ -613,7 +613,7 @@ export function Settings() {
       {selectedSection === "serviceMapping" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} />}
 
       {(selectedSection === "overview" || selectedSection === "git") && <div id="integration-git" className="scroll-mt-24 overflow-hidden">
-        <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-cyan-300/[0.025] px-7 py-6 sm:px-9">
+        <div className="integration-panel-header flex items-center justify-between gap-3 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2.5">
           <span className="grid h-10 w-10 place-items-center rounded-full border border-cyan-300/20 text-[var(--color-primary)]"><GitBranch size={17} /></span>
           <div>
@@ -623,7 +623,7 @@ export function Settings() {
           </div>
         </div>
 
-        <div className="space-y-5 p-7 sm:p-9">
+        <div className="integration-panel-body space-y-5">
           {selectedSection === "overview" && <ProjectGitConnections workspaces={workspaces} />}
           {selectedSection === "git" && <>
           {error && (
