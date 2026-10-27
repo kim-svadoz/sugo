@@ -9,9 +9,9 @@ describe("Integrations section navigation", () => {
     expect(source).toContain('label: "프로젝트"');
     expect(source).toContain('label: "외부 서비스"');
     expect(source).toContain('label: "연결 현황"');
-    expect(source).toContain('label: "프로젝트 등록"');
-    expect(source).toContain('label: "서비스 매핑"');
-    expect(source).toContain('label: `AWS');
+    expect(source).toContain('description: "로컬 프로젝트 등록"');
+    expect(source).toContain('label: `AWS 계정');
+    expect(source).toContain('label: "AWS 서비스 매핑"');
     expect(source).toContain('label: "GitHub · GitLab"');
     expect(source).toContain('label: `Pinpoint');
     expect(source).toContain('label: "코드 저장소"');
@@ -23,5 +23,8 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("statusOnly");
     expect(source.indexOf("!registrationOnly && statusOnly")).toBeLessThan(source.indexOf("!registrationOnly && !statusOnly && <>"));
     expect(source).toContain("서비스 매핑 기준");
+    expect(source).toContain('activeGroup !== "projects"');
+    expect(source).toContain("서비스 연동 미사용");
+    expect(source).toContain("추가할 서비스");
   });
 });

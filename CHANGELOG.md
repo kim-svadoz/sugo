@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.52.6 / Console 0.43.6] - 2026-10-28
+
+- Integrations에서 프로젝트 등록과 AWS 서비스 매핑을 분리하고, 저장된 연결·추가 후보·연동 미사용 상태를 프로젝트별로 명확히 표시합니다.
+
 ## [Plugin 0.52.5 / Console 0.43.5] - 2026-10-27
 
 - Integrations를 프로젝트·외부 서비스·연결 현황의 목적 중심 여정으로 재구성하고, AWS 인증과 CodeCommit PR 권한을 한 화면에서 관리합니다.

@@ -25,9 +25,9 @@ describe("project integration presentation", () => {
   });
 
   it("distinguishes workspace registration from confirmed infrastructure mapping", () => {
-    expect(integrationStatusLabel({ configured: false, selections: [] })).toBe("AWS/APM 미확정");
-    expect(integrationStatusLabel({ configured: true, selections: [candidates[0]] })).toBe("AWS/APM 1개 확정");
-    expect(integrationStatusLabel({ configured: true, selections: [] })).toBe("외부 연동 사용 안 함");
+    expect(integrationStatusLabel({ configured: false, selections: [] })).toBe("서비스 매핑 필요");
+    expect(integrationStatusLabel({ configured: true, selections: [candidates[0]] })).toBe("서비스 1개 연결");
+    expect(integrationStatusLabel({ configured: true, selections: [] })).toBe("서비스 연동 미사용");
   });
 
   it("partitions candidates into available and pending/confirmed columns", () => {

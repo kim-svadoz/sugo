@@ -25,9 +25,9 @@ export function initialIntegrationSelection(project: ProjectIntegration | undefi
 }
 
 export function integrationStatusLabel(project: Pick<ProjectIntegration, "configured" | "selections">): string {
-  if (!project.configured) return "AWS/APM 미확정";
-  if (project.selections.length === 0) return "외부 연동 사용 안 함";
-  return `AWS/APM ${project.selections.length}개 확정`;
+  if (!project.configured) return "서비스 매핑 필요";
+  if (project.selections.length === 0) return "서비스 연동 미사용";
+  return `서비스 ${project.selections.length}개 연결`;
 }
 
 export function partitionIntegrationCandidates(candidates: IntegrationCandidate[], selected: string[], key: KeyFn) {
