@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.52.2 / Console 0.43.2] - 2026-10-27
+
+- Integrations의 읽기 전용 현황과 직접 설정 영역을 분리하고, CodeCommit의 AWS CLI·SSO 인증 방식과 PR 권한의 목적을 명확히 안내합니다.
+
 ## [Plugin 0.52.1 / Console 0.43.1] - 2026-10-27
 
 - Integrations를 프로젝트 등록, 코드 저장소, 저장소 작업 권한, 서비스 상태, 모니터링 목적별로 분리하고 공급자별 감지 프로젝트와 원격 저장소를 확인할 수 있습니다.

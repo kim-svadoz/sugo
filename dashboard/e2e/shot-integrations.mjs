@@ -67,7 +67,7 @@ console.log("page", page.url(), (await page.locator("body").innerText()).slice(0
 await page.getByText("로컬 Git은 준비됐습니다", { exact: true }).waitFor({ timeout: 5_000 });
 await page.getByText("Git remote를 감지했습니다", { exact: true }).waitFor({ timeout: 5_000 });
 await page.screenshot({ path: output, fullPage: true });
-await page.getByRole("button", { name: "저장소 작업 권한" }).click();
+await page.getByRole("button", { name: "PR 작업 권한" }).click();
 await page.getByRole("button", { name: /GitHub 감지된 프로젝트 없음/ }).waitFor({ timeout: 5_000 });
 await page.getByRole("button", { name: /AWS CodeCommit 2개 프로젝트 감지/ }).click();
 await page.getByText("감지된 프로젝트", { exact: true }).waitFor({ timeout: 5_000 });
