@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.52.3 / Console 0.43.3] - 2026-10-27
+
+- Integrations의 서비스 상태는 저장된 ECS 연결만 보여주고, 프로젝트별 ECS 선택과 저장은 별도의 서비스 매핑 설정으로 분리합니다.
+
 ## [Plugin 0.52.2 / Console 0.43.2] - 2026-10-27
 
 - Integrations의 읽기 전용 현황과 직접 설정 영역을 분리하고, CodeCommit의 AWS CLI·SSO 인증 방식과 PR 권한의 목적을 명확히 안내합니다.

@@ -27,7 +27,9 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("AWS 읽기 범위");
     expect(source).toContain("<AwsAccessPolicySettings />");
     expect(source).toContain("Pinpoint APM");
-    expect(source).toContain("배포 서비스 연결");
+    expect(source).toContain("서비스 상태");
+    expect(source).toContain("서비스 매핑");
+    expect(source).toContain("statusOnly");
     expect(source).toContain("AWS CLI 또는 SSO 로그인 정보를 사용하므로 별도 토큰은 필요하지 않습니다");
     expect(source).not.toContain("외부 서비스 연결은 다음 단계에서 별도로 선택합니다");
     expect(source).not.toContain("Console에서도");
