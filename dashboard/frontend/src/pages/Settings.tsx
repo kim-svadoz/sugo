@@ -17,7 +17,7 @@ import { awsAccountMetaLabel, awsAccountOptionLabel, hasIntegrationSelectionChan
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
 import { snapshotAge } from "../lib/snapshotAge.js";
 import { PageHeading } from "../components/PageHeading.js";
-import { Activity, ArrowRight, Boxes, Check, ChevronDown, Cloud, FolderGit2, FolderPlus, GitBranch, HardDrive, X } from "lucide-react";
+import { Activity, ArrowRight, Boxes, Check, ChevronDown, Cloud, FolderGit2, GitBranch, HardDrive, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import { summarizeRepositoryConnections } from "../lib/integrationConnectionSummary.js";
@@ -26,7 +26,7 @@ const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 const contextAutoRefreshDescription = "Console이 켜져 있으면 매일 이 PC 시간 기준 08:00에 자동으로 동기화합니다. 꺼져 있었다면 다음에 켜질 때 동기화하고, 언제든 직접 동기화할 수 있습니다.";
 
 type IntegrationSectionId = "aws" | "pinpoint" | "projects" | "git";
-type IntegrationViewId = IntegrationSectionId | "catalog" | "overview";
+type IntegrationViewId = IntegrationSectionId | "catalog" | "overview" | "registration";
 const INTEGRATION_SECTIONS: ReadonlyArray<{ id: IntegrationSectionId; label: string; description: string; group: string; icon: LucideIcon }> = [
   { id: "aws", label: "AWS", description: "배포와 클라우드 리소스", group: "데이터 연결", icon: Cloud },
   { id: "pinpoint", label: "APM", description: "실행 상태와 성능 지표", group: "데이터 연결", icon: Activity },
@@ -252,10 +252,10 @@ function PinpointContextCard({ expanded, onToggle, focused = false, onConnection
   </div>;
 }
 
-function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspaceNames, startRegistering = false }: { expanded: boolean; onToggle: () => void; focused?: boolean; workspaceNames: string[]; startRegistering?: boolean }) {
+function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspaceNames, startRegistering = false, registrationOnly = false }: { expanded: boolean; onToggle: () => void; focused?: boolean; workspaceNames: string[]; startRegistering?: boolean; registrationOnly?: boolean }) {
   const [projects, setProjects] = useState<ProjectIntegration[]>([]); const [candidates, setCandidates] = useState<IntegrationCandidate[]>([]);
   const [path, setPath] = useState(''); const [selected, setSelected] = useState<string[]>([]); const [filter, setFilter] = useState(''); const [busy, setBusy] = useState(false); const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const [registering, setRegistering] = useState(startRegistering); const [registrationPath, setRegistrationPath] = useState(''); const [domainMode, setDomainMode] = useState<'existing' | 'new'>(workspaceNames.length > 0 ? 'existing' : 'new'); const [registrationWorkspace, setRegistrationWorkspace] = useState(workspaceNames[0] ?? ''); const [newWorkspace, setNewWorkspace] = useState(''); const [registrationError, setRegistrationError] = useState<string | null>(null);
+  const [registering, setRegistering] = useState(startRegistering || registrationOnly); const [registrationPath, setRegistrationPath] = useState(''); const [domainMode, setDomainMode] = useState<'existing' | 'new'>(workspaceNames.length > 0 ? 'existing' : 'new'); const [registrationWorkspace, setRegistrationWorkspace] = useState(workspaceNames[0] ?? ''); const [newWorkspace, setNewWorkspace] = useState(''); const [registrationError, setRegistrationError] = useState<string | null>(null);
   const key = (item: { accountName: string; service: string; cluster?: string | null }) => `${item.accountName}\u0000${item.cluster ?? ''}\u0000${item.service}`;
   async function load(nextPath?: string) { const data = await getProjectIntegrations(); setProjects(data.projects); setCandidates(data.candidates); const target = nextPath || path || data.projects[0]?.project_path || ''; const targetProject = data.projects.find((item) => item.project_path === target); setPath(target); setSelected(initialIntegrationSelection(targetProject, data.candidates, key)); }
   useEffect(() => { void load(); }, []);
@@ -272,20 +272,22 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspac
   const applied = sortCandidates(partitioned.applied);
   const visibleCandidates = [...applied, ...available];
   const toggleSelection = (value: string) => setSelected((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
-  async function submitRegistration() { const workspace = domainMode === 'new' ? newWorkspace.trim() : registrationWorkspace; if (!registrationPath.trim() || !workspace) return; setBusy(true); setRegistrationError(null); try { const result = await registerProject(registrationPath.trim(), workspace); await load(result.projectPath); setRegistering(false); setRegistrationPath(''); setSaveMessage(`${result.projectName} 프로젝트를 ${result.workspace} 도메인에 등록했습니다.`); } catch (error) { setRegistrationError(error instanceof Error ? error.message : String(error)); } finally { setBusy(false); } }
+  async function submitRegistration() { const workspace = domainMode === 'new' ? newWorkspace.trim() : registrationWorkspace; if (!registrationPath.trim() || !workspace) return; setBusy(true); setRegistrationError(null); try { const result = await registerProject(registrationPath.trim(), workspace); await load(result.projectPath); if (!registrationOnly) setRegistering(false); setRegistrationPath(''); setSaveMessage(`${result.projectName} 프로젝트를 ${result.workspace} 도메인에 등록했습니다.`); } catch (error) { setRegistrationError(error instanceof Error ? error.message : String(error)); } finally { setBusy(false); } }
   async function save(disable = false) { if (!path) return; setBusy(true); setSaveMessage(null); try { const values = disable ? [] : candidates.filter((item) => selected.includes(key(item))).map(({ accountName, service, environment, cluster }) => ({ accountName, service, environment, cluster })); await saveProjectIntegration(path, values); await load(path); setSaveMessage(disable ? "외부 운영 정보 사용을 해제했습니다." : `${values.length}개 운영 서비스를 연결했습니다.`); } finally { setBusy(false); } }
   return <div id="integration-projects" className="scroll-mt-24 overflow-hidden">
-    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "bg-violet-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>프로젝트 외부 연동</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>등록 프로젝트 {projects.length}개, 연결 설정 {projects.filter((item) => item.configured).length}개</p></div><div className="flex items-center gap-2"><button type="button" onClick={() => { setRegistering(true); setRegistrationError(null); }} className="settings-action settings-action-primary"><FolderPlus size={15} /> 프로젝트 등록</button>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div></div>
+    <div className={`${expanded ? "border-b" : ""} flex items-center justify-between gap-3 border-[var(--color-border)] ${focused ? "bg-violet-300/[0.025] px-7 py-6 sm:px-9" : "px-5 py-4"}`}><div><h2 className={`${focused ? "text-xl" : "text-base"} font-semibold text-[var(--color-text)]`}>{registrationOnly ? "프로젝트 등록" : "배포 서비스 연결"}</h2><p className={`${focused ? "mt-1 text-sm" : "text-xs"} text-[var(--color-text-muted)]`}>{registrationOnly ? "로컬 프로젝트를 Sugo 도메인에 등록합니다. 외부 서비스 연결은 다음 단계에서 별도로 선택합니다." : `등록 프로젝트 ${projects.length}개 중 ${projects.filter((item) => item.configured).length}개가 서비스 상태와 연결되어 있습니다.`}</p></div>{!focused && <DetailToggle expanded={expanded} onClick={onToggle} />}</div>
     {expanded && <div className={`space-y-5 ${focused ? "p-7 sm:p-9" : "p-5"}`}>
       {registering && <section aria-label="새 프로젝트 등록" className="border-y border-cyan-300/25 bg-cyan-300/[0.025] px-5 py-5">
-        <div className="flex items-start justify-between gap-4"><div><strong className="text-base text-cyan-100">도메인과 프로젝트 등록</strong><p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">Console에서도 <code className="font-mono text-cyan-200">/sugo:add</code>와 같은 엔진을 실행합니다. 스택 감지와 프로젝트 규칙 적용까지 함께 처리됩니다.</p></div><button type="button" onClick={() => setRegistering(false)} aria-label="등록 폼 닫기" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><X size={17} /></button></div>
+        <div className="flex items-start justify-between gap-4"><div><strong className="text-base text-cyan-100">도메인과 프로젝트 등록</strong><p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">Console에서도 <code className="font-mono text-cyan-200">/sugo:add</code>와 같은 엔진을 실행합니다. 스택 감지와 프로젝트 규칙 적용까지 함께 처리됩니다.</p></div>{!registrationOnly && <button type="button" onClick={() => setRegistering(false)} aria-label="등록 폼 닫기" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><X size={17} /></button>}</div>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,.85fr)]">
           <div><label htmlFor="registration-project-path" className="mb-2 block text-xs font-semibold text-[var(--color-text)]">로컬 프로젝트 절대경로</label><input id="registration-project-path" value={registrationPath} onChange={(event) => setRegistrationPath(event.target.value)} placeholder="/Users/name/dev/my-project" className="settings-field w-full font-mono" /><p className="mt-1.5 text-[11px] text-[var(--color-text-dim)]">현재 PC에 존재하는 프로젝트 폴더를 입력합니다.</p></div>
           <div><span className="mb-2 block text-xs font-semibold text-[var(--color-text)]">연결할 도메인</span><div className="mb-2 grid grid-cols-2 gap-2"><button type="button" aria-pressed={domainMode === 'existing'} disabled={workspaceNames.length === 0} onClick={() => setDomainMode('existing')} className={`settings-action justify-center ${domainMode === 'existing' ? 'settings-action-primary' : 'settings-action-secondary'}`}>기존 도메인</button><button type="button" aria-pressed={domainMode === 'new'} onClick={() => setDomainMode('new')} className={`settings-action justify-center ${domainMode === 'new' ? 'settings-action-primary' : 'settings-action-secondary'}`}>새 도메인</button></div>{domainMode === 'existing' ? <select value={registrationWorkspace} onChange={(event) => setRegistrationWorkspace(event.target.value)} className="settings-field w-full">{workspaceNames.map((name) => <option key={name} value={name}>{name}</option>)}</select> : <input value={newWorkspace} onChange={(event) => setNewWorkspace(event.target.value)} placeholder="예: content-platform" className="settings-field w-full" />}</div>
         </div>
         {registrationError && <p role="alert" className="mt-3 text-xs text-rose-300">{registrationError}</p>}
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.07] pt-4"><p className="text-[11px] text-[var(--color-text-dim)]">등록 후 Git 원격 저장소와 AWS·APM 연결 후보를 이 화면에서 이어서 확인합니다.</p><div className="flex gap-2"><button type="button" onClick={() => setRegistering(false)} className="settings-action settings-action-secondary">취소</button><button type="button" disabled={busy || !registrationPath.trim() || !(domainMode === 'new' ? newWorkspace.trim() : registrationWorkspace)} onClick={() => void submitRegistration()} className="settings-action settings-action-primary">{busy ? '등록 중…' : '프로젝트 등록'}</button></div></div>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.07] pt-4"><p className="text-[11px] text-[var(--color-text-dim)]">등록은 프로젝트와 도메인만 연결합니다. Git remote, 배포 서비스, APM은 자동 감지 후 각각의 화면에서 확인합니다.</p><div className="flex gap-2">{!registrationOnly && <button type="button" onClick={() => setRegistering(false)} className="settings-action settings-action-secondary">취소</button>}<button type="button" disabled={busy || !registrationPath.trim() || !(domainMode === 'new' ? newWorkspace.trim() : registrationWorkspace)} onClick={() => void submitRegistration()} className="settings-action settings-action-primary">{busy ? '등록 중…' : '프로젝트 등록'}</button></div></div>
       </section>}
+      {registrationOnly && saveMessage && <div role="status" className="border border-emerald-400/25 bg-emerald-400/[0.06] px-4 py-3 text-xs font-semibold text-emerald-200">✓ {saveMessage}</div>}
+      {!registrationOnly && <>
       <div className="break-keep border-y border-cyan-300/15 bg-cyan-300/[0.025] px-5 py-4">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0 flex-1">
@@ -313,6 +315,7 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspac
         </div>
         <div className={`flex flex-wrap items-center justify-between gap-3 border-t px-4 py-4 transition ${hasChanges ? 'border-amber-300/25 bg-amber-300/[0.035]' : 'border-white/[0.07]'}`}><p className={`text-[11px] ${hasChanges ? 'font-semibold text-amber-100' : 'text-[var(--color-text-dim)]'}`}>{hasChanges ? '저장하지 않은 변경이 있습니다. 저장해야 실제 연결에 반영됩니다.' : '저장된 연결과 현재 선택이 같습니다.'}</p><div className="flex gap-2"><button disabled={busy || selected.length === 0 || !hasChanges} onClick={() => void save()} className="settings-action settings-action-primary">{busy ? '저장 중…' : '변경 내용 저장'}</button><button disabled={busy || (project?.configured && project.selections.length === 0)} onClick={() => void save(true)} className="settings-action settings-action-secondary">운영 정보 사용 안 함</button></div></div>
         <p className="text-[11px] text-[var(--color-text-dim)]">저장 전에는 Inspector에 제안으로만 보이고, 저장하면 연결된 운영 정보로 바뀝니다. Pinpoint는 선택한 ECS 서비스에서 에이전트 설정이 확인될 때 함께 연결됩니다.</p>
+      </>}
       </>}
     </div>}
   </div>;
@@ -465,10 +468,9 @@ function IntegrationCatalog({ awsConnected, pinpointConnected, onSelect }: {
   </div>;
 }
 
-function ConnectionJourney({ projectCount, remoteCount, remoteSummary, permissionCount, awsConnected, pinpointConnected, onOpenGit }: {
+function ConnectionJourney({ projectCount, remoteCount, permissionCount, awsConnected, pinpointConnected, onOpenGit }: {
   projectCount: number;
   remoteCount: number;
-  remoteSummary: string;
   permissionCount: number;
   awsConnected: boolean;
   pinpointConnected: boolean;
@@ -485,9 +487,9 @@ function ConnectionJourney({ projectCount, remoteCount, remoteSummary, permissio
     </div>
     <ol className="grid sm:grid-cols-2 lg:grid-cols-4">
       <li className="flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:border-r lg:border-b-0"><span className="font-mono text-xs text-emerald-300">01</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">로컬 프로젝트</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">자동 확인 · {projectCount}개</small></span><Check size={15} className="text-emerald-300" /></li>
-      <li className={`flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 lg:border-b-0 lg:border-r ${remoteCount === 0 ? "bg-cyan-300/[0.055]" : ""}`}><span className="font-mono text-xs text-cyan-300">02</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">프로젝트 원격 저장소</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">{remoteCount > 0 ? `${remoteSummary} · ${remoteCount}개 프로젝트` : "감지된 remote 없음"}</small></span><button type="button" onClick={onOpenGit} className="text-cyan-300" aria-label="프로젝트 저장소 현황 열기"><ArrowRight size={16} /></button></li>
+      <li className={`flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 lg:border-b-0 lg:border-r ${remoteCount === 0 ? "bg-cyan-300/[0.055]" : ""}`}><span className="font-mono text-xs text-cyan-300">02</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">코드 저장소</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">{remoteCount > 0 ? "Git remote를 감지했습니다" : "감지된 Git remote 없음"}</small></span><button type="button" onClick={onOpenGit} className="text-cyan-200" aria-label="코드 저장소 현황 열기"><ArrowRight size={16} /></button></li>
       <li className="flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:border-r lg:border-b-0"><span className="font-mono text-xs text-violet-300">03</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">저장소 작업 권한</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">선택 기능 · {permissionCount > 0 ? `${permissionCount}개 설정` : "미설정"}</small></span></li>
-      <li className="flex min-h-20 items-center gap-3 px-5 py-4"><span className="font-mono text-xs text-amber-300">04</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">운영 정보</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">선택 기능 · {operationalCount}개 사용</small></span></li>
+      <li className="flex min-h-20 items-center gap-3 px-5 py-4"><span className="font-mono text-xs text-amber-300">04</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">서비스 상태 · 모니터링</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">선택 기능 · {operationalCount > 0 ? "연결됨" : "미연결"}</small></span></li>
     </ol>
   </section>;
 }
@@ -501,7 +503,7 @@ function ProjectGitConnections({ workspaces }: { workspaces: WorkspaceSummary[] 
       {projects.map((project) => { const confirmedOperations = project.aws_deployments.filter((item) => item.linkMode === "confirmed").length; const suggestedOperations = project.aws_deployments.filter((item) => item.linkMode === "suggested").length; return <div key={project.project_path} className="grid gap-4 px-1 py-4 sm:grid-cols-[minmax(0,1.1fr)_minmax(8rem,.55fr)_minmax(11rem,.8fr)_minmax(10rem,.7fr)] sm:items-center">
         <div className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center bg-cyan-300/[0.06] text-cyan-300"><FolderGit2 size={16} /></span><span className="min-w-0"><strong className="block truncate font-mono text-sm text-[var(--color-text)]">{project.project_path.split(/[\\/]/).filter(Boolean).pop()}</strong><small className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{project.project_path}</small></span></div>
         <div><small className="block text-[10px] text-[var(--color-text-dim)]">코드 이력</small><span className="mt-1 flex items-center gap-1.5 text-xs text-[var(--color-text)]"><HardDrive size={13} className="text-[var(--color-text-muted)]" />{project.local_git.headCommit ? "로컬 Git 사용 중" : "Git 확인 안 됨"}</span></div>
-        <div><small className="block text-[10px] text-[var(--color-text-dim)]">원격 저장소</small>{project.remote_git ? <><span className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-cyan-200"><Cloud size={13} />{project.remote_git.providerLabel}</span><span className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-muted)]">{project.remote_git.repository}</span></> : <span className="mt-1 block text-xs text-[var(--color-text-muted)]">연결된 origin 없음</span>}</div>
+        <div><small className="block text-[10px] text-[var(--color-text-dim)]">원격 저장소</small>{project.remote_git ? <><span className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-sky-100"><Cloud size={13} />{project.remote_git.providerLabel}</span><span className="mt-1 block truncate font-mono text-[10px] text-slate-300">{project.remote_git.repository}</span></> : <span className="mt-1 block text-xs text-[var(--color-text-muted)]">연결된 origin 없음</span>}</div>
         <div><small className="block text-[10px] text-[var(--color-text-dim)]">운영 정보</small>{confirmedOperations > 0 ? <span className="mt-1 block text-xs font-semibold text-emerald-300">ECS/APM {confirmedOperations}개 연결됨</span> : suggestedOperations > 0 ? <span className="mt-1 block text-xs text-amber-200">후보 {suggestedOperations}개 · 저장 필요</span> : <span className="mt-1 block text-xs text-[var(--color-text-muted)]">연결 없음</span>}</div>
       </div>})}
     </div>
@@ -524,7 +526,7 @@ export function Settings() {
   const { data: workspaces } = useWorkspaces();
 
   useEffect(() => {
-    if (searchParams.get('section') === 'projects') setSelectedSection('projects');
+    if (searchParams.get('section') === 'projects') setSelectedSection(searchParams.get('register') === '1' ? 'registration' : 'projects');
   }, [searchParams]);
 
   async function refresh() {
@@ -586,10 +588,10 @@ export function Settings() {
     <div className="settings-interface mx-auto max-w-6xl space-y-6">
       <PageHeading eyebrow="SYSTEM INTEGRATIONS" title="외부 연동" description="저장소와 운영 환경을 연결하고, Sugo가 사용할 외부 서비스의 범위를 관리합니다." />
 
-      <ConnectionJourney projectCount={repositorySummary.projectCount} remoteCount={repositorySummary.remoteProjectCount} remoteSummary={repositorySummary.providerSummary} permissionCount={connections.length} awsConnected={awsConnected} pinpointConnected={pinpointConnected} onOpenGit={() => setSelectedSection("overview")} />
+      <ConnectionJourney projectCount={repositorySummary.projectCount} remoteCount={repositorySummary.remoteProjectCount} permissionCount={connections.length} awsConnected={awsConnected} pinpointConnected={pinpointConnected} onOpenGit={() => setSelectedSection("overview")} />
 
       <nav aria-label="연동 설정" className="flex flex-wrap items-center gap-x-1 border-y border-[var(--color-border)] px-2">
-        {[{ id: "overview" as const, label: "연결 현황" }, { id: "projects" as const, label: "프로젝트 매핑" }, { id: "git" as const, label: "저장소 작업 권한" }, { id: "catalog" as const, label: "운영 도구" }, { id: "aws" as const, label: `AWS${awsConnected ? " · 연결됨" : ""}` }, { id: "pinpoint" as const, label: `APM${pinpointConnected ? " · 연결됨" : ""}` }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
+        {[{ id: "registration" as const, label: "프로젝트 등록" }, { id: "overview" as const, label: "코드 저장소" }, { id: "git" as const, label: "저장소 작업 권한" }, { id: "projects" as const, label: "서비스 상태" }, { id: "aws" as const, label: `AWS 데이터 소스${awsConnected ? " · 연결됨" : ""}` }, { id: "pinpoint" as const, label: `모니터링${pinpointConnected ? " · 연결됨" : ""}` }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
       </nav>
 
       {!LOCAL_DEV && <ApiTokensCard />}
@@ -598,15 +600,16 @@ export function Settings() {
       {selectedSection === "catalog" && <IntegrationCatalog awsConnected={awsConnected} pinpointConnected={pinpointConnected} onSelect={setSelectedSection} />}
       {selectedSection === "aws" && <AwsContextCard expanded onToggle={() => undefined} focused onConnectionChange={setAwsConnected} />}
       {selectedSection === "pinpoint" && <PinpointContextCard expanded onToggle={() => undefined} focused onConnectionChange={setPinpointConnected} />}
-      {selectedSection === "projects" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} startRegistering={searchParams.get('register') === '1'} />}
+      {selectedSection === "registration" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} registrationOnly />}
+      {selectedSection === "projects" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} />}
 
       {(selectedSection === "overview" || selectedSection === "git") && <div id="integration-git" className="scroll-mt-24 overflow-hidden">
         <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-cyan-300/[0.025] px-7 py-6 sm:px-9">
           <div className="flex items-center gap-2.5">
           <span className="grid h-10 w-10 place-items-center rounded-full border border-cyan-300/20 text-[var(--color-primary)]"><GitBranch size={17} /></span>
           <div>
-            <h2 className="text-xl font-semibold text-[var(--color-text)]">{selectedSection === "overview" ? "연결 현황" : "저장소 작업 권한"}</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">{selectedSection === "overview" ? <>등록 프로젝트 {repositorySummary.projectCount}개 중 {repositorySummary.remoteProjectCount}개에서 원격 저장소를 감지했습니다.{repositorySummary.providerSummary ? ` · ${repositorySummary.providerSummary}` : ""}</> : "Sugo가 GitHub·GitLab·CodeCommit에서 PR을 직접 조회하거나 만들 때만 설정합니다."}</p>
+            <h2 className="text-xl font-semibold text-[var(--color-text)]">{selectedSection === "overview" ? "코드 저장소" : "저장소 작업 권한"}</h2>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">{selectedSection === "overview" ? "등록한 로컬 프로젝트의 Git remote를 자동으로 읽어 원격 저장소 연결을 보여줍니다." : "Sugo가 GitHub·GitLab·CodeCommit에서 PR을 직접 조회하거나 만들 때만 설정합니다."}</p>
           </div>
           </div>
         </div>
@@ -659,6 +662,7 @@ export function Settings() {
                 {providers.map((provider) => {
                   const connected = connections.some((item) => item.provider === provider.id);
                   const planned = provider.status === "planned";
+                  const detectedProjects = repositorySummary.providerProjects[provider.id] ?? [];
                   return (
                     <button
                       key={provider.id}
@@ -668,9 +672,10 @@ export function Settings() {
                       className={`border-l-2 px-4 py-3 text-left transition ${selected === provider.id ? "border-cyan-300 bg-cyan-300/[0.06]" : "border-white/[0.08] hover:border-white/20 hover:bg-white/[0.025]"} disabled:cursor-default disabled:opacity-50`}
                     >
                       <div className="flex items-center justify-between gap-2 text-sm font-medium text-[var(--color-text)]">
-                        {provider.label}
-                        <span className="text-[10px] text-[var(--color-text-muted)]">{planned ? "지원 예정" : connected ? "작업 권한 있음" : repositorySummary.providerCounts[provider.label] ? `${repositorySummary.providerCounts[provider.label]}개 프로젝트 감지` : "설정 가능"}</span>
+                        <span>{provider.label}</span>
+                        <span className="text-[10px] text-[var(--color-text-muted)]">{planned ? "지원 예정" : connected ? "작업 권한 있음" : detectedProjects.length > 0 ? `${detectedProjects.length}개 프로젝트 감지` : "감지된 프로젝트 없음"}</span>
                       </div>
+                      {detectedProjects.length > 0 && <div className="mt-1 truncate text-[11px] text-[var(--color-text-dim)]">{detectedProjects.map((project) => `${project.workspaceName} / ${project.projectName}`).join(" · ")}</div>}
                     </button>
                   );
                 })}
@@ -680,8 +685,25 @@ export function Settings() {
                 const provider = providers.find((item) => item.id === selected)!;
                 const requiresBaseUrl = provider.id === "bitbucket_server";
                 const usesAwsCredentials = provider.authMode === "aws_default_chain";
+                const detectedProjects = repositorySummary.providerProjects[provider.id] ?? [];
                 return <div className="space-y-3 rounded-lg border border-cyan-500/25 bg-cyan-500/[0.03] p-4">
                   <div className="text-sm font-semibold text-[var(--color-text-bright)]">{provider.label} 작업 권한 설정</div>
+              <div className="border-y border-white/[0.08] py-3">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-[var(--color-text)]">감지된 프로젝트</span>
+                  <span className="text-[10px] text-[var(--color-text-muted)]">{detectedProjects.length}개</span>
+                </div>
+                {detectedProjects.length > 0 ? <div className="space-y-2">
+                  <div className="hidden grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4 text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-dim)] sm:grid">
+                    <span>도메인</span><span>로컬 프로젝트</span><span>원격 저장소</span>
+                  </div>
+                  {detectedProjects.map((project) => <div key={project.projectPath} className="grid gap-1 text-xs sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] sm:gap-4">
+                    <span className="truncate font-medium text-[var(--color-text)]">{project.workspaceName}</span>
+                    <span className="truncate text-[var(--color-text-muted)]" title={project.projectPath}>{project.projectName}</span>
+                    <span className="truncate font-mono text-[11px] font-medium text-sky-100" title={project.remoteUrl}>{project.repository}</span>
+                  </div>)}
+                </div> : <p className="text-xs leading-5 text-[var(--color-text-muted)]">이 공급자를 사용하는 Git remote가 등록 프로젝트에서 아직 감지되지 않았습니다.</p>}
+              </div>
               {usesAwsCredentials ? <>
                 <div className="rounded-md border border-amber-400/20 bg-amber-400/[0.04] px-3 py-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
                   Dashboard 서버의 AWS SDK 기본 자격 증명 체인을 사용합니다. 로컬에서는 AWS CLI/SSO 로그인을 먼저 완료하세요.

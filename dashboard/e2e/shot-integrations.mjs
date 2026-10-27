@@ -7,6 +7,7 @@ const output = process.env.SUGO_SCREENSHOT ?? join(tmpdir(), "sugo-integrations.
 const detailOutput = output.replace(/\.png$/i, "-git.png");
 const mappingOutput = output.replace(/\.png$/i, "-mapping.png");
 const registrationOutput = output.replace(/\.png$/i, "-registration.png");
+const permissionsOutput = output.replace(/\.png$/i, "-permissions.png");
 const projects = [
   {
     project_path: "/work/catalog-api",
@@ -64,11 +65,20 @@ await page.goto(`${base}/settings`, { waitUntil: "domcontentloaded" });
 await page.waitForTimeout(700);
 console.log("page", page.url(), (await page.locator("body").innerText()).slice(0, 500));
 await page.getByText("로컬 Git은 준비됐습니다", { exact: true }).waitFor({ timeout: 5_000 });
-await page.getByText("AWS CodeCommit 2 · 2개 프로젝트", { exact: true }).waitFor({ timeout: 5_000 });
+await page.getByText("Git remote를 감지했습니다", { exact: true }).waitFor({ timeout: 5_000 });
 await page.screenshot({ path: output, fullPage: true });
+await page.getByRole("button", { name: "저장소 작업 권한" }).click();
+await page.getByRole("button", { name: /GitHub 감지된 프로젝트 없음/ }).waitFor({ timeout: 5_000 });
+await page.getByRole("button", { name: /AWS CodeCommit 2개 프로젝트 감지/ }).click();
+await page.getByText("감지된 프로젝트", { exact: true }).waitFor({ timeout: 5_000 });
+await page.getByText("catalog", { exact: true }).last().waitFor({ timeout: 5_000 });
+await page.getByText("identity", { exact: true }).last().waitFor({ timeout: 5_000 });
+await page.getByText("감지된 프로젝트", { exact: true }).scrollIntoViewIfNeeded();
+await page.screenshot({ path: permissionsOutput, fullPage: true });
+await page.getByRole("button", { name: "코드 저장소", exact: true }).click();
 await page.getByText("프로젝트별 연결", { exact: true }).scrollIntoViewIfNeeded();
 await page.screenshot({ path: detailOutput, fullPage: false });
-await page.getByRole("button", { name: "프로젝트 매핑" }).click();
+await page.getByRole("button", { name: "서비스 상태" }).click();
 await page.getByText("현재 연결됨", { exact: true }).waitFor({ timeout: 5_000 });
 await page.waitForTimeout(250);
 console.log("active integration tab", await page.locator('nav[aria-label="연동 설정"] button[aria-pressed="true"]').allTextContents());
@@ -77,5 +87,5 @@ await page.screenshot({ path: mappingOutput, fullPage: true });
 await page.getByRole("button", { name: "프로젝트 등록" }).first().click();
 await page.getByRole("region", { name: "새 프로젝트 등록" }).waitFor({ timeout: 5_000 });
 await page.screenshot({ path: registrationOutput, fullPage: true });
-console.log(output, detailOutput, mappingOutput, registrationOutput);
+console.log(output, detailOutput, mappingOutput, registrationOutput, permissionsOutput);
 await browser.close();
