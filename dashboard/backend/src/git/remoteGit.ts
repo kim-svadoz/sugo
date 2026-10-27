@@ -8,6 +8,8 @@ export interface RemoteGitState {
 }
 
 function repositoryFromUrl(remoteUrl: string): string {
+  const codeCommitHelper = remoteUrl.match(/^codecommit::(?:[^:]+):\/\/([^/?#]+)/i)?.[1];
+  if (codeCommitHelper) return codeCommitHelper.replace(/\.git$/i, "");
   const codeCommit = remoteUrl.match(/\/v1\/repos\/([^/?#]+)/i)?.[1];
   if (codeCommit) return codeCommit.replace(/\.git$/i, "");
   const withoutQuery = remoteUrl.split(/[?#]/, 1)[0] ?? remoteUrl;
@@ -22,7 +24,7 @@ export function describeRemoteGit(remoteUrl: string): RemoteGitState {
     ? "github"
     : normalized.includes("gitlab")
       ? "gitlab"
-      : normalized.includes("git-codecommit.")
+      : normalized.includes("git-codecommit.") || normalized.startsWith("codecommit::")
         ? "aws_codecommit"
         : normalized.includes("bitbucket")
           ? "bitbucket_server"

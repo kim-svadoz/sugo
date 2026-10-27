@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.51.47 / Console 0.42.46] - 2026-10-27
+
+- Integrations에서 CodeCommit helper 형식의 실제 remote를 올바르게 감지하고, 프로젝트 연결·저장소 작업 권한·AWS/APM 운영 연결을 한 흐름에서 구분해 보여줍니다.
+
 ## [Plugin 0.51.46 / Console 0.42.45] - 2026-10-27
 
 - Integrations에서 로컬 Git, GitHub·GitLab·CodeCommit 같은 원격 저장소, AWS 운영 연결을 서로 다른 상태로 안내하고 프로젝트별 실제 `origin` 연결을 보여줍니다.

@@ -17,9 +17,10 @@ import { awsAccountMetaLabel, awsAccountOptionLabel, initialIntegrationSelection
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
 import { snapshotAge } from "../lib/snapshotAge.js";
 import { PageHeading } from "../components/PageHeading.js";
-import { Activity, ArrowRight, Boxes, Check, ChevronDown, Cloud, FolderGit2, GitBranch, HardDrive, Plus } from "lucide-react";
+import { Activity, ArrowRight, Boxes, Check, ChevronDown, Cloud, FolderGit2, GitBranch, HardDrive } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
+import { summarizeRepositoryConnections } from "../lib/integrationConnectionSummary.js";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 const contextAutoRefreshDescription = "Console이 켜져 있으면 매일 이 PC 시간 기준 08:00에 자동으로 동기화합니다. 꺼져 있었다면 다음에 켜질 때 동기화하고, 언제든 직접 동기화할 수 있습니다.";
@@ -449,9 +450,11 @@ function IntegrationCatalog({ awsConnected, pinpointConnected, onSelect }: {
   </div>;
 }
 
-function ConnectionJourney({ projectCount, remoteCount, awsConnected, pinpointConnected, onOpenGit }: {
+function ConnectionJourney({ projectCount, remoteCount, remoteSummary, permissionCount, awsConnected, pinpointConnected, onOpenGit }: {
   projectCount: number;
   remoteCount: number;
+  remoteSummary: string;
+  permissionCount: number;
   awsConnected: boolean;
   pinpointConnected: boolean;
   onOpenGit: () => void;
@@ -467,8 +470,8 @@ function ConnectionJourney({ projectCount, remoteCount, awsConnected, pinpointCo
     </div>
     <ol className="grid sm:grid-cols-2 lg:grid-cols-4">
       <li className="flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:border-r lg:border-b-0"><span className="font-mono text-xs text-emerald-300">01</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">로컬 프로젝트</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">자동 확인 · {projectCount}개</small></span><Check size={15} className="text-emerald-300" /></li>
-      <li className={`flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 lg:border-b-0 lg:border-r ${remoteCount === 0 ? "bg-cyan-300/[0.055]" : ""}`}><span className="font-mono text-xs text-cyan-300">02</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">원격 저장소</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">{remoteCount > 0 ? `${remoteCount}개 서비스 연결됨` : "필요할 때 선택"}</small></span><button type="button" onClick={onOpenGit} className="text-cyan-300" aria-label="원격 저장소 설정 열기"><ArrowRight size={16} /></button></li>
-      <li className="flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:border-r lg:border-b-0"><span className="font-mono text-xs text-violet-300">03</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">프로젝트 매핑</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">origin 기준 자동 확인</small></span></li>
+      <li className={`flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 lg:border-b-0 lg:border-r ${remoteCount === 0 ? "bg-cyan-300/[0.055]" : ""}`}><span className="font-mono text-xs text-cyan-300">02</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">프로젝트 원격 저장소</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">{remoteCount > 0 ? `${remoteSummary} · ${remoteCount}개 프로젝트` : "감지된 remote 없음"}</small></span><button type="button" onClick={onOpenGit} className="text-cyan-300" aria-label="프로젝트 저장소 현황 열기"><ArrowRight size={16} /></button></li>
+      <li className="flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:border-r lg:border-b-0"><span className="font-mono text-xs text-violet-300">03</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">저장소 작업 권한</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">선택 기능 · {permissionCount > 0 ? `${permissionCount}개 설정` : "미설정"}</small></span></li>
       <li className="flex min-h-20 items-center gap-3 px-5 py-4"><span className="font-mono text-xs text-amber-300">04</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">운영 정보</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">선택 기능 · {operationalCount}개 사용</small></span></li>
     </ol>
   </section>;
@@ -490,7 +493,7 @@ function ProjectGitConnections({ workspaces }: { workspaces: WorkspaceSummary[] 
 }
 
 export function Settings() {
-  const [selectedSection, setSelectedSection] = useState<IntegrationViewId>("catalog");
+  const [selectedSection, setSelectedSection] = useState<IntegrationViewId>("git");
   const [awsConnected, setAwsConnected] = useState(false);
   const [pinpointConnected, setPinpointConnected] = useState(false);
   const [providers, setProviders] = useState<GitProviderDescriptor[] | null>(null);
@@ -556,45 +559,17 @@ export function Settings() {
     }
   }
 
-  const activeSourceSections = INTEGRATION_SECTIONS.filter((section) =>
-    section.id === "git" || (section.id === "aws" && awsConnected) || (section.id === "pinpoint" && pinpointConnected),
-  );
-  const activeControlSections = awsConnected
-    ? INTEGRATION_SECTIONS.filter((section) => section.id === "projects")
-    : [];
-  const availableConnectionNames = [!awsConnected && "AWS", !pinpointConnected && "APM"].filter(Boolean).join(" · ");
-  const projectCount = new Set((workspaces ?? []).flatMap((workspace) => workspace.projects.map((project) => project.project_path))).size;
-  const externalConnectionCount = connections.length + Number(awsConnected) + Number(pinpointConnected);
+  const repositorySummary = summarizeRepositoryConnections(workspaces);
 
   return (
     <div className="settings-interface mx-auto max-w-6xl space-y-6">
       <PageHeading eyebrow="SYSTEM INTEGRATIONS" title="외부 연동" description="저장소와 운영 환경을 연결하고, Sugo가 사용할 외부 서비스의 범위를 관리합니다." />
 
-      <ConnectionJourney projectCount={projectCount} remoteCount={connections.length} awsConnected={awsConnected} pinpointConnected={pinpointConnected} onOpenGit={() => setSelectedSection("git")} />
+      <ConnectionJourney projectCount={repositorySummary.projectCount} remoteCount={repositorySummary.remoteProjectCount} remoteSummary={repositorySummary.providerSummary} permissionCount={connections.length} awsConnected={awsConnected} pinpointConnected={pinpointConnected} onOpenGit={() => setSelectedSection("git")} />
 
-      <section aria-label="외부 연동 구조" className="relative overflow-hidden border-y border-[var(--color-border)] bg-[linear-gradient(90deg,rgba(34,211,238,0.035),transparent_42%,rgba(139,92,246,0.035))] px-4 py-7 sm:px-7">
-        <div aria-hidden="true" className="absolute inset-x-[12%] top-1/2 h-px bg-gradient-to-r from-transparent via-cyan-300/25 to-transparent" />
-        <div className="relative grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_11rem_minmax(0,1fr)]">
-          <div>
-            <div className="mb-3 flex items-center justify-between gap-3"><p className="font-mono text-[10px] font-semibold tracking-[0.22em] text-cyan-300/70">CONNECTED SOURCES</p><span className="rounded-full border border-emerald-300/20 bg-emerald-300/[0.06] px-2 py-1 text-[9px] font-semibold text-emerald-300">외부 {externalConnectionCount}개 · 로컬 Git</span></div>
-            <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-              <button type="button" aria-pressed={selectedSection === "catalog"} onClick={() => setSelectedSection("catalog")} className={`flex min-h-20 items-center gap-3 border-l-2 px-4 py-3 text-left transition sm:col-span-3 lg:col-span-1 ${selectedSection === "catalog" ? "border-cyan-300 bg-cyan-300/[0.09] text-cyan-100" : "border-cyan-300/35 bg-cyan-300/[0.035] text-cyan-100 hover:bg-cyan-300/[0.07]"}`}><span className="grid h-10 w-10 place-items-center rounded-full border border-cyan-300/30 bg-cyan-300/[0.06]"><Plus size={17} /></span><span className="min-w-0 flex-1"><strong className="block text-base">지원 도구 관리</strong><span className="mt-1 block text-[11px] text-[var(--color-text-muted)]">{availableConnectionNames ? `${availableConnectionNames} 연결 가능` : "AWS · APM 연결 상태와 설정 보기"}</span></span><span className="text-xs font-semibold text-cyan-300">열기 →</span></button>
-              {activeSourceSections.map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} status={section.id === "git" ? "local" : "connected"} />)}
-            </div>
-          </div>
-          <div className="relative mx-auto grid h-36 w-36 place-items-center rounded-full border border-cyan-300/25 bg-[#071422] shadow-[0_0_48px_rgba(34,211,238,0.08)]">
-            <span className="absolute inset-3 rounded-full border border-dashed border-cyan-300/20" />
-            <div className="text-center"><strong className="block text-lg tracking-[0.18em] text-cyan-100">SUGO</strong><span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">READ-ONLY HUB</span></div>
-          </div>
-          <div>
-            <p className="mb-3 text-right font-mono text-[10px] font-semibold tracking-[0.22em] text-violet-300/70">{awsConnected ? "PROJECT SCOPE" : "OPTIONAL OPERATIONS"}</p>
-            <div className={`grid gap-2 sm:grid-cols-2 lg:grid-cols-1 ${awsConnected ? "border-r border-violet-300/15 pr-3" : ""}`}>
-              {activeControlSections.map((section) => <IntegrationNode key={section.id} section={section} selected={selectedSection === section.id} onSelect={setSelectedSection} align="right" />)}
-              {activeControlSections.length === 0 && <p className="border-r-2 border-dashed border-white/[0.07] px-3 py-4 text-right text-[11px] leading-5 text-[var(--color-text-dim)]">AWS를 연결하면 프로젝트별 운영 정보 적용이 열립니다.</p>}
-            </div>
-          </div>
-        </div>
-      </section>
+      <nav aria-label="연동 설정" className="flex flex-wrap items-center gap-x-1 border-y border-[var(--color-border)] px-2">
+        {[{ id: "git" as const, label: "프로젝트 저장소" }, { id: "catalog" as const, label: "지원 도구" }, { id: "aws" as const, label: `AWS${awsConnected ? " · 연결됨" : ""}` }, { id: "pinpoint" as const, label: `APM${pinpointConnected ? " · 연결됨" : ""}` }, { id: "projects" as const, label: "프로젝트 적용" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
+      </nav>
 
       {!LOCAL_DEV && <ApiTokensCard />}
 
@@ -609,8 +584,8 @@ export function Settings() {
           <div className="flex items-center gap-2.5">
           <span className="grid h-10 w-10 place-items-center rounded-full border border-cyan-300/20 text-[var(--color-primary)]"><GitBranch size={17} /></span>
           <div>
-            <h2 className="text-xl font-semibold text-[var(--color-text)]">Git 작업 경로</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">{connections.length > 0 ? `${connections.length}개 원격 서비스가 변경 이력과 연결되어 있습니다.` : "로컬 저장소만으로 작업 중입니다. 원격 서비스는 필요할 때 연결할 수 있습니다."}</p>
+            <h2 className="text-xl font-semibold text-[var(--color-text)]">프로젝트 저장소</h2>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">등록 프로젝트 {repositorySummary.projectCount}개 중 {repositorySummary.remoteProjectCount}개에서 원격 저장소를 감지했습니다.{repositorySummary.providerSummary ? ` · ${repositorySummary.providerSummary}` : ""}</p>
           </div>
           </div>
         </div>
@@ -633,10 +608,10 @@ export function Settings() {
               <div className="border-y border-[var(--color-border)] px-1 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-sm font-medium text-[var(--color-text)]">로컬 모드</div>
-                    <div className="mt-0.5 text-xs text-[var(--color-text-muted)]">Git 서비스 없이도 Sugo의 로컬 파이프라인은 그대로 동작합니다.</div>
+                    <div className="text-sm font-medium text-[var(--color-text)]">원격 저장소 작업 권한 <span className="font-normal text-[var(--color-text-dim)]">· 선택</span></div>
+                    <div className="mt-0.5 text-xs leading-5 text-[var(--color-text-muted)]">위 프로젝트 연결은 Git의 remote에서 자동으로 읽습니다. 아래 권한은 Sugo가 원격 서비스의 PR을 직접 조회하거나 만들 때만 설정합니다. AWS·APM 운영 정보 연결과도 별개입니다.</div>
                   </div>
-                  {connections.length === 0 && <span className="rounded-full bg-cyan-500/10 px-2 py-1 text-xs text-cyan-300">현재 사용 중</span>}
+                  <span className="shrink-0 bg-white/[0.035] px-2.5 py-1 text-[10px] font-semibold text-[var(--color-text-muted)]">{connections.length > 0 ? `${connections.length}개 권한 설정` : "설정 안 함"}</span>
                 </div>
               </div>
 
@@ -671,7 +646,7 @@ export function Settings() {
                     >
                       <div className="flex items-center justify-between gap-2 text-sm font-medium text-[var(--color-text)]">
                         {provider.label}
-                        <span className="text-[10px] text-[var(--color-text-muted)]">{planned ? "지원 예정" : connected ? "연결됨" : "선택"}</span>
+                        <span className="text-[10px] text-[var(--color-text-muted)]">{planned ? "지원 예정" : connected ? "작업 권한 있음" : repositorySummary.providerCounts[provider.label] ? `${repositorySummary.providerCounts[provider.label]}개 프로젝트 감지` : "설정 가능"}</span>
                       </div>
                     </button>
                   );
@@ -683,7 +658,7 @@ export function Settings() {
                 const requiresBaseUrl = provider.id === "bitbucket_server";
                 const usesAwsCredentials = provider.authMode === "aws_default_chain";
                 return <div className="space-y-3 rounded-lg border border-cyan-500/25 bg-cyan-500/[0.03] p-4">
-                  <div className="text-sm font-semibold text-[var(--color-text-bright)]">{provider.label} 연결</div>
+                  <div className="text-sm font-semibold text-[var(--color-text-bright)]">{provider.label} 작업 권한 설정</div>
               {usesAwsCredentials ? <>
                 <div className="rounded-md border border-amber-400/20 bg-amber-400/[0.04] px-3 py-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
                   Dashboard 서버의 AWS SDK 기본 자격 증명 체인을 사용합니다. 로컬에서는 AWS CLI/SSO 로그인을 먼저 완료하세요.

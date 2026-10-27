@@ -45584,6 +45584,8 @@ var init_roadmapGraph = __esm({
 
 // ../dashboard/backend/src/git/remoteGit.ts
 function repositoryFromUrl(remoteUrl) {
+  const codeCommitHelper = remoteUrl.match(/^codecommit::(?:[^:]+):\/\/([^/?#]+)/i)?.[1];
+  if (codeCommitHelper) return codeCommitHelper.replace(/\.git$/i, "");
   const codeCommit = remoteUrl.match(/\/v1\/repos\/([^/?#]+)/i)?.[1];
   if (codeCommit) return codeCommit.replace(/\.git$/i, "");
   const withoutQuery = remoteUrl.split(/[?#]/, 1)[0] ?? remoteUrl;
@@ -45593,7 +45595,7 @@ function repositoryFromUrl(remoteUrl) {
 }
 function describeRemoteGit(remoteUrl) {
   const normalized = remoteUrl.toLowerCase();
-  const provider = normalized.includes("github.com") ? "github" : normalized.includes("gitlab") ? "gitlab" : normalized.includes("git-codecommit.") ? "aws_codecommit" : normalized.includes("bitbucket") ? "bitbucket_server" : "git_remote";
+  const provider = normalized.includes("github.com") ? "github" : normalized.includes("gitlab") ? "gitlab" : normalized.includes("git-codecommit.") || normalized.startsWith("codecommit::") ? "aws_codecommit" : normalized.includes("bitbucket") ? "bitbucket_server" : "git_remote";
   const providerLabel = provider === "github" ? "GitHub" : provider === "gitlab" ? "GitLab" : provider === "aws_codecommit" ? "AWS CodeCommit" : provider === "bitbucket_server" ? "Bitbucket Server" : "Git \uC6D0\uACA9 \uC800\uC7A5\uC18C";
   return { remoteUrl, provider, providerLabel, repository: repositoryFromUrl(remoteUrl) };
 }
@@ -90515,7 +90517,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname5(fileURLToPath3(import.meta.url));
-    pkg = "0.42.45" ? { version: "0.42.45" } : JSON.parse(readFileSync(join14(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.42.46" ? { version: "0.42.46" } : JSON.parse(readFileSync(join14(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90638,7 +90640,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.42.45", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.42.46", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });
