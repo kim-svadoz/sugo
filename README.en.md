@@ -4,9 +4,9 @@
 
 [한국어](README.md)
 
-AI agents now take a lot of the legwork out of development. That also means each developer takes on more, and handing several tasks to AI at the same time has become normal. But when an agent calls a task done without running the tests, or wanders outside team rules and edits the wrong place, the legwork of checking it all lands back on you.
+AI agents now take a lot of the legwork out of development. That also means each developer takes on more, and handing several tasks to AI at the same time has become normal. The more you hand off, the more you need to set and manage the standard that AI-written code has to meet.
 
-Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin that lets you hand development to AI agents and trust what comes back. It manages a harness of rules for your stack and team, keeps the AI from going off track, and steers it toward code that you and your organization can rely on. With the Sugo Console that comes with it, you see every task running in parallel in one place and only make the calls that are yours to make.
+Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin that manages that standard. It keeps a harness of coding rules for your stack and team, attaches contract tests to each requirement, and checks results against real build and test runs such as Gradle or npm. Security hooks block risky commands such as AWS writes and secret reads before they run. The result is code that you and your organization can rely on. With the Sugo Console that comes with it, you see every task running in parallel in one place and only make the calls that are yours to make.
 
 ![Work floor: the worker moves through test, review, and docs to commit](docs/images/console-workfloor.gif)
 
@@ -29,9 +29,11 @@ Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin t
 
 | Common problem | What Sugo does |
 | --- | --- |
-| The agent reports done without tests | No recorded test run, no next step |
-| The agent edits files outside the request | Each step has a limited scope. The test agent edits only tests. The docs agent edits only docs |
-| Approval from a summary only | You approve after you see requirement status, test results, open risks, and the diff on one screen |
+| AI-written code is hard to keep to your team's standard | Agents read the stack harness and domain rules before they work, and review catches violations |
+| It is hard to tell whether every requirement was built | Each requirement gets acceptance criteria and contract tests, and its status is shown one by one |
+| You end up re-running builds and tests yourself | Sugo records real build and test runs such as Gradle or npm and decides the next step from those records |
+| Risky commands can run unchecked | Security hooks block AWS writes, secret reads, and edits outside each step's scope |
+| Running many tasks at once makes progress easy to lose | The Console shows progress, blockers, and approval requests per domain on one screen |
 | The reasoning disappears when the session ends | Specs, design decisions, work results, and later patches stay in one history |
 | Claude and Codex follow different rules | Both agents read the same rule files |
 | The same mistake comes back | A mistake you record as a rule is followed by every agent from the next session |
