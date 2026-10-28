@@ -5,11 +5,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/dashboard-start.mjs\"",
-            "timeout": 15
-          },
-          {
-            "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/agent-tools.mjs\"",
             "timeout": 10
           }

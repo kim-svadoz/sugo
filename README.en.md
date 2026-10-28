@@ -179,7 +179,7 @@ Use absolute paths. Put one behavior change in each `/sugo:feat`; if a spec is l
 
 ## Console guide
 
-The Console starts with each new Claude Code session at `http://sugo.localhost:3001`. If another program is using port 3001, it starts on the next free port. You do not need to know the port: `/sugo:console open` opens the current address in your browser. First register your projects and connect the external services you use, then start work from a schedule and a spec.
+Run `/sugo:console open` in Claude Code to start the Console and open it in your browser. It also starts on its own when a development task waits for your approval or answer. The address is `http://sugo.localhost:3001`; if another program is using port 3001, it starts on the next free port. Bookmark the address once and reuse it. If you open the bookmark while the Console is off, the page shows the command to start it again and moves to the Console as soon as it is back. First register your projects and connect the external services you use, then start work from a schedule and a spec.
 
 ### 1. Register projects and domains
 
@@ -303,17 +303,16 @@ Arguments are defined in [`sugo/commands/`](sugo/commands/).
 ## What installing Sugo changes
 
 > [!IMPORTANT]
-> Hooks run in every Claude Code project, including projects that you did not register with Sugo. Sugo sends no telemetry.
+> Hooks on commands and file edits run only inside projects registered with Sugo. Sessions opened in other folders are not affected. Sugo sends no telemetry.
 
 <details>
 <summary>Hooks, Console, project files, network</summary>
 
 | When | Hook | Action |
 | --- | --- | --- |
-| Session start | `dashboard-start` | Starts the local Console in the background |
 | Session start | `agent-tools` | Applies `agents.extraTools` to Sugo agents |
-| Before Bash | `aws-readonly-guard` | Blocks AWS CLI calls that write, read secrets, or exceed the budget |
-| Before Bash | `commit-body` | Makes Claude add a body when it commits without one. Weekly reads the purpose of work from commit bodies. Turn off with `WEEKLY_COMMIT_BODY=off` |
+| Before Bash | `aws-readonly-guard` | Blocks AWS CLI calls that write, read secrets, or exceed the budget. To apply it to every session, set `"aws": {"guard": "all"}` in `settings.json` |
+| Before Bash | `commit-body` | Makes Claude add a body when it commits without one. Applies only in repositories Weekly reads (Sugo projects and `git_repos`). Turn off with `WEEKLY_COMMIT_BODY=off` |
 | Before Write/Edit | `scope-guard` | Limits the scope of test-agent and docs-agent |
 | After Edit | `lint-hint` | Sends lint failures in registered projects to Claude. Does not block edits |
 | After MCP calls | `mcp-presentation` | Applies only to servers in `presentation.mcpServers`. Off by default |
@@ -339,6 +338,7 @@ Set personal settings as optional keys in `~/.claude/sugo/settings.json`. A miss
 | `dashboard` | Console connection (`enabled`, `apiUrl`, `userId`, `apiToken`) and a pinned port (`port`). Set automatically for the local Console; with `port` set, it does not move to another port |
 | `agents.extraTools` | Extra MCP tools for Sugo agents. Example: `["mcp__team-knowledge__search"]` |
 | `aws.environments` | Maps environment names (example: `dev`) to AWS account names registered in the Console |
+| `aws.guard` | `"all"` makes the AWS guard hook apply to sessions outside Sugo projects too |
 | `presentation.mcpServers` | MCP servers whose results Claude explains in plain Korean |
 
 Integrations are optional.

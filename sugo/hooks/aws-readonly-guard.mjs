@@ -4,6 +4,7 @@
 import {
   appendFileSync,
   closeSync,
+  existsSync,
   mkdirSync,
   openSync,
   readFileSync,
@@ -13,7 +14,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 export const DEFAULT_AWS_GUARD_POLICY = Object.freeze({
   schemaVersion: 1,
@@ -40,7 +41,36 @@ export function awsGuardPaths(env = process.env) {
     policy: env.SUGO_AWS_GUARD_POLICY_PATH || join(root, "aws-readonly-policy.json"),
     usage: env.SUGO_AWS_GUARD_USAGE_PATH || join(root, "aws-readonly-usage.json"),
     audit: env.SUGO_AWS_GUARD_AUDIT_PATH || join(root, "aws-readonly-audit.jsonl"),
+    settings: join(root, "settings.json"),
   };
+}
+
+const MAX_WALK_UP = 64;
+
+/** cwd에서 위로 올라가며 sugo/config.json(Sugo 등록 프로젝트 표시)을 찾는다. */
+export function isSugoProject(cwd, exists = existsSync) {
+  if (!cwd) return false;
+  let dir = resolve(cwd);
+  for (let i = 0; i < MAX_WALK_UP; i++) {
+    if (exists(join(dir, "sugo", "config.json"))) return true;
+    const parent = dirname(dir);
+    if (parent === dir) return false;
+    dir = parent;
+  }
+  return false;
+}
+
+/**
+ * 가드는 Sugo 등록 프로젝트 안에서만 동작한다. 모든 세션에 걸려면 settings.json에 "aws": {"guard": "all"}을 둔다.
+ * 설정을 읽지 못하면 기본 범위(Sugo 프로젝트)를 쓴다.
+ */
+export function guardApplies(input, settingsPath, exists = existsSync) {
+  try {
+    if (JSON.parse(readFileSync(settingsPath, "utf8"))?.aws?.guard === "all") return true;
+  } catch {
+    // 설정이 없으면 기본 범위다.
+  }
+  return isSugoProject(input?.cwd || process.cwd(), exists);
 }
 
 function boundedInt(value, fallback, min = 1, max = 100000) {
@@ -333,6 +363,7 @@ function decisionMessage(result, budget) {
 export function evaluateHookInput(input, options = {}) {
   const command = input?.tool_input?.command ?? input?.tool_input?.cmd ?? "";
   const paths = options.paths || awsGuardPaths(options.env);
+  if (paths.settings && !guardApplies(input, paths.settings, options.exists)) return { decision: "ignore", calls: [] };
   const policy = options.policy || loadAwsGuardPolicy(paths.policy);
   let result = evaluateAwsCommand(command, policy);
   let budget;

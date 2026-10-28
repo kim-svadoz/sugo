@@ -18,6 +18,8 @@ describe("GET /health", () => {
     expect(res.status).toBe(200);
     // service는 Sugo 플러그인이 같은 포트의 다른 앱과 Console을 구별하는 표시다.
     expect(res.body).toEqual({ status: "ok", service: "sugo-console", version: pkg.version, build: "dev" });
+    // 꺼진 Console의 안내 페이지가 다른 포트의 Console을 찾을 때 읽는다.
+    expect(res.headers["access-control-allow-origin"]).toBe("*");
     await db.close();
   });
 });

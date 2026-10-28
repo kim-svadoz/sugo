@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -89,5 +89,34 @@ describe('AWS readonly guard decision table', () => {
     expect(audit).toContain('[REDACTED]');
     expect(audit).not.toContain('super-secret');
     expect(audit).toContain('"profile":"prod"');
+  });
+});
+
+describe('가드 적용 범위', () => {
+  const write = 'aws ecs update-service --cluster c --service s';
+  const setup = () => {
+    const dir = mkdtempSync(join(tmpdir(), 'sugo-aws-scope-'));
+    const paths = { policy: join(dir, 'policy.json'), usage: join(dir, 'usage.json'), audit: join(dir, 'audit.jsonl'), settings: join(dir, 'settings.json') };
+    const project = join(dir, 'project');
+    mkdirSync(join(project, 'src'), { recursive: true });
+    return { paths, project };
+  };
+
+  it('Sugo에 등록하지 않은 폴더의 세션에는 걸리지 않는다', () => {
+    const { paths, project } = setup();
+    expect(evaluateHookInput({ cwd: project, tool_input: { command: write } }, { paths }).decision).toBe('ignore');
+  });
+
+  it('Sugo 프로젝트 안(하위 폴더 포함)에서는 쓰기를 막는다', () => {
+    const { paths, project } = setup();
+    mkdirSync(join(project, 'sugo'));
+    writeFileSync(join(project, 'sugo', 'config.json'), '{}');
+    expect(evaluateHookInput({ cwd: join(project, 'src'), tool_input: { command: write } }, { paths }).decision).toBe('deny');
+  });
+
+  it('settings.json의 aws.guard가 all이면 모든 세션에 걸린다', () => {
+    const { paths, project } = setup();
+    writeFileSync(paths.settings, JSON.stringify({ aws: { guard: 'all' } }));
+    expect(evaluateHookInput({ cwd: project, tool_input: { command: write } }, { paths }).decision).toBe('deny');
   });
 });

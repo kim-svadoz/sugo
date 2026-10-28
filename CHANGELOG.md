@@ -4,6 +4,12 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.59.0 / Console 0.49.0] - 2026-10-29
+
+- Console은 세션마다 뜨지 않고 `/sugo:console open`과 사람 판단 대기 때만 뜹니다. 꺼진 Console을 즐겨찾기로 열면 다시 띄우는 명령을 안내하고, Console이 다시 뜨면 자동으로 옮겨 갑니다.
+- AWS 가드와 커밋 본문 훅은 Sugo 프로젝트(커밋 본문은 Weekly의 `git_repos` 포함) 안에서만 동작합니다. `settings.json`의 `aws.guard: "all"`로 AWS 가드를 전역으로 둘 수 있습니다.
+- Weekly 자동 정리는 설정에서 켜기 전까지 꺼져 있는 것으로 표시합니다.
+
 ## [Plugin 0.58.0 / Console 0.48.0] - 2026-10-29
 
 - 완료한 파이프라인이 아직 없는 사용자의 Home에서 첫 작업 순서를 안내하고, 본문과 Playbook 메뉴를 연결해 다음 행동을 바로 찾을 수 있습니다.

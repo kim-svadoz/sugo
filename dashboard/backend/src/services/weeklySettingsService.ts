@@ -33,7 +33,7 @@ export interface WeeklySettingsServiceOptions {
 }
 
 const defaults: WeeklySettings = {
-  enabled: true,
+  enabled: false,
   weekday: 5,
   hour: 17,
   minute: 0,

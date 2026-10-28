@@ -21,7 +21,7 @@ export function Preferences() {
   const [regionQuery, setRegionQuery] = useState("");
   const [nickname, setNickname] = useState(displayName);
   const [saved, setSaved] = useState(false);
-  const [weekly, setWeekly] = useState<WeeklySettingsInput>({ enabled: true, weekday: 5, hour: 17, minute: 0, model: "default", extraRepositories: [] });
+  const [weekly, setWeekly] = useState<WeeklySettingsInput>({ enabled: false, weekday: 5, hour: 17, minute: 0, model: "default", extraRepositories: [] });
   const [weeklyLoading, setWeeklyLoading] = useState(true);
   const [weeklyError, setWeeklyError] = useState("");
   const [tokenConfigured, setTokenConfigured] = useState(false);

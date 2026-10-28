@@ -28292,7 +28292,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.58.0" : "0.0.0-dev";
+  return true ? "0.59.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -32732,6 +32732,402 @@ function errorResult12(errorCode, message) {
 var ROADMAP_LEVELS = ["spec", "workstream", "task", "subtask", "step"];
 var ROADMAP_NODE_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"];
 
+// src/lifecycle/consoleOnDemand.ts
+import { dirname as dirname11, join as join30 } from "node:path";
+import { fileURLToPath as fileURLToPath3 } from "node:url";
+
+// src/dashboard/syncAll.ts
+import { readFile as readFile26 } from "node:fs/promises";
+
+// src/work/spec.ts
+import { mkdir as mkdir18, readdir as readdir10, readFile as readFile25 } from "node:fs/promises";
+import { join as join28 } from "node:path";
+async function addSpec(workspace, params) {
+  const spec = {
+    name: params.name,
+    type: params.type,
+    tags: params.tags ?? [],
+    content: params.content,
+    created_at: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  const dir = specsDir(workspace);
+  await mkdir18(dir, { recursive: true });
+  const fileContent = stringifyFrontmatter(
+    { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
+    spec.content
+  );
+  await atomicWriteFile(join28(dir, `${slugify(params.name)}.md`), fileContent);
+  void syncSpec(workspace, spec);
+  return spec;
+}
+function parseSpecFile(raw) {
+  const { meta, body: body2 } = parseFrontmatter(raw);
+  return {
+    name: meta.name ?? "",
+    type: meta.type ?? "other",
+    tags: meta.tags ?? [],
+    created_at: meta.created_at ?? "",
+    content: body2
+  };
+}
+async function listSpecs(workspace) {
+  const dir = specsDir(workspace);
+  let entries;
+  try {
+    entries = await readdir10(dir);
+  } catch {
+    return [];
+  }
+  const specs = [];
+  for (const name2 of entries) {
+    if (!name2.endsWith(".md")) continue;
+    try {
+      const raw = await readFile25(join28(dir, name2), "utf-8");
+      specs.push(parseSpecFile(raw));
+    } catch {
+      continue;
+    }
+  }
+  return specs;
+}
+async function getSpec(workspace, name2) {
+  try {
+    const raw = await readFile25(join28(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    return parseSpecFile(raw);
+  } catch {
+    return null;
+  }
+}
+
+// src/dashboard/syncAll.ts
+async function syncAllWorkspaceData() {
+  const result3 = {
+    workspaceCount: 0,
+    taskCount: 0,
+    roadmapNodeCount: 0,
+    checkpointCount: 0,
+    historyCount: 0,
+    specCount: 0
+  };
+  const workspaces = await listWorkspaces();
+  result3.workspaceCount = workspaces.length;
+  for (const workspace of workspaces) {
+    await syncWorkspace(workspace);
+    const tasks = await listTasks(workspace.name);
+    await reconcileRoadmapWithTasks(workspace.name, tasks);
+    await backfillLegacyRoadmapWorkResults(workspace.name, tasks);
+    for (const task of tasks) await syncTask(workspace.name, task);
+    result3.taskCount += tasks.length;
+    const roadmap = await listRoadmapNodes(workspace.name);
+    await syncRoadmapSnapshot(workspace.name, roadmap);
+    result3.roadmapNodeCount += roadmap.length;
+    const checkpoints = await listCheckpoints(workspace.name);
+    for (const checkpoint of checkpoints) await syncCheckpoint(workspace.name, checkpoint);
+    result3.checkpointCount += checkpoints.length;
+    const history = await listWorkLogs(workspace.name);
+    for (const log of history) await syncHistory(workspace.name, log);
+    result3.historyCount += history.length;
+    const specs = await listSpecs(workspace.name);
+    for (const spec of specs) await syncSpec(workspace.name, spec);
+    result3.specCount += specs.length;
+    const specNames = new Set(specs.map((spec) => spec.name));
+    for (const task of tasks) {
+      if (!task.prd_ref || specNames.has(task.title)) continue;
+      const content = await readFile26(task.prd_ref, "utf8").catch(() => null);
+      if (!content) continue;
+      await syncSpec(workspace.name, {
+        name: task.title,
+        type: "other",
+        tags: ["prd-fallback"],
+        content,
+        created_at: task.created_at
+      });
+      specNames.add(task.title);
+      result3.specCount += 1;
+    }
+  }
+  await drainRetryQueue();
+  return result3;
+}
+
+// src/lifecycle/dashboardRuntime.ts
+import { spawn } from "node:child_process";
+import { createServer } from "node:net";
+import { closeSync, existsSync as existsSync5, openSync } from "node:fs";
+import { mkdir as mkdir19, readFile as readFile27, rm as rm5, stat as stat5 } from "node:fs/promises";
+import { join as join29 } from "node:path";
+var DEFAULT_DASHBOARD_PORT = 3001;
+var CONSOLE_HOST = "sugo.localhost";
+var CONSOLE_SERVICE = "sugo-console";
+var PORT_SCAN = 20;
+function consoleUrl(port) {
+  return `http://${CONSOLE_HOST}:${port}`;
+}
+function configuredDashboardPort() {
+  return process.env.SUGO_DASHBOARD_PORT ? Number(process.env.SUGO_DASHBOARD_PORT) : DEFAULT_DASHBOARD_PORT;
+}
+var HEALTH_TIMEOUT_MS = 1500;
+var START_WAIT_MS = 6e3;
+var STOP_WAIT_MS = 5e3;
+var POLL_MS = 150;
+var LOCK_STALE_MS = 3e4;
+function dashboardPaths(home = sugoHomeDir()) {
+  const sugoDir = join29(home, ".claude", "sugo");
+  const dataDir = join29(sugoDir, "dashboard");
+  return {
+    sugoDir,
+    dataDir,
+    stateFile: join29(dataDir, "server.json"),
+    logFile: join29(dataDir, "dashboard.log"),
+    lockDir: join29(dataDir, "start.lock"),
+    settingsFile: join29(sugoDir, "settings.json")
+  };
+}
+function isSupportedNode(version2 = process.versions.node) {
+  const [major = 0, minor = 0] = version2.split(".").map(Number);
+  return major > 22 || major === 22 && minor >= 5;
+}
+async function readServerState(paths) {
+  try {
+    return JSON.parse(await readFile27(paths.stateFile, "utf8"));
+  } catch {
+    return null;
+  }
+}
+function isConsoleHealth(health) {
+  return health?.service === CONSOLE_SERVICE;
+}
+function isPortFree(port) {
+  return new Promise((resolve16) => {
+    const probe = createServer();
+    probe.once("error", () => resolve16(false));
+    probe.listen(port, "127.0.0.1", () => probe.close(() => resolve16(true)));
+  });
+}
+async function pickDashboardPort(preferred, strict) {
+  const candidates = strict ? [preferred] : Array.from({ length: PORT_SCAN }, (_, i2) => preferred + i2);
+  for (const port of candidates) {
+    if (await isPortFree(port)) return port;
+  }
+  return null;
+}
+async function fetchHealth(port) {
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/health`, { signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS) });
+    if (!res.ok) return null;
+    const body2 = await res.json();
+    return body2.status === "ok" ? body2 : null;
+  } catch {
+    return null;
+  }
+}
+function isAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+var sleep = (ms) => new Promise((resolve16) => setTimeout(resolve16, ms));
+async function waitUntil(done, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await done()) return true;
+    await sleep(POLL_MS);
+  }
+  return done();
+}
+async function stopDashboard(paths) {
+  const state = await readServerState(paths);
+  if (!state) return { stopped: true, unverified: false };
+  if (!isAlive(state.pid)) {
+    await rm5(paths.stateFile, { force: true });
+    return { stopped: true, unverified: false };
+  }
+  if (!await fetchHealth(state.port)) return { stopped: false, unverified: true };
+  process.kill(state.pid, "SIGTERM");
+  if (!await waitUntil(() => !isAlive(state.pid), STOP_WAIT_MS)) process.kill(state.pid, "SIGKILL");
+  await waitUntil(() => !isAlive(state.pid), STOP_WAIT_MS);
+  await rm5(paths.stateFile, { force: true });
+  return { stopped: !isAlive(state.pid), unverified: false };
+}
+async function readDashboardSettings(settingsFile) {
+  try {
+    const settings = JSON.parse(await readFile27(settingsFile, "utf8"));
+    const { enabled, port } = settings.dashboard ?? {};
+    return {
+      ...typeof enabled === "boolean" ? { enabled } : {},
+      ...typeof port === "number" && Number.isInteger(port) && port >= 1024 && port <= 65535 ? { port } : {}
+    };
+  } catch {
+    return {};
+  }
+}
+async function preferredPort(options, paths) {
+  if (options.port !== void 0) return { port: options.port, strict: false };
+  const fixed = (await readDashboardSettings(paths.settingsFile)).port;
+  if (fixed !== void 0) return { port: fixed, strict: true };
+  if (process.env.SUGO_DASHBOARD_PORT) return { port: configuredDashboardPort(), strict: true };
+  return { port: DEFAULT_DASHBOARD_PORT, strict: false };
+}
+async function currentPort(options, paths) {
+  const state = await readServerState(paths);
+  const preferred = await preferredPort(options, paths);
+  const owned = state !== null && isAlive(state.pid);
+  return { ...preferred, port: owned ? state.port : preferred.port, state, owned };
+}
+async function acquireLock(paths) {
+  await mkdir19(paths.dataDir, { recursive: true });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await mkdir19(paths.lockDir);
+      return true;
+    } catch {
+      const age = await stat5(paths.lockDir).then((s) => Date.now() - s.mtimeMs, () => 0);
+      if (age < LOCK_STALE_MS) return false;
+      await rm5(paths.lockDir, { recursive: true, force: true });
+    }
+  }
+  return false;
+}
+async function dashboardStatus(action, options) {
+  const paths = options.paths ?? dashboardPaths();
+  const { port, owned } = await currentPort(options, paths);
+  const health = await fetchHealth(port);
+  const running = health !== null && (owned || isConsoleHealth(health));
+  return {
+    action,
+    running,
+    managed: running && owned,
+    url: consoleUrl(port),
+    ...running && health ? { version: health.version, build: health.build } : {}
+  };
+}
+function browserCommand(url, platform) {
+  if (platform === "darwin") return { command: "open", args: [url] };
+  if (platform === "win32") return { command: "cmd", args: ["/c", "start", "", url] };
+  return { command: "xdg-open", args: [url] };
+}
+function openInBrowser(url, platform = process.platform) {
+  const { command, args: args2 } = browserCommand(url, platform);
+  return new Promise((resolve16) => {
+    const child = spawn(command, args2, { detached: true, stdio: "ignore", windowsHide: true });
+    child.once("error", () => resolve16(false));
+    child.once("spawn", () => {
+      child.unref();
+      resolve16(true);
+    });
+  });
+}
+async function controlDashboard(action, options) {
+  if (action === "status") return dashboardStatus(action, options);
+  const paths = options.paths ?? dashboardPaths();
+  if (action === "stop") {
+    const stopped = await stopDashboard(paths);
+    const result4 = await dashboardStatus(action, options);
+    if (stopped.unverified) result4.message = "Sugo\uAC00 \uC2DC\uC791\uD55C \uC11C\uBC84\uC778\uC9C0 \uD655\uC778\uD560 \uC218 \uC5C6\uC5B4 \uC885\uB8CC\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
+    return result4;
+  }
+  if (action === "restart") {
+    const stopped = await stopDashboard(paths);
+    if (stopped.unverified) {
+      const result4 = await dashboardStatus(action, options);
+      result4.message = "Sugo\uAC00 \uC2DC\uC791\uD55C \uC11C\uBC84\uC778\uC9C0 \uD655\uC778\uD560 \uC218 \uC5C6\uC5B4 \uC7AC\uC2DC\uC791\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
+      return result4;
+    }
+  }
+  const ensured = await ensureDashboard({ ...options, paths });
+  const result3 = await dashboardStatus(action, options);
+  if ("message" in ensured && ensured.message) result3.message = ensured.message;
+  if (action === "open" && result3.running) {
+    const opened = await (options.openUrl ?? openInBrowser)(result3.url);
+    if (!opened) result3.message = `\uBE0C\uB77C\uC6B0\uC800\uB97C \uC5F4\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC774 \uC8FC\uC18C\uB97C \uC9C1\uC811 \uC5EC\uC138\uC694: ${result3.url}`;
+  }
+  return result3;
+}
+async function startServer(runtimeEntry, options, paths, port) {
+  const log = openSync(paths.logFile, "a");
+  let exited = false;
+  const child = spawn(process.execPath, [runtimeEntry], {
+    detached: true,
+    windowsHide: true,
+    stdio: ["ignore", log, log],
+    env: {
+      ...process.env,
+      SUGO_DASHBOARD_PORT: String(port),
+      BUILD_ID: options.buildId,
+      HARNESS_PATH: join29(options.pluginRoot, "harness-library"),
+      HARNESS_OVERRIDE_PATH: join29(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
+      SKILLS_PATH: options.pluginRoot
+    }
+  });
+  child.on("exit", () => {
+    exited = true;
+  });
+  child.unref();
+  closeSync(log);
+  const healthy = await waitUntil(async () => exited || (await fetchHealth(port))?.build === options.buildId, START_WAIT_MS);
+  if (healthy && !exited) return { kind: "started" };
+  return { kind: "failed", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD558\uC9C0 \uBABB\uD588\uB2E4. \uB85C\uADF8: ${paths.logFile}. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` };
+}
+async function ensureDashboard(options) {
+  const paths = options.paths ?? dashboardPaths();
+  const nodeVersion = options.nodeVersion ?? process.versions.node;
+  const runtimeEntry = join29(options.pluginRoot, "dashboard-runtime", "server.mjs");
+  try {
+    if (!isSupportedNode(nodeVersion)) {
+      return {
+        kind: "skipped",
+        reason: "node-too-old",
+        message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB294 Node 22.5 \uC774\uC0C1\uC774 \uD544\uC694\uD558\uB2E4(\uD604\uC7AC ${nodeVersion}). Node\uB97C \uC124\uCE58\uD55C \uB4A4 \uC0C8 \uC138\uC158\uC744 \uC5F0\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.`
+      };
+    }
+    const settings = await readDashboardSettings(paths.settingsFile);
+    if (settings.enabled === false) return { kind: "skipped", reason: "opt-out" };
+    if (!existsSync5(runtimeEntry)) return { kind: "skipped", reason: "no-runtime" };
+    const { port, strict, state, owned } = await currentPort(options, paths);
+    const health = await fetchHealth(port);
+    if (health && !owned && isConsoleHealth(health)) return { kind: "running" };
+    if (health && owned && health.build === options.buildId) return { kind: "running" };
+    if (health && owned) await stopDashboard(paths);
+    else if (state) await rm5(paths.stateFile, { force: true });
+    if (!await acquireLock(paths)) return { kind: "busy" };
+    try {
+      const preferred = (await preferredPort(options, paths)).port;
+      const chosen = await pickDashboardPort(preferred, strict);
+      if (chosen === null) {
+        return {
+          kind: "failed",
+          message: strict ? `Sugo \uB300\uC2DC\uBCF4\uB4DC \uD3EC\uD2B8 ${preferred}\uB97C \uB2E4\uB978 \uD504\uB85C\uADF8\uB7A8\uC774 \uC4F0\uACE0 \uC788\uB2E4. settings.json\uC758 dashboard.port\uB97C \uBC14\uAFB8\uAC70\uB098 \uC9C0\uC6B4\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` : `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uB744\uC6B8 \uBE48 \uD3EC\uD2B8\uB97C ${preferred}~${preferred + PORT_SCAN - 1}\uC5D0\uC11C \uCC3E\uC9C0 \uBABB\uD588\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.`
+        };
+      }
+      const started = await startServer(runtimeEntry, options, paths, chosen);
+      if (started.kind !== "started") return started;
+      const url = consoleUrl(chosen);
+      if (chosen !== preferred) return { kind: "started", message: `\uD3EC\uD2B8 ${preferred}\uB97C \uB2E4\uB978 \uD504\uB85C\uADF8\uB7A8\uC774 \uC4F0\uACE0 \uC788\uC5B4 Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C ${chosen}\uC5D0\uC11C \uC2DC\uC791\uD588\uB2E4: ${url}` };
+      if (settings.enabled !== true) return { kind: "started", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD588\uB2E4: ${url}` };
+      return started;
+    } finally {
+      await rm5(paths.lockDir, { recursive: true, force: true });
+    }
+  } catch (error3) {
+    return { kind: "failed", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD558\uC9C0 \uBABB\uD588\uB2E4: ${error3.message}. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` };
+  }
+}
+
+// src/lifecycle/consoleOnDemand.ts
+var pluginRoot = join30(dirname11(fileURLToPath3(import.meta.url)), "..");
+async function controlConsole(action, options = {}) {
+  const result3 = await controlDashboard(action, { pluginRoot, buildId: currentSugoVersion(), ...options });
+  if (result3.running && action !== "status" && action !== "stop") {
+    await syncAllWorkspaceData().catch((error3) => {
+      console.error("[sugo] console sync failed:", error3);
+    });
+  }
+  return result3;
+}
+
 // src/reviewConfirmation.ts
 function buildReviewConfirmationBlocker(input) {
   return {
@@ -32932,6 +33328,7 @@ async function handleSugoRoadmap(rawArgs) {
         blockedNextStep: args2.blockedNextStep,
         createdAt: (/* @__PURE__ */ new Date()).toISOString()
       };
+      const consoleState = await controlConsole("start");
       const result3 = await blockRoadmapNodeForHuman(args2.workspace, args2.id, blocker);
       if (!result3.ok) return errorResult13(result3.error, result3.message);
       session.data.humanDecisionGate = { workspace: args2.workspace, taskId: args2.id, blocker };
@@ -32942,7 +33339,7 @@ async function handleSugoRoadmap(rawArgs) {
       };
       await saveSession(session);
       await updateRoadmapNodeRuntimeAssessment(args2.workspace, args2.id, assessSession(session));
-      return ok4({ awaitingHumanDecision: true, node: await getRoadmapNode(args2.workspace, args2.id) });
+      return ok4({ awaitingHumanDecision: true, consoleUrl: consoleState.running ? consoleState.url : void 0, node: await getRoadmapNode(args2.workspace, args2.id) });
     }
     case "request_review_confirmation": {
       if (!args2.id || !args2.sessionId || !args2.reviewPacket) {
@@ -32956,6 +33353,7 @@ async function handleSugoRoadmap(rawArgs) {
       if (session.data.linkedWorkspace !== args2.workspace || session.data.linkedTaskId !== args2.id) {
         return errorResult13("BLOCKER_TARGET_MISMATCH", "\uD604\uC7AC \uC138\uC158\uC5D0 \uC5F0\uACB0\uB41C \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4/Task\uC640 \uD655\uC778 \uC694\uCCAD \uB300\uC0C1\uC774 \uB2E4\uB985\uB2C8\uB2E4.");
       }
+      const consoleState = await controlConsole("start");
       const files = await snapshotReviewArtifacts(
         session.projectPath,
         session.data.chainInfo.changedFiles ?? [],
@@ -33002,7 +33400,8 @@ async function handleSugoRoadmap(rawArgs) {
       return ok4({
         awaitingHumanDecision: true,
         presentation: "dashboard",
-        message: "Dashboard\uC758 Schedule \uB610\uB294 Agent Canvas\uC5D0\uC11C \uC791\uC5C5 \uACB0\uACFC\uB97C \uD655\uC778\uD558\uC138\uC694.",
+        consoleUrl: consoleState.running ? consoleState.url : void 0,
+        message: consoleState.running ? `Console(${consoleState.url})\uC758 Schedule \uB610\uB294 Agent Canvas\uC5D0\uC11C \uC791\uC5C5 \uACB0\uACFC\uB97C \uD655\uC778\uD558\uC138\uC694.` : "Console\uC744 \uB744\uC6B0\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. /sugo:console open\uC73C\uB85C \uC5F0 \uB4A4 Schedule \uB610\uB294 Agent Canvas\uC5D0\uC11C \uC791\uC5C5 \uACB0\uACFC\uB97C \uD655\uC778\uD558\uC138\uC694.",
         node: await getRoadmapNode(args2.workspace, args2.id)
       });
     }
@@ -33164,66 +33563,6 @@ async function handleSugoRoute(rawArgs) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...result3 }, null, 2) }] };
 }
 
-// src/work/spec.ts
-import { mkdir as mkdir18, readdir as readdir10, readFile as readFile25 } from "node:fs/promises";
-import { join as join28 } from "node:path";
-async function addSpec(workspace, params) {
-  const spec = {
-    name: params.name,
-    type: params.type,
-    tags: params.tags ?? [],
-    content: params.content,
-    created_at: (/* @__PURE__ */ new Date()).toISOString()
-  };
-  const dir = specsDir(workspace);
-  await mkdir18(dir, { recursive: true });
-  const fileContent = stringifyFrontmatter(
-    { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
-    spec.content
-  );
-  await atomicWriteFile(join28(dir, `${slugify(params.name)}.md`), fileContent);
-  void syncSpec(workspace, spec);
-  return spec;
-}
-function parseSpecFile(raw) {
-  const { meta, body: body2 } = parseFrontmatter(raw);
-  return {
-    name: meta.name ?? "",
-    type: meta.type ?? "other",
-    tags: meta.tags ?? [],
-    created_at: meta.created_at ?? "",
-    content: body2
-  };
-}
-async function listSpecs(workspace) {
-  const dir = specsDir(workspace);
-  let entries;
-  try {
-    entries = await readdir10(dir);
-  } catch {
-    return [];
-  }
-  const specs = [];
-  for (const name2 of entries) {
-    if (!name2.endsWith(".md")) continue;
-    try {
-      const raw = await readFile25(join28(dir, name2), "utf-8");
-      specs.push(parseSpecFile(raw));
-    } catch {
-      continue;
-    }
-  }
-  return specs;
-}
-async function getSpec(workspace, name2) {
-  try {
-    const raw = await readFile25(join28(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
-    return parseSpecFile(raw);
-  } catch {
-    return null;
-  }
-}
-
 // src/tools/sugoSpec.ts
 var SPEC_TYPES = ["architecture", "api-design", "business-rule", "data-model", "flow", "other"];
 var sugoSpecInputSchema = {
@@ -33268,8 +33607,8 @@ function errorResult14(errorCode, message) {
 }
 
 // src/tools/sugoSpecWriter.ts
-import { access as access3, readFile as readFile26, stat as stat5 } from "node:fs/promises";
-import { isAbsolute as isAbsolute8, join as join29, relative as relative8, resolve as resolve12, sep as sep4 } from "node:path";
+import { access as access3, readFile as readFile28, stat as stat6 } from "node:fs/promises";
+import { isAbsolute as isAbsolute8, join as join31, relative as relative8, resolve as resolve12, sep as sep4 } from "node:path";
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
   workspace: external_exports.string().min(1),
@@ -33329,12 +33668,12 @@ function specSlug(title) {
 }
 async function nextSpecTarget(title) {
   const date3 = localDateKey();
-  const root = join29(sugoHomeDir(), ".claude", "sugo", "specs");
-  const featureDir = join29(root, date3, specSlug(title));
+  const root = join31(sugoHomeDir(), ".claude", "sugo", "specs");
+  const featureDir = join31(root, date3, specSlug(title));
   let version2 = 1;
-  while (await access3(join29(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
-  const directory = join29(featureDir, `v${version2}`);
-  return { root, date: date3, version: version2, directory, path: join29(directory, "spec.md") };
+  while (await access3(join31(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
+  const directory = join31(featureDir, `v${version2}`);
+  return { root, date: date3, version: version2, directory, path: join31(directory, "spec.md") };
 }
 function managedSpecPath(specPath) {
   const root = resolve12(sugoHomeDir(), ".claude", "sugo", "specs");
@@ -33350,7 +33689,7 @@ async function invalidProjectReviewFiles(projectPath, paths) {
     const target = resolve12(root, path);
     const rel = relative8(root, target);
     const inside = rel !== ".." && !rel.startsWith(`..${sep4}`) && !isAbsolute8(rel);
-    const isFile = inside && await stat5(target).then((entry) => entry.isFile(), () => false);
+    const isFile = inside && await stat6(target).then((entry) => entry.isFile(), () => false);
     if (!isFile) invalid.push(path);
   }
   return invalid;
@@ -33365,7 +33704,7 @@ async function handleSugoSpecWriter(rawArgs) {
     return result({ ok: false, errorCode: "PROJECT_MISMATCH", expected: spec.projectPath, received: args2.projectPath });
   }
   if (args2.action === "context") {
-    const dir = join29(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const dir = join31(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     try {
       const [attachments, references, draftContent] = await Promise.all([
         downloadSpecAttachments(args2.workspace, spec.id, dir),
@@ -33406,7 +33745,7 @@ async function handleSugoSpecWriter(rawArgs) {
       message: "context \uC751\uB2F5\uC758 specTarget.path \uC544\uB798\uC5D0 \uC791\uC131\uD55C spec.md\uB9CC \uC5F0\uACB0\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     });
   }
-  const text = await readFile26(args2.specPath, "utf-8").catch(() => null);
+  const text = await readFile28(args2.specPath, "utf-8").catch(() => null);
   if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args2.specPath });
   if (args2.projectPath) {
     if (!args2.reviewEvidence) {
@@ -33428,7 +33767,7 @@ async function handleSugoSpecWriter(rawArgs) {
     if (invalidFiles.length > 0) {
       return result({ ok: false, errorCode: "SPEC_REVIEW_PROJECT_FILE_INVALID", invalidFiles });
     }
-    const attachmentDir = join29(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const attachmentDir = join31(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     const [attachments, references] = await Promise.all([
       downloadSpecAttachments(args2.workspace, spec.id, attachmentDir),
       fetchSpecReferences(args2.workspace, spec.id)
@@ -33785,8 +34124,8 @@ function evaluateAutoCheck(spec, ctx) {
 }
 
 // src/harness/validationConfig.ts
-import { readFile as readFile27 } from "node:fs/promises";
-import { join as join30 } from "node:path";
+import { readFile as readFile29 } from "node:fs/promises";
+import { join as join32 } from "node:path";
 function parseValidationYaml(content) {
   const raw = load(content);
   const checks = (raw?.checks ?? []).filter((c) => !!c?.id).map((c) => ({
@@ -33802,9 +34141,9 @@ async function loadProjectValidationConfigs(projectPath) {
   const result3 = /* @__PURE__ */ new Map();
   if (!config2) return result3;
   for (const applied of config2.appliedHarnesses) {
-    const path = join30(projectPath, "sugo", "harness", applied.id, "validation.yaml");
+    const path = join32(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile27(path, "utf-8");
+      const content = await readFile29(path, "utf-8");
       result3.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -33949,284 +34288,13 @@ async function handleSugoVersion() {
 }
 
 // src/tools/sugoConsole.ts
-import { dirname as dirname11, join as join32 } from "node:path";
-import { fileURLToPath as fileURLToPath3 } from "node:url";
-
-// src/lifecycle/dashboardRuntime.ts
-import { spawn } from "node:child_process";
-import { createServer } from "node:net";
-import { closeSync, existsSync as existsSync5, openSync } from "node:fs";
-import { mkdir as mkdir19, readFile as readFile28, rm as rm5, stat as stat6 } from "node:fs/promises";
-import { join as join31 } from "node:path";
-var DEFAULT_DASHBOARD_PORT = 3001;
-var CONSOLE_HOST = "sugo.localhost";
-var CONSOLE_SERVICE = "sugo-console";
-var PORT_SCAN = 20;
-function consoleUrl(port) {
-  return `http://${CONSOLE_HOST}:${port}`;
-}
-function configuredDashboardPort() {
-  return process.env.SUGO_DASHBOARD_PORT ? Number(process.env.SUGO_DASHBOARD_PORT) : DEFAULT_DASHBOARD_PORT;
-}
-var HEALTH_TIMEOUT_MS = 1500;
-var START_WAIT_MS = 6e3;
-var STOP_WAIT_MS = 5e3;
-var POLL_MS = 150;
-var LOCK_STALE_MS = 3e4;
-function dashboardPaths(home = sugoHomeDir()) {
-  const sugoDir = join31(home, ".claude", "sugo");
-  const dataDir = join31(sugoDir, "dashboard");
-  return {
-    sugoDir,
-    dataDir,
-    stateFile: join31(dataDir, "server.json"),
-    logFile: join31(dataDir, "dashboard.log"),
-    lockDir: join31(dataDir, "start.lock"),
-    settingsFile: join31(sugoDir, "settings.json")
-  };
-}
-function isSupportedNode(version2 = process.versions.node) {
-  const [major = 0, minor = 0] = version2.split(".").map(Number);
-  return major > 22 || major === 22 && minor >= 5;
-}
-async function readServerState(paths) {
-  try {
-    return JSON.parse(await readFile28(paths.stateFile, "utf8"));
-  } catch {
-    return null;
-  }
-}
-function isConsoleHealth(health) {
-  return health?.service === CONSOLE_SERVICE;
-}
-function isPortFree(port) {
-  return new Promise((resolve16) => {
-    const probe = createServer();
-    probe.once("error", () => resolve16(false));
-    probe.listen(port, "127.0.0.1", () => probe.close(() => resolve16(true)));
-  });
-}
-async function pickDashboardPort(preferred, strict) {
-  const candidates = strict ? [preferred] : Array.from({ length: PORT_SCAN }, (_, i2) => preferred + i2);
-  for (const port of candidates) {
-    if (await isPortFree(port)) return port;
-  }
-  return null;
-}
-async function fetchHealth(port) {
-  try {
-    const res = await fetch(`http://127.0.0.1:${port}/health`, { signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS) });
-    if (!res.ok) return null;
-    const body2 = await res.json();
-    return body2.status === "ok" ? body2 : null;
-  } catch {
-    return null;
-  }
-}
-function isAlive(pid) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
-var sleep = (ms) => new Promise((resolve16) => setTimeout(resolve16, ms));
-async function waitUntil(done, timeoutMs) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await done()) return true;
-    await sleep(POLL_MS);
-  }
-  return done();
-}
-async function stopDashboard(paths) {
-  const state = await readServerState(paths);
-  if (!state) return { stopped: true, unverified: false };
-  if (!isAlive(state.pid)) {
-    await rm5(paths.stateFile, { force: true });
-    return { stopped: true, unverified: false };
-  }
-  if (!await fetchHealth(state.port)) return { stopped: false, unverified: true };
-  process.kill(state.pid, "SIGTERM");
-  if (!await waitUntil(() => !isAlive(state.pid), STOP_WAIT_MS)) process.kill(state.pid, "SIGKILL");
-  await waitUntil(() => !isAlive(state.pid), STOP_WAIT_MS);
-  await rm5(paths.stateFile, { force: true });
-  return { stopped: !isAlive(state.pid), unverified: false };
-}
-async function readDashboardSettings(settingsFile) {
-  try {
-    const settings = JSON.parse(await readFile28(settingsFile, "utf8"));
-    const { enabled, port } = settings.dashboard ?? {};
-    return {
-      ...typeof enabled === "boolean" ? { enabled } : {},
-      ...typeof port === "number" && Number.isInteger(port) && port >= 1024 && port <= 65535 ? { port } : {}
-    };
-  } catch {
-    return {};
-  }
-}
-async function preferredPort(options, paths) {
-  if (options.port !== void 0) return { port: options.port, strict: false };
-  const fixed = (await readDashboardSettings(paths.settingsFile)).port;
-  if (fixed !== void 0) return { port: fixed, strict: true };
-  if (process.env.SUGO_DASHBOARD_PORT) return { port: configuredDashboardPort(), strict: true };
-  return { port: DEFAULT_DASHBOARD_PORT, strict: false };
-}
-async function currentPort(options, paths) {
-  const state = await readServerState(paths);
-  const preferred = await preferredPort(options, paths);
-  const owned = state !== null && isAlive(state.pid);
-  return { ...preferred, port: owned ? state.port : preferred.port, state, owned };
-}
-async function acquireLock(paths) {
-  await mkdir19(paths.dataDir, { recursive: true });
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      await mkdir19(paths.lockDir);
-      return true;
-    } catch {
-      const age = await stat6(paths.lockDir).then((s) => Date.now() - s.mtimeMs, () => 0);
-      if (age < LOCK_STALE_MS) return false;
-      await rm5(paths.lockDir, { recursive: true, force: true });
-    }
-  }
-  return false;
-}
-async function dashboardStatus(action, options) {
-  const paths = options.paths ?? dashboardPaths();
-  const { port, owned } = await currentPort(options, paths);
-  const health = await fetchHealth(port);
-  const running = health !== null && (owned || isConsoleHealth(health));
-  return {
-    action,
-    running,
-    managed: running && owned,
-    url: consoleUrl(port),
-    ...running && health ? { version: health.version, build: health.build } : {}
-  };
-}
-function browserCommand(url, platform) {
-  if (platform === "darwin") return { command: "open", args: [url] };
-  if (platform === "win32") return { command: "cmd", args: ["/c", "start", "", url] };
-  return { command: "xdg-open", args: [url] };
-}
-function openInBrowser(url, platform = process.platform) {
-  const { command, args: args2 } = browserCommand(url, platform);
-  return new Promise((resolve16) => {
-    const child = spawn(command, args2, { detached: true, stdio: "ignore", windowsHide: true });
-    child.once("error", () => resolve16(false));
-    child.once("spawn", () => {
-      child.unref();
-      resolve16(true);
-    });
-  });
-}
-async function controlDashboard(action, options) {
-  if (action === "status") return dashboardStatus(action, options);
-  const paths = options.paths ?? dashboardPaths();
-  if (action === "stop") {
-    const stopped = await stopDashboard(paths);
-    const result4 = await dashboardStatus(action, options);
-    if (stopped.unverified) result4.message = "Sugo\uAC00 \uC2DC\uC791\uD55C \uC11C\uBC84\uC778\uC9C0 \uD655\uC778\uD560 \uC218 \uC5C6\uC5B4 \uC885\uB8CC\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
-    return result4;
-  }
-  if (action === "restart") {
-    const stopped = await stopDashboard(paths);
-    if (stopped.unverified) {
-      const result4 = await dashboardStatus(action, options);
-      result4.message = "Sugo\uAC00 \uC2DC\uC791\uD55C \uC11C\uBC84\uC778\uC9C0 \uD655\uC778\uD560 \uC218 \uC5C6\uC5B4 \uC7AC\uC2DC\uC791\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
-      return result4;
-    }
-  }
-  const ensured = await ensureDashboard({ ...options, paths });
-  const result3 = await dashboardStatus(action, options);
-  if ("message" in ensured && ensured.message) result3.message = ensured.message;
-  if (action === "open" && result3.running) {
-    const opened = await (options.openUrl ?? openInBrowser)(result3.url);
-    if (!opened) result3.message = `\uBE0C\uB77C\uC6B0\uC800\uB97C \uC5F4\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC774 \uC8FC\uC18C\uB97C \uC9C1\uC811 \uC5EC\uC138\uC694: ${result3.url}`;
-  }
-  return result3;
-}
-async function startServer(runtimeEntry, options, paths, port) {
-  const log = openSync(paths.logFile, "a");
-  let exited = false;
-  const child = spawn(process.execPath, [runtimeEntry], {
-    detached: true,
-    windowsHide: true,
-    stdio: ["ignore", log, log],
-    env: {
-      ...process.env,
-      SUGO_DASHBOARD_PORT: String(port),
-      BUILD_ID: options.buildId,
-      HARNESS_PATH: join31(options.pluginRoot, "harness-library"),
-      HARNESS_OVERRIDE_PATH: join31(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
-      SKILLS_PATH: options.pluginRoot
-    }
-  });
-  child.on("exit", () => {
-    exited = true;
-  });
-  child.unref();
-  closeSync(log);
-  const healthy = await waitUntil(async () => exited || (await fetchHealth(port))?.build === options.buildId, START_WAIT_MS);
-  if (healthy && !exited) return { kind: "started" };
-  return { kind: "failed", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD558\uC9C0 \uBABB\uD588\uB2E4. \uB85C\uADF8: ${paths.logFile}. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` };
-}
-async function ensureDashboard(options) {
-  const paths = options.paths ?? dashboardPaths();
-  const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtimeEntry = join31(options.pluginRoot, "dashboard-runtime", "server.mjs");
-  try {
-    if (!isSupportedNode(nodeVersion)) {
-      return {
-        kind: "skipped",
-        reason: "node-too-old",
-        message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB294 Node 22.5 \uC774\uC0C1\uC774 \uD544\uC694\uD558\uB2E4(\uD604\uC7AC ${nodeVersion}). Node\uB97C \uC124\uCE58\uD55C \uB4A4 \uC0C8 \uC138\uC158\uC744 \uC5F0\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.`
-      };
-    }
-    const settings = await readDashboardSettings(paths.settingsFile);
-    if (settings.enabled === false) return { kind: "skipped", reason: "opt-out" };
-    if (!existsSync5(runtimeEntry)) return { kind: "skipped", reason: "no-runtime" };
-    const { port, strict, state, owned } = await currentPort(options, paths);
-    const health = await fetchHealth(port);
-    if (health && !owned && isConsoleHealth(health)) return { kind: "running" };
-    if (health && owned && health.build === options.buildId) return { kind: "running" };
-    if (health && owned) await stopDashboard(paths);
-    else if (state) await rm5(paths.stateFile, { force: true });
-    if (!await acquireLock(paths)) return { kind: "busy" };
-    try {
-      const preferred = (await preferredPort(options, paths)).port;
-      const chosen = await pickDashboardPort(preferred, strict);
-      if (chosen === null) {
-        return {
-          kind: "failed",
-          message: strict ? `Sugo \uB300\uC2DC\uBCF4\uB4DC \uD3EC\uD2B8 ${preferred}\uB97C \uB2E4\uB978 \uD504\uB85C\uADF8\uB7A8\uC774 \uC4F0\uACE0 \uC788\uB2E4. settings.json\uC758 dashboard.port\uB97C \uBC14\uAFB8\uAC70\uB098 \uC9C0\uC6B4\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` : `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uB744\uC6B8 \uBE48 \uD3EC\uD2B8\uB97C ${preferred}~${preferred + PORT_SCAN - 1}\uC5D0\uC11C \uCC3E\uC9C0 \uBABB\uD588\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.`
-        };
-      }
-      const started = await startServer(runtimeEntry, options, paths, chosen);
-      if (started.kind !== "started") return started;
-      const url = consoleUrl(chosen);
-      if (chosen !== preferred) return { kind: "started", message: `\uD3EC\uD2B8 ${preferred}\uB97C \uB2E4\uB978 \uD504\uB85C\uADF8\uB7A8\uC774 \uC4F0\uACE0 \uC788\uC5B4 Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C ${chosen}\uC5D0\uC11C \uC2DC\uC791\uD588\uB2E4: ${url}` };
-      if (settings.enabled !== true) return { kind: "started", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD588\uB2E4: ${url}` };
-      return started;
-    } finally {
-      await rm5(paths.lockDir, { recursive: true, force: true });
-    }
-  } catch (error3) {
-    return { kind: "failed", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD558\uC9C0 \uBABB\uD588\uB2E4: ${error3.message}. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` };
-  }
-}
-
-// src/tools/sugoConsole.ts
 var sugoConsoleInputSchema = {
   action: external_exports.enum(["status", "start", "restart", "stop", "open"]).default("status").describe("Console \uC11C\uBC84 \uAD00\uB9AC \uB3D9\uC791")
 };
 var SugoConsoleArgs = external_exports.object(sugoConsoleInputSchema);
 async function handleSugoConsole(rawArgs) {
   const { action } = SugoConsoleArgs.parse(rawArgs ?? {});
-  const pluginRoot = join32(dirname11(fileURLToPath3(import.meta.url)), "..");
-  const result3 = await controlDashboard(action, { pluginRoot, buildId: currentSugoVersion() });
+  const result3 = await controlConsole(action);
   return { content: [{ type: "text", text: JSON.stringify(result3, null, 2) }] };
 }
 
@@ -35154,7 +35222,7 @@ async function handleSugoAwsContext(rawArgs) {
 }
 
 // src/tools/sugoUninstall.ts
-import { access as access4, mkdir as mkdir21, readFile as readFile29, rename as rename2, rm as rm6, rmdir, writeFile as writeFile3 } from "node:fs/promises";
+import { access as access4, mkdir as mkdir21, readFile as readFile30, rename as rename2, rm as rm6, rmdir, writeFile as writeFile3 } from "node:fs/promises";
 import { dirname as dirname12, join as join34, resolve as resolve15 } from "node:path";
 import { createHash as createHash7 } from "node:crypto";
 var CONFIRMATION = "DELETE_SUGO_DATA";
@@ -35174,7 +35242,7 @@ function withoutManagedBlock(content, start2, end) {
   return before + after;
 }
 async function restoreRoot(path, original, start2, end) {
-  const current = await readFile29(path, "utf8").catch(() => null);
+  const current = await readFile30(path, "utf8").catch(() => null);
   if (current === null) return;
   const stripped = withoutManagedBlock(current, start2, end);
   if (typeof original === "string" && stripped.startsWith(original) && stripped.slice(original.length).trim() === "") return writeFile3(path, original);
@@ -35248,7 +35316,7 @@ async function uninstallSugo(rawArgs, deps) {
     return result2({ ok: true, action: "discard", retainedDataRemoved: true });
   }
   if (args2.action === "restore") {
-    const archivedRegistry = await readFile29(join34(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
+    const archivedRegistry = await readFile30(join34(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
     if (!archivedRegistry) return error2("NO_RETAINED_DATA", "\uBCF5\uAD6C\uD560 \uBE44\uD65C\uC131 Sugo \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const paths2 = dashboardPaths();
     if (!(await stopDashboard(paths2)).stopped) return error2("DASHBOARD_STILL_RUNNING", DASHBOARD_RUNNING_MESSAGE);

@@ -90682,7 +90682,7 @@ var init_weeklySettingsService = __esm({
     "use strict";
     init_weeklyScheduleService();
     defaults = {
-      enabled: true,
+      enabled: false,
       weekday: 5,
       hour: 17,
       minute: 0,
@@ -90748,6 +90748,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use(corsWhitelist(config.corsOrigins));
   app2.use(import_express21.default.json({ limit: "10mb" }));
   app2.get("/health", (_req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.json({ status: "ok", service: "sugo-console", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });
   });
   app2.use("/api/news", createNewsRouter());
@@ -90851,7 +90852,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname6(fileURLToPath4(import.meta.url));
-    pkg = "0.48.0" ? { version: "0.48.0" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.49.0" ? { version: "0.49.0" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90974,7 +90975,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.48.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.49.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

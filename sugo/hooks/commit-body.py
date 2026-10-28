@@ -4,6 +4,8 @@ The weekly report reads the purpose of work outside a sugo pipeline from commit 
 "unexplained" item in the report. This hook stops such a commit and asks Claude to add the body, then commit again.
 
 Runs on the system python3 (may be 3.9): standard library only, no 3.10+ syntax.
+It only applies in repositories the weekly report reads: Sugo projects (a sugo/config.json above cwd) and the
+"git_repos" listed in ~/.weekly/config.json.
 Turn off with WEEKLY_COMMIT_BODY=off or {"commit_body": false} in ~/.weekly/config.json.
 Commands it cannot read (editor, unusual quoting) are allowed: the hook only blocks when it is sure the body is missing.
 """
@@ -26,14 +28,40 @@ REASON = ("커밋 본문이 없다. 제목 아래에 빈 줄을 두고, 이 변�
           "끄려면 WEEKLY_COMMIT_BODY=off 또는 ~/.weekly/config.json의 \"commit_body\": false.")
 
 
+def _config() -> dict:
+    try:
+        with open(os.path.expanduser("~/.weekly/config.json"), encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
 def disabled() -> bool:
     if os.environ.get("WEEKLY_COMMIT_BODY", "").lower() in ("off", "0", "false"):
         return True
-    try:
-        with open(os.path.expanduser("~/.weekly/config.json"), encoding="utf-8") as f:
-            return json.load(f).get("commit_body") is False
-    except (OSError, ValueError):
-        return False
+    return _config().get("commit_body") is False
+
+
+def in_scope(cwd: str | None) -> bool:
+    """True when cwd is inside a repository the weekly report reads."""
+    here = os.path.realpath(cwd or os.getcwd())
+    d = here
+    while True:
+        if os.path.isfile(os.path.join(d, "sugo", "config.json")):
+            return True
+        parent = os.path.dirname(d)
+        if parent == d:
+            break
+        d = parent
+    for repo in _config().get("git_repos", []):
+        path = repo.get("path") if isinstance(repo, dict) else None
+        if not isinstance(path, str):
+            continue
+        root = os.path.realpath(os.path.expanduser(path))
+        if here == root or here.startswith(root + os.sep):
+            return True
+    return False
 
 
 def _segment(cmd: str) -> str:
@@ -96,7 +124,7 @@ def main() -> int:
         data = json.load(sys.stdin)
     except ValueError:
         return 0
-    if disabled():
+    if disabled() or not in_scope(data.get("cwd")):
         return 0
     reason = decide((data.get("tool_input") or {}).get("command") or "", data.get("cwd"))
     if reason:

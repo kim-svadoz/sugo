@@ -14,4 +14,4 @@ Manage the local Sugo Console. Input: $ARGUMENTS
 - For `start` or `restart`, tell the user to open the returned URL only after `running:true`.
 - If `managed:false` while a server is running, explain that the port is occupied by a Console process not started by this plugin and do not stop it.
 
-The installed Console starts automatically on a new Claude Code session. `/reload-plugins` reloads plugin definitions but does not rerun the `SessionStart` hook; use this command when the current session needs explicit recovery.
+The Console does not start with each session. It starts with `open` or `start`, and on its own when a task waits for a human decision. Records made while it was off are synced when it starts.

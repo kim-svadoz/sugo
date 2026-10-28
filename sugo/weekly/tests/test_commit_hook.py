@@ -42,8 +42,15 @@ def test_unclear_or_other_commands_are_allowed(tmp_path):
     assert cb.decide("git commit -F short.txt", str(tmp_path)) == cb.REASON
 
 
+def _sugo_project(tmp_path):
+    project = tmp_path / "project"
+    (project / "sugo").mkdir(parents=True)
+    (project / "sugo" / "config.json").write_text("{}")
+    return project
+
+
 def test_hook_prints_a_deny_decision_and_can_be_turned_off(tmp_path):
-    payload = json.dumps({"tool_input": {"command": "git commit -m 'x'"}, "cwd": str(tmp_path)})
+    payload = json.dumps({"tool_input": {"command": "git commit -m 'x'"}, "cwd": str(_sugo_project(tmp_path))})
     out = subprocess.run([sys.executable, str(HOOK)], input=payload, capture_output=True, text=True, env={"HOME": str(tmp_path), "PATH": "/usr/bin:/bin"})
     assert json.loads(out.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
     off = subprocess.run([sys.executable, str(HOOK)], input=payload, capture_output=True, text=True,
@@ -51,7 +58,25 @@ def test_hook_prints_a_deny_decision_and_can_be_turned_off(tmp_path):
     assert off.stdout == ""
 
 
-def test_hook_runs_on_the_system_python():
-    out = subprocess.run(["/usr/bin/python3", str(HOOK)], input=json.dumps({"tool_input": {"command": "git commit -m 'x'"}}),
-                         capture_output=True, text=True)
+def test_hook_only_applies_in_repositories_the_weekly_report_reads(tmp_path):
+    other = tmp_path / "other"
+    other.mkdir()
+    listed = tmp_path / "listed" / "sub"
+    listed.mkdir(parents=True)
+    (tmp_path / ".weekly").mkdir()
+    (tmp_path / ".weekly" / "config.json").write_text(json.dumps({"git_repos": [{"path": str(tmp_path / "listed")}]}))
+    env = {"HOME": str(tmp_path), "PATH": "/usr/bin:/bin"}
+
+    def run(cwd):
+        payload = json.dumps({"tool_input": {"command": "git commit -m 'x'"}, "cwd": str(cwd)})
+        return subprocess.run([sys.executable, str(HOOK)], input=payload, capture_output=True, text=True, env=env).stdout
+
+    assert run(other) == ""
+    assert "deny" in run(listed)
+    assert "deny" in run(_sugo_project(tmp_path) / "sugo")
+
+
+def test_hook_runs_on_the_system_python(tmp_path):
+    payload = json.dumps({"tool_input": {"command": "git commit -m 'x'"}, "cwd": str(_sugo_project(tmp_path))})
+    out = subprocess.run(["/usr/bin/python3", str(HOOK)], input=payload, capture_output=True, text=True)
     assert out.returncode == 0 and "deny" in out.stdout, out.stderr

@@ -16,13 +16,13 @@ async function freshApp() {
 describe("CORS whitelist", () => {
   it("allows the whitelisted dev origin", async () => {
     const { app } = await freshApp();
-    const res = await request(app).get("/health").set("Origin", "http://localhost:5175");
+    const res = await request(app).get("/api/workspaces").set("Origin", "http://localhost:5175");
     expect(res.headers["access-control-allow-origin"]).toBe("http://localhost:5175");
   });
 
   it("does not reflect an arbitrary non-whitelisted origin", async () => {
     const { app } = await freshApp();
-    const res = await request(app).get("/health").set("Origin", "https://evil.example.com");
+    const res = await request(app).get("/api/workspaces").set("Origin", "https://evil.example.com");
     expect(res.headers["access-control-allow-origin"]).toBeUndefined();
   });
 

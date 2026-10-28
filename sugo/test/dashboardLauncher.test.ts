@@ -246,12 +246,12 @@ describe("배포물 정합성", () => {
   const root = join(__dirname, "..");
   const consolePackage = join(root, "..", "dashboard", "backend", "package.json");
 
-  it("SessionStart 훅이 번들된 시작 스크립트를 가리키고 그 파일이 있다", () => {
+  it("세션을 열 때 Console을 띄우지 않는다(open, start, 사람 판단 대기 때만 띄운다)", () => {
     const hooks = JSON.parse(readFileSync(join(root, "hooks", "hooks.json"), "utf8"));
-    const command: string = hooks.hooks.SessionStart[0].hooks[0].command;
+    const commands: string[] = hooks.hooks.SessionStart.flatMap((entry: { hooks: { command: string }[] }) => entry.hooks.map((hook) => hook.command));
 
-    expect(command).toContain("${CLAUDE_PLUGIN_ROOT}/dist/dashboard-start.mjs");
-    expect(existsSync(join(root, "dist", "dashboard-start.mjs"))).toBe(true);
+    expect(commands.some((command) => command.includes("dashboard-start"))).toBe(false);
+    expect(readFileSync(join(root, "src", "tools", "sugoRoadmap.ts"), "utf8").match(/controlConsole\("start"\)/g)).toHaveLength(2);
   });
 
   it("사용자가 Console을 직접 관리하는 명령과 도구를 배포한다", () => {
@@ -261,7 +261,7 @@ describe("배포물 정합성", () => {
     expect(readFileSync(join(root, "src", "index.ts"), "utf8")).toContain('"sugo_console"');
   });
 
-  it("SessionStart 훅은 Dashboard가 준비되면 로컬 파일 정본을 자동 동기화한다", () => {
+  it("Console 시작 진입점은 Dashboard가 준비되면 로컬 파일 정본을 자동 동기화한다", () => {
     const source = readFileSync(join(root, "src", "lifecycle", "dashboardStartHook.ts"), "utf8");
     expect(source).toContain('import { syncAllWorkspaceData } from "../dashboard/syncAll.js"');
     expect(source).toContain('result.kind === "started" || result.kind === "running"');

@@ -179,7 +179,7 @@ Claude Code에서 `/reload-plugins`를 실행한 뒤 `/sugo:version`으로 설�
 
 ## Console 사용 가이드
 
-Console은 새 Claude Code 세션마다 자동으로 뜹니다. 주소는 `http://sugo.localhost:3001`이고, 3001 포트를 다른 프로그램이 쓰고 있으면 다음 빈 포트로 뜹니다. 포트를 몰라도 `/sugo:console open`을 실행하면 지금 뜬 주소로 브라우저가 열립니다. 처음에는 프로젝트를 등록하고 쓰는 외부 서비스를 연결한 뒤, 일정과 스펙으로 일을 시작합니다.
+Console은 Claude Code에서 `/sugo:console open`을 실행하면 뜨고, 그 주소로 브라우저가 열립니다. 개발 작업이 사람의 승인이나 답을 기다릴 때도 자동으로 뜹니다. 주소는 `http://sugo.localhost:3001`이고, 3001 포트를 다른 프로그램이 쓰고 있으면 다음 빈 포트로 뜹니다. 한 번 연 주소는 즐겨찾기해 두고 쓰면 됩니다. Console이 꺼져 있을 때 즐겨찾기로 열면 다시 띄우는 명령을 안내하고, Console이 다시 뜨면 그 주소로 자동으로 옮겨 갑니다. 처음에는 프로젝트를 등록하고 쓰는 외부 서비스를 연결한 뒤, 일정과 스펙으로 일을 시작합니다.
 
 ### 1. 프로젝트와 도메인 등록
 
@@ -303,17 +303,16 @@ Weekly, Calendar, diff 등 나머지 화면은 [Console 둘러보기](docs/conso
 ## 설치하면 바뀌는 것
 
 > [!IMPORTANT]
-> 훅은 Sugo에 등록하지 않은 프로젝트를 포함해 Claude Code의 모든 프로젝트에서 동작합니다. 사용 통계는 보내지 않습니다.
+> 명령 실행과 파일 편집에 걸리는 훅은 Sugo에 등록한 프로젝트 안에서만 동작합니다. 다른 폴더에서 연 세션에는 걸리지 않습니다. 사용 통계는 보내지 않습니다.
 
 <details>
 <summary>훅, Console, 프로젝트 파일, 네트워크</summary>
 
 | 시점 | 훅 | 동작 |
 | --- | --- | --- |
-| 세션 시작 | `dashboard-start` | 로컬 Console을 백그라운드로 시작 |
 | 세션 시작 | `agent-tools` | `agents.extraTools` 설정을 Sugo 에이전트에 반영 |
-| Bash 실행 전 | `aws-readonly-guard` | 쓰기, 비밀값 조회, 한도를 넘는 AWS CLI 호출 차단 |
-| Bash 실행 전 | `commit-body` | 본문 없는 커밋이면 목적을 쓰게 합니다. Weekly가 커밋 본문에서 작업 목적을 읽습니다. `WEEKLY_COMMIT_BODY=off`로 끕니다 |
+| Bash 실행 전 | `aws-readonly-guard` | 쓰기, 비밀값 조회, 한도를 넘는 AWS CLI 호출 차단. 모든 세션에 걸려면 `settings.json`에 `"aws": {"guard": "all"}` |
+| Bash 실행 전 | `commit-body` | 본문 없는 커밋이면 목적을 쓰게 합니다. Weekly가 읽는 저장소(Sugo 프로젝트와 `git_repos`)에서만 걸리고, `WEEKLY_COMMIT_BODY=off`로 끕니다 |
 | Write, Edit 실행 전 | `scope-guard` | test-agent와 docs-agent의 수정 범위 제한 |
 | Edit 실행 후 | `lint-hint` | 등록 프로젝트의 lint 실패를 Claude에 전달. 편집은 막지 않습니다 |
 | MCP 호출 후 | `mcp-presentation` | `presentation.mcpServers`에 지정한 서버에만 적용. 기본은 꺼짐 |
@@ -339,6 +338,7 @@ Weekly, Calendar, diff 등 나머지 화면은 [Console 둘러보기](docs/conso
 | `dashboard` | Console 연결(`enabled`, `apiUrl`, `userId`, `apiToken`)과 고정 포트(`port`). 로컬 Console은 자동으로 설정되고, `port`를 적으면 다른 포트로 옮겨 가지 않습니다 |
 | `agents.extraTools` | Sugo 에이전트에 추가할 외부 MCP 도구. 예: `["mcp__team-knowledge__search"]` |
 | `aws.environments` | 환경 이름(예: `dev`)과 Console에 등록한 AWS 계정 이름의 연결 |
+| `aws.guard` | `"all"`이면 AWS 가드 훅이 Sugo 프로젝트 밖의 세션에도 걸립니다 |
 | `presentation.mcpServers` | 결과를 쉬운 한국어 설명으로 바꿔 보여 줄 MCP 서버 |
 
 연동은 모두 선택 사항입니다.

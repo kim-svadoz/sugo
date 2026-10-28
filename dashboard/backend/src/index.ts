@@ -132,6 +132,8 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use(express.json({ limit: "10mb" }));
 
   app.get("/health", (_req, res) => {
+    // 꺼진 Console의 안내 페이지가 다른 포트에 뜬 Console을 찾을 수 있게 health만 출처 제한 없이 읽게 둔다.
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.json({ status: "ok", service: "sugo-console", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });
   });
   app.use("/api/news", createNewsRouter());

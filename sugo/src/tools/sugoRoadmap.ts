@@ -18,6 +18,7 @@ import {
 } from "../work/roadmap.js";
 import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../work/types.js";
 import { fetchBlockerDecision, updateScheduleSpecField } from "../dashboard/fetch.js";
+import { controlConsole } from "../lifecycle/consoleOnDemand.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
 import { assessSession } from "../ontology/sessionAssessment.js";
 import { buildReviewConfirmationBlocker, reviewDecisionResumeAction } from "../reviewConfirmation.js";
@@ -195,6 +196,8 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
         blockedNextStep: args.blockedNextStep,
         createdAt: new Date().toISOString(),
       } as const;
+      // 사람이 답할 화면이 필요하므로 이때 Console을 띄운다.
+      const consoleState = await controlConsole("start");
       const result = await blockRoadmapNodeForHuman(args.workspace, args.id, blocker);
       if (!result.ok) return errorResult(result.error!, result.message!);
       session.data.humanDecisionGate = { workspace: args.workspace, taskId: args.id, blocker };
@@ -205,7 +208,7 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       };
       await saveSession(session);
       await updateRoadmapNodeRuntimeAssessment(args.workspace, args.id, assessSession(session));
-      return ok({ awaitingHumanDecision: true, node: await getRoadmapNode(args.workspace, args.id) });
+      return ok({ awaitingHumanDecision: true, consoleUrl: consoleState.running ? consoleState.url : undefined, node: await getRoadmapNode(args.workspace, args.id) });
     }
     case "request_review_confirmation": {
       if (!args.id || !args.sessionId || !args.reviewPacket) {
@@ -219,6 +222,8 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       if (session.data.linkedWorkspace !== args.workspace || session.data.linkedTaskId !== args.id) {
         return errorResult("BLOCKER_TARGET_MISMATCH", "현재 세션에 연결된 워크스페이스/Task와 확인 요청 대상이 다릅니다.");
       }
+      // 사람이 승인할 화면이 필요하므로 이때 Console을 띄운다.
+      const consoleState = await controlConsole("start");
       const files = await snapshotReviewArtifacts(
         session.projectPath,
         session.data.chainInfo.changedFiles ?? [],
@@ -254,7 +259,10 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       return ok({
         awaitingHumanDecision: true,
         presentation: "dashboard",
-        message: "Dashboard의 Schedule 또는 Agent Canvas에서 작업 결과를 확인하세요.",
+        consoleUrl: consoleState.running ? consoleState.url : undefined,
+        message: consoleState.running
+          ? `Console(${consoleState.url})의 Schedule 또는 Agent Canvas에서 작업 결과를 확인하세요.`
+          : "Console을 띄우지 못했습니다. /sugo:console open으로 연 뒤 Schedule 또는 Agent Canvas에서 작업 결과를 확인하세요.",
         node: await getRoadmapNode(args.workspace, args.id),
       });
     }
