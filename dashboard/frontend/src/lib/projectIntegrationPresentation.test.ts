@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hasIntegrationSelectionChanges, initialIntegrationSelection, integrationStatusLabel, summarizeSavedIntegrations } from "./projectIntegrationPresentation.js";
-import { awsAccountOptionLabel, awsAccountMetaLabel, moveIntegrationKeys, partitionIntegrationCandidates } from "./projectIntegrationPresentation.js";
+import { awsAccountOptionLabel, awsAccountMetaLabel, groupProjectsByWorkspace, integrationCandidateMatchLabel, moveIntegrationKeys, partitionIntegrationCandidates } from "./projectIntegrationPresentation.js";
 
 const candidates = [
   { accountName: "team-dev", environment: "dev", service: "orders-api-service", cluster: "orders", images: ["repo/orders-api:1"], pinpointApplicationName: null },
@@ -9,6 +9,22 @@ const candidates = [
 const key = (item: { accountName: string; service: string; cluster?: string | null }) => `${item.accountName}\u0000${item.cluster ?? ""}\u0000${item.service}`;
 
 describe("project integration presentation", () => {
+  it("groups registered projects under their work domain", () => {
+    expect(groupProjectsByWorkspace([
+      { workspace_name: "recom", project_path: "/work/api", configured: false, selections: [] },
+      { workspace_name: "recom", project_path: "/work/model", configured: false, selections: [] },
+      { workspace_name: "profile", project_path: "/work/profile", configured: false, selections: [] },
+    ])).toEqual(new Map([
+      ["recom", ["api", "model"]],
+      ["profile", ["profile"]],
+    ]));
+  });
+
+  it("explains exact and manual service mappings without implying fuzzy matching", () => {
+    const candidate = { accountName: "dev", environment: "dev", service: "orders-api-service", cluster: "orders", pinpointApplicationName: null, images: [] };
+    expect(integrationCandidateMatchLabel("/work/orders-api", candidate)).toBe("프로젝트와 정확히 일치");
+    expect(integrationCandidateMatchLabel("/work/admin", candidate)).toBe("직접 선택");
+  });
   it("separates the account identity from non-duplicated profile metadata", () => {
     const account = { name: "team-prd", profile: "team-prd", region: "ap-northeast-2", accountHint: "1234", principal: "developer" };
     expect(awsAccountOptionLabel(account)).toBe("team-prd · ••••1234");

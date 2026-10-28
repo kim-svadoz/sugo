@@ -21,4 +21,12 @@ describe("local Settings presentation", () => {
     expect(header).toContain("Pinpoint 동기화");
     expect(header).toContain("contextAutoRefreshDescription");
   });
+
+  it("keeps registration projects inside domain choices and states PR authentication purpose", () => {
+    const source = readFileSync(join(process.cwd(), "src/pages/Settings.tsx"), "utf8");
+    expect(source).toContain("groupProjectsByWorkspace(projects)");
+    expect(source).not.toContain('id="registered-projects-title"');
+    expect(source).toContain("GitHub 액세스 토큰으로 PR 권한 연결");
+    expect(source).toContain("서비스 ID와 클러스터를 저장해 정확히 연결합니다");
+  });
 });

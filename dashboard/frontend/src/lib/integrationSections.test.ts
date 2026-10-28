@@ -14,7 +14,7 @@ describe("Integrations section navigation", () => {
     expect(source).toContain('label: "서비스 상태"');
     expect(source).toContain('label: "모니터링"');
     expect(source).toContain('provider.id === "github" || provider.id === "aws_codecommit"');
-    expect(source).toContain("CodeCommit PR API 권한");
+    expect(source).toContain("AWS 자격 증명으로 PR 권한 연결");
     expect(source).toContain("AWS 연결");
     expect(source).toContain("Pinpoint APM");
     expect(source).toContain("statusOnly");

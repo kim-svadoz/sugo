@@ -18,6 +18,21 @@ export function isExactIntegrationCandidate(projectPath: string, item: Integrati
   return serviceName === repositoryName || item.images.some((image) => image.split("/").at(-1)?.split(":")[0]?.toLowerCase() === repositoryName);
 }
 
+export function integrationCandidateMatchLabel(projectPath: string, item: IntegrationCandidate): string {
+  return isExactIntegrationCandidate(projectPath, item) ? "프로젝트와 정확히 일치" : "직접 선택";
+}
+
+export function groupProjectsByWorkspace(projects: ProjectIntegration[]): Map<string, string[]> {
+  const grouped = new Map<string, string[]>();
+  for (const project of projects) {
+    const projectName = project.project_path.split(/[\\/]/).filter(Boolean).at(-1) ?? project.project_path;
+    const names = grouped.get(project.workspace_name) ?? [];
+    if (!names.includes(projectName)) names.push(projectName);
+    grouped.set(project.workspace_name, names);
+  }
+  return grouped;
+}
+
 export function initialIntegrationSelection(project: ProjectIntegration | undefined, candidates: IntegrationCandidate[], key: KeyFn): string[] {
   if (!project) return [];
   if (project.configured) return project.selections.map(key);
