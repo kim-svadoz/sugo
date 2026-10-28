@@ -4,7 +4,9 @@
 
 [한국어](README.md)
 
-AI agents now take a lot of the legwork out of development. But when they call a task done without running the tests, or quietly break team rules, the legwork of checking it all lands back on you. Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin that lets you hand development to AI agents and trust what comes back. With the Sugo Console that comes with it, you see all your work in one place and only make the calls that are yours to make.
+AI agents now take a lot of the legwork out of development. That also means each developer takes on more, and handing several tasks to AI at the same time has become normal. But when an agent calls a task done without running the tests, or wanders outside team rules and edits the wrong place, the legwork of checking it all lands back on you.
+
+Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin that lets you hand development to AI agents and trust what comes back. It manages a harness of rules for your stack and team, keeps the AI from going off track, and steers it toward code that you and your organization can rely on. With the Sugo Console that comes with it, you see every task running in parallel in one place and only make the calls that are yours to make.
 
 ![Work floor: the worker moves through test, review, and docs to commit](docs/images/console-workfloor.gif)
 
@@ -115,7 +117,7 @@ The Console (`http://localhost:3001`) starts with each new Claude Code session. 
 
 ### 1. Register projects and domains
 
-In **Integrations → 프로젝트**, choose a project folder, put it in an existing domain or create a new one, and select **프로젝트 등록**. Registration detects the stack and installs the matching harness. It is the same registration as `/sugo:ws-add` and `/sugo:add` in the terminal.
+In **Integrations → 프로젝트**, choose a project folder, put it in an existing domain or create a new one, and select **프로젝트 등록**. Registration detects the stack and installs the matching harness automatically. It is the same registration as `/sugo:ws-add` and `/sugo:add` in the terminal.
 
 ![Project registration: project folder and work domain](docs/images/guide-project.png)
 
