@@ -10,8 +10,8 @@ describe("Integrations section navigation", () => {
     expect(source).toContain('label: "외부 서비스"');
     expect(source).toContain('label: "연결 현황"');
     expect(source).toContain('description: "로컬 프로젝트 등록"');
-    expect(source).toContain('label: "PR 작업"');
-    expect(source).toContain('label: "서비스 상태"');
+    expect(source).toContain('label: "PR 연동"');
+    expect(source).toContain('label: "서비스 상태 연동"');
     expect(source).toContain('label: "모니터링"');
     expect(source).toContain('provider.id === "github" || provider.id === "aws_codecommit"');
     expect(source).toContain("AWS 자격 증명으로 PR 권한 연결");
@@ -20,8 +20,13 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("statusOnly");
     expect(source.indexOf("!registrationOnly && statusOnly")).toBeLessThan(source.indexOf("!registrationOnly && !statusOnly && <>"));
     expect(source).toContain('selectedSection === "serviceMapping"');
+    expect(source).toContain('selectedSection === "serviceMapping" && <ProjectIntegrationsCard');
+    expect(source).not.toContain('selectedSection === "serviceMapping" && <><AwsContextCard');
     expect(source).toContain('selectedSection === "overview"');
     expect(source).toContain("서비스 연동 미사용");
     expect(source).toContain("운영 서비스 연결");
+    expect(source).toContain("저장소 선택");
+    expect(source).toContain("권한 설정");
+    expect(source).toContain("permissionStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })");
   });
 });

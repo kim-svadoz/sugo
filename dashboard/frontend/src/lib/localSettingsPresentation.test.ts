@@ -41,15 +41,16 @@ describe("local Settings presentation", () => {
   it("guides service mapping from project selection and handles AWS availability", () => {
     const source = readFileSync(join(process.cwd(), "src/pages/Settings.tsx"), "utf8");
     const mapping = source.slice(source.indexOf("function ProjectIntegrationsCard"), source.indexOf("function ApiTokensCard"));
-    expect(mapping).toContain("02</span><strong");
+    expect(mapping).toContain("serviceStepComplete ? <Check");
     expect(mapping).toContain("운영 서비스 연결");
     expect(mapping).not.toContain("03</span><strong");
     expect(mapping).not.toContain("ECS 서비스 추가");
     expect(mapping).toContain("AWS 계정을 연결하세요");
     expect(mapping).toContain("연결 가능한 운영 서비스가 없습니다");
-    expect(mapping).toContain("border-dashed border-cyan-300/35");
-    expect(mapping).toContain("h-7 w-7");
-    expect(mapping).not.toContain("drop-shadow-[0_0_5px");
+    expect(mapping).not.toContain("border-dashed border-cyan-300/35");
+    expect(mapping).toContain("serviceStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })");
+    expect(mapping).toContain("projectSelectionComplete ? <Check");
+    expect(mapping).toContain('ref={serviceStepRef}');
   });
 
   it("uses larger labels for the three integration stages", () => {
