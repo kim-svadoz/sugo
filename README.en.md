@@ -6,7 +6,7 @@
 
 AI agents now take a lot of the legwork out of development. That also means each developer takes on more, and handing several tasks to AI at the same time has become normal. The more you hand off, the more you need to set and manage the standard that AI-written code has to meet.
 
-Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin that manages that standard. It keeps a harness of coding rules for your stack and team, attaches contract tests to each requirement, and checks results against real build and test runs such as Gradle or npm. Security hooks block risky commands such as AWS writes and secret reads before they run. The result is code that you and your organization can rely on. With the Sugo Console that comes with it, you see every task running in parallel in one place and only make the calls that are yours to make.
+Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin that manages that standard. It keeps a harness of coding rules for your stack and team, attaches contract tests to each requirement, and checks results against real build and test runs such as Gradle or npm, while security hooks block risky commands such as unchecked API calls, write commands, and secret reads before they run. The aim is an AI agent that you and your organization can trust with the work. With the Sugo Console that comes with it, you see every task running in parallel in one place and put more of your energy into the decisions that are yours.
 
 ![Work floor: the worker moves through test, review, and docs to commit](docs/images/console-workfloor.gif)
 
@@ -46,6 +46,8 @@ Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin t
 ![The steps one feature takes from spec to commit, and where it goes back to implementation](docs/images/sugo-flow.en.png)
 
 A person sets the spec. AI agents implement, test, and review. A person approves the result, and Sugo commits. If a test fails, review finds a rule violation, or the person requests changes, the work goes back to implementation.
+
+This flow is a loop of Planner, Executor, and Validator (PEV). The orchestrator splits the spec into steps that can be verified (Planner), and the code and test agents carry them out (Executor). The result is judged not by the same model grading itself but by real build and test records, a read-only review, and human approval (Validator). Work that fails the judgment goes back to implementation with the reason attached.
 
 The reason stays as a sentence at the top of the **spec card** in the Console (the local screen Sugo runs). A spec card collects the status and history of one spec.
 
@@ -326,13 +328,15 @@ Other stacks use the default rules. Rule sources: [`sugo/harness-library/`](sugo
 
 ## Design philosophy
 
-> An AI agent is a fast colleague. What it doesn't know on its own is what to build, how this team works, and how far it may reach. Leave that unsaid and the output keeps piling up, but little of it can be trusted as is, and the checking falls back on people. Sugo fills that gap in three ways.
+> An agent is an LLM that calls tools in a loop. Split that loop into Planner, Executor, and Validator and you can see where it is weak. Sugo started from giving those three roles to different hands.
 >
-> - **The spec comes first (Spec-Driven Development).** Agents work from the spec, and verification uses the same spec.
-> - **The working environment is designed (harness engineering).** Rather than asking agents to do well every time, Sugo has them read the coding rules for their stack and the domain rules, and does not let work move on without execution records.
-> - **Roles are split.** The orchestrator and the code, test, review, and docs agents each handle only their own scope, and their reports are matched against execution records.
+> - **The model does not do it all. The harness does.** Put your stack and team rules in the context, and the model follows your rules instead of whatever was most common in its training data. The same task gives the same result without a long "please do better this time" prompt every session.
+> - **No one grades their own work.** Ask a model whether its own result is right and it usually says yes. So the judgment goes to outside signals such as builds, tests, and rule checks, to a read-only review agent, and to human approval.
+> - **Each role gets its own context.** The code, test, review, and docs agents each handle only their scope and pass on results. One agent's mistake does not spread to the next step.
+> - **Expensive decisions stay with people.** Small steps that can be verified run automatically; decisions that are hard to undo, such as approval, are made by a person. Hooks block risky commands before they run.
+> - **Failures become assets.** A mistake you hit once becomes a domain rule, and design decisions stay in the work report, so both become context for the next session. The next task gets better without retraining the model.
 >
-> People's time then goes to judgment. Sugo has already checked whether the tests really ran, so people look at whether the requirements were met and what risk remains, then approve. A mistake you hit once becomes a rule for the next task, so the more you use Sugo, the sturdier the environment gets.
+> Trust is not built in one shot; the loop builds it. Developer work is moving from writing code line by line toward designing loops of exploration and verification, and Sugo saves you from building that loop from scratch every time.
 
 ## Links
 
