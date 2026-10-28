@@ -13,6 +13,7 @@ import { ingestActivity } from "./src/services/activityService.js";
 import { createCheckpoint } from "./src/services/workspaceService.js";
 import { createScheduleCommitment } from "./src/services/scheduleCommitmentService.js";
 import { createScheduleMemo } from "./src/services/scheduleMemoService.js";
+import { archiveScheduleSpec } from "./src/services/scheduleSpecArchiveService.js";
 import { saveWeeklyReport } from "./src/services/weeklyReportService.js";
 import type { AwsContextClient, AwsInventoryResource, AwsServiceInventory } from "./src/aws/contextClient.js";
 import { connectAwsContext, refreshAllAwsContexts, setActiveAwsContext } from "./src/services/awsContextService.js";
@@ -285,7 +286,7 @@ const catalog: DemoFeature[] = [
       { daysAgo: 12, title: "최초 구현", summary: "환불 요청 목록과 승인, 반려 동작을 추가했다.", decisions: ["승인 권한은 서버 응답의 권한 목록으로만 판단한다."], limits: ["대량 일괄 승인은 범위 밖이다."], learnings: ["권한 판단은 화면이 아니라 서버 응답을 기준으로 한다."], tests: 14 },
       { daysAgo: 5, title: "사유 입력 필수", summary: "반려 사유를 필수로 받고 감사 로그에 남긴다.", decisions: ["사유는 5자 이상으로 검증하고 서버에서 다시 검증한다."], limits: [], learnings: [], tests: 17 },
     ] },
-  { workspace: "payments", project: "payment-api", key: "coupon", spec: "쿠폰 중복 적용 방지", task: "주문당 쿠폰 1회 적용", due: -2, file: "src/main/java/coupon/CouponRedemptionService.java",
+  { workspace: "payments", project: "payment-api", key: "coupon", spec: "쿠폰 중복 적용 방지", task: "주문당 쿠폰 1회 적용", due: 2, file: "src/main/java/coupon/CouponRedemptionService.java",
     reqs: ["한 주문에는 쿠폰을 한 번만 적용한다", "결제 취소 시 쿠폰을 복구한다", "만료된 쿠폰은 적용하지 않는다", "동시 요청에서도 한 번만 차감한다", "복구 이력을 남긴다"],
     versions: [
       { daysAgo: 25, title: "최초 구현", summary: "주문 ID 기준으로 쿠폰 적용을 한 번으로 제한했다.", decisions: ["쿠폰 사용 테이블에 주문 ID 유니크 제약을 둔다."], limits: ["결제 취소 시 복구가 없다."], learnings: ["중복 방지는 애플리케이션 검사보다 DB 제약이 확실하다."], tests: 12 },
@@ -294,20 +295,20 @@ const catalog: DemoFeature[] = [
       { daysAgo: 4, title: "동시 요청 보강", summary: "동시 요청에서도 쿠폰이 한 번만 차감되도록 보강했다.", decisions: ["차감은 조건부 UPDATE 한 번으로 끝낸다."], limits: [], learnings: ["동시성 문제는 동시 호출 통합 테스트로 재현한 뒤 고친다."], tests: 24 },
       { daysAgo: 2, title: "복구 이력", summary: "쿠폰 복구마다 사유와 주문 ID를 이력으로 남긴다.", decisions: ["이력은 기존 감사 로그 형식을 재사용한다."], limits: ["이력 조회 화면은 다음 작업으로 남긴다."], learnings: [], tests: 26 },
     ] },
-  { workspace: "search", project: "search-indexer", key: "popular", spec: "인기 검색어 집계", task: "시간대별 인기 검색어", due: -3, file: "src/aggregate/popular_terms.ts",
+  { workspace: "search", project: "search-indexer", key: "popular", spec: "인기 검색어 집계", task: "시간대별 인기 검색어", due: 4, file: "src/aggregate/popular_terms.ts",
     reqs: ["1시간 단위로 검색어 빈도를 집계한다", "금칙어를 집계에서 뺀다", "상위 10개를 캐시에 둔다"],
     versions: [
       { daysAgo: 16, title: "최초 구현", summary: "1시간 단위 검색어 빈도 집계를 추가했다.", decisions: ["집계는 기존 색인 파이프라인 뒤에 붙인다."], limits: ["금칙어 처리가 없다."], learnings: ["새 파이프라인을 만들기 전에 기존 단계에 붙일 수 있는지 본다."], tests: 11 },
       { daysAgo: 3, title: "금칙어 제외", summary: "금칙어를 집계에서 빼고 상위 10개를 캐시에 둔다.", decisions: ["금칙어 목록은 설정 파일로 관리한다."], limits: [], learnings: [], tests: 15 },
     ] },
-  { workspace: "mobile-app", project: "push-gateway", key: "push-settings", spec: "푸시 수신 설정", task: "카테고리별 푸시 수신 동의", due: -1, file: "src/push/PreferenceRepository.kt",
+  { workspace: "mobile-app", project: "push-gateway", key: "push-settings", spec: "푸시 수신 설정", task: "카테고리별 푸시 수신 동의", due: 1, file: "src/push/PreferenceRepository.kt",
     reqs: ["카테고리별로 수신 여부를 저장한다", "야간 수신 거부 시간을 지킨다", "동의 변경 이력을 남긴다", "기존 전체 동의를 카테고리로 옮긴다"],
     versions: [
       { daysAgo: 19, title: "최초 구현", summary: "카테고리별 푸시 수신 여부를 저장한다.", decisions: ["설정은 사용자별 한 행에 카테고리 비트로 저장한다."], limits: ["기존 전체 동의 이전이 남았다."], learnings: [], tests: 13 },
       { daysAgo: 10, title: "야간 수신 거부", summary: "21시부터 8시까지 광고성 푸시를 보내지 않는다.", decisions: ["시간 판단은 사용자 시간대 기준으로 한다."], limits: [], learnings: ["시간 규칙은 서버 시간대가 아니라 사용자 시간대로 테스트한다."], tests: 18 },
       { daysAgo: 1, title: "기존 동의 이전", summary: "기존 전체 동의를 모든 카테고리 동의로 옮겼다.", decisions: ["이전은 한 번만 실행되는 마이그레이션으로 둔다."], limits: ["이전 결과 점검 리포트는 다음 작업으로 남긴다."], learnings: [], tests: 21 },
     ] },
-  { workspace: "account", project: "account-api", key: "login-lock", spec: "로그인 실패 잠금", task: "5회 실패 시 10분 잠금", due: -6, file: "src/main/java/account/LoginAttemptService.java",
+  { workspace: "account", project: "account-api", key: "login-lock", spec: "로그인 실패 잠금", task: "5회 실패 시 10분 잠금", due: 3, file: "src/main/java/account/LoginAttemptService.java",
     reqs: ["로그인 실패를 계정별로 센다", "5회 실패하면 10분 동안 잠근다", "성공하면 실패 횟수를 초기화한다"],
     versions: [
       { daysAgo: 22, title: "최초 구현", summary: "로그인 5회 실패 시 계정을 10분 동안 잠근다.", decisions: ["실패 횟수는 Redis에 TTL과 함께 저장한다."], limits: ["IP 기준 제한은 범위 밖이다."], learnings: [], tests: 15 },
@@ -436,13 +437,28 @@ await syncReviewArtifacts("payments", "pay-task-webhook", "readme-demo-webhook",
 
 const db = await initDb();
 const dueDates: Array<[string, string, number]> = [
-  ["payments", "pay-spec-guard", -3], ["payments", "pay-spec-webhook", 1], ["payments", "pay-spec-refund", 4], ["payments", "pay-spec-receipt", 9],
+  ["payments", "pay-spec-guard", 5], ["payments", "pay-spec-webhook", 1], ["payments", "pay-spec-refund", 4], ["payments", "pay-spec-receipt", 9],
   ["search", "search-spec-filter", -2], ["search", "search-spec-typo", 6], ["mobile-app", "mobile-spec-cart", 12],
   ...catalog.map((feature): [string, string, number] => [feature.workspace, `${feature.workspace}-spec-${feature.key}`, feature.due]),
   ["account", "account-spec-2fa", 15],
 ];
 for (const [workspace, id, days] of dueDates) {
   await db.exec("UPDATE sugo_roadmap_nodes SET due_date = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [dateOnly(days), userId, workspace, id]);
+}
+// 스펙마다 저장소를 지정해 둔다. 스펙 카드의 후속 개발 명령이 바로 만들어진다.
+const specProjects: Array<[string, string, string]> = [
+  ["payments", "pay-spec-guard", payApi], ["payments", "pay-spec-webhook", payApi], ["payments", "pay-spec-refund", payApi], ["payments", "pay-spec-receipt", payApi],
+  ["search", "search-spec-filter", searchApi], ["search", "search-spec-typo", searchApi], ["mobile-app", "mobile-spec-cart", mobileApp],
+  ["account", "account-spec-2fa", project("account-api")],
+  ...catalog.map((feature): [string, string, string] => [feature.workspace, `${feature.workspace}-spec-${feature.key}`, project(feature.project)]),
+];
+for (const [workspace, id, path] of specProjects) {
+  await db.exec("UPDATE sugo_roadmap_nodes SET project_path = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", [path, userId, workspace, id]);
+}
+// 끝난 스펙은 실제 사용처럼 작업 종료로 보관한다. 도메인마다 최근에 끝난 스펙 하나만 남겨 진행률과 개발 이력을 보여 준다.
+const keepDone = new Set(["coupon", "login-lock", "popular", "push-settings"]);
+for (const [workspace, id] of [["search", "search-spec-filter"], ...catalog.filter((feature) => !keepDone.has(feature.key)).map((feature) => [feature.workspace, `${feature.workspace}-spec-${feature.key}`])] as Array<[string, string]>) {
+  await archiveScheduleSpec(db, userId, workspace, id, "closed");
 }
 
 // 작업실과 레인이 "진행 중"으로 보이도록 최근 몇 분 안의 이벤트를 넣는다.

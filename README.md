@@ -11,18 +11,10 @@ Sugo는 기능 하나를 정해진 순서로 진행합니다. 요구사항과 �
 
 ![작업장: 작업자가 테스트, 검토, 문서를 지나 커밋까지 가는 장면](docs/images/console-workfloor.gif)
 
-## Sugo가 막는 장면
-
-AI 에이전트가 "다 됐습니다"라고 말해도, Sugo는 실행 기록과 규칙을 확인하기 전에는 다음 단계로 넘기지 않습니다.
-
-| 테스트가 실패하면 넘어가지 않습니다 | 검토에서 도메인 규칙 위반을 잡습니다 | 빠진 요구사항은 승인 전에 드러납니다 |
-| --- | --- | --- |
-| ![테스트 실패 2/26으로 구현에 되돌아간 작업](docs/images/console-caught-test.png) | ![검토에서 도메인 규칙 위반 2건을 찾아 되돌린 작업](docs/images/console-caught-rule.png) | ![요구사항 하나가 빠진 채 올라온 승인 요청](docs/images/console-caught-requirement.png) |
-| 26건 중 2건이 실패한 작업은 완료로 보고되지 않고 구현으로 돌아갑니다 | 테스트를 모두 통과해도 금액을 `double`로 계산한 코드는 구현으로 돌아갑니다 | 세 요구사항 중 하나가 빠진 작업은 2/3으로 표시되고 사람이 수정을 요청합니다 |
-
 ## 목차
 
-- [Sugo가 막는 장면](#sugo가-막는-장면)
+- [한눈에 보기](#한눈에-보기)
+- [Sugo가 멈추는 지점](#sugo가-멈추는-지점)
 - [Sugo가 해결하는 문제](#sugo가-해결하는-문제)
 - [Sugo가 생각하는 AI 개발](#sugo가-생각하는-ai-개발)
 - [언제 쓰나요](#언제-쓰나요)
@@ -34,6 +26,47 @@ AI 에이전트가 "다 됐습니다"라고 말해도, Sugo는 실행 기록과 
 - [제거와 데이터](#제거와-데이터)
 - [지원 스택](#지원-스택)
 - [문제 해결](#문제-해결)
+
+## 한눈에 보기
+
+Workspaces 화면 하나에서 도메인마다 무엇이 어디까지 진행됐는지 봅니다.
+
+![Workspaces: 도메인 카드, 작업장, 최근 작업 요약, Inspector](docs/images/console-workspaces.png)
+
+- **도메인 카드:** 도메인별 진행률, 차단된 작업, 도메인 규칙 수를 봅니다.
+- **작업장:** 작업자가 지금 어느 단계에 있는지 보여 줍니다. 사람의 확인이 필요하면 그 자리에서 물음표를 띄우고 기다립니다.
+- **최근 작업 요약:** 선택한 작업의 제목과 완료 결과가 나옵니다.
+- **Inspector:** 도메인의 저장소와 연동 상태, 완료 이력(History), 작업의 단계별 기록(Activity)을 봅니다.
+
+## Sugo가 멈추는 지점
+
+AI 에이전트가 "다 됐습니다"라고 말해도, Sugo는 실행 기록과 규칙을 확인하기 전에는 다음 단계로 넘기지 않습니다.
+
+```mermaid
+flowchart LR
+    A[요구사항과<br/>완료 조건] --> B[구현]
+    B --> C{테스트<br/>실행 기록}
+    C -- 실패 --> B
+    C -- 통과 --> D{검토<br/>규칙과 보안}
+    D -- 규칙 위반 --> B
+    D -- 통과 --> E{사람 승인<br/>요구사항별}
+    E -- 수정 요청 --> B
+    E -- 승인 --> F[문서, 리포트, 커밋]
+```
+
+멈춘 이유는 스펙 카드 맨 위에 문장으로 남습니다.
+
+**테스트가 실패하면 구현으로 돌아갑니다.** 26건 중 2건이 실패한 작업은 완료로 보고되지 않습니다.
+
+![테스트 실패 2/26으로 구현에 되돌아간 작업](docs/images/console-stop-test.png)
+
+**검토에서 도메인 규칙 위반을 잡습니다.** 테스트를 모두 통과해도, 금액을 `double`로 계산한 코드는 도메인 규칙 위반으로 구현에 돌아갑니다.
+
+![검토에서 도메인 규칙 위반 2건을 찾아 되돌린 작업](docs/images/console-stop-rule.png)
+
+**마지막은 사람이 승인합니다.** 리뷰 보고서와 변경 파일 diff를 열어 본 뒤 승인하거나, 고칠 내용을 적어 수정을 요청합니다.
+
+![작업 결과 확인: 리뷰 보고서, diff, 승인과 수정 요청](docs/images/console-stop-approval.png)
 
 ## Sugo가 해결하는 문제
 
@@ -137,8 +170,6 @@ flowchart LR
 
 시작은 명령으로 하고, 확인과 판단은 Console(`http://localhost:3001`)에서 합니다. Console은 새 Claude Code 세션마다 자동으로 시작합니다.
 
-![Console Home: 작업 흐름, 승인 요청, 최근 작업 리뷰, 기술 블로그 피드](docs/images/console-home.png)
-
 | 할 일 | Console에서 | 명령 |
 | --- | --- | --- |
 | 일정과 스펙 준비 | Schedule에 개발 일정을 만들고 기획 문서 링크와 화면 캡처를 붙입니다 | 일정 카드에서 복사한 `/sugo:spec-writer`, `/sugo:feat --spec` |
@@ -146,17 +177,34 @@ flowchart LR
 | 사람의 결정 | 정책과 범위 질문, 승인 요청이 Home과 Schedule에 나타납니다 | — |
 | 승인 | 요구사항 충족 상태, 테스트 결과, 남은 위험, diff를 보고 승인합니다 | — |
 | 재발 방지 | Workspaces 도메인 규칙에 등록합니다 | `/sugo:checkpoint-sync` |
-| 후속 수정 | 완료 작업의 이력을 확인합니다 | `/sugo:patch` |
+| 후속 수정 | 스펙 카드의 개발 이력에서 다음 patch를 시작합니다 | `/sugo:patch` |
 | 주간 회고 | Weekly에서 주간 보고서와 기술 학습 노트를 봅니다 | `/sugo:weekly` |
 
-Sugo는 이 작업들이 기대는 설정도 함께 관리합니다. 스택별 코딩 규칙(Harness), 클라우드 서비스와 프로젝트별 연결(Integrations), Weekly 일정(Preferences)을 Console에서 정합니다.
+### 일정과 스펙 카드
+
+Agenda에서 오늘, 다음 7일, 이후 일정을 봅니다. 스펙 카드를 열면 최초 구현(FEAT)부터 이어진 patch까지 개발 이력이 한 줄로 이어지고, 마지막 결과를 기준으로 **새 Patch**를 바로 시작합니다.
+
+| Agenda | 스펙 카드 |
+| --- | --- |
+| ![Schedule Agenda: 오늘, 다음 7일, 이후 일정, 메모](docs/images/console-agenda.png) | ![스펙 카드: 개발 이력 FEAT부터 PATCH 4까지, 후속 개발](docs/images/console-spec.png) |
+
+### 도메인 규칙
+
+한 번 겪은 실수는 도메인 규칙으로 남깁니다. 규칙마다 생긴 이유와 확인 항목을 적고, `/sugo:checkpoint-sync`가 각 프로젝트의 `.claude/rules/`에 씁니다. Claude Code와 Codex는 작업 전에 이 규칙을 읽습니다.
+
+![도메인 규칙: 도메인 전체 규칙과 프로젝트 전용 규칙](docs/images/console-checkpoints.png)
+
+### 플랫폼 설정
+
+Sugo는 이 작업들이 기대는 설정도 Console에서 관리합니다.
 
 | Harness | Integrations | Preferences |
 | --- | --- | --- |
-| ![Harness: 기술과 버전별 코딩 규칙](docs/images/console-harness.png) | ![Integrations: 프로젝트별 연결 현황](docs/images/console-integration-status.png) | ![Preferences: 주간 리포트 생성 일정](docs/images/console-preferences.png) |
+| ![Harness: Spring Boot 코딩 규칙](docs/images/console-harness.png) | ![Integrations: 프로젝트별 연결 현황](docs/images/console-integration-status.png) | ![Preferences: 주간 리포트 생성 일정](docs/images/console-preferences.png) |
+| 스택과 버전별 코딩 규칙. 필요하면 내 규칙으로 고쳐 씁니다 | 클라우드 서비스와 프로젝트별 원격 저장소, PR, 서비스 상태, APM 연결 | 표시 이름, 날씨 지역, Weekly 생성 일정 |
 
 > [!TIP]
-> 모든 화면의 스크린샷과 설명은 [Console 둘러보기](docs/console.md)에 있습니다.
+> Home, Weekly, Calendar, diff 화면을 포함한 모든 화면 설명은 [Console 둘러보기](docs/console.md)에 있습니다.
 
 ## 명령
 

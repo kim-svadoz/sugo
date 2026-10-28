@@ -11,18 +11,10 @@ Sugo runs each feature in a fixed order. It sets requirements and acceptance cri
 
 ![Work floor: the worker moves through test, review, and docs to commit](docs/images/console-workfloor.gif)
 
-## What Sugo stops
-
-Even when an AI agent says "done", Sugo does not move the work on until it checks the execution records and the rules.
-
-| A failing test stops the work | Review catches a domain rule violation | A missing requirement shows before approval |
-| --- | --- | --- |
-| ![A task sent back to implementation after 2 of 26 tests failed](docs/images/console-caught-test.png) | ![A task sent back from review for two domain rule violations](docs/images/console-caught-rule.png) | ![An approval request with one requirement missing](docs/images/console-caught-requirement.png) |
-| A task with 2 of 26 tests failing is not reported as done and goes back to implementation | Even with every test passing, code that computes money as `double` goes back to implementation | A task that leaves one of three requirements undone shows 2/3, and a person requests changes |
-
 ## Contents
 
-- [What Sugo stops](#what-sugo-stops)
+- [At a glance](#at-a-glance)
+- [Where Sugo stops](#where-sugo-stops)
 - [Problems it solves](#problems-it-solves)
 - [How Sugo sees AI development](#how-sugo-sees-ai-development)
 - [When to use it](#when-to-use-it)
@@ -34,6 +26,47 @@ Even when an AI agent says "done", Sugo does not move the work on until it check
 - [Uninstall and data](#uninstall-and-data)
 - [Supported stacks](#supported-stacks)
 - [Troubleshooting](#troubleshooting)
+
+## At a glance
+
+One Workspaces screen shows what each domain is doing and how far it has gone.
+
+![Workspaces: domain cards, work floor, recent work summary, Inspector](docs/images/console-workspaces.png)
+
+- **Domain cards:** progress, blocked tasks, and the number of domain rules per domain.
+- **Work floor:** shows which step the worker is on now. When a person needs to confirm something, the worker raises a question mark and waits.
+- **Recent work summary:** the title and finished result of the selected task.
+- **Inspector:** the domain's repositories and integrations, finished history (History), and the step records of the task (Activity).
+
+## Where Sugo stops
+
+Even when an AI agent says "done", Sugo does not move the work on until it checks the execution records and the rules.
+
+```mermaid
+flowchart LR
+    A[Requirements and<br/>acceptance criteria] --> B[Implementation]
+    B --> C{Test<br/>run records}
+    C -- fail --> B
+    C -- pass --> D{Review<br/>rules and security}
+    D -- rule violation --> B
+    D -- pass --> E{Human approval<br/>per requirement}
+    E -- request changes --> B
+    E -- approve --> F[Docs, report, commit]
+```
+
+The reason for each stop stays as a sentence at the top of the spec card.
+
+**A failing test sends the work back to implementation.** A task with 2 of 26 tests failing is not reported as done.
+
+![A task sent back to implementation after 2 of 26 tests failed](docs/images/console-stop-test.png)
+
+**Review catches a domain rule violation.** Even with every test passing, code that computes money as `double` goes back to implementation for breaking a domain rule.
+
+![A task sent back from review for two domain rule violations](docs/images/console-stop-rule.png)
+
+**A person approves at the end.** Open the review report and the changed-file diff, then approve or write what to change and request changes.
+
+![Work result review: report, diff, approve, and request changes](docs/images/console-stop-approval.png)
 
 ## Problems it solves
 
@@ -137,8 +170,6 @@ Put one behavior change in each `/sugo:feat`. If a PRD is large, Sugo splits it 
 
 Start with commands. Check and decide in the Console (`http://localhost:3001`). The Console starts with each new Claude Code session.
 
-![Console Home: work flow, approval requests, recent work reviews, engineering-blog feed](docs/images/console-home.png)
-
 | Task | In the Console | Command |
 | --- | --- | --- |
 | Prepare schedule and spec | Create a schedule in Schedule and attach planning links and screen captures | `/sugo:spec-writer` and `/sugo:feat --spec`, copied from the schedule card |
@@ -146,17 +177,34 @@ Start with commands. Check and decide in the Console (`http://localhost:3001`). 
 | Human decisions | Policy and scope questions and approval requests appear in Home and Schedule | — |
 | Approve | Check requirement status, test results, open risks, and the diff, then approve | — |
 | Prevent repeats | Add the rule to Workspaces domain rules | `/sugo:checkpoint-sync` |
-| Later fix | Check the history of the finished task | `/sugo:patch` |
+| Later fix | Start the next patch from the development history on the spec card | `/sugo:patch` |
 | Weekly review | Read the weekly report and learning notes in Weekly | `/sugo:weekly` |
 
-Sugo also manages the setup this work depends on. Set coding rules per stack (Harness), cloud services and per-project connections (Integrations), and the Weekly schedule (Preferences) in the Console.
+### Schedule and spec card
+
+Agenda shows today, the next 7 days, and later work. Open a spec card to see its development history from the first implementation (FEAT) through every patch, and start a **new patch** from the latest result.
+
+| Agenda | Spec card |
+| --- | --- |
+| ![Schedule Agenda: today, next 7 days, later, memos](docs/images/console-agenda.png) | ![Spec card: development history from FEAT to PATCH 4, follow-up](docs/images/console-spec.png) |
+
+### Domain rules
+
+A mistake you hit once becomes a domain rule. Each rule records why it exists and what to check, and `/sugo:checkpoint-sync` writes it to `.claude/rules/` in each project. Claude Code and Codex read these rules before they work.
+
+![Domain rules: rules for the whole domain and rules for one project](docs/images/console-checkpoints.png)
+
+### Platform setup
+
+Sugo also manages the setup this work depends on in the Console.
 
 | Harness | Integrations | Preferences |
 | --- | --- | --- |
-| ![Harness: coding rules by technology and version](docs/images/console-harness.png) | ![Integrations: connection status per project](docs/images/console-integration-status.png) | ![Preferences: Weekly report schedule](docs/images/console-preferences.png) |
+| ![Harness: Spring Boot coding rules](docs/images/console-harness.png) | ![Integrations: connection status per project](docs/images/console-integration-status.png) | ![Preferences: Weekly report schedule](docs/images/console-preferences.png) |
+| Coding rules by stack and version. Override them with your own when needed | Cloud services and per-project remote repository, PR, service status, and APM connections | Display name, weather region, Weekly schedule |
 
 > [!TIP]
-> Screenshots and descriptions of every screen are in the [Console tour](docs/console.en.md).
+> Descriptions of every screen, including Home, Weekly, Calendar, and diff, are in the [Console tour](docs/console.en.md).
 
 ## Commands
 

@@ -62,7 +62,7 @@ try {
 
   await mkdir(out, { recursive: true });
   const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
-  const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 })).newPage();
+  const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })).newPage();
   await page.goto(`${base}/api/auth/local`, { waitUntil: "networkidle" });
   await page.route("**/api/news**", (route) => route.fulfill({ json: demoNewsFeed() }));
   // 처음 설정 안내가 뜨지 않도록 날씨 지역과 Weekly 설정을 채운다. 날씨는 외부 API 대신 고정 응답을 준다.
@@ -80,16 +80,12 @@ try {
   await page.waitForTimeout(1500);
   await page.screenshot({ path: join(out, "console-home.png") });
 
-  // 작업장, 연결 레일, 최근 작업 요약을 한 장에 담는다.
-  await page.setViewportSize({ width: 1440, height: 1600 });
+  // Workspaces 첫 화면: 도메인 카드, 작업장, 최근 작업 요약, Inspector를 한 장에 담는다.
+  await page.setViewportSize({ width: 1440, height: 1560 });
   await page.goto(`${base}/sessions`, { waitUntil: "networkidle" });
   await page.getByText("payments", { exact: true }).first().click();
-  await page.waitForTimeout(2500);
-  const floor = await page.locator('section[aria-label="payments 작업장"]').boundingBox();
-  const summary = await page.locator(".command-detail").first().boundingBox();
-  await page.screenshot({ path: join(out, "console-workspaces.png"), fullPage: true, clip: { x: floor.x - 8, y: floor.y - 8, width: floor.width + 16, height: summary.y + 300 - floor.y } });
-  // 도메인 관리: 도메인 목록과 선택한 도메인의 프로젝트, 도메인 규칙.
-  await page.screenshot({ path: join(out, "console-domains.png"), fullPage: true, clip: { x: 0, y: 0, width: 1440, height: floor.y - 8 } });
+  await page.waitForTimeout(3000);
+  await page.screenshot({ path: join(out, "console-workspaces.png") });
   const rulesButton = page.getByRole("button", { name: /도메인 규칙 관리/ });
   await page.locator("div").filter({ hasText: "payments" }).filter({ has: rulesButton }).last().getByRole("button", { name: /도메인 규칙 관리/ }).click();
   await page.waitForTimeout(1500);
@@ -98,20 +94,32 @@ try {
   await page.screenshot({ path: join(out, "console-checkpoints.png") });
   await page.keyboard.press("Escape");
 
+  // 스펙 카드 모달. 위쪽 상태 띠가 멈춘 이유를 문장으로 보여 준다. 제목부터 지정한 요소까지 잘라 찍는다.
+  await page.setViewportSize({ width: 1440, height: 1800 });
+  const specModal = async (workspace, spec, title, file, bottom, extra = 24) => {
+    await page.goto(`${base}/schedule?reviewWorkspace=${workspace}&reviewSpec=${spec}`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(3500);
+    const top = await page.getByText(title, { exact: true }).last().boundingBox();
+    const end = await bottom().boundingBox();
+    await page.screenshot({ path: join(out, file), clip: { x: 44, y: top.y - 62, width: 1352, height: end.y + end.height + extra - (top.y - 62) } });
+  };
+  await specModal("account", "account-spec-2fa", "2단계 인증", "console-stop-test.png", () => page.getByText(/현재 게이트가 완료되기 전에는/).first());
+  await specModal("payments", "pay-spec-refund", "부분 환불 API", "console-stop-rule.png", () => page.getByText(/현재 게이트가 완료되기 전에는/).first());
+  await specModal("payments", "pay-spec-webhook", "웹훅 재처리", "console-stop-approval.png", () => page.getByRole("button", { name: "수정 요청", exact: true }).first());
+  await specModal("payments", "payments-spec-coupon", "쿠폰 중복 적용 방지", "console-spec.png", () => page.getByText(/docs\/specs\/coupon\.md/).first());
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`${base}/schedule?reviewWorkspace=payments&reviewSpec=pay-spec-webhook`, { waitUntil: "networkidle" });
   await page.waitForTimeout(3500);
-  await page.screenshot({ path: join(out, "console-approval.png") });
   await page.getByRole("button", { name: /diff 보기/ }).first().click();
   await page.waitForTimeout(4000);
   await page.screenshot({ path: join(out, "console-diff.png") });
-  // 한 작업의 계보: 최초 구현(FEAT)부터 patch 4차까지의 개발 이력.
-  await page.goto(`${base}/schedule?reviewWorkspace=payments&reviewSpec=payments-spec-coupon`, { waitUntil: "networkidle" });
-  await page.waitForTimeout(3500);
-  await page.screenshot({ path: join(out, "console-lineage.png") });
 
+  // Agenda: 지난 일정, 오늘, 다음 7일, 이후 일정, 날짜 미정.
+  await page.setViewportSize({ width: 1440, height: 1300 });
   await page.goto(`${base}/schedule`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Agenda/ }).first().click();
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2000);
+  await page.screenshot({ path: join(out, "console-agenda.png") });
   // 캘린더는 폭이 1900px을 넘어야 칸 안에 일정 제목을 보인다.
   await page.setViewportSize({ width: 2000, height: 1000 });
   await page.getByRole("button", { name: /Calendar/ }).first().click();
@@ -124,17 +132,14 @@ try {
   await page.waitForTimeout(2000);
   await page.screenshot({ path: join(out, "console-weekly.png") });
 
-  // Sugo가 막은 장면: 테스트 실패로 구현에 되돌림, 검토에서 도메인 규칙 위반 발견, 요구사항 하나가 빠진 채 올라온 승인 요청.
-  await page.setViewportSize({ width: 1440, height: 900 });
-  for (const [workspace, node, file] of [["account", "account-task-otp", "console-caught-test.png"], ["payments", "pay-task-refund", "console-caught-rule.png"], ["payments", "pay-task-webhook", "console-caught-requirement.png"]]) {
-    await page.goto(`${base}/roadmap/${workspace}?focus=${node}`, { waitUntil: "networkidle" });
-    await page.waitForTimeout(3500);
-    await page.screenshot({ path: join(out, file) });
-  }
-
   // 플랫폼 설정: 하네스, 외부 연동(클라우드 서비스, 프로젝트별 연결 현황), 개인 설정.
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`${base}/harness`, { waitUntil: "networkidle" });
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(3000);
+  await page.getByRole("tab", { name: /프레임워크/ }).first().click();
+  await page.waitForTimeout(1500);
+  await page.locator("button", { hasText: "Spring" }).first().click({ timeout: 10_000 });
+  await page.waitForTimeout(1500);
   await page.screenshot({ path: join(out, "console-harness.png") });
   await page.goto(`${base}/settings`, { waitUntil: "networkidle" });
   await page.waitForTimeout(1500);
