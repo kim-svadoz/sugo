@@ -48,7 +48,7 @@ npx vitest run
 
 | 실행기 | 용도 | 주소 |
 | --- | --- | --- |
-| `bash dashboard/sd.sh` | 현재 소스를 `sugo/dashboard-runtime/`으로 빌드하고, 플러그인이 띄운 Console 대신 백그라운드로 재시작 | `http://localhost:3001` |
+| `bash dashboard/sd.sh` | 현재 소스를 `sugo/dashboard-runtime/`으로 빌드해 바로 띄워 보는 개발 편의용. macOS에서는 launchd 작업(`com.sugo.dashboard.local`)으로 등록되므로 쓴 뒤 `launchctl remove com.sugo.dashboard.local`로 내립니다. 릴리스 확인은 설치된 플러그인의 `/sugo:console restart`로 합니다 | `http://localhost:3001` |
 | `bash dashboard/dev-local.sh` | 로컬 로그인(`LOCAL_DEV_MODE=1`)으로 API와 Vite UI를 포그라운드 실행. 데모 데이터는 `SUGO_LOCAL_DEMO=1` | UI `:5175`, 로그인 `:3001/api/auth/local` |
 | `dashboard/dev.ps1`(Windows) | GitHub OAuth 개발 모드. `dashboard/backend/.env` 필요 | UI `:5175` |
 | `dashboard/dev-mysql.sh`, `dev-mysql.ps1` | 실제 MySQL, 시드 데이터, 개발용 로그인 페이지 | `http://localhost:4173/dev-login.html` |

@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.59.1 / Console 0.49.0] - 2026-10-29
+
+- 한국어 `/sugo:console` 명령 설명에 `open`과 필요할 때만 뜨는 Console 동작을 반영했습니다.
+
 ## [Plugin 0.59.0 / Console 0.49.0] - 2026-10-29
 
 - Console은 세션마다 뜨지 않고 `/sugo:console open`과 사람 판단 대기 때만 뜹니다. 꺼진 Console을 즐겨찾기로 열면 다시 띄우는 명령을 안내하고, Console이 다시 뜨면 자동으로 옮겨 갑니다.
