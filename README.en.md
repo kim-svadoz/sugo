@@ -10,9 +10,6 @@ Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin t
 
 ![Work floor: the worker moves through test, review, and docs to commit](docs/images/console-workfloor.gif)
 
-> [!NOTE]
-> Sugo makes the commit. You push.
-
 ## Contents
 
 - [Why Sugo](#why-sugo)

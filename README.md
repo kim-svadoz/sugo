@@ -10,9 +10,6 @@ Sugo는 그 기준을 관리하는 Claude Code 플러그인입니다. 스택과 
 
 ![작업장: 작업자가 테스트, 검토, 문서를 지나 커밋까지 가는 장면](docs/images/console-workfloor.gif)
 
-> [!NOTE]
-> Sugo는 커밋까지 만들고, push는 사용자가 직접 합니다.
-
 ## 목차
 
 - [왜 Sugo인가](#왜-sugo인가)
