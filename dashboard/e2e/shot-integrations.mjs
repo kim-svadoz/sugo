@@ -6,6 +6,7 @@ const base = process.env.SUGO_UI_URL ?? "http://127.0.0.1:5175";
 const output = process.env.SUGO_SCREENSHOT ?? join(tmpdir(), "sugo-integrations.png");
 const mappingOutput = output.replace(/\.png$/i, "-mapping.png");
 const registrationOutput = output.replace(/\.png$/i, "-registration.png");
+const overviewOutput = output.replace(/\.png$/i, "-overview.png");
 const projects = [
   {
     project_path: "/work/catalog-api",
@@ -72,5 +73,8 @@ await page.locator("#integration-projects").screenshot({ path: mappingOutput });
 await page.getByRole("button", { name: /프로젝트 로컬 프로젝트 등록/ }).click();
 await page.getByRole("region", { name: "새 프로젝트 등록" }).waitFor({ timeout: 5_000 });
 await page.screenshot({ path: registrationOutput, fullPage: true });
-console.log(output, mappingOutput, registrationOutput);
+await page.getByRole("button", { name: /연결 현황 읽기 전용 결과/ }).click();
+await page.getByRole("heading", { name: "프로젝트 연결 현황" }).waitFor({ timeout: 5_000 });
+await page.locator('[aria-label="프로젝트별 저장소 연결"]').screenshot({ path: overviewOutput });
+console.log(output, mappingOutput, registrationOutput, overviewOutput);
 await browser.close();

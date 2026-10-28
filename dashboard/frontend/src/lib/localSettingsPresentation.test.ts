@@ -53,6 +53,8 @@ describe("local Settings presentation", () => {
     expect(mapping).toContain("projectSelectionComplete ? <Check");
     expect(mapping).toContain('ref={serviceStepRef}');
     expect(mapping).toContain("projectSelectionComplete && path === item.project_path");
+    expect(mapping).toContain('aria-label="서비스 연결 프로젝트 브라우저"');
+    expect(mapping).not.toContain("item.workspace_name} · {integrationStatusLabel(item)");
   });
 
   it("separates repository, PR, service health, and APM status", () => {
@@ -64,6 +66,14 @@ describe("local Settings presentation", () => {
     expect(overview).toContain("APM 관리");
     expect(overview).toContain("Pinpoint");
     expect(overview).not.toContain("ECS/APM");
+    expect(overview).toContain('<table className="w-full min-w-[980px] table-fixed text-left">');
+    expect(overview).not.toContain('className="mt-4 grid gap-px');
+  });
+
+  it("describes the registration destination as a Sugo workspace", () => {
+    const source = readFileSync(join(process.cwd(), "src/pages/Settings.tsx"), "utf8");
+    expect(source).toContain("Sugo 작업공간 ·");
+    expect(source).not.toContain("등록 예정 ·");
   });
 
   it("uses larger labels for the three integration stages", () => {
