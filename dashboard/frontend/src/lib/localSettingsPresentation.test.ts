@@ -30,11 +30,12 @@ describe("local Settings presentation", () => {
     expect(source).toContain("AWS ECS");
   });
 
-  it("renders projects in the selected domain as separate readable rows", () => {
+  it("keeps domain cards fixed and renders selected domain projects in a separate panel", () => {
     const source = readFileSync(join(process.cwd(), "src/pages/Settings.tsx"), "utf8");
     expect(source).not.toContain("domainProjects.join(' · ')");
-    expect(source).toContain("등록 프로젝트");
-    expect(source).toContain("domainProjects.map((projectName)");
+    expect(source).toContain("selectedDomainProjects.map((projectName)");
+    expect(source).toContain('aria-label="선택한 도메인의 등록 프로젝트"');
+    expect(source).not.toContain("active && <span className=\"mt-3 block");
   });
 
   it("guides service mapping from project selection and handles AWS availability", () => {
@@ -46,8 +47,14 @@ describe("local Settings presentation", () => {
     expect(mapping).not.toContain("ECS 서비스 추가");
     expect(mapping).toContain("AWS 계정을 연결하세요");
     expect(mapping).toContain("연결 가능한 운영 서비스가 없습니다");
-    expect(mapping).toContain("animate-pulse");
-    expect(mapping).toContain("h-10 w-[2px]");
-    expect(mapping).toContain("size={20}");
+    expect(mapping).toContain("border-dashed border-cyan-300/35");
+    expect(mapping).toContain("h-7 w-7");
+    expect(mapping).not.toContain("drop-shadow-[0_0_5px");
+  });
+
+  it("uses larger labels for the three integration stages", () => {
+    const source = readFileSync(join(process.cwd(), "src/pages/Settings.tsx"), "utf8");
+    const stages = source.slice(source.indexOf('aria-label="외부 연동 단계"'), source.indexOf('{activeGroup === "services"'));
+    expect(stages).toContain('<strong className="text-base');
   });
 });
