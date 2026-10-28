@@ -4,9 +4,7 @@
 
 [한국어](README.md)
 
-Sugo is a Claude Code plugin that lets AI agents move a feature forward only after they build it to the spec (its requirements and acceptance criteria) and prove it with tests. The Sugo Console that comes with it shows all your work in one place, so you only step in when a decision is needed.
-
-The name comes from the Korean word 수고 (sugo), the effort a job takes. The AI does the legwork, and you spend your time checking and deciding.
+AI agents now take a lot of the legwork out of development. But when they call a task done without running the tests, or quietly break team rules, the legwork of checking it all lands back on you. Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin that keeps the AI from moving on until it has built to the spec (its requirements and acceptance criteria) and proven it with tests. With the Sugo Console that comes with it, you see all your work in one place and only make the calls that are yours to make.
 
 ![Work floor: the worker moves through test, review, and docs to commit](docs/images/console-workfloor.gif)
 
