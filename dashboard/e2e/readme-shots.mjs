@@ -23,25 +23,6 @@ const home = await mkdtemp("/tmp/sugo-");
 const env = { ...process.env, SUGO_HOME_OVERRIDE: home, SUGO_DASHBOARD_PORT: String(port), LOCAL_DEV_USER_ID: "readme-demo", LOCAL_DEV_DISPLAY_NAME: "Demo", README_DEMO_ROOT: home, SECRET_ENC_KEY: randomBytes(32).toString("base64") };
 for (const key of ["SUGO_DASHBOARD_API_URL", "SUGO_DASHBOARD_API_TOKEN", "SUGO_DASHBOARD_USER_ID", "SQLITE_FILE", "SUGO_SETTINGS_FILE"]) delete env[key];
 
-/** Home 엔지니어링 피드 예시. 외부 RSS 대신 이 브라우저 안에서만 응답을 고정한다. 실제 회사·블로그 이름을 쓰지 않는다. */
-function demoNewsFeed() {
-  const sources = [
-    ["Platform Notes", "플랫폼", "ko"], ["Backend Diary", "백엔드", "ko"], ["Data Craft", "데이터", "ko"],
-    ["Scale Weekly", "Infrastructure", "en"], ["Testing Field Guide", "Quality", "en"], ["Frontend Journal", "Frontend", "en"],
-  ].map(([name, category, language]) => ({ name, category, language, url: "https://example.com", status: "active", lastPublishedAt: new Date().toISOString() }));
-  const titles = [
-    [0, "배포 파이프라인을 10분에서 3분으로 줄인 과정"], [3, "Designing idempotent payment APIs"], [1, "Kotlin 코루틴으로 외부 API 병렬 호출 다루기"],
-    [4, "Contract tests that catch breaking changes early"], [2, "실시간 집계 파이프라인 운영 기록"], [5, "Rendering large tables without jank"],
-    [0, "멀티 리전 Redis 장애 대응 훈련"], [3, "Rate limiting at the edge"], [1, "트랜잭션 아웃박스 패턴 도입기"],
-    [4, "Flaky test triage playbook"], [2, "Athena 비용을 절반으로 줄인 파티션 설계"], [5, "Accessibility checks in CI"],
-  ];
-  const items = titles.map(([source, title], index) => ({
-    source: sources[source].name, category: sources[source].category, language: sources[source].language,
-    title, url: `https://example.com/posts/${index + 1}`, publishedAt: new Date(Date.now() - index * 11 * 3_600_000).toISOString(), summary: null,
-  }));
-  return { items, fetchedAt: new Date().toISOString(), sourceCount: sources.length, sources };
-}
-
 async function waitForHealth() {
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try { if ((await fetch(`${base}/health`)).ok) return; } catch { /* 아직 기동 중 */ }
@@ -64,7 +45,6 @@ try {
   const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
   const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })).newPage();
   await page.goto(`${base}/api/auth/local`, { waitUntil: "networkidle" });
-  await page.route("**/api/news**", (route) => route.fulfill({ json: demoNewsFeed() }));
   // 처음 설정 안내가 뜨지 않도록 날씨 지역과 Weekly 설정을 채운다. 날씨는 외부 API 대신 고정 응답을 준다.
   await page.route("https://api.open-meteo.com/**", (route) => route.fulfill({ json: { current: { temperature_2m: 18, weather_code: 1 } } }));
   await page.evaluate(() => localStorage.setItem("sugo_weather_region", "seoul-cityhall"));
@@ -77,7 +57,6 @@ try {
   const homeContext = await browser.newContext({ viewport: { width: 1440, height: 1500 }, deviceScaleFactor: 2, timezoneId: daytimeZone });
   const homePage = await homeContext.newPage();
   await homePage.goto(`${base}/api/auth/local`, { waitUntil: "networkidle" });
-  await homePage.route("**/api/news**", (route) => route.fulfill({ json: demoNewsFeed() }));
   await homePage.route("https://api.open-meteo.com/**", (route) => route.fulfill({ json: { current: { temperature_2m: 18, weather_code: 1 } } }));
   await homePage.evaluate(() => localStorage.setItem("sugo_weather_region", "seoul-cityhall"));
   await homePage.goto(`${base}/home`, { waitUntil: "networkidle" });
@@ -86,10 +65,9 @@ try {
   const homeHeight = await homePage.evaluate(() => Math.max(...[...document.querySelectorAll("main, main *")].filter((el) => el.scrollHeight > el.clientHeight + 4).map((el) => el.scrollHeight), document.body.scrollHeight));
   await homePage.setViewportSize({ width: 1440, height: homeHeight + 120 });
   await homePage.waitForTimeout(1500);
-  await homePage.screenshot({ path: join(out, "console-home.png") });
-  // README용 Home 첫 화면: 인사, 오늘의 할 일, 작업 흐름까지.
-  const flowPanel = await homePage.getByText("TODAY IN SUGO", { exact: true }).first().locator("xpath=ancestor::section[1]").boundingBox().catch(() => null);
-  await homePage.screenshot({ path: join(out, "console-home-top.png"), clip: { x: 0, y: 0, width: 1440, height: flowPanel ? flowPanel.y + flowPanel.height + 24 : 980 } });
+  // 최근 작업 리뷰와 Engineering Feed까지 담고, 그 아래 "오늘의 리뷰" 앞에서 자른다.
+  const todayReview = await homePage.getByText("오늘의 리뷰", { exact: true }).first().boundingBox().catch(() => null);
+  await homePage.screenshot({ path: join(out, "console-home.png"), ...(todayReview ? { clip: { x: 0, y: 0, width: 1440, height: todayReview.y - 40 } } : {}) });
   await homeContext.close();
 
   // Workspaces 첫 화면: 도메인 카드, 작업장, 최근 작업 요약, Inspector를 한 장에 담는다.
@@ -166,6 +144,70 @@ try {
   await page.getByText("주간 리포트", { exact: true }).first().click();
   await page.waitForTimeout(1500);
   await page.screenshot({ path: join(out, "console-preferences.png") });
+
+  // 사용 가이드: 입력 화면을 폼 단위로 잘라 찍는다. 기준 글자의 위치에서 위로 조금, 아래로 정해진 높이만큼.
+  const formShot = async (file, anchor, height, { top = 70, viewport = 1300 } = {}) => {
+    await page.setViewportSize({ width: 1440, height: viewport });
+    await page.waitForTimeout(800);
+    const box = await anchor().boundingBox();
+    await page.screenshot({ path: join(out, file), clip: { x: 230, y: Math.max(0, box.y - top), width: 1190, height } });
+  };
+  await page.goto(`${base}/settings`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1500);
+  await formShot("guide-project.png", () => page.getByText("로컬 프로젝트 등록", { exact: true }).last(), 760, { top: 40, viewport: 1500 });
+  await page.getByText("외부 서비스", { exact: true }).first().click();
+  await page.waitForTimeout(1500);
+  await page.getByRole("button", { name: "환경 연결", exact: true }).first().click();
+  await formShot("guide-cloud.png", () => page.getByText("AWS 연결", { exact: true }).first(), 1040, { viewport: 1500 });
+  await page.getByRole("button", { name: "PR 연동", exact: true }).first().click();
+  await page.waitForTimeout(1200);
+  await formShot("guide-pr.png", () => page.getByText("브랜치 확인과 PR 조회", { exact: false }).first(), 660, { top: 100 });
+  await page.getByRole("button", { name: "서비스 상태 연동", exact: true }).first().click();
+  await page.waitForTimeout(1200);
+  await page.getByText("payments", { exact: true }).last().click().catch(() => undefined);
+  await page.waitForTimeout(800);
+  await page.getByText("payment-api", { exact: true }).first().click().catch(() => undefined);
+  await page.waitForTimeout(1200);
+  await formShot("guide-service.png", () => page.getByText("프로젝트를 선택하고 운영 서비스를 연결합니다", { exact: false }).first(), 900, { top: 100, viewport: 1500 });
+  await page.getByRole("button", { name: "모니터링", exact: true }).first().click();
+  await page.waitForTimeout(1200);
+  await formShot("guide-monitor.png", () => page.getByText("Pinpoint APM", { exact: true }).first(), 440);
+
+  await page.setViewportSize({ width: 1440, height: 1300 });
+  await page.goto(`${base}/schedule`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /개발 일정 추가/ }).first().click();
+  await page.waitForTimeout(1200);
+  const addTitle = await page.getByRole("heading", { name: "개발 일정 추가" }).boundingBox();
+  const addButton = await page.getByRole("button", { name: "SPEC 초안 추가", exact: true }).boundingBox();
+  await page.screenshot({ path: join(out, "guide-schedule-add.png"), clip: { x: 186, y: addTitle.y - 40, width: 1068, height: addButton.y + addButton.height + 30 - (addTitle.y - 40) } });
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 1440, height: 1800 });
+  await specModal("payments", "pay-spec-receipt", "결제 완료 메일", "guide-spec-draft.png", () => page.getByText(/docs\/specs\/receipt-mail\.md/).first());
+
+  await page.setViewportSize({ width: 1440, height: 1300 });
+  await page.goto(`${base}/sessions`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1500);
+  const ruleButton = page.getByRole("button", { name: /도메인 규칙 관리/ });
+  await page.locator("div").filter({ hasText: "payments" }).filter({ has: ruleButton }).last().getByRole("button", { name: /도메인 규칙 관리/ }).click();
+  await page.waitForTimeout(1500);
+  const ruleHeading = page.getByText("새 규칙 작성", { exact: true }).first();
+  await ruleHeading.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(600);
+  const ruleBox = await ruleHeading.boundingBox();
+  await page.screenshot({ path: join(out, "guide-rule-new.png"), clip: { x: 100, y: ruleBox.y - 30, width: 1180, height: Math.min(560, 1300 - (ruleBox.y - 30)) } });
+  await page.keyboard.press("Escape");
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.goto(`${base}/harness`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(3000);
+  await page.getByRole("tab", { name: /프레임워크/ }).first().click();
+  await page.waitForTimeout(1200);
+  await page.locator("button", { hasText: "Spring" }).first().click({ timeout: 10_000 });
+  await page.waitForTimeout(800);
+  await page.getByRole("button", { name: /내 규칙으로 수정/ }).first().click();
+  await page.waitForTimeout(1000);
+  const ruleSelect = await page.getByText("규칙 선택", { exact: true }).first().boundingBox();
+  await page.screenshot({ path: join(out, "guide-harness-edit.png"), clip: { x: 230, y: ruleSelect.y - 30, width: 1190, height: 1100 - (ruleSelect.y - 30) } });
 
   // 작업장 GIF: search 도메인의 작업이 테스트에서 커밋까지 넘어가는 장면. 활동 이벤트를 차례로 넣고 화면을 연속으로 찍는다.
   if (spawnSync("ffmpeg", ["-version"]).status === 0) {

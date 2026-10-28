@@ -16,6 +16,7 @@ AI agents now take a lot of the legwork out of development. But when they call a
 - [Why Sugo](#why-sugo)
 - [How it works](#how-it-works)
 - [Quick start](#quick-start)
+- [Console guide](#console-guide)
 - [Console tour](#console-tour)
 - [Commands](#commands)
 - [What installing Sugo changes](#what-installing-sugo-changes)
@@ -108,15 +109,79 @@ In Claude Code, run `/reload-plugins`, then `/sugo:version`. No build or `npm in
 
 Use absolute paths. Follow progress in the Console (`http://localhost:3001`). The Console starts with each new Claude Code session.
 
-## Console tour
+## Console guide
 
-Start with commands. Check and decide in the Console.
+The Console (`http://localhost:3001`) starts with each new Claude Code session. First register your projects and connect the external services you use, then start work from a schedule and a spec.
+
+### 1. Register projects and domains
+
+In **Integrations → 프로젝트**, choose a project folder, put it in an existing domain or create a new one, and select **프로젝트 등록**. Registration detects the stack and installs the matching harness. It is the same registration as `/sugo:ws-add` and `/sugo:add` in the terminal.
+
+![Project registration: project folder and work domain](docs/images/guide-project.png)
+
+### 2. Connect external services
+
+In **Integrations → 외부 서비스**, connect only what you need. Every integration is optional and read-only.
+
+**AWS accounts.** Enter an environment name (example: DEV), choose a local AWS CLI profile and a region, then select **환경 연결**. Keys are not stored. Drag environments to reorder them; the order becomes the deployment state shown in Schedule (LOCAL → DEV → STG → PRD). **AWS 전체 동기화** fetches service lists such as ECS and pipelines.
+
+![AWS: environment list and connection form](docs/images/guide-cloud.png)
+
+**PR integration.** GitHub uses an access token; AWS CodeCommit uses your AWS CLI or SSO login. The token is used only to check branches and read or create PRs. Commit and push use your local Git credentials.
+
+**Service status.** Choose a project and add its running services per environment from the synced list. Connected services appear in the Inspector and in Schedule deployment state.
+
+**Monitoring.** Enter a Pinpoint address to read application status and performance from the last 5 minutes.
+
+| PR integration | Service status | Monitoring |
+| --- | --- | --- |
+| ![PR integration: GitHub, AWS CodeCommit](docs/images/guide-pr.png) | ![Service status: running services per project](docs/images/guide-service.png) | ![Monitoring: Pinpoint APM](docs/images/guide-monitor.png) |
+
+See the result per project in **Integrations → 연결 현황**.
+
+![Connection status: remote repository, PR, service status, APM per project](docs/images/console-integration-status.png)
+
+### 3. Schedule and spec
+
+In **Schedule → 개발 일정 추가**, set the title, domain, project, and due date, and write a SPEC draft. Describe the problem, goal, scope, and acceptance criteria freely, and paste screen captures from your planning.
+
+![Add schedule: title, domain, project, due date, SPEC draft, planning screens](docs/images/guide-schedule-add.png)
+
+Open the schedule card to attach more planning links and captures. Choose the agent (Claude or Codex), select **SPEC 작성 명령 복사**, and paste it in the terminal to turn the draft into a buildable spec. When the spec is ready, copy the command with **feat 시작** to start development.
+
+![Spec card: planning material, work context, spec writing, and feat start](docs/images/guide-spec-draft.png)
+
+### 4. Follow progress and approve
+
+Follow running work on the Workspaces work floor and the spec card. When a person needs to confirm something, an approval request appears in Home and Schedule; read the review report and diff on the spec card, then approve or request changes. Continue a finished task with **새 Patch 시작** on the spec card.
+
+### 5. Domain rules
+
+In **도메인 규칙 관리** on a domain card, write a new rule with a folder, a name, and Markdown content. A rule applies to the whole domain or to one project, and `/sugo:checkpoint-sync` writes it to `.claude/rules/` in each project. Claude Code and Codex read these rules before they work.
+
+| Rules | New rule |
+| --- | --- |
+| ![Domain rules: rules for the whole domain and rules for one project](docs/images/console-checkpoints.png) | ![New rule: folder, name, content](docs/images/guide-rule-new.png) |
+
+### 6. Harness
+
+In **Harness**, choose a technology and version to see Sugo's default coding rules. Select **내 규칙으로 수정** to adapt them to your team and save; they become the project's verification standard from the next sync.
+
+![Harness: editing the Spring Boot rules](docs/images/guide-harness-edit.png)
+
+### 7. Weekly
+
+In **Preferences → 주간 리포트**, set the day and time, the Claude model, extra repositories, and the Claude token for scheduled runs. The Console builds the weekly report and learning notes on that schedule; run `/sugo:weekly` to build one now.
+
+![Preferences: Weekly report schedule](docs/images/console-preferences.png)
+
+## Console tour
 
 ### Home
 
-Home shows the work to continue today and the work waiting for your decision first. The work flow separates human steps from AI steps and shows which step is waiting for what.
+Home shows the work to continue today and the work waiting for your decision first. The work flow separates human steps from AI steps, and below it collect review notes from recent finished work and new posts from engineering blogs.
 
-![Home: greeting, work to continue and decisions waiting, work flow](docs/images/console-home-top.png)
+![Home: today's work, work flow, recent work reviews, Engineering Feed](docs/images/console-home.png)
 
 ### Workspaces
 
@@ -129,29 +194,16 @@ One screen shows what each domain is doing and how far it has gone.
 - **Recent work summary:** the title and finished result of the selected task.
 - **Inspector:** the domain's repositories and integrations, finished history (History), and the step records of the task (Activity).
 
-### Schedule and spec card
+### Schedule and development history
 
-The Schedule Agenda shows today, the next 7 days, and later work. Open a spec card to see its development history from the first implementation (FEAT) through every patch, and start a **new patch** from the latest result.
+The Schedule Agenda shows today, the next 7 days, and later work. A spec card shows its development history from the first implementation (FEAT) through every patch.
 
-| Agenda | Spec card |
+| Agenda | Development history and follow-up |
 | --- | --- |
 | ![Schedule Agenda: today, next 7 days, later, memos](docs/images/console-agenda.png) | ![Spec card: development history from FEAT to PATCH 4, follow-up](docs/images/console-spec.png) |
 
-### Domain rules
-
-A mistake you hit once becomes a domain rule. Each rule records why it exists and what to check, and `/sugo:checkpoint-sync` writes it to `.claude/rules/` in each project. Claude Code and Codex read these rules before they work.
-
-![Domain rules: rules for the whole domain and rules for one project](docs/images/console-checkpoints.png)
-
-### Settings
-
-| Harness | Integrations | Preferences |
-| --- | --- | --- |
-| ![Harness: Spring Boot coding rules](docs/images/console-harness.png) | ![Integrations: connection status per project](docs/images/console-integration-status.png) | ![Preferences: Weekly report schedule](docs/images/console-preferences.png) |
-| Coding rules by stack and version. Override them with your own when needed | Cloud services and per-project remote repository, PR, service status, and APM connections | Display name, weather region, Weekly schedule |
-
 > [!TIP]
-> Descriptions of every screen, including Home, Weekly, Calendar, and diff, are in the [Console tour](docs/console.en.md).
+> Descriptions of every screen, including Weekly, Calendar, and diff, are in the [Console tour](docs/console.en.md).
 
 ## Commands
 

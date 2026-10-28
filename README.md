@@ -16,6 +16,7 @@
 - [왜 Sugo인가](#왜-sugo인가)
 - [동작 방식](#동작-방식)
 - [빠른 시작](#빠른-시작)
+- [Console 사용 가이드](#console-사용-가이드)
 - [Console 둘러보기](#console-둘러보기)
 - [명령](#명령)
 - [설치하면 바뀌는 것](#설치하면-바뀌는-것)
@@ -108,15 +109,79 @@ Claude Code에서 `/reload-plugins`를 실행한 뒤 `/sugo:version`으로 설�
 
 경로는 절대 경로로 씁니다. 진행 상황은 Console(`http://localhost:3001`)에서 봅니다. Console은 새 Claude Code 세션마다 자동으로 시작합니다.
 
-## Console 둘러보기
+## Console 사용 가이드
 
-시작은 명령으로 하고, 확인과 판단은 Console에서 합니다.
+Console(`http://localhost:3001`)은 새 Claude Code 세션마다 자동으로 뜹니다. 처음에는 프로젝트를 등록하고 쓰는 외부 서비스를 연결한 뒤, 일정과 스펙으로 일을 시작합니다.
+
+### 1. 프로젝트와 도메인 등록
+
+**Integrations → 프로젝트**에서 프로젝트 폴더를 고르고, 기존 도메인에 넣거나 새 도메인을 만든 뒤 **프로젝트 등록**을 누릅니다. 등록할 때 스택을 감지해 맞는 하네스를 설치합니다. 터미널의 `/sugo:ws-add`, `/sugo:add`와 같은 등록입니다.
+
+![프로젝트 등록: 프로젝트 폴더와 작업 도메인 선택](docs/images/guide-project.png)
+
+### 2. 외부 서비스 연결
+
+**Integrations → 외부 서비스**에서 필요한 것만 연결합니다. 모두 선택 사항이고, 조회만 합니다.
+
+**AWS 계정.** 환경 이름(예: DEV), 로컬 AWS CLI profile, 리전을 고르고 **환경 연결**을 누릅니다. 키는 저장하지 않습니다. 환경 순서는 끌어서 바꾸고, 이 순서가 Schedule의 배포 상태 표시(LOCAL → DEV → STG → PRD)가 됩니다. **AWS 전체 동기화**를 누르면 ECS, 파이프라인 같은 서비스 목록을 가져옵니다.
+
+![AWS 연결: 환경 목록과 환경 연결 폼](docs/images/guide-cloud.png)
+
+**PR 연동.** GitHub는 액세스 토큰을, AWS CodeCommit은 AWS CLI 또는 SSO 로그인을 씁니다. 토큰은 브랜치 확인과 PR 조회, 생성에만 쓰고 commit과 push는 로컬 Git 인증을 그대로 씁니다.
+
+**서비스 상태 연동.** 프로젝트를 고르고, 동기화한 서비스 목록에서 환경별 운영 서비스를 추가합니다. 연결한 서비스는 Inspector와 Schedule의 배포 상태에 나옵니다.
+
+**모니터링.** Pinpoint 주소를 넣으면 애플리케이션의 실행 상태와 최근 5분 성능 지표를 읽습니다.
+
+| PR 연동 | 서비스 상태 연동 | 모니터링 |
+| --- | --- | --- |
+| ![PR 연동: GitHub, AWS CodeCommit](docs/images/guide-pr.png) | ![서비스 상태 연동: 프로젝트별 운영 서비스](docs/images/guide-service.png) | ![모니터링: Pinpoint APM](docs/images/guide-monitor.png) |
+
+연결 결과는 **Integrations → 연결 현황**에서 프로젝트별로 한 번에 봅니다.
+
+![연결 현황: 프로젝트별 원격 저장소, PR, 서비스 상태, APM](docs/images/console-integration-status.png)
+
+### 3. 개발 일정과 스펙
+
+**Schedule → 개발 일정 추가**에서 제목, 도메인, 프로젝트, 마감일을 정하고 SPEC 초안을 적습니다. 초안에는 문제, 목적, 범위, 완료 조건을 자유롭게 쓰고 기획 화면 캡처를 붙여 넣을 수 있습니다.
+
+![개발 일정 추가: 제목, 도메인, 프로젝트, 마감일, SPEC 초안, 기획 화면](docs/images/guide-schedule-add.png)
+
+일정 카드를 열면 기획 문서 링크와 캡처를 더 붙일 수 있습니다. 실행할 에이전트(Claude 또는 Codex)를 고르고 **SPEC 작성 명령 복사**를 눌러 터미널에 붙이면 초안이 구현할 수 있는 스펙이 됩니다. 스펙이 준비되면 **feat 시작**으로 명령을 복사해 개발을 시작합니다.
+
+![스펙 카드: 기획 자료, 작업 컨텍스트, SPEC 작성과 feat 시작](docs/images/guide-spec-draft.png)
+
+### 4. 진행 확인과 승인
+
+진행 중인 작업은 Workspaces 작업장과 스펙 카드에서 봅니다. 사람의 확인이 필요하면 Home과 Schedule에 승인 요청이 뜨고, 스펙 카드에서 리뷰 보고서와 diff를 본 뒤 승인하거나 수정을 요청합니다. 끝난 작업의 후속 수정은 스펙 카드의 **새 Patch 시작**으로 이어 갑니다.
+
+### 5. 도메인 규칙
+
+도메인 카드의 **도메인 규칙 관리**에서 규칙 폴더, 규칙 이름, 내용(Markdown)을 적어 새 규칙을 만듭니다. 도메인 전체 또는 특정 프로젝트에 적용할 수 있고, `/sugo:checkpoint-sync`가 각 프로젝트의 `.claude/rules/`에 씁니다. Claude Code와 Codex는 작업 전에 이 규칙을 읽습니다.
+
+| 등록된 규칙 | 새 규칙 작성 |
+| --- | --- |
+| ![도메인 규칙: 도메인 전체 규칙과 프로젝트 전용 규칙](docs/images/console-checkpoints.png) | ![새 규칙 작성: 규칙 폴더, 이름, 내용](docs/images/guide-rule-new.png) |
+
+### 6. 하네스
+
+**Harness**에서 기술과 버전을 고르면 Sugo 기본 코딩 규칙이 나옵니다. **내 규칙으로 수정**을 눌러 팀에 맞게 고치고 저장하면, 다음 동기화부터 그 프로젝트의 검증 기준이 됩니다.
+
+![하네스: Spring Boot 규칙 수정](docs/images/guide-harness-edit.png)
+
+### 7. Weekly
+
+**Preferences → 주간 리포트**에서 생성 요일과 시각, Claude 모델, 추가로 포함할 저장소, 예약 실행에 쓸 Claude 토큰을 정합니다. 정한 일정에 Console이 주간 보고서와 기술 학습 노트를 만들고, 바로 만들려면 `/sugo:weekly`를 실행합니다.
+
+![Preferences: 주간 리포트 생성 일정](docs/images/console-preferences.png)
+
+## Console 둘러보기
 
 ### Home
 
-오늘 이어 갈 일과 내 판단을 기다리는 일이 먼저 보입니다. 작업 흐름은 사람이 맡는 단계와 AI가 맡는 단계를 나눠 보여 주고, 지금 어느 단계에서 무엇을 기다리는지 알려 줍니다.
+오늘 이어 갈 일과 내 판단을 기다리는 일이 먼저 보입니다. 작업 흐름은 사람이 맡는 단계와 AI가 맡는 단계를 나눠 보여 주고, 아래에는 최근 완료 작업의 리뷰 노트와 기술 블로그 새 글이 쌓입니다.
 
-![Home: 인사, 오늘 이어 갈 작업과 확인할 일, 작업 흐름](docs/images/console-home-top.png)
+![Home: 오늘의 할 일, 작업 흐름, 최근 작업 리뷰, Engineering Feed](docs/images/console-home.png)
 
 ### Workspaces
 
@@ -129,29 +194,16 @@ Claude Code에서 `/reload-plugins`를 실행한 뒤 `/sugo:version`으로 설�
 - **최근 작업 요약:** 선택한 작업의 제목과 완료 결과가 나옵니다.
 - **Inspector:** 도메인의 저장소와 연동 상태, 완료 이력(History), 작업의 단계별 기록(Activity)을 봅니다.
 
-### 일정과 스펙 카드
+### 일정과 개발 이력
 
-Schedule의 Agenda에서 오늘, 다음 7일, 이후 일정을 봅니다. 스펙 카드를 열면 최초 구현(FEAT)부터 이어진 patch까지 개발 이력이 한 줄로 이어지고, 마지막 결과를 기준으로 **새 Patch**를 바로 시작합니다.
+Schedule의 Agenda에서 오늘, 다음 7일, 이후 일정을 봅니다. 스펙 카드에는 최초 구현(FEAT)부터 이어진 patch까지 개발 이력이 한 줄로 이어집니다.
 
-| Agenda | 스펙 카드 |
+| Agenda | 개발 이력과 후속 개발 |
 | --- | --- |
 | ![Schedule Agenda: 오늘, 다음 7일, 이후 일정, 메모](docs/images/console-agenda.png) | ![스펙 카드: 개발 이력 FEAT부터 PATCH 4까지, 후속 개발](docs/images/console-spec.png) |
 
-### 도메인 규칙
-
-한 번 겪은 실수는 도메인 규칙으로 남깁니다. 규칙마다 생긴 이유와 확인 항목을 적고, `/sugo:checkpoint-sync`가 각 프로젝트의 `.claude/rules/`에 씁니다. Claude Code와 Codex는 작업 전에 이 규칙을 읽습니다.
-
-![도메인 규칙: 도메인 전체 규칙과 프로젝트 전용 규칙](docs/images/console-checkpoints.png)
-
-### 설정
-
-| Harness | Integrations | Preferences |
-| --- | --- | --- |
-| ![Harness: Spring Boot 코딩 규칙](docs/images/console-harness.png) | ![Integrations: 프로젝트별 연결 현황](docs/images/console-integration-status.png) | ![Preferences: 주간 리포트 생성 일정](docs/images/console-preferences.png) |
-| 스택과 버전별 코딩 규칙. 필요하면 내 규칙으로 고쳐 씁니다 | 클라우드 서비스, 프로젝트별 원격 저장소, PR, 서비스 상태, APM 연결 | 표시 이름, 날씨 지역, Weekly 생성 일정 |
-
 > [!TIP]
-> Home, Weekly, Calendar, diff까지 모든 화면 설명은 [Console 둘러보기](docs/console.md)에 있습니다.
+> Weekly, Calendar, diff까지 모든 화면 설명은 [Console 둘러보기](docs/console.md)에 있습니다.
 
 ## 명령
 
