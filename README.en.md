@@ -328,15 +328,44 @@ Other stacks use the default rules. Rule sources: [`sugo/harness-library/`](sugo
 
 ## Design philosophy
 
-> An agent is an LLM that calls tools in a loop. Split that loop into Planner, Executor, and Validator and you can see where it is weak. Sugo started from giving those three roles to different hands.
+> An agent is an LLM that calls tools in a loop. Producing code has become fast, and most of the time now goes into verifying it. Sugo started from splitting that loop into Planner, Executor, and Validator, and from leaving verification to the loop rather than to a person's gut feeling.
 >
 > - **The model does not do it all. The harness does.** Put your stack and team rules in the context, and the model follows your rules instead of whatever was most common in its training data. The same task gives the same result without a long "please do better this time" prompt every session.
-> - **No one grades their own work.** Ask a model whether its own result is right and it usually says yes. So the judgment goes to outside signals such as builds, tests, and rule checks, to a read-only review agent, and to human approval.
-> - **Each role gets its own context.** The code, test, review, and docs agents each handle only their scope and pass on results. One agent's mistake does not spread to the next step.
-> - **Expensive decisions stay with people.** Small steps that can be verified run automatically; decisions that are hard to undo, such as approval, are made by a person. Hooks block risky commands before they run.
 > - **Failures become assets.** A mistake you hit once becomes a domain rule, and design decisions stay in the work report, so both become context for the next session. The next task gets better without retraining the model.
 >
 > Trust is not built in one shot; the loop builds it. Developer work is moving from writing code line by line toward designing loops of exploration and verification, and Sugo saves you from building that loop from scratch every time.
+
+### Four things that keep an agent from falling apart
+
+Agents usually fall apart in the same few ways. They circle the same spot, believe they fixed something they did not, overflow their context, or make a hard-to-undo decision alone. Sugo answers each one.
+
+| Principle | In Sugo |
+| --- | --- |
+| Stopping is decided from outside | When tests fail, test-agent sends the work back to implementation at most three times. The number of returns shows in the Console as the reason work stopped. The server does not enforce a limit yet |
+| No one grades their own work | Test results are recorded as the command that ran and its exit code, and a claim that does not match the record is rejected. Review is done by review-agent, which cannot edit files |
+| Each role gets its own context | The code, test, review, and docs agents each work in their own context and pass on only results. test-agent can edit only test files, and docs-agent only docs |
+| Expensive decisions stay with people | A person approves before the commit, and pushes it themselves |
+
+### Evaluation and safety
+
+Implementing, running builds and tests, and going back to implementation with the failure message is an evaluator-optimizer loop. The evaluator is the build and tests, not the same model, so a failure that comes back is caught again.
+
+Safety asks a different question from quality: whether something can slip into the path that produces the result. When untrusted input, access to sensitive data, and outside communication come together in one tool (the Lethal Trifecta), a single prompt injection can send data out. So the review step does not pass until this check (`sugo_check_lethal_trifecta`) has run, and a tool that has all three needs a written mitigation before work moves on. On the execution side, hooks are the safety box. `aws-readonly-guard` blocks writes, secret reads, and over-limit AWS calls before they run, and `scope-guard` keeps each agent inside its edit scope.
+
+<details>
+<summary>PEV self-check</summary>
+
+Questions for checking a workflow. Any "no" marks a weak spot. Each row also shows how Sugo answers it.
+
+| Check | Question | Sugo |
+| --- | --- | --- |
+| Planner | Are the steps visible outside the model, and does each step have a condition for being done? | Each requirement gets acceptance criteria and contract tests, and the Console shows the steps |
+| Executor | Are tool responsibilities separated, and are results more than vague prose? | Each agent has its own tools, and test results are kept as commands and exit codes |
+| Validator | Is there an outside signal that decides pass or fail, rather than self-grading? | Real build and test records, a read-only review, and human approval decide |
+| Loop | Is there a stop condition, and is a person in front of hard-to-undo decisions? | A person approves before the commit. The retry limit is three, set in the agent instructions, and the server does not enforce it |
+| Memory | Do past mistakes stay as context for the next task? | The next session reads the domain rules and work reports |
+
+</details>
 
 ## Links
 
