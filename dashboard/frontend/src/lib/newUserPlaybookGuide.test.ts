@@ -10,6 +10,7 @@ describe("new user Playbook guide", () => {
     expect(home).toContain("getOnboardingStatus(userId)");
     expect(home).toContain("뉴비 모드");
     expect(home).toContain("newbiePreviewEnabled");
+    expect(home).toContain('url.searchParams.get("newbiePreview") === "1"');
     expect(home).toContain("setPlaybookGuideVisible(showPlaybookGuide)");
     expect(home).toContain('data-onboarding-tour-target={showPlaybookGuide ? "home"');
     expect(home).toContain('data-onboarding-tour-target={showPlaybookGuide ? "pipeline"');

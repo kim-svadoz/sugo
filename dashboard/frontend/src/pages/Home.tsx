@@ -25,6 +25,17 @@ function relativeTime(value: string): string {
   return `${Math.floor(hours / 24)}일 전`;
 }
 
+function enableNewbiePreviewForBrowser(): boolean {
+  if (typeof window === "undefined") return false;
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("newbiePreview") === "1") {
+    window.localStorage.setItem(NEWBIE_PREVIEW_KEY, "true");
+    url.searchParams.delete("newbiePreview");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+  return window.localStorage.getItem(NEWBIE_PREVIEW_KEY) === "true";
+}
+
 function firstSentence(value: string | null | undefined): string {
   if (!value) return "기록된 작업 요약이 없습니다.";
   return value.split(/\n|(?<=[.!?])\s+/)[0].trim();
@@ -142,7 +153,7 @@ export function Home() {
   const [selectedNote, setSelectedNote] = useState<LearningReviewNote | null>(null);
   const [weeklyConfigured, setWeeklyConfigured] = useState<boolean | null>(null);
   const [showPlaybookGuide, setShowPlaybookGuide] = useState(false);
-  const [newbiePreviewEnabled] = useState(() => typeof window !== "undefined" && window.localStorage.getItem(NEWBIE_PREVIEW_KEY) === "true");
+  const [newbiePreviewEnabled] = useState(enableNewbiePreviewForBrowser);
   const setupMissing = [!profile?.displayName ? "표시 이름" : null, !getWeatherRegion() ? "날씨 생활권" : null, weeklyConfigured === false ? "주간 리포트" : null].filter(Boolean) as string[];
   const brief = useMemo(() => buildHomeBrief(specs ?? []), [specs]);
   const review = useMemo(() => recentReview(specs ?? []), [specs]);
