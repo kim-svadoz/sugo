@@ -643,8 +643,8 @@ export function Settings() {
       <nav aria-label="외부 연동 단계" className="grid border-y border-[var(--color-border)] md:grid-cols-3">
         {[
           { id: "projects", number: "01", label: "프로젝트", description: "로컬 프로젝트 등록", target: "registration" as const },
-          { id: "services", number: "02", label: "외부 서비스", description: "인증·서비스 매핑", target: "aws" as const },
-          { id: "status", number: "03", label: "연결 현황", description: "읽기 전용 결과", target: "overview" as const },
+          { id: "services", number: "02", label: "외부 서비스", description: "클라우드 서비스 연동", target: "aws" as const },
+          { id: "status", number: "03", label: "연결 현황", description: "프로젝트별 연결 현황", target: "overview" as const },
         ].map((item) => <button key={item.id} type="button" aria-pressed={activeGroup === item.id} onClick={() => setSelectedSection(item.target)} className={`grid min-h-20 grid-cols-[2rem_1fr] border-b border-[var(--color-border)] px-5 py-4 text-left transition md:border-b-0 md:border-r ${activeGroup === item.id ? "bg-cyan-300/[0.055] shadow-[inset_0_-2px_var(--color-primary)]" : "hover:bg-white/[0.02]"}`}><span className="row-span-2 font-mono text-xs text-cyan-300">{item.number}</span><strong className="text-base text-[var(--color-text)]">{item.label}</strong><small className="mt-1 text-[11px] text-[var(--color-text-dim)]">{item.description}</small></button>)}
       </nav>
 
