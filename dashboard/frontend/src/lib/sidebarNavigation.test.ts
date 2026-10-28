@@ -46,6 +46,14 @@ describe("sidebar keyboard navigation", () => {
     expect(source).not.toContain("로그아웃");
   });
 
+  it("데스크톱 사이드바를 접고 상태를 브라우저에 기억한다", () => {
+    const source = readFileSync(new URL("../components/Sidebar.tsx", import.meta.url), "utf8");
+    expect(source).toContain("sugo.sidebar.collapsed");
+    expect(source).toContain("사이드바 접기");
+    expect(source).toContain("사이드바 펼치기");
+    expect(source).toContain('data-collapsed={collapsed}');
+  });
+
   it("Home에서는 날짜·날씨를, 다른 화면에서는 제품 메시지를 표시한다", () => {
     const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
     expect(source).toContain("useLocation");

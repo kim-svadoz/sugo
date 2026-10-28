@@ -7,6 +7,8 @@ const output = process.env.SUGO_SCREENSHOT ?? join(tmpdir(), "sugo-integrations.
 const mappingOutput = output.replace(/\.png$/i, "-mapping.png");
 const registrationOutput = output.replace(/\.png$/i, "-registration.png");
 const overviewOutput = output.replace(/\.png$/i, "-overview.png");
+const prOutput = output.replace(/\.png$/i, "-pr-scope.png");
+const collapsedOutput = output.replace(/\.png$/i, "-sidebar-collapsed.png");
 const projects = [
   {
     project_path: "/work/catalog-api",
@@ -76,5 +78,13 @@ await page.screenshot({ path: registrationOutput, fullPage: true });
 await page.getByRole("button", { name: /연결 현황 읽기 전용 결과/ }).click();
 await page.getByRole("heading", { name: "프로젝트 연결 현황" }).waitFor({ timeout: 5_000 });
 await page.locator('[aria-label="프로젝트별 저장소 연결"]').screenshot({ path: overviewOutput });
-console.log(output, mappingOutput, registrationOutput, overviewOutput);
+await page.getByRole("button", { name: /외부 서비스 인증·서비스 매핑/ }).click();
+await page.getByRole("button", { name: "PR 연동" }).click();
+await page.getByRole("button", { name: /AWS CodeCommit/ }).click();
+await page.getByText("적용 프로젝트 선택").waitFor({ timeout: 5_000 });
+await page.screenshot({ path: prOutput, fullPage: true });
+await page.getByRole("button", { name: "사이드바 접기" }).click();
+await page.waitForTimeout(250);
+await page.screenshot({ path: collapsedOutput, fullPage: true });
+console.log(output, mappingOutput, registrationOutput, overviewOutput, prOutput, collapsedOutput);
 await browser.close();

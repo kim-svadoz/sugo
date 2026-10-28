@@ -468,7 +468,7 @@ function ProjectGitConnections({ workspaces, connections }: { workspaces: Worksp
           {projects.map((project) => {
             const confirmedServices = project.aws_deployments.filter((item) => item.linkMode === "confirmed");
             const pinpointApplications = new Set(confirmedServices.map((item) => item.pinpointApplicationName).filter(Boolean));
-            const prConnected = Boolean(project.remote_git && connections.some((connection) => connection.provider === project.remote_git?.provider));
+            const prConnected = Boolean(project.remote_git && connections.some((connection) => connection.provider === project.remote_git?.provider && (connection.repositories === null || connection.repositories.includes(project.remote_git.repository))));
             return <tr key={project.project_path} className="transition hover:bg-white/[0.018]">
               <td className="px-3 py-4"><div className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center bg-cyan-300/[0.06] text-cyan-300"><FolderGit2 size={16} /></span><span className="min-w-0"><strong className="block truncate font-mono text-sm text-[var(--color-text)]">{project.project_path.split(/[\\/]/).filter(Boolean).pop()}</strong><small className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{project.project_path}</small></span></div></td>
               <td className="px-3 py-4">{project.remote_git ? <><span className="block text-xs font-semibold text-emerald-300">{project.remote_git.providerLabel}</span><span className="mt-1 block truncate font-mono text-[10px] text-emerald-200/80">{project.remote_git.repository}</span></> : <span className="text-xs text-[var(--color-text-muted)]">-</span>}</td>
@@ -497,6 +497,8 @@ export function Settings() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [providerSelectionComplete, setProviderSelectionComplete] = useState(false);
+  const [selectedRepositoryDomain, setSelectedRepositoryDomain] = useState<string | null>(null);
+  const [selectedRepositories, setSelectedRepositories] = useState<string[]>([]);
   const permissionStepRef = useRef<HTMLDivElement>(null);
   const { data: workspaces } = useWorkspaces();
 
@@ -532,7 +534,7 @@ export function Settings() {
     if (!selected) return;
     setBusy(true);
     try {
-      await setGitConnection(selected, token || undefined, baseUrl || undefined, profile || undefined);
+      await setGitConnection(selected, token || undefined, baseUrl || undefined, profile || undefined, selectedRepositories);
       setToken("");
       setBaseUrl("");
       setProfile("");
@@ -631,7 +633,7 @@ export function Settings() {
                 {visibleProviders.map((provider) => {
                   const detectedProjects = repositorySummary.providerProjects[provider.id] ?? [];
                   const connected = connections.some((item) => item.provider === provider.id);
-                  return <button key={provider.id} type="button" aria-pressed={selected === provider.id && providerSelectionComplete} onClick={() => { if (selected === provider.id && providerSelectionComplete) { setSelected(null); setProviderSelectionComplete(false); setToken(""); setBaseUrl(""); setProfile(""); return; } setSelected(provider.id); setBaseUrl(provider.defaultBaseUrl ?? ""); setProviderSelectionComplete(true); window.setTimeout(() => permissionStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 220); }} className={`border px-4 py-3 text-left transition ${selected === provider.id && providerSelectionComplete ? "border-cyan-300/55 bg-cyan-300/[0.07] shadow-[inset_3px_0_0_rgba(103,232,249,0.9)]" : "border-white/[0.08] bg-black/10 hover:border-white/[0.16] hover:bg-white/[0.025]"}`}><span className="flex items-center justify-between gap-3"><strong className="text-sm text-[var(--color-text)]">{provider.label}</strong><span className={`text-[10px] font-semibold ${connected ? "text-emerald-300" : "text-[var(--color-text-muted)]"}`}>{connected ? "권한 설정됨" : "권한 설정"}</span></span><span className="mt-1 block text-[11px] text-[var(--color-text-muted)]">{provider.authMode === "aws_default_chain" ? "AWS CLI·SSO 인증 사용 · 토큰 없음" : "PR API용 액세스 토큰 필요"} · {detectedProjects.length}개 프로젝트</span></button>;
+                  return <button key={provider.id} type="button" aria-pressed={selected === provider.id && providerSelectionComplete} onClick={() => { if (selected === provider.id && providerSelectionComplete) { setSelected(null); setProviderSelectionComplete(false); setSelectedRepositoryDomain(null); setSelectedRepositories([]); setToken(""); setBaseUrl(""); setProfile(""); return; } const existing = connections.find((item) => item.provider === provider.id); const firstDomain = detectedProjects[0]?.workspaceName ?? null; setSelected(provider.id); setBaseUrl(provider.defaultBaseUrl ?? ""); setSelectedRepositoryDomain(firstDomain); setSelectedRepositories(existing?.repositories ?? []); setProviderSelectionComplete(true); window.setTimeout(() => permissionStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 220); }} className={`border px-4 py-3 text-left transition ${selected === provider.id && providerSelectionComplete ? "border-cyan-300/55 bg-cyan-300/[0.07] shadow-[inset_3px_0_0_rgba(103,232,249,0.9)]" : "border-white/[0.08] bg-black/10 hover:border-white/[0.16] hover:bg-white/[0.025]"}`}><span className="flex items-center justify-between gap-3"><strong className="text-sm text-[var(--color-text)]">{provider.label}</strong><span className={`text-[10px] font-semibold ${connected ? "text-emerald-300" : "text-[var(--color-text-muted)]"}`}>{connected ? "권한 설정됨" : "권한 설정"}</span></span><span className="mt-1 block text-[11px] text-[var(--color-text-muted)]">{provider.authMode === "aws_default_chain" ? "AWS CLI·SSO 인증 사용 · 토큰 없음" : "PR API용 액세스 토큰 필요"} · {detectedProjects.length}개 프로젝트</span></button>;
                 })}
               </div>
               <div ref={permissionStepRef} className={`scroll-mt-24 space-y-5 border-y border-[var(--color-border)] px-1 py-5 transition duration-300 ${providerSelectionComplete ? 'opacity-100' : 'pointer-events-none opacity-40'}`}>
@@ -667,22 +669,19 @@ export function Settings() {
                 const requiresBaseUrl = provider.id === "bitbucket_server";
                 const usesAwsCredentials = provider.authMode === "aws_default_chain";
                 const detectedProjects = repositorySummary.providerProjects[provider.id] ?? [];
+                const domains = Array.from(new Set(detectedProjects.map((project) => project.workspaceName)));
+                const visibleProjects = detectedProjects.filter((project) => project.workspaceName === selectedRepositoryDomain);
                 return <div className="space-y-3 rounded-lg border border-cyan-500/25 bg-cyan-500/[0.03] p-4">
-              <div className="border-y border-white/[0.08] py-3">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-[var(--color-text)]">적용 프로젝트</span>
-                  <span className="text-[10px] text-[var(--color-text-muted)]">{detectedProjects.length}개</span>
-                </div>
-                {detectedProjects.length > 0 ? <div className="space-y-2">
-                  <div className="hidden grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4 text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-dim)] sm:grid">
-                    <span>도메인</span><span>로컬 프로젝트</span><span>원격 저장소</span>
+              <div className="space-y-3 border-y border-white/[0.08] py-4">
+                <div className="flex items-center justify-between gap-3"><span className="text-xs font-semibold text-[var(--color-text)]">적용 프로젝트 선택</span><span className="text-[10px] font-semibold text-cyan-200">{selectedRepositories.length}개 선택</span></div>
+                {detectedProjects.length > 0 ? <div className="grid overflow-hidden border border-white/[0.08] lg:grid-cols-[14rem_1fr]">
+                  <div className="border-b border-white/[0.08] bg-black/15 p-2 lg:border-b-0 lg:border-r">
+                    {domains.map((domain) => <button key={domain} type="button" onClick={() => { setSelectedRepositoryDomain(domain); setSelectedRepositories([]); }} className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-xs transition ${selectedRepositoryDomain === domain ? "bg-cyan-300/[0.09] font-semibold text-cyan-100" : "text-[var(--color-text-muted)] hover:bg-white/[0.03]"}`}><span>{domain}</span><span className="font-mono text-[10px] text-[var(--color-text-dim)]">{detectedProjects.filter((project) => project.workspaceName === domain).length}</span></button>)}
                   </div>
-                  {detectedProjects.map((project) => <div key={project.projectPath} className="grid gap-1 text-xs sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] sm:gap-4">
-                    <span className="truncate font-medium text-[var(--color-text)]">{project.workspaceName}</span>
-                    <span className="truncate text-[var(--color-text-muted)]" title={project.projectPath}>{project.projectName}</span>
-                    <span className="truncate font-mono text-[11px] font-medium text-sky-100" title={project.remoteUrl}>{project.repository}</span>
-                  </div>)}
-                </div> : <p className="text-xs leading-5 text-[var(--color-text-muted)]">이 공급자를 사용하는 Git remote가 등록 프로젝트에서 아직 감지되지 않았습니다.</p>}
+                  <div className="divide-y divide-white/[0.07]">
+                    {visibleProjects.map((project) => { const checked = selectedRepositories.includes(project.repository); return <label key={project.projectPath} className="flex cursor-pointer items-center gap-3 px-4 py-3 transition hover:bg-white/[0.025]"><input type="checkbox" checked={checked} onChange={() => setSelectedRepositories((current) => checked ? current.filter((item) => item !== project.repository) : [...current, project.repository])} className="h-4 w-4 accent-cyan-300" /><span className="min-w-0 flex-1"><strong className="block truncate text-xs text-[var(--color-text)]">{project.projectName}</strong><small className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{project.repository}</small></span></label>; })}
+                  </div>
+                </div> : <p className="text-xs leading-5 text-[var(--color-text-muted)]">이 저장소를 사용하는 등록 프로젝트가 없습니다.</p>}
               </div>
               {usesAwsCredentials ? <>
                 <div className="rounded-md border border-amber-400/20 bg-amber-400/[0.04] px-3 py-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
@@ -716,7 +715,7 @@ export function Settings() {
               </>}
               <button
                 type="button"
-                disabled={busy || (!usesAwsCredentials && !token) || (requiresBaseUrl && !baseUrl)}
+                disabled={busy || selectedRepositories.length === 0 || (!usesAwsCredentials && !token) || (requiresBaseUrl && !baseUrl)}
                 onClick={() => void handleConnect()}
                 className="settings-action settings-action-primary"
                 style={{ border: "1px solid var(--color-primary)" }}

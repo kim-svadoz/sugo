@@ -12,6 +12,7 @@ const connectionSchema = z.object({
   token: z.string().optional(),
   baseUrl: z.string().url().optional(),
   profile: z.string().regex(/^[A-Za-z0-9_-]+$/).optional(),
+  repositories: z.array(z.string().min(1)).min(1).optional(),
 }).superRefine((value, context) => {
   if (value.provider !== "aws_codecommit" && !value.token) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ["token"], message: "token is required" });
@@ -36,7 +37,7 @@ export function createGitConnectionsRouter(db: DbClient, sessionSecret: string, 
       res.status(400).json({ error: "BASE_URL_REQUIRED" });
       return;
     }
-    await setGitConnection(db, req.userId!, req.body.provider, req.body.token ?? "", req.body.baseUrl, req.body.profile, secretEncKey);
+    await setGitConnection(db, req.userId!, req.body.provider, req.body.token ?? "", req.body.baseUrl, req.body.profile, req.body.repositories, secretEncKey);
     res.json({ ok: true });
   });
 

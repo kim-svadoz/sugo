@@ -26,6 +26,12 @@ const existingSchema = z.object({
   targetBranch: z.string().optional(),
 });
 
+function repositoryAllowed(connection: { repositories?: string[] }, repository: { namespace: string; repo: string }): boolean {
+  if (!connection.repositories) return true;
+  const fullName = repository.namespace ? `${repository.namespace}/${repository.repo}` : repository.repo;
+  return connection.repositories.includes(repository.repo) || connection.repositories.includes(fullName);
+}
+
 // AUTH-gated provider-neutral PR/MR boundary. Credentials are resolved only after
 // the work-result remote identifies a provider; local-only users remain valid.
 export function createPrRouter(
@@ -51,7 +57,12 @@ export function createPrRouter(
       return;
     }
     try {
-      const pr = await clients[provider].findOpenPr(repositoryFor(refsResult.ref, connection), refsResult.ref.sourceBranch);
+      const repository = repositoryFor(refsResult.ref, connection);
+      if (!repositoryAllowed(connection, repository)) {
+        res.json({ exists: false, error: "REPOSITORY_NOT_ALLOWED", provider });
+        return;
+      }
+      const pr = await clients[provider].findOpenPr(repository, refsResult.ref.sourceBranch);
       res.json({ exists: Boolean(pr), pr: pr ?? undefined });
     } catch {
       res.json({ exists: false, error: "LOOKUP_FAILED" });
@@ -72,6 +83,10 @@ export function createPrRouter(
       return;
     }
     const repo = repositoryFor(refsResult.ref, connection);
+    if (!repositoryAllowed(connection, repo)) {
+      res.status(409).json({ error: "REPOSITORY_NOT_ALLOWED", provider });
+      return;
+    }
     const client = clients[provider];
     const fromBranch = refsResult.ref.sourceBranch;
     const toBranch = targetBranch ?? refsResult.ref.targetBranch;

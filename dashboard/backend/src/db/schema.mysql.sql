@@ -214,6 +214,7 @@ CREATE TABLE IF NOT EXISTS user_git_connections (
   tag VARCHAR(64) NOT NULL,
   base_url VARCHAR(1024) NULL,
   credential_profile VARCHAR(191) NULL,
+  repository_scope TEXT NULL,
   token_hint VARCHAR(8) NULL,
   updated_at VARCHAR(64) NOT NULL,
   PRIMARY KEY (user_id, provider)

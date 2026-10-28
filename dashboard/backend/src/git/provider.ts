@@ -8,6 +8,7 @@ export interface GitProviderConnection {
   token: string;
   baseUrl: string | null;
   profile?: string | null;
+  repositories?: string[];
 }
 
 export interface GitRepositoryRef {

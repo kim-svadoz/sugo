@@ -213,6 +213,7 @@ CREATE TABLE IF NOT EXISTS user_git_connections (
   tag TEXT NOT NULL,
   base_url TEXT,
   credential_profile TEXT,
+  repository_scope TEXT,
   token_hint TEXT,
   updated_at TEXT NOT NULL,
   PRIMARY KEY (user_id, provider)

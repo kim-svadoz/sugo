@@ -19,6 +19,7 @@ export interface GitConnectionStatus {
   baseUrl: string | null;
   updatedAt: string | null;
   profile: string | null;
+  repositories: string[] | null;
 }
 
 export interface GitConnectionsResponse {
@@ -30,8 +31,8 @@ export function getGitConnections(): Promise<GitConnectionsResponse> {
   return apiJson("/api/git-connections");
 }
 
-export function setGitConnection(provider: GitProviderId, token?: string, baseUrl?: string, profile?: string): Promise<{ ok: true }> {
-  return apiJson("/api/git-connections", { method: "PUT", body: JSON.stringify({ provider, token: token || undefined, baseUrl: baseUrl || undefined, profile: profile || undefined }) });
+export function setGitConnection(provider: GitProviderId, token?: string, baseUrl?: string, profile?: string, repositories?: string[]): Promise<{ ok: true }> {
+  return apiJson("/api/git-connections", { method: "PUT", body: JSON.stringify({ provider, token: token || undefined, baseUrl: baseUrl || undefined, profile: profile || undefined, repositories }) });
 }
 
 export function deleteGitConnection(provider: GitProviderId): Promise<{ ok: true }> {

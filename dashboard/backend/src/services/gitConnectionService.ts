@@ -11,6 +11,7 @@ export interface GitConnectionStatus {
   baseUrl: string | null;
   updatedAt: string | null;
   profile: string | null;
+  repositories: string[] | null;
 }
 
 interface ConnectionRow {
@@ -22,6 +23,7 @@ interface ConnectionRow {
   token_hint: string | null;
   updated_at: string;
   credential_profile: string | null;
+  repository_scope: string | null;
 }
 
 export async function ensureGitConnectionProfileColumn(db: DbClient): Promise<void> {
@@ -30,11 +32,24 @@ export async function ensureGitConnectionProfileColumn(db: DbClient): Promise<vo
   } catch {
     await db.exec("ALTER TABLE user_git_connections ADD COLUMN credential_profile VARCHAR(191) NULL");
   }
+  try {
+    await db.query("SELECT repository_scope FROM user_git_connections LIMIT 1");
+  } catch {
+    await db.exec("ALTER TABLE user_git_connections ADD COLUMN repository_scope TEXT NULL");
+  }
+}
+
+function parseRepositoryScope(value: string | null): string[] | null {
+  if (value === null) return null;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : null;
+  } catch { return null; }
 }
 
 export async function listGitConnections(db: DbClient, userId: string): Promise<GitConnectionStatus[]> {
   const rows = await db.query<ConnectionRow>(
-    "SELECT provider, ct, iv, tag, base_url, token_hint, updated_at, credential_profile FROM user_git_connections WHERE user_id = ?",
+    "SELECT provider, ct, iv, tag, base_url, token_hint, updated_at, credential_profile, repository_scope FROM user_git_connections WHERE user_id = ?",
     [userId]
   );
   const statuses: GitConnectionStatus[] = rows.map((row) => ({
@@ -44,13 +59,14 @@ export async function listGitConnections(db: DbClient, userId: string): Promise<
     baseUrl: row.base_url,
     updatedAt: row.updated_at,
     profile: row.credential_profile,
+    repositories: parseRepositoryScope(row.repository_scope),
   }));
 
   // Tokens stored before the generic connection table are still reported. Saving the
   // connection from the Settings screen writes it to the generic table.
   if (!statuses.some((status) => status.provider === "bitbucket_server")) {
     const legacy = await getBitbucketTokenStatus(db, userId);
-    if (legacy.connected) statuses.push({ provider: "bitbucket_server", ...legacy, profile: null });
+    if (legacy.connected) statuses.push({ provider: "bitbucket_server", ...legacy, profile: null, repositories: null });
   }
   return statuses;
 }
@@ -62,6 +78,7 @@ export async function setGitConnection(
   token: string,
   baseUrl: string | undefined,
   profile: string | undefined,
+  repositories: string[] | undefined,
   secretEncKey: string
 ): Promise<void> {
   const encrypted = encryptSecret(token, secretEncKey);
@@ -69,7 +86,7 @@ export async function setGitConnection(
     db,
     "user_git_connections",
     { user_id: userId, provider },
-    { ...encrypted, base_url: baseUrl?.replace(/\/+$/, "") || null, credential_profile: profile || null, token_hint: token ? token.slice(-4) : null, updated_at: new Date().toISOString() }
+    { ...encrypted, base_url: baseUrl?.replace(/\/+$/, "") || null, credential_profile: profile || null, repository_scope: repositories ? JSON.stringify(repositories) : null, token_hint: token ? token.slice(-4) : null, updated_at: new Date().toISOString() }
   );
 }
 
@@ -85,7 +102,7 @@ export async function getDecryptedGitConnection(
   secretEncKey: string
 ): Promise<GitProviderConnection | null> {
   const rows = await db.query<ConnectionRow>(
-    "SELECT provider, ct, iv, tag, base_url, token_hint, updated_at, credential_profile FROM user_git_connections WHERE user_id = ? AND provider = ?",
+    "SELECT provider, ct, iv, tag, base_url, token_hint, updated_at, credential_profile, repository_scope FROM user_git_connections WHERE user_id = ? AND provider = ?",
     [userId, provider]
   );
   if (rows[0]) {
@@ -94,6 +111,7 @@ export async function getDecryptedGitConnection(
       token: decryptSecret({ ct: rows[0].ct, iv: rows[0].iv, tag: rows[0].tag }, secretEncKey),
       baseUrl: rows[0].base_url,
       profile: rows[0].credential_profile,
+      repositories: parseRepositoryScope(rows[0].repository_scope) ?? undefined,
     };
   }
   if (provider === "bitbucket_server") {

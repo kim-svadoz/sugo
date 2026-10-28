@@ -51,9 +51,9 @@ describe("/api/git-connections", () => {
     expect(empty.body.connections).toEqual([]);
     expect(empty.body.providers).toEqual(expect.arrayContaining([expect.objectContaining({ id: "github", status: "available" }), expect.objectContaining({ id: "aws_codecommit", status: "available", authMode: "aws_default_chain" })]));
 
-    await request(app).put("/api/git-connections").set("Authorization", `Bearer ${token}`).send({ provider: "github", token: "github-secret-1234" }).expect(200);
+    await request(app).put("/api/git-connections").set("Authorization", `Bearer ${token}`).send({ provider: "github", token: "github-secret-1234", repositories: ["team/service"] }).expect(200);
     const status = await request(app).get("/api/git-connections").set("Authorization", `Bearer ${token}`).expect(200);
-    expect(status.body.connections).toEqual([expect.objectContaining({ provider: "github", hint: "1234", connected: true })]);
+    expect(status.body.connections).toEqual([expect.objectContaining({ provider: "github", hint: "1234", connected: true, repositories: ["team/service"] })]);
     expect(JSON.stringify(status.body)).not.toContain("github-secret");
     const rows = await db.query<{ ct: string }>("SELECT ct FROM user_git_connections WHERE user_id = ?", ["u1"]);
     expect(rows[0].ct).not.toContain("github-secret");
@@ -92,6 +92,22 @@ describe("provider-neutral PR routing", () => {
     const response = await request(app).post("/api/pr/create").set("Authorization", `Bearer ${auth}`).send({ workspace: "ws1", nodeId: "task-1", scope: "task" }).expect(200);
     expect(response.body.pr.url).toContain("github.com");
     expect(calls).toEqual(["branch:https://api.github.com", "lookup", "create"]);
+  });
+
+  it("rejects PR access outside the selected project scope", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    await syncUser(db, { userId: "u1" });
+    await syncRoadmap(db, "u1", "ws1", [{
+      id: "task-1", title: "Task", level: "task", status: "done",
+      workResult: { prRefs: { baseUrl: "https://github.com", projectKey: "team", repoSlug: "service", sourceBranch: "feat/x", targetBranch: "development" } },
+    }]);
+    const github = { remoteBranchExists: async () => true, findOpenPr: async () => null, createPullRequest: async () => ({ id: 1, url: "x" }) } satisfies GitProviderClient;
+    const auth = (await seedUserToken(db, "u1")).replace(/^Bearer /, "");
+    const { app } = await createApp({ db, secretEncKey, gitProviderClients: { github } });
+    await request(app).put("/api/git-connections").set("Authorization", `Bearer ${auth}`).send({ provider: "github", token: "gh-token", repositories: ["team/another-service"] }).expect(200);
+    const response = await request(app).post("/api/pr/create").set("Authorization", `Bearer ${auth}`).send({ workspace: "ws1", nodeId: "task-1", scope: "task" }).expect(409);
+    expect(response.body).toMatchObject({ error: "REPOSITORY_NOT_ALLOWED", provider: "github" });
   });
 
   it("routes a CodeCommit remote through the AWS adapter and detected region", async () => {
