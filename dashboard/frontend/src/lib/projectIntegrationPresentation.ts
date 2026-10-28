@@ -19,7 +19,7 @@ export function isExactIntegrationCandidate(projectPath: string, item: Integrati
 }
 
 export function integrationCandidateMatchLabel(projectPath: string, item: IntegrationCandidate): string {
-  return isExactIntegrationCandidate(projectPath, item) ? "프로젝트와 정확히 일치" : "직접 선택";
+  return isExactIntegrationCandidate(projectPath, item) ? "이름 일치" : "";
 }
 
 export function groupProjectsByWorkspace(projects: ProjectIntegration[]): Map<string, string[]> {

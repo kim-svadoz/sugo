@@ -22,8 +22,8 @@ describe("project integration presentation", () => {
 
   it("explains exact and manual service mappings without implying fuzzy matching", () => {
     const candidate = { accountName: "dev", environment: "dev", service: "orders-api-service", cluster: "orders", pinpointApplicationName: null, images: [] };
-    expect(integrationCandidateMatchLabel("/work/orders-api", candidate)).toBe("프로젝트와 정확히 일치");
-    expect(integrationCandidateMatchLabel("/work/admin", candidate)).toBe("직접 선택");
+    expect(integrationCandidateMatchLabel("/work/orders-api", candidate)).toBe("이름 일치");
+    expect(integrationCandidateMatchLabel("/work/admin", candidate)).toBe("");
   });
   it("separates the account identity from non-duplicated profile metadata", () => {
     const account = { name: "team-prd", profile: "team-prd", region: "ap-northeast-2", accountHint: "1234", principal: "developer" };
