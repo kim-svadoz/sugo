@@ -1,21 +1,12 @@
 # Sugo
 
-### 개발의 수고는 AI에게, 판단은 사람에게.
-
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757) ![Codex](https://img.shields.io/badge/Codex-supported-0f172a)
 
 [English](README.en.md)
 
-Sugo는 "수고"에서 온 이름입니다. 이제 AI 에이전트가 사람 대신 개발의 수고를 맡습니다. 다만 수고는 올바르게 했을 때만 의미가 있습니다. 스펙을 벗어나거나, 테스트 없이 완료를 보고하거나, 팀의 규칙을 어긴 수고는 결국 사람의 일로 돌아옵니다.
+Sugo는 AI 에이전트가 스펙(요구사항과 완료 조건)대로 만들고 테스트로 확인한 뒤에만 다음 단계로 넘어가게 하는 Claude Code 플러그인입니다. 함께 뜨는 Sugo Console에서 여러 작업의 진행을 한눈에 보고, 필요한 판단만 내리면 됩니다.
 
-그래서 Sugo는 두 부분으로 이루어져 있습니다.
-
-| | 하는 일 |
-| --- | --- |
-| **Sugo** (Claude Code 플러그인) | AI가 스펙(기능 하나의 요구사항과 완료 조건)대로 만들고, 테스트로 증명하고, 팀의 규칙을 지키게 합니다. 실행 기록으로 확인하기 전에는 다음 단계로 넘기지 않습니다 |
-| **Sugo Console** (로컬 작업 공간) | 여러 도메인과 작업의 진행, 멈춘 이유, 승인 요청, 개발 이력을 한 화면에 모읍니다. 사람은 여기서 무엇을 만들지 정하고 결과를 승인합니다 |
-
-AI가 올바르게 일하는 바탕이 있으니, 사람은 자기가 해야 할 판단에 집중하면서 더 많은 일을 한꺼번에 맡기고 관리할 수 있습니다.
+이름은 "수고"에서 따왔습니다. 개발의 수고는 AI가 맡고, 사람은 확인하고 결정하는 데 시간을 쓰자는 뜻입니다.
 
 ![작업장: 작업자가 테스트, 검토, 문서를 지나 커밋까지 가는 장면](docs/images/console-workfloor.gif)
 

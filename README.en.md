@@ -1,21 +1,12 @@
 # Sugo
 
-### Let AI carry the legwork of development. Keep the judgment for yourself.
-
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757) ![Codex](https://img.shields.io/badge/Codex-supported-0f172a)
 
 [한국어](README.md)
 
-Sugo takes its name from the Korean word 수고 (sugo): the effort and legwork that goes into a job. AI agents now carry much of that legwork for us. But the work only counts when it is done right. Work that drifts from the spec, reports done without tests, or breaks team rules ends up back on your desk.
+Sugo is a Claude Code plugin that lets AI agents move a feature forward only after they build it to the spec (its requirements and acceptance criteria) and prove it with tests. The Sugo Console that comes with it shows all your work in one place, so you only step in when a decision is needed.
 
-So Sugo comes in two parts.
-
-| | What it does |
-| --- | --- |
-| **Sugo** (Claude Code plugin) | Makes the AI build to the spec (the requirements and acceptance criteria of one feature), prove it with tests, and follow your team's rules. Work does not move on until execution records prove it |
-| **Sugo Console** (local workspace) | Brings progress, blockers, approval requests, and development history across domains and tasks onto one screen. This is where you decide what to build and approve the result |
-
-With the AI working on solid ground, you can focus on the decisions that are yours and hand off more work, across more domains, at the same time.
+The name comes from the Korean word 수고 (sugo), the effort a job takes. The AI does the legwork, and you spend your time checking and deciding.
 
 ![Work floor: the worker moves through test, review, and docs to commit](docs/images/console-workfloor.gif)
 
