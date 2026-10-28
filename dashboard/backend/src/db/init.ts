@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import type { DbClient } from "./client.js";
 import { createMySqlClient } from "./mysqlClient.js";
 import { createSqliteClient } from "./sqliteClient.js";
-import { migrateCanvasToRoadmap, migrateDecisionsToSpecs, migrateRoadmapRuntimeAssessment } from "./migrations.js";
+import { ensureAwsContextDisplayOrderColumn, migrateCanvasToRoadmap, migrateDecisionsToSpecs, migrateRoadmapRuntimeAssessment } from "./migrations.js";
 import { migrateWstToRun } from "../services/workspaceService.js";
 import {
   ensureCheckpointCreatedAtColumn,
@@ -40,6 +40,7 @@ export async function initDb(options: InitDbOptions = {}): Promise<DbClient> {
     await migrateWstToRun(client);
     await ensureHumanCompletionTable(client);
     await migrateRoadmapRuntimeAssessment(client);
+    await ensureAwsContextDisplayOrderColumn(client);
     await ensureRoadmapDueDateColumn(client);
     await ensureRoadmapProjectPathColumn(client);
     await ensureRoadmapWorkBranchColumn(client);
@@ -61,6 +62,7 @@ export async function initDb(options: InitDbOptions = {}): Promise<DbClient> {
   await migrateWstToRun(client);
     await ensureHumanCompletionTable(client);
   await migrateRoadmapRuntimeAssessment(client);
+  await ensureAwsContextDisplayOrderColumn(client);
   // `due_date` 자가보강 — 스키마 파일의 CREATE TABLE IF NOT EXISTS는 이미 존재하는
   // 테이블에는 컬럼을 못 붙이므로, 업그레이드 배포를 위해 별도로 돈다.
   await ensureRoadmapDueDateColumn(client);

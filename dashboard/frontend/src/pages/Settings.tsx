@@ -9,16 +9,17 @@ import {
   type GitProviderId,
 } from "../api/gitConnectionsApi.js";
 import { createToken, listTokens, revokeToken, type ApiTokenSummary } from "../api/tokensApi.js";
-import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsContexts, refreshAwsContext, selectAwsContext, updateAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
+import { connectAwsContext, disconnectAwsContext, getAwsContext, getAwsProfiles, refreshAllAwsContexts, refreshAwsContext, reorderAwsContexts, selectAwsContext, updateAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
 import { connectPinpointContext, disconnectPinpointContext, getPinpointContext, refreshPinpointContext, type PinpointStatus } from '../api/pinpointContextApi.js';
 import { browseLocalDirectories, getProjectIntegrations, registerProject, saveProjectIntegration, selectNativeProjectDirectory, type IntegrationCandidate, type LocalDirectoryListing, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
-import { awsAccountMetaLabel, awsAccountOptionLabel, groupProjectsByWorkspace, hasIntegrationSelectionChanges, initialIntegrationSelection, integrationCandidateMatchLabel, integrationStatusLabel, isExactIntegrationCandidate, partitionIntegrationCandidates, summarizeSavedIntegrations } from "../lib/projectIntegrationPresentation.js";
+import { groupProjectsByWorkspace, hasIntegrationSelectionChanges, initialIntegrationSelection, integrationCandidateMatchLabel, integrationStatusLabel, isExactIntegrationCandidate, partitionIntegrationCandidates, summarizeSavedIntegrations } from "../lib/projectIntegrationPresentation.js";
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
 import { PageHeading } from "../components/PageHeading.js";
-import { Activity, ArrowLeft, ArrowRight, Boxes, Check, ChevronDown, ChevronRight, Cloud, FolderGit2, FolderOpen, GitBranch, Plus, Unlink, X } from "lucide-react";
+import { Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Boxes, Check, ChevronDown, ChevronRight, Cloud, FolderGit2, FolderOpen, GitBranch, GripVertical, Pencil, Plus, Unlink, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import { summarizeRepositoryConnections } from "../lib/integrationConnectionSummary.js";
+import { AWS_REGIONS, awsRegionLabel } from "../lib/awsRegions.js";
 
 const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 const contextAutoRefreshDescription = "Console이 켜져 있으면 매일 이 PC 시간 기준 08:00에 자동으로 동기화합니다. 꺼져 있었다면 다음에 켜질 때 동기화하고, 언제든 직접 동기화할 수 있습니다.";
@@ -41,25 +42,27 @@ function DetailToggle({ expanded, onClick }: { expanded: boolean; onClick: () =>
 
 function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChange }: { expanded: boolean; onToggle: () => void; focused?: boolean; onConnectionChange?: (connected: boolean) => void }) {
   const [status, setStatus] = useState<AwsContextStatus | null>(null);
+  const [profiles, setProfiles] = useState<Array<{ name: string; region: string | null }>>([]);
   const [accountName, setAccountName] = useState("");
   const [profile, setProfile] = useState("");
-  const [region, setRegion] = useState("ap-northeast-2");
+  const [region, setRegion] = useState("");
   const [adding, setAdding] = useState(false);
   const [editingName, setEditingName] = useState<string | null>(null);
+  const [draggingName, setDraggingName] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
     try { const next = await getAwsContext(); setStatus(next); onConnectionChange?.(next.connected); setError(null); } catch (err) { setError(String(err)); }
   }
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); void getAwsProfiles().then((result) => setProfiles(result.profiles)).catch(() => setProfiles([])); }, []);
 
   async function connect() {
     setBusy(true);
     try {
       if (editingName) await updateAwsContext(editingName, accountName, profile, region);
       else await connectAwsContext(accountName, profile, region);
-      setAdding(false); setEditingName(null); setAccountName(""); setProfile("");
+      setAdding(false); setEditingName(null); setAccountName(""); setProfile(""); setRegion("");
       if (!editingName) await refreshAwsContext();
       await load();
     }
@@ -79,9 +82,10 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
     finally { setBusy(false); }
   }
   async function disconnect() {
-    if (!status?.activeAccount) return;
+    const target = editingName ?? status?.activeAccount;
+    if (!target) return;
     setBusy(true);
-    try { await disconnectAwsContext(status.activeAccount); await load(); }
+    try { await disconnectAwsContext(target); setAdding(false); setEditingName(null); await load(); }
     catch (err) { setError(String(err)); }
     finally { setBusy(false); }
   }
@@ -91,14 +95,41 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
     catch (err) { setError(String(err)); }
     finally { setBusy(false); }
   }
-  function editActiveAccount() {
-    const account = status?.accounts.find((item) => item.name === status.activeAccount);
-    if (!account) return;
-    setEditingName(account.name);
-    setAccountName(account.name);
-    setProfile(account.profile);
-    setRegion(account.region);
-    setAdding(true);
+  function chooseProfile(value: string) {
+    setProfile(value);
+    const detected = profiles.find((item) => item.name === value)?.region;
+    if (detected) setRegion(detected);
+  }
+
+  async function saveAccountOrder(accounts: AwsContextStatus["accounts"]) {
+    if (!status) return;
+    const ordered = accounts.map((account, index) => ({ ...account, displayOrder: index + 1 }));
+    setStatus({ ...status, accounts: ordered });
+    try { await reorderAwsContexts(ordered.map((account) => account.name)); await load(); }
+    catch (err) { setError(String(err)); await load(); }
+  }
+
+  async function moveAccount(targetName: string) {
+    if (!status || !draggingName || draggingName === targetName) return;
+    const accounts = [...status.accounts];
+    const from = accounts.findIndex((account) => account.name === draggingName);
+    const to = accounts.findIndex((account) => account.name === targetName);
+    if (from < 0 || to < 0) return;
+    const [moved] = accounts.splice(from, 1);
+    accounts.splice(to, 0, moved);
+    setDraggingName(null);
+    await saveAccountOrder(accounts);
+  }
+
+  async function moveAccountBy(name: string, offset: number) {
+    if (!status) return;
+    const accounts = [...status.accounts];
+    const from = accounts.findIndex((account) => account.name === name);
+    const to = from + offset;
+    if (from < 0 || to < 0 || to >= accounts.length) return;
+    const [moved] = accounts.splice(from, 1);
+    accounts.splice(to, 0, moved);
+    await saveAccountOrder(accounts);
   }
 
   return <div id="integration-aws" className="scroll-mt-24 overflow-hidden">
@@ -119,39 +150,34 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
     </div>
     {expanded && <div className={`space-y-5 ${focused ? "integration-panel-body" : "p-5"}`}>
       {error && <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{error}</div>}
-      {status === null ? <div className="text-sm text-[var(--color-text-muted)]">불러오는 중…</div> : !status.connected || adding ? <>
-        {status.connected && <div className="flex items-center justify-between"><div className="text-sm font-medium text-[var(--color-text)]">{editingName ? "AWS 환경 편집" : "AWS 계정 추가"}</div><button type="button" onClick={() => { setAdding(false); setEditingName(null); }} className="settings-action settings-action-secondary settings-action-compact">취소</button></div>}
-        <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
-          <div className="mb-2 font-semibold text-cyan-200">AWS Context 연결 순서</div>
-          <ol className="list-decimal space-y-1 pl-4">
-            <li>AWS CLI에서 profile을 준비합니다. <code className="text-[var(--color-text)]">aws configure --profile my-account</code> 또는 AWS SSO를 사용할 수 있습니다.</li>
-            <li><code className="text-[var(--color-text)]">aws sts get-caller-identity --profile my-account</code>로 로그인과 권한을 확인합니다.</li>
-            <li>아래에 환경 별칭·profile·region을 입력해 추가한 뒤 <b className="text-[var(--color-text)]">새로고침</b>하면 Sugo가 읽을 snapshot이 저장됩니다.</li>
-          </ol>
-          <p className="mt-2 text-[var(--color-text-dim)]">환경 별칭은 서비스 상태와 일정의 배포 태그에 그대로 표시됩니다.</p>
+      {status === null ? <div className="text-sm text-[var(--color-text-muted)]">불러오는 중…</div> : <>
+        {status.connected && <div className="overflow-x-auto border-y border-[var(--color-border)]">
+          <table className="w-full min-w-[760px] border-collapse text-left">
+            <thead><tr className="text-[11px] font-medium text-[var(--color-text-dim)]"><th className="w-16 px-3 py-3">순서</th><th className="px-3 py-3">환경</th><th className="px-3 py-3">AWS profile</th><th className="px-3 py-3">계정</th><th className="px-3 py-3">리전</th><th className="px-3 py-3">상태</th><th className="w-12 px-3 py-3"><span className="sr-only">편집</span></th></tr></thead>
+            <tbody>{status.accounts.map((account, index) => <tr key={account.name} draggable onDragStart={() => setDraggingName(account.name)} onDragOver={(event) => event.preventDefault()} onDrop={() => void moveAccount(account.name)} className={`border-t border-white/[0.07] text-sm ${status.activeAccount === account.name ? "bg-cyan-400/[0.045]" : "hover:bg-white/[0.02]"}`}>
+              <td className="px-3 py-4"><span className="flex items-center gap-1 font-mono text-xs text-cyan-300"><GripVertical size={15} className="mr-1 text-[var(--color-text-dim)]" />{String(index + 1).padStart(2, "0")}<button type="button" disabled={index === 0} aria-label={`${account.name} 환경 위로 이동`} onClick={() => void moveAccountBy(account.name, -1)} className="ml-1 text-[var(--color-text-dim)] enabled:hover:text-cyan-200 disabled:opacity-20"><ArrowUp size={12} /></button><button type="button" disabled={index === status.accounts.length - 1} aria-label={`${account.name} 환경 아래로 이동`} onClick={() => void moveAccountBy(account.name, 1)} className="text-[var(--color-text-dim)] enabled:hover:text-cyan-200 disabled:opacity-20"><ArrowDown size={12} /></button></span></td>
+              <td className="px-3 py-4"><button type="button" onClick={() => void select(account.name)} className="font-semibold text-[var(--color-text)]">{account.name}</button></td>
+              <td className="px-3 py-4 text-[var(--color-text-muted)]">{account.profile}</td>
+              <td className="px-3 py-4 font-mono text-xs text-[var(--color-text-muted)]">••••{account.accountHint}</td>
+              <td className="px-3 py-4 text-[var(--color-text-muted)]">{awsRegionLabel(account.region)}</td>
+              <td className="px-3 py-4 text-emerald-300">연결됨</td>
+              <td className="px-3 py-4"><button type="button" aria-label={`${account.name} 환경 편집`} onClick={() => { void select(account.name); setEditingName(account.name); setAccountName(account.name); setProfile(account.profile); setRegion(account.region); setAdding(true); }} className="settings-action settings-action-secondary settings-action-compact"><Pencil size={13} /></button></td>
+            </tr>)}</tbody>
+          </table>
+        </div>}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2"><span className="text-xs text-[var(--color-text-dim)]">Schedule 표시</span><span className="rounded-md border border-cyan-300/20 bg-cyan-300/[0.05] px-2.5 py-1 font-mono text-[11px] text-cyan-100">LOCAL</span>{status.accounts.map((account) => <span key={account.name} className="contents"><ArrowRight size={12} className="text-[var(--color-text-dim)]" /><span className="rounded-md border border-cyan-300/20 bg-cyan-300/[0.05] px-2.5 py-1 font-mono text-[11px] text-cyan-100">{account.name}</span></span>)}</div>
+          {!adding && <div className="flex gap-2"><button type="button" disabled={busy} onClick={() => { setEditingName(null); setAccountName(""); setProfile(""); setRegion(""); setAdding(true); }} className="settings-action settings-action-primary">환경 연결</button><button type="button" disabled={busy} onClick={() => void refresh()} className="settings-action settings-action-secondary">선택 환경 동기화</button></div>}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm text-[var(--color-text)]">환경 별칭<input value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="예: 개발계" className="settings-field mt-1.5 w-full" /></label>
-          <label className="text-sm text-[var(--color-text)]">AWS profile<input value={profile} onChange={(event) => setProfile(event.target.value)} placeholder="예: team-account" className="settings-field mt-1.5 w-full" /></label>
-          <label className="text-sm text-[var(--color-text)]">기본 region<input value={region} onChange={(event) => setRegion(event.target.value)} className="settings-field mt-1.5 w-full" /></label>
-        </div>
-        <button type="button" disabled={busy || !accountName || !profile || !region} onClick={() => void connect()} className="settings-action settings-action-primary">{editingName ? "변경사항 확인 후 저장" : "계정 확인 후 추가"}</button>
-        <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">AWS CLI의 로컬 자격 증명을 읽기 전용으로 사용합니다. 키는 Dashboard에 저장하지 않습니다.</p>
-      </> : <>
-        <div className="rounded-lg border border-emerald-400/25 bg-emerald-400/[0.05] px-4 py-3">
-          <div className="flex flex-wrap items-end gap-2">
-            <label className="min-w-[14rem] flex-1"><span className="sr-only">AWS 계정</span>
-              <select aria-label="AWS 계정" value={status.activeAccount ?? ""} disabled={busy} onChange={(event) => void select(event.target.value)} className="settings-field w-full">
-                {status.accounts.map((account) => <option key={account.name} value={account.name}>{awsAccountOptionLabel(account)}</option>)}
-              </select>
-            </label>
-            <button type="button" disabled={busy} onClick={() => setAdding(true)} className="settings-action settings-action-primary">계정 추가</button>
-            <button type="button" disabled={busy} onClick={editActiveAccount} className="settings-action settings-action-secondary">환경 편집</button>
-            <button type="button" disabled={busy} onClick={() => void refresh()} className="settings-action settings-action-secondary">새로고침</button>
-            <button type="button" disabled={busy} onClick={() => void disconnect()} className="settings-action settings-action-danger">연결 해제</button>
+        {(!status.connected || adding) && <div className="border border-cyan-300/20 bg-cyan-300/[0.025]">
+          <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4"><div><h3 className="text-sm font-semibold text-[var(--color-text)]">{editingName ? `${editingName} 환경 편집` : "AWS 환경 연결"}</h3><p className="mt-1 text-xs text-[var(--color-text-muted)]">환경 이름과 순서는 Schedule의 배포 상태에도 그대로 사용됩니다.</p></div>{status.connected && <button type="button" onClick={() => { setAdding(false); setEditingName(null); }} className="settings-action settings-action-secondary settings-action-compact">취소</button>}</div>
+          <div className="grid gap-4 p-5 lg:grid-cols-3">
+            <label className="text-xs text-[var(--color-text-muted)]">환경 이름<input value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="예: DEV" className="settings-field mt-2 w-full" /></label>
+            <label className="text-xs text-[var(--color-text-muted)]">AWS profile<input list="aws-profile-options" value={profile} onChange={(event) => chooseProfile(event.target.value)} placeholder="프로필 선택 또는 입력" className="settings-field mt-2 w-full" /><datalist id="aws-profile-options">{profiles.map((item) => <option key={item.name} value={item.name} />)}</datalist></label>
+            <label className="text-xs text-[var(--color-text-muted)]">리전<select value={region} onChange={(event) => setRegion(event.target.value)} className="settings-field mt-2 w-full"><option value="">리전 선택</option>{region && !AWS_REGIONS.some(([, code]) => code === region) && <option value={region}>{region} · 기존 설정</option>}{AWS_REGIONS.map(([label, code]) => <option key={code} value={code}>{label} · {code}{profiles.find((item) => item.name === profile)?.region === code ? " · 자동 감지" : ""}</option>)}</select></label>
           </div>
-          {status.activeAccount && <div className="mt-2 font-mono text-[11px] text-[var(--color-text-dim)]">{awsAccountMetaLabel(status.accounts.find((account) => account.name === status.activeAccount)!)}</div>}
-        </div>
+          <div className="flex items-center justify-between gap-3 px-5 pb-5"><span className="text-[11px] text-[var(--color-text-dim)]">AWS CLI의 로컬 자격 증명만 사용하며 키는 저장하지 않습니다.</span><div className="flex gap-2">{editingName && <button type="button" disabled={busy} onClick={() => void disconnect()} className="settings-action settings-action-danger">연결 해제</button>}<button type="button" disabled={busy || !accountName || !profile || !region} onClick={() => void connect()} className="settings-action settings-action-primary">{editingName ? "변경 저장" : "환경 연결"}</button></div></div>
+        </div>}
         <details className="border-y border-white/[0.08]">
           <summary className="cursor-pointer py-4 text-sm font-semibold text-[var(--color-text)]">AWS 조회 정책</summary>
           <div className="pb-5"><AwsAccessPolicySettings /></div>

@@ -179,6 +179,27 @@ describe("/api/aws-context", () => {
     expect(result.body.inventory[0].resources[0].id).toBe("dev-profile-repo");
   });
 
+  it("persists the environment display order and applies it to saved service mappings", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    await syncWorkspace(db, { userId: "order-user", name: "domain", projects: ["project"] });
+    const auth = (await seedUserToken(db, "order-user")).replace(/^Bearer /, "");
+    const fake: AwsContextClient = {
+      identity: async ({ profile }) => ({ accountId: profile, arn: `arn:aws:iam::123:user/${profile}` }),
+      inventory: async () => [],
+    };
+    const { app } = await createApp({ db, awsContextClient: fake });
+    for (const name of ["DEV", "PRD", "STG"]) {
+      await request(app).put("/api/aws-context").set("Authorization", `Bearer ${auth}`).send({ name, profile: name.toLowerCase(), region: "ap-northeast-2" }).expect(200);
+    }
+    await db.exec("INSERT INTO user_project_integration_mappings VALUES (?, ?, ?, ?)", ["order-user", "project", JSON.stringify(["DEV", "PRD", "STG"].map((accountName) => ({ accountName, environment: accountName.toLowerCase(), service: `${accountName}-api` }))), new Date().toISOString()]);
+    await request(app).post("/api/aws-context/order").set("Authorization", `Bearer ${auth}`).send({ names: ["DEV", "STG", "PRD"] }).expect(200);
+    const result = await request(app).get("/api/aws-context").set("Authorization", `Bearer ${auth}`).expect(200);
+    expect(result.body.accounts.map((account: { name: string }) => account.name)).toEqual(["DEV", "STG", "PRD"]);
+    const mappings = await db.query<{ selections: string }>("SELECT selections FROM user_project_integration_mappings WHERE user_id = ?", ["order-user"]);
+    expect(JSON.parse(mappings[0].selections).map((selection: { accountName: string }) => selection.accountName)).toEqual(["DEV", "STG", "PRD"]);
+  });
+
   it("reads a requested account snapshot without changing the UI active account", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);
@@ -267,7 +288,7 @@ it("narrow deployment retries use only owned Settings mappings and share the dai
   await db.execScript(schema);
   const project = "owned-repo";
   await syncWorkspace(db, { userId: "u", name: "ws", projects: [project] });
-  for (const [name, profile, id] of [["default", "shared-owner", "123"], ["prd", "prd", "999"]]) await db.exec("INSERT INTO user_aws_context_accounts VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", name, profile, "test", id, "test", new Date().toISOString()]);
+  for (const [name, profile, id] of [["default", "shared-owner", "123"], ["prd", "prd", "999"]]) await db.exec("INSERT INTO user_aws_context_accounts (user_id, name, profile, region, account_id, principal_arn, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", name, profile, "test", id, "test", new Date().toISOString()]);
   await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", "prd", JSON.stringify([{ service: "ecs", resources: [{ kind: "service", id: "api", metadata: { cluster: "cluster" } }, { kind: "service", id: "unrelated", metadata: { cluster: "cluster" } }] }]), new Date().toISOString()]);
   await db.exec("INSERT INTO user_project_integration_mappings VALUES (?, ?, ?, ?)", ["u", project, JSON.stringify([{ accountName: "prd", service: "api", cluster: "cluster", environment: "prd" }]), new Date().toISOString()]);
   const calls: string[] = [];

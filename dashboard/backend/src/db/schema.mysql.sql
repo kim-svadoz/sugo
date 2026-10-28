@@ -227,6 +227,7 @@ CREATE TABLE IF NOT EXISTS user_aws_context_accounts (
   region VARCHAR(64) NOT NULL,
   account_id VARCHAR(32) NOT NULL,
   principal_arn VARCHAR(1024) NOT NULL,
+  display_order INT NOT NULL DEFAULT 0,
   updated_at VARCHAR(64) NOT NULL,
   PRIMARY KEY (user_id, name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

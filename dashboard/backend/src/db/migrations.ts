@@ -82,3 +82,17 @@ export async function migrateRoadmapRuntimeAssessment(db: DbClient): Promise<boo
     return false;
   }
 }
+
+export async function ensureAwsContextDisplayOrderColumn(db: DbClient): Promise<void> {
+  try {
+    await db.query("SELECT display_order FROM user_aws_context_accounts LIMIT 1");
+    return;
+  } catch {
+    // Existing installations need the additive column before AWS settings are read.
+  }
+  try {
+    await db.exec("ALTER TABLE user_aws_context_accounts ADD COLUMN display_order INT NOT NULL DEFAULT 0");
+  } catch (err) {
+    console.warn(`[migration] AWS 환경 순서 컬럼 추가 실패(계속 진행): ${(err as Error).message}`);
+  }
+}

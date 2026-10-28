@@ -55,7 +55,7 @@ it("checks actual Git ancestry, unrelated revisions, squash equivalent files and
     ];
     for (const [env, deployed] of [["dev", finalCommit], ["stg", base]]) {
       const data = [{ service: "ecs", resources: [{ kind: "service", id: "api", metadata: { cluster: "cluster", status: "ACTIVE", rolloutState: "COMPLETED", runningCount: 1, desiredCount: 1, images: [image], runtimeImages: [{ image, imageDigest: "sha256:abc", tags: [deployed] }] } }] }];
-      await db.exec("INSERT INTO user_aws_context_accounts VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", env, "test", "test", "123", "test", new Date().toISOString()]);
+      await db.exec("INSERT INTO user_aws_context_accounts (user_id, name, profile, region, account_id, principal_arn, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", env, "test", "test", "123", "test", new Date().toISOString()]);
       await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", env, JSON.stringify(data), new Date().toISOString()]);
     }
     await db.exec("INSERT INTO user_project_integration_mappings VALUES (?, ?, ?, ?)", ["u", dir, JSON.stringify(["dev", "stg"].map(env => ({ accountName: env, service: "api", cluster: "cluster", environment: env }))), new Date().toISOString()]);
@@ -86,7 +86,7 @@ it("projects real deployed revisions onto SPEC without changing local completion
   ]);
   const image = "123.dkr.ecr.ap-northeast-2.amazonaws.com/deployment-test-project:1";
   const inventory = [{ service: "ecs", resources: [{ kind: "service", id: "api", metadata: { cluster: "cluster", status: "ACTIVE", rolloutState: "COMPLETED", desiredCount: 1, runningCount: 1, images: [image], runtimeImages: [{ image, imageDigest: "sha256:123", tags: [commit] }] } }] }];
-  await db.exec("INSERT INTO user_aws_context_accounts VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", "dev", "profile", "ap-northeast-2", "123", "test", new Date().toISOString()]);
+  await db.exec("INSERT INTO user_aws_context_accounts (user_id, name, profile, region, account_id, principal_arn, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", "dev", "profile", "ap-northeast-2", "123", "test", new Date().toISOString()]);
   await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", "dev", JSON.stringify(inventory), new Date().toISOString()]);
   await db.exec("INSERT INTO user_project_integration_mappings VALUES (?, ?, ?, ?)", ["u", project, JSON.stringify([{ accountName: "dev", service: "api", cluster: "cluster", environment: "dev" }]), new Date().toISOString()]);
   const roadmap = await getRoadmap(db, "u", "ws");
@@ -123,7 +123,7 @@ it("uses a separately connected build account for PRD and refuses an unrelated i
    await syncWorkspace(db, { userId: "u", name: "ws", projects: [dir] });
    const service = { kind: "service", id: "api", metadata: { ...metadata, cluster: "cluster", status: "ACTIVE", rolloutState: "COMPLETED", desiredCount: 1, images: [metadata.runtimeImages[0].image] } };
    const other = { kind: "service", id: "another-api", metadata: { ...service.metadata, images: ["123.dkr.ecr.test.amazonaws.com/another-repo:1"] } };
-   for (const account of ["default", "prd"]) await db.exec("INSERT INTO user_aws_context_accounts VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", account, "test", "test", "123", "test", new Date().toISOString()]);
+   for (const account of ["default", "prd"]) await db.exec("INSERT INTO user_aws_context_accounts (user_id, name, profile, region, account_id, principal_arn, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)", ["u", account, "test", "test", "123", "test", new Date().toISOString()]);
    await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", "default", JSON.stringify(build.inventory), new Date().toISOString()]);
    await db.exec("INSERT INTO user_aws_context_snapshots VALUES (?, ?, ?, ?)", ["u", "prd", JSON.stringify([{ service: "ecs", resources: [service, other] }]), new Date().toISOString()]);
    await db.exec("INSERT INTO user_project_integration_mappings VALUES (?, ?, ?, ?)", ["u", dir, JSON.stringify(["api", "another-api"].map(service => ({ accountName: "prd", service, environment: "prd", cluster: "cluster" }))), new Date().toISOString()]);

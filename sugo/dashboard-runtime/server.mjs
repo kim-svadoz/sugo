@@ -44384,6 +44384,18 @@ async function migrateRoadmapRuntimeAssessment(db2) {
     return false;
   }
 }
+async function ensureAwsContextDisplayOrderColumn(db2) {
+  try {
+    await db2.query("SELECT display_order FROM user_aws_context_accounts LIMIT 1");
+    return;
+  } catch {
+  }
+  try {
+    await db2.exec("ALTER TABLE user_aws_context_accounts ADD COLUMN display_order INT NOT NULL DEFAULT 0");
+  } catch (err) {
+    console.warn(`[migration] AWS \uD658\uACBD \uC21C\uC11C \uCEEC\uB7FC \uCD94\uAC00 \uC2E4\uD328(\uACC4\uC18D \uC9C4\uD589): ${err.message}`);
+  }
+}
 var init_migrations = __esm({
   "../dashboard/backend/src/db/migrations.ts"() {
     "use strict";
@@ -46837,6 +46849,7 @@ async function initDb(options = {}) {
     await migrateWstToRun(client2);
     await ensureHumanCompletionTable(client2);
     await migrateRoadmapRuntimeAssessment(client2);
+    await ensureAwsContextDisplayOrderColumn(client2);
     await ensureRoadmapDueDateColumn(client2);
     await ensureRoadmapProjectPathColumn(client2);
     await ensureRoadmapWorkBranchColumn(client2);
@@ -46857,6 +46870,7 @@ async function initDb(options = {}) {
   await migrateWstToRun(client);
   await ensureHumanCompletionTable(client);
   await migrateRoadmapRuntimeAssessment(client);
+  await ensureAwsContextDisplayOrderColumn(client);
   await ensureRoadmapDueDateColumn(client);
   await ensureRoadmapProjectPathColumn(client);
   await ensureRoadmapWorkBranchColumn(client);
@@ -53324,14 +53338,14 @@ function isFresh(observedAt) {
   return Boolean(observedAt && Number.isFinite(Date.parse(observedAt)) && Date.now() - Date.parse(observedAt) < REFRESH_COOLDOWN_MS);
 }
 async function accountState(db2, userId2, requestedAccount) {
-  const accounts = await db2.query("SELECT name, profile, region, account_id, principal_arn FROM user_aws_context_accounts WHERE user_id = ? ORDER BY name ASC", [userId2]);
+  const accounts = await db2.query("SELECT name, profile, region, account_id, principal_arn, display_order FROM user_aws_context_accounts WHERE user_id = ? ORDER BY display_order ASC, name ASC", [userId2]);
   const preferences = await db2.query("SELECT active_account_name FROM user_aws_context_preferences WHERE user_id = ?", [userId2]);
   const selectedName = requestedAccount ?? preferences[0]?.active_account_name;
   return { accounts, active: accounts.find((account) => account.name === selectedName) ?? (requestedAccount ? null : accounts[0] ?? null) };
 }
 async function getAwsContextStatus(db2, userId2, requestedAccount) {
   const { accounts, active } = await accountState(db2, userId2, requestedAccount);
-  const summaries = accounts.map((account) => ({ name: account.name, profile: account.profile, region: account.region, accountHint: account.account_id.slice(-4), principal: account.principal_arn.split("/").at(-1) ?? null }));
+  const summaries = accounts.map((account, index) => ({ name: account.name, profile: account.profile, region: account.region, accountHint: account.account_id.slice(-4), principal: account.principal_arn.split("/").at(-1) ?? null, displayOrder: account.display_order || index + 1 }));
   if (!active) return { connected: false, activeAccount: null, accounts: summaries, profile: null, region: null, accountHint: null, principal: null, observedAt: null, inventory: [], refreshBudget: null };
   const snapshots = await db2.query("SELECT payload, observed_at FROM user_aws_context_snapshots WHERE user_id = ? AND account_name = ?", [userId2, active.name]);
   const budgets = await db2.query("SELECT day_key, day_count, last_started_at FROM user_aws_context_refresh_budget WHERE user_id = ? AND account_name = ?", [userId2, active.name]);
@@ -53339,11 +53353,12 @@ async function getAwsContextStatus(db2, userId2, requestedAccount) {
 }
 async function connectAwsContext(db2, userId2, name, profile, region, client) {
   const identity = await client.identity({ profile, region });
-  await upsertRow(db2, "user_aws_context_accounts", { user_id: userId2, name }, { profile, region, account_id: identity.accountId, principal_arn: identity.arn, updated_at: (/* @__PURE__ */ new Date()).toISOString() });
+  const count = await db2.query("SELECT COUNT(*) AS count FROM user_aws_context_accounts WHERE user_id = ?", [userId2]);
+  await upsertRow(db2, "user_aws_context_accounts", { user_id: userId2, name }, { profile, region, account_id: identity.accountId, principal_arn: identity.arn, display_order: Number(count[0]?.count ?? 0) + 1, updated_at: (/* @__PURE__ */ new Date()).toISOString() });
   await setActiveAwsContext(db2, userId2, name);
 }
 async function updateAwsContext(db2, userId2, currentName, name, profile, region, client) {
-  const rows = await db2.query("SELECT name, profile, region, account_id, principal_arn FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId2, currentName]);
+  const rows = await db2.query("SELECT name, profile, region, account_id, principal_arn, display_order FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId2, currentName]);
   const current = rows[0];
   if (!current) throw Object.assign(new Error("AWS context account not found"), { code: "AWS_CONTEXT_NOT_FOUND" });
   if (name !== currentName) {
@@ -53366,6 +53381,23 @@ async function updateAwsContext(db2, userId2, currentName, name, profile, region
   }
   if (profile !== current.profile || region !== current.region || identity.accountId !== current.account_id) {
     await db2.exec("DELETE FROM user_aws_context_snapshots WHERE user_id = ? AND account_name = ?", [userId2, name]);
+  }
+}
+async function reorderAwsContexts(db2, userId2, names) {
+  const rows = await db2.query("SELECT name FROM user_aws_context_accounts WHERE user_id = ?", [userId2]);
+  const existing = rows.map((row) => row.name).sort();
+  if (names.length !== existing.length || [...names].sort().some((name, index) => name !== existing[index])) {
+    throw Object.assign(new Error("AWS environment order must include every connected environment exactly once"), { code: "AWS_CONTEXT_ORDER_INVALID" });
+  }
+  for (const [index, name] of names.entries()) {
+    await db2.exec("UPDATE user_aws_context_accounts SET display_order = ? WHERE user_id = ? AND name = ?", [index + 1, userId2, name]);
+  }
+  const rank = new Map(names.map((name, index) => [name, index]));
+  const mappings = await db2.query("SELECT project_path, selections FROM user_project_integration_mappings WHERE user_id = ?", [userId2]);
+  for (const mapping of mappings) {
+    const selections = parseMaybeJson(mapping.selections, []);
+    const ordered = [...selections].sort((a5, b5) => (rank.get(a5.accountName) ?? 999) - (rank.get(b5.accountName) ?? 999));
+    await db2.exec("UPDATE user_project_integration_mappings SET selections = ?, updated_at = ? WHERE user_id = ? AND project_path = ?", [JSON.stringify(ordered), (/* @__PURE__ */ new Date()).toISOString(), userId2, mapping.project_path]);
   }
 }
 async function setActiveAwsContext(db2, userId2, name) {
@@ -53451,12 +53483,41 @@ var init_awsContextService = __esm({
 });
 
 // ../dashboard/backend/src/routes/awsContext.ts
+import { execFile as execFile4 } from "node:child_process";
+import { promisify as promisify6 } from "node:util";
+async function discoveredProfiles() {
+  const listed = await execFileAsync2("aws", ["configure", "list-profiles"], { timeout: 1e4 });
+  const names = listed.stdout.split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
+  return Promise.all(names.map(async (name) => {
+    try {
+      const result = await execFileAsync2("aws", ["configure", "get", "region", "--profile", name], { timeout: 5e3 });
+      return { name, region: result.stdout.trim() || null };
+    } catch {
+      return { name, region: null };
+    }
+  }));
+}
 function createAwsContextRouter(db2, sessionSecret2, client) {
   const router = (0, import_express10.Router)();
   router.use(requireUser(db2, sessionSecret2));
   router.get("/", async (req, res) => {
     const account = typeof req.query.account === "string" ? req.query.account.trim() : void 0;
     res.json(await getAwsContextStatus(db2, req.userId, account || void 0));
+  });
+  router.get("/profiles", async (_req, res) => {
+    try {
+      res.json({ profiles: await discoveredProfiles() });
+    } catch {
+      res.json({ profiles: [] });
+    }
+  });
+  router.post("/order", validateBody(external_exports.object({ names: external_exports.array(external_exports.string().trim().min(1).max(64)).max(100) })), async (req, res) => {
+    try {
+      await reorderAwsContexts(db2, req.userId, req.body.names);
+      res.json({ ok: true });
+    } catch (error2) {
+      res.status(400).json({ error: error2.code ?? "AWS_CONTEXT_ORDER_INVALID" });
+    }
   });
   router.put("/", validateBody(connectSchema), async (req, res) => {
     try {
@@ -53515,7 +53576,7 @@ function createAwsContextRouter(db2, sessionSecret2, client) {
   });
   return router;
 }
-var import_express10, connectSchema, accountSchema;
+var import_express10, connectSchema, accountSchema, execFileAsync2;
 var init_awsContext = __esm({
   "../dashboard/backend/src/routes/awsContext.ts"() {
     "use strict";
@@ -53530,6 +53591,7 @@ var init_awsContext = __esm({
       region: external_exports.string().regex(/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/)
     });
     accountSchema = external_exports.object({ name: external_exports.string().trim().min(1).max(64) });
+    execFileAsync2 = promisify6(execFile4);
   }
 });
 
@@ -80007,7 +80069,7 @@ var require_dist_cjs12 = __commonJS({
   "../dashboard/backend/node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js"(exports) {
     var { externalDataInterceptor: externalDataInterceptor2, CredentialsProviderError: CredentialsProviderError2, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config3(), __toCommonJS(config_exports));
     var { exec: exec3 } = __require("node:child_process");
-    var { promisify: promisify9 } = __require("node:util");
+    var { promisify: promisify10 } = __require("node:util");
     var { setCredentialFeature: setCredentialFeature2 } = (init_client5(), __toCommonJS(client_exports2));
     var getValidatedProcessCredentials = (profileName, data, profiles) => {
       if (data.Version !== 1) {
@@ -80043,7 +80105,7 @@ var require_dist_cjs12 = __commonJS({
       if (profiles[profileName]) {
         const credentialProcess = profile["credential_process"];
         if (credentialProcess !== void 0) {
-          const execPromise = promisify9(externalDataInterceptor2?.getTokenRecord?.().exec ?? exec3);
+          const execPromise = promisify10(externalDataInterceptor2?.getTokenRecord?.().exec ?? exec3);
           try {
             const { stdout } = await execPromise(credentialProcess);
             let data;
@@ -89448,8 +89510,8 @@ var init_codeCommitClient = __esm({
 });
 
 // ../dashboard/backend/src/aws/contextClient.ts
-import { execFile as execFile4 } from "node:child_process";
-import { promisify as promisify6 } from "node:util";
+import { execFile as execFile5 } from "node:child_process";
+import { promisify as promisify7 } from "node:util";
 function assertReadOnlyAwsArgs(args) {
   const key2 = `${args[0] ?? ""}:${args[1] ?? ""}`;
   if (!READ_ONLY_AWS_OPERATIONS.has(key2)) {
@@ -89484,7 +89546,7 @@ function chunks(items, size) {
 }
 function createAwsCliContextClient(customRunner) {
   const underlying = customRunner ?? (async (args) => {
-    const { stdout } = await execFileAsync2("aws", args, { maxBuffer: 8 * 1024 * 1024, timeout: 6e4 });
+    const { stdout } = await execFileAsync3("aws", args, { maxBuffer: 8 * 1024 * 1024, timeout: 6e4 });
     return JSON.parse(stdout);
   });
   const run = async (args) => {
@@ -89792,11 +89854,11 @@ function createAwsCliContextClient(customRunner) {
     }
   };
 }
-var execFileAsync2, READ_ONLY_AWS_OPERATIONS;
+var execFileAsync3, READ_ONLY_AWS_OPERATIONS;
 var init_contextClient = __esm({
   "../dashboard/backend/src/aws/contextClient.ts"() {
     "use strict";
-    execFileAsync2 = promisify6(execFile4);
+    execFileAsync3 = promisify7(execFile5);
     READ_ONLY_AWS_OPERATIONS = /* @__PURE__ */ new Set([
       "sts:get-caller-identity",
       "codecommit:list-repositories",
@@ -90039,7 +90101,7 @@ function selectionKey(item) {
   return `${item.accountName}\0${item.cluster ?? ""}\0${item.service}\0${item.environment}`;
 }
 async function integrationCandidates(db2, userId2) {
-  const snapshots = await db2.query("SELECT account_name, payload FROM user_aws_context_snapshots WHERE user_id = ? ORDER BY account_name", [userId2]);
+  const snapshots = await db2.query("SELECT s.account_name, s.payload FROM user_aws_context_snapshots s JOIN user_aws_context_accounts a ON a.user_id = s.user_id AND a.name = s.account_name WHERE s.user_id = ? ORDER BY a.display_order, s.account_name", [userId2]);
   return snapshots.flatMap((snapshot) => parseMaybeJson(snapshot.payload, []).flatMap((inventory) => inventory?.service === "ecs" ? inventory.resources ?? [] : []).filter((resource2) => resource2?.kind === "service").map((resource2) => ({
     accountName: snapshot.account_name,
     environment: environmentOfAccount(snapshot.account_name),
@@ -90077,7 +90139,7 @@ var init_projectIntegrationService = __esm({
 });
 
 // ../dashboard/backend/src/services/projectRegistrar.ts
-import { execFile as execFile5 } from "node:child_process";
+import { execFile as execFile6 } from "node:child_process";
 import { access } from "node:fs/promises";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 import { resolve as resolve4 } from "node:path";
@@ -90101,7 +90163,7 @@ var init_projectRegistrar = __esm({
     runProjectRegistrar = async (input) => {
       const script = await registrarPath();
       return new Promise((resolveResult, reject) => {
-        const child = execFile5(process.execPath, [script], { timeout: 12e4, maxBuffer: 2 * 1024 * 1024 }, (error2, stdout, stderr) => {
+        const child = execFile6(process.execPath, [script], { timeout: 12e4, maxBuffer: 2 * 1024 * 1024 }, (error2, stdout, stderr) => {
           if (error2) {
             let detail = {};
             try {
@@ -90166,9 +90228,9 @@ var init_localDirectoryBrowser = __esm({
 });
 
 // ../dashboard/backend/src/services/nativeDirectoryPicker.ts
-import { execFile as execFile6 } from "node:child_process";
+import { execFile as execFile7 } from "node:child_process";
 import { platform as currentPlatform } from "node:os";
-import { promisify as promisify7 } from "node:util";
+import { promisify as promisify8 } from "node:util";
 function supportsNativeDirectoryPicker(platform2 = currentPlatform()) {
   return platform2 === "darwin" || platform2 === "win32";
 }
@@ -90187,7 +90249,7 @@ var runFile, macScript, windowsScript;
 var init_nativeDirectoryPicker = __esm({
   "../dashboard/backend/src/services/nativeDirectoryPicker.ts"() {
     "use strict";
-    runFile = promisify7(execFile6);
+    runFile = promisify8(execFile7);
     macScript = 'POSIX path of (choose folder with prompt "Sugo\uC5D0 \uB4F1\uB85D\uD560 \uD504\uB85C\uC81D\uD2B8 \uD3F4\uB354\uB97C \uC120\uD0DD\uD558\uC138\uC694")';
     windowsScript = [
       "Add-Type -AssemblyName System.Windows.Forms",
@@ -90411,12 +90473,12 @@ __export(weeklyScheduleService_exports, {
   weeklyHomeDir: () => weeklyHomeDir,
   weeklyRunDecision: () => weeklyRunDecision
 });
-import { execFile as execFile7 } from "node:child_process";
+import { execFile as execFile8 } from "node:child_process";
 import { appendFile, mkdir as mkdir4, readdir as readdir4, readFile as readFile9, stat as stat2, unlink as unlink3, writeFile as writeFile5 } from "node:fs/promises";
 import { homedir as homedir5 } from "node:os";
 import { dirname as dirname5, join as join13, resolve as resolve5 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
-import { promisify as promisify8 } from "node:util";
+import { promisify as promisify9 } from "node:util";
 function weeklyHomeDir() {
   return process.env.WEEKLY_HOME ?? join13(homedir5(), ".weekly");
 }
@@ -90456,7 +90518,7 @@ async function retireLegacyWeeklyAgents(home = homedir5()) {
   const legacy = names.filter((name) => /^com\..+\.weekly-ai-report(-server)?\.plist$/.test(name));
   for (const name of legacy) {
     const path = join13(agents, name);
-    await execFileAsync3("launchctl", ["bootout", `gui/${process.getuid?.() ?? 0}`, path]).catch(() => void 0);
+    await execFileAsync4("launchctl", ["bootout", `gui/${process.getuid?.() ?? 0}`, path]).catch(() => void 0);
     await unlink3(path);
   }
   return legacy;
@@ -90474,7 +90536,7 @@ function startWeeklySchedule(options = {}) {
   const handledPath = join13(weeklyHome, "last-scheduled-slot");
   const logPath = join13(weeklyHome, "scheduled-run.log");
   const engine = options.engine ?? (() => findWeeklyEngine());
-  const build = options.build ?? ((path) => execFileAsync3(process.execPath, [join13(path, "run.mjs"), "build"], { cwd: path, timeout: 30 * 6e4, maxBuffer: 16 * 1024 * 1024 }));
+  const build = options.build ?? ((path) => execFileAsync4(process.execPath, [join13(path, "run.mjs"), "build"], { cwd: path, timeout: 30 * 6e4, maxBuffer: 16 * 1024 * 1024 }));
   let running = false;
   let stopped = false;
   const tick = async () => {
@@ -90516,11 +90578,11 @@ ${out.stdout.slice(-2e3)}
     clearInterval(timer);
   };
 }
-var execFileAsync3;
+var execFileAsync4;
 var init_weeklyScheduleService = __esm({
   "../dashboard/backend/src/services/weeklyScheduleService.ts"() {
     "use strict";
-    execFileAsync3 = promisify8(execFile7);
+    execFileAsync4 = promisify9(execFile8);
   }
 });
 
@@ -90776,7 +90838,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname6(fileURLToPath4(import.meta.url));
-    pkg = "0.45.5" ? { version: "0.45.5" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.46.0" ? { version: "0.46.0" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90834,7 +90896,7 @@ import { dirname as dirname8, join as join16 } from "node:path";
 import { fileURLToPath as fileURLToPath5 } from "node:url";
 
 // ../dashboard/backend/test/schema.sqlite.sql
-var schema_sqlite_default = "-- SQLite translation of src/db/schema.mysql.sql, used only for local dev/testing.\n-- Must stay behaviorally equivalent: same tables/columns/keys, syntax adapted\n-- (ENUM->TEXT+CHECK, JSON->TEXT, AUTO_INCREMENT->INTEGER PRIMARY KEY AUTOINCREMENT,\n-- TIMESTAMP->TEXT ISO8601, composite PKs as-is since SQLite supports them).\n\nPRAGMA foreign_keys = ON;\n\nCREATE TABLE IF NOT EXISTS sugo_users (\n  id TEXT PRIMARY KEY,\n  display_name TEXT,\n  plugin_version TEXT,\n  version_updated_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspaces (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  name TEXT NOT NULL,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  deleted_at TIMESTAMP NULL DEFAULT NULL,\n  UNIQUE (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_projects (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  workspace_id INTEGER NOT NULL REFERENCES sugo_workspaces(id) ON DELETE CASCADE,\n  project_path TEXT NOT NULL,\n  git_synced INTEGER NOT NULL DEFAULT 0,\n  UNIQUE (workspace_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_tasks (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  project TEXT,\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','archived')),\n  priority TEXT,\n  description TEXT,\n  summary TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  started_at TEXT,\n  completed_at TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_history (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  task_id TEXT,\n  task_title TEXT,\n  summary TEXT,\n  key_decisions TEXT,\n  files_changed TEXT,\n  notes TEXT,\n  estimated_human_hours REAL,\n  user_reported_human_hours REAL,\n  ai_execution_minutes REAL,\n  estimation_basis TEXT,\n  completed_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_memos (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  title TEXT NOT NULL,\n  content_md TEXT NOT NULL,\n  due_date TEXT,\n  archived_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_memos_due ON sugo_schedule_memos(user_id, due_date);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_commitments (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  due_date TEXT,\n  state TEXT NOT NULL DEFAULT 'planned' CHECK (state IN ('planned','active','completed','cancelled')),\n  target TEXT NOT NULL DEFAULT 'custom' CHECK (target IN ('implementation','review','dev','stg','prd','custom')),\n  linked_run_id TEXT,\n  completed_at TEXT,\n  completed_by TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_due ON sugo_schedule_commitments(user_id, due_date);\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_spec ON sugo_schedule_commitments(user_id, workspace_name, spec_id);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  reason TEXT NOT NULL CHECK (reason IN ('deleted','closed')),\n  title TEXT NOT NULL,\n  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  archived_by TEXT NOT NULL,\n  PRIMARY KEY (user_id, workspace_name, spec_id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_specs (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'active',\n  content TEXT,\n  decision_date TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_checkpoints (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  category TEXT NOT NULL DEFAULT 'general',\n  title TEXT NOT NULL,\n  learned_from TEXT,\n  checklist TEXT,\n  applies_to TEXT,\n  checkpoint_date TEXT,\n  expires_at TEXT,\n  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_meta (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  golden_rule TEXT,\n  checkpoints_version INTEGER NOT NULL DEFAULT 0,\n  PRIMARY KEY (user_id, workspace_name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  level TEXT NOT NULL CHECK (level IN ('spec','workstream','task','subtask','step')),\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','blocked','dropped')),\n  depends_on TEXT,\n  parent TEXT,\n  ref TEXT,\n  note TEXT,\n  spec_path TEXT,\n  work_result TEXT,\n  lineage TEXT,\n  manual_status TEXT CHECK (manual_status IS NULL OR manual_status IN ('pending','in_progress','done','blocked','dropped')),\n  manual_by TEXT,\n  manual_at TEXT,\n  pos_x REAL,\n  pos_y REAL,\n  due_date TEXT,\n  project_path TEXT,\n  work_branch TEXT,\n  manual_title TEXT,\n  blocker_response TEXT,\n  blocker_answered_by TEXT,\n  blocker_answered_at TEXT,\n  blocker_context TEXT,\n  runtime_assessment TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  synced_at TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_activity_events (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  ts TEXT NOT NULL,\n  level TEXT NOT NULL DEFAULT 'INFO' CHECK (level IN ('AGENT','INFO','WARN','ERROR','SYSTEM')),\n  agent TEXT CHECK (agent IS NULL OR agent IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  handoff_to TEXT CHECK (handoff_to IS NULL OR handoff_to IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  event_type TEXT NOT NULL DEFAULT 'SYSTEM' CHECK (event_type IN ('EXECUTE','HANDOFF','COMPLETED','SYSTEM')),\n  message TEXT NOT NULL,\n  details TEXT\n);\nCREATE INDEX IF NOT EXISTS idx_activity_user_ws_ts ON sugo_activity_events (user_id, workspace_name, ts);\n\nCREATE TABLE IF NOT EXISTS user_bitbucket_tokens (\n  user_id TEXT PRIMARY KEY,\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS user_git_connections (\n  user_id TEXT NOT NULL,\n  provider TEXT NOT NULL CHECK (provider IN ('github','gitlab','bitbucket_server','aws_codecommit')),\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  credential_profile TEXT,\n  repository_scope TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, provider)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_accounts (\n  user_id TEXT NOT NULL,\n  name TEXT NOT NULL,\n  profile TEXT NOT NULL,\n  region TEXT NOT NULL,\n  account_id TEXT NOT NULL,\n  principal_arn TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_snapshots (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  payload TEXT NOT NULL,\n  observed_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_preferences (\n  user_id TEXT NOT NULL PRIMARY KEY,\n  active_account_name TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_refresh_budget (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  day_key TEXT NOT NULL,\n  day_count INTEGER NOT NULL,\n  last_started_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_project_integration_mappings (\n  user_id TEXT NOT NULL,\n  project_path TEXT NOT NULL,\n  selections TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS user_pinpoint_context (user_id TEXT PRIMARY KEY, base_url TEXT NOT NULL, updated_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_pinpoint_snapshots (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, observed_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_context_auto_refresh_runs (user_id TEXT NOT NULL, day_key TEXT NOT NULL, status TEXT NOT NULL, started_at TEXT NOT NULL, completed_at TEXT, error_message TEXT, PRIMARY KEY (user_id, day_key));\n\nCREATE TABLE IF NOT EXISTS user_api_tokens (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  name TEXT,\n  token_hash TEXT NOT NULL UNIQUE,\n  token_hint TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  last_used_at TEXT\n);\n\nCREATE TABLE IF NOT EXISTS sugo_review_artifacts (\n  artifact_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, workspace_name TEXT NOT NULL,\n  task_id TEXT NOT NULL, session_id TEXT NOT NULL, patch_version INTEGER NOT NULL,\n  file_path TEXT NOT NULL, change_type TEXT NOT NULL, content TEXT, diff_text TEXT,\n  unavailable_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS sugo_weekly_reports (\n  user_id TEXT NOT NULL,\n  week_id TEXT NOT NULL,\n  start_date TEXT NOT NULL,\n  end_date TEXT NOT NULL,\n  generated_at TEXT NOT NULL,\n  uploaded_at TEXT NOT NULL,\n  report_json TEXT NOT NULL,\n  PRIMARY KEY (user_id, week_id)\n);\n";
+var schema_sqlite_default = "-- SQLite translation of src/db/schema.mysql.sql, used only for local dev/testing.\n-- Must stay behaviorally equivalent: same tables/columns/keys, syntax adapted\n-- (ENUM->TEXT+CHECK, JSON->TEXT, AUTO_INCREMENT->INTEGER PRIMARY KEY AUTOINCREMENT,\n-- TIMESTAMP->TEXT ISO8601, composite PKs as-is since SQLite supports them).\n\nPRAGMA foreign_keys = ON;\n\nCREATE TABLE IF NOT EXISTS sugo_users (\n  id TEXT PRIMARY KEY,\n  display_name TEXT,\n  plugin_version TEXT,\n  version_updated_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspaces (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  name TEXT NOT NULL,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  deleted_at TIMESTAMP NULL DEFAULT NULL,\n  UNIQUE (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_projects (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  workspace_id INTEGER NOT NULL REFERENCES sugo_workspaces(id) ON DELETE CASCADE,\n  project_path TEXT NOT NULL,\n  git_synced INTEGER NOT NULL DEFAULT 0,\n  UNIQUE (workspace_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_tasks (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  project TEXT,\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','archived')),\n  priority TEXT,\n  description TEXT,\n  summary TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  started_at TEXT,\n  completed_at TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_history (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  task_id TEXT,\n  task_title TEXT,\n  summary TEXT,\n  key_decisions TEXT,\n  files_changed TEXT,\n  notes TEXT,\n  estimated_human_hours REAL,\n  user_reported_human_hours REAL,\n  ai_execution_minutes REAL,\n  estimation_basis TEXT,\n  completed_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_memos (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  title TEXT NOT NULL,\n  content_md TEXT NOT NULL,\n  due_date TEXT,\n  archived_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_memos_due ON sugo_schedule_memos(user_id, due_date);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_commitments (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  due_date TEXT,\n  state TEXT NOT NULL DEFAULT 'planned' CHECK (state IN ('planned','active','completed','cancelled')),\n  target TEXT NOT NULL DEFAULT 'custom' CHECK (target IN ('implementation','review','dev','stg','prd','custom')),\n  linked_run_id TEXT,\n  completed_at TEXT,\n  completed_by TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_due ON sugo_schedule_commitments(user_id, due_date);\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_spec ON sugo_schedule_commitments(user_id, workspace_name, spec_id);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  reason TEXT NOT NULL CHECK (reason IN ('deleted','closed')),\n  title TEXT NOT NULL,\n  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  archived_by TEXT NOT NULL,\n  PRIMARY KEY (user_id, workspace_name, spec_id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_specs (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'active',\n  content TEXT,\n  decision_date TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_checkpoints (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  category TEXT NOT NULL DEFAULT 'general',\n  title TEXT NOT NULL,\n  learned_from TEXT,\n  checklist TEXT,\n  applies_to TEXT,\n  checkpoint_date TEXT,\n  expires_at TEXT,\n  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_meta (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  golden_rule TEXT,\n  checkpoints_version INTEGER NOT NULL DEFAULT 0,\n  PRIMARY KEY (user_id, workspace_name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  level TEXT NOT NULL CHECK (level IN ('spec','workstream','task','subtask','step')),\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','blocked','dropped')),\n  depends_on TEXT,\n  parent TEXT,\n  ref TEXT,\n  note TEXT,\n  spec_path TEXT,\n  work_result TEXT,\n  lineage TEXT,\n  manual_status TEXT CHECK (manual_status IS NULL OR manual_status IN ('pending','in_progress','done','blocked','dropped')),\n  manual_by TEXT,\n  manual_at TEXT,\n  pos_x REAL,\n  pos_y REAL,\n  due_date TEXT,\n  project_path TEXT,\n  work_branch TEXT,\n  manual_title TEXT,\n  blocker_response TEXT,\n  blocker_answered_by TEXT,\n  blocker_answered_at TEXT,\n  blocker_context TEXT,\n  runtime_assessment TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  synced_at TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_activity_events (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  ts TEXT NOT NULL,\n  level TEXT NOT NULL DEFAULT 'INFO' CHECK (level IN ('AGENT','INFO','WARN','ERROR','SYSTEM')),\n  agent TEXT CHECK (agent IS NULL OR agent IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  handoff_to TEXT CHECK (handoff_to IS NULL OR handoff_to IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  event_type TEXT NOT NULL DEFAULT 'SYSTEM' CHECK (event_type IN ('EXECUTE','HANDOFF','COMPLETED','SYSTEM')),\n  message TEXT NOT NULL,\n  details TEXT\n);\nCREATE INDEX IF NOT EXISTS idx_activity_user_ws_ts ON sugo_activity_events (user_id, workspace_name, ts);\n\nCREATE TABLE IF NOT EXISTS user_bitbucket_tokens (\n  user_id TEXT PRIMARY KEY,\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS user_git_connections (\n  user_id TEXT NOT NULL,\n  provider TEXT NOT NULL CHECK (provider IN ('github','gitlab','bitbucket_server','aws_codecommit')),\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  credential_profile TEXT,\n  repository_scope TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, provider)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_accounts (\n  user_id TEXT NOT NULL,\n  name TEXT NOT NULL,\n  profile TEXT NOT NULL,\n  region TEXT NOT NULL,\n  account_id TEXT NOT NULL,\n  principal_arn TEXT NOT NULL,\n  display_order INTEGER NOT NULL DEFAULT 0,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_snapshots (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  payload TEXT NOT NULL,\n  observed_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_preferences (\n  user_id TEXT NOT NULL PRIMARY KEY,\n  active_account_name TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_refresh_budget (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  day_key TEXT NOT NULL,\n  day_count INTEGER NOT NULL,\n  last_started_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_project_integration_mappings (\n  user_id TEXT NOT NULL,\n  project_path TEXT NOT NULL,\n  selections TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS user_pinpoint_context (user_id TEXT PRIMARY KEY, base_url TEXT NOT NULL, updated_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_pinpoint_snapshots (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, observed_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_context_auto_refresh_runs (user_id TEXT NOT NULL, day_key TEXT NOT NULL, status TEXT NOT NULL, started_at TEXT NOT NULL, completed_at TEXT, error_message TEXT, PRIMARY KEY (user_id, day_key));\n\nCREATE TABLE IF NOT EXISTS user_api_tokens (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  name TEXT,\n  token_hash TEXT NOT NULL UNIQUE,\n  token_hint TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  last_used_at TEXT\n);\n\nCREATE TABLE IF NOT EXISTS sugo_review_artifacts (\n  artifact_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, workspace_name TEXT NOT NULL,\n  task_id TEXT NOT NULL, session_id TEXT NOT NULL, patch_version INTEGER NOT NULL,\n  file_path TEXT NOT NULL, change_type TEXT NOT NULL, content TEXT, diff_text TEXT,\n  unavailable_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS sugo_weekly_reports (\n  user_id TEXT NOT NULL,\n  week_id TEXT NOT NULL,\n  start_date TEXT NOT NULL,\n  end_date TEXT NOT NULL,\n  generated_at TEXT NOT NULL,\n  uploaded_at TEXT NOT NULL,\n  report_json TEXT NOT NULL,\n  PRIMARY KEY (user_id, week_id)\n);\n";
 
 // ../dashboard/backend/src/standalone.ts
 var DEFAULT_PORT = 3001;
@@ -90899,7 +90961,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.45.5", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.46.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

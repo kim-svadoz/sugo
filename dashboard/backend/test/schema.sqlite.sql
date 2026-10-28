@@ -226,6 +226,7 @@ CREATE TABLE IF NOT EXISTS user_aws_context_accounts (
   region TEXT NOT NULL,
   account_id TEXT NOT NULL,
   principal_arn TEXT NOT NULL,
+  display_order INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL,
   PRIMARY KEY (user_id, name)
 );

@@ -4,7 +4,9 @@ import type { DbClient } from "../db/client.js";
 import type { AwsContextClient } from "../aws/contextClient.js";
 import { requireUser } from "../auth/requireUser.js";
 import { validateBody } from "../schemas/validate.js";
-import { connectAwsContext, disconnectAwsContext, getAwsContextStatus, refreshAllAwsContexts, refreshAwsContext, refreshAwsDeploymentImages, setActiveAwsContext, updateAwsContext } from "../services/awsContextService.js";
+import { connectAwsContext, disconnectAwsContext, getAwsContextStatus, refreshAllAwsContexts, refreshAwsContext, refreshAwsDeploymentImages, reorderAwsContexts, setActiveAwsContext, updateAwsContext } from "../services/awsContextService.js";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
 const connectSchema = z.object({
   name: z.string().trim().min(1).max(64),
@@ -12,6 +14,18 @@ const connectSchema = z.object({
   region: z.string().regex(/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/),
 });
 const accountSchema = z.object({ name: z.string().trim().min(1).max(64) });
+const execFileAsync = promisify(execFile);
+
+async function discoveredProfiles(): Promise<Array<{ name: string; region: string | null }>> {
+  const listed = await execFileAsync("aws", ["configure", "list-profiles"], { timeout: 10_000 });
+  const names = listed.stdout.split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
+  return Promise.all(names.map(async (name) => {
+    try {
+      const result = await execFileAsync("aws", ["configure", "get", "region", "--profile", name], { timeout: 5_000 });
+      return { name, region: result.stdout.trim() || null };
+    } catch { return { name, region: null }; }
+  }));
+}
 
 export function createAwsContextRouter(db: DbClient, sessionSecret: string, client: AwsContextClient): Router {
   const router = Router();
@@ -19,6 +33,14 @@ export function createAwsContextRouter(db: DbClient, sessionSecret: string, clie
   router.get("/", async (req, res) => {
     const account = typeof req.query.account === "string" ? req.query.account.trim() : undefined;
     res.json(await getAwsContextStatus(db, req.userId!, account || undefined));
+  });
+  router.get("/profiles", async (_req, res) => {
+    try { res.json({ profiles: await discoveredProfiles() }); }
+    catch { res.json({ profiles: [] }); }
+  });
+  router.post("/order", validateBody(z.object({ names: z.array(z.string().trim().min(1).max(64)).max(100) })), async (req, res) => {
+    try { await reorderAwsContexts(db, req.userId!, req.body.names); res.json({ ok: true }); }
+    catch (error) { res.status(400).json({ error: (error as { code?: string }).code ?? "AWS_CONTEXT_ORDER_INVALID" }); }
   });
   router.put("/", validateBody(connectSchema), async (req, res) => {
     try {

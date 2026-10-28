@@ -16,7 +16,7 @@ export interface AwsServiceInventory {
 export interface AwsContextStatus {
   connected: boolean;
   activeAccount: string | null;
-  accounts: Array<{ name: string; profile: string; region: string; accountHint: string; principal: string | null }>;
+  accounts: Array<{ name: string; profile: string; region: string; accountHint: string; principal: string | null; displayOrder: number }>;
   profile: string | null;
   region: string | null;
   accountHint: string | null;
@@ -52,4 +52,12 @@ export function refreshAllAwsContexts(): Promise<{ refreshed: string[] }> {
 
 export function disconnectAwsContext(name: string): Promise<{ ok: true }> {
   return apiJson(`/api/aws-context/${encodeURIComponent(name)}`, { method: "DELETE" });
+}
+
+export function getAwsProfiles(): Promise<{ profiles: Array<{ name: string; region: string | null }> }> {
+  return apiJson("/api/aws-context/profiles");
+}
+
+export function reorderAwsContexts(names: string[]): Promise<{ ok: true }> {
+  return apiJson("/api/aws-context/order", { method: "POST", body: JSON.stringify({ names }) });
 }

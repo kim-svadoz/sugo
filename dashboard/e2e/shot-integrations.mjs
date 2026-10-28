@@ -9,6 +9,7 @@ const registrationOutput = output.replace(/\.png$/i, "-registration.png");
 const overviewOutput = output.replace(/\.png$/i, "-overview.png");
 const prOutput = output.replace(/\.png$/i, "-pr-scope.png");
 const collapsedOutput = output.replace(/\.png$/i, "-sidebar-collapsed.png");
+const awsMatrixOutput = output.replace(/\.png$/i, "-aws-matrix.png");
 const projects = [
   {
     project_path: "/work/catalog-api",
@@ -46,7 +47,12 @@ await page.route("**/*", (route) => {
     { id: "bitbucket_server", label: "Bitbucket Server / Data Center", pullRequests: true, selfHosted: true, defaultBaseUrl: null, status: "available", authMode: "token" },
     { id: "aws_codecommit", label: "AWS CodeCommit", pullRequests: true, selfHosted: false, defaultBaseUrl: null, status: "available", authMode: "aws_default_chain" },
   ], connections: [] } });
-  if (url.includes("/api/aws-context")) return route.fulfill({ json: { connected: true, activeAccount: "default", accounts: [{ name: "default", profile: "default", region: "ap-northeast-2", accountHint: "1234", principal: "developer" }], inventory: [], observedAt: null } });
+  if (url.includes("/api/aws-context/profiles")) return route.fulfill({ json: { profiles: [{ name: "team-development", region: "ap-northeast-2" }, { name: "team-staging", region: "ap-northeast-2" }, { name: "team-production", region: "ap-northeast-2" }] } });
+  if (url.includes("/api/aws-context")) return route.fulfill({ json: { connected: true, activeAccount: "DEV", accounts: [
+    { name: "DEV", profile: "team-development", region: "ap-northeast-2", accountHint: "1234", principal: "developer", displayOrder: 1 },
+    { name: "STG", profile: "team-staging", region: "ap-northeast-2", accountHint: "5678", principal: "developer", displayOrder: 2 },
+    { name: "PRD", profile: "team-production", region: "ap-northeast-2", accountHint: "9012", principal: "developer", displayOrder: 3 },
+  ], inventory: [], observedAt: null } });
   if (url.includes("/api/pinpoint-context")) return route.fulfill({ json: { connected: false, applications: [], observedAt: null } });
   if (url.includes("/api/project-integrations/select-directory")) return route.fulfill({ json: { supported: false, cancelled: true } });
   if (url.includes("/api/project-integrations/browse")) return route.fulfill({ json: {
@@ -80,6 +86,10 @@ await page.waitForTimeout(700);
 console.log("page", page.url(), (await page.locator("body").innerText()).slice(0, 500));
 await page.screenshot({ path: output, fullPage: true });
 await page.getByRole("button", { name: /외부 서비스 인증·서비스 매핑/ }).click();
+await page.getByRole("button", { name: "AWS 계정" }).click();
+await page.getByRole("heading", { name: "AWS 연결" }).waitFor({ timeout: 5_000 });
+await page.screenshot({ path: awsMatrixOutput, fullPage: true });
+await page.getByRole("button", { name: /외부 서비스 인증·서비스 매핑/ }).click();
 await page.getByRole("button", { name: "서비스 상태 연동" }).click();
 await page.getByRole("heading", { name: "서비스 상태 연동" }).waitFor({ timeout: 5_000 });
 await page.waitForTimeout(250);
@@ -100,5 +110,5 @@ await page.screenshot({ path: prOutput, fullPage: true });
 await page.getByRole("button", { name: "사이드바 접기" }).click();
 await page.waitForTimeout(250);
 await page.screenshot({ path: collapsedOutput, fullPage: true });
-console.log(output, mappingOutput, registrationOutput, overviewOutput, prOutput, collapsedOutput);
+console.log(output, mappingOutput, registrationOutput, overviewOutput, prOutput, collapsedOutput, awsMatrixOutput);
 await browser.close();

@@ -4,14 +4,14 @@ import { upsertRow } from "../db/upsert.js";
 import type { AwsContextClient, AwsServiceInventory } from "../aws/contextClient.js";
 import { environmentOfAccount } from "./awsEnvironment.js";
 
-export interface AwsContextAccountSummary { name: string; profile: string; region: string; accountHint: string; principal: string | null; }
+export interface AwsContextAccountSummary { name: string; profile: string; region: string; accountHint: string; principal: string | null; displayOrder: number; }
 export interface AwsContextStatus {
   connected: boolean; activeAccount: string | null; accounts: AwsContextAccountSummary[];
   profile: string | null; region: string | null; accountHint: string | null; principal: string | null;
   observedAt: string | null; inventory: AwsServiceInventory[];
   refreshBudget: { remainingToday: number; dailyLimit: number; nextAllowedAt: string | null; timezone: "Asia/Seoul" } | null;
 }
-interface AccountRow { name: string; profile: string; region: string; account_id: string; principal_arn: string; }
+interface AccountRow { name: string; profile: string; region: string; account_id: string; principal_arn: string; display_order: number; }
 interface PreferenceRow { active_account_name: string; }
 interface SnapshotRow { payload: unknown; observed_at: string; }
 const REFRESH_COOLDOWN_MS = 5 * 60_000;
@@ -59,7 +59,7 @@ function isFresh(observedAt: string | null | undefined): boolean {
 }
 
 async function accountState(db: DbClient, userId: string, requestedAccount?: string): Promise<{ accounts: AccountRow[]; active: AccountRow | null }> {
-  const accounts = await db.query<AccountRow>("SELECT name, profile, region, account_id, principal_arn FROM user_aws_context_accounts WHERE user_id = ? ORDER BY name ASC", [userId]);
+  const accounts = await db.query<AccountRow>("SELECT name, profile, region, account_id, principal_arn, display_order FROM user_aws_context_accounts WHERE user_id = ? ORDER BY display_order ASC, name ASC", [userId]);
   const preferences = await db.query<PreferenceRow>("SELECT active_account_name FROM user_aws_context_preferences WHERE user_id = ?", [userId]);
   const selectedName = requestedAccount ?? preferences[0]?.active_account_name;
   return { accounts, active: accounts.find((account) => account.name === selectedName) ?? (requestedAccount ? null : accounts[0] ?? null) };
@@ -67,7 +67,7 @@ async function accountState(db: DbClient, userId: string, requestedAccount?: str
 
 export async function getAwsContextStatus(db: DbClient, userId: string, requestedAccount?: string): Promise<AwsContextStatus> {
   const { accounts, active } = await accountState(db, userId, requestedAccount);
-  const summaries = accounts.map((account) => ({ name: account.name, profile: account.profile, region: account.region, accountHint: account.account_id.slice(-4), principal: account.principal_arn.split("/").at(-1) ?? null }));
+  const summaries = accounts.map((account, index) => ({ name: account.name, profile: account.profile, region: account.region, accountHint: account.account_id.slice(-4), principal: account.principal_arn.split("/").at(-1) ?? null, displayOrder: account.display_order || index + 1 }));
   if (!active) return { connected: false, activeAccount: null, accounts: summaries, profile: null, region: null, accountHint: null, principal: null, observedAt: null, inventory: [], refreshBudget: null };
   const snapshots = await db.query<SnapshotRow>("SELECT payload, observed_at FROM user_aws_context_snapshots WHERE user_id = ? AND account_name = ?", [userId, active.name]);
   const budgets = await db.query<BudgetRow>('SELECT day_key, day_count, last_started_at FROM user_aws_context_refresh_budget WHERE user_id = ? AND account_name = ?', [userId, active.name]);
@@ -76,12 +76,13 @@ export async function getAwsContextStatus(db: DbClient, userId: string, requeste
 
 export async function connectAwsContext(db: DbClient, userId: string, name: string, profile: string, region: string, client: AwsContextClient): Promise<void> {
   const identity = await client.identity({ profile, region });
-  await upsertRow(db, "user_aws_context_accounts", { user_id: userId, name }, { profile, region, account_id: identity.accountId, principal_arn: identity.arn, updated_at: new Date().toISOString() });
+  const count = await db.query<{ count: number | string }>("SELECT COUNT(*) AS count FROM user_aws_context_accounts WHERE user_id = ?", [userId]);
+  await upsertRow(db, "user_aws_context_accounts", { user_id: userId, name }, { profile, region, account_id: identity.accountId, principal_arn: identity.arn, display_order: Number(count[0]?.count ?? 0) + 1, updated_at: new Date().toISOString() });
   await setActiveAwsContext(db, userId, name);
 }
 
 export async function updateAwsContext(db: DbClient, userId: string, currentName: string, name: string, profile: string, region: string, client: AwsContextClient): Promise<void> {
-  const rows = await db.query<AccountRow>("SELECT name, profile, region, account_id, principal_arn FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId, currentName]);
+  const rows = await db.query<AccountRow>("SELECT name, profile, region, account_id, principal_arn, display_order FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId, currentName]);
   const current = rows[0];
   if (!current) throw Object.assign(new Error("AWS context account not found"), { code: "AWS_CONTEXT_NOT_FOUND" });
   if (name !== currentName) {
@@ -104,6 +105,24 @@ export async function updateAwsContext(db: DbClient, userId: string, currentName
   }
   if (profile !== current.profile || region !== current.region || identity.accountId !== current.account_id) {
     await db.exec("DELETE FROM user_aws_context_snapshots WHERE user_id = ? AND account_name = ?", [userId, name]);
+  }
+}
+
+export async function reorderAwsContexts(db: DbClient, userId: string, names: string[]): Promise<void> {
+  const rows = await db.query<{ name: string }>("SELECT name FROM user_aws_context_accounts WHERE user_id = ?", [userId]);
+  const existing = rows.map((row) => row.name).sort();
+  if (names.length !== existing.length || [...names].sort().some((name, index) => name !== existing[index])) {
+    throw Object.assign(new Error("AWS environment order must include every connected environment exactly once"), { code: "AWS_CONTEXT_ORDER_INVALID" });
+  }
+  for (const [index, name] of names.entries()) {
+    await db.exec("UPDATE user_aws_context_accounts SET display_order = ? WHERE user_id = ? AND name = ?", [index + 1, userId, name]);
+  }
+  const rank = new Map(names.map((name, index) => [name, index]));
+  const mappings = await db.query<{ project_path: string; selections: unknown }>("SELECT project_path, selections FROM user_project_integration_mappings WHERE user_id = ?", [userId]);
+  for (const mapping of mappings) {
+    const selections = parseMaybeJson<Array<{ accountName: string } & Record<string, unknown>>>(mapping.selections, []);
+    const ordered = [...selections].sort((a, b) => (rank.get(a.accountName) ?? 999) - (rank.get(b.accountName) ?? 999));
+    await db.exec("UPDATE user_project_integration_mappings SET selections = ?, updated_at = ? WHERE user_id = ? AND project_path = ?", [JSON.stringify(ordered), new Date().toISOString(), userId, mapping.project_path]);
   }
 }
 

@@ -27,7 +27,7 @@ export async function recordRegisteredProject(db: DbClient, userId: string, work
 function selectionKey(item: ProjectIntegrationSelection): string { return `${item.accountName}\u0000${item.cluster ?? ''}\u0000${item.service}\u0000${item.environment}`; }
 
 async function integrationCandidates(db: DbClient, userId: string) {
-  const snapshots = await db.query<{ account_name: string; payload: unknown }>('SELECT account_name, payload FROM user_aws_context_snapshots WHERE user_id = ? ORDER BY account_name', [userId]);
+  const snapshots = await db.query<{ account_name: string; payload: unknown }>('SELECT s.account_name, s.payload FROM user_aws_context_snapshots s JOIN user_aws_context_accounts a ON a.user_id = s.user_id AND a.name = s.account_name WHERE s.user_id = ? ORDER BY a.display_order, s.account_name', [userId]);
   return snapshots.flatMap((snapshot) => parseMaybeJson<any[]>(snapshot.payload, []).flatMap((inventory) => inventory?.service === 'ecs' ? (inventory.resources ?? []) : []).filter((resource: any) => resource?.kind === 'service').map((resource: any) => ({
     accountName: snapshot.account_name, environment: environmentOfAccount(snapshot.account_name), service: String(resource.id),
     cluster: typeof resource.metadata?.cluster === 'string' ? resource.metadata.cluster : null,
