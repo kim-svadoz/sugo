@@ -4,10 +4,8 @@ import { tmpdir } from "node:os";
 
 const base = process.env.SUGO_UI_URL ?? "http://127.0.0.1:5175";
 const output = process.env.SUGO_SCREENSHOT ?? join(tmpdir(), "sugo-integrations.png");
-const detailOutput = output.replace(/\.png$/i, "-git.png");
 const mappingOutput = output.replace(/\.png$/i, "-mapping.png");
 const registrationOutput = output.replace(/\.png$/i, "-registration.png");
-const permissionsOutput = output.replace(/\.png$/i, "-permissions.png");
 const projects = [
   {
     project_path: "/work/catalog-api",
@@ -67,25 +65,12 @@ await page.waitForTimeout(700);
 console.log("page", page.url(), (await page.locator("body").innerText()).slice(0, 500));
 await page.screenshot({ path: output, fullPage: true });
 await page.getByRole("button", { name: /외부 서비스 인증·서비스 매핑/ }).click();
-await page.getByRole("button", { name: "PR 작업", exact: true }).click();
-await page.getByRole("button", { name: /GitHub .*프로젝트/ }).waitFor({ timeout: 5_000 });
-await page.getByRole("button", { name: /AWS CodeCommit .*2개 프로젝트/ }).click();
-await page.getByText("적용 프로젝트", { exact: true }).waitFor({ timeout: 5_000 });
-await page.getByText("catalog", { exact: true }).last().waitFor({ timeout: 5_000 });
-await page.getByText("identity", { exact: true }).last().waitFor({ timeout: 5_000 });
-await page.getByText("적용 프로젝트", { exact: true }).scrollIntoViewIfNeeded();
-await page.screenshot({ path: permissionsOutput, fullPage: true });
-await page.getByRole("button", { name: /연결 현황 읽기 전용 결과/ }).click();
-await page.getByText("프로젝트별 연결", { exact: true }).scrollIntoViewIfNeeded();
-await page.screenshot({ path: detailOutput, fullPage: false });
 await page.getByRole("button", { name: "서비스 상태" }).click();
-await page.getByText("현재 연결됨", { exact: true }).waitFor({ timeout: 5_000 });
+await page.getByText("운영 서비스 연결", { exact: true }).waitFor({ timeout: 5_000 });
 await page.waitForTimeout(250);
-console.log("active integration tab", await page.locator('nav[aria-label="연동 설정"] button[aria-pressed="true"]').allTextContents());
-console.log("integration tab borders", await page.locator('nav[aria-label="연동 설정"] button').evaluateAll((items) => items.map((item) => [item.textContent, item.getAttribute('aria-pressed'), getComputedStyle(item).borderBottomColor])));
-await page.screenshot({ path: mappingOutput, fullPage: true });
+await page.locator("#integration-projects").screenshot({ path: mappingOutput });
 await page.getByRole("button", { name: /프로젝트 로컬 프로젝트 등록/ }).click();
 await page.getByRole("region", { name: "새 프로젝트 등록" }).waitFor({ timeout: 5_000 });
 await page.screenshot({ path: registrationOutput, fullPage: true });
-console.log(output, detailOutput, mappingOutput, registrationOutput, permissionsOutput);
+console.log(output, mappingOutput, registrationOutput);
 await browser.close();

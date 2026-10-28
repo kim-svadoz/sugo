@@ -22,6 +22,6 @@ describe("Integrations section navigation", () => {
     expect(source).toContain('selectedSection === "serviceMapping"');
     expect(source).toContain('selectedSection === "overview"');
     expect(source).toContain("서비스 연동 미사용");
-    expect(source).toContain("서비스 추가");
+    expect(source).toContain("운영 서비스 연결");
   });
 });

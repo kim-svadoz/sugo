@@ -27,6 +27,25 @@ describe("local Settings presentation", () => {
     expect(source).toContain("groupProjectsByWorkspace(projects)");
     expect(source).not.toContain('id="registered-projects-title"');
     expect(source).toContain("GitHub 액세스 토큰으로 PR 권한 연결");
-    expect(source).toContain("서비스 ID와 클러스터를 저장해 정확히 연결합니다");
+    expect(source).toContain("AWS ECS");
+  });
+
+  it("renders projects in the selected domain as separate readable rows", () => {
+    const source = readFileSync(join(process.cwd(), "src/pages/Settings.tsx"), "utf8");
+    expect(source).not.toContain("domainProjects.join(' · ')");
+    expect(source).toContain("등록 프로젝트");
+    expect(source).toContain("domainProjects.map((projectName)");
+  });
+
+  it("guides service mapping from project selection and handles AWS availability", () => {
+    const source = readFileSync(join(process.cwd(), "src/pages/Settings.tsx"), "utf8");
+    const mapping = source.slice(source.indexOf("function ProjectIntegrationsCard"), source.indexOf("function ApiTokensCard"));
+    expect(mapping).toContain("02</span><strong");
+    expect(mapping).toContain("운영 서비스 연결");
+    expect(mapping).not.toContain("03</span><strong");
+    expect(mapping).not.toContain("ECS 서비스 추가");
+    expect(mapping).toContain("AWS 계정을 연결하세요");
+    expect(mapping).toContain("연결 가능한 운영 서비스가 없습니다");
+    expect(mapping).toContain("animate-pulse");
   });
 });
