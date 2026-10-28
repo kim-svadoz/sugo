@@ -30,7 +30,7 @@ describe("repositoryConnectionBadges", () => {
     })).toEqual([
       { label: "로컬 Git", tone: "local" },
       { label: "원격 · GitHub", tone: "remote" },
-      { label: "AWS 운영 연결됨", tone: "confirmed" },
+      { label: "AWS 서비스 상태 연동", tone: "confirmed" },
     ]);
   });
 });

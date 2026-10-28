@@ -70,7 +70,9 @@ describe("local Settings presentation", () => {
     expect(overview).toContain("APM 관리");
     expect(overview).toContain("Pinpoint");
     expect(overview).not.toContain("ECS/APM");
-    expect(overview).toContain('<table className="w-full min-w-[980px] table-fixed text-left">');
+    expect(overview).toContain('<table className="w-full min-w-[1080px] table-fixed text-left">');
+    expect(overview).toContain('scope="rowgroup"');
+    expect(overview).toContain('left.name.localeCompare(right.name)');
     expect(overview).not.toContain('className="mt-4 grid gap-px');
     expect(overview).not.toContain("origin 없음");
     expect(overview).not.toContain("권한 미설정");

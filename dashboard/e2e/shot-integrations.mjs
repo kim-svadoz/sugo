@@ -86,7 +86,7 @@ await page.waitForTimeout(250);
 await page.locator("#integration-projects").screenshot({ path: mappingOutput });
 await page.getByRole("button", { name: /프로젝트 로컬 프로젝트 등록/ }).click();
 await page.getByRole("region", { name: "새 프로젝트 등록" }).waitFor({ timeout: 5_000 });
-await page.getByRole("button", { name: /폴더를 선택하세요 폴더 선택/ }).click();
+await page.getByRole("button", { name: /폴더를 선택하세요 폴더 찾아보기/ }).click();
 await page.getByRole("region", { name: "프로젝트 폴더 선택" }).waitFor({ timeout: 5_000 });
 await page.screenshot({ path: registrationOutput, fullPage: true });
 await page.getByRole("button", { name: /연결 현황 읽기 전용 결과/ }).click();

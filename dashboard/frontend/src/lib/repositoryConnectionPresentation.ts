@@ -14,6 +14,6 @@ export function repositoryConnectionBadges(input: {
   if (input.localGitAvailable) badges.push({ label: "로컬 Git", tone: "local" });
   if (input.remoteProviderLabel) badges.push({ label: `원격 · ${input.remoteProviderLabel}`, tone: "remote" });
   if (input.awsLinkMode === "suggested") badges.push({ label: "운영 연결 후보", tone: "suggested" });
-  if (input.awsLinkMode === "confirmed") badges.push({ label: "AWS 운영 연결됨", tone: "confirmed" });
+  if (input.awsLinkMode === "confirmed") badges.push({ label: "AWS 서비스 상태 연동", tone: "confirmed" });
   return badges;
 }

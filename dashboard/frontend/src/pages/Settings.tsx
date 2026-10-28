@@ -478,28 +478,40 @@ function ConnectionJourney({ projectCount, remoteCount, permissionCount, awsConn
 }
 
 function ProjectGitConnections({ workspaces, connections }: { workspaces: WorkspaceSummary[] | null; connections: GitConnectionStatus[] }) {
-  const projects = Array.from(new Map((workspaces ?? []).flatMap((workspace) => workspace.projects).map((project) => [project.project_path, project])).values());
-  if (projects.length === 0) return <div className="border-y border-[var(--color-border)] px-1 py-5 text-sm text-[var(--color-text-muted)]">등록된 로컬 프로젝트가 없습니다.</div>;
+  const groupedProjects = [...(workspaces ?? [])]
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((workspace) => ({
+      domain: workspace.name,
+      projects: [...workspace.projects].sort((left, right) => {
+        const leftName = left.project_path.split(/[\\/]/).filter(Boolean).pop() ?? left.project_path;
+        const rightName = right.project_path.split(/[\\/]/).filter(Boolean).pop() ?? right.project_path;
+        return leftName.localeCompare(rightName) || left.project_path.localeCompare(right.project_path);
+      }),
+    }))
+    .filter((group) => group.projects.length > 0);
+  const projectCount = groupedProjects.reduce((total, group) => total + group.projects.length, 0);
+  if (projectCount === 0) return <div className="border-y border-[var(--color-border)] px-1 py-5 text-sm text-[var(--color-text-muted)]">등록된 로컬 프로젝트가 없습니다.</div>;
   return <section aria-label="프로젝트별 저장소 연결" className="border-y border-[var(--color-border)]">
-    <div className="flex items-end justify-between gap-3 border-b border-[var(--color-border)] px-1 py-4"><strong className="text-sm text-[var(--color-text)]">프로젝트별 연결</strong><span className="text-[10px] text-[var(--color-text-dim)]">{projects.length}개 프로젝트</span></div>
+    <div className="flex items-end justify-between gap-3 border-b border-[var(--color-border)] px-1 py-4"><strong className="text-sm text-[var(--color-text)]">프로젝트별 연결</strong><span className="text-[10px] text-[var(--color-text-dim)]">{projectCount}개 프로젝트</span></div>
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[980px] table-fixed text-left">
+      <table className="w-full min-w-[1080px] table-fixed text-left">
         <thead className="border-b border-white/[0.08] text-[10px] font-medium text-[var(--color-text-dim)]">
-          <tr><th className="w-[30%] px-3 py-3">프로젝트</th><th className="w-[18%] px-3 py-3">원격 저장소</th><th className="w-[18%] px-3 py-3">PR 연동</th><th className="w-[17%] px-3 py-3">서비스 상태 관리</th><th className="w-[17%] px-3 py-3">APM 관리</th></tr>
+          <tr><th className="w-[15%] px-3 py-3">도메인</th><th className="w-[25%] px-3 py-3">프로젝트</th><th className="w-[16%] px-3 py-3">원격 저장소</th><th className="w-[16%] px-3 py-3">PR 연동</th><th className="w-[14%] px-3 py-3">서비스 상태 관리</th><th className="w-[14%] px-3 py-3">APM 관리</th></tr>
         </thead>
         <tbody className="divide-y divide-white/[0.07]">
-          {projects.map((project) => {
+          {groupedProjects.flatMap((group) => group.projects.map((project, projectIndex) => {
             const confirmedServices = project.aws_deployments.filter((item) => item.linkMode === "confirmed");
             const pinpointApplications = new Set(confirmedServices.map((item) => item.pinpointApplicationName).filter(Boolean));
             const prConnected = Boolean(project.remote_git && connections.some((connection) => connection.provider === project.remote_git?.provider && (connection.repositories === null || connection.repositories.includes(project.remote_git.repository))));
             return <tr key={project.project_path} className="transition hover:bg-white/[0.018]">
+              {projectIndex === 0 && <th rowSpan={group.projects.length} scope="rowgroup" className="border-r border-white/[0.07] bg-black/10 px-3 py-4 align-top"><strong className="block truncate text-xs font-semibold text-[var(--color-text)]">{group.domain}</strong><small className="mt-1 block font-mono text-[10px] text-[var(--color-text-dim)]">{group.projects.length}개</small></th>}
               <td className="px-3 py-4"><div className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center bg-cyan-300/[0.06] text-cyan-300"><FolderGit2 size={16} /></span><span className="min-w-0"><strong className="block truncate font-mono text-sm text-[var(--color-text)]">{project.project_path.split(/[\\/]/).filter(Boolean).pop()}</strong><small className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{project.project_path}</small></span></div></td>
               <td className="px-3 py-4">{project.remote_git ? <><span className="block text-xs font-semibold text-emerald-300">{project.remote_git.providerLabel}</span><span className="mt-1 block truncate font-mono text-[10px] text-emerald-200/80">{project.remote_git.repository}</span></> : <span className="text-xs text-[var(--color-text-muted)]">-</span>}</td>
               <td className="px-3 py-4"><span className={`text-xs font-semibold ${prConnected ? 'text-emerald-300' : 'text-[var(--color-text-muted)]'}`}>{prConnected ? `${project.remote_git?.providerLabel} 권한 연결됨` : '-'}</span></td>
               <td className="px-3 py-4"><span className={`text-xs font-semibold ${confirmedServices.length > 0 ? 'text-emerald-300' : 'text-[var(--color-text-muted)]'}`}>{confirmedServices.length > 0 ? `ECS ${confirmedServices.length}개` : '-'}</span></td>
               <td className="px-3 py-4"><span className={`text-xs font-semibold ${pinpointApplications.size > 0 ? 'text-emerald-300' : 'text-[var(--color-text-muted)]'}`}>{pinpointApplications.size > 0 ? `Pinpoint ${pinpointApplications.size}개` : '-'}</span></td>
             </tr>;
-          })}
+          }))}
         </tbody>
       </table>
     </div>
