@@ -38,13 +38,14 @@ await page.route("**/health", (route) => route.fulfill({ json: { status: "ok", v
 await page.route("**/*", (route) => {
   const url = route.request().url();
   if (!new URL(url).pathname.startsWith("/api/")) return route.continue();
+  if (url.includes("/api/tokens")) return route.fulfill({ json: { tokens: [] } });
   if (url.includes("/api/git-connections")) return route.fulfill({ json: { providers: [
     { id: "github", label: "GitHub", pullRequests: true, selfHosted: false, defaultBaseUrl: "https://api.github.com", status: "available", authMode: "token" },
     { id: "gitlab", label: "GitLab", pullRequests: true, selfHosted: true, defaultBaseUrl: "https://gitlab.com", status: "available", authMode: "token" },
     { id: "bitbucket_server", label: "Bitbucket Server / Data Center", pullRequests: true, selfHosted: true, defaultBaseUrl: null, status: "available", authMode: "token" },
     { id: "aws_codecommit", label: "AWS CodeCommit", pullRequests: true, selfHosted: false, defaultBaseUrl: null, status: "available", authMode: "aws_default_chain" },
   ], connections: [] } });
-  if (url.includes("/api/aws-context")) return route.fulfill({ json: { connected: true, activeAccount: "default", accounts: [], inventory: [], observedAt: null } });
+  if (url.includes("/api/aws-context")) return route.fulfill({ json: { connected: true, activeAccount: "default", accounts: [{ name: "default", profile: "default", region: "ap-northeast-2", accountHint: "1234", principal: "developer" }], inventory: [], observedAt: null } });
   if (url.includes("/api/pinpoint-context")) return route.fulfill({ json: { connected: false, applications: [], observedAt: null } });
   if (url.includes("/api/project-integrations")) return route.fulfill({ json: {
     projects: [
@@ -64,9 +65,8 @@ await page.route("**/*", (route) => {
 await page.goto(`${base}/settings`, { waitUntil: "domcontentloaded" });
 await page.waitForTimeout(700);
 console.log("page", page.url(), (await page.locator("body").innerText()).slice(0, 500));
-await page.getByText("로컬 Git은 준비됐습니다", { exact: true }).waitFor({ timeout: 5_000 });
-await page.getByText("Git remote를 감지했습니다", { exact: true }).waitFor({ timeout: 5_000 });
 await page.screenshot({ path: output, fullPage: true });
+await page.getByRole("button", { name: /외부 서비스 인증·서비스 매핑/ }).click();
 await page.getByRole("button", { name: "PR 작업", exact: true }).click();
 await page.getByRole("button", { name: /GitHub .*프로젝트/ }).waitFor({ timeout: 5_000 });
 await page.getByRole("button", { name: /AWS CodeCommit .*2개 프로젝트/ }).click();
@@ -75,7 +75,7 @@ await page.getByText("catalog", { exact: true }).last().waitFor({ timeout: 5_000
 await page.getByText("identity", { exact: true }).last().waitFor({ timeout: 5_000 });
 await page.getByText("적용 프로젝트", { exact: true }).scrollIntoViewIfNeeded();
 await page.screenshot({ path: permissionsOutput, fullPage: true });
-await page.getByRole("button", { name: /연결 현황/ }).click();
+await page.getByRole("button", { name: /연결 현황 읽기 전용 결과/ }).click();
 await page.getByText("프로젝트별 연결", { exact: true }).scrollIntoViewIfNeeded();
 await page.screenshot({ path: detailOutput, fullPage: false });
 await page.getByRole("button", { name: "서비스 상태" }).click();
