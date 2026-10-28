@@ -26,17 +26,14 @@ Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin t
 
 | Common problem | What Sugo does |
 | --- | --- |
-| AI-written code is hard to keep to your team's standard | Agents read the stack harness and domain rules before they work, and review catches violations |
-| It is hard to tell whether every requirement was built | Each requirement gets acceptance criteria and contract tests, and its status is shown one by one |
+| AI-written code is hard to keep to your team's standard | Agents read the coding rules for your stack (the harness) and the business rules your team set before they work, and review catches violations |
+| It is hard to tell whether every requirement was built | Each requirement gets acceptance criteria and tests that check them, and you see which requirements are met |
 | You end up re-running builds and tests yourself | Sugo records real build and test runs such as Gradle or npm and decides the next step from those records |
-| Risky commands can run unchecked | Security hooks block AWS writes, secret reads, and edits outside each step's scope |
-| Running many tasks at once makes progress easy to lose | The Console shows progress, blockers, and approval requests per domain on one screen |
-| The reasoning disappears when the session ends | Specs, design decisions, work results, and later patches stay in one history |
+| Risky commands can run unchecked | Security hooks block commands that change AWS resources, secret reads, and edits outside an agent's scope before they run |
+| Running many tasks at once makes progress easy to lose | The Console shows progress, blockers, and approval requests per business area on one screen |
+| The reasoning disappears when the session ends | Specs, design decisions, work results, and later fixes stay in one history |
 | Claude and Codex follow different rules | Both agents read the same rule files |
 | The same mistake comes back | A mistake you record as a rule is followed by every agent from the next session |
-
-> [!TIP]
-> It is not meant for one-line fixes or throwaway experiments. Use a normal chat, and connect only the changes you keep to an existing task with `/sugo:patch-attach`.
 
 ## How it works
 
@@ -44,7 +41,7 @@ Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin t
 
 A person sets the spec. AI agents implement, test, and review. A person approves the result, and Sugo commits. If a test fails, review finds a rule violation, or the person requests changes, the work goes back to implementation.
 
-This flow is a loop of Planner, Executor, and Validator (PEV). The orchestrator splits the spec into steps that can be verified (Planner), and the code and test agents carry them out (Executor). The result is judged not by the same model grading itself but by real build and test records, a read-only review, and human approval (Validator). Work that fails the judgment goes back to implementation with the reason attached.
+Seen as roles, this flow is a loop of Planner, Executor, and Validator (PEV). The Claude session you are talking to splits the spec into steps that can be checked (Planner), code-agent and test-agent do the work (Executor), and whether it passes is decided not by the AI grading itself but by real build and test records, a read-only review, and human approval (Validator).
 
 The reason stays as a sentence at the top of the **spec card** in the Console (the local screen Sugo runs). A spec card collects the status and history of one spec.
 
@@ -70,8 +67,6 @@ The reason stays as a sentence at the top of the **spec card** in the Console (t
 5. **Approve:** a person reads the verification material and the diff in the Console and approves each requirement. Answer policy or scope questions here too, and the same session continues.
 6. **Docs and report:** `docs-agent` updates the project docs, and Sugo saves the change summary, design decisions, open risks, and test evidence to `work-result.md`.
 7. **Commit:** when all steps pass, Sugo makes the commit. The commit message has no AI co-author line.
-
-Put one behavior change in each `/sugo:feat`. If a spec is large, Sugo splits it into subtasks and integrates them.
 
 </details>
 
@@ -110,7 +105,7 @@ In Claude Code, run `/reload-plugins`, then `/sugo:version`. No build or `npm in
 | `/sugo:add` | Registers a project in a domain. It detects the language, framework, and build tool and installs the coding rules for that stack (the harness) |
 | `/sugo:feat` | Runs one feature from spec to commit |
 
-Use absolute paths. Follow progress in the Console (`http://localhost:3001`). The Console starts with each new Claude Code session.
+Use absolute paths. Put one behavior change in each `/sugo:feat`; if a spec is large, Sugo splits it into subtasks and integrates them.
 
 ## Console guide
 
@@ -132,7 +127,7 @@ In **Integrations → 외부 서비스**, connect only what you need. Every inte
 
 **PR integration.** GitHub uses an access token; AWS CodeCommit uses your AWS CLI or SSO login. The token is used only to check branches and read or create PRs. Commit and push use your local Git credentials.
 
-**Service status.** Choose a project and add its running services per environment from the synced list. Connected services appear in the Inspector and in Schedule deployment state.
+**Service status.** Choose a project and add its running services per environment from the synced list. Connected services appear in the Inspector on the right of Workspaces and in Schedule deployment state.
 
 **Monitoring.** Enter a Pinpoint address to read application status and performance from the last 5 minutes.
 
@@ -156,7 +151,9 @@ Open the schedule card to attach more planning links and captures. Choose the ag
 
 ### 4. Follow progress and approve
 
-Follow running work on the Workspaces work floor and the spec card. When a person needs to confirm something, an approval request appears in Home and Schedule; read the review report and diff on the spec card, then approve or request changes. Continue a finished task with **새 Patch 시작** on the spec card.
+Follow running work on the Workspaces work floor and the spec card. When a person needs to confirm something, an approval request appears in Home and Schedule; read the review report and diff on the spec card, then approve or request changes. To change a finished task later, select **새 Patch 시작** on the spec card and the work continues in the same history.
+
+Small work such as a one-line fix or an experiment does not need a spec; handle it in a normal chat. For the changes you want to keep, `/sugo:patch-attach` verifies them and attaches them to an existing task as a patch, so the history stays in one piece.
 
 ### 5. Domain rules
 
@@ -205,8 +202,7 @@ The Schedule Agenda shows today, the next 7 days, and later work. A spec card sh
 | --- | --- |
 | ![Schedule Agenda: today, next 7 days, later, memos](docs/images/console-agenda.png) | ![Spec card: development history from FEAT to PATCH 4, follow-up](docs/images/console-spec.png) |
 
-> [!TIP]
-> Descriptions of every screen, including Weekly, Calendar, and diff, are in the [Console tour](docs/console.en.md).
+The other screens, such as Weekly, Calendar, and diff, are covered in the [Console tour](docs/console.en.md).
 
 ## Commands
 
@@ -340,7 +336,7 @@ Agents usually fall apart in the same few ways. They circle the same spot, belie
 | --- | --- |
 | Stopping is decided from outside | When tests fail, test-agent hands the work back to code-agent at most three times, and the Console shows how many times it did so alongside the reason work stopped. This limit comes from the agent instructions, so the server does not enforce it |
 | No one grades their own work | Test results are recorded as the command that ran and its exit code, and a claim that does not match the record is rejected. Review is done by review-agent, which cannot edit files |
-| Each role gets its own context | The code, test, review, and docs agents each work in their own context and pass on only results. test-agent can edit only test files, and docs-agent only docs |
+| Each role gets its own context | The code, test, review, and docs agents each work in their own context and pass only results to the next agent, so one agent's mistake does not spread to the next step |
 | Expensive decisions stay with people | A person approves before the commit, and pushes it themselves |
 
 ### Evaluation and safety
