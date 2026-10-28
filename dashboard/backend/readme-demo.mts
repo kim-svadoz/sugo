@@ -2,6 +2,7 @@
  * README 스크린샷용 데모 데이터. readme-shots.mjs가 임시 HOME으로 띄운 Console에만 넣는다.
  * 사용자 원장(~/.claude/sugo)과 실제 Console DB는 건드리지 않는다. 회사 이름과 실제 업무 이름을 쓰지 않는다.
  */
+import { execFileSync } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { syncHistory, syncReviewArtifacts, syncRoadmapSnapshot, syncTask, syncWorkspace } from "../../sugo/src/dashboard/sync.js";
@@ -13,6 +14,11 @@ import { createCheckpoint } from "./src/services/workspaceService.js";
 import { createScheduleCommitment } from "./src/services/scheduleCommitmentService.js";
 import { createScheduleMemo } from "./src/services/scheduleMemoService.js";
 import { saveWeeklyReport } from "./src/services/weeklyReportService.js";
+import type { AwsContextClient, AwsInventoryResource, AwsServiceInventory } from "./src/aws/contextClient.js";
+import { connectAwsContext, refreshAllAwsContexts, setActiveAwsContext } from "./src/services/awsContextService.js";
+import { setGitConnection } from "./src/services/gitConnectionService.js";
+import { connectPinpointContext } from "./src/services/pinpointContextService.js";
+import { listProjectIntegrations, recordRegisteredProject, saveProjectIntegration } from "./src/services/projectIntegrationService.js";
 
 const root = process.env.README_DEMO_ROOT;
 const userId = process.env.LOCAL_DEV_USER_ID;
@@ -399,7 +405,12 @@ const tasks: Array<[string, Task]> = [
 ];
 
 for (const [name, projects] of [["payments", [payApi, project("settlement-batch"), project("admin-web")]], ["search", [searchApi, project("search-indexer")]], ["mobile-app", [mobileApp, project("push-gateway")]], ["account", [project("account-api"), project("auth-gateway")]]] as const) {
-  for (const path of projects) await mkdir(path, { recursive: true });
+  for (const path of projects) {
+    await mkdir(path, { recursive: true });
+    // 연결 현황의 원격 저장소 열이 실제처럼 보이도록 예시 원격을 단 빈 저장소로 만든다.
+    execFileSync("git", ["init", "-q", "-b", "main", path]);
+    execFileSync("git", ["-C", path, "remote", "add", "origin", `https://github.com/example/${path.split("/").pop()}.git`]);
+  }
   await syncWorkspace({ name, projects: [...projects], created_at: at(-14 * DAY) });
 }
 for (const [workspace, task] of [...tasks, ...catalogTasks]) await syncTask(workspace, task);
@@ -525,5 +536,49 @@ const memos: Array<[string, string, number | null]> = [
 for (const [title, contentMd, due] of memos) await createScheduleMemo(db, userId, { title, contentMd, dueDate: due === null ? null : dateOnly(due) });
 await createScheduleCommitment(db, userId, { workspaceName: "payments", specId: "pay-spec-refund", title: "부분 환불 STG 반영", dueDate: dateOnly(3), target: "stg", state: "active" });
 await createScheduleCommitment(db, userId, { workspaceName: "account", specId: "account-spec-2fa", title: "2단계 인증 범위 확정", dueDate: dateOnly(8), target: "custom" });
+// 외부 연동: 실제 계정 없이 서비스 함수가 저장하는 형식 그대로 넣는다. 클라이언트는 고정 응답을 돌려주는 가짜다.
+const cloudEnvs = [
+  { name: "DEV", profile: "demo-dev", accountId: "1".repeat(12) },
+  { name: "STG", profile: "demo-stg", accountId: "2".repeat(12) },
+  { name: "PRD", profile: "demo-prd", accountId: "3".repeat(12) },
+];
+const ecsServices = ["payment-api", "settlement-batch", "admin-web", "account-api", "auth-gateway", "search-api", "push-gateway"];
+const fakeCloud: AwsContextClient = {
+  async identity(account) {
+    const env = cloudEnvs.find((item) => item.profile === account.profile)!;
+    return { accountId: env.accountId, arn: `arn:aws:iam::${env.accountId}:role/sugo-readonly` };
+  },
+  async inventory(account) {
+    const env = cloudEnvs.find((item) => item.profile === account.profile)!;
+    const cluster = `demo-${env.name.toLowerCase()}`;
+    const r = (service: AwsInventoryResource["service"], kind: string, id: string, metadata?: Record<string, unknown>): AwsInventoryResource => ({ service, kind, id, ...(metadata ? { metadata } : {}) });
+    const services: AwsServiceInventory[] = [
+      { service: "ecs", resources: [r("ecs", "cluster", cluster), ...ecsServices.map((name, index) => r("ecs", "service", name, {
+        cluster, status: "ACTIVE", desiredCount: env.name === "PRD" ? 4 : 2, runningCount: env.name === "PRD" ? 4 : 2, rolloutState: "COMPLETED",
+        deployedAt: at(-(index + 1) * 9 * 3_600_000), deploymentSource: "ECS_DEPLOYMENT", taskDefinition: `${name}:${40 + index}`, revision: String(40 + index),
+        images: [`${env.accountId}.dkr.ecr.ap-northeast-2.amazonaws.com/${name}:1.${8 + index}.0`], runtimeImages: [], runtimeError: null, pinpointApplicationName: name,
+      }))] },
+      { service: "codepipeline", resources: ecsServices.map((name) => r("codepipeline", "pipeline", `${name}-${env.name.toLowerCase()}`, { repositoryName: name, branchName: env.name === "PRD" ? "main" : "develop", latestBuildStatus: "SUCCEEDED", latestBuildAt: at(-6 * 3_600_000) })) },
+      { service: "dynamodb", resources: ["payment-idempotency", "push-preference"].map((name) => r("dynamodb", "table", `${name}-${env.name.toLowerCase()}`)) },
+      { service: "elasticache", resources: [r("elasticache", "replication-group", `session-${env.name.toLowerCase()}`, { status: "available", engine: "redis" })] },
+      { service: "s3", resources: [r("s3", "bucket", `demo-settlement-reports-${env.name.toLowerCase()}`)] },
+    ];
+    return services;
+  },
+};
+for (const env of cloudEnvs) await connectAwsContext(db, userId, env.name, env.profile, "ap-northeast-2", fakeCloud);
+await setActiveAwsContext(db, userId, "DEV");
+await refreshAllAwsContexts(db, userId, fakeCloud);
+const workspaceProjects: Array<[string, string[]]> = [["payments", ["payment-api", "settlement-batch", "admin-web"]], ["account", ["account-api", "auth-gateway"]], ["search", ["search-api"]], ["mobile-app", ["push-gateway"]]];
+for (const [workspace, names] of workspaceProjects) for (const name of names) await recordRegisteredProject(db, userId, workspace, project(name));
+const { candidates } = await listProjectIntegrations(db, userId);
+for (const [, names] of workspaceProjects) {
+  for (const name of names) {
+    await saveProjectIntegration(db, userId, project(name), candidates.filter((item) => item.service === name).map(({ accountName, environment, service, cluster }) => ({ accountName, environment, service, cluster })));
+  }
+}
+if (process.env.SECRET_ENC_KEY) await setGitConnection(db, userId, "github", "demo-token-for-readme-0000", undefined, undefined, undefined, process.env.SECRET_ENC_KEY);
+await connectPinpointContext(db, userId, "https://apm.example.com", { async verify() { return ecsServices.map((name) => ({ applicationName: name, serviceType: "SPRING_BOOT", serviceTypeCode: 1210 })); } } as never);
+
 await db.close();
 console.log(`[readme-demo] workspaces=4 specs=${7 + catalog.length + 1} events=${events.length + catalogEvents.length} checkpoints=${checkpoints.length + moreCheckpoints.length}`);

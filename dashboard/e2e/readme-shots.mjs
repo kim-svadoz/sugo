@@ -6,6 +6,7 @@
  *   node dashboard/e2e/readme-shots.mjs  # 결과: docs/images/console-*.png
  */
 import { spawn, spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -16,9 +17,10 @@ const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const port = Number(process.env.README_SHOTS_PORT ?? 3199);
 const base = `http://localhost:${port}`;
 const out = join(repo, "docs", "images");
-const home = await mkdtemp(join(tmpdir(), "sugo-readme-"));
+// 화면에 보이는 프로젝트 경로가 짧도록 /tmp 아래에 둔다.
+const home = await mkdtemp("/tmp/sugo-");
 
-const env = { ...process.env, SUGO_HOME_OVERRIDE: home, SUGO_DASHBOARD_PORT: String(port), LOCAL_DEV_USER_ID: "readme-demo", LOCAL_DEV_DISPLAY_NAME: "Demo", README_DEMO_ROOT: home };
+const env = { ...process.env, SUGO_HOME_OVERRIDE: home, SUGO_DASHBOARD_PORT: String(port), LOCAL_DEV_USER_ID: "readme-demo", LOCAL_DEV_DISPLAY_NAME: "Demo", README_DEMO_ROOT: home, SECRET_ENC_KEY: randomBytes(32).toString("base64") };
 for (const key of ["SUGO_DASHBOARD_API_URL", "SUGO_DASHBOARD_API_TOKEN", "SUGO_DASHBOARD_USER_ID", "SQLITE_FILE", "SUGO_SETTINGS_FILE"]) delete env[key];
 
 /** Home 엔지니어링 피드 예시. 외부 RSS 대신 이 브라우저 안에서만 응답을 고정한다. 실제 회사·블로그 이름을 쓰지 않는다. */
@@ -128,6 +130,58 @@ try {
     await page.goto(`${base}/roadmap/${workspace}?focus=${node}`, { waitUntil: "networkidle" });
     await page.waitForTimeout(3500);
     await page.screenshot({ path: join(out, file) });
+  }
+
+  // 플랫폼 설정: 하네스, 외부 연동(클라우드 서비스, 프로젝트별 연결 현황), 개인 설정.
+  await page.goto(`${base}/harness`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(2000);
+  await page.screenshot({ path: join(out, "console-harness.png") });
+  await page.goto(`${base}/settings`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1500);
+  await page.getByText("외부 서비스", { exact: true }).first().click();
+  await page.waitForTimeout(2000);
+  await page.screenshot({ path: join(out, "console-integrations.png") });
+  await page.getByText("연결 현황", { exact: true }).first().click();
+  await page.waitForTimeout(2000);
+  await page.screenshot({ path: join(out, "console-integration-status.png") });
+  await page.goto(`${base}/preferences`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1500);
+  await page.getByText("주간 리포트", { exact: true }).first().click();
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: join(out, "console-preferences.png") });
+
+  // 작업장 GIF: search 도메인의 작업이 테스트에서 커밋까지 넘어가는 장면. 활동 이벤트를 차례로 넣고 화면을 연속으로 찍는다.
+  if (spawnSync("ffmpeg", ["-version"]).status === 0) {
+    await page.setViewportSize({ width: 1440, height: 1200 });
+    await page.goto(`${base}/sessions`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(2000);
+    await page.locator("h3, strong, span").filter({ hasText: /^search$/ }).first().click();
+    await page.waitForTimeout(3000);
+    const floor = page.locator('section[aria-label="search 작업장"]');
+    const box = await floor.boundingBox();
+    const frames = await mkdtemp(join(tmpdir(), "sugo-floor-"));
+    const ingest = (agent, handoffTo, eventType, message) => page.evaluate(async (body) => {
+      const token = JSON.parse(localStorage.getItem("sugo_auth") ?? "{}").accessToken;
+      await fetch("/api/activity/ingest", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
+    }, { userId: "readme-demo", workspace: "search", level: "AGENT", agent, handoffTo, eventType, message, details: { task: { id: "search-task-typo", name: "교정 검색어 생성" } } });
+    const steps = [
+      [2, "TEST", "REVIEW", "HANDOFF", "typo-correction 테스트 31/31 통과"],
+      [8, "REVIEW", "DOCS", "HANDOFF", "typo-correction 검증 완료, 사용자 승인"],
+      [14, "DOCS", "MAIN", "HANDOFF", "typo-correction 문서 갱신"],
+      [20, "MAIN", null, "COMPLETED", "결과가 없으면 교정 검색어를 제안한다.\n테스트 31건 통과."],
+    ];
+    const start = Date.now();
+    let frame = 0;
+    while (Date.now() - start < 27_000) {
+      const elapsed = (Date.now() - start) / 1000;
+      while (steps.length && steps[0][0] <= elapsed) { const [, ...event] = steps.shift(); await ingest(...event); }
+      await page.screenshot({ path: join(frames, `f${String(frame++).padStart(4, "0")}.png`), clip: { x: box.x - 6, y: box.y - 6, width: box.width + 12, height: box.height + 12 } });
+      await page.waitForTimeout(120);
+    }
+    const fps = Math.max(1, Math.round(frame / 27));
+    spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", String(fps * 2), "-i", join(frames, "f%04d.png"),
+      "-vf", "scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4", join(out, "console-workfloor.gif")], { stdio: "inherit" });
+    await rm(frames, { recursive: true, force: true });
   }
 
   await browser.close();

@@ -9,15 +9,25 @@ Sugo는 기능 하나를 정해진 순서로 진행합니다. 요구사항과 �
 > [!NOTE]
 > 커밋까지는 Sugo가 만들고, push는 사용자가 직접 합니다.
 
-![Console Home: 작업 흐름, 승인 요청, 최근 작업 리뷰, 기술 블로그 피드](docs/images/console-home.png)
+![작업장: 작업자가 테스트, 검토, 문서를 지나 커밋까지 가는 장면](docs/images/console-workfloor.gif)
+
+## Sugo가 막는 장면
+
+AI 에이전트가 "다 됐습니다"라고 말해도, Sugo는 실행 기록과 규칙을 확인하기 전에는 다음 단계로 넘기지 않습니다.
+
+| 테스트가 실패하면 넘어가지 않습니다 | 검토에서 도메인 규칙 위반을 잡습니다 | 빠진 요구사항은 승인 전에 드러납니다 |
+| --- | --- | --- |
+| ![테스트 실패 2/26으로 구현에 되돌아간 작업](docs/images/console-caught-test.png) | ![검토에서 도메인 규칙 위반 2건을 찾아 되돌린 작업](docs/images/console-caught-rule.png) | ![요구사항 하나가 빠진 채 올라온 승인 요청](docs/images/console-caught-requirement.png) |
+| 26건 중 2건이 실패한 작업은 완료로 보고되지 않고 구현으로 돌아갑니다 | 테스트를 모두 통과해도 금액을 `double`로 계산한 코드는 구현으로 돌아갑니다 | 세 요구사항 중 하나가 빠진 작업은 2/3으로 표시되고 사람이 수정을 요청합니다 |
 
 ## 목차
 
+- [Sugo가 막는 장면](#sugo가-막는-장면)
 - [Sugo가 해결하는 문제](#sugo가-해결하는-문제)
 - [Sugo가 생각하는 AI 개발](#sugo가-생각하는-ai-개발)
 - [언제 쓰나요](#언제-쓰나요)
 - [빠른 시작](#빠른-시작)
-- [Console에서 일하기](#console에서-일하기)
+- [Console](#console)
 - [명령](#명령)
 - [설정과 연동](#설정과-연동)
 - [설치하면 바뀌는 것](#설치하면-바뀌는-것)
@@ -123,9 +133,11 @@ flowchart LR
 
 `/sugo:feat` 하나에는 동작 변경 하나를 담습니다. PRD가 크면 하위 작업으로 나눠 진행한 뒤 통합합니다.
 
-## Console에서 일하기
+## Console
 
 시작은 명령으로 하고, 확인과 판단은 Console(`http://localhost:3001`)에서 합니다. Console은 새 Claude Code 세션마다 자동으로 시작합니다.
+
+![Console Home: 작업 흐름, 승인 요청, 최근 작업 리뷰, 기술 블로그 피드](docs/images/console-home.png)
 
 | 할 일 | Console에서 | 명령 |
 | --- | --- | --- |
@@ -137,67 +149,14 @@ flowchart LR
 | 후속 수정 | 완료 작업의 이력을 확인합니다 | `/sugo:patch` |
 | 주간 회고 | Weekly에서 주간 보고서와 기술 학습 노트를 봅니다 | `/sugo:weekly` |
 
-### 일정 잡기
+Sugo는 이 작업들이 기대는 설정도 함께 관리합니다. 스택별 코딩 규칙(Harness), 클라우드 서비스와 프로젝트별 연결(Integrations), Weekly 일정(Preferences)을 Console에서 정합니다.
 
-개발 일정을 마감일에 배치하고, 일정 카드에서 스펙 작성 명령을 복사해 시작합니다.
+| Harness | Integrations | Preferences |
+| --- | --- | --- |
+| ![Harness: 기술과 버전별 코딩 규칙](docs/images/console-harness.png) | ![Integrations: 프로젝트별 연결 현황](docs/images/console-integration-status.png) | ![Preferences: 주간 리포트 생성 일정](docs/images/console-preferences.png) |
 
-![Schedule Calendar: 마감일 기준 개발 일정](docs/images/console-calendar.png)
-
-### 도메인과 도메인 규칙
-
-같은 업무 영역의 프로젝트를 한 도메인으로 묶고, 도메인 규칙으로 같은 맥락과 규약을 유지합니다.
-
-![도메인 관리: 도메인별 진행 상태와 도메인 규칙 수](docs/images/console-domains.png)
-
-![도메인 규칙: 도메인 전체 규칙과 프로젝트 전용 규칙](docs/images/console-checkpoints.png)
-
-- 도메인 카드에서 진행 상태, 차단 건수, 도메인 규칙 수를 봅니다.
-- 도메인 규칙은 도메인 전체나 특정 프로젝트에 적용합니다. 규칙마다 생긴 이유와 확인 항목을 적습니다.
-- `/sugo:checkpoint-sync`가 규칙을 각 프로젝트의 `.claude/rules/<분류>/`에 씁니다. Claude Code와 Codex는 작업 전에 이 규칙을 읽습니다.
-
-### 진행 확인
-
-Home 작업 흐름은 SPEC 작성부터 커밋까지의 단계를 한 줄로 보여 줍니다. 사람이 맡는 단계와 AI가 맡는 단계는 색으로 구분합니다.
-
-Workspaces 작업장에서는 선택한 작업이 지금 어느 단계에 있는지 그림으로 봅니다. 아래 최근 작업 요약 카드에 작업 제목과 완료 결과가 나오고, 도메인에 작업이 여러 개면 카드의 화살표로 바꿉니다. 오른쪽 Inspector에서는 도메인의 프로젝트(Repositories), 완료 이력(History), 선택한 작업의 단계별 기록(Activity)을 봅니다.
-
-![Workspaces 작업장: 작업 진행 단계, 최근 작업 요약, Inspector](docs/images/console-workspaces.png)
-
-### 승인
-
-검증 결과와 변경 파일 diff를 보고 승인하거나 수정을 요청합니다.
-
-<p>
-  <img src="docs/images/console-approval.png" alt="작업 결과 확인과 승인" width="49%">
-  <img src="docs/images/console-diff.png" alt="변경 파일 diff" width="49%">
-</p>
-
-### 작업 이력
-
-한 작업의 최초 구현(FEAT)과 이후의 patch가 하나의 개발 이력으로 이어집니다. 차수마다 무엇을 바꿨는지와 날짜가 남고, 마지막 결과를 기준으로 다음 patch를 시작합니다.
-
-![작업 이력: 최초 구현부터 patch 4차까지의 개발 이력](docs/images/console-lineage.png)
-
-### 주간 회고
-
-Weekly는 한 주의 완료 결과와 커밋 본문을 모아 주간 보고서와 기술 학습 노트를 만듭니다. 보고서는 지난주 계획, 주제별 상황과 목적, 막힌 것, 다음 주 계획으로 나뉩니다. 생성 일정은 Preferences에서 정합니다.
-
-![Weekly: 주간 작업 리포트](docs/images/console-weekly.png)
-
-### 화면 구성
-
-| 화면 | 내용 |
-| --- | --- |
-| Home | 작업 흐름, 오늘 이어갈 작업과 승인 요청, 최근 완료 작업과 학습 노트, 기술 블로그 피드 |
-| Workspaces | 도메인별 프로젝트, 도메인 규칙, 작업 이력, 작업별 진행 단계, Agent Canvas(작업 그래프, patch 이력, 승인 근거, diff) |
-| Schedule | 스펙 일정, 기획 링크와 메모, 배포 상태 |
-| Weekly | 주간 보고서와 기술 학습 노트 |
-| Skills, Playbook | 에이전트, 명령, 스킬 목록과 사용 시나리오 |
-| Harness | 프로젝트에 적용되는 코딩 규칙 |
-| Integrations | Git 서비스, AWS, Pinpoint 연결, 플러그인 API 토큰 |
-| Preferences | 표시 이름, 날씨 지역, Weekly 생성 일정 |
-
-Console 데이터는 `~/.claude/sugo/dashboard/`에 저장되고 업데이트 후에도 남습니다. Console이 꺼져 있어도 파이프라인은 그대로 진행되고, 동기화는 나중에 전송됩니다.
+> [!TIP]
+> 모든 화면의 스크린샷과 설명은 [Console 둘러보기](docs/console.md)에 있습니다.
 
 ## 명령
 

@@ -9,15 +9,25 @@ Sugo runs each feature in a fixed order. It sets requirements and acceptance cri
 > [!NOTE]
 > Sugo makes the commit. You push.
 
-![Console Home: work flow, approval requests, recent work reviews, engineering-blog feed](docs/images/console-home.png)
+![Work floor: the worker moves through test, review, and docs to commit](docs/images/console-workfloor.gif)
+
+## What Sugo stops
+
+Even when an AI agent says "done", Sugo does not move the work on until it checks the execution records and the rules.
+
+| A failing test stops the work | Review catches a domain rule violation | A missing requirement shows before approval |
+| --- | --- | --- |
+| ![A task sent back to implementation after 2 of 26 tests failed](docs/images/console-caught-test.png) | ![A task sent back from review for two domain rule violations](docs/images/console-caught-rule.png) | ![An approval request with one requirement missing](docs/images/console-caught-requirement.png) |
+| A task with 2 of 26 tests failing is not reported as done and goes back to implementation | Even with every test passing, code that computes money as `double` goes back to implementation | A task that leaves one of three requirements undone shows 2/3, and a person requests changes |
 
 ## Contents
 
+- [What Sugo stops](#what-sugo-stops)
 - [Problems it solves](#problems-it-solves)
 - [How Sugo sees AI development](#how-sugo-sees-ai-development)
 - [When to use it](#when-to-use-it)
 - [Quick start](#quick-start)
-- [Working in the Console](#working-in-the-console)
+- [Console](#console)
 - [Commands](#commands)
 - [Configuration and integrations](#configuration-and-integrations)
 - [What installing Sugo changes](#what-installing-sugo-changes)
@@ -123,9 +133,11 @@ If a step stops, Sugo returns the missing condition and how to fix it. Answer po
 
 Put one behavior change in each `/sugo:feat`. If a PRD is large, Sugo splits it into subtasks and integrates them.
 
-## Working in the Console
+## Console
 
 Start with commands. Check and decide in the Console (`http://localhost:3001`). The Console starts with each new Claude Code session.
+
+![Console Home: work flow, approval requests, recent work reviews, engineering-blog feed](docs/images/console-home.png)
 
 | Task | In the Console | Command |
 | --- | --- | --- |
@@ -137,67 +149,14 @@ Start with commands. Check and decide in the Console (`http://localhost:3001`). 
 | Later fix | Check the history of the finished task | `/sugo:patch` |
 | Weekly review | Read the weekly report and learning notes in Weekly | `/sugo:weekly` |
 
-### Schedule
+Sugo also manages the setup this work depends on. Set coding rules per stack (Harness), cloud services and per-project connections (Integrations), and the Weekly schedule (Preferences) in the Console.
 
-Place development schedules on their due dates, and copy the spec command from the schedule card to start.
+| Harness | Integrations | Preferences |
+| --- | --- | --- |
+| ![Harness: coding rules by technology and version](docs/images/console-harness.png) | ![Integrations: connection status per project](docs/images/console-integration-status.png) | ![Preferences: Weekly report schedule](docs/images/console-preferences.png) |
 
-![Schedule Calendar: development schedule by due date](docs/images/console-calendar.png)
-
-### Domains and domain rules
-
-Group the projects of one business area into a domain, and keep the same context and conventions with domain rules.
-
-![Domain management: progress and domain rule count per domain](docs/images/console-domains.png)
-
-![Domain rules: rules for the whole domain and rules for one project](docs/images/console-checkpoints.png)
-
-- Each domain card shows progress, blocked tasks, and the number of domain rules.
-- A domain rule applies to the whole domain or to one project. Each rule records why it exists and what to check.
-- `/sugo:checkpoint-sync` writes the rules to `.claude/rules/<category>/` in each project. Claude Code and Codex read these rules before they work.
-
-### Check progress
-
-The Home work flow shows the steps from spec to commit in one row. Human steps and AI steps have different colors.
-
-On the Workspaces work floor, see the current step of the selected task as a picture. The recent work summary card below shows the task title and its finished result. When a domain has more than one task, switch with the arrows on the card. The Inspector on the right shows the domain projects (Repositories), finished history (History), and the step records of the selected task (Activity).
-
-![Workspaces work floor: task step, recent work summary, Inspector](docs/images/console-workspaces.png)
-
-### Approve
-
-Read the verification result and the changed-file diff, then approve or request changes.
-
-<p>
-  <img src="docs/images/console-approval.png" alt="Work result review and approval" width="49%">
-  <img src="docs/images/console-diff.png" alt="Changed-file diff" width="49%">
-</p>
-
-### Work history
-
-A task's first implementation (FEAT) and its later patches stay in one development history. Each round records what changed and when, and the next patch starts from the latest result.
-
-![Work history: development history from the first implementation to patch 4](docs/images/console-lineage.png)
-
-### Weekly review
-
-Weekly collects the finished results and commit bodies of one week into a weekly report and technical learning notes. The report has last week's plan, the situation and goal of each topic, blockers, and next week's plan. Set the generation schedule in Preferences.
-
-![Weekly: weekly work report](docs/images/console-weekly.png)
-
-### Screens
-
-| Screen | Content |
-| --- | --- |
-| Home | Work flow, work to continue and approval requests, recent finished work and learning notes, engineering-blog feed |
-| Workspaces | Projects, domain rules, and history per domain; step per task; Agent Canvas (task graph, patch history, approval evidence, diff) |
-| Schedule | Spec schedule, planning links and memos, deployment state |
-| Weekly | Weekly reports and learning notes |
-| Skills, Playbook | Agents, commands, and skills; usage scenarios |
-| Harness | Coding rules for your projects |
-| Integrations | Git providers, AWS, Pinpoint, plugin API tokens |
-| Preferences | Display name, weather region, Weekly generation schedule |
-
-Console data is in `~/.claude/sugo/dashboard/` and stays after updates. If the Console is off, the pipeline continues and sends sync data later.
+> [!TIP]
+> Screenshots and descriptions of every screen are in the [Console tour](docs/console.en.md).
 
 ## Commands
 
