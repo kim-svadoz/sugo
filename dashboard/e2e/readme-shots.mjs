@@ -86,7 +86,7 @@ try {
   const homeHeight = await homePage.evaluate(() => Math.max(...[...document.querySelectorAll("main, main *")].filter((el) => el.scrollHeight > el.clientHeight + 4).map((el) => el.scrollHeight), document.body.scrollHeight));
   await homePage.setViewportSize({ width: 1440, height: homeHeight + 120 });
   await homePage.waitForTimeout(1500);
-  await homePage.screenshot({ path: join(out, "console-homePage.png") });
+  await homePage.screenshot({ path: join(out, "console-home.png") });
   // README용 Home 첫 화면: 인사, 오늘의 할 일, 작업 흐름까지.
   const flowPanel = await homePage.getByText("TODAY IN SUGO", { exact: true }).first().locator("xpath=ancestor::section[1]").boundingBox().catch(() => null);
   await homePage.screenshot({ path: join(out, "console-home-top.png"), clip: { x: 0, y: 0, width: 1440, height: flowPanel ? flowPanel.y + flowPanel.height + 24 : 980 } });
