@@ -186,7 +186,7 @@ function workResult(path: string, files: DemoFile[], title: string, summary: str
 const payApi = project("payment-api");
 const paySpec = join(payApi, "docs", "specs");
 await specFile(join(paySpec, "checkout-guard.md"), "결제 중복 방지", "## 요구사항\n\n- 모든 결제 승인 요청은 `Idempotency-Key`를 받는다.\n- 같은 키의 요청은 최초 승인 결과를 재사용한다.");
-await specFile(join(paySpec, "webhook-retry.md"), "웹훅 재처리", "## 요구사항\n\n- 실패한 웹훅을 지수 백오프로 재시도한다.\n- 6회 실패한 이벤트는 DLQ로 옮긴다.");
+await specFile(join(paySpec, "webhook-retry.md"), "웹훅 재처리", "## 요구사항\n\n- 실패한 웹훅을 지수 백오프로 재시도한다.\n- 6회 실패한 이벤트는 DLQ로 옮긴다.\n- DLQ로 옮긴 이벤트를 운영 채널에 알린다.");
 await specFile(join(paySpec, "partial-refund.md"), "부분 환불 API", "## 요구사항\n\n- 주문 금액 일부를 환불한다.\n- 누적 환불액은 결제 금액을 넘지 않는다.");
 await specFile(join(paySpec, "receipt-mail.md"), "결제 완료 메일", "## 요구사항\n\n- 결제 완료 후 영수증 메일을 보낸다.");
 
@@ -194,6 +194,9 @@ const guardDir = join(payApi, "sugo", "features", dateOnly(-4).replaceAll("-", "
 const guardV0 = workResult(join(guardDir, "work-result.md"), idempotencyFiles, "결제 중복 방지", "멱등키로 중복 결제 요청을 차단했다.", 0, at(-3 * DAY));
 const guardV1 = workResult(join(guardDir, "work-result-patch-v1.md"), idempotencyFiles, "결제 중복 방지", "동시 요청에서도 최초 승인 한 건만 발생하도록 보강했다.", 1, at(-1 * DAY));
 const webhookResult = workResult(join(payApi, "sugo", "features", dateOnly(-1).replaceAll("-", ""), "webhook-retry", "work-result-patch-v1.md"), webhookFiles, "웹훅 재처리", "실패한 웹훅을 지수 백오프로 재시도하고 6회 실패 시 DLQ로 옮긴다.", 1, now);
+// 장면 3: 세 요구사항 중 운영 알림이 빠진 채 승인 요청이 올라와, 사람이 요구사항별로 보고 수정을 요청할 수 있다.
+webhookResult.report.requirements = [{ id: "요구사항 1", covered: true }, { id: "요구사항 2", covered: true }, { id: "요구사항 3", covered: false }];
+webhookResult.report.knownLimitations = ["DLQ 이동 알림이 아직 없다. 운영 채널 연동은 구현하지 않았다."];
 const webhookV0 = { completedAt: at(-3 * DAY), summary: "실패한 웹훅을 30초 간격으로 3회 재시도한다." };
 
 const webhookBlocker = buildReviewConfirmationBlocker({
@@ -202,7 +205,7 @@ const webhookBlocker = buildReviewConfirmationBlocker({
   changes: ["RetryScheduler 추가: 15초부터 두 배씩 늘어나는 재시도 간격", "6회 초과 이벤트를 DLQ로 이동"],
   tests: ["./gradlew check 24/24 통과", "백오프 간격과 DLQ 경계 테스트 추가"],
   designDecisions: ["재시도 상태는 이벤트 테이블의 attempt 컬럼으로 관리한다.", "DLQ 이동은 재처리 큐와 같은 트랜잭션에서 처리한다."],
-  knownLimitations: ["DLQ 이벤트의 수동 재처리 화면은 다음 작업으로 남긴다."],
+  knownLimitations: ["DLQ 이동 알림(요구사항 3)을 구현하지 않았다. 운영 채널 연동 방식이 정해지지 않았다.", "DLQ 이벤트의 수동 재처리 화면은 다음 작업으로 남긴다."],
   files: webhookFiles.map((file) => ({ ...file })),
   report: webhookResult.report,
 } as Parameters<typeof buildReviewConfirmationBlocker>[0]);
@@ -219,9 +222,15 @@ const paymentsRoadmap: RoadmapNode[] = [
   { id: "pay-task-webhook", title: "실패 웹훅 재처리 큐", level: "task", status: "blocked", dependsOn: [], parent: "pay-run-webhook", ref: "pay-task-webhook", note: "검증 결과 확인 대기: 재시도 간격과 DLQ 이동 조건 승인 필요", workResult: webhookResult, humanBlocker: webhookBlocker , lineage: [{ version: 0, completedAt: webhookV0.completedAt, title: "최초 구현", summary: webhookV0.summary, changedFiles: webhookResult.report.changedFiles, workResult: { path: webhookResult.path.replace("work-result-patch-v1.md", "work-result.md"), summary: webhookV0.summary, patchVersion: 0 }, requirements: [{ id: "요구사항 1", title: "실패한 웹훅을 재시도한다", status: "done" as const }], runtimeVerified: true, wiringVerified: true }] },
   { id: "pay-task-webhook::1", title: "지수 백오프로 재시도한다", level: "subtask", status: "done", dependsOn: [], parent: "pay-task-webhook" },
   { id: "pay-task-webhook::2", title: "6회 실패 시 DLQ로 옮긴다", level: "subtask", status: "done", dependsOn: [], parent: "pay-task-webhook" },
+  { id: "pay-task-webhook::3", title: "DLQ로 옮긴 이벤트를 운영 채널에 알린다", level: "subtask", status: "pending", dependsOn: [], parent: "pay-task-webhook" },
   { id: "pay-spec-refund", title: "부분 환불 API", level: "spec", status: "in_progress", dependsOn: [], specPath: join(paySpec, "partial-refund.md") },
   { id: "pay-run-refund", title: "부분 환불 API", level: "workstream", status: "in_progress", dependsOn: [], parent: "pay-spec-refund" },
-  { id: "pay-task-refund", title: "누적 환불 한도 검증", level: "task", status: "in_progress", dependsOn: [], parent: "pay-run-refund", ref: "pay-task-refund" },
+  { id: "pay-task-refund", title: "누적 환불 한도 검증", level: "task", status: "in_progress", dependsOn: [], parent: "pay-run-refund", ref: "pay-task-refund",
+    note: "검토에서 도메인 규칙 \"금액은 원 단위 정수(long)로만 계산한다\" 위반 2건을 찾아 구현으로 되돌렸다: RefundCalculator가 환불 비율을 double로 계산한다.",
+    runtimeAssessment: { projectionSchemaVersion: 1, status: "in_progress", currentStage: "CODE_RUNNING", nextActions: ["code_done"], recommendedAction: "code_done", humanDecisionRequired: false,
+      blockers: ["review 미통과"], evidence: [], blockingReason: "검토 미통과: 도메인 규칙 cp-pay-money 위반 2건(RefundCalculator의 double 금액 계산)" } },
+  { id: "pay-task-refund::1", title: "주문 금액 일부를 환불한다", level: "subtask", status: "done", dependsOn: [], parent: "pay-task-refund" },
+  { id: "pay-task-refund::2", title: "누적 환불액이 결제 금액을 넘지 않는다", level: "subtask", status: "in_progress", dependsOn: [], parent: "pay-task-refund" },
   { id: "pay-spec-receipt", title: "결제 완료 메일", level: "spec", status: "pending", dependsOn: [], specPath: join(paySpec, "receipt-mail.md") },
 ];
 
@@ -365,9 +374,23 @@ for (const feature of catalog) {
 
 /* account 대기 SPEC: 이후 일정으로 남는 기능 */
 await specFile(join(project("account-api"), "docs", "specs", "two-factor.md"), "2단계 인증", "## 요구사항\n\n- 앱 OTP로 2단계 인증을 켠다.\n- 복구 코드 10개를 발급한다.");
-catalogRoadmaps.set("account", [...(catalogRoadmaps.get("account") ?? []), { id: "account-spec-2fa", title: "2단계 인증", level: "spec", status: "pending", dependsOn: [], specPath: join(project("account-api"), "docs", "specs", "two-factor.md") }]);
+catalogRoadmaps.set("account", [...(catalogRoadmaps.get("account") ?? []), { id: "account-spec-2fa", title: "2단계 인증", level: "spec", status: "in_progress", dependsOn: [], specPath: join(project("account-api"), "docs", "specs", "two-factor.md") }]);
+
+// 장면 1: 테스트 실패 2건이 기록돼 완료로 넘어가지 못하고 구현으로 돌아간 작업.
+catalogRoadmaps.get("account")!.push(
+  { id: "account-run-2fa", title: "2단계 인증", level: "workstream", status: "in_progress", dependsOn: [], parent: "account-spec-2fa" },
+  { id: "account-task-otp", title: "앱 OTP 등록과 검증", level: "task", status: "in_progress", dependsOn: [], parent: "account-run-2fa", ref: "account-task-otp",
+    note: "테스트 26건 중 2건이 실패해 완료로 넘어가지 못했다: 시계 오차 30초 허용, 같은 OTP 재사용 거부.",
+    runtimeAssessment: { projectionSchemaVersion: 1, status: "in_progress", currentStage: "CODE_RUNNING", nextActions: ["code_done"], recommendedAction: "code_done", humanDecisionRequired: false,
+      blockers: ["테스트 실패 2/26", "test_done 시점 판정이 fail — 그린 증거 기록 후 test_reverify 필요"], evidence: [{ id: "test", label: "테스트 실행 증거", status: "present", source: "session.data.chainInfo.testEvidence" }],
+      blockingReason: "테스트 실패 2/26: 시계 오차 허용 범위, OTP 재사용 거부" } },
+  { id: "account-task-otp::1", title: "앱 OTP 비밀키를 등록한다", level: "subtask", status: "done", dependsOn: [], parent: "account-task-otp" },
+  { id: "account-task-otp::2", title: "시계 오차 30초까지 허용한다", level: "subtask", status: "in_progress", dependsOn: [], parent: "account-task-otp" },
+  { id: "account-task-otp::3", title: "한 번 쓴 OTP는 다시 받지 않는다", level: "subtask", status: "in_progress", dependsOn: [], parent: "account-task-otp" },
+);
 
 const tasks: Array<[string, Task]> = [
+  ["account", { id: "account-task-otp", title: "앱 OTP 등록과 검증", project: "account-api", status: "in_progress", priority: "high", created_at: at(-1 * DAY), started_at: at(-1 * DAY) }],
   ["payments", { id: "pay-task-guard", title: "멱등키 기반 중복 결제 차단", project: "payment-api", status: "done", priority: "high", created_at: at(-4 * DAY), completed_at: guardV1.endedAt }],
   ["payments", { id: "pay-task-webhook", title: "실패 웹훅 재처리 큐", project: "payment-api", status: "in_progress", priority: "medium", created_at: at(-1 * DAY), started_at: at(-1 * DAY) }],
   ["payments", { id: "pay-task-refund", title: "누적 환불 한도 검증", project: "payment-api", status: "in_progress", priority: "high", created_at: now, started_at: now }],
@@ -418,7 +441,13 @@ const events = [
   { minAgo: 22, workspace: "payments", agent: "CODE", handoffTo: "TEST", eventType: "HANDOFF", message: "webhook-retry 구현 완료, 2개 파일 변경", details: task("pay-task-webhook", "실패 웹훅 재처리 큐") },
   { minAgo: 9, workspace: "payments", agent: "TEST", handoffTo: "REVIEW", eventType: "HANDOFF", message: "webhook-retry 검증 완료, 24/24 통과", details: task("pay-task-webhook", "실패 웹훅 재처리 큐") },
   { minAgo: 2, workspace: "payments", agent: "REVIEW", handoffTo: null, eventType: "EXECUTE", message: "webhook-retry 사용자 확인 요청", details: { ...task("pay-task-webhook", "실패 웹훅 재처리 큐"), stage: "user_confirmation" } },
-  { minAgo: 3, workspace: "payments", agent: "MAIN", handoffTo: "CODE", eventType: "HANDOFF", message: "partial-refund 구현 시작", details: task("pay-task-refund", "누적 환불 한도 검증") },
+  { minAgo: 58, workspace: "payments", agent: "MAIN", handoffTo: "CODE", eventType: "HANDOFF", message: "partial-refund 구현 시작", details: task("pay-task-refund", "누적 환불 한도 검증") },
+  { minAgo: 36, workspace: "payments", agent: "CODE", handoffTo: "TEST", eventType: "HANDOFF", message: "partial-refund 구현 완료, 3개 파일 변경", details: task("pay-task-refund", "누적 환불 한도 검증") },
+  { minAgo: 27, workspace: "payments", agent: "TEST", handoffTo: "REVIEW", eventType: "HANDOFF", message: "partial-refund 테스트 22/22 통과", details: task("pay-task-refund", "누적 환불 한도 검증") },
+  { minAgo: 14, workspace: "payments", agent: "REVIEW", handoffTo: "CODE", eventType: "HANDOFF", message: "partial-refund 검토 미통과: 도메인 규칙 cp-pay-money 위반 2건(double 금액 계산), 구현으로 되돌림", details: task("pay-task-refund", "누적 환불 한도 검증") },
+  { minAgo: 52, workspace: "account", agent: "MAIN", handoffTo: "CODE", eventType: "HANDOFF", message: "two-factor 구현 시작", details: task("account-task-otp", "앱 OTP 등록과 검증") },
+  { minAgo: 24, workspace: "account", agent: "CODE", handoffTo: "TEST", eventType: "HANDOFF", message: "two-factor 구현 완료, 4개 파일 변경", details: task("account-task-otp", "앱 OTP 등록과 검증") },
+  { minAgo: 5, workspace: "account", agent: "TEST", handoffTo: "CODE", eventType: "HANDOFF", message: "two-factor 테스트 실패 2/26(시계 오차 허용, OTP 재사용 거부), 구현으로 되돌림", details: task("account-task-otp", "앱 OTP 등록과 검증") },
   { minAgo: 6, workspace: "search", agent: "MAIN", handoffTo: "CODE", eventType: "HANDOFF", message: "typo-correction 구현 시작", details: task("search-task-typo", "교정 검색어 생성") },
   { minAgo: 1, workspace: "search", agent: "CODE", handoffTo: "TEST", eventType: "HANDOFF", message: "typo-correction 구현 완료, 3개 파일 변경", details: task("search-task-typo", "교정 검색어 생성") },
 ] as const;

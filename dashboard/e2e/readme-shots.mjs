@@ -122,6 +122,14 @@ try {
   await page.waitForTimeout(2000);
   await page.screenshot({ path: join(out, "console-weekly.png") });
 
+  // Sugo가 막은 장면: 테스트 실패로 구현에 되돌림, 검토에서 도메인 규칙 위반 발견, 요구사항 하나가 빠진 채 올라온 승인 요청.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  for (const [workspace, node, file] of [["account", "account-task-otp", "console-caught-test.png"], ["payments", "pay-task-refund", "console-caught-rule.png"], ["payments", "pay-task-webhook", "console-caught-requirement.png"]]) {
+    await page.goto(`${base}/roadmap/${workspace}?focus=${node}`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(3500);
+    await page.screenshot({ path: join(out, file) });
+  }
+
   await browser.close();
   console.log(`[readme-shots] ${out}`);
 } finally {
