@@ -30,12 +30,13 @@ describe("local Settings presentation", () => {
     expect(source).toContain("AWS ECS");
   });
 
-  it("keeps domain cards fixed and renders selected domain projects in a separate panel", () => {
+  it("renders existing domains as a browser with a stable project detail pane", () => {
     const source = readFileSync(join(process.cwd(), "src/pages/Settings.tsx"), "utf8");
     expect(source).not.toContain("domainProjects.join(' · ')");
     expect(source).toContain("selectedDomainProjects.map((projectName)");
     expect(source).toContain('aria-label="선택한 도메인의 등록 프로젝트"');
-    expect(source).not.toContain("active && <span className=\"mt-3 block");
+    expect(source).toContain('aria-label="도메인 브라우저"');
+    expect(source).toContain('sm:grid-cols-[16rem_minmax(0,1fr)]');
   });
 
   it("guides service mapping from project selection and handles AWS availability", () => {
@@ -51,6 +52,18 @@ describe("local Settings presentation", () => {
     expect(mapping).toContain("serviceStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })");
     expect(mapping).toContain("projectSelectionComplete ? <Check");
     expect(mapping).toContain('ref={serviceStepRef}');
+    expect(mapping).toContain("projectSelectionComplete && path === item.project_path");
+  });
+
+  it("separates repository, PR, service health, and APM status", () => {
+    const source = readFileSync(join(process.cwd(), "src/pages/Settings.tsx"), "utf8");
+    const overview = source.slice(source.indexOf("function ProjectGitConnections"), source.indexOf("export function Settings"));
+    expect(overview).toContain("원격 저장소");
+    expect(overview).toContain("PR 연동");
+    expect(overview).toContain("서비스 상태 관리");
+    expect(overview).toContain("APM 관리");
+    expect(overview).toContain("Pinpoint");
+    expect(overview).not.toContain("ECS/APM");
   });
 
   it("uses larger labels for the three integration stages", () => {

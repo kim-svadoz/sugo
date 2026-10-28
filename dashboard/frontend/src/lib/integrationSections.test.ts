@@ -13,7 +13,8 @@ describe("Integrations section navigation", () => {
     expect(source).toContain('label: "PR 연동"');
     expect(source).toContain('label: "서비스 상태 연동"');
     expect(source).toContain('label: "모니터링"');
-    expect(source).toContain('provider.id === "github" || provider.id === "aws_codecommit"');
+    expect(source).toContain('{ id: "aws" as const, label: "AWS 계정" }');
+    expect(source).toContain('provider.id === "github" || (awsConnected && provider.id === "aws_codecommit")');
     expect(source).toContain("AWS 자격 증명으로 PR 권한 연결");
     expect(source).toContain("AWS 연결");
     expect(source).toContain("Pinpoint APM");
@@ -28,5 +29,7 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("저장소 선택");
     expect(source).toContain("권한 설정");
     expect(source).toContain("permissionStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })");
+    expect(source).not.toContain('if (selectedSection === "git") setSelected("github")');
+    expect(source).toContain('if (selected === provider.id && providerSelectionComplete)');
   });
 });
