@@ -32,6 +32,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { findScheduleReviewTarget } from "../lib/scheduleReviewTarget.js";
 import { PageHeading } from "../components/PageHeading.js";
 import { latestDevelopmentPreview } from "../lib/scheduleDevelopmentPreview.js";
+import { getProjectIntegrations, type IntegrationSelection } from "../api/projectIntegrationsApi.js";
+import { scheduleDeploymentEnvironments } from "../lib/scheduleDeploymentEnvironments.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -66,12 +68,10 @@ function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compac
   return <span className={cn("shrink-0 rounded px-1 py-0.5 font-semibold", compact ? "text-[8px]" : "text-[9px]", tone)}>{label}</span>;
 }
 
-function DeploymentReach({ spec }: { spec: ScheduledSpec | null }) {
-  const reached = spec?.deployment?.environment ?? "UNKNOWN";
-  const order = ["LOCAL", "DEV", "STG", "PRD"] as const;
-  const reachedIndex = order.indexOf(reached as (typeof order)[number]);
-  return <div className="flex shrink-0 items-center gap-1" aria-label={`최신 작업 배포 범위 ${reached}`} title="이 SPEC의 최신 feat 또는 patch가 확인된 마지막 환경">
-    {order.map((environment, index) => <span key={environment} className={cn("rounded-md border px-1.5 py-1 font-mono text-[9px] font-bold", index <= reachedIndex ? "border-sky-400/35 bg-sky-400/12 text-sky-200" : "border-white/[0.08] bg-black/10 text-slate-600")}>{environment}</span>)}
+function DeploymentReach({ spec, selections }: { spec: ScheduledSpec | null; selections: IntegrationSelection[] }) {
+  const environments = scheduleDeploymentEnvironments(selections, spec?.deployment);
+  return <div className="flex shrink-0 items-center gap-1" aria-label="최신 작업 배포 범위" title="LOCAL과 이 프로젝트에 연결한 운영 환경의 반영 상태">
+    {environments.map((environment) => <span key={environment.key} className={cn("max-w-24 truncate rounded-md border px-1.5 py-1 font-mono text-[9px] font-bold", environment.reached ? "border-sky-400/35 bg-sky-400/12 text-sky-200" : "border-white/[0.08] bg-black/10 text-slate-600")}>{environment.label}</span>)}
   </div>;
 }
 
@@ -102,6 +102,19 @@ export function SchedulePage() {
   const [addImages, setAddImages] = useState<Array<{ file: File; url: string }>>([]);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [integrationSelections, setIntegrationSelections] = useState<Map<string, IntegrationSelection[]>>(new Map());
+
+  useEffect(() => {
+    let cancelled = false;
+    void getProjectIntegrations().then(({ projects }) => {
+      if (!cancelled) setIntegrationSelections(new Map(projects.map((project) => [project.project_path, project.selections])));
+    }).catch(() => {
+      if (!cancelled) setIntegrationSelections(new Map());
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const deploymentSelections = (spec: ScheduledSpec | null) => spec?.project_path ? integrationSelections.get(spec.project_path) ?? [] : [];
 
   useEffect(() => {
     if (searchParams.get("create") === "1") setAddOpen(true);
@@ -632,7 +645,7 @@ export function SchedulePage() {
                                         : <span className="ml-2 border-l border-white/10 pl-2 font-mono font-semibold text-sky-300">D-{remaining}</span>}
                                 </div>
                               </div>
-                              <DeploymentReach spec={spec} />
+                              <DeploymentReach spec={spec} selections={deploymentSelections(spec)} />
                             </div>
                           );
                         })}
@@ -760,7 +773,7 @@ export function SchedulePage() {
                           <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1900px]:hidden">
                             <button type="button" onClick={() => spec && openSpec(spec)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100">{commitment.title}</button>
                             {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">파이프라인 완료</span>}
-                            {spec && <SpecDeploymentBadge deployment={spec.deployment} title={commitment.title} />}
+                            {spec && <SpecDeploymentBadge deployment={spec.deployment} title={commitment.title} environments={scheduleDeploymentEnvironments(deploymentSelections(spec), spec.deployment)} />}
                           </div>
                         </div>
                       );
@@ -833,7 +846,7 @@ export function SchedulePage() {
                     <div className="flex items-center justify-between gap-2">
                       <strong className="font-semibold text-white">{guidance.kind === "done" ? "파이프라인 완료" : guidance.currentStage}</strong>
                       {guidance.kind !== "done" && <SpecStageBadge spec={selected} />}
-                      <SpecDeploymentBadge deployment={selected.deployment} title={selected.title} />
+                      <SpecDeploymentBadge deployment={selected.deployment} title={selected.title} environments={scheduleDeploymentEnvironments(deploymentSelections(selected), selected.deployment)} />
                     </div>
                     {guidance.kind !== "done" && selected.focus_task_human_blocker?.kind !== "review_confirmation" && <>
                     <p className="mt-1 text-slate-300">{guidance.reason}</p>

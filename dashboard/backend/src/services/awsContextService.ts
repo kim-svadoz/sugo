@@ -2,6 +2,7 @@ import type { DbClient } from "../db/client.js";
 import { parseMaybeJson } from "../db/jsonColumn.js";
 import { upsertRow } from "../db/upsert.js";
 import type { AwsContextClient, AwsServiceInventory } from "../aws/contextClient.js";
+import { environmentOfAccount } from "./awsEnvironment.js";
 
 export interface AwsContextAccountSummary { name: string; profile: string; region: string; accountHint: string; principal: string | null; }
 export interface AwsContextStatus {
@@ -77,6 +78,33 @@ export async function connectAwsContext(db: DbClient, userId: string, name: stri
   const identity = await client.identity({ profile, region });
   await upsertRow(db, "user_aws_context_accounts", { user_id: userId, name }, { profile, region, account_id: identity.accountId, principal_arn: identity.arn, updated_at: new Date().toISOString() });
   await setActiveAwsContext(db, userId, name);
+}
+
+export async function updateAwsContext(db: DbClient, userId: string, currentName: string, name: string, profile: string, region: string, client: AwsContextClient): Promise<void> {
+  const rows = await db.query<AccountRow>("SELECT name, profile, region, account_id, principal_arn FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId, currentName]);
+  const current = rows[0];
+  if (!current) throw Object.assign(new Error("AWS context account not found"), { code: "AWS_CONTEXT_NOT_FOUND" });
+  if (name !== currentName) {
+    const duplicate = await db.query("SELECT 1 FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId, name]);
+    if (duplicate[0]) throw Object.assign(new Error("AWS context alias already exists"), { code: "AWS_CONTEXT_ALIAS_EXISTS" });
+  }
+  const identity = await client.identity({ profile, region });
+  await db.exec("UPDATE user_aws_context_accounts SET name = ?, profile = ?, region = ?, account_id = ?, principal_arn = ?, updated_at = ? WHERE user_id = ? AND name = ?", [name, profile, region, identity.accountId, identity.arn, new Date().toISOString(), userId, currentName]);
+  if (name !== currentName) {
+    await db.exec("UPDATE user_aws_context_snapshots SET account_name = ? WHERE user_id = ? AND account_name = ?", [name, userId, currentName]);
+    await db.exec("UPDATE user_aws_context_preferences SET active_account_name = ?, updated_at = ? WHERE user_id = ? AND active_account_name = ?", [name, new Date().toISOString(), userId, currentName]);
+    await db.exec("UPDATE user_aws_context_refresh_budget SET account_name = ? WHERE user_id = ? AND account_name = ?", [name, userId, currentName]);
+    const mappings = await db.query<{ project_path: string; selections: unknown }>("SELECT project_path, selections FROM user_project_integration_mappings WHERE user_id = ?", [userId]);
+    for (const mapping of mappings) {
+      const selections = parseMaybeJson<Array<{ accountName: string; environment: string; service: string; cluster?: string | null }>>(mapping.selections, []);
+      if (!selections.some((selection) => selection.accountName === currentName)) continue;
+      const updated = selections.map((selection) => selection.accountName === currentName ? { ...selection, accountName: name, environment: environmentOfAccount(name) } : selection);
+      await db.exec("UPDATE user_project_integration_mappings SET selections = ?, updated_at = ? WHERE user_id = ? AND project_path = ?", [JSON.stringify(updated), new Date().toISOString(), userId, mapping.project_path]);
+    }
+  }
+  if (profile !== current.profile || region !== current.region || identity.accountId !== current.account_id) {
+    await db.exec("DELETE FROM user_aws_context_snapshots WHERE user_id = ? AND account_name = ?", [userId, name]);
+  }
 }
 
 export async function setActiveAwsContext(db: DbClient, userId: string, name: string): Promise<void> {

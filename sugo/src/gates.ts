@@ -74,10 +74,10 @@ export function checkBaselineGate(required: boolean, baselineEvidenceExitCode: n
 // ── analyze 호출강제 ─────────────────────────────────────────────────────────
 
 /** analyzePassed:true 같은 자기보고 파라미터가 아니라 서버가 기록한 호출 횟수만 본다. */
-export function checkAnalyzeGate(analyzeAttempts: number, hasPrd: boolean): GateCheckResult {
+export function checkAnalyzeGate(analyzeAttempts: number, hasPrd: boolean, blockedAction = "code_done"): GateCheckResult {
   if (!hasPrd) return ok();
   if (analyzeAttempts < 1) {
-    return fail("ANALYZE_NOT_CALLED", "code_done 전에 sugo_analyze를 최소 1회 실제 호출해야 합니다.");
+    return fail("ANALYZE_NOT_CALLED", `${blockedAction} 전에 sugo_analyze를 최소 1회 실제 호출해야 합니다.`);
   }
   return ok();
 }
@@ -359,7 +359,7 @@ export function validateConformanceLedger(prdContent: string): GateCheckResult {
   if (ghost.length > 0) parts.push(`존재하지 않는 REQ 참조: ${[...new Set(ghost)].join(", ")}`);
   return fail(
     "CONFORMANCE_LEDGER_INCOMPLETE",
-    `In-Scope/DoD 원장이 REQ와 맞물리지 않습니다 — ${parts.join(" · ")}. 항목을 REQ로 승격하거나 원장에서 빼세요.`,
+    `In-Scope/DoD 원장이 REQ와 맞물리지 않습니다 — ${parts.join(" · ")}. 범위·완료조건의 각 항목 끝에 (REQ-N)을 붙이거나 원장에서 빼세요.`,
   );
 }
 

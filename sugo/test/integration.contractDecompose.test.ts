@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -223,7 +223,7 @@ describe("decompose 오케스트레이션 — 전체 흐름", () => {
     expect(result.data.errorCode).toBe("MANIFEST_REQUIREMENT_UNCOVERED");
   });
 
-  it("전체 흐름: decompose→subtask_start×2→subtask_done×2→integrate→docs_done까지 이어진다", async () => {
+  it("전체 흐름: decompose→subtask_start×2→subtask_done×2→integrate→commit이 work-result를 남긴다", async () => {
     const sessionId = await toPrd();
     const decomposeResult = await call(handleSugoPlan, {
       action: "decompose",
@@ -272,6 +272,14 @@ describe("decompose 오케스트레이션 — 전체 흐름", () => {
     const docsDone = await call(handleSugoPlan, { action: "docs_done", sessionId });
     expect(docsDone.isError).toBe(false);
     expect(docsDone.data.state).toBe("COMMIT_PENDING");
+
+    const commit = await call(handleSugoPlan, { action: "commit", sessionId });
+    expect(commit.isError).toBe(false);
+    expect(commit.data.state).toBe("DONE");
+    expect(commit.data.completionGrade).toBe("unverified");
+    expect(commit.data.workResultPath).toMatch(/work-result\.md$/);
+    expect(existsSync(commit.data.workResultPath)).toBe(true);
+    expect(readFileSync(commit.data.workResultPath, "utf8")).toContain("분해 작업 통합 경로");
   });
 
   it("실제 변경파일이 겹치면 integrate 시점에 거부된다(계획엔 안 겹쳤어도)", async () => {

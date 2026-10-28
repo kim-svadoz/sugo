@@ -53,7 +53,7 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
   const rootClaudePath = join(projectPath, "CLAUDE.md");
   const rootAgentsPath = join(projectPath, "AGENTS.md");
   const existingManifest = await loadInstallManifest(projectPath);
-  const manifest: InstallManifest = existingManifest ?? {
+  const manifest: InstallManifest = existingManifest ? { ...existingManifest, projectPath } : {
     version: 1,
     projectPath,
     sugoDirExisted: await access(sugoDir).then(() => true, () => false),

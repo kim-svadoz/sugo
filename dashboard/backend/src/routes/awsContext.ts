@@ -4,7 +4,7 @@ import type { DbClient } from "../db/client.js";
 import type { AwsContextClient } from "../aws/contextClient.js";
 import { requireUser } from "../auth/requireUser.js";
 import { validateBody } from "../schemas/validate.js";
-import { connectAwsContext, disconnectAwsContext, getAwsContextStatus, refreshAllAwsContexts, refreshAwsContext, refreshAwsDeploymentImages, setActiveAwsContext } from "../services/awsContextService.js";
+import { connectAwsContext, disconnectAwsContext, getAwsContextStatus, refreshAllAwsContexts, refreshAwsContext, refreshAwsDeploymentImages, setActiveAwsContext, updateAwsContext } from "../services/awsContextService.js";
 
 const connectSchema = z.object({
   name: z.string().trim().min(1).max(64),
@@ -26,6 +26,15 @@ export function createAwsContextRouter(db: DbClient, sessionSecret: string, clie
       res.json({ ok: true });
     } catch (error) {
       res.status(502).json({ error: "AWS_IDENTITY_FAILED", message: error instanceof Error ? error.message : String(error) });
+    }
+  });
+  router.patch("/:name", validateBody(connectSchema), async (req, res) => {
+    try {
+      await updateAwsContext(db, req.userId!, req.params.name, req.body.name, req.body.profile, req.body.region, client);
+      res.json({ ok: true });
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      res.status(code === "AWS_CONTEXT_NOT_FOUND" ? 404 : code === "AWS_CONTEXT_ALIAS_EXISTS" ? 409 : 502).json({ error: code ?? "AWS_IDENTITY_FAILED", message: error instanceof Error ? error.message : String(error) });
     }
   });
   router.post("/active", validateBody(accountSchema), async (req, res) => {

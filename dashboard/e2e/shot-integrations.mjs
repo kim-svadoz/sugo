@@ -48,6 +48,7 @@ await page.route("**/*", (route) => {
   ], connections: [] } });
   if (url.includes("/api/aws-context")) return route.fulfill({ json: { connected: true, activeAccount: "default", accounts: [{ name: "default", profile: "default", region: "ap-northeast-2", accountHint: "1234", principal: "developer" }], inventory: [], observedAt: null } });
   if (url.includes("/api/pinpoint-context")) return route.fulfill({ json: { connected: false, applications: [], observedAt: null } });
+  if (url.includes("/api/project-integrations/select-directory")) return route.fulfill({ json: { supported: false, cancelled: true } });
   if (url.includes("/api/project-integrations/browse")) return route.fulfill({ json: {
     path: "/Users/demo/dev",
     parentPath: "/Users/demo",

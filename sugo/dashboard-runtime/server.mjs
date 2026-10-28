@@ -53342,6 +53342,32 @@ async function connectAwsContext(db2, userId2, name, profile, region, client) {
   await upsertRow(db2, "user_aws_context_accounts", { user_id: userId2, name }, { profile, region, account_id: identity.accountId, principal_arn: identity.arn, updated_at: (/* @__PURE__ */ new Date()).toISOString() });
   await setActiveAwsContext(db2, userId2, name);
 }
+async function updateAwsContext(db2, userId2, currentName, name, profile, region, client) {
+  const rows = await db2.query("SELECT name, profile, region, account_id, principal_arn FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId2, currentName]);
+  const current = rows[0];
+  if (!current) throw Object.assign(new Error("AWS context account not found"), { code: "AWS_CONTEXT_NOT_FOUND" });
+  if (name !== currentName) {
+    const duplicate = await db2.query("SELECT 1 FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId2, name]);
+    if (duplicate[0]) throw Object.assign(new Error("AWS context alias already exists"), { code: "AWS_CONTEXT_ALIAS_EXISTS" });
+  }
+  const identity = await client.identity({ profile, region });
+  await db2.exec("UPDATE user_aws_context_accounts SET name = ?, profile = ?, region = ?, account_id = ?, principal_arn = ?, updated_at = ? WHERE user_id = ? AND name = ?", [name, profile, region, identity.accountId, identity.arn, (/* @__PURE__ */ new Date()).toISOString(), userId2, currentName]);
+  if (name !== currentName) {
+    await db2.exec("UPDATE user_aws_context_snapshots SET account_name = ? WHERE user_id = ? AND account_name = ?", [name, userId2, currentName]);
+    await db2.exec("UPDATE user_aws_context_preferences SET active_account_name = ?, updated_at = ? WHERE user_id = ? AND active_account_name = ?", [name, (/* @__PURE__ */ new Date()).toISOString(), userId2, currentName]);
+    await db2.exec("UPDATE user_aws_context_refresh_budget SET account_name = ? WHERE user_id = ? AND account_name = ?", [name, userId2, currentName]);
+    const mappings = await db2.query("SELECT project_path, selections FROM user_project_integration_mappings WHERE user_id = ?", [userId2]);
+    for (const mapping of mappings) {
+      const selections = parseMaybeJson(mapping.selections, []);
+      if (!selections.some((selection) => selection.accountName === currentName)) continue;
+      const updated = selections.map((selection) => selection.accountName === currentName ? { ...selection, accountName: name, environment: environmentOfAccount(name) } : selection);
+      await db2.exec("UPDATE user_project_integration_mappings SET selections = ?, updated_at = ? WHERE user_id = ? AND project_path = ?", [JSON.stringify(updated), (/* @__PURE__ */ new Date()).toISOString(), userId2, mapping.project_path]);
+    }
+  }
+  if (profile !== current.profile || region !== current.region || identity.accountId !== current.account_id) {
+    await db2.exec("DELETE FROM user_aws_context_snapshots WHERE user_id = ? AND account_name = ?", [userId2, name]);
+  }
+}
 async function setActiveAwsContext(db2, userId2, name) {
   const rows = await db2.query("SELECT name FROM user_aws_context_accounts WHERE user_id = ? AND name = ?", [userId2, name]);
   if (!rows[0]) throw Object.assign(new Error("AWS context account not found"), { code: "AWS_CONTEXT_NOT_FOUND" });
@@ -53417,6 +53443,7 @@ var init_awsContextService = __esm({
     "use strict";
     init_jsonColumn();
     init_upsert();
+    init_awsEnvironment();
     REFRESH_COOLDOWN_MS = 5 * 6e4;
     AWS_REFRESH_MIN_INTERVAL_MS = 60 * 6e4;
     AWS_REFRESH_DAILY_LIMIT = 4;
@@ -53437,6 +53464,15 @@ function createAwsContextRouter(db2, sessionSecret2, client) {
       res.json({ ok: true });
     } catch (error2) {
       res.status(502).json({ error: "AWS_IDENTITY_FAILED", message: error2 instanceof Error ? error2.message : String(error2) });
+    }
+  });
+  router.patch("/:name", validateBody(connectSchema), async (req, res) => {
+    try {
+      await updateAwsContext(db2, req.userId, req.params.name, req.body.name, req.body.profile, req.body.region, client);
+      res.json({ ok: true });
+    } catch (error2) {
+      const code = error2.code;
+      res.status(code === "AWS_CONTEXT_NOT_FOUND" ? 404 : code === "AWS_CONTEXT_ALIAS_EXISTS" ? 409 : 502).json({ error: code ?? "AWS_IDENTITY_FAILED", message: error2 instanceof Error ? error2.message : String(error2) });
     }
   });
   router.post("/active", validateBody(accountSchema), async (req, res) => {
@@ -79971,7 +80007,7 @@ var require_dist_cjs12 = __commonJS({
   "../dashboard/backend/node_modules/@aws-sdk/credential-provider-process/dist-cjs/index.js"(exports) {
     var { externalDataInterceptor: externalDataInterceptor2, CredentialsProviderError: CredentialsProviderError2, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config3(), __toCommonJS(config_exports));
     var { exec: exec3 } = __require("node:child_process");
-    var { promisify: promisify8 } = __require("node:util");
+    var { promisify: promisify9 } = __require("node:util");
     var { setCredentialFeature: setCredentialFeature2 } = (init_client5(), __toCommonJS(client_exports2));
     var getValidatedProcessCredentials = (profileName, data, profiles) => {
       if (data.Version !== 1) {
@@ -80007,7 +80043,7 @@ var require_dist_cjs12 = __commonJS({
       if (profiles[profileName]) {
         const credentialProcess = profile["credential_process"];
         if (credentialProcess !== void 0) {
-          const execPromise = promisify8(externalDataInterceptor2?.getTokenRecord?.().exec ?? exec3);
+          const execPromise = promisify9(externalDataInterceptor2?.getTokenRecord?.().exec ?? exec3);
           try {
             const { stdout } = await execPromise(credentialProcess);
             let data;
@@ -90075,6 +90111,13 @@ var init_projectRegistrar = __esm({
 import { homedir as homedir4 } from "node:os";
 import { readdir as readdir3, realpath } from "node:fs/promises";
 import { basename as basename5, dirname as dirname3, isAbsolute as isAbsolute5, join as join12, relative as relative4 } from "node:path";
+async function inspectProjectDirectory(path) {
+  const current = await realpath(path);
+  const entries = await readdir3(current, { withFileTypes: true });
+  const names = new Set(entries.map((entry) => entry.name));
+  const signals = [...PROJECT_MARKERS].filter((marker) => names.has(marker));
+  return { path: current, name: basename5(current), projectLike: signals.length > 0, signals };
+}
 function assertInsideHome(path, home) {
   const rel = relative4(home, path);
   if (rel === ".." || rel.startsWith("../") || rel.startsWith("..\\") || isAbsolute5(rel)) {
@@ -90105,6 +90148,40 @@ var init_localDirectoryBrowser = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/nativeDirectoryPicker.ts
+import { execFile as execFile6 } from "node:child_process";
+import { platform as currentPlatform } from "node:os";
+import { promisify as promisify7 } from "node:util";
+function supportsNativeDirectoryPicker(platform2 = currentPlatform()) {
+  return platform2 === "darwin" || platform2 === "win32";
+}
+async function selectNativeDirectory(platform2 = currentPlatform(), run = runFile) {
+  try {
+    const result = platform2 === "darwin" ? await run("osascript", ["-e", macScript]) : platform2 === "win32" ? await run("powershell.exe", ["-NoProfile", "-STA", "-Command", windowsScript]) : void 0;
+    const selected = result?.stdout.trim();
+    return selected || void 0;
+  } catch (error2) {
+    const exitCode = error2.code;
+    if (exitCode === 1 || exitCode === "1") return void 0;
+    throw error2;
+  }
+}
+var runFile, macScript, windowsScript;
+var init_nativeDirectoryPicker = __esm({
+  "../dashboard/backend/src/services/nativeDirectoryPicker.ts"() {
+    "use strict";
+    runFile = promisify7(execFile6);
+    macScript = 'POSIX path of (choose folder with prompt "Sugo\uC5D0 \uB4F1\uB85D\uD560 \uD504\uB85C\uC81D\uD2B8 \uD3F4\uB354\uB97C \uC120\uD0DD\uD558\uC138\uC694")';
+    windowsScript = [
+      "Add-Type -AssemblyName System.Windows.Forms",
+      "$dialog = New-Object System.Windows.Forms.FolderBrowserDialog",
+      "$dialog.Description = 'Sugo\uC5D0 \uB4F1\uB85D\uD560 \uD504\uB85C\uC81D\uD2B8 \uD3F4\uB354\uB97C \uC120\uD0DD\uD558\uC138\uC694'",
+      "$dialog.ShowNewFolderButton = $false",
+      "if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Write($dialog.SelectedPath) }"
+    ].join("; ");
+  }
+});
+
 // ../dashboard/backend/src/routes/projectIntegrations.ts
 function createProjectIntegrationsRouter(db2, secret, registrar = runProjectRegistrar) {
   const router = (0, import_express19.Router)();
@@ -90115,6 +90192,22 @@ function createProjectIntegrationsRouter(db2, secret, registrar = runProjectRegi
       res.json(await inspectLocalDirectory(typeof req.query.path === "string" ? req.query.path : void 0));
     } catch (error2) {
       res.status(400).json({ error: error2?.code ?? "DIRECTORY_BROWSE_FAILED", message: error2 instanceof Error ? error2.message : String(error2) });
+    }
+  });
+  router.post("/select-directory", async (_req, res) => {
+    try {
+      if (!supportsNativeDirectoryPicker()) {
+        res.json({ supported: false, cancelled: true });
+        return;
+      }
+      const path = await selectNativeDirectory();
+      if (!path) {
+        res.json({ supported: true, cancelled: true });
+        return;
+      }
+      res.json({ supported: true, cancelled: false, ...await inspectProjectDirectory(path) });
+    } catch (error2) {
+      res.status(500).json({ error: "DIRECTORY_PICKER_FAILED", message: error2 instanceof Error ? error2.message : String(error2) });
     }
   });
   router.post("/register", validateBody(registrationSchema), async (req, res) => {
@@ -90146,6 +90239,7 @@ var init_projectIntegrations = __esm({
     init_projectIntegrationService();
     init_projectRegistrar();
     init_localDirectoryBrowser();
+    init_nativeDirectoryPicker();
     schema2 = external_exports.object({ projectPath: external_exports.string().min(1).max(1024), selections: external_exports.array(external_exports.object({ accountName: external_exports.string().min(1).max(191), service: external_exports.string().min(1).max(512), environment: external_exports.string().min(1).max(64), cluster: external_exports.string().max(512).nullable().optional() })).max(100) });
     registrationSchema = external_exports.object({
       projectPath: external_exports.string().trim().min(1).max(2048),
@@ -90298,12 +90392,12 @@ __export(weeklyScheduleService_exports, {
   weeklyHomeDir: () => weeklyHomeDir,
   weeklyRunDecision: () => weeklyRunDecision
 });
-import { execFile as execFile6 } from "node:child_process";
+import { execFile as execFile7 } from "node:child_process";
 import { appendFile, mkdir as mkdir4, readdir as readdir4, readFile as readFile9, stat as stat2, unlink as unlink3, writeFile as writeFile5 } from "node:fs/promises";
 import { homedir as homedir5 } from "node:os";
 import { dirname as dirname5, join as join13, resolve as resolve5 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
-import { promisify as promisify7 } from "node:util";
+import { promisify as promisify8 } from "node:util";
 function weeklyHomeDir() {
   return process.env.WEEKLY_HOME ?? join13(homedir5(), ".weekly");
 }
@@ -90407,7 +90501,7 @@ var execFileAsync3;
 var init_weeklyScheduleService = __esm({
   "../dashboard/backend/src/services/weeklyScheduleService.ts"() {
     "use strict";
-    execFileAsync3 = promisify7(execFile6);
+    execFileAsync3 = promisify8(execFile7);
   }
 });
 
@@ -90663,7 +90757,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname6(fileURLToPath4(import.meta.url));
-    pkg = "0.45.1" ? { version: "0.45.1" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.45.2" ? { version: "0.45.2" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90786,7 +90880,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.45.1", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.45.2", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

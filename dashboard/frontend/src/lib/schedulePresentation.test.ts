@@ -96,7 +96,8 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("Calendar에서 전체 이력 보기");
     expect(source).not.toContain("작업 목표 추가");
     expect(source).toContain("DeploymentReach");
-    expect(source).toContain('["LOCAL", "DEV", "STG", "PRD"]');
+    expect(source).toContain("scheduleDeploymentEnvironments");
+    expect(source).not.toContain('["LOCAL", "DEV", "STG", "PRD"]');
     expect(source).not.toContain("completeFromQueue");
   });
 

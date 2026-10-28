@@ -9,9 +9,9 @@ import {
   type GitProviderId,
 } from "../api/gitConnectionsApi.js";
 import { createToken, listTokens, revokeToken, type ApiTokenSummary } from "../api/tokensApi.js";
-import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsContexts, refreshAwsContext, selectAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
+import { connectAwsContext, disconnectAwsContext, getAwsContext, refreshAllAwsContexts, refreshAwsContext, selectAwsContext, updateAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
 import { connectPinpointContext, disconnectPinpointContext, getPinpointContext, refreshPinpointContext, type PinpointStatus } from '../api/pinpointContextApi.js';
-import { browseLocalDirectories, getProjectIntegrations, registerProject, saveProjectIntegration, type IntegrationCandidate, type LocalDirectoryListing, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
+import { browseLocalDirectories, getProjectIntegrations, registerProject, saveProjectIntegration, selectNativeProjectDirectory, type IntegrationCandidate, type LocalDirectoryListing, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
 import { awsAccountMetaLabel, awsAccountOptionLabel, groupProjectsByWorkspace, hasIntegrationSelectionChanges, initialIntegrationSelection, integrationCandidateMatchLabel, integrationStatusLabel, isExactIntegrationCandidate, partitionIntegrationCandidates, summarizeSavedIntegrations } from "../lib/projectIntegrationPresentation.js";
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
 import { PageHeading } from "../components/PageHeading.js";
@@ -45,6 +45,7 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
   const [profile, setProfile] = useState("");
   const [region, setRegion] = useState("ap-northeast-2");
   const [adding, setAdding] = useState(false);
+  const [editingName, setEditingName] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +56,13 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
 
   async function connect() {
     setBusy(true);
-    try { await connectAwsContext(accountName, profile, region); setAdding(false); setAccountName(""); setProfile(""); await refreshAwsContext(); await load(); }
+    try {
+      if (editingName) await updateAwsContext(editingName, accountName, profile, region);
+      else await connectAwsContext(accountName, profile, region);
+      setAdding(false); setEditingName(null); setAccountName(""); setProfile("");
+      if (!editingName) await refreshAwsContext();
+      await load();
+    }
     catch (err) { setError(String(err)); }
     finally { setBusy(false); }
   }
@@ -84,6 +91,15 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
     catch (err) { setError(String(err)); }
     finally { setBusy(false); }
   }
+  function editActiveAccount() {
+    const account = status?.accounts.find((item) => item.name === status.activeAccount);
+    if (!account) return;
+    setEditingName(account.name);
+    setAccountName(account.name);
+    setProfile(account.profile);
+    setRegion(account.region);
+    setAdding(true);
+  }
 
   return <div id="integration-aws" className="scroll-mt-24 overflow-hidden">
     <div className={`${expanded ? "border-b" : ""} border-[var(--color-border)] ${focused ? "integration-panel-header" : "px-5 py-4"}`}>
@@ -104,22 +120,22 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
     {expanded && <div className={`space-y-5 ${focused ? "integration-panel-body" : "p-5"}`}>
       {error && <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{error}</div>}
       {status === null ? <div className="text-sm text-[var(--color-text-muted)]">불러오는 중…</div> : !status.connected || adding ? <>
-        {status.connected && <div className="flex items-center justify-between"><div className="text-sm font-medium text-[var(--color-text)]">AWS 계정 추가</div><button type="button" onClick={() => setAdding(false)} className="settings-action settings-action-secondary settings-action-compact">취소</button></div>}
+        {status.connected && <div className="flex items-center justify-between"><div className="text-sm font-medium text-[var(--color-text)]">{editingName ? "AWS 환경 편집" : "AWS 계정 추가"}</div><button type="button" onClick={() => { setAdding(false); setEditingName(null); }} className="settings-action settings-action-secondary settings-action-compact">취소</button></div>}
         <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
           <div className="mb-2 font-semibold text-cyan-200">AWS Context 연결 순서</div>
           <ol className="list-decimal space-y-1 pl-4">
             <li>AWS CLI에서 profile을 준비합니다. <code className="text-[var(--color-text)]">aws configure --profile my-account</code> 또는 AWS SSO를 사용할 수 있습니다.</li>
             <li><code className="text-[var(--color-text)]">aws sts get-caller-identity --profile my-account</code>로 로그인과 권한을 확인합니다.</li>
-            <li>아래에 표시 이름·profile·region을 입력해 추가한 뒤 <b className="text-[var(--color-text)]">새로고침</b>하면 Sugo가 읽을 snapshot이 저장됩니다.</li>
+            <li>아래에 환경 별칭·profile·region을 입력해 추가한 뒤 <b className="text-[var(--color-text)]">새로고침</b>하면 Sugo가 읽을 snapshot이 저장됩니다.</li>
           </ol>
-          <p className="mt-2 text-[var(--color-text-dim)]">에이전트는 표시 이름으로 계정을 고릅니다. 이름을 지정하지 않으면 <code>default</code>를 읽습니다. 표시 이름과 다른 환경 이름(예: <code>dev</code>)을 쓰려면 <code>~/.claude/sugo/settings.json</code>의 <code>aws.environments</code>에 연결하세요.</p>
+          <p className="mt-2 text-[var(--color-text-dim)]">환경 별칭은 서비스 상태와 일정의 배포 태그에 그대로 표시됩니다.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm text-[var(--color-text)]">표시 이름<input value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="예: 공용 계정" className="settings-field mt-1.5 w-full" /></label>
+          <label className="text-sm text-[var(--color-text)]">환경 별칭<input value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="예: 개발계" className="settings-field mt-1.5 w-full" /></label>
           <label className="text-sm text-[var(--color-text)]">AWS profile<input value={profile} onChange={(event) => setProfile(event.target.value)} placeholder="예: team-account" className="settings-field mt-1.5 w-full" /></label>
           <label className="text-sm text-[var(--color-text)]">기본 region<input value={region} onChange={(event) => setRegion(event.target.value)} className="settings-field mt-1.5 w-full" /></label>
         </div>
-        <button type="button" disabled={busy || !accountName || !profile || !region} onClick={() => void connect()} className="settings-action settings-action-primary">계정 확인 후 추가</button>
+        <button type="button" disabled={busy || !accountName || !profile || !region} onClick={() => void connect()} className="settings-action settings-action-primary">{editingName ? "변경사항 확인 후 저장" : "계정 확인 후 추가"}</button>
         <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">AWS CLI의 로컬 자격 증명을 읽기 전용으로 사용합니다. 키는 Dashboard에 저장하지 않습니다.</p>
       </> : <>
         <div className="rounded-lg border border-emerald-400/25 bg-emerald-400/[0.05] px-4 py-3">
@@ -130,6 +146,7 @@ function AwsContextCard({ expanded, onToggle, focused = false, onConnectionChang
               </select>
             </label>
             <button type="button" disabled={busy} onClick={() => setAdding(true)} className="settings-action settings-action-primary">계정 추가</button>
+            <button type="button" disabled={busy} onClick={editActiveAccount} className="settings-action settings-action-secondary">환경 편집</button>
             <button type="button" disabled={busy} onClick={() => void refresh()} className="settings-action settings-action-secondary">새로고침</button>
             <button type="button" disabled={busy} onClick={() => void disconnect()} className="settings-action settings-action-danger">연결 해제</button>
           </div>
@@ -231,6 +248,7 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspac
   function selectServiceWorkspace(workspace: string) { const domainProjects = projects.filter((item) => item.workspace_name === workspace); setServiceWorkspace(workspace); setFilter(''); setSaveMessage(null); setServiceStepComplete(false); if (domainProjects.length === 1) { applyServiceProject(domainProjects[0]!); return; } setPath(''); setSelected([]); setProjectSelectionComplete(false); }
   function selectProject(item: ProjectIntegration) { if (projectSelectionComplete && path === item.project_path) { setPath(''); setSelected([]); setSaveMessage(null); setServiceStepComplete(false); setProjectSelectionComplete(false); return; } setPath(item.project_path); setSelected(initialIntegrationSelection(item, candidates, key)); setSaveMessage(null); setServiceStepComplete(false); setProjectSelectionComplete(true); window.setTimeout(() => serviceStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 220); }
   async function browseFolders(nextPath?: string) { setFolderBrowserBusy(true); setRegistrationError(null); try { setFolderBrowser(await browseLocalDirectories(nextPath)); setFolderBrowserOpen(true); } catch (error) { setRegistrationError(error instanceof Error ? error.message : String(error)); } finally { setFolderBrowserBusy(false); } }
+  async function chooseProjectFolder() { setFolderBrowserBusy(true); setRegistrationError(null); try { const result = await selectNativeProjectDirectory(); if (!result.supported) { await browseFolders(registrationPath || undefined); return; } if (result.cancelled) return; if (!result.projectLike) { setRegistrationError('Git 저장소, 빌드 설정 또는 소스 폴더가 있는 프로젝트를 선택하세요.'); return; } setRegistrationPath(result.path); setFolderBrowserOpen(false); } catch { await browseFolders(registrationPath || undefined); } finally { setFolderBrowserBusy(false); } }
   async function submitRegistration() { const workspace = domainMode === 'new' ? newWorkspace.trim() : registrationWorkspace; if (!registrationPath.trim() || !workspace) return; setBusy(true); setRegistrationError(null); try { const result = await registerProject(registrationPath.trim(), workspace); await load(result.projectPath); if (!registrationOnly) setRegistering(false); setRegistrationPath(''); setSaveMessage(`${result.projectName} 프로젝트를 ${result.workspace} 도메인에 등록했습니다.`); } catch (error) { setRegistrationError(error instanceof Error ? error.message : String(error)); } finally { setBusy(false); } }
   async function save(disable = false) { if (!path) return; setBusy(true); setSaveMessage(null); try { const values = disable ? [] : candidates.filter((item) => selected.includes(key(item))).map(({ accountName, service, environment, cluster }) => ({ accountName, service, environment, cluster })); await saveProjectIntegration(path, values); await load(path); setServiceStepComplete(true); setSaveMessage(disable ? "이 프로젝트의 서비스 연동을 미사용으로 변경했습니다." : `${values.length}개 운영 서비스를 연결했습니다.`); } finally { setBusy(false); } }
   return <div id="integration-projects" className="scroll-mt-24 overflow-hidden">
@@ -241,7 +259,7 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspac
         <div className="bg-[var(--color-background)]/95 px-6 py-6">
           <span className="font-mono text-[10px] font-semibold tracking-[0.16em] text-cyan-300">01 · PROJECT FOLDER</span>
           <label className="mb-2 mt-3 block text-sm font-semibold text-[var(--color-text)]">프로젝트 폴더</label>
-          <button type="button" onClick={() => void browseFolders(registrationPath || undefined)} className="flex h-12 w-full items-center justify-between gap-3 border border-cyan-300/25 bg-black/30 px-4 text-left transition hover:border-cyan-300/45 hover:bg-cyan-300/[0.025]"><span className={`min-w-0 truncate font-mono text-sm ${registrationPath ? 'text-[var(--color-text)]' : 'text-[var(--color-text-dim)]'}`}>{registrationPath || '폴더를 선택하세요'}</span><span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-cyan-200"><FolderOpen size={15} />{folderBrowserBusy ? '불러오는 중…' : '폴더 선택'}</span></button>
+          <button type="button" onClick={() => void chooseProjectFolder()} className="flex h-12 w-full items-center justify-between gap-3 border border-cyan-300/25 bg-black/30 px-4 text-left transition hover:border-cyan-300/45 hover:bg-cyan-300/[0.025]"><span className={`min-w-0 truncate font-mono text-sm ${registrationPath ? 'text-[var(--color-text)]' : 'text-[var(--color-text-dim)]'}`}>{registrationPath || '폴더를 선택하세요'}</span><span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-cyan-200"><FolderOpen size={15} />{folderBrowserBusy ? '여는 중…' : '폴더 찾아보기'}</span></button>
           {folderBrowserOpen && folderBrowser && <section aria-label="프로젝트 폴더 선택" className="mt-3 overflow-hidden border border-cyan-300/20 bg-[#070d18] shadow-[0_16px_40px_rgba(0,0,0,0.28)]"><header className="flex items-center gap-3 border-b border-white/[0.08] px-3 py-3"><button type="button" disabled={!folderBrowser.parentPath || folderBrowserBusy} onClick={() => void browseFolders(folderBrowser.parentPath ?? undefined)} aria-label="상위 폴더" className="grid h-8 w-8 shrink-0 place-items-center border border-white/[0.09] text-[var(--color-text-muted)] transition hover:border-cyan-300/25 hover:text-cyan-100 disabled:opacity-30"><ArrowLeft size={14} /></button><span className="min-w-0 flex-1 truncate font-mono text-xs text-[var(--color-text-muted)]">{folderBrowser.path}</span><button type="button" disabled={!folderBrowser.projectLike} onClick={() => { setRegistrationPath(folderBrowser.path); setFolderBrowserOpen(false); }} className="settings-action settings-action-primary settings-action-compact">이 폴더 선택</button></header><div className="ck-scroll max-h-72 divide-y divide-white/[0.06] overflow-auto">{folderBrowser.directories.map((directory) => <button key={directory.path} type="button" onClick={() => void browseFolders(directory.path)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-cyan-300/[0.04]"><FolderOpen size={15} className={directory.projectLike ? 'text-cyan-200' : 'text-[var(--color-text-dim)]'} /><span className="min-w-0 flex-1 truncate text-sm text-[var(--color-text)]">{directory.name}</span>{directory.projectLike && <span className="text-[10px] font-semibold text-emerald-300">프로젝트</span>}<ChevronRight size={14} className="text-[var(--color-text-dim)]" /></button>)}{folderBrowser.directories.length === 0 && <div className="px-4 py-8 text-center text-xs text-[var(--color-text-dim)]">하위 폴더가 없습니다.</div>}</div>{!folderBrowser.projectLike && <p className="border-t border-white/[0.07] px-4 py-3 text-[11px] text-[var(--color-text-dim)]">Git 저장소, 빌드 설정 또는 소스 폴더가 있는 위치를 선택하세요.</p>}</section>}
           <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-1"><span className="font-mono text-[10px] font-semibold tracking-[0.16em] text-cyan-300">02 · WORK DOMAIN</span><span className="text-[11px] text-[var(--color-text-muted)]">이 프로젝트가 속할 작업 영역</span></div>
           <div className="mt-3 grid grid-cols-2 gap-1 rounded-lg border border-white/[0.09] bg-black/20 p-1 sm:w-[24rem]">

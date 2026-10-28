@@ -5,7 +5,9 @@ export interface ProjectIntegration { workspace_name: string; project_path: stri
 export interface ProjectRegistrationResult { ok: true; projectPath: string; projectName: string; workspace: string; detectedStack: unknown; appliedHarnesses: unknown[]; warnings: string[]; }
 export interface LocalDirectoryEntry { name: string; path: string; projectLike: boolean; signals: string[]; }
 export interface LocalDirectoryListing { path: string; parentPath: string | null; name: string; projectLike: boolean; signals: string[]; directories: LocalDirectoryEntry[]; }
+export type NativeDirectorySelection = { supported: boolean; cancelled: true } | { supported: true; cancelled: false; path: string; name: string; projectLike: boolean; signals: string[] };
 export const getProjectIntegrations = () => apiJson<{ projects: ProjectIntegration[]; candidates: IntegrationCandidate[] }>('/api/project-integrations');
 export const registerProject = (projectPath: string, workspace: string) => apiJson<ProjectRegistrationResult>('/api/project-integrations/register', { method: 'POST', body: JSON.stringify({ projectPath, workspace }) });
 export const browseLocalDirectories = (path?: string) => apiJson<LocalDirectoryListing>(`/api/project-integrations/browse${path ? `?path=${encodeURIComponent(path)}` : ''}`);
+export const selectNativeProjectDirectory = () => apiJson<NativeDirectorySelection>('/api/project-integrations/select-directory', { method: 'POST' });
 export const saveProjectIntegration = (projectPath: string, selections: IntegrationSelection[]) => apiJson<{ ok: true }>('/api/project-integrations', { method: 'PUT', body: JSON.stringify({ projectPath, selections }) });

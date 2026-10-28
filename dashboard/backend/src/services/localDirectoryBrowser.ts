@@ -6,6 +6,14 @@ const PROJECT_MARKERS = new Set([".git", "package.json", "pom.xml", "build.gradl
 
 export interface LocalDirectoryEntry { name: string; path: string; projectLike: boolean; signals: string[]; }
 
+export async function inspectProjectDirectory(path: string): Promise<{ path: string; name: string; projectLike: boolean; signals: string[] }> {
+  const current = await realpath(path);
+  const entries = await readdir(current, { withFileTypes: true });
+  const names = new Set(entries.map((entry) => entry.name));
+  const signals = [...PROJECT_MARKERS].filter((marker) => names.has(marker));
+  return { path: current, name: basename(current), projectLike: signals.length > 0, signals };
+}
+
 function assertInsideHome(path: string, home: string): void {
   const rel = relative(home, path);
   if (rel === ".." || rel.startsWith("../") || rel.startsWith("..\\") || isAbsolute(rel)) {

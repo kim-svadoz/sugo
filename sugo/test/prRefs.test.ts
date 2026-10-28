@@ -77,7 +77,7 @@ describe("collectPrRefs — 실제 git 저장소(읽기전용 명령만 사용)"
       projectKey: "PROJ",
       repoSlug: "repo",
       sourceBranch: "main",
-      targetBranch: "develop",
+      targetBranch: "main",
     });
   });
 

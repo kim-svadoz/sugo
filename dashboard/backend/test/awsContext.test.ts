@@ -119,6 +119,25 @@ describe("AWS context CLI adapter", () => {
 });
 
 describe("/api/aws-context", () => {
+  it("edits an environment alias and keeps saved service mappings aligned", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    await syncWorkspace(db, { userId: "alias-user", name: "domain", projects: ["project"] });
+    const auth = (await seedUserToken(db, "alias-user")).replace(/^Bearer /, "");
+    const fake: AwsContextClient = {
+      identity: async ({ profile }) => ({ accountId: "123456789012", arn: `arn:aws:iam::123456789012:user/${profile}` }),
+      inventory: async () => [],
+    };
+    const { app } = await createApp({ db, awsContextClient: fake });
+    await request(app).put("/api/aws-context").set("Authorization", `Bearer ${auth}`).send({ name: "dev", profile: "dev-profile", region: "ap-northeast-2" }).expect(200);
+    await db.exec("INSERT INTO user_project_integration_mappings VALUES (?, ?, ?, ?)", ["alias-user", "project", JSON.stringify([{ accountName: "dev", environment: "dev", service: "api" }]), new Date().toISOString()]);
+    await request(app).patch("/api/aws-context/dev").set("Authorization", `Bearer ${auth}`).send({ name: "개발계", profile: "dev-profile", region: "ap-northeast-2" }).expect(200);
+    const status = await request(app).get("/api/aws-context").set("Authorization", `Bearer ${auth}`).expect(200);
+    expect(status.body).toMatchObject({ activeAccount: "개발계", accounts: [expect.objectContaining({ name: "개발계", profile: "dev-profile" })] });
+    const mappings = await db.query<{ selections: string }>("SELECT selections FROM user_project_integration_mappings WHERE user_id = ?", ["alias-user"]);
+    expect(JSON.parse(mappings[0].selections)).toEqual([{ accountName: "개발계", environment: "개발계", service: "api" }]);
+  });
+
   it("verifies identity, snapshots inventory, and returns only a masked account id", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);

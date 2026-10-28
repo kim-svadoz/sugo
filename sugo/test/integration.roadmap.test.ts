@@ -13,6 +13,7 @@ import { handleSugoRoadmap } from "../src/tools/sugoRoadmap.js";
 import { loadSession } from "../src/session.js";
 import { validateOperationalContract } from "../src/ontology/contractValidation.js";
 import { explainSessionBlock } from "../src/ontology/operationalQueries.js";
+import { addRoadmapNode } from "../src/work/roadmap.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
@@ -138,6 +139,18 @@ describe("Roadmap DAG — sugo_plan(prd) 자동 REQ 승격", () => {
 });
 
 describe("sugo_roadmap ready/get/mark_req", () => {
+
+  it("summary 조회는 큰 작업 결과와 계보 본문을 생략한다", async () => {
+    await addRoadmapNode("team-a", {
+      id: "large", title: "큰 결과", level: "task", status: "done", dependsOn: [],
+      workResult: { path: "/tmp/work-result.md", summary: "요약", files: [{ path: "a.ts", change: "modified", content: "x".repeat(1000) }] },
+      lineage: [{ version: 0, completedAt: "2026-10-01", workResult: { path: "/tmp/work-result.md", files: [] } }],
+    });
+    const result = await call(handleSugoRoadmap, { action: "list", workspace: "team-a", summary: true });
+    expect(result.data.nodes[0]).toMatchObject({ id: "large", title: "큰 결과", workResult: { path: "/tmp/work-result.md", summary: "요약" } });
+    expect(result.data.nodes[0].workResult.files).toBeUndefined();
+    expect(result.data.nodes[0].lineage).toBeUndefined();
+  });
   it("의존 관계상 REQ-1만 ready하고, REQ-2는 REQ-1이 done이어야 ready된다", async () => {
     const { taskId } = await toReadyAndBeyond(HEADING_PRD);
     const ready1 = await call(handleSugoRoadmap, { action: "ready", workspace: "team-a" });

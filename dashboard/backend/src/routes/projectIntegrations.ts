@@ -5,7 +5,8 @@ import { requireUser } from '../auth/requireUser.js';
 import { validateBody } from '../schemas/validate.js';
 import { listProjectIntegrations, saveProjectIntegration } from '../services/projectIntegrationService.js';
 import { runProjectRegistrar, type ProjectRegistrar } from '../services/projectRegistrar.js';
-import { inspectLocalDirectory } from '../services/localDirectoryBrowser.js';
+import { inspectLocalDirectory, inspectProjectDirectory } from '../services/localDirectoryBrowser.js';
+import { selectNativeDirectory, supportsNativeDirectoryPicker } from '../services/nativeDirectoryPicker.js';
 
 const schema = z.object({ projectPath: z.string().min(1).max(1024), selections: z.array(z.object({ accountName: z.string().min(1).max(191), service: z.string().min(1).max(512), environment: z.string().min(1).max(64), cluster: z.string().max(512).nullable().optional() })).max(100) });
 const registrationSchema = z.object({
@@ -18,6 +19,16 @@ export function createProjectIntegrationsRouter(db: DbClient, secret: string, re
   router.get('/browse', async (req, res) => {
     try { res.json(await inspectLocalDirectory(typeof req.query.path === 'string' ? req.query.path : undefined)); }
     catch (error) { res.status(400).json({ error: (error as any)?.code ?? 'DIRECTORY_BROWSE_FAILED', message: error instanceof Error ? error.message : String(error) }); }
+  });
+  router.post('/select-directory', async (_req, res) => {
+    try {
+      if (!supportsNativeDirectoryPicker()) { res.json({ supported: false, cancelled: true }); return; }
+      const path = await selectNativeDirectory();
+      if (!path) { res.json({ supported: true, cancelled: true }); return; }
+      res.json({ supported: true, cancelled: false, ...(await inspectProjectDirectory(path)) });
+    } catch (error) {
+      res.status(500).json({ error: 'DIRECTORY_PICKER_FAILED', message: error instanceof Error ? error.message : String(error) });
+    }
   });
   router.post('/register', validateBody(registrationSchema), async (req, res) => {
     try { res.status(201).json(await registrar(req.body)); }

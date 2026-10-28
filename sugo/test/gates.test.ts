@@ -93,6 +93,13 @@ describe("checkAnalyzeGate — 반드시 거부/허용", () => {
     expect(result.code).toBe("ANALYZE_NOT_CALLED");
   });
 
+  it("integrate 합류점에서는 실제로 막힌 단계가 안내된다", () => {
+    const result = checkAnalyzeGate(0, true, "integrate");
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain("integrate 전에");
+    expect(result.message).not.toContain("code_done 전에");
+  });
+
   it("analyze를 1회 이상 호출했으면 verdict와 관계없이 통과한다", () => {
     expect(checkAnalyzeGate(1, true).ok).toBe(true);
     expect(checkAnalyzeGate(3, true).ok).toBe(true);

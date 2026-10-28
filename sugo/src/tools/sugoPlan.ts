@@ -9,8 +9,9 @@ import { checkCoverageGate } from "../consistency.js";
 import { checkContractEvidenceGate, checkContractStartedGate, resolveContractRequired } from "../contractEvidence.js";
 import { activityForPlanTransition, emitActivity, activityTaskDetails } from "../dashboard/activity.js";
 import { resolveDashboardConfig } from "../dashboard/config.js";
-import { fetchBlockerDecision, fetchCalibratedRatio, fetchUnlinkedSpecDrafts } from "../dashboard/fetch.js";
+import { fetchBlockerDecision, fetchCalibratedRatio, fetchUnlinkedSpecDrafts, updateScheduleSpecField } from "../dashboard/fetch.js";
 import { snapshotWorkResultFiles } from "../dashboard/workResultFiles.js";
+import { syncRoadmapSnapshot } from "../dashboard/sync.js";
 import { collectPrRefs } from "../prRefs.js";
 import { validateIntegration, validateManifest, type DecomposeManifest } from "../decompose.js";
 import { checkEvidenceReuseGate, computeChangedFilesFingerprint } from "../fingerprint.js";
@@ -46,7 +47,7 @@ import { checkpointApplies } from "../work/matching.js";
 import { completedCycleTitle, taskCycleTitle } from "../taskTitle.js";
 import { addWorkLog } from "../work/history.js";
 import { listCheckpoints, pullCheckpointsToRules } from "../work/checkpoint.js";
-import { backfillRoadmapTask, beginRoadmapPatch, completeTaskRequirements, getRoadmapNode, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../work/roadmap.js";
+import { backfillRoadmapTask, beginRoadmapPatch, completeTaskRequirements, getRoadmapNode, listRoadmapNodes, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../work/roadmap.js";
 import { promotePrdRequirements } from "../work/roadmapReq.js";
 import { addTask, findTaskByPrdRef, listTasks, updateTask } from "../work/task.js";
 import type { Task, TaskPatchInfo } from "../work/types.js";
@@ -95,6 +96,7 @@ export const sugoPlanInputSchema = {
     .describe("clarify action: 미연결 SPEC 초안 후보가 있으면 사용자에게 보여준 뒤 기존 초안 연결(link) 또는 새 SPEC 생성(new)을 반드시 선택"),
   specDraftId: z.string().optional().describe("start/clarify action: Dashboard에서 선택한 spec-manual-* ID"),
   workBranch: z.string().optional().describe("start action: feat 시작 전 준비할 Git 브랜치"),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("start action: Schedule에 기록할 완료 목표일"),
   prdContent: z.string().optional().describe("prd action에 필요. 본문 ≥100자, REQ-N 태그 ≥1"),
   specPath: z
     .string()
@@ -218,6 +220,7 @@ const SugoPlanArgs = z.object(sugoPlanInputSchema);
 export async function handleSugoPlan(rawArgs: unknown) {
   const args = SugoPlanArgs.parse(rawArgs);
   const { action, sessionId } = args;
+  let scheduleLinkWarning: string | undefined;
 
   let existing: PlanSession | null = null;
   if (action !== "start") {
@@ -604,7 +607,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     const mergedChangedFiles = Array.from(new Set(manifest.subtasks.flatMap((s) => s.changedFiles ?? [])));
     const hasPrd = !!existing.data.prdPath;
 
-    const analyzeGate = checkAnalyzeGate(existing.data.chainInfo.analyzeAttempts, hasPrd);
+    const analyzeGate = checkAnalyzeGate(existing.data.chainInfo.analyzeAttempts, hasPrd, "integrate");
     if (!analyzeGate.ok) return errorResult(analyzeGate.code as GateBlockCode, analyzeGate.message!);
 
     const baselineResult = checkBaselineGate(
@@ -780,6 +783,10 @@ export async function handleSugoPlan(rawArgs: unknown) {
   // ── seed(사용자 지시)는 세션에 그대로 보존해뒀다가 review_done이 work-result에 싣는다.
   if (action === "start" && args.seed) {
     session = { ...session, data: { ...session.data, seed: args.seed } };
+  }
+
+  if (action === "start" && args.dueDate) {
+    session = { ...session, data: { ...session.data, scheduleDueDate: args.dueDate } };
   }
 
   // feat/patch 진입점 자체에서도 Dashboard 체크포인트를 재조정한다. command 스킬은 보통
@@ -1044,6 +1051,22 @@ export async function handleSugoPlan(rawArgs: unknown) {
           specPath: prdPath,
         },
       ]);
+      // 로컬 로드맵 스냅샷을 먼저 보낸 뒤 Schedule 전용 메타데이터를 채운다. spec에 이미
+      // 사람이 지정한 값이 있으면 덮어쓰지 않는다.
+      await syncRoadmapSnapshot(registryEntry.workspace, await listRoadmapNodes(registryEntry.workspace));
+      const scheduleUpdates: Array<Promise<boolean>> = [];
+      if (!selectedDraft?.projectPath) {
+        scheduleUpdates.push(updateScheduleSpecField(registryEntry.workspace, "project", { nodeId: specId, projectPath: session.projectPath }));
+      }
+      if (session.data.workBranch?.name && !selectedDraft?.workBranch) {
+        scheduleUpdates.push(updateScheduleSpecField(registryEntry.workspace, "work-branch", { nodeId: specId, workBranch: session.data.workBranch.name }));
+      }
+      if (session.data.scheduleDueDate && !selectedDraft?.dueDate) {
+        scheduleUpdates.push(updateScheduleSpecField(registryEntry.workspace, "due-date", { nodeId: specId, dueDate: session.data.scheduleDueDate }));
+      }
+      if (scheduleUpdates.length > 0 && (await Promise.all(scheduleUpdates)).some((updated) => !updated)) {
+        scheduleLinkWarning = "Schedule 연결 정보 일부를 저장하지 못했습니다. sugo_roadmap set_project/set_work_branch/set_due_date로 다시 설정할 수 있습니다.";
+      }
       if (isPatch) {
         await beginRoadmapPatch(
           registryEntry.workspace,
@@ -1230,6 +1253,73 @@ export async function handleSugoPlan(rawArgs: unknown) {
     if (session.data.linkedWorkspace && session.data.linkedTaskId) {
       await completeTaskRequirements(session.data.linkedWorkspace, session.data.linkedTaskId, args.summary);
     }
+  }
+
+  // 분해 경로는 review_done을 지나지 않고 integrate → docs_done → commit으로 끝난다.
+  // 따라서 commit 직전에 동일한 work-result 계약을 보장하되, 테스트·런타임 증거가 없는
+  // 결과를 검증 완료로 과장하지 않는다. 이후 Patch의 정식 기준점으로 사용할 수 있는 최소
+  // 산출물은 남기고 완료등급은 unverified로 명시한다.
+  if (action === "commit" && session.data.decomposeManifest && !session.data.chainInfo.workResultPath) {
+    const completedAt = new Date().toISOString();
+    const patchVersion = session.data.mode === "patch" ? (session.data.patch?.version ?? 0) : 0;
+    const fallbackSummary = args.summary?.trim() || session.data.chainInfo.reviewSummary?.trim()
+      || `${session.featureName} 분해 작업 통합을 완료했습니다.`;
+    const evidence = session.data.chainInfo.testEvidence;
+    const report = buildWorkResultReport({
+      featureName: session.featureName,
+      kind: patchVersion > 0 ? "patch" : "feat",
+      patchVersion,
+      completedAt,
+      completionGrade: "unverified",
+      bypassLabels: session.data.chainInfo.bypassLabels,
+      summary: fallbackSummary,
+      changedFiles: session.data.chainInfo.changedFiles,
+      requirements: session.data.chainInfo.coverageMap?.acceptanceCriteria,
+      knownLimitations: ["분해 작업 통합 경로에서 별도 리뷰·런타임 검증 증거를 기록하지 않았습니다."],
+      seed: session.data.seed,
+      provenance: session.data.postHocCapture ? "captured-post-hoc" : "native",
+      postHocCapture: session.data.postHocCapture,
+      testEvidence: {
+        command: evidence?.command,
+        exitCode: evidence?.exitCode,
+        total: evidence?.total,
+        passed: evidence?.passed,
+        failed: evidence?.failed,
+        state: evidence?.derivedState ?? "unverified",
+      },
+      runtimeVerified: false,
+      wiringVerified: session.data.chainInfo.wiringVerified,
+      validation: session.data.chainInfo.lastValidation,
+    });
+    const content = renderWorkResultMarkdown(report);
+    const featurePath = session.data.featurePath ?? session.projectPath;
+    const { workResultPath } = patchVersion > 0 && session.data.patch
+      ? await writePatchWorkResultFile(session.data.patch.featureDir, patchVersion, content)
+      : await writeWorkResultFile(featurePath, content);
+    const bypassLabels = [
+      ...(session.data.chainInfo.bypassLabels ?? []),
+      {
+        kind: "runtimeUnverified" as const,
+        reason: "분해 작업 통합 경로에서 별도 리뷰·런타임 검증 증거를 기록하지 않았습니다.",
+        patchVersion,
+        recordedAt: completedAt,
+      },
+    ];
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        chainInfo: {
+          ...session.data.chainInfo,
+          bypassLabels,
+          workResultPath,
+          workResultReport: { ...report, bypassLabels },
+          reviewSummary: fallbackSummary,
+          reviewDoneAt: completedAt,
+          runtimeVerified: false,
+        },
+      },
+    };
   }
 
   // ── label-guard: commit 시점에 우회 라벨 누적분으로 completionGrade를 판정한다. 차단은
@@ -1422,6 +1512,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
     prdPath: session.data.prdPath,
     workResultPath: session.data.chainInfo.workResultPath,
     workBranch: action === "start" ? session.data.workBranch : undefined,
+    scheduleLinkWarning,
     patch:
       session.data.mode === "patch" && session.data.patch
         ? { parentPrdPath: session.data.patch.parentPrdPath, version: session.data.patch.version }

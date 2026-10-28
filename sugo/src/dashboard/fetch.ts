@@ -26,6 +26,35 @@ async function fetchJson<T>(path: string, timeoutMs: number): Promise<T | null> 
   }
 }
 
+export type ScheduleSpecField = "project" | "work-branch" | "due-date";
+
+/** CLI와 Schedule이 같은 spec 메타데이터를 쓰도록 하는 인증된 쓰기 seam. */
+export async function updateScheduleSpecField(
+  workspaceName: string,
+  field: ScheduleSpecField,
+  body: Record<string, string | null>,
+): Promise<boolean> {
+  const config = await resolveDashboardConfig();
+  if (!config.enabled || !config.apiUrl) return false;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (config.apiToken) headers.Authorization = `Bearer ${config.apiToken}`;
+    const res = await fetch(`${config.apiUrl}/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap/${field}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export interface RemoteRoadmapOrdering {
   workResult?: { path?: string; report?: WorkResultReport };
   id: string;

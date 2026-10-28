@@ -126,6 +126,8 @@ export interface SessionData {
   prdPath?: string;
   mode: "plan" | "patch";
   workBranch?: { name: string; source: "local" | "remote" | "created"; remoteCreated: boolean; preparedAt: string };
+  /** CLI start에서 받은 Schedule 완료 목표일. spec 노드 생성 시 Console 메타데이터로 기록한다. */
+  scheduleDueDate?: string;
   /** 서버가 실제로 성공시킨 마지막 상태 전이. explain_state가 추측 없이 진입 action을 설명한다. */
   lastTransition?: {
     action: ActionName;

@@ -17,7 +17,7 @@ import {
   updateRoadmapNodeRuntimeAssessment,
 } from "../work/roadmap.js";
 import { ROADMAP_LEVELS, ROADMAP_NODE_STATUSES } from "../work/types.js";
-import { fetchBlockerDecision } from "../dashboard/fetch.js";
+import { fetchBlockerDecision, updateScheduleSpecField } from "../dashboard/fetch.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
 import { assessSession } from "../ontology/sessionAssessment.js";
 import { buildReviewConfirmationBlocker, reviewDecisionResumeAction } from "../reviewConfirmation.js";
@@ -44,6 +44,9 @@ export const sugoRoadmapInputSchema = {
     "block_for_human",
     "request_review_confirmation",
     "resume_with_decision",
+    "set_project",
+    "set_work_branch",
+    "set_due_date",
   ]),
   workspace: z.string().describe("워크스페이스 이름"),
   id: z.string().optional().describe("add/remove/status/get/mark_req action에 필요. add의 새 노드 id 또는 대상 노드 id"),
@@ -62,6 +65,10 @@ export const sugoRoadmapInputSchema = {
   taskIds: z.array(z.string()).optional().describe("group action에 필요 — 이 workstream 아래로 묶을 task id들"),
   filterLevel: z.enum(ROADMAP_LEVELS).optional().describe("list action의 선택적 필터"),
   filterParent: z.string().optional().describe("list action의 선택적 필터"),
+  summary: z.boolean().optional().describe("list action: 큰 파일 내용과 계보를 생략한 경량 응답"),
+  projectPath: z.string().nullable().optional().describe("set_project: Schedule SPEC에 연결할 프로젝트 절대경로(null이면 해제)"),
+  workBranch: z.string().nullable().optional().describe("set_work_branch: Schedule SPEC 작업 브랜치(null이면 해제)"),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional().describe("set_due_date: Schedule SPEC 목표일(null이면 해제)"),
   sessionId: z.string().optional().describe("block_for_human/resume_with_decision: 원래 sugo_plan 세션 ID"),
   stage: z.string().optional().describe("block_for_human: 멈춘 파이프라인 상태"),
   resumeAction: z.string().optional().describe("block_for_human: 결정 반영 뒤 다시 시도할 sugo_plan action"),
@@ -141,7 +148,7 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
     }
     case "list": {
       const nodes = await listRoadmapNodes(args.workspace, { level: args.filterLevel, parent: args.filterParent });
-      return ok({ nodes });
+      return ok({ nodes: args.summary ? nodes.map(toRoadmapSummary) : nodes });
     }
     case "ready": {
       const ready = await getReadySet(args.workspace);
@@ -150,6 +157,22 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
     case "pull_ordering": {
       const pulled = await pullRoadmapOrdering(args.workspace);
       return ok({ pulled });
+    }
+    case "set_project":
+    case "set_work_branch":
+    case "set_due_date": {
+      if (!args.id) return errorResult("ID_REQUIRED", `${args.action} action에는 id가 필요합니다.`);
+      const node = await getRoadmapNode(args.workspace, args.id);
+      if (!node || node.level !== "spec") return errorResult("SPEC_NODE_REQUIRED", "Schedule 메타데이터는 spec 노드에만 설정할 수 있습니다.");
+      const config = {
+        set_project: { field: "project" as const, key: "projectPath", value: args.projectPath },
+        set_work_branch: { field: "work-branch" as const, key: "workBranch", value: args.workBranch },
+        set_due_date: { field: "due-date" as const, key: "dueDate", value: args.dueDate },
+      }[args.action];
+      if (config.value === undefined) return errorResult("VALUE_REQUIRED", `${args.action} action에는 ${config.key}가 필요합니다.`);
+      const updated = await updateScheduleSpecField(args.workspace, config.field, { nodeId: args.id, [config.key]: config.value });
+      if (!updated) return errorResult("DASHBOARD_UPDATE_FAILED", "Schedule 연결 정보를 저장하지 못했습니다. Console 연결과 API 토큰을 확인하세요.");
+      return ok({ nodeId: args.id, [config.key]: config.value });
     }
     case "block_for_human": {
       if (!args.id || !args.sessionId || !args.stage || !args.resumeAction || !args.blockerSummary || !args.question || !args.blockedNextStep) {
@@ -286,6 +309,14 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       return ok({ node: await getRoadmapNode(args.workspace, args.id) });
     }
   }
+}
+
+function toRoadmapSummary(node: Awaited<ReturnType<typeof listRoadmapNodes>>[number]) {
+  const workResult = node.workResult
+    ? { path: node.workResult.path, summary: node.workResult.summary, patchVersion: node.workResult.patchVersion, endedAt: node.workResult.endedAt }
+    : undefined;
+  const { lineage: _lineage, workResult: _workResult, ...rest } = node;
+  return { ...rest, ...(workResult ? { workResult } : {}) };
 }
 
 function resultFrom(args: z.infer<typeof SugoRoadmapArgs>) {

@@ -438,9 +438,23 @@ export async function removeRoadmapNode(workspace: string, id: string): Promise<
     if (!file.nodes.some((n) => n.id === id)) {
       return { ok: false, error: "NODE_NOT_FOUND", message: `노드를 찾을 수 없습니다: ${id}` };
     }
+    const removed = new Set([id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const node of file.nodes) {
+        if (node.parent && removed.has(node.parent) && !removed.has(node.id)) {
+          removed.add(node.id);
+          changed = true;
+        }
+      }
+    }
     const nodes = file.nodes
-      .filter((n) => n.id !== id)
-      .map((n) => (n.dependsOn.includes(id) ? { ...n, dependsOn: n.dependsOn.filter((d) => d !== id) } : n));
+      .filter((n) => !removed.has(n.id))
+      .map((n) => {
+        const dependsOn = n.dependsOn.filter((dependency) => !removed.has(dependency));
+        return dependsOn.length === n.dependsOn.length ? n : { ...n, dependsOn };
+      });
     await writeRoadmapFile(workspace, { ...file, nodes });
     return { ok: true };
   });

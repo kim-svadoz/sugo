@@ -68,5 +68,9 @@ export async function collectPrRefs(projectPath: string): Promise<PrRefs | null>
   const parsed = parseRemoteUrl(remoteUrl);
   if (!parsed) return null;
   const sourceBranch = (await runGit(["rev-parse", "--abbrev-ref", "HEAD"], projectPath)) ?? "HEAD";
-  return { ...parsed, sourceBranch, targetBranch: "develop" };
+  const remoteHead = await runGit(["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"], projectPath);
+  const targetBranch = remoteHead?.replace(/^origin\//, "")
+    ?? (await runGit(["config", "--get", "init.defaultBranch"], projectPath))
+    ?? (sourceBranch === "HEAD" ? "main" : sourceBranch);
+  return { ...parsed, sourceBranch, targetBranch };
 }

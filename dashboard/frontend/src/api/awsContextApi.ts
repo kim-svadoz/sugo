@@ -34,6 +34,10 @@ export function connectAwsContext(name: string, profile: string, region: string)
   return apiJson("/api/aws-context", { method: "PUT", body: JSON.stringify({ name, profile, region }) });
 }
 
+export function updateAwsContext(currentName: string, name: string, profile: string, region: string): Promise<{ ok: true }> {
+  return apiJson(`/api/aws-context/${encodeURIComponent(currentName)}`, { method: "PATCH", body: JSON.stringify({ name, profile, region }) });
+}
+
 export function selectAwsContext(name: string): Promise<{ ok: true }> {
   return apiJson("/api/aws-context/active", { method: "POST", body: JSON.stringify({ name }) });
 }

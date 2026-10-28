@@ -23685,7 +23685,7 @@ async function syncProjectHarness(args2) {
   const rootClaudePath = join7(projectPath, "CLAUDE.md");
   const rootAgentsPath = join7(projectPath, "AGENTS.md");
   const existingManifest = await loadInstallManifest(projectPath);
-  const manifest = existingManifest ?? {
+  const manifest = existingManifest ? { ...existingManifest, projectPath } : {
     version: 1,
     projectPath,
     sugoDirExisted: await access(sugoDir).then(() => true, () => false),
@@ -24880,6 +24880,27 @@ async function fetchJson(path, timeoutMs) {
     return await res.json();
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function updateScheduleSpecField(workspaceName, field, body2) {
+  const config2 = await resolveDashboardConfig();
+  if (!config2.enabled || !config2.apiUrl) return false;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8e3);
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (config2.apiToken) headers.Authorization = `Bearer ${config2.apiToken}`;
+    const res = await fetch(`${config2.apiUrl}/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap/${field}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body2),
+      signal: controller.signal
+    });
+    return res.ok;
+  } catch {
+    return false;
   } finally {
     clearTimeout(timer);
   }
@@ -28271,7 +28292,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.54.1" : "0.0.0-dev";
+  return true ? "0.55.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -28619,7 +28640,9 @@ async function collectPrRefs(projectPath) {
   const parsed = parseRemoteUrl(remoteUrl);
   if (!parsed) return null;
   const sourceBranch = await runGit(["rev-parse", "--abbrev-ref", "HEAD"], projectPath) ?? "HEAD";
-  return { ...parsed, sourceBranch, targetBranch: "develop" };
+  const remoteHead = await runGit(["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"], projectPath);
+  const targetBranch = remoteHead?.replace(/^origin\//, "") ?? await runGit(["config", "--get", "init.defaultBranch"], projectPath) ?? (sourceBranch === "HEAD" ? "main" : sourceBranch);
+  return { ...parsed, sourceBranch, targetBranch };
 }
 
 // src/gitBranch.ts
@@ -28675,10 +28698,10 @@ function checkBaselineGate(required2, baselineEvidenceExitCode) {
   }
   return ok2();
 }
-function checkAnalyzeGate(analyzeAttempts, hasPrd) {
+function checkAnalyzeGate(analyzeAttempts, hasPrd, blockedAction = "code_done") {
   if (!hasPrd) return ok2();
   if (analyzeAttempts < 1) {
-    return fail("ANALYZE_NOT_CALLED", "code_done \uC804\uC5D0 sugo_analyze\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4.");
+    return fail("ANALYZE_NOT_CALLED", `${blockedAction} \uC804\uC5D0 sugo_analyze\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4.`);
   }
   return ok2();
 }
@@ -28844,7 +28867,7 @@ function validateConformanceLedger(prdContent) {
   if (ghost.length > 0) parts2.push(`\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 REQ \uCC38\uC870: ${[...new Set(ghost)].join(", ")}`);
   return fail(
     "CONFORMANCE_LEDGER_INCOMPLETE",
-    `In-Scope/DoD \uC6D0\uC7A5\uC774 REQ\uC640 \uB9DE\uBB3C\uB9AC\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4 \u2014 ${parts2.join(" \xB7 ")}. \uD56D\uBAA9\uC744 REQ\uB85C \uC2B9\uACA9\uD558\uAC70\uB098 \uC6D0\uC7A5\uC5D0\uC11C \uBE7C\uC138\uC694.`
+    `In-Scope/DoD \uC6D0\uC7A5\uC774 REQ\uC640 \uB9DE\uBB3C\uB9AC\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4 \u2014 ${parts2.join(" \xB7 ")}. \uBC94\uC704\xB7\uC644\uB8CC\uC870\uAC74\uC758 \uAC01 \uD56D\uBAA9 \uB05D\uC5D0 (REQ-N)\uC744 \uBD99\uC774\uAC70\uB098 \uC6D0\uC7A5\uC5D0\uC11C \uBE7C\uC138\uC694.`
   );
 }
 function checkValidateCalledGate(lastValidation) {
@@ -30355,7 +30378,21 @@ async function removeRoadmapNode(workspace, id) {
     if (!file.nodes.some((n) => n.id === id)) {
       return { ok: false, error: "NODE_NOT_FOUND", message: `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${id}` };
     }
-    const nodes = file.nodes.filter((n) => n.id !== id).map((n) => n.dependsOn.includes(id) ? { ...n, dependsOn: n.dependsOn.filter((d) => d !== id) } : n);
+    const removed = /* @__PURE__ */ new Set([id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const node of file.nodes) {
+        if (node.parent && removed.has(node.parent) && !removed.has(node.id)) {
+          removed.add(node.id);
+          changed = true;
+        }
+      }
+    }
+    const nodes = file.nodes.filter((n) => !removed.has(n.id)).map((n) => {
+      const dependsOn = n.dependsOn.filter((dependency) => !removed.has(dependency));
+      return dependsOn.length === n.dependsOn.length ? n : { ...n, dependsOn };
+    });
     await writeRoadmapFile(workspace, { ...file, nodes });
     return { ok: true };
   });
@@ -31382,6 +31419,7 @@ var sugoPlanInputSchema = {
   specDraftDecision: external_exports.enum(["link", "new"]).optional().describe("clarify action: \uBBF8\uC5F0\uACB0 SPEC \uCD08\uC548 \uD6C4\uBCF4\uAC00 \uC788\uC73C\uBA74 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uBCF4\uC5EC\uC900 \uB4A4 \uAE30\uC874 \uCD08\uC548 \uC5F0\uACB0(link) \uB610\uB294 \uC0C8 SPEC \uC0DD\uC131(new)\uC744 \uBC18\uB4DC\uC2DC \uC120\uD0DD"),
   specDraftId: external_exports.string().optional().describe("start/clarify action: Dashboard\uC5D0\uC11C \uC120\uD0DD\uD55C spec-manual-* ID"),
   workBranch: external_exports.string().optional().describe("start action: feat \uC2DC\uC791 \uC804 \uC900\uBE44\uD560 Git \uBE0C\uB79C\uCE58"),
+  dueDate: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("start action: Schedule\uC5D0 \uAE30\uB85D\uD560 \uC644\uB8CC \uBAA9\uD45C\uC77C"),
   prdContent: external_exports.string().optional().describe("prd action\uC5D0 \uD544\uC694. \uBCF8\uBB38 \u2265100\uC790, REQ-N \uD0DC\uADF8 \u22651"),
   specPath: external_exports.string().optional().describe("start/prd action: \uB300\uC870\uD560 \uAE30\uC900 spec.md \uACBD\uB85C. \uC2E4\uC7AC\uD558\uBA74 specOracle\uC774 \uCF1C\uC838 ready \uC804\uC5D0 oracle_done\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4"),
   uncovered: external_exports.array(external_exports.object({ quote: external_exports.string(), reason: external_exports.string() })).optional().describe("oracle_done: \uAE30\uC900 \uC2A4\uD399\uC5D0 \uC788\uC73C\uB098 PRD\uAC00 \uBABB \uB36E\uC740 \uD56D\uBAA9\uB4E4(\uC778\uC6A9 + \uC0AC\uC720). 1\uAC74 \uC774\uC0C1\uC774\uBA74 overrideReason \uD544\uC218"),
@@ -31451,6 +31489,7 @@ var SugoPlanArgs = external_exports.object(sugoPlanInputSchema);
 async function handleSugoPlan(rawArgs) {
   const args2 = SugoPlanArgs.parse(rawArgs);
   const { action, sessionId } = args2;
+  let scheduleLinkWarning;
   let existing = null;
   if (action !== "start") {
     if (!sessionId) {
@@ -31750,7 +31789,7 @@ async function handleSugoPlan(rawArgs) {
     if (!integrationResult.ok) return errorResult9(integrationResult.code, integrationResult.message);
     const mergedChangedFiles = Array.from(new Set(manifest.subtasks.flatMap((s) => s.changedFiles ?? [])));
     const hasPrd = !!existing.data.prdPath;
-    const analyzeGate = checkAnalyzeGate(existing.data.chainInfo.analyzeAttempts, hasPrd);
+    const analyzeGate = checkAnalyzeGate(existing.data.chainInfo.analyzeAttempts, hasPrd, "integrate");
     if (!analyzeGate.ok) return errorResult9(analyzeGate.code, analyzeGate.message);
     const baselineResult = checkBaselineGate(
       existing.data.baselineGate?.required ?? false,
@@ -31894,6 +31933,9 @@ async function handleSugoPlan(rawArgs) {
   }
   if (action === "start" && args2.seed) {
     session = { ...session, data: { ...session.data, seed: args2.seed } };
+  }
+  if (action === "start" && args2.dueDate) {
+    session = { ...session, data: { ...session.data, scheduleDueDate: args2.dueDate } };
   }
   if (action === "start") {
     const registryEntry = await findRegistryEntry(session.projectPath);
@@ -32104,6 +32146,20 @@ ${args2.prdContent}` : args2.prdContent;
           specPath: prdPath
         }
       ]);
+      await syncRoadmapSnapshot(registryEntry.workspace, await listRoadmapNodes(registryEntry.workspace));
+      const scheduleUpdates = [];
+      if (!selectedDraft?.projectPath) {
+        scheduleUpdates.push(updateScheduleSpecField(registryEntry.workspace, "project", { nodeId: specId, projectPath: session.projectPath }));
+      }
+      if (session.data.workBranch?.name && !selectedDraft?.workBranch) {
+        scheduleUpdates.push(updateScheduleSpecField(registryEntry.workspace, "work-branch", { nodeId: specId, workBranch: session.data.workBranch.name }));
+      }
+      if (session.data.scheduleDueDate && !selectedDraft?.dueDate) {
+        scheduleUpdates.push(updateScheduleSpecField(registryEntry.workspace, "due-date", { nodeId: specId, dueDate: session.data.scheduleDueDate }));
+      }
+      if (scheduleUpdates.length > 0 && (await Promise.all(scheduleUpdates)).some((updated) => !updated)) {
+        scheduleLinkWarning = "Schedule \uC5F0\uACB0 \uC815\uBCF4 \uC77C\uBD80\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. sugo_roadmap set_project/set_work_branch/set_due_date\uB85C \uB2E4\uC2DC \uC124\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.";
+      }
       if (isPatch) {
         await beginRoadmapPatch(
           registryEntry.workspace,
@@ -32266,6 +32322,65 @@ ${args2.prdContent}` : args2.prdContent;
       await completeTaskRequirements(session.data.linkedWorkspace, session.data.linkedTaskId, args2.summary);
     }
   }
+  if (action === "commit" && session.data.decomposeManifest && !session.data.chainInfo.workResultPath) {
+    const completedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const patchVersion = session.data.mode === "patch" ? session.data.patch?.version ?? 0 : 0;
+    const fallbackSummary = args2.summary?.trim() || session.data.chainInfo.reviewSummary?.trim() || `${session.featureName} \uBD84\uD574 \uC791\uC5C5 \uD1B5\uD569\uC744 \uC644\uB8CC\uD588\uC2B5\uB2C8\uB2E4.`;
+    const evidence = session.data.chainInfo.testEvidence;
+    const report = buildWorkResultReport({
+      featureName: session.featureName,
+      kind: patchVersion > 0 ? "patch" : "feat",
+      patchVersion,
+      completedAt,
+      completionGrade: "unverified",
+      bypassLabels: session.data.chainInfo.bypassLabels,
+      summary: fallbackSummary,
+      changedFiles: session.data.chainInfo.changedFiles,
+      requirements: session.data.chainInfo.coverageMap?.acceptanceCriteria,
+      knownLimitations: ["\uBD84\uD574 \uC791\uC5C5 \uD1B5\uD569 \uACBD\uB85C\uC5D0\uC11C \uBCC4\uB3C4 \uB9AC\uBDF0\xB7\uB7F0\uD0C0\uC784 \uAC80\uC99D \uC99D\uAC70\uB97C \uAE30\uB85D\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4."],
+      seed: session.data.seed,
+      provenance: session.data.postHocCapture ? "captured-post-hoc" : "native",
+      postHocCapture: session.data.postHocCapture,
+      testEvidence: {
+        command: evidence?.command,
+        exitCode: evidence?.exitCode,
+        total: evidence?.total,
+        passed: evidence?.passed,
+        failed: evidence?.failed,
+        state: evidence?.derivedState ?? "unverified"
+      },
+      runtimeVerified: false,
+      wiringVerified: session.data.chainInfo.wiringVerified,
+      validation: session.data.chainInfo.lastValidation
+    });
+    const content = renderWorkResultMarkdown(report);
+    const featurePath = session.data.featurePath ?? session.projectPath;
+    const { workResultPath } = patchVersion > 0 && session.data.patch ? await writePatchWorkResultFile(session.data.patch.featureDir, patchVersion, content) : await writeWorkResultFile(featurePath, content);
+    const bypassLabels = [
+      ...session.data.chainInfo.bypassLabels ?? [],
+      {
+        kind: "runtimeUnverified",
+        reason: "\uBD84\uD574 \uC791\uC5C5 \uD1B5\uD569 \uACBD\uB85C\uC5D0\uC11C \uBCC4\uB3C4 \uB9AC\uBDF0\xB7\uB7F0\uD0C0\uC784 \uAC80\uC99D \uC99D\uAC70\uB97C \uAE30\uB85D\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.",
+        patchVersion,
+        recordedAt: completedAt
+      }
+    ];
+    session = {
+      ...session,
+      data: {
+        ...session.data,
+        chainInfo: {
+          ...session.data.chainInfo,
+          bypassLabels,
+          workResultPath,
+          workResultReport: { ...report, bypassLabels },
+          reviewSummary: fallbackSummary,
+          reviewDoneAt: completedAt,
+          runtimeVerified: false
+        }
+      }
+    };
+  }
   let completionGrade;
   let bypassSummary;
   if (action === "commit") {
@@ -32424,6 +32539,7 @@ ${args2.prdContent}` : args2.prdContent;
     prdPath: session.data.prdPath,
     workResultPath: session.data.chainInfo.workResultPath,
     workBranch: action === "start" ? session.data.workBranch : void 0,
+    scheduleLinkWarning,
     patch: session.data.mode === "patch" && session.data.patch ? { parentPrdPath: session.data.patch.parentPrdPath, version: session.data.patch.version } : void 0,
     workRecord,
     decomposeManifest: session.data.decomposeManifest,
@@ -32667,7 +32783,10 @@ var sugoRoadmapInputSchema = {
     "pull_ordering",
     "block_for_human",
     "request_review_confirmation",
-    "resume_with_decision"
+    "resume_with_decision",
+    "set_project",
+    "set_work_branch",
+    "set_due_date"
   ]),
   workspace: external_exports.string().describe("\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984"),
   id: external_exports.string().optional().describe("add/remove/status/get/mark_req action\uC5D0 \uD544\uC694. add\uC758 \uC0C8 \uB178\uB4DC id \uB610\uB294 \uB300\uC0C1 \uB178\uB4DC id"),
@@ -32686,6 +32805,10 @@ var sugoRoadmapInputSchema = {
   taskIds: external_exports.array(external_exports.string()).optional().describe("group action\uC5D0 \uD544\uC694 \u2014 \uC774 workstream \uC544\uB798\uB85C \uBB36\uC744 task id\uB4E4"),
   filterLevel: external_exports.enum(ROADMAP_LEVELS).optional().describe("list action\uC758 \uC120\uD0DD\uC801 \uD544\uD130"),
   filterParent: external_exports.string().optional().describe("list action\uC758 \uC120\uD0DD\uC801 \uD544\uD130"),
+  summary: external_exports.boolean().optional().describe("list action: \uD070 \uD30C\uC77C \uB0B4\uC6A9\uACFC \uACC4\uBCF4\uB97C \uC0DD\uB7B5\uD55C \uACBD\uB7C9 \uC751\uB2F5"),
+  projectPath: external_exports.string().nullable().optional().describe("set_project: Schedule SPEC\uC5D0 \uC5F0\uACB0\uD560 \uD504\uB85C\uC81D\uD2B8 \uC808\uB300\uACBD\uB85C(null\uC774\uBA74 \uD574\uC81C)"),
+  workBranch: external_exports.string().nullable().optional().describe("set_work_branch: Schedule SPEC \uC791\uC5C5 \uBE0C\uB79C\uCE58(null\uC774\uBA74 \uD574\uC81C)"),
+  dueDate: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional().describe("set_due_date: Schedule SPEC \uBAA9\uD45C\uC77C(null\uC774\uBA74 \uD574\uC81C)"),
   sessionId: external_exports.string().optional().describe("block_for_human/resume_with_decision: \uC6D0\uB798 sugo_plan \uC138\uC158 ID"),
   stage: external_exports.string().optional().describe("block_for_human: \uBA48\uCD98 \uD30C\uC774\uD504\uB77C\uC778 \uC0C1\uD0DC"),
   resumeAction: external_exports.string().optional().describe("block_for_human: \uACB0\uC815 \uBC18\uC601 \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD560 sugo_plan action"),
@@ -32762,7 +32885,7 @@ async function handleSugoRoadmap(rawArgs) {
     }
     case "list": {
       const nodes = await listRoadmapNodes(args2.workspace, { level: args2.filterLevel, parent: args2.filterParent });
-      return ok4({ nodes });
+      return ok4({ nodes: args2.summary ? nodes.map(toRoadmapSummary) : nodes });
     }
     case "ready": {
       const ready = await getReadySet(args2.workspace);
@@ -32771,6 +32894,22 @@ async function handleSugoRoadmap(rawArgs) {
     case "pull_ordering": {
       const pulled = await pullRoadmapOrdering(args2.workspace);
       return ok4({ pulled });
+    }
+    case "set_project":
+    case "set_work_branch":
+    case "set_due_date": {
+      if (!args2.id) return errorResult13("ID_REQUIRED", `${args2.action} action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
+      const node = await getRoadmapNode(args2.workspace, args2.id);
+      if (!node || node.level !== "spec") return errorResult13("SPEC_NODE_REQUIRED", "Schedule \uBA54\uD0C0\uB370\uC774\uD130\uB294 spec \uB178\uB4DC\uC5D0\uB9CC \uC124\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+      const config2 = {
+        set_project: { field: "project", key: "projectPath", value: args2.projectPath },
+        set_work_branch: { field: "work-branch", key: "workBranch", value: args2.workBranch },
+        set_due_date: { field: "due-date", key: "dueDate", value: args2.dueDate }
+      }[args2.action];
+      if (config2.value === void 0) return errorResult13("VALUE_REQUIRED", `${args2.action} action\uC5D0\uB294 ${config2.key}\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.`);
+      const updated = await updateScheduleSpecField(args2.workspace, config2.field, { nodeId: args2.id, [config2.key]: config2.value });
+      if (!updated) return errorResult13("DASHBOARD_UPDATE_FAILED", "Schedule \uC5F0\uACB0 \uC815\uBCF4\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. Console \uC5F0\uACB0\uACFC API \uD1A0\uD070\uC744 \uD655\uC778\uD558\uC138\uC694.");
+      return ok4({ nodeId: args2.id, [config2.key]: config2.value });
     }
     case "block_for_human": {
       if (!args2.id || !args2.sessionId || !args2.stage || !args2.resumeAction || !args2.blockerSummary || !args2.question || !args2.blockedNextStep) {
@@ -32918,6 +33057,11 @@ async function handleSugoRoadmap(rawArgs) {
       return ok4({ node: await getRoadmapNode(args2.workspace, args2.id) });
     }
   }
+}
+function toRoadmapSummary(node) {
+  const workResult = node.workResult ? { path: node.workResult.path, summary: node.workResult.summary, patchVersion: node.workResult.patchVersion, endedAt: node.workResult.endedAt } : void 0;
+  const { lineage: _lineage, workResult: _workResult, ...rest } = node;
+  return { ...rest, ...workResult ? { workResult } : {} };
 }
 function resultFrom(args2) {
   if (!args2.resultSummary && !args2.logId) return void 0;

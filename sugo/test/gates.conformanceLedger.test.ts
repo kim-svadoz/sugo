@@ -38,6 +38,7 @@ ${withReqs}`;
     const r = validateConformanceLedger(prd);
     expect(r.ok).toBe(false);
     expect(r.code).toBe("CONFORMANCE_LEDGER_INCOMPLETE");
+    expect(r.message).toContain("(REQ-N)");
     expect(r.message).toContain("비밀번호 재설정 메일");
   });
 

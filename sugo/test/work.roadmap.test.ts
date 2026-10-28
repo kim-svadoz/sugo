@@ -533,6 +533,14 @@ describe("removeRoadmapNode", () => {
     const b = await getRoadmapNode("ws1", "B");
     expect(b?.dependsOn).not.toContain("A");
   });
+
+  it("부모를 지우면 하위 노드도 함께 제거해 고아를 만들지 않는다", async () => {
+    await addRoadmapNode("ws1", { id: "SPEC", title: "SPEC", level: "spec", status: "pending", dependsOn: [] });
+    await addRoadmapNode("ws1", { id: "RUN", title: "RUN", level: "workstream", status: "pending", dependsOn: [], parent: "SPEC" });
+    await addRoadmapNode("ws1", { id: "TASK", title: "TASK", level: "task", status: "pending", dependsOn: [], parent: "RUN" });
+    await removeRoadmapNode("ws1", "SPEC");
+    expect(await listRoadmapNodes("ws1")).toEqual([]);
+  });
 });
 
 describe("getReadySet — 로드 후 순수함수 위임", () => {
