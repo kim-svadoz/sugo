@@ -13,6 +13,7 @@ Sugo runs each feature in a fixed order. It sets requirements and acceptance cri
 
 ## Contents
 
+- [Terms to know](#terms-to-know)
 - [At a glance](#at-a-glance)
 - [Where Sugo stops](#where-sugo-stops)
 - [Problems it solves](#problems-it-solves)
@@ -27,9 +28,20 @@ Sugo runs each feature in a fixed order. It sets requirements and acceptance cri
 - [Supported stacks](#supported-stacks)
 - [Troubleshooting](#troubleshooting)
 
+## Terms to know
+
+| Term | Meaning |
+| --- | --- |
+| Console | The local screen Sugo runs (`http://localhost:3001`). You follow progress and approve work here |
+| Domain | A group of projects in one business area. Example: the `payments` domain holds a payment API, a settlement batch, and an admin UI |
+| Spec | A document with the requirements and acceptance criteria of one feature. Sugo runs work one spec at a time |
+| Spec card | The card in Console Schedule that opens one spec. It shows status, why work stopped, and development history |
+| Domain rule | A rule kept in a domain so a mistake does not happen twice. Every agent reads it from the next task on |
+| Harness | A set of coding rules for a project stack (Java, Spring, TypeScript, and so on) |
+
 ## At a glance
 
-One Workspaces screen shows what each domain is doing and how far it has gone.
+One Console Workspaces screen shows what each domain is doing and how far it has gone.
 
 ![Workspaces: domain cards, work floor, recent work summary, Inspector](docs/images/console-workspaces.png)
 
@@ -54,7 +66,7 @@ flowchart LR
     E -- approve --> F[Docs, report, commit]
 ```
 
-The reason for each stop stays as a sentence at the top of the spec card.
+The reason for each stop stays as a sentence at the top of that feature's spec card.
 
 **A failing test sends the work back to implementation.** A task with 2 of 26 tests failing is not reported as done.
 
