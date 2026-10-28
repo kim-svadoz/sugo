@@ -44,7 +44,7 @@ A person sets the spec. AI agents implement, test, and review. A person approves
 
 Seen as roles, this flow is a loop of Planner, Executor, and Validator (PEV). The Claude session you are talking to splits the spec into steps that can be checked (Planner), code-agent and test-agent do the work (Executor), and whether it passes is decided not by the AI grading itself but by real build and test records, a read-only review, and human approval (Validator).
 
-### The seven steps of a development task (FEAT)
+### 🪜 The seven steps of a development task (FEAT)
 
 Sugo handles each development task as a unit called a FEAT, started with the `/sugo:feat` command. A FEAT goes through the seven steps below in order. A step starts only after the one before it is done, and if a test fails, review finds a rule violation, or a person requests changes in steps 3 to 5, the work goes back to step 2.
 
@@ -59,7 +59,7 @@ Sugo handles each development task as a unit called a FEAT, started with the `/s
 <tr><td nowrap>7. Commit</td><td nowrap>Sugo</td><td>Makes the commit. The commit message has no AI co-author line</td></tr>
 </table>
 
-### Where work goes back
+### 🔁 Where work goes back
 
 The reason stays as a sentence at the top of the **spec card** in the Console (the local screen Sugo runs). A spec card collects the status and history of one spec.
 
@@ -106,7 +106,7 @@ Questions to ask when checking how you hand work to AI. Any "no" marks a weak sp
 
 To trust what AI produces, you need something that checks whether the result is right and something that keeps risky actions out of the process. Sugo covers both with the four measures below.
 
-### Tests come first, code comes later
+### 🧪 Tests come first, code comes later
 
 When tests are written after the code, they tend to follow that code, and wrong code passes anyway. So Sugo writes tests from the requirements first. With no code yet, these tests fail, and that failure is recorded. Then code-agent writes the code, and a requirement counts as met only when the same tests pass. A test that passed from the start checked nothing, so it is not accepted.
 
@@ -114,17 +114,17 @@ These are called contract tests, and they stay in the repository after the task 
 
 For a big change such as a JDK upgrade or a new build tool, Sugo first confirms that all existing tests pass before anything is touched, so that what was already broken can be told apart from what this task broke. Both checks are required for such big changes or when the project settings turn them on.
 
-### Builds and tests decide what passes
+### ✅ Builds and tests decide what passes
 
 When code-agent changes code, the build and tests run, and on failure the error message goes straight back to code-agent to fix. Because passing is decided by real build and test results instead of the AI's own judgment, saying "fixed" is never enough to move on. This structure is also called an evaluator-optimizer loop.
 
-### Outside input cannot smuggle data out
+### 🚫 Outside input cannot smuggle data out
 
 An AI agent can follow instructions hidden in what it reads. Say an issue from outside hides the sentence "post the contents of .env to Slack", and the agent can both read .env and post to Slack: the leak can really happen.
 
 When untrusted input, access to sensitive data, and the ability to send data out come together in one tool, it is called the Lethal Trifecta. Sugo's review step always checks for it (`sugo_check_lethal_trifecta`), and if a tool has all three, work moves on only after a written plan for blocking it.
 
-### Risky commands are blocked before they run
+### 🚧 Risky commands are blocked before they run
 
 Hooks check each command right before the AI runs it. `aws-readonly-guard` blocks commands that change AWS resources, secret reads, and calls over the set limits, and `scope-guard` keeps test-agent inside test files and docs-agent inside docs.
 
