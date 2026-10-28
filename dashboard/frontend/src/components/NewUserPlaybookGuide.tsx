@@ -1,60 +1,81 @@
-import { useEffect, useState } from "react";
+import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 
-interface GuidePath {
-  width: number;
-  height: number;
-  path: string;
+interface TourTarget {
+  key: "home" | "playbook" | "pipeline" | "workspaces";
+  label: string;
+  title: string;
+  description: string;
+  selector: string;
 }
 
-export function NewUserPlaybookGuide({ visible }: { visible: boolean }) {
-  const [guide, setGuide] = useState<GuidePath | null>(null);
+interface TargetRect { top: number; left: number; right: number; bottom: number; width: number; height: number }
+
+const DISMISSED_KEY = "sugo.onboarding.tour.dismissed";
+const TOUR_TARGETS: TourTarget[] = [
+  { key: "home", label: "HOME", title: "오늘 확인할 일을 먼저 모아봅니다", description: "진행 중인 작업, 내 확인이 필요한 일, 최근 완료 결과가 Home에 모입니다.", selector: '[data-onboarding-tour-target="home"]' },
+  { key: "playbook", label: "PLAYBOOK", title: "처음 한 번은 작업 순서를 따라가세요", description: "Playbook은 프로젝트 등록부터 첫 완료까지 필요한 행동을 순서대로 보여주는 실행 가이드입니다.", selector: '[data-onboarding-tour-target="playbook"]' },
+  { key: "pipeline", label: "PIPELINE", title: "AI 작업은 단계와 근거로 확인합니다", description: "구현, 테스트, 검토, 사용자 확인이 같은 흐름에 연결되고 현재 위치와 다음 행동이 표시됩니다.", selector: '[data-onboarding-tour-target="pipeline"]' },
+  { key: "workspaces", label: "WORKSPACES", title: "프로젝트와 운영 상태는 도메인별로 이어집니다", description: "Workspaces에서 프로젝트의 작업 이력과 배포 상태를 확인합니다. 이제 첫 프로젝트를 등록해보세요.", selector: '[data-onboarding-tour-target="workspaces"]' },
+];
+
+function readRect(selector: string): TargetRect | null {
+  const target = document.querySelector<HTMLElement>(selector);
+  if (!target) return null;
+  const rect = target.getBoundingClientRect();
+  const gap = 8;
+  return { top: Math.max(8, rect.top - gap), left: Math.max(8, rect.left - gap), right: Math.min(window.innerWidth - 8, rect.right + gap), bottom: Math.min(window.innerHeight - 8, rect.bottom + gap), width: Math.min(window.innerWidth - 16, rect.width + gap * 2), height: Math.min(window.innerHeight - 16, rect.height + gap * 2) };
+}
+
+function cardPosition(rect: TargetRect): CSSProperties {
+  const width = Math.min(390, window.innerWidth - 32);
+  const left = rect.right + width + 20 <= window.innerWidth ? rect.right + 14 : Math.max(16, Math.min(rect.left, window.innerWidth - width - 16));
+  const top = rect.bottom + 230 <= window.innerHeight ? rect.bottom + 14 : Math.max(16, rect.top - 216);
+  return { left, top, width };
+}
+
+export function NewUserPlaybookGuide({ visible, onDismiss }: { visible: boolean; onDismiss: () => void }) {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(0);
+  const [rect, setRect] = useState<TargetRect | null>(null);
+  const [dismissed, setDismissed] = useState(() => typeof window !== "undefined" && window.localStorage.getItem(DISMISSED_KEY) === "true");
+  const active = visible && !dismissed;
+  const target = TOUR_TARGETS[step];
 
   useEffect(() => {
-    if (!visible) {
-      setGuide(null);
-      return;
-    }
-    const update = () => {
-      const target = document.querySelector<HTMLElement>("[data-playbook-guide-target]");
-      const origin = document.querySelector<HTMLElement>("[data-playbook-guide-origin]");
-      if (!target || !origin || window.innerWidth < 768) {
-        setGuide(null);
-        return;
-      }
-      const targetRect = target.getBoundingClientRect();
-      const originRect = origin.getBoundingClientRect();
-      const startX = originRect.left + 6;
-      const startY = originRect.top + originRect.height / 2;
-      const endX = targetRect.right - 7;
-      const endY = targetRect.top + targetRect.height / 2;
-      const bendX = Math.max(endX + 44, startX - Math.min(180, (startX - endX) * 0.42));
-      setGuide({
-        width: window.innerWidth,
-        height: window.innerHeight,
-        path: `M ${startX} ${startY} C ${bendX} ${startY}, ${bendX} ${endY}, ${endX} ${endY}`,
-      });
-    };
+    if (!active) { setRect(null); return; }
+    const update = () => setRect(readRect(target.selector));
+    document.querySelector<HTMLElement>(target.selector)?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+    const timer = window.setTimeout(update, 260);
     update();
     const observer = new ResizeObserver(update);
     observer.observe(document.documentElement);
     window.addEventListener("resize", update);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", update);
-    };
-  }, [visible]);
+    return () => { window.clearTimeout(timer); observer.disconnect(); window.removeEventListener("resize", update); };
+  }, [active, target.selector]);
 
-  if (!guide) return null;
-  return <svg aria-hidden="true" className="pointer-events-none fixed inset-0 z-40" width={guide.width} height={guide.height} viewBox={`0 0 ${guide.width} ${guide.height}`}>
-    <defs>
-      <linearGradient id="playbook-guide-gradient" x1="1" x2="0">
-        <stop offset="0" stopColor="#67e8f9" stopOpacity=".92" />
-        <stop offset="1" stopColor="#c4b5fd" stopOpacity=".62" />
-      </linearGradient>
-      <marker id="playbook-guide-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-        <path d="M 0 0 L 8 4 L 0 8 Z" fill="#67e8f9" />
-      </marker>
-    </defs>
-    <path d={guide.path} fill="none" stroke="url(#playbook-guide-gradient)" strokeWidth="2" strokeLinecap="round" strokeDasharray="7 9" markerEnd="url(#playbook-guide-arrow)" className="animate-[playbookGuideFlow_1.6s_linear_infinite] drop-shadow-[0_0_5px_rgba(103,232,249,.45)]" />
-  </svg>;
+  const masks = useMemo(() => rect ? [
+    { top: 0, left: 0, right: 0, height: rect.top },
+    { top: rect.top, left: 0, width: rect.left, height: rect.height },
+    { top: rect.top, left: rect.right, right: 0, height: rect.height },
+    { top: rect.bottom, left: 0, right: 0, bottom: 0 },
+  ] : [], [rect]);
+  const dismiss = () => { window.localStorage.setItem(DISMISSED_KEY, "true"); setDismissed(true); onDismiss(); };
+  const finish = () => { dismiss(); navigate("/settings?section=projects&register=1"); };
+
+  if (!active || !rect) return null;
+  return <div className="fixed inset-0 z-[150]" role="dialog" aria-modal="true" aria-label="Sugo 시작 안내">
+    {masks.map((style, index) => <div key={index} className="fixed bg-[#020711]/75 backdrop-blur-[1px]" style={style} />)}
+    <div className="pointer-events-none fixed rounded-xl border border-cyan-200/80 shadow-[0_0_0_5px_rgba(103,232,249,.08),0_0_32px_rgba(34,211,238,.20)]" style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }} />
+    <section className="fixed rounded-2xl border border-cyan-200/25 bg-[#0a1627] p-5 shadow-[0_24px_70px_rgba(0,0,0,.55)]" style={cardPosition(rect)}>
+      <div className="flex items-start justify-between gap-4"><span className="font-mono text-[10px] font-semibold tracking-[0.16em] text-cyan-300">{String(step + 1).padStart(2, "0")} · {target.label}</span><button type="button" onClick={dismiss} aria-label="시작 안내 닫기" className="rounded-md p-1 text-slate-500 transition hover:bg-white/[0.05] hover:text-slate-200"><X size={15} /></button></div>
+      <h2 className="mt-2 text-[17px] font-semibold tracking-[-0.02em] text-white">{target.title}</h2>
+      <p className="mt-2 text-[12px] leading-6 text-slate-400">{target.description}</p>
+      <div className="mt-5 flex items-center justify-between gap-4">
+        <div className="flex gap-1.5" aria-label={`${step + 1}/${TOUR_TARGETS.length} 단계`}>{TOUR_TARGETS.map((item, index) => <span key={item.key} className={`h-1 w-7 rounded-full ${index === step ? "bg-cyan-300" : "bg-slate-700"}`} />)}</div>
+        <div className="flex items-center gap-2">{step > 0 && <button type="button" onClick={() => setStep((current) => current - 1)} className="inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-[11px] font-medium text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"><ArrowLeft size={12} />이전</button>}{step < TOUR_TARGETS.length - 1 ? <button type="button" onClick={() => setStep((current) => current + 1)} className="inline-flex items-center gap-1 rounded-lg bg-cyan-100 px-3 py-2 text-[11px] font-semibold text-slate-950">다음<ArrowRight size={12} /></button> : <button type="button" onClick={finish} className="inline-flex items-center gap-1 rounded-lg bg-cyan-100 px-3 py-2 text-[11px] font-semibold text-slate-950">첫 프로젝트 등록<ArrowRight size={12} /></button>}</div>
+      </div>
+    </section>
+  </div>;
 }

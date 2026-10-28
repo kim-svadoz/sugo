@@ -62,7 +62,7 @@ export function Sidebar({ playbookGuideVisible = false }: { playbookGuideVisible
             key={to}
             to={to}
             title={`${label} · ⌘${shortcut}`}
-            data-playbook-guide-target={guided ? "true" : undefined}
+            data-onboarding-tour-target={playbookGuideVisible && to === "/playbook" ? "playbook" : playbookGuideVisible && to === "/sessions" ? "workspaces" : undefined}
             className={({ isActive }) =>
               cn(
                 "group relative flex h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left transition-colors duration-150",

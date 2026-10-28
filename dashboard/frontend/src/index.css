@@ -275,9 +275,6 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 }
 
 /* ──── Skills/Harness/Settings/Playbook 공용 유틸 ──────────────────── */
-@keyframes playbookGuideFlow {
-  to { stroke-dashoffset: -32; }
-}
 .ck-pill {
   display: inline-flex; align-items: center; gap: 0.3rem;
   padding: 0.1rem 0.5rem; border-radius: 999px;

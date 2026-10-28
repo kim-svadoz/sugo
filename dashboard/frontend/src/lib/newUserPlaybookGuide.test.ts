@@ -9,13 +9,27 @@ describe("new user Playbook guide", () => {
     const layout = source("../components/Layout.tsx");
     expect(home).toContain("getOnboardingStatus(userId)");
     expect(home).toContain("setPlaybookGuideVisible(showPlaybookGuide)");
-    expect(home).toContain("첫 파이프라인은 Playbook과 함께 시작해보세요.");
+    expect(home).toContain('data-onboarding-tour-target={showPlaybookGuide ? "home"');
+    expect(home).toContain('data-onboarding-tour-target={showPlaybookGuide ? "pipeline"');
     expect(layout).toContain("<NewUserPlaybookGuide visible={playbookGuideVisible}");
   });
 
-  it("connects the Home callout to the Playbook navigation target", () => {
-    expect(source("../pages/Home.tsx")).toContain("data-playbook-guide-origin");
-    expect(source("../components/Sidebar.tsx")).toContain("data-playbook-guide-target");
-    expect(source("../components/NewUserPlaybookGuide.tsx")).toContain("window.innerWidth < 768");
+  it("walks through the product landmarks and ends at project registration", () => {
+    const sidebar = source("../components/Sidebar.tsx");
+    const guide = source("../components/NewUserPlaybookGuide.tsx");
+    expect(sidebar).toContain('to === "/playbook" ? "playbook"');
+    expect(sidebar).toContain('to === "/sessions" ? "workspaces"');
+    expect(guide).toContain('key: "home"');
+    expect(guide).toContain('key: "pipeline"');
+    expect(guide).toContain('navigate("/settings?section=projects&register=1")');
+    expect(guide).toContain("sugo.onboarding.tour.dismissed");
+  });
+
+  it("keeps the future team gate hidden unless its feature flag is enabled", () => {
+    const login = source("../pages/Login.tsx");
+    expect(login).toContain('VITE_TEAM_WORKSPACES === "true"');
+    expect(login).toContain("teamWorkspacesEnabled &&");
+    expect(login).toContain("개인 작업 공간");
+    expect(login).toContain("조직 작업 공간");
   });
 });

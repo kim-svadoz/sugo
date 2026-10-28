@@ -64,7 +64,7 @@ export function Layout() {
         </main>
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
-      <NewUserPlaybookGuide visible={playbookGuideVisible} />
+      <NewUserPlaybookGuide visible={playbookGuideVisible} onDismiss={() => setPlaybookGuideVisible(false)} />
     </div>
     </OnboardingGuideContext.Provider>
   );

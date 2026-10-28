@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpenText, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, GitPullRequest, Library, Sparkles, Star, X } from "lucide-react";
+import { ArrowRight, BookOpenText, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, GitPullRequest, Library, Star, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNewsFeed, type NewsFeed, type NewsItem } from "../api/newsApi.js";
@@ -178,11 +178,9 @@ export function Home() {
 
     {setupMissing.length > 0 && <section className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.045] px-4 py-3"><span className="min-w-0 flex-1 text-[12px] text-slate-300"><strong className="text-amber-200">처음 설정을 마치면 Home이 내 작업 방식에 맞춰집니다.</strong><span className="ml-2 text-slate-500">남은 설정 · {setupMissing.join(" · ")}</span></span><button type="button" onClick={() => navigate(`/preferences?tab=${setupMissing[0] === "날씨 생활권" ? "weather" : setupMissing[0] === "주간 리포트" ? "weekly" : "general"}`)} className="rounded-lg border border-amber-300/25 px-3 py-1.5 text-[11px] font-semibold text-amber-100">설정 이어가기</button></section>}
 
-    {showPlaybookGuide && <section data-playbook-guide-origin className="relative flex flex-wrap items-center gap-3 overflow-hidden rounded-xl border border-violet-300/20 bg-gradient-to-r from-violet-300/[0.07] via-cyan-300/[0.035] to-transparent px-4 py-3.5"><span className="absolute inset-y-0 left-0 w-0.5 bg-violet-300" /><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-300/10 text-violet-200"><Sparkles size={16} /></span><span className="min-w-0 flex-1"><strong className="block text-[12px] text-violet-100">첫 파이프라인은 Playbook과 함께 시작해보세요.</strong><span className="mt-1 block text-[10px] text-slate-400">프로젝트 등록부터 SPEC 작성, 검토와 완료까지 실제 순서대로 안내합니다.</span></span><button type="button" onClick={() => navigate("/playbook")} className="inline-flex items-center gap-1.5 rounded-lg border border-violet-300/25 bg-violet-300/[0.08] px-3 py-2 text-[11px] font-semibold text-violet-100 transition hover:bg-violet-300/[0.14]">Playbook 보기<ArrowRight size={12} /></button></section>}
-
     <section className="relative overflow-hidden rounded-2xl border border-cyan-300/15 bg-[linear-gradient(110deg,rgba(8,47,73,.42),rgba(10,18,32,.92)_48%,rgba(76,29,149,.16))] px-5 py-4" aria-label="오늘의 Sugo 작업 장면">
       <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-cyan-300/[0.06] blur-3xl" />
-      <div className="relative grid items-center gap-5 xl:grid-cols-[minmax(260px,.75fr)_minmax(0,1.4fr)_auto]">
+      <div data-onboarding-tour-target={showPlaybookGuide ? "home" : undefined} className="relative grid items-center gap-5 xl:grid-cols-[minmax(260px,.75fr)_minmax(0,1.4fr)_auto]">
         <div><span className="font-mono text-[9px] font-bold tracking-[0.18em] text-cyan-300">TODAY IN SUGO</span><h2 className="mt-1.5 text-[18px] font-semibold text-white">오늘 이어갈 작업과 확인할 일을 모았습니다</h2><p className="mt-1 text-[11px] leading-5 text-slate-400">진행 중인 개발, 내 확인이 필요한 일, 최근 완료 결과를 한곳에서 확인합니다.</p></div>
         <div className="grid grid-cols-2 gap-2">
           {brief.resume.length > 0 && <div className="relative rounded-xl border border-cyan-300/15 bg-cyan-300/[0.045] px-4 py-3"><div className="absolute left-4 top-0 h-px w-8 bg-cyan-300" /><span className="text-[9px] text-cyan-200/70">진행 중</span><strong className="mt-1 block font-mono text-[20px] text-white">{brief.resume.length}</strong><span className="mt-0.5 block text-[9px] text-slate-400">현재 이어가는 파이프라인</span></div>}
@@ -191,7 +189,7 @@ export function Home() {
         </div>
         <button type="button" onClick={() => navigate(brief.decisions.length > 0 ? "/schedule" : "/sessions")} className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-300/[0.08] px-4 py-3 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-300/[0.14]">{brief.decisions.length > 0 ? "판단할 작업 열기" : "작업 흐름 보기"}<ArrowRight size={13} /></button>
       </div>
-      <div className="relative mt-4 border-t border-white/[0.06] pt-3"><WorkBoard specs={specs ?? []} waitingReviews={brief.decisions.length} /></div>
+      <div data-onboarding-tour-target={showPlaybookGuide ? "pipeline" : undefined} className="relative mt-4 border-t border-white/[0.06] pt-3"><WorkBoard specs={specs ?? []} waitingReviews={brief.decisions.length} /></div>
     </section>
 
     <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,.85fr)]">

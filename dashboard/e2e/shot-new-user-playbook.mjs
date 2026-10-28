@@ -4,11 +4,13 @@ import { tmpdir } from "node:os";
 
 const base = process.env.SUGO_UI_URL ?? "http://127.0.0.1:5175";
 const output = process.env.SUGO_SCREENSHOT ?? join(tmpdir(), "sugo-new-user-playbook-guide.png");
+const loginOutput = process.env.SUGO_LOGIN_SCREENSHOT ?? join(tmpdir(), "sugo-workspace-gate.png");
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
 await page.addInitScript(() => {
   localStorage.setItem("sugo_auth", JSON.stringify({ user: { id: "new-user" }, accessToken: "fake.jwt.token", refreshToken: null, expiresAt: Date.now() + 3_600_000 }));
   localStorage.setItem("sugo_weather_region", "seoul-cityhall");
+  localStorage.removeItem("sugo.onboarding.tour.dismissed");
 });
 await page.route("**/health", (route) => route.fulfill({ json: { status: "ok", version: "test", build: "test" } }));
 await page.route("**/api/**", (route) => {
@@ -25,8 +27,13 @@ await page.route("**/api/**", (route) => {
   return route.fulfill({ json: {} });
 });
 await page.goto(`${base}/home`, { waitUntil: "networkidle" });
-await page.getByText("첫 파이프라인은 Playbook과 함께 시작해보세요.").waitFor();
+await page.getByRole("dialog", { name: "Sugo 시작 안내" }).waitFor();
 await page.waitForTimeout(300);
 await page.screenshot({ path: output, fullPage: false });
 console.log(output);
+await page.evaluate(() => localStorage.removeItem("sugo_auth"));
+await page.goto(`${base}/login`, { waitUntil: "networkidle" });
+await page.getByText("WORKSPACE GATE").waitFor();
+await page.screenshot({ path: loginOutput, fullPage: false });
+console.log(loginOutput);
 await browser.close();
