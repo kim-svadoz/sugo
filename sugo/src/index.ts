@@ -385,7 +385,7 @@ server.registerTool(
   "sugo_console",
   {
     title: "Local Sugo Console management",
-    description: "로컬 Sugo Console의 상태를 확인하고 시작·재시작·정지한다. 기본 주소는 http://localhost:3001이다.",
+    description: "로컬 Sugo Console의 상태를 확인하고 시작·재시작·정지하며, open은 브라우저로 연다. 주소는 http://sugo.localhost:<포트>이고 기본 포트 3001이 쓰이고 있으면 다음 빈 포트로 뜬다. 실제 주소는 결과의 url이다.",
     inputSchema: sugoConsoleInputSchema,
   },
   handleSugoConsole,

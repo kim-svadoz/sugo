@@ -18,7 +18,7 @@ const port = Number(process.env.README_SHOTS_PORT ?? 3199);
 const base = `http://localhost:${port}`;
 const out = join(repo, "docs", "images");
 // 화면에 보이는 프로젝트 경로가 짧도록 /tmp 아래에 둔다.
-const home = await mkdtemp("/tmp/sugo-");
+const home = await mkdtemp(join(tmpdir(), "sugo-"));
 
 const env = { ...process.env, SUGO_HOME_OVERRIDE: home, SUGO_DASHBOARD_PORT: String(port), LOCAL_DEV_USER_ID: "readme-demo", LOCAL_DEV_DISPLAY_NAME: "Demo", README_DEMO_ROOT: home, SECRET_ENC_KEY: randomBytes(32).toString("base64") };
 for (const key of ["SUGO_DASHBOARD_API_URL", "SUGO_DASHBOARD_API_TOKEN", "SUGO_DASHBOARD_USER_ID", "SQLITE_FILE", "SUGO_SETTINGS_FILE"]) delete env[key];

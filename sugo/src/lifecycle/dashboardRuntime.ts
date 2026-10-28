@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { createServer } from "node:net";
 import { closeSync, existsSync, openSync } from "node:fs";
 import { mkdir, readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
@@ -7,6 +8,16 @@ import { sugoHomeDir } from "../homeDir.js";
 /** 개인용 로컬 대시보드 서버의 실행·정지·상태. 세션 시작 훅과 uninstall이 같은 규칙을 쓴다. */
 
 export const DEFAULT_DASHBOARD_PORT = 3001;
+/** 브라우저가 별도 설정 없이 127.0.0.1로 연결하는 이름이다. 포트가 바뀌어도 사용자가 기억할 주소는 이 이름 하나다. */
+export const CONSOLE_HOST = "sugo.localhost";
+/** /health 응답에서 Sugo Console을 다른 앱과 구별하는 표시다. */
+export const CONSOLE_SERVICE = "sugo-console";
+/** 기본 포트가 쓰이고 있을 때 이어서 시도하는 포트 수다. */
+const PORT_SCAN = 20;
+
+export function consoleUrl(port: number): string {
+  return `http://${CONSOLE_HOST}:${port}`;
+}
 
 /** SUGO_DASHBOARD_PORT는 검증용 시임이다. 평소에는 설정하지 않으며 기본 포트를 쓴다. */
 export function configuredDashboardPort(): number {
@@ -66,6 +77,28 @@ export interface Health {
   status: string;
   version: string;
   build: string;
+  service?: string;
+}
+
+export function isConsoleHealth(health: Health | null): boolean {
+  return health?.service === CONSOLE_SERVICE;
+}
+
+function isPortFree(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const probe = createServer();
+    probe.once("error", () => resolve(false));
+    probe.listen(port, "127.0.0.1", () => probe.close(() => resolve(true)));
+  });
+}
+
+/** 선호 포트부터 빈 포트를 찾는다. 사용자가 포트를 고정했으면 그 포트만 쓴다. */
+export async function pickDashboardPort(preferred: number, strict: boolean): Promise<number | null> {
+  const candidates = strict ? [preferred] : Array.from({ length: PORT_SCAN }, (_, i) => preferred + i);
+  for (const port of candidates) {
+    if (await isPortFree(port)) return port;
+  }
+  return null;
 }
 
 export async function fetchHealth(port: number): Promise<Health | null> {
@@ -127,16 +160,41 @@ export async function stopDashboard(paths: DashboardPaths): Promise<StopResult> 
   return { stopped: !isAlive(state.pid), unverified: false };
 }
 
-/** settings.json의 dashboard.enabled. 키가 없으면 undefined — 사용자가 끈 것(false)과 구별한다. */
-async function readEnabled(settingsFile: string): Promise<boolean | undefined> {
+interface DashboardSettings {
+  /** 키가 없으면 undefined — 사용자가 끈 것(false)과 구별한다. */
+  enabled?: boolean;
+  /** 사용자가 고정한 포트. 있으면 다른 포트로 옮겨 가지 않는다. */
+  port?: number;
+}
+
+async function readDashboardSettings(settingsFile: string): Promise<DashboardSettings> {
   try {
-    const settings = JSON.parse(await readFile(settingsFile, "utf8")) as { dashboard?: { enabled?: unknown } };
-    const enabled = settings.dashboard?.enabled;
-    return typeof enabled === "boolean" ? enabled : undefined;
+    const settings = JSON.parse(await readFile(settingsFile, "utf8")) as { dashboard?: { enabled?: unknown; port?: unknown } };
+    const { enabled, port } = settings.dashboard ?? {};
+    return {
+      ...(typeof enabled === "boolean" ? { enabled } : {}),
+      ...(typeof port === "number" && Number.isInteger(port) && port >= 1024 && port <= 65535 ? { port } : {}),
+    };
   } catch {
     // 설정이 없으면 사용자가 정한 값이 없다.
-    return undefined;
+    return {};
   }
+}
+
+async function preferredPort(options: EnsureOptions, paths: DashboardPaths): Promise<{ port: number; strict: boolean }> {
+  if (options.port !== undefined) return { port: options.port, strict: false };
+  const fixed = (await readDashboardSettings(paths.settingsFile)).port;
+  if (fixed !== undefined) return { port: fixed, strict: true };
+  if (process.env.SUGO_DASHBOARD_PORT) return { port: configuredDashboardPort(), strict: true };
+  return { port: DEFAULT_DASHBOARD_PORT, strict: false };
+}
+
+/** 지금 우리 서버가 쓰는 포트. 기록된 서버가 살아 있으면 그 포트, 아니면 선호 포트다. */
+async function currentPort(options: EnsureOptions, paths: DashboardPaths): Promise<{ port: number; strict: boolean; state: ServerState | null; owned: boolean }> {
+  const state = await readServerState(paths);
+  const preferred = await preferredPort(options, paths);
+  const owned = state !== null && isAlive(state.pid);
+  return { ...preferred, port: owned ? state.port : preferred.port, state, owned };
 }
 
 /** 동시에 여러 세션이 열려도 서버는 하나만 띄운다. mkdir는 원자적이다. */
@@ -167,12 +225,15 @@ export interface EnsureOptions {
   pluginRoot: string;
   /** 서버가 /health에 싣는 빌드 식별자. 플러그인 버전이 바뀌면 서버를 교체한다. */
   buildId: string;
+  /** 먼저 시도할 포트. 쓰이고 있으면 다음 빈 포트로 띄운다. */
   port?: number;
   nodeVersion?: string;
   paths?: DashboardPaths;
+  /** open 동작이 브라우저를 여는 방법. 테스트에서 바꿔 끼운다. */
+  openUrl?: (url: string) => Promise<boolean>;
 }
 
-export type DashboardControlAction = "status" | "start" | "restart" | "stop";
+export type DashboardControlAction = "status" | "start" | "restart" | "stop" | "open";
 
 export interface DashboardControlResult {
   action: DashboardControlAction;
@@ -185,19 +246,39 @@ export interface DashboardControlResult {
 }
 
 async function dashboardStatus(action: DashboardControlAction, options: EnsureOptions): Promise<DashboardControlResult> {
-  const port = options.port ?? configuredDashboardPort();
   const paths = options.paths ?? dashboardPaths();
-  const [health, state] = await Promise.all([fetchHealth(port), readServerState(paths)]);
+  const { port, owned } = await currentPort(options, paths);
+  const health = await fetchHealth(port);
+  const running = health !== null && (owned || isConsoleHealth(health));
   return {
     action,
-    running: health !== null,
-    managed: health !== null && state?.port === port,
-    url: `http://localhost:${port}`,
-    ...(health ? { version: health.version, build: health.build } : {}),
+    running,
+    managed: running && owned,
+    url: consoleUrl(port),
+    ...(running && health ? { version: health.version, build: health.build } : {}),
   };
 }
 
-/** 사용자 명령에서 자동 시작과 같은 런타임을 상태 확인·시작·재시작·정지한다. */
+/** 플랫폼별 기본 브라우저 실행 명령. 플랫폼을 주입받아 세 분기를 모두 테스트한다. */
+export function browserCommand(url: string, platform: NodeJS.Platform): { command: string; args: string[] } {
+  if (platform === "darwin") return { command: "open", args: [url] };
+  if (platform === "win32") return { command: "cmd", args: ["/c", "start", "", url] };
+  return { command: "xdg-open", args: [url] };
+}
+
+function openInBrowser(url: string, platform: NodeJS.Platform = process.platform): Promise<boolean> {
+  const { command, args } = browserCommand(url, platform);
+  return new Promise((resolve) => {
+    const child = spawn(command, args, { detached: true, stdio: "ignore", windowsHide: true });
+    child.once("error", () => resolve(false));
+    child.once("spawn", () => {
+      child.unref();
+      resolve(true);
+    });
+  });
+}
+
+/** 사용자 명령에서 자동 시작과 같은 런타임을 상태 확인·시작·재시작·정지하고, 브라우저로 연다. */
 export async function controlDashboard(action: DashboardControlAction, options: EnsureOptions): Promise<DashboardControlResult> {
   if (action === "status") return dashboardStatus(action, options);
 
@@ -221,6 +302,10 @@ export async function controlDashboard(action: DashboardControlAction, options: 
   const ensured = await ensureDashboard({ ...options, paths });
   const result = await dashboardStatus(action, options);
   if ("message" in ensured && ensured.message) result.message = ensured.message;
+  if (action === "open" && result.running) {
+    const opened = await (options.openUrl ?? openInBrowser)(result.url);
+    if (!opened) result.message = `브라우저를 열지 못했습니다. 이 주소를 직접 여세요: ${result.url}`;
+  }
   return result;
 }
 
@@ -253,7 +338,6 @@ async function startServer(runtimeEntry: string, options: EnsureOptions, paths: 
 
 /** 세션 시작 때 호출한다. 어떤 경우에도 던지지 않고 결과를 돌려준다(대시보드가 파이프라인을 막지 않는다). */
 export async function ensureDashboard(options: EnsureOptions): Promise<EnsureResult> {
-  const port = options.port ?? configuredDashboardPort();
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
   const runtimeEntry = join(options.pluginRoot, "dashboard-runtime", "server.mjs");
@@ -266,24 +350,35 @@ export async function ensureDashboard(options: EnsureOptions): Promise<EnsureRes
         message: `Sugo 대시보드는 Node 22.5 이상이 필요하다(현재 ${nodeVersion}). Node를 설치한 뒤 새 세션을 연다. sugo의 다른 기능은 그대로 동작한다.`,
       };
     }
-    if ((await readEnabled(paths.settingsFile)) === false) return { kind: "skipped", reason: "opt-out" };
+    const settings = await readDashboardSettings(paths.settingsFile);
+    if (settings.enabled === false) return { kind: "skipped", reason: "opt-out" };
     if (!existsSync(runtimeEntry)) return { kind: "skipped", reason: "no-runtime" };
 
+    const { port, strict, state, owned } = await currentPort(options, paths);
     const health = await fetchHealth(port);
-    const state = await readServerState(paths);
-    const owned = state !== null && state.port === port && isAlive(state.pid);
-    // 개발용 대시보드 등 우리가 띄우지 않은 서버가 응답 중이면 그대로 쓰고 건드리지 않는다.
-    if (health && !owned) return { kind: "running" };
-    if (health && health.build === options.buildId) return { kind: "running" };
-    if (health) await stopDashboard(paths);
+    // 개발용 Console처럼 우리가 띄우지 않은 Sugo Console이 응답 중이면 그대로 쓰고 건드리지 않는다.
+    if (health && !owned && isConsoleHealth(health)) return { kind: "running" };
+    if (health && owned && health.build === options.buildId) return { kind: "running" };
+    if (health && owned) await stopDashboard(paths);
     else if (state) await rm(paths.stateFile, { force: true });
 
     if (!(await acquireLock(paths))) return { kind: "busy" };
     try {
-      if ((await fetchHealth(port))?.build === options.buildId) return { kind: "running" };
-      const firstTime = (await readEnabled(paths.settingsFile)) !== true;
-      const started = await startServer(runtimeEntry, options, paths, port);
-      if (started.kind === "started" && firstTime) return { kind: "started", message: `Sugo 대시보드를 시작했다: http://localhost:${port}` };
+      const preferred = (await preferredPort(options, paths)).port;
+      const chosen = await pickDashboardPort(preferred, strict);
+      if (chosen === null) {
+        return {
+          kind: "failed",
+          message: strict
+            ? `Sugo 대시보드 포트 ${preferred}를 다른 프로그램이 쓰고 있다. settings.json의 dashboard.port를 바꾸거나 지운다. sugo의 다른 기능은 그대로 동작한다.`
+            : `Sugo 대시보드를 띄울 빈 포트를 ${preferred}~${preferred + PORT_SCAN - 1}에서 찾지 못했다. sugo의 다른 기능은 그대로 동작한다.`,
+        };
+      }
+      const started = await startServer(runtimeEntry, options, paths, chosen);
+      if (started.kind !== "started") return started;
+      const url = consoleUrl(chosen);
+      if (chosen !== preferred) return { kind: "started", message: `포트 ${preferred}를 다른 프로그램이 쓰고 있어 Sugo 대시보드를 ${chosen}에서 시작했다: ${url}` };
+      if (settings.enabled !== true) return { kind: "started", message: `Sugo 대시보드를 시작했다: ${url}` };
       return started;
     } finally {
       await rm(paths.lockDir, { recursive: true, force: true });

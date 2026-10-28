@@ -2,7 +2,7 @@
 
 [English](console.en.md) | [README로 돌아가기](../README.md)
 
-Console은 Sugo가 진행하는 작업을 확인하고 판단하는 로컬 화면입니다. 새 Claude Code 세션마다 `http://localhost:3001`에서 자동으로 시작합니다.
+Console은 Sugo가 진행하는 작업을 확인하고 판단하는 로컬 화면입니다. 새 Claude Code 세션마다 `http://sugo.localhost:3001`에서 자동으로 시작하고, 3001 포트가 쓰이고 있으면 다음 빈 포트로 뜹니다. `/sugo:console open`을 실행하면 지금 주소로 바로 열립니다.
 
 ## 목차
 

@@ -5,7 +5,7 @@ import { controlDashboard } from "../lifecycle/dashboardRuntime.js";
 import { currentSugoVersion } from "../version.js";
 
 export const sugoConsoleInputSchema = {
-  action: z.enum(["status", "start", "restart", "stop"]).default("status").describe("Console 서버 관리 동작"),
+  action: z.enum(["status", "start", "restart", "stop", "open"]).default("status").describe("Console 서버 관리 동작"),
 };
 
 const SugoConsoleArgs = z.object(sugoConsoleInputSchema);

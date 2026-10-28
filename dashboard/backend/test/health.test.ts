@@ -9,14 +9,15 @@ const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
 
 describe("GET /health", () => {
-  it("reports status/version/build without touching a real MySQL instance", async () => {
+  it("reports status/service/version/build without touching a real MySQL instance", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);
     const { app } = await createApp(db);
 
     const res = await request(app).get("/health");
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: "ok", version: pkg.version, build: "dev" });
+    // service는 Sugo 플러그인이 같은 포트의 다른 앱과 Console을 구별하는 표시다.
+    expect(res.body).toEqual({ status: "ok", service: "sugo-console", version: pkg.version, build: "dev" });
     await db.close();
   });
 });

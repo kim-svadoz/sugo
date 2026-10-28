@@ -42,6 +42,14 @@ describe("한 포트에서 UI와 API 제공", () => {
     expect(unknownApi.text).not.toContain("ui");
   });
 
+  it("화면 주소가 비어 있으면 로그인 뒤 상대 경로로 돌아가 사용자가 연 이름(sugo.localhost)에 머문다", async () => {
+    const { app } = await createApp({ db, sessionSecret: "s".repeat(32), frontendUrl: "", localDev: { enabled: true, userId: "me", displayName: "Me" } });
+
+    const res = await request(app).get("/api/auth/local").set("Host", "sugo.localhost:3002");
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toMatch(/^\/auth\/callback#session=/);
+  });
+
   it("staticDir이 없으면 UI를 서빙하지 않는다", async () => {
     const { app } = await createApp({ db });
     expect((await request(app).get("/sessions")).status).toBe(404);

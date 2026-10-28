@@ -186,11 +186,12 @@ describe("이식성 가드 — 배포되는 코드에 특정 PC 전용 가정이
     expect(offenders).toEqual([]);
   });
 
-  it("process.platform 분기는 허용된 한 곳(stackDetector)에만 있다", async () => {
+  it("process.platform 분기는 주입 가능한 허용 파일(stackDetector, dashboardRuntime)에만 있다", async () => {
+    const allowed = [join("harness", "stackDetector.ts"), join("lifecycle", "dashboardRuntime.ts")];
     const offenders: string[] = [];
     for (const f of await sourceFiles()) {
       if (!readFileSync(f, "utf-8").includes("process.platform")) continue;
-      if (!f.endsWith(join("harness", "stackDetector.ts"))) offenders.push(f);
+      if (!allowed.some((a) => f.endsWith(a))) offenders.push(f);
     }
     expect(offenders).toEqual([]);
   });

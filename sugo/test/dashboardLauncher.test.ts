@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  browserCommand,
   controlDashboard,
   dashboardPaths,
   ensureDashboard,
@@ -55,7 +56,7 @@ describe("세션 시작 때 대시보드 실행", () => {
   it("처음에는 서버를 띄우고 주소를 알린다", async () => {
     const result = await ensure();
 
-    expect(result).toEqual({ kind: "started", message: `Sugo 대시보드를 시작했다: http://localhost:${port}` });
+    expect(result).toEqual({ kind: "started", message: `Sugo 대시보드를 시작했다: http://sugo.localhost:${port}` });
     expect((await fetchHealth(port))?.build).toBe("1.0.0");
     expect((await readServerState(paths))?.port).toBe(port);
   });
@@ -89,12 +90,39 @@ describe("세션 시작 때 대시보드 실행", () => {
     expect((await readServerState(paths))?.pid).not.toBe(oldPid);
   });
 
-  it("우리가 띄우지 않은 대시보드가 응답 중이면 건드리지 않는다", async () => {
-    foreign = createServer((_req, res) => res.end(JSON.stringify({ status: "ok", version: "0.26.9", build: "dev" })));
+  it("우리가 띄우지 않은 Sugo Console(개발용 등)이 응답 중이면 건드리지 않는다", async () => {
+    foreign = createServer((_req, res) => res.end(JSON.stringify({ status: "ok", service: "sugo-console", version: "0.26.9", build: "dev" })));
     await new Promise<void>((resolve) => foreign!.listen(port, "127.0.0.1", resolve));
 
     expect(await ensure()).toEqual({ kind: "running" });
     expect((await fetchHealth(port))?.build).toBe("dev");
+    expect(await readServerState(paths)).toBeNull();
+  });
+
+  it("다른 앱이 포트를 쓰고 있으면 health가 ok여도 Console로 보지 않고 다음 빈 포트로 띄운다", async () => {
+    foreign = createServer((_req, res) => res.end(JSON.stringify({ status: "ok", version: "9.9.9", build: "other" })));
+    await new Promise<void>((resolve) => foreign!.listen(port, "127.0.0.1", resolve));
+
+    const result = await ensure();
+    const state = await readServerState(paths);
+
+    expect(result.kind).toBe("started");
+    expect(state?.port).toBeGreaterThan(port);
+    expect(result).toHaveProperty("message", expect.stringContaining(`http://sugo.localhost:${state?.port}`));
+    expect((await fetchHealth(state!.port))?.build).toBe("1.0.0");
+    expect((await controlDashboard("status", { pluginRoot, buildId: "1.0.0", port, paths })).url).toBe(`http://sugo.localhost:${state?.port}`);
+  });
+
+  it("사용자가 고정한 포트가 쓰이고 있으면 다른 포트로 옮기지 않고 이유를 알린다", async () => {
+    foreign = createServer((_req, res) => res.end("busy"));
+    await new Promise<void>((resolve) => foreign!.listen(port, "127.0.0.1", resolve));
+    mkdirSync(paths.sugoDir, { recursive: true });
+    writeFileSync(paths.settingsFile, JSON.stringify({ dashboard: { port } }));
+
+    const result = await ensureDashboard({ pluginRoot, buildId: "1.0.0", paths });
+
+    expect(result).toMatchObject({ kind: "failed" });
+    expect(result).toHaveProperty("message", expect.stringContaining("dashboard.port"));
     expect(await readServerState(paths)).toBeNull();
   });
 
@@ -168,7 +196,7 @@ describe("사용자 Console 관리", () => {
       action: "status",
       running: false,
       managed: false,
-      url: `http://localhost:${port}`,
+      url: `http://sugo.localhost:${port}`,
     });
     expect(await fetchHealth(port)).toBeNull();
   });
@@ -186,8 +214,31 @@ describe("사용자 Console 관리", () => {
       action: "stop",
       running: false,
       managed: false,
-      url: `http://localhost:${port}`,
+      url: `http://sugo.localhost:${port}`,
     });
+  });
+});
+
+describe("브라우저로 열기", () => {
+  it("open은 Console을 띄운 뒤 결과 주소를 브라우저로 연다", async () => {
+    const opened: string[] = [];
+    const result = await controlDashboard("open", { pluginRoot, buildId: "1.0.0", port, paths, openUrl: async (url) => (opened.push(url), true) });
+
+    expect(result).toMatchObject({ action: "open", running: true, url: `http://sugo.localhost:${port}` });
+    expect(opened).toEqual([`http://sugo.localhost:${port}`]);
+  });
+
+  it("브라우저를 열지 못하면 주소를 직접 열도록 알린다", async () => {
+    const result = await controlDashboard("open", { pluginRoot, buildId: "1.0.0", port, paths, openUrl: async () => false });
+
+    expect(result.message).toContain(`http://sugo.localhost:${port}`);
+  });
+
+  it("플랫폼마다 기본 브라우저 실행 명령이 다르다", () => {
+    const url = "http://sugo.localhost:3001";
+    expect(browserCommand(url, "darwin")).toEqual({ command: "open", args: [url] });
+    expect(browserCommand(url, "win32")).toEqual({ command: "cmd", args: ["/c", "start", "", url] });
+    expect(browserCommand(url, "linux")).toEqual({ command: "xdg-open", args: [url] });
   });
 });
 

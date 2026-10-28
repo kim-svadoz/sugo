@@ -58,8 +58,9 @@ process.env.SESSION_SECRET = sessionSecret;
 process.env.LOCAL_DEV_MODE = "1";
 process.env.LOCAL_DEV_USER_ID = userId;
 process.env.LOCAL_DEV_DISPLAY_NAME = displayName;
-process.env.FRONTEND_URL = apiUrl;
-process.env.CORS_ORIGINS = apiUrl;
+// 화면과 API가 같은 출처라 로그인 뒤 돌아갈 곳은 상대 경로로 둔다. sugo.localhost와 localhost 중 어느 이름으로 열어도 그 이름에 머문다.
+process.env.FRONTEND_URL = "";
+process.env.CORS_ORIGINS = `${apiUrl},http://sugo.localhost:${port}`;
 process.env.SUGO_DASHBOARD_API_URL = apiUrl;
 process.env.HARNESS_PATH = join(pluginRoot, "harness-library");
 process.env.SKILLS_PATH = pluginRoot;

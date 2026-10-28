@@ -179,7 +179,7 @@ Use absolute paths. Put one behavior change in each `/sugo:feat`; if a spec is l
 
 ## Console guide
 
-The Console (`http://localhost:3001`) starts with each new Claude Code session. First register your projects and connect the external services you use, then start work from a schedule and a spec.
+The Console starts with each new Claude Code session at `http://sugo.localhost:3001`. If another program is using port 3001, it starts on the next free port. You do not need to know the port: `/sugo:console open` opens the current address in your browser. First register your projects and connect the external services you use, then start work from a schedule and a spec.
 
 ### 1. Register projects and domains
 
@@ -292,7 +292,7 @@ The other screens, such as Weekly, Calendar, and diff, are covered in the [Conso
 | `/sugo:validate` | Check the project against its rules |
 | `/sugo:overview` | Analyze project structure (AST) |
 | `/sugo:weekly` | Build the weekly report and learning notes now |
-| `/sugo:console` | Local Console `status`, `start`, `restart`, `stop` |
+| `/sugo:console` | Local Console `status`, `start`, `restart`, `stop`, `open` (open in the browser) |
 | `/sugo:version` | Show the installed version |
 | `/sugo:uninstall`, `/sugo:restore`, `/sugo:purge`, `/sugo:fresh-start` | Remove, restore, delete |
 
@@ -318,7 +318,7 @@ Arguments are defined in [`sugo/commands/`](sugo/commands/).
 | After Edit | `lint-hint` | Sends lint failures in registered projects to Claude. Does not block edits |
 | After MCP calls | `mcp-presentation` | Applies only to servers in `presentation.mcpServers`. Off by default |
 
-- **Console:** starts at `http://localhost:3001` and accepts connections from `127.0.0.1` only. To turn it off, set `"dashboard": {"enabled": false}` in `~/.claude/sugo/settings.json`.
+- **Console:** starts at `http://sugo.localhost:3001` (or the next free port when 3001 is taken) and accepts connections from `127.0.0.1` only. To pin a port, set `"dashboard": {"port": 3005}` in `~/.claude/sugo/settings.json`. To turn it off, set `"dashboard": {"enabled": false}` in `~/.claude/sugo/settings.json`.
 - **Project files:** Sugo writes `sugo/`, `.claude/rules/`, and a Sugo-managed block in `AGENTS.md` and `CLAUDE.md` to registered projects. Your own text stays.
 - **Network:** the Console fetches public engineering-blog RSS feeds for Home and a web font from a CDN, and calls Open-Meteo only if you set a weather region.
 - **Weekly:** the Console builds the weekly report on the schedule in Preferences. One build calls `claude -p` twice. Data is in `~/.weekly/`.
@@ -336,7 +336,7 @@ Set personal settings as optional keys in `~/.claude/sugo/settings.json`. A miss
 
 | Key | Action |
 | --- | --- |
-| `dashboard` | Console connection (`enabled`, `apiUrl`, `userId`, `apiToken`). Set automatically for the local Console |
+| `dashboard` | Console connection (`enabled`, `apiUrl`, `userId`, `apiToken`) and a pinned port (`port`). Set automatically for the local Console; with `port` set, it does not move to another port |
 | `agents.extraTools` | Extra MCP tools for Sugo agents. Example: `["mcp__team-knowledge__search"]` |
 | `aws.environments` | Maps environment names (example: `dev`) to AWS account names registered in the Console |
 | `presentation.mcpServers` | MCP servers whose results Claude explains in plain Korean |
@@ -390,7 +390,7 @@ Other stacks use the default rules. Rule sources: [`sugo/harness-library/`](sugo
 
 | Symptom | Fix |
 | --- | --- |
-| `localhost:3001` does not respond | `/sugo:console status`, then `/sugo:console start` |
+| The Console address does not open | Check the current address with `/sugo:console status`, or open it with `/sugo:console open` |
 | Behavior is old after an update | `/reload-plugins`, then check `/sugo:version` |
 | Finished work is not in the Console | Ask the agent to call `sugo_status` with `health: true` and check connection and sync errors |
 | Old work is missing after a reinstall | Expected. Run `/sugo:restore`, or `/sugo:fresh-start` to start over |

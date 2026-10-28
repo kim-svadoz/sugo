@@ -2,7 +2,7 @@
 
 [한국어](console.md) | [Back to README](../README.en.md)
 
-The Console is the local screen where you check and decide on the work Sugo runs. It starts at `http://localhost:3001` with each new Claude Code session.
+The Console is the local screen where you check and decide on the work Sugo runs. It starts at `http://sugo.localhost:3001` with each new Claude Code session, or on the next free port when 3001 is taken. `/sugo:console open` opens the current address.
 
 ## Contents
 

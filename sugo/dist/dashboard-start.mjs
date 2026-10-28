@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.56.1" : "0.0.0-dev";
+  return true ? "0.57.0" : "0.0.0-dev";
 }
 
 // src/dashboard/syncAll.ts
@@ -3196,10 +3196,17 @@ async function syncAllWorkspaceData() {
 
 // src/lifecycle/dashboardRuntime.ts
 import { spawn } from "node:child_process";
+import { createServer } from "node:net";
 import { closeSync, existsSync, openSync } from "node:fs";
 import { mkdir as mkdir10, readFile as readFile11, rm as rm3, stat as stat2 } from "node:fs/promises";
 import { join as join8 } from "node:path";
 var DEFAULT_DASHBOARD_PORT = 3001;
+var CONSOLE_HOST = "sugo.localhost";
+var CONSOLE_SERVICE = "sugo-console";
+var PORT_SCAN = 20;
+function consoleUrl(port) {
+  return `http://${CONSOLE_HOST}:${port}`;
+}
 function configuredDashboardPort() {
   return process.env.SUGO_DASHBOARD_PORT ? Number(process.env.SUGO_DASHBOARD_PORT) : DEFAULT_DASHBOARD_PORT;
 }
@@ -3230,6 +3237,23 @@ async function readServerState(paths) {
   } catch {
     return null;
   }
+}
+function isConsoleHealth(health) {
+  return health?.service === CONSOLE_SERVICE;
+}
+function isPortFree(port) {
+  return new Promise((resolve) => {
+    const probe = createServer();
+    probe.once("error", () => resolve(false));
+    probe.listen(port, "127.0.0.1", () => probe.close(() => resolve(true)));
+  });
+}
+async function pickDashboardPort(preferred, strict) {
+  const candidates = strict ? [preferred] : Array.from({ length: PORT_SCAN }, (_, i) => preferred + i);
+  for (const port of candidates) {
+    if (await isPortFree(port)) return port;
+  }
+  return null;
 }
 async function fetchHealth(port) {
   try {
@@ -3272,14 +3296,30 @@ async function stopDashboard(paths) {
   await rm3(paths.stateFile, { force: true });
   return { stopped: !isAlive(state.pid), unverified: false };
 }
-async function readEnabled(settingsFile) {
+async function readDashboardSettings(settingsFile) {
   try {
     const settings = JSON.parse(await readFile11(settingsFile, "utf8"));
-    const enabled = settings.dashboard?.enabled;
-    return typeof enabled === "boolean" ? enabled : void 0;
+    const { enabled, port } = settings.dashboard ?? {};
+    return {
+      ...typeof enabled === "boolean" ? { enabled } : {},
+      ...typeof port === "number" && Number.isInteger(port) && port >= 1024 && port <= 65535 ? { port } : {}
+    };
   } catch {
-    return void 0;
+    return {};
   }
+}
+async function preferredPort(options, paths) {
+  if (options.port !== void 0) return { port: options.port, strict: false };
+  const fixed = (await readDashboardSettings(paths.settingsFile)).port;
+  if (fixed !== void 0) return { port: fixed, strict: true };
+  if (process.env.SUGO_DASHBOARD_PORT) return { port: configuredDashboardPort(), strict: true };
+  return { port: DEFAULT_DASHBOARD_PORT, strict: false };
+}
+async function currentPort(options, paths) {
+  const state = await readServerState(paths);
+  const preferred = await preferredPort(options, paths);
+  const owned = state !== null && isAlive(state.pid);
+  return { ...preferred, port: owned ? state.port : preferred.port, state, owned };
 }
 async function acquireLock(paths) {
   await mkdir10(paths.dataDir, { recursive: true });
@@ -3321,7 +3361,6 @@ async function startServer(runtimeEntry, options, paths, port) {
   return { kind: "failed", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD558\uC9C0 \uBABB\uD588\uB2E4. \uB85C\uADF8: ${paths.logFile}. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` };
 }
 async function ensureDashboard(options) {
-  const port = options.port ?? configuredDashboardPort();
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
   const runtimeEntry = join8(options.pluginRoot, "dashboard-runtime", "server.mjs");
@@ -3333,21 +3372,30 @@ async function ensureDashboard(options) {
         message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB294 Node 22.5 \uC774\uC0C1\uC774 \uD544\uC694\uD558\uB2E4(\uD604\uC7AC ${nodeVersion}). Node\uB97C \uC124\uCE58\uD55C \uB4A4 \uC0C8 \uC138\uC158\uC744 \uC5F0\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.`
       };
     }
-    if (await readEnabled(paths.settingsFile) === false) return { kind: "skipped", reason: "opt-out" };
+    const settings = await readDashboardSettings(paths.settingsFile);
+    if (settings.enabled === false) return { kind: "skipped", reason: "opt-out" };
     if (!existsSync(runtimeEntry)) return { kind: "skipped", reason: "no-runtime" };
+    const { port, strict, state, owned } = await currentPort(options, paths);
     const health = await fetchHealth(port);
-    const state = await readServerState(paths);
-    const owned = state !== null && state.port === port && isAlive(state.pid);
-    if (health && !owned) return { kind: "running" };
-    if (health && health.build === options.buildId) return { kind: "running" };
-    if (health) await stopDashboard(paths);
+    if (health && !owned && isConsoleHealth(health)) return { kind: "running" };
+    if (health && owned && health.build === options.buildId) return { kind: "running" };
+    if (health && owned) await stopDashboard(paths);
     else if (state) await rm3(paths.stateFile, { force: true });
     if (!await acquireLock(paths)) return { kind: "busy" };
     try {
-      if ((await fetchHealth(port))?.build === options.buildId) return { kind: "running" };
-      const firstTime = await readEnabled(paths.settingsFile) !== true;
-      const started = await startServer(runtimeEntry, options, paths, port);
-      if (started.kind === "started" && firstTime) return { kind: "started", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD588\uB2E4: http://localhost:${port}` };
+      const preferred = (await preferredPort(options, paths)).port;
+      const chosen = await pickDashboardPort(preferred, strict);
+      if (chosen === null) {
+        return {
+          kind: "failed",
+          message: strict ? `Sugo \uB300\uC2DC\uBCF4\uB4DC \uD3EC\uD2B8 ${preferred}\uB97C \uB2E4\uB978 \uD504\uB85C\uADF8\uB7A8\uC774 \uC4F0\uACE0 \uC788\uB2E4. settings.json\uC758 dashboard.port\uB97C \uBC14\uAFB8\uAC70\uB098 \uC9C0\uC6B4\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` : `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uB744\uC6B8 \uBE48 \uD3EC\uD2B8\uB97C ${preferred}~${preferred + PORT_SCAN - 1}\uC5D0\uC11C \uCC3E\uC9C0 \uBABB\uD588\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.`
+        };
+      }
+      const started = await startServer(runtimeEntry, options, paths, chosen);
+      if (started.kind !== "started") return started;
+      const url = consoleUrl(chosen);
+      if (chosen !== preferred) return { kind: "started", message: `\uD3EC\uD2B8 ${preferred}\uB97C \uB2E4\uB978 \uD504\uB85C\uADF8\uB7A8\uC774 \uC4F0\uACE0 \uC788\uC5B4 Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C ${chosen}\uC5D0\uC11C \uC2DC\uC791\uD588\uB2E4: ${url}` };
+      if (settings.enabled !== true) return { kind: "started", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD588\uB2E4: ${url}` };
       return started;
     } finally {
       await rm3(paths.lockDir, { recursive: true, force: true });

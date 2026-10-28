@@ -179,7 +179,7 @@ Claude Code에서 `/reload-plugins`를 실행한 뒤 `/sugo:version`으로 설�
 
 ## Console 사용 가이드
 
-Console(`http://localhost:3001`)은 새 Claude Code 세션마다 자동으로 뜹니다. 처음에는 프로젝트를 등록하고 쓰는 외부 서비스를 연결한 뒤, 일정과 스펙으로 일을 시작합니다.
+Console은 새 Claude Code 세션마다 자동으로 뜹니다. 주소는 `http://sugo.localhost:3001`이고, 3001 포트를 다른 프로그램이 쓰고 있으면 다음 빈 포트로 뜹니다. 포트를 몰라도 `/sugo:console open`을 실행하면 지금 뜬 주소로 브라우저가 열립니다. 처음에는 프로젝트를 등록하고 쓰는 외부 서비스를 연결한 뒤, 일정과 스펙으로 일을 시작합니다.
 
 ### 1. 프로젝트와 도메인 등록
 
@@ -292,7 +292,7 @@ Weekly, Calendar, diff 등 나머지 화면은 [Console 둘러보기](docs/conso
 | `/sugo:validate` | 프로젝트 규칙 위반 검사 |
 | `/sugo:overview` | 프로젝트 구조 분석(AST) |
 | `/sugo:weekly` | 주간 보고서와 기술 학습 노트를 지금 생성 |
-| `/sugo:console` | 로컬 Console `status`, `start`, `restart`, `stop` |
+| `/sugo:console` | 로컬 Console `status`, `start`, `restart`, `stop`, `open`(브라우저로 열기) |
 | `/sugo:version` | 설치 버전 확인 |
 | `/sugo:uninstall`, `/sugo:restore`, `/sugo:purge`, `/sugo:fresh-start` | 제거, 복구, 삭제 |
 
@@ -318,7 +318,7 @@ Weekly, Calendar, diff 등 나머지 화면은 [Console 둘러보기](docs/conso
 | Edit 실행 후 | `lint-hint` | 등록 프로젝트의 lint 실패를 Claude에 전달. 편집은 막지 않습니다 |
 | MCP 호출 후 | `mcp-presentation` | `presentation.mcpServers`에 지정한 서버에만 적용. 기본은 꺼짐 |
 
-- **Console:** `http://localhost:3001`에서 시작하고 `127.0.0.1` 접속만 받습니다. 끄려면 `~/.claude/sugo/settings.json`에 `"dashboard": {"enabled": false}`를 넣습니다.
+- **Console:** `http://sugo.localhost:3001`에서 시작하고(3001이 쓰이고 있으면 다음 빈 포트), `127.0.0.1` 접속만 받습니다. 포트를 고정하려면 `~/.claude/sugo/settings.json`에 `"dashboard": {"port": 3005}`처럼 적고, 끄려면 `~/.claude/sugo/settings.json`에 `"dashboard": {"enabled": false}`를 넣습니다.
 - **프로젝트 파일:** 등록한 프로젝트에 `sugo/`, `.claude/rules/`, 그리고 `AGENTS.md`와 `CLAUDE.md` 안의 Sugo 관리 블록을 씁니다. 사용자가 쓴 내용은 그대로 둡니다.
 - **네트워크:** Console은 Home 피드용 공개 기술 블로그 RSS와 웹 폰트 CDN을 부르고, 날씨 지역을 설정했을 때만 Open-Meteo를 부릅니다.
 - **Weekly:** Preferences에 정한 일정에 맞춰 Console이 주간 보고서를 만듭니다. 한 번 만들 때 `claude -p`를 2번 호출합니다. 데이터는 `~/.weekly/`에 둡니다.
@@ -336,7 +336,7 @@ Weekly, Calendar, diff 등 나머지 화면은 [Console 둘러보기](docs/conso
 
 | 키 | 동작 |
 | --- | --- |
-| `dashboard` | Console 연결(`enabled`, `apiUrl`, `userId`, `apiToken`). 로컬 Console은 자동으로 설정됩니다 |
+| `dashboard` | Console 연결(`enabled`, `apiUrl`, `userId`, `apiToken`)과 고정 포트(`port`). 로컬 Console은 자동으로 설정되고, `port`를 적으면 다른 포트로 옮겨 가지 않습니다 |
 | `agents.extraTools` | Sugo 에이전트에 추가할 외부 MCP 도구. 예: `["mcp__team-knowledge__search"]` |
 | `aws.environments` | 환경 이름(예: `dev`)과 Console에 등록한 AWS 계정 이름의 연결 |
 | `presentation.mcpServers` | 결과를 쉬운 한국어 설명으로 바꿔 보여 줄 MCP 서버 |
@@ -390,7 +390,7 @@ Weekly, Calendar, diff 등 나머지 화면은 [Console 둘러보기](docs/conso
 
 | 증상 | 조치 |
 | --- | --- |
-| `localhost:3001`이 응답하지 않습니다 | `/sugo:console status`로 확인한 뒤 `/sugo:console start` |
+| Console 주소가 열리지 않습니다 | `/sugo:console status`로 지금 주소를 확인하거나 `/sugo:console open`으로 엽니다 |
 | 업데이트했는데 동작이 이전과 같습니다 | `/reload-plugins` 후 `/sugo:version`으로 버전 확인 |
 | 완료한 작업이 Console에 없습니다 | 에이전트에게 `sugo_status`를 `health: true`로 호출하게 해 연결 오류와 전송 오류 확인 |
 | 다시 설치했더니 이전 작업이 없습니다 | 정상입니다. `/sugo:restore`로 복구하거나 `/sugo:fresh-start`로 새로 시작 |

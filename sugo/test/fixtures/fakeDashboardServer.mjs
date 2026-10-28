@@ -7,7 +7,7 @@ const port = Number(process.env.SUGO_DASHBOARD_PORT);
 const dir = join(process.env.SUGO_HOME_OVERRIDE, ".claude", "sugo", "dashboard");
 const server = createServer((req, res) => {
   res.setHeader("Content-Type", "application/json");
-  res.end(JSON.stringify({ status: "ok", version: "1.0.0", build: process.env.BUILD_ID }));
+  res.end(JSON.stringify({ status: "ok", service: "sugo-console", version: "1.0.0", build: process.env.BUILD_ID }));
 });
 server.listen(port, "127.0.0.1", () => {
   mkdirSync(dir, { recursive: true });

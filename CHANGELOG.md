@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.57.0 / Console 0.47.0] - 2026-10-29
+
+- Console 기본 포트(3001)를 다른 프로그램이 쓰고 있으면 다음 빈 포트로 뜨고, 주소는 `http://sugo.localhost:<포트>`로 안내합니다. `/sugo:console open`이 지금 주소로 브라우저를 열고, `settings.json`의 `dashboard.port`로 포트를 고정할 수 있습니다. 같은 포트의 다른 앱을 Console로 착각하던 문제도 고쳤습니다.
+
 ## [Plugin 0.56.0 / Console 0.46.0] - 2026-10-29
 
 - AWS 환경을 순서·별칭·프로필·리전으로 관리하는 매트릭스를 추가하고, 설정한 순서를 일정과 서비스 상태에 동일하게 적용합니다.
