@@ -47,5 +47,7 @@ describe("local Settings presentation", () => {
     expect(mapping).toContain("AWS 계정을 연결하세요");
     expect(mapping).toContain("연결 가능한 운영 서비스가 없습니다");
     expect(mapping).toContain("animate-pulse");
+    expect(mapping).toContain("h-10 w-[2px]");
+    expect(mapping).toContain("size={20}");
   });
 });
