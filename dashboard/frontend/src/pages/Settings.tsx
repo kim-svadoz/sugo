@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   deleteGitConnection,
   getGitConnections,
@@ -285,8 +285,6 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspac
           <span className="font-mono text-[10px] font-semibold tracking-[0.16em] text-cyan-300">01 · PROJECT FOLDER</span>
           <label htmlFor="registration-project-path" className="mb-2 mt-3 block text-sm font-semibold text-[var(--color-text)]">프로젝트 폴더</label>
           <input id="registration-project-path" value={registrationPath} onChange={(event) => setRegistrationPath(event.target.value)} placeholder="절대경로를 입력하세요" className="settings-field h-12 w-full border-cyan-300/25 bg-black/30 font-mono hover:border-cyan-300/45 focus:shadow-[0_0_0_3px_rgba(34,211,238,0.10)]" />
-          <p className="mt-2 text-[11px] text-[var(--color-text-dim)]">Git 저장소 또는 개발 프로젝트의 절대 경로</p>
-
           <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-1"><span className="font-mono text-[10px] font-semibold tracking-[0.16em] text-cyan-300">02 · WORK DOMAIN</span><span className="text-[11px] text-[var(--color-text-muted)]">이 프로젝트가 속할 작업 영역</span></div>
           <div className="mt-3 grid grid-cols-2 gap-1 rounded-lg border border-white/[0.09] bg-black/20 p-1 sm:w-[24rem]">
             <button type="button" aria-pressed={domainMode === 'existing'} disabled={workspaceNames.length === 0} onClick={() => setDomainMode('existing')} className={`h-10 rounded-md px-4 text-xs font-semibold transition ${domainMode === 'existing' ? 'bg-cyan-300/10 text-cyan-100' : 'text-[var(--color-text-muted)] hover:bg-white/[0.035] hover:text-[var(--color-text)]'}`}>기존 도메인</button>
@@ -298,16 +296,15 @@ function ProjectIntegrationsCard({ expanded, onToggle, focused = false, workspac
         <div className="mx-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.07] py-5"><p className="text-xs text-[var(--color-text-muted)]">등록 예정 · <strong className="font-mono font-semibold text-[var(--color-text)]">{registrationProjectName}</strong><span className="mx-2 text-[var(--color-text-dim)]">→</span><strong className="font-mono font-semibold text-cyan-200">{registrationDomain || '도메인 선택'}</strong></p><div className="flex gap-2">{!registrationOnly && <button type="button" onClick={() => setRegistering(false)} className="settings-action settings-action-secondary">취소</button>}<button type="button" disabled={busy || !registrationPath.trim() || !registrationDomain} onClick={() => void submitRegistration()} className="settings-action settings-action-primary">{busy ? '등록 중…' : '프로젝트 등록'}</button></div></div>
       </section>}
       {registrationOnly && saveMessage && <div role="status" className="border border-emerald-400/25 bg-emerald-400/[0.06] px-4 py-3 text-xs font-semibold text-emerald-200">✓ {saveMessage}</div>}
-      {registrationOnly && projects.length > 0 && <section aria-labelledby="registered-projects-title" className="border-y border-white/[0.08]"><div className="flex items-end justify-between gap-3 border-b border-white/[0.07] px-1 pb-3"><div><h3 id="registered-projects-title" className="text-sm font-semibold text-[var(--color-text)]">등록된 프로젝트</h3><p className="mt-1 text-[11px] text-[var(--color-text-muted)]">서비스 연결 상태는 프로젝트별로 함께 표시됩니다.</p></div><span className="font-mono text-xs text-[var(--color-text-dim)]">{projects.length}개</span></div><div className="divide-y divide-white/[0.06]">{projects.map((item) => <div key={item.project_path} className="grid gap-2 px-1 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><strong className="font-mono text-sm text-[var(--color-text)]">{item.workspace_name} / {item.project_path.split('/').at(-1)}</strong><span className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{item.project_path}</span></div><span className={`w-fit border px-2.5 py-1.5 text-[11px] font-semibold ${item.configured && item.selections.length > 0 ? 'border-emerald-300/20 bg-emerald-300/[0.045] text-emerald-200' : item.configured ? 'border-white/[0.09] bg-white/[0.025] text-[var(--color-text-muted)]' : 'border-amber-300/20 bg-amber-300/[0.035] text-amber-100'}`}>{integrationStatusLabel(item)}</span></div>)}</div></section>}
+      {registrationOnly && projects.length > 0 && <section aria-labelledby="registered-projects-title" className="border-y border-white/[0.08]"><div className="flex items-end justify-between gap-3 border-b border-white/[0.07] px-1 pb-3"><h3 id="registered-projects-title" className="text-sm font-semibold text-[var(--color-text)]">등록된 프로젝트</h3><span className="font-mono text-xs text-[var(--color-text-dim)]">{projects.length}개</span></div><div className="divide-y divide-white/[0.06]">{projects.map((item) => <div key={item.project_path} className="grid gap-2 px-1 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><strong className="font-mono text-sm text-[var(--color-text)]">{item.workspace_name} / {item.project_path.split('/').at(-1)}</strong><span className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{item.project_path}</span></div><span className={`w-fit border px-2.5 py-1.5 text-[11px] font-semibold ${item.configured && item.selections.length > 0 ? 'border-emerald-300/20 bg-emerald-300/[0.045] text-emerald-200' : item.configured ? 'border-white/[0.09] bg-white/[0.025] text-[var(--color-text-muted)]' : 'border-amber-300/20 bg-amber-300/[0.035] text-amber-100'}`}>{integrationStatusLabel(item)}</span></div>)}</div></section>}
       {!registrationOnly && statusOnly && (projects.length === 0 ? <div className="py-8 text-center text-xs text-[var(--color-text-dim)]">등록된 프로젝트가 없습니다.</div> : <div className="divide-y divide-white/[0.07] border-y border-white/[0.08]">{projects.map((item) => { const summary = summarizeSavedIntegrations(item.selections); return <div key={item.project_path} className="grid gap-3 px-1 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] sm:items-center"><div><strong className="font-mono text-sm text-[var(--color-text)]">{item.workspace_name} / {item.project_path.split('/').at(-1)}</strong><span className="mt-1 block text-[11px] text-[var(--color-text-dim)]">{integrationStatusLabel(item)}</span></div><div className="flex flex-wrap gap-2">{summary.flatMap((group) => group.services.map((service) => <span key={`${group.environment}-${service}`} className="border border-emerald-300/15 bg-emerald-300/[0.025] px-2.5 py-1.5 text-[11px] text-[var(--color-text)]"><b className="mr-1.5 font-mono text-emerald-300">{group.environment}</b>{service}</span>))}{summary.length === 0 && <span className="text-xs text-[var(--color-text-muted)]">{item.configured ? '서비스 연동 미사용' : '서비스 매핑 필요'}</span>}</div></div>})}</div>)}
       {!registrationOnly && !statusOnly && <>
-      <div className="flex items-center justify-between gap-4 border-y border-white/[0.07] px-1 py-3"><details className="text-xs text-[var(--color-text-muted)]"><summary className="font-semibold text-[var(--color-text)]">서비스 매핑 기준</summary><p className="mt-2 max-w-3xl leading-5">프로젝트 이름과 ECS 서비스·컨테이너 이미지 이름이 일치하면 후보로 표시합니다. 실제 연결은 저장할 때 확정됩니다.</p></details><Link to="/sessions" className="settings-action settings-action-secondary settings-action-compact shrink-0">Workspaces 열기</Link></div>
       {!registrationOnly && !statusOnly && (projects.length === 0 ? <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] pb-5"><p className="text-xs text-[var(--color-text-dim)]">아직 등록된 프로젝트가 없습니다. 위 등록 폼이나 <code className="font-mono text-[11px] text-cyan-200">/sugo:add</code> 중 편한 방법을 사용할 수 있습니다.</p><button type="button" onClick={() => setRegistering(true)} className="settings-action settings-action-primary">프로젝트 등록</button></div> : <>
-        <div className="grid gap-4 border-y border-white/[0.07] py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-center"><div><strong className="block text-sm text-[var(--color-text)]">적용할 프로젝트</strong><span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">프로젝트마다 사용할 운영 근거를 고릅니다.</span></div><select value={path} onChange={(event) => { const next = event.target.value; const nextProject = projects.find((item) => item.project_path === next); setPath(next); setSelected(initialIntegrationSelection(nextProject, candidates, key)); setSaveMessage(null); }} className="settings-field w-full">{projects.map((item) => <option key={item.project_path} value={item.project_path}>{item.workspace_name} / {item.project_path.split('/').at(-1)} ({integrationStatusLabel(item)})</option>)}</select></div>
+        <section aria-label="프로젝트 선택" className="border-y border-white/[0.07] py-5"><div className="mb-3 flex items-center gap-3"><span className="font-mono text-[10px] font-semibold tracking-[0.14em] text-cyan-300">01</span><strong className="text-sm text-[var(--color-text)]">프로젝트 선택</strong></div><div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{projects.map((item) => <button key={item.project_path} type="button" aria-pressed={path === item.project_path} onClick={() => { setPath(item.project_path); setSelected(initialIntegrationSelection(item, candidates, key)); setSaveMessage(null); }} className={`min-w-0 border px-4 py-3 text-left transition ${path === item.project_path ? 'border-cyan-300/55 bg-cyan-300/[0.07] shadow-[inset_3px_0_0_rgba(103,232,249,0.9)]' : 'border-white/[0.08] bg-black/10 hover:border-white/[0.16] hover:bg-white/[0.025]'}`}><strong className="block truncate font-mono text-sm text-[var(--color-text)]">{item.project_path.split('/').at(-1)}</strong><span className="mt-1 block truncate text-[11px] text-[var(--color-text-muted)]">{item.workspace_name} · {integrationStatusLabel(item)}</span></button>)}</div></section>
         {saveMessage && <div role="status" className="border border-emerald-400/25 bg-emerald-400/[0.06] px-4 py-3 text-xs font-semibold text-emerald-200">✓ {saveMessage}</div>}
-        {project && project.configured && project.selections.length > 0 ? <section aria-label="현재 연결된 운영 서비스" className="border-y border-emerald-300/20 bg-emerald-300/[0.025] px-4 py-4"><div className="flex items-center justify-between gap-3"><div><strong className="text-sm text-emerald-200">현재 연결</strong><p className="mt-1 text-[11px] text-[var(--color-text-muted)]">Inspector와 일정에서 사용 중인 서비스입니다.</p></div><span className="font-mono text-xs text-emerald-300">{project.selections.length}개</span></div><div className="mt-3 flex flex-wrap gap-2">{savedCandidates.map((item) => { const removed = !selected.includes(key(item)); return <button type="button" key={key(item)} onClick={() => { toggleSelection(key(item)); setSaveMessage(null); }} className={`group inline-flex items-center gap-2 border px-2.5 py-1.5 text-[11px] transition ${removed ? 'border-amber-300/20 text-amber-100 line-through opacity-60' : 'border-emerald-300/15 bg-black/15 text-[var(--color-text)] hover:border-rose-300/25'}`} title={removed ? '연결 유지' : '이 연결 해제'}><b className="font-mono text-emerald-300">{item.environment.toUpperCase()}</b>{item.service}{removed ? <span className="no-underline">해제 예정</span> : <X size={12} className="text-[var(--color-text-dim)] group-hover:text-rose-300" />}</button>; })}</div></section> : project && <div className={project.configured ? "border-y border-white/[0.08] bg-white/[0.018] px-4 py-3 text-xs text-[var(--color-text-muted)]" : "border-y border-amber-400/20 bg-amber-400/[0.035] px-4 py-3 text-xs text-amber-100"}>{project.configured ? "서비스 연동 미사용으로 설정된 프로젝트입니다." : `아직 저장된 연결이 없습니다. 일치 후보 ${suggestionCount}개는 저장 전까지 적용되지 않습니다.`}</div>}
+        {project && project.configured && project.selections.length > 0 ? <section aria-label="현재 연결된 운영 서비스" className="border-y border-emerald-300/20 bg-emerald-300/[0.025] px-4 py-4"><div className="flex items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="font-mono text-[10px] font-semibold tracking-[0.14em] text-emerald-300">02</span><strong className="text-sm text-emerald-200">현재 연결</strong></div><span className="font-mono text-xs text-emerald-300">{project.selections.length}개</span></div><div className="mt-3 flex flex-wrap gap-2">{savedCandidates.map((item) => { const removed = !selected.includes(key(item)); return <button type="button" key={key(item)} onClick={() => { toggleSelection(key(item)); setSaveMessage(null); }} className={`group inline-flex items-center gap-2 border px-2.5 py-1.5 text-[11px] transition ${removed ? 'border-amber-300/20 text-amber-100 line-through opacity-60' : 'border-emerald-300/15 bg-black/15 text-[var(--color-text)] hover:border-rose-300/25'}`} title={removed ? '연결 유지' : '이 연결 해제'}><b className="font-mono text-emerald-300">{item.environment.toUpperCase()}</b>{item.service}{removed ? <span className="no-underline">해제 예정</span> : <X size={12} className="text-[var(--color-text-dim)] group-hover:text-rose-300" />}</button>; })}</div></section> : project && <div className={project.configured ? "border-y border-white/[0.08] bg-white/[0.018] px-4 py-3 text-xs text-[var(--color-text-muted)]" : "border-y border-amber-400/20 bg-amber-400/[0.035] px-4 py-3 text-xs text-amber-100"}>{project.configured ? "서비스 연동 미사용으로 설정된 프로젝트입니다." : `아직 저장된 연결이 없습니다. 일치 후보 ${suggestionCount}개는 저장 전까지 적용되지 않습니다.`}</div>}
         {pendingCandidates.length > 0 && <section aria-label="추가 예정 서비스" className="border-y border-cyan-300/15 bg-cyan-300/[0.025] px-4 py-3"><div className="flex items-center justify-between gap-3"><strong className="text-xs text-cyan-100">추가 예정</strong><span className="font-mono text-[11px] text-cyan-300">{pendingCandidates.length}개</span></div><div className="mt-2 flex flex-wrap gap-2">{pendingCandidates.map((item) => <button type="button" key={key(item)} onClick={() => toggleSelection(key(item))} className="inline-flex items-center gap-2 border border-cyan-300/15 px-2.5 py-1.5 text-[11px] text-[var(--color-text)]"><b className="font-mono text-cyan-200">{item.environment.toUpperCase()}</b>{item.service}<X size={12} className="text-[var(--color-text-dim)]" /></button>)}</div></section>}
-        <div className="flex items-center justify-between gap-4 pt-2"><div><strong className="text-sm text-[var(--color-text)]">추가할 서비스</strong><span className="ml-2 font-mono text-xs text-[var(--color-text-dim)]">{available.length}개 후보</span></div><input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="계정, 서비스, 환경 검색" className="settings-field w-64 max-w-[50%]" /></div>
+        <div className="flex items-center justify-between gap-4 pt-2"><div className="flex items-center gap-3"><span className="font-mono text-[10px] font-semibold tracking-[0.14em] text-cyan-300">03</span><strong className="text-sm text-[var(--color-text)]">서비스 추가</strong><span className="font-mono text-xs text-[var(--color-text-dim)]">{available.length}개</span></div><input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="계정, 서비스, 환경 검색" className="settings-field w-64 max-w-[50%]" /></div>
         <div className="ck-scroll max-h-80 divide-y divide-white/[0.06] overflow-auto border-y border-white/[0.07]">
           {available.length === 0 && <div className="px-3 py-10 text-center text-xs text-[var(--color-text-dim)]">추가로 연결할 서비스를 찾지 못했습니다.</div>}
           {available.map((item) => { const itemKey = key(item); return <div key={itemKey} className="flex items-center gap-4 px-3 py-3.5 transition hover:bg-white/[0.025]"><span className="min-w-0 flex-1"><span className="text-sm text-[var(--color-text)]"><b className="text-cyan-200">{item.environment.toUpperCase()}</b> {item.service}</span><span className="mt-1 block truncate font-mono text-[10px] text-[var(--color-text-dim)]">{item.accountName} / {item.cluster ?? 'cluster 미확인'}{item.pinpointApplicationName ? ` / Pinpoint ${item.pinpointApplicationName}` : ''}</span></span>{isSuggested(item) && <span className="border border-amber-400/20 px-2 py-1 text-[11px] text-amber-200">프로젝트와 일치</span>}<button type="button" onClick={() => { toggleSelection(itemKey); setSaveMessage(null); }} className="settings-action settings-action-secondary settings-action-compact gap-1.5"><Plus size={13} />추가</button></div>; })}
@@ -339,6 +336,11 @@ function ApiTokensCard() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    if (selectedSection === "git") setSelected("github");
+    if (selectedSection === "aws") setSelected("aws_codecommit");
+  }, [selectedSection]);
 
   async function handleCreate() {
     setBusy(true);
@@ -487,7 +489,7 @@ function ConnectionJourney({ projectCount, remoteCount, permissionCount, awsConn
     <ol className="grid sm:grid-cols-2 lg:grid-cols-4">
       <li className="flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:border-r lg:border-b-0"><span className="font-mono text-xs text-emerald-300">01</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">로컬 프로젝트</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">자동 확인 · {projectCount}개</small></span><Check size={15} className="text-emerald-300" /></li>
       <li className={`flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 lg:border-b-0 lg:border-r ${remoteCount === 0 ? "bg-cyan-300/[0.055]" : ""}`}><span className="font-mono text-xs text-cyan-300">02</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">코드 저장소</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">{remoteCount > 0 ? "Git remote를 감지했습니다" : "감지된 Git remote 없음"}</small></span><button type="button" onClick={onOpenGit} className="text-cyan-200" aria-label="코드 저장소 현황 열기"><ArrowRight size={16} /></button></li>
-      <li className="flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:border-r lg:border-b-0"><span className="font-mono text-xs text-violet-300">03</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">PR 조회·생성 권한</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">선택 기능 · {permissionCount > 0 ? `${permissionCount}개 설정` : "미설정"}</small></span></li>
+      <li className="flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:border-r lg:border-b-0"><span className="font-mono text-xs text-violet-300">03</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">PR API 권한</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">브랜치 확인·PR 조회·생성 · {permissionCount > 0 ? `${permissionCount}개 설정` : "미설정"}</small></span></li>
       <li className="flex min-h-20 items-center gap-3 px-5 py-4"><span className="font-mono text-xs text-amber-300">04</span><span className="min-w-0 flex-1"><strong className="block text-sm text-[var(--color-text)]">서비스 상태 · 모니터링</strong><small className="mt-1 block text-[11px] text-[var(--color-text-muted)]">선택 기능 · {operationalCount > 0 ? "연결됨" : "미연결"}</small></span></li>
     </ol>
   </section>;
@@ -587,8 +589,8 @@ export function Settings() {
     : selectedSection === "overview" || selectedSection === "projects"
       ? "status"
       : "services";
-  const visibleProviders = providers?.filter((provider) => selectedSection === "aws" ? provider.id === "aws_codecommit" : provider.id !== "aws_codecommit") ?? null;
-  const visibleConnections = connections.filter((connection) => selectedSection === "aws" ? connection.provider === "aws_codecommit" : connection.provider !== "aws_codecommit");
+  const visibleProviders = providers?.filter((provider) => selectedSection === "aws" ? provider.id === "aws_codecommit" : provider.id === "github") ?? null;
+  const visibleConnections = connections.filter((connection) => selectedSection === "aws" ? connection.provider === "aws_codecommit" : connection.provider === "github");
 
   return (
     <div className="settings-interface mx-auto max-w-6xl space-y-6">
@@ -603,7 +605,7 @@ export function Settings() {
       </nav>
 
       {activeGroup !== "projects" && <nav aria-label={`${activeGroup} 세부 화면`} className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2">
-        {(activeGroup === "services" ? [{ id: "aws" as const, label: `AWS 계정${awsConnected ? " · 연결됨" : ""}` }, { id: "serviceMapping" as const, label: "AWS 서비스 매핑" }, { id: "git" as const, label: "GitHub · GitLab" }, { id: "pinpoint" as const, label: `Pinpoint${pinpointConnected ? " · 연결됨" : ""}` }]
+        {(activeGroup === "services" ? [{ id: "aws" as const, label: "AWS 계정" }, { id: "serviceMapping" as const, label: "AWS 서비스 매핑" }, { id: "git" as const, label: "GitHub PR 권한" }, { id: "pinpoint" as const, label: "Pinpoint" }]
           : [{ id: "overview" as const, label: "코드 저장소" }, { id: "projects" as const, label: "서비스 상태" }]
         ).map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
       </nav>}
@@ -623,8 +625,8 @@ export function Settings() {
           <div className="flex items-center gap-2.5">
           <span className="grid h-10 w-10 place-items-center rounded-full border border-cyan-300/20 text-[var(--color-primary)]"><GitBranch size={17} /></span>
           <div>
-            <h2 className="text-xl font-semibold text-[var(--color-text)]">{selectedSection === "overview" ? "코드 저장소" : "PR 작업 권한"}</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">{selectedSection === "overview" ? "등록한 로컬 프로젝트의 Git remote를 읽어 현재 연결 상태만 보여줍니다." : "Sugo가 원격 서비스에서 PR을 직접 조회하거나 만들 때만 추가로 설정합니다."}</p>
+            <h2 className="text-xl font-semibold text-[var(--color-text)]">{selectedSection === "overview" ? "코드 저장소" : "GitHub PR API 권한"}</h2>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">{selectedSection === "overview" ? "등록한 로컬 프로젝트의 Git remote를 읽어 현재 연결 상태만 보여줍니다." : "브랜치 확인과 PR 조회·생성에만 사용합니다. 로컬 Git의 commit·push 인증과는 별개입니다."}</p>
           </div>
           </div>
         </div>}
@@ -649,10 +651,10 @@ export function Settings() {
               <div className="border-y border-[var(--color-border)] px-1 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-sm font-medium text-[var(--color-text)]">{selectedSection === "aws" ? "CodeCommit PR 작업" : "PR 조회·생성 권한"} <span className="font-normal text-[var(--color-text-dim)]">· 선택</span></div>
-                    <div className="mt-0.5 text-xs leading-5 text-[var(--color-text-muted)]">{selectedSection === "aws" ? "같은 AWS 인증으로 CodeCommit PR을 조회하거나 만듭니다." : "원격 저장소의 PR을 조회하거나 만들 때만 설정합니다."}</div>
+                    <div className="text-sm font-medium text-[var(--color-text)]">{selectedSection === "aws" ? "CodeCommit PR API 권한" : "GitHub PR API 권한"} <span className="font-normal text-[var(--color-text-dim)]">· 선택</span></div>
+                    <div className="mt-0.5 text-xs leading-5 text-[var(--color-text-muted)]">{selectedSection === "aws" ? "브랜치 확인과 PR 조회·생성에 AWS 인증을 사용합니다. commit·push 인증은 로컬 Git 설정을 따릅니다." : "브랜치 확인과 PR 조회·생성에만 사용합니다. commit·push 인증은 로컬 Git 설정을 따릅니다."}</div>
                   </div>
-                  <span className="shrink-0 bg-white/[0.035] px-2.5 py-1 text-[10px] font-semibold text-[var(--color-text-muted)]">{visibleConnections.length > 0 ? "사용 중" : "사용 안 함"}</span>
+                  <span className="shrink-0 bg-white/[0.035] px-2.5 py-1 text-[10px] font-semibold text-[var(--color-text-muted)]">{visibleConnections.length > 0 ? "PR API 사용 중" : "PR API 미설정"}</span>
                 </div>
               </div>
 
@@ -672,29 +674,6 @@ export function Settings() {
                   </div>
                 );
               })}
-
-              <div className="grid gap-2 sm:grid-cols-2">
-                {visibleProviders.map((provider) => {
-                  const connected = connections.some((item) => item.provider === provider.id);
-                  const planned = provider.status === "planned";
-                  const detectedProjects = repositorySummary.providerProjects[provider.id] ?? [];
-                  return (
-                    <button
-                      key={provider.id}
-                      type="button"
-                      disabled={connected || planned}
-                      onClick={() => { setSelected(provider.id); setBaseUrl(provider.defaultBaseUrl ?? ""); }}
-                      className={`border-l-2 px-4 py-3 text-left transition ${selected === provider.id ? "border-cyan-300 bg-cyan-300/[0.06]" : "border-white/[0.08] hover:border-white/20 hover:bg-white/[0.025]"} disabled:cursor-default disabled:opacity-50`}
-                    >
-                      <div className="flex items-center justify-between gap-2 text-sm font-medium text-[var(--color-text)]">
-                        <span>{provider.label}</span>
-                        <span className="text-[10px] text-[var(--color-text-muted)]">{planned ? "지원 예정" : connected ? "작업 권한 있음" : detectedProjects.length > 0 ? `${detectedProjects.length}개 프로젝트 감지` : "감지된 프로젝트 없음"}</span>
-                      </div>
-                      {detectedProjects.length > 0 && <div className="mt-1 truncate text-[11px] text-[var(--color-text-dim)]">{detectedProjects.map((project) => `${project.workspaceName} / ${project.projectName}`).join(" · ")}</div>}
-                    </button>
-                  );
-                })}
-              </div>
 
               {selected && visibleProviders.some((provider) => provider.id === selected) && (() => {
                 const provider = visibleProviders.find((item) => item.id === selected)!;
