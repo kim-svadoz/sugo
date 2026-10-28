@@ -341,16 +341,16 @@ Agents usually fall apart in the same few ways. They circle the same spot, belie
 
 | Principle | In Sugo |
 | --- | --- |
-| Stopping is decided from outside | When tests fail, test-agent sends the work back to implementation at most three times. The number of returns shows in the Console as the reason work stopped. The server does not enforce a limit yet |
+| Stopping is decided from outside | When tests fail, test-agent hands the work back to code-agent at most three times, and the Console shows how many times it did so alongside the reason work stopped. This limit comes from the agent instructions, so the server does not enforce it |
 | No one grades their own work | Test results are recorded as the command that ran and its exit code, and a claim that does not match the record is rejected. Review is done by review-agent, which cannot edit files |
 | Each role gets its own context | The code, test, review, and docs agents each work in their own context and pass on only results. test-agent can edit only test files, and docs-agent only docs |
 | Expensive decisions stay with people | A person approves before the commit, and pushes it themselves |
 
 ### Evaluation and safety
 
-The rule for evaluation is to build the evaluation set first and generate later. In Sugo, contract tests are that set. Tests are written from the requirements and run before implementation to record a failure (red), and after implementation the same tests must record a pass (green). A test that passed from the start, or has no recorded failure, is not accepted as evidence, because a test written by looking at the implementation simply follows it. For risky changes such as a JDK upgrade, a build system change, or removing a dependency, a baseline showing the existing tests pass is recorded before anything changes. This evidence is required for those risky changes or when the project policy turns it on, and the tests stay in the repository to run as regression tests from the next task on.
+The rule for evaluation is to build the evaluation set first and generate later. In Sugo, contract tests are that set. Before code-agent starts, the orchestrator writes tests from the requirements and runs them to record a failure (red), and once the work is done, test-agent runs the same tests to record a pass (green). A test that passed from the start, or has no recorded failure, is not accepted as evidence, because a test written by looking at the implementation simply follows it. For risky changes such as a JDK upgrade, a build system change, or removing a dependency, a baseline showing the existing tests pass is recorded before anything changes. This evidence is required for those risky changes or when the project policy turns it on, and the tests stay in the repository to run as regression tests from the next task on.
 
-Implementing, running builds and tests, and going back to implementation with the failure message is an evaluator-optimizer loop. The evaluator is the build and tests, not the same model, so a failure that comes back is caught again.
+code-agent making changes, builds and tests running, and the failure message going back to code-agent is an evaluator-optimizer loop. The evaluator is the build and tests, not the same model, so a failure that comes back is caught again.
 
 Safety asks a different question from quality: whether something can slip into the path that produces the result. When untrusted input, access to sensitive data, and outside communication come together in one tool (the Lethal Trifecta), a single prompt injection can send data out. So the review step does not pass until this check (`sugo_check_lethal_trifecta`) has run, and a tool that has all three needs a written mitigation before work moves on. On the execution side, hooks are the safety box. `aws-readonly-guard` blocks writes, secret reads, and over-limit AWS calls before they run, and `scope-guard` keeps each agent inside its edit scope.
 
@@ -364,7 +364,7 @@ Questions for checking a workflow. Any "no" marks a weak spot. Each row also sho
 | Planner | Are the steps visible outside the model, and does each step have a condition for being done? | Each requirement gets acceptance criteria and contract tests, and the Console shows the steps |
 | Executor | Are tool responsibilities separated, and are results more than vague prose? | Each agent has its own tools, and test results are kept as commands and exit codes |
 | Validator | Is there an outside signal that decides pass or fail, rather than self-grading? | Real build and test records, a read-only review, and human approval decide |
-| Loop | Is there a stop condition, and is a person in front of hard-to-undo decisions? | A person approves before the commit. The retry limit is three, set in the agent instructions, and the server does not enforce it |
+| Loop | Is there a stop condition, and is a person in front of hard-to-undo decisions? | A person approves before the commit, and handing work back to code-agent is capped at three times by the agent instructions, though the server does not enforce it |
 | Memory | Do past mistakes stay as context for the next task? | The next session reads the domain rules and work reports |
 
 </details>
