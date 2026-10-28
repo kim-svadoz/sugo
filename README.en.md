@@ -1,12 +1,21 @@
 # Sugo
 
-**A Claude Code plugin that won't move on when an AI agent says "done" until execution records prove it**
+### Let AI carry the legwork of development. Keep the judgment for yourself.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757) ![Codex](https://img.shields.io/badge/Codex-supported-0f172a)
 
 [한국어](README.md)
 
-AI agents write code fast, but they also report work as done without running the tests, or edit files nobody asked them to touch. Sugo turns each feature into a **spec** (a document with its requirements and acceptance criteria), then runs it through implementation, tests, review, human approval, and commit. Each step moves on only after Sugo checks the real test run records and the changed files, and a person gives the final approval after reading the diff.
+Sugo takes its name from the Korean word 수고 (sugo): the effort and legwork that goes into a job. AI agents now carry much of that legwork for us. But the work only counts when it is done right. Work that drifts from the spec, reports done without tests, or breaks team rules ends up back on your desk.
+
+So Sugo comes in two parts.
+
+| | What it does |
+| --- | --- |
+| **Sugo** (Claude Code plugin) | Makes the AI build to the spec (the requirements and acceptance criteria of one feature), prove it with tests, and follow your team's rules. Work does not move on until execution records prove it |
+| **Sugo Console** (local workspace) | Brings progress, blockers, approval requests, and development history across domains and tasks onto one screen. This is where you decide what to build and approve the result |
+
+With the AI working on solid ground, you can focus on the decisions that are yours and hand off more work, across more domains, at the same time.
 
 ![Work floor: the worker moves through test, review, and docs to commit](docs/images/console-workfloor.gif)
 
@@ -113,6 +122,12 @@ Use absolute paths. Follow progress in the Console (`http://localhost:3001`). Th
 ## Console tour
 
 Start with commands. Check and decide in the Console.
+
+### Home
+
+Home shows the work to continue today and the work waiting for your decision first. The work flow separates human steps from AI steps and shows which step is waiting for what.
+
+![Home: greeting, work to continue and decisions waiting, work flow](docs/images/console-home-top.png)
 
 ### Workspaces
 

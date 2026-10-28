@@ -71,14 +71,26 @@ try {
   const weeklySaved = await page.evaluate(async () => (await fetch("/api/weekly/reports/settings/current", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${JSON.parse(localStorage.getItem("sugo_auth") ?? "{}").accessToken}` }, body: JSON.stringify({ enabled: false, weekday: 5, hour: 17, minute: 0, model: "default", extraRepositories: [] }) })).status);
   if (weeklySaved !== 200) throw new Error(`weekly settings ${weeklySaved}`);
 
-  await page.setViewportSize({ width: 1440, height: 1500 });
-  await page.goto(`${base}/home`, { waitUntil: "networkidle" });
-  await page.waitForTimeout(7000);
+  // Home 인사말은 시각을 따른다. 언제 찍어도 낮 인사가 나오도록 Home만 지금이 낮인 시간대로 연다.
+  const daytimeZone = ["Asia/Seoul", "Pacific/Kiritimati", "Pacific/Auckland", "Asia/Dubai", "Europe/Berlin", "America/New_York", "America/Los_Angeles", "Pacific/Honolulu"]
+    .find((timeZone) => { const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", hourCycle: "h23" }).format(new Date())); return hour >= 10 && hour < 17; }) ?? "Asia/Seoul";
+  const homeContext = await browser.newContext({ viewport: { width: 1440, height: 1500 }, deviceScaleFactor: 2, timezoneId: daytimeZone });
+  const homePage = await homeContext.newPage();
+  await homePage.goto(`${base}/api/auth/local`, { waitUntil: "networkidle" });
+  await homePage.route("**/api/news**", (route) => route.fulfill({ json: demoNewsFeed() }));
+  await homePage.route("https://api.open-meteo.com/**", (route) => route.fulfill({ json: { current: { temperature_2m: 18, weather_code: 1 } } }));
+  await homePage.evaluate(() => localStorage.setItem("sugo_weather_region", "seoul-cityhall"));
+  await homePage.goto(`${base}/home`, { waitUntil: "networkidle" });
+  await homePage.waitForTimeout(7000);
   // 사이드바와 상단 바까지 포함한 Home 전체. 본문은 내부 스크롤이라 화면 높이를 본문 높이로 늘려 한 번에 찍는다.
-  const homeHeight = await page.evaluate(() => Math.max(...[...document.querySelectorAll("main, main *")].filter((el) => el.scrollHeight > el.clientHeight + 4).map((el) => el.scrollHeight), document.body.scrollHeight));
-  await page.setViewportSize({ width: 1440, height: homeHeight + 120 });
-  await page.waitForTimeout(1500);
-  await page.screenshot({ path: join(out, "console-home.png") });
+  const homeHeight = await homePage.evaluate(() => Math.max(...[...document.querySelectorAll("main, main *")].filter((el) => el.scrollHeight > el.clientHeight + 4).map((el) => el.scrollHeight), document.body.scrollHeight));
+  await homePage.setViewportSize({ width: 1440, height: homeHeight + 120 });
+  await homePage.waitForTimeout(1500);
+  await homePage.screenshot({ path: join(out, "console-homePage.png") });
+  // README용 Home 첫 화면: 인사, 오늘의 할 일, 작업 흐름까지.
+  const flowPanel = await homePage.getByText("TODAY IN SUGO", { exact: true }).first().locator("xpath=ancestor::section[1]").boundingBox().catch(() => null);
+  await homePage.screenshot({ path: join(out, "console-home-top.png"), clip: { x: 0, y: 0, width: 1440, height: flowPanel ? flowPanel.y + flowPanel.height + 24 : 980 } });
+  await homeContext.close();
 
   // Workspaces 첫 화면: 도메인 카드, 작업장, 최근 작업 요약, Inspector를 한 장에 담는다.
   await page.setViewportSize({ width: 1440, height: 1560 });
