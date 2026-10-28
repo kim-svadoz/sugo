@@ -58,15 +58,19 @@ The reason stays as a sentence at the top of the **spec card** in the Console (t
 ![Work result review: report, diff, approve, and request changes](docs/images/console-stop-approval.png)
 
 <details>
-<summary>Step by step</summary>
+<summary>The seven steps one feature takes from spec to commit</summary>
 
-1. **Spec:** Sugo writes the request as a spec and sets acceptance criteria for each requirement. Out-of-scope work is removed here. When needed, it writes the criteria as contract tests first and confirms that they fail.
-2. **Implement:** `code-agent` implements within the spec.
-3. **Test:** `test-agent` runs the tests and records the results. It edits only test files.
-4. **Review:** `review-agent` checks rule violations and security in read-only mode and prepares the verification material.
-5. **Approve:** a person reads the verification material and the diff in the Console and approves each requirement. Answer policy or scope questions here too, and the same session continues.
-6. **Docs and report:** `docs-agent` updates the project docs, and Sugo saves the change summary, design decisions, open risks, and test evidence to `work-result.md`.
-7. **Commit:** when all steps pass, Sugo makes the commit. The commit message has no AI co-author line.
+When you hand over a feature, the work goes through the seven steps below in order. A step starts only after the one before it is done, and if a test fails, review finds a rule violation, or a person requests changes in steps 3 to 5, the work goes back to step 2.
+
+| Step | Who | What happens |
+| --- | --- | --- |
+| 1. Spec | You and the Claude session | The request becomes a spec (`spec.md`). Each requirement gets acceptance criteria, unclear points are settled by asking you, and out-of-scope work is removed. A large spec is split into subtasks. For a big change such as a JDK upgrade, a baseline of passing existing tests and contract tests that still fail are recorded here first |
+| 2. Implement | code-agent | Changes the code within the spec |
+| 3. Test | test-agent | Writes and runs tests from the spec, not from the implementation, and records the command and exit code. It edits only test files |
+| 4. Review | review-agent | Reads without editing and looks for harness and domain rule violations and security problems. When review ends, the change summary, design decisions, open risks, and test evidence are saved to `work-result.md` |
+| 5. Approve | You | Read the review report and diff on the spec card in the Console, then approve each requirement or send it back with what to fix. Answer policy or scope questions here too, and the same session continues |
+| 6. Docs | docs-agent | Updates the project docs to match the change |
+| 7. Commit | Sugo | Makes the commit. The commit message has no AI co-author line |
 
 </details>
 
