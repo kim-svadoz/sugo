@@ -1,6 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 import { useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, FileText, Plug, Shapes, ShieldHalf, SlidersHorizontal, Wand2, Workflow, Zap } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, FileText, Plug, Shapes, ShieldHalf, SlidersHorizontal, Sparkles, Wand2, Workflow, Zap } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { SIDEBAR_GROUPS } from "../lib/sidebarNavigation.js";
 import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
@@ -13,7 +13,7 @@ import { useDashboardMeta } from "../hooks/useDashboardMeta.js";
  */
 const icons = { workspaces: Shapes, schedule: CalendarDays, weekly: FileText, skills: Zap, playbook: Wand2, harness: ShieldHalf, integrations: Plug, preferences: SlidersHorizontal } as const;
 
-export function Sidebar() {
+export function Sidebar({ playbookGuideVisible = false }: { playbookGuideVisible?: boolean }) {
   const { dashboardVersion, pluginVersion } = useDashboardMeta();
   const [collapsed, setCollapsed] = useState(() => typeof window !== "undefined" && window.localStorage.getItem("sugo.sidebar.collapsed") === "true");
 
@@ -56,18 +56,22 @@ export function Sidebar() {
           <div className="space-y-0.5">
           {group.items.map(({ to, icon: iconName, label, shortcut }) => {
             const Icon = icons[iconName];
+            const guided = playbookGuideVisible && to === "/playbook";
             return (
           <NavLink
             key={to}
             to={to}
             title={`${label} · ⌘${shortcut}`}
+            data-playbook-guide-target={guided ? "true" : undefined}
             className={({ isActive }) =>
               cn(
                 "group relative flex h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left transition-colors duration-150",
                 collapsed && "md:justify-center md:px-0",
                 isActive
                   ? "bg-cyan-400/[0.10] text-cyan-200"
-                  : "text-[var(--color-text-muted)] hover:bg-white/[0.035] hover:text-[var(--color-text)]",
+                  : guided
+                    ? "bg-violet-300/[0.08] text-violet-100 ring-1 ring-inset ring-violet-300/25 shadow-[0_0_18px_rgba(167,139,250,.12)]"
+                    : "text-[var(--color-text-muted)] hover:bg-white/[0.035] hover:text-[var(--color-text)]",
               )
             }
           >
@@ -76,6 +80,7 @@ export function Sidebar() {
                 {isActive && <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-cyan-300" />}
                 <span className={cn("flex h-6 w-6 shrink-0 items-center justify-center", isActive && "text-cyan-300")}><Icon size={16} strokeWidth={isActive ? 2.1 : 1.7} /></span>
                 <span className={cn("min-w-0 flex-1 truncate py-0.5 text-[12px] font-medium leading-5 tracking-[-0.01em]", collapsed && "md:hidden")}>{label}</span>
+                {guided && <Sparkles size={12} className={cn("animate-pulse text-violet-200", collapsed && "md:absolute md:-right-0.5 md:-top-0.5")} aria-label="첫 작업 안내" />}
                 <span className={cn("font-mono text-[9px] text-[var(--color-text-dim)] opacity-0 transition-opacity group-hover:opacity-100", collapsed && "md:hidden")}>{shortcut}</span>
               </>
             )}

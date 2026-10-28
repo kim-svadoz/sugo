@@ -45829,6 +45829,14 @@ async function getRecentHistory(db2, userId2, limit) {
     [userId2, limit]
   );
 }
+async function getOnboardingStatus(db2, userId2) {
+  const rows = await db2.query(
+    "SELECT COUNT(*) AS completed_count FROM sugo_history WHERE user_id = ? AND completed_at IS NOT NULL",
+    [userId2]
+  );
+  const hasCompletedPipeline = Number(rows[0]?.completed_count ?? 0) > 0;
+  return { hasCompletedPipeline, shouldGuideToPlaybook: !hasCompletedPipeline };
+}
 async function searchWorkspaces(db2, userId2, q3) {
   const like = `%${q3}%`;
   return db2.query(
@@ -52099,6 +52107,11 @@ function createWorkspacesRouter(db2, sessionSecret2, specAttachmentsPath) {
     const userId2 = requireUserId(req, res);
     if (!userId2) return;
     res.json({ specs: await getScheduledSpecs(db2, userId2) });
+  });
+  router.get("/onboarding-status", async (req, res) => {
+    const userId2 = requireUserId(req, res);
+    if (!userId2) return;
+    res.json(await getOnboardingStatus(db2, userId2));
   });
   router.get("/recent-history", async (req, res) => {
     const userId2 = requireUserId(req, res);
@@ -90838,7 +90851,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname6(fileURLToPath4(import.meta.url));
-    pkg = "0.47.0" ? { version: "0.47.0" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.48.0" ? { version: "0.48.0" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90961,7 +90974,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.47.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.48.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

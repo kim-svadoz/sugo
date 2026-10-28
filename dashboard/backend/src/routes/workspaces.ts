@@ -37,6 +37,7 @@ import {
   getBlockerDecision,
   getCheckpoints,
   getHistory,
+  getOnboardingStatus,
   getRecentHistory,
   getRoadmap,
   isUnverifiedWorkResult,
@@ -142,6 +143,12 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     const userId = requireUserId(req, res);
     if (!userId) return;
     res.json({ specs: await getScheduledSpecs(db, userId) });
+  });
+
+  router.get("/onboarding-status", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    res.json(await getOnboardingStatus(db, userId));
   });
 
   router.get("/recent-history", async (req, res) => {

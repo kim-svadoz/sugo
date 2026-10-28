@@ -120,6 +120,19 @@ describe("GET /api/workspaces/recent-history and /search", () => {
   });
 });
 
+describe("GET /api/workspaces/onboarding-status", () => {
+  it("keeps the Playbook guide visible until a pipeline completion is recorded", async () => {
+    const { app, db, auth } = await seededApp();
+
+    const before = await request(app).get("/api/workspaces/onboarding-status").set("Authorization", auth).expect(200);
+    expect(before.body).toEqual({ hasCompletedPipeline: false, shouldGuideToPlaybook: true });
+
+    await db.exec("UPDATE sugo_history SET completed_at = ? WHERE user_id = ? AND id = ?", ["2026-10-29 09:00:00", "u1", "h1"]);
+    const after = await request(app).get("/api/workspaces/onboarding-status").set("Authorization", auth).expect(200);
+    expect(after.body).toEqual({ hasCompletedPipeline: true, shouldGuideToPlaybook: false });
+  });
+});
+
 describe("GET /api/workspaces/checkpoint-sync", () => {
   it("returns all checkpoints across workspaces for the user", async () => {
     const { app, auth } = await seededApp();

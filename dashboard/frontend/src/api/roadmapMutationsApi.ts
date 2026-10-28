@@ -163,6 +163,12 @@ export async function getSchedule(userId: string): Promise<ScheduledSpec[]> {
   return res.specs;
 }
 
+export function getOnboardingStatus(userId: string) {
+  return apiJson<{ hasCompletedPipeline: boolean; shouldGuideToPlaybook: boolean }>(
+    withUserId("/api/workspaces/onboarding-status", userId)
+  );
+}
+
 /** level='spec' 노드에만 적용 가능. dueDate=null이면 "기한 미정"으로 되돌린다.
  * 실패(404/400)는 apiJson이 그대로 throw한다 — 호출부에서 잡아 안내한다. */
 export function setDueDate(userId: string, workspace: string, nodeId: string, dueDate: string | null) {

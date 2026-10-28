@@ -3,6 +3,8 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { CommandPalette } from "./CommandPalette.js";
 import { Header } from "./Header.js";
 import { Sidebar } from "./Sidebar.js";
+import { NewUserPlaybookGuide } from "./NewUserPlaybookGuide.js";
+import { OnboardingGuideContext } from "./OnboardingGuideContext.js";
 import { isTextEditingTarget, sidebarShortcutPath } from "../lib/sidebarNavigation.js";
 
 /**
@@ -11,6 +13,7 @@ import { isTextEditingTarget, sidebarShortcutPath } from "../lib/sidebarNavigati
  */
 export function Layout() {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [playbookGuideVisible, setPlaybookGuideVisible] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,8 +54,9 @@ export function Layout() {
   }, [navigate]);
 
   return (
+    <OnboardingGuideContext.Provider value={{ playbookGuideVisible, setPlaybookGuideVisible }}>
     <div className="flex h-full min-h-0">
-      <Sidebar />
+      <Sidebar playbookGuideVisible={playbookGuideVisible} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
         <main className="flex-1 overflow-auto p-3 lg:p-5 2xl:p-6">
@@ -60,6 +64,8 @@ export function Layout() {
         </main>
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <NewUserPlaybookGuide visible={playbookGuideVisible} />
     </div>
+    </OnboardingGuideContext.Provider>
   );
 }

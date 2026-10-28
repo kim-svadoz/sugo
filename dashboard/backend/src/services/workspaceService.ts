@@ -322,6 +322,15 @@ export async function getRecentHistory(db: DbClient, userId: string, limit: numb
   );
 }
 
+export async function getOnboardingStatus(db: DbClient, userId: string): Promise<{ hasCompletedPipeline: boolean; shouldGuideToPlaybook: boolean }> {
+  const rows = await db.query<{ completed_count: number | string }>(
+    "SELECT COUNT(*) AS completed_count FROM sugo_history WHERE user_id = ? AND completed_at IS NOT NULL",
+    [userId]
+  );
+  const hasCompletedPipeline = Number(rows[0]?.completed_count ?? 0) > 0;
+  return { hasCompletedPipeline, shouldGuideToPlaybook: !hasCompletedPipeline };
+}
+
 export async function searchWorkspaces(db: DbClient, userId: string, q: string): Promise<HistoryRow[]> {
   const like = `%${q}%`;
   return db.query<HistoryRow>(
