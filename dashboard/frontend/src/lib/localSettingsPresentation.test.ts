@@ -55,6 +55,10 @@ describe("local Settings presentation", () => {
     expect(mapping).toContain("projectSelectionComplete && path === item.project_path");
     expect(mapping).toContain('aria-label="서비스 연결 프로젝트 브라우저"');
     expect(mapping).not.toContain("item.workspace_name} · {integrationStatusLabel(item)");
+    expect(mapping).toContain("function selectServiceWorkspace(workspace: string)");
+    expect(mapping).toContain("onClick={() => selectServiceWorkspace(workspace)}");
+    expect(mapping).toContain("setProjectSelectionComplete(false)");
+    expect(mapping).toContain("setSelected([])");
   });
 
   it("separates repository, PR, service health, and APM status", () => {
@@ -68,6 +72,10 @@ describe("local Settings presentation", () => {
     expect(overview).not.toContain("ECS/APM");
     expect(overview).toContain('<table className="w-full min-w-[980px] table-fixed text-left">');
     expect(overview).not.toContain('className="mt-4 grid gap-px');
+    expect(overview).not.toContain("origin 없음");
+    expect(overview).not.toContain("권한 미설정");
+    expect(overview).not.toContain("원격 저장소 없음");
+    expect(overview).not.toContain("연결 없음");
   });
 
   it("describes the registration destination as a Sugo workspace", () => {
