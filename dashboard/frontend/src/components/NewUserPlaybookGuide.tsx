@@ -13,6 +13,8 @@ interface TourTarget {
 interface TargetRect { top: number; left: number; right: number; bottom: number; width: number; height: number }
 
 const DISMISSED_KEY = "sugo.onboarding.tour.dismissed";
+export const NEWBIE_PREVIEW_KEY = "sugo.dev.newbie-preview.enabled";
+export const NEWBIE_TOUR_START_EVENT = "sugo:onboarding-tour:start";
 const TOUR_TARGETS: TourTarget[] = [
   { key: "home", label: "HOME", title: "오늘 확인할 일을 먼저 모아봅니다", description: "진행 중인 작업, 내 확인이 필요한 일, 최근 완료 결과가 Home에 모입니다.", selector: '[data-onboarding-tour-target="home"]' },
   { key: "playbook", label: "PLAYBOOK", title: "처음 한 번은 작업 순서를 따라가세요", description: "Playbook은 프로젝트 등록부터 첫 완료까지 필요한 행동을 순서대로 보여주는 실행 가이드입니다.", selector: '[data-onboarding-tour-target="playbook"]' },
@@ -42,6 +44,15 @@ export function NewUserPlaybookGuide({ visible, onDismiss }: { visible: boolean;
   const [dismissed, setDismissed] = useState(() => typeof window !== "undefined" && window.localStorage.getItem(DISMISSED_KEY) === "true");
   const active = visible && !dismissed;
   const target = TOUR_TARGETS[step];
+
+  useEffect(() => {
+    const restart = () => {
+      setStep(0);
+      setDismissed(false);
+    };
+    window.addEventListener(NEWBIE_TOUR_START_EVENT, restart);
+    return () => window.removeEventListener(NEWBIE_TOUR_START_EVENT, restart);
+  }, []);
 
   useEffect(() => {
     if (!active) { setRect(null); return; }

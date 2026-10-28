@@ -8,6 +8,8 @@ describe("new user Playbook guide", () => {
     const home = source("../pages/Home.tsx");
     const layout = source("../components/Layout.tsx");
     expect(home).toContain("getOnboardingStatus(userId)");
+    expect(home).toContain("뉴비 모드");
+    expect(home).toContain("newbiePreviewEnabled");
     expect(home).toContain("setPlaybookGuideVisible(showPlaybookGuide)");
     expect(home).toContain('data-onboarding-tour-target={showPlaybookGuide ? "home"');
     expect(home).toContain('data-onboarding-tour-target={showPlaybookGuide ? "pipeline"');
@@ -23,6 +25,8 @@ describe("new user Playbook guide", () => {
     expect(guide).toContain('key: "pipeline"');
     expect(guide).toContain('navigate("/settings?section=projects&register=1")');
     expect(guide).toContain("sugo.onboarding.tour.dismissed");
+    expect(guide).toContain("sugo.dev.newbie-preview.enabled");
+    expect(guide).toContain("sugo:onboarding-tour:start");
   });
 
   it("keeps the future team gate hidden unless its feature flag is enabled", () => {

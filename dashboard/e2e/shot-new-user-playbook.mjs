@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 
 const base = process.env.SUGO_UI_URL ?? "http://127.0.0.1:5175";
 const output = process.env.SUGO_SCREENSHOT ?? join(tmpdir(), "sugo-new-user-playbook-guide.png");
+const previewOutput = process.env.SUGO_PREVIEW_SCREENSHOT ?? join(tmpdir(), "sugo-newbie-preview-button.png");
 const loginOutput = process.env.SUGO_LOGIN_SCREENSHOT ?? join(tmpdir(), "sugo-workspace-gate.png");
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
@@ -11,11 +12,12 @@ await page.addInitScript(() => {
   localStorage.setItem("sugo_auth", JSON.stringify({ user: { id: "new-user" }, accessToken: "fake.jwt.token", refreshToken: null, expiresAt: Date.now() + 3_600_000 }));
   localStorage.setItem("sugo_weather_region", "seoul-cityhall");
   localStorage.removeItem("sugo.onboarding.tour.dismissed");
+  localStorage.setItem("sugo.dev.newbie-preview.enabled", "true");
 });
 await page.route("**/health", (route) => route.fulfill({ json: { status: "ok", version: "test", build: "test" } }));
 await page.route("**/api/**", (route) => {
   const url = route.request().url();
-  if (url.includes("/api/workspaces/onboarding-status")) return route.fulfill({ json: { hasCompletedPipeline: false, shouldGuideToPlaybook: true } });
+  if (url.includes("/api/workspaces/onboarding-status")) return route.fulfill({ json: { hasCompletedPipeline: true, shouldGuideToPlaybook: false } });
   if (url.includes("/api/workspaces/schedule")) return route.fulfill({ json: { specs: [] } });
   if (url.includes("/api/schedule/commitments")) return route.fulfill({ json: { commitments: [] } });
   if (url.includes("/api/schedule/memos")) return route.fulfill({ json: { memos: [] } });
@@ -27,6 +29,10 @@ await page.route("**/api/**", (route) => {
   return route.fulfill({ json: {} });
 });
 await page.goto(`${base}/home`, { waitUntil: "networkidle" });
+await page.getByRole("button", { name: "뉴비 모드" }).waitFor();
+await page.screenshot({ path: previewOutput, fullPage: false });
+console.log(previewOutput);
+await page.getByRole("button", { name: "뉴비 모드" }).click();
 await page.getByRole("dialog", { name: "Sugo 시작 안내" }).waitFor();
 await page.waitForTimeout(300);
 await page.screenshot({ path: output, fullPage: false });
