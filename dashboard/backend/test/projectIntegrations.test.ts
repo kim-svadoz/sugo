@@ -37,6 +37,14 @@ describe("/api/project-integrations", () => {
 
     expect(calls).toEqual([{ projectPath: "/work/orders-api", workspace: "orders" }]);
     expect(response.body).toMatchObject({ ok: true, projectName: "orders-api", workspace: "orders" });
+
+    const listed = await request(app)
+      .get("/api/project-integrations")
+      .set("Authorization", authorization)
+      .expect(200);
+    expect(listed.body.projects).toEqual([
+      expect.objectContaining({ workspace_name: "orders", project_path: "/work/orders-api" }),
+    ]);
   });
 
   it("offers saved ECS candidates and persists an explicit project mapping", async () => {

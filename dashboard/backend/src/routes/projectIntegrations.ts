@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { DbClient } from '../db/client.js';
 import { requireUser } from '../auth/requireUser.js';
 import { validateBody } from '../schemas/validate.js';
-import { listProjectIntegrations, saveProjectIntegration } from '../services/projectIntegrationService.js';
+import { listProjectIntegrations, recordRegisteredProject, saveProjectIntegration } from '../services/projectIntegrationService.js';
 import { runProjectRegistrar, type ProjectRegistrar } from '../services/projectRegistrar.js';
 import { inspectLocalDirectory, inspectProjectDirectory } from '../services/localDirectoryBrowser.js';
 import { selectNativeDirectory, supportsNativeDirectoryPicker } from '../services/nativeDirectoryPicker.js';
@@ -31,7 +31,11 @@ export function createProjectIntegrationsRouter(db: DbClient, secret: string, re
     }
   });
   router.post('/register', validateBody(registrationSchema), async (req, res) => {
-    try { res.status(201).json(await registrar(req.body)); }
+    try {
+      const result = await registrar(req.body);
+      await recordRegisteredProject(db, req.userId!, result.workspace, result.projectPath);
+      res.status(201).json(result);
+    }
     catch (error) { res.status(409).json({ error: (error as any)?.code ?? 'PROJECT_REGISTRATION_FAILED', message: error instanceof Error ? error.message : String(error) }); }
   });
   router.put('/', validateBody(schema), async (req, res) => { try { await saveProjectIntegration(db, req.userId!, req.body.projectPath, req.body.selections); res.json({ ok: true }); } catch (error) { const code = (error as any)?.code; res.status(code === 'PROJECT_NOT_FOUND' ? 404 : code === 'SERVICE_NOT_AVAILABLE' ? 409 : 500).json({ error: code ?? 'PROJECT_INTEGRATION_FAILED' }); } });

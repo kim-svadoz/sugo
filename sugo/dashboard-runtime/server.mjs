@@ -90018,6 +90018,23 @@ var init_pinpointContext = __esm({
 });
 
 // ../dashboard/backend/src/services/projectIntegrationService.ts
+async function recordRegisteredProject(db2, userId2, workspace, projectPath) {
+  const workspaces = await db2.query("SELECT id FROM sugo_workspaces WHERE user_id = ? AND name = ?", [userId2, workspace]);
+  let workspaceId = workspaces[0]?.id;
+  if (workspaceId === void 0) {
+    workspaceId = Number((await db2.exec("INSERT INTO sugo_workspaces (user_id, name) VALUES (?, ?)", [userId2, workspace])).insertId);
+  } else {
+    await db2.exec("UPDATE sugo_workspaces SET deleted_at = NULL WHERE id = ?", [workspaceId]);
+  }
+  await db2.exec(
+    "DELETE FROM sugo_workspace_projects WHERE project_path = ? AND workspace_id IN (SELECT id FROM sugo_workspaces WHERE user_id = ?) AND workspace_id <> ?",
+    [projectPath, userId2, workspaceId]
+  );
+  const existing = await db2.query("SELECT 1 FROM sugo_workspace_projects WHERE workspace_id = ? AND project_path = ?", [workspaceId, projectPath]);
+  if (!existing[0]) {
+    await db2.exec("INSERT INTO sugo_workspace_projects (workspace_id, project_path, git_synced) VALUES (?, ?, ?)", [workspaceId, projectPath, 0]);
+  }
+}
 function selectionKey(item) {
   return `${item.accountName}\0${item.cluster ?? ""}\0${item.service}\0${item.environment}`;
 }
@@ -90212,7 +90229,9 @@ function createProjectIntegrationsRouter(db2, secret, registrar = runProjectRegi
   });
   router.post("/register", validateBody(registrationSchema), async (req, res) => {
     try {
-      res.status(201).json(await registrar(req.body));
+      const result = await registrar(req.body);
+      await recordRegisteredProject(db2, req.userId, result.workspace, result.projectPath);
+      res.status(201).json(result);
     } catch (error2) {
       res.status(409).json({ error: error2?.code ?? "PROJECT_REGISTRATION_FAILED", message: error2 instanceof Error ? error2.message : String(error2) });
     }
@@ -90757,7 +90776,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname6(fileURLToPath4(import.meta.url));
-    pkg = "0.45.2" ? { version: "0.45.2" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.45.3" ? { version: "0.45.3" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90880,7 +90899,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.45.2", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.45.3", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });
