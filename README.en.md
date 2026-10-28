@@ -37,11 +37,27 @@ Sugo (from 수고, Korean for the legwork a job takes) is a Claude Code plugin t
 
 ## How it works
 
-![The steps one feature takes from spec to commit, and where it goes back to implementation](docs/images/sugo-flow.en.png)
+![The steps a development task takes from spec to commit, and where it goes back to implementation](docs/images/sugo-flow.en.png)
 
 A person sets the spec. AI agents implement, test, and review. A person approves the result, and Sugo commits. If a test fails, review finds a rule violation, or the person requests changes, the work goes back to implementation.
 
 Seen as roles, this flow is a loop of Planner, Executor, and Validator (PEV). The Claude session you are talking to splits the spec into steps that can be checked (Planner), code-agent and test-agent do the work (Executor), and whether it passes is decided not by the AI grading itself but by real build and test records, a read-only review, and human approval (Validator).
+
+### The seven steps of a development task (FEAT)
+
+Sugo handles each development task as a unit called a FEAT, started with the `/sugo:feat` command. A FEAT goes through the seven steps below in order. A step starts only after the one before it is done, and if a test fails, review finds a rule violation, or a person requests changes in steps 3 to 5, the work goes back to step 2.
+
+| Step | Who | What happens |
+| --- | --- | --- |
+| 1. Spec | You and the Claude session | The request becomes a spec (`spec.md`). Each requirement gets acceptance criteria, unclear points are settled by asking you, and out-of-scope work is removed. A large spec is split into subtasks. For a big change such as a JDK upgrade, a baseline of passing existing tests and contract tests that still fail are recorded here first |
+| 2. Implement | code-agent | Changes the code within the spec |
+| 3. Test | test-agent | Writes and runs tests from the spec, not from the implementation, and records the command and exit code. It edits only test files |
+| 4. Review | review-agent | Reads without editing and looks for harness and domain rule violations and security problems. When review ends, the change summary, design decisions, open risks, and test evidence are saved to `work-result.md` |
+| 5. Approve | You | Read the review report and diff on the spec card in the Console, then approve each requirement or send it back with what to fix. Answer policy or scope questions here too, and the same session continues |
+| 6. Docs | docs-agent | Updates the project docs to match the change |
+| 7. Commit | Sugo | Makes the commit. The commit message has no AI co-author line |
+
+### Where work goes back
 
 The reason stays as a sentence at the top of the **spec card** in the Console (the local screen Sugo runs). A spec card collects the status and history of one spec.
 
@@ -56,23 +72,6 @@ The reason stays as a sentence at the top of the **spec card** in the Console (t
 **A person approves at the end.** Open the review report and the changed-file diff, then approve or write what to change and request changes.
 
 ![Work result review: report, diff, approve, and request changes](docs/images/console-stop-approval.png)
-
-<details>
-<summary>The seven steps one feature takes from spec to commit</summary>
-
-When you hand over a feature, the work goes through the seven steps below in order. A step starts only after the one before it is done, and if a test fails, review finds a rule violation, or a person requests changes in steps 3 to 5, the work goes back to step 2.
-
-| Step | Who | What happens |
-| --- | --- | --- |
-| 1. Spec | You and the Claude session | The request becomes a spec (`spec.md`). Each requirement gets acceptance criteria, unclear points are settled by asking you, and out-of-scope work is removed. A large spec is split into subtasks. For a big change such as a JDK upgrade, a baseline of passing existing tests and contract tests that still fail are recorded here first |
-| 2. Implement | code-agent | Changes the code within the spec |
-| 3. Test | test-agent | Writes and runs tests from the spec, not from the implementation, and records the command and exit code. It edits only test files |
-| 4. Review | review-agent | Reads without editing and looks for harness and domain rule violations and security problems. When review ends, the change summary, design decisions, open risks, and test evidence are saved to `work-result.md` |
-| 5. Approve | You | Read the review report and diff on the spec card in the Console, then approve each requirement or send it back with what to fix. Answer policy or scope questions here too, and the same session continues |
-| 6. Docs | docs-agent | Updates the project docs to match the change |
-| 7. Commit | Sugo | Makes the commit. The commit message has no AI co-author line |
-
-</details>
 
 ## Quick start
 
@@ -95,7 +94,7 @@ In Claude Code, run `/reload-plugins`, then `/sugo:version`. No build or `npm in
 - **Update:** `claude plugin update sugo@sugo-marketplace`, then `/reload-plugins`
 - **Codex app:** add `https://github.com/kim-svadoz/sugo.git` as a plugin marketplace and turn on `sugo`. Codex provides the `/sugo:...` commands as skills.
 
-### 3. First feature
+### 3. Start your first development task
 
 ```text
 /sugo:ws-add payments
@@ -107,7 +106,7 @@ In Claude Code, run `/reload-plugins`, then `/sugo:version`. No build or `npm in
 | --- | --- |
 | `/sugo:ws-add` | Creates a domain. A domain is a group of projects in one business area. Example: the `payments` domain holds a payment API, a settlement batch, and an admin UI |
 | `/sugo:add` | Registers a project in a domain. It detects the language, framework, and build tool and installs the coding rules for that stack (the harness) |
-| `/sugo:feat` | Runs one feature from spec to commit |
+| `/sugo:feat` | Runs one development task (FEAT) from spec to commit |
 
 Use absolute paths. Put one behavior change in each `/sugo:feat`; if a spec is large, Sugo splits it into subtasks and integrates them.
 
@@ -212,7 +211,7 @@ The other screens, such as Weekly, Calendar, and diff, are covered in the [Conso
 
 | Command | Purpose |
 | --- | --- |
-| `/sugo:feat` | Run one feature from spec to commit |
+| `/sugo:feat` | Run one development task (FEAT) from spec to commit |
 | `/sugo:patch` | Start a later fix from a finished task's `work-result.md` |
 | `/sugo:patch-attach` | Verify changes from a normal chat and connect them to an existing task as a patch |
 | `/sugo:add`, `/sugo:ws-add` | Register a project, create a domain |
