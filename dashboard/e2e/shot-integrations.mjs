@@ -48,6 +48,17 @@ await page.route("**/*", (route) => {
   ], connections: [] } });
   if (url.includes("/api/aws-context")) return route.fulfill({ json: { connected: true, activeAccount: "default", accounts: [{ name: "default", profile: "default", region: "ap-northeast-2", accountHint: "1234", principal: "developer" }], inventory: [], observedAt: null } });
   if (url.includes("/api/pinpoint-context")) return route.fulfill({ json: { connected: false, applications: [], observedAt: null } });
+  if (url.includes("/api/project-integrations/browse")) return route.fulfill({ json: {
+    path: "/Users/demo/dev",
+    parentPath: "/Users/demo",
+    name: "dev",
+    projectLike: false,
+    signals: [],
+    directories: [
+      { name: "catalog-api", path: "/Users/demo/dev/catalog-api", projectLike: true, signals: ["package.json"] },
+      { name: "notes", path: "/Users/demo/dev/notes", projectLike: false, signals: [] },
+    ],
+  } });
   if (url.includes("/api/project-integrations")) return route.fulfill({ json: {
     projects: [
       { workspace_name: "catalog", project_path: "/work/catalog-api", configured: true, selections: [{ accountName: "team-dev", environment: "dev", service: "catalog-api-service", cluster: "catalog" }] },
@@ -74,6 +85,8 @@ await page.waitForTimeout(250);
 await page.locator("#integration-projects").screenshot({ path: mappingOutput });
 await page.getByRole("button", { name: /프로젝트 로컬 프로젝트 등록/ }).click();
 await page.getByRole("region", { name: "새 프로젝트 등록" }).waitFor({ timeout: 5_000 });
+await page.getByRole("button", { name: /폴더를 선택하세요 폴더 선택/ }).click();
+await page.getByRole("region", { name: "프로젝트 폴더 선택" }).waitFor({ timeout: 5_000 });
 await page.screenshot({ path: registrationOutput, fullPage: true });
 await page.getByRole("button", { name: /연결 현황 읽기 전용 결과/ }).click();
 await page.getByRole("heading", { name: "프로젝트 연결 현황" }).waitFor({ timeout: 5_000 });

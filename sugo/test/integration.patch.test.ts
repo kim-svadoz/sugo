@@ -33,6 +33,7 @@ let projectDir: string;
 beforeEach(() => {
   fakeHome = mkdtempSync(join(tmpdir(), "sugo-patch-home-"));
   projectDir = mkdtempSync(join(tmpdir(), "sugo-patch-project-"));
+  writeFileSync(join(projectDir, "package.json"), "{}\n");
   process.env.SUGO_HOME_OVERRIDE = fakeHome;
 });
 

@@ -52,7 +52,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // ../dashboard/backend/node_modules/depd/index.js
 var require_depd = __commonJS({
   "../dashboard/backend/node_modules/depd/index.js"(exports, module) {
-    var relative4 = __require("path").relative;
+    var relative5 = __require("path").relative;
     module.exports = depd;
     var basePath = process.cwd();
     function containsNamespace(str, namespace) {
@@ -244,7 +244,7 @@ var require_depd = __commonJS({
       return formatted;
     }
     function formatLocation(callSite) {
-      return relative4(basePath, callSite[0]) + ":" + callSite[1] + ":" + callSite[2];
+      return relative5(basePath, callSite[0]) + ":" + callSite[1] + ":" + callSite[2];
     }
     function getStack() {
       var limit = Error.stackTraceLimit;
@@ -18509,10 +18509,10 @@ var require_view = __commonJS({
     var debug = require_src()("express:view");
     var path = __require("path");
     var fs = __require("fs");
-    var dirname8 = path.dirname;
-    var basename5 = path.basename;
+    var dirname9 = path.dirname;
+    var basename6 = path.basename;
     var extname2 = path.extname;
-    var join16 = path.join;
+    var join17 = path.join;
     var resolve6 = path.resolve;
     module.exports = View;
     function View(name, options) {
@@ -18548,8 +18548,8 @@ var require_view = __commonJS({
       for (var i5 = 0; i5 < roots.length && !path2; i5++) {
         var root5 = roots[i5];
         var loc = resolve6(root5, name);
-        var dir = dirname8(loc);
-        var file = basename5(loc);
+        var dir = dirname9(loc);
+        var file = basename6(loc);
         path2 = this.resolve(dir, file);
       }
       return path2;
@@ -18560,12 +18560,12 @@ var require_view = __commonJS({
     };
     View.prototype.resolve = function resolve7(dir, file) {
       var ext = this.ext;
-      var path2 = join16(dir, file);
+      var path2 = join17(dir, file);
       var stat4 = tryStat(path2);
       if (stat4 && stat4.isFile()) {
         return path2;
       }
-      path2 = join16(dir, basename5(file, ext), "index" + ext);
+      path2 = join17(dir, basename6(file, ext), "index" + ext);
       stat4 = tryStat(path2);
       if (stat4 && stat4.isFile()) {
         return path2;
@@ -18646,7 +18646,7 @@ var require_content_disposition = __commonJS({
     "use strict";
     module.exports = contentDisposition;
     module.exports.parse = parse2;
-    var basename5 = __require("path").basename;
+    var basename6 = __require("path").basename;
     var Buffer3 = require_safe_buffer().Buffer;
     var ENCODE_URL_ATTR_CHAR_REGEXP = /[\x00-\x20"'()*,/:;<=>?@[\\\]{}\x7f]/g;
     var HEX_ESCAPE_REGEXP = /%[0-9A-Fa-f]{2}/;
@@ -18682,9 +18682,9 @@ var require_content_disposition = __commonJS({
       if (typeof fallback2 === "string" && NON_LATIN1_REGEXP.test(fallback2)) {
         throw new TypeError("fallback must be ISO-8859-1 string");
       }
-      var name = basename5(filename);
+      var name = basename6(filename);
       var isQuotedString = TEXT_REGEXP.test(name);
-      var fallbackName = typeof fallback2 !== "string" ? fallback2 && getlatin1(name) : basename5(fallback2);
+      var fallbackName = typeof fallback2 !== "string" ? fallback2 && getlatin1(name) : basename6(fallback2);
       var hasFallback = typeof fallbackName === "string" && fallbackName !== name;
       if (hasFallback || !isQuotedString || HEX_ESCAPE_REGEXP.test(name)) {
         params["filename*"] = name;
@@ -19198,7 +19198,7 @@ var require_send = __commonJS({
     var Stream = __require("stream");
     var util4 = __require("util");
     var extname2 = path.extname;
-    var join16 = path.join;
+    var join17 = path.join;
     var normalize3 = path.normalize;
     var resolve6 = path.resolve;
     var sep3 = path.sep;
@@ -19417,7 +19417,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = path2.split(sep3);
-        path2 = normalize3(join16(root5, path2));
+        path2 = normalize3(join17(root5, path2));
       } else {
         if (UP_PATH_REGEXP.test(path2)) {
           debug('malicious path "%s"', path2);
@@ -19552,7 +19552,7 @@ var require_send = __commonJS({
           if (err) return self2.onStatError(err);
           return self2.error(404);
         }
-        var p3 = join16(path2, self2._index[i5]);
+        var p3 = join17(path2, self2._index[i5]);
         debug('stat "%s"', p3);
         fs.stat(p3, function(err2, stat4) {
           if (err2) return next(err2);
@@ -21976,7 +21976,7 @@ var require_response = __commonJS({
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
     var http2 = __require("http");
-    var isAbsolute5 = require_utils2().isAbsolute;
+    var isAbsolute6 = require_utils2().isAbsolute;
     var onFinished = require_on_finished();
     var path = __require("path");
     var statuses = require_statuses();
@@ -22182,7 +22182,7 @@ var require_response = __commonJS({
         done = options;
         opts = {};
       }
-      if (!opts.root && !isAbsolute5(path2)) {
+      if (!opts.root && !isAbsolute6(path2)) {
         throw new TypeError("path must be absolute or specify root to res.sendFile");
       }
       var pathname = encodeURI(path2);
@@ -41776,7 +41776,7 @@ var require_named_placeholders = __commonJS({
         }
         return s2;
       }
-      function join16(tree) {
+      function join17(tree) {
         if (tree.length === 1) {
           return tree;
         }
@@ -41802,7 +41802,7 @@ var require_named_placeholders = __commonJS({
         if (cache7 && (tree = cache7.get(query))) {
           return toArrayParams(tree, paramsObj);
         }
-        tree = join16(parse2(query));
+        tree = join17(parse2(query));
         if (cache7) {
           cache7.set(query, tree);
         }
@@ -70354,12 +70354,12 @@ var require_dist_cjs6 = __commonJS({
     var fromHttp = (options = {}) => {
       options.logger?.debug("@aws-sdk/credential-provider-http - fromHttp");
       let host;
-      const relative4 = options.awsContainerCredentialsRelativeUri ?? process.env[AWS_CONTAINER_CREDENTIALS_RELATIVE_URI];
+      const relative5 = options.awsContainerCredentialsRelativeUri ?? process.env[AWS_CONTAINER_CREDENTIALS_RELATIVE_URI];
       const full = options.awsContainerCredentialsFullUri ?? process.env[AWS_CONTAINER_CREDENTIALS_FULL_URI];
       const token = options.awsContainerAuthorizationToken ?? process.env[AWS_CONTAINER_AUTHORIZATION_TOKEN];
       const tokenFile = options.awsContainerAuthorizationTokenFile ?? process.env[AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE];
       const warn = options.logger?.constructor?.name === "NoOpLogger" || !options.logger?.warn ? console.warn : options.logger.warn.bind(options.logger);
-      if (relative4 && full) {
+      if (relative5 && full) {
         warn("@aws-sdk/credential-provider-http: you have set both awsContainerCredentialsRelativeUri and awsContainerCredentialsFullUri.");
         warn("awsContainerCredentialsRelativeUri will take precedence.");
       }
@@ -70367,8 +70367,8 @@ var require_dist_cjs6 = __commonJS({
         warn("@aws-sdk/credential-provider-http: you have set both awsContainerAuthorizationToken and awsContainerAuthorizationTokenFile.");
         warn("awsContainerAuthorizationTokenFile will take precedence.");
       }
-      if (relative4) {
-        host = `${DEFAULT_LINK_LOCAL_HOST}${relative4}`;
+      if (relative5) {
+        host = `${DEFAULT_LINK_LOCAL_HOST}${relative5}`;
       } else if (full) {
         host = full;
       } else {
@@ -79689,8 +79689,8 @@ var require_dist_cjs11 = __commonJS({
     var { HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
     var { createHash: createHash11, createPrivateKey: createPrivateKey2, createPublicKey: createPublicKey2, sign: sign4 } = __require("node:crypto");
     var { promises } = __require("node:fs");
-    var { homedir: homedir6 } = __require("node:os");
-    var { dirname: dirname8, join: join16 } = __require("node:path");
+    var { homedir: homedir7 } = __require("node:os");
+    var { dirname: dirname9, join: join17 } = __require("node:path");
     var LoginCredentialsFetcher = class _LoginCredentialsFetcher {
       profileData;
       init;
@@ -79846,7 +79846,7 @@ var require_dist_cjs11 = __commonJS({
       }
       async saveToken(token) {
         const tokenFilePath = this.getTokenFilePath();
-        const directory = dirname8(tokenFilePath);
+        const directory = dirname9(tokenFilePath);
         try {
           await promises.mkdir(directory, { recursive: true });
         } catch (error2) {
@@ -79854,10 +79854,10 @@ var require_dist_cjs11 = __commonJS({
         await promises.writeFile(tokenFilePath, JSON.stringify(token, null, 2), "utf8");
       }
       getTokenFilePath() {
-        const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join16(homedir6(), ".aws", "login", "cache");
+        const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join17(homedir7(), ".aws", "login", "cache");
         const loginSessionBytes = Buffer.from(this.loginSession, "utf8");
         const loginSessionSha256 = createHash11("sha256").update(loginSessionBytes).digest("hex");
-        return join16(directory, `${loginSessionSha256}.json`);
+        return join17(directory, `${loginSessionSha256}.json`);
       }
       derToRawSignature(derSignature) {
         let offset = 2;
@@ -89982,10 +89982,12 @@ var init_pinpointContext = __esm({
 });
 
 // ../dashboard/backend/src/services/projectIntegrationService.ts
-async function listProjectIntegrations(db2, userId2) {
-  const projects = await db2.query(`SELECT w.name AS workspace_name, p.project_path FROM sugo_workspace_projects p JOIN sugo_workspaces w ON w.id = p.workspace_id WHERE w.user_id = ? AND w.deleted_at IS NULL ORDER BY w.name, p.project_path`, [userId2]);
+function selectionKey(item) {
+  return `${item.accountName}\0${item.cluster ?? ""}\0${item.service}\0${item.environment}`;
+}
+async function integrationCandidates(db2, userId2) {
   const snapshots = await db2.query("SELECT account_name, payload FROM user_aws_context_snapshots WHERE user_id = ? ORDER BY account_name", [userId2]);
-  const candidates = snapshots.flatMap((snapshot) => parseMaybeJson(snapshot.payload, []).flatMap((inventory) => inventory?.service === "ecs" ? inventory.resources ?? [] : []).filter((resource2) => resource2?.kind === "service").map((resource2) => ({
+  return snapshots.flatMap((snapshot) => parseMaybeJson(snapshot.payload, []).flatMap((inventory) => inventory?.service === "ecs" ? inventory.resources ?? [] : []).filter((resource2) => resource2?.kind === "service").map((resource2) => ({
     accountName: snapshot.account_name,
     environment: environmentOfAccount(snapshot.account_name),
     service: String(resource2.id),
@@ -89993,6 +89995,10 @@ async function listProjectIntegrations(db2, userId2) {
     pinpointApplicationName: typeof resource2.metadata?.pinpointApplicationName === "string" ? resource2.metadata.pinpointApplicationName : null,
     images: Array.isArray(resource2.metadata?.images) ? resource2.metadata.images : []
   })));
+}
+async function listProjectIntegrations(db2, userId2) {
+  const projects = await db2.query(`SELECT w.name AS workspace_name, p.project_path FROM sugo_workspace_projects p JOIN sugo_workspaces w ON w.id = p.workspace_id WHERE w.user_id = ? AND w.deleted_at IS NULL ORDER BY w.name, p.project_path`, [userId2]);
+  const candidates = await integrationCandidates(db2, userId2);
   const mappings = await db2.query("SELECT project_path, selections FROM user_project_integration_mappings WHERE user_id = ?", [userId2]);
   const byPath = new Map(mappings.map((row) => [row.project_path, parseMaybeJson(row.selections, [])]));
   return { candidates, projects: projects.map((project) => ({ ...project, configured: byPath.has(project.project_path), selections: byPath.get(project.project_path) ?? [] })) };
@@ -90000,6 +90006,12 @@ async function listProjectIntegrations(db2, userId2) {
 async function saveProjectIntegration(db2, userId2, projectPath, selections) {
   const owned = await db2.query(`SELECT 1 FROM sugo_workspace_projects p JOIN sugo_workspaces w ON w.id = p.workspace_id WHERE w.user_id = ? AND p.project_path = ?`, [userId2, projectPath]);
   if (!owned[0]) throw Object.assign(new Error("Project not found"), { code: "PROJECT_NOT_FOUND" });
+  const existingRows = await db2.query("SELECT selections FROM user_project_integration_mappings WHERE user_id = ? AND project_path = ?", [userId2, projectPath]);
+  const existing = parseMaybeJson(existingRows[0]?.selections, []);
+  const allowed = new Set([...await integrationCandidates(db2, userId2), ...existing].map(selectionKey));
+  if (selections.some((selection) => !allowed.has(selectionKey(selection)))) {
+    throw Object.assign(new Error("Service is not present in the synchronized AWS inventory"), { code: "SERVICE_NOT_AVAILABLE" });
+  }
   await upsertRow(db2, "user_project_integration_mappings", { user_id: userId2, project_path: projectPath }, { selections: JSON.stringify(selections), updated_at: (/* @__PURE__ */ new Date()).toISOString() });
 }
 var init_projectIntegrationService = __esm({
@@ -90059,11 +90071,52 @@ var init_projectRegistrar = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/localDirectoryBrowser.ts
+import { homedir as homedir4 } from "node:os";
+import { readdir as readdir3, realpath } from "node:fs/promises";
+import { basename as basename5, dirname as dirname3, isAbsolute as isAbsolute5, join as join12, relative as relative4 } from "node:path";
+function assertInsideHome(path, home) {
+  const rel = relative4(home, path);
+  if (rel === ".." || rel.startsWith("../") || rel.startsWith("..\\") || isAbsolute5(rel)) {
+    throw Object.assign(new Error("\uD648 \uB514\uB809\uD130\uB9AC \uBC16\uC758 \uACBD\uB85C\uB294 \uD0D0\uC0C9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."), { code: "DIRECTORY_OUTSIDE_HOME" });
+  }
+}
+async function inspectLocalDirectory(inputPath, allowedHome = homedir4()) {
+  const home = await realpath(allowedHome);
+  const current = await realpath(inputPath || home);
+  assertInsideHome(current, home);
+  const entries = await readdir3(current, { withFileTypes: true });
+  const names = new Set(entries.map((entry) => entry.name));
+  const signals = [...PROJECT_MARKERS].filter((marker) => names.has(marker));
+  const directories = await Promise.all(entries.filter((entry) => entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "node_modules").sort((left, right) => left.name.localeCompare(right.name)).map(async (entry) => {
+    const path = join12(current, entry.name);
+    const children = await readdir3(path, { withFileTypes: true }).catch(() => []);
+    const childNames = new Set(children.map((child) => child.name));
+    const childSignals = [...PROJECT_MARKERS].filter((marker) => childNames.has(marker));
+    return { name: entry.name, path, projectLike: childSignals.length > 0, signals: childSignals };
+  }));
+  return { path: current, parentPath: current === home ? null : dirname3(current), name: basename5(current), projectLike: signals.length > 0, signals, directories };
+}
+var PROJECT_MARKERS;
+var init_localDirectoryBrowser = __esm({
+  "../dashboard/backend/src/services/localDirectoryBrowser.ts"() {
+    "use strict";
+    PROJECT_MARKERS = /* @__PURE__ */ new Set([".git", "package.json", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "pyproject.toml", "requirements.txt", "Cargo.toml", "go.mod", "composer.json", "Gemfile", "Makefile", "src"]);
+  }
+});
+
 // ../dashboard/backend/src/routes/projectIntegrations.ts
 function createProjectIntegrationsRouter(db2, secret, registrar = runProjectRegistrar) {
   const router = (0, import_express19.Router)();
   router.use(requireUser(db2, secret));
   router.get("/", async (req, res) => res.json(await listProjectIntegrations(db2, req.userId)));
+  router.get("/browse", async (req, res) => {
+    try {
+      res.json(await inspectLocalDirectory(typeof req.query.path === "string" ? req.query.path : void 0));
+    } catch (error2) {
+      res.status(400).json({ error: error2?.code ?? "DIRECTORY_BROWSE_FAILED", message: error2 instanceof Error ? error2.message : String(error2) });
+    }
+  });
   router.post("/register", validateBody(registrationSchema), async (req, res) => {
     try {
       res.status(201).json(await registrar(req.body));
@@ -90076,7 +90129,8 @@ function createProjectIntegrationsRouter(db2, secret, registrar = runProjectRegi
       await saveProjectIntegration(db2, req.userId, req.body.projectPath, req.body.selections);
       res.json({ ok: true });
     } catch (error2) {
-      res.status(error2?.code === "PROJECT_NOT_FOUND" ? 404 : 500).json({ error: error2?.code ?? "PROJECT_INTEGRATION_FAILED" });
+      const code = error2?.code;
+      res.status(code === "PROJECT_NOT_FOUND" ? 404 : code === "SERVICE_NOT_AVAILABLE" ? 409 : 500).json({ error: code ?? "PROJECT_INTEGRATION_FAILED" });
     }
   });
   return router;
@@ -90091,6 +90145,7 @@ var init_projectIntegrations = __esm({
     init_validate();
     init_projectIntegrationService();
     init_projectRegistrar();
+    init_localDirectoryBrowser();
     schema2 = external_exports.object({ projectPath: external_exports.string().min(1).max(1024), selections: external_exports.array(external_exports.object({ accountName: external_exports.string().min(1).max(191), service: external_exports.string().min(1).max(512), environment: external_exports.string().min(1).max(64), cluster: external_exports.string().max(512).nullable().optional() })).max(100) });
     registrationSchema = external_exports.object({
       projectPath: external_exports.string().trim().min(1).max(2048),
@@ -90101,7 +90156,7 @@ var init_projectIntegrations = __esm({
 
 // ../dashboard/backend/src/routes/awsGuardPolicy.ts
 import { mkdir as mkdir3, readFile as readFile8, rename, writeFile as writeFile4 } from "node:fs/promises";
-import { dirname as dirname3 } from "node:path";
+import { dirname as dirname4 } from "node:path";
 async function load(path) {
   try {
     return { ...defaultAwsGuardPolicy, ...schema3.parse(JSON.parse(await readFile8(path, "utf8"))) };
@@ -90115,7 +90170,7 @@ function createAwsGuardPolicyRouter(db2, secret, path) {
   router.get("/", async (_req, res) => res.json(await load(path)));
   router.put("/", validateBody(schema3), async (req, res) => {
     const value = { schemaVersion: 1, ...req.body };
-    await mkdir3(dirname3(path), { recursive: true });
+    await mkdir3(dirname4(path), { recursive: true });
     const temporary = `${path}.${process.pid}.tmp`;
     await writeFile4(temporary, `${JSON.stringify(value, null, 2)}
 `, { mode: 384 });
@@ -90244,13 +90299,13 @@ __export(weeklyScheduleService_exports, {
   weeklyRunDecision: () => weeklyRunDecision
 });
 import { execFile as execFile6 } from "node:child_process";
-import { appendFile, mkdir as mkdir4, readdir as readdir3, readFile as readFile9, stat as stat2, unlink as unlink3, writeFile as writeFile5 } from "node:fs/promises";
-import { homedir as homedir4 } from "node:os";
-import { dirname as dirname4, join as join12, resolve as resolve5 } from "node:path";
+import { appendFile, mkdir as mkdir4, readdir as readdir4, readFile as readFile9, stat as stat2, unlink as unlink3, writeFile as writeFile5 } from "node:fs/promises";
+import { homedir as homedir5 } from "node:os";
+import { dirname as dirname5, join as join13, resolve as resolve5 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 import { promisify as promisify7 } from "node:util";
 function weeklyHomeDir() {
-  return process.env.WEEKLY_HOME ?? join12(homedir4(), ".weekly");
+  return process.env.WEEKLY_HOME ?? join13(homedir5(), ".weekly");
 }
 function latestWeeklySlot(now, schedule) {
   const slot = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getDay() - schedule.weekday + 7) % 7, schedule.hour, schedule.minute);
@@ -90264,30 +90319,30 @@ function weeklyRunDecision(now, schedule, handled) {
   return handled < slot ? { run: true, record: slot } : { run: false, record: null };
 }
 function weeklyEngineCandidates() {
-  const here = dirname4(fileURLToPath3(import.meta.url));
+  const here = dirname5(fileURLToPath3(import.meta.url));
   return [process.env.SUGO_WEEKLY_ENGINE, resolve5(here, "../weekly"), resolve5(here, "../../../../sugo/weekly")].filter((path) => Boolean(path));
 }
 async function findWeeklyEngine(candidates = weeklyEngineCandidates()) {
   for (const candidate of candidates) {
     try {
-      await stat2(join12(candidate, "run.mjs"));
+      await stat2(join13(candidate, "run.mjs"));
       return candidate;
     } catch {
     }
   }
   return null;
 }
-async function retireLegacyWeeklyAgents(home = homedir4()) {
-  const agents = join12(home, "Library", "LaunchAgents");
+async function retireLegacyWeeklyAgents(home = homedir5()) {
+  const agents = join13(home, "Library", "LaunchAgents");
   let names;
   try {
-    names = await readdir3(agents);
+    names = await readdir4(agents);
   } catch {
     return [];
   }
   const legacy = names.filter((name) => /^com\..+\.weekly-ai-report(-server)?\.plist$/.test(name));
   for (const name of legacy) {
-    const path = join12(agents, name);
+    const path = join13(agents, name);
     await execFileAsync3("launchctl", ["bootout", `gui/${process.getuid?.() ?? 0}`, path]).catch(() => void 0);
     await unlink3(path);
   }
@@ -90303,10 +90358,10 @@ async function readSchedule(configPath) {
 }
 function startWeeklySchedule(options = {}) {
   const weeklyHome = options.weeklyHome ?? weeklyHomeDir();
-  const handledPath = join12(weeklyHome, "last-scheduled-slot");
-  const logPath = join12(weeklyHome, "scheduled-run.log");
+  const handledPath = join13(weeklyHome, "last-scheduled-slot");
+  const logPath = join13(weeklyHome, "scheduled-run.log");
   const engine = options.engine ?? (() => findWeeklyEngine());
-  const build = options.build ?? ((path) => execFileAsync3(process.execPath, [join12(path, "run.mjs"), "build"], { cwd: path, timeout: 30 * 6e4, maxBuffer: 16 * 1024 * 1024 }));
+  const build = options.build ?? ((path) => execFileAsync3(process.execPath, [join13(path, "run.mjs"), "build"], { cwd: path, timeout: 30 * 6e4, maxBuffer: 16 * 1024 * 1024 }));
   let running = false;
   let stopped = false;
   const tick = async () => {
@@ -90314,7 +90369,7 @@ function startWeeklySchedule(options = {}) {
     running = true;
     try {
       const handled = await readFile9(handledPath, "utf8").then((value) => value.trim() || null, () => null);
-      const decision = weeklyRunDecision(/* @__PURE__ */ new Date(), await readSchedule(join12(weeklyHome, "config.json")), handled);
+      const decision = weeklyRunDecision(/* @__PURE__ */ new Date(), await readSchedule(join13(weeklyHome, "config.json")), handled);
       if (decision.record === null) return;
       await mkdir4(weeklyHome, { recursive: true });
       await writeFile5(handledPath, `${decision.record}
@@ -90358,7 +90413,7 @@ var init_weeklyScheduleService = __esm({
 
 // ../dashboard/backend/src/services/weeklySettingsService.ts
 import { chmod, mkdir as mkdir5, readFile as readFile10, stat as stat3, writeFile as writeFile6 } from "node:fs/promises";
-import { join as join13 } from "node:path";
+import { join as join14 } from "node:path";
 async function exists(path) {
   try {
     await stat3(path);
@@ -90389,9 +90444,9 @@ async function readStoredConfig(path) {
 function createWeeklySettingsService(options = {}) {
   const findEngine = options.findEngine ?? (() => findWeeklyEngine());
   const weeklyHome = options.weeklyHome ?? weeklyHomeDir();
-  const configPath = join13(weeklyHome, "config.json");
-  const tokenPath = join13(weeklyHome, "claude.token");
-  const setupMarkerPath = join13(weeklyHome, "setup-complete");
+  const configPath = join14(weeklyHome, "config.json");
+  const tokenPath = join14(weeklyHome, "claude.token");
+  const setupMarkerPath = join14(weeklyHome, "setup-complete");
   return {
     async get() {
       const stored = await readStoredConfig(configPath);
@@ -90455,7 +90510,7 @@ __export(index_exports, {
   createApp: () => createApp
 });
 import { fileURLToPath as fileURLToPath4, pathToFileURL } from "node:url";
-import { dirname as dirname5, join as join14 } from "node:path";
+import { dirname as dirname6, join as join15 } from "node:path";
 function unconfiguredVerifyJwt() {
   return async () => {
     throw new Error("OIDC_JWKS_URI not configured");
@@ -90547,7 +90602,7 @@ async function createApp(dbOverrideOrOptions) {
   if (staticDir2) {
     app2.use(import_express21.default.static(staticDir2));
     app2.get(/^\/(?!api\/|health$).*/, (_req, res) => {
-      res.sendFile(join14(staticDir2, "index.html"));
+      res.sendFile(join15(staticDir2, "index.html"));
     });
   }
   app2.use(errorMiddleware);
@@ -90607,8 +90662,8 @@ var init_index = __esm({
     init_asyncHandler();
     init_contextAutoRefreshService();
     init_weeklySettingsService();
-    __dirname2 = dirname5(fileURLToPath4(import.meta.url));
-    pkg = "0.44.0" ? { version: "0.44.0" } : JSON.parse(readFileSync(join14(__dirname2, "..", "package.json"), "utf8"));
+    __dirname2 = dirname6(fileURLToPath4(import.meta.url));
+    pkg = "0.45.0" ? { version: "0.45.0" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90621,7 +90676,7 @@ __export(localBootstrap_exports, {
   bootstrapLocalDashboard: () => bootstrapLocalDashboard
 });
 import { chmod as chmod2, mkdir as mkdir6, readFile as readFile11, rename as rename2, writeFile as writeFile7 } from "node:fs/promises";
-import { dirname as dirname6 } from "node:path";
+import { dirname as dirname7 } from "node:path";
 async function readSettings(settingsPath) {
   try {
     return JSON.parse(await readFile11(settingsPath, "utf8"));
@@ -90642,7 +90697,7 @@ async function bootstrapLocalDashboard(db2, input) {
     ...settings,
     dashboard: { ...dashboard, enabled: true, apiUrl: input.apiUrl, userId: input.userId, apiToken }
   };
-  await mkdir6(dirname6(input.settingsPath), { recursive: true });
+  await mkdir6(dirname7(input.settingsPath), { recursive: true });
   const tempPath = `${input.settingsPath}.tmp-${process.pid}`;
   await writeFile7(tempPath, `${JSON.stringify(next, null, 2)}
 `, { mode: 384 });
@@ -90661,8 +90716,8 @@ var init_localBootstrap = __esm({
 // ../dashboard/backend/src/standalone.ts
 import { randomBytes as randomBytes6 } from "node:crypto";
 import { chmod as chmod3, mkdir as mkdir7, readFile as readFile12, rm as rm3, writeFile as writeFile8 } from "node:fs/promises";
-import { homedir as homedir5, userInfo } from "node:os";
-import { dirname as dirname7, join as join15 } from "node:path";
+import { homedir as homedir6, userInfo } from "node:os";
+import { dirname as dirname8, join as join16 } from "node:path";
 import { fileURLToPath as fileURLToPath5 } from "node:url";
 
 // ../dashboard/backend/test/schema.sqlite.sql
@@ -90671,15 +90726,15 @@ var schema_sqlite_default = "-- SQLite translation of src/db/schema.mysql.sql, u
 // ../dashboard/backend/src/standalone.ts
 var DEFAULT_PORT = 3001;
 var HOST = "127.0.0.1";
-var sugoHome = process.env.SUGO_HOME_OVERRIDE ?? homedir5();
-var sugoDir = join15(sugoHome, ".claude", "sugo");
-var dataDir = join15(sugoDir, "dashboard");
-var secretFile = join15(dataDir, "session-secret");
-var stateFile = join15(dataDir, "server.json");
+var sugoHome = process.env.SUGO_HOME_OVERRIDE ?? homedir6();
+var sugoDir = join16(sugoHome, ".claude", "sugo");
+var dataDir = join16(sugoDir, "dashboard");
+var secretFile = join16(dataDir, "session-secret");
+var stateFile = join16(dataDir, "server.json");
 var port = Number(process.env.SUGO_DASHBOARD_PORT ?? DEFAULT_PORT);
-var runtimeDir = dirname7(fileURLToPath5(import.meta.url));
-var pluginRoot = dirname7(runtimeDir);
-var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join15(runtimeDir, "web");
+var runtimeDir = dirname8(fileURLToPath5(import.meta.url));
+var pluginRoot = dirname8(runtimeDir);
+var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join16(runtimeDir, "web");
 var userId = process.env.LOCAL_DEV_USER_ID ?? userInfo().username;
 var displayName = process.env.LOCAL_DEV_DISPLAY_NAME ?? userId;
 async function loadOrCreateSecret() {
@@ -90705,7 +90760,7 @@ process.env.SUGO_DASHBOARD_EMBEDDED = "1";
 process.env.HOST = HOST;
 process.env.PORT = String(port);
 process.env.DB_DRIVER = "sqlite";
-process.env.SQLITE_FILE = join15(dataDir, "dashboard.db");
+process.env.SQLITE_FILE = join16(dataDir, "dashboard.db");
 process.env.SESSION_SECRET = sessionSecret;
 process.env.LOCAL_DEV_MODE = "1";
 process.env.LOCAL_DEV_USER_ID = userId;
@@ -90713,10 +90768,10 @@ process.env.LOCAL_DEV_DISPLAY_NAME = displayName;
 process.env.FRONTEND_URL = apiUrl;
 process.env.CORS_ORIGINS = apiUrl;
 process.env.SUGO_DASHBOARD_API_URL = apiUrl;
-process.env.HARNESS_PATH = join15(pluginRoot, "harness-library");
+process.env.HARNESS_PATH = join16(pluginRoot, "harness-library");
 process.env.SKILLS_PATH = pluginRoot;
-process.env.SUGO_WEEKLY_ENGINE = join15(pluginRoot, "weekly");
-process.env.WEEKLY_HOME ??= join15(sugoHome, ".weekly");
+process.env.SUGO_WEEKLY_ENGINE = join16(pluginRoot, "weekly");
+process.env.WEEKLY_HOME ??= join16(sugoHome, ".weekly");
 var { createApp: createApp2 } = await Promise.resolve().then(() => (init_index(), index_exports));
 var { bootstrapLocalDashboard: bootstrapLocalDashboard2 } = await Promise.resolve().then(() => (init_localBootstrap(), localBootstrap_exports));
 var { app, db, awsContextClient, pinpointClient } = await createApp2({ staticDir, sqliteSchema: schema_sqlite_default });
@@ -90726,12 +90781,12 @@ await bootstrapLocalDashboard2(db, {
   userId,
   displayName,
   apiUrl,
-  settingsPath: join15(sugoDir, "settings.json")
+  settingsPath: join16(sugoDir, "settings.json")
 });
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.44.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.45.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

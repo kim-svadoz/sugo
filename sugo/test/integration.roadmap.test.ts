@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer } from "node:http";
@@ -34,6 +34,7 @@ let projectDir: string;
 beforeEach(() => {
   fakeHome = mkdtempSync(join(tmpdir(), "sugo-roadmap-e2e-home-"));
   projectDir = mkdtempSync(join(tmpdir(), "sugo-roadmap-e2e-project-"));
+  writeFileSync(join(projectDir, "package.json"), "{}\n");
   process.env.SUGO_HOME_OVERRIDE = fakeHome;
 });
 

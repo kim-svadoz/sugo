@@ -37,7 +37,7 @@ export function Header() {
         setTipPhase("enter");
         window.requestAnimationFrame(() => window.requestAnimationFrame(() => setTipPhase("idle")));
       }, 280);
-    }, 7_000);
+    }, 5_000);
     return () => window.clearInterval(interval);
   }, [isHome, tips.length]);
   useEffect(() => setTipIndex(0), [pathname]);

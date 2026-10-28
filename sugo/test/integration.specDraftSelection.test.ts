@@ -22,6 +22,7 @@ describe("feat 미연결 SPEC 초안 선택 게이트", () => {
 
   beforeEach(async () => {
     projectDir = mkdtempSync(join(tmpdir(), "sugo-spec-draft-project-"));
+    writeFileSync(join(projectDir, "package.json"), "{}\n");
     fakeHome = mkdtempSync(join(tmpdir(), "sugo-spec-draft-home-"));
     process.env.SUGO_HOME_OVERRIDE = fakeHome;
     server = createServer((req, res) => {

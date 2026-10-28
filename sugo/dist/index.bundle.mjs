@@ -24405,8 +24405,19 @@ async function deleteWorkspace(name2, options = {}) {
 }
 
 // src/projectRegistration.ts
-import { access as access2, stat as stat2 } from "node:fs/promises";
+import { access as access2, readdir as readdir2, stat as stat2 } from "node:fs/promises";
 import { join as join10, resolve as resolve4 } from "node:path";
+var PROJECT_MARKERS = /* @__PURE__ */ new Set([".git", "package.json", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "pyproject.toml", "requirements.txt", "Cargo.toml", "go.mod", "composer.json", "Gemfile", "Makefile", "src"]);
+async function assertProjectDirectory(projectPath) {
+  const projectStat = await stat2(projectPath).catch(() => null);
+  if (!projectStat?.isDirectory()) {
+    throw Object.assign(new Error("\uD504\uB85C\uC81D\uD2B8 \uD3F4\uB354\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."), { code: "PROJECT_PATH_NOT_FOUND" });
+  }
+  const entries = await readdir2(projectPath).catch(() => []);
+  if (!entries.some((entry) => PROJECT_MARKERS.has(entry))) {
+    throw Object.assign(new Error("Git \uC800\uC7A5\uC18C, \uBE4C\uB4DC \uC124\uC815 \uB610\uB294 \uC18C\uC2A4 \uD3F4\uB354\uAC00 \uC788\uB294 \uD504\uB85C\uC81D\uD2B8\uB97C \uC120\uD0DD\uD558\uC138\uC694."), { code: "PROJECT_MARKER_NOT_FOUND" });
+  }
+}
 async function assertProjectRegistrationAllowed() {
   const retainedData = join10(sugoHomeDir(), ".sugo", "data");
   if (await access2(retainedData).then(() => true, () => false)) {
@@ -24418,10 +24429,7 @@ async function registerSugoProject(input) {
   if (!/^[A-Za-z0-9._-]+$/.test(input.workspace) || input.workspace === "." || input.workspace === "..") {
     throw Object.assign(new Error("\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uB294 \uB3C4\uBA54\uC778 \uC774\uB984\uC785\uB2C8\uB2E4."), { code: "INVALID_WORKSPACE_NAME" });
   }
-  const projectStat = await stat2(projectPath).catch(() => null);
-  if (!projectStat?.isDirectory()) {
-    throw Object.assign(new Error("\uD504\uB85C\uC81D\uD2B8 \uD3F4\uB354\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."), { code: "PROJECT_PATH_NOT_FOUND" });
-  }
+  await assertProjectDirectory(projectPath);
   await assertProjectRegistrationAllowed();
   const result3 = await syncProjectHarness({ projectPath, workspace: input.workspace });
   await ensureWorkspace(input.workspace, projectPath);
@@ -24591,7 +24599,7 @@ async function readFileContents(projectPath, changedFiles) {
 
 // src/session.ts
 import { randomBytes } from "node:crypto";
-import { mkdir as mkdir8, readdir as readdir2, readFile as readFile10 } from "node:fs/promises";
+import { mkdir as mkdir8, readdir as readdir3, readFile as readFile10 } from "node:fs/promises";
 import { join as join12 } from "node:path";
 function sessionsDir() {
   return join12(sugoHomeDir(), ".claude", "sugo", "sessions");
@@ -24622,7 +24630,7 @@ async function sessionExists(id) {
 async function loadAllSessions() {
   let entries;
   try {
-    entries = await readdir2(sessionsDir());
+    entries = await readdir3(sessionsDir());
   } catch {
     return [];
   }
@@ -24853,7 +24861,7 @@ function errorResult3(errorCode, message) {
 
 // src/work/checkpoint.ts
 import { createHash as createHash3, randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir10, readdir as readdir3, readFile as readFile12, rm as rm3 } from "node:fs/promises";
+import { mkdir as mkdir10, readdir as readdir4, readFile as readFile12, rm as rm3 } from "node:fs/promises";
 import { join as join14 } from "node:path";
 import { relative as relative3 } from "node:path";
 
@@ -27997,7 +28005,7 @@ async function listCheckpointFiles(workspace) {
   const dir = checkpointsDir(workspace);
   let names;
   try {
-    names = await readdir3(dir);
+    names = await readdir4(dir);
   } catch {
     return [];
   }
@@ -28096,7 +28104,7 @@ async function checkpointFiles(projectPath, id) {
   const root = join14(projectPath, ".claude", "rules");
   const found = [];
   async function walk(dir) {
-    const entries = await readdir3(dir, { withFileTypes: true }).catch(() => []);
+    const entries = await readdir4(dir, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
       const path = join14(dir, entry.name);
       if (entry.isDirectory()) await walk(path);
@@ -28263,7 +28271,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.53.0" : "0.0.0-dev";
+  return true ? "0.54.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -28547,7 +28555,7 @@ async function handleSugoExplore(rawArgs) {
 }
 
 // src/tools/sugoGetProjectContext.ts
-import { readdir as readdir4, readFile as readFile16 } from "node:fs/promises";
+import { readdir as readdir5, readFile as readFile16 } from "node:fs/promises";
 import { basename as basename2, join as join19 } from "node:path";
 
 // src/harness/toolRegistry.ts
@@ -28969,7 +28977,7 @@ async function readIfExists(path) {
 async function readRulesDir(rulesDir, excludeBasenames, isTopLevel = true) {
   let entries;
   try {
-    entries = await readdir4(rulesDir, { withFileTypes: true });
+    entries = await readdir5(rulesDir, { withFileTypes: true });
   } catch {
     return [];
   }
@@ -29045,7 +29053,7 @@ async function handleSugoGetProjectContext(rawArgs) {
 
 // src/work/history.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdir as mkdir13, readdir as readdir5, readFile as readFile17 } from "node:fs/promises";
+import { mkdir as mkdir13, readdir as readdir6, readFile as readFile17 } from "node:fs/promises";
 import { join as join20 } from "node:path";
 function generateWorkLogId() {
   return `wl-${Date.now()}-${randomBytes3(4).toString("hex")}`;
@@ -29062,7 +29070,7 @@ async function listWorkLogs(workspace) {
   const dir = historyDir(workspace);
   let entries;
   try {
-    entries = await readdir5(dir);
+    entries = await readdir6(dir);
   } catch {
     return [];
   }
@@ -29153,7 +29161,7 @@ import { readFile as readFile18 } from "node:fs/promises";
 import { relative as relative4, sep as sep2 } from "node:path";
 
 // src/overview.ts
-import { readdir as readdir6 } from "node:fs/promises";
+import { readdir as readdir7 } from "node:fs/promises";
 import { join as join21 } from "node:path";
 var IGNORED_DIR_NAMES = /* @__PURE__ */ new Set([
   "node_modules",
@@ -29171,7 +29179,7 @@ async function walkSourceFiles(rootDir, maxFiles) {
     if (results.length >= maxFiles) return;
     let entries;
     try {
-      entries = await readdir6(dir, { withFileTypes: true });
+      entries = await readdir7(dir, { withFileTypes: true });
     } catch {
       return;
     }
@@ -29266,7 +29274,7 @@ async function isProjectBootable(projectPath) {
 }
 
 // src/bootScan.ts
-import { readdir as readdir7, readFile as readFile20 } from "node:fs/promises";
+import { readdir as readdir8, readFile as readFile20 } from "node:fs/promises";
 import { join as join22 } from "node:path";
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
 var MAX_FILES4 = 2e3;
@@ -29275,7 +29283,7 @@ async function collectJavaFiles(dir, acc) {
   if (acc.length >= MAX_FILES4) return;
   let entries;
   try {
-    entries = await readdir7(dir, { withFileTypes: true });
+    entries = await readdir8(dir, { withFileTypes: true });
   } catch {
     return;
   }
@@ -29311,7 +29319,7 @@ import { mkdir as mkdir14 } from "node:fs/promises";
 import { join as join24 } from "node:path";
 
 // src/patch.ts
-import { realpath, readdir as readdir8, stat as stat3 } from "node:fs/promises";
+import { realpath, readdir as readdir9, stat as stat3 } from "node:fs/promises";
 import { basename as basename3, dirname as dirname9, join as join23, relative as relative6, resolve as resolve10, sep as sep3 } from "node:path";
 var PatchEntryError = class extends Error {
   constructor(code, message) {
@@ -29412,7 +29420,7 @@ async function resolvePatchContext(workResultPath, projectPath) {
   const featureDir = dirname9(resolvedWorkResult);
   let filenames;
   try {
-    filenames = await readdir8(featureDir);
+    filenames = await readdir9(featureDir);
   } catch {
     throw new PatchEntryError("PATCH_FEATURE_DIR_NOT_FOUND", `feature \uB514\uB809\uD130\uB9AC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`);
   }
@@ -33013,7 +33021,7 @@ async function handleSugoRoute(rawArgs) {
 }
 
 // src/work/spec.ts
-import { mkdir as mkdir18, readdir as readdir9, readFile as readFile25 } from "node:fs/promises";
+import { mkdir as mkdir18, readdir as readdir10, readFile as readFile25 } from "node:fs/promises";
 import { join as join28 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
@@ -33047,7 +33055,7 @@ async function listSpecs(workspace) {
   const dir = specsDir(workspace);
   let entries;
   try {
-    entries = await readdir9(dir);
+    entries = await readdir10(dir);
   } catch {
     return [];
   }

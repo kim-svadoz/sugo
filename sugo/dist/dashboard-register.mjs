@@ -6,7 +6,7 @@ const __filename = __sugoFileURLToPath(import.meta.url);
 const __dirname = __sugoDirname(__filename);
 
 // src/projectRegistration.ts
-import { access as access2, stat as stat2 } from "node:fs/promises";
+import { access as access2, readdir as readdir2, stat as stat2 } from "node:fs/promises";
 import { join as join10, resolve as resolve2 } from "node:path";
 
 // src/homeDir.ts
@@ -1453,6 +1453,17 @@ async function ensureWorkspace(name, projectPath) {
 }
 
 // src/projectRegistration.ts
+var PROJECT_MARKERS = /* @__PURE__ */ new Set([".git", "package.json", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "pyproject.toml", "requirements.txt", "Cargo.toml", "go.mod", "composer.json", "Gemfile", "Makefile", "src"]);
+async function assertProjectDirectory(projectPath) {
+  const projectStat = await stat2(projectPath).catch(() => null);
+  if (!projectStat?.isDirectory()) {
+    throw Object.assign(new Error("\uD504\uB85C\uC81D\uD2B8 \uD3F4\uB354\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."), { code: "PROJECT_PATH_NOT_FOUND" });
+  }
+  const entries = await readdir2(projectPath).catch(() => []);
+  if (!entries.some((entry) => PROJECT_MARKERS.has(entry))) {
+    throw Object.assign(new Error("Git \uC800\uC7A5\uC18C, \uBE4C\uB4DC \uC124\uC815 \uB610\uB294 \uC18C\uC2A4 \uD3F4\uB354\uAC00 \uC788\uB294 \uD504\uB85C\uC81D\uD2B8\uB97C \uC120\uD0DD\uD558\uC138\uC694."), { code: "PROJECT_MARKER_NOT_FOUND" });
+  }
+}
 async function assertProjectRegistrationAllowed() {
   const retainedData = join10(sugoHomeDir(), ".sugo", "data");
   if (await access2(retainedData).then(() => true, () => false)) {
@@ -1464,10 +1475,7 @@ async function registerSugoProject(input) {
   if (!/^[A-Za-z0-9._-]+$/.test(input.workspace) || input.workspace === "." || input.workspace === "..") {
     throw Object.assign(new Error("\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uB294 \uB3C4\uBA54\uC778 \uC774\uB984\uC785\uB2C8\uB2E4."), { code: "INVALID_WORKSPACE_NAME" });
   }
-  const projectStat = await stat2(projectPath).catch(() => null);
-  if (!projectStat?.isDirectory()) {
-    throw Object.assign(new Error("\uD504\uB85C\uC81D\uD2B8 \uD3F4\uB354\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."), { code: "PROJECT_PATH_NOT_FOUND" });
-  }
+  await assertProjectDirectory(projectPath);
   await assertProjectRegistrationAllowed();
   const result = await syncProjectHarness({ projectPath, workspace: input.workspace });
   await ensureWorkspace(input.workspace, projectPath);

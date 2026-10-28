@@ -1,5 +1,5 @@
 import { createServer, type Server } from "node:http";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -30,6 +30,7 @@ const received: string[] = [];
 beforeEach(async () => {
   fakeHome = mkdtempSync(join(tmpdir(), "sugo-dsync-home-"));
   projectDir = mkdtempSync(join(tmpdir(), "sugo-dsync-project-"));
+  writeFileSync(join(projectDir, "package.json"), "{}\n");
   process.env.SUGO_HOME_OVERRIDE = fakeHome;
   received.length = 0;
   server = createServer((req, res) => {

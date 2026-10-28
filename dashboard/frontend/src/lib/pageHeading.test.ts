@@ -23,7 +23,7 @@ describe("page heading typography", () => {
     const source = readFileSync(new URL("../components/Header.tsx", import.meta.url), "utf8");
     expect(readFileSync(new URL("./pageTips.ts", import.meta.url), "utf8")).toContain("PAGE_TIPS");
     expect(source).toContain("tipsForPath(pathname)");
-    expect(source).toContain("7_000");
+    expect(source).toContain("5_000");
     expect(source).toContain("Sugo 활용 팁");
     expect(source).toContain("text-amber-300");
     expect(source).not.toContain('>TIP</span>');

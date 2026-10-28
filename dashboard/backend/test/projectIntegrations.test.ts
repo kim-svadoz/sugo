@@ -68,4 +68,18 @@ describe("/api/project-integrations", () => {
     expect(result.body.projects).toEqual([expect.objectContaining({ project_path: "/work/mine", configured: true, selections: [] })]);
     await request(app).put("/api/project-integrations").set("Authorization", authorization).send({ projectPath: "/work/theirs", selections: [] }).expect(404);
   });
+
+  it("rejects a service that is not in the synchronized AWS inventory", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    const authorization = await seedProject(db, "u1", "orders", "/work/orders-api");
+    const { app } = await createApp({ db });
+
+    const response = await request(app).put("/api/project-integrations").set("Authorization", authorization).send({
+      projectPath: "/work/orders-api",
+      selections: [{ accountName: "unknown", environment: "prd", service: "arbitrary-service", cluster: "unknown" }],
+    }).expect(409);
+
+    expect(response.body.error).toBe("SERVICE_NOT_AVAILABLE");
+  });
 });
