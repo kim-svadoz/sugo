@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpenText, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, GitPullRequest, Library, Sparkles, Star, X } from "lucide-react";
+import { ArrowRight, BookOpenText, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, GitPullRequest, Library, Star, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNewsFeed, type NewsFeed, type NewsItem } from "../api/newsApi.js";
@@ -16,24 +16,12 @@ import { useProfile } from "../hooks/useProfile.js";
 import { getWeatherRegion } from "../lib/weatherPreferences.js";
 import { getWeeklySettings } from "../api/weeklyApi.js";
 import { useOnboardingGuide } from "../components/OnboardingGuideContext.js";
-import { NEWBIE_PREVIEW_KEY, NEWBIE_TOUR_START_EVENT } from "../components/NewUserPlaybookGuide.js";
 
 function relativeTime(value: string): string {
   const hours = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 3_600_000));
   if (hours < 1) return "방금 전";
   if (hours < 24) return `${hours}시간 전`;
   return `${Math.floor(hours / 24)}일 전`;
-}
-
-function enableNewbiePreviewForBrowser(): boolean {
-  if (typeof window === "undefined") return false;
-  const url = new URL(window.location.href);
-  if (url.searchParams.get("newbiePreview") === "1") {
-    window.localStorage.setItem(NEWBIE_PREVIEW_KEY, "true");
-    url.searchParams.delete("newbiePreview");
-    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-  }
-  return window.localStorage.getItem(NEWBIE_PREVIEW_KEY) === "true";
 }
 
 function firstSentence(value: string | null | undefined): string {
@@ -153,7 +141,6 @@ export function Home() {
   const [selectedNote, setSelectedNote] = useState<LearningReviewNote | null>(null);
   const [weeklyConfigured, setWeeklyConfigured] = useState<boolean | null>(null);
   const [showPlaybookGuide, setShowPlaybookGuide] = useState(false);
-  const [newbiePreviewEnabled] = useState(enableNewbiePreviewForBrowser);
   const setupMissing = [!profile?.displayName ? "표시 이름" : null, !getWeatherRegion() ? "날씨 생활권" : null, weeklyConfigured === false ? "주간 리포트" : null].filter(Boolean) as string[];
   const brief = useMemo(() => buildHomeBrief(specs ?? []), [specs]);
   const review = useMemo(() => recentReview(specs ?? []), [specs]);
@@ -162,11 +149,6 @@ export function Home() {
     return note ? [[spec.id, note] as const] : [];
   })), [review.items]);
   const openWork = (workspace: string, id: string) => navigate(`/schedule?reviewWorkspace=${encodeURIComponent(workspace)}&reviewSpec=${encodeURIComponent(id)}&returnTo=home`);
-  const startNewbiePreview = () => {
-    setShowPlaybookGuide(true);
-    setPlaybookGuideVisible(true);
-    window.dispatchEvent(new Event(NEWBIE_TOUR_START_EVENT));
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -192,7 +174,7 @@ export function Home() {
   }, []);
 
   return <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-5">
-    <section className="flex items-start justify-between gap-4 pt-1"><div><h1 className="text-[30px] font-semibold tracking-[-0.035em] text-[var(--color-text-bright)]">{dailyGreeting()}</h1><p className="mt-2 text-[14px] text-[var(--color-text-muted)]">{loading ? "개발 기록을 정리하고 있습니다." : brief.decisions.length > 0 ? `오늘 확인할 리뷰가 ${brief.decisions.length}개 있습니다.` : "지금 확인할 리뷰는 없습니다."}</p></div>{newbiePreviewEnabled && <button type="button" onClick={startNewbiePreview} className="mt-1 inline-flex shrink-0 items-center gap-2 rounded-lg border border-cyan-300/20 bg-cyan-300/[0.055] px-3 py-2 text-[11px] font-semibold text-cyan-100 transition hover:border-cyan-300/35 hover:bg-cyan-300/[0.1]"><Sparkles size={14} className="text-cyan-300" />뉴비 모드</button>}</section>
+    <section className="flex items-start justify-between gap-4 pt-1"><div><h1 className="text-[30px] font-semibold tracking-[-0.035em] text-[var(--color-text-bright)]">{dailyGreeting()}</h1><p className="mt-2 text-[14px] text-[var(--color-text-muted)]">{loading ? "개발 기록을 정리하고 있습니다." : brief.decisions.length > 0 ? `오늘 확인할 리뷰가 ${brief.decisions.length}개 있습니다.` : "지금 확인할 리뷰는 없습니다."}</p></div></section>
 
     {setupMissing.length > 0 && <section className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.045] px-4 py-3"><span className="min-w-0 flex-1 text-[12px] text-slate-300"><strong className="text-amber-200">처음 설정을 마치면 Home이 내 작업 방식에 맞춰집니다.</strong><span className="ml-2 text-slate-500">남은 설정 · {setupMissing.join(" · ")}</span></span><button type="button" onClick={() => navigate(`/preferences?tab=${setupMissing[0] === "날씨 생활권" ? "weather" : setupMissing[0] === "주간 리포트" ? "weekly" : "general"}`)} className="rounded-lg border border-amber-300/25 px-3 py-1.5 text-[11px] font-semibold text-amber-100">설정 이어가기</button></section>}
 
