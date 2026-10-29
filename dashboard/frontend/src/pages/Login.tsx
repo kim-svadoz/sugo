@@ -54,8 +54,7 @@ export function Login() {
         </div>
 
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.055] px-7 py-4 text-[9px] text-slate-600 sm:px-10">
-          <span>프로젝트 코드는 이 컴퓨터에서 실행됩니다.</span>
-          <span className="font-mono tracking-[0.08em]">LOCAL-FIRST · READ-ONLY BY DEFAULT</span>
+          <span>작업 기록은 이 컴퓨터에만 저장됩니다.</span>
         </footer>
       </section>
     </main>
