@@ -17,7 +17,7 @@ const page = await browser.newPage({
 await page.addInitScript(() => {
   localStorage.setItem("sugo_auth", JSON.stringify({ user: { id: "new-user" }, accessToken: "fake.jwt.token", refreshToken: null, expiresAt: Date.now() + 3_600_000 }));
   localStorage.setItem("sugo_weather_region", "seoul-cityhall");
-  localStorage.removeItem("sugo.onboarding.tour.dismissed");
+  localStorage.removeItem("sugo.onboarding.tour.hiddenOn");
 });
 await page.route("**/health", (route) => route.fulfill({ json: { status: "ok", version: "test", build: "test" } }));
 await page.route("**/api/**", (route) => {

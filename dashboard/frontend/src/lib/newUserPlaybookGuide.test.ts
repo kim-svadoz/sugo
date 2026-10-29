@@ -26,7 +26,11 @@ describe("new user Playbook guide", () => {
     expect(guide).toContain('key: "home"');
     expect(guide).toContain('key: "pipeline"');
     expect(guide).toContain('navigate("/settings?section=projects&register=1")');
-    expect(guide).toContain("sugo.onboarding.tour.dismissed");
+    // 영구 숨김은 없다. "가이드 보지 않기"는 그날 하루만 숨기고, X는 지금 화면에서만 닫는다.
+    expect(guide).not.toContain("sugo.onboarding.tour.dismissed");
+    expect(guide).toContain("가이드 보지 않기");
+    expect(guide).toContain("<CircleAlert");
+    expect(guide).toContain("isTourHiddenToday(hiddenOn, new Date())");
     expect(guide).not.toContain("scrollIntoView");
     expect(guide).toContain("main.contains(target)");
     expect(guide).toContain('[data-onboarding-tour-target="home"]');
