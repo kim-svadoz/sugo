@@ -88,6 +88,7 @@ export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; w
 
     <div className="mt-3 grid min-h-[470px] overflow-hidden rounded-xl border border-white/[0.07] bg-[#080f1c] xl:grid-cols-[minmax(0,6fr)_220px]">
       <div className="relative min-w-0 overflow-hidden p-5">
+        <div data-tour-pipeline-stages>
         <div className="mb-1 grid grid-cols-8 gap-2 px-1" aria-label="사람과 AI의 작업 구간">
           <WorkflowGroupRail tone="human">사용자 정의</WorkflowGroupRail>
           <span className="col-span-4"><WorkflowGroupRail tone="ai">AI 실행</WorkflowGroupRail></span>
@@ -118,6 +119,7 @@ export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; w
         <div className="pointer-events-none relative my-5 h-3" aria-hidden="true">
           <div className="absolute inset-x-[7%] top-1/2 h-px bg-gradient-to-r from-cyan-400/15 via-cyan-300/55 to-amber-300/35" />
           <span className="ck-work-route-dot absolute left-[7%] top-1/2 -ml-[5px] -mt-[5px] h-2.5 w-2.5 rounded-full bg-cyan-200 shadow-[0_0_16px_rgba(103,232,249,.95)]" />
+        </div>
         </div>
 
         <div className="grid grid-cols-[1.15fr_1fr_1fr] gap-3">

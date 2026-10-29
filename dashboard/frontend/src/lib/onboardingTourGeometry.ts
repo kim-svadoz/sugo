@@ -31,6 +31,20 @@ const TARGET_GAP = 4;
 const CARD_GAP = 14;
 const CARD_ESTIMATED_HEIGHT = 220;
 
+/**
+ * body에 CSS zoom(index.css의 1.1)이 걸려 있으면 getBoundingClientRect와 window.inner*는 확대된 화면 기준 값이고,
+ * body 안에 그리는 fixed 요소의 top/left는 그 값에 zoom이 한 번 더 곱해진다. 그려질 좌표계로 되돌린다.
+ */
+export function rectInZoomedSpace(rect: RawRect, zoom: number): RawRect {
+  const factor = zoom > 0 ? zoom : 1;
+  return { top: rect.top / factor, left: rect.left / factor, right: rect.right / factor, bottom: rect.bottom / factor };
+}
+
+export function viewportInZoomedSpace(viewport: TourViewport, zoom: number): TourViewport {
+  const factor = zoom > 0 ? zoom : 1;
+  return { width: viewport.width / factor, height: viewport.height / factor };
+}
+
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum);
 }

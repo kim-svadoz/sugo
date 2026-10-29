@@ -31,7 +31,9 @@ describe("new user Playbook guide", () => {
     expect(guide).not.toContain("scrollIntoView");
     expect(guide).toContain("main.contains(target)");
     expect(guide).toContain('[data-onboarding-tour-target="home"]');
-    expect(guide).toContain('[data-onboarding-tour-target="pipeline"] .work-world > div:first-child');
+    // PIPELINE 단계는 상태 줄이 아니라 단계 카드 영역을 비춘다.
+    expect(guide).toContain('[data-onboarding-tour-target="pipeline"] [data-tour-pipeline-stages]');
+    expect(source("../components/WorkBoard.tsx")).toContain("data-tour-pipeline-stages");
   });
 
   it("keeps the future team gate hidden unless its feature flag is enabled", () => {
