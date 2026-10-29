@@ -18509,7 +18509,7 @@ var require_view = __commonJS({
     var debug = require_src()("express:view");
     var path = __require("path");
     var fs = __require("fs");
-    var dirname9 = path.dirname;
+    var dirname10 = path.dirname;
     var basename6 = path.basename;
     var extname2 = path.extname;
     var join17 = path.join;
@@ -18548,7 +18548,7 @@ var require_view = __commonJS({
       for (var i5 = 0; i5 < roots.length && !path2; i5++) {
         var root5 = roots[i5];
         var loc = resolve6(root5, name);
-        var dir = dirname9(loc);
+        var dir = dirname10(loc);
         var file = basename6(loc);
         path2 = this.resolve(dir, file);
       }
@@ -20692,7 +20692,7 @@ var require_application = __commonJS({
   "../dashboard/backend/node_modules/express/lib/application.js"(exports, module) {
     "use strict";
     var finalhandler = require_finalhandler();
-    var Router21 = require_router();
+    var Router22 = require_router();
     var methods = require_methods();
     var middleware = require_init();
     var query = require_query();
@@ -20757,7 +20757,7 @@ var require_application = __commonJS({
     };
     app2.lazyrouter = function lazyrouter() {
       if (!this._router) {
-        this._router = new Router21({
+        this._router = new Router22({
           caseSensitive: this.enabled("case sensitive routing"),
           strict: this.enabled("strict routing")
         });
@@ -22621,7 +22621,7 @@ var require_express = __commonJS({
     var mixin = require_merge_descriptors();
     var proto = require_application();
     var Route = require_route();
-    var Router21 = require_router();
+    var Router22 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -22644,7 +22644,7 @@ var require_express = __commonJS({
     exports.request = req;
     exports.response = res;
     exports.Route = Route;
-    exports.Router = Router21;
+    exports.Router = Router22;
     exports.json = bodyParser.json;
     exports.query = require_query();
     exports.raw = bodyParser.raw;
@@ -24504,6 +24504,7 @@ var init_config = __esm({
       // Schedule SPEC에 붙여 넣은 기획 화면 이미지. spec-writer가 읽어 spec.md 버전 디렉터리로 복사한다.
       specAttachmentsPath: process.env.SPEC_ATTACHMENTS_PATH ?? join(homedir(), ".sugo-dashboard", "spec-attachments"),
       awsGuardPolicyPath: process.env.SUGO_AWS_GUARD_POLICY_PATH ?? join(homedir(), ".claude", "sugo", "aws-readonly-policy.json"),
+      integrationFeaturesPath: process.env.SUGO_INTEGRATION_FEATURES_PATH ?? join(homedir(), ".claude", "sugo", "integration-features.json"),
       // cors()를 옵션 없이 열어두지 않는다 — 화이트리스트만 허용.
       // CORS_ORIGINS는 콤마 구분이고, 기본값은 로컬 개발용 Vite dev 서버 포트다.
       corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5175").split(",").map((s2) => s2.trim()).filter(Boolean),
@@ -46520,12 +46521,12 @@ async function migrateWstToRun(db2) {
       "SELECT user_id, workspace_name, id, parent, depends_on FROM sugo_roadmap_nodes WHERE id LIKE 'wst-%' OR parent LIKE 'wst-%' OR CAST(depends_on AS CHAR) LIKE '%wst-%'"
     );
     if (affected.length === 0) return { migrated: 0 };
-    const rename3 = (v) => v.startsWith("wst-") ? `run-${v.slice(4)}` : v;
+    const rename4 = (v) => v.startsWith("wst-") ? `run-${v.slice(4)}` : v;
     let migrated = 0;
     for (const row of affected) {
-      const newDeps = row.depends_on === null || row.depends_on === void 0 ? null : JSON.stringify(parseJsonArray(row.depends_on).map(rename3));
-      const newParent = row.parent === null ? null : rename3(row.parent);
-      const newId = rename3(row.id);
+      const newDeps = row.depends_on === null || row.depends_on === void 0 ? null : JSON.stringify(parseJsonArray(row.depends_on).map(rename4));
+      const newParent = row.parent === null ? null : rename4(row.parent);
+      const newId = rename4(row.id);
       await db2.exec(
         "UPDATE sugo_roadmap_nodes SET id = ?, parent = ?, depends_on = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
         [newId, newParent, newDeps, row.user_id, row.workspace_name, row.id]
@@ -76562,11 +76563,11 @@ var require_dist_cjs8 = __commonJS({
         throw new TokenProviderError2(`Value not present for '${key2}' in SSO Token${forRefresh ? ". Cannot refresh" : ""}. ${REFRESH_MESSAGE}`, false);
       }
     };
-    var { writeFile: writeFile9 } = promises;
+    var { writeFile: writeFile10 } = promises;
     var writeSSOTokenToFile = (id, ssoToken) => {
       const tokenFilepath = getSSOTokenFilepath2(id);
       const tokenString = JSON.stringify(ssoToken, null, 2);
-      return writeFile9(tokenFilepath, tokenString);
+      return writeFile10(tokenFilepath, tokenString);
     };
     var lastRefreshAttemptTimes = /* @__PURE__ */ new Map();
     var fromSso = (init = {}) => async ({ callerClientConfig } = {}) => {
@@ -79801,7 +79802,7 @@ var require_dist_cjs11 = __commonJS({
     var { createHash: createHash11, createPrivateKey: createPrivateKey2, createPublicKey: createPublicKey2, sign: sign4 } = __require("node:crypto");
     var { promises } = __require("node:fs");
     var { homedir: homedir7 } = __require("node:os");
-    var { dirname: dirname9, join: join17 } = __require("node:path");
+    var { dirname: dirname10, join: join17 } = __require("node:path");
     var LoginCredentialsFetcher = class _LoginCredentialsFetcher {
       profileData;
       init;
@@ -79957,7 +79958,7 @@ var require_dist_cjs11 = __commonJS({
       }
       async saveToken(token) {
         const tokenFilePath = this.getTokenFilePath();
-        const directory = dirname9(tokenFilePath);
+        const directory = dirname10(tokenFilePath);
         try {
           await promises.mkdir(directory, { recursive: true });
         } catch (error2) {
@@ -90380,6 +90381,63 @@ var init_awsGuardPolicy = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/integrationFeatures.ts
+import { mkdir as mkdir4, readFile as readFile9, rename as rename2, writeFile as writeFile5 } from "node:fs/promises";
+import { dirname as dirname5 } from "node:path";
+async function hasRow(db2, table, userId2) {
+  const rows = await db2.query(`SELECT 1 AS found FROM ${table} WHERE user_id = ? LIMIT 1`, [userId2]);
+  return rows.length > 0;
+}
+async function loadIntegrationFeatures(path, db2, userId2) {
+  try {
+    return integrationFeaturesSchema.parse(JSON.parse(await readFile9(path, "utf8")));
+  } catch {
+  }
+  const [aws, pr, apm] = await Promise.all([
+    hasRow(db2, "user_aws_context_accounts", userId2),
+    hasRow(db2, "user_git_connections", userId2),
+    hasRow(db2, "user_pinpoint_context", userId2)
+  ]);
+  return { aws, pr, apm };
+}
+async function saveIntegrationFeatures(path, value) {
+  await mkdir4(dirname5(path), { recursive: true });
+  const temporary = `${path}.${process.pid}.tmp`;
+  await writeFile5(temporary, `${JSON.stringify(value, null, 2)}
+`, { mode: 384 });
+  await rename2(temporary, path);
+}
+var integrationFeaturesSchema;
+var init_integrationFeatures = __esm({
+  "../dashboard/backend/src/services/integrationFeatures.ts"() {
+    "use strict";
+    init_zod();
+    integrationFeaturesSchema = external_exports.object({ aws: external_exports.boolean(), pr: external_exports.boolean(), apm: external_exports.boolean() }).strict();
+  }
+});
+
+// ../dashboard/backend/src/routes/integrationFeatures.ts
+function createIntegrationFeaturesRouter(db2, secret, path) {
+  const router = (0, import_express21.Router)();
+  router.use(requireUser(db2, secret));
+  router.get("/", async (req, res) => res.json(await loadIntegrationFeatures(path, db2, req.userId)));
+  router.put("/", validateBody(integrationFeaturesSchema), async (req, res) => {
+    await saveIntegrationFeatures(path, req.body);
+    res.json(req.body);
+  });
+  return router;
+}
+var import_express21;
+var init_integrationFeatures2 = __esm({
+  "../dashboard/backend/src/routes/integrationFeatures.ts"() {
+    "use strict";
+    import_express21 = __toESM(require_express2(), 1);
+    init_requireUser();
+    init_validate();
+    init_integrationFeatures();
+  }
+});
+
 // ../dashboard/backend/src/middleware/cors.ts
 function corsWhitelist(allowedOrigins) {
   return (req, res, next) => {
@@ -90406,6 +90464,7 @@ var init_cors = __esm({
 // ../dashboard/backend/src/services/contextAutoRefreshService.ts
 var contextAutoRefreshService_exports = {};
 __export(contextAutoRefreshService_exports, {
+  featureGatedRefresh: () => featureGatedRefresh,
   localRefreshDay: () => localRefreshDay,
   runDueContextRefresh: () => runDueContextRefresh,
   startContextAutoRefresh: () => startContextAutoRefresh
@@ -90445,10 +90504,16 @@ async function runDueContextRefresh(db2, now, refreshAws, refreshPinpoint, timeZ
     }
   }
 }
-function startContextAutoRefresh(db2, aws, pinpoint) {
+function featureGatedRefresh(featuresPath, db2, feature, refresh) {
+  if (!featuresPath) return refresh;
+  return async (userId2) => (await loadIntegrationFeatures(featuresPath, db2, userId2))[feature] ? refresh(userId2) : void 0;
+}
+function startContextAutoRefresh(db2, aws, pinpoint, featuresPath) {
   let stopped = false;
   let timer = null;
-  const run = () => runDueContextRefresh(db2, /* @__PURE__ */ new Date(), (userId2) => refreshAllAwsContexts(db2, userId2, aws), (userId2) => refreshPinpointContext(db2, userId2, pinpoint)).catch((error2) => console.error("[dashboard] context auto refresh failed:", error2 instanceof Error ? error2.message : error2));
+  const refreshAws = featureGatedRefresh(featuresPath, db2, "aws", (userId2) => refreshAllAwsContexts(db2, userId2, aws));
+  const refreshApm = featureGatedRefresh(featuresPath, db2, "apm", (userId2) => refreshPinpointContext(db2, userId2, pinpoint));
+  const run = () => runDueContextRefresh(db2, /* @__PURE__ */ new Date(), refreshAws, refreshApm).catch((error2) => console.error("[dashboard] context auto refresh failed:", error2 instanceof Error ? error2.message : error2));
   const schedule = () => {
     if (stopped) return;
     const now = /* @__PURE__ */ new Date();
@@ -90472,6 +90537,7 @@ var init_contextAutoRefreshService = __esm({
     "use strict";
     init_awsContextService();
     init_pinpointContextService();
+    init_integrationFeatures();
   }
 });
 
@@ -90487,9 +90553,9 @@ __export(weeklyScheduleService_exports, {
   weeklyRunDecision: () => weeklyRunDecision
 });
 import { execFile as execFile8 } from "node:child_process";
-import { appendFile, mkdir as mkdir4, readdir as readdir4, readFile as readFile9, stat as stat2, unlink as unlink3, writeFile as writeFile5 } from "node:fs/promises";
+import { appendFile, mkdir as mkdir5, readdir as readdir4, readFile as readFile10, stat as stat2, unlink as unlink3, writeFile as writeFile6 } from "node:fs/promises";
 import { homedir as homedir5 } from "node:os";
-import { dirname as dirname5, join as join13, resolve as resolve5 } from "node:path";
+import { dirname as dirname6, join as join13, resolve as resolve5 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 import { promisify as promisify9 } from "node:util";
 function weeklyHomeDir() {
@@ -90507,7 +90573,7 @@ function weeklyRunDecision(now, schedule, handled) {
   return handled < slot ? { run: true, record: slot } : { run: false, record: null };
 }
 function weeklyEngineCandidates() {
-  const here = dirname5(fileURLToPath3(import.meta.url));
+  const here = dirname6(fileURLToPath3(import.meta.url));
   return [process.env.SUGO_WEEKLY_ENGINE, resolve5(here, "../weekly"), resolve5(here, "../../../../sugo/weekly")].filter((path) => Boolean(path));
 }
 async function findWeeklyEngine(candidates = weeklyEngineCandidates()) {
@@ -90538,7 +90604,7 @@ async function retireLegacyWeeklyAgents(home = homedir5()) {
 }
 async function readSchedule(configPath) {
   try {
-    const schedule = JSON.parse(await readFile9(configPath, "utf8")).schedule ?? {};
+    const schedule = JSON.parse(await readFile10(configPath, "utf8")).schedule ?? {};
     return { enabled: schedule.enabled ?? false, weekday: schedule.weekday ?? 5, hour: schedule.hour ?? 17, minute: schedule.minute ?? 0 };
   } catch {
     return { enabled: false, weekday: 5, hour: 17, minute: 0 };
@@ -90556,11 +90622,11 @@ function startWeeklySchedule(options = {}) {
     if (running || stopped) return;
     running = true;
     try {
-      const handled = await readFile9(handledPath, "utf8").then((value) => value.trim() || null, () => null);
+      const handled = await readFile10(handledPath, "utf8").then((value) => value.trim() || null, () => null);
       const decision = weeklyRunDecision(/* @__PURE__ */ new Date(), await readSchedule(join13(weeklyHome, "config.json")), handled);
       if (decision.record === null) return;
-      await mkdir4(weeklyHome, { recursive: true });
-      await writeFile5(handledPath, `${decision.record}
+      await mkdir5(weeklyHome, { recursive: true });
+      await writeFile6(handledPath, `${decision.record}
 `, "utf8");
       if (!decision.run) return;
       const path = await engine();
@@ -90600,7 +90666,7 @@ var init_weeklyScheduleService = __esm({
 });
 
 // ../dashboard/backend/src/services/weeklySettingsService.ts
-import { chmod, mkdir as mkdir5, readFile as readFile10, stat as stat3, writeFile as writeFile6 } from "node:fs/promises";
+import { chmod, mkdir as mkdir6, readFile as readFile11, stat as stat3, writeFile as writeFile7 } from "node:fs/promises";
 import { join as join14 } from "node:path";
 async function exists(path) {
   try {
@@ -90624,7 +90690,7 @@ function normalizeConfig(config2) {
 }
 async function readStoredConfig(path) {
   try {
-    return JSON.parse(await readFile10(path, "utf8"));
+    return JSON.parse(await readFile11(path, "utf8"));
   } catch {
     return null;
   }
@@ -90646,7 +90712,7 @@ function createWeeklySettingsService(options = {}) {
       };
     },
     async save(settings, token) {
-      await mkdir5(weeklyHome, { recursive: true });
+      await mkdir6(weeklyHome, { recursive: true });
       const previous = await readStoredConfig(configPath) ?? {};
       const next = {
         ...previous,
@@ -90655,15 +90721,15 @@ function createWeeklySettingsService(options = {}) {
       };
       if (settings.model === "default") delete next.model;
       else next.model = settings.model;
-      await writeFile6(configPath, `${JSON.stringify(next, null, 2)}
+      await writeFile7(configPath, `${JSON.stringify(next, null, 2)}
 `, { encoding: "utf8", mode: 384 });
       await chmod(configPath, 384);
       if (token?.trim()) {
-        await writeFile6(tokenPath, `${token.trim()}
+        await writeFile7(tokenPath, `${token.trim()}
 `, { encoding: "utf8", mode: 384 });
         await chmod(tokenPath, 384);
       }
-      await writeFile6(setupMarkerPath, "configured-by-sugo-console\n", { encoding: "utf8", mode: 384 });
+      await writeFile7(setupMarkerPath, "configured-by-sugo-console\n", { encoding: "utf8", mode: 384 });
       return this.get();
     },
     async deleteToken() {
@@ -90698,7 +90764,7 @@ __export(index_exports, {
   createApp: () => createApp
 });
 import { fileURLToPath as fileURLToPath4, pathToFileURL } from "node:url";
-import { dirname as dirname6, join as join15 } from "node:path";
+import { dirname as dirname7, join as join15 } from "node:path";
 function unconfiguredVerifyJwt() {
   return async () => {
     throw new Error("OIDC_JWKS_URI not configured");
@@ -90743,10 +90809,11 @@ async function createApp(dbOverrideOrOptions) {
   const skillsPath = overrides.skillsPath ?? config.skillsPath;
   const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
+  const integrationFeaturesPath = overrides.integrationFeaturesPath ?? config.integrationFeaturesPath;
   const weeklySettingsService = overrides.weeklySettingsService ?? createWeeklySettingsService();
-  const app2 = (0, import_express21.default)();
+  const app2 = (0, import_express22.default)();
   app2.use(corsWhitelist(config.corsOrigins));
-  app2.use(import_express21.default.json({ limit: "10mb" }));
+  app2.use(import_express22.default.json({ limit: "10mb" }));
   app2.get("/health", (_req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.json({ status: "ok", service: "sugo-console", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });
@@ -90778,6 +90845,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use("/api/git-connections", createGitConnectionsRouter(db2, sessionSecret2, secretEncKey));
   app2.use("/api/aws-context", createAwsContextRouter(db2, sessionSecret2, awsContextClient2));
   app2.use("/api/aws-guard-policy", createAwsGuardPolicyRouter(db2, sessionSecret2, awsGuardPolicyPath));
+  app2.use("/api/integration-features", createIntegrationFeaturesRouter(db2, sessionSecret2, integrationFeaturesPath));
   app2.use("/api/pinpoint-context", createPinpointContextRouter(db2, sessionSecret2, pinpointClient2));
   app2.use("/api/project-integrations", createProjectIntegrationsRouter(db2, sessionSecret2, overrides.projectRegistrar));
   app2.use("/api/pr", createPrRouter(db2, sessionSecret2, secretEncKey, gitProviderClients));
@@ -90789,7 +90857,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use("/api/skills", createSkillsRouter(skillsPath));
   const staticDir2 = overrides.staticDir ?? config.staticDir;
   if (staticDir2) {
-    app2.use(import_express21.default.static(staticDir2));
+    app2.use(import_express22.default.static(staticDir2));
     app2.get(/^\/(?!api\/|health$).*/, (_req, res) => {
       res.sendFile(join15(staticDir2, "index.html"));
     });
@@ -90810,11 +90878,11 @@ async function main() {
     console.log(`sugo-dashboard-backend listening on ${config.host}:${config.port} (db=${config.dbDriver})`);
   });
 }
-var import_express21, __dirname2, pkg;
+var import_express22, __dirname2, pkg;
 var init_index = __esm({
   "../dashboard/backend/src/index.ts"() {
     "use strict";
-    import_express21 = __toESM(require_express2(), 1);
+    import_express22 = __toESM(require_express2(), 1);
     init_esm();
     init_config();
     init_init();
@@ -90847,12 +90915,13 @@ var init_index = __esm({
     init_pinpointContext();
     init_projectIntegrations();
     init_awsGuardPolicy();
+    init_integrationFeatures2();
     init_cors();
     init_asyncHandler();
     init_contextAutoRefreshService();
     init_weeklySettingsService();
-    __dirname2 = dirname6(fileURLToPath4(import.meta.url));
-    pkg = "0.50.10" ? { version: "0.50.10" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
+    __dirname2 = dirname7(fileURLToPath4(import.meta.url));
+    pkg = "0.51.0" ? { version: "0.51.0" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -90864,11 +90933,11 @@ var localBootstrap_exports = {};
 __export(localBootstrap_exports, {
   bootstrapLocalDashboard: () => bootstrapLocalDashboard
 });
-import { chmod as chmod2, mkdir as mkdir6, readFile as readFile11, rename as rename2, writeFile as writeFile7 } from "node:fs/promises";
-import { dirname as dirname7 } from "node:path";
+import { chmod as chmod2, mkdir as mkdir7, readFile as readFile12, rename as rename3, writeFile as writeFile8 } from "node:fs/promises";
+import { dirname as dirname8 } from "node:path";
 async function readSettings(settingsPath) {
   try {
-    return JSON.parse(await readFile11(settingsPath, "utf8"));
+    return JSON.parse(await readFile12(settingsPath, "utf8"));
   } catch {
     return {};
   }
@@ -90886,11 +90955,11 @@ async function bootstrapLocalDashboard(db2, input) {
     ...settings,
     dashboard: { ...dashboard, enabled: true, apiUrl: input.apiUrl, userId: input.userId, apiToken }
   };
-  await mkdir6(dirname7(input.settingsPath), { recursive: true });
+  await mkdir7(dirname8(input.settingsPath), { recursive: true });
   const tempPath = `${input.settingsPath}.tmp-${process.pid}`;
-  await writeFile7(tempPath, `${JSON.stringify(next, null, 2)}
+  await writeFile8(tempPath, `${JSON.stringify(next, null, 2)}
 `, { mode: 384 });
-  await rename2(tempPath, input.settingsPath);
+  await rename3(tempPath, input.settingsPath);
   await chmod2(input.settingsPath, 384);
   return { tokenReused };
 }
@@ -90904,9 +90973,9 @@ var init_localBootstrap = __esm({
 
 // ../dashboard/backend/src/standalone.ts
 import { randomBytes as randomBytes6 } from "node:crypto";
-import { chmod as chmod3, mkdir as mkdir7, readFile as readFile12, rm as rm3, writeFile as writeFile8 } from "node:fs/promises";
+import { chmod as chmod3, mkdir as mkdir8, readFile as readFile13, rm as rm3, writeFile as writeFile9 } from "node:fs/promises";
 import { homedir as homedir6, userInfo } from "node:os";
-import { dirname as dirname8, join as join16 } from "node:path";
+import { dirname as dirname9, join as join16 } from "node:path";
 import { fileURLToPath as fileURLToPath5 } from "node:url";
 
 // ../dashboard/backend/test/schema.sqlite.sql
@@ -90921,18 +90990,18 @@ var dataDir = join16(sugoDir, "dashboard");
 var secretFile = join16(dataDir, "session-secret");
 var stateFile = join16(dataDir, "server.json");
 var port = Number(process.env.SUGO_DASHBOARD_PORT ?? DEFAULT_PORT);
-var runtimeDir = dirname8(fileURLToPath5(import.meta.url));
-var pluginRoot = dirname8(runtimeDir);
+var runtimeDir = dirname9(fileURLToPath5(import.meta.url));
+var pluginRoot = dirname9(runtimeDir);
 var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join16(runtimeDir, "web");
 var userId = process.env.LOCAL_DEV_USER_ID ?? userInfo().username;
 var displayName = process.env.LOCAL_DEV_DISPLAY_NAME ?? userId;
 async function loadOrCreateSecret() {
   try {
-    return (await readFile12(secretFile, "utf8")).trim();
+    return (await readFile13(secretFile, "utf8")).trim();
   } catch {
   }
   const secret = randomBytes6(32).toString("base64");
-  await writeFile8(secretFile, secret, { mode: 384 });
+  await writeFile9(secretFile, secret, { mode: 384 });
   await chmod3(secretFile, 384);
   return secret;
 }
@@ -90942,7 +91011,7 @@ process.on("unhandledRejection", (reason) => {
 process.on("uncaughtException", (err) => {
   console.error("[dashboard] uncaughtException (\uD504\uB85C\uC138\uC2A4 \uC720\uC9C0):", err.message);
 });
-await mkdir7(dataDir, { recursive: true });
+await mkdir8(dataDir, { recursive: true });
 var sessionSecret = await loadOrCreateSecret();
 var apiUrl = `http://localhost:${port}`;
 process.env.SUGO_DASHBOARD_EMBEDDED = "1";
@@ -90961,6 +91030,7 @@ process.env.HARNESS_PATH = join16(pluginRoot, "harness-library");
 process.env.SKILLS_PATH = pluginRoot;
 process.env.SUGO_WEEKLY_ENGINE = join16(pluginRoot, "weekly");
 process.env.WEEKLY_HOME ??= join16(sugoHome, ".weekly");
+process.env.SUGO_INTEGRATION_FEATURES_PATH ??= join16(sugoDir, "integration-features.json");
 var { createApp: createApp2 } = await Promise.resolve().then(() => (init_index(), index_exports));
 var { bootstrapLocalDashboard: bootstrapLocalDashboard2 } = await Promise.resolve().then(() => (init_localBootstrap(), localBootstrap_exports));
 var { app, db, awsContextClient, pinpointClient } = await createApp2({ staticDir, sqliteSchema: schema_sqlite_default });
@@ -90972,10 +91042,10 @@ await bootstrapLocalDashboard2(db, {
   apiUrl,
   settingsPath: join16(sugoDir, "settings.json")
 });
-var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient);
+var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile8(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.50.10", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.51.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

@@ -23,7 +23,11 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("statusOnly");
     expect(source.indexOf("!registrationOnly && statusOnly")).toBeLessThan(source.indexOf("!registrationOnly && !statusOnly && <>"));
     expect(source).toContain('selectedSection === "serviceMapping"');
-    expect(source).toContain('selectedSection === "serviceMapping" && <ProjectIntegrationsCard');
+    expect(source).toContain('selectedSection === "serviceMapping" && !sectionBlocked && <ProjectIntegrationsCard');
+    // Preferences › 외부 연동에서 끈 기능의 탭은 설정 대신 같은 꺼짐 안내를 보여 준다.
+    expect(source).toContain("<IntegrationFeatureOffNotice label={gate.label} />");
+    expect(source).toContain('git: { key: "pr", label: "PR" }');
+    expect(source).toContain('pinpoint: { key: "apm", label: "APM" }');
     expect(source).not.toContain('selectedSection === "serviceMapping" && <><AwsContextCard');
     expect(source).toContain('selectedSection === "overview"');
     expect(source).toContain("서비스 연동 미사용");

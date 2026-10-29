@@ -18,6 +18,8 @@ import { PageHeading } from "../components/PageHeading.js";
 import { Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Boxes, Check, ChevronDown, ChevronRight, Cloud, FolderGit2, FolderOpen, GitBranch, GripVertical, Pencil, Plus, Unlink, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
+import { getIntegrationFeatures, type IntegrationFeatures } from "../api/integrationFeaturesApi.js";
+import { IntegrationFeatureOffNotice } from "../components/IntegrationFeatureOffNotice.js";
 import { summarizeRepositoryConnections } from "../lib/integrationConnectionSummary.js";
 import { AWS_REGIONS, awsRegionLabel } from "../lib/awsRegions.js";
 
@@ -547,6 +549,16 @@ function ProjectGitConnections({ workspaces, connections }: { workspaces: Worksp
 export function Settings() {
   const [searchParams] = useSearchParams();
   const [selectedSection, setSelectedSection] = useState<IntegrationViewId>("registration");
+  const [features, setFeatures] = useState<IntegrationFeatures | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getIntegrationFeatures().then((value) => { if (!cancelled) setFeatures(value); }).catch(() => { if (!cancelled) setFeatures({ aws: true, pr: true, apm: true }); });
+    return () => { cancelled = true; };
+  }, []);
+  // 02 외부 서비스의 탭마다 Preferences › 외부 연동의 어느 기능에 속하는지. 설정을 읽는 동안에는 본문을 비워 둔다.
+  const sectionFeature: Partial<Record<IntegrationViewId, { key: keyof IntegrationFeatures; label: string }>> = { aws: { key: "aws", label: "AWS" }, serviceMapping: { key: "aws", label: "AWS" }, git: { key: "pr", label: "PR" }, pinpoint: { key: "apm", label: "APM" } };
+  const gate = sectionFeature[selectedSection];
+  const sectionBlocked = gate !== undefined && (features === null || !features[gate.key]);
   const [awsConnected, setAwsConnected] = useState(false);
   const [pinpointConnected, setPinpointConnected] = useState(false);
   const [providers, setProviders] = useState<GitProviderDescriptor[] | null>(null);
@@ -657,13 +669,14 @@ export function Settings() {
       {!LOCAL_DEV && <ApiTokensCard />}
 
       <section className="integration-workbench overflow-hidden border-y border-[var(--color-border)] bg-[linear-gradient(135deg,rgba(15,23,42,0.78),rgba(6,12,22,0.9))] shadow-[0_20px_70px_rgba(0,0,0,0.12)]">
+      {gate && features && !features[gate.key] && <IntegrationFeatureOffNotice label={gate.label} />}
       {selectedSection === "catalog" && <IntegrationCatalog awsConnected={awsConnected} pinpointConnected={pinpointConnected} onSelect={setSelectedSection} />}
-      {selectedSection === "aws" && <AwsContextCard expanded onToggle={() => undefined} focused onConnectionChange={setAwsConnected} />}
-      {selectedSection === "pinpoint" && <PinpointContextCard expanded onToggle={() => undefined} focused onConnectionChange={setPinpointConnected} />}
+      {selectedSection === "aws" && !sectionBlocked && <AwsContextCard expanded onToggle={() => undefined} focused onConnectionChange={setAwsConnected} />}
+      {selectedSection === "pinpoint" && !sectionBlocked && <PinpointContextCard expanded onToggle={() => undefined} focused onConnectionChange={setPinpointConnected} />}
       {selectedSection === "registration" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} registrationOnly />}
-      {selectedSection === "serviceMapping" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} awsConnected={awsConnected} onConfigureAws={() => setSelectedSection("aws")} />}
+      {selectedSection === "serviceMapping" && !sectionBlocked && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} awsConnected={awsConnected} onConfigureAws={() => setSelectedSection("aws")} />}
 
-      {(selectedSection === "overview" || selectedSection === "git") && <div id="integration-git" className="scroll-mt-24 overflow-hidden">
+      {(selectedSection === "overview" || selectedSection === "git") && !sectionBlocked && <div id="integration-git" className="scroll-mt-24 overflow-hidden">
         <div className="integration-panel-header flex items-center justify-between gap-3 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2.5">
           <span className="grid h-10 w-10 place-items-center rounded-full border border-cyan-300/20 text-[var(--color-primary)]"><GitBranch size={17} /></span>

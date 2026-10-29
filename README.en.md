@@ -189,7 +189,7 @@ In **Integrations → 프로젝트**, choose a project folder, put it in an exis
 
 ### 2. Connect external services
 
-In **Integrations → 외부 서비스**, connect only what you need. Every integration is optional and read-only.
+AWS, PR, and APM start turned off. Turn on only what you use in **Preferences → 외부 연동**, and its settings tab opens in **Integrations → 외부 서비스**; a tab that is off only shows how to turn it on. Every integration is optional and read-only.
 
 **AWS accounts.** Enter an environment name (example: DEV), choose a local AWS CLI profile and a region, then select **환경 연결**. Keys are not stored. Drag environments to reorder them; the order becomes the deployment state shown in Schedule (LOCAL → DEV → STG → PRD). **AWS 전체 동기화** fetches service lists such as ECS and pipelines.
 

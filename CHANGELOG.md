@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.61.0 / Console 0.51.0] - 2026-10-29
+
+- Preferences에 '외부 연동' 탭을 추가해 AWS, PR, APM을 켜고 끕니다. 처음에는 모두 꺼져 있고(이미 연결해 둔 기능은 켜진 채로 시작), 꺼 둔 기능은 Integrations › 외부 서비스에서 설정 대신 켜는 방법을 안내하며 자동 갱신도 하지 않습니다. Preferences 탭 순서를 일반, 외부 연동, 주간 리포트, 날씨로 바꿨습니다.
+
 ## [Plugin 0.60.10 / Console 0.50.10] - 2026-10-29
 
 - Harness와 Preferences의 영역을 Integrations처럼 사각형으로 맞췄습니다.

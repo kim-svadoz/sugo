@@ -1,4 +1,4 @@
-import { CalendarClock, Check, ChevronDown, CloudSun, Copy, KeyRound, MapPin, MonitorCog, Plus, Search, Trash2 } from "lucide-react";
+import { CalendarClock, Check, ChevronDown, CloudSun, Copy, KeyRound, MapPin, MonitorCog, PlugZap, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.js";
@@ -6,16 +6,17 @@ import { useProfile } from "../hooks/useProfile.js";
 import { getWeatherRegion, setWeatherRegion, WEATHER_REGIONS } from "../lib/weatherPreferences.js";
 import { cn } from "../lib/utils.js";
 import { PageHeading } from "../components/PageHeading.js";
+import { IntegrationFeaturesPanel } from "../components/IntegrationFeaturesPanel.js";
 import { deleteWeeklyToken, getWeeklySettings, saveWeeklySettings, type WeeklySettingsInput } from "../api/weeklyApi.js";
 
-type PreferencesTab = "general" | "weather" | "weekly";
+type PreferencesTab = "general" | "integrations" | "weekly" | "weather";
 
 export function Preferences() {
   const { userId } = useAuth();
   const { displayName, saveDisplayName } = useProfile(userId);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
-  const tab: PreferencesTab = requestedTab === "weather" || requestedTab === "weekly" ? requestedTab : "general";
+  const tab: PreferencesTab = requestedTab === "integrations" || requestedTab === "weekly" || requestedTab === "weather" ? requestedTab : "general";
   const [selectedRegion, setSelectedRegion] = useState(() => getWeatherRegion()?.id ?? "");
   const [regionPickerOpen, setRegionPickerOpen] = useState(false);
   const [regionQuery, setRegionQuery] = useState("");
@@ -43,7 +44,7 @@ export function Preferences() {
     <div className="grid overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_20px_70px_rgba(0,0,0,0.14)] lg:grid-cols-[14rem_minmax(0,1fr)]">
     <div className="border-b border-[var(--color-border)] bg-black/[0.08] p-3 lg:border-b-0 lg:border-r" role="tablist" aria-label="시스템 설정">
       <p className="px-3 pb-3 pt-2 font-mono text-[10px] font-semibold tracking-[0.2em] text-[var(--color-text-dim)]">PREFERENCES</p>
-      {([['general', '일반', '이름과 로컬 환경', MonitorCog], ['weather', '날씨', 'Home 생활권', CloudSun], ['weekly', '주간 리포트', '일정과 실행 인증', CalendarClock]] as const).map(([id, label, description, Icon]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => selectTab(id)} className={cn("flex w-full items-center gap-3 border-l-2 px-3 py-3 text-left transition-colors", tab === id ? "border-cyan-300 bg-cyan-300/[0.07] text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:bg-white/[0.025] hover:text-white")}><span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full border", tab === id ? "border-cyan-300/30 bg-cyan-300/10" : "border-white/[0.07]")}><Icon size={14} /></span><span><strong className="block text-sm font-semibold">{label}</strong><span className="mt-0.5 block text-[10px] font-normal text-[var(--color-text-dim)]">{description}</span></span></button>)}
+      {([['general', '일반', '이름과 로컬 환경', MonitorCog], ['integrations', '외부 연동', 'AWS · PR · APM 사용 여부', PlugZap], ['weekly', '주간 리포트', '일정과 실행 인증', CalendarClock], ['weather', '날씨', 'Home 생활권', CloudSun]] as const).map(([id, label, description, Icon]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => selectTab(id)} className={cn("flex w-full items-center gap-3 border-l-2 px-3 py-3 text-left transition-colors", tab === id ? "border-cyan-300 bg-cyan-300/[0.07] text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:bg-white/[0.025] hover:text-white")}><span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full border", tab === id ? "border-cyan-300/30 bg-cyan-300/10" : "border-white/[0.07]")}><Icon size={14} /></span><span><strong className="block text-sm font-semibold">{label}</strong><span className="mt-0.5 block text-[10px] font-normal text-[var(--color-text-dim)]">{description}</span></span></button>)}
     </div>
     <div className="min-w-0 p-5 sm:p-7">
     {tab === "general" ? <section>
@@ -53,7 +54,7 @@ export function Preferences() {
         <div className="grid gap-4 py-5 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-center"><div><div className="text-sm font-semibold text-[var(--color-text)]">Console 주소</div><p className="mt-1 text-[10px] leading-4 text-[var(--color-text-muted)]">화면과 API가 함께 사용하는 로컬 주소입니다.</p></div><div><div className="font-mono text-sm text-slate-200">{window.location.host}</div><div className="mt-1 text-[10px] text-slate-600">계정 ID {userId}</div></div></div>
         <div className="grid gap-4 py-5 sm:grid-cols-[12rem_minmax(0,1fr)]"><div className="text-sm font-semibold text-[var(--color-text)]">데이터 위치</div><p className="max-w-xl text-xs leading-5 text-[var(--color-text-muted)]">작업 데이터는 이 컴퓨터의 Sugo 저장소에 유지됩니다.</p></div>
       </div>
-    </section> : tab === "weather" ? <section>
+    </section> : tab === "integrations" ? <IntegrationFeaturesPanel /> : tab === "weather" ? <section>
       <h2 className="text-base font-semibold text-[var(--color-text)]">날씨 생활권</h2><p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">위치 권한 없이 선택한 생활권의 날씨를 Home에 표시합니다.</p>
       <div className="mt-6 max-w-2xl overflow-hidden border-y border-[var(--color-border)]">
         <button type="button" aria-expanded={regionPickerOpen} onClick={() => setRegionPickerOpen((open) => !open)} className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-white/[0.03]">

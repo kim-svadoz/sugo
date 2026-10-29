@@ -3,6 +3,7 @@ import type { AwsContextClient } from "../aws/contextClient.js";
 import type { PinpointClient } from "../pinpoint/client.js";
 import { refreshAllAwsContexts } from "./awsContextService.js";
 import { refreshPinpointContext } from "./pinpointContextService.js";
+import { loadIntegrationFeatures, type IntegrationFeatures } from "./integrationFeatures.js";
 
 export function localRefreshDay(now = new Date(), timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone): string | null {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -39,10 +40,18 @@ export async function runDueContextRefresh(db: DbClient, now: Date, refreshAws: 
   }
 }
 
-export function startContextAutoRefresh(db: DbClient, aws: AwsContextClient, pinpoint: PinpointClient): () => void {
+/** Preferences에서 끈 기능은 연결 정보가 남아 있어도 자동으로 조회하지 않는다. */
+export function featureGatedRefresh(featuresPath: string | undefined, db: DbClient, feature: keyof IntegrationFeatures, refresh: Refresh): Refresh {
+  if (!featuresPath) return refresh;
+  return async (userId) => ((await loadIntegrationFeatures(featuresPath, db, userId))[feature] ? refresh(userId) : undefined);
+}
+
+export function startContextAutoRefresh(db: DbClient, aws: AwsContextClient, pinpoint: PinpointClient, featuresPath?: string): () => void {
   let stopped = false;
   let timer: NodeJS.Timeout | null = null;
-  const run = () => runDueContextRefresh(db, new Date(), (userId) => refreshAllAwsContexts(db, userId, aws), (userId) => refreshPinpointContext(db, userId, pinpoint))
+  const refreshAws = featureGatedRefresh(featuresPath, db, "aws", (userId) => refreshAllAwsContexts(db, userId, aws));
+  const refreshApm = featureGatedRefresh(featuresPath, db, "apm", (userId) => refreshPinpointContext(db, userId, pinpoint));
+  const run = () => runDueContextRefresh(db, new Date(), refreshAws, refreshApm)
     .catch((error) => console.error("[dashboard] context auto refresh failed:", error instanceof Error ? error.message : error));
   const schedule = () => {
     if (stopped) return;
