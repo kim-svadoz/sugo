@@ -21,6 +21,16 @@ describe("시작 투어 화면 배치", () => {
 
     expect(position.left).toBeGreaterThan(228);
     expect(position.left + position.width).toBeLessThanOrEqual(2_032);
-    expect(position.top + position.height).toBeLessThanOrEqual(1_019);
+    expect(position.top + position.maxHeight).toBe(1_019);
+  });
+
+  it("브라우저 글자 확대에서도 내용이 잘리지 않도록 카드 높이를 강제하지 않는다", () => {
+    const position = positionTourCard(
+      { top: 340, left: 460, right: 990, bottom: 460, width: 530, height: 120 },
+      { width: 2_395, height: 1_082 },
+    );
+
+    expect(position).not.toHaveProperty("height");
+    expect(position.maxHeight).toBe(726);
   });
 });

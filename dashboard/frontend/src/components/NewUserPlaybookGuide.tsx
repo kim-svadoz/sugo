@@ -9,22 +9,23 @@ interface TourTarget {
   title: string;
   description: string;
   selector: string;
+  gap?: number;
 }
 
 const DISMISSED_KEY = "sugo.onboarding.tour.dismissed";
 export const NEWBIE_PREVIEW_KEY = "sugo.dev.newbie-preview.enabled";
 export const NEWBIE_TOUR_START_EVENT = "sugo:onboarding-tour:start";
 const TOUR_TARGETS: TourTarget[] = [
-  { key: "home", label: "HOME", title: "오늘 확인할 일을 먼저 모아봅니다", description: "진행 중인 작업, 내 확인이 필요한 일, 최근 완료 결과가 Home에 모입니다.", selector: '[data-onboarding-tour-target="home"] > div:first-child' },
+  { key: "home", label: "HOME", title: "오늘 확인할 일을 먼저 모아봅니다", description: "진행 중인 작업, 내 확인이 필요한 일, 최근 완료 결과가 Home에 모입니다.", selector: '[data-onboarding-tour-target="home"]' },
   { key: "playbook", label: "PLAYBOOK", title: "처음 한 번은 작업 순서를 따라가세요", description: "Playbook은 프로젝트 등록부터 첫 완료까지 필요한 행동을 순서대로 보여주는 실행 가이드입니다.", selector: '[data-onboarding-tour-target="playbook"]' },
   { key: "pipeline", label: "PIPELINE", title: "AI 작업은 단계와 근거로 확인합니다", description: "구현, 테스트, 검토, 사용자 확인이 같은 흐름에 연결되고 현재 위치와 다음 행동이 표시됩니다.", selector: '[data-onboarding-tour-target="pipeline"] .work-world > div:first-child' },
   { key: "workspaces", label: "WORKSPACES", title: "프로젝트와 운영 상태는 도메인별로 이어집니다", description: "Workspaces에서 프로젝트의 작업 이력과 배포 상태를 확인합니다. 이제 첫 프로젝트를 등록해보세요.", selector: '[data-onboarding-tour-target="workspaces"]' },
 ];
 
-function readRect(selector: string): TourRect | null {
+function readRect(selector: string, gap?: number): TourRect | null {
   const target = document.querySelector<HTMLElement>(selector);
   if (!target) return null;
-  return clampTourTargetRect(target.getBoundingClientRect(), { width: window.innerWidth, height: window.innerHeight });
+  return clampTourTargetRect(target.getBoundingClientRect(), { width: window.innerWidth, height: window.innerHeight }, gap);
 }
 
 function centerTargetVertically(target: HTMLElement): HTMLElement | null {
@@ -56,7 +57,7 @@ export function NewUserPlaybookGuide({ visible, onDismiss }: { visible: boolean;
 
   useEffect(() => {
     if (!active) { setRect(null); return; }
-    const update = () => setRect(readRect(target.selector));
+    const update = () => setRect(readRect(target.selector, target.gap));
     const targetElement = document.querySelector<HTMLElement>(target.selector);
     const main = targetElement ? centerTargetVertically(targetElement) : null;
     const timer = window.setTimeout(update, 50);
@@ -66,7 +67,7 @@ export function NewUserPlaybookGuide({ visible, onDismiss }: { visible: boolean;
     window.addEventListener("resize", update);
     main?.addEventListener("scroll", update);
     return () => { window.clearTimeout(timer); observer.disconnect(); window.removeEventListener("resize", update); main?.removeEventListener("scroll", update); };
-  }, [active, target.selector]);
+  }, [active, target.gap, target.selector]);
 
   const masks = useMemo(() => rect ? [
     { top: 0, left: 0, right: 0, height: rect.top },
