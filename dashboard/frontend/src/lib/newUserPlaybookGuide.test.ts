@@ -28,6 +28,10 @@ describe("new user Playbook guide", () => {
     expect(guide).toContain("sugo.onboarding.tour.dismissed");
     expect(guide).toContain("sugo.dev.newbie-preview.enabled");
     expect(guide).toContain("sugo:onboarding-tour:start");
+    expect(guide).not.toContain("scrollIntoView");
+    expect(guide).toContain("main.contains(target)");
+    expect(guide).toContain('[data-onboarding-tour-target="home"] > div:first-child');
+    expect(guide).toContain('[data-onboarding-tour-target="pipeline"] .work-world > div:first-child');
   });
 
   it("keeps the future team gate hidden unless its feature flag is enabled", () => {
