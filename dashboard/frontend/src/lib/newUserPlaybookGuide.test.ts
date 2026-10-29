@@ -22,6 +22,8 @@ describe("new user Playbook guide", () => {
     const guide = source("../components/NewUserPlaybookGuide.tsx");
     expect(sidebar).toContain('to === "/playbook" ? "playbook"');
     expect(sidebar).toContain('to === "/sessions" ? "workspaces"');
+    // 투어는 Home에서만 뜨므로 로그인 직후 Home으로 가야 새 사용자가 볼 수 있다.
+    expect(source("../pages/AuthCallback.tsx")).toContain('<Navigate to="/home" replace />');
     expect(guide).toContain('key: "home"');
     expect(guide).toContain('key: "pipeline"');
     expect(guide).toContain('navigate("/settings?section=projects&register=1")');

@@ -22,8 +22,9 @@ export function AuthCallback() {
     }
   }, [handleSession, isAuthenticated]);
 
+  // 로그인 직후는 Home으로 간다. 처음 쓰는 사람에게 시작 안내 투어가 Home에서 뜬다.
   if (isAuthenticated) {
-    return <Navigate to="/sessions" replace />;
+    return <Navigate to="/home" replace />;
   }
   if (error) {
     return <div className="p-6 text-sm text-red-400">인증 실패: 세션을 찾을 수 없습니다. 다시 로그인해 주세요.</div>;
