@@ -38,7 +38,7 @@ export function Preferences() {
   const currentRegion = WEATHER_REGIONS.find((region) => region.id === selectedRegion);
   const visibleRegions = WEATHER_REGIONS.filter((region) => region.label.toLowerCase().includes(regionQuery.trim().toLowerCase()));
 
-  return <div className="settings-interface mx-auto max-w-6xl space-y-6">
+  return <div className="settings-interface settings-square mx-auto max-w-6xl space-y-6">
     <PageHeading eyebrow="SYSTEM PREFERENCES" title="시스템 설정" description="이 브라우저에서 사용하는 Sugo의 기본 환경을 설정합니다." />
     <div className="grid overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_20px_70px_rgba(0,0,0,0.14)] lg:grid-cols-[14rem_minmax(0,1fr)]">
     <div className="border-b border-[var(--color-border)] bg-black/[0.08] p-3 lg:border-b-0 lg:border-r" role="tablist" aria-label="시스템 설정">

@@ -73,7 +73,7 @@ export function Harness() {
   };
 
   return (
-    <div className="harness-page space-y-3 2xl:space-y-5">
+    <div className="harness-page settings-square space-y-3 2xl:space-y-5">
       <PageHeading eyebrow="ENGINEERING HARNESS" title="하네스 규칙" description="기술과 버전에 맞는 검증 규칙을 선택하고, 프로젝트마다 일관된 개발 기준을 적용합니다." />
       <section className="grid gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.035] p-3 md:grid-cols-3 2xl:p-4" aria-label="하네스 사용 안내">
         {[['01', '기술 선택', '프로젝트에 사용하는 프레임워크·언어·빌드 도구를 고릅니다.'], ['02', '버전 확인', '선택한 기술의 버전에 맞는 기본 규칙을 확인합니다.'], ['03', '프로젝트 적용', '저장한 규칙은 다음 동기화부터 해당 프로젝트의 검증 기준으로 사용됩니다.']].map(([step, title, text]) => <div key={step} className="flex min-w-0 gap-2 max-[1900px]:gap-1.5"><span className="shrink-0 font-mono text-[10px] font-semibold text-cyan-300">{step}</span><div className="min-w-0"><h2 className="text-[13px] font-semibold text-slate-100 max-[1900px]:text-[11px]">{title}</h2><p className="mt-0.5 text-[11px] leading-4 text-slate-400 max-[1900px]:text-[10px] max-[1900px]:leading-[1.45]">{text}</p></div></div>)}

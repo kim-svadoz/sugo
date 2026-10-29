@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.60.10 / Console 0.50.10] - 2026-10-29
+
+- Harness와 Preferences의 영역을 Integrations처럼 사각형으로 맞췄습니다.
+
 ## [Plugin 0.60.9 / Console 0.50.9] - 2026-10-29
 
 - 로그인 화면 아래의 'LOCAL-FIRST · READ-ONLY BY DEFAULT' 문구를 없애고, 안내를 '작업 기록은 이 컴퓨터에만 저장됩니다.'로 바꿨습니다.

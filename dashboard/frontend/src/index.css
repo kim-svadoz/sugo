@@ -502,6 +502,8 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .settings-interface .text-lg:not(.page-heading *) { font-size: 16.5px; line-height: 24px; }
 .settings-interface .text-xl:not(.page-heading *) { font-size: 18px; line-height: 26px; }
 .settings-interface .text-2xl:not(.page-heading *) { font-size: 22px; line-height: 30px; }
+/* 설정 화면(Harness, Preferences)의 영역은 Integrations처럼 사각형으로 둔다. 아이콘 원·점 같은 rounded-full은 그대로 둔다. */
+.settings-square [class*="rounded"]:not(.rounded-full) { border-radius: 0; }
 .settings-action-compact { min-height: 32px; padding: 5px 11px; font-size: 12.5px; }
 .settings-interface .settings-action:disabled { cursor: not-allowed; opacity: 0.35; }
 .settings-field {
