@@ -5,7 +5,7 @@ import { cn } from "../lib/utils.js";
 import type { ScheduledMemo } from "../api/scheduleMemoApi.js";
 import type { ArchivePagination } from "../api/scheduleSpecArchiveApi.js";
 
-function formatArchiveTime(value: string): string { return new Date(value).toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" }); }
+function formatArchiveTime(value: string | null): string { return value ? new Date(value).toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" }) : "-"; }
 
 function Pagination({ value, onChange }: { value: ArchivePagination; onChange?: (page: number) => void }) {
   const pages = Math.max(1, Math.ceil(value.total / value.pageSize));

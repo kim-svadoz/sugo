@@ -46869,15 +46869,21 @@ function subtree(rows, rootId) {
 }
 async function archiveScheduleSpec(db2, userId2, workspaceName, specId, reason) {
   const rows = await db2.query(
-    "SELECT id, parent, level, title, manual_title, updated_at FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    "SELECT id, parent, level, title, manual_title FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
     [userId2, workspaceName]
   );
   const root5 = rows.find((row) => row.id === specId && row.level === "spec");
   if (!root5) return null;
   const now = (/* @__PURE__ */ new Date()).toISOString();
   const title = root5.manual_title ?? root5.title;
-  const ids = new Set(subtree(rows, specId));
-  const lastWorkedAt = rows.filter((row) => ids.has(row.id)).map((row) => row.updated_at).filter(Boolean).sort((a5, b5) => Date.parse(b5) - Date.parse(a5))[0] ?? now;
+  const ids = subtree(rows, specId);
+  const placeholders = ids.map(() => "?").join(", ");
+  const activity = await db2.query(
+    `SELECT MAX(COALESCE(completed_at, created_at)) AS last_worked_at
+     FROM sugo_history WHERE user_id = ? AND workspace_name = ? AND task_id IN (${placeholders})`,
+    [userId2, workspaceName, ...ids]
+  );
+  const lastWorkedAt = activity[0]?.last_worked_at ?? null;
   await db2.exec("DELETE FROM sugo_schedule_spec_archives WHERE user_id = ? AND workspace_name = ? AND spec_id = ?", [userId2, workspaceName, specId]);
   await db2.exec(
     `INSERT INTO sugo_schedule_spec_archives
@@ -46914,7 +46920,8 @@ async function listScheduleSpecArchives(db2, userId2, page = 1, pageSize = 20, w
   const [{ total }] = await db2.query(`SELECT COUNT(*) AS total FROM sugo_schedule_spec_archives ${where}`, params);
   const offset = (page - 1) * pageSize;
   const items = await db2.query(
-    `SELECT workspace_name, spec_id, title, reason, archived_at, COALESCE(last_worked_at, archived_at) AS last_worked_at, archived_by
+    `SELECT workspace_name, spec_id, title, reason, archived_at,
+       CASE WHEN last_worked_at = archived_at THEN NULL ELSE last_worked_at END AS last_worked_at, archived_by
      FROM sugo_schedule_spec_archives ${where} ORDER BY archived_at DESC LIMIT ? OFFSET ?`,
     [...params, pageSize, offset]
   );
@@ -46922,7 +46929,7 @@ async function listScheduleSpecArchives(db2, userId2, page = 1, pageSize = 20, w
 }
 async function restoreScheduleSpec(db2, userId2, workspaceName, specId) {
   const rows = await db2.query(
-    "SELECT id, parent, level, title, manual_title, updated_at FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    "SELECT id, parent, level, title, manual_title FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
     [userId2, workspaceName]
   );
   if (!rows.some((row) => row.id === specId && row.level === "spec")) return false;
@@ -90962,7 +90969,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname7(fileURLToPath4(import.meta.url));
-    pkg = "0.52.0" ? { version: "0.52.0" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.52.1" ? { version: "0.52.1" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91086,7 +91093,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.52.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.52.1", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

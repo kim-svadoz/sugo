@@ -2,7 +2,7 @@ import { apiJson, withUserId } from "./client.js";
 
 export type ScheduleSpecArchiveReason = "deleted" | "closed";
 export interface ArchivePagination { total: number; page: number; pageSize: number; hasMore: boolean }
-export interface ScheduleSpecArchive { workspace_name: string; spec_id: string; title: string; reason: ScheduleSpecArchiveReason; archived_at: string; last_worked_at: string; archived_by: string }
+export interface ScheduleSpecArchive { workspace_name: string; spec_id: string; title: string; reason: ScheduleSpecArchiveReason; archived_at: string; last_worked_at: string | null; archived_by: string }
 export interface ScheduleSpecArchivePage { items: ScheduleSpecArchive[]; pagination: ArchivePagination }
 const base = "/api/schedule/specs";
 export async function getScheduleSpecArchives(userId: string, page = 1, pageSize = 20, workspace?: string, reason?: ScheduleSpecArchiveReason): Promise<ScheduleSpecArchivePage> {
