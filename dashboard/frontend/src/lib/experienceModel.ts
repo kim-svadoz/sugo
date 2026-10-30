@@ -9,33 +9,28 @@ export interface WorkspaceCommandPulse {
 
 export function workspaceCommandSummary(pulse: WorkspaceCommandPulse): {
   headline: string;
-  detail: string;
   intent: WorkspaceCommandIntent;
 } {
   if (pulse.attention > 0) {
     return {
       headline: `확인이 필요한 작업이 ${pulse.attention}건 있습니다`,
-      detail: `사람의 확인이 필요한 작업 ${pulse.attention}건을 먼저 확인하세요.`,
       intent: "attention",
     };
   }
   if (pulse.active > 0) {
     return {
       headline: `${pulse.active}개 워크스페이스가 실행 중입니다`,
-      detail: `완료 ${pulse.done}/${pulse.total} · 진행 중인 작업의 최신 변화를 확인하세요.`,
       intent: "active",
     };
   }
   if (pulse.total > 0 && pulse.done === pulse.total) {
     return {
       headline: "모든 작업이 안정 상태입니다",
-      detail: `완료 ${pulse.done}/${pulse.total} · 새 작업을 시작할 준비가 됐습니다.`,
       intent: "stable",
     };
   }
   return {
     headline: "지금 실행 중인 작업이 없습니다",
-    detail: `완료 ${pulse.done}/${pulse.total} · 대기 중인 워크스페이스를 선택해 다음 작업을 확인하세요.`,
     intent: "idle",
   };
 }

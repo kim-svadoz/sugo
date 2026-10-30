@@ -645,10 +645,7 @@ export function Sessions() {
           <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", commandSummary.intent === "attention" ? "bg-amber-400/12 text-amber-300" : commandSummary.intent === "stable" ? "bg-emerald-400/10 text-emerald-300" : "bg-cyan-400/10 text-cyan-300")}>
             {commandSummary.intent === "attention" ? <AlertTriangle size={16} /> : commandSummary.intent === "stable" ? <CheckCircle2 size={16} /> : <Activity size={16} />}
           </span>
-          <span className="min-w-0">
-            <span className="block text-[13px] font-semibold text-white">{commandSummary.headline}</span>
-            <span className="block text-[11px] text-[var(--color-text-muted)]">{commandSummary.detail}</span>
-          </span>
+          <span className="min-w-0 text-[13px] font-semibold text-white">{commandSummary.headline}</span>
         </span>
         {commandSummary.intent === "attention" && <span className="shrink-0 text-[12px] font-semibold text-amber-200 transition-transform group-hover:translate-x-1">확인할 작업 열기 →</span>}
       </button>

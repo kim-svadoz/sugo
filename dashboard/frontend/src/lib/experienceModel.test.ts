@@ -5,7 +5,6 @@ describe("flagship workspace experience", () => {
   it("turns workspace totals into an action-oriented command summary", () => {
     expect(workspaceCommandSummary({ active: 2, attention: 1, done: 7, total: 10 })).toEqual({
       headline: "확인이 필요한 작업이 1건 있습니다",
-      detail: "사람의 확인이 필요한 작업 1건을 먼저 확인하세요.",
       intent: "attention",
     });
   });
@@ -13,7 +12,6 @@ describe("flagship workspace experience", () => {
   it("keeps a calm summary when no workspace needs attention", () => {
     expect(workspaceCommandSummary({ active: 0, attention: 0, done: 10, total: 10 })).toEqual({
       headline: "모든 작업이 안정 상태입니다",
-      detail: "완료 10/10 · 새 작업을 시작할 준비가 됐습니다.",
       intent: "stable",
     });
   });
