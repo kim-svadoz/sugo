@@ -53,6 +53,10 @@ describe("Schedule commitment API", () => {
       ["closed-task", "commitment-owner", "orders", "종료 Task", "task", "in_progress", "closed-run"],
     );
     await db.exec(
+      "UPDATE sugo_roadmap_nodes SET manual_status = 'done', manual_at = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
+      ["2026-09-20T11:45:00.000Z", "commitment-owner", "orders", "closed-task"],
+    );
+    await db.exec(
       "INSERT INTO sugo_history (id, user_id, workspace_name, task_id, task_title, completed_at) VALUES (?, ?, ?, ?, ?, ?)",
       ["history-closed-task", "commitment-owner", "orders", "closed-task", "종료 Task", "2026-09-18T07:30:00.000Z"],
     );
@@ -77,7 +81,7 @@ describe("Schedule commitment API", () => {
     expect(active.body.specs.map((spec: { id: string }) => spec.id)).toEqual(["active-spec"]);
     const archive = await request(app).get("/api/schedule/specs/archive").set("Authorization", auth).expect(200);
     expect(archive.body.specs).toEqual([expect.objectContaining({
-      workspace_name: "orders", spec_id: "spec-1", title: "할 일 추가", reason: "closed", last_worked_at: "2026-09-18T07:30:00.000Z",
+      workspace_name: "orders", spec_id: "spec-1", title: "할 일 추가", reason: "closed", last_worked_at: "2026-09-20T11:45:00.000Z",
     })]);
     expect((await db.query<{ manual_status: string | null }>("SELECT manual_status FROM sugo_roadmap_nodes WHERE id = 'spec-1'"))[0].manual_status).toBeNull();
     const roadmap = await request(app).get("/api/workspaces/orders/roadmap").set("Authorization", auth).expect(200);

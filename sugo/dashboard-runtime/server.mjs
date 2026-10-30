@@ -46829,7 +46829,9 @@ async function listArchivedScheduleMemos(db2, userId2, page = 1, pageSize = 20) 
   const [{ total }] = await db2.query("SELECT COUNT(*) AS total FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL", [userId2]);
   const offset = (page - 1) * pageSize;
   const items = await db2.query(
-    "SELECT id, title, content_md, due_date, created_at, updated_at, archived_at FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL ORDER BY archived_at DESC LIMIT ? OFFSET ?",
+    `SELECT id, title, content_md, due_date, created_at,
+       CASE WHEN updated_at = archived_at THEN created_at ELSE updated_at END AS updated_at, archived_at
+     FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL ORDER BY archived_at DESC LIMIT ? OFFSET ?`,
     [userId2, pageSize, offset]
   );
   return { items, total: Number(total), page, pageSize, hasMore: offset + items.length < Number(total) };
@@ -46867,23 +46869,39 @@ function subtree(rows, rootId) {
   }
   return [...found];
 }
+function latestBefore(values, before) {
+  const limit = Date.parse(before);
+  return values.filter((value) => Boolean(value) && Number.isFinite(Date.parse(value)) && Date.parse(value) < limit).sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null;
+}
+async function resolveLastWorkedAt(db2, userId2, workspaceName, specId, archivedAt, rows) {
+  const nodes5 = rows ?? await db2.query(
+    "SELECT id, parent, level, title, manual_title, manual_at, blocker_answered_at FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    [userId2, workspaceName]
+  );
+  const ids = subtree(nodes5, specId);
+  const placeholders = ids.map(() => "?").join(", ");
+  const [history] = await db2.query(
+    `SELECT MAX(COALESCE(completed_at, created_at)) AS activity_at
+     FROM sugo_history WHERE user_id = ? AND workspace_name = ? AND task_id IN (${placeholders})`,
+    [userId2, workspaceName, ...ids]
+  );
+  const [commitment] = await db2.query(
+    "SELECT MAX(updated_at) AS activity_at FROM sugo_schedule_commitments WHERE user_id = ? AND workspace_name = ? AND spec_id = ?",
+    [userId2, workspaceName, specId]
+  );
+  const nodeActivity = nodes5.filter((node) => ids.includes(node.id)).flatMap((node) => [node.manual_at, node.blocker_answered_at]);
+  return latestBefore([history?.activity_at, commitment?.activity_at, ...nodeActivity], archivedAt);
+}
 async function archiveScheduleSpec(db2, userId2, workspaceName, specId, reason) {
   const rows = await db2.query(
-    "SELECT id, parent, level, title, manual_title FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    "SELECT id, parent, level, title, manual_title, manual_at, blocker_answered_at FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
     [userId2, workspaceName]
   );
   const root5 = rows.find((row) => row.id === specId && row.level === "spec");
   if (!root5) return null;
   const now = (/* @__PURE__ */ new Date()).toISOString();
   const title = root5.manual_title ?? root5.title;
-  const ids = subtree(rows, specId);
-  const placeholders = ids.map(() => "?").join(", ");
-  const activity = await db2.query(
-    `SELECT MAX(COALESCE(completed_at, created_at)) AS last_worked_at
-     FROM sugo_history WHERE user_id = ? AND workspace_name = ? AND task_id IN (${placeholders})`,
-    [userId2, workspaceName, ...ids]
-  );
-  const lastWorkedAt = activity[0]?.last_worked_at ?? null;
+  const lastWorkedAt = await resolveLastWorkedAt(db2, userId2, workspaceName, specId, now, rows);
   await db2.exec("DELETE FROM sugo_schedule_spec_archives WHERE user_id = ? AND workspace_name = ? AND spec_id = ?", [userId2, workspaceName, specId]);
   await db2.exec(
     `INSERT INTO sugo_schedule_spec_archives
@@ -46920,16 +46938,23 @@ async function listScheduleSpecArchives(db2, userId2, page = 1, pageSize = 20, w
   const [{ total }] = await db2.query(`SELECT COUNT(*) AS total FROM sugo_schedule_spec_archives ${where}`, params);
   const offset = (page - 1) * pageSize;
   const items = await db2.query(
-    `SELECT workspace_name, spec_id, title, reason, archived_at,
-       CASE WHEN last_worked_at = archived_at THEN NULL ELSE last_worked_at END AS last_worked_at, archived_by
+    `SELECT workspace_name, spec_id, title, reason, archived_at, last_worked_at, archived_by
      FROM sugo_schedule_spec_archives ${where} ORDER BY archived_at DESC LIMIT ? OFFSET ?`,
     [...params, pageSize, offset]
   );
+  for (const item of items) {
+    if (item.last_worked_at && Date.parse(item.last_worked_at) !== Date.parse(item.archived_at)) continue;
+    item.last_worked_at = await resolveLastWorkedAt(db2, userId2, item.workspace_name, item.spec_id, item.archived_at);
+    await db2.exec(
+      "UPDATE sugo_schedule_spec_archives SET last_worked_at = ? WHERE user_id = ? AND workspace_name = ? AND spec_id = ?",
+      [item.last_worked_at, userId2, item.workspace_name, item.spec_id]
+    );
+  }
   return { items, total: Number(total), page, pageSize, hasMore: offset + items.length < Number(total) };
 }
 async function restoreScheduleSpec(db2, userId2, workspaceName, specId) {
   const rows = await db2.query(
-    "SELECT id, parent, level, title, manual_title FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    "SELECT id, parent, level, title, manual_title, manual_at, blocker_answered_at FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
     [userId2, workspaceName]
   );
   if (!rows.some((row) => row.id === specId && row.level === "spec")) return false;
@@ -90969,7 +90994,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname7(fileURLToPath4(import.meta.url));
-    pkg = "0.52.1" ? { version: "0.52.1" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.52.2" ? { version: "0.52.2" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91093,7 +91118,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.52.1", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.52.2", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

@@ -86,7 +86,9 @@ export async function listArchivedScheduleMemos(db: DbClient, userId: string, pa
   const [{ total }] = await db.query<{ total: number }>("SELECT COUNT(*) AS total FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL", [userId]);
   const offset = (page - 1) * pageSize;
   const items = await db.query<ScheduleMemo>(
-    "SELECT id, title, content_md, due_date, created_at, updated_at, archived_at FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL ORDER BY archived_at DESC LIMIT ? OFFSET ?",
+    `SELECT id, title, content_md, due_date, created_at,
+       CASE WHEN updated_at = archived_at THEN created_at ELSE updated_at END AS updated_at, archived_at
+     FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL ORDER BY archived_at DESC LIMIT ? OFFSET ?`,
     [userId, pageSize, offset],
   );
   return { items, total: Number(total), page, pageSize, hasMore: offset + items.length < Number(total) };

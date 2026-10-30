@@ -20,7 +20,15 @@ export interface ScheduleSpecArchivePage {
   hasMore: boolean;
 }
 
-interface NodeRow { id: string; parent: string | null; level: string; title: string; manual_title: string | null }
+interface NodeRow {
+  id: string;
+  parent: string | null;
+  level: string;
+  title: string;
+  manual_title: string | null;
+  manual_at: string | null;
+  blocker_answered_at: string | null;
+}
 
 export async function ensureScheduleSpecArchiveLastWorkedAtColumn(db: DbClient): Promise<void> {
   try { await db.query("SELECT last_worked_at FROM sugo_schedule_spec_archives LIMIT 1"); return; } catch { /* upgrade schema */ }
@@ -39,25 +47,47 @@ function subtree(rows: NodeRow[], rootId: string): string[] {
   return [...found];
 }
 
+function latestBefore(values: Array<string | null | undefined>, before: string): string | null {
+  const limit = Date.parse(before);
+  return values
+    .filter((value): value is string => Boolean(value) && Number.isFinite(Date.parse(value!)) && Date.parse(value!) < limit)
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null;
+}
+
+async function resolveLastWorkedAt(db: DbClient, userId: string, workspaceName: string, specId: string, archivedAt: string, rows?: NodeRow[]): Promise<string | null> {
+  const nodes = rows ?? await db.query<NodeRow>(
+    "SELECT id, parent, level, title, manual_title, manual_at, blocker_answered_at FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    [userId, workspaceName],
+  );
+  const ids = subtree(nodes, specId);
+  const placeholders = ids.map(() => "?").join(", ");
+  const [history] = await db.query<{ activity_at: string | null }>(
+    `SELECT MAX(COALESCE(completed_at, created_at)) AS activity_at
+     FROM sugo_history WHERE user_id = ? AND workspace_name = ? AND task_id IN (${placeholders})`,
+    [userId, workspaceName, ...ids],
+  );
+  const [commitment] = await db.query<{ activity_at: string | null }>(
+    "SELECT MAX(updated_at) AS activity_at FROM sugo_schedule_commitments WHERE user_id = ? AND workspace_name = ? AND spec_id = ?",
+    [userId, workspaceName, specId],
+  );
+  const nodeActivity = nodes
+    .filter(node => ids.includes(node.id))
+    .flatMap(node => [node.manual_at, node.blocker_answered_at]);
+  return latestBefore([history?.activity_at, commitment?.activity_at, ...nodeActivity], archivedAt);
+}
+
 export async function archiveScheduleSpec(
   db: DbClient, userId: string, workspaceName: string, specId: string, reason: ScheduleSpecArchiveReason,
 ): Promise<ScheduleSpecArchive | null> {
   const rows = await db.query<NodeRow>(
-    "SELECT id, parent, level, title, manual_title FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    "SELECT id, parent, level, title, manual_title, manual_at, blocker_answered_at FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
     [userId, workspaceName],
   );
   const root = rows.find(row => row.id === specId && row.level === "spec");
   if (!root) return null;
   const now = new Date().toISOString();
   const title = root.manual_title ?? root.title;
-  const ids = subtree(rows, specId);
-  const placeholders = ids.map(() => "?").join(", ");
-  const activity = await db.query<{ last_worked_at: string | null }>(
-    `SELECT MAX(COALESCE(completed_at, created_at)) AS last_worked_at
-     FROM sugo_history WHERE user_id = ? AND workspace_name = ? AND task_id IN (${placeholders})`,
-    [userId, workspaceName, ...ids],
-  );
-  const lastWorkedAt = activity[0]?.last_worked_at ?? null;
+  const lastWorkedAt = await resolveLastWorkedAt(db, userId, workspaceName, specId, now, rows);
   await db.exec("DELETE FROM sugo_schedule_spec_archives WHERE user_id = ? AND workspace_name = ? AND spec_id = ?", [userId, workspaceName, specId]);
   await db.exec(
     `INSERT INTO sugo_schedule_spec_archives
@@ -91,17 +121,24 @@ export async function listScheduleSpecArchives(db: DbClient, userId: string, pag
   const [{ total }] = await db.query<{ total: number }>(`SELECT COUNT(*) AS total FROM sugo_schedule_spec_archives ${where}`, params);
   const offset = (page - 1) * pageSize;
   const items = await db.query<ScheduleSpecArchive>(
-    `SELECT workspace_name, spec_id, title, reason, archived_at,
-       CASE WHEN last_worked_at = archived_at THEN NULL ELSE last_worked_at END AS last_worked_at, archived_by
+    `SELECT workspace_name, spec_id, title, reason, archived_at, last_worked_at, archived_by
      FROM sugo_schedule_spec_archives ${where} ORDER BY archived_at DESC LIMIT ? OFFSET ?`,
     [...params, pageSize, offset],
   );
+  for (const item of items) {
+    if (item.last_worked_at && Date.parse(item.last_worked_at) !== Date.parse(item.archived_at)) continue;
+    item.last_worked_at = await resolveLastWorkedAt(db, userId, item.workspace_name, item.spec_id, item.archived_at);
+    await db.exec(
+      "UPDATE sugo_schedule_spec_archives SET last_worked_at = ? WHERE user_id = ? AND workspace_name = ? AND spec_id = ?",
+      [item.last_worked_at, userId, item.workspace_name, item.spec_id],
+    );
+  }
   return { items, total: Number(total), page, pageSize, hasMore: offset + items.length < Number(total) };
 }
 
 export async function restoreScheduleSpec(db: DbClient, userId: string, workspaceName: string, specId: string): Promise<boolean> {
   const rows = await db.query<NodeRow>(
-    "SELECT id, parent, level, title, manual_title FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
+    "SELECT id, parent, level, title, manual_title, manual_at, blocker_answered_at FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?",
     [userId, workspaceName],
   );
   if (!rows.some(row => row.id === specId && row.level === "spec")) return false;

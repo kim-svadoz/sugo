@@ -40,12 +40,16 @@ describe("Schedule memo API", () => {
   });
 
   it("삭제한 메모를 보관함에서 조회하고 원문 그대로 복구한다", async () => {
-    const { app, auth } = await boot();
+    const { app, db, auth } = await boot();
     const created = await request(app).post("/api/schedule/memos").set("Authorization", auth).send({
       title: "배포 메모", contentMd: "## 확인\n- STG 로그", dueDate: "2026-10-23",
     }).expect(201);
 
     await request(app).delete(`/api/schedule/memos/${created.body.memo.id}`).set("Authorization", auth).expect(200);
+    await db.exec(
+      "UPDATE sugo_schedule_memos SET created_at = ?, updated_at = archived_at WHERE user_id = ? AND id = ?",
+      ["2026-09-10T08:15:00.000Z", "memo-owner", created.body.memo.id],
+    );
     expect((await request(app).get("/api/schedule/memos").set("Authorization", auth).expect(200)).body.memos).toEqual([]);
 
     const archived = await request(app).get("/api/schedule/memos/archive").set("Authorization", auth).expect(200);
@@ -54,6 +58,7 @@ describe("Schedule memo API", () => {
       title: "배포 메모",
       content_md: "## 확인\n- STG 로그",
       due_date: "2026-10-23",
+      updated_at: "2026-09-10T08:15:00.000Z",
       archived_at: expect.any(String),
     })]);
 
