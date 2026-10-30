@@ -78,9 +78,8 @@ export function Preferences() {
       </div>
       {selectedRegion && <p className="mt-3 text-xs text-emerald-300">Home 날씨에 자동 적용됩니다.</p>}
     </section> : <section>
-      <h2 className="text-base font-semibold text-slate-100">주간 작업 리포트</h2><p className="mt-1 text-xs leading-5 text-slate-400">Sugo가 등록된 작업을 매주 정리해 Weekly에 남깁니다. 일정, Claude 모델과 예약 실행 토큰을 여기서 함께 관리합니다.</p>
-      {weeklyLoading ? <p className="mt-5 text-xs text-slate-500">설정을 불러오는 중입니다.</p> : <>
-      <div className="mt-6 grid gap-4 border-y border-white/[0.06] py-5 sm:grid-cols-[12rem_minmax(0,1fr)_auto] sm:items-center">
+      {weeklyLoading ? <p className="text-xs text-slate-500">설정을 불러오는 중입니다.</p> : <>
+      <div className="grid gap-4 border-b border-white/[0.06] pb-5 sm:grid-cols-[12rem_minmax(0,1fr)_auto] sm:items-center">
         <div><div className="text-sm font-semibold text-[var(--color-text)]">자동 주간 정리</div><p className="mt-1 text-[10px] leading-4 text-[var(--color-text-muted)]">정한 요일과 시각에 실행</p></div>
         <p className="text-xs leading-5 text-[var(--color-text-muted)]">{weekly.enabled ? "완료 기록을 한 주 단위로 묶어 Weekly에 남깁니다. 아래에서 일정과 실행 토큰을 정하고 저장하면 예약에 적용됩니다." : "자동으로 만들지 않습니다. 필요할 때 /sugo:weekly로 직접 만들 수 있습니다."}</p>
         <div className="flex items-center gap-3">
