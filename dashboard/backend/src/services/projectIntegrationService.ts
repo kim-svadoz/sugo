@@ -24,6 +24,22 @@ export async function recordRegisteredProject(db: DbClient, userId: string, work
   }
 }
 
+export async function ownsProject(db: DbClient, userId: string, projectPath: string): Promise<boolean> {
+  const rows = await db.query('SELECT 1 FROM sugo_workspace_projects p JOIN sugo_workspaces w ON w.id = p.workspace_id WHERE w.user_id = ? AND p.project_path = ?', [userId, projectPath]);
+  return Boolean(rows[0]);
+}
+
+export async function forgetRegisteredProject(db: DbClient, userId: string, projectPath: string): Promise<void> {
+  await db.exec('DELETE FROM sugo_workspace_projects WHERE project_path = ? AND workspace_id IN (SELECT id FROM sugo_workspaces WHERE user_id = ?)', [projectPath, userId]);
+  await db.exec('DELETE FROM user_project_integration_mappings WHERE user_id = ? AND project_path = ?', [userId, projectPath]);
+}
+
+export async function moveRegisteredProject(db: DbClient, userId: string, from: string, to: string): Promise<void> {
+  await db.exec('UPDATE sugo_workspace_projects SET project_path = ? WHERE project_path = ? AND workspace_id IN (SELECT id FROM sugo_workspaces WHERE user_id = ?)', [to, from, userId]);
+  await db.exec('UPDATE user_project_integration_mappings SET project_path = ? WHERE user_id = ? AND project_path = ?', [to, userId, from]);
+  await db.exec('UPDATE sugo_roadmap_nodes SET project_path = ? WHERE user_id = ? AND project_path = ?', [to, userId, from]);
+}
+
 function selectionKey(item: ProjectIntegrationSelection): string { return `${item.accountName}\u0000${item.cluster ?? ''}\u0000${item.service}\u0000${item.environment}`; }
 
 async function integrationCandidates(db: DbClient, userId: string) {

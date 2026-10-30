@@ -86,7 +86,7 @@ describe("sugo_reset — 적용된 하네스만 지우고 등록은 유지", () 
   });
 });
 
-describe("sugo_delete — 레지스트리에서만 제거(파일은 안 건드림)", () => {
+describe("sugo_delete — 등록 해제", () => {
   it("delete 후 sugo_status에서 사라진다", async () => {
     await call(handleSugoAdd, { projectPath: projectDir });
     const del = await call(handleSugoDelete, { projectPath: projectDir });

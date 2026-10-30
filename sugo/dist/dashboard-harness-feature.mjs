@@ -292,15 +292,18 @@ function mergeRootClaudeReference(existing, appliedHarnessIds) {
   const content = before + block + after;
   return { content, changed: content !== base };
 }
-function removeRootClaudeReference(existing) {
+function removeManagedBlock(existing, start, end) {
   const base = existing ?? "";
-  const startIdx = base.indexOf(BLOCK_START);
-  const endIdx = base.indexOf(BLOCK_END);
+  const startIdx = base.indexOf(start);
+  const endIdx = base.indexOf(end);
   if (startIdx === -1 || endIdx === -1) return { content: base, changed: false };
   const before = base.slice(0, startIdx).trimEnd();
-  const after = base.slice(endIdx + BLOCK_END.length).trimStart();
+  const after = base.slice(endIdx + end.length).trimStart();
   const content = [before, after].filter(Boolean).join("\n\n") + (before || after ? "\n" : "");
   return { content, changed: content !== base };
+}
+function removeRootClaudeReference(existing) {
+  return removeManagedBlock(existing, BLOCK_START, BLOCK_END);
 }
 function mergeRootAgentsReference(existing) {
   const block = `${AGENTS_BLOCK_START}
@@ -1351,7 +1354,7 @@ var init_sync = __esm({
 });
 
 // src/harness/featureControl.ts
-import { readFile as readFile6, unlink as unlink3 } from "node:fs/promises";
+import { access as access2, readFile as readFile6, unlink as unlink3 } from "node:fs/promises";
 import { join as join9 } from "node:path";
 async function suspendProjectHarness(projectPath) {
   const config = await loadProjectConfig(projectPath);
@@ -1366,7 +1369,10 @@ async function suspendProjectHarness(projectPath) {
 }
 async function setHarnessFeatureEnabled(enabled) {
   await saveHarnessFeatureState({ enabled });
-  const projects = await loadRegistry();
+  const registered = await loadRegistry();
+  const present = await Promise.all(registered.map((project) => access2(project.path).then(() => true, () => false)));
+  const projects = registered.filter((_, index) => present[index]);
+  const skippedProjects = registered.filter((_, index) => !present[index]).map((project) => project.path);
   if (enabled) {
     const { syncProjectHarness: syncProjectHarness2 } = await Promise.resolve().then(() => (init_sync(), sync_exports));
     for (const project of projects) {
@@ -1375,7 +1381,7 @@ async function setHarnessFeatureEnabled(enabled) {
   } else {
     for (const project of projects) await suspendProjectHarness(project.path);
   }
-  return { enabled, projectCount: projects.length };
+  return { enabled, projectCount: projects.length, skippedProjects };
 }
 var init_featureControl = __esm({
   "src/harness/featureControl.ts"() {

@@ -16,6 +16,74 @@ async function seedProject(db: ReturnType<typeof createSqliteClient>, userId: st
 }
 
 describe("/api/project-integrations", () => {
+  it("removes an owned project through the Sugo engine and forgets its Console rows", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    const authorization = await seedProject(db, "u1", "orders", "/work/orders-api");
+    await db.exec("INSERT INTO user_project_integration_mappings (user_id, project_path, selections, updated_at) VALUES (?, ?, ?, ?)", ["u1", "/work/orders-api", "[]", "2026-10-30T00:00:00Z"]);
+    const removed: string[] = [];
+    const { app } = await createApp({ db, projectManager: {
+      remove: async (projectPath) => { removed.push(projectPath); return { ok: true, projectPath, folderMissing: false, removedFiles: [".claude/rules/default.md"], workspaces: ["orders"] }; },
+      move: async () => { throw new Error("unused"); },
+    } });
+
+    const response = await request(app).post("/api/project-integrations/remove").set("Authorization", authorization).send({ projectPath: "/work/orders-api" }).expect(200);
+
+    expect(removed).toEqual(["/work/orders-api"]);
+    expect(response.body.removedFiles).toEqual([".claude/rules/default.md"]);
+    const listed = await request(app).get("/api/project-integrations").set("Authorization", authorization).expect(200);
+    expect(listed.body.projects).toEqual([]);
+    expect(await db.query("SELECT 1 FROM user_project_integration_mappings")).toEqual([]);
+  });
+
+  it("refuses to remove or move a project the user does not own", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    await seedProject(db, "owner", "orders", "/work/orders-api");
+    const authorization = await seedUserToken(db, "intruder");
+    const calls: string[] = [];
+    const { app } = await createApp({ db, projectManager: {
+      remove: async (projectPath) => { calls.push(projectPath); throw new Error("must not run"); },
+      move: async (from) => { calls.push(from); throw new Error("must not run"); },
+    } });
+
+    await request(app).post("/api/project-integrations/remove").set("Authorization", authorization).send({ projectPath: "/work/orders-api" }).expect(404);
+    await request(app).post("/api/project-integrations/move").set("Authorization", authorization).send({ from: "/work/orders-api", to: "/work/elsewhere" }).expect(404);
+    expect(calls).toEqual([]);
+  });
+
+  it("moves an owned project and rewrites its Console paths", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    const authorization = await seedProject(db, "u1", "orders", "/work/orders-api");
+    await db.exec("INSERT INTO user_project_integration_mappings (user_id, project_path, selections, updated_at) VALUES (?, ?, ?, ?)", ["u1", "/work/orders-api", "[]", "2026-10-30T00:00:00Z"]);
+    const { app } = await createApp({ db, projectManager: {
+      remove: async () => { throw new Error("unused"); },
+      move: async (from, to) => ({ ok: true, from, to, workspace: "orders", removedFiles: [] }),
+    } });
+
+    await request(app).post("/api/project-integrations/move").set("Authorization", authorization).send({ from: "/work/orders-api", to: "/work/orders-api-v2" }).expect(200);
+
+    const listed = await request(app).get("/api/project-integrations").set("Authorization", authorization).expect(200);
+    expect(listed.body.projects).toEqual([expect.objectContaining({ workspace_name: "orders", project_path: "/work/orders-api-v2", configured: true })]);
+  });
+
+  it("passes engine refusals back as conflicts without touching Console rows", async () => {
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    const authorization = await seedProject(db, "u1", "orders", "/work/orders-api");
+    const { app } = await createApp({ db, projectManager: {
+      remove: async () => { throw new Error("unused"); },
+      move: async () => { throw Object.assign(new Error("이미 등록된 경로입니다."), { code: "PROJECT_ALREADY_REGISTERED" }); },
+    } });
+
+    const response = await request(app).post("/api/project-integrations/move").set("Authorization", authorization).send({ from: "/work/orders-api", to: "/work/other" }).expect(409);
+
+    expect(response.body).toMatchObject({ error: "PROJECT_ALREADY_REGISTERED", message: "이미 등록된 경로입니다." });
+    const listed = await request(app).get("/api/project-integrations").set("Authorization", authorization).expect(200);
+    expect(listed.body.projects).toEqual([expect.objectContaining({ project_path: "/work/orders-api" })]);
+  });
+
   it("registers a local project through the shared Sugo registrar", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);

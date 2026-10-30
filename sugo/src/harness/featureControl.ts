@@ -1,4 +1,4 @@
-import { readFile, unlink } from "node:fs/promises";
+import { access, readFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { atomicWriteFile } from "../fsUtil.js";
 import { loadProjectConfig } from "./config.js";
@@ -17,9 +17,13 @@ export async function suspendProjectHarness(projectPath: string): Promise<void> 
   if (next.changed) await atomicWriteFile(rootPath, next.content);
 }
 
-export async function setHarnessFeatureEnabled(enabled: boolean): Promise<{ enabled: boolean; projectCount: number }> {
+export async function setHarnessFeatureEnabled(enabled: boolean): Promise<{ enabled: boolean; projectCount: number; skippedProjects: string[] }> {
   await saveHarnessFeatureState({ enabled });
-  const projects = await loadRegistry();
+  const registered = await loadRegistry();
+  // 폴더가 사라진 프로젝트에 규칙을 쓰면 지운 폴더가 다시 생긴다.
+  const present = await Promise.all(registered.map((project) => access(project.path).then(() => true, () => false)));
+  const projects = registered.filter((_, index) => present[index]);
+  const skippedProjects = registered.filter((_, index) => !present[index]).map((project) => project.path);
   if (enabled) {
     const { syncProjectHarness } = await import("./sync.js");
     for (const project of projects) {
@@ -28,5 +32,5 @@ export async function setHarnessFeatureEnabled(enabled: boolean): Promise<{ enab
   } else {
     for (const project of projects) await suspendProjectHarness(project.path);
   }
-  return { enabled, projectCount: projects.length };
+  return { enabled, projectCount: projects.length, skippedProjects };
 }

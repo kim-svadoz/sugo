@@ -24,7 +24,7 @@ export function HarnessFeaturePanel() {
 
   return <section>
     <h2 className="text-base font-semibold text-slate-100">하네스 사용</h2>
-    <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">프로젝트에 Sugo 코딩 규칙을 제공할지 선택합니다.</p>
+    <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">프로젝트에 Sugo 코딩 규칙을 제공할지 선택합니다. 바꾼 설정은 새로 여는 Claude 세션부터 적용되므로, 이미 열려 있는 세션은 다시 시작하세요.</p>
     {error && <p className="mt-3 text-xs text-rose-300">{error}</p>}
     <div className="mt-6 divide-y divide-white/[0.06] border-y border-white/[0.06]">
       <div className="grid gap-4 py-5 sm:grid-cols-[12rem_minmax(0,1fr)_auto] sm:items-center">

@@ -4,6 +4,13 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.64.0 / Console 0.54.0] - 2026-10-30
+
+- Integrations › 프로젝트에 프로젝트 관리 탭을 추가했습니다. 등록된 프로젝트의 경로를 바꾸거나 Sugo에서 뺄 수 있고, 빼기 전에 지워지는 Sugo 파일을 알려 줍니다.
+- 프로젝트를 Sugo에서 빼면(`sugo_delete` 포함) 자동으로 읽히는 Sugo 파일(.claude/rules/의 Sugo 규칙, CLAUDE.md·AGENTS.md의 Sugo 블록, sugo/harness·설정)만 지우고 PRD·스펙·작업 결과는 남깁니다.
+- 하네스를 다시 켤 때 폴더가 사라진 프로젝트는 건너뛰어, 지운 폴더가 다시 생기지 않습니다.
+- 하네스 설정 화면에 바꾼 설정이 새로 여는 Claude 세션부터 적용된다는 안내를 넣었습니다.
+
 ## [Plugin 0.63.6 / Console 0.53.6] - 2026-10-30
 
 - 도메인 관리 화면 위쪽 상태 카드에서 보조 문구를 없애고 상태 한 줄만 보여 줍니다.

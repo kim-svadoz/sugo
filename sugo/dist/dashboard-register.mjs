@@ -523,15 +523,18 @@ function mergeRootClaudeReference(existing, appliedHarnessIds) {
   const content = before + block + after;
   return { content, changed: content !== base };
 }
-function removeRootClaudeReference(existing) {
+function removeManagedBlock(existing, start, end) {
   const base = existing ?? "";
-  const startIdx = base.indexOf(BLOCK_START);
-  const endIdx = base.indexOf(BLOCK_END);
+  const startIdx = base.indexOf(start);
+  const endIdx = base.indexOf(end);
   if (startIdx === -1 || endIdx === -1) return { content: base, changed: false };
   const before = base.slice(0, startIdx).trimEnd();
-  const after = base.slice(endIdx + BLOCK_END.length).trimStart();
+  const after = base.slice(endIdx + end.length).trimStart();
   const content = [before, after].filter(Boolean).join("\n\n") + (before || after ? "\n" : "");
   return { content, changed: content !== base };
+}
+function removeRootClaudeReference(existing) {
+  return removeManagedBlock(existing, BLOCK_START, BLOCK_END);
 }
 function mergeRootAgentsReference(existing) {
   const block = `${AGENTS_BLOCK_START}
@@ -1207,7 +1210,7 @@ var init_featureState = __esm({
 });
 
 // src/harness/featureControl.ts
-import { readFile as readFile5, unlink as unlink2 } from "node:fs/promises";
+import { access, readFile as readFile5, unlink as unlink2 } from "node:fs/promises";
 import { join as join8 } from "node:path";
 async function suspendProjectHarness(projectPath) {
   const config = await loadProjectConfig(projectPath);
@@ -1232,7 +1235,7 @@ var init_featureControl = __esm({
 });
 
 // src/harness/sync.ts
-import { access, mkdir as mkdir6, readFile as readFile6, unlink as unlink3 } from "node:fs/promises";
+import { access as access2, mkdir as mkdir6, readFile as readFile6, unlink as unlink3 } from "node:fs/promises";
 import { basename, dirname as dirname7, join as join9 } from "node:path";
 async function writeTextIfChanged(path, content) {
   const existing = await readFile6(path, "utf-8").catch(() => null);
@@ -1248,7 +1251,7 @@ async function syncProjectHarness(args) {
   const manifest = existingManifest ? { ...existingManifest, projectPath } : {
     version: 1,
     projectPath,
-    sugoDirExisted: await access(sugoDir).then(() => true, () => false),
+    sugoDirExisted: await access2(sugoDir).then(() => true, () => false),
     rootClaudeOriginal: fileBaseline(await readFile6(rootClaudePath, "utf8").catch(() => null)),
     rootAgentsOriginal: fileBaseline(await readFile6(rootAgentsPath, "utf8").catch(() => null)),
     managedFiles: []
@@ -1360,7 +1363,7 @@ var init_sync = __esm({
 // src/projectRegistration.ts
 init_homeDir();
 init_sync();
-import { access as access2, readdir as readdir2, stat as stat2 } from "node:fs/promises";
+import { access as access3, readdir as readdir2, stat as stat2 } from "node:fs/promises";
 import { join as join12, resolve as resolve2 } from "node:path";
 
 // src/work/workspace.ts
@@ -1639,7 +1642,7 @@ async function assertProjectDirectory(projectPath) {
 }
 async function assertProjectRegistrationAllowed() {
   const retainedData = join12(sugoHomeDir(), ".sugo", "data");
-  if (await access2(retainedData).then(() => true, () => false)) {
+  if (await access3(retainedData).then(() => true, () => false)) {
     throw Object.assign(new Error("\uBE44\uD65C\uC131 \uBCF4\uAD00\uB41C Sugo \uB370\uC774\uD130\uC758 \uBCF5\uAD6C \uB610\uB294 \uD3D0\uAE30\uB97C \uBA3C\uC800 \uACB0\uC815\uD574\uC57C \uD569\uB2C8\uB2E4."), { code: "RETAINED_DATA_DECISION_REQUIRED" });
   }
 }

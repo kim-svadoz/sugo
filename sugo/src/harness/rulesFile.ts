@@ -94,16 +94,25 @@ export function mergeRootClaudeReference(
   return { content, changed: content !== base };
 }
 
-/** 사람이 작성한 본문은 보존하고 Sugo 하네스 자동 로딩 블록만 제거한다. */
-export function removeRootClaudeReference(existing: string | null): { content: string; changed: boolean } {
+function removeManagedBlock(existing: string | null, start: string, end: string): { content: string; changed: boolean } {
   const base = existing ?? "";
-  const startIdx = base.indexOf(BLOCK_START);
-  const endIdx = base.indexOf(BLOCK_END);
+  const startIdx = base.indexOf(start);
+  const endIdx = base.indexOf(end);
   if (startIdx === -1 || endIdx === -1) return { content: base, changed: false };
   const before = base.slice(0, startIdx).trimEnd();
-  const after = base.slice(endIdx + BLOCK_END.length).trimStart();
+  const after = base.slice(endIdx + end.length).trimStart();
   const content = [before, after].filter(Boolean).join("\n\n") + (before || after ? "\n" : "");
   return { content, changed: content !== base };
+}
+
+/** 사람이 작성한 본문은 보존하고 Sugo 하네스 자동 로딩 블록만 제거한다. */
+export function removeRootClaudeReference(existing: string | null): { content: string; changed: boolean } {
+  return removeManagedBlock(existing, BLOCK_START, BLOCK_END);
+}
+
+/** 사람이 작성한 본문은 보존하고 Sugo 프로젝트 컨텍스트 블록만 제거한다. */
+export function removeRootAgentsReference(existing: string | null): { content: string; changed: boolean } {
+  return removeManagedBlock(existing, AGENTS_BLOCK_START, AGENTS_BLOCK_END);
 }
 
 /**

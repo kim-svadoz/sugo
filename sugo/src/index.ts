@@ -328,7 +328,7 @@ server.registerTool(
   {
     title: "Unregister a project from the global registry",
     description:
-      "레지스트리(등록 목록)에서만 제거한다 — 프로젝트의 실제 파일(sugo/**)은 지우지 않는다.",
+      "등록과 워크스페이스 소속을 풀고, 프로젝트에서 자동으로 읽히는 Sugo 파일(.claude/rules/의 Sugo 규칙, CLAUDE.md·AGENTS.md의 Sugo 블록, sugo/harness·config)만 지운다. PRD·스펙·작업 결과는 남긴다.",
     inputSchema: sugoDeleteInputSchema,
   },
   handleSugoDelete,

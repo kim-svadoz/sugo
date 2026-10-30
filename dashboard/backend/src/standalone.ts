@@ -70,6 +70,7 @@ process.env.WEEKLY_HOME ??= join(sugoHome, ".weekly");
 process.env.SUGO_INTEGRATION_FEATURES_PATH ??= join(sugoDir, "integration-features.json");
 process.env.SUGO_HARNESS_FEATURE_PATH ??= join(sugoDir, "harness-feature.json");
 process.env.SUGO_HARNESS_FEATURE_ENGINE ??= join(pluginRoot, "dist", "dashboard-harness-feature.mjs");
+process.env.SUGO_PROJECT_MANAGE_ENGINE ??= join(pluginRoot, "dist", "dashboard-project-manage.mjs");
 
 const { createApp } = await import("./index.js");
 const { bootstrapLocalDashboard } = await import("./localBootstrap.js");

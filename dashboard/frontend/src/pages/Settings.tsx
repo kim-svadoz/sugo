@@ -11,6 +11,7 @@ import {
 import { createToken, listTokens, revokeToken, type ApiTokenSummary } from "../api/tokensApi.js";
 import { connectAwsContext, disconnectAwsContext, getAwsContext, getAwsProfiles, refreshAllAwsContexts, refreshAwsContext, reorderAwsContexts, selectAwsContext, updateAwsContext, type AwsContextStatus } from "../api/awsContextApi.js";
 import { connectPinpointContext, disconnectPinpointContext, getPinpointContext, refreshPinpointContext, type PinpointStatus } from '../api/pinpointContextApi.js';
+import { ProjectManagementPanel } from '../components/ProjectManagementPanel.js';
 import { browseLocalDirectories, getProjectIntegrations, registerProject, saveProjectIntegration, selectNativeProjectDirectory, type IntegrationCandidate, type LocalDirectoryListing, type ProjectIntegration } from '../api/projectIntegrationsApi.js';
 import { groupProjectsByWorkspace, hasIntegrationSelectionChanges, initialIntegrationSelection, integrationCandidateMatchLabel, integrationStatusLabel, isExactIntegrationCandidate, partitionIntegrationCandidates, summarizeSavedIntegrations } from "../lib/projectIntegrationPresentation.js";
 import { getAwsGuardPolicy, saveAwsGuardPolicy, type AwsGuardPolicy } from "../api/awsGuardPolicyApi.js";
@@ -27,7 +28,7 @@ const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 const contextAutoRefreshDescription = "Console이 켜져 있으면 매일 이 PC 시간 기준 08:00에 자동으로 동기화합니다. 꺼져 있었다면 다음에 켜질 때 동기화하고, 언제든 직접 동기화할 수 있습니다.";
 
 type IntegrationSectionId = "aws" | "pinpoint" | "projects" | "git";
-type IntegrationViewId = IntegrationSectionId | "catalog" | "overview" | "registration" | "serviceMapping";
+type IntegrationViewId = IntegrationSectionId | "catalog" | "overview" | "registration" | "projectManage" | "serviceMapping";
 const INTEGRATION_SECTIONS: ReadonlyArray<{ id: IntegrationSectionId; label: string; description: string; group: string; icon: LucideIcon }> = [
   { id: "aws", label: "AWS", description: "배포와 클라우드 리소스", group: "데이터 연결", icon: Cloud },
   { id: "pinpoint", label: "APM", description: "실행 상태와 성능 지표", group: "데이터 연결", icon: Activity },
@@ -632,7 +633,7 @@ export function Settings() {
   }
 
   const repositorySummary = summarizeRepositoryConnections(workspaces);
-  const activeGroup = selectedSection === "registration"
+  const activeGroup = selectedSection === "registration" || selectedSection === "projectManage"
     ? "projects"
     : selectedSection === "overview"
       ? "status"
@@ -663,7 +664,9 @@ export function Settings() {
       {activeGroup === "services" && <nav aria-label="외부 서비스 설정" className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2">
         {[{ id: "aws" as const, label: "AWS 계정" }, { id: "git" as const, label: "PR 연동" }, { id: "serviceMapping" as const, label: "서비스 상태 연동" }, { id: "pinpoint" as const, label: "모니터링" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
       </nav>}
-      {activeGroup === "projects" && <nav aria-label="프로젝트 설정" className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2"><button type="button" aria-pressed="true" className="border-b-2 border-cyan-300 px-4 py-3 text-sm font-semibold text-cyan-100">프로젝트 등록</button></nav>}
+      {activeGroup === "projects" && <nav aria-label="프로젝트 설정" className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2">
+        {[{ id: "registration" as const, label: "프로젝트 등록" }, { id: "projectManage" as const, label: "프로젝트 관리" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
+      </nav>}
       {activeGroup === "status" && <nav aria-label="연결 현황 설정" className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2"><button type="button" aria-pressed="true" className="border-b-2 border-cyan-300 px-4 py-3 text-sm font-semibold text-cyan-100">연결 현황</button></nav>}
 
       {!LOCAL_DEV && <ApiTokensCard />}
@@ -674,6 +677,7 @@ export function Settings() {
       {selectedSection === "aws" && !sectionBlocked && <AwsContextCard expanded onToggle={() => undefined} focused onConnectionChange={setAwsConnected} />}
       {selectedSection === "pinpoint" && !sectionBlocked && <PinpointContextCard expanded onToggle={() => undefined} focused onConnectionChange={setPinpointConnected} />}
       {selectedSection === "registration" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} registrationOnly />}
+      {selectedSection === "projectManage" && <ProjectManagementPanel />}
       {selectedSection === "serviceMapping" && !sectionBlocked && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} awsConnected={awsConnected} onConfigureAws={() => setSelectedSection("aws")} />}
 
       {(selectedSection === "overview" || selectedSection === "git") && !sectionBlocked && <div id="integration-git" className="scroll-mt-24 overflow-hidden">
