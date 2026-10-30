@@ -5,6 +5,9 @@ import { getHarnessManifest, getHarnessSource, resetHarnessOverride, saveHarness
 import { groupHarnessManifest, harnessCategoryLabel, harnessVersion, simplifyHarnessHeading, type HarnessTechnology } from "../lib/harnessCatalog.js";
 import { cn } from "../lib/utils.js";
 import { PageHeading } from "../components/PageHeading.js";
+import { getHarnessFeature } from "../api/harnessFeatureApi.js";
+import { NoticeBar } from "../components/NoticeBar.js";
+import { useNavigate } from "react-router-dom";
 
 // Harness — unified 마크다운 렌더 + manifest 칩. 데이터는 백엔드 /api/harness(HARNESS_PATH).
 export function Harness() {
@@ -20,6 +23,14 @@ export function Harness() {
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const [harnessOff, setHarnessOff] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let cancelled = false;
+    getHarnessFeature().then((value) => { if (!cancelled) setHarnessOff(!value.enabled); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     getHarnessManifest()
@@ -77,6 +88,7 @@ export function Harness() {
   return (
     <div className="harness-page settings-square space-y-3 2xl:space-y-5">
       <PageHeading eyebrow="ENGINEERING HARNESS" title="하네스 규칙" description="기술과 버전에 맞는 검증 규칙을 선택하고, 프로젝트마다 일관된 개발 기준을 적용합니다." />
+      {harnessOff && <NoticeBar title="하네스가 꺼져 있어 코드 품질 규칙을 적용하지 않습니다." detail="규칙과 직접 고친 내용은 그대로 남아 있고, 다시 켜면 돌아옵니다." actionLabel="하네스 설정 열기" onAction={() => navigate("/preferences?tab=harness")} />}
       <section className="grid gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.035] p-3 md:grid-cols-3 2xl:p-4" aria-label="하네스 사용 안내">
         {[['01', '기술 선택', '프로젝트에 사용하는 프레임워크·언어·빌드 도구를 고릅니다.'], ['02', '버전 확인', '선택한 기술의 버전에 맞는 기본 규칙을 확인합니다.'], ['03', '프로젝트 적용', '저장한 규칙은 다음 동기화부터 해당 프로젝트의 검증 기준으로 사용됩니다.']].map(([step, title, text]) => <div key={step} className="flex min-w-0 gap-2 max-[1900px]:gap-1.5"><span className="shrink-0 font-mono text-[10px] font-semibold text-cyan-300">{step}</span><div className="min-w-0"><h2 className="text-[13px] font-semibold text-slate-100 max-[1900px]:text-[11px]">{title}</h2><p className="mt-0.5 text-[11px] leading-4 text-slate-400 max-[1900px]:text-[10px] max-[1900px]:leading-[1.45]">{text}</p></div></div>)}
       </section>
