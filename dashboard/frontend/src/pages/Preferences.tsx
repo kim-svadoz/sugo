@@ -80,7 +80,7 @@ export function Preferences() {
     </section> : <section>
       {weeklyLoading ? <p className="text-xs text-slate-500">설정을 불러오는 중입니다.</p> : <>
       <div className="grid gap-4 border-b border-white/[0.06] pb-5 sm:grid-cols-[12rem_minmax(0,1fr)_auto] sm:items-center">
-        <div><div className="text-sm font-semibold text-[var(--color-text)]">자동 주간 정리</div><p className="mt-1 text-[10px] leading-4 text-[var(--color-text-muted)]">정한 요일과 시각에 실행</p></div>
+        <div><h2 className="text-base font-semibold text-slate-100">자동 주간 정리</h2><p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">정한 요일과 시각에 실행</p></div>
         <p className="text-xs leading-5 text-[var(--color-text-muted)]">{weekly.enabled ? "완료 기록을 한 주 단위로 묶어 Weekly에 남깁니다. 아래에서 일정과 실행 토큰을 정하고 저장하면 예약에 적용됩니다." : "자동으로 만들지 않습니다. 필요할 때 /sugo:weekly로 직접 만들 수 있습니다."}</p>
         <div className="flex items-center gap-3">
           <span className={cn("text-[11px]", weekly.enabled ? "text-cyan-200" : "text-slate-500")}>{weekly.enabled ? "켜짐" : "꺼짐"}</span>
