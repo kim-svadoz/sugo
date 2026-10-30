@@ -80,7 +80,7 @@ export function SchedulePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { data: workspaces, error: workspaceError } = useWorkspaces();
-  const { data: specs, memos, commitments, archives, memoArchives, refetch } = useSchedule();
+  const { data: specs, memos, commitments, archives, memoArchives, archivePagination, memoArchivePagination, setArchivePage, setMemoArchivePage, refetch } = useSchedule();
   const reviewWorkspace = searchParams.get("reviewWorkspace");
   const reviewSpec = searchParams.get("reviewSpec");
   const returnTo = searchParams.get("returnTo");
@@ -484,7 +484,7 @@ export function SchedulePage() {
         <div className="flex h-9 items-center gap-2">
           <button type="button" onClick={() => setTrashOpen(true)} className="relative flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white" title="삭제하거나 종료한 작업 보기">
             <Archive size={15} /> 보관함
-            {archives.length + memoArchives.length > 0 && <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 font-mono text-[9px] text-slate-300">{archives.length + memoArchives.length}</span>}
+            {archivePagination.total + memoArchivePagination.total > 0 && <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 font-mono text-[9px] text-slate-300">{archivePagination.total + memoArchivePagination.total}</span>}
           </button>
           <div className="flex items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1" aria-label="일정 보기 방식">
             <button
@@ -1078,7 +1078,7 @@ export function SchedulePage() {
         </div>
       )}
 
-      {trashOpen && <SpecArchiveModal items={archives} memos={memoArchives} busy={busy} onClose={() => setTrashOpen(false)} onRestore={async item => { if (!userId) return; setBusy(true); try { await restoreScheduleSpec(userId, item.workspace_name, item.spec_id); refetch(); } catch { setErrorMsg("개발 항목을 복구하지 못했습니다."); } finally { setBusy(false); } }} onRestoreMemo={async memo => { if (!userId) return; setBusy(true); try { await restoreScheduleMemo(userId, memo.id); refetch(); } catch { setErrorMsg("메모를 복구하지 못했습니다."); } finally { setBusy(false); } }} />}
+      {trashOpen && <SpecArchiveModal items={archives} memos={memoArchives} specPagination={archivePagination} memoPagination={memoArchivePagination} onSpecPageChange={setArchivePage} onMemoPageChange={setMemoArchivePage} busy={busy} onClose={() => setTrashOpen(false)} onRestore={async item => { if (!userId) return; setBusy(true); try { await restoreScheduleSpec(userId, item.workspace_name, item.spec_id); refetch(); } catch { setErrorMsg("개발 항목을 복구하지 못했습니다."); } finally { setBusy(false); } }} onRestoreMemo={async memo => { if (!userId) return; setBusy(true); try { await restoreScheduleMemo(userId, memo.id); refetch(); } catch { setErrorMsg("메모를 복구하지 못했습니다."); } finally { setBusy(false); } }} />}
 
       {/* 경량 Spec 추가("+ SPEC 일정 추가") */}
       {addOpen && (

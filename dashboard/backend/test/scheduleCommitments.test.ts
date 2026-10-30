@@ -22,6 +22,25 @@ async function boot() {
 }
 
 describe("Schedule commitment API", () => {
+  it("보관 SPEC을 최근 순으로 20개씩 나누고 마지막 작업일을 별도로 돌려준다", async () => {
+    const { app, db, auth } = await boot();
+    for (let i = 1; i <= 21; i++) await db.exec(
+      `INSERT INTO sugo_schedule_spec_archives
+        (user_id, workspace_name, spec_id, reason, title, archived_at, last_worked_at, archived_by)
+       VALUES (?, ?, ?, 'closed', ?, ?, ?, ?)`,
+      ["commitment-owner", "orders", `archived-${i}`, `보관 ${i}`, `2026-10-${String(i).padStart(2, "0")}T12:00:00.000Z`, `2026-09-${String(Math.min(i, 30)).padStart(2, "0")}T08:00:00.000Z`, "commitment-owner"],
+    );
+
+    const first = await request(app).get("/api/schedule/specs/archive?page=1&pageSize=20&workspace=orders&reason=closed").set("Authorization", auth).expect(200);
+    expect(first.body.specs).toHaveLength(20);
+    expect(first.body.pagination).toMatchObject({ total: 21, page: 1, pageSize: 20, hasMore: true });
+    expect(first.body.specs[0]).toMatchObject({ spec_id: "archived-21", last_worked_at: expect.any(String), archived_at: expect.any(String) });
+
+    const second = await request(app).get("/api/schedule/specs/archive?page=2&pageSize=20&workspace=orders&reason=closed").set("Authorization", auth).expect(200);
+    expect(second.body.specs).toHaveLength(1);
+    expect(second.body.pagination).toMatchObject({ total: 21, page: 2, pageSize: 20, hasMore: false });
+  });
+
   it("정식 SPEC도 삭제·종료 이유를 구분해 보관하고 복구한다", async () => {
     const { app, db, auth } = await boot();
 

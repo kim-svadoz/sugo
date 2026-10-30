@@ -85,7 +85,7 @@ export function Skills() {
   const commandCount = skills.filter(skill => skill.kind === "command" || skill.command).length;
   const commonCount = skills.filter(skill => skill.kind === "skill" && !skill.agent).length;
 
-  return <div className="space-y-5">
+  return <div className="mx-auto w-full max-w-[1680px] space-y-5">
     <PageHeading eyebrow="AI CAPABILITIES" title="스킬 카탈로그" description={catalogView === "skills" ? "AI가 작업 중 적용하는 전문 규칙과 역할을 확인합니다." : "사용자가 직접 시작할 수 있는 명령을 확인합니다."} action={<span className="font-mono text-xs text-[var(--color-text-dim)]">{skillCount} skills · {commandCount} commands</span>} />
 
     {!empty && <section className="overflow-hidden rounded-xl border border-cyan-300/15 bg-gradient-to-r from-cyan-400/[0.045] via-[var(--color-surface)] to-violet-400/[0.04] p-4" aria-label="Sugo 에이전트 작업 조직도">

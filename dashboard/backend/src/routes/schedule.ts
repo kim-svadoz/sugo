@@ -44,6 +44,12 @@ const specArchiveBody = z.object({
   reason: z.enum(["deleted", "closed"]),
 }).strict();
 const specRestoreBody = specArchiveBody.omit({ reason: true });
+const archivePageQuery = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  workspace: z.string().trim().min(1).max(255).optional(),
+  reason: z.enum(["deleted", "closed"]).optional(),
+});
 
 export function createScheduleRouter(db: DbClient, sessionSecret: string): Router {
   const router = Router();
@@ -53,7 +59,11 @@ export function createScheduleRouter(db: DbClient, sessionSecret: string): Route
     try { res.json({ memos: await listScheduleMemos(db, _req.userId!) }); } catch (error) { next(error); }
   });
   router.get("/memos/archive", async (req, res, next) => {
-    try { res.json({ memos: await listArchivedScheduleMemos(db, req.userId!) }); } catch (error) { next(error); }
+    try {
+      const query = archivePageQuery.omit({ workspace: true, reason: true }).parse(req.query);
+      const result = await listArchivedScheduleMemos(db, req.userId!, query.page, query.pageSize);
+      res.json({ memos: result.items, pagination: result });
+    } catch (error) { next(error); }
   });
   router.post("/memos", validateBody(memoBody), async (req, res, next) => {
     try { res.status(201).json({ memo: await createScheduleMemo(db, req.userId!, req.body) }); } catch (error) { next(error); }
@@ -88,7 +98,11 @@ export function createScheduleRouter(db: DbClient, sessionSecret: string): Route
     try { res.json({ commitments: await listScheduleCommitments(db, req.userId!) }); } catch (error) { next(error); }
   });
   router.get("/specs/archive", async (req, res, next) => {
-    try { res.json({ specs: await listScheduleSpecArchives(db, req.userId!) }); } catch (error) { next(error); }
+    try {
+      const query = archivePageQuery.parse(req.query);
+      const result = await listScheduleSpecArchives(db, req.userId!, query.page, query.pageSize, query.workspace, query.reason);
+      res.json({ specs: result.items, pagination: result });
+    } catch (error) { next(error); }
   });
   router.post("/specs/archive", validateBody(specArchiveBody), async (req, res, next) => {
     try {

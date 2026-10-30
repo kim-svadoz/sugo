@@ -12,7 +12,7 @@ describe("canvas selection interaction", () => {
   it("정상 종료 SPEC은 폐기함과 분리된 보관함에서 복구한다", () => {
     const source = readFileSync(new URL("./RoadmapGraph.tsx", import.meta.url), "utf8");
     expect(source).toContain("보관함");
-    expect(source).toContain('archive.reason === "closed"');
+    expect(source).toContain('getScheduleSpecArchives(userId, archivePage, 20, workspace, "closed")');
     expect(source).toContain("restoreScheduleSpec");
   });
 

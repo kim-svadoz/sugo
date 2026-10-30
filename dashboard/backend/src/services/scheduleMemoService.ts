@@ -11,6 +11,8 @@ export interface ScheduleMemo {
   archived_at?: string | null;
 }
 
+export interface ScheduleMemoPage { items: ScheduleMemo[]; total: number; page: number; pageSize: number; hasMore: boolean }
+
 export async function ensureScheduleMemoArchivedAtColumn(db: DbClient): Promise<void> {
   try { await db.query("SELECT archived_at FROM sugo_schedule_memos LIMIT 1"); return; } catch { /* upgrade schema */ }
   await db.exec("ALTER TABLE sugo_schedule_memos ADD COLUMN archived_at TIMESTAMP NULL DEFAULT NULL");
@@ -74,17 +76,20 @@ export async function setScheduleMemoDueDate(
 
 export async function deleteScheduleMemo(db: DbClient, userId: string, id: string): Promise<boolean> {
   const result = await db.exec(
-    "UPDATE sugo_schedule_memos SET archived_at = ?, updated_at = ? WHERE user_id = ? AND id = ? AND archived_at IS NULL",
-    [new Date().toISOString(), new Date().toISOString(), userId, id],
+    "UPDATE sugo_schedule_memos SET archived_at = ? WHERE user_id = ? AND id = ? AND archived_at IS NULL",
+    [new Date().toISOString(), userId, id],
   );
   return result.affectedRows > 0;
 }
 
-export async function listArchivedScheduleMemos(db: DbClient, userId: string): Promise<ScheduleMemo[]> {
-  return db.query<ScheduleMemo>(
-    "SELECT id, title, content_md, due_date, created_at, updated_at, archived_at FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL ORDER BY archived_at DESC",
-    [userId],
+export async function listArchivedScheduleMemos(db: DbClient, userId: string, page = 1, pageSize = 20): Promise<ScheduleMemoPage> {
+  const [{ total }] = await db.query<{ total: number }>("SELECT COUNT(*) AS total FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL", [userId]);
+  const offset = (page - 1) * pageSize;
+  const items = await db.query<ScheduleMemo>(
+    "SELECT id, title, content_md, due_date, created_at, updated_at, archived_at FROM sugo_schedule_memos WHERE user_id = ? AND archived_at IS NOT NULL ORDER BY archived_at DESC LIMIT ? OFFSET ?",
+    [userId, pageSize, offset],
   );
+  return { items, total: Number(total), page, pageSize, hasMore: offset + items.length < Number(total) };
 }
 
 export async function restoreScheduleMemo(db: DbClient, userId: string, id: string): Promise<boolean> {

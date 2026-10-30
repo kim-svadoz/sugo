@@ -44,7 +44,7 @@ import { filesForRoadmapScope, reviewArtifactLocator } from "./fileViewerModel.j
 import { taskGuidance } from "../../lib/taskGuidance.js";
 import { focusPathIds, focusRootId } from "./focusPath.js";
 import { presentSteKorean } from "../../lib/steKorean.js";
-import { getScheduleSpecArchives, restoreScheduleSpec, type ScheduleSpecArchive } from "../../api/scheduleSpecArchiveApi.js";
+import { getScheduleSpecArchives, restoreScheduleSpec, type ArchivePagination, type ScheduleSpecArchive } from "../../api/scheduleSpecArchiveApi.js";
 import { SpecArchiveModal } from "../SpecArchiveModal.js";
 
 /** 카드·컨테이너 치수 상수. */
@@ -1093,6 +1093,8 @@ export function RoadmapGraph({
   const [binOpen, setBinOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [archives, setArchives] = useState<ScheduleSpecArchive[]>([]);
+  const [archivePage, setArchivePage] = useState(1);
+  const [archivePagination, setArchivePagination] = useState<ArchivePagination>({ total: 0, page: 1, pageSize: 20, hasMore: false });
   const [busy, setBusy] = useState(false);
   /** 펼친 SPEC/RUN/lineage 집합. SPEC은 기본 펼침, lineage는 RUN을 열었을 때 계보가 곧바로
    * 보이도록 기본 펼침이다. RUN 자체는 접어서 첫 화면의 최상위 구조를 유지한다. */
@@ -1107,9 +1109,10 @@ export function RoadmapGraph({
 
   const refreshArchives = useCallback(async () => {
     if (!userId) return;
-    const items = await getScheduleSpecArchives(userId);
-    setArchives(items.filter((archive) => archive.workspace_name === workspace && archive.reason === "closed"));
-  }, [userId, workspace]);
+    const result = await getScheduleSpecArchives(userId, archivePage, 20, workspace, "closed");
+    setArchives(result.items);
+    setArchivePagination(result.pagination);
+  }, [userId, workspace, archivePage]);
 
   useEffect(() => { void refreshArchives(); }, [refreshArchives]);
 
@@ -1587,13 +1590,13 @@ export function RoadmapGraph({
               🗑️ 폐기함 {droppedTop.length}
             </button>
           )}
-          {archives.length > 0 && (
+          {archivePagination.total > 0 && (
             <button
               onClick={() => setArchiveOpen(true)}
               className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-xs text-[var(--color-text-muted)] hover:border-cyan-400/50 hover:text-cyan-300"
               title="보관함 — 정상 종료한 SPEC 보기/복구"
             >
-              🗄️ 보관함 {archives.length}
+              🗄️ 보관함 {archivePagination.total}
             </button>
           )}
         </div>
@@ -1826,7 +1829,7 @@ export function RoadmapGraph({
         </div>
       )}
 
-      {archiveOpen && <SpecArchiveModal items={archives} busy={busy} onClose={() => setArchiveOpen(false)} onRestore={(archive) => void run(async () => { await restoreScheduleSpec(userId!, workspace, archive.spec_id); await refreshArchives(); })} />}
+      {archiveOpen && <SpecArchiveModal items={archives} specPagination={archivePagination} onSpecPageChange={setArchivePage} busy={busy} onClose={() => setArchiveOpen(false)} onRestore={(archive) => void run(async () => { await restoreScheduleSpec(userId!, workspace, archive.spec_id); await refreshArchives(); })} />}
     </div>
   );
 }

@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (
   reason TEXT NOT NULL CHECK (reason IN ('deleted','closed')),
   title TEXT NOT NULL,
   archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_worked_at TEXT,
   archived_by TEXT NOT NULL,
   PRIMARY KEY (user_id, workspace_name, spec_id)
 );

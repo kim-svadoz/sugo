@@ -15,7 +15,7 @@ describe("Weekly index presentation", () => {
   });
 
   it("keeps the weekly index readable at laptop and wide-monitor widths", () => {
-    expect(source).toContain("mx-auto w-full max-w-[1680px]");
+    expect(source).toContain('return <div className="w-full space-y-5"');
     expect(source).toContain("min-[1100px]:grid-cols-[minmax(0,1fr)_clamp(280px,22vw,330px)]");
     expect(source).toContain("px-4 py-3");
     expect(source).toContain("text-[12.5px] leading-5");
