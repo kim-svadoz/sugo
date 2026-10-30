@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { marked } from "marked";
-import { Boxes, ChevronRight, Layers3, Pencil, RotateCcw } from "lucide-react";
+import { Boxes, Check, ChevronRight, Layers3, Pencil, RotateCcw, X } from "lucide-react";
 import { getHarnessManifest, getHarnessSource, resetHarnessOverride, saveHarnessOverride, type HarnessManifestEntry } from "../api/catalogApi.js";
 import { groupHarnessManifest, harnessCategoryLabel, harnessVersion, simplifyHarnessHeading, type HarnessTechnology } from "../lib/harnessCatalog.js";
 import { cn } from "../lib/utils.js";
@@ -19,6 +19,7 @@ export function Harness() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   useEffect(() => {
     getHarnessManifest()
@@ -53,6 +54,7 @@ export function Harness() {
     let cancelled = false;
     setContentLoading(true);
     setEditing(false);
+    setConfirmingReset(false);
     getHarnessSource(selectedId)
       .then((value) => { if (!cancelled) { setContent(value.content); setDraft(value.content); setCustomized(value.customized); } })
       .catch(() => !cancelled && setContent(""))
@@ -68,7 +70,7 @@ export function Harness() {
   };
   const reset = async () => {
     setSaving(true);
-    try { await resetHarnessOverride(selectedId); const value = await getHarnessSource(selectedId); setContent(value.content); setDraft(value.content); setCustomized(false); setEditing(false); }
+    try { await resetHarnessOverride(selectedId); const value = await getHarnessSource(selectedId); setContent(value.content); setDraft(value.content); setCustomized(false); setEditing(false); setConfirmingReset(false); }
     finally { setSaving(false); }
   };
 
@@ -85,7 +87,7 @@ export function Harness() {
         </div>
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="하네스 카테고리">
           {categories.map((key) => (
-            <button key={key} role="tab" aria-selected={category === key} onClick={() => setCategory(key)} className={cn("min-w-[108px] rounded-lg border px-4 py-1.5 text-[12px] font-semibold transition-colors", category === key ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-200" : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-cyan-400/30 hover:text-[var(--color-text)]")}>{harnessCategoryLabel(key)}<span className="ml-1.5 font-mono text-[9px] opacity-60">{groups.filter((group) => group.category === key).length}</span></button>
+            <button key={key} role="tab" aria-selected={category === key} onClick={() => setCategory(key)} className={cn("min-w-[108px] rounded-lg border px-4 py-1.5 text-[12px] font-semibold transition-colors", category === key ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-200" : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-cyan-400/30 hover:text-[var(--color-text)]")}>{harnessCategoryLabel(key)}</button>
           ))}
         </div>
       </section>
@@ -98,10 +100,10 @@ export function Harness() {
           </p>
         </div>
       ) : (
-        <div className="grid min-h-0 grid-cols-[minmax(300px,0.58fr)_minmax(0,2.42fr)] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] max-[1900px]:grid-cols-[280px_minmax(0,1fr)]">
-          <section className="border-r border-[var(--color-border)] p-4 max-[1900px]:p-3 2xl:p-5">
+        <div className="grid min-h-0 grid-cols-[minmax(270px,0.48fr)_minmax(0,2.52fr)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] max-[1900px]:grid-cols-[250px_minmax(0,1fr)]">
+          <section className="border-r border-[var(--color-border)] p-3 2xl:p-4">
             <div className="mb-2.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-dim)]"><Boxes size={13} /> 기술 선택</div>
-            <div className={cn("grid gap-2", visibleGroups.length === 1 ? "grid-cols-1" : "grid-cols-2")}>
+            <div className="divide-y divide-[var(--color-border)] overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-background)]/35">
               {visibleGroups.map((group) => <TechnologyCard key={group.key} group={group} selected={technologyKey === group.key} onClick={() => setTechnologyKey(group.key)} />)}
             </div>
           </section>
@@ -112,16 +114,17 @@ export function Harness() {
                 {selectedTechnology?.versions.map((entry) => <button key={String(entry.id)} aria-pressed={selectedId === entry.id} onClick={() => setSelectedId(String(entry.id))} className={cn("rounded-lg border px-2.5 py-2 text-left font-mono text-[11px] transition-colors max-[1900px]:px-2 max-[1900px]:text-[10px]", selectedId === entry.id ? "border-[var(--color-action-primary)]/60 bg-[var(--color-action-primary)]/10 text-cyan-200" : "border-transparent text-[var(--color-text-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-text)]")}>{harnessVersion(entry)}</button>)}
               </div>
             </aside>
-            <div className="min-h-0 p-4 2xl:p-6">
-              <div className="mb-4 flex items-center justify-between gap-3 border-b border-[var(--color-border)] pb-4">
-                <div><span className={cn("rounded-md px-2 py-1 font-mono text-[11px]", customized ? "bg-amber-400/10 text-amber-200" : "bg-cyan-400/10 text-cyan-200")}>{customized ? "사용자 수정" : "Sugo 기본값"}</span><p className="mt-2 text-[11px] text-[var(--color-text-dim)]">저장한 규칙은 다음 프로젝트 동기화부터 적용됩니다.</p></div>
-                <div className="flex gap-2">
-                  {customized && <button disabled={saving} onClick={reset} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><RotateCcw size={13} /> 기본값 복원</button>}
-                  {editing ? <><button onClick={() => { setDraft(content); setEditing(false); }} className="px-3 py-2 text-xs text-[var(--color-text-muted)]">취소</button><button disabled={saving || !draft.trim()} onClick={save} className="rounded-lg bg-cyan-500 px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-40">{saving ? "저장 중…" : "저장"}</button></> : <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 px-3 py-2 text-xs font-semibold text-cyan-200"><Pencil size={13} /> 내 규칙으로 수정</button>}
+            <div className="min-h-0 p-4 2xl:p-5">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] pb-3">
+                <div className="flex items-center gap-2"><span className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-[10px]", customized ? "bg-amber-400/10 text-amber-200" : "bg-emerald-400/10 text-emerald-200")}>{customized ? <Pencil size={11} /> : <Check size={11} />}{customized ? "사용자 규칙 적용 중" : "Sugo 기본 규칙"}</span><span className="text-[11px] text-[var(--color-text-dim)]">다음 프로젝트 동기화부터 반영</span></div>
+                <div className="flex items-center gap-2">
+                  <button disabled={saving || !customized} onClick={() => { setEditing(false); setConfirmingReset(true); }} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 py-2 text-[11px] text-[var(--color-text-muted)] transition-colors hover:border-amber-300/30 hover:text-amber-100 disabled:cursor-not-allowed disabled:opacity-35"><RotateCcw size={13} /> Sugo 기본값으로 초기화</button>
+                  {editing ? <><button onClick={() => { setDraft(content); setEditing(false); }} className="inline-flex items-center gap-1 px-3 py-2 text-[11px] text-[var(--color-text-muted)]"><X size={13} /> 취소</button><button disabled={saving || !draft.trim()} onClick={save} className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-400 px-3 py-2 text-[11px] font-semibold text-slate-950 disabled:opacity-40"><Check size={13} /> {saving ? "저장 중…" : "규칙 저장"}</button></> : <button onClick={() => { setConfirmingReset(false); setEditing(true); }} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-400/[0.04] px-3 py-2 text-[11px] font-semibold text-cyan-200"><Pencil size={13} /> 사용자 규칙 편집</button>}
                 </div>
               </div>
+              {confirmingReset && <div role="alertdialog" aria-label="하네스 규칙 초기화 확인" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300/20 bg-amber-300/[0.05] px-3 py-2.5"><div><p className="text-[12px] font-semibold text-amber-100">사용자 규칙을 삭제하고 Sugo 기본값으로 되돌릴까요?</p><p className="mt-0.5 text-[10px] text-[var(--color-text-dim)]">현재 선택한 기술과 버전에만 적용됩니다.</p></div><div className="flex gap-2"><button onClick={() => setConfirmingReset(false)} className="px-2.5 py-1.5 text-[11px] text-[var(--color-text-muted)]">취소</button><button disabled={saving} onClick={reset} className="rounded-md border border-amber-300/30 px-2.5 py-1.5 text-[11px] font-semibold text-amber-100">{saving ? "초기화 중…" : "기본값으로 초기화"}</button></div></div>}
               <div className="ck-scroll h-[clamp(320px,calc(100vh-350px),720px)] min-h-0 overflow-y-auto pr-3">
-                {contentLoading ? <div className="py-12 text-center font-mono text-sm text-[var(--color-text-dim)]">규칙을 불러오는 중…</div> : editing ? <textarea aria-label="하네스 규칙 편집" value={draft} onChange={(event) => setDraft(event.target.value)} className="min-h-full w-full resize-none rounded-xl border border-cyan-400/30 bg-[var(--color-background)] p-4 font-mono text-[13px] leading-6 text-[var(--color-text)] outline-none focus:border-cyan-400/70" /> : html ? <article className="md-body" dangerouslySetInnerHTML={{ __html: html }} /> : <div className="py-12 text-center text-sm text-[var(--color-text-muted)]">표시할 하네스 본문이 없습니다.</div>}
+                {contentLoading ? <div className="py-12 text-center font-mono text-xs text-[var(--color-text-dim)]">규칙을 불러오는 중…</div> : editing ? <div className="flex h-full min-h-[320px] flex-col"><div className="mb-2 flex items-center justify-between"><p className="text-[11px] font-semibold text-[var(--color-text)]">사용자 규칙 편집</p><span className="font-mono text-[9px] text-[var(--color-text-dim)]">MARKDOWN</span></div><textarea autoFocus aria-label="하네스 규칙 편집" value={draft} onChange={(event) => setDraft(event.target.value)} className="min-h-[300px] flex-1 resize-y rounded-lg border border-cyan-400/25 bg-[var(--color-background)] p-4 font-mono text-[12px] leading-5 text-[var(--color-text)] outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10" /></div> : html ? <article className="md-body harness-rule-body" dangerouslySetInnerHTML={{ __html: html }} /> : <div className="py-12 text-center text-sm text-[var(--color-text-muted)]">표시할 하네스 본문이 없습니다.</div>}
               </div>
             </div>
           </section>
@@ -132,5 +135,5 @@ export function Harness() {
 }
 
 function TechnologyCard({ group, selected, onClick }: { group: HarnessTechnology; selected: boolean; onClick: () => void }) {
-  return <button onClick={onClick} className={cn("group flex min-h-16 min-w-0 items-center justify-between gap-1 rounded-xl border p-3 text-left transition-all max-[1900px]:min-h-14 max-[1900px]:p-2", selected ? "-translate-y-0.5 border-cyan-400/60 bg-cyan-400/[0.07] shadow-[0_0_24px_rgba(34,211,238,0.08)]" : "border-[var(--color-border)] bg-[var(--color-background)]/50 hover:border-cyan-400/30 hover:bg-cyan-400/[0.03]")}><span className="min-w-0"><span className="block truncate text-[14px] font-semibold capitalize text-[var(--color-text-bright)] max-[1900px]:text-[12px]">{group.technology}</span><span className="mt-0.5 block text-nowrap font-mono text-[9px] text-[var(--color-text-dim)]">{group.versions.length}개 규칙 세트</span></span><ChevronRight size={15} className={cn("shrink-0 transition-transform", selected ? "translate-x-0.5 text-cyan-300" : "text-[var(--color-text-dim)] group-hover:translate-x-0.5")} /></button>;
+  return <button onClick={onClick} aria-pressed={selected} className={cn("group flex min-h-12 w-full min-w-0 items-center justify-between gap-2 border-l-2 px-3 py-2.5 text-left transition-colors", selected ? "border-l-cyan-300 bg-cyan-400/[0.07]" : "border-l-transparent hover:bg-cyan-400/[0.025]")}><span className={cn("min-w-0 truncate text-[13px] font-semibold capitalize", selected ? "text-cyan-100" : "text-[var(--color-text)]")}>{group.technology}</span><ChevronRight size={14} className={cn("shrink-0 transition-transform", selected ? "translate-x-0.5 text-cyan-300" : "text-[var(--color-text-dim)] group-hover:translate-x-0.5")} /></button>;
 }
