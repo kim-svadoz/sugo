@@ -58,9 +58,9 @@ export function clampTourTargetRect(rect: RawRect, viewport: TourViewport, reque
   return { top, left, right, bottom, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
 }
 
-export function positionTourCard(rect: TourRect, viewport: TourViewport): TourCardPosition {
+export function positionTourCard(rect: TourRect, viewport: TourViewport, cardHeight = CARD_ESTIMATED_HEIGHT): TourCardPosition {
   const width = Math.min(420, viewport.width - EDGE * 2);
-  const estimatedHeight = Math.min(CARD_ESTIMATED_HEIGHT, viewport.height - EDGE * 2);
+  const estimatedHeight = Math.min(cardHeight, viewport.height - EDGE * 2);
   const rightSide = rect.right + CARD_GAP;
   const leftSide = rect.left - CARD_GAP - width;
   const place = (left: number, top: number): TourCardPosition => ({

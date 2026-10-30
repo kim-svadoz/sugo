@@ -12,11 +12,7 @@ import { buildSevenDayFeed, filterNewsByRegion, type NewsRegion } from "../lib/t
 import { selectLearningReviewNote, type LearningReviewNote } from "../lib/homeLearningReview.js";
 import { technicalIdentifierParts } from "../lib/technicalIdentifiers.js";
 import { dailyGreeting } from "../lib/homeGreeting.js";
-import { useProfile } from "../hooks/useProfile.js";
-import { getWeatherRegion } from "../lib/weatherPreferences.js";
-import { getWeeklySettings } from "../api/weeklyApi.js";
 import { useOnboardingGuide } from "../components/OnboardingGuideContext.js";
-import { NoticeBar } from "../components/NoticeBar.js";
 
 function relativeTime(value: string): string {
   const hours = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 3_600_000));
@@ -135,14 +131,11 @@ function TechBrief({ feed, userId }: { feed: NewsFeed | null; userId: string | n
 export function Home() {
   const { data: specs, loading } = useSchedule();
   const { userId } = useAuth();
-  const { profile } = useProfile(userId);
   const navigate = useNavigate();
   const { setPlaybookGuideVisible } = useOnboardingGuide();
   const [newsFeed, setNewsFeed] = useState<NewsFeed | null>(null);
   const [selectedNote, setSelectedNote] = useState<LearningReviewNote | null>(null);
-  const [weeklyConfigured, setWeeklyConfigured] = useState<boolean | null>(null);
   const [showPlaybookGuide, setShowPlaybookGuide] = useState(false);
-  const setupMissing = [!profile?.displayName ? "표시 이름" : null, !getWeatherRegion() ? "날씨 생활권" : null, weeklyConfigured === false ? "주간 리포트" : null].filter(Boolean) as string[];
   const brief = useMemo(() => buildHomeBrief(specs ?? []), [specs]);
   const review = useMemo(() => recentReview(specs ?? []), [specs]);
   const notes = useMemo(() => new Map(review.items.flatMap(({ spec, histories }) => {
@@ -168,16 +161,10 @@ export function Home() {
     setPlaybookGuideVisible(showPlaybookGuide);
     return () => setPlaybookGuideVisible(false);
   }, [setPlaybookGuideVisible, showPlaybookGuide]);
-  useEffect(() => {
-    let cancelled = false;
-    getWeeklySettings().then((settings) => { if (!cancelled) setWeeklyConfigured(settings.configured); }).catch(() => { if (!cancelled) setWeeklyConfigured(null); });
-    return () => { cancelled = true; };
-  }, []);
 
   return <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-5">
     <section className="flex items-start justify-between gap-4 pt-1"><div><h1 className="text-[30px] font-semibold tracking-[-0.035em] text-[var(--color-text-bright)]">{dailyGreeting()}</h1><p className="mt-2 text-[14px] text-[var(--color-text-muted)]">{loading ? "개발 기록을 정리하고 있습니다." : brief.decisions.length > 0 ? `오늘 확인할 리뷰가 ${brief.decisions.length}개 있습니다.` : "지금 확인할 리뷰는 없습니다."}</p></div></section>
 
-    {setupMissing.length > 0 && <NoticeBar title="처음 설정을 마치면 Home이 내 작업 방식에 맞춰집니다." detail={`남은 설정 · ${setupMissing.join(" · ")}`} actionLabel="설정 이어가기" onAction={() => navigate(`/preferences?tab=${setupMissing[0] === "날씨 생활권" ? "weather" : setupMissing[0] === "주간 리포트" ? "weekly" : "general"}`)} />}
 
     <section className="relative overflow-hidden rounded-2xl border border-cyan-300/15 bg-[linear-gradient(110deg,rgba(8,47,73,.42),rgba(10,18,32,.92)_48%,rgba(76,29,149,.16))] px-5 py-4" aria-label="오늘의 Sugo 작업 장면">
       <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-cyan-300/[0.06] blur-3xl" />

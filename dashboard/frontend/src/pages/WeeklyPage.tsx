@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { getWeeklyReport, listWeeklyReports, type WeeklyReportDetail, type WeeklyReportSummary } from "../api/weeklyApi.js";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { getWeeklyReport, getWeeklySettings, listWeeklyReports, type WeeklyReportDetail, type WeeklyReportSummary } from "../api/weeklyApi.js";
 import { toWeeklyView, type WeeklyLearningView, type WeeklyTopicView } from "../lib/weeklyPresentation.js";
 import { buildWeeklyCalendar } from "../lib/weeklyCalendar.js";
 import { cn } from "../lib/utils.js";
 import { PageHeading } from "../components/PageHeading.js";
+import { NoticeBar } from "../components/NoticeBar.js";
 import { readWeeklyRouteState, writeWeeklyRouteState, type WeeklyDetailView } from "../lib/weeklyRouteState.js";
 import { selectWeeklySection } from "../lib/weeklyScrollSpy.js";
 import { ArrowRight } from "lucide-react";
@@ -185,10 +186,13 @@ export function WeeklyPage() {
   const routeState = readWeeklyRouteState(searchParams);
   const selected = routeState.weekId;
   const [reports, setReports] = useState<WeeklyReportSummary[] | null>(null); const [detail, setDetail] = useState<WeeklyReportDetail | null>(null);
+  const navigate = useNavigate();
+  const [scheduleOff, setScheduleOff] = useState(false);
   useEffect(() => { listWeeklyReports().then(setReports).catch(() => setReports([])); }, []);
+  useEffect(() => { getWeeklySettings().then((settings) => setScheduleOff(!settings.enabled)).catch(() => setScheduleOff(false)); }, []);
   useEffect(() => { if (!selected) return setDetail(null); let cancelled = false; setDetail(null); getWeeklyReport(selected).then((value) => !cancelled && setDetail(value)).catch(() => !cancelled && setDetail(null)); return () => { cancelled = true; }; }, [selected]);
   const selectedReport = reports?.find((report) => report.weekId === selected);
-  return <div className="w-full space-y-5"><PageHeading eyebrow="WEEKLY REVIEW" title="주간 작업 리포트" description="한 주의 작업 결과와 기술 학습을 기록하고 다시 확인합니다." action={selected ? <button onClick={() => setSearchParams(writeWeeklyRouteState(searchParams, null, "report"), { replace: true })} className="text-sm font-semibold text-cyan-300 hover:text-cyan-100">← 주간 보고서 목록</button> : undefined} />{selected ? <>
+  return <div className="w-full space-y-5"><PageHeading eyebrow="WEEKLY REVIEW" title="주간 작업 리포트" description="한 주의 작업 결과와 기술 학습을 기록하고 다시 확인합니다." action={selected ? <button onClick={() => setSearchParams(writeWeeklyRouteState(searchParams, null, "report"), { replace: true })} className="text-sm font-semibold text-cyan-300 hover:text-cyan-100">← 주간 보고서 목록</button> : undefined} />{scheduleOff && <NoticeBar title="주간 리포트 자동 정리가 꺼져 있습니다." detail="켜면 정한 요일과 시각에 리포트를 만들고, 꺼져 있는 동안은 /sugo:weekly로 직접 만들 수 있습니다." actionLabel="주간 리포트 설정 열기" onAction={() => navigate("/preferences?tab=weekly")} />}{selected ? <>
     {selectedReport && <header className="flex justify-end"><p className="font-mono text-sm text-slate-400">{selectedReport.weekId} · {selectedReport.start} — {selectedReport.end}</p></header>}
     <main>{detail ? <ReportBody detail={detail} tab={routeState.view} onTabChange={(view) => setSearchParams(writeWeeklyRouteState(searchParams, selected, view), { replace: true })} /> : <div className="h-28 animate-pulse rounded-xl bg-[var(--color-surface)]" />}</main>
   </> : <>

@@ -1,11 +1,11 @@
 import { ArrowLeft, ArrowRight, CircleAlert, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { isTourHiddenToday, localDayKey, TOUR_HIDDEN_ON_KEY } from "../lib/onboardingTourVisibility.js";
 import { clampTourTargetRect, positionTourCard, rectInZoomedSpace, viewportInZoomedSpace, type TourRect, type TourViewport } from "../lib/onboardingTourGeometry.js";
 
 interface TourTarget {
-  key: "home" | "playbook" | "pipeline" | "workspaces";
+  key: "home" | "playbook" | "pipeline" | "preferences" | "workspaces";
   label: string;
   title: string;
   description: string;
@@ -17,6 +17,7 @@ const TOUR_TARGETS: TourTarget[] = [
   { key: "home", label: "HOME", title: "오늘 확인할 일을 먼저 모아봅니다", description: "진행 중인 작업, 내 확인이 필요한 일, 최근 완료 결과가 Home에 모입니다.", selector: '[data-onboarding-tour-target="home"]' },
   { key: "playbook", label: "PLAYBOOK", title: "처음 한 번은 작업 순서를 따라가세요", description: "Playbook은 프로젝트 등록부터 첫 완료까지 필요한 행동을 순서대로 보여주는 실행 가이드입니다.", selector: '[data-onboarding-tour-target="playbook"]' },
   { key: "pipeline", label: "PIPELINE", title: "AI 작업은 단계와 근거로 확인합니다", description: "구현, 테스트, 검토, 사용자 확인이 같은 흐름에 연결되고 현재 위치와 다음 행동이 표시됩니다.", selector: '[data-onboarding-tour-target="pipeline"] [data-tour-pipeline-stages]' },
+  { key: "preferences", label: "PREFERENCES", title: "내 환경은 Preferences에서 맞춥니다", description: "표시 이름, 날씨 생활권, 주간 리포트 일정을 정하면 Home 인사말과 날씨, 주간 정리가 내 환경에 맞춰집니다. 정하지 않아도 Sugo를 쓰는 데는 문제가 없습니다.", selector: '[data-onboarding-tour-target="preferences"]' },
   { key: "workspaces", label: "WORKSPACES", title: "프로젝트와 운영 상태는 도메인별로 이어집니다", description: "Workspaces에서 프로젝트의 작업 이력과 배포 상태를 확인합니다. 이제 첫 프로젝트를 등록해보세요.", selector: '[data-onboarding-tour-target="workspaces"]' },
 ];
 
@@ -70,6 +71,13 @@ export function NewUserPlaybookGuide({ visible, onDismiss }: { visible: boolean;
     return () => { window.clearTimeout(timer); observer.disconnect(); window.removeEventListener("resize", update); main?.removeEventListener("scroll", update); };
   }, [active, target.gap, target.selector]);
 
+  const cardRef = useRef<HTMLElement>(null);
+  const [cardHeight, setCardHeight] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    const height = cardRef.current?.scrollHeight;
+    if (height && height !== cardHeight) setCardHeight(height);
+  }, [cardHeight, rect, step]);
+
   const masks = useMemo(() => rect ? [
     { top: 0, left: 0, right: 0, height: rect.top },
     { top: rect.top, left: 0, width: rect.left, height: rect.height },
@@ -89,7 +97,7 @@ export function NewUserPlaybookGuide({ visible, onDismiss }: { visible: boolean;
   return <div className="fixed inset-0 z-[150]" role="dialog" aria-modal="true" aria-label="Sugo 시작 안내">
     {masks.map((style, index) => <div key={index} className="fixed bg-[#020711]/75 backdrop-blur-[1px]" style={style} />)}
     <div className="pointer-events-none fixed rounded-xl border border-cyan-200/80 shadow-[0_0_0_5px_rgba(103,232,249,.08),0_0_32px_rgba(34,211,238,.20)]" style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }} />
-    <section className="fixed overflow-y-auto rounded-2xl border border-cyan-200/25 bg-[#0a1627] p-5 shadow-[0_24px_70px_rgba(0,0,0,.55)]" style={positionTourCard(rect, tourViewport())}>
+    <section ref={cardRef} className="fixed overflow-y-auto rounded-2xl border border-cyan-200/25 bg-[#0a1627] p-5 shadow-[0_24px_70px_rgba(0,0,0,.55)]" style={positionTourCard(rect, tourViewport(), cardHeight)}>
       <div className="flex items-start justify-between gap-4"><span className="font-mono text-[10px] font-semibold tracking-[0.16em] text-cyan-300">{String(step + 1).padStart(2, "0")} · {target.label}</span><button type="button" onClick={close} aria-label="시작 안내 닫기" className="rounded-md p-1 text-slate-500 transition hover:bg-white/[0.05] hover:text-slate-200"><X size={15} /></button></div>
       <h2 className="mt-2 text-[17px] font-semibold tracking-[-0.02em] text-white">{target.title}</h2>
       <p className="mt-2 text-[12px] leading-6 text-slate-400">{target.description}</p>

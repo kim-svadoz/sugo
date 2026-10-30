@@ -24,6 +24,16 @@ describe("시작 투어 화면 배치", () => {
     expect(position.top + position.maxHeight).toBe(1_019);
   });
 
+  it("화면 아래쪽 대상이면 실제 카드 높이만큼 위로 올려 버튼이 잘리지 않게 한다", () => {
+    const position = positionTourCard(
+      { top: 690, left: 8, right: 183, bottom: 750, width: 175, height: 60 },
+      { width: 2_177, height: 984 },
+      290,
+    );
+
+    expect(position.top + 290).toBeLessThanOrEqual(968);
+  });
+
   it("브라우저 글자 확대에서도 내용이 잘리지 않도록 카드 높이를 강제하지 않는다", () => {
     const position = positionTourCard(
       { top: 340, left: 460, right: 990, bottom: 460, width: 530, height: 120 },
