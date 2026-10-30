@@ -37,6 +37,8 @@ import { createProjectIntegrationsRouter } from './routes/projectIntegrations.js
 import type { ProjectRegistrar } from './services/projectRegistrar.js';
 import { createAwsGuardPolicyRouter } from './routes/awsGuardPolicy.js';
 import { createIntegrationFeaturesRouter } from './routes/integrationFeatures.js';
+import { createHarnessFeatureRouter } from './routes/harnessFeature.js';
+import type { HarnessFeatureUpdater } from './services/harnessFeatureService.js';
 import { corsWhitelist } from "./middleware/cors.js";
 import { errorMiddleware } from "./middleware/asyncHandler.js";
 import { startContextAutoRefresh } from "./services/contextAutoRefreshService.js";
@@ -85,10 +87,12 @@ export interface AppOverrides {
   specAttachmentsPath?: string;
   awsGuardPolicyPath?: string;
   integrationFeaturesPath?: string;
+  harnessFeaturePath?: string;
   staticDir?: string;
   sqliteSchema?: InitDbOptions["sqliteSchema"];
   weeklySettingsService?: WeeklySettingsService;
   projectRegistrar?: ProjectRegistrar;
+  harnessFeatureUpdater?: HarnessFeatureUpdater;
 }
 
 export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
@@ -128,6 +132,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
   const integrationFeaturesPath = overrides.integrationFeaturesPath ?? config.integrationFeaturesPath;
+  const harnessFeaturePath = overrides.harnessFeaturePath ?? config.harnessFeaturePath;
   const weeklySettingsService = overrides.weeklySettingsService ?? createWeeklySettingsService();
 
   const app = express();
@@ -169,6 +174,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/aws-context", createAwsContextRouter(db, sessionSecret, awsContextClient));
   app.use("/api/aws-guard-policy", createAwsGuardPolicyRouter(db, sessionSecret, awsGuardPolicyPath));
   app.use("/api/integration-features", createIntegrationFeaturesRouter(db, sessionSecret, integrationFeaturesPath));
+  app.use("/api/harness-feature", createHarnessFeatureRouter(db, sessionSecret, harnessFeaturePath, overrides.harnessFeatureUpdater));
   app.use("/api/pinpoint-context", createPinpointContextRouter(db, sessionSecret, pinpointClient));
   app.use('/api/project-integrations', createProjectIntegrationsRouter(db, sessionSecret, overrides.projectRegistrar));
   app.use("/api/pr", createPrRouter(db, sessionSecret, secretEncKey, gitProviderClients));

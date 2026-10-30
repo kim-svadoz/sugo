@@ -16,6 +16,9 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
   if (typeof require !== "undefined") return require.apply(this, arguments);
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __commonJS = (cb, mod) => function __require2() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -6893,6 +6896,1417 @@ var require_dist = __commonJS({
     module2.exports = exports2 = formatsPlugin;
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.default = formatsPlugin;
+  }
+});
+
+// src/fsUtil.ts
+import { mkdir, open, rename, stat, unlink, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
+async function atomicWriteFile(path, content) {
+  const tmpPath = `${path}.tmp.${process.pid}.${Date.now()}.${seq++}`;
+  await writeFile(tmpPath, content, "utf-8");
+  const delays = [0, 25, 50, 100, 200];
+  let lastErr;
+  for (const delay of delays) {
+    if (delay > 0) await new Promise((r) => setTimeout(r, delay));
+    try {
+      await rename(tmpPath, path);
+      return;
+    } catch (err2) {
+      lastErr = err2;
+    }
+  }
+  await unlink(tmpPath).catch(() => {
+  });
+  throw lastErr;
+}
+async function withFileLock(lockPath, fn) {
+  await mkdir(dirname(lockPath), { recursive: true });
+  const maxAttempts = 40;
+  const baseDelayMs = 10;
+  const maxDelayMs = 250;
+  let acquired = false;
+  let lastErr;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (attempt > 0) {
+      const backoff = Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1));
+      const jitter = Math.random() * backoff * 0.5;
+      await new Promise((r) => setTimeout(r, backoff + jitter));
+    }
+    try {
+      const handle2 = await open(lockPath, "wx");
+      await handle2.close();
+      acquired = true;
+      break;
+    } catch (err2) {
+      lastErr = err2;
+      const age = await stat(lockPath).then((s) => Date.now() - s.mtimeMs, () => 0);
+      if (age > STALE_LOCK_MS) await unlink(lockPath).catch(() => {
+      });
+    }
+  }
+  if (!acquired) {
+    throw new Error(`\uB77D \uD30C\uC77C\uC744 \uD68D\uB4DD\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${lockPath} (${String(lastErr)})`);
+  }
+  try {
+    return await fn();
+  } finally {
+    await unlink(lockPath).catch(() => {
+    });
+  }
+}
+var seq, STALE_LOCK_MS;
+var init_fsUtil = __esm({
+  "src/fsUtil.ts"() {
+    "use strict";
+    seq = 0;
+    STALE_LOCK_MS = 3e4;
+  }
+});
+
+// src/harness/config.ts
+import { mkdir as mkdir2, readFile } from "node:fs/promises";
+import { dirname as dirname2, join } from "node:path";
+function projectSugoDir(projectPath) {
+  return join(projectPath, "sugo");
+}
+function projectConfigPath(projectPath) {
+  return join(projectSugoDir(projectPath), "config.json");
+}
+async function saveProjectConfig(config2) {
+  const path = projectConfigPath(config2.projectPath);
+  await mkdir2(dirname2(path), { recursive: true });
+  await atomicWriteFile(path, JSON.stringify(config2, null, 2));
+}
+async function loadProjectConfig(projectPath) {
+  try {
+    const raw = await readFile(projectConfigPath(projectPath), "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+var init_config = __esm({
+  "src/harness/config.ts"() {
+    "use strict";
+    init_fsUtil();
+  }
+});
+
+// src/harness/contentHash.ts
+import { createHash } from "node:crypto";
+function hashHarnessContent(harness) {
+  return createHash("sha1").update(harness.harnessMd).update("\0").update(harness.validationYaml).digest("hex");
+}
+var init_contentHash = __esm({
+  "src/harness/contentHash.ts"() {
+    "use strict";
+  }
+});
+
+// src/harness/harnessComposer.ts
+function extractCoreRuleBullets(harnessMd, limit = 2) {
+  const lines2 = harnessMd.split(/\r?\n/);
+  const headingIdx = lines2.findIndex((l) => /^#{1,3}\s*핵심 규칙/.test(l.trim()));
+  if (headingIdx === -1) return [];
+  const bullets2 = [];
+  for (let i2 = headingIdx + 1; i2 < lines2.length; i2++) {
+    const line = lines2[i2].trim();
+    if (/^#{1,3}\s/.test(line)) break;
+    const m = line.match(/^(?:\d+\.|-)\s+(.*)$/);
+    if (m) bullets2.push(m[1]);
+    if (bullets2.length >= limit) break;
+  }
+  return bullets2;
+}
+function formatItemList(items) {
+  if (items.length === 0) return "(\uC5C6\uC74C)";
+  const labels = items.map((i2) => i2.version ? `${i2.name} ${i2.version}` : i2.name);
+  return Array.from(new Set(labels)).join(", ");
+}
+function formatCommands(commands) {
+  const entries = Object.entries(commands).filter(([, v]) => v);
+  if (entries.length === 0) return "(\uAC10\uC9C0\uB41C \uBA85\uB839 \uC5C6\uC74C)";
+  return entries.map(([k, v]) => `${k}=\`${v}\``).join(", ");
+}
+function compose(params) {
+  const { harnesses, projectName, workspace, detectedStack, fetchWarnings } = params;
+  const harnessFiles = [];
+  for (const h of harnesses) {
+    harnessFiles.push({ relPath: `sugo/harness/${h.id}/harness.md`, content: h.harnessMd });
+    harnessFiles.push({ relPath: `sugo/harness/${h.id}/validation.yaml`, content: h.validationYaml });
+  }
+  const appliedTableRows = harnesses.map((h) => `| \`${h.id}\` | ${h.source === "default-fallback" ? "(\uD3F4\uBC31) " : ""}${h.version} |`).join("\n");
+  const ruleSummaryBlocks = harnesses.map((h) => {
+    const bullets2 = extractCoreRuleBullets(h.harnessMd);
+    if (bullets2.length === 0) return `### \`${h.id}\`
+(\uD575\uC2EC \uADDC\uCE59 \uC139\uC158 \uC5C6\uC74C \u2014 harness.md \uCC38\uACE0)`;
+    return `### \`${h.id}\`
+${bullets2.map((b) => `- ${b}`).join("\n")}`;
+  }).join("\n\n");
+  const allWarnings = [...fetchWarnings];
+  const claudeMd = `# ${projectName} \u2014 Sugo \uD558\uB124\uC2A4 \uC778\uB371\uC2A4
+
+> \uC790\uB3D9 \uC0DD\uC131\uB428. \`sugo:add\`\uB97C \uB2E4\uC2DC \uC2E4\uD589\uD558\uBA74 \uAC31\uC2E0\uB429\uB2C8\uB2E4. \uAC1C\uBCC4 \uD558\uB124\uC2A4 \uC804\uBB38\uC740
+> \`sugo/harness/<id>/harness.md\`, \uAC80\uC99D \uC124\uC815\uC740 \`sugo/harness/<id>/validation.yaml\`\uC744 \uCC38\uACE0\uD558\uC138\uC694.
+> \uC774 \uD30C\uC77C \uC790\uCCB4\uB294 \uCC38\uACE0\uC6A9 \uC778\uB371\uC2A4\uC785\uB2C8\uB2E4 \u2014 Claude Code\uAC00 \uC138\uC158 \uC2DC\uC791 \uC2DC \uC790\uB3D9\uC73C\uB85C \uC77D\uB294 \uAC74
+> \`.claude/rules/*.md\`\uC640 \uD504\uB85C\uC81D\uD2B8 \uB8E8\uD2B8 \`CLAUDE.md\`\uC774\uBA70, \uC5EC\uAE30 \uC788\uB294 \uC694\uC57D\uC740 \uADF8\uAC78 \uBCF4\uC644\uD569\uB2C8\uB2E4.
+${workspace ? `>
+> \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4: \`${workspace}\`` : ""}
+
+## \uAC10\uC9C0\uB41C \uC2A4\uD0DD
+
+- **\uC5B8\uC5B4:** ${formatItemList(detectedStack.languages)}
+- **\uD504\uB808\uC784\uC6CC\uD06C:** ${formatItemList(detectedStack.frameworks)}
+- **\uBE4C\uB4DC\uB3C4\uAD6C:** ${formatItemList(detectedStack.buildTools)}
+- **\uB370\uC774\uD130\uC2A4\uD1A0\uC5B4(\uC815\uBCF4\uC131 \u2014 \uBCC4\uB3C4 \uD558\uB124\uC2A4 \uBBF8\uC801\uC6A9):** ${formatItemList(detectedStack.dataStores)}
+- **\uC778\uD504\uB77C(\uC815\uBCF4\uC131):** ${formatItemList(detectedStack.infra)}
+- **\uAC10\uC9C0\uB41C \uBA85\uB839:** ${formatCommands(detectedStack.commands)}
+
+## \uC801\uC6A9\uB41C \uD558\uB124\uC2A4
+
+| id | version |
+|----|---------|
+${appliedTableRows}
+
+## \uD575\uC2EC \uADDC\uCE59 \uC694\uC57D
+
+${ruleSummaryBlocks}
+
+## \uAC80\uC99D \uAC8C\uC774\uD2B8 \uC139\uC158
+
+sugo \uD30C\uC774\uD504\uB77C\uC778\uC758 \uC21C\uC11C\uAC15\uC81C\xB7\uCF58\uD150\uCE20 \uAC8C\uC774\uD2B8(analyze \uD638\uCD9C\uAC15\uC81C, baseline, wiring/glue/boot, \uD14C\uC2A4\uD2B8\uC99D\uAC70\uB300\uC870,
+review 4\uC911\uAC80\uC99D \uB4F1)\uB294 \uC2E4\uC81C\uB85C \uC9D1\uD589\uB429\uB2C8\uB2E4(\`sugo_plan\` \uC0C1\uD0DC\uBA38\uC2E0). \uC704 \uD45C\uC758 \uAC01 \uD558\uB124\uC2A4 \`validation.yaml\`\uC740
+\`sugo_validate\`(review \uB2E8\uACC4)\uAC00 \uB300\uC870\uD569\uB2C8\uB2E4 \u2014 \uADF8\uC911 \`auto\`\uAC00 \uC120\uC5B8\uB41C \uCCB4\uD06C\uB294 \uC11C\uBC84\uAC00 \uD30C\uC77C\uC744 \uC9C1\uC811 \uC77D\uC5B4
+\uC2E4\uCE21\uD558\uACE0, \uADF8 \uACB0\uACFC\uAC00 \uC5D0\uC774\uC804\uD2B8\uC758 \uC790\uAE30\uBCF4\uACE0\uBCF4\uB2E4 \uC6B0\uC120\uD569\uB2C8\uB2E4(\uC8FC\uC7A5\uACFC \uC5B4\uAE0B\uB098\uBA74 \`contradictions\`\uC5D0 \uB0A8\uC2B5\uB2C8\uB2E4).
+**\uB2E4\uB9CC \uC544\uC9C1 \uBAA8\uB4E0 \uCCB4\uD06C\uAC00 \uC2E4\uCE21\uB418\uB294 \uAC74 \uC544\uB2D9\uB2C8\uB2E4** \u2014 \uB300\uBD80\uBD84\uC740 review-agent\uC758 \uC790\uAE30\uBCF4\uACE0\uC774\uACE0,
+\`review_done\`\uC774 \uAC80\uC99D \uC2E4\uD328\uB97C \uC774\uC720\uB85C \uD30C\uC774\uD504\uB77C\uC778\uC744 \uB9C9\uB294 \uD558\uB4DC \uAC8C\uC774\uD2B8\uB85C \uC2B9\uACA9\uB418\uC9C0\uB3C4 \uC54A\uC558\uC2B5\uB2C8\uB2E4.
+"\uD575\uC2EC \uADDC\uCE59 \uC694\uC57D"\uC740 \uADF8 \uCC28\uC774\uB97C \uC54C\uACE0 \uCC38\uACE0 \uC790\uB8CC\uB85C \uD65C\uC6A9\uD558\uC138\uC694.
+
+${allWarnings.length > 0 ? `## \uACBD\uACE0
+
+${allWarnings.map((w) => `- ${w}`).join("\n")}
+` : ""}`;
+  return {
+    claudeMd,
+    harnessFiles,
+    appliedHarnesses: harnesses.map((h) => ({ id: h.id, version: h.version })),
+    warnings: allWarnings
+  };
+}
+var init_harnessComposer = __esm({
+  "src/harness/harnessComposer.ts"() {
+    "use strict";
+  }
+});
+
+// src/harness/harnessFetcher.ts
+import { existsSync, readFileSync } from "node:fs";
+import { join as join2 } from "node:path";
+function baseHarnessId(id) {
+  const parts2 = id.split("/");
+  if (parts2.length <= 2) return null;
+  return parts2.slice(0, 2).join("/");
+}
+function readHarnessDir(libraryDir, id, overrideDir) {
+  const dir = join2(libraryDir, id);
+  const harnessPath = join2(dir, "harness.md");
+  const validationPath = join2(dir, "validation.yaml");
+  if (!existsSync(harnessPath) || !existsSync(validationPath)) return null;
+  return {
+    harnessMd: overrideDir && existsSync(join2(overrideDir, id, "harness.md")) ? readFileSync(join2(overrideDir, id, "harness.md"), "utf-8") : readFileSync(harnessPath, "utf-8"),
+    validationYaml: overrideDir && existsSync(join2(overrideDir, id, "validation.yaml")) ? readFileSync(join2(overrideDir, id, "validation.yaml"), "utf-8") : readFileSync(validationPath, "utf-8")
+  };
+}
+function fetchFromLocal(harnessIds, libraryDir, overrideDir) {
+  const harnesses = [];
+  const warnings = [];
+  const idsToFetch = harnessIds.length > 0 ? harnessIds : [];
+  for (const id of idsToFetch) {
+    let hit = readHarnessDir(libraryDir, id, overrideDir);
+    let resolvedId = id;
+    let source = "local";
+    if (!hit) {
+      const base = baseHarnessId(id);
+      if (base) {
+        hit = readHarnessDir(libraryDir, base, overrideDir);
+        if (hit) resolvedId = base;
+      }
+    }
+    if (!hit) {
+      warnings.push(`\uD558\uB124\uC2A4 id "${id}"\uC5D0 \uB300\uD55C \uB85C\uCEEC \uCF58\uD150\uCE20\uB97C \uCC3E\uC9C0 \uBABB\uD574 default\uB85C \uD3F4\uBC31\uD569\uB2C8\uB2E4.`);
+      hit = readHarnessDir(libraryDir, DEFAULT_HARNESS_ID, overrideDir);
+      resolvedId = DEFAULT_HARNESS_ID;
+      source = "default-fallback";
+      if (!hit) {
+        throw new Error(`\uB85C\uCEEC \uD558\uB124\uC2A4 \uB77C\uC774\uBE0C\uB7EC\uB9AC\uC5D0 "${DEFAULT_HARNESS_ID}" \uD3F4\uBC31 \uCF58\uD150\uCE20\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4: ${libraryDir}`);
+      }
+    }
+    if (harnesses.some((h) => h.id === resolvedId)) continue;
+    harnesses.push({
+      id: resolvedId,
+      version: LOCAL_HARNESS_VERSION,
+      harnessMd: hit.harnessMd,
+      validationYaml: hit.validationYaml,
+      source
+    });
+  }
+  if (!harnesses.some((h) => h.id === DEFAULT_HARNESS_ID)) {
+    const defaultHit = readHarnessDir(libraryDir, DEFAULT_HARNESS_ID, overrideDir);
+    if (!defaultHit) {
+      throw new Error(`\uB85C\uCEEC \uD558\uB124\uC2A4 \uB77C\uC774\uBE0C\uB7EC\uB9AC\uC5D0 "${DEFAULT_HARNESS_ID}" \uCF58\uD150\uCE20\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4: ${libraryDir}`);
+    }
+    harnesses.unshift({
+      id: DEFAULT_HARNESS_ID,
+      version: LOCAL_HARNESS_VERSION,
+      harnessMd: defaultHit.harnessMd,
+      validationYaml: defaultHit.validationYaml,
+      source: "local"
+    });
+  }
+  return { harnesses, warnings };
+}
+function fetchHarnesses(params) {
+  const result3 = fetchFromLocal(params.harnessIds, params.libraryDir, params.overrideDir);
+  if (params.repoUrl) {
+    result3.warnings.unshift(
+      `repoUrl(${params.repoUrl})\uC774 \uC9C0\uC815\uB418\uC5C8\uC9C0\uB9CC git \uAE30\uBC18 \uD558\uB124\uC2A4 fetch\uB294 \uC544\uC9C1 \uAD6C\uD604\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uB85C\uCEEC \uD558\uB124\uC2A4 \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB85C \uD3F4\uBC31\uD569\uB2C8\uB2E4.`
+    );
+  }
+  return result3;
+}
+var LOCAL_HARNESS_VERSION, DEFAULT_HARNESS_ID, HARNESS_FETCH_COOLDOWN_MS;
+var init_harnessFetcher = __esm({
+  "src/harness/harnessFetcher.ts"() {
+    "use strict";
+    LOCAL_HARNESS_VERSION = "1.0.0-local";
+    DEFAULT_HARNESS_ID = "default";
+    HARNESS_FETCH_COOLDOWN_MS = 5 * 60 * 1e3;
+  }
+});
+
+// src/homeDir.ts
+import { homedir } from "node:os";
+function sugoHomeDir() {
+  return process.env.SUGO_HOME_OVERRIDE ?? homedir();
+}
+var init_homeDir = __esm({
+  "src/homeDir.ts"() {
+    "use strict";
+  }
+});
+
+// src/harness/libraryPath.ts
+import { existsSync as existsSync2 } from "node:fs";
+import { dirname as dirname3, join as join3 } from "node:path";
+import { fileURLToPath } from "node:url";
+function defaultHarnessLibraryDir() {
+  const here = dirname3(fileURLToPath(import.meta.url));
+  const candidates = [join3(here, "..", "..", "harness-library"), join3(here, "..", "harness-library")];
+  for (const c of candidates) {
+    if (existsSync2(c)) return c;
+  }
+  return candidates[0];
+}
+function userHarnessOverrideDir() {
+  return join3(sugoHomeDir(), ".claude", "sugo", "harness-overrides");
+}
+var init_libraryPath = __esm({
+  "src/harness/libraryPath.ts"() {
+    "use strict";
+    init_homeDir();
+  }
+});
+
+// src/harness/registry.ts
+import { mkdir as mkdir3, readFile as readFile2 } from "node:fs/promises";
+import { dirname as dirname4, join as join4, resolve } from "node:path";
+function registryPath() {
+  return join4(sugoHomeDir(), ".claude", "sugo", "registry.json");
+}
+function registryLockPath() {
+  return `${registryPath()}.lock`;
+}
+async function readRegistryFile() {
+  try {
+    const raw = await readFile2(registryPath(), "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+async function loadRegistry() {
+  return readRegistryFile();
+}
+async function findRegistryEntry(projectPath) {
+  const normalized = resolve(projectPath);
+  const entries = await readRegistryFile();
+  return entries.find((e) => resolve(e.path) === normalized) ?? null;
+}
+async function registerProject(entry) {
+  const path = registryPath();
+  await mkdir3(dirname4(path), { recursive: true });
+  const normalizedPath = resolve(entry.path);
+  await withFileLock(registryLockPath(), async () => {
+    const current = await readRegistryFile();
+    const normalizedEntry = { ...entry, path: normalizedPath };
+    const existing = current.find((e) => resolve(e.path) === normalizedPath);
+    if (existing && JSON.stringify(existing) === JSON.stringify(normalizedEntry)) return;
+    const filtered = current.filter((e) => resolve(e.path) !== normalizedPath);
+    filtered.push(normalizedEntry);
+    await atomicWriteFile(path, JSON.stringify(filtered, null, 2));
+  });
+}
+async function unregisterProject(projectPath) {
+  const normalizedPath = resolve(projectPath);
+  return withFileLock(registryLockPath(), async () => {
+    const current = await readRegistryFile();
+    const filtered = current.filter((e) => resolve(e.path) !== normalizedPath);
+    if (filtered.length === current.length) return false;
+    await atomicWriteFile(registryPath(), JSON.stringify(filtered, null, 2));
+    return true;
+  });
+}
+var init_registry = __esm({
+  "src/harness/registry.ts"() {
+    "use strict";
+    init_fsUtil();
+    init_homeDir();
+  }
+});
+
+// src/harness/claudeMdFreshness.ts
+function freshnessLine(dateIso) {
+  return `${FRESHNESS_PREFIX}${dateIso}
+
+`;
+}
+function stripFreshnessLine(content) {
+  if (!content.startsWith(FRESHNESS_PREFIX)) return content;
+  const idx = content.indexOf("\n\n");
+  return idx === -1 ? content : content.slice(idx + 2);
+}
+function writeClaudeIfChanged(existing, nextBody, nowIso2) {
+  if (existing !== null && stripFreshnessLine(existing) === nextBody) {
+    return { content: existing, changed: false };
+  }
+  return { content: freshnessLine(nowIso2) + nextBody, changed: true };
+}
+var FRESHNESS_PREFIX;
+var init_claudeMdFreshness = __esm({
+  "src/harness/claudeMdFreshness.ts"() {
+    "use strict";
+    FRESHNESS_PREFIX = "> \uC801\uC6A9 \uD558\uB124\uC2A4 \uCD5C\uADFC \uBCC0\uACBD: ";
+  }
+});
+
+// src/harness/harnessRouting.ts
+function normalizePath(filePath) {
+  return filePath.replace(/\\/g, "/").toLowerCase();
+}
+function basenameOf(normalized) {
+  const idx = normalized.lastIndexOf("/");
+  return idx === -1 ? normalized : normalized.slice(idx + 1);
+}
+function extensionOf(basename4) {
+  const idx = basename4.lastIndexOf(".");
+  return idx <= 0 ? "" : basename4.slice(idx);
+}
+function prefixesForFile(filePath) {
+  const normalized = normalizePath(filePath);
+  const basename4 = basenameOf(normalized);
+  const byName = PREFIXES_BY_FILENAME[basename4];
+  if (byName) return byName;
+  if (basename4.startsWith("next.config.")) return ["framework/nextjs", ...NODE_PREFIXES];
+  if (/^requirements.*\.txt$/.test(basename4)) return ["buildtool/pip", ...PYTHON_PREFIXES];
+  const byExt = PREFIXES_BY_EXTENSION[extensionOf(basename4)];
+  return byExt ?? null;
+}
+function matchesPrefix(harnessId, prefix) {
+  return harnessId === prefix || harnessId.startsWith(`${prefix}/`);
+}
+function globsForHarnessId(harnessId) {
+  const globs = /* @__PURE__ */ new Set();
+  for (const [ext, prefixes] of Object.entries(PREFIXES_BY_EXTENSION)) {
+    if (prefixes.some((p) => matchesPrefix(harnessId, p))) globs.add(`**/*${ext}`);
+  }
+  for (const [filename, prefixes] of Object.entries(PREFIXES_BY_FILENAME)) {
+    if (prefixes.some((p) => matchesPrefix(harnessId, p))) globs.add(`**/${filename}`);
+  }
+  if (["framework/nextjs", ...NODE_PREFIXES].some((p) => matchesPrefix(harnessId, p))) {
+    globs.add("**/next.config.*");
+  }
+  if (["buildtool/pip", ...PYTHON_PREFIXES].some((p) => matchesPrefix(harnessId, p))) {
+    globs.add("**/requirements*.txt");
+  }
+  return [...globs].sort();
+}
+function routeHarnessesForFiles(appliedIds, changedFiles) {
+  const prefixes = /* @__PURE__ */ new Set();
+  const unmatchedFiles = [];
+  for (const file of changedFiles) {
+    const hit = prefixesForFile(file);
+    if (hit === null) {
+      unmatchedFiles.push(file);
+      continue;
+    }
+    for (const p of hit) prefixes.add(p);
+  }
+  if (prefixes.size === 0) {
+    return { selected: [...appliedIds], excluded: [], unmatchedFiles, fellBackToAll: true };
+  }
+  const selected = [];
+  const excluded = [];
+  for (const id of appliedIds) {
+    const keep = id === ALWAYS_SELECTED || [...prefixes].some((p) => matchesPrefix(id, p));
+    (keep ? selected : excluded).push(id);
+  }
+  return { selected, excluded, unmatchedFiles, fellBackToAll: false };
+}
+var JAVA_PREFIXES, NODE_PREFIXES, PYTHON_PREFIXES, PREFIXES_BY_EXTENSION, PREFIXES_BY_FILENAME, ALWAYS_SELECTED;
+var init_harnessRouting = __esm({
+  "src/harness/harnessRouting.ts"() {
+    "use strict";
+    JAVA_PREFIXES = ["lang/java", "framework/spring"];
+    NODE_PREFIXES = [
+      "lang/typescript",
+      "lang/javascript",
+      "framework/node",
+      "framework/react",
+      "framework/nextjs",
+      "framework/express"
+    ];
+    PYTHON_PREFIXES = ["lang/python"];
+    PREFIXES_BY_EXTENSION = {
+      ".java": JAVA_PREFIXES,
+      ".kt": JAVA_PREFIXES,
+      ".ts": NODE_PREFIXES,
+      ".tsx": NODE_PREFIXES,
+      ".mts": NODE_PREFIXES,
+      ".cts": NODE_PREFIXES,
+      ".js": NODE_PREFIXES,
+      ".jsx": NODE_PREFIXES,
+      ".mjs": NODE_PREFIXES,
+      ".cjs": NODE_PREFIXES,
+      ".py": PYTHON_PREFIXES,
+      ".pyi": PYTHON_PREFIXES
+    };
+    PREFIXES_BY_FILENAME = {
+      "pom.xml": ["buildtool/maven", ...JAVA_PREFIXES],
+      "build.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "build.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "settings.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "settings.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "gradle.properties": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "libs.versions.toml": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "package.json": ["buildtool/npm", ...NODE_PREFIXES],
+      "package-lock.json": ["buildtool/npm", ...NODE_PREFIXES],
+      "yarn.lock": ["buildtool/yarn", ...NODE_PREFIXES],
+      "pnpm-lock.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
+      "pnpm-workspace.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
+      "tsconfig.json": ["lang/typescript"],
+      "poetry.lock": ["buildtool/poetry", ...PYTHON_PREFIXES],
+      "pyproject.toml": ["buildtool/poetry", "buildtool/pip", ...PYTHON_PREFIXES]
+    };
+    ALWAYS_SELECTED = "default";
+  }
+});
+
+// src/harness/rulesFile.ts
+function ruleFilename(harnessId) {
+  return `${harnessId.replace(/\//g, "-")}.md`;
+}
+function buildClaudeRuleFile(harnessId, harnessMd) {
+  const globs = globsForHarnessId(harnessId);
+  const frontmatter = globs.length === 0 ? "" : `---
+paths:
+${globs.map((g) => `  - "${g}"`).join("\n")}
+---
+
+`;
+  return { relPath: `.claude/rules/${ruleFilename(harnessId)}`, content: frontmatter + harnessMd };
+}
+function baseId(id) {
+  const parts2 = id.split("/");
+  return parts2.length > 2 ? parts2.slice(0, 2).join("/") : null;
+}
+function buildEffectiveClaudeRuleFiles(harnesses) {
+  const byId = new Map(harnesses.map((harness) => [harness.id, harness]));
+  const shadowedBases = new Set(harnesses.map((harness) => baseId(harness.id)).filter((id) => id !== null));
+  return harnesses.filter((harness) => !shadowedBases.has(harness.id)).map((harness) => {
+    const parent = baseId(harness.id);
+    const parentHarness = parent ? byId.get(parent) : void 0;
+    const content = parentHarness ? `${parentHarness.harnessMd.trimEnd()}
+
+---
+
+${harness.harnessMd.trimStart()}` : harness.harnessMd;
+    return buildClaudeRuleFile(harness.id, content);
+  });
+}
+function buildManagedBlock(harnessIds) {
+  const list = harnessIds.length === 0 ? "(\uC801\uC6A9\uB41C \uD558\uB124\uC2A4 \uC5C6\uC74C)" : harnessIds.map((id) => `- \`${id}\``).join("\n");
+  return `${BLOCK_START}
+<!-- \uC774 \uBE14\uB85D\uC740 sugo\uAC00 \uC790\uB3D9 \uAD00\uB9AC\uD569\uB2C8\uB2E4. \uC190\uC73C\uB85C \uACE0\uCE58\uBA74 \uB2E4\uC74C sugo_add/sugo_update \uB54C \uB36E\uC5B4\uC368\uC9D1\uB2C8\uB2E4. -->
+## Sugo \uD558\uB124\uC2A4
+
+\uC774 \uD504\uB85C\uC81D\uD2B8\uC5D0 \uC801\uC6A9\uB41C \uCF54\uB529 \uD45C\uC900\uC774 \`.claude/rules/\`\uC5D0 \uC790\uB3D9 \uB85C\uB4DC\uB418\uB3C4\uB85D \uC124\uCE58\uB3FC \uC788\uC2B5\uB2C8\uB2E4.
+\uC804\uBB38\uC740 \`sugo/harness/<id>/harness.md\`, \uAC80\uC99D \uC124\uC815\uC740 \`sugo/harness/<id>/validation.yaml\`\uC5D0 \uC788\uC2B5\uB2C8\uB2E4.
+
+${list}
+${BLOCK_END}`;
+}
+function mergeRootClaudeReference(existing, appliedHarnessIds) {
+  const block = buildManagedBlock(appliedHarnessIds);
+  const base = existing ?? "";
+  const startIdx = base.indexOf(BLOCK_START);
+  const endIdx = base.indexOf(BLOCK_END);
+  if (startIdx === -1 || endIdx === -1) {
+    const separator = base.length > 0 && !base.endsWith("\n\n") ? base.endsWith("\n") ? "\n" : "\n\n" : "";
+    return { content: base + separator + block + "\n", changed: true };
+  }
+  const before = base.slice(0, startIdx);
+  const after = base.slice(endIdx + BLOCK_END.length);
+  const content = before + block + after;
+  return { content, changed: content !== base };
+}
+function removeRootClaudeReference(existing) {
+  const base = existing ?? "";
+  const startIdx = base.indexOf(BLOCK_START);
+  const endIdx = base.indexOf(BLOCK_END);
+  if (startIdx === -1 || endIdx === -1) return { content: base, changed: false };
+  const before = base.slice(0, startIdx).trimEnd();
+  const after = base.slice(endIdx + BLOCK_END.length).trimStart();
+  const content = [before, after].filter(Boolean).join("\n\n") + (before || after ? "\n" : "");
+  return { content, changed: content !== base };
+}
+function mergeRootAgentsReference(existing) {
+  const block = `${AGENTS_BLOCK_START}
+<!-- \uC774 \uBE14\uB85D\uC740 sugo\uAC00 \uC790\uB3D9 \uAD00\uB9AC\uD569\uB2C8\uB2E4. \uC190\uC73C\uB85C \uACE0\uCE58\uBA74 \uB2E4\uC74C sugo_add/sugo_update \uB54C \uB36E\uC5B4\uC368\uC9D1\uB2C8\uB2E4. -->
+## Sugo \uD504\uB85C\uC81D\uD2B8 \uCEE8\uD14D\uC2A4\uD2B8
+
+\uC791\uC5C5\uC744 \uACC4\uD68D\uD558\uAC70\uB098 \uD30C\uC77C\uC744 \uC218\uC815\uD558\uAE30 \uC804\uC5D0 \uC791\uC5C5 \uB300\uC0C1 \uD504\uB85C\uC81D\uD2B8\uC758 \`.claude/rules/\` \uC544\uB798 Markdown \uD30C\uC77C\uC744 \uC7AC\uADC0\uC801\uC73C\uB85C \uD655\uC778\uD55C\uB2E4.
+\uC774 \uD30C\uC77C\uB4E4\uC740 Sugo \uD558\uB124\uC2A4\uC640 Dashboard\uC758 \uB3C4\uBA54\uC778 \uADDC\uCE59 \uAD00\uB9AC\uC5D0\uC11C \uB3D9\uAE30\uD654\uD55C \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB2E4.
+\uD604\uC7AC \uC791\uC5C5\uC5D0 \uC801\uC6A9\uB418\uB294 \uADDC\uCE59\uC744 \uAD6C\uD604\xB7\uB9AC\uBDF0\xB7\uAC80\uC99D \uD310\uB2E8\uC5D0 \uBC18\uC601\uD558\uACE0, \uCDA9\uB3CC\uD558\uAC70\uB098 \uC801\uC6A9\uD560 \uC218 \uC5C6\uC73C\uBA74 \uACB0\uACFC\uC5D0 \uC774\uC720\uB97C \uBA85\uC2DC\uD55C\uB2E4.
+${AGENTS_BLOCK_END}`;
+  const base = existing ?? "";
+  const startIdx = base.indexOf(AGENTS_BLOCK_START);
+  const endIdx = base.indexOf(AGENTS_BLOCK_END);
+  if (startIdx === -1 || endIdx === -1) {
+    const separator = base.length > 0 && !base.endsWith("\n\n") ? base.endsWith("\n") ? "\n" : "\n\n" : "";
+    return { content: base + separator + block + "\n", changed: true };
+  }
+  const content = base.slice(0, startIdx) + block + base.slice(endIdx + AGENTS_BLOCK_END.length);
+  return { content, changed: content !== base };
+}
+var BLOCK_START, BLOCK_END, AGENTS_BLOCK_START, AGENTS_BLOCK_END;
+var init_rulesFile = __esm({
+  "src/harness/rulesFile.ts"() {
+    "use strict";
+    init_harnessRouting();
+    BLOCK_START = "<!-- sugo:harness-rules:start -->";
+    BLOCK_END = "<!-- sugo:harness-rules:end -->";
+    AGENTS_BLOCK_START = "<!-- sugo:project-context:start -->";
+    AGENTS_BLOCK_END = "<!-- sugo:project-context:end -->";
+  }
+});
+
+// src/harness/context.ts
+import { existsSync as existsSync3, readFileSync as readFileSync2 } from "node:fs";
+import { isAbsolute, join as join5 } from "node:path";
+function resolvePath(projectPath, relPath) {
+  return isAbsolute(relPath) ? relPath : join5(projectPath, relPath);
+}
+function createFsDetectionContext(projectPath, changedFiles = []) {
+  return {
+    projectPath,
+    changedFiles,
+    fileExists(relPath) {
+      return existsSync3(resolvePath(projectPath, relPath));
+    },
+    readFile(relPath) {
+      try {
+        return readFileSync2(resolvePath(projectPath, relPath), "utf-8");
+      } catch {
+        return null;
+      }
+    },
+    readJson(relPath) {
+      const raw = this.readFile(relPath);
+      if (raw === null) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+  };
+}
+var init_context = __esm({
+  "src/harness/context.ts"() {
+    "use strict";
+  }
+});
+
+// src/harness/rules.ts
+function readPackageJson(ctx) {
+  return ctx.readJson("package.json");
+}
+function depVersion(pkg, name2) {
+  if (!pkg) return void 0;
+  return pkg.dependencies?.[name2] ?? pkg.devDependencies?.[name2] ?? pkg.peerDependencies?.[name2];
+}
+function hasDep(pkg, ...names) {
+  return names.some((n) => depVersion(pkg, n) !== void 0);
+}
+function readJavaBuildFiles(ctx) {
+  return [
+    ctx.readFile("pom.xml"),
+    ctx.readFile("build.gradle"),
+    ctx.readFile("build.gradle.kts")
+  ].filter((c) => c !== null).join("\n");
+}
+function readPythonFiles(ctx) {
+  return [ctx.readFile("requirements.txt"), ctx.readFile("pyproject.toml")].filter((c) => c !== null).join("\n");
+}
+function nearestBucket(value, buckets) {
+  let hit = null;
+  for (const b of buckets) if (value >= b) hit = b;
+  return hit;
+}
+function majorFromRange(raw) {
+  if (!raw) return null;
+  const m = raw.match(/(\d+)/);
+  return m ? Number(m[1]) : null;
+}
+function withVersionBucket(base, bucket) {
+  if (bucket === null) return [base];
+  return [base, { ...base, id: `${base.id}/${bucket}`, version: bucket }];
+}
+function extractNodeMajor(ctx, pkg) {
+  const engines = pkg?.engines?.node;
+  const fromEngines = majorFromRange(engines);
+  if (fromEngines !== null) return fromEngines;
+  for (const file of [".nvmrc", ".node-version"]) {
+    const raw = ctx.readFile(file);
+    const major = majorFromRange(raw?.trim());
+    if (major !== null) return major;
+  }
+  return null;
+}
+function packageManagerMajor(pkg, tool) {
+  const raw = pkg?.packageManager;
+  if (!raw || !raw.startsWith(`${tool}@`)) return null;
+  return majorFromRange(raw.slice(tool.length + 1));
+}
+function extractJavaMajor(javaSrc) {
+  const patterns = [
+    /<java\.version>\s*(?:1\.)?(\d+)/,
+    /<maven\.compiler\.release>\s*(?:1\.)?(\d+)/,
+    /<maven\.compiler\.(?:source|target)>\s*(?:1\.)?(\d+)/,
+    /<release>\s*(?:1\.)?(\d+)\s*<\/release>/,
+    /JavaLanguageVersion\.of\(\s*['"]?(\d+)/,
+    /(?:source|target)Compatibility\s*=?\s*['"]?(?:JavaVersion\.VERSION_)?(?:1[._])?(\d+)/,
+    /options\.release\s*(?:\.set\()?\s*=?\s*['"]?(\d+)/
+  ];
+  for (const re of patterns) {
+    const m = javaSrc.match(re);
+    if (m) return Number(m[1]);
+  }
+  return null;
+}
+function extractPythonMinor(ctx) {
+  const pyproject = ctx.readFile("pyproject.toml");
+  if (pyproject) {
+    const patterns = [
+      /requires-python\s*=\s*["'][^"']*?3\.(\d+)/,
+      /^\s*python\s*=\s*["'][^"']*?3\.(\d+)/m,
+      /target-version\s*=\s*["']py3(\d+)["']/
+    ];
+    for (const re of patterns) {
+      const m = pyproject.match(re);
+      if (m) return Number(m[1]);
+    }
+  }
+  for (const file of [".python-version", "runtime.txt"]) {
+    const content = ctx.readFile(file);
+    const m = content?.match(/3\.(\d+)/);
+    if (m) return Number(m[1]);
+  }
+  return null;
+}
+function extractSpringMajor(javaSrc) {
+  const patterns = [
+    /<spring-boot\.version>\s*(\d+)\.(\d+)\.(\d+)/,
+    /spring-boot-starter-parent[\s\S]{0,200}?<version>\s*(\d+)\.(\d+)\.(\d+)/,
+    /org\.springframework\.boot['"]\s*\)?\s*version\s*['"](\d+)\.(\d+)\.(\d+)/
+  ];
+  for (const re of patterns) {
+    const m = javaSrc.match(re);
+    if (m) return m[1];
+  }
+  return void 0;
+}
+function buildToolRule(id, name2, marker) {
+  return {
+    id,
+    category: "buildTool",
+    detect(ctx) {
+      if (!ctx.fileExists(marker)) return null;
+      return { id, category: "buildTool", name: name2, detectedBy: marker };
+    }
+  };
+}
+function dataStoreRule(id, name2, matchers) {
+  return {
+    id,
+    category: "dataStore",
+    detect(ctx) {
+      const pkg = readPackageJson(ctx);
+      const javaSrc = readJavaBuildFiles(ctx);
+      const pySrc = readPythonFiles(ctx);
+      if (!matchers(pkg, javaSrc, pySrc)) return null;
+      return { id, category: "dataStore", name: name2, detectedBy: "dependency-scan" };
+    }
+  };
+}
+function flattenDetected(result3) {
+  if (result3 === null) return [];
+  return Array.isArray(result3) ? result3 : [result3];
+}
+var JAVA_BUCKETS, PYTHON_MINOR_BUCKETS, REACT_BUCKETS, NEXT_BUCKETS, SPRING_BUCKETS, TYPESCRIPT_BUCKETS, NODE_BUCKETS, EXPRESS_BUCKETS, GRADLE_BUCKETS, PNPM_BUCKETS, POETRY_BUCKETS, langTypescript, langJavascript, langJava, langPython, frameworkNode, frameworkReact, frameworkNextjs, frameworkExpress, frameworkSpring, buildtoolNpm, buildtoolMaven, buildtoolPnpm, buildtoolYarn, buildtoolGradle, buildtoolPip, buildtoolPoetry, datastorePostgres, datastoreMysql, datastoreMongodb, datastoreRedis, infraDocker, infraGithubActions, ALL_RULES;
+var init_rules = __esm({
+  "src/harness/rules.ts"() {
+    "use strict";
+    JAVA_BUCKETS = [8, 11, 17, 21, 25];
+    PYTHON_MINOR_BUCKETS = [9, 10, 12, 14];
+    REACT_BUCKETS = [18, 19];
+    NEXT_BUCKETS = [15, 16];
+    SPRING_BUCKETS = [2, 3, 4];
+    TYPESCRIPT_BUCKETS = [5, 6, 7];
+    NODE_BUCKETS = [20, 22, 24];
+    EXPRESS_BUCKETS = [4, 5];
+    GRADLE_BUCKETS = [8, 9];
+    PNPM_BUCKETS = [10, 12];
+    POETRY_BUCKETS = [1, 2];
+    langTypescript = {
+      id: "lang/typescript",
+      category: "language",
+      detect(ctx) {
+        if (!ctx.fileExists("tsconfig.json")) return null;
+        const pkg = readPackageJson(ctx);
+        const declared = depVersion(pkg, "typescript");
+        const bucket = nearestBucket(majorFromRange(declared) ?? -1, TYPESCRIPT_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "lang/typescript",
+            category: "language",
+            name: "TypeScript",
+            version: declared,
+            detectedBy: "tsconfig.json"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    langJavascript = {
+      id: "lang/javascript",
+      category: "language",
+      detect(ctx) {
+        if (!ctx.fileExists("package.json") || ctx.fileExists("tsconfig.json")) return null;
+        return { id: "lang/javascript", category: "language", name: "JavaScript", detectedBy: "package.json" };
+      }
+    };
+    langJava = {
+      id: "lang/java",
+      category: "language",
+      detect(ctx) {
+        const marker = ["pom.xml", "build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
+        if (!marker) return null;
+        const major = extractJavaMajor(readJavaBuildFiles(ctx));
+        const bucket = major === null ? null : nearestBucket(major, JAVA_BUCKETS);
+        return withVersionBucket(
+          { id: "lang/java", category: "language", name: "Java", version: major ? String(major) : void 0, detectedBy: marker },
+          bucket === null ? null : String(bucket)
+        );
+      }
+    };
+    langPython = {
+      id: "lang/python",
+      category: "language",
+      detect(ctx) {
+        const marker = ["requirements.txt", "pyproject.toml"].find((f) => ctx.fileExists(f));
+        if (!marker) return null;
+        const minor = extractPythonMinor(ctx);
+        const bucket = minor === null ? null : nearestBucket(minor, PYTHON_MINOR_BUCKETS);
+        return withVersionBucket(
+          { id: "lang/python", category: "language", name: "Python", version: minor ? `3.${minor}` : void 0, detectedBy: marker },
+          bucket === null ? null : `3.${bucket}`
+        );
+      }
+    };
+    frameworkNode = {
+      id: "framework/node",
+      category: "framework",
+      detect(ctx) {
+        if (!ctx.fileExists("package.json")) return null;
+        const pkg = readPackageJson(ctx);
+        const major = extractNodeMajor(ctx, pkg);
+        const bucket = major === null ? null : nearestBucket(major, NODE_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "framework/node",
+            category: "framework",
+            name: "Node.js",
+            version: major === null ? void 0 : String(major),
+            detectedBy: "package.json"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    frameworkReact = {
+      id: "framework/react",
+      category: "framework",
+      detect(ctx) {
+        const pkg = readPackageJson(ctx);
+        if (!hasDep(pkg, "react")) return null;
+        const major = majorFromRange(depVersion(pkg, "react"));
+        const bucket = major === null ? null : nearestBucket(major, REACT_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "framework/react",
+            category: "framework",
+            name: "React",
+            version: depVersion(pkg, "react"),
+            detectedBy: "package.json:dependencies.react"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    frameworkNextjs = {
+      id: "framework/nextjs",
+      category: "framework",
+      detect(ctx) {
+        const pkg = readPackageJson(ctx);
+        if (!hasDep(pkg, "next")) return null;
+        const major = majorFromRange(depVersion(pkg, "next"));
+        const bucket = major === null ? null : nearestBucket(major, NEXT_BUCKETS);
+        const appRouter = ctx.fileExists("app") || ctx.fileExists("src/app");
+        return withVersionBucket(
+          {
+            id: "framework/nextjs",
+            category: "framework",
+            name: appRouter ? "Next.js (App Router)" : "Next.js",
+            version: depVersion(pkg, "next"),
+            detectedBy: "package.json:dependencies.next"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    frameworkExpress = {
+      id: "framework/express",
+      category: "framework",
+      detect(ctx) {
+        const pkg = readPackageJson(ctx);
+        if (!hasDep(pkg, "express")) return null;
+        const declared = depVersion(pkg, "express");
+        const bucket = nearestBucket(majorFromRange(declared) ?? -1, EXPRESS_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "framework/express",
+            category: "framework",
+            name: "Express",
+            version: declared,
+            detectedBy: "package.json:dependencies.express"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    frameworkSpring = {
+      id: "framework/spring",
+      category: "framework",
+      detect(ctx) {
+        const src = readJavaBuildFiles(ctx);
+        if (!src || !/spring-boot|org\.springframework\.boot/.test(src)) return null;
+        const major = extractSpringMajor(src);
+        const bucket = major === void 0 ? null : nearestBucket(Number(major), SPRING_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "framework/spring",
+            category: "framework",
+            name: "Spring Boot",
+            version: major ? `${major}.x` : void 0,
+            detectedBy: ctx.fileExists("pom.xml") ? "pom.xml" : "build.gradle"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    buildtoolNpm = buildToolRule("buildtool/npm", "npm", "package-lock.json");
+    buildtoolMaven = buildToolRule("buildtool/maven", "Maven", "pom.xml");
+    buildtoolPnpm = {
+      id: "buildtool/pnpm",
+      category: "buildTool",
+      detect(ctx) {
+        if (!ctx.fileExists("pnpm-lock.yaml")) return null;
+        const major = packageManagerMajor(readPackageJson(ctx), "pnpm");
+        const bucket = major === null ? null : nearestBucket(major, PNPM_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "buildtool/pnpm",
+            category: "buildTool",
+            name: "pnpm",
+            version: major === null ? void 0 : String(major),
+            detectedBy: "pnpm-lock.yaml"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    buildtoolYarn = {
+      id: "buildtool/yarn",
+      category: "buildTool",
+      detect(ctx) {
+        if (!ctx.fileExists("yarn.lock")) return null;
+        const major = packageManagerMajor(readPackageJson(ctx), "yarn");
+        const berryConfig = ctx.fileExists(".yarnrc.yml");
+        const label = major === null ? berryConfig ? "berry" : null : major >= 2 ? "berry" : "1.x";
+        return withVersionBucket(
+          {
+            id: "buildtool/yarn",
+            category: "buildTool",
+            name: label === "berry" ? "Yarn (Berry)" : "Yarn",
+            version: major === null ? void 0 : String(major),
+            detectedBy: "yarn.lock"
+          },
+          label
+        );
+      }
+    };
+    buildtoolGradle = {
+      id: "buildtool/gradle",
+      category: "buildTool",
+      detect(ctx) {
+        const marker = ["build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
+        if (!marker) return null;
+        const wrapper = ctx.readFile("gradle/wrapper/gradle-wrapper.properties");
+        const major = majorFromRange(wrapper?.match(/gradle-(\d+)\.[\d.]*-(?:bin|all)\.zip/)?.[1]);
+        const bucket = major === null ? null : nearestBucket(major, GRADLE_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "buildtool/gradle",
+            category: "buildTool",
+            name: "Gradle",
+            version: major === null ? void 0 : String(major),
+            detectedBy: marker
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    buildtoolPip = buildToolRule("buildtool/pip", "pip", "requirements.txt");
+    buildtoolPoetry = {
+      id: "buildtool/poetry",
+      category: "buildTool",
+      detect(ctx) {
+        const src = ctx.readFile("pyproject.toml");
+        if (!src || !src.includes("[tool.poetry]")) return null;
+        const declared = majorFromRange(src.match(/requires-poetry\s*=\s*["'][^"']*?(\d+)/)?.[1]);
+        const lockVersion = majorFromRange(ctx.readFile("poetry.lock")?.match(/lock-version\s*=\s*["'](\d+)/)?.[1]);
+        const major = declared ?? (lockVersion !== null && lockVersion >= 2 ? 2 : null);
+        const bucket = major === null ? null : nearestBucket(major, POETRY_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "buildtool/poetry",
+            category: "buildTool",
+            name: "Poetry",
+            version: major === null ? void 0 : String(major),
+            detectedBy: "pyproject.toml"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    datastorePostgres = dataStoreRule(
+      "datastore/postgres",
+      "PostgreSQL",
+      (pkg, javaSrc, pySrc) => hasDep(pkg, "pg") || /postgresql/i.test(javaSrc) || /psycopg2/i.test(pySrc)
+    );
+    datastoreMysql = dataStoreRule(
+      "datastore/mysql",
+      "MySQL",
+      (pkg, javaSrc, pySrc) => hasDep(pkg, "mysql", "mysql2") || /mysql-connector/i.test(javaSrc) || /(pymysql|mysqlclient)/i.test(pySrc)
+    );
+    datastoreMongodb = dataStoreRule(
+      "datastore/mongodb",
+      "MongoDB",
+      (pkg, javaSrc, pySrc) => hasDep(pkg, "mongoose", "mongodb") || /mongodb-driver/i.test(javaSrc) || /pymongo/i.test(pySrc)
+    );
+    datastoreRedis = dataStoreRule(
+      "datastore/redis",
+      "Redis",
+      (pkg, javaSrc, pySrc) => hasDep(pkg, "redis", "ioredis") || /(lettuce|jedis)/i.test(javaSrc) || /\bredis\b/i.test(pySrc)
+    );
+    infraDocker = {
+      id: "infra/docker",
+      category: "infra",
+      detect(ctx) {
+        const marker = ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"].find((f) => ctx.fileExists(f));
+        if (!marker) return null;
+        return { id: "infra/docker", category: "infra", name: "Docker", detectedBy: marker };
+      }
+    };
+    infraGithubActions = {
+      id: "infra/github-actions",
+      category: "infra",
+      detect(ctx) {
+        if (!ctx.fileExists(".github/workflows")) return null;
+        return { id: "infra/github-actions", category: "infra", name: "GitHub Actions", detectedBy: ".github/workflows" };
+      }
+    };
+    ALL_RULES = [
+      langTypescript,
+      langJavascript,
+      langJava,
+      langPython,
+      frameworkNode,
+      frameworkReact,
+      frameworkNextjs,
+      frameworkExpress,
+      frameworkSpring,
+      buildtoolNpm,
+      buildtoolYarn,
+      buildtoolPnpm,
+      buildtoolMaven,
+      buildtoolGradle,
+      buildtoolPip,
+      buildtoolPoetry,
+      datastorePostgres,
+      datastoreMysql,
+      datastoreMongodb,
+      datastoreRedis,
+      infraDocker,
+      infraGithubActions
+    ];
+  }
+});
+
+// src/harness/stackDetector.ts
+function detectNodeCommands(ctx, buildToolIds) {
+  const pkg = ctx.readJson("package.json");
+  const scripts = pkg?.scripts ?? {};
+  const runner = buildToolIds.includes("buildtool/pnpm") ? "pnpm" : buildToolIds.includes("buildtool/yarn") ? "yarn" : "npm run";
+  const commands = {};
+  if (scripts.build) commands.build = `${runner} build`;
+  if (scripts.test) commands.test = `${runner} test`;
+  if (scripts.format) commands.format = `${runner} format`;
+  if (scripts.lint) commands.lint = `${runner} lint`;
+  return commands;
+}
+function readBuildFileText(ctx, paths) {
+  return paths.map((p) => ctx.readFile(p) ?? "").join("\n");
+}
+function detectGradleCommands(ctx, isWindows) {
+  const hasBat = ctx.fileExists("gradlew.bat");
+  const hasSh = ctx.fileExists("gradlew");
+  const exe = isWindows && hasBat ? ".\\gradlew.bat" : hasSh ? "./gradlew" : "gradle";
+  const buildFile = readBuildFileText(ctx, ["build.gradle", "build.gradle.kts"]);
+  const lintTasks = [];
+  if (/checkstyle/i.test(buildFile)) lintTasks.push("checkstyleMain");
+  if (/spotbugs/i.test(buildFile)) lintTasks.push("spotbugsMain");
+  return {
+    build: `${exe} build`,
+    test: `${exe} test`,
+    ...lintTasks.length > 0 ? { lint: `${exe} ${lintTasks.join(" ")}` } : {}
+  };
+}
+function detectMavenCommands(ctx, isWindows) {
+  const hasCmd = ctx.fileExists("mvnw.cmd");
+  const hasSh = ctx.fileExists("mvnw");
+  const exe = isWindows && hasCmd ? "mvnw.cmd" : hasSh ? "./mvnw" : "mvn";
+  const pom = ctx.readFile("pom.xml") ?? "";
+  const lintGoals = [];
+  if (pom.includes("maven-checkstyle-plugin")) lintGoals.push("checkstyle:check");
+  if (pom.includes("spotbugs-maven-plugin")) lintGoals.push("spotbugs:check");
+  return {
+    build: `${exe} compile`,
+    test: `${exe} test`,
+    ...lintGoals.length > 0 ? { lint: `${exe} ${lintGoals.join(" ")}` } : {}
+  };
+}
+function detectPythonCommands(ctx, buildToolIds) {
+  if (!buildToolIds.includes("buildtool/pip") && !buildToolIds.includes("buildtool/poetry")) return {};
+  const isPoetry = buildToolIds.includes("buildtool/poetry");
+  const test = isPoetry ? "poetry run pytest" : "pytest";
+  const pyproject = ctx.readFile("pyproject.toml") ?? "";
+  const prefix = isPoetry ? "poetry run " : "";
+  let lint;
+  if (/\[tool\.ruff(\.|\])/.test(pyproject) || ctx.fileExists("ruff.toml") || ctx.fileExists(".ruff.toml")) {
+    lint = `${prefix}ruff check .`;
+  } else if (/\[tool\.flake8\]/.test(pyproject) || ctx.fileExists(".flake8") || /\[flake8\]/.test(ctx.readFile("setup.cfg") ?? "")) {
+    lint = `${prefix}flake8`;
+  }
+  return { test, ...lint ? { lint } : {} };
+}
+function detectStack(projectPath, platform = process.platform) {
+  const ctx = createFsDetectionContext(projectPath);
+  const isWindows = platform === "win32";
+  const languages = [];
+  const frameworks = [];
+  const dataStores = [];
+  const buildTools = [];
+  const infra = [];
+  for (const rule of ALL_RULES) {
+    const items = flattenDetected(rule.detect(ctx));
+    for (const item of items) {
+      switch (item.category) {
+        case "language":
+          languages.push(item);
+          break;
+        case "framework":
+          frameworks.push(item);
+          break;
+        case "dataStore":
+          dataStores.push(item);
+          break;
+        case "buildTool":
+          buildTools.push(item);
+          break;
+        case "infra":
+          infra.push(item);
+          break;
+      }
+    }
+  }
+  const harnessIds = Array.from(
+    new Set([...languages, ...frameworks, ...buildTools].map((item) => item.id))
+  );
+  const buildToolIds = buildTools.map((b) => b.id);
+  const commands = {
+    ...buildToolIds.some((id) => id.startsWith("buildtool/npm") || id.startsWith("buildtool/yarn") || id.startsWith("buildtool/pnpm")) ? detectNodeCommands(ctx, buildToolIds) : {},
+    ...buildToolIds.includes("buildtool/gradle") ? detectGradleCommands(ctx, isWindows) : {},
+    ...buildToolIds.includes("buildtool/maven") ? detectMavenCommands(ctx, isWindows) : {},
+    ...detectPythonCommands(ctx, buildToolIds)
+  };
+  return { languages, frameworks, dataStores, buildTools, infra, harnessIds, commands };
+}
+var init_stackDetector = __esm({
+  "src/harness/stackDetector.ts"() {
+    "use strict";
+    init_context();
+    init_rules();
+  }
+});
+
+// src/harness/installManifest.ts
+import { mkdir as mkdir4, readFile as readFile3 } from "node:fs/promises";
+import { dirname as dirname5, join as join6 } from "node:path";
+import { createHash as createHash2 } from "node:crypto";
+function fileBaseline(content) {
+  return content === null ? { existed: false, byteLength: 0, sha256: null } : { existed: true, byteLength: Buffer.byteLength(content), sha256: createHash2("sha256").update(content).digest("hex") };
+}
+function installManifestPath(projectPath) {
+  return join6(projectPath, "sugo", "install-manifest.json");
+}
+async function loadInstallManifest(projectPath) {
+  return readFile3(installManifestPath(projectPath), "utf8").then((raw) => JSON.parse(raw), () => null);
+}
+async function saveInstallManifest(manifest) {
+  const path = installManifestPath(manifest.projectPath);
+  const content = `${JSON.stringify({ ...manifest, managedFiles: [...new Set(manifest.managedFiles)].sort() }, null, 2)}
+`;
+  const existing = await readFile3(path, "utf8").catch(() => null);
+  if (existing === content) return;
+  await mkdir4(dirname5(path), { recursive: true });
+  await atomicWriteFile(path, content);
+}
+async function recordManagedFile(projectPath, relPath) {
+  const manifest = await loadInstallManifest(projectPath);
+  if (!manifest || manifest.managedFiles.includes(relPath)) return;
+  manifest.managedFiles.push(relPath);
+  await saveInstallManifest(manifest);
+}
+var init_installManifest = __esm({
+  "src/harness/installManifest.ts"() {
+    "use strict";
+    init_fsUtil();
+  }
+});
+
+// src/harness/featureState.ts
+import { mkdir as mkdir5, readFile as readFile4 } from "node:fs/promises";
+import { dirname as dirname6, join as join7 } from "node:path";
+function harnessFeatureStatePath() {
+  return join7(sugoHomeDir(), ".claude", "sugo", "harness-feature.json");
+}
+async function loadHarnessFeatureState() {
+  try {
+    const value = JSON.parse(await readFile4(harnessFeatureStatePath(), "utf8"));
+    return { enabled: value.enabled !== false };
+  } catch {
+    return { enabled: true };
+  }
+}
+var init_featureState = __esm({
+  "src/harness/featureState.ts"() {
+    "use strict";
+    init_fsUtil();
+    init_homeDir();
+  }
+});
+
+// src/harness/featureControl.ts
+import { readFile as readFile5, unlink as unlink2 } from "node:fs/promises";
+import { join as join8 } from "node:path";
+async function suspendProjectHarness(projectPath) {
+  const config2 = await loadProjectConfig(projectPath);
+  for (const applied of config2?.appliedHarnesses ?? []) {
+    await unlink2(join8(projectPath, buildClaudeRuleFile(applied.id, "").relPath)).catch(() => {
+    });
+  }
+  const rootPath = join8(projectPath, "CLAUDE.md");
+  const current = await readFile5(rootPath, "utf8").catch(() => null);
+  const next = removeRootClaudeReference(current);
+  if (next.changed) await atomicWriteFile(rootPath, next.content);
+}
+var init_featureControl = __esm({
+  "src/harness/featureControl.ts"() {
+    "use strict";
+    init_fsUtil();
+    init_config();
+    init_registry();
+    init_rulesFile();
+    init_featureState();
+  }
+});
+
+// src/harness/sync.ts
+import { access, mkdir as mkdir6, readFile as readFile6, unlink as unlink3 } from "node:fs/promises";
+import { basename, dirname as dirname7, join as join9 } from "node:path";
+async function writeTextIfChanged(path, content) {
+  const existing = await readFile6(path, "utf-8").catch(() => null);
+  if (existing === content) return;
+  await atomicWriteFile(path, content);
+}
+async function syncProjectHarness(args2) {
+  const { projectPath } = args2;
+  const sugoDir = projectSugoDir(projectPath);
+  const rootClaudePath = join9(projectPath, "CLAUDE.md");
+  const rootAgentsPath = join9(projectPath, "AGENTS.md");
+  const existingManifest = await loadInstallManifest(projectPath);
+  const manifest = existingManifest ? { ...existingManifest, projectPath } : {
+    version: 1,
+    projectPath,
+    sugoDirExisted: await access(sugoDir).then(() => true, () => false),
+    rootClaudeOriginal: fileBaseline(await readFile6(rootClaudePath, "utf8").catch(() => null)),
+    rootAgentsOriginal: fileBaseline(await readFile6(rootAgentsPath, "utf8").catch(() => null)),
+    managedFiles: []
+  };
+  const existingConfig = await loadProjectConfig(projectPath);
+  const existingEntry = await findRegistryEntry(projectPath);
+  const workspace = args2.workspace ?? existingEntry?.workspace;
+  const detectedStack = detectStack(projectPath);
+  const harnessIds = Array.from(/* @__PURE__ */ new Set([...detectedStack.harnessIds, ...args2.additionalStacks ?? []]));
+  const libraryDir = defaultHarnessLibraryDir();
+  const { harnesses, warnings: fetchWarnings } = fetchHarnesses({ harnessIds, libraryDir, overrideDir: userHarnessOverrideDir(), repoUrl: args2.repoUrl });
+  const projectName = basename(projectPath);
+  const composeResult = compose({ harnesses, projectName, workspace, detectedStack, fetchWarnings });
+  const claudeMdPath = join9(sugoDir, "CLAUDE.md");
+  await mkdir6(sugoDir, { recursive: true });
+  const existingClaudeMd = await readFile6(claudeMdPath, "utf-8").catch(() => null);
+  const claudeMdResult = writeClaudeIfChanged(existingClaudeMd, composeResult.claudeMd, (/* @__PURE__ */ new Date()).toISOString());
+  if (claudeMdResult.changed) await atomicWriteFile(claudeMdPath, claudeMdResult.content);
+  for (const file of composeResult.harnessFiles) {
+    const fullPath = join9(projectPath, file.relPath);
+    await mkdir6(dirname7(fullPath), { recursive: true });
+    await writeTextIfChanged(fullPath, file.content);
+  }
+  const claudeRulesDir = join9(projectPath, ".claude", "rules");
+  await mkdir6(claudeRulesDir, { recursive: true });
+  const effectiveRuleFiles = buildEffectiveClaudeRuleFiles(harnesses);
+  for (const ruleFile of effectiveRuleFiles) {
+    await writeTextIfChanged(join9(projectPath, ruleFile.relPath), ruleFile.content);
+  }
+  const currentRulePaths = new Set(effectiveRuleFiles.map((file) => file.relPath));
+  const previousIds = existingConfig?.appliedHarnesses.map((h) => h.id) ?? [];
+  for (const staleId of previousIds.filter((id) => !currentRulePaths.has(buildClaudeRuleFile(id, "").relPath))) {
+    const stalePath = join9(projectPath, buildClaudeRuleFile(staleId, "").relPath);
+    await unlink3(stalePath).catch(() => {
+    });
+  }
+  const existingRootClaude = await readFile6(rootClaudePath, "utf-8").catch(() => null);
+  const rootClaude = mergeRootClaudeReference(existingRootClaude, harnesses.map((h) => h.id));
+  if (rootClaude.changed) await atomicWriteFile(rootClaudePath, rootClaude.content);
+  const existingRootAgents = await readFile6(rootAgentsPath, "utf-8").catch(() => null);
+  const rootAgents = mergeRootAgentsReference(existingRootAgents);
+  if (rootAgents.changed) await atomicWriteFile(rootAgentsPath, rootAgents.content);
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  const candidateConfig = {
+    version: "0.1.0",
+    projectPath,
+    projectName,
+    registeredAt: existingConfig?.registeredAt ?? now,
+    lastUpdated: now,
+    detectedStack,
+    appliedHarnesses: harnesses.map((h) => {
+      const contentHash = hashHarnessContent(h);
+      const previous = existingConfig?.appliedHarnesses.find(
+        (item) => item.id === h.id && item.version === h.version && item.contentHash === contentHash
+      );
+      return { id: h.id, version: h.version, appliedAt: previous?.appliedAt ?? now, contentHash };
+    }),
+    autoCommitArtifacts: existingConfig?.autoCommitArtifacts ?? true,
+    disabled: existingConfig?.disabled ?? false,
+    verificationPolicy: args2.integrationGateEnforced === void 0 && args2.contractEvidenceRequired === void 0 ? existingConfig?.verificationPolicy : {
+      ...existingConfig?.verificationPolicy,
+      ...args2.integrationGateEnforced !== void 0 && { integrationGateEnforced: args2.integrationGateEnforced },
+      ...args2.contractEvidenceRequired !== void 0 && { contractEvidenceRequired: args2.contractEvidenceRequired }
+    }
+  };
+  const unchanged = existingConfig !== null && JSON.stringify({ ...candidateConfig, lastUpdated: existingConfig.lastUpdated }) === JSON.stringify(existingConfig);
+  const config2 = unchanged ? existingConfig : candidateConfig;
+  if (!unchanged) await saveProjectConfig(config2);
+  manifest.managedFiles = [
+    ...manifest.managedFiles,
+    "sugo/CLAUDE.md",
+    "sugo/config.json",
+    ...composeResult.harnessFiles.map((file) => file.relPath),
+    ...effectiveRuleFiles.map((file) => file.relPath)
+  ];
+  await saveInstallManifest(manifest);
+  await registerProject({ path: projectPath, name: projectName, registeredAt: config2.registeredAt, workspace });
+  if (!(await loadHarnessFeatureState()).enabled) await suspendProjectHarness(projectPath);
+  return {
+    projectName,
+    workspace,
+    composeResult,
+    config: config2,
+    claudeMdPath,
+    rootClaudeMdPath: rootClaudePath,
+    rootAgentsMdPath: rootAgentsPath,
+    claudeRulesFiles: (await loadHarnessFeatureState()).enabled ? harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath) : []
+  };
+}
+var init_sync = __esm({
+  "src/harness/sync.ts"() {
+    "use strict";
+    init_fsUtil();
+    init_config();
+    init_contentHash();
+    init_harnessComposer();
+    init_harnessFetcher();
+    init_libraryPath();
+    init_registry();
+    init_claudeMdFreshness();
+    init_rulesFile();
+    init_stackDetector();
+    init_installManifest();
+    init_featureState();
+    init_featureControl();
   }
 });
 
@@ -22527,1267 +23941,20 @@ var StdioServerTransport = class {
 
 // src/tools/sugoAdd.ts
 import { resolve as resolve5 } from "node:path";
-
-// src/harness/sync.ts
-import { access, mkdir as mkdir5, readFile as readFile4, unlink as unlink2 } from "node:fs/promises";
-import { basename, dirname as dirname6, join as join7 } from "node:path";
-
-// src/fsUtil.ts
-import { mkdir, open, rename, stat, unlink, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
-var seq = 0;
-async function atomicWriteFile(path, content) {
-  const tmpPath = `${path}.tmp.${process.pid}.${Date.now()}.${seq++}`;
-  await writeFile(tmpPath, content, "utf-8");
-  const delays = [0, 25, 50, 100, 200];
-  let lastErr;
-  for (const delay of delays) {
-    if (delay > 0) await new Promise((r) => setTimeout(r, delay));
-    try {
-      await rename(tmpPath, path);
-      return;
-    } catch (err2) {
-      lastErr = err2;
-    }
-  }
-  await unlink(tmpPath).catch(() => {
-  });
-  throw lastErr;
-}
-var STALE_LOCK_MS = 3e4;
-async function withFileLock(lockPath, fn) {
-  await mkdir(dirname(lockPath), { recursive: true });
-  const maxAttempts = 40;
-  const baseDelayMs = 10;
-  const maxDelayMs = 250;
-  let acquired = false;
-  let lastErr;
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    if (attempt > 0) {
-      const backoff = Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1));
-      const jitter = Math.random() * backoff * 0.5;
-      await new Promise((r) => setTimeout(r, backoff + jitter));
-    }
-    try {
-      const handle2 = await open(lockPath, "wx");
-      await handle2.close();
-      acquired = true;
-      break;
-    } catch (err2) {
-      lastErr = err2;
-      const age = await stat(lockPath).then((s) => Date.now() - s.mtimeMs, () => 0);
-      if (age > STALE_LOCK_MS) await unlink(lockPath).catch(() => {
-      });
-    }
-  }
-  if (!acquired) {
-    throw new Error(`\uB77D \uD30C\uC77C\uC744 \uD68D\uB4DD\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${lockPath} (${String(lastErr)})`);
-  }
-  try {
-    return await fn();
-  } finally {
-    await unlink(lockPath).catch(() => {
-    });
-  }
-}
-
-// src/harness/config.ts
-import { mkdir as mkdir2, readFile } from "node:fs/promises";
-import { dirname as dirname2, join } from "node:path";
-function projectSugoDir(projectPath) {
-  return join(projectPath, "sugo");
-}
-function projectConfigPath(projectPath) {
-  return join(projectSugoDir(projectPath), "config.json");
-}
-async function saveProjectConfig(config2) {
-  const path = projectConfigPath(config2.projectPath);
-  await mkdir2(dirname2(path), { recursive: true });
-  await atomicWriteFile(path, JSON.stringify(config2, null, 2));
-}
-async function loadProjectConfig(projectPath) {
-  try {
-    const raw = await readFile(projectConfigPath(projectPath), "utf-8");
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-// src/harness/contentHash.ts
-import { createHash } from "node:crypto";
-function hashHarnessContent(harness) {
-  return createHash("sha1").update(harness.harnessMd).update("\0").update(harness.validationYaml).digest("hex");
-}
-
-// src/harness/harnessComposer.ts
-function extractCoreRuleBullets(harnessMd, limit = 2) {
-  const lines2 = harnessMd.split(/\r?\n/);
-  const headingIdx = lines2.findIndex((l) => /^#{1,3}\s*핵심 규칙/.test(l.trim()));
-  if (headingIdx === -1) return [];
-  const bullets2 = [];
-  for (let i2 = headingIdx + 1; i2 < lines2.length; i2++) {
-    const line = lines2[i2].trim();
-    if (/^#{1,3}\s/.test(line)) break;
-    const m = line.match(/^(?:\d+\.|-)\s+(.*)$/);
-    if (m) bullets2.push(m[1]);
-    if (bullets2.length >= limit) break;
-  }
-  return bullets2;
-}
-function formatItemList(items) {
-  if (items.length === 0) return "(\uC5C6\uC74C)";
-  const labels = items.map((i2) => i2.version ? `${i2.name} ${i2.version}` : i2.name);
-  return Array.from(new Set(labels)).join(", ");
-}
-function formatCommands(commands) {
-  const entries = Object.entries(commands).filter(([, v]) => v);
-  if (entries.length === 0) return "(\uAC10\uC9C0\uB41C \uBA85\uB839 \uC5C6\uC74C)";
-  return entries.map(([k, v]) => `${k}=\`${v}\``).join(", ");
-}
-function compose(params) {
-  const { harnesses, projectName, workspace, detectedStack, fetchWarnings } = params;
-  const harnessFiles = [];
-  for (const h of harnesses) {
-    harnessFiles.push({ relPath: `sugo/harness/${h.id}/harness.md`, content: h.harnessMd });
-    harnessFiles.push({ relPath: `sugo/harness/${h.id}/validation.yaml`, content: h.validationYaml });
-  }
-  const appliedTableRows = harnesses.map((h) => `| \`${h.id}\` | ${h.source === "default-fallback" ? "(\uD3F4\uBC31) " : ""}${h.version} |`).join("\n");
-  const ruleSummaryBlocks = harnesses.map((h) => {
-    const bullets2 = extractCoreRuleBullets(h.harnessMd);
-    if (bullets2.length === 0) return `### \`${h.id}\`
-(\uD575\uC2EC \uADDC\uCE59 \uC139\uC158 \uC5C6\uC74C \u2014 harness.md \uCC38\uACE0)`;
-    return `### \`${h.id}\`
-${bullets2.map((b) => `- ${b}`).join("\n")}`;
-  }).join("\n\n");
-  const allWarnings = [...fetchWarnings];
-  const claudeMd = `# ${projectName} \u2014 Sugo \uD558\uB124\uC2A4 \uC778\uB371\uC2A4
-
-> \uC790\uB3D9 \uC0DD\uC131\uB428. \`sugo:add\`\uB97C \uB2E4\uC2DC \uC2E4\uD589\uD558\uBA74 \uAC31\uC2E0\uB429\uB2C8\uB2E4. \uAC1C\uBCC4 \uD558\uB124\uC2A4 \uC804\uBB38\uC740
-> \`sugo/harness/<id>/harness.md\`, \uAC80\uC99D \uC124\uC815\uC740 \`sugo/harness/<id>/validation.yaml\`\uC744 \uCC38\uACE0\uD558\uC138\uC694.
-> \uC774 \uD30C\uC77C \uC790\uCCB4\uB294 \uCC38\uACE0\uC6A9 \uC778\uB371\uC2A4\uC785\uB2C8\uB2E4 \u2014 Claude Code\uAC00 \uC138\uC158 \uC2DC\uC791 \uC2DC \uC790\uB3D9\uC73C\uB85C \uC77D\uB294 \uAC74
-> \`.claude/rules/*.md\`\uC640 \uD504\uB85C\uC81D\uD2B8 \uB8E8\uD2B8 \`CLAUDE.md\`\uC774\uBA70, \uC5EC\uAE30 \uC788\uB294 \uC694\uC57D\uC740 \uADF8\uAC78 \uBCF4\uC644\uD569\uB2C8\uB2E4.
-${workspace ? `>
-> \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4: \`${workspace}\`` : ""}
-
-## \uAC10\uC9C0\uB41C \uC2A4\uD0DD
-
-- **\uC5B8\uC5B4:** ${formatItemList(detectedStack.languages)}
-- **\uD504\uB808\uC784\uC6CC\uD06C:** ${formatItemList(detectedStack.frameworks)}
-- **\uBE4C\uB4DC\uB3C4\uAD6C:** ${formatItemList(detectedStack.buildTools)}
-- **\uB370\uC774\uD130\uC2A4\uD1A0\uC5B4(\uC815\uBCF4\uC131 \u2014 \uBCC4\uB3C4 \uD558\uB124\uC2A4 \uBBF8\uC801\uC6A9):** ${formatItemList(detectedStack.dataStores)}
-- **\uC778\uD504\uB77C(\uC815\uBCF4\uC131):** ${formatItemList(detectedStack.infra)}
-- **\uAC10\uC9C0\uB41C \uBA85\uB839:** ${formatCommands(detectedStack.commands)}
-
-## \uC801\uC6A9\uB41C \uD558\uB124\uC2A4
-
-| id | version |
-|----|---------|
-${appliedTableRows}
-
-## \uD575\uC2EC \uADDC\uCE59 \uC694\uC57D
-
-${ruleSummaryBlocks}
-
-## \uAC80\uC99D \uAC8C\uC774\uD2B8 \uC139\uC158
-
-sugo \uD30C\uC774\uD504\uB77C\uC778\uC758 \uC21C\uC11C\uAC15\uC81C\xB7\uCF58\uD150\uCE20 \uAC8C\uC774\uD2B8(analyze \uD638\uCD9C\uAC15\uC81C, baseline, wiring/glue/boot, \uD14C\uC2A4\uD2B8\uC99D\uAC70\uB300\uC870,
-review 4\uC911\uAC80\uC99D \uB4F1)\uB294 \uC2E4\uC81C\uB85C \uC9D1\uD589\uB429\uB2C8\uB2E4(\`sugo_plan\` \uC0C1\uD0DC\uBA38\uC2E0). \uC704 \uD45C\uC758 \uAC01 \uD558\uB124\uC2A4 \`validation.yaml\`\uC740
-\`sugo_validate\`(review \uB2E8\uACC4)\uAC00 \uB300\uC870\uD569\uB2C8\uB2E4 \u2014 \uADF8\uC911 \`auto\`\uAC00 \uC120\uC5B8\uB41C \uCCB4\uD06C\uB294 \uC11C\uBC84\uAC00 \uD30C\uC77C\uC744 \uC9C1\uC811 \uC77D\uC5B4
-\uC2E4\uCE21\uD558\uACE0, \uADF8 \uACB0\uACFC\uAC00 \uC5D0\uC774\uC804\uD2B8\uC758 \uC790\uAE30\uBCF4\uACE0\uBCF4\uB2E4 \uC6B0\uC120\uD569\uB2C8\uB2E4(\uC8FC\uC7A5\uACFC \uC5B4\uAE0B\uB098\uBA74 \`contradictions\`\uC5D0 \uB0A8\uC2B5\uB2C8\uB2E4).
-**\uB2E4\uB9CC \uC544\uC9C1 \uBAA8\uB4E0 \uCCB4\uD06C\uAC00 \uC2E4\uCE21\uB418\uB294 \uAC74 \uC544\uB2D9\uB2C8\uB2E4** \u2014 \uB300\uBD80\uBD84\uC740 review-agent\uC758 \uC790\uAE30\uBCF4\uACE0\uC774\uACE0,
-\`review_done\`\uC774 \uAC80\uC99D \uC2E4\uD328\uB97C \uC774\uC720\uB85C \uD30C\uC774\uD504\uB77C\uC778\uC744 \uB9C9\uB294 \uD558\uB4DC \uAC8C\uC774\uD2B8\uB85C \uC2B9\uACA9\uB418\uC9C0\uB3C4 \uC54A\uC558\uC2B5\uB2C8\uB2E4.
-"\uD575\uC2EC \uADDC\uCE59 \uC694\uC57D"\uC740 \uADF8 \uCC28\uC774\uB97C \uC54C\uACE0 \uCC38\uACE0 \uC790\uB8CC\uB85C \uD65C\uC6A9\uD558\uC138\uC694.
-
-${allWarnings.length > 0 ? `## \uACBD\uACE0
-
-${allWarnings.map((w) => `- ${w}`).join("\n")}
-` : ""}`;
-  return {
-    claudeMd,
-    harnessFiles,
-    appliedHarnesses: harnesses.map((h) => ({ id: h.id, version: h.version })),
-    warnings: allWarnings
-  };
-}
-
-// src/harness/harnessFetcher.ts
-import { existsSync, readFileSync } from "node:fs";
-import { join as join2 } from "node:path";
-var LOCAL_HARNESS_VERSION = "1.0.0-local";
-var DEFAULT_HARNESS_ID = "default";
-var HARNESS_FETCH_COOLDOWN_MS = 5 * 60 * 1e3;
-function baseHarnessId(id) {
-  const parts2 = id.split("/");
-  if (parts2.length <= 2) return null;
-  return parts2.slice(0, 2).join("/");
-}
-function readHarnessDir(libraryDir, id, overrideDir) {
-  const dir = join2(libraryDir, id);
-  const harnessPath = join2(dir, "harness.md");
-  const validationPath = join2(dir, "validation.yaml");
-  if (!existsSync(harnessPath) || !existsSync(validationPath)) return null;
-  return {
-    harnessMd: overrideDir && existsSync(join2(overrideDir, id, "harness.md")) ? readFileSync(join2(overrideDir, id, "harness.md"), "utf-8") : readFileSync(harnessPath, "utf-8"),
-    validationYaml: overrideDir && existsSync(join2(overrideDir, id, "validation.yaml")) ? readFileSync(join2(overrideDir, id, "validation.yaml"), "utf-8") : readFileSync(validationPath, "utf-8")
-  };
-}
-function fetchFromLocal(harnessIds, libraryDir, overrideDir) {
-  const harnesses = [];
-  const warnings = [];
-  const idsToFetch = harnessIds.length > 0 ? harnessIds : [];
-  for (const id of idsToFetch) {
-    let hit = readHarnessDir(libraryDir, id, overrideDir);
-    let resolvedId = id;
-    let source = "local";
-    if (!hit) {
-      const base = baseHarnessId(id);
-      if (base) {
-        hit = readHarnessDir(libraryDir, base, overrideDir);
-        if (hit) resolvedId = base;
-      }
-    }
-    if (!hit) {
-      warnings.push(`\uD558\uB124\uC2A4 id "${id}"\uC5D0 \uB300\uD55C \uB85C\uCEEC \uCF58\uD150\uCE20\uB97C \uCC3E\uC9C0 \uBABB\uD574 default\uB85C \uD3F4\uBC31\uD569\uB2C8\uB2E4.`);
-      hit = readHarnessDir(libraryDir, DEFAULT_HARNESS_ID, overrideDir);
-      resolvedId = DEFAULT_HARNESS_ID;
-      source = "default-fallback";
-      if (!hit) {
-        throw new Error(`\uB85C\uCEEC \uD558\uB124\uC2A4 \uB77C\uC774\uBE0C\uB7EC\uB9AC\uC5D0 "${DEFAULT_HARNESS_ID}" \uD3F4\uBC31 \uCF58\uD150\uCE20\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4: ${libraryDir}`);
-      }
-    }
-    if (harnesses.some((h) => h.id === resolvedId)) continue;
-    harnesses.push({
-      id: resolvedId,
-      version: LOCAL_HARNESS_VERSION,
-      harnessMd: hit.harnessMd,
-      validationYaml: hit.validationYaml,
-      source
-    });
-  }
-  if (!harnesses.some((h) => h.id === DEFAULT_HARNESS_ID)) {
-    const defaultHit = readHarnessDir(libraryDir, DEFAULT_HARNESS_ID, overrideDir);
-    if (!defaultHit) {
-      throw new Error(`\uB85C\uCEEC \uD558\uB124\uC2A4 \uB77C\uC774\uBE0C\uB7EC\uB9AC\uC5D0 "${DEFAULT_HARNESS_ID}" \uCF58\uD150\uCE20\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4: ${libraryDir}`);
-    }
-    harnesses.unshift({
-      id: DEFAULT_HARNESS_ID,
-      version: LOCAL_HARNESS_VERSION,
-      harnessMd: defaultHit.harnessMd,
-      validationYaml: defaultHit.validationYaml,
-      source: "local"
-    });
-  }
-  return { harnesses, warnings };
-}
-function fetchHarnesses(params) {
-  const result3 = fetchFromLocal(params.harnessIds, params.libraryDir, params.overrideDir);
-  if (params.repoUrl) {
-    result3.warnings.unshift(
-      `repoUrl(${params.repoUrl})\uC774 \uC9C0\uC815\uB418\uC5C8\uC9C0\uB9CC git \uAE30\uBC18 \uD558\uB124\uC2A4 fetch\uB294 \uC544\uC9C1 \uAD6C\uD604\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uB85C\uCEEC \uD558\uB124\uC2A4 \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB85C \uD3F4\uBC31\uD569\uB2C8\uB2E4.`
-    );
-  }
-  return result3;
-}
-
-// src/harness/libraryPath.ts
-import { existsSync as existsSync2 } from "node:fs";
-import { dirname as dirname3, join as join3 } from "node:path";
-import { fileURLToPath } from "node:url";
-
-// src/homeDir.ts
-import { homedir } from "node:os";
-function sugoHomeDir() {
-  return process.env.SUGO_HOME_OVERRIDE ?? homedir();
-}
-
-// src/harness/libraryPath.ts
-function defaultHarnessLibraryDir() {
-  const here = dirname3(fileURLToPath(import.meta.url));
-  const candidates = [join3(here, "..", "..", "harness-library"), join3(here, "..", "harness-library")];
-  for (const c of candidates) {
-    if (existsSync2(c)) return c;
-  }
-  return candidates[0];
-}
-function userHarnessOverrideDir() {
-  return join3(sugoHomeDir(), ".claude", "sugo", "harness-overrides");
-}
-
-// src/harness/registry.ts
-import { mkdir as mkdir3, readFile as readFile2 } from "node:fs/promises";
-import { dirname as dirname4, join as join4, resolve } from "node:path";
-function registryPath() {
-  return join4(sugoHomeDir(), ".claude", "sugo", "registry.json");
-}
-function registryLockPath() {
-  return `${registryPath()}.lock`;
-}
-async function readRegistryFile() {
-  try {
-    const raw = await readFile2(registryPath(), "utf-8");
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
-async function loadRegistry() {
-  return readRegistryFile();
-}
-async function findRegistryEntry(projectPath) {
-  const normalized = resolve(projectPath);
-  const entries = await readRegistryFile();
-  return entries.find((e) => resolve(e.path) === normalized) ?? null;
-}
-async function registerProject(entry) {
-  const path = registryPath();
-  await mkdir3(dirname4(path), { recursive: true });
-  const normalizedPath = resolve(entry.path);
-  await withFileLock(registryLockPath(), async () => {
-    const current = await readRegistryFile();
-    const normalizedEntry = { ...entry, path: normalizedPath };
-    const existing = current.find((e) => resolve(e.path) === normalizedPath);
-    if (existing && JSON.stringify(existing) === JSON.stringify(normalizedEntry)) return;
-    const filtered = current.filter((e) => resolve(e.path) !== normalizedPath);
-    filtered.push(normalizedEntry);
-    await atomicWriteFile(path, JSON.stringify(filtered, null, 2));
-  });
-}
-async function unregisterProject(projectPath) {
-  const normalizedPath = resolve(projectPath);
-  return withFileLock(registryLockPath(), async () => {
-    const current = await readRegistryFile();
-    const filtered = current.filter((e) => resolve(e.path) !== normalizedPath);
-    if (filtered.length === current.length) return false;
-    await atomicWriteFile(registryPath(), JSON.stringify(filtered, null, 2));
-    return true;
-  });
-}
-
-// src/harness/claudeMdFreshness.ts
-var FRESHNESS_PREFIX = "> \uC801\uC6A9 \uD558\uB124\uC2A4 \uCD5C\uADFC \uBCC0\uACBD: ";
-function freshnessLine(dateIso) {
-  return `${FRESHNESS_PREFIX}${dateIso}
-
-`;
-}
-function stripFreshnessLine(content) {
-  if (!content.startsWith(FRESHNESS_PREFIX)) return content;
-  const idx = content.indexOf("\n\n");
-  return idx === -1 ? content : content.slice(idx + 2);
-}
-function writeClaudeIfChanged(existing, nextBody, nowIso2) {
-  if (existing !== null && stripFreshnessLine(existing) === nextBody) {
-    return { content: existing, changed: false };
-  }
-  return { content: freshnessLine(nowIso2) + nextBody, changed: true };
-}
-
-// src/harness/harnessRouting.ts
-var JAVA_PREFIXES = ["lang/java", "framework/spring"];
-var NODE_PREFIXES = [
-  "lang/typescript",
-  "lang/javascript",
-  "framework/node",
-  "framework/react",
-  "framework/nextjs",
-  "framework/express"
-];
-var PYTHON_PREFIXES = ["lang/python"];
-var PREFIXES_BY_EXTENSION = {
-  ".java": JAVA_PREFIXES,
-  ".kt": JAVA_PREFIXES,
-  ".ts": NODE_PREFIXES,
-  ".tsx": NODE_PREFIXES,
-  ".mts": NODE_PREFIXES,
-  ".cts": NODE_PREFIXES,
-  ".js": NODE_PREFIXES,
-  ".jsx": NODE_PREFIXES,
-  ".mjs": NODE_PREFIXES,
-  ".cjs": NODE_PREFIXES,
-  ".py": PYTHON_PREFIXES,
-  ".pyi": PYTHON_PREFIXES
-};
-var PREFIXES_BY_FILENAME = {
-  "pom.xml": ["buildtool/maven", ...JAVA_PREFIXES],
-  "build.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "build.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "settings.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "settings.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "gradle.properties": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "libs.versions.toml": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "package.json": ["buildtool/npm", ...NODE_PREFIXES],
-  "package-lock.json": ["buildtool/npm", ...NODE_PREFIXES],
-  "yarn.lock": ["buildtool/yarn", ...NODE_PREFIXES],
-  "pnpm-lock.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
-  "pnpm-workspace.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
-  "tsconfig.json": ["lang/typescript"],
-  "poetry.lock": ["buildtool/poetry", ...PYTHON_PREFIXES],
-  "pyproject.toml": ["buildtool/poetry", "buildtool/pip", ...PYTHON_PREFIXES]
-};
-var ALWAYS_SELECTED = "default";
-function normalizePath(filePath) {
-  return filePath.replace(/\\/g, "/").toLowerCase();
-}
-function basenameOf(normalized) {
-  const idx = normalized.lastIndexOf("/");
-  return idx === -1 ? normalized : normalized.slice(idx + 1);
-}
-function extensionOf(basename4) {
-  const idx = basename4.lastIndexOf(".");
-  return idx <= 0 ? "" : basename4.slice(idx);
-}
-function prefixesForFile(filePath) {
-  const normalized = normalizePath(filePath);
-  const basename4 = basenameOf(normalized);
-  const byName = PREFIXES_BY_FILENAME[basename4];
-  if (byName) return byName;
-  if (basename4.startsWith("next.config.")) return ["framework/nextjs", ...NODE_PREFIXES];
-  if (/^requirements.*\.txt$/.test(basename4)) return ["buildtool/pip", ...PYTHON_PREFIXES];
-  const byExt = PREFIXES_BY_EXTENSION[extensionOf(basename4)];
-  return byExt ?? null;
-}
-function matchesPrefix(harnessId, prefix) {
-  return harnessId === prefix || harnessId.startsWith(`${prefix}/`);
-}
-function globsForHarnessId(harnessId) {
-  const globs = /* @__PURE__ */ new Set();
-  for (const [ext, prefixes] of Object.entries(PREFIXES_BY_EXTENSION)) {
-    if (prefixes.some((p) => matchesPrefix(harnessId, p))) globs.add(`**/*${ext}`);
-  }
-  for (const [filename, prefixes] of Object.entries(PREFIXES_BY_FILENAME)) {
-    if (prefixes.some((p) => matchesPrefix(harnessId, p))) globs.add(`**/${filename}`);
-  }
-  if (["framework/nextjs", ...NODE_PREFIXES].some((p) => matchesPrefix(harnessId, p))) {
-    globs.add("**/next.config.*");
-  }
-  if (["buildtool/pip", ...PYTHON_PREFIXES].some((p) => matchesPrefix(harnessId, p))) {
-    globs.add("**/requirements*.txt");
-  }
-  return [...globs].sort();
-}
-function routeHarnessesForFiles(appliedIds, changedFiles) {
-  const prefixes = /* @__PURE__ */ new Set();
-  const unmatchedFiles = [];
-  for (const file of changedFiles) {
-    const hit = prefixesForFile(file);
-    if (hit === null) {
-      unmatchedFiles.push(file);
-      continue;
-    }
-    for (const p of hit) prefixes.add(p);
-  }
-  if (prefixes.size === 0) {
-    return { selected: [...appliedIds], excluded: [], unmatchedFiles, fellBackToAll: true };
-  }
-  const selected = [];
-  const excluded = [];
-  for (const id of appliedIds) {
-    const keep = id === ALWAYS_SELECTED || [...prefixes].some((p) => matchesPrefix(id, p));
-    (keep ? selected : excluded).push(id);
-  }
-  return { selected, excluded, unmatchedFiles, fellBackToAll: false };
-}
-
-// src/harness/rulesFile.ts
-function ruleFilename(harnessId) {
-  return `${harnessId.replace(/\//g, "-")}.md`;
-}
-function buildClaudeRuleFile(harnessId, harnessMd) {
-  const globs = globsForHarnessId(harnessId);
-  const frontmatter = globs.length === 0 ? "" : `---
-paths:
-${globs.map((g) => `  - "${g}"`).join("\n")}
----
-
-`;
-  return { relPath: `.claude/rules/${ruleFilename(harnessId)}`, content: frontmatter + harnessMd };
-}
-function baseId(id) {
-  const parts2 = id.split("/");
-  return parts2.length > 2 ? parts2.slice(0, 2).join("/") : null;
-}
-function buildEffectiveClaudeRuleFiles(harnesses) {
-  const byId = new Map(harnesses.map((harness) => [harness.id, harness]));
-  const shadowedBases = new Set(harnesses.map((harness) => baseId(harness.id)).filter((id) => id !== null));
-  return harnesses.filter((harness) => !shadowedBases.has(harness.id)).map((harness) => {
-    const parent = baseId(harness.id);
-    const parentHarness = parent ? byId.get(parent) : void 0;
-    const content = parentHarness ? `${parentHarness.harnessMd.trimEnd()}
-
----
-
-${harness.harnessMd.trimStart()}` : harness.harnessMd;
-    return buildClaudeRuleFile(harness.id, content);
-  });
-}
-var BLOCK_START = "<!-- sugo:harness-rules:start -->";
-var BLOCK_END = "<!-- sugo:harness-rules:end -->";
-var AGENTS_BLOCK_START = "<!-- sugo:project-context:start -->";
-var AGENTS_BLOCK_END = "<!-- sugo:project-context:end -->";
-function buildManagedBlock(harnessIds) {
-  const list = harnessIds.length === 0 ? "(\uC801\uC6A9\uB41C \uD558\uB124\uC2A4 \uC5C6\uC74C)" : harnessIds.map((id) => `- \`${id}\``).join("\n");
-  return `${BLOCK_START}
-<!-- \uC774 \uBE14\uB85D\uC740 sugo\uAC00 \uC790\uB3D9 \uAD00\uB9AC\uD569\uB2C8\uB2E4. \uC190\uC73C\uB85C \uACE0\uCE58\uBA74 \uB2E4\uC74C sugo_add/sugo_update \uB54C \uB36E\uC5B4\uC368\uC9D1\uB2C8\uB2E4. -->
-## Sugo \uD558\uB124\uC2A4
-
-\uC774 \uD504\uB85C\uC81D\uD2B8\uC5D0 \uC801\uC6A9\uB41C \uCF54\uB529 \uD45C\uC900\uC774 \`.claude/rules/\`\uC5D0 \uC790\uB3D9 \uB85C\uB4DC\uB418\uB3C4\uB85D \uC124\uCE58\uB3FC \uC788\uC2B5\uB2C8\uB2E4.
-\uC804\uBB38\uC740 \`sugo/harness/<id>/harness.md\`, \uAC80\uC99D \uC124\uC815\uC740 \`sugo/harness/<id>/validation.yaml\`\uC5D0 \uC788\uC2B5\uB2C8\uB2E4.
-
-${list}
-${BLOCK_END}`;
-}
-function mergeRootClaudeReference(existing, appliedHarnessIds) {
-  const block = buildManagedBlock(appliedHarnessIds);
-  const base = existing ?? "";
-  const startIdx = base.indexOf(BLOCK_START);
-  const endIdx = base.indexOf(BLOCK_END);
-  if (startIdx === -1 || endIdx === -1) {
-    const separator = base.length > 0 && !base.endsWith("\n\n") ? base.endsWith("\n") ? "\n" : "\n\n" : "";
-    return { content: base + separator + block + "\n", changed: true };
-  }
-  const before = base.slice(0, startIdx);
-  const after = base.slice(endIdx + BLOCK_END.length);
-  const content = before + block + after;
-  return { content, changed: content !== base };
-}
-function mergeRootAgentsReference(existing) {
-  const block = `${AGENTS_BLOCK_START}
-<!-- \uC774 \uBE14\uB85D\uC740 sugo\uAC00 \uC790\uB3D9 \uAD00\uB9AC\uD569\uB2C8\uB2E4. \uC190\uC73C\uB85C \uACE0\uCE58\uBA74 \uB2E4\uC74C sugo_add/sugo_update \uB54C \uB36E\uC5B4\uC368\uC9D1\uB2C8\uB2E4. -->
-## Sugo \uD504\uB85C\uC81D\uD2B8 \uCEE8\uD14D\uC2A4\uD2B8
-
-\uC791\uC5C5\uC744 \uACC4\uD68D\uD558\uAC70\uB098 \uD30C\uC77C\uC744 \uC218\uC815\uD558\uAE30 \uC804\uC5D0 \uC791\uC5C5 \uB300\uC0C1 \uD504\uB85C\uC81D\uD2B8\uC758 \`.claude/rules/\` \uC544\uB798 Markdown \uD30C\uC77C\uC744 \uC7AC\uADC0\uC801\uC73C\uB85C \uD655\uC778\uD55C\uB2E4.
-\uC774 \uD30C\uC77C\uB4E4\uC740 Sugo \uD558\uB124\uC2A4\uC640 Dashboard\uC758 \uB3C4\uBA54\uC778 \uADDC\uCE59 \uAD00\uB9AC\uC5D0\uC11C \uB3D9\uAE30\uD654\uD55C \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB2E4.
-\uD604\uC7AC \uC791\uC5C5\uC5D0 \uC801\uC6A9\uB418\uB294 \uADDC\uCE59\uC744 \uAD6C\uD604\xB7\uB9AC\uBDF0\xB7\uAC80\uC99D \uD310\uB2E8\uC5D0 \uBC18\uC601\uD558\uACE0, \uCDA9\uB3CC\uD558\uAC70\uB098 \uC801\uC6A9\uD560 \uC218 \uC5C6\uC73C\uBA74 \uACB0\uACFC\uC5D0 \uC774\uC720\uB97C \uBA85\uC2DC\uD55C\uB2E4.
-${AGENTS_BLOCK_END}`;
-  const base = existing ?? "";
-  const startIdx = base.indexOf(AGENTS_BLOCK_START);
-  const endIdx = base.indexOf(AGENTS_BLOCK_END);
-  if (startIdx === -1 || endIdx === -1) {
-    const separator = base.length > 0 && !base.endsWith("\n\n") ? base.endsWith("\n") ? "\n" : "\n\n" : "";
-    return { content: base + separator + block + "\n", changed: true };
-  }
-  const content = base.slice(0, startIdx) + block + base.slice(endIdx + AGENTS_BLOCK_END.length);
-  return { content, changed: content !== base };
-}
-
-// src/harness/context.ts
-import { existsSync as existsSync3, readFileSync as readFileSync2 } from "node:fs";
-import { isAbsolute, join as join5 } from "node:path";
-function resolvePath(projectPath, relPath) {
-  return isAbsolute(relPath) ? relPath : join5(projectPath, relPath);
-}
-function createFsDetectionContext(projectPath, changedFiles = []) {
-  return {
-    projectPath,
-    changedFiles,
-    fileExists(relPath) {
-      return existsSync3(resolvePath(projectPath, relPath));
-    },
-    readFile(relPath) {
-      try {
-        return readFileSync2(resolvePath(projectPath, relPath), "utf-8");
-      } catch {
-        return null;
-      }
-    },
-    readJson(relPath) {
-      const raw = this.readFile(relPath);
-      if (raw === null) return null;
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return null;
-      }
-    }
-  };
-}
-
-// src/harness/rules.ts
-function readPackageJson(ctx) {
-  return ctx.readJson("package.json");
-}
-function depVersion(pkg, name2) {
-  if (!pkg) return void 0;
-  return pkg.dependencies?.[name2] ?? pkg.devDependencies?.[name2] ?? pkg.peerDependencies?.[name2];
-}
-function hasDep(pkg, ...names) {
-  return names.some((n) => depVersion(pkg, n) !== void 0);
-}
-function readJavaBuildFiles(ctx) {
-  return [
-    ctx.readFile("pom.xml"),
-    ctx.readFile("build.gradle"),
-    ctx.readFile("build.gradle.kts")
-  ].filter((c) => c !== null).join("\n");
-}
-function readPythonFiles(ctx) {
-  return [ctx.readFile("requirements.txt"), ctx.readFile("pyproject.toml")].filter((c) => c !== null).join("\n");
-}
-function nearestBucket(value, buckets) {
-  let hit = null;
-  for (const b of buckets) if (value >= b) hit = b;
-  return hit;
-}
-function majorFromRange(raw) {
-  if (!raw) return null;
-  const m = raw.match(/(\d+)/);
-  return m ? Number(m[1]) : null;
-}
-function withVersionBucket(base, bucket) {
-  if (bucket === null) return [base];
-  return [base, { ...base, id: `${base.id}/${bucket}`, version: bucket }];
-}
-var JAVA_BUCKETS = [8, 11, 17, 21, 25];
-var PYTHON_MINOR_BUCKETS = [9, 10, 12, 14];
-var REACT_BUCKETS = [18, 19];
-var NEXT_BUCKETS = [15, 16];
-var SPRING_BUCKETS = [2, 3, 4];
-var TYPESCRIPT_BUCKETS = [5, 6, 7];
-var NODE_BUCKETS = [20, 22, 24];
-var EXPRESS_BUCKETS = [4, 5];
-var GRADLE_BUCKETS = [8, 9];
-var PNPM_BUCKETS = [10, 12];
-var POETRY_BUCKETS = [1, 2];
-function extractNodeMajor(ctx, pkg) {
-  const engines = pkg?.engines?.node;
-  const fromEngines = majorFromRange(engines);
-  if (fromEngines !== null) return fromEngines;
-  for (const file of [".nvmrc", ".node-version"]) {
-    const raw = ctx.readFile(file);
-    const major = majorFromRange(raw?.trim());
-    if (major !== null) return major;
-  }
-  return null;
-}
-function packageManagerMajor(pkg, tool) {
-  const raw = pkg?.packageManager;
-  if (!raw || !raw.startsWith(`${tool}@`)) return null;
-  return majorFromRange(raw.slice(tool.length + 1));
-}
-function extractJavaMajor(javaSrc) {
-  const patterns = [
-    /<java\.version>\s*(?:1\.)?(\d+)/,
-    /<maven\.compiler\.release>\s*(?:1\.)?(\d+)/,
-    /<maven\.compiler\.(?:source|target)>\s*(?:1\.)?(\d+)/,
-    /<release>\s*(?:1\.)?(\d+)\s*<\/release>/,
-    /JavaLanguageVersion\.of\(\s*['"]?(\d+)/,
-    /(?:source|target)Compatibility\s*=?\s*['"]?(?:JavaVersion\.VERSION_)?(?:1[._])?(\d+)/,
-    /options\.release\s*(?:\.set\()?\s*=?\s*['"]?(\d+)/
-  ];
-  for (const re of patterns) {
-    const m = javaSrc.match(re);
-    if (m) return Number(m[1]);
-  }
-  return null;
-}
-function extractPythonMinor(ctx) {
-  const pyproject = ctx.readFile("pyproject.toml");
-  if (pyproject) {
-    const patterns = [
-      /requires-python\s*=\s*["'][^"']*?3\.(\d+)/,
-      /^\s*python\s*=\s*["'][^"']*?3\.(\d+)/m,
-      /target-version\s*=\s*["']py3(\d+)["']/
-    ];
-    for (const re of patterns) {
-      const m = pyproject.match(re);
-      if (m) return Number(m[1]);
-    }
-  }
-  for (const file of [".python-version", "runtime.txt"]) {
-    const content = ctx.readFile(file);
-    const m = content?.match(/3\.(\d+)/);
-    if (m) return Number(m[1]);
-  }
-  return null;
-}
-function extractSpringMajor(javaSrc) {
-  const patterns = [
-    /<spring-boot\.version>\s*(\d+)\.(\d+)\.(\d+)/,
-    /spring-boot-starter-parent[\s\S]{0,200}?<version>\s*(\d+)\.(\d+)\.(\d+)/,
-    /org\.springframework\.boot['"]\s*\)?\s*version\s*['"](\d+)\.(\d+)\.(\d+)/
-  ];
-  for (const re of patterns) {
-    const m = javaSrc.match(re);
-    if (m) return m[1];
-  }
-  return void 0;
-}
-var langTypescript = {
-  id: "lang/typescript",
-  category: "language",
-  detect(ctx) {
-    if (!ctx.fileExists("tsconfig.json")) return null;
-    const pkg = readPackageJson(ctx);
-    const declared = depVersion(pkg, "typescript");
-    const bucket = nearestBucket(majorFromRange(declared) ?? -1, TYPESCRIPT_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "lang/typescript",
-        category: "language",
-        name: "TypeScript",
-        version: declared,
-        detectedBy: "tsconfig.json"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var langJavascript = {
-  id: "lang/javascript",
-  category: "language",
-  detect(ctx) {
-    if (!ctx.fileExists("package.json") || ctx.fileExists("tsconfig.json")) return null;
-    return { id: "lang/javascript", category: "language", name: "JavaScript", detectedBy: "package.json" };
-  }
-};
-var langJava = {
-  id: "lang/java",
-  category: "language",
-  detect(ctx) {
-    const marker = ["pom.xml", "build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
-    if (!marker) return null;
-    const major = extractJavaMajor(readJavaBuildFiles(ctx));
-    const bucket = major === null ? null : nearestBucket(major, JAVA_BUCKETS);
-    return withVersionBucket(
-      { id: "lang/java", category: "language", name: "Java", version: major ? String(major) : void 0, detectedBy: marker },
-      bucket === null ? null : String(bucket)
-    );
-  }
-};
-var langPython = {
-  id: "lang/python",
-  category: "language",
-  detect(ctx) {
-    const marker = ["requirements.txt", "pyproject.toml"].find((f) => ctx.fileExists(f));
-    if (!marker) return null;
-    const minor = extractPythonMinor(ctx);
-    const bucket = minor === null ? null : nearestBucket(minor, PYTHON_MINOR_BUCKETS);
-    return withVersionBucket(
-      { id: "lang/python", category: "language", name: "Python", version: minor ? `3.${minor}` : void 0, detectedBy: marker },
-      bucket === null ? null : `3.${bucket}`
-    );
-  }
-};
-var frameworkNode = {
-  id: "framework/node",
-  category: "framework",
-  detect(ctx) {
-    if (!ctx.fileExists("package.json")) return null;
-    const pkg = readPackageJson(ctx);
-    const major = extractNodeMajor(ctx, pkg);
-    const bucket = major === null ? null : nearestBucket(major, NODE_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "framework/node",
-        category: "framework",
-        name: "Node.js",
-        version: major === null ? void 0 : String(major),
-        detectedBy: "package.json"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var frameworkReact = {
-  id: "framework/react",
-  category: "framework",
-  detect(ctx) {
-    const pkg = readPackageJson(ctx);
-    if (!hasDep(pkg, "react")) return null;
-    const major = majorFromRange(depVersion(pkg, "react"));
-    const bucket = major === null ? null : nearestBucket(major, REACT_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "framework/react",
-        category: "framework",
-        name: "React",
-        version: depVersion(pkg, "react"),
-        detectedBy: "package.json:dependencies.react"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var frameworkNextjs = {
-  id: "framework/nextjs",
-  category: "framework",
-  detect(ctx) {
-    const pkg = readPackageJson(ctx);
-    if (!hasDep(pkg, "next")) return null;
-    const major = majorFromRange(depVersion(pkg, "next"));
-    const bucket = major === null ? null : nearestBucket(major, NEXT_BUCKETS);
-    const appRouter = ctx.fileExists("app") || ctx.fileExists("src/app");
-    return withVersionBucket(
-      {
-        id: "framework/nextjs",
-        category: "framework",
-        name: appRouter ? "Next.js (App Router)" : "Next.js",
-        version: depVersion(pkg, "next"),
-        detectedBy: "package.json:dependencies.next"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var frameworkExpress = {
-  id: "framework/express",
-  category: "framework",
-  detect(ctx) {
-    const pkg = readPackageJson(ctx);
-    if (!hasDep(pkg, "express")) return null;
-    const declared = depVersion(pkg, "express");
-    const bucket = nearestBucket(majorFromRange(declared) ?? -1, EXPRESS_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "framework/express",
-        category: "framework",
-        name: "Express",
-        version: declared,
-        detectedBy: "package.json:dependencies.express"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var frameworkSpring = {
-  id: "framework/spring",
-  category: "framework",
-  detect(ctx) {
-    const src = readJavaBuildFiles(ctx);
-    if (!src || !/spring-boot|org\.springframework\.boot/.test(src)) return null;
-    const major = extractSpringMajor(src);
-    const bucket = major === void 0 ? null : nearestBucket(Number(major), SPRING_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "framework/spring",
-        category: "framework",
-        name: "Spring Boot",
-        version: major ? `${major}.x` : void 0,
-        detectedBy: ctx.fileExists("pom.xml") ? "pom.xml" : "build.gradle"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-function buildToolRule(id, name2, marker) {
-  return {
-    id,
-    category: "buildTool",
-    detect(ctx) {
-      if (!ctx.fileExists(marker)) return null;
-      return { id, category: "buildTool", name: name2, detectedBy: marker };
-    }
-  };
-}
-var buildtoolNpm = buildToolRule("buildtool/npm", "npm", "package-lock.json");
-var buildtoolMaven = buildToolRule("buildtool/maven", "Maven", "pom.xml");
-var buildtoolPnpm = {
-  id: "buildtool/pnpm",
-  category: "buildTool",
-  detect(ctx) {
-    if (!ctx.fileExists("pnpm-lock.yaml")) return null;
-    const major = packageManagerMajor(readPackageJson(ctx), "pnpm");
-    const bucket = major === null ? null : nearestBucket(major, PNPM_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "buildtool/pnpm",
-        category: "buildTool",
-        name: "pnpm",
-        version: major === null ? void 0 : String(major),
-        detectedBy: "pnpm-lock.yaml"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var buildtoolYarn = {
-  id: "buildtool/yarn",
-  category: "buildTool",
-  detect(ctx) {
-    if (!ctx.fileExists("yarn.lock")) return null;
-    const major = packageManagerMajor(readPackageJson(ctx), "yarn");
-    const berryConfig = ctx.fileExists(".yarnrc.yml");
-    const label = major === null ? berryConfig ? "berry" : null : major >= 2 ? "berry" : "1.x";
-    return withVersionBucket(
-      {
-        id: "buildtool/yarn",
-        category: "buildTool",
-        name: label === "berry" ? "Yarn (Berry)" : "Yarn",
-        version: major === null ? void 0 : String(major),
-        detectedBy: "yarn.lock"
-      },
-      label
-    );
-  }
-};
-var buildtoolGradle = {
-  id: "buildtool/gradle",
-  category: "buildTool",
-  detect(ctx) {
-    const marker = ["build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
-    if (!marker) return null;
-    const wrapper = ctx.readFile("gradle/wrapper/gradle-wrapper.properties");
-    const major = majorFromRange(wrapper?.match(/gradle-(\d+)\.[\d.]*-(?:bin|all)\.zip/)?.[1]);
-    const bucket = major === null ? null : nearestBucket(major, GRADLE_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "buildtool/gradle",
-        category: "buildTool",
-        name: "Gradle",
-        version: major === null ? void 0 : String(major),
-        detectedBy: marker
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var buildtoolPip = buildToolRule("buildtool/pip", "pip", "requirements.txt");
-var buildtoolPoetry = {
-  id: "buildtool/poetry",
-  category: "buildTool",
-  detect(ctx) {
-    const src = ctx.readFile("pyproject.toml");
-    if (!src || !src.includes("[tool.poetry]")) return null;
-    const declared = majorFromRange(src.match(/requires-poetry\s*=\s*["'][^"']*?(\d+)/)?.[1]);
-    const lockVersion = majorFromRange(ctx.readFile("poetry.lock")?.match(/lock-version\s*=\s*["'](\d+)/)?.[1]);
-    const major = declared ?? (lockVersion !== null && lockVersion >= 2 ? 2 : null);
-    const bucket = major === null ? null : nearestBucket(major, POETRY_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "buildtool/poetry",
-        category: "buildTool",
-        name: "Poetry",
-        version: major === null ? void 0 : String(major),
-        detectedBy: "pyproject.toml"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-function dataStoreRule(id, name2, matchers) {
-  return {
-    id,
-    category: "dataStore",
-    detect(ctx) {
-      const pkg = readPackageJson(ctx);
-      const javaSrc = readJavaBuildFiles(ctx);
-      const pySrc = readPythonFiles(ctx);
-      if (!matchers(pkg, javaSrc, pySrc)) return null;
-      return { id, category: "dataStore", name: name2, detectedBy: "dependency-scan" };
-    }
-  };
-}
-var datastorePostgres = dataStoreRule(
-  "datastore/postgres",
-  "PostgreSQL",
-  (pkg, javaSrc, pySrc) => hasDep(pkg, "pg") || /postgresql/i.test(javaSrc) || /psycopg2/i.test(pySrc)
-);
-var datastoreMysql = dataStoreRule(
-  "datastore/mysql",
-  "MySQL",
-  (pkg, javaSrc, pySrc) => hasDep(pkg, "mysql", "mysql2") || /mysql-connector/i.test(javaSrc) || /(pymysql|mysqlclient)/i.test(pySrc)
-);
-var datastoreMongodb = dataStoreRule(
-  "datastore/mongodb",
-  "MongoDB",
-  (pkg, javaSrc, pySrc) => hasDep(pkg, "mongoose", "mongodb") || /mongodb-driver/i.test(javaSrc) || /pymongo/i.test(pySrc)
-);
-var datastoreRedis = dataStoreRule(
-  "datastore/redis",
-  "Redis",
-  (pkg, javaSrc, pySrc) => hasDep(pkg, "redis", "ioredis") || /(lettuce|jedis)/i.test(javaSrc) || /\bredis\b/i.test(pySrc)
-);
-var infraDocker = {
-  id: "infra/docker",
-  category: "infra",
-  detect(ctx) {
-    const marker = ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"].find((f) => ctx.fileExists(f));
-    if (!marker) return null;
-    return { id: "infra/docker", category: "infra", name: "Docker", detectedBy: marker };
-  }
-};
-var infraGithubActions = {
-  id: "infra/github-actions",
-  category: "infra",
-  detect(ctx) {
-    if (!ctx.fileExists(".github/workflows")) return null;
-    return { id: "infra/github-actions", category: "infra", name: "GitHub Actions", detectedBy: ".github/workflows" };
-  }
-};
-var ALL_RULES = [
-  langTypescript,
-  langJavascript,
-  langJava,
-  langPython,
-  frameworkNode,
-  frameworkReact,
-  frameworkNextjs,
-  frameworkExpress,
-  frameworkSpring,
-  buildtoolNpm,
-  buildtoolYarn,
-  buildtoolPnpm,
-  buildtoolMaven,
-  buildtoolGradle,
-  buildtoolPip,
-  buildtoolPoetry,
-  datastorePostgres,
-  datastoreMysql,
-  datastoreMongodb,
-  datastoreRedis,
-  infraDocker,
-  infraGithubActions
-];
-function flattenDetected(result3) {
-  if (result3 === null) return [];
-  return Array.isArray(result3) ? result3 : [result3];
-}
-
-// src/harness/stackDetector.ts
-function detectNodeCommands(ctx, buildToolIds) {
-  const pkg = ctx.readJson("package.json");
-  const scripts = pkg?.scripts ?? {};
-  const runner = buildToolIds.includes("buildtool/pnpm") ? "pnpm" : buildToolIds.includes("buildtool/yarn") ? "yarn" : "npm run";
-  const commands = {};
-  if (scripts.build) commands.build = `${runner} build`;
-  if (scripts.test) commands.test = `${runner} test`;
-  if (scripts.format) commands.format = `${runner} format`;
-  if (scripts.lint) commands.lint = `${runner} lint`;
-  return commands;
-}
-function readBuildFileText(ctx, paths) {
-  return paths.map((p) => ctx.readFile(p) ?? "").join("\n");
-}
-function detectGradleCommands(ctx, isWindows) {
-  const hasBat = ctx.fileExists("gradlew.bat");
-  const hasSh = ctx.fileExists("gradlew");
-  const exe = isWindows && hasBat ? ".\\gradlew.bat" : hasSh ? "./gradlew" : "gradle";
-  const buildFile = readBuildFileText(ctx, ["build.gradle", "build.gradle.kts"]);
-  const lintTasks = [];
-  if (/checkstyle/i.test(buildFile)) lintTasks.push("checkstyleMain");
-  if (/spotbugs/i.test(buildFile)) lintTasks.push("spotbugsMain");
-  return {
-    build: `${exe} build`,
-    test: `${exe} test`,
-    ...lintTasks.length > 0 ? { lint: `${exe} ${lintTasks.join(" ")}` } : {}
-  };
-}
-function detectMavenCommands(ctx, isWindows) {
-  const hasCmd = ctx.fileExists("mvnw.cmd");
-  const hasSh = ctx.fileExists("mvnw");
-  const exe = isWindows && hasCmd ? "mvnw.cmd" : hasSh ? "./mvnw" : "mvn";
-  const pom = ctx.readFile("pom.xml") ?? "";
-  const lintGoals = [];
-  if (pom.includes("maven-checkstyle-plugin")) lintGoals.push("checkstyle:check");
-  if (pom.includes("spotbugs-maven-plugin")) lintGoals.push("spotbugs:check");
-  return {
-    build: `${exe} compile`,
-    test: `${exe} test`,
-    ...lintGoals.length > 0 ? { lint: `${exe} ${lintGoals.join(" ")}` } : {}
-  };
-}
-function detectPythonCommands(ctx, buildToolIds) {
-  if (!buildToolIds.includes("buildtool/pip") && !buildToolIds.includes("buildtool/poetry")) return {};
-  const isPoetry = buildToolIds.includes("buildtool/poetry");
-  const test = isPoetry ? "poetry run pytest" : "pytest";
-  const pyproject = ctx.readFile("pyproject.toml") ?? "";
-  const prefix = isPoetry ? "poetry run " : "";
-  let lint;
-  if (/\[tool\.ruff(\.|\])/.test(pyproject) || ctx.fileExists("ruff.toml") || ctx.fileExists(".ruff.toml")) {
-    lint = `${prefix}ruff check .`;
-  } else if (/\[tool\.flake8\]/.test(pyproject) || ctx.fileExists(".flake8") || /\[flake8\]/.test(ctx.readFile("setup.cfg") ?? "")) {
-    lint = `${prefix}flake8`;
-  }
-  return { test, ...lint ? { lint } : {} };
-}
-function detectStack(projectPath, platform = process.platform) {
-  const ctx = createFsDetectionContext(projectPath);
-  const isWindows = platform === "win32";
-  const languages = [];
-  const frameworks = [];
-  const dataStores = [];
-  const buildTools = [];
-  const infra = [];
-  for (const rule of ALL_RULES) {
-    const items = flattenDetected(rule.detect(ctx));
-    for (const item of items) {
-      switch (item.category) {
-        case "language":
-          languages.push(item);
-          break;
-        case "framework":
-          frameworks.push(item);
-          break;
-        case "dataStore":
-          dataStores.push(item);
-          break;
-        case "buildTool":
-          buildTools.push(item);
-          break;
-        case "infra":
-          infra.push(item);
-          break;
-      }
-    }
-  }
-  const harnessIds = Array.from(
-    new Set([...languages, ...frameworks, ...buildTools].map((item) => item.id))
-  );
-  const buildToolIds = buildTools.map((b) => b.id);
-  const commands = {
-    ...buildToolIds.some((id) => id.startsWith("buildtool/npm") || id.startsWith("buildtool/yarn") || id.startsWith("buildtool/pnpm")) ? detectNodeCommands(ctx, buildToolIds) : {},
-    ...buildToolIds.includes("buildtool/gradle") ? detectGradleCommands(ctx, isWindows) : {},
-    ...buildToolIds.includes("buildtool/maven") ? detectMavenCommands(ctx, isWindows) : {},
-    ...detectPythonCommands(ctx, buildToolIds)
-  };
-  return { languages, frameworks, dataStores, buildTools, infra, harnessIds, commands };
-}
-
-// src/harness/installManifest.ts
-import { mkdir as mkdir4, readFile as readFile3 } from "node:fs/promises";
-import { dirname as dirname5, join as join6 } from "node:path";
-import { createHash as createHash2 } from "node:crypto";
-function fileBaseline(content) {
-  return content === null ? { existed: false, byteLength: 0, sha256: null } : { existed: true, byteLength: Buffer.byteLength(content), sha256: createHash2("sha256").update(content).digest("hex") };
-}
-function installManifestPath(projectPath) {
-  return join6(projectPath, "sugo", "install-manifest.json");
-}
-async function loadInstallManifest(projectPath) {
-  return readFile3(installManifestPath(projectPath), "utf8").then((raw) => JSON.parse(raw), () => null);
-}
-async function saveInstallManifest(manifest) {
-  const path = installManifestPath(manifest.projectPath);
-  const content = `${JSON.stringify({ ...manifest, managedFiles: [...new Set(manifest.managedFiles)].sort() }, null, 2)}
-`;
-  const existing = await readFile3(path, "utf8").catch(() => null);
-  if (existing === content) return;
-  await mkdir4(dirname5(path), { recursive: true });
-  await atomicWriteFile(path, content);
-}
-async function recordManagedFile(projectPath, relPath) {
-  const manifest = await loadInstallManifest(projectPath);
-  if (!manifest || manifest.managedFiles.includes(relPath)) return;
-  manifest.managedFiles.push(relPath);
-  await saveInstallManifest(manifest);
-}
-
-// src/harness/sync.ts
-async function writeTextIfChanged(path, content) {
-  const existing = await readFile4(path, "utf-8").catch(() => null);
-  if (existing === content) return;
-  await atomicWriteFile(path, content);
-}
-async function syncProjectHarness(args2) {
-  const { projectPath } = args2;
-  const sugoDir = projectSugoDir(projectPath);
-  const rootClaudePath = join7(projectPath, "CLAUDE.md");
-  const rootAgentsPath = join7(projectPath, "AGENTS.md");
-  const existingManifest = await loadInstallManifest(projectPath);
-  const manifest = existingManifest ? { ...existingManifest, projectPath } : {
-    version: 1,
-    projectPath,
-    sugoDirExisted: await access(sugoDir).then(() => true, () => false),
-    rootClaudeOriginal: fileBaseline(await readFile4(rootClaudePath, "utf8").catch(() => null)),
-    rootAgentsOriginal: fileBaseline(await readFile4(rootAgentsPath, "utf8").catch(() => null)),
-    managedFiles: []
-  };
-  const existingConfig = await loadProjectConfig(projectPath);
-  const existingEntry = await findRegistryEntry(projectPath);
-  const workspace = args2.workspace ?? existingEntry?.workspace;
-  const detectedStack = detectStack(projectPath);
-  const harnessIds = Array.from(/* @__PURE__ */ new Set([...detectedStack.harnessIds, ...args2.additionalStacks ?? []]));
-  const libraryDir = defaultHarnessLibraryDir();
-  const { harnesses, warnings: fetchWarnings } = fetchHarnesses({ harnessIds, libraryDir, overrideDir: userHarnessOverrideDir(), repoUrl: args2.repoUrl });
-  const projectName = basename(projectPath);
-  const composeResult = compose({ harnesses, projectName, workspace, detectedStack, fetchWarnings });
-  const claudeMdPath = join7(sugoDir, "CLAUDE.md");
-  await mkdir5(sugoDir, { recursive: true });
-  const existingClaudeMd = await readFile4(claudeMdPath, "utf-8").catch(() => null);
-  const claudeMdResult = writeClaudeIfChanged(existingClaudeMd, composeResult.claudeMd, (/* @__PURE__ */ new Date()).toISOString());
-  if (claudeMdResult.changed) await atomicWriteFile(claudeMdPath, claudeMdResult.content);
-  for (const file of composeResult.harnessFiles) {
-    const fullPath = join7(projectPath, file.relPath);
-    await mkdir5(dirname6(fullPath), { recursive: true });
-    await writeTextIfChanged(fullPath, file.content);
-  }
-  const claudeRulesDir = join7(projectPath, ".claude", "rules");
-  await mkdir5(claudeRulesDir, { recursive: true });
-  const effectiveRuleFiles = buildEffectiveClaudeRuleFiles(harnesses);
-  for (const ruleFile of effectiveRuleFiles) {
-    await writeTextIfChanged(join7(projectPath, ruleFile.relPath), ruleFile.content);
-  }
-  const currentRulePaths = new Set(effectiveRuleFiles.map((file) => file.relPath));
-  const previousIds = existingConfig?.appliedHarnesses.map((h) => h.id) ?? [];
-  for (const staleId of previousIds.filter((id) => !currentRulePaths.has(buildClaudeRuleFile(id, "").relPath))) {
-    const stalePath = join7(projectPath, buildClaudeRuleFile(staleId, "").relPath);
-    await unlink2(stalePath).catch(() => {
-    });
-  }
-  const existingRootClaude = await readFile4(rootClaudePath, "utf-8").catch(() => null);
-  const rootClaude = mergeRootClaudeReference(existingRootClaude, harnesses.map((h) => h.id));
-  if (rootClaude.changed) await atomicWriteFile(rootClaudePath, rootClaude.content);
-  const existingRootAgents = await readFile4(rootAgentsPath, "utf-8").catch(() => null);
-  const rootAgents = mergeRootAgentsReference(existingRootAgents);
-  if (rootAgents.changed) await atomicWriteFile(rootAgentsPath, rootAgents.content);
-  const now = (/* @__PURE__ */ new Date()).toISOString();
-  const candidateConfig = {
-    version: "0.1.0",
-    projectPath,
-    projectName,
-    registeredAt: existingConfig?.registeredAt ?? now,
-    lastUpdated: now,
-    detectedStack,
-    appliedHarnesses: harnesses.map((h) => {
-      const contentHash = hashHarnessContent(h);
-      const previous = existingConfig?.appliedHarnesses.find(
-        (item) => item.id === h.id && item.version === h.version && item.contentHash === contentHash
-      );
-      return { id: h.id, version: h.version, appliedAt: previous?.appliedAt ?? now, contentHash };
-    }),
-    autoCommitArtifacts: existingConfig?.autoCommitArtifacts ?? true,
-    disabled: existingConfig?.disabled ?? false,
-    verificationPolicy: args2.integrationGateEnforced === void 0 && args2.contractEvidenceRequired === void 0 ? existingConfig?.verificationPolicy : {
-      ...existingConfig?.verificationPolicy,
-      ...args2.integrationGateEnforced !== void 0 && { integrationGateEnforced: args2.integrationGateEnforced },
-      ...args2.contractEvidenceRequired !== void 0 && { contractEvidenceRequired: args2.contractEvidenceRequired }
-    }
-  };
-  const unchanged = existingConfig !== null && JSON.stringify({ ...candidateConfig, lastUpdated: existingConfig.lastUpdated }) === JSON.stringify(existingConfig);
-  const config2 = unchanged ? existingConfig : candidateConfig;
-  if (!unchanged) await saveProjectConfig(config2);
-  manifest.managedFiles = [
-    ...manifest.managedFiles,
-    "sugo/CLAUDE.md",
-    "sugo/config.json",
-    ...composeResult.harnessFiles.map((file) => file.relPath),
-    ...effectiveRuleFiles.map((file) => file.relPath)
-  ];
-  await saveInstallManifest(manifest);
-  await registerProject({ path: projectPath, name: projectName, registeredAt: config2.registeredAt, workspace });
-  return {
-    projectName,
-    workspace,
-    composeResult,
-    config: config2,
-    claudeMdPath,
-    rootClaudeMdPath: rootClaudePath,
-    rootAgentsMdPath: rootAgentsPath,
-    claudeRulesFiles: harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath)
-  };
-}
+init_sync();
 
 // src/work/workspace.ts
-import { mkdir as mkdir7, readdir, readFile as readFile8, rm } from "node:fs/promises";
+init_fsUtil();
+import { mkdir as mkdir8, readdir, readFile as readFile10, rm } from "node:fs/promises";
 import { isAbsolute as isAbsolute3, relative as relative2, resolve as resolve3 } from "node:path";
 
 // src/dashboard/config.ts
+init_homeDir();
 import { userInfo } from "node:os";
-import { readFile as readFile5 } from "node:fs/promises";
-import { join as join8 } from "node:path";
+import { readFile as readFile7 } from "node:fs/promises";
+import { join as join10 } from "node:path";
 function settingsFilePath() {
-  return join8(sugoHomeDir(), ".claude", "sugo", "settings.json");
+  return join10(sugoHomeDir(), ".claude", "sugo", "settings.json");
 }
 function currentUsername() {
   try {
@@ -23808,7 +23975,7 @@ async function resolveDashboardConfig() {
     };
   }
   try {
-    const raw = await readFile5(settingsFilePath(), "utf-8");
+    const raw = await readFile7(settingsFilePath(), "utf-8");
     const parsed = JSON.parse(raw);
     const d = parsed.dashboard;
     if (d?.enabled && d.apiUrl) {
@@ -23820,7 +23987,7 @@ async function resolveDashboardConfig() {
 }
 async function resolveAwsEnvironmentAccount(environment) {
   try {
-    const raw = await readFile5(settingsFilePath(), "utf-8");
+    const raw = await readFile7(settingsFilePath(), "utf-8");
     const parsed = JSON.parse(raw);
     const mapped = parsed.aws?.environments?.[environment];
     if (typeof mapped === "string" && mapped.trim()) return mapped.trim();
@@ -23830,52 +23997,54 @@ async function resolveAwsEnvironmentAccount(environment) {
 }
 
 // src/dashboard/retryQueue.ts
-import { mkdir as mkdir6, readFile as readFile6 } from "node:fs/promises";
+init_fsUtil();
+import { mkdir as mkdir7, readFile as readFile8 } from "node:fs/promises";
 
 // src/work/storage.ts
-import { join as join9 } from "node:path";
+init_homeDir();
+import { join as join11 } from "node:path";
 function workRootDir() {
-  return join9(sugoHomeDir(), ".claude", "sugo", "work");
+  return join11(sugoHomeDir(), ".claude", "sugo", "work");
 }
 function workspaceDir(workspace) {
-  return join9(workRootDir(), workspace);
+  return join11(workRootDir(), workspace);
 }
 function workspaceFilePath(workspace) {
-  return join9(workspaceDir(workspace), "workspace.json");
+  return join11(workspaceDir(workspace), "workspace.json");
 }
 function tasksFilePath(workspace) {
-  return join9(workspaceDir(workspace), "tasks.json");
+  return join11(workspaceDir(workspace), "tasks.json");
 }
 function tasksLockPath(workspace) {
   return `${tasksFilePath(workspace)}.lock`;
 }
 function checkpointsDir(workspace) {
-  return join9(workspaceDir(workspace), "checkpoints");
+  return join11(workspaceDir(workspace), "checkpoints");
 }
 function specsDir(workspace) {
-  return join9(workspaceDir(workspace), "specs");
+  return join11(workspaceDir(workspace), "specs");
 }
 function historyDir(workspace) {
-  return join9(workspaceDir(workspace), "history");
+  return join11(workspaceDir(workspace), "history");
 }
 function memoryFilePath(workspace) {
-  return join9(workspaceDir(workspace), "memory.md");
+  return join11(workspaceDir(workspace), "memory.md");
 }
 function roadmapFilePath(workspace) {
-  return join9(workspaceDir(workspace), "roadmap.json");
+  return join11(workspaceDir(workspace), "roadmap.json");
 }
 function roadmapLockPath(workspace) {
   return `${roadmapFilePath(workspace)}.lock`;
 }
 function syncRetryQueuePath() {
-  return join9(workRootDir(), "sync-retry-queue.json");
+  return join11(workRootDir(), "sync-retry-queue.json");
 }
 function syncRetryQueueLockPath() {
   return `${syncRetryQueuePath()}.lock`;
 }
 
 // src/dashboard/retryQueue.ts
-import { dirname as dirname7 } from "node:path";
+import { dirname as dirname8 } from "node:path";
 var MAX_RETRY_QUEUE_ITEMS = 100;
 var MAX_RETRY_ATTEMPTS = 5;
 function discard(file, item, cause) {
@@ -23895,14 +24064,14 @@ function failureFields(result3) {
 }
 async function readQueueFile() {
   try {
-    const raw = await readFile6(syncRetryQueuePath(), "utf-8");
+    const raw = await readFile8(syncRetryQueuePath(), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { items: [] };
   }
 }
 async function writeQueueFile(file) {
-  await mkdir6(dirname7(syncRetryQueuePath()), { recursive: true });
+  await mkdir7(dirname8(syncRetryQueuePath()), { recursive: true });
   await atomicWriteFile(syncRetryQueuePath(), JSON.stringify(file, null, 2));
 }
 async function enqueueRetry(endpoint, method, data, failure) {
@@ -24152,7 +24321,7 @@ async function drainRetryQueue() {
 
 // src/dashboard/workResultFiles.ts
 import { execFile } from "node:child_process";
-import { readFile as readFile7 } from "node:fs/promises";
+import { readFile as readFile9 } from "node:fs/promises";
 import { isAbsolute as isAbsolute2, relative, resolve as resolve2, sep } from "node:path";
 import { promisify } from "node:util";
 var execFileAsync = promisify(execFile);
@@ -24197,7 +24366,7 @@ async function snapshotWorkResultFiles(projectPath, paths, startedAt) {
     let content;
     if (change !== "deleted") {
       try {
-        const raw = await readFile7(safe.absolute);
+        const raw = await readFile9(safe.absolute);
         if (raw.byteLength <= MAX_CONTENT_BYTES && !raw.includes(0)) content = raw.toString("utf8");
       } catch {
       }
@@ -24314,7 +24483,7 @@ async function syncReviewArtifacts(workspaceName, taskId, sessionId, patchVersio
 // src/work/workspace.ts
 async function loadWorkspace(name2) {
   try {
-    const raw = await readFile8(workspaceFilePath(name2), "utf-8");
+    const raw = await readFile10(workspaceFilePath(name2), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -24329,7 +24498,7 @@ async function ensureWorkspace(name2, projectPath) {
     projects: Array.from(projects),
     created_at: existing?.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
   };
-  await mkdir7(workspaceDir(name2), { recursive: true });
+  await mkdir8(workspaceDir(name2), { recursive: true });
   await atomicWriteFile(workspaceFilePath(name2), JSON.stringify(workspace, null, 2));
   void syncWorkspace(workspace);
   return workspace;
@@ -24405,8 +24574,10 @@ async function deleteWorkspace(name2, options = {}) {
 }
 
 // src/projectRegistration.ts
+init_homeDir();
+init_sync();
 import { access as access2, readdir as readdir2, stat as stat2 } from "node:fs/promises";
-import { join as join10, resolve as resolve4 } from "node:path";
+import { join as join12, resolve as resolve4 } from "node:path";
 var PROJECT_MARKERS = /* @__PURE__ */ new Set([".git", "package.json", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "pyproject.toml", "requirements.txt", "Cargo.toml", "go.mod", "composer.json", "Gemfile", "Makefile", "src"]);
 async function assertProjectDirectory(projectPath) {
   const projectStat = await stat2(projectPath).catch(() => null);
@@ -24419,7 +24590,7 @@ async function assertProjectDirectory(projectPath) {
   }
 }
 async function assertProjectRegistrationAllowed() {
-  const retainedData = join10(sugoHomeDir(), ".sugo", "data");
+  const retainedData = join12(sugoHomeDir(), ".sugo", "data");
   if (await access2(retainedData).then(() => true, () => false)) {
     throw Object.assign(new Error("\uBE44\uD65C\uC131 \uBCF4\uAD00\uB41C Sugo \uB370\uC774\uD130\uC758 \uBCF5\uAD6C \uB610\uB294 \uD3D0\uAE30\uB97C \uBA3C\uC800 \uACB0\uC815\uD574\uC57C \uD569\uB2C8\uB2E4."), { code: "RETAINED_DATA_DECISION_REQUIRED" });
   }
@@ -24492,7 +24663,7 @@ async function handleSugoAdd(rawArgs) {
 }
 
 // src/tools/sugoAnalyze.ts
-import { readFile as readFile11 } from "node:fs/promises";
+import { readFile as readFile13 } from "node:fs/promises";
 
 // src/analyze.ts
 var REQ_LINE_RE = /\bREQ-(\d+)\b\s*:?\s*(.*)$/gim;
@@ -24579,16 +24750,16 @@ function analyzePrdMatch(prdContent, fileContents) {
 }
 
 // src/readChangedFiles.ts
-import { readFile as readFile9 } from "node:fs/promises";
-import { isAbsolute as isAbsolute4, join as join11 } from "node:path";
+import { readFile as readFile11 } from "node:fs/promises";
+import { isAbsolute as isAbsolute4, join as join13 } from "node:path";
 var MAX_FILE_BYTES = 3e5;
 var MAX_FILES = 200;
 async function readFileContents(projectPath, changedFiles) {
   const contents = [];
   for (const rel of changedFiles.slice(0, MAX_FILES)) {
-    const full = isAbsolute4(rel) ? rel : join11(projectPath, rel);
+    const full = isAbsolute4(rel) ? rel : join13(projectPath, rel);
     try {
-      const content = await readFile9(full, "utf-8");
+      const content = await readFile11(full, "utf-8");
       if (content.length <= MAX_FILE_BYTES) contents.push(content);
     } catch {
       continue;
@@ -24598,30 +24769,32 @@ async function readFileContents(projectPath, changedFiles) {
 }
 
 // src/session.ts
+init_fsUtil();
+init_homeDir();
 import { randomBytes } from "node:crypto";
-import { mkdir as mkdir8, readdir as readdir3, readFile as readFile10 } from "node:fs/promises";
-import { join as join12 } from "node:path";
+import { mkdir as mkdir9, readdir as readdir3, readFile as readFile12 } from "node:fs/promises";
+import { join as join14 } from "node:path";
 function sessionsDir() {
-  return join12(sugoHomeDir(), ".claude", "sugo", "sessions");
+  return join14(sugoHomeDir(), ".claude", "sugo", "sessions");
 }
 function generateSessionId() {
   return `plan-${Date.now()}-${randomBytes(4).toString("hex")}`;
 }
 function sessionFilePath(id) {
-  return join12(sessionsDir(), `${id}.json`);
+  return join14(sessionsDir(), `${id}.json`);
 }
 async function saveSession(session) {
-  await mkdir8(sessionsDir(), { recursive: true });
+  await mkdir9(sessionsDir(), { recursive: true });
   session.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   await atomicWriteFile(sessionFilePath(session.id), JSON.stringify(session, null, 2));
 }
 async function loadSession(id) {
-  const raw = await readFile10(sessionFilePath(id), "utf-8");
+  const raw = await readFile12(sessionFilePath(id), "utf-8");
   return JSON.parse(raw);
 }
 async function sessionExists(id) {
   try {
-    await readFile10(sessionFilePath(id), "utf-8");
+    await readFile12(sessionFilePath(id), "utf-8");
     return true;
   } catch {
     return false;
@@ -24638,7 +24811,7 @@ async function loadAllSessions() {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile10(join12(sessionsDir(), name2), "utf-8");
+      const raw = await readFile12(join14(sessionsDir(), name2), "utf-8");
       sessions.push(JSON.parse(raw));
     } catch {
       continue;
@@ -24664,7 +24837,7 @@ async function handleSugoAnalyze(rawArgs) {
   }
   let prdContent;
   try {
-    prdContent = await readFile11(session.data.prdPath, "utf-8");
+    prdContent = await readFile13(session.data.prdPath, "utf-8");
   } catch {
     return errorResult("PRD_FILE_MISSING", `PRD \uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${session.data.prdPath}`);
   }
@@ -24860,14 +25033,16 @@ function errorResult3(errorCode, message) {
 }
 
 // src/work/checkpoint.ts
+init_fsUtil();
+init_installManifest();
 import { createHash as createHash3, randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir10, readdir as readdir4, readFile as readFile12, rm as rm3 } from "node:fs/promises";
-import { join as join14 } from "node:path";
+import { mkdir as mkdir11, readdir as readdir4, readFile as readFile14, rm as rm3 } from "node:fs/promises";
+import { join as join16 } from "node:path";
 import { relative as relative3 } from "node:path";
 
 // src/dashboard/fetch.ts
-import { mkdir as mkdir9, rm as rm2, writeFile as writeFile2 } from "node:fs/promises";
-import { join as join13 } from "node:path";
+import { mkdir as mkdir10, rm as rm2, writeFile as writeFile2 } from "node:fs/promises";
+import { join as join15 } from "node:path";
 async function fetchJson(path, timeoutMs) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled || !config2.apiUrl) return null;
@@ -24947,12 +25122,12 @@ async function downloadSpecAttachments(workspaceName, nodeId, destDir) {
   const headers = config2.apiToken ? { Authorization: `Bearer ${config2.apiToken}` } : void 0;
   await rm2(destDir, { recursive: true, force: true });
   if (list.attachments.length === 0) return [];
-  await mkdir9(destDir, { recursive: true });
+  await mkdir10(destDir, { recursive: true });
   const paths = [];
   for (const { name: name2 } of list.attachments) {
     const res = await fetch(`${config2.apiUrl}/api/workspaces/${ws}/roadmap/spec-attachments/file?${qs}&name=${encodeURIComponent(name2)}`, { headers });
     if (!res.ok) throw new Error(`SPEC_ATTACHMENT_DOWNLOAD_FAILED:${name2}:${res.status}`);
-    const target = join13(destDir, name2);
+    const target = join15(destDir, name2);
     await writeFile2(target, Buffer.from(await res.arrayBuffer()));
     paths.push(target);
   }
@@ -27982,6 +28157,9 @@ function slugify(text) {
   );
 }
 
+// src/work/checkpoint.ts
+init_config();
+
 // src/work/matching.ts
 function checkpointApplies(checkpoint, ctx) {
   const applies = checkpoint.applies_to;
@@ -28005,7 +28183,7 @@ async function addCheckpoint(workspace, params) {
     expires_at: params.expires_at
   };
   const dir = checkpointsDir(workspace);
-  await mkdir10(dir, { recursive: true });
+  await mkdir11(dir, { recursive: true });
   const content = stringifyFrontmatter({
     id: checkpoint.id,
     title: checkpoint.title,
@@ -28015,7 +28193,7 @@ async function addCheckpoint(workspace, params) {
     created_at: checkpoint.created_at,
     expires_at: checkpoint.expires_at ?? null
   });
-  await atomicWriteFile(join14(dir, `${id}-${slugify(params.title)}.md`), content);
+  await atomicWriteFile(join16(dir, `${id}-${slugify(params.title)}.md`), content);
   return checkpoint;
 }
 async function listCheckpoints(workspace) {
@@ -28034,7 +28212,7 @@ async function listCheckpointFiles(workspace) {
   for (const name2 of names) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile12(join14(dir, name2), "utf-8");
+      const raw = await readFile14(join16(dir, name2), "utf-8");
       const { meta } = parseFrontmatter(raw);
       result3.push({ filename: name2, checkpoint: meta });
     } catch {
@@ -28051,7 +28229,7 @@ async function removeCheckpoint(workspace, id) {
   const entries = await listCheckpointFiles(workspace);
   const found = entries.find((e) => e.checkpoint.id === id);
   if (!found) return false;
-  await rm3(join14(checkpointsDir(workspace), found.filename), { force: true });
+  await rm3(join16(checkpointsDir(workspace), found.filename), { force: true });
   return true;
 }
 async function migrateCheckpoints(workspace) {
@@ -28067,7 +28245,7 @@ async function migrateCheckpoints(workspace) {
       created_at: checkpoint.created_at ?? (/* @__PURE__ */ new Date()).toISOString(),
       expires_at: checkpoint.expires_at ?? null
     });
-    await atomicWriteFile(join14(dir, filename), content);
+    await atomicWriteFile(join16(dir, filename), content);
   }
   return entries.length;
 }
@@ -28122,15 +28300,15 @@ function wasEdited(content, cp, workspace) {
   return digest(without) !== match[1];
 }
 async function checkpointFiles(projectPath, id) {
-  const root = join14(projectPath, ".claude", "rules");
+  const root = join16(projectPath, ".claude", "rules");
   const found = [];
   async function walk(dir) {
     const entries = await readdir4(dir, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
-      const path = join14(dir, entry.name);
+      const path = join16(dir, entry.name);
       if (entry.isDirectory()) await walk(path);
       else if (entry.isFile() && entry.name.endsWith(".md")) {
-        const content = await readFile12(path, "utf8").catch(() => "");
+        const content = await readFile14(path, "utf8").catch(() => "");
         if (content.includes(`checkpoint-id: ${id}`) || content.includes(`Sugo checkpoint ${id} \xB7`)) found.push(path);
       }
     }
@@ -28143,10 +28321,10 @@ async function syncRemoteCheckpointsToRules(projectPath, workspace, remote, cont
   for (const cp of remote) {
     const files = await checkpointFiles(projectPath, cp.id);
     const applicable = checkpointApplies(cp, context) && !isExpired(cp.expires_at, now);
-    const target = join14(projectPath, ".claude", "rules", cp.category ?? "general", `${cp.id}-${slugify(cp.title)}.md`);
+    const target = join16(projectPath, ".claude", "rules", cp.category ?? "general", `${cp.id}-${slugify(cp.title)}.md`);
     let blocked = false;
     for (const file of files.filter((path) => !applicable || path !== target)) {
-      const content2 = await readFile12(file, "utf8").catch(() => null);
+      const content2 = await readFile14(file, "utf8").catch(() => null);
       if (content2 === null) continue;
       if (wasEdited(content2, cp, workspace)) {
         result3.conflicts.push(file);
@@ -28158,12 +28336,12 @@ async function syncRemoteCheckpointsToRules(projectPath, workspace, remote, cont
     }
     if (!applicable || blocked) continue;
     const content = checkpointBody(cp, workspace);
-    const existing = await readFile12(target, "utf8").catch(() => null);
+    const existing = await readFile14(target, "utf8").catch(() => null);
     if (existing !== null && existing !== content && wasEdited(existing, cp, workspace)) {
       result3.conflicts.push(target);
       continue;
     }
-    await mkdir10(join14(projectPath, ".claude", "rules", cp.category ?? "general"), { recursive: true });
+    await mkdir11(join16(projectPath, ".claude", "rules", cp.category ?? "general"), { recursive: true });
     if (existing !== content) await atomicWriteFile(target, content);
     await recordManagedFile(projectPath, relative3(projectPath, target).replace(/\\/g, "/"));
     result3.appliedCount += 1;
@@ -28182,21 +28360,22 @@ async function pullCheckpointsToRules(projectPath, workspace) {
 }
 
 // src/work/memory.ts
-import { mkdir as mkdir11, readFile as readFile13 } from "node:fs/promises";
+init_fsUtil();
+import { mkdir as mkdir12, readFile as readFile15 } from "node:fs/promises";
 async function appendMemory(workspace, note) {
   const path = memoryFilePath(workspace);
-  const existing = await readFile13(path, "utf-8").catch(() => "");
+  const existing = await readFile15(path, "utf-8").catch(() => "");
   const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
 
 ${note}
 `;
   const next = existing ? `${existing}
 ${entry}` : entry;
-  await mkdir11(workspaceDir(workspace), { recursive: true });
+  await mkdir12(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(path, next);
 }
 async function readMemory(workspace) {
-  return readFile13(memoryFilePath(workspace), "utf-8").catch(() => "");
+  return readFile15(memoryFilePath(workspace), "utf-8").catch(() => "");
 }
 
 // src/tools/sugoCheckpoint.ts
@@ -28292,11 +28471,12 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.62.3" : "0.0.0-dev";
+  return true ? "0.63.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
 import { resolve as resolve6 } from "node:path";
+init_registry();
 var sugoDeleteInputSchema = {
   projectPath: external_exports.string().describe("\uB4F1\uB85D \uCDE8\uC18C\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C")
 };
@@ -28329,6 +28509,7 @@ function errorResult5(errorCode, message) {
 import { resolve as resolve7 } from "node:path";
 
 // src/harness/toggle.ts
+init_config();
 var ToggleProjectError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -28391,12 +28572,12 @@ function errorResult7(errorCode, message) {
 }
 
 // src/tools/sugoExplore.ts
-import { readFile as readFile14 } from "node:fs/promises";
-import { isAbsolute as isAbsolute5, join as join17 } from "node:path";
+import { readFile as readFile16 } from "node:fs/promises";
+import { isAbsolute as isAbsolute5, join as join19 } from "node:path";
 
 // src/ast/astParser.ts
 var import_web_tree_sitter = __toESM(require_tree_sitter(), 1);
-import { extname, join as join16 } from "node:path";
+import { extname, join as join18 } from "node:path";
 
 // src/ast/outline.ts
 var NODE_TYPE_MAP = {
@@ -28469,11 +28650,11 @@ function extractOutline(rootNode, language) {
 
 // src/ast/wasmGrammarPath.ts
 import { existsSync as existsSync4 } from "node:fs";
-import { dirname as dirname8, join as join15 } from "node:path";
+import { dirname as dirname9, join as join17 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 function defaultWasmGrammarsDir() {
-  const here = dirname8(fileURLToPath2(import.meta.url));
-  const candidates = [join15(here, "..", "..", "wasm-grammars"), join15(here, "..", "wasm-grammars")];
+  const here = dirname9(fileURLToPath2(import.meta.url));
+  const candidates = [join17(here, "..", "..", "wasm-grammars"), join17(here, "..", "wasm-grammars")];
   for (const c of candidates) {
     if (existsSync4(c)) return c;
   }
@@ -28512,7 +28693,7 @@ async function ensureInit() {
   if (!initPromise2) {
     const grammarsDir = defaultWasmGrammarsDir();
     initPromise2 = import_web_tree_sitter.default.init({
-      locateFile: (scriptName) => join16(grammarsDir, scriptName)
+      locateFile: (scriptName) => join18(grammarsDir, scriptName)
     });
   }
   return initPromise2;
@@ -28522,7 +28703,7 @@ async function loadLanguage(language) {
   if (cached2) return cached2;
   const wasmFile = LANGUAGE_FILE_MAP[language];
   if (!wasmFile) throw new Error(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC5B8\uC5B4: ${language}`);
-  const lang = await import_web_tree_sitter.default.Language.load(join16(defaultWasmGrammarsDir(), wasmFile));
+  const lang = await import_web_tree_sitter.default.Language.load(join18(defaultWasmGrammarsDir(), wasmFile));
   languageCache.set(language, lang);
   return lang;
 }
@@ -28552,10 +28733,10 @@ async function handleSugoExplore(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const f of args2.filePaths.slice(0, MAX_FILES2)) {
-    const full = isAbsolute5(f) ? f : join17(args2.projectPath, f);
+    const full = isAbsolute5(f) ? f : join19(args2.projectPath, f);
     let content;
     try {
-      content = await readFile14(full, "utf-8");
+      content = await readFile16(full, "utf-8");
     } catch {
       skipped.push({ path: f, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -28576,8 +28757,12 @@ async function handleSugoExplore(rawArgs) {
 }
 
 // src/tools/sugoGetProjectContext.ts
-import { readdir as readdir5, readFile as readFile16 } from "node:fs/promises";
-import { basename as basename2, join as join19 } from "node:path";
+import { readdir as readdir5, readFile as readFile18 } from "node:fs/promises";
+import { basename as basename2, join as join21 } from "node:path";
+init_config();
+init_registry();
+init_harnessRouting();
+init_rulesFile();
 
 // src/harness/toolRegistry.ts
 var HARNESS_TOOL_REGISTRY = [];
@@ -28658,8 +28843,9 @@ function featureBranchName(branch) {
 }
 
 // src/todoSpec.ts
-import { mkdir as mkdir12, readFile as readFile15 } from "node:fs/promises";
-import { join as join18 } from "node:path";
+init_fsUtil();
+import { mkdir as mkdir13, readFile as readFile17 } from "node:fs/promises";
+import { join as join20 } from "node:path";
 
 // src/gates.ts
 function ok2() {
@@ -28905,11 +29091,11 @@ function checkLethalTrifectaMitigationGate(lastCheck, trifectaMitigation) {
 
 // src/todoSpec.ts
 function todoSpecPath(projectPath, featureName) {
-  return join18(projectPath, "sugo", "docs", "feature", featureName, "TODO-SPEC.md");
+  return join20(projectPath, "sugo", "docs", "feature", featureName, "TODO-SPEC.md");
 }
 async function readTodoSpec(projectPath, featureName) {
   try {
-    return await readFile15(todoSpecPath(projectPath, featureName), "utf-8");
+    return await readFile17(todoSpecPath(projectPath, featureName), "utf-8");
   } catch {
     return null;
   }
@@ -28933,7 +29119,7 @@ async function createTodoSpec(projectPath, draft) {
     "## \uAC31\uC2E0 \uB85C\uADF8",
     ""
   ].join("\n");
-  await mkdir12(join18(projectPath, "sugo", "docs", "feature", draft.featureName), { recursive: true });
+  await mkdir13(join20(projectPath, "sugo", "docs", "feature", draft.featureName), { recursive: true });
   await atomicWriteFile(path, content);
   return { path, content };
 }
@@ -28985,6 +29171,7 @@ function checkTodoSpecSyncGate(snapshotAtStart, currentContent, syncReason) {
 }
 
 // src/tools/sugoGetProjectContext.ts
+init_featureState();
 var sugoGetProjectContextInputSchema = {
   projectPath: external_exports.string().describe("\uCEE8\uD14D\uC2A4\uD2B8\uB97C \uB85C\uB4DC\uD560 \uD504\uB85C\uC81D\uD2B8 \uC808\uB300\uACBD\uB85C"),
   changedFiles: external_exports.array(external_exports.string()).optional().describe("\uC774\uBC88 \uC791\uC5C5\uC5D0\uC11C \uAC74\uB4DC\uB9B4 \uD30C\uC77C \uBAA9\uB85D. \uC8FC\uBA74 \uAD00\uB828 \uD558\uB124\uC2A4\uB9CC \uC120\uBCC4\uD574 \uBC18\uD658\uD55C\uB2E4(\uC0DD\uB7B5 \uC2DC \uC804\uB7C9)")
@@ -28992,7 +29179,7 @@ var sugoGetProjectContextInputSchema = {
 var SugoGetProjectContextArgs = external_exports.object(sugoGetProjectContextInputSchema);
 async function readIfExists(path) {
   try {
-    return await readFile16(path, "utf-8");
+    return await readFile18(path, "utf-8");
   } catch {
     return null;
   }
@@ -29006,7 +29193,7 @@ async function readRulesDir(rulesDir, excludeBasenames, isTopLevel = true) {
   }
   const rules = [];
   for (const entry of entries) {
-    const full = join19(rulesDir, entry.name);
+    const full = join21(rulesDir, entry.name);
     if (entry.isDirectory()) {
       rules.push(...await readRulesDir(full, excludeBasenames, false));
       continue;
@@ -29021,14 +29208,15 @@ async function readRulesDir(rulesDir, excludeBasenames, isTopLevel = true) {
 async function handleSugoGetProjectContext(rawArgs) {
   const args2 = SugoGetProjectContextArgs.parse(rawArgs);
   const { projectPath, changedFiles } = args2;
-  const claudeMd = await readIfExists(join19(projectPath, "sugo", "CLAUDE.md"));
+  const harnessEnabled = (await loadHarnessFeatureState()).enabled;
+  const claudeMd = harnessEnabled ? await readIfExists(join21(projectPath, "sugo", "CLAUDE.md")) : null;
   const config2 = await loadProjectConfig(projectPath);
   const registryEntry = await findRegistryEntry(projectPath);
   const checkpointSync = registryEntry?.workspace ? await pullCheckpointsToRules(projectPath, registryEntry.workspace).catch(() => null) : null;
   const loaded = [];
-  if (config2) {
+  if (config2 && harnessEnabled) {
     for (const applied of config2.appliedHarnesses) {
-      const content = await readIfExists(join19(projectPath, "sugo", "harness", applied.id, "harness.md"));
+      const content = await readIfExists(join21(projectPath, "sugo", "harness", applied.id, "harness.md"));
       if (content !== null) loaded.push({ id: applied.id, harnessMd: content });
     }
   }
@@ -29037,8 +29225,8 @@ async function handleSugoGetProjectContext(rawArgs) {
     changedFiles ?? []
   );
   const harnesses = loaded.filter((h) => routing.selected.includes(h.id));
-  const sugoManagedRuleFiles = new Set(loaded.map((h) => basename2(buildClaudeRuleFile(h.id, "").relPath)));
-  const rules = await readRulesDir(join19(projectPath, ".claude", "rules"), sugoManagedRuleFiles);
+  const sugoManagedRuleFiles = new Set((config2?.appliedHarnesses ?? []).map((h) => basename2(buildClaudeRuleFile(h.id, "").relPath)));
+  const rules = await readRulesDir(join21(projectPath, ".claude", "rules"), sugoManagedRuleFiles);
   const harnessToolGuides = resolveHarnessToolGuides(routing.selected);
   const branch = await currentGitBranch(projectPath);
   const fName = featureBranchName(branch);
@@ -29047,11 +29235,12 @@ async function handleSugoGetProjectContext(rawArgs) {
     ok: true,
     projectPath,
     registered: !!config2,
+    harnessEnabled,
     workspace: registryEntry?.workspace ?? null,
     checkpointSync: {
       attempted: !!registryEntry?.workspace,
       injectedCount: checkpointSync,
-      rulesRoot: join19(projectPath, ".claude", "rules")
+      rulesRoot: join21(projectPath, ".claude", "rules")
     },
     claudeMd,
     harnesses,
@@ -29075,17 +29264,18 @@ async function handleSugoGetProjectContext(rawArgs) {
 }
 
 // src/work/history.ts
+init_fsUtil();
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdir as mkdir13, readdir as readdir6, readFile as readFile17 } from "node:fs/promises";
-import { join as join20 } from "node:path";
+import { mkdir as mkdir14, readdir as readdir6, readFile as readFile19 } from "node:fs/promises";
+import { join as join22 } from "node:path";
 function generateWorkLogId() {
   return `wl-${Date.now()}-${randomBytes3(4).toString("hex")}`;
 }
 async function addWorkLog(workspace, params) {
   const workLog = { id: generateWorkLogId(), ...params };
   const dir = historyDir(workspace);
-  await mkdir13(dir, { recursive: true });
-  await atomicWriteFile(join20(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
+  await mkdir14(dir, { recursive: true });
+  await atomicWriteFile(join22(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
   void syncHistory(workspace, workLog, workLog.prRefs);
   return workLog;
 }
@@ -29101,7 +29291,7 @@ async function listWorkLogs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile17(join20(dir, name2), "utf-8");
+      const raw = await readFile19(join22(dir, name2), "utf-8");
       logs.push(JSON.parse(raw));
     } catch {
       continue;
@@ -29111,7 +29301,7 @@ async function listWorkLogs(workspace) {
 }
 async function getWorkLog(workspace, id) {
   try {
-    const raw = await readFile17(join20(historyDir(workspace), `${id}.json`), "utf-8");
+    const raw = await readFile19(join22(historyDir(workspace), `${id}.json`), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -29180,12 +29370,12 @@ function errorResult8(errorCode, message) {
 }
 
 // src/tools/sugoOverview.ts
-import { readFile as readFile18 } from "node:fs/promises";
+import { readFile as readFile20 } from "node:fs/promises";
 import { relative as relative4, sep as sep2 } from "node:path";
 
 // src/overview.ts
 import { readdir as readdir7 } from "node:fs/promises";
-import { join as join21 } from "node:path";
+import { join as join23 } from "node:path";
 var IGNORED_DIR_NAMES = /* @__PURE__ */ new Set([
   "node_modules",
   "dist",
@@ -29210,9 +29400,9 @@ async function walkSourceFiles(rootDir, maxFiles) {
       if (results.length >= maxFiles) return;
       if (entry.isDirectory()) {
         if (entry.name.startsWith(".") || IGNORED_DIR_NAMES.has(entry.name)) continue;
-        await walk(join21(dir, entry.name));
+        await walk(join23(dir, entry.name));
       } else if (entry.isFile() && detectLanguage(entry.name)) {
-        results.push(join21(dir, entry.name));
+        results.push(join23(dir, entry.name));
       }
     }
   }
@@ -29236,7 +29426,7 @@ async function handleSugoOverview(rawArgs) {
     const relPath = relative4(args2.projectPath, full).split(sep2).join("/");
     let content;
     try {
-      content = await readFile18(full, "utf-8");
+      content = await readFile20(full, "utf-8");
     } catch {
       skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -29265,7 +29455,7 @@ async function handleSugoOverview(rawArgs) {
 
 // src/sourceRevision.ts
 import { createHash as createHash4 } from "node:crypto";
-import { readFile as readFile19 } from "node:fs/promises";
+import { readFile as readFile21 } from "node:fs/promises";
 import { relative as relative5, resolve as resolve9, isAbsolute as isAbsolute6 } from "node:path";
 async function collectSourceRevision(projectPath, changedFiles, startedAt) {
   const paths = [...new Set(changedFiles.map((f) => relative5(projectPath, resolve9(projectPath, f)).replace(/\\/g, "/")))].sort();
@@ -29275,7 +29465,7 @@ async function collectSourceRevision(projectPath, changedFiles, startedAt) {
   const files = [];
   for (const path of paths) {
     try {
-      files.push({ path, hash: createHash4("sha256").update(await readFile19(resolve9(projectPath, path))).digest("hex") });
+      files.push({ path, hash: createHash4("sha256").update(await readFile21(resolve9(projectPath, path))).digest("hex") });
     } catch (e) {
       if (e.code !== "ENOENT") return void 0;
       files.push({ path, hash: "deleted" });
@@ -29288,17 +29478,18 @@ async function collectSourceRevision(projectPath, changedFiles, startedAt) {
 }
 
 // src/tools/sugoPlan.ts
-import { readFile as readFile23 } from "node:fs/promises";
+import { readFile as readFile25 } from "node:fs/promises";
 
 // src/bootable.ts
+init_config();
 async function isProjectBootable(projectPath) {
   const config2 = await loadProjectConfig(projectPath);
   return (config2?.detectedStack.frameworks ?? []).some((f) => f.id.startsWith("framework/spring"));
 }
 
 // src/bootScan.ts
-import { readdir as readdir8, readFile as readFile20 } from "node:fs/promises";
-import { join as join22 } from "node:path";
+import { readdir as readdir8, readFile as readFile22 } from "node:fs/promises";
+import { join as join24 } from "node:path";
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
 var MAX_FILES4 = 2e3;
 var MAX_FILE_BYTES4 = 3e5;
@@ -29314,9 +29505,9 @@ async function collectJavaFiles(dir, acc) {
     if (acc.length >= MAX_FILES4) return;
     if (entry.isDirectory()) {
       if (EXCLUDED_DIRS.has(entry.name)) continue;
-      await collectJavaFiles(join22(dir, entry.name), acc);
+      await collectJavaFiles(join24(dir, entry.name), acc);
     } else if (entry.isFile() && entry.name.endsWith(".java")) {
-      acc.push(join22(dir, entry.name));
+      acc.push(join24(dir, entry.name));
     }
   }
 }
@@ -29327,7 +29518,7 @@ async function scanForSpringBootTestAnnotation(projectPath) {
   const candidates = testFiles.length > 0 ? testFiles : files;
   for (const file of candidates) {
     try {
-      const content = await readFile20(file, "utf-8");
+      const content = await readFile22(file, "utf-8");
       if (content.length > MAX_FILE_BYTES4) continue;
       if (hasValidSpringBootTestAnnotation([content])) return true;
     } catch {
@@ -29338,12 +29529,13 @@ async function scanForSpringBootTestAnnotation(projectPath) {
 }
 
 // src/feature.ts
-import { mkdir as mkdir14 } from "node:fs/promises";
-import { join as join24 } from "node:path";
+init_fsUtil();
+import { mkdir as mkdir15 } from "node:fs/promises";
+import { join as join26 } from "node:path";
 
 // src/patch.ts
 import { realpath, readdir as readdir9, stat as stat3 } from "node:fs/promises";
-import { basename as basename3, dirname as dirname9, join as join23, relative as relative6, resolve as resolve10, sep as sep3 } from "node:path";
+import { basename as basename3, dirname as dirname10, join as join25, relative as relative6, resolve as resolve10, sep as sep3 } from "node:path";
 var PatchEntryError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -29440,7 +29632,7 @@ async function resolvePatchContext(workResultPath, projectPath) {
   if (!/^work-result(?:-patch-v\d+)?\.md$/i.test(resultName)) {
     throw new PatchEntryError("PATCH_WORK_RESULT_INVALID", `\uC815\uC2DD work-result \uD30C\uC77C\uB9CC patch \uC9C4\uC785\uC810\uC73C\uB85C \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4: ${workResultPath}`);
   }
-  const featureDir = dirname9(resolvedWorkResult);
+  const featureDir = dirname10(resolvedWorkResult);
   let filenames;
   try {
     filenames = await readdir9(featureDir);
@@ -29463,7 +29655,7 @@ async function resolvePatchContext(workResultPath, projectPath) {
   }
   let parentPrdPath;
   if (filenames.includes("prd.md")) {
-    parentPrdPath = join23(featureDir, "prd.md");
+    parentPrdPath = join25(featureDir, "prd.md");
   } else {
     const latest = findLatestPrdPatchFilename(filenames);
     if (!latest) {
@@ -29472,7 +29664,7 @@ async function resolvePatchContext(workResultPath, projectPath) {
         `\uBD80\uBAA8 PRD(prd.md \uB610\uB294 PRD-patch-v*.md)\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`
       );
     }
-    parentPrdPath = join23(featureDir, latest);
+    parentPrdPath = join25(featureDir, latest);
   }
   const version2 = computeNextPatchVersion(filenames);
   return { parentPrdPath, version: version2, baseWorkResultPath: resolvedWorkResult, featureDir };
@@ -29488,27 +29680,27 @@ function todayYyyymmdd() {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 }
 async function writePrdFile(projectPath, featureName, content) {
-  const featurePath = join24(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
-  const prdPath = join24(featurePath, "prd.md");
-  await mkdir14(featurePath, { recursive: true });
+  const featurePath = join26(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
+  const prdPath = join26(featurePath, "prd.md");
+  await mkdir15(featurePath, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath, prdPath };
 }
 async function writeWorkResultFile(featurePath, content) {
-  const workResultPath = join24(featurePath, "work-result.md");
-  await mkdir14(featurePath, { recursive: true });
+  const workResultPath = join26(featurePath, "work-result.md");
+  await mkdir15(featurePath, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
 async function writePatchPrdFile(featureDir, version2, content) {
-  const prdPath = join24(featureDir, patchPrdFilename(version2));
-  await mkdir14(featureDir, { recursive: true });
+  const prdPath = join26(featureDir, patchPrdFilename(version2));
+  await mkdir15(featureDir, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath: featureDir, prdPath };
 }
 async function writePatchWorkResultFile(featureDir, version2, content) {
-  const workResultPath = join24(featureDir, patchWorkResultFilename(version2));
-  await mkdir14(featureDir, { recursive: true });
+  const workResultPath = join26(featureDir, patchWorkResultFilename(version2));
+  await mkdir15(featureDir, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
@@ -29725,7 +29917,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash5 } from "node:crypto";
 import { stat as stat4 } from "node:fs/promises";
-import { isAbsolute as isAbsolute7, join as join25, relative as relative7 } from "node:path";
+import { isAbsolute as isAbsolute7, join as join27, relative as relative7 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash5("sha1").update(parts2.join("\n")).digest("hex");
@@ -29733,7 +29925,7 @@ function computeFingerprintFromEntries(entries) {
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
-    const full = isAbsolute7(f) ? f : join25(projectPath, f);
+    const full = isAbsolute7(f) ? f : join27(projectPath, f);
     const relPath = isAbsolute7(f) ? relative7(projectPath, f) : f;
     try {
       const st = await stat4(full);
@@ -29763,6 +29955,11 @@ function checkEvidenceReuseGate(reusedFromTestDone, storedFingerprint, currentFi
   }
   return ok2();
 }
+
+// src/tools/sugoPlan.ts
+init_config();
+init_featureState();
+init_registry();
 
 // src/humanHours.ts
 var DEFAULT_RATIO = 3.5;
@@ -29960,8 +30157,9 @@ ${lines2.join("\n")}`;
 }
 
 // src/work/roadmap.ts
-import { mkdir as mkdir15, readFile as readFile21 } from "node:fs/promises";
-import { dirname as dirname10, join as join26 } from "node:path";
+init_fsUtil();
+import { mkdir as mkdir16, readFile as readFile23 } from "node:fs/promises";
+import { dirname as dirname11, join as join28 } from "node:path";
 
 // src/work/roadmapGraph.ts
 function mergeRoadmapOwnership(localNodes, remoteOrdering) {
@@ -30073,8 +30271,8 @@ function promotePrdRequirements(taskId, prdContent) {
 // src/work/roadmap.ts
 async function restoredPatchTitle(task) {
   if (!task.patchInfo) return task.title;
-  const patchPrdPath = task.patchInfo.prdPath ?? (task.prd_ref ? join26(dirname10(task.prd_ref), `PRD-patch-v${task.patchInfo.patchVersion}.md`) : void 0);
-  const prdContent = patchPrdPath ? await readFile21(patchPrdPath, "utf8").catch(() => void 0) : void 0;
+  const patchPrdPath = task.patchInfo.prdPath ?? (task.prd_ref ? join28(dirname11(task.prd_ref), `PRD-patch-v${task.patchInfo.patchVersion}.md`) : void 0);
+  const prdContent = patchPrdPath ? await readFile23(patchPrdPath, "utf8").catch(() => void 0) : void 0;
   return task.patchInfo.title ?? taskCycleTitle(task.patchInfo.seed, task.title, prdContent);
 }
 function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath, baseTitle) {
@@ -30106,7 +30304,7 @@ function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPa
 async function readRoadmapFile(workspace) {
   let file;
   try {
-    const raw = await readFile21(roadmapFilePath(workspace), "utf-8");
+    const raw = await readFile23(roadmapFilePath(workspace), "utf-8");
     file = JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
@@ -30128,7 +30326,7 @@ async function readRoadmapFile(workspace) {
   return file;
 }
 async function writeRoadmapFile(workspace, file) {
-  await mkdir15(workspaceDir(workspace), { recursive: true });
+  await mkdir16(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(roadmapFilePath(workspace), JSON.stringify(file, null, 2));
   void syncRoadmapSnapshot(workspace, file.nodes).catch(() => {
   });
@@ -30251,12 +30449,12 @@ async function backfillLegacyRoadmapWorkResults(workspace, tasks) {
     if (task.status !== "done" || !task.prd_ref) continue;
     const node = await getRoadmapNode(workspace, task.id);
     if (!node || node.workResult?.path) continue;
-    const prdExists = await readFile21(task.prd_ref, "utf8").then(() => true).catch(() => false);
+    const prdExists = await readFile23(task.prd_ref, "utf8").then(() => true).catch(() => false);
     if (!prdExists) continue;
-    const featureDir = dirname10(task.prd_ref);
-    const workResultPath = join26(featureDir, "work-result.md");
+    const featureDir = dirname11(task.prd_ref);
+    const workResultPath = join28(featureDir, "work-result.md");
     const summary = task.summary?.trim() || task.title;
-    const existing = await readFile21(workResultPath, "utf8").catch(() => null);
+    const existing = await readFile23(workResultPath, "utf8").catch(() => null);
     if (existing === null) {
       await atomicWriteFile(
         workResultPath,
@@ -30504,21 +30702,22 @@ async function pullRoadmapOrdering(workspace) {
 }
 
 // src/work/task.ts
+init_fsUtil();
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir16, readFile as readFile22 } from "node:fs/promises";
+import { mkdir as mkdir17, readFile as readFile24 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile22(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile24(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
   }
 }
 async function writeTasksFile(workspace, file) {
-  await mkdir16(workspaceDir(workspace), { recursive: true });
+  await mkdir17(workspaceDir(workspace), { recursive: true });
   await atomicWriteFile(tasksFilePath(workspace), JSON.stringify(file, null, 2));
 }
 async function addTask(workspace, params) {
@@ -31767,7 +31966,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "decompose" && existing) {
     if (!args2.manifest) return errorResult9("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     if (!existing.data.prdPath) return errorResult9("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    const prdContent = await readFile23(existing.data.prdPath, "utf-8").catch(() => "");
+    const prdContent = await readFile25(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
@@ -31967,7 +32166,7 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "start" && args2.specPath) {
-    const specExists = await readFile23(args2.specPath, "utf-8").then(() => true, () => false);
+    const specExists = await readFile25(args2.specPath, "utf-8").then(() => true, () => false);
     if (!specExists) return errorResult9("SPEC_FILE_NOT_FOUND", `\uAE30\uC900 SPEC \uD30C\uC77C\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.specPath}`);
     const selectedId = session.data.specDraftSelection?.selectedId;
     const selected = session.data.specDraftSelection?.candidates.find((candidate) => candidate.id === selectedId);
@@ -32026,7 +32225,7 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "prd" && args2.specPath) {
-    const specExists = await readFile23(args2.specPath, "utf-8").then(
+    const specExists = await readFile25(args2.specPath, "utf-8").then(
       () => true,
       () => false
     );
@@ -32252,7 +32451,7 @@ ${args2.prdContent}` : args2.prdContent;
   let harnessToolMenu;
   if (action === "code_start") {
     const projectConfig = await loadProjectConfig(session.projectPath);
-    const guides = resolveHarnessToolGuides(projectConfig?.appliedHarnesses.map((h) => h.id) ?? []);
+    const guides = resolveHarnessToolGuides((await loadHarnessFeatureState()).enabled ? projectConfig?.appliedHarnesses.map((h) => h.id) ?? [] : []);
     harnessToolMenu = renderToolMenu(guides);
   }
   let humanHoursEstimate;
@@ -32431,7 +32630,7 @@ ${args2.prdContent}` : args2.prdContent;
       prRefs,
       report: session.data.chainInfo.workResultReport
     };
-    const completedPrd = (patchVersion ?? 0) > 0 ? await readFile23(session.data.prdPath ?? "", "utf8").catch(() => void 0) : void 0;
+    const completedPrd = (patchVersion ?? 0) > 0 ? await readFile25(session.data.prdPath ?? "", "utf8").catch(() => void 0) : void 0;
     await recordRoadmapWorkResult(workspace, session.data.linkedTaskId, workResult, {
       version: patchVersion ?? 0,
       completedAt,
@@ -32666,8 +32865,10 @@ function errorResult11(errorCode, message) {
 import { resolve as resolve11 } from "node:path";
 
 // src/harness/reset.ts
-import { mkdir as mkdir17, readFile as readFile24, rm as rm4 } from "node:fs/promises";
-import { join as join27 } from "node:path";
+init_fsUtil();
+init_config();
+import { mkdir as mkdir18, readFile as readFile26, rm as rm4 } from "node:fs/promises";
+import { join as join29 } from "node:path";
 var ResetProjectError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -32689,17 +32890,17 @@ async function resetProjectHarness(projectPath) {
     throw new ResetProjectError("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4(sugo/config.json \uC5C6\uC74C): ${projectPath}`);
   }
   const sugoDir = projectSugoDir(projectPath);
-  const claudeMdPath = join27(sugoDir, "CLAUDE.md");
+  const claudeMdPath = join29(sugoDir, "CLAUDE.md");
   let backedUpTo;
   try {
-    const current = await readFile24(claudeMdPath, "utf-8");
-    const backupDir = join27(sugoDir, "backup");
-    await mkdir17(backupDir, { recursive: true });
-    backedUpTo = join27(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
+    const current = await readFile26(claudeMdPath, "utf-8");
+    const backupDir = join29(sugoDir, "backup");
+    await mkdir18(backupDir, { recursive: true });
+    backedUpTo = join29(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
     await atomicWriteFile(backedUpTo, current);
   } catch {
   }
-  await rm4(join27(sugoDir, "harness"), { recursive: true, force: true });
+  await rm4(join29(sugoDir, "harness"), { recursive: true, force: true });
   await atomicWriteFile(claudeMdPath, RESET_CLAUDE_MD);
   await saveProjectConfig({ ...config2, appliedHarnesses: [], lastUpdated: (/* @__PURE__ */ new Date()).toISOString() });
   return { backedUpTo };
@@ -32733,15 +32934,16 @@ var ROADMAP_LEVELS = ["spec", "workstream", "task", "subtask", "step"];
 var ROADMAP_NODE_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"];
 
 // src/lifecycle/consoleOnDemand.ts
-import { dirname as dirname11, join as join30 } from "node:path";
+import { dirname as dirname12, join as join32 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // src/dashboard/syncAll.ts
-import { readFile as readFile26 } from "node:fs/promises";
+import { readFile as readFile28 } from "node:fs/promises";
 
 // src/work/spec.ts
-import { mkdir as mkdir18, readdir as readdir10, readFile as readFile25 } from "node:fs/promises";
-import { join as join28 } from "node:path";
+init_fsUtil();
+import { mkdir as mkdir19, readdir as readdir10, readFile as readFile27 } from "node:fs/promises";
+import { join as join30 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
     name: params.name,
@@ -32751,12 +32953,12 @@ async function addSpec(workspace, params) {
     created_at: (/* @__PURE__ */ new Date()).toISOString()
   };
   const dir = specsDir(workspace);
-  await mkdir18(dir, { recursive: true });
+  await mkdir19(dir, { recursive: true });
   const fileContent = stringifyFrontmatter(
     { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
     spec.content
   );
-  await atomicWriteFile(join28(dir, `${slugify(params.name)}.md`), fileContent);
+  await atomicWriteFile(join30(dir, `${slugify(params.name)}.md`), fileContent);
   void syncSpec(workspace, spec);
   return spec;
 }
@@ -32782,7 +32984,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile25(join28(dir, name2), "utf-8");
+      const raw = await readFile27(join30(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -32792,7 +32994,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile25(join28(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile27(join30(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -32833,7 +33035,7 @@ async function syncAllWorkspaceData() {
     const specNames = new Set(specs.map((spec) => spec.name));
     for (const task of tasks) {
       if (!task.prd_ref || specNames.has(task.title)) continue;
-      const content = await readFile26(task.prd_ref, "utf8").catch(() => null);
+      const content = await readFile28(task.prd_ref, "utf8").catch(() => null);
       if (!content) continue;
       await syncSpec(workspace.name, {
         name: task.title,
@@ -32851,11 +33053,12 @@ async function syncAllWorkspaceData() {
 }
 
 // src/lifecycle/dashboardRuntime.ts
+init_homeDir();
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { closeSync, existsSync as existsSync5, openSync } from "node:fs";
-import { mkdir as mkdir19, readFile as readFile27, rm as rm5, stat as stat5 } from "node:fs/promises";
-import { join as join29 } from "node:path";
+import { mkdir as mkdir20, readFile as readFile29, rm as rm5, stat as stat5 } from "node:fs/promises";
+import { join as join31 } from "node:path";
 var DEFAULT_DASHBOARD_PORT = 3001;
 var CONSOLE_HOST = "sugo.localhost";
 var CONSOLE_SERVICE = "sugo-console";
@@ -32872,15 +33075,15 @@ var STOP_WAIT_MS = 5e3;
 var POLL_MS = 150;
 var LOCK_STALE_MS = 3e4;
 function dashboardPaths(home = sugoHomeDir()) {
-  const sugoDir = join29(home, ".claude", "sugo");
-  const dataDir = join29(sugoDir, "dashboard");
+  const sugoDir = join31(home, ".claude", "sugo");
+  const dataDir = join31(sugoDir, "dashboard");
   return {
     sugoDir,
     dataDir,
-    stateFile: join29(dataDir, "server.json"),
-    logFile: join29(dataDir, "dashboard.log"),
-    lockDir: join29(dataDir, "start.lock"),
-    settingsFile: join29(sugoDir, "settings.json")
+    stateFile: join31(dataDir, "server.json"),
+    logFile: join31(dataDir, "dashboard.log"),
+    lockDir: join31(dataDir, "start.lock"),
+    settingsFile: join31(sugoDir, "settings.json")
   };
 }
 function isSupportedNode(version2 = process.versions.node) {
@@ -32889,7 +33092,7 @@ function isSupportedNode(version2 = process.versions.node) {
 }
 async function readServerState(paths) {
   try {
-    return JSON.parse(await readFile27(paths.stateFile, "utf8"));
+    return JSON.parse(await readFile29(paths.stateFile, "utf8"));
   } catch {
     return null;
   }
@@ -32954,7 +33157,7 @@ async function stopDashboard(paths) {
 }
 async function readDashboardSettings(settingsFile) {
   try {
-    const settings = JSON.parse(await readFile27(settingsFile, "utf8"));
+    const settings = JSON.parse(await readFile29(settingsFile, "utf8"));
     const { enabled, port } = settings.dashboard ?? {};
     return {
       ...typeof enabled === "boolean" ? { enabled } : {},
@@ -32978,10 +33181,10 @@ async function currentPort(options, paths) {
   return { ...preferred, port: owned ? state.port : preferred.port, state, owned };
 }
 async function acquireLock(paths) {
-  await mkdir19(paths.dataDir, { recursive: true });
+  await mkdir20(paths.dataDir, { recursive: true });
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await mkdir19(paths.lockDir);
+      await mkdir20(paths.lockDir);
       return true;
     } catch {
       const age = await stat5(paths.lockDir).then((s) => Date.now() - s.mtimeMs, () => 0);
@@ -33057,8 +33260,8 @@ async function startServer(runtimeEntry, options, paths, port) {
       ...process.env,
       SUGO_DASHBOARD_PORT: String(port),
       BUILD_ID: options.buildId,
-      HARNESS_PATH: join29(options.pluginRoot, "harness-library"),
-      HARNESS_OVERRIDE_PATH: join29(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
+      HARNESS_PATH: join31(options.pluginRoot, "harness-library"),
+      HARNESS_OVERRIDE_PATH: join31(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
       SKILLS_PATH: options.pluginRoot
     }
   });
@@ -33074,7 +33277,7 @@ async function startServer(runtimeEntry, options, paths, port) {
 async function ensureDashboard(options) {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtimeEntry = join29(options.pluginRoot, "dashboard-runtime", "server.mjs");
+  const runtimeEntry = join31(options.pluginRoot, "dashboard-runtime", "server.mjs");
   try {
     if (!isSupportedNode(nodeVersion)) {
       return {
@@ -33117,7 +33320,7 @@ async function ensureDashboard(options) {
 }
 
 // src/lifecycle/consoleOnDemand.ts
-var pluginRoot = join30(dirname11(fileURLToPath3(import.meta.url)), "..");
+var pluginRoot = join32(dirname12(fileURLToPath3(import.meta.url)), "..");
 async function controlConsole(action, options = {}) {
   const result3 = await controlDashboard(action, { pluginRoot, buildId: currentSugoVersion(), ...options });
   if (result3.running && action !== "status" && action !== "stop") {
@@ -33607,8 +33810,9 @@ function errorResult14(errorCode, message) {
 }
 
 // src/tools/sugoSpecWriter.ts
-import { access as access3, readFile as readFile28, stat as stat6 } from "node:fs/promises";
-import { isAbsolute as isAbsolute8, join as join31, relative as relative8, resolve as resolve12, sep as sep4 } from "node:path";
+import { access as access3, readFile as readFile30, stat as stat6 } from "node:fs/promises";
+import { isAbsolute as isAbsolute8, join as join33, relative as relative8, resolve as resolve12, sep as sep4 } from "node:path";
+init_homeDir();
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
   workspace: external_exports.string().min(1),
@@ -33668,12 +33872,12 @@ function specSlug(title) {
 }
 async function nextSpecTarget(title) {
   const date3 = localDateKey();
-  const root = join31(sugoHomeDir(), ".claude", "sugo", "specs");
-  const featureDir = join31(root, date3, specSlug(title));
+  const root = join33(sugoHomeDir(), ".claude", "sugo", "specs");
+  const featureDir = join33(root, date3, specSlug(title));
   let version2 = 1;
-  while (await access3(join31(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
-  const directory = join31(featureDir, `v${version2}`);
-  return { root, date: date3, version: version2, directory, path: join31(directory, "spec.md") };
+  while (await access3(join33(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
+  const directory = join33(featureDir, `v${version2}`);
+  return { root, date: date3, version: version2, directory, path: join33(directory, "spec.md") };
 }
 function managedSpecPath(specPath) {
   const root = resolve12(sugoHomeDir(), ".claude", "sugo", "specs");
@@ -33704,7 +33908,7 @@ async function handleSugoSpecWriter(rawArgs) {
     return result({ ok: false, errorCode: "PROJECT_MISMATCH", expected: spec.projectPath, received: args2.projectPath });
   }
   if (args2.action === "context") {
-    const dir = join31(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const dir = join33(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     try {
       const [attachments, references, draftContent] = await Promise.all([
         downloadSpecAttachments(args2.workspace, spec.id, dir),
@@ -33745,7 +33949,7 @@ async function handleSugoSpecWriter(rawArgs) {
       message: "context \uC751\uB2F5\uC758 specTarget.path \uC544\uB798\uC5D0 \uC791\uC131\uD55C spec.md\uB9CC \uC5F0\uACB0\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     });
   }
-  const text = await readFile28(args2.specPath, "utf-8").catch(() => null);
+  const text = await readFile30(args2.specPath, "utf-8").catch(() => null);
   if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args2.specPath });
   if (args2.projectPath) {
     if (!args2.reviewEvidence) {
@@ -33767,7 +33971,7 @@ async function handleSugoSpecWriter(rawArgs) {
     if (invalidFiles.length > 0) {
       return result({ ok: false, errorCode: "SPEC_REVIEW_PROJECT_FILE_INVALID", invalidFiles });
     }
-    const attachmentDir = join31(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const attachmentDir = join33(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     const [attachments, references] = await Promise.all([
       downloadSpecAttachments(args2.workspace, spec.id, attachmentDir),
       fetchSpecReferences(args2.workspace, spec.id)
@@ -33815,6 +34019,10 @@ async function handleSugoSpecWriter(rawArgs) {
     return result({ ok: false, errorCode: "SPEC_ATTACH_FAILED", message: error3 instanceof Error ? error3.message : String(error3) });
   }
 }
+
+// src/tools/sugoStatus.ts
+init_config();
+init_registry();
 
 // src/judgment.ts
 function minutesBetween(fromIso, toIso) {
@@ -33991,6 +34199,8 @@ function errorResult15(errorCode, message) {
 
 // src/tools/sugoUpdate.ts
 import { resolve as resolve13 } from "node:path";
+init_registry();
+init_sync();
 var sugoUpdateInputSchema = {
   projectPath: external_exports.string().describe("\uAC31\uC2E0\uD560 \uD504\uB85C\uC81D\uD2B8\uC758 \uC808\uB300\uACBD\uB85C(\uC774\uBBF8 sugo_add\uB85C \uB4F1\uB85D\uB3FC \uC788\uC5B4\uC57C \uD568)"),
   repoUrl: external_exports.string().optional(),
@@ -34123,9 +34333,14 @@ function evaluateAutoCheck(spec, ctx) {
   }
 }
 
+// src/tools/sugoValidate.ts
+init_context();
+
 // src/harness/validationConfig.ts
-import { readFile as readFile29 } from "node:fs/promises";
-import { join as join32 } from "node:path";
+import { readFile as readFile31 } from "node:fs/promises";
+import { join as join34 } from "node:path";
+init_config();
+init_featureState();
 function parseValidationYaml(content) {
   const raw = load(content);
   const checks = (raw?.checks ?? []).filter((c) => !!c?.id).map((c) => ({
@@ -34137,13 +34352,14 @@ function parseValidationYaml(content) {
   return { harnessId: raw?.harnessId ?? "unknown", checks };
 }
 async function loadProjectValidationConfigs(projectPath) {
+  if (!(await loadHarnessFeatureState()).enabled) return /* @__PURE__ */ new Map();
   const config2 = await loadProjectConfig(projectPath);
   const result3 = /* @__PURE__ */ new Map();
   if (!config2) return result3;
   for (const applied of config2.appliedHarnesses) {
-    const path = join32(projectPath, "sugo", "harness", applied.id, "validation.yaml");
+    const path = join34(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile29(path, "utf-8");
+      const content = await readFile31(path, "utf-8");
       result3.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -34956,9 +35172,10 @@ function errorResult18(errorCode, message) {
 }
 
 // src/work/gitHistory.ts
+init_fsUtil();
 import { execFile as execFile4 } from "node:child_process";
-import { mkdir as mkdir20, realpath as realpath2 } from "node:fs/promises";
-import { isAbsolute as isAbsolute9, join as join33, relative as relative9, resolve as resolve14, sep as sep5 } from "node:path";
+import { mkdir as mkdir21, realpath as realpath2 } from "node:fs/promises";
+import { isAbsolute as isAbsolute9, join as join35, relative as relative9, resolve as resolve14, sep as sep5 } from "node:path";
 import { promisify as promisify4 } from "node:util";
 var execFileAsync3 = promisify4(execFile4);
 async function git2(cwd, args2) {
@@ -35002,8 +35219,8 @@ async function backfillWorkspaceGitHistory(workspace) {
     }
   }
   const unique = [...new Map(logs.map((log) => [log.id, log])).values()];
-  await mkdir20(historyDir(workspace.name), { recursive: true });
-  await Promise.all(unique.map((log) => atomicWriteFile(join33(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
+  await mkdir21(historyDir(workspace.name), { recursive: true });
+  await Promise.all(unique.map((log) => atomicWriteFile(join35(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
   return unique;
 }
 
@@ -35222,8 +35439,12 @@ async function handleSugoAwsContext(rawArgs) {
 }
 
 // src/tools/sugoUninstall.ts
-import { access as access4, mkdir as mkdir21, readFile as readFile30, rename as rename2, rm as rm6, rmdir, writeFile as writeFile3 } from "node:fs/promises";
-import { dirname as dirname12, join as join34, resolve as resolve15 } from "node:path";
+import { access as access4, mkdir as mkdir22, readFile as readFile32, rename as rename2, rm as rm6, rmdir, writeFile as writeFile3 } from "node:fs/promises";
+import { dirname as dirname13, join as join36, resolve as resolve15 } from "node:path";
+init_homeDir();
+init_installManifest();
+init_registry();
+init_sync();
 import { createHash as createHash7 } from "node:crypto";
 var CONFIRMATION = "DELETE_SUGO_DATA";
 var sugoUninstallInputSchema = {
@@ -35242,7 +35463,7 @@ function withoutManagedBlock(content, start2, end) {
   return before + after;
 }
 async function restoreRoot(path, original, start2, end) {
-  const current = await readFile30(path, "utf8").catch(() => null);
+  const current = await readFile32(path, "utf8").catch(() => null);
   if (current === null) return;
   const stripped = withoutManagedBlock(current, start2, end);
   if (typeof original === "string" && stripped.startsWith(original) && stripped.slice(original.length).trim() === "") return writeFile3(path, original);
@@ -35256,44 +35477,44 @@ async function restoreRoot(path, original, start2, end) {
   await writeFile3(path, stripped);
 }
 async function pruneEmptyParents(path, stopAt) {
-  let current = dirname12(path);
+  let current = dirname13(path);
   while (current.startsWith(stopAt) && current !== stopAt) {
     const removed = await rmdir(current).then(() => true, () => false);
     if (!removed) break;
-    current = dirname12(current);
+    current = dirname13(current);
   }
 }
 async function cleanupProject(projectPath, manifest) {
   const preserved = [];
   if (manifest) {
     await restoreRoot(
-      join34(projectPath, "CLAUDE.md"),
+      join36(projectPath, "CLAUDE.md"),
       manifest.rootClaudeOriginal,
       "<!-- sugo:harness-rules:start -->",
       "<!-- sugo:harness-rules:end -->"
     );
     await restoreRoot(
-      join34(projectPath, "AGENTS.md"),
+      join36(projectPath, "AGENTS.md"),
       manifest.rootAgentsOriginal,
       "<!-- sugo:project-context:start -->",
       "<!-- sugo:project-context:end -->"
     );
     if (manifest.sugoDirExisted) {
       for (const rel of manifest.managedFiles) {
-        const path = join34(projectPath, rel);
+        const path = join36(projectPath, rel);
         await rm6(path, { force: true, recursive: true });
-        await pruneEmptyParents(path, join34(projectPath, "sugo"));
+        await pruneEmptyParents(path, join36(projectPath, "sugo"));
       }
-      await rm6(join34(projectPath, "sugo", "install-manifest.json"), { force: true });
-      await rmdir(join34(projectPath, "sugo")).catch(() => {
+      await rm6(join36(projectPath, "sugo", "install-manifest.json"), { force: true });
+      await rmdir(join36(projectPath, "sugo")).catch(() => {
       });
       preserved.push("sugo/ (\uC124\uCE58 \uC804\uBD80\uD130 \uC874\uC7AC\uD558\uC5EC \uC18C\uC720\uAD8C \uBD88\uBA85 \uD30C\uC77C \uBCF4\uC874)");
     } else {
-      await rm6(join34(projectPath, "sugo"), { force: true, recursive: true });
+      await rm6(join36(projectPath, "sugo"), { force: true, recursive: true });
     }
     for (const rel of manifest.managedFiles.filter((path) => path.startsWith(".claude/rules/"))) {
-      await rm6(join34(projectPath, rel), { force: true });
-      await rmdir(dirname12(join34(projectPath, rel))).catch(() => {
+      await rm6(join36(projectPath, rel), { force: true });
+      await rmdir(dirname13(join36(projectPath, rel))).catch(() => {
       });
     }
   } else {
@@ -35307,27 +35528,27 @@ function handleSugoUninstall(rawArgs) {
 }
 async function uninstallSugo(rawArgs, deps) {
   const args2 = Args2.parse(rawArgs);
-  const activeRoot = join34(sugoHomeDir(), ".claude", "sugo");
-  const productRoot = join34(sugoHomeDir(), ".sugo");
-  const archiveRoot = join34(productRoot, "data");
+  const activeRoot = join36(sugoHomeDir(), ".claude", "sugo");
+  const productRoot = join36(sugoHomeDir(), ".sugo");
+  const archiveRoot = join36(productRoot, "data");
   if (args2.action === "discard") {
     if (args2.confirmation !== "DELETE_RETAINED_DATA") return error2("CONFIRMATION_REQUIRED", "confirmation\uC5D0 DELETE_RETAINED_DATA\uB97C \uC815\uD655\uD788 \uC785\uB825\uD574\uC57C \uD569\uB2C8\uB2E4.");
     await rm6(archiveRoot, { recursive: true, force: true });
     return result2({ ok: true, action: "discard", retainedDataRemoved: true });
   }
   if (args2.action === "restore") {
-    const archivedRegistry = await readFile30(join34(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
+    const archivedRegistry = await readFile32(join36(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
     if (!archivedRegistry) return error2("NO_RETAINED_DATA", "\uBCF5\uAD6C\uD560 \uBE44\uD65C\uC131 Sugo \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const paths2 = dashboardPaths();
     if (!(await stopDashboard(paths2)).stopped) return error2("DASHBOARD_STILL_RUNNING", DASHBOARD_RUNNING_MESSAGE);
     await rm6(activeRoot, { recursive: true, force: true });
-    await mkdir21(dirname12(activeRoot), { recursive: true });
+    await mkdir22(dirname13(activeRoot), { recursive: true });
     await rename2(archiveRoot, activeRoot);
     await rm6(paths2.stateFile, { force: true });
     await rm6(paths2.lockDir, { recursive: true, force: true });
     for (const entry of archivedRegistry) await syncProjectHarness({ projectPath: resolve15(entry.path), workspace: entry.workspace });
     const dashboard = await ensureDashboard({
-      pluginRoot: deps.pluginRoot ?? join34(dirname12(process.argv[1] ?? ""), ".."),
+      pluginRoot: deps.pluginRoot ?? join36(dirname13(process.argv[1] ?? ""), ".."),
       buildId: deps.buildId ?? currentSugoVersion(),
       port: deps.port
     });
@@ -35354,7 +35575,7 @@ async function uninstallSugo(rawArgs, deps) {
     if (paths2.length) preserved.push({ projectPath, paths: paths2 });
   }
   if (args2.mode === "retain") {
-    await mkdir21(productRoot, { recursive: true });
+    await mkdir22(productRoot, { recursive: true });
     await rm6(archiveRoot, { recursive: true, force: true });
     if (await access4(activeRoot).then(() => true, () => false)) await rename2(activeRoot, archiveRoot);
   } else {
@@ -35372,12 +35593,13 @@ function error2(errorCode, message) {
 }
 
 // src/lifecycle/recoveryInstaller.ts
-import { copyFile, mkdir as mkdir22 } from "node:fs/promises";
-import { dirname as dirname13, join as join35 } from "node:path";
+init_homeDir();
+import { copyFile, mkdir as mkdir23 } from "node:fs/promises";
+import { dirname as dirname14, join as join37 } from "node:path";
 async function ensureRecoveryUtility() {
-  const source = join35(dirname13(process.argv[1] ?? ""), "..", "scripts", "sugo-uninstall-standalone.mjs");
-  const target = join35(sugoHomeDir(), ".sugo", "bin", "sugo-uninstall.mjs");
-  await mkdir22(dirname13(target), { recursive: true });
+  const source = join37(dirname14(process.argv[1] ?? ""), "..", "scripts", "sugo-uninstall-standalone.mjs");
+  const target = join37(sugoHomeDir(), ".sugo", "bin", "sugo-uninstall.mjs");
+  await mkdir23(dirname14(target), { recursive: true });
   await copyFile(source, target);
 }
 

@@ -4962,10 +4962,10 @@ var require_raw_body = __commonJS({
       if (done) {
         return readStream(stream, encoding, length, limit, wrap(done));
       }
-      return new Promise(function executor(resolve6, reject) {
+      return new Promise(function executor(resolve7, reject) {
         readStream(stream, encoding, length, limit, function onRead(err, buf2) {
           if (err) return reject(err);
-          resolve6(buf2);
+          resolve7(buf2);
         });
       });
     }
@@ -18513,7 +18513,7 @@ var require_view = __commonJS({
     var basename6 = path.basename;
     var extname2 = path.extname;
     var join17 = path.join;
-    var resolve6 = path.resolve;
+    var resolve7 = path.resolve;
     module.exports = View;
     function View(name, options) {
       var opts = options || {};
@@ -18547,7 +18547,7 @@ var require_view = __commonJS({
       debug('lookup "%s"', name);
       for (var i5 = 0; i5 < roots.length && !path2; i5++) {
         var root5 = roots[i5];
-        var loc = resolve6(root5, name);
+        var loc = resolve7(root5, name);
         var dir = dirname10(loc);
         var file = basename6(loc);
         path2 = this.resolve(dir, file);
@@ -18558,7 +18558,7 @@ var require_view = __commonJS({
       debug('render "%s"', this.path);
       this.engine(this.path, options, callback);
     };
-    View.prototype.resolve = function resolve7(dir, file) {
+    View.prototype.resolve = function resolve8(dir, file) {
       var ext = this.ext;
       var path2 = join17(dir, file);
       var stat4 = tryStat(path2);
@@ -19200,7 +19200,7 @@ var require_send = __commonJS({
     var extname2 = path.extname;
     var join17 = path.join;
     var normalize3 = path.normalize;
-    var resolve6 = path.resolve;
+    var resolve7 = path.resolve;
     var sep3 = path.sep;
     var BYTES_RANGE_REGEXP = /^ *bytes=/;
     var MAX_MAXAGE = 60 * 60 * 24 * 365 * 1e3;
@@ -19237,7 +19237,7 @@ var require_send = __commonJS({
       this._maxage = opts.maxAge || opts.maxage;
       this._maxage = typeof this._maxage === "string" ? ms(this._maxage) : Number(this._maxage);
       this._maxage = !isNaN(this._maxage) ? Math.min(Math.max(0, this._maxage), MAX_MAXAGE) : 0;
-      this._root = opts.root ? resolve6(opts.root) : null;
+      this._root = opts.root ? resolve7(opts.root) : null;
       if (!this._root && opts.from) {
         this.from(opts.from);
       }
@@ -19261,7 +19261,7 @@ var require_send = __commonJS({
       return this;
     }, "send.index: pass index as option");
     SendStream.prototype.root = function root5(path2) {
-      this._root = resolve6(String(path2));
+      this._root = resolve7(String(path2));
       debug("root %s", this._root);
       return this;
     };
@@ -19425,15 +19425,15 @@ var require_send = __commonJS({
           return res;
         }
         parts = normalize3(path2).split(sep3);
-        path2 = resolve6(path2);
+        path2 = resolve7(path2);
       }
       if (containsDotFile(parts)) {
-        var access2 = this._dotfiles;
-        if (access2 === void 0) {
-          access2 = parts[parts.length - 1][0] === "." ? this._hidden ? "allow" : "ignore" : "allow";
+        var access3 = this._dotfiles;
+        if (access3 === void 0) {
+          access3 = parts[parts.length - 1][0] === "." ? this._hidden ? "allow" : "ignore" : "allow";
         }
-        debug('%s dotfile "%s"', access2, path2);
-        switch (access2) {
+        debug('%s dotfile "%s"', access3, path2);
+        switch (access3) {
           case "allow":
             break;
           case "deny":
@@ -20692,7 +20692,7 @@ var require_application = __commonJS({
   "../dashboard/backend/node_modules/express/lib/application.js"(exports, module) {
     "use strict";
     var finalhandler = require_finalhandler();
-    var Router22 = require_router();
+    var Router23 = require_router();
     var methods = require_methods();
     var middleware = require_init();
     var query = require_query();
@@ -20705,7 +20705,7 @@ var require_application = __commonJS({
     var deprecate = require_depd()("express");
     var flatten = require_array_flatten();
     var merge2 = require_utils_merge();
-    var resolve6 = __require("path").resolve;
+    var resolve7 = __require("path").resolve;
     var setPrototypeOf = require_setprototypeof();
     var hasOwnProperty = Object.prototype.hasOwnProperty;
     var slice = Array.prototype.slice;
@@ -20744,7 +20744,7 @@ var require_application = __commonJS({
       this.mountpath = "/";
       this.locals.settings = this.settings;
       this.set("view", View);
-      this.set("views", resolve6("views"));
+      this.set("views", resolve7("views"));
       this.set("jsonp callback name", "callback");
       if (env2 === "production") {
         this.enable("view cache");
@@ -20757,7 +20757,7 @@ var require_application = __commonJS({
     };
     app2.lazyrouter = function lazyrouter() {
       if (!this._router) {
-        this._router = new Router22({
+        this._router = new Router23({
           caseSensitive: this.enabled("case sensitive routing"),
           strict: this.enabled("strict routing")
         });
@@ -21989,7 +21989,7 @@ var require_response = __commonJS({
     var send = require_send();
     var extname2 = path.extname;
     var mime = send.mime;
-    var resolve6 = path.resolve;
+    var resolve7 = path.resolve;
     var vary = require_vary();
     var res = Object.create(http2.ServerResponse.prototype);
     module.exports = res;
@@ -22248,7 +22248,7 @@ var require_response = __commonJS({
       }
       opts = Object.create(opts);
       opts.headers = headers;
-      var fullPath = !opts.root ? resolve6(path2) : path2;
+      var fullPath = !opts.root ? resolve7(path2) : path2;
       return this.sendFile(fullPath, opts, done);
     };
     res.contentType = res.type = function contentType(type) {
@@ -22514,7 +22514,7 @@ var require_serve_static = __commonJS({
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
     var parseUrl2 = require_parseurl();
-    var resolve6 = __require("path").resolve;
+    var resolve7 = __require("path").resolve;
     var send = require_send();
     var url = __require("url");
     module.exports = serveStatic;
@@ -22534,7 +22534,7 @@ var require_serve_static = __commonJS({
         throw new TypeError("option setHeaders must be function");
       }
       opts.maxage = opts.maxage || opts.maxAge || 0;
-      opts.root = resolve6(root5);
+      opts.root = resolve7(root5);
       var onDirectory = redirect ? createRedirectDirectoryListener() : createNotFoundDirectoryListener();
       return function serveStatic2(req, res, next) {
         if (req.method !== "GET" && req.method !== "HEAD") {
@@ -22621,7 +22621,7 @@ var require_express = __commonJS({
     var mixin = require_merge_descriptors();
     var proto = require_application();
     var Route = require_route();
-    var Router22 = require_router();
+    var Router23 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -22644,7 +22644,7 @@ var require_express = __commonJS({
     exports.request = req;
     exports.response = res;
     exports.Route = Route;
-    exports.Router = Router22;
+    exports.Router = Router23;
     exports.json = bodyParser.json;
     exports.query = require_query();
     exports.raw = bodyParser.raw;
@@ -24505,6 +24505,7 @@ var init_config = __esm({
       specAttachmentsPath: process.env.SPEC_ATTACHMENTS_PATH ?? join(homedir(), ".sugo-dashboard", "spec-attachments"),
       awsGuardPolicyPath: process.env.SUGO_AWS_GUARD_POLICY_PATH ?? join(homedir(), ".claude", "sugo", "aws-readonly-policy.json"),
       integrationFeaturesPath: process.env.SUGO_INTEGRATION_FEATURES_PATH ?? join(homedir(), ".claude", "sugo", "integration-features.json"),
+      harnessFeaturePath: process.env.SUGO_HARNESS_FEATURE_PATH ?? join(homedir(), ".claude", "sugo", "harness-feature.json"),
       // cors()를 옵션 없이 열어두지 않는다 — 화이트리스트만 허용.
       // CORS_ORIGINS는 콤마 구분이고, 기본값은 로컬 개발용 Vite dev 서버 포트다.
       corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5175").split(",").map((s2) => s2.trim()).filter(Boolean),
@@ -41962,11 +41963,11 @@ var require_connection = __commonJS({
             const config2 = this.config;
             tracePromise(
               connectChannel,
-              () => new Promise((resolve6, reject) => {
+              () => new Promise((resolve7, reject) => {
                 let onConnect, onError;
                 onConnect = (param) => {
                   this.removeListener("error", onError);
-                  resolve6(param);
+                  resolve7(param);
                 };
                 onError = (err) => {
                   this.removeListener("connect", onConnect);
@@ -42391,9 +42392,9 @@ var require_connection = __commonJS({
         } else if (shouldTrace(queryChannel)) {
           tracePromise(
             queryChannel,
-            () => new Promise((resolve6, reject) => {
+            () => new Promise((resolve7, reject) => {
               cmdQuery.once("error", reject);
-              cmdQuery.once("end", () => resolve6());
+              cmdQuery.once("end", () => resolve7());
               this.addCommand(cmdQuery);
             }),
             () => {
@@ -42540,12 +42541,12 @@ var require_connection = __commonJS({
         } else if (shouldTrace(executeChannel)) {
           tracePromise(
             executeChannel,
-            () => new Promise((resolve6, reject) => {
+            () => new Promise((resolve7, reject) => {
               prepareAndExecute((err) => {
                 executeCommand.emit("error", err);
               });
               executeCommand.once("error", reject);
-              executeCommand.once("end", () => resolve6());
+              executeCommand.once("end", () => resolve7());
             }),
             () => {
               const server2 = getServerContext(this.config);
@@ -42812,13 +42813,13 @@ var require_make_done_cb = __commonJS({
   "../dashboard/backend/node_modules/mysql2/lib/promise/make_done_cb.js"(exports, module) {
     "use strict";
     var { applyCapturedStack } = require_capture_local_err();
-    function makeDoneCb(resolve6, reject, stackHolder) {
+    function makeDoneCb(resolve7, reject, stackHolder) {
       return function(err, rows, fields) {
         if (err) {
           applyCapturedStack(err, stackHolder);
           reject(err);
         } else {
-          resolve6([rows, fields]);
+          resolve7([rows, fields]);
         }
       };
     }
@@ -42842,8 +42843,8 @@ var require_prepared_statement_info = __commonJS({
         const stackHolder = captureStackHolder(
           _PromisePreparedStatementInfo.prototype.execute
         );
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           if (parameters) {
             s2.execute(parameters, done);
           } else {
@@ -42852,9 +42853,9 @@ var require_prepared_statement_info = __commonJS({
         });
       }
       close() {
-        return new this.Promise((resolve6) => {
+        return new this.Promise((resolve7) => {
           this.statement.close();
-          resolve6();
+          resolve7();
         });
       }
     };
@@ -42927,8 +42928,8 @@ var require_connection2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           if (params !== void 0) {
             c5.query(query, params, done);
           } else {
@@ -42944,8 +42945,8 @@ var require_connection2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           if (params !== void 0) {
             c5.execute(query, params, done);
           } else {
@@ -42954,8 +42955,8 @@ var require_connection2 = __commonJS({
         });
       }
       end() {
-        return new this.Promise((resolve6) => {
-          this.connection.end(resolve6);
+        return new this.Promise((resolve7) => {
+          this.connection.end(resolve7);
         });
       }
       async [Symbol.asyncDispose]() {
@@ -42968,16 +42969,16 @@ var require_connection2 = __commonJS({
         const stackHolder = captureStackHolder(
           _PromiseConnection.prototype.beginTransaction
         );
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           c5.beginTransaction(done);
         });
       }
       commit() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.commit);
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           c5.commit(done);
         });
       }
@@ -42986,21 +42987,21 @@ var require_connection2 = __commonJS({
         const stackHolder = captureStackHolder(
           _PromiseConnection.prototype.rollback
         );
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           c5.rollback(done);
         });
       }
       ping() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.ping);
-        return new this.Promise((resolve6, reject) => {
+        return new this.Promise((resolve7, reject) => {
           c5.ping((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve6(true);
+              resolve7(true);
             }
           });
         });
@@ -43008,13 +43009,13 @@ var require_connection2 = __commonJS({
       reset() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.reset);
-        return new this.Promise((resolve6, reject) => {
+        return new this.Promise((resolve7, reject) => {
           c5.reset((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve6();
+              resolve7();
             }
           });
         });
@@ -43022,13 +43023,13 @@ var require_connection2 = __commonJS({
       connect() {
         const c5 = this.connection;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.connect);
-        return new this.Promise((resolve6, reject) => {
+        return new this.Promise((resolve7, reject) => {
           c5.connect((err, param) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve6(param);
+              resolve7(param);
             }
           });
         });
@@ -43037,7 +43038,7 @@ var require_connection2 = __commonJS({
         const c5 = this.connection;
         const promiseImpl = this.Promise;
         const stackHolder = captureStackHolder(_PromiseConnection.prototype.prepare);
-        return new this.Promise((resolve6, reject) => {
+        return new this.Promise((resolve7, reject) => {
           c5.prepare(options, (err, statement) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
@@ -43047,7 +43048,7 @@ var require_connection2 = __commonJS({
                 statement,
                 promiseImpl
               );
-              resolve6(wrappedStatement);
+              resolve7(wrappedStatement);
             }
           });
         });
@@ -43057,13 +43058,13 @@ var require_connection2 = __commonJS({
         const stackHolder = captureStackHolder(
           _PromiseConnection.prototype.changeUser
         );
-        return new this.Promise((resolve6, reject) => {
+        return new this.Promise((resolve7, reject) => {
           c5.changeUser(options, (err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve6();
+              resolve7();
             }
           });
         });
@@ -43534,12 +43535,12 @@ var require_pool2 = __commonJS({
       }
       getConnection() {
         const corePool = this.pool;
-        return new this.Promise((resolve6, reject) => {
+        return new this.Promise((resolve7, reject) => {
           corePool.getConnection((err, coreConnection) => {
             if (err) {
               reject(err);
             } else {
-              resolve6(new PromisePoolConnection(coreConnection, this.Promise));
+              resolve7(new PromisePoolConnection(coreConnection, this.Promise));
             }
           });
         });
@@ -43555,8 +43556,8 @@ var require_pool2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           if (args !== void 0) {
             corePool.query(sql, args, done);
           } else {
@@ -43572,8 +43573,8 @@ var require_pool2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           if (args) {
             corePool.execute(sql, args, done);
           } else {
@@ -43584,13 +43585,13 @@ var require_pool2 = __commonJS({
       end() {
         const corePool = this.pool;
         const stackHolder = captureStackHolder(_PromisePool.prototype.end);
-        return new this.Promise((resolve6, reject) => {
+        return new this.Promise((resolve7, reject) => {
           corePool.end((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve6();
+              resolve7();
             }
           });
         });
@@ -44022,12 +44023,12 @@ var require_pool_cluster2 = __commonJS({
       }
       getConnection() {
         const corePoolNamespace = this.poolNamespace;
-        return new this.Promise((resolve6, reject) => {
+        return new this.Promise((resolve7, reject) => {
           corePoolNamespace.getConnection((err, coreConnection) => {
             if (err) {
               reject(err);
             } else {
-              resolve6(new PromisePoolConnection(coreConnection, this.Promise));
+              resolve7(new PromisePoolConnection(coreConnection, this.Promise));
             }
           });
         });
@@ -44042,8 +44043,8 @@ var require_pool_cluster2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           corePoolNamespace.query(sql, values, done);
         });
       }
@@ -44057,8 +44058,8 @@ var require_pool_cluster2 = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           corePoolNamespace.execute(sql, values, done);
         });
       }
@@ -44097,9 +44098,9 @@ var require_promise = __commonJS({
           "no Promise implementation available.Use promise-enabled node version or pass userland Promise implementation as parameter, for example: { Promise: require('bluebird') }"
         );
       }
-      return new thePromise((resolve6, reject) => {
+      return new thePromise((resolve7, reject) => {
         coreConnection.once("connect", () => {
-          resolve6(new PromiseConnection(coreConnection, thePromise));
+          resolve7(new PromiseConnection(coreConnection, thePromise));
         });
         coreConnection.once("error", (err) => {
           applyCapturedStack(err, stackHolder);
@@ -44126,7 +44127,7 @@ var require_promise = __commonJS({
       }
       getConnection(pattern, selector) {
         const corePoolCluster = this.poolCluster;
-        return new this.Promise((resolve6, reject) => {
+        return new this.Promise((resolve7, reject) => {
           corePoolCluster.getConnection(
             pattern,
             selector,
@@ -44134,7 +44135,7 @@ var require_promise = __commonJS({
               if (err) {
                 reject(err);
               } else {
-                resolve6(new PromisePoolConnection(coreConnection, this.Promise));
+                resolve7(new PromisePoolConnection(coreConnection, this.Promise));
               }
             }
           );
@@ -44148,8 +44149,8 @@ var require_promise = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           corePoolCluster.query(sql, args, done);
         });
       }
@@ -44163,8 +44164,8 @@ var require_promise = __commonJS({
             "Callback function is not available with promise clients."
           );
         }
-        return new this.Promise((resolve6, reject) => {
-          const done = makeDoneCb(resolve6, reject, stackHolder);
+        return new this.Promise((resolve7, reject) => {
+          const done = makeDoneCb(resolve7, reject, stackHolder);
           corePoolCluster.execute(sql, args, done);
         });
       }
@@ -44177,13 +44178,13 @@ var require_promise = __commonJS({
       end() {
         const corePoolCluster = this.poolCluster;
         const stackHolder = captureStackHolder(_PromisePoolCluster.prototype.end);
-        return new this.Promise((resolve6, reject) => {
+        return new this.Promise((resolve7, reject) => {
           corePoolCluster.end((err) => {
             if (err) {
               applyCapturedStack(err, stackHolder);
               reject(err);
             } else {
-              resolve6();
+              resolve7();
             }
           });
         });
@@ -47656,30 +47657,30 @@ function floatSafeRemainder(val, step) {
   const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
   return valInt % stepInt / 10 ** decCount;
 }
-function deepPartialify(schema4) {
-  if (schema4 instanceof ZodObject) {
+function deepPartialify(schema5) {
+  if (schema5 instanceof ZodObject) {
     const newShape = {};
-    for (const key2 in schema4.shape) {
-      const fieldSchema = schema4.shape[key2];
+    for (const key2 in schema5.shape) {
+      const fieldSchema = schema5.shape[key2];
       newShape[key2] = ZodOptional.create(deepPartialify(fieldSchema));
     }
     return new ZodObject({
-      ...schema4._def,
+      ...schema5._def,
       shape: () => newShape
     });
-  } else if (schema4 instanceof ZodArray) {
+  } else if (schema5 instanceof ZodArray) {
     return new ZodArray({
-      ...schema4._def,
-      type: deepPartialify(schema4.element)
+      ...schema5._def,
+      type: deepPartialify(schema5.element)
     });
-  } else if (schema4 instanceof ZodOptional) {
-    return ZodOptional.create(deepPartialify(schema4.unwrap()));
-  } else if (schema4 instanceof ZodNullable) {
-    return ZodNullable.create(deepPartialify(schema4.unwrap()));
-  } else if (schema4 instanceof ZodTuple) {
-    return ZodTuple.create(schema4.items.map((item) => deepPartialify(item)));
+  } else if (schema5 instanceof ZodOptional) {
+    return ZodOptional.create(deepPartialify(schema5.unwrap()));
+  } else if (schema5 instanceof ZodNullable) {
+    return ZodNullable.create(deepPartialify(schema5.unwrap()));
+  } else if (schema5 instanceof ZodTuple) {
+    return ZodTuple.create(schema5.items.map((item) => deepPartialify(item)));
   } else {
-    return schema4;
+    return schema5;
   }
 }
 function mergeValues(a5, b5) {
@@ -49406,9 +49407,9 @@ var init_types = __esm({
         return this.min(1, message2);
       }
     };
-    ZodArray.create = (schema4, params) => {
+    ZodArray.create = (schema5, params) => {
       return new ZodArray({
-        type: schema4,
+        type: schema5,
         minLength: null,
         maxLength: null,
         exactLength: null,
@@ -49629,8 +49630,8 @@ var init_types = __esm({
       //   }) as any;
       //   return merged;
       // }
-      setKey(key2, schema4) {
-        return this.augment({ [key2]: schema4 });
+      setKey(key2, schema5) {
+        return this.augment({ [key2]: schema5 });
       }
       // merge<Incoming extends AnyZodObject>(
       //   merging: Incoming
@@ -50038,10 +50039,10 @@ var init_types = __esm({
           status.dirty();
         }
         const items = [...ctx.data].map((item, itemIndex) => {
-          const schema4 = this._def.items[itemIndex] || this._def.rest;
-          if (!schema4)
+          const schema5 = this._def.items[itemIndex] || this._def.rest;
+          if (!schema5)
             return null;
-          return schema4._parse(new ParseInputLazyPath(ctx, item, ctx.path, itemIndex));
+          return schema5._parse(new ParseInputLazyPath(ctx, item, ctx.path, itemIndex));
         }).filter((x) => !!x);
         if (ctx.common.async) {
           return Promise.all(items).then((results) => {
@@ -50548,9 +50549,9 @@ var init_types = __esm({
         }));
       }
     };
-    ZodPromise.create = (schema4, params) => {
+    ZodPromise.create = (schema5, params) => {
       return new ZodPromise({
-        type: schema4,
+        type: schema5,
         typeName: ZodFirstPartyTypeKind.ZodPromise,
         ...processCreateParams(params)
       });
@@ -50678,17 +50679,17 @@ var init_types = __esm({
         util3.assertNever(effect);
       }
     };
-    ZodEffects.create = (schema4, effect, params) => {
+    ZodEffects.create = (schema5, effect, params) => {
       return new ZodEffects({
-        schema: schema4,
+        schema: schema5,
         typeName: ZodFirstPartyTypeKind.ZodEffects,
         effect,
         ...processCreateParams(params)
       });
     };
-    ZodEffects.createWithPreprocess = (preprocess, schema4, params) => {
+    ZodEffects.createWithPreprocess = (preprocess, schema5, params) => {
       return new ZodEffects({
-        schema: schema4,
+        schema: schema5,
         effect: { type: "preprocess", transform: preprocess },
         typeName: ZodFirstPartyTypeKind.ZodEffects,
         ...processCreateParams(params)
@@ -51300,9 +51301,9 @@ var init_sync = __esm({
 });
 
 // ../dashboard/backend/src/schemas/validate.ts
-function validateBody(schema4) {
+function validateBody(schema5) {
   return (req, res, next) => {
-    const result = schema4.safeParse(req.body);
+    const result = schema5.safeParse(req.body);
     if (!result.success) {
       res.status(400).json({ error: "invalid_request", issues: result.error.issues });
       return;
@@ -55366,7 +55367,7 @@ var sleep;
 var init_sleep = __esm({
   "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/util-waiter/utils/sleep.js"() {
     sleep = (seconds) => {
-      return new Promise((resolve6) => setTimeout(resolve6, seconds * 1e3));
+      return new Promise((resolve7) => setTimeout(resolve7, seconds * 1e3));
     };
   }
 });
@@ -55531,8 +55532,8 @@ var init_createWaiter = __esm({
     init_waiter();
     abortTimeout = (abortSignal) => {
       let onAbort;
-      const promise = new Promise((resolve6) => {
-        onAbort = () => resolve6({ state: WaiterState.ABORTED });
+      const promise = new Promise((resolve7) => {
+        onAbort = () => resolve7({ state: WaiterState.ABORTED });
         if (typeof abortSignal.addEventListener === "function") {
           abortSignal.addEventListener("abort", onAbort);
         } else {
@@ -55786,8 +55787,8 @@ var init_Schema = __esm({
       namespace;
       traits;
       static assign(instance, values) {
-        const schema4 = Object.assign(instance, values);
-        return schema4;
+        const schema5 = Object.assign(instance, values);
+        return schema5;
       }
       static [Symbol.hasInstance](lhs) {
         const isPrototype = this.prototype.isPrototypeOf(lhs);
@@ -55979,12 +55980,12 @@ var init_NormalizedSchema = __esm({
         this.memberName = memberName;
         const traitStack = [];
         let _ref = ref;
-        let schema4 = ref;
+        let schema5 = ref;
         this._isMemberSchema = false;
         while (isMemberSchema(_ref)) {
           traitStack.push(_ref[1]);
           _ref = _ref[0];
-          schema4 = deref(_ref);
+          schema5 = deref(_ref);
           this._isMemberSchema = true;
         }
         if (traitStack.length > 0) {
@@ -55996,20 +55997,20 @@ var init_NormalizedSchema = __esm({
         } else {
           this.memberTraits = 0;
         }
-        if (schema4 instanceof _NormalizedSchema) {
+        if (schema5 instanceof _NormalizedSchema) {
           const computedMemberTraits = this.memberTraits;
-          Object.assign(this, schema4);
-          this.memberTraits = Object.assign({}, computedMemberTraits, schema4.getMemberTraits(), this.getMemberTraits());
+          Object.assign(this, schema5);
+          this.memberTraits = Object.assign({}, computedMemberTraits, schema5.getMemberTraits(), this.getMemberTraits());
           this.normalizedTraits = void 0;
-          this.memberName = memberName ?? schema4.memberName;
+          this.memberName = memberName ?? schema5.memberName;
           return;
         }
-        this.schema = deref(schema4);
+        this.schema = deref(schema5);
         if (isStaticSchema(this.schema)) {
           this.name = `${this.schema[1]}#${this.schema[2]}`;
           this.traits = this.schema[3];
         } else {
-          this.name = this.memberName ?? String(schema4);
+          this.name = this.memberName ?? String(schema5);
           this.traits = 0;
         }
         if (this._isMemberSchema && !memberName) {
@@ -56157,8 +56158,8 @@ var init_NormalizedSchema = __esm({
         if (!isDoc && !isMap) {
           throw new Error(`@smithy/core/schema - cannot get key for non-map: ${this.getName(true)}`);
         }
-        const schema4 = this.getSchema();
-        const memberSchema = isDoc ? 15 : schema4[4] ?? 0;
+        const schema5 = this.getSchema();
+        const memberSchema = isDoc ? 15 : schema5[4] ?? 0;
         return member([memberSchema, 0], "key");
       }
       getValueSchema() {
@@ -56311,11 +56312,11 @@ var init_TypeRegistry = __esm({
           }
         }
       }
-      register(shapeId, schema4) {
+      register(shapeId, schema5) {
         const qualifiedName = this.normalizeShapeId(shapeId);
         for (const r5 of [this, _TypeRegistry.for(qualifiedName.split("#")[0])]) {
           if (!r5.schemas.has(qualifiedName)) {
-            r5.schemas.set(qualifiedName, schema4);
+            r5.schemas.set(qualifiedName, schema5);
           }
         }
       }
@@ -56325,9 +56326,9 @@ var init_TypeRegistry = __esm({
           if (!shapeId.includes("#")) {
             const suffix = "#" + shapeId;
             const candidates = [];
-            for (const [shapeId2, schema4] of this.schemas.entries()) {
+            for (const [shapeId2, schema5] of this.schemas.entries()) {
               if (shapeId2.endsWith(suffix)) {
-                candidates.push(schema4);
+                candidates.push(schema5);
               }
             }
             if (candidates.length === 1) {
@@ -56370,9 +56371,9 @@ var init_TypeRegistry = __esm({
         return void 0;
       }
       find(predicate) {
-        for (const schema4 of this.schemas.values()) {
-          if (predicate(schema4)) {
-            return schema4;
+        for (const schema5 of this.schemas.values()) {
+          if (predicate(schema5)) {
+            return schema5;
           }
         }
         return void 0;
@@ -56442,11 +56443,11 @@ var init_schema = __esm({
 });
 
 // ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/client/smithy-client/schemaLogFilter.js
-function schemaLogFilter(schema4, data) {
+function schemaLogFilter(schema5, data) {
   if (data == null) {
     return data;
   }
-  const ns = NormalizedSchema.of(schema4);
+  const ns = NormalizedSchema.of(schema5);
   if (ns.getMergedTraits().sensitive) {
     return SENSITIVE_STRING;
   }
@@ -59006,7 +59007,7 @@ var init_getInstanceMetadataRegion = __esm({
     };
     imdsRequest = async (options) => {
       const { request } = await import("node:http");
-      return new Promise((resolve6, reject) => {
+      return new Promise((resolve7, reject) => {
         const req = request({
           hostname: options.hostname,
           port: options.port,
@@ -59034,7 +59035,7 @@ var init_getInstanceMetadataRegion = __esm({
           const chunks2 = [];
           res.on("data", (chunk) => chunks2.push(chunk));
           res.on("end", () => {
-            resolve6(Buffer.concat(chunks2));
+            resolve7(Buffer.concat(chunks2));
             req.destroy();
           });
         });
@@ -61266,7 +61267,7 @@ var init_headStream = __esm({
       if (isReadableStream(stream)) {
         return headStream(stream, bytes);
       }
-      return new Promise((resolve6, reject) => {
+      return new Promise((resolve7, reject) => {
         const collector = new Collector();
         collector.limit = bytes;
         stream.pipe(collector);
@@ -61277,7 +61278,7 @@ var init_headStream = __esm({
         collector.on("error", reject);
         collector.on("finish", function() {
           const bytes2 = concatBytes(this.buffers);
-          resolve6(bytes2);
+          resolve7(bytes2);
         });
       });
     };
@@ -61429,7 +61430,7 @@ var init_stream_collector = __esm({
       if (isReadableStream(stream)) {
         return collectReadableStream(stream);
       }
-      return new Promise((resolve6, reject) => {
+      return new Promise((resolve7, reject) => {
         const collector = new Collector2();
         const nodeStream = stream;
         nodeStream.pipe(collector);
@@ -61440,7 +61441,7 @@ var init_stream_collector = __esm({
         collector.on("error", reject);
         collector.on("finish", function() {
           const bytes = concatBytes(this.bufferedBytes);
-          resolve6(bytes);
+          resolve7(bytes);
         });
       });
     };
@@ -61767,7 +61768,7 @@ var fileStreamHasher, isReadStream;
 var init_fileStreamHasher = __esm({
   "../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/fileStreamHasher.js"() {
     init_HashCalculator();
-    fileStreamHasher = (hashCtor, fileStream) => new Promise((resolve6, reject) => {
+    fileStreamHasher = (hashCtor, fileStream) => new Promise((resolve7, reject) => {
       if (!isReadStream(fileStream)) {
         reject(new Error("Unable to calculate hash for non-file streams."));
         return;
@@ -61785,7 +61786,7 @@ var init_fileStreamHasher = __esm({
       });
       hashCalculator.on("error", reject);
       hashCalculator.on("finish", function() {
-        hash2.digest().then(resolve6).catch(reject);
+        hash2.digest().then(resolve7).catch(reject);
       });
     });
     isReadStream = (stream) => typeof stream.path === "string";
@@ -61804,14 +61805,14 @@ var init_readableStreamHasher = __esm({
       const hash2 = new hashCtor();
       const hashCalculator = new HashCalculator(hash2);
       readableStream.pipe(hashCalculator);
-      return new Promise((resolve6, reject) => {
+      return new Promise((resolve7, reject) => {
         readableStream.on("error", (err) => {
           hashCalculator.end();
           reject(err);
         });
         hashCalculator.on("error", reject);
         hashCalculator.on("finish", () => {
-          hash2.digest().then(resolve6).catch(reject);
+          hash2.digest().then(resolve7).catch(reject);
         });
       });
     };
@@ -63056,7 +63057,7 @@ async function* readableToIterable(readStream) {
     streamEnded = true;
   });
   while (!generationEnded) {
-    const value = await new Promise((resolve6) => setTimeout(() => resolve6(records.shift()), 0));
+    const value = await new Promise((resolve7) => setTimeout(() => resolve7(records.shift()), 0));
     if (value) {
       yield value;
     }
@@ -63558,24 +63559,24 @@ var init_HttpProtocol = __esm({
       }
       resolveError(name, namespaces, registries) {
         const defaultErrorSchema = [-3, "", "Error", 0, [], [], 0];
-        let schema4;
+        let schema5;
         for (const registry of registries) {
           for (const ns of namespaces) {
             try {
               if (ns === "*") {
-                schema4 = registry.getSchema(name);
+                schema5 = registry.getSchema(name);
               } else {
-                schema4 = registry.getSchema(ns + "#" + name);
+                schema5 = registry.getSchema(ns + "#" + name);
               }
-              const errorCtor = registry.getErrorCtor(schema4);
+              const errorCtor = registry.getErrorCtor(schema5);
               if (errorCtor) {
-                return [schema4, errorCtor, "modeled"];
+                return [schema5, errorCtor, "modeled"];
               } else {
                 const syntheticErrorSchema = registry.getBaseException();
                 if (syntheticErrorSchema) {
                   const syntheticErrorCtor = registry.getErrorCtor(syntheticErrorSchema);
                   if (syntheticErrorCtor) {
-                    return [schema4, syntheticErrorCtor, "synthetic"];
+                    return [schema5, syntheticErrorCtor, "synthetic"];
                   }
                 }
               }
@@ -63625,8 +63626,8 @@ var init_HttpProtocol = __esm({
       getDefaultContentType() {
         throw new Error(`@smithy/core/protocols - ${this.constructor.name} getDefaultContentType() implementation missing.`);
       }
-      async deserializeHttpMessage(schema4, context, response, arg4, arg5) {
-        void schema4;
+      async deserializeHttpMessage(schema5, context, response, arg4, arg5) {
+        void schema5;
         void context;
         void response;
         void arg4;
@@ -63856,7 +63857,7 @@ var init_HttpBindingProtocol = __esm({
         dataObject.$metadata = this.deserializeMetadata(response);
         return dataObject;
       }
-      async deserializeHttpMessage(schema4, context, response, arg4, arg5) {
+      async deserializeHttpMessage(schema5, context, response, arg4, arg5) {
         let dataObject;
         if (arg4 instanceof Set) {
           dataObject = arg5;
@@ -63865,7 +63866,7 @@ var init_HttpBindingProtocol = __esm({
         }
         let discardResponseBody = true;
         const deserializer = this.deserializer;
-        const ns = NormalizedSchema.of(schema4);
+        const ns = NormalizedSchema.of(schema5);
         const nonHttpBindingMembers = [];
         for (const [memberName, memberSchema] of ns.structIterator()) {
           const memberTraits = memberSchema.getMemberTraits();
@@ -63951,7 +63952,7 @@ var init_RpcProtocol = __esm({
         const headers = {};
         const endpoint2 = await context.endpoint();
         const ns = NormalizedSchema.of(operationSchema?.input);
-        const schema4 = ns.getSchema();
+        const schema5 = ns.getSchema();
         let payload2;
         const input = _input && typeof _input === "object" ? _input : {};
         const request = new HttpRequest({
@@ -63985,7 +63986,7 @@ var init_RpcProtocol = __esm({
               });
             }
           } else {
-            serializer.write(schema4, input);
+            serializer.write(schema5, input);
             payload2 = serializer.flush();
           }
         }
@@ -64238,8 +64239,8 @@ var init_HttpInterceptingShapeDeserializer = __esm({
         this.codecDeserializer.setSerdeContext(serdeContext);
         this.serdeContext = serdeContext;
       }
-      read(schema4, data) {
-        const ns = NormalizedSchema.of(schema4);
+      read(schema5, data) {
+        const ns = NormalizedSchema.of(schema5);
         const traits = ns.getMergedTraits();
         const toString = this.serdeContext?.utf8Encoder ?? toUtf8;
         if (traits.httpHeader || traits.httpResponseCode) {
@@ -64280,8 +64281,8 @@ var init_ToStringShapeSerializer = __esm({
         super();
         this.settings = settings;
       }
-      write(schema4, value) {
-        const ns = NormalizedSchema.of(schema4);
+      write(schema5, value) {
+        const ns = NormalizedSchema.of(schema5);
         switch (typeof value) {
           case "object":
             if (value === null) {
@@ -64379,8 +64380,8 @@ var init_HttpInterceptingShapeSerializer = __esm({
         this.codecSerializer.setSerdeContext(serdeContext);
         this.stringSerializer.setSerdeContext(serdeContext);
       }
-      write(schema4, value) {
-        const ns = NormalizedSchema.of(schema4);
+      write(schema5, value) {
+        const ns = NormalizedSchema.of(schema5);
         const traits = ns.getMergedTraits();
         if (traits.httpHeader || traits.httpLabel || traits.httpQuery) {
           this.stringSerializer.write(ns, value);
@@ -64882,7 +64883,7 @@ var init_retryMiddleware = __esm({
     init_constants5();
     init_parseRetryAfterHeader();
     init_util2();
-    cooldown = (ms) => new Promise((resolve6) => setTimeout(resolve6, ms));
+    cooldown = (ms) => new Promise((resolve7) => setTimeout(resolve7, ms));
     isRetryStrategyV2 = (retryStrategy) => typeof retryStrategy.acquireInitialRetryToken !== "undefined" && typeof retryStrategy.refreshRetryTokenForRetry !== "undefined" && typeof retryStrategy.recordSuccess !== "undefined";
     getRetryErrorInfo = (error2, logger2) => {
       const errorInfo = {
@@ -64980,7 +64981,7 @@ var init_DefaultRateLimiter = __esm({
         this.refillTokenBucket();
         while (amount > this.availableTokens) {
           const delay = (amount - this.availableTokens) / this.fillRate * 1e3;
-          await new Promise((resolve6) => _DefaultRateLimiter.setTimeoutFn(resolve6, delay));
+          await new Promise((resolve7) => _DefaultRateLimiter.setTimeoutFn(resolve7, delay));
           this.refillTokenBucket();
         }
         this.availableTokens = this.availableTokens - amount;
@@ -65418,7 +65419,7 @@ var init_StandardRetryStrategy2 = __esm({
               const delayFromResponse = getDelayFromRetryAfterHeader(err.$response);
               const delay = Math.max(delayFromResponse || 0, delayFromDecider);
               totalDelay += delay;
-              await new Promise((resolve6) => setTimeout(resolve6, delay));
+              await new Promise((resolve7) => setTimeout(resolve7, delay));
               continue;
             }
             if (!err.$metadata) {
@@ -69288,7 +69289,7 @@ var require_dist_cjs4 = __commonJS({
     var DEFAULT_MAX_RETRIES = 0;
     var providerConfigFromInit = ({ maxRetries = DEFAULT_MAX_RETRIES, timeout = DEFAULT_TIMEOUT }) => ({ maxRetries, timeout });
     function httpRequest(options) {
-      return new Promise((resolve6, reject) => {
+      return new Promise((resolve7, reject) => {
         const req = node_http.request({
           method: "GET",
           ...options,
@@ -69313,7 +69314,7 @@ var require_dist_cjs4 = __commonJS({
             chunks2.push(chunk);
           });
           res.on("end", () => {
-            resolve6(Buffer.concat(chunks2));
+            resolve7(Buffer.concat(chunks2));
             req.destroy();
           });
         });
@@ -69757,21 +69758,21 @@ var require_dist_cjs5 = __commonJS({
       let sendBody = true;
       if (!externalAgent && expect === "100-continue") {
         sendBody = await Promise.race([
-          new Promise((resolve6) => {
-            timeoutId = Number(timing.setTimeout(() => resolve6(true), Math.max(MIN_WAIT_TIME, maxContinueTimeoutMs)));
+          new Promise((resolve7) => {
+            timeoutId = Number(timing.setTimeout(() => resolve7(true), Math.max(MIN_WAIT_TIME, maxContinueTimeoutMs)));
           }),
-          new Promise((resolve6) => {
+          new Promise((resolve7) => {
             httpRequest.on("continue", () => {
               timing.clearTimeout(timeoutId);
-              resolve6(true);
+              resolve7(true);
             });
             httpRequest.on("response", () => {
               timing.clearTimeout(timeoutId);
-              resolve6(false);
+              resolve7(false);
             });
             httpRequest.on("error", () => {
               timing.clearTimeout(timeoutId);
-              resolve6(false);
+              resolve7(false);
             });
           })
         ]);
@@ -69847,13 +69848,13 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return socketWarningTimestamp;
       }
       constructor(options) {
-        this.configProvider = new Promise((resolve6, reject) => {
+        this.configProvider = new Promise((resolve7, reject) => {
           if (typeof options === "function") {
             options().then((_options) => {
-              resolve6(this.resolveDefaultConfig(_options));
+              resolve7(this.resolveDefaultConfig(_options));
             }).catch(reject);
           } else {
-            resolve6(this.resolveDefaultConfig(options));
+            resolve7(this.resolveDefaultConfig(options));
           }
         });
       }
@@ -69885,7 +69886,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             timing.clearTimeout(socketTimeoutId);
             timing.clearTimeout(keepAliveTimeoutId);
           };
-          const resolve6 = async (arg) => {
+          const resolve7 = async (arg) => {
             await writeRequestBodyPromise;
             clearTimeouts();
             _resolve(arg);
@@ -69949,7 +69950,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
               headers: getTransformedHeaders(res.headers),
               body: res
             });
-            resolve6({ response: httpResponse });
+            resolve7({ response: httpResponse });
           });
           req.on("error", (err) => {
             if (NODEJS_TIMEOUT_ERROR_CODES2.includes(err.code)) {
@@ -70277,13 +70278,13 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return new _NodeHttp2Handler(instanceOrOptions);
       }
       constructor(options) {
-        this.configProvider = new Promise((resolve6, reject) => {
+        this.configProvider = new Promise((resolve7, reject) => {
           if (typeof options === "function") {
             options().then((opts) => {
-              resolve6(opts || {});
+              resolve7(opts || {});
             }).catch(reject);
           } else {
-            resolve6(options || {});
+            resolve7(options || {});
           }
         });
       }
@@ -70308,7 +70309,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return new Promise((_resolve, _reject) => {
           let fulfilled = false;
           let writeRequestBodyPromise = void 0;
-          const resolve6 = async (arg) => {
+          const resolve7 = async (arg) => {
             await writeRequestBodyPromise;
             _resolve(arg);
           };
@@ -70393,7 +70394,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
               body: clientHttp2Stream
             });
             fulfilled = true;
-            resolve6({ response: httpResponse });
+            resolve7({ response: httpResponse });
             if (useIsolatedSession) {
               session.close();
               clientHttp2Stream.on("end", () => {
@@ -70525,7 +70526,7 @@ var require_dist_cjs6 = __commonJS({
           try {
             return await toRetry();
           } catch (e5) {
-            await new Promise((resolve6) => setTimeout(resolve6, delayMs));
+            await new Promise((resolve7) => setTimeout(resolve7, delayMs));
           }
         }
         return await toRetry();
@@ -70854,8 +70855,8 @@ var init_parseCborBody = __esm({
 
 // ../dashboard/backend/node_modules/@smithy/core/dist-es/submodules/cbor/codec-v2/CborShapeSerializer2.js
 function loadCborStructIterator(ns) {
-  const schema4 = ns.getSchema();
-  const existing = schema4[CBOR_STRUCT_CACHE];
+  const schema5 = ns.getSchema();
+  const existing = schema5[CBOR_STRUCT_CACHE];
   if (existing) {
     return existing;
   }
@@ -70870,7 +70871,7 @@ function loadCborStructIterator(ns) {
     encodedKeys[i5] = encodeCborStringKey(memberNames[i5]);
   }
   const cache7 = { memberNames, memberSchemas, encodedKeys };
-  schema4[CBOR_STRUCT_CACHE] = cache7;
+  schema5[CBOR_STRUCT_CACHE] = cache7;
   return cache7;
 }
 function encodeCborStringKey(s2) {
@@ -71420,9 +71421,9 @@ var init_CborShapeSerializer2 = __esm({
     init_serde();
     init_cbor_types();
     CborShapeSerializer2 = class extends SerdeContext {
-      write(schema4, value) {
+      write(schema5, value) {
         cursor = 0;
-        const ns = NormalizedSchema.of(schema4);
+        const ns = NormalizedSchema.of(schema5);
         writeValue(ns, value, void 0, this.serdeContext);
       }
       flush() {
@@ -72058,14 +72059,14 @@ var init_CborShapeDeserializer2 = __esm({
     init_cbor_types();
     init_CborShapeSerializer2();
     CborShapeDeserializer2 = class extends SerdeContext {
-      read(schema4, bytes) {
+      read(schema5, bytes) {
         payload = bytes;
         isBuffer = USE_BUFFER2 && bytes instanceof Buffer;
         dataView = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
         pos = 0;
         end = bytes.length;
         cacheEpoch = cacheEpoch + 1 & 65535;
-        return readValue(NormalizedSchema.of(schema4));
+        return readValue(NormalizedSchema.of(schema5));
       }
       readValue(_schema, value) {
         return transformObject(NormalizedSchema.of(_schema), value);
@@ -72352,7 +72353,7 @@ var init_ProtocolLib = __esm({
         try {
           return registry.getSchema(errorName);
         } catch (e5) {
-          return registry.find((schema4) => NormalizedSchema.of(schema4).getMergedTraits().awsQueryError?.[0] === errorName);
+          return registry.find((schema5) => NormalizedSchema.of(schema5).getMergedTraits().awsQueryError?.[0] === errorName);
         }
       }
     };
@@ -72605,8 +72606,8 @@ var init_jsonReviver = __esm({
 });
 
 // ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/needsReviver.js
-function needsReviver(schema4) {
-  const ns = NormalizedSchema.of(schema4);
+function needsReviver(schema5) {
+  const ns = NormalizedSchema.of(schema5);
   const raw = ns.getSchema();
   if (Array.isArray(raw) && ns.isStructSchema()) {
     if (REVIVER_SYMBOL in raw) {
@@ -72661,7 +72662,7 @@ var init_common = __esm({
 });
 
 // ../dashboard/backend/node_modules/@aws-sdk/core/dist-es/submodules/protocols/json/parseJsonBody.js
-async function parseJsonBody(streamBody, context, schema4) {
+async function parseJsonBody(streamBody, context, schema5) {
   let parsingInput;
   if (detectBufferParsing() && typeof streamBody?.[Symbol.asyncIterator] === "function") {
     const buffer = await collectBody(streamBody, context);
@@ -72679,7 +72680,7 @@ async function parseJsonBody(streamBody, context, schema4) {
   if (parsingInput.length === 0) {
     return {};
   }
-  const reviver = schema4 && needsReviver(schema4) ? jsonReviver : void 0;
+  const reviver = schema5 && needsReviver(schema5) ? jsonReviver : void 0;
   try {
     return JSON.parse(parsingInput, reviver);
   } catch (e5) {
@@ -72783,8 +72784,8 @@ var init_JsonShapeDeserializer2 = __esm({
         super();
         this.settings = settings;
       }
-      async read(schema4, data) {
-        const reviver = needsReviver(schema4) ? jsonReviver : void 0;
+      async read(schema5, data) {
+        const reviver = needsReviver(schema5) ? jsonReviver : void 0;
         let parsed;
         if (typeof data === "string") {
           if (data.length === 0) {
@@ -72798,16 +72799,16 @@ var init_JsonShapeDeserializer2 = __esm({
           const buf2 = Buffer.isBuffer(data) ? data : Buffer.from(data.buffer, data.byteOffset, data.byteLength);
           parsed = JSON.parse(buf2, reviver);
         } else {
-          parsed = await parseJsonBody(data, this.serdeContext, schema4);
+          parsed = await parseJsonBody(data, this.serdeContext, schema5);
         }
-        return this._read(schema4, parsed);
+        return this._read(schema5, parsed);
       }
-      readObject(schema4, data) {
-        return this._read(schema4, data);
+      readObject(schema5, data) {
+        return this._read(schema5, data);
       }
-      _read(schema4, value) {
+      _read(schema5, value) {
         const isObject2 = value !== null && typeof value === "object";
-        const ns = NormalizedSchema.of(schema4);
+        const ns = NormalizedSchema.of(schema5);
         if (isObject2) {
           if (ns.isStructSchema()) {
             return this._readStruct(ns, value);
@@ -73125,18 +73126,18 @@ var init_JsonShapeSerializer2 = __esm({
         this.settings = settings;
         this.json = alloc(INITIAL_BUFFER_SIZE2);
       }
-      write(schema4, value) {
+      write(schema5, value) {
         this.i = 0;
         this.rawValue = value;
-        this.rootSchema = NormalizedSchema.of(schema4);
+        this.rootSchema = NormalizedSchema.of(schema5);
         this.passthrough = this.rootSchema.isBlobSchema() || this.rootSchema.isStringSchema();
         if (!this.passthrough) {
           this.writeValue(this.rootSchema, value, void 0);
         }
       }
-      writeDiscriminatedDocument(schema4, value) {
+      writeDiscriminatedDocument(schema5, value) {
         this.i = 0;
-        this.rootSchema = NormalizedSchema.of(schema4);
+        this.rootSchema = NormalizedSchema.of(schema5);
         const ns = this.rootSchema;
         if (ns.isStructSchema() && value != null && typeof value === "object") {
           this.writeValue(ns, value, void 0);
@@ -73298,11 +73299,11 @@ var init_JsonShapeSerializer2 = __esm({
         json2[i5++] = QUOTE;
         this.i = i5;
       }
-      writeValue(schema4, value, container) {
+      writeValue(schema5, value, container) {
         if (value == null) {
           if (container?.isStructSchema()) {
             if (value === void 0) {
-              const ns2 = NormalizedSchema.of(schema4);
+              const ns2 = NormalizedSchema.of(schema5);
               if (ns2.isIdempotencyToken()) {
                 this.writeAsciiQuoted(generateIdempotencyToken());
                 return;
@@ -73315,7 +73316,7 @@ var init_JsonShapeSerializer2 = __esm({
           this.i += 4;
           return;
         }
-        const ns = NormalizedSchema.of(schema4);
+        const ns = NormalizedSchema.of(schema5);
         const isObject2 = typeof value === "object";
         if (ns.isStringSchema()) {
           const mediaType = ns.getMergedTraits().mediaType;
@@ -73864,16 +73865,16 @@ var init_JsonShapeDeserializer = __esm({
         super();
         this.settings = settings;
       }
-      async read(schema4, data) {
-        const reviver = needsReviver(schema4) ? jsonReviver : void 0;
-        return this._read(schema4, typeof data === "string" ? JSON.parse(data, reviver) : await parseJsonBody(data, this.serdeContext, schema4));
+      async read(schema5, data) {
+        const reviver = needsReviver(schema5) ? jsonReviver : void 0;
+        return this._read(schema5, typeof data === "string" ? JSON.parse(data, reviver) : await parseJsonBody(data, this.serdeContext, schema5));
       }
-      readObject(schema4, data) {
-        return this._read(schema4, data);
+      readObject(schema5, data) {
+        return this._read(schema5, data);
       }
-      _read(schema4, value) {
+      _read(schema5, value) {
         const isObject2 = value !== null && typeof value === "object";
-        const ns = NormalizedSchema.of(schema4);
+        const ns = NormalizedSchema.of(schema5);
         if (isObject2) {
           if (ns.isStructSchema()) {
             const record = value;
@@ -74080,8 +74081,8 @@ var init_JsonShapeSerializer = __esm({
         super();
         this.settings = settings;
       }
-      write(schema4, value) {
-        this.rootSchema = NormalizedSchema.of(schema4);
+      write(schema5, value) {
+        this.rootSchema = NormalizedSchema.of(schema5);
         this.buffer = this._write(this.rootSchema, value);
       }
       flush() {
@@ -74097,15 +74098,15 @@ var init_JsonShapeSerializer = __esm({
         }
         return this.buffer;
       }
-      writeDiscriminatedDocument(schema4, value) {
-        this.write(schema4, value);
+      writeDiscriminatedDocument(schema5, value) {
+        this.write(schema5, value);
         if (typeof this.buffer === "object") {
-          this.buffer.__type = NormalizedSchema.of(schema4).getName(true);
+          this.buffer.__type = NormalizedSchema.of(schema5).getName(true);
         }
       }
-      _write(schema4, value, container) {
+      _write(schema5, value, container) {
         const isObject2 = value !== null && typeof value === "object";
-        const ns = NormalizedSchema.of(schema4);
+        const ns = NormalizedSchema.of(schema5);
         if (isObject2) {
           if (ns.isStructSchema()) {
             const record = value;
@@ -74670,8 +74671,8 @@ var init_XmlShapeDeserializer = __esm({
         this.serdeContext = serdeContext;
         this.stringDeserializer.setSerdeContext(serdeContext);
       }
-      read(schema4, bytes, key2) {
-        const ns = NormalizedSchema.of(schema4);
+      read(schema5, bytes, key2) {
+        const ns = NormalizedSchema.of(schema5);
         const memberSchemas = ns.getMemberSchemas();
         const isEventPayload = ns.isStructSchema() && ns.isMemberSchema() && !!Object.values(memberSchemas).find((memberNs) => {
           return !!memberNs.getMemberTraits().eventPayload;
@@ -74689,7 +74690,7 @@ var init_XmlShapeDeserializer = __esm({
         }
         const xmlString = (this.serdeContext?.utf8Encoder ?? toUtf8)(bytes);
         const parsedObject = this.parseXml(xmlString);
-        return this.readSchema(schema4, key2 ? parsedObject[key2] : parsedObject);
+        return this.readSchema(schema5, key2 ? parsedObject[key2] : parsedObject);
       }
       readSchema(_schema, value) {
         const ns = NormalizedSchema.of(_schema);
@@ -74819,11 +74820,11 @@ var init_QueryShapeSerializer = __esm({
         super();
         this.settings = settings;
       }
-      write(schema4, value, prefix = "") {
+      write(schema5, value, prefix = "") {
         if (this.buffer === void 0) {
           this.buffer = "";
         }
-        const ns = NormalizedSchema.of(schema4);
+        const ns = NormalizedSchema.of(schema5);
         if (prefix && !prefix.endsWith(".")) {
           prefix += ".";
         }
@@ -75222,8 +75223,8 @@ var init_XmlShapeSerializer = __esm({
         super();
         this.settings = settings;
       }
-      write(schema4, value) {
-        const ns = NormalizedSchema.of(schema4);
+      write(schema5, value) {
+        const ns = NormalizedSchema.of(schema5);
         if (ns.isStringSchema() && typeof value === "string") {
           this.stringBuffer = value;
         } else if (ns.isBlobSchema()) {
@@ -90511,6 +90512,86 @@ var init_integrationFeatures2 = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/harnessFeatureService.ts
+import { execFile as execFile8 } from "node:child_process";
+import { access as access2, readFile as readFile10 } from "node:fs/promises";
+import { fileURLToPath as fileURLToPath3 } from "node:url";
+import { resolve as resolve5 } from "node:path";
+async function loadHarnessFeatureState(path) {
+  try {
+    const value = JSON.parse(await readFile10(path, "utf8"));
+    return { enabled: value.enabled !== false };
+  } catch {
+    return { enabled: true };
+  }
+}
+async function enginePath() {
+  const candidates = [
+    process.env.SUGO_HARNESS_FEATURE_ENGINE,
+    fileURLToPath3(new URL("../dist/dashboard-harness-feature.mjs", import.meta.url)),
+    resolve5(process.cwd(), "../../sugo/dist/dashboard-harness-feature.mjs"),
+    resolve5(process.cwd(), "sugo/dist/dashboard-harness-feature.mjs")
+  ].filter((value) => Boolean(value));
+  for (const candidate of candidates) if (await access2(candidate).then(() => true, () => false)) return candidate;
+  throw Object.assign(new Error("Sugo \uD558\uB124\uC2A4 \uC124\uC815 \uC5D4\uC9C4\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uD50C\uB7EC\uADF8\uC778\uC744 \uB2E4\uC2DC \uBE4C\uB4DC\uD558\uAC70\uB098 \uC5C5\uB370\uC774\uD2B8\uD558\uC138\uC694."), { code: "HARNESS_FEATURE_ENGINE_UNAVAILABLE" });
+}
+var updateHarnessFeature;
+var init_harnessFeatureService = __esm({
+  "../dashboard/backend/src/services/harnessFeatureService.ts"() {
+    "use strict";
+    updateHarnessFeature = async (enabled) => {
+      const script = await enginePath();
+      return new Promise((resolveResult, reject) => {
+        const child = execFile8(process.execPath, [script], { timeout: 12e4, maxBuffer: 2 * 1024 * 1024 }, (error2, stdout, stderr) => {
+          if (error2) {
+            let detail = {};
+            try {
+              detail = JSON.parse(stderr);
+            } catch {
+              detail = { error: stderr.trim() || error2.message };
+            }
+            reject(Object.assign(new Error(detail.error || "\uD558\uB124\uC2A4 \uC124\uC815\uC744 \uC801\uC6A9\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4."), { code: detail.code || "HARNESS_FEATURE_UPDATE_FAILED" }));
+            return;
+          }
+          try {
+            resolveResult(JSON.parse(stdout));
+          } catch {
+            reject(Object.assign(new Error("\uD558\uB124\uC2A4 \uC124\uC815 \uC5D4\uC9C4\uC758 \uC751\uB2F5\uC744 \uC77D\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4."), { code: "HARNESS_FEATURE_INVALID_RESPONSE" }));
+          }
+        });
+        child.stdin?.end(JSON.stringify({ enabled }));
+      });
+    };
+  }
+});
+
+// ../dashboard/backend/src/routes/harnessFeature.ts
+function createHarnessFeatureRouter(db2, secret, path, updater = updateHarnessFeature) {
+  const router = (0, import_express22.Router)();
+  router.use(requireUser(db2, secret));
+  router.get("/", async (_req, res) => res.json(await loadHarnessFeatureState(path)));
+  router.put("/", validateBody(schema4), async (req, res) => {
+    try {
+      res.json(await updater(req.body.enabled));
+    } catch (error2) {
+      res.status(500).json({ error: error2?.code ?? "HARNESS_FEATURE_UPDATE_FAILED", message: error2 instanceof Error ? error2.message : String(error2) });
+    }
+  });
+  return router;
+}
+var import_express22, schema4;
+var init_harnessFeature = __esm({
+  "../dashboard/backend/src/routes/harnessFeature.ts"() {
+    "use strict";
+    import_express22 = __toESM(require_express2(), 1);
+    init_zod();
+    init_requireUser();
+    init_validate();
+    init_harnessFeatureService();
+    schema4 = external_exports.object({ enabled: external_exports.boolean() }).strict();
+  }
+});
+
 // ../dashboard/backend/src/middleware/cors.ts
 function corsWhitelist(allowedOrigins) {
   return (req, res, next) => {
@@ -90625,11 +90706,11 @@ __export(weeklyScheduleService_exports, {
   weeklyHomeDir: () => weeklyHomeDir,
   weeklyRunDecision: () => weeklyRunDecision
 });
-import { execFile as execFile8 } from "node:child_process";
-import { appendFile, mkdir as mkdir5, readdir as readdir4, readFile as readFile10, stat as stat2, unlink as unlink3, writeFile as writeFile6 } from "node:fs/promises";
+import { execFile as execFile9 } from "node:child_process";
+import { appendFile, mkdir as mkdir5, readdir as readdir4, readFile as readFile11, stat as stat2, unlink as unlink3, writeFile as writeFile6 } from "node:fs/promises";
 import { homedir as homedir5 } from "node:os";
-import { dirname as dirname6, join as join13, resolve as resolve5 } from "node:path";
-import { fileURLToPath as fileURLToPath3 } from "node:url";
+import { dirname as dirname6, join as join13, resolve as resolve6 } from "node:path";
+import { fileURLToPath as fileURLToPath4 } from "node:url";
 import { promisify as promisify9 } from "node:util";
 function weeklyHomeDir() {
   return process.env.WEEKLY_HOME ?? join13(homedir5(), ".weekly");
@@ -90646,8 +90727,8 @@ function weeklyRunDecision(now, schedule, handled) {
   return handled < slot ? { run: true, record: slot } : { run: false, record: null };
 }
 function weeklyEngineCandidates() {
-  const here = dirname6(fileURLToPath3(import.meta.url));
-  return [process.env.SUGO_WEEKLY_ENGINE, resolve5(here, "../weekly"), resolve5(here, "../../../../sugo/weekly")].filter((path) => Boolean(path));
+  const here = dirname6(fileURLToPath4(import.meta.url));
+  return [process.env.SUGO_WEEKLY_ENGINE, resolve6(here, "../weekly"), resolve6(here, "../../../../sugo/weekly")].filter((path) => Boolean(path));
 }
 async function findWeeklyEngine(candidates = weeklyEngineCandidates()) {
   for (const candidate of candidates) {
@@ -90677,7 +90758,7 @@ async function retireLegacyWeeklyAgents(home = homedir5()) {
 }
 async function readSchedule(configPath) {
   try {
-    const schedule = JSON.parse(await readFile10(configPath, "utf8")).schedule ?? {};
+    const schedule = JSON.parse(await readFile11(configPath, "utf8")).schedule ?? {};
     return { enabled: schedule.enabled ?? false, weekday: schedule.weekday ?? 5, hour: schedule.hour ?? 17, minute: schedule.minute ?? 0 };
   } catch {
     return { enabled: false, weekday: 5, hour: 17, minute: 0 };
@@ -90695,7 +90776,7 @@ function startWeeklySchedule(options = {}) {
     if (running || stopped) return;
     running = true;
     try {
-      const handled = await readFile10(handledPath, "utf8").then((value) => value.trim() || null, () => null);
+      const handled = await readFile11(handledPath, "utf8").then((value) => value.trim() || null, () => null);
       const decision = weeklyRunDecision(/* @__PURE__ */ new Date(), await readSchedule(join13(weeklyHome, "config.json")), handled);
       if (decision.record === null) return;
       await mkdir5(weeklyHome, { recursive: true });
@@ -90734,12 +90815,12 @@ var execFileAsync4;
 var init_weeklyScheduleService = __esm({
   "../dashboard/backend/src/services/weeklyScheduleService.ts"() {
     "use strict";
-    execFileAsync4 = promisify9(execFile8);
+    execFileAsync4 = promisify9(execFile9);
   }
 });
 
 // ../dashboard/backend/src/services/weeklySettingsService.ts
-import { chmod, mkdir as mkdir6, readFile as readFile11, stat as stat3, writeFile as writeFile7 } from "node:fs/promises";
+import { chmod, mkdir as mkdir6, readFile as readFile12, stat as stat3, writeFile as writeFile7 } from "node:fs/promises";
 import { join as join14 } from "node:path";
 async function exists(path) {
   try {
@@ -90763,7 +90844,7 @@ function normalizeConfig(config2) {
 }
 async function readStoredConfig(path) {
   try {
-    return JSON.parse(await readFile11(path, "utf8"));
+    return JSON.parse(await readFile12(path, "utf8"));
   } catch {
     return null;
   }
@@ -90836,7 +90917,7 @@ var index_exports = {};
 __export(index_exports, {
   createApp: () => createApp
 });
-import { fileURLToPath as fileURLToPath4, pathToFileURL } from "node:url";
+import { fileURLToPath as fileURLToPath5, pathToFileURL } from "node:url";
 import { dirname as dirname7, join as join15 } from "node:path";
 function unconfiguredVerifyJwt() {
   return async () => {
@@ -90883,10 +90964,11 @@ async function createApp(dbOverrideOrOptions) {
   const specAttachmentsPath = overrides.specAttachmentsPath ?? config.specAttachmentsPath;
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
   const integrationFeaturesPath = overrides.integrationFeaturesPath ?? config.integrationFeaturesPath;
+  const harnessFeaturePath = overrides.harnessFeaturePath ?? config.harnessFeaturePath;
   const weeklySettingsService = overrides.weeklySettingsService ?? createWeeklySettingsService();
-  const app2 = (0, import_express22.default)();
+  const app2 = (0, import_express23.default)();
   app2.use(corsWhitelist(config.corsOrigins));
-  app2.use(import_express22.default.json({ limit: "10mb" }));
+  app2.use(import_express23.default.json({ limit: "10mb" }));
   app2.get("/health", (_req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.json({ status: "ok", service: "sugo-console", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });
@@ -90919,6 +91001,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use("/api/aws-context", createAwsContextRouter(db2, sessionSecret2, awsContextClient2));
   app2.use("/api/aws-guard-policy", createAwsGuardPolicyRouter(db2, sessionSecret2, awsGuardPolicyPath));
   app2.use("/api/integration-features", createIntegrationFeaturesRouter(db2, sessionSecret2, integrationFeaturesPath));
+  app2.use("/api/harness-feature", createHarnessFeatureRouter(db2, sessionSecret2, harnessFeaturePath, overrides.harnessFeatureUpdater));
   app2.use("/api/pinpoint-context", createPinpointContextRouter(db2, sessionSecret2, pinpointClient2));
   app2.use("/api/project-integrations", createProjectIntegrationsRouter(db2, sessionSecret2, overrides.projectRegistrar));
   app2.use("/api/pr", createPrRouter(db2, sessionSecret2, secretEncKey, gitProviderClients));
@@ -90930,7 +91013,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use("/api/skills", createSkillsRouter(skillsPath));
   const staticDir2 = overrides.staticDir ?? config.staticDir;
   if (staticDir2) {
-    app2.use(import_express22.default.static(staticDir2));
+    app2.use(import_express23.default.static(staticDir2));
     app2.get(/^\/(?!api\/|health$).*/, (_req, res) => {
       res.sendFile(join15(staticDir2, "index.html"));
     });
@@ -90951,11 +91034,11 @@ async function main() {
     console.log(`sugo-dashboard-backend listening on ${config.host}:${config.port} (db=${config.dbDriver})`);
   });
 }
-var import_express22, __dirname2, pkg;
+var import_express23, __dirname2, pkg;
 var init_index = __esm({
   "../dashboard/backend/src/index.ts"() {
     "use strict";
-    import_express22 = __toESM(require_express2(), 1);
+    import_express23 = __toESM(require_express2(), 1);
     init_esm();
     init_config();
     init_init();
@@ -90989,12 +91072,13 @@ var init_index = __esm({
     init_projectIntegrations();
     init_awsGuardPolicy();
     init_integrationFeatures2();
+    init_harnessFeature();
     init_cors();
     init_asyncHandler();
     init_contextAutoRefreshService();
     init_weeklySettingsService();
-    __dirname2 = dirname7(fileURLToPath4(import.meta.url));
-    pkg = "0.52.3" ? { version: "0.52.3" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
+    __dirname2 = dirname7(fileURLToPath5(import.meta.url));
+    pkg = "0.53.0" ? { version: "0.53.0" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91006,11 +91090,11 @@ var localBootstrap_exports = {};
 __export(localBootstrap_exports, {
   bootstrapLocalDashboard: () => bootstrapLocalDashboard
 });
-import { chmod as chmod2, mkdir as mkdir7, readFile as readFile12, rename as rename3, writeFile as writeFile8 } from "node:fs/promises";
+import { chmod as chmod2, mkdir as mkdir7, readFile as readFile13, rename as rename3, writeFile as writeFile8 } from "node:fs/promises";
 import { dirname as dirname8 } from "node:path";
 async function readSettings(settingsPath) {
   try {
-    return JSON.parse(await readFile12(settingsPath, "utf8"));
+    return JSON.parse(await readFile13(settingsPath, "utf8"));
   } catch {
     return {};
   }
@@ -91046,10 +91130,10 @@ var init_localBootstrap = __esm({
 
 // ../dashboard/backend/src/standalone.ts
 import { randomBytes as randomBytes6 } from "node:crypto";
-import { chmod as chmod3, mkdir as mkdir8, readFile as readFile13, rm as rm3, writeFile as writeFile9 } from "node:fs/promises";
+import { chmod as chmod3, mkdir as mkdir8, readFile as readFile14, rm as rm3, writeFile as writeFile9 } from "node:fs/promises";
 import { homedir as homedir6, userInfo } from "node:os";
 import { dirname as dirname9, join as join16 } from "node:path";
-import { fileURLToPath as fileURLToPath5 } from "node:url";
+import { fileURLToPath as fileURLToPath6 } from "node:url";
 
 // ../dashboard/backend/test/schema.sqlite.sql
 var schema_sqlite_default = "-- SQLite translation of src/db/schema.mysql.sql, used only for local dev/testing.\n-- Must stay behaviorally equivalent: same tables/columns/keys, syntax adapted\n-- (ENUM->TEXT+CHECK, JSON->TEXT, AUTO_INCREMENT->INTEGER PRIMARY KEY AUTOINCREMENT,\n-- TIMESTAMP->TEXT ISO8601, composite PKs as-is since SQLite supports them).\n\nPRAGMA foreign_keys = ON;\n\nCREATE TABLE IF NOT EXISTS sugo_users (\n  id TEXT PRIMARY KEY,\n  display_name TEXT,\n  plugin_version TEXT,\n  version_updated_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspaces (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  name TEXT NOT NULL,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  deleted_at TIMESTAMP NULL DEFAULT NULL,\n  UNIQUE (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_projects (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  workspace_id INTEGER NOT NULL REFERENCES sugo_workspaces(id) ON DELETE CASCADE,\n  project_path TEXT NOT NULL,\n  git_synced INTEGER NOT NULL DEFAULT 0,\n  UNIQUE (workspace_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_tasks (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  project TEXT,\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','archived')),\n  priority TEXT,\n  description TEXT,\n  summary TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  started_at TEXT,\n  completed_at TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_history (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  task_id TEXT,\n  task_title TEXT,\n  summary TEXT,\n  key_decisions TEXT,\n  files_changed TEXT,\n  notes TEXT,\n  estimated_human_hours REAL,\n  user_reported_human_hours REAL,\n  ai_execution_minutes REAL,\n  estimation_basis TEXT,\n  completed_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_memos (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  title TEXT NOT NULL,\n  content_md TEXT NOT NULL,\n  due_date TEXT,\n  archived_at TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_memos_due ON sugo_schedule_memos(user_id, due_date);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_commitments (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  title TEXT NOT NULL,\n  due_date TEXT,\n  state TEXT NOT NULL DEFAULT 'planned' CHECK (state IN ('planned','active','completed','cancelled')),\n  target TEXT NOT NULL DEFAULT 'custom' CHECK (target IN ('implementation','review','dev','stg','prd','custom')),\n  linked_run_id TEXT,\n  completed_at TEXT,\n  completed_by TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, id)\n);\n\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_due ON sugo_schedule_commitments(user_id, due_date);\nCREATE INDEX IF NOT EXISTS idx_schedule_commitments_spec ON sugo_schedule_commitments(user_id, workspace_name, spec_id);\n\nCREATE TABLE IF NOT EXISTS sugo_schedule_spec_archives (\n  user_id TEXT NOT NULL REFERENCES sugo_users(id) ON DELETE CASCADE,\n  workspace_name TEXT NOT NULL,\n  spec_id TEXT NOT NULL,\n  reason TEXT NOT NULL CHECK (reason IN ('deleted','closed')),\n  title TEXT NOT NULL,\n  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  last_worked_at TEXT,\n  archived_by TEXT NOT NULL,\n  PRIMARY KEY (user_id, workspace_name, spec_id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_specs (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'active',\n  content TEXT,\n  decision_date TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_checkpoints (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  category TEXT NOT NULL DEFAULT 'general',\n  title TEXT NOT NULL,\n  learned_from TEXT,\n  checklist TEXT,\n  applies_to TEXT,\n  checkpoint_date TEXT,\n  expires_at TEXT,\n  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_workspace_meta (\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  golden_rule TEXT,\n  checkpoints_version INTEGER NOT NULL DEFAULT 0,\n  PRIMARY KEY (user_id, workspace_name)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (\n  id TEXT NOT NULL,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  title TEXT NOT NULL,\n  level TEXT NOT NULL CHECK (level IN ('spec','workstream','task','subtask','step')),\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','blocked','dropped')),\n  depends_on TEXT,\n  parent TEXT,\n  ref TEXT,\n  note TEXT,\n  spec_path TEXT,\n  work_result TEXT,\n  lineage TEXT,\n  manual_status TEXT CHECK (manual_status IS NULL OR manual_status IN ('pending','in_progress','done','blocked','dropped')),\n  manual_by TEXT,\n  manual_at TEXT,\n  pos_x REAL,\n  pos_y REAL,\n  due_date TEXT,\n  project_path TEXT,\n  work_branch TEXT,\n  manual_title TEXT,\n  blocker_response TEXT,\n  blocker_answered_by TEXT,\n  blocker_answered_at TEXT,\n  blocker_context TEXT,\n  runtime_assessment TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  synced_at TEXT,\n  PRIMARY KEY (user_id, workspace_name, id)\n);\n\nCREATE TABLE IF NOT EXISTS sugo_activity_events (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  workspace_name TEXT NOT NULL,\n  ts TEXT NOT NULL,\n  level TEXT NOT NULL DEFAULT 'INFO' CHECK (level IN ('AGENT','INFO','WARN','ERROR','SYSTEM')),\n  agent TEXT CHECK (agent IS NULL OR agent IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  handoff_to TEXT CHECK (handoff_to IS NULL OR handoff_to IN ('MAIN','CODE','TEST','REVIEW','DOCS')),\n  event_type TEXT NOT NULL DEFAULT 'SYSTEM' CHECK (event_type IN ('EXECUTE','HANDOFF','COMPLETED','SYSTEM')),\n  message TEXT NOT NULL,\n  details TEXT\n);\nCREATE INDEX IF NOT EXISTS idx_activity_user_ws_ts ON sugo_activity_events (user_id, workspace_name, ts);\n\nCREATE TABLE IF NOT EXISTS user_bitbucket_tokens (\n  user_id TEXT PRIMARY KEY,\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS user_git_connections (\n  user_id TEXT NOT NULL,\n  provider TEXT NOT NULL CHECK (provider IN ('github','gitlab','bitbucket_server','aws_codecommit')),\n  ct TEXT NOT NULL,\n  iv TEXT NOT NULL,\n  tag TEXT NOT NULL,\n  base_url TEXT,\n  credential_profile TEXT,\n  repository_scope TEXT,\n  token_hint TEXT,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, provider)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_accounts (\n  user_id TEXT NOT NULL,\n  name TEXT NOT NULL,\n  profile TEXT NOT NULL,\n  region TEXT NOT NULL,\n  account_id TEXT NOT NULL,\n  principal_arn TEXT NOT NULL,\n  display_order INTEGER NOT NULL DEFAULT 0,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_snapshots (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  payload TEXT NOT NULL,\n  observed_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_preferences (\n  user_id TEXT NOT NULL PRIMARY KEY,\n  active_account_name TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS user_aws_context_refresh_budget (\n  user_id TEXT NOT NULL,\n  account_name TEXT NOT NULL,\n  day_key TEXT NOT NULL,\n  day_count INTEGER NOT NULL,\n  last_started_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, account_name)\n);\n\nCREATE TABLE IF NOT EXISTS user_project_integration_mappings (\n  user_id TEXT NOT NULL,\n  project_path TEXT NOT NULL,\n  selections TEXT NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (user_id, project_path)\n);\n\nCREATE TABLE IF NOT EXISTS user_pinpoint_context (user_id TEXT PRIMARY KEY, base_url TEXT NOT NULL, updated_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_pinpoint_snapshots (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, observed_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS user_context_auto_refresh_runs (user_id TEXT NOT NULL, day_key TEXT NOT NULL, status TEXT NOT NULL, started_at TEXT NOT NULL, completed_at TEXT, error_message TEXT, PRIMARY KEY (user_id, day_key));\n\nCREATE TABLE IF NOT EXISTS user_api_tokens (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  name TEXT,\n  token_hash TEXT NOT NULL UNIQUE,\n  token_hint TEXT,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  last_used_at TEXT\n);\n\nCREATE TABLE IF NOT EXISTS sugo_review_artifacts (\n  artifact_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, workspace_name TEXT NOT NULL,\n  task_id TEXT NOT NULL, session_id TEXT NOT NULL, patch_version INTEGER NOT NULL,\n  file_path TEXT NOT NULL, change_type TEXT NOT NULL, content TEXT, diff_text TEXT,\n  unavailable_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS sugo_weekly_reports (\n  user_id TEXT NOT NULL,\n  week_id TEXT NOT NULL,\n  start_date TEXT NOT NULL,\n  end_date TEXT NOT NULL,\n  generated_at TEXT NOT NULL,\n  uploaded_at TEXT NOT NULL,\n  report_json TEXT NOT NULL,\n  PRIMARY KEY (user_id, week_id)\n);\n";
@@ -91063,14 +91147,14 @@ var dataDir = join16(sugoDir, "dashboard");
 var secretFile = join16(dataDir, "session-secret");
 var stateFile = join16(dataDir, "server.json");
 var port = Number(process.env.SUGO_DASHBOARD_PORT ?? DEFAULT_PORT);
-var runtimeDir = dirname9(fileURLToPath5(import.meta.url));
+var runtimeDir = dirname9(fileURLToPath6(import.meta.url));
 var pluginRoot = dirname9(runtimeDir);
 var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join16(runtimeDir, "web");
 var userId = process.env.LOCAL_DEV_USER_ID ?? userInfo().username;
 var displayName = process.env.LOCAL_DEV_DISPLAY_NAME ?? userId;
 async function loadOrCreateSecret() {
   try {
-    return (await readFile13(secretFile, "utf8")).trim();
+    return (await readFile14(secretFile, "utf8")).trim();
   } catch {
   }
   const secret = randomBytes6(32).toString("base64");
@@ -91104,6 +91188,8 @@ process.env.SKILLS_PATH = pluginRoot;
 process.env.SUGO_WEEKLY_ENGINE = join16(pluginRoot, "weekly");
 process.env.WEEKLY_HOME ??= join16(sugoHome, ".weekly");
 process.env.SUGO_INTEGRATION_FEATURES_PATH ??= join16(sugoDir, "integration-features.json");
+process.env.SUGO_HARNESS_FEATURE_PATH ??= join16(sugoDir, "harness-feature.json");
+process.env.SUGO_HARNESS_FEATURE_ENGINE ??= join16(pluginRoot, "dist", "dashboard-harness-feature.mjs");
 var { createApp: createApp2 } = await Promise.resolve().then(() => (init_index(), index_exports));
 var { bootstrapLocalDashboard: bootstrapLocalDashboard2 } = await Promise.resolve().then(() => (init_localBootstrap(), localBootstrap_exports));
 var { app, db, awsContextClient, pinpointClient } = await createApp2({ staticDir, sqliteSchema: schema_sqlite_default });
@@ -91118,7 +91204,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.52.3", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.53.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

@@ -11,6 +11,8 @@ import { writeClaudeIfChanged } from "./claudeMdFreshness.js";
 import { buildClaudeRuleFile, buildEffectiveClaudeRuleFiles, mergeRootAgentsReference, mergeRootClaudeReference } from "./rulesFile.js";
 import { detectStack } from "./stackDetector.js";
 import { fileBaseline, loadInstallManifest, saveInstallManifest, type InstallManifest } from "./installManifest.js";
+import { loadHarnessFeatureState } from "./featureState.js";
+import { suspendProjectHarness } from "./featureControl.js";
 
 export interface SyncProjectHarnessArgs {
   projectPath: string;
@@ -155,6 +157,10 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
 
   await registerProject({ path: projectPath, name: projectName, registeredAt: config.registeredAt, workspace });
 
+  // OFF는 규칙 원본과 사용자 편집본을 보존하되 Claude의 자동 로딩 진입점만 제거한다.
+  // 따라서 OFF 중 새로 등록하거나 업데이트한 프로젝트도 하네스를 컨텍스트로 받지 않는다.
+  if (!(await loadHarnessFeatureState()).enabled) await suspendProjectHarness(projectPath);
+
   return {
     projectName,
     workspace,
@@ -163,6 +169,8 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
     claudeMdPath,
     rootClaudeMdPath: rootClaudePath,
     rootAgentsMdPath: rootAgentsPath,
-    claudeRulesFiles: harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath),
+    claudeRulesFiles: (await loadHarnessFeatureState()).enabled
+      ? harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath)
+      : [],
   };
 }

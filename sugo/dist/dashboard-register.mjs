@@ -4,25 +4,25 @@ import { dirname as __sugoDirname } from "node:path";
 const require = __sugoCreateRequire(import.meta.url);
 const __filename = __sugoFileURLToPath(import.meta.url);
 const __dirname = __sugoDirname(__filename);
-
-// src/projectRegistration.ts
-import { access as access2, readdir as readdir2, stat as stat2 } from "node:fs/promises";
-import { join as join10, resolve as resolve2 } from "node:path";
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 
 // src/homeDir.ts
 import { homedir } from "node:os";
 function sugoHomeDir() {
   return process.env.SUGO_HOME_OVERRIDE ?? homedir();
 }
-
-// src/harness/sync.ts
-import { access, mkdir as mkdir5, readFile as readFile4, unlink as unlink2 } from "node:fs/promises";
-import { basename, dirname as dirname6, join as join7 } from "node:path";
+var init_homeDir = __esm({
+  "src/homeDir.ts"() {
+    "use strict";
+  }
+});
 
 // src/fsUtil.ts
 import { mkdir, open, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-var seq = 0;
 async function atomicWriteFile(path, content) {
   const tmpPath = `${path}.tmp.${process.pid}.${Date.now()}.${seq++}`;
   await writeFile(tmpPath, content, "utf-8");
@@ -41,7 +41,6 @@ async function atomicWriteFile(path, content) {
   });
   throw lastErr;
 }
-var STALE_LOCK_MS = 3e4;
 async function withFileLock(lockPath, fn) {
   await mkdir(dirname(lockPath), { recursive: true });
   const maxAttempts = 40;
@@ -77,6 +76,14 @@ async function withFileLock(lockPath, fn) {
     });
   }
 }
+var seq, STALE_LOCK_MS;
+var init_fsUtil = __esm({
+  "src/fsUtil.ts"() {
+    "use strict";
+    seq = 0;
+    STALE_LOCK_MS = 3e4;
+  }
+});
 
 // src/harness/config.ts
 import { mkdir as mkdir2, readFile } from "node:fs/promises";
@@ -100,12 +107,23 @@ async function loadProjectConfig(projectPath) {
     return null;
   }
 }
+var init_config = __esm({
+  "src/harness/config.ts"() {
+    "use strict";
+    init_fsUtil();
+  }
+});
 
 // src/harness/contentHash.ts
 import { createHash } from "node:crypto";
 function hashHarnessContent(harness) {
   return createHash("sha1").update(harness.harnessMd).update("\0").update(harness.validationYaml).digest("hex");
 }
+var init_contentHash = __esm({
+  "src/harness/contentHash.ts"() {
+    "use strict";
+  }
+});
 
 // src/harness/harnessComposer.ts
 function extractCoreRuleBullets(harnessMd, limit = 2) {
@@ -197,13 +215,15 @@ ${allWarnings.map((w) => `- ${w}`).join("\n")}
     warnings: allWarnings
   };
 }
+var init_harnessComposer = __esm({
+  "src/harness/harnessComposer.ts"() {
+    "use strict";
+  }
+});
 
 // src/harness/harnessFetcher.ts
 import { existsSync, readFileSync } from "node:fs";
 import { join as join2 } from "node:path";
-var LOCAL_HARNESS_VERSION = "1.0.0-local";
-var DEFAULT_HARNESS_ID = "default";
-var HARNESS_FETCH_COOLDOWN_MS = 5 * 60 * 1e3;
 function baseHarnessId(id) {
   const parts = id.split("/");
   if (parts.length <= 2) return null;
@@ -276,6 +296,15 @@ function fetchHarnesses(params) {
   }
   return result;
 }
+var LOCAL_HARNESS_VERSION, DEFAULT_HARNESS_ID, HARNESS_FETCH_COOLDOWN_MS;
+var init_harnessFetcher = __esm({
+  "src/harness/harnessFetcher.ts"() {
+    "use strict";
+    LOCAL_HARNESS_VERSION = "1.0.0-local";
+    DEFAULT_HARNESS_ID = "default";
+    HARNESS_FETCH_COOLDOWN_MS = 5 * 60 * 1e3;
+  }
+});
 
 // src/harness/libraryPath.ts
 import { existsSync as existsSync2 } from "node:fs";
@@ -292,6 +321,12 @@ function defaultHarnessLibraryDir() {
 function userHarnessOverrideDir() {
   return join3(sugoHomeDir(), ".claude", "sugo", "harness-overrides");
 }
+var init_libraryPath = __esm({
+  "src/harness/libraryPath.ts"() {
+    "use strict";
+    init_homeDir();
+  }
+});
 
 // src/harness/registry.ts
 import { mkdir as mkdir3, readFile as readFile2 } from "node:fs/promises";
@@ -329,9 +364,15 @@ async function registerProject(entry) {
     await atomicWriteFile(path, JSON.stringify(filtered, null, 2));
   });
 }
+var init_registry = __esm({
+  "src/harness/registry.ts"() {
+    "use strict";
+    init_fsUtil();
+    init_homeDir();
+  }
+});
 
 // src/harness/claudeMdFreshness.ts
-var FRESHNESS_PREFIX = "> \uC801\uC6A9 \uD558\uB124\uC2A4 \uCD5C\uADFC \uBCC0\uACBD: ";
 function freshnessLine(dateIso) {
   return `${FRESHNESS_PREFIX}${dateIso}
 
@@ -348,49 +389,15 @@ function writeClaudeIfChanged(existing, nextBody, nowIso) {
   }
   return { content: freshnessLine(nowIso) + nextBody, changed: true };
 }
+var FRESHNESS_PREFIX;
+var init_claudeMdFreshness = __esm({
+  "src/harness/claudeMdFreshness.ts"() {
+    "use strict";
+    FRESHNESS_PREFIX = "> \uC801\uC6A9 \uD558\uB124\uC2A4 \uCD5C\uADFC \uBCC0\uACBD: ";
+  }
+});
 
 // src/harness/harnessRouting.ts
-var JAVA_PREFIXES = ["lang/java", "framework/spring"];
-var NODE_PREFIXES = [
-  "lang/typescript",
-  "lang/javascript",
-  "framework/node",
-  "framework/react",
-  "framework/nextjs",
-  "framework/express"
-];
-var PYTHON_PREFIXES = ["lang/python"];
-var PREFIXES_BY_EXTENSION = {
-  ".java": JAVA_PREFIXES,
-  ".kt": JAVA_PREFIXES,
-  ".ts": NODE_PREFIXES,
-  ".tsx": NODE_PREFIXES,
-  ".mts": NODE_PREFIXES,
-  ".cts": NODE_PREFIXES,
-  ".js": NODE_PREFIXES,
-  ".jsx": NODE_PREFIXES,
-  ".mjs": NODE_PREFIXES,
-  ".cjs": NODE_PREFIXES,
-  ".py": PYTHON_PREFIXES,
-  ".pyi": PYTHON_PREFIXES
-};
-var PREFIXES_BY_FILENAME = {
-  "pom.xml": ["buildtool/maven", ...JAVA_PREFIXES],
-  "build.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "build.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "settings.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "settings.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "gradle.properties": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "libs.versions.toml": ["buildtool/gradle", ...JAVA_PREFIXES],
-  "package.json": ["buildtool/npm", ...NODE_PREFIXES],
-  "package-lock.json": ["buildtool/npm", ...NODE_PREFIXES],
-  "yarn.lock": ["buildtool/yarn", ...NODE_PREFIXES],
-  "pnpm-lock.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
-  "pnpm-workspace.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
-  "tsconfig.json": ["lang/typescript"],
-  "poetry.lock": ["buildtool/poetry", ...PYTHON_PREFIXES],
-  "pyproject.toml": ["buildtool/poetry", "buildtool/pip", ...PYTHON_PREFIXES]
-};
 function matchesPrefix(harnessId, prefix) {
   return harnessId === prefix || harnessId.startsWith(`${prefix}/`);
 }
@@ -410,6 +417,53 @@ function globsForHarnessId(harnessId) {
   }
   return [...globs].sort();
 }
+var JAVA_PREFIXES, NODE_PREFIXES, PYTHON_PREFIXES, PREFIXES_BY_EXTENSION, PREFIXES_BY_FILENAME;
+var init_harnessRouting = __esm({
+  "src/harness/harnessRouting.ts"() {
+    "use strict";
+    JAVA_PREFIXES = ["lang/java", "framework/spring"];
+    NODE_PREFIXES = [
+      "lang/typescript",
+      "lang/javascript",
+      "framework/node",
+      "framework/react",
+      "framework/nextjs",
+      "framework/express"
+    ];
+    PYTHON_PREFIXES = ["lang/python"];
+    PREFIXES_BY_EXTENSION = {
+      ".java": JAVA_PREFIXES,
+      ".kt": JAVA_PREFIXES,
+      ".ts": NODE_PREFIXES,
+      ".tsx": NODE_PREFIXES,
+      ".mts": NODE_PREFIXES,
+      ".cts": NODE_PREFIXES,
+      ".js": NODE_PREFIXES,
+      ".jsx": NODE_PREFIXES,
+      ".mjs": NODE_PREFIXES,
+      ".cjs": NODE_PREFIXES,
+      ".py": PYTHON_PREFIXES,
+      ".pyi": PYTHON_PREFIXES
+    };
+    PREFIXES_BY_FILENAME = {
+      "pom.xml": ["buildtool/maven", ...JAVA_PREFIXES],
+      "build.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "build.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "settings.gradle": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "settings.gradle.kts": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "gradle.properties": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "libs.versions.toml": ["buildtool/gradle", ...JAVA_PREFIXES],
+      "package.json": ["buildtool/npm", ...NODE_PREFIXES],
+      "package-lock.json": ["buildtool/npm", ...NODE_PREFIXES],
+      "yarn.lock": ["buildtool/yarn", ...NODE_PREFIXES],
+      "pnpm-lock.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
+      "pnpm-workspace.yaml": ["buildtool/pnpm", ...NODE_PREFIXES],
+      "tsconfig.json": ["lang/typescript"],
+      "poetry.lock": ["buildtool/poetry", ...PYTHON_PREFIXES],
+      "pyproject.toml": ["buildtool/poetry", "buildtool/pip", ...PYTHON_PREFIXES]
+    };
+  }
+});
 
 // src/harness/rulesFile.ts
 function ruleFilename(harnessId) {
@@ -443,10 +497,6 @@ ${harness.harnessMd.trimStart()}` : harness.harnessMd;
     return buildClaudeRuleFile(harness.id, content);
   });
 }
-var BLOCK_START = "<!-- sugo:harness-rules:start -->";
-var BLOCK_END = "<!-- sugo:harness-rules:end -->";
-var AGENTS_BLOCK_START = "<!-- sugo:project-context:start -->";
-var AGENTS_BLOCK_END = "<!-- sugo:project-context:end -->";
 function buildManagedBlock(harnessIds) {
   const list = harnessIds.length === 0 ? "(\uC801\uC6A9\uB41C \uD558\uB124\uC2A4 \uC5C6\uC74C)" : harnessIds.map((id) => `- \`${id}\``).join("\n");
   return `${BLOCK_START}
@@ -473,6 +523,16 @@ function mergeRootClaudeReference(existing, appliedHarnessIds) {
   const content = before + block + after;
   return { content, changed: content !== base };
 }
+function removeRootClaudeReference(existing) {
+  const base = existing ?? "";
+  const startIdx = base.indexOf(BLOCK_START);
+  const endIdx = base.indexOf(BLOCK_END);
+  if (startIdx === -1 || endIdx === -1) return { content: base, changed: false };
+  const before = base.slice(0, startIdx).trimEnd();
+  const after = base.slice(endIdx + BLOCK_END.length).trimStart();
+  const content = [before, after].filter(Boolean).join("\n\n") + (before || after ? "\n" : "");
+  return { content, changed: content !== base };
+}
 function mergeRootAgentsReference(existing) {
   const block = `${AGENTS_BLOCK_START}
 <!-- \uC774 \uBE14\uB85D\uC740 sugo\uAC00 \uC790\uB3D9 \uAD00\uB9AC\uD569\uB2C8\uB2E4. \uC190\uC73C\uB85C \uACE0\uCE58\uBA74 \uB2E4\uC74C sugo_add/sugo_update \uB54C \uB36E\uC5B4\uC368\uC9D1\uB2C8\uB2E4. -->
@@ -492,6 +552,17 @@ ${AGENTS_BLOCK_END}`;
   const content = base.slice(0, startIdx) + block + base.slice(endIdx + AGENTS_BLOCK_END.length);
   return { content, changed: content !== base };
 }
+var BLOCK_START, BLOCK_END, AGENTS_BLOCK_START, AGENTS_BLOCK_END;
+var init_rulesFile = __esm({
+  "src/harness/rulesFile.ts"() {
+    "use strict";
+    init_harnessRouting();
+    BLOCK_START = "<!-- sugo:harness-rules:start -->";
+    BLOCK_END = "<!-- sugo:harness-rules:end -->";
+    AGENTS_BLOCK_START = "<!-- sugo:project-context:start -->";
+    AGENTS_BLOCK_END = "<!-- sugo:project-context:end -->";
+  }
+});
 
 // src/harness/context.ts
 import { existsSync as existsSync3, readFileSync as readFileSync2 } from "node:fs";
@@ -524,6 +595,11 @@ function createFsDetectionContext(projectPath, changedFiles = []) {
     }
   };
 }
+var init_context = __esm({
+  "src/harness/context.ts"() {
+    "use strict";
+  }
+});
 
 // src/harness/rules.ts
 function readPackageJson(ctx) {
@@ -560,17 +636,6 @@ function withVersionBucket(base, bucket) {
   if (bucket === null) return [base];
   return [base, { ...base, id: `${base.id}/${bucket}`, version: bucket }];
 }
-var JAVA_BUCKETS = [8, 11, 17, 21, 25];
-var PYTHON_MINOR_BUCKETS = [9, 10, 12, 14];
-var REACT_BUCKETS = [18, 19];
-var NEXT_BUCKETS = [15, 16];
-var SPRING_BUCKETS = [2, 3, 4];
-var TYPESCRIPT_BUCKETS = [5, 6, 7];
-var NODE_BUCKETS = [20, 22, 24];
-var EXPRESS_BUCKETS = [4, 5];
-var GRADLE_BUCKETS = [8, 9];
-var PNPM_BUCKETS = [10, 12];
-var POETRY_BUCKETS = [1, 2];
 function extractNodeMajor(ctx, pkg) {
   const engines = pkg?.engines?.node;
   const fromEngines = majorFromRange(engines);
@@ -635,163 +700,6 @@ function extractSpringMajor(javaSrc) {
   }
   return void 0;
 }
-var langTypescript = {
-  id: "lang/typescript",
-  category: "language",
-  detect(ctx) {
-    if (!ctx.fileExists("tsconfig.json")) return null;
-    const pkg = readPackageJson(ctx);
-    const declared = depVersion(pkg, "typescript");
-    const bucket = nearestBucket(majorFromRange(declared) ?? -1, TYPESCRIPT_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "lang/typescript",
-        category: "language",
-        name: "TypeScript",
-        version: declared,
-        detectedBy: "tsconfig.json"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var langJavascript = {
-  id: "lang/javascript",
-  category: "language",
-  detect(ctx) {
-    if (!ctx.fileExists("package.json") || ctx.fileExists("tsconfig.json")) return null;
-    return { id: "lang/javascript", category: "language", name: "JavaScript", detectedBy: "package.json" };
-  }
-};
-var langJava = {
-  id: "lang/java",
-  category: "language",
-  detect(ctx) {
-    const marker = ["pom.xml", "build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
-    if (!marker) return null;
-    const major = extractJavaMajor(readJavaBuildFiles(ctx));
-    const bucket = major === null ? null : nearestBucket(major, JAVA_BUCKETS);
-    return withVersionBucket(
-      { id: "lang/java", category: "language", name: "Java", version: major ? String(major) : void 0, detectedBy: marker },
-      bucket === null ? null : String(bucket)
-    );
-  }
-};
-var langPython = {
-  id: "lang/python",
-  category: "language",
-  detect(ctx) {
-    const marker = ["requirements.txt", "pyproject.toml"].find((f) => ctx.fileExists(f));
-    if (!marker) return null;
-    const minor = extractPythonMinor(ctx);
-    const bucket = minor === null ? null : nearestBucket(minor, PYTHON_MINOR_BUCKETS);
-    return withVersionBucket(
-      { id: "lang/python", category: "language", name: "Python", version: minor ? `3.${minor}` : void 0, detectedBy: marker },
-      bucket === null ? null : `3.${bucket}`
-    );
-  }
-};
-var frameworkNode = {
-  id: "framework/node",
-  category: "framework",
-  detect(ctx) {
-    if (!ctx.fileExists("package.json")) return null;
-    const pkg = readPackageJson(ctx);
-    const major = extractNodeMajor(ctx, pkg);
-    const bucket = major === null ? null : nearestBucket(major, NODE_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "framework/node",
-        category: "framework",
-        name: "Node.js",
-        version: major === null ? void 0 : String(major),
-        detectedBy: "package.json"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var frameworkReact = {
-  id: "framework/react",
-  category: "framework",
-  detect(ctx) {
-    const pkg = readPackageJson(ctx);
-    if (!hasDep(pkg, "react")) return null;
-    const major = majorFromRange(depVersion(pkg, "react"));
-    const bucket = major === null ? null : nearestBucket(major, REACT_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "framework/react",
-        category: "framework",
-        name: "React",
-        version: depVersion(pkg, "react"),
-        detectedBy: "package.json:dependencies.react"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var frameworkNextjs = {
-  id: "framework/nextjs",
-  category: "framework",
-  detect(ctx) {
-    const pkg = readPackageJson(ctx);
-    if (!hasDep(pkg, "next")) return null;
-    const major = majorFromRange(depVersion(pkg, "next"));
-    const bucket = major === null ? null : nearestBucket(major, NEXT_BUCKETS);
-    const appRouter = ctx.fileExists("app") || ctx.fileExists("src/app");
-    return withVersionBucket(
-      {
-        id: "framework/nextjs",
-        category: "framework",
-        name: appRouter ? "Next.js (App Router)" : "Next.js",
-        version: depVersion(pkg, "next"),
-        detectedBy: "package.json:dependencies.next"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var frameworkExpress = {
-  id: "framework/express",
-  category: "framework",
-  detect(ctx) {
-    const pkg = readPackageJson(ctx);
-    if (!hasDep(pkg, "express")) return null;
-    const declared = depVersion(pkg, "express");
-    const bucket = nearestBucket(majorFromRange(declared) ?? -1, EXPRESS_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "framework/express",
-        category: "framework",
-        name: "Express",
-        version: declared,
-        detectedBy: "package.json:dependencies.express"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var frameworkSpring = {
-  id: "framework/spring",
-  category: "framework",
-  detect(ctx) {
-    const src = readJavaBuildFiles(ctx);
-    if (!src || !/spring-boot|org\.springframework\.boot/.test(src)) return null;
-    const major = extractSpringMajor(src);
-    const bucket = major === void 0 ? null : nearestBucket(Number(major), SPRING_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "framework/spring",
-        category: "framework",
-        name: "Spring Boot",
-        version: major ? `${major}.x` : void 0,
-        detectedBy: ctx.fileExists("pom.xml") ? "pom.xml" : "build.gradle"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
 function buildToolRule(id, name, marker) {
   return {
     id,
@@ -802,91 +710,6 @@ function buildToolRule(id, name, marker) {
     }
   };
 }
-var buildtoolNpm = buildToolRule("buildtool/npm", "npm", "package-lock.json");
-var buildtoolMaven = buildToolRule("buildtool/maven", "Maven", "pom.xml");
-var buildtoolPnpm = {
-  id: "buildtool/pnpm",
-  category: "buildTool",
-  detect(ctx) {
-    if (!ctx.fileExists("pnpm-lock.yaml")) return null;
-    const major = packageManagerMajor(readPackageJson(ctx), "pnpm");
-    const bucket = major === null ? null : nearestBucket(major, PNPM_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "buildtool/pnpm",
-        category: "buildTool",
-        name: "pnpm",
-        version: major === null ? void 0 : String(major),
-        detectedBy: "pnpm-lock.yaml"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var buildtoolYarn = {
-  id: "buildtool/yarn",
-  category: "buildTool",
-  detect(ctx) {
-    if (!ctx.fileExists("yarn.lock")) return null;
-    const major = packageManagerMajor(readPackageJson(ctx), "yarn");
-    const berryConfig = ctx.fileExists(".yarnrc.yml");
-    const label = major === null ? berryConfig ? "berry" : null : major >= 2 ? "berry" : "1.x";
-    return withVersionBucket(
-      {
-        id: "buildtool/yarn",
-        category: "buildTool",
-        name: label === "berry" ? "Yarn (Berry)" : "Yarn",
-        version: major === null ? void 0 : String(major),
-        detectedBy: "yarn.lock"
-      },
-      label
-    );
-  }
-};
-var buildtoolGradle = {
-  id: "buildtool/gradle",
-  category: "buildTool",
-  detect(ctx) {
-    const marker = ["build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
-    if (!marker) return null;
-    const wrapper = ctx.readFile("gradle/wrapper/gradle-wrapper.properties");
-    const major = majorFromRange(wrapper?.match(/gradle-(\d+)\.[\d.]*-(?:bin|all)\.zip/)?.[1]);
-    const bucket = major === null ? null : nearestBucket(major, GRADLE_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "buildtool/gradle",
-        category: "buildTool",
-        name: "Gradle",
-        version: major === null ? void 0 : String(major),
-        detectedBy: marker
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
-var buildtoolPip = buildToolRule("buildtool/pip", "pip", "requirements.txt");
-var buildtoolPoetry = {
-  id: "buildtool/poetry",
-  category: "buildTool",
-  detect(ctx) {
-    const src = ctx.readFile("pyproject.toml");
-    if (!src || !src.includes("[tool.poetry]")) return null;
-    const declared = majorFromRange(src.match(/requires-poetry\s*=\s*["'][^"']*?(\d+)/)?.[1]);
-    const lockVersion = majorFromRange(ctx.readFile("poetry.lock")?.match(/lock-version\s*=\s*["'](\d+)/)?.[1]);
-    const major = declared ?? (lockVersion !== null && lockVersion >= 2 ? 2 : null);
-    const bucket = major === null ? null : nearestBucket(major, POETRY_BUCKETS);
-    return withVersionBucket(
-      {
-        id: "buildtool/poetry",
-        category: "buildTool",
-        name: "Poetry",
-        version: major === null ? void 0 : String(major),
-        detectedBy: "pyproject.toml"
-      },
-      bucket === null ? null : `${bucket}.x`
-    );
-  }
-};
 function dataStoreRule(id, name, matchers) {
   return {
     id,
@@ -900,71 +723,330 @@ function dataStoreRule(id, name, matchers) {
     }
   };
 }
-var datastorePostgres = dataStoreRule(
-  "datastore/postgres",
-  "PostgreSQL",
-  (pkg, javaSrc, pySrc) => hasDep(pkg, "pg") || /postgresql/i.test(javaSrc) || /psycopg2/i.test(pySrc)
-);
-var datastoreMysql = dataStoreRule(
-  "datastore/mysql",
-  "MySQL",
-  (pkg, javaSrc, pySrc) => hasDep(pkg, "mysql", "mysql2") || /mysql-connector/i.test(javaSrc) || /(pymysql|mysqlclient)/i.test(pySrc)
-);
-var datastoreMongodb = dataStoreRule(
-  "datastore/mongodb",
-  "MongoDB",
-  (pkg, javaSrc, pySrc) => hasDep(pkg, "mongoose", "mongodb") || /mongodb-driver/i.test(javaSrc) || /pymongo/i.test(pySrc)
-);
-var datastoreRedis = dataStoreRule(
-  "datastore/redis",
-  "Redis",
-  (pkg, javaSrc, pySrc) => hasDep(pkg, "redis", "ioredis") || /(lettuce|jedis)/i.test(javaSrc) || /\bredis\b/i.test(pySrc)
-);
-var infraDocker = {
-  id: "infra/docker",
-  category: "infra",
-  detect(ctx) {
-    const marker = ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"].find((f) => ctx.fileExists(f));
-    if (!marker) return null;
-    return { id: "infra/docker", category: "infra", name: "Docker", detectedBy: marker };
-  }
-};
-var infraGithubActions = {
-  id: "infra/github-actions",
-  category: "infra",
-  detect(ctx) {
-    if (!ctx.fileExists(".github/workflows")) return null;
-    return { id: "infra/github-actions", category: "infra", name: "GitHub Actions", detectedBy: ".github/workflows" };
-  }
-};
-var ALL_RULES = [
-  langTypescript,
-  langJavascript,
-  langJava,
-  langPython,
-  frameworkNode,
-  frameworkReact,
-  frameworkNextjs,
-  frameworkExpress,
-  frameworkSpring,
-  buildtoolNpm,
-  buildtoolYarn,
-  buildtoolPnpm,
-  buildtoolMaven,
-  buildtoolGradle,
-  buildtoolPip,
-  buildtoolPoetry,
-  datastorePostgres,
-  datastoreMysql,
-  datastoreMongodb,
-  datastoreRedis,
-  infraDocker,
-  infraGithubActions
-];
 function flattenDetected(result) {
   if (result === null) return [];
   return Array.isArray(result) ? result : [result];
 }
+var JAVA_BUCKETS, PYTHON_MINOR_BUCKETS, REACT_BUCKETS, NEXT_BUCKETS, SPRING_BUCKETS, TYPESCRIPT_BUCKETS, NODE_BUCKETS, EXPRESS_BUCKETS, GRADLE_BUCKETS, PNPM_BUCKETS, POETRY_BUCKETS, langTypescript, langJavascript, langJava, langPython, frameworkNode, frameworkReact, frameworkNextjs, frameworkExpress, frameworkSpring, buildtoolNpm, buildtoolMaven, buildtoolPnpm, buildtoolYarn, buildtoolGradle, buildtoolPip, buildtoolPoetry, datastorePostgres, datastoreMysql, datastoreMongodb, datastoreRedis, infraDocker, infraGithubActions, ALL_RULES;
+var init_rules = __esm({
+  "src/harness/rules.ts"() {
+    "use strict";
+    JAVA_BUCKETS = [8, 11, 17, 21, 25];
+    PYTHON_MINOR_BUCKETS = [9, 10, 12, 14];
+    REACT_BUCKETS = [18, 19];
+    NEXT_BUCKETS = [15, 16];
+    SPRING_BUCKETS = [2, 3, 4];
+    TYPESCRIPT_BUCKETS = [5, 6, 7];
+    NODE_BUCKETS = [20, 22, 24];
+    EXPRESS_BUCKETS = [4, 5];
+    GRADLE_BUCKETS = [8, 9];
+    PNPM_BUCKETS = [10, 12];
+    POETRY_BUCKETS = [1, 2];
+    langTypescript = {
+      id: "lang/typescript",
+      category: "language",
+      detect(ctx) {
+        if (!ctx.fileExists("tsconfig.json")) return null;
+        const pkg = readPackageJson(ctx);
+        const declared = depVersion(pkg, "typescript");
+        const bucket = nearestBucket(majorFromRange(declared) ?? -1, TYPESCRIPT_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "lang/typescript",
+            category: "language",
+            name: "TypeScript",
+            version: declared,
+            detectedBy: "tsconfig.json"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    langJavascript = {
+      id: "lang/javascript",
+      category: "language",
+      detect(ctx) {
+        if (!ctx.fileExists("package.json") || ctx.fileExists("tsconfig.json")) return null;
+        return { id: "lang/javascript", category: "language", name: "JavaScript", detectedBy: "package.json" };
+      }
+    };
+    langJava = {
+      id: "lang/java",
+      category: "language",
+      detect(ctx) {
+        const marker = ["pom.xml", "build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
+        if (!marker) return null;
+        const major = extractJavaMajor(readJavaBuildFiles(ctx));
+        const bucket = major === null ? null : nearestBucket(major, JAVA_BUCKETS);
+        return withVersionBucket(
+          { id: "lang/java", category: "language", name: "Java", version: major ? String(major) : void 0, detectedBy: marker },
+          bucket === null ? null : String(bucket)
+        );
+      }
+    };
+    langPython = {
+      id: "lang/python",
+      category: "language",
+      detect(ctx) {
+        const marker = ["requirements.txt", "pyproject.toml"].find((f) => ctx.fileExists(f));
+        if (!marker) return null;
+        const minor = extractPythonMinor(ctx);
+        const bucket = minor === null ? null : nearestBucket(minor, PYTHON_MINOR_BUCKETS);
+        return withVersionBucket(
+          { id: "lang/python", category: "language", name: "Python", version: minor ? `3.${minor}` : void 0, detectedBy: marker },
+          bucket === null ? null : `3.${bucket}`
+        );
+      }
+    };
+    frameworkNode = {
+      id: "framework/node",
+      category: "framework",
+      detect(ctx) {
+        if (!ctx.fileExists("package.json")) return null;
+        const pkg = readPackageJson(ctx);
+        const major = extractNodeMajor(ctx, pkg);
+        const bucket = major === null ? null : nearestBucket(major, NODE_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "framework/node",
+            category: "framework",
+            name: "Node.js",
+            version: major === null ? void 0 : String(major),
+            detectedBy: "package.json"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    frameworkReact = {
+      id: "framework/react",
+      category: "framework",
+      detect(ctx) {
+        const pkg = readPackageJson(ctx);
+        if (!hasDep(pkg, "react")) return null;
+        const major = majorFromRange(depVersion(pkg, "react"));
+        const bucket = major === null ? null : nearestBucket(major, REACT_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "framework/react",
+            category: "framework",
+            name: "React",
+            version: depVersion(pkg, "react"),
+            detectedBy: "package.json:dependencies.react"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    frameworkNextjs = {
+      id: "framework/nextjs",
+      category: "framework",
+      detect(ctx) {
+        const pkg = readPackageJson(ctx);
+        if (!hasDep(pkg, "next")) return null;
+        const major = majorFromRange(depVersion(pkg, "next"));
+        const bucket = major === null ? null : nearestBucket(major, NEXT_BUCKETS);
+        const appRouter = ctx.fileExists("app") || ctx.fileExists("src/app");
+        return withVersionBucket(
+          {
+            id: "framework/nextjs",
+            category: "framework",
+            name: appRouter ? "Next.js (App Router)" : "Next.js",
+            version: depVersion(pkg, "next"),
+            detectedBy: "package.json:dependencies.next"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    frameworkExpress = {
+      id: "framework/express",
+      category: "framework",
+      detect(ctx) {
+        const pkg = readPackageJson(ctx);
+        if (!hasDep(pkg, "express")) return null;
+        const declared = depVersion(pkg, "express");
+        const bucket = nearestBucket(majorFromRange(declared) ?? -1, EXPRESS_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "framework/express",
+            category: "framework",
+            name: "Express",
+            version: declared,
+            detectedBy: "package.json:dependencies.express"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    frameworkSpring = {
+      id: "framework/spring",
+      category: "framework",
+      detect(ctx) {
+        const src = readJavaBuildFiles(ctx);
+        if (!src || !/spring-boot|org\.springframework\.boot/.test(src)) return null;
+        const major = extractSpringMajor(src);
+        const bucket = major === void 0 ? null : nearestBucket(Number(major), SPRING_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "framework/spring",
+            category: "framework",
+            name: "Spring Boot",
+            version: major ? `${major}.x` : void 0,
+            detectedBy: ctx.fileExists("pom.xml") ? "pom.xml" : "build.gradle"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    buildtoolNpm = buildToolRule("buildtool/npm", "npm", "package-lock.json");
+    buildtoolMaven = buildToolRule("buildtool/maven", "Maven", "pom.xml");
+    buildtoolPnpm = {
+      id: "buildtool/pnpm",
+      category: "buildTool",
+      detect(ctx) {
+        if (!ctx.fileExists("pnpm-lock.yaml")) return null;
+        const major = packageManagerMajor(readPackageJson(ctx), "pnpm");
+        const bucket = major === null ? null : nearestBucket(major, PNPM_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "buildtool/pnpm",
+            category: "buildTool",
+            name: "pnpm",
+            version: major === null ? void 0 : String(major),
+            detectedBy: "pnpm-lock.yaml"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    buildtoolYarn = {
+      id: "buildtool/yarn",
+      category: "buildTool",
+      detect(ctx) {
+        if (!ctx.fileExists("yarn.lock")) return null;
+        const major = packageManagerMajor(readPackageJson(ctx), "yarn");
+        const berryConfig = ctx.fileExists(".yarnrc.yml");
+        const label = major === null ? berryConfig ? "berry" : null : major >= 2 ? "berry" : "1.x";
+        return withVersionBucket(
+          {
+            id: "buildtool/yarn",
+            category: "buildTool",
+            name: label === "berry" ? "Yarn (Berry)" : "Yarn",
+            version: major === null ? void 0 : String(major),
+            detectedBy: "yarn.lock"
+          },
+          label
+        );
+      }
+    };
+    buildtoolGradle = {
+      id: "buildtool/gradle",
+      category: "buildTool",
+      detect(ctx) {
+        const marker = ["build.gradle", "build.gradle.kts"].find((f) => ctx.fileExists(f));
+        if (!marker) return null;
+        const wrapper = ctx.readFile("gradle/wrapper/gradle-wrapper.properties");
+        const major = majorFromRange(wrapper?.match(/gradle-(\d+)\.[\d.]*-(?:bin|all)\.zip/)?.[1]);
+        const bucket = major === null ? null : nearestBucket(major, GRADLE_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "buildtool/gradle",
+            category: "buildTool",
+            name: "Gradle",
+            version: major === null ? void 0 : String(major),
+            detectedBy: marker
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    buildtoolPip = buildToolRule("buildtool/pip", "pip", "requirements.txt");
+    buildtoolPoetry = {
+      id: "buildtool/poetry",
+      category: "buildTool",
+      detect(ctx) {
+        const src = ctx.readFile("pyproject.toml");
+        if (!src || !src.includes("[tool.poetry]")) return null;
+        const declared = majorFromRange(src.match(/requires-poetry\s*=\s*["'][^"']*?(\d+)/)?.[1]);
+        const lockVersion = majorFromRange(ctx.readFile("poetry.lock")?.match(/lock-version\s*=\s*["'](\d+)/)?.[1]);
+        const major = declared ?? (lockVersion !== null && lockVersion >= 2 ? 2 : null);
+        const bucket = major === null ? null : nearestBucket(major, POETRY_BUCKETS);
+        return withVersionBucket(
+          {
+            id: "buildtool/poetry",
+            category: "buildTool",
+            name: "Poetry",
+            version: major === null ? void 0 : String(major),
+            detectedBy: "pyproject.toml"
+          },
+          bucket === null ? null : `${bucket}.x`
+        );
+      }
+    };
+    datastorePostgres = dataStoreRule(
+      "datastore/postgres",
+      "PostgreSQL",
+      (pkg, javaSrc, pySrc) => hasDep(pkg, "pg") || /postgresql/i.test(javaSrc) || /psycopg2/i.test(pySrc)
+    );
+    datastoreMysql = dataStoreRule(
+      "datastore/mysql",
+      "MySQL",
+      (pkg, javaSrc, pySrc) => hasDep(pkg, "mysql", "mysql2") || /mysql-connector/i.test(javaSrc) || /(pymysql|mysqlclient)/i.test(pySrc)
+    );
+    datastoreMongodb = dataStoreRule(
+      "datastore/mongodb",
+      "MongoDB",
+      (pkg, javaSrc, pySrc) => hasDep(pkg, "mongoose", "mongodb") || /mongodb-driver/i.test(javaSrc) || /pymongo/i.test(pySrc)
+    );
+    datastoreRedis = dataStoreRule(
+      "datastore/redis",
+      "Redis",
+      (pkg, javaSrc, pySrc) => hasDep(pkg, "redis", "ioredis") || /(lettuce|jedis)/i.test(javaSrc) || /\bredis\b/i.test(pySrc)
+    );
+    infraDocker = {
+      id: "infra/docker",
+      category: "infra",
+      detect(ctx) {
+        const marker = ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"].find((f) => ctx.fileExists(f));
+        if (!marker) return null;
+        return { id: "infra/docker", category: "infra", name: "Docker", detectedBy: marker };
+      }
+    };
+    infraGithubActions = {
+      id: "infra/github-actions",
+      category: "infra",
+      detect(ctx) {
+        if (!ctx.fileExists(".github/workflows")) return null;
+        return { id: "infra/github-actions", category: "infra", name: "GitHub Actions", detectedBy: ".github/workflows" };
+      }
+    };
+    ALL_RULES = [
+      langTypescript,
+      langJavascript,
+      langJava,
+      langPython,
+      frameworkNode,
+      frameworkReact,
+      frameworkNextjs,
+      frameworkExpress,
+      frameworkSpring,
+      buildtoolNpm,
+      buildtoolYarn,
+      buildtoolPnpm,
+      buildtoolMaven,
+      buildtoolGradle,
+      buildtoolPip,
+      buildtoolPoetry,
+      datastorePostgres,
+      datastoreMysql,
+      datastoreMongodb,
+      datastoreRedis,
+      infraDocker,
+      infraGithubActions
+    ];
+  }
+});
 
 // src/harness/stackDetector.ts
 function detectNodeCommands(ctx, buildToolIds) {
@@ -1065,6 +1147,13 @@ function detectStack(projectPath, platform = process.platform) {
   };
   return { languages, frameworks, dataStores, buildTools, infra, harnessIds, commands };
 }
+var init_stackDetector = __esm({
+  "src/harness/stackDetector.ts"() {
+    "use strict";
+    init_context();
+    init_rules();
+  }
+});
 
 // src/harness/installManifest.ts
 import { mkdir as mkdir4, readFile as readFile3 } from "node:fs/promises";
@@ -1088,25 +1177,80 @@ async function saveInstallManifest(manifest) {
   await mkdir4(dirname5(path), { recursive: true });
   await atomicWriteFile(path, content);
 }
+var init_installManifest = __esm({
+  "src/harness/installManifest.ts"() {
+    "use strict";
+    init_fsUtil();
+  }
+});
+
+// src/harness/featureState.ts
+import { mkdir as mkdir5, readFile as readFile4 } from "node:fs/promises";
+import { dirname as dirname6, join as join7 } from "node:path";
+function harnessFeatureStatePath() {
+  return join7(sugoHomeDir(), ".claude", "sugo", "harness-feature.json");
+}
+async function loadHarnessFeatureState() {
+  try {
+    const value = JSON.parse(await readFile4(harnessFeatureStatePath(), "utf8"));
+    return { enabled: value.enabled !== false };
+  } catch {
+    return { enabled: true };
+  }
+}
+var init_featureState = __esm({
+  "src/harness/featureState.ts"() {
+    "use strict";
+    init_fsUtil();
+    init_homeDir();
+  }
+});
+
+// src/harness/featureControl.ts
+import { readFile as readFile5, unlink as unlink2 } from "node:fs/promises";
+import { join as join8 } from "node:path";
+async function suspendProjectHarness(projectPath) {
+  const config = await loadProjectConfig(projectPath);
+  for (const applied of config?.appliedHarnesses ?? []) {
+    await unlink2(join8(projectPath, buildClaudeRuleFile(applied.id, "").relPath)).catch(() => {
+    });
+  }
+  const rootPath = join8(projectPath, "CLAUDE.md");
+  const current = await readFile5(rootPath, "utf8").catch(() => null);
+  const next = removeRootClaudeReference(current);
+  if (next.changed) await atomicWriteFile(rootPath, next.content);
+}
+var init_featureControl = __esm({
+  "src/harness/featureControl.ts"() {
+    "use strict";
+    init_fsUtil();
+    init_config();
+    init_registry();
+    init_rulesFile();
+    init_featureState();
+  }
+});
 
 // src/harness/sync.ts
+import { access, mkdir as mkdir6, readFile as readFile6, unlink as unlink3 } from "node:fs/promises";
+import { basename, dirname as dirname7, join as join9 } from "node:path";
 async function writeTextIfChanged(path, content) {
-  const existing = await readFile4(path, "utf-8").catch(() => null);
+  const existing = await readFile6(path, "utf-8").catch(() => null);
   if (existing === content) return;
   await atomicWriteFile(path, content);
 }
 async function syncProjectHarness(args) {
   const { projectPath } = args;
   const sugoDir = projectSugoDir(projectPath);
-  const rootClaudePath = join7(projectPath, "CLAUDE.md");
-  const rootAgentsPath = join7(projectPath, "AGENTS.md");
+  const rootClaudePath = join9(projectPath, "CLAUDE.md");
+  const rootAgentsPath = join9(projectPath, "AGENTS.md");
   const existingManifest = await loadInstallManifest(projectPath);
   const manifest = existingManifest ? { ...existingManifest, projectPath } : {
     version: 1,
     projectPath,
     sugoDirExisted: await access(sugoDir).then(() => true, () => false),
-    rootClaudeOriginal: fileBaseline(await readFile4(rootClaudePath, "utf8").catch(() => null)),
-    rootAgentsOriginal: fileBaseline(await readFile4(rootAgentsPath, "utf8").catch(() => null)),
+    rootClaudeOriginal: fileBaseline(await readFile6(rootClaudePath, "utf8").catch(() => null)),
+    rootAgentsOriginal: fileBaseline(await readFile6(rootAgentsPath, "utf8").catch(() => null)),
     managedFiles: []
   };
   const existingConfig = await loadProjectConfig(projectPath);
@@ -1118,33 +1262,33 @@ async function syncProjectHarness(args) {
   const { harnesses, warnings: fetchWarnings } = fetchHarnesses({ harnessIds, libraryDir, overrideDir: userHarnessOverrideDir(), repoUrl: args.repoUrl });
   const projectName = basename(projectPath);
   const composeResult = compose({ harnesses, projectName, workspace, detectedStack, fetchWarnings });
-  const claudeMdPath = join7(sugoDir, "CLAUDE.md");
-  await mkdir5(sugoDir, { recursive: true });
-  const existingClaudeMd = await readFile4(claudeMdPath, "utf-8").catch(() => null);
+  const claudeMdPath = join9(sugoDir, "CLAUDE.md");
+  await mkdir6(sugoDir, { recursive: true });
+  const existingClaudeMd = await readFile6(claudeMdPath, "utf-8").catch(() => null);
   const claudeMdResult = writeClaudeIfChanged(existingClaudeMd, composeResult.claudeMd, (/* @__PURE__ */ new Date()).toISOString());
   if (claudeMdResult.changed) await atomicWriteFile(claudeMdPath, claudeMdResult.content);
   for (const file of composeResult.harnessFiles) {
-    const fullPath = join7(projectPath, file.relPath);
-    await mkdir5(dirname6(fullPath), { recursive: true });
+    const fullPath = join9(projectPath, file.relPath);
+    await mkdir6(dirname7(fullPath), { recursive: true });
     await writeTextIfChanged(fullPath, file.content);
   }
-  const claudeRulesDir = join7(projectPath, ".claude", "rules");
-  await mkdir5(claudeRulesDir, { recursive: true });
+  const claudeRulesDir = join9(projectPath, ".claude", "rules");
+  await mkdir6(claudeRulesDir, { recursive: true });
   const effectiveRuleFiles = buildEffectiveClaudeRuleFiles(harnesses);
   for (const ruleFile of effectiveRuleFiles) {
-    await writeTextIfChanged(join7(projectPath, ruleFile.relPath), ruleFile.content);
+    await writeTextIfChanged(join9(projectPath, ruleFile.relPath), ruleFile.content);
   }
   const currentRulePaths = new Set(effectiveRuleFiles.map((file) => file.relPath));
   const previousIds = existingConfig?.appliedHarnesses.map((h) => h.id) ?? [];
   for (const staleId of previousIds.filter((id) => !currentRulePaths.has(buildClaudeRuleFile(id, "").relPath))) {
-    const stalePath = join7(projectPath, buildClaudeRuleFile(staleId, "").relPath);
-    await unlink2(stalePath).catch(() => {
+    const stalePath = join9(projectPath, buildClaudeRuleFile(staleId, "").relPath);
+    await unlink3(stalePath).catch(() => {
     });
   }
-  const existingRootClaude = await readFile4(rootClaudePath, "utf-8").catch(() => null);
+  const existingRootClaude = await readFile6(rootClaudePath, "utf-8").catch(() => null);
   const rootClaude = mergeRootClaudeReference(existingRootClaude, harnesses.map((h) => h.id));
   if (rootClaude.changed) await atomicWriteFile(rootClaudePath, rootClaude.content);
-  const existingRootAgents = await readFile4(rootAgentsPath, "utf-8").catch(() => null);
+  const existingRootAgents = await readFile6(rootAgentsPath, "utf-8").catch(() => null);
   const rootAgents = mergeRootAgentsReference(existingRootAgents);
   if (rootAgents.changed) await atomicWriteFile(rootAgentsPath, rootAgents.content);
   const now = (/* @__PURE__ */ new Date()).toISOString();
@@ -1182,6 +1326,7 @@ async function syncProjectHarness(args) {
   ];
   await saveInstallManifest(manifest);
   await registerProject({ path: projectPath, name: projectName, registeredAt: config.registeredAt, workspace });
+  if (!(await loadHarnessFeatureState()).enabled) await suspendProjectHarness(projectPath);
   return {
     projectName,
     workspace,
@@ -1190,19 +1335,45 @@ async function syncProjectHarness(args) {
     claudeMdPath,
     rootClaudeMdPath: rootClaudePath,
     rootAgentsMdPath: rootAgentsPath,
-    claudeRulesFiles: harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath)
+    claudeRulesFiles: (await loadHarnessFeatureState()).enabled ? harnesses.map((h) => buildClaudeRuleFile(h.id, "").relPath) : []
   };
 }
+var init_sync = __esm({
+  "src/harness/sync.ts"() {
+    "use strict";
+    init_fsUtil();
+    init_config();
+    init_contentHash();
+    init_harnessComposer();
+    init_harnessFetcher();
+    init_libraryPath();
+    init_registry();
+    init_claudeMdFreshness();
+    init_rulesFile();
+    init_stackDetector();
+    init_installManifest();
+    init_featureState();
+    init_featureControl();
+  }
+});
+
+// src/projectRegistration.ts
+init_homeDir();
+init_sync();
+import { access as access2, readdir as readdir2, stat as stat2 } from "node:fs/promises";
+import { join as join12, resolve as resolve2 } from "node:path";
 
 // src/work/workspace.ts
-import { mkdir as mkdir7, readdir, readFile as readFile7, rm } from "node:fs/promises";
+import { mkdir as mkdir8, readdir, readFile as readFile9, rm } from "node:fs/promises";
+init_fsUtil();
 
 // src/dashboard/config.ts
+init_homeDir();
 import { userInfo } from "node:os";
-import { readFile as readFile5 } from "node:fs/promises";
-import { join as join8 } from "node:path";
+import { readFile as readFile7 } from "node:fs/promises";
+import { join as join10 } from "node:path";
 function settingsFilePath() {
-  return join8(sugoHomeDir(), ".claude", "sugo", "settings.json");
+  return join10(sugoHomeDir(), ".claude", "sugo", "settings.json");
 }
 function currentUsername() {
   try {
@@ -1223,7 +1394,7 @@ async function resolveDashboardConfig() {
     };
   }
   try {
-    const raw = await readFile5(settingsFilePath(), "utf-8");
+    const raw = await readFile7(settingsFilePath(), "utf-8");
     const parsed = JSON.parse(raw);
     const d = parsed.dashboard;
     if (d?.enabled && d.apiUrl) {
@@ -1235,28 +1406,30 @@ async function resolveDashboardConfig() {
 }
 
 // src/dashboard/retryQueue.ts
-import { mkdir as mkdir6, readFile as readFile6 } from "node:fs/promises";
+init_fsUtil();
+import { mkdir as mkdir7, readFile as readFile8 } from "node:fs/promises";
 
 // src/work/storage.ts
-import { join as join9 } from "node:path";
+init_homeDir();
+import { join as join11 } from "node:path";
 function workRootDir() {
-  return join9(sugoHomeDir(), ".claude", "sugo", "work");
+  return join11(sugoHomeDir(), ".claude", "sugo", "work");
 }
 function workspaceDir(workspace) {
-  return join9(workRootDir(), workspace);
+  return join11(workRootDir(), workspace);
 }
 function workspaceFilePath(workspace) {
-  return join9(workspaceDir(workspace), "workspace.json");
+  return join11(workspaceDir(workspace), "workspace.json");
 }
 function syncRetryQueuePath() {
-  return join9(workRootDir(), "sync-retry-queue.json");
+  return join11(workRootDir(), "sync-retry-queue.json");
 }
 function syncRetryQueueLockPath() {
   return `${syncRetryQueuePath()}.lock`;
 }
 
 // src/dashboard/retryQueue.ts
-import { dirname as dirname7 } from "node:path";
+import { dirname as dirname8 } from "node:path";
 var MAX_RETRY_QUEUE_ITEMS = 100;
 function discard(file, item, cause) {
   const reason = `${cause}: ${item.lastFailureReason ?? "unknown failure"}`;
@@ -1275,14 +1448,14 @@ function failureFields(result) {
 }
 async function readQueueFile() {
   try {
-    const raw = await readFile6(syncRetryQueuePath(), "utf-8");
+    const raw = await readFile8(syncRetryQueuePath(), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { items: [] };
   }
 }
 async function writeQueueFile(file) {
-  await mkdir6(dirname7(syncRetryQueuePath()), { recursive: true });
+  await mkdir7(dirname8(syncRetryQueuePath()), { recursive: true });
   await atomicWriteFile(syncRetryQueuePath(), JSON.stringify(file, null, 2));
 }
 async function enqueueRetry(endpoint, method, data, failure) {
@@ -1431,7 +1604,7 @@ async function syncWorkspace(ws) {
 // src/work/workspace.ts
 async function loadWorkspace(name) {
   try {
-    const raw = await readFile7(workspaceFilePath(name), "utf-8");
+    const raw = await readFile9(workspaceFilePath(name), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -1446,7 +1619,7 @@ async function ensureWorkspace(name, projectPath) {
     projects: Array.from(projects),
     created_at: existing?.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
   };
-  await mkdir7(workspaceDir(name), { recursive: true });
+  await mkdir8(workspaceDir(name), { recursive: true });
   await atomicWriteFile(workspaceFilePath(name), JSON.stringify(workspace, null, 2));
   void syncWorkspace(workspace);
   return workspace;
@@ -1465,7 +1638,7 @@ async function assertProjectDirectory(projectPath) {
   }
 }
 async function assertProjectRegistrationAllowed() {
-  const retainedData = join10(sugoHomeDir(), ".sugo", "data");
+  const retainedData = join12(sugoHomeDir(), ".sugo", "data");
   if (await access2(retainedData).then(() => true, () => false)) {
     throw Object.assign(new Error("\uBE44\uD65C\uC131 \uBCF4\uAD00\uB41C Sugo \uB370\uC774\uD130\uC758 \uBCF5\uAD6C \uB610\uB294 \uD3D0\uAE30\uB97C \uBA3C\uC800 \uACB0\uC815\uD574\uC57C \uD569\uB2C8\uB2E4."), { code: "RETAINED_DATA_DECISION_REQUIRED" });
   }

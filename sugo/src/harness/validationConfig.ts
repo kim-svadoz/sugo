@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { load } from "js-yaml";
 import { parseAutoSpec, type AutoCheckSpec } from "./autoCheck.js";
 import { loadProjectConfig } from "./config.js";
+import { loadHarnessFeatureState } from "./featureState.js";
 
 export type CheckSeverity = "error" | "warning";
 
@@ -43,6 +44,7 @@ export function parseValidationYaml(content: string): HarnessValidationConfig {
 
 /** 프로젝트에 적용된 하네스들의 validation.yaml을 실제로 읽어 harnessId -> config로 맵을 만든다. */
 export async function loadProjectValidationConfigs(projectPath: string): Promise<Map<string, HarnessValidationConfig>> {
+  if (!(await loadHarnessFeatureState()).enabled) return new Map();
   const config = await loadProjectConfig(projectPath);
   const result = new Map<string, HarnessValidationConfig>();
   if (!config) return result;

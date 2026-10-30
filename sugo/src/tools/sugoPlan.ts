@@ -41,6 +41,7 @@ import {
 } from "../gates.js";
 import { loadProjectConfig } from "../harness/config.js";
 import { renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistry.js";
+import { loadHarnessFeatureState } from "../harness/featureState.js";
 import { findRegistryEntry } from "../harness/registry.js";
 import { estimateHumanHours } from "../humanHours.js";
 import { checkpointApplies } from "../work/matching.js";
@@ -1175,7 +1176,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
   let harnessToolMenu: string | undefined;
   if (action === "code_start") {
     const projectConfig = await loadProjectConfig(session.projectPath);
-    const guides = resolveHarnessToolGuides(projectConfig?.appliedHarnesses.map((h) => h.id) ?? []);
+    const guides = resolveHarnessToolGuides((await loadHarnessFeatureState()).enabled ? projectConfig?.appliedHarnesses.map((h) => h.id) ?? [] : []);
     harnessToolMenu = renderToolMenu(guides);
   }
 

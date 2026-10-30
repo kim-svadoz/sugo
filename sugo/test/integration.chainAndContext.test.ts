@@ -9,6 +9,7 @@ import { handleSugoGetProjectContext } from "../src/tools/sugoGetProjectContext.
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 import { handleSugoRecordTestEvidence } from "../src/tools/sugoRecordTestEvidence.js";
 import { handleSugoValidate } from "../src/tools/sugoValidate.js";
+import { saveHarnessFeatureState } from "../src/harness/featureState.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
@@ -139,6 +140,24 @@ describe("sugo_get_project_context", () => {
     expect(result.data.rules).toHaveLength(1);
     expect(result.data.rules[0].content).toContain("팀 전용 규칙");
     expect(result.data.harnesses.some((h: { id: string }) => h.id === "lang/typescript")).toBe(true);
+  });
+
+  it("하네스를 끄면 Sugo 하네스만 컨텍스트에서 제외하고 사용자 체크포인트는 유지한다", async () => {
+    writeFileSync(join(projectDir, "package.json"), JSON.stringify({ dependencies: { react: "^18.0.0" } }));
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    await call(handleSugoAdd, { projectPath: projectDir });
+    mkdirSync(join(projectDir, ".claude", "rules", "backend"), { recursive: true });
+    writeFileSync(join(projectDir, ".claude", "rules", "backend", "checkpoint.md"), "# 사용자 체크포인트");
+    await saveHarnessFeatureState({ enabled: false });
+
+    const result = await call(handleSugoGetProjectContext, { projectPath: projectDir });
+
+    expect(result.data.harnessEnabled).toBe(false);
+    expect(result.data.claudeMd).toBeNull();
+    expect(result.data.harnesses).toEqual([]);
+    expect(result.data.harnessTools.guides).toEqual([]);
+    expect(result.data.rules.some((rule: { content: string }) => rule.content.includes("사용자 체크포인트"))).toBe(true);
+    expect(result.data.rules.some((rule: { content: string }) => rule.content.includes("Sugo 기본 하네스"))).toBe(false);
   });
 
   it("changedFiles를 주면 그 파일에 해당하는 하네스만 싣는다(폴리글랏 실배선)", async () => {

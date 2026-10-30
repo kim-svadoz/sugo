@@ -68,6 +68,8 @@ process.env.SUGO_WEEKLY_ENGINE = join(pluginRoot, "weekly");
 // Weekly 데이터도 Console과 같은 HOME을 쓴다. 임시 HOME으로 띄운 Console이 사용자의 ~/.weekly를 건드리지 않게 한다.
 process.env.WEEKLY_HOME ??= join(sugoHome, ".weekly");
 process.env.SUGO_INTEGRATION_FEATURES_PATH ??= join(sugoDir, "integration-features.json");
+process.env.SUGO_HARNESS_FEATURE_PATH ??= join(sugoDir, "harness-feature.json");
+process.env.SUGO_HARNESS_FEATURE_ENGINE ??= join(pluginRoot, "dist", "dashboard-harness-feature.mjs");
 
 const { createApp } = await import("./index.js");
 const { bootstrapLocalDashboard } = await import("./localBootstrap.js");

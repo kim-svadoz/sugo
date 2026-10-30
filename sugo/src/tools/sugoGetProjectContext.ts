@@ -9,6 +9,7 @@ import { buildClaudeRuleFile } from "../harness/rulesFile.js";
 import { mcpAllowPatterns, renderToolMenu, resolveHarnessToolGuides } from "../harness/toolRegistry.js";
 import { currentGitBranch, featureBranchName } from "../gitBranch.js";
 import { readTodoSpec, todoSpecPath } from "../todoSpec.js";
+import { loadHarnessFeatureState } from "../harness/featureState.js";
 
 export const sugoGetProjectContextInputSchema = {
   projectPath: z.string().describe("컨텍스트를 로드할 프로젝트 절대경로"),
@@ -73,7 +74,8 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
   const args = SugoGetProjectContextArgs.parse(rawArgs);
   const { projectPath, changedFiles } = args;
 
-  const claudeMd = await readIfExists(join(projectPath, "sugo", "CLAUDE.md"));
+  const harnessEnabled = (await loadHarnessFeatureState()).enabled;
+  const claudeMd = harnessEnabled ? await readIfExists(join(projectPath, "sugo", "CLAUDE.md")) : null;
   const config = await loadProjectConfig(projectPath);
   const registryEntry = await findRegistryEntry(projectPath);
 
@@ -85,7 +87,7 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
     : null;
 
   const loaded: { id: string; harnessMd: string }[] = [];
-  if (config) {
+  if (config && harnessEnabled) {
     for (const applied of config.appliedHarnesses) {
       const content = await readIfExists(join(projectPath, "sugo", "harness", applied.id, "harness.md"));
       if (content !== null) loaded.push({ id: applied.id, harnessMd: content });
@@ -100,7 +102,7 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
   );
   const harnesses = loaded.filter((h) => routing.selected.includes(h.id));
 
-  const sugoManagedRuleFiles = new Set(loaded.map((h) => basename(buildClaudeRuleFile(h.id, "").relPath)));
+  const sugoManagedRuleFiles = new Set((config?.appliedHarnesses ?? []).map((h) => basename(buildClaudeRuleFile(h.id, "").relPath)));
   const rules = await readRulesDir(join(projectPath, ".claude", "rules"), sugoManagedRuleFiles);
 
   // ── 하네스 도구 디스패치: 적용된 하네스에 매칭되는 하네스 전용 MCP 도구 안내를 실어준다.
@@ -119,6 +121,7 @@ export async function handleSugoGetProjectContext(rawArgs: unknown) {
     ok: true,
     projectPath,
     registered: !!config,
+    harnessEnabled,
     workspace: registryEntry?.workspace ?? null,
     checkpointSync: {
       attempted: !!registryEntry?.workspace,
