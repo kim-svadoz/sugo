@@ -68,14 +68,13 @@ export function ProjectManagementPanel() {
                 {domains.map((name) => { const active = activeDomain === name; return <button key={name} type="button" aria-pressed={active} onClick={() => { setDomain(name); setMode(null); }} className={`flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition ${active ? "bg-cyan-300/[0.08] text-cyan-50 shadow-[inset_3px_0_0_rgba(103,232,249,0.9)]" : "text-[var(--color-text-muted)] hover:bg-white/[0.025] hover:text-[var(--color-text)]"}`}><strong className="truncate text-sm">{name}</strong><span className="shrink-0 font-mono text-[10px] text-[var(--color-text-dim)]">{byDomain.get(name)?.length ?? 0}</span></button>; })}
               </nav>
               <section aria-label="선택한 도메인의 프로젝트" className="p-5">
-                <div className="flex items-center justify-between gap-3 border-b border-white/[0.07] pb-3"><div><span className="font-mono text-[10px] tracking-[0.14em] text-cyan-300">WORK DOMAIN</span><strong className="mt-1 block text-base text-[var(--color-text)]">{activeDomain}</strong></div><span className="text-[11px] text-[var(--color-text-dim)]">프로젝트 {domainProjects.length}개</span></div>
                 <div className="divide-y divide-white/[0.06]">
                   {domainProjects.map((project) => {
                     const active = mode?.path === project.project_path ? mode.kind : null;
                     return <div key={project.project_path} className="py-3">
                       <div className="flex items-center gap-3">
                         <span className="grid h-8 w-8 shrink-0 place-items-center bg-cyan-300/[0.05] text-cyan-200"><FolderGit2 size={14} /></span>
-                        <div className="min-w-0 flex-1"><div className="truncate font-mono text-xs text-[var(--color-text)]">{projectName(project.project_path)}</div><div className="mt-0.5 truncate font-mono text-[10px] text-[var(--color-text-dim)]">{project.project_path}</div></div>
+                        <span title={project.project_path} className="min-w-0 flex-1 truncate font-mono text-xs text-[var(--color-text)]">{projectName(project.project_path)}</span>
                         <button type="button" disabled={busy} onClick={() => open(project.project_path, "move")} className="settings-action settings-action-secondary settings-action-compact gap-1"><FolderPen size={12} />경로 변경</button>
                         <button type="button" disabled={busy} onClick={() => open(project.project_path, "remove")} className="settings-action settings-action-danger settings-action-compact gap-1"><Trash2 size={12} />제거</button>
                       </div>
