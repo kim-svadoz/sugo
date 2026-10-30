@@ -9,10 +9,8 @@ import {
   Gauge,
   GitBranch,
   History,
-  LayoutGrid,
   Package,
   Plus,
-  Rows3,
   Calendar,
   CheckCircle2,
   ChevronRight,
@@ -35,7 +33,7 @@ import { Modal } from "../components/Modal.js";
 import { LoadingSpinner, EmptyState } from "../components/StatusViews.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
 import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
-import { FloorTaskHeader, WorkFloor } from "../components/WorkFloor.js";
+import { FloorTaskHeader, WorkFloor, WorkFloorPreview } from "../components/WorkFloor.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
@@ -193,7 +191,6 @@ export function Sessions() {
     </span>
   </>;
   const [activeTab, setActiveTab] = useState<TabType>("repositories");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<"all" | "recent">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [inspectorPage, setInspectorPage] = useState(0);
@@ -611,10 +608,6 @@ export function Sessions() {
             <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 text-[12.5px]">
               {([['all', '전체 도메인'], ['recent', '최근 활동 30일']] as const).map(([f, label]) => <button key={f} onClick={() => setStatusFilter(f)} className={cn("rounded-md px-2.5 py-1 transition-colors", statusFilter === f ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")}>{label}</button>)}
             </div>
-            <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5">
-              <button onClick={() => setViewMode("grid")} className={cn("rounded-md p-1.5", viewMode === "grid" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")} title="카드로 보기"><LayoutGrid size={15} /></button>
-              <button onClick={() => setViewMode("list")} className={cn("rounded-md p-1.5", viewMode === "list" ? "bg-cyan-500/15 text-cyan-200" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]")} title="목록으로 보기"><Rows3 size={15} /></button>
-            </div>
             <button onClick={() => navigate('/settings?section=projects&register=1')} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 px-3 py-1.5 text-[12.5px] font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/10"><Plus size={14} /> 프로젝트 등록</button>
           </div>
         </div>
@@ -705,12 +698,11 @@ export function Sessions() {
             );
           })}
         </div>
-      ) : viewMode === "grid" ? (
-        <div className="workspace-card-grid grid shrink-0 grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+      ) : (
+        <div className="workspace-control-grid grid shrink-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {filteredWorkspaces.map((ws) => {
             const isSel = selectedWorkspace === ws.name;
             const st = statusOf(ws);
-            const h = healthOf(ws);
             return (
               <div
                 key={ws.name}
@@ -722,56 +714,36 @@ export function Sessions() {
                   if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
                 }}
                 className={cn(
-                  "ck-card workspace-command-card flex cursor-pointer flex-col justify-between rounded-xl border border-[var(--color-border)] p-2.5 transition-[opacity,filter,background-color,transform,box-shadow] duration-200",
+                  "ck-card workspace-control-card group flex min-h-[190px] cursor-pointer flex-col overflow-hidden rounded-xl border border-[var(--color-border)] transition-[opacity,filter,background-color,transform,box-shadow] duration-200",
                   WORKSPACE_CARD_FOCUS_CLASSES,
                   workspaceCardEmphasis(isSel, selectedWorkspace !== null),
                   isSel && "workspace-command-card--selected",
                 )}
               >
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full ck-pulse-dot", st.dot)} />
-                      <h3 className="truncate font-mono text-sm font-bold text-white">{ws.name}</h3>
-                    </div>
-                    <span className={cn("shrink-0 rounded-md border px-2 py-1 text-[10.5px] font-semibold", st.pill)}>
-                      {st.text}
-                    </span>
+                <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] px-3 py-2.5">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", activeOf(ws) && "ck-pulse-dot", st.dot)} />
+                    <h3 className="truncate font-mono text-[13px] font-bold text-white">{ws.name}</h3>
                   </div>
-                  {h !== null && (
-                    <div className="mt-1.5 rounded-lg border border-[var(--color-border)] bg-slate-950/60 px-2 py-1.5 text-[11px]">
-                      <span className="mr-2 text-[var(--color-text-muted)]">작업 진행</span>
-                      <span
-                        className={cn(
-                          "font-bold",
-                          h >= 90 ? "text-emerald-400" : h >= 50 ? "text-amber-400" : "text-rose-400",
-                        )}
-                      >
-                        {ws.roadmapDoneCount ?? 0}/{ws.roadmapCount} 완료 · {h}%
-                      </span>
-                    </div>
-                  )}
-                  {(ws.attentionCount ?? 0) > 0 ? (
-                    <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-amber-300" title={`${ws.attentionCount}개의 작업에 사람의 확인이 필요합니다`}>
-                      <AlertTriangle size={13} /> {ws.attentionLabel ?? `확인 필요 ${ws.attentionCount}건`}
-                    </div>
-                  ) : activeOf(ws) ? (
-                    <div className="mt-2 text-xs font-medium text-cyan-300">작업 {ws.activeTaskCount}개 진행 중</div>
-                  ) : null}
+                  <span className={cn("shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold", st.pill)}>{st.text}</span>
                 </div>
-                <div className="mt-2 flex flex-nowrap items-center gap-2 border-t border-[var(--color-border)] pt-2" aria-label="워크스페이스 도구">
+                <div className="relative min-h-0 flex-1 bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,.055),transparent_55%)] px-2 pb-1 pt-1">
+                  <WorkFloorPreview workspace={ws.name} />
+                </div>
+                <div className="flex flex-nowrap items-center justify-between gap-2 border-t border-white/[0.06] px-3 py-2" aria-label="워크스페이스 도구">
+                  <span className="truncate text-[10.5px] text-slate-500">{st.desc}</span>
+                  <div className="flex shrink-0 items-center gap-1.5">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedWorkspace(ws.name);
                         setCheckpointModal(ws.name);
                       }}
-                      className="group inline-flex min-w-0 flex-none items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/[0.07] px-2.5 py-1.5 text-left outline-none transition-colors hover:border-amber-400/50 hover:bg-amber-500/[0.13] focus-visible:bg-amber-500/[0.16]"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-500/25 bg-amber-500/[0.06] text-amber-300 outline-none transition-colors hover:border-amber-400/50 hover:bg-amber-500/[0.13]"
                       title={WORKSPACE_RULES_TOOL.workspaceDescription}
                     >
                       <Shield size={14} className="shrink-0 text-amber-300" />
-                      <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-slate-100">{WORKSPACE_RULES_TOOL.label}</span>
-                      <span className="shrink-0 rounded-md bg-amber-400/10 px-1.5 py-0.5 font-mono text-[10px] text-amber-300">{ws.checkpointCount}</span>
+                      <span className="sr-only">{WORKSPACE_RULES_TOOL.label}</span>
                     </button>
                     {(ws.roadmapCount ?? 0) > 0 && (
                       <button
@@ -779,47 +751,15 @@ export function Sessions() {
                           e.stopPropagation();
                           setAgentCanvasModal(ws.name);
                         }}
-                        className="group inline-flex min-w-0 flex-none items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/[0.07] px-2.5 py-1.5 text-left outline-none transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/[0.13] focus-visible:bg-cyan-500/[0.16]"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-cyan-500/25 bg-cyan-500/[0.06] text-cyan-300 outline-none transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/[0.13]"
                         title={AI_WORK_STATUS_TOOL.description}
                       >
                         <Bot size={14} className="shrink-0 text-cyan-300" />
-                        <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-slate-100">{AI_WORK_STATUS_TOOL.label}</span>
+                        <span className="sr-only">{AI_WORK_STATUS_TOOL.label}</span>
                       </button>
                     )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* Compact List — 단일 행 */
-        <div className="ck-scroll max-h-[360px] space-y-1 overflow-auto pr-1">
-          {filteredWorkspaces.map((ws) => {
-            const isSel = selectedWorkspace === ws.name;
-            const st = statusOf(ws);
-            return (
-              <div
-                key={ws.name}
-                role="button"
-                tabIndex={0}
-                aria-pressed={isSel}
-                onClick={() => setSelectedWorkspace(isSel ? null : ws.name)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
-                }}
-                className={cn(
-                  "ck-card flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--color-border)] px-4 py-2.5 transition-[opacity,filter,background-color] duration-200",
-                  WORKSPACE_CARD_FOCUS_CLASSES,
-                  workspaceCardEmphasis(isSel, selectedWorkspace !== null),
-                )}
-              >
-                <span className={cn("h-2 w-2 shrink-0 rounded-full ck-pulse-dot", st.dot)} />
-                <span className="w-48 shrink-0 truncate font-mono text-[13px] font-semibold tracking-[-0.01em] text-slate-100">{ws.name}</span>
-                <span className={cn("shrink-0 rounded-md border px-2 py-1 text-[10.5px] font-semibold", st.pill)}>
-                  {st.text}
-                </span>
-                <div className="flex-1">{renderCounts(ws)}</div>
-                {renderVitals(ws)}
               </div>
             );
           })}

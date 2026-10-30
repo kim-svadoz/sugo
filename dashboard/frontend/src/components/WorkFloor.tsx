@@ -232,6 +232,50 @@ function Lane({ lane, now }: { lane: FloorLane; now: number }) {
   </div>;
 }
 
+/** 도메인 선택 보드용 축소 작업장. 전체 작업장과 같은 소품·작업자·상태 계산을 사용한다. */
+export function WorkFloorPreview({ workspace }: { workspace: string }) {
+  const all = useActivityStream(workspace);
+  const now = Date.now();
+  const lanes = selectFloorLanes(all.filter((event) => event.workspace_name === workspace), now);
+  const lane = lanes[0];
+
+  if (!lane) {
+    return <svg viewBox="0 0 960 154" preserveAspectRatio="xMidYMid meet" className="block h-full w-full" role="img" aria-label={`${workspace} · 작업 기록 대기`}>
+      <rect x="0" y={FLOOR_Y} width="960" height="10" rx="3" fill="#0f172a" />
+      <g opacity="0.38" style={{ filter: "grayscale(1)" }}>
+        {FLOOR_STATIONS.slice(0, -1).map((item, step) => <path key={item.id} d={`M${benchX(step) + 74} ${FLOOR_Y + 5} H${benchX(step + 1) - 26}`} stroke="#334155" strokeWidth="2" strokeDasharray="5 5" />)}
+        {FLOOR_STATIONS.map((item, step) => <StationProp key={item.id} id={item.id} x={benchX(step)} y={FLOOR_Y} working={false} />)}
+      </g>
+      <g style={{ transform: `translate(${benchX(0) - 24}px, ${FLOOR_Y}px)` }}><BlockPerson role="main" className="wk--resting wk--at-order" leftHand={<Mug />} /></g>
+      {FLOOR_STATIONS.map((item, step) => <text key={item.id} x={benchX(step) + 26} y="153" textAnchor="middle" fontSize="11" fontWeight="600" fill="#64748b">{item.label}</text>)}
+    </svg>;
+  }
+
+  const { state } = lane;
+  const idle = lanes.every((item) => isFloorIdle(item.state, now));
+  const index = Math.max(0, FLOOR_STATIONS.findIndex((station) => station.id === state.station));
+  const poseClass = `wk--${idle ? "resting" : state.activity} wk--at-${state.station}`;
+
+  return <svg viewBox="0 0 960 154" preserveAspectRatio="xMidYMid meet" className="block h-full w-full" role="img" aria-label={`${workspace} · ${idle ? "새 작업 대기" : headlineOf(lane)}`}>
+    <rect x="0" y={FLOOR_Y} width="960" height="10" rx="3" fill="#0f172a" />
+    {FLOOR_STATIONS.slice(0, -1).map((item, step) => <path key={item.id} d={`M${benchX(step) + 74} ${FLOOR_Y + 5} H${benchX(step + 1) - 26}`} stroke={!idle && state.passed.includes(item.id) ? C.emerald : "#334155"} strokeWidth="2" strokeDasharray="5 5" opacity={idle ? 0.45 : 1} />)}
+    <g opacity={idle ? 0.38 : 1} style={idle ? { filter: "grayscale(1)" } : undefined}>
+      {FLOOR_STATIONS.map((item, step) => {
+        const active = !idle && item.id === state.station;
+        return <g key={item.id}>
+          {active && <ellipse cx={benchX(step) + 26} cy={FLOOR_Y + 4} rx="62" ry="7" fill={state.activity === "waiting" ? C.violet : C.cyan} opacity="0.16" />}
+          <StationProp id={item.id} x={benchX(step)} y={FLOOR_Y} working={active && (state.activity === "working" || state.activity === "celebrating")} waiting={active && state.activity === "waiting"} />
+          {!idle && state.passed.includes(item.id) && <g><circle cx={benchX(step) + 60} cy={FLOOR_Y - 104} r="7" fill={C.emerald} /><path d={`M${benchX(step) + 57} ${FLOOR_Y - 104} l2.2 2.3 l4.2 -4.6`} stroke="#0f172a" strokeWidth="1.8" fill="none" /></g>}
+        </g>;
+      })}
+    </g>
+    <g className="wk-mover" style={{ transform: `translate(${benchX(idle ? 0 : index) - 24}px, ${FLOOR_Y}px)` }}>
+      <BlockPerson role="main" className={poseClass} rightHand={idle ? undefined : heldItem(state.activity, state.station)} leftHand={idle ? <Mug /> : undefined} />
+    </g>
+    {FLOOR_STATIONS.map((item, step) => <text key={item.id} x={benchX(step) + 26} y="153" textAnchor="middle" fontSize="11" fontWeight="600" fill={!idle && item.id === state.station ? "#a5f3fc" : "#64748b"}>{item.label}</text>)}
+  </svg>;
+}
+
 /** Workspaces의 코드 작업 흐름. 같은 도메인에서 동시에 진행 중인 작업은 작업별 레인으로 나눈다. */
 export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, onIdleChange }: { workspace: string; selectedTaskKey?: string | null; onSelectedTaskChange?: (taskKey: string) => void; onIdleChange?: (idle: boolean) => void }) {
   const all = useActivityStream(workspace);

@@ -13,6 +13,10 @@ describe("도메인 목록 표현", () => {
     expect(source).toContain("작업 이력 검색");
     expect(source).toContain("전체 도메인");
     expect(source).toContain("프로젝트 등록");
+    expect(source).toContain("<WorkFloorPreview workspace={ws.name}");
+    expect(source).toContain("xl:grid-cols-3 2xl:grid-cols-4");
+    expect(source).not.toContain("카드로 보기");
+    expect(source).not.toContain("목록으로 보기");
   });
 
   it("목록의 수치가 자체적으로 의미를 드러낸다", () => {
