@@ -604,7 +604,7 @@ export function SchedulePage() {
               ) : (
                 <div className="space-y-7">
                   {agenda.map((group, index) => (
-                    <section key={group.id} aria-labelledby={`agenda-${group.id}`}>
+                    <section key={group.id} aria-labelledby={`agenda-${group.id}`} className="aurora-card rounded-2xl border px-4 pb-4 pt-3.5">
                       <div className="mb-[6px] flex items-center gap-2.5">
                         <span className="font-mono text-[16px] font-semibold tracking-[0.1em] text-slate-500">
                           {String(index + 1).padStart(2, "0")}
@@ -625,8 +625,9 @@ export function SchedulePage() {
                               onKeyDown={(event) => {
                                 if ((event.key === "Enter" || event.key === " ") && spec) openSpec(spec);
                               }}
-                              style={style}
-                              className="surface-card group flex h-[92px] items-center gap-3 rounded-xl border px-4 py-3 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_32px_-14px_rgba(0,0,0,0.75)] active:translate-y-0"
+                              // 오로라 영역 위의 유리 카드. 도메인 색은 왼쪽 막대(style)에만 남긴다.
+                              style={{ ...style, backgroundColor: "rgba(7, 12, 22, 0.55)" }}
+                              className="group flex h-[92px] items-center gap-3 overflow-hidden rounded-xl border px-4 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-[6px] transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_32px_-14px_rgba(0,0,0,0.75)] active:translate-y-0"
                             >
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
