@@ -291,6 +291,13 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
   animation: stage-drift 14s ease-in-out infinite alternate;
   pointer-events: none;
 }
+/* Weekly 리더의 본문 카드. 상태 카드와 같은 남색 표면이지만 흐르는 빛 없이 정적으로 둔다(카드가 여러 장이라). */
+.panel-card {
+  border-color: rgba(165, 243, 252, 0.09);
+  background: radial-gradient(120% 140% at 0% 0%, rgba(45, 212, 191, 0.06), transparent 50%), linear-gradient(180deg, rgba(16, 29, 48, 0.9), rgba(8, 15, 28, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 18px 36px -26px rgba(0, 0, 0, 0.85);
+}
+
 /* 가이드 화면 머리 영역(스킬 조직도, 플레이북 목적 고르기)의 오로라 띠. 투명한 결은 두고 청록에서 보라로 흐르는 빛을 깐다. */
 .aurora-card {
   position: relative;
