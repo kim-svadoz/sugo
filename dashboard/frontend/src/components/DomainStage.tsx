@@ -1,5 +1,6 @@
 import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, ClipboardList, Code2, FlaskConical, GitCommitHorizontal, ShieldCheck, UserCheck } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { apiJson } from "../api/client.js";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { stageHeadline, type StageTone } from "../lib/domainPulse.js";
@@ -55,6 +56,22 @@ function Journey({ lane, tone }: { lane?: FloorLane; tone: StageTone }) {
   </ol>;
 }
 
+/** 프로젝트 경로가 없는 예전 기록의 작업을 feature 폴더로 프로젝트에 잇는다. 찾지 못한 작업은 비워 둔다. */
+function useTaskProjects(workspace: string, taskNames: readonly string[]): Readonly<Record<string, string>> {
+  const [found, setFound] = useState<Record<string, string>>({});
+  const key = taskNames.join(",");
+  useEffect(() => {
+    if (key === "") return;
+    let cancelled = false;
+    apiJson<{ projects: Record<string, string> }>(`/api/workspaces/${encodeURIComponent(workspace)}/task-projects?tasks=${encodeURIComponent(key)}`)
+      .then((res) => { if (!cancelled) setFound(res.projects); })
+      // 찾지 못하면 프로젝트명 없이 시각만 보여 준다. 카드의 다른 정보는 그대로 쓸 수 있다.
+      .catch(() => { if (!cancelled) setFound({}); });
+    return () => { cancelled = true; };
+  }, [workspace, key]);
+  return found;
+}
+
 /**
  * 도메인 관리의 상태 카드. 선택한 도메인에서 지금 무슨 일이 있는지 한 문장으로 말하고,
  * 그 작업이 거친 단계를 여정으로 보여 준다. 여러 작업이 동시에 진행되면 카드 안에서 넘겨 본다.
@@ -82,8 +99,10 @@ export function DomainStage({ workspace, projectPaths, selectedTaskKey, onSelect
   const headline = stageHeadline(lane);
   const tone = TONE[headline.tone];
   const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, specs ?? []) : null;
+  const unresolved = useMemo(() => lanes.filter((item) => !item.projectPath).map((item) => item.name), [lanes]);
+  const taskProjects = useTaskProjects(workspace, unresolved);
   const baseName = (path: string) => path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
-  const projectName = title?.project ?? (lane?.projectPath ? baseName(lane.projectPath) : projectPaths.length === 1 ? baseName(projectPaths[0]) : null);
+  const projectName = title?.project ?? (lane?.projectPath ? baseName(lane.projectPath) : lane && taskProjects[lane.name] ? baseName(taskProjects[lane.name]) : projectPaths.length === 1 ? baseName(projectPaths[0]) : null);
   const move = (delta: number) => onSelectedTaskChange(lanes[(index + delta + lanes.length) % lanes.length].key);
 
   return <section className={cn("ck-stage-in rounded-2xl border px-5 py-4 transition-colors duration-500", tone.card)} aria-label={`${workspace} 상태`}>

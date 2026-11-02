@@ -3,6 +3,7 @@ import { requireHumanSession } from "../auth/session.js";
 import { changeHumanApproval, readApprovalEvents } from "../services/humanCompletion.js";
 import express, { Router } from "express";
 import { roadmapCounts, roadmapIssues } from "../services/roadmapGraph.js";
+import { resolveTaskProjects } from "../services/taskProjectService.js";
 import type { DbClient } from "../db/client.js";
 import { validateBody } from "../schemas/validate.js";
 import { requireUser } from "../auth/requireUser.js";
@@ -188,6 +189,14 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     const userId = requireUserId(req, res);
     if (!userId) return;
     res.json({ tasks: await getTasks(db, userId, req.params.name) });
+  });
+
+  // 프로젝트 경로가 없는 예전 활동 기록의 작업이 어느 프로젝트에 속하는지 feature 폴더로 찾는다(도메인 상태 카드용).
+  router.get("/:name/task-projects", async (req, res) => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const tasks = String(req.query.tasks ?? "").split(",").map((task) => task.trim()).filter(Boolean).slice(0, 20);
+    res.json({ projects: await resolveTaskProjects(db, userId, req.params.name, tasks) });
   });
 
   // RoadmapTab이 `const { counts, issues } = roadmap`으로 받는다. 프론트에서 세지
