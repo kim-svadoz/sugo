@@ -654,10 +654,10 @@ export function Sessions() {
           })}
         </div>
       ) : (
-        <div className="focus-stack ck-stage-in grid min-h-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[rgba(8,14,24,.72)] xl:grid-cols-[240px_minmax(0,1fr)]">
+        <div className="focus-stack ck-stage-in grid min-h-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[rgba(8,14,24,.72)] xl:grid-cols-[280px_minmax(0,1fr)]">
           <nav aria-label="도메인 선택" className="border-b border-[var(--color-border)] p-2 xl:border-b-0 xl:border-r xl:p-2.5">
             <div className="ck-scroll flex gap-1.5 overflow-x-auto xl:max-h-[690px] xl:flex-col xl:overflow-y-auto xl:overflow-x-hidden">
-              {filteredWorkspaces.map((ws, index) => {
+              {filteredWorkspaces.map((ws) => {
                 const isSel = selectedWorkspace === ws.name;
                 const st = statusOf(ws);
                 return (
@@ -667,16 +667,12 @@ export function Sessions() {
                     aria-current={isSel ? "true" : undefined}
                     onClick={() => setSelectedWorkspace(ws.name)}
                     className={cn(
-                      "group flex min-w-[220px] items-center gap-2 rounded-lg px-3 py-2.5 text-left outline-none transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full",
+                      "group flex min-w-[248px] items-center gap-3 rounded-lg px-3 py-3 text-left outline-none transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full",
                       isSel && "bg-cyan-300/[0.09] text-white ring-1 ring-inset ring-cyan-300/20",
                     )}
                   >
-                    <span className={cn("h-2 w-2 shrink-0 rounded-full", activeOf(ws) && "ck-pulse-dot", st.dot)} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-mono text-[13px] font-semibold text-slate-200" title={ws.name}>{ws.name}</span>
-                      <span className="mt-0.5 block truncate text-[10px] text-slate-500">{st.text}</span>
-                    </span>
-                    <span className="font-mono text-[10px] text-slate-600">{String(index + 1).padStart(2, "0")}</span>
+                    <span className={cn("h-7 w-1 shrink-0 rounded-full", activeOf(ws) && "ck-pulse-dot", st.dot)} aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate font-mono text-sm font-semibold text-slate-200" title={ws.name}>{ws.name}</span>
                   </button>
                 );
               })}

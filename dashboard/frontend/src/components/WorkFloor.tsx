@@ -1,5 +1,5 @@
-import { ChevronLeft, ChevronRight, ListTree, Pin } from "lucide-react";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { BookOpen, Check, ChevronLeft, ChevronRight, ClipboardList, Code2, FlaskConical, GitCommitHorizontal, ListTree, Pin, ShieldCheck, UserCheck } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { resolveTaskTitle } from "../lib/taskTitle.js";
@@ -88,41 +88,6 @@ export function StationProp({ id, x, y, working, waiting = false }: { id: FloorS
   }
 }
 
-/** 도메인에 진행 중인 작업이 없을 때: 파이프라인은 꺼 두고, 작업자는 시작점에서 다음 요청을 확인한다. */
-function IdleFloor() {
-  const dispatchX = 48;
-  const pipelineOffset = 205;
-  const pipelineScale = 0.84;
-  return <svg viewBox="0 0 1200 174" preserveAspectRatio="xMidYMid meet" className="mt-1 block max-h-[112px] w-full" role="img" aria-label="진행 중인 파이프라인이 없어 작업 배정 데스크에서 다음 요청을 기다리는 중">
-    <rect x="0" y={FLOOR_Y} width="1200" height="10" rx="3" fill="#0f172a" />
-    <g transform={`translate(${pipelineOffset} ${FLOOR_Y * (1 - pipelineScale)}) scale(${pipelineScale})`} opacity="0.24" style={{ filter: "grayscale(1)" }}>
-      {FLOOR_STATIONS.slice(0, -1).map((item, step) => <path key={item.id} d={`M${benchX(step) + 74} ${FLOOR_Y + 5} H${benchX(step + 1) - 26}`} stroke="#334155" strokeWidth="2" strokeDasharray="5 5" />)}
-      {FLOOR_STATIONS.map((item, step) => <StationProp key={item.id} id={item.id} x={benchX(step)} y={FLOOR_Y} working={false} />)}
-    </g>
-    {FLOOR_STATIONS.map((item, step) => <text key={item.id} x={pipelineOffset + (benchX(step) + 26) * pipelineScale} y={FLOOR_Y + 30} textAnchor="middle" fontSize="12" fill="#475569">{item.label}</text>)}
-    <path d={`M174 ${FLOOR_Y + 5} H${pipelineOffset + 10}`} stroke={C.cyan} strokeWidth="2" strokeDasharray="3 7" opacity="0.4" />
-    <circle cx="184" cy={FLOOR_Y + 5} r="3" fill={C.cyan} opacity="0.75" className="wk-pass" />
-    <g transform={`translate(${dispatchX} ${FLOOR_Y - 92})`}>
-      <ellipse cx="61" cy="96" rx="70" ry="7" fill={C.cyan} opacity="0.12" />
-      <rect x="0" y="23" width="60" height="38" rx="4" fill="#0f172a" stroke="#164e63" />
-      <rect x="7" y="30" width="46" height="22" rx="2" fill="#082f49" />
-      <circle cx="45" cy="34" r="2.5" fill={C.emerald} className="wk-pass" />
-      <path d="M12 40 H36 M12 46 H29" stroke="#67e8f9" strokeWidth="2" strokeLinecap="round" opacity="0.65" />
-      <rect x="24" y="61" width="12" height="7" rx="1" fill={C.steel} />
-      <rect x="2" y="68" width="98" height="8" rx="2" fill={C.bench} />
-      <rect x="9" y="76" width="6" height="20" fill="#172033" /><rect x="86" y="76" width="6" height="20" fill="#172033" />
-      <g transform="translate(104 94)"><BlockPerson role="main" seated className="wk--resting" rightHand={<rect x="14" y="-48" width="15" height="12" rx="1" fill={C.paper} />} /></g>
-    </g>
-    <text x="109" y={FLOOR_Y + 30} textAnchor="middle" fontSize="12" fontWeight="600" fill="#a5f3fc">작업 배정 대기</text>
-    <text x="720" y="24" textAnchor="middle" fontSize="11" fill="#475569">진행 중인 파이프라인 없음</text>
-  </svg>;
-}
-
-function lastCompletionLabelOf(lastAt: number | undefined, now: number): string {
-  if (lastAt === undefined) return "작업 기록 없음";
-  return `마지막 완료 ${relativeTime(lastAt, now)}`;
-}
-
 function headlineOf(lane: FloorLane): string {
   const { state } = lane;
   const station = FLOOR_STATIONS.find((item) => item.id === state.station)!;
@@ -131,40 +96,6 @@ function headlineOf(lane: FloorLane): string {
   if (state.live) return `${station.label} 진행 중`;
   if (state.activity === "paused") return `${station.label}에서 멈춤`;
   return "새 작업 대기";
-}
-
-type WorksiteSignal = "idle" | "working" | "waiting" | "paused" | "complete";
-
-function signalOf(lane: FloorLane): WorksiteSignal {
-  if (lane.state.activity === "waiting") return "waiting";
-  if (lane.state.activity === "paused") return "paused";
-  if (lane.state.activity === "celebrating") return "complete";
-  if (lane.state.live) return "working";
-  return "idle";
-}
-
-const SIGNAL_STYLE: Record<WorksiteSignal, { frame: string; light: string; glow: boolean }> = {
-  idle: { frame: "border-slate-600/70 bg-slate-800/45 text-slate-400", light: "bg-slate-400", glow: false },
-  working: { frame: "border-cyan-400/45 bg-cyan-400/[0.08] text-cyan-200", light: "bg-cyan-300", glow: true },
-  waiting: { frame: "border-violet-400/45 bg-violet-400/[0.08] text-violet-200", light: "bg-violet-300", glow: true },
-  paused: { frame: "border-amber-400/45 bg-amber-400/[0.08] text-amber-200", light: "bg-amber-300", glow: false },
-  complete: { frame: "border-emerald-400/45 bg-emerald-400/[0.08] text-emerald-200", light: "bg-emerald-300", glow: true },
-};
-
-/** 현실의 작업장 간판처럼 도메인 이름 앞에서 현재 운영 상태를 알린다. */
-function WorksiteSign({ signal, label }: { signal: WorksiteSignal; label: string }) {
-  const style = SIGNAL_STYLE[signal];
-  const tooltipId = useId();
-  return <span className="group/worksite-sign relative inline-flex shrink-0">
-    <span className={`relative inline-flex h-6 w-7 items-center justify-center rounded-md border outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-300/60 ${style.frame}`} role="img" tabIndex={0} aria-label={`도메인 작업장 상태: ${label}`} aria-describedby={tooltipId}>
-      <svg viewBox="0 0 20 18" width="17" height="15" aria-hidden="true">
-        <path d="M5 6V3.5h10V6M3.5 6.5h13v8h-13z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-        <path d="M7 10h6M7 12.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.75" />
-      </svg>
-      <span className={`absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-[#0b1220] ${style.light} ${style.glow ? "animate-pulse shadow-[0_0_8px_currentColor]" : ""}`} aria-hidden="true" />
-    </span>
-    <span id={tooltipId} role="tooltip" className="pointer-events-none absolute left-0 top-full z-50 mt-2 translate-y-1 whitespace-nowrap rounded-lg border border-slate-600/80 bg-[#080f1b] px-2.5 py-1.5 text-[11px] font-medium text-slate-100 opacity-0 shadow-xl transition-all group-hover/worksite-sign:translate-y-0 group-hover/worksite-sign:opacity-100 group-focus-within/worksite-sign:translate-y-0 group-focus-within/worksite-sign:opacity-100">현재 상태 · {label}</span>
-  </span>;
 }
 
 function TaskHeader({ title, projectName, at, now, children }: { title: ReturnType<typeof resolveTaskTitle>; projectName: string; at?: number; now: number; children?: ReactNode }) {
@@ -183,55 +114,32 @@ function TaskHeader({ title, projectName, at, now, children }: { title: ReturnTy
   </div>;
 }
 
-function Lane({ lane, now }: { lane: FloorLane; now: number }) {
-  const { state } = lane;
-  const index = FLOOR_STATIONS.findIndex((station) => station.id === state.station);
-  const [walking, setWalking] = useState(false);
-  const previous = useRef(state.station);
-  useEffect(() => {
-    if (previous.current === state.station) return;
-    previous.current = state.station;
-    setWalking(true);
-    const timer = window.setTimeout(() => setWalking(false), 1600);
-    return () => window.clearTimeout(timer);
-  }, [state.station]);
-  const poseClass = `wk--${state.activity} wk--at-${state.station} ${walking ? "wk--walking" : ""}`;
+const STATION_ICONS: Record<FloorStationId, typeof ClipboardList> = {
+  order: ClipboardList,
+  code: Code2,
+  test: FlaskConical,
+  review: ShieldCheck,
+  confirm: UserCheck,
+  docs: BookOpen,
+  commit: GitCommitHorizontal,
+};
 
-  return <div className="work-floor__lane">
-    <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-      <WorksiteSign signal={signalOf(lane)} label={headlineOf(lane)} />
-      <strong className="shrink-0 text-[13px] text-white">{lane.workspace}</strong>
-      <span className={`shrink-0 text-[11.5px] ${state.activity === "waiting" ? "text-violet-200" : state.live ? "text-cyan-200" : state.activity === "paused" ? "text-amber-200" : "text-slate-500"}`}>· {headlineOf(lane)}</span>
-      {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
-    </div>
-    <div className="mx-auto w-full max-w-[88%]">
-    <svg viewBox="0 0 960 150" preserveAspectRatio="xMidYMid meet" className="mt-1 block max-h-[104px] w-full" role="img" aria-label={`${lane.name} · ${headlineOf(lane)}`}>
-      <rect x="0" y={FLOOR_Y} width="960" height="10" rx="3" fill="#0f172a" />
-      {FLOOR_STATIONS.slice(0, -1).map((item, step) => <path key={item.id} d={`M${benchX(step) + 74} ${FLOOR_Y + 5} H${benchX(step + 1) - 26}`} stroke={state.passed.includes(item.id) ? C.emerald : "#334155"} strokeWidth="2" strokeDasharray="5 5" />)}
-      {FLOOR_STATIONS.map((item, step) => {
-        const active = item.id === state.station;
-        return <g key={item.id} className={`wk-station ${active ? "wk-station--active" : ""}`}>
-          {active && <ellipse cx={benchX(step) + 26} cy={FLOOR_Y + 4} rx="62" ry="7" fill={state.activity === "waiting" ? C.violet : C.cyan} opacity="0.16" />}
-          <StationProp id={item.id} x={benchX(step)} y={FLOOR_Y} working={active && (state.activity === "working" || state.activity === "celebrating")} waiting={active && state.activity === "waiting"} />
-          {state.passed.includes(item.id) && <g><circle cx={benchX(step) + 60} cy={FLOOR_Y - 104} r="7" fill={C.emerald} /><path d={`M${benchX(step) + 57} ${FLOOR_Y - 104} l2.2 2.3 l4.2 -4.6`} stroke="#0f172a" strokeWidth="1.8" fill="none" /></g>}
-        </g>;
-      })}
-      <g className="wk-mover" style={{ transform: `translate(${benchX(index) - 24}px, ${FLOOR_Y}px)` }}>
-        <BlockPerson role="main" className={poseClass} rightHand={heldItem(state.activity, state.station)} leftHand={state.activity === "resting" ? <Mug /> : undefined}
-          extra={state.activity === "waiting" ? <g className="wk-bubble"><rect x="-4" y="-124" width="26" height="20" rx="6" fill={C.violet} /><path d="M2 -104 l-3 6 l8 -6 z" fill={C.violet} /><text x="9" y="-109.5" textAnchor="middle" fontSize="13" fontWeight="700" fill="#0f172a">?</text></g>
-            : state.activity === "paused" ? <g className="wk-bubble"><rect x="-4" y="-124" width="26" height="20" rx="6" fill={C.steel} /><path d="M2 -104 l-3 6 l8 -6 z" fill={C.steel} /><rect x="4" y="-119" width="3.4" height="10" rx="1" fill={C.paper} /><rect x="11" y="-119" width="3.4" height="10" rx="1" fill={C.paper} /></g> : undefined} />
-      </g>
-    </svg>
-    <div className="grid grid-cols-7 gap-1.5">
-      {FLOOR_STATIONS.map((item) => {
-        const last = state.lastAt[item.id];
-        const active = item.id === state.station;
-        return <div key={item.id} title={last ? `${last.message} · ${relativeTime(last.at, now)}` : "이번 차수에 기록 없음"} className={`rounded-md px-1.5 py-1 text-center ${active ? "bg-cyan-300/[0.08] ring-1 ring-inset ring-cyan-300/25" : ""}`}>
-          <div className={`truncate text-[11.5px] font-semibold ${active ? "text-cyan-100" : state.passed.includes(item.id) ? "text-emerald-300" : "text-slate-400"}`}>{item.label}</div>
-          <div className="mt-0.5 truncate font-mono text-[10px] text-slate-500">{last ? relativeTime(last.at, now) : "—"}</div>
+function PipelineStrip({ lane, idle = false }: { lane?: FloorLane; idle?: boolean }) {
+  const state = lane?.state;
+  return <div className="mx-auto w-full max-w-[860px] py-4" role="img" aria-label={lane ? `${lane.workspace} · ${headlineOf(lane)}` : "진행 중인 파이프라인 없음"}>
+    <div className="grid grid-cols-7">
+      {FLOOR_STATIONS.map((station, index) => {
+        const Icon = STATION_ICONS[station.id];
+        const passed = !idle && Boolean(state?.passed.includes(station.id));
+        const active = !idle && state?.station === station.id;
+        return <div key={station.id} className="relative flex min-w-0 flex-col items-center">
+          {index > 0 && <span className={`absolute right-1/2 top-4 h-px w-full ${passed || active ? "bg-emerald-400/45" : "bg-slate-700/70"}`} aria-hidden="true" />}
+          <span className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-lg border transition-colors duration-300 ${active ? "border-cyan-300/60 bg-cyan-300/10 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,.12)]" : passed ? "border-emerald-400/35 bg-emerald-400/[0.08] text-emerald-300" : "border-slate-700/80 bg-slate-900/90 text-slate-600"}`}>
+            {passed ? <Check size={15} strokeWidth={2.4} /> : <Icon size={15} strokeWidth={1.8} />}
+          </span>
+          <span className={`mt-2 truncate text-xs font-medium ${active ? "text-cyan-100" : passed ? "text-emerald-300/80" : "text-slate-500"}`}>{station.label}</span>
         </div>;
       })}
-    </div>
     </div>
   </div>;
 }
@@ -295,22 +203,10 @@ export function WorkFloor({ workspace, selectedTaskKey, onSelectedTaskChange, on
   // 레인이 없을 때(불러오는 중 포함)는 알리지 않는다. 알리면 배치가 바뀌며 다시 마운트되어 빈 상태를 반복한다.
   // 도메인의 모든 작업이 대기 중일 때만 대기 배치로 바꾼다. 다른 작업이 진행 중이면 지난 작업을 골라도 장면을 보여 준다.
   const idle = lanes.length > 0 ? lanes.every((item) => isFloorIdle(item.state, now)) : null;
-  const lastAt = lanes.reduce<number | undefined>((latest, item) => item.state.at !== undefined && (latest === undefined || item.state.at > latest) ? item.state.at : latest, undefined);
   useEffect(() => { if (idle !== null) onIdleChange?.(idle); }, [idle, onIdleChange]);
   if (lanes.length === 0) return <div className="work-floor py-3 text-center text-[12px] text-slate-500">이 도메인에는 아직 작업 기록이 없습니다.</div>;
-  // 작업장 머리는 도메인 상태만 보여 준다. 고른 작업의 제목과 넘김은 아래 최근 작업 요약 카드(FloorTaskHeader)가 맡는다.
-  if (idle) return <div className="work-floor relative pb-1">
-    <div className="flex items-center gap-2.5">
-      <WorksiteSign signal="idle" label="새 작업 대기" />
-      <strong className="text-[13px] text-white">{workspace}</strong>
-      <span className="shrink-0 text-[11.5px] text-cyan-200">· 새 작업 대기</span>
-      <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-400">{lastCompletionLabelOf(lastAt, now)}</span>
-    </div>
-    <div className="mx-auto w-full max-w-[88%]"><IdleFloor /></div>
-  </div>;
-  return <div className="work-floor relative space-y-2 pb-1">
-    <Lane lane={lane} now={now} />
-  </div>;
+  if (idle) return <div className="work-floor"><PipelineStrip idle /></div>;
+  return <div className="work-floor"><PipelineStrip lane={lane} /></div>;
 }
 
 /** 최근 작업 요약 카드 맨 위의 작업 머리. 여러 작업이면 넘겨 보고, 위 작업장 장면도 같은 작업으로 바뀐다. */

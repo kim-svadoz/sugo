@@ -29,24 +29,23 @@ describe("Console 정보 구조", () => {
     expect(workFloor).not.toContain("작업 결과 요약으로 연결");
   });
 
-  it("쉬는 공간을 파이프라인 단계처럼 붙이지 않고 시작점에서 다음 작업 배정을 기다린다", () => {
-    expect(workFloor).toContain("작업 배정 대기");
+  it("작업장 머리의 중복 상태 문구 없이 파이프라인 단계만 보여준다", () => {
     expect(workFloor).toContain("진행 중인 파이프라인 없음");
-    expect(workFloor).toContain("· 새 작업 대기");
-    expect(workFloor).toContain("마지막 완료 ${relativeTime(lastAt, now)}");
+    expect(workFloor).toContain("function PipelineStrip");
+    expect(workFloor).toContain("STATION_ICONS");
+    expect(workFloor).not.toContain("작업 배정 대기");
+    expect(workFloor).not.toContain("· 새 작업 대기");
+    expect(workFloor).not.toContain("마지막 완료 ${relativeTime(lastAt, now)}");
     expect(workFloor).not.toContain("휴게 공간");
     expect(workFloor).not.toContain("째 쉬는 중");
   });
 
-  it("작업장 간판의 상태등으로 대기·진행·확인·중단·완료를 구분한다", () => {
-    expect(workFloor).toContain("function WorksiteSign");
-    expect(workFloor).toContain("도메인 작업장 상태:");
-    for (const signal of ["idle", "working", "waiting", "paused", "complete"]) expect(workFloor).toContain(`${signal}: {`);
-    expect(workFloor).toContain('signal="idle" label="새 작업 대기"');
-    expect(workFloor).toContain("signal={signalOf(lane)}");
-    expect(workFloor).toContain('role="tooltip"');
-    expect(workFloor).toContain("group-hover/worksite-sign:opacity-100");
-    expect(workFloor).toContain("group-focus-within/worksite-sign:opacity-100");
+  it("완료·현재·예정 단계를 선과 아이콘 상태로 구분한다", () => {
+    expect(workFloor).toContain("passed || active");
+    expect(workFloor).toContain("border-cyan-300/60");
+    expect(workFloor).toContain("border-emerald-400/35");
+    expect(workFloor).toContain("border-slate-700/80");
+    expect(workFloor).not.toContain("function WorksiteSign");
   });
 
   it("최근 작업 요약과 Inspector는 같은 상세 행의 높이를 함께 사용한다", () => {
