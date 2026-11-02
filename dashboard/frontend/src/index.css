@@ -270,8 +270,9 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 .ck-scroll::-webkit-scrollbar-thumb:hover { background: rgba(34, 211, 238, 0.4); }
 .ck-scroll::-webkit-scrollbar-track { background: transparent; }
 
-/* 도메인 상태 카드 표면. 배경보다 한 톤 밝은 남색 위에 상태 색 빛(--stage-glow)과 천천히 흐르는 빛을 얹어 배경과 구분한다. */
-.stage-card {
+/* 도메인 상태 카드 표면. 배경보다 한 톤 밝은 남색 위에 상태 색 빛(--stage-glow)과 천천히 흐르는 빛을 얹어 배경과 구분한다.
+   surface-card는 다른 화면의 주요 카드(일정 작업 카드, 최신 주간 리포트)에 같은 표면을 쓴다. */
+.stage-card, .surface-card {
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -281,7 +282,7 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
     linear-gradient(180deg, rgba(16, 29, 48, 0.94), rgba(8, 15, 28, 0.94));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 22px 44px -28px rgba(0, 0, 0, 0.9);
 }
-.stage-card::before {
+.stage-card::before, .surface-card::before {
   content: "";
   position: absolute;
   inset: -30%;
@@ -293,7 +294,7 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
 @keyframes stage-drift { from { transform: translate3d(-8%, -5%, 0); } to { transform: translate3d(8%, 5%, 0); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage-card::before, .ck-pulse-dot, .ck-line-in, .ck-stage-in, .ck-summary-flow, .ck-work-route-dot, .ck-bridge-spark, .wk-zzz { animation: none !important; }
+  .stage-card::before, .surface-card::before, .ck-pulse-dot, .ck-line-in, .ck-stage-in, .ck-summary-flow, .ck-work-route-dot, .ck-bridge-spark, .wk-zzz { animation: none !important; }
   .ck-scan::after { animation: none !important; }
   .command-brief, .workspace-command-card, .workspace-command-card--selected { transform: none !important; }
 }

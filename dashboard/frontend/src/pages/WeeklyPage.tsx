@@ -133,7 +133,7 @@ const monthLabel = (date: string) => `${date.slice(0, 4)}년 ${Number(date.slice
 function LatestWeek({ report, highlighted, onHover, onLeave, onOpen }: { report: WeeklyReportSummary; highlighted: boolean; onHover: (weekId: string) => void; onLeave: () => void; onOpen: (weekId: string, view?: WeeklyDetailView) => void }) {
   const counts = report.counts;
   const stats: Array<[string, number | undefined]> = [["주제", counts?.topics], ["기술 학습", counts?.learnings], ["다음 주", counts?.nextWeek]];
-  return <section aria-label="최근 주간 보고서" onMouseEnter={() => onHover(report.weekId)} onMouseLeave={onLeave} className={cn("overflow-hidden rounded-2xl border bg-[linear-gradient(135deg,rgba(34,211,238,0.07),rgba(15,23,42,0.55)_45%,rgba(139,92,246,0.06))] transition", highlighted ? "border-cyan-400/60" : "border-[var(--color-border)]")}>
+  return <section aria-label="최근 주간 보고서" onMouseEnter={() => onHover(report.weekId)} onMouseLeave={onLeave} className={cn("surface-card rounded-2xl border transition", highlighted ? "border-cyan-400/60" : "border-[var(--color-border)]")}>
     <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-white/[0.06] px-5 py-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><span className="font-mono text-[11px] font-semibold tracking-[0.18em] text-cyan-300">LATEST</span><strong className="font-mono text-[16px] text-white">{report.weekId}</strong><span className="font-mono text-[12px] text-slate-400">{report.start} — {report.end}</span></div>
       <span className="font-mono text-[11px] text-slate-500">생성 {report.generatedAt.slice(0, 10)}</span>

@@ -626,7 +626,7 @@ export function SchedulePage() {
                                 if ((event.key === "Enter" || event.key === " ") && spec) openSpec(spec);
                               }}
                               style={style}
-                              className="group flex h-[92px] items-center gap-3 overflow-hidden rounded-xl border px-4 py-3 text-left transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-white/[0.035] hover:shadow-[0_12px_28px_rgba(0,0,0,0.2)] active:translate-y-0"
+                              className="surface-card group flex h-[92px] items-center gap-3 rounded-xl border px-4 py-3 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_32px_-14px_rgba(0,0,0,0.75)] active:translate-y-0"
                             >
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
