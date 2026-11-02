@@ -11,7 +11,6 @@ import {
   Package,
   Plus,
   Calendar,
-  CheckCircle2,
   ChevronRight,
   FileCode,
   Lightbulb,
@@ -32,7 +31,11 @@ import { Modal } from "../components/Modal.js";
 import { LoadingSpinner, EmptyState } from "../components/StatusViews.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
 import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
-import { FloorTaskHeader, WorkFloor } from "../components/WorkFloor.js";
+import { DomainStage } from "../components/DomainStage.js";
+import { relativeTime } from "../components/WorkFloor.js";
+import { useDomainActivity } from "../hooks/useDomainActivity.js";
+import { domainPulse, groupDomainsByPulse, type DomainTone } from "../lib/domainPulse.js";
+import { selectFloorLanes } from "../lib/workFloor.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
@@ -40,8 +43,6 @@ import { useRoadmap } from "../hooks/useRoadmap.js";
 import { compareRelease, shortCommit, type ReleaseComparison } from "../lib/awsReleasePresentation.js";
 import { presentSteKorean } from "../lib/steKorean.js";
 import { historyContextTitle, historyDisplayDate, historyDisplayTitle } from "../lib/historyPresentation.js";
-import { workspacePulse } from "../lib/operationalPulse.js";
-import { workspaceCommandSummary } from "../lib/experienceModel.js";
 import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
 import { repositoryConnectionBadges, type RepositoryBadgeTone } from "../lib/repositoryConnectionPresentation.js";
 
@@ -138,6 +139,19 @@ const RELEASE_STATE: Record<ReleaseComparison, { label: string; color: string; d
   UNKNOWN: { label: "비교 불가", color: "border-slate-400/30 bg-slate-400/10 text-slate-300", description: "커밋·빌드·이미지 중 비교에 필요한 정보가 부족합니다." },
 };
 
+const DOMAIN_GROUP_TITLE: Record<DomainTone, string> = { waiting: "text-violet-200", live: "text-cyan-200", quiet: "text-slate-500" };
+const DOMAIN_LABEL_TONE: Record<DomainTone, string> = { waiting: "font-semibold text-violet-200", live: "text-cyan-200", quiet: "text-slate-500" };
+
+/** 도메인 상태 점. 확인 대기는 퍼지는 링, 진행 중은 숨 쉬는 점, 조용함은 작은 회색 점이다. */
+function DomainDot({ tone }: { tone: DomainTone }) {
+  if (tone === "quiet") return <span className="mx-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-600" aria-hidden="true" />;
+  const color = tone === "waiting" ? "bg-violet-300" : "bg-cyan-300";
+  return <span className="relative flex h-3 w-3 shrink-0" aria-hidden="true">
+    <span className={cn("absolute inset-0 rounded-full opacity-60", color, tone === "waiting" ? "animate-ping" : "ck-pulse-dot")} />
+    <span className={cn("relative m-auto h-2 w-2 rounded-full", color)} />
+  </span>;
+}
+
 export function Sessions() {
   const { data, loading } = useWorkspaces();
   const navigate = useNavigate();
@@ -160,8 +174,6 @@ export function Sessions() {
   const history = useWorkspaceHistory(selectedWorkspace);
 
   const workspaces = useMemo(() => data ?? [], [data]);
-  const pulse = useMemo(() => workspacePulse(workspaces), [workspaces]);
-  const commandSummary = useMemo(() => workspaceCommandSummary(pulse), [pulse]);
   const isSearchMode = searchQuery.trim().length >= 2;
   const initialSelectionApplied = useRef(false);
 
@@ -191,6 +203,14 @@ export function Sessions() {
     }
     return list;
   }, [workspaces, statusFilter, searchQuery, isSearchMode, searchResults]);
+
+  const domainEvents = useDomainActivity(useMemo(() => filteredWorkspaces.map((ws) => ws.name), [filteredWorkspaces]));
+  const [pulseNow, setPulseNow] = useState(() => Date.now());
+  useEffect(() => { const timer = window.setInterval(() => setPulseNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
+  const domainGroups = useMemo(() => groupDomainsByPulse(filteredWorkspaces.map((ws) => ({
+    ws,
+    pulse: domainPulse(ws, selectFloorLanes(domainEvents.get(ws.name) ?? [], pulseNow)),
+  }))), [filteredWorkspaces, domainEvents, pulseNow]);
 
   /** 검색 모드에서 이 도메인에 걸린 이력만. 인스펙터가 전체 이력 대신 이걸 보여준다. */
   const getSearchResultHistory = useCallback(
@@ -576,27 +596,6 @@ export function Sessions() {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => {
-          if (commandSummary.intent !== "attention") return;
-          const needsAttention = workspaces.find((workspace) => (workspace.attentionCount ?? 0) > 0);
-          if (needsAttention) navigate(`/schedule?reviewWorkspace=${encodeURIComponent(needsAttention.name)}`);
-        }}
-        className={cn(
-          "command-brief ck-stage-in group flex w-full shrink-0 items-center justify-between gap-4 rounded-xl border px-3 py-2 text-left 2xl:px-4 2xl:py-2.5",
-          commandSummary.intent === "attention" ? "border-amber-400/25 bg-amber-400/[0.055]" : "border-[var(--color-border)] bg-[var(--color-surface)]/75",
-          commandSummary.intent === "attention" ? "cursor-pointer hover:border-amber-300/45" : "cursor-default",
-        )}
-      >
-        <span className="flex min-w-0 items-center gap-2.5">
-          <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", commandSummary.intent === "attention" ? "bg-amber-400/12 text-amber-300" : commandSummary.intent === "stable" ? "bg-emerald-400/10 text-emerald-300" : "bg-cyan-400/10 text-cyan-300")}>
-            {commandSummary.intent === "attention" ? <AlertTriangle size={16} /> : commandSummary.intent === "stable" ? <CheckCircle2 size={16} /> : <Activity size={16} />}
-          </span>
-          <span className="min-w-0 text-[13px] font-semibold text-white">{commandSummary.headline}</span>
-        </span>
-        {commandSummary.intent === "attention" && <span className="shrink-0 text-[12px] font-semibold text-amber-200 transition-transform group-hover:translate-x-1">확인할 작업 열기 →</span>}
-      </button>
 
       {/* 도메인 목록 */}
       {filteredWorkspaces.length === 0 ? (
@@ -656,53 +655,62 @@ export function Sessions() {
       ) : (
         <div className="focus-stack ck-stage-in grid min-h-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[rgba(8,14,24,.72)] xl:grid-cols-[280px_minmax(0,1fr)]">
           <nav aria-label="도메인 선택" className="border-b border-[var(--color-border)] p-2 xl:border-b-0 xl:border-r xl:p-2.5">
-            <div className="ck-scroll flex gap-1.5 overflow-x-auto xl:max-h-[690px] xl:flex-col xl:overflow-y-auto xl:overflow-x-hidden">
-              {filteredWorkspaces.map((ws) => {
-                const isSel = selectedWorkspace === ws.name;
-                const st = statusOf(ws);
-                return (
-                  <button
-                    key={ws.name}
-                    type="button"
-                    aria-current={isSel ? "true" : undefined}
-                    onClick={() => setSelectedWorkspace(ws.name)}
-                    className={cn(
-                      "group flex min-w-[248px] items-center gap-3 rounded-lg px-3 py-3 text-left outline-none transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full",
-                      isSel && "bg-cyan-300/[0.07] ring-1 ring-inset ring-cyan-300/20",
-                    )}
-                  >
-                    <span className={cn("h-2 w-2 shrink-0 rounded-full", activeOf(ws) && "ck-pulse-dot", st.dot)} aria-hidden="true" />
-                    <span className={cn("min-w-0 flex-1 truncate font-mono text-[13px] font-medium", isSel ? "text-slate-200" : "text-slate-400 group-hover:text-slate-300")} title={ws.name}>{ws.name}</span>
-                  </button>
-                );
-              })}
+            <div className="ck-scroll flex gap-1.5 overflow-x-auto xl:max-h-[690px] xl:flex-col xl:gap-0 xl:overflow-y-auto xl:overflow-x-hidden">
+              {domainGroups.map((group) => (
+                <div key={group.tone} className="flex gap-1.5 xl:mb-3 xl:flex-col xl:gap-0.5 xl:last:mb-0">
+                  <p className={cn("hidden px-3 pb-1 pt-2 text-[11px] font-semibold xl:flex xl:items-center xl:gap-1.5", DOMAIN_GROUP_TITLE[group.tone])}>
+                    {group.title}<span className="font-mono text-[10px] opacity-70">{group.items.length}</span>
+                  </p>
+                  {group.items.map(({ ws, pulse }) => {
+                    const isSel = selectedWorkspace === ws.name;
+                    return (
+                      <button
+                        key={ws.name}
+                        type="button"
+                        aria-current={isSel ? "true" : undefined}
+                        onClick={() => setSelectedWorkspace(ws.name)}
+                        className={cn(
+                          "group flex min-w-[220px] items-center gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full",
+                          isSel && "bg-white/[0.06] ring-1 ring-inset ring-white/10",
+                        )}
+                      >
+                        <DomainDot tone={pulse.tone} />
+                        <span className="min-w-0 flex-1">
+                          <span className={cn("block truncate font-mono text-[13px]", isSel ? "font-semibold text-white" : pulse.tone === "quiet" ? "text-slate-400 group-hover:text-slate-200" : "font-medium text-slate-100")} title={ws.name}>{ws.name}</span>
+                          <span className={cn("mt-0.5 block truncate text-[11.5px]", DOMAIN_LABEL_TONE[pulse.tone])}>
+                            {pulse.label}{pulse.at !== null && <span className="text-slate-500"> · {relativeTime(pulse.at, pulseNow)}</span>}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </nav>
 
           {selected && (
             <div className="min-w-0">
-              <section className="px-4 py-3 2xl:px-5" aria-label={`${selected.name} 작업장`}>
-                <div className="mb-2 flex min-w-0 items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <h2 className="truncate font-mono text-sm font-semibold text-white">{selected.name}</h2>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
+              <div className="px-4 pb-4 pt-4 2xl:px-5">
+                <DomainStage
+                  workspace={selected.name}
+                  selectedTaskKey={selectedTaskKey}
+                  onSelectedTaskChange={setSelectedTaskKey}
+                  attention={{ count: selected.attentionCount ?? 0, label: selected.attentionLabel ?? null }}
+                  onOpenAttention={() => navigate(`/schedule?reviewWorkspace=${encodeURIComponent(selected.name)}`)}
+                  tools={<>
                     <button type="button" onClick={() => setCheckpointModal(selected.name)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/[0.05] text-amber-300 outline-none transition-colors hover:bg-amber-500/[0.12] focus-visible:ring-2 focus-visible:ring-amber-300/60" title={WORKSPACE_RULES_TOOL.workspaceDescription}>
                       <Shield size={15} /><span className="sr-only">{WORKSPACE_RULES_TOOL.label}</span>
                     </button>
                     {(selected.roadmapCount ?? 0) > 0 && <button type="button" onClick={() => setAgentCanvasModal(selected.name)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/[0.05] text-cyan-300 outline-none transition-colors hover:bg-cyan-500/[0.12] focus-visible:ring-2 focus-visible:ring-cyan-300/60" title={AI_WORK_STATUS_TOOL.description}>
                       <Bot size={15} /><span className="sr-only">{AI_WORK_STATUS_TOOL.label}</span>
                     </button>}
-                  </div>
-                </div>
-                <div className="w-full max-w-[940px]">
-                  <WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />
-                </div>
-              </section>
+                  </>}
+                />
+              </div>
 
               <div className="grid min-h-[360px] border-t border-[var(--color-border)] lg:grid-cols-[minmax(260px,0.78fr)_minmax(440px,1.22fr)]">
                 <section className="flex min-h-0 flex-col border-b border-[var(--color-border)] p-4 lg:border-b-0 lg:border-r" aria-label={`${selected.name} 작업 결과 요약`}>
-                  <FloorTaskHeader workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />
                   <div className="ck-scroll min-h-0 flex-1 overflow-auto pr-1"><LiveConsole workspace={selected.name} taskKey={selectedTaskKey} /></div>
                 </section>
                 <section className="flex min-h-0 min-w-0 flex-col p-4" aria-label={`${selected.name} Inspector`}>

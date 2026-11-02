@@ -7,7 +7,8 @@ const skills = readFileSync(new URL("../pages/Skills.tsx", import.meta.url), "ut
 
 describe("주요 운영 화면의 정보 밀도", () => {
   it("도메인 전환과 선택한 작업장을 한 화면에 두고 상세 영역을 같은 높이로 나눈다", () => {
-    expect(sessions).toContain("command-brief ck-stage-in group flex w-full shrink-0 items-center justify-between gap-4 rounded-xl border px-3 py-2");
+    expect(sessions).not.toContain("command-brief");
+    expect(sessions).toContain("<DomainStage");
     expect(sessions).toContain('aria-label="도메인 선택"');
     expect(sessions).toContain("xl:grid-cols-[280px_minmax(0,1fr)]");
     expect(sessions).toContain("lg:grid-cols-[minmax(260px,0.78fr)_minmax(440px,1.22fr)]");

@@ -239,7 +239,6 @@ describe("schedule presentation", () => {
       expect(source).toContain("WORKSPACE_RULES_TOOL.label");
       expect(source).toContain("AI_WORK_STATUS_TOOL.label");
     }
-    expect(workspaces).toContain("flex flex-nowrap items-center justify-between gap-2");
     expect(workspaces).not.toContain("md:col-span-2 xl:col-span-2");
     expect(checkpoint).toContain("WORKSPACE_RULES_TOOL.label");
   });
@@ -247,8 +246,9 @@ describe("schedule presentation", () => {
   it("Workspaces 확인 필요 브리프는 Schedule의 해당 SPEC 상세를 연다", () => {
     const workspaces = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
     const schedule = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    const stage = readFileSync(new URL("../components/DomainStage.tsx", import.meta.url), "utf8");
     expect(workspaces).toContain("/schedule?reviewWorkspace=");
-    expect(workspaces).toContain("확인할 작업 열기 →");
+    expect(stage).toContain("확인하기");
     expect(workspaces).not.toContain("검토할 도메인 열기 →");
     expect(schedule).toContain('searchParams.get("reviewWorkspace")');
     expect(schedule).toContain("openSpec(reviewTarget)");

@@ -34,11 +34,8 @@ describe("responsive dashboard shell", () => {
   it("keeps workspace cards and their actions inside the viewport", () => {
     const sessions = source("../pages/Sessions.tsx");
     expect(sessions).toContain('className="flex min-h-full flex-col gap-3 2xl:gap-4"');
-    expect(sessions).toContain("xl:grid-cols-3");
-    expect(sessions).toContain("workspace-control-grid");
-    expect(sessions).toContain("flex flex-nowrap items-center justify-between gap-2");
-    expect(sessions).toContain('className="workspace-control-grid grid shrink-0 grid-cols-1 gap-3 md:grid-cols-2');
-    expect(sessions).toContain("2xl:grid-cols-4");
+    expect(sessions).toContain("min-w-[220px]");
+    expect(sessions).toContain("xl:min-w-0 xl:w-full");
     expect(sessions).not.toContain("h-[calc(100vh-7rem)] min-h-[640px]");
   });
 
