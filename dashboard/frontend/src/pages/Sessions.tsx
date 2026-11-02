@@ -366,10 +366,10 @@ export function Sessions() {
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border)] pb-2.5">
           <div className="flex items-center gap-2">
             <FolderOpen size={15} className="text-cyan-300" />
-            <span className="font-mono text-[13px] font-semibold text-[var(--color-text-bright)]">
-              {ws.name} Inspector
+            <span className="text-[13px] font-semibold text-[var(--color-text-bright)]">
+              <span className="font-mono font-medium">{ws.name}</span> Inspector
             </span>
-            <span className="font-mono text-[11px] text-[var(--color-text-dim)]">| {ws.projectCount} repos</span>
+            <span className="text-[11.5px] text-[var(--color-text-dim)]">저장소 {ws.projectCount}</span>
           </div>
           <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 text-[12.5px]" role="tablist">
             {INSPECTOR_TABS.map((t) => {
@@ -430,12 +430,12 @@ export function Sessions() {
                     onClick={() => setExpandedRepository(isExpanded ? null : p.project_path)}
                     className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.025]"
                   >
-                    <span className="flex min-w-0 items-center gap-2">
+                    <span className="flex shrink-0 items-center gap-2">
                       <ChevronRight size={14} className={cn("shrink-0 text-[var(--color-text-dim)] transition-transform", isExpanded && "rotate-90 text-cyan-300")} />
-                      <span className="truncate font-mono text-sm font-semibold text-[var(--color-text-bright)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
+                      <span className="truncate font-mono text-[13px] font-medium text-[var(--color-text-bright)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
                     </span>
-                    <div className="flex shrink-0 gap-1.5">
-                      {connectionBadges.map((badge) => <span key={badge.label} className={`rounded border px-1.5 py-0.5 text-[10px] font-bold ${REPOSITORY_BADGE_CLASS[badge.tone]}`}>{badge.label}</span>)}
+                    <div className="flex min-w-0 flex-wrap justify-end gap-1.5">
+                      {connectionBadges.map((badge) => <span key={badge.label} className={`rounded-md border px-1.5 py-0.5 text-[10.5px] font-medium ${REPOSITORY_BADGE_CLASS[badge.tone]}`}>{badge.label}</span>)}
                     </div>
                   </button>
                   {isExpanded && <div className="border-t border-[var(--color-border)] px-3 pb-3">
@@ -443,7 +443,7 @@ export function Sessions() {
                     <span>배포 기준 <b className="text-cyan-200">{p.aws_release.baseBranch}</b></span>
                     <span>로컬 <b className="text-[var(--color-text)]">{p.local_git.branch ?? "detached"}@{shortCommit(p.local_git.headCommit)}</b></span>
                     <span>최신 성공 Build <b className="text-purple-200">#{p.aws_release.latestBuildNumber ?? "?"}</b> · {shortCommit(p.aws_release.latestBuildCommit)}</span>
-                    <span className={`ml-auto rounded border px-1.5 py-0.5 font-bold ${releaseState.color}`} title={releaseState.description}>{releaseState.label}</span>
+                    <span className={`ml-auto rounded-md border px-1.5 py-0.5 font-medium ${releaseState.color}`} title={releaseState.description}>{releaseState.label}</span>
                   </div>}
                   {serviceDeployments.map(({ service, deployments }) => <section key={service} className="mt-3 rounded-md border border-[var(--color-border)] bg-black/10 p-2.5">
                     <div className="mb-2 truncate font-mono text-[12px] font-semibold tracking-wide text-amber-200" title={service}>ECS {service}</div>
@@ -453,7 +453,7 @@ export function Sessions() {
                         const imageVersion = deployment.images[0]?.split(":").at(-1) ?? null;
                         return <div key={`${deployment.accountName}:${deployment.service}`} className="rounded-md border border-[var(--color-border)] bg-black/15 px-2.5 py-2.5 leading-relaxed">
                           <div className="flex items-center justify-between gap-2 text-[12px]">
-                            <span className="font-bold uppercase tracking-wide text-cyan-200">{deployment.environment}</span>
+                            <span className="font-semibold uppercase tracking-wide text-cyan-200">{deployment.environment}</span>
                             <span className={`font-medium ${health.color}`} title={`ECS 원본: ${deployment.rolloutState ?? deployment.status ?? "없음"}`}>ECS {health.label}</span>
                           </div>
                           <div className="mt-1 truncate font-mono text-[12px] font-medium text-[var(--color-text)]" title={deployment.taskDefinition ?? undefined}>{deployment.taskDefinition ?? "TaskDefinition 미확인"}</div>
@@ -591,7 +591,7 @@ export function Sessions() {
       </section>
       {isSearchMode && (
         <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-3">
-          <p className="text-sm text-[var(--color-text)]">
+          <p className="text-[13px] text-[var(--color-text)]">
             <span className="font-medium">{new Set(searchResults.map((r) => r.workspace_name)).size}</span> workspace(s) with matching history for "
             <span className="font-medium">{searchQuery}</span>"
           </p>
