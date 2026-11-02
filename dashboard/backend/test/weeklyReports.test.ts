@@ -14,7 +14,10 @@ async function freshApp() {
   const settings = { enabled: true, weekday: 6, hour: 8, minute: 0, model: "opus" as const, extraRepositories: [], configured: true, tokenConfigured: false, engineAvailable: true };
   const weeklySettingsService = {
     get: async () => settings,
-    save: async (value: typeof settings, token?: string) => ({ ...value, configured: true, tokenConfigured: Boolean(token), engineAvailable: true }),
+    save: async (value: typeof settings, token?: string) => {
+      if (token === "rejected") throw Object.assign(new Error("이 토큰으로 Claude에 로그인하지 못했습니다: Not logged in"), { code: "TOKEN_REJECTED" });
+      return { ...value, configured: true, tokenConfigured: Boolean(token), engineAvailable: true };
+    },
     deleteToken: async () => undefined,
   };
   const { app } = await createApp({ db, weeklySettingsService });
@@ -82,5 +85,11 @@ describe("/api/weekly/reports", () => {
     const saved = await request(app).put("/api/weekly/reports/settings/current").set("Authorization", mine).send({ enabled: true, weekday: 0, hour: 9, minute: 30, model: "sonnet", extraRepositories: [], token: "hidden" }).expect(200);
     expect(saved.body).toMatchObject({ weekday: 0, model: "sonnet", tokenConfigured: true });
     expect(saved.body).not.toHaveProperty("token");
+  });
+
+  it("토큰이 거부되면 400과 이유를 돌려준다", async () => {
+    const { app, mine } = await freshApp();
+    const res = await request(app).put("/api/weekly/reports/settings/current").set("Authorization", mine).send({ enabled: true, weekday: 0, hour: 9, minute: 30, model: "sonnet", extraRepositories: [], token: "rejected" }).expect(400);
+    expect(res.body).toMatchObject({ error: "TOKEN_REJECTED", message: expect.stringContaining("Not logged in") });
   });
 });

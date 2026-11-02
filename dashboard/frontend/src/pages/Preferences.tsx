@@ -30,6 +30,7 @@ export function Preferences() {
   const [token, setToken] = useState("");
   const [repositoryDraft, setRepositoryDraft] = useState("");
   const [weeklySaved, setWeeklySaved] = useState(false);
+  const [weeklySaving, setWeeklySaving] = useState(false);
   useEffect(() => setNickname(displayName), [displayName]);
   useEffect(() => {
     let cancelled = false;
@@ -102,7 +103,7 @@ export function Preferences() {
           <div className="flex items-center justify-between rounded-lg border border-white/[0.06] px-3 py-2"><span className={cn("text-[11px]", tokenConfigured ? "text-emerald-300" : "text-amber-200")}>{tokenConfigured ? "토큰 설정됨" : "토큰 설정 필요"}</span>{tokenConfigured && <button type="button" onClick={() => void deleteWeeklyToken().then(() => { setTokenConfigured(false); setWeeklySaved(false); })} className="settings-action settings-action-danger settings-action-compact gap-1"><Trash2 size={12} />삭제</button>}</div>
           <p className="text-[10px] leading-5 text-slate-500">기존 Weekly 설정이 있으면 처음 저장할 때 Sugo가 그대로 이어받습니다. 이후 별도 설정 페이지를 열 필요가 없습니다.</p>
         </div>
-        <div className="flex items-center gap-3 lg:col-span-2"><button type="button" onClick={() => { setWeeklyError(""); void saveWeeklySettings({ ...weekly, ...(token.trim() ? { token: token.trim() } : {}) }).then((value) => { setToken(""); setTokenConfigured(value.tokenConfigured); setWeeklySaved(true); }).catch(() => setWeeklyError("설정을 저장하거나 예약을 적용하지 못했습니다.")); }} className="settings-action settings-action-primary">설정 저장</button>{weeklySaved && <span className="text-xs text-emerald-300">예약에 적용됨</span>}{weeklyError && <span className="text-xs text-rose-300">{weeklyError}</span>}</div>
+        <div className="flex items-center gap-3 lg:col-span-2"><button type="button" disabled={weeklySaving} onClick={() => { setWeeklyError(""); setWeeklySaving(true); void saveWeeklySettings({ ...weekly, ...(token.trim() ? { token } : {}) }).then((value) => { setToken(""); setTokenConfigured(value.tokenConfigured); setWeeklySaved(true); }).catch((error: unknown) => setWeeklyError(error instanceof Error ? error.message : String(error))).finally(() => setWeeklySaving(false)); }} className="settings-action settings-action-primary">{weeklySaving && token.trim() ? "토큰 확인 중…" : "설정 저장"}</button>{weeklySaved && <span className="text-xs text-emerald-300">예약에 적용됨</span>}{weeklyError && <span className="text-xs text-rose-300">{weeklyError}</span>}</div>
       </div>}
       </>}
     </section>}

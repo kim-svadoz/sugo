@@ -26,7 +26,7 @@ const settingsSchema = z.object({
   minute: z.number().int().min(0).max(59),
   model: z.enum(["default", "sonnet", "opus"]),
   extraRepositories: z.array(z.string().trim().min(1).max(1024)).max(50),
-  token: z.string().trim().min(1).max(16_384).optional(),
+  token: z.string().min(1).max(16_384).optional(),
 });
 
 export function createWeeklyReportsRouter(db: DbClient, sessionSecret: string, settingsService?: WeeklySettingsService): Router {
@@ -60,7 +60,13 @@ export function createWeeklyReportsRouter(db: DbClient, sessionSecret: string, s
     }));
     router.put("/settings/current", validateBody(settingsSchema), asyncHandler(async (req, res) => {
       const { token, ...settings } = req.body;
-      res.json(await settingsService.save(settings, token));
+      try {
+        res.json(await settingsService.save(settings, token));
+      } catch (error) {
+        const code = (error as { code?: string }).code;
+        if (code !== "INVALID_TOKEN" && code !== "TOKEN_REJECTED") throw error;
+        res.status(400).json({ error: code, message: (error as Error).message });
+      }
     }));
     router.delete("/settings/token", asyncHandler(async (_req, res) => {
       await settingsService.deleteToken();

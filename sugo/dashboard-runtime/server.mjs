@@ -54013,7 +54013,13 @@ function createWeeklyReportsRouter(db2, sessionSecret2, settingsService) {
     }));
     router.put("/settings/current", validateBody(settingsSchema), asyncHandler(async (req, res) => {
       const { token, ...settings } = req.body;
-      res.json(await settingsService.save(settings, token));
+      try {
+        res.json(await settingsService.save(settings, token));
+      } catch (error2) {
+        const code = error2.code;
+        if (code !== "INVALID_TOKEN" && code !== "TOKEN_REJECTED") throw error2;
+        res.status(400).json({ error: code, message: error2.message });
+      }
     }));
     router.delete("/settings/token", asyncHandler(async (_req, res) => {
       await settingsService.deleteToken();
@@ -54058,7 +54064,7 @@ var init_weeklyReports = __esm({
       minute: external_exports.number().int().min(0).max(59),
       model: external_exports.enum(["default", "sonnet", "opus"]),
       extraRepositories: external_exports.array(external_exports.string().trim().min(1).max(1024)).max(50),
-      token: external_exports.string().trim().min(1).max(16384).optional()
+      token: external_exports.string().min(1).max(16384).optional()
     });
   }
 });
@@ -90914,8 +90920,39 @@ var init_weeklyScheduleService = __esm({
 });
 
 // ../dashboard/backend/src/services/weeklySettingsService.ts
+import { execFile as execFile11 } from "node:child_process";
 import { chmod, mkdir as mkdir6, readFile as readFile12, stat as stat3, writeFile as writeFile7 } from "node:fs/promises";
 import { join as join14 } from "node:path";
+function normalizeClaudeToken(raw) {
+  const token = raw.replace(/\s+/g, "");
+  return TOKEN_PATTERN.test(token) ? token : null;
+}
+function tokenError(code, message2) {
+  return Object.assign(new Error(message2), { code });
+}
+function verifyClaudeToken(token) {
+  const args = ["-p", "reply with OK", "--tools", "", "--strict-mcp-config", "--setting-sources", "", "--no-session-persistence", "--output-format", "json", "--model", "haiku"];
+  return new Promise((resolve8) => {
+    const child = execFile11("claude", args, { env: { ...process.env, CLAUDE_CODE_OAUTH_TOKEN: token }, timeout: 6e4 }, (error2, stdout, stderr) => {
+      if (error2?.code === "ENOENT") {
+        resolve8(null);
+        return;
+      }
+      let result = null;
+      try {
+        result = JSON.parse(stdout);
+      } catch {
+      }
+      if (!error2 && result && !result.is_error) {
+        resolve8(null);
+        return;
+      }
+      const reason = String(result?.result ?? (stderr.trim() || error2?.message || "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958"));
+      resolve8(reason.replace(/sk-ant-[A-Za-z0-9_-]+/g, "sk-ant-***").slice(0, 300));
+    });
+    child.stdin?.end();
+  });
+}
 async function exists(path) {
   try {
     await stat3(path);
@@ -90945,6 +90982,7 @@ async function readStoredConfig(path) {
 }
 function createWeeklySettingsService(options = {}) {
   const findEngine = options.findEngine ?? (() => findWeeklyEngine());
+  const verifyToken = options.verifyToken ?? verifyClaudeToken;
   const weeklyHome = options.weeklyHome ?? weeklyHomeDir();
   const configPath = join14(weeklyHome, "config.json");
   const tokenPath = join14(weeklyHome, "claude.token");
@@ -90959,7 +90997,14 @@ function createWeeklySettingsService(options = {}) {
         engineAvailable: await findEngine() !== null
       };
     },
-    async save(settings, token) {
+    async save(settings, rawToken) {
+      let token = null;
+      if (rawToken?.trim()) {
+        token = normalizeClaudeToken(rawToken);
+        if (!token) throw tokenError("INVALID_TOKEN", "Claude \uD1A0\uD070 \uD615\uC2DD\uC774 \uC544\uB2D9\uB2C8\uB2E4. claude setup-token\uC774 \uCD9C\uB825\uD55C sk-ant-\uB85C \uC2DC\uC791\uD558\uB294 \uAC12\uC744 \uBD99\uC5EC \uB123\uC73C\uC138\uC694.");
+        const rejected = await verifyToken(token);
+        if (rejected) throw tokenError("TOKEN_REJECTED", `\uC774 \uD1A0\uD070\uC73C\uB85C Claude\uC5D0 \uB85C\uADF8\uC778\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${rejected}`);
+      }
       await mkdir6(weeklyHome, { recursive: true });
       const previous = await readStoredConfig(configPath) ?? {};
       const next = {
@@ -90972,8 +91017,8 @@ function createWeeklySettingsService(options = {}) {
       await writeFile7(configPath, `${JSON.stringify(next, null, 2)}
 `, { encoding: "utf8", mode: 384 });
       await chmod(configPath, 384);
-      if (token?.trim()) {
-        await writeFile7(tokenPath, `${token.trim()}
+      if (token) {
+        await writeFile7(tokenPath, `${token}
 `, { encoding: "utf8", mode: 384 });
         await chmod(tokenPath, 384);
       }
@@ -90990,11 +91035,12 @@ function createWeeklySettingsService(options = {}) {
     }
   };
 }
-var defaults;
+var TOKEN_PATTERN, defaults;
 var init_weeklySettingsService = __esm({
   "../dashboard/backend/src/services/weeklySettingsService.ts"() {
     "use strict";
     init_weeklyScheduleService();
+    TOKEN_PATTERN = /^sk-ant-[A-Za-z0-9_-]+$/;
     defaults = {
       enabled: false,
       weekday: 5,
@@ -91172,7 +91218,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname7(fileURLToPath6(import.meta.url));
-    pkg = "0.54.8" ? { version: "0.54.8" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.54.9" ? { version: "0.54.9" } : JSON.parse(readFileSync(join15(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91299,7 +91345,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.54.8", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.54.9", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });
