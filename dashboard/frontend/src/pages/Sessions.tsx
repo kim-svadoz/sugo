@@ -700,8 +700,8 @@ export function Sessions() {
                   attention={{ count: selected.attentionCount ?? 0, label: selected.attentionLabel ?? null }}
                   onOpenAttention={() => navigate(`/schedule?reviewWorkspace=${encodeURIComponent(selected.name)}`)}
                   tools={<>
-                    <button type="button" onClick={() => setCheckpointModal(selected.name)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/[0.05] text-amber-300 outline-none transition-colors hover:bg-amber-500/[0.12] focus-visible:ring-2 focus-visible:ring-amber-300/60" title={WORKSPACE_RULES_TOOL.workspaceDescription}>
-                      <Shield size={15} /><span className="sr-only">{WORKSPACE_RULES_TOOL.label}</span>
+                    <button type="button" onClick={() => setCheckpointModal(selected.name)} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/[0.05] px-3 text-[12.5px] font-semibold text-amber-200 outline-none transition-colors hover:bg-amber-500/[0.12] focus-visible:ring-2 focus-visible:ring-amber-300/60" title={WORKSPACE_RULES_TOOL.workspaceDescription}>
+                      <Shield size={15} className="text-amber-300" />{WORKSPACE_RULES_TOOL.label}
                     </button>
                     {(selected.roadmapCount ?? 0) > 0 && <button type="button" onClick={() => setAgentCanvasModal(selected.name)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/[0.05] text-cyan-300 outline-none transition-colors hover:bg-cyan-500/[0.12] focus-visible:ring-2 focus-visible:ring-cyan-300/60" title={AI_WORK_STATUS_TOOL.description}>
                       <Bot size={15} /><span className="sr-only">{AI_WORK_STATUS_TOOL.label}</span>
