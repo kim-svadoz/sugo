@@ -371,25 +371,27 @@ export function Sessions() {
             </span>
             <span className="font-mono text-[11px] text-[var(--color-text-dim)]">| {ws.projectCount} repos</span>
           </div>
-          <div className="flex gap-1.5 font-mono text-xs">
+          <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 text-[12.5px]" role="tablist">
             {INSPECTOR_TABS.map((t) => {
               const Icon = t.icon;
               const count = t.id === "history" ? hist.data.length : t.id === "activity" ? taskActivity.length : (ws.projects?.length ?? 0);
               return (
                 <button
                   key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === t.id}
                   onClick={() => {
                     setActiveTab(t.id);
                     setInspectorPage(0);
                   }}
                   className={cn(
-                    "flex items-center gap-1 rounded-md border px-2.5 py-1 font-bold transition-all",
-                    activeTab === t.id
-                      ? "neon-border-cyan bg-cyan-500/20 text-cyan-300"
-                      : "border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
+                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition-colors",
+                    activeTab === t.id ? "bg-cyan-500/15 text-cyan-100" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
                   )}
                 >
-                  <Icon size={11} /> {t.label} ({count})
+                  <Icon size={12} className={activeTab === t.id ? "text-cyan-300" : undefined} />{t.label}
+                  <span className={cn("font-mono text-[11px]", activeTab === t.id ? "text-cyan-300/80" : "text-[var(--color-text-dim)]")}>{count}</span>
                 </button>
               );
             })}
@@ -671,7 +673,7 @@ export function Sessions() {
                         onClick={() => setSelectedWorkspace(ws.name)}
                         className={cn(
                           "group flex min-w-[220px] items-center gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full",
-                          isSel && "bg-white/[0.06] ring-1 ring-inset ring-white/10",
+                          isSel && "bg-[linear-gradient(100deg,rgba(34,211,238,.12),rgba(34,211,238,.035)_60%,rgba(99,102,241,.04))] shadow-[inset_2px_0_0_rgba(103,232,249,.75),inset_0_0_0_1px_rgba(103,232,249,.14)]",
                         )}
                       >
                         <DomainDot tone={pulse.tone} />
