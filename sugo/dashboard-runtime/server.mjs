@@ -91262,7 +91262,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname7(fileURLToPath6(import.meta.url));
-    pkg = "0.55.7" ? { version: "0.55.7" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.55.8" ? { version: "0.55.8" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91389,7 +91389,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.55.7", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.55.8", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });
