@@ -126,7 +126,7 @@ const STATION_ICONS: Record<FloorStationId, typeof ClipboardList> = {
 
 function PipelineStrip({ lane, idle = false }: { lane?: FloorLane; idle?: boolean }) {
   const state = lane?.state;
-  return <div className="mx-auto w-full max-w-[860px] py-4" role="img" aria-label={lane ? `${lane.workspace} · ${headlineOf(lane)}` : "진행 중인 파이프라인 없음"}>
+  return <div className="w-full max-w-[860px] py-4" role="img" aria-label={lane ? `${lane.workspace} · ${headlineOf(lane)}` : "진행 중인 파이프라인 없음"}>
     <div className="grid grid-cols-7">
       {FLOOR_STATIONS.map((station, index) => {
         const Icon = STATION_ICONS[station.id];

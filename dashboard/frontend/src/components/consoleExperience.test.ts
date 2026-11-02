@@ -32,6 +32,8 @@ describe("Console 정보 구조", () => {
   it("작업장 머리의 중복 상태 문구 없이 파이프라인 단계만 보여준다", () => {
     expect(workFloor).toContain("진행 중인 파이프라인 없음");
     expect(workFloor).toContain("function PipelineStrip");
+    expect(workFloor).toContain('className="w-full max-w-[860px] py-4"');
+    expect(workFloor).not.toContain('className="mx-auto w-full max-w-[860px] py-4"');
     expect(workFloor).toContain("STATION_ICONS");
     expect(workFloor).not.toContain("작업 배정 대기");
     expect(workFloor).not.toContain("· 새 작업 대기");

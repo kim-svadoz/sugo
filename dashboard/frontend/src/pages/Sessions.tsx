@@ -668,11 +668,11 @@ export function Sessions() {
                     onClick={() => setSelectedWorkspace(ws.name)}
                     className={cn(
                       "group flex min-w-[248px] items-center gap-3 rounded-lg px-3 py-3 text-left outline-none transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full",
-                      isSel && "bg-cyan-300/[0.09] text-white ring-1 ring-inset ring-cyan-300/20",
+                      isSel && "bg-cyan-300/[0.07] ring-1 ring-inset ring-cyan-300/20",
                     )}
                   >
-                    <span className={cn("h-7 w-1 shrink-0 rounded-full", activeOf(ws) && "ck-pulse-dot", st.dot)} aria-hidden="true" />
-                    <span className="min-w-0 flex-1 truncate font-mono text-sm font-semibold text-slate-200" title={ws.name}>{ws.name}</span>
+                    <span className={cn("h-2 w-2 shrink-0 rounded-full", activeOf(ws) && "ck-pulse-dot", st.dot)} aria-hidden="true" />
+                    <span className={cn("min-w-0 flex-1 truncate font-mono text-[13px] font-medium", isSel ? "text-slate-200" : "text-slate-400 group-hover:text-slate-300")} title={ws.name}>{ws.name}</span>
                   </button>
                 );
               })}
@@ -684,10 +684,7 @@ export function Sessions() {
               <section className="px-4 py-3 2xl:px-5" aria-label={`${selected.name} 작업장`}>
                 <div className="mb-2 flex min-w-0 items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h2 className="truncate font-mono text-sm font-semibold text-white">{selected.name}</h2>
-                      <span className="shrink-0 text-xs text-slate-500">{statusOf(selected).desc}</span>
-                    </div>
+                    <h2 className="truncate font-mono text-sm font-semibold text-white">{selected.name}</h2>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <button type="button" onClick={() => setCheckpointModal(selected.name)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/[0.05] text-amber-300 outline-none transition-colors hover:bg-amber-500/[0.12] focus-visible:ring-2 focus-visible:ring-amber-300/60" title={WORKSPACE_RULES_TOOL.workspaceDescription}>
@@ -698,7 +695,7 @@ export function Sessions() {
                     </button>}
                   </div>
                 </div>
-                <div className="mx-auto max-w-[940px]">
+                <div className="w-full max-w-[940px]">
                   <WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />
                 </div>
               </section>
