@@ -694,6 +694,7 @@ export function Sessions() {
               <div className="px-4 pb-4 pt-4 2xl:px-5">
                 <DomainStage
                   workspace={selected.name}
+                  projectPaths={(selected.projects ?? []).map((project) => project.project_path)}
                   selectedTaskKey={selectedTaskKey}
                   onSelectedTaskChange={setSelectedTaskKey}
                   attention={{ count: selected.attentionCount ?? 0, label: selected.attentionLabel ?? null }}

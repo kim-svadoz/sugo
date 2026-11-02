@@ -59,8 +59,10 @@ function Journey({ lane, tone }: { lane?: FloorLane; tone: StageTone }) {
  * 도메인 관리의 상태 카드. 선택한 도메인에서 지금 무슨 일이 있는지 한 문장으로 말하고,
  * 그 작업이 거친 단계를 여정으로 보여 준다. 여러 작업이 동시에 진행되면 카드 안에서 넘겨 본다.
  */
-export function DomainStage({ workspace, selectedTaskKey, onSelectedTaskChange, attention, onOpenAttention, tools }: {
+export function DomainStage({ workspace, projectPaths, selectedTaskKey, onSelectedTaskChange, attention, onOpenAttention, tools }: {
   workspace: string;
+  /** 도메인에 등록된 프로젝트 경로. 작업 기록에 프로젝트가 없을 때, 프로젝트가 하나뿐이면 그 이름을 쓴다. */
+  projectPaths: readonly string[];
   selectedTaskKey: string | null;
   onSelectedTaskChange: (taskKey: string) => void;
   attention: { count: number; label: string | null };
@@ -80,7 +82,8 @@ export function DomainStage({ workspace, selectedTaskKey, onSelectedTaskChange, 
   const headline = stageHeadline(lane);
   const tone = TONE[headline.tone];
   const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, specs ?? []) : null;
-  const projectName = lane ? title?.project ?? lane.projectPath?.split(/[\\/]/).filter(Boolean).at(-1) ?? null : null;
+  const baseName = (path: string) => path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
+  const projectName = title?.project ?? (lane?.projectPath ? baseName(lane.projectPath) : projectPaths.length === 1 ? baseName(projectPaths[0]) : null);
   const move = (delta: number) => onSelectedTaskChange(lanes[(index + delta + lanes.length) % lanes.length].key);
 
   return <section className={cn("ck-stage-in rounded-2xl border px-5 py-4 transition-colors duration-500", tone.card)} aria-label={`${workspace} 상태`}>
@@ -93,18 +96,17 @@ export function DomainStage({ workspace, selectedTaskKey, onSelectedTaskChange, 
           </span>
           <strong className={cn("text-[17px] font-semibold tracking-[-0.01em]", tone.text)}>{headline.text}</strong>
         </p>
-        {title && <p className="mt-1.5 truncate text-[14px] text-slate-200" title={title.title}>
-          {projectName && <span className="mr-2 font-mono text-[12px] text-slate-400">{projectName}</span>}{title.title}
-        </p>}
-        <p className="mt-1 flex items-center gap-2 text-[12px] text-slate-500">
-          <span className="font-mono">{workspace}</span>
-          {lane?.state.at && <><span aria-hidden="true">·</span><span>{relativeTime(lane.state.at, now)}</span></>}
+        {title && <p className="mt-1.5 truncate text-[14px] text-slate-200" title={title.title}>{title.title}</p>}
+        {(projectName || lane?.state.at) && <p className="mt-1 flex items-center gap-2 text-[12px] text-slate-500">
+          {projectName && <span className="font-mono">{projectName}</span>}
+          {projectName && lane?.state.at && <span aria-hidden="true">·</span>}
+          {lane?.state.at && <span>{relativeTime(lane.state.at, now)}</span>}
           {lanes.length > 1 && <span className="ml-1 flex items-center gap-1">
             <button type="button" aria-label="이전 작업" onClick={() => move(-1)} className="rounded-full p-0.5 text-slate-400 hover:bg-white/5 hover:text-slate-100"><ChevronLeft size={14} /></button>
             <span className="font-mono text-[11px]">{index + 1}/{lanes.length}</span>
             <button type="button" aria-label="다음 작업" onClick={() => move(1)} className="rounded-full p-0.5 text-slate-400 hover:bg-white/5 hover:text-slate-100"><ChevronRight size={14} /></button>
           </span>}
-        </p>
+        </p>}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {attention.count > 0 && <button type="button" onClick={onOpenAttention} className="group inline-flex items-center gap-1.5 rounded-full bg-amber-300 px-3.5 py-1.5 text-[12.5px] font-bold text-amber-950 transition-transform active:scale-[0.97]">
