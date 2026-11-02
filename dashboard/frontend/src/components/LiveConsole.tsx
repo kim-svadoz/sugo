@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ListTree, Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { useActivityStream, type ActivityEvent } from "../hooks/useActivityStream.js";
 import { AgentBadge } from "./AgentBadge.js";
 import { formatActivityTime } from "../lib/activityTime.js";
@@ -37,7 +37,7 @@ function FeedLine({ ev, expanded = false }: { ev: ActivityEvent; expanded?: bool
 }
 
 /** 전역 콘솔. `workspace`를 주면 그 워크스페이스 로그만 거른다(Sessions 하단 2단이 그렇게 쓴다). */
-/** 고른 작업(없으면 도메인 전체)의 기록. 최근 작업 요약과 Inspector Activity 탭이 같은 목록을 쓴다. */
+/** 고른 작업(없으면 도메인 전체)의 기록. 결과 요약과 Inspector Activity 탭이 같은 목록을 쓴다. */
 export function useTaskActivity(workspace?: string, taskKey?: string | null): ActivityEvent[] {
   const events = useActivityStream(workspace);
   const byWorkspace = workspace ? events.filter((e) => e.workspace_name === workspace) : events;
@@ -51,9 +51,6 @@ export function LiveConsole({ workspace, taskKey }: { workspace?: string; taskKe
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="mb-3 flex shrink-0 items-center border-b border-[var(--color-border)] pb-2.5">
-        <span className="flex items-center gap-2 text-[12px] font-semibold text-[var(--color-text-bright)]"><ListTree size={14} className="shrink-0 text-cyan-300" />최근 작업 요약</span>
-      </div>
       {!hasCompletedResult ? <div className="flex min-h-40 flex-col items-center justify-center px-5 text-center"><span className="relative mb-3 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-300/[0.05]"><span className="absolute h-2 w-2 animate-ping rounded-full bg-cyan-300/30" /><span className="h-2 w-2 rounded-full bg-cyan-300/70" /></span><strong className="text-[12px] text-slate-300">작업 결과를 기다리고 있습니다</strong><span className="mt-1 max-w-xs text-[10px] leading-5 text-[var(--color-text-dim)]">작업이 완료되면 이곳에 결과를 3~4줄로 정리합니다.</span></div> : <div className="space-y-3">
         <ul className="space-y-2 border-l border-emerald-300/20 pl-3">{(summary.result.length > 0 ? summary.result : [visible[0].message]).slice(0, 4).map((line, index) => <li key={`${index}:${line}`} className="flex gap-2 text-[13px] leading-6 text-slate-300"><span className="text-emerald-300/60">•</span><span className="line-clamp-2">{line}</span></li>)}</ul>
       </div>}

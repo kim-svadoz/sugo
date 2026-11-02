@@ -654,7 +654,7 @@ export function Sessions() {
           })}
         </div>
       ) : (
-        <div className="focus-stack ck-stage-in grid min-h-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[rgba(8,14,24,.72)] xl:grid-cols-[188px_minmax(0,1fr)]">
+        <div className="focus-stack ck-stage-in grid min-h-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[rgba(8,14,24,.72)] xl:grid-cols-[240px_minmax(0,1fr)]">
           <nav aria-label="도메인 선택" className="border-b border-[var(--color-border)] p-2 xl:border-b-0 xl:border-r xl:p-2.5">
             <div className="ck-scroll flex gap-1.5 overflow-x-auto xl:max-h-[690px] xl:flex-col xl:overflow-y-auto xl:overflow-x-hidden">
               {filteredWorkspaces.map((ws, index) => {
@@ -667,13 +667,13 @@ export function Sessions() {
                     aria-current={isSel ? "true" : undefined}
                     onClick={() => setSelectedWorkspace(ws.name)}
                     className={cn(
-                      "group flex min-w-[168px] items-center gap-2 rounded-lg px-2.5 py-2 text-left outline-none transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full",
+                      "group flex min-w-[220px] items-center gap-2 rounded-lg px-3 py-2.5 text-left outline-none transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full",
                       isSel && "bg-cyan-300/[0.09] text-white ring-1 ring-inset ring-cyan-300/20",
                     )}
                   >
                     <span className={cn("h-2 w-2 shrink-0 rounded-full", activeOf(ws) && "ck-pulse-dot", st.dot)} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-mono text-[12px] font-semibold text-slate-200">{ws.name}</span>
+                      <span className="block truncate font-mono text-[13px] font-semibold text-slate-200" title={ws.name}>{ws.name}</span>
                       <span className="mt-0.5 block truncate text-[10px] text-slate-500">{st.text}</span>
                     </span>
                     <span className="font-mono text-[10px] text-slate-600">{String(index + 1).padStart(2, "0")}</span>
@@ -689,7 +689,6 @@ export function Sessions() {
                 <div className="mb-2 flex min-w-0 items-center gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", activeOf(selected) && "ck-pulse-dot", statusOf(selected).dot)} />
                       <h2 className="truncate font-mono text-sm font-semibold text-white">{selected.name}</h2>
                       <span className="shrink-0 text-xs text-slate-500">{statusOf(selected).desc}</span>
                     </div>
@@ -703,13 +702,13 @@ export function Sessions() {
                     </button>}
                   </div>
                 </div>
-                <div className="mx-auto max-w-[1180px]">
+                <div className="mx-auto max-w-[940px]">
                   <WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />
                 </div>
               </section>
 
               <div className="grid min-h-[360px] border-t border-[var(--color-border)] lg:grid-cols-[minmax(260px,0.78fr)_minmax(440px,1.22fr)]">
-                <section className="flex min-h-0 flex-col border-b border-[var(--color-border)] p-4 lg:border-b-0 lg:border-r" aria-label={`${selected.name} 최근 작업 요약`}>
+                <section className="flex min-h-0 flex-col border-b border-[var(--color-border)] p-4 lg:border-b-0 lg:border-r" aria-label={`${selected.name} 작업 결과 요약`}>
                   <FloorTaskHeader workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />
                   <div className="ck-scroll min-h-0 flex-1 overflow-auto pr-1"><LiveConsole workspace={selected.name} taskKey={selectedTaskKey} /></div>
                 </section>

@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Pin } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListTree, Pin } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useSchedule } from "../hooks/useSchedule.js";
@@ -93,7 +93,7 @@ function IdleFloor() {
   const dispatchX = 48;
   const pipelineOffset = 205;
   const pipelineScale = 0.84;
-  return <svg viewBox="0 0 1200 174" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label="진행 중인 파이프라인이 없어 작업 배정 데스크에서 다음 요청을 기다리는 중">
+  return <svg viewBox="0 0 1200 174" preserveAspectRatio="xMidYMid meet" className="mt-1 block max-h-[112px] w-full" role="img" aria-label="진행 중인 파이프라인이 없어 작업 배정 데스크에서 다음 요청을 기다리는 중">
     <rect x="0" y={FLOOR_Y} width="1200" height="10" rx="3" fill="#0f172a" />
     <g transform={`translate(${pipelineOffset} ${FLOOR_Y * (1 - pipelineScale)}) scale(${pipelineScale})`} opacity="0.24" style={{ filter: "grayscale(1)" }}>
       {FLOOR_STATIONS.slice(0, -1).map((item, step) => <path key={item.id} d={`M${benchX(step) + 74} ${FLOOR_Y + 5} H${benchX(step + 1) - 26}`} stroke="#334155" strokeWidth="2" strokeDasharray="5 5" />)}
@@ -167,15 +167,19 @@ function WorksiteSign({ signal, label }: { signal: WorksiteSignal; label: string
   </span>;
 }
 
-function TaskHeader({ title, at, now, children }: { title: ReturnType<typeof resolveTaskTitle>; at?: number; now: number; children?: ReactNode }) {
-  return <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-    <Pin size={15} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
-    <strong className="shrink-0 text-[13px] text-white" title={title.title}>{title.title}</strong>
-    {title.kind && <span className="shrink-0 rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[10px] text-violet-200">{title.kind}</span>}
-    {title.project && <span className="inline-flex shrink-0 items-center gap-1 rounded border border-white/[0.08] bg-white/[0.025] px-1.5 py-0.5 font-mono text-[10px] text-slate-400"><span aria-hidden="true">📦</span>{title.project}</span>}
-    {!title.linked && <span className="shrink-0 text-[10px] text-amber-300">이력 연결 안 됨</span>}
-    {children}
-    {at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(at, now)}</span>}
+function TaskHeader({ title, projectName, at, now, children }: { title: ReturnType<typeof resolveTaskTitle>; projectName: string; at?: number; now: number; children?: ReactNode }) {
+  return <div className="min-w-0">
+    <div className="flex min-w-0 items-center gap-2.5">
+      <Pin size={15} strokeWidth={2.2} className="shrink-0 fill-rose-500/80 text-rose-500" aria-hidden="true" />
+      <strong className="min-w-0 truncate font-mono text-[12px] font-semibold text-slate-200" title={projectName}>{projectName}</strong>
+      {title.kind && <span className="shrink-0 rounded bg-violet-400/10 px-1.5 py-0.5 font-mono text-[10px] text-violet-200">{title.kind}</span>}
+      {children}
+      {at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(at, now)}</span>}
+    </div>
+    <div className="mt-2 flex min-w-0 items-center gap-2 border-t border-white/[0.06] pt-2">
+      <ListTree size={14} className="shrink-0 text-cyan-300" aria-hidden="true" />
+      <strong className="min-w-0 truncate text-[13px] font-semibold text-white" title={title.title}>{title.title}</strong>
+    </div>
   </div>;
 }
 
@@ -201,7 +205,7 @@ function Lane({ lane, now }: { lane: FloorLane; now: number }) {
       {state.at && <span className="ml-auto shrink-0 font-mono text-[11px] text-slate-500">{relativeTime(state.at, now)}</span>}
     </div>
     <div className="mx-auto w-full max-w-[88%]">
-    <svg viewBox="0 0 960 150" preserveAspectRatio="xMidYMid meet" className="mt-1 block h-auto w-full" role="img" aria-label={`${lane.name} · ${headlineOf(lane)}`}>
+    <svg viewBox="0 0 960 150" preserveAspectRatio="xMidYMid meet" className="mt-1 block max-h-[104px] w-full" role="img" aria-label={`${lane.name} · ${headlineOf(lane)}`}>
       <rect x="0" y={FLOOR_Y} width="960" height="10" rx="3" fill="#0f172a" />
       {FLOOR_STATIONS.slice(0, -1).map((item, step) => <path key={item.id} d={`M${benchX(step) + 74} ${FLOOR_Y + 5} H${benchX(step + 1) - 26}`} stroke={state.passed.includes(item.id) ? C.emerald : "#334155"} strokeWidth="2" strokeDasharray="5 5" />)}
       {FLOOR_STATIONS.map((item, step) => {
@@ -320,8 +324,9 @@ export function FloorTaskHeader({ workspace, selectedTaskKey, onSelectedTaskChan
   if (!lane) return null;
   const title = resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, specs ?? []);
   const move = (delta: number) => onSelectedTaskChange?.(lanes[(index + delta + lanes.length) % lanes.length].key);
-  return <div className="mb-2 border-b border-white/[0.06] pb-2.5">
-    <TaskHeader title={title} at={lane.state.at} now={now}>
+  const projectName = title.project ?? lane.projectPath?.split(/[\\/]/).filter(Boolean).at(-1) ?? lane.workspace;
+  return <div className="mb-3">
+    <TaskHeader title={title} projectName={projectName} at={lane.state.at} now={now}>
       {lanes.length > 1 && <span className="flex items-center gap-1"><button type="button" aria-label="이전 작업" onClick={() => move(-1)} className="rounded-md border border-white/10 p-0.5 text-slate-400 hover:text-cyan-200"><ChevronLeft size={13} /></button><span className="font-mono text-[10px] text-slate-500">{index + 1}/{lanes.length}</span><button type="button" aria-label="다음 작업" onClick={() => move(1)} className="rounded-md border border-white/10 p-0.5 text-slate-400 hover:text-cyan-200"><ChevronRight size={13} /></button></span>}
     </TaskHeader>
   </div>;

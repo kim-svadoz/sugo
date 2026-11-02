@@ -14,7 +14,7 @@ describe("도메인 목록 표현", () => {
     expect(source).toContain("전체 도메인");
     expect(source).toContain("프로젝트 등록");
     expect(source).toContain("<WorkFloor workspace={selected.name}");
-    expect(source).toContain("xl:grid-cols-[188px_minmax(0,1fr)]");
+    expect(source).toContain("xl:grid-cols-[240px_minmax(0,1fr)]");
     expect(source).not.toContain("카드로 보기");
     expect(source).not.toContain("목록으로 보기");
   });
