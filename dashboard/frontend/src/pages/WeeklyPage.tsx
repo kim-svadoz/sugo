@@ -155,7 +155,7 @@ function LearningView({ summary, items, ids, active, onSelect }: { summary: stri
       <p className="flex items-center gap-2 text-[12.5px] font-semibold text-cyan-200"><GraduationCap size={15} />이번 주 배운 것<span className="font-mono text-[11px] font-normal text-slate-500">기술 {items.length}개</span></p>
       <ul className="mt-3 space-y-2">{summary.map((line) => <li key={line} className="flex gap-3 text-[14.5px] leading-[1.6] text-slate-100"><Check size={15} className="mt-[4px] shrink-0 text-cyan-300" />{line}</li>)}</ul>
     </section>}
-    <div className="grid items-start gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
+    <div className="grid items-start gap-5 xl:grid-cols-[200px_minmax(0,1fr)]">
       <nav aria-label="기술 학습 목차" className="hidden xl:sticky xl:top-4 xl:block">
         <p className="mb-2 px-2.5 text-[11px] font-semibold text-slate-500">학습 목차</p>
         {items.map((item, index) => <button key={ids[index]} type="button" aria-current={active === ids[index] ? "true" : undefined} onClick={() => onSelect(ids[index])} className={cn("block w-full border-l-2 px-2.5 py-1.5 text-left transition-colors", active === ids[index] ? "border-cyan-400 bg-white/[0.04]" : "border-transparent hover:bg-white/[0.025]")}>
@@ -207,7 +207,7 @@ function ReportView({ view, ids, active, onSelect }: { view: ReturnType<typeof t
       <p className="mb-3 flex items-center gap-2 text-[12.5px] font-semibold text-slate-200"><ListChecks size={15} className="text-cyan-300" />지난주 계획<span className="font-mono text-[11px] font-normal text-slate-500">{view.lastWeekPlan.length}</span></p>
       <ul className="divide-y divide-white/[0.05]">{view.lastWeekPlan.map((item) => <li key={`${item.status}-${item.text}`} className="flex items-start gap-3 py-2.5 text-[14px] leading-[1.6] text-slate-200"><span className={cn("mt-[2px] w-[68px] shrink-0 rounded-md px-1.5 py-0.5 text-center text-[11px] font-medium", PLAN_STATUS[item.status] ?? "bg-slate-400/15 text-slate-300")}>{item.status || "기록 없음"}</span><span className="min-w-0 break-words">{item.text}</span></li>)}</ul>
     </section>}
-    {view.topics.length > 0 && <div id="weekly-topics" className="grid scroll-mt-16 items-start gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
+    {view.topics.length > 0 && <div id="weekly-topics" className="grid scroll-mt-16 items-start gap-5 xl:grid-cols-[200px_minmax(0,1fr)]">
       <nav aria-label="주제 목차" className="hidden xl:sticky xl:top-4 xl:block">
         <p className="mb-2 px-2.5 text-[11px] font-semibold text-slate-500">주제 {view.topics.length}</p>
         {view.topics.map((topic, index) => <button key={ids[index]} type="button" aria-current={active === ids[index] ? "true" : undefined} onClick={() => onSelect(ids[index])} className={cn("block w-full border-l-2 px-2.5 py-1.5 text-left transition-colors", active === ids[index] ? "border-cyan-400 bg-white/[0.04]" : "border-transparent hover:bg-white/[0.025]")}>
@@ -315,7 +315,7 @@ export function WeeklyPage() {
             <button type="button" disabled={!newer} onClick={() => newer && select(newer.weekId)} title="다음 주" className={iconButton}><ChevronRight size={15} /><span className="sr-only">다음 주</span></button>
           </span>
         </div>
-        <div className="mx-auto max-w-[1280px] px-6 py-8 sm:px-10">
+        <div className="mx-auto max-w-[1680px] px-5 py-8 sm:px-8">
           {selectedReport && <DocHeader report={selectedReport} />}
           {detail ? <ReportBody detail={detail} tab={routeState.view} onTabChange={(view) => setSearchParams(writeWeeklyRouteState(searchParams, selected, view), { replace: true })} /> : <div className="h-28 animate-pulse rounded-md bg-white/[0.03]" />}
         </div>
