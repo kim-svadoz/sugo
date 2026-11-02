@@ -13,11 +13,12 @@ describe("Weekly index presentation", () => {
     expect(source).not.toContain("주간 보고서 달력");
   });
 
-  it("본문은 마크다운 미리보기처럼 한 단 문서로 그리고, 주차 목록은 접을 수 있다", () => {
+  it("본문은 Sugo 표면의 학습·작업 카드로 그리고, 주차 목록은 접을 수 있다", () => {
     expect(source).not.toContain("aurora-card");
     expect(source).toContain("max-w-[1280px]");
     expect(source).toContain("bg-[#0a101b]");
-    expect(source).toContain("list-disc");
+    expect(source).toContain("function TopicCard(");
+    expect(source).toContain("function LearningCard(");
     expect(source).toContain("주차 목록 닫기");
     expect(source).toContain('const RAIL_KEY = "sugo.weekly.railOpen"');
   });

@@ -7,7 +7,7 @@ import { PageHeading } from "../components/PageHeading.js";
 import { NoticeBar } from "../components/NoticeBar.js";
 import { readWeeklyRouteState, writeWeeklyRouteState, type WeeklyDetailView } from "../lib/weeklyRouteState.js";
 import { selectWeeklySection } from "../lib/weeklyScrollSpy.js";
-import { AlertTriangle, Check, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, FileText, GraduationCap, HelpCircle, Lightbulb, Link2, PanelLeftClose, PanelLeftOpen, Scale, Workflow, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, FileText, GraduationCap, Hammer, HelpCircle, Lightbulb, Link2, ListChecks, PanelLeftClose, PanelLeftOpen, Scale, Sparkles, Target, Workflow, XCircle } from "lucide-react";
 
 function findScrollContainer(element: HTMLElement): HTMLElement | null {
   let parent = element.parentElement;
@@ -60,51 +60,11 @@ function useWeeklyScrollSpy(ids: string[], enabled: boolean) {
 }
 
 /* 본문은 개발자에게 익숙한 마크다운 미리보기처럼 그린다: 한 단 문서, ## 제목 아래 구분선, 일반 목록, 왼쪽 선 강조 상자. */
-const H2 = "mb-4 border-b border-white/[0.08] pb-2 text-[16px] font-semibold text-slate-100";
-const SECTION = "mt-10 scroll-mt-16 first:mt-0";
 const H3 = "text-[15px] font-semibold text-cyan-100";
-
-function Bullets({ items }: { items: string[] }) {
-  return <ul className="list-disc space-y-1.5 pl-5 text-[14px] leading-[1.75] text-slate-300 marker:text-slate-500">{items.map((item, index) => <li key={`${index}-${item}`} className="break-words pl-1">{item}</li>)}</ul>;
-}
 
 function Count({ children }: { children: number }) { return <span className="ml-1.5 font-mono text-[11px] text-slate-500">{children}</span>; }
 
-/** GitHub 알림 상자처럼 왼쪽 선만 둔 강조 상자. */
-function Callout({ title, tone = "warn", children }: { title: string; tone?: "warn" | "note"; children: React.ReactNode }) {
-  return <div className={cn("rounded-r-md border-l-[3px] px-4 py-3", tone === "warn" ? "border-amber-400/70 bg-amber-400/[0.045]" : "border-cyan-400/60 bg-cyan-400/[0.04]")}>
-    <p className={cn("mb-1.5 text-[12px] font-semibold", tone === "warn" ? "text-amber-200" : "text-cyan-200")}>{title}</p>
-    {children}
-  </div>;
-}
-
 function Chip({ children, mono = false }: { children: React.ReactNode; mono?: boolean }) { return <span className={cn("rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[11px] text-slate-300", mono && "font-mono")}>{children}</span>; }
-
-function Field({ label, items }: { label: string; items: string[] }) {
-  return items.length ? <div><h4 className="mb-1 text-[12.5px] font-semibold text-slate-400">{label}</h4><Bullets items={items} /></div> : null;
-}
-
-function Topic({ topic }: { topic: WeeklyTopicView }) {
-  return <article className="space-y-4">
-    <header>
-      <div className="flex flex-wrap items-center gap-2"><h3 className={H3}>{topic.title}</h3>{topic.category && <Chip>{topic.category}</Chip>}{topic.workspace && <Chip mono>{topic.workspace}</Chip>}</div>
-      {topic.oneLine && <p className="mt-1.5 text-[14px] leading-[1.7] text-slate-400">{topic.oneLine}</p>}
-    </header>
-    <div className="grid gap-x-8 gap-y-4 xl:grid-cols-2">
-      <Field label="상황" items={topic.context ? [topic.context] : []} />
-      <Field label="목적" items={topic.goal ? [topic.goal] : []} />
-      <Field label="한 일" items={topic.done} />
-      <Field label="검증" items={topic.results} />
-    </div>
-    {topic.todo.length > 0 && <Callout title={`남은 일 ${topic.todo.length}`}><ul className="space-y-1 text-[14px] leading-[1.7] text-slate-300">{topic.todo.map((item) => <li key={`${item.kind}-${item.text}`}><span className="mr-2 font-mono text-[11px] text-amber-200/80">[{item.kind || "작업"}]</span>{item.text}</li>)}</ul></Callout>}
-  </article>;
-}
-
-function JumpTabs({ label, items, active, onSelect }: { label: string; items: Array<{ id: string; label: string }>; active: string; onSelect: (id: string) => void }) {
-  return <nav aria-label={label} className="sticky top-0 z-20 -mx-1 overflow-x-auto border-b border-white/[0.08] bg-[var(--color-background)]/95 px-1 py-1.5 backdrop-blur">
-    <div className="flex min-w-max gap-0.5">{items.map((item, index) => <button key={item.id} type="button" aria-current={active === item.id ? "true" : undefined} onClick={() => onSelect(item.id)} className={cn("max-w-[260px] rounded-md px-2.5 py-1.5 text-left text-[12.5px] transition-colors", active === item.id ? "bg-white/[0.06] text-cyan-100" : "text-slate-400 hover:text-slate-200")}><span className="mr-1.5 font-mono text-[10.5px] text-slate-500">{String(index + 1).padStart(2, "0")}</span><span className="inline-block max-w-[210px] truncate align-bottom">{item.label}</span></button>)}</div>
-  </nav>;
-}
 
 /* 기술 학습은 문서가 아니라 학습 카드로 보여 준다. 남색 표면과 청록 강조만 쓰고, 항목마다 읽는 방식에 맞는 모양을 준다. */
 const STUDY_CARD = "rounded-2xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(15,26,43,0.96),rgba(9,15,26,0.96))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_36px_-26px_rgba(0,0,0,0.85)]";
@@ -208,6 +168,62 @@ function LearningView({ summary, items, ids, active, onSelect }: { summary: stri
   </div>;
 }
 
+const PLAN_STATUS: Record<string, string> = { 완료: "bg-emerald-400/15 text-emerald-200", 진행: "bg-cyan-400/15 text-cyan-200", 미착수: "bg-slate-400/15 text-slate-300", "판단 불가": "bg-amber-400/15 text-amber-200" };
+const CATEGORY_TONE: Record<string, string> = { 기능: "bg-cyan-400/10 text-cyan-200", 수정: "bg-violet-400/10 text-violet-200", 개선: "bg-emerald-400/10 text-emerald-200", 도구: "bg-blue-400/10 text-blue-200", 운영: "bg-amber-400/10 text-amber-200" };
+
+function TopicCard({ topic, index }: { topic: WeeklyTopicView; index: number }) {
+  return <article className={cn(STUDY_CARD, "overflow-hidden")}>
+    <header className="border-b border-white/[0.06] px-6 pb-5 pt-5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="font-mono text-[11px] text-slate-500">{String(index + 1).padStart(2, "0")}</span>
+        {topic.category && <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-medium", CATEGORY_TONE[topic.category] ?? "bg-slate-400/10 text-slate-300")}>{topic.category}</span>}
+        {topic.workspace && <span className="rounded-md border border-white/[0.08] px-1.5 py-0.5 font-mono text-[11px] text-slate-400">{topic.workspace}</span>}
+      </div>
+      <h3 className="mt-2.5 text-[18px] font-semibold tracking-tight text-white">{topic.title}</h3>
+      {topic.oneLine && <p className="mt-1.5 text-[14.5px] leading-[1.6] text-slate-300">{topic.oneLine}</p>}
+    </header>
+    {(topic.context || topic.goal) && <div className="grid gap-3 px-6 pt-5 md:grid-cols-2">
+      {topic.context && <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4"><StudyHeading icon={FileText} tone="violet">상황</StudyHeading><p className="text-[13.5px] leading-[1.65] text-slate-300">{topic.context}</p></div>}
+      {topic.goal && <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4"><StudyHeading icon={Target}>목적</StudyHeading><p className="text-[13.5px] leading-[1.65] text-slate-300">{topic.goal}</p></div>}
+    </div>}
+    <div className="grid gap-6 px-6 py-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      {topic.done.length > 0 && <section><StudyHeading icon={Hammer}>한 일</StudyHeading>
+        <ol className="space-y-2.5">{topic.done.map((line, step) => <li key={line} className="flex gap-3 text-[14px] leading-[1.6] text-slate-200"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-cyan-400/15 font-mono text-[10.5px] font-semibold text-cyan-200">{step + 1}</span><span className="min-w-0 break-words">{line}</span></li>)}</ol>
+      </section>}
+      {topic.results.length > 0 && <section><StudyHeading icon={CheckCircle2} tone="emerald">검증</StudyHeading>
+        <ul className="space-y-2">{topic.results.map((line) => <li key={line} className="flex gap-2.5 rounded-lg bg-emerald-400/[0.04] px-3 py-2 text-[13.5px] leading-[1.6] text-slate-200"><Check size={14} className="mt-[4px] shrink-0 text-emerald-300" /><span className="min-w-0 break-words">{line}</span></li>)}</ul>
+      </section>}
+    </div>
+    {topic.todo.length > 0 && <section className="border-t border-white/[0.06] bg-amber-400/[0.03] px-6 py-4"><StudyHeading icon={AlertTriangle} tone="amber">남은 일 {topic.todo.length}</StudyHeading>
+      <ul className="space-y-1.5">{topic.todo.map((item) => <li key={`${item.kind}-${item.text}`} className="flex flex-wrap items-baseline gap-2 text-[13.5px] leading-[1.6] text-slate-200"><span className="rounded-md bg-amber-300/15 px-1.5 py-0.5 text-[11px] font-medium text-amber-200">{item.kind || "작업"}</span>{item.text}</li>)}</ul>
+    </section>}
+  </article>;
+}
+
+/** 주간 작업 탭: 지난주 계획 체크리스트, 왼쪽 주제 목차와 주제 카드, 막힌 것·다음 주 카드. */
+function ReportView({ view, ids, active, onSelect }: { view: ReturnType<typeof toWeeklyView>; ids: string[]; active: string; onSelect: (id: string) => void }) {
+  return <div className="space-y-6">
+    {view.lastWeekPlan.length > 0 && <section id="weekly-plan" className={cn(STUDY_CARD, "scroll-mt-16 px-6 py-5")}>
+      <p className="mb-3 flex items-center gap-2 text-[12.5px] font-semibold text-slate-200"><ListChecks size={15} className="text-cyan-300" />지난주 계획<span className="font-mono text-[11px] font-normal text-slate-500">{view.lastWeekPlan.length}</span></p>
+      <ul className="divide-y divide-white/[0.05]">{view.lastWeekPlan.map((item) => <li key={`${item.status}-${item.text}`} className="flex items-start gap-3 py-2.5 text-[14px] leading-[1.6] text-slate-200"><span className={cn("mt-[2px] w-[68px] shrink-0 rounded-md px-1.5 py-0.5 text-center text-[11px] font-medium", PLAN_STATUS[item.status] ?? "bg-slate-400/15 text-slate-300")}>{item.status || "기록 없음"}</span><span className="min-w-0 break-words">{item.text}</span></li>)}</ul>
+    </section>}
+    {view.topics.length > 0 && <div id="weekly-topics" className="grid scroll-mt-16 items-start gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
+      <nav aria-label="주제 목차" className="hidden xl:sticky xl:top-4 xl:block">
+        <p className="mb-2 px-2.5 text-[11px] font-semibold text-slate-500">주제 {view.topics.length}</p>
+        {view.topics.map((topic, index) => <button key={ids[index]} type="button" aria-current={active === ids[index] ? "true" : undefined} onClick={() => onSelect(ids[index])} className={cn("block w-full border-l-2 px-2.5 py-1.5 text-left transition-colors", active === ids[index] ? "border-cyan-400 bg-white/[0.04]" : "border-transparent hover:bg-white/[0.025]")}>
+          <span className={cn("block truncate text-[13px]", active === ids[index] ? "font-semibold text-slate-100" : "text-slate-400")}>{topic.title}</span>
+          <span className="mt-0.5 block truncate text-[11px] text-slate-500">{[topic.category, topic.workspace].filter(Boolean).join(" · ")}</span>
+        </button>)}
+      </nav>
+      <div className="min-w-0 space-y-6">{view.topics.map((topic, index) => <div id={ids[index]} key={`${index}-${topic.title}`} className="scroll-mt-6"><TopicCard topic={topic} index={index} /></div>)}</div>
+    </div>}
+    {(view.blocked.length > 0 || view.nextWeek.length > 0) && <div className="grid gap-4 xl:grid-cols-2">
+      {view.blocked.length > 0 && <section id="weekly-blocked" className="scroll-mt-16 rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] px-6 py-5"><StudyHeading icon={AlertTriangle} tone="amber">막힌 것 {view.blocked.length}</StudyHeading><ul className="space-y-2 text-[14px] leading-[1.6] text-slate-200">{view.blocked.map((line) => <li key={line} className="flex gap-2.5"><span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300" />{line}</li>)}</ul></section>}
+      {view.nextWeek.length > 0 && <section id="weekly-next" className={cn(STUDY_CARD, "scroll-mt-16 px-6 py-5")}><StudyHeading icon={ArrowRight}>다음 주 할 일 {view.nextWeek.length}</StudyHeading><ul className="space-y-2 text-[14px] leading-[1.6] text-slate-200">{view.nextWeek.map((line) => <li key={line} className="flex gap-2.5"><span className="mt-[5px] h-3.5 w-3.5 shrink-0 rounded border border-cyan-300/40" />{line}</li>)}</ul></section>}
+    </div>}
+  </div>;
+}
+
 function ReportBody({ detail, tab, onTabChange }: { detail: WeeklyReportDetail; tab: WeeklyDetailView; onTabChange: (tab: WeeklyDetailView) => void }) {
   const view = useMemo(() => toWeeklyView(detail.report), [detail]);
   const topicTabs = useMemo(() => view.topics.map((topic, index) => ({ id: `weekly-topic-${index}`, label: topic.title })), [view.topics]);
@@ -217,12 +233,7 @@ function ReportBody({ detail, tab, onTabChange }: { detail: WeeklyReportDetail; 
   const jumpTo = (id: string, setActive: (id: string) => void) => { setActive(id); document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }); };
   return <div>
     <nav className="mb-6 flex gap-6 border-b border-white/[0.08]" aria-label="Weekly 보기">{([["report", "주간 작업", view.topics.length], ["learning", "기술 학습", view.learning.length]] as const).map(([key, label, count]) => <button key={key} onClick={() => onTabChange(key)} className={cn("-mb-px border-b-2 px-0.5 pb-2.5 text-[13px] font-semibold", tab === key ? "border-cyan-400 text-slate-100" : "border-transparent text-slate-500 hover:text-slate-300")}>{label}<Count>{count}</Count></button>)}</nav>
-    {tab === "report" ? <div>
-      {view.lastWeekPlan.length > 0 && <section id="weekly-plan" className={SECTION}><h2 className={H2}>지난주 계획</h2><Bullets items={view.lastWeekPlan.map((item) => item.status ? `[${item.status}] ${item.text}` : item.text)} /></section>}
-      {view.topics.length > 0 && <section id="weekly-topics" className={SECTION}><h2 className={H2}>주제<Count>{view.topics.length}</Count></h2><JumpTabs label="주제 바로가기" items={topicTabs} active={activeTopic} onSelect={(id) => jumpTo(id, setActiveTopic)} /><div className="mt-6 space-y-10">{view.topics.map((topic, index) => <div id={topicTabs[index].id} key={`${index}-${topic.title}`} className="scroll-mt-14"><Topic topic={topic} /></div>)}</div></section>}
-      {view.blocked.length > 0 && <section id="weekly-blocked" className={SECTION}><h2 className={H2}>막힌 것</h2><Callout title={`막힌 것 ${view.blocked.length}`}><Bullets items={view.blocked} /></Callout></section>}
-      {view.nextWeek.length > 0 && <section id="weekly-next" className={SECTION}><h2 className={H2}>다음 주</h2><Bullets items={view.nextWeek} /></section>}
-    </div> : <LearningView summary={view.learningSummary} items={view.learning} ids={learningTabs.map((tabItem) => tabItem.id)} active={activeLearning} onSelect={(id) => jumpTo(id, setActiveLearning)} />}
+    {tab === "report" ? <ReportView view={view} ids={topicTabs.map((tabItem) => tabItem.id)} active={activeTopic} onSelect={(id) => jumpTo(id, setActiveTopic)} /> : <LearningView summary={view.learningSummary} items={view.learning} ids={learningTabs.map((tabItem) => tabItem.id)} active={activeLearning} onSelect={(id) => jumpTo(id, setActiveLearning)} />}
   </div>;
 }
 
@@ -251,7 +262,10 @@ function DocHeader({ report }: { report: WeeklyReportSummary }) {
   return <header className="mb-8">
     <h1 className="font-mono text-[20px] font-semibold tracking-tight text-white">{report.weekId}</h1>
     <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-slate-500"><span className="font-mono">{report.start} — {report.end}</span><span>생성 {report.generatedAt.slice(0, 10)}</span>{counts && <span>주제 {counts.topics} · 기술 학습 {counts.learnings} · 다음 주 {counts.nextWeek}</span>}</p>
-    {report.headline.length > 0 && <div className="mt-5"><Bullets items={report.headline} /></div>}
+    {report.headline.length > 0 && <section className={cn(STUDY_CARD, "mt-5 px-6 py-5")}>
+      <p className="flex items-center gap-2 text-[12.5px] font-semibold text-cyan-200"><Sparkles size={15} />이번 주 요약</p>
+      <ul className="mt-3 space-y-2">{report.headline.map((line) => <li key={line} className="flex gap-3 text-[14.5px] leading-[1.6] text-slate-100"><Check size={15} className="mt-[4px] shrink-0 text-cyan-300" />{line}</li>)}</ul>
+    </section>}
   </header>;
 }
 
