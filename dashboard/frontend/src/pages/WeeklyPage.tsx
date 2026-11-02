@@ -60,12 +60,12 @@ function useWeeklyScrollSpy(ids: string[], enabled: boolean) {
 }
 
 /* 본문은 개발자에게 익숙한 마크다운 미리보기처럼 그린다: 한 단 문서, ## 제목 아래 구분선, 일반 목록, 왼쪽 선 강조 상자. */
-const H2 = "mb-4 border-b border-white/[0.08] pb-2 text-[17px] font-semibold text-slate-100";
+const H2 = "mb-4 border-b border-white/[0.08] pb-2 text-[16px] font-semibold text-slate-100";
 const SECTION = "mt-10 scroll-mt-16 first:mt-0";
-const H3 = "text-[15px] font-semibold text-slate-100";
+const H3 = "text-[15px] font-semibold text-cyan-100";
 
 function Bullets({ items }: { items: string[] }) {
-  return <ul className="list-disc space-y-1 pl-5 text-[13px] leading-[1.75] text-slate-300 marker:text-slate-500">{items.map((item, index) => <li key={`${index}-${item}`} className="break-words pl-1">{item}</li>)}</ul>;
+  return <ul className="list-disc space-y-1.5 pl-5 text-[14px] leading-[1.75] text-slate-300 marker:text-slate-500">{items.map((item, index) => <li key={`${index}-${item}`} className="break-words pl-1">{item}</li>)}</ul>;
 }
 
 function Count({ children }: { children: number }) { return <span className="ml-1.5 font-mono text-[11px] text-slate-500">{children}</span>; }
@@ -81,14 +81,14 @@ function Callout({ title, tone = "warn", children }: { title: string; tone?: "wa
 function Chip({ children, mono = false }: { children: React.ReactNode; mono?: boolean }) { return <span className={cn("rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[11px] text-slate-300", mono && "font-mono")}>{children}</span>; }
 
 function Field({ label, items }: { label: string; items: string[] }) {
-  return items.length ? <div><h4 className="mb-1 text-[12px] font-semibold text-slate-400">{label}</h4><Bullets items={items} /></div> : null;
+  return items.length ? <div><h4 className="mb-1 text-[12.5px] font-semibold text-slate-400">{label}</h4><Bullets items={items} /></div> : null;
 }
 
 function Topic({ topic }: { topic: WeeklyTopicView }) {
   return <article className="space-y-4">
     <header>
       <div className="flex flex-wrap items-center gap-2"><h3 className={H3}>{topic.title}</h3>{topic.category && <Chip>{topic.category}</Chip>}{topic.workspace && <Chip mono>{topic.workspace}</Chip>}</div>
-      {topic.oneLine && <p className="mt-1.5 text-[13px] leading-[1.7] text-slate-400">{topic.oneLine}</p>}
+      {topic.oneLine && <p className="mt-1.5 text-[14px] leading-[1.7] text-slate-400">{topic.oneLine}</p>}
     </header>
     <div className="grid gap-x-8 gap-y-4 xl:grid-cols-2">
       <Field label="상황" items={topic.context ? [topic.context] : []} />
@@ -96,7 +96,7 @@ function Topic({ topic }: { topic: WeeklyTopicView }) {
       <Field label="한 일" items={topic.done} />
       <Field label="검증" items={topic.results} />
     </div>
-    {topic.todo.length > 0 && <Callout title={`남은 일 ${topic.todo.length}`}><ul className="space-y-1 text-[13px] leading-[1.7] text-slate-300">{topic.todo.map((item) => <li key={`${item.kind}-${item.text}`}><span className="mr-2 font-mono text-[11px] text-amber-200/80">[{item.kind || "작업"}]</span>{item.text}</li>)}</ul></Callout>}
+    {topic.todo.length > 0 && <Callout title={`남은 일 ${topic.todo.length}`}><ul className="space-y-1 text-[14px] leading-[1.7] text-slate-300">{topic.todo.map((item) => <li key={`${item.kind}-${item.text}`}><span className="mr-2 font-mono text-[11px] text-amber-200/80">[{item.kind || "작업"}]</span>{item.text}</li>)}</ul></Callout>}
   </article>;
 }
 
@@ -113,7 +113,7 @@ function LearningCard({ item }: { item: WeeklyLearningView }) {
       <div className="flex flex-wrap items-center gap-2"><h3 className={H3}>{item.name}</h3>{item.category && <Chip>{item.category}</Chip>}{item.level && <Chip>{item.level}</Chip>}</div>
       {item.relatedTopics.length > 0 && <p className="mt-1.5 text-[12px] text-slate-500">쓰인 작업: {item.relatedTopics.join(", ")}</p>}
     </header>
-    {item.definition && <Callout title="정의" tone="note"><p className="text-[13px] leading-[1.7] text-slate-200">{item.definition}</p></Callout>}
+    {item.definition && <Callout title="정의" tone="note"><p className="text-[14px] leading-[1.7] text-slate-200">{item.definition}</p></Callout>}
     <div className="grid gap-x-8 gap-y-4 xl:grid-cols-2">
       <Field label="핵심 개념" items={item.keyPoints} />
       <Field label="동작 원리" items={item.howItWorks} />
@@ -123,9 +123,9 @@ function LearningCard({ item }: { item: WeeklyLearningView }) {
       <Field label="보완재" items={item.complements.map((value) => `${value.name} — ${value.why}`)} />
     </div>
     {item.pitfalls.length > 0 && <Callout title="흔한 함정"><Bullets items={item.pitfalls} /></Callout>}
-    {item.alternatives.length > 0 && <div className="overflow-x-auto"><h4 className="mb-1.5 text-[12px] font-semibold text-slate-400">대체재 비교</h4><table className="w-full min-w-[660px] border-collapse text-left text-[12.5px] text-slate-300"><thead><tr>{["대체재", "장점", "단점", "더 맞는 상황"].map((head) => <th key={head} className="border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 font-semibold text-slate-200">{head}</th>)}</tr></thead><tbody>{item.alternatives.map((alt) => <tr key={alt.name}><td className="border border-white/[0.08] px-3 py-1.5 font-semibold text-slate-200">{alt.name}</td><td className="border border-white/[0.08] px-3 py-1.5">{alt.pros}</td><td className="border border-white/[0.08] px-3 py-1.5">{alt.cons}</td><td className="border border-white/[0.08] px-3 py-1.5">{alt.when}</td></tr>)}</tbody></table></div>}
+    {item.alternatives.length > 0 && <div className="overflow-x-auto"><h4 className="mb-1.5 text-[12px] font-semibold text-slate-400">대체재 비교</h4><table className="w-full min-w-[660px] border-collapse text-left text-[13px] text-slate-300"><thead><tr>{["대체재", "장점", "단점", "더 맞는 상황"].map((head) => <th key={head} className="border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 font-semibold text-slate-200">{head}</th>)}</tr></thead><tbody>{item.alternatives.map((alt) => <tr key={alt.name}><td className="border border-white/[0.08] px-3 py-1.5 font-semibold text-slate-200">{alt.name}</td><td className="border border-white/[0.08] px-3 py-1.5">{alt.pros}</td><td className="border border-white/[0.08] px-3 py-1.5">{alt.cons}</td><td className="border border-white/[0.08] px-3 py-1.5">{alt.when}</td></tr>)}</tbody></table></div>}
     {rationale.length > 0 && <Field label="선택 근거" items={rationale} />}
-    {item.quiz.length > 0 && <div className="space-y-1.5">{item.quiz.map((quiz) => <details key={quiz.question} className="rounded-md border border-white/[0.08] px-3 py-2 text-[13px] text-slate-300"><summary className="cursor-pointer text-slate-200">Q. {quiz.question}</summary><p className="mt-2 leading-[1.7]">{quiz.answer}</p></details>)}</div>}
+    {item.quiz.length > 0 && <div className="space-y-1.5">{item.quiz.map((quiz) => <details key={quiz.question} className="rounded-md border border-white/[0.08] px-3 py-2 text-[14px] text-slate-300"><summary className="cursor-pointer text-slate-200">Q. {quiz.question}</summary><p className="mt-2 leading-[1.7]">{quiz.answer}</p></details>)}</div>}
     {item.keywords.length > 0 && <div className="flex flex-wrap gap-1.5">{item.keywords.map((keyword) => <Chip key={keyword} mono>{keyword}</Chip>)}</div>}
   </article>;
 }
@@ -156,7 +156,7 @@ const monthLabel = (date: string) => `${date.slice(0, 4)}년 ${Number(date.slice
 /** 왼쪽 주차 목록. 접으면 본문이 전체 폭을 쓴다. */
 function WeekRail({ reports, selected, onSelect }: { reports: WeeklyReportSummary[]; selected: string; onSelect: (weekId: string) => void }) {
   const months = Object.entries(reports.reduce<Record<string, WeeklyReportSummary[]>>((groups, report) => { (groups[monthLabel(report.start)] ??= []).push(report); return groups; }, {}));
-  return <nav aria-label="주차 목록" className="ck-scroll space-y-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:pr-1">
+  return <nav aria-label="주차 목록" className="ck-scroll space-y-4 rounded-xl border border-white/[0.07] bg-[#0a101b] p-2 xl:sticky xl:top-4 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto">
     {months.map(([label, items]) => <div key={label}>
       <p className="px-2.5 pb-1 text-[11px] font-semibold text-slate-500">{label}</p>
       {items.map((report) => {
@@ -174,8 +174,8 @@ function WeekRail({ reports, selected, onSelect }: { reports: WeeklyReportSummar
 function DocHeader({ report }: { report: WeeklyReportSummary }) {
   const counts = report.counts;
   return <header className="mb-8">
-    <h1 className="font-mono text-[22px] font-semibold tracking-tight text-white">{report.weekId}</h1>
-    <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-slate-500"><span className="font-mono">{report.start} — {report.end}</span><span>생성 {report.generatedAt.slice(0, 10)}</span>{counts && <span>주제 {counts.topics} · 기술 학습 {counts.learnings} · 다음 주 {counts.nextWeek}</span>}</p>
+    <h1 className="font-mono text-[20px] font-semibold tracking-tight text-white">{report.weekId}</h1>
+    <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-slate-500"><span className="font-mono">{report.start} — {report.end}</span><span>생성 {report.generatedAt.slice(0, 10)}</span>{counts && <span>주제 {counts.topics} · 기술 학습 {counts.learnings} · 다음 주 {counts.nextWeek}</span>}</p>
     {report.headline.length > 0 && <div className="mt-5"><Bullets items={report.headline} /></div>}
   </header>;
 }
@@ -216,7 +216,8 @@ export function WeeklyPage() {
   return <div className="w-full space-y-5"><PageHeading eyebrow="WEEKLY REVIEW" title="주간 작업 리포트" description="한 주의 작업 결과와 기술 학습을 기록하고 다시 확인합니다." />{scheduleOff && <NoticeBar title="주간 리포트 자동 정리가 꺼져 있습니다." detail="켜면 정한 요일과 시각에 리포트를 만들고, 꺼져 있는 동안은 /sugo:weekly로 직접 만들 수 있습니다." actionLabel="주간 리포트 설정 열기" onAction={() => navigate("/preferences?tab=weekly")} />}
     {reports !== null && reports.length === 0 ? <p className="text-[13px] text-slate-400">보고서가 없습니다.</p> : reports && selected && <div className={cn("grid items-start gap-6", railOpen && "xl:grid-cols-[240px_minmax(0,1fr)]")}>
       {railOpen && <WeekRail reports={reports} selected={selected} onSelect={select} />}
-      <main ref={readerRef} className="min-w-0 scroll-mt-4 rounded-xl border border-white/[0.07] bg-[rgba(8,13,23,0.6)]">
+      {/* 전역 CSS가 main에 점무늬 배경을 강제하므로 문서 영역은 article로 둔다. */}
+      <article ref={readerRef} aria-label="주간 리포트 본문" className="min-w-0 scroll-mt-4 rounded-xl border border-white/[0.07] bg-[#0a101b]">
         <div className="flex items-center gap-2 border-b border-white/[0.07] px-4 py-2.5">
           <button type="button" onClick={toggleRail} aria-pressed={railOpen} title={railOpen ? "주차 목록 닫기" : "주차 목록 열기"} className={iconButton}>{railOpen ? <PanelLeftClose size={15} /> : <PanelLeftOpen size={15} />}<span className="sr-only">{railOpen ? "주차 목록 닫기" : "주차 목록 열기"}</span></button>
           <span className="ml-1 font-mono text-[12px] text-slate-400">{selectedReport ? `weekly / ${selectedReport.weekId}.md` : ""}</span>
@@ -225,11 +226,11 @@ export function WeeklyPage() {
             <button type="button" disabled={!newer} onClick={() => newer && select(newer.weekId)} title="다음 주" className={iconButton}><ChevronRight size={15} /><span className="sr-only">다음 주</span></button>
           </span>
         </div>
-        <div className="mx-auto max-w-[960px] px-6 py-8 sm:px-10">
+        <div className="mx-auto max-w-[1280px] px-6 py-8 sm:px-10">
           {selectedReport && <DocHeader report={selectedReport} />}
           {detail ? <ReportBody detail={detail} tab={routeState.view} onTabChange={(view) => setSearchParams(writeWeeklyRouteState(searchParams, selected, view), { replace: true })} /> : <div className="h-28 animate-pulse rounded-md bg-white/[0.03]" />}
         </div>
-      </main>
+      </article>
     </div>}
   </div>;
 }
