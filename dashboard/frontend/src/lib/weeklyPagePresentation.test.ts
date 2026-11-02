@@ -7,16 +7,18 @@ describe("Weekly index presentation", () => {
   it("목록과 상세를 오가지 않고 왼쪽 주차 타임라인에서 고른 주를 오른쪽에서 바로 읽는다", () => {
     expect(source).toContain('title="주간 작업 리포트"');
     expect(source).toContain('aria-label="주차 목록"');
-    expect(source).toContain("xl:grid-cols-[280px_minmax(0,1fr)]");
+    expect(source).toContain("xl:grid-cols-[240px_minmax(0,1fr)]");
     expect(source).toContain("routeState.weekId ?? reports?.[0]?.weekId");
     expect(source).not.toContain("← 주간 보고서 목록");
     expect(source).not.toContain("주간 보고서 달력");
   });
 
-  it("고른 주의 요약은 오로라 머리에, 본문 카드는 정적 표면에 둔다", () => {
-    expect(source).toContain('className="aurora-card rounded-2xl border px-5 py-4"');
-    expect(source).toContain("panel-card");
-    expect(source).not.toContain("bg-[var(--color-surface)] px-5 py-4");
+  it("본문은 마크다운 미리보기처럼 한 단 문서로 그리고, 주차 목록은 접을 수 있다", () => {
+    expect(source).not.toContain("aurora-card");
+    expect(source).toContain("max-w-[960px]");
+    expect(source).toContain("list-disc");
+    expect(source).toContain("주차 목록 닫기");
+    expect(source).toContain('const RAIL_KEY = "sugo.weekly.railOpen"');
   });
 
   it("넓은 화면에서 커지는 rem 글자 클래스를 쓰지 않는다", () => {
