@@ -7,7 +7,7 @@ import { PageHeading } from "../components/PageHeading.js";
 import { NoticeBar } from "../components/NoticeBar.js";
 import { readWeeklyRouteState, writeWeeklyRouteState, type WeeklyDetailView } from "../lib/weeklyRouteState.js";
 import { selectWeeklySection } from "../lib/weeklyScrollSpy.js";
-import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, FileText, GraduationCap, HelpCircle, Lightbulb, Link2, PanelLeftClose, PanelLeftOpen, Scale, Workflow, XCircle } from "lucide-react";
 
 function findScrollContainer(element: HTMLElement): HTMLElement | null {
   let parent = element.parentElement;
@@ -106,28 +106,106 @@ function JumpTabs({ label, items, active, onSelect }: { label: string; items: Ar
   </nav>;
 }
 
-function LearningCard({ item }: { item: WeeklyLearningView }) {
-  const rationale = [...item.rationaleRecorded, ...item.rationaleUnverified.map((value) => `근거 기록 없음 · ${value}`), ...(item.rationaleGeneral ? [`일반론 · ${item.rationaleGeneral}`] : [])];
-  return <article className="space-y-4">
-    <header>
-      <div className="flex flex-wrap items-center gap-2"><h3 className={H3}>{item.name}</h3>{item.category && <Chip>{item.category}</Chip>}{item.level && <Chip>{item.level}</Chip>}</div>
-      {item.relatedTopics.length > 0 && <p className="mt-1.5 text-[12px] text-slate-500">쓰인 작업: {item.relatedTopics.join(", ")}</p>}
+/* 기술 학습은 문서가 아니라 학습 카드로 보여 준다. 남색 표면과 청록 강조만 쓰고, 항목마다 읽는 방식에 맞는 모양을 준다. */
+const STUDY_CARD = "rounded-2xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(15,26,43,0.96),rgba(9,15,26,0.96))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_36px_-26px_rgba(0,0,0,0.85)]";
+const LEVELS = ["기초", "중급", "심화"];
+
+function LevelMeter({ level }: { level: string }) {
+  const rank = LEVELS.indexOf(level) + 1;
+  if (rank === 0) return level ? <Chip>{level}</Chip> : null;
+  return <span className="inline-flex items-center gap-1.5 text-[11.5px] text-slate-400" title={`난이도 ${level}`}>
+    <span className="flex items-end gap-[3px]" aria-hidden="true">{[1, 2, 3].map((step) => <span key={step} className={cn("w-[4px] rounded-sm", step <= rank ? "bg-cyan-300" : "bg-white/15")} style={{ height: 4 + step * 3 }} />)}</span>{level}
+  </span>;
+}
+
+function StudyHeading({ icon: Icon, children, tone = "cyan" }: { icon: typeof Lightbulb; children: React.ReactNode; tone?: "cyan" | "emerald" | "rose" | "amber" | "violet" }) {
+  const color = { cyan: "text-cyan-300", emerald: "text-emerald-300", rose: "text-rose-300", amber: "text-amber-300", violet: "text-violet-300" }[tone];
+  return <h4 className="mb-3 flex items-center gap-2 text-[12.5px] font-semibold text-slate-200"><Icon size={14} className={color} />{children}</h4>;
+}
+
+function QuizCard({ question, answer, revealed, onReveal }: { question: string; answer: string; revealed: boolean; onReveal: () => void }) {
+  return <div className={cn("rounded-xl border p-4 transition-colors", revealed ? "border-cyan-300/25 bg-cyan-300/[0.04]" : "border-white/[0.08] bg-white/[0.02]")}>
+    <p className="flex gap-2 text-[14px] font-medium leading-[1.6] text-slate-100"><span className="font-mono text-cyan-300">Q.</span>{question}</p>
+    {revealed
+      ? <ul className="mt-3 space-y-1 border-t border-white/[0.06] pt-3 text-[13px] leading-[1.65] text-slate-300">{answer.split("\n").filter(Boolean).map((line) => <li key={line} className="flex gap-2"><Check size={13} className="mt-[5px] shrink-0 text-cyan-300" />{line}</li>)}</ul>
+      : <button type="button" onClick={onReveal} className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-[12px] font-semibold text-slate-300 transition-colors hover:border-cyan-300/40 hover:text-cyan-100"><Eye size={13} />정답 보기</button>}
+  </div>;
+}
+
+function LearningCard({ item, index }: { item: WeeklyLearningView; index: number }) {
+  const [revealed, setRevealed] = useState<Set<number>>(new Set());
+  const rationale = [...item.rationaleRecorded, ...item.rationaleUnverified.map((value) => `근거 기록 없음 · ${value}`), ...(item.rationaleGeneral ? [item.rationaleGeneral] : [])];
+  return <article className={cn(STUDY_CARD, "overflow-hidden")}>
+    <header className="border-b border-white/[0.06] px-6 pb-5 pt-5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="font-mono text-[11px] text-slate-500">{String(index + 1).padStart(2, "0")}</span>
+        {item.category && <span className="rounded-md bg-cyan-400/10 px-2 py-0.5 text-[11px] font-medium text-cyan-200">{item.category}</span>}
+        <LevelMeter level={item.level} />
+        {item.quiz.length > 0 && <span className="ml-auto font-mono text-[11px] text-slate-500">퀴즈 {revealed.size}/{item.quiz.length}</span>}
+      </div>
+      <h3 className="mt-2.5 text-[20px] font-semibold tracking-tight text-white">{item.name}</h3>
+      {item.definition && <p className="mt-2 max-w-4xl text-[15px] leading-[1.65] text-slate-300">{item.definition}</p>}
+      {item.relatedTopics.length > 0 && <p className="mt-3 flex flex-wrap items-center gap-1.5 text-[11.5px] text-slate-500"><Link2 size={12} />{item.relatedTopics.map((topic) => <span key={topic} className="rounded-md border border-white/[0.08] px-1.5 py-0.5 text-slate-400">{topic}</span>)}</p>}
     </header>
-    {item.definition && <Callout title="정의" tone="note"><p className="text-[14px] leading-[1.7] text-slate-200">{item.definition}</p></Callout>}
-    <div className="grid gap-x-8 gap-y-4 xl:grid-cols-2">
-      <Field label="핵심 개념" items={item.keyPoints} />
-      <Field label="동작 원리" items={item.howItWorks} />
-      <Field label="이번 작업에서의 예" items={item.example} />
-      <Field label="쓸 때" items={item.whenToUse} />
-      <Field label="피할 때" items={item.whenNotToUse} />
-      <Field label="보완재" items={item.complements.map((value) => `${value.name} — ${value.why}`)} />
+
+    <div className="grid gap-6 px-6 py-6 xl:grid-cols-2">
+      {item.keyPoints.length > 0 && <section><StudyHeading icon={Lightbulb}>핵심 개념</StudyHeading>
+        <ol className="space-y-2.5">{item.keyPoints.map((point, step) => <li key={point} className="flex gap-3 text-[14px] leading-[1.6] text-slate-200"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-cyan-400/15 font-mono text-[10.5px] font-semibold text-cyan-200">{step + 1}</span><span className="min-w-0">{point}</span></li>)}</ol>
+      </section>}
+      {item.howItWorks.length > 0 && <section><StudyHeading icon={Workflow} tone="violet">동작 원리</StudyHeading>
+        <ol className="relative space-y-3 pl-5 before:absolute before:bottom-2 before:left-[5px] before:top-2 before:w-px before:bg-violet-300/25">{item.howItWorks.map((step) => <li key={step} className="relative text-[14px] leading-[1.6] text-slate-200"><span className="absolute -left-5 top-[7px] h-[11px] w-[11px] rounded-full border-2 border-violet-300/60 bg-[#0b1220]" />{step}</li>)}</ol>
+      </section>}
     </div>
-    {item.pitfalls.length > 0 && <Callout title="흔한 함정"><Bullets items={item.pitfalls} /></Callout>}
-    {item.alternatives.length > 0 && <div className="overflow-x-auto"><h4 className="mb-1.5 text-[12px] font-semibold text-slate-400">대체재 비교</h4><table className="w-full min-w-[660px] border-collapse text-left text-[13px] text-slate-300"><thead><tr>{["대체재", "장점", "단점", "더 맞는 상황"].map((head) => <th key={head} className="border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 font-semibold text-slate-200">{head}</th>)}</tr></thead><tbody>{item.alternatives.map((alt) => <tr key={alt.name}><td className="border border-white/[0.08] px-3 py-1.5 font-semibold text-slate-200">{alt.name}</td><td className="border border-white/[0.08] px-3 py-1.5">{alt.pros}</td><td className="border border-white/[0.08] px-3 py-1.5">{alt.cons}</td><td className="border border-white/[0.08] px-3 py-1.5">{alt.when}</td></tr>)}</tbody></table></div>}
-    {rationale.length > 0 && <Field label="선택 근거" items={rationale} />}
-    {item.quiz.length > 0 && <div className="space-y-1.5">{item.quiz.map((quiz) => <details key={quiz.question} className="rounded-md border border-white/[0.08] px-3 py-2 text-[14px] text-slate-300"><summary className="cursor-pointer text-slate-200">Q. {quiz.question}</summary><p className="mt-2 leading-[1.7]">{quiz.answer}</p></details>)}</div>}
-    {item.keywords.length > 0 && <div className="flex flex-wrap gap-1.5">{item.keywords.map((keyword) => <Chip key={keyword} mono>{keyword}</Chip>)}</div>}
+
+    {item.example.length > 0 && <section className="mx-6 mb-6"><StudyHeading icon={Code2} tone="emerald">이번 작업에서의 예</StudyHeading>
+      <div className="rounded-xl border border-white/[0.07] bg-[#060b14] px-4 py-3 font-mono text-[12.5px] leading-[1.8] text-emerald-100/90">{item.example.map((line) => <p key={line} className="flex gap-3"><span className="select-none text-slate-600">›</span><span className="min-w-0 break-words">{line}</span></p>)}</div>
+    </section>}
+
+    {(item.whenToUse.length > 0 || item.whenNotToUse.length > 0) && <section className="mx-6 mb-6 grid gap-3 md:grid-cols-2">
+      <div className="rounded-xl border border-emerald-400/15 bg-emerald-400/[0.04] p-4"><StudyHeading icon={CheckCircle2} tone="emerald">이럴 때 쓴다</StudyHeading><ul className="space-y-1.5 text-[13.5px] leading-[1.6] text-slate-200">{item.whenToUse.map((line) => <li key={line}>{line}</li>)}</ul></div>
+      <div className="rounded-xl border border-rose-400/15 bg-rose-400/[0.04] p-4"><StudyHeading icon={XCircle} tone="rose">이럴 땐 피한다</StudyHeading><ul className="space-y-1.5 text-[13.5px] leading-[1.6] text-slate-200">{item.whenNotToUse.map((line) => <li key={line}>{line}</li>)}</ul></div>
+    </section>}
+
+    {item.pitfalls.length > 0 && <section className="mx-6 mb-6"><StudyHeading icon={AlertTriangle} tone="amber">흔한 함정</StudyHeading>
+      <ul className="space-y-2">{item.pitfalls.map((line) => <li key={line} className="flex gap-3 rounded-lg border-l-2 border-amber-400/60 bg-amber-400/[0.04] px-3 py-2 text-[13.5px] leading-[1.6] text-slate-200">{line}</li>)}</ul>
+    </section>}
+
+    {(item.alternatives.length > 0 || item.complements.length > 0) && <section className="mx-6 mb-6 grid gap-4 xl:grid-cols-2">
+      {item.alternatives.length > 0 && <div><StudyHeading icon={Scale}>대신 쓸 수 있는 것</StudyHeading><div className="space-y-2">{item.alternatives.map((alt) => <div key={alt.name} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
+        <p className="text-[14px] font-semibold text-slate-100">{alt.name}</p>
+        <dl className="mt-2 grid gap-1 text-[12.5px] leading-[1.55]"><div className="flex gap-2"><dt className="w-10 shrink-0 text-emerald-300">장점</dt><dd className="text-slate-300">{alt.pros}</dd></div><div className="flex gap-2"><dt className="w-10 shrink-0 text-rose-300">단점</dt><dd className="text-slate-300">{alt.cons}</dd></div><div className="flex gap-2"><dt className="w-10 shrink-0 text-slate-500">상황</dt><dd className="text-slate-400">{alt.when}</dd></div></dl>
+      </div>)}</div></div>}
+      {item.complements.length > 0 && <div><StudyHeading icon={Link2}>함께 쓰는 것</StudyHeading><div className="space-y-2">{item.complements.map((value) => <div key={value.name} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5"><p className="text-[14px] font-semibold text-slate-100">{value.name}</p><p className="mt-1 text-[12.5px] leading-[1.55] text-slate-400">{value.why}</p></div>)}</div></div>}
+    </section>}
+
+    {rationale.length > 0 && <section className="mx-6 mb-6"><StudyHeading icon={FileText} tone="violet">이번에 이렇게 고른 이유</StudyHeading><ul className="space-y-1.5 text-[13.5px] leading-[1.6] text-slate-300">{rationale.map((line) => <li key={line} className="flex gap-2"><span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-slate-500" />{line}</li>)}</ul></section>}
+
+    {item.quiz.length > 0 && <section className="border-t border-white/[0.06] bg-black/10 px-6 py-5"><StudyHeading icon={HelpCircle}>스스로 확인하기</StudyHeading>
+      <div className="grid gap-3 xl:grid-cols-2">{item.quiz.map((quiz, quizIndex) => <QuizCard key={quiz.question} question={quiz.question} answer={quiz.answer} revealed={revealed.has(quizIndex)} onReveal={() => setRevealed((current) => new Set(current).add(quizIndex))} />)}</div>
+    </section>}
+
+    {item.keywords.length > 0 && <footer className="flex flex-wrap gap-1.5 border-t border-white/[0.06] px-6 py-4">{item.keywords.map((keyword) => <span key={keyword} className="rounded-md bg-white/[0.04] px-2 py-0.5 font-mono text-[11px] text-slate-400">#{keyword}</span>)}</footer>}
   </article>;
+}
+
+/** 기술 학습 탭: 왼쪽에 학습 목차, 오른쪽에 학습 카드. */
+function LearningView({ summary, items, ids, active, onSelect }: { summary: string[]; items: WeeklyLearningView[]; ids: string[]; active: string; onSelect: (id: string) => void }) {
+  return <div className="space-y-6">
+    {summary.length > 0 && <section className={cn(STUDY_CARD, "px-6 py-5")}>
+      <p className="flex items-center gap-2 text-[12.5px] font-semibold text-cyan-200"><GraduationCap size={15} />이번 주 배운 것<span className="font-mono text-[11px] font-normal text-slate-500">기술 {items.length}개</span></p>
+      <ul className="mt-3 space-y-2">{summary.map((line) => <li key={line} className="flex gap-3 text-[14.5px] leading-[1.6] text-slate-100"><Check size={15} className="mt-[4px] shrink-0 text-cyan-300" />{line}</li>)}</ul>
+    </section>}
+    <div className="grid items-start gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
+      <nav aria-label="기술 학습 목차" className="hidden xl:sticky xl:top-4 xl:block">
+        <p className="mb-2 px-2.5 text-[11px] font-semibold text-slate-500">학습 목차</p>
+        {items.map((item, index) => <button key={ids[index]} type="button" aria-current={active === ids[index] ? "true" : undefined} onClick={() => onSelect(ids[index])} className={cn("block w-full border-l-2 px-2.5 py-1.5 text-left transition-colors", active === ids[index] ? "border-cyan-400 bg-white/[0.04]" : "border-transparent hover:bg-white/[0.025]")}>
+          <span className={cn("block truncate text-[13px]", active === ids[index] ? "font-semibold text-slate-100" : "text-slate-400")}>{item.name}</span>
+          <span className="mt-0.5 block truncate text-[11px] text-slate-500">{[item.category, item.level].filter(Boolean).join(" · ")}</span>
+        </button>)}
+      </nav>
+      <div className="min-w-0 space-y-6">{items.map((item, index) => <div id={ids[index]} key={`${index}-${item.name}`} className="scroll-mt-6"><LearningCard item={item} index={index} /></div>)}</div>
+    </div>
+  </div>;
 }
 
 function ReportBody({ detail, tab, onTabChange }: { detail: WeeklyReportDetail; tab: WeeklyDetailView; onTabChange: (tab: WeeklyDetailView) => void }) {
@@ -144,10 +222,7 @@ function ReportBody({ detail, tab, onTabChange }: { detail: WeeklyReportDetail; 
       {view.topics.length > 0 && <section id="weekly-topics" className={SECTION}><h2 className={H2}>주제<Count>{view.topics.length}</Count></h2><JumpTabs label="주제 바로가기" items={topicTabs} active={activeTopic} onSelect={(id) => jumpTo(id, setActiveTopic)} /><div className="mt-6 space-y-10">{view.topics.map((topic, index) => <div id={topicTabs[index].id} key={`${index}-${topic.title}`} className="scroll-mt-14"><Topic topic={topic} /></div>)}</div></section>}
       {view.blocked.length > 0 && <section id="weekly-blocked" className={SECTION}><h2 className={H2}>막힌 것</h2><Callout title={`막힌 것 ${view.blocked.length}`}><Bullets items={view.blocked} /></Callout></section>}
       {view.nextWeek.length > 0 && <section id="weekly-next" className={SECTION}><h2 className={H2}>다음 주</h2><Bullets items={view.nextWeek} /></section>}
-    </div> : <div>
-      {view.learningSummary.length > 0 && <section className={SECTION}><h2 className={H2}>이번 주 배운 것</h2><Bullets items={view.learningSummary} /></section>}
-      {view.learning.length > 0 && <section className={SECTION}><h2 className={H2}>기술 학습<Count>{view.learning.length}</Count></h2><JumpTabs label="기술 학습 바로가기" items={learningTabs} active={activeLearning} onSelect={(id) => jumpTo(id, setActiveLearning)} /><div className="mt-6 space-y-10">{view.learning.map((item, index) => <div id={learningTabs[index].id} key={`${index}-${item.name}`} className="scroll-mt-14"><LearningCard item={item} /></div>)}</div></section>}
-    </div>}
+    </div> : <LearningView summary={view.learningSummary} items={view.learning} ids={learningTabs.map((tabItem) => tabItem.id)} active={activeLearning} onSelect={(id) => jumpTo(id, setActiveLearning)} />}
   </div>;
 }
 
