@@ -1,5 +1,5 @@
 import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, ClipboardList, Code2, FlaskConical, GitCommitHorizontal, ShieldCheck, UserCheck } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { apiJson } from "../api/client.js";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useSchedule } from "../hooks/useSchedule.js";
@@ -20,12 +20,12 @@ const STATION_ICONS: Record<FloorStationId, typeof ClipboardList> = {
 };
 
 /** 상태별 색. 카드 테두리·배경 빛·현재 단계 노드가 같은 색을 쓴다. */
-const TONE: Record<StageTone, { card: string; dot: string; text: string; node: string; halo: string }> = {
-  waiting: { card: "border-violet-300/30 bg-[radial-gradient(120%_140%_at_0%_0%,rgba(167,139,250,.16),transparent_55%)]", dot: "bg-violet-300", text: "text-violet-100", node: "border-violet-300/70 bg-violet-400/20 text-violet-100", halo: "bg-violet-400/40" },
-  live: { card: "border-cyan-300/25 bg-[radial-gradient(120%_140%_at_0%_0%,rgba(34,211,238,.13),transparent_55%)]", dot: "bg-cyan-300", text: "text-cyan-50", node: "border-cyan-300/70 bg-cyan-400/15 text-cyan-100", halo: "bg-cyan-400/40" },
-  done: { card: "border-emerald-300/25 bg-[radial-gradient(120%_140%_at_0%_0%,rgba(52,211,153,.13),transparent_55%)]", dot: "bg-emerald-300", text: "text-emerald-50", node: "border-emerald-300/60 bg-emerald-400/15 text-emerald-200", halo: "bg-emerald-400/30" },
-  paused: { card: "border-amber-300/20 bg-[radial-gradient(120%_140%_at_0%_0%,rgba(251,191,36,.09),transparent_55%)]", dot: "bg-amber-300", text: "text-amber-50", node: "border-amber-300/50 bg-amber-400/10 text-amber-200", halo: "" },
-  rest: { card: "border-white/[0.08] bg-[radial-gradient(120%_140%_at_0%_0%,rgba(148,163,184,.07),transparent_55%)]", dot: "bg-slate-400", text: "text-slate-100", node: "border-slate-500/50 bg-slate-500/10 text-slate-300", halo: "" },
+const TONE: Record<StageTone, { card: string; glow: string; dot: string; text: string; node: string; halo: string }> = {
+  waiting: { card: "border-violet-300/30", glow: "rgba(167,139,250,.20)", dot: "bg-violet-300", text: "text-violet-100", node: "border-violet-300/70 bg-violet-400/20 text-violet-100", halo: "bg-violet-400/40" },
+  live: { card: "border-cyan-300/25", glow: "rgba(34,211,238,.16)", dot: "bg-cyan-300", text: "text-cyan-50", node: "border-cyan-300/70 bg-cyan-400/15 text-cyan-100", halo: "bg-cyan-400/40" },
+  done: { card: "border-emerald-300/25", glow: "rgba(52,211,153,.16)", dot: "bg-emerald-300", text: "text-emerald-50", node: "border-emerald-300/60 bg-emerald-400/15 text-emerald-200", halo: "bg-emerald-400/30" },
+  paused: { card: "border-amber-300/20", glow: "rgba(251,191,36,.11)", dot: "bg-amber-300", text: "text-amber-50", node: "border-amber-300/50 bg-amber-400/10 text-amber-200", halo: "" },
+  rest: { card: "border-cyan-200/[0.10]", glow: "rgba(45,212,191,.10)", dot: "bg-slate-400", text: "text-slate-100", node: "border-slate-500/50 bg-slate-500/10 text-slate-300", halo: "" },
 };
 
 function Journey({ lane, tone }: { lane?: FloorLane; tone: StageTone }) {
@@ -105,7 +105,7 @@ export function DomainStage({ workspace, projectPaths, selectedTaskKey, onSelect
   const projectName = title?.project ?? (lane?.projectPath ? baseName(lane.projectPath) : lane && taskProjects[lane.name] ? baseName(taskProjects[lane.name]) : projectPaths.length === 1 ? baseName(projectPaths[0]) : null);
   const move = (delta: number) => onSelectedTaskChange(lanes[(index + delta + lanes.length) % lanes.length].key);
 
-  return <section className={cn("ck-stage-in rounded-2xl border px-5 py-4 transition-colors duration-500", tone.card)} aria-label={`${workspace} 상태`}>
+  return <section className={cn("stage-card ck-stage-in rounded-2xl border px-5 py-4 transition-colors duration-500", tone.card)} style={{ "--stage-glow": tone.glow } as CSSProperties} aria-label={`${workspace} 상태`}>
     <div className="flex min-w-0 items-start gap-4">
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-2.5">
