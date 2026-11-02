@@ -20,9 +20,9 @@ describe("Console 정보 구조", () => {
     expect(sessions).toContain('label: "Activity"');
   });
 
-  it("작업 레인과 최근 요약 사이에 읽을 수 있는 연결 브리지를 표시한다", () => {
-    expect(sessions).toContain("선택한 작업의 완료 기록");
-    expect(sessions).toContain("ck-summary-bridge");
+  it("작업 레인 아래에서 최근 요약과 Inspector를 독립 영역으로 나눈다", () => {
+    expect(sessions).toContain('aria-label={`${selected.name} 최근 작업 요약`}');
+    expect(sessions).toContain('aria-label={`${selected.name} Inspector`}');
     expect(workFloor).not.toContain("작업 결과 요약으로 연결");
   });
 
@@ -46,9 +46,9 @@ describe("Console 정보 구조", () => {
     expect(workFloor).toContain("group-focus-within/worksite-sign:opacity-100");
   });
 
-  it("최근 작업 요약과 Inspector는 서로의 높이를 늘리지 않는다", () => {
-    expect(sessions).toContain("items-start");
-    expect(sessions).toContain("self-start");
+  it("최근 작업 요약과 Inspector는 같은 상세 행의 높이를 함께 사용한다", () => {
+    expect(sessions).toContain("grid min-h-[360px]");
+    expect(sessions).toContain("min-h-0 flex-1 overflow-auto");
   });
 
   it("작업실은 네 전문 에이전트와 사용자 확인·커밋 출고 흐름을 각각 표시한다", () => {

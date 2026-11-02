@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Activity,
   AlertTriangle,
-  ArrowDown,
   Bot,
   FolderOpen,
   Gauge,
@@ -33,7 +32,7 @@ import { Modal } from "../components/Modal.js";
 import { LoadingSpinner, EmptyState } from "../components/StatusViews.js";
 import { CheckpointPanel } from "../components/CheckpointPanel.js";
 import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
-import { FloorTaskHeader, WorkFloor, WorkFloorPreview } from "../components/WorkFloor.js";
+import { FloorTaskHeader, WorkFloor } from "../components/WorkFloor.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
@@ -139,12 +138,6 @@ const RELEASE_STATE: Record<ReleaseComparison, { label: string; color: string; d
   UNKNOWN: { label: "비교 불가", color: "border-slate-400/30 bg-slate-400/10 text-slate-300", description: "커밋·빌드·이미지 중 비교에 필요한 정보가 부족합니다." },
 };
 
-const SUMMARY_WIDTH_KEY = "sugo.workspaces.summaryWidth";
-const SUMMARY_WIDTH_DEFAULT = 30;
-const SUMMARY_WIDTH_MIN = 22;
-const SUMMARY_WIDTH_MAX = 58;
-const clampSummaryWidth = (value: number) => Math.min(SUMMARY_WIDTH_MAX, Math.max(SUMMARY_WIDTH_MIN, value));
-
 export function Sessions() {
   const { data, loading } = useWorkspaces();
   const navigate = useNavigate();
@@ -152,44 +145,6 @@ export function Sessions() {
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
   const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
   const taskActivity = useTaskActivity(selectedWorkspace ?? undefined, selectedTaskKey);
-  // 최근 작업 요약(왼쪽) 폭. Inspector와 연결 레일이 같은 값을 따른다. 사용자가 정한 폭은 이 브라우저에만 기억한다.
-  const [summaryWidth, setSummaryWidth] = useState(() => {
-    try { const saved = Number(localStorage.getItem(SUMMARY_WIDTH_KEY)); return saved >= SUMMARY_WIDTH_MIN && saved <= SUMMARY_WIDTH_MAX ? saved : SUMMARY_WIDTH_DEFAULT; } catch { return SUMMARY_WIDTH_DEFAULT; }
-  });
-  useEffect(() => { try { localStorage.setItem(SUMMARY_WIDTH_KEY, String(Math.round(summaryWidth))); } catch { /* 저장이 막힌 브라우저에서는 이번 화면에서만 유지한다. */ } }, [summaryWidth]);
-  const splitRef = useRef<HTMLDivElement>(null);
-  const startSummaryResize = (event: React.PointerEvent<HTMLDivElement>) => {
-    const box = splitRef.current?.getBoundingClientRect();
-    if (!box || box.width === 0) return;
-    event.preventDefault();
-    const handle = event.currentTarget;
-    handle.setPointerCapture(event.pointerId);
-    const move = (next: PointerEvent) => setSummaryWidth(clampSummaryWidth(((next.clientX - box.left) / box.width) * 100));
-    const stop = () => {
-      handle.removeEventListener("pointermove", move);
-      handle.removeEventListener("pointerup", stop);
-      handle.removeEventListener("pointercancel", stop);
-      document.body.style.removeProperty("cursor");
-      document.body.style.removeProperty("user-select");
-    };
-    handle.addEventListener("pointermove", move);
-    handle.addEventListener("pointerup", stop);
-    handle.addEventListener("pointercancel", stop);
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  };
-  const splitStyle = { "--summary-w": `${summaryWidth}%` } as React.CSSProperties;
-  // 작업장이 쉬는 중이면(4일 넘게 기록 없음) 작업장을 최근 작업 요약 위로 옮겨 왼쪽 열 하나로 잇는다.
-  const [floorIdle, setFloorIdle] = useState(false);
-  useEffect(() => { setFloorIdle(false); }, [selectedWorkspace]);
-  const summaryBridge = <>
-    <span className="ck-bridge-rail absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 rounded-full" />
-    {[0, 0.6, 1.2].map((delay) => <span key={delay} className="ck-bridge-spark" style={{ animationDelay: `${delay}s` }} />)}
-    <span className="ck-stage-in relative flex items-center gap-1.5 rounded-full border border-cyan-300/30 bg-[#0a1424] px-3 py-1 text-[11px] font-medium text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,.18)]">
-      <span className="shrink-0">{floorIdle ? "마지막 완료 기록" : "완료 기록"}</span>
-      <ArrowDown size={12} strokeWidth={2} className="ck-summary-flow shrink-0 text-cyan-300" />
-    </span>
-  </>;
   const [activeTab, setActiveTab] = useState<TabType>("repositories");
   const [statusFilter, setStatusFilter] = useState<"all" | "recent">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -699,104 +654,71 @@ export function Sessions() {
           })}
         </div>
       ) : (
-        <div className="workspace-control-grid grid shrink-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {filteredWorkspaces.map((ws) => {
-            const isSel = selectedWorkspace === ws.name;
-            const st = statusOf(ws);
-            return (
-              <div
-                key={ws.name}
-                role="button"
-                tabIndex={0}
-                aria-pressed={isSel}
-                onClick={() => setSelectedWorkspace(isSel ? null : ws.name)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setSelectedWorkspace(isSel ? null : ws.name);
-                }}
-                className={cn(
-                  "ck-card workspace-control-card group flex min-h-[190px] cursor-pointer flex-col overflow-hidden rounded-xl border border-[var(--color-border)] transition-[opacity,filter,background-color,transform,box-shadow] duration-200",
-                  WORKSPACE_CARD_FOCUS_CLASSES,
-                  workspaceCardEmphasis(isSel, selectedWorkspace !== null),
-                  isSel && "workspace-command-card--selected",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] px-3 py-2.5">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", activeOf(ws) && "ck-pulse-dot", st.dot)} />
-                    <h3 className="truncate font-mono text-[13px] font-bold text-white">{ws.name}</h3>
-                  </div>
-                  <span className={cn("shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold", st.pill)}>{st.text}</span>
-                </div>
-                <div className="relative min-h-0 flex-1 bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,.055),transparent_55%)] px-2 pb-1 pt-1">
-                  <WorkFloorPreview workspace={ws.name} />
-                </div>
-                <div className="flex flex-nowrap items-center justify-between gap-2 border-t border-white/[0.06] px-3 py-2" aria-label="워크스페이스 도구">
-                  <span className="truncate text-[10.5px] text-slate-500">{st.desc}</span>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedWorkspace(ws.name);
-                        setCheckpointModal(ws.name);
-                      }}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-500/25 bg-amber-500/[0.06] text-amber-300 outline-none transition-colors hover:border-amber-400/50 hover:bg-amber-500/[0.13]"
-                      title={WORKSPACE_RULES_TOOL.workspaceDescription}
-                    >
-                      <Shield size={14} className="shrink-0 text-amber-300" />
-                      <span className="sr-only">{WORKSPACE_RULES_TOOL.label}</span>
-                    </button>
-                    {(ws.roadmapCount ?? 0) > 0 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAgentCanvasModal(ws.name);
-                        }}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-cyan-500/25 bg-cyan-500/[0.06] text-cyan-300 outline-none transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/[0.13]"
-                        title={AI_WORK_STATUS_TOOL.description}
-                      >
-                        <Bot size={14} className="shrink-0 text-cyan-300" />
-                        <span className="sr-only">{AI_WORK_STATUS_TOOL.label}</span>
-                      </button>
+        <div className="focus-stack ck-stage-in grid min-h-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[rgba(8,14,24,.72)] xl:grid-cols-[188px_minmax(0,1fr)]">
+          <nav aria-label="도메인 선택" className="border-b border-[var(--color-border)] p-2 xl:border-b-0 xl:border-r xl:p-2.5">
+            <div className="ck-scroll flex gap-1.5 overflow-x-auto xl:max-h-[690px] xl:flex-col xl:overflow-y-auto xl:overflow-x-hidden">
+              {filteredWorkspaces.map((ws, index) => {
+                const isSel = selectedWorkspace === ws.name;
+                const st = statusOf(ws);
+                return (
+                  <button
+                    key={ws.name}
+                    type="button"
+                    aria-current={isSel ? "true" : undefined}
+                    onClick={() => setSelectedWorkspace(ws.name)}
+                    className={cn(
+                      "group flex min-w-[168px] items-center gap-2 rounded-lg px-2.5 py-2 text-left outline-none transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full",
+                      isSel && "bg-cyan-300/[0.09] text-white ring-1 ring-inset ring-cyan-300/20",
                     )}
+                  >
+                    <span className={cn("h-2 w-2 shrink-0 rounded-full", activeOf(ws) && "ck-pulse-dot", st.dot)} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-mono text-[12px] font-semibold text-slate-200">{ws.name}</span>
+                      <span className="mt-0.5 block truncate text-[10px] text-slate-500">{st.text}</span>
+                    </span>
+                    <span className="font-mono text-[10px] text-slate-600">{String(index + 1).padStart(2, "0")}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
+          {selected && (
+            <div className="min-w-0">
+              <section className="px-4 py-3 2xl:px-5" aria-label={`${selected.name} 작업장`}>
+                <div className="mb-2 flex min-w-0 items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", activeOf(selected) && "ck-pulse-dot", statusOf(selected).dot)} />
+                      <h2 className="truncate font-mono text-sm font-semibold text-white">{selected.name}</h2>
+                      <span className="shrink-0 text-xs text-slate-500">{statusOf(selected).desc}</span>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button type="button" onClick={() => setCheckpointModal(selected.name)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/[0.05] text-amber-300 outline-none transition-colors hover:bg-amber-500/[0.12] focus-visible:ring-2 focus-visible:ring-amber-300/60" title={WORKSPACE_RULES_TOOL.workspaceDescription}>
+                      <Shield size={15} /><span className="sr-only">{WORKSPACE_RULES_TOOL.label}</span>
+                    </button>
+                    {(selected.roadmapCount ?? 0) > 0 && <button type="button" onClick={() => setAgentCanvasModal(selected.name)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/[0.05] text-cyan-300 outline-none transition-colors hover:bg-cyan-500/[0.12] focus-visible:ring-2 focus-visible:ring-cyan-300/60" title={AI_WORK_STATUS_TOOL.description}>
+                      <Bot size={15} /><span className="sr-only">{AI_WORK_STATUS_TOOL.label}</span>
+                    </button>}
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                <div className="mx-auto max-w-[1180px]">
+                  <WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />
+                </div>
+              </section>
 
-      {/*
-        하단 2단 — 좌 LiveConsole · 우 Pinned Inspector.
-        **검색 모드에선 띄우지 않는다.** 검색은 결과 행 안에서 바로 펼치는 뷰라, 아래에
-        같은 인스펙터를 하나 더 띄우면 같은 내용이 두 벌로 보인다.
-      */}
-      {selected && !isSearchMode && (
-        <section className="ck-glass shrink-0 rounded-xl border border-[var(--color-border)] px-4 py-3" aria-label={`${selected.name} 작업장`}><WorkFloor workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} onIdleChange={setFloorIdle} /></section>
-      )}
-      {selected && !isSearchMode && (
-        <div key={selectedTaskKey ?? "none"} style={splitStyle} className="pointer-events-none relative z-10 -my-3 flex h-16 2xl:-my-4" aria-label="선택한 작업의 완료 기록이 최근 작업 요약으로 연결됨">
-          <div className="ck-summary-bridge relative flex w-full items-center justify-center lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
-            <span className="ck-bridge-socket absolute -top-[2px] left-1/2 h-[3px] w-14 -translate-x-1/2 rounded-full" />
-            {summaryBridge}
-          </div>
-        </div>
-      )}
-      {selected && !isSearchMode && (
-        <div key={selected.name} ref={splitRef} style={splitStyle} className="command-detail ck-stage-in flex min-h-[340px] flex-1 flex-col items-start gap-3 lg:flex-row lg:gap-0">
-          <div className="ck-glass flex min-h-[260px] max-h-[360px] w-full self-start flex-col overflow-hidden rounded-xl border border-cyan-300/25 p-3 shadow-[0_-8px_26px_-14px_rgba(34,211,238,.55)] lg:w-[var(--summary-w)] lg:min-w-[260px] lg:shrink-0">
-            <FloorTaskHeader workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />
-            <LiveConsole workspace={selected.name} taskKey={selectedTaskKey} />
-          </div>
-          <div role="separator" aria-orientation="vertical" aria-label="최근 작업 요약과 Inspector 폭 조절" aria-valuemin={SUMMARY_WIDTH_MIN} aria-valuemax={SUMMARY_WIDTH_MAX} aria-valuenow={Math.round(summaryWidth)} tabIndex={0} title="드래그해 폭 조절, 더블클릭하면 기본 폭"
-            onPointerDown={startSummaryResize} onDoubleClick={() => setSummaryWidth(SUMMARY_WIDTH_DEFAULT)}
-            onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); setSummaryWidth((value) => clampSummaryWidth(value + (event.key === "ArrowLeft" ? -2 : 2))); } }}
-            className="group hidden w-4 shrink-0 cursor-col-resize touch-none items-center justify-center self-stretch outline-none lg:flex">
-            <span className="h-14 w-[3px] rounded-full bg-white/10 transition-colors group-hover:bg-cyan-300/60 group-focus-visible:bg-cyan-300" />
-          </div>
-          <div className="ck-glass flex min-h-[340px] max-h-[680px] w-full min-w-0 self-start flex-col rounded-xl border border-[var(--color-border)] p-3 lg:min-w-[360px] lg:flex-1">
-            {renderInspector(selected)}
-          </div>
+              <div className="grid min-h-[360px] border-t border-[var(--color-border)] lg:grid-cols-[minmax(260px,0.78fr)_minmax(440px,1.22fr)]">
+                <section className="flex min-h-0 flex-col border-b border-[var(--color-border)] p-4 lg:border-b-0 lg:border-r" aria-label={`${selected.name} 최근 작업 요약`}>
+                  <FloorTaskHeader workspace={selected.name} selectedTaskKey={selectedTaskKey} onSelectedTaskChange={setSelectedTaskKey} />
+                  <div className="ck-scroll min-h-0 flex-1 overflow-auto pr-1"><LiveConsole workspace={selected.name} taskKey={selectedTaskKey} /></div>
+                </section>
+                <section className="flex min-h-0 min-w-0 flex-col p-4" aria-label={`${selected.name} Inspector`}>
+                  {renderInspector(selected)}
+                </section>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
