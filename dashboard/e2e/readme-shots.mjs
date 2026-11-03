@@ -48,7 +48,7 @@ try {
   // 처음 설정 안내가 뜨지 않도록 날씨 지역과 Weekly 설정을 채운다. 날씨는 외부 API 대신 고정 응답을 준다.
   await page.route("https://api.open-meteo.com/**", (route) => route.fulfill({ json: { current: { temperature_2m: 18, weather_code: 1 } } }));
   await page.evaluate(() => localStorage.setItem("sugo_weather_region", "seoul-cityhall"));
-  const weeklySaved = await page.evaluate(async () => (await fetch("/api/weekly/reports/settings/current", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${JSON.parse(localStorage.getItem("sugo_auth") ?? "{}").accessToken}` }, body: JSON.stringify({ enabled: false, weekday: 5, hour: 17, minute: 0, model: "default", extraRepositories: [] }) })).status);
+  const weeklySaved = await page.evaluate(async () => (await fetch("/api/weekly/reports/settings/current", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${JSON.parse(localStorage.getItem("sugo_auth") ?? "{}").accessToken}` }, body: JSON.stringify({ enabled: true, weekday: 5, hour: 17, minute: 0, model: "default", extraRepositories: [] }) })).status);
   if (weeklySaved !== 200) throw new Error(`weekly settings ${weeklySaved}`);
 
   // Home 인사말은 시각을 따른다. 언제 찍어도 낮 인사가 나오도록 Home만 지금이 낮인 시간대로 연다.
@@ -70,8 +70,8 @@ try {
   await homePage.screenshot({ path: join(out, "console-home.png"), ...(todayReview ? { clip: { x: 0, y: 0, width: 1440, height: todayReview.y - 40 } } : {}) });
   await homeContext.close();
 
-  // Workspaces 첫 화면: 도메인 카드, 작업장, 최근 작업 요약, Inspector를 한 장에 담는다.
-  await page.setViewportSize({ width: 1440, height: 1560 });
+  // Workspaces 첫 화면: 상태별 도메인 목록, 상태 카드와 작업 여정, 최근 작업 요약, Inspector를 한 장에 담는다.
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(`${base}/sessions`, { waitUntil: "networkidle" });
   await page.getByText("payments", { exact: true }).first().click();
   await page.waitForTimeout(3000);
@@ -204,19 +204,19 @@ try {
   await page.waitForTimeout(1200);
   await page.locator("button", { hasText: "Spring" }).first().click({ timeout: 10_000 });
   await page.waitForTimeout(800);
-  await page.getByRole("button", { name: /내 규칙으로 수정/ }).first().click();
+  await page.getByRole("button", { name: /규칙 커스터마이징/ }).first().click();
   await page.waitForTimeout(1000);
   const ruleSelect = await page.getByText("규칙 선택", { exact: true }).first().boundingBox();
   await page.screenshot({ path: join(out, "guide-harness-edit.png"), clip: { x: 230, y: ruleSelect.y - 30, width: 1190, height: 1100 - (ruleSelect.y - 30) } });
 
-  // 작업장 GIF: search 도메인의 작업이 테스트에서 커밋까지 넘어가는 장면. 활동 이벤트를 차례로 넣고 화면을 연속으로 찍는다.
+  // 상태 카드 GIF: search 도메인의 작업이 테스트에서 커밋까지 넘어가는 장면. 활동 이벤트를 차례로 넣고 화면을 연속으로 찍는다.
   if (spawnSync("ffmpeg", ["-version"]).status === 0) {
     await page.setViewportSize({ width: 1440, height: 1200 });
     await page.goto(`${base}/sessions`, { waitUntil: "networkidle" });
     await page.waitForTimeout(2000);
     await page.locator("h3, strong, span").filter({ hasText: /^search$/ }).first().click();
     await page.waitForTimeout(3000);
-    const floor = page.locator('section[aria-label="search 작업장"]');
+    const floor = page.locator('section[aria-label="search 상태"]');
     const box = await floor.boundingBox();
     const frames = await mkdtemp(join(tmpdir(), "sugo-floor-"));
     const ingest = (agent, handoffTo, eventType, message) => page.evaluate(async (body) => {
