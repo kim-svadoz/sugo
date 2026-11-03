@@ -15,7 +15,7 @@ interface TourTarget {
 
 const TOUR_TARGETS: TourTarget[] = [
   { key: "home", label: "HOME", title: "오늘 확인할 일을 먼저 모아봅니다", description: "진행 중인 작업, 내 확인이 필요한 일, 최근 완료 결과가 Home에 모입니다.", selector: '[data-onboarding-tour-target="home"]' },
-  { key: "playbook", label: "PLAYBOOK", title: "처음 한 번은 작업 순서를 따라가세요", description: "Playbook은 프로젝트 등록부터 첫 완료까지 필요한 행동을 순서대로 보여주는 실행 가이드입니다.", selector: '[data-onboarding-tour-target="playbook"]' },
+  { key: "playbook", label: "HOW IT WORKS", title: "처음 한 번은 작업 순서를 따라가세요", description: "How it works는 기획 정리부터 검토와 후속 수정까지 Sugo가 일하는 순서를 단계별로 보여 줍니다.", selector: '[data-onboarding-tour-target="playbook"]' },
   { key: "pipeline", label: "PIPELINE", title: "AI 작업은 단계와 근거로 확인합니다", description: "구현, 테스트, 검토, 사용자 확인이 같은 흐름에 연결되고 현재 위치와 다음 행동이 표시됩니다.", selector: '[data-onboarding-tour-target="pipeline"] [data-tour-pipeline-stages]' },
   { key: "preferences", label: "PREFERENCES", title: "내 환경은 Preferences에서 맞춥니다", description: "표시 이름, 날씨 생활권, 주간 리포트 일정을 정하면 Home 인사말과 날씨, 주간 정리가 내 환경에 맞춰집니다. 정하지 않아도 Sugo를 쓰는 데는 문제가 없습니다.", selector: '[data-onboarding-tour-target="preferences"]' },
   { key: "workspaces", label: "WORKSPACES", title: "프로젝트와 운영 상태는 도메인별로 이어집니다", description: "Workspaces에서 프로젝트의 작업 이력과 배포 상태를 확인합니다. 이제 첫 프로젝트를 등록해보세요.", selector: '[data-onboarding-tour-target="workspaces"]' },

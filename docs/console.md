@@ -128,7 +128,7 @@ Sugo가 쓸 외부 서비스를 연결하고, 연결 범위를 프로젝트별�
 | Workspaces | 상태별 도메인 목록, 상태 카드와 작업 여정, 최근 작업 요약, Inspector(Repositories, History, Activity), 도메인 규칙 |
 | Schedule | Agenda와 Calendar, 기획 링크와 메모, 배포 상태, 스펙 카드(개발 이력, 멈춘 이유, 승인, 후속 개발) |
 | Weekly | 주차 목록, 주간 작업 카드, 기술 학습 카드 |
-| Skills, Playbook | 에이전트, 명령, 스킬 목록과 사용 시나리오 |
+| Skills, How it works | 에이전트, 명령, 스킬 목록과 사용 시나리오 |
 | Harness | 프로젝트에 적용되는 코딩 규칙 |
 | Integrations | 프로젝트 등록, 클라우드 서비스 연동, 프로젝트별 연결 현황 |
 | Preferences | 표시 이름, 날씨 지역, Weekly 생성 일정 |

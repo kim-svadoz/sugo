@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.66.7 / Console 0.56.7] - 2026-11-03
+
+- 사용 시나리오 화면의 이름을 Playbook·실행 플레이북에서 How it works로 바꾸고, 그 화면의 TIPS 문구를 실제 동작에 맞게 고쳤습니다.
+
 ## [Plugin 0.66.5 / Console 0.56.5] - 2026-11-03
 
 - Weekly 본문을 넓은 화면에서 더 넓게 쓰도록 폭을 늘리고 주제·학습 목차 폭을 줄였습니다.

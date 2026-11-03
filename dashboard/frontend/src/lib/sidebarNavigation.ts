@@ -16,7 +16,7 @@ export const SIDEBAR_GROUPS = [
     title: "Sugo 둘러보기",
     items: [
       { to: "/skills", label: "Skills", shortcut: "4", icon: "skills" },
-      { to: "/playbook", label: "Playbook", shortcut: "5", icon: "playbook" },
+      { to: "/playbook", label: "How it works", shortcut: "5", icon: "playbook" },
     ],
   },
   {
