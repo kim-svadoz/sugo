@@ -10,6 +10,7 @@ const overviewOutput = output.replace(/\.png$/i, "-overview.png");
 const prOutput = output.replace(/\.png$/i, "-pr-scope.png");
 const collapsedOutput = output.replace(/\.png$/i, "-sidebar-collapsed.png");
 const awsMatrixOutput = output.replace(/\.png$/i, "-aws-matrix.png");
+const planningDocsOutput = output.replace(/\.png$/i, "-planning-docs.png");
 const projects = [
   {
     project_path: "/work/catalog-api",
@@ -41,6 +42,8 @@ await page.route("**/*", (route) => {
   const url = route.request().url();
   if (!new URL(url).pathname.startsWith("/api/")) return route.continue();
   if (url.includes("/api/tokens")) return route.fulfill({ json: { tokens: [] } });
+  if (url.includes("/api/integration-features")) return route.fulfill({ json: { aws: true, pr: true, apm: true, planningDocs: true } });
+  if (url.includes("/api/reference-readers")) return route.fulfill({ json: { readers: [{ id: "team-docs", urlPrefix: "https://docs.example.com/team/", mcpServer: "team-knowledge" }] } });
   if (url.includes("/api/git-connections")) return route.fulfill({ json: { providers: [
     { id: "github", label: "GitHub", pullRequests: true, selfHosted: false, defaultBaseUrl: "https://api.github.com", status: "available", authMode: "token" },
     { id: "gitlab", label: "GitLab", pullRequests: true, selfHosted: true, defaultBaseUrl: "https://gitlab.com", status: "available", authMode: "token" },
@@ -85,30 +88,33 @@ await page.goto(`${base}/settings`, { waitUntil: "domcontentloaded" });
 await page.waitForTimeout(700);
 console.log("page", page.url(), (await page.locator("body").innerText()).slice(0, 500));
 await page.screenshot({ path: output, fullPage: true });
-await page.getByRole("button", { name: /외부 서비스 인증·서비스 매핑/ }).click();
+await page.getByRole("navigation", { name: "외부 연동 단계" }).getByRole("button").nth(1).click();
 await page.getByRole("button", { name: "AWS 계정" }).click();
 await page.getByRole("heading", { name: "AWS 연결" }).waitFor({ timeout: 5_000 });
 await page.screenshot({ path: awsMatrixOutput, fullPage: true });
-await page.getByRole("button", { name: /외부 서비스 인증·서비스 매핑/ }).click();
+await page.getByRole("navigation", { name: "외부 연동 단계" }).getByRole("button").nth(1).click();
 await page.getByRole("button", { name: "서비스 상태 연동" }).click();
 await page.getByRole("heading", { name: "서비스 상태 연동" }).waitFor({ timeout: 5_000 });
 await page.waitForTimeout(250);
 await page.locator("#integration-projects").screenshot({ path: mappingOutput });
-await page.getByRole("button", { name: /프로젝트 로컬 프로젝트 등록/ }).click();
+await page.getByRole("navigation", { name: "외부 연동 단계" }).getByRole("button").nth(0).click();
 await page.getByRole("region", { name: "새 프로젝트 등록" }).waitFor({ timeout: 5_000 });
 await page.getByRole("button", { name: /폴더를 선택하세요 폴더 찾아보기/ }).click();
 await page.getByRole("region", { name: "프로젝트 폴더 선택" }).waitFor({ timeout: 5_000 });
 await page.screenshot({ path: registrationOutput, fullPage: true });
-await page.getByRole("button", { name: /연결 현황 읽기 전용 결과/ }).click();
+await page.getByRole("navigation", { name: "외부 연동 단계" }).getByRole("button").nth(2).click();
 await page.getByRole("heading", { name: "프로젝트 연결 현황" }).waitFor({ timeout: 5_000 });
 await page.locator('[aria-label="프로젝트별 저장소 연결"]').screenshot({ path: overviewOutput });
-await page.getByRole("button", { name: /외부 서비스 인증·서비스 매핑/ }).click();
+await page.getByRole("navigation", { name: "외부 연동 단계" }).getByRole("button").nth(1).click();
 await page.getByRole("button", { name: "PR 연동" }).click();
 await page.getByRole("button", { name: /AWS CodeCommit/ }).click();
 await page.getByText("적용 프로젝트 선택").waitFor({ timeout: 5_000 });
 await page.screenshot({ path: prOutput, fullPage: true });
+await page.getByRole("button", { name: "기획 문서" }).click();
+await page.getByRole("heading", { name: "기획 문서" }).waitFor({ timeout: 5_000 });
+await page.screenshot({ path: planningDocsOutput, fullPage: true });
 await page.getByRole("button", { name: "사이드바 접기" }).click();
 await page.waitForTimeout(250);
 await page.screenshot({ path: collapsedOutput, fullPage: true });
-console.log(output, mappingOutput, registrationOutput, overviewOutput, prOutput, collapsedOutput, awsMatrixOutput);
+console.log(output, mappingOutput, registrationOutput, overviewOutput, prOutput, collapsedOutput, awsMatrixOutput, planningDocsOutput);
 await browser.close();

@@ -90617,7 +90617,7 @@ async function loadIntegrationFeatures(path, db2, userId2) {
     hasRow(db2, "user_git_connections", userId2),
     hasRow(db2, "user_pinpoint_context", userId2)
   ]);
-  return { aws, pr, apm };
+  return { aws, pr, apm, planningDocs: false };
 }
 async function saveIntegrationFeatures(path, value) {
   await mkdir4(dirname5(path), { recursive: true });
@@ -90631,7 +90631,12 @@ var init_integrationFeatures = __esm({
   "../dashboard/backend/src/services/integrationFeatures.ts"() {
     "use strict";
     init_zod();
-    integrationFeaturesSchema = external_exports.object({ aws: external_exports.boolean(), pr: external_exports.boolean(), apm: external_exports.boolean() }).strict();
+    integrationFeaturesSchema = external_exports.object({
+      aws: external_exports.boolean(),
+      pr: external_exports.boolean(),
+      apm: external_exports.boolean(),
+      planningDocs: external_exports.boolean().default(false)
+    }).strict();
   }
 });
 
@@ -91328,7 +91333,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname8(fileURLToPath6(import.meta.url));
-    pkg = "0.57.0" ? { version: "0.57.0" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.57.1" ? { version: "0.57.1" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91456,7 +91461,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.57.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.57.1", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

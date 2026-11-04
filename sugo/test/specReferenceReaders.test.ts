@@ -24,6 +24,21 @@ describe("spec reference readers", () => {
     dirs.push(dir);
     const path = join(dir, "settings.json");
     await writeFile(path, JSON.stringify({ referenceReaders: [{ urlPrefix: "not-a-url", mcpServer: "" }] }));
-    await expect(loadReferenceReaders(path)).resolves.toEqual([]);
+    const featuresPath = join(dir, "integration-features.json");
+    await writeFile(featuresPath, JSON.stringify({ planningDocs: true }));
+    await expect(loadReferenceReaders(path, featuresPath)).resolves.toEqual([]);
+  });
+
+  it("returns configured readers only while planning document integration is enabled", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "sugo-reference-readers-"));
+    dirs.push(dir);
+    const settingsPath = join(dir, "settings.json");
+    const featuresPath = join(dir, "integration-features.json");
+    const readers = [{ id: "docs", urlPrefix: "https://docs.example.test/", mcpServer: "team-docs" }];
+    await writeFile(settingsPath, JSON.stringify({ referenceReaders: readers }));
+    await writeFile(featuresPath, JSON.stringify({ planningDocs: false }));
+    await expect(loadReferenceReaders(settingsPath, featuresPath)).resolves.toEqual([]);
+    await writeFile(featuresPath, JSON.stringify({ planningDocs: true }));
+    await expect(loadReferenceReaders(settingsPath, featuresPath)).resolves.toEqual(readers);
   });
 });

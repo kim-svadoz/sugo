@@ -13,6 +13,7 @@ describe("Integrations section navigation", () => {
     expect(source).toContain('label: "PR 연동"');
     expect(source).toContain('label: "서비스 상태 연동"');
     expect(source).toContain('label: "모니터링"');
+    expect(source).toContain('label: "기획 문서"');
     expect(source).toContain('{ id: "aws" as const, label: "AWS 계정" }');
     expect(source).toContain('aria-label="연결 현황 설정"');
     expect(source).toContain('>연결 현황</button>');
@@ -28,6 +29,7 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("<IntegrationFeatureOffNotice label={gate.label} />");
     expect(source).toContain('git: { key: "pr", label: "PR" }');
     expect(source).toContain('pinpoint: { key: "apm", label: "APM" }');
+    expect(source).toContain('planningDocs: { key: "planningDocs", label: "기획 문서" }');
     expect(source).not.toContain('selectedSection === "serviceMapping" && <><AwsContextCard');
     expect(source).toContain('selectedSection === "overview"');
     expect(source).toContain("서비스 연동 미사용");

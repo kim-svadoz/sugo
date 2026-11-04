@@ -21,6 +21,7 @@ import type { LucideIcon } from "lucide-react";
 import { useWorkspaces, type WorkspaceSummary } from "../hooks/useWorkspaces.js";
 import { getIntegrationFeatures, type IntegrationFeatures } from "../api/integrationFeaturesApi.js";
 import { IntegrationFeatureOffNotice } from "../components/IntegrationFeatureOffNotice.js";
+import { ReferenceReadersPanel } from "../components/ReferenceReadersPanel.js";
 import { summarizeRepositoryConnections } from "../lib/integrationConnectionSummary.js";
 import { AWS_REGIONS, awsRegionLabel } from "../lib/awsRegions.js";
 
@@ -28,7 +29,7 @@ const LOCAL_DEV = import.meta.env.VITE_LOCAL_DEV === "true";
 const contextAutoRefreshDescription = "Console이 켜져 있으면 매일 이 PC 시간 기준 08:00에 자동으로 동기화합니다. 꺼져 있었다면 다음에 켜질 때 동기화하고, 언제든 직접 동기화할 수 있습니다.";
 
 type IntegrationSectionId = "aws" | "pinpoint" | "projects" | "git";
-type IntegrationViewId = IntegrationSectionId | "catalog" | "overview" | "registration" | "projectManage" | "serviceMapping";
+type IntegrationViewId = IntegrationSectionId | "catalog" | "overview" | "registration" | "projectManage" | "serviceMapping" | "planningDocs";
 const INTEGRATION_SECTIONS: ReadonlyArray<{ id: IntegrationSectionId; label: string; description: string; group: string; icon: LucideIcon }> = [
   { id: "aws", label: "AWS", description: "배포와 클라우드 리소스", group: "데이터 연결", icon: Cloud },
   { id: "pinpoint", label: "APM", description: "실행 상태와 성능 지표", group: "데이터 연결", icon: Activity },
@@ -552,11 +553,11 @@ export function Settings() {
   const [features, setFeatures] = useState<IntegrationFeatures | null>(null);
   useEffect(() => {
     let cancelled = false;
-    getIntegrationFeatures().then((value) => { if (!cancelled) setFeatures(value); }).catch(() => { if (!cancelled) setFeatures({ aws: true, pr: true, apm: true }); });
+    getIntegrationFeatures().then((value) => { if (!cancelled) setFeatures(value); }).catch(() => { if (!cancelled) setFeatures({ aws: true, pr: true, apm: true, planningDocs: false }); });
     return () => { cancelled = true; };
   }, []);
   // 02 외부 서비스의 탭마다 Preferences › 외부 연동의 어느 기능에 속하는지. 설정을 읽는 동안에는 본문을 비워 둔다.
-  const sectionFeature: Partial<Record<IntegrationViewId, { key: keyof IntegrationFeatures; label: string }>> = { aws: { key: "aws", label: "AWS" }, serviceMapping: { key: "aws", label: "AWS" }, git: { key: "pr", label: "PR" }, pinpoint: { key: "apm", label: "APM" } };
+  const sectionFeature: Partial<Record<IntegrationViewId, { key: keyof IntegrationFeatures; label: string }>> = { aws: { key: "aws", label: "AWS" }, serviceMapping: { key: "aws", label: "AWS" }, git: { key: "pr", label: "PR" }, pinpoint: { key: "apm", label: "APM" }, planningDocs: { key: "planningDocs", label: "기획 문서" } };
   const gate = sectionFeature[selectedSection];
   const sectionBlocked = gate !== undefined && (features === null || !features[gate.key]);
   const [awsConnected, setAwsConnected] = useState(false);
@@ -661,7 +662,7 @@ export function Settings() {
       </nav>
 
       {activeGroup === "services" && <nav aria-label="외부 서비스 설정" className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2">
-        {[{ id: "aws" as const, label: "AWS 계정" }, { id: "git" as const, label: "PR 연동" }, { id: "serviceMapping" as const, label: "서비스 상태 연동" }, { id: "pinpoint" as const, label: "모니터링" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
+        {[{ id: "aws" as const, label: "AWS 계정" }, { id: "git" as const, label: "PR 연동" }, { id: "serviceMapping" as const, label: "서비스 상태 연동" }, { id: "pinpoint" as const, label: "모니터링" }, { id: "planningDocs" as const, label: "기획 문서" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
       </nav>}
       {activeGroup === "projects" && <nav aria-label="프로젝트 설정" className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2">
         {[{ id: "registration" as const, label: "프로젝트 등록" }, { id: "projectManage" as const, label: "프로젝트 관리" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
@@ -675,6 +676,7 @@ export function Settings() {
       {selectedSection === "catalog" && <IntegrationCatalog awsConnected={awsConnected} pinpointConnected={pinpointConnected} onSelect={setSelectedSection} />}
       {selectedSection === "aws" && !sectionBlocked && <AwsContextCard expanded onToggle={() => undefined} focused onConnectionChange={setAwsConnected} />}
       {selectedSection === "pinpoint" && !sectionBlocked && <PinpointContextCard expanded onToggle={() => undefined} focused onConnectionChange={setPinpointConnected} />}
+      {selectedSection === "planningDocs" && !sectionBlocked && <ReferenceReadersPanel />}
       {selectedSection === "registration" && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} registrationOnly />}
       {selectedSection === "projectManage" && <ProjectManagementPanel />}
       {selectedSection === "serviceMapping" && !sectionBlocked && <ProjectIntegrationsCard expanded onToggle={() => undefined} focused workspaceNames={(workspaces ?? []).map((workspace) => workspace.name)} awsConnected={awsConnected} onConfigureAws={() => setSelectedSection("aws")} />}

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -28,16 +28,21 @@ afterEach(async () => {
 });
 
 describe("외부 연동 사용 설정", () => {
-  it("처음 쓰는 사용자는 AWS, PR, APM이 모두 꺼져 있다", async () => {
-    expect(await loadIntegrationFeatures(path, db, "me")).toEqual({ aws: false, pr: false, apm: false });
+  it("처음 쓰는 사용자는 외부 연동이 모두 꺼져 있다", async () => {
+    expect(await loadIntegrationFeatures(path, db, "me")).toEqual({ aws: false, pr: false, apm: false, planningDocs: false });
+  });
+
+  it("기존 설정 파일에는 기획 문서 사용 여부를 꺼짐으로 보완한다", async () => {
+    writeFileSync(path, JSON.stringify({ aws: true, pr: false, apm: true }));
+    expect(await loadIntegrationFeatures(path, db, "me")).toEqual({ aws: true, pr: false, apm: true, planningDocs: false });
   });
 
   it("설정 파일이 없을 때 이미 연결해 둔 기능은 켜진 상태로 시작한다", async () => {
     await db.exec("INSERT INTO user_aws_context_accounts (user_id, name, profile, region, account_id, principal_arn, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)", ["me", "dev", "dev", "ap-northeast-2", "1".repeat(12), "arn", "2026-10-29"]);
     await db.exec("INSERT INTO user_pinpoint_context (user_id, base_url, updated_at) VALUES (?, ?, ?)", ["me", "https://apm.example.com", "2026-10-29"]);
 
-    expect(await loadIntegrationFeatures(path, db, "me")).toEqual({ aws: true, pr: false, apm: true });
-    expect(await loadIntegrationFeatures(path, db, "other")).toEqual({ aws: false, pr: false, apm: false });
+    expect(await loadIntegrationFeatures(path, db, "me")).toEqual({ aws: true, pr: false, apm: true, planningDocs: false });
+    expect(await loadIntegrationFeatures(path, db, "other")).toEqual({ aws: false, pr: false, apm: false, planningDocs: false });
   });
 
   it("저장한 값은 연결 여부와 상관없이 그대로 쓴다", async () => {
@@ -46,16 +51,16 @@ describe("외부 연동 사용 설정", () => {
     const session = decodeURIComponent(String(login.headers.location).split("session=")[1]);
     const auth = { Authorization: `Bearer ${session}` };
 
-    const saved = await request(app).put("/api/integration-features").set(auth).send({ aws: false, pr: true, apm: false });
-    expect(saved.body).toEqual({ aws: false, pr: true, apm: false });
-    expect((await request(app).get("/api/integration-features").set(auth)).body).toEqual({ aws: false, pr: true, apm: false });
+    const saved = await request(app).put("/api/integration-features").set(auth).send({ aws: false, pr: true, apm: false, planningDocs: true });
+    expect(saved.body).toEqual({ aws: false, pr: true, apm: false, planningDocs: true });
+    expect((await request(app).get("/api/integration-features").set(auth)).body).toEqual({ aws: false, pr: true, apm: false, planningDocs: true });
     expect((await request(app).put("/api/integration-features").set(auth).send({ aws: "yes" })).status).toBe(400);
   });
 });
 
 describe("꺼진 기능의 자동 갱신", () => {
   it("끈 기능은 조회하지 않고, 켠 기능만 조회한다", async () => {
-    await saveIntegrationFeatures(path, { aws: false, pr: false, apm: true });
+    await saveIntegrationFeatures(path, { aws: false, pr: false, apm: true, planningDocs: false });
     const called: string[] = [];
     await featureGatedRefresh(path, db, "aws", async (userId) => called.push(`aws:${userId}`))("me");
     await featureGatedRefresh(path, db, "apm", async (userId) => called.push(`apm:${userId}`))("me");

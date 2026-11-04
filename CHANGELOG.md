@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.67.1 / Console 0.57.1] - 2026-11-04
+
+- 기획 문서 MCP 설정을 Integrations로 옮기고 Preferences에는 사용 여부만 남겼습니다. 주소 범위는 권한이 아닌 연결 규칙임을 안내하며, 켠 경우에만 spec-writer가 문서를 읽어 확정 SPEC에 반영합니다.
+
 ## [Plugin 0.67.0 / Console 0.57.0] - 2026-11-04
 
 - Preferences에서 기획 문서 URL 조건과 MCP 서버를 연결하면 spec-writer가 해당 서버로 문서 본문을 읽고, 읽지 못한 링크는 이유와 함께 사용자에게 원문을 요청합니다.

@@ -25059,8 +25059,17 @@ var readerSchema = external_exports.object({
   urlPrefix: external_exports.string().trim().url().max(2048).refine((value) => value.startsWith("https://") || value.startsWith("http://")),
   mcpServer: external_exports.string().trim().min(1).max(120).regex(/^[A-Za-z0-9._-]+$/)
 });
-async function loadReferenceReaders(path = join15(sugoHomeDir(), ".claude", "sugo", "settings.json")) {
+async function planningDocsEnabled(path) {
   try {
+    const parsed = JSON.parse(await readFile14(path, "utf8"));
+    return parsed.planningDocs === true;
+  } catch {
+    return false;
+  }
+}
+async function loadReferenceReaders(path = join15(sugoHomeDir(), ".claude", "sugo", "settings.json"), featuresPath = join15(sugoHomeDir(), ".claude", "sugo", "integration-features.json")) {
+  try {
+    if (!await planningDocsEnabled(featuresPath)) return [];
     const parsed = JSON.parse(await readFile14(path, "utf8"));
     const result3 = external_exports.array(readerSchema).safeParse(parsed.referenceReaders);
     return result3.success ? result3.data : [];
@@ -28506,7 +28515,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.67.0" : "0.0.0-dev";
+  return true ? "0.67.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts

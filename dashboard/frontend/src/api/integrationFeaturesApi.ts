@@ -5,9 +5,10 @@ export interface IntegrationFeatures {
   aws: boolean;
   pr: boolean;
   apm: boolean;
+  planningDocs: boolean;
 }
 
-export const INTEGRATION_FEATURES_OFF: IntegrationFeatures = { aws: false, pr: false, apm: false };
+export const INTEGRATION_FEATURES_OFF: IntegrationFeatures = { aws: false, pr: false, apm: false, planningDocs: false };
 
 export function getIntegrationFeatures(): Promise<IntegrationFeatures> {
   return apiJson<IntegrationFeatures>("/api/integration-features");

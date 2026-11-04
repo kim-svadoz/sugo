@@ -4,7 +4,12 @@ import { z } from "zod";
 import type { DbClient } from "../db/client.js";
 
 /** Preferences › 외부 연동에서 켜고 끄는 기능. 꺼진 기능은 Integrations에서 설정을 숨기고 자동 갱신도 하지 않는다. */
-export const integrationFeaturesSchema = z.object({ aws: z.boolean(), pr: z.boolean(), apm: z.boolean() }).strict();
+export const integrationFeaturesSchema = z.object({
+  aws: z.boolean(),
+  pr: z.boolean(),
+  apm: z.boolean(),
+  planningDocs: z.boolean().default(false),
+}).strict();
 export type IntegrationFeatures = z.infer<typeof integrationFeaturesSchema>;
 
 async function hasRow(db: DbClient, table: string, userId: string): Promise<boolean> {
@@ -27,7 +32,7 @@ export async function loadIntegrationFeatures(path: string, db: DbClient, userId
     hasRow(db, "user_git_connections", userId),
     hasRow(db, "user_pinpoint_context", userId),
   ]);
-  return { aws, pr, apm };
+  return { aws, pr, apm, planningDocs: false };
 }
 
 export async function saveIntegrationFeatures(path: string, value: IntegrationFeatures): Promise<void> {

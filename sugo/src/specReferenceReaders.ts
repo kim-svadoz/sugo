@@ -11,8 +11,21 @@ const readerSchema = z.object({
 
 export type ReferenceReader = z.infer<typeof readerSchema>;
 
-export async function loadReferenceReaders(path = join(sugoHomeDir(), ".claude", "sugo", "settings.json")): Promise<ReferenceReader[]> {
+async function planningDocsEnabled(path: string): Promise<boolean> {
   try {
+    const parsed = JSON.parse(await readFile(path, "utf8")) as { planningDocs?: unknown };
+    return parsed.planningDocs === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function loadReferenceReaders(
+  path = join(sugoHomeDir(), ".claude", "sugo", "settings.json"),
+  featuresPath = join(sugoHomeDir(), ".claude", "sugo", "integration-features.json"),
+): Promise<ReferenceReader[]> {
+  try {
+    if (!await planningDocsEnabled(featuresPath)) return [];
     const parsed = JSON.parse(await readFile(path, "utf8")) as { referenceReaders?: unknown };
     const result = z.array(readerSchema).safeParse(parsed.referenceReaders);
     return result.success ? result.data : [];
