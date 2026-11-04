@@ -367,7 +367,7 @@ export function Sessions() {
           <div className="flex items-center gap-2">
             <FolderOpen size={15} className="text-cyan-300" />
             <span className="text-[13px] font-semibold text-[var(--color-text-bright)]">
-              <span className="font-mono font-medium">{ws.name}</span> Inspector
+              프로젝트 현황
             </span>
             <span className="text-[11.5px] text-[var(--color-text-dim)]">저장소 {ws.projectCount}</span>
           </div>

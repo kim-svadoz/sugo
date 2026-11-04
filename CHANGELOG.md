@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.68.1 / Console 0.58.1] - 2026-11-05
+
+- 도메인 관리 상세 패널 헤더에서 중복 도메인명을 제거하고 `프로젝트 현황`으로 통일합니다.
+
 ## [Plugin 0.68.0 / Console 0.58.0] - 2026-11-04
 
 - WIKI 연동의 MCP 등록, Atlassian 인증, 주소 규칙 저장 상태를 단계별로 표시합니다.
