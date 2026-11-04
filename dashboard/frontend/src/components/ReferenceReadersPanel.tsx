@@ -26,7 +26,7 @@ export function ReferenceReadersPanel() {
 
   const copyCommand = async (client: "claude" | "codex") => {
     const command = client === "claude"
-      ? "claude mcp add --transport http atlassian https://mcp.atlassian.com/v2/mcp"
+      ? "claude mcp add --transport http --scope user atlassian https://mcp.atlassian.com/v2/mcp"
       : "codex mcp add atlassian --url https://mcp.atlassian.com/v2/mcp";
     try {
       await navigator.clipboard.writeText(command);
@@ -53,7 +53,7 @@ export function ReferenceReadersPanel() {
           <div>
             <p className="font-mono text-[10px] tracking-[0.18em] text-cyan-300">ATLASSIAN CLOUD</p>
             <h3 id="atlassian-connect-title" className="mt-2 text-base font-semibold text-[var(--color-text)]">Confluence를 먼저 연결하세요</h3>
-            <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">공식 Atlassian MCP를 등록한 뒤 OAuth로 로그인합니다. 기존 Confluence 권한 범위 안에서만 문서를 읽습니다.</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">공식 Atlassian MCP를 한 번 등록한 뒤 OAuth로 로그인합니다. 어느 프로젝트에서든 기존 Confluence 권한 범위 안에서 문서를 읽습니다.</p>
           </div>
           <a href="https://support.atlassian.com/atlassian-ai-gateway/docs/get-started-with-the-atlassian-remote-mcp-server/" target="_blank" rel="noreferrer" className="settings-action settings-action-secondary settings-action-compact">공식 안내 <ExternalLink size={13} /></a>
         </div>

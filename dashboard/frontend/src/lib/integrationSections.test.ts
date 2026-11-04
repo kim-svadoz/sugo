@@ -44,7 +44,7 @@ describe("Integrations section navigation", () => {
   it("공식 Atlassian MCP 연결과 WIKI 주소 라우팅을 한 흐름으로 안내한다", () => {
     const source = readFileSync(new URL("../components/ReferenceReadersPanel.tsx", import.meta.url), "utf8");
     expect(source).toContain("https://mcp.atlassian.com/v2/mcp");
-    expect(source).toContain("claude mcp add --transport http atlassian");
+    expect(source).toContain("claude mcp add --transport http --scope user atlassian");
     expect(source).toContain("codex mcp add atlassian --url");
     expect(source).toContain("/mcp");
     expect(source).toContain('mcpServer: "atlassian"');
