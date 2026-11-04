@@ -303,7 +303,7 @@ export function Playbook() {
   };
   return (
     <div className="mx-auto w-full max-w-[1680px] pb-10">
-      <div className="mb-7"><PageHeading eyebrow="SUGO GUIDE" title="How it works" description="요청을 정리하고 팀의 규칙을 적용한 뒤, 실행 근거와 실제 배포 상태까지 추적합니다." action={<button type="button" onClick={() => navigate("/schedule?create=1")} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-cyan-300/30 bg-cyan-300/[0.08] px-3 text-[12px] font-semibold text-cyan-100 hover:bg-cyan-300/[0.14]"><CalendarPlus size={15} />첫 개발 일정 만들기</button>} /></div>
+      <div className="mb-5"><PageHeading eyebrow="SUGO GUIDE" title="How it works" description="요청을 정리하고 팀의 규칙을 적용한 뒤, 실행 근거와 실제 배포 상태까지 추적합니다." action={<button type="button" onClick={() => navigate("/schedule?create=1")} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-cyan-300/30 bg-cyan-300/[0.08] px-3 text-[12px] font-semibold text-cyan-100 hover:bg-cyan-300/[0.14]"><CalendarPlus size={15} />첫 개발 일정 만들기</button>} /></div>
       <section className="aurora-card mb-7 rounded-xl border p-4" aria-label="목적별 Sugo 사용 안내">
         <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-[15px] font-semibold text-white">지금 무엇을 하려 하나요?</h2><p className="text-[10px] text-slate-400">선택하면 실제 Console 사용 위치로 이동합니다.</p></div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
