@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.66.8 / Console 0.56.8] - 2026-11-04
+
+- How it works의 목적 카드를 빠른 이동 메뉴로 분리하고, 각 시나리오에 실제 Console 위치와 실행 순서를 표시합니다.
+
 ## [Plugin 0.66.7 / Console 0.56.7] - 2026-11-03
 
 - 사용 시나리오 화면의 이름을 Playbook·실행 플레이북에서 How it works로 바꾸고, 그 화면의 TIPS 문구를 실제 동작에 맞게 고쳤습니다.

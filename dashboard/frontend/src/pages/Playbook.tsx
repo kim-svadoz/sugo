@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Blocks,
@@ -9,6 +9,8 @@ import {
   GitBranch,
   Radar,
   ShieldCheck,
+  ArrowRight,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 import { PageHeading } from "../components/PageHeading.js";
@@ -16,6 +18,7 @@ import { cn } from "../lib/utils.js";
 
 type StageId = "intent" | "context" | "delivery" | "review" | "lineage" | "operations";
 type Stage = { id: StageId; order: string; label: string; eyebrow: string; title: string; outcome: string; icon: LucideIcon };
+type ConsoleLocation = { section: string; steps: string[]; result: string };
 type PipelineStep = { name: string; owner: string; proof: string };
 type ConsoleCapability = { name: string; question: string; answer: string };
 
@@ -28,12 +31,21 @@ const STAGES: Stage[] = [
   { id: "operations", order: "06", label: "Console로 운영 확인", eyebrow: "Sugo Console", title: "AI 작업을 운영 판단에 필요한 정보로 바꿉니다", outcome: "Console은 일정, 작업 근거, 개발 이력, 실제 배포 상태를 같은 기능 명세로 연결합니다.", icon: Radar },
 ];
 
-const PLAYBOOK_INTENTS: Array<{ label: string; detail: string; stage: StageId }> = [
-  { label: "새 기능을 시작하고 싶어요", detail: "일정 초안에서 구현 가능한 SPEC을 만듭니다.", stage: "intent" },
-  { label: "AI가 왜 멈췄는지 알고 싶어요", detail: "단계별 통과 조건과 필요한 판단을 확인합니다.", stage: "delivery" },
-  { label: "완료 결과를 검토하고 싶어요", detail: "변경과 실행 근거를 보고 승인 여부를 판단합니다.", stage: "review" },
-  { label: "후속 수정을 이어가고 싶어요", detail: "완료 결과를 보존한 채 새 PATCH를 연결합니다.", stage: "lineage" },
+const PLAYBOOK_INTENTS: Array<{ label: string; detail: string; destination: string; stage: StageId }> = [
+  { label: "새 기능을 시작하고 싶어요", detail: "개발 일정을 만들고 SPEC을 확정합니다.", destination: "일정 관리 · 개발 일정 추가", stage: "intent" },
+  { label: "AI가 왜 멈췄는지 알고 싶어요", detail: "현재 단계와 다음에 필요한 판단을 확인합니다.", destination: "Home · 작업 흐름 보기", stage: "delivery" },
+  { label: "완료 결과를 검토하고 싶어요", detail: "완료된 SPEC에서 변경과 검증 근거를 엽니다.", destination: "일정 관리 · 작업 결과 확인", stage: "review" },
+  { label: "후속 수정을 이어가고 싶어요", detail: "완료된 결과에서 다음 PATCH를 시작합니다.", destination: "일정 관리 · 새 Patch 시작", stage: "lineage" },
 ] as const;
+
+const CONSOLE_LOCATIONS: Record<StageId, ConsoleLocation> = {
+  intent: { section: "일정 관리", steps: ["개발 일정 추가", "기획 자료 입력", "SPEC 확정"], result: "확정된 SPEC 카드에서 첫 개발을 시작합니다." },
+  context: { section: "도메인 관리 · 설정", steps: ["도메인 규칙 관리", "하네스 확인", "프로젝트에 적용"], result: "다음 AI 세션부터 같은 규칙을 읽습니다." },
+  delivery: { section: "Home · 도메인 관리", steps: ["작업 흐름 보기", "현재 단계 확인", "필요한 다음 행동 확인"], result: "AI가 멈춘 이유와 사람이 해야 할 일을 함께 봅니다." },
+  review: { section: "일정 관리", steps: ["완료된 SPEC 카드", "작업 결과 확인", "변경·테스트·위험 검토"], result: "검토 자료를 확인한 뒤 완료하거나 수정을 요청합니다." },
+  lineage: { section: "일정 관리", steps: ["완료된 SPEC 카드", "새 Patch 시작", "이전 결과에서 이어서 작업"], result: "기존 완료 결과는 보존되고 새 차수가 추가됩니다." },
+  operations: { section: "도메인 관리 · Inspector", steps: ["프로젝트 선택", "저장소·배포 상태 확인", "환경별 실행 결과 비교"], result: "개발 완료와 실제 배포 완료를 구분합니다." },
+};
 
 const PIPELINE_STEPS: PipelineStep[] = [
   { name: "개발 일정 작성", owner: "SCHEDULE", proof: "사람이 목표일, 저장소, 초안과 기획 자료를 한 SPEC 일정에 모읍니다." },
@@ -252,21 +264,61 @@ function Operations() {
   );
 }
 
+function ConsoleLocationGuide({ location }: { location: ConsoleLocation }) {
+  return (
+    <div className="mb-8 rounded-xl border border-cyan-300/15 bg-[rgba(8,16,27,.68)] p-4" aria-label="Console에서 확인하는 위치">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+          <MapPin size={16} className="text-cyan-300" />
+          Console에서 이렇게 확인합니다
+        </div>
+        <span className="rounded-md bg-cyan-300/[0.08] px-3 py-1.5 text-xs font-semibold text-cyan-200">{location.section}</span>
+      </div>
+      <ol className="mt-4 grid gap-2 md:grid-cols-3">
+        {location.steps.map((step, index) => (
+          <li key={step} className="relative flex min-h-14 items-center gap-3 rounded-lg bg-white/[0.035] px-3 py-2.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-cyan-300/25 font-mono text-xs text-cyan-200">{index + 1}</span>
+            <span className="text-sm font-medium text-slate-200">{step}</span>
+            {index < location.steps.length - 1 && <ArrowRight size={15} aria-hidden="true" className="absolute -right-3.5 z-10 hidden text-cyan-300/50 md:block" />}
+          </li>
+        ))}
+      </ol>
+      <p className="mt-3 text-sm text-slate-400">{location.result}</p>
+    </div>
+  );
+}
+
 const CONTENT: Record<StageId, () => ReactNode> = { intent: Intent, context: Context, delivery: Delivery, review: Review, lineage: Lineage, operations: Operations };
 
 /** 실제 사용자 데이터를 읽지 않는 100% 시뮬레이션 화면이다. */
 export function Playbook() {
   const [activeId, setActiveId] = useState<StageId>("intent");
+  const guideRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const active = STAGES.find((stage) => stage.id === activeId) ?? STAGES[0];
   const Content = CONTENT[active.id];
+  const openStage = (stage: StageId) => {
+    setActiveId(stage);
+    requestAnimationFrame(() => guideRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }));
+  };
   return (
     <div className="mx-auto w-full max-w-[1680px] pb-10">
       <div className="mb-7 border-b border-[var(--color-border)] pb-6"><PageHeading eyebrow="SUGO GUIDE" title="How it works" description="요청을 정리하고 팀의 규칙을 적용한 뒤, 실행 근거와 실제 배포 상태까지 추적합니다." action={<button type="button" onClick={() => navigate("/schedule?create=1")} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-cyan-300/30 bg-cyan-300/[0.08] px-3 text-[12px] font-semibold text-cyan-100 hover:bg-cyan-300/[0.14]"><CalendarPlus size={15} />첫 개발 일정 만들기</button>} /></div>
-      <section className="aurora-card mb-7 rounded-xl border p-4" aria-label="목적별 Sugo 사용 안내"><div className="mb-3 flex items-baseline justify-between gap-3"><h2 className="text-[15px] font-semibold text-white">지금 무엇을 하려 하나요?</h2><span className="text-[10px] text-slate-500">목적을 고르면 관련 흐름으로 바로 이동합니다.</span></div><div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">{PLAYBOOK_INTENTS.map((intent) => <button key={intent.label} type="button" onClick={() => setActiveId(intent.stage)} className={cn("rounded-lg border p-3 text-left backdrop-blur-[6px] transition hover:-translate-y-0.5", active.id === intent.stage ? "border-cyan-300/35 bg-cyan-300/[0.09]" : "border-white/[0.08] bg-[rgba(7,12,22,0.55)] hover:border-violet-300/25")}><strong className="block text-[12px] text-slate-100">{intent.label}</strong><span className="mt-1 block text-[10px] leading-4 text-slate-400">{intent.detail}</span></button>)}</div></section>
-      <div className="grid min-w-0 gap-7 xl:grid-cols-[260px_minmax(0,1fr)]">
+      <section className="mb-8 border-y border-[var(--color-border)] py-4" aria-label="목적별 Sugo 사용 안내">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-white">지금 무엇을 하려 하나요?</h2><span className="text-xs text-slate-500">선택하면 실제 Console 사용 위치로 이동합니다.</span></div>
+        <div className="grid gap-px overflow-hidden rounded-xl bg-white/[0.08] sm:grid-cols-2 xl:grid-cols-4">
+          {PLAYBOOK_INTENTS.map((intent) => (
+            <button key={intent.label} type="button" onClick={() => openStage(intent.stage)} className="group min-h-28 bg-[rgba(7,12,22,.96)] p-4 text-left outline-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[rgba(14,29,43,.96)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300/60">
+              <span className="flex items-start justify-between gap-3"><strong className="text-sm font-semibold text-slate-100">{intent.label}</strong><ArrowRight size={16} className="mt-0.5 shrink-0 text-slate-600 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1 group-hover:text-cyan-300" /></span>
+              <span className="mt-2 block text-xs text-slate-400">{intent.detail}</span>
+              <span className="mt-3 block text-xs font-medium text-cyan-300/75">{intent.destination}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+      <div ref={guideRef} className="scroll-mt-6 grid min-w-0 gap-7 xl:grid-cols-[260px_minmax(0,1fr)]">
         <nav aria-label="AI 개발 사용 시나리오" className="border-b border-[var(--color-border)] pb-5 xl:border-r xl:border-b-0 xl:pr-5 xl:pb-0"><div role="tablist" aria-orientation="vertical" className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:block xl:space-y-1">{STAGES.map((stage) => { const Icon = stage.icon; const selected = stage.id === active.id; return <button key={stage.id} role="tab" aria-selected={selected} aria-controls={`playbook-panel-${stage.id}`} id={`playbook-tab-${stage.id}`} onClick={() => setActiveId(stage.id)} className={cn("flex w-full items-center gap-2 rounded px-3 py-3 text-left transition-colors xl:gap-3 xl:px-3.5 xl:py-3.5", selected ? "bg-cyan-500/10 text-[var(--color-text-bright)]" : "text-[var(--color-text-muted)] hover:bg-[var(--color-background)] hover:text-[var(--color-text)]")}><span className={cn("font-mono text-[11px]", selected ? "text-cyan-300" : "text-[var(--color-text-dim)]")}>{stage.order}</span><Icon size={17} className={selected ? "text-cyan-300" : "text-[var(--color-text-dim)]"} /><span className="text-[14px] font-medium">{stage.label}</span></button>; })}</div></nav>
-        <section role="tabpanel" id={`playbook-panel-${active.id}`} aria-labelledby={`playbook-tab-${active.id}`} className="min-w-0 px-1 py-1"><div className="mb-8 max-w-4xl"><div className="text-[12px] font-semibold tracking-[.1em] text-cyan-300">{active.eyebrow}</div><h2 className="mt-2.5 text-[29px] font-semibold tracking-[-.025em] text-[var(--color-text-bright)]">{active.title}</h2><p className="mt-3 text-[16px] leading-relaxed text-[var(--color-text-muted)]">{active.outcome}</p></div><Content /></section>
+        <section role="tabpanel" id={`playbook-panel-${active.id}`} aria-labelledby={`playbook-tab-${active.id}`} className="min-w-0 px-1 py-1"><div className="mb-8 max-w-4xl"><div className="text-xs font-semibold tracking-[.1em] text-cyan-300">{active.eyebrow}</div><h2 className="mt-2 text-3xl font-semibold tracking-[-.025em] text-[var(--color-text-bright)]">{active.title}</h2><p className="mt-3 text-base text-[var(--color-text-muted)]">{active.outcome}</p></div><ConsoleLocationGuide location={CONSOLE_LOCATIONS[active.id]} /><Content /></section>
       </div>
     </div>
   );

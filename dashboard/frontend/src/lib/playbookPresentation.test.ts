@@ -63,7 +63,18 @@ describe("Playbook product lifecycle", () => {
   it("사용 목적에서 바로 관련 사용 시나리오를 열 수 있다", () => {
     expect(source).toContain("지금 무엇을 하려 하나요?");
     expect(source).toContain("PLAYBOOK_INTENTS");
-    expect(source).toContain("setActiveId(intent.stage)");
+    expect(source).toContain("openStage(intent.stage)");
+    expect(source).toContain("scrollIntoView");
+    expect(source).not.toContain('active.id === intent.stage');
+  });
+
+  it("각 시나리오가 실제 Console 위치와 행동을 안내한다", () => {
+    expect(source).toContain("Console에서 이렇게 확인합니다");
+    expect(source).toContain("완료된 SPEC 카드");
+    expect(source).toContain("작업 결과 확인");
+    expect(source).toContain("새 Patch 시작");
+    expect(source).toContain("도메인 관리 · Inspector");
+    expect(source).toContain("개발 완료와 실제 배포 완료를 구분합니다.");
   });
 
   it("첫 개발 일정을 일정 작성 화면에서 바로 시작한다", () => {
