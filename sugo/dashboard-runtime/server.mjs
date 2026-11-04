@@ -46497,10 +46497,10 @@ async function assignRunToSpec(db2, userId2, workspaceName, runId, specId) {
     [userId2, workspaceName, runId, specId ?? runId]
   );
   const byId = new Map(rows.map((r5) => [r5.id, r5]));
-  const run = byId.get(runId);
-  if (!run) return { ok: false, errorCode: "NODE_NOT_FOUND", message: `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${runId}` };
-  if (run.level !== "workstream") {
-    return { ok: false, errorCode: "NOT_A_RUN", message: `RUN(workstream)\uC774 \uC544\uB2D9\uB2C8\uB2E4: ${runId}(level=${run.level})` };
+  const run2 = byId.get(runId);
+  if (!run2) return { ok: false, errorCode: "NODE_NOT_FOUND", message: `\uB178\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${runId}` };
+  if (run2.level !== "workstream") {
+    return { ok: false, errorCode: "NOT_A_RUN", message: `RUN(workstream)\uC774 \uC544\uB2D9\uB2C8\uB2E4: ${runId}(level=${run2.level})` };
   }
   if (specId !== null) {
     const spec = byId.get(specId);
@@ -89688,13 +89688,13 @@ function createAwsCliContextClient(customRunner) {
     const { stdout } = await execFileAsync3("aws", args, { maxBuffer: 8 * 1024 * 1024, timeout: 6e4 });
     return JSON.parse(stdout);
   });
-  const run = async (args) => {
+  const run2 = async (args) => {
     assertReadOnlyAwsArgs(args);
     return underlying(args);
   };
   async function collect(account, service, command5, parse2) {
     try {
-      const payload2 = await run([...command5, ...commonArgs(account)]);
+      const payload2 = await run2([...command5, ...commonArgs(account)]);
       return { service, resources: parse2(payload2) };
     } catch (error2) {
       return { service, resources: [], error: error2 instanceof Error ? error2.message : String(error2) };
@@ -89705,10 +89705,10 @@ function createAwsCliContextClient(customRunner) {
     let runtimeError = null;
     const digestTags = /* @__PURE__ */ new Map();
     try {
-      const listed = await run(["ecs", "list-tasks", "--cluster", cluster, "--service-name", service, "--desired-status", "RUNNING", ...commonArgs(account)]);
+      const listed = await run2(["ecs", "list-tasks", "--cluster", cluster, "--service-name", service, "--desired-status", "RUNNING", ...commonArgs(account)]);
       const taskArns = Array.isArray(listed.taskArns) ? listed.taskArns.filter((a5) => typeof a5 === "string") : [];
       for (const batch of chunks(taskArns, 100)) {
-        const tasks = await run(["ecs", "describe-tasks", "--cluster", cluster, "--tasks", ...batch, ...commonArgs(account)]);
+        const tasks = await run2(["ecs", "describe-tasks", "--cluster", cluster, "--tasks", ...batch, ...commonArgs(account)]);
         if (tasks.failures?.length) throw new Error("ECS runtime task lookup incomplete");
         for (const task of tasks.tasks ?? []) for (const container of task.containers ?? []) {
           if (task.lastStatus !== "RUNNING" || container.lastStatus !== "RUNNING") continue;
@@ -89723,7 +89723,7 @@ function createAwsCliContextClient(customRunner) {
             const key2 = `${credentials.profile}/${ecr[1]}/${ecr[3]}@${imageDigest}`;
             try {
               if (!digestTags.has(key2)) {
-                const detail = await run(["ecr", "describe-images", "--registry-id", ecr[1], "--repository-name", ecr[3], "--image-ids", `imageDigest=${imageDigest}`, ...commonArgs(credentials)]);
+                const detail = await run2(["ecr", "describe-images", "--registry-id", ecr[1], "--repository-name", ecr[3], "--image-ids", `imageDigest=${imageDigest}`, ...commonArgs(credentials)]);
                 digestTags.set(key2, (detail.imageDetails ?? []).filter((d5) => d5.imageDigest === imageDigest).flatMap((d5) => Array.isArray(d5.imageTags) ? d5.imageTags.filter((t) => typeof t === "string") : []));
               }
               result.tags = digestTags.get(key2);
@@ -89744,21 +89744,21 @@ function createAwsCliContextClient(customRunner) {
     const resources = [];
     const errors = [];
     try {
-      const clusterPayload = await run(["ecs", "list-clusters", ...commonArgs(account)]);
+      const clusterPayload = await run2(["ecs", "list-clusters", ...commonArgs(account)]);
       const clusterArns = Array.isArray(clusterPayload.clusterArns) ? clusterPayload.clusterArns : [];
       resources.push(...compact(clusterArns.map((arn) => resource("ecs", "cluster", arnName(arn)))));
       for (const clusterArn of clusterArns.filter((arn) => typeof arn === "string")) {
         try {
-          const servicesPayload = await run(["ecs", "list-services", "--cluster", clusterArn, ...commonArgs(account)]);
+          const servicesPayload = await run2(["ecs", "list-services", "--cluster", clusterArn, ...commonArgs(account)]);
           const serviceArns = Array.isArray(servicesPayload.serviceArns) ? servicesPayload.serviceArns.filter((arn) => typeof arn === "string") : [];
           for (const serviceChunk of chunks(serviceArns, 10)) {
-            const described = await run(["ecs", "describe-services", "--cluster", clusterArn, "--services", ...serviceChunk, ...commonArgs(account)]);
+            const described = await run2(["ecs", "describe-services", "--cluster", clusterArn, "--services", ...serviceChunk, ...commonArgs(account)]);
             for (const service of described.services ?? []) {
               const primaryDeployment = Array.isArray(service.deployments) ? service.deployments.find((deployment) => deployment.status === "PRIMARY") : null;
               let primaryTaskSet = null;
               if (service.deploymentController?.type === "CODE_DEPLOY" || !primaryDeployment) {
                 try {
-                  const payload2 = await run(["ecs", "describe-task-sets", "--cluster", clusterArn, "--service", service.serviceArn ?? service.serviceName, ...commonArgs(account)]);
+                  const payload2 = await run2(["ecs", "describe-task-sets", "--cluster", clusterArn, "--service", service.serviceArn ?? service.serviceName, ...commonArgs(account)]);
                   primaryTaskSet = Array.isArray(payload2.taskSets) ? payload2.taskSets.find((taskSet) => taskSet.status === "PRIMARY") : null;
                 } catch (error2) {
                   const message2 = error2 instanceof Error ? error2.message : String(error2);
@@ -89769,7 +89769,7 @@ function createAwsCliContextClient(customRunner) {
               let taskDefinition = null;
               if (taskDefinitionArn) {
                 try {
-                  const payload2 = await run(["ecs", "describe-task-definition", "--task-definition", taskDefinitionArn, ...commonArgs(account)]);
+                  const payload2 = await run2(["ecs", "describe-task-definition", "--task-definition", taskDefinitionArn, ...commonArgs(account)]);
                   taskDefinition = payload2.taskDefinition ?? null;
                 } catch (error2) {
                   errors.push(error2 instanceof Error ? error2.message : String(error2));
@@ -89817,11 +89817,11 @@ function createAwsCliContextClient(customRunner) {
     const resources = [];
     const errors = [];
     try {
-      const listed = await run(["codepipeline", "list-pipelines", ...commonArgs(account)]);
+      const listed = await run2(["codepipeline", "list-pipelines", ...commonArgs(account)]);
       const names = (listed.pipelines ?? []).map((item) => text(item.name)).filter((name) => name !== null);
       for (const name of names) {
         try {
-          const detail = await run(["codepipeline", "get-pipeline", "--name", name, ...commonArgs(account)]);
+          const detail = await run2(["codepipeline", "get-pipeline", "--name", name, ...commonArgs(account)]);
           const stages = Array.isArray(detail.pipeline?.stages) ? detail.pipeline.stages : [];
           const actions = stages.flatMap((stage) => Array.isArray(stage.actions) ? stage.actions : []);
           const source = actions.find((action) => action.actionTypeId?.category === "Source" && ["CodeCommit", "CodeStarSourceConnection", "GitHub"].includes(action.actionTypeId?.provider));
@@ -89830,10 +89830,10 @@ function createAwsCliContextClient(customRunner) {
           let latestBuild = null;
           let buildHistory = [];
           if (buildProject) {
-            const buildList = await run(["codebuild", "list-builds-for-project", "--project-name", buildProject, ...commonArgs(account)]);
+            const buildList = await run2(["codebuild", "list-builds-for-project", "--project-name", buildProject, ...commonArgs(account)]);
             const ids = Array.isArray(buildList.ids) ? buildList.ids.slice(0, 100).filter((id) => typeof id === "string") : [];
             if (ids.length > 0) {
-              const builds = await run(["codebuild", "batch-get-builds", "--ids", ...ids, ...commonArgs(account)]);
+              const builds = await run2(["codebuild", "batch-get-builds", "--ids", ...ids, ...commonArgs(account)]);
               buildHistory = (builds.builds ?? []).filter((b5) => b5.buildStatus === "SUCCEEDED").map((b5) => ({ project: buildProject, number: b5.buildNumber, commit: text(b5.resolvedSourceVersion), at: text(b5.endTime), imageUri: text(b5.exportedEnvironmentVariables?.find((v) => v.name === "IMAGE_URI")?.value), imageDigest: text(b5.exportedEnvironmentVariables?.find((v) => v.name === "IMAGE_DIGEST")?.value) }));
               latestBuild = (builds.builds ?? []).find((item) => item.buildStatus === "SUCCEEDED") ?? builds.builds?.[0] ?? null;
             }
@@ -89898,7 +89898,7 @@ function createAwsCliContextClient(customRunner) {
     ];
     for (const call of calls) {
       try {
-        resources.push(...call.parse(await run([...call.command, ...commonArgs(account)])));
+        resources.push(...call.parse(await run2([...call.command, ...commonArgs(account)])));
       } catch (error2) {
         errors.push(error2 instanceof Error ? error2.message : String(error2));
       }
@@ -89908,8 +89908,8 @@ function createAwsCliContextClient(customRunner) {
   async function collectLambda(account) {
     try {
       const [functionsPayload, mappingsPayload] = await Promise.all([
-        run(["lambda", "list-functions", "--query", "{Functions: Functions[].{FunctionName:FunctionName,Runtime:Runtime,Handler:Handler,State:State,LastModified:LastModified,MemorySize:MemorySize,Timeout:Timeout,EnvironmentVariableNames:keys(not_null(Environment.Variables, `{}`))}}", ...commonArgs(account)]),
-        run(["lambda", "list-event-source-mappings", "--query", "{EventSourceMappings: EventSourceMappings[].{FunctionArn:FunctionArn,EventSourceArn:EventSourceArn,State:State,BatchSize:BatchSize,StartingPosition:StartingPosition}}", ...commonArgs(account)])
+        run2(["lambda", "list-functions", "--query", "{Functions: Functions[].{FunctionName:FunctionName,Runtime:Runtime,Handler:Handler,State:State,LastModified:LastModified,MemorySize:MemorySize,Timeout:Timeout,EnvironmentVariableNames:keys(not_null(Environment.Variables, `{}`))}}", ...commonArgs(account)]),
+        run2(["lambda", "list-event-source-mappings", "--query", "{EventSourceMappings: EventSourceMappings[].{FunctionArn:FunctionArn,EventSourceArn:EventSourceArn,State:State,BatchSize:BatchSize,StartingPosition:StartingPosition}}", ...commonArgs(account)])
       ]);
       const mappings = Array.isArray(mappingsPayload.EventSourceMappings) ? mappingsPayload.EventSourceMappings : [];
       const resources = compact((functionsPayload.Functions ?? []).map((fn) => {
@@ -89940,13 +89940,13 @@ function createAwsCliContextClient(customRunner) {
     const resources = [];
     const errors = [];
     try {
-      const payload2 = await run(["kinesis", "list-streams", "--limit", "100", "--query", "{StreamSummaries: StreamSummaries[].{StreamName:StreamName,StreamARN:StreamARN,StreamStatus:StreamStatus,StreamModeDetails:StreamModeDetails,StreamCreationTimestamp:StreamCreationTimestamp}}", ...commonArgs(account)]);
+      const payload2 = await run2(["kinesis", "list-streams", "--limit", "100", "--query", "{StreamSummaries: StreamSummaries[].{StreamName:StreamName,StreamARN:StreamARN,StreamStatus:StreamStatus,StreamModeDetails:StreamModeDetails,StreamCreationTimestamp:StreamCreationTimestamp}}", ...commonArgs(account)]);
       for (const stream of payload2.StreamSummaries ?? []) {
         const streamName = text(stream.StreamName);
         if (!streamName) continue;
         let openShardCount = null;
         try {
-          const detail = await run(["kinesis", "describe-stream-summary", "--stream-name", streamName, "--query", "{StreamDescriptionSummary:{OpenShardCount:StreamDescriptionSummary.OpenShardCount}}", ...commonArgs(account)]);
+          const detail = await run2(["kinesis", "describe-stream-summary", "--stream-name", streamName, "--query", "{StreamDescriptionSummary:{OpenShardCount:StreamDescriptionSummary.OpenShardCount}}", ...commonArgs(account)]);
           openShardCount = typeof detail.StreamDescriptionSummary?.OpenShardCount === "number" ? detail.StreamDescriptionSummary.OpenShardCount : null;
         } catch (error2) {
           errors.push(`${streamName}: ${error2 instanceof Error ? error2.message : String(error2)}`);
@@ -89967,7 +89967,7 @@ function createAwsCliContextClient(customRunner) {
   }
   return {
     async identity(account) {
-      const payload2 = await run(["sts", "get-caller-identity", ...commonArgs(account)]);
+      const payload2 = await run2(["sts", "get-caller-identity", ...commonArgs(account)]);
       if (!text(payload2.Account) || !text(payload2.Arn)) throw new Error("AWS identity response is incomplete");
       return { accountId: payload2.Account, arn: payload2.Arn };
     },
@@ -90435,9 +90435,9 @@ import { promisify as promisify8 } from "node:util";
 function supportsNativeDirectoryPicker(platform2 = currentPlatform()) {
   return platform2 === "darwin" || platform2 === "win32";
 }
-async function selectNativeDirectory(platform2 = currentPlatform(), run = runFile) {
+async function selectNativeDirectory(platform2 = currentPlatform(), run2 = runFile) {
   try {
-    const result = platform2 === "darwin" ? await run("osascript", ["-e", macScript]) : platform2 === "win32" ? await run("powershell.exe", ["-NoProfile", "-STA", "-Command", windowsScript]) : void 0;
+    const result = platform2 === "darwin" ? await run2("osascript", ["-e", macScript]) : platform2 === "win32" ? await run2("powershell.exe", ["-NoProfile", "-STA", "-Command", windowsScript]) : void 0;
     const selected = result?.stdout.trim();
     return selected || void 0;
   } catch (error2) {
@@ -90782,11 +90782,52 @@ var init_referenceReaders = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/wikiSetupStatus.ts
+import { execFile as execFile10 } from "node:child_process";
+function isRegistered(output) {
+  return !/no mcp server (?:found with name|named)/i.test(output) && (/scope:\s*(?:user|local|project)/i.test(output) || /"name"\s*:\s*"atlassian"/i.test(output) || /type:\s*(?:http|stdio|sse)/i.test(output));
+}
+function summarizeWikiMcpChecks(checks) {
+  const registered = checks.filter((check) => isRegistered(check.output));
+  const clients = registered.map((check) => check.client);
+  if (registered.length === 0) return { registration: "missing", authentication: "blocked", clients: [] };
+  if (registered.some((check) => /status:\s*[✔✓].*connected/i.test(check.output))) {
+    return { registration: "complete", authentication: "complete", clients };
+  }
+  if (registered.some((check) => /needs authentication|authentication required|not authenticated/i.test(check.output))) {
+    return { registration: "complete", authentication: "required", clients };
+  }
+  return { registration: "complete", authentication: "unknown", clients };
+}
+function run(client, command5, args) {
+  return new Promise((resolve8) => {
+    execFile10(command5, args, { timeout: 5e3 }, (error2, stdout, stderr) => {
+      resolve8({ client, output: `${stdout ?? ""}
+${stderr ?? ""}`.trim(), succeeded: !error2 });
+    });
+  });
+}
+async function inspectWikiMcpStatus() {
+  const checks = await Promise.all([
+    run("claude", "claude", ["mcp", "get", "atlassian"]),
+    run("codex", "codex", ["mcp", "get", "atlassian", "--json"])
+  ]);
+  return summarizeWikiMcpChecks(checks);
+}
+var init_wikiSetupStatus = __esm({
+  "../dashboard/backend/src/services/wikiSetupStatus.ts"() {
+    "use strict";
+  }
+});
+
 // ../dashboard/backend/src/routes/referenceReaders.ts
 function createReferenceReadersRouter(db2, secret, settingsPath) {
   const router = (0, import_express23.Router)();
   router.use(requireUser(db2, secret));
-  router.get("/", async (_req, res) => res.json({ readers: await loadReferenceReaders(settingsPath) }));
+  router.get("/", async (_req, res) => {
+    const [readers, setup] = await Promise.all([loadReferenceReaders(settingsPath), inspectWikiMcpStatus()]);
+    res.json({ readers, setup });
+  });
   router.put("/", validateBody(referenceReadersSchema), async (req, res) => {
     await saveReferenceReaders(settingsPath, req.body.readers);
     res.json(req.body);
@@ -90801,6 +90842,7 @@ var init_referenceReaders2 = __esm({
     init_requireUser();
     init_validate();
     init_referenceReaders();
+    init_wikiSetupStatus();
   }
 });
 
@@ -90879,19 +90921,19 @@ function startContextAutoRefresh(db2, aws, pinpoint, featuresPath) {
   let timer = null;
   const refreshAws = featureGatedRefresh(featuresPath, db2, "aws", (userId2) => refreshAllAwsContexts(db2, userId2, aws));
   const refreshApm = featureGatedRefresh(featuresPath, db2, "apm", (userId2) => refreshPinpointContext(db2, userId2, pinpoint));
-  const run = () => runDueContextRefresh(db2, /* @__PURE__ */ new Date(), refreshAws, refreshApm).catch((error2) => console.error("[dashboard] context auto refresh failed:", error2 instanceof Error ? error2.message : error2));
+  const run2 = () => runDueContextRefresh(db2, /* @__PURE__ */ new Date(), refreshAws, refreshApm).catch((error2) => console.error("[dashboard] context auto refresh failed:", error2 instanceof Error ? error2.message : error2));
   const schedule = () => {
     if (stopped) return;
     const now = /* @__PURE__ */ new Date();
     const nextHour = new Date(now);
     nextHour.setMinutes(60, 0, 0);
     timer = setTimeout(async () => {
-      await run();
+      await run2();
       schedule();
     }, nextHour.getTime() - now.getTime());
     timer.unref?.();
   };
-  void run();
+  void run2();
   schedule();
   return () => {
     stopped = true;
@@ -90918,7 +90960,7 @@ __export(weeklyScheduleService_exports, {
   weeklyHomeDir: () => weeklyHomeDir,
   weeklyRunDecision: () => weeklyRunDecision
 });
-import { execFile as execFile10 } from "node:child_process";
+import { execFile as execFile11 } from "node:child_process";
 import { appendFile, mkdir as mkdir6, readdir as readdir5, readFile as readFile12, stat as stat3, unlink as unlink3, writeFile as writeFile7 } from "node:fs/promises";
 import { homedir as homedir5 } from "node:os";
 import { dirname as dirname7, join as join14, resolve as resolve7 } from "node:path";
@@ -91027,12 +91069,12 @@ var execFileAsync4;
 var init_weeklyScheduleService = __esm({
   "../dashboard/backend/src/services/weeklyScheduleService.ts"() {
     "use strict";
-    execFileAsync4 = promisify9(execFile10);
+    execFileAsync4 = promisify9(execFile11);
   }
 });
 
 // ../dashboard/backend/src/services/weeklySettingsService.ts
-import { execFile as execFile11 } from "node:child_process";
+import { execFile as execFile12 } from "node:child_process";
 import { chmod, mkdir as mkdir7, readFile as readFile13, stat as stat4, writeFile as writeFile8 } from "node:fs/promises";
 import { join as join15 } from "node:path";
 function normalizeClaudeToken(raw) {
@@ -91045,7 +91087,7 @@ function tokenError(code, message2) {
 function verifyClaudeToken(token) {
   const args = ["-p", "reply with OK", "--tools", "", "--strict-mcp-config", "--setting-sources", "", "--no-session-persistence", "--output-format", "json", "--model", "haiku"];
   return new Promise((resolve8) => {
-    const child = execFile11("claude", args, { env: { ...process.env, CLAUDE_CODE_OAUTH_TOKEN: token }, timeout: 6e4 }, (error2, stdout, stderr) => {
+    const child = execFile12("claude", args, { env: { ...process.env, CLAUDE_CODE_OAUTH_TOKEN: token }, timeout: 6e4 }, (error2, stdout, stderr) => {
       if (error2?.code === "ENOENT") {
         resolve8(null);
         return;
@@ -91333,7 +91375,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname8(fileURLToPath6(import.meta.url));
-    pkg = "0.57.3" ? { version: "0.57.3" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.58.0" ? { version: "0.58.0" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91461,7 +91503,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.57.3", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.58.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

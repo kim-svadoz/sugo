@@ -6,7 +6,13 @@ export interface ReferenceReader {
   mcpServer: string;
 }
 
-export function getReferenceReaders(): Promise<{ readers: ReferenceReader[] }> {
+export interface WikiSetupStatus {
+  registration: "complete" | "missing";
+  authentication: "complete" | "required" | "unknown" | "blocked";
+  clients: Array<"claude" | "codex">;
+}
+
+export function getReferenceReaders(): Promise<{ readers: ReferenceReader[]; setup: WikiSetupStatus }> {
   return apiJson("/api/reference-readers");
 }
 

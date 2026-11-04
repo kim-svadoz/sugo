@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.68.0 / Console 0.58.0] - 2026-11-04
+
+- WIKI 연동의 MCP 등록, Atlassian 인증, 주소 규칙 저장 상태를 단계별로 표시합니다.
+
 ## [Plugin 0.67.3 / Console 0.57.3] - 2026-11-04
 
 - WIKI MCP를 현재 폴더가 아닌 사용자 범위에 등록해, Sugo가 어느 프로젝트에서든 같은 연결을 사용하도록 안내합니다.
