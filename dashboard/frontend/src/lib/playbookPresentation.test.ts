@@ -63,6 +63,7 @@ describe("Playbook product lifecycle", () => {
   it("사용 목적에서 바로 관련 사용 시나리오를 열 수 있다", () => {
     expect(source).toContain("지금 무엇을 하려 하나요?");
     expect(source).toContain("PLAYBOOK_INTENTS");
+    expect(source).toContain('className="aurora-card mb-7 rounded-xl border p-4"');
     expect(source).toContain("openStage(intent.stage)");
     expect(source).toContain("scrollIntoView");
     expect(source).not.toContain('active.id === intent.stage');

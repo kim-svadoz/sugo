@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.66.9 / Console 0.56.9] - 2026-11-04
+
+- How it works의 목적 선택 영역을 스킬 카탈로그와 같은 통합 박스 구조로 맞추고, 첫 진입 상태에는 선택 강조를 표시하지 않습니다.
+
 ## [Plugin 0.66.8 / Console 0.56.8] - 2026-11-04
 
 - How it works의 목적 카드를 빠른 이동 메뉴로 분리하고, 각 시나리오에 실제 Console 위치와 실행 순서를 표시합니다.

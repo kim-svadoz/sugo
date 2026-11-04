@@ -304,14 +304,14 @@ export function Playbook() {
   return (
     <div className="mx-auto w-full max-w-[1680px] pb-10">
       <div className="mb-7 border-b border-[var(--color-border)] pb-6"><PageHeading eyebrow="SUGO GUIDE" title="How it works" description="요청을 정리하고 팀의 규칙을 적용한 뒤, 실행 근거와 실제 배포 상태까지 추적합니다." action={<button type="button" onClick={() => navigate("/schedule?create=1")} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-cyan-300/30 bg-cyan-300/[0.08] px-3 text-[12px] font-semibold text-cyan-100 hover:bg-cyan-300/[0.14]"><CalendarPlus size={15} />첫 개발 일정 만들기</button>} /></div>
-      <section className="mb-8 border-y border-[var(--color-border)] py-4" aria-label="목적별 Sugo 사용 안내">
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-white">지금 무엇을 하려 하나요?</h2><span className="text-xs text-slate-500">선택하면 실제 Console 사용 위치로 이동합니다.</span></div>
-        <div className="grid gap-px overflow-hidden rounded-xl bg-white/[0.08] sm:grid-cols-2 xl:grid-cols-4">
+      <section className="aurora-card mb-7 rounded-xl border p-4" aria-label="목적별 Sugo 사용 안내">
+        <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-[15px] font-semibold text-white">지금 무엇을 하려 하나요?</h2><p className="text-[10px] text-slate-400">선택하면 실제 Console 사용 위치로 이동합니다.</p></div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {PLAYBOOK_INTENTS.map((intent) => (
-            <button key={intent.label} type="button" onClick={() => openStage(intent.stage)} className="group min-h-28 bg-[rgba(7,12,22,.96)] p-4 text-left outline-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[rgba(14,29,43,.96)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300/60">
-              <span className="flex items-start justify-between gap-3"><strong className="text-sm font-semibold text-slate-100">{intent.label}</strong><ArrowRight size={16} className="mt-0.5 shrink-0 text-slate-600 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1 group-hover:text-cyan-300" /></span>
-              <span className="mt-2 block text-xs text-slate-400">{intent.detail}</span>
-              <span className="mt-3 block text-xs font-medium text-cyan-300/75">{intent.destination}</span>
+            <button key={intent.label} type="button" onClick={() => openStage(intent.stage)} className="group relative rounded-lg border border-white/[0.08] bg-[rgba(7,12,22,0.55)] p-3 text-left backdrop-blur-[6px] transition hover:-translate-y-0.5 hover:border-cyan-300/25 hover:bg-cyan-300/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60">
+              <span className="flex items-start justify-between gap-3"><strong className="text-[12px] text-slate-100">{intent.label}</strong><ArrowRight size={13} className="mt-0.5 shrink-0 text-cyan-300/40 transition-transform group-hover:translate-x-0.5 group-hover:text-cyan-300" /></span>
+              <span className="mt-1 block text-[10px] leading-4 text-slate-400">{intent.detail}</span>
+              <span className="mt-2 block text-[10px] font-medium text-cyan-300/75">{intent.destination}</span>
             </button>
           ))}
         </div>
