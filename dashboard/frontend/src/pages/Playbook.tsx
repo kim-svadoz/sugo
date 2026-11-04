@@ -70,8 +70,8 @@ const CONSOLE_CAPABILITIES: ConsoleCapability[] = [
 function Fact({ label, value, tone }: { label: string; value: string; tone?: "good" | "warn" }) {
   return (
     <div className="grid grid-cols-[132px_minmax(0,1fr)] gap-5 border-b border-[var(--color-border)]/70 py-4 last:border-b-0">
-      <span className="text-[12px] font-semibold text-[var(--color-text-muted)]">{label}</span>
-      <span className={cn("text-[15px] leading-relaxed", tone === "good" ? "text-emerald-300" : tone === "warn" ? "text-amber-300" : "text-[var(--color-text)]")}>{value}</span>
+      <span className="text-[11px] font-semibold text-[var(--color-text-muted)]">{label}</span>
+      <span className={cn("text-[14px] leading-relaxed", tone === "good" ? "text-emerald-300" : tone === "warn" ? "text-amber-300" : "text-[var(--color-text)]")}>{value}</span>
     </div>
   );
 }
@@ -81,7 +81,7 @@ function Flow({ steps }: { steps: string[] }) {
     <div className="flex flex-wrap items-center gap-1.5">
       {steps.map((step, index) => (
         <div key={step} className="flex items-center gap-1.5">
-          <span className="rounded border border-cyan-500/30 bg-cyan-500/8 px-3 py-2 text-[13px] font-medium text-cyan-200">{step}</span>
+          <span className="rounded border border-cyan-500/30 bg-cyan-500/8 px-3 py-2 text-[12px] font-medium text-cyan-200">{step}</span>
           {index < steps.length - 1 && <span className="text-[var(--color-text-dim)]">→</span>}
         </div>
       ))}
@@ -93,23 +93,23 @@ function PipelineMap() {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-[16px] font-semibold text-[var(--color-text-bright)]">실제 개발 파이프라인</h3>
-        <span className="text-[13px] text-[var(--color-text-dim)]">각 단계는 실행 결과를 남기고 다음 단계에 전달합니다.</span>
+        <h3 className="text-[15px] font-semibold text-[var(--color-text-bright)]">실제 개발 파이프라인</h3>
+        <span className="text-[12px] text-[var(--color-text-dim)]">각 단계는 실행 결과를 남기고 다음 단계에 전달합니다.</span>
       </div>
       <ol className="grid gap-x-6 gap-y-5 md:grid-cols-3">
         {PIPELINE_STEPS.map((step, index) => (
           <li key={step.name} className="relative border-t-2 border-cyan-500/45 pt-3 md:min-h-[138px]">
             <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-[11px] text-cyan-300">{String(index + 1).padStart(2, "0")}</span>
+              <span className="font-mono text-[10px] text-cyan-300">{String(index + 1).padStart(2, "0")}</span>
               {index < PIPELINE_STEPS.length - 1 && <span aria-hidden="true" className={cn("text-[16px] text-[var(--color-text-dim)]", (index === 2 || index === 5) && "md:hidden")}>→</span>}
             </div>
-            <div className="mt-2 text-[15px] font-semibold text-[var(--color-text-bright)]">{step.name}</div>
-            <div className="mt-1 text-[12px] font-medium text-cyan-300/80">{step.owner}</div>
-            <p className="mt-2 text-[13px] leading-relaxed text-[var(--color-text-muted)]">{step.proof}</p>
+            <div className="mt-2 text-[14px] font-semibold text-[var(--color-text-bright)]">{step.name}</div>
+            <div className="mt-1 text-[11px] font-medium text-cyan-300/80">{step.owner}</div>
+            <p className="mt-2 text-[12px] leading-relaxed text-[var(--color-text-muted)]">{step.proof}</p>
           </li>
         ))}
       </ol>
-      <p className="mt-4 border-l-2 border-amber-400/50 pl-3 text-[13px] leading-relaxed text-amber-200">테스트나 검토에서 문제가 나오면 구현 단계로 돌아갑니다. 기존 결과를 덮지 않고 재검증 기록을 추가합니다.</p>
+      <p className="mt-4 border-l-2 border-amber-400/50 pl-3 text-[12px] leading-relaxed text-amber-200">테스트나 검토에서 문제가 나오면 구현 단계로 돌아갑니다. 기존 결과를 덮지 않고 재검증 기록을 추가합니다.</p>
     </div>
   );
 }
@@ -145,9 +145,9 @@ function Context() {
       <div className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
         {sources.map(([title, detail], index) => (
           <div key={title} className="grid grid-cols-[30px_130px_1fr] gap-3 py-3">
-            <span className="font-mono text-[11px] text-cyan-300">0{index + 1}</span>
-            <span className="text-[15px] font-semibold text-[var(--color-text-bright)]">{title}</span>
-            <span className="text-[14px] leading-relaxed text-[var(--color-text-muted)]">{detail}</span>
+            <span className="font-mono text-[10px] text-cyan-300">0{index + 1}</span>
+            <span className="text-[14px] font-semibold text-[var(--color-text-bright)]">{title}</span>
+            <span className="text-[13px] leading-relaxed text-[var(--color-text-muted)]">{detail}</span>
           </div>
         ))}
       </div>
@@ -174,11 +174,11 @@ function Delivery() {
       <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
         <div>
           <div className="mb-3">
-            <div className="text-[15px] font-semibold text-[var(--color-text-bright)]">각 단계는 별도의 AI 에이전트가 실행합니다.</div>
-            <p className="mt-1 text-[13px] leading-relaxed text-[var(--color-text-muted)]">각 에이전트는 자신의 책임만 수행합니다. 작업 결과와 실행 증거를 다음 에이전트에 인계합니다.</p>
+            <div className="text-[14px] font-semibold text-[var(--color-text-bright)]">각 단계는 별도의 AI 에이전트가 실행합니다.</div>
+            <p className="mt-1 text-[12px] leading-relaxed text-[var(--color-text-muted)]">각 에이전트는 자신의 책임만 수행합니다. 작업 결과와 실행 증거를 다음 에이전트에 인계합니다.</p>
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-            {agents.map((agent) => <div key={agent.id} className="border-t border-[var(--color-border)] py-4"><div className="flex flex-wrap items-center gap-2"><span className="text-[13px] font-semibold text-cyan-300">{agent.name}</span><span className="rounded border border-violet-400/25 bg-violet-400/8 px-1.5 py-0.5 font-mono text-[10px] text-violet-200">{agent.id}</span></div><div className="mt-1.5 text-[14px] leading-relaxed text-[var(--color-text-muted)]">{agent.role}</div></div>)}
+            {agents.map((agent) => <div key={agent.id} className="border-t border-[var(--color-border)] py-4"><div className="flex flex-wrap items-center gap-2"><span className="text-[12px] font-semibold text-cyan-300">{agent.name}</span><span className="rounded border border-violet-400/25 bg-violet-400/8 px-1.5 py-0.5 font-mono text-[9px] text-violet-200">{agent.id}</span></div><div className="mt-1.5 text-[13px] leading-relaxed text-[var(--color-text-muted)]">{agent.role}</div></div>)}
           </div>
         </div>
         <div>
@@ -202,12 +202,12 @@ function Review() {
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_330px]">
       <div className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
-        {evidence.map(([title, detail], index) => <div key={title} className="grid grid-cols-[34px_145px_1fr] items-center gap-3 py-4"><span className="font-mono text-[11px] text-cyan-300">0{index + 1}</span><span className="text-[15px] font-semibold text-[var(--color-text-bright)]">{title}</span><span className="text-[14px] text-[var(--color-text-muted)]">{detail}</span></div>)}
+        {evidence.map(([title, detail], index) => <div key={title} className="grid grid-cols-[34px_145px_1fr] items-center gap-3 py-4"><span className="font-mono text-[10px] text-cyan-300">0{index + 1}</span><span className="text-[14px] font-semibold text-[var(--color-text-bright)]">{title}</span><span className="text-[13px] text-[var(--color-text-muted)]">{detail}</span></div>)}
       </div>
       <div className="border-l border-[var(--color-border)] pl-6">
-        <div className="text-[12px] font-semibold text-amber-300">검토 완료 조건</div>
-        <p className="mt-3 text-[15px] leading-relaxed text-[var(--color-text)]">Sugo는 검토 자료를 먼저 게시합니다. 사용자는 HTML 보고서를 확인합니다. 그다음 <b>확인, 진행</b>을 선택하거나 수정 내용을 저장합니다.</p>
-        <div className="mt-4 inline-flex items-center gap-2 rounded border border-emerald-500/35 bg-emerald-500/8 px-3 py-2.5 text-[12px] font-medium text-emerald-300"><CheckCircle2 size={15} /> 사용자가 판단할 수 있는 상태</div>
+        <div className="text-[11px] font-semibold text-amber-300">검토 완료 조건</div>
+        <p className="mt-3 text-[14px] leading-relaxed text-[var(--color-text)]">Sugo는 검토 자료를 먼저 게시합니다. 사용자는 HTML 보고서를 확인합니다. 그다음 <b>확인, 진행</b>을 선택하거나 수정 내용을 저장합니다.</p>
+        <div className="mt-4 inline-flex items-center gap-2 rounded border border-emerald-500/35 bg-emerald-500/8 px-3 py-2.5 text-[11px] font-medium text-emerald-300"><CheckCircle2 size={15} /> 사용자가 판단할 수 있는 상태</div>
       </div>
     </div>
   );
@@ -218,12 +218,12 @@ function Lineage() {
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <div className="relative space-y-2 border-l border-violet-500/40 pl-6">
-        {history.map((item, index) => <div key={item} className="relative py-3"><span className={cn("absolute -left-[29px] top-4.5 h-2 w-2 rounded-full ring-4 ring-[var(--color-surface)]", index ? "bg-violet-400" : "bg-cyan-400")} /><div className="text-[11px] font-semibold text-[var(--color-text-dim)]">{index ? `후속 변경 ${index}` : "첫 개발"}</div><div className="mt-1 text-[15px] text-[var(--color-text-bright)]">{item}</div><div className="mt-1.5 text-[13px] text-[var(--color-text-dim)]">작업 요약 · 기능 요구사항 · 검증 결과 · 변경 파일을 별도로 보존합니다.</div></div>)}
+        {history.map((item, index) => <div key={item} className="relative py-3"><span className={cn("absolute -left-[29px] top-4.5 h-2 w-2 rounded-full ring-4 ring-[var(--color-surface)]", index ? "bg-violet-400" : "bg-cyan-400")} /><div className="text-[10px] font-semibold text-[var(--color-text-dim)]">{index ? `후속 변경 ${index}` : "첫 개발"}</div><div className="mt-1 text-[14px] text-[var(--color-text-bright)]">{item}</div><div className="mt-1.5 text-[12px] text-[var(--color-text-dim)]">작업 요약 · 기능 요구사항 · 검증 결과 · 변경 파일을 별도로 보존합니다.</div></div>)}
       </div>
       <div>
         <div className="mb-5 rounded-lg border border-cyan-400/20 bg-cyan-400/[0.05] px-4 py-3">
-          <div className="text-[13px] font-semibold text-cyan-200">일정 관리에서 이어가기</div>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--color-text-muted)]"><b className="text-[var(--color-text-bright)]">새 Patch 시작</b>은 완료 결과에서 새 후속 개발을 시작합니다. <b className="text-[var(--color-text-bright)]">작업 기록 이어붙이기</b>는 이미 끝낸 변경을 같은 개발 이력에 연결할 때 사용합니다.</p>
+          <div className="text-[12px] font-semibold text-cyan-200">일정 관리에서 이어가기</div>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--color-text-muted)]"><b className="text-[var(--color-text-bright)]">새 Patch 시작</b>은 완료 결과에서 새 후속 개발을 시작합니다. <b className="text-[var(--color-text-bright)]">작업 기록 이어붙이기</b>는 이미 끝낸 변경을 같은 개발 이력에 연결할 때 사용합니다.</p>
         </div>
         <Fact label="완료 결과 보존" value="첫 개발 결과는 후속 변경의 진행 상태로 바뀌지 않습니다." />
         <Fact label="차수별 비교" value="각 변경의 의도와 구현 결과를 따로 열어 비교합니다." />
@@ -239,19 +239,19 @@ function Operations() {
   return (
     <div className="space-y-7">
       <div className="grid grid-cols-4 overflow-hidden rounded border border-[var(--color-border)]">
-        {envs.map(([env, detail], index) => <div key={env} className={cn("border-r border-[var(--color-border)] px-4 py-4 last:border-r-0", index < 3 && "bg-cyan-500/5")}><div className={cn("text-[13px] font-semibold", index < 3 ? "text-cyan-300" : "text-[var(--color-text-dim)]")}>{env}</div><div className="mt-1.5 text-[13px] text-[var(--color-text-muted)]">{detail}</div></div>)}
+        {envs.map(([env, detail], index) => <div key={env} className={cn("border-r border-[var(--color-border)] px-4 py-4 last:border-r-0", index < 3 && "bg-cyan-500/5")}><div className={cn("text-[12px] font-semibold", index < 3 ? "text-cyan-300" : "text-[var(--color-text-dim)]")}>{env}</div><div className="mt-1.5 text-[12px] text-[var(--color-text-muted)]">{detail}</div></div>)}
       </div>
       <div>
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="text-[16px] font-semibold text-[var(--color-text-bright)]">Sugo Console이 답하는 질문</h3>
-          <span className="text-[13px] text-[var(--color-text-dim)]">작업 기록을 운영 판단에 필요한 정보로 바꿉니다.</span>
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-bright)]">Sugo Console이 답하는 질문</h3>
+          <span className="text-[12px] text-[var(--color-text-dim)]">작업 기록을 운영 판단에 필요한 정보로 바꿉니다.</span>
         </div>
         <div className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
           {CONSOLE_CAPABILITIES.map((feature) => (
             <div key={feature.name} className="grid gap-2 py-4 md:grid-cols-[140px_260px_minmax(0,1fr)] md:gap-5">
-              <span className="text-[15px] font-semibold text-cyan-200">{feature.name}</span>
-              <span className="text-[14px] font-medium text-[var(--color-text-bright)]">{feature.question}</span>
-              <span className="text-[14px] leading-relaxed text-[var(--color-text-muted)]">{feature.answer}</span>
+              <span className="text-[14px] font-semibold text-cyan-200">{feature.name}</span>
+              <span className="text-[13px] font-medium text-[var(--color-text-bright)]">{feature.question}</span>
+              <span className="text-[13px] leading-relaxed text-[var(--color-text-muted)]">{feature.answer}</span>
             </div>
           ))}
         </div>
@@ -268,22 +268,22 @@ function ConsoleLocationGuide({ location }: { location: ConsoleLocation }) {
   return (
     <div className="mb-8 rounded-xl border border-cyan-300/15 bg-[rgba(8,16,27,.68)] p-4" aria-label="Console에서 확인하는 위치">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+        <div className="flex items-center gap-2 text-[13px] font-semibold text-slate-100">
           <MapPin size={16} className="text-cyan-300" />
           Console에서 이렇게 확인합니다
         </div>
-        <span className="rounded-md bg-cyan-300/[0.08] px-3 py-1.5 text-xs font-semibold text-cyan-200">{location.section}</span>
+        <span className="rounded-md bg-cyan-300/[0.08] px-3 py-1.5 text-[11px] font-semibold text-cyan-200">{location.section}</span>
       </div>
       <ol className="mt-4 grid gap-2 md:grid-cols-3">
         {location.steps.map((step, index) => (
           <li key={step} className="relative flex min-h-14 items-center gap-3 rounded-lg bg-white/[0.035] px-3 py-2.5">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-cyan-300/25 font-mono text-xs text-cyan-200">{index + 1}</span>
-            <span className="text-sm font-medium text-slate-200">{step}</span>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-cyan-300/25 font-mono text-[11px] text-cyan-200">{index + 1}</span>
+            <span className="text-[13px] font-medium text-slate-200">{step}</span>
             {index < location.steps.length - 1 && <ArrowRight size={15} aria-hidden="true" className="absolute -right-3.5 z-10 hidden text-cyan-300/50 md:block" />}
           </li>
         ))}
       </ol>
-      <p className="mt-3 text-sm text-slate-400">{location.result}</p>
+      <p className="mt-3 text-[13px] text-slate-400">{location.result}</p>
     </div>
   );
 }
@@ -318,7 +318,7 @@ export function Playbook() {
       </section>
       <div ref={guideRef} className="scroll-mt-6 grid min-w-0 gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
         <nav aria-label="AI 개발 사용 시나리오" className="border-b border-[var(--color-border)] pb-4 xl:border-r xl:border-b-0 xl:pr-4 xl:pb-0"><div role="tablist" aria-orientation="vertical" className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:block xl:space-y-0.5">{STAGES.map((stage) => { const Icon = stage.icon; const selected = stage.id === active.id; return <button key={stage.id} role="tab" aria-selected={selected} aria-controls={`playbook-panel-${stage.id}`} id={`playbook-tab-${stage.id}`} onClick={() => setActiveId(stage.id)} className={cn("flex w-full items-center gap-2 rounded px-2.5 py-2.5 text-left transition-colors", selected ? "bg-cyan-500/10 text-[var(--color-text-bright)]" : "text-[var(--color-text-muted)] hover:bg-[var(--color-background)] hover:text-[var(--color-text)]")}><span className={cn("font-mono text-[10px]", selected ? "text-cyan-300" : "text-[var(--color-text-dim)]")}>{stage.order}</span><Icon size={15} className={selected ? "text-cyan-300" : "text-[var(--color-text-dim)]"} /><span className="text-[13px] font-medium">{stage.label}</span></button>; })}</div></nav>
-        <section role="tabpanel" id={`playbook-panel-${active.id}`} aria-labelledby={`playbook-tab-${active.id}`} className="min-w-0 px-1 py-1"><div className="mb-8 max-w-4xl"><div className="text-xs font-semibold tracking-[.1em] text-cyan-300">{active.eyebrow}</div><h2 className="mt-2 text-2xl font-semibold tracking-[-.025em] text-[var(--color-text-bright)]">{active.title}</h2><p className="mt-3 text-sm text-[var(--color-text-muted)]">{active.outcome}</p></div><ConsoleLocationGuide location={CONSOLE_LOCATIONS[active.id]} /><Content /></section>
+        <section role="tabpanel" id={`playbook-panel-${active.id}`} aria-labelledby={`playbook-tab-${active.id}`} className="min-w-0 px-1 py-1"><div className="mb-8 max-w-4xl"><div className="text-[11px] font-semibold tracking-[.1em] text-cyan-300">{active.eyebrow}</div><h2 className="mt-2 text-[23px] font-semibold tracking-[-.025em] text-[var(--color-text-bright)]">{active.title}</h2><p className="mt-3 text-[13px] text-[var(--color-text-muted)]">{active.outcome}</p></div><ConsoleLocationGuide location={CONSOLE_LOCATIONS[active.id]} /><Content /></section>
       </div>
     </div>
   );

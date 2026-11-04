@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.66.14 / Console 0.56.14] - 2026-11-04
+
+- How it works 상세 본문의 텍스트 크기를 전반적으로 1px 낮춰 작은 화면의 정보 밀도를 조정했습니다.
+
 ## [Plugin 0.66.13 / Console 0.56.13] - 2026-11-04
 
 - How it works의 단계 목차 폭과 글자·아이콘·행 높이를 줄여 상세 본문에 맞는 보조 탐색 영역으로 정리했습니다.
