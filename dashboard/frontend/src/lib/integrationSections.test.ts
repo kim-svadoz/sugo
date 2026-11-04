@@ -13,7 +13,7 @@ describe("Integrations section navigation", () => {
     expect(source).toContain('label: "PR 연동"');
     expect(source).toContain('label: "서비스 상태 연동"');
     expect(source).toContain('label: "모니터링"');
-    expect(source).toContain('label: "기획 문서"');
+    expect(source).toContain('label: "WIKI 연동"');
     expect(source).toContain('{ id: "aws" as const, label: "AWS 계정" }');
     expect(source).toContain('aria-label="연결 현황 설정"');
     expect(source).toContain('>연결 현황</button>');
@@ -29,7 +29,7 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("<IntegrationFeatureOffNotice label={gate.label} />");
     expect(source).toContain('git: { key: "pr", label: "PR" }');
     expect(source).toContain('pinpoint: { key: "apm", label: "APM" }');
-    expect(source).toContain('planningDocs: { key: "planningDocs", label: "기획 문서" }');
+    expect(source).toContain('planningDocs: { key: "planningDocs", label: "WIKI 연동" }');
     expect(source).not.toContain('selectedSection === "serviceMapping" && <><AwsContextCard');
     expect(source).toContain('selectedSection === "overview"');
     expect(source).toContain("서비스 연동 미사용");
@@ -39,5 +39,15 @@ describe("Integrations section navigation", () => {
     expect(source).toContain("permissionStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })");
     expect(source).not.toContain('if (selectedSection === "git") setSelected("github")');
     expect(source).toContain('if (selected === provider.id && providerSelectionComplete)');
+  });
+
+  it("공식 Atlassian MCP 연결과 WIKI 주소 라우팅을 한 흐름으로 안내한다", () => {
+    const source = readFileSync(new URL("../components/ReferenceReadersPanel.tsx", import.meta.url), "utf8");
+    expect(source).toContain("https://mcp.atlassian.com/v2/mcp");
+    expect(source).toContain("claude mcp add --transport http atlassian");
+    expect(source).toContain("codex mcp add atlassian --url");
+    expect(source).toContain("/mcp");
+    expect(source).toContain('mcpServer: "atlassian"');
+    expect(source).toContain("주소 범위는 권한이 아니라 라우팅 규칙입니다.");
   });
 });

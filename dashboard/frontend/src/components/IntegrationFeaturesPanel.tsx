@@ -6,7 +6,7 @@ const FEATURES: { key: keyof IntegrationFeatures; label: string; description: st
   { key: "aws", label: "AWS", description: "배포 상태와 클라우드 리소스를 읽습니다.", tabs: "AWS 계정 · 서비스 상태 연동" },
   { key: "pr", label: "PR", description: "GitHub, CodeCommit의 PR과 브랜치를 읽습니다.", tabs: "PR 연동" },
   { key: "apm", label: "APM", description: "Pinpoint의 실행 상태와 성능 지표를 읽습니다.", tabs: "모니터링" },
-  { key: "planningDocs", label: "기획 문서", description: "SPEC에 등록한 링크의 본문을 MCP로 읽습니다.", tabs: "기획 문서" },
+  { key: "planningDocs", label: "WIKI 연동", description: "SPEC에 등록한 WIKI 링크의 본문을 MCP로 읽습니다.", tabs: "WIKI 연동" },
 ];
 
 export function IntegrationFeaturesPanel() {

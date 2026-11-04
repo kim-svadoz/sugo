@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.67.2 / Console 0.57.2] - 2026-11-04
+
+- 외부 연동의 기획 문서 설정을 WIKI 연동으로 바꾸고, 공식 Atlassian MCP 등록·OAuth 인증·Confluence 주소 연결을 한 흐름에서 안내합니다.
+
 ## [Plugin 0.67.1 / Console 0.57.1] - 2026-11-04
 
 - 기획 문서 MCP 설정을 Integrations로 옮기고 Preferences에는 사용 여부만 남겼습니다. 주소 범위는 권한이 아닌 연결 규칙임을 안내하며, 켠 경우에만 spec-writer가 문서를 읽어 확정 SPEC에 반영합니다.

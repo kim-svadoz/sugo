@@ -557,7 +557,7 @@ export function Settings() {
     return () => { cancelled = true; };
   }, []);
   // 02 외부 서비스의 탭마다 Preferences › 외부 연동의 어느 기능에 속하는지. 설정을 읽는 동안에는 본문을 비워 둔다.
-  const sectionFeature: Partial<Record<IntegrationViewId, { key: keyof IntegrationFeatures; label: string }>> = { aws: { key: "aws", label: "AWS" }, serviceMapping: { key: "aws", label: "AWS" }, git: { key: "pr", label: "PR" }, pinpoint: { key: "apm", label: "APM" }, planningDocs: { key: "planningDocs", label: "기획 문서" } };
+  const sectionFeature: Partial<Record<IntegrationViewId, { key: keyof IntegrationFeatures; label: string }>> = { aws: { key: "aws", label: "AWS" }, serviceMapping: { key: "aws", label: "AWS" }, git: { key: "pr", label: "PR" }, pinpoint: { key: "apm", label: "APM" }, planningDocs: { key: "planningDocs", label: "WIKI 연동" } };
   const gate = sectionFeature[selectedSection];
   const sectionBlocked = gate !== undefined && (features === null || !features[gate.key]);
   const [awsConnected, setAwsConnected] = useState(false);
@@ -662,7 +662,7 @@ export function Settings() {
       </nav>
 
       {activeGroup === "services" && <nav aria-label="외부 서비스 설정" className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2">
-        {[{ id: "aws" as const, label: "AWS 계정" }, { id: "git" as const, label: "PR 연동" }, { id: "serviceMapping" as const, label: "서비스 상태 연동" }, { id: "pinpoint" as const, label: "모니터링" }, { id: "planningDocs" as const, label: "기획 문서" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
+        {[{ id: "aws" as const, label: "AWS 계정" }, { id: "git" as const, label: "PR 연동" }, { id: "serviceMapping" as const, label: "서비스 상태 연동" }, { id: "pinpoint" as const, label: "모니터링" }, { id: "planningDocs" as const, label: "WIKI 연동" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
       </nav>}
       {activeGroup === "projects" && <nav aria-label="프로젝트 설정" className="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2">
         {[{ id: "registration" as const, label: "프로젝트 등록" }, { id: "projectManage" as const, label: "프로젝트 관리" }].map((item) => <button key={item.id} type="button" aria-pressed={selectedSection === item.id} onClick={() => setSelectedSection(item.id)} className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${selectedSection === item.id ? "border-cyan-300 text-cyan-100" : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>{item.label}</button>)}
