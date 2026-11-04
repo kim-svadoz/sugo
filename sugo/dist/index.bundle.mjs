@@ -25042,13 +25042,37 @@ function errorResult3(errorCode, message) {
 init_fsUtil();
 init_installManifest();
 import { createHash as createHash3, randomBytes as randomBytes2 } from "node:crypto";
-import { mkdir as mkdir11, readdir as readdir4, readFile as readFile14, rm as rm3 } from "node:fs/promises";
-import { join as join16 } from "node:path";
+import { mkdir as mkdir11, readdir as readdir4, readFile as readFile15, rm as rm3 } from "node:fs/promises";
+import { join as join17 } from "node:path";
 import { relative as relative3 } from "node:path";
 
 // src/dashboard/fetch.ts
 import { mkdir as mkdir10, rm as rm2, writeFile as writeFile2 } from "node:fs/promises";
+import { join as join16 } from "node:path";
+
+// src/specReferenceReaders.ts
+import { readFile as readFile14 } from "node:fs/promises";
 import { join as join15 } from "node:path";
+init_homeDir();
+var readerSchema = external_exports.object({
+  id: external_exports.string().trim().min(1).max(100),
+  urlPrefix: external_exports.string().trim().url().max(2048).refine((value) => value.startsWith("https://") || value.startsWith("http://")),
+  mcpServer: external_exports.string().trim().min(1).max(120).regex(/^[A-Za-z0-9._-]+$/)
+});
+async function loadReferenceReaders(path = join15(sugoHomeDir(), ".claude", "sugo", "settings.json")) {
+  try {
+    const parsed = JSON.parse(await readFile14(path, "utf8"));
+    const result3 = external_exports.array(readerSchema).safeParse(parsed.referenceReaders);
+    return result3.success ? result3.data : [];
+  } catch {
+    return [];
+  }
+}
+function matchReferenceReader(url, readers) {
+  return readers.filter((reader) => url.startsWith(reader.urlPrefix)).sort((left, right) => right.urlPrefix.length - left.urlPrefix.length)[0];
+}
+
+// src/dashboard/fetch.ts
 async function fetchJson(path, timeoutMs) {
   const config2 = await resolveDashboardConfig();
   if (!config2.enabled || !config2.apiUrl) return null;
@@ -25133,7 +25157,7 @@ async function downloadSpecAttachments(workspaceName, nodeId, destDir) {
   for (const { name: name2 } of list.attachments) {
     const res = await fetch(`${config2.apiUrl}/api/workspaces/${ws}/roadmap/spec-attachments/file?${qs}&name=${encodeURIComponent(name2)}`, { headers });
     if (!res.ok) throw new Error(`SPEC_ATTACHMENT_DOWNLOAD_FAILED:${name2}:${res.status}`);
-    const target = join15(destDir, name2);
+    const target = join16(destDir, name2);
     await writeFile2(target, Buffer.from(await res.arrayBuffer()));
     paths.push(target);
   }
@@ -25148,7 +25172,12 @@ async function fetchSpecReferences(workspaceName, nodeId) {
     `/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap/spec-references?${qs.toString()}`,
     8e3
   );
-  return result3?.links ?? null;
+  if (!result3) return null;
+  const readers = await loadReferenceReaders();
+  return result3.links.map((reference) => {
+    const reader = matchReferenceReader(reference.url, readers);
+    return reader ? { ...reference, reader: { mcpServer: reader.mcpServer } } : reference;
+  });
 }
 async function fetchSpecDraft(workspaceName, nodeId) {
   const config2 = await resolveDashboardConfig();
@@ -28199,7 +28228,7 @@ async function addCheckpoint(workspace, params) {
     created_at: checkpoint.created_at,
     expires_at: checkpoint.expires_at ?? null
   });
-  await atomicWriteFile(join16(dir, `${id}-${slugify(params.title)}.md`), content);
+  await atomicWriteFile(join17(dir, `${id}-${slugify(params.title)}.md`), content);
   return checkpoint;
 }
 async function listCheckpoints(workspace) {
@@ -28218,7 +28247,7 @@ async function listCheckpointFiles(workspace) {
   for (const name2 of names) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile14(join16(dir, name2), "utf-8");
+      const raw = await readFile15(join17(dir, name2), "utf-8");
       const { meta } = parseFrontmatter(raw);
       result3.push({ filename: name2, checkpoint: meta });
     } catch {
@@ -28235,7 +28264,7 @@ async function removeCheckpoint(workspace, id) {
   const entries = await listCheckpointFiles(workspace);
   const found = entries.find((e) => e.checkpoint.id === id);
   if (!found) return false;
-  await rm3(join16(checkpointsDir(workspace), found.filename), { force: true });
+  await rm3(join17(checkpointsDir(workspace), found.filename), { force: true });
   return true;
 }
 async function migrateCheckpoints(workspace) {
@@ -28251,7 +28280,7 @@ async function migrateCheckpoints(workspace) {
       created_at: checkpoint.created_at ?? (/* @__PURE__ */ new Date()).toISOString(),
       expires_at: checkpoint.expires_at ?? null
     });
-    await atomicWriteFile(join16(dir, filename), content);
+    await atomicWriteFile(join17(dir, filename), content);
   }
   return entries.length;
 }
@@ -28306,15 +28335,15 @@ function wasEdited(content, cp, workspace) {
   return digest(without) !== match[1];
 }
 async function checkpointFiles(projectPath, id) {
-  const root = join16(projectPath, ".claude", "rules");
+  const root = join17(projectPath, ".claude", "rules");
   const found = [];
   async function walk(dir) {
     const entries = await readdir4(dir, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
-      const path = join16(dir, entry.name);
+      const path = join17(dir, entry.name);
       if (entry.isDirectory()) await walk(path);
       else if (entry.isFile() && entry.name.endsWith(".md")) {
-        const content = await readFile14(path, "utf8").catch(() => "");
+        const content = await readFile15(path, "utf8").catch(() => "");
         if (content.includes(`checkpoint-id: ${id}`) || content.includes(`Sugo checkpoint ${id} \xB7`)) found.push(path);
       }
     }
@@ -28327,10 +28356,10 @@ async function syncRemoteCheckpointsToRules(projectPath, workspace, remote, cont
   for (const cp of remote) {
     const files = await checkpointFiles(projectPath, cp.id);
     const applicable = checkpointApplies(cp, context) && !isExpired(cp.expires_at, now);
-    const target = join16(projectPath, ".claude", "rules", cp.category ?? "general", `${cp.id}-${slugify(cp.title)}.md`);
+    const target = join17(projectPath, ".claude", "rules", cp.category ?? "general", `${cp.id}-${slugify(cp.title)}.md`);
     let blocked = false;
     for (const file of files.filter((path) => !applicable || path !== target)) {
-      const content2 = await readFile14(file, "utf8").catch(() => null);
+      const content2 = await readFile15(file, "utf8").catch(() => null);
       if (content2 === null) continue;
       if (wasEdited(content2, cp, workspace)) {
         result3.conflicts.push(file);
@@ -28342,12 +28371,12 @@ async function syncRemoteCheckpointsToRules(projectPath, workspace, remote, cont
     }
     if (!applicable || blocked) continue;
     const content = checkpointBody(cp, workspace);
-    const existing = await readFile14(target, "utf8").catch(() => null);
+    const existing = await readFile15(target, "utf8").catch(() => null);
     if (existing !== null && existing !== content && wasEdited(existing, cp, workspace)) {
       result3.conflicts.push(target);
       continue;
     }
-    await mkdir11(join16(projectPath, ".claude", "rules", cp.category ?? "general"), { recursive: true });
+    await mkdir11(join17(projectPath, ".claude", "rules", cp.category ?? "general"), { recursive: true });
     if (existing !== content) await atomicWriteFile(target, content);
     await recordManagedFile(projectPath, relative3(projectPath, target).replace(/\\/g, "/"));
     result3.appliedCount += 1;
@@ -28367,10 +28396,10 @@ async function pullCheckpointsToRules(projectPath, workspace) {
 
 // src/work/memory.ts
 init_fsUtil();
-import { mkdir as mkdir12, readFile as readFile15 } from "node:fs/promises";
+import { mkdir as mkdir12, readFile as readFile16 } from "node:fs/promises";
 async function appendMemory(workspace, note) {
   const path = memoryFilePath(workspace);
-  const existing = await readFile15(path, "utf-8").catch(() => "");
+  const existing = await readFile16(path, "utf-8").catch(() => "");
   const entry = `## ${(/* @__PURE__ */ new Date()).toISOString()}
 
 ${note}
@@ -28381,7 +28410,7 @@ ${entry}` : entry;
   await atomicWriteFile(path, next);
 }
 async function readMemory(workspace) {
-  return readFile15(memoryFilePath(workspace), "utf-8").catch(() => "");
+  return readFile16(memoryFilePath(workspace), "utf-8").catch(() => "");
 }
 
 // src/tools/sugoCheckpoint.ts
@@ -28477,7 +28506,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.66.14" : "0.0.0-dev";
+  return true ? "0.67.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -28490,15 +28519,15 @@ init_installManifest();
 init_registry();
 init_rulesFile();
 init_sync();
-import { access as access4, readdir as readdir5, readFile as readFile16, rm as rm4, rmdir } from "node:fs/promises";
-import { join as join17, resolve as resolve6 } from "node:path";
+import { access as access4, readdir as readdir5, readFile as readFile17, rm as rm4, rmdir } from "node:fs/promises";
+import { join as join18, resolve as resolve6 } from "node:path";
 var SUGO_LOADING_FILES = ["sugo/harness", "sugo/config.json", "sugo/CLAUDE.md"];
 function lifecycleError(code, message) {
   return Object.assign(new Error(message), { code });
 }
 var exists = (path) => access4(path).then(() => true, () => false);
 async function stripRootBlock(path, strip) {
-  const current = await readFile16(path, "utf8").catch(() => null);
+  const current = await readFile17(path, "utf8").catch(() => null);
   if (current === null) return false;
   const next = strip(current);
   if (!next.changed) return false;
@@ -28519,18 +28548,18 @@ async function detachProjectFiles(projectPath) {
   ];
   const removed = [];
   for (const rel of /* @__PURE__ */ new Set([...rulePaths, ...SUGO_LOADING_FILES])) {
-    const path = join17(projectPath, rel);
+    const path = join18(projectPath, rel);
     if (!await exists(path)) continue;
     await rm4(path, { recursive: true, force: true });
     removed.push(rel);
   }
-  if (await stripRootBlock(join17(projectPath, "CLAUDE.md"), removeRootClaudeReference)) removed.push("CLAUDE.md");
-  if (await stripRootBlock(join17(projectPath, "AGENTS.md"), removeRootAgentsReference)) removed.push("AGENTS.md");
-  await removeIfEmpty(join17(projectPath, ".claude", "rules", "general"));
-  await removeIfEmpty(join17(projectPath, ".claude", "rules"));
-  await removeIfEmpty(join17(projectPath, ".claude"));
-  const sugoEntries = await readdir5(join17(projectPath, "sugo")).catch(() => []);
-  if (sugoEntries.length === 1 && sugoEntries[0] === "install-manifest.json") await rm4(join17(projectPath, "sugo"), { recursive: true, force: true });
+  if (await stripRootBlock(join18(projectPath, "CLAUDE.md"), removeRootClaudeReference)) removed.push("CLAUDE.md");
+  if (await stripRootBlock(join18(projectPath, "AGENTS.md"), removeRootAgentsReference)) removed.push("AGENTS.md");
+  await removeIfEmpty(join18(projectPath, ".claude", "rules", "general"));
+  await removeIfEmpty(join18(projectPath, ".claude", "rules"));
+  await removeIfEmpty(join18(projectPath, ".claude"));
+  const sugoEntries = await readdir5(join18(projectPath, "sugo")).catch(() => []);
+  if (sugoEntries.length === 1 && sugoEntries[0] === "install-manifest.json") await rm4(join18(projectPath, "sugo"), { recursive: true, force: true });
   return removed;
 }
 async function removeSugoProject(rawPath) {
@@ -28633,12 +28662,12 @@ function errorResult7(errorCode, message) {
 }
 
 // src/tools/sugoExplore.ts
-import { readFile as readFile17 } from "node:fs/promises";
-import { isAbsolute as isAbsolute5, join as join20 } from "node:path";
+import { readFile as readFile18 } from "node:fs/promises";
+import { isAbsolute as isAbsolute5, join as join21 } from "node:path";
 
 // src/ast/astParser.ts
 var import_web_tree_sitter = __toESM(require_tree_sitter(), 1);
-import { extname, join as join19 } from "node:path";
+import { extname, join as join20 } from "node:path";
 
 // src/ast/outline.ts
 var NODE_TYPE_MAP = {
@@ -28711,11 +28740,11 @@ function extractOutline(rootNode, language) {
 
 // src/ast/wasmGrammarPath.ts
 import { existsSync as existsSync4 } from "node:fs";
-import { dirname as dirname9, join as join18 } from "node:path";
+import { dirname as dirname9, join as join19 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 function defaultWasmGrammarsDir() {
   const here = dirname9(fileURLToPath2(import.meta.url));
-  const candidates = [join18(here, "..", "..", "wasm-grammars"), join18(here, "..", "wasm-grammars")];
+  const candidates = [join19(here, "..", "..", "wasm-grammars"), join19(here, "..", "wasm-grammars")];
   for (const c of candidates) {
     if (existsSync4(c)) return c;
   }
@@ -28754,7 +28783,7 @@ async function ensureInit() {
   if (!initPromise2) {
     const grammarsDir = defaultWasmGrammarsDir();
     initPromise2 = import_web_tree_sitter.default.init({
-      locateFile: (scriptName) => join19(grammarsDir, scriptName)
+      locateFile: (scriptName) => join20(grammarsDir, scriptName)
     });
   }
   return initPromise2;
@@ -28764,7 +28793,7 @@ async function loadLanguage(language) {
   if (cached2) return cached2;
   const wasmFile = LANGUAGE_FILE_MAP[language];
   if (!wasmFile) throw new Error(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC5B8\uC5B4: ${language}`);
-  const lang = await import_web_tree_sitter.default.Language.load(join19(defaultWasmGrammarsDir(), wasmFile));
+  const lang = await import_web_tree_sitter.default.Language.load(join20(defaultWasmGrammarsDir(), wasmFile));
   languageCache.set(language, lang);
   return lang;
 }
@@ -28794,10 +28823,10 @@ async function handleSugoExplore(rawArgs) {
   const outlines = [];
   const skipped = [];
   for (const f of args2.filePaths.slice(0, MAX_FILES2)) {
-    const full = isAbsolute5(f) ? f : join20(args2.projectPath, f);
+    const full = isAbsolute5(f) ? f : join21(args2.projectPath, f);
     let content;
     try {
-      content = await readFile17(full, "utf-8");
+      content = await readFile18(full, "utf-8");
     } catch {
       skipped.push({ path: f, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -28818,8 +28847,8 @@ async function handleSugoExplore(rawArgs) {
 }
 
 // src/tools/sugoGetProjectContext.ts
-import { readdir as readdir6, readFile as readFile19 } from "node:fs/promises";
-import { basename as basename2, join as join22 } from "node:path";
+import { readdir as readdir6, readFile as readFile20 } from "node:fs/promises";
+import { basename as basename2, join as join23 } from "node:path";
 init_config();
 init_registry();
 init_harnessRouting();
@@ -28905,8 +28934,8 @@ function featureBranchName(branch) {
 
 // src/todoSpec.ts
 init_fsUtil();
-import { mkdir as mkdir13, readFile as readFile18 } from "node:fs/promises";
-import { join as join21 } from "node:path";
+import { mkdir as mkdir13, readFile as readFile19 } from "node:fs/promises";
+import { join as join22 } from "node:path";
 
 // src/gates.ts
 function ok2() {
@@ -29152,11 +29181,11 @@ function checkLethalTrifectaMitigationGate(lastCheck, trifectaMitigation) {
 
 // src/todoSpec.ts
 function todoSpecPath(projectPath, featureName) {
-  return join21(projectPath, "sugo", "docs", "feature", featureName, "TODO-SPEC.md");
+  return join22(projectPath, "sugo", "docs", "feature", featureName, "TODO-SPEC.md");
 }
 async function readTodoSpec(projectPath, featureName) {
   try {
-    return await readFile18(todoSpecPath(projectPath, featureName), "utf-8");
+    return await readFile19(todoSpecPath(projectPath, featureName), "utf-8");
   } catch {
     return null;
   }
@@ -29180,7 +29209,7 @@ async function createTodoSpec(projectPath, draft) {
     "## \uAC31\uC2E0 \uB85C\uADF8",
     ""
   ].join("\n");
-  await mkdir13(join21(projectPath, "sugo", "docs", "feature", draft.featureName), { recursive: true });
+  await mkdir13(join22(projectPath, "sugo", "docs", "feature", draft.featureName), { recursive: true });
   await atomicWriteFile(path, content);
   return { path, content };
 }
@@ -29240,7 +29269,7 @@ var sugoGetProjectContextInputSchema = {
 var SugoGetProjectContextArgs = external_exports.object(sugoGetProjectContextInputSchema);
 async function readIfExists(path) {
   try {
-    return await readFile19(path, "utf-8");
+    return await readFile20(path, "utf-8");
   } catch {
     return null;
   }
@@ -29254,7 +29283,7 @@ async function readRulesDir(rulesDir, excludeBasenames, isTopLevel = true) {
   }
   const rules = [];
   for (const entry of entries) {
-    const full = join22(rulesDir, entry.name);
+    const full = join23(rulesDir, entry.name);
     if (entry.isDirectory()) {
       rules.push(...await readRulesDir(full, excludeBasenames, false));
       continue;
@@ -29270,14 +29299,14 @@ async function handleSugoGetProjectContext(rawArgs) {
   const args2 = SugoGetProjectContextArgs.parse(rawArgs);
   const { projectPath, changedFiles } = args2;
   const harnessEnabled = (await loadHarnessFeatureState()).enabled;
-  const claudeMd = harnessEnabled ? await readIfExists(join22(projectPath, "sugo", "CLAUDE.md")) : null;
+  const claudeMd = harnessEnabled ? await readIfExists(join23(projectPath, "sugo", "CLAUDE.md")) : null;
   const config2 = await loadProjectConfig(projectPath);
   const registryEntry = await findRegistryEntry(projectPath);
   const checkpointSync = registryEntry?.workspace ? await pullCheckpointsToRules(projectPath, registryEntry.workspace).catch(() => null) : null;
   const loaded = [];
   if (config2 && harnessEnabled) {
     for (const applied of config2.appliedHarnesses) {
-      const content = await readIfExists(join22(projectPath, "sugo", "harness", applied.id, "harness.md"));
+      const content = await readIfExists(join23(projectPath, "sugo", "harness", applied.id, "harness.md"));
       if (content !== null) loaded.push({ id: applied.id, harnessMd: content });
     }
   }
@@ -29287,7 +29316,7 @@ async function handleSugoGetProjectContext(rawArgs) {
   );
   const harnesses = loaded.filter((h) => routing.selected.includes(h.id));
   const sugoManagedRuleFiles = new Set((config2?.appliedHarnesses ?? []).map((h) => basename2(buildClaudeRuleFile(h.id, "").relPath)));
-  const rules = await readRulesDir(join22(projectPath, ".claude", "rules"), sugoManagedRuleFiles);
+  const rules = await readRulesDir(join23(projectPath, ".claude", "rules"), sugoManagedRuleFiles);
   const harnessToolGuides = resolveHarnessToolGuides(routing.selected);
   const branch = await currentGitBranch(projectPath);
   const fName = featureBranchName(branch);
@@ -29301,7 +29330,7 @@ async function handleSugoGetProjectContext(rawArgs) {
     checkpointSync: {
       attempted: !!registryEntry?.workspace,
       injectedCount: checkpointSync,
-      rulesRoot: join22(projectPath, ".claude", "rules")
+      rulesRoot: join23(projectPath, ".claude", "rules")
     },
     claudeMd,
     harnesses,
@@ -29327,8 +29356,8 @@ async function handleSugoGetProjectContext(rawArgs) {
 // src/work/history.ts
 init_fsUtil();
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { mkdir as mkdir14, readdir as readdir7, readFile as readFile20 } from "node:fs/promises";
-import { join as join23 } from "node:path";
+import { mkdir as mkdir14, readdir as readdir7, readFile as readFile21 } from "node:fs/promises";
+import { join as join24 } from "node:path";
 function generateWorkLogId() {
   return `wl-${Date.now()}-${randomBytes3(4).toString("hex")}`;
 }
@@ -29336,7 +29365,7 @@ async function addWorkLog(workspace, params) {
   const workLog = { id: generateWorkLogId(), ...params };
   const dir = historyDir(workspace);
   await mkdir14(dir, { recursive: true });
-  await atomicWriteFile(join23(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
+  await atomicWriteFile(join24(dir, `${workLog.id}.json`), JSON.stringify(workLog, null, 2));
   void syncHistory(workspace, workLog, workLog.prRefs);
   return workLog;
 }
@@ -29352,7 +29381,7 @@ async function listWorkLogs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".json")) continue;
     try {
-      const raw = await readFile20(join23(dir, name2), "utf-8");
+      const raw = await readFile21(join24(dir, name2), "utf-8");
       logs.push(JSON.parse(raw));
     } catch {
       continue;
@@ -29362,7 +29391,7 @@ async function listWorkLogs(workspace) {
 }
 async function getWorkLog(workspace, id) {
   try {
-    const raw = await readFile20(join23(historyDir(workspace), `${id}.json`), "utf-8");
+    const raw = await readFile21(join24(historyDir(workspace), `${id}.json`), "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -29431,12 +29460,12 @@ function errorResult8(errorCode, message) {
 }
 
 // src/tools/sugoOverview.ts
-import { readFile as readFile21 } from "node:fs/promises";
+import { readFile as readFile22 } from "node:fs/promises";
 import { relative as relative4, sep as sep2 } from "node:path";
 
 // src/overview.ts
 import { readdir as readdir8 } from "node:fs/promises";
-import { join as join24 } from "node:path";
+import { join as join25 } from "node:path";
 var IGNORED_DIR_NAMES = /* @__PURE__ */ new Set([
   "node_modules",
   "dist",
@@ -29461,9 +29490,9 @@ async function walkSourceFiles(rootDir, maxFiles) {
       if (results.length >= maxFiles) return;
       if (entry.isDirectory()) {
         if (entry.name.startsWith(".") || IGNORED_DIR_NAMES.has(entry.name)) continue;
-        await walk(join24(dir, entry.name));
+        await walk(join25(dir, entry.name));
       } else if (entry.isFile() && detectLanguage(entry.name)) {
-        results.push(join24(dir, entry.name));
+        results.push(join25(dir, entry.name));
       }
     }
   }
@@ -29487,7 +29516,7 @@ async function handleSugoOverview(rawArgs) {
     const relPath = relative4(args2.projectPath, full).split(sep2).join("/");
     let content;
     try {
-      content = await readFile21(full, "utf-8");
+      content = await readFile22(full, "utf-8");
     } catch {
       skipped.push({ path: relPath, reason: "\uD30C\uC77C\uC744 \uC77D\uC744 \uC218 \uC5C6\uC74C" });
       continue;
@@ -29516,7 +29545,7 @@ async function handleSugoOverview(rawArgs) {
 
 // src/sourceRevision.ts
 import { createHash as createHash4 } from "node:crypto";
-import { readFile as readFile22 } from "node:fs/promises";
+import { readFile as readFile23 } from "node:fs/promises";
 import { relative as relative5, resolve as resolve10, isAbsolute as isAbsolute6 } from "node:path";
 async function collectSourceRevision(projectPath, changedFiles, startedAt) {
   const paths = [...new Set(changedFiles.map((f) => relative5(projectPath, resolve10(projectPath, f)).replace(/\\/g, "/")))].sort();
@@ -29526,7 +29555,7 @@ async function collectSourceRevision(projectPath, changedFiles, startedAt) {
   const files = [];
   for (const path of paths) {
     try {
-      files.push({ path, hash: createHash4("sha256").update(await readFile22(resolve10(projectPath, path))).digest("hex") });
+      files.push({ path, hash: createHash4("sha256").update(await readFile23(resolve10(projectPath, path))).digest("hex") });
     } catch (e) {
       if (e.code !== "ENOENT") return void 0;
       files.push({ path, hash: "deleted" });
@@ -29539,7 +29568,7 @@ async function collectSourceRevision(projectPath, changedFiles, startedAt) {
 }
 
 // src/tools/sugoPlan.ts
-import { readFile as readFile26 } from "node:fs/promises";
+import { readFile as readFile27 } from "node:fs/promises";
 
 // src/bootable.ts
 init_config();
@@ -29549,8 +29578,8 @@ async function isProjectBootable(projectPath) {
 }
 
 // src/bootScan.ts
-import { readdir as readdir9, readFile as readFile23 } from "node:fs/promises";
-import { join as join25 } from "node:path";
+import { readdir as readdir9, readFile as readFile24 } from "node:fs/promises";
+import { join as join26 } from "node:path";
 var EXCLUDED_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "build", "target", "out", ".gradle", "sugo"]);
 var MAX_FILES4 = 2e3;
 var MAX_FILE_BYTES4 = 3e5;
@@ -29566,9 +29595,9 @@ async function collectJavaFiles(dir, acc) {
     if (acc.length >= MAX_FILES4) return;
     if (entry.isDirectory()) {
       if (EXCLUDED_DIRS.has(entry.name)) continue;
-      await collectJavaFiles(join25(dir, entry.name), acc);
+      await collectJavaFiles(join26(dir, entry.name), acc);
     } else if (entry.isFile() && entry.name.endsWith(".java")) {
-      acc.push(join25(dir, entry.name));
+      acc.push(join26(dir, entry.name));
     }
   }
 }
@@ -29579,7 +29608,7 @@ async function scanForSpringBootTestAnnotation(projectPath) {
   const candidates = testFiles.length > 0 ? testFiles : files;
   for (const file of candidates) {
     try {
-      const content = await readFile23(file, "utf-8");
+      const content = await readFile24(file, "utf-8");
       if (content.length > MAX_FILE_BYTES4) continue;
       if (hasValidSpringBootTestAnnotation([content])) return true;
     } catch {
@@ -29592,11 +29621,11 @@ async function scanForSpringBootTestAnnotation(projectPath) {
 // src/feature.ts
 init_fsUtil();
 import { mkdir as mkdir15 } from "node:fs/promises";
-import { join as join27 } from "node:path";
+import { join as join28 } from "node:path";
 
 // src/patch.ts
 import { realpath, readdir as readdir10, stat as stat3 } from "node:fs/promises";
-import { basename as basename3, dirname as dirname10, join as join26, relative as relative6, resolve as resolve11, sep as sep3 } from "node:path";
+import { basename as basename3, dirname as dirname10, join as join27, relative as relative6, resolve as resolve11, sep as sep3 } from "node:path";
 var PatchEntryError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -29716,7 +29745,7 @@ async function resolvePatchContext(workResultPath, projectPath) {
   }
   let parentPrdPath;
   if (filenames.includes("prd.md")) {
-    parentPrdPath = join26(featureDir, "prd.md");
+    parentPrdPath = join27(featureDir, "prd.md");
   } else {
     const latest = findLatestPrdPatchFilename(filenames);
     if (!latest) {
@@ -29725,7 +29754,7 @@ async function resolvePatchContext(workResultPath, projectPath) {
         `\uBD80\uBAA8 PRD(prd.md \uB610\uB294 PRD-patch-v*.md)\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${featureDir}`
       );
     }
-    parentPrdPath = join26(featureDir, latest);
+    parentPrdPath = join27(featureDir, latest);
   }
   const version2 = computeNextPatchVersion(filenames);
   return { parentPrdPath, version: version2, baseWorkResultPath: resolvedWorkResult, featureDir };
@@ -29741,26 +29770,26 @@ function todayYyyymmdd() {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 }
 async function writePrdFile(projectPath, featureName, content) {
-  const featurePath = join27(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
-  const prdPath = join27(featurePath, "prd.md");
+  const featurePath = join28(projectPath, "sugo", "features", todayYyyymmdd(), slugify2(featureName));
+  const prdPath = join28(featurePath, "prd.md");
   await mkdir15(featurePath, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath, prdPath };
 }
 async function writeWorkResultFile(featurePath, content) {
-  const workResultPath = join27(featurePath, "work-result.md");
+  const workResultPath = join28(featurePath, "work-result.md");
   await mkdir15(featurePath, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
 }
 async function writePatchPrdFile(featureDir, version2, content) {
-  const prdPath = join27(featureDir, patchPrdFilename(version2));
+  const prdPath = join28(featureDir, patchPrdFilename(version2));
   await mkdir15(featureDir, { recursive: true });
   await atomicWriteFile(prdPath, content);
   return { featurePath: featureDir, prdPath };
 }
 async function writePatchWorkResultFile(featureDir, version2, content) {
-  const workResultPath = join27(featureDir, patchWorkResultFilename(version2));
+  const workResultPath = join28(featureDir, patchWorkResultFilename(version2));
   await mkdir15(featureDir, { recursive: true });
   await atomicWriteFile(workResultPath, content);
   return { workResultPath };
@@ -29978,7 +30007,7 @@ function validateIntegration(manifest) {
 // src/fingerprint.ts
 import { createHash as createHash5 } from "node:crypto";
 import { stat as stat4 } from "node:fs/promises";
-import { isAbsolute as isAbsolute7, join as join28, relative as relative7 } from "node:path";
+import { isAbsolute as isAbsolute7, join as join29, relative as relative7 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
   return createHash5("sha1").update(parts2.join("\n")).digest("hex");
@@ -29986,7 +30015,7 @@ function computeFingerprintFromEntries(entries) {
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
   for (const f of changedFiles) {
-    const full = isAbsolute7(f) ? f : join28(projectPath, f);
+    const full = isAbsolute7(f) ? f : join29(projectPath, f);
     const relPath = isAbsolute7(f) ? relative7(projectPath, f) : f;
     try {
       const st = await stat4(full);
@@ -30219,8 +30248,8 @@ ${lines2.join("\n")}`;
 
 // src/work/roadmap.ts
 init_fsUtil();
-import { mkdir as mkdir16, readFile as readFile24 } from "node:fs/promises";
-import { dirname as dirname11, join as join29 } from "node:path";
+import { mkdir as mkdir16, readFile as readFile25 } from "node:fs/promises";
+import { dirname as dirname11, join as join30 } from "node:path";
 
 // src/work/roadmapGraph.ts
 function mergeRoadmapOwnership(localNodes, remoteOrdering) {
@@ -30332,8 +30361,8 @@ function promotePrdRequirements(taskId, prdContent) {
 // src/work/roadmap.ts
 async function restoredPatchTitle(task) {
   if (!task.patchInfo) return task.title;
-  const patchPrdPath = task.patchInfo.prdPath ?? (task.prd_ref ? join29(dirname11(task.prd_ref), `PRD-patch-v${task.patchInfo.patchVersion}.md`) : void 0);
-  const prdContent = patchPrdPath ? await readFile24(patchPrdPath, "utf8").catch(() => void 0) : void 0;
+  const patchPrdPath = task.patchInfo.prdPath ?? (task.prd_ref ? join30(dirname11(task.prd_ref), `PRD-patch-v${task.patchInfo.patchVersion}.md`) : void 0);
+  const prdContent = patchPrdPath ? await readFile25(patchPrdPath, "utf8").catch(() => void 0) : void 0;
   return task.patchInfo.title ?? taskCycleTitle(task.patchInfo.seed, task.title, prdContent);
 }
 function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPath, baseTitle) {
@@ -30365,7 +30394,7 @@ function withStartedPatch(node, patchVersion, title, startedAt, baseWorkResultPa
 async function readRoadmapFile(workspace) {
   let file;
   try {
-    const raw = await readFile24(roadmapFilePath(workspace), "utf-8");
+    const raw = await readFile25(roadmapFilePath(workspace), "utf-8");
     file = JSON.parse(raw);
   } catch {
     return { nodes: [], schemaVersion: 1 };
@@ -30510,12 +30539,12 @@ async function backfillLegacyRoadmapWorkResults(workspace, tasks) {
     if (task.status !== "done" || !task.prd_ref) continue;
     const node = await getRoadmapNode(workspace, task.id);
     if (!node || node.workResult?.path) continue;
-    const prdExists = await readFile24(task.prd_ref, "utf8").then(() => true).catch(() => false);
+    const prdExists = await readFile25(task.prd_ref, "utf8").then(() => true).catch(() => false);
     if (!prdExists) continue;
     const featureDir = dirname11(task.prd_ref);
-    const workResultPath = join29(featureDir, "work-result.md");
+    const workResultPath = join30(featureDir, "work-result.md");
     const summary = task.summary?.trim() || task.title;
-    const existing = await readFile24(workResultPath, "utf8").catch(() => null);
+    const existing = await readFile25(workResultPath, "utf8").catch(() => null);
     if (existing === null) {
       await atomicWriteFile(
         workResultPath,
@@ -30765,13 +30794,13 @@ async function pullRoadmapOrdering(workspace) {
 // src/work/task.ts
 init_fsUtil();
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { mkdir as mkdir17, readFile as readFile25 } from "node:fs/promises";
+import { mkdir as mkdir17, readFile as readFile26 } from "node:fs/promises";
 function generateTaskId() {
   return `task-${Date.now()}-${randomBytes4(4).toString("hex")}`;
 }
 async function readTasksFile(workspace) {
   try {
-    const raw = await readFile25(tasksFilePath(workspace), "utf-8");
+    const raw = await readFile26(tasksFilePath(workspace), "utf-8");
     return JSON.parse(raw);
   } catch {
     return { tasks: [], last_updated: (/* @__PURE__ */ new Date()).toISOString(), schemaVersion: 1 };
@@ -32027,7 +32056,7 @@ async function handleSugoPlan(rawArgs) {
   if (action === "decompose" && existing) {
     if (!args2.manifest) return errorResult9("MANIFEST_REQUIRED", "decompose action\uC5D0\uB294 manifest\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     if (!existing.data.prdPath) return errorResult9("PRD_NOT_FOUND", "decompose \uC804\uC5D0 PRD\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    const prdContent = await readFile26(existing.data.prdPath, "utf-8").catch(() => "");
+    const prdContent = await readFile27(existing.data.prdPath, "utf-8").catch(() => "");
     const prdRequirementIds = extractRequirements(prdContent).map((r) => r.id);
     const candidateManifest = {
       subtasks: args2.manifest.subtasks.map((s) => ({ ...s, status: "pending" }))
@@ -32227,7 +32256,7 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "start" && args2.specPath) {
-    const specExists = await readFile26(args2.specPath, "utf-8").then(() => true, () => false);
+    const specExists = await readFile27(args2.specPath, "utf-8").then(() => true, () => false);
     if (!specExists) return errorResult9("SPEC_FILE_NOT_FOUND", `\uAE30\uC900 SPEC \uD30C\uC77C\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.specPath}`);
     const selectedId = session.data.specDraftSelection?.selectedId;
     const selected = session.data.specDraftSelection?.candidates.find((candidate) => candidate.id === selectedId);
@@ -32286,7 +32315,7 @@ async function handleSugoPlan(rawArgs) {
     }
   }
   if (action === "prd" && args2.specPath) {
-    const specExists = await readFile26(args2.specPath, "utf-8").then(
+    const specExists = await readFile27(args2.specPath, "utf-8").then(
       () => true,
       () => false
     );
@@ -32691,7 +32720,7 @@ ${args2.prdContent}` : args2.prdContent;
       prRefs,
       report: session.data.chainInfo.workResultReport
     };
-    const completedPrd = (patchVersion ?? 0) > 0 ? await readFile26(session.data.prdPath ?? "", "utf8").catch(() => void 0) : void 0;
+    const completedPrd = (patchVersion ?? 0) > 0 ? await readFile27(session.data.prdPath ?? "", "utf8").catch(() => void 0) : void 0;
     await recordRoadmapWorkResult(workspace, session.data.linkedTaskId, workResult, {
       version: patchVersion ?? 0,
       completedAt,
@@ -32928,8 +32957,8 @@ import { resolve as resolve12 } from "node:path";
 // src/harness/reset.ts
 init_fsUtil();
 init_config();
-import { mkdir as mkdir18, readFile as readFile27, rm as rm5 } from "node:fs/promises";
-import { join as join30 } from "node:path";
+import { mkdir as mkdir18, readFile as readFile28, rm as rm5 } from "node:fs/promises";
+import { join as join31 } from "node:path";
 var ResetProjectError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -32951,17 +32980,17 @@ async function resetProjectHarness(projectPath) {
     throw new ResetProjectError("PROJECT_NOT_REGISTERED", `\uB4F1\uB85D\uB41C \uD504\uB85C\uC81D\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4(sugo/config.json \uC5C6\uC74C): ${projectPath}`);
   }
   const sugoDir = projectSugoDir(projectPath);
-  const claudeMdPath = join30(sugoDir, "CLAUDE.md");
+  const claudeMdPath = join31(sugoDir, "CLAUDE.md");
   let backedUpTo;
   try {
-    const current = await readFile27(claudeMdPath, "utf-8");
-    const backupDir = join30(sugoDir, "backup");
+    const current = await readFile28(claudeMdPath, "utf-8");
+    const backupDir = join31(sugoDir, "backup");
     await mkdir18(backupDir, { recursive: true });
-    backedUpTo = join30(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
+    backedUpTo = join31(backupDir, `CLAUDE.md.${backupTimestamp()}.bak`);
     await atomicWriteFile(backedUpTo, current);
   } catch {
   }
-  await rm5(join30(sugoDir, "harness"), { recursive: true, force: true });
+  await rm5(join31(sugoDir, "harness"), { recursive: true, force: true });
   await atomicWriteFile(claudeMdPath, RESET_CLAUDE_MD);
   await saveProjectConfig({ ...config2, appliedHarnesses: [], lastUpdated: (/* @__PURE__ */ new Date()).toISOString() });
   return { backedUpTo };
@@ -32995,16 +33024,16 @@ var ROADMAP_LEVELS = ["spec", "workstream", "task", "subtask", "step"];
 var ROADMAP_NODE_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"];
 
 // src/lifecycle/consoleOnDemand.ts
-import { dirname as dirname12, join as join33 } from "node:path";
+import { dirname as dirname12, join as join34 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // src/dashboard/syncAll.ts
-import { readFile as readFile29 } from "node:fs/promises";
+import { readFile as readFile30 } from "node:fs/promises";
 
 // src/work/spec.ts
 init_fsUtil();
-import { mkdir as mkdir19, readdir as readdir11, readFile as readFile28 } from "node:fs/promises";
-import { join as join31 } from "node:path";
+import { mkdir as mkdir19, readdir as readdir11, readFile as readFile29 } from "node:fs/promises";
+import { join as join32 } from "node:path";
 async function addSpec(workspace, params) {
   const spec = {
     name: params.name,
@@ -33019,7 +33048,7 @@ async function addSpec(workspace, params) {
     { name: spec.name, type: spec.type, tags: spec.tags, created_at: spec.created_at },
     spec.content
   );
-  await atomicWriteFile(join31(dir, `${slugify(params.name)}.md`), fileContent);
+  await atomicWriteFile(join32(dir, `${slugify(params.name)}.md`), fileContent);
   void syncSpec(workspace, spec);
   return spec;
 }
@@ -33045,7 +33074,7 @@ async function listSpecs(workspace) {
   for (const name2 of entries) {
     if (!name2.endsWith(".md")) continue;
     try {
-      const raw = await readFile28(join31(dir, name2), "utf-8");
+      const raw = await readFile29(join32(dir, name2), "utf-8");
       specs.push(parseSpecFile(raw));
     } catch {
       continue;
@@ -33055,7 +33084,7 @@ async function listSpecs(workspace) {
 }
 async function getSpec(workspace, name2) {
   try {
-    const raw = await readFile28(join31(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
+    const raw = await readFile29(join32(specsDir(workspace), `${slugify(name2)}.md`), "utf-8");
     return parseSpecFile(raw);
   } catch {
     return null;
@@ -33096,7 +33125,7 @@ async function syncAllWorkspaceData() {
     const specNames = new Set(specs.map((spec) => spec.name));
     for (const task of tasks) {
       if (!task.prd_ref || specNames.has(task.title)) continue;
-      const content = await readFile29(task.prd_ref, "utf8").catch(() => null);
+      const content = await readFile30(task.prd_ref, "utf8").catch(() => null);
       if (!content) continue;
       await syncSpec(workspace.name, {
         name: task.title,
@@ -33118,8 +33147,8 @@ init_homeDir();
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { closeSync, existsSync as existsSync5, openSync } from "node:fs";
-import { mkdir as mkdir20, readFile as readFile30, rm as rm6, stat as stat5 } from "node:fs/promises";
-import { join as join32 } from "node:path";
+import { mkdir as mkdir20, readFile as readFile31, rm as rm6, stat as stat5 } from "node:fs/promises";
+import { join as join33 } from "node:path";
 var DEFAULT_DASHBOARD_PORT = 3001;
 var CONSOLE_HOST = "sugo.localhost";
 var CONSOLE_SERVICE = "sugo-console";
@@ -33136,15 +33165,15 @@ var STOP_WAIT_MS = 5e3;
 var POLL_MS = 150;
 var LOCK_STALE_MS = 3e4;
 function dashboardPaths(home = sugoHomeDir()) {
-  const sugoDir = join32(home, ".claude", "sugo");
-  const dataDir = join32(sugoDir, "dashboard");
+  const sugoDir = join33(home, ".claude", "sugo");
+  const dataDir = join33(sugoDir, "dashboard");
   return {
     sugoDir,
     dataDir,
-    stateFile: join32(dataDir, "server.json"),
-    logFile: join32(dataDir, "dashboard.log"),
-    lockDir: join32(dataDir, "start.lock"),
-    settingsFile: join32(sugoDir, "settings.json")
+    stateFile: join33(dataDir, "server.json"),
+    logFile: join33(dataDir, "dashboard.log"),
+    lockDir: join33(dataDir, "start.lock"),
+    settingsFile: join33(sugoDir, "settings.json")
   };
 }
 function isSupportedNode(version2 = process.versions.node) {
@@ -33153,7 +33182,7 @@ function isSupportedNode(version2 = process.versions.node) {
 }
 async function readServerState(paths) {
   try {
-    return JSON.parse(await readFile30(paths.stateFile, "utf8"));
+    return JSON.parse(await readFile31(paths.stateFile, "utf8"));
   } catch {
     return null;
   }
@@ -33218,7 +33247,7 @@ async function stopDashboard(paths) {
 }
 async function readDashboardSettings(settingsFile) {
   try {
-    const settings = JSON.parse(await readFile30(settingsFile, "utf8"));
+    const settings = JSON.parse(await readFile31(settingsFile, "utf8"));
     const { enabled, port } = settings.dashboard ?? {};
     return {
       ...typeof enabled === "boolean" ? { enabled } : {},
@@ -33321,8 +33350,8 @@ async function startServer(runtimeEntry, options, paths, port) {
       ...process.env,
       SUGO_DASHBOARD_PORT: String(port),
       BUILD_ID: options.buildId,
-      HARNESS_PATH: join32(options.pluginRoot, "harness-library"),
-      HARNESS_OVERRIDE_PATH: join32(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
+      HARNESS_PATH: join33(options.pluginRoot, "harness-library"),
+      HARNESS_OVERRIDE_PATH: join33(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
       SKILLS_PATH: options.pluginRoot
     }
   });
@@ -33338,7 +33367,7 @@ async function startServer(runtimeEntry, options, paths, port) {
 async function ensureDashboard(options) {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtimeEntry = join32(options.pluginRoot, "dashboard-runtime", "server.mjs");
+  const runtimeEntry = join33(options.pluginRoot, "dashboard-runtime", "server.mjs");
   try {
     if (!isSupportedNode(nodeVersion)) {
       return {
@@ -33381,7 +33410,7 @@ async function ensureDashboard(options) {
 }
 
 // src/lifecycle/consoleOnDemand.ts
-var pluginRoot = join33(dirname12(fileURLToPath3(import.meta.url)), "..");
+var pluginRoot = join34(dirname12(fileURLToPath3(import.meta.url)), "..");
 async function controlConsole(action, options = {}) {
   const result3 = await controlDashboard(action, { pluginRoot, buildId: currentSugoVersion(), ...options });
   if (result3.running && action !== "status" && action !== "stop") {
@@ -33871,8 +33900,8 @@ function errorResult14(errorCode, message) {
 }
 
 // src/tools/sugoSpecWriter.ts
-import { access as access5, readFile as readFile31, stat as stat6 } from "node:fs/promises";
-import { isAbsolute as isAbsolute8, join as join34, relative as relative8, resolve as resolve13, sep as sep4 } from "node:path";
+import { access as access5, readFile as readFile32, stat as stat6 } from "node:fs/promises";
+import { isAbsolute as isAbsolute8, join as join35, relative as relative8, resolve as resolve13, sep as sep4 } from "node:path";
 init_homeDir();
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
@@ -33933,12 +33962,12 @@ function specSlug(title) {
 }
 async function nextSpecTarget(title) {
   const date3 = localDateKey();
-  const root = join34(sugoHomeDir(), ".claude", "sugo", "specs");
-  const featureDir = join34(root, date3, specSlug(title));
+  const root = join35(sugoHomeDir(), ".claude", "sugo", "specs");
+  const featureDir = join35(root, date3, specSlug(title));
   let version2 = 1;
-  while (await access5(join34(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
-  const directory = join34(featureDir, `v${version2}`);
-  return { root, date: date3, version: version2, directory, path: join34(directory, "spec.md") };
+  while (await access5(join35(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
+  const directory = join35(featureDir, `v${version2}`);
+  return { root, date: date3, version: version2, directory, path: join35(directory, "spec.md") };
 }
 function managedSpecPath(specPath) {
   const root = resolve13(sugoHomeDir(), ".claude", "sugo", "specs");
@@ -33969,7 +33998,7 @@ async function handleSugoSpecWriter(rawArgs) {
     return result({ ok: false, errorCode: "PROJECT_MISMATCH", expected: spec.projectPath, received: args2.projectPath });
   }
   if (args2.action === "context") {
-    const dir = join34(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const dir = join35(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     try {
       const [attachments, references, draftContent] = await Promise.all([
         downloadSpecAttachments(args2.workspace, spec.id, dir),
@@ -34010,7 +34039,7 @@ async function handleSugoSpecWriter(rawArgs) {
       message: "context \uC751\uB2F5\uC758 specTarget.path \uC544\uB798\uC5D0 \uC791\uC131\uD55C spec.md\uB9CC \uC5F0\uACB0\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     });
   }
-  const text = await readFile31(args2.specPath, "utf-8").catch(() => null);
+  const text = await readFile32(args2.specPath, "utf-8").catch(() => null);
   if (text === null) return result({ ok: false, errorCode: "SPEC_FILE_NOT_FOUND", specPath: args2.specPath });
   if (args2.projectPath) {
     if (!args2.reviewEvidence) {
@@ -34032,7 +34061,7 @@ async function handleSugoSpecWriter(rawArgs) {
     if (invalidFiles.length > 0) {
       return result({ ok: false, errorCode: "SPEC_REVIEW_PROJECT_FILE_INVALID", invalidFiles });
     }
-    const attachmentDir = join34(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const attachmentDir = join35(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     const [attachments, references] = await Promise.all([
       downloadSpecAttachments(args2.workspace, spec.id, attachmentDir),
       fetchSpecReferences(args2.workspace, spec.id)
@@ -34398,8 +34427,8 @@ function evaluateAutoCheck(spec, ctx) {
 init_context();
 
 // src/harness/validationConfig.ts
-import { readFile as readFile32 } from "node:fs/promises";
-import { join as join35 } from "node:path";
+import { readFile as readFile33 } from "node:fs/promises";
+import { join as join36 } from "node:path";
 init_config();
 init_featureState();
 function parseValidationYaml(content) {
@@ -34418,9 +34447,9 @@ async function loadProjectValidationConfigs(projectPath) {
   const result3 = /* @__PURE__ */ new Map();
   if (!config2) return result3;
   for (const applied of config2.appliedHarnesses) {
-    const path = join35(projectPath, "sugo", "harness", applied.id, "validation.yaml");
+    const path = join36(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
-      const content = await readFile32(path, "utf-8");
+      const content = await readFile33(path, "utf-8");
       result3.set(applied.id, parseValidationYaml(content));
     } catch {
       continue;
@@ -35236,7 +35265,7 @@ function errorResult18(errorCode, message) {
 init_fsUtil();
 import { execFile as execFile4 } from "node:child_process";
 import { mkdir as mkdir21, realpath as realpath2 } from "node:fs/promises";
-import { isAbsolute as isAbsolute9, join as join36, relative as relative9, resolve as resolve15, sep as sep5 } from "node:path";
+import { isAbsolute as isAbsolute9, join as join37, relative as relative9, resolve as resolve15, sep as sep5 } from "node:path";
 import { promisify as promisify4 } from "node:util";
 var execFileAsync3 = promisify4(execFile4);
 async function git2(cwd, args2) {
@@ -35281,7 +35310,7 @@ async function backfillWorkspaceGitHistory(workspace) {
   }
   const unique = [...new Map(logs.map((log) => [log.id, log])).values()];
   await mkdir21(historyDir(workspace.name), { recursive: true });
-  await Promise.all(unique.map((log) => atomicWriteFile(join36(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
+  await Promise.all(unique.map((log) => atomicWriteFile(join37(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
   return unique;
 }
 
@@ -35500,8 +35529,8 @@ async function handleSugoAwsContext(rawArgs) {
 }
 
 // src/tools/sugoUninstall.ts
-import { access as access6, mkdir as mkdir22, readFile as readFile33, rename as rename2, rm as rm7, rmdir as rmdir2, writeFile as writeFile3 } from "node:fs/promises";
-import { dirname as dirname13, join as join37, resolve as resolve16 } from "node:path";
+import { access as access6, mkdir as mkdir22, readFile as readFile34, rename as rename2, rm as rm7, rmdir as rmdir2, writeFile as writeFile3 } from "node:fs/promises";
+import { dirname as dirname13, join as join38, resolve as resolve16 } from "node:path";
 init_homeDir();
 init_installManifest();
 init_registry();
@@ -35524,7 +35553,7 @@ function withoutManagedBlock(content, start2, end) {
   return before + after;
 }
 async function restoreRoot(path, original, start2, end) {
-  const current = await readFile33(path, "utf8").catch(() => null);
+  const current = await readFile34(path, "utf8").catch(() => null);
   if (current === null) return;
   const stripped = withoutManagedBlock(current, start2, end);
   if (typeof original === "string" && stripped.startsWith(original) && stripped.slice(original.length).trim() === "") return writeFile3(path, original);
@@ -35549,33 +35578,33 @@ async function cleanupProject(projectPath, manifest) {
   const preserved = [];
   if (manifest) {
     await restoreRoot(
-      join37(projectPath, "CLAUDE.md"),
+      join38(projectPath, "CLAUDE.md"),
       manifest.rootClaudeOriginal,
       "<!-- sugo:harness-rules:start -->",
       "<!-- sugo:harness-rules:end -->"
     );
     await restoreRoot(
-      join37(projectPath, "AGENTS.md"),
+      join38(projectPath, "AGENTS.md"),
       manifest.rootAgentsOriginal,
       "<!-- sugo:project-context:start -->",
       "<!-- sugo:project-context:end -->"
     );
     if (manifest.sugoDirExisted) {
       for (const rel of manifest.managedFiles) {
-        const path = join37(projectPath, rel);
+        const path = join38(projectPath, rel);
         await rm7(path, { force: true, recursive: true });
-        await pruneEmptyParents(path, join37(projectPath, "sugo"));
+        await pruneEmptyParents(path, join38(projectPath, "sugo"));
       }
-      await rm7(join37(projectPath, "sugo", "install-manifest.json"), { force: true });
-      await rmdir2(join37(projectPath, "sugo")).catch(() => {
+      await rm7(join38(projectPath, "sugo", "install-manifest.json"), { force: true });
+      await rmdir2(join38(projectPath, "sugo")).catch(() => {
       });
       preserved.push("sugo/ (\uC124\uCE58 \uC804\uBD80\uD130 \uC874\uC7AC\uD558\uC5EC \uC18C\uC720\uAD8C \uBD88\uBA85 \uD30C\uC77C \uBCF4\uC874)");
     } else {
-      await rm7(join37(projectPath, "sugo"), { force: true, recursive: true });
+      await rm7(join38(projectPath, "sugo"), { force: true, recursive: true });
     }
     for (const rel of manifest.managedFiles.filter((path) => path.startsWith(".claude/rules/"))) {
-      await rm7(join37(projectPath, rel), { force: true });
-      await rmdir2(dirname13(join37(projectPath, rel))).catch(() => {
+      await rm7(join38(projectPath, rel), { force: true });
+      await rmdir2(dirname13(join38(projectPath, rel))).catch(() => {
       });
     }
   } else {
@@ -35589,16 +35618,16 @@ function handleSugoUninstall(rawArgs) {
 }
 async function uninstallSugo(rawArgs, deps) {
   const args2 = Args2.parse(rawArgs);
-  const activeRoot = join37(sugoHomeDir(), ".claude", "sugo");
-  const productRoot = join37(sugoHomeDir(), ".sugo");
-  const archiveRoot = join37(productRoot, "data");
+  const activeRoot = join38(sugoHomeDir(), ".claude", "sugo");
+  const productRoot = join38(sugoHomeDir(), ".sugo");
+  const archiveRoot = join38(productRoot, "data");
   if (args2.action === "discard") {
     if (args2.confirmation !== "DELETE_RETAINED_DATA") return error2("CONFIRMATION_REQUIRED", "confirmation\uC5D0 DELETE_RETAINED_DATA\uB97C \uC815\uD655\uD788 \uC785\uB825\uD574\uC57C \uD569\uB2C8\uB2E4.");
     await rm7(archiveRoot, { recursive: true, force: true });
     return result2({ ok: true, action: "discard", retainedDataRemoved: true });
   }
   if (args2.action === "restore") {
-    const archivedRegistry = await readFile33(join37(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
+    const archivedRegistry = await readFile34(join38(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
     if (!archivedRegistry) return error2("NO_RETAINED_DATA", "\uBCF5\uAD6C\uD560 \uBE44\uD65C\uC131 Sugo \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const paths2 = dashboardPaths();
     if (!(await stopDashboard(paths2)).stopped) return error2("DASHBOARD_STILL_RUNNING", DASHBOARD_RUNNING_MESSAGE);
@@ -35609,7 +35638,7 @@ async function uninstallSugo(rawArgs, deps) {
     await rm7(paths2.lockDir, { recursive: true, force: true });
     for (const entry of archivedRegistry) await syncProjectHarness({ projectPath: resolve16(entry.path), workspace: entry.workspace });
     const dashboard = await ensureDashboard({
-      pluginRoot: deps.pluginRoot ?? join37(dirname13(process.argv[1] ?? ""), ".."),
+      pluginRoot: deps.pluginRoot ?? join38(dirname13(process.argv[1] ?? ""), ".."),
       buildId: deps.buildId ?? currentSugoVersion(),
       port: deps.port
     });
@@ -35656,10 +35685,10 @@ function error2(errorCode, message) {
 // src/lifecycle/recoveryInstaller.ts
 init_homeDir();
 import { copyFile, mkdir as mkdir23 } from "node:fs/promises";
-import { dirname as dirname14, join as join38 } from "node:path";
+import { dirname as dirname14, join as join39 } from "node:path";
 async function ensureRecoveryUtility() {
-  const source = join38(dirname14(process.argv[1] ?? ""), "..", "scripts", "sugo-uninstall-standalone.mjs");
-  const target = join38(sugoHomeDir(), ".sugo", "bin", "sugo-uninstall.mjs");
+  const source = join39(dirname14(process.argv[1] ?? ""), "..", "scripts", "sugo-uninstall-standalone.mjs");
+  const target = join39(sugoHomeDir(), ".sugo", "bin", "sugo-uninstall.mjs");
   await mkdir23(dirname14(target), { recursive: true });
   await copyFile(source, target);
 }

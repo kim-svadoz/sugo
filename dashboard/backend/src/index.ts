@@ -39,6 +39,7 @@ import type { ProjectManager } from './services/projectManager.js';
 import { createAwsGuardPolicyRouter } from './routes/awsGuardPolicy.js';
 import { createIntegrationFeaturesRouter } from './routes/integrationFeatures.js';
 import { createHarnessFeatureRouter } from './routes/harnessFeature.js';
+import { createReferenceReadersRouter } from './routes/referenceReaders.js';
 import type { HarnessFeatureUpdater } from './services/harnessFeatureService.js';
 import { corsWhitelist } from "./middleware/cors.js";
 import { errorMiddleware } from "./middleware/asyncHandler.js";
@@ -89,6 +90,7 @@ export interface AppOverrides {
   awsGuardPolicyPath?: string;
   integrationFeaturesPath?: string;
   harnessFeaturePath?: string;
+  settingsPath?: string;
   staticDir?: string;
   sqliteSchema?: InitDbOptions["sqliteSchema"];
   weeklySettingsService?: WeeklySettingsService;
@@ -135,6 +137,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
   const integrationFeaturesPath = overrides.integrationFeaturesPath ?? config.integrationFeaturesPath;
   const harnessFeaturePath = overrides.harnessFeaturePath ?? config.harnessFeaturePath;
+  const settingsPath = overrides.settingsPath ?? config.settingsPath;
   const weeklySettingsService = overrides.weeklySettingsService ?? createWeeklySettingsService();
 
   const app = express();
@@ -177,6 +180,7 @@ export async function createApp(dbOverrideOrOptions?: DbClient | AppOverrides) {
   app.use("/api/aws-guard-policy", createAwsGuardPolicyRouter(db, sessionSecret, awsGuardPolicyPath));
   app.use("/api/integration-features", createIntegrationFeaturesRouter(db, sessionSecret, integrationFeaturesPath));
   app.use("/api/harness-feature", createHarnessFeatureRouter(db, sessionSecret, harnessFeaturePath, overrides.harnessFeatureUpdater));
+  app.use("/api/reference-readers", createReferenceReadersRouter(db, sessionSecret, settingsPath));
   app.use("/api/pinpoint-context", createPinpointContextRouter(db, sessionSecret, pinpointClient));
   app.use('/api/project-integrations', createProjectIntegrationsRouter(db, sessionSecret, overrides.projectRegistrar, overrides.projectManager));
   app.use("/api/pr", createPrRouter(db, sessionSecret, secretEncKey, gitProviderClients));

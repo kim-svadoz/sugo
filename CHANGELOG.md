@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.67.0 / Console 0.57.0] - 2026-11-04
+
+- Preferences에서 기획 문서 URL 조건과 MCP 서버를 연결하면 spec-writer가 해당 서버로 문서 본문을 읽고, 읽지 못한 링크는 이유와 함께 사용자에게 원문을 요청합니다.
+
 ## [Plugin 0.66.14 / Console 0.56.14] - 2026-11-04
 
 - How it works 상세 본문의 텍스트 크기를 전반적으로 1px 낮춰 작은 화면의 정보 밀도를 조정했습니다.

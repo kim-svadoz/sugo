@@ -18509,7 +18509,7 @@ var require_view = __commonJS({
     var debug = require_src()("express:view");
     var path = __require("path");
     var fs = __require("fs");
-    var dirname10 = path.dirname;
+    var dirname11 = path.dirname;
     var basename6 = path.basename;
     var extname2 = path.extname;
     var join18 = path.join;
@@ -18548,7 +18548,7 @@ var require_view = __commonJS({
       for (var i5 = 0; i5 < roots.length && !path2; i5++) {
         var root5 = roots[i5];
         var loc = resolve8(root5, name);
-        var dir = dirname10(loc);
+        var dir = dirname11(loc);
         var file = basename6(loc);
         path2 = this.resolve(dir, file);
       }
@@ -20692,7 +20692,7 @@ var require_application = __commonJS({
   "../dashboard/backend/node_modules/express/lib/application.js"(exports, module) {
     "use strict";
     var finalhandler = require_finalhandler();
-    var Router23 = require_router();
+    var Router24 = require_router();
     var methods = require_methods();
     var middleware = require_init();
     var query = require_query();
@@ -20757,7 +20757,7 @@ var require_application = __commonJS({
     };
     app2.lazyrouter = function lazyrouter() {
       if (!this._router) {
-        this._router = new Router23({
+        this._router = new Router24({
           caseSensitive: this.enabled("case sensitive routing"),
           strict: this.enabled("strict routing")
         });
@@ -22621,7 +22621,7 @@ var require_express = __commonJS({
     var mixin = require_merge_descriptors();
     var proto = require_application();
     var Route = require_route();
-    var Router23 = require_router();
+    var Router24 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -22644,7 +22644,7 @@ var require_express = __commonJS({
     exports.request = req;
     exports.response = res;
     exports.Route = Route;
-    exports.Router = Router23;
+    exports.Router = Router24;
     exports.json = bodyParser.json;
     exports.query = require_query();
     exports.raw = bodyParser.raw;
@@ -24506,6 +24506,7 @@ var init_config = __esm({
       awsGuardPolicyPath: process.env.SUGO_AWS_GUARD_POLICY_PATH ?? join(homedir(), ".claude", "sugo", "aws-readonly-policy.json"),
       integrationFeaturesPath: process.env.SUGO_INTEGRATION_FEATURES_PATH ?? join(homedir(), ".claude", "sugo", "integration-features.json"),
       harnessFeaturePath: process.env.SUGO_HARNESS_FEATURE_PATH ?? join(homedir(), ".claude", "sugo", "harness-feature.json"),
+      settingsPath: process.env.SUGO_SETTINGS_PATH ?? join(homedir(), ".claude", "sugo", "settings.json"),
       // cors()를 옵션 없이 열어두지 않는다 — 화이트리스트만 허용.
       // CORS_ORIGINS는 콤마 구분이고, 기본값은 로컬 개발용 Vite dev 서버 포트다.
       corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5175").split(",").map((s2) => s2.trim()).filter(Boolean),
@@ -46522,12 +46523,12 @@ async function migrateWstToRun(db2) {
       "SELECT user_id, workspace_name, id, parent, depends_on FROM sugo_roadmap_nodes WHERE id LIKE 'wst-%' OR parent LIKE 'wst-%' OR CAST(depends_on AS CHAR) LIKE '%wst-%'"
     );
     if (affected.length === 0) return { migrated: 0 };
-    const rename4 = (v) => v.startsWith("wst-") ? `run-${v.slice(4)}` : v;
+    const rename5 = (v) => v.startsWith("wst-") ? `run-${v.slice(4)}` : v;
     let migrated = 0;
     for (const row of affected) {
-      const newDeps = row.depends_on === null || row.depends_on === void 0 ? null : JSON.stringify(parseJsonArray(row.depends_on).map(rename4));
-      const newParent = row.parent === null ? null : rename4(row.parent);
-      const newId = rename4(row.id);
+      const newDeps = row.depends_on === null || row.depends_on === void 0 ? null : JSON.stringify(parseJsonArray(row.depends_on).map(rename5));
+      const newParent = row.parent === null ? null : rename5(row.parent);
+      const newId = rename5(row.id);
       await db2.exec(
         "UPDATE sugo_roadmap_nodes SET id = ?, parent = ?, depends_on = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
         [newId, newParent, newDeps, row.user_id, row.workspace_name, row.id]
@@ -76687,11 +76688,11 @@ var require_dist_cjs8 = __commonJS({
         throw new TokenProviderError2(`Value not present for '${key2}' in SSO Token${forRefresh ? ". Cannot refresh" : ""}. ${REFRESH_MESSAGE}`, false);
       }
     };
-    var { writeFile: writeFile10 } = promises;
+    var { writeFile: writeFile11 } = promises;
     var writeSSOTokenToFile = (id, ssoToken) => {
       const tokenFilepath = getSSOTokenFilepath2(id);
       const tokenString = JSON.stringify(ssoToken, null, 2);
-      return writeFile10(tokenFilepath, tokenString);
+      return writeFile11(tokenFilepath, tokenString);
     };
     var lastRefreshAttemptTimes = /* @__PURE__ */ new Map();
     var fromSso = (init = {}) => async ({ callerClientConfig } = {}) => {
@@ -79926,7 +79927,7 @@ var require_dist_cjs11 = __commonJS({
     var { createHash: createHash11, createPrivateKey: createPrivateKey2, createPublicKey: createPublicKey2, sign: sign4 } = __require("node:crypto");
     var { promises } = __require("node:fs");
     var { homedir: homedir7 } = __require("node:os");
-    var { dirname: dirname10, join: join18 } = __require("node:path");
+    var { dirname: dirname11, join: join18 } = __require("node:path");
     var LoginCredentialsFetcher = class _LoginCredentialsFetcher {
       profileData;
       init;
@@ -80082,7 +80083,7 @@ var require_dist_cjs11 = __commonJS({
       }
       async saveToken(token) {
         const tokenFilePath = this.getTokenFilePath();
-        const directory = dirname10(tokenFilePath);
+        const directory = dirname11(tokenFilePath);
         try {
           await promises.mkdir(directory, { recursive: true });
         } catch (error2) {
@@ -90736,6 +90737,68 @@ var init_harnessFeature = __esm({
   }
 });
 
+// ../dashboard/backend/src/services/referenceReaders.ts
+import { mkdir as mkdir5, readFile as readFile11, rename as rename3, writeFile as writeFile6 } from "node:fs/promises";
+import { dirname as dirname6 } from "node:path";
+async function readSettings(path) {
+  try {
+    const parsed = JSON.parse(await readFile11(path, "utf8"));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (error2) {
+    if (error2.code === "ENOENT") return {};
+    throw error2;
+  }
+}
+async function loadReferenceReaders(path) {
+  const parsed = external_exports.array(readerSchema).safeParse((await readSettings(path)).referenceReaders);
+  return parsed.success ? parsed.data : [];
+}
+async function saveReferenceReaders(path, readers) {
+  const value = external_exports.array(readerSchema).max(30).parse(readers);
+  const settings = await readSettings(path);
+  settings.referenceReaders = value;
+  await mkdir5(dirname6(path), { recursive: true });
+  const temporary = `${path}.${process.pid}.tmp`;
+  await writeFile6(temporary, `${JSON.stringify(settings, null, 2)}
+`, { mode: 384 });
+  await rename3(temporary, path);
+}
+var readerSchema, referenceReadersSchema;
+var init_referenceReaders = __esm({
+  "../dashboard/backend/src/services/referenceReaders.ts"() {
+    "use strict";
+    init_zod();
+    readerSchema = external_exports.object({
+      id: external_exports.string().trim().min(1).max(100),
+      urlPrefix: external_exports.string().trim().url().max(2048).refine((value) => value.startsWith("https://") || value.startsWith("http://")),
+      mcpServer: external_exports.string().trim().min(1).max(120).regex(/^[A-Za-z0-9._-]+$/)
+    }).strict();
+    referenceReadersSchema = external_exports.object({ readers: external_exports.array(readerSchema).max(30) }).strict();
+  }
+});
+
+// ../dashboard/backend/src/routes/referenceReaders.ts
+function createReferenceReadersRouter(db2, secret, settingsPath) {
+  const router = (0, import_express23.Router)();
+  router.use(requireUser(db2, secret));
+  router.get("/", async (_req, res) => res.json({ readers: await loadReferenceReaders(settingsPath) }));
+  router.put("/", validateBody(referenceReadersSchema), async (req, res) => {
+    await saveReferenceReaders(settingsPath, req.body.readers);
+    res.json(req.body);
+  });
+  return router;
+}
+var import_express23;
+var init_referenceReaders2 = __esm({
+  "../dashboard/backend/src/routes/referenceReaders.ts"() {
+    "use strict";
+    import_express23 = __toESM(require_express2(), 1);
+    init_requireUser();
+    init_validate();
+    init_referenceReaders();
+  }
+});
+
 // ../dashboard/backend/src/middleware/cors.ts
 function corsWhitelist(allowedOrigins) {
   return (req, res, next) => {
@@ -90851,9 +90914,9 @@ __export(weeklyScheduleService_exports, {
   weeklyRunDecision: () => weeklyRunDecision
 });
 import { execFile as execFile10 } from "node:child_process";
-import { appendFile, mkdir as mkdir5, readdir as readdir5, readFile as readFile11, stat as stat3, unlink as unlink3, writeFile as writeFile6 } from "node:fs/promises";
+import { appendFile, mkdir as mkdir6, readdir as readdir5, readFile as readFile12, stat as stat3, unlink as unlink3, writeFile as writeFile7 } from "node:fs/promises";
 import { homedir as homedir5 } from "node:os";
-import { dirname as dirname6, join as join14, resolve as resolve7 } from "node:path";
+import { dirname as dirname7, join as join14, resolve as resolve7 } from "node:path";
 import { fileURLToPath as fileURLToPath5 } from "node:url";
 import { promisify as promisify9 } from "node:util";
 function weeklyHomeDir() {
@@ -90871,7 +90934,7 @@ function weeklyRunDecision(now, schedule, handled) {
   return handled < slot ? { run: true, record: slot } : { run: false, record: null };
 }
 function weeklyEngineCandidates() {
-  const here = dirname6(fileURLToPath5(import.meta.url));
+  const here = dirname7(fileURLToPath5(import.meta.url));
   return [process.env.SUGO_WEEKLY_ENGINE, resolve7(here, "../weekly"), resolve7(here, "../../../../sugo/weekly")].filter((path) => Boolean(path));
 }
 async function findWeeklyEngine(candidates = weeklyEngineCandidates()) {
@@ -90902,7 +90965,7 @@ async function retireLegacyWeeklyAgents(home = homedir5()) {
 }
 async function readSchedule(configPath) {
   try {
-    const schedule = JSON.parse(await readFile11(configPath, "utf8")).schedule ?? {};
+    const schedule = JSON.parse(await readFile12(configPath, "utf8")).schedule ?? {};
     return { enabled: schedule.enabled ?? false, weekday: schedule.weekday ?? 5, hour: schedule.hour ?? 17, minute: schedule.minute ?? 0 };
   } catch {
     return { enabled: false, weekday: 5, hour: 17, minute: 0 };
@@ -90920,11 +90983,11 @@ function startWeeklySchedule(options = {}) {
     if (running || stopped) return;
     running = true;
     try {
-      const handled = await readFile11(handledPath, "utf8").then((value) => value.trim() || null, () => null);
+      const handled = await readFile12(handledPath, "utf8").then((value) => value.trim() || null, () => null);
       const decision = weeklyRunDecision(/* @__PURE__ */ new Date(), await readSchedule(join14(weeklyHome, "config.json")), handled);
       if (decision.record === null) return;
-      await mkdir5(weeklyHome, { recursive: true });
-      await writeFile6(handledPath, `${decision.record}
+      await mkdir6(weeklyHome, { recursive: true });
+      await writeFile7(handledPath, `${decision.record}
 `, "utf8");
       if (!decision.run) return;
       const path = await engine();
@@ -90965,7 +91028,7 @@ var init_weeklyScheduleService = __esm({
 
 // ../dashboard/backend/src/services/weeklySettingsService.ts
 import { execFile as execFile11 } from "node:child_process";
-import { chmod, mkdir as mkdir6, readFile as readFile12, stat as stat4, writeFile as writeFile7 } from "node:fs/promises";
+import { chmod, mkdir as mkdir7, readFile as readFile13, stat as stat4, writeFile as writeFile8 } from "node:fs/promises";
 import { join as join15 } from "node:path";
 function normalizeClaudeToken(raw) {
   const token = raw.replace(/\s+/g, "");
@@ -91019,7 +91082,7 @@ function normalizeConfig(config2) {
 }
 async function readStoredConfig(path) {
   try {
-    return JSON.parse(await readFile12(path, "utf8"));
+    return JSON.parse(await readFile13(path, "utf8"));
   } catch {
     return null;
   }
@@ -91049,7 +91112,7 @@ function createWeeklySettingsService(options = {}) {
         const rejected = await verifyToken(token);
         if (rejected) throw tokenError("TOKEN_REJECTED", `\uC774 \uD1A0\uD070\uC73C\uB85C Claude\uC5D0 \uB85C\uADF8\uC778\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: ${rejected}`);
       }
-      await mkdir6(weeklyHome, { recursive: true });
+      await mkdir7(weeklyHome, { recursive: true });
       const previous = await readStoredConfig(configPath) ?? {};
       const next = {
         ...previous,
@@ -91058,15 +91121,15 @@ function createWeeklySettingsService(options = {}) {
       };
       if (settings.model === "default") delete next.model;
       else next.model = settings.model;
-      await writeFile7(configPath, `${JSON.stringify(next, null, 2)}
+      await writeFile8(configPath, `${JSON.stringify(next, null, 2)}
 `, { encoding: "utf8", mode: 384 });
       await chmod(configPath, 384);
       if (token) {
-        await writeFile7(tokenPath, `${token}
+        await writeFile8(tokenPath, `${token}
 `, { encoding: "utf8", mode: 384 });
         await chmod(tokenPath, 384);
       }
-      await writeFile7(setupMarkerPath, "configured-by-sugo-console\n", { encoding: "utf8", mode: 384 });
+      await writeFile8(setupMarkerPath, "configured-by-sugo-console\n", { encoding: "utf8", mode: 384 });
       return this.get();
     },
     async deleteToken() {
@@ -91102,7 +91165,7 @@ __export(index_exports, {
   createApp: () => createApp
 });
 import { fileURLToPath as fileURLToPath6, pathToFileURL } from "node:url";
-import { dirname as dirname7, join as join16 } from "node:path";
+import { dirname as dirname8, join as join16 } from "node:path";
 function unconfiguredVerifyJwt() {
   return async () => {
     throw new Error("OIDC_JWKS_URI not configured");
@@ -91149,10 +91212,11 @@ async function createApp(dbOverrideOrOptions) {
   const awsGuardPolicyPath = overrides.awsGuardPolicyPath ?? config.awsGuardPolicyPath;
   const integrationFeaturesPath = overrides.integrationFeaturesPath ?? config.integrationFeaturesPath;
   const harnessFeaturePath = overrides.harnessFeaturePath ?? config.harnessFeaturePath;
+  const settingsPath = overrides.settingsPath ?? config.settingsPath;
   const weeklySettingsService = overrides.weeklySettingsService ?? createWeeklySettingsService();
-  const app2 = (0, import_express23.default)();
+  const app2 = (0, import_express24.default)();
   app2.use(corsWhitelist(config.corsOrigins));
-  app2.use(import_express23.default.json({ limit: "10mb" }));
+  app2.use(import_express24.default.json({ limit: "10mb" }));
   app2.get("/health", (_req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.json({ status: "ok", service: "sugo-console", version: pkg.version, build: process.env.BUILD_ID ?? "dev" });
@@ -91186,6 +91250,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use("/api/aws-guard-policy", createAwsGuardPolicyRouter(db2, sessionSecret2, awsGuardPolicyPath));
   app2.use("/api/integration-features", createIntegrationFeaturesRouter(db2, sessionSecret2, integrationFeaturesPath));
   app2.use("/api/harness-feature", createHarnessFeatureRouter(db2, sessionSecret2, harnessFeaturePath, overrides.harnessFeatureUpdater));
+  app2.use("/api/reference-readers", createReferenceReadersRouter(db2, sessionSecret2, settingsPath));
   app2.use("/api/pinpoint-context", createPinpointContextRouter(db2, sessionSecret2, pinpointClient2));
   app2.use("/api/project-integrations", createProjectIntegrationsRouter(db2, sessionSecret2, overrides.projectRegistrar, overrides.projectManager));
   app2.use("/api/pr", createPrRouter(db2, sessionSecret2, secretEncKey, gitProviderClients));
@@ -91197,7 +91262,7 @@ async function createApp(dbOverrideOrOptions) {
   app2.use("/api/skills", createSkillsRouter(skillsPath));
   const staticDir2 = overrides.staticDir ?? config.staticDir;
   if (staticDir2) {
-    app2.use(import_express23.default.static(staticDir2));
+    app2.use(import_express24.default.static(staticDir2));
     app2.get(/^\/(?!api\/|health$).*/, (_req, res) => {
       res.sendFile(join16(staticDir2, "index.html"));
     });
@@ -91218,11 +91283,11 @@ async function main() {
     console.log(`sugo-dashboard-backend listening on ${config.host}:${config.port} (db=${config.dbDriver})`);
   });
 }
-var import_express23, __dirname2, pkg;
+var import_express24, __dirname2, pkg;
 var init_index = __esm({
   "../dashboard/backend/src/index.ts"() {
     "use strict";
-    import_express23 = __toESM(require_express2(), 1);
+    import_express24 = __toESM(require_express2(), 1);
     init_esm();
     init_config();
     init_init();
@@ -91257,12 +91322,13 @@ var init_index = __esm({
     init_awsGuardPolicy();
     init_integrationFeatures2();
     init_harnessFeature();
+    init_referenceReaders2();
     init_cors();
     init_asyncHandler();
     init_contextAutoRefreshService();
     init_weeklySettingsService();
-    __dirname2 = dirname7(fileURLToPath6(import.meta.url));
-    pkg = "0.56.14" ? { version: "0.56.14" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
+    __dirname2 = dirname8(fileURLToPath6(import.meta.url));
+    pkg = "0.57.0" ? { version: "0.57.0" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91274,11 +91340,11 @@ var localBootstrap_exports = {};
 __export(localBootstrap_exports, {
   bootstrapLocalDashboard: () => bootstrapLocalDashboard
 });
-import { chmod as chmod2, mkdir as mkdir7, readFile as readFile13, rename as rename3, writeFile as writeFile8 } from "node:fs/promises";
-import { dirname as dirname8 } from "node:path";
-async function readSettings(settingsPath) {
+import { chmod as chmod2, mkdir as mkdir8, readFile as readFile14, rename as rename4, writeFile as writeFile9 } from "node:fs/promises";
+import { dirname as dirname9 } from "node:path";
+async function readSettings2(settingsPath) {
   try {
-    return JSON.parse(await readFile13(settingsPath, "utf8"));
+    return JSON.parse(await readFile14(settingsPath, "utf8"));
   } catch {
     return {};
   }
@@ -91286,7 +91352,7 @@ async function readSettings(settingsPath) {
 async function bootstrapLocalDashboard(db2, input) {
   await ensureUser(db2, input.userId);
   await db2.exec("UPDATE sugo_users SET display_name = COALESCE(NULLIF(display_name, ''), ?) WHERE id = ?", [input.displayName, input.userId]);
-  const settings = await readSettings(input.settingsPath);
+  const settings = await readSettings2(input.settingsPath);
   const dashboard = settings.dashboard ?? {};
   const existingToken = typeof dashboard.apiToken === "string" ? dashboard.apiToken : void 0;
   const existingOwner = existingToken ? await resolveUserIdByToken(db2, existingToken) : null;
@@ -91296,11 +91362,11 @@ async function bootstrapLocalDashboard(db2, input) {
     ...settings,
     dashboard: { ...dashboard, enabled: true, apiUrl: input.apiUrl, userId: input.userId, apiToken }
   };
-  await mkdir7(dirname8(input.settingsPath), { recursive: true });
+  await mkdir8(dirname9(input.settingsPath), { recursive: true });
   const tempPath = `${input.settingsPath}.tmp-${process.pid}`;
-  await writeFile8(tempPath, `${JSON.stringify(next, null, 2)}
+  await writeFile9(tempPath, `${JSON.stringify(next, null, 2)}
 `, { mode: 384 });
-  await rename3(tempPath, input.settingsPath);
+  await rename4(tempPath, input.settingsPath);
   await chmod2(input.settingsPath, 384);
   return { tokenReused };
 }
@@ -91314,9 +91380,9 @@ var init_localBootstrap = __esm({
 
 // ../dashboard/backend/src/standalone.ts
 import { randomBytes as randomBytes6 } from "node:crypto";
-import { chmod as chmod3, mkdir as mkdir8, readFile as readFile14, rm as rm3, writeFile as writeFile9 } from "node:fs/promises";
+import { chmod as chmod3, mkdir as mkdir9, readFile as readFile15, rm as rm3, writeFile as writeFile10 } from "node:fs/promises";
 import { homedir as homedir6, userInfo } from "node:os";
-import { dirname as dirname9, join as join17 } from "node:path";
+import { dirname as dirname10, join as join17 } from "node:path";
 import { fileURLToPath as fileURLToPath7 } from "node:url";
 
 // ../dashboard/backend/test/schema.sqlite.sql
@@ -91331,18 +91397,18 @@ var dataDir = join17(sugoDir, "dashboard");
 var secretFile = join17(dataDir, "session-secret");
 var stateFile = join17(dataDir, "server.json");
 var port = Number(process.env.SUGO_DASHBOARD_PORT ?? DEFAULT_PORT);
-var runtimeDir = dirname9(fileURLToPath7(import.meta.url));
-var pluginRoot = dirname9(runtimeDir);
+var runtimeDir = dirname10(fileURLToPath7(import.meta.url));
+var pluginRoot = dirname10(runtimeDir);
 var staticDir = process.env.DASHBOARD_STATIC_DIR ?? join17(runtimeDir, "web");
 var userId = process.env.LOCAL_DEV_USER_ID ?? userInfo().username;
 var displayName = process.env.LOCAL_DEV_DISPLAY_NAME ?? userId;
 async function loadOrCreateSecret() {
   try {
-    return (await readFile14(secretFile, "utf8")).trim();
+    return (await readFile15(secretFile, "utf8")).trim();
   } catch {
   }
   const secret = randomBytes6(32).toString("base64");
-  await writeFile9(secretFile, secret, { mode: 384 });
+  await writeFile10(secretFile, secret, { mode: 384 });
   await chmod3(secretFile, 384);
   return secret;
 }
@@ -91352,7 +91418,7 @@ process.on("unhandledRejection", (reason) => {
 process.on("uncaughtException", (err) => {
   console.error("[dashboard] uncaughtException (\uD504\uB85C\uC138\uC2A4 \uC720\uC9C0):", err.message);
 });
-await mkdir8(dataDir, { recursive: true });
+await mkdir9(dataDir, { recursive: true });
 var sessionSecret = await loadOrCreateSecret();
 var apiUrl = `http://localhost:${port}`;
 process.env.SUGO_DASHBOARD_EMBEDDED = "1";
@@ -91375,6 +91441,7 @@ process.env.SUGO_INTEGRATION_FEATURES_PATH ??= join17(sugoDir, "integration-feat
 process.env.SUGO_HARNESS_FEATURE_PATH ??= join17(sugoDir, "harness-feature.json");
 process.env.SUGO_HARNESS_FEATURE_ENGINE ??= join17(pluginRoot, "dist", "dashboard-harness-feature.mjs");
 process.env.SUGO_PROJECT_MANAGE_ENGINE ??= join17(pluginRoot, "dist", "dashboard-project-manage.mjs");
+process.env.SUGO_SETTINGS_PATH ??= join17(sugoDir, "settings.json");
 var { createApp: createApp2 } = await Promise.resolve().then(() => (init_index(), index_exports));
 var { bootstrapLocalDashboard: bootstrapLocalDashboard2 } = await Promise.resolve().then(() => (init_localBootstrap(), localBootstrap_exports));
 var { app, db, awsContextClient, pinpointClient } = await createApp2({ staticDir, sqliteSchema: schema_sqlite_default });
@@ -91389,7 +91456,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile9(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.56.14", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.57.0", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

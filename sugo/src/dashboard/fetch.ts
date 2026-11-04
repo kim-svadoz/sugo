@@ -2,6 +2,7 @@ import type { WorkResultReport } from "../workResultReport.js";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { resolveDashboardConfig } from "./config.js";
+import { loadReferenceReaders, matchReferenceReader } from "../specReferenceReaders.js";
 
 /**
  * fetch(블로킹, 3~10s): 실패/disabled면 전부 null로 안전 폴백한다(호출부가 로컬 상태를
@@ -168,6 +169,7 @@ export async function downloadSpecAttachments(workspaceName: string, nodeId: str
 export interface SpecReference {
   title: string;
   url: string;
+  reader?: { mcpServer: string };
 }
 
 /** Schedule SPEC 카드에 저장한 기획 문서 링크를 spec-writer 컨텍스트로 전달한다. */
@@ -176,11 +178,16 @@ export async function fetchSpecReferences(workspaceName: string, nodeId: string)
   if (!config.enabled) return null;
   const qs = new URLSearchParams({ nodeId });
   if (config.userId) qs.set("userId", config.userId);
-  const result = await fetchJson<{ links: SpecReference[] }>(
+  const result = await fetchJson<{ links: Array<{ title: string; url: string }> }>(
     `/api/workspaces/${encodeURIComponent(workspaceName)}/roadmap/spec-references?${qs.toString()}`,
     8000,
   );
-  return result?.links ?? null;
+  if (!result) return null;
+  const readers = await loadReferenceReaders();
+  return result.links.map((reference) => {
+    const reader = matchReferenceReader(reference.url, readers);
+    return reader ? { ...reference, reader: { mcpServer: reader.mcpServer } } : reference;
+  });
 }
 
 export async function fetchSpecDraft(workspaceName: string, nodeId: string): Promise<string | null> {

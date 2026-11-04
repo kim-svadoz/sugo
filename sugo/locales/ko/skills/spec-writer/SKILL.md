@@ -15,6 +15,7 @@ Claude와 Codex가 공유하는 SPEC 작성 계약이다. 제품 코드를 구�
 4. `sugo_get_project_context(projectPath)`로 하네스, rules, 체크포인트, TODO-SPEC을 읽는다.
 5. context 응답의 `attachments`는 사용자가 Schedule SPEC 카드에 붙여 넣은 기획 화면 이미지의 로컬 경로다.
    모두 열어 본다. `attachmentsUnavailable`이면 대시보드가 첨부를 지원하지 않는 버전이니 사용자에게 알린다.
+6. context 응답의 `references`를 모두 읽는다. `reader.mcpServer`가 있으면 현재 세션에서 해당 MCP 서버의 문서 읽기 도구로 URL을 읽고 다른 서버로 대신하지 않는다. 읽을 수 있는 문서 본문이 반환된 링크만 검토한 기획 자료로 기록한다. 서버나 읽기 도구가 없거나 본문을 읽지 못하면 URL과 이유를 알리고 사용자에게 현재 대화로 문서를 달라고 요청한다. 반환된 링크를 조용히 생략하지 않는다.
 
 ## 작성
 

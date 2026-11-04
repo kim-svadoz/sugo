@@ -13,7 +13,7 @@ Claude and Codex share this SPEC-writing contract. Do not implement product code
 2. First call `sugo_spec_writer(action:"context", workspace, projectPath, specDraftId)`.
 3. Stop on `SPEC_NOT_EDITABLE`. A SPEC linked to feat is immutable; use patch for later changes.
 4. Call `sugo_get_project_context(projectPath)` for harnesses, rules, checkpoints, and TODO-SPEC.
-5. Open every local planning image path in context `attachments`. Review every planning document in context `references`. If a reference cannot be opened or its contents cannot be read, ask the user to provide the document in the current conversation. Never silently omit a returned reference.
+5. Open every local planning image path in context `attachments`. Review every planning document in context `references`. When a reference has `reader.mcpServer`, use that MCP server's document-reading tool in the current session to read the URL. Do not substitute a different server. Count a reference as reviewed only after readable document text is returned. If the configured server or a suitable reading tool is unavailable, or the call cannot return readable document text, report the URL and reason and ask the user to provide the document in the current conversation. Never silently omit a returned reference.
    If `attachmentsUnavailable` or `referencesUnavailable`, tell the user that this Dashboard version cannot provide that source type.
 6. Stop on `SPEC_REFERENCED_SOURCE_MISSING`. Tell the user that the draft refers to planning material but no file or link is connected. Ask the user to attach it to the Schedule SPEC card or the current conversation. Do not complete the SPEC before receiving it.
 
