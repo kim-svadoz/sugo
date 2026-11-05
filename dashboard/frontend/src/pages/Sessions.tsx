@@ -366,15 +366,15 @@ export function Sessions() {
 
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border)] pb-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border)] pb-2">
           <div className="flex items-center gap-2">
-            <FolderOpen size={15} className="text-cyan-300" />
-            <span className="text-[13px] font-semibold text-[var(--color-text-bright)]">
+            <FolderOpen size={14} className="text-cyan-300" />
+            <span className="text-xs font-semibold text-[var(--color-text-bright)] 2xl:text-sm">
               프로젝트 현황
             </span>
-            <span className="text-[11.5px] text-[var(--color-text-dim)]">저장소 {ws.projectCount}</span>
+            <span className="text-xs text-[var(--color-text-dim)]">저장소 {ws.projectCount}</span>
           </div>
-          <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 text-[12.5px]" role="tablist">
+          <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 text-xs" role="tablist">
             {INSPECTOR_TABS.map((t) => {
               const Icon = t.icon;
               const count = t.id === "history" ? hist.data.length : t.id === "activity" ? taskActivity.length : (ws.projects?.length ?? 0);
@@ -389,7 +389,7 @@ export function Sessions() {
                     setInspectorPage(0);
                   }}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition-colors",
+                    "flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors 2xl:gap-1.5 2xl:px-2.5",
                     activeTab === t.id ? "bg-cyan-500/15 text-cyan-100" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
                   )}
                 >
@@ -401,7 +401,7 @@ export function Sessions() {
           </div>
         </div>
 
-        <div className="ck-scroll mt-2 min-h-0 flex-1 overflow-auto pr-1">
+        <div className="ck-scroll mt-1.5 min-h-0 flex-1 overflow-auto pr-1 2xl:mt-2">
           {activeTab === "repositories" ? (
             <div className="space-y-2">
               <ul className="space-y-1">
@@ -426,17 +426,17 @@ export function Sessions() {
                 return (
                 <li
                   key={p.project_path}
-                  className="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] text-[13px]"
+                  className="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] text-xs"
                 >
                   <div className="flex items-center gap-2 pr-3 transition-colors hover:bg-white/[0.025]">
                     <button
                       type="button"
                       aria-expanded={isExpanded}
                       onClick={() => setExpandedRepository(isExpanded ? null : p.project_path)}
-                      className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2.5 text-left"
+                      className="flex min-w-0 flex-1 items-center gap-2 px-2.5 py-2 text-left 2xl:px-3 2xl:py-2.5"
                     >
                       <ChevronRight size={14} className={cn("shrink-0 text-[var(--color-text-dim)] transition-transform", isExpanded && "rotate-90 text-cyan-300")} />
-                      <span className="truncate font-mono text-[13px] font-medium text-[var(--color-text-bright)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
+                      <span className="truncate font-mono text-xs font-medium text-[var(--color-text-bright)] 2xl:text-[13px]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
                     </button>
                     <div className="flex min-w-0 flex-wrap justify-end gap-1.5">
                       {connectionBadges.map((badge) => badge.tone === "remote" && remoteBrowserUrl ? (
@@ -674,13 +674,13 @@ export function Sessions() {
           })}
         </div>
       ) : (
-        <div className="focus-stack ck-stage-in grid min-h-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[rgba(8,14,24,.72)] xl:grid-cols-[280px_minmax(0,1fr)]">
-          <nav aria-label="도메인 선택" className="border-b border-[var(--color-border)] p-2 xl:border-b-0 xl:border-r xl:p-2.5">
+        <div className="focus-stack ck-stage-in grid min-h-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[rgba(8,14,24,.72)] xl:grid-cols-[220px_minmax(0,1fr)] 2xl:grid-cols-[250px_minmax(0,1fr)]">
+          <nav aria-label="도메인 선택" className="border-b border-[var(--color-border)] p-2 xl:border-b-0 xl:border-r">
             <div className="ck-scroll flex gap-1.5 overflow-x-auto xl:max-h-[690px] xl:flex-col xl:gap-0 xl:overflow-y-auto xl:overflow-x-hidden">
               {domainGroups.map((group) => (
                 <div key={group.tone} className="flex gap-1.5 xl:mb-3 xl:flex-col xl:gap-0.5 xl:last:mb-0">
-                  <p className={cn("hidden px-3 pb-1 pt-2 text-[11px] font-semibold xl:flex xl:items-center xl:gap-1.5", DOMAIN_GROUP_TITLE[group.tone])}>
-                    {group.title}<span className="font-mono text-[10px] opacity-70">{group.items.length}</span>
+                  <p className={cn("hidden px-2 pb-1 pt-2 text-[10px] font-semibold xl:flex xl:items-center xl:gap-1.5", DOMAIN_GROUP_TITLE[group.tone])}>
+                    {group.title}<span className="font-mono text-[10px] opacity-60">{group.items.length}</span>
                   </p>
                   {group.items.map(({ ws, pulse }) => {
                     const isSel = selectedWorkspace === ws.name;
@@ -691,14 +691,14 @@ export function Sessions() {
                         aria-current={isSel ? "true" : undefined}
                         onClick={() => setSelectedWorkspace(ws.name)}
                         className={cn(
-                          "group flex min-w-[220px] items-center gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full",
+                          "group flex min-w-[220px] items-center gap-2 rounded-lg px-2 py-2 text-left outline-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/[0.045] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-300/60 xl:min-w-0 xl:w-full 2xl:gap-2.5 2xl:px-2.5",
                           isSel && "bg-[linear-gradient(100deg,rgba(34,211,238,.12),rgba(34,211,238,.035)_60%,rgba(99,102,241,.04))] shadow-[inset_2px_0_0_rgba(103,232,249,.75),inset_0_0_0_1px_rgba(103,232,249,.14)]",
                         )}
                       >
                         <DomainDot tone={pulse.tone} />
                         <span className="min-w-0 flex-1">
-                          <span className={cn("block truncate font-mono text-[13px]", isSel ? "font-semibold text-white" : pulse.tone === "quiet" ? "text-slate-400 group-hover:text-slate-200" : "font-medium text-slate-100")} title={ws.name}>{ws.name}</span>
-                          <span className={cn("mt-0.5 block truncate text-[11.5px]", DOMAIN_LABEL_TONE[pulse.tone])}>
+                          <span className={cn("block truncate font-mono text-[12px]", isSel ? "font-semibold text-white" : pulse.tone === "quiet" ? "text-slate-400 group-hover:text-slate-200" : "font-medium text-slate-100")} title={ws.name}>{ws.name}</span>
+                          <span className={cn("block truncate text-[10px] opacity-75", DOMAIN_LABEL_TONE[pulse.tone])}>
                             {pulse.label}{pulse.at !== null && <span className="text-slate-500"> · {relativeTime(pulse.at, pulseNow)}</span>}
                           </span>
                         </span>
@@ -731,11 +731,11 @@ export function Sessions() {
                 />
               </div>
 
-              <div className="grid min-h-[360px] border-t border-[var(--color-border)] lg:grid-cols-[minmax(260px,0.78fr)_minmax(440px,1.22fr)]">
-                <section className="flex min-h-0 flex-col border-b border-[var(--color-border)] p-4 lg:border-b-0 lg:border-r" aria-label={`${selected.name} 작업 결과 요약`}>
+              <div className="grid min-h-[340px] border-t border-[var(--color-border)] lg:grid-cols-[minmax(240px,0.72fr)_minmax(420px,1.28fr)] 2xl:min-h-[360px] 2xl:grid-cols-[minmax(260px,0.78fr)_minmax(440px,1.22fr)]">
+                <section className="flex min-h-0 flex-col border-b border-[var(--color-border)] p-3 lg:border-b-0 lg:border-r 2xl:p-4" aria-label={`${selected.name} 작업 결과 요약`}>
                   <div className="ck-scroll min-h-0 flex-1 overflow-auto pr-1"><LiveConsole workspace={selected.name} taskKey={selectedTaskKey} /></div>
                 </section>
-                <section className="flex min-h-0 min-w-0 flex-col p-4" aria-label={`${selected.name} Inspector`}>
+                <section className="flex min-h-0 min-w-0 flex-col p-3 2xl:p-4" aria-label={`${selected.name} Inspector`}>
                   {renderInspector(selected)}
                 </section>
               </div>
