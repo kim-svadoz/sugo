@@ -674,7 +674,7 @@ export function Sessions() {
           })}
         </div>
       ) : (
-        <div className="focus-stack ck-stage-in grid min-h-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[rgba(8,14,24,.72)] xl:grid-cols-[220px_minmax(0,1fr)] 2xl:grid-cols-[250px_minmax(0,1fr)]">
+        <div className="focus-stack ck-stage-in grid min-h-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[rgba(8,14,24,.72)] xl:grid-cols-[200px_minmax(0,1fr)] 2xl:grid-cols-[230px_minmax(0,1fr)]">
           <nav aria-label="도메인 선택" className="border-b border-[var(--color-border)] p-2 xl:border-b-0 xl:border-r">
             <div className="ck-scroll flex gap-1.5 overflow-x-auto xl:max-h-[690px] xl:flex-col xl:gap-0 xl:overflow-y-auto xl:overflow-x-hidden">
               {domainGroups.map((group) => (
