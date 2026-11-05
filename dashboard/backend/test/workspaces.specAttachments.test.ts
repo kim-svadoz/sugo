@@ -33,9 +33,12 @@ describe("Schedule SPEC 기획 화면 첨부", () => {
 
   it("정식 SPEC 전 Markdown 초안을 저장하고 다시 읽는다", async () => {
     const path = "/api/workspaces/ws1/roadmap/spec-draft";
+    await ctx.db.exec("UPDATE sugo_roadmap_nodes SET updated_at = ? WHERE user_id = ? AND workspace_name = ? AND id = ?", ["2026-01-01 00:00:00", "u1", "ws1", nodeId]);
     await request(ctx.app).put(path).query({ nodeId }).set("Authorization", ctx.auth).send({ content: "## 배경\n첫 초안" }).expect(200);
     const read = await request(ctx.app).get(path).query({ nodeId }).set("Authorization", ctx.auth).expect(200);
     expect(read.body).toMatchObject({ content: "## 배경\n첫 초안", locked: false });
+    const [node] = await ctx.db.query<{ updated_at: string }>("SELECT updated_at FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND id = ?", ["u1", "ws1", nodeId]);
+    expect(node.updated_at).not.toBe("2026-01-01 00:00:00");
   });
 
   it("붙여 넣은 이미지를 순번 이름으로 저장하고 절대 경로와 함께 목록·파일을 돌려준다", async () => {

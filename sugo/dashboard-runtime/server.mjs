@@ -45818,8 +45818,21 @@ async function countRows(db2, table, userId2, workspaceName) {
 async function lastActivityAt(db2, userId2, workspaceName) {
   try {
     const rows = await db2.query(
-      "SELECT MAX(COALESCE(completed_at, created_at)) as ts FROM sugo_history WHERE user_id = ? AND workspace_name = ?",
-      [userId2, workspaceName]
+      `SELECT MAX(activity_at) AS ts
+         FROM (
+           SELECT MAX(COALESCE(completed_at, created_at)) AS activity_at
+             FROM sugo_history WHERE user_id = ? AND workspace_name = ?
+           UNION ALL
+           SELECT MAX(updated_at) AS activity_at
+             FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?
+           UNION ALL
+           SELECT MAX(updated_at) AS activity_at
+             FROM sugo_schedule_commitments WHERE user_id = ? AND workspace_name = ?
+           UNION ALL
+           SELECT MAX(ts) AS activity_at
+             FROM sugo_activity_events WHERE user_id = ? AND workspace_name = ?
+         ) meaningful_activity`,
+      [userId2, workspaceName, userId2, workspaceName, userId2, workspaceName, userId2, workspaceName]
     );
     return rows[0]?.ts ?? null;
   } catch {
@@ -46141,6 +46154,10 @@ async function updateRoadmapSpecDocument(db2, userId2, workspaceName, nodeId, co
   try {
     await writeFile(tempPath, content, "utf8");
     await renameFile(tempPath, state2.specPath);
+    await db2.exec(
+      "UPDATE sugo_roadmap_nodes SET updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND workspace_name = ? AND id = ?",
+      [userId2, workspaceName, nodeId]
+    );
   } finally {
     await unlink(tempPath).catch(() => void 0);
   }
@@ -51929,6 +51946,12 @@ async function specNode(db2, userId2, workspaceName, nodeId) {
   );
   return { ok: true, locked: children.length > 0 };
 }
+async function touchSpecNode(db2, userId2, workspaceName, nodeId) {
+  await db2.exec(
+    "UPDATE sugo_roadmap_nodes SET updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [userId2, workspaceName, nodeId]
+  );
+}
 function attachmentDir(root5, userId2, workspaceName, nodeId) {
   return join6(root5, ...[userId2, workspaceName, nodeId].map((part) => encodeURIComponent(part).replace(/^\.+$/, "_")));
 }
@@ -51983,6 +52006,7 @@ async function writeSpecDraft(db2, root5, userId2, workspaceName, nodeId, conten
   const dir = attachmentDir(root5, userId2, workspaceName, nodeId);
   await mkdir(dir, { recursive: true });
   await writeFile2(join6(dir, DRAFT_FILE), content, "utf8");
+  await touchSpecNode(db2, userId2, workspaceName, nodeId);
   return { ok: true, locked: false, content };
 }
 async function replaceSpecReferences(db2, root5, userId2, workspaceName, nodeId, links) {
@@ -51996,6 +52020,7 @@ async function replaceSpecReferences(db2, root5, userId2, workspaceName, nodeId,
   const dir = attachmentDir(root5, userId2, workspaceName, nodeId);
   await mkdir(dir, { recursive: true });
   await writeFile2(join6(dir, REFERENCES_FILE), JSON.stringify(normalized, null, 2), "utf8");
+  await touchSpecNode(db2, userId2, workspaceName, nodeId);
   return { ok: true, links: normalized };
 }
 async function addSpecAttachment(db2, root5, userId2, workspaceName, nodeId, contentType, body) {
@@ -52011,6 +52036,7 @@ async function addSpecAttachment(db2, root5, userId2, workspaceName, nodeId, con
   const name = `${String(next).padStart(2, "0")}.${ext}`;
   await mkdir(dir, { recursive: true });
   await writeFile2(join6(dir, name), body, { flag: "wx" });
+  await touchSpecNode(db2, userId2, workspaceName, nodeId);
   return { ok: true, name };
 }
 async function readSpecAttachment(db2, root5, userId2, workspaceName, nodeId, name) {
@@ -52027,6 +52053,7 @@ async function deleteSpecAttachment(db2, root5, userId2, workspaceName, nodeId, 
   if (node.locked) return { ok: false, errorCode: "SPEC_LOCKED_AFTER_FEAT" };
   if (!NAME_PATTERN.test(name)) return { ok: false, errorCode: "ATTACHMENT_NOT_FOUND" };
   const removed = await unlink2(join6(attachmentDir(root5, userId2, workspaceName, nodeId), name)).then(() => true, () => false);
+  if (removed) await touchSpecNode(db2, userId2, workspaceName, nodeId);
   return removed ? { ok: true } : { ok: false, errorCode: "ATTACHMENT_NOT_FOUND" };
 }
 async function removeSpecAttachments(root5, userId2, workspaceName, nodeId) {
@@ -91375,7 +91402,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname8(fileURLToPath6(import.meta.url));
-    pkg = "0.58.2" ? { version: "0.58.2" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.58.3" ? { version: "0.58.3" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91503,7 +91530,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.58.2", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.58.3", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

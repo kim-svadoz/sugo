@@ -96,6 +96,23 @@ describe("GET /api/workspaces", () => {
     expect(res.body.workspaces[0].roadmap).toEqual({ total: 2, done: 2, active: 0 });
   });
 
+  it("SPEC·파이프라인·일정의 최신 변경을 도메인 최근 활동으로 계산한다", async () => {
+    const { app, db, auth } = await seededApp();
+    await db.exec("UPDATE sugo_history SET created_at = ?, completed_at = NULL WHERE user_id = ? AND workspace_name = ?", ["2026-10-01 09:00:00", "u1", "ws1"]);
+    await db.exec("UPDATE sugo_roadmap_nodes SET created_at = ?, updated_at = ? WHERE user_id = ? AND workspace_name = ?", ["2026-10-02 09:00:00", "2026-10-02 09:00:00", "u1", "ws1"]);
+    await db.exec(
+      "INSERT INTO sugo_schedule_commitments (id, user_id, workspace_name, spec_id, title, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+      ["schedule-1", "u1", "ws1", "spec-1", "검토 일정", "2026-10-03 09:00:00"],
+    );
+    await db.exec(
+      "INSERT INTO sugo_activity_events (user_id, workspace_name, ts, event_type, message) VALUES (?, ?, ?, ?, ?)",
+      ["u1", "ws1", "2026-10-04 09:00:00", "HANDOFF", "테스트 단계로 이동"],
+    );
+
+    const res = await request(app).get("/api/workspaces").set("Authorization", auth).expect(200);
+    expect(res.body.workspaces[0].lastActivityAt).toBe("2026-10-04 09:00:00");
+  });
+
   it("401s without an API token", async () => {
     const { app } = await seededApp();
     await request(app).get("/api/workspaces").expect(401);

@@ -279,12 +279,25 @@ async function countRows(db: DbClient, table: string, userId: string, workspaceN
   }
 }
 
-/** `Recently Active (30d)` 필터 기준. history 최신 완료/생성 시각을 쓴다(활동의 실제 흔적). */
+/** `Recently Active (30d)`와 도메인 정렬 기준. 조회가 아닌 실제 작업 흔적만 모은다. */
 async function lastActivityAt(db: DbClient, userId: string, workspaceName: string): Promise<string | null> {
   try {
     const rows = await db.query<{ ts: string | null }>(
-      "SELECT MAX(COALESCE(completed_at, created_at)) as ts FROM sugo_history WHERE user_id = ? AND workspace_name = ?",
-      [userId, workspaceName]
+      `SELECT MAX(activity_at) AS ts
+         FROM (
+           SELECT MAX(COALESCE(completed_at, created_at)) AS activity_at
+             FROM sugo_history WHERE user_id = ? AND workspace_name = ?
+           UNION ALL
+           SELECT MAX(updated_at) AS activity_at
+             FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?
+           UNION ALL
+           SELECT MAX(updated_at) AS activity_at
+             FROM sugo_schedule_commitments WHERE user_id = ? AND workspace_name = ?
+           UNION ALL
+           SELECT MAX(ts) AS activity_at
+             FROM sugo_activity_events WHERE user_id = ? AND workspace_name = ?
+         ) meaningful_activity`,
+      [userId, workspaceName, userId, workspaceName, userId, workspaceName, userId, workspaceName]
     );
     return rows[0]?.ts ?? null;
   } catch {
@@ -821,6 +834,10 @@ export async function updateRoadmapSpecDocument(
   try {
     await writeFile(tempPath, content, "utf8");
     await renameFile(tempPath, state.specPath);
+    await db.exec(
+      "UPDATE sugo_roadmap_nodes SET updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND workspace_name = ? AND id = ?",
+      [userId, workspaceName, nodeId],
+    );
   } finally {
     await unlink(tempPath).catch(() => undefined);
   }

@@ -33,6 +33,13 @@ async function specNode(db: DbClient, userId: string, workspaceName: string, nod
   return { ok: true, locked: children.length > 0 };
 }
 
+async function touchSpecNode(db: DbClient, userId: string, workspaceName: string, nodeId: string): Promise<void> {
+  await db.exec(
+    "UPDATE sugo_roadmap_nodes SET updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND workspace_name = ? AND id = ?",
+    [userId, workspaceName, nodeId],
+  );
+}
+
 // 경로 구성 요소는 인코딩해 디렉터리 탈출을 막는다. 노드 존재는 호출 전에 DB로 확인한다.
 function attachmentDir(root: string, userId: string, workspaceName: string, nodeId: string): string {
   return join(root, ...[userId, workspaceName, nodeId].map((part) => encodeURIComponent(part).replace(/^\.+$/, "_")));
@@ -97,6 +104,7 @@ export async function writeSpecDraft(db: DbClient, root: string, userId: string,
   const dir = attachmentDir(root, userId, workspaceName, nodeId);
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, DRAFT_FILE), content, "utf8");
+  await touchSpecNode(db, userId, workspaceName, nodeId);
   return { ok: true as const, locked: false, content };
 }
 
@@ -113,6 +121,7 @@ export async function replaceSpecReferences(
   const dir = attachmentDir(root, userId, workspaceName, nodeId);
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, REFERENCES_FILE), JSON.stringify(normalized, null, 2), "utf8");
+  await touchSpecNode(db, userId, workspaceName, nodeId);
   return { ok: true as const, links: normalized };
 }
 
@@ -131,6 +140,7 @@ export async function addSpecAttachment(
   const name = `${String(next).padStart(2, "0")}.${ext}`;
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, name), body, { flag: "wx" });
+  await touchSpecNode(db, userId, workspaceName, nodeId);
   return { ok: true as const, name };
 }
 
@@ -149,6 +159,7 @@ export async function deleteSpecAttachment(db: DbClient, root: string, userId: s
   if (node.locked) return { ok: false as const, errorCode: "SPEC_LOCKED_AFTER_FEAT" as const };
   if (!NAME_PATTERN.test(name)) return { ok: false as const, errorCode: "ATTACHMENT_NOT_FOUND" as const };
   const removed = await unlink(join(attachmentDir(root, userId, workspaceName, nodeId), name)).then(() => true, () => false);
+  if (removed) await touchSpecNode(db, userId, workspaceName, nodeId);
   return removed ? { ok: true as const } : { ok: false as const, errorCode: "ATTACHMENT_NOT_FOUND" as const };
 }
 

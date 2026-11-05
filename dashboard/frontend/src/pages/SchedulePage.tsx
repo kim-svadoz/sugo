@@ -767,7 +767,7 @@ export function SchedulePage() {
                             <span className={cn("pointer-events-none absolute z-50 w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/marker:translate-y-0 group-hover/marker:opacity-100 group-focus-visible/marker:translate-y-0 group-focus-visible/marker:opacity-100", dayIndex >= 21 ? "bottom-full mb-2" : "top-full mt-2", day.getDay() >= 5 ? "right-0" : "left-0")}>
                               <span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300/75">일정 미리보기</span>
                               <strong className="mt-1.5 block text-[12px] leading-5 text-white">{commitment.title}</strong>
-                              <span className="mt-1 block text-[9px] text-slate-500">{commitment.workspace_name} · {commitment.due_date ?? "날짜 미정"}</span>
+                              <span className="mt-1 block text-[9px] text-slate-500">{commitment.workspace_name}</span>
                               {preview ? <span className="mt-2 block border-t border-white/10 pt-2"><span className="block font-mono text-[9px] font-bold text-violet-200">최근 작업 · {preview.label}</span><span className="mt-1 block line-clamp-1 text-[10px] font-normal leading-4 text-slate-300">{preview.title}</span></span> : <span className="mt-2 block border-t border-white/10 pt-2 text-[10px] text-slate-500">아직 완료된 개발 이력이 없습니다.</span>}
                             </span>
                           </button>

@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.68.3 / Console 0.58.3] - 2026-11-05
+
+- 도메인의 최근 활동에 SPEC 작성·수정, 파이프라인 진행, 일정 변경을 반영하고 캘린더 미리보기의 중복 날짜를 제거합니다.
+
 ## [Plugin 0.68.2 / Console 0.58.2] - 2026-11-05
 
 - 프로젝트 현황의 GitHub·AWS CodeCommit 원격 저장소 태그에서 해당 저장소를 바로 열 수 있습니다.
