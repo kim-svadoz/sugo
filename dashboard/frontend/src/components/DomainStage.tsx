@@ -1,5 +1,5 @@
 import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, ClipboardList, Code2, FlaskConical, GitCommitHorizontal, ShieldCheck, UserCheck } from "lucide-react";
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { apiJson } from "../api/client.js";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useSchedule } from "../hooks/useSchedule.js";
@@ -101,11 +101,53 @@ export function DomainStage({ workspace, projectPaths, selectedTaskKey, onSelect
   const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, specs ?? []) : null;
   const unresolved = useMemo(() => lanes.filter((item) => !item.projectPath).map((item) => item.name), [lanes]);
   const taskProjects = useTaskProjects(workspace, unresolved);
+  const swipeStart = useRef<{ pointerId: number; x: number; y: number } | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
   const baseName = (path: string) => path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
   const projectName = title?.project ?? (lane?.projectPath ? baseName(lane.projectPath) : lane && taskProjects[lane.name] ? baseName(taskProjects[lane.name]) : projectPaths.length === 1 ? baseName(projectPaths[0]) : null);
   const move = (delta: number) => onSelectedTaskChange(lanes[(index + delta + lanes.length) % lanes.length].key);
+  const canSwitch = lanes.length > 1;
+  const isInteractive = (target: EventTarget | null) => target instanceof Element && Boolean(target.closest("button, a, input, select, textarea, [role='button'], [data-no-lane-swipe]"));
+  const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!canSwitch || event.button !== 0 || isInteractive(event.target)) return;
+    swipeStart.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+    const start = swipeStart.current;
+    if (!start || start.pointerId !== event.pointerId) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (Math.abs(dx) <= Math.abs(dy)) return;
+    setDragOffset(Math.max(-24, Math.min(24, dx * 0.12)));
+  };
+  const finishSwipe = (event: ReactPointerEvent<HTMLElement>) => {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    setDragOffset(0);
+    if (!start || start.pointerId !== event.pointerId) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (Math.abs(dx) >= 56 && Math.abs(dx) > Math.abs(dy) * 1.2) move(dx < 0 ? 1 : -1);
+  };
 
-  return <section className={cn("stage-card ck-stage-in rounded-2xl border px-5 py-4 transition-colors duration-500", tone.card)} style={{ "--stage-glow": tone.glow } as CSSProperties} aria-label={`${workspace} 상태`}>
+  return <section
+    className={cn("stage-card ck-stage-in relative rounded-2xl border px-5 py-4 transition-colors duration-500", canSwitch && "cursor-grab touch-pan-y select-none active:cursor-grabbing", tone.card)}
+    style={{ "--stage-glow": tone.glow, translate: dragOffset === 0 ? undefined : `${dragOffset}px 0` } as CSSProperties}
+    aria-label={`${workspace} 상태`}
+    onPointerDown={onPointerDown}
+    onPointerMove={onPointerMove}
+    onPointerUp={finishSwipe}
+    onPointerCancel={finishSwipe}
+  >
+    {canSwitch && <>
+      <button type="button" data-no-lane-swipe aria-label="이전 작업장" onClick={() => move(-1)} className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/[0.08] bg-slate-950/75 p-1.5 text-slate-400 shadow-lg backdrop-blur transition hover:border-cyan-300/25 hover:bg-slate-900 hover:text-cyan-100 active:scale-95">
+        <ChevronLeft size={17} />
+      </button>
+      <button type="button" data-no-lane-swipe aria-label="다음 작업장" onClick={() => move(1)} className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/[0.08] bg-slate-950/75 p-1.5 text-slate-400 shadow-lg backdrop-blur transition hover:border-cyan-300/25 hover:bg-slate-900 hover:text-cyan-100 active:scale-95">
+        <ChevronRight size={17} />
+      </button>
+    </>}
     <div className="flex min-w-0 items-start gap-4">
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-2.5">
@@ -120,11 +162,7 @@ export function DomainStage({ workspace, projectPaths, selectedTaskKey, onSelect
           {projectName && <span className="font-mono">{projectName}</span>}
           {projectName && lane?.state.at && <span aria-hidden="true">·</span>}
           {lane?.state.at && <span>{relativeTime(lane.state.at, now)}</span>}
-          {lanes.length > 1 && <span className="ml-1 flex items-center gap-1">
-            <button type="button" aria-label="이전 작업" onClick={() => move(-1)} className="rounded-full p-0.5 text-slate-400 hover:bg-white/5 hover:text-slate-100"><ChevronLeft size={14} /></button>
-            <span className="font-mono text-[11px]">{index + 1}/{lanes.length}</span>
-            <button type="button" aria-label="다음 작업" onClick={() => move(1)} className="rounded-full p-0.5 text-slate-400 hover:bg-white/5 hover:text-slate-100"><ChevronRight size={14} /></button>
-          </span>}
+          {lanes.length > 1 && <span className="ml-1 font-mono text-[11px] text-slate-500">{index + 1}/{lanes.length}</span>}
         </p>}
       </div>
       <div className="flex shrink-0 items-center gap-2">
