@@ -28515,7 +28515,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.68.3" : "0.0.0-dev";
+  return true ? "0.68.4" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29877,6 +29877,13 @@ function resolveContractRequired(policyValue, sessionCtx) {
 // src/dashboard/activity.ts
 function activityForPlanTransition(action, fromState, featureName, context = {}) {
   const changed = context.changedFiles?.length ? `${context.changedFiles.length}\uAC1C \uD30C\uC77C \uBCC0\uACBD` : "\uAD6C\uD604 \uACB0\uACFC \uAE30\uB85D";
+  if (action === "prd") {
+    return {
+      agent: "MAIN",
+      eventType: "EXECUTE",
+      message: `${featureName} \uAC1C\uBC1C \uC900\uBE44 \xB7 \uAE30\uC900 \uD14C\uC2A4\uD2B8\uC640 \uACC4\uC57D \uD14C\uC2A4\uD2B8 \uD655\uC778`
+    };
+  }
   if (action === "code_start") {
     const agent = fromState === "REVIEW_RUNNING" ? "REVIEW" : fromState === "TEST_DONE" ? "TEST" : "MAIN";
     return {

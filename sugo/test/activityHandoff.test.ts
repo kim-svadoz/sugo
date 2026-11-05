@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import { activityForPlanTransition, activityTaskDetails, reviewConfirmationActivity } from "../src/dashboard/activity.js";
 
 describe("plan transition activity", () => {
+  it("PRD가 저장되면 구현 전 준비도 작업 지시 단계의 실행으로 표시한다", () => {
+    expect(activityForPlanTransition("prd", "CLARIFY", "결제 중복 방지")).toMatchObject({
+      agent: "MAIN",
+      eventType: "EXECUTE",
+      message: expect.stringContaining("개발 준비"),
+    });
+  });
+
   it.each([
     ["code_start", "CODE_READY", "MAIN", "CODE"],
     ["test_start", "CODE_DONE", "CODE", "TEST"],

@@ -34,6 +34,13 @@ describe("domainPulse", () => {
     expect(domainPulse({ ...summary, lastActivityAt: "2026-10-27T03:00:00Z" }, [])).toEqual({ tone: "quiet", label: "작업 대기", at: Date.parse("2026-10-27T03:00:00Z") });
     expect(domainPulse(summary, [])).toEqual({ tone: "quiet", label: "기록 없음", at: null });
   });
+
+  it("과거 파이프라인 이벤트보다 최근 SPEC 변경 시각을 정렬에 사용한다", () => {
+    expect(domainPulse(
+      { ...summary, lastActivityAt: "2026-11-03T06:00:19Z" },
+      lanesOf([event({ ts: "2026-10-21 01:58:22", event_type: "COMPLETED", handoff_to: null })]),
+    )).toMatchObject({ tone: "quiet", at: Date.parse("2026-11-03T06:00:19Z") });
+  });
 });
 
 describe("groupDomainsByPulse", () => {

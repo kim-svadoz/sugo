@@ -29,6 +29,13 @@ export interface ActivityTransitionContext {
  */
 export function activityForPlanTransition(action: string, fromState: string, featureName: string, context: ActivityTransitionContext = {}): HandoffActivity | null {
   const changed = context.changedFiles?.length ? `${context.changedFiles.length}개 파일 변경` : "구현 결과 기록";
+  if (action === "prd") {
+    return {
+      agent: "MAIN",
+      eventType: "EXECUTE",
+      message: `${featureName} 개발 준비 · 기준 테스트와 계약 테스트 확인`,
+    };
+  }
   if (action === "code_start") {
     const agent: ActivityAgent = fromState === "REVIEW_RUNNING" ? "REVIEW" : fromState === "TEST_DONE" ? "TEST" : "MAIN";
     return {

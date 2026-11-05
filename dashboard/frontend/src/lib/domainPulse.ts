@@ -20,14 +20,15 @@ const stationLabel = (id: FloorStationId) => FLOOR_STATIONS.find((station) => st
 
 export function domainPulse(summary: { attentionCount: number; attentionLabel: string | null; lastActivityAt: string | null }, lanes: readonly FloorLane[]): DomainPulse {
   const lastAt = summary.lastActivityAt ? Date.parse(summary.lastActivityAt) : null;
+  const activityAt = (laneAt: number | null | undefined) => Math.max(lastAt ?? -1, laneAt ?? -1) < 0 ? null : Math.max(lastAt ?? -1, laneAt ?? -1);
   const waiting = lanes.find((lane) => lane.state.activity === "waiting");
-  if (waiting) return { tone: "waiting", label: "확인 대기", at: waiting.state.at ?? lastAt };
+  if (waiting) return { tone: "waiting", label: "확인 대기", at: activityAt(waiting.state.at) };
   const lane = lanes[0];
-  if (lane?.state.live) return { tone: "live", label: lane.state.activity === "celebrating" ? "방금 완료" : LIVE_LABEL[lane.state.station], at: lane.state.at ?? lastAt };
-  if (summary.attentionCount > 0) return { tone: "waiting", label: summary.attentionLabel ?? "확인 필요", at: lane?.state.at ?? lastAt };
+  if (lane?.state.live) return { tone: "live", label: lane.state.activity === "celebrating" ? "방금 완료" : LIVE_LABEL[lane.state.station], at: activityAt(lane.state.at) };
+  if (summary.attentionCount > 0) return { tone: "waiting", label: summary.attentionLabel ?? "확인 필요", at: activityAt(lane?.state.at) };
   if (!lane) return { tone: "quiet", label: lastAt === null ? "기록 없음" : "작업 대기", at: lastAt };
   const label = lane.state.activity === "paused" ? `${stationLabel(lane.state.station)}에서 멈춤` : "커밋 완료";
-  return { tone: "quiet", label, at: lane.state.at ?? lastAt };
+  return { tone: "quiet", label, at: activityAt(lane.state.at) };
 }
 
 const GROUPS: ReadonlyArray<{ tone: DomainTone; title: string }> = [
