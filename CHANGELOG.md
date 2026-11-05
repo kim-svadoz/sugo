@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.68.2 / Console 0.58.2] - 2026-11-05
+
+- 프로젝트 현황의 GitHub·AWS CodeCommit 원격 저장소 태그에서 해당 저장소를 바로 열 수 있습니다.
+
 ## [Plugin 0.68.1 / Console 0.58.1] - 2026-11-05
 
 - 도메인 관리 상세 패널 헤더에서 중복 도메인명을 제거하고 `프로젝트 현황`으로 통일합니다.

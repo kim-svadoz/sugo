@@ -13,6 +13,7 @@ import {
   Calendar,
   ChevronRight,
   FileCode,
+  ExternalLink,
   Lightbulb,
   Search,
   Shield,
@@ -44,7 +45,7 @@ import { compareRelease, shortCommit, type ReleaseComparison } from "../lib/awsR
 import { presentSteKorean } from "../lib/steKorean.js";
 import { historyContextTitle, historyDisplayDate, historyDisplayTitle } from "../lib/historyPresentation.js";
 import { AI_WORK_STATUS_TOOL, WORKSPACE_RULES_TOOL } from "../lib/workspaceTools.js";
-import { repositoryConnectionBadges, type RepositoryBadgeTone } from "../lib/repositoryConnectionPresentation.js";
+import { remoteRepositoryBrowserUrl, repositoryConnectionBadges, type RepositoryBadgeTone } from "../lib/repositoryConnectionPresentation.js";
 
 /** 상수 — 인스펙터는 10개씩 끊는다(200개여도 스크롤 지옥이 안 되게). */
 const PAGE_SIZE = 10;
@@ -419,25 +420,41 @@ export function Sessions() {
                   remoteProviderLabel: p.remote_git?.providerLabel ?? null,
                   awsLinkMode,
                 });
+                const remoteBrowserUrl = p.remote_git ? remoteRepositoryBrowserUrl(p.remote_git) : null;
                 return (
                 <li
                   key={p.project_path}
                   className="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] text-[13px]"
                 >
-                  <button
-                    type="button"
-                    aria-expanded={isExpanded}
-                    onClick={() => setExpandedRepository(isExpanded ? null : p.project_path)}
-                    className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.025]"
-                  >
-                    <span className="flex shrink-0 items-center gap-2">
+                  <div className="flex items-center gap-2 pr-3 transition-colors hover:bg-white/[0.025]">
+                    <button
+                      type="button"
+                      aria-expanded={isExpanded}
+                      onClick={() => setExpandedRepository(isExpanded ? null : p.project_path)}
+                      className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2.5 text-left"
+                    >
                       <ChevronRight size={14} className={cn("shrink-0 text-[var(--color-text-dim)] transition-transform", isExpanded && "rotate-90 text-cyan-300")} />
                       <span className="truncate font-mono text-[13px] font-medium text-[var(--color-text-bright)]" title={p.project_path}>📦 {repoName(p.project_path)}</span>
-                    </span>
+                    </button>
                     <div className="flex min-w-0 flex-wrap justify-end gap-1.5">
-                      {connectionBadges.map((badge) => <span key={badge.label} className={`rounded-md border px-1.5 py-0.5 text-[10.5px] font-medium ${REPOSITORY_BADGE_CLASS[badge.tone]}`}>{badge.label}</span>)}
+                      {connectionBadges.map((badge) => badge.tone === "remote" && remoteBrowserUrl ? (
+                        <a
+                          key={badge.label}
+                          href={remoteBrowserUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={`${p.remote_git?.providerLabel ?? "원격"} 저장소 열기`}
+                          aria-label={`${repoName(p.project_path)} ${p.remote_git?.providerLabel ?? "원격"} 저장소 새 탭에서 열기`}
+                          className={`group flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10.5px] font-medium transition-[color,background-color,border-color,transform] duration-150 hover:-translate-y-px hover:border-cyan-300/45 hover:bg-cyan-300/15 hover:text-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60 ${REPOSITORY_BADGE_CLASS.remote}`}
+                        >
+                          {badge.label}
+                          <ExternalLink size={10} aria-hidden="true" className="opacity-50 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+                        </a>
+                      ) : (
+                        <span key={badge.label} className={`rounded-md border px-1.5 py-0.5 text-[10.5px] font-medium ${REPOSITORY_BADGE_CLASS[badge.tone]}`}>{badge.label}</span>
+                      ))}
                     </div>
-                  </button>
+                  </div>
                   {isExpanded && <div className="border-t border-[var(--color-border)] px-3 pb-3">
                   {p.aws_release && <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border border-cyan-400/20 bg-cyan-400/[0.04] px-2.5 py-2 text-[11px] leading-5 text-[var(--color-text-muted)]">
                     <span>배포 기준 <b className="text-cyan-200">{p.aws_release.baseBranch}</b></span>

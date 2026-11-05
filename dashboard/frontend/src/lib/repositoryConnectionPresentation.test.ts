@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { repositoryConnectionBadges } from "./repositoryConnectionPresentation.js";
+import { remoteRepositoryBrowserUrl, repositoryConnectionBadges } from "./repositoryConnectionPresentation.js";
 
 describe("repositoryConnectionBadges", () => {
   it("separates local Git, remote provider, and operational suggestions", () => {
@@ -32,5 +32,41 @@ describe("repositoryConnectionBadges", () => {
       { label: "원격 · GitHub", tone: "remote" },
       { label: "AWS 서비스 상태 연동", tone: "confirmed" },
     ]);
+  });
+});
+
+describe("remoteRepositoryBrowserUrl", () => {
+  it("turns GitHub HTTPS and SSH remotes into repository browser URLs", () => {
+    expect(remoteRepositoryBrowserUrl({
+      provider: "github",
+      remoteUrl: "https://github.com/acme/sugo.git",
+      repository: "acme/sugo",
+    })).toBe("https://github.com/acme/sugo");
+    expect(remoteRepositoryBrowserUrl({
+      provider: "github",
+      remoteUrl: "git@github.com:acme/sugo.git",
+      repository: "acme/sugo",
+    })).toBe("https://github.com/acme/sugo");
+  });
+
+  it("opens an AWS CodeCommit repository in the region from its remote", () => {
+    expect(remoteRepositoryBrowserUrl({
+      provider: "aws_codecommit",
+      remoteUrl: "https://git-codecommit.ap-northeast-2.amazonaws.com/v1/repos/sample-service",
+      repository: "sample-service",
+    })).toBe("https://console.aws.amazon.com/codesuite/codecommit/home?region=ap-northeast-2#/repository/sample-service/browse/HEAD/--/");
+    expect(remoteRepositoryBrowserUrl({
+      provider: "aws_codecommit",
+      remoteUrl: "codecommit::ap-northeast-2://sample-service",
+      repository: "sample-service",
+    })).toBe("https://console.aws.amazon.com/codesuite/codecommit/home?region=ap-northeast-2#/repository/sample-service/browse/HEAD/--/");
+  });
+
+  it("does not make an unrecognized remote clickable", () => {
+    expect(remoteRepositoryBrowserUrl({
+      provider: "git_remote",
+      remoteUrl: "ssh://git@example.internal/team/repository.git",
+      repository: "team/repository",
+    })).toBeNull();
   });
 });

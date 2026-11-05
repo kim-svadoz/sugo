@@ -5,6 +5,29 @@ export interface RepositoryConnectionBadge {
   tone: RepositoryBadgeTone;
 }
 
+interface RemoteRepository {
+  provider: "github" | "gitlab" | "bitbucket_server" | "aws_codecommit" | "git_remote";
+  remoteUrl: string;
+  repository: string;
+}
+
+export function remoteRepositoryBrowserUrl(remote: RemoteRepository): string | null {
+  if (remote.provider === "github") {
+    const repository = remote.repository.replace(/^\/+|\.git$/gi, "");
+    return /^[^/\s]+\/[^/\s]+$/.test(repository) ? `https://github.com/${repository}` : null;
+  }
+
+  if (remote.provider === "aws_codecommit") {
+    const region = remote.remoteUrl.match(/git-codecommit\.([a-z0-9-]+)\.amazonaws\.com/i)?.[1]
+      ?? remote.remoteUrl.match(/^codecommit::([a-z0-9-]+):\/\//i)?.[1];
+    const repository = remote.repository.replace(/^\/+|\.git$/gi, "");
+    if (!region || !repository || /[/?#\s]/.test(repository)) return null;
+    return `https://console.aws.amazon.com/codesuite/codecommit/home?region=${encodeURIComponent(region)}#/repository/${encodeURIComponent(repository)}/browse/HEAD/--/`;
+  }
+
+  return null;
+}
+
 export function repositoryConnectionBadges(input: {
   localGitAvailable: boolean;
   remoteProviderLabel: string | null;
