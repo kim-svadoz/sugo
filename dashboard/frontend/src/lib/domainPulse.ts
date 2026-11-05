@@ -43,7 +43,17 @@ export function groupDomainsByPulse<T extends { pulse: DomainPulse }>(items: rea
     .filter((group) => group.items.length > 0);
 }
 
+/** 화면에 실제로 표시되는 정렬 순서의 첫 도메인. */
+export function firstDomainName<T extends { ws: { name: string } }>(groups: readonly { items: readonly T[] }[]): string | null {
+  return groups.find((group) => group.items.length > 0)?.items[0]?.ws.name ?? null;
+}
+
 export type StageTone = "waiting" | "live" | "done" | "paused" | "rest";
+
+/** 사용자 확인 대기는 실패나 차단이 아니라 정상적인 승인 단계로 안내한다. */
+export function attentionActionText(tone: StageTone, label: string | null): string {
+  return tone === "waiting" ? "사용자 승인 필요" : `${label ?? "확인 필요"} 확인하기`;
+}
 
 /** 상태 카드 첫 줄. 선택한 작업이 지금 어디서 무엇을 하는지 한 문장으로 말한다. */
 export function stageHeadline(lane: FloorLane | undefined): { tone: StageTone; text: string } {

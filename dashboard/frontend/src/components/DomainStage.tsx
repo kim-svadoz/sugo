@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { apiJson } from "../api/client.js";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useSchedule } from "../hooks/useSchedule.js";
-import { stageHeadline, type StageTone } from "../lib/domainPulse.js";
+import { attentionActionText, stageHeadline, type StageTone } from "../lib/domainPulse.js";
 import { resolveTaskTitle } from "../lib/taskTitle.js";
 import { cn } from "../lib/utils.js";
 import { FLOOR_STATIONS, selectFloorLanes, type FloorLane, type FloorStationId } from "../lib/workFloor.js";
@@ -129,7 +129,7 @@ export function DomainStage({ workspace, projectPaths, selectedTaskKey, onSelect
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {attention.count > 0 && <button type="button" onClick={onOpenAttention} className="group inline-flex items-center gap-1.5 rounded-full bg-amber-300 px-3.5 py-1.5 text-[12.5px] font-bold text-amber-950 transition-transform active:scale-[0.97]">
-          {attention.label ?? "확인 필요"} 확인하기<ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+          {attentionActionText(headline.tone, attention.label)}<ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
         </button>}
         {tools}
       </div>

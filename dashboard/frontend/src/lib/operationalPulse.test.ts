@@ -23,6 +23,7 @@ describe("operational pulse", () => {
   it("Workspaces 첫 랜딩은 첫 워크스페이스을 한 번만 자동 선택한다", () => {
     const source = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
     expect(source).toContain("initialSelectionApplied.current");
-    expect(source).toContain("setSelectedWorkspace(workspaces[0].name)");
+    expect(source).toContain("const first = firstDomainName(domainGroups)");
+    expect(source).toContain("setSelectedWorkspace(first)");
   });
 });

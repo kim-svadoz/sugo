@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ActivityEvent } from "../hooks/useActivityStream.js";
-import { domainPulse, groupDomainsByPulse, stageHeadline } from "./domainPulse.js";
+import { attentionActionText, domainPulse, firstDomainName, groupDomainsByPulse, stageHeadline } from "./domainPulse.js";
 import { selectFloorLanes } from "./workFloor.js";
 
 const NOW = Date.parse("2026-11-02T03:00:00Z");
@@ -55,6 +55,22 @@ describe("groupDomainsByPulse", () => {
       ["내 확인 필요", ["wait"]],
       ["조용함", ["new", "old", "none"]],
     ]);
+  });
+});
+
+describe("workspace presentation", () => {
+  it("화면에 정렬된 첫 도메인을 초기 선택한다", () => {
+    const groups = groupDomainsByPulse([
+      { ws: { name: "fashion-content" }, pulse: { tone: "quiet" as const, label: "작업 대기", at: 10 } },
+      { ws: { name: "service-a" }, pulse: { tone: "waiting" as const, label: "확인 대기", at: 20 } },
+    ]);
+
+    expect(firstDomainName(groups)).toBe("service-a");
+  });
+
+  it("정상적인 사용자 확인 단계는 차단이 아니라 승인 요청으로 안내한다", () => {
+    expect(attentionActionText("waiting", "차단 1건")).toBe("사용자 승인 필요");
+    expect(attentionActionText("paused", "차단 1건")).toBe("차단 1건 확인하기");
   });
 });
 

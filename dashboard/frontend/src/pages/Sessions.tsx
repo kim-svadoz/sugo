@@ -35,7 +35,7 @@ import { AgentCanvasOverlay } from "../components/AgentCanvasOverlay.js";
 import { DomainStage } from "../components/DomainStage.js";
 import { relativeTime } from "../components/WorkFloor.js";
 import { useDomainActivity } from "../hooks/useDomainActivity.js";
-import { domainPulse, groupDomainsByPulse, type DomainTone } from "../lib/domainPulse.js";
+import { domainPulse, firstDomainName, groupDomainsByPulse, type DomainTone } from "../lib/domainPulse.js";
 import { selectFloorLanes } from "../lib/workFloor.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
@@ -179,12 +179,6 @@ export function Sessions() {
   const initialSelectionApplied = useRef(false);
 
   useEffect(() => {
-    if (initialSelectionApplied.current || workspaces.length === 0) return;
-    initialSelectionApplied.current = true;
-    setSelectedWorkspace(workspaces[0].name);
-  }, [workspaces]);
-
-  useEffect(() => {
     setExpandedRepository(null);
     setSelectedTaskKey(null);
   }, [selectedWorkspace, inspectorPage]);
@@ -212,6 +206,14 @@ export function Sessions() {
     ws,
     pulse: domainPulse(ws, selectFloorLanes(domainEvents.get(ws.name) ?? [], pulseNow)),
   }))), [filteredWorkspaces, domainEvents, pulseNow]);
+
+  useEffect(() => {
+    if (initialSelectionApplied.current) return;
+    const first = firstDomainName(domainGroups);
+    if (!first) return;
+    initialSelectionApplied.current = true;
+    setSelectedWorkspace(first);
+  }, [domainGroups]);
 
   /** 검색 모드에서 이 도메인에 걸린 이력만. 인스펙터가 전체 이력 대신 이걸 보여준다. */
   const getSearchResultHistory = useCallback(

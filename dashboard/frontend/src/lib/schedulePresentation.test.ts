@@ -249,7 +249,7 @@ describe("schedule presentation", () => {
     const schedule = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     const stage = readFileSync(new URL("../components/DomainStage.tsx", import.meta.url), "utf8");
     expect(workspaces).toContain("/schedule?reviewWorkspace=");
-    expect(stage).toContain("확인하기");
+    expect(stage).toContain("attentionActionText(headline.tone, attention.label)");
     expect(workspaces).not.toContain("검토할 도메인 열기 →");
     expect(schedule).toContain('searchParams.get("reviewWorkspace")');
     expect(schedule).toContain("openSpec(reviewTarget)");
