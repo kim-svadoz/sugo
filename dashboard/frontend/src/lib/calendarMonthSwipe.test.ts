@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calendarMonthSwipeOffset, shiftCalendarMonth } from "./calendarMonthSwipe.js";
+import { calendarMonthSwipeOffset, canStartCalendarMonthSwipe, shiftCalendarMonth } from "./calendarMonthSwipe.js";
 
 describe("calendar month swipe", () => {
   it("moves to the next month after a deliberate left drag", () => {
@@ -18,5 +18,13 @@ describe("calendar month swipe", () => {
   it("crosses year boundaries", () => {
     expect(shiftCalendarMonth({ year: 2026, month: 11 }, 1)).toEqual({ year: 2027, month: 0 });
     expect(shiftCalendarMonth({ year: 2026, month: 0 }, -1)).toEqual({ year: 2025, month: 11 });
+  });
+
+  it("does not start a month swipe from an interactive calendar day", () => {
+    const target = {
+      closest: (selector: string) => selector.includes("[data-month-swipe-ignore='true']") ? {} : null,
+    };
+
+    expect(canStartCalendarMonthSwipe(target)).toBe(false);
   });
 });

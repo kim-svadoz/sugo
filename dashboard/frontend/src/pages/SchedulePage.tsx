@@ -34,7 +34,7 @@ import { PageHeading } from "../components/PageHeading.js";
 import { latestDevelopmentPreview } from "../lib/scheduleDevelopmentPreview.js";
 import { getProjectIntegrations, type IntegrationSelection } from "../api/projectIntegrationsApi.js";
 import { scheduleDeploymentEnvironments } from "../lib/scheduleDeploymentEnvironments.js";
-import { calendarMonthSwipeOffset, shiftCalendarMonth } from "../lib/calendarMonthSwipe.js";
+import { calendarMonthSwipeOffset, canStartCalendarMonthSwipe, shiftCalendarMonth } from "../lib/calendarMonthSwipe.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -111,7 +111,7 @@ export function SchedulePage() {
   function startMonthSwipe(event: ReactPointerEvent<HTMLDivElement>) {
     if (event.button !== 0 || !event.isPrimary) return;
     const target = event.target as HTMLElement;
-    if (target.closest("button, a, input, textarea, select, [draggable='true']")) return;
+    if (!canStartCalendarMonthSwipe(target)) return;
     monthSwipe.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
@@ -771,6 +771,7 @@ export function SchedulePage() {
               return (
                 <div
                   key={key}
+                  data-month-swipe-ignore="true"
                   onDoubleClick={() => setMemoTarget({ initialDate: key })}
                   onDragOver={(e) => {
                     e.preventDefault();

@@ -1,5 +1,11 @@
 export type MonthCursor = { year: number; month: number };
 
+type SwipeTarget = { closest: (selector: string) => unknown };
+
+export function canStartCalendarMonthSwipe(target: SwipeTarget): boolean {
+  return !target.closest("button, a, input, textarea, select, [draggable='true'], [data-month-swipe-ignore='true']");
+}
+
 export function shiftCalendarMonth(cursor: MonthCursor, offset: -1 | 1): MonthCursor {
   const next = new Date(cursor.year, cursor.month + offset, 1);
   return { year: next.getFullYear(), month: next.getMonth() };
