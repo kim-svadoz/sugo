@@ -1,5 +1,5 @@
 import { SpecDeploymentBadge } from "../components/SpecDeploymentBadge.js";
-import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { Archive, BookOpen, CalendarDays, CalendarPlus, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, FilePenLine, LayoutList, Pencil, Shield, Trash2, Workflow } from "lucide-react";
 import { cn } from "../lib/utils.js";
 import { getWorkspaceColor, workspaceChipStyle } from "../lib/workspaceSelection.js";
@@ -34,6 +34,7 @@ import { PageHeading } from "../components/PageHeading.js";
 import { latestDevelopmentPreview } from "../lib/scheduleDevelopmentPreview.js";
 import { getProjectIntegrations, type IntegrationSelection } from "../api/projectIntegrationsApi.js";
 import { scheduleDeploymentEnvironments } from "../lib/scheduleDeploymentEnvironments.js";
+import { calendarMonthSwipeOffset, shiftCalendarMonth } from "../lib/calendarMonthSwipe.js";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -88,6 +89,9 @@ export function SchedulePage() {
 
   const today = nowKST();
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
+  const monthSwipe = useRef<{ pointerId: number; startX: number; startY: number } | null>(null);
+  const suppressMonthClickUntil = useRef(0);
+  const [monthDragX, setMonthDragX] = useState(0);
   const [scheduleView, setScheduleView] = useState<"agenda" | "month">("agenda");
   const [selected, setSelected] = useState<ScheduledSpec | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
@@ -103,6 +107,42 @@ export function SchedulePage() {
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [integrationSelections, setIntegrationSelections] = useState<Map<string, IntegrationSelection[]>>(new Map());
+
+  function startMonthSwipe(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.button !== 0 || !event.isPrimary) return;
+    const target = event.target as HTMLElement;
+    if (target.closest("button, a, input, textarea, select, [draggable='true']")) return;
+    monthSwipe.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveMonthSwipe(event: ReactPointerEvent<HTMLDivElement>) {
+    const swipe = monthSwipe.current;
+    if (!swipe || swipe.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - swipe.startX;
+    const deltaY = event.clientY - swipe.startY;
+    if (Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return;
+    setMonthDragX(Math.max(-36, Math.min(36, deltaX * 0.18)));
+  }
+
+  function finishMonthSwipe(event: ReactPointerEvent<HTMLDivElement>) {
+    const swipe = monthSwipe.current;
+    if (!swipe || swipe.pointerId !== event.pointerId) return;
+    const offset = calendarMonthSwipeOffset(event.clientX - swipe.startX, event.clientY - swipe.startY);
+    monthSwipe.current = null;
+    setMonthDragX(0);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (offset !== 0) {
+      suppressMonthClickUntil.current = Date.now() + 400;
+      setCursor((current) => shiftCalendarMonth(current, offset));
+    }
+  }
+
+  function cancelMonthSwipe(event: ReactPointerEvent<HTMLDivElement>) {
+    if (monthSwipe.current?.pointerId !== event.pointerId) return;
+    monthSwipe.current = null;
+    setMonthDragX(0);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -674,7 +714,7 @@ export function SchedulePage() {
           <div className="mb-2 flex shrink-0 items-center justify-between">
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => setCursor((c) => (c.month === 0 ? { year: c.year - 1, month: 11 } : { year: c.year, month: c.month - 1 }))}
+                onClick={() => setCursor((current) => shiftCalendarMonth(current, -1))}
                 className="rounded-lg border border-[var(--color-border)] p-1.5 text-[var(--color-text-muted)] hover:text-cyan-300"
               >
                 <ChevronLeft size={16} />
@@ -683,7 +723,7 @@ export function SchedulePage() {
                 {cursor.year}.{String(cursor.month + 1).padStart(2, "0")}
               </span>
               <button
-                onClick={() => setCursor((c) => (c.month === 11 ? { year: c.year + 1, month: 0 } : { year: c.year, month: c.month + 1 }))}
+                onClick={() => setCursor((current) => shiftCalendarMonth(current, 1))}
                 className="rounded-lg border border-[var(--color-border)] p-1.5 text-[var(--color-text-muted)] hover:text-cyan-300"
               >
                 <ChevronRight size={16} />
@@ -705,7 +745,20 @@ export function SchedulePage() {
             ))}
           </div>
 
-          <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-1 overflow-auto p-px">
+          <div
+            onPointerDown={startMonthSwipe}
+            onPointerMove={moveMonthSwipe}
+            onPointerUp={finishMonthSwipe}
+            onPointerCancel={cancelMonthSwipe}
+            onClickCapture={(event) => {
+              if (Date.now() > suppressMonthClickUntil.current) return;
+              event.preventDefault();
+              event.stopPropagation();
+              suppressMonthClickUntil.current = 0;
+            }}
+            className="grid min-h-0 flex-1 cursor-grab touch-pan-y grid-cols-7 grid-rows-6 gap-1 overflow-auto p-px active:cursor-grabbing"
+            style={{ transform: `translateX(${monthDragX}px)`, opacity: monthDragX === 0 ? 1 : 0.92, transition: monthDragX === 0 ? "transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease" : "none" }}
+          >
             {grid.map((day, dayIndex) => {
               const key = toDateKey(day);
               const inMonth = day.getMonth() === cursor.month;
