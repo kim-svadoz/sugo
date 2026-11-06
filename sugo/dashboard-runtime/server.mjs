@@ -45686,18 +45686,8 @@ function projectedTaskStatus(rawStatus, runtimeAssessment, workResult) {
 }
 async function workspaceAttention(db2, userId2, workspaceName) {
   const rows = (await getRoadmap(db2, userId2, workspaceName)).filter((n3) => n3.level === "task");
-  let blocked = 0;
-  let stale = 0;
-  let unverified = 0;
-  for (const row of rows) {
-    const status = row.display_status ?? row.status;
-    if (status === "blocked") blocked++;
-    else if (isStale(status, row.updated_at)) stale++;
-    if (isUnverifiedWorkResult(row.work_result)) unverified++;
-  }
-  const count = blocked + stale + unverified;
-  const label = blocked > 0 ? `\uCC28\uB2E8 ${blocked}\uAC74` : stale > 0 ? `\uD655\uC778 \uD544\uC694 ${stale}\uAC74` : unverified > 0 ? `\uAC80\uC99D ${unverified}\uAC74` : null;
-  return { count, label };
+  const count = rows.filter((row) => row.human_blocker != null && row.blocker_decision == null).length;
+  return { count, label: count > 0 ? `\uC0AC\uC6A9\uC790 \uD655\uC778 ${count}\uAC74` : null };
 }
 async function roadmapCounts2(db2, userId2, workspaceName) {
   const rows = (await getRoadmap(db2, userId2, workspaceName)).filter((n3) => n3.level === "task");
@@ -91402,7 +91392,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname8(fileURLToPath6(import.meta.url));
-    pkg = "0.58.8" ? { version: "0.58.8" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.58.9" ? { version: "0.58.9" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91530,7 +91520,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.58.8", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.58.9", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

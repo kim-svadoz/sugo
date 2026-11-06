@@ -123,7 +123,7 @@ it("미검증 Task와 상위 컨테이너를 검증 상태로 표시하고 완�
     const schedule = async () => (await request(f.app).get("/api/workspaces/schedule").set("Authorization", f.pat).expect(200)).body.specs[0];
     expect(await schedule()).toMatchObject({ status: "verification", done_task_count: 0, unverified_task_count: 1 });
     const workspaces = await request(f.app).get("/api/workspaces").set("Authorization", f.pat).expect(200);
-    expect(workspaces.body.workspaces[0]).toMatchObject({ roadmapCount: 1, roadmapDoneCount: 0, attentionCount: 1 });
+    expect(workspaces.body.workspaces[0]).toMatchObject({ roadmapCount: 1, roadmapDoneCount: 0, attentionCount: 0 });
     await f.approve(0).expect(200);
     expect((await view()).counts).toMatchObject({ done: 0, verification: 1 });
     await f.approve(1).expect(200);

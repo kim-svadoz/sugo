@@ -97,7 +97,7 @@ export interface WorkspaceSummary {
   historyCount: number;
   checkpointCount: number;
   projectCount: number;
-  /** 사람이 지금 확인해야 할 task(차단·6h 정체·미검증 완료)의 합계와 최우선 요약. */
+  /** 사용자의 답변을 기다리는 명시적 요청의 합계와 요약. */
   attentionCount: number;
   attentionLabel: string | null;
   /** `Recently Active (30d)` 필터의 기준. 활동이 전혀 없으면 null. */
@@ -138,18 +138,8 @@ function projectedTaskStatus(rawStatus: string, runtimeAssessment: unknown, work
 
 async function workspaceAttention(db: DbClient, userId: string, workspaceName: string): Promise<{ count: number; label: string | null }> {
   const rows = (await getRoadmap(db, userId, workspaceName)).filter(n => n.level === "task");
-  let blocked = 0;
-  let stale = 0;
-  let unverified = 0;
-  for (const row of rows) {
-    const status = row.display_status ?? row.status;
-    if (status === "blocked") blocked++;
-    else if (isStale(status, row.updated_at)) stale++;
-    if (isUnverifiedWorkResult(row.work_result)) unverified++;
-  }
-  const count = blocked + stale + unverified;
-  const label = blocked > 0 ? `차단 ${blocked}건` : stale > 0 ? `확인 필요 ${stale}건` : unverified > 0 ? `검증 ${unverified}건` : null;
-  return { count, label };
+  const count = rows.filter(row => row.human_blocker != null && row.blocker_decision == null).length;
+  return { count, label: count > 0 ? `사용자 확인 ${count}건` : null };
 }
 
 // roadmap count는 level='task'만, active는 COALESCE(manual_status,status)='in_progress'.

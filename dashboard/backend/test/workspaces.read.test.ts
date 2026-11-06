@@ -78,12 +78,26 @@ describe("GET /api/workspaces", () => {
     expect(res.body.workspaces[0].projects[0]).toMatchObject({ aws_synced: 1, aws_deployments: [{ environment: "dev", revision: 1, service: "orders-api-service" }] });
   });
 
-  it("차단·정체·미검증 완료 Task를 확인 필요 건수로 집계한다", async () => {
+  it("실제 미응답 사용자 요청만 확인 필요 건수로 집계한다", async () => {
     const { app, db, auth } = await seededApp();
     await db.exec("UPDATE sugo_roadmap_nodes SET status = 'blocked', note = '정책 확인 대기' WHERE id = 't1'");
     await db.exec("UPDATE sugo_roadmap_nodes SET work_result = ? WHERE id = 't2'", [JSON.stringify({ report: { completionGrade: "unverified" } })]);
-    const res = await request(app).get("/api/workspaces").set("Authorization", auth).expect(200);
-    expect(res.body.workspaces[0]).toMatchObject({ attentionCount: 2, attentionLabel: "차단 1건" });
+    const withoutRequest = await request(app).get("/api/workspaces").set("Authorization", auth).expect(200);
+    expect(withoutRequest.body.workspaces[0]).toMatchObject({ attentionCount: 0, attentionLabel: null });
+
+    await db.exec(
+      "UPDATE sugo_roadmap_nodes SET blocker_context = ?, blocker_response = NULL, blocker_answered_by = NULL, blocker_answered_at = NULL WHERE id = 't1'",
+      [JSON.stringify({ kind: "review_confirmation", stage: "REVIEW_RUNNING", question: "이 결과를 승인할까요?" })],
+    );
+    const withRequest = await request(app).get("/api/workspaces").set("Authorization", auth).expect(200);
+    expect(withRequest.body.workspaces[0]).toMatchObject({ attentionCount: 1, attentionLabel: "사용자 확인 1건" });
+
+    await db.exec(
+      "UPDATE sugo_roadmap_nodes SET blocker_response = ?, blocker_answered_by = ?, blocker_answered_at = ? WHERE id = 't1'",
+      ["승인", "u1", "2026-11-06 10:00:00"],
+    );
+    const answeredRequest = await request(app).get("/api/workspaces").set("Authorization", auth).expect(200);
+    expect(answeredRequest.body.workspaces[0]).toMatchObject({ attentionCount: 0, attentionLabel: null });
   });
 
   it("Workspace 요약도 raw status보다 versioned runtime assessment를 우선한다", async () => {

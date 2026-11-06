@@ -8,4 +8,12 @@ describe("BlockerDecisionPanel draft stability", () => {
     expect(source).not.toContain("[taskId, decision]");
     expect(source).toContain("decision?.response, decision?.answered_at");
   });
+
+  it("저장 결과를 다시 받아도 첫 클릭의 성공 안내를 지우지 않는다", () => {
+    const source = readFileSync(new URL("./BlockerDecisionPanel.tsx", import.meta.url), "utf8");
+
+    expect(source).not.toContain("}, [taskId, decision?.response, decision?.answered_at]);");
+    expect(source).toContain("}, [taskId]);");
+    expect(source).toContain("}, [decision?.response, decision?.answered_at]);");
+  });
 });
