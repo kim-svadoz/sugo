@@ -710,7 +710,19 @@ export function SchedulePage() {
           </section>
         ) : (
         /* 월간 캘린더 (KST 기준, 주말/공휴일 표시) */
-        <div className="ck-glass ck-card ck-stage-in flex min-h-0 flex-col overflow-hidden p-3">
+        <div
+          onPointerDown={startMonthSwipe}
+          onPointerMove={moveMonthSwipe}
+          onPointerUp={finishMonthSwipe}
+          onPointerCancel={cancelMonthSwipe}
+          onClickCapture={(event) => {
+            if (Date.now() > suppressMonthClickUntil.current) return;
+            event.preventDefault();
+            event.stopPropagation();
+            suppressMonthClickUntil.current = 0;
+          }}
+          className="ck-glass ck-card ck-stage-in flex min-h-0 cursor-grab touch-pan-y select-none flex-col overflow-hidden p-3 active:cursor-grabbing"
+        >
           <div className="mb-2 flex shrink-0 items-center justify-between">
             <div className="flex items-center gap-1.5">
               <button
@@ -746,17 +758,7 @@ export function SchedulePage() {
           </div>
 
           <div
-            onPointerDown={startMonthSwipe}
-            onPointerMove={moveMonthSwipe}
-            onPointerUp={finishMonthSwipe}
-            onPointerCancel={cancelMonthSwipe}
-            onClickCapture={(event) => {
-              if (Date.now() > suppressMonthClickUntil.current) return;
-              event.preventDefault();
-              event.stopPropagation();
-              suppressMonthClickUntil.current = 0;
-            }}
-            className="grid min-h-0 flex-1 cursor-grab touch-pan-y grid-cols-7 grid-rows-6 gap-1 overflow-auto p-px active:cursor-grabbing"
+            className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-1 overflow-auto p-px"
             style={{ transform: `translateX(${monthDragX}px)`, opacity: monthDragX === 0 ? 1 : 0.92, transition: monthDragX === 0 ? "transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease" : "none" }}
           >
             {grid.map((day, dayIndex) => {
