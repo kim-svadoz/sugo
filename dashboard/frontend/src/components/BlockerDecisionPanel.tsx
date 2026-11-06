@@ -64,7 +64,7 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
     }
     setResponse("확인, 진행");
     setConfirmDiscard(false);
-    void copyResume("확인, 진행", "승인으로 저장했습니다. 재개 프롬프트를 복사했습니다.");
+    void copyResume("확인, 진행", "승인으로 저장하고 재개 프롬프트를 복사했습니다. 기존 작업 세션에 붙여넣어 작업을 이어가세요.");
   }
 
   if (Boolean(blocker?.kind === "review_confirmation")) return <section id="review-confirmation-panel" className="space-y-3 rounded-xl border border-amber-300/25 bg-amber-300/[0.04] p-4">
@@ -78,7 +78,7 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
     {confirmDiscard && <div role="alert" className="rounded-lg border border-amber-300/30 bg-amber-300/[0.08] px-3 py-2 text-xs leading-relaxed text-amber-100"><strong>입력한 수정 요청이 있습니다.</strong> 승인하면 이 내용은 저장되지 않습니다. 승인하려면 ‘그래도 승인’을 누르세요.</div>}
     <div className="grid grid-cols-2 gap-2">
       <button type="button" disabled={busy} onClick={approveReview} className="rounded-lg bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-200 disabled:opacity-50">{confirmDiscard ? "그래도 승인" : "승인하고 진행"}</button>
-      <button type="button" disabled={busy || !revisionText.trim()} onClick={() => void copyResume(revisionText, "수정 요청으로 저장했습니다. 재개 프롬프트를 복사했습니다. 원래 작업 세션에 붙여넣어 이어가세요.")} className="rounded-lg border border-rose-300/25 bg-rose-400/[0.06] px-4 py-3 text-sm font-semibold text-rose-100 disabled:opacity-40">수정 요청</button>
+      <button type="button" disabled={busy || !revisionText.trim()} onClick={() => void copyResume(revisionText, "수정 요청으로 저장하고 재개 프롬프트를 복사했습니다. 기존 작업 세션에 붙여넣어 작업을 이어가세요.")} className="rounded-lg border border-rose-300/25 bg-rose-400/[0.06] px-4 py-3 text-sm font-semibold text-rose-100 disabled:opacity-40">수정 요청</button>
     </div>
     {decisionNotice && <p role="status" className="rounded-lg bg-black/20 px-3 py-2 text-xs text-emerald-200">{decisionNotice}</p>}
     {error && <p role="alert" className="text-xs text-rose-300">{error}</p>}

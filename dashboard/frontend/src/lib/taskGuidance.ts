@@ -115,7 +115,7 @@ export function taskGuidance(node: TaskGuidanceInput, now = Date.now()): TaskGui
     if (node.human_blocker?.kind === "review_confirmation"
       && node.runtime_assessment.status === "blocked"
       && node.runtime_assessment.currentStage === "REVIEW_RUNNING") {
-      return { ...guidance, nextAction: "작업 결과 확인 열기", action: "open_review_confirmation" };
+      return { ...guidance, label: "사용자 확인 필요", nextAction: "작업 결과 확인 열기", action: "open_review_confirmation" };
     }
     if (node.runtime_assessment.status === "completed") {
       const grade = workResult?.report?.completionGrade;

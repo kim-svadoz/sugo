@@ -34,6 +34,7 @@ describe("task guidance", () => {
       },
     }, now)).toMatchObject({
       kind: "blocked",
+      label: "사용자 확인 필요",
       currentStage: "REVIEW_RUNNING",
       nextAction: "작업 결과 확인 열기",
       action: "open_review_confirmation",

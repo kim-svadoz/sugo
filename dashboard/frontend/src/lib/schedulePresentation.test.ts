@@ -3,6 +3,11 @@ import { describe, expect, it } from "vitest";
 import { countUpcomingScheduledSpecs, daySpecOverflowClass, defaultSchedulePanelMode, isManualSpec, scheduleCardStyle, schedulePresentationReady, visibleRegisteredSpecs } from "./schedulePresentation.js";
 
 describe("schedule presentation", () => {
+  it("사용자 검토 대기 상태는 내부 blocked 값을 그대로 노출하지 않는다", () => {
+    const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
+    expect(source).toContain('selected.focus_task_human_blocker?.kind === "review_confirmation" ? "사용자 확인 필요"');
+  });
+
   it("워크스페이스 색상 순서가 오기 전에는 Schedule 카드를 노출하지 않는다", () => {
     expect(schedulePresentationReady([{}], null)).toBe(false);
     expect(schedulePresentationReady(null, [{}])).toBe(false);

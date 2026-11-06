@@ -839,7 +839,7 @@ export function SchedulePage() {
                   {savedFlash === "title" && <span className="text-[10.5px] font-semibold text-emerald-400">저장됨</span>}
                 </div>
               )}
-              <p className="font-mono text-[11px] text-[var(--color-text-dim)]">{selected.id} · {selected.status}</p>
+              <p className="font-mono text-[11px] text-[var(--color-text-dim)]">{selected.id} · {selected.focus_task_human_blocker?.kind === "review_confirmation" ? "사용자 확인 필요" : selected.status}</p>
               {(() => {
                 const guidance = scheduleAttention(selected);
                 return (
