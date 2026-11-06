@@ -44847,7 +44847,7 @@ async function projectSpecDeployments(db2, userId2, workspace, nodes5) {
   } catch {
     return result;
   }
-  if (!owned.size || !snapshots.length) return result;
+  if (!owned.size) return result;
   const byId = new Map(nodes5.map((n3) => [n3.id, n3]));
   const legacy = await localLegacyWorkResults(userId2, workspace);
   const sourceMemo = /* @__PURE__ */ new Map();
@@ -44874,14 +44874,13 @@ async function projectSpecDeployments(db2, userId2, workspace, nodes5) {
     }));
     const paths = [...new Set([spec.project_path, ...sources.map((s2) => s2?.projectPath)].filter((p3) => !!p3 && owned.has(p3)))];
     if (!paths.length && owned.size === 1) paths.push([...owned][0]);
-    const linked = paths.filter((path) => linkAwsDeployments(path, snapshots, [], mappings.get(path)).length > 0 || !!mappings.get(path)?.length);
-    if (!linked.length) continue;
     const resolved = await Promise.all(sources.map((source) => {
       if (!source) return null;
       const key2 = JSON.stringify(source);
       if (!sourceMemo.has(key2)) sourceMemo.set(key2, resolveSource(source, owned));
       return sourceMemo.get(key2);
     }));
+    const linked = paths.filter((path) => linkAwsDeployments(path, snapshots, [], mappings.get(path)).length > 0 || !!mappings.get(path)?.length);
     const environments = [];
     let stale = false;
     for (const environment of ORDER) {
@@ -91392,7 +91391,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname8(fileURLToPath6(import.meta.url));
-    pkg = "0.58.10" ? { version: "0.58.10" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.58.11" ? { version: "0.58.11" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91520,7 +91519,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.58.10", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.58.11", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

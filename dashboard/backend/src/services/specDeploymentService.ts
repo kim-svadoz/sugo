@@ -159,7 +159,7 @@ export async function projectSpecDeployments(db: DbClient, userId: string, works
     const rows = await db.query<{ name: string; region: string; payload: unknown; observed_at: string | null }>("SELECT a.name, a.region, s.payload, s.observed_at FROM user_aws_context_accounts a LEFT JOIN user_aws_context_snapshots s ON s.user_id = a.user_id AND s.account_name = a.name WHERE a.user_id = ?", [userId]);
     snapshots = rows.map(r => ({ accountName: r.name, region: r.region, inventory: parseMaybeJson(r.payload, []), observedAt: r.observed_at }));
   } catch { return result; }
-  if (!owned.size || !snapshots.length) return result;
+  if (!owned.size) return result;
   const byId = new Map(nodes.map(n => [n.id, n]));
   const legacy = await localLegacyWorkResults(userId, workspace);
   const sourceMemo = new Map<string, Promise<Source | null>>(); const includeMemo = new Map<string, Promise<boolean | null>>(); const commitMemo = new Map<string, Promise<string[] | null>>();
@@ -179,9 +179,8 @@ export async function projectSpecDeployments(db: DbClient, userId: string, works
     }));
     const paths = [...new Set([spec.project_path, ...sources.map(s => s?.projectPath)].filter((p): p is string => !!p && owned.has(p)))];
     if (!paths.length && owned.size === 1) paths.push([...owned][0]);
-    const linked = paths.filter(path => linkAwsDeployments(path, snapshots, [], mappings.get(path)).length > 0 || !!mappings.get(path)?.length);
-    if (!linked.length) continue;
     const resolved = await Promise.all(sources.map(source => { if (!source) return null; const key = JSON.stringify(source); if (!sourceMemo.has(key)) sourceMemo.set(key, resolveSource(source, owned)); return sourceMemo.get(key)!; }));
+    const linked = paths.filter(path => linkAwsDeployments(path, snapshots, [], mappings.get(path)).length > 0 || !!mappings.get(path)?.length);
     const environments: DeploymentEnvironment[] = []; let stale = false;
     for (const environment of ORDER) {
       const serviceRows: Array<{ project: string; evidence: DeploymentServiceEvidence }> = [];

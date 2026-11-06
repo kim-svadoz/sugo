@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { deploymentInclusionLabel, type SpecDeployment } from "../lib/specDeployment.js";
-import type { ScheduleDeploymentEnvironment } from "../lib/scheduleDeploymentEnvironments.js";
+import { hasLocalCommitEvidence, type ScheduleDeploymentEnvironment } from "../lib/scheduleDeploymentEnvironments.js";
 
 export function SpecDeploymentBadge({ deployment, title, environments: providedEnvironments }: { deployment?: SpecDeployment; title: string; environments?: ScheduleDeploymentEnvironment[] }) {
   const [open, setOpen] = useState(false);
@@ -24,7 +24,7 @@ export function SpecDeploymentBadge({ deployment, title, environments: providedE
     return () => { document.removeEventListener("keydown", key, true); (button.current ?? previous)?.focus(); };
   }, [open]);
   const environments = providedEnvironments ?? [
-    { key: "local", label: "LOCAL", reached: Boolean(deployment && deployment.environment !== "UNKNOWN") },
+    { key: "local", label: "LOCAL", reached: hasLocalCommitEvidence(deployment) },
     ...(deployment?.environments ?? []).map((item) => ({ key: item.environment, label: item.environment.toUpperCase(), reached: item.included > 0 })),
   ];
   const reached = environments.filter((item) => item.reached).at(-1);

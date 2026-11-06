@@ -7,11 +7,19 @@ export interface ScheduleDeploymentEnvironment {
   reached: boolean;
 }
 
+export function hasLocalCommitEvidence(deployment?: Pick<SpecDeployment, "sources">): boolean {
+  return Boolean(deployment?.sources?.some((source) =>
+    source.state === "committed"
+    && typeof source.commit === "string"
+    && /^[a-f0-9]{40,64}$/i.test(source.commit),
+  ));
+}
+
 export function scheduleDeploymentEnvironments(
   selections: IntegrationSelection[],
   deployment?: SpecDeployment,
 ): ScheduleDeploymentEnvironment[] {
-  const localReached = Boolean(deployment && deployment.environment !== "UNKNOWN");
+  const localReached = hasLocalCommitEvidence(deployment);
   const result: ScheduleDeploymentEnvironment[] = [{ key: "local", label: "LOCAL", reached: localReached }];
   const seen = new Set<string>();
   for (const selection of selections) {

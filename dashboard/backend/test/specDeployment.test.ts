@@ -19,6 +19,19 @@ import { createSqliteClient } from "../src/db/sqliteClient.js";
 import { syncWorkspace, syncRoadmap } from "../src/services/syncService.js";
 import { getRoadmap, getScheduledSpecs } from "../src/services/workspaceService.js";
 import { commitIncluded, projectSpecDeployments, resolveDeployedCommits } from "../src/services/specDeploymentService.js";
+it("keeps committed local evidence even when no AWS service is connected", async () => {
+ const db = createSqliteClient();
+ try {
+  await db.execScript(readFileSync(new URL("./schema.sqlite.sql", import.meta.url), "utf8"));
+  const project = join(tmpdir(), "local-only-deployment-project");
+  await syncWorkspace(db, { userId: "u", name: "ws", projects: [project] });
+  const deployment = (await projectSpecDeployments(db, "u", "ws", [
+   { id: "spec", level: "spec", parent: null, status: "done", project_path: project },
+   { id: "task", level: "task", parent: "spec", status: "done", work_result: { sourceRevision: { projectPath: project, state: "committed", commit: "a".repeat(40) } } },
+  ])).get("spec");
+  expect(deployment?.sources).toEqual([{ taskId: "task", project, commit: "a".repeat(40), state: "committed", patchVersion: undefined, recoveredFrom: undefined, summary: undefined }]);
+ } finally { await db.close(); }
+});
 it("checks actual Git ancestry, unrelated revisions, squash equivalent files and an explicit revert", async () => {
  const dir = mkdtempSync(join(tmpdir(), "sugo-deployment-git-"));
  const git = (...args: string[]) => execFileSync("git", ["-C", dir, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();

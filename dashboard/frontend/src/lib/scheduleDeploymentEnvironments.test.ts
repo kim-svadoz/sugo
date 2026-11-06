@@ -18,11 +18,35 @@ describe("scheduleDeploymentEnvironments", () => {
   it("matches deployment evidence by stored environment while displaying the account alias", () => {
     const environments = scheduleDeploymentEnvironments(
       [{ accountName: "개발 AWS", environment: "dev", service: "api" }],
-      { environment: "DEV", partial: false, total: 1, environments: [{ environment: "dev", included: 1, total: 1, unknown: false, services: [] }] },
+      {
+        environment: "DEV",
+        partial: false,
+        total: 1,
+        environments: [{ environment: "dev", included: 1, total: 1, unknown: false, services: [] }],
+        sources: [{ taskId: "task-1", project: "/project", commit: "a".repeat(40), state: "committed" }],
+      },
     );
     expect(environments).toEqual([
       { key: "local", label: "LOCAL", reached: true },
       { key: "개발 AWS", label: "개발 AWS", reached: true },
     ]);
+  });
+
+  it("lights LOCAL only when the SPEC has committed local work evidence", () => {
+    expect(scheduleDeploymentEnvironments([], {
+      environment: "UNKNOWN",
+      partial: false,
+      total: 1,
+      environments: [],
+      sources: [{ taskId: "task-1", project: "/project", commit: "a".repeat(40), state: "committed" }],
+    })).toEqual([{ key: "local", label: "LOCAL", reached: true }]);
+
+    expect(scheduleDeploymentEnvironments([], {
+      environment: "UNKNOWN",
+      partial: false,
+      total: 0,
+      environments: [],
+      sources: [],
+    })).toEqual([{ key: "local", label: "LOCAL", reached: false }]);
   });
 });
