@@ -151,15 +151,16 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("> 메모 추가</button>");
   });
 
-  it("Planning Inbox와 메모는 Calendar에서만 보인다", () => {
+  it("Calendar 레일은 Planning Inbox와 기한 미정 메모만 함께 보인다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain('useState<"backlog" | "memo">("backlog")');
-    expect(source).toContain('onClick={() => setPanelMode("memo")}');
-    expect(source).toContain("sortedMemos.map");
-    expect(source).toContain('panelMode === "memo"');
     expect(source).toContain("Planning Inbox");
+    expect(source).toContain("undatedMemos.map");
+    expect(source).toContain("agendaMemos.map");
+    expect(source).toContain("지난 메모 {pastMemos.length}개");
     expect(source).toContain('scheduleView === "month" && (');
     expect(source).toContain("whitespace-nowrap");
+    expect(source).not.toContain('useState<"backlog" | "memo">');
+    expect(source).not.toContain('setPanelMode("memo")');
     expect(source).not.toContain("scheduledMemos.map");
     expect(source).not.toContain("memoBacklog.map");
   });

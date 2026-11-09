@@ -267,16 +267,19 @@ export function SchedulePage() {
     return map;
   }, [memos]);
 
-  const sortedMemos = useMemo(
-    () => [...(memos ?? [])].sort((a, b) => {
-      if (!a.due_date) return 1;
-      if (!b.due_date) return -1;
-      return a.due_date.localeCompare(b.due_date);
-    }),
+  const monthStartKey = `${cursor.year}-${String(cursor.month + 1).padStart(2, "0")}-01`;
+  const undatedMemos = useMemo(
+    () => (memos ?? []).filter((memo) => !memo.due_date).sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
     [memos],
   );
-
-  const [panelMode, setPanelMode] = useState<"backlog" | "memo">("backlog");
+  const agendaMemos = useMemo(
+    () => (memos ?? []).filter((memo) => memo.due_date && memo.due_date >= monthStartKey).sort((a, b) => a.due_date!.localeCompare(b.due_date!)),
+    [memos, monthStartKey],
+  );
+  const pastMemos = useMemo(
+    () => (memos ?? []).filter((memo) => memo.due_date && memo.due_date < monthStartKey).sort((a, b) => b.due_date!.localeCompare(a.due_date!)),
+    [memos, monthStartKey],
+  );
   const commitmentViews = useMemo<CommitmentView[]>(() => {
     if (!specs) return [];
     if (commitments === null) return legacyCommitments(specs);
@@ -562,80 +565,56 @@ export function SchedulePage() {
         <div
           className="ck-glass ck-card flex min-w-0 flex-col gap-2 overflow-auto p-3 transition-colors"
           onDragOver={(event) => {
-            if (panelMode !== "backlog") return;
             event.preventDefault();
             event.dataTransfer.dropEffect = "move";
             setDragOverKey("backlog");
           }}
           onDragLeave={() => setDragOverKey((key) => (key === "backlog" ? null : key))}
-          onDrop={(e) => panelMode === "backlog" && dropScheduleItem(e, null)}
+          onDrop={(e) => dropScheduleItem(e, null)}
         >
-          <div className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-[var(--color-border)] p-0.5 text-[11px] font-semibold">
-            <button
-              onClick={() => setPanelMode("backlog")}
-              role="tab"
-              aria-selected={panelMode === "backlog"}
-              className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "backlog" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
-            >
-              Planning Inbox
-            </button>
-            <button
-              onClick={() => setPanelMode("memo")}
-              role="tab"
-              aria-selected={panelMode === "memo"}
-              className={cn("flex-1 rounded-md px-2 py-1 transition-colors", panelMode === "memo" ? "bg-cyan-500/15 text-cyan-300" : "text-[var(--color-text-dim)] hover:text-[var(--color-text-muted)]")}
-            >
-              메모
-            </button>
+          <div className="shrink-0 border-b border-[var(--color-border)] px-1 pb-2 text-[11px] font-semibold text-cyan-300">
+            Planning Inbox
           </div>
-
-          {panelMode === "backlog" ? (
-            <>
-              {planningInbox.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">날짜를 정할 작업이 없습니다.</p>}
-              {planningInbox.map((commitment) => {
-                const style = scheduleCardStyle(colorOf(commitment.workspace_name));
-                const action = commitmentNextAction(commitment);
-                const spec = specForCommitment(commitment);
-                return (
-                  <button
-                    key={commitment.id}
-                    type="button"
-                    onClick={() => spec && openSpec(spec)}
-                    style={style}
-                    className="flex min-h-[76px] flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)]"
-                  >
-                    <span className="w-full break-keep text-[12.5px] font-semibold leading-5">{commitment.title}</span>
-                    <span className="text-[10px] text-cyan-200">{action.label}</span>
-                    <span className="line-clamp-2 text-[9.5px] text-[var(--color-text-dim)]">{action.detail}</span>
-                  </button>
-                );
-              })}
-            </>
-          ) : (
-            <>
-              {sortedMemos.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">등록된 메모가 없습니다.</p>}
-              {sortedMemos.map((memo) => (
-                <button
-                  key={memo.id}
-                  draggable
-                  onDragStart={(event) => startMemoDrag(event, memo)}
-                  onDragEnd={() => setDragOverKey(null)}
-                  onClick={() => openMemo(memo)}
-                  className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border border-slate-400/45 bg-slate-400/[0.14] px-2.5 py-1.5 text-left text-[12px] font-medium text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing"
-                >
-                  <span className="flex min-w-0 items-center gap-1.5"><FilePenLine size={11} className="shrink-0 text-slate-300" /><span className="truncate">{memo.title}</span></span>
-                  <span className="font-mono text-[9.5px] text-slate-400">{memo.due_date ?? "기한 미정"}</span>
-                </button>
-              ))}
-            </>
-          )}
+          {planningInbox.length === 0 && undatedMemos.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">날짜를 정할 항목이 없습니다.</p>}
+          {planningInbox.map((commitment) => {
+            const style = scheduleCardStyle(colorOf(commitment.workspace_name));
+            const action = commitmentNextAction(commitment);
+            const spec = specForCommitment(commitment);
+            return (
+              <button
+                key={commitment.id}
+                type="button"
+                onClick={() => spec && openSpec(spec)}
+                style={style}
+                className="flex min-h-[76px] flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)]"
+              >
+                <span className="w-full break-keep text-[12.5px] font-semibold leading-5">{commitment.title}</span>
+                <span className="text-[10px] text-cyan-200">{action.label}</span>
+                <span className="line-clamp-2 text-[9.5px] text-[var(--color-text-dim)]">{action.detail}</span>
+              </button>
+            );
+          })}
+          {undatedMemos.length > 0 && planningInbox.length > 0 && <div className="my-1 border-t border-[var(--color-border)]" />}
+          {undatedMemos.map((memo) => (
+            <button
+              key={memo.id}
+              draggable
+              onDragStart={(event) => startMemoDrag(event, memo)}
+              onDragEnd={() => setDragOverKey(null)}
+              onClick={() => openMemo(memo)}
+              className="flex min-h-9 cursor-grab flex-col gap-1 rounded-lg border border-slate-400/45 bg-slate-400/[0.14] px-2.5 py-1.5 text-left text-[12px] font-medium text-slate-100 hover:bg-slate-400/20 active:cursor-grabbing"
+            >
+              <span className="flex min-w-0 items-center gap-1.5"><FilePenLine size={11} className="shrink-0 text-slate-300" /><span className="truncate">{memo.title}</span></span>
+              <span className="font-mono text-[9.5px] text-slate-400">기한 미정</span>
+            </button>
+          ))}
         </div>
         )}
 
         {scheduleView === "agenda" ? (
           <section className="ck-glass command-stage ck-stage-in flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)]" aria-label="실행 대기열">
             <div className="ck-scroll min-h-0 flex-1 overflow-auto p-4">
-              {agenda.length === 0 && sortedMemos.length === 0 ? (
+              {agenda.length === 0 && agendaMemos.length === 0 && pastMemos.length === 0 ? (
                 <div className="flex h-full min-h-56 flex-col items-center justify-center text-center">
                   <Check size={28} className="mb-3 text-emerald-300" />
                   <h3 className="text-base font-semibold text-white">해야 할 일이 없습니다</h3>
@@ -693,16 +672,26 @@ export function SchedulePage() {
                       </div>
                     </section>
                   ))}
-                  {sortedMemos.length > 0 && (
+                  {agendaMemos.length > 0 && (
                     <section aria-labelledby="agenda-memos">
                       <div className="mb-2.5 flex items-center gap-2.5">
                         <FilePenLine size={14} className="text-slate-300" />
                         <h3 id="agenda-memos" className="text-[14px] font-semibold tracking-[0.06em] text-slate-300">메모</h3>
                       </div>
                       <div className="grid gap-2 xl:grid-cols-2">
-                        {sortedMemos.map((memo) => <button key={memo.id} type="button" onClick={() => openMemo(memo)} className="flex min-h-[62px] items-center gap-3 rounded-xl border border-slate-400/25 bg-slate-400/[0.07] px-4 py-3 text-left transition-colors hover:bg-slate-400/[0.12]"><FilePenLine size={14} className="shrink-0 text-slate-300" /><span className="min-w-0 flex-1"><strong className="block truncate text-[13px] text-slate-100">{memo.title}</strong><span className="mt-1 block font-mono text-[10px] text-slate-500">{memo.due_date ?? "기한 없음"}</span></span></button>)}
+                        {agendaMemos.map((memo) => <button key={memo.id} type="button" onClick={() => openMemo(memo)} className="flex min-h-[62px] items-center gap-3 rounded-xl border border-slate-400/25 bg-slate-400/[0.07] px-4 py-3 text-left transition-colors hover:bg-slate-400/[0.12]"><FilePenLine size={14} className="shrink-0 text-slate-300" /><span className="min-w-0 flex-1"><strong className="block truncate text-[13px] text-slate-100">{memo.title}</strong><span className="mt-1 block font-mono text-[10px] text-slate-500">{memo.due_date}</span></span></button>)}
                       </div>
                     </section>
+                  )}
+                  {pastMemos.length > 0 && (
+                    <details className="group rounded-xl border border-slate-500/20 bg-slate-500/[0.04]">
+                      <summary className="cursor-pointer list-none px-4 py-3 text-[12px] font-semibold text-slate-400 marker:hidden hover:text-slate-200">
+                        지난 메모 {pastMemos.length}개 <span className="ml-1 inline-block transition-transform group-open:rotate-180">⌄</span>
+                      </summary>
+                      <div className="grid gap-2 border-t border-slate-500/20 p-3 xl:grid-cols-2">
+                        {pastMemos.map((memo) => <button key={memo.id} type="button" onClick={() => openMemo(memo)} className="flex min-h-[58px] items-center gap-3 rounded-lg border border-slate-500/20 bg-slate-500/[0.05] px-3 py-2.5 text-left transition-colors hover:bg-slate-400/[0.1]"><FilePenLine size={13} className="shrink-0 text-slate-500" /><span className="min-w-0 flex-1"><strong className="block truncate text-[12.5px] text-slate-300">{memo.title}</strong><span className="mt-1 block font-mono text-[9.5px] text-slate-600">{memo.due_date}</span></span></button>)}
+                      </div>
+                    </details>
                   )}
                 </div>
               )}
