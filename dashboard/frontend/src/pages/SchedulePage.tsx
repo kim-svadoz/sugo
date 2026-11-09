@@ -301,6 +301,7 @@ export function SchedulePage() {
   }, [commitments, specs]);
   const agenda = useMemo(() => buildCommitmentQueue(commitmentViews, todayKey), [commitmentViews, todayKey]);
   const planningInbox = useMemo(() => commitmentViews.filter((item) => item.state !== "completed" && item.state !== "cancelled" && !item.due_date), [commitmentViews]);
+  const hasPlanningInbox = planningInbox.length > 0 || undatedMemos.length > 0;
   const byDate = useMemo(() => {
     const map = new Map<string, CommitmentView[]>();
     for (const item of commitmentViews) {
@@ -560,8 +561,8 @@ export function SchedulePage() {
         <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">{errorMsg}</div>
       )}
 
-      <div className={cn("grid min-h-0 flex-1 grid-cols-1 gap-3 2xl:gap-4", scheduleView === "month" && "grid-cols-[clamp(150px,14vw,220px)_minmax(0,1fr)]")}>
-        {scheduleView === "month" && (
+      <div className={cn("grid min-h-0 flex-1 grid-cols-1 gap-3 2xl:gap-4", scheduleView === "month" && hasPlanningInbox && "grid-cols-[clamp(150px,14vw,220px)_minmax(0,1fr)]")}>
+        {scheduleView === "month" && hasPlanningInbox && (
         <div
           className="ck-glass ck-card flex min-w-0 flex-col gap-2 overflow-auto p-3 transition-colors"
           onDragOver={(event) => {
@@ -575,7 +576,6 @@ export function SchedulePage() {
           <div className="shrink-0 border-b border-[var(--color-border)] px-1 pb-2 text-[11px] font-semibold text-cyan-300">
             Planning Inbox
           </div>
-          {planningInbox.length === 0 && undatedMemos.length === 0 && <p className="text-[11.5px] text-[var(--color-text-dim)]">날짜를 정할 항목이 없습니다.</p>}
           {planningInbox.map((commitment) => {
             const style = scheduleCardStyle(colorOf(commitment.workspace_name));
             const action = commitmentNextAction(commitment);

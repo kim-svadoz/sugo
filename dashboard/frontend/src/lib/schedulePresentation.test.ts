@@ -154,10 +154,13 @@ describe("schedule presentation", () => {
   it("Calendar 레일은 Planning Inbox와 기한 미정 메모만 함께 보인다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     expect(source).toContain("Planning Inbox");
+    expect(source).toContain("const hasPlanningInbox = planningInbox.length > 0 || undatedMemos.length > 0");
+    expect(source).toContain('scheduleView === "month" && hasPlanningInbox && (');
+    expect(source).not.toContain("날짜를 정할 항목이 없습니다.");
     expect(source).toContain("undatedMemos.map");
     expect(source).toContain("agendaMemos.map");
     expect(source).toContain("지난 메모 {pastMemos.length}개");
-    expect(source).toContain('scheduleView === "month" && (');
+    expect(source).toContain('scheduleView === "month" && hasPlanningInbox && (');
     expect(source).toContain("whitespace-nowrap");
     expect(source).not.toContain('useState<"backlog" | "memo">');
     expect(source).not.toContain('setPanelMode("memo")');

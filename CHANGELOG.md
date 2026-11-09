@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.68.16 / Console 0.58.16] - 2026-11-09
+
+- 날짜를 정할 일정이나 메모가 없으면 월간 캘린더의 빈 Planning Inbox를 숨기고 캘린더를 전체 폭으로 표시합니다.
+
 ## [Plugin 0.68.15 / Console 0.58.15] - 2026-11-09
 
 - 일정 캘린더의 메모 탭을 없애고 기한 없는 메모를 Planning Inbox에 모으며, Agenda에서는 현재 달 이후 메모만 펼쳐 보고 지난 메모는 접어서 확인합니다.
