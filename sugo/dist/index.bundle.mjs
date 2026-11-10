@@ -25059,6 +25059,19 @@ var readerSchema = external_exports.object({
   urlPrefix: external_exports.string().trim().url().max(2048).refine((value) => value.startsWith("https://") || value.startsWith("http://")),
   mcpServer: external_exports.string().trim().min(1).max(120).regex(/^[A-Za-z0-9._-]+$/)
 });
+function normalizeReferenceReaderPrefix(value) {
+  const url = new URL(value.trim());
+  url.hash = "";
+  url.search = "";
+  const confluenceSpace = url.pathname.match(/^\/wiki\/spaces\/([^/]+)(?:\/.*)?$/);
+  if (confluenceSpace) url.pathname = `/wiki/spaces/${confluenceSpace[1]}/`;
+  return url.toString();
+}
+function matchesUrlPrefix(value, prefix) {
+  if (value.protocol.toLowerCase() !== prefix.protocol.toLowerCase() || value.host.toLowerCase() !== prefix.host.toLowerCase()) return false;
+  const base = prefix.pathname.endsWith("/") ? prefix.pathname : `${prefix.pathname}/`;
+  return value.pathname === prefix.pathname || value.pathname.startsWith(base);
+}
 async function planningDocsEnabled(path) {
   try {
     const parsed = JSON.parse(await readFile14(path, "utf8"));
@@ -25072,13 +25085,20 @@ async function loadReferenceReaders(path = join15(sugoHomeDir(), ".claude", "sug
     if (!await planningDocsEnabled(featuresPath)) return [];
     const parsed = JSON.parse(await readFile14(path, "utf8"));
     const result3 = external_exports.array(readerSchema).safeParse(parsed.referenceReaders);
-    return result3.success ? result3.data : [];
+    return result3.success ? result3.data.map((reader) => ({ ...reader, urlPrefix: normalizeReferenceReaderPrefix(reader.urlPrefix) })) : [];
   } catch {
     return [];
   }
 }
 function matchReferenceReader(url, readers) {
-  return readers.filter((reader) => url.startsWith(reader.urlPrefix)).sort((left, right) => right.urlPrefix.length - left.urlPrefix.length)[0];
+  try {
+    const target = new URL(url);
+    target.hash = "";
+    target.search = "";
+    return readers.map((reader) => ({ ...reader, urlPrefix: normalizeReferenceReaderPrefix(reader.urlPrefix) })).filter((reader) => matchesUrlPrefix(target, new URL(reader.urlPrefix))).sort((left, right) => new URL(right.urlPrefix).pathname.length - new URL(left.urlPrefix).pathname.length)[0];
+  } catch {
+    return void 0;
+  }
 }
 
 // src/dashboard/fetch.ts
@@ -28515,7 +28535,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.68.16" : "0.0.0-dev";
+  return true ? "0.68.17" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts

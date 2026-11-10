@@ -11,6 +11,37 @@ const readerSchema = z.object({
 export const referenceReadersSchema = z.object({ readers: z.array(readerSchema).max(30) }).strict();
 export type ReferenceReader = z.infer<typeof readerSchema>;
 
+export function normalizeReferenceReaderPrefix(value: string): string {
+  const url = new URL(value.trim());
+  url.hash = "";
+  url.search = "";
+  const confluenceSpace = url.pathname.match(/^\/wiki\/spaces\/([^/]+)(?:\/.*)?$/);
+  if (confluenceSpace) url.pathname = `/wiki/spaces/${confluenceSpace[1]}/`;
+  return url.toString();
+}
+
+export function normalizeReferenceReaders(readers: ReferenceReader[]): ReferenceReader[] {
+  return readers.map((reader) => ({ ...reader, urlPrefix: normalizeReferenceReaderPrefix(reader.urlPrefix) }));
+}
+
+export function matchReferenceReader(url: string, readers: ReferenceReader[]): ReferenceReader | undefined {
+  try {
+    const target = new URL(url);
+    target.hash = "";
+    target.search = "";
+    return normalizeReferenceReaders(readers)
+      .filter((reader) => {
+        const prefix = new URL(reader.urlPrefix);
+        if (target.protocol.toLowerCase() !== prefix.protocol.toLowerCase() || target.host.toLowerCase() !== prefix.host.toLowerCase()) return false;
+        const base = prefix.pathname.endsWith("/") ? prefix.pathname : `${prefix.pathname}/`;
+        return target.pathname === prefix.pathname || target.pathname.startsWith(base);
+      })
+      .sort((left, right) => new URL(right.urlPrefix).pathname.length - new URL(left.urlPrefix).pathname.length)[0];
+  } catch {
+    return undefined;
+  }
+}
+
 async function readSettings(path: string): Promise<Record<string, unknown>> {
   try {
     const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
@@ -23,11 +54,11 @@ async function readSettings(path: string): Promise<Record<string, unknown>> {
 
 export async function loadReferenceReaders(path: string): Promise<ReferenceReader[]> {
   const parsed = z.array(readerSchema).safeParse((await readSettings(path)).referenceReaders);
-  return parsed.success ? parsed.data : [];
+  return parsed.success ? normalizeReferenceReaders(parsed.data) : [];
 }
 
 export async function saveReferenceReaders(path: string, readers: ReferenceReader[]): Promise<void> {
-  const value = z.array(readerSchema).max(30).parse(readers);
+  const value = normalizeReferenceReaders(z.array(readerSchema).max(30).parse(readers));
   const settings = await readSettings(path);
   settings.referenceReaders = value;
   await mkdir(dirname(path), { recursive: true });

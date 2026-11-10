@@ -90761,6 +90761,32 @@ var init_harnessFeature = __esm({
 // ../dashboard/backend/src/services/referenceReaders.ts
 import { mkdir as mkdir5, readFile as readFile11, rename as rename3, writeFile as writeFile6 } from "node:fs/promises";
 import { dirname as dirname6 } from "node:path";
+function normalizeReferenceReaderPrefix(value) {
+  const url = new URL(value.trim());
+  url.hash = "";
+  url.search = "";
+  const confluenceSpace = url.pathname.match(/^\/wiki\/spaces\/([^/]+)(?:\/.*)?$/);
+  if (confluenceSpace) url.pathname = `/wiki/spaces/${confluenceSpace[1]}/`;
+  return url.toString();
+}
+function normalizeReferenceReaders(readers) {
+  return readers.map((reader) => ({ ...reader, urlPrefix: normalizeReferenceReaderPrefix(reader.urlPrefix) }));
+}
+function matchReferenceReader(url, readers) {
+  try {
+    const target = new URL(url);
+    target.hash = "";
+    target.search = "";
+    return normalizeReferenceReaders(readers).filter((reader) => {
+      const prefix = new URL(reader.urlPrefix);
+      if (target.protocol.toLowerCase() !== prefix.protocol.toLowerCase() || target.host.toLowerCase() !== prefix.host.toLowerCase()) return false;
+      const base = prefix.pathname.endsWith("/") ? prefix.pathname : `${prefix.pathname}/`;
+      return target.pathname === prefix.pathname || target.pathname.startsWith(base);
+    }).sort((left, right) => new URL(right.urlPrefix).pathname.length - new URL(left.urlPrefix).pathname.length)[0];
+  } catch {
+    return void 0;
+  }
+}
 async function readSettings(path) {
   try {
     const parsed = JSON.parse(await readFile11(path, "utf8"));
@@ -90772,10 +90798,10 @@ async function readSettings(path) {
 }
 async function loadReferenceReaders(path) {
   const parsed = external_exports.array(readerSchema).safeParse((await readSettings(path)).referenceReaders);
-  return parsed.success ? parsed.data : [];
+  return parsed.success ? normalizeReferenceReaders(parsed.data) : [];
 }
 async function saveReferenceReaders(path, readers) {
-  const value = external_exports.array(readerSchema).max(30).parse(readers);
+  const value = normalizeReferenceReaders(external_exports.array(readerSchema).max(30).parse(readers));
   const settings = await readSettings(path);
   settings.referenceReaders = value;
   await mkdir5(dirname6(path), { recursive: true });
@@ -90846,7 +90872,16 @@ function createReferenceReadersRouter(db2, secret, settingsPath) {
   });
   router.put("/", validateBody(referenceReadersSchema), async (req, res) => {
     await saveReferenceReaders(settingsPath, req.body.readers);
-    res.json(req.body);
+    res.json({ readers: normalizeReferenceReaders(req.body.readers) });
+  });
+  router.post("/preview", validateBody(referenceReadersSchema), (req, res) => {
+    const readers = normalizeReferenceReaders(req.body.readers);
+    res.json({ readers, changed: readers.some((reader, index) => reader.urlPrefix !== req.body.readers[index]?.urlPrefix) });
+  });
+  router.post("/match", (req, res) => {
+    const parsed = referenceReadersSchema.safeParse({ readers: req.body?.readers });
+    if (!parsed.success || typeof req.body?.url !== "string") return res.status(400).json({ error: "invalid_request" });
+    res.json({ match: matchReferenceReader(req.body.url, parsed.data.readers) ?? null });
   });
   return router;
 }
@@ -91391,7 +91426,7 @@ var init_index = __esm({
     init_contextAutoRefreshService();
     init_weeklySettingsService();
     __dirname2 = dirname8(fileURLToPath6(import.meta.url));
-    pkg = "0.58.16" ? { version: "0.58.16" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
+    pkg = "0.58.17" ? { version: "0.58.17" } : JSON.parse(readFileSync(join16(__dirname2, "..", "package.json"), "utf8"));
     if (!process.env.SUGO_DASHBOARD_EMBEDDED && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
       main();
     }
@@ -91519,7 +91554,7 @@ await bootstrapLocalDashboard2(db, {
 var stopContextAutoRefresh = startContextAutoRefresh2(db, awsContextClient, pinpointClient, process.env.SUGO_INTEGRATION_FEATURES_PATH);
 var stopWeeklySchedule = startWeeklySchedule2({ weeklyHome: process.env.WEEKLY_HOME, home: sugoHome });
 var server = app.listen(port, HOST, () => {
-  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.58.16", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
+  void writeFile10(stateFile, `${JSON.stringify({ pid: process.pid, port, version: "0.58.17", startedAt: (/* @__PURE__ */ new Date()).toISOString() })}
 `);
   console.log(`Dashboard \u2192 ${apiUrl}`);
 });

@@ -11,6 +11,21 @@ const readerSchema = z.object({
 
 export type ReferenceReader = z.infer<typeof readerSchema>;
 
+export function normalizeReferenceReaderPrefix(value: string): string {
+  const url = new URL(value.trim());
+  url.hash = "";
+  url.search = "";
+  const confluenceSpace = url.pathname.match(/^\/wiki\/spaces\/([^/]+)(?:\/.*)?$/);
+  if (confluenceSpace) url.pathname = `/wiki/spaces/${confluenceSpace[1]}/`;
+  return url.toString();
+}
+
+function matchesUrlPrefix(value: URL, prefix: URL): boolean {
+  if (value.protocol.toLowerCase() !== prefix.protocol.toLowerCase() || value.host.toLowerCase() !== prefix.host.toLowerCase()) return false;
+  const base = prefix.pathname.endsWith("/") ? prefix.pathname : `${prefix.pathname}/`;
+  return value.pathname === prefix.pathname || value.pathname.startsWith(base);
+}
+
 async function planningDocsEnabled(path: string): Promise<boolean> {
   try {
     const parsed = JSON.parse(await readFile(path, "utf8")) as { planningDocs?: unknown };
@@ -28,14 +43,22 @@ export async function loadReferenceReaders(
     if (!await planningDocsEnabled(featuresPath)) return [];
     const parsed = JSON.parse(await readFile(path, "utf8")) as { referenceReaders?: unknown };
     const result = z.array(readerSchema).safeParse(parsed.referenceReaders);
-    return result.success ? result.data : [];
+    return result.success ? result.data.map((reader) => ({ ...reader, urlPrefix: normalizeReferenceReaderPrefix(reader.urlPrefix) })) : [];
   } catch {
     return [];
   }
 }
 
 export function matchReferenceReader(url: string, readers: ReferenceReader[]): ReferenceReader | undefined {
-  return readers
-    .filter((reader) => url.startsWith(reader.urlPrefix))
-    .sort((left, right) => right.urlPrefix.length - left.urlPrefix.length)[0];
+  try {
+    const target = new URL(url);
+    target.hash = "";
+    target.search = "";
+    return readers
+      .map((reader) => ({ ...reader, urlPrefix: normalizeReferenceReaderPrefix(reader.urlPrefix) }))
+      .filter((reader) => matchesUrlPrefix(target, new URL(reader.urlPrefix)))
+      .sort((left, right) => new URL(right.urlPrefix).pathname.length - new URL(left.urlPrefix).pathname.length)[0];
+  } catch {
+    return undefined;
+  }
 }

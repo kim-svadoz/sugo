@@ -4,6 +4,10 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.68.17 / Console 0.58.17] - 2026-11-10
+
+- WIKI 주소 범위를 URL 경계에 맞게 정리하고, 저장 전 변경값 확인과 실제 spec-writer 기준의 링크 매칭 테스트를 제공합니다.
+
 ## [Plugin 0.68.16 / Console 0.58.16] - 2026-11-09
 
 - 날짜를 정할 일정이나 메모가 없으면 월간 캘린더의 빈 Planning Inbox를 숨기고 캘린더를 전체 폭으로 표시합니다.

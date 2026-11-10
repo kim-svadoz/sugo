@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BookOpenText, Check, Circle, CircleAlert, Copy, ExternalLink, Plus, Trash2 } from "lucide-react";
-import { getReferenceReaders, saveReferenceReaders, type ReferenceReader, type WikiSetupStatus } from "../api/referenceReadersApi.js";
+import { getReferenceReaders, previewReferenceReaders, saveReferenceReaders, testReferenceReader, type ReferenceReader, type WikiSetupStatus } from "../api/referenceReadersApi.js";
 
 type StepState = "complete" | "required" | "unknown" | "blocked" | "missing" | "pending";
 
@@ -22,6 +22,10 @@ export function ReferenceReadersPanel() {
   const [routeSaved, setRouteSaved] = useState(false);
   const [routeDirty, setRouteDirty] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [pendingNormalized, setPendingNormalized] = useState<ReferenceReader[] | null>(null);
+  const [testUrl, setTestUrl] = useState("");
+  const [testMatch, setTestMatch] = useState<ReferenceReader | null>(null);
+  const [testPending, setTestPending] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +37,7 @@ export function ReferenceReadersPanel() {
     setReaders((current) => current.map((reader) => reader.id === id ? { ...reader, [key]: value } : reader));
     setSaved(false);
     setRouteDirty(true);
+    setPendingNormalized(null);
   };
   const valid = readers.every((reader) => {
     try { return ["http:", "https:"].includes(new URL(reader.urlPrefix).protocol) && !!reader.mcpServer.trim(); } catch { return false; }
@@ -66,9 +71,74 @@ export function ReferenceReadersPanel() {
   };
 
   const addAtlassianRule = () => {
-    setReaders((current) => [...current, { id: crypto.randomUUID(), urlPrefix: "", mcpServer: "atlassian" }]);
+    setReaders((current) => {
+      const existing = current.find((reader) => reader.mcpServer === "atlassian" && reader.urlPrefix.includes(".atlassian.net/"));
+      let urlPrefix = "https://{site}.atlassian.net/wiki/";
+      if (existing) {
+        try { urlPrefix = `${new URL(existing.urlPrefix).origin}/wiki/`; } catch { /* keep the editable default */ }
+      }
+      return [...current, { id: crypto.randomUUID(), urlPrefix, mcpServer: "atlassian" }];
+    });
     setSaved(false);
     setRouteDirty(true);
+    setPendingNormalized(null);
+  };
+
+  useEffect(() => {
+    const value = testUrl.trim();
+    if (!value || !valid) {
+      setTestMatch(null);
+      setTestPending(false);
+      return;
+    }
+    let cancelled = false;
+    setTestPending(true);
+    const timer = window.setTimeout(() => {
+      void testReferenceReader(value, readers)
+        .then((result) => { if (!cancelled) setTestMatch(result.match); })
+        .catch(() => { if (!cancelled) setTestMatch(null); })
+        .finally(() => { if (!cancelled) setTestPending(false); });
+    }, 250);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [readers, testUrl, valid]);
+
+  const persistReaders = async (value: ReferenceReader[]) => {
+    setSaving(true);
+    setError("");
+    try {
+      const result = await saveReferenceReaders(value);
+      setReaders(result.readers);
+      setSaved(true);
+      setRouteSaved(result.readers.some((reader) => reader.mcpServer === "atlassian"));
+      setRouteDirty(false);
+      setPendingNormalized(null);
+    } catch {
+      setError("WIKI 연동 설정을 저장하지 못했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const requestSave = async () => {
+    if (pendingNormalized) {
+      await persistReaders(pendingNormalized);
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const preview = await previewReferenceReaders(readers);
+      if (preview.changed) {
+        setPendingNormalized(preview.readers);
+        return;
+      }
+    } catch {
+      setError("WIKI 주소 범위를 확인하지 못했습니다.");
+      return;
+    } finally {
+      setSaving(false);
+    }
+    await persistReaders(readers);
   };
 
   return <section>
@@ -114,14 +184,22 @@ export function ReferenceReadersPanel() {
       </div>
       <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
         {readers.map((reader) => <div key={reader.id} className="grid gap-3 py-4 md:grid-cols-[minmax(0,1.5fr)_minmax(12rem,0.8fr)_auto] md:items-end">
-          <label className="text-xs text-[var(--color-text-muted)]"><span className="mb-2 block">WIKI 주소 범위</span><input value={reader.urlPrefix} onChange={(event) => update(reader.id, "urlPrefix", event.target.value)} placeholder="https://team.atlassian.net/wiki/" className="settings-field w-full font-mono" /><span className="mt-1.5 block text-[10px] text-[var(--color-text-dim)]">이 주소로 시작하는 모든 링크에 적용</span></label>
+          <label className="text-xs text-[var(--color-text-muted)]"><span className="mb-2 block">WIKI 주소 범위</span><input value={reader.urlPrefix} onChange={(event) => update(reader.id, "urlPrefix", event.target.value)} placeholder="https://team.atlassian.net/wiki/" className="settings-field w-full font-mono" /><span className="mt-1.5 block text-[10px] text-[var(--color-text-dim)]">같은 호스트와 이 경로 아래의 링크에 적용</span></label>
           <label className="text-xs text-[var(--color-text-muted)]"><span className="mb-2 block">MCP 서버 이름</span><input value={reader.mcpServer} onChange={(event) => update(reader.id, "mcpServer", event.target.value)} placeholder="team-docs" className="settings-field w-full font-mono" /><span className="mt-1.5 block text-[10px] text-[var(--color-text-dim)]">MCP 설정에 등록된 이름과 정확히 일치</span></label>
           <button type="button" aria-label="WIKI 연결 규칙 삭제" onClick={() => { setReaders((current) => current.filter((item) => item.id !== reader.id)); setSaved(false); setRouteDirty(true); }} className="settings-action settings-action-secondary px-3"><Trash2 size={14} /></button>
         </div>)}
         {!loading && readers.length === 0 && <p className="py-8 text-center text-xs text-[var(--color-text-dim)]">등록된 문서 연결 규칙이 없습니다.</p>}
       </div>
+      {pendingNormalized && <div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.05] p-4">
+        <p className="text-xs font-semibold text-amber-100">주소 범위를 아래 값으로 정리해 저장합니다.</p>
+        <div className="mt-3 space-y-2">{pendingNormalized.map((reader, index) => readers[index]?.urlPrefix !== reader.urlPrefix && <div key={reader.id} className="grid gap-1 font-mono text-[10px] leading-5 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center"><span className="truncate text-[var(--color-text-dim)]">{readers[index]?.urlPrefix}</span><span className="text-amber-200">→</span><span className="truncate text-amber-100">{reader.urlPrefix}</span></div>)}</div>
+      </div>}
+      <section className="rounded-xl border border-white/[0.07] bg-black/15 p-4">
+        <label className="text-xs text-[var(--color-text-muted)]"><span className="mb-2 block font-semibold text-[var(--color-text)]">링크 테스트</span><input value={testUrl} onChange={(event) => setTestUrl(event.target.value)} placeholder="확인할 WIKI 링크를 붙여 넣으세요" className="settings-field w-full font-mono" /></label>
+        {testUrl.trim() && <div className="mt-3 text-xs">{testPending ? <span className="text-[var(--color-text-dim)]">확인 중…</span> : testMatch ? <span className="text-emerald-200"><strong>{testMatch.mcpServer}</strong> · {testMatch.urlPrefix}</span> : <span className="text-amber-200">매칭되는 규칙 없음</span>}</div>}
+      </section>
       {error && <p className="text-xs text-rose-300">{error}</p>}
-      <div className="flex items-center gap-3"><button type="button" disabled={!valid || saving || loading} onClick={() => { setSaving(true); setError(""); void saveReferenceReaders(readers).then((value) => { setReaders(value.readers); setSaved(true); setRouteSaved(value.readers.some((reader) => reader.mcpServer === "atlassian")); setRouteDirty(false); }).catch(() => setError("WIKI 연동 설정을 저장하지 못했습니다.")).finally(() => setSaving(false)); }} className="settings-action settings-action-primary settings-action-compact">{saving ? "저장 중…" : "설정 저장"}</button>{saved && <span className="text-[11px] text-emerald-300">저장됨</span>}</div>
+      <div className="flex items-center gap-3"><button type="button" disabled={!valid || saving || loading} onClick={() => void requestSave()} className="settings-action settings-action-primary settings-action-compact">{saving ? "저장 중…" : pendingNormalized ? "정리된 주소로 저장" : "설정 저장"}</button>{saved && <span className="text-[11px] text-emerald-300">저장됨</span>}</div>
       <p className="text-[11px] leading-5 text-[var(--color-text-dim)]">spec-writer가 링크 본문을 읽어 spec.md에 고정합니다. feat는 확정된 SPEC을 사용하고, patch는 당시 SPEC과 완료 결과를 이어받아 원문을 임의로 다시 읽지 않습니다. MCP를 찾지 못하거나 문서를 읽지 못하면 작업을 완료하지 않고 원문을 요청합니다.</p>
     </div>
   </section>;

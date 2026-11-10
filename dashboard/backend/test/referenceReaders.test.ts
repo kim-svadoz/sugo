@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { loadReferenceReaders, saveReferenceReaders } from "../src/services/referenceReaders.js";
+import { loadReferenceReaders, matchReferenceReader, normalizeReferenceReaderPrefix, saveReferenceReaders } from "../src/services/referenceReaders.js";
 
 const dirs: string[] = [];
 
@@ -35,5 +35,27 @@ describe("reference reader settings", () => {
 
     await expect(saveReferenceReaders(path, [])).rejects.toThrow();
     expect(await readFile(path, "utf8")).toBe("{ malformed");
+  });
+
+  it("normalizes Confluence page URLs when saving", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "sugo-reference-readers-"));
+    dirs.push(dir);
+    const path = join(dir, "settings.json");
+    await saveReferenceReaders(path, [{
+      id: "wiki",
+      urlPrefix: "https://example.atlassian.net/wiki/spaces/PRODUCT/overview?homepageId=99024898",
+      mcpServer: "atlassian",
+    }]);
+    expect(await loadReferenceReaders(path)).toEqual([{
+      id: "wiki",
+      urlPrefix: "https://example.atlassian.net/wiki/spaces/PRODUCT/",
+      mcpServer: "atlassian",
+    }]);
+  });
+
+  it("uses the same URL-aware matching contract as spec-writer", () => {
+    const readers = [{ id: "wiki", urlPrefix: normalizeReferenceReaderPrefix("https://example.atlassian.net/wiki/spaces/AB/overview?x=1"), mcpServer: "atlassian" }];
+    expect(matchReferenceReader("https://EXAMPLE.atlassian.net/wiki/spaces/AB/pages/1#part", readers)?.mcpServer).toBe("atlassian");
+    expect(matchReferenceReader("https://example.atlassian.net/wiki/spaces/ABC/pages/1", readers)).toBeUndefined();
   });
 });

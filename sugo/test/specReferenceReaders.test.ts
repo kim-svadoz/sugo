@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { loadReferenceReaders, matchReferenceReader } from "../src/specReferenceReaders.js";
+import { loadReferenceReaders, matchReferenceReader, normalizeReferenceReaderPrefix } from "../src/specReferenceReaders.js";
 
 const dirs: string[] = [];
 
@@ -17,6 +17,27 @@ describe("spec reference readers", () => {
       { id: "team", urlPrefix: "https://docs.example.test/team/", mcpServer: "team-knowledge" },
     ];
     expect(matchReferenceReader("https://docs.example.test/team/plan", readers)?.mcpServer).toBe("team-knowledge");
+  });
+
+  it("normalizes a Confluence page URL to its space boundary", () => {
+    expect(normalizeReferenceReaderPrefix("https://example.atlassian.net/wiki/spaces/PRODUCT/overview?homepageId=99024898#top"))
+      .toBe("https://example.atlassian.net/wiki/spaces/PRODUCT/");
+  });
+
+  it("matches URL components while ignoring host case, query, and fragment", () => {
+    const readers = [{ id: "wiki", urlPrefix: "https://example.atlassian.net/wiki/spaces/PRODUCT/", mcpServer: "atlassian" }];
+    expect(matchReferenceReader("https://EXAMPLE.atlassian.net/wiki/spaces/PRODUCT/pages/1?draft=true#section", readers)?.mcpServer)
+      .toBe("atlassian");
+  });
+
+  it("does not match a partial path segment", () => {
+    const readers = [{ id: "ab", urlPrefix: "https://docs.example.test/wiki/spaces/AB/", mcpServer: "ab" }];
+    expect(matchReferenceReader("https://docs.example.test/wiki/spaces/ABC/pages/1", readers)).toBeUndefined();
+  });
+
+  it("routes Confluence short links through a wiki-wide rule", () => {
+    const readers = [{ id: "wiki", urlPrefix: "https://example.atlassian.net/wiki/", mcpServer: "atlassian" }];
+    expect(matchReferenceReader("https://example.atlassian.net/wiki/x/4_sXAQ", readers)?.mcpServer).toBe("atlassian");
   });
 
   it("ignores invalid private settings without breaking spec-writer", async () => {

@@ -23,3 +23,19 @@ export function saveReferenceReaders(readers: ReferenceReader[]): Promise<{ read
     body: JSON.stringify({ readers }),
   });
 }
+
+export function previewReferenceReaders(readers: ReferenceReader[]): Promise<{ readers: ReferenceReader[]; changed: boolean }> {
+  return apiJson("/api/reference-readers/preview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ readers }),
+  });
+}
+
+export function testReferenceReader(url: string, readers: ReferenceReader[]): Promise<{ match: ReferenceReader | null }> {
+  return apiJson("/api/reference-readers/match", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, readers }),
+  });
+}
