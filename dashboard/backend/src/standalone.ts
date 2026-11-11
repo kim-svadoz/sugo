@@ -62,8 +62,10 @@ process.env.LOCAL_DEV_DISPLAY_NAME = displayName;
 process.env.FRONTEND_URL = "";
 process.env.CORS_ORIGINS = `${apiUrl},http://sugo.localhost:${port}`;
 process.env.SUGO_DASHBOARD_API_URL = apiUrl;
-process.env.HARNESS_PATH = join(pluginRoot, "harness-library");
-process.env.SKILLS_PATH = pluginRoot;
+// 독립 Console runtime에서는 pluginRoot가 runtime 저장소를 가리킨다. Plugin launcher가 실제
+// 설치본 경로를 넘겼다면 그 값을 보존하고, 단독 실행일 때만 runtime 내부 경로를 fallback으로 쓴다.
+process.env.HARNESS_PATH ??= join(pluginRoot, "harness-library");
+process.env.SKILLS_PATH ??= pluginRoot;
 process.env.SUGO_WEEKLY_ENGINE = join(pluginRoot, "weekly");
 // Weekly 데이터도 Console과 같은 HOME을 쓴다. 임시 HOME으로 띄운 Console이 사용자의 ~/.weekly를 건드리지 않게 한다.
 process.env.WEEKLY_HOME ??= join(sugoHome, ".weekly");

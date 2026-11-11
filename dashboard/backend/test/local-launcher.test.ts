@@ -44,7 +44,7 @@ describe("local dashboard launcher", () => {
   });
 
   it("설치형 Console이 번들에 포함된 기본 Harness와 Skills를 자동으로 사용한다", () => {
-    expect(standalone).toContain('process.env.HARNESS_PATH = join(pluginRoot, "harness-library")');
-    expect(standalone).toContain('process.env.SKILLS_PATH = pluginRoot');
+    expect(standalone).toContain('process.env.HARNESS_PATH ??= join(pluginRoot, "harness-library")');
+    expect(standalone).toContain('process.env.SKILLS_PATH ??= pluginRoot');
   });
 });

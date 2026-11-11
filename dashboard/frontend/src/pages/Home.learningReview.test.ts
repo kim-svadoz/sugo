@@ -28,4 +28,10 @@ describe("Home 학습 리뷰 노트", () => {
     expect(source).not.toContain("근거 기록 ·");
     expect(source).not.toContain("{test.command");
   });
+
+  it("확인 필요 건수는 상단 작업 장면의 독립 KPI가 아니라 오늘의 리뷰 제목에 붙인다", () => {
+    expect(source).not.toContain('<span className="text-[9px] text-violet-200/70">확인 필요</span>');
+    expect(source).toContain('오늘의 리뷰</h2>{brief.decisions.length > 0 &&');
+    expect(source).toContain('건 확인 필요');
+  });
 });
