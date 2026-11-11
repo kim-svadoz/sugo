@@ -1,0 +1,60 @@
+/* Shared UI primitives. All visual values resolve through tokens.css. */
+.ds-button {
+  --button-accent: var(--color-status-neutral);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--control-radius);
+  font: inherit;
+  font-size: var(--text-label-size);
+  font-weight: var(--ds-font-weight-semibold);
+  transition: border-color var(--motion-fast) var(--ease-enter), background-color var(--motion-fast) var(--ease-enter), color var(--motion-fast) var(--ease-enter), opacity var(--motion-fast) var(--ease-enter);
+}
+.ds-button--medium { min-height: var(--control-height-md); padding: var(--ds-space-2) var(--ds-space-4); }
+.ds-button--small { min-height: var(--control-height-sm); padding: var(--ds-space-1) var(--ds-space-3); }
+.ds-button--xsmall { min-height: var(--control-height-xs); padding: 0 var(--ds-space-2); font-size: var(--text-caption-size); }
+.ds-button--brand { --button-accent: var(--color-action-primary); }
+.ds-button--neutral { --button-accent: var(--color-status-neutral); }
+.ds-button--danger { --button-accent: var(--color-status-danger); }
+.ds-button--warning { --button-accent: var(--color-status-warning); }
+.ds-button--solid { border-color: var(--button-accent); background: var(--button-accent); color: var(--color-background); }
+.ds-button--soft { border-color: color-mix(in srgb, var(--button-accent) 35%, transparent); background: color-mix(in srgb, var(--button-accent) 10%, transparent); color: color-mix(in srgb, var(--button-accent) 75%, white); }
+.ds-button--ghost { border-color: transparent; background: transparent; color: color-mix(in srgb, var(--button-accent) 75%, white); }
+.ds-button:hover:not(:disabled) { filter: brightness(1.12); }
+.ds-button:active:not(:disabled) { transform: translateY(1px); }
+.ds-button:disabled { opacity: 0.45; }
+.ds-button--block { width: 100%; }
+.ds-button__icon { display: inline-flex; }
+.ds-spinner { width: 0.9rem; height: 0.9rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ds-spin 0.8s linear infinite; }
+@keyframes ds-spin { to { transform: rotate(360deg); } }
+
+.ds-badge { display: inline-flex; align-items: center; min-height: 1.25rem; padding: 0 var(--ds-space-2); border: 1px solid currentColor; border-radius: var(--ds-radius-pill); font-family: var(--font-mono); font-size: var(--text-caption-size); line-height: 1; }
+.ds-badge--neutral { color: var(--color-status-neutral); background: color-mix(in srgb, var(--color-status-neutral) 8%, transparent); }
+.ds-badge--brand { color: var(--color-primary); background: var(--color-action-primary-soft); }
+.ds-badge--success { color: var(--color-status-success); background: color-mix(in srgb, var(--color-status-success) 8%, transparent); }
+.ds-badge--progress { color: var(--color-status-progress); background: color-mix(in srgb, var(--color-status-progress) 8%, transparent); }
+.ds-badge--warning { color: var(--color-status-warning); background: color-mix(in srgb, var(--color-status-warning) 8%, transparent); }
+.ds-badge--danger { color: var(--color-status-danger); background: color-mix(in srgb, var(--color-status-danger) 8%, transparent); }
+
+.ds-field-shell { display: grid; gap: var(--ds-space-1); color: var(--color-text); }
+.ds-field-label { font-size: var(--text-label-size); font-weight: var(--text-label-weight); }
+.ds-field { min-height: var(--control-height-md); width: 100%; border: 1px solid var(--color-border); border-radius: var(--control-radius); background: var(--color-background); color: var(--color-text); padding: var(--ds-space-2) var(--ds-space-3); font: inherit; font-size: var(--ds-font-size-body-sm); outline: none; }
+.ds-field:focus { border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-action-primary-soft); }
+.ds-field:disabled { opacity: 0.45; }
+.ds-field--error { border-color: var(--color-status-danger); }
+.ds-field-hint { color: var(--color-text-dim); font-size: var(--text-caption-size); }
+.ds-field-hint--error { color: var(--color-status-danger); }
+.ds-select { appearance: auto; }
+.ds-textarea { min-height: 6rem; resize: vertical; }
+
+.ds-surface { border: 1px solid var(--color-border); border-radius: var(--panel-radius); }
+.ds-surface--panel { background: var(--color-surface); }
+.ds-surface--raised { background: var(--surface-raised-1); }
+.ds-surface--inset { background: var(--color-background); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-button, .ds-spinner { animation: none; transition: none; }
+}

@@ -1,0 +1,42 @@
+/* Layer 3 typography roles. Values live in tokens.css. */
+.text-display-role {
+  color: var(--color-text-bright);
+  font-size: var(--text-display-size);
+  font-weight: var(--text-display-weight);
+  line-height: var(--text-display-line);
+  letter-spacing: -0.02em;
+}
+
+.text-title-role {
+  color: var(--color-text-bright);
+  font-size: var(--text-title-size);
+  font-weight: var(--text-title-weight);
+  line-height: var(--text-title-line);
+}
+
+.text-body-role {
+  color: var(--color-text);
+  font-size: var(--text-body-size);
+  font-weight: var(--text-body-weight);
+  line-height: var(--text-body-line);
+}
+
+.text-label-role {
+  color: var(--color-text);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line);
+}
+
+.text-caption-role {
+  color: var(--color-text-dim);
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-caption-weight);
+  line-height: var(--text-caption-line);
+}
+
+.text-role--muted { color: var(--color-text-muted); }
+.text-role--bright { color: var(--color-text-bright); }
+.text-role--brand { color: var(--color-primary); }
+.text-role--danger { color: var(--color-status-danger); }
+.text-role--mono { font-family: var(--font-mono); }

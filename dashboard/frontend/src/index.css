@@ -2,60 +2,9 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
 @import "tailwindcss";
-
-/* 폰트 스택 — UI=Plus Jakarta Sans(라틴)+Pretendard(한글 폴백), 코드/로그=JetBrains Mono. */
-@theme {
-  --font-sans: 'Plus Jakarta Sans', 'Pretendard Variable', Pretendard, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-  --font-mono: 'JetBrains Mono', 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, 'Cascadia Code', Menlo, Consolas, monospace;
-}
-
-:root {
-  /* Cyberpunk Console 팔레트 — 시안 네온 액센트 + 딥 슬레이트 콘솔. */
-  --color-primary: #00b4d8;        /* cyan — 네온 액센트(액티브 nav·포커스·주요 CTA) */
-  --color-primary-dark: #0891b2;   /* cyan-600 */
-  --color-secondary: #8b5cf6;      /* violet-500 — 패치 계보·보조 */
-  --color-accent: #f59e0b;         /* amber-500 — WARN/경고 */
-  --color-background: #040711;     /* 딥 다크 그리드 바탕 */
-  --color-surface: #0b111d;        /* 패널/카드 */
-  --color-surface-hover: #141c2b;  /* hover 서피스 */
-  --color-border: #1e293b;         /* slate-800 단일 보더 */
-  --color-text: #e2e8f0;           /* slate-200 본문 */
-  --color-text-muted: #94a3b8;     /* slate-400 보조 */
-  --color-text-bright: #f1f5f9;    /* slate-100 제목·강조 */
-  --color-text-dim: #7f8ea3;       /* 작은 메타도 surface에서 AA 대비를 유지 */
-
-  /* 제품 표면과 전환. 보더 대신 깊이로 현재 작업 맥락을 구분한다. */
-  --surface-canvas: #070b14;
-  --surface-raised-1: #101827;
-  --surface-raised-2: #152033;
-  --motion-fast: 140ms;
-  --motion-base: 220ms;
-  --ease-enter: cubic-bezier(.16, 1, .3, 1);
-
-  /* 역할 기반 색상. 기존 변수는 호환 별칭으로 유지하고 새 코드는 이 계층을 쓴다. */
-  --color-action-primary: #00b4d8;
-  --color-action-primary-soft: rgba(0, 180, 216, 0.12);
-  --color-focus-ring: #67e8f9;
-  --color-status-success: #34d399;
-  --color-status-progress: #60a5fa;
-  --color-status-warning: #fbbf24;
-  --color-status-danger: #fb7185;
-  --color-status-neutral: #94a3b8;
-  --color-deployment: #60a5fa;
-  --color-identity-code: #22d3ee;
-  --color-identity-test: #34d399;
-  --color-identity-docs: #7dd3fc;
-  --color-identity-review: #fbbf24;
-  --color-identity-sugo: #a78bfa;
-
-  /* 콘솔 로그 레벨 시맨틱 */
-  --color-agent: #00b4d8;          /* AGENT — cyan */
-  --color-warn: #f59e0b;           /* WARN — amber */
-  --color-info: #10b981;           /* INFO — emerald */
-  --color-syst: #94a3b8;           /* SYST — slate */
-  --color-ok: #10b981;             /* connected/verified */
-  --color-danger: #fb7185;         /* rose-400 — 실패/차단 */
-}
+@import "./styles/tokens.css";
+@import "./styles/typography.css";
+@import "./styles/ui.css";
 
 /* 100% 브라우저 배율에서도 110%로 보던 정보 밀도와 가독성을 기본값으로 제공한다.
    기준 크기는 화면 폭을 따른다. 큰 모니터(약 1900px 이상)는 21px, 노트북 폭(약 1470px)은 약 17.5px로 줄여

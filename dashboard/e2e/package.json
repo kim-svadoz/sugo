@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "description": "실물 검증 하네스: 실제 MySQL + 로컬 OIDC provider + Bitbucket mock + 헤드리스 브라우저",
+  "scripts": {
+    "shot:foundations": "node shot-foundations.mjs",
+    "visual:compare": "node compare-visual-snapshots.mjs"
+  },
   "devDependencies": {
     "oidc-provider": "^9.0.0",
     "playwright": "^1.62.0"

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AGENT_COLOR_HEX, AGENT_TONES } from "./colorSystem.js";
 import { WORKSPACE_COLORS } from "./workspaceSelection.js";
 
-const css = readFileSync(new URL("../index.css", import.meta.url), "utf8");
+const css = readFileSync(new URL("../styles/tokens.css", import.meta.url), "utf8");
 
 describe("semantic color system", () => {
   it("기반·상호작용·상태·식별 색상을 서로 다른 토큰 계층으로 제공한다", () => {

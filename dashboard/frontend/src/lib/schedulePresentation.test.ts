@@ -289,7 +289,7 @@ describe("schedule presentation", () => {
 
   it("정보가 많은 SPEC 상세는 확장 모달을 사용한다", () => {
     const schedule = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    const modal = readFileSync(new URL("../components/Modal.tsx", import.meta.url), "utf8");
+    const modal = readFileSync(new URL("../shared/ui/Modal.tsx", import.meta.url), "utf8");
     expect(schedule).toContain('size="xwide"');
     expect(modal).toContain('max-h-[92vh] max-w-[1320px]');
     expect(modal).toContain('max-h-[calc(92vh-60px)] px-9 py-7');

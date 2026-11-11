@@ -1,12 +1,13 @@
 {
   "name": "sugo-dashboard-frontend",
-  "version": "0.61.1",
+  "version": "0.61.2",
   "description": "Sugo Dashboard frontend - React + Vite + Tailwind v4",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "foundations": "vite --open /foundations.html",
     "typecheck": "tsc -b --noEmit",
     "build:local": "vite build --mode development"
   },
