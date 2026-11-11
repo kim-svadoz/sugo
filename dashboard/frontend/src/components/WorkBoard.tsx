@@ -14,6 +14,7 @@ import {
 import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
+import type { HomeAttentionItem } from "../lib/homePresentation.js";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { selectWorldState, weekBins, type MainSpot, type Specialist } from "../lib/workWorld.js";
@@ -62,7 +63,7 @@ function WorkflowGroupRail({ children, tone }: { children: string; tone: "human"
   </span>;
 }
 
-export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; waitingReviews: number }) {
+export function WorkBoard({ specs, waitingReviews, currentWork }: { specs: ScheduledSpec[]; waitingReviews: number; currentWork?: HomeAttentionItem }) {
   const navigate = useNavigate();
   const events = useActivityStream();
   const { data: workspaces } = useWorkspaces();
@@ -77,13 +78,18 @@ export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; w
   const bins = useMemo(() => weekBins(specs, new Date(now)), [specs, now]);
   const completedThisWeek = bins.reduce((sum, count) => sum + count, 0);
   const domainCount = workspaces?.length ?? 0;
+  const currentSpec = currentWork ? specs.find((spec) => spec.id === currentWork.id && spec.workspace_name === currentWork.workspace) : undefined;
+  const projectName = currentSpec?.project_path?.split(/[\\/]/).filter(Boolean).at(-1) ?? "프로젝트 미지정";
   useEffect(() => { if (world.live) setSelected(active); }, [active, world.live]);
 
   return <div className="work-world">
-    <div className="flex min-w-0 items-center gap-2.5">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
       <span className={`h-2 w-2 shrink-0 rounded-full ${world.live ? "bg-cyan-300 ck-pulse-dot" : waitingReviews > 0 ? "bg-violet-300" : "bg-slate-500"}`} />
-      <strong className="text-[13px] text-white">{world.live ? `${STATIONS.find((station) => station.id === active)?.label ?? "작업"} 진행 중` : waitingReviews > 0 ? `사용자 확인 ${waitingReviews}건 대기 중` : "AI가 다음 작업을 기다리고 있습니다"}</strong>
-      <span className="text-[11px] text-slate-500">각 작업대가 한 방향으로 결과를 넘깁니다.</span>
+      {currentWork ? <>
+        <span className="text-[10px] text-slate-500">도메인</span><strong className="text-[12px] text-cyan-100">{currentWork.workspace}</strong>
+        <span className="text-slate-700">/</span><span className="text-[10px] text-slate-500">프로젝트</span><strong className="text-[12px] text-slate-200">{projectName}</strong>
+        <span className="text-slate-700">/</span><span className="text-[10px] text-slate-500">작업</span><strong className="max-w-[48rem] truncate text-[12px] text-white">{currentWork.title}</strong>
+      </> : <strong className="text-[13px] text-white">{world.live ? `${STATIONS.find((station) => station.id === active)?.label ?? "작업"} 진행 중` : waitingReviews > 0 ? `사용자 확인 ${waitingReviews}건 대기 중` : "AI가 다음 작업을 기다리고 있습니다"}</strong>}
     </div>
 
     <div className="mt-3 grid min-h-[470px] overflow-hidden rounded-xl border border-white/[0.07] bg-[#080f1c] xl:grid-cols-[minmax(0,6fr)_220px]">
@@ -107,7 +113,12 @@ export function WorkBoard({ specs, waitingReviews }: { specs: ScheduledSpec[]; w
             const idleClass = station.owner === "human"
               ? "border-amber-300/15 bg-[#121a27] hover:border-amber-200/35 hover:bg-amber-300/[0.035]"
               : "border-cyan-300/[0.08] bg-[#0d1727] hover:border-cyan-200/25 hover:bg-cyan-300/[0.025]";
-            return <div key={station.id} className="relative min-w-0"><button type="button" onClick={() => setSelected(station.id)} className={`group flex min-h-[142px] w-full min-w-0 flex-col rounded-xl border px-3 py-3 text-left transition ${isSelected ? selectedClass : idleClass}`}>
+            const activeClass = isActive
+              ? station.owner === "human"
+                ? "ring-2 ring-amber-200/70 shadow-[0_0_0_1px_rgba(251,191,36,.28),0_0_28px_rgba(251,191,36,.22)]"
+                : "ring-2 ring-cyan-200/65 shadow-[0_0_0_1px_rgba(103,232,249,.22),0_0_28px_rgba(103,232,249,.18)]"
+              : "";
+            return <div key={station.id} className="relative min-w-0"><button type="button" onClick={() => setSelected(station.id)} className={`group flex min-h-[142px] w-full min-w-0 flex-col rounded-xl border px-3 py-3 text-left transition ${isSelected ? selectedClass : idleClass} ${activeClass}`}>
               <span className="flex items-center justify-between gap-1"><span className="font-mono text-[9px] font-semibold" style={{ color: accent }}>{station.step}</span>{isActive && <span className={`h-1.5 w-1.5 rounded-full ck-pulse-dot ${station.owner === "human" ? "bg-amber-200" : "bg-cyan-200"}`} />}</span>
               <span className={`mt-5 flex h-10 w-10 items-center justify-center rounded-xl border ${station.owner === "human" ? "border-amber-300/20 bg-amber-300/[0.07]" : "border-cyan-300/15 bg-cyan-300/[0.055]"}`} style={{ color: accent }}><Icon size={20} strokeWidth={1.7} /></span>
               <strong className={`mt-3 line-clamp-2 min-h-8 text-[10px] leading-4 ${station.owner === "human" ? "text-amber-100" : "text-cyan-50"}`}>{station.label}</strong>

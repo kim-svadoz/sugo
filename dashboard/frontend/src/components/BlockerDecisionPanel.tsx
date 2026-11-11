@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, MessageSquareWarning } from "lucide-react";
+import { Check, ClipboardCheck, Copy, ExternalLink, FileDiff, MessageSquareWarning } from "lucide-react";
 import { saveBlockerDecision, type BlockerDecision, type HumanBlocker } from "../api/roadmapMutationsApi.js";
 import { blockerResumePrompt } from "../lib/blockerDecision.js";
 import { presentSteKorean } from "../lib/steKorean.js";
@@ -67,21 +67,26 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
     void copyResume("확인, 진행", "승인으로 저장하고 재개 프롬프트를 복사했습니다. 기존 작업 세션에 붙여넣어 작업을 이어가세요.");
   }
 
-  if (Boolean(blocker?.kind === "review_confirmation")) return <section id="review-confirmation-panel" className="space-y-3 rounded-xl border border-amber-300/25 bg-amber-300/[0.04] p-4">
-    <h3 className="text-sm font-semibold text-white">작업 결과 확인</h3>
-    <p className="text-xs leading-relaxed text-slate-300">보고서를 확인한 뒤 아래에서 진행 또는 수정 요청을 선택하세요. 선택하면 결정을 저장하고 재개 프롬프트를 한 번에 복사합니다.</p>
-    <div className="grid grid-cols-2 gap-2">
-      <button type="button" onClick={onOpenReport} disabled={!onOpenReport} className="rounded-lg border border-violet-300/30 bg-violet-400/10 px-4 py-3 text-sm font-semibold text-violet-100 disabled:opacity-40">리뷰 보고서 HTML로 열기 ↗</button>
-      <button type="button" onClick={onOpenDiff} disabled={!onOpenDiff} className="rounded-lg border border-cyan-300/30 bg-cyan-400/[0.08] px-4 py-3 text-sm font-semibold text-cyan-100 disabled:opacity-40">이번 변경 파일 diff 보기 ↗</button>
-    </div>
-    <label className="block text-xs text-slate-300">수정 요청 내용<textarea value={revisionText} onChange={event => { setResponse(event.target.value); setConfirmDiscard(false); setDecisionNotice(null); }} placeholder="수정이 필요할 때만 구체적으로 입력하세요" className="mt-2 min-h-24 w-full rounded-lg border border-white/15 bg-slate-950/50 p-3 text-sm text-white" /></label>
+  if (Boolean(blocker?.kind === "review_confirmation")) return <section id="review-confirmation-panel" tabIndex={-1} className="scroll-mt-6 overflow-hidden rounded-2xl border border-amber-300/30 bg-[#111721] outline-none shadow-[0_18px_50px_rgba(0,0,0,.20)] focus-visible:ring-2 focus-visible:ring-amber-200/70">
+    <header className="flex items-start gap-3 border-b border-amber-200/10 bg-amber-300/[0.045] px-5 py-4">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/20 bg-amber-300/10 text-amber-200"><ClipboardCheck size={19} /></span>
+      <span className="min-w-0 flex-1"><span className="font-mono text-[10px] font-semibold tracking-[0.14em] text-amber-300">YOUR DECISION</span><h3 className="mt-1 text-base font-semibold text-white">작업 결과 확인</h3><p className="mt-1 text-xs leading-5 text-slate-400">검토 자료를 확인하고 진행 또는 수정 요청을 선택하세요. 결정은 저장되며 재개 프롬프트가 함께 복사됩니다.</p></span>
+      <span className="shrink-0 rounded-full border border-amber-300/20 bg-amber-300/[0.07] px-2.5 py-1 text-[10px] font-semibold text-amber-200">사용자 승인 필요</span>
+    </header>
+    <div className="space-y-5 p-5">
+      <section><div className="mb-2 flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-300/10 font-mono text-[10px] text-violet-200">1</span><h4 className="text-xs font-semibold text-slate-200">검토 자료</h4></div><div className="grid gap-2 sm:grid-cols-2">
+        <button type="button" onClick={onOpenReport} disabled={!onOpenReport} className="group flex items-center gap-3 rounded-xl border border-violet-300/25 bg-violet-400/[0.07] px-4 py-3 text-left outline-none transition-colors hover:border-violet-200/45 hover:bg-violet-400/[0.11] focus-visible:ring-2 focus-visible:ring-violet-200/60 disabled:opacity-40"><ExternalLink size={17} className="text-violet-300" /><span><strong className="block text-sm text-violet-100">리뷰 보고서 HTML로 열기</strong><span className="mt-0.5 block text-[10px] text-slate-400">요구사항, 테스트와 남은 위험 확인</span></span></button>
+        <button type="button" onClick={onOpenDiff} disabled={!onOpenDiff} className="group flex items-center gap-3 rounded-xl border border-cyan-300/25 bg-cyan-400/[0.055] px-4 py-3 text-left outline-none transition-colors hover:border-cyan-200/45 hover:bg-cyan-400/[0.09] focus-visible:ring-2 focus-visible:ring-cyan-200/60 disabled:opacity-40"><FileDiff size={17} className="text-cyan-300" /><span><strong className="block text-sm text-cyan-100">이번 변경 파일 diff 보기</strong><span className="mt-0.5 block text-[10px] text-slate-400">실제 변경된 코드와 파일 확인</span></span></button>
+      </div></section>
+      <section><div className="mb-2 flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-300/10 font-mono text-[10px] text-amber-200">2</span><h4 className="text-xs font-semibold text-slate-200">결정 입력</h4><span className="text-[10px] text-slate-500">수정할 내용이 있을 때만 작성</span></div><label className="sr-only" htmlFor="review-revision">수정 요청 내용</label><textarea id="review-revision" value={revisionText} onChange={event => { setResponse(event.target.value); setConfirmDiscard(false); setDecisionNotice(null); }} placeholder="예: Redis 장애 시 기존 서빙으로 전환되는 조건을 테스트에 추가해 주세요." className="min-h-24 w-full resize-y rounded-xl border border-white/10 bg-slate-950/55 p-3 text-sm text-white outline-none transition-colors placeholder:text-slate-600 focus:border-amber-300/45 focus:ring-2 focus:ring-amber-300/10" /></section>
     {confirmDiscard && <div role="alert" className="rounded-lg border border-amber-300/30 bg-amber-300/[0.08] px-3 py-2 text-xs leading-relaxed text-amber-100"><strong>입력한 수정 요청이 있습니다.</strong> 승인하면 이 내용은 저장되지 않습니다. 승인하려면 ‘그래도 승인’을 누르세요.</div>}
-    <div className="grid grid-cols-2 gap-2">
-      <button type="button" disabled={busy} onClick={approveReview} className="rounded-lg bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-200 disabled:opacity-50">{confirmDiscard ? "그래도 승인" : "승인하고 진행"}</button>
-      <button type="button" disabled={busy || !revisionText.trim()} onClick={() => void copyResume(revisionText, "수정 요청으로 저장하고 재개 프롬프트를 복사했습니다. 기존 작업 세션에 붙여넣어 작업을 이어가세요.")} className="rounded-lg border border-rose-300/25 bg-rose-400/[0.06] px-4 py-3 text-sm font-semibold text-rose-100 disabled:opacity-40">수정 요청</button>
-    </div>
+      <section><div className="mb-2 flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-300/10 font-mono text-[10px] text-emerald-200">3</span><h4 className="text-xs font-semibold text-slate-200">검토 완료 후 선택</h4></div><div className="grid gap-2 sm:grid-cols-2">
+        <button type="button" disabled={busy} onClick={approveReview} className="rounded-xl border border-emerald-300/25 bg-emerald-400/15 px-4 py-3 text-sm font-semibold text-emerald-100 outline-none transition-colors hover:bg-emerald-400/20 focus-visible:ring-2 focus-visible:ring-emerald-200/60 disabled:opacity-50">{confirmDiscard ? "그래도 승인" : "승인하고 진행"}</button>
+        <button type="button" disabled={busy || !revisionText.trim()} onClick={() => void copyResume(revisionText, "수정 요청으로 저장하고 재개 프롬프트를 복사했습니다. 기존 작업 세션에 붙여넣어 작업을 이어가세요.")} className="rounded-xl border border-rose-300/25 bg-rose-400/[0.06] px-4 py-3 text-sm font-semibold text-rose-100 outline-none transition-colors hover:bg-rose-400/[0.11] focus-visible:ring-2 focus-visible:ring-rose-200/60 disabled:opacity-40">수정 요청 보내기</button>
+      </div></section>
     {decisionNotice && <p role="status" className="rounded-lg bg-black/20 px-3 py-2 text-xs text-emerald-200">{decisionNotice}</p>}
     {error && <p role="alert" className="text-xs text-rose-300">{error}</p>}
+    </div>
   </section>;
 
   return <section id={blocker?.kind === "review_confirmation" ? "review-confirmation-panel" : undefined} tabIndex={blocker?.kind === "review_confirmation" ? -1 : undefined} className="scroll-mt-4 rounded-xl border border-orange-400/45 bg-orange-400/[0.07] p-3 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60">

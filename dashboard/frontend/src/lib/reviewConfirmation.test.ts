@@ -31,5 +31,8 @@ describe("reviewConfirmationSections", () => {
     expect(source).not.toContain("원래 작업 세션에 프롬프트를 붙여넣으면");
     expect(source).not.toContain(">확인, 진행</button>");
     expect(source).not.toContain("진행 결정 저장됨");
+    expect(source).toContain("검토 자료");
+    expect(source).toContain("결정 입력");
+    expect(source).toContain("검토 완료 후 선택");
   });
 });

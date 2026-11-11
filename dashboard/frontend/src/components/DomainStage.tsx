@@ -28,7 +28,7 @@ const TONE: Record<StageTone, { card: string; glow: string; dot: string; text: s
   rest: { card: "border-cyan-200/[0.10]", glow: "rgba(45,212,191,.10)", dot: "bg-slate-400", text: "text-slate-100", node: "border-slate-500/50 bg-slate-500/10 text-slate-300", halo: "" },
 };
 
-function Journey({ lane, tone }: { lane?: FloorLane; tone: StageTone }) {
+function Journey({ lane, tone, onOpenAttention }: { lane?: FloorLane; tone: StageTone; onOpenAttention?: () => void }) {
   const state = lane?.state;
   const finished = tone === "rest" && state?.passed.length === FLOOR_STATIONS.length;
   return <ol className={cn("grid w-full grid-cols-7", finished && "opacity-70")} aria-label="작업 단계">
@@ -47,8 +47,8 @@ function Journey({ lane, tone }: { lane?: FloorLane; tone: StageTone }) {
               {passed && !current ? <Check size={16} strokeWidth={2.6} /> : <Icon size={16} strokeWidth={1.9} />}
             </span>
           </span>
-          {myTurn
-            ? <span className="mt-2 rounded-full bg-violet-300 px-2 py-0.5 text-[11px] font-bold text-violet-950">내 차례</span>
+          {myTurn && onOpenAttention
+            ? <button type="button" onClick={onOpenAttention} aria-label="사용자 확인 영역 열기" className="mt-2 rounded-full bg-violet-300 px-2 py-0.5 text-[11px] font-bold text-violet-950 outline-none transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-105 hover:shadow-[0_0_16px_rgba(196,181,253,.45)] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-violet-100">내 차례</button>
             : <span className={cn("mt-2 truncate text-[12px]", current ? cn("font-semibold", TONE[tone].text) : passed ? "text-emerald-200/70" : "text-slate-500")}>{station.label}</span>}
         </span>
       </li>;
@@ -173,7 +173,7 @@ export function DomainStage({ workspace, projectPaths, selectedTaskKey, onSelect
       </div>
     </div>
     <div className="mt-5 border-t border-white/[0.06] pt-4">
-      <Journey lane={lane} tone={headline.tone} />
+      <Journey lane={lane} tone={headline.tone} onOpenAttention={onOpenAttention} />
     </div>
   </section>;
 }

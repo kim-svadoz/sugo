@@ -8,6 +8,7 @@ const home = readFileSync(new URL("../pages/Home.tsx", import.meta.url), "utf8")
 const sessions = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
 const workFloor = readFileSync(new URL("./WorkFloor.tsx", import.meta.url), "utf8");
 const workBoard = readFileSync(new URL("./WorkBoard.tsx", import.meta.url), "utf8");
+const domainStage = readFileSync(new URL("./DomainStage.tsx", import.meta.url), "utf8");
 
 describe("Console 정보 구조", () => {
   it("최근 작업은 간결한 결과 요약만 보여주고 전체 기록은 Inspector Activity 탭에 둔다", () => {
@@ -95,6 +96,21 @@ describe("Console 정보 구조", () => {
     expect(workBoard).not.toContain('aria-label="사용자와 AI의 작업 구간"');
     expect(workBoard).not.toContain("관련 화면 열기");
     expect(workBoard.match(/하네스 기준/g)?.length).toBe(1);
+  });
+
+  it("작업 레일은 현재 도메인·프로젝트·작업을 표시하고 활성 카드를 점보다 강하게 강조한다", () => {
+    expect(workBoard).toContain("currentWork");
+    expect(workBoard).toContain("projectName");
+    expect(workBoard).toContain("currentWork.workspace");
+    expect(workBoard).toContain("currentWork.title");
+    expect(workBoard).not.toContain("각 작업대가 한 방향으로 결과를 넘깁니다.");
+    expect(workBoard).toContain("ring-2 ring-amber-200/70");
+    expect(workBoard).toContain("shadow-[0_0_0_1px_rgba(251,191,36,.28),0_0_28px_rgba(251,191,36,.22)]");
+  });
+
+  it("사용자 확인 단계의 내 차례 배지는 판단 영역으로 이동하는 버튼이다", () => {
+    expect(domainStage).toContain("myTurn && onOpenAttention");
+    expect(domainStage).toContain('aria-label="사용자 확인 영역 열기"');
   });
 
   it("버전은 헤더 액션에서 빼고 사이드바 하단의 보조 정보로 둔다", () => {

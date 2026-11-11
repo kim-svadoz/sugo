@@ -34,4 +34,10 @@ describe("Home 학습 리뷰 노트", () => {
     expect(source).toContain('오늘의 리뷰</h2>{brief.decisions.length > 0 &&');
     expect(source).toContain('건 확인 필요');
   });
+
+  it("상단의 큰 이동 버튼을 제거하고 실제 판단 작업 문맥을 작업 레일에 전달한다", () => {
+    expect(source).not.toContain("판단할 작업 열기");
+    expect(source).not.toContain("작업 흐름 보기");
+    expect(source).toContain("currentWork={brief.decisions[0]}");
+  });
 });
