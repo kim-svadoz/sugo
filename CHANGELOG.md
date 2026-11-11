@@ -4,6 +4,12 @@ Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 �
 
 ## [Unreleased]
 
+## [Plugin 0.70.0 / Console 0.60.0] - 2026-11-11
+
+- Console runtime을 사용자별 외부 저장소에 독립 설치하고, 호환 외부본을 embedded fallback보다 우선 실행합니다.
+- Console runtime을 Plugin 업데이트와 별도로 설치·업데이트·롤백할 수 있으며, 롤백 버전은 명시적 업데이트 전까지 유지됩니다.
+- 손상되거나 호환되지 않는 외부 runtime은 실행하지 않고 호환 embedded runtime으로 안전하게 폴백합니다.
+
 ## [Plugin 0.69.0 / Console 0.59.0] - 2026-11-11
 
 - 새 프로젝트는 REQ 커버리지 게이트를 기본으로 사용하고, 테스트 근거 초안을 받아 요구사항별 검증 결과를 빠르게 확정할 수 있습니다.

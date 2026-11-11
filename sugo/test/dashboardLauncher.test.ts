@@ -53,6 +53,16 @@ describe("Node 버전 검사", () => {
 });
 
 describe("세션 시작 때 대시보드 실행", () => {
+  it("embedded runtime을 외부 저장소에 설치한 뒤 그 복사본으로 서버를 띄운다", async () => {
+    writeFileSync(join(pluginRoot, "dashboard-runtime", "runtime.json"), JSON.stringify({ runtimeSchemaVersion: 1, engineApiVersion: 1, consoleVersion: "0.59.0" }));
+
+    const result = await ensureDashboard({ pluginRoot, port, paths });
+
+    expect(result.kind).toBe("started");
+    expect((await fetchHealth(port))?.build).toBe("console-0.59.0");
+    expect(existsSync(join(home, ".sugo", "runtime", "console", "0.59.0", "server.mjs"))).toBe(true);
+  });
+
   it("처음에는 서버를 띄우고 주소를 알린다", async () => {
     const result = await ensure();
 

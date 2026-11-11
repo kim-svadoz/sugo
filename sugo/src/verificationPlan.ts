@@ -74,7 +74,7 @@ export function buildVerificationPlan(impact: ChangeImpact, changeType: "feature
   if (impact.areas.includes("plugin-runtime") || impact.areas.includes("plugin-packaging")) implementationChecks.push("plugin-build");
 
   const releaseChecks: string[] = [];
-  if (impact.products.includes("console")) releaseChecks.push("console-version", "embedded-console-refresh", "dashboard-e2e");
+  if (impact.products.includes("console")) releaseChecks.push("console-version", "external-runtime-promotion", "dashboard-e2e");
   if (impact.products.includes("plugin")) releaseChecks.push("plugin-version", "cold-smoke-core");
 
   const fingerprintInput = JSON.stringify({ files: impact.sourceFiles, risks: impact.risks, changeType });

@@ -4,7 +4,7 @@ import { closeSync, existsSync, openSync } from "node:fs";
 import { mkdir, readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { sugoHomeDir } from "../homeDir.js";
-import { resolveConsoleRuntime, type ConsoleRuntimeDescriptor } from "./consoleRuntime.js";
+import { prepareConsoleRuntime, type ConsoleRuntimeDescriptor } from "./consoleRuntime.js";
 
 /** 개인용 로컬 대시보드 서버의 실행·정지·상태. 세션 시작 훅과 uninstall이 같은 규칙을 쓴다. */
 
@@ -344,7 +344,7 @@ async function startServer(runtimeEntry: string, options: EnsureOptions, paths: 
 export async function ensureDashboard(options: EnsureOptions): Promise<EnsureResult> {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtime = options.runtime ?? resolveConsoleRuntime(options.pluginRoot);
+  const runtime = options.runtime ?? await prepareConsoleRuntime(options.pluginRoot);
   const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join(options.pluginRoot, "dashboard-runtime", "server.mjs") : undefined);
   const buildId = options.buildId ?? runtime?.buildId;
 

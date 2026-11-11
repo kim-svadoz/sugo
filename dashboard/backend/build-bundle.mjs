@@ -44,5 +44,5 @@ execFileSync(process.execPath, [resolve(frontendDir, "node_modules/vite/bin/vite
   env: { ...process.env, VITE_LOCAL_DEV: "true", VITE_API_BASE: "" },
   stdio: "inherit",
 });
-writeFileSync(resolve(outDir, "runtime.json"), `${JSON.stringify({ consoleVersion: pkg.version })}\n`);
+writeFileSync(resolve(outDir, "runtime.json"), `${JSON.stringify({ runtimeSchemaVersion: 1, engineApiVersion: 1, consoleVersion: pkg.version })}\n`);
 console.log(`대시보드 번들 완료: ${outDir}`);

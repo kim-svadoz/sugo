@@ -11,7 +11,7 @@ var __export = (target, all) => {
 };
 
 // src/lifecycle/dashboardStartHook.ts
-import { dirname as dirname4, join as join10 } from "node:path";
+import { dirname as dirname5, join as join10 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/dashboard/syncAll.ts
@@ -264,17 +264,17 @@ function serializeHistory(userId, workspaceName, workLog) {
     estimationBasis: workLog.metrics?.estimationBasis
   };
 }
-function serializeCheckpoint(userId, workspaceName, cp) {
+function serializeCheckpoint(userId, workspaceName, cp2) {
   return {
     userId,
     workspaceName,
-    id: cp.id,
-    title: cp.title,
-    category: cp.category,
-    appliesTo: cp.applies_to,
-    checklist: cp.checklist,
-    checkpointDate: cp.created_at,
-    expiresAt: cp.expires_at
+    id: cp2.id,
+    title: cp2.title,
+    category: cp2.category,
+    appliesTo: cp2.applies_to,
+    checklist: cp2.checklist,
+    checkpointDate: cp2.created_at,
+    expiresAt: cp2.expires_at
   };
 }
 function serializeSpec(userId, workspaceName, spec) {
@@ -7246,22 +7246,27 @@ async function syncAllWorkspaceData() {
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { closeSync, existsSync as existsSync2, openSync } from "node:fs";
-import { mkdir as mkdir10, readFile as readFile11, rm as rm3, stat as stat2 } from "node:fs/promises";
+import { mkdir as mkdir11, readFile as readFile11, rm as rm4, stat as stat2 } from "node:fs/promises";
 import { join as join9 } from "node:path";
 
 // src/lifecycle/consoleRuntime.ts
-import { existsSync, readFileSync } from "node:fs";
-import { join as join8 } from "node:path";
-function resolveConsoleRuntime(pluginRoot2) {
-  const runtimeRoot = join8(pluginRoot2, "dashboard-runtime");
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { cp, mkdir as mkdir10, rename as rename2, rm as rm3 } from "node:fs/promises";
+import { basename, dirname as dirname4, join as join8 } from "node:path";
+var CONSOLE_RUNTIME_SCHEMA_VERSION = 1;
+var CONSOLE_ENGINE_API_VERSION = 1;
+function consoleRuntimeStoreRoot(home = sugoHomeDir()) {
+  return join8(home, ".sugo", "runtime", "console");
+}
+function runtimeDescriptor(runtimeRoot, source) {
   const entryPath = join8(runtimeRoot, "server.mjs");
   const manifestPath = join8(runtimeRoot, "runtime.json");
   if (!existsSync(entryPath) || !existsSync(manifestPath)) return null;
   try {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-    if (typeof manifest.consoleVersion !== "string" || !manifest.consoleVersion.trim()) return null;
+    if (manifest.runtimeSchemaVersion !== CONSOLE_RUNTIME_SCHEMA_VERSION || manifest.engineApiVersion !== CONSOLE_ENGINE_API_VERSION || typeof manifest.consoleVersion !== "string" || !manifest.consoleVersion.trim() || !versionParts(manifest.consoleVersion)) return null;
     return {
-      source: "embedded",
+      source,
       runtimeRoot,
       entryPath,
       consoleVersion: manifest.consoleVersion,
@@ -7270,6 +7275,68 @@ function resolveConsoleRuntime(pluginRoot2) {
   } catch {
     return null;
   }
+}
+function readActive(storeRoot) {
+  try {
+    const value = JSON.parse(readFileSync(join8(storeRoot, "active.json"), "utf8"));
+    return typeof value.version === "string" && value.version.length > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+function versionParts(version) {
+  if (!/^\d+\.\d+\.\d+$/.test(version)) return null;
+  return version.split(".").map(Number);
+}
+function compareConsoleVersions(left, right) {
+  const a = versionParts(left);
+  const b = versionParts(right);
+  if (!a || !b) return left.localeCompare(right);
+  for (let index = 0; index < 3; index++) {
+    if (a[index] !== b[index]) return a[index] - b[index];
+  }
+  return 0;
+}
+async function writeActive(storeRoot, active) {
+  await mkdir10(storeRoot, { recursive: true });
+  await atomicWriteFile(join8(storeRoot, "active.json"), `${JSON.stringify(active)}
+`);
+}
+async function installConsoleRuntime(runtimeRoot, home = sugoHomeDir(), pinned = false) {
+  const source = runtimeDescriptor(runtimeRoot, "external");
+  if (!source) return null;
+  const storeRoot = consoleRuntimeStoreRoot(home);
+  return withFileLock(join8(storeRoot, ".runtime.lock"), async () => {
+    const target = join8(storeRoot, source.consoleVersion);
+    if (existsSync(target) && !runtimeDescriptor(target, "external")) {
+      await rm3(target, { recursive: true, force: true });
+    }
+    if (!existsSync(target)) {
+      await mkdir10(dirname4(target), { recursive: true });
+      const temporary = join8(storeRoot, `.install-${basename(target)}-${process.pid}-${Date.now()}`);
+      await cp(runtimeRoot, temporary, { recursive: true, errorOnExist: true });
+      try {
+        await rename2(temporary, target);
+      } catch (error) {
+        await rm3(temporary, { recursive: true, force: true });
+        if (!existsSync(target)) throw error;
+      }
+    }
+    const installed = runtimeDescriptor(target, "external");
+    if (!installed) return null;
+    await writeActive(storeRoot, { version: installed.consoleVersion, pinned });
+    return installed;
+  });
+}
+async function prepareConsoleRuntime(pluginRoot2, home = sugoHomeDir()) {
+  const storeRoot = consoleRuntimeStoreRoot(home);
+  const active = readActive(storeRoot);
+  const selected = active ? runtimeDescriptor(join8(storeRoot, active.version), "external") : null;
+  const embeddedRoot = join8(pluginRoot2, "dashboard-runtime");
+  const embedded = runtimeDescriptor(embeddedRoot, "embedded");
+  if (!embedded) return selected ?? null;
+  if (selected && (active?.pinned || compareConsoleVersions(selected.consoleVersion, embedded.consoleVersion) >= 0)) return selected;
+  return installConsoleRuntime(embeddedRoot, home);
 }
 
 // src/lifecycle/dashboardRuntime.ts
@@ -7359,14 +7426,14 @@ async function stopDashboard(paths) {
   const state = await readServerState(paths);
   if (!state) return { stopped: true, unverified: false };
   if (!isAlive(state.pid)) {
-    await rm3(paths.stateFile, { force: true });
+    await rm4(paths.stateFile, { force: true });
     return { stopped: true, unverified: false };
   }
   if (!await fetchHealth(state.port)) return { stopped: false, unverified: true };
   process.kill(state.pid, "SIGTERM");
   if (!await waitUntil(() => !isAlive(state.pid), STOP_WAIT_MS)) process.kill(state.pid, "SIGKILL");
   await waitUntil(() => !isAlive(state.pid), STOP_WAIT_MS);
-  await rm3(paths.stateFile, { force: true });
+  await rm4(paths.stateFile, { force: true });
   return { stopped: !isAlive(state.pid), unverified: false };
 }
 async function readDashboardSettings(settingsFile) {
@@ -7395,15 +7462,15 @@ async function currentPort(options, paths) {
   return { ...preferred, port: owned ? state.port : preferred.port, state, owned };
 }
 async function acquireLock(paths) {
-  await mkdir10(paths.dataDir, { recursive: true });
+  await mkdir11(paths.dataDir, { recursive: true });
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await mkdir10(paths.lockDir);
+      await mkdir11(paths.lockDir);
       return true;
     } catch {
       const age = await stat2(paths.lockDir).then((s) => Date.now() - s.mtimeMs, () => 0);
       if (age < LOCK_STALE_MS) return false;
-      await rm3(paths.lockDir, { recursive: true, force: true });
+      await rm4(paths.lockDir, { recursive: true, force: true });
     }
   }
   return false;
@@ -7438,7 +7505,7 @@ async function startServer(runtimeEntry, options, paths, port) {
 async function ensureDashboard(options) {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtime = options.runtime ?? resolveConsoleRuntime(options.pluginRoot);
+  const runtime = options.runtime ?? await prepareConsoleRuntime(options.pluginRoot);
   const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join9(options.pluginRoot, "dashboard-runtime", "server.mjs") : void 0);
   const buildId = options.buildId ?? runtime?.buildId;
   try {
@@ -7457,7 +7524,7 @@ async function ensureDashboard(options) {
     if (health && !owned && isConsoleHealth(health)) return { kind: "running" };
     if (health && owned && health.build === buildId) return { kind: "running" };
     if (health && owned) await stopDashboard(paths);
-    else if (state) await rm3(paths.stateFile, { force: true });
+    else if (state) await rm4(paths.stateFile, { force: true });
     if (!await acquireLock(paths)) return { kind: "busy" };
     try {
       const preferred = (await preferredPort(options, paths)).port;
@@ -7475,7 +7542,7 @@ async function ensureDashboard(options) {
       if (settings.enabled !== true) return { kind: "started", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD588\uB2E4: ${url}` };
       return started;
     } finally {
-      await rm3(paths.lockDir, { recursive: true, force: true });
+      await rm4(paths.lockDir, { recursive: true, force: true });
     }
   } catch (error) {
     return { kind: "failed", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD558\uC9C0 \uBABB\uD588\uB2E4: ${error.message}. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` };
@@ -7483,7 +7550,7 @@ async function ensureDashboard(options) {
 }
 
 // src/lifecycle/dashboardStartHook.ts
-var pluginRoot = join10(dirname4(fileURLToPath(import.meta.url)), "..");
+var pluginRoot = join10(dirname5(fileURLToPath(import.meta.url)), "..");
 var result = await ensureDashboard({ pluginRoot });
 if ("message" in result && result.message) console.log(JSON.stringify({ systemMessage: result.message }));
 if (result.kind === "started" || result.kind === "running") {

@@ -15,7 +15,7 @@ describe("verification plan", () => {
     expect(plan.level).toBe("targeted");
     expect(plan.implementationChecks).toEqual(["targeted-test", "frontend-build"]);
     expect(plan.implementationChecks).not.toContain("backend-test");
-    expect(plan.releaseChecks).toEqual(["console-version", "embedded-console-refresh", "dashboard-e2e"]);
+    expect(plan.releaseChecks).toEqual(["console-version", "external-runtime-promotion", "dashboard-e2e"]);
   });
 
   it("gate, persistence, authentication, packaging, and coupled changes require full verification", () => {

@@ -65,12 +65,14 @@ try {
   for (const path of shipped) cpSync(join(source, path), join(plugin, path), { recursive: true });
   writeFileSync(join(project, "package.json"), JSON.stringify({ name: "e2e-project" }));
   const consoleVersion = readJson(join(plugin, "dashboard-runtime", "runtime.json")).consoleVersion;
+  const nextConsoleVersion = consoleVersion.replace(/(\d+)$/, (patch) => String(Number(patch) + 1));
 
   // 1. 첫 세션: 서버가 뜨고 연결 설정이 자동으로 채워진다.
   const first = runHook(plugin);
   check("첫 세션 훅이 정상 종료하고 시작을 알린다", first.status === 0 && first.stdout.includes("Sugo 대시보드를 시작했다"), first.stdout + first.stderr);
   const up = await health();
   check("서버가 응답하고 Console runtime 버전이 맞다", up?.status === "ok" && up.version === consoleVersion && up.build === `console-${consoleVersion}`, JSON.stringify(up));
+  check("embedded runtime을 외부 저장소에 승격해 실행한다", existsSync(join(home, ".sugo", "runtime", "console", consoleVersion, "server.mjs")) && readJson(join(home, ".sugo", "runtime", "console", "active.json")).version === consoleVersion);
   const settings = existsSync(settingsPath) ? readJson(settingsPath).dashboard : {};
   check("연결 설정이 자동으로 켜진다(사용자 작업 없음)", settings.enabled === true && settings.apiUrl === `http://localhost:${port}` && String(settings.apiToken).startsWith("sugo_pat_"));
   const page = await fetch(`${base}/`).then((r) => r.text());
@@ -118,18 +120,34 @@ try {
     JSON.stringify({ status: updated.status, stdout: updated.stdout, stderr: updated.stderr, build: afterUpdate?.build, beforeUpdate, after: statePid(), stillThere }));
   const plugin3 = join(root, "plugin3");
   cpSync(plugin2, plugin3, { recursive: true });
-  writeFileSync(join(plugin3, "dashboard-runtime", "runtime.json"), JSON.stringify({ consoleVersion: "0.59.1" }));
+  writeFileSync(join(plugin3, "dashboard-runtime", "runtime.json"), JSON.stringify({ runtimeSchemaVersion: 1, engineApiVersion: 1, consoleVersion: nextConsoleVersion }));
   const runtimeUpdated = runHook(plugin3);
   const runtimeHealth = await waitFor("updated console runtime", async () => {
     const current = await health();
-    return current?.build === "console-0.59.1" ? current : null;
+    return current?.build === `console-${nextConsoleVersion}` ? current : null;
   });
   const stillThereAfterRuntime = (await (await api("/api/workspaces")).json()).workspaces?.some((w) => w.name === "e2e-ws");
-  check("Console runtime이 업데이트되면 서버만 교체하고 데이터는 유지한다", runtimeUpdated.status === 0 && runtimeHealth?.build === "console-0.59.1" && statePid() !== beforeUpdate && stillThereAfterRuntime,
+  check("Console runtime이 업데이트되면 서버만 교체하고 데이터는 유지한다", runtimeUpdated.status === 0 && runtimeHealth?.build === `console-${nextConsoleVersion}` && statePid() !== beforeUpdate && stillThereAfterRuntime,
     JSON.stringify({ status: runtimeUpdated.status, stdout: runtimeUpdated.stdout, stderr: runtimeUpdated.stderr, build: runtimeHealth?.build, beforeUpdate, after: statePid(), stillThereAfterRuntime }));
   const updatedPid = statePid();
   const sameAgain = runHook(plugin3);
   check("같은 Console runtime 세션은 다시 띄우지 않는다", sameAgain.stdout === "" && statePid() === updatedPid);
+
+  const rolledBack = await mcp.call("sugo_console", { action: "runtime_rollback" });
+  const rollbackHealth = await waitFor("rolled back console runtime", async () => {
+    const current = await health();
+    return current?.build === `console-${consoleVersion}` ? current : null;
+  });
+  check("runtime_rollback은 이전 외부본을 pin하고 실행 서버를 교체한다", rolledBack.ok === true && rolledBack.runtime?.consoleVersion === consoleVersion && rollbackHealth?.build === `console-${consoleVersion}`);
+  const pinnedPid = statePid();
+  runHook(plugin3);
+  check("pin된 rollback은 다음 세션의 자동 업데이트가 덮지 않는다", statePid() === pinnedPid && (await health())?.build === `console-${consoleVersion}`);
+  const forward = await mcp.call("sugo_console", { action: "runtime_update" });
+  const forwardHealth = await waitFor("updated console runtime after rollback", async () => {
+    const current = await health();
+    return current?.build === `console-${nextConsoleVersion}` ? current : null;
+  });
+  check("runtime_update는 pin을 해제하고 최신 호환본으로 복귀한다", forward.ok === true && forward.runtime?.consoleVersion === nextConsoleVersion && forwardHealth?.build === `console-${nextConsoleVersion}`);
 
   // 7. uninstall(retain) → restore → purge.
   const retained = await mcp.call("sugo_uninstall", { action: "execute", mode: "retain", confirmation: "UNINSTALL_SUGO" });
