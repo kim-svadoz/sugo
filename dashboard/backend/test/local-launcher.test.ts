@@ -14,7 +14,7 @@ describe("local dashboard launcher", () => {
     expect(launcher).toContain('PATH="$PATH"');
     expect(launcher).toContain("nohup");
     expect(launcher).toContain('npm run build:dashboard');
-    expect(launcher).toContain('dashboard-runtime/server.mjs');
+    expect(launcher).toContain('.artifacts/console-runtime/server.mjs');
     expect(launcher).not.toContain('"$DASHBOARD_ROOT/dev-local.sh"');
     expect(launcher).toContain('source "$DASHBOARD_ROOT/port-contract.sh"');
     expect(launcher).toContain('API_PORT="$SUGO_LOCAL_API_PORT"');

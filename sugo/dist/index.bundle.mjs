@@ -2245,8 +2245,8 @@ var require_resolve = __commonJS({
       }
       return count;
     }
-    function getFullPath(resolver, id = "", normalize2) {
-      if (normalize2 !== false)
+    function getFullPath(resolver, id = "", normalize3) {
+      if (normalize3 !== false)
         id = normalizeId(id);
       const p = resolver.parse(id);
       return _getFullPath(resolver, p);
@@ -3642,7 +3642,7 @@ var require_fast_uri = __commonJS({
     "use strict";
     var { normalizeIPv6, removeDotSegments, recomposeAuthority, normalizePercentEncoding, normalizePathEncoding, escapePreservingEscapes, reescapeHostDelimiters, isIPv4, nonSimpleDomain } = require_utils();
     var { SCHEMES, getSchemeHandler } = require_schemes();
-    function normalize2(uri, options) {
+    function normalize3(uri, options) {
       if (typeof uri === "string") {
         uri = /** @type {T} */
         normalizeString(uri, options);
@@ -3909,7 +3909,7 @@ var require_fast_uri = __commonJS({
     }
     var fastUri = {
       SCHEMES,
-      normalize: normalize2,
+      normalize: normalize3,
       resolve: resolve17,
       resolveComponent,
       equal,
@@ -28071,8 +28071,8 @@ function writeFlowMapping(state, level, node) {
     if (explicitPair) pairBuffer += "? ";
     else if (state.quoteFlowKeys) pairBuffer += '"';
     const valueText = writeNode(state, level, value, {});
-    const sep6 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
-    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep6}${valueText}`;
+    const sep7 = state.flowSkipColonSpace || valueText === "" ? "" : " ";
+    pairBuffer += `${keyText}${state.quoteFlowKeys && !explicitPair ? '"' : ""}:${sep7}${valueText}`;
     result3 += pairBuffer;
   }
   const pad = state.flowBracketPadding && result3 !== "" ? " " : "";
@@ -28169,8 +28169,8 @@ function writeNode(state, level, node, ctx) {
       if (anchor !== null) props.push(anchor);
       if (tag !== null) props.push(tag);
     }
-    const sep6 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
-    body2 = `${props.join(" ")}${sep6}${body2}`;
+    const sep7 = body2 === "" || body2.charCodeAt(0) === CHAR_LINE_FEED ? "" : " ";
+    body2 = `${props.join(" ")}${sep7}${body2}`;
   }
   return body2;
 }
@@ -28215,8 +28215,8 @@ function present(documents, options) {
         block: true,
         compact: true
       });
-      const sep6 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
-      result3 += `---${sep6}${body2}
+      const sep7 = body2 === "" ? "" : hasDirectives || rootStartsOwnLine(doc.contents) ? "\n" : " ";
+      result3 += `---${sep7}${body2}
 `;
     } else result3 += writeNode(state, 0, doc.contents, {
       block: true,
@@ -28613,7 +28613,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.70.0" : "0.0.0-dev";
+  return true ? "0.71.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -33208,7 +33208,7 @@ var ROADMAP_LEVELS = ["spec", "workstream", "task", "subtask", "step"];
 var ROADMAP_NODE_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"];
 
 // src/lifecycle/consoleOnDemand.ts
-import { dirname as dirname13, join as join35 } from "node:path";
+import { dirname as dirname14, join as join36 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // src/dashboard/syncAll.ts
@@ -33331,23 +33331,71 @@ init_homeDir();
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { closeSync, existsSync as existsSync6, openSync } from "node:fs";
-import { mkdir as mkdir21, readFile as readFile31, rm as rm7, stat as stat5 } from "node:fs/promises";
-import { join as join34 } from "node:path";
+import { mkdir as mkdir22, readFile as readFile31, rm as rm7, stat as stat5 } from "node:fs/promises";
+import { join as join35 } from "node:path";
 
 // src/lifecycle/consoleRuntime.ts
 init_homeDir();
 init_fsUtil();
 import { existsSync as existsSync5, readFileSync as readFileSync3, readdirSync } from "node:fs";
-import { cp, mkdir as mkdir20, rename as rename2, rm as rm6 } from "node:fs/promises";
-import { basename as basename4, dirname as dirname12, join as join33 } from "node:path";
+import { cp, mkdir as mkdir21, rename as rename2, rm as rm6 } from "node:fs/promises";
+import { basename as basename4, dirname as dirname13, join as join34 } from "node:path";
+
+// src/lifecycle/consoleRuntimeArchive.ts
+import { createHash as createHash7 } from "node:crypto";
+import { mkdir as mkdir20, writeFile as writeFile3 } from "node:fs/promises";
+import { dirname as dirname12, join as join33, normalize as normalize2, sep as sep4 } from "node:path";
+import { gunzipSync } from "node:zlib";
+function verifySha256(bytes, expected) {
+  return /^[a-f0-9]{64}$/i.test(expected) && createHash7("sha256").update(bytes).digest("hex") === expected.toLowerCase();
+}
+function tarString(block, start2, length) {
+  const end = block.indexOf(0, start2);
+  return block.subarray(start2, end < 0 || end > start2 + length ? start2 + length : end).toString("utf8");
+}
+function safeTarget(root, name2) {
+  const clean = normalize2(name2.replaceAll("\\", "/")).replace(/^([/\\])+/, "");
+  const target = join33(root, clean);
+  if (target !== root && !target.startsWith(`${root}${sep4}`)) throw new Error(`unsafe runtime archive path: ${name2}`);
+  return target;
+}
+async function extractConsoleRuntimeArchive(archive, targetRoot) {
+  const tar = gunzipSync(archive, { maxOutputLength: 256 * 1024 * 1024 });
+  for (let offset = 0; offset + 512 <= tar.length; ) {
+    const header = tar.subarray(offset, offset + 512);
+    if (header.every((byte) => byte === 0)) break;
+    const name2 = tarString(header, 0, 100);
+    const prefix = tarString(header, 345, 155);
+    const fullName = prefix ? `${prefix}/${name2}` : name2;
+    const sizeText = tarString(header, 124, 12).trim().replace(/\0/g, "");
+    const size = Number.parseInt(sizeText || "0", 8);
+    if (!Number.isSafeInteger(size) || size < 0) throw new Error("invalid runtime archive size");
+    const type = String.fromCharCode(header[156] || 48);
+    const target = safeTarget(targetRoot, fullName);
+    if (type === "x" || type === "g") {
+    } else if (type === "5") await mkdir20(target, { recursive: true });
+    else if (type === "0" || type === "\0") {
+      await mkdir20(dirname12(target), { recursive: true });
+      await writeFile3(target, tar.subarray(offset + 512, offset + 512 + size));
+    } else {
+      throw new Error(`unsupported runtime archive entry: ${type}`);
+    }
+    offset += 512 + Math.ceil(size / 512) * 512;
+  }
+}
+
+// src/lifecycle/consoleRuntime.ts
 var CONSOLE_RUNTIME_SCHEMA_VERSION = 1;
 var CONSOLE_ENGINE_API_VERSION = 1;
+var DEFAULT_CONSOLE_RUNTIME_MANIFEST_URL = "https://github.com/kim-svadoz/sugo/releases/download/console-latest/console-runtime.json";
+var AUTO_UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1e3;
+var MAX_RUNTIME_ARCHIVE_BYTES = 100 * 1024 * 1024;
 function consoleRuntimeStoreRoot(home = sugoHomeDir()) {
-  return join33(home, ".sugo", "runtime", "console");
+  return join34(home, ".sugo", "runtime", "console");
 }
 function runtimeDescriptor(runtimeRoot, source) {
-  const entryPath = join33(runtimeRoot, "server.mjs");
-  const manifestPath = join33(runtimeRoot, "runtime.json");
+  const entryPath = join34(runtimeRoot, "server.mjs");
+  const manifestPath = join34(runtimeRoot, "runtime.json");
   if (!existsSync5(entryPath) || !existsSync5(manifestPath)) return null;
   try {
     const manifest = JSON.parse(readFileSync3(manifestPath, "utf8"));
@@ -33365,10 +33413,18 @@ function runtimeDescriptor(runtimeRoot, source) {
 }
 function readActive(storeRoot) {
   try {
-    const value = JSON.parse(readFileSync3(join33(storeRoot, "active.json"), "utf8"));
+    const value = JSON.parse(readFileSync3(join34(storeRoot, "active.json"), "utf8"));
     return typeof value.version === "string" && value.version.length > 0 ? value : null;
   } catch {
     return null;
+  }
+}
+function recentlyChecked(storeRoot, now = Date.now()) {
+  try {
+    const value = JSON.parse(readFileSync3(join34(storeRoot, "update-check.json"), "utf8"));
+    return typeof value.checkedAt === "number" && now - value.checkedAt >= 0 && now - value.checkedAt < AUTO_UPDATE_INTERVAL_MS;
+  } catch {
+    return false;
   }
 }
 function versionParts(version2) {
@@ -33388,28 +33444,84 @@ function resolveConsoleRuntime(pluginRoot, home = sugoHomeDir()) {
   const storeRoot = consoleRuntimeStoreRoot(home);
   const active = readActive(storeRoot);
   if (active) {
-    const external = runtimeDescriptor(join33(storeRoot, active.version), "external");
+    const external = runtimeDescriptor(join34(storeRoot, active.version), "external");
     if (external) return external;
   }
-  return runtimeDescriptor(join33(pluginRoot, "dashboard-runtime"), "embedded");
+  return runtimeDescriptor(join34(pluginRoot, "dashboard-runtime"), "embedded");
 }
 async function writeActive(storeRoot, active) {
-  await mkdir20(storeRoot, { recursive: true });
-  await atomicWriteFile(join33(storeRoot, "active.json"), `${JSON.stringify(active)}
+  await mkdir21(storeRoot, { recursive: true });
+  await atomicWriteFile(join34(storeRoot, "active.json"), `${JSON.stringify(active)}
 `);
+}
+function validRelease(value) {
+  if (!value || typeof value !== "object") return false;
+  const release = value;
+  return release.runtimeSchemaVersion === CONSOLE_RUNTIME_SCHEMA_VERSION && release.engineApiVersion === CONSOLE_ENGINE_API_VERSION && typeof release.consoleVersion === "string" && versionParts(release.consoleVersion) !== null && typeof release.archiveUrl === "string" && /^https?:\/\//.test(release.archiveUrl) && typeof release.sha256 === "string" && /^[a-f0-9]{64}$/i.test(release.sha256);
+}
+async function fetchWithTimeout(url, timeoutMs = 5e3) {
+  return fetch(url, { signal: AbortSignal.timeout(timeoutMs), redirect: "follow" });
+}
+async function fetchConsoleRuntimeRelease(manifestUrl = process.env.SUGO_CONSOLE_RUNTIME_MANIFEST_URL || DEFAULT_CONSOLE_RUNTIME_MANIFEST_URL) {
+  try {
+    const response = await fetchWithTimeout(manifestUrl);
+    if (!response.ok) return null;
+    const release = await response.json();
+    return validRelease(release) ? release : null;
+  } catch {
+    return null;
+  }
+}
+async function downloadConsoleRuntime(release, home = sugoHomeDir()) {
+  if (!validRelease(release)) return null;
+  const storeRoot = consoleRuntimeStoreRoot(home);
+  return withFileLock(join34(storeRoot, ".runtime.lock"), async () => {
+    const target = join34(storeRoot, release.consoleVersion);
+    const existing = runtimeDescriptor(target, "external");
+    if (existing) {
+      await writeActive(storeRoot, { version: existing.consoleVersion, pinned: false });
+      return existing;
+    }
+    let archive;
+    try {
+      const response = await fetchWithTimeout(release.archiveUrl, 3e4);
+      if (!response.ok) return null;
+      const contentLength = Number(response.headers.get("content-length"));
+      if (Number.isFinite(contentLength) && contentLength > MAX_RUNTIME_ARCHIVE_BYTES) return null;
+      archive = new Uint8Array(await response.arrayBuffer());
+    } catch {
+      return null;
+    }
+    if (archive.byteLength > MAX_RUNTIME_ARCHIVE_BYTES || !verifySha256(archive, release.sha256)) return null;
+    const temporary = join34(storeRoot, `.download-${release.consoleVersion}-${process.pid}-${Date.now()}`);
+    await mkdir21(storeRoot, { recursive: true });
+    try {
+      await extractConsoleRuntimeArchive(archive, temporary);
+      const unpacked = runtimeDescriptor(temporary, "external");
+      if (!unpacked || unpacked.consoleVersion !== release.consoleVersion) return null;
+      if (existsSync5(target)) await rm6(target, { recursive: true, force: true });
+      await rename2(temporary, target);
+      const installed = runtimeDescriptor(target, "external");
+      if (!installed) return null;
+      await writeActive(storeRoot, { version: installed.consoleVersion, pinned: false });
+      return installed;
+    } finally {
+      await rm6(temporary, { recursive: true, force: true });
+    }
+  });
 }
 async function installConsoleRuntime(runtimeRoot, home = sugoHomeDir(), pinned = false) {
   const source = runtimeDescriptor(runtimeRoot, "external");
   if (!source) return null;
   const storeRoot = consoleRuntimeStoreRoot(home);
-  return withFileLock(join33(storeRoot, ".runtime.lock"), async () => {
-    const target = join33(storeRoot, source.consoleVersion);
+  return withFileLock(join34(storeRoot, ".runtime.lock"), async () => {
+    const target = join34(storeRoot, source.consoleVersion);
     if (existsSync5(target) && !runtimeDescriptor(target, "external")) {
       await rm6(target, { recursive: true, force: true });
     }
     if (!existsSync5(target)) {
-      await mkdir20(dirname12(target), { recursive: true });
-      const temporary = join33(storeRoot, `.install-${basename4(target)}-${process.pid}-${Date.now()}`);
+      await mkdir21(dirname13(target), { recursive: true });
+      const temporary = join34(storeRoot, `.install-${basename4(target)}-${process.pid}-${Date.now()}`);
       await cp(runtimeRoot, temporary, { recursive: true, errorOnExist: true });
       try {
         await rename2(temporary, target);
@@ -33427,21 +33539,37 @@ async function installConsoleRuntime(runtimeRoot, home = sugoHomeDir(), pinned =
 async function prepareConsoleRuntime(pluginRoot, home = sugoHomeDir()) {
   const storeRoot = consoleRuntimeStoreRoot(home);
   const active = readActive(storeRoot);
-  const selected = active ? runtimeDescriptor(join33(storeRoot, active.version), "external") : null;
-  const embeddedRoot = join33(pluginRoot, "dashboard-runtime");
-  const embedded = runtimeDescriptor(embeddedRoot, "embedded");
-  if (!embedded) return selected ?? null;
-  if (selected && (active?.pinned || compareConsoleVersions(selected.consoleVersion, embedded.consoleVersion) >= 0)) return selected;
-  return installConsoleRuntime(embeddedRoot, home);
+  const selected = active ? runtimeDescriptor(join34(storeRoot, active.version), "external") : null;
+  if (selected && active?.pinned) return selected;
+  const embedded = runtimeDescriptor(join34(pluginRoot, "dashboard-runtime"), "embedded");
+  if (embedded && (!selected || compareConsoleVersions(embedded.consoleVersion, selected.consoleVersion) > 0)) {
+    const installed = await installConsoleRuntime(embedded.runtimeRoot, home);
+    if (installed) await atomicWriteFile(join34(storeRoot, "update-check.json"), `${JSON.stringify({ checkedAt: Date.now() })}
+`);
+    return installed;
+  }
+  if (selected && recentlyChecked(storeRoot)) return selected;
+  const release = await fetchConsoleRuntimeRelease();
+  if (selected) await atomicWriteFile(join34(storeRoot, "update-check.json"), `${JSON.stringify({ checkedAt: Date.now() })}
+`);
+  if (release && (!selected || compareConsoleVersions(release.consoleVersion, selected.consoleVersion) > 0)) {
+    const downloaded = await downloadConsoleRuntime(release, home);
+    if (downloaded) {
+      await atomicWriteFile(join34(storeRoot, "update-check.json"), `${JSON.stringify({ checkedAt: Date.now() })}
+`);
+      return downloaded;
+    }
+  }
+  return selected ?? embedded;
 }
 function listInstalledConsoleRuntimes(home = sugoHomeDir()) {
   const storeRoot = consoleRuntimeStoreRoot(home);
   if (!existsSync5(storeRoot)) return [];
-  return readdirSync(storeRoot, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => runtimeDescriptor(join33(storeRoot, entry.name), "external")).filter((entry) => entry !== null).sort((left, right) => compareConsoleVersions(right.consoleVersion, left.consoleVersion));
+  return readdirSync(storeRoot, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => runtimeDescriptor(join34(storeRoot, entry.name), "external")).filter((entry) => entry !== null).sort((left, right) => compareConsoleVersions(right.consoleVersion, left.consoleVersion));
 }
 async function rollbackConsoleRuntime(home = sugoHomeDir()) {
   const storeRoot = consoleRuntimeStoreRoot(home);
-  return withFileLock(join33(storeRoot, ".runtime.lock"), async () => {
+  return withFileLock(join34(storeRoot, ".runtime.lock"), async () => {
     const active = readActive(storeRoot);
     const installed = listInstalledConsoleRuntimes(home);
     const target = active ? installed.find((runtime) => compareConsoleVersions(runtime.consoleVersion, active.version) < 0) : installed[1];
@@ -33451,13 +33579,18 @@ async function rollbackConsoleRuntime(home = sugoHomeDir()) {
   });
 }
 async function updateConsoleRuntime(pluginRoot, home = sugoHomeDir()) {
-  const embedded = runtimeDescriptor(join33(pluginRoot, "dashboard-runtime"), "embedded");
+  const release = await fetchConsoleRuntimeRelease();
+  if (release) {
+    const downloaded = await downloadConsoleRuntime(release, home);
+    if (downloaded) return downloaded;
+  }
+  const embedded = runtimeDescriptor(join34(pluginRoot, "dashboard-runtime"), "embedded");
   const installed = listInstalledConsoleRuntimes(home);
   const latest = [embedded, ...installed].filter((runtime) => runtime !== null).sort((left, right) => compareConsoleVersions(right.consoleVersion, left.consoleVersion))[0];
   if (!latest) return null;
   if (latest.source === "embedded") return installConsoleRuntime(latest.runtimeRoot, home);
   const storeRoot = consoleRuntimeStoreRoot(home);
-  return withFileLock(join33(storeRoot, ".runtime.lock"), async () => {
+  return withFileLock(join34(storeRoot, ".runtime.lock"), async () => {
     await writeActive(storeRoot, { version: latest.consoleVersion, pinned: false });
     return latest;
   });
@@ -33480,15 +33613,15 @@ var STOP_WAIT_MS = 5e3;
 var POLL_MS = 150;
 var LOCK_STALE_MS = 3e4;
 function dashboardPaths(home = sugoHomeDir()) {
-  const sugoDir = join34(home, ".claude", "sugo");
-  const dataDir = join34(sugoDir, "dashboard");
+  const sugoDir = join35(home, ".claude", "sugo");
+  const dataDir = join35(sugoDir, "dashboard");
   return {
     sugoDir,
     dataDir,
-    stateFile: join34(dataDir, "server.json"),
-    logFile: join34(dataDir, "dashboard.log"),
-    lockDir: join34(dataDir, "start.lock"),
-    settingsFile: join34(sugoDir, "settings.json")
+    stateFile: join35(dataDir, "server.json"),
+    logFile: join35(dataDir, "dashboard.log"),
+    lockDir: join35(dataDir, "start.lock"),
+    settingsFile: join35(sugoDir, "settings.json")
   };
 }
 function isSupportedNode(version2 = process.versions.node) {
@@ -33586,10 +33719,10 @@ async function currentPort(options, paths) {
   return { ...preferred, port: owned ? state.port : preferred.port, state, owned };
 }
 async function acquireLock(paths) {
-  await mkdir21(paths.dataDir, { recursive: true });
+  await mkdir22(paths.dataDir, { recursive: true });
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await mkdir21(paths.lockDir);
+      await mkdir22(paths.lockDir);
       return true;
     } catch {
       const age = await stat5(paths.lockDir).then((s) => Date.now() - s.mtimeMs, () => 0);
@@ -33667,8 +33800,8 @@ async function startServer(runtimeEntry, options, paths, port) {
       ...process.env,
       SUGO_DASHBOARD_PORT: String(port),
       BUILD_ID: buildId,
-      HARNESS_PATH: join34(options.pluginRoot, "harness-library"),
-      HARNESS_OVERRIDE_PATH: join34(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
+      HARNESS_PATH: join35(options.pluginRoot, "harness-library"),
+      HARNESS_OVERRIDE_PATH: join35(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
       SKILLS_PATH: options.pluginRoot
     }
   });
@@ -33685,7 +33818,7 @@ async function ensureDashboard(options) {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
   const runtime = options.runtime ?? await prepareConsoleRuntime(options.pluginRoot);
-  const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join34(options.pluginRoot, "dashboard-runtime", "server.mjs") : void 0);
+  const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join35(options.pluginRoot, "dashboard-runtime", "server.mjs") : void 0);
   const buildId = options.buildId ?? runtime?.buildId;
   try {
     if (!isSupportedNode(nodeVersion)) {
@@ -33729,7 +33862,7 @@ async function ensureDashboard(options) {
 }
 
 // src/lifecycle/consoleOnDemand.ts
-var consolePluginRoot = join35(dirname13(fileURLToPath3(import.meta.url)), "..");
+var consolePluginRoot = join36(dirname14(fileURLToPath3(import.meta.url)), "..");
 async function controlConsole(action, options = {}) {
   const result3 = await controlDashboard(action, { pluginRoot: consolePluginRoot, ...options });
   if (result3.running && action !== "status" && action !== "stop") {
@@ -34235,7 +34368,7 @@ function errorResult14(errorCode, message) {
 
 // src/tools/sugoSpecWriter.ts
 import { access as access5, readFile as readFile32, stat as stat6 } from "node:fs/promises";
-import { isAbsolute as isAbsolute8, join as join36, relative as relative8, resolve as resolve13, sep as sep4 } from "node:path";
+import { isAbsolute as isAbsolute8, join as join37, relative as relative8, resolve as resolve13, sep as sep5 } from "node:path";
 init_homeDir();
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
@@ -34296,18 +34429,18 @@ function specSlug(title) {
 }
 async function nextSpecTarget(title) {
   const date3 = localDateKey();
-  const root = join36(sugoHomeDir(), ".claude", "sugo", "specs");
-  const featureDir = join36(root, date3, specSlug(title));
+  const root = join37(sugoHomeDir(), ".claude", "sugo", "specs");
+  const featureDir = join37(root, date3, specSlug(title));
   let version2 = 1;
-  while (await access5(join36(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
-  const directory = join36(featureDir, `v${version2}`);
-  return { root, date: date3, version: version2, directory, path: join36(directory, "spec.md") };
+  while (await access5(join37(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
+  const directory = join37(featureDir, `v${version2}`);
+  return { root, date: date3, version: version2, directory, path: join37(directory, "spec.md") };
 }
 function managedSpecPath(specPath) {
   const root = resolve13(sugoHomeDir(), ".claude", "sugo", "specs");
   const rel = relative8(root, resolve13(specPath));
-  if (!rel || rel.startsWith(`..${sep4}`) || rel === ".." || isAbsolute8(rel)) return false;
-  const parts2 = rel.split(sep4);
+  if (!rel || rel.startsWith(`..${sep5}`) || rel === ".." || isAbsolute8(rel)) return false;
+  const parts2 = rel.split(sep5);
   return parts2.length === 4 && /^\d{8}$/.test(parts2[0]) && parts2[1].length > 0 && /^v[1-9]\d*$/.test(parts2[2]) && parts2[3] === "spec.md";
 }
 async function invalidProjectReviewFiles(projectPath, paths) {
@@ -34316,7 +34449,7 @@ async function invalidProjectReviewFiles(projectPath, paths) {
   for (const path of paths) {
     const target = resolve13(root, path);
     const rel = relative8(root, target);
-    const inside = rel !== ".." && !rel.startsWith(`..${sep4}`) && !isAbsolute8(rel);
+    const inside = rel !== ".." && !rel.startsWith(`..${sep5}`) && !isAbsolute8(rel);
     const isFile = inside && await stat6(target).then((entry) => entry.isFile(), () => false);
     if (!isFile) invalid.push(path);
   }
@@ -34332,7 +34465,7 @@ async function handleSugoSpecWriter(rawArgs) {
     return result({ ok: false, errorCode: "PROJECT_MISMATCH", expected: spec.projectPath, received: args2.projectPath });
   }
   if (args2.action === "context") {
-    const dir = join36(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const dir = join37(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     try {
       const [attachments, references, draftContent] = await Promise.all([
         downloadSpecAttachments(args2.workspace, spec.id, dir),
@@ -34395,7 +34528,7 @@ async function handleSugoSpecWriter(rawArgs) {
     if (invalidFiles.length > 0) {
       return result({ ok: false, errorCode: "SPEC_REVIEW_PROJECT_FILE_INVALID", invalidFiles });
     }
-    const attachmentDir = join36(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const attachmentDir = join37(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     const [attachments, references] = await Promise.all([
       downloadSpecAttachments(args2.workspace, spec.id, attachmentDir),
       fetchSpecReferences(args2.workspace, spec.id)
@@ -34762,7 +34895,7 @@ init_context();
 
 // src/harness/validationConfig.ts
 import { readFile as readFile33 } from "node:fs/promises";
-import { join as join37 } from "node:path";
+import { join as join38 } from "node:path";
 init_config();
 init_featureState();
 function parseValidationYaml(content) {
@@ -34781,7 +34914,7 @@ async function loadProjectValidationConfigs(projectPath) {
   const result3 = /* @__PURE__ */ new Map();
   if (!config2) return result3;
   for (const applied of config2.appliedHarnesses) {
-    const path = join37(projectPath, "sugo", "harness", applied.id, "validation.yaml");
+    const path = join38(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
       const content = await readFile33(path, "utf-8");
       result3.set(applied.id, parseValidationYaml(content));
@@ -34940,7 +35073,7 @@ async function handleSugoConsole(rawArgs) {
 }
 
 // src/ontology/identity.ts
-import { createHash as createHash7 } from "node:crypto";
+import { createHash as createHash8 } from "node:crypto";
 
 // src/ontology/workflowGraph.ts
 function reachable(start2, edges) {
@@ -35050,7 +35183,7 @@ function canonicalJson(value) {
   throw new TypeError(`Ontology hash cannot encode ${typeof value}`);
 }
 function deterministicModelHash(value) {
-  return `sha256:${createHash7("sha256").update(canonicalJson(value)).digest("hex")}`;
+  return `sha256:${createHash8("sha256").update(canonicalJson(value)).digest("hex")}`;
 }
 var HASHED_MODEL = {
   ontology: ONTOLOGY,
@@ -35599,8 +35732,8 @@ function errorResult18(errorCode, message) {
 // src/work/gitHistory.ts
 init_fsUtil();
 import { execFile as execFile4 } from "node:child_process";
-import { mkdir as mkdir22, realpath as realpath2 } from "node:fs/promises";
-import { isAbsolute as isAbsolute9, join as join38, relative as relative9, resolve as resolve15, sep as sep5 } from "node:path";
+import { mkdir as mkdir23, realpath as realpath2 } from "node:fs/promises";
+import { isAbsolute as isAbsolute9, join as join39, relative as relative9, resolve as resolve15, sep as sep6 } from "node:path";
 import { promisify as promisify4 } from "node:util";
 var execFileAsync3 = promisify4(execFile4);
 async function git2(cwd, args2) {
@@ -35617,9 +35750,9 @@ async function repositoryScopes(projects) {
     if (!root) continue;
     const [canonicalRoot, canonicalProject] = await Promise.all([realpath2(resolve15(root)), realpath2(resolve15(project))]);
     const rel = relative9(canonicalRoot, canonicalProject);
-    if (isAbsolute9(rel) || rel === ".." || rel.startsWith(`..${sep5}`)) continue;
+    if (isAbsolute9(rel) || rel === ".." || rel.startsWith(`..${sep6}`)) continue;
     const paths = byRoot.get(root) ?? /* @__PURE__ */ new Set();
-    paths.add(rel ? rel.split(sep5).join("/") : ".");
+    paths.add(rel ? rel.split(sep6).join("/") : ".");
     byRoot.set(canonicalRoot, paths);
   }
   return [...byRoot].map(([root, paths]) => ({ root, paths: [...paths] }));
@@ -35644,8 +35777,8 @@ async function backfillWorkspaceGitHistory(workspace) {
     }
   }
   const unique2 = [...new Map(logs.map((log) => [log.id, log])).values()];
-  await mkdir22(historyDir(workspace.name), { recursive: true });
-  await Promise.all(unique2.map((log) => atomicWriteFile(join38(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
+  await mkdir23(historyDir(workspace.name), { recursive: true });
+  await Promise.all(unique2.map((log) => atomicWriteFile(join39(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
   return unique2;
 }
 
@@ -35864,13 +35997,13 @@ async function handleSugoAwsContext(rawArgs) {
 }
 
 // src/tools/sugoUninstall.ts
-import { access as access6, mkdir as mkdir23, readFile as readFile34, rename as rename3, rm as rm8, rmdir as rmdir2, writeFile as writeFile3 } from "node:fs/promises";
-import { dirname as dirname14, join as join39, resolve as resolve16 } from "node:path";
+import { access as access6, mkdir as mkdir24, readFile as readFile34, rename as rename3, rm as rm8, rmdir as rmdir2, writeFile as writeFile4 } from "node:fs/promises";
+import { dirname as dirname15, join as join40, resolve as resolve16 } from "node:path";
 init_homeDir();
 init_installManifest();
 init_registry();
 init_sync();
-import { createHash as createHash8 } from "node:crypto";
+import { createHash as createHash9 } from "node:crypto";
 var CONFIRMATION = "DELETE_SUGO_DATA";
 var sugoUninstallInputSchema = {
   action: external_exports.enum(["preview", "execute", "restore", "discard"]).default("preview"),
@@ -35891,55 +36024,55 @@ async function restoreRoot(path, original, start2, end) {
   const current = await readFile34(path, "utf8").catch(() => null);
   if (current === null) return;
   const stripped = withoutManagedBlock(current, start2, end);
-  if (typeof original === "string" && stripped.startsWith(original) && stripped.slice(original.length).trim() === "") return writeFile3(path, original);
+  if (typeof original === "string" && stripped.startsWith(original) && stripped.slice(original.length).trim() === "") return writeFile4(path, original);
   if (original && typeof original === "object" && original.existed) {
     const bytes = Buffer.from(stripped);
     const prefix = bytes.subarray(0, original.byteLength).toString();
-    const matches = createHash8("sha256").update(prefix).digest("hex") === original.sha256 && bytes.subarray(original.byteLength).toString().trim() === "";
-    return writeFile3(path, matches ? prefix : stripped);
+    const matches = createHash9("sha256").update(prefix).digest("hex") === original.sha256 && bytes.subarray(original.byteLength).toString().trim() === "";
+    return writeFile4(path, matches ? prefix : stripped);
   }
   if ((original === null || typeof original === "object" && !original.existed) && stripped.trim() === "") return rm8(path, { force: true });
-  await writeFile3(path, stripped);
+  await writeFile4(path, stripped);
 }
 async function pruneEmptyParents(path, stopAt) {
-  let current = dirname14(path);
+  let current = dirname15(path);
   while (current.startsWith(stopAt) && current !== stopAt) {
     const removed = await rmdir2(current).then(() => true, () => false);
     if (!removed) break;
-    current = dirname14(current);
+    current = dirname15(current);
   }
 }
 async function cleanupProject(projectPath, manifest) {
   const preserved = [];
   if (manifest) {
     await restoreRoot(
-      join39(projectPath, "CLAUDE.md"),
+      join40(projectPath, "CLAUDE.md"),
       manifest.rootClaudeOriginal,
       "<!-- sugo:harness-rules:start -->",
       "<!-- sugo:harness-rules:end -->"
     );
     await restoreRoot(
-      join39(projectPath, "AGENTS.md"),
+      join40(projectPath, "AGENTS.md"),
       manifest.rootAgentsOriginal,
       "<!-- sugo:project-context:start -->",
       "<!-- sugo:project-context:end -->"
     );
     if (manifest.sugoDirExisted) {
       for (const rel of manifest.managedFiles) {
-        const path = join39(projectPath, rel);
+        const path = join40(projectPath, rel);
         await rm8(path, { force: true, recursive: true });
-        await pruneEmptyParents(path, join39(projectPath, "sugo"));
+        await pruneEmptyParents(path, join40(projectPath, "sugo"));
       }
-      await rm8(join39(projectPath, "sugo", "install-manifest.json"), { force: true });
-      await rmdir2(join39(projectPath, "sugo")).catch(() => {
+      await rm8(join40(projectPath, "sugo", "install-manifest.json"), { force: true });
+      await rmdir2(join40(projectPath, "sugo")).catch(() => {
       });
       preserved.push("sugo/ (\uC124\uCE58 \uC804\uBD80\uD130 \uC874\uC7AC\uD558\uC5EC \uC18C\uC720\uAD8C \uBD88\uBA85 \uD30C\uC77C \uBCF4\uC874)");
     } else {
-      await rm8(join39(projectPath, "sugo"), { force: true, recursive: true });
+      await rm8(join40(projectPath, "sugo"), { force: true, recursive: true });
     }
     for (const rel of manifest.managedFiles.filter((path) => path.startsWith(".claude/rules/"))) {
-      await rm8(join39(projectPath, rel), { force: true });
-      await rmdir2(dirname14(join39(projectPath, rel))).catch(() => {
+      await rm8(join40(projectPath, rel), { force: true });
+      await rmdir2(dirname15(join40(projectPath, rel))).catch(() => {
       });
     }
   } else {
@@ -35953,27 +36086,27 @@ function handleSugoUninstall(rawArgs) {
 }
 async function uninstallSugo(rawArgs, deps) {
   const args2 = Args2.parse(rawArgs);
-  const activeRoot = join39(sugoHomeDir(), ".claude", "sugo");
-  const productRoot = join39(sugoHomeDir(), ".sugo");
-  const archiveRoot = join39(productRoot, "data");
+  const activeRoot = join40(sugoHomeDir(), ".claude", "sugo");
+  const productRoot = join40(sugoHomeDir(), ".sugo");
+  const archiveRoot = join40(productRoot, "data");
   if (args2.action === "discard") {
     if (args2.confirmation !== "DELETE_RETAINED_DATA") return error2("CONFIRMATION_REQUIRED", "confirmation\uC5D0 DELETE_RETAINED_DATA\uB97C \uC815\uD655\uD788 \uC785\uB825\uD574\uC57C \uD569\uB2C8\uB2E4.");
     await rm8(archiveRoot, { recursive: true, force: true });
     return result2({ ok: true, action: "discard", retainedDataRemoved: true });
   }
   if (args2.action === "restore") {
-    const archivedRegistry = await readFile34(join39(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
+    const archivedRegistry = await readFile34(join40(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
     if (!archivedRegistry) return error2("NO_RETAINED_DATA", "\uBCF5\uAD6C\uD560 \uBE44\uD65C\uC131 Sugo \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const paths2 = dashboardPaths();
     if (!(await stopDashboard(paths2)).stopped) return error2("DASHBOARD_STILL_RUNNING", DASHBOARD_RUNNING_MESSAGE);
     await rm8(activeRoot, { recursive: true, force: true });
-    await mkdir23(dirname14(activeRoot), { recursive: true });
+    await mkdir24(dirname15(activeRoot), { recursive: true });
     await rename3(archiveRoot, activeRoot);
     await rm8(paths2.stateFile, { force: true });
     await rm8(paths2.lockDir, { recursive: true, force: true });
     for (const entry of archivedRegistry) await syncProjectHarness({ projectPath: resolve16(entry.path), workspace: entry.workspace });
     const dashboard = await ensureDashboard({
-      pluginRoot: deps.pluginRoot ?? join39(dirname14(process.argv[1] ?? ""), ".."),
+      pluginRoot: deps.pluginRoot ?? join40(dirname15(process.argv[1] ?? ""), ".."),
       buildId: deps.buildId,
       port: deps.port
     });
@@ -36000,7 +36133,7 @@ async function uninstallSugo(rawArgs, deps) {
     if (paths2.length) preserved.push({ projectPath, paths: paths2 });
   }
   if (args2.mode === "retain") {
-    await mkdir23(productRoot, { recursive: true });
+    await mkdir24(productRoot, { recursive: true });
     await rm8(archiveRoot, { recursive: true, force: true });
     if (await access6(activeRoot).then(() => true, () => false)) await rename3(activeRoot, archiveRoot);
   } else {
@@ -36019,12 +36152,12 @@ function error2(errorCode, message) {
 
 // src/lifecycle/recoveryInstaller.ts
 init_homeDir();
-import { copyFile, mkdir as mkdir24 } from "node:fs/promises";
-import { dirname as dirname15, join as join40 } from "node:path";
+import { copyFile, mkdir as mkdir25 } from "node:fs/promises";
+import { dirname as dirname16, join as join41 } from "node:path";
 async function ensureRecoveryUtility() {
-  const source = join40(dirname15(process.argv[1] ?? ""), "..", "scripts", "sugo-uninstall-standalone.mjs");
-  const target = join40(sugoHomeDir(), ".sugo", "bin", "sugo-uninstall.mjs");
-  await mkdir24(dirname15(target), { recursive: true });
+  const source = join41(dirname16(process.argv[1] ?? ""), "..", "scripts", "sugo-uninstall-standalone.mjs");
+  const target = join41(sugoHomeDir(), ".sugo", "bin", "sugo-uninstall.mjs");
+  await mkdir25(dirname16(target), { recursive: true });
   await copyFile(source, target);
 }
 
@@ -36280,7 +36413,7 @@ server.registerTool(
   "sugo_console",
   {
     title: "Local Sugo Console management",
-    description: "\uB85C\uCEEC Sugo Console \uC11C\uBC84\uC640 \uB3C5\uB9BD runtime\uC744 \uAD00\uB9AC\uD55C\uB2E4. runtime_install/update/rollback\uC740 \uC678\uBD80 runtime \uC800\uC7A5\uC18C\uB97C \uC6D0\uC790\uC801\uC73C\uB85C \uC804\uD658\uD558\uACE0, \uC2E4\uD589 \uC911\uC778 \uC11C\uBC84\uB9CC \uC0C8 runtime\uC73C\uB85C \uC7AC\uC2DC\uC791\uD55C\uB2E4.",
+    description: "\uB85C\uCEEC Sugo Console \uC11C\uBC84\uC640 \uB3C5\uB9BD runtime\uC744 \uAD00\uB9AC\uD55C\uB2E4. runtime_update\uB294 \uB3C5\uB9BD release\uB97C \uBB34\uACB0\uC131 \uAC80\uC99D \uD6C4 \uC124\uCE58\uD558\uBA70, install/update/rollback\uC740 \uC678\uBD80 runtime \uC800\uC7A5\uC18C\uB97C \uC6D0\uC790\uC801\uC73C\uB85C \uC804\uD658\uD558\uACE0 \uC2E4\uD589 \uC911\uC778 \uC11C\uBC84\uB9CC \uC7AC\uC2DC\uC791\uD55C\uB2E4.",
     inputSchema: sugoConsoleInputSchema
   },
   handleSugoConsole

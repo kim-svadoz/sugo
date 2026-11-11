@@ -2,7 +2,7 @@
  * README 스크린샷 생성기.
  * 임시 HOME과 별도 포트로 번들 Console을 띄우고 데모 데이터만 넣어 찍는다. 사용자 DB(~/.claude/sugo)와 3001 포트는 쓰지 않는다.
  *
- *   cd sugo && npm run build:dashboard   # 화면을 바꿨다면 먼저 번들을 최신으로 만든다
+ *   cd sugo && npm run build:dashboard   # 화면을 바꿨다면 독립 runtime 후보를 먼저 만든다
  *   node dashboard/e2e/readme-shots.mjs  # 결과: docs/images/console-*.png
  */
 import { spawn, spawnSync } from "node:child_process";
@@ -31,7 +31,7 @@ async function waitForHealth() {
   throw new Error(`${base}/health 응답 없음`);
 }
 
-const server = spawn(process.execPath, [join(repo, "sugo", "dashboard-runtime", "server.mjs")], { env, stdio: ["ignore", "inherit", "inherit"] });
+const server = spawn(process.execPath, [join(repo, ".artifacts", "console-runtime", "server.mjs")], { env, stdio: ["ignore", "inherit", "inherit"] });
 try {
   await waitForHealth();
   const seed = spawnSync("npx", ["tsx", "readme-demo.mts"], {

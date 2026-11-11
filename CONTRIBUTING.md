@@ -15,7 +15,8 @@
 .claude-plugin/marketplace.json   마켓플레이스 정의
 sugo/                             플러그인: commands, agents, skills, hooks, harness-library, src, test
 sugo/dist/                        빌드된 MCP 번들(커밋 대상)
-sugo/dashboard-runtime/           플러그인에 실리는 빌드된 Console(커밋 대상)
+.github/workflows/console-release.yml  Console 독립 runtime 자동 배포
+.artifacts/console-runtime/       로컬에서 만든 Console runtime 후보(커밋 제외)
 sugo/weekly/                      Weekly 엔진(Python 표준 라이브러리). Console 예약과 /sugo:weekly가 run.mjs로 실행
 dashboard/backend/                Express + TypeScript, SQLite 또는 MySQL
 dashboard/frontend/               React + Vite + Tailwind + React Flow
@@ -48,13 +49,13 @@ npx vitest run
 
 | 실행기 | 용도 | 주소 |
 | --- | --- | --- |
-| `bash dashboard/sd.sh` | 현재 소스를 `sugo/dashboard-runtime/`으로 빌드해 바로 띄워 보는 개발 편의용. macOS에서는 launchd 작업(`com.sugo.dashboard.local`)으로 등록되므로 쓴 뒤 `launchctl remove com.sugo.dashboard.local`로 내립니다. 릴리스 확인은 설치된 플러그인의 `/sugo:console restart`로 합니다 | `http://localhost:3001` |
+| `bash dashboard/sd.sh` | 현재 소스를 `.artifacts/console-runtime/`으로 빌드해 바로 띄워 보는 개발 편의용. macOS에서는 launchd 작업(`com.sugo.dashboard.local`)으로 등록되므로 쓴 뒤 `launchctl remove com.sugo.dashboard.local`로 내립니다. 릴리스 확인은 설치된 플러그인의 `/sugo:console restart`로 합니다 | `http://localhost:3001` |
 | `bash dashboard/dev-local.sh` | 로컬 로그인(`LOCAL_DEV_MODE=1`)으로 API와 Vite UI를 포그라운드 실행. 데모 데이터는 `SUGO_LOCAL_DEMO=1` | UI `:5175`, 로그인 `:3001/api/auth/local` |
 | `dashboard/dev.ps1`(Windows) | GitHub OAuth 개발 모드. `dashboard/backend/.env` 필요 | UI `:5175` |
 | `dashboard/dev-mysql.sh`, `dev-mysql.ps1` | 실제 MySQL, 시드 데이터, 개발용 로그인 페이지 | `http://localhost:4173/dev-login.html` |
 
 - `sd.sh`와 `dev-local.sh`는 설치형 Console과 같은 DB(`~/.claude/sugo/dashboard/dashboard.db`)를 씁니다.
-- `sd.sh`는 커밋 대상인 `sugo/dashboard-runtime/`을 다시 만듭니다. 플러그인 릴리스 때만 커밋합니다.
+- `sd.sh`의 `.artifacts/console-runtime/`은 로컬 산출물이라 커밋하지 않습니다. Console 변경을 main에 push하면 GitHub Actions가 독립 runtime release를 만듭니다.
 - MySQL 모드에서 프론트 빌드는 `dist/`의 `dev-login.html`까지 지웁니다. 빌드 → 시드 순서를 지킵니다.
 - SQLite 통과는 MySQL 통과가 아닙니다. 스키마 변경은 실제 MySQL로 확인합니다.
 

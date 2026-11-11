@@ -11,7 +11,7 @@ var __export = (target, all) => {
 };
 
 // src/lifecycle/dashboardStartHook.ts
-import { dirname as dirname5, join as join10 } from "node:path";
+import { dirname as dirname6, join as join11 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/dashboard/syncAll.ts
@@ -7246,21 +7246,69 @@ async function syncAllWorkspaceData() {
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { closeSync, existsSync as existsSync2, openSync } from "node:fs";
-import { mkdir as mkdir11, readFile as readFile11, rm as rm4, stat as stat2 } from "node:fs/promises";
-import { join as join9 } from "node:path";
+import { mkdir as mkdir12, readFile as readFile11, rm as rm4, stat as stat2 } from "node:fs/promises";
+import { join as join10 } from "node:path";
 
 // src/lifecycle/consoleRuntime.ts
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { cp, mkdir as mkdir10, rename as rename2, rm as rm3 } from "node:fs/promises";
-import { basename, dirname as dirname4, join as join8 } from "node:path";
+import { cp, mkdir as mkdir11, rename as rename2, rm as rm3 } from "node:fs/promises";
+import { basename, dirname as dirname5, join as join9 } from "node:path";
+
+// src/lifecycle/consoleRuntimeArchive.ts
+import { createHash } from "node:crypto";
+import { mkdir as mkdir10, writeFile as writeFile2 } from "node:fs/promises";
+import { dirname as dirname4, join as join8, normalize, sep } from "node:path";
+import { gunzipSync } from "node:zlib";
+function verifySha256(bytes, expected) {
+  return /^[a-f0-9]{64}$/i.test(expected) && createHash("sha256").update(bytes).digest("hex") === expected.toLowerCase();
+}
+function tarString(block, start, length) {
+  const end = block.indexOf(0, start);
+  return block.subarray(start, end < 0 || end > start + length ? start + length : end).toString("utf8");
+}
+function safeTarget(root, name) {
+  const clean = normalize(name.replaceAll("\\", "/")).replace(/^([/\\])+/, "");
+  const target = join8(root, clean);
+  if (target !== root && !target.startsWith(`${root}${sep}`)) throw new Error(`unsafe runtime archive path: ${name}`);
+  return target;
+}
+async function extractConsoleRuntimeArchive(archive, targetRoot) {
+  const tar = gunzipSync(archive, { maxOutputLength: 256 * 1024 * 1024 });
+  for (let offset = 0; offset + 512 <= tar.length; ) {
+    const header = tar.subarray(offset, offset + 512);
+    if (header.every((byte) => byte === 0)) break;
+    const name = tarString(header, 0, 100);
+    const prefix = tarString(header, 345, 155);
+    const fullName = prefix ? `${prefix}/${name}` : name;
+    const sizeText = tarString(header, 124, 12).trim().replace(/\0/g, "");
+    const size = Number.parseInt(sizeText || "0", 8);
+    if (!Number.isSafeInteger(size) || size < 0) throw new Error("invalid runtime archive size");
+    const type = String.fromCharCode(header[156] || 48);
+    const target = safeTarget(targetRoot, fullName);
+    if (type === "x" || type === "g") {
+    } else if (type === "5") await mkdir10(target, { recursive: true });
+    else if (type === "0" || type === "\0") {
+      await mkdir10(dirname4(target), { recursive: true });
+      await writeFile2(target, tar.subarray(offset + 512, offset + 512 + size));
+    } else {
+      throw new Error(`unsupported runtime archive entry: ${type}`);
+    }
+    offset += 512 + Math.ceil(size / 512) * 512;
+  }
+}
+
+// src/lifecycle/consoleRuntime.ts
 var CONSOLE_RUNTIME_SCHEMA_VERSION = 1;
 var CONSOLE_ENGINE_API_VERSION = 1;
+var DEFAULT_CONSOLE_RUNTIME_MANIFEST_URL = "https://github.com/kim-svadoz/sugo/releases/download/console-latest/console-runtime.json";
+var AUTO_UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1e3;
+var MAX_RUNTIME_ARCHIVE_BYTES = 100 * 1024 * 1024;
 function consoleRuntimeStoreRoot(home = sugoHomeDir()) {
-  return join8(home, ".sugo", "runtime", "console");
+  return join9(home, ".sugo", "runtime", "console");
 }
 function runtimeDescriptor(runtimeRoot, source) {
-  const entryPath = join8(runtimeRoot, "server.mjs");
-  const manifestPath = join8(runtimeRoot, "runtime.json");
+  const entryPath = join9(runtimeRoot, "server.mjs");
+  const manifestPath = join9(runtimeRoot, "runtime.json");
   if (!existsSync(entryPath) || !existsSync(manifestPath)) return null;
   try {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
@@ -7278,10 +7326,18 @@ function runtimeDescriptor(runtimeRoot, source) {
 }
 function readActive(storeRoot) {
   try {
-    const value = JSON.parse(readFileSync(join8(storeRoot, "active.json"), "utf8"));
+    const value = JSON.parse(readFileSync(join9(storeRoot, "active.json"), "utf8"));
     return typeof value.version === "string" && value.version.length > 0 ? value : null;
   } catch {
     return null;
+  }
+}
+function recentlyChecked(storeRoot, now = Date.now()) {
+  try {
+    const value = JSON.parse(readFileSync(join9(storeRoot, "update-check.json"), "utf8"));
+    return typeof value.checkedAt === "number" && now - value.checkedAt >= 0 && now - value.checkedAt < AUTO_UPDATE_INTERVAL_MS;
+  } catch {
+    return false;
   }
 }
 function versionParts(version) {
@@ -7298,22 +7354,78 @@ function compareConsoleVersions(left, right) {
   return 0;
 }
 async function writeActive(storeRoot, active) {
-  await mkdir10(storeRoot, { recursive: true });
-  await atomicWriteFile(join8(storeRoot, "active.json"), `${JSON.stringify(active)}
+  await mkdir11(storeRoot, { recursive: true });
+  await atomicWriteFile(join9(storeRoot, "active.json"), `${JSON.stringify(active)}
 `);
+}
+function validRelease(value) {
+  if (!value || typeof value !== "object") return false;
+  const release = value;
+  return release.runtimeSchemaVersion === CONSOLE_RUNTIME_SCHEMA_VERSION && release.engineApiVersion === CONSOLE_ENGINE_API_VERSION && typeof release.consoleVersion === "string" && versionParts(release.consoleVersion) !== null && typeof release.archiveUrl === "string" && /^https?:\/\//.test(release.archiveUrl) && typeof release.sha256 === "string" && /^[a-f0-9]{64}$/i.test(release.sha256);
+}
+async function fetchWithTimeout(url, timeoutMs = 5e3) {
+  return fetch(url, { signal: AbortSignal.timeout(timeoutMs), redirect: "follow" });
+}
+async function fetchConsoleRuntimeRelease(manifestUrl = process.env.SUGO_CONSOLE_RUNTIME_MANIFEST_URL || DEFAULT_CONSOLE_RUNTIME_MANIFEST_URL) {
+  try {
+    const response = await fetchWithTimeout(manifestUrl);
+    if (!response.ok) return null;
+    const release = await response.json();
+    return validRelease(release) ? release : null;
+  } catch {
+    return null;
+  }
+}
+async function downloadConsoleRuntime(release, home = sugoHomeDir()) {
+  if (!validRelease(release)) return null;
+  const storeRoot = consoleRuntimeStoreRoot(home);
+  return withFileLock(join9(storeRoot, ".runtime.lock"), async () => {
+    const target = join9(storeRoot, release.consoleVersion);
+    const existing = runtimeDescriptor(target, "external");
+    if (existing) {
+      await writeActive(storeRoot, { version: existing.consoleVersion, pinned: false });
+      return existing;
+    }
+    let archive;
+    try {
+      const response = await fetchWithTimeout(release.archiveUrl, 3e4);
+      if (!response.ok) return null;
+      const contentLength = Number(response.headers.get("content-length"));
+      if (Number.isFinite(contentLength) && contentLength > MAX_RUNTIME_ARCHIVE_BYTES) return null;
+      archive = new Uint8Array(await response.arrayBuffer());
+    } catch {
+      return null;
+    }
+    if (archive.byteLength > MAX_RUNTIME_ARCHIVE_BYTES || !verifySha256(archive, release.sha256)) return null;
+    const temporary = join9(storeRoot, `.download-${release.consoleVersion}-${process.pid}-${Date.now()}`);
+    await mkdir11(storeRoot, { recursive: true });
+    try {
+      await extractConsoleRuntimeArchive(archive, temporary);
+      const unpacked = runtimeDescriptor(temporary, "external");
+      if (!unpacked || unpacked.consoleVersion !== release.consoleVersion) return null;
+      if (existsSync(target)) await rm3(target, { recursive: true, force: true });
+      await rename2(temporary, target);
+      const installed = runtimeDescriptor(target, "external");
+      if (!installed) return null;
+      await writeActive(storeRoot, { version: installed.consoleVersion, pinned: false });
+      return installed;
+    } finally {
+      await rm3(temporary, { recursive: true, force: true });
+    }
+  });
 }
 async function installConsoleRuntime(runtimeRoot, home = sugoHomeDir(), pinned = false) {
   const source = runtimeDescriptor(runtimeRoot, "external");
   if (!source) return null;
   const storeRoot = consoleRuntimeStoreRoot(home);
-  return withFileLock(join8(storeRoot, ".runtime.lock"), async () => {
-    const target = join8(storeRoot, source.consoleVersion);
+  return withFileLock(join9(storeRoot, ".runtime.lock"), async () => {
+    const target = join9(storeRoot, source.consoleVersion);
     if (existsSync(target) && !runtimeDescriptor(target, "external")) {
       await rm3(target, { recursive: true, force: true });
     }
     if (!existsSync(target)) {
-      await mkdir10(dirname4(target), { recursive: true });
-      const temporary = join8(storeRoot, `.install-${basename(target)}-${process.pid}-${Date.now()}`);
+      await mkdir11(dirname5(target), { recursive: true });
+      const temporary = join9(storeRoot, `.install-${basename(target)}-${process.pid}-${Date.now()}`);
       await cp(runtimeRoot, temporary, { recursive: true, errorOnExist: true });
       try {
         await rename2(temporary, target);
@@ -7331,12 +7443,28 @@ async function installConsoleRuntime(runtimeRoot, home = sugoHomeDir(), pinned =
 async function prepareConsoleRuntime(pluginRoot2, home = sugoHomeDir()) {
   const storeRoot = consoleRuntimeStoreRoot(home);
   const active = readActive(storeRoot);
-  const selected = active ? runtimeDescriptor(join8(storeRoot, active.version), "external") : null;
-  const embeddedRoot = join8(pluginRoot2, "dashboard-runtime");
-  const embedded = runtimeDescriptor(embeddedRoot, "embedded");
-  if (!embedded) return selected ?? null;
-  if (selected && (active?.pinned || compareConsoleVersions(selected.consoleVersion, embedded.consoleVersion) >= 0)) return selected;
-  return installConsoleRuntime(embeddedRoot, home);
+  const selected = active ? runtimeDescriptor(join9(storeRoot, active.version), "external") : null;
+  if (selected && active?.pinned) return selected;
+  const embedded = runtimeDescriptor(join9(pluginRoot2, "dashboard-runtime"), "embedded");
+  if (embedded && (!selected || compareConsoleVersions(embedded.consoleVersion, selected.consoleVersion) > 0)) {
+    const installed = await installConsoleRuntime(embedded.runtimeRoot, home);
+    if (installed) await atomicWriteFile(join9(storeRoot, "update-check.json"), `${JSON.stringify({ checkedAt: Date.now() })}
+`);
+    return installed;
+  }
+  if (selected && recentlyChecked(storeRoot)) return selected;
+  const release = await fetchConsoleRuntimeRelease();
+  if (selected) await atomicWriteFile(join9(storeRoot, "update-check.json"), `${JSON.stringify({ checkedAt: Date.now() })}
+`);
+  if (release && (!selected || compareConsoleVersions(release.consoleVersion, selected.consoleVersion) > 0)) {
+    const downloaded = await downloadConsoleRuntime(release, home);
+    if (downloaded) {
+      await atomicWriteFile(join9(storeRoot, "update-check.json"), `${JSON.stringify({ checkedAt: Date.now() })}
+`);
+      return downloaded;
+    }
+  }
+  return selected ?? embedded;
 }
 
 // src/lifecycle/dashboardRuntime.ts
@@ -7356,15 +7484,15 @@ var STOP_WAIT_MS = 5e3;
 var POLL_MS = 150;
 var LOCK_STALE_MS = 3e4;
 function dashboardPaths(home = sugoHomeDir()) {
-  const sugoDir = join9(home, ".claude", "sugo");
-  const dataDir = join9(sugoDir, "dashboard");
+  const sugoDir = join10(home, ".claude", "sugo");
+  const dataDir = join10(sugoDir, "dashboard");
   return {
     sugoDir,
     dataDir,
-    stateFile: join9(dataDir, "server.json"),
-    logFile: join9(dataDir, "dashboard.log"),
-    lockDir: join9(dataDir, "start.lock"),
-    settingsFile: join9(sugoDir, "settings.json")
+    stateFile: join10(dataDir, "server.json"),
+    logFile: join10(dataDir, "dashboard.log"),
+    lockDir: join10(dataDir, "start.lock"),
+    settingsFile: join10(sugoDir, "settings.json")
   };
 }
 function isSupportedNode(version = process.versions.node) {
@@ -7462,10 +7590,10 @@ async function currentPort(options, paths) {
   return { ...preferred, port: owned ? state.port : preferred.port, state, owned };
 }
 async function acquireLock(paths) {
-  await mkdir11(paths.dataDir, { recursive: true });
+  await mkdir12(paths.dataDir, { recursive: true });
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await mkdir11(paths.lockDir);
+      await mkdir12(paths.lockDir);
       return true;
     } catch {
       const age = await stat2(paths.lockDir).then((s) => Date.now() - s.mtimeMs, () => 0);
@@ -7488,8 +7616,8 @@ async function startServer(runtimeEntry, options, paths, port) {
       ...process.env,
       SUGO_DASHBOARD_PORT: String(port),
       BUILD_ID: buildId,
-      HARNESS_PATH: join9(options.pluginRoot, "harness-library"),
-      HARNESS_OVERRIDE_PATH: join9(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
+      HARNESS_PATH: join10(options.pluginRoot, "harness-library"),
+      HARNESS_OVERRIDE_PATH: join10(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
       SKILLS_PATH: options.pluginRoot
     }
   });
@@ -7506,7 +7634,7 @@ async function ensureDashboard(options) {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
   const runtime = options.runtime ?? await prepareConsoleRuntime(options.pluginRoot);
-  const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join9(options.pluginRoot, "dashboard-runtime", "server.mjs") : void 0);
+  const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join10(options.pluginRoot, "dashboard-runtime", "server.mjs") : void 0);
   const buildId = options.buildId ?? runtime?.buildId;
   try {
     if (!isSupportedNode(nodeVersion)) {
@@ -7550,7 +7678,7 @@ async function ensureDashboard(options) {
 }
 
 // src/lifecycle/dashboardStartHook.ts
-var pluginRoot = join10(dirname5(fileURLToPath(import.meta.url)), "..");
+var pluginRoot = join11(dirname6(fileURLToPath(import.meta.url)), "..");
 var result = await ensureDashboard({ pluginRoot });
 if ("message" in result && result.message) console.log(JSON.stringify({ systemMessage: result.message }));
 if (result.kind === "started" || result.kind === "running") {

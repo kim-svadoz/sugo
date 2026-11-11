@@ -278,15 +278,12 @@ describe("배포물 정합성", () => {
     expect(source).toContain("await syncAllWorkspaceData()");
   });
 
-  it("서버 번들과 프론트 정적 파일이 플러그인에 실려 있다", () => {
-    expect(existsSync(join(root, "dashboard-runtime", "server.mjs"))).toBe(true);
-    expect(existsSync(join(root, "dashboard-runtime", "web", "index.html"))).toBe(true);
+  it("Console runtime은 플러그인 패키지에 실리지 않고 독립 release workflow가 배포한다", () => {
+    expect(existsSync(join(root, "dashboard-runtime"))).toBe(false);
+    expect(existsSync(join(root, "..", ".github", "workflows", "console-release.yml"))).toBe(true);
   });
 
-  it.skipIf(!existsSync(consolePackage))("번들한 Console 버전이 dashboard 패키지 버전과 같다(Console 버전을 올렸으면 다시 번들한다)", () => {
-    const bundled = JSON.parse(readFileSync(join(root, "dashboard-runtime", "runtime.json"), "utf8"));
-    const current = JSON.parse(readFileSync(consolePackage, "utf8"));
-
-    expect(bundled.consoleVersion).toBe(current.version);
+  it.skipIf(!existsSync(consolePackage))("독립 release 생성기는 Console package 버전을 정본으로 쓴다", () => {
+    expect(readFileSync(join(root, "..", "dashboard", "backend", "write-runtime-release.mjs"), "utf8")).toContain("pkg.version");
   });
 });

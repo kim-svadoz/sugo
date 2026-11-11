@@ -1,0 +1,55 @@
+name: Console runtime release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "dashboard/**"
+      - ".github/workflows/console-release.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: console-runtime-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            dashboard/frontend/package-lock.json
+            dashboard/backend/package-lock.json
+      - run: npm ci
+        working-directory: dashboard/frontend
+      - run: npm ci
+        working-directory: dashboard/backend
+      - run: npm run build && npx vitest run
+        working-directory: dashboard/frontend
+      - run: npm run build && npm test
+        working-directory: dashboard/backend
+      - name: Build independent runtime
+        run: node dashboard/backend/build-bundle.mjs console-runtime
+      - name: Pack and describe runtime
+        run: |
+          tar -czf console-runtime.tgz -C console-runtime .
+          node dashboard/backend/write-runtime-release.mjs console-runtime.tgz console-runtime.json
+      - name: Publish immutable Console release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./dashboard/backend/package.json').version")
+          if gh release view "console-v${VERSION}" >/dev/null 2>&1; then
+            echo "Console version ${VERSION} already exists; bump both Console package versions before release." >&2
+            exit 1
+          fi
+          gh release create "console-v${VERSION}" console-runtime.tgz console-runtime.json --title "Console ${VERSION}" --notes "Independent Sugo Console runtime ${VERSION}"
+          gh release delete console-latest --cleanup-tag --yes >/dev/null 2>&1 || true
+          gh release create console-latest console-runtime.json --title "Console latest (${VERSION})" --notes "Discovery pointer to immutable console-v${VERSION}."

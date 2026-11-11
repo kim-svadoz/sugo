@@ -1,12 +1,12 @@
 {
   "name": "sugo",
-  "version": "0.70.0",
+  "version": "0.71.0",
   "description": "AI 코딩 에이전트가 스펙 → 구현 → 테스트 → 검증 → 사용자 승인 → 문서 순서를 실행 근거로 통과하게 하고, 주간 보고서까지 만드는 개발 파이프라인",
   "type": "module",
   "main": "dist/index.bundle.mjs",
   "scripts": {
     "prebuild": "node syncVersion.mjs",
-    "build:dashboard": "node ../dashboard/backend/build-bundle.mjs dashboard-runtime",
+    "build:dashboard": "node ../dashboard/backend/build-bundle.mjs ../.artifacts/console-runtime",
     "build": "node build.mjs",
     "sync-version": "node syncVersion.mjs",
     "test": "vitest run",

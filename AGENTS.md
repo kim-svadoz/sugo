@@ -121,14 +121,14 @@ git add / git commit (분리) / git push
 ```
 sugo/package.json 의 version만 올린다   ← 정본. 다른 3파일은 절대 손으로 고치지 않는다
 npm run build:dashboard                ← Console을 바꿨으면 먼저: 독립 runtime 후보를
-                                          sugo/dashboard-runtime/에 만든다(Phase 2 fallback/승격 원본)
+                                          .artifacts/console-runtime/에 만든다(커밋하지 않음)
 npm run build                          ← prebuild(syncVersion.mjs)가 plugin.json·
                                           package-lock.json(2곳)·marketplace.json 전파
                                           + __SUGO_VERSION__ 빌드타임 상수 주입
 npm test                               ← syncVersion.files.test.ts가 4파일+dist 정합성 검사
-npm run release-verify -- --scope=plugin  ← Plugin-only는 core, Console runtime을 번들했으면 scope=console
+npm run release-verify -- --scope=plugin  ← Plugin-only는 core, Console 배포 계약을 바꿨으면 scope=console
                                           10번째 patch/minor .0은 scope와 무관하게 core+full
-git add / git commit (분리) / push      ← dist/*.mjs와 dashboard-runtime/도 함께 스테이징
+git add / git commit (분리) / push      ← dist/*.mjs도 함께 스테이징
 claude plugin update sugo@sugo-marketplace
 /reload-plugins                        ← 전체 재시작 불필요
 ```
@@ -141,10 +141,11 @@ claude plugin update sugo@sugo-marketplace
   보고한다. `syncVersion.files.test.ts`가 이 불일치를 잡는다.
 - 설치본은 버전별 디렉터리로 쌓이고 구버전은 지워지지 않는다
   (`~/.claude/plugins/cache/sugo-marketplace/sugo/<버전>/`).
-- Console runtime은 `~/.sugo/runtime/console/<Console 버전>/`에 독립 설치되고 `active.json`으로
-  활성 버전을 고른다. 호환 runtime이 없거나 손상되면 플러그인의 `dashboard-runtime/`으로 폴백한다.
-  `runtime_rollback`은 이전 버전을 pin하고, 명시적 `runtime_update`가 pin을 해제한다. Phase 3에서
-  fallback 제거가 끝날 때까지 `dashboard-runtime/`을 릴리스 번들에서 빼지 않는다.
+- Console runtime은 Plugin에 포함하지 않는다. Console 두 package 버전을 함께 올려 main에 push하면
+  `.github/workflows/console-release.yml`이 테스트 후 `console-v<버전>` GitHub Release를 자동 생성한다.
+  Plugin은 SHA-256과 schema/API 호환성을 확인해 `~/.sugo/runtime/console/<Console 버전>/`에 원자 설치하고
+  `active.json`으로 활성 버전을 고른다. 다운로드 실패 시 기존 설치본을 유지한다. `runtime_rollback`은
+  이전 버전을 pin하고, 명시적 `runtime_update`가 pin을 해제한다.
 
 ## 설치하기
 

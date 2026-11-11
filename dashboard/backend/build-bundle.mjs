@@ -1,6 +1,6 @@
 /**
  * 대시보드 배포 번들을 만든다: 백엔드 단일 파일 + 프론트 정적 빌드.
- * 결과는 플러그인에 실리는 `<outDir>/server.mjs`와 `<outDir>/web/`이다.
+ * 결과는 독립 배포하는 `<outDir>/server.mjs`와 `<outDir>/web/`이다.
  * 사용: node build-bundle.mjs <outDir>
  */
 import { execFileSync } from "node:child_process";
@@ -9,7 +9,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
-const outDir = resolve(process.argv[2] ?? "../../sugo/dashboard-runtime");
+const outDir = resolve(process.argv[2] ?? "../../.artifacts/console-runtime");
 const backendDir = fileURLToPath(new URL(".", import.meta.url));
 const frontendDir = resolve(backendDir, "../frontend");
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));

@@ -10,7 +10,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { build } from "esbuild";
 
 const source = join(dirname(fileURLToPath(import.meta.url)), "..");
-const shipped = [".claude-plugin", "dist", "dashboard-runtime", "harness-library", "wasm-grammars", "commands", "agents", "skills", "hooks", "scripts"];
+const shipped = [".claude-plugin", "dist", "harness-library", "wasm-grammars", "commands", "agents", "skills", "hooks", "scripts"];
 const root = mkdtempSync(join(tmpdir(), "sugo-dashboard-e2e-"));
 const failures = [];
 const check = (label, pass, detail = "") => { console.log(`${pass ? "PASS" : "FAIL"} ${label}${pass || !detail ? "" : ` — ${detail}`}`); if (!pass) failures.push(label); };
@@ -36,6 +36,7 @@ const api = (path, init = {}) => {
 };
 
 let mcp = null;
+let releaseServer = null;
 function startMcp(pluginDir) {
   const server = spawn(process.execPath, [join(pluginDir, "dist", "index.bundle.mjs")], { env, stdio: ["pipe", "pipe", "inherit"] });
   let buffer = ""; let id = 0; const pending = new Map();
@@ -64,15 +65,30 @@ try {
   mkdirSync(plugin, { recursive: true }); mkdirSync(home); mkdirSync(project);
   for (const path of shipped) cpSync(join(source, path), join(plugin, path), { recursive: true });
   writeFileSync(join(project, "package.json"), JSON.stringify({ name: "e2e-project" }));
-  const consoleVersion = readJson(join(plugin, "dashboard-runtime", "runtime.json")).consoleVersion;
+  const runtime1 = join(root, "runtime1");
+  cpSync(join(source, "..", ".artifacts", "console-runtime"), runtime1, { recursive: true });
+  const consoleVersion = readJson(join(runtime1, "runtime.json")).consoleVersion;
   const nextConsoleVersion = consoleVersion.replace(/(\d+)$/, (patch) => String(Number(patch) + 1));
+  const runtime2 = join(root, "runtime2"); cpSync(runtime1, runtime2, { recursive: true });
+  writeFileSync(join(runtime2, "runtime.json"), JSON.stringify({ runtimeSchemaVersion: 1, engineApiVersion: 1, consoleVersion: nextConsoleVersion }));
+  const archive1 = join(root, "runtime1.tgz"); const archive2 = join(root, "runtime2.tgz");
+  for (const [dir, archive] of [[runtime1, archive1], [runtime2, archive2]]) {
+    const packed = spawnSync("tar", ["-czf", archive, "-C", dir, "."], { encoding: "utf8" });
+    if (packed.status !== 0) throw new Error(`runtime archive failed: ${packed.stderr}`);
+  }
+  const releasePort = await freePort(); const latestPath = join(root, "latest-runtime"); writeFileSync(latestPath, "1");
+  const releaseScript = join(root, "release-server.mjs");
+  writeFileSync(releaseScript, `import{createHash}from'node:crypto';import{readFileSync}from'node:fs';import{createServer}from'node:http';const [port,latest,a1,a2,v1,v2]=process.argv.slice(2);createServer((q,s)=>{const n=readFileSync(latest,'utf8').trim();const a=n==='1'?a1:a2;const v=n==='1'?v1:v2;const b=readFileSync(a);if(q.url==='/console-runtime.json'){s.setHeader('content-type','application/json');s.end(JSON.stringify({runtimeSchemaVersion:1,engineApiVersion:1,consoleVersion:v,archiveUrl:'http://127.0.0.1:'+port+'/console-runtime.tgz',sha256:createHash('sha256').update(b).digest('hex')}))}else{s.setHeader('content-type','application/gzip');s.end(b)}}).listen(Number(port),'127.0.0.1');`);
+  releaseServer = spawn(process.execPath, [releaseScript, String(releasePort), latestPath, archive1, archive2, consoleVersion, nextConsoleVersion], { stdio: "ignore" });
+  env.SUGO_CONSOLE_RUNTIME_MANIFEST_URL = `http://127.0.0.1:${releasePort}/console-runtime.json`;
+  await waitFor("release server", () => fetch(env.SUGO_CONSOLE_RUNTIME_MANIFEST_URL).then((response) => response.ok, () => false));
 
   // 1. 첫 세션: 서버가 뜨고 연결 설정이 자동으로 채워진다.
   const first = runHook(plugin);
   check("첫 세션 훅이 정상 종료하고 시작을 알린다", first.status === 0 && first.stdout.includes("Sugo 대시보드를 시작했다"), first.stdout + first.stderr);
   const up = await health();
   check("서버가 응답하고 Console runtime 버전이 맞다", up?.status === "ok" && up.version === consoleVersion && up.build === `console-${consoleVersion}`, JSON.stringify(up));
-  check("embedded runtime을 외부 저장소에 승격해 실행한다", existsSync(join(home, ".sugo", "runtime", "console", consoleVersion, "server.mjs")) && readJson(join(home, ".sugo", "runtime", "console", "active.json")).version === consoleVersion);
+  check("내장본 없는 Plugin이 독립 release에서 runtime을 설치해 실행한다", !existsSync(join(plugin, "dashboard-runtime")) && existsSync(join(home, ".sugo", "runtime", "console", consoleVersion, "server.mjs")) && readJson(join(home, ".sugo", "runtime", "console", "active.json")).version === consoleVersion);
   const settings = existsSync(settingsPath) ? readJson(settingsPath).dashboard : {};
   check("연결 설정이 자동으로 켜진다(사용자 작업 없음)", settings.enabled === true && settings.apiUrl === `http://localhost:${port}` && String(settings.apiToken).startsWith("sugo_pat_"));
   const page = await fetch(`${base}/`).then((r) => r.text());
@@ -120,7 +136,8 @@ try {
     JSON.stringify({ status: updated.status, stdout: updated.stdout, stderr: updated.stderr, build: afterUpdate?.build, beforeUpdate, after: statePid(), stillThere }));
   const plugin3 = join(root, "plugin3");
   cpSync(plugin2, plugin3, { recursive: true });
-  writeFileSync(join(plugin3, "dashboard-runtime", "runtime.json"), JSON.stringify({ runtimeSchemaVersion: 1, engineApiVersion: 1, consoleVersion: nextConsoleVersion }));
+  writeFileSync(latestPath, "2");
+  writeFileSync(join(home, ".sugo", "runtime", "console", "update-check.json"), JSON.stringify({ checkedAt: 0 }));
   const runtimeUpdated = runHook(plugin3);
   const runtimeHealth = await waitFor("updated console runtime", async () => {
     const current = await health();
@@ -163,6 +180,7 @@ try {
 } catch (error) {
   check("e2e 실행 중 예외 없음", false, error instanceof Error ? error.stack : String(error));
 } finally {
+  try { releaseServer?.kill(); } catch { /* 생성 전 실패 */ }
   mcp?.server.kill();
   const left = existsSync(join(dashDir, "server.json")) ? readJson(join(dashDir, "server.json")).pid : null;
   if (left) { try { process.kill(left, "SIGKILL"); } catch { /* 이미 종료됨 */ } }

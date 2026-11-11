@@ -1,8 +1,14 @@
 # 변경 기록
 
-Plugin과 Console은 버전을 따로 매깁니다. Console은 플러그인에 실려 배포되므로 Console이 바뀌면 Plugin 버전도 함께 오릅니다. 설치된 버전은 `/sugo:version` 또는 Console 사이드바 하단에서 확인합니다.
+Plugin과 Console은 버전을 따로 매기고 독립 배포합니다. 설치된 버전은 `/sugo:version` 또는 Console 사이드바 하단에서 확인합니다.
 
 ## [Unreleased]
+
+## [Plugin 0.71.0 / Console 0.61.0] - 2026-11-11
+
+- Console runtime을 Plugin 패키지에서 분리하고, 검증된 독립 GitHub Release에서 자동 설치·업데이트합니다.
+- 다운로드 자산의 SHA-256과 runtime schema/API 호환성을 확인하며, 실패해도 기존 Console과 Sugo 파이프라인은 그대로 유지합니다.
+- Console 변경은 main 반영 시 테스트를 통과한 독립 runtime release로 자동 배포됩니다.
 
 ## [Plugin 0.70.0 / Console 0.60.0] - 2026-11-11
 

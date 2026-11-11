@@ -1,8 +1,24 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
-import { prepareConsoleRuntime, resolveConsoleRuntime, rollbackConsoleRuntime } from "../src/lifecycle/consoleRuntime.js";
+import { gzipSync } from "node:zlib";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { downloadConsoleRuntime, fetchConsoleRuntimeRelease, prepareConsoleRuntime, resolveConsoleRuntime, rollbackConsoleRuntime } from "../src/lifecycle/consoleRuntime.js";
+
+beforeEach(() => vi.stubEnv("SUGO_CONSOLE_RUNTIME_MANIFEST_URL", "http://127.0.0.1:1/unavailable"));
+
+function archive(files: Record<string, string>): Buffer {
+  const chunks: Buffer[] = [];
+  for (const [name, value] of Object.entries(files)) {
+    const body = Buffer.from(value); const header = Buffer.alloc(512);
+    header.write(name); header.write(`${body.length.toString(8).padStart(11, "0")}\0`, 124, 12); header.fill(32, 148, 156); header[156] = 48; header.write("ustar\0", 257);
+    let sum = 0; for (const byte of header) sum += byte; header.write(`${sum.toString(8).padStart(6, "0")}\0 `, 148, 8);
+    chunks.push(header, body, Buffer.alloc((512 - body.length % 512) % 512));
+  }
+  return gzipSync(Buffer.concat([...chunks, Buffer.alloc(1024)]));
+}
 
 function runtime(root: string, version: string, engineApiVersion = 1) {
   mkdirSync(join(root, "dashboard-runtime", "web"), { recursive: true });
@@ -11,6 +27,48 @@ function runtime(root: string, version: string, engineApiVersion = 1) {
 }
 
 describe("resolveConsoleRuntime", () => {
+  it("내장본 없이 release manifest와 SHA-256을 검증해 외부 runtime을 설치한다", async () => {
+    const home = mkdtempSync(join(tmpdir(), "sugo-console-download-home-"));
+    const bytes = archive({
+      "server.mjs": "// downloaded",
+      "runtime.json": JSON.stringify({ runtimeSchemaVersion: 1, engineApiVersion: 1, consoleVersion: "0.61.0" }),
+      "web/index.html": "console",
+    });
+    const server = createServer((request, response) => {
+      if (request.url === "/manifest") response.end(JSON.stringify({ runtimeSchemaVersion: 1, engineApiVersion: 1, consoleVersion: "0.61.0", archiveUrl: `http://127.0.0.1:${(server.address() as { port: number }).port}/runtime.tgz`, sha256: createHash("sha256").update(bytes).digest("hex") }));
+      else { response.setHeader("content-type", "application/gzip"); response.end(bytes); }
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const port = (server.address() as { port: number }).port;
+    try {
+      const release = await fetchConsoleRuntimeRelease(`http://127.0.0.1:${port}/manifest`);
+      expect(release).not.toBeNull();
+      expect(await downloadConsoleRuntime(release!, home)).toMatchObject({ source: "external", consoleVersion: "0.61.0" });
+      expect(resolveConsoleRuntime("/plugin-without-runtime", home)).toMatchObject({ source: "external", consoleVersion: "0.61.0" });
+    } finally { server.close(); }
+  });
+
+  it("checksum이 다르면 다운로드를 활성화하지 않는다", async () => {
+    const home = mkdtempSync(join(tmpdir(), "sugo-console-checksum-home-"));
+    const server = createServer((_request, response) => response.end("corrupt"));
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const port = (server.address() as { port: number }).port;
+    try {
+      expect(await downloadConsoleRuntime({ runtimeSchemaVersion: 1, engineApiVersion: 1, consoleVersion: "0.61.0", archiveUrl: `http://127.0.0.1:${port}/runtime.tgz`, sha256: "0".repeat(64) }, home)).toBeNull();
+      expect(resolveConsoleRuntime("/plugin-without-runtime", home)).toBeNull();
+    } finally { server.close(); }
+  });
+
+  it("설치본이 있으면 6시간 동안 원격 확인을 반복하지 않는다", async () => {
+    const plugin = mkdtempSync(join(tmpdir(), "sugo-console-cache-plugin-"));
+    const home = mkdtempSync(join(tmpdir(), "sugo-console-cache-home-"));
+    runtime(plugin, "0.59.0");
+    await prepareConsoleRuntime(plugin, home);
+    writeFileSync(join(home, ".sugo", "runtime", "console", "update-check.json"), JSON.stringify({ checkedAt: Date.now() }));
+    vi.stubEnv("SUGO_CONSOLE_RUNTIME_MANIFEST_URL", "not-a-valid-url");
+    expect((await prepareConsoleRuntime("/plugin-without-runtime", home))?.consoleVersion).toBe("0.59.0");
+    expect(JSON.parse(readFileSync(join(home, ".sugo", "runtime", "console", "active.json"), "utf8")).version).toBe("0.59.0");
+  });
   it("embedded Console의 경로와 버전을 Plugin 버전과 독립된 build id로 반환한다", () => {
     const root = mkdtempSync(join(tmpdir(), "sugo-console-runtime-"));
     runtime(root, "0.58.18");

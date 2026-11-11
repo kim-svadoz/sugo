@@ -12,6 +12,7 @@ Thumbs.db
 
 # 로컬 도구 캐시
 .ua/
+.artifacts/
 
 # 대시보드 체크포인트 동기화 규칙과 로컬 DB 백업(로컬 전용 파일)
 **/.claude/rules/general/

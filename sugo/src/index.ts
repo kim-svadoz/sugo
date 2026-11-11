@@ -385,7 +385,7 @@ server.registerTool(
   "sugo_console",
   {
     title: "Local Sugo Console management",
-    description: "로컬 Sugo Console 서버와 독립 runtime을 관리한다. runtime_install/update/rollback은 외부 runtime 저장소를 원자적으로 전환하고, 실행 중인 서버만 새 runtime으로 재시작한다.",
+    description: "로컬 Sugo Console 서버와 독립 runtime을 관리한다. runtime_update는 독립 release를 무결성 검증 후 설치하며, install/update/rollback은 외부 runtime 저장소를 원자적으로 전환하고 실행 중인 서버만 재시작한다.",
     inputSchema: sugoConsoleInputSchema,
   },
   handleSugoConsole,
