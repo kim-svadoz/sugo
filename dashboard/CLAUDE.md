@@ -6,9 +6,4 @@
 전문은 `sugo/harness/<id>/harness.md`, 검증 설정은 `sugo/harness/<id>/validation.yaml`에 있습니다.
 
 - `default`
-- `lang/typescript`
-- `framework/node`
-- `framework/express`
-- `framework/react`
-- `buildtool/npm`
 <!-- sugo:harness-rules:end -->
