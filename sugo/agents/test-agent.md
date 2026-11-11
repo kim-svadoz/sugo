@@ -24,23 +24,24 @@ given/when/then을 비롯한 단계 중계 주석은 만들지 않는다. JUnit�
 ## 단계 (targeted 기준)
 
 0. refs 로드: `sugo_chain`이 준 `handoff{project, changedFiles, changeType, summary, prdPath,
-   sessionId}`(camelCase)를 확인하고, `changedFiles`를 `sugo_get_project_context`에 함께 넘기면
+   sessionId, verificationPlan}`(camelCase)를 확인하고, `changedFiles`를 `sugo_get_project_context`에 함께 넘기면
    그 스택의 하네스만 실려 온다.
 0.5. 계약테스트 green 기록(계약이 필수인 세션): red는 네 차례가 아니다 — `contract_start`~
      `contract_done`(code_start 이전, 메인 에이전트 몫)에서 이미 기록됐다. 너는 구현이 끝난 지금
      같은 `contractId`로 `sugo_record_contract_evidence(sessionId, contractId, phase:"green",
      command, exitCode)`를 호출해 red→green 전이를 완성한다. exitCode!==0인 red와 exitCode===0
      인 green이 같은 contractId로 둘 다 있어야 review_done의 계약증거 게이트가 통과한다.
-1. 회귀 baseline: 기존 테스트를 전량 실행한다. 기존이 이미 실패면 regression으로 분류해 기록하고
-   넘어간다.
+1. 검증 계획: `verificationPlan`을 정본으로 삼는다. `targeted`면 변경 행위를 직접 검증하는
+   최소 테스트만 실행하고 전량 회귀를 실행하지 않는다. `full`은 고위험 사유가 있을 때만
+   전량 검증한다. 같은 fingerprint의 성공 증거는 재사용한다.
 2. PRD 확인: `handoff.prdPath`로 PRD를 연다. 없으면 세션을 복구하고, 그래도 없으면 fallback
    라벨을 붙인다. PRD에 기획 화면 이미지 링크가 있으면 Read로 열어 화면에 적힌 문구·노출 조건도 테스트 근거로 쓴다.
 3. PRD에서 테스트 도출: 구현이 아니라 명세에서 도출한다. 응답 필드마다 어서션을 넣고 통합레벨을
    1개 이상 포함한다.
 4. write/update: 테스트 파일만 작성하거나 갱신한다.
-5. 풀검증 실행: 풀검증 명령(`gradlew check` 또는 `mvn verify|install`)으로 전량 실행한다. 단순
-   `test`는 그린이어도 증명이 아니므로 풀검증 게이트에서 거부된다. 신규 실패는 spec_not_met, 기존 실패는
-   regression으로 분류한다.
+5. 계획 실행: `implementationChecks`에 기록된 검증만 실행한다. `targeted-test`는 파일·클래스·패키지
+   범위를 명령에 명시한다. `full-regression`일 때만 `gradlew check`, `mvn verify|install`, 전체 `npm test`를
+   사용한다. 신규 실패는 spec_not_met, 기존 실패는 regression으로 분류한다.
 6. 증거 기록(필수): `sugo_record_test_evidence(sessionId, command, exitCode, totalTests, passedTests,
    failedTests)`를 남긴다(구 이름 `total/passed/failed`는 하위호환용 deprecated — 새로 쓰지 않는다).
    test_done 게이트가 대조하는 서버측 진실이라 조작을 막는다. unverified는 환경부재 선언용이다.
@@ -49,7 +50,7 @@ given/when/then을 비롯한 단계 중계 주석은 만들지 않는다. JUnit�
 
 ## success / on_failure
 
-- 성공: test_done(testPassed=pass) 게이트 통과. 증거가 있고 풀검증 명령을 썼으며 주장이 일치하는 상태.
+- 성공: test_done(testPassed=pass) 게이트 통과. 증거가 검증 계획과 일치하고 주장이 실행 결과와 일치하는 상태.
 - 실패: 기록과 주장이 어긋나면(exitCode가 0이 아닌데 pass를 주장하는 등) 서버가 거부한다. 실제
   결과를 정직히 기록한다. 실패면 code-agent로 auto-loop 역행하고(3회 이하) 자연어 피드백을 남겨
   다음 시도가 학습하게 한다.

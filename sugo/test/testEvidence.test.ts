@@ -158,6 +158,27 @@ describe("record_test_evidence 파라미터명", () => {
     return (await loadSession(started.sessionId)).data.chainInfo.testEvidence;
   }
 
+  async function recordWithPlan(args: Record<string, unknown>) {
+    const { handleSugoPlan } = await import("../src/tools/sugoPlan.js");
+    const { handleSugoRecordTestEvidence } = await import("../src/tools/sugoRecordTestEvidence.js");
+    const { loadSession, saveSession } = await import("../src/session.js");
+    const started = JSON.parse(
+      ((await handleSugoPlan({ action: "start", projectPath: process.cwd(), featureName: "f" })) as { content: { text: string }[] }).content[0].text,
+    );
+    const session = await loadSession(started.sessionId);
+    session.data.chainInfo.verificationPlan = {
+      fingerprint: "same-input",
+      level: "targeted",
+      reasons: ["isolated-change"],
+      implementationChecks: ["targeted-test"],
+      releaseChecks: [],
+      broadCommandsAllowed: false,
+    };
+    await saveSession(session);
+    const first = await handleSugoRecordTestEvidence({ sessionId: started.sessionId, ...args });
+    return { first, sessionId: started.sessionId, handleSugoRecordTestEvidence };
+  }
+
   it("새 이름(totalTests/passedTests/failedTests)이 기록된다", async () => {
     const ev = await record({ command: "./gradlew check", exitCode: 0, totalTests: 12, passedTests: 12, failedTests: 0 });
     expect(ev?.total).toBe(12);
@@ -173,5 +194,20 @@ describe("record_test_evidence 파라미터명", () => {
   it("둘 다 주면 새 이름이 이긴다", async () => {
     const ev = await record({ command: "npm test", exitCode: 0, total: 1, totalTests: 9 });
     expect(ev?.total).toBe(9);
+  });
+
+  it("targeted 계획은 전량 명령 증거를 거부한다", async () => {
+    const { first } = await recordWithPlan({ command: "npm test", exitCode: 0, failedTests: 0 });
+    const payload = JSON.parse((first as { content: { text: string }[] }).content[0].text);
+    expect(payload.errorCode).toBe("VERIFICATION_OUT_OF_PLAN");
+  });
+
+  it("같은 fingerprint와 명령의 성공 증거는 재사용한다", async () => {
+    const command = "npx vitest run test/chain.test.ts";
+    const { first, sessionId, handleSugoRecordTestEvidence } = await recordWithPlan({ command, exitCode: 0, failedTests: 0 });
+    expect(JSON.parse((first as { content: { text: string }[] }).content[0].text).reused).toBeUndefined();
+
+    const second = await handleSugoRecordTestEvidence({ sessionId, command, exitCode: 0, failedTests: 0 });
+    expect(JSON.parse((second as { content: { text: string }[] }).content[0].text).reused).toBe(true);
   });
 });

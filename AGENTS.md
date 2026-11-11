@@ -52,7 +52,7 @@ cd <저장소 경로>/dashboard
 ## 콜드 환경 검증
 
 ```bash
-cd sugo && npm run build && npm run release-verify
+cd sugo && npm run build && npm run release-verify -- --scope=plugin
 ```
 
 마켓플레이스가 주는 것만(= `node_modules` 없이) 빈 HOME + 대시보드/DB 미설정으로 띄워
@@ -126,7 +126,8 @@ npm run build                          ← prebuild(syncVersion.mjs)가 plugin.j
                                           package-lock.json(2곳)·marketplace.json 전파
                                           + __SUGO_VERSION__ 빌드타임 상수 주입
 npm test                               ← syncVersion.files.test.ts가 4파일+dist 정합성 검사
-npm run release-verify                 ← 매번 core, 10번째 patch/minor .0에는 core+full
+npm run release-verify -- --scope=plugin  ← Plugin-only는 core, Console runtime을 번들했으면 scope=console
+                                          10번째 patch/minor .0은 scope와 무관하게 core+full
 git add / git commit (분리) / push      ← dist/*.mjs와 dashboard-runtime/도 함께 스테이징
 claude plugin update sugo@sugo-marketplace
 /reload-plugins                        ← 전체 재시작 불필요

@@ -8,6 +8,14 @@ const HANDOFF: ChainHandoff = {
   summary: "이메일 로그인 기능 추가",
   prdPath: "/tmp/demo/sugo/features/20260101/login/prd.md",
   sessionId: "plan-1",
+  verificationPlan: {
+    fingerprint: "plan-1",
+    level: "targeted",
+    reasons: ["isolated-change"],
+    implementationChecks: ["targeted-test"],
+    releaseChecks: [],
+    broadCommandsAllowed: false,
+  },
 };
 
 describe("buildChainPrompt", () => {
@@ -32,5 +40,12 @@ describe("buildChainPrompt", () => {
   it("changedFiles가 비어있으면 '(없음)'으로 표기한다", () => {
     const prompt = buildChainPrompt("code_to_test", { ...HANDOFF, changedFiles: [] });
     expect(prompt).toContain("변경 파일: (없음)");
+  });
+
+  it("targeted plan forbids full regression and tells the next agent to reuse matching evidence", () => {
+    const prompt = buildChainPrompt("code_to_test", HANDOFF);
+    expect(prompt).toContain("검증 범위: targeted");
+    expect(prompt).toContain("전량 회귀를 실행하지 마세요");
+    expect(prompt).toContain("입력 fingerprint가 같은 성공 증거는 재사용");
   });
 });

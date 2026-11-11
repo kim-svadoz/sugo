@@ -2245,8 +2245,8 @@ var require_resolve = __commonJS({
       }
       return count;
     }
-    function getFullPath(resolver, id = "", normalize) {
-      if (normalize !== false)
+    function getFullPath(resolver, id = "", normalize2) {
+      if (normalize2 !== false)
         id = normalizeId(id);
       const p = resolver.parse(id);
       return _getFullPath(resolver, p);
@@ -3642,7 +3642,7 @@ var require_fast_uri = __commonJS({
     "use strict";
     var { normalizeIPv6, removeDotSegments, recomposeAuthority, normalizePercentEncoding, normalizePathEncoding, escapePreservingEscapes, reescapeHostDelimiters, isIPv4, nonSimpleDomain } = require_utils();
     var { SCHEMES, getSchemeHandler } = require_schemes();
-    function normalize(uri, options) {
+    function normalize2(uri, options) {
       if (typeof uri === "string") {
         uri = /** @type {T} */
         normalizeString(uri, options);
@@ -3909,7 +3909,7 @@ var require_fast_uri = __commonJS({
     }
     var fastUri = {
       SCHEMES,
-      normalize,
+      normalize: normalize2,
       resolve: resolve17,
       resolveComponent,
       equal,
@@ -24894,13 +24894,17 @@ function buildCodeToTestPrompt(handoff) {
     `\uBCC0\uACBD \uC720\uD615: ${handoff.changeType}`,
     `\uBCC0\uACBD \uD30C\uC77C: ${handoff.changedFiles.length > 0 ? handoff.changedFiles.join(", ") : "(\uC5C6\uC74C)"}`,
     `PRD: ${handoff.prdPath ?? "(\uC5C6\uC74C)"}`,
+    `\uAC80\uC99D \uBC94\uC704: ${handoff.verificationPlan.level}`,
+    `\uAC80\uC99D \uACC4\uD68D: ${handoff.verificationPlan.implementationChecks.join(", ") || "(\uC5C6\uC74C)"}`,
+    `\uC785\uB825 fingerprint: ${handoff.verificationPlan.fingerprint}`,
     "",
     "## \uC694\uC57D",
     handoff.summary,
     "",
     "## test-agent \uC9C0\uC2DC\uC0AC\uD56D",
     "- PRD\uB97C oracle \uC0BC\uC544 \uBA85\uC138\uC5D0\uC11C \uD14C\uC2A4\uD2B8\uB97C \uB3C4\uCD9C\uD558\uC138\uC694. \uAD6C\uD604 \uCF54\uB4DC\uB97C \uBCF4\uACE0 \uB530\uB77C\uC9DC\uC9C0 \uB9C8\uC138\uC694(\uC21C\uD658\uAC80\uC99D \uBC29\uC9C0).",
-    "- \uAE30\uC874 \uD14C\uC2A4\uD2B8\uB97C \uBA3C\uC800 \uC804\uB7C9 \uC2E4\uD589\uD574 \uD68C\uADC0 baseline\uC744 \uD655\uC778\uD558\uC138\uC694(\uC2E0\uADDC \uC2E4\uD328=spec_not_met, \uAE30\uC874 \uC2E4\uD328=regression\uC73C\uB85C \uAD6C\uBD84).",
+    ...handoff.verificationPlan.broadCommandsAllowed ? ["- \uACE0\uC704\uD5D8 \uBCC0\uACBD\uC73C\uB85C \uC804\uB7C9 \uD68C\uADC0\uAC00 \uD5C8\uC6A9\uB429\uB2C8\uB2E4. \uACC4\uD68D\uC5D0 \uAE30\uB85D\uB41C \uBC94\uC704\uB9CC \uC2E4\uD589\uD558\uC138\uC694."] : ["- targeted \uACC4\uD68D\uC785\uB2C8\uB2E4. \uC804\uB7C9 \uD68C\uADC0\uB97C \uC2E4\uD589\uD558\uC9C0 \uB9C8\uC138\uC694. \uBCC0\uACBD \uD589\uC704\uB97C \uC9C1\uC811 \uAC80\uC99D\uD558\uB294 \uCD5C\uC18C \uD14C\uC2A4\uD2B8\uB9CC \uC2E4\uD589\uD558\uC138\uC694."],
+    "- \uC785\uB825 fingerprint\uAC00 \uAC19\uC740 \uC131\uACF5 \uC99D\uAC70\uB294 \uC7AC\uC0AC\uC6A9\uD558\uACE0 \uAC19\uC740 \uBA85\uB839\uC744 \uB2E4\uC2DC \uC2E4\uD589\uD558\uC9C0 \uB9C8\uC138\uC694.",
     "- \uC644\uB8CC \uD6C4 \uBC18\uB4DC\uC2DC sugo_record_test_evidence\uB85C \uC2E4\uD589 \uACB0\uACFC\uB97C \uAE30\uB85D\uD558\uC138\uC694 \u2014 \uC774 \uAE30\uB85D\uB9CC\uC774 test_done \uAC8C\uC774\uD2B8\uAC00 \uC2E0\uB8B0\uD558\uB294 \uC99D\uAC70\uC785\uB2C8\uB2E4."
   ].join("\n");
 }
@@ -24930,6 +24934,73 @@ function buildChainPrompt(direction, handoff) {
   return direction === "code_to_test" ? buildCodeToTestPrompt(handoff) : buildTestToReviewPrompt(handoff);
 }
 
+// src/verificationPlan.ts
+import { createHash as createHash3 } from "node:crypto";
+var normalize = (file) => file.replace(/\\/g, "/").replace(/^\.\//, "");
+var unique = (items) => [...new Set(items)];
+function isTest(file) {
+  return /(^|\/)(test|tests|__tests__|e2e)(\/|$)|\.(test|spec)\.[^.]+$/.test(file);
+}
+function isDocumentation(file) {
+  return /(^|\/)(docs?)(\/|$)|(^|\/)(README|CHANGELOG|AGENTS|CLAUDE)(\.|$)/i.test(file) || file.endsWith(".md");
+}
+function classifyChangeImpact(changedFiles) {
+  const files = unique(changedFiles.map(normalize)).sort();
+  const areas = [];
+  const risks = [];
+  const sourceFiles = files.filter((file) => !isTest(file) && !isDocumentation(file));
+  for (const file of files) {
+    if (isTest(file)) areas.push("tests");
+    else if (isDocumentation(file)) areas.push("documentation");
+    else if (file.startsWith("dashboard/frontend/")) areas.push("console-frontend");
+    else if (file.startsWith("dashboard/backend/")) areas.push("console-backend");
+    else if (/^sugo\/(build\.mjs|syncVersion\.mjs|scripts\/|\.claude-plugin\/|package(-lock)?\.json)/.test(file)) areas.push("plugin-packaging");
+    else if (file.startsWith("sugo/")) areas.push("plugin-runtime");
+    if (/(^|\/)(gate|gates|ontology|testEvidence|verificationPlan)\.[^.]+$/.test(file)) risks.push("gate");
+    if (/(^|\/)(db|database|schema|migration|migrations)(\/|\.|$)/i.test(file)) risks.push("persistence");
+    if (/(^|\/)(auth|authentication|session)(\/|\.|$)/i.test(file)) risks.push("authentication");
+    if (/^sugo\/(build\.mjs|syncVersion\.mjs|scripts\/|\.claude-plugin\/|package(-lock)?\.json)/.test(file)) risks.push("packaging");
+  }
+  const resolvedAreas = unique(areas);
+  const products = unique([
+    ...resolvedAreas.some((area) => area.startsWith("console-")) ? ["console"] : [],
+    ...resolvedAreas.some((area) => area.startsWith("plugin-")) ? ["plugin"] : []
+  ]);
+  if (resolvedAreas.includes("console-frontend") && resolvedAreas.includes("console-backend")) risks.push("coupled-subsystems");
+  return { products, areas: resolvedAreas, risks: unique(risks), sourceFiles };
+}
+function buildVerificationPlan(impact, changeType) {
+  const full = impact.risks.length > 0;
+  const implementationChecks = [];
+  if (impact.sourceFiles.length > 0) implementationChecks.push(full ? "full-regression" : "targeted-test");
+  if (impact.areas.includes("console-frontend")) implementationChecks.push("frontend-build");
+  if (impact.areas.includes("console-backend")) implementationChecks.push("backend-build");
+  if (impact.areas.includes("plugin-runtime") || impact.areas.includes("plugin-packaging")) implementationChecks.push("plugin-build");
+  const releaseChecks = [];
+  if (impact.products.includes("console")) releaseChecks.push("console-version", "embedded-console-refresh", "dashboard-e2e");
+  if (impact.products.includes("plugin")) releaseChecks.push("plugin-version", "cold-smoke-core");
+  const fingerprintInput = JSON.stringify({ files: impact.sourceFiles, risks: impact.risks, changeType });
+  return {
+    fingerprint: createHash3("sha256").update(fingerprintInput).digest("hex"),
+    level: full ? "full" : "targeted",
+    reasons: full ? impact.risks : [impact.sourceFiles.length > 0 ? "isolated-change" : "non-runtime-change"],
+    implementationChecks: unique(implementationChecks),
+    releaseChecks: unique(releaseChecks),
+    broadCommandsAllowed: full
+  };
+}
+function isBroadVerificationCommand(command) {
+  const value = command.trim().toLowerCase();
+  if (/^(npm|pnpm|yarn) (run )?test(?:\s+--)?$/.test(value)) return true;
+  if (/\bvitest\s+run\s*$/.test(value)) return true;
+  if (/\bgradlew?(\.bat)?\s+(clean\s+)?(check|build)\b/.test(value)) return true;
+  if (/\bgradlew?(\.bat)?\s+test\b/.test(value) && !/--tests?\b/.test(value)) return true;
+  if (/\bmvnw?(\.cmd)?\s+(clean\s+)?(verify|install|test)\b/.test(value)) return true;
+  if (/^(python\s+-m\s+)?pytest\s*$/.test(value)) return true;
+  if (/\bgo\s+test\s+\.\/\.\.\./.test(value)) return true;
+  return false;
+}
+
 // src/tools/sugoChain.ts
 var sugoChainInputSchema = {
   sessionId: external_exports.string().describe("sugo_plan(start)\uC73C\uB85C \uBC1C\uAE09\uB41C \uC138\uC158 id"),
@@ -24952,13 +25023,15 @@ async function handleSugoChain(rawArgs) {
       `sugo_chain\uC740 CODE_DONE(\u2192test-agent) \uB610\uB294 TEST_DONE(\u2192review-agent) \uC0C1\uD0DC\uC5D0\uC11C\uB9CC \uD638\uCD9C\uD569\uB2C8\uB2E4. \uD604\uC7AC \uC0C1\uD0DC: ${session.state}`
     );
   }
+  const verificationPlan = session.data.chainInfo.verificationPlan ?? buildVerificationPlan(classifyChangeImpact(session.data.chainInfo.changedFiles), args2.changeType);
   const handoff = {
     project: session.projectPath,
     changedFiles: session.data.chainInfo.changedFiles,
     changeType: args2.changeType,
     summary: args2.summary,
     prdPath: session.data.prdPath,
-    sessionId: session.id
+    sessionId: session.id,
+    verificationPlan
   };
   const prompt = buildChainPrompt(direction, handoff);
   const updated = {
@@ -24967,7 +25040,8 @@ async function handleSugoChain(rawArgs) {
       ...session.data,
       chainInfo: {
         ...session.data.chainInfo,
-        chainHandoffs: [...session.data.chainInfo.chainHandoffs ?? [], { direction, calledAt: (/* @__PURE__ */ new Date()).toISOString() }]
+        chainHandoffs: [...session.data.chainInfo.chainHandoffs ?? [], { direction, calledAt: (/* @__PURE__ */ new Date()).toISOString() }],
+        verificationPlan
       }
     }
   };
@@ -25041,7 +25115,7 @@ function errorResult3(errorCode, message) {
 // src/work/checkpoint.ts
 init_fsUtil();
 init_installManifest();
-import { createHash as createHash3, randomBytes as randomBytes2 } from "node:crypto";
+import { createHash as createHash4, randomBytes as randomBytes2 } from "node:crypto";
 import { mkdir as mkdir11, readdir as readdir4, readFile as readFile15, rm as rm3 } from "node:fs/promises";
 import { join as join17 } from "node:path";
 import { relative as relative3 } from "node:path";
@@ -28321,7 +28395,7 @@ function isExpired(expiresAt, now) {
   return !!expiresAt && /^\d{4}-\d{2}-\d{2}$/.test(expiresAt.slice(0, 10)) && expiresAt.slice(0, 10) < todayLocal(now);
 }
 function digest(value) {
-  return createHash3("sha256").update(value).digest("hex");
+  return createHash4("sha256").update(value).digest("hex");
 }
 function checkpointBody(cp, workspace) {
   const body2 = [
@@ -28535,7 +28609,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.68.18" : "0.0.0-dev";
+  return true ? "0.68.19" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29573,7 +29647,7 @@ async function handleSugoOverview(rawArgs) {
 }
 
 // src/sourceRevision.ts
-import { createHash as createHash4 } from "node:crypto";
+import { createHash as createHash5 } from "node:crypto";
 import { readFile as readFile23 } from "node:fs/promises";
 import { relative as relative5, resolve as resolve10, isAbsolute as isAbsolute6 } from "node:path";
 async function collectSourceRevision(projectPath, changedFiles, startedAt) {
@@ -29584,7 +29658,7 @@ async function collectSourceRevision(projectPath, changedFiles, startedAt) {
   const files = [];
   for (const path of paths) {
     try {
-      files.push({ path, hash: createHash4("sha256").update(await readFile23(resolve10(projectPath, path))).digest("hex") });
+      files.push({ path, hash: createHash5("sha256").update(await readFile23(resolve10(projectPath, path))).digest("hex") });
     } catch (e) {
       if (e.code !== "ENOENT") return void 0;
       files.push({ path, hash: "deleted" });
@@ -30041,12 +30115,12 @@ function validateIntegration(manifest) {
 }
 
 // src/fingerprint.ts
-import { createHash as createHash5 } from "node:crypto";
+import { createHash as createHash6 } from "node:crypto";
 import { stat as stat4 } from "node:fs/promises";
 import { isAbsolute as isAbsolute7, join as join29, relative as relative7 } from "node:path";
 function computeFingerprintFromEntries(entries) {
   const parts2 = entries.map((e) => `${e.relPath}|${e.size}|${e.mtimeMs}`).sort();
-  return createHash5("sha1").update(parts2.join("\n")).digest("hex");
+  return createHash6("sha1").update(parts2.join("\n")).digest("hex");
 }
 async function statChangedFiles(projectPath, changedFiles) {
   const entries = [];
@@ -32945,6 +33019,18 @@ async function handleSugoRecordTestEvidence(rawArgs) {
     return errorResult11("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
+  const plan = session.data.chainInfo.verificationPlan;
+  if (args2.kind === "feature" && plan && !plan.broadCommandsAllowed && isBroadVerificationCommand(args2.command)) {
+    return errorResult11(
+      "VERIFICATION_OUT_OF_PLAN",
+      `targeted \uAC80\uC99D \uACC4\uD68D\uC5D0\uC11C \uC804\uB7C9 \uBA85\uB839\uC744 \uC99D\uAC70\uB85C \uAE30\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.command}`
+    );
+  }
+  const previous = session.data.chainInfo.testEvidence;
+  if (args2.kind === "feature" && !!plan?.fingerprint && previous?.derivedState === "pass" && previous.command === args2.command && previous.inputFingerprint === plan?.fingerprint) {
+    const payload2 = { ok: true, sessionId: session.id, kind: args2.kind, derivedState: previous.derivedState, reused: true };
+    return { content: [{ type: "text", text: JSON.stringify(payload2, null, 2) }] };
+  }
   const record2 = makeTestEvidenceRecord(
     args2.kind,
     {
@@ -32959,6 +33045,7 @@ async function handleSugoRecordTestEvidence(rawArgs) {
     (/* @__PURE__ */ new Date()).toISOString()
   );
   if (args2.kind === "feature") record2.implementationCycle = session.data.chainInfo.implementationCycle ?? 0;
+  if (args2.kind === "feature") record2.inputFingerprint = plan?.fingerprint;
   const updated = args2.kind === "baseline" ? {
     ...session,
     data: {
@@ -34641,7 +34728,7 @@ async function handleSugoConsole(rawArgs) {
 }
 
 // src/ontology/identity.ts
-import { createHash as createHash6 } from "node:crypto";
+import { createHash as createHash7 } from "node:crypto";
 
 // src/ontology/workflowGraph.ts
 function reachable(start2, edges) {
@@ -34751,7 +34838,7 @@ function canonicalJson(value) {
   throw new TypeError(`Ontology hash cannot encode ${typeof value}`);
 }
 function deterministicModelHash(value) {
-  return `sha256:${createHash6("sha256").update(canonicalJson(value)).digest("hex")}`;
+  return `sha256:${createHash7("sha256").update(canonicalJson(value)).digest("hex")}`;
 }
 var HASHED_MODEL = {
   ontology: ONTOLOGY,
@@ -35344,10 +35431,10 @@ async function backfillWorkspaceGitHistory(workspace) {
       });
     }
   }
-  const unique = [...new Map(logs.map((log) => [log.id, log])).values()];
+  const unique2 = [...new Map(logs.map((log) => [log.id, log])).values()];
   await mkdir21(historyDir(workspace.name), { recursive: true });
-  await Promise.all(unique.map((log) => atomicWriteFile(join37(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
-  return unique;
+  await Promise.all(unique2.map((log) => atomicWriteFile(join37(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
+  return unique2;
 }
 
 // src/tools/sugoWorkspace.ts
@@ -35571,7 +35658,7 @@ init_homeDir();
 init_installManifest();
 init_registry();
 init_sync();
-import { createHash as createHash7 } from "node:crypto";
+import { createHash as createHash8 } from "node:crypto";
 var CONFIRMATION = "DELETE_SUGO_DATA";
 var sugoUninstallInputSchema = {
   action: external_exports.enum(["preview", "execute", "restore", "discard"]).default("preview"),
@@ -35596,7 +35683,7 @@ async function restoreRoot(path, original, start2, end) {
   if (original && typeof original === "object" && original.existed) {
     const bytes = Buffer.from(stripped);
     const prefix = bytes.subarray(0, original.byteLength).toString();
-    const matches = createHash7("sha256").update(prefix).digest("hex") === original.sha256 && bytes.subarray(original.byteLength).toString().trim() === "";
+    const matches = createHash8("sha256").update(prefix).digest("hex") === original.sha256 && bytes.subarray(original.byteLength).toString().trim() === "";
     return writeFile3(path, matches ? prefix : stripped);
   }
   if ((original === null || typeof original === "object" && !original.existed) && stripped.trim() === "") return rm7(path, { force: true });

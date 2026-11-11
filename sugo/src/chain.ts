@@ -1,3 +1,5 @@
+import type { VerificationPlan } from "./verificationPlan.js";
+
 export type ChangeType = "feature" | "bugfix" | "refactor";
 export type ChainDirection = "code_to_test" | "test_to_review";
 
@@ -8,6 +10,7 @@ export interface ChainHandoff {
   summary: string;
   prdPath?: string;
   sessionId: string;
+  verificationPlan: VerificationPlan;
 }
 
 function buildCodeToTestPrompt(handoff: ChainHandoff): string {
@@ -18,13 +21,19 @@ function buildCodeToTestPrompt(handoff: ChainHandoff): string {
     `변경 유형: ${handoff.changeType}`,
     `변경 파일: ${handoff.changedFiles.length > 0 ? handoff.changedFiles.join(", ") : "(없음)"}`,
     `PRD: ${handoff.prdPath ?? "(없음)"}`,
+    `검증 범위: ${handoff.verificationPlan.level}`,
+    `검증 계획: ${handoff.verificationPlan.implementationChecks.join(", ") || "(없음)"}`,
+    `입력 fingerprint: ${handoff.verificationPlan.fingerprint}`,
     "",
     "## 요약",
     handoff.summary,
     "",
     "## test-agent 지시사항",
     "- PRD를 oracle 삼아 명세에서 테스트를 도출하세요. 구현 코드를 보고 따라짜지 마세요(순환검증 방지).",
-    "- 기존 테스트를 먼저 전량 실행해 회귀 baseline을 확인하세요(신규 실패=spec_not_met, 기존 실패=regression으로 구분).",
+    ...(handoff.verificationPlan.broadCommandsAllowed
+      ? ["- 고위험 변경으로 전량 회귀가 허용됩니다. 계획에 기록된 범위만 실행하세요."]
+      : ["- targeted 계획입니다. 전량 회귀를 실행하지 마세요. 변경 행위를 직접 검증하는 최소 테스트만 실행하세요."]),
+    "- 입력 fingerprint가 같은 성공 증거는 재사용하고 같은 명령을 다시 실행하지 마세요.",
     "- 완료 후 반드시 sugo_record_test_evidence로 실행 결과를 기록하세요 — 이 기록만이 test_done 게이트가 신뢰하는 증거입니다.",
   ].join("\n");
 }

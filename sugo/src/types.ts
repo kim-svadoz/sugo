@@ -61,6 +61,7 @@ import type { JiraOption, LastLethalTrifectaCheck, SpecOracleState } from "./gat
 import type { UnlinkedSpecDraft } from "./dashboard/fetch.js";
 import type { WorkResultReport } from "./workResultReport.js";
 import type { HumanBlocker } from "./work/types.js";
+import type { VerificationPlan } from "./verificationPlan.js";
 
 /** code_done 시점에 전달된 게이트 관련 플래그를 감사(audit) 목적으로 보존한다 — 자기보고 값이지만
  * 최소한 "무엇을 주장했는지"는 세션 파일에 남겨 나중에 review 단계에서 대조할 수 있게 한다. */
@@ -92,6 +93,7 @@ export interface ChainInfo {
   codeGateAudit?: CodeGateAudit;
   /** sugo_chain 호출 감사로그. test_start/review_start의 하드 게이트는 아니고 기록만 한다. */
   chainHandoffs?: { direction: ChainDirection; calledAt: string }[];
+  verificationPlan?: VerificationPlan;
   lastValidation?: {
     verdict: "pass" | "partial" | "fail";
     checkedAt: string;

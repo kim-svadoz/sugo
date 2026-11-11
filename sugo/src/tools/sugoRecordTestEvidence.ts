@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { loadSession, saveSession, sessionExists } from "../session.js";
 import { makeTestEvidenceRecord } from "../testEvidence.js";
+import { isBroadVerificationCommand } from "../verificationPlan.js";
 
 export const sugoRecordTestEvidenceInputSchema = {
   sessionId: z.string().describe("sugo_plan(start)으로 발급된 세션 id"),
@@ -40,6 +41,25 @@ export async function handleSugoRecordTestEvidence(rawArgs: unknown) {
     return errorResult("SESSION_NOT_FOUND", `세션을 찾을 수 없습니다: ${args.sessionId}`);
   }
   const session = await loadSession(args.sessionId);
+  const plan = session.data.chainInfo.verificationPlan;
+  if (args.kind === "feature" && plan && !plan.broadCommandsAllowed && isBroadVerificationCommand(args.command)) {
+    return errorResult(
+      "VERIFICATION_OUT_OF_PLAN",
+      `targeted 검증 계획에서 전량 명령을 증거로 기록할 수 없습니다: ${args.command}`,
+    );
+  }
+
+  const previous = session.data.chainInfo.testEvidence;
+  if (
+    args.kind === "feature"
+    && !!plan?.fingerprint
+    && previous?.derivedState === "pass"
+    && previous.command === args.command
+    && previous.inputFingerprint === plan?.fingerprint
+  ) {
+    const payload = { ok: true, sessionId: session.id, kind: args.kind, derivedState: previous.derivedState, reused: true };
+    return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
+  }
 
   const record = makeTestEvidenceRecord(
     args.kind,
@@ -56,6 +76,7 @@ export async function handleSugoRecordTestEvidence(rawArgs: unknown) {
   );
 
   if (args.kind === "feature") record.implementationCycle = session.data.chainInfo.implementationCycle ?? 0;
+  if (args.kind === "feature") record.inputFingerprint = plan?.fingerprint;
 
   const updated =
     args.kind === "baseline"

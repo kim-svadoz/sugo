@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { buildChainPrompt, type ChainDirection, type ChainHandoff } from "../chain.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
+import { buildVerificationPlan, classifyChangeImpact } from "../verificationPlan.js";
 
 export const sugoChainInputSchema = {
   sessionId: z.string().describe("sugo_plan(start)으로 발급된 세션 id"),
@@ -32,6 +33,8 @@ export async function handleSugoChain(rawArgs: unknown) {
     );
   }
 
+  const verificationPlan = session.data.chainInfo.verificationPlan
+    ?? buildVerificationPlan(classifyChangeImpact(session.data.chainInfo.changedFiles), args.changeType);
   const handoff: ChainHandoff = {
     project: session.projectPath,
     changedFiles: session.data.chainInfo.changedFiles,
@@ -39,6 +42,7 @@ export async function handleSugoChain(rawArgs: unknown) {
     summary: args.summary,
     prdPath: session.data.prdPath,
     sessionId: session.id,
+    verificationPlan,
   };
   const prompt = buildChainPrompt(direction, handoff);
 
@@ -49,6 +53,7 @@ export async function handleSugoChain(rawArgs: unknown) {
       chainInfo: {
         ...session.data.chainInfo,
         chainHandoffs: [...(session.data.chainInfo.chainHandoffs ?? []), { direction, calledAt: new Date().toISOString() }],
+        verificationPlan,
       },
     },
   };

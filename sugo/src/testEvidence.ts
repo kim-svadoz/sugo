@@ -42,6 +42,7 @@ export interface TestEvidenceInput {
 export interface TestEvidenceRecord extends TestEvidenceInput {
   /** Server assigned implementation cycle; prevents old evidence in the same millisecond being treated as fresh. */
   implementationCycle?: number;
+  inputFingerprint?: string;
   kind: TestEvidenceKind;
   recordedAt: string;
   derivedState: TestPassedState;
