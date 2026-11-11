@@ -28613,7 +28613,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.71.0" : "0.0.0-dev";
+  return true ? "0.71.1" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -30906,11 +30906,22 @@ async function markRequirementDone(workspace, id, result3) {
   }
   return updateRoadmapNodeStatus(workspace, id, "done", result3);
 }
-async function completeTaskRequirements(workspace, taskId, summary, logId) {
+async function applyTaskRequirementCoverage(workspace, taskId, coverage) {
   await withRoadmap(workspace, async (file) => {
-    const children = file.nodes.filter((n) => n.parent === taskId);
-    if (children.length === 0) return;
-    const nodes = file.nodes.map((n) => n.parent === taskId ? { ...n, status: "done", result: { summary, logId } } : n);
+    const byId = new Map(coverage.map((item) => [`${taskId}::${item.id}`, item.covered]));
+    const nodes = file.nodes.map((node) => {
+      const covered = byId.get(node.id);
+      if (node.parent !== taskId || covered === void 0 || node.id.endsWith("::REQ-CONFIRM")) return node;
+      return { ...node, status: covered ? "done" : "pending" };
+    });
+    await writeRoadmapFile(workspace, { ...file, nodes });
+  });
+}
+async function completeTaskConfirmation(workspace, taskId, summary, logId) {
+  await withRoadmap(workspace, async (file) => {
+    const confirmId = `${taskId}::REQ-CONFIRM`;
+    if (!file.nodes.some((node) => node.id === confirmId)) return;
+    const nodes = file.nodes.map((node) => node.id === confirmId ? { ...node, status: "done", result: { summary, logId } } : node);
     await writeRoadmapFile(workspace, { ...file, nodes });
   });
 }
@@ -32701,6 +32712,13 @@ ${args2.prdContent}` : args2.prdContent;
         }
       }
     };
+    if (args2.coverageMap && session.data.linkedWorkspace && session.data.linkedTaskId) {
+      await applyTaskRequirementCoverage(
+        session.data.linkedWorkspace,
+        session.data.linkedTaskId,
+        args2.coverageMap.acceptanceCriteria
+      );
+    }
   }
   let harnessToolMenu;
   if (action === "code_start") {
@@ -32772,7 +32790,7 @@ ${args2.prdContent}` : args2.prdContent;
       }
     };
     if (session.data.linkedWorkspace && session.data.linkedTaskId) {
-      await completeTaskRequirements(session.data.linkedWorkspace, session.data.linkedTaskId, args2.summary);
+      await completeTaskConfirmation(session.data.linkedWorkspace, session.data.linkedTaskId, args2.summary);
     }
   }
   if (action === "commit" && session.data.decomposeManifest && !session.data.chainInfo.workResultPath) {
@@ -33817,7 +33835,7 @@ async function startServer(runtimeEntry, options, paths, port) {
 async function ensureDashboard(options) {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtime = options.runtime ?? await prepareConsoleRuntime(options.pluginRoot);
+  const runtime = options.runtime ?? (options.buildId ? null : await prepareConsoleRuntime(options.pluginRoot));
   const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join35(options.pluginRoot, "dashboard-runtime", "server.mjs") : void 0);
   const buildId = options.buildId ?? runtime?.buildId;
   try {
@@ -34123,7 +34141,7 @@ async function handleSugoRoadmap(rawArgs) {
       await syncReviewArtifacts(args2.workspace, args2.id, args2.sessionId, patchVersion, files);
       const chain = session.data.chainInfo;
       const evidence = chain.testEvidence;
-      const requirements = chain.coverageMap?.acceptanceCriteria ?? (await listRoadmapNodes(args2.workspace)).filter((node) => node.parent === args2.id && node.level === "subtask").map((node) => ({ id: node.title, covered: node.status === "done" }));
+      const requirements = chain.coverageMap?.acceptanceCriteria;
       const report = buildWorkResultReport({
         featureName: session.featureName,
         kind: session.data.mode === "patch" ? "patch" : "feat",

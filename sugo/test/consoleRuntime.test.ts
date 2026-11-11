@@ -71,9 +71,10 @@ describe("resolveConsoleRuntime", () => {
   });
   it("embedded Console의 경로와 버전을 Plugin 버전과 독립된 build id로 반환한다", () => {
     const root = mkdtempSync(join(tmpdir(), "sugo-console-runtime-"));
+    const home = mkdtempSync(join(tmpdir(), "sugo-console-runtime-home-"));
     runtime(root, "0.58.18");
 
-    expect(resolveConsoleRuntime(root)).toEqual({
+    expect(resolveConsoleRuntime(root, home)).toEqual({
       source: "embedded",
       runtimeRoot: join(root, "dashboard-runtime"),
       entryPath: join(root, "dashboard-runtime", "server.mjs"),
@@ -83,7 +84,10 @@ describe("resolveConsoleRuntime", () => {
   });
 
   it("runtime manifest나 entry가 없으면 null을 반환한다", () => {
-    expect(resolveConsoleRuntime(mkdtempSync(join(tmpdir(), "sugo-console-runtime-empty-")))).toBeNull();
+    expect(resolveConsoleRuntime(
+      mkdtempSync(join(tmpdir(), "sugo-console-runtime-empty-")),
+      mkdtempSync(join(tmpdir(), "sugo-console-runtime-empty-home-")),
+    )).toBeNull();
   });
 
   it("embedded runtime을 외부 저장소에 승격하고 이후 외부본을 우선 선택한다", async () => {

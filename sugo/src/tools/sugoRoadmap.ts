@@ -233,9 +233,8 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
       await syncReviewArtifacts(args.workspace, args.id, args.sessionId, patchVersion, files);
       const chain = session.data.chainInfo;
       const evidence = chain.testEvidence;
-      const requirements = chain.coverageMap?.acceptanceCriteria ?? (await listRoadmapNodes(args.workspace))
-        .filter(node => node.parent === args.id && node.level === "subtask")
-        .map(node => ({ id: node.title, covered: node.status === "done" }));
+      // coverageMap이 없으면 판정을 꾸며내지 않는다. UI는 해당 REQ를 "매핑 없음"으로 표시한다.
+      const requirements = chain.coverageMap?.acceptanceCriteria;
       const report = buildWorkResultReport({
         featureName: session.featureName, kind: session.data.mode === "patch" ? "patch" : "feat", patchVersion,
         completedAt: new Date().toISOString(),

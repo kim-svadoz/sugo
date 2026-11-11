@@ -534,7 +534,7 @@ export async function backfillRoadmapTask(workspace: string, taskId: string, tit
 
 /**
  * 에이전트가 REQ-CONFIRM을 직접 done 처리하는 것은 거부한다. id가 `::REQ-CONFIRM`으로
- * 끝나면 이 경로로는 완료 불가. 오직 completeTaskRequirements(review_done 트리거)만 완료시킬 수 있다.
+ * 끝나면 이 경로로는 완료 불가. 오직 completeTaskConfirmation(review_done 트리거)만 완료시킬 수 있다.
  */
 export async function markRequirementDone(
   workspace: string,
@@ -552,16 +552,33 @@ export async function markRequirementDone(
 }
 
 /**
- * review_done 시 REQ + REQ-CONFIRM 자동완료: 이 taskId의 자식 노드(REQ들 + REQ-CONFIRM,
- * parent===taskId)를 전부 done으로 롤다운한다. 승격된 REQ가 없는 taskId(워크스페이스 미등록 등)는
- * 조용히 no-op — sugo_plan의 review_done 핸들러가 워크스페이스 유무와 무관하게 항상 호출해도
- * 안전해야 하기 때문이다.
+ * test_done의 명시적 coverageMap을 캔버스 REQ 진행률에 반영한다. covered=true만 done이고,
+ * false는 pending으로 남긴다. 사용자 최종확인 노드는 건드리지 않는다.
  */
-export async function completeTaskRequirements(workspace: string, taskId: string, summary: string, logId?: string): Promise<void> {
+export async function applyTaskRequirementCoverage(
+  workspace: string,
+  taskId: string,
+  coverage: { id: string; covered: boolean }[],
+): Promise<void> {
   await withRoadmap(workspace, async (file) => {
-    const children = file.nodes.filter((n) => n.parent === taskId);
-    if (children.length === 0) return;
-    const nodes = file.nodes.map((n) => (n.parent === taskId ? { ...n, status: "done" as const, result: { summary, logId } } : n));
+    const byId = new Map(coverage.map((item) => [`${taskId}::${item.id}`, item.covered]));
+    const nodes = file.nodes.map((node) => {
+      const covered = byId.get(node.id);
+      if (node.parent !== taskId || covered === undefined || node.id.endsWith("::REQ-CONFIRM")) return node;
+      return { ...node, status: covered ? "done" as const : "pending" as const };
+    });
+    await writeRoadmapFile(workspace, { ...file, nodes });
+  });
+}
+
+/** review_done은 기술 REQ를 조작하지 않고 사람의 최종확인 노드만 완료한다. */
+export async function completeTaskConfirmation(workspace: string, taskId: string, summary: string, logId?: string): Promise<void> {
+  await withRoadmap(workspace, async (file) => {
+    const confirmId = `${taskId}::REQ-CONFIRM`;
+    if (!file.nodes.some((node) => node.id === confirmId)) return;
+    const nodes = file.nodes.map((node) => node.id === confirmId
+      ? { ...node, status: "done" as const, result: { summary, logId } }
+      : node);
     await writeRoadmapFile(workspace, { ...file, nodes });
   });
 }

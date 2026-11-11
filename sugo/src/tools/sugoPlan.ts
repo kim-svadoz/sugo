@@ -49,7 +49,7 @@ import { checkpointApplies } from "../work/matching.js";
 import { completedCycleTitle, taskCycleTitle } from "../taskTitle.js";
 import { addWorkLog } from "../work/history.js";
 import { listCheckpoints, pullCheckpointsToRules } from "../work/checkpoint.js";
-import { backfillRoadmapTask, beginRoadmapPatch, completeTaskRequirements, getRoadmapNode, listRoadmapNodes, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../work/roadmap.js";
+import { applyTaskRequirementCoverage, backfillRoadmapTask, beginRoadmapPatch, completeTaskConfirmation, getRoadmapNode, listRoadmapNodes, reconcileRoadmapWithTasks, recordRoadmapWorkResult, replaceTaskRequirements, updateRoadmapNodeRuntimeAssessment, updateRoadmapNodeStatus, upsertRoadmapNodes } from "../work/roadmap.js";
 import { promotePrdRequirements } from "../work/roadmapReq.js";
 import { addTask, findTaskByPrdRef, listTasks, updateTask } from "../work/task.js";
 import type { Task, TaskPatchInfo } from "../work/types.js";
@@ -1180,6 +1180,13 @@ export async function handleSugoPlan(rawArgs: unknown) {
         },
       },
     };
+    if (args.coverageMap && session.data.linkedWorkspace && session.data.linkedTaskId) {
+      await applyTaskRequirementCoverage(
+        session.data.linkedWorkspace,
+        session.data.linkedTaskId,
+        args.coverageMap.acceptanceCriteria,
+      );
+    }
   }
 
   // ── 하네스 도구 디스패치: code_start 순간에 적용된 하네스와 매칭되는 전용 MCP 도구 메뉴를
@@ -1259,11 +1266,9 @@ export async function handleSugoPlan(rawArgs: unknown) {
       },
     };
 
-    // ── REQ/REQ-CONFIRM 자동완료: "사용자 확인이 곧 REQ 롤다운"이다. 승격된 REQ가 없는
-    // 세션(워크스페이스 미등록, 헤딩 형식 REQ 없음 등)은 completeTaskRequirements 내부에서 조용히
-    // no-op하므로 여기서 별도 분기 없이 항상 호출해도 안전하다.
+    // 기술 REQ는 test_done의 coverageMap에서 이미 결정됐다. review_done은 사용자 확인만 닫는다.
     if (session.data.linkedWorkspace && session.data.linkedTaskId) {
-      await completeTaskRequirements(session.data.linkedWorkspace, session.data.linkedTaskId, args.summary);
+      await completeTaskConfirmation(session.data.linkedWorkspace, session.data.linkedTaskId, args.summary);
     }
   }
 

@@ -6,7 +6,8 @@ import {
   addRoadmapNode,
   backfillRoadmapTask,
   backfillLegacyRoadmapWorkResults,
-  completeTaskRequirements,
+  applyTaskRequirementCoverage,
+  completeTaskConfirmation,
   getReadySet,
   getRoadmapNode,
   groupRoadmapNodes,
@@ -437,25 +438,32 @@ describe("markRequirementDone — 반드시 거부/허용", () => {
   });
 });
 
-describe("completeTaskRequirements — review_done 자동완료 연동", () => {
-  it("taskId의 모든 REQ + REQ-CONFIRM을 한 번에 done 처리한다(사용자 확인이 곧 롤다운)", async () => {
+describe("REQ 기술 검증과 사용자 확인 분리", () => {
+  it("coverageMap은 해당 REQ만 갱신하고 사용자 확인은 건드리지 않는다", async () => {
     const nodes = promotePrdRequirements("t-1", "### REQ-1: A\n### REQ-2: B");
     await addRoadmapNode("ws1", { id: "t-1", title: "기능", level: "task", status: "in_progress", dependsOn: [] });
     await upsertRoadmapNodes("ws1", nodes);
 
-    await completeTaskRequirements("ws1", "t-1", "review_done으로 확인 완료");
+    await applyTaskRequirementCoverage("ws1", "t-1", [
+      { id: "REQ-1", covered: true },
+      { id: "REQ-2", covered: false },
+    ]);
 
     const req1 = await getRoadmapNode("ws1", "t-1::REQ-1");
     const req2 = await getRoadmapNode("ws1", "t-1::REQ-2");
     const confirm = await getRoadmapNode("ws1", reqConfirmId("t-1"));
     expect(req1?.status).toBe("done");
-    expect(req2?.status).toBe("done");
-    expect(confirm?.status).toBe("done");
-    expect(confirm?.result?.summary).toBe("review_done으로 확인 완료");
+    expect(req2?.status).toBe("pending");
+    expect(confirm?.status).toBe("pending");
+
+    await completeTaskConfirmation("ws1", "t-1", "review_done으로 확인 완료");
+    expect((await getRoadmapNode("ws1", reqConfirmId("t-1")))?.status).toBe("done");
+    expect((await getRoadmapNode("ws1", reqConfirmId("t-1")))?.result?.summary).toBe("review_done으로 확인 완료");
+    expect((await getRoadmapNode("ws1", "t-1::REQ-2"))?.status).toBe("pending");
   });
 
   it("REQ 승격이 안 된 taskId(워크스페이스 미등록 등)를 불러도 조용히 no-op한다", async () => {
-    await expect(completeTaskRequirements("ws1", "nonexistent-task", "요약")).resolves.not.toThrow();
+    await expect(completeTaskConfirmation("ws1", "nonexistent-task", "요약")).resolves.not.toThrow();
   });
 });
 

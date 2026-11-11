@@ -344,7 +344,9 @@ async function startServer(runtimeEntry: string, options: EnsureOptions, paths: 
 export async function ensureDashboard(options: EnsureOptions): Promise<EnsureResult> {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtime = options.runtime ?? await prepareConsoleRuntime(options.pluginRoot);
+  // buildId는 테스트·개발 실행기가 명시한 runtime 계약이다. 이 경우 사용자 전역 active runtime을
+  // 섞지 않고 pluginRoot의 entry를 그대로 사용해야 격리된 HOME과 실제 설치본이 교차 오염되지 않는다.
+  const runtime = options.runtime ?? (options.buildId ? null : await prepareConsoleRuntime(options.pluginRoot));
   const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join(options.pluginRoot, "dashboard-runtime", "server.mjs") : undefined);
   const buildId = options.buildId ?? runtime?.buildId;
 

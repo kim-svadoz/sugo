@@ -7633,7 +7633,7 @@ async function startServer(runtimeEntry, options, paths, port) {
 async function ensureDashboard(options) {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtime = options.runtime ?? await prepareConsoleRuntime(options.pluginRoot);
+  const runtime = options.runtime ?? (options.buildId ? null : await prepareConsoleRuntime(options.pluginRoot));
   const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join10(options.pluginRoot, "dashboard-runtime", "server.mjs") : void 0);
   const buildId = options.buildId ?? runtime?.buildId;
   try {

@@ -4,6 +4,11 @@ Plugin과 Console은 버전을 따로 매기고 독립 배포합니다. 설치�
 
 ## [Unreleased]
 
+## [Plugin 0.71.1] - 2026-11-11
+
+- 계약 테스트의 coverageMap이 `test_done` 시점에 개별 REQ 진행률과 리뷰 보고서에 즉시 반영되어 사용자 승인 전에 충족·미충족을 판단할 수 있습니다.
+- `review_done`은 기술 REQ를 일괄 완료하지 않고 사용자 최종확인만 완료하며, coverageMap이 없는 과거 작업을 미충족으로 표시하지 않습니다.
+
 ## [Plugin 0.71.0 / Console 0.61.0] - 2026-11-11
 
 - Console runtime을 Plugin 패키지에서 분리하고, 검증된 독립 GitHub Release에서 자동 설치·업데이트합니다.

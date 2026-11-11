@@ -173,8 +173,35 @@ describe("sugo_roadmap ready/get/mark_req", () => {
   });
 });
 
-describe("review_done → REQ/REQ-CONFIRM 자동완료", () => {
-  it("review_done이 성공하면 해당 task의 모든 REQ와 REQ-CONFIRM이 done으로 롤다운된다", async () => {
+describe("test_done REQ 판정 → review_done 사용자 확인", () => {
+  it("test_done의 coverageMap이 승인 전에 개별 REQ 진행률을 완료하고 사용자 확인은 pending으로 둔다", async () => {
+    const { sessionId, taskId } = await toReadyAndBeyond(HEADING_PRD);
+    await call(handleSugoPlan, { action: "code_start", sessionId });
+    await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
+    await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: [] });
+    await call(handleSugoPlan, { action: "test_start", sessionId });
+    await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
+    const testDone = await call(handleSugoPlan, {
+      action: "test_done",
+      sessionId,
+      testPassed: true,
+      coverageMap: {
+        acceptanceCriteria: [{ id: "REQ-1", covered: true }, { id: "REQ-2", covered: true }],
+        responseFields: [],
+        integrationTestCount: 2,
+        regressionChecked: true,
+        regressionIntact: true,
+      },
+    });
+    expect(testDone.isError).toBe(false);
+
+    const list = await call(handleSugoRoadmap, { action: "list", workspace: "team-a" });
+    expect(list.data.nodes.find((n: { id: string }) => n.id === `${taskId}::REQ-1`).status).toBe("done");
+    expect(list.data.nodes.find((n: { id: string }) => n.id === `${taskId}::REQ-2`).status).toBe("done");
+    expect(list.data.nodes.find((n: { id: string }) => n.id === `${taskId}::REQ-CONFIRM`).status).toBe("pending");
+  });
+
+  it("coverageMap이 없던 기존 작업은 review_done이 REQ를 충족으로 꾸미지 않고 확인만 완료한다", async () => {
     const { sessionId, taskId } = await toReadyAndBeyond(HEADING_PRD);
     await call(handleSugoPlan, { action: "code_start", sessionId });
     await call(handleSugoAnalyze, { sessionId, changedFiles: [] });
@@ -200,8 +227,8 @@ describe("review_done → REQ/REQ-CONFIRM 자동완료", () => {
     const req1 = list.data.nodes.find((n: { id: string }) => n.id.endsWith("::REQ-1"));
     const req2 = list.data.nodes.find((n: { id: string }) => n.id.endsWith("::REQ-2"));
     const confirm = list.data.nodes.find((n: { id: string }) => n.id.endsWith("::REQ-CONFIRM"));
-    expect(req1.status).toBe("done");
-    expect(req2.status).toBe("done");
+    expect(req1.status).toBe("pending");
+    expect(req2.status).toBe("pending");
     expect(confirm.status).toBe("done");
     expect(confirm.result.summary).toBe(GOOD_SUMMARY);
   });
