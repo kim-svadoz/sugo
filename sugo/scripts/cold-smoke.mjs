@@ -112,7 +112,14 @@ async function handshake(rpc, server) {
   server.stdin.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n");
 }
 
-const VALID_PRD = "REQ-1: 이메일 로그인 기능을 제공한다. " + "가".repeat(90);
+const VALID_PRD = `REQ-1: 이메일 로그인 기능을 제공한다. ${"가".repeat(90)}\n\n## 완료조건\n- (REQ-1) 이메일 로그인 성공을 검증한다.`;
+const FULL_COVERAGE = {
+  acceptanceCriteria: [{ id: "REQ-1", covered: true }],
+  responseFields: [],
+  integrationTestCount: 1,
+  regressionChecked: true,
+  regressionIntact: true,
+};
 const GOOD_SUMMARY = [
   "배경: 사용자가 이메일로 로그인할 수 없는 문제가 있었다.",
   "변경: EmailLoginService를 추가하고 컨트롤러에 연결했다.",
@@ -164,7 +171,7 @@ async function runPipeline(callTool, project, featureName) {
   }
   await callTool("sugo_record_test_evidence", { sessionId, command: "npm test", exitCode: 0, failed: 0 });
   for (const [action, extra, expectedState] of [
-    ["test_done", { testPassed: true }, "TEST_DONE"],
+    ["test_done", { testPassed: true, coverageMap: FULL_COVERAGE }, "TEST_DONE"],
     ["review_start", {}, "REVIEW_RUNNING"],
   ]) {
     const r = await transition(action, extra, expectedState);

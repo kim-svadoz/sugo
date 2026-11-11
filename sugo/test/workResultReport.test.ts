@@ -71,7 +71,8 @@ describe("canonical work-result report", () => {
     expect(markdown).toContain("- 변경 파일 없음");
     expect(markdown).toContain("- 별도 설계 결정 기록 없음");
     expect(markdown).toContain("- 알려진 제한 사항 없음");
-    expect(markdown).toContain("미검증");
+    expect(markdown).toContain("미실시");
+    expect(markdown).toContain("기록 전");
   });
 
   it("사후 연결 결과에 서버가 검증한 provenance와 Git 기준선을 표시한다", () => {

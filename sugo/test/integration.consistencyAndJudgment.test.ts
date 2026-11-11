@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -16,7 +16,10 @@ async function call(handler: (args: unknown) => Promise<any>, args: unknown) {
   return { isError: !!res.isError, data: JSON.parse(res.content[0].text) };
 }
 
-const VALID_PRD = "REQ-1: 이메일 로그인 기능을 제공한다. " + "가".repeat(90);
+const VALID_PRD = `REQ-1: 이메일 로그인 기능을 제공한다. ${"가".repeat(90)}
+
+## 완료조건
+- (REQ-1) 이메일 로그인 성공을 통합 테스트로 검증한다.`;
 const GOOD_SUMMARY = [
   "배경: 사용자가 이메일로 로그인할 수 없는 문제가 있었다.",
   "변경: EmailLoginService를 추가하고 컨트롤러에 연결했다.",
@@ -63,12 +66,25 @@ async function toTestRunning(): Promise<string> {
   return sessionId;
 }
 
-describe("PRD 정합성 게이트 — opt-in 꺼져있으면(기본) coverageMap 없이도 통과", () => {
-  it("integrationGateEnforced 미설정이면 coverageMap 없이 test_done이 통과한다", async () => {
+describe("PRD 정합성 게이트 — 기존 프로젝트는 설정을 보존", () => {
+  it("새 프로젝트는 coverage gate를 기본으로 켠다", async () => {
+    await call(handleSugoAdd, { projectPath: projectDir });
+    const config = JSON.parse(readFileSync(join(projectDir, "sugo", "config.json"), "utf8"));
+    expect(config.verificationPolicy.integrationGateEnforced).toBe(true);
+  });
+
+  it("기존 프로젝트에서 integrationGateEnforced 미설정이면 coverageMap 없이 통과한다", async () => {
     const sessionId = await toTestRunning();
     await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
     const result = await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     expect(result.isError).toBe(false);
+    expect(result.data.coverageMapDraft.acceptanceCriteria).toEqual([expect.objectContaining({ id: "REQ-1" })]);
+  });
+
+  it("start 응답은 꺼진 gate와 보고서의 매핑 없음 상태를 안내한다", async () => {
+    const result = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "coverage-warning" });
+    expect(result.data.verificationPolicy).toMatchObject({ integrationGateEnforced: false });
+    expect(result.data.verificationPolicy.warning).toContain("매핑 없음");
   });
 });
 
@@ -80,6 +96,9 @@ describe("PRD 정합성 게이트 — opt-in 켜져 있으면 강제", () => {
     const result = await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
     expect(result.isError).toBe(true);
     expect(result.data.errorCode).toBe("COVERAGE_MAP_REQUIRED");
+    expect(result.data.coverageMapDraft.acceptanceCriteria).toEqual([
+      expect.objectContaining({ id: "REQ-1", evidence: expect.arrayContaining([expect.stringContaining("이메일 로그인 성공")]) }),
+    ]);
   });
 
   it("커버리지가 불완전한 coverageMap을 제출하면 거부한다", async () => {

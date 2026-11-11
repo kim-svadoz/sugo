@@ -132,14 +132,18 @@ export async function syncProjectHarness(args: SyncProjectHarnessArgs): Promise<
     }),
     autoCommitArtifacts: existingConfig?.autoCommitArtifacts ?? true,
     disabled: existingConfig?.disabled ?? false,
-    verificationPolicy:
-      args.integrationGateEnforced === undefined && args.contractEvidenceRequired === undefined
-        ? existingConfig?.verificationPolicy
+    verificationPolicy: existingConfig
+      ? args.integrationGateEnforced === undefined && args.contractEvidenceRequired === undefined
+        ? existingConfig.verificationPolicy
         : {
-            ...existingConfig?.verificationPolicy,
+            ...existingConfig.verificationPolicy,
             ...(args.integrationGateEnforced !== undefined && { integrationGateEnforced: args.integrationGateEnforced }),
             ...(args.contractEvidenceRequired !== undefined && { contractEvidenceRequired: args.contractEvidenceRequired }),
-          },
+          }
+      : {
+          integrationGateEnforced: args.integrationGateEnforced ?? true,
+          ...(args.contractEvidenceRequired !== undefined && { contractEvidenceRequired: args.contractEvidenceRequired }),
+        },
   };
   const unchanged = existingConfig !== null
     && JSON.stringify({ ...candidateConfig, lastUpdated: existingConfig.lastUpdated }) === JSON.stringify(existingConfig);

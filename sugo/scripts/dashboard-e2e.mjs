@@ -64,14 +64,13 @@ try {
   mkdirSync(plugin, { recursive: true }); mkdirSync(home); mkdirSync(project);
   for (const path of shipped) cpSync(join(source, path), join(plugin, path), { recursive: true });
   writeFileSync(join(project, "package.json"), JSON.stringify({ name: "e2e-project" }));
-  const pluginVersion = readJson(join(plugin, ".claude-plugin", "plugin.json")).version;
   const consoleVersion = readJson(join(plugin, "dashboard-runtime", "runtime.json")).consoleVersion;
 
   // 1. 첫 세션: 서버가 뜨고 연결 설정이 자동으로 채워진다.
   const first = runHook(plugin);
   check("첫 세션 훅이 정상 종료하고 시작을 알린다", first.status === 0 && first.stdout.includes("Sugo 대시보드를 시작했다"), first.stdout + first.stderr);
   const up = await health();
-  check("서버가 응답하고 Console·Plugin 버전이 맞다", up?.status === "ok" && up.version === consoleVersion && up.build === pluginVersion, JSON.stringify(up));
+  check("서버가 응답하고 Console runtime 버전이 맞다", up?.status === "ok" && up.version === consoleVersion && up.build === `console-${consoleVersion}`, JSON.stringify(up));
   const settings = existsSync(settingsPath) ? readJson(settingsPath).dashboard : {};
   check("연결 설정이 자동으로 켜진다(사용자 작업 없음)", settings.enabled === true && settings.apiUrl === `http://localhost:${port}` && String(settings.apiToken).startsWith("sugo_pat_"));
   const page = await fetch(`${base}/`).then((r) => r.text());
@@ -106,7 +105,7 @@ try {
   const recovered = runHook(plugin);
   check("다음 세션 훅이 죽은 서버를 정리하고 다시 띄운다", recovered.status === 0 && (await health())?.status === "ok" && statePid() !== pid);
 
-  // 6. 플러그인 업데이트: 새 버전 번들이 서버를 교체하고 데이터는 유지된다.
+  // 6. Plugin 버전과 Console runtime 버전은 독립적이다.
   const plugin2 = join(root, "plugin2");
   cpSync(plugin, plugin2, { recursive: true });
   await build({ entryPoints: [join(source, "src", "lifecycle", "dashboardStartHook.ts")], bundle: true, platform: "node", format: "esm",
@@ -115,11 +114,22 @@ try {
   const updated = runHook(plugin2);
   const afterUpdate = await health();
   const stillThere = (await (await api("/api/workspaces")).json()).workspaces?.some((w) => w.name === "e2e-ws");
-  check("업데이트하면 새 버전 서버로 교체되고 데이터가 유지된다", updated.status === 0 && afterUpdate?.build === "99.0.0" && statePid() !== beforeUpdate && stillThere,
+  check("Plugin만 업데이트하면 같은 Console 서버와 데이터가 유지된다", updated.status === 0 && afterUpdate?.build === `console-${consoleVersion}` && statePid() === beforeUpdate && stillThere,
     JSON.stringify({ status: updated.status, stdout: updated.stdout, stderr: updated.stderr, build: afterUpdate?.build, beforeUpdate, after: statePid(), stillThere }));
+  const plugin3 = join(root, "plugin3");
+  cpSync(plugin2, plugin3, { recursive: true });
+  writeFileSync(join(plugin3, "dashboard-runtime", "runtime.json"), JSON.stringify({ consoleVersion: "0.59.1" }));
+  const runtimeUpdated = runHook(plugin3);
+  const runtimeHealth = await waitFor("updated console runtime", async () => {
+    const current = await health();
+    return current?.build === "console-0.59.1" ? current : null;
+  });
+  const stillThereAfterRuntime = (await (await api("/api/workspaces")).json()).workspaces?.some((w) => w.name === "e2e-ws");
+  check("Console runtime이 업데이트되면 서버만 교체하고 데이터는 유지한다", runtimeUpdated.status === 0 && runtimeHealth?.build === "console-0.59.1" && statePid() !== beforeUpdate && stillThereAfterRuntime,
+    JSON.stringify({ status: runtimeUpdated.status, stdout: runtimeUpdated.stdout, stderr: runtimeUpdated.stderr, build: runtimeHealth?.build, beforeUpdate, after: statePid(), stillThereAfterRuntime }));
   const updatedPid = statePid();
-  const sameAgain = runHook(plugin2);
-  check("업데이트 뒤 같은 버전 세션은 다시 띄우지 않는다", sameAgain.stdout === "" && statePid() === updatedPid);
+  const sameAgain = runHook(plugin3);
+  check("같은 Console runtime 세션은 다시 띄우지 않는다", sameAgain.stdout === "" && statePid() === updatedPid);
 
   // 7. uninstall(retain) → restore → purge.
   const retained = await mcp.call("sugo_uninstall", { action: "execute", mode: "retain", confirmation: "UNINSTALL_SUGO" });

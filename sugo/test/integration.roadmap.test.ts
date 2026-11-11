@@ -48,7 +48,7 @@ afterEach(() => {
 });
 
 async function toReadyAndBeyond(prd: string): Promise<{ sessionId: string; taskId: string }> {
-  await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a" });
+  await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a", integrationGateEnforced: false });
   const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
   const sessionId = start.data.sessionId as string;
   await call(handleSugoPlan, { action: "clarify", sessionId });
@@ -103,7 +103,7 @@ async function approveDashboardReview(sessionId: string, taskId: string): Promis
 
 describe("Roadmap DAG — sugo_plan(prd) 자동 REQ 승격", () => {
   it("### 헤딩 PRD가 있으면 REQ 노드 + REQ-CONFIRM이 자동으로 심긴다", async () => {
-    await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a" });
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a", integrationGateEnforced: false });
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId;
     await call(handleSugoPlan, { action: "clarify", sessionId });
@@ -123,7 +123,7 @@ describe("Roadmap DAG — sugo_plan(prd) 자동 REQ 승격", () => {
   });
 
   it("인라인 REQ만 있는 평범한 PRD는 로드맵에 아무것도 심지 않는다(no-op)", async () => {
-    await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a" });
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a", integrationGateEnforced: false });
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId;
     await call(handleSugoPlan, { action: "clarify", sessionId });

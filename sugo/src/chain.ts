@@ -34,6 +34,7 @@ function buildCodeToTestPrompt(handoff: ChainHandoff): string {
       ? ["- 고위험 변경으로 전량 회귀가 허용됩니다. 계획에 기록된 범위만 실행하세요."]
       : ["- targeted 계획입니다. 전량 회귀를 실행하지 마세요. 변경 행위를 직접 검증하는 최소 테스트만 실행하세요."]),
     "- 입력 fingerprint가 같은 성공 증거는 재사용하고 같은 명령을 다시 실행하지 마세요.",
+    "- 각 REQ를 덮는 테스트 클래스·파일을 정리해 testClasses로 기록하고, 서버가 돌려준 coverageMap 초안을 확인한 뒤 covered 값을 직접 판단해 제출하세요.",
     "- 완료 후 반드시 sugo_record_test_evidence로 실행 결과를 기록하세요 — 이 기록만이 test_done 게이트가 신뢰하는 증거입니다.",
   ].join("\n");
 }

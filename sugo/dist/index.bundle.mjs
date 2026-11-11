@@ -8267,9 +8267,12 @@ async function syncProjectHarness(args2) {
     }),
     autoCommitArtifacts: existingConfig?.autoCommitArtifacts ?? true,
     disabled: existingConfig?.disabled ?? false,
-    verificationPolicy: args2.integrationGateEnforced === void 0 && args2.contractEvidenceRequired === void 0 ? existingConfig?.verificationPolicy : {
-      ...existingConfig?.verificationPolicy,
+    verificationPolicy: existingConfig ? args2.integrationGateEnforced === void 0 && args2.contractEvidenceRequired === void 0 ? existingConfig.verificationPolicy : {
+      ...existingConfig.verificationPolicy,
       ...args2.integrationGateEnforced !== void 0 && { integrationGateEnforced: args2.integrationGateEnforced },
+      ...args2.contractEvidenceRequired !== void 0 && { contractEvidenceRequired: args2.contractEvidenceRequired }
+    } : {
+      integrationGateEnforced: args2.integrationGateEnforced ?? true,
       ...args2.contractEvidenceRequired !== void 0 && { contractEvidenceRequired: args2.contractEvidenceRequired }
     }
   };
@@ -24627,7 +24630,7 @@ var sugoAddInputSchema = {
   workspace: external_exports.string().optional().describe("\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC774\uB984 \u2014 \uC9C0\uC815\uD558\uBA74 \uD504\uB85C\uC81D\uD2B8\uAC00 \uC774 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uC5D0 \uC18C\uC18D\uB418\uC5B4 prd/commit \uC2DC Task/WorkLog\uAC00 \uC790\uB3D9 \uC5F0\uB3D9\uB41C\uB2E4"),
   repoUrl: external_exports.string().optional().describe("\uD558\uB124\uC2A4 \uC800\uC7A5\uC18C git URL(\uC544\uC9C1 \uBBF8\uAD6C\uD604 \u2014 \uB85C\uCEEC \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB85C \uD3F4\uBC31)"),
   additionalStacks: external_exports.array(external_exports.string()).optional().describe("\uC790\uB3D9\uAC10\uC9C0 \uACB0\uACFC\uC5D0 \uCD94\uAC00\uB85C \uAC15\uC81C \uD3EC\uD568\uD560 harnessId \uBAA9\uB85D"),
-  integrationGateEnforced: external_exports.boolean().optional().describe("PRD \uC815\uD569\uC131 \uAC8C\uC774\uD2B8\uB97C opt-in\uC73C\uB85C \uAC15\uC81C\uD560\uC9C0(verificationPolicy). true\uBA74 test_done\uC5D0 coverageMap \uC81C\uCD9C\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4"),
+  integrationGateEnforced: external_exports.boolean().optional().describe("PRD \uC815\uD569\uC131 \uAC8C\uC774\uD2B8\uB97C \uAC15\uC81C\uD560\uC9C0(verificationPolicy). \uC0C8 \uD504\uB85C\uC81D\uD2B8 \uAE30\uBCF8\uAC12\uC740 true\uC774\uBA70 test_done\uC5D0 coverageMap \uC81C\uCD9C\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4"),
   contractEvidenceRequired: external_exports.boolean().optional().describe("\uACC4\uC57D\uD14C\uC2A4\uD2B8 \uC2E4\uD589\uC99D\uAC70\uB97C opt-in\uC73C\uB85C \uAC15\uC81C\uD560\uC9C0(verificationPolicy). true\uBA74 review_done\uC5D0 red\u2192green \uC804\uC774 \uAE30\uB85D\uC774 \uD544\uC218\uAC00 \uB41C\uB2E4")
 };
 var SugoAddArgs = external_exports.object(sugoAddInputSchema);
@@ -24905,6 +24908,7 @@ function buildCodeToTestPrompt(handoff) {
     "- PRD\uB97C oracle \uC0BC\uC544 \uBA85\uC138\uC5D0\uC11C \uD14C\uC2A4\uD2B8\uB97C \uB3C4\uCD9C\uD558\uC138\uC694. \uAD6C\uD604 \uCF54\uB4DC\uB97C \uBCF4\uACE0 \uB530\uB77C\uC9DC\uC9C0 \uB9C8\uC138\uC694(\uC21C\uD658\uAC80\uC99D \uBC29\uC9C0).",
     ...handoff.verificationPlan.broadCommandsAllowed ? ["- \uACE0\uC704\uD5D8 \uBCC0\uACBD\uC73C\uB85C \uC804\uB7C9 \uD68C\uADC0\uAC00 \uD5C8\uC6A9\uB429\uB2C8\uB2E4. \uACC4\uD68D\uC5D0 \uAE30\uB85D\uB41C \uBC94\uC704\uB9CC \uC2E4\uD589\uD558\uC138\uC694."] : ["- targeted \uACC4\uD68D\uC785\uB2C8\uB2E4. \uC804\uB7C9 \uD68C\uADC0\uB97C \uC2E4\uD589\uD558\uC9C0 \uB9C8\uC138\uC694. \uBCC0\uACBD \uD589\uC704\uB97C \uC9C1\uC811 \uAC80\uC99D\uD558\uB294 \uCD5C\uC18C \uD14C\uC2A4\uD2B8\uB9CC \uC2E4\uD589\uD558\uC138\uC694."],
     "- \uC785\uB825 fingerprint\uAC00 \uAC19\uC740 \uC131\uACF5 \uC99D\uAC70\uB294 \uC7AC\uC0AC\uC6A9\uD558\uACE0 \uAC19\uC740 \uBA85\uB839\uC744 \uB2E4\uC2DC \uC2E4\uD589\uD558\uC9C0 \uB9C8\uC138\uC694.",
+    "- \uAC01 REQ\uB97C \uB36E\uB294 \uD14C\uC2A4\uD2B8 \uD074\uB798\uC2A4\xB7\uD30C\uC77C\uC744 \uC815\uB9AC\uD574 testClasses\uB85C \uAE30\uB85D\uD558\uACE0, \uC11C\uBC84\uAC00 \uB3CC\uB824\uC900 coverageMap \uCD08\uC548\uC744 \uD655\uC778\uD55C \uB4A4 covered \uAC12\uC744 \uC9C1\uC811 \uD310\uB2E8\uD574 \uC81C\uCD9C\uD558\uC138\uC694.",
     "- \uC644\uB8CC \uD6C4 \uBC18\uB4DC\uC2DC sugo_record_test_evidence\uB85C \uC2E4\uD589 \uACB0\uACFC\uB97C \uAE30\uB85D\uD558\uC138\uC694 \u2014 \uC774 \uAE30\uB85D\uB9CC\uC774 test_done \uAC8C\uC774\uD2B8\uAC00 \uC2E0\uB8B0\uD558\uB294 \uC99D\uAC70\uC785\uB2C8\uB2E4."
   ].join("\n");
 }
@@ -28609,7 +28613,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.68.19" : "0.0.0-dev";
+  return true ? "0.69.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29926,6 +29930,47 @@ function checkCoverageGate(coverageMap) {
   return ok2();
 }
 
+// src/coverageDraft.ts
+function completionSection(prd) {
+  const lines2 = prd.split(/\r?\n/);
+  const start2 = lines2.findIndex((line) => /^##\s*완료조건\s*$/.test(line.trim()));
+  if (start2 < 0) return "";
+  const endOffset = lines2.slice(start2 + 1).findIndex((line) => /^##\s/.test(line.trim()));
+  const end = endOffset < 0 ? lines2.length : start2 + 1 + endOffset;
+  return lines2.slice(start2 + 1, end).join("\n");
+}
+function requirementIds(value) {
+  return [...new Set([...value.matchAll(/\bREQ-\d+\b/gi)].map((match) => match[0].toUpperCase()))];
+}
+function buildCoverageMapDraft(input) {
+  const section = completionSection(input.prd);
+  const lines2 = section.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const criteria = /* @__PURE__ */ new Map();
+  for (const line of lines2) {
+    const ids = requirementIds(line);
+    const description = line.replace(/^[-*]\s*/, "").replace(/\s*\(REQ-\d+\)\s*/gi, " ").trim();
+    for (const id of ids) criteria.set(id, [`\uC644\uB8CC\uC870\uAC74: ${description}`]);
+  }
+  for (const contract of input.contracts ?? []) {
+    if (contract.greenExitCode !== 0) continue;
+    for (const id of requirementIds(contract.contractId)) {
+      if (criteria.has(id)) criteria.get(id).push(`\uACC4\uC57D \uD14C\uC2A4\uD2B8: ${contract.contractId}`);
+    }
+  }
+  for (const testClass of input.testClasses ?? []) {
+    for (const id of requirementIds(testClass)) {
+      if (criteria.has(id)) criteria.get(id).push(`\uD14C\uC2A4\uD2B8 \uD074\uB798\uC2A4: ${testClass}`);
+    }
+  }
+  return {
+    acceptanceCriteria: [...criteria].map(([id, evidence]) => ({ id, evidence })),
+    responseFields: [],
+    integrationTestCount: input.testClasses?.length ?? 0,
+    regressionChecked: false,
+    regressionIntact: false
+  };
+}
+
 // src/contractEvidence.ts
 function applyContractPhase(existing, contractId, phase, exitCode, now) {
   const base = existing ?? { contractId };
@@ -30248,7 +30293,7 @@ function buildWorkResultReport(input) {
     }
   };
 }
-var yesNo = (value) => value === true ? "\uC644\uB8CC" : value === false ? "\uBBF8\uAC80\uC99D" : "\uD574\uB2F9 \uC5C6\uC74C";
+var yesNo = (value) => value === true ? "\uD655\uC778\uB428" : value === false ? "\uBBF8\uC2E4\uC2DC" : "\uAE30\uB85D \uC804";
 var bullets = (items, empty) => items.length > 0 ? items.map((item) => `- ${item}`).join("\n") : `- ${empty}`;
 function renderWorkResultMarkdown(report) {
   const kindLabel = report.kind === "feat" ? "FEAT" : `PATCH v${report.patchVersion}`;
@@ -31889,6 +31934,7 @@ async function handleSugoPlan(rawArgs) {
   const args2 = SugoPlanArgs.parse(rawArgs);
   const { action, sessionId } = args2;
   let scheduleLinkWarning;
+  let coverageMapDraft;
   let existing = null;
   if (action !== "start") {
     if (!sessionId) {
@@ -32026,10 +32072,17 @@ async function handleSugoPlan(rawArgs) {
     }
     const projectConfig = await loadProjectConfig(existing.projectPath);
     const enforced = projectConfig?.verificationPolicy?.integrationGateEnforced ?? false;
+    const prd = existing.data.prdPath ? await readFile27(existing.data.prdPath, "utf8").catch(() => "") : "";
+    coverageMapDraft = buildCoverageMapDraft({
+      prd,
+      contracts: existing.data.chainInfo.contractTests,
+      testClasses: existing.data.chainInfo.testEvidence?.testClasses
+    });
     if (enforced && !args2.coverageMap) {
       return errorResult9(
         "COVERAGE_MAP_REQUIRED",
-        "\uC774 \uD504\uB85C\uC81D\uD2B8\uB294 verificationPolicy.integrationGateEnforced\uAC00 \uCF1C\uC838 \uC788\uC5B4 test_done\uC5D0 coverageMap\uC774 \uD544\uC694\uD569\uB2C8\uB2E4."
+        "\uC774 \uD504\uB85C\uC81D\uD2B8\uB294 verificationPolicy.integrationGateEnforced\uAC00 \uCF1C\uC838 \uC788\uC5B4 test_done\uC5D0 coverageMap\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.",
+        { coverageMapDraft }
       );
     }
     if (args2.coverageMap) {
@@ -32342,6 +32395,7 @@ async function handleSugoPlan(rawArgs) {
       await pullCheckpointsToRules(session.projectPath, registryEntry.workspace).catch(() => null);
     }
   }
+  const projectVerificationPolicy = action === "start" ? (await loadProjectConfig(session.projectPath))?.verificationPolicy : void 0;
   if (action === "start" && session.data.mode !== "patch") {
     const registryEntry = await findRegistryEntry(session.projectPath);
     if (registryEntry?.workspace) {
@@ -32939,22 +32993,27 @@ ${args2.prdContent}` : args2.prdContent;
     workResultPath: session.data.chainInfo.workResultPath,
     workBranch: action === "start" ? session.data.workBranch : void 0,
     scheduleLinkWarning,
+    verificationPolicy: action === "start" ? {
+      integrationGateEnforced: projectVerificationPolicy?.integrationGateEnforced === true,
+      warning: projectVerificationPolicy?.integrationGateEnforced === true ? void 0 : "REQ \uCEE4\uBC84\uB9AC\uC9C0 \uAC8C\uC774\uD2B8\uAC00 \uAEBC\uC838 \uC788\uC2B5\uB2C8\uB2E4. test_done\uC5D0 coverageMap\uC744 \uC81C\uCD9C\uD558\uC9C0 \uC54A\uC73C\uBA74 \uB9AC\uBDF0 \uBCF4\uACE0\uC11C\uC758 REQ \uC0C1\uD0DC\uB294 '\uB9E4\uD551 \uC5C6\uC74C'\uC73C\uB85C \uD45C\uC2DC\uB429\uB2C8\uB2E4."
+    } : void 0,
     patch: session.data.mode === "patch" && session.data.patch ? { parentPrdPath: session.data.patch.parentPrdPath, version: session.data.patch.version } : void 0,
     workRecord,
     decomposeManifest: session.data.decomposeManifest,
     harnessToolMenu,
     // "정적검증 미강제" 라벨: test_done에서 npm/py/go 등 풀검증 강제 불가 명령이면 false로
     // 노출한다(gradle/maven이면 true — 그쪽은 게이트가 gradlew check/mvn verify를 이미 강제).
-    fullVerifyEnforceable: action === "test_done" && session.data.chainInfo.testEvidence ? isFullVerifyEnforceable(session.data.chainInfo.testEvidence.command) : void 0
+    fullVerifyEnforceable: action === "test_done" && session.data.chainInfo.testEvidence ? isFullVerifyEnforceable(session.data.chainInfo.testEvidence.command) : void 0,
+    coverageMapDraft: action === "test_done" ? coverageMapDraft : void 0
   };
   return {
     content: [{ type: "text", text: JSON.stringify(payload, null, 2) }]
   };
 }
-function errorResult9(errorCode, message) {
+function errorResult9(errorCode, message, details = {}) {
   return {
     isError: true,
-    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }]
+    content: [{ type: "text", text: JSON.stringify({ ok: false, errorCode, message, ...details }, null, 2) }]
   };
 }
 
@@ -33005,6 +33064,7 @@ var sugoRecordTestEvidenceInputSchema = {
   failedTests: external_exports.number().optional().describe("\uC2E4\uD328 \uC218"),
   skippedTests: external_exports.number().optional().describe("\uC2A4\uD0B5 \uC218"),
   rawOutput: external_exports.string().optional().describe("\uC6D0\uBB38 \uCD9C\uB825(\uAC10\uC0AC\uC6A9, \uC120\uD0DD)"),
+  testClasses: external_exports.array(external_exports.string()).optional().describe("\uC2E4\uD589\uD55C \uD14C\uC2A4\uD2B8 \uD074\uB798\uC2A4\xB7\uD30C\uC77C \uBAA9\uB85D. coverageMap \uCD08\uC548 \uADFC\uAC70\uB85C \uC0AC\uC6A9"),
   /** @deprecated 이전 이름 — 호환용. 새 코드는 totalTests/passedTests/failedTests를 쓴다. */
   total: external_exports.number().optional(),
   passed: external_exports.number().optional(),
@@ -33040,7 +33100,8 @@ async function handleSugoRecordTestEvidence(rawArgs) {
       passed: args2.passedTests ?? args2.passed,
       failed: args2.failedTests ?? args2.failed,
       unverified: args2.unverified,
-      unverifiedReason: args2.unverifiedReason
+      unverifiedReason: args2.unverifiedReason,
+      testClasses: args2.testClasses
     },
     (/* @__PURE__ */ new Date()).toISOString()
   );
@@ -33147,7 +33208,7 @@ var ROADMAP_LEVELS = ["spec", "workstream", "task", "subtask", "step"];
 var ROADMAP_NODE_STATUSES = ["pending", "in_progress", "done", "blocked", "dropped"];
 
 // src/lifecycle/consoleOnDemand.ts
-import { dirname as dirname12, join as join34 } from "node:path";
+import { dirname as dirname12, join as join35 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // src/dashboard/syncAll.ts
@@ -33269,9 +33330,34 @@ async function syncAllWorkspaceData() {
 init_homeDir();
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
-import { closeSync, existsSync as existsSync5, openSync } from "node:fs";
+import { closeSync, existsSync as existsSync6, openSync } from "node:fs";
 import { mkdir as mkdir20, readFile as readFile31, rm as rm6, stat as stat5 } from "node:fs/promises";
+import { join as join34 } from "node:path";
+
+// src/lifecycle/consoleRuntime.ts
+import { existsSync as existsSync5, readFileSync as readFileSync3 } from "node:fs";
 import { join as join33 } from "node:path";
+function resolveConsoleRuntime(pluginRoot2) {
+  const runtimeRoot = join33(pluginRoot2, "dashboard-runtime");
+  const entryPath = join33(runtimeRoot, "server.mjs");
+  const manifestPath = join33(runtimeRoot, "runtime.json");
+  if (!existsSync5(entryPath) || !existsSync5(manifestPath)) return null;
+  try {
+    const manifest = JSON.parse(readFileSync3(manifestPath, "utf8"));
+    if (typeof manifest.consoleVersion !== "string" || !manifest.consoleVersion.trim()) return null;
+    return {
+      source: "embedded",
+      runtimeRoot,
+      entryPath,
+      consoleVersion: manifest.consoleVersion,
+      buildId: `console-${manifest.consoleVersion}`
+    };
+  } catch {
+    return null;
+  }
+}
+
+// src/lifecycle/dashboardRuntime.ts
 var DEFAULT_DASHBOARD_PORT = 3001;
 var CONSOLE_HOST = "sugo.localhost";
 var CONSOLE_SERVICE = "sugo-console";
@@ -33288,15 +33374,15 @@ var STOP_WAIT_MS = 5e3;
 var POLL_MS = 150;
 var LOCK_STALE_MS = 3e4;
 function dashboardPaths(home = sugoHomeDir()) {
-  const sugoDir = join33(home, ".claude", "sugo");
-  const dataDir = join33(sugoDir, "dashboard");
+  const sugoDir = join34(home, ".claude", "sugo");
+  const dataDir = join34(sugoDir, "dashboard");
   return {
     sugoDir,
     dataDir,
-    stateFile: join33(dataDir, "server.json"),
-    logFile: join33(dataDir, "dashboard.log"),
-    lockDir: join33(dataDir, "start.lock"),
-    settingsFile: join33(sugoDir, "settings.json")
+    stateFile: join34(dataDir, "server.json"),
+    logFile: join34(dataDir, "dashboard.log"),
+    lockDir: join34(dataDir, "start.lock"),
+    settingsFile: join34(sugoDir, "settings.json")
   };
 }
 function isSupportedNode(version2 = process.versions.node) {
@@ -33463,6 +33549,8 @@ async function controlDashboard(action, options) {
   return result3;
 }
 async function startServer(runtimeEntry, options, paths, port) {
+  const buildId = options.buildId ?? options.runtime?.buildId;
+  if (!buildId) return { kind: "failed", message: "Sugo Console build \uC2DD\uBCC4\uC790\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4." };
   const log = openSync(paths.logFile, "a");
   let exited = false;
   const child = spawn(process.execPath, [runtimeEntry], {
@@ -33472,9 +33560,9 @@ async function startServer(runtimeEntry, options, paths, port) {
     env: {
       ...process.env,
       SUGO_DASHBOARD_PORT: String(port),
-      BUILD_ID: options.buildId,
-      HARNESS_PATH: join33(options.pluginRoot, "harness-library"),
-      HARNESS_OVERRIDE_PATH: join33(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
+      BUILD_ID: buildId,
+      HARNESS_PATH: join34(options.pluginRoot, "harness-library"),
+      HARNESS_OVERRIDE_PATH: join34(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
       SKILLS_PATH: options.pluginRoot
     }
   });
@@ -33483,14 +33571,16 @@ async function startServer(runtimeEntry, options, paths, port) {
   });
   child.unref();
   closeSync(log);
-  const healthy = await waitUntil(async () => exited || (await fetchHealth(port))?.build === options.buildId, START_WAIT_MS);
+  const healthy = await waitUntil(async () => exited || (await fetchHealth(port))?.build === buildId, START_WAIT_MS);
   if (healthy && !exited) return { kind: "started" };
   return { kind: "failed", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD558\uC9C0 \uBABB\uD588\uB2E4. \uB85C\uADF8: ${paths.logFile}. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` };
 }
 async function ensureDashboard(options) {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtimeEntry = join33(options.pluginRoot, "dashboard-runtime", "server.mjs");
+  const runtime = options.runtime ?? resolveConsoleRuntime(options.pluginRoot);
+  const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join34(options.pluginRoot, "dashboard-runtime", "server.mjs") : void 0);
+  const buildId = options.buildId ?? runtime?.buildId;
   try {
     if (!isSupportedNode(nodeVersion)) {
       return {
@@ -33501,11 +33591,11 @@ async function ensureDashboard(options) {
     }
     const settings = await readDashboardSettings(paths.settingsFile);
     if (settings.enabled === false) return { kind: "skipped", reason: "opt-out" };
-    if (!existsSync5(runtimeEntry)) return { kind: "skipped", reason: "no-runtime" };
+    if (!runtimeEntry || !buildId || !existsSync6(runtimeEntry)) return { kind: "skipped", reason: "no-runtime" };
     const { port, strict, state, owned } = await currentPort(options, paths);
     const health = await fetchHealth(port);
     if (health && !owned && isConsoleHealth(health)) return { kind: "running" };
-    if (health && owned && health.build === options.buildId) return { kind: "running" };
+    if (health && owned && health.build === buildId) return { kind: "running" };
     if (health && owned) await stopDashboard(paths);
     else if (state) await rm6(paths.stateFile, { force: true });
     if (!await acquireLock(paths)) return { kind: "busy" };
@@ -33518,7 +33608,7 @@ async function ensureDashboard(options) {
           message: strict ? `Sugo \uB300\uC2DC\uBCF4\uB4DC \uD3EC\uD2B8 ${preferred}\uB97C \uB2E4\uB978 \uD504\uB85C\uADF8\uB7A8\uC774 \uC4F0\uACE0 \uC788\uB2E4. settings.json\uC758 dashboard.port\uB97C \uBC14\uAFB8\uAC70\uB098 \uC9C0\uC6B4\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` : `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uB744\uC6B8 \uBE48 \uD3EC\uD2B8\uB97C ${preferred}~${preferred + PORT_SCAN - 1}\uC5D0\uC11C \uCC3E\uC9C0 \uBABB\uD588\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.`
         };
       }
-      const started = await startServer(runtimeEntry, options, paths, chosen);
+      const started = await startServer(runtimeEntry, { ...options, runtime: runtime ?? void 0 }, paths, chosen);
       if (started.kind !== "started") return started;
       const url = consoleUrl(chosen);
       if (chosen !== preferred) return { kind: "started", message: `\uD3EC\uD2B8 ${preferred}\uB97C \uB2E4\uB978 \uD504\uB85C\uADF8\uB7A8\uC774 \uC4F0\uACE0 \uC788\uC5B4 Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C ${chosen}\uC5D0\uC11C \uC2DC\uC791\uD588\uB2E4: ${url}` };
@@ -33533,9 +33623,9 @@ async function ensureDashboard(options) {
 }
 
 // src/lifecycle/consoleOnDemand.ts
-var pluginRoot = join34(dirname12(fileURLToPath3(import.meta.url)), "..");
+var pluginRoot = join35(dirname12(fileURLToPath3(import.meta.url)), "..");
 async function controlConsole(action, options = {}) {
-  const result3 = await controlDashboard(action, { pluginRoot, buildId: currentSugoVersion(), ...options });
+  const result3 = await controlDashboard(action, { pluginRoot, ...options });
   if (result3.running && action !== "status" && action !== "stop") {
     await syncAllWorkspaceData().catch((error3) => {
       console.error("[sugo] console sync failed:", error3);
@@ -34024,7 +34114,7 @@ function errorResult14(errorCode, message) {
 
 // src/tools/sugoSpecWriter.ts
 import { access as access5, readFile as readFile32, stat as stat6 } from "node:fs/promises";
-import { isAbsolute as isAbsolute8, join as join35, relative as relative8, resolve as resolve13, sep as sep4 } from "node:path";
+import { isAbsolute as isAbsolute8, join as join36, relative as relative8, resolve as resolve13, sep as sep4 } from "node:path";
 init_homeDir();
 var sugoSpecWriterInputSchema = {
   action: external_exports.enum(["context", "complete"]),
@@ -34085,12 +34175,12 @@ function specSlug(title) {
 }
 async function nextSpecTarget(title) {
   const date3 = localDateKey();
-  const root = join35(sugoHomeDir(), ".claude", "sugo", "specs");
-  const featureDir = join35(root, date3, specSlug(title));
+  const root = join36(sugoHomeDir(), ".claude", "sugo", "specs");
+  const featureDir = join36(root, date3, specSlug(title));
   let version2 = 1;
-  while (await access5(join35(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
-  const directory = join35(featureDir, `v${version2}`);
-  return { root, date: date3, version: version2, directory, path: join35(directory, "spec.md") };
+  while (await access5(join36(featureDir, `v${version2}`)).then(() => true, () => false)) version2 += 1;
+  const directory = join36(featureDir, `v${version2}`);
+  return { root, date: date3, version: version2, directory, path: join36(directory, "spec.md") };
 }
 function managedSpecPath(specPath) {
   const root = resolve13(sugoHomeDir(), ".claude", "sugo", "specs");
@@ -34121,7 +34211,7 @@ async function handleSugoSpecWriter(rawArgs) {
     return result({ ok: false, errorCode: "PROJECT_MISMATCH", expected: spec.projectPath, received: args2.projectPath });
   }
   if (args2.action === "context") {
-    const dir = join35(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const dir = join36(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     try {
       const [attachments, references, draftContent] = await Promise.all([
         downloadSpecAttachments(args2.workspace, spec.id, dir),
@@ -34184,7 +34274,7 @@ async function handleSugoSpecWriter(rawArgs) {
     if (invalidFiles.length > 0) {
       return result({ ok: false, errorCode: "SPEC_REVIEW_PROJECT_FILE_INVALID", invalidFiles });
     }
-    const attachmentDir = join35(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
+    const attachmentDir = join36(sugoHomeDir(), ".claude", "sugo", "spec-attachments", encodeURIComponent(args2.workspace), encodeURIComponent(spec.id));
     const [attachments, references] = await Promise.all([
       downloadSpecAttachments(args2.workspace, spec.id, attachmentDir),
       fetchSpecReferences(args2.workspace, spec.id)
@@ -34551,7 +34641,7 @@ init_context();
 
 // src/harness/validationConfig.ts
 import { readFile as readFile33 } from "node:fs/promises";
-import { join as join36 } from "node:path";
+import { join as join37 } from "node:path";
 init_config();
 init_featureState();
 function parseValidationYaml(content) {
@@ -34570,7 +34660,7 @@ async function loadProjectValidationConfigs(projectPath) {
   const result3 = /* @__PURE__ */ new Map();
   if (!config2) return result3;
   for (const applied of config2.appliedHarnesses) {
-    const path = join36(projectPath, "sugo", "harness", applied.id, "validation.yaml");
+    const path = join37(projectPath, "sugo", "harness", applied.id, "validation.yaml");
     try {
       const content = await readFile33(path, "utf-8");
       result3.set(applied.id, parseValidationYaml(content));
@@ -35388,7 +35478,7 @@ function errorResult18(errorCode, message) {
 init_fsUtil();
 import { execFile as execFile4 } from "node:child_process";
 import { mkdir as mkdir21, realpath as realpath2 } from "node:fs/promises";
-import { isAbsolute as isAbsolute9, join as join37, relative as relative9, resolve as resolve15, sep as sep5 } from "node:path";
+import { isAbsolute as isAbsolute9, join as join38, relative as relative9, resolve as resolve15, sep as sep5 } from "node:path";
 import { promisify as promisify4 } from "node:util";
 var execFileAsync3 = promisify4(execFile4);
 async function git2(cwd, args2) {
@@ -35433,7 +35523,7 @@ async function backfillWorkspaceGitHistory(workspace) {
   }
   const unique2 = [...new Map(logs.map((log) => [log.id, log])).values()];
   await mkdir21(historyDir(workspace.name), { recursive: true });
-  await Promise.all(unique2.map((log) => atomicWriteFile(join37(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
+  await Promise.all(unique2.map((log) => atomicWriteFile(join38(historyDir(workspace.name), `${log.id}.json`), JSON.stringify(log, null, 2))));
   return unique2;
 }
 
@@ -35653,7 +35743,7 @@ async function handleSugoAwsContext(rawArgs) {
 
 // src/tools/sugoUninstall.ts
 import { access as access6, mkdir as mkdir22, readFile as readFile34, rename as rename2, rm as rm7, rmdir as rmdir2, writeFile as writeFile3 } from "node:fs/promises";
-import { dirname as dirname13, join as join38, resolve as resolve16 } from "node:path";
+import { dirname as dirname13, join as join39, resolve as resolve16 } from "node:path";
 init_homeDir();
 init_installManifest();
 init_registry();
@@ -35701,33 +35791,33 @@ async function cleanupProject(projectPath, manifest) {
   const preserved = [];
   if (manifest) {
     await restoreRoot(
-      join38(projectPath, "CLAUDE.md"),
+      join39(projectPath, "CLAUDE.md"),
       manifest.rootClaudeOriginal,
       "<!-- sugo:harness-rules:start -->",
       "<!-- sugo:harness-rules:end -->"
     );
     await restoreRoot(
-      join38(projectPath, "AGENTS.md"),
+      join39(projectPath, "AGENTS.md"),
       manifest.rootAgentsOriginal,
       "<!-- sugo:project-context:start -->",
       "<!-- sugo:project-context:end -->"
     );
     if (manifest.sugoDirExisted) {
       for (const rel of manifest.managedFiles) {
-        const path = join38(projectPath, rel);
+        const path = join39(projectPath, rel);
         await rm7(path, { force: true, recursive: true });
-        await pruneEmptyParents(path, join38(projectPath, "sugo"));
+        await pruneEmptyParents(path, join39(projectPath, "sugo"));
       }
-      await rm7(join38(projectPath, "sugo", "install-manifest.json"), { force: true });
-      await rmdir2(join38(projectPath, "sugo")).catch(() => {
+      await rm7(join39(projectPath, "sugo", "install-manifest.json"), { force: true });
+      await rmdir2(join39(projectPath, "sugo")).catch(() => {
       });
       preserved.push("sugo/ (\uC124\uCE58 \uC804\uBD80\uD130 \uC874\uC7AC\uD558\uC5EC \uC18C\uC720\uAD8C \uBD88\uBA85 \uD30C\uC77C \uBCF4\uC874)");
     } else {
-      await rm7(join38(projectPath, "sugo"), { force: true, recursive: true });
+      await rm7(join39(projectPath, "sugo"), { force: true, recursive: true });
     }
     for (const rel of manifest.managedFiles.filter((path) => path.startsWith(".claude/rules/"))) {
-      await rm7(join38(projectPath, rel), { force: true });
-      await rmdir2(dirname13(join38(projectPath, rel))).catch(() => {
+      await rm7(join39(projectPath, rel), { force: true });
+      await rmdir2(dirname13(join39(projectPath, rel))).catch(() => {
       });
     }
   } else {
@@ -35741,16 +35831,16 @@ function handleSugoUninstall(rawArgs) {
 }
 async function uninstallSugo(rawArgs, deps) {
   const args2 = Args2.parse(rawArgs);
-  const activeRoot = join38(sugoHomeDir(), ".claude", "sugo");
-  const productRoot = join38(sugoHomeDir(), ".sugo");
-  const archiveRoot = join38(productRoot, "data");
+  const activeRoot = join39(sugoHomeDir(), ".claude", "sugo");
+  const productRoot = join39(sugoHomeDir(), ".sugo");
+  const archiveRoot = join39(productRoot, "data");
   if (args2.action === "discard") {
     if (args2.confirmation !== "DELETE_RETAINED_DATA") return error2("CONFIRMATION_REQUIRED", "confirmation\uC5D0 DELETE_RETAINED_DATA\uB97C \uC815\uD655\uD788 \uC785\uB825\uD574\uC57C \uD569\uB2C8\uB2E4.");
     await rm7(archiveRoot, { recursive: true, force: true });
     return result2({ ok: true, action: "discard", retainedDataRemoved: true });
   }
   if (args2.action === "restore") {
-    const archivedRegistry = await readFile34(join38(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
+    const archivedRegistry = await readFile34(join39(archiveRoot, "registry.json"), "utf8").then(JSON.parse, () => null);
     if (!archivedRegistry) return error2("NO_RETAINED_DATA", "\uBCF5\uAD6C\uD560 \uBE44\uD65C\uC131 Sugo \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const paths2 = dashboardPaths();
     if (!(await stopDashboard(paths2)).stopped) return error2("DASHBOARD_STILL_RUNNING", DASHBOARD_RUNNING_MESSAGE);
@@ -35761,8 +35851,8 @@ async function uninstallSugo(rawArgs, deps) {
     await rm7(paths2.lockDir, { recursive: true, force: true });
     for (const entry of archivedRegistry) await syncProjectHarness({ projectPath: resolve16(entry.path), workspace: entry.workspace });
     const dashboard = await ensureDashboard({
-      pluginRoot: deps.pluginRoot ?? join38(dirname13(process.argv[1] ?? ""), ".."),
-      buildId: deps.buildId ?? currentSugoVersion(),
+      pluginRoot: deps.pluginRoot ?? join39(dirname13(process.argv[1] ?? ""), ".."),
+      buildId: deps.buildId,
       port: deps.port
     });
     return result2({ ok: true, action: "restore", restoredProjects: archivedRegistry.length, active: true, dashboard: dashboard.kind });
@@ -35808,10 +35898,10 @@ function error2(errorCode, message) {
 // src/lifecycle/recoveryInstaller.ts
 init_homeDir();
 import { copyFile, mkdir as mkdir23 } from "node:fs/promises";
-import { dirname as dirname14, join as join39 } from "node:path";
+import { dirname as dirname14, join as join40 } from "node:path";
 async function ensureRecoveryUtility() {
-  const source = join39(dirname14(process.argv[1] ?? ""), "..", "scripts", "sugo-uninstall-standalone.mjs");
-  const target = join39(sugoHomeDir(), ".sugo", "bin", "sugo-uninstall.mjs");
+  const source = join40(dirname14(process.argv[1] ?? ""), "..", "scripts", "sugo-uninstall-standalone.mjs");
+  const target = join40(sugoHomeDir(), ".sugo", "bin", "sugo-uninstall.mjs");
   await mkdir23(dirname14(target), { recursive: true });
   await copyFile(source, target);
 }

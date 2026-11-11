@@ -50,7 +50,7 @@ describe("워크스페이스 연동 전체 흐름: workspace 등록 → prd 자�
     // 실측)를 진짜로 위반한다 — 이 테스트가 검증하려는 건 작업 기록 누적이라 하네스 위반과 무관해야 한다.
     writeFileSync(join(projectDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { strict: true, moduleResolution: "bundler" } }));
 
-    const add = await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a" });
+    const add = await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-a", integrationGateEnforced: false });
     expect(add.isError).toBe(false);
     expect(add.data.workspace).toBe("team-a");
 

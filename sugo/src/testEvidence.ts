@@ -37,6 +37,7 @@ export interface TestEvidenceInput {
   failed?: number;
   unverified?: boolean;
   unverifiedReason?: string;
+  testClasses?: string[];
 }
 
 export interface TestEvidenceRecord extends TestEvidenceInput {

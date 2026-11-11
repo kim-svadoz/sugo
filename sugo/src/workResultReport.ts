@@ -98,7 +98,7 @@ export function buildWorkResultReport(input: BuildWorkResultReportInput): WorkRe
   };
 }
 
-const yesNo = (value: boolean | undefined) => value === true ? "완료" : value === false ? "미검증" : "해당 없음";
+const yesNo = (value: boolean | undefined) => value === true ? "확인됨" : value === false ? "미실시" : "기록 전";
 const bullets = (items: string[], empty: string) => items.length > 0 ? items.map((item) => `- ${item}`).join("\n") : `- ${empty}`;
 
 export function renderWorkResultMarkdown(report: WorkResultReport): string {

@@ -99,7 +99,7 @@ describe("commit → prRefs 수집 + WorkLog에 실림", () => {
     await execFileAsync("git", ["commit", "--allow-empty", "-m", "init"], { cwd: projectDir });
     await execFileAsync("git", ["remote", "add", "origin", "https://bitbucket.example.com/scm/proj/repo.git"], { cwd: projectDir });
 
-    await call(handleSugoAdd, { projectPath: projectDir, workspace: "ws-pr" });
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "ws-pr", integrationGateEnforced: false });
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId;
     await call(handleSugoPlan, { action: "clarify", sessionId });

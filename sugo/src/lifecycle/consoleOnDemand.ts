@@ -1,7 +1,6 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { syncAllWorkspaceData } from "../dashboard/syncAll.js";
-import { currentSugoVersion } from "../version.js";
 import { controlDashboard, type DashboardControlAction, type DashboardControlResult, type EnsureOptions } from "./dashboardRuntime.js";
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -11,7 +10,7 @@ const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
  * 기다릴 때. 꺼져 있던 동안의 작업 기록은 로컬 파일이 정본이므로, 띄운 직후 전량 다시 맞춘다.
  */
 export async function controlConsole(action: DashboardControlAction, options: Partial<EnsureOptions> = {}): Promise<DashboardControlResult> {
-  const result = await controlDashboard(action, { pluginRoot, buildId: currentSugoVersion(), ...options });
+  const result = await controlDashboard(action, { pluginRoot, ...options });
   if (result.running && action !== "status" && action !== "stop") {
     await syncAllWorkspaceData().catch((error) => {
       console.error("[sugo] console sync failed:", error);

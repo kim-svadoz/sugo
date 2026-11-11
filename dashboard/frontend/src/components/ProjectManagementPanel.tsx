@@ -1,6 +1,6 @@
 import { FolderCog, FolderGit2, FolderOpen, FolderPen, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getProjectIntegrations, moveProject, removeProject, selectNativeProjectDirectory, type ProjectIntegration } from "../api/projectIntegrationsApi.js";
+import { getProjectIntegrations, moveProject, removeProject, saveProjectVerificationPolicy, selectNativeProjectDirectory, type ProjectIntegration } from "../api/projectIntegrationsApi.js";
 
 const SUGO_FILES_NOTICE = "프로젝트의 .claude/rules/ 안 Sugo 규칙, CLAUDE.md·AGENTS.md의 Sugo 블록, sugo/harness와 설정 파일을 지웁니다. PRD·스펙·작업 결과와 직접 만든 파일은 남습니다.";
 
@@ -54,6 +54,16 @@ export function ProjectManagementPanel() {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally { setBusy(false); }
   };
+  const toggleCoverageGate = async (project: ProjectIntegration) => {
+    setBusy(true); setError(""); setDone("");
+    try {
+      const enabled = !project.integration_gate_enforced;
+      await saveProjectVerificationPolicy(project.project_path, enabled);
+      setDone(enabled ? `${projectName(project.project_path)}의 REQ 커버리지 게이트를 켰습니다.` : `${projectName(project.project_path)}의 REQ 커버리지 게이트를 껐습니다. 보고서에는 매핑 없음으로 표시됩니다.`);
+      await load();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+    finally { setBusy(false); }
+  };
 
   return <div id="integration-project-manage" className="scroll-mt-24 overflow-hidden">
     <div className="integration-panel-header flex items-center justify-between gap-3 border-b border-[var(--color-border)]"><div className="flex items-center gap-2.5"><span className="grid h-10 w-10 place-items-center rounded-full border border-cyan-300/20 text-[var(--color-primary)]"><FolderCog size={17} /></span><div><h2 className="text-xl font-semibold text-[var(--color-text)]">프로젝트 관리</h2><p className="mt-1 text-sm text-[var(--color-text-muted)]">등록된 프로젝트의 경로를 바꾸거나 Sugo에서 뺍니다.</p></div></div></div>
@@ -75,6 +85,7 @@ export function ProjectManagementPanel() {
                       <div className="flex items-center gap-3">
                         <span className="grid h-8 w-8 shrink-0 place-items-center bg-cyan-300/[0.05] text-cyan-200"><FolderGit2 size={14} /></span>
                         <span title={project.project_path} className="min-w-0 flex-1 truncate font-mono text-xs text-[var(--color-text)]">{projectName(project.project_path)}</span>
+                        <label className="flex shrink-0 items-center gap-2 text-[11px] text-[var(--color-text-muted)]"><input type="checkbox" checked={project.integration_gate_enforced} disabled={busy} onChange={() => void toggleCoverageGate(project)} />REQ 커버리지</label>
                         <button type="button" disabled={busy} onClick={() => open(project.project_path, "move")} className="settings-action settings-action-secondary settings-action-compact gap-1"><FolderPen size={12} />경로 변경</button>
                         <button type="button" disabled={busy} onClick={() => open(project.project_path, "remove")} className="settings-action settings-action-danger settings-action-compact gap-1"><Trash2 size={12} />제거</button>
                       </div>

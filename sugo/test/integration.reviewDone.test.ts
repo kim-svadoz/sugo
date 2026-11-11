@@ -266,7 +266,7 @@ describe("review_done — sugo_validate 호출강제 + 실측 우선 게이트(�
     // strict:false는 lang/typescript의 no-weakened-strict-config(error, auto)를 실제로 위반한다.
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ devDependencies: { typescript: "^5.4.0" } }));
     writeFileSync(join(projectDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { strict: false } }));
-    await call(handleSugoAdd, { projectPath: projectDir });
+    await call(handleSugoAdd, { projectPath: projectDir, integrationGateEnforced: false });
 
     const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ true);
     const validate = await call(handleSugoValidate, {
@@ -290,7 +290,7 @@ describe("review_done — sugo_validate 호출강제 + 실측 우선 게이트(�
   it("실측이 전부 통과면 review_done이 정상 진행된다", async () => {
     writeFileSync(join(projectDir, "package.json"), JSON.stringify({ devDependencies: { typescript: "^5.4.0" } }));
     writeFileSync(join(projectDir, "tsconfig.json"), JSON.stringify({ compilerOptions: { strict: true, moduleResolution: "bundler" } }));
-    await call(handleSugoAdd, { projectPath: projectDir });
+    await call(handleSugoAdd, { projectPath: projectDir, integrationGateEnforced: false });
 
     const sessionId = await toTestDone(true, 0, /* skipAutoValidate */ true);
     await call(handleSugoValidate, { sessionId, validationResults: [] });
@@ -378,7 +378,7 @@ describe("review_done — sugo_check_lethal_trifecta 호출강제 + 완화사유
 
 describe("review_done — no-secrets auto 실측(실배선)", () => {
   it("이번 diff에 하드코딩된 시크릿이 있으면 자기보고로 우겨도 review_done이 거부된다", async () => {
-    await call(handleSugoAdd, { projectPath: projectDir });
+    await call(handleSugoAdd, { projectPath: projectDir, integrationGateEnforced: false });
     mkdirSync(join(projectDir, "src"), { recursive: true });
     writeFileSync(join(projectDir, "src", "config.ts"), 'export const apiKey = "sk-abcdef1234567890";\n');
 
@@ -404,7 +404,7 @@ describe("review_done — no-secrets auto 실측(실배선)", () => {
   });
 
   it("이번 diff에 없는 다른 파일에 시크릿이 있어도(고정 목록이 아니라 changedFiles만 본다) 통과한다", async () => {
-    await call(handleSugoAdd, { projectPath: projectDir });
+    await call(handleSugoAdd, { projectPath: projectDir, integrationGateEnforced: false });
     mkdirSync(join(projectDir, "src"), { recursive: true });
     writeFileSync(join(projectDir, "src", "config.ts"), "export const timeout = 3000;\n");
     writeFileSync(join(projectDir, "src", "legacy.ts"), 'export const password = "hunter22222222";\n');

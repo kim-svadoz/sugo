@@ -8,6 +8,7 @@ import { engineProjectManager, type ProjectManager } from '../services/projectMa
 import { runProjectRegistrar, type ProjectRegistrar } from '../services/projectRegistrar.js';
 import { inspectLocalDirectory, inspectProjectDirectory } from '../services/localDirectoryBrowser.js';
 import { selectNativeDirectory, supportsNativeDirectoryPicker } from '../services/nativeDirectoryPicker.js';
+import { writeProjectVerificationPolicy } from '../services/projectVerificationPolicy.js';
 
 const schema = z.object({ projectPath: z.string().min(1).max(1024), selections: z.array(z.object({ accountName: z.string().min(1).max(191), service: z.string().min(1).max(512), environment: z.string().min(1).max(64), cluster: z.string().max(512).nullable().optional() })).max(100) });
 const registrationSchema = z.object({
@@ -16,6 +17,7 @@ const registrationSchema = z.object({
 }).strict();
 const removalSchema = z.object({ projectPath: z.string().trim().min(1).max(2048) }).strict();
 const moveSchema = z.object({ from: z.string().trim().min(1).max(2048), to: z.string().trim().min(1).max(2048) }).strict();
+const verificationPolicySchema = z.object({ projectPath: z.string().trim().min(1).max(2048), integrationGateEnforced: z.boolean() }).strict();
 const manageStatus = (code: string | undefined) => code === 'PROJECT_NOT_REGISTERED' ? 404 : code === 'PROJECT_MANAGE_ENGINE_UNAVAILABLE' ? 503 : 409;
 export function createProjectIntegrationsRouter(db: DbClient, secret: string, registrar: ProjectRegistrar = runProjectRegistrar, manager: ProjectManager = engineProjectManager): Router {
   const router = Router(); router.use(requireUser(db, secret));
@@ -57,6 +59,15 @@ export function createProjectIntegrationsRouter(db: DbClient, secret: string, re
       await moveRegisteredProject(db, req.userId!, req.body.from, result.to);
       res.json(result);
     } catch (error) { const code = (error as any)?.code; res.status(manageStatus(code)).json({ error: code ?? 'PROJECT_MANAGE_FAILED', message: error instanceof Error ? error.message : String(error) }); }
+  });
+  router.put('/verification-policy', validateBody(verificationPolicySchema), async (req, res) => {
+    if (!(await ownsProject(db, req.userId!, req.body.projectPath))) { res.status(404).json({ error: 'PROJECT_NOT_FOUND' }); return; }
+    try {
+      const policy = await writeProjectVerificationPolicy(req.body.projectPath, req.body.integrationGateEnforced);
+      res.json(policy);
+    } catch (error) {
+      res.status(409).json({ error: 'VERIFICATION_POLICY_UPDATE_FAILED', message: error instanceof Error ? error.message : String(error) });
+    }
   });
   router.put('/', validateBody(schema), async (req, res) => { try { await saveProjectIntegration(db, req.userId!, req.body.projectPath, req.body.selections); res.json({ ok: true }); } catch (error) { const code = (error as any)?.code; res.status(code === 'PROJECT_NOT_FOUND' ? 404 : code === 'SERVICE_NOT_AVAILABLE' ? 409 : 500).json({ error: code ?? 'PROJECT_INTEGRATION_FAILED' }); } });
   return router;

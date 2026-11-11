@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
@@ -16,6 +18,23 @@ async function seedProject(db: ReturnType<typeof createSqliteClient>, userId: st
 }
 
 describe("/api/project-integrations", () => {
+  it("updates the coverage gate only for an owned project", async () => {
+    const project = await mkdtemp(join(tmpdir(), "sugo-policy-route-"));
+    await mkdir(join(project, "sugo"));
+    await writeFile(join(project, "sugo", "config.json"), JSON.stringify({ projectName: "demo", verificationPolicy: { contractEvidenceRequired: true } }));
+    const db = createSqliteClient();
+    await db.execScript(schema);
+    const authorization = await seedProject(db, "u1", "demo", project);
+    const { app } = await createApp({ db });
+
+    await request(app).put("/api/project-integrations/verification-policy").set("Authorization", authorization).send({ projectPath: project, integrationGateEnforced: true }).expect(200);
+    const saved = JSON.parse(await readFile(join(project, "sugo", "config.json"), "utf8"));
+    expect(saved.verificationPolicy).toEqual({ contractEvidenceRequired: true, integrationGateEnforced: true });
+    const listed = await request(app).get("/api/project-integrations").set("Authorization", authorization).expect(200);
+    expect(listed.body.projects[0].integration_gate_enforced).toBe(true);
+    await rm(project, { recursive: true, force: true });
+  });
+
   it("removes an owned project through the Sugo engine and forgets its Console rows", async () => {
     const db = createSqliteClient();
     await db.execScript(schema);

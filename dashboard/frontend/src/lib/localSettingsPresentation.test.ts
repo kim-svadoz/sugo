@@ -92,4 +92,11 @@ describe("local Settings presentation", () => {
     const stages = source.slice(source.indexOf('aria-label="외부 연동 단계"'), source.indexOf('{activeGroup === "services"'));
     expect(stages).toContain('<strong className="text-base');
   });
+
+  it("lets an owner toggle REQ coverage enforcement per project", () => {
+    const source = readFileSync(join(process.cwd(), "src/components/ProjectManagementPanel.tsx"), "utf8");
+    expect(source).toContain("saveProjectVerificationPolicy");
+    expect(source).toContain("REQ 커버리지");
+    expect(source).toContain("보고서에는 매핑 없음으로 표시됩니다");
+  });
 });

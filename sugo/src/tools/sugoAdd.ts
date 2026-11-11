@@ -12,7 +12,7 @@ export const sugoAddInputSchema = {
   integrationGateEnforced: z
     .boolean()
     .optional()
-    .describe("PRD 정합성 게이트를 opt-in으로 강제할지(verificationPolicy). true면 test_done에 coverageMap 제출이 필수가 된다"),
+    .describe("PRD 정합성 게이트를 강제할지(verificationPolicy). 새 프로젝트 기본값은 true이며 test_done에 coverageMap 제출이 필수가 된다"),
   contractEvidenceRequired: z
     .boolean()
     .optional()

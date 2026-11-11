@@ -128,7 +128,7 @@ describe("계약테스트 실행증거 — opt-in", () => {
   it("필수인데 red 확인 자체가 없으면 code_start 전에 contract_done에서 이미 거부된다", async () => {
     // contract_done 상태전이 자체가 막아 code_start조차 못 간다 — review_done까지 끌고 가지
     // 않고 앞단에서 빨리 실패시키는 게 이 게이트의 요점이다.
-    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
+    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true, integrationGateEnforced: false });
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "login" });
     const sessionId = start.data.sessionId as string;
     await call(handleSugoPlan, { action: "clarify", sessionId });
@@ -142,7 +142,7 @@ describe("계약테스트 실행증거 — opt-in", () => {
   });
 
   it("red만 기록하고 green이 없으면 review_done에서 거부한다(자기보고 승격 차단)", async () => {
-    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
+    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true, integrationGateEnforced: false });
     const sessionId = await toTestDonePass(VALID_PRD, "login.ts", "C-1");
     const result = await call(handleSugoPlan, {
       action: "review_done",
@@ -156,7 +156,7 @@ describe("계약테스트 실행증거 — opt-in", () => {
   });
 
   it("green만 기록하고 red가 없으면 거부한다(자기보고 승격 차단 — C-1은 contract_done 통과용, C-2가 검증 대상)", async () => {
-    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
+    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true, integrationGateEnforced: false });
     const sessionId = await toTestDonePass(VALID_PRD, "login.ts", "C-1");
     await call(handleSugoRecordContractEvidence, { sessionId, contractId: "C-2", phase: "green", command: "x", exitCode: 0 });
     const result = await call(handleSugoPlan, {
@@ -172,7 +172,7 @@ describe("계약테스트 실행증거 — opt-in", () => {
   });
 
   it("red→green 전이를 실제로 기록하면 통과한다", async () => {
-    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true });
+    await call(handleSugoAdd, { projectPath: projectDir, contractEvidenceRequired: true, integrationGateEnforced: false });
     const sessionId = await toTestDonePass(VALID_PRD, "login.ts", "C-1");
     await call(handleSugoRecordContractEvidence, { sessionId, contractId: "C-1", phase: "green", command: "x", exitCode: 0 });
     const result = await call(handleSugoPlan, {

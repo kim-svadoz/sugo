@@ -2,8 +2,14 @@ import type { DbClient } from '../db/client.js';
 import { parseMaybeJson } from '../db/jsonColumn.js';
 import { upsertRow } from '../db/upsert.js';
 import { environmentOfAccount } from './awsEnvironment.js';
+import { readProjectVerificationPolicy } from './projectVerificationPolicy.js';
 
 export interface ProjectIntegrationSelection { accountName: string; service: string; environment: string; cluster?: string | null; }
+
+async function integrationGateEnforced(projectPath: string): Promise<boolean> {
+  try { return (await readProjectVerificationPolicy(projectPath)).integrationGateEnforced; }
+  catch { return false; }
+}
 
 export async function recordRegisteredProject(db: DbClient, userId: string, workspace: string, projectPath: string): Promise<void> {
   const workspaces = await db.query<{ id: number }>('SELECT id FROM sugo_workspaces WHERE user_id = ? AND name = ?', [userId, workspace]);
@@ -57,7 +63,15 @@ export async function listProjectIntegrations(db: DbClient, userId: string) {
   const candidates = await integrationCandidates(db, userId);
   const mappings = await db.query<{ project_path: string; selections: unknown }>('SELECT project_path, selections FROM user_project_integration_mappings WHERE user_id = ?', [userId]);
   const byPath = new Map(mappings.map((row) => [row.project_path, parseMaybeJson<ProjectIntegrationSelection[]>(row.selections, [])]));
-  return { candidates, projects: projects.map((project) => ({ ...project, configured: byPath.has(project.project_path), selections: byPath.get(project.project_path) ?? [] })) };
+  return {
+    candidates,
+    projects: await Promise.all(projects.map(async (project) => ({
+      ...project,
+      configured: byPath.has(project.project_path),
+      selections: byPath.get(project.project_path) ?? [],
+      integration_gate_enforced: await integrationGateEnforced(project.project_path),
+    }))),
+  };
 }
 
 export async function saveProjectIntegration(db: DbClient, userId: string, projectPath: string, selections: ProjectIntegrationSelection[]) {

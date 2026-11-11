@@ -4,6 +4,7 @@ import { closeSync, existsSync, openSync } from "node:fs";
 import { mkdir, readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { sugoHomeDir } from "../homeDir.js";
+import { resolveConsoleRuntime, type ConsoleRuntimeDescriptor } from "./consoleRuntime.js";
 
 /** 개인용 로컬 대시보드 서버의 실행·정지·상태. 세션 시작 훅과 uninstall이 같은 규칙을 쓴다. */
 
@@ -223,8 +224,9 @@ export type EnsureResult =
 
 export interface EnsureOptions {
   pluginRoot: string;
-  /** 서버가 /health에 싣는 빌드 식별자. 플러그인 버전이 바뀌면 서버를 교체한다. */
-  buildId: string;
+  /** 테스트와 마이그레이션 호환용 override. 기본값은 Console runtime manifest에서 결정한다. */
+  buildId?: string;
+  runtime?: ConsoleRuntimeDescriptor;
   /** 먼저 시도할 포트. 쓰이고 있으면 다음 빈 포트로 띄운다. */
   port?: number;
   nodeVersion?: string;
@@ -310,6 +312,8 @@ export async function controlDashboard(action: DashboardControlAction, options: 
 }
 
 async function startServer(runtimeEntry: string, options: EnsureOptions, paths: DashboardPaths, port: number): Promise<EnsureResult> {
+  const buildId = options.buildId ?? options.runtime?.buildId;
+  if (!buildId) return { kind: "failed", message: "Sugo Console build 식별자를 확인할 수 없습니다." };
   const log = openSync(paths.logFile, "a");
   let exited = false;
   const child = spawn(process.execPath, [runtimeEntry], {
@@ -319,7 +323,7 @@ async function startServer(runtimeEntry: string, options: EnsureOptions, paths: 
     env: {
       ...process.env,
       SUGO_DASHBOARD_PORT: String(port),
-      BUILD_ID: options.buildId,
+      BUILD_ID: buildId,
       HARNESS_PATH: join(options.pluginRoot, "harness-library"),
       HARNESS_OVERRIDE_PATH: join(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
       SKILLS_PATH: options.pluginRoot,
@@ -331,7 +335,7 @@ async function startServer(runtimeEntry: string, options: EnsureOptions, paths: 
   child.unref();
   closeSync(log);
 
-  const healthy = await waitUntil(async () => exited || (await fetchHealth(port))?.build === options.buildId, START_WAIT_MS);
+  const healthy = await waitUntil(async () => exited || (await fetchHealth(port))?.build === buildId, START_WAIT_MS);
   if (healthy && !exited) return { kind: "started" };
   return { kind: "failed", message: `Sugo 대시보드를 시작하지 못했다. 로그: ${paths.logFile}. sugo의 다른 기능은 그대로 동작한다.` };
 }
@@ -340,7 +344,9 @@ async function startServer(runtimeEntry: string, options: EnsureOptions, paths: 
 export async function ensureDashboard(options: EnsureOptions): Promise<EnsureResult> {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtimeEntry = join(options.pluginRoot, "dashboard-runtime", "server.mjs");
+  const runtime = options.runtime ?? resolveConsoleRuntime(options.pluginRoot);
+  const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join(options.pluginRoot, "dashboard-runtime", "server.mjs") : undefined);
+  const buildId = options.buildId ?? runtime?.buildId;
 
   try {
     if (!isSupportedNode(nodeVersion)) {
@@ -352,13 +358,13 @@ export async function ensureDashboard(options: EnsureOptions): Promise<EnsureRes
     }
     const settings = await readDashboardSettings(paths.settingsFile);
     if (settings.enabled === false) return { kind: "skipped", reason: "opt-out" };
-    if (!existsSync(runtimeEntry)) return { kind: "skipped", reason: "no-runtime" };
+    if (!runtimeEntry || !buildId || !existsSync(runtimeEntry)) return { kind: "skipped", reason: "no-runtime" };
 
     const { port, strict, state, owned } = await currentPort(options, paths);
     const health = await fetchHealth(port);
     // 개발용 Console처럼 우리가 띄우지 않은 Sugo Console이 응답 중이면 그대로 쓰고 건드리지 않는다.
     if (health && !owned && isConsoleHealth(health)) return { kind: "running" };
-    if (health && owned && health.build === options.buildId) return { kind: "running" };
+    if (health && owned && health.build === buildId) return { kind: "running" };
     if (health && owned) await stopDashboard(paths);
     else if (state) await rm(paths.stateFile, { force: true });
 
@@ -374,7 +380,7 @@ export async function ensureDashboard(options: EnsureOptions): Promise<EnsureRes
             : `Sugo 대시보드를 띄울 빈 포트를 ${preferred}~${preferred + PORT_SCAN - 1}에서 찾지 못했다. sugo의 다른 기능은 그대로 동작한다.`,
         };
       }
-      const started = await startServer(runtimeEntry, options, paths, chosen);
+      const started = await startServer(runtimeEntry, { ...options, runtime: runtime ?? undefined }, paths, chosen);
       if (started.kind !== "started") return started;
       const url = consoleUrl(chosen);
       if (chosen !== preferred) return { kind: "started", message: `포트 ${preferred}를 다른 프로그램이 쓰고 있어 Sugo 대시보드를 ${chosen}에서 시작했다: ${url}` };

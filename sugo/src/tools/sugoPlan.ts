@@ -6,6 +6,7 @@ import { isProjectBootable } from "../bootable.js";
 import { scanForSpringBootTestAnnotation } from "../bootScan.js";
 import { writePatchPrdFile, writePatchWorkResultFile, writePrdFile, writeWorkResultFile } from "../feature.js";
 import { checkCoverageGate } from "../consistency.js";
+import { buildCoverageMapDraft } from "../coverageDraft.js";
 import { checkContractEvidenceGate, checkContractStartedGate, resolveContractRequired } from "../contractEvidence.js";
 import { activityForPlanTransition, emitActivity, activityTaskDetails } from "../dashboard/activity.js";
 import { resolveDashboardConfig } from "../dashboard/config.js";
@@ -222,6 +223,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
   const args = SugoPlanArgs.parse(rawArgs);
   const { action, sessionId } = args;
   let scheduleLinkWarning: string | undefined;
+  let coverageMapDraft: ReturnType<typeof buildCoverageMapDraft> | undefined;
 
   let existing: PlanSession | null = null;
   if (action !== "start") {
@@ -392,14 +394,21 @@ export async function handleSugoPlan(rawArgs: unknown) {
       });
     }
 
-    // ── PRD 정합성 게이트(선택 확장, opt-in): config.verificationPolicy.integrationGateEnforced가
-    // 켜져 있으면 coverageMap 제출을 강제한다. 꺼져 있으면 제출된 경우에만 검증(하위호환).
+    // ── PRD 정합성 게이트: 새 프로젝트는 기본-on이고 기존 프로젝트의 미설정은 그대로 보존한다.
+    // 켜져 있으면 coverageMap 제출을 강제하고, 꺼져 있어도 초안을 응답에 실어 점진적으로 채운다.
     const projectConfig = await loadProjectConfig(existing.projectPath);
     const enforced = projectConfig?.verificationPolicy?.integrationGateEnforced ?? false;
+    const prd = existing.data.prdPath ? await readFile(existing.data.prdPath, "utf8").catch(() => "") : "";
+    coverageMapDraft = buildCoverageMapDraft({
+      prd,
+      contracts: existing.data.chainInfo.contractTests,
+      testClasses: existing.data.chainInfo.testEvidence?.testClasses,
+    });
     if (enforced && !args.coverageMap) {
       return errorResult(
         "COVERAGE_MAP_REQUIRED",
         "이 프로젝트는 verificationPolicy.integrationGateEnforced가 켜져 있어 test_done에 coverageMap이 필요합니다.",
+        { coverageMapDraft },
       );
     }
     if (args.coverageMap) {
@@ -799,6 +808,8 @@ export async function handleSugoPlan(rawArgs: unknown) {
       await pullCheckpointsToRules(session.projectPath, registryEntry.workspace).catch(() => null);
     }
   }
+
+  const projectVerificationPolicy = action === "start" ? (await loadProjectConfig(session.projectPath))?.verificationPolicy : undefined;
 
   // feat 시작 시 Dashboard의 미연결 SPEC 초안을 캡처한다. Dashboard가 꺼져 있거나 조회에 실패하면
   // 기존 fail-open 원칙대로 후보 없음으로 진행하지만, 후보를 정상 조회했다면 clarify 게이트가 강제된다.
@@ -1514,6 +1525,12 @@ export async function handleSugoPlan(rawArgs: unknown) {
     workResultPath: session.data.chainInfo.workResultPath,
     workBranch: action === "start" ? session.data.workBranch : undefined,
     scheduleLinkWarning,
+    verificationPolicy: action === "start" ? {
+      integrationGateEnforced: projectVerificationPolicy?.integrationGateEnforced === true,
+      warning: projectVerificationPolicy?.integrationGateEnforced === true
+        ? undefined
+        : "REQ 커버리지 게이트가 꺼져 있습니다. test_done에 coverageMap을 제출하지 않으면 리뷰 보고서의 REQ 상태는 '매핑 없음'으로 표시됩니다.",
+    } : undefined,
     patch:
       session.data.mode === "patch" && session.data.patch
         ? { parentPrdPath: session.data.patch.parentPrdPath, version: session.data.patch.version }
@@ -1527,6 +1544,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       action === "test_done" && session.data.chainInfo.testEvidence
         ? isFullVerifyEnforceable(session.data.chainInfo.testEvidence.command)
         : undefined,
+    coverageMapDraft: action === "test_done" ? coverageMapDraft : undefined,
   };
 
   return {
@@ -1534,9 +1552,9 @@ export async function handleSugoPlan(rawArgs: unknown) {
   };
 }
 
-function errorResult(errorCode: string, message: string) {
+function errorResult(errorCode: string, message: string, details: object = {}) {
   return {
     isError: true,
-    content: [{ type: "text" as const, text: JSON.stringify({ ok: false, errorCode, message }, null, 2) }],
+    content: [{ type: "text" as const, text: JSON.stringify({ ok: false, errorCode, message, ...details }, null, 2) }],
   };
 }

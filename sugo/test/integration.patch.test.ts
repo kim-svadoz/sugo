@@ -189,7 +189,7 @@ describe("사후 patch 연결 — 서버 강제 계약", () => {
   });
 
   it("등록된 Workspace에서 기존 Task 계보를 찾지 못하면 새 Task를 만들지 않고 중단한다", async () => {
-    await call(handleSugoAdd, { projectPath: projectDir, workspace: "post-hoc-missing-lineage" });
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "post-hoc-missing-lineage", integrationGateEnforced: false });
     execFileSync("git", ["init"], { cwd: projectDir });
     execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: projectDir });
     execFileSync("git", ["config", "user.name", "Test"], { cwd: projectDir });
@@ -340,7 +340,7 @@ describe("Patch 전체 흐름", () => {
 
 describe("Patch — Run 재사용 + seed + patchInfo + lineage", () => {
   it("patch 2차 진입은 새 Task를 만들지 않고 기존 Task를 재사용한다(prd_ref 매칭)", async () => {
-    await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-patch" });
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-patch", integrationGateEnforced: false });
     const { workResultPath } = await runFirstRoundToReviewDone();
 
     const tasksAfterFirst = await call(handleSugoTask, { action: "list", workspace: "team-patch" });
@@ -381,7 +381,7 @@ describe("Patch — Run 재사용 + seed + patchInfo + lineage", () => {
   });
 
   it("seed가 있으면 work-result에 그대로 실린다", async () => {
-    await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-patch2" });
+    await call(handleSugoAdd, { projectPath: projectDir, workspace: "team-patch2", integrationGateEnforced: false });
     const { workResultPath } = await runFirstRoundToReviewDone();
 
     const patchStart = await call(handleSugoPlan, {

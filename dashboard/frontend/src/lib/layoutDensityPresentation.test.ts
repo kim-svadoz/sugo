@@ -10,8 +10,9 @@ describe("주요 운영 화면의 정보 밀도", () => {
     expect(sessions).not.toContain("command-brief");
     expect(sessions).toContain("<DomainStage");
     expect(sessions).toContain('aria-label="도메인 선택"');
-    expect(sessions).toContain("xl:grid-cols-[280px_minmax(0,1fr)]");
-    expect(sessions).toContain("lg:grid-cols-[minmax(260px,0.78fr)_minmax(440px,1.22fr)]");
+    expect(sessions).toContain("xl:grid-cols-[200px_minmax(0,1fr)]");
+    expect(sessions).toContain("lg:grid-cols-[minmax(240px,0.72fr)_minmax(420px,1.28fr)]");
+    expect(sessions).toContain("2xl:grid-cols-[minmax(260px,0.78fr)_minmax(440px,1.22fr)]");
     expect(sessions).not.toContain('role="separator" aria-orientation="vertical"');
     expect(sessions).not.toContain("CURRENT_WORKSPACE");
   });

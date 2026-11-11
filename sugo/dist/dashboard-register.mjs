@@ -1311,9 +1311,12 @@ async function syncProjectHarness(args) {
     }),
     autoCommitArtifacts: existingConfig?.autoCommitArtifacts ?? true,
     disabled: existingConfig?.disabled ?? false,
-    verificationPolicy: args.integrationGateEnforced === void 0 && args.contractEvidenceRequired === void 0 ? existingConfig?.verificationPolicy : {
-      ...existingConfig?.verificationPolicy,
+    verificationPolicy: existingConfig ? args.integrationGateEnforced === void 0 && args.contractEvidenceRequired === void 0 ? existingConfig.verificationPolicy : {
+      ...existingConfig.verificationPolicy,
       ...args.integrationGateEnforced !== void 0 && { integrationGateEnforced: args.integrationGateEnforced },
+      ...args.contractEvidenceRequired !== void 0 && { contractEvidenceRequired: args.contractEvidenceRequired }
+    } : {
+      integrationGateEnforced: args.integrationGateEnforced ?? true,
       ...args.contractEvidenceRequired !== void 0 && { contractEvidenceRequired: args.contractEvidenceRequired }
     }
   };

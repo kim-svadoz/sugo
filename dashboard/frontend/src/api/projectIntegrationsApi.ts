@@ -1,7 +1,7 @@
 import { apiFetch, apiJson } from './client.js';
 export interface IntegrationSelection { accountName: string; service: string; environment: string; cluster?: string | null; }
 export interface IntegrationCandidate extends IntegrationSelection { cluster: string | null; pinpointApplicationName: string | null; images: string[]; }
-export interface ProjectIntegration { workspace_name: string; project_path: string; configured: boolean; selections: IntegrationSelection[]; }
+export interface ProjectIntegration { workspace_name: string; project_path: string; configured: boolean; selections: IntegrationSelection[]; integration_gate_enforced?: boolean; }
 export interface ProjectRegistrationResult { ok: true; projectPath: string; projectName: string; workspace: string; detectedStack: unknown; appliedHarnesses: unknown[]; warnings: string[]; }
 export interface LocalDirectoryEntry { name: string; path: string; projectLike: boolean; signals: string[]; }
 export interface LocalDirectoryListing { path: string; parentPath: string | null; name: string; projectLike: boolean; signals: string[]; directories: LocalDirectoryEntry[]; }
@@ -11,6 +11,7 @@ export const registerProject = (projectPath: string, workspace: string) => apiJs
 export const browseLocalDirectories = (path?: string) => apiJson<LocalDirectoryListing>(`/api/project-integrations/browse${path ? `?path=${encodeURIComponent(path)}` : ''}`);
 export const selectNativeProjectDirectory = () => apiJson<NativeDirectorySelection>('/api/project-integrations/select-directory', { method: 'POST' });
 export const saveProjectIntegration = (projectPath: string, selections: IntegrationSelection[]) => apiJson<{ ok: true }>('/api/project-integrations', { method: 'PUT', body: JSON.stringify({ projectPath, selections }) });
+export const saveProjectVerificationPolicy = (projectPath: string, integrationGateEnforced: boolean) => apiJson<{ integrationGateEnforced: boolean }>('/api/project-integrations/verification-policy', { method: 'PUT', body: JSON.stringify({ projectPath, integrationGateEnforced }) });
 export interface ProjectRemoveResult { ok: true; projectPath: string; folderMissing: boolean; removedFiles: string[]; workspaces: string[]; }
 export interface ProjectMoveResult { ok: true; from: string; to: string; workspace: string | null; removedFiles: string[]; }
 async function postProjectChange<T>(path: string, body: unknown): Promise<T> {

@@ -11,13 +11,8 @@ var __export = (target, all) => {
 };
 
 // src/lifecycle/dashboardStartHook.ts
-import { dirname as dirname4, join as join9 } from "node:path";
+import { dirname as dirname4, join as join10 } from "node:path";
 import { fileURLToPath } from "node:url";
-
-// src/version.ts
-function currentSugoVersion() {
-  return true ? "0.68.19" : "0.0.0-dev";
-}
 
 // src/dashboard/syncAll.ts
 import { readFile as readFile10 } from "node:fs/promises";
@@ -7250,9 +7245,34 @@ async function syncAllWorkspaceData() {
 // src/lifecycle/dashboardRuntime.ts
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
-import { closeSync, existsSync, openSync } from "node:fs";
+import { closeSync, existsSync as existsSync2, openSync } from "node:fs";
 import { mkdir as mkdir10, readFile as readFile11, rm as rm3, stat as stat2 } from "node:fs/promises";
+import { join as join9 } from "node:path";
+
+// src/lifecycle/consoleRuntime.ts
+import { existsSync, readFileSync } from "node:fs";
 import { join as join8 } from "node:path";
+function resolveConsoleRuntime(pluginRoot2) {
+  const runtimeRoot = join8(pluginRoot2, "dashboard-runtime");
+  const entryPath = join8(runtimeRoot, "server.mjs");
+  const manifestPath = join8(runtimeRoot, "runtime.json");
+  if (!existsSync(entryPath) || !existsSync(manifestPath)) return null;
+  try {
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    if (typeof manifest.consoleVersion !== "string" || !manifest.consoleVersion.trim()) return null;
+    return {
+      source: "embedded",
+      runtimeRoot,
+      entryPath,
+      consoleVersion: manifest.consoleVersion,
+      buildId: `console-${manifest.consoleVersion}`
+    };
+  } catch {
+    return null;
+  }
+}
+
+// src/lifecycle/dashboardRuntime.ts
 var DEFAULT_DASHBOARD_PORT = 3001;
 var CONSOLE_HOST = "sugo.localhost";
 var CONSOLE_SERVICE = "sugo-console";
@@ -7269,15 +7289,15 @@ var STOP_WAIT_MS = 5e3;
 var POLL_MS = 150;
 var LOCK_STALE_MS = 3e4;
 function dashboardPaths(home = sugoHomeDir()) {
-  const sugoDir = join8(home, ".claude", "sugo");
-  const dataDir = join8(sugoDir, "dashboard");
+  const sugoDir = join9(home, ".claude", "sugo");
+  const dataDir = join9(sugoDir, "dashboard");
   return {
     sugoDir,
     dataDir,
-    stateFile: join8(dataDir, "server.json"),
-    logFile: join8(dataDir, "dashboard.log"),
-    lockDir: join8(dataDir, "start.lock"),
-    settingsFile: join8(sugoDir, "settings.json")
+    stateFile: join9(dataDir, "server.json"),
+    logFile: join9(dataDir, "dashboard.log"),
+    lockDir: join9(dataDir, "start.lock"),
+    settingsFile: join9(sugoDir, "settings.json")
   };
 }
 function isSupportedNode(version = process.versions.node) {
@@ -7389,6 +7409,8 @@ async function acquireLock(paths) {
   return false;
 }
 async function startServer(runtimeEntry, options, paths, port) {
+  const buildId = options.buildId ?? options.runtime?.buildId;
+  if (!buildId) return { kind: "failed", message: "Sugo Console build \uC2DD\uBCC4\uC790\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4." };
   const log = openSync(paths.logFile, "a");
   let exited = false;
   const child = spawn(process.execPath, [runtimeEntry], {
@@ -7398,9 +7420,9 @@ async function startServer(runtimeEntry, options, paths, port) {
     env: {
       ...process.env,
       SUGO_DASHBOARD_PORT: String(port),
-      BUILD_ID: options.buildId,
-      HARNESS_PATH: join8(options.pluginRoot, "harness-library"),
-      HARNESS_OVERRIDE_PATH: join8(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
+      BUILD_ID: buildId,
+      HARNESS_PATH: join9(options.pluginRoot, "harness-library"),
+      HARNESS_OVERRIDE_PATH: join9(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
       SKILLS_PATH: options.pluginRoot
     }
   });
@@ -7409,14 +7431,16 @@ async function startServer(runtimeEntry, options, paths, port) {
   });
   child.unref();
   closeSync(log);
-  const healthy = await waitUntil(async () => exited || (await fetchHealth(port))?.build === options.buildId, START_WAIT_MS);
+  const healthy = await waitUntil(async () => exited || (await fetchHealth(port))?.build === buildId, START_WAIT_MS);
   if (healthy && !exited) return { kind: "started" };
   return { kind: "failed", message: `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC2DC\uC791\uD558\uC9C0 \uBABB\uD588\uB2E4. \uB85C\uADF8: ${paths.logFile}. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` };
 }
 async function ensureDashboard(options) {
   const paths = options.paths ?? dashboardPaths();
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  const runtimeEntry = join8(options.pluginRoot, "dashboard-runtime", "server.mjs");
+  const runtime = options.runtime ?? resolveConsoleRuntime(options.pluginRoot);
+  const runtimeEntry = runtime?.entryPath ?? (options.buildId ? join9(options.pluginRoot, "dashboard-runtime", "server.mjs") : void 0);
+  const buildId = options.buildId ?? runtime?.buildId;
   try {
     if (!isSupportedNode(nodeVersion)) {
       return {
@@ -7427,11 +7451,11 @@ async function ensureDashboard(options) {
     }
     const settings = await readDashboardSettings(paths.settingsFile);
     if (settings.enabled === false) return { kind: "skipped", reason: "opt-out" };
-    if (!existsSync(runtimeEntry)) return { kind: "skipped", reason: "no-runtime" };
+    if (!runtimeEntry || !buildId || !existsSync2(runtimeEntry)) return { kind: "skipped", reason: "no-runtime" };
     const { port, strict, state, owned } = await currentPort(options, paths);
     const health = await fetchHealth(port);
     if (health && !owned && isConsoleHealth(health)) return { kind: "running" };
-    if (health && owned && health.build === options.buildId) return { kind: "running" };
+    if (health && owned && health.build === buildId) return { kind: "running" };
     if (health && owned) await stopDashboard(paths);
     else if (state) await rm3(paths.stateFile, { force: true });
     if (!await acquireLock(paths)) return { kind: "busy" };
@@ -7444,7 +7468,7 @@ async function ensureDashboard(options) {
           message: strict ? `Sugo \uB300\uC2DC\uBCF4\uB4DC \uD3EC\uD2B8 ${preferred}\uB97C \uB2E4\uB978 \uD504\uB85C\uADF8\uB7A8\uC774 \uC4F0\uACE0 \uC788\uB2E4. settings.json\uC758 dashboard.port\uB97C \uBC14\uAFB8\uAC70\uB098 \uC9C0\uC6B4\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.` : `Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C \uB744\uC6B8 \uBE48 \uD3EC\uD2B8\uB97C ${preferred}~${preferred + PORT_SCAN - 1}\uC5D0\uC11C \uCC3E\uC9C0 \uBABB\uD588\uB2E4. sugo\uC758 \uB2E4\uB978 \uAE30\uB2A5\uC740 \uADF8\uB300\uB85C \uB3D9\uC791\uD55C\uB2E4.`
         };
       }
-      const started = await startServer(runtimeEntry, options, paths, chosen);
+      const started = await startServer(runtimeEntry, { ...options, runtime: runtime ?? void 0 }, paths, chosen);
       if (started.kind !== "started") return started;
       const url = consoleUrl(chosen);
       if (chosen !== preferred) return { kind: "started", message: `\uD3EC\uD2B8 ${preferred}\uB97C \uB2E4\uB978 \uD504\uB85C\uADF8\uB7A8\uC774 \uC4F0\uACE0 \uC788\uC5B4 Sugo \uB300\uC2DC\uBCF4\uB4DC\uB97C ${chosen}\uC5D0\uC11C \uC2DC\uC791\uD588\uB2E4: ${url}` };
@@ -7459,8 +7483,8 @@ async function ensureDashboard(options) {
 }
 
 // src/lifecycle/dashboardStartHook.ts
-var pluginRoot = join9(dirname4(fileURLToPath(import.meta.url)), "..");
-var result = await ensureDashboard({ pluginRoot, buildId: currentSugoVersion() });
+var pluginRoot = join10(dirname4(fileURLToPath(import.meta.url)), "..");
+var result = await ensureDashboard({ pluginRoot });
 if ("message" in result && result.message) console.log(JSON.stringify({ systemMessage: result.message }));
 if (result.kind === "started" || result.kind === "running") {
   await syncAllWorkspaceData().catch((error) => {

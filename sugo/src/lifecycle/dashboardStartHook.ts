@@ -5,12 +5,11 @@
  */
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { currentSugoVersion } from "../version.js";
 import { syncAllWorkspaceData } from "../dashboard/syncAll.js";
 import { ensureDashboard } from "./dashboardRuntime.js";
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const result = await ensureDashboard({ pluginRoot, buildId: currentSugoVersion() });
+const result = await ensureDashboard({ pluginRoot });
 if ("message" in result && result.message) console.log(JSON.stringify({ systemMessage: result.message }));
 if (result.kind === "started" || result.kind === "running") {
   await syncAllWorkspaceData().catch((error) => {

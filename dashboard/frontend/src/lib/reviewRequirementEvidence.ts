@@ -1,9 +1,12 @@
 export type ReviewRequirementEvidence = { id: string; covered: boolean };
 
-export function isRequirementCovered(
+export type RequirementCoverageState = "covered" | "uncovered" | "unmapped";
+export type VerificationEvidenceState = "verified" | "not-run" | "not-recorded";
+
+export function requirementCoverageState(
   requirement: { id: string; title: string; status?: string; manual_status?: string | null },
   evidence?: ReviewRequirementEvidence[],
-): boolean {
+): RequirementCoverageState {
   const id = requirement.id.trim().toLocaleLowerCase();
   const title = requirement.title.trim().toLocaleLowerCase();
   const explicit = evidence?.find((item) => {
@@ -12,5 +15,11 @@ export function isRequirementCovered(
       || evidenceId === title
       || [" ", ".", ":", "-"].some((separator) => title.startsWith(`${evidenceId}${separator}`));
   });
-  return explicit?.covered ?? (requirement.manual_status ?? requirement.status) === "done";
+  if (!explicit) return "unmapped";
+  return explicit.covered ? "covered" : "uncovered";
+}
+
+export function verificationEvidenceState(value: boolean | undefined): VerificationEvidenceState {
+  if (value === undefined) return "not-recorded";
+  return value ? "verified" : "not-run";
 }

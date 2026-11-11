@@ -51,7 +51,8 @@ describe("Console 정보 구조", () => {
   });
 
   it("최근 작업 요약과 Inspector는 같은 상세 행의 높이를 함께 사용한다", () => {
-    expect(sessions).toContain("grid min-h-[360px]");
+    expect(sessions).toContain("grid min-h-[340px]");
+    expect(sessions).toContain("2xl:min-h-[360px]");
     expect(sessions).toContain("min-h-0 flex-1 overflow-auto");
   });
 

@@ -6,7 +6,6 @@ import { loadInstallManifest, type InstallManifest } from "../harness/installMan
 import { loadRegistry } from "../harness/registry.js";
 import { syncProjectHarness } from "../harness/sync.js";
 import { createHash } from "node:crypto";
-import { currentSugoVersion } from "../version.js";
 import { dashboardPaths, ensureDashboard, fetchHealth, readServerState, stopDashboard } from "../lifecycle/dashboardRuntime.js";
 import type { FileBaseline } from "../harness/installManifest.js";
 
@@ -119,7 +118,7 @@ export async function uninstallSugo(rawArgs: unknown, deps: UninstallDeps) {
     for (const entry of archivedRegistry) await syncProjectHarness({ projectPath: resolve(entry.path), workspace: entry.workspace });
     const dashboard = await ensureDashboard({
       pluginRoot: deps.pluginRoot ?? join(dirname(process.argv[1] ?? ""), ".."),
-      buildId: deps.buildId ?? currentSugoVersion(),
+      buildId: deps.buildId,
       port: deps.port,
     });
     return result({ ok: true, action: "restore", restoredProjects: archivedRegistry.length, active: true, dashboard: dashboard.kind });
