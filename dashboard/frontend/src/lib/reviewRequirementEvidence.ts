@@ -12,6 +12,7 @@ export function requirementCoverageState(
   const explicit = evidence?.find((item) => {
     const evidenceId = item.id.trim().toLocaleLowerCase();
     return evidenceId === id
+      || id.endsWith(`::${evidenceId}`)
       || evidenceId === title
       || [" ", ".", ":", "-"].some((separator) => title.startsWith(`${evidenceId}${separator}`));
   });
