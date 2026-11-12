@@ -40,17 +40,25 @@ function Journey({ lane, tone, onOpenAttention }: { lane?: FloorLane; tone: Stag
       const reached = passed || current;
       return <li key={station.id} className="relative flex min-w-0 flex-col items-center" aria-current={current ? "step" : undefined}>
         {index > 0 && <span className={cn("absolute right-[calc(50%+24px)] top-[17px] h-[2px] w-[calc(100%-48px)] rounded-full transition-colors duration-500", reached ? "bg-emerald-400/50" : "bg-[repeating-linear-gradient(90deg,rgba(100,116,139,.45)_0_4px,transparent_4px_8px)]")} aria-hidden="true" />}
-        <span className="flex min-w-0 flex-col items-center">
-          <span className="relative flex h-9 w-9 items-center justify-center">
-            {current && TONE[tone].halo && <span className={cn("absolute inset-0 animate-ping rounded-full opacity-60 [animation-duration:2.2s]", TONE[tone].halo)} aria-hidden="true" />}
-            <span className={cn("relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-500", current ? TONE[tone].node : passed ? "border-emerald-300/45 bg-emerald-400/[0.12] text-emerald-300" : "border-slate-700 bg-slate-900/80 text-slate-500")}>
-              {passed && !current ? <Check size={16} strokeWidth={2.6} /> : <Icon size={16} strokeWidth={1.9} />}
-            </span>
-          </span>
-          {myTurn && onOpenAttention
-            ? <button type="button" onClick={onOpenAttention} aria-label="사용자 확인 영역 열기" className="mt-2 rounded-full bg-violet-300 px-2 py-0.5 text-[11px] font-bold text-violet-950 outline-none transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-105 hover:shadow-[0_0_16px_rgba(196,181,253,.45)] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-violet-100">내 차례</button>
-            : <span className={cn("mt-2 truncate text-[12px]", current ? cn("font-semibold", TONE[tone].text) : passed ? "text-emerald-200/70" : "text-slate-500")}>{station.label}</span>}
-        </span>
+        {myTurn && onOpenAttention
+          ? <button type="button" onClick={onOpenAttention} aria-label="사용자 확인 영역 열기" className="group flex min-w-0 flex-col items-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-violet-100 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-950">
+              <span className="relative flex h-9 w-9 items-center justify-center transition-[transform,filter] duration-300 group-hover:scale-105 group-hover:drop-shadow-[0_0_10px_rgba(196,181,253,.65)] group-active:scale-[0.96]">
+                {TONE[tone].halo && <span className={cn("absolute inset-0 animate-ping rounded-full opacity-60 [animation-duration:2.2s]", TONE[tone].halo)} aria-hidden="true" />}
+                <span className={cn("relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-500", TONE[tone].node)}>
+                  <Icon size={16} strokeWidth={1.9} />
+                </span>
+              </span>
+              <span className="mt-2 rounded-full bg-violet-300 px-2 py-0.5 text-[11px] font-bold text-violet-950 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105 group-hover:shadow-[0_0_16px_rgba(196,181,253,.45)]">내 차례</span>
+            </button>
+          : <span className="flex min-w-0 flex-col items-center">
+              <span className="relative flex h-9 w-9 items-center justify-center">
+                {current && TONE[tone].halo && <span className={cn("absolute inset-0 animate-ping rounded-full opacity-60 [animation-duration:2.2s]", TONE[tone].halo)} aria-hidden="true" />}
+                <span className={cn("relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-500", current ? TONE[tone].node : passed ? "border-emerald-300/45 bg-emerald-400/[0.12] text-emerald-300" : "border-slate-700 bg-slate-900/80 text-slate-500")}>
+                  {passed && !current ? <Check size={16} strokeWidth={2.6} /> : <Icon size={16} strokeWidth={1.9} />}
+                </span>
+              </span>
+              <span className={cn("mt-2 truncate text-[12px]", current ? cn("font-semibold", TONE[tone].text) : passed ? "text-emerald-200/70" : "text-slate-500")}>{station.label}</span>
+            </span>}
       </li>;
     })}
   </ol>;
