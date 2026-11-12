@@ -1,5 +1,6 @@
 import {
   Archive,
+  ArrowRight,
   BookOpenText,
   CheckCircle2,
   ClipboardCheck,
@@ -63,7 +64,7 @@ function WorkflowGroupRail({ children, tone }: { children: string; tone: "human"
   </span>;
 }
 
-export function WorkBoard({ specs, waitingReviews, currentWork }: { specs: ScheduledSpec[]; waitingReviews: number; currentWork?: HomeAttentionItem }) {
+export function WorkBoard({ specs, waitingReviews, currentWork, onOpenAttention }: { specs: ScheduledSpec[]; waitingReviews: number; currentWork?: HomeAttentionItem; onOpenAttention?: (workspace: string) => void }) {
   const navigate = useNavigate();
   const events = useActivityStream();
   const { data: workspaces } = useWorkspaces();
@@ -106,6 +107,7 @@ export function WorkBoard({ specs, waitingReviews, currentWork }: { specs: Sched
             const Icon = station.icon;
             const accent = station.owner === "human" ? HUMAN_ACCENT : AI_ACCENT;
             const isActive = world.live && active === station.id || station.id === "confirm" && waitingReviews > 0;
+            const opensAttention = station.id === "confirm" && waitingReviews > 0 && currentWork && onOpenAttention;
             const isSelected = selected === station.id;
             const selectedClass = station.owner === "human"
               ? "border-amber-200/60 bg-amber-300/[0.10] shadow-[inset_0_0_0_1px_rgba(252,211,77,.08),0_8px_24px_rgba(245,158,11,.07)]"
@@ -118,11 +120,11 @@ export function WorkBoard({ specs, waitingReviews, currentWork }: { specs: Sched
                 ? "ring-2 ring-amber-200/70 shadow-[0_0_0_1px_rgba(251,191,36,.28),0_0_28px_rgba(251,191,36,.22)]"
                 : "ring-2 ring-cyan-200/65 shadow-[0_0_0_1px_rgba(103,232,249,.22),0_0_28px_rgba(103,232,249,.18)]"
               : "";
-            return <div key={station.id} className="relative min-w-0"><button type="button" onClick={() => setSelected(station.id)} className={`group flex min-h-[142px] w-full min-w-0 flex-col rounded-xl border px-3 py-3 text-left transition ${isSelected ? selectedClass : idleClass} ${activeClass}`}>
+            return <div key={station.id} className="relative min-w-0"><button type="button" aria-label={opensAttention ? `${currentWork.title} 사용자 확인 도메인 열기` : undefined} onClick={() => { setSelected(station.id); if (opensAttention) onOpenAttention(currentWork.workspace); }} className={`group flex min-h-[142px] w-full min-w-0 flex-col rounded-xl border px-3 py-3 text-left outline-none transition-[transform,background-color,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-amber-200/70 ${isSelected ? selectedClass : idleClass} ${activeClass} ${opensAttention ? "cursor-pointer" : ""}`}>
               <span className="flex items-center justify-between gap-1"><span className="font-mono text-[9px] font-semibold" style={{ color: accent }}>{station.step}</span>{isActive && <span className={`h-1.5 w-1.5 rounded-full ck-pulse-dot ${station.owner === "human" ? "bg-amber-200" : "bg-cyan-200"}`} />}</span>
               <span className={`mt-5 flex h-10 w-10 items-center justify-center rounded-xl border ${station.owner === "human" ? "border-amber-300/20 bg-amber-300/[0.07]" : "border-cyan-300/15 bg-cyan-300/[0.055]"}`} style={{ color: accent }}><Icon size={20} strokeWidth={1.7} /></span>
               <strong className={`mt-3 line-clamp-2 min-h-8 text-[10px] leading-4 ${station.owner === "human" ? "text-amber-100" : "text-cyan-50"}`}>{station.label}</strong>
-              <span className="mt-1 text-[9px] text-slate-500">{isActive ? "현재 작업 중" : station.id === "spec" && plannedSpecs > 0 ? `시작 전 ${plannedSpecs}개` : "대기"}</span>
+              <span className={`mt-1 flex items-center gap-1 text-[9px] ${opensAttention ? "font-semibold text-amber-200" : "text-slate-500"}`}>{opensAttention ? <>확인하러 가기<ArrowRight size={10} className="transition-transform duration-300 group-hover:translate-x-0.5" /></> : isActive ? "현재 작업 중" : station.id === "spec" && plannedSpecs > 0 ? `시작 전 ${plannedSpecs}개` : "대기"}</span>
             </button></div>;
           })}
         </div>

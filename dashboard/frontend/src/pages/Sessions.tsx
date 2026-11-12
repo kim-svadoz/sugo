@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Activity,
   AlertTriangle,
@@ -156,6 +156,8 @@ function DomainDot({ tone }: { tone: DomainTone }) {
 export function Sessions() {
   const { data, loading } = useWorkspaces();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedWorkspace = searchParams.get("workspace");
 
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
   const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
@@ -209,11 +211,12 @@ export function Sessions() {
 
   useEffect(() => {
     if (initialSelectionApplied.current) return;
-    const first = firstDomainName(domainGroups);
+    const requested = requestedWorkspace && filteredWorkspaces.some((workspace) => workspace.name === requestedWorkspace) ? requestedWorkspace : null;
+    const first = requested ?? firstDomainName(domainGroups);
     if (!first) return;
     initialSelectionApplied.current = true;
     setSelectedWorkspace(first);
-  }, [domainGroups]);
+  }, [domainGroups, filteredWorkspaces, requestedWorkspace]);
 
   /** 검색 모드에서 이 도메인에 걸린 이력만. 인스펙터가 전체 이력 대신 이걸 보여준다. */
   const getSearchResultHistory = useCallback(

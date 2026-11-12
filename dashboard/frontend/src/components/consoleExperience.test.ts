@@ -115,6 +115,17 @@ describe("Console 정보 구조", () => {
     expect(domainStage).toContain('group-hover:scale-105');
   });
 
+  it("홈의 사용자 확인 진입점은 해당 도메인 현장을 정확히 선택해 연다", () => {
+    expect(home).toContain("openAttentionWorkspace");
+    expect(home).toContain("/sessions?workspace=");
+    expect(home).toContain("onOpenAttention={openAttentionWorkspace}");
+    expect(workBoard).toContain("onOpenAttention");
+    expect(workBoard).toContain('station.id === "confirm" && waitingReviews > 0 && currentWork');
+    expect(workBoard).toContain("확인하러 가기");
+    expect(sessions).toContain("useSearchParams");
+    expect(sessions).toContain('searchParams.get("workspace")');
+  });
+
   it("버전은 헤더 액션에서 빼고 사이드바 하단의 보조 정보로 둔다", () => {
     expect(header).not.toContain("Console</span>");
     expect(sidebar).toContain("Sugo 대시보드");
