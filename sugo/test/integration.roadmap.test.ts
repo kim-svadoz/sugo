@@ -92,8 +92,9 @@ async function approveDashboardReview(sessionId: string, taskId: string): Promis
     if (!address || typeof address === "string") throw new Error("test dashboard address unavailable");
     process.env.SUGO_DASHBOARD_API_URL = `http://127.0.0.1:${address.port}`;
     process.env.SUGO_DASHBOARD_USER_ID = "tester";
-    const resumed = await call(handleSugoRoadmap, { action: "resume_with_decision", workspace: "team-a", id: taskId, sessionId });
+    const resumed = await call(handleSugoRoadmap, { action: "wait_for_decision", workspace: "team-a", id: taskId, sessionId, waitTimeoutMs: 50, pollIntervalMs: 10 });
     expect(resumed.isError).toBe(false);
+    expect(resumed.data).toMatchObject({ automaticResume: true, resumeAction: "review_done" });
   } finally {
     delete process.env.SUGO_DASHBOARD_API_URL;
     delete process.env.SUGO_DASHBOARD_USER_ID;

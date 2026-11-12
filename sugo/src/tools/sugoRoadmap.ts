@@ -44,6 +44,7 @@ export const sugoRoadmapInputSchema = {
     "pull_ordering",
     "block_for_human",
     "request_review_confirmation",
+    "wait_for_decision",
     "resume_with_decision",
     "set_project",
     "set_work_branch",
@@ -70,7 +71,9 @@ export const sugoRoadmapInputSchema = {
   projectPath: z.string().nullable().optional().describe("set_project: Schedule SPEC에 연결할 프로젝트 절대경로(null이면 해제)"),
   workBranch: z.string().nullable().optional().describe("set_work_branch: Schedule SPEC 작업 브랜치(null이면 해제)"),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional().describe("set_due_date: Schedule SPEC 목표일(null이면 해제)"),
-  sessionId: z.string().optional().describe("block_for_human/resume_with_decision: 원래 sugo_plan 세션 ID"),
+  sessionId: z.string().optional().describe("block_for_human/wait_for_decision/resume_with_decision: 원래 sugo_plan 세션 ID"),
+  waitTimeoutMs: z.number().int().min(10).max(120_000).optional().describe("wait_for_decision: 한 번의 대기 시간(기본 25초)"),
+  pollIntervalMs: z.number().int().min(10).max(5_000).optional().describe("wait_for_decision: Dashboard 결정 확인 간격(기본 2초)"),
   stage: z.string().optional().describe("block_for_human: 멈춘 파이프라인 상태"),
   resumeAction: z.string().optional().describe("block_for_human: 결정 반영 뒤 다시 시도할 sugo_plan action"),
   blockerSummary: z.string().optional().describe("block_for_human: 무엇을 하다가 멈췄는지 한 문장"),
@@ -89,7 +92,9 @@ export const sugoRoadmapInputSchema = {
 
 const SugoRoadmapArgs = z.object(sugoRoadmapInputSchema);
 
-export async function handleSugoRoadmap(rawArgs: unknown) {
+type ToolResult = { isError?: boolean; content: Array<{ type: "text"; text: string }> };
+
+export async function handleSugoRoadmap(rawArgs: unknown): Promise<ToolResult> {
   const args = SugoRoadmapArgs.parse(rawArgs);
 
   switch (args.action) {
@@ -260,8 +265,8 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
         presentation: "dashboard",
         consoleUrl: consoleState.running ? consoleState.url : undefined,
         message: consoleState.running
-          ? `Console(${consoleState.url})의 Schedule 또는 Agent Canvas에서 작업 결과를 확인하세요.`
-          : "Console을 띄우지 못했습니다. /sugo:console open으로 연 뒤 Schedule 또는 Agent Canvas에서 작업 결과를 확인하세요.",
+          ? `Console(${consoleState.url})의 Schedule 또는 Agent Canvas에서 작업 결과를 확인하세요. 이제 wait_for_decision을 호출해 사용자 결정을 기다리세요.`
+          : "Console을 띄우지 못했습니다. /sugo:console open으로 연 뒤 wait_for_decision을 호출해 사용자 결정을 기다리세요.",
         node: await getRoadmapNode(args.workspace, args.id),
       });
     }
@@ -302,6 +307,22 @@ export async function handleSugoRoadmap(rawArgs: unknown) {
         resumeAction: reviewDecisionResumeAction(gate.blocker, remote.decision.response),
         node: await getRoadmapNode(args.workspace, args.id),
       });
+    }
+    case "wait_for_decision": {
+      if (!args.id || !args.sessionId) return errorResult("ID_AND_SESSION_REQUIRED", "결정 대기에는 id와 sessionId가 필요합니다.");
+      const deadline = Date.now() + (args.waitTimeoutMs ?? 25_000);
+      const pollIntervalMs = args.pollIntervalMs ?? 2_000;
+      while (Date.now() < deadline) {
+        const remote = await fetchBlockerDecision(args.workspace, args.id);
+        if (remote?.decision?.response) {
+          const resumed: ToolResult = await handleSugoRoadmap({ action: "resume_with_decision", workspace: args.workspace, id: args.id, sessionId: args.sessionId });
+          if (resumed.isError) return resumed;
+          const payload = JSON.parse(resumed.content[0].text) as Record<string, unknown>;
+          return ok({ ...payload, automaticResume: true });
+        }
+        await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+      }
+      return ok({ awaitingHumanDecision: true, retryAction: "wait_for_decision" });
     }
     case "get": {
       if (!args.id) return errorResult("ID_REQUIRED", "get action에는 id가 필요합니다.");

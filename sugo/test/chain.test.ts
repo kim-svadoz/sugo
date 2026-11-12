@@ -34,6 +34,8 @@ describe("buildChainPrompt", () => {
     expect(prompt).toContain("코드를 수정하지 마세요");
     expect(prompt).toContain("userConfirmed:true");
     expect(prompt).toContain("request_review_confirmation");
+    expect(prompt).toContain("wait_for_decision");
+    expect(prompt).not.toContain("resume_with_decision으로 확인");
     expect(prompt).toContain("Dashboard");
   });
 

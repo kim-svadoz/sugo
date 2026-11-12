@@ -19,20 +19,24 @@ describe("reviewConfirmationSections", () => {
     ]);
   });
 
-  it("진행 승인과 수정 요청은 각각 저장과 재개 프롬프트 복사를 한 번에 수행한다", () => {
+  it("체크리스트를 마치면 승인 또는 수정 요청을 저장해 작업 세션이 자동 재개한다", () => {
     const source = readFileSync(join(process.cwd(), "src/components/BlockerDecisionPanel.tsx"), "utf8");
-    expect(source).toContain("승인하고 진행");
+    expect(source).toContain("승인하고 계속하기");
     expect(source).toContain("수정 요청");
-    expect(source).toContain("입력한 수정 요청이 있습니다");
-    expect(source).toContain("승인으로 저장하고 재개 프롬프트를 복사했습니다");
-    expect(source).toContain("수정 요청으로 저장하고 재개 프롬프트를 복사했습니다");
-    expect(source.match(/기존 작업 세션에 붙여넣어 작업을 이어가세요/g)?.length).toBe(2);
+    expect(source).toContain("작업 세션이 결정을 감지하면 자동으로 계속 진행합니다");
+    expect(source).toContain("작업 세션이 결정을 감지하면 자동으로 수정 작업을 시작합니다");
     expect(source).toContain("이번 변경 파일 diff 보기");
     expect(source).not.toContain("원래 작업 세션에 프롬프트를 붙여넣으면");
     expect(source).not.toContain(">확인, 진행</button>");
     expect(source).not.toContain("진행 결정 저장됨");
     expect(source).toContain("검토 자료");
-    expect(source).toContain("결정 입력");
-    expect(source).toContain("검토 완료 후 선택");
+    expect(source).toContain("결과 확인");
+    expect(source).toContain("요청 사항");
+    expect(source).toContain("다음 단계");
+    expect(source).toContain("reportChecked");
+    expect(source).toContain("diffChecked");
+    expect(source).toContain("요청 사항 없음");
+    expect(source).toContain("검토 항목을 모두 확인해야 다음 단계로 갈 수 있습니다");
+    expect(source).not.toContain("void copyResume(\"확인, 진행\"");
   });
 });

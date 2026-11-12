@@ -14,9 +14,9 @@ Run the Sugo patch pipeline. Input: $ARGUMENTS
    - Reuse the existing Run and record `patchInfo` with parentTaskId, patchVersion, and seed.
    - Store seed under `## 사용자 지시(seed)` in work-result.
    - Sync lineage to Dashboard.
-   - After review-agent returns evidence, do not use Claude's own choice prompt. Publish summary and code artifacts with `request_review_confirmation`. Do not call `review_done` until `resume_with_decision` verifies Dashboard decision `확인, 진행`.
+   - After review-agent returns evidence, do not use Claude's own choice prompt. Publish summary and code artifacts with `request_review_confirmation`, then wait with `wait_for_decision`. Do not call `review_done` until the Dashboard decision `확인, 진행` is verified.
 3. Limit this patch PRD to the delta. Infer commit type and version.
 
 ## Rules
 - Without a work-result path, use `/sugo:feat`; this is not patch mode.
-- For human policy decisions during implementation or verification, apply `/sugo:feat`'s human-decision blocking contract. Record `block_for_human` on the parent Task with the current `sessionId`, verify the Dashboard answer with `resume_with_decision`, then resume the same patch session at `resumeAction`.
+- For human policy decisions during implementation or verification, apply `/sugo:feat`'s human-decision blocking contract. Record `block_for_human` on the parent Task with the current `sessionId`, wait for the Dashboard answer with `wait_for_decision`, then resume the same patch session at `resumeAction`.

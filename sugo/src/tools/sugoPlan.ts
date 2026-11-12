@@ -238,7 +238,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
       const gate = existing.data.humanDecisionGate;
       return errorResult(
         "HUMAN_DECISION_REQUIRED",
-        `사람의 결정이 필요한 차단 상태입니다. Dashboard에서 답변한 뒤 sugo_roadmap(action:\"resume_with_decision\", workspace:\"${gate.workspace}\", id:\"${gate.taskId}\", sessionId:\"${existing.id}\")로 재개하세요. 질문: ${gate.blocker.question}`,
+        `사람의 결정이 필요한 차단 상태입니다. sugo_roadmap(action:\"wait_for_decision\", workspace:\"${gate.workspace}\", id:\"${gate.taskId}\", sessionId:\"${existing.id}\")으로 Dashboard 답변을 기다리세요. 질문: ${gate.blocker.question}`,
       );
     }
   }
@@ -488,7 +488,7 @@ export async function handleSugoPlan(rawArgs: unknown) {
         if (confirmation.decision !== "approve") {
           return errorResult(
             "REVIEW_CONFIRMATION_APPROVAL_REQUIRED",
-            "Dashboard에서 작업 요약과 코드 diff를 확인하고 '확인, 진행'을 저장한 뒤 resume_with_decision으로 재개해야 합니다.",
+            "Dashboard에서 작업 요약과 코드 diff를 확인하도록 요청한 뒤 wait_for_decision으로 사용자 결정을 기다려야 합니다.",
           );
         }
       }
