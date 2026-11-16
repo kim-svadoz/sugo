@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { appendFile, mkdir, readdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -21,21 +22,39 @@ export function latestWeeklySlot(now: Date, schedule: Omit<WeeklySchedule, "enab
   return slot;
 }
 
-/**
- * 이번 확인에서 생성할지 정한다. record는 처리한 예약 시점으로 남길 값이다.
- * 처리 기록이 없으면(처음 켬) 지난 시점을 실행하지 않고 기록만 한다. Console이 꺼져 있다 켜지면 밀린 시점을 한 번만 실행한다.
- */
-export function weeklyRunDecision(now: Date, schedule: WeeklySchedule, handled: string | null): { run: boolean; record: string | null } {
-  if (!schedule.enabled) return { run: false, record: null };
-  const slot = latestWeeklySlot(now, schedule).toISOString();
-  if (handled === null) return { run: false, record: slot };
-  return handled < slot ? { run: true, record: slot } : { run: false, record: null };
+/** handled 이후부터 now까지 지난 예약 시점. 오래된 것부터. */
+export function weeklySlotsSince(handled: string, now: Date, schedule: Omit<WeeklySchedule, "enabled">): string[] {
+  const slots: string[] = [];
+  for (const slot = latestWeeklySlot(now, schedule); slot.toISOString() > handled; slot.setDate(slot.getDate() - 7)) slots.unshift(slot.toISOString());
+  return slots;
 }
 
-/** 플러그인에 실린 Weekly 엔진(sugo/weekly). 번들(dashboard-runtime/server.mjs)과 소스 실행 위치를 모두 찾는다. */
+/** 이 시각에 실행하면 엔진(collect.week_range)이 만드는 주. 금~일은 그 주, 월~목은 지난주다. */
+export function weeklyLabelForRun(at: Date): string {
+  const weekday = (at.getDay() + 6) % 7;
+  const monday = new Date(Date.UTC(at.getFullYear(), at.getMonth(), at.getDate() - weekday - (weekday >= 4 ? 0 : 7)));
+  const thursday = new Date(monday.getTime() + 3 * 86_400_000);
+  const jan4 = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 4));
+  const firstMonday = jan4.getTime() - ((jan4.getUTCDay() + 6) % 7) * 86_400_000;
+  const week = Math.round((monday.getTime() - firstMonday) / (7 * 86_400_000)) + 1;
+  return `${thursday.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+/** 플러그인에 실린 Weekly 엔진(sugo/weekly). Launcher가 넘긴 경로, 설치된 Plugin, 번들·소스 실행 위치 순으로 찾는다. */
 export function weeklyEngineCandidates(): string[] {
   const here = dirname(fileURLToPath(import.meta.url));
-  return [process.env.SUGO_WEEKLY_ENGINE, resolve(here, "../weekly"), resolve(here, "../../../../sugo/weekly")].filter((path): path is string => Boolean(path));
+  return [process.env.SUGO_WEEKLY_ENGINE, installedPluginEngine(), resolve(here, "../weekly"), resolve(here, "../../../../sugo/weekly")].filter((path): path is string => Boolean(path));
+}
+
+function installedPluginEngine(): string | undefined {
+  const registry = join(process.env.SUGO_HOME_OVERRIDE ?? homedir(), ".claude", "plugins", "installed_plugins.json");
+  try {
+    const plugins = (JSON.parse(readFileSync(registry, "utf8")) as { plugins?: Record<string, { installPath?: string }[]> }).plugins ?? {};
+    const installPath = plugins["sugo@sugo-marketplace"]?.[0]?.installPath;
+    return installPath ? join(installPath, "weekly") : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function findWeeklyEngine(candidates = weeklyEngineCandidates()): Promise<string | null> {
@@ -65,8 +84,22 @@ export interface WeeklyScheduleOptions {
   /** LaunchAgents를 찾을 HOME. */
   home?: string;
   engine?: () => Promise<string | null>;
-  build?: (engine: string) => Promise<{ stdout: string; stderr: string }>;
+  build?: (engine: string, week: string) => Promise<{ stdout: string; stderr: string }>;
+  now?: () => Date;
   intervalMs?: number;
+}
+
+export interface WeeklyPendingRun { week: string; attempts: number; nextAttemptAt: string; lastError?: string }
+export interface WeeklyFailedRun { week: string; attempts: number; lastError: string }
+export interface WeeklyRunState { pending: WeeklyPendingRun[]; failed: WeeklyFailedRun[] }
+
+export const WEEKLY_MAX_ATTEMPTS = 6;
+const RETRY_BASE_MS = 15 * 60_000;
+const KEPT_FAILURES = 10;
+
+/** n번째 실패 뒤 다시 시도할 때까지 기다리는 시간. 15분부터 두 배씩 늘린다. */
+export function weeklyRetryDelayMs(attempts: number): number {
+  return RETRY_BASE_MS * 2 ** (attempts - 1);
 }
 
 async function readSchedule(configPath: string): Promise<WeeklySchedule> {
@@ -78,13 +111,90 @@ async function readSchedule(configPath: string): Promise<WeeklySchedule> {
   }
 }
 
-/** 1분마다 예약을 확인하고, 시점이 지났으면 엔진으로 한 주를 생성한다. 생성 결과는 엔진이 Console에 올린다. */
-export function startWeeklySchedule(options: WeeklyScheduleOptions = {}): () => void {
+export function weeklyRunStatePath(weeklyHome: string): string {
+  return join(weeklyHome, "scheduled-runs.json");
+}
+
+export function weeklyReportPath(weeklyHome: string, week: string): string {
+  return join(process.env.WEEKLY_REPORT_OUT ?? join(weeklyHome, "reports"), `${week}.html`);
+}
+
+export async function readWeeklyRunState(weeklyHome: string): Promise<WeeklyRunState | null> {
+  try {
+    const state = JSON.parse(await readFile(weeklyRunStatePath(weeklyHome), "utf8")) as Partial<WeeklyRunState>;
+    return { pending: state.pending ?? [], failed: state.failed ?? [] };
+  } catch {
+    return null;
+  }
+}
+
+async function exists(path: string): Promise<boolean> {
+  try { await stat(path); return true; } catch { return false; }
+}
+
+/**
+ * 예약 한 번 확인. 지난 예약 시점마다 만들 주를 대기 목록에 넣고, 차례가 된 주 하나를 만든다.
+ * 실패한 주는 늦춰 가며 다시 시도하고, WEEKLY_MAX_ATTEMPTS번 실패하면 failed로 옮겨 화면에 알린다.
+ */
+export function createWeeklyScheduleTick(options: WeeklyScheduleOptions = {}): () => Promise<void> {
   const weeklyHome = options.weeklyHome ?? weeklyHomeDir();
   const handledPath = join(weeklyHome, "last-scheduled-slot");
   const logPath = join(weeklyHome, "scheduled-run.log");
   const engine = options.engine ?? (() => findWeeklyEngine());
-  const build = options.build ?? ((path: string) => execFileAsync(process.execPath, [join(path, "run.mjs"), "build"], { cwd: path, timeout: 30 * 60_000, maxBuffer: 16 * 1024 * 1024 }));
+  const build = options.build ?? ((path: string, week: string) => execFileAsync(process.execPath, [join(path, "run.mjs"), "build", "--week", week], { cwd: path, timeout: 30 * 60_000, maxBuffer: 16 * 1024 * 1024 }));
+  const now = options.now ?? (() => new Date());
+  const log = (line: string) => appendFile(logPath, `[${now().toISOString()}] ${line}\n`).catch(() => undefined);
+
+  return async () => {
+    const schedule = await readSchedule(join(weeklyHome, "config.json"));
+    if (!schedule.enabled) return;
+    const at = now();
+    const latest = latestWeeklySlot(at, schedule).toISOString();
+    const handled = await readFile(handledPath, "utf8").then((value) => value.trim() || null, () => null);
+    await mkdir(weeklyHome, { recursive: true });
+    const saved = await readWeeklyRunState(weeklyHome);
+    const state: WeeklyRunState = structuredClone(saved ?? { pending: [], failed: [] });
+    const enqueue = (week: string) => {
+      if (state.pending.some((run) => run.week === week)) return;
+      state.failed = state.failed.filter((run) => run.week !== week);
+      state.pending.push({ week, attempts: 0, nextAttemptAt: at.toISOString() });
+    };
+    // 처음 켰을 때는 지난 시점을 만들지 않는다. 예전 버전이 처리했다고만 기록하고 만들지 못한 주는 한 번 되살린다.
+    if (handled !== null) {
+      if (saved === null && !(await exists(weeklyReportPath(weeklyHome, weeklyLabelForRun(new Date(handled)))))) enqueue(weeklyLabelForRun(new Date(handled)));
+      for (const slot of weeklySlotsSince(handled, at, schedule)) enqueue(weeklyLabelForRun(new Date(slot)));
+    }
+    const writeState = () => writeFile(weeklyRunStatePath(weeklyHome), `${JSON.stringify(state, null, 2)}\n`, "utf8");
+    if (saved === null || JSON.stringify(saved) !== JSON.stringify(state)) await writeState();
+    if (handled !== latest) await writeFile(handledPath, `${latest}\n`, "utf8");
+
+    const run = state.pending.find((item) => item.nextAttemptAt <= at.toISOString());
+    if (!run) return;
+    try {
+      const path = await engine();
+      if (!path) throw new Error("weekly engine not found");
+      const out = await build(path, run.week);
+      state.pending = state.pending.filter((item) => item !== run);
+      await log(`ok ${run.week}\n${out.stdout.slice(-2000)}`);
+    } catch (error) {
+      const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
+      run.attempts += 1;
+      run.lastError = message;
+      run.nextAttemptAt = new Date(now().getTime() + weeklyRetryDelayMs(run.attempts)).toISOString();
+      if (run.attempts >= WEEKLY_MAX_ATTEMPTS) {
+        state.pending = state.pending.filter((item) => item !== run);
+        state.failed = [...state.failed, { week: run.week, attempts: run.attempts, lastError: message }].slice(-KEPT_FAILURES);
+      }
+      console.error("[dashboard] weekly scheduled run failed:", message);
+      await log(`failed ${run.week} (${run.attempts}/${WEEKLY_MAX_ATTEMPTS}) ${message}`);
+    }
+    await writeState();
+  };
+}
+
+/** 1분마다 예약을 확인한다. 생성 결과는 엔진이 Console에 올린다. */
+export function startWeeklySchedule(options: WeeklyScheduleOptions = {}): () => void {
+  const check = createWeeklyScheduleTick(options);
   let running = false;
   let stopped = false;
 
@@ -92,21 +202,9 @@ export function startWeeklySchedule(options: WeeklyScheduleOptions = {}): () => 
     if (running || stopped) return;
     running = true;
     try {
-      const handled = await readFile(handledPath, "utf8").then((value) => value.trim() || null, () => null);
-      const decision = weeklyRunDecision(new Date(), await readSchedule(join(weeklyHome, "config.json")), handled);
-      if (decision.record === null) return;
-      await mkdir(weeklyHome, { recursive: true });
-      // 실패해도 같은 시점을 다시 실행하지 않도록 먼저 기록한다. Claude 호출 비용이 매분 반복되는 것을 막는다.
-      await writeFile(handledPath, `${decision.record}\n`, "utf8");
-      if (!decision.run) return;
-      const path = await engine();
-      if (!path) throw new Error("weekly engine not found");
-      const out = await build(path);
-      await appendFile(logPath, `[${new Date().toISOString()}] ok ${decision.record}\n${out.stdout.slice(-2000)}\n`);
+      await check();
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("[dashboard] weekly scheduled run failed:", message);
-      await appendFile(logPath, `[${new Date().toISOString()}] failed ${message.slice(0, 2000)}\n`).catch(() => undefined);
+      console.error("[dashboard] weekly schedule check failed:", error instanceof Error ? error.message : error);
     } finally {
       running = false;
     }

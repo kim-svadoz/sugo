@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { chmod, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { findWeeklyEngine, weeklyHomeDir } from "./weeklyScheduleService.js";
+import { findWeeklyEngine, readWeeklyRunState, weeklyHomeDir, weeklyReportPath } from "./weeklyScheduleService.js";
 
 export type WeeklyModel = "default" | "sonnet" | "opus";
 
@@ -18,6 +18,8 @@ export interface WeeklySettingsView extends WeeklySettings {
   configured: boolean;
   tokenConfigured: boolean;
   engineAvailable: boolean;
+  /** 자동 생성에 실패했고 아직 보고서가 없는 주. retrying이면 나중에 다시 시도한다. */
+  scheduleFailures: { week: string; attempts: number; lastError: string; retrying: boolean }[];
 }
 
 interface StoredConfig {
@@ -96,6 +98,17 @@ async function readStoredConfig(path: string): Promise<StoredConfig | null> {
   try { return JSON.parse(await readFile(path, "utf8")) as StoredConfig; } catch { return null; }
 }
 
+async function scheduleFailures(weeklyHome: string): Promise<WeeklySettingsView["scheduleFailures"]> {
+  const state = await readWeeklyRunState(weeklyHome);
+  if (!state) return [];
+  const runs = [
+    ...state.failed.map((run) => ({ ...run, retrying: false })),
+    ...state.pending.filter((run) => run.attempts > 0).map((run) => ({ week: run.week, attempts: run.attempts, lastError: run.lastError ?? "", retrying: true })),
+  ];
+  const missing = await Promise.all(runs.map(async (run) => !(await exists(weeklyReportPath(weeklyHome, run.week)))));
+  return runs.filter((_, index) => missing[index]);
+}
+
 export function createWeeklySettingsService(options: WeeklySettingsServiceOptions = {}) {
   const findEngine = options.findEngine ?? (() => findWeeklyEngine());
   const verifyToken = options.verifyToken ?? verifyClaudeToken;
@@ -113,6 +126,7 @@ export function createWeeklySettingsService(options: WeeklySettingsServiceOption
         configured: stored !== null && await exists(setupMarkerPath),
         tokenConfigured: await exists(tokenPath),
         engineAvailable: (await findEngine()) !== null,
+        scheduleFailures: await scheduleFailures(weeklyHome),
       };
     },
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getWeeklyReport, getWeeklySettings, listWeeklyReports, type WeeklyReportDetail, type WeeklyReportSummary } from "../api/weeklyApi.js";
+import { getWeeklyReport, getWeeklySettings, listWeeklyReports, type WeeklyReportDetail, type WeeklyReportSummary, type WeeklySettings } from "../api/weeklyApi.js";
 import { toWeeklyView, type WeeklyLearningView, type WeeklyTopicView } from "../lib/weeklyPresentation.js";
 import { cn } from "../lib/utils.js";
 import { PageHeading } from "../components/PageHeading.js";
@@ -274,17 +274,25 @@ function readRailOpen(): boolean {
   try { return localStorage.getItem(RAIL_KEY) !== "0"; } catch { return true; }
 }
 
+function scheduleFailureDetail(runs: WeeklySettings["scheduleFailures"]): string {
+  const reason = runs[runs.length - 1].lastError.split("\n").map((line) => line.trim()).filter(Boolean).at(-1)?.slice(0, 160) ?? "";
+  const stopped = runs.filter((run) => !run.retrying).map((run) => run.week);
+  const next = stopped.length > 0 ? `다시 시도를 멈췄습니다. /sugo:weekly --week ${stopped[0]}로 직접 만들 수 있습니다.` : "잠시 뒤 다시 시도합니다.";
+  return reason ? `${next} 이유: ${reason}` : next;
+}
+
 export function WeeklyPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const routeState = readWeeklyRouteState(searchParams);
   const [reports, setReports] = useState<WeeklyReportSummary[] | null>(null); const [detail, setDetail] = useState<WeeklyReportDetail | null>(null);
   const navigate = useNavigate();
   const [scheduleOff, setScheduleOff] = useState(false);
+  const [scheduleFailures, setScheduleFailures] = useState<WeeklySettings["scheduleFailures"]>([]);
   const [railOpen, setRailOpen] = useState(readRailOpen);
   // 주를 고르지 않았으면 가장 최근 주를 연다.
   const selected = routeState.weekId ?? reports?.[0]?.weekId ?? null;
   useEffect(() => { listWeeklyReports().then(setReports).catch(() => setReports([])); }, []);
-  useEffect(() => { getWeeklySettings().then((settings) => setScheduleOff(!settings.enabled)).catch(() => setScheduleOff(false)); }, []);
+  useEffect(() => { getWeeklySettings().then((settings) => { setScheduleOff(!settings.enabled); setScheduleFailures(settings.scheduleFailures ?? []); }).catch(() => setScheduleOff(false)); }, []);
   useEffect(() => { if (!selected) return setDetail(null); let cancelled = false; setDetail(null); getWeeklyReport(selected).then((value) => !cancelled && setDetail(value)).catch(() => !cancelled && setDetail(null)); return () => { cancelled = true; }; }, [selected]);
   const index = reports?.findIndex((report) => report.weekId === selected) ?? -1;
   const selectedReport = index >= 0 ? reports![index] : undefined;
@@ -302,7 +310,7 @@ export function WeeklyPage() {
   const older = reports && index >= 0 ? reports[index + 1] : undefined;
   const newer = reports && index > 0 ? reports[index - 1] : undefined;
   const iconButton = "grid h-8 w-8 place-items-center rounded-md border border-white/[0.08] text-slate-400 transition-colors hover:border-white/15 hover:text-slate-100 disabled:opacity-30";
-  return <div className="w-full space-y-5"><PageHeading eyebrow="WEEKLY REVIEW" title="주간 작업 리포트" description="한 주의 작업 결과와 기술 학습을 기록하고 다시 확인합니다." />{scheduleOff && <NoticeBar title="주간 리포트 자동 정리가 꺼져 있습니다." detail="켜면 정한 요일과 시각에 리포트를 만들고, 꺼져 있는 동안은 /sugo:weekly로 직접 만들 수 있습니다." actionLabel="주간 리포트 설정 열기" onAction={() => navigate("/preferences?tab=weekly")} />}
+  return <div className="w-full space-y-5"><PageHeading eyebrow="WEEKLY REVIEW" title="주간 작업 리포트" description="한 주의 작업 결과와 기술 학습을 기록하고 다시 확인합니다." />{scheduleOff && <NoticeBar title="주간 리포트 자동 정리가 꺼져 있습니다." detail="켜면 정한 요일과 시각에 리포트를 만들고, 꺼져 있는 동안은 /sugo:weekly로 직접 만들 수 있습니다." actionLabel="주간 리포트 설정 열기" onAction={() => navigate("/preferences?tab=weekly")} />}{scheduleFailures.length > 0 && <NoticeBar title={`${scheduleFailures.map((run) => run.week).join(", ")} 주간 리포트를 자동으로 만들지 못했습니다.`} detail={scheduleFailureDetail(scheduleFailures)} actionLabel="주간 리포트 설정 열기" onAction={() => navigate("/preferences?tab=weekly")} />}
     {reports !== null && reports.length === 0 ? <p className="text-[13px] text-slate-400">보고서가 없습니다.</p> : reports && selected && <div className={cn("grid items-start gap-6", railOpen && "xl:grid-cols-[240px_minmax(0,1fr)]")}>
       {railOpen && <WeekRail reports={reports} selected={selected} onSelect={select} />}
       {/* 전역 CSS가 main에 점무늬 배경을 강제하므로 문서 영역은 article로 둔다. */}

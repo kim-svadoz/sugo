@@ -11,12 +11,12 @@ const schema = readFileSync(join(__dirname, "schema.sqlite.sql"), "utf8");
 async function freshApp() {
   const db = createSqliteClient();
   await db.execScript(schema);
-  const settings = { enabled: true, weekday: 6, hour: 8, minute: 0, model: "opus" as const, extraRepositories: [], configured: true, tokenConfigured: false, engineAvailable: true };
+  const settings = { enabled: true, weekday: 6, hour: 8, minute: 0, model: "opus" as const, extraRepositories: [], configured: true, tokenConfigured: false, engineAvailable: true, scheduleFailures: [] };
   const weeklySettingsService = {
     get: async () => settings,
     save: async (value: typeof settings, token?: string) => {
       if (token === "rejected") throw Object.assign(new Error("이 토큰으로 Claude에 로그인하지 못했습니다: Not logged in"), { code: "TOKEN_REJECTED" });
-      return { ...value, configured: true, tokenConfigured: Boolean(token), engineAvailable: true };
+      return { ...value, configured: true, tokenConfigured: Boolean(token), engineAvailable: true, scheduleFailures: [] };
     },
     deleteToken: async () => undefined,
   };

@@ -28,6 +28,7 @@ export interface WeeklySettings {
   configured: boolean;
   tokenConfigured: boolean;
   engineAvailable: boolean;
+  scheduleFailures: { week: string; attempts: number; lastError: string; retrying: boolean }[];
 }
 
 export interface WeeklySettingsInput {
