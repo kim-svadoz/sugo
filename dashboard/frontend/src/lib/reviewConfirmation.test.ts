@@ -23,8 +23,8 @@ describe("reviewConfirmationSections", () => {
     const source = readFileSync(join(process.cwd(), "src/components/BlockerDecisionPanel.tsx"), "utf8");
     expect(source).toContain("승인하고 계속하기");
     expect(source).toContain("수정 요청");
-    expect(source).toContain("작업 세션이 결정을 감지하면 자동으로 계속 진행합니다");
-    expect(source).toContain("작업 세션이 결정을 감지하면 자동으로 수정 작업을 시작합니다");
+    expect(source).toContain("대기 중인 작업 세션이 이어서 진행합니다. 세션이 멈춰 있으면 아무 Claude 세션에서 입력하면 이어집니다.");
+    expect(source).toContain("대기 중인 작업 세션이 수정 작업을 시작합니다. 세션이 멈춰 있으면 아무 Claude 세션에서 입력하면 이어집니다.");
     expect(source).toContain("이번 변경 파일 diff 보기");
     expect(source).not.toContain("원래 작업 세션에 프롬프트를 붙여넣으면");
     expect(source).not.toContain(">확인, 진행</button>");

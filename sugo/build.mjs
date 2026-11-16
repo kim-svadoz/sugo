@@ -29,5 +29,6 @@ await build({ ...common, entryPoints: ["src/lifecycle/dashboardStartHook.ts"], o
 await build({ ...common, entryPoints: ["src/dashboardRegister.ts"], outfile: "dist/dashboard-register.mjs" });
 await build({ ...common, entryPoints: ["src/dashboardHarnessFeature.ts"], outfile: "dist/dashboard-harness-feature.mjs" });
 await build({ ...common, entryPoints: ["src/dashboardProjectManage.ts"], outfile: "dist/dashboard-project-manage.mjs" });
+await build({ ...common, entryPoints: ["src/lifecycle/decisionHook.ts"], outfile: "dist/decision-hook.mjs" });
 
-console.log("빌드 완료: dist/index.bundle.mjs, dist/dashboard-start.mjs, dist/dashboard-register.mjs, dist/dashboard-harness-feature.mjs, dist/dashboard-project-manage.mjs");
+console.log("빌드 완료: dist/index.bundle.mjs, dist/dashboard-start.mjs, dist/dashboard-register.mjs, dist/dashboard-harness-feature.mjs, dist/dashboard-project-manage.mjs, dist/decision-hook.mjs");
