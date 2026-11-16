@@ -226,8 +226,10 @@ export function createWorkspacesRouter(db: DbClient, sessionSecret: string, spec
     const filePath = typeof req.query.path === "string" ? req.query.path : "";
     const sessionId = typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
     const patchVersionRaw = typeof req.query.patchVersion === "string" ? Number(req.query.patchVersion) : undefined;
+    const roundRaw = typeof req.query.round === "string" ? Number(req.query.round) : undefined;
+    const round = Number.isInteger(roundRaw) && roundRaw! > 0 ? roundRaw : undefined;
     if (!taskId || !filePath) return res.status(400).json({ error: "taskId and path required" });
-    const artifact = await readReviewArtifact(db, userId, req.params.name, taskId, filePath, sessionId, Number.isInteger(patchVersionRaw) ? patchVersionRaw : undefined);
+    const artifact = await readReviewArtifact(db, userId, req.params.name, taskId, filePath, sessionId, Number.isInteger(patchVersionRaw) ? patchVersionRaw : undefined, round, req.query.compare === "previousRound");
     if (!artifact) return res.status(404).json({ error: "not_found" });
     res.set("Cache-Control", "private, no-store").json({ artifact });
   });

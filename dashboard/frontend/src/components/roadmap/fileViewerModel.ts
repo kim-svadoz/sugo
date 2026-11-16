@@ -9,7 +9,7 @@ export interface FileViewerPresentation {
   tone: "cyan" | "violet" | "amber" | "emerald" | "sky" | "rose" | "slate";
 }
 
-type ArtifactLookup = { taskId: string; patchVersion?: number; sessionId?: string };
+type ArtifactLookup = { taskId: string; patchVersion?: number; sessionId?: string; round?: number };
 
 /** 구버전 changedFiles의 로컬 절대경로를 review artifact가 사용하는 저장소 상대경로로 맞춘다. */
 export function repositoryRelativePath(path: string): string {
@@ -29,6 +29,7 @@ export function reviewArtifactLocator(file: WorkResultFile, fallback: ArtifactLo
     taskId: file.artifactTaskId ?? fallback.taskId,
     patchVersion: file.artifactPatchVersion ?? fallback.patchVersion,
     sessionId: file.artifactSessionId ?? (hasOrigin ? undefined : fallback.sessionId),
+    round: file.artifactRound ?? fallback.round,
   };
 }
 
@@ -93,6 +94,7 @@ export function filesForRoadmapScope(selected: RoadmapNode, nodes: RoadmapNode[]
       artifactTaskId: file.artifactTaskId ?? (node.level === "task" ? node.ref ?? node.id.replace(/:v\d+$/, "") : undefined),
       artifactSessionId: file.artifactSessionId ?? (packet ? node.human_blocker?.sessionId : undefined),
       artifactPatchVersion: file.artifactPatchVersion ?? packet?.report?.patchVersion ?? workResult?.patchVersion,
+      artifactRound: file.artifactRound ?? packet?.round,
     }));
     for (const file of [...lineageFiles(node), ...ownFiles]) {
       latestByPath.delete(file.path);

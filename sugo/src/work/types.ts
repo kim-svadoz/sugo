@@ -149,6 +149,8 @@ export interface RoadmapNode {
   specPath?: string;
   note?: string;
   humanBlocker?: HumanBlocker;
+  /** 사용자 확인을 받은 검토 회차. 수정 요청 뒤에도 이전 회차의 결과와 요청을 남긴다. */
+  reviewRounds?: ReviewRound[];
   /** Ontology projection v1. 플러그인이 계산하고 Dashboard는 해석을 복제하지 않고 소비한다. */
   runtimeAssessment?: import("../ontology/sessionAssessment.js").SessionAssessment;
   result?: RoadmapNodeResult;
@@ -168,6 +170,16 @@ export interface HumanBlockerOption {
   impact: string;
 }
 
+export interface ReviewRound {
+  round: number;
+  sessionId: string;
+  requestedAt: string;
+  reviewPacket: NonNullable<HumanBlocker["reviewPacket"]>;
+  decision: "approve" | "revise";
+  response: string;
+  answeredAt?: string;
+}
+
 export interface HumanBlocker {
   schemaVersion: 1;
   kind?: "decision" | "review_confirmation";
@@ -181,6 +193,8 @@ export interface HumanBlocker {
   blockedNextStep: string;
   createdAt: string;
   reviewPacket?: {
+    /** 같은 세션 안에서 몇 번째 사용자 확인인지. 1부터 센다. */
+    round?: number;
     report?: WorkResultReport;
     summary: string;
     changes: string[];

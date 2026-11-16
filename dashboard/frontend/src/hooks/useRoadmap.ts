@@ -16,6 +16,7 @@ export interface WorkResultFile {
   artifactTaskId?: string;
   artifactPatchVersion?: number;
   artifactSessionId?: string;
+  artifactRound?: number;
 }
 
 export interface WorkResult {
@@ -108,6 +109,7 @@ export interface RoadmapNode {
   synced_at?: string | null;
   blocker_decision?: { response: string; answered_by: string; answered_at: string } | null;
   human_blocker?: HumanBlocker | null;
+  review_rounds?: import("../lib/reviewConfirmation.js").ReviewRound[] | null;
 }
 
 /** RoadmapTab이 받는 봉투. counts/issues는 **서버가** 센다(전체 기준 진척). */

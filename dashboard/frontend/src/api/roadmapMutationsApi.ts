@@ -20,13 +20,15 @@ export function clearManualStatus(userId: string, workspace: string, nodeId: str
 }
 
 export async function getReviewArtifact(userId: string, workspace: string, input: {
-  taskId: string; path: string; sessionId?: string; patchVersion?: number;
+  taskId: string; path: string; sessionId?: string; patchVersion?: number; round?: number; compare?: "previousRound";
 }) {
   const response = await apiJson<{ artifact: { path: string; changeType: "added" | "modified" | "deleted" | "unchanged"; content?: string | null; diff?: string | null; unavailableReason?: string | null } }>(
     withUserId(`/api/workspaces/${encodeURIComponent(workspace)}/review-artifact`, userId, {
       taskId: input.taskId, path: input.path,
       ...(input.sessionId ? { sessionId: input.sessionId } : {}),
       ...(input.patchVersion !== undefined ? { patchVersion: String(input.patchVersion) } : {}),
+      ...(input.round !== undefined ? { round: String(input.round) } : {}),
+      ...(input.compare ? { compare: input.compare } : {}),
     }),
   );
   return {

@@ -296,6 +296,62 @@ describe("sugo_roadmap — link/unlink/group/backfill (task 레벨 관리)", () 
     expect(blocked.data.errorCode).toBe("HUMAN_DECISION_REQUIRED");
   });
 
+  it("수정 요청한 검토 회차를 지우지 않고 다음 회차와 함께 남긴다", async () => {
+    const { sessionId, taskId } = await toReadyAndBeyond(HEADING_PRD);
+    writeFileSync(join(projectDir, "login.ts"), "export const login = 1;\n");
+    const toReview = async () => {
+      await call(handleSugoPlan, { action: "code_start", sessionId });
+      await call(handleSugoAnalyze, { sessionId, changedFiles: ["login.ts"] });
+      await call(handleSugoPlan, { action: "code_done", sessionId, changedFiles: ["login.ts"] });
+      await call(handleSugoPlan, { action: "test_start", sessionId });
+      await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0, failed: 0 });
+      await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
+      await call(handleSugoPlan, { action: "review_start", sessionId });
+    };
+    const packet = (summary: string) => ({ summary, changes: ["이메일 로그인 추가"], tests: ["npm test 통과"], designDecisions: [], knownLimitations: [] });
+    let decision = { response: "수정 필요 — 실패 메시지를 바꿔 주세요.", answered_by: "tester", answered_at: "2026-11-16T01:00:00.000Z" };
+    const uploads: Array<{ path: string; round?: number }> = [];
+    const dashboard = createServer((req, res) => {
+      let body = "";
+      req.on("data", (chunk) => { body += chunk; });
+      req.on("end", () => {
+        if (req.url?.startsWith("/api/sync/review-artifact")) uploads.push(JSON.parse(body));
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ status: "blocked", blocker: { sessionId }, decision }));
+      });
+    });
+    await new Promise<void>((resolve) => dashboard.listen(0, "127.0.0.1", resolve));
+    try {
+      const address = dashboard.address();
+      if (!address || typeof address === "string") throw new Error("test dashboard address unavailable");
+      process.env.SUGO_DASHBOARD_API_URL = `http://127.0.0.1:${address.port}`;
+      process.env.SUGO_DASHBOARD_USER_ID = "tester";
+
+      await toReview();
+      const first = await call(handleSugoRoadmap, { action: "request_review_confirmation", workspace: "team-a", id: taskId, sessionId, reviewPacket: packet("1차 결과") });
+      expect(first.data.node.humanBlocker.reviewPacket.round).toBe(1);
+      const revised = await call(handleSugoRoadmap, { action: "resume_with_decision", workspace: "team-a", id: taskId, sessionId });
+      expect(revised.data).toMatchObject({ resumeAction: "code_start" });
+      expect(revised.data.node.reviewRounds).toEqual([expect.objectContaining({
+        round: 1, sessionId, decision: "revise", response: decision.response, answeredAt: decision.answered_at,
+        reviewPacket: expect.objectContaining({ summary: "1차 결과", files: [expect.objectContaining({ path: "login.ts" })] }),
+      })]);
+
+      await toReview();
+      const second = await call(handleSugoRoadmap, { action: "request_review_confirmation", workspace: "team-a", id: taskId, sessionId, reviewPacket: packet("2차 결과") });
+      expect(second.data.node.humanBlocker.reviewPacket.round).toBe(2);
+      expect(second.data.node.reviewRounds).toHaveLength(1);
+      decision = { response: "확인, 진행", answered_by: "tester", answered_at: "2026-11-16T02:00:00.000Z" };
+      const approved = await call(handleSugoRoadmap, { action: "resume_with_decision", workspace: "team-a", id: taskId, sessionId });
+      expect(approved.data).toMatchObject({ resumeAction: "review_done" });
+      expect(approved.data.node.reviewRounds.map((round: { round: number; decision: string; reviewPacket: { summary: string } }) => [round.round, round.decision, round.reviewPacket.summary]))
+        .toEqual([[1, "revise", "1차 결과"], [2, "approve", "2차 결과"]]);
+      expect(uploads.filter((upload) => upload.path === "login.ts").map((upload) => upload.round)).toEqual([1, 2]);
+    } finally {
+      await new Promise<void>((resolve, reject) => dashboard.close((error) => error ? reject(error) : resolve()));
+    }
+  });
+
   it("사람만 답할 수 있는 판단은 구조화된 차단으로 기록한다", async () => {
     const { sessionId, taskId } = await toReadyAndBeyond(HEADING_PRD);
     const blocked = await call(handleSugoRoadmap, {

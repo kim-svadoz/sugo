@@ -1,5 +1,6 @@
 import { renderWorkResultMarkdown } from "../workResultReport.js";
 import { computeCompletionGrade, labelId } from "../labelGuard.js";
+import { isReviewApproval } from "../reviewConfirmation.js";
 import { loadAllSessions, saveSession } from "../session.js";
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -417,6 +418,7 @@ export async function resumeRoadmapNodeWithDecision(
   id: string,
   sessionId: string,
   decision: string,
+  answeredAt?: string,
 ): Promise<RoadmapMutationResult> {
   return withRoadmap(workspace, async (file) => {
     const node = file.nodes.find((candidate) => candidate.id === id);
@@ -427,6 +429,19 @@ export async function resumeRoadmapNodeWithDecision(
     if (!decision.trim()) return { ok: false, error: "DECISION_REQUIRED", message: "저장된 사용자 결정이 필요합니다." };
     node.status = "in_progress";
     node.note = `사용자 결정 반영: ${decision.trim()}`;
+    const blocker = node.humanBlocker;
+    if (blocker.kind === "review_confirmation" && blocker.reviewPacket) {
+      const rounds = node.reviewRounds ?? [];
+      node.reviewRounds = [...rounds, {
+        round: blocker.reviewPacket.round ?? rounds.filter((round) => round.sessionId === sessionId).length + 1,
+        sessionId,
+        requestedAt: blocker.createdAt,
+        reviewPacket: blocker.reviewPacket,
+        decision: isReviewApproval(blocker, decision.trim()) ? "approve" : "revise",
+        response: decision.trim(),
+        answeredAt: answeredAt ?? new Date().toISOString(),
+      }];
+    }
     delete node.humanBlocker;
     await writeRoadmapFile(workspace, file);
     return { ok: true };

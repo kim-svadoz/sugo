@@ -133,6 +133,7 @@ export interface RoadmapNodeWire {
   workResult?: unknown;
   lineage?: unknown;
   humanBlocker?: unknown;
+  reviewRounds?: unknown;
   runtimeAssessment?: unknown;
 }
 
@@ -198,6 +199,7 @@ export function serializeRoadmapNode(node: RoadmapNode): RoadmapNodeWire {
     workResult: node.workResult,
     lineage: node.lineage,
     humanBlocker: node.humanBlocker,
+    reviewRounds: node.reviewRounds,
     runtimeAssessment: node.runtimeAssessment,
   };
 }

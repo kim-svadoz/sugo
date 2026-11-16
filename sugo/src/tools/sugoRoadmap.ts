@@ -21,7 +21,7 @@ import { fetchBlockerDecision, updateScheduleSpecField } from "../dashboard/fetc
 import { controlConsole } from "../lifecycle/consoleOnDemand.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
 import { assessSession } from "../ontology/sessionAssessment.js";
-import { buildReviewConfirmationBlocker, reviewDecisionResumeAction } from "../reviewConfirmation.js";
+import { buildReviewConfirmationBlocker, isReviewApproval, reviewDecisionResumeAction } from "../reviewConfirmation.js";
 import { snapshotReviewArtifacts } from "../dashboard/workResultFiles.js";
 import { activityTaskDetails, emitActivity, reviewConfirmationActivity } from "../dashboard/activity.js";
 import { syncReviewArtifacts } from "../dashboard/sync.js";
@@ -235,7 +235,8 @@ export async function handleSugoRoadmap(rawArgs: unknown): Promise<ToolResult> {
         session.data.chainInfo.implementationStartedAt ?? session.startedAt,
       );
       const patchVersion = session.data.mode === "patch" ? session.data.patch?.version ?? 0 : 0;
-      await syncReviewArtifacts(args.workspace, args.id, args.sessionId, patchVersion, files);
+      const round = ((await getRoadmapNode(args.workspace, args.id))?.reviewRounds ?? []).filter((item) => item.sessionId === args.sessionId).length + 1;
+      await syncReviewArtifacts(args.workspace, args.id, args.sessionId, patchVersion, files, round);
       const chain = session.data.chainInfo;
       const evidence = chain.testEvidence;
       // coverageMap이 없으면 판정을 꾸며내지 않는다. UI는 해당 REQ를 "매핑 없음"으로 표시한다.
@@ -252,7 +253,7 @@ export async function handleSugoRoadmap(rawArgs: unknown): Promise<ToolResult> {
           passed: evidence?.passed, failed: evidence?.failed, state: evidence?.derivedState ?? chain.testPassedState ?? "unverified" },
         runtimeVerified: chain.runtimeVerified === true, wiringVerified: chain.wiringVerified, validation: chain.lastValidation,
       });
-      const blocker = buildReviewConfirmationBlocker({ sessionId: args.sessionId, ...args.reviewPacket, files, report });
+      const blocker = buildReviewConfirmationBlocker({ sessionId: args.sessionId, ...args.reviewPacket, files, report, round });
       const result = await blockRoadmapNodeForHuman(args.workspace, args.id, blocker);
       if (!result.ok) return errorResult(result.error!, result.message!);
       session.data.humanDecisionGate = { workspace: args.workspace, taskId: args.id, blocker };
@@ -283,16 +284,15 @@ export async function handleSugoRoadmap(rawArgs: unknown): Promise<ToolResult> {
       if (remote.blocker?.sessionId && remote.blocker.sessionId !== args.sessionId) {
         return errorResult("BLOCKER_SESSION_MISMATCH", "대시보드 차단을 만든 세션과 현재 세션이 다릅니다.");
       }
-      const result = await resumeRoadmapNodeWithDecision(args.workspace, args.id, args.sessionId, remote.decision.response);
+      const result = await resumeRoadmapNodeWithDecision(args.workspace, args.id, args.sessionId, remote.decision.response, remote.decision.answered_at);
       if (!result.ok) return errorResult(result.error!, result.message!);
       session.data.humanDecisionGate = undefined;
       if (gate.blocker.kind === "review_confirmation") {
-        const approvalLabel = gate.blocker.options.find((option) => option.id === "approve")?.label;
         session.data.reviewConfirmation = {
           workspace: args.workspace,
           taskId: args.id,
           requestedAt: session.data.reviewConfirmation?.requestedAt ?? gate.blocker.createdAt,
-          decision: remote.decision.response === approvalLabel ? "approve" : "revise",
+          decision: isReviewApproval(gate.blocker, remote.decision.response) ? "approve" : "revise",
           answeredAt: remote.decision.answered_at,
         };
       }

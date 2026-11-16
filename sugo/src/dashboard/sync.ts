@@ -153,12 +153,13 @@ export async function syncReviewArtifacts(
   sessionId: string,
   patchVersion: number,
   files: NonNullable<RoadmapWorkResult["files"]>,
+  round?: number,
 ): Promise<void> {
   const config = await resolveDashboardConfig();
   if (!config.enabled) return;
   await Promise.all(files.map((file) =>
     pushEvent("/api/sync/review-artifact", "POST", {
-      userId: config.userId, workspaceName, taskId, sessionId, patchVersion, ...file,
+      userId: config.userId, workspaceName, taskId, sessionId, patchVersion, ...(round ? { round } : {}), ...file,
     }, 15_000),
   ));
 }

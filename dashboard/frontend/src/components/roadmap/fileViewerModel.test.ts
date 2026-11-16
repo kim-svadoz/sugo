@@ -123,6 +123,15 @@ describe("changed-file viewer model", () => {
     )).toEqual({ taskId: "task-a", patchVersion: 2, sessionId: undefined });
   });
 
+  it("이전 검토 회차 파일은 그 회차의 저장 키로 조회한다", () => {
+    expect(reviewArtifactLocator(
+      { path: "src/A.java", change: "modified", artifactSessionId: "s1", artifactRound: 1 },
+      { taskId: "task", sessionId: "s1", round: 2 },
+    )).toEqual({ taskId: "task", patchVersion: undefined, sessionId: "s1", round: 1 });
+    expect(reviewArtifactLocator({ path: "src/A.java", change: "modified" }, { taskId: "task", sessionId: "s1", round: 2 }))
+      .toEqual({ taskId: "task", patchVersion: undefined, sessionId: "s1", round: 2 });
+  });
+
   it("과거 절대경로와 현재 상대경로는 같은 저장소 파일로 합친다", () => {
     const task = node("task", "task", "run");
     task.lineage = [

@@ -104,6 +104,7 @@ const roadmapNodeSchema = z.object({
   workResult: z.unknown().optional(),
   lineage: z.unknown().optional(),
   humanBlocker: z.unknown().optional(),
+  reviewRounds: z.unknown().optional(),
   runtimeAssessment: z.unknown().optional(),
 });
 
@@ -120,6 +121,7 @@ export const reviewArtifactSchema = z.object({
   taskId: z.string().min(1).max(512),
   sessionId: z.string().min(1).max(512),
   patchVersion: z.number().int().min(0),
+  round: z.number().int().min(1).optional(),
   path: z.string().min(1).max(2048),
   change: z.enum(["added", "modified", "deleted"]),
   content: z.string().max(200_000).optional(),

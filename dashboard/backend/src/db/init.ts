@@ -21,6 +21,7 @@ import { pruneExpiredActivityEvents } from "../services/activityService.js";
 import { ensureGitConnectionProfileColumn } from "../services/gitConnectionService.js";
 import { ensureScheduleMemoArchivedAtColumn } from "../services/scheduleMemoService.js";
 import { ensureScheduleSpecArchiveLastWorkedAtColumn } from "../services/scheduleSpecArchiveService.js";
+import { ensureReviewArtifactRoundColumn } from "../services/reviewArtifacts.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +48,7 @@ export async function initDb(options: InitDbOptions = {}): Promise<DbClient> {
     await ensureRoadmapWorkBranchColumn(client);
     await ensureRoadmapManualTitleColumn(client);
     await ensureRoadmapBlockerDecisionColumns(client);
+    await ensureReviewArtifactRoundColumn(client);
     await ensureCheckpointCreatedAtColumn(client);
     await ensureCheckpointExpiresAtColumn(client);
     await ensureGitConnectionProfileColumn(client);
@@ -72,6 +74,7 @@ export async function initDb(options: InitDbOptions = {}): Promise<DbClient> {
   await ensureRoadmapWorkBranchColumn(client);
   await ensureRoadmapManualTitleColumn(client);
   await ensureRoadmapBlockerDecisionColumns(client);
+  await ensureReviewArtifactRoundColumn(client);
   await ensureCheckpointCreatedAtColumn(client);
   await ensureCheckpointExpiresAtColumn(client);
   await ensureGitConnectionProfileColumn(client);

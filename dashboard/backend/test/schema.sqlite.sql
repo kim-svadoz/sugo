@@ -175,6 +175,7 @@ CREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (
   blocker_answered_by TEXT,
   blocker_answered_at TEXT,
   blocker_context TEXT,
+  review_rounds TEXT,
   runtime_assessment TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -279,7 +280,7 @@ CREATE TABLE IF NOT EXISTS user_api_tokens (
 
 CREATE TABLE IF NOT EXISTS sugo_review_artifacts (
   artifact_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, workspace_name TEXT NOT NULL,
-  task_id TEXT NOT NULL, session_id TEXT NOT NULL, patch_version INTEGER NOT NULL,
+  task_id TEXT NOT NULL, session_id TEXT NOT NULL, patch_version INTEGER NOT NULL, review_round INTEGER NOT NULL DEFAULT 1,
   file_path TEXT NOT NULL, change_type TEXT NOT NULL, content TEXT, diff_text TEXT,
   unavailable_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );

@@ -13,7 +13,8 @@ import { taskGuidance } from "../lib/taskGuidance.js";
 import { workResultSummaryHtml } from "../lib/workResultSummaryHtml.js";
 import { requirementCoverageState, verificationEvidenceState } from "../lib/reviewRequirementEvidence.js";
 import { BlockerDecisionPanel } from "./BlockerDecisionPanel.js";
-import type { ReviewPacket } from "../lib/reviewConfirmation.js";
+import { currentReviewRounds, type ReviewPacket, type ReviewRound } from "../lib/reviewConfirmation.js";
+import { ReviewRoundHistory } from "./ReviewRoundHistory.js";
 
 type Tab = "progress" | "summary" | "files";
 
@@ -77,7 +78,15 @@ export function SubtaskPanel({
   useEffect(() => setTab("progress"), [node.id]);
 
   const reviewPacket = node.human_blocker?.kind === "review_confirmation" ? node.human_blocker.reviewPacket : undefined;
-  const files = scopeFiles ?? workResult?.files ?? reviewPacket?.files ?? [];
+  const rounds = node.level === "task" ? currentReviewRounds(node.review_rounds, node.human_blocker?.sessionId) : [];
+  const pendingRound = reviewPacket ? reviewPacket.round ?? rounds.length + 1 : undefined;
+  const [fileRound, setFileRound] = useState<number | null>(null);
+  useEffect(() => setFileRound(null), [node.id, pendingRound]);
+  const viewedRound = fileRound === null ? undefined : rounds.find((round) => round.round === fileRound);
+  const roundFiles = viewedRound?.reviewPacket.files?.map((file) => ({ ...file, artifactSessionId: viewedRound.sessionId, artifactRound: viewedRound.round }));
+  const files = scopeFiles ?? roundFiles ?? workResult?.files ?? reviewPacket?.files ?? [];
+  const openRoundReport = (round: ReviewRound) => openWorkResultHtml(`${node.title} · ${round.round}차 검토`, null, progressItems, round.reviewPacket);
+  const openRoundFiles = (round: number | null) => { setFileRound(round); setTab("files"); };
 
   return (
     <aside className="flex min-h-full w-full min-w-0 flex-col overflow-hidden bg-[var(--color-surface)]">
@@ -130,10 +139,14 @@ export function SubtaskPanel({
             onReviewResult={() => setTab("summary")}
             files={files}
             onOpenFile={onOpenFile}
+            reviewRounds={rounds}
+            pendingRound={pendingRound}
+            onOpenRoundReport={openRoundReport}
+            onOpenRoundFiles={openRoundFiles}
           />
         )}
         {tab === "summary" && <SummaryTab title={node.title} workResult={workResult} reviewPacket={reviewPacket} requirements={node.level === "task" ? progressItems : []} />}
-        {tab === "files" && <FilesTab userId={userId} workspace={workspace} taskId={node.ref ?? node.id.replace(/:v\d+$/, "")} sessionId={node.human_blocker?.sessionId} patchVersion={workResult?.patchVersion} files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} />}
+        {tab === "files" && <FilesTab userId={userId} workspace={workspace} taskId={node.ref ?? node.id.replace(/:v\d+$/, "")} sessionId={node.human_blocker?.sessionId} patchVersion={workResult?.patchVersion} files={files} onOpenFile={onOpenFile} aggregated={node.level === "spec" || node.level === "workstream"} rounds={rounds} pendingRound={pendingRound} selectedRound={fileRound} onSelectRound={setFileRound} />}
       </div>
     </aside>
   );
@@ -159,6 +172,10 @@ function ProgressTab({
   onReviewResult,
   files,
   onOpenFile,
+  reviewRounds,
+  pendingRound,
+  onOpenRoundReport,
+  onOpenRoundFiles,
 }: {
   userId: string | null;
   workspace: string;
@@ -171,6 +188,10 @@ function ProgressTab({
   onReviewResult: () => void;
   files: WorkResultFile[];
   onOpenFile: (file: WorkResultFile, expanded?: boolean) => void;
+  reviewRounds: ReviewRound[];
+  pendingRound?: number;
+  onOpenRoundReport: (round: ReviewRound) => void;
+  onOpenRoundFiles: (round: number | null) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [patchCopied, setPatchCopied] = useState(false);
@@ -291,8 +312,11 @@ function ProgressTab({
           onSaved={onChanged}
           onOpenReport={() => openWorkResultHtml(node.title, workResult, progressItems, node.human_blocker?.reviewPacket)}
           onOpenDiff={files[0] ? () => onOpenFile(files[0], true) : undefined}
+          round={pendingRound}
+          previousRevision={[...reviewRounds].reverse().find((round) => round.decision === "revise")}
         />
       )}
+      {node.level === "task" && <ReviewRoundHistory rounds={reviewRounds} pendingRound={pendingRound} onOpenReport={onOpenRoundReport} onOpenFiles={onOpenRoundFiles} />}
       {requirementsUnavailable ? (
         <div className="rounded-lg border border-[var(--color-border)] p-3 text-[12px] text-[var(--color-text-muted)]">이 차수의 주요 개발 사항 기록이 없습니다.</div>
       ) : <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-4">
@@ -540,30 +564,39 @@ function ChildList({ items }: { items: RoadmapNode[] }) {
   );
 }
 
-function FilesTab({ userId, workspace, taskId, sessionId, patchVersion, files, onOpenFile, aggregated = false }: { userId: string | null; workspace: string; taskId: string; sessionId?: string; patchVersion?: number; files: WorkResultFile[]; onOpenFile: (file: WorkResultFile, expanded?: boolean) => void; aggregated?: boolean }) {
+function FilesTab({ userId, workspace, taskId, sessionId, patchVersion, files, onOpenFile, aggregated = false, rounds = [], pendingRound, selectedRound = null, onSelectRound }: { userId: string | null; workspace: string; taskId: string; sessionId?: string; patchVersion?: number; files: WorkResultFile[]; onOpenFile: (file: WorkResultFile, expanded?: boolean) => void; aggregated?: boolean; rounds?: ReviewRound[]; pendingRound?: number; selectedRound?: number | null; onSelectRound?: (round: number | null) => void }) {
   const [selected, setSelected] = useState<WorkResultFile | null>(null);
   const [loadingPath, setLoadingPath] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [compare, setCompare] = useState(false);
+  const round = selectedRound ?? pendingRound ?? rounds.at(-1)?.round;
+  useEffect(() => setCompare(false), [round]);
   async function open(file: WorkResultFile, expanded: boolean) {
     setSelected(file);
     setError(null);
-    if (file.diff || (file.content && file.change !== "modified" && !file.unavailableReason) || !userId) {
+    if (!compare && (file.diff || (file.content && file.change !== "modified" && !file.unavailableReason)) || !userId) {
       onOpenFile(file, expanded);
       return;
     }
     setLoadingPath(file.path);
     try {
-      const locator = reviewArtifactLocator(file, { taskId, sessionId, patchVersion });
-      onOpenFile(await getReviewArtifact(userId, workspace, { ...locator, path: file.path }), expanded);
+      const locator = reviewArtifactLocator(file, { taskId, sessionId, patchVersion, round: selectedRound ?? pendingRound });
+      onOpenFile(await getReviewArtifact(userId, workspace, { ...locator, path: file.path, ...(compare ? { round, compare: "previousRound" as const } : {}) }), expanded);
     } catch {
       setError("코드 아티팩트를 불러오지 못했습니다. 플러그인 동기화 상태를 확인하세요.");
     } finally {
       setLoadingPath(null);
     }
   }
-  if (files.length === 0) return <div className="text-xs opacity-50">변경된 파일 없음</div>;
+  const roundPicker = rounds.length > 0 && onSelectRound && <div className="flex flex-wrap items-center gap-1.5">
+    {rounds.map((item) => <button key={item.round} type="button" aria-pressed={selectedRound === item.round} onClick={() => onSelectRound(item.round)} className={`rounded-full border px-2.5 py-1 text-[10.5px] font-semibold ${selectedRound === item.round ? "border-cyan-300/45 bg-cyan-400/10 text-cyan-100" : "border-white/10 text-slate-400 hover:text-slate-200"}`}>{item.round}차 · {item.decision === "revise" ? "수정 요청" : "승인"}</button>)}
+    <button type="button" aria-pressed={selectedRound === null} onClick={() => onSelectRound(null)} className={`rounded-full border px-2.5 py-1 text-[10.5px] font-semibold ${selectedRound === null ? "border-cyan-300/45 bg-cyan-400/10 text-cyan-100" : "border-white/10 text-slate-400 hover:text-slate-200"}`}>{pendingRound ? `${pendingRound}차 · 확인 대기` : "최종 결과"}</button>
+    {round !== undefined && round > 1 && <button type="button" role="checkbox" aria-checked={compare} onClick={() => setCompare((value) => !value)} className={`ml-auto rounded-md border px-2 py-1 text-[10.5px] font-semibold ${compare ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-200" : "border-white/10 text-slate-400 hover:text-slate-200"}`}>직전 회차와 비교</button>}
+  </div>;
+  if (files.length === 0) return <div className="flex flex-col gap-2">{roundPicker}<div className="text-xs opacity-50">변경된 파일 없음</div></div>;
   return (
     <div className="flex min-h-0 flex-col gap-2">
+      {roundPicker}
       {aggregated && (
         <div className="rounded-lg border border-cyan-400/15 bg-cyan-400/[0.035] px-2.5 py-2 text-[10.5px] leading-relaxed text-cyan-100/60">
           이 범위에 속한 하위 RUN/TASK의 변경 파일을 합쳐서 보여줍니다. 같은 경로는 최신 산출물 기준입니다.

@@ -344,6 +344,7 @@ function serializeRoadmapNode(node) {
     workResult: node.workResult,
     lineage: node.lineage,
     humanBlocker: node.humanBlocker,
+    reviewRounds: node.reviewRounds,
     runtimeAssessment: node.runtimeAssessment
   };
 }
@@ -493,7 +494,7 @@ async function syncSpec(workspaceName, spec) {
 import { mkdir as mkdir3, readdir, readFile as readFile3, rm } from "node:fs/promises";
 import { join as join3 } from "node:path";
 
-// ../../sugo/sugo/node_modules/zod/v3/external.js
+// node_modules/zod/v3/external.js
 var external_exports = {};
 __export(external_exports, {
   BRAND: () => BRAND,
@@ -605,7 +606,7 @@ __export(external_exports, {
   void: () => voidType
 });
 
-// ../../sugo/sugo/node_modules/zod/v3/helpers/util.js
+// node_modules/zod/v3/helpers/util.js
 var util;
 (function(util2) {
   util2.assertEqual = (_) => {
@@ -739,7 +740,7 @@ var getParsedType = (data) => {
   }
 };
 
-// ../../sugo/sugo/node_modules/zod/v3/ZodError.js
+// node_modules/zod/v3/ZodError.js
 var ZodIssueCode = util.arrayToEnum([
   "invalid_type",
   "invalid_literal",
@@ -857,7 +858,7 @@ ZodError.create = (issues) => {
   return error;
 };
 
-// ../../sugo/sugo/node_modules/zod/v3/locales/en.js
+// node_modules/zod/v3/locales/en.js
 var errorMap = (issue, _ctx) => {
   let message;
   switch (issue.code) {
@@ -960,7 +961,7 @@ var errorMap = (issue, _ctx) => {
 };
 var en_default = errorMap;
 
-// ../../sugo/sugo/node_modules/zod/v3/errors.js
+// node_modules/zod/v3/errors.js
 var overrideErrorMap = en_default;
 function setErrorMap(map) {
   overrideErrorMap = map;
@@ -969,7 +970,7 @@ function getErrorMap() {
   return overrideErrorMap;
 }
 
-// ../../sugo/sugo/node_modules/zod/v3/helpers/parseUtil.js
+// node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
   const { data, path, errorMaps, issueData } = params;
   const fullPath = [...path, ...issueData.path || []];
@@ -1079,14 +1080,14 @@ var isDirty = (x) => x.status === "dirty";
 var isValid = (x) => x.status === "valid";
 var isAsync = (x) => typeof Promise !== "undefined" && x instanceof Promise;
 
-// ../../sugo/sugo/node_modules/zod/v3/helpers/errorUtil.js
+// node_modules/zod/v3/helpers/errorUtil.js
 var errorUtil;
 (function(errorUtil2) {
   errorUtil2.errToObj = (message) => typeof message === "string" ? { message } : message || {};
   errorUtil2.toString = (message) => typeof message === "string" ? message : message?.message;
 })(errorUtil || (errorUtil = {}));
 
-// ../../sugo/sugo/node_modules/zod/v3/types.js
+// node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
   constructor(parent, value, path, key) {
     this._cachedPath = [];
@@ -4541,7 +4542,7 @@ var readerSchema = external_exports.object({
   mcpServer: external_exports.string().trim().min(1).max(120).regex(/^[A-Za-z0-9._-]+$/)
 });
 
-// ../../sugo/sugo/node_modules/js-yaml/dist/js-yaml.mjs
+// node_modules/js-yaml/dist/js-yaml.mjs
 var NOT_RESOLVED = Symbol("NOT_RESOLVED");
 var MERGE_KEY = Symbol("MERGE_KEY");
 function defineScalarTag(tagName, options) {

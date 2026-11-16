@@ -905,6 +905,7 @@ export function SchedulePage() {
               {selected.focus_task_id && selected.focus_task_status === "blocked" && (
                 <div className="mt-3">
                   <BlockerDecisionPanel
+                    round={selected.focus_task_human_blocker?.reviewPacket?.round}
                     onOpenReport={() => openWorkResultHtml(selected.title, null, [], selected.focus_task_human_blocker?.reviewPacket)}
                     onOpenDiff={selected.focus_task_human_blocker?.reviewPacket?.files?.[0] ? () => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.focus_task_id!, filePath: selected.focus_task_human_blocker!.reviewPacket!.files![0].path }) : undefined}
                     userId={userId}

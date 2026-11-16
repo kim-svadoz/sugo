@@ -80,6 +80,16 @@ describe("blocked task decision", () => {
     expect(task.human_blocker).toBeNull();
   });
 
+  it("검토 회차 기록을 돌려주고, 회차를 보내지 않는 구버전 재동기화가 지우지 않는다", async () => {
+    const reviewRounds = [{ round: 1, sessionId: "plan-1", requestedAt: "2026-11-16T00:00:00.000Z", decision: "revise", response: "수정 필요 — 실패 메시지를 바꿔 주세요.", reviewPacket: { round: 1, summary: "1차 결과", changes: [], tests: [], designDecisions: [], knownLimitations: [] } }];
+    const { app, auth } = await appWithNodes([{ id: "review-task", level: "task", status: "in_progress" }]);
+    await request(app).post("/api/sync/roadmap").set("Authorization", auth).send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "review-task", title: "review-task", level: "task", status: "in_progress", reviewRounds }] }).expect(200);
+    await request(app).post("/api/sync/roadmap").set("Authorization", auth).send({ userId: "u1", workspaceName: "ws1", nodes: [{ id: "review-task", title: "review-task", level: "task", status: "in_progress" }] }).expect(200);
+
+    const roadmap = await request(app).get("/api/workspaces/ws1/roadmap").query({ userId: "u1" }).set("Authorization", auth).expect(200);
+    expect(roadmap.body.nodes.find((node: { id: string }) => node.id === "review-task").review_rounds).toEqual(reviewRounds);
+  });
+
   it("rejects decisions for a task that is not blocked", async () => {
     const { app, auth } = await appWithNodes([{ id: "active-task", level: "task", status: "in_progress" }]);
     const response = await request(app)

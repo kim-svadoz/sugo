@@ -449,6 +449,7 @@ export interface RoadmapNodeRow {
   blocker_answered_at: string | null;
   blocker_context: unknown;
   human_blocker?: unknown;
+  review_rounds?: unknown;
   blocker_decision?: { response: string; answered_by: string; answered_at: string } | null;
 }
 
@@ -497,6 +498,7 @@ export async function getRoadmap(db: DbClient, userId: string, workspaceName: st
     runtime_assessment: parseMaybeJson<unknown>(r.runtime_assessment, null),
     lineage: projectedLineage,
     human_blocker: parseMaybeJson<unknown>(r.blocker_context, null),
+    review_rounds: parseMaybeJson<unknown>(r.review_rounds, null),
     blocker_decision: r.blocker_response && r.blocker_answered_by && r.blocker_answered_at
       ? { response: r.blocker_response, answered_by: r.blocker_answered_by, answered_at: r.blocker_answered_at }
       : null,

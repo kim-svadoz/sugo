@@ -10,6 +10,7 @@ export interface ReviewConfirmationInput {
   knownLimitations: string[];
   files?: NonNullable<RoadmapWorkResult["files"]>;
   report?: import("./workResultReport.js").WorkResultReport;
+  round?: number;
 }
 
 export function buildReviewConfirmationBlocker(input: ReviewConfirmationInput): HumanBlocker {
@@ -29,6 +30,7 @@ export function buildReviewConfirmationBlocker(input: ReviewConfirmationInput): 
     blockedNextStep: "review_done 확인 후 docs 단계 진행",
     createdAt: new Date().toISOString(),
     reviewPacket: {
+      ...(input.round ? { round: input.round } : {}),
       ...(input.report ? { report: input.report } : {}),
       summary: input.summary,
       changes: input.changes,
@@ -40,8 +42,11 @@ export function buildReviewConfirmationBlocker(input: ReviewConfirmationInput): 
   };
 }
 
+export function isReviewApproval(blocker: HumanBlocker, response: string): boolean {
+  return response === blocker.options.find((option) => option.id === "approve")?.label;
+}
+
 export function reviewDecisionResumeAction(blocker: HumanBlocker, response: string): string {
   if (blocker.kind !== "review_confirmation") return blocker.resumeAction;
-  const approvalLabel = blocker.options.find((option) => option.id === "approve")?.label;
-  return response === approvalLabel ? blocker.resumeAction : "code_start";
+  return isReviewApproval(blocker, response) ? blocker.resumeAction : "code_start";
 }

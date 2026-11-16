@@ -3,9 +3,9 @@ import { Check, ClipboardCheck, Copy, ExternalLink, FileDiff, MessageSquareWarni
 import { saveBlockerDecision, type BlockerDecision, type HumanBlocker } from "../api/roadmapMutationsApi.js";
 import { blockerResumePrompt } from "../lib/blockerDecision.js";
 import { presentSteKorean } from "../lib/steKorean.js";
-import { reviewConfirmationSections } from "../lib/reviewConfirmation.js";
+import { reviewConfirmationSections, revisionRequestText, type ReviewRound } from "../lib/reviewConfirmation.js";
 
-export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, question, decision, blocker, onSaved, onOpenReport, onOpenDiff }: {
+export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, question, decision, blocker, onSaved, onOpenReport, onOpenDiff, round, previousRevision }: {
   userId: string | null;
   workspace: string;
   taskId: string;
@@ -16,6 +16,8 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
   onSaved?: () => void;
   onOpenReport?: () => void;
   onOpenDiff?: () => void;
+  round?: number;
+  previousRevision?: ReviewRound;
 }) {
   const [response, setResponse] = useState(decision?.response ?? "");
   const [saved, setSaved] = useState<BlockerDecision | null>(decision ?? null);
@@ -72,13 +74,14 @@ export function BlockerDecisionPanel({ userId, workspace, taskId, taskTitle, que
   if (Boolean(blocker?.kind === "review_confirmation")) return <section id="review-confirmation-panel" tabIndex={-1} className="scroll-mt-6 overflow-hidden rounded-2xl border border-amber-300/30 bg-[#111721] outline-none shadow-[0_18px_50px_rgba(0,0,0,.20)] focus-visible:ring-2 focus-visible:ring-amber-200/70">
     <header className="flex items-start gap-3 border-b border-amber-200/10 bg-amber-300/[0.045] px-5 py-4">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/20 bg-amber-300/10 text-amber-200"><ClipboardCheck size={19} /></span>
-      <span className="min-w-0 flex-1"><span className="font-mono text-[10px] font-semibold tracking-[0.14em] text-amber-300">YOUR DECISION</span><h3 className="mt-1 text-base font-semibold text-white">작업 결과 확인</h3><p className="mt-1 text-xs leading-5 text-slate-400">검토 자료를 확인하고 진행 또는 수정 요청을 선택하세요. 저장된 결정은 대기 중인 작업 세션에 자동으로 전달됩니다.</p></span>
+      <span className="min-w-0 flex-1"><span className="font-mono text-[10px] font-semibold tracking-[0.14em] text-amber-300">YOUR DECISION</span><h3 className="mt-1 text-base font-semibold text-white">{round && round > 1 ? `${round}차 작업 결과 확인` : "작업 결과 확인"}</h3><p className="mt-1 text-xs leading-5 text-slate-400">검토 자료를 확인하고 진행 또는 수정 요청을 선택하세요. 저장된 결정은 대기 중인 작업 세션에 자동으로 전달됩니다.</p></span>
       <span className="shrink-0 rounded-full border border-amber-300/20 bg-amber-300/[0.07] px-2.5 py-1 text-[10px] font-semibold text-amber-200">사용자 승인 필요</span>
     </header>
     <div className="grid grid-cols-3 border-b border-white/[0.07] bg-black/10 px-5 py-3">
       {[{ label: "결과 확인", done: reviewEvidenceReady, active: !reviewEvidenceReady }, { label: "요청 사항", done: reviewEvidenceReady && (noRequest || revisionText.trim().length > 0), active: reviewEvidenceReady && !reviewDecisionReady }, { label: "다음 단계", done: Boolean(saved), active: reviewDecisionReady }].map((step, index) => <div key={step.label} className="flex min-w-0 items-center gap-2"><span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-mono text-[10px] ${step.done ? "border-emerald-300/35 bg-emerald-300/10 text-emerald-200" : step.active ? "border-amber-300/45 bg-amber-300/10 text-amber-100" : "border-white/10 text-slate-600"}`}>{step.done ? <Check size={12} /> : index + 1}</span><span className={`text-[11px] font-semibold ${step.active ? "text-white" : step.done ? "text-emerald-200" : "text-slate-600"}`}>{step.label}</span>{index < 2 && <span className={`ml-auto h-px min-w-3 flex-1 ${step.done ? "bg-emerald-300/30" : "bg-white/[0.07]"}`} />}</div>)}
     </div>
     <div className="space-y-5 p-5">
+      {previousRevision && <section className="rounded-xl border border-rose-300/20 bg-rose-400/[0.05] px-3 py-2.5"><h4 className="text-[10.5px] font-semibold text-rose-200">{previousRevision.round}차 수정 요청</h4><p className="mt-1 whitespace-pre-line text-[12px] leading-relaxed text-slate-200">{revisionRequestText(previousRevision.response)}</p></section>}
       <section><div className="mb-2 flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-300/10 font-mono text-[10px] text-violet-200">1</span><h4 className="text-xs font-semibold text-slate-200">검토 자료</h4><span className="text-[10px] text-slate-500">자료를 본 뒤 직접 확인해 주세요</span></div><div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-xl border border-violet-300/20 bg-violet-400/[0.05] p-3"><button type="button" onClick={onOpenReport} disabled={!onOpenReport} className="group flex w-full items-center gap-3 text-left outline-none disabled:opacity-40"><ExternalLink size={17} className="text-violet-300" /><span><strong className="block text-sm text-violet-100">리뷰 보고서 HTML로 열기</strong><span className="mt-0.5 block text-[10px] text-slate-400">요구사항, 테스트와 남은 위험 확인</span></span></button><button type="button" role="checkbox" aria-checked={reportChecked} onClick={() => setReportChecked((value) => !value)} className={`mt-3 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-[11px] font-semibold outline-none ${reportChecked ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-200" : "border-white/10 bg-black/10 text-slate-300 hover:border-violet-200/30"}`}><span className={`flex h-4 w-4 items-center justify-center rounded border ${reportChecked ? "border-emerald-300 bg-emerald-300 text-emerald-950" : "border-slate-500"}`}>{reportChecked && <Check size={11} />}</span>보고서를 확인했습니다</button></div>
         <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/[0.045] p-3"><button type="button" onClick={onOpenDiff} disabled={!onOpenDiff} className="group flex w-full items-center gap-3 text-left outline-none disabled:opacity-40"><FileDiff size={17} className="text-cyan-300" /><span><strong className="block text-sm text-cyan-100">이번 변경 파일 diff 보기</strong><span className="mt-0.5 block text-[10px] text-slate-400">실제 변경된 코드와 파일 확인</span></span></button><button type="button" role="checkbox" aria-checked={diffChecked} onClick={() => setDiffChecked((value) => !value)} className={`mt-3 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-[11px] font-semibold outline-none ${diffChecked ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-200" : "border-white/10 bg-black/10 text-slate-300 hover:border-cyan-200/30"}`}><span className={`flex h-4 w-4 items-center justify-center rounded border ${diffChecked ? "border-emerald-300 bg-emerald-300 text-emerald-950" : "border-slate-500"}`}>{diffChecked && <Check size={11} />}</span>변경 파일을 확인했습니다</button></div>

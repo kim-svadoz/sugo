@@ -193,6 +193,7 @@ export async function ensureRoadmapBlockerDecisionColumns(db: DbClient): Promise
     ["blocker_answered_by", "VARCHAR(191) NULL"],
     ["blocker_answered_at", "TIMESTAMP NULL"],
     ["blocker_context", "TEXT NULL"],
+    ["review_rounds", "TEXT NULL"],
   ] as const;
   try {
     for (const [name, definition] of columns) {
@@ -591,6 +592,7 @@ export interface RoadmapNodeInput {
   workResult?: unknown;
   lineage?: unknown;
   humanBlocker?: unknown;
+  reviewRounds?: unknown;
   runtimeAssessment?: unknown;
 }
 
@@ -643,13 +645,14 @@ export async function syncRoadmap(
     const workResultJson = node.workResult !== undefined ? JSON.stringify(stripHumanCompletion(node.workResult)) : undefined;
     const lineageJson = node.lineage !== undefined ? JSON.stringify(stripHumanCompletion(node.lineage)) : undefined;
     const blockerContextJson = node.humanBlocker !== undefined ? JSON.stringify(node.humanBlocker) : null;
+    const reviewRoundsJson = node.reviewRounds !== undefined ? JSON.stringify(node.reviewRounds) : undefined;
     const runtimeAssessmentJson = node.runtimeAssessment !== undefined ? JSON.stringify(node.runtimeAssessment) : null;
 
     if (!existing) {
       await db.exec(
         `INSERT INTO sugo_roadmap_nodes
-         (id, user_id, workspace_name, title, level, status, depends_on, parent, ref, note, spec_path, work_result, lineage, blocker_context${hasRuntimeAssessment ? ", runtime_assessment" : ""}, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasRuntimeAssessment ? ", ?" : ""}, CURRENT_TIMESTAMP)`,
+         (id, user_id, workspace_name, title, level, status, depends_on, parent, ref, note, spec_path, work_result, lineage, blocker_context, review_rounds${hasRuntimeAssessment ? ", runtime_assessment" : ""}, synced_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasRuntimeAssessment ? ", ?" : ""}, CURRENT_TIMESTAMP)`,
         [
           node.id,
           userId,
@@ -665,6 +668,7 @@ export async function syncRoadmap(
           workResultJson ?? null,
           lineageJson ?? null,
           blockerContextJson,
+          reviewRoundsJson ?? null,
           ...(hasRuntimeAssessment ? [runtimeAssessmentJson] : []),
         ]
       );
@@ -691,6 +695,11 @@ export async function syncRoadmap(
     if (lineageJson !== undefined) {
       sets.push("lineage = ?");
       params.push(lineageJson);
+    }
+    // 구버전 플러그인은 회차를 보내지 않는다. 그때 남아 있는 회차 기록을 지우지 않는다.
+    if (reviewRoundsJson !== undefined) {
+      sets.push("review_rounds = ?");
+      params.push(reviewRoundsJson);
     }
     if (seed) {
       sets.push("depends_on = ?");
