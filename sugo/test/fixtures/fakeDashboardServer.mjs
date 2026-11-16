@@ -12,5 +12,7 @@ const server = createServer((req, res) => {
 server.listen(port, "127.0.0.1", () => {
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, "server.json"), JSON.stringify({ pid: process.pid, port, startedAt: new Date().toISOString() }));
+  const { SUGO_WEEKLY_ENGINE, SUGO_HARNESS_FEATURE_ENGINE, SUGO_PROJECT_MANAGE_ENGINE } = process.env;
+  writeFileSync(join(dir, "launch-env.json"), JSON.stringify({ SUGO_WEEKLY_ENGINE, SUGO_HARNESS_FEATURE_ENGINE, SUGO_PROJECT_MANAGE_ENGINE }));
 });
 process.on("SIGTERM", () => { rmSync(join(dir, "server.json"), { force: true }); process.exit(0); });

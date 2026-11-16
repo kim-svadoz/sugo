@@ -63,6 +63,18 @@ describe("세션 시작 때 대시보드 실행", () => {
     expect(existsSync(join(home, ".sugo", "runtime", "console", "0.59.0", "server.mjs"))).toBe(true);
   });
 
+  it("외부 저장소의 runtime에도 플러그인 설치본의 Weekly·하네스·프로젝트 관리 엔진 경로를 넘긴다", async () => {
+    writeFileSync(join(pluginRoot, "dashboard-runtime", "runtime.json"), JSON.stringify({ runtimeSchemaVersion: 1, engineApiVersion: 1, consoleVersion: "0.59.0" }));
+
+    await ensureDashboard({ pluginRoot, port, paths });
+
+    expect(JSON.parse(readFileSync(join(paths.dataDir, "launch-env.json"), "utf8"))).toEqual({
+      SUGO_WEEKLY_ENGINE: join(pluginRoot, "weekly"),
+      SUGO_HARNESS_FEATURE_ENGINE: join(pluginRoot, "dist", "dashboard-harness-feature.mjs"),
+      SUGO_PROJECT_MANAGE_ENGINE: join(pluginRoot, "dist", "dashboard-project-manage.mjs"),
+    });
+  });
+
   it("처음에는 서버를 띄우고 주소를 알린다", async () => {
     const result = await ensure();
 

@@ -327,6 +327,9 @@ async function startServer(runtimeEntry: string, options: EnsureOptions, paths: 
       HARNESS_PATH: join(options.pluginRoot, "harness-library"),
       HARNESS_OVERRIDE_PATH: join(sugoHomeDir(), ".claude", "sugo", "harness-overrides"),
       SKILLS_PATH: options.pluginRoot,
+      SUGO_WEEKLY_ENGINE: join(options.pluginRoot, "weekly"),
+      SUGO_HARNESS_FEATURE_ENGINE: join(options.pluginRoot, "dist", "dashboard-harness-feature.mjs"),
+      SUGO_PROJECT_MANAGE_ENGINE: join(options.pluginRoot, "dist", "dashboard-project-manage.mjs"),
     },
   });
   child.on("exit", () => {
