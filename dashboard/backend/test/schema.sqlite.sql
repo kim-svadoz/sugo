@@ -160,6 +160,7 @@ CREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (
   ref TEXT,
   note TEXT,
   spec_path TEXT,
+  spec_written_at TIMESTAMP NULL,
   work_result TEXT,
   lineage TEXT,
   manual_status TEXT CHECK (manual_status IS NULL OR manual_status IN ('pending','in_progress','done','blocked','dropped')),

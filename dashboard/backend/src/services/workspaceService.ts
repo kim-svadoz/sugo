@@ -277,14 +277,16 @@ async function lastActivityAt(db: DbClient, userId: string, workspaceName: strin
            SELECT MAX(COALESCE(completed_at, created_at)) AS activity_at
              FROM sugo_history WHERE user_id = ? AND workspace_name = ?
            UNION ALL
-           SELECT MAX(updated_at) AS activity_at
+           SELECT MAX(spec_written_at) AS activity_at
              FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ?
+               AND level = 'spec' AND spec_path IS NOT NULL AND spec_path <> ''
            UNION ALL
-           SELECT MAX(updated_at) AS activity_at
-             FROM sugo_schedule_commitments WHERE user_id = ? AND workspace_name = ?
+           SELECT MAX(created_at) AS activity_at
+             FROM sugo_roadmap_nodes WHERE user_id = ? AND workspace_name = ? AND level IN ('workstream', 'task')
            UNION ALL
            SELECT MAX(ts) AS activity_at
              FROM sugo_activity_events WHERE user_id = ? AND workspace_name = ?
+               AND event_type IN ('EXECUTE', 'HANDOFF', 'COMPLETED')
          ) meaningful_activity`,
       [userId, workspaceName, userId, workspaceName, userId, workspaceName, userId, workspaceName]
     );
@@ -590,6 +592,7 @@ export interface ScheduledSpecRow {
   project_path: string | null;
   work_branch: string | null;
   spec_path: string | null;
+  spec_written_at: string | null;
   has_run: boolean;
   task_ids: string[];
   task_count: number;
@@ -613,9 +616,9 @@ export interface ScheduledSpecRow {
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
  * 프론트가 due_date 유무로 캘린더/"기한 미정" 리스트를 나눈다. */
 export async function getScheduledSpecs(db: DbClient, userId: string): Promise<ScheduledSpecRow[]> {
-  const rows = await db.query<Omit<ScheduledSpecRow, "has_run" | "task_ids" | "task_count" | "done_task_count" | "active_task_count" | "blocked_task_count" | "stale_task_count" | "unverified_task_count" | "focus_task_id" | "focus_task_title" | "focus_task_status" | "focus_task_note" | "focus_task_updated_at" | "focus_task_work_result" | "focus_task_runtime_assessment" | "focus_task_blocker_decision" | "focus_task_human_blocker"> & { manual_title: string | null; has_run: number | boolean }>(
+  const rows = await db.query<Omit<ScheduledSpecRow, "spec_written_at" | "has_run" | "task_ids" | "task_count" | "done_task_count" | "active_task_count" | "blocked_task_count" | "stale_task_count" | "unverified_task_count" | "focus_task_id" | "focus_task_title" | "focus_task_status" | "focus_task_note" | "focus_task_updated_at" | "focus_task_work_result" | "focus_task_runtime_assessment" | "focus_task_blocker_decision" | "focus_task_human_blocker"> & { manual_title: string | null; has_run: number | boolean; spec_written_at: string | Date | null }>(
     `SELECT n.id, n.workspace_name, n.title, n.manual_title,
-            COALESCE(n.manual_status, n.status) AS status, CAST(n.due_date AS CHAR) AS due_date, n.project_path, n.work_branch, n.spec_path,
+            COALESCE(n.manual_status, n.status) AS status, CAST(n.due_date AS CHAR) AS due_date, n.project_path, n.work_branch, n.spec_path, n.spec_written_at,
             EXISTS (SELECT 1 FROM sugo_roadmap_nodes child
                      WHERE child.user_id = n.user_id AND child.workspace_name = n.workspace_name
                        AND child.parent = n.id AND child.level = 'workstream') AS has_run
@@ -680,6 +683,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
     }).sort((a, b) => (a.completed_at ?? "").localeCompare(b.completed_at ?? "") || a.version - b.version);
     return {
       ...row,
+      spec_written_at: row.spec_written_at instanceof Date ? row.spec_written_at.toISOString() : row.spec_written_at,
       deployment: deployments.get(`${row.workspace_name}\0${row.id}`),
       status: row.status === "dropped" ? "dropped" : enriched.some(t => t.status === "blocked") ? "blocked" : enriched.some(t => t.status === "in_progress") ? "in_progress" : enriched.some(t => t.status === "verification") ? "verification" : enriched.length > 0 && enriched.every(t => t.status === "done") ? "done" : row.status === "done" && enriched.some(t => t.status === "pending") ? "pending" : row.status,
       has_run: Boolean(has_run),
@@ -731,8 +735,11 @@ export async function setRoadmapSpecDocument(
   );
   if (children.length > 0) return { ok: false, errorCode: "SPEC_LOCKED_AFTER_FEAT" };
   await db.exec(
-    "UPDATE sugo_roadmap_nodes SET spec_path = ? WHERE user_id = ? AND workspace_name = ? AND id = ?",
-    [specPath, userId, workspaceName, nodeId]
+    `UPDATE sugo_roadmap_nodes
+        SET spec_written_at = CASE WHEN spec_path = ? AND spec_written_at IS NOT NULL THEN spec_written_at ELSE CURRENT_TIMESTAMP END,
+            spec_path = ?
+      WHERE user_id = ? AND workspace_name = ? AND id = ?`,
+    [specPath, specPath, userId, workspaceName, nodeId]
   );
   return { ok: true };
 }

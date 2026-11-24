@@ -1,5 +1,6 @@
 import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import type { ActivityEvent } from "../hooks/useActivityStream.js";
+import { parseActivityTime } from "./activityTime.js";
 import { scheduleCardStage } from "./scheduleSpecWorkflow.js";
 import { collectFloorLanes, type FloorLane } from "./workFloor.js";
 
@@ -36,6 +37,7 @@ export function selectDomainLanes(events: readonly ActivityEvent[], specs: reado
     const preparation = stage === "ready" ? "ready" : spec.has_run && stage === "in_progress" ? "starting" : null;
     if (!preparation) return [];
     const key = specKey(spec);
+    const at = spec.spec_written_at ? parseActivityTime(spec.spec_written_at).getTime() : undefined;
     return [{
       key,
       activityKey: key,
@@ -44,9 +46,9 @@ export function selectDomainLanes(events: readonly ActivityEvent[], specs: reado
       workspace,
       spec,
       preparation,
-      state: { station: "order", activity: "resting", live: false, passed: [], lastAt: {} },
+      state: { station: "order", activity: "resting", live: false, at, passed: [], lastAt: {} },
     }];
-  });
+  }).sort((left, right) => (right.state.at ?? 0) - (left.state.at ?? 0));
   const live = lanes.filter((lane) => lane.state.live);
   const past = lanes.filter((lane) => !lane.state.live);
   const paused = past.filter((lane) => lane.spec?.status === "in_progress" && lane.state.activity === "paused");

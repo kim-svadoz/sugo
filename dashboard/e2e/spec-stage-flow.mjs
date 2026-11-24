@@ -13,7 +13,7 @@ const draft = {
   due_date: `${month}-11`,
   project_path: "/example/shop", spec_path: null, has_run: false,
 };
-const ready = { ...draft, id: "spec-ready", title: "결제 내역 개선", due_date: `${month}-12`, spec_path: "/example/spec.md" };
+const ready = { ...draft, id: "spec-ready", title: "결제 내역 개선", due_date: `${month}-12`, spec_path: "/example/spec.md", spec_written_at: new Date(Date.now() - 8 * 60_000).toISOString() };
 const done = { ...ready, id: "spec-done", title: "상품 목록 개선", due_date: `${month}-13`, status: "done", has_run: true };
 const specs = [draft, ready, done];
 const events = [];
@@ -69,6 +69,7 @@ try {
   }
   await page.screenshot({ path: join(output, "calendar-wide.png") });
 
+  specs.push({ ...ready, id: "other-ready", title: "장바구니 개선", spec_written_at: new Date(Date.now() - 2 * 3_600_000).toISOString() });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`${E2E_UI_URL}/sessions?workspace=shop`);
   const rail = page.getByRole("list", { name: "작업 단계" });
@@ -76,6 +77,12 @@ try {
   assert.match(await rail.locator("li").nth(0).textContent(), /스펙 작성/);
   assert.match(await rail.locator("li").nth(1).textContent(), /작업 지시/);
   await rail.locator('li[aria-label="스펙 작성 완료"]').waitFor();
+  const picker = page.getByRole("combobox", { name: "작업 선택" });
+  assert.match(await picker.locator("option:checked").textContent(), /결제 내역 개선/);
+  await page.getByText(/스펙 작성 \d+분 전/).waitFor();
+  await picker.selectOption({ label: "장바구니 개선" });
+  await page.getByText("스펙 작성 2시간 전").waitFor();
+  await picker.selectOption({ label: "결제 내역 개선" });
   await page.screenshot({ path: join(output, "domain-ready.png") });
 
   specs[1] = { ...ready, status: "in_progress", has_run: true, task_ids: ["task-ready"] };
@@ -94,7 +101,7 @@ try {
   await page.getByText("구현 진행 중").waitFor();
   await rail.locator('li[aria-label="스펙 작성 완료"]').waitFor();
   assert.match(await rail.locator('li[aria-current="step"]').textContent(), /구현/);
-  assert.equal(await page.getByRole("button", { name: "다음 작업장" }).count(), 0);
+  assert.match(await picker.locator("option:checked").textContent(), /결제 내역 개선/);
   await page.screenshot({ path: join(output, "domain-running.png") });
   await page.goto(`${E2E_UI_URL}/schedule`);
   await page.getByText("진행 중", { exact: true }).waitFor();

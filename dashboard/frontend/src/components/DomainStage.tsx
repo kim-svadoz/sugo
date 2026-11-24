@@ -1,5 +1,5 @@
-import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, ClipboardList, Code2, FileText, FlaskConical, GitCommitHorizontal, ShieldCheck, UserCheck } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { ArrowRight, BookOpen, Check, ChevronDown, ClipboardList, Code2, FileText, FlaskConical, GitCommitHorizontal, ShieldCheck, UserCheck } from "lucide-react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { apiJson } from "../api/client.js";
 import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { useActivityStream } from "../hooks/useActivityStream.js";
@@ -86,7 +86,7 @@ function useTaskProjects(workspace: string, taskNames: readonly string[]): Reado
 
 /**
  * 도메인 관리의 상태 카드. 선택한 도메인에서 지금 무슨 일이 있는지 한 문장으로 말하고,
- * 그 작업이 거친 단계를 여정으로 보여 준다. 여러 작업이 동시에 진행되면 카드 안에서 넘겨 본다.
+ * 그 작업이 거친 단계를 보여 준다. 작업이 여러 개면 제목으로 선택한다.
  */
 export function DomainStage({ workspace, projectPaths, specs, selection, onSelectedTaskChange, attention, onOpenAttention, tools }: {
   workspace: string;
@@ -103,9 +103,7 @@ export function DomainStage({ workspace, projectPaths, specs, selection, onSelec
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
   const lanes = useMemo(() => selectDomainLanes(all, specs, workspace, now), [all, specs, workspace, now]);
-  const requested = selection ? lanes.findIndex((lane) => lane.key === selection.key) : -1;
-  const index = requested >= 0 ? requested : 0;
-  const lane = lanes[index];
+  const lane = lanes.find((item) => item.key === selection?.key) ?? lanes[0];
   useEffect(() => {
     if (lane && (lane.key !== selection?.key || lane.activityKey !== selection.activityKey)) {
       onSelectedTaskChange({ key: lane.key, activityKey: lane.activityKey });
@@ -118,57 +116,15 @@ export function DomainStage({ workspace, projectPaths, specs, selection, onSelec
   const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, specId: lane.spec?.id, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, lane.spec ? [lane.spec] : specs) : null;
   const unresolved = useMemo(() => lanes.filter((item) => !item.preparation && !item.projectPath).map((item) => item.name), [lanes]);
   const taskProjects = useTaskProjects(workspace, unresolved);
-  const swipeStart = useRef<{ pointerId: number; x: number; y: number } | null>(null);
-  const [dragOffset, setDragOffset] = useState(0);
   const baseName = (path: string) => path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
   const projectName = title?.project ?? (lane?.projectPath ? baseName(lane.projectPath) : lane && taskProjects[lane.name] ? baseName(taskProjects[lane.name]) : projectPaths.length === 1 ? baseName(projectPaths[0]) : null);
-  const move = (delta: number) => {
-    const next = lanes[(index + delta + lanes.length) % lanes.length];
-    onSelectedTaskChange({ key: next.key, activityKey: next.activityKey });
-  };
-  const canSwitch = lanes.length > 1;
-  const isInteractive = (target: EventTarget | null) => target instanceof Element && Boolean(target.closest("button, a, input, select, textarea, [role='button'], [data-no-lane-swipe]"));
-  const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
-    if (!canSwitch || event.button !== 0 || isInteractive(event.target)) return;
-    swipeStart.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-  const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
-    const start = swipeStart.current;
-    if (!start || start.pointerId !== event.pointerId) return;
-    const dx = event.clientX - start.x;
-    const dy = event.clientY - start.y;
-    if (Math.abs(dx) <= Math.abs(dy)) return;
-    setDragOffset(Math.max(-24, Math.min(24, dx * 0.12)));
-  };
-  const finishSwipe = (event: ReactPointerEvent<HTMLElement>) => {
-    const start = swipeStart.current;
-    swipeStart.current = null;
-    setDragOffset(0);
-    if (!start || start.pointerId !== event.pointerId) return;
-    const dx = event.clientX - start.x;
-    const dy = event.clientY - start.y;
-    if (Math.abs(dx) >= 56 && Math.abs(dx) > Math.abs(dy) * 1.2) move(dx < 0 ? 1 : -1);
-  };
 
   return <section
-    className={cn("stage-card ck-stage-in relative rounded-2xl border px-5 py-4 transition-colors duration-500", canSwitch && "cursor-grab touch-pan-y select-none active:cursor-grabbing", tone.card)}
-    style={{ "--stage-glow": tone.glow, translate: dragOffset === 0 ? undefined : `${dragOffset}px 0` } as CSSProperties}
+    className={cn("stage-card ck-stage-in relative rounded-2xl border px-5 py-4 transition-colors duration-500", tone.card)}
+    style={{ "--stage-glow": tone.glow } as CSSProperties}
     aria-label={`${workspace} 상태`}
-    onPointerDown={onPointerDown}
-    onPointerMove={onPointerMove}
-    onPointerUp={finishSwipe}
-    onPointerCancel={finishSwipe}
   >
-    {canSwitch && <>
-      <button type="button" data-no-lane-swipe aria-label="이전 작업장" onClick={() => move(-1)} className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/[0.08] bg-slate-950/75 p-1.5 text-slate-400 shadow-lg backdrop-blur transition hover:border-cyan-300/25 hover:bg-slate-900 hover:text-cyan-100 active:scale-95">
-        <ChevronLeft size={17} />
-      </button>
-      <button type="button" data-no-lane-swipe aria-label="다음 작업장" onClick={() => move(1)} className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/[0.08] bg-slate-950/75 p-1.5 text-slate-400 shadow-lg backdrop-blur transition hover:border-cyan-300/25 hover:bg-slate-900 hover:text-cyan-100 active:scale-95">
-        <ChevronRight size={17} />
-      </button>
-    </>}
-    <div className="flex min-w-0 items-start gap-4">
+    <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-2.5">
           <span className="relative flex h-2.5 w-2.5 shrink-0">
@@ -177,12 +133,22 @@ export function DomainStage({ workspace, projectPaths, specs, selection, onSelec
           </span>
           <strong className={cn("text-[17px] font-semibold tracking-[-0.01em]", tone.text)}>{headline.text}</strong>
         </p>
-        {title && <p className="mt-1.5 truncate text-[14px] text-slate-200" title={title.title}>{title.title}</p>}
+        {lanes.length > 1 ? <label className="mt-2 flex max-w-full flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="shrink-0 text-[12px] font-medium text-slate-400">작업 선택</span>
+          <span className="relative min-w-0 max-w-full">
+            <select value={lane?.key} onChange={(event) => {
+              const next = lanes.find((item) => item.key === event.target.value);
+              if (next) onSelectedTaskChange({ key: next.key, activityKey: next.activityKey });
+            }} className="block max-w-full appearance-none truncate rounded-lg border border-cyan-300/20 bg-slate-950/70 py-1.5 pl-2.5 pr-7 text-[13px] font-medium text-slate-100 outline-none hover:border-cyan-300/40 focus-visible:ring-2 focus-visible:ring-cyan-300/70">
+              {lanes.map((item) => <option key={item.key} value={item.key}>{item.spec?.title ?? item.name}</option>)}
+            </select>
+            <ChevronDown size={13} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          </span>
+        </label> : title && <p className="mt-1.5 truncate text-[14px] text-slate-200" title={title.title}>{title.title}</p>}
         {(projectName || lane?.state.at) && <p className="mt-1 flex items-center gap-2 text-[12px] text-slate-500">
           {projectName && <span className="font-mono">{projectName}</span>}
           {projectName && lane?.state.at && <span aria-hidden="true">·</span>}
-          {lane?.state.at && <span>{relativeTime(lane.state.at, now)}</span>}
-          {lanes.length > 1 && <span className="ml-1 font-mono text-[11px] text-slate-500">{index + 1}/{lanes.length}</span>}
+          {lane?.state.at && <time dateTime={new Date(lane.state.at).toISOString()}>{lane.preparation === "ready" && "스펙 작성 "}{relativeTime(lane.state.at, now)}</time>}
         </p>}
       </div>
       <div className="flex shrink-0 items-center gap-2">

@@ -161,6 +161,7 @@ CREATE TABLE IF NOT EXISTS sugo_roadmap_nodes (
   ref VARCHAR(512) NULL,
   note MEDIUMTEXT NULL,
   spec_path VARCHAR(1024) NULL,
+  spec_written_at TIMESTAMP NULL,
   work_result JSON NULL,
   lineage JSON NULL,
   manual_status ENUM('pending','in_progress','done','blocked','dropped') NULL,

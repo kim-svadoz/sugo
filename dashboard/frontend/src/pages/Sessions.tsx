@@ -38,6 +38,7 @@ import { useDomainActivity } from "../hooks/useDomainActivity.js";
 import { domainPulse, firstDomainName, groupDomainsByPulse, type DomainTone } from "../lib/domainPulse.js";
 import { selectDomainLanes, type DomainFloorSelection } from "../lib/domainFloor.js";
 import { useSchedule } from "../hooks/useSchedule.js";
+import { parseActivityTime } from "../lib/activityTime.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
@@ -178,20 +179,32 @@ export function Sessions() {
 
   const history = useWorkspaceHistory(selectedWorkspace);
 
-  const workspaces = useMemo(() => data ?? [], [data]);
+  const workspaces = useMemo(() => {
+    const latestSpecWrite = new Map<string, number>();
+    for (const spec of specs ?? []) {
+      if (!spec.spec_path || !spec.spec_written_at) continue;
+      const at = parseActivityTime(spec.spec_written_at).getTime();
+      if (at > (latestSpecWrite.get(spec.workspace_name) ?? 0)) latestSpecWrite.set(spec.workspace_name, at);
+    }
+    return (data ?? []).map((ws) => {
+      const lastActivity = ws.lastActivityAt ? parseActivityTime(ws.lastActivityAt).getTime() : 0;
+      const specWrite = latestSpecWrite.get(ws.name) ?? 0;
+      return specWrite > lastActivity ? { ...ws, lastActivityAt: new Date(specWrite).toISOString() } : ws;
+    });
+  }, [data, specs]);
   const isSearchMode = searchQuery.trim().length >= 2;
   const initialSelectionApplied = useRef(false);
 
   useEffect(() => {
     setExpandedRepository(null);
-    setLaneSelection(null);
   }, [selectedWorkspace, inspectorPage]);
+  useEffect(() => setLaneSelection(null), [selectedWorkspace]);
 
   const filteredWorkspaces = useMemo(() => {
     let list = workspaces;
     if (statusFilter === "recent") {
       const cutoff = Date.now() - 30 * 24 * 3600 * 1000;
-      list = list.filter((w) => w.lastActivityAt !== null && new Date(w.lastActivityAt).getTime() >= cutoff);
+      list = list.filter((w) => w.lastActivityAt !== null && parseActivityTime(w.lastActivityAt).getTime() >= cutoff);
     }
     if (isSearchMode) {
       // 이건 **이력 검색**이다. 도메인 이름만 대조하면 "1건 일치"라고 배너에 써놓고 목록은

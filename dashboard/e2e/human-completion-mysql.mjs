@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { createMySqlClient } from "../backend/src/db/mysqlClient.ts";
+import { ensureRoadmapSpecWrittenAtColumn } from "../backend/src/db/migrations.ts";
 import { createApp } from "../backend/src/index.ts";
 import { issueSession } from "../backend/src/auth/session.ts";
 import { completionLabelId, ensureHumanCompletionTable } from "../backend/src/services/humanCompletion.ts";
@@ -58,6 +59,17 @@ try {
   assert.equal(schedule.status, 200);
   const scheduledSpec = (await schedule.json()).specs.find(item => item.id === spec.id);
   assert.deepEqual([scheduledSpec.due_date, scheduledSpec.has_run, scheduledSpec.task_ids], ["2026-11-27", true, ["deploy-task"]]);
+  await db.exec("ALTER TABLE sugo_roadmap_nodes DROP COLUMN spec_written_at");
+  await db.exec(`INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, spec_path, updated_at)
+    VALUES ('legacy-written', 'mysql-human', 'ws', '이전 정식 SPEC', 'spec', '/example/spec.md', '2026-11-20 09:00:00'),
+           ('draft', 'mysql-human', 'ws', '초안', 'spec', NULL, '2026-11-21 09:00:00')`);
+  await ensureRoadmapSpecWrittenAtColumn(db);
+  await ensureRoadmapSpecWrittenAtColumn(db);
+  const specTimes = async () => new Map((await (await fetch(base + "/api/workspaces/schedule", { headers })).json()).specs.map(item => [item.id, item.spec_written_at]));
+  assert.equal((await specTimes()).get("legacy-written"), "2026-11-20T09:00:00.000Z");
+  assert.equal((await specTimes()).get("draft"), null);
+  await post("/api/workspaces/ws/roadmap/spec-document", { nodeId: "draft", specPath: "/example/new-spec.md" });
+  assert.ok(Date.parse((await specTimes()).get("draft")) > Date.parse("2026-11-20T09:00:00.000Z"));
   console.log(JSON.stringify({ mysql: (await db.query("SELECT VERSION() AS version"))[0].version, auditEvents: 3, partial: "unverified", approved: "verified_by_human", revoked: "unverified", resyncPreserved: true, localLogin: true, deployment: "DEV" }));
 } finally {
   if (server) await new Promise(resolve => server.close(resolve));

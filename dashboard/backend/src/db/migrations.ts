@@ -96,3 +96,21 @@ export async function ensureAwsContextDisplayOrderColumn(db: DbClient): Promise<
     console.warn(`[migration] AWS 환경 순서 컬럼 추가 실패(계속 진행): ${(err as Error).message}`);
   }
 }
+
+export async function ensureRoadmapSpecWrittenAtColumn(db: DbClient): Promise<void> {
+  try {
+    await db.query("SELECT spec_written_at FROM sugo_roadmap_nodes LIMIT 1");
+    return;
+  } catch {
+    // Existing installations predate the dedicated SPEC timestamp.
+  }
+  try {
+    await db.exec("ALTER TABLE sugo_roadmap_nodes ADD COLUMN spec_written_at TIMESTAMP NULL");
+    // Older linked SPECs only have a roadmap timestamp. Preserve it as the initial estimate.
+    await db.exec(`UPDATE sugo_roadmap_nodes
+      SET spec_written_at = updated_at, updated_at = updated_at
+      WHERE level = 'spec' AND spec_path IS NOT NULL AND spec_path <> '' AND spec_written_at IS NULL`);
+  } catch (err) {
+    console.warn(`[migration] SPEC 작성 시각 컬럼 갱신 실패: ${(err as Error).message}`);
+  }
+}

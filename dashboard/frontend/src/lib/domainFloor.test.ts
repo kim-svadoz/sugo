@@ -18,6 +18,16 @@ const implementation: ActivityEvent = {
 };
 
 describe("도메인 SPEC 작업 레일", () => {
+  it("준비된 작업은 마감일 대신 각 SPEC 작성 시각 순으로 보인다", () => {
+    const recent = { ...ready, id: "recent", spec_written_at: "2026-11-24 02:50:00" };
+    const older = { ...ready, id: "older", spec_written_at: "2026-11-24 01:40:00" };
+    const lanes = selectDomainLanes([], [older, recent], "shop", now);
+    expect(lanes.map((lane) => [lane.spec?.id, lane.state.at])).toEqual([
+      ["recent", Date.parse("2026-11-24T02:50:00Z")],
+      ["older", Date.parse("2026-11-24T01:40:00Z")],
+    ]);
+  });
+
   it("초안은 건너뛰고 정식 SPEC은 작업 지시를 기다리는 레일에 표시한다", () => {
     expect(selectDomainLanes([], [draft], "shop", now)).toEqual([]);
     const lanes = selectDomainLanes([], [ready], "shop", now);

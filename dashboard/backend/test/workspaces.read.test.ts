@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/index.js";
 import { createSqliteClient } from "../src/db/sqliteClient.js";
+import { ensureRoadmapSpecWrittenAtColumn } from "../src/db/migrations.js";
 import { seedUserToken } from "./testAuth.js";
 import { __resetCheckpointCreatedAtColState, __resetCheckpointExpiresAtColState, ensureCheckpointCreatedAtColumn, ensureCheckpointExpiresAtColumn } from "../src/services/syncService.js";
 
@@ -110,21 +111,45 @@ describe("GET /api/workspaces", () => {
     expect(res.body.workspaces[0].roadmap).toEqual({ total: 2, done: 2, active: 0 });
   });
 
-  it("SPEC·파이프라인·일정의 최신 변경을 도메인 최근 활동으로 계산한다", async () => {
+  it("정식 SPEC과 실행 기록만 도메인 최근 활동에 반영한다", async () => {
     const { app, db, auth } = await seededApp();
     await db.exec("UPDATE sugo_history SET created_at = ?, completed_at = NULL WHERE user_id = ? AND workspace_name = ?", ["2026-10-01 09:00:00", "u1", "ws1"]);
     await db.exec("UPDATE sugo_roadmap_nodes SET created_at = ?, updated_at = ? WHERE user_id = ? AND workspace_name = ?", ["2026-10-02 09:00:00", "2026-10-02 09:00:00", "u1", "ws1"]);
     await db.exec(
       "INSERT INTO sugo_schedule_commitments (id, user_id, workspace_name, spec_id, title, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-      ["schedule-1", "u1", "ws1", "spec-1", "검토 일정", "2026-10-03 09:00:00"],
+      ["schedule-1", "u1", "ws1", "spec-1", "검토 일정", "2026-10-08 09:00:00"],
     );
     await db.exec(
       "INSERT INTO sugo_activity_events (user_id, workspace_name, ts, event_type, message) VALUES (?, ?, ?, ?, ?)",
       ["u1", "ws1", "2026-10-04 09:00:00", "HANDOFF", "테스트 단계로 이동"],
     );
-
+    await db.exec(`INSERT INTO sugo_roadmap_nodes
+      (id, user_id, workspace_name, title, level, spec_path, spec_written_at, updated_at)
+      VALUES ('draft', 'u1', 'ws1', '초안', 'spec', NULL, NULL, '2026-10-09 09:00:00'),
+             ('linked', 'u1', 'ws1', '정식 SPEC', 'spec', '/example/spec.md', '2026-10-05 09:00:00', '2026-10-10 09:00:00')`);
     const res = await request(app).get("/api/workspaces").set("Authorization", auth).expect(200);
-    expect(res.body.workspaces[0].lastActivityAt).toBe("2026-10-04 09:00:00");
+    expect(res.body.workspaces[0].lastActivityAt).toBe("2026-10-05 09:00:00");
+    await db.exec("UPDATE sugo_roadmap_nodes SET spec_path = NULL WHERE id = 'linked'");
+    const withoutSpec = await request(app).get("/api/workspaces").set("Authorization", auth).expect(200);
+    expect(withoutSpec.body.workspaces[0].lastActivityAt).toBe("2026-10-04 09:00:00");
+  });
+
+  it("기존 정식 SPEC만 마이그레이션하고 같은 원문을 다시 연결해도 작성 시각을 유지한다", async () => {
+    const { app, db, auth } = await seededApp();
+    await db.exec("ALTER TABLE sugo_roadmap_nodes DROP COLUMN spec_written_at");
+    await db.exec(`INSERT INTO sugo_roadmap_nodes (id, user_id, workspace_name, title, level, spec_path, updated_at)
+      VALUES ('draft', 'u1', 'ws1', '초안', 'spec', NULL, '2026-10-09 09:00:00'),
+             ('linked', 'u1', 'ws1', '정식 SPEC', 'spec', '/example/spec.md', '2026-10-05 09:00:00')`);
+    await ensureRoadmapSpecWrittenAtColumn(db);
+    await ensureRoadmapSpecWrittenAtColumn(db);
+    const link = (nodeId: string) => request(app).post("/api/workspaces/ws1/roadmap/spec-document").set("Authorization", auth).send({ nodeId, specPath: "/example/spec.md" }).expect(200);
+    await link("linked");
+    let res = await request(app).get("/api/workspaces/schedule").set("Authorization", auth).expect(200);
+    expect(res.body.specs.find((row: { id: string }) => row.id === "linked").spec_written_at).toBe("2026-10-05 09:00:00");
+    expect(res.body.specs.find((row: { id: string }) => row.id === "draft").spec_written_at).toBeNull();
+    await link("draft");
+    res = await request(app).get("/api/workspaces/schedule").set("Authorization", auth).expect(200);
+    expect(res.body.specs.find((row: { id: string }) => row.id === "draft").spec_written_at).toMatch(/^\d{4}-\d{2}-\d{2} /);
   });
 
   it("401s without an API token", async () => {
