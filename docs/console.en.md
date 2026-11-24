@@ -81,7 +81,9 @@ When work cannot move on, the top of the card states the current step, why it st
 
 ### Approval
 
-Work that passes review waits for a person. Open the review report and the changed-file diff, then approve or request changes. When you request changes, Sugo saves the decision and copies a prompt that resumes the same session.
+Work that passes review waits for a person. Open the review report and the changed-file diff, then approve or request changes. If the work session is waiting, it picks up the saved decision and continues. If you closed it, the next Claude session can show you how to resume.
+
+Requesting changes preserves that round's report, changed files, and feedback. Open **검토 회차** in the task details to revisit an earlier review, or compare against the previous round in the changed-files tab.
 
 ![Work result review: report, diff, approve, and request changes](images/console-stop-approval.png)
 
