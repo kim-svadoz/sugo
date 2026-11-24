@@ -109,6 +109,7 @@ export interface ScheduledSpec {
   work_branch?: string | null;
   spec_path: string | null;
   has_run: boolean;
+  task_ids?: string[];
   task_count?: number;
   done_task_count?: number;
   active_task_count?: number;

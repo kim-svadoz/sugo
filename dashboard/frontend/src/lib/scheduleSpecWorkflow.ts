@@ -3,9 +3,16 @@ import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
 export type SpecWriterProvider = "claude" | "codex";
 export type ScheduleSpecStage = "draft" | "ready" | "in_progress";
 
-export function scheduleSpecStage(spec: ScheduledSpec): ScheduleSpecStage {
+export function scheduleSpecStage(spec: Pick<ScheduledSpec, "has_run" | "spec_path">): ScheduleSpecStage {
   if (spec.has_run) return "in_progress";
   return spec.spec_path ? "ready" : "draft";
+}
+
+export function scheduleCardStage(spec: Pick<ScheduledSpec, "status" | "has_run" | "spec_path">) {
+  if (spec.status === "done") return "done";
+  if (spec.status === "in_progress") return "in_progress";
+  if (spec.status === "blocked" || spec.status === "verification" || spec.status === "dropped") return null;
+  return scheduleSpecStage(spec);
 }
 
 function quoted(value: string): string {

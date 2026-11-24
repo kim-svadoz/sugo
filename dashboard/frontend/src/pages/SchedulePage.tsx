@@ -20,7 +20,7 @@ import { useAuth } from "../auth/AuthContext.js";
 import { useWorkspaces } from "../hooks/useWorkspaces.js";
 import { useSchedule } from "../hooks/useSchedule.js";
 import { createQuickSpec, getSpecDraft, renameRoadmapNode, setDueDate, setProject, setWorkBranch, updateSpecDraft, uploadSpecAttachment, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
-import { buildFeatCommand, buildPatchAttachCommand, buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
+import { buildFeatCommand, buildPatchAttachCommand, buildPatchCommand, buildSpecWriterCommand, scheduleCardStage, scheduleSpecStage, type SpecWriterProvider } from "../lib/scheduleSpecWorkflow.js";
 import { scheduleAttention } from "../lib/taskGuidance.js";
 import { createScheduleMemo, deleteScheduleMemo, restoreScheduleMemo, setScheduleMemoDueDate, updateScheduleMemo, type ScheduledMemo } from "../api/scheduleMemoApi.js";
 import { SpecArchiveModal } from "../components/SpecArchiveModal.js";
@@ -67,6 +67,23 @@ function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compac
   } as const)[guidance.kind];
   const label = guidance.kind === "done" ? "파이프라인 완료" : guidance.label;
   return <span className={cn("shrink-0 rounded px-1 py-0.5 font-semibold", compact ? "text-[8px]" : "text-[9px]", tone)}>{label}</span>;
+}
+
+const SCHEDULE_CARD_STAGES = {
+  draft: { label: "SPEC 작성 중", tone: "bg-violet-500/15 text-violet-200", marker: "bg-violet-300" },
+  ready: { label: "SPEC 작성 완료", tone: "bg-cyan-500/15 text-cyan-200", marker: "bg-cyan-300" },
+  in_progress: { label: "진행 중", tone: "bg-sky-500/15 text-sky-300", marker: "bg-sky-400" },
+  done: { label: "파이프라인 완료", tone: "bg-emerald-500/15 text-emerald-300", marker: "bg-emerald-300" },
+};
+
+function scheduleCardStatus(spec: ScheduledSpec | null) {
+  const stage = spec && scheduleCardStage(spec);
+  return stage ? SCHEDULE_CARD_STAGES[stage] : null;
+}
+
+function ScheduleCardBadge({ status, compact = false }: { status: ReturnType<typeof scheduleCardStatus>; compact?: boolean }) {
+  if (!status) return null;
+  return <span className={cn("shrink-0 whitespace-nowrap rounded py-0.5 font-semibold", compact ? "px-1 text-[8px]" : "px-1.5 text-[9px]", status.tone)}>{status.label}</span>;
 }
 
 function DeploymentReach({ spec, selections }: { spec: ScheduledSpec | null; selections: IntegrationSelection[] }) {
@@ -588,7 +605,7 @@ export function SchedulePage() {
                 style={style}
                 className="flex min-h-[76px] flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left text-slate-100 transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.24)]"
               >
-                <span className="w-full break-keep text-[12.5px] font-semibold leading-5">{commitment.title}</span>
+                <span className="w-full break-keep text-[12.5px] font-semibold leading-5">{commitment.title} <ScheduleCardBadge status={scheduleCardStatus(spec)} /></span>
                 <span className="text-[10px] text-cyan-200">{action.label}</span>
                 <span className="line-clamp-2 text-[9.5px] text-[var(--color-text-dim)]">{action.detail}</span>
               </button>
@@ -651,8 +668,7 @@ export function SchedulePage() {
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <span className="truncate text-[14px] font-semibold text-white">{commitment.title}</span>
-                                  {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300">파이프라인 완료</span>}
-                                  {commitment.pipeline_status === "running" && <span className="shrink-0 rounded bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-sky-300">진행 중</span>}
+                                  <ScheduleCardBadge status={scheduleCardStatus(spec)} />
                                 </div>
                                 <div className="mt-2 flex items-center text-[11px] text-[var(--color-text-muted)]">
                                   {commitment.due_date && <span className="flex items-center gap-1.5 font-mono text-slate-300"><CalendarDays size={11} className="text-slate-500" />{commitment.due_date}</span>}
@@ -791,6 +807,7 @@ export function SchedulePage() {
                     {dayChips.map((commitment) => {
                       const style = scheduleCardStyle(colorOf(commitment.workspace_name));
                       const spec = specForCommitment(commitment);
+                      const status = scheduleCardStatus(spec);
                       const preview = spec ? latestDevelopmentPreview(spec) : null;
                       const explicit = !commitment.id.startsWith("legacy:");
                       return (
@@ -805,21 +822,22 @@ export function SchedulePage() {
                           <button
                             type="button"
                             onClick={() => spec && openSpec(spec)}
-                            aria-label={`개발 일정 · ${commitment.title}`}
-                            className="group/marker relative hidden h-2.5 w-1 rounded-sm shadow-[0_0_6px_rgba(255,255,255,0.12)] max-[1900px]:block"
-                            style={{ backgroundColor: colorOf(commitment.workspace_name) }}
+                            aria-label={`개발 일정 · ${commitment.title}${status ? ` · ${status.label}` : ""}`}
+                            className="group/marker relative hidden h-2.5 w-3 items-start gap-px max-[1900px]:flex"
                           >
+                            <span className="h-2.5 w-1 rounded-sm shadow-[0_0_6px_rgba(255,255,255,0.12)]" style={{ backgroundColor: colorOf(commitment.workspace_name) }} aria-hidden="true" />
+                            {status && <span className={cn("mt-px h-1.5 w-1.5 rounded-full", status.marker)} aria-hidden="true" />}
                             <span className={cn("pointer-events-none absolute z-50 w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/marker:translate-y-0 group-hover/marker:opacity-100 group-focus-visible/marker:translate-y-0 group-focus-visible/marker:opacity-100", dayIndex >= 21 ? "bottom-full mb-2" : "top-full mt-2", day.getDay() >= 5 ? "right-0" : "left-0")}>
                               <span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300/75">일정 미리보기</span>
                               <strong className="mt-1.5 block text-[12px] leading-5 text-white">{commitment.title}</strong>
-                              <span className="mt-1 block text-[9px] text-slate-500">{commitment.workspace_name}</span>
+                              <span className="mt-1 flex items-center gap-2 text-[9px] text-slate-500">{commitment.workspace_name}<ScheduleCardBadge status={status} /></span>
                               {preview ? <span className="mt-2 block border-t border-white/10 pt-2"><span className="block font-mono text-[9px] font-bold text-violet-200">최근 작업 · {preview.label}</span><span className="mt-1 block line-clamp-1 text-[10px] font-normal leading-4 text-slate-300">{preview.title}</span></span> : <span className="mt-2 block border-t border-white/10 pt-2 text-[10px] text-slate-500">아직 완료된 개발 이력이 없습니다.</span>}
                             </span>
                           </button>
-                          <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1900px]:hidden">
-                            <button type="button" onClick={() => spec && openSpec(spec)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100">{commitment.title}</button>
-                            {commitment.pipeline_status === "done" && <span className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 text-[8px] font-semibold text-emerald-300">파이프라인 완료</span>}
-                            {spec && <SpecDeploymentBadge deployment={spec.deployment} title={commitment.title} environments={scheduleDeploymentEnvironments(deploymentSelections(spec), spec.deployment)} />}
+                          <div style={style} className="flex min-h-[26px] cursor-pointer items-center gap-1 rounded-md border px-1.5 py-0.5 text-left text-[11px] transition-[box-shadow,background-color] hover:shadow-[inset_0_0_0_1px_rgba(241,245,249,0.28)] max-[1900px]:hidden">
+                            <button type="button" title={commitment.title} onClick={() => spec && openSpec(spec)} className="min-w-0 flex-1 truncate text-left font-semibold text-slate-100">{commitment.title}</button>
+                            <ScheduleCardBadge status={status} compact />
+                            {spec && <SpecDeploymentBadge deployment={spec.deployment} title={commitment.title} environments={scheduleDeploymentEnvironments(deploymentSelections(spec), spec.deployment)} compact />}
                           </div>
                         </div>
                       );

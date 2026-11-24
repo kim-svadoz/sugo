@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
-import { buildFeatCommand, buildPatchAttachCommand, buildPatchCommand, buildSpecWriterCommand, scheduleSpecStage } from "./scheduleSpecWorkflow.js";
+import { buildFeatCommand, buildPatchAttachCommand, buildPatchCommand, buildSpecWriterCommand, scheduleCardStage, scheduleSpecStage } from "./scheduleSpecWorkflow.js";
 
 const base: ScheduledSpec = {
   id: "spec-manual-1", workspace_name: "shop", title: "결제 개선", status: "pending",
@@ -9,6 +9,16 @@ const base: ScheduledSpec = {
 };
 
 describe("Schedule SPEC workflow", () => {
+  it("일정 카드에는 SPEC 준비 상태를 표시하고 feat 시작 후에는 파이프라인 상태를 우선한다", () => {
+    const ready = { ...base, spec_path: "/example/spec.md" };
+    expect(scheduleCardStage(base)).toBe("draft");
+    expect(scheduleCardStage(ready)).toBe("ready");
+    expect(scheduleCardStage({ ...ready, has_run: true })).toBe("in_progress");
+    expect(scheduleCardStage({ ...ready, status: "in_progress" })).toBe("in_progress");
+    expect(scheduleCardStage({ ...ready, has_run: true, status: "done" })).toBe("done");
+    expect(scheduleCardStage({ ...ready, has_run: true, status: "blocked" })).toBeNull();
+  });
+
   it("derives draft, ready, and immutable in-progress stages", () => {
     expect(scheduleSpecStage(base)).toBe("draft");
     expect(scheduleSpecStage({ ...base, spec_path: "/example/spec.md" })).toBe("ready");

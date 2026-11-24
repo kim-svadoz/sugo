@@ -121,15 +121,18 @@ export function groupByTask(events: readonly ActivityEvent[]): Map<string, { nam
   return groups;
 }
 
-/** 작업별 레인. 진행 중(최근 이벤트 또는 확인 대기)인 작업을 모두 보여주고, 없으면 가장 최근 작업 하나만 보여준다. */
-export function selectFloorLanes(events: readonly ActivityEvent[], now = Date.now(), max = 8): FloorLane[] {
-  const lanes = [...groupByTask(events).entries()]
+/** 실제 활동에서 작업별 레인을 만든다. 확인 대기, 진행 중, 지난 작업 순으로 정렬한다. */
+export function collectFloorLanes(events: readonly ActivityEvent[], now: number): FloorLane[] {
+  const priority = (lane: FloorLane) => lane.state.activity === "waiting" ? 0 : lane.state.live ? 1 : 2;
+  return [...groupByTask(events).entries()]
     .map(([key, group]) => ({ key, name: group.name, taskId: group.taskId, projectPath: group.projectPath, workspace: group.workspace, state: selectFloorState(group.events, now) }))
     .filter((lane) => lane.state.at !== undefined)
-    .sort((a, b) => (b.state.at ?? 0) - (a.state.at ?? 0));
-  const live = lanes.filter((lane) => lane.state.live).sort((a, b) => {
-    const priority = (lane: FloorLane) => lane.state.activity === "waiting" ? 0 : 1;
-    return priority(a) - priority(b) || (b.state.at ?? 0) - (a.state.at ?? 0);
-  });
+    .sort((a, b) => priority(a) - priority(b) || (b.state.at ?? 0) - (a.state.at ?? 0));
+}
+
+/** 작업별 레인. 진행 중(최근 이벤트 또는 확인 대기)인 작업을 모두 보여주고, 없으면 가장 최근 작업 하나만 보여준다. */
+export function selectFloorLanes(events: readonly ActivityEvent[], now = Date.now(), max = 8): FloorLane[] {
+  const lanes = collectFloorLanes(events, now);
+  const live = lanes.filter((lane) => lane.state.live);
   return (live.length > 0 ? live : lanes.slice(0, 1)).slice(0, max);
 }

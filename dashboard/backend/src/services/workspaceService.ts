@@ -106,14 +106,13 @@ export interface WorkspaceSummary {
 
 const STALE_ATTENTION_HOURS = 6;
 
-function timestampMs(value: string | null): number | null {
+function timestampMs(value: string | Date | null): number | null {
   if (!value) return null;
-  const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
-  const parsed = Date.parse(normalized);
+  const parsed = value instanceof Date ? value.getTime() : Date.parse(value.includes("T") ? value : `${value.replace(" ", "T")}Z`);
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-function isStale(status: string, updatedAt: string | null, now = Date.now()): boolean {
+function isStale(status: string, updatedAt: string | Date | null, now = Date.now()): boolean {
   const updated = timestampMs(updatedAt);
   return status === "in_progress" && updated !== null && now - updated >= STALE_ATTENTION_HOURS * 3_600_000;
 }
@@ -592,6 +591,7 @@ export interface ScheduledSpecRow {
   work_branch: string | null;
   spec_path: string | null;
   has_run: boolean;
+  task_ids: string[];
   task_count: number;
   done_task_count: number;
   active_task_count: number;
@@ -613,9 +613,9 @@ export interface ScheduledSpecRow {
 /** 로그인 사용자의 전체 워크스페이스에서 level='spec' 노드 전부(due_date NULL 포함)를 반환한다.
  * 프론트가 due_date 유무로 캘린더/"기한 미정" 리스트를 나눈다. */
 export async function getScheduledSpecs(db: DbClient, userId: string): Promise<ScheduledSpecRow[]> {
-  const rows = await db.query<Omit<ScheduledSpecRow, "has_run" | "task_count" | "done_task_count" | "active_task_count" | "blocked_task_count" | "stale_task_count" | "unverified_task_count" | "focus_task_id" | "focus_task_title" | "focus_task_status" | "focus_task_note" | "focus_task_updated_at" | "focus_task_work_result" | "focus_task_runtime_assessment" | "focus_task_blocker_decision" | "focus_task_human_blocker"> & { manual_title: string | null; has_run: number | boolean }>(
+  const rows = await db.query<Omit<ScheduledSpecRow, "has_run" | "task_ids" | "task_count" | "done_task_count" | "active_task_count" | "blocked_task_count" | "stale_task_count" | "unverified_task_count" | "focus_task_id" | "focus_task_title" | "focus_task_status" | "focus_task_note" | "focus_task_updated_at" | "focus_task_work_result" | "focus_task_runtime_assessment" | "focus_task_blocker_decision" | "focus_task_human_blocker"> & { manual_title: string | null; has_run: number | boolean }>(
     `SELECT n.id, n.workspace_name, n.title, n.manual_title,
-            COALESCE(n.manual_status, n.status) AS status, n.due_date, n.project_path, n.work_branch, n.spec_path,
+            COALESCE(n.manual_status, n.status) AS status, CAST(n.due_date AS CHAR) AS due_date, n.project_path, n.work_branch, n.spec_path,
             EXISTS (SELECT 1 FROM sugo_roadmap_nodes child
                      WHERE child.user_id = n.user_id AND child.workspace_name = n.workspace_name
                        AND child.parent = n.id AND child.level = 'workstream') AS has_run
@@ -629,7 +629,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
   );
   const tasks = await db.query<{
     workspace_name: string; spec_id: string; id: string; title: string; status: string; manual_status: string | null;
-    note: string | null; updated_at: string | null; work_result: unknown; lineage: unknown; runtime_assessment: unknown; blocker_response: string | null; blocker_answered_by: string | null; blocker_answered_at: string | null; blocker_context: unknown;
+    note: string | null; updated_at: string | Date | null; work_result: unknown; lineage: unknown; runtime_assessment: unknown; blocker_response: string | null; blocker_answered_by: string | null; blocker_answered_at: string | null; blocker_context: unknown;
   }>(
     `SELECT task.workspace_name, run.parent AS spec_id, task.id, task.title, task.status, task.manual_status,
             task.note, task.updated_at, task.work_result, task.lineage, task.runtime_assessment, task.blocker_response, task.blocker_answered_by, task.blocker_answered_at, task.blocker_context
@@ -683,6 +683,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
       deployment: deployments.get(`${row.workspace_name}\0${row.id}`),
       status: row.status === "dropped" ? "dropped" : enriched.some(t => t.status === "blocked") ? "blocked" : enriched.some(t => t.status === "in_progress") ? "in_progress" : enriched.some(t => t.status === "verification") ? "verification" : enriched.length > 0 && enriched.every(t => t.status === "done") ? "done" : row.status === "done" && enriched.some(t => t.status === "pending") ? "pending" : row.status,
       has_run: Boolean(has_run),
+      task_ids: children.map((task) => task.id),
       title: manual_title ?? row.title,
       task_count: enriched.length,
       done_task_count: enriched.filter((task) => task.status === "done").length,
@@ -694,7 +695,7 @@ export async function getScheduledSpecs(db: DbClient, userId: string): Promise<S
       focus_task_title: focus?.title ?? null,
       focus_task_status: focus?.status ?? null,
       focus_task_note: focus?.note ?? null,
-      focus_task_updated_at: focus?.updated_at ?? null,
+      focus_task_updated_at: focus?.updated_at instanceof Date ? focus.updated_at.toISOString() : focus?.updated_at ?? null,
       focus_task_work_result: parseMaybeJson(focus?.work_result, null),
       focus_task_runtime_assessment: parseMaybeJson(focus?.runtime_assessment, null),
       focus_task_blocker_decision: focus?.blocker_response && focus.blocker_answered_by && focus.blocker_answered_at

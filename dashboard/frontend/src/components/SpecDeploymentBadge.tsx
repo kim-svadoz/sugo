@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { deploymentInclusionLabel, type SpecDeployment } from "../lib/specDeployment.js";
 import { hasLocalCommitEvidence, type ScheduleDeploymentEnvironment } from "../lib/scheduleDeploymentEnvironments.js";
+import { cn } from "../lib/utils.js";
 
-export function SpecDeploymentBadge({ deployment, title, environments: providedEnvironments }: { deployment?: SpecDeployment; title: string; environments?: ScheduleDeploymentEnvironment[] }) {
+export function SpecDeploymentBadge({ deployment, title, environments: providedEnvironments, compact = false }: { deployment?: SpecDeployment; title: string; environments?: ScheduleDeploymentEnvironment[]; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDivElement>(null);
@@ -32,7 +33,7 @@ export function SpecDeploymentBadge({ deployment, title, environments: providedE
   const observed = (deployment?.environments ?? []).flatMap(env => env.services).map(service => Date.parse(service.observedAt ?? "")).filter(Number.isFinite);
   const checkedAt = observed.length ? new Date(Math.min(...observed)).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }) : null;
   return <>
-    <button ref={button} type="button" aria-label={`배포 환경 ${label}`} title="배포 환경 보기" onClick={e => { e.stopPropagation(); setOpen(true); }} className="nodrag nopan shrink-0 rounded border border-[var(--color-deployment)]/40 bg-[var(--color-deployment)]/10 px-1.5 py-0.5 text-[10px] font-bold text-blue-300 hover:bg-[var(--color-deployment)]/20">{label}</button>
+    <button ref={button} type="button" aria-label={`배포 환경 ${label}`} title="배포 환경 보기" onClick={e => { e.stopPropagation(); setOpen(true); }} className={cn("nodrag nopan shrink-0 rounded border border-[var(--color-deployment)]/40 bg-[var(--color-deployment)]/10 font-bold text-blue-300 hover:bg-[var(--color-deployment)]/20", compact ? "px-1 text-[8px]" : "px-1.5 py-0.5 text-[10px]")}>{label}</button>
     {open && createPortal(<div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4" onClick={e => { e.stopPropagation(); if (e.target === e.currentTarget) setOpen(false); }}>
       <div ref={dialog} role="dialog" aria-modal="true" aria-label="작업 배포 환경" className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b111b] p-6 text-sm text-slate-200 shadow-2xl">
         <div className="flex items-center justify-between gap-4"><h2 className="font-semibold text-slate-400">배포 환경</h2><button type="button" onClick={() => setOpen(false)} className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-800 hover:text-white">닫기</button></div>

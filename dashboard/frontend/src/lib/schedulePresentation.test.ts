@@ -57,7 +57,7 @@ describe("schedule presentation", () => {
     expect(source).not.toContain('max-w-full truncate font-mono text-[9.5px] font-semibold text-slate-300');
     expect(source).not.toContain('mr-1 font-mono text-[9px] font-semibold text-slate-400');
     expect(source).toContain("{commitment.title}</button>");
-    expect(source).toContain("{commitment.workspace_name}</span>");
+    expect(source).toContain("{commitment.workspace_name}<ScheduleCardBadge");
     expect(source).not.toContain('{commitment.workspace_name} · {commitment.due_date ?? "날짜 미정"}');
   });
 
@@ -107,11 +107,9 @@ describe("schedule presentation", () => {
     expect(source).not.toContain("completeFromQueue");
   });
 
-  it("Agenda 카드는 파이프라인 상태 태그와 D-day만 간결하게 표시한다", () => {
+  it("Agenda 카드는 공통 상태 태그와 D-day만 간결하게 표시한다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain('commitment.pipeline_status === "done"');
-    expect(source).toContain('commitment.pipeline_status === "running"');
-    expect(source).toContain(">진행 중</span>");
+    expect(source).toContain("<ScheduleCardBadge status={scheduleCardStatus(spec)} />");
     expect(source).toContain('<CalendarDays size={11} className="text-slate-500" />{commitment.due_date}');
     expect(source).toContain("border-l border-white/10 pl-2");
     expect(source).toContain(">D-Day</span>");

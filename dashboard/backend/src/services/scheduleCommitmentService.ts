@@ -37,7 +37,7 @@ interface CommitmentUpdate {
   linkedRunId: string | null;
 }
 
-const columns = `id, workspace_name, spec_id, title, due_date, state, target, linked_run_id,
+const columns = `id, workspace_name, spec_id, title, CAST(due_date AS CHAR) AS due_date, state, target, linked_run_id,
   completed_at, completed_by, created_at, updated_at`;
 
 async function getCommitment(db: DbClient, userId: string, id: string): Promise<ScheduleCommitment | null> {

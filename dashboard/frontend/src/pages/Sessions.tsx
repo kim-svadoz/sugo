@@ -36,7 +36,8 @@ import { DomainStage } from "../components/DomainStage.js";
 import { relativeTime } from "../components/WorkFloor.js";
 import { useDomainActivity } from "../hooks/useDomainActivity.js";
 import { domainPulse, firstDomainName, groupDomainsByPulse, type DomainTone } from "../lib/domainPulse.js";
-import { selectFloorLanes } from "../lib/workFloor.js";
+import { selectDomainLanes, type DomainFloorSelection } from "../lib/domainFloor.js";
+import { useSchedule } from "../hooks/useSchedule.js";
 import { searchHistory, type HistorySearchResult } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.js";
 import { RoadmapTab } from "../components/roadmap/RoadmapTab.js";
@@ -155,13 +156,14 @@ function DomainDot({ tone }: { tone: DomainTone }) {
 
 export function Sessions() {
   const { data, loading } = useWorkspaces();
+  const { data: specs } = useSchedule();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedWorkspace = searchParams.get("workspace");
 
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null);
-  const [selectedTaskKey, setSelectedTaskKey] = useState<string | null>(null);
-  const taskActivity = useTaskActivity(selectedWorkspace ?? undefined, selectedTaskKey);
+  const [laneSelection, setLaneSelection] = useState<DomainFloorSelection | null>(null);
+  const taskActivity = useTaskActivity(selectedWorkspace ?? undefined, laneSelection?.activityKey);
   const [activeTab, setActiveTab] = useState<TabType>("repositories");
   const [statusFilter, setStatusFilter] = useState<"all" | "recent">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -182,7 +184,7 @@ export function Sessions() {
 
   useEffect(() => {
     setExpandedRepository(null);
-    setSelectedTaskKey(null);
+    setLaneSelection(null);
   }, [selectedWorkspace, inspectorPage]);
 
   const filteredWorkspaces = useMemo(() => {
@@ -206,8 +208,8 @@ export function Sessions() {
   useEffect(() => { const timer = window.setInterval(() => setPulseNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
   const domainGroups = useMemo(() => groupDomainsByPulse(filteredWorkspaces.map((ws) => ({
     ws,
-    pulse: domainPulse(ws, selectFloorLanes(domainEvents.get(ws.name) ?? [], pulseNow)),
-  }))), [filteredWorkspaces, domainEvents, pulseNow]);
+    pulse: domainPulse(ws, selectDomainLanes(domainEvents.get(ws.name) ?? [], specs ?? [], ws.name, pulseNow)),
+  }))), [filteredWorkspaces, domainEvents, pulseNow, specs]);
 
   useEffect(() => {
     if (initialSelectionApplied.current) return;
@@ -719,8 +721,9 @@ export function Sessions() {
                 <DomainStage
                   workspace={selected.name}
                   projectPaths={(selected.projects ?? []).map((project) => project.project_path)}
-                  selectedTaskKey={selectedTaskKey}
-                  onSelectedTaskChange={setSelectedTaskKey}
+                  specs={specs ?? []}
+                  selection={laneSelection}
+                  onSelectedTaskChange={setLaneSelection}
                   attention={{ count: selected.attentionCount ?? 0, label: selected.attentionLabel ?? null }}
                   onOpenAttention={() => navigate(`/schedule?reviewWorkspace=${encodeURIComponent(selected.name)}`)}
                   tools={<>
@@ -736,7 +739,7 @@ export function Sessions() {
 
               <div className="grid min-h-[340px] border-t border-[var(--color-border)] lg:grid-cols-[minmax(240px,0.72fr)_minmax(420px,1.28fr)] 2xl:min-h-[360px] 2xl:grid-cols-[minmax(260px,0.78fr)_minmax(440px,1.22fr)]">
                 <section className="flex min-h-0 flex-col border-b border-[var(--color-border)] p-3 lg:border-b-0 lg:border-r 2xl:p-4" aria-label={`${selected.name} 작업 결과 요약`}>
-                  <div className="ck-scroll min-h-0 flex-1 overflow-auto pr-1"><LiveConsole workspace={selected.name} taskKey={selectedTaskKey} /></div>
+                  <div className="ck-scroll min-h-0 flex-1 overflow-auto pr-1"><LiveConsole workspace={selected.name} taskKey={laneSelection?.activityKey} /></div>
                 </section>
                 <section className="flex min-h-0 min-w-0 flex-col p-3 2xl:p-4" aria-label={`${selected.name} Inspector`}>
                   {renderInspector(selected)}

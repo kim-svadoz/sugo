@@ -53,6 +53,11 @@ try {
   await seedDeployment(db, "mysql-human", "ws");
   const spec = (await view()).nodes.find(n => n.id === "spec");
   assert.equal(spec.deployment.environment, "DEV"); assert.equal(spec.display_status, "done");
+  await post("/api/workspaces/ws/roadmap/due-date", { nodeId: "spec", dueDate: "2026-11-27" });
+  const schedule = await fetch(base + "/api/workspaces/schedule", { headers });
+  assert.equal(schedule.status, 200);
+  const scheduledSpec = (await schedule.json()).specs.find(item => item.id === spec.id);
+  assert.deepEqual([scheduledSpec.due_date, scheduledSpec.has_run, scheduledSpec.task_ids], ["2026-11-27", true, ["deploy-task"]]);
   console.log(JSON.stringify({ mysql: (await db.query("SELECT VERSION() AS version"))[0].version, auditEvents: 3, partial: "unverified", approved: "verified_by_human", revoked: "unverified", resyncPreserved: true, localLogin: true, deployment: "DEV" }));
 } finally {
   if (server) await new Promise(resolve => server.close(resolve));

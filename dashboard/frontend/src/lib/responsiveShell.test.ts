@@ -14,7 +14,7 @@ describe("responsive dashboard shell", () => {
   it("uses hoverable square calendar markers on laptop-width screens", () => {
     const schedule = source("../pages/SchedulePage.tsx");
     expect(schedule).toContain("max-[1900px]:hidden");
-    expect(schedule).toContain('aria-label={`개발 일정 · ${commitment.title}`}');
+    expect(schedule).toContain('aria-label={`개발 일정 · ${commitment.title}${status ?');
     expect(schedule).toContain('aria-label={`메모 · ${memo.title}`}');
     expect(schedule).toContain("group-hover/marker:opacity-100");
     expect(schedule).toContain("h-2.5 w-1 rounded-sm");

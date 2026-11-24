@@ -1,8 +1,9 @@
 import { FLOOR_STATIONS, type FloorLane, type FloorStationId } from "./workFloor.js";
+import type { DomainFloorLane } from "./domainFloor.js";
 
 /**
  * 도메인 관리 화면의 상태 표현. 도메인 목록 묶음과 상태 카드가 같은 판정을 쓴다.
- * 판정은 작업장 레인(실제 활동 이벤트)과 로드맵 확인 필요 건수로만 한다.
+ * 작업장 레인에는 실제 활동 이벤트와 연결된 정식 SPEC이 반영된다.
  */
 export type DomainTone = "waiting" | "live" | "quiet";
 export interface DomainPulse { tone: DomainTone; label: string; at: number | null }
@@ -18,7 +19,7 @@ const LIVE_LABEL: Record<FloorStationId, string> = {
 };
 const stationLabel = (id: FloorStationId) => FLOOR_STATIONS.find((station) => station.id === id)!.label;
 
-export function domainPulse(summary: { attentionCount: number; attentionLabel: string | null; lastActivityAt: string | null }, lanes: readonly FloorLane[]): DomainPulse {
+export function domainPulse(summary: { attentionCount: number; attentionLabel: string | null; lastActivityAt: string | null }, lanes: readonly (FloorLane & Pick<DomainFloorLane, "preparation">)[]): DomainPulse {
   const lastAt = summary.lastActivityAt ? Date.parse(summary.lastActivityAt) : null;
   const activityAt = (laneAt: number | null | undefined) => Math.max(lastAt ?? -1, laneAt ?? -1) < 0 ? null : Math.max(lastAt ?? -1, laneAt ?? -1);
   const waiting = lanes.find((lane) => lane.state.activity === "waiting");
@@ -26,6 +27,7 @@ export function domainPulse(summary: { attentionCount: number; attentionLabel: s
   const lane = lanes[0];
   if (lane?.state.live) return { tone: "live", label: lane.state.activity === "celebrating" ? "방금 완료" : LIVE_LABEL[lane.state.station], at: activityAt(lane.state.at) };
   if (summary.attentionCount > 0) return { tone: "waiting", label: summary.attentionLabel ?? "확인 필요", at: activityAt(lane?.state.at) };
+  if (lane?.preparation) return { tone: "quiet", label: lane.preparation === "ready" ? "스펙 작성 완료" : "작업 활동 기록 대기", at: lastAt };
   if (!lane) return { tone: "quiet", label: lastAt === null ? "기록 없음" : "작업 대기", at: lastAt };
   const label = lane.state.activity === "paused" ? `${stationLabel(lane.state.station)}에서 멈춤` : "커밋 완료";
   return { tone: "quiet", label, at: activityAt(lane.state.at) };

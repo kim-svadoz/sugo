@@ -1,15 +1,18 @@
-import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, ClipboardList, Code2, FlaskConical, GitCommitHorizontal, ShieldCheck, UserCheck } from "lucide-react";
+import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, ClipboardList, Code2, FileText, FlaskConical, GitCommitHorizontal, ShieldCheck, UserCheck } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { apiJson } from "../api/client.js";
+import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { useActivityStream } from "../hooks/useActivityStream.js";
-import { useSchedule } from "../hooks/useSchedule.js";
+import { selectDomainLanes, type DomainFloorLane, type DomainFloorSelection } from "../lib/domainFloor.js";
 import { attentionActionText, stageHeadline, type StageTone } from "../lib/domainPulse.js";
 import { resolveTaskTitle } from "../lib/taskTitle.js";
 import { cn } from "../lib/utils.js";
-import { FLOOR_STATIONS, selectFloorLanes, type FloorLane, type FloorStationId } from "../lib/workFloor.js";
+import { FLOOR_STATIONS, type FloorStationId } from "../lib/workFloor.js";
 import { relativeTime } from "./WorkFloor.js";
 
-const STATION_ICONS: Record<FloorStationId, typeof ClipboardList> = {
+const SPEC_STATION = { id: "spec", label: "스펙 작성" } as const;
+const STATION_ICONS: Record<FloorStationId | "spec", typeof ClipboardList> = {
+  spec: FileText,
   order: ClipboardList,
   code: Code2,
   test: FlaskConical,
@@ -28,17 +31,18 @@ const TONE: Record<StageTone, { card: string; glow: string; dot: string; text: s
   rest: { card: "border-cyan-200/[0.10]", glow: "rgba(45,212,191,.10)", dot: "bg-slate-400", text: "text-slate-100", node: "border-slate-500/50 bg-slate-500/10 text-slate-300", halo: "" },
 };
 
-function Journey({ lane, tone, onOpenAttention }: { lane?: FloorLane; tone: StageTone; onOpenAttention?: () => void }) {
+function Journey({ lane, tone, onOpenAttention }: { lane?: DomainFloorLane; tone: StageTone; onOpenAttention?: () => void }) {
   const state = lane?.state;
   const finished = tone === "rest" && state?.passed.length === FLOOR_STATIONS.length;
-  return <ol className={cn("grid w-full grid-cols-7", finished && "opacity-70")} aria-label="작업 단계">
-    {FLOOR_STATIONS.map((station, index) => {
+  const stations = lane?.spec ? [SPEC_STATION, ...FLOOR_STATIONS] : FLOOR_STATIONS;
+  return <ol className={cn("grid w-full", lane?.spec ? "grid-cols-8" : "grid-cols-7", finished && "opacity-70")} aria-label="작업 단계">
+    {stations.map((station, index) => {
       const Icon = STATION_ICONS[station.id];
-      const passed = Boolean(state?.passed.includes(station.id));
+      const passed = station.id === "spec" || Boolean(state?.passed.includes(station.id));
       const current = !finished && state?.station === station.id && tone !== "rest";
       const myTurn = current && tone === "waiting";
       const reached = passed || current;
-      return <li key={station.id} className="relative flex min-w-0 flex-col items-center" aria-current={current ? "step" : undefined}>
+      return <li key={station.id} className="relative flex min-w-0 flex-col items-center" aria-current={current ? "step" : undefined} aria-label={station.id === "spec" ? "스펙 작성 완료" : undefined}>
         {index > 0 && <span className={cn("absolute right-[calc(50%+24px)] top-[17px] h-[2px] w-[calc(100%-48px)] rounded-full transition-colors duration-500", reached ? "bg-emerald-400/50" : "bg-[repeating-linear-gradient(90deg,rgba(100,116,139,.45)_0_4px,transparent_4px_8px)]")} aria-hidden="true" />}
         {myTurn && onOpenAttention
           ? <button type="button" onClick={onOpenAttention} aria-label="사용자 확인 영역 열기" className="group flex min-w-0 flex-col items-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-violet-100 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-950">
@@ -84,36 +88,44 @@ function useTaskProjects(workspace: string, taskNames: readonly string[]): Reado
  * 도메인 관리의 상태 카드. 선택한 도메인에서 지금 무슨 일이 있는지 한 문장으로 말하고,
  * 그 작업이 거친 단계를 여정으로 보여 준다. 여러 작업이 동시에 진행되면 카드 안에서 넘겨 본다.
  */
-export function DomainStage({ workspace, projectPaths, selectedTaskKey, onSelectedTaskChange, attention, onOpenAttention, tools }: {
+export function DomainStage({ workspace, projectPaths, specs, selection, onSelectedTaskChange, attention, onOpenAttention, tools }: {
   workspace: string;
   /** 도메인에 등록된 프로젝트 경로. 작업 기록에 프로젝트가 없을 때, 프로젝트가 하나뿐이면 그 이름을 쓴다. */
   projectPaths: readonly string[];
-  selectedTaskKey: string | null;
-  onSelectedTaskChange: (taskKey: string) => void;
+  specs: readonly ScheduledSpec[];
+  selection: DomainFloorSelection | null;
+  onSelectedTaskChange: (selection: DomainFloorSelection) => void;
   attention: { count: number; label: string | null };
   onOpenAttention: () => void;
   tools?: ReactNode;
 }) {
   const all = useActivityStream(workspace);
-  const { data: specs } = useSchedule();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
-  const lanes = selectFloorLanes(all.filter((event) => event.workspace_name === workspace), now);
-  const requested = selectedTaskKey ? lanes.findIndex((lane) => lane.key === selectedTaskKey) : -1;
+  const lanes = useMemo(() => selectDomainLanes(all, specs, workspace, now), [all, specs, workspace, now]);
+  const requested = selection ? lanes.findIndex((lane) => lane.key === selection.key) : -1;
   const index = requested >= 0 ? requested : 0;
   const lane = lanes[index];
-  useEffect(() => { if (lane && lane.key !== selectedTaskKey) onSelectedTaskChange(lane.key); }, [lane, onSelectedTaskChange, selectedTaskKey]);
+  useEffect(() => {
+    if (lane && (lane.key !== selection?.key || lane.activityKey !== selection.activityKey)) {
+      onSelectedTaskChange({ key: lane.key, activityKey: lane.activityKey });
+    }
+  }, [lane, onSelectedTaskChange, selection]);
 
-  const headline = stageHeadline(lane);
+  const headline = lane?.preparation === "ready" ? { tone: "rest" as const, text: "스펙 작성을 마쳤어요 · 작업 지시 대기" }
+    : lane?.preparation === "starting" ? { tone: "rest" as const, text: "작업 활동 기록을 기다려요" } : stageHeadline(lane);
   const tone = TONE[headline.tone];
-  const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, specs ?? []) : null;
-  const unresolved = useMemo(() => lanes.filter((item) => !item.projectPath).map((item) => item.name), [lanes]);
+  const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, specId: lane.spec?.id, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, lane.spec ? [lane.spec] : specs) : null;
+  const unresolved = useMemo(() => lanes.filter((item) => !item.preparation && !item.projectPath).map((item) => item.name), [lanes]);
   const taskProjects = useTaskProjects(workspace, unresolved);
   const swipeStart = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
   const baseName = (path: string) => path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
   const projectName = title?.project ?? (lane?.projectPath ? baseName(lane.projectPath) : lane && taskProjects[lane.name] ? baseName(taskProjects[lane.name]) : projectPaths.length === 1 ? baseName(projectPaths[0]) : null);
-  const move = (delta: number) => onSelectedTaskChange(lanes[(index + delta + lanes.length) % lanes.length].key);
+  const move = (delta: number) => {
+    const next = lanes[(index + delta + lanes.length) % lanes.length];
+    onSelectedTaskChange({ key: next.key, activityKey: next.activityKey });
+  };
   const canSwitch = lanes.length > 1;
   const isInteractive = (target: EventTarget | null) => target instanceof Element && Boolean(target.closest("button, a, input, select, textarea, [role='button'], [data-no-lane-swipe]"));
   const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {

@@ -22,7 +22,8 @@ async function appWithNodesIn(
       userId: "u1",
       workspaceName,
       nodes: nodes.map((n) => ({ id: n.id, title: n.id, level: n.level, status: n.status ?? "pending" })),
-    });
+    })
+    .expect(200);
   return { app, db, auth };
 }
 
@@ -78,6 +79,7 @@ describe("GET /api/workspaces/schedule — 워크스페이스 비종속 집계",
     expect(res.body.specs.find((s: { id: string }) => s.id === "spec1")).toMatchObject({
       spec_path: "/tmp/spec.md",
       has_run: true,
+      task_ids: [],
     });
   });
 
@@ -96,6 +98,7 @@ describe("GET /api/workspaces/schedule — 워크스페이스 비종속 집계",
 
     const res = await request(ctx.app).get("/api/workspaces/schedule").set("Authorization", ctx.auth).expect(200);
     expect(res.body.specs[0]).toMatchObject({
+      task_ids: expect.arrayContaining(["task-running", "task-blocked"]),
       task_count: 2,
       active_task_count: 1,
       blocked_task_count: 1,
@@ -152,7 +155,8 @@ describe("GET /api/workspaces/schedule — 워크스페이스 비종속 집계",
     await request(ctx.app)
       .post("/api/sync/roadmap")
       .set("Authorization", otherAuth)
-      .send({ userId: "u2", workspaceName: "ws1", nodes: [{ id: "spec-other", title: "spec-other", level: "spec", status: "pending" }] });
+      .send({ userId: "u2", workspaceName: "ws1", nodes: [{ id: "spec-other", title: "spec-other", level: "spec", status: "pending" }] })
+      .expect(200);
 
     const res = await request(ctx.app).get("/api/workspaces/schedule").query({ userId: "u1" }).set("Authorization", ctx.auth).expect(200);
     expect(res.body.specs.map((s: { id: string }) => s.id)).toEqual(["spec1"]);
