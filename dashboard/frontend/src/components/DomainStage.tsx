@@ -230,6 +230,8 @@ function StageCard({ lane, now, specs, projectPaths, taskProjects, attention, on
   const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, specId: lane.spec?.id, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, lane.spec ? [lane.spec] : specs) : null;
   const baseName = (path: string) => path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
   const projectName = title?.project ?? (lane?.projectPath ? baseName(lane.projectPath) : lane && taskProjects[lane.name] ? baseName(taskProjects[lane.name]) : projectPaths.length === 1 ? baseName(projectPaths[0]) : null);
+  // 연결된 SPEC은 보관한 일정을 제외하는 Schedule 목록에서 가져온다.
+  const scheduleOpen = lane?.state.completed && lane.spec !== undefined;
 
   return <div
     className={cn("stage-card relative rounded-2xl border px-5 py-4", tone.card)}
@@ -245,10 +247,14 @@ function StageCard({ lane, now, specs, projectPaths, taskProjects, attention, on
           <strong className={cn("text-[17px] font-semibold tracking-[-0.01em]", tone.text)}>{headline.text}</strong>
         </p>
         {title && <p className="mt-1.5 truncate text-[14px] text-slate-200" title={title.title}>{title.title}</p>}
-        {(projectName || lane?.state.at) && <p className="mt-1 flex items-center gap-2 text-[12px] text-slate-500">
+        {(projectName || lane?.state.at || scheduleOpen) && <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-slate-500">
           {projectName && <span className="font-mono">{projectName}</span>}
           {projectName && lane?.state.at && <span aria-hidden="true">·</span>}
           {lane?.state.at && <time dateTime={new Date(lane.state.at).toISOString()}>{lane.preparation === "ready" && "스펙 작성 "}{relativeTime(lane.state.at, now)}</time>}
+          {scheduleOpen && <>
+            {(projectName || lane.state.at) && <span aria-hidden="true">·</span>}
+            <span className="text-slate-400">일정 열림</span>
+          </>}
         </p>}
       </div>
       <div className="flex shrink-0 items-center gap-2">

@@ -38,6 +38,7 @@ try {
       "/api/schedule/memos/archive": { memos: [] },
       "/api/schedule/commitments": { commitments: [] },
       "/api/activity/stream": { events },
+      "/api/workspaces/shop/task-projects": { projects: {} },
       "/api/workspaces": { workspaces: [{ name: "shop", projects: [], lastActivityAt: new Date().toISOString(), attentionCount: 0 }] },
     };
     return route.fulfill({ json: responses[path] ?? {} });
@@ -143,6 +144,20 @@ try {
   await page.screenshot({ path: join(output, "domain-running.png") });
   await page.goto(`${E2E_UI_URL}/schedule`);
   await page.getByText("진행 중", { exact: true }).waitFor();
+
+  specs.pop();
+  specs[1] = { ...specs[1], status: "done" };
+  events.push({
+    id: 3, workspace_name: "shop", ts: new Date().toISOString(), level: "info", agent: "MAIN",
+    handoff_to: null, event_type: "COMPLETED", message: "결제 내역 구현 완료", details,
+  });
+  await page.goto(`${E2E_UI_URL}/sessions?workspace=shop`);
+  await activeCard.getByText("개발을 마쳤어요", { exact: true }).waitFor();
+  await activeCard.getByText("일정 열림", { exact: true }).waitFor();
+  await page.screenshot({ path: join(output, "domain-completed-open.png") });
+  specs.splice(1, 1);
+  await activeCard.getByText("일정 열림", { exact: true }).waitFor({ state: "hidden" });
+  await activeCard.getByText("개발을 마쳤어요", { exact: true }).waitFor();
   assert.deepEqual(errors, []);
   console.log(`SPEC stage screenshots saved to ${output}`);
 } finally {

@@ -63,7 +63,7 @@ export function stageHeadline(lane: FloorLane | undefined): { tone: StageTone; t
   if (!lane) return { tone: "rest", text: "아직 작업 기록이 없어요" };
   const { state } = lane;
   if (state.activity === "waiting") return { tone: "waiting", text: "사용자 확인을 기다려요" };
-  if (state.activity === "celebrating") return { tone: "done", text: "작업을 마쳤어요" };
+  if (state.completed) return { tone: state.activity === "celebrating" ? "done" : "rest", text: "개발을 마쳤어요" };
   if (state.live) return { tone: "live", text: `${stationLabel(state.station)} 진행 중` };
   if (state.activity === "paused") return { tone: "paused", text: `${stationLabel(state.station)}에서 멈췄어요` };
   return { tone: "rest", text: "다음 작업을 기다려요" };

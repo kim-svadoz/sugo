@@ -23,6 +23,7 @@ export interface FloorState {
   station: FloorStationId;
   activity: FloorActivity;
   live: boolean;
+  completed?: boolean;
   passed: FloorStationId[];
   workspace?: string;
   message?: string;
@@ -88,7 +89,7 @@ export function selectFloorState(events: readonly ActivityEvent[], now = Date.no
   const lastAt: FloorState["lastAt"] = {};
   for (const item of currentRound(placed)) lastAt[item.station] ??= { message: item.event.message, at: item.at };
   const latest = placed[0];
-  const base = latest ? { workspace: latest.event.workspace_name, message: latest.event.message, at: latest.at, lastAt } : { lastAt };
+  const base = latest ? { workspace: latest.event.workspace_name, message: latest.event.message, at: latest.at, lastAt, completed: latest.event.event_type === "COMPLETED" } : { lastAt };
   if (latest?.station === "confirm") return { ...base, station: "confirm", activity: "waiting", live: true, passed: passedBefore("confirm") };
   if (latest && now - latest.at <= LIVE_WINDOW_MS) {
     const celebrating = latest.event.event_type === "COMPLETED";

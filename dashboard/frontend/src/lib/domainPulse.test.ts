@@ -78,9 +78,10 @@ describe("stageHeadline", () => {
   it("선택한 작업의 상태를 한 문장으로 말한다", () => {
     expect(stageHeadline(lanesOf([waitingEvent("2026-11-02 02:58:00")])[0])).toEqual({ tone: "waiting", text: "사용자 확인을 기다려요" });
     expect(stageHeadline(lanesOf([event({ ts: "2026-11-02 02:58:00" })])[0])).toEqual({ tone: "live", text: "구현 진행 중" });
-    expect(stageHeadline(lanesOf([event({ ts: "2026-11-02 02:58:00", event_type: "COMPLETED", handoff_to: null })])[0])).toEqual({ tone: "done", text: "작업을 마쳤어요" });
+    expect(stageHeadline(lanesOf([event({ ts: "2026-11-02 02:58:00", event_type: "COMPLETED", handoff_to: null })])[0])).toEqual({ tone: "done", text: "개발을 마쳤어요" });
     expect(stageHeadline(lanesOf([event({ ts: "2026-10-31 03:00:00", handoff_to: "TEST" })])[0])).toEqual({ tone: "paused", text: "테스트에서 멈췄어요" });
-    expect(stageHeadline(lanesOf([event({ ts: "2026-10-20 03:00:00", event_type: "COMPLETED", handoff_to: null })])[0])).toEqual({ tone: "rest", text: "다음 작업을 기다려요" });
+    expect(stageHeadline(lanesOf([event({ ts: "2026-10-20 03:00:00", event_type: "COMPLETED", handoff_to: null })])[0])).toEqual({ tone: "rest", text: "개발을 마쳤어요" });
+    expect(stageHeadline(lanesOf([event({ ts: "2026-10-20 03:00:00", agent: "DOCS", handoff_to: "MAIN" })])[0]).text).not.toBe("개발을 마쳤어요");
     expect(stageHeadline(undefined)).toEqual({ tone: "rest", text: "아직 작업 기록이 없어요" });
   });
 });
