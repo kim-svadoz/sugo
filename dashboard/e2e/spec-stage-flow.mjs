@@ -19,7 +19,8 @@ const awaitingApproval = {
   ...ready, id: "spec-review", title: "배송 상태 화면 개선", due_date: `${month}-14`, status: "blocked", has_run: true,
   focus_task_status: "blocked", focus_task_human_blocker: { kind: "review_confirmation" },
 };
-const specs = [draft, ready, done, awaitingApproval];
+const running = { ...ready, id: "spec-running", title: "배송 알림 개선", due_date: `${month}-15`, status: "in_progress", has_run: true };
+const specs = [draft, ready, done, awaitingApproval, running];
 const events = [];
 
 const browser = await chromium.launch({ channel: process.env.E2E_BROWSER_CHANNEL });
@@ -50,10 +51,19 @@ try {
 
   await page.goto(`${E2E_UI_URL}/schedule`);
   await page.getByRole("button", { name: "Agenda" }).click();
-  const badges = ["SPEC 작성 중", "SPEC 작성 완료", "파이프라인 완료", "사용자 승인 대기"];
+  const badges = ["SPEC 작성 중", "SPEC 작성 완료", "파이프라인 완료", "사용자 승인 대기", "진행 중"];
   for (const label of badges) await page.getByText(label, { exact: true }).waitFor();
   const reviewCard = page.getByRole("button", { name: /배송 상태 화면 개선/ });
   await reviewCard.getByText("사용자 승인 대기", { exact: true }).waitFor();
+  const activeBadge = page.getByText("진행 중", { exact: true });
+  const activeDot = activeBadge.locator('[aria-hidden="true"]');
+  const animationName = (locator) => locator.evaluate((element) => getComputedStyle(element).animationName);
+  assert.equal(await animationName(activeDot), "pulse");
+  assert.equal(await animationName(activeBadge), "none");
+  assert.equal(await reviewCard.getByText("사용자 승인 대기", { exact: true }).locator('[aria-hidden="true"]').count(), 0);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  assert.equal(await animationName(activeDot), "none");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.screenshot({ path: join(output, "agenda.png") });
 
   await page.getByRole("button", { name: "Calendar" }).click();
@@ -62,6 +72,11 @@ try {
   const preview = await reviewMarker.getByText("일정 미리보기").locator("..").elementHandle();
   await reviewMarker.getByText("사용자 승인 대기", { exact: true }).waitFor();
   await page.waitForFunction((element) => getComputedStyle(element).opacity === "1", preview);
+  const runningMarker = page.getByRole("button", { name: "개발 일정 · 배송 알림 개선 · 진행 중" });
+  assert.equal(await animationName(runningMarker.locator(':scope > [aria-hidden="true"]').nth(1)), "pulse");
+  await runningMarker.hover();
+  const runningPreview = await runningMarker.getByText("일정 미리보기").locator("..").elementHandle();
+  await page.waitForFunction((element) => getComputedStyle(element).opacity === "1", runningPreview);
   await page.screenshot({ path: join(output, "calendar-compact.png") });
   await page.setViewportSize({ width: 2000, height: 900 });
   await page.reload();
@@ -74,6 +89,7 @@ try {
       return element.getBoundingClientRect().bottom <= scroller.getBoundingClientRect().bottom;
     }), true, `${label} fits inside its calendar cell`);
   }
+  assert.equal(await animationName(activeDot.filter({ visible: true })), "pulse");
   await page.screenshot({ path: join(output, "calendar-wide.png") });
 
   specs[3] = {
@@ -84,7 +100,7 @@ try {
   await page.getByRole("button", { name: "Agenda" }).click();
   await reviewCard.waitFor();
   assert.equal(await reviewCard.getByText("사용자 승인 대기", { exact: true }).count(), 0);
-  specs.pop();
+  specs.splice(3);
 
   specs.push({ ...ready, id: "other-ready", title: "장바구니 개선", spec_written_at: new Date(Date.now() - 2 * 3_600_000).toISOString() });
   await page.setViewportSize({ width: 1440, height: 900 });

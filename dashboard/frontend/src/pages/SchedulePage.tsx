@@ -72,7 +72,7 @@ function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compac
 const SCHEDULE_CARD_STAGES = {
   draft: { label: "SPEC 작성 중", tone: "bg-violet-500/15 text-violet-200", marker: "bg-violet-300" },
   ready: { label: "SPEC 작성 완료", tone: "bg-cyan-500/15 text-cyan-200", marker: "bg-cyan-300" },
-  in_progress: { label: "진행 중", tone: "bg-sky-500/15 text-sky-300", marker: "bg-sky-400" },
+  in_progress: { label: "진행 중", tone: "bg-sky-500/15 text-sky-300", marker: "bg-sky-400 motion-safe:animate-pulse" },
   awaiting_approval: { label: "사용자 승인 대기", tone: "bg-amber-400/15 text-amber-200", marker: "bg-amber-300" },
   done: { label: "파이프라인 완료", tone: "bg-emerald-500/15 text-emerald-300", marker: "bg-emerald-300" },
 };
@@ -84,7 +84,10 @@ function scheduleCardStatus(spec: ScheduledSpec | null) {
 
 function ScheduleCardBadge({ status, compact = false }: { status: ReturnType<typeof scheduleCardStatus>; compact?: boolean }) {
   if (!status) return null;
-  return <span className={cn("shrink-0 whitespace-nowrap rounded py-0.5 font-semibold", compact ? "px-1 text-[8px]" : "px-1.5 text-[9px]", status.tone)}>{status.label}</span>;
+  return <span className={cn("inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded py-0.5 font-semibold", compact ? "px-1 text-[8px]" : "px-1.5 text-[9px]", status.tone)}>
+    {status === SCHEDULE_CARD_STAGES.in_progress && <span className={cn("size-1.5 rounded-full", status.marker)} aria-hidden="true" />}
+    {status.label}
+  </span>;
 }
 
 function DeploymentReach({ spec, selections }: { spec: ScheduledSpec | null; selections: IntegrationSelection[] }) {
