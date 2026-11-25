@@ -15,7 +15,11 @@ const draft = {
 };
 const ready = { ...draft, id: "spec-ready", title: "결제 내역 개선", due_date: `${month}-12`, spec_path: "/example/spec.md", spec_written_at: new Date(Date.now() - 8 * 60_000).toISOString() };
 const done = { ...ready, id: "spec-done", title: "상품 목록 개선", due_date: `${month}-13`, status: "done", has_run: true };
-const specs = [draft, ready, done];
+const awaitingApproval = {
+  ...ready, id: "spec-review", title: "배송 상태 화면 개선", due_date: `${month}-14`, status: "blocked", has_run: true,
+  focus_task_status: "blocked", focus_task_human_blocker: { kind: "review_confirmation" },
+};
+const specs = [draft, ready, done, awaitingApproval];
 const events = [];
 
 const browser = await chromium.launch({ channel: process.env.E2E_BROWSER_CHANNEL });
@@ -46,15 +50,17 @@ try {
 
   await page.goto(`${E2E_UI_URL}/schedule`);
   await page.getByRole("button", { name: "Agenda" }).click();
-  const badges = ["SPEC 작성 중", "SPEC 작성 완료", "파이프라인 완료"];
+  const badges = ["SPEC 작성 중", "SPEC 작성 완료", "파이프라인 완료", "사용자 승인 대기"];
   for (const label of badges) await page.getByText(label, { exact: true }).waitFor();
+  const reviewCard = page.getByRole("button", { name: /배송 상태 화면 개선/ });
+  await reviewCard.getByText("사용자 승인 대기", { exact: true }).waitFor();
   await page.screenshot({ path: join(output, "agenda.png") });
 
   await page.getByRole("button", { name: "Calendar" }).click();
-  const readyMarker = page.getByRole("button", { name: "개발 일정 · 결제 내역 개선 · SPEC 작성 완료" });
-  await readyMarker.hover();
-  await readyMarker.getByText("SPEC 작성 완료", { exact: true }).waitFor();
-  const preview = await readyMarker.getByText("일정 미리보기").locator("..").elementHandle();
+  const reviewMarker = page.getByRole("button", { name: "개발 일정 · 배송 상태 화면 개선 · 사용자 승인 대기" });
+  await reviewMarker.hover();
+  const preview = await reviewMarker.getByText("일정 미리보기").locator("..").elementHandle();
+  await reviewMarker.getByText("사용자 승인 대기", { exact: true }).waitFor();
   await page.waitForFunction((element) => getComputedStyle(element).opacity === "1", preview);
   await page.screenshot({ path: join(output, "calendar-compact.png") });
   await page.setViewportSize({ width: 2000, height: 900 });
@@ -69,6 +75,16 @@ try {
     }), true, `${label} fits inside its calendar cell`);
   }
   await page.screenshot({ path: join(output, "calendar-wide.png") });
+
+  specs[3] = {
+    ...awaitingApproval,
+    focus_task_blocker_decision: { response: "승인", answered_by: "e2euser", answered_at: new Date().toISOString() },
+  };
+  await page.reload();
+  await page.getByRole("button", { name: "Agenda" }).click();
+  await reviewCard.waitFor();
+  assert.equal(await reviewCard.getByText("사용자 승인 대기", { exact: true }).count(), 0);
+  specs.pop();
 
   specs.push({ ...ready, id: "other-ready", title: "장바구니 개선", spec_written_at: new Date(Date.now() - 2 * 3_600_000).toISOString() });
   await page.setViewportSize({ width: 1440, height: 900 });

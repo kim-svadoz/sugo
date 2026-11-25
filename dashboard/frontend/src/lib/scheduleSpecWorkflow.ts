@@ -8,10 +8,16 @@ export function scheduleSpecStage(spec: Pick<ScheduledSpec, "has_run" | "spec_pa
   return spec.spec_path ? "ready" : "draft";
 }
 
-export function scheduleCardStage(spec: Pick<ScheduledSpec, "status" | "has_run" | "spec_path">) {
+export function scheduleCardStage(spec: Pick<ScheduledSpec, "status" | "has_run" | "spec_path" | "focus_task_status" | "focus_task_human_blocker" | "focus_task_blocker_decision">) {
   if (spec.status === "done") return "done";
   if (spec.status === "in_progress") return "in_progress";
-  if (spec.status === "blocked" || spec.status === "verification" || spec.status === "dropped") return null;
+  if (spec.status === "blocked") {
+    return spec.focus_task_status === "blocked"
+      && spec.focus_task_human_blocker?.kind === "review_confirmation"
+      && !spec.focus_task_blocker_decision
+      ? "awaiting_approval" : null;
+  }
+  if (spec.status === "verification" || spec.status === "dropped") return null;
   return scheduleSpecStage(spec);
 }
 

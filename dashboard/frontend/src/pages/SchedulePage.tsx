@@ -73,6 +73,7 @@ const SCHEDULE_CARD_STAGES = {
   draft: { label: "SPEC 작성 중", tone: "bg-violet-500/15 text-violet-200", marker: "bg-violet-300" },
   ready: { label: "SPEC 작성 완료", tone: "bg-cyan-500/15 text-cyan-200", marker: "bg-cyan-300" },
   in_progress: { label: "진행 중", tone: "bg-sky-500/15 text-sky-300", marker: "bg-sky-400" },
+  awaiting_approval: { label: "사용자 승인 대기", tone: "bg-amber-400/15 text-amber-200", marker: "bg-amber-300" },
   done: { label: "파이프라인 완료", tone: "bg-emerald-500/15 text-emerald-300", marker: "bg-emerald-300" },
 };
 
@@ -829,8 +830,11 @@ export function SchedulePage() {
                             {status && <span className={cn("mt-px h-1.5 w-1.5 rounded-full", status.marker)} aria-hidden="true" />}
                             <span className={cn("pointer-events-none absolute z-50 w-72 translate-y-1 rounded-xl border border-slate-600/80 bg-[#080f1b] p-3 text-left opacity-0 shadow-2xl transition-all group-hover/marker:translate-y-0 group-hover/marker:opacity-100 group-focus-visible/marker:translate-y-0 group-focus-visible/marker:opacity-100", dayIndex >= 21 ? "bottom-full mb-2" : "top-full mt-2", day.getDay() >= 5 ? "right-0" : "left-0")}>
                               <span className="block font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300/75">일정 미리보기</span>
-                              <strong className="mt-1.5 block text-[12px] leading-5 text-white">{commitment.title}</strong>
-                              <span className="mt-1 flex items-center gap-2 text-[9px] text-slate-500">{commitment.workspace_name}<ScheduleCardBadge status={status} /></span>
+                              <span className="mt-1.5 flex items-start gap-2">
+                                <strong className="min-w-0 break-words text-[12px] leading-5 text-white">{commitment.title}</strong>
+                                <ScheduleCardBadge status={status} />
+                              </span>
+                              <span className="mt-1 block text-[9px] text-slate-500">{commitment.workspace_name}</span>
                               {preview ? <span className="mt-2 block border-t border-white/10 pt-2"><span className="block font-mono text-[9px] font-bold text-violet-200">최근 작업 · {preview.label}</span><span className="mt-1 block line-clamp-1 text-[10px] font-normal leading-4 text-slate-300">{preview.title}</span></span> : <span className="mt-2 block border-t border-white/10 pt-2 text-[10px] text-slate-500">아직 완료된 개발 이력이 없습니다.</span>}
                             </span>
                           </button>

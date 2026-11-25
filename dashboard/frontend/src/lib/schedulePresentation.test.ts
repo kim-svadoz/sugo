@@ -57,7 +57,7 @@ describe("schedule presentation", () => {
     expect(source).not.toContain('max-w-full truncate font-mono text-[9.5px] font-semibold text-slate-300');
     expect(source).not.toContain('mr-1 font-mono text-[9px] font-semibold text-slate-400');
     expect(source).toContain("{commitment.title}</button>");
-    expect(source).toContain("{commitment.workspace_name}<ScheduleCardBadge");
+    expect(source).toContain('text-slate-500">{commitment.workspace_name}</span>');
     expect(source).not.toContain('{commitment.workspace_name} · {commitment.due_date ?? "날짜 미정"}');
   });
 
