@@ -74,13 +74,12 @@ const SCHEDULE_CARD_STAGES = {
   ready: { label: "SPEC 작성 완료", tone: "bg-cyan-500/15 text-cyan-200", marker: "bg-cyan-300" },
   in_progress: { label: "진행 중", tone: "bg-sky-500/15 text-sky-300", marker: "bg-sky-400 motion-safe:animate-pulse" },
   awaiting_approval: { label: "사용자 승인 대기", tone: "bg-amber-400/15 text-amber-200", marker: "bg-amber-300" },
-  verification: { label: "검증 필요", tone: "bg-amber-400/15 text-amber-200", marker: "bg-amber-300" },
   done: { label: "개발 완료", tone: "bg-emerald-500/15 text-emerald-300", marker: "bg-emerald-300" },
 };
 
 function scheduleCardStatus(spec: ScheduledSpec | null) {
   const stage = spec && scheduleCardStage(spec);
-  return stage ? SCHEDULE_CARD_STAGES[stage] : null;
+  return stage ? SCHEDULE_CARD_STAGES[stage === "verification" ? "done" : stage] : null;
 }
 
 function ScheduleCardBadge({ status, compact = false }: { status: ReturnType<typeof scheduleCardStatus>; compact?: boolean }) {
@@ -910,17 +909,20 @@ export function SchedulePage() {
                   {savedFlash === "title" && <span className="text-[10.5px] font-semibold text-emerald-400">저장됨</span>}
                 </div>
               )}
-              <p className="font-mono text-[11px] text-[var(--color-text-dim)]">{selected.id} · {selected.focus_task_human_blocker?.kind === "review_confirmation" ? "사용자 확인 필요" : selected.status}</p>
+              <p className="font-mono text-[11px] text-[var(--color-text-dim)]">{selected.id} · {selected.focus_task_human_blocker?.kind === "review_confirmation" ? "사용자 확인 필요" : selected.status === "verification" ? "개발 완료" : selected.status}</p>
               {(() => {
                 const guidance = scheduleAttention(selected);
+                const verificationException = selected.status === "verification";
+                const developmentComplete = guidance.kind === "done" || verificationException;
                 return (
                   <div className="mt-3 rounded-lg border border-cyan-500/25 bg-cyan-500/[0.07] px-3 py-2.5 text-[11.5px] leading-relaxed text-slate-200">
                     <div className="flex items-center justify-between gap-2">
-                      <strong className="font-semibold text-white">{guidance.kind === "done" ? "개발 완료" : guidance.currentStage}</strong>
-                      {guidance.kind !== "done" && <SpecStageBadge spec={selected} />}
+                      <strong className="font-semibold text-white">{developmentComplete ? "개발 완료" : guidance.currentStage}</strong>
+                      {!developmentComplete && <SpecStageBadge spec={selected} />}
                       <SpecDeploymentBadge deployment={selected.deployment} title={selected.title} environments={scheduleDeploymentEnvironments(deploymentSelections(selected), selected.deployment)} />
                     </div>
-                    {guidance.kind !== "done" && selected.focus_task_human_blocker?.kind !== "review_confirmation" && <>
+                    {verificationException && <p className="mt-1 text-slate-300">테스트 검증 예외는 AI 작업 현황에서 확인할 수 있습니다.</p>}
+                    {!developmentComplete && selected.focus_task_human_blocker?.kind !== "review_confirmation" && <>
                     <p className="mt-1 text-slate-300">{guidance.reason}</p>
                     <p className="mt-2"><span className="text-cyan-300">권장 작업</span> · {guidance.nextAction}</p>
                     <p className="mt-0.5 text-[10.5px] text-slate-400">{guidance.blockedNextStep}</p>

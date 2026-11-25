@@ -45,6 +45,8 @@ try {
       "/api/schedule/commitments": { commitments: [] },
       "/api/activity/stream": { events },
       "/api/workspaces/shop/task-projects": { projects: {} },
+      "/api/workspaces/shop/roadmap/spec-attachments": { attachments: [], locked: true },
+      "/api/workspaces/shop/roadmap/spec-references": { links: [], locked: true },
       "/api/workspaces": { workspaces: [{ name: "shop", projects: [], lastActivityAt: new Date().toISOString(), attentionCount: 0 }] },
     };
     return route.fulfill({ json: responses[path] ?? {} });
@@ -52,8 +54,10 @@ try {
 
   await page.goto(`${E2E_UI_URL}/schedule`);
   await page.getByRole("button", { name: "Agenda" }).click();
-  const badges = ["SPEC 작성 중", "SPEC 작성 완료", "개발 완료", "사용자 승인 대기", "진행 중", "검증 필요"];
-  for (const label of badges) await page.getByText(label, { exact: true }).waitFor();
+  const badges = ["SPEC 작성 중", "SPEC 작성 완료", "개발 완료", "사용자 승인 대기", "진행 중"];
+  for (const label of badges) await page.getByText(label, { exact: true }).first().waitFor();
+  const verificationCard = page.getByRole("button", { name: /배송 이력 개선/ });
+  await verificationCard.getByText("개발 완료", { exact: true }).waitFor();
   const reviewCard = page.getByRole("button", { name: /배송 상태 화면 개선/ });
   await reviewCard.getByText("사용자 승인 대기", { exact: true }).waitFor();
   const activeBadge = page.getByText("진행 중", { exact: true });
@@ -66,8 +70,12 @@ try {
   assert.equal(await animationName(activeDot), "none");
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.screenshot({ path: join(output, "agenda.png") });
+  await verificationCard.click();
+  await page.getByText("테스트 검증 예외는 AI 작업 현황에서 확인할 수 있습니다.").waitFor();
+  await page.keyboard.press("Escape");
 
   await page.getByRole("button", { name: "Calendar" }).click();
+  await page.getByRole("button", { name: "개발 일정 · 배송 이력 개선 · 개발 완료" }).waitFor();
   const reviewMarker = page.getByRole("button", { name: "개발 일정 · 배송 상태 화면 개선 · 사용자 승인 대기" });
   await reviewMarker.hover();
   const preview = await reviewMarker.getByText("일정 미리보기").locator("..").elementHandle();
@@ -83,7 +91,7 @@ try {
   await page.reload();
   await page.getByRole("button", { name: "Calendar" }).click();
   for (const label of badges) {
-    const badge = page.getByText(label, { exact: true }).filter({ visible: true });
+    const badge = page.getByText(label, { exact: true }).filter({ visible: true }).first();
     await badge.waitFor();
     assert.equal(await badge.evaluate((element) => {
       const scroller = element.closest(".overflow-y-auto");
