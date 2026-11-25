@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { loadSession, saveSession, sessionExists } from "../session.js";
 import { makeTestEvidenceRecord } from "../testEvidence.js";
-import { isBroadVerificationCommand } from "../verificationPlan.js";
+import { canRecordVerificationCommand } from "../verificationPlan.js";
 
 export const sugoRecordTestEvidenceInputSchema = {
   sessionId: z.string().describe("sugo_plan(start)으로 발급된 세션 id"),
@@ -43,10 +43,10 @@ export async function handleSugoRecordTestEvidence(rawArgs: unknown) {
   }
   const session = await loadSession(args.sessionId);
   const plan = session.data.chainInfo.verificationPlan;
-  if (args.kind === "feature" && plan && !plan.broadCommandsAllowed && isBroadVerificationCommand(args.command)) {
+  if (args.kind === "feature" && !canRecordVerificationCommand(plan, args.command)) {
     return errorResult(
       "VERIFICATION_OUT_OF_PLAN",
-      `targeted 검증 계획에서 전량 명령을 증거로 기록할 수 없습니다: ${args.command}`,
+      `targeted 검증 계획에서 이 전량 명령을 기록할 수 없습니다: ${args.command}. 예: npx vitest run test/example.test.ts. Gradle/Maven의 필수 명령은 필터 없이 ./gradlew clean check 또는 mvn clean verify를 사용하세요. 다른 전량 검증이 필요하면 sugo_chain에 fullVerificationReason을 전달하세요.`,
     );
   }
 

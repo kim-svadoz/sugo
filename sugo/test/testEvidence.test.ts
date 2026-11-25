@@ -117,6 +117,27 @@ describe("풀검증 명령 게이트 — 적대적 입력", () => {
     expect(checkTestEvidenceGate(true, rec("mvn clean verify")).ok).toBe(true);
   });
 
+  it.each([
+    "./gradlew clean test --tests '*HomeType*' --tests '*BaseDate*' check",
+    "./gradlew test --tests 'check'",
+    "./gradlew check -x test",
+    "./gradlew check --dry-run",
+    "./gradlew check || true",
+    "./gradlew test # check",
+    "./gradlew -p check test",
+    "./mvnw test",
+    "mvn verify -DskipTests",
+    "mvn verify -Dmaven.test.failure.ignore=true",
+    "mvn verify -Dtest=HomeTypeTest",
+    "mvn -pl service verify",
+  ])("필터·스킵·단순 테스트는 풀검증을 증명하지 못한다 (%s)", (command) => {
+    expect(checkTestEvidenceGate(true, rec(command)).code).toBe("TEST_NOT_FULL_VERIFY");
+  });
+
+  it.each([".\\gradlew.bat --no-daemon clean check", "./mvnw -B clean verify", "mvnw.cmd clean install"])("래퍼에서도 풀검증을 인정한다 (%s)", (command) => {
+    expect(classifyVerifyCommand(command)).toBe("full-verify");
+  });
+
   it("반드시 허용: npm은 풀검증 강제 불가라 단순 test여도 통과(미강제)", () => {
     expect(checkTestEvidenceGate(true, rec("npm test")).ok).toBe(true);
   });

@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { buildChainPrompt, type ChainDirection, type ChainHandoff } from "../chain.js";
 import { loadSession, saveSession, sessionExists } from "../session.js";
-import { buildVerificationPlan, classifyChangeImpact } from "../verificationPlan.js";
+import { buildVerificationPlan, classifyChangeImpact, promoteVerificationPlan } from "../verificationPlan.js";
 
 export const sugoChainInputSchema = {
   sessionId: z.string().describe("sugo_plan(start)으로 발급된 세션 id"),
   changeType: z.enum(["feature", "bugfix", "refactor"]).describe("이번 변경의 성격"),
   summary: z.string().describe("이전 단계 작업 요약(다음 에이전트에게 넘길 컨텍스트)"),
+  fullVerificationReason: z.string().trim().min(1).optional().describe("CODE_DONE 또는 TEST_RUNNING에서 메인 에이전트가 검증 범위를 full로 올리는 사유"),
 };
 
 const SugoChainArgs = z.object(sugoChainInputSchema);
@@ -22,9 +23,13 @@ export async function handleSugoChain(rawArgs: unknown) {
     return errorResult("SESSION_NOT_FOUND", `세션을 찾을 수 없습니다: ${args.sessionId}`);
   }
   const session = await loadSession(args.sessionId);
+  const canPromote = (session.state === "CODE_DONE" || session.state === "TEST_RUNNING") && !session.data.humanDecisionGate;
+  if (args.fullVerificationReason && !canPromote) {
+    return errorResult("CHAIN_WRONG_STATE", "full 검증으로 확대하려면 사람 결정을 기다리고 있지 않은 CODE_DONE 또는 TEST_RUNNING 상태여야 합니다.");
+  }
 
   let direction: ChainDirection;
-  if (session.state === "CODE_DONE") direction = "code_to_test";
+  if (session.state === "CODE_DONE" || args.fullVerificationReason) direction = "code_to_test";
   else if (session.state === "TEST_DONE") direction = "test_to_review";
   else {
     return errorResult(
@@ -33,8 +38,9 @@ export async function handleSugoChain(rawArgs: unknown) {
     );
   }
 
-  const verificationPlan = session.data.chainInfo.verificationPlan
+  const currentPlan = session.data.chainInfo.verificationPlan
     ?? buildVerificationPlan(classifyChangeImpact(session.data.chainInfo.changedFiles), args.changeType);
+  const verificationPlan = args.fullVerificationReason ? promoteVerificationPlan(currentPlan, args.fullVerificationReason) : currentPlan;
   const handoff: ChainHandoff = {
     project: session.projectPath,
     changedFiles: session.data.chainInfo.changedFiles,
@@ -54,6 +60,7 @@ export async function handleSugoChain(rawArgs: unknown) {
         ...session.data.chainInfo,
         chainHandoffs: [...(session.data.chainInfo.chainHandoffs ?? []), { direction, calledAt: new Date().toISOString() }],
         verificationPlan,
+        ...(verificationPlan === currentPlan ? {} : { testEvidence: undefined }),
       },
     },
   };

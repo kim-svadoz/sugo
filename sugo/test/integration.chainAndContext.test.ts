@@ -71,6 +71,33 @@ describe("sugo_chain — 세션 상태에 따른 방향 판단", () => {
     expect(result.data.prompt).toContain("읽기 전용");
   });
 
+  it("기존 targeted Gradle 세션은 필터 없이 check를 실행해 test_done을 통과한다", async () => {
+    const sessionId = await toCodeDone();
+    const chain = await call(handleSugoChain, { sessionId, changeType: "bugfix", summary: "모델 수정" });
+    expect(chain.data.handoff.verificationPlan.level).toBe("targeted");
+    await call(handleSugoPlan, { action: "test_start", sessionId });
+    const evidence = await call(handleSugoRecordTestEvidence, { sessionId, command: "./gradlew clean check", exitCode: 0, failed: 0 });
+    expect(evidence.data.ok).toBe(true);
+    const done = await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true });
+    expect(done.data.state).toBe("TEST_DONE");
+  });
+
+  it("테스트 중 확대 사유를 남기면 전량 실행을 허용하고 기존 증거는 새로 기록해야 한다", async () => {
+    const sessionId = await toCodeDone();
+    const args = { sessionId, changeType: "bugfix", summary: "이메일 로그인 수정" };
+    const original = await call(handleSugoChain, args);
+    await call(handleSugoPlan, { action: "test_start", sessionId });
+    await call(handleSugoRecordTestEvidence, { sessionId, command: "npx vitest run test/login.test.ts", exitCode: 0 });
+    const upgraded = await call(handleSugoChain, { ...args, fullVerificationReason: "공용 로그인 계약도 검증해야 함" });
+    const plan = upgraded.data.handoff.verificationPlan;
+    expect(plan.level).toBe("full");
+    expect(plan.fingerprint).not.toBe(original.data.handoff.verificationPlan.fingerprint);
+    expect(upgraded.data.prompt).toContain("공용 로그인 계약도 검증해야 함");
+    expect((await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true })).data.errorCode).toBe("TEST_EVIDENCE_MISSING");
+    expect((await call(handleSugoRecordTestEvidence, { sessionId, command: "npm test", exitCode: 0 })).data.ok).toBe(true);
+    expect((await call(handleSugoPlan, { action: "test_done", sessionId, testPassed: true })).data.state).toBe("TEST_DONE");
+  });
+
   it("잘못된 상태(SCAN)에서 호출하면 거부한다", async () => {
     const start = await call(handleSugoPlan, { action: "start", projectPath: projectDir, featureName: "x" });
     const result = await call(handleSugoChain, { sessionId: start.data.sessionId, changeType: "feature", summary: "x" });

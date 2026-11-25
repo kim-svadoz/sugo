@@ -24900,6 +24900,7 @@ function buildCodeToTestPrompt(handoff) {
     `\uBCC0\uACBD \uD30C\uC77C: ${handoff.changedFiles.length > 0 ? handoff.changedFiles.join(", ") : "(\uC5C6\uC74C)"}`,
     `PRD: ${handoff.prdPath ?? "(\uC5C6\uC74C)"}`,
     `\uAC80\uC99D \uBC94\uC704: ${handoff.verificationPlan.level}`,
+    `\uAC80\uC99D \uBC94\uC704 \uADFC\uAC70: ${handoff.verificationPlan.reasons.join(", ") || "(\uC5C6\uC74C)"}`,
     `\uAC80\uC99D \uACC4\uD68D: ${handoff.verificationPlan.implementationChecks.join(", ") || "(\uC5C6\uC74C)"}`,
     `\uC785\uB825 fingerprint: ${handoff.verificationPlan.fingerprint}`,
     "",
@@ -24908,7 +24909,11 @@ function buildCodeToTestPrompt(handoff) {
     "",
     "## test-agent \uC9C0\uC2DC\uC0AC\uD56D",
     "- PRD\uB97C oracle \uC0BC\uC544 \uBA85\uC138\uC5D0\uC11C \uD14C\uC2A4\uD2B8\uB97C \uB3C4\uCD9C\uD558\uC138\uC694. \uAD6C\uD604 \uCF54\uB4DC\uB97C \uBCF4\uACE0 \uB530\uB77C\uC9DC\uC9C0 \uB9C8\uC138\uC694(\uC21C\uD658\uAC80\uC99D \uBC29\uC9C0).",
-    ...handoff.verificationPlan.broadCommandsAllowed ? ["- \uACE0\uC704\uD5D8 \uBCC0\uACBD\uC73C\uB85C \uC804\uB7C9 \uD68C\uADC0\uAC00 \uD5C8\uC6A9\uB429\uB2C8\uB2E4. \uACC4\uD68D\uC5D0 \uAE30\uB85D\uB41C \uBC94\uC704\uB9CC \uC2E4\uD589\uD558\uC138\uC694."] : ["- targeted \uACC4\uD68D\uC785\uB2C8\uB2E4. \uC804\uB7C9 \uD68C\uADC0\uB97C \uC2E4\uD589\uD558\uC9C0 \uB9C8\uC138\uC694. \uBCC0\uACBD \uD589\uC704\uB97C \uC9C1\uC811 \uAC80\uC99D\uD558\uB294 \uCD5C\uC18C \uD14C\uC2A4\uD2B8\uB9CC \uC2E4\uD589\uD558\uC138\uC694."],
+    ...handoff.verificationPlan.broadCommandsAllowed ? ["- \uC804\uB7C9 \uD68C\uADC0\uAC00 \uD5C8\uC6A9\uB429\uB2C8\uB2E4. \uACC4\uD68D\uC5D0 \uAE30\uB85D\uB41C \uBC94\uC704\uB9CC \uC2E4\uD589\uD558\uC138\uC694."] : [
+      "- targeted \uACC4\uD68D\uC785\uB2C8\uB2E4. \uBCC0\uACBD \uD589\uC704\uB97C \uC9C1\uC811 \uAC80\uC99D\uD558\uB294 \uCD5C\uC18C \uD14C\uC2A4\uD2B8\uB97C \uC2E4\uD589\uD558\uC138\uC694. \uC77C\uBC18 \uC804\uB7C9 \uD68C\uADC0\uB97C \uC2E4\uD589\uD558\uC9C0 \uB9C8\uC138\uC694.",
+      "- Gradle/Maven\uC758 test_done\uC5D0\uB294 \uD544\uD130 \uC5C6\uC774 ./gradlew clean check \uB610\uB294 mvn clean verify\uB85C \uAC80\uC99D\uD55C \uC99D\uAC70\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4. \uC774 \uBA85\uB839\uC740 targeted \uACC4\uD68D\uC5D0\uC11C\uB3C4 \uAE30\uB85D\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+      "- \uB2E4\uB978 \uC804\uB7C9 \uAC80\uC99D\uC774 \uD544\uC694\uD558\uBA74 \uBA54\uC778 \uC5D0\uC774\uC804\uD2B8\uC5D0 \uC0AC\uC720\uB97C \uC804\uB2EC\uD574 sugo_chain(fullVerificationReason)\uC73C\uB85C \uACC4\uD68D\uC744 \uD655\uB300\uD558\uC138\uC694."
+    ],
     "- \uC785\uB825 fingerprint\uAC00 \uAC19\uC740 \uC131\uACF5 \uC99D\uAC70\uB294 \uC7AC\uC0AC\uC6A9\uD558\uACE0 \uAC19\uC740 \uBA85\uB839\uC744 \uB2E4\uC2DC \uC2E4\uD589\uD558\uC9C0 \uB9C8\uC138\uC694.",
     "- \uAC01 REQ\uB97C \uB36E\uB294 \uD14C\uC2A4\uD2B8 \uD074\uB798\uC2A4\xB7\uD30C\uC77C\uC744 \uC815\uB9AC\uD574 testClasses\uB85C \uAE30\uB85D\uD558\uACE0, \uC11C\uBC84\uAC00 \uB3CC\uB824\uC900 coverageMap \uCD08\uC548\uC744 \uD655\uC778\uD55C \uB4A4 covered \uAC12\uC744 \uC9C1\uC811 \uD310\uB2E8\uD574 \uC81C\uCD9C\uD558\uC138\uC694.",
     "- \uC644\uB8CC \uD6C4 \uBC18\uB4DC\uC2DC sugo_record_test_evidence\uB85C \uC2E4\uD589 \uACB0\uACFC\uB97C \uAE30\uB85D\uD558\uC138\uC694 \u2014 \uC774 \uAE30\uB85D\uB9CC\uC774 test_done \uAC8C\uC774\uD2B8\uAC00 \uC2E0\uB8B0\uD558\uB294 \uC99D\uAC70\uC785\uB2C8\uB2E4."
@@ -24943,6 +24948,314 @@ function buildChainPrompt(direction, handoff) {
 
 // src/verificationPlan.ts
 import { createHash as createHash3 } from "node:crypto";
+
+// src/gates.ts
+function ok() {
+  return { ok: true };
+}
+function fail(code, message) {
+  return { ok: false, code, message };
+}
+var REQ_TAG_RE = /\bREQ-\d+\b/g;
+function validatePrd(content) {
+  const trimmed = content.trim();
+  const length = trimmed.length;
+  const reqIds = new Set((trimmed.match(REQ_TAG_RE) ?? []).map((s) => s.toUpperCase()));
+  const reqCount = reqIds.size;
+  const errors = [];
+  if (length < 100) errors.push("PRD_TOO_SHORT");
+  if (reqCount < 1) errors.push("PRD_MISSING_REQUIREMENTS");
+  return { ok: errors.length === 0, length, reqCount, errors };
+}
+var BASELINE_SIGNAL_PATTERNS = [
+  { label: "jdk-runtime-upgrade", re: /(JDK|자바\s*버전|java\s*version|런타임)[\s\S]{0,12}(상향|업그레이드|변경|마이그레이션|upgrade|migration)/i },
+  { label: "build-system-change", re: /(빌드\s*시스템|build\s*system)[\s\S]{0,12}(변경|교체|전환|migration)/i },
+  { label: "dependency-removal", re: /의존성[\s\S]{0,6}(제거|삭제|내재화)|(dependency|library)[\s\S]{0,12}(removal|removed|inlin(e|ing))/i }
+];
+function detectBaselineSignals(prdContent) {
+  const signals = BASELINE_SIGNAL_PATTERNS.filter((p) => p.re.test(prdContent)).map((p) => p.label);
+  return { required: signals.length > 0, signals };
+}
+function checkBaselineGate(required2, baselineEvidenceExitCode) {
+  if (!required2) return ok();
+  if (baselineEvidenceExitCode === null) {
+    return fail("BASELINE_NOT_GREEN", "baseline \uC2DC\uADF8\uB110\uC774 \uAC10\uC9C0\uB41C PRD\uC785\uB2C8\uB2E4. code_done \uC804\uC5D0 baseline \uD14C\uC2A4\uD2B8 \uC99D\uAC70(record_test_evidence, kind=baseline)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  }
+  if (baselineEvidenceExitCode !== 0) {
+    return fail("BASELINE_NOT_GREEN", `baseline \uD14C\uC2A4\uD2B8\uAC00 \uADF8\uB9B0\uC774 \uC544\uB2D9\uB2C8\uB2E4(exitCode=${baselineEvidenceExitCode}).`);
+  }
+  return ok();
+}
+function checkAnalyzeGate(analyzeAttempts, hasPrd, blockedAction = "code_done") {
+  if (!hasPrd) return ok();
+  if (analyzeAttempts < 1) {
+    return fail("ANALYZE_NOT_CALLED", `${blockedAction} \uC804\uC5D0 sugo_analyze\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4.`);
+  }
+  return ok();
+}
+var WIRING_FILE_PATTERNS = [
+  /(^|[\\/])application(-[^\\/.]*)?\.(ya?ml|properties)$/i,
+  /(^|[\\/])\w+Config(uration)?\.(java|kt)$/,
+  /(^|[\\/])docker-compose(\.[^\\/]*)?\.ya?ml$/i,
+  /(^|[\\/])Dockerfile$/i,
+  /(^|[\\/])\.env(\.[^\\/]*)?$/,
+  /(^|[\\/])(build\.gradle(\.kts)?|pom\.xml)$/
+];
+function isWiringChange(changedFiles) {
+  return changedFiles.some((f) => WIRING_FILE_PATTERNS.some((re) => re.test(f)));
+}
+function checkWiringGate(changedFiles, mode, wiringTestAdded) {
+  const triggered = mode === "patch" || isWiringChange(changedFiles);
+  if (!triggered) return ok();
+  if (!wiringTestAdded) {
+    return fail(
+      "WIRING_TEST_MISSING",
+      "\uBC30\uC120/\uC124\uC815 \uD30C\uC77C \uBCC0\uACBD(\uB610\uB294 patch \uBAA8\uB4DC)\uC774 \uAC10\uC9C0\uB418\uC5C8\uC2B5\uB2C8\uB2E4. mock \uC5C6\uB294 \uBC30\uC120 \uD14C\uC2A4\uD2B8\uB97C \uCD94\uAC00/\uAC80\uC99D\uD588\uB294\uC9C0(wiringTestAdded)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok();
+}
+function checkRegistrationGlueGate(dependencyRemoved, registrationGlueChecked) {
+  if (!dependencyRemoved) return ok();
+  if (!registrationGlueChecked) {
+    return fail(
+      "REGISTRATION_GLUE_NOT_CHECKED",
+      "\uC758\uC874\uC131 \uC81C\uAC70/\uB0B4\uC7AC\uD654\uAC00 \uC120\uC5B8\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB4F1\uB85D \uAE00\uB8E8(\uBE48 \uB4F1\uB85D \uBA54\uD0C0)\uAC00 \uB3D9\uC77C\uD558\uAC8C \uC720\uC9C0\uB418\uB294\uC9C0 diff\uB85C \uD655\uC778(registrationGlueChecked)\uD574\uC57C \uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok();
+}
+var SPRING_BOOT_TEST_ANNOTATION_RE = /^[ \t]*@SpringBootTest\b/m;
+function hasValidSpringBootTestAnnotation(fileContents) {
+  return fileContents.some((content) => SPRING_BOOT_TEST_ANNOTATION_RE.test(content));
+}
+function checkBootGate(bootable, annotationFound, bootUnverifiedReason) {
+  if (!bootable) return ok();
+  if (annotationFound) return ok();
+  if (bootUnverifiedReason && bootUnverifiedReason.trim().length > 0) return ok();
+  return fail(
+    "BOOT_GATE_FAILED",
+    "\uBD80\uD305 \uAC00\uB2A5 \uC2A4\uD0DD(Spring Boot)\uC778\uB370 \uD480\uCEE8\uD14D\uC2A4\uD2B8 @SpringBootTest\uAC00 \uBC1C\uACAC\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uD658\uACBD\uBD80\uC7AC\uBA74 bootUnverifiedReason\uC73C\uB85C \uB77C\uBCA8\uB9C1\uD558\uC138\uC694."
+  );
+}
+function checkUserConfirmationGate(userConfirmed) {
+  if (!userConfirmed) {
+    return fail(
+      "USER_CONFIRMATION_REQUIRED",
+      "review_done \uC804\uC5D0 work-result\uB97C \uC0AC\uB78C\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uD655\uC778(userConfirmed:true)\uBC1B\uC544\uC57C \uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok();
+}
+function validateSummaryQuality(summary) {
+  const trimmed = summary.trim();
+  const lines2 = trimmed.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0).length;
+  const length = trimmed.length;
+  const uniqueChars = new Set(trimmed.replace(/\s+/g, "")).size;
+  const tokens = trimmed.split(/[^\p{L}\p{N}]+/u).filter((t) => t.length >= 2);
+  const distinctTokens = new Set(tokens.map((t) => t.toLowerCase())).size;
+  const errors = [];
+  if (lines2 < 3) errors.push("SUMMARY_TOO_FEW_LINES");
+  if (length < 30) errors.push("SUMMARY_TOO_SHORT");
+  if (uniqueChars < 10) errors.push("SUMMARY_LOW_CHAR_DIVERSITY");
+  if (distinctTokens < 5) errors.push("SUMMARY_LOW_TOKEN_DIVERSITY");
+  return { ok: errors.length === 0, lines: lines2, length, uniqueChars, distinctTokens, errors };
+}
+function checkRuntimeVerificationGate(testPassedState, runtimeCheck, bootable) {
+  const labeled = !!(runtimeCheck.unverifiedReason && runtimeCheck.unverifiedReason.trim().length > 0);
+  if (!runtimeCheck.runtimeVerified) {
+    if (labeled) return ok();
+    return fail(
+      "RUNTIME_UNVERIFIED_GATE_FAILED",
+      "\uC2E4\uC81C \uBE4C\uB4DC+\uD14C\uC2A4\uD2B8\uB85C \uADF8\uB9B0\uC784\uC744 \uC99D\uBA85(runtimeVerified:true)\uD558\uAC70\uB098 \uD658\uACBD\uBD80\uC7AC\uB97C unverifiedReason\uC73C\uB85C \uB77C\uBCA8\uB9C1\uD574\uC57C \uD569\uB2C8\uB2E4."
+    );
+  }
+  if (testPassedState === "fail") {
+    return fail(
+      "RUNTIME_CLAIM_CONTRADICTS_EVIDENCE",
+      "\uAE30\uB85D\uB41C test evidence\uAC00 fail\uC778\uB370 runtimeVerified:true\uB97C \uC8FC\uC7A5\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uC790\uAE30\uBCF4\uACE0\uBCF4\uB2E4 \uAE30\uB85D\uB41C \uC99D\uAC70\uAC00 \uC6B0\uC120\uD569\uB2C8\uB2E4."
+    );
+  }
+  if (bootable && runtimeCheck.wiringVerified !== true) {
+    if (labeled) return ok();
+    return fail(
+      "RUNTIME_WIRING_NOT_VERIFIED",
+      "\uBD80\uD305 \uAC00\uB2A5 \uC2A4\uD0DD\uC740 wiringVerified:true(\uC571\uC774 \uC2E4\uC81C \uB728\uB294\uC9C0 \uBC30\uC120 \uAC80\uC99D)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok();
+}
+function checkSpecOracleGate(specOracle) {
+  if (!specOracle?.required) return ok();
+  if (specOracle.ran) return ok();
+  return fail(
+    "SPEC_ORACLE_NOT_RUN",
+    "\uAE30\uC900 \uC2A4\uD399 \uBB38\uC11C \uB300\uC870(oracle)\uAC00 \uC544\uC9C1 \uAE30\uB85D\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4 \u2014 sugo_plan({action:'oracle_done', ...})\uC73C\uB85C \uB300\uC870 \uACB0\uACFC\uB97C \uBA3C\uC800 \uAE30\uB85D\uD558\uC138\uC694."
+  );
+}
+function checkOracleDone(uncovered, overrideReason) {
+  if (!uncovered || uncovered.length === 0) return ok();
+  if (overrideReason && overrideReason.trim().length > 0) return ok();
+  return fail(
+    "ORACLE_OVERRIDE_REASON_REQUIRED",
+    `\uBBF8\uCEE4\uBC84 \uD56D\uBAA9 ${uncovered.length}\uAC74\uC744 \uBCF4\uACE0\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uADF8\uB300\uB85C \uC9C4\uD589\uD558\uB824\uBA74 overrideReason(\uC65C \uC9C0\uAE08 \uCEE4\uBC84\uD558\uC9C0 \uC54A\uB294\uC9C0)\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.`
+  );
+}
+function checkJiraOption(option, jiraKey) {
+  if (!option) return fail("JIRA_OPTION_REQUIRED", "jira action\uC5D0\uB294 jiraOption('new'|'link'|'skip')\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  if (option === "link" && !(jiraKey && jiraKey.trim().length > 0)) {
+    return fail("JIRA_KEY_REQUIRED", "jiraOption:'link'\uC5D0\uB294 \uC5F0\uACB0\uD560 jiraKey\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  }
+  return ok();
+}
+var LEDGER_HEADING = /^#{1,6}\s*.*(in[-\s]?scope|범위|dod|완료\s*조건|definition of done)/i;
+var OUT_OF_SCOPE_HEADING = /out[-\s]?of[-\s]?scope|범위\s*외|제외/i;
+var REQ_REF = /\bREQ-\d+\b/gi;
+function validateConformanceLedger(prdContent) {
+  const lines2 = prdContent.split(/\r?\n/);
+  const declaredReqs = /* @__PURE__ */ new Set();
+  {
+    let scanLedger = false;
+    for (const raw of lines2) {
+      const line = raw.trim();
+      if (/^#{1,6}\s/.test(line)) {
+        scanLedger = LEDGER_HEADING.test(line) && !OUT_OF_SCOPE_HEADING.test(line);
+        if (!scanLedger) for (const m of line.match(REQ_REF) ?? []) declaredReqs.add(m.toUpperCase());
+        continue;
+      }
+      if (scanLedger) continue;
+      for (const m of line.match(REQ_REF) ?? []) declaredReqs.add(m.toUpperCase());
+    }
+  }
+  const uncovered = [];
+  const ghost = [];
+  let inLedger = false;
+  for (const raw of lines2) {
+    const line = raw.trim();
+    if (/^#{1,6}\s/.test(line)) {
+      inLedger = LEDGER_HEADING.test(line) && !OUT_OF_SCOPE_HEADING.test(line);
+      continue;
+    }
+    if (!inLedger) continue;
+    const item = line.replace(/^[-*+]\s*/, "").replace(/^\d+\.\s*/, "").trim();
+    if (item === line && !/^[-*+]\s|^\d+\.\s/.test(line)) continue;
+    if (item.length === 0) continue;
+    const refs = item.match(REQ_REF);
+    if (!refs || refs.length === 0) {
+      uncovered.push(item);
+      continue;
+    }
+    for (const ref of refs) {
+      if (!declaredReqs.has(ref.toUpperCase())) ghost.push(ref.toUpperCase());
+    }
+  }
+  if (uncovered.length === 0 && ghost.length === 0) return ok();
+  const parts2 = [];
+  if (uncovered.length > 0) parts2.push(`REQ \uBBF8\uB9E4\uD551 ${uncovered.length}\uAC74: ${uncovered.join(" / ")}`);
+  if (ghost.length > 0) parts2.push(`\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 REQ \uCC38\uC870: ${[...new Set(ghost)].join(", ")}`);
+  return fail(
+    "CONFORMANCE_LEDGER_INCOMPLETE",
+    `In-Scope/DoD \uC6D0\uC7A5\uC774 REQ\uC640 \uB9DE\uBB3C\uB9AC\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4 \u2014 ${parts2.join(" \xB7 ")}. \uBC94\uC704\xB7\uC644\uB8CC\uC870\uAC74\uC758 \uAC01 \uD56D\uBAA9 \uB05D\uC5D0 (REQ-N)\uC744 \uBD99\uC774\uAC70\uB098 \uC6D0\uC7A5\uC5D0\uC11C \uBE7C\uC138\uC694.`
+  );
+}
+function checkValidateCalledGate(lastValidation) {
+  if (!lastValidation) {
+    return fail("VALIDATE_NOT_CALLED", "review_done \uC804\uC5D0 sugo_validate\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4.");
+  }
+  return ok();
+}
+function checkValidateVerifiedGate(lastValidation) {
+  if (!lastValidation || lastValidation.verifiedFailures.length === 0) return ok();
+  const detail = lastValidation.verifiedFailures.map((f) => `${f.harnessId}#${f.checkId}(${f.detail})`).join(" / ");
+  return fail(
+    "VALIDATE_VERIFIED_FAILURE",
+    `sugo_validate\uAC00 \uC11C\uBC84 \uC2E4\uCE21\uC73C\uB85C \uD655\uC778\uD55C \uC704\uBC18\uC774 \uC788\uC2B5\uB2C8\uB2E4 \u2014 ${detail}. \uC2E4\uCE21 \uACB0\uACFC\uB77C \uC790\uAE30\uBCF4\uACE0\uB85C \uB36E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`
+  );
+}
+function checkLethalTrifectaCalledGate(lastCheck) {
+  if (!lastCheck) {
+    return fail(
+      "LETHAL_TRIFECTA_NOT_CALLED",
+      "review_done \uC804\uC5D0 sugo_check_lethal_trifecta\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4."
+    );
+  }
+  return ok();
+}
+function checkLethalTrifectaMitigationGate(lastCheck, trifectaMitigation) {
+  if (!lastCheck || lastCheck.warnings.length === 0) return ok();
+  if (trifectaMitigation && trifectaMitigation.trim().length > 0) return ok();
+  const detail = lastCheck.warnings.map((w) => `${w.toolName}(${w.reason})`).join(" / ");
+  return fail(
+    "LETHAL_TRIFECTA_MITIGATION_REQUIRED",
+    `sugo_check_lethal_trifecta\uAC00 \uACBD\uACE0\uB97C \uBCF4\uACE0\uD588\uC2B5\uB2C8\uB2E4 \u2014 ${detail}. \uADF8\uB300\uB85C \uC9C4\uD589\uD558\uB824\uBA74 trifectaMitigation(\uC5B4\uB5BB\uAC8C \uC644\uD654\uD588\uB294\uC9C0)\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.`
+  );
+}
+
+// src/testEvidence.ts
+var GRADLE_LAUNCHER = /^gradlew?(?:\.bat|\.exe)?$/i;
+var MAVEN_LAUNCHER = /^(?:mvnw?|maven)(?:\.cmd|\.bat|\.exe)?$/i;
+var GRADLE_LIMIT = /^(?:--tests?|--exclude-task|--dry-run|--task-graph|--help|--version|--project-dir|--include-build|--build-file|--settings-file|--init-script)(?:=|$)|^-(?:x|m|h|v|p|b|c|I)/;
+var MAVEN_LIMIT = /^(?:--projects|--resume-from|--non-recursive|--file|--fail-never|--help|--version|-(?:pl|rf|N|f|fn|h|v))(?:=|$)/;
+var MAVEN_TEST_FILTER = /^-D(?:test|it\.test|(?:surefire|failsafe)\.(?:includes|excludes))(?:=|$)/i;
+var MAVEN_TEST_SKIP = /^-D(?:skipTests|skipITs|maven\.test\.(?:skip|failure\.ignore))(?:=(?!false$).*|$)/i;
+function executableName(arg) {
+  return arg?.split(/[\\/]/).pop() ?? "";
+}
+function classifyVerifyCommand(command) {
+  const invocation = command.trim().replace(/^cd\s+(?:"[^"]+"|'[^']+'|[^\s;&|]+)\s*&&\s+/, "");
+  const words = invocation.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) ?? [];
+  const args2 = words.map((word) => word.replace(/^["']|["']$/g, ""));
+  const launcherIndex = /^(?:ba)?sh$/.test(executableName(args2[0])) ? 1 : 0;
+  const launcher = executableName(args2[launcherIndex]);
+  const tasks = args2.slice(launcherIndex + 1);
+  const simpleInvocation = !/[;&|<>`$#\r\n]/.test(invocation);
+  if (GRADLE_LAUNCHER.test(launcher)) {
+    return simpleInvocation && tasks.includes("check") && !tasks.some((arg) => GRADLE_LIMIT.test(arg)) ? "full-verify" : "partial-test";
+  }
+  if (MAVEN_LAUNCHER.test(launcher)) {
+    const hasVerifyPhase = tasks.includes("verify") || tasks.includes("install");
+    const limitsVerification = tasks.some((arg) => MAVEN_LIMIT.test(arg) || MAVEN_TEST_FILTER.test(arg) || MAVEN_TEST_SKIP.test(arg));
+    return simpleInvocation && hasVerifyPhase && !limitsVerification ? "full-verify" : "partial-test";
+  }
+  return /gradlew|\bgradle\b|\bmvnw?\b|\bmaven\b/i.test(invocation) ? "partial-test" : "not-enforceable";
+}
+function isFullVerifyCommand(command) {
+  return classifyVerifyCommand(command) === "full-verify";
+}
+function isFullVerifyEnforceable(command) {
+  return classifyVerifyCommand(command) !== "not-enforceable";
+}
+function deriveTestState(input) {
+  if (input.unverified) return "unverified";
+  if (input.exitCode === void 0) return "unverified";
+  if (input.exitCode === 0 && (input.failed ?? 0) === 0) return "pass";
+  return "fail";
+}
+function makeTestEvidenceRecord(kind, input, recordedAt) {
+  return { ...input, kind, recordedAt, derivedState: deriveTestState(input) };
+}
+function checkTestEvidenceGate(claimedTestPassed, evidence) {
+  if (!evidence) {
+    return fail("TEST_EVIDENCE_MISSING", "test_done \uC804\uC5D0 sugo_record_test_evidence\uB85C \uC2E4\uD589 \uC99D\uAC70\uB97C \uAE30\uB85D\uD574\uC57C \uD569\uB2C8\uB2E4.");
+  }
+  if (evidence.derivedState === "unverified") return ok();
+  const actuallyPassed = evidence.derivedState === "pass";
+  if (claimedTestPassed !== actuallyPassed) {
+    return fail(
+      "TEST_EVIDENCE_MISMATCH",
+      `testPassed \uC8FC\uC7A5(${claimedTestPassed})\uC774 \uAE30\uB85D\uB41C \uC99D\uAC70(${evidence.derivedState}, exitCode=${evidence.exitCode}, failed=${evidence.failed ?? "?"})\uC640 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`
+    );
+  }
+  if (actuallyPassed && classifyVerifyCommand(evidence.command) === "partial-test") {
+    return fail(
+      "TEST_NOT_FULL_VERIFY",
+      `\uAE30\uB85D\uB41C \uBA85\uB839("${evidence.command}")\uC774 \uD480\uAC80\uC99D \uBA85\uB839\uC774 \uC544\uB2D9\uB2C8\uB2E4. \uD544\uD130\xB7\uC2A4\uD0B5 \uC635\uC158 \uC5C6\uC774 ./gradlew clean check, ./mvnw clean verify \uB610\uB294 mvn clean verify\uB97C \uC2E4\uD589\uD558\uACE0 \uADF8 \uACB0\uACFC\uB97C \uAE30\uB85D\uD558\uC138\uC694.`
+    );
+  }
+  return ok();
+}
+
+// src/verificationPlan.ts
 var normalize = (file) => file.replace(/\\/g, "/").replace(/^\.\//, "");
 var unique = (items) => [...new Set(items)];
 function isTest(file) {
@@ -25007,12 +25320,27 @@ function isBroadVerificationCommand(command) {
   if (/\bgo\s+test\s+\.\/\.\.\./.test(value)) return true;
   return false;
 }
+function canRecordVerificationCommand(plan, command) {
+  return !plan || plan.broadCommandsAllowed || isFullVerifyCommand(command) || !isBroadVerificationCommand(command);
+}
+function promoteVerificationPlan(plan, reason) {
+  if (plan.level === "full") return plan;
+  return {
+    ...plan,
+    fingerprint: createHash3("sha256").update(JSON.stringify([plan.fingerprint, "full", reason])).digest("hex"),
+    level: "full",
+    reasons: [...plan.reasons, reason],
+    implementationChecks: unique(["full-regression", ...plan.implementationChecks.filter((check2) => check2 !== "targeted-test")]),
+    broadCommandsAllowed: true
+  };
+}
 
 // src/tools/sugoChain.ts
 var sugoChainInputSchema = {
   sessionId: external_exports.string().describe("sugo_plan(start)\uC73C\uB85C \uBC1C\uAE09\uB41C \uC138\uC158 id"),
   changeType: external_exports.enum(["feature", "bugfix", "refactor"]).describe("\uC774\uBC88 \uBCC0\uACBD\uC758 \uC131\uACA9"),
-  summary: external_exports.string().describe("\uC774\uC804 \uB2E8\uACC4 \uC791\uC5C5 \uC694\uC57D(\uB2E4\uC74C \uC5D0\uC774\uC804\uD2B8\uC5D0\uAC8C \uB118\uAE38 \uCEE8\uD14D\uC2A4\uD2B8)")
+  summary: external_exports.string().describe("\uC774\uC804 \uB2E8\uACC4 \uC791\uC5C5 \uC694\uC57D(\uB2E4\uC74C \uC5D0\uC774\uC804\uD2B8\uC5D0\uAC8C \uB118\uAE38 \uCEE8\uD14D\uC2A4\uD2B8)"),
+  fullVerificationReason: external_exports.string().trim().min(1).optional().describe("CODE_DONE \uB610\uB294 TEST_RUNNING\uC5D0\uC11C \uBA54\uC778 \uC5D0\uC774\uC804\uD2B8\uAC00 \uAC80\uC99D \uBC94\uC704\uB97C full\uB85C \uC62C\uB9AC\uB294 \uC0AC\uC720")
 };
 var SugoChainArgs = external_exports.object(sugoChainInputSchema);
 async function handleSugoChain(rawArgs) {
@@ -25021,8 +25349,12 @@ async function handleSugoChain(rawArgs) {
     return errorResult2("SESSION_NOT_FOUND", `\uC138\uC158\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.sessionId}`);
   }
   const session = await loadSession(args2.sessionId);
+  const canPromote = (session.state === "CODE_DONE" || session.state === "TEST_RUNNING") && !session.data.humanDecisionGate;
+  if (args2.fullVerificationReason && !canPromote) {
+    return errorResult2("CHAIN_WRONG_STATE", "full \uAC80\uC99D\uC73C\uB85C \uD655\uB300\uD558\uB824\uBA74 \uC0AC\uB78C \uACB0\uC815\uC744 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uC9C0 \uC54A\uC740 CODE_DONE \uB610\uB294 TEST_RUNNING \uC0C1\uD0DC\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  }
   let direction;
-  if (session.state === "CODE_DONE") direction = "code_to_test";
+  if (session.state === "CODE_DONE" || args2.fullVerificationReason) direction = "code_to_test";
   else if (session.state === "TEST_DONE") direction = "test_to_review";
   else {
     return errorResult2(
@@ -25030,7 +25362,8 @@ async function handleSugoChain(rawArgs) {
       `sugo_chain\uC740 CODE_DONE(\u2192test-agent) \uB610\uB294 TEST_DONE(\u2192review-agent) \uC0C1\uD0DC\uC5D0\uC11C\uB9CC \uD638\uCD9C\uD569\uB2C8\uB2E4. \uD604\uC7AC \uC0C1\uD0DC: ${session.state}`
     );
   }
-  const verificationPlan = session.data.chainInfo.verificationPlan ?? buildVerificationPlan(classifyChangeImpact(session.data.chainInfo.changedFiles), args2.changeType);
+  const currentPlan = session.data.chainInfo.verificationPlan ?? buildVerificationPlan(classifyChangeImpact(session.data.chainInfo.changedFiles), args2.changeType);
+  const verificationPlan = args2.fullVerificationReason ? promoteVerificationPlan(currentPlan, args2.fullVerificationReason) : currentPlan;
   const handoff = {
     project: session.projectPath,
     changedFiles: session.data.chainInfo.changedFiles,
@@ -25048,7 +25381,8 @@ async function handleSugoChain(rawArgs) {
       chainInfo: {
         ...session.data.chainInfo,
         chainHandoffs: [...session.data.chainInfo.chainHandoffs ?? [], { direction, calledAt: (/* @__PURE__ */ new Date()).toISOString() }],
-        verificationPlan
+        verificationPlan,
+        ...verificationPlan === currentPlan ? {} : { testEvidence: void 0 }
       }
     }
   };
@@ -28551,36 +28885,36 @@ async function handleSugoCheckpoint(rawArgs) {
         expires_at: args2.expires_at,
         checklist: args2.checklist
       });
-      return ok({ checkpoint });
+      return ok2({ checkpoint });
     }
     case "get": {
       if (!args2.id) return errorResult4("ID_REQUIRED", "get action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const checkpoint = await getCheckpoint(args2.workspace, args2.id);
       if (!checkpoint) return errorResult4("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
-      return ok({ checkpoint });
+      return ok2({ checkpoint });
     }
     case "list": {
       const checkpoints = await listCheckpoints(args2.workspace);
-      return ok({ checkpoints });
+      return ok2({ checkpoints });
     }
     case "remove": {
       if (!args2.id) return errorResult4("ID_REQUIRED", "remove action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const removed = await removeCheckpoint(args2.workspace, args2.id);
       if (!removed) return errorResult4("CHECKPOINT_NOT_FOUND", `\uCCB4\uD06C\uD3EC\uC778\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.id}`);
-      return ok({});
+      return ok2({});
     }
     case "memory": {
       if (!args2.note) return errorResult4("NOTE_REQUIRED", "memory action\uC5D0\uB294 note\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       await appendMemory(args2.workspace, args2.note);
-      return ok({});
+      return ok2({});
     }
     case "read_memory": {
       const memory = await readMemory(args2.workspace);
-      return ok({ memory });
+      return ok2({ memory });
     }
     case "migrate": {
       const migratedCount = await migrateCheckpoints(args2.workspace);
-      return ok({ migratedCount });
+      return ok2({ migratedCount });
     }
     case "sync": {
       if (!args2.id) return errorResult4("ID_REQUIRED", "sync action\uC5D0\uB294 id\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
@@ -28589,22 +28923,22 @@ async function handleSugoCheckpoint(rawArgs) {
       const config2 = await resolveDashboardConfig();
       await syncCheckpoint(args2.workspace, checkpoint);
       if (!config2.enabled) {
-        return ok({
+        return ok2({
           synced: false,
           dashboard: "disabled",
           note: "\uB300\uC2DC\uBCF4\uB4DC\uAC00 \uC124\uC815\uB418\uC9C0 \uC54A\uC544 \uC804\uC1A1\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uB85C\uCEEC \uCCB4\uD06C\uD3EC\uC778\uD2B8\uB294 \uADF8\uB300\uB85C \uB0A8\uC544 \uC788\uC2B5\uB2C8\uB2E4."
         });
       }
-      return ok({ synced: true, dashboard: "enabled" });
+      return ok2({ synced: true, dashboard: "enabled" });
     }
     case "pull": {
       if (!args2.projectPath) return errorResult4("PROJECT_PATH_REQUIRED", "pull action\uC5D0\uB294 projectPath\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
       const pulledCount = await pullCheckpointsToRules(args2.projectPath, args2.workspace);
-      return ok({ pulledCount });
+      return ok2({ pulledCount });
     }
   }
 }
-function ok(payload) {
+function ok2(payload) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, ...payload }, null, 2) }] };
 }
 function errorResult4(errorCode, message) {
@@ -28616,7 +28950,7 @@ function errorResult4(errorCode, message) {
 
 // src/version.ts
 function currentSugoVersion() {
-  return true ? "0.74.0" : "0.0.0-dev";
+  return true ? "0.75.0" : "0.0.0-dev";
 }
 
 // src/tools/sugoDelete.ts
@@ -29046,250 +29380,6 @@ function featureBranchName(branch) {
 init_fsUtil();
 import { mkdir as mkdir13, readFile as readFile19 } from "node:fs/promises";
 import { join as join22 } from "node:path";
-
-// src/gates.ts
-function ok2() {
-  return { ok: true };
-}
-function fail(code, message) {
-  return { ok: false, code, message };
-}
-var REQ_TAG_RE = /\bREQ-\d+\b/g;
-function validatePrd(content) {
-  const trimmed = content.trim();
-  const length = trimmed.length;
-  const reqIds = new Set((trimmed.match(REQ_TAG_RE) ?? []).map((s) => s.toUpperCase()));
-  const reqCount = reqIds.size;
-  const errors = [];
-  if (length < 100) errors.push("PRD_TOO_SHORT");
-  if (reqCount < 1) errors.push("PRD_MISSING_REQUIREMENTS");
-  return { ok: errors.length === 0, length, reqCount, errors };
-}
-var BASELINE_SIGNAL_PATTERNS = [
-  { label: "jdk-runtime-upgrade", re: /(JDK|자바\s*버전|java\s*version|런타임)[\s\S]{0,12}(상향|업그레이드|변경|마이그레이션|upgrade|migration)/i },
-  { label: "build-system-change", re: /(빌드\s*시스템|build\s*system)[\s\S]{0,12}(변경|교체|전환|migration)/i },
-  { label: "dependency-removal", re: /의존성[\s\S]{0,6}(제거|삭제|내재화)|(dependency|library)[\s\S]{0,12}(removal|removed|inlin(e|ing))/i }
-];
-function detectBaselineSignals(prdContent) {
-  const signals = BASELINE_SIGNAL_PATTERNS.filter((p) => p.re.test(prdContent)).map((p) => p.label);
-  return { required: signals.length > 0, signals };
-}
-function checkBaselineGate(required2, baselineEvidenceExitCode) {
-  if (!required2) return ok2();
-  if (baselineEvidenceExitCode === null) {
-    return fail("BASELINE_NOT_GREEN", "baseline \uC2DC\uADF8\uB110\uC774 \uAC10\uC9C0\uB41C PRD\uC785\uB2C8\uB2E4. code_done \uC804\uC5D0 baseline \uD14C\uC2A4\uD2B8 \uC99D\uAC70(record_test_evidence, kind=baseline)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-  }
-  if (baselineEvidenceExitCode !== 0) {
-    return fail("BASELINE_NOT_GREEN", `baseline \uD14C\uC2A4\uD2B8\uAC00 \uADF8\uB9B0\uC774 \uC544\uB2D9\uB2C8\uB2E4(exitCode=${baselineEvidenceExitCode}).`);
-  }
-  return ok2();
-}
-function checkAnalyzeGate(analyzeAttempts, hasPrd, blockedAction = "code_done") {
-  if (!hasPrd) return ok2();
-  if (analyzeAttempts < 1) {
-    return fail("ANALYZE_NOT_CALLED", `${blockedAction} \uC804\uC5D0 sugo_analyze\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4.`);
-  }
-  return ok2();
-}
-var WIRING_FILE_PATTERNS = [
-  /(^|[\\/])application(-[^\\/.]*)?\.(ya?ml|properties)$/i,
-  /(^|[\\/])\w+Config(uration)?\.(java|kt)$/,
-  /(^|[\\/])docker-compose(\.[^\\/]*)?\.ya?ml$/i,
-  /(^|[\\/])Dockerfile$/i,
-  /(^|[\\/])\.env(\.[^\\/]*)?$/,
-  /(^|[\\/])(build\.gradle(\.kts)?|pom\.xml)$/
-];
-function isWiringChange(changedFiles) {
-  return changedFiles.some((f) => WIRING_FILE_PATTERNS.some((re) => re.test(f)));
-}
-function checkWiringGate(changedFiles, mode, wiringTestAdded) {
-  const triggered = mode === "patch" || isWiringChange(changedFiles);
-  if (!triggered) return ok2();
-  if (!wiringTestAdded) {
-    return fail(
-      "WIRING_TEST_MISSING",
-      "\uBC30\uC120/\uC124\uC815 \uD30C\uC77C \uBCC0\uACBD(\uB610\uB294 patch \uBAA8\uB4DC)\uC774 \uAC10\uC9C0\uB418\uC5C8\uC2B5\uB2C8\uB2E4. mock \uC5C6\uB294 \uBC30\uC120 \uD14C\uC2A4\uD2B8\uB97C \uCD94\uAC00/\uAC80\uC99D\uD588\uB294\uC9C0(wiringTestAdded)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok2();
-}
-function checkRegistrationGlueGate(dependencyRemoved, registrationGlueChecked) {
-  if (!dependencyRemoved) return ok2();
-  if (!registrationGlueChecked) {
-    return fail(
-      "REGISTRATION_GLUE_NOT_CHECKED",
-      "\uC758\uC874\uC131 \uC81C\uAC70/\uB0B4\uC7AC\uD654\uAC00 \uC120\uC5B8\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB4F1\uB85D \uAE00\uB8E8(\uBE48 \uB4F1\uB85D \uBA54\uD0C0)\uAC00 \uB3D9\uC77C\uD558\uAC8C \uC720\uC9C0\uB418\uB294\uC9C0 diff\uB85C \uD655\uC778(registrationGlueChecked)\uD574\uC57C \uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok2();
-}
-var SPRING_BOOT_TEST_ANNOTATION_RE = /^[ \t]*@SpringBootTest\b/m;
-function hasValidSpringBootTestAnnotation(fileContents) {
-  return fileContents.some((content) => SPRING_BOOT_TEST_ANNOTATION_RE.test(content));
-}
-function checkBootGate(bootable, annotationFound, bootUnverifiedReason) {
-  if (!bootable) return ok2();
-  if (annotationFound) return ok2();
-  if (bootUnverifiedReason && bootUnverifiedReason.trim().length > 0) return ok2();
-  return fail(
-    "BOOT_GATE_FAILED",
-    "\uBD80\uD305 \uAC00\uB2A5 \uC2A4\uD0DD(Spring Boot)\uC778\uB370 \uD480\uCEE8\uD14D\uC2A4\uD2B8 @SpringBootTest\uAC00 \uBC1C\uACAC\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uD658\uACBD\uBD80\uC7AC\uBA74 bootUnverifiedReason\uC73C\uB85C \uB77C\uBCA8\uB9C1\uD558\uC138\uC694."
-  );
-}
-function checkUserConfirmationGate(userConfirmed) {
-  if (!userConfirmed) {
-    return fail(
-      "USER_CONFIRMATION_REQUIRED",
-      "review_done \uC804\uC5D0 work-result\uB97C \uC0AC\uB78C\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uD655\uC778(userConfirmed:true)\uBC1B\uC544\uC57C \uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok2();
-}
-function validateSummaryQuality(summary) {
-  const trimmed = summary.trim();
-  const lines2 = trimmed.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0).length;
-  const length = trimmed.length;
-  const uniqueChars = new Set(trimmed.replace(/\s+/g, "")).size;
-  const tokens = trimmed.split(/[^\p{L}\p{N}]+/u).filter((t) => t.length >= 2);
-  const distinctTokens = new Set(tokens.map((t) => t.toLowerCase())).size;
-  const errors = [];
-  if (lines2 < 3) errors.push("SUMMARY_TOO_FEW_LINES");
-  if (length < 30) errors.push("SUMMARY_TOO_SHORT");
-  if (uniqueChars < 10) errors.push("SUMMARY_LOW_CHAR_DIVERSITY");
-  if (distinctTokens < 5) errors.push("SUMMARY_LOW_TOKEN_DIVERSITY");
-  return { ok: errors.length === 0, lines: lines2, length, uniqueChars, distinctTokens, errors };
-}
-function checkRuntimeVerificationGate(testPassedState, runtimeCheck, bootable) {
-  const labeled = !!(runtimeCheck.unverifiedReason && runtimeCheck.unverifiedReason.trim().length > 0);
-  if (!runtimeCheck.runtimeVerified) {
-    if (labeled) return ok2();
-    return fail(
-      "RUNTIME_UNVERIFIED_GATE_FAILED",
-      "\uC2E4\uC81C \uBE4C\uB4DC+\uD14C\uC2A4\uD2B8\uB85C \uADF8\uB9B0\uC784\uC744 \uC99D\uBA85(runtimeVerified:true)\uD558\uAC70\uB098 \uD658\uACBD\uBD80\uC7AC\uB97C unverifiedReason\uC73C\uB85C \uB77C\uBCA8\uB9C1\uD574\uC57C \uD569\uB2C8\uB2E4."
-    );
-  }
-  if (testPassedState === "fail") {
-    return fail(
-      "RUNTIME_CLAIM_CONTRADICTS_EVIDENCE",
-      "\uAE30\uB85D\uB41C test evidence\uAC00 fail\uC778\uB370 runtimeVerified:true\uB97C \uC8FC\uC7A5\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uC790\uAE30\uBCF4\uACE0\uBCF4\uB2E4 \uAE30\uB85D\uB41C \uC99D\uAC70\uAC00 \uC6B0\uC120\uD569\uB2C8\uB2E4."
-    );
-  }
-  if (bootable && runtimeCheck.wiringVerified !== true) {
-    if (labeled) return ok2();
-    return fail(
-      "RUNTIME_WIRING_NOT_VERIFIED",
-      "\uBD80\uD305 \uAC00\uB2A5 \uC2A4\uD0DD\uC740 wiringVerified:true(\uC571\uC774 \uC2E4\uC81C \uB728\uB294\uC9C0 \uBC30\uC120 \uAC80\uC99D)\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok2();
-}
-function checkSpecOracleGate(specOracle) {
-  if (!specOracle?.required) return ok2();
-  if (specOracle.ran) return ok2();
-  return fail(
-    "SPEC_ORACLE_NOT_RUN",
-    "\uAE30\uC900 \uC2A4\uD399 \uBB38\uC11C \uB300\uC870(oracle)\uAC00 \uC544\uC9C1 \uAE30\uB85D\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4 \u2014 sugo_plan({action:'oracle_done', ...})\uC73C\uB85C \uB300\uC870 \uACB0\uACFC\uB97C \uBA3C\uC800 \uAE30\uB85D\uD558\uC138\uC694."
-  );
-}
-function checkOracleDone(uncovered, overrideReason) {
-  if (!uncovered || uncovered.length === 0) return ok2();
-  if (overrideReason && overrideReason.trim().length > 0) return ok2();
-  return fail(
-    "ORACLE_OVERRIDE_REASON_REQUIRED",
-    `\uBBF8\uCEE4\uBC84 \uD56D\uBAA9 ${uncovered.length}\uAC74\uC744 \uBCF4\uACE0\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uADF8\uB300\uB85C \uC9C4\uD589\uD558\uB824\uBA74 overrideReason(\uC65C \uC9C0\uAE08 \uCEE4\uBC84\uD558\uC9C0 \uC54A\uB294\uC9C0)\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.`
-  );
-}
-function checkJiraOption(option, jiraKey) {
-  if (!option) return fail("JIRA_OPTION_REQUIRED", "jira action\uC5D0\uB294 jiraOption('new'|'link'|'skip')\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
-  if (option === "link" && !(jiraKey && jiraKey.trim().length > 0)) {
-    return fail("JIRA_KEY_REQUIRED", "jiraOption:'link'\uC5D0\uB294 \uC5F0\uACB0\uD560 jiraKey\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-  }
-  return ok2();
-}
-var LEDGER_HEADING = /^#{1,6}\s*.*(in[-\s]?scope|범위|dod|완료\s*조건|definition of done)/i;
-var OUT_OF_SCOPE_HEADING = /out[-\s]?of[-\s]?scope|범위\s*외|제외/i;
-var REQ_REF = /\bREQ-\d+\b/gi;
-function validateConformanceLedger(prdContent) {
-  const lines2 = prdContent.split(/\r?\n/);
-  const declaredReqs = /* @__PURE__ */ new Set();
-  {
-    let scanLedger = false;
-    for (const raw of lines2) {
-      const line = raw.trim();
-      if (/^#{1,6}\s/.test(line)) {
-        scanLedger = LEDGER_HEADING.test(line) && !OUT_OF_SCOPE_HEADING.test(line);
-        if (!scanLedger) for (const m of line.match(REQ_REF) ?? []) declaredReqs.add(m.toUpperCase());
-        continue;
-      }
-      if (scanLedger) continue;
-      for (const m of line.match(REQ_REF) ?? []) declaredReqs.add(m.toUpperCase());
-    }
-  }
-  const uncovered = [];
-  const ghost = [];
-  let inLedger = false;
-  for (const raw of lines2) {
-    const line = raw.trim();
-    if (/^#{1,6}\s/.test(line)) {
-      inLedger = LEDGER_HEADING.test(line) && !OUT_OF_SCOPE_HEADING.test(line);
-      continue;
-    }
-    if (!inLedger) continue;
-    const item = line.replace(/^[-*+]\s*/, "").replace(/^\d+\.\s*/, "").trim();
-    if (item === line && !/^[-*+]\s|^\d+\.\s/.test(line)) continue;
-    if (item.length === 0) continue;
-    const refs = item.match(REQ_REF);
-    if (!refs || refs.length === 0) {
-      uncovered.push(item);
-      continue;
-    }
-    for (const ref of refs) {
-      if (!declaredReqs.has(ref.toUpperCase())) ghost.push(ref.toUpperCase());
-    }
-  }
-  if (uncovered.length === 0 && ghost.length === 0) return ok2();
-  const parts2 = [];
-  if (uncovered.length > 0) parts2.push(`REQ \uBBF8\uB9E4\uD551 ${uncovered.length}\uAC74: ${uncovered.join(" / ")}`);
-  if (ghost.length > 0) parts2.push(`\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 REQ \uCC38\uC870: ${[...new Set(ghost)].join(", ")}`);
-  return fail(
-    "CONFORMANCE_LEDGER_INCOMPLETE",
-    `In-Scope/DoD \uC6D0\uC7A5\uC774 REQ\uC640 \uB9DE\uBB3C\uB9AC\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4 \u2014 ${parts2.join(" \xB7 ")}. \uBC94\uC704\xB7\uC644\uB8CC\uC870\uAC74\uC758 \uAC01 \uD56D\uBAA9 \uB05D\uC5D0 (REQ-N)\uC744 \uBD99\uC774\uAC70\uB098 \uC6D0\uC7A5\uC5D0\uC11C \uBE7C\uC138\uC694.`
-  );
-}
-function checkValidateCalledGate(lastValidation) {
-  if (!lastValidation) {
-    return fail("VALIDATE_NOT_CALLED", "review_done \uC804\uC5D0 sugo_validate\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4.");
-  }
-  return ok2();
-}
-function checkValidateVerifiedGate(lastValidation) {
-  if (!lastValidation || lastValidation.verifiedFailures.length === 0) return ok2();
-  const detail = lastValidation.verifiedFailures.map((f) => `${f.harnessId}#${f.checkId}(${f.detail})`).join(" / ");
-  return fail(
-    "VALIDATE_VERIFIED_FAILURE",
-    `sugo_validate\uAC00 \uC11C\uBC84 \uC2E4\uCE21\uC73C\uB85C \uD655\uC778\uD55C \uC704\uBC18\uC774 \uC788\uC2B5\uB2C8\uB2E4 \u2014 ${detail}. \uC2E4\uCE21 \uACB0\uACFC\uB77C \uC790\uAE30\uBCF4\uACE0\uB85C \uB36E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`
-  );
-}
-function checkLethalTrifectaCalledGate(lastCheck) {
-  if (!lastCheck) {
-    return fail(
-      "LETHAL_TRIFECTA_NOT_CALLED",
-      "review_done \uC804\uC5D0 sugo_check_lethal_trifecta\uB97C \uCD5C\uC18C 1\uD68C \uC2E4\uC81C \uD638\uCD9C\uD574\uC57C \uD569\uB2C8\uB2E4."
-    );
-  }
-  return ok2();
-}
-function checkLethalTrifectaMitigationGate(lastCheck, trifectaMitigation) {
-  if (!lastCheck || lastCheck.warnings.length === 0) return ok2();
-  if (trifectaMitigation && trifectaMitigation.trim().length > 0) return ok2();
-  const detail = lastCheck.warnings.map((w) => `${w.toolName}(${w.reason})`).join(" / ");
-  return fail(
-    "LETHAL_TRIFECTA_MITIGATION_REQUIRED",
-    `sugo_check_lethal_trifecta\uAC00 \uACBD\uACE0\uB97C \uBCF4\uACE0\uD588\uC2B5\uB2C8\uB2E4 \u2014 ${detail}. \uADF8\uB300\uB85C \uC9C4\uD589\uD558\uB824\uBA74 trifectaMitigation(\uC5B4\uB5BB\uAC8C \uC644\uD654\uD588\uB294\uC9C0)\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.`
-  );
-}
-
-// src/todoSpec.ts
 function todoSpecPath(projectPath, featureName) {
   return join22(projectPath, "sugo", "docs", "feature", featureName, "TODO-SPEC.md");
 }
@@ -29336,7 +29426,7 @@ function checkTodoSpecDraftGate(goal, items, userConfirmed) {
       "TODO-LIST \uCD08\uC548\uC744 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uBCF4\uC5EC\uC8FC\uACE0 \uD655\uC778(todoSpecUserConfirmed:true)\uBC1B\uC740 \uB4A4\uC5D0\uB9CC \uD30C\uC77C\uC744 \uC0DD\uC131\uD569\uB2C8\uB2E4."
     );
   }
-  return ok2();
+  return ok();
 }
 function extractCheckboxItems(content, checked) {
   const re = checked ? /^- \[x\] (.+?)(?:\s+—.*)?$/gim : /^- \[ \] (.+?)(?:\s+—.*)?$/gim;
@@ -29356,14 +29446,14 @@ function todoSpecActuallySynced(snapshotAtStart, currentContent) {
 }
 function checkTodoSpecSyncGate(snapshotAtStart, currentContent, syncReason) {
   if (currentContent === null) {
-    if (syncReason?.trim()) return ok2();
+    if (syncReason?.trim()) return ok();
     return fail(
       "TODO_SPEC_MISSING_AT_COMMIT",
       "\uC774 \uBE0C\uB79C\uCE58\uB294 feature/* \uD328\uD134\uC778\uB370 TODO-SPEC.md\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4 \u2014 clarify \uB2E8\uACC4\uC5D0\uC11C \uCD5C\uC885 \uBAA9\uD45C\uB97C \uD655\uC815\uD558\uACE0 \uC0DD\uC131\uD558\uC138\uC694. \uC774\uBC88 \uC791\uC5C5\uACFC \uBB34\uAD00\uD558\uBA74 todoSpecSyncReason\uC73C\uB85C \uC0AC\uC720\uB97C \uB0A8\uAE30\uC138\uC694."
     );
   }
-  if (todoSpecActuallySynced(snapshotAtStart, currentContent)) return ok2();
-  if (syncReason?.trim()) return ok2();
+  if (todoSpecActuallySynced(snapshotAtStart, currentContent)) return ok();
+  if (syncReason?.trim()) return ok();
   return fail(
     "TODO_SPEC_SYNC_REQUIRED",
     "TODO-SPEC.md\uAC00 \uC138\uC158 \uC2DC\uC791 \uC774\uD6C4 \uAC31\uC2E0\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4 \u2014 \uC774\uBC88 \uC138\uC158\uC774 \uB2E4\uB8EC \uD56D\uBAA9\uC744 \uCCB4\uD06C\uD558\uAC70\uB098 \uC0C8\uB85C \uBC1C\uACAC\uB41C \uC794\uC5EC \uD56D\uBAA9\uC744 \uCD94\uAC00\uD558\uC138\uC694. \uC774\uBC88 \uC791\uC5C5\uACFC \uBB34\uAD00\uD558\uBA74 todoSpecSyncReason\uC73C\uB85C \uC0AC\uC720\uB97C \uB0A8\uAE30\uC138\uC694."
@@ -29930,7 +30020,7 @@ function checkCoverageGate(coverageMap) {
   if (coverageMap.integrationTestCount < 1) {
     return fail("INTEGRATION_TEST_MISSING", "\uD1B5\uD569\uB808\uBCA8 \uD14C\uC2A4\uD2B8\uAC00 \uCD5C\uC18C 1\uAC1C \uD544\uC694\uD569\uB2C8\uB2E4.");
   }
-  return ok2();
+  return ok();
 }
 
 // src/coverageDraft.ts
@@ -29984,7 +30074,7 @@ function isValidRedToGreenTransition(r) {
   return r.redExitCode !== void 0 && r.redExitCode !== 0 && r.greenExitCode === 0;
 }
 function checkContractEvidenceGate(records, required2) {
-  if (!required2) return ok2();
+  if (!required2) return ok();
   if (records.length === 0) {
     return fail("CONTRACT_EVIDENCE_MISSING", "\uACC4\uC57D\uD14C\uC2A4\uD2B8 \uC2E4\uD589\uC99D\uAC70(red\u2192green)\uAC00 \uD558\uB098\uB3C4 \uAE30\uB85D\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.");
   }
@@ -29995,21 +30085,21 @@ function checkContractEvidenceGate(records, required2) {
       `red\u2192green \uC804\uC774\uAC00 \uD655\uC778\uB418\uC9C0 \uC54A\uC740 \uACC4\uC57D: ${invalid.map((r) => r.contractId).join(", ")}`
     );
   }
-  return ok2();
+  return ok();
 }
 function hasValidRed(r) {
   return r.redExitCode !== void 0 && r.redExitCode !== 0;
 }
 function checkContractStartedGate(records, required2, environmentAbsentReason) {
-  if (!required2) return ok2();
-  if (environmentAbsentReason && environmentAbsentReason.trim().length > 0) return ok2();
+  if (!required2) return ok();
+  if (environmentAbsentReason && environmentAbsentReason.trim().length > 0) return ok();
   if (!records.some(hasValidRed)) {
     return fail(
       "CONTRACT_NOT_STARTED",
       "\uACC4\uC57D\uD14C\uC2A4\uD2B8\uAC00 \uD544\uC218\uC778\uB370 \uAD6C\uD604 \uC804 red \uD655\uC778(sugo_record_contract_evidence phase=red)\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."
     );
   }
-  return ok2();
+  return ok();
 }
 function resolveContractRequired(policyValue, sessionCtx) {
   if (policyValue !== void 0) return policyValue;
@@ -30145,7 +30235,7 @@ function validateManifest(manifest, prdRequirementIds) {
   if (coverage.uncovered.length > 0) {
     return fail("MANIFEST_REQUIREMENT_UNCOVERED", `\uC5B4\uB5A4 \uC11C\uBE0C\uD0DC\uC2A4\uD06C\uB3C4 \uCEE4\uBC84\uD558\uC9C0 \uC54A\uB294 \uC694\uAD6C\uC0AC\uD56D: ${coverage.uncovered.join(", ")}`);
   }
-  return ok2();
+  return ok();
 }
 function validateIntegration(manifest) {
   const incomplete = manifest.subtasks.filter((s) => s.status !== "done");
@@ -30159,7 +30249,7 @@ function validateIntegration(manifest) {
       `\uC2E4\uC81C \uBCC0\uACBD\uD30C\uC77C\uC774 \uACB9\uCE69\uB2C8\uB2E4: ${overlaps.map((o) => `${o.file}(${o.subtaskIds.join(",")})`).join("; ")}`
     );
   }
-  return ok2();
+  return ok();
 }
 
 // src/fingerprint.ts
@@ -30188,7 +30278,7 @@ async function computeChangedFilesFingerprint(projectPath, changedFiles) {
   return computeFingerprintFromEntries(await statChangedFiles(projectPath, changedFiles));
 }
 function checkEvidenceReuseGate(reusedFromTestDone, storedFingerprint, currentFingerprint, testPassedState) {
-  if (!reusedFromTestDone) return ok2();
+  if (!reusedFromTestDone) return ok();
   if (!storedFingerprint) {
     return fail("EVIDENCE_REUSE_NO_BASELINE", "test_done \uC2DC\uC810\uC5D0 \uAE30\uB85D\uB41C \uBCC0\uACBD\uD30C\uC77C \uC9C0\uBB38\uC774 \uC5C6\uC5B4 \uC99D\uAC70\uB97C \uC7AC\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
   }
@@ -30201,7 +30291,7 @@ function checkEvidenceReuseGate(reusedFromTestDone, storedFingerprint, currentFi
       "\uB9AC\uBDF0 \uC911 \uBCC0\uACBD\uD30C\uC77C\uC774 \uC218\uC815\uB418\uC5B4 \uC9C0\uBB38\uC774 \uB2EC\uB77C\uC84C\uC2B5\uB2C8\uB2E4 \u2014 test_done \uC99D\uAC70\uB97C \uC7AC\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC73C\uB2C8 \uC7AC\uC2E4\uD589\uC774 \uD544\uC694\uD569\uB2C8\uB2E4."
     );
   }
-  return ok2();
+  return ok();
 }
 
 // src/tools/sugoPlan.ts
@@ -30372,14 +30462,14 @@ function hasGreenExecutionEvidence(input) {
   return false;
 }
 function detectLabelContradiction(claimsAbsent, hasGreenEvidence) {
-  if (!claimsAbsent) return ok2();
+  if (!claimsAbsent) return ok();
   if (hasGreenEvidence) {
     return fail(
       "LABEL_CONTRADICTION",
       "\uC774 \uC138\uC158\uC5D0 \uADF8\uB9B0 \uC2E4\uD589 \uC99D\uAC70\uAC00 \uC774\uBBF8 \uC788\uB294\uB370 \uD658\uACBD\uBD80\uC7AC\uB958 \uB77C\uBCA8\uC744 \uC8FC\uC7A5\uD588\uC2B5\uB2C8\uB2E4 \u2014 \uB77C\uBCA8-\uBAA8\uC21C\uC73C\uB85C \uAC70\uBD80\uD569\uB2C8\uB2E4."
     );
   }
-  return ok2();
+  return ok();
 }
 function isLabelStillInScope(labelPatchVersion, currentPatchVersion) {
   return labelPatchVersion === currentPatchVersion;
@@ -31649,48 +31739,6 @@ function sessionForTask(sessions, taskId) {
 function sessionsForProjects(sessions, projectPaths) {
   const paths = new Set(projectPaths);
   return sessions.filter((s) => paths.has(s.projectPath)).map(summarizeSession).sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
-}
-
-// src/testEvidence.ts
-function classifyVerifyCommand(command) {
-  const c = command.toLowerCase();
-  const isGradle = /gradlew|\bgradle\b/.test(c);
-  const isMaven = /\bmvn\b|\bmaven\b/.test(c);
-  if (isGradle) return /\bcheck\b/.test(c) ? "full-verify" : "partial-test";
-  if (isMaven) return /\b(verify|install)\b/.test(c) ? "full-verify" : "partial-test";
-  return "not-enforceable";
-}
-function isFullVerifyEnforceable(command) {
-  return classifyVerifyCommand(command) !== "not-enforceable";
-}
-function deriveTestState(input) {
-  if (input.unverified) return "unverified";
-  if (input.exitCode === void 0) return "unverified";
-  if (input.exitCode === 0 && (input.failed ?? 0) === 0) return "pass";
-  return "fail";
-}
-function makeTestEvidenceRecord(kind, input, recordedAt) {
-  return { ...input, kind, recordedAt, derivedState: deriveTestState(input) };
-}
-function checkTestEvidenceGate(claimedTestPassed, evidence) {
-  if (!evidence) {
-    return fail("TEST_EVIDENCE_MISSING", "test_done \uC804\uC5D0 sugo_record_test_evidence\uB85C \uC2E4\uD589 \uC99D\uAC70\uB97C \uAE30\uB85D\uD574\uC57C \uD569\uB2C8\uB2E4.");
-  }
-  if (evidence.derivedState === "unverified") return ok2();
-  const actuallyPassed = evidence.derivedState === "pass";
-  if (claimedTestPassed !== actuallyPassed) {
-    return fail(
-      "TEST_EVIDENCE_MISMATCH",
-      `testPassed \uC8FC\uC7A5(${claimedTestPassed})\uC774 \uAE30\uB85D\uB41C \uC99D\uAC70(${evidence.derivedState}, exitCode=${evidence.exitCode}, failed=${evidence.failed ?? "?"})\uC640 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`
-    );
-  }
-  if (actuallyPassed && classifyVerifyCommand(evidence.command) === "partial-test") {
-    return fail(
-      "TEST_NOT_FULL_VERIFY",
-      `\uAE30\uB85D\uB41C \uBA85\uB839("${evidence.command}")\uC774 \uD480\uAC80\uC99D \uBA85\uB839\uC774 \uC544\uB2D9\uB2C8\uB2E4. gradle/maven\uC740 gradlew check / mvn verify|install\uB85C \uC2E4\uD589\uD574\uC57C \uD569\uB2C8\uB2E4("test \uADF8\uB9B0"\uC740 \uC99D\uBA85\uC774 \uC544\uB2D8).`
-    );
-  }
-  return ok2();
 }
 
 // src/testReverify.ts
@@ -33151,10 +33199,10 @@ async function handleSugoRecordTestEvidence(rawArgs) {
   }
   const session = await loadSession(args2.sessionId);
   const plan = session.data.chainInfo.verificationPlan;
-  if (args2.kind === "feature" && plan && !plan.broadCommandsAllowed && isBroadVerificationCommand(args2.command)) {
+  if (args2.kind === "feature" && !canRecordVerificationCommand(plan, args2.command)) {
     return errorResult11(
       "VERIFICATION_OUT_OF_PLAN",
-      `targeted \uAC80\uC99D \uACC4\uD68D\uC5D0\uC11C \uC804\uB7C9 \uBA85\uB839\uC744 \uC99D\uAC70\uB85C \uAE30\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.command}`
+      `targeted \uAC80\uC99D \uACC4\uD68D\uC5D0\uC11C \uC774 \uC804\uB7C9 \uBA85\uB839\uC744 \uAE30\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: ${args2.command}. \uC608: npx vitest run test/example.test.ts. Gradle/Maven\uC758 \uD544\uC218 \uBA85\uB839\uC740 \uD544\uD130 \uC5C6\uC774 ./gradlew clean check \uB610\uB294 mvn clean verify\uB97C \uC0AC\uC6A9\uD558\uC138\uC694. \uB2E4\uB978 \uC804\uB7C9 \uAC80\uC99D\uC774 \uD544\uC694\uD558\uBA74 sugo_chain\uC5D0 fullVerificationReason\uC744 \uC804\uB2EC\uD558\uC138\uC694.`
     );
   }
   const previous = session.data.chainInfo.testEvidence;

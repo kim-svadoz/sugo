@@ -22,6 +22,7 @@ function buildCodeToTestPrompt(handoff: ChainHandoff): string {
     `변경 파일: ${handoff.changedFiles.length > 0 ? handoff.changedFiles.join(", ") : "(없음)"}`,
     `PRD: ${handoff.prdPath ?? "(없음)"}`,
     `검증 범위: ${handoff.verificationPlan.level}`,
+    `검증 범위 근거: ${handoff.verificationPlan.reasons.join(", ") || "(없음)"}`,
     `검증 계획: ${handoff.verificationPlan.implementationChecks.join(", ") || "(없음)"}`,
     `입력 fingerprint: ${handoff.verificationPlan.fingerprint}`,
     "",
@@ -31,8 +32,10 @@ function buildCodeToTestPrompt(handoff: ChainHandoff): string {
     "## test-agent 지시사항",
     "- PRD를 oracle 삼아 명세에서 테스트를 도출하세요. 구현 코드를 보고 따라짜지 마세요(순환검증 방지).",
     ...(handoff.verificationPlan.broadCommandsAllowed
-      ? ["- 고위험 변경으로 전량 회귀가 허용됩니다. 계획에 기록된 범위만 실행하세요."]
-      : ["- targeted 계획입니다. 전량 회귀를 실행하지 마세요. 변경 행위를 직접 검증하는 최소 테스트만 실행하세요."]),
+      ? ["- 전량 회귀가 허용됩니다. 계획에 기록된 범위만 실행하세요."]
+      : ["- targeted 계획입니다. 변경 행위를 직접 검증하는 최소 테스트를 실행하세요. 일반 전량 회귀를 실행하지 마세요.",
+        "- Gradle/Maven의 test_done에는 필터 없이 ./gradlew clean check 또는 mvn clean verify로 검증한 증거가 필요합니다. 이 명령은 targeted 계획에서도 기록할 수 있습니다.",
+        "- 다른 전량 검증이 필요하면 메인 에이전트에 사유를 전달해 sugo_chain(fullVerificationReason)으로 계획을 확대하세요."]),
     "- 입력 fingerprint가 같은 성공 증거는 재사용하고 같은 명령을 다시 실행하지 마세요.",
     "- 각 REQ를 덮는 테스트 클래스·파일을 정리해 testClasses로 기록하고, 서버가 돌려준 coverageMap 초안을 확인한 뒤 covered 값을 직접 판단해 제출하세요.",
     "- 완료 후 반드시 sugo_record_test_evidence로 실행 결과를 기록하세요 — 이 기록만이 test_done 게이트가 신뢰하는 증거입니다.",

@@ -32,16 +32,17 @@ given/when/then을 비롯한 단계 중계 주석은 만들지 않는다. JUnit�
      command, exitCode)`를 호출해 red→green 전이를 완성한다. exitCode!==0인 red와 exitCode===0
      인 green이 같은 contractId로 둘 다 있어야 review_done의 계약증거 게이트가 통과한다.
 1. 검증 계획: `verificationPlan`을 정본으로 삼는다. `targeted`면 변경 행위를 직접 검증하는
-   최소 테스트만 실행하고 전량 회귀를 실행하지 않는다. `full`은 고위험 사유가 있을 때만
-   전량 검증한다. 같은 fingerprint의 성공 증거는 재사용한다.
+   최소 테스트를 실행한다. 다른 전량 검증이 필요하면 메인 에이전트에게 사유와 함께 계획 확대를
+   요청한다. 같은 fingerprint의 성공 증거는 재사용한다.
 2. PRD 확인: `handoff.prdPath`로 PRD를 연다. 없으면 세션을 복구하고, 그래도 없으면 fallback
    라벨을 붙인다. PRD에 기획 화면 이미지 링크가 있으면 Read로 열어 화면에 적힌 문구·노출 조건도 테스트 근거로 쓴다.
 3. PRD에서 테스트 도출: 구현이 아니라 명세에서 도출한다. 응답 필드마다 어서션을 넣고 통합레벨을
    1개 이상 포함한다.
 4. write/update: 테스트 파일만 작성하거나 갱신한다.
-5. 계획 실행: `implementationChecks`에 기록된 검증만 실행한다. `targeted-test`는 파일·클래스·패키지
-   범위를 명령에 명시한다. `full-regression`일 때만 `gradlew check`, `mvn verify|install`, 전체 `npm test`를
-   사용한다. 신규 실패는 spec_not_met, 기존 실패는 regression으로 분류한다.
+5. 계획 실행: `targeted-test`는 파일·클래스·패키지 범위를 명령에 명시한다. Gradle/Maven은
+   `test_done`에 필수인 `./gradlew clean check` 또는 `mvn clean verify`로 필터·스킵 없는 검증 증거를
+   기록한다. 전체 `npm test`와 같은 다른 전량 검증은 `full-regression`일 때 실행한다.
+   신규 실패는 spec_not_met, 기존 실패는 regression으로 분류한다.
 6. 증거 기록(필수): `sugo_record_test_evidence(sessionId, command, exitCode, totalTests, passedTests,
    failedTests)`를 남긴다(구 이름 `total/passed/failed`는 하위호환용 deprecated — 새로 쓰지 않는다).
    test_done 게이트가 대조하는 서버측 진실이라 조작을 막는다. unverified는 환경부재 선언용이다.

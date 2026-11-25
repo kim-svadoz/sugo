@@ -10,13 +10,38 @@ export type TestPassedState = "pass" | "fail" | "unverified";
  */
 export type VerifyCommandKind = "full-verify" | "partial-test" | "not-enforceable";
 
+const GRADLE_LAUNCHER = /^gradlew?(?:\.bat|\.exe)?$/i;
+const MAVEN_LAUNCHER = /^(?:mvnw?|maven)(?:\.cmd|\.bat|\.exe)?$/i;
+const GRADLE_LIMIT = /^(?:--tests?|--exclude-task|--dry-run|--task-graph|--help|--version|--project-dir|--include-build|--build-file|--settings-file|--init-script)(?:=|$)|^-(?:x|m|h|v|p|b|c|I)/;
+const MAVEN_LIMIT = /^(?:--projects|--resume-from|--non-recursive|--file|--fail-never|--help|--version|-(?:pl|rf|N|f|fn|h|v))(?:=|$)/;
+const MAVEN_TEST_FILTER = /^-D(?:test|it\.test|(?:surefire|failsafe)\.(?:includes|excludes))(?:=|$)/i;
+const MAVEN_TEST_SKIP = /^-D(?:skipTests|skipITs|maven\.test\.(?:skip|failure\.ignore))(?:=(?!false$).*|$)/i;
+
+function executableName(arg: string | undefined): string {
+  return arg?.split(/[\\/]/).pop() ?? "";
+}
+
 export function classifyVerifyCommand(command: string): VerifyCommandKind {
-  const c = command.toLowerCase();
-  const isGradle = /gradlew|\bgradle\b/.test(c);
-  const isMaven = /\bmvn\b|\bmaven\b/.test(c);
-  if (isGradle) return /\bcheck\b/.test(c) ? "full-verify" : "partial-test";
-  if (isMaven) return /\b(verify|install)\b/.test(c) ? "full-verify" : "partial-test";
-  return "not-enforceable";
+  const invocation = command.trim().replace(/^cd\s+(?:"[^"]+"|'[^']+'|[^\s;&|]+)\s*&&\s+/, "");
+  const words = invocation.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) ?? [];
+  const args = words.map((word) => word.replace(/^["']|["']$/g, ""));
+  const launcherIndex = /^(?:ba)?sh$/.test(executableName(args[0])) ? 1 : 0;
+  const launcher = executableName(args[launcherIndex]);
+  const tasks = args.slice(launcherIndex + 1);
+  const simpleInvocation = !/[;&|<>`$#\r\n]/.test(invocation);
+
+  if (GRADLE_LAUNCHER.test(launcher)) {
+    return simpleInvocation && tasks.includes("check") && !tasks.some((arg) => GRADLE_LIMIT.test(arg))
+      ? "full-verify" : "partial-test";
+  }
+  if (MAVEN_LAUNCHER.test(launcher)) {
+    const hasVerifyPhase = tasks.includes("verify") || tasks.includes("install");
+    const limitsVerification = tasks.some((arg) => MAVEN_LIMIT.test(arg) || MAVEN_TEST_FILTER.test(arg) || MAVEN_TEST_SKIP.test(arg));
+    return simpleInvocation && hasVerifyPhase && !limitsVerification
+      ? "full-verify" : "partial-test";
+  }
+  // 다른 셸 구문에 나타난 Gradle/Maven 문자열도 풀검증을 했다는 증거로 삼을 수 없다.
+  return /gradlew|\bgradle\b|\bmvnw?\b|\bmaven\b/i.test(invocation) ? "partial-test" : "not-enforceable";
 }
 
 /** `gradlew check` / `mvn verify|install`만 풀검증으로 인정. 단순 test는 불인정. */
@@ -87,7 +112,7 @@ export function checkTestEvidenceGate(claimedTestPassed: boolean, evidence: Test
   if (actuallyPassed && classifyVerifyCommand(evidence.command) === "partial-test") {
     return fail(
       "TEST_NOT_FULL_VERIFY",
-      `기록된 명령("${evidence.command}")이 풀검증 명령이 아닙니다. gradle/maven은 gradlew check / mvn verify|install로 실행해야 합니다("test 그린"은 증명이 아님).`,
+      `기록된 명령("${evidence.command}")이 풀검증 명령이 아닙니다. 필터·스킵 옵션 없이 ./gradlew clean check, ./mvnw clean verify 또는 mvn clean verify를 실행하고 그 결과를 기록하세요.`,
     );
   }
   return ok();

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { isFullVerifyCommand } from "./testEvidence.js";
 
 export type ChangeArea =
   | "console-frontend"
@@ -98,4 +99,21 @@ export function isBroadVerificationCommand(command: string): boolean {
   if (/^(python\s+-m\s+)?pytest\s*$/.test(value)) return true;
   if (/\bgo\s+test\s+\.\/\.\.\./.test(value)) return true;
   return false;
+}
+
+export function canRecordVerificationCommand(plan: VerificationPlan | undefined, command: string): boolean {
+  // Gradle/Maven에서 test_done이 요구하는 풀검증은 targeted 계획에서도 기록할 수 있어야 한다.
+  return !plan || plan.broadCommandsAllowed || isFullVerifyCommand(command) || !isBroadVerificationCommand(command);
+}
+
+export function promoteVerificationPlan(plan: VerificationPlan, reason: string): VerificationPlan {
+  if (plan.level === "full") return plan;
+  return {
+    ...plan,
+    fingerprint: createHash("sha256").update(JSON.stringify([plan.fingerprint, "full", reason])).digest("hex"),
+    level: "full",
+    reasons: [...plan.reasons, reason],
+    implementationChecks: unique(["full-regression", ...plan.implementationChecks.filter((check) => check !== "targeted-test")]),
+    broadCommandsAllowed: true,
+  };
 }
