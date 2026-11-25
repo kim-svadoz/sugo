@@ -1,5 +1,5 @@
-import { ArrowRight, BookOpen, Check, ChevronDown, ClipboardList, Code2, FileText, FlaskConical, GitCommitHorizontal, ShieldCheck, UserCheck } from "lucide-react";
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, ClipboardList, Code2, FileText, FlaskConical, GitCommitHorizontal, ShieldCheck, UserCheck } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import { apiJson } from "../api/client.js";
 import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { useActivityStream } from "../hooks/useActivityStream.js";
@@ -86,7 +86,7 @@ function useTaskProjects(workspace: string, taskNames: readonly string[]): Reado
 
 /**
  * 도메인 관리의 상태 카드. 선택한 도메인에서 지금 무슨 일이 있는지 한 문장으로 말하고,
- * 그 작업이 거친 단계를 보여 준다. 작업이 여러 개면 제목으로 선택한다.
+ * 그 작업이 거친 단계를 보여 준다. 작업이 여러 개면 카드를 좌우로 넘긴다.
  */
 export function DomainStage({ workspace, projectPaths, specs, selection, onSelectedTaskChange, attention, onOpenAttention, tools }: {
   workspace: string;
@@ -103,26 +103,137 @@ export function DomainStage({ workspace, projectPaths, specs, selection, onSelec
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
   const lanes = useMemo(() => selectDomainLanes(all, specs, workspace, now), [all, specs, workspace, now]);
-  const lane = lanes.find((item) => item.key === selection?.key) ?? lanes[0];
+  const index = Math.max(0, lanes.findIndex((item) => item.key === selection?.key));
+  const lane = lanes[index];
+  const canSwipe = lanes.length > 1;
   useEffect(() => {
     if (lane && (lane.key !== selection?.key || lane.activityKey !== selection.activityKey)) {
       onSelectedTaskChange({ key: lane.key, activityKey: lane.activityKey });
     }
   }, [lane, onSelectedTaskChange, selection]);
 
+  const viewport = useRef<HTMLDivElement>(null);
+  const centered = useRef<HTMLDivElement>(null);
+  const gesture = useRef<{ id: number; x: number; y: number; width: number; start: number | null } | null>(null);
+
+  function resetOffset(element: HTMLDivElement) {
+    element.removeAttribute("data-dragging");
+    element.style.removeProperty("--domain-swipe-offset");
+  }
+
+  useLayoutEffect(() => {
+    gesture.current = null;
+    if (viewport.current) resetOffset(viewport.current);
+  }, [workspace, lane?.key, canSwipe]);
+
+  function move(direction: number) {
+    const next = lanes[index + direction];
+    if (!next) return false;
+    onSelectedTaskChange({ key: next.key, activityKey: next.activityKey });
+    return true;
+  }
+
+  function startSwipe(event: PointerEvent<HTMLDivElement>) {
+    if (!canSwipe || !event.isPrimary || event.button !== 0) return;
+    if ((event.target as Element).closest("button, a, input, select, textarea, [role='button']")) return;
+    gesture.current = { id: event.pointerId, x: event.clientX, y: event.clientY, width: event.currentTarget.getBoundingClientRect().width, start: null };
+  }
+
+  function updateSwipe(event: PointerEvent<HTMLDivElement>) {
+    const drag = gesture.current;
+    if (!drag || drag.id !== event.pointerId) return;
+    const { currentTarget } = event;
+    const dx = event.clientX - drag.x;
+    if (drag.start === null) {
+      const dy = event.clientY - drag.y;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 7) return;
+      if (Math.abs(dy) >= Math.abs(dx) || !centered.current) {
+        gesture.current = null;
+        return;
+      }
+      // 이어서 잡을 때는 진행 중인 애니메이션의 현재 위치부터 이동한다.
+      drag.start = (centered.current.getBoundingClientRect().left - currentTarget.getBoundingClientRect().left) / drag.width * 100;
+      currentTarget.setPointerCapture(event.pointerId);
+      currentTarget.setAttribute("data-dragging", "");
+    }
+    // Console의 CSS zoom에서도 포인터와 카드가 같은 거리만큼 움직이게 한다.
+    const atEdge = dx > 0 ? index === 0 : index === lanes.length - 1;
+    const offset = drag.start + dx / drag.width * (atEdge ? 24 : 100);
+    currentTarget.style.setProperty("--domain-swipe-offset", `${Math.max(-100, Math.min(100, offset))}%`);
+  }
+
+  function finishSwipe(event: PointerEvent<HTMLDivElement>, cancelled = false) {
+    const drag = gesture.current;
+    if (!drag || drag.id !== event.pointerId) return;
+    gesture.current = null;
+    if (drag.start === null) return;
+    const dx = event.clientX - drag.x;
+    if (!cancelled && Math.abs(dx) >= Math.min(72, drag.width * 0.18) && move(dx < 0 ? 1 : -1)) return;
+    resetOffset(event.currentTarget);
+  }
+
+  const unresolved = useMemo(() => lanes.filter((item) => !item.preparation && !item.projectPath).map((item) => item.name), [lanes]);
+  const taskProjects = useTaskProjects(workspace, unresolved);
+  const first = Math.max(0, index - 1);
+  const nearby = lanes.length ? lanes.slice(first, index + 2) : [undefined];
+
+  return <section aria-label={`${workspace} 상태`}>
+    <div
+      ref={viewport}
+      className={cn("domain-swipe grid min-w-0 overflow-hidden rounded-2xl", canSwipe && "cursor-grab select-none [touch-action:pan-y_pinch-zoom]")}
+      onPointerDown={startSwipe}
+      onPointerMove={updateSwipe}
+      onPointerUp={finishSwipe}
+      onPointerCancel={(event) => finishSwipe(event, true)}
+      onLostPointerCapture={(event) => { if (event.target === event.currentTarget) finishSwipe(event, true); }}
+      onPointerLeave={(event) => { if (gesture.current?.start === null) finishSwipe(event, true); }}
+    >
+      {nearby.map((item, position) => {
+        const offset = first + position - index;
+        return <div
+          key={item?.key ?? "empty"}
+          ref={offset === 0 ? centered : undefined}
+          className="domain-swipe-slide col-start-1 row-start-1 grid min-w-0"
+          style={{ "--domain-swipe-position": `${100 * offset}%` } as CSSProperties}
+          inert={offset !== 0}
+          aria-hidden={offset !== 0 || undefined}
+        >
+          <StageCard lane={item} now={now} specs={specs} projectPaths={projectPaths} taskProjects={taskProjects} attention={attention} onOpenAttention={onOpenAttention} tools={tools} />
+        </div>;
+      })}
+    </div>
+    {canSwipe && <nav aria-label="작업 카드 전환" className="mt-2 flex items-center justify-between gap-2 px-1">
+      <button type="button" onClick={() => move(-1)} aria-disabled={index === 0} className="domain-swipe-button">
+        <ChevronLeft size={15} aria-hidden="true" /> 이전 작업
+      </button>
+      <span aria-live="polite" className="whitespace-nowrap text-xs tabular-nums text-slate-300">작업 {index + 1}/{lanes.length}</span>
+      <button type="button" onClick={() => move(1)} aria-disabled={index === lanes.length - 1} className="domain-swipe-button">
+        다음 작업 <ChevronRight size={15} aria-hidden="true" />
+      </button>
+    </nav>}
+  </section>;
+}
+
+function StageCard({ lane, now, specs, projectPaths, taskProjects, attention, onOpenAttention, tools }: {
+  lane?: DomainFloorLane;
+  now: number;
+  specs: readonly ScheduledSpec[];
+  projectPaths: readonly string[];
+  taskProjects: Readonly<Record<string, string>>;
+  attention: { count: number; label: string | null };
+  onOpenAttention: () => void;
+  tools?: ReactNode;
+}) {
   const headline = lane?.preparation === "ready" ? { tone: "rest" as const, text: "스펙 작성을 마쳤어요 · 작업 지시 대기" }
     : lane?.preparation === "starting" ? { tone: "rest" as const, text: "작업 활동 기록을 기다려요" } : stageHeadline(lane);
   const tone = TONE[headline.tone];
   const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, specId: lane.spec?.id, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, lane.spec ? [lane.spec] : specs) : null;
-  const unresolved = useMemo(() => lanes.filter((item) => !item.preparation && !item.projectPath).map((item) => item.name), [lanes]);
-  const taskProjects = useTaskProjects(workspace, unresolved);
   const baseName = (path: string) => path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
   const projectName = title?.project ?? (lane?.projectPath ? baseName(lane.projectPath) : lane && taskProjects[lane.name] ? baseName(taskProjects[lane.name]) : projectPaths.length === 1 ? baseName(projectPaths[0]) : null);
 
-  return <section
-    className={cn("stage-card ck-stage-in relative rounded-2xl border px-5 py-4 transition-colors duration-500", tone.card)}
+  return <div
+    className={cn("stage-card relative rounded-2xl border px-5 py-4", tone.card)}
     style={{ "--stage-glow": tone.glow } as CSSProperties}
-    aria-label={`${workspace} 상태`}
   >
     <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
       <div className="min-w-0 flex-1">
@@ -133,18 +244,7 @@ export function DomainStage({ workspace, projectPaths, specs, selection, onSelec
           </span>
           <strong className={cn("text-[17px] font-semibold tracking-[-0.01em]", tone.text)}>{headline.text}</strong>
         </p>
-        {lanes.length > 1 ? <label className="mt-2 flex max-w-full flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="shrink-0 text-[12px] font-medium text-slate-400">작업 선택</span>
-          <span className="relative min-w-0 max-w-full">
-            <select value={lane?.key} onChange={(event) => {
-              const next = lanes.find((item) => item.key === event.target.value);
-              if (next) onSelectedTaskChange({ key: next.key, activityKey: next.activityKey });
-            }} className="block max-w-full appearance-none truncate rounded-lg border border-cyan-300/20 bg-slate-950/70 py-1.5 pl-2.5 pr-7 text-[13px] font-medium text-slate-100 outline-none hover:border-cyan-300/40 focus-visible:ring-2 focus-visible:ring-cyan-300/70">
-              {lanes.map((item) => <option key={item.key} value={item.key}>{item.spec?.title ?? item.name}</option>)}
-            </select>
-            <ChevronDown size={13} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-          </span>
-        </label> : title && <p className="mt-1.5 truncate text-[14px] text-slate-200" title={title.title}>{title.title}</p>}
+        {title && <p className="mt-1.5 truncate text-[14px] text-slate-200" title={title.title}>{title.title}</p>}
         {(projectName || lane?.state.at) && <p className="mt-1 flex items-center gap-2 text-[12px] text-slate-500">
           {projectName && <span className="font-mono">{projectName}</span>}
           {projectName && lane?.state.at && <span aria-hidden="true">·</span>}
@@ -161,5 +261,5 @@ export function DomainStage({ workspace, projectPaths, specs, selection, onSelec
     <div className="mt-5 border-t border-white/[0.06] pt-4">
       <Journey lane={lane} tone={headline.tone} onOpenAttention={onOpenAttention} />
     </div>
-  </section>;
+  </div>;
 }

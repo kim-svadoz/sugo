@@ -240,6 +240,21 @@ button:disabled, button[disabled], [aria-disabled="true"] { cursor: not-allowed;
   animation: stage-drift 14s ease-in-out infinite alternate;
   pointer-events: none;
 }
+
+.domain-swipe-slide {
+  transform: translate3d(calc(var(--domain-swipe-position) + var(--domain-swipe-offset, 0%)), 0, 0);
+  transition: transform 230ms cubic-bezier(.2, .8, .25, 1);
+}
+.domain-swipe[data-dragging] { cursor: grabbing; }
+.domain-swipe[data-dragging] .domain-swipe-slide { transition: none; }
+.domain-swipe-button {
+  @apply inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-cyan-300/15 bg-slate-950/60 px-2.5 text-xs font-medium text-slate-200 outline-none hover:border-cyan-300/40 focus-visible:ring-2 focus-visible:ring-cyan-300/70;
+}
+.domain-swipe-button[aria-disabled="true"] { opacity: .4; cursor: default; }
+@media (prefers-reduced-motion: reduce) {
+  .domain-swipe-slide { transition: none; }
+}
+
 /* 가이드 화면 머리 영역(스킬 조직도, 플레이북 목적 고르기)의 오로라 띠. 투명한 결은 두고 청록에서 보라로 흐르는 빛을 깐다. */
 .aurora-card {
   position: relative;
