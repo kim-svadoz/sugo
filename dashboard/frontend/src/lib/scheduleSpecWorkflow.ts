@@ -17,7 +17,8 @@ export function scheduleCardStage(spec: Pick<ScheduledSpec, "status" | "has_run"
       && !spec.focus_task_blocker_decision
       ? "awaiting_approval" : null;
   }
-  if (spec.status === "verification" || spec.status === "dropped") return null;
+  if (spec.status === "verification") return "verification";
+  if (spec.status === "dropped") return null;
   return scheduleSpecStage(spec);
 }
 

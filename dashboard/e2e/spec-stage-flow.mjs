@@ -20,7 +20,8 @@ const awaitingApproval = {
   focus_task_status: "blocked", focus_task_human_blocker: { kind: "review_confirmation" },
 };
 const running = { ...ready, id: "spec-running", title: "배송 알림 개선", due_date: `${month}-15`, status: "in_progress", has_run: true };
-const specs = [draft, ready, done, awaitingApproval, running];
+const verification = { ...done, id: "spec-verification", title: "배송 이력 개선", due_date: `${month}-16`, status: "verification" };
+const specs = [draft, ready, done, awaitingApproval, running, verification];
 const events = [];
 
 const browser = await chromium.launch({ channel: process.env.E2E_BROWSER_CHANNEL });
@@ -51,7 +52,7 @@ try {
 
   await page.goto(`${E2E_UI_URL}/schedule`);
   await page.getByRole("button", { name: "Agenda" }).click();
-  const badges = ["SPEC 작성 중", "SPEC 작성 완료", "파이프라인 완료", "사용자 승인 대기", "진행 중"];
+  const badges = ["SPEC 작성 중", "SPEC 작성 완료", "개발 완료", "사용자 승인 대기", "진행 중", "검증 필요"];
   for (const label of badges) await page.getByText(label, { exact: true }).waitFor();
   const reviewCard = page.getByRole("button", { name: /배송 상태 화면 개선/ });
   await reviewCard.getByText("사용자 승인 대기", { exact: true }).waitFor();

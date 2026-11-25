@@ -65,7 +65,7 @@ function SpecStageBadge({ spec, compact = false }: { spec: ScheduledSpec; compac
     done: "bg-emerald-500/15 text-emerald-300",
     pending: "bg-slate-500/15 text-slate-400",
   } as const)[guidance.kind];
-  const label = guidance.kind === "done" ? "파이프라인 완료" : guidance.label;
+  const label = guidance.kind === "done" ? "개발 완료" : guidance.label;
   return <span className={cn("shrink-0 rounded px-1 py-0.5 font-semibold", compact ? "text-[8px]" : "text-[9px]", tone)}>{label}</span>;
 }
 
@@ -74,7 +74,8 @@ const SCHEDULE_CARD_STAGES = {
   ready: { label: "SPEC 작성 완료", tone: "bg-cyan-500/15 text-cyan-200", marker: "bg-cyan-300" },
   in_progress: { label: "진행 중", tone: "bg-sky-500/15 text-sky-300", marker: "bg-sky-400 motion-safe:animate-pulse" },
   awaiting_approval: { label: "사용자 승인 대기", tone: "bg-amber-400/15 text-amber-200", marker: "bg-amber-300" },
-  done: { label: "파이프라인 완료", tone: "bg-emerald-500/15 text-emerald-300", marker: "bg-emerald-300" },
+  verification: { label: "검증 필요", tone: "bg-amber-400/15 text-amber-200", marker: "bg-amber-300" },
+  done: { label: "개발 완료", tone: "bg-emerald-500/15 text-emerald-300", marker: "bg-emerald-300" },
 };
 
 function scheduleCardStatus(spec: ScheduledSpec | null) {
@@ -915,7 +916,7 @@ export function SchedulePage() {
                 return (
                   <div className="mt-3 rounded-lg border border-cyan-500/25 bg-cyan-500/[0.07] px-3 py-2.5 text-[11.5px] leading-relaxed text-slate-200">
                     <div className="flex items-center justify-between gap-2">
-                      <strong className="font-semibold text-white">{guidance.kind === "done" ? "파이프라인 완료" : guidance.currentStage}</strong>
+                      <strong className="font-semibold text-white">{guidance.kind === "done" ? "개발 완료" : guidance.currentStage}</strong>
                       {guidance.kind !== "done" && <SpecStageBadge spec={selected} />}
                       <SpecDeploymentBadge deployment={selected.deployment} title={selected.title} environments={scheduleDeploymentEnvironments(deploymentSelections(selected), selected.deployment)} />
                     </div>

@@ -16,6 +16,7 @@ describe("Schedule SPEC workflow", () => {
     expect(scheduleCardStage({ ...ready, has_run: true })).toBe("in_progress");
     expect(scheduleCardStage({ ...ready, status: "in_progress" })).toBe("in_progress");
     expect(scheduleCardStage({ ...ready, has_run: true, status: "done" })).toBe("done");
+    expect(scheduleCardStage({ ...ready, has_run: true, status: "verification" })).toBe("verification");
     expect(scheduleCardStage({ ...ready, has_run: true, status: "blocked" })).toBeNull();
   });
 

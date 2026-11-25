@@ -86,7 +86,7 @@ describe("schedule presentation", () => {
 
   it("SPEC 상세에서 별도 일정 닫기 상태를 노출하지 않는다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(source).toContain("파이프라인 완료");
+    expect(source).toContain("개발 완료");
     expect(source).not.toContain('aria-label="일정 상태"');
     expect(source).not.toContain("setCommitmentClosed");
     expect(source).not.toContain("Agenda에 다시 열기");
