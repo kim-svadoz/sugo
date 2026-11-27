@@ -32,8 +32,8 @@ describe("page heading typography", () => {
   it("Home에서 연 SPEC 상세는 닫을 때 Home으로 돌아간다", () => {
     const home = readFileSync(new URL("../pages/Home.tsx", import.meta.url), "utf8");
     const schedule = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
-    expect(home).toContain("returnTo=home");
+    expect(home).toContain('scheduleSpecPath(workspace, id, "home")');
     expect(schedule).toContain('searchParams.get("returnTo")');
-    expect(schedule).toContain('navigate("/home")');
+    expect(schedule).toContain('navigate("/home", { replace: true })');
   });
 });

@@ -1,10 +1,13 @@
 import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, ClipboardList, Code2, FileText, FlaskConical, GitCommitHorizontal, ShieldCheck, UserCheck } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { apiJson } from "../api/client.js";
 import type { ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { useActivityStream } from "../hooks/useActivityStream.js";
 import { selectDomainLanes, type DomainFloorLane, type DomainFloorSelection } from "../lib/domainFloor.js";
 import { attentionActionText, stageHeadline, type StageTone } from "../lib/domainPulse.js";
+import { scheduleSpecPath } from "../lib/scheduleReviewTarget.js";
+import { scheduleAttention } from "../lib/taskGuidance.js";
 import { resolveTaskTitle } from "../lib/taskTitle.js";
 import { cn } from "../lib/utils.js";
 import { FLOOR_STATIONS, type FloorStationId } from "../lib/workFloor.js";
@@ -31,7 +34,7 @@ const TONE: Record<StageTone, { card: string; glow: string; dot: string; text: s
   rest: { card: "border-cyan-200/[0.10]", glow: "rgba(45,212,191,.10)", dot: "bg-slate-400", text: "text-slate-100", node: "border-slate-500/50 bg-slate-500/10 text-slate-300", halo: "" },
 };
 
-function Journey({ lane, tone, onOpenAttention }: { lane?: DomainFloorLane; tone: StageTone; onOpenAttention?: () => void }) {
+function Journey({ lane, tone, attentionPath }: { lane?: DomainFloorLane; tone: StageTone; attentionPath?: string }) {
   const state = lane?.state;
   const finished = tone === "rest" && state?.passed.length === FLOOR_STATIONS.length;
   const stations = lane?.spec ? [SPEC_STATION, ...FLOOR_STATIONS] : FLOOR_STATIONS;
@@ -44,8 +47,8 @@ function Journey({ lane, tone, onOpenAttention }: { lane?: DomainFloorLane; tone
       const reached = passed || current;
       return <li key={station.id} className="relative flex min-w-0 flex-col items-center" aria-current={current ? "step" : undefined} aria-label={station.id === "spec" ? "스펙 작성 완료" : undefined}>
         {index > 0 && <span className={cn("absolute right-[calc(50%+24px)] top-[17px] h-[2px] w-[calc(100%-48px)] rounded-full transition-colors duration-500", reached ? "bg-emerald-400/50" : "bg-[repeating-linear-gradient(90deg,rgba(100,116,139,.45)_0_4px,transparent_4px_8px)]")} aria-hidden="true" />}
-        {myTurn && onOpenAttention
-          ? <button type="button" onClick={onOpenAttention} aria-label="사용자 확인 영역 열기" className="group flex min-w-0 flex-col items-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-violet-100 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-950">
+        {myTurn && attentionPath
+          ? <Link to={attentionPath} aria-label="사용자 확인 영역 열기" className="group flex min-w-0 flex-col items-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-violet-100 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-950">
               <span className="relative flex h-9 w-9 items-center justify-center transition-[transform,filter] duration-300 group-hover:scale-105 group-hover:drop-shadow-[0_0_10px_rgba(196,181,253,.65)] group-active:scale-[0.96]">
                 {TONE[tone].halo && <span className={cn("absolute inset-0 animate-ping rounded-full opacity-60 [animation-duration:2.2s]", TONE[tone].halo)} aria-hidden="true" />}
                 <span className={cn("relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-500", TONE[tone].node)}>
@@ -53,7 +56,7 @@ function Journey({ lane, tone, onOpenAttention }: { lane?: DomainFloorLane; tone
                 </span>
               </span>
               <span className="mt-2 rounded-full bg-violet-300 px-2 py-0.5 text-[11px] font-bold text-violet-950 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105 group-hover:shadow-[0_0_16px_rgba(196,181,253,.45)]">내 차례</span>
-            </button>
+            </Link>
           : <span className="flex min-w-0 flex-col items-center">
               <span className="relative flex h-9 w-9 items-center justify-center">
                 {current && TONE[tone].halo && <span className={cn("absolute inset-0 animate-ping rounded-full opacity-60 [animation-duration:2.2s]", TONE[tone].halo)} aria-hidden="true" />}
@@ -88,15 +91,13 @@ function useTaskProjects(workspace: string, taskNames: readonly string[]): Reado
  * 도메인 관리의 상태 카드. 선택한 도메인에서 지금 무슨 일이 있는지 한 문장으로 말하고,
  * 그 작업이 거친 단계를 보여 준다. 작업이 여러 개면 카드를 좌우로 넘긴다.
  */
-export function DomainStage({ workspace, projectPaths, specs, selection, onSelectedTaskChange, attention, onOpenAttention, tools }: {
+export function DomainStage({ workspace, projectPaths, specs, selection, onSelectedTaskChange, tools }: {
   workspace: string;
   /** 도메인에 등록된 프로젝트 경로. 작업 기록에 프로젝트가 없을 때, 프로젝트가 하나뿐이면 그 이름을 쓴다. */
   projectPaths: readonly string[];
   specs: readonly ScheduledSpec[];
   selection: DomainFloorSelection | null;
   onSelectedTaskChange: (selection: DomainFloorSelection) => void;
-  attention: { count: number; label: string | null };
-  onOpenAttention: () => void;
   tools?: ReactNode;
 }) {
   const all = useActivityStream(workspace);
@@ -198,7 +199,7 @@ export function DomainStage({ workspace, projectPaths, specs, selection, onSelec
           inert={offset !== 0}
           aria-hidden={offset !== 0 || undefined}
         >
-          <StageCard lane={item} now={now} specs={specs} projectPaths={projectPaths} taskProjects={taskProjects} attention={attention} onOpenAttention={onOpenAttention} tools={tools} />
+          <StageCard lane={item} now={now} specs={specs} projectPaths={projectPaths} taskProjects={taskProjects} tools={tools} />
         </div>;
       })}
     </div>
@@ -214,19 +215,20 @@ export function DomainStage({ workspace, projectPaths, specs, selection, onSelec
   </section>;
 }
 
-function StageCard({ lane, now, specs, projectPaths, taskProjects, attention, onOpenAttention, tools }: {
+function StageCard({ lane, now, specs, projectPaths, taskProjects, tools }: {
   lane?: DomainFloorLane;
   now: number;
   specs: readonly ScheduledSpec[];
   projectPaths: readonly string[];
   taskProjects: Readonly<Record<string, string>>;
-  attention: { count: number; label: string | null };
-  onOpenAttention: () => void;
   tools?: ReactNode;
 }) {
   const headline = lane?.preparation === "ready" ? { tone: "rest" as const, text: "스펙 작성을 마쳤어요 · 작업 지시 대기" }
     : lane?.preparation === "starting" ? { tone: "rest" as const, text: "작업 활동 기록을 기다려요" } : stageHeadline(lane);
   const tone = TONE[headline.tone];
+  const spec = lane?.spec;
+  const needsAttention = headline.tone === "waiting" || Boolean(spec?.focus_task_human_blocker);
+  const attentionPath = spec && needsAttention && !spec.focus_task_blocker_decision ? scheduleSpecPath(spec.workspace_name, spec.id) : undefined;
   const title = lane ? resolveTaskTitle({ workspace: lane.workspace, taskId: lane.taskId, specId: lane.spec?.id, projectPath: lane.projectPath, name: lane.name, at: lane.state.at }, lane.spec ? [lane.spec] : specs) : null;
   const baseName = (path: string) => path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
   const projectName = title?.project ?? (lane?.projectPath ? baseName(lane.projectPath) : lane && taskProjects[lane.name] ? baseName(taskProjects[lane.name]) : projectPaths.length === 1 ? baseName(projectPaths[0]) : null);
@@ -258,14 +260,14 @@ function StageCard({ lane, now, specs, projectPaths, taskProjects, attention, on
         </p>}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {attention.count > 0 && <button type="button" onClick={onOpenAttention} className="group inline-flex items-center gap-1.5 rounded-full bg-amber-300 px-3.5 py-1.5 text-[12.5px] font-bold text-amber-950 transition-transform active:scale-[0.97]">
-          {attentionActionText(headline.tone, attention.label)}<ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
-        </button>}
+        {spec && attentionPath && <Link to={attentionPath} className="group inline-flex items-center gap-1.5 rounded-full bg-amber-300 px-3.5 py-1.5 text-[12.5px] font-bold text-amber-950 transition-transform active:scale-[0.97]">
+          {attentionActionText(headline.tone, scheduleAttention(spec, now).label)}<ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+        </Link>}
         {tools}
       </div>
     </div>
     <div className="mt-5 border-t border-white/[0.06] pt-4">
-      <Journey lane={lane} tone={headline.tone} onOpenAttention={onOpenAttention} />
+      <Journey lane={lane} tone={headline.tone} attentionPath={attentionPath} />
     </div>
   </div>;
 }

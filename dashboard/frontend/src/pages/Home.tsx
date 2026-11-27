@@ -1,6 +1,7 @@
 import { ArrowRight, BookOpenText, CheckCircle2, ChevronLeft, ChevronRight, Code2, Eye, GitPullRequest, Library, Star, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { scheduleSpecPath } from "../lib/scheduleReviewTarget.js";
 import { getNewsFeed, type NewsFeed, type NewsItem } from "../api/newsApi.js";
 import { getOnboardingStatus, type ScheduledSpec } from "../api/roadmapMutationsApi.js";
 import { useAuth } from "../auth/AuthContext.js";
@@ -142,7 +143,7 @@ export function Home() {
     const note = selectLearningReviewNote(histories.map((history) => ({ spec, history })));
     return note ? [[spec.id, note] as const] : [];
   })), [review.items]);
-  const openWork = (workspace: string, id: string) => navigate(`/schedule?reviewWorkspace=${encodeURIComponent(workspace)}&reviewSpec=${encodeURIComponent(id)}&returnTo=home`);
+  const openWork = (workspace: string, id: string) => navigate(scheduleSpecPath(workspace, id, "home"));
   const openAttentionWorkspace = (workspace: string) => navigate(`/sessions?workspace=${encodeURIComponent(workspace)}&attention=1`);
 
   useEffect(() => {

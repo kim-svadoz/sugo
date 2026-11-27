@@ -135,7 +135,8 @@ describe("schedule presentation", () => {
   it("Schedule 카드 클릭은 상세만 열고 Canvas는 명시적 버튼으로만 연다", () => {
     const source = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     const openSpecBody = source.match(/function openSpec\(spec: ScheduledSpec\) \{([\s\S]*?)\n  \}/)?.[1] ?? "";
-    expect(openSpecBody).toContain("setSelected(spec)");
+    expect(openSpecBody).toContain('params.set("reviewSpec", spec.id)');
+    expect(openSpecBody).toContain("setSearchParams(params)");
     expect(openSpecBody).not.toContain("setCanvasOverlay");
     expect(source).toContain('onClick={() => setCanvasOverlay({ workspace: selected.workspace_name, nodeId: selected.focus_task_id ?? selected.id })}');
   });
@@ -255,11 +256,12 @@ describe("schedule presentation", () => {
     const workspaces = readFileSync(new URL("../pages/Sessions.tsx", import.meta.url), "utf8");
     const schedule = readFileSync(new URL("../pages/SchedulePage.tsx", import.meta.url), "utf8");
     const stage = readFileSync(new URL("../components/DomainStage.tsx", import.meta.url), "utf8");
-    expect(workspaces).toContain("/schedule?reviewWorkspace=");
-    expect(stage).toContain("attentionActionText(headline.tone, attention.label)");
+    expect(workspaces).not.toContain("/schedule?reviewWorkspace=");
+    expect(stage).toContain("scheduleSpecPath(spec.workspace_name, spec.id)");
+    expect(stage).toContain("attentionPath={attentionPath}");
     expect(workspaces).not.toContain("검토할 도메인 열기 →");
     expect(schedule).toContain('searchParams.get("reviewWorkspace")');
-    expect(schedule).toContain("openSpec(reviewTarget)");
+    expect(schedule).toContain('params.set("reviewSpec", spec.id)');
   });
 
   it("Canvas는 AI 작업 현황을 주 제목으로, Agent Canvas를 보조 명칭으로 쓴다", () => {

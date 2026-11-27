@@ -99,14 +99,16 @@ function DeploymentReach({ spec, selections }: { spec: ScheduledSpec | null; sel
 
 export function SchedulePage() {
   const { userId } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { data: workspaces, error: workspaceError } = useWorkspaces();
   const { data: specs, memos, commitments, archives, memoArchives, archivePagination, memoArchivePagination, setArchivePage, setMemoArchivePage, refetch } = useSchedule();
   const reviewWorkspace = searchParams.get("reviewWorkspace");
   const reviewSpec = searchParams.get("reviewSpec");
   const returnTo = searchParams.get("returnTo");
-  const reviewTargetOpened = useRef(false);
+  const reviewTarget = specs && reviewWorkspace ? findScheduleReviewTarget(specs, reviewWorkspace, reviewSpec) : undefined;
+  const [editedSpec, setEditedSpec] = useState<{ base: ScheduledSpec; value: ScheduledSpec } | null>(null);
+  const selected = editedSpec && editedSpec.base === reviewTarget ? editedSpec.value : reviewTarget ?? null;
 
   const today = nowKST();
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
@@ -114,7 +116,6 @@ export function SchedulePage() {
   const suppressMonthClickUntil = useRef(0);
   const [monthDragX, setMonthDragX] = useState(0);
   const [scheduleView, setScheduleView] = useState<"agenda" | "month">("agenda");
-  const [selected, setSelected] = useState<ScheduledSpec | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [memoTarget, setMemoTarget] = useState<{ memo?: ScheduledMemo; initialDate?: string | null } | null>(null);
@@ -182,26 +183,39 @@ export function SchedulePage() {
   }, [searchParams]);
 
   function openSpec(spec: ScheduledSpec) {
-    setArchiveConfirm(null);
-    setBranchDraft(null);
-    setProjectMenuOpen(false);
-    setSelected(spec);
+    const params = new URLSearchParams(searchParams);
+    params.set("reviewWorkspace", spec.workspace_name);
+    params.set("reviewSpec", spec.id);
+    params.delete("returnTo");
+    params.delete("create");
+    setSearchParams(params);
+  }
+
+  function clearSpecRoute() {
+    const params = new URLSearchParams(searchParams);
+    params.delete("reviewWorkspace");
+    params.delete("reviewSpec");
+    params.delete("returnTo");
+    setSearchParams(params, { replace: true });
+  }
+
+  function closeSpec() {
+    if (returnTo === "home") navigate("/home", { replace: true });
+    else clearSpecRoute();
+  }
+
+  function applySpecEdit(spec: ScheduledSpec, changes: Partial<ScheduledSpec>) {
+    if (!reviewTarget || spec.id !== reviewTarget.id || spec.workspace_name !== reviewTarget.workspace_name) return;
+    setEditedSpec((current) => ({
+      base: reviewTarget,
+      value: { ...(current?.base === reviewTarget ? current.value : reviewTarget), ...changes },
+    }));
   }
 
   function openMemo(memo: ScheduledMemo) {
     setMemoTarget({ memo });
   }
 
-  useEffect(() => {
-    if (!reviewWorkspace || reviewTargetOpened.current || !specs?.length) return;
-    const reviewTarget = findScheduleReviewTarget(specs, reviewWorkspace, reviewSpec, (spec) => {
-      const kind = scheduleAttention(spec).kind;
-      return kind === "blocked" || kind === "attention" || kind === "verification";
-    });
-    if (!reviewTarget) return;
-    reviewTargetOpened.current = true;
-    openSpec(reviewTarget);
-  }, [reviewSpec, reviewWorkspace, specs]);
   // 마감일/프로젝트 select는 클릭 즉시 저장되고 별도 "저장" 버튼이 없다 — 저장됐는지 눈에
   // 안 보이면 사용자가 헷갈린다. 성공 시 잠깐 "저장됨"을 보여준다.
   const [savedFlash, setSavedFlash] = useState<"due" | "project" | "branch" | "title" | null>(null);
@@ -253,12 +267,16 @@ export function SchedulePage() {
   const [canvasOverlay, setCanvasOverlay] = useState<{ workspace: string; nodeId: string; filePath?: string } | null>(null);
   const [specDocumentTarget, setSpecDocumentTarget] = useState<{ workspace: string; nodeId: string; title: string } | null>(null);
 
-  // spec-writer는 다른 터미널에서 완료되므로 4초 폴링 결과를 열린 상세에도 반영한다.
   useEffect(() => {
-    if (!selected || !specs) return;
-    const fresh = specs.find((spec) => spec.id === selected.id && spec.workspace_name === selected.workspace_name);
-    if (fresh && fresh !== selected) setSelected(fresh);
-  }, [specs, selected]);
+    setEditedSpec(null);
+    setArchiveConfirm(null);
+    setTitleDraft(null);
+    setBranchDraft(null);
+    setProjectMenuOpen(false);
+    setCheckpointTarget(null);
+    setCanvasOverlay(null);
+    setSpecDocumentTarget(null);
+  }, [reviewWorkspace, reviewSpec]);
 
   useEffect(() => {
     if (!selected || selected.spec_path) return setDetailDraft("");
@@ -363,7 +381,7 @@ export function SchedulePage() {
     try {
       await setDueDate(userId, spec.workspace_name, spec.id, dueDate);
       refetch();
-      if (selected?.id === spec.id) setSelected({ ...spec, due_date: dueDate });
+      applySpecEdit(spec, { due_date: dueDate });
       flashSaved("due");
     } catch {
       setErrorMsg("날짜 저장에 실패했습니다. Run/Task가 아닌 Spec인지 확인하세요.");
@@ -376,7 +394,7 @@ export function SchedulePage() {
     try {
       await setProject(userId, spec.workspace_name, spec.id, projectPath);
       refetch();
-      if (selected?.id === spec.id) setSelected({ ...spec, project_path: projectPath });
+      applySpecEdit(spec, { project_path: projectPath });
       flashSaved("project");
     } catch {
       setErrorMsg("프로젝트 지정에 실패했습니다. Run/Task가 아닌 Spec인지 확인하세요.");
@@ -391,7 +409,7 @@ export function SchedulePage() {
     try {
       await setWorkBranch(userId, spec.workspace_name, spec.id, workBranch);
       refetch();
-      if (selected?.id === spec.id) setSelected({ ...spec, work_branch: workBranch });
+      applySpecEdit(spec, { work_branch: workBranch });
       flashSaved("branch");
     } catch {
       setErrorMsg("작업 브랜치 저장에 실패했습니다.");
@@ -407,7 +425,7 @@ export function SchedulePage() {
     try {
       await renameRoadmapNode(userId, spec.workspace_name, spec.id, title.trim());
       refetch();
-      if (selected?.id === spec.id) setSelected({ ...spec, title: title.trim() });
+      applySpecEdit(spec, { title: title.trim() });
       flashSaved("title");
     } catch {
       setErrorMsg("이름 변경에 실패했습니다.");
@@ -510,7 +528,7 @@ export function SchedulePage() {
     setErrorMsg(null);
     try {
       await archiveScheduleSpec(userId, spec.workspace_name, spec.id, reason);
-      setSelected(null);
+      clearSpecRoute();
       setArchiveConfirm(null);
       refetch();
     } catch {
@@ -580,6 +598,11 @@ export function SchedulePage() {
 
       {errorMsg && (
         <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">{errorMsg}</div>
+      )}
+      {specs && reviewSpec !== null && !reviewTarget && (
+        <div role="status" className="rounded-lg border border-white/10 px-3 py-2 text-[12.5px] text-slate-300">
+          이 링크의 일정 카드를 찾을 수 없습니다.
+        </div>
       )}
 
       <div className={cn("grid min-h-0 flex-1 grid-cols-1 gap-3 2xl:gap-4", scheduleView === "month" && hasPlanningInbox && "grid-cols-[clamp(150px,14vw,220px)_minmax(0,1fr)]")}>
@@ -864,12 +887,9 @@ export function SchedulePage() {
       {/* Spec 상세 패널 */}
       {selected && (
         <Modal
+          key={JSON.stringify([selected.workspace_name, selected.id])}
           size="xwide"
-          onClose={() => {
-            setSelected(null);
-            setTitleDraft(null);
-            if (returnTo === "home") navigate("/home");
-          }}
+          onClose={closeSpec}
           disableEscape={!!checkpointTarget || !!canvasOverlay || !!specDocumentTarget || !!archiveConfirm}
         >
           <div className="space-y-4">

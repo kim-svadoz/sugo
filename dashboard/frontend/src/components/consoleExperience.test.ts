@@ -108,8 +108,9 @@ describe("Console 정보 구조", () => {
     expect(workBoard).toContain("shadow-[0_0_0_1px_rgba(251,191,36,.28),0_0_28px_rgba(251,191,36,.22)]");
   });
 
-  it("사용자 확인 단계의 원형 아이콘과 내 차례 배지 전체가 판단 영역으로 이동하는 버튼이다", () => {
-    expect(domainStage).toContain("myTurn && onOpenAttention");
+  it("사용자 확인 단계의 원형 아이콘과 내 차례 배지 전체가 같은 카드의 판단 영역 링크다", () => {
+    expect(domainStage).toContain("myTurn && attentionPath");
+    expect(domainStage).toContain("<Link to={attentionPath}");
     expect(domainStage).toContain('aria-label="사용자 확인 영역 열기"');
     expect(domainStage).toContain('className="group flex min-w-0 flex-col items-center');
     expect(domainStage).toContain('group-hover:scale-105');
