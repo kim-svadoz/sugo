@@ -1,6 +1,6 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { handleSugoPlan } from "../src/tools/sugoPlan.js";
 
@@ -35,6 +35,44 @@ async function toPrd(specPath?: string): Promise<string> {
 }
 
 describe("스펙 오라클 — 실제 파이프라인 통과", () => {
+  it("feat에서 저장한 PRD의 상대경로 이미지가 PRD 옆의 복사본을 가리킨다", async () => {
+    const specDir = join(fakeHome, "specs", "v1");
+    mkdirSync(join(specDir, "images"), { recursive: true });
+    const assets = ["01.png", "02.webp", "03.jpg"];
+    for (const name of assets) writeFileSync(join(specDir, "images", name), name);
+    const images = assets.map((name) => `![참고 화면](images/${name})`).join("\n");
+    const specPath = join(specDir, "spec.md");
+    writeFileSync(specPath, images);
+
+    const start = await call({ action: "start", projectPath: projectDir, featureName: "planning images", specPath });
+    const { sessionId } = start.data;
+    await call({ action: "clarify", sessionId });
+    const result = await call({ action: "prd", sessionId, prdContent: `${VALID_PRD}\n\n## 기획 화면\n${images}` });
+    const status = await call({ action: "status", sessionId });
+    expect(result.isError).toBe(false);
+    const prdPath = status.data.prdPath as string;
+    const prd = readFileSync(prdPath, "utf8");
+    expect(prd).toContain(images);
+    for (const name of assets) expect(readFileSync(join(dirname(prdPath), "images", name), "utf8")).toBe(name);
+  });
+
+  it("이미지 복사 실패 시 PRD 단계로 넘어가지 않고 원본을 복구한 뒤 재시도할 수 있다", async () => {
+    const specPath = join(fakeHome, "spec.md");
+    const link = "![참고 화면](images/01.png)";
+    writeFileSync(specPath, link);
+    const start = await call({ action: "start", projectPath: projectDir, featureName: "missing image", specPath });
+    const { sessionId } = start.data;
+    await call({ action: "clarify", sessionId });
+    const args = { action: "prd", sessionId, prdContent: `${VALID_PRD}\n${link}` };
+
+    const failed = await call(args);
+    expect(failed).toMatchObject({ isError: true, data: { errorCode: "PRD_WRITE_FAILED" } });
+    expect((await call({ action: "status", sessionId })).data.prdPath).toBeUndefined();
+    mkdirSync(join(fakeHome, "images"));
+    writeFileSync(join(fakeHome, "images", "01.png"), "restored");
+    expect((await call(args)).isError).toBe(false);
+  });
+
   it("기준 스펙 문서가 없으면 게이트가 안 켜져 PRD→ready가 그대로 열린다", async () => {
     const sessionId = await toPrd();
     const ready = await call({ action: "ready", sessionId });

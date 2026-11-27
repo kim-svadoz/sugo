@@ -7,7 +7,7 @@ let seq = 0;
  * 임시파일(.tmp.<pid>.<ts>.<seq>) 쓰고 rename으로 교체 — 중단돼도 반쪽 파일이 남지 않는다.
  * Windows에서 AV/인덱서가 핸들을 점유하면 rename이 EPERM/EBUSY로 실패할 수 있어 짧은 백오프 재시도.
  */
-export async function atomicWriteFile(path: string, content: string): Promise<void> {
+export async function atomicWriteFile(path: string, content: string | Uint8Array): Promise<void> {
   const tmpPath = `${path}.tmp.${process.pid}.${Date.now()}.${seq++}`;
   await writeFile(tmpPath, content, "utf-8");
   const delays = [0, 25, 50, 100, 200];

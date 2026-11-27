@@ -1,6 +1,6 @@
-import { mkdir } from "node:fs/promises";
-import { join } from "node:path";
-import { atomicWriteFile } from "./fsUtil.js";
+import { mkdir, readFile, realpath } from "node:fs/promises";
+import { dirname, extname, join } from "node:path";
+import { atomicWriteFile, withFileLock } from "./fsUtil.js";
 import { patchPrdFilename, patchWorkResultFilename } from "./patch.js";
 import { toNfc } from "./unicodeName.js";
 
@@ -16,16 +16,57 @@ function todayYyyymmdd(): string {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 }
 
+const planningImageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+
+/** Materialize the inline image links produced by spec-writer before publishing the PRD. */
+async function copyPrdImages(specPath: string, featurePath: string, content: string): Promise<void> {
+  const names = new Set(Array.from(
+    content.matchAll(/!\[[^\]\r\n]*\]\(images\/([a-zA-Z0-9_.-]+\.[a-zA-Z0-9]+)(?=[\s)])/g),
+    ([, name]) => name ?? "",
+  ).filter((name) => planningImageExtensions.has(extname(name).toLowerCase())));
+  if (names.size === 0) return;
+
+  const sourceDir = join(await realpath(dirname(specPath)), "images");
+  if (await realpath(sourceDir) !== sourceDir) throw new Error("SPEC images directory must be beside spec.md");
+  const targetDir = join(await realpath(featurePath), "images");
+  await mkdir(targetDir, { recursive: true });
+  if (await realpath(targetDir) !== targetDir) throw new Error("PRD images directory must be beside prd.md");
+
+  for (const name of names) {
+    const source = join(sourceDir, name);
+    if (await realpath(source) !== source) throw new Error(`SPEC image must be a local file: ${name}`);
+    const image = await readFile(source);
+    const target = join(targetDir, name);
+    const existing = await realpath(target).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    });
+    if (existing) {
+      if (existing !== target || !(await readFile(target)).equals(image)) throw new Error(`PRD image conflicts with an existing file: ${name}`);
+      continue;
+    }
+    await atomicWriteFile(target, image);
+  }
+}
+
 /** 저장 레이아웃: <project>/sugo/features/<yyyymmdd>/<feature>/prd.md */
 export async function writePrdFile(
   projectPath: string,
   featureName: string,
   content: string,
+  specPath?: string,
 ): Promise<{ featurePath: string; prdPath: string }> {
   const featurePath = join(projectPath, "sugo", "features", todayYyyymmdd(), slugify(featureName));
   const prdPath = join(featurePath, "prd.md");
   await mkdir(featurePath, { recursive: true });
-  await atomicWriteFile(prdPath, content);
+  if (specPath) {
+    await withFileLock(`${prdPath}.lock`, async () => {
+      await copyPrdImages(specPath, featurePath, content);
+      await atomicWriteFile(prdPath, content);
+    });
+  } else {
+    await atomicWriteFile(prdPath, content);
+  }
   return { featurePath, prdPath };
 }
 

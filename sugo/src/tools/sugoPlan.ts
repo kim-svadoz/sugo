@@ -967,9 +967,20 @@ export async function handleSugoPlan(rawArgs: unknown) {
       ? `> Provenance: captured-post-hoc\n> Baseline: ${session.data.postHocCapture.baselineRevision}\n\n${args.prdContent}`
       : args.prdContent;
     const isPatch = session.data.mode === "patch" && session.data.patch;
-    const { featurePath, prdPath } = isPatch
-      ? await writePatchPrdFile(session.data.patch!.featureDir, session.data.patch!.version, prdContent)
-      : await writePrdFile(session.projectPath, session.featureName, prdContent);
+    const draftSelection = session.data.specDraftSelection;
+    const selectedDraft = draftSelection?.decision === "link"
+      ? draftSelection.candidates.find((candidate) => candidate.id === draftSelection.selectedId)
+      : undefined;
+    const specPath = selectedDraft?.specPath ?? session.data.specOracle?.specPath;
+    let prdFile: Awaited<ReturnType<typeof writePrdFile>>;
+    try {
+      prdFile = isPatch
+        ? await writePatchPrdFile(isPatch.featureDir, isPatch.version, prdContent)
+        : await writePrdFile(session.projectPath, session.featureName, prdContent, specPath);
+    } catch (error) {
+      return errorResult("PRD_WRITE_FAILED", error instanceof Error ? error.message : String(error));
+    }
+    const { featurePath, prdPath } = prdFile;
     const baseline = detectBaselineSignals(prdContent);
     session = {
       ...session,
@@ -1028,10 +1039,6 @@ export async function handleSugoPlan(rawArgs: unknown) {
       const existingTaskNode = isPatch ? await getRoadmapNode(registryEntry.workspace, task.id) : null;
       const runId = existingTaskNode?.parent ?? `run-${task.id}`;
       const existingRunNode = await getRoadmapNode(registryEntry.workspace, runId);
-      const draftSelection = session.data.specDraftSelection;
-      const selectedDraft = draftSelection?.decision === "link"
-        ? draftSelection.candidates.find((candidate) => candidate.id === draftSelection.selectedId)
-        : undefined;
       const specId = existingRunNode?.parent ?? selectedDraft?.id ?? `spec-${task.id}`;
       const existingSpecNode = await getRoadmapNode(registryEntry.workspace, specId);
       await upsertRoadmapNodes(registryEntry.workspace, [
